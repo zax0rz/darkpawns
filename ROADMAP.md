@@ -41,7 +41,7 @@ You can fight things and die.
 
 ## What's Next
 
-### 🔲 Phase 2b — "I Can Actually Play This"
+### ✅ Phase 2b — "I Can Actually Play This"
 **Goal:** A complete play loop. Log in, kill something, loot it, equip the weapon,
 log out, log back in and still have your stuff.
 
