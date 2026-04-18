@@ -67,6 +67,20 @@ func (m *Manager) GetCombatEngine() *combat.CombatEngine {
 	return m.combatEngine
 }
 
+// SetDeathFunc wires the game-layer death handler into the combat engine.
+func (m *Manager) SetDeathFunc() {
+	m.combatEngine.DeathFunc = func(victim, killer combat.Combatant) {
+		m.world.HandleDeath(victim, killer)
+
+		// If victim was a player, send updated room state after respawn
+		if !victim.IsNPC() {
+			if s, ok := m.GetSession(victim.GetName()); ok {
+				cmdLook(s, nil)
+			}
+		}
+	}
+}
+
 // HandleWebSocket upgrades HTTP to WebSocket and manages the session.
 func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)

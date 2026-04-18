@@ -26,6 +26,10 @@ type CombatEngine struct {
 	
 	// Message broadcaster function (set by game)
 	BroadcastFunc func(roomVNum int, message string, exclude string)
+
+	// DeathFunc handles corpse creation and respawn (set by game layer)
+	// Called after death messages are sent.
+	DeathFunc func(victim, killer Combatant)
 }
 
 // NewCombatEngine creates a new combat engine
@@ -244,27 +248,30 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant) {
 	}
 }
 
-// handleDeath processes character death
+// handleDeath processes character death.
+//
+// Faithful to Dark Pawns die()/raw_kill() in fight.c:
+//   - Player: lose EXP/3, create corpse with inventory+equipment+gold, send to room 8004
+//   - Mob: create corpse, remove from world
+//   - Corpse creation is delegated via DeathFunc callback (set by game layer)
 func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 	victimName := victim.GetName()
 	killerName := killer.GetName()
 	roomVNum := victim.GetRoom()
-	
-	// Death message
-	victim.SendMessage("You have been KILLED!")
-	
+
+	// Death message to victim
+	victim.SendMessage("You have been KILLED!\r\n")
+
+	// Death message to room
 	if ce.BroadcastFunc != nil {
 		ce.BroadcastFunc(roomVNum,
 			fmt.Sprintf("%s has been killed by %s!", victimName, killerName),
 			"")
 	}
-	
-	// For players: respawn
-	if !victim.IsNPC() {
-		// Heal to full
-		victim.Heal(9999)
-		victim.StopFighting()
-		// TODO: Move to respawn location
+
+	// Delegate to game layer for corpse creation + respawn
+	if ce.DeathFunc != nil {
+		ce.DeathFunc(victim, killer)
 	}
 }
 
