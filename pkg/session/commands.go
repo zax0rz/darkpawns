@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zax0rz/darkpawns/pkg/commands"
+	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // ExecuteCommand processes a game command.
@@ -37,21 +38,21 @@ func ExecuteCommand(s *Session, command string, args []string) error {
 		return cmdQuit(s)
 	// Item commands
 	case "inventory", "i", "inv":
-		return commands.ExecuteItemCommand(s, cmd, args)
+		return cmdInventory(s, args)
 	case "equipment", "eq":
-		return commands.ExecuteItemCommand(s, cmd, args)
+		return cmdEquipment(s, args)
 	case "wear":
-		return commands.ExecuteItemCommand(s, cmd, args)
+		return cmdWear(s, args)
 	case "remove":
-		return commands.ExecuteItemCommand(s, cmd, args)
+		return cmdRemove(s, args)
 	case "wield":
-		return commands.ExecuteItemCommand(s, cmd, args)
+		return cmdWield(s, args)
 	case "hold":
-		return commands.ExecuteItemCommand(s, cmd, args)
+		return cmdHold(s, args)
 	case "get", "take":
-		return commands.ExecuteItemCommand(s, cmd, args)
+		return cmdGet(s, args)
 	case "drop":
-		return commands.ExecuteItemCommand(s, cmd, args)
+		return cmdDrop(s, args)
 	default:
 		s.sendText(fmt.Sprintf("Unknown command: %s", command))
 		return nil
@@ -181,6 +182,279 @@ func cmdQuit(s *Session) error {
 	s.conn.Close()
 
 	return nil
+}
+
+// cmdInventory shows the player's inventory.
+func cmdInventory(s *Session, args []string) error {
+	// Get item count first
+	count := s.player.Inventory.GetItemCount()
+	if count == 0 {
+		s.sendText("You are carrying nothing.")
+		return nil
+	}
+
+	// Get all items
+	items := s.player.Inventory.FindItems("") // Empty string returns all items
+	var itemDescs []string
+	for _, item := range items {
+		itemDescs = append(itemDescs, item.ShortDesc)
+	}
+
+	msg := fmt.Sprintf("You are carrying:\n%s", strings.Join(itemDescs, "\n"))
+	s.sendText(msg)
+	return nil
+}
+
+// cmdEquipment shows the player's equipped items.
+func cmdEquipment(s *Session, args []string) error {
+	equipped := s.player.Equipment.GetEquippedItems()
+	if len(equipped) == 0 {
+		s.sendText("You are not wearing anything.")
+		return nil
+	}
+
+	var items []string
+	for slot, item := range equipped {
+		items = append(items, fmt.Sprintf("%-10s: %s", slot.String(), item.ShortDesc))
+	}
+
+	msg := fmt.Sprintf("You are wearing:\n%s", strings.Join(items, "\n"))
+	s.sendText(msg)
+	return nil
+}
+
+// cmdWear equips an item from inventory.
+func cmdWear(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Wear what?")
+		return nil
+	}
+
+	itemName := strings.Join(args, " ")
+	
+	// Find item in inventory
+	item, found := s.player.Inventory.FindItem(itemName)
+	if !found {
+		s.sendText(fmt.Sprintf("You don't have '%s'.", itemName))
+		return nil
+	}
+
+	// Try to equip the item
+	if err := s.player.Equipment.Equip(item, s.player.Inventory); err != nil {
+		s.sendText(fmt.Sprintf("You can't wear that: %v", err))
+		return nil
+	}
+
+	// Remove from inventory (equip should have moved it)
+	s.player.Inventory.RemoveItem(item)
+	s.sendText(fmt.Sprintf("You wear %s.", item.ShortDesc))
+
+	// Broadcast to room
+	broadcastEquipmentChange(s, "wear", item)
+	return nil
+}
+
+// cmdRemove unequips an item.
+func cmdRemove(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Remove what?")
+		return nil
+	}
+
+	itemName := strings.Join(args, " ")
+	
+	// Find the item in equipment
+	var itemToRemove *parser.Obj
+	var slotToRemove game.EquipmentSlot
+	equipped := s.player.Equipment.GetEquippedItems()
+	
+	for slot, item := range equipped {
+		// Check if item matches by name
+		if strings.Contains(strings.ToLower(item.Keywords), strings.ToLower(itemName)) ||
+		   strings.Contains(strings.ToLower(item.ShortDesc), strings.ToLower(itemName)) {
+			itemToRemove = item
+			slotToRemove = slot
+			break
+		}
+	}
+
+	if itemToRemove == nil {
+		s.sendText(fmt.Sprintf("You're not wearing '%s'.", itemName))
+		return nil
+	}
+
+	// Try to unequip
+	if err := s.player.Equipment.Unequip(slotToRemove, s.player.Inventory); err != nil {
+		s.sendText(fmt.Sprintf("You can't remove that: %v", err))
+		return nil
+	}
+
+	s.sendText(fmt.Sprintf("You remove %s.", itemToRemove.ShortDesc))
+
+	// Broadcast to room
+	broadcastEquipmentChange(s, "remove", itemToRemove)
+	return nil
+}
+
+// cmdWield equips a weapon.
+func cmdWield(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Wield what?")
+		return nil
+	}
+
+	itemName := strings.Join(args, " ")
+	
+	// Find item in inventory
+	item, found := s.player.Inventory.FindItem(itemName)
+	if !found {
+		s.sendText(fmt.Sprintf("You don't have '%s'.", itemName))
+		return nil
+	}
+
+	// Check if item is a weapon
+	if item.TypeFlag != 1 { // Type 1 is weapon in CircleMUD
+		s.sendText("That's not a weapon.")
+		return nil
+	}
+
+	// Unequip current weapon if any
+	if _, ok := s.player.Equipment.GetItemInSlot(game.SlotWield); ok {
+		if err := s.player.Equipment.Unequip(game.SlotWield, s.player.Inventory); err != nil {
+			s.sendText(fmt.Sprintf("You can't unwield your current weapon: %v", err))
+			return nil
+		}
+	}
+
+	// Equip new weapon
+	if err := s.player.Equipment.Equip(item, s.player.Inventory); err != nil {
+		s.sendText(fmt.Sprintf("You can't wield that: %v", err))
+		return nil
+	}
+
+	// Remove from inventory
+	s.player.Inventory.RemoveItem(item)
+	s.sendText(fmt.Sprintf("You wield %s.", item.ShortDesc))
+
+	// Broadcast to room
+	broadcastEquipmentChange(s, "wield", item)
+	return nil
+}
+
+// cmdHold holds an item.
+func cmdHold(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Hold what?")
+		return nil
+	}
+
+	itemName := strings.Join(args, " ")
+	
+	// Find item in inventory
+	item, found := s.player.Inventory.FindItem(itemName)
+	if !found {
+		s.sendText(fmt.Sprintf("You don't have '%s'.", itemName))
+		return nil
+	}
+
+	// Unequip current held item if any
+	if _, ok := s.player.Equipment.GetItemInSlot(game.SlotHold); ok {
+		if err := s.player.Equipment.Unequip(game.SlotHold, s.player.Inventory); err != nil {
+			s.sendText(fmt.Sprintf("You can't unhold your current item: %v", err))
+			return nil
+		}
+	}
+
+	// Try to equip in hold slot
+	if err := s.player.Equipment.Equip(item, s.player.Inventory); err != nil {
+		s.sendText(fmt.Sprintf("You can't hold that: %v", err))
+		return nil
+	}
+
+	// Remove from inventory
+	s.player.Inventory.RemoveItem(item)
+	s.sendText(fmt.Sprintf("You hold %s.", item.ShortDesc))
+
+	// Broadcast to room
+	broadcastEquipmentChange(s, "hold", item)
+	return nil
+}
+
+// cmdGet picks up an item from the room.
+func cmdGet(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Get what?")
+		return nil
+	}
+
+	_ = strings.Join(args, " ") // itemName - will be used when room items are implemented
+	
+	// Get current room
+	_, ok := s.manager.world.GetRoom(s.player.GetRoom())
+	if !ok {
+		return fmt.Errorf("invalid room")
+	}
+
+	// Check if inventory is full
+	if s.player.Inventory.IsFull() {
+		s.sendText("Your inventory is full.")
+		return nil
+	}
+
+	// Create a test item (in real implementation, get from room)
+	testItem := &parser.Obj{
+		VNum:      1,
+		Keywords:  "sword",
+		ShortDesc: "a sharp sword",
+		LongDesc:  "A sharp sword lies here.",
+		TypeFlag:  1, // Weapon
+		Weight:    5,
+	}
+
+	if err := s.player.Inventory.AddItem(testItem); err != nil {
+		s.sendText(fmt.Sprintf("Can't pick that up: %v", err))
+		return nil
+	}
+
+	s.sendText(fmt.Sprintf("You pick up %s.", testItem.ShortDesc))
+	return nil
+}
+
+// cmdDrop drops an item from inventory.
+func cmdDrop(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Drop what?")
+		return nil
+	}
+
+	itemName := strings.Join(args, " ")
+	
+	item, found := s.player.Inventory.FindItem(itemName)
+	if !found {
+		s.sendText(fmt.Sprintf("You don't have '%s'.", itemName))
+		return nil
+	}
+
+	// Remove from inventory
+	s.player.Inventory.RemoveItem(item)
+	s.sendText(fmt.Sprintf("You drop %s.", item.ShortDesc))
+	return nil
+}
+
+// broadcastEquipmentChange broadcasts equipment changes to the room.
+func broadcastEquipmentChange(s *Session, action string, item *parser.Obj) {
+	event := EventData{
+		Type: "equipment",
+		From: s.player.Name,
+		Text: fmt.Sprintf("%s %s %s.", s.player.Name, action, item.ShortDesc),
+	}
+
+	msg, _ := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: event,
+	})
+
+	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
 }
 
 // sendText sends a simple text message to the player.

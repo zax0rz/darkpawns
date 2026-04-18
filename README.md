@@ -1,3 +1,6 @@
+---
+tags: [active]
+---
 # Dark Pawns
 
 A resurrection of the Dark Pawns MUD (1997-2010) for the age of AI agents.

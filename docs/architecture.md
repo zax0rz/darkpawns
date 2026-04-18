@@ -1,3 +1,6 @@
+---
+tags: [active]
+---
 # Dark Pawns Architecture
 
 ## Overview

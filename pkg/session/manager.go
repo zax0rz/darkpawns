@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -24,16 +25,21 @@ var upgrader = websocket.Upgrader{
 
 // Manager handles all active sessions.
 type Manager struct {
-	mu       sync.RWMutex
-	sessions map[string]*Session // keyed by player name
-	world    *game.World
+	mu            sync.RWMutex
+	sessions      map[string]*Session // keyed by player name
+	world         *game.World
+	combatEngine  *combat.CombatEngine
 }
 
 // NewManager creates a new session manager.
 func NewManager(world *game.World) *Manager {
+	ce := combat.NewCombatEngine()
+	ce.Start()
+	
 	return &Manager{
-		sessions: make(map[string]*Session),
-		world:    world,
+		sessions:     make(map[string]*Session),
+		world:        world,
+		combatEngine: ce,
 	}
 }
 

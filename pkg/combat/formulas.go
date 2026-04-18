@@ -3,8 +3,6 @@ package combat
 import (
 	"math/rand"
 	"time"
-
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // AttackType represents different types of attacks
@@ -30,17 +28,7 @@ const (
 	POS_STANDING  = 8
 )
 
-// Combatant represents a character in combat (player or mob)
-type Combatant interface {
-	GetLevel() int
-	GetTHAC0() int
-	GetAC() int
-	GetHP() int
-	GetMaxHP() int
-	GetDamageRoll() parser.DiceRoll
-	IsNPC() bool
-	GetPosition() int
-}
+
 
 // CalculateHitChance calculates if an attack hits based on THAC0 vs AC
 // Returns true if the attack hits
@@ -65,7 +53,7 @@ func CalculateHitChance(attacker, defender Combatant) bool {
 }
 
 // CalculateDamage calculates damage based on the original C formula
-func CalculateDamage(attacker, defender Combatant, weaponDamage parser.DiceRoll, attackType AttackType) int {
+func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attackType AttackType) int {
 	dam := 0
 	
 	// Base damage from strength (simplified)

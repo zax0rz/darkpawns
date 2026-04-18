@@ -143,7 +143,7 @@ func (eq *Equipment) Equip(item *parser.Obj, inv *Inventory) error {
 	// For now, equip in first available slot
 	// In a full implementation, we'd check for multiple slots (like finger)
 	for _, slot := range wearFlags {
-		if existing, ok := eq.Slots[slot]; ok {
+		if _, ok := eq.Slots[slot]; ok {
 			// Unequip existing item first
 			if err := eq.unequip(slot, inv); err != nil {
 				return fmt.Errorf("cannot unequip existing %s: %v", slot, err)

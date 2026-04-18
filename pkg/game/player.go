@@ -3,8 +3,8 @@ package game
 import (
 	"sync"
 	"time"
-	
-	"github.com/zax0rz/darkpawns/pkg/parser"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // Player represents an active player in the game.
@@ -18,7 +18,6 @@ type Player struct {
 	// Core stats
 	Health    int
 	MaxHealth int
-	MaxHealth int
 	Mana      int
 	MaxMana   int
 	Level     int
@@ -28,7 +27,7 @@ type Player struct {
 	// Combat stats
 	THAC0      int // To Hit Armor Class 0
 	AC         int // Armor Class
-	DamageRoll parser.DiceRoll
+	DamageRoll combat.DiceRoll
 	Position   int // Current position (standing, fighting, etc.)
 
 	// Inventory and equipment
@@ -63,7 +62,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		Strength:    10, // Default strength
 		THAC0:       20, // Default THAC0
 		AC:          10, // Default AC
-		DamageRoll:  parser.DiceRoll{Num: 1, Sides: 4, Plus: 0}, // 1d4
+		DamageRoll:  combat.DiceRoll{Num: 1, Sides: 4, Plus: 0}, // 1d4
 		Position:    8, // POS_STANDING
 		ConnectedAt: now,
 		LastActive:  now,
@@ -138,7 +137,7 @@ func (p *Player) GetMaxHP() int {
 }
 
 // GetDamageRoll returns the player's damage dice.
-func (p *Player) GetDamageRoll() parser.DiceRoll {
+func (p *Player) GetDamageRoll() combat.DiceRoll {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.DamageRoll
@@ -195,4 +194,27 @@ func (p *Player) Heal(amount int) {
 	if p.Health > p.MaxHealth {
 		p.Health = p.MaxHealth
 	}
+}
+
+// GetName returns the player's name.
+func (p *Player) GetName() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Name
+}
+
+// SendMessage sends a message to the player.
+func (p *Player) SendMessage(msg string) {
+	select {
+	case p.Send <- []byte(msg):
+	default:
+		// Channel full, drop message
+	}
+}
+
+// StopFighting clears the fighting target.
+func (p *Player) StopFighting() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Fighting = ""
 }

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zax0rz/darkpawns/pkg/ai"
+
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -199,7 +199,7 @@ func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 		return nil, fmt.Errorf("mob prototype %d not found", vnum)
 	}
 
-	room, ok := w.rooms[roomVNum]
+	_, ok = w.rooms[roomVNum]
 	if !ok {
 		return nil, fmt.Errorf("room %d not found", roomVNum)
 	}
@@ -213,7 +213,7 @@ func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	// Notify players in the room
 	players := w.GetPlayersInRoom(roomVNum)
 	for _, player := range players {
-		player.Send <- []byte(fmt.Sprintf("%s appears.\n", mob.ShortDesc))
+		player.Send <- []byte(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
 	}
 
 	return mob, nil
@@ -320,10 +320,9 @@ func (w *World) GetSpawner() *Spawner {
 func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int) {
 	mobs := w.GetMobsInRoom(roomVNum)
 	for _, mob := range mobs {
-		if mob.HasFlag(ai.MOB_AGGRESSIVE) && mob.Brain != nil {
+		if mob.HasFlag(MOB_AGGRESSIVE) {
 			// Aggressive mobs attack immediately
-			mob.Brain.SetTarget(player.Name)
-			go func(m *Mob) {
+			go func(m *MobInstance) {
 				if err := m.Attack(player, w); err != nil {
 					fmt.Printf("Attack error: %v\n", err)
 				}

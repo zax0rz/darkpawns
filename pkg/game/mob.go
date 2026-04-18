@@ -3,7 +3,7 @@ package game
 
 import (
 	"fmt"
-	"github.com/zax0rz/darkpawns/pkg/ai"
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -20,7 +20,7 @@ type MobInstance struct {
 	Status    string // "standing", "sleeping", "fighting", etc.
 
 	// AI
-	Brain *ai.Brain
+	// Brain *ai.Brain // Temporarily commented out to fix circular import
 
 	// Inventory and equipment
 	Inventory []*ObjectInstance
@@ -56,7 +56,7 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	}
 
 	// Create AI brain
-	mob.Brain = ai.NewBrain(mob)
+	// mob.Brain = ai.NewBrain(mob) // Temporarily commented out
 
 	return mob
 }
@@ -114,9 +114,9 @@ func (m *MobInstance) Attack(player *Player, world *World) error {
 
 // Update runs the mob's AI update.
 func (m *MobInstance) Update(world *World) error {
-	if m.Brain != nil {
-		return m.Brain.Update(m, world)
-	}
+	// if m.Brain != nil {
+	// 	return m.Brain.Update(m, world)
+	// }
 	return nil
 }
 
@@ -212,11 +212,15 @@ func (m *MobInstance) GetLevel() int {
 }
 
 // GetDamageRoll returns the damage dice for the mob's attacks.
-func (m *MobInstance) GetDamageRoll() parser.DiceRoll {
+func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
 	if m.Prototype != nil {
-		return m.Prototype.Damage
+		return combat.DiceRoll{
+			Num:   m.Prototype.Damage.Num,
+			Sides: m.Prototype.Damage.Sides,
+			Plus:  m.Prototype.Damage.Plus,
+		}
 	}
-	return parser.DiceRoll{Num: 1, Sides: 4, Plus: 0} // 1d4 default
+	return combat.DiceRoll{Num: 1, Sides: 4, Plus: 0} // 1d4 default
 }
 
 // Combatant interface implementation
@@ -263,4 +267,35 @@ func (m *MobInstance) GetPosition() int {
 	default:
 		return 8 // Default to standing
 	}
+}
+
+// GetName returns the mob's short description as its name.
+func (m *MobInstance) GetName() string {
+	return m.GetShortDesc()
+}
+
+// SendMessage sends a message to the mob (no-op for mobs, but needed for interface).
+func (m *MobInstance) SendMessage(msg string) {
+	// Mobs don't receive messages, but we could log this
+}
+
+// SetFighting sets who the mob is fighting.
+func (m *MobInstance) SetFighting(target string) {
+	m.Status = "fighting"
+	// Target is stored as a string name; we'd need a lookup mechanism
+	// For now, just mark as fighting
+}
+
+// StopFighting clears the fighting state.
+func (m *MobInstance) StopFighting() {
+	m.Status = "standing"
+	m.Fighting = false
+}
+
+// GetFighting returns who the mob is fighting (empty string if not fighting).
+func (m *MobInstance) GetFighting() string {
+	if m.Status == "fighting" {
+		return "someone" // Simplified; would need proper target tracking
+	}
+	return ""
 }
