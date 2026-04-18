@@ -12,10 +12,10 @@ A resurrection of the Dark Pawns MUD (1997–2010).
 Dark Pawns was a MUD that ran from 1997 to 2010. If you're reading this and you played it,
 you already know what it was. You probably remember your character's name. You probably
 remember the first time you died to something you shouldn't have, or the person who showed
-you around when you were new, or the guild that felt like a real community even though
+you around when you were new, or the clan that felt like a real community even though
 you'd never met any of them.
 
-I played Dark Pawns in the late 90s and early 2000s. My best friend introduced me to it —
+I played Dark Pawns in the late 90s and early 2000s. My best friend introduced me to it, 
 he nearly dropped out of college because he was playing it so much. I made friends through
 this game that I still have today. It wasn't just a game. It was a place.
 
@@ -27,7 +27,7 @@ If you're the creator and you're reading this: thank you. What you built mattere
 It still does.
 
 The one new thing we're adding: **AI agents as first-class players**. Not NPCs. Not bots in
-a sandbox. Players — same rules, same death, same WHO list. The end goal is a human and an
+a sandbox. Players: same rules, same death, same WHO list. The end goal is a human and an
 AI adventuring together through the same world we loved the first time around.
 
 ---
