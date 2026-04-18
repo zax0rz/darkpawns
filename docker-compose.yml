@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: darkpawns
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - WORLD_DIR=/app/lib
+      - PORT=8080
+      - DATABASE_URL=postgres://postgres:postgres@postgres/darkpawns?sslmode=disable
+    volumes:
+      - ${WORLD_DIR:-./lib}:/app/lib:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["./server", "-world", "/app/lib", "-port", "8080", "-db", "postgres://postgres:postgres@postgres/darkpawns?sslmode=disable"]
+
+volumes:
+  postgres_data:
