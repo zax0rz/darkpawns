@@ -98,23 +98,40 @@ func (w *World) handlePlayerDeath(victim combat.Combatant) {
 		player.SendMessage(fmt.Sprintf("You lose %d experience points.\r\n", expLoss))
 	}
 
-	// make_corpse: note inventory/equipment use *parser.Obj at this stage.
-	// We record item counts for the corpse description but don't transfer
-	// ObjectInstances (they don't exist yet for player items).
-	// TODO: when player inventory migrates to ObjectInstance, transfer items here.
-	invCount := 0
+	// make_corpse: transfer inventory and equipment to corpse
+	var inventoryItems []*ObjectInstance
+	var equipmentItems []*ObjectInstance
+	
 	if player.Inventory != nil {
-		invCount = len(player.Inventory.Items)
-		player.Inventory.Items = nil
-	}
-	if player.Equipment != nil {
-		for slot := range player.Equipment.Slots {
-			delete(player.Equipment.Slots, slot)
+		// Get all items from inventory
+		inventoryItems = player.Inventory.FindItems("")
+		// Clear inventory and update item states
+		for _, item := range inventoryItems {
+			item.Carrier = nil
+			item.Container = nil
+			item.EquippedOn = nil
+			item.EquipPosition = -1
 		}
+		player.Inventory.Clear()
 	}
-	_ = invCount // will be used when items transfer to corpse
+	
+	if player.Equipment != nil {
+		// Get all equipped items
+		equipped := player.Equipment.GetEquippedItems()
+		for _, item := range equipped {
+			equipmentItems = append(equipmentItems, item)
+			item.EquippedOn = nil
+			item.EquipPosition = -1
+			item.Carrier = nil
+			item.Container = nil
+		}
+		// Clear equipment slots
+		player.Equipment.mu.Lock()
+		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
+		player.Equipment.mu.Unlock()
+	}
 
-	corpse := w.makeCorpse(player.Name, nil, nil, roomVNum)
+	corpse := w.makeCorpse(player.Name, inventoryItems, equipmentItems, roomVNum)
 	w.AddItemToRoom(corpse, roomVNum)
 
 	// Notify room

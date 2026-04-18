@@ -23,6 +23,11 @@ type Player struct {
 	Level     int
 	Exp       int
 	Strength  int // For inventory capacity
+
+	// Character identity — from do_start()/roll_real_abils() in class.c
+	Class int
+	Race  int
+	Stats CharStats
 	
 	// Combat stats
 	THAC0      int // To Hit Armor Class 0
@@ -46,7 +51,8 @@ type Player struct {
 	Send chan []byte // Channel for sending messages to player
 }
 
-// NewPlayer creates a new player.
+// NewPlayer creates a new player with default stats (no class/race yet).
+// For new characters, call NewCharacter instead.
 func NewPlayer(id int, name string, roomVNum int) *Player {
 	now := time.Now()
 	player := &Player{
@@ -76,6 +82,50 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 	player.Inventory.SetCapacity(player.Strength)
 	
 	return player
+}
+
+// NewCharacter creates a brand new level 1 character with class/race and rolled stats.
+// Implements do_start() from class.c — call this on first login.
+func NewCharacter(id int, name string, class, race int) *Player {
+	stats := RollRealAbils(class, race)
+	p := NewPlayer(id, name, MortalStartRoom)
+	p.Class = class
+	p.Race = race
+	p.Stats = stats
+	p.Strength = stats.Str
+
+	// do_start(): level 1, 1 exp, 10 base HP, 100 mana — from class.c line 538
+	p.Level = 1
+	p.Exp = 1
+	p.MaxHealth = 10
+	p.Health = 10
+	p.MaxMana = 100
+	p.Mana = 100
+
+	// THAC0 from class table
+	if class >= 0 && class < 12 {
+		p.THAC0 = thaco[class][1]
+	}
+
+	p.Inventory.SetCapacity(p.Strength)
+	return p
+}
+
+// thaco local reference for player creation
+// Full table lives in pkg/combat/formulas.go
+var thaco = [12][41]int{
+	{100,20,20,20,19,19,19,18,18,18,17,17,17,16,16,16,15,15,15,14,14,14,13,13,13,12,12,12,11,11,11,10,10,10,9,9,9,9,9,9,9},
+	{100,20,20,20,18,18,18,16,16,16,14,14,14,12,12,12,10,10,10,8,8,8,6,6,6,4,4,4,2,2,2,1,1,1,1,1,1,1,1,1,1},
+	{100,20,20,19,19,18,18,17,17,16,16,15,15,14,13,13,12,12,11,11,10,10,9,9,8,8,7,7,6,6,5,5,4,4,3,3,3,3,3,3,3},
+	{100,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+	{100,20,20,20,19,19,19,18,18,18,17,17,17,16,16,16,15,15,15,14,14,14,13,13,13,12,12,12,11,11,11,10,10,10,9,9,9,9,9,9,9},
+	{100,20,20,20,18,18,18,16,16,16,14,14,14,12,12,12,10,10,10,8,8,8,6,6,6,4,4,4,2,2,2,1,1,1,1,1,1,1,1,1,1},
+	{100,20,20,19,19,18,18,17,17,16,16,15,15,14,13,13,12,12,11,11,10,10,9,9,8,8,7,7,6,6,5,5,4,4,3,3,3,3,3,3,3},
+	{100,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+	{100,20,20,19,19,18,18,17,17,16,16,15,15,14,13,13,12,12,11,11,10,10,9,9,8,8,7,7,6,6,5,5,4,4,3,3,3,3,3,3,3},
+	{100,20,20,19,18,18,17,16,16,16,15,15,14,14,14,13,12,12,10,10,9,9,8,8,7,7,6,5,5,4,4,3,3,3,2,2,1,1,1,1,1},
+	{100,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+	{100,20,20,20,19,19,19,18,18,18,17,17,17,16,16,16,15,15,15,14,14,14,13,13,13,12,12,12,11,11,11,10,10,10,9,9,9,9,9,9,9},
 }
 
 // UpdateActivity marks the player as active.

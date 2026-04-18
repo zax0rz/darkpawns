@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -29,22 +30,25 @@ type Manager struct {
 	sessions      map[string]*Session // keyed by player name
 	world         *game.World
 	combatEngine  *combat.CombatEngine
+	db            db.DB
+	hasDB         bool
 }
 
 // NewManager creates a new session manager.
-func NewManager(world *game.World) *Manager {
+func NewManager(world *game.World, database *db.DB) *Manager {
 	ce := combat.NewCombatEngine()
-	
-	// Set up broadcast function for combat messages
-	// This will be set properly after manager is created via a setter
-	
 	ce.Start()
-	
-	return &Manager{
+
+	m := &Manager{
 		sessions:     make(map[string]*Session),
 		world:        world,
 		combatEngine: ce,
 	}
+	if database != nil {
+		m.db    = *database
+		m.hasDB = true
+	}
+	return m
 }
 
 // SetCombatBroadcastFunc sets the broadcast function for combat messages.
@@ -114,14 +118,26 @@ func (m *Manager) Register(playerName string, s *Session) error {
 	return nil
 }
 
-// Unregister removes a session.
+// Unregister removes a session and saves the player to DB.
 func (m *Manager) Unregister(playerName string) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if s, ok := m.sessions[playerName]; ok {
+	s, ok := m.sessions[playerName]
+	if ok {
 		delete(m.sessions, playerName)
+	}
+	m.mu.Unlock()
+
+	if ok {
+		// Save to DB on disconnect
+		if m.hasDB && s.player != nil && s.player.ID > 0 {
+			if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
+				if err := m.db.SavePlayer(rec); err != nil {
+					log.Printf("DB save error for %s: %v", playerName, err)
+				}
+			}
+		}
 		close(s.send)
+		m.world.RemovePlayer(playerName)
 	}
 }
 
@@ -249,10 +265,36 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return ErrInvalidPlayerName
 	}
 
-	// TODO: Check password against database
-	// For Phase 1: auto-create/login player
-
-	s.player = game.NewPlayer(0, login.PlayerName, 3001) // Start in room 3001
+	// Load from DB if available, otherwise create new character
+	if s.manager.hasDB {
+		rec, err := s.manager.db.GetPlayer(login.PlayerName)
+		if err != nil {
+			log.Printf("DB load error for %s: %v", login.PlayerName, err)
+		}
+		if rec != nil && !login.NewChar {
+			// Returning player — restore from DB
+			p, err := db.RecordToPlayer(rec, s.manager.world)
+			if err != nil {
+				log.Printf("RecordToPlayer error: %v", err)
+				s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
+			} else {
+				s.player = p
+			}
+		} else {
+			// New character
+			s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
+			// Save immediately to get an ID
+			if r, err := db.PlayerToRecord(s.player, nil); err == nil {
+				if err := s.manager.db.CreatePlayer(r); err != nil {
+					log.Printf("DB create error: %v", err)
+				} else {
+					s.player.ID = r.ID
+				}
+			}
+		}
+	} else {
+		s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
+	}
 	s.authenticated = true
 
 	if err := s.manager.Register(login.PlayerName, s); err != nil {
@@ -300,6 +342,14 @@ func (s *Session) sendWelcome() {
 			Health:    s.player.Health,
 			MaxHealth: s.player.MaxHealth,
 			Level:     s.player.Level,
+			Class:     game.ClassNames[s.player.Class],
+			Race:      game.RaceNames[s.player.Race],
+			Str:       s.player.Stats.Str,
+			Int:       s.player.Stats.Int,
+			Wis:       s.player.Stats.Wis,
+			Dex:       s.player.Stats.Dex,
+			Con:       s.player.Stats.Con,
+			Cha:       s.player.Stats.Cha,
 		},
 		Room: RoomState{
 			VNum:        room.VNum,

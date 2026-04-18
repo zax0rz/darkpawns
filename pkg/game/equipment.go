@@ -234,8 +234,8 @@ func (eq *Equipment) GetArmorClass() int {
 	
 	ac := 0
 	for _, item := range eq.Slots {
-		// Check if item is armor (type 2 is armor in CircleMUD)
-		if item.GetTypeFlag() == 2 {
+		// Check if item is armor (type 9 is ITEM_ARMOR in CircleMUD)
+		if item.GetTypeFlag() == 9 {
 			// Values[0] is AC for armor
 			ac += item.Prototype.Values[0]
 		}
@@ -249,8 +249,8 @@ func (eq *Equipment) GetWeaponDamage() (numDice, diceType int) {
 	defer eq.mu.RUnlock()
 	
 	if weapon, ok := eq.Slots[SlotWield]; ok {
-		// Check if item is a weapon (type 1 is weapon in CircleMUD)
-		if weapon.GetTypeFlag() == 1 {
+		// Check if item is a weapon (type 5 is ITEM_WEAPON in CircleMUD)
+		if weapon.GetTypeFlag() == 5 {
 			// Values[1] is number of dice, Values[2] is dice type
 			return weapon.Prototype.Values[1], weapon.Prototype.Values[2]
 		}

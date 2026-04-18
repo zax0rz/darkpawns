@@ -74,6 +74,13 @@ func cmdLook(s *Session, args []string) error {
 		}
 	}
 
+	// Get items in room
+	items := s.manager.world.GetItemsInRoom(room.VNum)
+	var itemDescs []string
+	for _, item := range items {
+		itemDescs = append(itemDescs, item.GetLongDesc())
+	}
+
 	state := StateData{
 		Player: PlayerState{
 			Name:      s.player.Name,
@@ -87,6 +94,7 @@ func cmdLook(s *Session, args []string) error {
 			Description: room.Description,
 			Exits:       getExitNames(room.Exits),
 			Players:     playerNames,
+			Items:       itemDescs,
 		},
 	}
 
@@ -314,7 +322,7 @@ func cmdWield(s *Session, args []string) error {
 	}
 
 	// Check if item is a weapon
-	if item.Prototype == nil || item.Prototype.TypeFlag != 5 { // ITEM_WEAPON = 5 from structs.h
+	if item.GetTypeFlag() != 5 { // ITEM_WEAPON = 5 from structs.h
 		s.sendText("That's not a weapon.")
 		return nil
 	}
