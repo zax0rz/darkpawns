@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // EquipmentSlot represents where an item can be equipped.
@@ -119,18 +117,18 @@ func ParseEquipmentSlot(s string) (EquipmentSlot, bool) {
 // Equipment represents a player's equipped items.
 type Equipment struct {
 	mu    sync.RWMutex
-	Slots map[EquipmentSlot]*parser.Obj
+	Slots map[EquipmentSlot]*ObjectInstance
 }
 
 // NewEquipment creates a new empty equipment set.
 func NewEquipment() *Equipment {
 	return &Equipment{
-		Slots: make(map[EquipmentSlot]*parser.Obj),
+		Slots: make(map[EquipmentSlot]*ObjectInstance),
 	}
 }
 
 // Equip attempts to equip an item in the appropriate slot(s).
-func (eq *Equipment) Equip(item *parser.Obj, inv *Inventory) error {
+func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 	eq.mu.Lock()
 	defer eq.mu.Unlock()
 	
@@ -149,6 +147,9 @@ func (eq *Equipment) Equip(item *parser.Obj, inv *Inventory) error {
 				return fmt.Errorf("cannot unequip existing %s: %v", slot, err)
 			}
 		}
+		// Set equipment state
+		item.EquippedOn = eq
+		item.EquipPosition = int(slot)
 		eq.Slots[slot] = item
 		return nil
 	}
@@ -170,6 +171,10 @@ func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
 		return fmt.Errorf("slot %s is empty", slot)
 	}
 
+	// Clear equipment state
+	item.EquippedOn = nil
+	item.EquipPosition = -1
+
 	// Try to add to inventory
 	if err := inv.AddItem(item); err != nil {
 		return fmt.Errorf("inventory full, cannot unequip")
@@ -180,7 +185,7 @@ func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
 }
 
 // UnequipItem removes a specific item from equipment.
-func (eq *Equipment) UnequipItem(item *parser.Obj, inv *Inventory) bool {
+func (eq *Equipment) UnequipItem(item *ObjectInstance, inv *Inventory) bool {
 	eq.mu.Lock()
 	defer eq.mu.Unlock()
 	
@@ -196,7 +201,7 @@ func (eq *Equipment) UnequipItem(item *parser.Obj, inv *Inventory) bool {
 }
 
 // GetItemInSlot returns the item in a specific slot.
-func (eq *Equipment) GetItemInSlot(slot EquipmentSlot) (*parser.Obj, bool) {
+func (eq *Equipment) GetItemInSlot(slot EquipmentSlot) (*ObjectInstance, bool) {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
 	
@@ -211,7 +216,7 @@ func (eq *Equipment) GetEquipmentBonus(stat string) int {
 	
 	total := 0
 	for _, item := range eq.Slots {
-		for _, affect := range item.Affects {
+		for _, affect := range item.GetAffects() {
 			// This is a simplified version - in a full implementation,
 			// we'd map affect.Location to specific stats
 			if affect.Location == getStatLocation(stat) {
@@ -230,9 +235,9 @@ func (eq *Equipment) GetArmorClass() int {
 	ac := 0
 	for _, item := range eq.Slots {
 		// Check if item is armor (type 2 is armor in CircleMUD)
-		if item.TypeFlag == 2 {
+		if item.GetTypeFlag() == 2 {
 			// Values[0] is AC for armor
-			ac += item.Values[0]
+			ac += item.Prototype.Values[0]
 		}
 	}
 	return ac
@@ -245,20 +250,20 @@ func (eq *Equipment) GetWeaponDamage() (numDice, diceType int) {
 	
 	if weapon, ok := eq.Slots[SlotWield]; ok {
 		// Check if item is a weapon (type 1 is weapon in CircleMUD)
-		if weapon.TypeFlag == 1 {
+		if weapon.GetTypeFlag() == 1 {
 			// Values[1] is number of dice, Values[2] is dice type
-			return weapon.Values[1], weapon.Values[2]
+			return weapon.Prototype.Values[1], weapon.Prototype.Values[2]
 		}
 	}
 	return 1, 4 // Default bare-handed damage
 }
 
 // getWearFlags returns which equipment slots an item can be worn in.
-func (eq *Equipment) getWearFlags(item *parser.Obj) []EquipmentSlot {
+func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 	var slots []EquipmentSlot
 	
 	// Check each wear flag position
-	for i, flag := range item.WearFlags {
+	for i, flag := range item.Prototype.WearFlags {
 		if flag == 0 {
 			continue
 		}
@@ -353,12 +358,12 @@ func getStatLocation(stat string) int {
 }
 
 // GetEquippedItems returns all equipped items.
-func (eq *Equipment) GetEquippedItems() map[EquipmentSlot]*parser.Obj {
+func (eq *Equipment) GetEquippedItems() map[EquipmentSlot]*ObjectInstance {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
 	
 	// Return a copy to prevent external modification
-	result := make(map[EquipmentSlot]*parser.Obj)
+	result := make(map[EquipmentSlot]*ObjectInstance)
 	for k, v := range eq.Slots {
 		result[k] = v
 	}

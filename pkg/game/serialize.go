@@ -45,10 +45,11 @@ func DeserializeInventory(data []byte, worldObjs map[int]*parser.Obj) (*Inventor
 	inv := NewInventory()
 	inv.Capacity = invData.Capacity
 
-	// Restore items from VNums
+	// Restore items from VNums - create ObjectInstances
 	for _, vnum := range invData.ItemVnums {
 		if obj, ok := worldObjs[vnum]; ok {
-			inv.Items = append(inv.Items, obj)
+			objInst := NewObjectInstance(obj, -1) // -1 for inventory
+			inv.Items = append(inv.Items, objInst)
 		} else {
 			// Log warning but continue
 			fmt.Printf("Warning: Object VNum %d not found in world\n", vnum)
@@ -84,7 +85,7 @@ func DeserializeEquipment(data []byte, worldObjs map[int]*parser.Obj) (*Equipmen
 
 	eq := NewEquipment()
 
-	// Restore slots from VNums
+	// Restore slots from VNums - create ObjectInstances
 	for slotName, vnum := range eqData.Slots {
 		slot, ok := ParseEquipmentSlot(slotName)
 		if !ok {
@@ -93,7 +94,10 @@ func DeserializeEquipment(data []byte, worldObjs map[int]*parser.Obj) (*Equipmen
 		}
 
 		if obj, ok := worldObjs[vnum]; ok {
-			eq.Slots[slot] = obj
+			objInst := NewObjectInstance(obj, -1)
+			objInst.EquippedOn = eq
+			objInst.EquipPosition = int(slot)
+			eq.Slots[slot] = objInst
 		} else {
 			fmt.Printf("Warning: Object VNum %d not found in world for slot %s\n", vnum, slotName)
 		}

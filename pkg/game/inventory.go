@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Inventory represents a player's inventory.
 type Inventory struct {
 	mu       sync.RWMutex
-	Items    []*parser.Obj
+	Items    []*ObjectInstance
 	// Capacity is based on strength (default 20 + strength * 5)
 	Capacity int
 }
@@ -19,31 +17,36 @@ type Inventory struct {
 // NewInventory creates a new inventory with default capacity.
 func NewInventory() *Inventory {
 	return &Inventory{
-		Items:    make([]*parser.Obj, 0),
+		Items:    make([]*ObjectInstance, 0),
 		Capacity: 20, // Default base capacity
 	}
 }
 
 // AddItem adds an item to the inventory.
-func (inv *Inventory) AddItem(item *parser.Obj) error {
+func (inv *Inventory) AddItem(item *ObjectInstance) error {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
 	
 	if len(inv.Items) >= inv.Capacity {
 		return fmt.Errorf("inventory is full")
 	}
+	// Set carrier and clear room location
+	item.Carrier = inv
+	item.RoomVNum = -1
+	item.Container = nil
 	inv.Items = append(inv.Items, item)
 	return nil
 }
 
 // RemoveItem removes an item from the inventory by reference.
-func (inv *Inventory) RemoveItem(item *parser.Obj) bool {
+func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
 	
 	for i, invItem := range inv.Items {
 		if invItem == item {
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
+			item.Carrier = nil
 			return true
 		}
 	}
@@ -51,13 +54,14 @@ func (inv *Inventory) RemoveItem(item *parser.Obj) bool {
 }
 
 // RemoveItemByVNum removes an item from the inventory by VNum.
-func (inv *Inventory) RemoveItemByVNum(vnum int) (*parser.Obj, bool) {
+func (inv *Inventory) RemoveItemByVNum(vnum int) (*ObjectInstance, bool) {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
 	
 	for i, item := range inv.Items {
 		if item.VNum == vnum {
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
+			item.Carrier = nil
 			return item, true
 		}
 	}
@@ -65,19 +69,19 @@ func (inv *Inventory) RemoveItemByVNum(vnum int) (*parser.Obj, bool) {
 }
 
 // FindItem finds an item by name (case-insensitive partial match).
-func (inv *Inventory) FindItem(name string) (*parser.Obj, bool) {
+func (inv *Inventory) FindItem(name string) (*ObjectInstance, bool) {
 	inv.mu.RLock()
 	defer inv.mu.RUnlock()
 	
 	lowerName := strings.ToLower(name)
 	for _, item := range inv.Items {
 		// Check keywords
-		keywords := strings.ToLower(item.Keywords)
+		keywords := strings.ToLower(item.GetKeywords())
 		if strings.Contains(keywords, lowerName) {
 			return item, true
 		}
 		// Check short description
-		shortDesc := strings.ToLower(item.ShortDesc)
+		shortDesc := strings.ToLower(item.GetShortDesc())
 		if strings.Contains(shortDesc, lowerName) {
 			return item, true
 		}
@@ -87,28 +91,28 @@ func (inv *Inventory) FindItem(name string) (*parser.Obj, bool) {
 
 // FindItems finds all items matching a name (case-insensitive partial match).
 // If name is empty string, returns all items.
-func (inv *Inventory) FindItems(name string) []*parser.Obj {
+func (inv *Inventory) FindItems(name string) []*ObjectInstance {
 	inv.mu.RLock()
 	defer inv.mu.RUnlock()
 	
 	if name == "" {
 		// Return a copy of all items
-		allItems := make([]*parser.Obj, len(inv.Items))
+		allItems := make([]*ObjectInstance, len(inv.Items))
 		copy(allItems, inv.Items)
 		return allItems
 	}
 	
 	lowerName := strings.ToLower(name)
-	var matches []*parser.Obj
+	var matches []*ObjectInstance
 	for _, item := range inv.Items {
 		// Check keywords
-		keywords := strings.ToLower(item.Keywords)
+		keywords := strings.ToLower(item.GetKeywords())
 		if strings.Contains(keywords, lowerName) {
 			matches = append(matches, item)
 			continue
 		}
 		// Check short description
-		shortDesc := strings.ToLower(item.ShortDesc)
+		shortDesc := strings.ToLower(item.GetShortDesc())
 		if strings.Contains(shortDesc, lowerName) {
 			matches = append(matches, item)
 		}
@@ -137,7 +141,7 @@ func (inv *Inventory) GetWeight() int {
 	
 	total := 0
 	for _, item := range inv.Items {
-		total += item.Weight
+		total += item.GetTotalWeight()
 	}
 	return total
 }
@@ -154,5 +158,8 @@ func (inv *Inventory) SetCapacity(strength int) {
 func (inv *Inventory) Clear() {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
-	inv.Items = make([]*parser.Obj, 0)
+	for _, item := range inv.Items {
+		item.Carrier = nil
+	}
+	inv.Items = make([]*ObjectInstance, 0)
 }

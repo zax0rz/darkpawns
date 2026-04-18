@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // ExecuteCommand processes a game command.
@@ -203,7 +202,7 @@ func cmdInventory(s *Session, args []string) error {
 	items := s.player.Inventory.FindItems("") // Empty string returns all items
 	var itemDescs []string
 	for _, item := range items {
-		itemDescs = append(itemDescs, item.ShortDesc)
+		itemDescs = append(itemDescs, item.GetShortDesc())
 	}
 
 	msg := fmt.Sprintf("You are carrying:\n%s", strings.Join(itemDescs, "\n"))
@@ -221,7 +220,7 @@ func cmdEquipment(s *Session, args []string) error {
 
 	var items []string
 	for slot, item := range equipped {
-		items = append(items, fmt.Sprintf("%-10s: %s", slot.String(), item.ShortDesc))
+		items = append(items, fmt.Sprintf("%-10s: %s", slot.String(), item.GetShortDesc()))
 	}
 
 	msg := fmt.Sprintf("You are wearing:\n%s", strings.Join(items, "\n"))
@@ -253,7 +252,7 @@ func cmdWear(s *Session, args []string) error {
 
 	// Remove from inventory (equip should have moved it)
 	s.player.Inventory.RemoveItem(item)
-	s.sendText(fmt.Sprintf("You wear %s.", item.ShortDesc))
+	s.sendText(fmt.Sprintf("You wear %s.", item.GetShortDesc()))
 
 	// Broadcast to room
 	broadcastEquipmentChange(s, "wear", item)
@@ -270,14 +269,13 @@ func cmdRemove(s *Session, args []string) error {
 	itemName := strings.Join(args, " ")
 	
 	// Find the item in equipment
-	var itemToRemove *parser.Obj
+	var itemToRemove *game.ObjectInstance
 	var slotToRemove game.EquipmentSlot
 	equipped := s.player.Equipment.GetEquippedItems()
-	
+
 	for slot, item := range equipped {
-		// Check if item matches by name
-		if strings.Contains(strings.ToLower(item.Keywords), strings.ToLower(itemName)) ||
-		   strings.Contains(strings.ToLower(item.ShortDesc), strings.ToLower(itemName)) {
+		if strings.Contains(strings.ToLower(item.GetKeywords()), strings.ToLower(itemName)) ||
+			strings.Contains(strings.ToLower(item.GetShortDesc()), strings.ToLower(itemName)) {
 			itemToRemove = item
 			slotToRemove = slot
 			break
@@ -289,15 +287,12 @@ func cmdRemove(s *Session, args []string) error {
 		return nil
 	}
 
-	// Try to unequip
 	if err := s.player.Equipment.Unequip(slotToRemove, s.player.Inventory); err != nil {
 		s.sendText(fmt.Sprintf("You can't remove that: %v", err))
 		return nil
 	}
 
-	s.sendText(fmt.Sprintf("You remove %s.", itemToRemove.ShortDesc))
-
-	// Broadcast to room
+	s.sendText(fmt.Sprintf("You remove %s.", itemToRemove.GetShortDesc()))
 	broadcastEquipmentChange(s, "remove", itemToRemove)
 	return nil
 }
@@ -319,7 +314,7 @@ func cmdWield(s *Session, args []string) error {
 	}
 
 	// Check if item is a weapon
-	if item.TypeFlag != 1 { // Type 1 is weapon in CircleMUD
+	if item.Prototype == nil || item.Prototype.TypeFlag != 5 { // ITEM_WEAPON = 5 from structs.h
 		s.sendText("That's not a weapon.")
 		return nil
 	}
@@ -340,9 +335,7 @@ func cmdWield(s *Session, args []string) error {
 
 	// Remove from inventory
 	s.player.Inventory.RemoveItem(item)
-	s.sendText(fmt.Sprintf("You wield %s.", item.ShortDesc))
-
-	// Broadcast to room
+	s.sendText(fmt.Sprintf("You wield %s.", item.GetShortDesc()))
 	broadcastEquipmentChange(s, "wield", item)
 	return nil
 }
@@ -379,9 +372,7 @@ func cmdHold(s *Session, args []string) error {
 
 	// Remove from inventory
 	s.player.Inventory.RemoveItem(item)
-	s.sendText(fmt.Sprintf("You hold %s.", item.ShortDesc))
-
-	// Broadcast to room
+	s.sendText(fmt.Sprintf("You hold %s.", item.GetShortDesc()))
 	broadcastEquipmentChange(s, "hold", item)
 	return nil
 }
@@ -413,7 +404,7 @@ func cmdGet(s *Session, args []string) error {
 			}
 			
 			// Add to inventory
-			if err := s.player.Inventory.AddItem(item.Prototype); err != nil {
+			if err := s.player.Inventory.AddItem(item); err != nil {
 				// Put back in room
 				s.manager.world.AddItemToRoom(item, roomVNum)
 				s.sendText(fmt.Sprintf("Can't pick that up: %v", err))
@@ -456,22 +447,19 @@ func cmdDrop(s *Session, args []string) error {
 		return nil
 	}
 
-	// Remove from inventory
+	// Remove from inventory and place in room
 	s.player.Inventory.RemoveItem(item)
+	item.RoomVNum = roomVNum
+	s.manager.world.AddItemToRoom(item, roomVNum)
 
-	// Create object instance and add to room
-	objInst := game.NewObjectInstance(item, roomVNum)
-	s.manager.world.AddItemToRoom(objInst, roomVNum)
+	s.sendText(fmt.Sprintf("You drop %s.", item.GetShortDesc()))
 
-	s.sendText(fmt.Sprintf("You drop %s.", item.ShortDesc))
-
-	// Notify room
 	msg, _ := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "drop",
 			From: s.player.Name,
-			Text: fmt.Sprintf("%s drops %s.", s.player.Name, item.ShortDesc),
+			Text: fmt.Sprintf("%s drops %s.", s.player.Name, item.GetShortDesc()),
 		},
 	})
 	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
@@ -480,11 +468,11 @@ func cmdDrop(s *Session, args []string) error {
 }
 
 // broadcastEquipmentChange broadcasts equipment changes to the room.
-func broadcastEquipmentChange(s *Session, action string, item *parser.Obj) {
+func broadcastEquipmentChange(s *Session, action string, item *game.ObjectInstance) {
 	event := EventData{
 		Type: "equipment",
 		From: s.player.Name,
-		Text: fmt.Sprintf("%s %s %s.", s.player.Name, action, item.ShortDesc),
+		Text: fmt.Sprintf("%s %s %s.", s.player.Name, action, item.GetShortDesc()),
 	}
 
 	msg, _ := json.Marshal(ServerMessage{
