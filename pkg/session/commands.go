@@ -387,13 +387,8 @@ func cmdGet(s *Session, args []string) error {
 		return nil
 	}
 
-	_ = strings.Join(args, " ") // itemName - will be used when room items are implemented
-	
-	// Get current room
-	_, ok := s.manager.world.GetRoom(s.player.GetRoom())
-	if !ok {
-		return fmt.Errorf("invalid room")
-	}
+	itemName := strings.Join(args, " ")
+	roomVNum := s.player.GetRoom()
 
 	// Check if inventory is full
 	if s.player.Inventory.IsFull() {
@@ -401,22 +396,41 @@ func cmdGet(s *Session, args []string) error {
 		return nil
 	}
 
-	// Create a test item (in real implementation, get from room)
-	testItem := &parser.Obj{
-		VNum:      1,
-		Keywords:  "sword",
-		ShortDesc: "a sharp sword",
-		LongDesc:  "A sharp sword lies here.",
-		TypeFlag:  1, // Weapon
-		Weight:    5,
+	// Find item in room
+	items := s.manager.world.GetItemsInRoom(roomVNum)
+	for _, item := range items {
+		if strings.Contains(strings.ToLower(item.GetShortDesc()), strings.ToLower(itemName)) {
+			// Remove from room
+			if !s.manager.world.RemoveItemFromRoom(item, roomVNum) {
+				s.sendText("You can't get that.")
+				return nil
+			}
+			
+			// Add to inventory
+			if err := s.player.Inventory.AddItem(item.Prototype); err != nil {
+				// Put back in room
+				s.manager.world.AddItemToRoom(item, roomVNum)
+				s.sendText(fmt.Sprintf("Can't pick that up: %v", err))
+				return nil
+			}
+
+			s.sendText(fmt.Sprintf("You pick up %s.", item.GetShortDesc()))
+			
+			// Notify room
+			msg, _ := json.Marshal(ServerMessage{
+				Type: MsgEvent,
+				Data: EventData{
+					Type: "get",
+					From: s.player.Name,
+					Text: fmt.Sprintf("%s picks up %s.", s.player.Name, item.GetShortDesc()),
+				},
+			})
+			s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
+			return nil
+		}
 	}
 
-	if err := s.player.Inventory.AddItem(testItem); err != nil {
-		s.sendText(fmt.Sprintf("Can't pick that up: %v", err))
-		return nil
-	}
-
-	s.sendText(fmt.Sprintf("You pick up %s.", testItem.ShortDesc))
+	s.sendText("You don't see that here.")
 	return nil
 }
 
@@ -428,7 +442,8 @@ func cmdDrop(s *Session, args []string) error {
 	}
 
 	itemName := strings.Join(args, " ")
-	
+	roomVNum := s.player.GetRoom()
+
 	item, found := s.player.Inventory.FindItem(itemName)
 	if !found {
 		s.sendText(fmt.Sprintf("You don't have '%s'.", itemName))
@@ -437,7 +452,24 @@ func cmdDrop(s *Session, args []string) error {
 
 	// Remove from inventory
 	s.player.Inventory.RemoveItem(item)
+
+	// Create object instance and add to room
+	objInst := game.NewObjectInstance(item, roomVNum)
+	s.manager.world.AddItemToRoom(objInst, roomVNum)
+
 	s.sendText(fmt.Sprintf("You drop %s.", item.ShortDesc))
+
+	// Notify room
+	msg, _ := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "drop",
+			From: s.player.Name,
+			Text: fmt.Sprintf("%s drops %s.", s.player.Name, item.ShortDesc),
+		},
+	})
+	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
+
 	return nil
 }
 

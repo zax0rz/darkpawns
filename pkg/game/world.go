@@ -25,6 +25,10 @@ type World struct {
 	activeMobs map[int]*MobInstance    // keyed by instance ID
 	nextMobID  int
 	
+	// Room items: room VNum -> list of object instances
+	roomItems map[int][]*ObjectInstance
+	nextObjID int
+	
 	// AI tick management
 	aiticker *time.Ticker
 	done     chan bool
@@ -43,6 +47,8 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		players:    make(map[string]*Player),
 		activeMobs: make(map[int]*MobInstance),
 		nextMobID:  1,
+		roomItems:  make(map[int][]*ObjectInstance),
+		nextObjID:   1,
 		done:       make(chan bool),
 	}
 
@@ -150,42 +156,10 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 	return newRoom, nil
 }
 
-// StartAITicker starts the AI tick loop.
-func (w *World) StartAITicker() {
-	w.aiticker = time.NewTicker(10 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-w.aiticker.C:
-				w.RunAITick()
-			case <-w.done:
-				w.aiticker.Stop()
-				return
-			}
-		}
-	}()
-}
-
 // StopAITicker stops the AI tick loop.
 func (w *World) StopAITicker() {
 	if w.done != nil {
 		close(w.done)
-	}
-}
-
-// RunAITick runs AI for all active mobs.
-func (w *World) RunAITick() {
-	w.mu.RLock()
-	mobs := make([]*MobInstance, 0, len(w.activeMobs))
-	for _, mob := range w.activeMobs {
-		mobs = append(mobs, mob)
-	}
-	w.mu.RUnlock()
-
-	for _, mob := range mobs {
-		if err := mob.Update(w); err != nil {
-			fmt.Printf("AI tick error for mob %d: %v\n", mob.VNum, err)
-		}
 	}
 }
 
@@ -251,6 +225,35 @@ func (w *World) GetMobsInRoom(roomVNum int) []*MobInstance {
 		}
 	}
 	return mobs
+}
+
+// GetItemsInRoom returns all items in a given room.
+func (w *World) GetItemsInRoom(roomVNum int) []*ObjectInstance {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.roomItems[roomVNum]
+}
+
+// AddItemToRoom adds an item to a room.
+func (w *World) AddItemToRoom(item *ObjectInstance, roomVNum int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
+}
+
+// RemoveItemFromRoom removes an item from a room.
+func (w *World) RemoveItemFromRoom(item *ObjectInstance, roomVNum int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	
+	items := w.roomItems[roomVNum]
+	for i, it := range items {
+		if it == item {
+			w.roomItems[roomVNum] = append(items[:i], items[i+1:]...)
+			return true
+		}
+	}
+	return false
 }
 
 // GetMobPrototype returns a mob prototype by VNum.
@@ -320,7 +323,18 @@ func (w *World) GetSpawner() *Spawner {
 func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int) {
 	mobs := w.GetMobsInRoom(roomVNum)
 	for _, mob := range mobs {
-		if mob.HasFlag(MOB_AGGRESSIVE) {
+		// Check if mob is aggressive
+		isAggressive := false
+		if mob.Prototype != nil {
+			for _, flag := range mob.Prototype.ActionFlags {
+				if flag == "aggressive" {
+					isAggressive = true
+					break
+				}
+			}
+		}
+		
+		if isAggressive {
 			// Aggressive mobs attack immediately
 			go func(m *MobInstance) {
 				if err := m.Attack(player, w); err != nil {
