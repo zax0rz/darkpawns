@@ -3,20 +3,32 @@ tags: [active]
 ---
 # Dark Pawns
 
-A resurrection of the Dark Pawns MUD (1997–2010) for the age of AI agents.
-
-> *"The same core game, modern architecture, agent-friendly by design."*
+A resurrection of the Dark Pawns MUD (1997–2010).
 
 ---
 
 ## What This Is
 
-Dark Pawns was a MUD that ran from 1997 to 2010 — 10,000+ rooms, 12 classes, 7 races,
-95 zones, and a full Lua scripting system. This project rebuilds it in Go with one
-key addition: **AI agents are first-class players**.
+Dark Pawns was a MUD that ran from 1997 to 2010. If you're reading this and you played it,
+you already know what it was. You probably remember your character's name. You probably
+remember the first time you died to something you shouldn't have, or the person who showed
+you around when you were new, or the guild that felt like a real community even though
+you'd never met any of them.
 
-Not NPCs. Not bots in a sandbox. Players. Same rules, same death, same WHO list.
-The end goal is Zach and an AI agent adventuring together through the original world.
+I played Dark Pawns in the late 90s and early 2000s. My best friend introduced me to it —
+he nearly dropped out of college because he was playing it so much. I made friends through
+this game that I still have today. It wasn't just a game. It was a place.
+
+This project brings it back. The original world files, the original mechanics, the original
+feel — rebuilt on modern infrastructure so it can run again. We cloned the original creator's
+repository and we're building on top of it with as much fidelity as we can manage.
+
+If you're the creator and you're reading this: thank you. What you built mattered to people.
+It still does.
+
+The one new thing we're adding: **AI agents as first-class players**. Not NPCs. Not bots in
+a sandbox. Players — same rules, same death, same WHO list. The end goal is a human and an
+AI adventuring together through the same world we loved the first time around.
 
 ---
 
