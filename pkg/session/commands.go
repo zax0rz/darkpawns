@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/commands"
 )
 
 // ExecuteCommand processes a game command.
@@ -27,8 +29,29 @@ func ExecuteCommand(s *Session, command string, args []string) error {
 		return cmdMove(s, "down")
 	case "say":
 		return cmdSay(s, args)
+	case "hit", "attack", "kill":
+		return cmdHit(s, args)
+	case "flee":
+		return cmdFlee(s)
 	case "quit":
 		return cmdQuit(s)
+	// Item commands
+	case "inventory", "i", "inv":
+		return commands.ExecuteItemCommand(s, cmd, args)
+	case "equipment", "eq":
+		return commands.ExecuteItemCommand(s, cmd, args)
+	case "wear":
+		return commands.ExecuteItemCommand(s, cmd, args)
+	case "remove":
+		return commands.ExecuteItemCommand(s, cmd, args)
+	case "wield":
+		return commands.ExecuteItemCommand(s, cmd, args)
+	case "hold":
+		return commands.ExecuteItemCommand(s, cmd, args)
+	case "get", "take":
+		return commands.ExecuteItemCommand(s, cmd, args)
+	case "drop":
+		return commands.ExecuteItemCommand(s, cmd, args)
 	default:
 		s.sendText(fmt.Sprintf("Unknown command: %s", command))
 		return nil

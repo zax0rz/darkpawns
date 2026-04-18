@@ -15,16 +15,19 @@ type DB struct {
 
 // PlayerRecord represents a player in the database.
 type PlayerRecord struct {
-	ID       int
-	Name     string
-	Password string // hashed
-	RoomVNum int
-	Level    int
-	Exp      int
-	Health   int
+	ID        int
+	Name      string
+	Password  string // hashed
+	RoomVNum  int
+	Level     int
+	Exp       int
+	Health    int
 	MaxHealth int
-	Mana     int
-	MaxMana  int
+	Mana      int
+	MaxMana   int
+	Strength  int
+	Inventory []byte // JSONB encoded inventory
+	Equipment []byte // JSONB encoded equipment
 }
 
 // New creates a new database connection.
@@ -65,6 +68,9 @@ func (db *DB) createTables() error {
 		max_health INTEGER DEFAULT 100,
 		mana INTEGER DEFAULT 100,
 		max_mana INTEGER DEFAULT 100,
+		strength INTEGER DEFAULT 10,
+		inventory JSONB DEFAULT '[]',
+		equipment JSONB DEFAULT '{}',
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
@@ -79,7 +85,7 @@ func (db *DB) createTables() error {
 // GetPlayer retrieves a player by name.
 func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 	query := `
-		SELECT id, name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana
+		SELECT id, name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana, strength, inventory, equipment
 		FROM players
 		WHERE name = $1
 	`
@@ -88,6 +94,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 	err := db.conn.QueryRow(query, name).Scan(
 		&p.ID, &p.Name, &p.Password, &p.RoomVNum, &p.Level, &p.Exp,
 		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana,
+		&p.Strength, &p.Inventory, &p.Equipment,
 	)
 
 	if err == sql.ErrNoRows {
@@ -105,13 +112,14 @@ func (db *DB) CreatePlayer(name string) (*PlayerRecord, error) {
 	query := `
 		INSERT INTO players (name, room_vnum)
 		VALUES ($1, 3001)
-		RETURNING id, name, room_vnum, level, exp, health, max_health, mana, max_mana
+		RETURNING id, name, room_vnum, level, exp, health, max_health, mana, max_mana, strength, inventory, equipment
 	`
 
 	var p PlayerRecord
 	err := db.conn.QueryRow(query, name).Scan(
 		&p.ID, &p.Name, &p.RoomVNum, &p.Level, &p.Exp,
 		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana,
+		&p.Strength, &p.Inventory, &p.Equipment,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create player: %w", err)
@@ -124,12 +132,13 @@ func (db *DB) CreatePlayer(name string) (*PlayerRecord, error) {
 func (db *DB) SavePlayer(p *PlayerRecord) error {
 	query := `
 		UPDATE players
-		SET room_vnum = $1, level = $2, exp = $3, health = $4, max_health = $5, mana = $6, max_mana = $7, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $8
+		SET room_vnum = $1, level = $2, exp = $3, health = $4, max_health = $5, mana = $6, max_mana = $7, strength = $8, inventory = $9, equipment = $10, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $11
 	`
 
 	_, err := db.conn.Exec(query,
-		p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.ID,
+		p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana,
+		p.Strength, p.Inventory, p.Equipment, p.ID,
 	)
 	return err
 }

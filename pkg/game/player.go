@@ -3,6 +3,8 @@ package game
 import (
 	"sync"
 	"time"
+	
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Player represents an active player in the game.
@@ -16,10 +18,22 @@ type Player struct {
 	// Core stats
 	Health    int
 	MaxHealth int
+	MaxHealth int
 	Mana      int
 	MaxMana   int
 	Level     int
 	Exp       int
+	Strength  int // For inventory capacity
+	
+	// Combat stats
+	THAC0      int // To Hit Armor Class 0
+	AC         int // Armor Class
+	DamageRoll parser.DiceRoll
+	Position   int // Current position (standing, fighting, etc.)
+
+	// Inventory and equipment
+	Inventory  *Inventory
+	Equipment  *Equipment
 
 	// Position
 	RoomVNum int // Current room
@@ -27,6 +41,7 @@ type Player struct {
 	// State
 	ConnectedAt time.Time
 	LastActive  time.Time
+	Fighting   string // Name of character being fought
 
 	// Communication
 	Send chan []byte // Channel for sending messages to player
@@ -35,7 +50,7 @@ type Player struct {
 // NewPlayer creates a new player.
 func NewPlayer(id int, name string, roomVNum int) *Player {
 	now := time.Now()
-	return &Player{
+	player := &Player{
 		ID:          id,
 		Name:        name,
 		RoomVNum:    roomVNum,
@@ -45,10 +60,23 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		MaxMana:     100,
 		Level:       1,
 		Exp:         0,
+		Strength:    10, // Default strength
+		THAC0:       20, // Default THAC0
+		AC:          10, // Default AC
+		DamageRoll:  parser.DiceRoll{Num: 1, Sides: 4, Plus: 0}, // 1d4
+		Position:    8, // POS_STANDING
 		ConnectedAt: now,
 		LastActive:  now,
+		Fighting:    "", // Not fighting anyone
 		Send:        make(chan []byte, 256),
 	}
+	
+	// Initialize inventory and equipment
+	player.Inventory = NewInventory()
+	player.Equipment = NewEquipment()
+	player.Inventory.SetCapacity(player.Strength)
+	
+	return player
 }
 
 // UpdateActivity marks the player as active.
@@ -70,4 +98,101 @@ func (p *Player) GetRoom() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.RoomVNum
+}
+
+// Combatant interface implementation
+
+// GetLevel returns the player's level.
+func (p *Player) GetLevel() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Level
+}
+
+// GetTHAC0 returns the player's THAC0.
+func (p *Player) GetTHAC0() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.THAC0
+}
+
+// GetAC returns the player's Armor Class.
+func (p *Player) GetAC() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.AC
+}
+
+// GetHP returns the player's current health.
+func (p *Player) GetHP() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Health
+}
+
+// GetMaxHP returns the player's maximum health.
+func (p *Player) GetMaxHP() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.MaxHealth
+}
+
+// GetDamageRoll returns the player's damage dice.
+func (p *Player) GetDamageRoll() parser.DiceRoll {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.DamageRoll
+}
+
+// IsNPC returns false for players.
+func (p *Player) IsNPC() bool {
+	return false
+}
+
+// GetPosition returns the player's current position.
+func (p *Player) GetPosition() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Position
+}
+
+// SetPosition sets the player's position.
+func (p *Player) SetPosition(pos int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Position = pos
+}
+
+// GetFighting returns who the player is fighting.
+func (p *Player) GetFighting() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Fighting
+}
+
+// SetFighting sets who the player is fighting.
+func (p *Player) SetFighting(target string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Fighting = target
+}
+
+// TakeDamage applies damage to the player.
+func (p *Player) TakeDamage(amount int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Health -= amount
+	if p.Health < 0 {
+		p.Health = 0
+	}
+}
+
+// Heal restores health to the player.
+func (p *Player) Heal(amount int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Health += amount
+	if p.Health > p.MaxHealth {
+		p.Health = p.MaxHealth
+	}
 }
