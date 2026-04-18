@@ -66,7 +66,14 @@ func ParseMobFile(path string) ([]Mob, error) {
 		}
 
 		if strings.HasPrefix(line, "#") {
-			vnum, err := strconv.Atoi(line[1:])
+			vnumStr := line[1:]
+			
+			// Special case: #99999 is end-of-file marker
+			if vnumStr == "99999" {
+				break
+			}
+			
+			vnum, err := strconv.Atoi(vnumStr)
 			if err != nil {
 				return nil, fmt.Errorf("invalid mob vnum: %s", line)
 			}
@@ -119,23 +126,26 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	}
 	mob.DetailedDesc = strings.Join(descLines, "\n")
 
-	// Action flags, affect flags, alignment, race (ends with E)
+	// Action flags, affect flags, alignment, race (ends with E or S)
 	if !scanner.Scan() {
 		return mob, fmt.Errorf("expected mob flags line")
 	}
 	flagsLine := scanner.Text()
 	
-	// Parse until we hit E
-	for !strings.HasSuffix(flagsLine, " E") && !strings.HasSuffix(flagsLine, "E") {
+	// Parse until we hit E or S (Simple flag)
+	for !strings.HasSuffix(flagsLine, " E") && !strings.HasSuffix(flagsLine, "E") &&
+		  !strings.HasSuffix(flagsLine, " S") && !strings.HasSuffix(flagsLine, "S") {
 		if !scanner.Scan() {
-			return mob, fmt.Errorf("expected end of flags (E)")
+			return mob, fmt.Errorf("expected end of flags (E or S)")
 		}
 		flagsLine = scanner.Text()
 	}
 	
-	// Remove trailing E and parse
+	// Remove trailing E or S and parse
 	flagsLine = strings.TrimSuffix(flagsLine, " E")
 	flagsLine = strings.TrimSuffix(flagsLine, "E")
+	flagsLine = strings.TrimSuffix(flagsLine, " S")
+	flagsLine = strings.TrimSuffix(flagsLine, "S")
 	
 	// Parse action flags (bitmask as string), affect flags (bitmask), alignment
 	// Format: <action_flags> <affect_flags> <alignment> <race>

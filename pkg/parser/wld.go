@@ -51,7 +51,14 @@ func ParseWldFile(path string) ([]Room, error) {
 		
 		// Room starts with #<vnum>
 		if strings.HasPrefix(line, "#") {
-			vnum, err := strconv.Atoi(line[1:])
+			vnumStr := line[1:]
+			
+			// Special case: #99999 is end-of-world marker
+			if vnumStr == "99999" {
+				break
+			}
+			
+			vnum, err := strconv.Atoi(vnumStr)
 			if err != nil {
 				return nil, fmt.Errorf("invalid room vnum: %s", line)
 			}
