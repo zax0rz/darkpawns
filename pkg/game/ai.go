@@ -3,7 +3,15 @@ package game
 import (
 	"math/rand"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
+
+// CombatEngine interface for AI to initiate combat
+type CombatEngine interface {
+	StartCombat(attacker, defender combat.Combatant) error
+	IsFighting(name string) bool
+}
 
 // AIBehavior defines mob AI behavior
 type AIBehavior int
@@ -13,6 +21,14 @@ const (
 	AIAggressive
 	AISentinel
 )
+
+// combatEngine is stored for AI to use
+var aiCombatEngine CombatEngine
+
+// SetAICombatEngine sets the combat engine for AI to use
+func SetAICombatEngine(ce CombatEngine) {
+	aiCombatEngine = ce
+}
 
 // AITick runs AI for all active mobs
 func (w *World) AITick() {
@@ -52,13 +68,20 @@ func (w *World) runMobAI(mob *MobInstance) {
 		return
 	}
 
+	// Don't act if already fighting
+	if aiCombatEngine != nil && aiCombatEngine.IsFighting(mob.GetName()) {
+		return
+	}
+
 	// Check for aggressive mobs
 	if isAggressive {
 		// Check for players in room
 		players := w.GetPlayersInRoom(mob.RoomVNum)
 		for _, player := range players {
-			// Attack!
-			mob.Attack(player, w)
+			// Attack via combat engine!
+			if aiCombatEngine != nil {
+				aiCombatEngine.StartCombat(mob, player)
+			}
 			return
 		}
 	}

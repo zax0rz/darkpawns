@@ -320,7 +320,8 @@ func (w *World) GetSpawner() *Spawner {
 }
 
 // OnPlayerEnterRoom handles player entering a room (for aggressive mobs).
-func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int) {
+// Returns true if combat was initiated.
+func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int, ce CombatEngine) bool {
 	mobs := w.GetMobsInRoom(roomVNum)
 	for _, mob := range mobs {
 		// Check if mob is aggressive
@@ -333,16 +334,20 @@ func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int) {
 				}
 			}
 		}
-		
-		if isAggressive {
-			// Aggressive mobs attack immediately
-			go func(m *MobInstance) {
-				if err := m.Attack(player, w); err != nil {
-					fmt.Printf("Attack error: %v\n", err)
-				}
-			}(mob)
+
+		if isAggressive && !player.IsFighting() {
+			// Check if mob is already fighting
+			if !ce.IsFighting(mob.GetName()) {
+				go func(m *MobInstance) {
+					if err := ce.StartCombat(m, player); err != nil {
+						// Combat might fail if already fighting, that's ok
+					}
+				}(mob)
+				return true
+			}
 		}
 	}
+	return false
 }
 
 // Stats returns world statistics.

@@ -131,6 +131,12 @@ func cmdMove(s *Session, direction string) error {
 	})
 	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
 
+	// Check for aggressive mobs in new room
+	if s.manager.world.OnPlayerEnterRoom(s.player, newRoom.VNum, s.manager.combatEngine) {
+		// Combat was initiated, notify player
+		s.sendText("You are attacked!")
+	}
+
 	// Send new room state to player
 	return cmdLook(s, nil)
 }

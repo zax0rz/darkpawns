@@ -115,11 +115,18 @@ func (p *Player) GetTHAC0() int {
 	return p.THAC0
 }
 
-// GetAC returns the player's Armor Class.
+// GetAC returns the player's Armor Class including equipment bonuses.
 func (p *Player) GetAC() int {
 	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.AC
+	baseAC := p.AC
+	p.mu.RUnlock()
+
+	// Add equipment AC bonus
+	if p.Equipment != nil {
+		baseAC -= p.Equipment.GetArmorClass() // Lower AC is better
+	}
+
+	return baseAC
 }
 
 // GetHP returns the player's current health.
@@ -136,10 +143,20 @@ func (p *Player) GetMaxHP() int {
 	return p.MaxHealth
 }
 
-// GetDamageRoll returns the player's damage dice.
+// GetDamageRoll returns the player's damage dice including weapon.
 func (p *Player) GetDamageRoll() combat.DiceRoll {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+
+	// Check if wielding a weapon
+	if p.Equipment != nil {
+		num, sides := p.Equipment.GetWeaponDamage()
+		if num > 0 && sides > 0 {
+			return combat.DiceRoll{Num: num, Sides: sides, Plus: 0}
+		}
+	}
+
+	// Return bare hands damage
 	return p.DamageRoll
 }
 
@@ -217,4 +234,11 @@ func (p *Player) StopFighting() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Fighting = ""
+}
+
+// IsFighting returns true if the player is in combat.
+func (p *Player) IsFighting() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Fighting != ""
 }

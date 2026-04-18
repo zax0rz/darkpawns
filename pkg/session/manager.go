@@ -34,6 +34,10 @@ type Manager struct {
 // NewManager creates a new session manager.
 func NewManager(world *game.World) *Manager {
 	ce := combat.NewCombatEngine()
+	
+	// Set up broadcast function for combat messages
+	// This will be set properly after manager is created via a setter
+	
 	ce.Start()
 	
 	return &Manager{
@@ -41,6 +45,26 @@ func NewManager(world *game.World) *Manager {
 		world:        world,
 		combatEngine: ce,
 	}
+}
+
+// SetCombatBroadcastFunc sets the broadcast function for combat messages.
+// Must be called after the manager is created and before combat starts.
+func (m *Manager) SetCombatBroadcastFunc() {
+	m.combatEngine.SetBroadcastFunc(func(roomVNum int, message string, exclude string) {
+		msg, _ := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "combat",
+				Text: message,
+			},
+		})
+		m.BroadcastToRoom(roomVNum, msg, exclude)
+	})
+}
+
+// GetCombatEngine returns the combat engine for AI integration.
+func (m *Manager) GetCombatEngine() *combat.CombatEngine {
+	return m.combatEngine
 }
 
 // HandleWebSocket upgrades HTTP to WebSocket and manages the session.
