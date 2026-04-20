@@ -350,6 +350,70 @@ func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int, ce CombatEngine)
 	return false
 }
 
+// GiveStartingItems implements do_start() item distribution from class.c lines 506-532.
+// Creates ObjectInstance items from prototypes and adds them to player inventory.
+// Source: class.c do_start()
+func (w *World) GiveStartingItems(p *Player) {
+	// Pack (8038) is created first, filled with bread (8010) + waterskin (8063)
+	// then given to player
+	
+	packProto, packOK := w.GetObjPrototype(8038)
+	
+	// Class-specific items (given directly to player)
+	switch p.Class {
+	case ClassThief, ClassAssassin:
+		w.giveItem(p, 8036) // dagger
+		if packOK {
+			// lockpicks (8027) go INTO the pack — handled after pack creation
+			_ = packProto // suppress unused warning, used below
+		}
+	case ClassMageUser, ClassMagus:
+		w.giveItem(p, 8036) // dagger
+		w.giveItem(p, 1239) // obsidian
+		w.giveItem(p, 1239) // obsidian (2x)
+	case ClassNinja:
+		w.giveItem(p, 8036) // dagger
+	case ClassWarrior, ClassPsionic:
+		w.giveItem(p, 8037) // small sword
+	default:
+		w.giveItem(p, 8023) // club
+	}
+	
+	w.giveItem(p, 8019) // tunic (all classes)
+	
+	// Create pack and fill it
+	if packOK {
+		pack := NewObjectInstance(packProto, -1)
+		pack.Contains = make([]*ObjectInstance, 0)
+		
+		// bread + waterskin always in pack
+		if bread, ok := w.GetObjPrototype(8010); ok {
+			pack.Contains = append(pack.Contains, NewObjectInstance(bread, -1))
+		}
+		if water, ok := w.GetObjPrototype(8063); ok {
+			pack.Contains = append(pack.Contains, NewObjectInstance(water, -1))
+		}
+		// lockpicks in pack for thieves/assassins
+		if p.Class == ClassThief || p.Class == ClassAssassin {
+			if picks, ok := w.GetObjPrototype(8027); ok {
+				pack.Contains = append(pack.Contains, NewObjectInstance(picks, -1))
+			}
+		}
+		
+		_ = p.Inventory.AddItem(pack)
+	}
+}
+
+// giveItem creates an ObjectInstance from a prototype vnum and adds it to player inventory.
+func (w *World) giveItem(p *Player, vnum int) {
+	proto, ok := w.GetObjPrototype(vnum)
+	if !ok {
+		return
+	}
+	obj := NewObjectInstance(proto, -1)
+	_ = p.Inventory.AddItem(obj)
+}
+
 // Stats returns world statistics.
 func (w *World) Stats() string {
 	w.mu.RLock()

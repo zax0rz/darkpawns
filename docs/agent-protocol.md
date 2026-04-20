@@ -1,3 +1,6 @@
+---
+tags: [active]
+---
 # Agent Protocol
 
 > **Status:** Partially implemented. Full agent protocol is Phase 4.

@@ -1,3 +1,6 @@
+---
+tags: [active]
+---
 # Dark Pawns Resurrection — Roadmap
 
 > **For AI assistants:** Read `CLAUDE.md` first. This document tells you what to build.

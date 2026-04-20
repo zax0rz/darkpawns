@@ -28,6 +28,8 @@ const (
 	RaceDwarf    = 2
 	RaceKender   = 3
 	RaceMinotaur = 4
+	RaceRakshasa = 5
+	RaceSsaur    = 6
 )
 
 // ClassNames maps class int to display name
@@ -53,6 +55,8 @@ var RaceNames = map[int]string{
 	RaceDwarf:    "Dwarf",
 	RaceKender:   "Kender",
 	RaceMinotaur: "Minotaur",
+	RaceRakshasa: "Rakshasa",
+	RaceSsaur:    "Ssaur",
 }
 
 // CharStats holds the six base ability scores
@@ -115,6 +119,17 @@ func RollRealAbils(class, race int) CharStats {
 		if s.Str == 18 && class == ClassWarrior {
 			s.StrAdd = rand.Intn(101)
 		}
+	case RaceRakshasa:
+		s.Str = min18(s.Str + 1)
+		if s.Str == 18 && class == ClassWarrior {
+			s.StrAdd = rand.Intn(101)
+		}
+	case RaceSsaur:
+		s.Con = min18(s.Con + 1)
+		s.Wis = min18(s.Wis) // CAP wis at 16 (handled by min18)
+		if s.Wis > 16 {
+			s.Wis = 16
+		}
 	}
 
 	return s
@@ -150,6 +165,24 @@ func rollStatTable() [6]int {
 func min18(v int) int {
 	if v > 18 { return 18 }
 	return v
+}
+
+// ValidUserClassChoice implements valid_user_class_choice() from interpreter.c lines 1673-1688.
+// Returns true if the race/class combination is valid for new character creation.
+// Only CLASS_NINJA is restricted to RACE_HUMAN.
+// Valid classes for all races: Mage, Cleric, Thief, Warrior, Psionic
+// All other classes (Magus, Avatar, Assassin, Paladin, Ranger, Mystic) are remort-only.
+func ValidUserClassChoice(race, class int) bool {
+	switch class {
+	case ClassNinja:
+		if race != RaceHuman {
+			return false
+		}
+		fallthrough
+	case ClassMageUser, ClassCleric, ClassThief, ClassWarrior, ClassPsionic:
+		return true
+	}
+	return false
 }
 
 // DoStart implements do_start() from class.c lines 501-591.

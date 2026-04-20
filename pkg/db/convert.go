@@ -31,14 +31,15 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 		Strength:  p.Strength,
 		Class:     p.Class,
 		Race:      p.Race,
-		StatStr:   p.Stats.Str,
-		StatInt:   p.Stats.Int,
-		StatWis:   p.Stats.Wis,
-		StatDex:   p.Stats.Dex,
-		StatCon:   p.Stats.Con,
-		StatCha:   p.Stats.Cha,
-		Inventory: invBytes,
-		Equipment: eqBytes,
+		StatStr:    p.Stats.Str,
+		StatStrAdd: p.Stats.StrAdd,
+		StatInt:    p.Stats.Int,
+		StatWis:    p.Stats.Wis,
+		StatDex:    p.Stats.Dex,
+		StatCon:    p.Stats.Con,
+		StatCha:    p.Stats.Cha,
+		Inventory:  invBytes,
+		Equipment:  eqBytes,
 	}, nil
 }
 
@@ -48,8 +49,13 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 
 	// Override rolled stats with saved values
 	p.Stats = game.CharStats{
-		Str: r.StatStr, Int: r.StatInt, Wis: r.StatWis,
-		Dex: r.StatDex, Con: r.StatCon, Cha: r.StatCha,
+		Str:    r.StatStr,
+		StrAdd: r.StatStrAdd,
+		Int:    r.StatInt,
+		Wis:    r.StatWis,
+		Dex:    r.StatDex,
+		Con:    r.StatCon,
+		Cha:    r.StatCha,
 	}
 	p.Strength = r.StatStr
 	p.Level    = r.Level

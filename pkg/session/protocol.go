@@ -4,16 +4,18 @@ import "encoding/json"
 
 // Client to Server message types
 const (
-	MsgLogin    = "login"
-	MsgCommand  = "command"
+	MsgLogin     = "login"
+	MsgCommand   = "command"
+	MsgCharInput = "char_input"  // client → server: answers during char creation
 )
 
 // Server to Client message types
 const (
-	MsgState    = "state"
-	MsgEvent    = "event"
-	MsgError    = "error"
-	MsgText     = "text"
+	MsgState      = "state"
+	MsgEvent      = "event"
+	MsgError      = "error"
+	MsgText       = "text"
+	MsgCharCreate = "char_create" // server → client: prompts during char creation
 )
 
 // ClientMessage is a message from client to server.
@@ -31,12 +33,12 @@ type ServerMessage struct {
 // LoginData is sent to authenticate.
 // For new characters, include class and race.
 // Class: 0=Mage 1=Cleric 2=Thief 3=Warrior 4=Magus 5=Avatar 6=Assassin 7=Paladin 8=Ninja 9=Psionic 10=Ranger 11=Mystic
-// Race:  0=Human 1=Elf 2=Dwarf 3=Kender 4=Minotaur
+// Race:  0=Human 1=Elf 2=Dwarf 3=Kender 4=Minotaur 5=Rakshasa 6=Ssaur
 type LoginData struct {
 	PlayerName string `json:"player_name"`
 	Password   string `json:"password,omitempty"`
 	Class      int    `json:"class,omitempty"` // 0-11, defaults to Warrior if omitted
-	Race       int    `json:"race,omitempty"`  // 0-4, defaults to Human if omitted
+	Race       int    `json:"race,omitempty"`  // 0-6, defaults to Human if omitted
 	NewChar    bool   `json:"new_char,omitempty"` // true = create new character
 }
 
@@ -93,4 +95,27 @@ type ErrorData struct {
 // TextData is a simple text message.
 type TextData struct {
 	Text string `json:"text"`
+}
+
+// CharCreateData is sent to client during char creation.
+type CharCreateData struct {
+	Stage   string            `json:"stage"`   // "sex", "race", "class", "hometown", "rollstats", "confirm"
+	Prompt  string            `json:"prompt"`
+	Options map[string]string `json:"options,omitempty"` // key → description
+	Stats   *CharStatsDisplay `json:"stats,omitempty"`   // only on rollstats/confirm stage
+}
+
+// CharStatsDisplay is the rolled stats shown to player during creation.
+type CharStatsDisplay struct {
+	Str int `json:"str"`
+	Int int `json:"int"`
+	Wis int `json:"wis"`
+	Dex int `json:"dex"`
+	Con int `json:"con"`
+	Cha int `json:"cha"`
+}
+
+// CharInputData is sent by client during char creation.
+type CharInputData struct {
+	Choice string `json:"choice"` // the user's selection
 }

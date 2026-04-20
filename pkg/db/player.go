@@ -28,14 +28,15 @@ type PlayerRecord struct {
 	Strength  int
 	Class     int
 	Race      int
-	StatStr   int
-	StatInt   int
-	StatWis   int
-	StatDex   int
-	StatCon   int
-	StatCha   int
-	Inventory []byte // JSONB encoded inventory
-	Equipment []byte // JSONB encoded equipment
+	StatStr    int
+	StatStrAdd int // 18/xx for warriors
+	StatInt    int
+	StatWis    int
+	StatDex    int
+	StatCon    int
+	StatCha    int
+	Inventory  []byte // JSONB encoded inventory
+	Equipment  []byte // JSONB encoded equipment
 }
 
 // New creates a new database connection.
@@ -94,6 +95,7 @@ func (db *DB) createTables() error {
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS class INTEGER DEFAULT 3;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS race INTEGER DEFAULT 0;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_str INTEGER DEFAULT 10;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_str_add INTEGER DEFAULT 0;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_int INTEGER DEFAULT 10;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_wis INTEGER DEFAULT 10;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_dex INTEGER DEFAULT 10;
@@ -112,7 +114,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 	query := `
 		SELECT id, name, COALESCE(password_hash,''), room_vnum, level, exp,
 		       health, max_health, mana, max_mana, strength,
-		       class, race, stat_str, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
+		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		       inventory, equipment
 		FROM players WHERE name = $1
 	`
@@ -120,7 +122,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 	err := db.conn.QueryRow(query, name).Scan(
 		&p.ID, &p.Name, &p.Password, &p.RoomVNum, &p.Level, &p.Exp,
 		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana, &p.Strength,
-		&p.Class, &p.Race, &p.StatStr, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
+		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
 		&p.Inventory, &p.Equipment,
 	)
 	if err == sql.ErrNoRows {
@@ -137,14 +139,14 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 	query := `
 		INSERT INTO players
 		  (name, room_vnum, level, exp, health, max_health, mana, max_mana, strength,
-		   class, race, stat_str, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
+		   class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		   inventory, equipment)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
 		RETURNING id
 	`
 	return db.conn.QueryRow(query,
 		p.Name, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Strength,
-		p.Class, p.Race, p.StatStr, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
+		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Inventory, p.Equipment,
 	).Scan(&p.ID)
 }
@@ -156,15 +158,15 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		  room_vnum=$1, level=$2, exp=$3, health=$4, max_health=$5,
 		  mana=$6, max_mana=$7, strength=$8,
 		  class=$9, race=$10,
-		  stat_str=$11, stat_int=$12, stat_wis=$13, stat_dex=$14, stat_con=$15, stat_cha=$16,
-		  inventory=$17, equipment=$18, updated_at=CURRENT_TIMESTAMP
-		WHERE id=$19
+		  stat_str=$11, stat_str_add=$12, stat_int=$13, stat_wis=$14, stat_dex=$15, stat_con=$16, stat_cha=$17,
+		  inventory=$18, equipment=$19, updated_at=CURRENT_TIMESTAMP
+		WHERE id=$20
 	`
 	_, err := db.conn.Exec(query,
 		p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth,
 		p.Mana, p.MaxMana, p.Strength,
 		p.Class, p.Race,
-		p.StatStr, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
+		p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Inventory, p.Equipment, p.ID,
 	)
 	return err

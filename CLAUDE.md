@@ -1,3 +1,6 @@
+---
+tags: [active]
+---
 # Dark Pawns — Project Brief for AI Assistants
 
 Read this first. Every time. Before touching any code.

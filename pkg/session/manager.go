@@ -176,6 +176,15 @@ type Session struct {
 	player     *game.Player
 	playerName string
 	authenticated bool
+	
+	// Character creation state
+	charCreating bool
+	charName     string
+	charSex      int
+	charRace     int
+	charClass    int
+	charHometown int
+	charStats    game.CharStats
 }
 
 // readPump reads messages from the WebSocket.
@@ -249,6 +258,11 @@ func (s *Session) handleMessage(data []byte) error {
 			return ErrNotAuthenticated
 		}
 		return s.handleCommand(msg.Data)
+	case MsgCharInput:
+		if s.charCreating {
+			return s.handleCharInput(msg.Data)
+		}
+		return ErrNotInCharCreation
 	default:
 		return ErrUnknownMessageType
 	}
@@ -265,23 +279,28 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return ErrInvalidPlayerName
 	}
 
-	// Load from DB if available, otherwise create new character
+	// Load from DB if available
 	if s.manager.hasDB {
 		rec, err := s.manager.db.GetPlayer(login.PlayerName)
 		if err != nil {
 			log.Printf("DB load error for %s: %v", login.PlayerName, err)
 		}
+		
 		if rec != nil && !login.NewChar {
 			// Returning player — restore from DB
 			p, err := db.RecordToPlayer(rec, s.manager.world)
 			if err != nil {
 				log.Printf("RecordToPlayer error: %v", err)
-				s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
-			} else {
-				s.player = p
+				// Fall back to character creation
+				s.startCharCreation(login.PlayerName)
+				return nil
 			}
+			s.player = p
+			s.authenticated = true
 		} else {
-			// New character
+			// New character or explicit new_char flag
+			// For Phase 2b, we still use the direct creation for agents
+			// Character creation flow will be implemented for humans in Phase 3
 			s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
 			// Save immediately to get an ID
 			if r, err := db.PlayerToRecord(s.player, nil); err == nil {
@@ -289,36 +308,45 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 					log.Printf("DB create error: %v", err)
 				} else {
 					s.player.ID = r.ID
+					// Give starting items for brand new characters — do_start() from class.c
+					s.manager.world.GiveStartingItems(s.player)
 				}
 			}
+			s.authenticated = true
 		}
 	} else {
+		// No DB - always create new character
 		s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
+		// Give starting items for brand new characters — do_start() from class.c
+		s.manager.world.GiveStartingItems(s.player)
+		s.authenticated = true
 	}
-	s.authenticated = true
+	
+	// If we created a player directly (not through char creation), proceed with registration
+	if s.authenticated && s.player != nil {
+		if err := s.manager.Register(login.PlayerName, s); err != nil {
+			return err
+		}
 
-	if err := s.manager.Register(login.PlayerName, s); err != nil {
-		return err
+		if err := s.manager.world.AddPlayer(s.player); err != nil {
+			s.manager.Unregister(login.PlayerName)
+			return err
+		}
+
+		// Send welcome
+		s.sendWelcome()
+
+		// Broadcast to room
+		enterMsg, _ := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "enter",
+				Text: s.player.Name + " has arrived.",
+			},
+		})
+		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 	}
-
-	if err := s.manager.world.AddPlayer(s.player); err != nil {
-		s.manager.Unregister(login.PlayerName)
-		return err
-	}
-
-	// Send welcome
-	s.sendWelcome()
-
-	// Broadcast to room
-	enterMsg, _ := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "enter",
-			Text: s.player.Name + " has arrived.",
-		},
-	})
-	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
-
+	
 	return nil
 }
 
@@ -392,4 +420,5 @@ var (
 	ErrNotAuthenticated    = fmt.Errorf("not authenticated")
 	ErrUnknownMessageType  = fmt.Errorf("unknown message type")
 	ErrInvalidPlayerName   = fmt.Errorf("invalid player name")
+	ErrNotInCharCreation   = fmt.Errorf("not in character creation")
 )
