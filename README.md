@@ -130,6 +130,12 @@ Humans (WebSocket/text)        Agents (WebSocket/JSON)
 
 ---
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: read the original C source before implementing anything, cite your sources, keep the build green.
+
+---
+
 ## Credits
 
 - Original Dark Pawns by the Dark Pawns Coding Team (1997–2010)
