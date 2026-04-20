@@ -146,12 +146,15 @@ func (inv *Inventory) GetWeight() int {
 	return total
 }
 
-// SetCapacity sets the inventory capacity based on strength.
-// Formula: base 20 + strength * 5
-func (inv *Inventory) SetCapacity(strength int) {
+// SetCapacity sets the inventory capacity based on dexterity and level.
+// Formula: CAN_CARRY_N(ch) = 5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1)
+// Source: utils.h:448-449
+// Note: Weight tracking (CAN_CARRY_W) requires str_app table — implement item count limit only for now
+func (inv *Inventory) SetCapacity(dex int, level int) {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
-	inv.Capacity = 20 + (strength * 5)
+	// >> 1 means divide by 2 (integer division)
+	inv.Capacity = 5 + (dex / 2) + (level / 2)
 }
 
 // Clear removes all items from inventory.

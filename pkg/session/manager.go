@@ -308,8 +308,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 					log.Printf("DB create error: %v", err)
 				} else {
 					s.player.ID = r.ID
-					// Give starting items for brand new characters — do_start() from class.c
+					// Give starting items and skills — do_start() from class.c
 					s.manager.world.GiveStartingItems(s.player)
+					game.GiveStartingSkills(s.player)
 				}
 			}
 			s.authenticated = true
@@ -317,8 +318,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	} else {
 		// No DB - always create new character
 		s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
-		// Give starting items for brand new characters — do_start() from class.c
+		// Give starting items and skills — do_start() from class.c
 		s.manager.world.GiveStartingItems(s.player)
+		game.GiveStartingSkills(s.player)
 		s.authenticated = true
 	}
 	

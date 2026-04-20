@@ -228,3 +228,27 @@ func DoStart(class int) (StartItems, CharStats) {
 
 	return items, CharStats{}
 }
+
+// GiveStartingSkills assigns starting skills to a player based on class and race.
+// Source: class.c:554-570 (do_start skill assignments)
+func GiveStartingSkills(p *Player) {
+	// Thief/Assassin starting skills — class.c:554-562
+	if p.Class == ClassThief || p.Class == ClassAssassin {
+		p.SetSkill("sneak", 10)
+		p.SetSkill("hide", 5)
+		p.SetSkill("peek", 15)
+		p.SetSkill("steal", 15)
+		p.SetSkill("backstab", 10)
+		p.SetSkill("pick_lock", 10)
+	}
+
+	// Kender racial skill — class.c:567
+	if p.Race == RaceKender {
+		p.SetSkill("steal", 25)
+	}
+
+	// Minotaur racial skill — class.c:569
+	if p.Race == RaceMinotaur {
+		p.SetSkill("headbutt", 25)
+	}
+}

@@ -46,20 +46,40 @@ func (w *World) AITick() {
 
 // runMobAI runs AI for a single mob
 func (w *World) runMobAI(mob *MobInstance) {
-	// Check mob flags from prototype
 	if mob.Prototype == nil {
 		return
 	}
 
-	// Check for sentinel behavior
+	// Parse mob flags once
 	isSentinel := false
 	isAggressive := false
+	isAggrEvil := false
+	isAggrGood := false
+	isAggrNeutral := false
+	isWimpy := false
+	isMemory := false
+	isHelper := false
+	isScavenger := false
 	for _, flag := range mob.Prototype.ActionFlags {
-		if flag == "sentinel" {
+		switch flag {
+		case "sentinel":
 			isSentinel = true
-		}
-		if flag == "aggressive" {
+		case "aggressive":
 			isAggressive = true
+		case "aggr_evil":
+			isAggrEvil = true
+		case "aggr_good":
+			isAggrGood = true
+		case "aggr_neutral":
+			isAggrNeutral = true
+		case "wimpy":
+			isWimpy = true
+		case "memory":
+			isMemory = true
+		case "helper":
+			isHelper = true
+		case "scavenger":
+			isScavenger = true
 		}
 	}
 
@@ -68,14 +88,44 @@ func (w *World) runMobAI(mob *MobInstance) {
 		return
 	}
 
-	// Check for aggressive mobs
-	// MOB_SENTINEL only prevents movement, does NOT prevent aggression checks
-	// Source: mobact.c:110-132
-	if isAggressive {
-		// Check for players in room
-		players := w.GetPlayersInRoom(mob.RoomVNum)
+	players := w.GetPlayersInRoom(mob.RoomVNum)
+
+	// MOB_MEMORY: hunt players this mob remembers attacking it
+	// Source: mobact.c:262-285
+	if isMemory && len(mob.Memory) > 0 {
 		for _, player := range players {
-			// Attack via combat engine!
+			for _, name := range mob.Memory {
+				if name == player.GetName() {
+					player.SendMessage("'Hey!  You're the fiend that attacked me!!!', exclaims " + mob.GetShortDesc() + ".\r\n")
+					if aiCombatEngine != nil {
+						aiCombatEngine.StartCombat(mob, player)
+					}
+					return
+				}
+			}
+		}
+	}
+
+	// Aggression checks
+	// MOB_SENTINEL only prevents movement, NOT aggression — mobact.c:110-132
+	hasAlignAggr := isAggrEvil || isAggrGood || isAggrNeutral
+	if isAggressive || hasAlignAggr {
+		for _, player := range players {
+			// MOB_WIMPY: skip awake players — mobact.c:209
+			if isWimpy {
+				continue // all players considered awake for now
+			}
+			// Alignment-based aggression — mobact.c:217-225
+			// IS_GOOD: alignment >= 350, IS_EVIL: <= -350 (utils.h:454-455)
+			if hasAlignAggr {
+				align := player.GetAlignment()
+				isGood := align >= 350
+				isEvil := align <= -350
+				isNeutral := !isGood && !isEvil
+				if !((isAggrEvil && isEvil) || (isAggrGood && isGood) || (isAggrNeutral && isNeutral)) {
+					continue
+				}
+			}
 			if aiCombatEngine != nil {
 				aiCombatEngine.StartCombat(mob, player)
 			}
@@ -83,9 +133,51 @@ func (w *World) runMobAI(mob *MobInstance) {
 		}
 	}
 
-	// Wandering behavior (if not sentinel)
-	// MOB_SENTINEL prevents movement
-	// 25% chance to wander
+	// MOB_HELPER: assist other fighting mobs against players
+	// Source: mobact.c:286-302
+	if isHelper {
+		w.mu.RLock()
+		for _, otherMob := range w.activeMobs {
+			if otherMob == mob || otherMob.RoomVNum != mob.RoomVNum {
+				continue
+			}
+			if otherMob.Fighting && otherMob.Target == nil {
+				// otherMob is fighting a player — join in
+				for _, player := range players {
+					player.SendMessage(mob.GetShortDesc() + " jumps to the aid of " + otherMob.GetShortDesc() + "!\r\n")
+					if aiCombatEngine != nil {
+						aiCombatEngine.StartCombat(mob, player)
+					}
+					w.mu.RUnlock()
+					return
+				}
+			}
+		}
+		w.mu.RUnlock()
+	}
+
+	// MOB_SCAVENGER: pick up highest-value item in room — mobact.c:103-115
+	// Only triggers 1 in 10 times (number(0,10) == 0 in original)
+	if isScavenger && rand.Intn(11) == 0 {
+		items := w.GetItemsInRoom(mob.RoomVNum)
+		var bestItem *ObjectInstance
+		bestCost := 0
+		for _, item := range items {
+			if item.GetCost() > bestCost {
+				bestCost = item.GetCost()
+				bestItem = item
+			}
+		}
+		if bestItem != nil {
+			w.RemoveItemFromRoom(bestItem, mob.RoomVNum)
+			mob.Inventory = append(mob.Inventory, bestItem)
+			for _, player := range players {
+				player.SendMessage(mob.GetShortDesc() + " picks up " + bestItem.GetShortDesc() + ".\r\n")
+			}
+		}
+	}
+
+	// Wandering behavior — MOB_SENTINEL prevents movement only
 	if !isSentinel && rand.Intn(100) < 25 {
 		w.wanderMob(mob)
 	}

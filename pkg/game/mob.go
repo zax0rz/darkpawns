@@ -29,6 +29,10 @@ type MobInstance struct {
 	// Combat state
 	Target    *MobInstance // or Player
 	Fighting  bool
+
+	// Memory: names of players this mob remembers attacking it
+	// Source: mobact.c:262-285, remember()/forget() in mobact.c:346-407
+	Memory []string
 }
 
 // NewMob creates a new mob instance from a prototype.

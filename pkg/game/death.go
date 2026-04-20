@@ -180,10 +180,34 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool) {
 	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
 }
 
+// CorpseAttackType describes what killed the victim, for corpse descriptions.
+// Source: fight.c:283-370
+type CorpseAttackType int
+
+const (
+	AttackUndefined  CorpseAttackType = iota // TYPE_UNDEFINED: "The corpse of X is lying here."
+	AttackFire                               // fire spells: "The charred corpse of X is lying here, still smoking."
+	AttackCold                               // chill touch: "The frozen corpse of X is thawing here."
+	AttackSlash                              // TYPE_SLASH: "The hacked up, bloody corpse of X is lying here."
+)
+
+// corpseAttackLongDesc returns the long description for a corpse based on attack type.
+// Source: fight.c:283-370
+func corpseAttackLongDesc(name string, attackType CorpseAttackType) string {
+	switch attackType {
+	case AttackFire:
+		return fmt.Sprintf("The charred corpse of %s is lying here, still smoking.", name)
+	case AttackCold:
+		return fmt.Sprintf("The frozen corpse of %s is thawing here.", name)
+	case AttackSlash:
+		return fmt.Sprintf("The hacked up, bloody corpse of %s is lying here.", name)
+	default: // AttackUndefined
+		return fmt.Sprintf("The corpse of %s is lying here.", name)
+	}
+}
+
 // makeCorpse creates a corpse container object, faithfully to make_corpse() in fight.c.
 // The corpse is an ObjectInstance with ITEM_NODONATE, containing the victim's inventory.
-// Corpse description matches the original "The corpse of <name> is lying here."
-// (Attack-type-specific descriptions are a Phase 3 enhancement when we have spell types.)
 func (w *World) makeCorpse(name string, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int) *ObjectInstance {
 	corpse := &ObjectInstance{
 		Prototype:     nil, // synthetic object, no prototype vnum
@@ -202,7 +226,9 @@ func (w *World) makeCorpse(name string, inventory []*ObjectInstance, equipment [
 	// Name and descriptions — from make_corpse() in fight.c
 	corpse.CustomData["name"] = fmt.Sprintf("%s corpse", name)
 	corpse.CustomData["short_desc"] = fmt.Sprintf("the corpse of %s", name)
-	corpse.CustomData["long_desc"] = fmt.Sprintf("The corpse of %s is lying here.", name)
+	// Use TYPE_UNDEFINED description for now; attackType param to be added in Phase 3
+	// when spell/weapon types are tracked. Source: fight.c:283-370
+	corpse.CustomData["long_desc"] = corpseAttackLongDesc(name, AttackUndefined)
 
 	// Transfer inventory into corpse (obj_to_obj in original)
 	for _, item := range inventory {

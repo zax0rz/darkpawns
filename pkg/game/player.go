@@ -47,6 +47,15 @@ type Player struct {
 	LastActive  time.Time
 	Fighting   string // Name of character being fought
 
+	// Alignment: -1000 (evil) to +1000 (good), 0 = neutral
+	// Source: structs.h:930, utils.h:454-456
+	// IS_GOOD: >= 350, IS_EVIL: <= -350, IS_NEUTRAL: between
+	Alignment int
+
+	// Skills: map of skill name → proficiency (0-100)
+	// Populated by DoStart() and advance_level(). Used by Phase 3 Lua scripts.
+	Skills map[string]int
+
 	// Communication
 	Send chan []byte // Channel for sending messages to player
 }
@@ -74,12 +83,15 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		LastActive:  now,
 		Fighting:    "", // Not fighting anyone
 		Send:        make(chan []byte, 256),
+		Alignment:   0, // Neutral by default
+		Skills:      make(map[string]int),
 	}
 	
 	// Initialize inventory and equipment
 	player.Inventory = NewInventory()
 	player.Equipment = NewEquipment()
-	player.Inventory.SetCapacity(player.Strength)
+	// Set default capacity (will be updated when stats are set)
+	player.Inventory.SetCapacity(10, 1) // Default DEX=10, level=1
 	
 	return player
 }
@@ -111,7 +123,9 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	// This adds con_app[con].hitp + class-specific random HP
 	p.AdvanceLevel()
 
-	p.Inventory.SetCapacity(p.Strength)
+	// Set inventory capacity based on DEX and level
+	// Formula: 5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1)
+	p.Inventory.SetCapacity(p.Stats.Dex, p.Level)
 	return p
 }
 
@@ -255,6 +269,42 @@ func (p *Player) TakeDamage(amount int) {
 	if p.Health < 0 {
 		p.Health = 0
 	}
+}
+
+// GetAlignment returns the player's alignment score.
+func (p *Player) GetAlignment() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Alignment
+}
+
+// IsGood returns true if alignment >= 350 (utils.h:454)
+func (p *Player) IsGood() bool { return p.GetAlignment() >= 350 }
+
+// IsEvil returns true if alignment <= -350 (utils.h:455)
+func (p *Player) IsEvil() bool { return p.GetAlignment() <= -350 }
+
+// IsNeutral returns true if not good and not evil (utils.h:456)
+func (p *Player) IsNeutral() bool { return !p.IsGood() && !p.IsEvil() }
+
+// SetSkill sets a skill level (0-100).
+func (p *Player) SetSkill(name string, level int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.Skills == nil {
+		p.Skills = make(map[string]int)
+	}
+	p.Skills[name] = level
+}
+
+// GetSkill returns a skill level (0 if not set).
+func (p *Player) GetSkill(name string) int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if p.Skills == nil {
+		return 0
+	}
+	return p.Skills[name]
 }
 
 // LoseExp deducts experience from the player, floored at 0.

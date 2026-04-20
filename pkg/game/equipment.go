@@ -27,6 +27,15 @@ const (
 	SlotEar
 	SlotShoulder
 	SlotBack
+	// Dual equipment slots (M4)
+	SlotFingerR
+	SlotFingerL
+	SlotNeck1
+	SlotNeck2
+	SlotWristR
+	SlotWristL
+	// Shield slot (M2/M3)
+	SlotShield
 	SlotMax // Sentinel value
 )
 
@@ -67,6 +76,22 @@ func (s EquipmentSlot) String() string {
 		return "shoulder"
 	case SlotBack:
 		return "back"
+	// Dual equipment slots (M4)
+	case SlotFingerR:
+		return "finger right"
+	case SlotFingerL:
+		return "finger left"
+	case SlotNeck1:
+		return "neck 1"
+	case SlotNeck2:
+		return "neck 2"
+	case SlotWristR:
+		return "wrist right"
+	case SlotWristL:
+		return "wrist left"
+	// Shield slot (M2/M3)
+	case SlotShield:
+		return "shield"
 	default:
 		return "unknown"
 	}
@@ -109,6 +134,22 @@ func ParseEquipmentSlot(s string) (EquipmentSlot, bool) {
 		return SlotShoulder, true
 	case "back":
 		return SlotBack, true
+	// Dual equipment slots (M4)
+	case "finger right", "finger_r":
+		return SlotFingerR, true
+	case "finger left", "finger_l":
+		return SlotFingerL, true
+	case "neck 1", "neck1":
+		return SlotNeck1, true
+	case "neck 2", "neck2":
+		return SlotNeck2, true
+	case "wrist right", "wrist_r":
+		return SlotWristR, true
+	case "wrist left", "wrist_l":
+		return SlotWristL, true
+	// Shield slot (M2/M3)
+	case "shield":
+		return SlotShield, true
 	default:
 		return SlotMax, false
 	}
@@ -138,9 +179,46 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 		return fmt.Errorf("item cannot be equipped")
 	}
 
-	// For now, equip in first available slot
-	// In a full implementation, we'd check for multiple slots (like finger)
+	// Handle dual equipment slots (M4)
+	// When equipping a ring/neck/wrist item, prefer the right/first slot;
+	// use the left/second if already occupied.
+	// Source: structs.h:391-405 - players have dual slots for rings, necks, wrists
+	
+	// Group dual slots
+	dualSlotGroups := map[EquipmentSlot][]EquipmentSlot{
+		SlotFingerR: {SlotFingerR, SlotFingerL},
+		SlotFingerL: {SlotFingerR, SlotFingerL},
+		SlotNeck1:   {SlotNeck1, SlotNeck2},
+		SlotNeck2:   {SlotNeck1, SlotNeck2},
+		SlotWristR:  {SlotWristR, SlotWristL},
+		SlotWristL:  {SlotWristR, SlotWristL},
+	}
+	
 	for _, slot := range wearFlags {
+		// Check if this slot is part of a dual slot group
+		if group, isDual := dualSlotGroups[slot]; isDual {
+			// Try each slot in the group in order
+			for _, trySlot := range group {
+				if _, occupied := eq.Slots[trySlot]; !occupied {
+					// Found empty slot
+					item.EquippedOn = eq
+					item.EquipPosition = int(trySlot)
+					eq.Slots[trySlot] = item
+					return nil
+				}
+			}
+			// All slots in group are occupied, unequip from first slot
+			if err := eq.unequip(group[0], inv); err != nil {
+				return fmt.Errorf("cannot unequip existing %s: %v", group[0], err)
+			}
+			// Now equip in first slot
+			item.EquippedOn = eq
+			item.EquipPosition = int(group[0])
+			eq.Slots[group[0]] = item
+			return nil
+		}
+		
+		// Non-dual slot
 		if _, ok := eq.Slots[slot]; ok {
 			// Unequip existing item first
 			if err := eq.unequip(slot, inv); err != nil {
@@ -259,6 +337,7 @@ func (eq *Equipment) GetWeaponDamage() (numDice, diceType int) {
 }
 
 // getWearFlags returns which equipment slots an item can be worn in.
+// Maps ITEM_WEAR_* flags from structs.h:446-462 to EquipmentSlot
 func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 	var slots []EquipmentSlot
 	
@@ -268,60 +347,77 @@ func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 			continue
 		}
 		
-		// Convert CircleMUD wear flags to our EquipmentSlot
-		// This is a simplified mapping
+		// Convert Dark Pawns wear flags to our EquipmentSlot
+		// Source: structs.h:446-462 ITEM_WEAR_* constants
 		switch i {
-		case 0: // Primary wear flags
-			if flag&(1<<0) != 0 { // TAKE
-				// Can be held
-				slots = append(slots, SlotHold)
+		case 0: // Primary wear flags (bits 0-15)
+			// ITEM_WEAR_TAKE (bit 0) = item can be picked up, NOT an equip slot
+			// Do NOT map to SlotHold for bit 0
+			
+			if flag&(1<<1) != 0 { // ITEM_WEAR_FINGER (bit 1)
+				// Can be worn on finger - map to both finger slots
+				slots = append(slots, SlotFingerR, SlotFingerL)
 			}
-			if flag&(1<<1) != 0 { // FINGER
-				slots = append(slots, SlotFinger)
+			if flag&(1<<2) != 0 { // ITEM_WEAR_NECK (bit 2)
+				// Can be worn around neck - map to both neck slots
+				slots = append(slots, SlotNeck1, SlotNeck2)
 			}
-			if flag&(1<<2) != 0 { // NECK
-				slots = append(slots, SlotNeck)
-			}
-			if flag&(1<<3) != 0 { // BODY
+			if flag&(1<<3) != 0 { // ITEM_WEAR_BODY (bit 3)
 				slots = append(slots, SlotBody)
 			}
-			if flag&(1<<4) != 0 { // HEAD
+			if flag&(1<<4) != 0 { // ITEM_WEAR_HEAD (bit 4)
 				slots = append(slots, SlotHead)
 			}
-			if flag&(1<<5) != 0 { // LEGS
+			if flag&(1<<5) != 0 { // ITEM_WEAR_LEGS (bit 5)
 				slots = append(slots, SlotLegs)
 			}
-			if flag&(1<<6) != 0 { // FEET
+			if flag&(1<<6) != 0 { // ITEM_WEAR_FEET (bit 6)
 				slots = append(slots, SlotFeet)
 			}
-			if flag&(1<<7) != 0 { // HANDS
+			if flag&(1<<7) != 0 { // ITEM_WEAR_HANDS (bit 7)
 				slots = append(slots, SlotHands)
 			}
-			if flag&(1<<8) != 0 { // ARMS
+			if flag&(1<<8) != 0 { // ITEM_WEAR_ARMS (bit 8)
 				slots = append(slots, SlotArms)
 			}
-			if flag&(1<<9) != 0 { // SHIELD
-				slots = append(slots, SlotHold) // Shield goes in hold slot
+			if flag&(1<<9) != 0 { // ITEM_WEAR_SHIELD (bit 9)
+				// Shield should map to SlotShield, not SlotHold
+				slots = append(slots, SlotShield)
 			}
-			if flag&(1<<10) != 0 { // ABOUT
+			if flag&(1<<10) != 0 { // ITEM_WEAR_ABOUT (bit 10)
 				slots = append(slots, SlotAbout)
 			}
-			if flag&(1<<11) != 0 { // WAIST
+			if flag&(1<<11) != 0 { // ITEM_WEAR_WAIST (bit 11)
 				slots = append(slots, SlotWaist)
 			}
-			if flag&(1<<12) != 0 { // WRIST
-				slots = append(slots, SlotWrist)
+			if flag&(1<<12) != 0 { // ITEM_WEAR_WRIST (bit 12)
+				// Can be worn on wrist - map to both wrist slots
+				slots = append(slots, SlotWristR, SlotWristL)
 			}
-			if flag&(1<<13) != 0 { // WIELD
+			if flag&(1<<13) != 0 { // ITEM_WEAR_WIELD (bit 13)
 				slots = append(slots, SlotWield)
 			}
-			if flag&(1<<14) != 0 { // HOLD
+			if flag&(1<<14) != 0 { // ITEM_WEAR_HOLD (bit 14)
 				slots = append(slots, SlotHold)
 			}
-		case 1: // Secondary wear flags
-			if flag&(1<<0) != 0 { // LIGHT
-				slots = append(slots, SlotLight)
+			if flag&(1<<15) != 0 { // ITEM_WEAR_THROW (bit 15)
+				// Can be thrown - not an equip slot
 			}
+		case 1: // Secondary wear flags (bits 16-31)
+			if flag&(1<<0) != 0 { // ITEM_WEAR_ABLEGS (bit 16)
+				// Can be worn about legs
+				slots = append(slots, SlotLegs) // Approximate
+			}
+			if flag&(1<<1) != 0 { // ITEM_WEAR_FACE (bit 17)
+				// Can be worn as a mask
+				slots = append(slots, SlotHead) // Approximate
+			}
+			if flag&(1<<2) != 0 { // ITEM_WEAR_HOVER (bit 18)
+				// Hovers near head
+				slots = append(slots, SlotHead) // Approximate
+			}
+			// Note: ITEM_WEAR_LIGHT is not in Dark Pawns structs.h
+			// Light items might be handled differently
 		}
 	}
 	
