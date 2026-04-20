@@ -63,17 +63,14 @@ func (w *World) runMobAI(mob *MobInstance) {
 		}
 	}
 
-	// Sentinel mobs don't move or attack automatically
-	if isSentinel {
-		return
-	}
-
 	// Don't act if already fighting
 	if aiCombatEngine != nil && aiCombatEngine.IsFighting(mob.GetName()) {
 		return
 	}
 
 	// Check for aggressive mobs
+	// MOB_SENTINEL only prevents movement, does NOT prevent aggression checks
+	// Source: mobact.c:110-132
 	if isAggressive {
 		// Check for players in room
 		players := w.GetPlayersInRoom(mob.RoomVNum)
@@ -87,8 +84,9 @@ func (w *World) runMobAI(mob *MobInstance) {
 	}
 
 	// Wandering behavior (if not sentinel)
+	// MOB_SENTINEL prevents movement
 	// 25% chance to wander
-	if rand.Intn(100) < 25 {
+	if !isSentinel && rand.Intn(100) < 25 {
 		w.wanderMob(mob)
 	}
 }
@@ -105,20 +103,58 @@ func (w *World) wanderMob(mob *MobInstance) {
 		return
 	}
 
-	// Pick random exit
-	directions := make([]string, 0, len(room.Exits))
-	for dir := range room.Exits {
-		directions = append(directions, dir)
+	// Check if mob has MOB_STAY_ZONE flag
+	hasStayZone := false
+	if mob.Prototype != nil {
+		for _, flag := range mob.Prototype.ActionFlags {
+			if flag == "stay_zone" {
+				hasStayZone = true
+				break
+			}
+		}
 	}
 
-	direction := directions[rand.Intn(len(directions))]
-	exit := room.Exits[direction]
+	// Pick random exit, filtering by zone if MOB_STAY_ZONE
+	var validDirections []string
+	for dir, exit := range room.Exits {
+		// Check if target room exists
+		targetRoom, ok := w.rooms[exit.ToRoom]
+		if !ok {
+			continue
+		}
+		
+		// MOB_STAY_ZONE: skip exits that lead to a different zone
+		// Source: mobact.c:127
+		if hasStayZone && targetRoom.Zone != room.Zone {
+			continue
+		}
+		
+		// Check ROOM_DEATH and ROOM_NOMOB before mob movement
+		// Source: mobact.c - before moving a mob to a room, checks !ROOM_DEATH and !ROOM_NOMOB
+		hasDeath := false
+		hasNoMob := false
+		for _, flag := range targetRoom.Flags {
+			if flag == "death" {
+				hasDeath = true
+			}
+			if flag == "nomob" {
+				hasNoMob = true
+			}
+		}
+		if hasDeath || hasNoMob {
+			continue
+		}
+		
+		validDirections = append(validDirections, dir)
+	}
 
-	// Check if target room exists
-	targetRoom, ok := w.rooms[exit.ToRoom]
-	if !ok {
+	if len(validDirections) == 0 {
 		return
 	}
+
+	direction := validDirections[rand.Intn(len(validDirections))]
+	exit := room.Exits[direction]
+	targetRoom := w.rooms[exit.ToRoom]
 
 	// Move mob
 	oldRoom := mob.RoomVNum

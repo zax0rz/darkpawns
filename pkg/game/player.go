@@ -107,6 +107,10 @@ func NewCharacter(id int, name string, class, race int) *Player {
 		p.THAC0 = thaco[class][1]
 	}
 
+	// Call advance_level() for level 1 HP bonus (class.c:600-720)
+	// This adds con_app[con].hitp + class-specific random HP
+	p.AdvanceLevel()
+
 	p.Inventory.SetCapacity(p.Strength)
 	return p
 }
@@ -359,4 +363,12 @@ func (p *Player) GetDamroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return 0 // No equipment bonuses yet
+}
+
+// GetStrAdd returns the player's strength add (exceptional strength)
+// Source: utils.h GET_ADD(ch) macro
+func (p *Player) GetStrAdd() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Stats.StrAdd
 }

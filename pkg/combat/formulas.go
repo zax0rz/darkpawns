@@ -192,12 +192,26 @@ var dexApp = []dexAppType{
 // strIndex returns the str_app index for a combatant.
 // Implements STRENGTH_APPLY_INDEX macro from utils.h line 440
 // Source: utils.h: STRENGTH_APPLY_INDEX(ch) macro
-// TODO: Need to handle StrAdd for 18/xx exceptional strength
 func strIndex(c Combatant) int {
 	str := c.GetStr()
-	// For now, return str directly (no exceptional strength handling)
-	// In original: str_app index is str unless str==18 with strAdd>0
-	return str
+	strAdd := c.GetStrAdd()
+	
+	if strAdd == 0 || str != 18 {
+		return str
+	}
+	
+	// Handle 18/xx exceptional strength
+	if strAdd <= 50 {
+		return 26 // 18/01-50
+	} else if strAdd <= 75 {
+		return 27 // 18/51-75
+	} else if strAdd <= 90 {
+		return 28 // 18/76-90
+	} else if strAdd <= 99 {
+		return 29 // 18/91-99
+	} else {
+		return 30 // 18/100
+	}
 }
 
 // dexIndex returns the dex_app index for a combatant.

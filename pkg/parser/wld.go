@@ -114,6 +114,8 @@ func parseRoom(scanner *bufio.Scanner, vnum int) (Room, error) {
 	
 	room.Zone, _ = strconv.Atoi(nums[0])
 	// nums[1] = flags (bitmask)
+	flags, _ := strconv.Atoi(nums[1])
+	room.Flags = parseRoomFlags(flags)
 	// nums[2] = sector type
 	room.Sector, _ = strconv.Atoi(nums[2])
 	
@@ -140,6 +142,38 @@ func parseRoom(scanner *bufio.Scanner, vnum int) (Room, error) {
 	}
 	
 	return room, nil
+}
+
+// parseRoomFlags converts a bitmask integer to flag names.
+// Source: structs.h - ROOM_DEATH = 1 (bit 1), ROOM_NOMOB = 2 (bit 2)
+func parseRoomFlags(bitmask int) []string {
+	var flags []string
+	// Map bit positions to flag names (from structs.h)
+	flagMap := map[int]string{
+		0:  "dark",      // ROOM_DARK
+		1:  "death",     // ROOM_DEATH
+		2:  "nomob",     // ROOM_NOMOB
+		3:  "indoors",   // ROOM_INDOORS
+		4:  "peaceful",  // ROOM_PEACEFUL
+		5:  "soundproof", // ROOM_SOUNDPROOF
+		6:  "notrack",   // ROOM_NOTRACK
+		7:  "nomagic",   // ROOM_NOMAGIC
+		8:  "tunnel",    // ROOM_TUNNEL
+		9:  "private",   // ROOM_PRIVATE
+		10: "godroom",   // ROOM_GODROOM
+		11: "house",     // ROOM_HOUSE
+		12: "house_crash", // ROOM_HOUSE_CRASH
+		13: "atrium",    // ROOM_ATRIUM
+		14: "olc",       // ROOM_OLC
+		15: "bspace",    // ROOM_BSPACE
+	}
+	
+	for bit, name := range flagMap {
+		if bitmask&(1<<bit) != 0 {
+			flags = append(flags, name)
+		}
+	}
+	return flags
 }
 
 // parseExit parses a single exit section.

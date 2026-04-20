@@ -29,6 +29,7 @@ type Combatant interface {
 	// Class and ability scores (Phase 2c additions)
 	GetClass() int
 	GetStr() int
+	GetStrAdd() int // For 18/xx exceptional strength
 	GetDex() int
 	GetInt() int
 	GetWis() int

@@ -348,3 +348,9 @@ func (m *MobInstance) GetHitroll() int {
 func (m *MobInstance) GetDamroll() int {
 	return 0
 }
+
+// GetStrAdd returns the mob's strength add (exceptional strength)
+// Mobs don't have exceptional strength, return 0 as default
+func (m *MobInstance) GetStrAdd() int {
+	return 0
+}

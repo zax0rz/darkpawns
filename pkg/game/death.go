@@ -68,7 +68,13 @@ func (w *World) handleMobDeath(victim combat.Combatant) {
 	}
 
 	// make_corpse: create a container object in the room
-	corpse := w.makeCorpse(deadMob.GetName(), deadMob.Inventory, nil, roomVNum)
+	// Transfer BOTH inventory items AND all equipped slots into the corpse container
+	// Source: fight.c:make_corpse() lines ~383-410
+	var equipmentItems []*ObjectInstance
+	for _, item := range deadMob.Equipment {
+		equipmentItems = append(equipmentItems, item)
+	}
+	corpse := w.makeCorpse(deadMob.GetName(), deadMob.Inventory, equipmentItems, roomVNum)
 	w.AddItemToRoom(corpse, roomVNum)
 
 	// Notify players in room
