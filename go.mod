@@ -6,3 +6,5 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/lib/pq v1.10.9
 )
+
+require github.com/yuin/gopher-lua v1.1.2 // indirect

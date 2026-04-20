@@ -195,7 +195,7 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 		mob.Sex, _ = strconv.Atoi(pos[2])
 	}
 
-	// Parse optional fields (Race, Noise, Script)
+	// Parse optional fields (Race, Noise, Script, BareHandAttack, etc.)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		
@@ -223,6 +223,20 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 				mob.Noise = noise
 			}
 		}
+		
+		if strings.HasPrefix(line, "Script:") {
+			// Format: "Script: filename bitmask"
+			// Example: "Script: 144/hisc.lua 512"
+			scriptLine := strings.TrimPrefix(line, "Script:")
+			scriptLine = strings.TrimSpace(scriptLine)
+			fields := strings.Fields(scriptLine)
+			if len(fields) >= 2 {
+				mob.ScriptName = fields[0]
+				mob.LuaFunctions, _ = strconv.Atoi(fields[1])
+			}
+		}
+		
+		// Ignore other fields like BareHandAttack for now
 	}
 
 	return mob, nil

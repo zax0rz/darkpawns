@@ -22,6 +22,7 @@ type Player struct {
 	MaxMana   int
 	Level     int
 	Exp       int
+	Gold      int // Currency, used by Lua scripts
 	Strength  int // For inventory capacity
 
 	// Character identity — from do_start()/roll_real_abils() in class.c
