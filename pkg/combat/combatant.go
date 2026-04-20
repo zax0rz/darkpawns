@@ -26,6 +26,15 @@ type Combatant interface {
 	GetDamageRoll() DiceRoll
 	GetPosition() int
 
+	// Class and ability scores (Phase 2c additions)
+	GetClass() int
+	GetStr() int
+	GetDex() int
+	GetInt() int
+	GetWis() int
+	GetHitroll() int
+	GetDamroll() int
+
 	// Combat actions
 	TakeDamage(amount int)
 	Heal(amount int)

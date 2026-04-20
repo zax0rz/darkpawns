@@ -253,6 +253,16 @@ func (p *Player) TakeDamage(amount int) {
 	}
 }
 
+// LoseExp deducts experience from the player, floored at 0.
+func (p *Player) LoseExp(amount int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Exp -= amount
+	if p.Exp < 0 {
+		p.Exp = 0
+	}
+}
+
 // Heal restores health to the player.
 func (p *Player) Heal(amount int) {
 	p.mu.Lock()
@@ -291,4 +301,62 @@ func (p *Player) IsFighting() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.Fighting != ""
+}
+
+// GetClass returns the player's class (Phase 2c addition)
+// Source: fight.c uses GET_CLASS(ch) macro
+func (p *Player) GetClass() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Class
+}
+
+// GetStr returns the player's strength (Phase 2c addition)
+// Source: fight.c uses GET_STR(ch) macro
+func (p *Player) GetStr() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Stats.Str
+}
+
+// GetDex returns the player's dexterity (Phase 2c addition)
+// Source: fight.c uses GET_DEX(ch) macro
+func (p *Player) GetDex() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Stats.Dex
+}
+
+// GetInt returns the player's intelligence (Phase 2c addition)
+// Source: fight.c uses GET_INT(ch) macro
+func (p *Player) GetInt() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Stats.Int
+}
+
+// GetWis returns the player's wisdom (Phase 2c addition)
+// Source: fight.c uses GET_WIS(ch) macro
+func (p *Player) GetWis() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Stats.Wis
+}
+
+// GetHitroll returns the player's hitroll bonus (Phase 2c addition)
+// Source: fight.c uses GET_HITROLL(ch) macro
+// TODO: Phase 3 - implement equipment bonuses
+func (p *Player) GetHitroll() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return 0 // No equipment bonuses yet
+}
+
+// GetDamroll returns the player's damroll bonus (Phase 2c addition)
+// Source: fight.c uses GET_DAMROLL(ch) macro
+// TODO: Phase 3 - implement equipment bonuses
+func (p *Player) GetDamroll() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return 0 // No equipment bonuses yet
 }

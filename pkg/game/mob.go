@@ -299,3 +299,52 @@ func (m *MobInstance) GetFighting() string {
 	}
 	return ""
 }
+
+// GetClass returns the mob's class (Phase 2c addition)
+// Mobs don't have classes in Dark Pawns, return 0 (CLASS_MAGE) as default
+// Source: fight.c - mobs don't use class-based THAC0
+func (m *MobInstance) GetClass() int {
+	return 0 // CLASS_MAGE
+}
+
+// GetStr returns the mob's strength (Phase 2c addition)
+// Mobs don't have STR stats, return 10 (average) as default
+// Source: fight.c - mobs don't use str_app[]
+func (m *MobInstance) GetStr() int {
+	return 10
+}
+
+// GetDex returns the mob's dexterity (Phase 2c addition)
+// Mobs don't have DEX stats, return 10 (average) as default
+// Source: fight.c - mobs don't use dex_app[]
+func (m *MobInstance) GetDex() int {
+	return 10
+}
+
+// GetInt returns the mob's intelligence (Phase 2c addition)
+// Mobs don't have INT stats, return 10 (average) as default
+// Source: fight.c - mobs don't use INT for THAC0
+func (m *MobInstance) GetInt() int {
+	return 10
+}
+
+// GetWis returns the mob's wisdom (Phase 2c addition)
+// Mobs don't have WIS stats, return 10 (average) as default
+// Source: fight.c - mobs don't use WIS for THAC0
+func (m *MobInstance) GetWis() int {
+	return 10
+}
+
+// GetHitroll returns the mob's hitroll bonus (Phase 2c addition)
+// Mobs don't have hitroll, return 0 as default
+// Source: fight.c - mobs don't use GET_HITROLL()
+func (m *MobInstance) GetHitroll() int {
+	return 0
+}
+
+// GetDamroll returns the mob's damroll bonus (Phase 2c addition)
+// Mobs don't have damroll, return 0 as default
+// Source: fight.c - mobs don't use GET_DAMROLL()
+func (m *MobInstance) GetDamroll() int {
+	return 0
+}

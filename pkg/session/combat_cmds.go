@@ -96,6 +96,7 @@ func cmdHit(s *Session, args []string) error {
 }
 
 // cmdFlee attempts to flee from combat.
+// Implements do_flee() from act.offensive.c lines 360-420
 func cmdFlee(s *Session) error {
 	// Check if in combat
 	if !s.manager.combatEngine.IsFighting(s.player.Name) {
@@ -127,6 +128,28 @@ func cmdFlee(s *Session) error {
 		return nil
 	}
 
+	// Calculate XP loss before stopping combat
+	// Source: act.offensive.c do_flee() lines 367-371
+	var xpLoss int
+	if opponent, ok := s.manager.combatEngine.GetCombatTarget(s.player.Name); ok {
+		loss := opponent.GetMaxHP() - opponent.GetHP()
+		loss *= opponent.GetLevel()
+		xpLoss = loss
+	}
+
+	// Apply XP loss for players level > 10
+	// Source: act.offensive.c do_flee() lines 398-401
+	level := s.player.GetLevel()
+	if level > 10 {
+		// 500 * (level / 2.6) — original uses float division, cast to int
+		// Source: act.offensive.c do_flee() line 400
+		xpLoss += int(500 * (float64(level) / 2.6))
+		s.player.LoseExp(xpLoss)
+		if xpLoss > 0 {
+			s.sendText(fmt.Sprintf("You lose %d experience points for fleeing.", xpLoss))
+		}
+	}
+
 	// Flee successfully
 	s.manager.combatEngine.StopCombat(s.player.Name)
 
@@ -147,7 +170,7 @@ func cmdFlee(s *Session) error {
 		Data: EventData{
 			Type: "flee",
 			From: s.player.Name,
-			Text: fmt.Sprintf("%s flees %s!", s.player.Name, direction),
+			Text: fmt.Sprintf("%s panics, and attempts to flee!", s.player.Name),
 		},
 	})
 	s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
@@ -163,7 +186,7 @@ func cmdFlee(s *Session) error {
 	})
 	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
 
-	s.sendText(fmt.Sprintf("You flee %s!", direction))
+	s.sendText("You flee head over heels.")
 
 	// Send new room state
 	return cmdLook(s, nil)

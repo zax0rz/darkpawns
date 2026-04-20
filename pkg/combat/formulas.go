@@ -190,25 +190,32 @@ var dexApp = []dexAppType{
 }
 
 // strIndex returns the str_app index for a combatant.
-// For simplicity at Phase 2, players/mobs don't have STR/ADD stats yet,
-// so we default to index 10 (str=10, no bonus/penalty).
-// TODO: expose STR and ADD via Combatant interface in Phase 3+.
+// Implements STRENGTH_APPLY_INDEX macro from utils.h line 440
+// Source: utils.h: STRENGTH_APPLY_INDEX(ch) macro
+// TODO: Need to handle StrAdd for 18/xx exceptional strength
 func strIndex(c Combatant) int {
-	return 10
+	str := c.GetStr()
+	// For now, return str directly (no exceptional strength handling)
+	// In original: str_app index is str unless str==18 with strAdd>0
+	return str
 }
 
 // dexIndex returns the dex_app index for a combatant.
-// Defaults to 10 (no bonus/penalty) until DEX is exposed.
-// TODO: expose DEX via Combatant interface in Phase 3+.
+// Source: fight.c uses GET_DEX(ch) directly for dex_app index
 func dexIndex(c Combatant) int {
-	return 10
+	dex := c.GetDex()
+	if dex < 0 {
+		dex = 0
+	} else if dex > 25 {
+		dex = 25
+	}
+	return dex
 }
 
 // getTHAC0 returns the base THAC0 for a combatant.
 // Mobs always use 20 (from fight.c line 1786).
-// Players use the class/level table. Since Class isn't on the interface yet,
-// we default players to WARRIOR (best THAC0) as a placeholder.
-// TODO: expose Class via Combatant interface in Phase 3+.
+// Players use the class/level table.
+// Source: fight.c line 1784-1785
 func getTHAC0(c Combatant) int {
 	if c.IsNPC() {
 		return 20
@@ -220,8 +227,11 @@ func getTHAC0(c Combatant) int {
 	if level > 40 {
 		level = 40
 	}
-	// Default to WARRIOR table until Class is exposed
-	return thaco[CLASS_WARRIOR][level]
+	class := c.GetClass()
+	if class < 0 || class >= len(thaco) {
+		class = CLASS_WARRIOR // Default to warrior if invalid class
+	}
+	return thaco[class][level]
 }
 
 // CalculateHitChance implements the original hit() logic from fight.c lines 1783–1830.
@@ -229,9 +239,9 @@ func getTHAC0(c Combatant) int {
 // Original formula:
 //   calc_thaco = thaco[class][level]           (players) or 20 (mobs)
 //   calc_thaco -= str_app[str_index].tohit
-//   calc_thaco -= GET_HITROLL(ch)              (TODO: not yet on interface)
-//   calc_thaco -= (INT-13)/1.5                 (TODO: not yet on interface)
-//   calc_thaco -= (WIS-13)/1.5                 (TODO: not yet on interface)
+//   calc_thaco -= GET_HITROLL(ch)              (fight.c line 1812)
+//   calc_thaco -= (INT-13)/1.5                 (fight.c line 1813)
+//   calc_thaco -= (WIS-13)/1.5                 (fight.c line 1814)
 //   diceroll = number(1,20)
 //   victim_ac = GET_AC(victim)/10
 //   if AWAKE: victim_ac += dex_app[dex].defensive
@@ -241,6 +251,13 @@ func getTHAC0(c Combatant) int {
 func CalculateHitChance(attacker, defender Combatant) bool {
 	calcThaco := getTHAC0(attacker)
 	calcThaco -= strApp[strIndex(attacker)].ToHit
+	calcThaco -= attacker.GetHitroll() // fight.c line 1812
+	
+	// INT and WIS THAC0 reduction - fight.c lines 1813-1814
+	intBonus := int(float64(attacker.GetInt()-13) / 1.5)
+	wisBonus := int(float64(attacker.GetWis()-13) / 1.5)
+	calcThaco -= intBonus
+	calcThaco -= wisBonus
 
 	diceroll := rand.Intn(20) + 1
 
@@ -267,17 +284,101 @@ func CalculateHitChance(attacker, defender Combatant) bool {
 	return true // hit
 }
 
+// getMinusDam implements get_minusdam() from fight.c lines 1722-1760.
+// Reduces damage based on victim's AC.
+// Source: fight.c get_minusdam() function
+func getMinusDam(dam int, ac int) int {
+	pcmod := 2.0 // Player character modifier
+	
+	// Note: In original, lower AC is better (negative values).
+	// The function checks if ac > X, meaning less negative (worse armor).
+	if ac > 90 {
+		return dam
+	}
+	if ac > 80 {
+		return dam - int(float64(dam)*(0.01*pcmod))
+	}
+	if ac > 70 {
+		return dam - int(float64(dam)*(0.02*pcmod))
+	}
+	if ac > 60 {
+		return dam - int(float64(dam)*(0.03*pcmod))
+	}
+	if ac > 50 {
+		return dam - int(float64(dam)*(0.04*pcmod))
+	}
+	if ac > 40 {
+		return dam - int(float64(dam)*(0.05*pcmod))
+	}
+	if ac > 30 {
+		return dam - int(float64(dam)*(0.06*pcmod))
+	}
+	if ac > 20 {
+		return dam - int(float64(dam)*(0.07*pcmod))
+	}
+	if ac > 10 {
+		return dam - int(float64(dam)*(0.08*pcmod))
+	}
+	if ac > 0 {
+		return dam - int(float64(dam)*(0.10*pcmod))
+	}
+	if ac > -10 {
+		return dam - int(float64(dam)*(0.11*pcmod))
+	}
+	if ac > -20 {
+		return dam - int(float64(dam)*(0.12*pcmod))
+	}
+	if ac > -30 {
+		return dam - int(float64(dam)*(0.13*pcmod))
+	}
+	if ac > -40 {
+		return dam - int(float64(dam)*(0.14*pcmod))
+	}
+	if ac > -50 {
+		return dam - int(float64(dam)*(0.15*pcmod))
+	}
+	if ac > -60 {
+		return dam - int(float64(dam)*(0.16*pcmod))
+	}
+	if ac > -70 {
+		return dam - int(float64(dam)*(0.17*pcmod))
+	}
+	if ac > -80 {
+		return dam - int(float64(dam)*(0.18*pcmod))
+	}
+	if ac > -90 {
+		return dam - int(float64(dam)*(0.19*pcmod))
+	}
+	if ac > -95 {
+		return dam - int(float64(dam)*(0.20*pcmod))
+	}
+	if ac > -110 {
+		return dam - int(float64(dam)*(0.21*pcmod))
+	}
+	if ac > -130 {
+		return dam - int(float64(dam)*(0.22*pcmod))
+	}
+	if ac > -150 {
+		return dam - int(float64(dam)*(0.23*pcmod))
+	}
+	
+	// ac <= -150
+	return dam - int(float64(dam)*(0.24*pcmod))
+}
+
 // CalculateDamage implements the original damage calculation from fight.c lines 1840–1858.
 //
 // Original formula:
 //   dam = str_app[str_index].todam
-//   dam += GET_DAMROLL(ch)             (TODO: not yet on interface)
+//   dam += GET_DAMROLL(ch)             (fight.c line 1840)
 //   if player+wielding weapon: dam += dice(weapon_val1, weapon_val2)
 //   if mob: dam += dice(damnodice, damsizedice)
 //   if player+no weapon: dam += number(0, level/3)
 //   if victim position < POS_FIGHTING: dam *= 1 + (POS_FIGHTING-pos)/3
+//   dam = get_minusdam(dam, victim)    (fight.c line 1882)
 func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attackType AttackType) int {
 	dam := strApp[strIndex(attacker)].ToDam
+	dam += attacker.GetDamroll() // fight.c line 1840
 
 	// Weapon/bare hands damage
 	damRoll := attacker.GetDamageRoll()
@@ -300,6 +401,12 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 		dam = dam * (1 + (POS_FIGHTING-defPos)) / 3
 	}
 
+	// Apply AC damage reduction (get_minusdam) - fight.c line 1882
+	// Only for normal weapon hits, not spells
+	if attackType == AttackNormal {
+		dam = getMinusDam(dam, defender.GetAC())
+	}
+
 	// Minimum 1 damage
 	if dam < 1 {
 		dam = 1
@@ -308,32 +415,75 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 	return dam
 }
 
-// GetAttacksPerRound implements perform_violence() mob attack count from fight.c lines 1904–1922.
-// Player attack calculation is not yet implemented (requires class info).
-func GetAttacksPerRound(mob Combatant, hasHaste, hasSlow bool) int {
-	level := mob.GetLevel()
-	attacks := 4
-
-	if level >= 31 {
-		attacks = 5
-	} else if level <= 30 {
+// GetAttacksPerRound implements perform_violence() attack count from fight.c lines 1904–1945.
+// Source: fight.c perform_violence() function
+func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
+	attacks := 1
+	if c.IsNPC() {
+		// Mob attack calculation - fight.c lines 1904-1922
+		level := c.GetLevel()
 		attacks = 4
-	}
-	if level <= 27 {
-		attacks = 3
-	}
-	if level <= 20 {
-		attacks = 2
-	}
-	if level <= 10 {
+
+		if level >= 31 {
+			attacks = 5
+		} else if level <= 30 {
+			attacks = 4
+		}
+		if level <= 27 {
+			attacks = 3
+		}
+		if level <= 20 {
+			attacks = 2
+		}
+		if level <= 10 {
+			attacks = 1
+		}
+
+		// Random bonus: number(0, 900) < level
+		if rand.Intn(901) < level {
+			attacks++
+		}
+	} else {
+		// Player attack calculation - fight.c lines 1924-1945
 		attacks = 1
+		level := c.GetLevel()
+		class := c.GetClass()
+		
+		// Warriors/Paladins/Rangers: +1 at level 10+ (60% + level% chance)
+		if (class == CLASS_WARRIOR || class == CLASS_PALADIN || class == CLASS_RANGER) &&
+		   level > 10 && rand.Intn(100) < (60+level) {
+			attacks++
+		}
+		
+		// Ninjas/Avatars: +1 at level 12+ (60% + level% chance)
+		if (class == CLASS_NINJA || class == CLASS_AVATAR) &&
+		   level > 12 && rand.Intn(100) < (60+level) {
+			attacks++
+		}
+		
+		// Thieves/Assassins: +1 at level 15+ (30% + level% chance)
+		if (class == CLASS_THIEF || class == CLASS_ASSASSIN) &&
+		   level > 15 && rand.Intn(100) < (30+level) {
+			attacks++
+		}
+		
+		// All players: +1 at level 25+ (75% chance)
+		if level > 25 && rand.Intn(100) < 75 {
+			attacks++
+		}
+		
+		// All players: +1 at level 30+ OR !number(0,500)
+		if level > 30 || rand.Intn(501) == 0 {
+			attacks++
+		}
+		
+		// All players: +2 at level 39+
+		if level > 39 {
+			attacks += 2
+		}
 	}
 
-	// Random bonus: number(0, 900) < level
-	if rand.Intn(901) < level {
-		attacks++
-	}
-
+	// Haste/Slow effects - fight.c lines 1922, 1944-1945
 	if hasHaste {
 		attacks++
 	}

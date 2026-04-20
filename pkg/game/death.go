@@ -25,11 +25,23 @@ const MortalStartRoom = 8004
 
 // HandleDeath is the DeathFunc set on the combat engine.
 // It handles both player and mob death faithfully to the original.
+// This is called for combat deaths (die_with_killer).
+// Source: fight.c die_with_killer() uses GET_EXP(ch)/37
 func (w *World) HandleDeath(victim, killer combat.Combatant) {
 	if victim.IsNPC() {
 		w.handleMobDeath(victim)
 	} else {
-		w.handlePlayerDeath(victim)
+		w.handlePlayerDeath(victim, true) // combat death
+	}
+}
+
+// HandleNonCombatDeath handles non-combat deaths (bleed-out, legacy).
+// Source: fight.c die() uses GET_EXP(ch)/3
+func (w *World) HandleNonCombatDeath(victim combat.Combatant) {
+	if victim.IsNPC() {
+		w.handleMobDeath(victim)
+	} else {
+		w.handlePlayerDeath(victim, false) // non-combat death
 	}
 }
 
@@ -71,12 +83,13 @@ func (w *World) handleMobDeath(victim combat.Combatant) {
 	w.mu.Unlock()
 }
 
-// handlePlayerDeath implements die() + raw_kill() for players.
+// handlePlayerDeath implements die()/die_with_killer() + raw_kill() for players.
 // Original:
-//   die():     gain_exp(ch, -(GET_EXP(ch)/3))
+//   die_with_killer(): gain_exp(ch, -(GET_EXP(ch)/37))  (combat death)
+//   die():             gain_exp(ch, -(GET_EXP(ch)/3))   (non-combat death)
 //   raw_kill(): stop_fighting, make_corpse, extract_char
 // Modern addition: respawn at MortalStartRoom, heal to full.
-func (w *World) handlePlayerDeath(victim combat.Combatant) {
+func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool) {
 	roomVNum := victim.GetRoom()
 
 	// Find the Player
@@ -85,8 +98,15 @@ func (w *World) handlePlayerDeath(victim combat.Combatant) {
 		return
 	}
 
-	// die(): lose EXP/3 — from fight.c: gain_exp(ch, -(GET_EXP(ch)/3))
-	expLoss := player.Exp / 3
+	// EXP loss based on death type
+	// die_with_killer(): GET_EXP(ch)/37 (combat death) - fight.c line 590
+	// die(): GET_EXP(ch)/3 (non-combat death) - fight.c line 628
+	var expLoss int
+	if isCombatDeath {
+		expLoss = player.Exp / 37
+	} else {
+		expLoss = player.Exp / 3
+	}
 	player.mu.Lock()
 	player.Exp -= expLoss
 	if player.Exp < 0 {
