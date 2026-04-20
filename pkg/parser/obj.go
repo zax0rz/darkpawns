@@ -41,6 +41,39 @@ type ExtraDesc struct {
 	Description string
 }
 
+// lineBuffer wraps a bufio.Scanner to allow one-line "unread" for the obj parser.
+// Needed because parseObj reads until it sees the next #VNUM line, then must
+// return that line to the caller rather than consuming it.
+type lineBuffer struct {
+	scanner  *bufio.Scanner
+	buffered string
+	has      bool
+}
+
+func (lb *lineBuffer) Scan() bool {
+	if lb.has {
+		lb.has = false
+		return true
+	}
+	return lb.scanner.Scan()
+}
+
+func (lb *lineBuffer) Text() string {
+	if lb.has {
+		return lb.buffered
+	}
+	return lb.scanner.Text()
+}
+
+func (lb *lineBuffer) Unread(line string) {
+	lb.buffered = line
+	lb.has = true
+}
+
+func (lb *lineBuffer) Err() error {
+	return lb.scanner.Err()
+}
+
 // ParseObjFile parses a single .obj file and returns all objects.
 func ParseObjFile(path string) ([]Obj, error) {
 	file, err := os.Open(path)
@@ -50,10 +83,10 @@ func ParseObjFile(path string) ([]Obj, error) {
 	defer file.Close()
 
 	var objs []Obj
-	scanner := bufio.NewScanner(file)
+	lb := &lineBuffer{scanner: bufio.NewScanner(file)}
 
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	for lb.Scan() {
+		line := strings.TrimSpace(lb.Text())
 
 		if line == "" || strings.HasPrefix(line, "*") {
 			continue
@@ -61,57 +94,66 @@ func ParseObjFile(path string) ([]Obj, error) {
 
 		if strings.HasPrefix(line, "#") {
 			vnum, err := strconv.Atoi(line[1:])
-			if err != nil {
-				return nil, fmt.Errorf("invalid obj vnum: %s", line)
+			if err != nil || vnum == 0 || vnum == 99999 {
+				// #0, #99999, or parse error = end of file sentinel
+				break
 			}
 
-			obj, err := parseObj(scanner, vnum)
+			obj, nextLine, err := parseObj(lb, vnum)
 			if err != nil {
 				return nil, fmt.Errorf("parse obj %d: %w", vnum, err)
 			}
 			objs = append(objs, obj)
+
+			// parseObj consumed the next #VNUM line — put it back so the
+			// outer loop sees it on the next iteration.
+			if nextLine != "" {
+				lb.Unread(nextLine)
+			}
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
+	if err := lb.Err(); err != nil {
 		return nil, fmt.Errorf("scan %s: %w", path, err)
 	}
 
 	return objs, nil
 }
 
-func parseObj(scanner *bufio.Scanner, vnum int) (Obj, error) {
+// parseObj parses one object record. Returns the object, the next unconsumed
+// line (the #VNUM that terminated the E/A block), and any error.
+func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 	obj := Obj{VNum: vnum}
 
 	// Keywords (ends with ~)
-	if !scanner.Scan() {
-		return obj, fmt.Errorf("expected obj keywords")
+	if !lb.Scan() {
+		return obj, "", fmt.Errorf("expected obj keywords")
 	}
-	obj.Keywords = strings.TrimSuffix(scanner.Text(), "~")
+	obj.Keywords = strings.TrimSuffix(lb.Text(), "~")
 
 	// Short description (ends with ~)
-	if !scanner.Scan() {
-		return obj, fmt.Errorf("expected obj short desc")
+	if !lb.Scan() {
+		return obj, "", fmt.Errorf("expected obj short desc")
 	}
-	obj.ShortDesc = strings.TrimSuffix(scanner.Text(), "~")
+	obj.ShortDesc = strings.TrimSuffix(lb.Text(), "~")
 
 	// Long description (ends with ~)
-	if !scanner.Scan() {
-		return obj, fmt.Errorf("expected obj long desc")
+	if !lb.Scan() {
+		return obj, "", fmt.Errorf("expected obj long desc")
 	}
-	obj.LongDesc = strings.TrimSuffix(scanner.Text(), "~")
+	obj.LongDesc = strings.TrimSuffix(lb.Text(), "~")
 
 	// Action description (ends with ~, can be empty)
-	if !scanner.Scan() {
-		return obj, fmt.Errorf("expected obj action desc")
+	if !lb.Scan() {
+		return obj, "", fmt.Errorf("expected obj action desc")
 	}
-	obj.ActionDesc = strings.TrimSuffix(scanner.Text(), "~")
+	obj.ActionDesc = strings.TrimSuffix(lb.Text(), "~")
 
 	// Type flag and flags line
-	if !scanner.Scan() {
-		return obj, fmt.Errorf("expected obj type/flags line")
+	if !lb.Scan() {
+		return obj, "", fmt.Errorf("expected obj type/flags line")
 	}
-	flags := strings.Fields(scanner.Text())
+	flags := strings.Fields(lb.Text())
 	if len(flags) >= 9 {
 		obj.TypeFlag, _ = strconv.Atoi(flags[0])
 		for i := 0; i < 4; i++ {
@@ -123,49 +165,64 @@ func parseObj(scanner *bufio.Scanner, vnum int) (Obj, error) {
 	}
 
 	// Values line
-	if !scanner.Scan() {
-		return obj, fmt.Errorf("expected obj values line")
+	if !lb.Scan() {
+		return obj, "", fmt.Errorf("expected obj values line")
 	}
-	values := strings.Fields(scanner.Text())
+	values := strings.Fields(lb.Text())
 	for i := 0; i < 4 && i < len(values); i++ {
 		obj.Values[i], _ = strconv.Atoi(values[i])
 	}
 
 	// Weight, cost, load percent line
-	if !scanner.Scan() {
-		return obj, fmt.Errorf("expected obj weight/cost line")
+	if !lb.Scan() {
+		return obj, "", fmt.Errorf("expected obj weight/cost line")
 	}
-	wcl := strings.Fields(scanner.Text())
+	wcl := strings.Fields(lb.Text())
 	if len(wcl) >= 3 {
 		obj.Weight, _ = strconv.Atoi(wcl[0])
 		obj.Cost, _ = strconv.Atoi(wcl[1])
 		obj.LoadPercent, _ = strconv.ParseFloat(wcl[2], 64)
 	}
 
-	// Parse extra descriptions and affects until $ or #
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	// Parse extra descriptions (E) and affects (A) until "$" or next "#VNUM".
+	// When we see a "#" line, return it as nextLine so the caller can unread it.
+	var nextLine string
+	for lb.Scan() {
+		line := strings.TrimSpace(lb.Text())
 
-		if line == "$" || strings.HasPrefix(line, "#") {
+		if line == "$" {
+			break
+		}
+		if strings.HasPrefix(line, "#") {
+			// Next object's vnum — hand back to caller
+			nextLine = line
 			break
 		}
 
 		if line == "E" {
-			// Extra description
+			// Extra description: keywords~ then multi-line desc ending with ~
 			var ed ExtraDesc
-			if scanner.Scan() {
-				ed.Keywords = strings.TrimSuffix(scanner.Text(), "~")
+			if lb.Scan() {
+				ed.Keywords = strings.TrimSuffix(lb.Text(), "~")
 			}
-			if scanner.Scan() {
-				ed.Description = strings.TrimSuffix(scanner.Text(), "~")
+			var descLines []string
+			for lb.Scan() {
+				descLine := lb.Text()
+				trimmed := strings.TrimSpace(descLine)
+				if strings.HasSuffix(trimmed, "~") {
+					descLines = append(descLines, strings.TrimSuffix(trimmed, "~"))
+					break
+				}
+				descLines = append(descLines, descLine)
 			}
+			ed.Description = strings.Join(descLines, "\n")
 			obj.ExtraDescs = append(obj.ExtraDescs, ed)
 		}
 
 		if line == "A" {
-			// Affect
-			if scanner.Scan() {
-				affectFields := strings.Fields(scanner.Text())
+			// Affect: location modifier
+			if lb.Scan() {
+				affectFields := strings.Fields(lb.Text())
 				if len(affectFields) >= 2 {
 					var aff ObjAffect
 					aff.Location, _ = strconv.Atoi(affectFields[0])
@@ -176,12 +233,18 @@ func parseObj(scanner *bufio.Scanner, vnum int) (Obj, error) {
 		}
 	}
 
-	return obj, nil
+	return obj, nextLine, nil
 }
 
-// parseFlag converts an ASCII flag string like "abc" to an integer bitmask.
+// parseFlag converts a flag value to an integer.
+// Dark Pawns stores flags as plain integers (e.g. "8193"), not CircleMUD's
+// letter-encoded bitmasks. We try integer parse first, fall back to letters.
 func parseFlag(s string) int {
-	// CircleMUD uses lowercase letters a-z for bits 0-25, A-Z for bits 26-31
+	// Try plain integer first (Dark Pawns format)
+	if v, err := strconv.Atoi(s); err == nil {
+		return v
+	}
+	// Fall back to letter-encoded bitmask (original CircleMUD format)
 	result := 0
 	for _, c := range s {
 		if c >= 'a' && c <= 'z' {
