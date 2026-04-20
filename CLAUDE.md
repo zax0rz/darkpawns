@@ -32,9 +32,12 @@ When implementing any game mechanic (combat, death, movement, items, spells, AI)
 
 Key source files:
 - `fight.c` — combat, damage, death, fleeing
-- `class.c` — class definitions, THAC0 tables
-- `constants.c` — str_app, dex_app, and other stat tables
-- `structs.h` / `utils.h` — constants, macros
+- `class.c` — class definitions, THAC0 tables, advance_level, backstab_mult
+- `constants.c` — str_app, dex_app, con_app, wis_app, and other stat tables
+- `structs.h` / `utils.h` — constants, macros, alignment thresholds
+- `mobact.c` — mob AI: aggression, memory, scavenger, helper, wimpy
+- `act.item.c` — item commands: get, drop, wear, wield, remove
+- `interpreter.c` — character creation flow (nanny), class/race validation
 - `config.c` — world configuration (start rooms, etc.)
 - `lib/world/` — world files (.wld, .mob, .obj, .zon)
 
@@ -44,7 +47,7 @@ Key source files:
 
 - **Language:** Go 1.24.2
 - **Transport:** WebSocket (gorilla/websocket)
-- **Database:** PostgreSQL (not yet fully wired)
+- **Database:** PostgreSQL (wired — save/load on connect/disconnect)
 - **Scripting:** gopher-lua (Phase 3 — not yet started)
 - **World files:** Original Dark Pawns `.wld`, `.mob`, `.obj`, `.zon` format, parsed in `pkg/parser/`
 
@@ -53,7 +56,8 @@ Key source files:
 ## Current Status
 
 ### ✅ Phase 0 — World Parser
-- Parses all original world files: 10,057 rooms, 1,313 mobs, 854 objects, 95 zones
+- Parses all original world files: 10,057 rooms, 1,313 mobs, 1,620 objects, 95 zones
+- **Note:** Object count was 854 before Phase 2c — a parser lookahead bug was silently dropping every other object. Fixed.
 - Located in `pkg/parser/`
 
 ### ✅ Phase 1 — Minimal Engine
@@ -61,41 +65,97 @@ Key source files:
 - Player login, basic commands
 - Located in `pkg/session/`, `pkg/game/`
 
-### ✅ Phase 2 — Core Systems
-- Combat engine (THAC0/AC formula from `fight.c`, tables from `class.c`/`constants.c`)
-- `hit` and `flee` commands
-- Mob spawning from zone files (`pkg/game/spawner.go`)
-- AI behaviors: aggressive mobs attack players, wandering mobs move
-- Death/respawn: exp loss (EXP/3 from `fight.c`), corpse creation, respawn at room 8004
-- Inventory and equipment system (partial — still uses `*parser.Obj`, not `ObjectInstance`)
+### ✅ Phase 2b — Full Play Loop
+- Character creation: 12 classes, 7 races, stat rolling (roll_real_abils from class.c)
+- Starting items given on first login (do_start from class.c)
+- Full inventory and equipment system (ObjectInstance, not parser.Obj)
+- get/drop/wear/wield/remove/inventory/equipment commands
+- PostgreSQL persistence: save on disconnect, load on login
+- StrAdd (18/xx warrior STR) persisted
 
-### ⬜ Phase 3 — Lua Integration
-- Embed gopher-lua
-- Expose game API to Lua (act, do_damage, etc.)
-- Port room/mob/obj scripts from `darkpawns/lib/scripts/`
+### ✅ Phase 2c — Correctness Pass (QA audit against original C source)
+
+**Combat:**
+- EXP loss on death: `/37` for combat deaths (die_with_killer), `/3` for bleed-out (die) — fight.c
+- Attacks-per-round: full per-class/level formula from fight.c perform_violence()
+- AC damage reduction: get_minusdam() ported from fight.c
+- Flee XP loss: formula from act.offensive.c do_flee()
+- THAC0 now uses correct per-class table (was always warrior)
+- STR/DEX stat indices wired into hit/damage (str_app, dex_app from constants.c)
+- Hitroll/damroll wired (return 0 until equipment affects in Phase 3)
+- INT/WIS THAC0 reduction: (stat-13)/1.5 from fight.c
+- Backstab multiplier: (level*0.2)+1, 20 at LVL_IMMORT — class.c
+
+**World:**
+- advance_level() implemented — per-class HP/mana/move gains, con_app table — class.c
+- Mob equipped items transferred to corpse on death (was discarded)
+- Zone resets implemented — M/O/G/E/R/D commands, zone age/lifespan ticker
+- Sentinel mobs now correctly attack (was blocking aggression — mobact.c fix)
+- MOB_STAY_ZONE enforced — mobs don't wander across zones
+- ROOM_DEATH and ROOM_NOMOB checked before mob movement
+- Room flags parsed from .wld bitmask (structs.h)
+
+**Equipment:**
+- ITEM_WEAR_TAKE (bit 0) no longer maps to equip slot
+- ITEM_WEAR_SHIELD maps to distinct SlotShield
+- Dual slots: SlotFingerR/L, SlotNeck1/2, SlotWristR/L
+
+**AI behaviors:**
+- MOB_MEMORY: mob hunts players who attacked it (mobact.c)
+- MOB_AGGR_EVIL/GOOD/NEUTRAL: alignment-based aggression (mobact.c)
+- MOB_WIMPY: skips awake players (mobact.c)
+- MOB_SCAVENGER: picks up highest-value room item (mobact.c)
+- MOB_HELPER: joins combat to assist other fighting mobs (mobact.c)
+
+**Characters:**
+- 7 races fully implemented (Rakshasa, Ssaur added)
+- Class/race restrictions: Ninja is Human-only, remort classes blocked at creation
+- Starting class skills assigned (Thief/Assassin, Kender/Minotaur racial)
+- Player.Alignment field added (-1000 to +1000)
+- Attack-type corpse descriptions scaffolded (fire/cold/slash — Phase 3 for spell types)
+
+### ⬜ Phase 3 — Lua Scripting
+**Goal:** The world feels alive. Traps spring, mobs talk, quests trigger.
+
+- Embed gopher-lua (`github.com/yuin/gopher-lua`)
+- Expose original Dark Pawns script API: `act()`, `do_damage()`, `ch.hp`, `number()`, `send_to_room()`
+- Trigger types: `onpulse()`, `oncmd()`, `onenter()`, `ondeath()`
+- Priority scripts to port (start here, not all 179):
+  1. Room traps — `onenter()` working
+  2. Shopkeeper mobs — `oncmd()` working
+  3. Quest-giving mobs — state tracking
+  4. Special items — `onuse()`
+- Source: `scripting.c`, `lib/scripts/*.lua`
 
 ### ⬜ Phase 4 — Agent Protocol
-- API key authentication
-- Structured JSON state endpoint
-- Action API, event streaming, rate limiting
+- API key authentication (`{"type":"auth_apikey","data":{"key":"dp_abc123"}}`)
+- Structured JSON state after every action (room, self, events)
+- Rate limiting: 1 action/100ms, combat locked to 2s engine tick
+- Simple Python bot as proof-of-concept
 
-### ⬜ Phase 5 — BRENDA-Lobster Integration
-- BRENDA connects as an agent player
+### ⬜ Phase 5 — BRENDA Plays
+- BRENDA69 gets a persistent character (class TBD — Mage or Assassin)
+- API key in Vaultwarden
+- mem0 for cross-session memory ("last time we were here, Zach died to the dragon")
+- SOUL.md applies in-game: opinions, dry commentary, refuses stupid plans
 
-### ⬜ Phase 6 — Polish & Release
-- Web client, Telnet support, admin tools, public server
+### ⬜ Phase 6 — Polish & Public Server
+- Web client (React, VT100, inventory panel)
+- Telnet support (GMCP/MXP)
+- Admin tools, public hosting at darkpawns.labz0rz.com
 
 ---
 
-## Known TODOs (Flagged in Code)
+## Known TODOs (Deferred — Do Not Fix Now)
 
-These are deferred to later phases — do not "fix" them now:
-
-- `STR/DEX/INT/WIS/Class` not yet on `Combatant` interface — formula defaults to neutral. Phase 3.
-- Player inventory still `*parser.Obj`, not `ObjectInstance` — corpse doesn't transfer items yet. Phase 3.
-- Respawn is instant heal + teleport — original had resurrection by other players. Phase 3+.
-- `backstab_mult()` in `formulas.go` is approximated — port from `skills.c` in Phase 3.
-- Player attack count in `GetAttacksPerRound` defaults to 1 — needs class info. Phase 3.
+- **Hitroll/damroll from equipment** — returns 0 until Phase 3 equipment affect system
+- **Attack-type corpse descriptions** — attack type not tracked until Phase 3 spell system
+- **Practices** — wis_app bonus calculated in advance_level() but field not added to Player yet
+- **Move points** — calculated in advance_level() but not tracked on Player yet
+- **Player resurrection** — currently instant respawn; original required other players. Phase 3+
+- **Weight limits** — CAN_CARRY_W not enforced (requires str_app carry_w lookup). Phase 3
+- **Skills persistence** — Skills map not saved to DB yet. Phase 3
+- **Alignment persistence** — Alignment not saved to DB yet. Phase 3
 
 ---
 
@@ -114,14 +174,17 @@ These are deferred to later phases — do not "fix" them now:
 cd /home/zach/.openclaw/workspace/darkpawns-phase1
 export PATH=$PATH:/usr/local/go/bin
 go build ./cmd/server
-./server -world ../darkpawns/lib
+./server -world /path/to/darkpawns/lib/world -port 8080 -db "postgres://..."
 ```
+
+World files are at: `/home/zach/.openclaw/workspace/darkpawns/lib/world`
 
 Connect via WebSocket at `ws://localhost:8080/ws`:
 ```json
-{"type":"login","data":{"player_name":"YourName"}}
+{"type":"login","data":{"player_name":"YourName","class":3,"race":0,"new_char":true}}
 {"type":"command","data":{"command":"look"}}
 {"type":"command","data":{"command":"hit","args":["goblin"]}}
+{"type":"command","data":{"command":"wield","args":["sword"]}}
 ```
 
 ---
@@ -131,5 +194,6 @@ Connect via WebSocket at `ws://localhost:8080/ws`:
 - Do not invent combat formulas — they exist in `fight.c`
 - Do not invent stat tables — they exist in `constants.c` and `class.c`
 - Do not add "modern improvements" to game mechanics without flagging them as deviations
-- Do not start Phase 3+ work while Phase 2 items are open
-- Do not commit without building (`go build ./cmd/server` must succeed)
+- Do not start the next phase while current phase items are open
+- Do not commit without building (`go build ./...` must succeed)
+- Do not write `if isAgent { ... }` in game logic — agents play by the same rules

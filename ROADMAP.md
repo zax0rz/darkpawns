@@ -22,7 +22,8 @@ corpses, they form parties. BRENDA69 and Zach adventure together. That's the end
 
 ### ✅ Phase 0 — World Parser
 All original world files parse correctly.
-- 10,057 rooms, 1,313 mobs, 854 objects, 95 zones loaded
+- 10,057 rooms, 1,313 mobs, 1,620 objects, 95 zones loaded
+- **Note:** A parser lookahead bug was silently dropping every other object (854 → 1,620 after fix)
 - `pkg/parser/` — parsers for `.wld`, `.mob`, `.obj`, `.zon`
 
 ### ✅ Phase 1 — Minimal Engine
@@ -37,47 +38,47 @@ You can fight things and die.
 - `hit` and `flee` commands
 - Mob spawning from zone files
 - Aggressive mobs attack on entry, wandering mobs roam
-- Death: lose EXP/3, leave a corpse, respawn at room 8004
-- Inventory and equipment structure exists but uses prototypes (`*parser.Obj`), not runtime instances
+- Death: leave a corpse, respawn at room 8004
+- Inventory and equipment structure exists
+
+### ✅ Phase 2b — Full Play Loop
+**Deliverable met:** Kill something. Loot a sword. Equip it. Log out. Log back in with it equipped.
+- Full ObjectInstance inventory/equipment system
+- get/drop/wear/wield/remove/inventory/equipment commands
+- 12 classes, 7 races, stat rolling (roll_real_abils from class.c)
+- Starting items on first login (do_start from class.c)
+- PostgreSQL persistence: save on disconnect, load on login
+- StrAdd (18/xx warrior STR) persisted
+
+### ✅ Phase 2c — Correctness Pass
+Full QA audit against original C source. Everything that was wrong or missing before Phase 3.
+
+**Combat correctness:**
+- EXP loss: `/37` combat deaths, `/3` bleed-out (fight.c die_with_killer vs die)
+- Attacks-per-round: full per-class/level formula (fight.c perform_violence)
+- AC damage reduction: get_minusdam() ported (fight.c)
+- Flee XP loss formula (act.offensive.c)
+- THAC0 uses correct per-class table; STR/DEX/INT/WIS all wired into combat
+- Backstab multiplier: (level*0.2)+1, 20 at LVL_IMMORT (class.c)
+
+**World correctness:**
+- advance_level(): per-class HP/mana/move gains, con_app table (class.c)
+- Mob equipped items transferred to corpse on death
+- Zone resets: M/O/G/E/R/D commands, age/lifespan ticker
+- Sentinel mobs now correctly attack (only movement was blocked)
+- MOB_STAY_ZONE enforced; ROOM_DEATH/ROOM_NOMOB checked
+- Parser bug fixed: was silently dropping every other object (854 → 1,620)
+- Wear flag integers parsed correctly (was treating as letter bitmasks)
+
+**AI behaviors:** MOB_MEMORY, MOB_AGGR_EVIL/GOOD/NEUTRAL, MOB_WIMPY, MOB_SCAVENGER, MOB_HELPER
+
+**Equipment slots:** Dual finger/neck/wrist slots; shield slot distinct from hold; TAKE bit removed
+
+**Characters:** 7 races complete; class/race restrictions; starting skills; Player.Alignment field
 
 ---
 
 ## What's Next
-
-### ✅ Phase 2b — "I Can Actually Play This"
-**Goal:** A complete play loop. Log in, kill something, loot it, equip the weapon,
-log out, log back in and still have your stuff.
-
-This phase finishes what Phase 2 started before moving to Lua scripting.
-Lua scripts manipulate items and check character stats constantly — none of that
-works until this foundation is solid.
-
-**Items (get/drop/equip/use):**
-- Migrate player inventory from `*parser.Obj` to `*ObjectInstance` (runtime state)
-- `get <item>` — pick up from room
-- `drop <item>` — drop to room
-- `equip <item>` / `wear <item>` — equip from inventory
-- `remove <item>` — unequip
-- `inventory` / `equipment` commands
-- Corpse now actually transfers items (blocked on ObjectInstance migration)
-- Source reference: `act.obj.c`, `handler.c`
-
-**Character creation:**
-- Pick class (12 classes from original) and race (7 races)
-- Stats rolled at creation — port `do_start()` from `db.c`
-- Classes: Mage, Cleric, Thief, Warrior, Magus, Avatar, Assassin, Paladin, Ninja, Psionic, Ranger, Mystic
-- Races: Human, Elf, Gnome, Dwarf, Half-Elf, Halfling, Half-Orc
-- Stats now flow into combat formulas (STR tohit/todam, DEX defensive, etc.)
-- Source reference: `class.c`, `db.c`
-
-**Player persistence (PostgreSQL):**
-- Save and load character on login/logout
-- Schema: name, class, race, level, exp, hp, stats, room_vnum, inventory
-- The DB connection is already wired in `pkg/db/` — just needs the actual save/load logic
-- Source reference: `db.c` (save_char, load_char)
-
-**Deliverable:** Kill a rat. Loot a sword from its corpse. Equip it. Log out. Log back in
-with the sword still equipped. THAC0 reflects your class and STR.
 
 ---
 
