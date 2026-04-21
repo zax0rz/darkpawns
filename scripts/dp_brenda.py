@@ -364,6 +364,7 @@ class BrendaAgent:
         self.zach_in_room = False
 
         self.history_context = ""
+        self.narrative_block = ""
         self._was_fighting = False
         self.recent_text: deque[str] = deque(maxlen=5)
 
@@ -418,6 +419,9 @@ class BrendaAgent:
         else:
             self.history_context = ""
             log("MEM0", "No prior memories found — fresh start")
+
+        if self.narrative_block:
+            log("MEMORY", "Server-side narrative bootstrap also active")
 
     def _save_kill(self, target: str):
         self.kill_count += 1
@@ -555,11 +559,20 @@ class BrendaAgent:
         # LLM decision
         recent_feedback = list(self.recent_text)
         self.recent_text.clear()
+
+        # Merge server-side narrative block with subjective mem0 history
+        if self.narrative_block and self.history_context:
+            combined_history = self.narrative_block + "\n\n[SUBJECTIVE MEMORY (mem0)]\n" + self.history_context
+        elif self.narrative_block:
+            combined_history = self.narrative_block
+        else:
+            combined_history = self.history_context
+
         action, in_game_say, commentary = llm_decide(
             self.state,
             self.model,
             self.litellm_url,
-            history_context=self.history_context,
+            history_context=combined_history,
             party_context=self._party_context(),
             recent_text=recent_feedback if recent_feedback else None,
         )
@@ -649,6 +662,12 @@ class BrendaAgent:
                                 f"Vars | hp={self.state.get('HEALTH', 0)} "
                                 f"room={self.state.get('ROOM_NAME', '?')}"
                             ))
+                        elif mtype == "memory_bootstrap":
+                            data = msg.get("data", {})
+                            self.narrative_block = data.get("block", "")
+                            count = data.get("count", 0)
+                            summaries = data.get("summaries", 0)
+                            log("MEMORY", f"Bootstrap: {count} memories, {summaries} summaries")
                         elif mtype == "error":
                             log("ERROR", msg.get("data", {}).get("message", "?"))
                             return  # unrecoverable auth error
