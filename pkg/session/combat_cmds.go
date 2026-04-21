@@ -8,6 +8,9 @@ import (
 )
 
 // cmdHit initiates combat with a target.
+// Note: once combat is started, further "hit" commands are no-ops (IsFighting check below).
+// Actual attack cadence is governed by the 2-second engine tick in combat/engine.go —
+// not by how fast the client sends commands. Rate limiting here only affects the initiation.
 func cmdHit(s *Session, args []string) error {
 	if len(args) == 0 {
 		s.sendText("Hit whom?")

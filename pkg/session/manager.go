@@ -14,6 +14,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"golang.org/x/time/rate"
 )
 
 var upgrader = websocket.Upgrader{
@@ -105,6 +106,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		conn:    conn,
 		manager: m,
 		send:    make(chan []byte, 256),
+		limiter: rate.NewLimiter(rate.Limit(10), 10),
 	}
 
 	// Start goroutines for reading and writing
@@ -177,6 +179,15 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 }
 
 // Session represents a single WebSocket connection.
+//
+// Rate limiting design (Phase 4.3):
+//   - Each session has an independent token bucket: capacity=10, refill=10 tokens/sec.
+//   - This bounds command throughput to ~10 cmd/sec sustained, with short bursts up to 10.
+//   - Applies equally to human players and AI agents — agents are players (see CLAUDE.md).
+//   - Combat is additionally self-rate-limited by the 2-second engine tick in combat/engine.go;
+//     spamming "hit" does nothing extra once combat has started.
+//   - NOTE: This limiter protects the game engine from fast clients. It does NOT protect
+//     API costs (e.g. LLM calls made by agent code outside this server).
 type Session struct {
 	conn       *websocket.Conn
 	manager    *Manager
@@ -184,7 +195,8 @@ type Session struct {
 	player     *game.Player
 	playerName string
 	authenticated bool
-	
+	limiter    *rate.Limiter
+
 	// Character creation state
 	charCreating bool
 	charName     string
@@ -362,6 +374,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 // handleCommand processes game commands.
 func (s *Session) handleCommand(data json.RawMessage) error {
+	if !s.limiter.Allow() {
+		s.sendError("rate limit exceeded — slow down")
+		return nil
+	}
+
 	var cmd CommandData
 	if err := json.Unmarshal(data, &cmd); err != nil {
 		return err
