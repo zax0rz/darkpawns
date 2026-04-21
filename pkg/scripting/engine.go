@@ -91,7 +91,9 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 				mt.RawSetString("level", lua.LNumber(m.GetLevel()))
 				mt.RawSetString("hp", lua.LNumber(m.GetHealth()))
 				mt.RawSetString("maxhp", lua.LNumber(m.GetMaxHealth()))
-				mt.RawSetString("evil", lua.LBool(false))
+				// Check mob alignment (negative = evil)
+				alignment := m.GetPrototype().GetAlignment()
+				mt.RawSetString("evil", lua.LBool(alignment < 0))
 				mt.RawSetString("pos", lua.LNumber(8)) // POS_STANDING
 				mt.RawSetString("vnum", lua.LNumber(m.GetVNum()))
 				mt.RawSetString("room", lua.LNumber(ctx.RoomVNum))
@@ -991,6 +993,15 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		L.Pop(1)
 	}
 	
+	// Helper function for dice rolls
+	dice := func(num, sides int) int {
+		total := 0
+		for i := 0; i < num; i++ {
+			total += rand.Intn(sides) + 1
+		}
+		return total
+	}
+	
 	// Handle different spell types
 	switch spellNum {
 	case 2: // SPELL_TELEPORT
@@ -1009,8 +1020,8 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		
 	case 16: // SPELL_CURE_LIGHT
 		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
-			// Healing spell: restore rand(1, 8) + caster.level/4 HP
-			healAmount := rand.Intn(8) + 1 + casterLevel/4
+			// Healing spell: dice(2,8) + 1 + (level >> 2) - magic.c mag_points() line ~1765
+			healAmount := dice(2, 8) + 1 + (casterLevel >> 2)
 			L.GetField(targetTbl, "hp")
 			currentHP := int(L.ToNumber(-1))
 			L.Pop(1)
@@ -1028,8 +1039,8 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		
 	case 28: // SPELL_HEAL
 		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
-			// Healing spell: restore 100 + rand(1, caster.level) HP
-			healAmount := 100 + rand.Intn(casterLevel) + 1
+			// Healing spell: 100 + dice(3,8) - magic.c mag_points() line ~1783
+			healAmount := 100 + dice(3, 8)
 			L.GetField(targetTbl, "hp")
 			currentHP := int(L.ToNumber(-1))
 			L.Pop(1)
@@ -1047,22 +1058,124 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		
 	case 67: // SPELL_VITALITY
 		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
-			// Restore to full HP
+			// Healing spell: dice(5,10) HP + dice(10,10) move - magic.c mag_points() line ~1800
+			healAmount := dice(5, 10)
+			L.GetField(targetTbl, "hp")
+			currentHP := int(L.ToNumber(-1))
+			L.Pop(1)
 			L.GetField(targetTbl, "maxhp")
 			maxHP := int(L.ToNumber(-1))
 			L.Pop(1)
-			L.SetField(targetTbl, "hp", lua.LNumber(maxHP))
-			log.Printf("[SPELL] Vitality: restored to full HP (%d)", maxHP)
+			newHP := currentHP + healAmount
+			if newHP > maxHP {
+				newHP = maxHP
+			}
+			L.SetField(targetTbl, "hp", lua.LNumber(newHP))
+			// TODO: Restore move points when move tracking is implemented
+			log.Printf("[SPELL] Vitality: restored %d HP (new HP: %d)", healAmount, newHP)
 		}
 		return 0
 	}
 	
 	// For offensive spells (aggressive=true)
 	if aggressive && targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
-		// Simple formula: damage = caster.level * 2 + rand(caster.level, caster.level * 3)
-		minDamage := casterLevel
-		maxDamage := casterLevel * 3
-		damage := casterLevel*2 + rand.Intn(maxDamage-minDamage+1) + minDamage
+		// Calculate damage based on spell type and caster level
+		// Formulas from Dark Pawns magic.c
+		damage := 0
+		switch spellNum {
+		case 32: // SPELL_MAGIC_MISSILE
+			damage = dice(4, 3) + casterLevel
+		case 5: // SPELL_BURNING_HANDS
+			damage = dice(4, 5) + casterLevel
+		case 37: // SPELL_SHOCKING_GRASP
+			damage = dice(4, 7) + casterLevel
+		case 30: // SPELL_LIGHTNING_BOLT
+			damage = dice(9, 4) + casterLevel
+		case 10: // SPELL_COLOR_SPRAY
+			damage = dice(9, 7) + casterLevel
+		case 26: // SPELL_FIREBALL
+			// magic.c mag_damage() line ~690 - non-mage formula (we don't track reagents)
+			damage = dice(12, 8) + casterLevel*2
+		case 58: // SPELL_HELLFIRE
+			// SPELL_HELLFIRE: disabled in original source (magic.c spell_hellfire - dummy) line ~1583
+			log.Printf("[SPELL] SPELL_HELLFIRE: disabled in original source")
+			return 0
+		case 92: // SPELL_DISRUPT
+			// magic.c mag_damage() line ~720 - non-mage formula
+			damage = dice(20, 7) + casterLevel
+		case 93: // SPELL_DISINTEGRATE
+			// magic.c mag_damage() line ~700 - non-mage formula
+			damage = dice(18, 8) + casterLevel
+		case 96: // SPELL_FLAMESTRIKE
+			// SPELL_FLAMESTRIKE: NOT a direct damage spell in mag_damage() - it's an outdoor AFF_FLAMING affect
+			log.Printf("[SPELL] SPELL_FLAMESTRIKE: outdoor affect spell, not direct damage")
+			return 0
+		case 75: // SPELL_ACID_BLAST
+			// magic.c mag_damage() line ~790
+			damage = dice(4, 3) + casterLevel
+		case 22: // SPELL_DISPEL_EVIL
+			// magic.c mag_damage() line ~730
+			damage = dice(9, 5) + casterLevel + 5 + casterLevel/2
+		case 46: // SPELL_DISPEL_GOOD
+			// magic.c mag_damage() line ~740
+			damage = dice(9, 5) + casterLevel + 5
+		case 27: // SPELL_HARM
+			// magic.c mag_damage() line ~750
+			damage = dice(12, 8) + casterLevel*2
+		case 4: // SPELL_BLINDNESS
+			// SPELL_BLINDNESS: affect only, not damage
+			log.Printf("[SPELL] SPELL_BLINDNESS: affect only, not damage")
+			return 0
+		case 17: // SPELL_CURSE
+			// SPELL_CURSE: affect only, not damage
+			log.Printf("[SPELL] SPELL_CURSE: affect only, not damage")
+			return 0
+		case 33: // SPELL_POISON
+			// SPELL_POISON: affect only, not damage
+			log.Printf("[SPELL] SPELL_POISON: affect only, not damage")
+			return 0
+		case 23: // SPELL_EARTHQUAKE
+			// magic.c mag_damage() line ~785
+			damage = dice(7, 7) + casterLevel
+		case 81: // SPELL_DIVINE_INT
+			// SPELL_DIVINE_INT: NOT a damage spell — it summons an angel
+			log.Printf("[SPELL] SPELL_DIVINE_INT: summon spell, not damage")
+			return 0
+		case 82: // SPELL_MIND_BAR
+			// SPELL_MIND_BAR: NOT a damage spell — it's an INT debuff affect
+			log.Printf("[SPELL] SPELL_MIND_BAR: INT debuff affect, not damage")
+			return 0
+		case 41: // SPELL_METEOR_SWARM
+			// SPELL_METEOR_SWARM: Area spell that calls damage() per person in room — not single-target damage
+			log.Printf("[SPELL] SPELL_METEOR_SWARM: area spell handled separately")
+			return 0
+		case 100: // SPELL_PSIBLAST
+			// magic.c mag_damage() line ~805
+			damage = dice(15, 13) + 3 * casterLevel
+		case 104: // SPELL_PETRIFY
+			// SPELL_PETRIFY: raw_kill mechanic, not mag_damage
+			log.Printf("[SPELL] SPELL_PETRIFY: raw_kill mechanic, not mag_damage")
+			return 0
+		case 8: // SPELL_CHILL_TOUCH
+			// magic.c mag_damage() line ~636
+			damage = dice(5, 3) + casterLevel
+		case 6: // SPELL_CALL_LIGHTNING
+			// magic.c mag_damage() line ~748
+			damage = dice(10, 8) + casterLevel + 5
+		case 25: // SPELL_ENERGY_DRAIN
+		case 83: // SPELL_SOUL_LEECH
+			// magic.c mag_damage() line ~778
+			damage = dice(10, 6) + casterLevel
+			// TODO: soul leech also heals caster by dam/3
+		case 62: // SPELL_MINDBLAST
+			// magic.c mag_damage() line ~800
+			damage = dice(9, 7) + casterLevel + casterLevel/2
+		default:
+			// Default formula for unknown offensive spells
+			minDamage := casterLevel
+			maxDamage := casterLevel * 3
+			damage = casterLevel*2 + rand.Intn(maxDamage-minDamage+1) + minDamage
+		}
 		
 		// Get current HP
 		L.GetField(targetTbl, "hp")
@@ -1120,6 +1233,13 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		case 23: spellName = "EARTHQUAKE"
 		case 81: spellName = "DIVINE_INT"
 		case 82: spellName = "MIND_BAR"
+		case 8: spellName = "CHILL_TOUCH"
+		case 6: spellName = "CALL_LIGHTNING"
+		case 25: spellName = "ENERGY_DRAIN"
+		case 83: spellName = "SOUL_LEECH"
+		case 62: spellName = "MINDBLAST"
+		case 100: spellName = "PSIBLAST"
+		case 37: spellName = "SHOCKING_GRASP"
 		}
 		
 		log.Printf("[SPELL] %s casts %s on %s for %d damage (HP: %d -> %d)", 
