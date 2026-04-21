@@ -14,18 +14,20 @@ import (
 // Engine manages the Lua VM.
 // Based on boot_lua() in scripts.c lines 1703-1716.
 type Engine struct {
-	scriptsDir string
-	L          *lua.LState
-	world      ScriptableWorld
+	scriptsDir  string
+	L           *lua.LState
+	world       ScriptableWorld
+	transitItems map[int]ScriptableObject // in-flight items moved by objfrom/objto
 }
 
 // NewEngine creates a new Lua scripting engine.
 func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	L := lua.NewState()
 	engine := &Engine{
-		scriptsDir: scriptsDir,
-		L:          L,
-		world:      world,
+		scriptsDir:  scriptsDir,
+		L:           L,
+		world:       world,
+		transitItems: make(map[int]ScriptableObject),
 	}
 
 	// Open standard libraries
@@ -1372,28 +1374,183 @@ func (e *Engine) luaRound(L *lua.LState) int {
 }
 
 func (e *Engine) luaHasItem(L *lua.LState) int {
-	// has_item(ch, vnum) - check if character has item in inventory
-	log.Printf("[STUB] has_item(ch, vnum)")
-	L.Push(lua.LBool(false)) // Return FALSE for now
+	// has_item(ch, vnum) - returns true if ch has an item with vnum in inventory.
+	// Source: scripts.c lua_has_item() — searches char inventory for matching vnum.
+	chTbl := L.Get(1)
+	vnum := L.ToInt(2)
+
+	if e.world == nil || chTbl.Type() != lua.LTTable {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+
+	nameVal := L.GetField(chTbl, "name")
+	if nameVal.Type() != lua.LTString {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+	charName := string(nameVal.(lua.LString))
+
+	L.Push(lua.LBool(e.world.HasItemByVNum(charName, vnum)))
 	return 1
 }
 
 func (e *Engine) luaObjInRoom(L *lua.LState) int {
-	// obj_in_room(room_vnum, vnum) - check if object is in a room
-	log.Printf("[STUB] obj_in_room(room_vnum, vnum)")
-	L.Push(lua.LNil) // Return nil for now
+	// obj_in_room(room_vnum, obj_vnum) - returns item table if obj_vnum is in room, else nil.
+	// Source: scripts.c lua_obj_in_room().
+	roomVNum := L.ToInt(1)
+	objVNum := L.ToInt(2)
+
+	if e.world == nil {
+		L.Push(lua.LNil)
+		return 1
+	}
+
+	for _, item := range e.world.GetItemsInRoom(roomVNum) {
+		if item.GetVNum() == objVNum {
+			tbl := L.NewTable()
+			tbl.RawSetString("vnum", lua.LNumber(item.GetVNum()))
+			tbl.RawSetString("name", lua.LString(item.GetShortDesc()))
+			tbl.RawSetString("alias", lua.LString(item.GetKeywords()))
+			tbl.RawSetString("cost", lua.LNumber(item.GetCost()))
+			tbl.RawSetString("timer", lua.LNumber(item.GetTimer()))
+			// _src_room lets objfrom know which room to remove from
+			tbl.RawSetString("_src_room", lua.LNumber(roomVNum))
+			L.Push(tbl)
+			return 1
+		}
+	}
+
+	L.Push(lua.LNil)
 	return 1
 }
 
 func (e *Engine) luaObjFrom(L *lua.LState) int {
-	// objfrom(item, location) - remove item from location
-	log.Printf("[STUB] objfrom(item, location)")
+	// objfrom(item, location) - remove item from location ('char' or 'room').
+	// Removed item is held in e.transitItems until objto places it.
+	// Source: scripts.c lua_objfrom() — calls obj_from_char() or obj_from_room().
+	itemTbl := L.Get(1)
+	location := L.ToString(2)
+
+	if e.world == nil || itemTbl.Type() != lua.LTTable {
+		return 0
+	}
+
+	vnumVal := L.GetField(itemTbl, "vnum")
+	if vnumVal.Type() != lua.LTNumber {
+		return 0
+	}
+	vnum := int(vnumVal.(lua.LNumber))
+
+	var removed ScriptableObject
+
+	switch location {
+	case "room":
+		// Determine source room: prefer _src_room field, fall back to me.room
+		roomVNum := 0
+		srcRoomVal := L.GetField(itemTbl, "_src_room")
+		if srcRoomVal.Type() == lua.LTNumber {
+			roomVNum = int(srcRoomVal.(lua.LNumber))
+		} else {
+			meVal := L.GetGlobal("me")
+			if meVal.Type() == lua.LTTable {
+				roomField := L.GetField(meVal, "room")
+				if roomField.Type() == lua.LTNumber {
+					roomVNum = int(roomField.(lua.LNumber))
+				}
+			}
+		}
+		if roomVNum > 0 {
+			removed = e.world.RemoveItemFromRoom(vnum, roomVNum)
+		}
+
+	case "char":
+		// Remove from mob's own inventory (me)
+		meVal := L.GetGlobal("me")
+		if meVal.Type() == lua.LTTable {
+			nameField := L.GetField(meVal, "name")
+			if nameField.Type() == lua.LTString {
+				removed = e.world.RemoveItemFromChar(string(nameField.(lua.LString)), vnum)
+			}
+		}
+	}
+
+	if removed != nil {
+		e.transitItems[vnum] = removed
+	} else {
+		log.Printf("[OBJFROM] item vnum %d not found in location %q", vnum, location)
+	}
 	return 0
 }
 
 func (e *Engine) luaObjTo(L *lua.LState) int {
-	// objto(item, location, target) - move item to location
-	log.Printf("[STUB] objto(item, location, target)")
+	// objto(item, location, target) - place item at location ('char' or 'room').
+	// Retrieves the in-transit item placed by objfrom.
+	// Source: scripts.c lua_objto() — calls obj_to_char() or obj_to_room().
+	itemTbl := L.Get(1)
+	location := L.ToString(2)
+	targetVal := L.Get(3)
+
+	if e.world == nil || itemTbl.Type() != lua.LTTable {
+		return 0
+	}
+
+	vnumVal := L.GetField(itemTbl, "vnum")
+	if vnumVal.Type() != lua.LTNumber {
+		return 0
+	}
+	vnum := int(vnumVal.(lua.LNumber))
+
+	item, ok := e.transitItems[vnum]
+	if !ok {
+		log.Printf("[OBJTO] no in-transit item for vnum %d", vnum)
+		return 0
+	}
+
+	switch location {
+	case "char":
+		charName := ""
+		if targetVal.Type() == lua.LTTable {
+			nameField := L.GetField(targetVal, "name")
+			if nameField.Type() == lua.LTString {
+				charName = string(nameField.(lua.LString))
+			}
+		}
+		if charName == "" {
+			log.Printf("[OBJTO] 'char' target has no name")
+			return 0
+		}
+		if err := e.world.GiveItemToChar(charName, item); err != nil {
+			log.Printf("[OBJTO] GiveItemToChar(%s, vnum %d): %v", charName, vnum, err)
+		} else {
+			delete(e.transitItems, vnum)
+		}
+
+	case "room":
+		roomVNum := 0
+		if targetVal.Type() == lua.LTNumber {
+			roomVNum = int(targetVal.(lua.LNumber))
+		} else {
+			// Default: me's room
+			meVal := L.GetGlobal("me")
+			if meVal.Type() == lua.LTTable {
+				roomField := L.GetField(meVal, "room")
+				if roomField.Type() == lua.LTNumber {
+					roomVNum = int(roomField.(lua.LNumber))
+				}
+			}
+		}
+		if roomVNum == 0 {
+			log.Printf("[OBJTO] 'room' target: room vnum is 0")
+			return 0
+		}
+		if err := e.world.AddItemToRoom(item, roomVNum); err != nil {
+			log.Printf("[OBJTO] AddItemToRoom(room %d, vnum %d): %v", roomVNum, vnum, err)
+		} else {
+			delete(e.transitItems, vnum)
+		}
+	}
+
 	return 0
 }
 
