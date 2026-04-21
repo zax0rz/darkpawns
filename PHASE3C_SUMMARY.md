@@ -1,3 +1,6 @@
+---
+tags: [active]
+---
 # Phase 3C Summary: RESTORE Tier Scripts & Combat AI Matrices
 
 **Date:** 2026-04-20  

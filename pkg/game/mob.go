@@ -30,6 +30,7 @@ type MobInstance struct {
 	// Combat state
 	Target    *MobInstance // or Player
 	Fighting  bool
+	FightingTarget string // Name of the target being fought
 
 	// Memory: names of players this mob remembers attacking it
 	// Source: mobact.c:262-285, remember()/forget() in mobact.c:346-407
@@ -58,6 +59,7 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Inventory: make([]*ObjectInstance, 0),
 		Equipment: make(map[int]*ObjectInstance),
 		Fighting:  false,
+		FightingTarget: "",
 	}
 
 	// Create AI brain
@@ -288,20 +290,20 @@ func (m *MobInstance) SendMessage(msg string) {
 func (m *MobInstance) SetFighting(target string) {
 	m.Status = "fighting"
 	m.Fighting = true
-	// Store target name for lookup
-	// For now, we don't store the target name
+	m.FightingTarget = target
 }
 
 // StopFighting clears the fighting state.
 func (m *MobInstance) StopFighting() {
 	m.Status = "standing"
 	m.Fighting = false
+	m.FightingTarget = ""
 }
 
 // GetFighting returns who the mob is fighting (empty string if not fighting).
 func (m *MobInstance) GetFighting() string {
 	if m.Fighting || m.Status == "fighting" {
-		return "someone" // Simplified; would need proper target tracking
+		return m.FightingTarget
 	}
 	return ""
 }
