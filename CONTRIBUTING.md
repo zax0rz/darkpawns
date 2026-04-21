@@ -1,3 +1,6 @@
+---
+tags: [active]
+---
 # Contributing to Dark Pawns
 
 Thanks for being here. This is a passion project — a resurrection of a MUD that mattered to people. If you found this repo, you probably know what that means.
@@ -24,7 +27,7 @@ The original C source lives at: https://github.com/rparet/darkpawns
 
 [ROADMAP.md](ROADMAP.md) lays out the phases. Check what's open. Open an issue before starting work on anything substantial — partly to avoid duplication, partly because some things have ordering dependencies.
 
-### Read CLAUDE.md first
+### Read [[CLAUDE]] first
 
 [CLAUDE.md](CLAUDE.md) is the project brief. It covers the stack, what's done, what's next, known TODOs, and what not to do. Read it before touching any code.
 

@@ -288,3 +288,7 @@ func (m *Mob) GetScriptName() string {
 func (m *Mob) GetLuaFunctions() int {
 	return m.LuaFunctions
 }
+
+func (m *Mob) GetAlignment() int {
+	return m.Alignment
+}

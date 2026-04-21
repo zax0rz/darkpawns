@@ -1,3 +1,6 @@
+---
+tags: [active]
+---
 # Dark Pawns Script Inventory
 _Reviewed via Gemini 2026-04-20. Source: `lib/scripts/` (179 total)._
 

@@ -114,24 +114,46 @@ Key source files:
 - Player.Alignment field added (-1000 to +1000)
 - Attack-type corpse descriptions scaffolded (fire/cold/slash — Phase 3 for spell types)
 
-### ⬜ Phase 3 — Lua Scripting
-**Goal:** The world feels alive. Traps spring, mobs talk, quests trigger.
+### ✅ Phase 3A — Lua Engine
+- gopher-lua embedded; full Dark Pawns script API exposed
+- All trigger types wired: oncmd/ongive/sound/fight/greet/ondeath/bribe/onpulse
+- `pkg/scripting/` — engine.go, types.go, ScriptContext
+- `pkg/spells/spells.go` — SPELL_* constants from spells.h
 
-- Embed gopher-lua (`github.com/yuin/gopher-lua`)
-- Expose original Dark Pawns script API: `act()`, `do_damage()`, `ch.hp`, `number()`, `send_to_room()`
-- Trigger types: `onpulse()`, `oncmd()`, `onenter()`, `ondeath()`
-- Priority scripts to port (start here, not all 179):
-  1. Room traps — `onenter()` working
-  2. Shopkeeper mobs — `oncmd()` working
-  3. Quest-giving mobs — state tracking
-  4. Special items — `onuse()`
-- Source: `scripting.c`, `lib/scripts/*.lua`
+### ✅ Phase 3B — Engine Stubs → Real Implementations
+- act/say/emote/do_damage/send_to_room deliver to actual players
+- Trigger dispatch wired throughout game loop
 
-### ⬜ Phase 4 — Agent Protocol
-- API key authentication (`{"type":"auth_apikey","data":{"key":"dp_abc123"}}`)
-- Structured JSON state after every action (room, self, events)
-- Rate limiting: 1 action/100ms, combat locked to 2s engine tick
-- Simple Python bot as proof-of-concept
+### ✅ Phase 3C — Combat AI Matrices
+- fighter/magic_user/cleric/sorcery — faithful ports of originals
+- `test_scripts/mob/archive/` — all four live
+
+### 🔲 Phase 3D — Engine Completion (IN PROGRESS)
+**Open gaps:**
+- `isfighting()` → wire to real `MobInstance.Fighting` state
+- `room` global → table with `.vnum` + `.char[]` (players+mobs)
+- `globals.lua` → full constant audit and registration
+- `spell()` → real damage dispatch
+
+**RESTORE scripts to port (in order):**
+1. globals.lua, no_move.lua, assembler.lua
+2. Newbie pipeline: creation, clerk, banker
+3. Law & order: cityguard, guard_captain, take_jail
+4. Crafting chain: farmer_wheat, miller, baker_flour, baker_dough
+
+**Deliverable:** Fighter bashes you. Cleric heals and teleports. Guards work. Clerk gives gear.
+
+### 🔲 Phase 4 — Agent Protocol
+**Prior art:** NLE, GMCP/MSDP (BasedMUD/MTH), Aardwolf. This is GMCP-over-WebSocket.
+
+- **Auth:** `api_key` + `mode:"agent"` in existing auth message; `agent_keys` Postgres table
+- **State:** Subscription model (MSDP-inspired) — agents subscribe to named variables,
+  server flushes dirty vars at end of each command dispatch. Not full state every tick.
+- **Variables:** HEALTH, MAX_HEALTH, MANA, LEVEL, ROOM_VNUM, ROOM_NAME, ROOM_EXITS,
+  ROOM_MOBS, ROOM_ITEMS, FIGHTING, INVENTORY, EQUIPMENT, EVENTS
+- **Rate limiting:** Token bucket (golang.org/x/time/rate), capacity=10 refill=10/sec;
+  combat locked to 2s engine tick
+- **Deliverable:** `scripts/dp_bot.py` — connects, navigates, kills something, loots it
 
 ### ⬜ Phase 5 — BRENDA Plays
 - BRENDA69 gets a persistent character (class TBD — Mage or Assassin)

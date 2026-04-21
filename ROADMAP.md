@@ -76,68 +76,103 @@ Full QA audit against original C source. Everything that was wrong or missing be
 
 **Characters:** 7 races complete; class/race restrictions; starting skills; Player.Alignment field
 
+### ✅ Phase 3A — Lua Engine
+- gopher-lua embedded
+- Full Dark Pawns script API exposed: `act()`, `do_damage()`, `spell()`, `action()`, `isfighting()`, `send_to_room()`, `number()`, `round()`, `getn()`
+- All trigger types wired: `oncmd`, `ongive`, `sound`, `fight`, `greet`, `ondeath`, `bribe`, `onpulse`
+- Import cycle resolved via interface-based ScriptContext
+- `-scripts` server flag for scripts directory
+- `pkg/scripting/types.go` — ScriptablePlayer/ScriptableMob/ScriptableWorld interfaces
+
+### ✅ Phase 3B — Engine Stubs → Real Implementations
+- `act()` / `say()` / `emote()` deliver to actual players
+- `do_damage()` wired to combat engine
+- `send_to_room()` broadcasts to all room occupants
+- `pkg/spells/spells.go` — SPELL_* constants from spells.h; `Cast()` stub
+- Priority script loading and trigger dispatch wired throughout game loop
+
+### ✅ Phase 3C — Combat AI Matrices
+Faithful ports of all four original combat AI scripts:
+- `mob/archive/fighter.lua` — headbutt/parry/bash/berserk/kick/trip via `action()`
+- `mob/archive/magic_user.lua` — level-scaled spell table, teleport escape, staff usage
+- `mob/archive/cleric.lua` — heal/attack split, alignment-aware dispel, teleport at <25% HP
+- `mob/archive/sorcery.lua` — targets random room occupant (not just current attacker)
+
+**Known gaps (Phase 3D):**
+- `isfighting()` returns nil — needs wiring to real mob combat state
+- `room.char` is a number not a table — sorcery/multi-target scripts can't fire yet
+- `globals.lua` constants need audit against all script dependencies
+- `spell()` logs but doesn't deal damage — real spell effects are Phase 3D
+
 ---
 
 ## What's Next
 
 ---
 
-### 🔲 Phase 3 — Lua Scripting
-**Goal:** The world feels alive. Traps spring, mobs talk, quests trigger.
+### 🔲 Phase 3D — Lua Engine Completion
+**Goal:** Scripts actually fire correctly. Combat AI matrices are live.
 
-The original has 179 Lua scripts. We don't port all of them — we build the engine
-and port the most important ones. The rest follow naturally.
+**Engine gaps to close:**
+- `isfighting(mob)` → wired to real `MobInstance.Fighting` combat state
+- `room` global → table with `.vnum` + `.char[]` (array of players+mobs in room)
+- `globals.lua` → full audit: all SPELL_*, LVL_*, POS_*, ITEM_*, TO_* constants registered
+- `spell()` → real damage dispatch (or at minimum, believable stubs that affect HP)
 
-**Lua engine:**
-- Embed `gopher-lua` (`github.com/yuin/gopher-lua`)
-- Expose the original API surface to Lua (from `scripting.c`):
-  - `act(msg, ch)` — send message
-  - `do_damage(ch, victim, dam)` — deal damage
-  - `ch.hp`, `ch.level`, `ch.name` — character state reads
-  - `number(low, high)` — RNG (maps to `rand.Intn`)
-  - `send_to_room(msg, room)` — broadcast to room
-- Trigger types from original: `onpulse()`, `oncmd()`, `onenter()`, `ondeath()`
+**RESTORE scripts to port** (priority order from script-inventory.md):
+1. `globals.lua`, `mob/no_move.lua`, `mob/assembler.lua` — core engine, nothing else works without these
+2. Newbie pipeline: `creation.lua`, `clerk.lua`, `banker.lua`
+3. Law & order: `cityguard.lua`, `guard_captain.lua`, `take_jail.lua`
+4. Crafting chain: `farmer_wheat.lua`, `miller.lua`, `baker_flour.lua`, `baker_dough.lua`
 
-**Script priority order** (start here, not with all 179):
-1. Room traps — demonstrate `onenter()` working
-2. Shopkeeper mobs — demonstrate `oncmd()` working  
-3. Quest-giving mobs — demonstrate state tracking
-4. Special items (magic, cursed) — demonstrate `onuse()`
+**Persona's contribution:** brenda-persona is auditing all 92 RESTORE scripts for VNum issues
+and broken dependencies. Results feed back via A2A before porting begins.
 
-**Source reference:** `scripting.c`, `lib/scripts/*.lua`
-
-**Deliverable:** Walk into a trapped room, spring the trap, take damage.
-Buy something from a shopkeeper. Accept a quest.
+**Deliverable:** Hit a fighter mob — it bashes you. Hit a cleric — it heals itself and tries to
+teleport when low. Walk into a starting city — guards work, clerk gives gear, banker gives gold.
 
 ---
 
 ### 🔲 Phase 4 — Agent Protocol
-**Goal:** A bot can connect and play the game programmatically.
+**Goal:** A bot can connect and play the game programmatically. Agents are first-class players.
 
-The WebSocket/JSON transport already exists. What's missing is the agent-specific layer.
+**Prior art studied:** NLE (NetHack Learning Environment, NeurIPS 2020), GMCP/MSDP (Aardwolf/Achaea),
+BasedMUD/NekkidMUD/Lowlands (scandum's MTH library). Phase 4 is GMCP-over-WebSocket.
 
-**API key auth:**
-- `{"type":"auth_apikey","data":{"key":"dp_abc123"}}` instead of player_name/password
-- Keys stored in PostgreSQL, associated with a character
-- Source reference: LoFP bot API design (see `research/darkpawns_resurrection_research.md`)
+**4.1 — Authentication**
+- Add `api_key` + `mode` fields to existing auth message (no new auth flow):
+  `{"type":"auth","data":{"player_name":"bot","api_key":"dp_abc123","mode":"agent"}}`
+- `agent_keys` Postgres table: `(id, character_name, key_hash, created_at, revoked)`
+- Key format: `dp_` + 32 hex chars. SHA-256 at rest, shown once at creation.
+- Auth response includes full variable list so agents know what to subscribe to.
 
-**Structured state for agents:**
-- After every action, agents receive full structured state (not just text):
+**4.2 — Variable Table + Subscription Model** (inspired by BasedMUD MSDP)
+
+Instead of pushing full state after every command, agents subscribe to variables:
 ```json
-{
-  "room": {"vnum": 3001, "name": "...", "exits": ["north","east"], "mobs": [...], "items": [...]},
-  "self": {"hp": 45, "max_hp": 60, "level": 3, "fighting": "goblin"},
-  "events": [{"type":"combat","attacker":"goblin","damage":8}]
-}
+{"type":"subscribe","data":{"variables":["HEALTH","ROOM_VNUM","FIGHTING","EVENTS"]}}
 ```
-- Human players continue to receive text. Agents opt into structured mode at auth.
+Server tracks dirty vars per session, flushes at end of each command dispatch.
+Only changed subscribed vars are sent — no bandwidth waste.
 
-**Rate limiting:**
-- Same rules as humans: can't spam 1000 commands/second
-- 1 action per 100ms, combat locked to engine tick rate (2s rounds)
+Variable table: `HEALTH`, `MAX_HEALTH`, `MANA`, `MAX_MANA`, `LEVEL`, `EXP`,
+`ROOM_VNUM`, `ROOM_NAME`, `ROOM_EXITS`, `ROOM_MOBS`, `ROOM_ITEMS`,
+`FIGHTING`, `INVENTORY`, `EQUIPMENT`, `EVENTS`
 
-**Deliverable:** A simple Python bot connects, walks around, finds a mob, kills it,
-loots the corpse, and reports back. Prove agents play by the same rules.
+Humans: never receive `state` messages. No change to existing text flow.
+
+**4.3 — Rate Limiting**
+- Token bucket per session via `golang.org/x/time/rate`: capacity=10, refill=10/sec
+- Combat actions additionally locked to 2s engine tick (enforced by combat engine, not limiter)
+- Same limits for humans and agents — agents play by the same rules
+
+**4.4 — Python Bot Proof-of-Concept** (`scripts/dp_bot.py`)
+- Connects via WebSocket, authenticates with API key
+- Subscribes to `HEALTH`, `ROOM_VNUM`, `ROOM_MOBS`, `ROOM_EXITS`, `FIGHTING`, `EVENTS`
+- Navigates, finds a mob, kills it, loots the corpse, reports back
+
+**Deliverable:** `brenda69` connects, kills something, says something dry about it.
+Prove agents play by the same rules as humans.
 
 ---
 

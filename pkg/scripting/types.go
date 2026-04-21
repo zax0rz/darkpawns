@@ -29,6 +29,7 @@ type ScriptableMob interface {
 	GetGold() int
 	GetRoomVNum() int
 	GetPrototype() ScriptableMobPrototype
+	GetFighting() ScriptableMob // Returns the mob's combat target, or nil if not fighting
 }
 
 // ScriptableMobPrototype represents mob prototype data.
@@ -36,6 +37,7 @@ type ScriptableMobPrototype interface {
 	GetShortDesc() string
 	GetGold() int
 	GetLevel() int
+	GetAlignment() int
 	GetScriptName() string
 	GetLuaFunctions() int
 }
@@ -54,6 +56,10 @@ type ScriptableObject interface {
 type ScriptableWorld interface {
 	// GetPlayersInRoom returns all players in a given room.
 	GetPlayersInRoom(roomVNum int) []ScriptablePlayer
+	// GetMobsInRoom returns all mobs in a given room.
+	GetMobsInRoom(roomVNum int) []ScriptableMob
+	// GetMobByVNumAndRoom returns a mob by its vnum and room.
+	GetMobByVNumAndRoom(vnum int, roomVNum int) ScriptableMob
 	// GetObjPrototype returns an object prototype by vnum.
 	GetObjPrototype(vnum int) ScriptableObject
 	// AddItemToRoom adds an item to a room.
