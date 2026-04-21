@@ -57,6 +57,11 @@ type Player struct {
 	// Populated by DoStart() and advance_level(). Used by Phase 3 Lua scripts.
 	Skills map[string]int
 
+	// Group/follow state
+	// Source: act.movement.c (ch->master), structs.h AFF_GROUP flag
+	Following string // Name of player being followed (ch->master in original)
+	InGroup   bool   // Whether in a group (AFF_GROUP flag in original)
+
 	// Communication
 	Send chan []byte // Channel for sending messages to player
 }
