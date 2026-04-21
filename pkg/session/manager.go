@@ -184,7 +184,11 @@ type Session struct {
 	player     *game.Player
 	playerName string
 	authenticated bool
-	
+
+	// Agent auth — set on login when mode="agent"
+	isAgent    bool
+	agentKeyID int64
+
 	// Character creation state
 	charCreating bool
 	charName     string
@@ -283,6 +287,25 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return err
 	}
 
+	// Agent auth path — mode="agent" with api_key
+	if login.Mode == "agent" && login.APIKey != "" {
+		if !s.manager.hasDB {
+			s.sendError("agent auth requires database")
+			s.conn.Close()
+			return nil
+		}
+		charName, keyID, valid := s.manager.db.ValidateAgentKey(login.APIKey)
+		if !valid {
+			s.sendError("invalid agent key")
+			s.conn.Close()
+			return nil
+		}
+		// Use character name from the key — ignore login.PlayerName for security
+		login.PlayerName = charName
+		s.isAgent = true
+		s.agentKeyID = keyID
+	}
+
 	if login.PlayerName == "" {
 		return ErrInvalidPlayerName
 	}
@@ -345,6 +368,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 		// Send welcome
 		s.sendWelcome()
+
+		// Agents get a full variable dump immediately after login
+		if s.isAgent {
+			s.sendFullVarDump()
+		}
 
 		// Broadcast to room
 		enterMsg, _ := json.Marshal(ServerMessage{

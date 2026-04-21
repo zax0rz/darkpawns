@@ -2,7 +2,10 @@
 package db
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 
 	_ "github.com/lib/pq"
@@ -106,10 +109,58 @@ func (db *DB) createTables() error {
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS equipment JSONB DEFAULT '{}';
 
 	CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
+
+	CREATE TABLE IF NOT EXISTS agent_keys (
+		id             SERIAL PRIMARY KEY,
+		character_name VARCHAR(64) NOT NULL,
+		key_hash       VARCHAR(64) NOT NULL UNIQUE,
+		created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
+		revoked        BOOLEAN NOT NULL DEFAULT FALSE
+	);
 	`
 
 	_, err := db.conn.Exec(query)
 	return err
+}
+
+// CreateAgentKey generates a new agent API key for the given character.
+// Returns the raw key (shown once — never stored) and its DB row id.
+func (db *DB) CreateAgentKey(characterName string) (rawKey string, id int64, err error) {
+	// Generate 32 random bytes → 64 hex chars
+	buf := make([]byte, 32)
+	if _, err = rand.Read(buf); err != nil {
+		return "", 0, fmt.Errorf("generate key: %w", err)
+	}
+	rawKey = "dp_" + hex.EncodeToString(buf)
+
+	// SHA-256 hash — only the hash is stored
+	h := sha256.Sum256([]byte(rawKey))
+	keyHash := hex.EncodeToString(h[:])
+
+	err = db.conn.QueryRow(
+		`INSERT INTO agent_keys (character_name, key_hash) VALUES ($1, $2) RETURNING id`,
+		characterName, keyHash,
+	).Scan(&id)
+	if err != nil {
+		return "", 0, fmt.Errorf("insert agent key: %w", err)
+	}
+	return rawKey, id, nil
+}
+
+// ValidateAgentKey hashes rawKey and looks it up in agent_keys.
+// Returns the associated character name and row id if the key is valid and not revoked.
+func (db *DB) ValidateAgentKey(rawKey string) (characterName string, keyID int64, valid bool) {
+	h := sha256.Sum256([]byte(rawKey))
+	keyHash := hex.EncodeToString(h[:])
+
+	err := db.conn.QueryRow(
+		`SELECT id, character_name FROM agent_keys WHERE key_hash = $1 AND revoked = FALSE`,
+		keyHash,
+	).Scan(&keyID, &characterName)
+	if err != nil {
+		return "", 0, false
+	}
+	return characterName, keyID, true
 }
 
 // GetPlayer retrieves a player by name. Returns nil, nil if not found.
