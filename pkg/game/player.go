@@ -62,6 +62,11 @@ type Player struct {
 	Following string // Name of player being followed (ch->master in original)
 	InGroup   bool   // Whether in a group (AFF_GROUP flag in original)
 
+	// Player flags bitmask — PLR_* constants from structs.h
+	// Bit N corresponds to PLR flag N (e.g. PLR_WEREWOLF=16, PLR_VAMPIRE=17).
+	// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.
+	Flags uint64
+
 	// Communication
 	Send chan []byte // Channel for sending messages to player
 }
@@ -477,4 +482,27 @@ func (p *Player) GetRoomVNum() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.RoomVNum
+}
+
+// GetFlags returns the raw PLR flags bitmask.
+// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.
+func (p *Player) GetFlags() uint64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Flags
+}
+
+// SetPlrFlag sets or clears PLR flag bit N on this player.
+// Source: utils.h PLR_FLAGS() macro.
+func (p *Player) SetPlrFlag(bit int, val bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if bit < 0 || bit >= 64 {
+		return
+	}
+	if val {
+		p.Flags |= 1 << uint(bit)
+	} else {
+		p.Flags &^= 1 << uint(bit)
+	}
 }
