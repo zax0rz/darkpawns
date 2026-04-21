@@ -16,6 +16,9 @@ type ScriptablePlayer interface {
 	GetAlignment() int
 	GetRoomVNum() int
 	SendMessage(string)
+	// GetFlags returns the raw PLR flags bitmask.
+	// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.
+	GetFlags() uint64
 }
 
 // ScriptableMob represents a mob that can be exposed to Lua scripts.
@@ -68,6 +71,19 @@ type ScriptableWorld interface {
 	HandleNonCombatDeath(player ScriptablePlayer)
 	// HandleSpellDeath handles death caused by a spell.
 	HandleSpellDeath(victimName string, spellNum int, roomVNum int)
+	// SendTell delivers a private tell message to a named player.
+	// Source: act.comm.c do_tell().
+	SendTell(targetName, message string)
+	// GetItemsInRoom returns all items in a given room as ScriptableObject.
+	GetItemsInRoom(roomVNum int) []ScriptableObject
+	// HasItemByVNum returns true if the named character has an item with the given vnum.
+	HasItemByVNum(charName string, vnum int) bool
+	// RemoveItemFromRoom removes the first item with the given vnum from the room and returns it.
+	RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject
+	// RemoveItemFromChar removes the first item with the given vnum from the character's inventory.
+	RemoveItemFromChar(charName string, vnum int) ScriptableObject
+	// GiveItemToChar adds an item to the named character's inventory.
+	GiveItemToChar(charName string, obj ScriptableObject) error
 }
 
 // ScriptContext holds the game objects exposed to Lua as globals.

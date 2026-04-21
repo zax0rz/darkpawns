@@ -477,9 +477,20 @@ func (w *World) GetObjPrototypeScriptable(vnum int) scripting.ScriptableObject {
 }
 
 // AddItemToRoomScriptable adds an item to a room.
+// If obj is a scriptableObjInstanceWrapper the live ObjectInstance is used directly;
+// otherwise a new instance is created from the object prototype.
 func (w *World) AddItemToRoomScriptable(obj scripting.ScriptableObject, roomVNum int) error {
-	// For now, just log - we'd need to convert ScriptableObject to ObjectInstance
-	log.Printf("[SCRIPT] Would add object vnum %d to room %d", obj.GetVNum(), roomVNum)
+	item := objectInstanceFromScriptable(obj)
+	if item == nil {
+		// Fallback: create a new instance from prototype
+		proto, ok := w.GetObjPrototype(obj.GetVNum())
+		if !ok {
+			return fmt.Errorf("AddItemToRoom: prototype vnum %d not found", obj.GetVNum())
+		}
+		item = NewObjectInstance(proto, roomVNum)
+	}
+	item.RoomVNum = roomVNum
+	w.AddItemToRoom(item, roomVNum)
 	return nil
 }
 
@@ -558,6 +569,34 @@ func (a *WorldScriptableAdapter) HandleSpellDeath(victimName string, spellNum in
 	a.world.HandleSpellDeathScriptable(victimName, spellNum, roomVNum)
 }
 
+// SendTell delivers a private tell message to a named online player.
+// Source: act.comm.c do_tell().
+func (a *WorldScriptableAdapter) SendTell(targetName, message string) {
+	if p, ok := a.world.GetPlayer(targetName); ok {
+		p.SendMessage(message)
+	}
+}
+
+func (a *WorldScriptableAdapter) GetItemsInRoom(roomVNum int) []scripting.ScriptableObject {
+	return a.world.GetItemsInRoomScriptable(roomVNum)
+}
+
+func (a *WorldScriptableAdapter) HasItemByVNum(charName string, vnum int) bool {
+	return a.world.HasItemByVNumScriptable(charName, vnum)
+}
+
+func (a *WorldScriptableAdapter) RemoveItemFromRoom(vnum int, roomVNum int) scripting.ScriptableObject {
+	return a.world.RemoveItemFromRoomByVNum(vnum, roomVNum)
+}
+
+func (a *WorldScriptableAdapter) RemoveItemFromChar(charName string, vnum int) scripting.ScriptableObject {
+	return a.world.RemoveItemFromCharByVNum(charName, vnum)
+}
+
+func (a *WorldScriptableAdapter) GiveItemToChar(charName string, obj scripting.ScriptableObject) error {
+	return a.world.GiveItemToCharScriptable(charName, obj)
+}
+
 // scriptableObjWrapper wraps parser.Obj to implement ScriptableObject
 type scriptableObjWrapper struct {
 	obj *parser.Obj
@@ -586,6 +625,106 @@ func (w *scriptableObjWrapper) GetTimer() int {
 func (w *scriptableObjWrapper) SetTimer(timer int) {
 	// TODO: timer mutation on parser.Obj not supported — Phase 3 tracks timer on ObjectInstance
 }
+
+// scriptableObjInstanceWrapper wraps ObjectInstance to implement ScriptableObject.
+// Used by item-transfer Lua functions (objfrom/objto) to carry live instances.
+type scriptableObjInstanceWrapper struct {
+	item *ObjectInstance
+}
+
+func (w *scriptableObjInstanceWrapper) GetVNum() int         { return w.item.VNum }
+func (w *scriptableObjInstanceWrapper) GetKeywords() string  { return w.item.GetKeywords() }
+func (w *scriptableObjInstanceWrapper) GetShortDesc() string { return w.item.GetShortDesc() }
+func (w *scriptableObjInstanceWrapper) GetCost() int         { return w.item.GetCost() }
+func (w *scriptableObjInstanceWrapper) GetTimer() int        { return w.item.GetTimer() }
+func (w *scriptableObjInstanceWrapper) SetTimer(t int)       { w.item.SetTimer(t) }
+
+// objectInstanceFromScriptable extracts the underlying ObjectInstance from a
+// scriptableObjInstanceWrapper, returning nil for other ScriptableObject types.
+func objectInstanceFromScriptable(obj scripting.ScriptableObject) *ObjectInstance {
+	if w, ok := obj.(*scriptableObjInstanceWrapper); ok {
+		return w.item
+	}
+	return nil
+}
+
+// GetItemsInRoomScriptable returns all items in a room as []ScriptableObject.
+func (w *World) GetItemsInRoomScriptable(roomVNum int) []scripting.ScriptableObject {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	items := w.roomItems[roomVNum]
+	result := make([]scripting.ScriptableObject, 0, len(items))
+	for _, item := range items {
+		result = append(result, &scriptableObjInstanceWrapper{item: item})
+	}
+	return result
+}
+
+// HasItemByVNumScriptable returns true if the named player has an item with the given vnum.
+func (w *World) HasItemByVNumScriptable(charName string, vnum int) bool {
+	w.mu.RLock()
+	p, ok := w.players[charName]
+	w.mu.RUnlock()
+	if !ok {
+		return false
+	}
+	p.Inventory.mu.RLock()
+	defer p.Inventory.mu.RUnlock()
+	for _, item := range p.Inventory.Items {
+		if item.VNum == vnum {
+			return true
+		}
+	}
+	return false
+}
+
+// RemoveItemFromRoomByVNum removes the first item with the given vnum from the room.
+// Returns the removed item as ScriptableObject, or nil if not found.
+func (w *World) RemoveItemFromRoomByVNum(vnum int, roomVNum int) scripting.ScriptableObject {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	items := w.roomItems[roomVNum]
+	for i, item := range items {
+		if item.VNum == vnum {
+			w.roomItems[roomVNum] = append(items[:i], items[i+1:]...)
+			item.RoomVNum = -1
+			return &scriptableObjInstanceWrapper{item: item}
+		}
+	}
+	return nil
+}
+
+// RemoveItemFromCharByVNum removes the first item with the given vnum from the named player.
+// Returns the removed item as ScriptableObject, or nil if not found.
+func (w *World) RemoveItemFromCharByVNum(charName string, vnum int) scripting.ScriptableObject {
+	w.mu.RLock()
+	p, ok := w.players[charName]
+	w.mu.RUnlock()
+	if !ok {
+		return nil
+	}
+	item, found := p.Inventory.RemoveItemByVNum(vnum)
+	if !found {
+		return nil
+	}
+	return &scriptableObjInstanceWrapper{item: item}
+}
+
+// GiveItemToCharScriptable adds a ScriptableObject to the named player's inventory.
+func (w *World) GiveItemToCharScriptable(charName string, obj scripting.ScriptableObject) error {
+	w.mu.RLock()
+	p, ok := w.players[charName]
+	w.mu.RUnlock()
+	if !ok {
+		return fmt.Errorf("player %q not found", charName)
+	}
+	item := objectInstanceFromScriptable(obj)
+	if item == nil {
+		return fmt.Errorf("GiveItemToChar: object is not an ObjectInstance")
+	}
+	return p.Inventory.AddItem(item)
+}
+
 // FireMobFightScript fires the "fight" trigger on a mob after a combat round.
 // Called by the combat engine's ScriptFightFunc after each round.
 // Source: mobact.c — mob_activity() calls Lua fight trigger during violence.

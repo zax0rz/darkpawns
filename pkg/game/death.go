@@ -29,17 +29,20 @@ const MortalStartRoom = 8004
 // Source: fight.c die_with_killer() uses GET_EXP(ch)/37
 func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 	if victim.IsNPC() {
+		// Capture mob vnum/exp before the mob is removed from the world.
+		// Source: fight.c die_with_killer() line 1638 — group_gain(ch, victim)
+		mobExp := 0
+		mobVNum := 0
+		if mob, ok := victim.(*MobInstance); ok && mob.Prototype != nil {
+			mobExp = mob.Prototype.Exp
+			mobVNum = mob.Prototype.VNum
+		}
 		// Fire memory hook before removing mob from active list
 		killerName := ""
 		killerIsNPC := false
 		if killer != nil {
 			killerName = killer.GetName()
 			killerIsNPC = killer.IsNPC()
-		}
-		mob, _ := victim.(*MobInstance)
-		vnum := 0
-		if mob != nil {
-			vnum = mob.Prototype.VNum
 		}
 		roomName := ""
 		if room, ok := w.GetRoom(victim.GetRoom()); ok {
@@ -49,11 +52,15 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			KillerName:  killerName,
 			KillerIsNPC: killerIsNPC,
 			VictimName:  victim.GetName(),
-			VictimVNum:  vnum,
+			VictimVNum:  mobVNum,
 			RoomVNum:    victim.GetRoom(),
 			RoomName:    roomName,
 		})
 		w.handleMobDeath(victim, attackType)
+		// Award XP to killer and party members — fight.c group_gain()
+		if mobExp > 0 {
+			w.AwardMobKillXP(killer, mobExp)
+		}
 	} else {
 		// Fire player death hook
 		killerName := ""

@@ -14,18 +14,20 @@ import (
 // Engine manages the Lua VM.
 // Based on boot_lua() in scripts.c lines 1703-1716.
 type Engine struct {
-	scriptsDir string
-	L          *lua.LState
-	world      ScriptableWorld
+	scriptsDir  string
+	L           *lua.LState
+	world       ScriptableWorld
+	transitItems map[int]ScriptableObject // in-flight items moved by objfrom/objto
 }
 
 // NewEngine creates a new Lua scripting engine.
 func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	L := lua.NewState()
 	engine := &Engine{
-		scriptsDir: scriptsDir,
-		L:          L,
-		world:      world,
+		scriptsDir:  scriptsDir,
+		L:           L,
+		world:       world,
+		transitItems: make(map[int]ScriptableObject),
 	}
 
 	// Open standard libraries
@@ -240,6 +242,9 @@ func (e *Engine) registerFunctions() {
 	e.L.SetGlobal("plr_flagged", e.L.NewFunction(e.luaPlrFlagged))
 	e.L.SetGlobal("cansee", e.L.NewFunction(e.luaCanSee))
 	e.L.SetGlobal("isnpc", e.L.NewFunction(e.luaIsNPC))
+	e.L.SetGlobal("aff_flagged", e.L.NewFunction(e.luaAffFlagged))
+	e.L.SetGlobal("plr_flags", e.L.NewFunction(e.luaPlrFlags))
+	e.L.SetGlobal("obj_list", e.L.NewFunction(e.luaObjList))
 }
 
 // loadGlobals loads the globals.lua file.
@@ -435,6 +440,13 @@ func (e *Engine) charToTable(player ScriptablePlayer, globalName string) {
 	}
 	tbl.RawSetString("evil", lua.LNumber(evil))
 
+	// is_npc: false for players. Source: utils.h IS_NPC() macro.
+	tbl.RawSetString("is_npc", lua.LBool(false))
+
+	// Expose raw PLR flags bitmask so plr_flagged() can check individual bits.
+	// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.
+	tbl.RawSetString("plr_flags_raw", lua.LNumber(float64(player.GetFlags())))
+
 	// Skills table (stub for now)
 	skillsTbl := L.NewTable()
 	tbl.RawSetString("skills", skillsTbl)
@@ -472,7 +484,10 @@ func (e *Engine) mobToTable(mob ScriptableMob, globalName string) {
 		evil = 1 // TRUE
 	}
 	tbl.RawSetString("evil", lua.LNumber(evil))
-	
+
+	// is_npc: true for mobs. Source: utils.h IS_NPC() macro — MOB_ISNPC flag always set.
+	tbl.RawSetString("is_npc", lua.LBool(true))
+
 	// Wear property (array of worn items) - placeholder empty table
 	wearTbl := L.NewTable()
 	tbl.RawSetString("wear", wearTbl)
@@ -1317,25 +1332,34 @@ func (e *Engine) luaDofile(L *lua.LState) int {
 }
 
 func (e *Engine) luaCall(L *lua.LState) int {
-	// call(fn, arg1, arg2) - call a named function loaded via dofile
-	// Source: cityguard.lua — call(fight, ch, "x") after dofile("scripts/mob/fighter.lua")
-	fnName := L.ToString(1)
-	if fnName == "" {
-		return 0
-	}
-	fn := e.L.GetGlobal(fnName)
-	if fn.Type() == lua.LTNil {
-		log.Printf("[SCRIPT] call: function %s not found", fnName)
-		return 0
-	}
-	// Push fn and args (skip first arg which is fn name)
-	e.L.Push(fn)
+	// call(fn, arg1, arg2) - call a function loaded via dofile.
+	// fn may be a function reference (most common: call(fight, ch, "x"))
+	// or a string global name.
+	// Source: dracula.lua, pyros.lua, breed_killer.lua — dofile+call delegation pattern.
 	nArgs := L.GetTop() - 1
-	for i := 2; i <= L.GetTop(); i++ {
-		e.L.Push(L.Get(i))
+	arg1 := L.Get(1)
+	var fn lua.LValue
+	if arg1.Type() == lua.LTFunction {
+		// Direct function reference — the common case after dofile redefines the global
+		fn = arg1
+	} else {
+		fnName := L.ToString(1)
+		if fnName == "" {
+			return 0
+		}
+		fn = L.GetGlobal(fnName)
+		if fn.Type() == lua.LTNil {
+			log.Printf("[SCRIPT] call: function %s not found", fnName)
+			return 0
+		}
 	}
-	if err := e.L.PCall(nArgs, 0, nil); err != nil {
-		log.Printf("[SCRIPT] call(%s): %v", fnName, err)
+	// Push function then remaining arguments
+	L.Push(fn)
+	for i := 2; i <= nArgs+1; i++ {
+		L.Push(L.Get(i))
+	}
+	if err := L.PCall(nArgs, 0, nil); err != nil {
+		log.Printf("[SCRIPT] call: %v", err)
 	}
 	return 0
 }
@@ -1350,28 +1374,183 @@ func (e *Engine) luaRound(L *lua.LState) int {
 }
 
 func (e *Engine) luaHasItem(L *lua.LState) int {
-	// has_item(ch, vnum) - check if character has item in inventory
-	log.Printf("[STUB] has_item(ch, vnum)")
-	L.Push(lua.LBool(false)) // Return FALSE for now
+	// has_item(ch, vnum) - returns true if ch has an item with vnum in inventory.
+	// Source: scripts.c lua_has_item() — searches char inventory for matching vnum.
+	chTbl := L.Get(1)
+	vnum := L.ToInt(2)
+
+	if e.world == nil || chTbl.Type() != lua.LTTable {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+
+	nameVal := L.GetField(chTbl, "name")
+	if nameVal.Type() != lua.LTString {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+	charName := string(nameVal.(lua.LString))
+
+	L.Push(lua.LBool(e.world.HasItemByVNum(charName, vnum)))
 	return 1
 }
 
 func (e *Engine) luaObjInRoom(L *lua.LState) int {
-	// obj_in_room(room_vnum, vnum) - check if object is in a room
-	log.Printf("[STUB] obj_in_room(room_vnum, vnum)")
-	L.Push(lua.LNil) // Return nil for now
+	// obj_in_room(room_vnum, obj_vnum) - returns item table if obj_vnum is in room, else nil.
+	// Source: scripts.c lua_obj_in_room().
+	roomVNum := L.ToInt(1)
+	objVNum := L.ToInt(2)
+
+	if e.world == nil {
+		L.Push(lua.LNil)
+		return 1
+	}
+
+	for _, item := range e.world.GetItemsInRoom(roomVNum) {
+		if item.GetVNum() == objVNum {
+			tbl := L.NewTable()
+			tbl.RawSetString("vnum", lua.LNumber(item.GetVNum()))
+			tbl.RawSetString("name", lua.LString(item.GetShortDesc()))
+			tbl.RawSetString("alias", lua.LString(item.GetKeywords()))
+			tbl.RawSetString("cost", lua.LNumber(item.GetCost()))
+			tbl.RawSetString("timer", lua.LNumber(item.GetTimer()))
+			// _src_room lets objfrom know which room to remove from
+			tbl.RawSetString("_src_room", lua.LNumber(roomVNum))
+			L.Push(tbl)
+			return 1
+		}
+	}
+
+	L.Push(lua.LNil)
 	return 1
 }
 
 func (e *Engine) luaObjFrom(L *lua.LState) int {
-	// objfrom(item, location) - remove item from location
-	log.Printf("[STUB] objfrom(item, location)")
+	// objfrom(item, location) - remove item from location ('char' or 'room').
+	// Removed item is held in e.transitItems until objto places it.
+	// Source: scripts.c lua_objfrom() — calls obj_from_char() or obj_from_room().
+	itemTbl := L.Get(1)
+	location := L.ToString(2)
+
+	if e.world == nil || itemTbl.Type() != lua.LTTable {
+		return 0
+	}
+
+	vnumVal := L.GetField(itemTbl, "vnum")
+	if vnumVal.Type() != lua.LTNumber {
+		return 0
+	}
+	vnum := int(vnumVal.(lua.LNumber))
+
+	var removed ScriptableObject
+
+	switch location {
+	case "room":
+		// Determine source room: prefer _src_room field, fall back to me.room
+		roomVNum := 0
+		srcRoomVal := L.GetField(itemTbl, "_src_room")
+		if srcRoomVal.Type() == lua.LTNumber {
+			roomVNum = int(srcRoomVal.(lua.LNumber))
+		} else {
+			meVal := L.GetGlobal("me")
+			if meVal.Type() == lua.LTTable {
+				roomField := L.GetField(meVal, "room")
+				if roomField.Type() == lua.LTNumber {
+					roomVNum = int(roomField.(lua.LNumber))
+				}
+			}
+		}
+		if roomVNum > 0 {
+			removed = e.world.RemoveItemFromRoom(vnum, roomVNum)
+		}
+
+	case "char":
+		// Remove from mob's own inventory (me)
+		meVal := L.GetGlobal("me")
+		if meVal.Type() == lua.LTTable {
+			nameField := L.GetField(meVal, "name")
+			if nameField.Type() == lua.LTString {
+				removed = e.world.RemoveItemFromChar(string(nameField.(lua.LString)), vnum)
+			}
+		}
+	}
+
+	if removed != nil {
+		e.transitItems[vnum] = removed
+	} else {
+		log.Printf("[OBJFROM] item vnum %d not found in location %q", vnum, location)
+	}
 	return 0
 }
 
 func (e *Engine) luaObjTo(L *lua.LState) int {
-	// objto(item, location, target) - move item to location
-	log.Printf("[STUB] objto(item, location, target)")
+	// objto(item, location, target) - place item at location ('char' or 'room').
+	// Retrieves the in-transit item placed by objfrom.
+	// Source: scripts.c lua_objto() — calls obj_to_char() or obj_to_room().
+	itemTbl := L.Get(1)
+	location := L.ToString(2)
+	targetVal := L.Get(3)
+
+	if e.world == nil || itemTbl.Type() != lua.LTTable {
+		return 0
+	}
+
+	vnumVal := L.GetField(itemTbl, "vnum")
+	if vnumVal.Type() != lua.LTNumber {
+		return 0
+	}
+	vnum := int(vnumVal.(lua.LNumber))
+
+	item, ok := e.transitItems[vnum]
+	if !ok {
+		log.Printf("[OBJTO] no in-transit item for vnum %d", vnum)
+		return 0
+	}
+
+	switch location {
+	case "char":
+		charName := ""
+		if targetVal.Type() == lua.LTTable {
+			nameField := L.GetField(targetVal, "name")
+			if nameField.Type() == lua.LTString {
+				charName = string(nameField.(lua.LString))
+			}
+		}
+		if charName == "" {
+			log.Printf("[OBJTO] 'char' target has no name")
+			return 0
+		}
+		if err := e.world.GiveItemToChar(charName, item); err != nil {
+			log.Printf("[OBJTO] GiveItemToChar(%s, vnum %d): %v", charName, vnum, err)
+		} else {
+			delete(e.transitItems, vnum)
+		}
+
+	case "room":
+		roomVNum := 0
+		if targetVal.Type() == lua.LTNumber {
+			roomVNum = int(targetVal.(lua.LNumber))
+		} else {
+			// Default: me's room
+			meVal := L.GetGlobal("me")
+			if meVal.Type() == lua.LTTable {
+				roomField := L.GetField(meVal, "room")
+				if roomField.Type() == lua.LTNumber {
+					roomVNum = int(roomField.(lua.LNumber))
+				}
+			}
+		}
+		if roomVNum == 0 {
+			log.Printf("[OBJTO] 'room' target: room vnum is 0")
+			return 0
+		}
+		if err := e.world.AddItemToRoom(item, roomVNum); err != nil {
+			log.Printf("[OBJTO] AddItemToRoom(room %d, vnum %d): %v", roomVNum, vnum, err)
+		} else {
+			delete(e.transitItems, vnum)
+		}
+	}
+
 	return 0
 }
 
@@ -1387,29 +1566,119 @@ func (e *Engine) luaCreateEvent(L *lua.LState) int {
 	return 0
 }
 
+// luaTell sends a private message to a named player.
+// tell(player_name, message)
+// Source: act.comm.c do_tell().
 func (e *Engine) luaTell(L *lua.LState) int {
-	// tell(player_name, message) - send message to specific player
-	log.Printf("[STUB] tell(player_name, message)")
+	targetName := L.CheckString(1)
+	message := L.CheckString(2)
+	if e.world != nil && targetName != "" {
+		e.world.SendTell(targetName, message)
+	}
 	return 0
 }
 
+// luaPlrFlagged checks whether a player character has a given PLR_* flag set.
+// plr_flagged(ch, flag) → bool
+// Returns false for NPCs (they use mob flags, not PLR flags).
+// Source: utils.h PLR_FLAGGED(ch, flag) macro.
 func (e *Engine) luaPlrFlagged(L *lua.LState) int {
-	// plr_flagged(ch, flag) - check if player has flag set
-	log.Printf("[STUB] plr_flagged(ch, flag)")
-	L.Push(lua.LBool(false)) // Return FALSE for now
+	chTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+	flagNum, ok := L.Get(2).(lua.LNumber)
+	if !ok {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+
+	// NPCs never have PLR flags.
+	if isNPC, ok := chTbl.RawGetString("is_npc").(lua.LBool); ok && bool(isNPC) {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+
+	// Read raw flags bitmask serialised into the ch table by charToTable().
+	rawFlags, ok := chTbl.RawGetString("plr_flags_raw").(lua.LNumber)
+	if !ok {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+
+	bit := int(flagNum)
+	if bit < 0 || bit >= 64 {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+	result := (uint64(rawFlags)>>uint(bit))&1 == 1
+	L.Push(lua.LBool(result))
 	return 1
 }
 
+// luaCanSee checks whether the mob (me) can see character ch.
+// cansee(ch) → bool
+// Simplified: returns true if ch exists (level > 0).
+// TODO: full impl — check PLR_INVISIBLE, room DARK flag, AFF_BLIND — Phase 6.
+// Source: utils.h CAN_SEE() macro.
 func (e *Engine) luaCanSee(L *lua.LState) int {
-	// cansee(ch) - check if character can see
-	log.Printf("[STUB] cansee(ch)")
-	L.Push(lua.LBool(true)) // Return TRUE for now
+	chTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+	lvl, ok := chTbl.RawGetString("level").(lua.LNumber)
+	if !ok || lvl <= 0 {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+	L.Push(lua.LBool(true))
 	return 1
 }
 
+// luaIsNPC returns true if ch is an NPC/mob, false if a player.
+// isnpc(ch) → bool
+// Reads the 'is_npc' field set by charToTable() (false) or mobToTable() (true).
+// Source: utils.h IS_NPC(ch) macro — checks MOB_ISNPC in MOB_FLAGS(ch).
 func (e *Engine) luaIsNPC(L *lua.LState) int {
-	// isnpc(ch) - check if character is an NPC
-	log.Printf("[STUB] isnpc(ch)")
-	L.Push(lua.LBool(false)) // Return FALSE for now (assuming player)
+	chTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		// Unknown type — treat as non-NPC to be safe.
+		L.Push(lua.LBool(false))
+		return 1
+	}
+	isNPC, ok := chTbl.RawGetString("is_npc").(lua.LBool)
+	if !ok {
+		L.Push(lua.LBool(false))
+		return 1
+	}
+	L.Push(isNPC)
+	return 1
+}
+
+func (e *Engine) luaAffFlagged(L *lua.LState) int {
+	// aff_flagged(ch, flag) - check if character has affect flag set (e.g. AFF_VAMPIRE)
+	// Based on AFF_FLAGGED() macro in utils.h
+	log.Printf("[STUB] aff_flagged(ch, flag)")
+	L.Push(lua.LBool(false))
+	return 1
+}
+
+func (e *Engine) luaPlrFlags(L *lua.LState) int {
+	// plr_flags(ch, operation, flag) - set or remove a player flag
+	// operation is "set" or "remove"; flag is PLR_* constant
+	// Based on PLR_FLAGS() macro in utils.h
+	log.Printf("[STUB] plr_flags(ch, operation, flag)")
+	return 0
+}
+
+func (e *Engine) luaObjList(L *lua.LState) int {
+	// obj_list(keyword, location) - search mob's inventory for item matching keyword
+	// location: "char" = mob's inventory, "room" = room floor
+	// Returns the object table if found, NIL otherwise
+	// Based on lua_obj_list() pattern in scripts.c
+	log.Printf("[STUB] obj_list(keyword, location)")
+	L.Push(lua.LNil)
 	return 1
 }

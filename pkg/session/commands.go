@@ -82,6 +82,30 @@ func ExecuteCommand(s *Session, command string, args []string) error {
 		return cmdGet(s, args)
 	case "drop":
 		return cmdDrop(s, args)
+	// Social / info commands
+	case "score", "sc":
+		return cmdScore(s)
+	case "who":
+		return cmdWho(s)
+	case "tell":
+		return cmdTell(s, args)
+	case "emote", "me":
+		return cmdEmote(s, args)
+	case "shout":
+		return cmdShout(s, args)
+	case "where":
+		return cmdWhere(s)
+	case "help":
+		return cmdHelp(s, args)
+	// Group / party commands
+	case "follow":
+		return cmdFollow(s, args)
+	case "group", "party":
+		return cmdGroup(s, args)
+	case "ungroup", "disband":
+		return cmdUngroup(s, args)
+	case "gtell", "gsay":
+		return cmdGtell(s, args)
 	default:
 		s.sendText(fmt.Sprintf("Unknown command: %s", command))
 		return nil
@@ -137,8 +161,13 @@ func cmdLook(s *Session, args []string) error {
 }
 
 // cmdMove moves the player in a direction.
+// Also drags followers into the new room.
+// Source: act.movement.c do_follow() — followers move when leader moves
 func cmdMove(s *Session, direction string) error {
 	oldRoom := s.player.GetRoom()
+
+	// Collect followers in this room before moving (cannot query after move holds lock)
+	followers := s.manager.world.GetFollowersInRoom(s.player.Name, oldRoom)
 
 	newRoom, err := s.manager.world.MovePlayer(s.player, direction)
 	if err != nil {
@@ -181,6 +210,39 @@ func cmdMove(s *Session, direction string) error {
 	if s.manager.world.OnPlayerEnterRoom(s.player, newRoom.VNum, s.manager.combatEngine) {
 		// Combat was initiated, notify player
 		s.sendText("You are attacked!")
+	}
+
+	// Drag followers into the new room — act.movement.c follower movement
+	for _, follower := range followers {
+		followerOldRoom := follower.GetRoom()
+		if _, ferr := s.manager.world.MovePlayer(follower, direction); ferr == nil {
+			follower.SendMessage(fmt.Sprintf("You follow %s %s.\r\n", s.player.Name, direction))
+			// Notify follower's old room
+			fleaveMsg, _ := json.Marshal(ServerMessage{
+				Type: MsgEvent,
+				Data: EventData{
+					Type: "leave",
+					From: follower.Name,
+					Text: fmt.Sprintf("%s leaves %s.", follower.Name, direction),
+				},
+			})
+			s.manager.BroadcastToRoom(followerOldRoom, fleaveMsg, follower.Name)
+			// Notify new room of follower arrival
+			fenterMsg, _ := json.Marshal(ServerMessage{
+				Type: MsgEvent,
+				Data: EventData{
+					Type: "enter",
+					From: follower.Name,
+					Text: fmt.Sprintf("%s has arrived.", follower.Name),
+				},
+			})
+			s.manager.BroadcastToRoom(newRoom.VNum, fenterMsg, follower.Name)
+			// Send look to follower's session
+			if fSess, ok := s.manager.GetSession(follower.Name); ok {
+				cmdLook(fSess, nil)
+				fSess.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
+			}
+		}
 	}
 
 	// Mark room vars dirty for agents after movement
@@ -538,6 +600,264 @@ func broadcastEquipmentChange(s *Session, action string, item *game.ObjectInstan
 	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
 }
 
+// cmdFollow sets the player to follow another player.
+// Source: act.movement.c do_follow() lines 883–951
+func cmdFollow(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Whom do you wish to follow?")
+		return nil
+	}
+
+	targetName := args[0]
+
+	// follow self = stop following (act.movement.c line 912–917)
+	if strings.EqualFold(targetName, s.player.Name) {
+		if s.player.Following == "" {
+			s.sendText("You are already following yourself.")
+			return nil
+		}
+		oldLeader := s.player.Following
+		s.player.Following = ""
+		s.player.InGroup = false // REMOVE_BIT AFF_GROUP — act.movement.c line 926
+		s.sendText(fmt.Sprintf("You stop following %s.", oldLeader))
+		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
+			leader.SendMessage(fmt.Sprintf("%s stops following you.\r\n", s.player.Name))
+		}
+		return nil
+	}
+
+	// Find target — get_char_room_vis (act.movement.c line 895)
+	target, ok := s.manager.world.GetPlayer(targetName)
+	if !ok {
+		s.sendText("There is no one by that name here.")
+		return nil
+	}
+	if target.GetRoom() != s.player.GetRoom() {
+		s.sendText("They are not here.")
+		return nil
+	}
+
+	// Already following? (act.movement.c line 904)
+	if s.player.Following == target.Name {
+		s.sendText(fmt.Sprintf("You are already following %s.", target.Name))
+		return nil
+	}
+
+	// Stop following previous leader (act.movement.c line 924–925 stop_follower)
+	if s.player.Following != "" {
+		oldLeader := s.player.Following
+		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
+			leader.SendMessage(fmt.Sprintf("%s stops following you.\r\n", s.player.Name))
+		}
+	}
+
+	// REMOVE_BIT AFF_GROUP — act.movement.c line 926 (leaving old group when changing leader)
+	s.player.Following = target.Name
+	s.player.InGroup = false
+
+	// add_follower() — act.movement.c line 948
+	s.sendText(fmt.Sprintf("You now follow %s.", target.Name))
+	target.SendMessage(fmt.Sprintf("%s now follows you.\r\n", s.player.Name))
+	return nil
+}
+
+// cmdGroup adds/removes players from a group, or prints group status.
+// Source: act.other.c do_group() lines 685–740 and perform_group() lines 624–635
+func cmdGroup(s *Session, args []string) error {
+	// No args: print group — act.other.c do_group() line 693
+	if len(args) == 0 {
+		return printGroup(s)
+	}
+
+	// Must have no master to enroll others — act.other.c line 699
+	if s.player.Following != "" {
+		s.sendText("You cannot enroll group members without being head of a group.")
+		return nil
+	}
+
+	targetName := strings.Join(args, " ")
+
+	// "group all" — act.other.c lines 706–717
+	if strings.EqualFold(targetName, "all") {
+		s.player.InGroup = true
+		found := 0
+		for _, f := range s.manager.world.GetFollowersInRoom(s.player.Name, s.player.GetRoom()) {
+			if !f.InGroup {
+				f.InGroup = true
+				s.sendText(fmt.Sprintf("%s is now a member of your group.", f.Name))
+				f.SendMessage(fmt.Sprintf("You are now a member of %s's group.\r\n", s.player.Name))
+				found++
+			}
+		}
+		if found == 0 {
+			s.sendText("Everyone following you here is already in your group.")
+		}
+		return nil
+	}
+
+	// Single target — act.other.c lines 719–738
+	target, ok := s.manager.world.GetPlayer(targetName)
+	if !ok {
+		s.sendText("There is no one by that name here.")
+		return nil
+	}
+
+	// Target must be following us — act.other.c line 721: vict->master != ch
+	// Agent exception: agents auto-follow and auto-accept the invite.
+	if target.Following != s.player.Name {
+		targetSess, hasSess := s.manager.GetSession(target.Name)
+		if hasSess && targetSess.isAgent {
+			// Agent auto-follow — mirrors BRENDA accepting an invite
+			target.Following = s.player.Name
+			target.InGroup = false
+			target.SendMessage(fmt.Sprintf("You start following %s.\r\n", s.player.Name))
+			s.sendText(fmt.Sprintf("%s starts following you.", target.Name))
+		} else {
+			s.sendText(fmt.Sprintf("%s must follow you to enter your group.", target.Name))
+			return nil
+		}
+	}
+
+	// Toggle membership — perform_group() / kick-out path (act.other.c lines 726–738)
+	if !target.InGroup {
+		// perform_group(): SET_BIT AFF_GROUP
+		target.InGroup = true
+		s.player.InGroup = true // leader is also in the group
+		if target.Name != s.player.Name {
+			s.sendText(fmt.Sprintf("%s is now a member of your group.", target.Name))
+		}
+		target.SendMessage(fmt.Sprintf("You are now a member of %s's group.\r\n", s.player.Name))
+	} else {
+		// Kick out — REMOVE_BIT AFF_GROUP (act.other.c line 737)
+		target.InGroup = false
+		s.sendText(fmt.Sprintf("%s is no longer a member of your group.", target.Name))
+		target.SendMessage(fmt.Sprintf("You have been kicked out of %s's group!\r\n", s.player.Name))
+	}
+	return nil
+}
+
+// printGroup displays the current group composition.
+// Source: act.other.c print_group() lines 638–681
+func printGroup(s *Session) error {
+	if !s.player.InGroup {
+		s.sendText("But you are not the member of a group!")
+		return nil
+	}
+
+	leaderName := s.player.Name
+	if s.player.Following != "" {
+		leaderName = s.player.Following
+	}
+
+	leader, ok := s.manager.world.GetPlayer(leaderName)
+	if !ok {
+		s.sendText("Your group leader is not online.")
+		return nil
+	}
+
+	var sb strings.Builder
+	sb.WriteString("Your group consists of:\r\n")
+	if leader.InGroup {
+		sb.WriteString(fmt.Sprintf("     [%3dH %3dM] [%2d] %s (Head of group)\r\n",
+			leader.Health, leader.Mana, leader.Level, leader.Name))
+	}
+	for _, m := range s.manager.world.GetGroupMembers(leaderName) {
+		if m.Name == leaderName {
+			continue // already printed above
+		}
+		sb.WriteString(fmt.Sprintf("     [%3dH %3dM] [%2d] %s\r\n",
+			m.Health, m.Mana, m.Level, m.Name))
+	}
+	s.sendText(sb.String())
+	return nil
+}
+
+// cmdUngroup removes a player from the group or disbands the entire group.
+// Source: act.other.c do_ungroup() lines 744–794
+func cmdUngroup(s *Session, args []string) error {
+	// No args: disband if leader — act.other.c lines 752–770
+	if len(args) == 0 {
+		if s.player.Following != "" || !s.player.InGroup {
+			s.sendText("But you lead no group!")
+			return nil
+		}
+		disbandMsg := fmt.Sprintf("%s has disbanded the group.\r\n", s.player.Name)
+		for _, m := range s.manager.world.GetGroupMembers(s.player.Name) {
+			if m.Name == s.player.Name {
+				continue
+			}
+			m.InGroup = false
+			m.Following = "" // stop_follower — act.other.c line 764
+			m.SendMessage(disbandMsg)
+		}
+		s.player.InGroup = false
+		s.sendText("You disband the group.")
+		return nil
+	}
+
+	// Remove specific member — act.other.c lines 772–793
+	targetName := strings.Join(args, " ")
+	target, ok := s.manager.world.GetPlayer(targetName)
+	if !ok {
+		s.sendText("There is no such person!")
+		return nil
+	}
+	if target.Following != s.player.Name {
+		s.sendText("That person is not following you!")
+		return nil
+	}
+	if !target.InGroup {
+		s.sendText("That person isn't in your group.")
+		return nil
+	}
+
+	target.InGroup = false
+	target.Following = "" // stop_follower — act.other.c line 793
+	s.sendText(fmt.Sprintf("%s is no longer a member of your group.", target.Name))
+	target.SendMessage(fmt.Sprintf("You have been kicked out of %s's group!\r\n", s.player.Name))
+	return nil
+}
+
+// cmdGtell sends a message to all group members.
+// Source: act.comm.c do_gsay() lines 824–870 (registered as "gtell" in interpreter.c line 484)
+func cmdGtell(s *Session, args []string) error {
+	if !s.player.InGroup {
+		s.sendText("But you are not the member of a group!")
+		return nil
+	}
+	if len(args) == 0 {
+		s.sendText("Yes, but WHAT do you want to group-say?")
+		return nil
+	}
+
+	text := strings.Join(args, " ")
+	broadcastMsg := fmt.Sprintf("%s tells the group, '%s'\r\n", s.player.Name, text)
+
+	// Find leader — act.comm.c do_gsay() line 838–841
+	leaderName := s.player.Name
+	if s.player.Following != "" {
+		leaderName = s.player.Following
+	}
+
+	// Send to leader if not self (act.comm.c lines 846–851)
+	if leaderName != s.player.Name {
+		if leader, ok := s.manager.world.GetPlayer(leaderName); ok && leader.InGroup {
+			leader.SendMessage(broadcastMsg)
+		}
+	}
+
+	// Send to all group followers excluding self (act.comm.c lines 852–858)
+	for _, f := range s.manager.world.GetFollowers(leaderName) {
+		if f.InGroup && f.Name != s.player.Name {
+			f.SendMessage(broadcastMsg)
+		}
+	}
+
+	// Confirm to sender — act.comm.c line 862–865
+	s.sendText(fmt.Sprintf("You tell the group, '%s'", text))
+	return nil
+}
+
 // sendText sends a simple text message to the player.
 func (s *Session) sendText(text string) {
 	msg, _ := json.Marshal(ServerMessage{
@@ -548,4 +868,316 @@ func (s *Session) sendText(text string) {
 	case s.send <- msg:
 	default:
 	}
+}
+
+// cmdScore shows the player's stats.
+// Source: act.informative.c do_score() lines 1168-1451
+func cmdScore(s *Session) error {
+	p := s.player
+	className := game.ClassNames[p.Class]
+	raceName := game.RaceNames[p.Race]
+
+	// Mana label — act.informative.c line 1197
+	manaLabel := "Mana"
+	if p.Class == game.ClassPsionic || p.Class == game.ClassMystic {
+		manaLabel = "Mind/Psi"
+	}
+
+	// Alignment description — act.informative.c lines 1203-1228
+	align := p.Alignment
+	var alignDesc string
+	switch {
+	case align == 1000:
+		alignDesc = "You are the Epitome of Righteousness!"
+	case align >= 900:
+		alignDesc = "You're so good, you make the angels jealous."
+	case align >= 750:
+		alignDesc = "You are feeling pretty righteous."
+	case align >= 500:
+		alignDesc = "You are aligned with the path of right."
+	case align >= 350:
+		alignDesc = "You are feeling pretty good today."
+	case align >= 100:
+		alignDesc = "You are a little more good than neutral, but yet still bland."
+	case align > -100:
+		alignDesc = "You are neutral, how boring."
+	case align > -350:
+		alignDesc = "You are little more evil than neutral, but not very exciting."
+	case align > -500:
+		alignDesc = "I actually think you would kill your own mother."
+	case align > -750:
+		alignDesc = "You are so evil it hurts."
+	case align > -900:
+		alignDesc = "Charles Manson is in your fan club."
+	default:
+		alignDesc = "You are the Epitome of Evil!"
+	}
+
+	// AC description — act.informative.c lines 1230-1257
+	ac := p.AC
+	var acDesc string
+	switch {
+	case ac == 100:
+		acDesc = "You are naked, have you no shame?"
+	case ac > 70:
+		acDesc = "You are lightly clothed."
+	case ac > 40:
+		acDesc = "You are pretty well clothed."
+	case ac > 10:
+		acDesc = "You are lightly armored."
+	case ac > -10:
+		acDesc = "You are well armored."
+	case ac > -40:
+		acDesc = "You are getting pretty sweaty with all that armor on."
+	case ac > -50:
+		acDesc = "You are extremely well armored."
+	case ac > -75:
+		acDesc = "You are decked out in full battle armor."
+	case ac > -125:
+		acDesc = "You are armored like a wyvern!"
+	case ac > -150:
+		acDesc = "You are armored like a dragon!"
+	case ac > -175:
+		acDesc = "You could walk through the gates of Hell in all that armor!"
+	default:
+		acDesc = "You are armored like a god!"
+	}
+
+	// Pack weight — act.informative.c lines 1301-1317 (simplified: track item count)
+	var packDesc string
+	count := p.Inventory.GetItemCount()
+	switch {
+	case count == 0:
+		packDesc = "Your pack is empty."
+	case count <= 3:
+		packDesc = "Your pack is light."
+	case count <= 6:
+		packDesc = "Your pack is fairly heavy."
+	case count <= 9:
+		packDesc = "Your pack is heavy."
+	default:
+		packDesc = "Your pack is almost too heavy to lift."
+	}
+
+	// Position — act.informative.c lines 1321-1356 (POS_STANDING=8 from structs.h)
+	var posDesc string
+	if p.Fighting != "" {
+		posDesc = fmt.Sprintf("You are fighting %s.", p.Fighting)
+	} else {
+		posDesc = "You are standing."
+	}
+
+	out := fmt.Sprintf(
+		"%s\n"+
+			"Hit points: %d(%d)  %s points: %d(%d)\n"+
+			"%s\n"+
+			"%s\n"+
+			"Experience: %d points\n"+
+			"Coins carried: %d gold coins\n"+
+			"This ranks you as %s %s (level %d).\n"+
+			"You are %s %s.\n"+
+			"%s\n"+
+			"%s",
+		p.Name,
+		p.Health, p.MaxHealth, manaLabel, p.Mana, p.MaxMana,
+		alignDesc,
+		acDesc,
+		p.Exp,
+		p.Gold,
+		p.Name, className, p.Level,
+		raceName, className,
+		packDesc,
+		posDesc,
+	)
+	s.sendText(out)
+	return nil
+}
+
+// cmdWho lists all online players.
+// Source: act.informative.c do_who() lines 1681-1943
+func cmdWho(s *Session) error {
+	s.manager.mu.RLock()
+	sessions := make([]*Session, 0, len(s.manager.sessions))
+	for _, sess := range s.manager.sessions {
+		sessions = append(sessions, sess)
+	}
+	s.manager.mu.RUnlock()
+
+	out := "Players\n-------\n"
+	count := 0
+	for _, sess := range sessions {
+		if sess.player == nil {
+			continue
+		}
+		p := sess.player
+		className := game.ClassNames[p.Class]
+		raceName := game.RaceNames[p.Race]
+		// Format: [ LV  Class ] Name Race — act.informative.c line 1874
+		tag := "player"
+		if sess.isAgent {
+			tag = "agent"
+		}
+		out += fmt.Sprintf("[ %2d  %-8s] %-15s (%s, %s, %s)\n",
+			p.Level, className, p.Name, raceName, className, tag)
+		count++
+	}
+	if count == 0 {
+		out += "\nNo-one at all!\n"
+	} else if count == 1 {
+		out += "\nOne character displayed.\n"
+	} else {
+		out += fmt.Sprintf("\n%d characters displayed.\n", count)
+	}
+	s.sendText(out)
+	return nil
+}
+
+// cmdTell sends a private message to another player.
+// Source: act.comm.c do_tell() lines 901-931, perform_tell()
+func cmdTell(s *Session, args []string) error {
+	if len(args) < 2 {
+		s.sendText("Who do you wish to tell what??")
+		return nil
+	}
+	targetName := args[0]
+	message := strings.Join(args[1:], " ")
+
+	if strings.EqualFold(targetName, s.player.Name) {
+		s.sendText("You try to tell yourself something.")
+		return nil
+	}
+
+	// Find target session — act.comm.c line 909 get_char_vis()
+	target, ok := s.manager.GetSession(targetName)
+	if !ok || target.player == nil {
+		s.sendText("There is no such player online.")
+		return nil
+	}
+
+	// Deliver to target — act.comm.c perform_tell()
+	target.sendText(fmt.Sprintf("%s tells you, '%s'", s.player.Name, message))
+	// Confirm to sender
+	s.sendText(fmt.Sprintf("You tell %s, '%s'", target.player.Name, message))
+	return nil
+}
+
+// cmdEmote broadcasts a roleplay action to the room.
+// Source: act.comm.c do_emote() — "$n laughs." style
+func cmdEmote(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Emote what?")
+		return nil
+	}
+	action := strings.Join(args, " ")
+	text := fmt.Sprintf("%s %s", s.player.Name, action)
+
+	s.sendText(text)
+	msg, _ := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "emote",
+			From: s.player.Name,
+			Text: text,
+		},
+	})
+	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
+	return nil
+}
+
+// cmdShout broadcasts a message to all players in the same zone.
+// Source: act.comm.c do_gen_comm() SCMD_SHOUT lines 1286-1289
+// Original: zone-scoped; receivers must be POS_RESTING or higher.
+func cmdShout(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Yes, shout, fine, shout we must, but WHAT???")
+		return nil
+	}
+	message := strings.Join(args, " ")
+
+	// Get the shouter's zone
+	senderRoom, ok := s.manager.world.GetRoom(s.player.GetRoom())
+	if !ok {
+		return nil
+	}
+	senderZone := senderRoom.Zone
+
+	text := fmt.Sprintf("%s shouts, '%s'", s.player.Name, message)
+	s.sendText(fmt.Sprintf("You shout, '%s'", message))
+
+	s.manager.mu.RLock()
+	targets := make([]*Session, 0)
+	for name, sess := range s.manager.sessions {
+		if name == s.player.Name || sess.player == nil {
+			continue
+		}
+		// Restrict to same zone — act.comm.c line 1287
+		targetRoom, ok := s.manager.world.GetRoom(sess.player.GetRoom())
+		if !ok || targetRoom.Zone != senderZone {
+			continue
+		}
+		targets = append(targets, sess)
+	}
+	s.manager.mu.RUnlock()
+
+	msg, _ := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "shout",
+			From: s.player.Name,
+			Text: text,
+		},
+	})
+	for _, sess := range targets {
+		select {
+		case sess.send <- msg:
+		default:
+		}
+	}
+	return nil
+}
+
+// cmdWhere lists all online players and their locations.
+// Source: act.informative.c do_where() lines 2244-2307
+func cmdWhere(s *Session) error {
+	s.manager.mu.RLock()
+	sessions := make([]*Session, 0, len(s.manager.sessions))
+	for _, sess := range s.manager.sessions {
+		sessions = append(sessions, sess)
+	}
+	s.manager.mu.RUnlock()
+
+	out := "Players\n-------\n"
+	found := false
+	for _, sess := range sessions {
+		if sess.player == nil {
+			continue
+		}
+		p := sess.player
+		room, ok := s.manager.world.GetRoom(p.GetRoom())
+		if !ok {
+			continue
+		}
+		// Format mirrors do_where() line 2272: name - [vnum] room name
+		out += fmt.Sprintf("%-20s - [%5d] %s\n", p.Name, room.VNum, room.Name)
+		found = true
+	}
+	if !found {
+		out += "No-one visible.\n"
+	}
+	s.sendText(out)
+	return nil
+}
+
+// cmdHelp provides a basic help stub.
+// Full implementation deferred to a later phase.
+func cmdHelp(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Available commands: look, north/south/east/west/up/down, say, hit, flee, " +
+			"inventory, equipment, wear, remove, wield, hold, get, drop, " +
+			"score, who, tell, emote, shout, where, quit\n" +
+			"Type 'help <topic>' for more info (stub — full help coming later).")
+		return nil
+	}
+	s.sendText(fmt.Sprintf("No help available for '%s' yet.", strings.Join(args, " ")))
+	return nil
 }

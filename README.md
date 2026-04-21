@@ -34,7 +34,7 @@ AI adventuring together through the same world we loved the first time around.
 
 ## Current Status
 
-**Phase 4 complete.** Agents are first-class players.
+**Phase 5 in progress (~65%).** BRENDA69 is alive. Party play is next.
 
 | Phase | Status | What It Covers |
 |-------|--------|----------------|
@@ -44,8 +44,9 @@ AI adventuring together through the same world we loved the first time around.
 | 2b — Full Play Loop | ✅ Done | Items, character creation, PostgreSQL persistence |
 | 2c — Correctness Pass | ✅ Done | Full QA audit against original C source |
 | 3A-3D — Lua Engine | ✅ Done | gopher-lua, all triggers, newbie pipeline, combat AI |
-| 4 — Agent Protocol | ✅ Done | API keys, variable subscriptions, dp_bot.py |
-| 5 — BRENDA Plays | 🔲 Current | SOUL.md in-game, mem0 memory, party play with Zach |
+| 4 — Agent Protocol | ✅ Done | API keys, variable subscriptions, dp_bot.py, rate limiting |
+| 5 — BRENDA Plays | 🔄 In Progress | dp_brenda.py live, party/group/social commands, mem0 memory |
+| 5b — World Restoration | 🔲 Planned | K2.6 agent swarms restore all 92 RESTORE scripts (SWARM-PLAN.md) |
 | 6 — Public Server | ⬜ Planned | Web client, Telnet, darkpawns.labz0rz.com |
 
 See [ROADMAP.md](ROADMAP.md) for the full plan.
@@ -66,30 +67,52 @@ See [ROADMAP.md](ROADMAP.md) for the full plan.
 
 ```bash
 git clone https://github.com/zax0rz/darkpawns.git
-cd darkpawns
+cd darkpawns-phase1
 
-# You need the original world files (not included — see note below)
+# World files are gitignored — restore if missing:
+# git checkout origin/master -- lib/world/
+
 go build ./cmd/server
-./server -world /path/to/darkpawns/lib
+./server \
+  -world /home/zach/.openclaw/workspace/darkpawns/lib/world \
+  -port 4350 \
+  -db "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable" \
+  -scripts ./test_scripts
 ```
 
-Connect via WebSocket at `ws://localhost:8080/ws`:
+> **Note:** The compiled binary lives at `/tmp/dp-server6`. Rebuild from source after any merge.
+
+Connect via WebSocket at `ws://localhost:4350/ws`:
 
 ```json
-// Login
+// Human login
 {"type":"login","data":{"player_name":"YourName"}}
+
+// Agent login (requires API key from agent_keys table)
+{"type":"login","data":{"player_name":"brenda69","api_key":"<key>","mode":"agent"}}
 
 // Commands
 {"type":"command","data":{"command":"look"}}
 {"type":"command","data":{"command":"north"}}
 {"type":"command","data":{"command":"hit","args":["goblin"]}}
 {"type":"command","data":{"command":"flee"}}
+{"type":"command","data":{"command":"party","args":["brenda69"]}}
 ```
 
-Or use Docker (requires PostgreSQL):
-```bash
-docker-compose up
-```
+Agent API key for BRENDA69 is stored in Vaultwarden as **"Dark Pawns Agent Key — brenda69"**.
+
+---
+
+## Agent Protocol
+
+Agents connect via WebSocket with `"mode":"agent"` and receive structured JSON state updates rather than raw text. Key features:
+
+- **Auth:** `api_key` field in login message; keys in `agent_keys` Postgres table
+- **Variables:** Subscribe to named vars — HEALTH, MAX_HEALTH, MANA, LEVEL, ROOM_VNUM, ROOM_NAME, ROOM_EXITS, ROOM_MOBS (with `target_string` for combat targeting), ROOM_ITEMS, FIGHTING, INVENTORY, EQUIPMENT, EVENTS
+- **Rate limiting:** Token bucket, 10 commands/sec via `golang.org/x/time/rate`
+- **Reference agents:** `scripts/dp_bot.py` (638-line deterministic FSM), `scripts/dp_brenda.py` (BRENDA69 with SOUL.md + mem0)
+
+Full spec: [PHASE4-AGENT-PROTOCOL.md](PHASE4-AGENT-PROTOCOL.md)
 
 ---
 
