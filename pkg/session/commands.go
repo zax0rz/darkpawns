@@ -82,6 +82,21 @@ func ExecuteCommand(s *Session, command string, args []string) error {
 		return cmdGet(s, args)
 	case "drop":
 		return cmdDrop(s, args)
+	// Social / info commands
+	case "score", "sc":
+		return cmdScore(s)
+	case "who":
+		return cmdWho(s)
+	case "tell":
+		return cmdTell(s, args)
+	case "emote", "me":
+		return cmdEmote(s, args)
+	case "shout":
+		return cmdShout(s, args)
+	case "where":
+		return cmdWhere(s)
+	case "help":
+		return cmdHelp(s, args)
 	default:
 		s.sendText(fmt.Sprintf("Unknown command: %s", command))
 		return nil
@@ -548,4 +563,316 @@ func (s *Session) sendText(text string) {
 	case s.send <- msg:
 	default:
 	}
+}
+
+// cmdScore shows the player's stats.
+// Source: act.informative.c do_score() lines 1168-1451
+func cmdScore(s *Session) error {
+	p := s.player
+	className := game.ClassNames[p.Class]
+	raceName := game.RaceNames[p.Race]
+
+	// Mana label — act.informative.c line 1197
+	manaLabel := "Mana"
+	if p.Class == game.ClassPsionic || p.Class == game.ClassMystic {
+		manaLabel = "Mind/Psi"
+	}
+
+	// Alignment description — act.informative.c lines 1203-1228
+	align := p.Alignment
+	var alignDesc string
+	switch {
+	case align == 1000:
+		alignDesc = "You are the Epitome of Righteousness!"
+	case align >= 900:
+		alignDesc = "You're so good, you make the angels jealous."
+	case align >= 750:
+		alignDesc = "You are feeling pretty righteous."
+	case align >= 500:
+		alignDesc = "You are aligned with the path of right."
+	case align >= 350:
+		alignDesc = "You are feeling pretty good today."
+	case align >= 100:
+		alignDesc = "You are a little more good than neutral, but yet still bland."
+	case align > -100:
+		alignDesc = "You are neutral, how boring."
+	case align > -350:
+		alignDesc = "You are little more evil than neutral, but not very exciting."
+	case align > -500:
+		alignDesc = "I actually think you would kill your own mother."
+	case align > -750:
+		alignDesc = "You are so evil it hurts."
+	case align > -900:
+		alignDesc = "Charles Manson is in your fan club."
+	default:
+		alignDesc = "You are the Epitome of Evil!"
+	}
+
+	// AC description — act.informative.c lines 1230-1257
+	ac := p.AC
+	var acDesc string
+	switch {
+	case ac == 100:
+		acDesc = "You are naked, have you no shame?"
+	case ac > 70:
+		acDesc = "You are lightly clothed."
+	case ac > 40:
+		acDesc = "You are pretty well clothed."
+	case ac > 10:
+		acDesc = "You are lightly armored."
+	case ac > -10:
+		acDesc = "You are well armored."
+	case ac > -40:
+		acDesc = "You are getting pretty sweaty with all that armor on."
+	case ac > -50:
+		acDesc = "You are extremely well armored."
+	case ac > -75:
+		acDesc = "You are decked out in full battle armor."
+	case ac > -125:
+		acDesc = "You are armored like a wyvern!"
+	case ac > -150:
+		acDesc = "You are armored like a dragon!"
+	case ac > -175:
+		acDesc = "You could walk through the gates of Hell in all that armor!"
+	default:
+		acDesc = "You are armored like a god!"
+	}
+
+	// Pack weight — act.informative.c lines 1301-1317 (simplified: track item count)
+	var packDesc string
+	count := p.Inventory.GetItemCount()
+	switch {
+	case count == 0:
+		packDesc = "Your pack is empty."
+	case count <= 3:
+		packDesc = "Your pack is light."
+	case count <= 6:
+		packDesc = "Your pack is fairly heavy."
+	case count <= 9:
+		packDesc = "Your pack is heavy."
+	default:
+		packDesc = "Your pack is almost too heavy to lift."
+	}
+
+	// Position — act.informative.c lines 1321-1356 (POS_STANDING=8 from structs.h)
+	var posDesc string
+	if p.Fighting != "" {
+		posDesc = fmt.Sprintf("You are fighting %s.", p.Fighting)
+	} else {
+		posDesc = "You are standing."
+	}
+
+	out := fmt.Sprintf(
+		"%s\n"+
+			"Hit points: %d(%d)  %s points: %d(%d)\n"+
+			"%s\n"+
+			"%s\n"+
+			"Experience: %d points\n"+
+			"Coins carried: %d gold coins\n"+
+			"This ranks you as %s %s (level %d).\n"+
+			"You are %s %s.\n"+
+			"%s\n"+
+			"%s",
+		p.Name,
+		p.Health, p.MaxHealth, manaLabel, p.Mana, p.MaxMana,
+		alignDesc,
+		acDesc,
+		p.Exp,
+		p.Gold,
+		p.Name, className, p.Level,
+		raceName, className,
+		packDesc,
+		posDesc,
+	)
+	s.sendText(out)
+	return nil
+}
+
+// cmdWho lists all online players.
+// Source: act.informative.c do_who() lines 1681-1943
+func cmdWho(s *Session) error {
+	s.manager.mu.RLock()
+	sessions := make([]*Session, 0, len(s.manager.sessions))
+	for _, sess := range s.manager.sessions {
+		sessions = append(sessions, sess)
+	}
+	s.manager.mu.RUnlock()
+
+	out := "Players\n-------\n"
+	count := 0
+	for _, sess := range sessions {
+		if sess.player == nil {
+			continue
+		}
+		p := sess.player
+		className := game.ClassNames[p.Class]
+		raceName := game.RaceNames[p.Race]
+		// Format: [ LV  Class ] Name Race — act.informative.c line 1874
+		tag := "player"
+		if sess.isAgent {
+			tag = "agent"
+		}
+		out += fmt.Sprintf("[ %2d  %-8s] %-15s (%s, %s, %s)\n",
+			p.Level, className, p.Name, raceName, className, tag)
+		count++
+	}
+	if count == 0 {
+		out += "\nNo-one at all!\n"
+	} else if count == 1 {
+		out += "\nOne character displayed.\n"
+	} else {
+		out += fmt.Sprintf("\n%d characters displayed.\n", count)
+	}
+	s.sendText(out)
+	return nil
+}
+
+// cmdTell sends a private message to another player.
+// Source: act.comm.c do_tell() lines 901-931, perform_tell()
+func cmdTell(s *Session, args []string) error {
+	if len(args) < 2 {
+		s.sendText("Who do you wish to tell what??")
+		return nil
+	}
+	targetName := args[0]
+	message := strings.Join(args[1:], " ")
+
+	if strings.EqualFold(targetName, s.player.Name) {
+		s.sendText("You try to tell yourself something.")
+		return nil
+	}
+
+	// Find target session — act.comm.c line 909 get_char_vis()
+	target, ok := s.manager.GetSession(targetName)
+	if !ok || target.player == nil {
+		s.sendText("There is no such player online.")
+		return nil
+	}
+
+	// Deliver to target — act.comm.c perform_tell()
+	target.sendText(fmt.Sprintf("%s tells you, '%s'", s.player.Name, message))
+	// Confirm to sender
+	s.sendText(fmt.Sprintf("You tell %s, '%s'", target.player.Name, message))
+	return nil
+}
+
+// cmdEmote broadcasts a roleplay action to the room.
+// Source: act.comm.c do_emote() — "$n laughs." style
+func cmdEmote(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Emote what?")
+		return nil
+	}
+	action := strings.Join(args, " ")
+	text := fmt.Sprintf("%s %s", s.player.Name, action)
+
+	s.sendText(text)
+	msg, _ := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "emote",
+			From: s.player.Name,
+			Text: text,
+		},
+	})
+	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
+	return nil
+}
+
+// cmdShout broadcasts a message to all players in the same zone.
+// Source: act.comm.c do_gen_comm() SCMD_SHOUT lines 1286-1289
+// Original: zone-scoped; receivers must be POS_RESTING or higher.
+func cmdShout(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Yes, shout, fine, shout we must, but WHAT???")
+		return nil
+	}
+	message := strings.Join(args, " ")
+
+	// Get the shouter's zone
+	senderRoom, ok := s.manager.world.GetRoom(s.player.GetRoom())
+	if !ok {
+		return nil
+	}
+	senderZone := senderRoom.Zone
+
+	text := fmt.Sprintf("%s shouts, '%s'", s.player.Name, message)
+	s.sendText(fmt.Sprintf("You shout, '%s'", message))
+
+	s.manager.mu.RLock()
+	targets := make([]*Session, 0)
+	for name, sess := range s.manager.sessions {
+		if name == s.player.Name || sess.player == nil {
+			continue
+		}
+		// Restrict to same zone — act.comm.c line 1287
+		targetRoom, ok := s.manager.world.GetRoom(sess.player.GetRoom())
+		if !ok || targetRoom.Zone != senderZone {
+			continue
+		}
+		targets = append(targets, sess)
+	}
+	s.manager.mu.RUnlock()
+
+	msg, _ := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "shout",
+			From: s.player.Name,
+			Text: text,
+		},
+	})
+	for _, sess := range targets {
+		select {
+		case sess.send <- msg:
+		default:
+		}
+	}
+	return nil
+}
+
+// cmdWhere lists all online players and their locations.
+// Source: act.informative.c do_where() lines 2244-2307
+func cmdWhere(s *Session) error {
+	s.manager.mu.RLock()
+	sessions := make([]*Session, 0, len(s.manager.sessions))
+	for _, sess := range s.manager.sessions {
+		sessions = append(sessions, sess)
+	}
+	s.manager.mu.RUnlock()
+
+	out := "Players\n-------\n"
+	found := false
+	for _, sess := range sessions {
+		if sess.player == nil {
+			continue
+		}
+		p := sess.player
+		room, ok := s.manager.world.GetRoom(p.GetRoom())
+		if !ok {
+			continue
+		}
+		// Format mirrors do_where() line 2272: name - [vnum] room name
+		out += fmt.Sprintf("%-20s - [%5d] %s\n", p.Name, room.VNum, room.Name)
+		found = true
+	}
+	if !found {
+		out += "No-one visible.\n"
+	}
+	s.sendText(out)
+	return nil
+}
+
+// cmdHelp provides a basic help stub.
+// Full implementation deferred to a later phase.
+func cmdHelp(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Available commands: look, north/south/east/west/up/down, say, hit, flee, " +
+			"inventory, equipment, wear, remove, wield, hold, get, drop, " +
+			"score, who, tell, emote, shout, where, quit\n" +
+			"Type 'help <topic>' for more info (stub — full help coming later).")
+		return nil
+	}
+	s.sendText(fmt.Sprintf("No help available for '%s' yet.", strings.Join(args, " ")))
+	return nil
 }
