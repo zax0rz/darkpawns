@@ -569,14 +569,14 @@ func (a *WorldScriptableAdapter) HandleSpellDeath(victimName string, spellNum in
 	a.world.HandleSpellDeathScriptable(victimName, spellNum, roomVNum)
 }
 
-<<<<<<< HEAD
 // SendTell delivers a private tell message to a named online player.
 // Source: act.comm.c do_tell().
 func (a *WorldScriptableAdapter) SendTell(targetName, message string) {
 	if p, ok := a.world.GetPlayer(targetName); ok {
 		p.SendMessage(message)
 	}
-=======
+}
+
 func (a *WorldScriptableAdapter) GetItemsInRoom(roomVNum int) []scripting.ScriptableObject {
 	return a.world.GetItemsInRoomScriptable(roomVNum)
 }

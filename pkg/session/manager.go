@@ -121,6 +121,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		subscribedVars: make(map[string]bool),
 		dirtyVars:      make(map[string]bool),
 		pendingEvents:  nil,
+		connectedAt:    time.Now(),
 	}
 
 	// Start goroutines for reading and writing
@@ -202,8 +203,9 @@ type Session struct {
 	authenticated bool
 
 	// Agent auth — set on login when mode="agent"
-	isAgent    bool
-	agentKeyID int64
+	isAgent     bool
+	agentKeyID  int64
+	connectedAt time.Time // set on session creation, used for sessionID()
 
 	// Agent subscription state — only populated when isAgent==true
 	subscribedVars map[string]bool  // vars this session subscribed to
@@ -401,9 +403,10 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		// Send welcome
 		s.sendWelcome()
 
-		// Agents get a full variable dump immediately after login
+		// Agents get a full variable dump + memory bootstrap immediately after login
 		if s.isAgent {
 			s.sendFullVarDump()
+			s.SendMemoryBootstrap()
 		}
 
 		// Broadcast to room

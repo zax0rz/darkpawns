@@ -110,11 +110,12 @@ func TestRoomTable(t *testing.T) {
 	t.Log("char field contains tables for players and mobs in the room")
 }
 
-// TestTier2CombatAIScriptsParse verifies that all five Tier 2 combat AI scripts
+
+// --- Tier 2 Combat AI — Batch A (dragon_breath/anhkheg/drake/bradle/caerroil) ---
+
+// TestTier2CombatAIScriptsParse verifies that all five Tier 2 Batch A combat AI scripts
 // load without Lua syntax errors.
-//
-// Scripts ported from origin/master:lib/scripts/mob/archive/ (dragon_breath,
-// anhkheg, drake, bradle, caerroil).
+// Scripts ported from origin/master:lib/scripts/mob/archive/
 func TestTier2CombatAIScriptsParse(t *testing.T) {
 	scripts := []struct {
 		name string
@@ -135,8 +136,6 @@ func TestTier2CombatAIScriptsParse(t *testing.T) {
 
 	for _, s := range scripts {
 		t.Run(s.name, func(t *testing.T) {
-			// Compile-only check: load the file as a chunk without executing it.
-			// This catches syntax errors without requiring a full game context.
 			fn, err := engine.L.LoadFile(s.path)
 			if err != nil {
 				t.Fatalf("%s: Lua parse error: %v", s.name, err)
@@ -151,7 +150,6 @@ func TestTier2CombatAIScriptsParse(t *testing.T) {
 
 // TestDragonBreathSpellConstants verifies that the breath weapon spell numbers
 // exposed to Lua match the values from globals.lua (origin/master).
-//
 // Source: globals.lua lines defining SPELL_FIRE_BREATH=202 .. SPELL_LIGHTNING_BREATH=206
 func TestDragonBreathSpellConstants(t *testing.T) {
 	tests := []struct {
@@ -159,11 +157,11 @@ func TestDragonBreathSpellConstants(t *testing.T) {
 		global   string
 		expected int
 	}{
-		{"SPELL_FIRE_BREATH", "SPELL_FIRE_BREATH", 202},         // globals.lua
-		{"SPELL_GAS_BREATH", "SPELL_GAS_BREATH", 203},           // globals.lua
-		{"SPELL_FROST_BREATH", "SPELL_FROST_BREATH", 204},        // globals.lua
-		{"SPELL_ACID_BREATH", "SPELL_ACID_BREATH", 205},          // globals.lua
-		{"SPELL_LIGHTNING_BREATH", "SPELL_LIGHTNING_BREATH", 206}, // globals.lua
+		{"SPELL_FIRE_BREATH", "SPELL_FIRE_BREATH", 202},
+		{"SPELL_GAS_BREATH", "SPELL_GAS_BREATH", 203},
+		{"SPELL_FROST_BREATH", "SPELL_FROST_BREATH", 204},
+		{"SPELL_ACID_BREATH", "SPELL_ACID_BREATH", 205},
+		{"SPELL_LIGHTNING_BREATH", "SPELL_LIGHTNING_BREATH", 206},
 	}
 
 	mockWorld := &mockWorldForTest{}
@@ -183,12 +181,10 @@ func TestDragonBreathSpellConstants(t *testing.T) {
 	}
 }
 
-// TestAnhkhegFightLogic documents the anhkheg fight trigger behavior:
+// TestAnhkhegFightLogic documents the anhkheg fight trigger:
 // 20% chance (number(0,4)==0) to cast SPELL_ACID_BLAST on target.
 // Source: anhkheg.lua line 2-3
 func TestAnhkhegFightLogic(t *testing.T) {
-	// number(0,4) produces [0,4], so P(==0) = 1/5 = 20%
-	// SPELL_ACID_BLAST = 75 (spells.go)
 	const spellAcidBlast = 75
 	const prob = 1.0 / 5.0
 	t.Logf("anhkheg: SPELL_ACID_BLAST=%d, trigger probability=%.0f%%", spellAcidBlast, prob*100)
@@ -197,19 +193,19 @@ func TestAnhkhegFightLogic(t *testing.T) {
 	}
 }
 
-// TestBradle_LevelScaledBiteProbability documents the bradle bite mechanic:
+// TestBradleLevelScaledBiteProbability documents the bradle bite mechanic.
 // bite probability = 1/(102-ch.level), increasing with target level.
 // Source: bradle.lua line 2
-func TestBradle_LevelScaledBiteProbability(t *testing.T) {
+func TestBradleLevelScaledBiteProbability(t *testing.T) {
 	tests := []struct {
 		level         int
 		expectedDenom int
 	}{
-		{1, 101},  // bradle.lua: number(0, 102-1) → 1-in-101
-		{10, 92},  // bradle.lua: number(0, 102-10) → 1-in-92
-		{20, 82},  // bradle.lua: number(0, 102-20) → 1-in-82
-		{50, 52},  // bradle.lua: number(0, 102-50) → 1-in-52
-		{100, 2},  // bradle.lua: number(0, 102-100) → 1-in-2 (very frequent)
+		{1, 101},
+		{10, 92},
+		{20, 82},
+		{50, 52},
+		{100, 2},
 	}
 	for _, tt := range tests {
 		denom := 102 - tt.level
@@ -217,5 +213,132 @@ func TestBradle_LevelScaledBiteProbability(t *testing.T) {
 			t.Errorf("level %d: expected denom %d, got %d", tt.level, tt.expectedDenom, denom)
 		}
 		t.Logf("level %d: bite chance = 1/%d (%.1f%%)", tt.level, denom, 100.0/float64(denom))
+	}
+}
+
+// --- Tier 2 Combat AI — Batch B (ettin/snake/troll/mindflayer/paladin) ---
+
+// TestBatchBScriptsParse verifies all five Batch B combat AI scripts load without
+// Lua syntax errors. Source: lib/scripts/mob/archive/
+func TestBatchBScriptsParse(t *testing.T) {
+	scripts := []struct {
+		name string
+		path string
+	}{
+		{"ettin", "../../test_scripts/mob/archive/ettin.lua"},
+		{"snake", "../../test_scripts/mob/archive/snake.lua"},
+		{"troll", "../../test_scripts/mob/archive/troll.lua"},
+		{"mindflayer", "../../test_scripts/mob/archive/mindflayer.lua"},
+		{"paladin", "../../test_scripts/mob/archive/paladin.lua"},
+	}
+
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+
+	for _, s := range scripts {
+		t.Run(s.name, func(t *testing.T) {
+			fn, err := engine.L.LoadFile(s.path)
+			if err != nil {
+				t.Fatalf("%s: Lua parse error: %v", s.name, err)
+			}
+			if fn == nil {
+				t.Fatalf("%s: LoadFile returned nil function", s.name)
+			}
+			t.Logf("%s: parsed OK", s.name)
+		})
+	}
+}
+
+// TestTrollDefinesBothTriggers verifies troll.lua defines both fight() and
+// onpulse_all() triggers. Source: troll.lua
+func TestTrollDefinesBothTriggers(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/troll.lua"); err != nil {
+		t.Fatalf("troll.lua load error: %v", err)
+	}
+	for _, fn := range []string{"fight", "onpulse_all"} {
+		val := engine.L.GetGlobal(fn)
+		if val.Type().String() != "function" {
+			t.Errorf("troll.lua: %s() not defined (got %s)", fn, val.Type().String())
+		} else {
+			t.Logf("troll.lua: %s() defined OK", fn)
+		}
+	}
+}
+
+// TestEttinBoulderDamageRange documents the raw HP damage range.
+// Source: ettin.lua line 2 — number(10, 30)
+func TestEttinBoulderDamageRange(t *testing.T) {
+	const minDmg, maxDmg = 10, 30
+	if minDmg <= 0 {
+		t.Errorf("ettin min boulder damage must be > 0, got %d", minDmg)
+	}
+	if maxDmg < minDmg {
+		t.Errorf("ettin max boulder damage (%d) < min (%d)", maxDmg, minDmg)
+	}
+	t.Logf("ettin boulder damage: %d-%d (25%% chance per round)", minDmg, maxDmg)
+}
+
+// TestSnakePoisonChanceFormula documents level-scaled poison bite probability.
+// snake.lua: number(0, 102-ch.level)==0; prob = 1/(103-level).
+// Source: snake.lua line 2
+func TestSnakePoisonChanceFormula(t *testing.T) {
+	tests := []struct {
+		level         int
+		expectedDenom int
+	}{
+		{1, 102},
+		{10, 93},
+		{30, 73},
+	}
+	for _, tt := range tests {
+		denom := 102 - tt.level + 1
+		if denom != tt.expectedDenom {
+			t.Errorf("level %d: expected denom %d, got %d", tt.level, tt.expectedDenom, denom)
+		}
+		t.Logf("snake level %d: poison chance = 1/%d (%.2f%%)", tt.level, denom, 100.0/float64(denom))
+	}
+}
+
+// TestMindflayerSpellConstants verifies SOUL_LEECH and PSIBLAST constants.
+// Source: engine.go (SPELL_SOUL_LEECH=83, SPELL_PSIBLAST=100)
+func TestMindflayerSpellConstants(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	for _, name := range []string{"SPELL_SOUL_LEECH", "SPELL_PSIBLAST"} {
+		val := engine.L.GetGlobal(name)
+		if val.Type().String() != "number" {
+			t.Errorf("%s: expected number, got %s", name, val.Type().String())
+		} else {
+			t.Logf("%s = %v", name, val)
+		}
+	}
+}
+
+// TestPaladinSpellConstants verifies DISPEL_EVIL and DISPEL_GOOD constants.
+// Source: spells.h (SPELL_DISPEL_EVIL=22, SPELL_DISPEL_GOOD=46)
+func TestPaladinSpellConstants(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	for _, name := range []string{"SPELL_DISPEL_EVIL", "SPELL_DISPEL_GOOD"} {
+		val := engine.L.GetGlobal(name)
+		if val.Type().String() != "number" {
+			t.Errorf("%s: expected number, got %s", name, val.Type().String())
+		} else {
+			t.Logf("%s = %v", name, val)
+		}
 	}
 }

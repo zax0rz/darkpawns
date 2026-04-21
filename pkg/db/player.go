@@ -57,6 +57,9 @@ func New(connString string) (*DB, error) {
 	if err := db.createTables(); err != nil {
 		return nil, fmt.Errorf("create tables: %w", err)
 	}
+	if err := db.InitNarrativeMemory(); err != nil {
+		return nil, fmt.Errorf("init narrative memory: %w", err)
+	}
 
 	return db, nil
 }
