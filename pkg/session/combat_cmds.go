@@ -8,6 +8,8 @@ import (
 )
 
 // cmdHit initiates combat with a target.
+// Combat is self-rate-limited by the 2s engine tick.
+// StartCombat enrolls the player; PerformRound fires autonomously.
 func cmdHit(s *Session, args []string) error {
 	if len(args) == 0 {
 		s.sendText("Hit whom?")

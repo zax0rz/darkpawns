@@ -14,6 +14,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"golang.org/x/time/rate"
 )
 
 var upgrader = websocket.Upgrader{
@@ -105,6 +106,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		conn:    conn,
 		manager: m,
 		send:    make(chan []byte, 256),
+		limiter: rate.NewLimiter(rate.Limit(10), 10),
 	}
 
 	// Start goroutines for reading and writing
@@ -193,6 +195,12 @@ type Session struct {
 	charClass    int
 	charHometown int
 	charStats    game.CharStats
+
+	// Rate limit: capacity=10, refill=10/sec (token bucket via golang.org/x/time/rate)
+	// This protects the server from command floods — it does NOT protect API costs.
+	// Agents must implement their own circuit breakers for LLM-level loop detection.
+	// See scripts/dp_bot.py for reference implementation.
+	limiter *rate.Limiter
 }
 
 // readPump reads messages from the WebSocket.
@@ -365,6 +373,18 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	var cmd CommandData
 	if err := json.Unmarshal(data, &cmd); err != nil {
 		return err
+	}
+
+	// Token bucket rate limit: 10 cmd/sec per session
+	if !s.limiter.Allow() {
+		s.sendError("rate limit exceeded — slow down")
+		// TODO: When Agent #2 dirty-flush fields land, wire this to agent events:
+		// if s.isAgent {
+		//     s.pendingEvents = append(s.pendingEvents, map[string]interface{}{"type": "rate_limited", "command": cmd.Command})
+		//     s.markDirty("EVENTS")
+		//     s.flushDirtyVars()
+		// }
+		return nil
 	}
 
 	return ExecuteCommand(s, cmd.Command, cmd.Args)
