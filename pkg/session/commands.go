@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -11,6 +12,35 @@ import (
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, command string, args []string) error {
 	cmd := strings.ToLower(command)
+
+	// Check for mob scripts with oncmd trigger before processing
+	// Based on the original MUD's script handling
+	if s.player != nil && s.player.GetRoomVNum() > 0 {
+		// Get mobs in the room
+		mobs := s.manager.world.GetMobsInRoom(s.player.GetRoomVNum())
+		fullCommand := command
+		if len(args) > 0 {
+			fullCommand = command + " " + strings.Join(args, " ")
+		}
+		
+		// Check each mob for oncmd script
+		for _, mob := range mobs {
+			if mob.HasScript("oncmd") {
+				// Create script context
+				ctx := mob.CreateScriptContext(s.player, nil, fullCommand)
+				// Run the script
+				handled, err := mob.RunScript("oncmd", ctx)
+				if err != nil {
+					// Log error but continue
+					log.Printf("Error running oncmd script for mob %v: %v", mob.GetVNum(), err)
+				}
+				if handled {
+					// Script handled the command, don't process further
+					return nil
+				}
+			}
+		}
+	}
 
 	switch cmd {
 	case "look", "l":
@@ -137,6 +167,15 @@ func cmdMove(s *Session, direction string) error {
 		},
 	})
 	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
+
+	// Check for mobs with greet scripts
+	mobs := s.manager.world.GetMobsInRoom(newRoom.VNum)
+	for _, mob := range mobs {
+		if mob.HasScript("greet") {
+			ctx := mob.CreateScriptContext(s.player, nil, "")
+			mob.RunScript("greet", ctx)
+		}
+	}
 
 	// Check for aggressive mobs in new room
 	if s.manager.world.OnPlayerEnterRoom(s.player, newRoom.VNum, s.manager.combatEngine) {

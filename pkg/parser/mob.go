@@ -266,3 +266,25 @@ func ParseAllMobFiles(dir string) ([]Mob, error) {
 
 	return allMobs, nil
 }
+
+// Scripting interface implementations for parser.Mob
+
+func (m *Mob) GetShortDesc() string {
+	return m.ShortDesc
+}
+
+func (m *Mob) GetGold() int {
+	return m.Gold
+}
+
+func (m *Mob) GetLevel() int {
+	return m.Level
+}
+
+func (m *Mob) GetScriptName() string {
+	return m.ScriptName
+}
+
+func (m *Mob) GetLuaFunctions() int {
+	return m.LuaFunctions
+}

@@ -156,6 +156,13 @@ func (w *World) runMobAI(mob *MobInstance) {
 		w.mu.RUnlock()
 	}
 
+	// Call sound scripts (ambient pulse)
+	// Based on original ambient pulse handling
+	if mob.HasScript("sound") && rand.Intn(100) < 10 { // 10% chance per tick
+		ctx := mob.CreateScriptContext(nil, nil, "")
+		mob.RunScript("sound", ctx)
+	}
+
 	// MOB_SCAVENGER: pick up highest-value item in room — mobact.c:103-115
 	// Only triggers 1 in 10 times (number(0,10) == 0 in original)
 	if isScavenger && rand.Intn(11) == 0 {

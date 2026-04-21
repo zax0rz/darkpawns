@@ -8,24 +8,23 @@ import (
 	"strings"
 
 	lua "github.com/yuin/gopher-lua"
-	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // Engine manages the Lua VM.
 // Based on boot_lua() in scripts.c lines 1703-1716.
 type Engine struct {
 	scriptsDir string
-	world      *game.World
 	L          *lua.LState
+	world      ScriptableWorld
 }
 
 // NewEngine creates a new Lua scripting engine.
-func NewEngine(scriptsDir string, world *game.World) *Engine {
+func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	L := lua.NewState()
 	engine := &Engine{
 		scriptsDir: scriptsDir,
-		world:      world,
 		L:          L,
+		world:      world,
 	}
 
 	// Open standard libraries
@@ -45,11 +44,7 @@ func NewEngine(scriptsDir string, world *game.World) *Engine {
 // triggerName is the function to call (e.g. "oncmd", "sound", "fight").
 // Returns true if the script handled the event (returned TRUE), false otherwise.
 // Based on run_script() in scripts.c lines 1718-1810.
-func (e *Engine) RunScript(ctx *game.ScriptContext, fname string, triggerName string) (bool, error) {
-	// Save stack position
-	top := e.L.GetTop()
-	defer e.L.SetTop(top)
-
+func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string) (bool, error) {
 	// Set globals based on context
 	// Based on run_script() lines 1732-1761
 	if ctx.Ch != nil {
@@ -67,8 +62,7 @@ func (e *Engine) RunScript(ctx *game.ScriptContext, fname string, triggerName st
 
 	// Set room global if we have room vnum
 	if ctx.RoomVNum > 0 {
-		// TODO: Implement room table
-		e.L.SetGlobal("room", lua.LNil)
+		e.L.SetGlobal("room", lua.LNumber(ctx.RoomVNum))
 	}
 
 	// Load and execute the script file
@@ -81,8 +75,9 @@ func (e *Engine) RunScript(ctx *game.ScriptContext, fname string, triggerName st
 
 	// Call the trigger function
 	// Based on run_script() lines 1780-1795
-	e.L.GetGlobal(triggerName)
-	if e.L.Get(-1).Type() == lua.LTNil {
+	fn := e.L.GetGlobal(triggerName)
+	e.L.Push(fn)
+	if fn.Type() == lua.LTNil {
 		// Function doesn't exist
 		e.L.Pop(1)
 		return false, nil
@@ -90,6 +85,8 @@ func (e *Engine) RunScript(ctx *game.ScriptContext, fname string, triggerName st
 
 	if err := e.L.PCall(0, 1, nil); err != nil {
 		log.Printf("[Lua] Error calling function %s in script %s: %v", triggerName, fname, err)
+		// Pop the error from stack
+		e.L.Pop(1)
 		return false, err
 	}
 
@@ -156,93 +153,114 @@ func (e *Engine) registerFunctions() {
 	e.L.SetGlobal("tport", e.L.NewFunction(e.luaTport))
 }
 
-// loadGlobals loads the globals.lua file and calls default().
+// loadGlobals loads the globals.lua file.
 // Based on boot_lua() lines 1711-1714.
 func (e *Engine) loadGlobals() {
 	globalsPath := e.scriptsDir + "/globals.lua"
 	if err := e.L.DoFile(globalsPath); err != nil {
 		log.Printf("[Lua] Warning: Could not load globals.lua: %v", err)
-		return
 	}
-
-	// Call default() function to set up constants
-	e.L.GetGlobal("default")
-	if e.L.Get(-1).Type() != lua.LTNil {
-		if err := e.L.PCall(0, 0, nil); err != nil {
-			log.Printf("[Lua] Warning: Error calling default(): %v", err)
-		}
-	}
-	e.L.Pop(1)
+	// Always set up basic constants
+	e.setupBasicConstants()
 }
 
-// charToTable converts a Player to a Lua table.
+// setupBasicConstants sets up essential constants when globals.lua is missing.
+func (e *Engine) setupBasicConstants() {
+	// Direction constants
+	e.L.SetGlobal("NORTH", lua.LNumber(0))
+	e.L.SetGlobal("EAST", lua.LNumber(1))
+	e.L.SetGlobal("SOUTH", lua.LNumber(2))
+	e.L.SetGlobal("WEST", lua.LNumber(3))
+	e.L.SetGlobal("UP", lua.LNumber(4))
+	e.L.SetGlobal("DOWN", lua.LNumber(5))
+	
+	// Message types for act()
+	e.L.SetGlobal("TO_ROOM", lua.LNumber(1))
+	e.L.SetGlobal("TO_VICT", lua.LNumber(2))
+	e.L.SetGlobal("TO_NOTVICT", lua.LNumber(3))
+	e.L.SetGlobal("TO_CHAR", lua.LNumber(4))
+	
+	// Boolean constants
+	e.L.SetGlobal("TRUE", lua.LNumber(1))
+	e.L.SetGlobal("FALSE", lua.LNumber(0))
+	e.L.SetGlobal("NIL", lua.LNil)
+	
+	// Level constants
+	e.L.SetGlobal("LVL_IMMORT", lua.LNumber(31))
+}
+
+// charToTable converts a ScriptablePlayer to a Lua table.
 // Based on char_to_table() in scripts.c lines 1812-1916.
-func (e *Engine) charToTable(player *game.Player, globalName string) {
+func (e *Engine) charToTable(player ScriptablePlayer, globalName string) {
 	L := e.L
 	tbl := L.NewTable()
 
 	// Basic fields
-	tbl.RawSetString("name", lua.LString(player.Name))
-	tbl.RawSetString("level", lua.LNumber(player.Level))
-	tbl.RawSetString("hp", lua.LNumber(player.Health))
-	tbl.RawSetString("maxhp", lua.LNumber(player.MaxHealth))
-	tbl.RawSetString("gold", lua.LNumber(0)) // TODO: Add Gold field to Player
-	tbl.RawSetString("race", lua.LNumber(player.Race))
-	tbl.RawSetString("class", lua.LNumber(player.Class))
-	tbl.RawSetString("alignment", lua.LNumber(0)) // TODO: Add alignment field
+	tbl.RawSetString("name", lua.LString(player.GetName()))
+	tbl.RawSetString("level", lua.LNumber(player.GetLevel()))
+	tbl.RawSetString("hp", lua.LNumber(player.GetHealth()))
+	tbl.RawSetString("maxhp", lua.LNumber(player.GetMaxHealth()))
+	tbl.RawSetString("gold", lua.LNumber(player.GetGold()))
+	tbl.RawSetString("race", lua.LNumber(player.GetRace()))
+	tbl.RawSetString("class", lua.LNumber(player.GetClass()))
+	tbl.RawSetString("alignment", lua.LNumber(player.GetAlignment()))
+	tbl.RawSetString("room", lua.LNumber(player.GetRoomVNum()))
 
 	// Skills table (stub for now)
 	skillsTbl := L.NewTable()
 	tbl.RawSetString("skills", skillsTbl)
 
 	// Store pointer to struct for write-back
-	tbl.RawSetString("struct", lua.LNumber(player.ID))
+	tbl.RawSetString("struct", lua.LNumber(player.GetID()))
 
 	L.SetGlobal(globalName, tbl)
 }
 
-// mobToTable converts a MobInstance to a Lua table.
+// mobToTable converts a ScriptableMob to a Lua table.
 // Based on char_to_table() for NPCs in scripts.c lines 1904-1910.
-func (e *Engine) mobToTable(mob *game.MobInstance, globalName string) {
+func (e *Engine) mobToTable(mob ScriptableMob, globalName string) {
 	L := e.L
 	tbl := L.NewTable()
 
+	proto := mob.GetPrototype()
+	
 	// Basic fields
-	tbl.RawSetString("name", lua.LString(mob.Prototype.ShortDesc))
-	tbl.RawSetString("level", lua.LNumber(mob.Prototype.Level))
-	tbl.RawSetString("hp", lua.LNumber(mob.CurrentHP))
-	tbl.RawSetString("maxhp", lua.LNumber(mob.MaxHP))
-	tbl.RawSetString("vnum", lua.LNumber(mob.VNum))
-	tbl.RawSetString("gold", lua.LNumber(mob.Prototype.Gold))
+	tbl.RawSetString("name", lua.LString(proto.GetShortDesc()))
+	tbl.RawSetString("level", lua.LNumber(proto.GetLevel()))
+	tbl.RawSetString("hp", lua.LNumber(mob.GetHealth()))
+	tbl.RawSetString("maxhp", lua.LNumber(mob.GetMaxHealth()))
+	tbl.RawSetString("vnum", lua.LNumber(mob.GetVNum()))
+	tbl.RawSetString("gold", lua.LNumber(proto.GetGold()))
+	tbl.RawSetString("room", lua.LNumber(mob.GetRoomVNum()))
 
 	// Store pointer to struct for write-back
-	tbl.RawSetString("struct", lua.LNumber(mob.VNum))
+	tbl.RawSetString("struct", lua.LNumber(mob.GetVNum()))
 
 	L.SetGlobal(globalName, tbl)
 }
 
-// objToTable converts an ObjectInstance to a Lua table.
+// objToTable converts a ScriptableObject to a Lua table.
 // Based on obj_to_table() in scripts.c lines 1918-2016.
-func (e *Engine) objToTable(obj *game.ObjectInstance, globalName string) {
+func (e *Engine) objToTable(obj ScriptableObject, globalName string) {
 	L := e.L
 	tbl := L.NewTable()
 
 	// Basic fields
-	tbl.RawSetString("vnum", lua.LNumber(obj.VNum))
-	tbl.RawSetString("alias", lua.LString(obj.Prototype.Keywords))
-	tbl.RawSetString("name", lua.LString(obj.Prototype.ShortDesc))
-	tbl.RawSetString("cost", lua.LNumber(obj.Prototype.Cost))
-	tbl.RawSetString("timer", lua.LNumber(0)) // TODO: Add timer field
+	tbl.RawSetString("vnum", lua.LNumber(obj.GetVNum()))
+	tbl.RawSetString("alias", lua.LString(obj.GetKeywords()))
+	tbl.RawSetString("name", lua.LString(obj.GetShortDesc()))
+	tbl.RawSetString("cost", lua.LNumber(obj.GetCost()))
+	tbl.RawSetString("timer", lua.LNumber(obj.GetTimer()))
 
 	// Store pointer to struct for write-back
-	tbl.RawSetString("struct", lua.LNumber(obj.VNum))
+	tbl.RawSetString("struct", lua.LNumber(obj.GetVNum()))
 
 	L.SetGlobal(globalName, tbl)
 }
 
-// tableToChar reads back changes from the ch table to the Player.
+// tableToChar reads back changes from the ch table to the ScriptablePlayer.
 // Based on table_to_char() in scripts.c lines 2018-2116.
-func (e *Engine) tableToChar(player *game.Player) {
+func (e *Engine) tableToChar(player ScriptablePlayer) {
 	L := e.L
 	tbl := L.Get(-1)
 
@@ -253,21 +271,21 @@ func (e *Engine) tableToChar(player *game.Player) {
 	// Read hp changes
 	L.GetField(tbl, "hp")
 	if val := L.Get(-1); val.Type() == lua.LTNumber {
-		player.Health = int(lua.LVAsNumber(val))
+		player.SetHealth(int(lua.LVAsNumber(val)))
 	}
 	L.Pop(1)
 
 	// Read gold changes
 	L.GetField(tbl, "gold")
 	if val := L.Get(-1); val.Type() == lua.LTNumber {
-		// TODO: Set player.Gold when field is added
+		player.SetGold(int(lua.LVAsNumber(val)))
 	}
 	L.Pop(1)
 }
 
-// tableToMob reads back changes from the me table to the MobInstance.
+// tableToMob reads back changes from the me table to the ScriptableMob.
 // Based on table_to_char() for NPCs in scripts.c lines 2040-2045.
-func (e *Engine) tableToMob(mob *game.MobInstance) {
+func (e *Engine) tableToMob(mob ScriptableMob) {
 	L := e.L
 	tbl := L.Get(-1)
 
@@ -278,7 +296,7 @@ func (e *Engine) tableToMob(mob *game.MobInstance) {
 	// Read hp changes
 	L.GetField(tbl, "hp")
 	if val := L.Get(-1); val.Type() == lua.LTNumber {
-		mob.CurrentHP = int(lua.LVAsNumber(val))
+		mob.SetHealth(int(lua.LVAsNumber(val)))
 	}
 	L.Pop(1)
 }
@@ -290,41 +308,62 @@ func (e *Engine) luaAct(L *lua.LState) int {
 	// act(msg, visible, ch, obj, vict, type)
 	// Based on lua_act() in scripts.c lines 79-124
 	msg := L.ToString(1)
-	_ = L.ToBool(2) // visible — used for future CAN_SEE checks
+	_ = L.ToBool(2) // visible - unused for now
 	where := L.ToInt(6)
 
-	// Get ch from global
+	// Get room vnum from context
+	var roomVNum int
+	L.GetGlobal("room")
+	if L.Get(-1).Type() == lua.LTNumber {
+		roomVNum = int(L.ToNumber(-1))
+	}
+	L.Pop(1)
+
+	// Get me from global for room context
+	L.GetGlobal("me")
+	if L.Get(-1).Type() == lua.LTTable {
+		L.GetField(L.Get(-1), "room")
+		if L.Get(-1).Type() == lua.LTNumber {
+			roomVNum = int(L.ToNumber(-1))
+		}
+		L.Pop(1)
+	}
+	L.Pop(1)
+
+	// Get ch from global for TO_VICT/TO_CHAR
 	L.GetGlobal("ch")
-	var ch *game.Player = nil
+	var ch ScriptablePlayer = nil
 	if L.Get(-1).Type() == lua.LTTable {
 		// In real implementation, we'd get the actual player pointer
+		// For now, we'll use the world to find players
 	}
 	L.Pop(1)
 
-	// Get me from global
-	L.GetGlobal("me")
-	var me *game.MobInstance = nil
-	if L.Get(-1).Type() == lua.LTTable {
-		// In real implementation, we'd get the actual mob pointer
+	if e.world == nil || roomVNum == 0 {
+		log.Printf("[ACT] No world or room context: %s (type: %d)", msg, where)
+		return 0
 	}
-	L.Pop(1)
 
-	// Simplified implementation for now
+	players := e.world.GetPlayersInRoom(roomVNum)
+	
 	switch where {
 	case 1: // TO_ROOM
-		if me != nil {
-			// Send to room where me is
-			log.Printf("[ACT TO_ROOM] %s: %s", me.Prototype.ShortDesc, msg)
+		for _, player := range players {
+			player.SendMessage(msg + "\r\n")
 		}
 	case 2: // TO_VICT
 		if ch != nil {
-			log.Printf("[ACT TO_VICT] To %s: %s", ch.Name, msg)
+			ch.SendMessage(msg + "\r\n")
 		}
 	case 3: // TO_NOTVICT
-		log.Printf("[ACT TO_NOTVICT] %s", msg)
+		for _, player := range players {
+			if ch == nil || player.GetID() != ch.GetID() {
+				player.SendMessage(msg + "\r\n")
+			}
+		}
 	case 4: // TO_CHAR
 		if ch != nil {
-			log.Printf("[ACT TO_CHAR] To %s: %s", ch.Name, msg)
+			ch.SendMessage(msg + "\r\n")
 		}
 	}
 
@@ -335,12 +374,33 @@ func (e *Engine) luaDoDamage(L *lua.LState) int {
 	// do_damage(amount)
 	// Based on pattern_dmg.lua example
 	amount := L.ToInt(1)
-	_ = amount // applied via currentContext below
 
 	// Get ch from global
 	L.GetGlobal("ch")
 	if L.Get(-1).Type() == lua.LTTable {
-		// Damage applied via write-back in RunScript tableToChar
+		// Apply damage to ch
+		L.GetField(L.Get(-1), "hp")
+		if L.Get(-1).Type() == lua.LTNumber {
+			currentHP := int(L.ToNumber(-1))
+			newHP := currentHP - amount
+			if newHP < 0 {
+				newHP = 0
+			}
+			L.Pop(1) // pop hp value
+			
+			// Update hp in table
+			L.Push(lua.LNumber(newHP))
+			L.SetField(L.Get(-2), "hp", lua.LNumber(newHP))
+			
+			// Check for death
+			if newHP <= 0 && e.world != nil {
+				// Get the actual player object from the world
+				// For now, just log
+				log.Printf("[DO_DAMAGE] Player would die from %d damage", amount)
+			}
+		} else {
+			L.Pop(1)
+		}
 	}
 	L.Pop(1)
 
@@ -352,13 +412,40 @@ func (e *Engine) luaSay(L *lua.LState) int {
 	// Based on lua_say() (not shown in snippets but referenced)
 	msg := L.ToString(1)
 	
-	// Get me from global
+	// Get me from global for room context
+	var roomVNum int
 	L.GetGlobal("me")
 	if L.Get(-1).Type() == lua.LTTable {
-		// In real implementation: send to room
-		log.Printf("[SAY] %s says: %s", "mob", msg)
+		L.GetField(L.Get(-1), "room")
+		if L.Get(-1).Type() == lua.LTNumber {
+			roomVNum = int(L.ToNumber(-1))
+		}
+		L.Pop(1)
 	}
 	L.Pop(1)
+	
+	if e.world == nil || roomVNum == 0 {
+		log.Printf("[SAY] No world or room context: %s", msg)
+		return 0
+	}
+	
+	// Format message: "mob says 'message'"
+	L.GetGlobal("me")
+	var mobName string = "someone"
+	if L.Get(-1).Type() == lua.LTTable {
+		L.GetField(L.Get(-1), "name")
+		if L.Get(-1).Type() == lua.LTString {
+			mobName = L.ToString(-1)
+		}
+		L.Pop(1)
+	}
+	L.Pop(1)
+	
+	formattedMsg := mobName + " says '" + msg + "'\r\n"
+	players := e.world.GetPlayersInRoom(roomVNum)
+	for _, player := range players {
+		player.SendMessage(formattedMsg)
+	}
 	
 	return 0
 }
@@ -368,12 +455,40 @@ func (e *Engine) luaEmote(L *lua.LState) int {
 	// Based on lua_emote() in scripts.c lines 291-306
 	msg := L.ToString(1)
 	
-	// Get me from global
+	// Get me from global for room context
+	var roomVNum int
 	L.GetGlobal("me")
 	if L.Get(-1).Type() == lua.LTTable {
-		log.Printf("[EMOTE] %s %s", "mob", msg)
+		L.GetField(L.Get(-1), "room")
+		if L.Get(-1).Type() == lua.LTNumber {
+			roomVNum = int(L.ToNumber(-1))
+		}
+		L.Pop(1)
 	}
 	L.Pop(1)
+	
+	if e.world == nil || roomVNum == 0 {
+		log.Printf("[EMOTE] No world or room context: %s", msg)
+		return 0
+	}
+	
+	// Format message: "mob message"
+	L.GetGlobal("me")
+	var mobName string = "someone"
+	if L.Get(-1).Type() == lua.LTTable {
+		L.GetField(L.Get(-1), "name")
+		if L.Get(-1).Type() == lua.LTString {
+			mobName = L.ToString(-1)
+		}
+		L.Pop(1)
+	}
+	L.Pop(1)
+	
+	formattedMsg := mobName + " " + msg + "\r\n"
+	players := e.world.GetPlayersInRoom(roomVNum)
+	for _, player := range players {
+		player.SendMessage(formattedMsg)
+	}
 	
 	return 0
 }
@@ -390,7 +505,38 @@ func (e *Engine) luaOload(L *lua.LState) int {
 	// oload(target, vnum, location)
 	// Based on lua_oload() in scripts.c lines 1047-1090
 	// target is ch table, vnum is number, location is string
-	return 0
+	vnum := L.ToInt(2)
+	location := L.ToString(3)
+	
+	if e.world == nil {
+		log.Printf("[OLOAD] No world context: vnum %d, location %s", vnum, location)
+		L.Push(lua.LNil)
+		return 1
+	}
+	
+	// Get object prototype
+	objProto := e.world.GetObjPrototype(vnum)
+	if objProto == nil {
+		log.Printf("[OLOAD] Object prototype not found: vnum %d", vnum)
+		L.Push(lua.LNil)
+		return 1
+	}
+	
+	// Create object instance from prototype
+	// For now, just return the prototype as a table
+	tbl := L.NewTable()
+	tbl.RawSetString("vnum", lua.LNumber(objProto.GetVNum()))
+	tbl.RawSetString("alias", lua.LString(objProto.GetKeywords()))
+	tbl.RawSetString("name", lua.LString(objProto.GetShortDesc()))
+	tbl.RawSetString("cost", lua.LNumber(objProto.GetCost()))
+	tbl.RawSetString("timer", lua.LNumber(objProto.GetTimer()))
+	
+	// TODO: Actually add to room or character inventory based on location
+	// For now, just log
+	log.Printf("[OLOAD] Created object vnum %d at location %s", vnum, location)
+	
+	L.Push(tbl)
+	return 1
 }
 
 func (e *Engine) luaMload(L *lua.LState) int {
@@ -432,7 +578,16 @@ func (e *Engine) luaSendToRoom(L *lua.LState) int {
 	msg := L.ToString(1)
 	roomVNum := L.ToInt(2)
 	
-	log.Printf("[SEND_TO_ROOM] Room %d: %s", roomVNum, msg)
+	if e.world == nil {
+		log.Printf("[SEND_TO_ROOM] No world context: Room %d: %s", roomVNum, msg)
+		return 0
+	}
+	
+	players := e.world.GetPlayersInRoom(roomVNum)
+	for _, player := range players {
+		player.SendMessage(msg + "\r\n")
+	}
+	
 	return 0
 }
 

@@ -205,3 +205,18 @@ func (o *ObjectInstance) GetCustomData(key string) interface{} {
 	}
 	return o.CustomData[key]
 }
+
+// Scripting interface implementations
+
+func (o *ObjectInstance) GetVNum() int {
+	return o.VNum
+}
+
+func (o *ObjectInstance) GetTimer() int {
+	// TODO: Add timer field to ObjectInstance
+	return 0
+}
+
+func (o *ObjectInstance) SetTimer(timer int) {
+	// TODO: Add timer field to ObjectInstance
+}

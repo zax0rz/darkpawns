@@ -1,16 +1,14 @@
 // Package game manages the game world state and player interactions.
 package game
 
-// ScriptContext holds the game objects exposed to Lua as globals.
-// Defined here (in pkg/game) to avoid import cycles with pkg/scripting.
-type ScriptContext struct {
-	Ch       *Player
-	Me       *MobInstance
-	Obj      *ObjectInstance
-	RoomVNum int
-	Argument string
-	World    *World
-}
+import (
+	"log"
+	
+	"github.com/zax0rz/darkpawns/pkg/scripting"
+)
+
+// ScriptContext is an alias for scripting.ScriptContext
+type ScriptContext = scripting.ScriptContext
 
 // ScriptEngine is set by the server at startup.
 var ScriptEngine interface {
@@ -27,28 +25,28 @@ func (m *MobInstance) HasScript(trigger string) bool {
 	}
 
 	// Check bitmask based on trigger type
-	// From structs.h: MS_BRIBE, MS_GREET, MS_ONGIVE, MS_SOUND, MS_DEATH, 
-	// MS_ONPULSE_ALL, MS_ONPULSE_PC, MS_FIGHTING, MS_ONCMD
+	// From structs.h lines 659-690: MS_BRIBE=1, MS_GREET=2, MS_ONGIVE=4, MS_SOUND=8,
+	// MS_DEATH=16, MS_ONPULSE_ALL=32, MS_ONPULSE_PC=64, MS_FIGHTING=128, MS_ONCMD=256
 	var bitmask int
 	switch trigger {
 	case "bribe":
-		bitmask = 1 << 1
+		bitmask = 1 // MS_BRIBE
 	case "greet":
-		bitmask = 1 << 2
+		bitmask = 2 // MS_GREET
 	case "ongive":
-		bitmask = 1 << 3
+		bitmask = 4 // MS_ONGIVE
 	case "sound":
-		bitmask = 1 << 4
-	case "ondeath":
-		bitmask = 1 << 5
+		bitmask = 8 // MS_SOUND
+	case "death":
+		bitmask = 16 // MS_DEATH
 	case "onpulse_all":
-		bitmask = 1 << 6
+		bitmask = 32 // MS_ONPULSE_ALL
 	case "onpulse_pc":
-		bitmask = 1 << 7
+		bitmask = 64 // MS_ONPULSE_PC
 	case "fight":
-		bitmask = 1 << 8
+		bitmask = 128 // MS_FIGHTING
 	case "oncmd":
-		bitmask = 1 << 9
+		bitmask = 256 // MS_ONCMD
 	default:
 		return false
 	}
@@ -68,17 +66,34 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 	}
 
 	// Run the script
-	return ScriptEngine.RunScript(ctx, "mob/"+m.Prototype.ScriptName, trigger)
+	handled, err := ScriptEngine.RunScript(ctx, m.Prototype.ScriptName, trigger)
+	
+	// Handle assembler.lua silent return issue
+	// If ongive returns false/nil, send default message
+	if trigger == "ongive" && !handled && err == nil && ctx.Ch != nil {
+		// Send default "You can't give that here." message
+		// In real implementation: ctx.Ch.SendMessage("You can't give that here.\r\n")
+		log.Printf("[SCRIPT] ongive returned false for mob %d, player %s", m.GetVNum(), ctx.Ch.GetName())
+	}
+	
+	return handled, err
 }
 
 // Helper to create script context for mob events
 func (m *MobInstance) CreateScriptContext(ch *Player, obj *ObjectInstance, argument string) *ScriptContext {
-	return &ScriptContext{
-		Ch:       ch,
+	ctx := &ScriptContext{
 		Me:       m,
-		Obj:      obj,
 		RoomVNum: m.RoomVNum,
 		Argument: argument,
 		World:    nil, // Would need world reference
 	}
+	// Only set Ch if ch is not nil
+	if ch != nil {
+		ctx.Ch = ch
+	}
+	// Only set Obj if obj is not nil
+	if obj != nil {
+		ctx.Obj = obj
+	}
+	return ctx
 }

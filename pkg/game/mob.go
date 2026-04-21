@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
 // MobInstance represents a spawned mob in the world.
@@ -357,4 +358,37 @@ func (m *MobInstance) GetDamroll() int {
 // Mobs don't have exceptional strength, return 0 as default
 func (m *MobInstance) GetStrAdd() int {
 	return 0
+}
+
+// Scripting interface implementations
+
+func (m *MobInstance) GetVNum() int {
+	return m.VNum
+}
+
+func (m *MobInstance) GetHealth() int {
+	return m.CurrentHP
+}
+
+func (m *MobInstance) SetHealth(health int) {
+	m.CurrentHP = health
+}
+
+func (m *MobInstance) GetMaxHealth() int {
+	return m.MaxHP
+}
+
+func (m *MobInstance) GetGold() int {
+	if m.Prototype != nil {
+		return m.Prototype.Gold
+	}
+	return 0
+}
+
+func (m *MobInstance) GetRoomVNum() int {
+	return m.RoomVNum
+}
+
+func (m *MobInstance) GetPrototype() scripting.ScriptableMobPrototype {
+	return m.Prototype
 }

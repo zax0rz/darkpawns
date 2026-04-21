@@ -3,11 +3,12 @@ package game
 
 import (
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
-
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
 // World represents the active game world with runtime state.
@@ -423,4 +424,106 @@ func (w *World) Stats() string {
 		"World: %d rooms, %d mobs (%d active), %d objects, %d zones, %d players online",
 		len(w.rooms), len(w.mobs), len(w.activeMobs), len(w.objs), len(w.zones), len(w.players),
 	)
+}
+
+// ScriptableWorld interface implementation
+
+// GetPlayersInRoomScriptable returns all players in a given room as ScriptablePlayer.
+func (w *World) GetPlayersInRoomScriptable(roomVNum int) []scripting.ScriptablePlayer {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	var players []scripting.ScriptablePlayer
+	for _, p := range w.players {
+		if p.RoomVNum == roomVNum {
+			players = append(players, p)
+		}
+	}
+	return players
+}
+
+// GetObjPrototypeScriptable returns an object prototype by vnum as ScriptableObject.
+func (w *World) GetObjPrototypeScriptable(vnum int) scripting.ScriptableObject {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	
+	obj, ok := w.objs[vnum]
+	if !ok {
+		return nil
+	}
+	// Create a wrapper that implements ScriptableObject
+	return &scriptableObjWrapper{obj: obj}
+}
+
+// AddItemToRoomScriptable adds an item to a room.
+func (w *World) AddItemToRoomScriptable(obj scripting.ScriptableObject, roomVNum int) error {
+	// For now, just log - we'd need to convert ScriptableObject to ObjectInstance
+	log.Printf("[SCRIPT] Would add object vnum %d to room %d", obj.GetVNum(), roomVNum)
+	return nil
+}
+
+// HandleNonCombatDeathScriptable handles player death from non-combat damage.
+func (w *World) HandleNonCombatDeathScriptable(player scripting.ScriptablePlayer) {
+	log.Printf("[SCRIPT] Player %s would die from non-combat damage", player.GetName())
+	// TODO: Implement death handling
+}
+
+// ScriptableWorld interface implementation via adapter
+
+// WorldScriptableAdapter adapts World to ScriptableWorld
+type WorldScriptableAdapter struct {
+	world *World
+}
+
+// NewWorldScriptableAdapter creates a WorldScriptableAdapter.
+func NewWorldScriptableAdapter(w *World) *WorldScriptableAdapter {
+	return &WorldScriptableAdapter{world: w}
+}
+
+func (a *WorldScriptableAdapter) GetPlayersInRoom(roomVNum int) []scripting.ScriptablePlayer {
+	return a.world.GetPlayersInRoomScriptable(roomVNum)
+}
+
+func (a *WorldScriptableAdapter) GetObjPrototype(vnum int) scripting.ScriptableObject {
+	return a.world.GetObjPrototypeScriptable(vnum)
+}
+
+func (a *WorldScriptableAdapter) AddItemToRoom(obj scripting.ScriptableObject, roomVNum int) error {
+	return a.world.AddItemToRoomScriptable(obj, roomVNum)
+}
+
+func (a *WorldScriptableAdapter) HandleNonCombatDeath(player scripting.ScriptablePlayer) {
+	// ScriptablePlayer is an interface — find the actual Player by name
+	if p, ok := a.world.GetPlayer(player.GetName()); ok {
+		a.world.HandleNonCombatDeath(p)
+	}
+}
+
+// scriptableObjWrapper wraps parser.Obj to implement ScriptableObject
+type scriptableObjWrapper struct {
+	obj *parser.Obj
+}
+
+func (w *scriptableObjWrapper) GetVNum() int {
+	return w.obj.VNum
+}
+
+func (w *scriptableObjWrapper) GetKeywords() string {
+	return w.obj.Keywords
+}
+
+func (w *scriptableObjWrapper) GetShortDesc() string {
+	return w.obj.ShortDesc
+}
+
+func (w *scriptableObjWrapper) GetCost() int {
+	return w.obj.Cost
+}
+
+func (w *scriptableObjWrapper) GetTimer() int {
+	return 0 // parser.Obj has no Timer field — runtime timer tracked on ObjectInstance
+}
+
+func (w *scriptableObjWrapper) SetTimer(timer int) {
+	// TODO: timer mutation on parser.Obj not supported — Phase 3 tracks timer on ObjectInstance
 }
