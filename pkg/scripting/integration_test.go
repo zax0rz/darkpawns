@@ -46,6 +46,11 @@ func (m *mockWorldForTest) HandleNonCombatDeath(player ScriptablePlayer) {}
 func (m *mockWorldForTest) HandleSpellDeath(victimName string, spellNum int, roomVNum int) {}
 
 func (m *mockWorldForTest) SendTell(targetName, message string) {}
+func (m *mockWorldForTest) GetItemsInRoom(roomVNum int) []ScriptableObject        { return nil }
+func (m *mockWorldForTest) HasItemByVNum(charName string, vnum int) bool           { return false }
+func (m *mockWorldForTest) RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject { return nil }
+func (m *mockWorldForTest) RemoveItemFromChar(charName string, vnum int) ScriptableObject { return nil }
+func (m *mockWorldForTest) GiveItemToChar(charName string, obj ScriptableObject) error { return nil }
 
 // TestSpellDamageFormulas tests that spell damage formulas are implemented
 func TestSpellDamageFormulas(t *testing.T) {
