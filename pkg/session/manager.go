@@ -86,6 +86,17 @@ func (m *Manager) SetDeathFunc() {
 	}
 }
 
+// SetDamageFunc wires health dirty-tracking into the combat engine.
+// When a player takes damage in combat, their HEALTH and MAX_HEALTH vars are
+// marked dirty so the next flushDirtyVars call will push the update.
+func (m *Manager) SetDamageFunc() {
+	m.combatEngine.DamageFunc = func(victimName string) {
+		if s, ok := m.GetSession(victimName); ok {
+			s.markDirty(VarHealth, VarMaxHealth)
+		}
+	}
+}
+
 // SetScriptFightFunc wires the fight trigger into the combat engine.
 // After each combat round, if the mob has a fight script, it fires.
 func (m *Manager) SetScriptFightFunc() {
@@ -103,10 +114,13 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session := &Session{
-		conn:    conn,
-		manager: m,
-		send:    make(chan []byte, 256),
-		limiter: rate.NewLimiter(rate.Limit(10), 10),
+		conn:           conn,
+		manager:        m,
+		send:           make(chan []byte, 256),
+		limiter:        rate.NewLimiter(rate.Limit(10), 10),
+		subscribedVars: make(map[string]bool),
+		dirtyVars:      make(map[string]bool),
+		pendingEvents:  nil,
 	}
 
 	// Start goroutines for reading and writing
@@ -190,6 +204,11 @@ type Session struct {
 	// Agent auth — set on login when mode="agent"
 	isAgent    bool
 	agentKeyID int64
+
+	// Agent subscription state — only populated when isAgent==true
+	subscribedVars map[string]bool  // vars this session subscribed to
+	dirtyVars      map[string]bool  // vars changed since last flush
+	pendingEvents  []interface{}    // queued EVENTS since last flush
 
 	// Character creation state
 	charCreating bool
@@ -278,6 +297,11 @@ func (s *Session) handleMessage(data []byte) error {
 			return ErrNotAuthenticated
 		}
 		return s.handleCommand(msg.Data)
+	case MsgSubscribe:
+		if !s.authenticated {
+			return ErrNotAuthenticated
+		}
+		return s.handleSubscribe(msg.Data)
 	case MsgCharInput:
 		if s.charCreating {
 			return s.handleCharInput(msg.Data)
@@ -406,16 +430,20 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	// Token bucket rate limit: 10 cmd/sec per session
 	if !s.limiter.Allow() {
 		s.sendError("rate limit exceeded — slow down")
-		// TODO: When Agent #2 dirty-flush fields land, wire this to agent events:
-		// if s.isAgent {
-		//     s.pendingEvents = append(s.pendingEvents, map[string]interface{}{"type": "rate_limited", "command": cmd.Command})
-		//     s.markDirty("EVENTS")
-		//     s.flushDirtyVars()
-		// }
+		if s.isAgent {
+			s.pendingEvents = append(s.pendingEvents, map[string]interface{}{"type": "rate_limited", "command": cmd.Command})
+			s.markDirty(VarEvents)
+			s.flushDirtyVars()
+		}
 		return nil
 	}
 
-	return ExecuteCommand(s, cmd.Command, cmd.Args)
+	err := ExecuteCommand(s, cmd.Command, cmd.Args)
+	// Flush dirty vars for agents after every command dispatch
+	if s.isAgent {
+		s.flushDirtyVars()
+	}
+	return err
 }
 
 // sendWelcome sends the initial game state to the player.

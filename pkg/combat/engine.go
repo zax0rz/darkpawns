@@ -36,6 +36,11 @@ type CombatEngine struct {
 	// Set by the game layer. Called with (mobName, targetName, roomVNum).
 	// Source: mobact.c — mobs use scripts during combat
 	ScriptFightFunc func(mobName string, targetName string, roomVNum int)
+
+	// DamageFunc is called after damage is applied to a combatant each round.
+	// Set by the session manager to propagate health changes to agent sessions.
+	// victimName is the name of the character who took damage.
+	DamageFunc func(victimName string)
 }
 
 // NewCombatEngine creates a new combat engine
@@ -205,7 +210,10 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		
 		// Apply damage
 		defender.TakeDamage(damage)
-		
+		if ce.DamageFunc != nil {
+			ce.DamageFunc(defender.GetName())
+		}
+
 		// Send combat messages
 		ce.sendHitMessage(attacker, defender, damage)
 		

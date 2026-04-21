@@ -183,6 +183,9 @@ func cmdMove(s *Session, direction string) error {
 		s.sendText("You are attacked!")
 	}
 
+	// Mark room vars dirty for agents after movement
+	s.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
+
 	// Send new room state to player
 	return cmdLook(s, nil)
 }
@@ -300,6 +303,7 @@ func cmdWear(s *Session, args []string) error {
 	// Remove from inventory (equip should have moved it)
 	s.player.Inventory.RemoveItem(item)
 	s.sendText(fmt.Sprintf("You wear %s.", item.GetShortDesc()))
+	s.markDirty(VarInventory, VarEquipment)
 
 	// Broadcast to room
 	broadcastEquipmentChange(s, "wear", item)
@@ -340,6 +344,7 @@ func cmdRemove(s *Session, args []string) error {
 	}
 
 	s.sendText(fmt.Sprintf("You remove %s.", itemToRemove.GetShortDesc()))
+	s.markDirty(VarInventory, VarEquipment)
 	broadcastEquipmentChange(s, "remove", itemToRemove)
 	return nil
 }
@@ -383,6 +388,7 @@ func cmdWield(s *Session, args []string) error {
 	// Remove from inventory
 	s.player.Inventory.RemoveItem(item)
 	s.sendText(fmt.Sprintf("You wield %s.", item.GetShortDesc()))
+	s.markDirty(VarInventory, VarEquipment)
 	broadcastEquipmentChange(s, "wield", item)
 	return nil
 }
@@ -459,7 +465,8 @@ func cmdGet(s *Session, args []string) error {
 			}
 
 			s.sendText(fmt.Sprintf("You pick up %s.", item.GetShortDesc()))
-			
+			s.markDirty(VarInventory, VarRoomItems)
+
 			// Notify room
 			msg, _ := json.Marshal(ServerMessage{
 				Type: MsgEvent,
@@ -500,6 +507,7 @@ func cmdDrop(s *Session, args []string) error {
 	s.manager.world.AddItemToRoom(item, roomVNum)
 
 	s.sendText(fmt.Sprintf("You drop %s.", item.GetShortDesc()))
+	s.markDirty(VarInventory, VarRoomItems)
 
 	msg, _ := json.Marshal(ServerMessage{
 		Type: MsgEvent,

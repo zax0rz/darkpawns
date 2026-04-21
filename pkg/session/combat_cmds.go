@@ -43,6 +43,7 @@ func cmdHit(s *Session, args []string) error {
 
 			// Notify player
 			s.sendText(fmt.Sprintf("You attack %s!", mob.GetShortDesc()))
+			s.markDirty(VarFighting)
 
 			// Notify room
 			msg, _ := json.Marshal(ServerMessage{
@@ -72,6 +73,7 @@ func cmdHit(s *Session, args []string) error {
 
 			// Notify both players
 			s.sendText(fmt.Sprintf("You attack %s!", p.Name))
+			s.markDirty(VarFighting)
 
 			// Notify target
 			if targetSession, ok := s.manager.GetSession(p.Name); ok {
@@ -189,6 +191,7 @@ func cmdFlee(s *Session) error {
 	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
 
 	s.sendText("You flee head over heels.")
+	s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
 
 	// Send new room state
 	return cmdLook(s, nil)
