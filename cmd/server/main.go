@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -91,6 +92,17 @@ Protocol:
   {"type":"command","data":{"command":"say","args":["hello"]}}
 `))
 	})
+
+	// Start zone resets in background (initial + periodic every 60s)
+	go func() {
+		log.Printf("Starting zone resets...")
+		if err := gameWorld.StartZoneResets(); err != nil {
+			log.Printf("Zone reset error: %v", err)
+		} else {
+			log.Printf("Zone resets complete")
+		}
+		gameWorld.StartPeriodicResets(60 * time.Second)
+	}()
 
 	// Start server
 	addr := ":" + *port
