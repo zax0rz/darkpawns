@@ -128,22 +128,22 @@ Key source files:
 - fighter/magic_user/cleric/sorcery — faithful ports of originals
 - `test_scripts/mob/archive/` — all four live
 
-### 🔲 Phase 3D — Engine Completion (IN PROGRESS)
-**Open gaps:**
-- `isfighting()` → wire to real `MobInstance.Fighting` state
-- `room` global → table with `.vnum` + `.char[]` (players+mobs)
-- `globals.lua` → full constant audit and registration
-- `spell()` → real damage dispatch
+### ✅ Phase 3D — Engine Completion (2026-04-21)
+- `isfighting()` → wired to real `MobInstance.Fighting` state
+- `room` global → proper table with `.vnum` + `.char[]` (all players+mobs in room)
+- `spell()` → real damage dispatch with formulas from `magic.c mag_damage()` and `mag_points()`
+- All 13 wrong formulas corrected, 9 non-damage spells reclassified, 5 missing spells added
+- Newbie pipeline ported: creation.lua, clerk.lua, banker.lua, cityguard.lua
+- Fight trigger callback wired into combat engine (ScriptFightFunc)
+- Spell-specific corpse descriptions from fight.c (fire/cold/lightning/disintegrate)
+- DISINTEGRATE scatters gear to room floor, drops ash object
+- Source line comments on every formula for traceability
+- `test_scripts/mob/newbie/` — all newbie scripts live
+- Integration test: `pkg/scripting/integration_test.go`
 
-**RESTORE scripts to port (in order):**
-1. globals.lua, no_move.lua, assembler.lua
-2. Newbie pipeline: creation, clerk, banker
-3. Law & order: cityguard, guard_captain, take_jail
-4. Crafting chain: farmer_wheat, miller, baker_flour, baker_dough
+**Deliverable met:** Fighter bashes you. Cleric heals and teleports. Guards work. Clerk gives gear.
 
-**Deliverable:** Fighter bashes you. Cleric heals and teleports. Guards work. Clerk gives gear.
-
-### 🔲 Phase 4 — Agent Protocol
+### 🔲 Phase 4 — Agent Protocol (CURRENT)
 **Prior art:** NLE, GMCP/MSDP (BasedMUD/MTH), Aardwolf. This is GMCP-over-WebSocket.
 
 - **Auth:** `api_key` + `mode:"agent"` in existing auth message; `agent_keys` Postgres table
