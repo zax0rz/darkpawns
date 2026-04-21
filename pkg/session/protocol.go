@@ -16,6 +16,12 @@ const (
 	MsgError      = "error"
 	MsgText       = "text"
 	MsgCharCreate = "char_create" // server → client: prompts during char creation
+	MsgVars       = "vars"        // server → agent: variable state update
+)
+
+// Client to Server message types (agent-specific)
+const (
+	MsgSubscribe = "subscribe" // agent → server: subscribe to named variables
 )
 
 // ClientMessage is a message from client to server.
@@ -34,12 +40,15 @@ type ServerMessage struct {
 // For new characters, include class and race.
 // Class: 0=Mage 1=Cleric 2=Thief 3=Warrior 4=Magus 5=Avatar 6=Assassin 7=Paladin 8=Ninja 9=Psionic 10=Ranger 11=Mystic
 // Race:  0=Human 1=Elf 2=Dwarf 3=Kender 4=Minotaur 5=Rakshasa 6=Ssaur
+// For agent login, set Mode="agent" and APIKey to the dp_<32hex> key.
 type LoginData struct {
 	PlayerName string `json:"player_name"`
 	Password   string `json:"password,omitempty"`
 	Class      int    `json:"class,omitempty"` // 0-11, defaults to Warrior if omitted
 	Race       int    `json:"race,omitempty"`  // 0-6, defaults to Human if omitted
 	NewChar    bool   `json:"new_char,omitempty"` // true = create new character
+	APIKey     string `json:"api_key,omitempty"`  // agent auth key (dp_<32hex>)
+	Mode       string `json:"mode,omitempty"`     // "agent" or "" (human)
 }
 
 // CommandData is a player command.
