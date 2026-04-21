@@ -19,6 +19,7 @@ import re
 import sys
 import threading
 import time
+from collections import deque
 from datetime import datetime
 from typing import Optional
 
@@ -207,6 +208,7 @@ def llm_decide(
     litellm_url: str,
     history_context: str = "",
     party_context: str = "",
+    recent_text: Optional[list] = None,
 ) -> tuple[dict, Optional[str], str]:
     """
     Ask BRENDA what to do next.
@@ -253,6 +255,10 @@ State:
 
     if history_context:
         user_msg += f"\n\n[CHARACTER HISTORY]\n{history_context}"
+
+    if recent_text:
+        feedback_lines = "\n".join(f"- {t}" for t in recent_text)
+        user_msg += f"\n\n[Recent server feedback]\n{feedback_lines}"
 
     user_msg += """\n
 Decide. Output format:
@@ -359,6 +365,7 @@ class BrendaAgent:
 
         self.history_context = ""
         self._was_fighting = False
+        self.recent_text: deque[str] = deque(maxlen=5)
 
     # ── helpers ──────────────────────────────────────────────────────────────
 
@@ -443,6 +450,21 @@ class BrendaAgent:
         )
 
     # ── text/event scanning ──────────────────────────────────────────────────
+
+    def _is_combat_spam(self, text: str) -> bool:
+        """Return True for combat noise that's redundant with structured COMBAT_* events."""
+        t = text.strip()
+        # Outgoing attack lines
+        if re.match(r'^You (?:hit|miss|slash|pierce|crush|blast)\b', t, re.IGNORECASE):
+            return True
+        # Healing ticks
+        if re.match(r'^You feel better\b|^Your wounds\b', t, re.IGNORECASE):
+            return True
+        # Incoming attack lines: "<name> hits/misses/slashes you"
+        name = re.escape(self.name)
+        if re.match(rf'^.+? (?:hits|misses|slashes) you\b', t, re.IGNORECASE):
+            return True
+        return False
 
     def _scan_text(self, text: str):
         """Parse incoming text for notable events."""
@@ -531,12 +553,15 @@ class BrendaAgent:
             return
 
         # LLM decision
+        recent_feedback = list(self.recent_text)
+        self.recent_text.clear()
         action, in_game_say, commentary = llm_decide(
             self.state,
             self.model,
             self.litellm_url,
             history_context=self.history_context,
             party_context=self._party_context(),
+            recent_text=recent_feedback if recent_feedback else None,
         )
 
         cmd = action.get("command", "look")
@@ -576,6 +601,8 @@ class BrendaAgent:
                 if text:
                     log("SERVER", text[:120])
                     self._scan_text(text)
+                    if not self._is_combat_spam(text):
+                        self.recent_text.append(text)
             elif mtype == "event":
                 ev_text = msg.get("data", {}).get("text", "")
                 if ev_text:
