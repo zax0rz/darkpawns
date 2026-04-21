@@ -29,7 +29,17 @@ const MortalStartRoom = 8004
 // Source: fight.c die_with_killer() uses GET_EXP(ch)/37
 func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 	if victim.IsNPC() {
+		// Capture mob exp before the mob is removed from the world.
+		// Source: fight.c die_with_killer() line 1638 — group_gain(ch, victim)
+		mobExp := 0
+		if mob, ok := victim.(*MobInstance); ok && mob.Prototype != nil {
+			mobExp = mob.Prototype.Exp
+		}
 		w.handleMobDeath(victim, attackType)
+		// Award XP to killer and party members — fight.c group_gain()
+		if mobExp > 0 {
+			w.AwardMobKillXP(killer, mobExp)
+		}
 	} else {
 		w.handlePlayerDeath(victim, true, attackType) // combat death
 	}
