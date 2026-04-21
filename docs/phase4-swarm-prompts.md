@@ -1,5 +1,5 @@
 ---
-tags: [active, reference]
+tags: [active]
 ---
 # Phase 4 Swarm Prompts
 

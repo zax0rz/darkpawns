@@ -70,6 +70,7 @@ func main() {
 	manager := session.NewManager(gameWorld, database)
 	manager.SetCombatBroadcastFunc()                  // Enable combat messages to rooms
 	manager.SetDeathFunc()                            // Enable death/respawn handling
+	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
 	game.SetAICombatEngine(manager.GetCombatEngine()) // Enable AI to use combat

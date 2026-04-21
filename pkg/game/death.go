@@ -29,8 +29,51 @@ const MortalStartRoom = 8004
 // Source: fight.c die_with_killer() uses GET_EXP(ch)/37
 func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 	if victim.IsNPC() {
+		// Fire memory hook before removing mob from active list
+		killerName := ""
+		killerIsNPC := false
+		if killer != nil {
+			killerName = killer.GetName()
+			killerIsNPC = killer.IsNPC()
+		}
+		mob, _ := victim.(*MobInstance)
+		vnum := 0
+		if mob != nil {
+			vnum = mob.Prototype.VNum
+		}
+		roomName := ""
+		if room, ok := w.GetRoom(victim.GetRoom()); ok {
+			roomName = room.Name
+		}
+		fireMobKill(&MobKillEvent{
+			KillerName:  killerName,
+			KillerIsNPC: killerIsNPC,
+			VictimName:  victim.GetName(),
+			VictimVNum:  vnum,
+			RoomVNum:    victim.GetRoom(),
+			RoomName:    roomName,
+		})
 		w.handleMobDeath(victim, attackType)
 	} else {
+		// Fire player death hook
+		killerName := ""
+		killerIsNPC := false
+		if killer != nil {
+			killerName = killer.GetName()
+			killerIsNPC = killer.IsNPC()
+		}
+		roomName := ""
+		if room, ok := w.GetRoom(victim.GetRoom()); ok {
+			roomName = room.Name
+		}
+		firePlayerDeath(&PlayerDeathEvent{
+			VictimName:  victim.GetName(),
+			KillerName:  killerName,
+			KillerIsNPC: killerIsNPC,
+			RoomVNum:    victim.GetRoom(),
+			RoomName:    roomName,
+			IsCombat:    true,
+		})
 		w.handlePlayerDeath(victim, true, attackType) // combat death
 	}
 }
