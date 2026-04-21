@@ -240,6 +240,9 @@ func (e *Engine) registerFunctions() {
 	e.L.SetGlobal("plr_flagged", e.L.NewFunction(e.luaPlrFlagged))
 	e.L.SetGlobal("cansee", e.L.NewFunction(e.luaCanSee))
 	e.L.SetGlobal("isnpc", e.L.NewFunction(e.luaIsNPC))
+	e.L.SetGlobal("aff_flagged", e.L.NewFunction(e.luaAffFlagged))
+	e.L.SetGlobal("plr_flags", e.L.NewFunction(e.luaPlrFlags))
+	e.L.SetGlobal("obj_list", e.L.NewFunction(e.luaObjList))
 }
 
 // loadGlobals loads the globals.lua file.
@@ -1317,25 +1320,34 @@ func (e *Engine) luaDofile(L *lua.LState) int {
 }
 
 func (e *Engine) luaCall(L *lua.LState) int {
-	// call(fn, arg1, arg2) - call a named function loaded via dofile
-	// Source: cityguard.lua — call(fight, ch, "x") after dofile("scripts/mob/fighter.lua")
-	fnName := L.ToString(1)
-	if fnName == "" {
-		return 0
-	}
-	fn := e.L.GetGlobal(fnName)
-	if fn.Type() == lua.LTNil {
-		log.Printf("[SCRIPT] call: function %s not found", fnName)
-		return 0
-	}
-	// Push fn and args (skip first arg which is fn name)
-	e.L.Push(fn)
+	// call(fn, arg1, arg2) - call a function loaded via dofile.
+	// fn may be a function reference (most common: call(fight, ch, "x"))
+	// or a string global name.
+	// Source: dracula.lua, pyros.lua, breed_killer.lua — dofile+call delegation pattern.
 	nArgs := L.GetTop() - 1
-	for i := 2; i <= L.GetTop(); i++ {
-		e.L.Push(L.Get(i))
+	arg1 := L.Get(1)
+	var fn lua.LValue
+	if arg1.Type() == lua.LTFunction {
+		// Direct function reference — the common case after dofile redefines the global
+		fn = arg1
+	} else {
+		fnName := L.ToString(1)
+		if fnName == "" {
+			return 0
+		}
+		fn = L.GetGlobal(fnName)
+		if fn.Type() == lua.LTNil {
+			log.Printf("[SCRIPT] call: function %s not found", fnName)
+			return 0
+		}
 	}
-	if err := e.L.PCall(nArgs, 0, nil); err != nil {
-		log.Printf("[SCRIPT] call(%s): %v", fnName, err)
+	// Push function then remaining arguments
+	L.Push(fn)
+	for i := 2; i <= nArgs+1; i++ {
+		L.Push(L.Get(i))
+	}
+	if err := L.PCall(nArgs, 0, nil); err != nil {
+		log.Printf("[SCRIPT] call: %v", err)
 	}
 	return 0
 }
@@ -1411,5 +1423,31 @@ func (e *Engine) luaIsNPC(L *lua.LState) int {
 	// isnpc(ch) - check if character is an NPC
 	log.Printf("[STUB] isnpc(ch)")
 	L.Push(lua.LBool(false)) // Return FALSE for now (assuming player)
+	return 1
+}
+
+func (e *Engine) luaAffFlagged(L *lua.LState) int {
+	// aff_flagged(ch, flag) - check if character has affect flag set (e.g. AFF_VAMPIRE)
+	// Based on AFF_FLAGGED() macro in utils.h
+	log.Printf("[STUB] aff_flagged(ch, flag)")
+	L.Push(lua.LBool(false))
+	return 1
+}
+
+func (e *Engine) luaPlrFlags(L *lua.LState) int {
+	// plr_flags(ch, operation, flag) - set or remove a player flag
+	// operation is "set" or "remove"; flag is PLR_* constant
+	// Based on PLR_FLAGS() macro in utils.h
+	log.Printf("[STUB] plr_flags(ch, operation, flag)")
+	return 0
+}
+
+func (e *Engine) luaObjList(L *lua.LState) int {
+	// obj_list(keyword, location) - search mob's inventory for item matching keyword
+	// location: "char" = mob's inventory, "room" = room floor
+	// Returns the object table if found, NIL otherwise
+	// Based on lua_obj_list() pattern in scripts.c
+	log.Printf("[STUB] obj_list(keyword, location)")
+	L.Push(lua.LNil)
 	return 1
 }
