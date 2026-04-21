@@ -462,32 +462,7 @@ func (w *World) GetPlayersInRoomScriptable(roomVNum int) []scripting.ScriptableP
 	return players
 }
 
-// GetMobsInRoomScriptable returns all mobs in a given room as ScriptableMob.
-func (w *World) GetMobsInRoomScriptable(roomVNum int) []scripting.ScriptableMob {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
 
-	var mobs []scripting.ScriptableMob
-	for _, mob := range w.activeMobs {
-		if mob.GetRoom() == roomVNum {
-			mobs = append(mobs, mob)
-		}
-	}
-	return mobs
-}
-
-// GetMobByVNumAndRoomScriptable returns a mob by its vnum and room as ScriptableMob.
-func (w *World) GetMobByVNumAndRoomScriptable(vnum int, roomVNum int) scripting.ScriptableMob {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	for _, mob := range w.activeMobs {
-		if mob.VNum == vnum && mob.GetRoom() == roomVNum {
-			return mob
-		}
-	}
-	return nil
-}
 
 // GetObjPrototypeScriptable returns an object prototype by vnum as ScriptableObject.
 func (w *World) GetObjPrototypeScriptable(vnum int) scripting.ScriptableObject {

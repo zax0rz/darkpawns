@@ -287,8 +287,9 @@ func (m *MobInstance) SendMessage(msg string) {
 // SetFighting sets who the mob is fighting.
 func (m *MobInstance) SetFighting(target string) {
 	m.Status = "fighting"
-	// Target is stored as a string name; we'd need a lookup mechanism
-	// For now, just mark as fighting
+	m.Fighting = true
+	// Store target name for lookup
+	// For now, we don't store the target name
 }
 
 // StopFighting clears the fighting state.
@@ -299,7 +300,7 @@ func (m *MobInstance) StopFighting() {
 
 // GetFighting returns who the mob is fighting (empty string if not fighting).
 func (m *MobInstance) GetFighting() string {
-	if m.Status == "fighting" {
+	if m.Fighting || m.Status == "fighting" {
 		return "someone" // Simplified; would need proper target tracking
 	}
 	return ""

@@ -215,6 +215,9 @@ func (e *Engine) registerFunctions() {
 	e.L.SetGlobal("raw_kill", e.L.NewFunction(e.luaRawKill))
 	e.L.SetGlobal("save_char", e.L.NewFunction(e.luaSaveChar))
 	e.L.SetGlobal("save_obj", e.L.NewFunction(e.luaSaveObj))
+	// dofile/call: shared-script delegation pattern used by cityguard, breed_killer, etc.
+	e.L.SetGlobal("dofile", e.L.NewFunction(e.luaDofile))
+	e.L.SetGlobal("call", e.L.NewFunction(e.luaCall))
 	e.L.SetGlobal("save_room", e.L.NewFunction(e.luaSaveRoom))
 	e.L.SetGlobal("set_skill", e.L.NewFunction(e.luaSetSkill))
 	e.L.SetGlobal("spell", e.L.NewFunction(e.luaSpell))
@@ -223,6 +226,18 @@ func (e *Engine) registerFunctions() {
 	// Additional functions needed for combat AI scripts
 	e.L.SetGlobal("isfighting", e.L.NewFunction(e.luaIsFighting))
 	e.L.SetGlobal("round", e.L.NewFunction(e.luaRound))
+	
+	// Functions needed for RESTORE scripts
+	e.L.SetGlobal("has_item", e.L.NewFunction(e.luaHasItem))
+	e.L.SetGlobal("obj_in_room", e.L.NewFunction(e.luaObjInRoom))
+	e.L.SetGlobal("objfrom", e.L.NewFunction(e.luaObjFrom))
+	e.L.SetGlobal("objto", e.L.NewFunction(e.luaObjTo))
+	e.L.SetGlobal("obj_extra", e.L.NewFunction(e.luaObjExtra))
+	e.L.SetGlobal("create_event", e.L.NewFunction(e.luaCreateEvent))
+	e.L.SetGlobal("tell", e.L.NewFunction(e.luaTell))
+	e.L.SetGlobal("plr_flagged", e.L.NewFunction(e.luaPlrFlagged))
+	e.L.SetGlobal("cansee", e.L.NewFunction(e.luaCanSee))
+	e.L.SetGlobal("isnpc", e.L.NewFunction(e.luaIsNPC))
 }
 
 // loadGlobals loads the globals.lua file.
@@ -1064,11 +1079,114 @@ func (e *Engine) luaIsFighting(L *lua.LState) int {
 	return 1
 }
 
+func (e *Engine) luaDofile(L *lua.LState) int {
+	// dofile(path) - load and execute a Lua file, used for shared script delegation
+	// Source: cityguard.lua, breed_killer.lua — dofile+call pattern for shared AI
+	path := L.ToString(1)
+	if path == "" {
+		return 0
+	}
+	fullPath := e.scriptsDir + "/" + path
+	if err := e.L.DoFile(fullPath); err != nil {
+		log.Printf("[SCRIPT] dofile(%s): %v", path, err)
+	}
+	return 0
+}
+
+func (e *Engine) luaCall(L *lua.LState) int {
+	// call(fn, arg1, arg2) - call a named function loaded via dofile
+	// Source: cityguard.lua — call(fight, ch, "x") after dofile("scripts/mob/fighter.lua")
+	fnName := L.ToString(1)
+	if fnName == "" {
+		return 0
+	}
+	fn := e.L.GetGlobal(fnName)
+	if fn.Type() == lua.LTNil {
+		log.Printf("[SCRIPT] call: function %s not found", fnName)
+		return 0
+	}
+	// Push fn and args (skip first arg which is fn name)
+	e.L.Push(fn)
+	nArgs := L.GetTop() - 1
+	for i := 2; i <= L.GetTop(); i++ {
+		e.L.Push(L.Get(i))
+	}
+	if err := e.L.PCall(nArgs, 0, nil); err != nil {
+		log.Printf("[SCRIPT] call(%s): %v", fnName, err)
+	}
+	return 0
+}
+
 func (e *Engine) luaRound(L *lua.LState) int {
 	// round(n) - rounds a number to nearest integer
 	// Lua 4 compat function used in combat AI scripts
 	n := L.ToNumber(1)
 	rounded := int(n + 0.5)
 	L.Push(lua.LNumber(rounded))
+	return 1
+}
+
+func (e *Engine) luaHasItem(L *lua.LState) int {
+	// has_item(ch, vnum) - check if character has item in inventory
+	log.Printf("[STUB] has_item(ch, vnum)")
+	L.Push(lua.LBool(false)) // Return FALSE for now
+	return 1
+}
+
+func (e *Engine) luaObjInRoom(L *lua.LState) int {
+	// obj_in_room(room_vnum, vnum) - check if object is in a room
+	log.Printf("[STUB] obj_in_room(room_vnum, vnum)")
+	L.Push(lua.LNil) // Return nil for now
+	return 1
+}
+
+func (e *Engine) luaObjFrom(L *lua.LState) int {
+	// objfrom(item, location) - remove item from location
+	log.Printf("[STUB] objfrom(item, location)")
+	return 0
+}
+
+func (e *Engine) luaObjTo(L *lua.LState) int {
+	// objto(item, location, target) - move item to location
+	log.Printf("[STUB] objto(item, location, target)")
+	return 0
+}
+
+func (e *Engine) luaObjExtra(L *lua.LState) int {
+	// obj_extra(item, operation, flag) - set/clear object extra flags
+	log.Printf("[STUB] obj_extra(item, operation, flag)")
+	return 0
+}
+
+func (e *Engine) luaCreateEvent(L *lua.LState) int {
+	// create_event(source, target, obj, argument, trigger, delay, type)
+	log.Printf("[STUB] create_event(source, target, obj, argument, trigger, delay, type)")
+	return 0
+}
+
+func (e *Engine) luaTell(L *lua.LState) int {
+	// tell(player_name, message) - send message to specific player
+	log.Printf("[STUB] tell(player_name, message)")
+	return 0
+}
+
+func (e *Engine) luaPlrFlagged(L *lua.LState) int {
+	// plr_flagged(ch, flag) - check if player has flag set
+	log.Printf("[STUB] plr_flagged(ch, flag)")
+	L.Push(lua.LBool(false)) // Return FALSE for now
+	return 1
+}
+
+func (e *Engine) luaCanSee(L *lua.LState) int {
+	// cansee(ch) - check if character can see
+	log.Printf("[STUB] cansee(ch)")
+	L.Push(lua.LBool(true)) // Return TRUE for now
+	return 1
+}
+
+func (e *Engine) luaIsNPC(L *lua.LState) int {
+	// isnpc(ch) - check if character is an NPC
+	log.Printf("[STUB] isnpc(ch)")
+	L.Push(lua.LBool(false)) // Return FALSE for now (assuming player)
 	return 1
 }
