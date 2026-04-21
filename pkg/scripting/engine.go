@@ -70,9 +70,35 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		roomTbl := e.L.NewTable()
 		roomTbl.RawSetString("vnum", lua.LNumber(ctx.RoomVNum))
 		
-		// Create empty char table (for now)
-		// In real implementation, this would contain characters in the room
+		// Populate room.char with all players + mobs in the room
 		charTbl := e.L.NewTable()
+		idx := 1
+		if e.world != nil {
+			for _, p := range e.world.GetPlayersInRoom(ctx.RoomVNum) {
+				pt := e.L.NewTable()
+				pt.RawSetString("name", lua.LString(p.GetName()))
+				pt.RawSetString("level", lua.LNumber(p.GetLevel()))
+				pt.RawSetString("hp", lua.LNumber(p.GetHealth()))
+				pt.RawSetString("maxhp", lua.LNumber(p.GetMaxHealth()))
+				pt.RawSetString("evil", lua.LBool(p.GetAlignment() < -350))
+				pt.RawSetString("pos", lua.LNumber(8)) // POS_STANDING
+				charTbl.RawSetInt(idx, pt)
+				idx++
+			}
+			for _, m := range e.world.GetMobsInRoom(ctx.RoomVNum) {
+				mt := e.L.NewTable()
+				mt.RawSetString("name", lua.LString(m.GetName()))
+				mt.RawSetString("level", lua.LNumber(m.GetLevel()))
+				mt.RawSetString("hp", lua.LNumber(m.GetHealth()))
+				mt.RawSetString("maxhp", lua.LNumber(m.GetMaxHealth()))
+				mt.RawSetString("evil", lua.LBool(false))
+				mt.RawSetString("pos", lua.LNumber(8)) // POS_STANDING
+				mt.RawSetString("vnum", lua.LNumber(m.GetVNum()))
+				mt.RawSetString("room", lua.LNumber(ctx.RoomVNum))
+				charTbl.RawSetInt(idx, mt)
+				idx++
+			}
+		}
 		roomTbl.RawSetString("char", charTbl)
 		
 		e.L.SetGlobal("room", roomTbl)
@@ -1002,9 +1028,38 @@ func (e *Engine) luaTport(L *lua.LState) int {
 }
 
 func (e *Engine) luaIsFighting(L *lua.LState) int {
-	// isfighting(mob) - returns mob's current combat target or nil
-	// Based on original C implementation that would check mob's fighting pointer
-	// For now, return nil as we don't have combat tracking yet
+	// isfighting(mob) - returns the mob's current combat target as a table, or nil
+	// Based on lua_isfighting() in scripts.c — checks mob's fighting pointer
+	mobTbl := L.Get(1)
+	if mobTbl.Type() != lua.LTTable {
+		L.Push(lua.LNil)
+		return 1
+	}
+	// Get the mob's vnum from the table to look it up in world
+	L.GetField(mobTbl, "vnum")
+	vnum := int(L.ToNumber(-1))
+	L.Pop(1)
+
+	if e.world != nil && vnum > 0 {
+		// Look up the mob's fighting target via ScriptableWorld
+		// GetMobByVNumAndRoom is approximate — use vnum to find the mob
+		L.GetField(mobTbl, "room")
+		roomVNum := int(L.ToNumber(-1))
+		L.Pop(1)
+
+		mob := e.world.GetMobByVNumAndRoom(vnum, roomVNum)
+		if mob != nil {
+			targetName := mob.GetFighting()
+			if targetName != "" {
+				// Return a minimal table with .name so scripts can do fighting.name
+				tgt := L.NewTable()
+				tgt.RawSetString("name", lua.LString(targetName))
+				tgt.RawSetString("level", lua.LNumber(1)) // Unknown — fighting target level
+				L.Push(tgt)
+				return 1
+			}
+		}
+	}
 	L.Push(lua.LNil)
 	return 1
 }

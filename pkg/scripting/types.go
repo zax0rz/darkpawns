@@ -29,7 +29,7 @@ type ScriptableMob interface {
 	GetGold() int
 	GetRoomVNum() int
 	GetPrototype() ScriptableMobPrototype
-	GetFighting() ScriptableMob // Returns the mob's combat target, or nil if not fighting
+	GetFighting() string // Returns the name of the mob's combat target, or "" if not fighting
 }
 
 // ScriptableMobPrototype represents mob prototype data.

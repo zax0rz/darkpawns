@@ -214,6 +214,26 @@ func (w *World) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 	return obj, nil
 }
 
+// GetMobsInRoomScriptable returns mobs in a room as ScriptableMob slice.
+func (w *World) GetMobsInRoomScriptable(roomVNum int) []scripting.ScriptableMob {
+	mobs := w.GetMobsInRoom(roomVNum)
+	out := make([]scripting.ScriptableMob, 0, len(mobs))
+	for _, m := range mobs {
+		out = append(out, m)
+	}
+	return out
+}
+
+// GetMobByVNumAndRoomScriptable returns a mob by vnum+room as ScriptableMob.
+func (w *World) GetMobByVNumAndRoomScriptable(vnum int, roomVNum int) scripting.ScriptableMob {
+	for _, m := range w.GetMobsInRoom(roomVNum) {
+		if m.GetVNum() == vnum {
+			return m
+		}
+	}
+	return nil
+}
+
 // GetMobsInRoom returns all mobs in a given room.
 func (w *World) GetMobsInRoom(roomVNum int) []*MobInstance {
 	w.mu.RLock()
@@ -442,6 +462,33 @@ func (w *World) GetPlayersInRoomScriptable(roomVNum int) []scripting.ScriptableP
 	return players
 }
 
+// GetMobsInRoomScriptable returns all mobs in a given room as ScriptableMob.
+func (w *World) GetMobsInRoomScriptable(roomVNum int) []scripting.ScriptableMob {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	var mobs []scripting.ScriptableMob
+	for _, mob := range w.activeMobs {
+		if mob.GetRoom() == roomVNum {
+			mobs = append(mobs, mob)
+		}
+	}
+	return mobs
+}
+
+// GetMobByVNumAndRoomScriptable returns a mob by its vnum and room as ScriptableMob.
+func (w *World) GetMobByVNumAndRoomScriptable(vnum int, roomVNum int) scripting.ScriptableMob {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	for _, mob := range w.activeMobs {
+		if mob.VNum == vnum && mob.GetRoom() == roomVNum {
+			return mob
+		}
+	}
+	return nil
+}
+
 // GetObjPrototypeScriptable returns an object prototype by vnum as ScriptableObject.
 func (w *World) GetObjPrototypeScriptable(vnum int) scripting.ScriptableObject {
 	w.mu.RLock()
@@ -482,6 +529,14 @@ func NewWorldScriptableAdapter(w *World) *WorldScriptableAdapter {
 
 func (a *WorldScriptableAdapter) GetPlayersInRoom(roomVNum int) []scripting.ScriptablePlayer {
 	return a.world.GetPlayersInRoomScriptable(roomVNum)
+}
+
+func (a *WorldScriptableAdapter) GetMobsInRoom(roomVNum int) []scripting.ScriptableMob {
+	return a.world.GetMobsInRoomScriptable(roomVNum)
+}
+
+func (a *WorldScriptableAdapter) GetMobByVNumAndRoom(vnum int, roomVNum int) scripting.ScriptableMob {
+	return a.world.GetMobByVNumAndRoomScriptable(vnum, roomVNum)
 }
 
 func (a *WorldScriptableAdapter) GetObjPrototype(vnum int) scripting.ScriptableObject {
