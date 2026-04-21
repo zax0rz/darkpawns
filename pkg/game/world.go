@@ -490,6 +490,32 @@ func (w *World) HandleNonCombatDeathScriptable(player scripting.ScriptablePlayer
 	// TODO: Implement death handling
 }
 
+// HandleSpellDeathScriptable handles death caused by a spell.
+func (w *World) HandleSpellDeathScriptable(victimName string, spellNum int, roomVNum int) {
+	log.Printf("[SCRIPT] HandleSpellDeath: %s died to spell %d in room %d", victimName, spellNum, roomVNum)
+	
+	// First, check if it's a player
+	if player, ok := w.GetPlayer(victimName); ok {
+		// Player died to spell
+		// We need to handle this as a combat death with spell attack type
+		// For now, we'll call handlePlayerDeath directly
+		// TODO: Find the actual killer (caster) if possible
+		w.handlePlayerDeath(player, true, spellNum)
+		return
+	}
+	
+	// Check if it's a mob
+	w.mu.RLock()
+	for _, mob := range w.activeMobs {
+		if mob.GetShortDesc() == victimName && mob.GetRoom() == roomVNum {
+			w.mu.RUnlock()
+			w.handleMobDeath(mob, spellNum)
+			return
+		}
+	}
+	w.mu.RUnlock()
+}
+
 // ScriptableWorld interface implementation via adapter
 
 // WorldScriptableAdapter adapts World to ScriptableWorld
@@ -527,6 +553,10 @@ func (a *WorldScriptableAdapter) HandleNonCombatDeath(player scripting.Scriptabl
 	if p, ok := a.world.GetPlayer(player.GetName()); ok {
 		a.world.HandleNonCombatDeath(p)
 	}
+}
+
+func (a *WorldScriptableAdapter) HandleSpellDeath(victimName string, spellNum int, roomVNum int) {
+	a.world.HandleSpellDeathScriptable(victimName, spellNum, roomVNum)
 }
 
 // scriptableObjWrapper wraps parser.Obj to implement ScriptableObject

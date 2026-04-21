@@ -1076,6 +1076,20 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		}
 		L.SetField(targetTbl, "hp", lua.LNumber(newHP))
 		
+		// Check for death
+		if newHP == 0 && e.world != nil {
+			// Get target name and room
+			L.GetField(targetTbl, "name")
+			targetName := L.ToString(-1)
+			L.Pop(1)
+			L.GetField(targetTbl, "room")
+			roomVNum := int(L.ToNumber(-1))
+			L.Pop(1)
+			
+			// Notify world of spell death
+			e.world.HandleSpellDeath(targetName, spellNum, roomVNum)
+		}
+		
 		// Log
 		L.GetField(casterTbl, "name")
 		casterName := L.ToString(-1)

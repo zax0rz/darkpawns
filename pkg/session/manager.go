@@ -73,8 +73,8 @@ func (m *Manager) GetCombatEngine() *combat.CombatEngine {
 
 // SetDeathFunc wires the game-layer death handler into the combat engine.
 func (m *Manager) SetDeathFunc() {
-	m.combatEngine.DeathFunc = func(victim, killer combat.Combatant) {
-		m.world.HandleDeath(victim, killer)
+	m.combatEngine.DeathFunc = func(victim, killer combat.Combatant, attackType int) {
+		m.world.HandleDeath(victim, killer, attackType)
 
 		// If victim was a player, send updated room state after respawn
 		if !victim.IsNPC() {

@@ -66,6 +66,8 @@ type ScriptableWorld interface {
 	AddItemToRoom(obj ScriptableObject, roomVNum int) error
 	// HandleNonCombatDeath handles player death from non-combat damage.
 	HandleNonCombatDeath(player ScriptablePlayer)
+	// HandleSpellDeath handles death caused by a spell.
+	HandleSpellDeath(victimName string, spellNum int, roomVNum int)
 }
 
 // ScriptContext holds the game objects exposed to Lua as globals.

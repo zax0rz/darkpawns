@@ -11,6 +11,7 @@ type CombatPair struct {
 	Attacker Combatant
 	Defender Combatant
 	Started  time.Time
+	LastAttackType int // Track what type of attack killed the victim (spell number, skill number, or TYPE_ constant)
 }
 
 // CombatEngine manages all active combat in the game
@@ -29,11 +30,7 @@ type CombatEngine struct {
 
 	// DeathFunc handles corpse creation and respawn (set by game layer)
 	// Called after death messages are sent.
-	DeathFunc func(victim, killer Combatant)
-
-	// ScriptFunc triggers mob scripts during combat (set by game layer)
-	// Called after each attack in combat.
-	ScriptFunc func(attacker, defender Combatant)
+	DeathFunc func(victim, killer Combatant, attackType int)
 
 	// ScriptFightFunc fires the "fight" trigger on a mob after each combat round.
 	// Set by the game layer. Called with (mobName, targetName, roomVNum).
@@ -52,11 +49,6 @@ func NewCombatEngine() *CombatEngine {
 // SetBroadcastFunc sets the function used to broadcast messages to rooms
 func (ce *CombatEngine) SetBroadcastFunc(fn func(roomVNum int, message string, exclude string)) {
 	ce.BroadcastFunc = fn
-}
-
-// SetScriptFunc sets the function used to trigger mob scripts during combat
-func (ce *CombatEngine) SetScriptFunc(fn func(attacker, defender Combatant)) {
-	ce.ScriptFunc = fn
 }
 
 // Start begins the combat tick loop
@@ -291,7 +283,14 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 
 	// Delegate to game layer for corpse creation + respawn
 	if ce.DeathFunc != nil {
-		ce.DeathFunc(victim, killer)
+		// Get attack type from combat pair if available
+		attackType := -1 // TYPE_UNDEFINED
+		ce.mu.RLock()
+		if pair, exists := ce.combatPairs[killerName]; exists {
+			attackType = pair.LastAttackType
+		}
+		ce.mu.RUnlock()
+		ce.DeathFunc(victim, killer, attackType)
 	}
 }
 
