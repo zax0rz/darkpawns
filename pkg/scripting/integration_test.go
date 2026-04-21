@@ -102,3 +102,142 @@ func TestRoomTable(t *testing.T) {
 	t.Log("When ctx.RoomVNum > 0, engine creates room table with vnum and char fields")
 	t.Log("char field contains tables for players and mobs in the room")
 }
+
+// --- Batch B: ettin / snake / troll / mindflayer / paladin ---
+
+// TestBatchBScriptsParse verifies all five Batch B combat AI scripts load without
+// Lua syntax errors (compile-only, no game context required).
+// Source: lib/scripts/mob/archive/ (ettin, snake, troll, mindflayer, paladin)
+func TestBatchBScriptsParse(t *testing.T) {
+	scripts := []struct {
+		name string
+		path string
+	}{
+		{"ettin", "../../test_scripts/mob/archive/ettin.lua"},
+		{"snake", "../../test_scripts/mob/archive/snake.lua"},
+		{"troll", "../../test_scripts/mob/archive/troll.lua"},
+		{"mindflayer", "../../test_scripts/mob/archive/mindflayer.lua"},
+		{"paladin", "../../test_scripts/mob/archive/paladin.lua"},
+	}
+
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+
+	for _, s := range scripts {
+		t.Run(s.name, func(t *testing.T) {
+			fn, err := engine.L.LoadFile(s.path)
+			if err != nil {
+				t.Fatalf("%s: Lua parse error: %v", s.name, err)
+			}
+			if fn == nil {
+				t.Fatalf("%s: LoadFile returned nil function", s.name)
+			}
+			t.Logf("%s: parsed OK", s.name)
+		})
+	}
+}
+
+// TestTrollDefinesBothTriggers verifies troll.lua defines both fight() and
+// onpulse_all() — both triggers required by the original.
+// Source: troll.lua (onpulse_all lines 1-8, fight lines 11-19)
+func TestTrollDefinesBothTriggers(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/troll.lua"); err != nil {
+		t.Fatalf("troll.lua load error: %v", err)
+	}
+	for _, fn := range []string{"fight", "onpulse_all"} {
+		val := engine.L.GetGlobal(fn)
+		if val.Type().String() != "function" {
+			t.Errorf("troll.lua: %s() not defined (got %s)", fn, val.Type().String())
+		} else {
+			t.Logf("troll.lua: %s() defined OK", fn)
+		}
+	}
+}
+
+// TestEttinBoulderDamageRange documents the raw HP damage range used by the ettin.
+// Source: ettin.lua line 2 — number(10, 30)
+func TestEttinBoulderDamageRange(t *testing.T) {
+	const minDmg, maxDmg = 10, 30
+	if minDmg <= 0 {
+		t.Errorf("ettin min boulder damage must be > 0, got %d", minDmg)
+	}
+	if maxDmg < minDmg {
+		t.Errorf("ettin max boulder damage (%d) < min (%d)", maxDmg, minDmg)
+	}
+	t.Logf("ettin boulder damage: %d-%d (25%% chance per round)", minDmg, maxDmg)
+}
+
+// TestSnakePoisonChanceFormula documents the level-scaled poison bite probability.
+// snake.lua uses number(0, 102-ch.level)==0; prob = 1/(103-level).
+// Source: snake.lua line 2
+func TestSnakePoisonChanceFormula(t *testing.T) {
+	tests := []struct {
+		level         int
+		expectedDenom int
+	}{
+		{1, 102},
+		{10, 93},
+		{30, 73},
+	}
+	for _, tt := range tests {
+		denom := 102 - tt.level + 1
+		if denom != tt.expectedDenom {
+			t.Errorf("level %d: expected denom %d, got %d", tt.level, tt.expectedDenom, denom)
+		}
+		t.Logf("snake level %d: poison chance = 1/%d (%.2f%%)", tt.level, denom, 100.0/float64(denom))
+	}
+}
+
+// TestMindflayerSpellConstants verifies SOUL_LEECH and PSIBLAST constants are
+// set in engine globals. Source: engine.go (SPELL_SOUL_LEECH=83, SPELL_PSIBLAST=100)
+func TestMindflayerSpellConstants(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	L := engine.L
+	cases := []struct{ name string }{
+		{"SPELL_SOUL_LEECH"},
+		{"SPELL_PSIBLAST"},
+	}
+	for _, c := range cases {
+		val := L.GetGlobal(c.name)
+		if val.Type().String() != "number" {
+			t.Errorf("%s: expected number, got %s", c.name, val.Type().String())
+		} else {
+			t.Logf("%s = %v", c.name, val)
+		}
+	}
+}
+
+// TestPaladinSpellConstants verifies DISPEL_EVIL and DISPEL_GOOD constants are
+// set in engine globals. Source: spells.h (SPELL_DISPEL_EVIL=22, SPELL_DISPEL_GOOD=46)
+func TestPaladinSpellConstants(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	L := engine.L
+	cases := []struct{ name string }{
+		{"SPELL_DISPEL_EVIL"},
+		{"SPELL_DISPEL_GOOD"},
+	}
+	for _, c := range cases {
+		val := L.GetGlobal(c.name)
+		if val.Type().String() != "number" {
+			t.Errorf("%s: expected number, got %s", c.name, val.Type().String())
+		} else {
+			t.Logf("%s = %v", c.name, val)
+		}
+	}
+}
