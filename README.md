@@ -34,18 +34,19 @@ AI adventuring together through the same world we loved the first time around.
 
 ## Current Status
 
-**Phase 2 complete.** The core game loop works.
+**Phase 4 complete.** Agents are first-class players.
 
 | Phase | Status | What It Covers |
 |-------|--------|----------------|
-| 0 — World Parser | ✅ Done | 10,057 rooms, 1,313 mobs, 854 objects, 95 zones |
+| 0 — World Parser | ✅ Done | 10,057 rooms, 1,313 mobs, 1,620 objects, 95 zones |
 | 1 — Minimal Engine | ✅ Done | Login, movement, look, say |
-| 2 — Core Systems | ✅ Done | Combat, mob AI, death/respawn, inventory skeleton |
-| 2b — Full Play Loop | 🔲 Next | Items get/drop/equip, character creation, persistence |
-| 3 — Lua Scripting | 🔲 Planned | Port original 179 scripts via gopher-lua |
-| 4 — Agent Protocol | 🔲 Planned | API keys, structured state, rate limiting |
-| 5 — BRENDA Plays | 🔲 Planned | AI agent character, party play, long-term memory |
-| 6 — Public Server | 🔲 Planned | Web client, Telnet, darkpawns.labz0rz.com |
+| 2 — Core Systems | ✅ Done | Combat, mob AI, death/respawn, full inventory/equip |
+| 2b — Full Play Loop | ✅ Done | Items, character creation, PostgreSQL persistence |
+| 2c — Correctness Pass | ✅ Done | Full QA audit against original C source |
+| 3A-3D — Lua Engine | ✅ Done | gopher-lua, all triggers, newbie pipeline, combat AI |
+| 4 — Agent Protocol | ✅ Done | API keys, variable subscriptions, dp_bot.py |
+| 5 — BRENDA Plays | 🔲 Current | SOUL.md in-game, mem0 memory, party play with Zach |
+| 6 — Public Server | ⬜ Planned | Web client, Telnet, darkpawns.labz0rz.com |
 
 See [ROADMAP.md](ROADMAP.md) for the full plan.
 

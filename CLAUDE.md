@@ -143,7 +143,7 @@ Key source files:
 
 **Deliverable met:** Fighter bashes you. Cleric heals and teleports. Guards work. Clerk gives gear.
 
-### 🔲 Phase 4 — Agent Protocol (CURRENT)
+### ✅ Phase 4 — Agent Protocol (2026-04-21)
 **Prior art:** NLE, GMCP/MSDP (BasedMUD/MTH), Aardwolf. This is GMCP-over-WebSocket.
 
 - **Auth:** `api_key` + `mode:"agent"` in existing auth message; `agent_keys` Postgres table
@@ -153,9 +153,13 @@ Key source files:
   ROOM_MOBS, ROOM_ITEMS, FIGHTING, INVENTORY, EQUIPMENT, EVENTS
 - **Rate limiting:** Token bucket (golang.org/x/time/rate), capacity=10 refill=10/sec;
   combat locked to 2s engine tick
-- **Deliverable:** `scripts/dp_bot.py` — connects, navigates, kills something, loots it
+- **Deliverable met:** `scripts/dp_bot.py` (638 lines) — connects, navigates, finds mobs,
+  attacks using `target_string`, circuit breaker, death handling, reconnect logic
+- **Key files:** `pkg/session/agent_vars.go`, `pkg/session/agent.go`,
+  `pkg/db/player.go` (agent_keys), `cmd/agentkeygen/main.go`
+- **Bugs fixed:** Spawner mutex deadlock (zone resets), SpawnMob self-deadlock on world.mu
 
-### ⬜ Phase 5 — BRENDA Plays
+### 🔲 Phase 5 — BRENDA Plays (CURRENT)
 - BRENDA69 gets a persistent character (class TBD — Mage or Assassin)
 - API key in Vaultwarden
 - mem0 for cross-session memory ("last time we were here, Zach died to the dragon")

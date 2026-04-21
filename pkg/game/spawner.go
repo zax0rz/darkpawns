@@ -55,8 +55,8 @@ func (s *Spawner) StartZoneResets() error {
 
 // ExecuteZoneReset executes all reset commands for a zone.
 func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// Note: do NOT hold s.mu here — SpawnMob/SpawnObject/CanSpawn each lock internally.
+	// Holding s.mu here causes a deadlock since those methods also lock s.mu.
 
 	// Track the last mob spawned for G and E commands
 	var lastMob *MobInstance

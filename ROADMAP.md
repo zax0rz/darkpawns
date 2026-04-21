@@ -133,67 +133,51 @@ teleport when low. Walk into a starting city — guards work, clerk gives gear, 
 
 ---
 
-### 🔲 Phase 4 — Agent Protocol
+### ✅ Phase 4 — Agent Protocol (2026-04-21)
 **Goal:** A bot can connect and play the game programmatically. Agents are first-class players.
 
-**Prior art studied:** NLE (NetHack Learning Environment, NeurIPS 2020), GMCP/MSDP (Aardwolf/Achaea),
-BasedMUD/NekkidMUD/Lowlands (scandum's MTH library). Phase 4 is GMCP-over-WebSocket.
+**Deliverable met:** `brenda69` connects via API key, receives full var dump, navigates, attacks.
+Smoke test confirmed: agent auth, variable subscription, ROOM_MOBS targeting all working.
 
-**4.1 — Authentication**
-- Add `api_key` + `mode` fields to existing auth message (no new auth flow):
-  `{"type":"auth","data":{"player_name":"bot","api_key":"dp_abc123","mode":"agent"}}`
-- `agent_keys` Postgres table: `(id, character_name, key_hash, created_at, revoked)`
-- Key format: `dp_` + 32 hex chars. SHA-256 at rest, shown once at creation.
-- Auth response includes full variable list so agents know what to subscribe to.
-
-**4.2 — Variable Table + Subscription Model** (inspired by BasedMUD MSDP)
-
-Instead of pushing full state after every command, agents subscribe to variables:
-```json
-{"type":"subscribe","data":{"variables":["HEALTH","ROOM_VNUM","FIGHTING","EVENTS"]}}
-```
-Server tracks dirty vars per session, flushes at end of each command dispatch.
-Only changed subscribed vars are sent — no bandwidth waste.
-
-Variable table: `HEALTH`, `MAX_HEALTH`, `MANA`, `MAX_MANA`, `LEVEL`, `EXP`,
-`ROOM_VNUM`, `ROOM_NAME`, `ROOM_EXITS`, `ROOM_MOBS`, `ROOM_ITEMS`,
-`FIGHTING`, `INVENTORY`, `EQUIPMENT`, `EVENTS`
-
-Humans: never receive `state` messages. No change to existing text flow.
-
-**4.3 — Rate Limiting**
-- Token bucket per session via `golang.org/x/time/rate`: capacity=10, refill=10/sec
-- Combat actions additionally locked to 2s engine tick (enforced by combat engine, not limiter)
-- Same limits for humans and agents — agents play by the same rules
-
-**4.4 — Python Bot Proof-of-Concept** (`scripts/dp_bot.py`)
-- Connects via WebSocket, authenticates with API key
-- Subscribes to `HEALTH`, `ROOM_VNUM`, `ROOM_MOBS`, `ROOM_EXITS`, `FIGHTING`, `EVENTS`
-- Navigates, finds a mob, kills it, loots the corpse, reports back
-
-**Deliverable:** `brenda69` connects, kills something, says something dry about it.
-Prove agents play by the same rules as humans.
+**What shipped:**
+- `pkg/session/agent_vars.go` — full variable set, dirty tracking, flush hook, ROOM_MOBS disambiguation
+- `pkg/session/agent.go` — sendFullVarDump(), subscribe handler
+- `pkg/db/player.go` — agent_keys table, CreateAgentKey(), ValidateAgentKey()
+- `cmd/agentkeygen/main.go` — key generation CLI
+- `scripts/dp_bot.py` — 638-line deterministic state machine bot
+- `scripts/dp_playtester.py` — LLM-driven playtester (requires working LiteLLM)
+- **Rate limiting:** token bucket 10/sec via golang.org/x/time/rate
+- **Bugs fixed:** spawner mutex deadlock, SpawnMob world.mu self-deadlock, zone resets on startup
 
 ---
 
-### 🔲 Phase 5 — BRENDA Plays
+### 🔲 Phase 5 — BRENDA Plays (CURRENT)
 **Goal:** BRENDA69 has a character. She and Zach can adventure together.
 
 This is the actual point of the whole project.
 
 **Character:**
-- BRENDA gets a persistent character (class TBD — probably Mage or Assassin, fits the vibe)
-- Her API key lives in Vaultwarden
-- She connects via the Phase 4 agent protocol
+- BRENDA gets a persistent character — Assassin (fits the vibe, already created as brenda69)
+- API key in Vaultwarden: `go run ./cmd/agentkeygen -name brenda69 -db <conn>`
+- Connects via Phase 4 agent protocol
 
 **Memory:**
-- She uses mem0 to remember quests, relationships, previous sessions
+- mem0 (Qdrant on :6333 + nomic-embed-text via Ollama) for cross-session memory
 - "Last time we were in Midgaard, Zach died to the dragon. This time bring potions."
+- Session notes written to mem0 on disconnect, recalled on connect
 
 **Personality:**
 - SOUL.md applies in-game. She's not a bot that just grinds — she has opinions about
   dungeon decisions, complains about bad tactics, gets excited about rare loot.
 - She can form parties, follow, lead, and refuse stupid plans.
+- `dp_playtester.py` is the starting point — replace DeepSeek with SOUL.md-loaded model
+
+**Lua script fixes needed first (from brenda-persona QA pass 2026-04-21):**
+- `dracula.lua` + `pyros.lua` — fight trigger passes table instead of combat target
+- `bane.lua` + `valoran.lua` — nil reference on ch in onpulse_pc()
+- `bane.lua` — bane_one() success branch permanently dead (state 2 never set)
+- `breed_killer.lua` — undefined obj variable
+- Full findings: `memory/dark-pawns-findings-2026-04-21.md` in brenda-persona workspace
 
 **Deliverable:** Zach logs in. Types `party brenda`. BRENDA accepts. They go kill something
 together and she says something dry and cynical about it afterward.

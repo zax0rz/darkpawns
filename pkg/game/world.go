@@ -180,15 +180,14 @@ func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	}
 
 	mob := NewMob(proto, roomVNum)
-	// In a real implementation, we'd assign a unique instance ID
-	// For now, we'll use the nextMobID
 	w.activeMobs[w.nextMobID] = mob
 	w.nextMobID++
 
-	// Notify players in the room
-	players := w.GetPlayersInRoom(roomVNum)
-	for _, player := range players {
-		player.Send <- []byte(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
+	// Notify players in the room — use internal unlocked access since we hold w.mu.Lock()
+	for _, player := range w.players {
+		if player.GetRoom() == roomVNum {
+			player.Send <- []byte(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
+		}
 	}
 
 	return mob, nil
