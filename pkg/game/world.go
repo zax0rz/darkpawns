@@ -558,6 +558,14 @@ func (a *WorldScriptableAdapter) HandleSpellDeath(victimName string, spellNum in
 	a.world.HandleSpellDeathScriptable(victimName, spellNum, roomVNum)
 }
 
+// SendTell delivers a private tell message to a named online player.
+// Source: act.comm.c do_tell().
+func (a *WorldScriptableAdapter) SendTell(targetName, message string) {
+	if p, ok := a.world.GetPlayer(targetName); ok {
+		p.SendMessage(message)
+	}
+}
+
 // scriptableObjWrapper wraps parser.Obj to implement ScriptableObject
 type scriptableObjWrapper struct {
 	obj *parser.Obj

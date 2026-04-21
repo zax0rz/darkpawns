@@ -45,6 +45,8 @@ func (m *mockWorldForTest) HandleNonCombatDeath(player ScriptablePlayer) {}
 
 func (m *mockWorldForTest) HandleSpellDeath(victimName string, spellNum int, roomVNum int) {}
 
+func (m *mockWorldForTest) SendTell(targetName, message string) {}
+
 // TestSpellDamageFormulas tests that spell damage formulas are implemented
 func TestSpellDamageFormulas(t *testing.T) {
 	// This test doesn't actually run Lua code, but verifies our understanding
