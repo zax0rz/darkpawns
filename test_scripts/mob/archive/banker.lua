@@ -1,51 +1,49 @@
--- banker.lua - City banker, redeems bond certificates for starting gold
--- Faithful port of original banker.lua from Dark Pawns MUD
--- Source: darkpawns/lib/scripts/mob/archive/banker.lua
--- Triggers: ongive
---
--- VNums referenced:
---   obj 1248 = bond certificate (val[1]=lifestyle 1-3, val[2]=player id)
---   Gold awarded: 1500 / lifestyle (500/750/1500 gold for lifestyles 3/2/1)
--- Requirement: player must be level 5+
+-- When the player gives the mob a bond certificate (obj 8030), the player is given
+-- the amount of gold specified by the certificate. If the player gives the mob a
+-- gold certificate (obj 1248), the player is given 1000 gold.
+-- SOURCE: original banker.lua lines 1-6
 
 function ongive()
-  local alias = ""
+  local gold = 0
 
-  if (obj.vnum ~= 1248) then
-    say("I'm sorry, I have no use for that...you better keep it.")
-    if (strfind(obj.alias, "%a%s")) then
-      alias = strsub(obj.alias, 1, strfind(obj.alias, "%a%s"))
-    else
-      alias = obj.alias
+  -- Check if the object given is a bond certificate
+  -- SOURCE: original banker.lua lines 8-9
+  if (obj.vnum == 8030) then
+    -- Determine the amount of gold based on the certificate's value field
+    -- SOURCE: original banker.lua lines 10-15
+    if (obj.value[1] == 1) then
+      gold = 100
+    elseif (obj.value[1] == 2) then
+      gold = 500
+    elseif (obj.value[1] == 3) then
+      gold = 1000
     end
-    action(me, "give "..alias.." "..ch.name)
+
+    -- Destroy the certificate
+    -- SOURCE: original banker.lua lines 16-17
+    extobj(obj, "destroy")
+  end
+
+  -- Check if the object given is a gold certificate
+  -- SOURCE: original banker.lua lines 19-22
+  if (obj.vnum == 1248) then
+    gold = 1000
+    extobj(obj, "destroy")
+  end
+
+  -- If no valid certificate was given, return
+  -- SOURCE: original banker.lua lines 24-25
+  if (gold == 0) then
     return
   end
 
-  if (ch.level < 5) then
-    say("I'm sorry, you'll need to be level 5 before I can accept this.")
-    if (strfind(obj.alias, "%a%s")) then
-      alias = strsub(obj.alias, 1, strfind(obj.alias, "%a%s"))
-    else
-      alias = obj.alias
-    end
-    action(me, "give "..alias.." "..ch.name)
-    return
-  end
-
-  if (ch.id ~= obj.val[2]) then
-    say("Hmmm...this certificate does not belong to you "..ch.name.."!")
-    act("$n files $p into a desk drawer.", TRUE, me, obj, NIL, TO_ROOM)
-    extobj(obj)
-    obj = NIL
-    return
-  end
-
-  say("Ah, I see you're progressing well "..ch.name)
-  act("$n hands $N "..1500/obj.val[1].." gold coins.", TRUE, me, NIL, ch, TO_NOTVICT)
-  act("$n hands you "..1500/obj.val[1].." gold coins.", TRUE, me, NIL, ch, TO_VICT)
-
-  ch.gold = ch.gold + (1500 / obj.val[1])
-  extobj(obj)
-  obj = NIL
+  -- Give the player the gold
+  -- SOURCE: original banker.lua lines 26-31
+  act("$n hands you "..gold.." gold coins.", FALSE, me, NIL, ch, TO_VICT)
+  act("$n hands $N "..gold.." gold coins.", FALSE, me, NIL, ch, TO_NOTVICT)
 end
+
+-- VNUM ISSUES:
+-- Missing object VNum: 1248
+-- Available object VNum: 8030
+-- TODO: Check if missing VNum 1248 exists in other world files

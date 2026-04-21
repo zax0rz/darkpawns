@@ -85,6 +85,14 @@ func (m *Manager) SetDeathFunc() {
 	}
 }
 
+// SetScriptFightFunc wires the fight trigger into the combat engine.
+// After each combat round, if the mob has a fight script, it fires.
+func (m *Manager) SetScriptFightFunc() {
+	m.combatEngine.ScriptFightFunc = func(mobName string, targetName string, roomVNum int) {
+		m.world.FireMobFightScript(mobName, targetName, roomVNum)
+	}
+}
+
 // HandleWebSocket upgrades HTTP to WebSocket and manages the session.
 func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)

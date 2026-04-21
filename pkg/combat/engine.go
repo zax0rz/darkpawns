@@ -30,6 +30,15 @@ type CombatEngine struct {
 	// DeathFunc handles corpse creation and respawn (set by game layer)
 	// Called after death messages are sent.
 	DeathFunc func(victim, killer Combatant)
+
+	// ScriptFunc triggers mob scripts during combat (set by game layer)
+	// Called after each attack in combat.
+	ScriptFunc func(attacker, defender Combatant)
+
+	// ScriptFightFunc fires the "fight" trigger on a mob after each combat round.
+	// Set by the game layer. Called with (mobName, targetName, roomVNum).
+	// Source: mobact.c — mobs use scripts during combat
+	ScriptFightFunc func(mobName string, targetName string, roomVNum int)
 }
 
 // NewCombatEngine creates a new combat engine
@@ -43,6 +52,11 @@ func NewCombatEngine() *CombatEngine {
 // SetBroadcastFunc sets the function used to broadcast messages to rooms
 func (ce *CombatEngine) SetBroadcastFunc(fn func(roomVNum int, message string, exclude string)) {
 	ce.BroadcastFunc = fn
+}
+
+// SetScriptFunc sets the function used to trigger mob scripts during combat
+func (ce *CombatEngine) SetScriptFunc(fn func(attacker, defender Combatant)) {
+	ce.ScriptFunc = fn
 }
 
 // Start begins the combat tick loop
@@ -203,12 +217,18 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		// Send combat messages
 		ce.sendHitMessage(attacker, defender, damage)
 		
-		// Check for death
+			// Check for death
 		if defender.GetHP() <= 0 {
 			ce.handleDeath(defender, attacker)
 			ce.StopCombat(attacker.GetName())
 			break
 		}
+	}
+
+	// Fire fight trigger on mob attacker after combat round
+	// Source: mobact.c — mob_activity() calls mob scripts after violence
+	if attacker.IsNPC() && ce.ScriptFightFunc != nil && defender.GetHP() > 0 {
+		ce.ScriptFightFunc(attacker.GetName(), defender.GetName(), attacker.GetRoom())
 	}
 }
 

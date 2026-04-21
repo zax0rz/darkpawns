@@ -557,3 +557,48 @@ func (w *scriptableObjWrapper) GetTimer() int {
 func (w *scriptableObjWrapper) SetTimer(timer int) {
 	// TODO: timer mutation on parser.Obj not supported — Phase 3 tracks timer on ObjectInstance
 }
+// FireMobFightScript fires the "fight" trigger on a mob after a combat round.
+// Called by the combat engine's ScriptFightFunc after each round.
+// Source: mobact.c — mob_activity() calls Lua fight trigger during violence.
+func (w *World) FireMobFightScript(mobName string, targetName string, roomVNum int) {
+	if ScriptEngine == nil {
+		return
+	}
+
+	// Find the mob by name in the room
+	w.mu.RLock()
+	var mob *MobInstance
+	for _, m := range w.activeMobs {
+		if m.GetRoom() == roomVNum && m.GetName() == mobName && m.HasScript("fight") {
+			mob = m
+			break
+		}
+	}
+	// Find the target player
+	var target scripting.ScriptablePlayer
+	for _, p := range w.players {
+		if p.GetName() == targetName {
+			target = p
+			break
+		}
+	}
+	w.mu.RUnlock()
+
+	if mob == nil {
+		return
+	}
+
+	ctx := mob.CreateScriptContext(nil, nil, "")
+	if target != nil {
+		if p, ok := target.(*Player); ok {
+			ctx.Ch = p
+		}
+	}
+	ctx.World = NewWorldScriptableAdapter(w)
+	ctx.RoomVNum = roomVNum
+
+	if _, err := mob.RunScript("fight", ctx); err != nil {
+		// Script errors are non-fatal — log and continue
+		_ = err
+	}
+}

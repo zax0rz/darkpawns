@@ -981,57 +981,146 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 	spellNum := L.ToInt(3)
 	aggressive := L.ToBool(4)
 	
-	// Log the spell cast for now
-	// TODO: Implement actual spell casting logic
-	casterName := "unknown"
-	targetName := "nil"
-	
+	// Get caster level
+	casterLevel := 1
 	if casterTbl.Type() == lua.LTTable {
-		L.GetField(casterTbl, "name")
-		if L.Get(-1).Type() == lua.LTString {
-			casterName = L.ToString(-1)
+		L.GetField(casterTbl, "level")
+		if L.Get(-1).Type() == lua.LTNumber {
+			casterLevel = int(L.ToNumber(-1))
 		}
 		L.Pop(1)
 	}
 	
-	if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
-		L.GetField(targetTbl, "name")
-		if L.Get(-1).Type() == lua.LTString {
-			targetName = L.ToString(-1)
-		}
-		L.Pop(1)
-	}
-	
-	// Convert spell number to name for logging
-	spellName := fmt.Sprintf("SPELL_%d", spellNum)
-	// Map common spell numbers to names
+	// Handle different spell types
 	switch spellNum {
-	case 32: spellName = "MAGIC_MISSILE"
-	case 5: spellName = "BURNING_HANDS"
-	case 30: spellName = "LIGHTNING_BOLT"
-	case 26: spellName = "FIREBALL"
-	case 58: spellName = "HELLFIRE"
-	case 10: spellName = "COLOR_SPRAY"
-	case 92: spellName = "DISRUPT"
-	case 93: spellName = "DISINTEGRATE"
-	case 96: spellName = "FLAMESTRIKE"
-	case 75: spellName = "ACID_BLAST"
-	case 2: spellName = "TELEPORT"
-	case 22: spellName = "DISPEL_EVIL"
-	case 46: spellName = "DISPEL_GOOD"
-	case 28: spellName = "HEAL"
-	case 67: spellName = "VITALITY"
-	case 16: spellName = "CURE_LIGHT"
-	case 27: spellName = "HARM"
-	case 4: spellName = "BLINDNESS"
-	case 17: spellName = "CURSE"
-	case 33: spellName = "POISON"
-	case 23: spellName = "EARTHQUAKE"
-	case 81: spellName = "DIVINE_INT"
-	case 82: spellName = "MIND_BAR"
+	case 2: // SPELL_TELEPORT
+		// Move target to a random room
+		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
+			// Get a random room from world (for now, just room 8004 - death room)
+			newRoom := 8004
+			L.SetField(targetTbl, "room", lua.LNumber(newRoom))
+			// Send message to target if it's a player
+			L.GetField(targetTbl, "name")
+			targetName := L.ToString(-1)
+			L.Pop(1)
+			log.Printf("[SPELL] Teleported %s to room %d", targetName, newRoom)
+		}
+		return 0
+		
+	case 16: // SPELL_CURE_LIGHT
+		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
+			// Healing spell: restore rand(1, 8) + caster.level/4 HP
+			healAmount := rand.Intn(8) + 1 + casterLevel/4
+			L.GetField(targetTbl, "hp")
+			currentHP := int(L.ToNumber(-1))
+			L.Pop(1)
+			L.GetField(targetTbl, "maxhp")
+			maxHP := int(L.ToNumber(-1))
+			L.Pop(1)
+			newHP := currentHP + healAmount
+			if newHP > maxHP {
+				newHP = maxHP
+			}
+			L.SetField(targetTbl, "hp", lua.LNumber(newHP))
+			log.Printf("[SPELL] Cure Light: healed %d HP (new HP: %d)", healAmount, newHP)
+		}
+		return 0
+		
+	case 28: // SPELL_HEAL
+		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
+			// Healing spell: restore 100 + rand(1, caster.level) HP
+			healAmount := 100 + rand.Intn(casterLevel) + 1
+			L.GetField(targetTbl, "hp")
+			currentHP := int(L.ToNumber(-1))
+			L.Pop(1)
+			L.GetField(targetTbl, "maxhp")
+			maxHP := int(L.ToNumber(-1))
+			L.Pop(1)
+			newHP := currentHP + healAmount
+			if newHP > maxHP {
+				newHP = maxHP
+			}
+			L.SetField(targetTbl, "hp", lua.LNumber(newHP))
+			log.Printf("[SPELL] Heal: restored %d HP (new HP: %d)", healAmount, newHP)
+		}
+		return 0
+		
+	case 67: // SPELL_VITALITY
+		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
+			// Restore to full HP
+			L.GetField(targetTbl, "maxhp")
+			maxHP := int(L.ToNumber(-1))
+			L.Pop(1)
+			L.SetField(targetTbl, "hp", lua.LNumber(maxHP))
+			log.Printf("[SPELL] Vitality: restored to full HP (%d)", maxHP)
+		}
+		return 0
 	}
 	
-	log.Printf("[SPELL] %s casts %s on %s (aggressive: %v)", casterName, spellName, targetName, aggressive)
+	// For offensive spells (aggressive=true)
+	if aggressive && targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
+		// Simple formula: damage = caster.level * 2 + rand(caster.level, caster.level * 3)
+		minDamage := casterLevel
+		maxDamage := casterLevel * 3
+		damage := casterLevel*2 + rand.Intn(maxDamage-minDamage+1) + minDamage
+		
+		// Get current HP
+		L.GetField(targetTbl, "hp")
+		currentHP := int(L.ToNumber(-1))
+		L.Pop(1)
+		
+		// Apply damage
+		newHP := currentHP - damage
+		if newHP < 0 {
+			newHP = 0
+		}
+		L.SetField(targetTbl, "hp", lua.LNumber(newHP))
+		
+		// Log
+		L.GetField(casterTbl, "name")
+		casterName := L.ToString(-1)
+		L.Pop(1)
+		L.GetField(targetTbl, "name")
+		targetName := L.ToString(-1)
+		L.Pop(1)
+		
+		// Convert spell number to name for logging
+		spellName := fmt.Sprintf("SPELL_%d", spellNum)
+		switch spellNum {
+		case 32: spellName = "MAGIC_MISSILE"
+		case 5: spellName = "BURNING_HANDS"
+		case 30: spellName = "LIGHTNING_BOLT"
+		case 26: spellName = "FIREBALL"
+		case 58: spellName = "HELLFIRE"
+		case 10: spellName = "COLOR_SPRAY"
+		case 92: spellName = "DISRUPT"
+		case 93: spellName = "DISINTEGRATE"
+		case 96: spellName = "FLAMESTRIKE"
+		case 75: spellName = "ACID_BLAST"
+		case 22: spellName = "DISPEL_EVIL"
+		case 46: spellName = "DISPEL_GOOD"
+		case 27: spellName = "HARM"
+		case 4: spellName = "BLINDNESS"
+		case 17: spellName = "CURSE"
+		case 33: spellName = "POISON"
+		case 23: spellName = "EARTHQUAKE"
+		case 81: spellName = "DIVINE_INT"
+		case 82: spellName = "MIND_BAR"
+		}
+		
+		log.Printf("[SPELL] %s casts %s on %s for %d damage (HP: %d -> %d)", 
+			casterName, spellName, targetName, damage, currentHP, newHP)
+		
+		// TODO: Handle death if newHP == 0
+	} else {
+		// Non-aggressive or no target
+		L.GetField(casterTbl, "name")
+		casterName := L.ToString(-1)
+		L.Pop(1)
+		
+		spellName := fmt.Sprintf("SPELL_%d", spellNum)
+		log.Printf("[SPELL] %s casts %s (non-aggressive or no target)", casterName, spellName)
+	}
 	
 	return 0
 }
