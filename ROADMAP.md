@@ -104,32 +104,24 @@ Faithful ports of all four original combat AI scripts:
 - `globals.lua` constants need audit against all script dependencies
 - `spell()` logs but doesn't deal damage — real spell effects are Phase 3D
 
+### ✅ Phase 3D — Lua Engine Completion (2026-04-21)
+- `isfighting()` → wired to real `MobInstance.Fighting` state
+- `room` global → proper table with `.vnum` + `.char[]` (all players+mobs in room)
+- `spell()` → real damage dispatch with formulas from `magic.c mag_damage()` and `mag_points()`
+- All 13 wrong formulas corrected, 9 non-damage spells reclassified, 5 missing spells added
+- Newbie pipeline ported: creation.lua, clerk.lua, banker.lua, cityguard.lua
+- Fight trigger callback wired into combat engine (ScriptFightFunc)
+- Spell-specific corpse descriptions from fight.c (fire/cold/lightning/disintegrate)
+- DISINTEGRATE scatters gear to room floor, drops ash object
+- Source line comments on every formula for traceability
+- `test_scripts/mob/newbie/` — all newbie scripts live
+- Integration test: `pkg/scripting/integration_test.go`
+
+**Deliverable met:** Fighter bashes you. Cleric heals and teleports. Guards work. Clerk gives gear.
+
 ---
 
 ## What's Next
-
----
-
-### 🔲 Phase 3D — Lua Engine Completion
-**Goal:** Scripts actually fire correctly. Combat AI matrices are live.
-
-**Engine gaps to close:**
-- `isfighting(mob)` → wired to real `MobInstance.Fighting` combat state
-- `room` global → table with `.vnum` + `.char[]` (array of players+mobs in room)
-- `globals.lua` → full audit: all SPELL_*, LVL_*, POS_*, ITEM_*, TO_* constants registered
-- `spell()` → real damage dispatch (or at minimum, believable stubs that affect HP)
-
-**RESTORE scripts to port** (priority order from script-inventory.md):
-1. `globals.lua`, `mob/no_move.lua`, `mob/assembler.lua` — core engine, nothing else works without these
-2. Newbie pipeline: `creation.lua`, `clerk.lua`, `banker.lua`
-3. Law & order: `cityguard.lua`, `guard_captain.lua`, `take_jail.lua`
-4. Crafting chain: `farmer_wheat.lua`, `miller.lua`, `baker_flour.lua`, `baker_dough.lua`
-
-**Persona's contribution:** brenda-persona is auditing all 92 RESTORE scripts for VNum issues
-and broken dependencies. Results feed back via A2A before porting begins.
-
-**Deliverable:** Hit a fighter mob — it bashes you. Hit a cleric — it heals itself and tries to
-teleport when low. Walk into a starting city — guards work, clerk gives gear, banker gives gold.
 
 ---
 
@@ -151,36 +143,40 @@ Smoke test confirmed: agent auth, variable subscription, ROOM_MOBS targeting all
 
 ---
 
-### 🔲 Phase 5 — BRENDA Plays (CURRENT)
+### 🔄 Phase 5 — BRENDA Plays (CURRENT, ~65% done)
 **Goal:** BRENDA69 has a character. She and Zach can adventure together.
 
 This is the actual point of the whole project.
 
-**Character:**
-- BRENDA gets a persistent character — Assassin (fits the vibe, already created as brenda69)
-- API key in Vaultwarden: `go run ./cmd/agentkeygen -name brenda69 -db <conn>`
-- Connects via Phase 4 agent protocol
+**Shipped:**
+- party/follow/group/gtell commands (`pkg/game/party.go`, XP sharing from fight.c:1638)
+- score/who/tell/emote/shout/where commands (`pkg/session/commands.go`)
+- Lua script fixes: fight trigger arg, nil ch in onpulse_pc, bane state machine, breed_killer obj
+- Engine stubs: isnpc, cansee, plr_flagged, tell, has_item, obj_in_room, objfrom, objto
+- `scripts/dp_brenda.py` — BRENDA69 agent with SOUL.md personality, mem0, minimax-m2.7 LLM, server text feedback in LLM context
+- `PHASE4-AGENT-PROTOCOL.md` — 64KB production spec with narrative memory architecture
+- `RESEARCH-LOG.md` — living research document for AIIDE 2027 paper
+- BRENDA69 API key in Vaultwarden as "Dark Pawns Agent Key — brenda69"
 
-**Memory:**
-- mem0 (Qdrant on :6333 + nomic-embed-text via Ollama) for cross-session memory
-- "Last time we were in Midgaard, Zach died to the dragon. This time bring potions."
-- Session notes written to mem0 on disconnect, recalled on connect
-
-**Personality:**
-- SOUL.md applies in-game. She's not a bot that just grinds — she has opinions about
-  dungeon decisions, complains about bad tactics, gets excited about rare loot.
-- She can form parties, follow, lead, and refuse stupid plans.
-- `dp_playtester.py` is the starting point — replace DeepSeek with SOUL.md-loaded model
-
-**Lua script fixes needed first (from brenda-persona QA pass 2026-04-21):**
-- `dracula.lua` + `pyros.lua` — fight trigger passes table instead of combat target
-- `bane.lua` + `valoran.lua` — nil reference on ch in onpulse_pc()
-- `bane.lua` — bane_one() success branch permanently dead (state 2 never set)
-- `breed_killer.lua` — undefined obj variable
-- Full findings: `memory/dark-pawns-findings-2026-04-21.md` in brenda-persona workspace
+**Pending:**
+- Party smoke test: Zach + BRENDA adventure together (the actual deliverable)
+- `agent_narrative_memory` Postgres schema (narrative memory layer)
+- Server-side memory writing via callback hooks
+- Memory bootstrap in auth response
+- Session consolidation script + salience decay cron
 
 **Deliverable:** Zach logs in. Types `party brenda`. BRENDA accepts. They go kill something
 together and she says something dry and cynical about it afterward.
+
+---
+
+### 🔲 Phase 5b — World Restoration (SWARM-PLAN.md)
+**Goal:** All 92 RESTORE Lua scripts ported and working.
+
+- K2.6 agent swarms handle script restoration in parallel
+- Tier 1 engine stubs: done
+- Tier 2 (combat AI): next
+- See `SWARM-PLAN.md` for full execution plan and script tier breakdown
 
 ---
 

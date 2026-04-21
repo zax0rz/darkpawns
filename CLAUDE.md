@@ -159,11 +159,29 @@ Key source files:
   `pkg/db/player.go` (agent_keys), `cmd/agentkeygen/main.go`
 - **Bugs fixed:** Spawner mutex deadlock (zone resets), SpawnMob self-deadlock on world.mu
 
-### 🔲 Phase 5 — BRENDA Plays (CURRENT)
-- BRENDA69 gets a persistent character (class TBD — Mage or Assassin)
-- API key in Vaultwarden
-- mem0 for cross-session memory ("last time we were here, Zach died to the dragon")
-- SOUL.md applies in-game: opinions, dry commentary, refuses stupid plans
+### 🔄 Phase 5 — BRENDA Plays (CURRENT, ~65% done)
+
+**Shipped:**
+- party/follow/group/gtell commands (`pkg/game/party.go`, XP sharing from fight.c:1638)
+- score/who/tell/emote/shout/where commands (`pkg/session/commands.go`)
+- Lua script fixes: fight trigger arg, nil ch in onpulse_pc, bane state machine, breed_killer obj
+- Engine stubs implemented: isnpc, cansee, plr_flagged, tell, has_item, obj_in_room, objfrom, objto
+- `scripts/dp_brenda.py` — BRENDA69 agent with SOUL.md personality, mem0 cross-session memory, minimax-m2.7 LLM, server text feedback in LLM context
+- `PHASE4-AGENT-PROTOCOL.md` — 64KB production spec with narrative memory architecture
+- `RESEARCH-LOG.md` — living research document for AIIDE 2027 paper
+- `SWARM-PLAN.md` — world restoration execution plan (K2.6 agent swarms, 92 RESTORE scripts)
+
+**Pending:**
+- Party smoke test: Zach + BRENDA adventure together
+- `agent_narrative_memory` Postgres schema (narrative memory layer)
+- Server-side memory writing via callback hooks
+- Memory bootstrap in auth response
+- Session consolidation script + salience decay cron
+
+### 🔲 Phase 5b — World Restoration (SWARM-PLAN.md)
+- K2.6 agent swarms restore all 92 RESTORE scripts
+- Tier 1 engine stubs done; Tier 2 (combat AI) next
+- See `SWARM-PLAN.md` for execution plan
 
 ### ⬜ Phase 6 — Polish & Public Server
 - Web client (React, VT100, inventory panel)
@@ -200,18 +218,49 @@ Key source files:
 cd /home/zach/.openclaw/workspace/darkpawns-phase1
 export PATH=$PATH:/usr/local/go/bin
 go build ./cmd/server
-./server -world /path/to/darkpawns/lib/world -port 8080 -db "postgres://..."
+./server \
+  -world /home/zach/.openclaw/workspace/darkpawns/lib/world \
+  -port 4350 \
+  -db "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable" \
+  -scripts ./test_scripts
 ```
 
-World files are at: `/home/zach/.openclaw/workspace/darkpawns/lib/world`
+**Binary:** `/tmp/dp-server6` — rebuild from source after any merge.
 
-Connect via WebSocket at `ws://localhost:8080/ws`:
+**World files:** `/home/zach/.openclaw/workspace/darkpawns/lib/world`
+> `lib/world` is gitignored. If missing: `git checkout origin/master -- lib/world/`
+
+**DB:** `postgres://postgres:postgres@localhost/darkpawns?sslmode=disable`
+
+**BRENDA69 agent key:** stored in Vaultwarden as **"Dark Pawns Agent Key — brenda69"**
+
+Connect via WebSocket at `ws://localhost:4350/ws`:
 ```json
 {"type":"login","data":{"player_name":"YourName","class":3,"race":0,"new_char":true}}
+{"type":"login","data":{"player_name":"brenda69","api_key":"<key>","mode":"agent"}}
 {"type":"command","data":{"command":"look"}}
 {"type":"command","data":{"command":"hit","args":["goblin"]}}
 {"type":"command","data":{"command":"wield","args":["sword"]}}
 ```
+
+---
+
+## Key Files Added (Phase 4–5)
+
+| File | Purpose |
+|------|---------|
+| `PHASE4-AGENT-PROTOCOL.md` | Full agent protocol spec + narrative memory architecture (64KB) |
+| `RESEARCH-LOG.md` | Living research log — update when making significant design decisions |
+| `SWARM-PLAN.md` | World restoration execution plan for K2.6 agent swarms |
+| `scripts/dp_brenda.py` | BRENDA69 agent (SOUL.md + mem0 + minimax-m2.7) |
+| `scripts/dp_bot.py` | Deterministic FSM agent (638 lines) |
+| `pkg/game/party.go` | Party/group system |
+| `pkg/session/commands.go` | Social commands (score/who/tell/emote/shout/where) |
+| `pkg/session/agent_vars.go` | Agent variable subscription + dirty tracking |
+| `pkg/session/agent.go` | Agent WebSocket handler |
+| `cmd/agentkeygen/main.go` | Agent key generation CLI |
+
+**Research log:** When making significant design decisions (new systems, architectural choices, protocol changes), add an entry to `RESEARCH-LOG.md`. This feeds the AIIDE 2027 paper.
 
 ---
 
