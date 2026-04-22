@@ -325,6 +325,87 @@ func TestMindflayerSpellConstants(t *testing.T) {
 	}
 }
 
+// --- Tier 3 Economy — Batch B (merchant_walk/teacher/recruiter/pet_store/remove_curse) ---
+
+// TestTier3EconomyScriptsParse verifies all five Tier 3 Economy scripts load without
+// Lua syntax errors. These are new scripts based on standard MUD economy patterns.
+func TestTier3EconomyScriptsParse(t *testing.T) {
+	scripts := []struct {
+		name string
+		path string
+	}{
+		{"merchant_walk", "../../test_scripts/mob/archive/merchant_walk.lua"},
+		{"teacher", "../../test_scripts/mob/archive/teacher.lua"},
+		{"recruiter", "../../test_scripts/mob/archive/recruiter.lua"},
+		{"pet_store", "../../test_scripts/mob/archive/pet_store.lua"},
+		{"remove_curse", "../../test_scripts/mob/archive/remove_curse.lua"},
+		{"shopkeeper", "../../test_scripts/mob/archive/shopkeeper.lua"},
+		{"shop_give", "../../test_scripts/mob/archive/shop_give.lua"},
+		{"identifier", "../../test_scripts/mob/archive/identifier.lua"},
+		{"stable", "../../test_scripts/mob/archive/stable.lua"},
+		{"merchant_inn", "../../test_scripts/mob/archive/merchant_inn.lua"},
+	}
+
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+
+	for _, s := range scripts {
+		t.Run(s.name, func(t *testing.T) {
+			fn, err := engine.L.LoadFile(s.path)
+			if err != nil {
+				t.Fatalf("%s: Lua parse error: %v", s.name, err)
+			}
+			if fn == nil {
+				t.Fatalf("%s: LoadFile returned nil function", s.name)
+			}
+			t.Logf("%s: parsed OK", s.name)
+		})
+	}
+}
+
+// TestMerchantWalkDefinesTriggers verifies merchant_walk.lua defines onpulse_all and oncmd.
+func TestMerchantWalkDefinesTriggers(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/merchant_walk.lua"); err != nil {
+		t.Fatalf("merchant_walk.lua load error: %v", err)
+	}
+	for _, fn := range []string{"onpulse_all", "oncmd"} {
+		val := engine.L.GetGlobal(fn)
+		if val.Type().String() != "function" {
+			t.Errorf("merchant_walk.lua: %s() not defined (got %s)", fn, val.Type().String())
+		} else {
+			t.Logf("merchant_walk.lua: %s() defined OK", fn)
+		}
+	}
+}
+
+// TestRemoveCurseDefinesTriggers verifies remove_curse.lua defines oncmd and greet.
+func TestRemoveCurseDefinesTriggers(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/remove_curse.lua"); err != nil {
+		t.Fatalf("remove_curse.lua load error: %v", err)
+	}
+	for _, fn := range []string{"oncmd", "greet"} {
+		val := engine.L.GetGlobal(fn)
+		if val.Type().String() != "function" {
+			t.Errorf("remove_curse.lua: %s() not defined (got %s)", fn, val.Type().String())
+		} else {
+			t.Logf("remove_curse.lua: %s() defined OK", fn)
+		}
+	}
+}
+
 // TestPaladinSpellConstants verifies DISPEL_EVIL and DISPEL_GOOD constants.
 // Source: spells.h (SPELL_DISPEL_EVIL=22, SPELL_DISPEL_GOOD=46)
 func TestPaladinSpellConstants(t *testing.T) {

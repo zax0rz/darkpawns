@@ -245,6 +245,24 @@ func (e *Engine) registerFunctions() {
 	e.L.SetGlobal("aff_flagged", e.L.NewFunction(e.luaAffFlagged))
 	e.L.SetGlobal("plr_flags", e.L.NewFunction(e.luaPlrFlags))
 	e.L.SetGlobal("obj_list", e.L.NewFunction(e.luaObjList))
+
+	// Stubs needed by Tier 3 Economy scripts
+	e.L.SetGlobal("item_check", e.L.NewFunction(e.luaItemCheck))
+	e.L.SetGlobal("load_room", e.L.NewFunction(e.luaLoadRoom))
+	e.L.SetGlobal("inworld", e.L.NewFunction(e.luaInworld))
+	e.L.SetGlobal("mob_flagged", e.L.NewFunction(e.luaMobFlagged))
+	e.L.SetGlobal("aff_flags", e.L.NewFunction(e.luaAffFlags))
+	e.L.SetGlobal("follow", e.L.NewFunction(e.luaFollow))
+	e.L.SetGlobal("mount", e.L.NewFunction(e.luaMount))
+	e.L.SetGlobal("direction", e.L.NewFunction(e.luaDirection))
+	e.L.SetGlobal("set_hunt", e.L.NewFunction(e.luaSetHunt))
+	e.L.SetGlobal("mxp", e.L.NewFunction(e.luaMxp))
+	e.L.SetGlobal("skip_spaces", e.L.NewFunction(e.luaSkipSpaces))
+	e.L.SetGlobal("social", e.L.NewFunction(e.luaSocial))
+	e.L.SetGlobal("obj_flagged", e.L.NewFunction(e.luaObjFlagged))
+	e.L.SetGlobal("get_group_lvl", e.L.NewFunction(e.luaGetGroupLvl))
+	e.L.SetGlobal("get_group_pts", e.L.NewFunction(e.luaGetGroupPts))
+	e.L.SetGlobal("skill_group", e.L.NewFunction(e.luaSkillGroup))
 }
 
 // loadGlobals loads the globals.lua file.
@@ -1675,10 +1693,152 @@ func (e *Engine) luaPlrFlags(L *lua.LState) int {
 
 func (e *Engine) luaObjList(L *lua.LState) int {
 	// obj_list(keyword, location) - search mob's inventory for item matching keyword
-	// location: "char" = mob's inventory, "room" = room floor
+	// location: "char" = mob's inventory, "room" = room floor, "vict" = player inventory
 	// Returns the object table if found, NIL otherwise
 	// Based on lua_obj_list() pattern in scripts.c
 	log.Printf("[STUB] obj_list(keyword, location)")
 	L.Push(lua.LNil)
+	return 1
+}
+
+// --- Tier 3 Economy stubs ---
+
+func (e *Engine) luaItemCheck(L *lua.LState) int {
+	// item_check(obj) - validates whether object is a production item for the shop.
+	// Source: shop_give.lua — checks if given item is valid shop production.
+	// Engine gap: always returns false — shop production tables not yet implemented.
+	log.Printf("[STUB] item_check(obj) — always returns false")
+	L.Push(lua.LBool(false))
+	return 1
+}
+
+func (e *Engine) luaLoadRoom(L *lua.LState) int {
+	// load_room(vnum) - returns a room table with vnum, char, exit, objs fields.
+	// Source: pet_store.lua, merchant_inn.lua — loads adjacent room for pet listing.
+	log.Printf("[STUB] load_room(vnum)")
+	vnum := L.ToInt(1)
+	tbl := L.NewTable()
+	tbl.RawSetString("vnum", lua.LNumber(vnum))
+	tbl.RawSetString("char", L.NewTable())
+	tbl.RawSetString("exit", L.NewTable())
+	tbl.RawSetString("objs", L.NewTable())
+	L.Push(tbl)
+	return 1
+}
+
+func (e *Engine) luaInworld(L *lua.LState) int {
+	// inworld(type, vnum) - check if a mob/obj with given vnum exists in the world.
+	// Source: merchant_inn.lua — checks if travelling merchant (6805) already exists.
+	log.Printf("[STUB] inworld(type, vnum)")
+	L.Push(lua.LNil)
+	return 1
+}
+
+func (e *Engine) luaMobFlagged(L *lua.LState) int {
+	// mob_flagged(mob, flag) - check if mob has given MOB_* flag set.
+	// Source: stable.lua find_mount() — checks MOB_MOUNTABLE.
+	log.Printf("[STUB] mob_flagged(mob, flag)")
+	L.Push(lua.LBool(false))
+	return 1
+}
+
+func (e *Engine) luaAffFlags(L *lua.LState) int {
+	// aff_flags(ch, operation, flag) - set or remove an affect flag on a character.
+	// Source: stable.lua — removes AFF_CHARM from mount when stabling.
+	log.Printf("[STUB] aff_flags(ch, operation, flag)")
+	return 0
+}
+
+func (e *Engine) luaFollow(L *lua.LState) int {
+	// follow(ch, charm) - makes mob follow ch, optionally charmed.
+	// Source: pet_store.lua — makes purchased pet follow the buyer.
+	log.Printf("[STUB] follow(ch, charm)")
+	return 0
+}
+
+func (e *Engine) luaMount(L *lua.LState) int {
+	// mount(ch, nil, "unmount") - dismount a player from their mount.
+	// Source: stable.lua — dismounts player before stabling.
+	log.Printf("[STUB] mount(ch, nil, operation)")
+	return 0
+}
+
+func (e *Engine) luaDirection(L *lua.LState) int {
+	// direction(from_vnum, to_vnum) - returns direction (0-5) from one room to another.
+	// Source: merchant_walk.lua — pathfinding from current room toward target room 4860.
+	log.Printf("[STUB] direction(from, to)")
+	L.Push(lua.LNumber(-1))
+	return 1
+}
+
+func (e *Engine) luaSetHunt(L *lua.LState) int {
+	// set_hunt(hunter, prey) - set mob to hunt a target.
+	// Source: merchant_walk.lua attack_time() — bandits hunt merchant and escort.
+	log.Printf("[STUB] set_hunt(hunter, prey)")
+	return 0
+}
+
+func (e *Engine) luaMxp(L *lua.LState) int {
+	// mxp(text, command) - returns MXP-enabled link text. Falls back to plain text.
+	// Source: merchant_inn.lua — creates clickable "interested?" link.
+	if L.GetTop() >= 1 {
+		L.Push(L.Get(1)) // Return the display text as-is
+	} else {
+		L.Push(lua.LString(""))
+	}
+	return 1
+}
+
+func (e *Engine) luaSkipSpaces(L *lua.LState) int {
+	// skip_spaces(s) - trim leading spaces from a string.
+	// Source: merchant_inn.lua — strips leading space from say argument.
+	s := L.ToString(1)
+	L.Push(lua.LString(strings.TrimLeft(s, " ")))
+	return 1
+}
+
+func (e *Engine) luaSocial(L *lua.LState) int {
+	// social(mob, social_name) - perform a social command.
+	// Source: remove_curse.lua — performs "cough" social.
+	log.Printf("[STUB] social(mob, social_name)")
+	return 0
+}
+
+func (e *Engine) luaObjFlagged(L *lua.LState) int {
+	// obj_flagged(obj, flag) - check if object has given ITEM_* flag set.
+	// Source: identifier.lua — checks ITEM_MAGIC; remove_curse.lua — checks ITEM_NODROP.
+	log.Printf("[STUB] obj_flagged(obj, flag)")
+	L.Push(lua.LBool(false))
+	return 1
+}
+
+func (e *Engine) luaGetGroupLvl(L *lua.LState) int {
+	// get_group_lvl(ch, group[, newval]) - get or set character's skill group level.
+	// Source: teacher.lua — reads and writes group level for skill training.
+	log.Printf("[STUB] get_group_lvl(ch, group[, newval])")
+	if L.GetTop() >= 3 {
+		// Set mode: update ch.group_lvl (stub — no-op)
+		return 0
+	}
+	L.Push(lua.LNumber(0))
+	return 1
+}
+
+func (e *Engine) luaGetGroupPts(L *lua.LState) int {
+	// get_group_pts(ch[, newval]) - get or set character's available group points.
+	// Source: teacher.lua — reads and writes group points for skill training.
+	log.Printf("[STUB] get_group_pts(ch[, newval])")
+	if L.GetTop() >= 2 {
+		return 0
+	}
+	L.Push(lua.LNumber(0))
+	return 1
+}
+
+func (e *Engine) luaSkillGroup(L *lua.LState) int {
+	// skill_group(name) - converts skill group name to numeric ID.
+	// Source: teacher.lua — maps group names like "Rejuvenation" to IDs.
+	log.Printf("[STUB] skill_group(name)")
+	L.Push(lua.LNumber(0))
 	return 1
 }

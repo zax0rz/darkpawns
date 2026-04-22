@@ -62,11 +62,11 @@ func (db *DB) InitNarrativeMemory() error {
 		summary          TEXT          NOT NULL,
 		room_vnum        INTEGER       NOT NULL DEFAULT 0,
 		room_name        VARCHAR(128)  NOT NULL DEFAULT '',
-		related_entity   VARCHAR(128)  NOT NULL DEFAULT '',
-		related_vnum     INTEGER       NOT NULL DEFAULT 0,
+		related_entity   VARCHAR(128),   -- e.g., 'mob:giant_rat', 'player:zach'
+		related_vnum     INTEGER,         -- vnum of related mob/item, NULL if not applicable
 		valence          SMALLINT      NOT NULL DEFAULT 0 CHECK (valence BETWEEN -3 AND 3),
 		salience         REAL          NOT NULL DEFAULT 1.0 CHECK (salience BETWEEN 0.0 AND 1.0),
-		social_event_id  VARCHAR(64)   NOT NULL DEFAULT '',
+		social_event_id  VARCHAR(64),   -- NULL for non-social events
 		session_id       VARCHAR(64)   NOT NULL DEFAULT '',
 		created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 		updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
