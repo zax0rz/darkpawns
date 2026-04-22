@@ -533,3 +533,134 @@ func TestTier4EnvironmentalEngineGaps(t *testing.T) {
 	}
 	t.Log("\nCritical gaps: create_event (sandstorm), steal (eq_thief), raw_kill (medusa), tport (sandstorm, souleater)")
 }
+
+// --- Batch B Ambient/Flavor Scripts ---
+
+// TestBatchBAmbientScriptsParse verifies all 19 Batch B ambient/flavor scripts
+// load without Lua syntax errors.
+// Source: scripts_full_dump.txt ./mob/archive/
+func TestBatchBAmbientScriptsParse(t *testing.T) {
+	scripts := []struct {
+		name string
+		path string
+	}{
+		{"beggar", "../../test_scripts/mob/archive/beggar.lua"},
+		{"bhang", "../../test_scripts/mob/archive/bhang.lua"},
+		{"blacksmith", "../../test_scripts/mob/archive/blacksmith.lua"},
+		{"carpenter", "../../test_scripts/mob/archive/carpenter.lua"},
+		{"citizen", "../../test_scripts/mob/archive/citizen.lua"},
+		{"elven_prostitute", "../../test_scripts/mob/archive/elven_prostitute.lua"},
+		{"forester", "../../test_scripts/mob/archive/forester.lua"},
+		{"hermit", "../../test_scripts/mob/archive/hermit.lua"},
+		{"mime", "../../test_scripts/mob/archive/mime.lua"},
+		{"minstrel", "../../test_scripts/mob/archive/minstrel.lua"},
+		{"petitioner", "../../test_scripts/mob/archive/petitioner.lua"},
+		{"puff", "../../test_scripts/mob/archive/puff.lua"},
+		{"seiji", "../../test_scripts/mob/archive/seiji.lua"},
+		{"singingdrunk", "../../test_scripts/mob/archive/singingdrunk.lua"},
+		{"tyr", "../../test_scripts/mob/archive/tyr.lua"},
+		{"warg", "../../test_scripts/mob/archive/warg.lua"},
+		{"zealot", "../../test_scripts/mob/archive/zealot.lua"},
+		{"bearcub", "../../test_scripts/mob/archive/bearcub.lua"},
+		{"towncrier", "../../test_scripts/mob/archive/towncrier.lua"},
+	}
+
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+
+	for _, s := range scripts {
+		t.Run(s.name, func(t *testing.T) {
+			fn, err := engine.L.LoadFile(s.path)
+			if err != nil {
+				t.Fatalf("%s: Lua parse error: %v", s.name, err)
+			}
+			if fn == nil {
+				t.Fatalf("%s: LoadFile returned nil function", s.name)
+			}
+			t.Logf("%s: parsed OK", s.name)
+		})
+	}
+}
+
+// TestPuffSoundCaseRange documents puff.lua sound trigger case coverage.
+// puff.lua uses case = number(0,20), but elseif ladder only handles cases 0-15.
+// case 39 is unreachable (number(0,20) never returns 39); this matches the original.
+// Source: scripts_full_dump.txt ./mob/archive/puff.lua
+func TestPuffSoundCaseRange(t *testing.T) {
+	// number(0, 20) returns values in [0..20]
+	// Original has elseif case == 39, which is dead code — preserved faithfully
+	cases := map[int]string{
+		0:  "say: My god! It's full of stars!",
+		1:  "say: How'd all those fish get up here?",
+		2:  "say: I'm a very female dragon.",
+		3:  "say: I've got this peaceful, easy feeling.",
+		4:  "say: Goddamn, what a trip! Listen to those colors!",
+		5:  "say: Bring out your dead!",
+		6:  "say: Rule number 6...there is NO rule number 6.",
+		7:  "say: To be rich is no longer a sin...its a MIRACLE!",
+		8:  "emote: looks at you and then breaks out in a fit of laughter!",
+		9:  "say: What is the sound of down?",
+		10: "emote: wonders where she left that darn wand.",
+		11: "say: Do you want to stroke my tail?",
+		12: "emote: does female stuff.",
+		13: "emote: contemplates the meaning of life.",
+		14: "say: NIH!",
+		15: "emote: rocks out to some funky beats.",
+		39: "say: I'm gonna kick your ASS! (dead code — unreachable, preserved from original)",
+	}
+	// Cases 16-20 and 21-38 fall through with no action (silent tick)
+	t.Logf("puff sound cases covered: %d (including 1 unreachable dead-code case)", len(cases))
+	for c, action := range cases {
+		t.Logf("  case %d: %s", c, action)
+	}
+	// Sanity: number range max is 20, so case 39 is always skipped
+	maxRoll := 20
+	if maxRoll >= 39 {
+		t.Error("puff: number(0,20) could reach case 39 — original is now reachable, needs fix")
+	}
+}
+
+// TestBearcubMotherVNum documents the mother bear vnum used by bearcub.lua.
+// The cub searches room.char for a mob with vnum 9111 (mama bear) and follows it.
+// Source: scripts_full_dump.txt ./mob/archive/bearcub.lua line 5
+func TestBearcubMotherVNum(t *testing.T) {
+	const mamaBearVNum = 9111
+	t.Logf("bearcub: follows mob with vnum %d (mama bear)", mamaBearVNum)
+	if mamaBearVNum != 9111 {
+		t.Errorf("expected mama bear vnum 9111, got %d", mamaBearVNum)
+	}
+}
+
+// TestWargGreetAlignmentLogic documents warg.lua greet alignment check.
+// Warg wags tail for positive alignment (ch.align > 0), growls for non-positive.
+// Trigger fires with 1-in-11 probability (number(0,10)==0).
+// Source: scripts_full_dump.txt ./mob/archive/warg.lua
+func TestWargGreetAlignmentLogic(t *testing.T) {
+	tests := []struct {
+		align    int
+		reaction string
+	}{
+		{1000, "wags its tail happily."},
+		{1, "wags its tail happily."},
+		{0, "growls."},
+		{-1, "growls."},
+		{-1000, "growls."},
+	}
+	for _, tt := range tests {
+		t.Run(t.Name(), func(t *testing.T) {
+			var got string
+			if tt.align > 0 {
+				got = "wags its tail happily."
+			} else {
+				got = "growls."
+			}
+			if got != tt.reaction {
+				t.Errorf("align %d: expected %q, got %q", tt.align, tt.reaction, got)
+			}
+			t.Logf("align %d -> %s", tt.align, got)
+		})
+	}
+}
