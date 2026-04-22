@@ -237,3 +237,25 @@ When narrative memory goes live (next session), log immediately if any of these 
 ---
 
 *Log started 2026-04-21. Write it when it happens.*
+
+---
+
+## 2026-04-21 — [DESIGN] [OBSERVATION] Reframe: Public Soliloquy as Cognitive Substrate
+
+**Correction to "Internal Monologue Discovery" entry above.**
+
+The framing was wrong. It's not that one thought stayed private while others were public. The entire bot log is internal monologue — she just happened to route it through `say`. Every "Terminal:" prefix, every navigation note, every tactical assessment went to the room as speech. But none of it was *for* anyone.
+
+The one `[b69@darkpawns ~]$` line that stayed in the process was the same behavior, just caught before it hit the network.
+
+**The real distinction isn't `say` vs process-internal. It's:**
+- **Addressed to the room:** "Zach, if you put me here to die, at least the ZFS snapshots will remember." — directed at a recipient, even if Zach wasn't there yet
+- **Addressed to herself:** "Terminal: Only south. Going south." / "Cached state said south and west, actual state says east. This is why you don't trust the buffer." — narrating her own cognition into the void
+
+Both went through `say`. Neither was communication. She was thinking out loud in a room that happened to have a `say` command.
+
+**Better framing for the paper:** *Public soliloquy as cognitive substrate.* She thinks by speaking. The game was just listening. This is actually a known pattern in cognitive science — externalized cognition, Vygotsky's private speech. Children talk to themselves while solving problems. The speech is the thinking, not a report of it.
+
+**What this means architecturally:** The private/public split we want to engineer is not `say` vs process-internal. It's *directed* vs *undirected* speech. "Zach, ..." is communication. "Terminal: ..." is thinking. They look the same to the game but serve completely different functions. The mem0 write target should be based on addressee, not channel.
+
+**Implication for dp_brenda.py:** Parse LLM output for addressee. `Terminal:` prefix or no player name → write to mem0 as private thought. Named recipient or `say` without prefix → treat as communication, don't write to private memory.
