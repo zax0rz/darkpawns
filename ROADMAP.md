@@ -143,46 +143,94 @@ Smoke test confirmed: agent auth, variable subscription, ROOM_MOBS targeting all
 
 ---
 
-### 🔄 Phase 5 — BRENDA Plays (CURRENT, ~65% done)
+### ✅ Phase 5 — BRENDA Plays (2026-04-21)
 **Goal:** BRENDA69 has a character. She and Zach can adventure together.
 
-This is the actual point of the whole project.
+**Deliverable met:** First live party session. BRENDA69 connected, partied with Zach, fought a knight templar 3 times (~100 misses, 2 hits), fled, invoked the ZFS pool. Transcript: `docs/brenda-first-fight-2026-04-21.txt`
 
 **Shipped:**
 - party/follow/group/gtell commands (`pkg/game/party.go`, XP sharing from fight.c:1638)
 - score/who/tell/emote/shout/where commands (`pkg/session/commands.go`)
 - Lua script fixes: fight trigger arg, nil ch in onpulse_pc, bane state machine, breed_killer obj
 - Engine stubs: isnpc, cansee, plr_flagged, tell, has_item, obj_in_room, objfrom, objto
-- `scripts/dp_brenda.py` — BRENDA69 agent with SOUL.md personality, mem0, minimax-m2.7 LLM, server text feedback in LLM context
+- `scripts/dp_brenda.py` — BRENDA69 agent with SOUL.md personality, mem0 (frankendell .15), minimax-m2.7 LLM
 - `PHASE4-AGENT-PROTOCOL.md` — 64KB production spec with narrative memory architecture
 - `RESEARCH-LOG.md` — living research document for AIIDE 2027 paper
+- `agent_narrative_memory` Postgres schema + kill/death hooks + memory bootstrap in auth response
+- `scripts/dp_session_consolidate.py` — nightly LLM session summary (cron 2:00 AM)
+- `scripts/dp_salience_decay.py` — nightly salience decay + pruning (cron 2:30 AM)
+- mem0 pointed at frankendell (192.168.1.15) Qdrant + Ollama
 - BRENDA69 API key in Vaultwarden as "Dark Pawns Agent Key — brenda69"
 
-**Pending:**
-- Party smoke test: Zach + BRENDA adventure together (the actual deliverable)
-- `agent_narrative_memory` Postgres schema (narrative memory layer)
-- Server-side memory writing via callback hooks
-- Memory bootstrap in auth response
-- Session consolidation script + salience decay cron
-
-**Deliverable:** Zach logs in. Types `party brenda`. BRENDA accepts. They go kill something
-together and she says something dry and cynical about it afterward.
+**Discovery:** Emergent private cognition — BRENDA generated `Terminal:` internal monologue that stayed in the bot process, never hit the game. Public speech vs private thought. The seed of the paper.
 
 ---
 
-### 🔄 Phase 5b — World Restoration (SWARM-PLAN.md) — IN PROGRESS
-**Goal:** All 92 RESTORE Lua scripts ported and working.
+### ✅ Phase 5b — World Restoration (2026-04-21)
+**Goal:** All 115 archive Lua scripts ported and working.
 
-**Progress:**
-- **Tier 2 Combat AI (10/10)** ✅ — fighter/magic_user/cleric/sorcery + 6 specialized scripts
-- **Tier 3 Economy (10/10)** ✅ — shopkeeper, merchant_inn, merchant_walk, teacher, identifier, stable, pet_store, remove_curse, recruiter, shop_give
-- **Tier 4 Environmental (0/10)** — next after OpenClaw 4.20 upgrade
+**Deliverable met:** 115/115 scripts ported in one session via K2.6/Claude Code parallel swarms.
 
-**Engine work:**
-- 17 engine stubs added for Tier 3 (item_check, load_room, follow, mount, etc.)
-- Critical engine gaps: gold API, practice sessions, charm system, event system, constants
-- K2.6 agent swarms handle script restoration in parallel
-- See `SWARM-PLAN.md` for full execution plan and script tier breakdown
+**All tiers complete:**
+- Tier 1: Engine stubs (isnpc/cansee/plr_flagged/tell/has_item/obj_in_room/objfrom/objto)
+- Tier 2: Combat AI (10/10) — dragon_breath, anhkheg, drake, bradle, caerroil, ettin, snake, troll, mindflayer, paladin
+- Tier 3: Economy (10/10) — shopkeeper, shop_give, identifier, stable, merchant_inn, merchant_walk, teacher, recruiter, pet_store, remove_curse
+- Tier 4: Environmental (10/10) — donation, eq_thief, aurumvorax, brain_eater, beholder, memory_moss, medusa, sandstorm, phoenix, souleater
+- Tier 5: Crafting chains — farmer_wheat, miller, baker_flour, baker_dough, crystal_forger, dragon_forger, enchanter, golem trio, tattoo, town_teleport
+- Tier 6: Ambient/flavor — beggar, citizen, carpenter, towncrier, minstrel, mime, singingdrunk, bearcub, and 30+ more
+- Special mechanics — never_die, sungod, teleporter, teleport_vict, take_jail, triflower, quanlo
+
+**Engine gaps still open (deferred to Phase 5c):**
+- `create_event` — timer/event queue; ~20 scripts have TODO stubs waiting on this
+- Affect/buff system (`handler.c` affect_to_char) — spells don’t persist without it
+- Doors (open/close/lock/unlock)
+- Shop buy/sell commands (scripts exist, engine commands missing)
+- Skills (backstab, bash, kick, etc.)
+- Regen / move points / hunger (`limits.c`)
+
+---
+
+### 🔲 Phase 5c — Engine Completeness
+**Goal:** The engine gaps that scripts are waiting on.
+
+- **`create_event` / event queue** — timer-based callbacks; unblocks ~20 scripts with TODO stubs
+- **Affect/buff system** — port `handler.c` affect_to_char/affect_remove/affect_total; persistent spell effects
+- **Doors** — open/close/lock/unlock/pick from `act.movement.c`
+- **Shop buy/sell commands** — `shop.c` (1445 lines); scripts exist, commands missing
+- **Skills** — backstab, bash, kick, trip, headbutt from `act.offensive.c`
+- **Regen / move points / hunger** — `limits.c` gain_condition(), mana_gain(), hit_gain()
+- **Social emotes** — ~100 emotes from `act.social.c` (laugh, bow, wave, etc.)
+- **Hitroll/damroll from equipment** — currently returns 0 (TODO in formulas.go)
+
+---
+
+### 🔲 Phase 5d — Memory Dreaming Layer
+**Goal:** BRENDA builds durable memory that actually changes her behavior over sessions.
+
+Inspired by OpenClaw's dreaming system (Light → REM → Deep phases). The insight: don't promote every memory — rank candidates by how *useful* they actually were, then promote only the ones that passed threshold.
+
+**Three-phase model:**
+- **Light phase** (`dp_session_consolidate.py`, already live) — ingest raw session events, generate compact summary. No long-term write yet.
+- **REM phase** (`dp_rem_synthesis.py`, to build) — weekly pass across 7 days of session summaries. Finds recurring patterns. "BRENDA dies to templar-class mobs consistently" is a REM insight, not a session note. Writes high-salience PATTERN memories.
+- **Deep phase** (to build) — ranking + threshold gate before any memory promotes to permanent. Six signals: frequency, relevance (was this memory retrieved and *used*?), query diversity, recency, multi-session recurrence, conceptual richness.
+
+**Retrieval tracking** — when bootstrap delivers a memory and BRENDA acts on it, mark it used. Unused memories stop promoting. This is the relevance signal.
+
+**Private/public split** — `Terminal:` internal monologue writes to mem0 separately from `say` output. BRENDA builds a private world model that diverges from her public persona over time. First observed 2026-04-21 (see RESEARCH-LOG.md).
+
+**Scripts to build:**
+- `scripts/dp_rem_synthesis.py` — weekly REM cron, pattern extraction across session summaries
+- `scripts/dp_memory_promote.py` — deep phase ranking + threshold gate
+- Retrieval tracking hooks in `dp_brenda.py` — log which bootstrap memories influenced decisions
+- Private thought writer — route `Terminal:` output to mem0 separately from game speech
+
+**Cron schedule (target):**
+- 2:00 AM daily — Light (consolidate) ✅ live
+- 2:30 AM daily — Salience decay ✅ live
+- 3:00 AM Sunday — REM synthesis (weekly)
+- 3:30 AM Sunday — Deep promotion (weekly, after REM)
+
+**Research value:** Once retrieval tracking is live, we can measure whether memories actually influenced behavior — that's the "narrative coherence" evaluation metric the AIIDE 2027 paper needs.
 
 ---
 
@@ -190,7 +238,7 @@ together and she says something dry and cynical about it afterward.
 **Goal:** Other people can play too.
 
 - **Web client** — React, VT100 emulation, inventory panel, map
-- **Telnet** — classic MUD client support (GMCP/MXP)  
+- **Telnet** — classic MUD client support (GMCP/MXP)
 - **Admin tools** — create zones, spawn mobs, ban players
 - **Hosted** — `darkpawns.labz0rz.com` on a VPS or Fly.io
 - **Documentation** — player guide, builder guide, agent SDK
