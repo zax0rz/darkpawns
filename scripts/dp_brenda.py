@@ -35,10 +35,10 @@ DEFAULT_MODEL_FAST = "zai/glm-5-turbo"
 DEFAULT_MODEL_FALLBACK = "anthropic/claude-sonnet-4-6"
 LITELLM_KEY = "sk-labz0rz-master-key"
 
-QDRANT_HOST = "192.168.1.69"
+QDRANT_HOST = "192.168.1.15"
 QDRANT_PORT = 6333
 MEM0_COLLECTION = "dp_brenda_memory"
-OLLAMA_BASE = "http://192.168.1.69:11434"
+OLLAMA_BASE = "http://192.168.1.15:11434"
 OLLAMA_EMBED_MODEL = "nomic-embed-text"
 
 ALL_VARS = [
