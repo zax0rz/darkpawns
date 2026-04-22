@@ -1062,3 +1062,178 @@ func TestBatchCEngineGaps(t *testing.T) {
 	}
 	t.Log("\nCritical gaps: extra (head_shrinker necklace desc), iscorpse (janitor cleanup), steal (mymic/eq_thief)")
 }
+
+// --- Batch E: Special Mechanics Scripts ---
+
+// TestNeverDieDefinesTrigger verifies never_die.lua defines onpulse_all.
+// Source: scripts_full_dump.txt ./mob/archive/never_die.lua — mob 19113 unkillable mechanic.
+func TestNeverDieDefinesTrigger(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/never_die.lua"); err != nil {
+		t.Fatalf("never_die.lua load error: %v", err)
+	}
+	val := engine.L.GetGlobal("onpulse_all")
+	if val.Type().String() != "function" {
+		t.Errorf("never_die.lua: onpulse_all() not defined (got %s)", val.Type().String())
+	} else {
+		t.Log("never_die.lua: onpulse_all() defined OK")
+	}
+}
+
+// TestSungodDefinesTrigger verifies sungod.lua defines onpulse_all.
+// Source: scripts_full_dump.txt ./mob/archive/sungod.lua — mob 10205 disappearing fire god.
+func TestSungodDefinesTrigger(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/sungod.lua"); err != nil {
+		t.Fatalf("sungod.lua load error: %v", err)
+	}
+	val := engine.L.GetGlobal("onpulse_all")
+	if val.Type().String() != "function" {
+		t.Errorf("sungod.lua: onpulse_all() not defined (got %s)", val.Type().String())
+	} else {
+		t.Log("sungod.lua: onpulse_all() defined OK")
+	}
+}
+
+// TestTeleporterDefinesTrigger verifies teleporter.lua defines fight.
+// Source: scripts_full_dump.txt ./mob/archive/teleporter.lua — mob 14411 self-teleport on low HP.
+func TestTeleporterDefinesTrigger(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/teleporter.lua"); err != nil {
+		t.Fatalf("teleporter.lua load error: %v", err)
+	}
+	val := engine.L.GetGlobal("fight")
+	if val.Type().String() != "function" {
+		t.Errorf("teleporter.lua: fight() not defined (got %s)", val.Type().String())
+	} else {
+		t.Log("teleporter.lua: fight() defined OK")
+	}
+}
+
+// TestTeleportVictDefinesTrigger verifies teleport_vict.lua defines fight.
+// Source: scripts_full_dump.txt ./mob/archive/teleport_vict.lua — mob 14405 victim teleporter.
+func TestTeleportVictDefinesTrigger(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/teleport_vict.lua"); err != nil {
+		t.Fatalf("teleport_vict.lua load error: %v", err)
+	}
+	val := engine.L.GetGlobal("fight")
+	if val.Type().String() != "function" {
+		t.Errorf("teleport_vict.lua: fight() not defined (got %s)", val.Type().String())
+	} else {
+		t.Log("teleport_vict.lua: fight() defined OK")
+	}
+}
+
+// TestTakeJailDefinesTriggers verifies take_jail.lua defines fight, onpulse_pc, and jail.
+// Source: scripts_full_dump.txt ./mob/archive/take_jail.lua — jail mechanic used by aversin/jailguard.
+func TestTakeJailDefinesTriggers(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/take_jail.lua"); err != nil {
+		t.Fatalf("take_jail.lua load error: %v", err)
+	}
+	for _, fn := range []string{"fight", "onpulse_pc", "jail"} {
+		val := engine.L.GetGlobal(fn)
+		if val.Type().String() != "function" {
+			t.Errorf("take_jail.lua: %s() not defined (got %s)", fn, val.Type().String())
+		} else {
+			t.Logf("take_jail.lua: %s() defined OK", fn)
+		}
+	}
+}
+
+// TestQuanloDefinesTrigger verifies quanlo.lua defines oncmd.
+// Source: scripts_full_dump.txt ./mob/archive/quanlo.lua — command interception NPC.
+func TestQuanloDefinesTrigger(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/quanlo.lua"); err != nil {
+		t.Fatalf("quanlo.lua load error: %v", err)
+	}
+	val := engine.L.GetGlobal("oncmd")
+	if val.Type().String() != "function" {
+		t.Errorf("quanlo.lua: oncmd() not defined (got %s)", val.Type().String())
+	} else {
+		t.Log("quanlo.lua: oncmd() defined OK")
+	}
+}
+
+// TestTriflowerDefinesTriggers verifies triflower.lua defines onpulse_pc and fight.
+// Source: scripts_full_dump.txt ./mob/archive/triflower.lua — mob 20310 carnivorous plant.
+func TestTriflowerDefinesTriggers(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/triflower.lua"); err != nil {
+		t.Fatalf("triflower.lua load error: %v", err)
+	}
+	for _, fn := range []string{"onpulse_pc", "fight"} {
+		val := engine.L.GetGlobal(fn)
+		if val.Type().String() != "function" {
+			t.Errorf("triflower.lua: %s() not defined (got %s)", fn, val.Type().String())
+		} else {
+			t.Logf("triflower.lua: %s() defined OK", fn)
+		}
+	}
+}
+
+// TestBatchEEngineGaps documents engine gaps introduced by Batch E scripts.
+func TestBatchEEngineGaps(t *testing.T) {
+	gaps := []struct {
+		script    string
+		functions []string
+		status    string
+	}{
+		{
+			script:    "sungod",
+			functions: []string{"extobj", "extchar"},
+			status:    "extobj/extchar stubbed — object/mob destruction not yet wired",
+		},
+		{
+			script:    "teleporter",
+			functions: []string{"spell (SPELL_TELEPORT)", "tport"},
+			status:    "spell stubbed (teleport is no-op), tport stubbed",
+		},
+		{
+			script:    "take_jail",
+			functions: []string{"set_hunt", "mount", "create_event", "tport", "save_char"},
+			status:    "set_hunt/mount stubbed, create_event no-op, tport stubbed, save_char no-op",
+		},
+		{
+			script:    "quanlo",
+			functions: []string{"gossip"},
+			status:    "gossip implemented — sends to room (TODO: broadcast to all players)",
+		},
+	}
+
+	t.Log("Batch E Special Mechanics scripts engine gaps:")
+	for _, gap := range gaps {
+		t.Logf("  %s: %v — %s", gap.script, gap.functions, gap.status)
+	}
+	t.Log("\nCritical: tport (jail destination), create_event (jail delay), extchar (sungod despawn)")
+}

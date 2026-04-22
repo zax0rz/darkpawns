@@ -197,6 +197,7 @@ func (e *Engine) registerFunctions() {
 	e.L.SetGlobal("act", e.L.NewFunction(e.luaAct))
 	e.L.SetGlobal("do_damage", e.L.NewFunction(e.luaDoDamage))
 	e.L.SetGlobal("say", e.L.NewFunction(e.luaSay))
+	e.L.SetGlobal("gossip", e.L.NewFunction(e.luaGossip))
 	e.L.SetGlobal("emote", e.L.NewFunction(e.luaEmote))
 	e.L.SetGlobal("action", e.L.NewFunction(e.luaAction))
 	e.L.SetGlobal("oload", e.L.NewFunction(e.luaOload))
@@ -744,6 +745,38 @@ func (e *Engine) luaSay(L *lua.LState) int {
 		player.SendMessage(formattedMsg)
 	}
 	
+	return 0
+}
+
+// luaGossip broadcasts a mob's message to the room (gossip channel stub).
+// gossip(msg) — in the original, this goes to all players world-wide.
+// Since we have no global channel yet, we send to the mob's current room.
+// Based on gossip channel in comm.c; used by quanlo.lua.
+func (e *Engine) luaGossip(L *lua.LState) int {
+	msg := L.ToString(1)
+
+	// Resolve room from the me global
+	var roomVNum int
+	L.GetGlobal("me")
+	if L.Get(-1).Type() == lua.LTTable {
+		L.GetField(L.Get(-1), "room")
+		if L.Get(-1).Type() == lua.LTNumber {
+			roomVNum = int(L.ToNumber(-1))
+		}
+		L.Pop(1)
+	}
+	L.Pop(1)
+
+	// TODO: send to all online players when global channel is implemented
+	if e.world == nil || roomVNum == 0 {
+		log.Printf("[GOSSIP] %s", msg)
+		return 0
+	}
+
+	formatted := "[gossip] " + msg + "\r\n"
+	for _, player := range e.world.GetPlayersInRoom(roomVNum) {
+		player.SendMessage(formatted)
+	}
 	return 0
 }
 
