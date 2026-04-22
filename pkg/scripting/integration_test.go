@@ -423,3 +423,113 @@ func TestPaladinSpellConstants(t *testing.T) {
 		}
 	}
 }
+
+// --- Tier 4 Environmental — All 10 scripts ---
+
+// TestTier4EnvironmentalScriptsParse verifies all ten Tier 4 Environmental scripts
+// load without Lua syntax errors.
+// Scripts ported from origin/master:lib/scripts/mob/archive/
+func TestTier4EnvironmentalScriptsParse(t *testing.T) {
+	scripts := []struct {
+		name string
+		path string
+	}{
+		{"aurumvorax", "../../test_scripts/mob/archive/aurumvorax.lua"},
+		{"beholder", "../../test_scripts/mob/archive/beholder.lua"},
+		{"brain_eater", "../../test_scripts/mob/archive/brain_eater.lua"},
+		{"donation", "../../test_scripts/mob/archive/donation.lua"},
+		{"eq_thief", "../../test_scripts/mob/archive/eq_thief.lua"},
+		{"memory_moss", "../../test_scripts/mob/archive/memory_moss.lua"},
+		{"medusa", "../../test_scripts/mob/archive/medusa.lua"},
+		{"sandstorm", "../../test_scripts/mob/archive/sandstorm.lua"},
+		{"phoenix", "../../test_scripts/mob/archive/phoenix.lua"},
+		{"souleater", "../../test_scripts/mob/archive/souleater.lua"},
+	}
+
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+
+	for _, s := range scripts {
+		t.Run(s.name, func(t *testing.T) {
+			fn, err := engine.L.LoadFile(s.path)
+			if err != nil {
+				t.Fatalf("%s: Lua parse error: %v", s.name, err)
+			}
+			if fn == nil {
+				t.Fatalf("%s: LoadFile returned nil function", s.name)
+			}
+			t.Logf("%s: parsed OK", s.name)
+		})
+	}
+}
+
+// TestTier4EnvironmentalEngineGaps documents missing engine functions needed for
+// Tier 4 Environmental scripts.
+func TestTier4EnvironmentalEngineGaps(t *testing.T) {
+	// Document engine functions that are stubbed or missing
+	gaps := []struct {
+		script string
+		functions []string
+		description string
+	}{
+		{
+			script: "aurumvorax",
+			functions: []string{"obj_list", "extobj", "action"},
+			description: "obj_list is stubbed, needs proper item search implementation",
+		},
+		{
+			script: "beholder",
+			functions: []string{"strfind", "strsub", "gsub", "number", "getn", "spell"},
+			description: "All functions implemented, spell needs proper targeting",
+		},
+		{
+			script: "brain_eater",
+			functions: []string{"iscorpse", "strfind", "action", "getn"},
+			description: "iscorpse not implemented, needs corpse detection logic",
+		},
+		{
+			script: "donation",
+			functions: []string{"canget", "strfind", "strsub", "obj_flagged", "action"},
+			description: "canget and obj_flagged not implemented, needs item permission and flag checks",
+		},
+		{
+			script: "eq_thief",
+			functions: []string{"isfighting", "canget", "steal"},
+			description: "steal not implemented, needs theft mechanics",
+		},
+		{
+			script: "memory_moss",
+			functions: []string{"cansee", "unaffect"},
+			description: "cansee and unaffect not implemented, needs visibility and spell removal",
+		},
+		{
+			script: "medusa",
+			functions: []string{"raw_kill", "dofile", "call"},
+			description: "raw_kill not implemented, needs instant death mechanic",
+		},
+		{
+			script: "sandstorm",
+			functions: []string{"create_event", "tport"},
+			description: "create_event not implemented, needs event scheduling system",
+		},
+		{
+			script: "phoenix",
+			functions: []string{"mload", "oload", "equip_char", "extobj", "extchar"},
+			description: "mload, oload, equip_char partially implemented, needs full mob/item loading",
+		},
+		{
+			script: "souleater",
+			functions: []string{"tport"},
+			description: "tport not implemented, needs teleportation mechanics",
+		},
+	}
+
+	t.Log("Tier 4 Environmental scripts engine gaps:")
+	for _, gap := range gaps {
+		t.Logf("  %s: %v - %s", gap.script, gap.functions, gap.description)
+	}
+	t.Log("\nCritical gaps: create_event (sandstorm), steal (eq_thief), raw_kill (medusa), tport (sandstorm, souleater)")
+}

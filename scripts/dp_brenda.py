@@ -283,10 +283,10 @@ Rules: flee if HP<25% and fighting. Attack mobs if not fighting. Loot items. Mov
                         {"role": "system", "content": BRENDA_SYSTEM},
                         {"role": "user", "content": user_msg},
                     ],
-                    "max_tokens": 150,
+                    "max_tokens": 400,
                     "temperature": 0.8,
                 },
-                timeout=8,
+                timeout=30,
             )
             resp.raise_for_status()
             text = resp.json()["choices"][0]["message"]["content"].strip()
@@ -604,10 +604,19 @@ class BrendaAgent:
                     if not self._is_combat_spam(text):
                         self.recent_text.append(text)
             elif mtype == "event":
-                ev_text = msg.get("data", {}).get("text", "")
+                ev_data = msg.get("data", {})
+                ev_text = ev_data.get("text", "")
+                ev_from = ev_data.get("from", "")
                 if ev_text:
                     log("EVENT", ev_text[:100])
                     self._scan_text(ev_text)
+                # Auto-group Zach when he arrives in the room
+                if ev_data.get("type") == "enter" and ev_from.lower() == "zach":
+                    log("PARTY", "Zach arrived — grouping him")
+                    await self.ws.send(json.dumps({"type": "command", "data": {"command": "group", "args": ["Zach"]}}))
+                    self.zach_in_party = True
+                    if "Zach" not in self.party_members:
+                        self.party_members.append("Zach")
 
         # Pace: let combat tick resolve before deciding again
         if self.state.get("FIGHTING", False):

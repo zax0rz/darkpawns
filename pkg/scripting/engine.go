@@ -263,6 +263,8 @@ func (e *Engine) registerFunctions() {
 	e.L.SetGlobal("get_group_lvl", e.L.NewFunction(e.luaGetGroupLvl))
 	e.L.SetGlobal("get_group_pts", e.L.NewFunction(e.luaGetGroupPts))
 	e.L.SetGlobal("skill_group", e.L.NewFunction(e.luaSkillGroup))
+	e.L.SetGlobal("unaffect", e.L.NewFunction(e.luaUnaffect))
+	e.L.SetGlobal("equip_char", e.L.NewFunction(e.luaEquipChar))
 }
 
 // loadGlobals loads the globals.lua file.
@@ -528,6 +530,9 @@ func (e *Engine) objToTable(obj ScriptableObject, globalName string) {
 	tbl.RawSetString("name", lua.LString(obj.GetShortDesc()))
 	tbl.RawSetString("cost", lua.LNumber(obj.GetCost()))
 	tbl.RawSetString("timer", lua.LNumber(obj.GetTimer()))
+
+	// Object prototype fields (stubbed)
+	tbl.RawSetString("perc_load", lua.LNumber(0))  // Default 0% load chance
 
 	// Store pointer to struct for write-back
 	tbl.RawSetString("struct", lua.LNumber(obj.GetVNum()))
@@ -1841,4 +1846,18 @@ func (e *Engine) luaSkillGroup(L *lua.LState) int {
 	log.Printf("[STUB] skill_group(name)")
 	L.Push(lua.LNumber(0))
 	return 1
+}
+
+func (e *Engine) luaUnaffect(L *lua.LState) int {
+	// unaffect(ch) - remove all spell affections from character.
+	// Source: memory_moss.lua line 33 — removes all spell affects from victim.
+	log.Printf("[STUB] unaffect(ch)")
+	return 0
+}
+
+func (e *Engine) luaEquipChar(L *lua.LState) int {
+	// equip_char(mob, obj) - equip a mob with an object.
+	// Source: phoenix.lua line 14 — equips rider with trident.
+	log.Printf("[STUB] equip_char(mob, obj)")
+	return 0
 }
