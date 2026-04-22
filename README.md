@@ -46,7 +46,7 @@ AI adventuring together through the same world we loved the first time around.
 | 3A-3D — Lua Engine | ✅ Done | gopher-lua, all triggers, newbie pipeline, combat AI |
 | 4 — Agent Protocol | ✅ Done | API keys, variable subscriptions, dp_bot.py, rate limiting |
 | 5 — BRENDA Plays | 🔄 In Progress | dp_brenda.py live, party/group/social commands, mem0 memory |
-| 5b — World Restoration | 🔲 Planned | K2.6 agent swarms restore all 92 RESTORE scripts (SWARM-PLAN.md) |
+| 5b — World Restoration | 🔄 In Progress | **Tier 2 Combat AI (10/10)** ✅, **Tier 3 Economy (10/10)** ✅, Tier 4 Environmental (0/10) — K2.6 agent swarms restore all 92 RESTORE scripts (SWARM-PLAN.md) |
 | 6 — Public Server | ⬜ Planned | Web client, Telnet, darkpawns.labz0rz.com |
 
 See [ROADMAP.md](ROADMAP.md) for the full plan.

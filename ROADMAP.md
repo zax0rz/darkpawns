@@ -170,12 +170,18 @@ together and she says something dry and cynical about it afterward.
 
 ---
 
-### 🔲 Phase 5b — World Restoration (SWARM-PLAN.md)
+### 🔄 Phase 5b — World Restoration (SWARM-PLAN.md) — IN PROGRESS
 **Goal:** All 92 RESTORE Lua scripts ported and working.
 
+**Progress:**
+- **Tier 2 Combat AI (10/10)** ✅ — fighter/magic_user/cleric/sorcery + 6 specialized scripts
+- **Tier 3 Economy (10/10)** ✅ — shopkeeper, merchant_inn, merchant_walk, teacher, identifier, stable, pet_store, remove_curse, recruiter, shop_give
+- **Tier 4 Environmental (0/10)** — next after OpenClaw 4.20 upgrade
+
+**Engine work:**
+- 17 engine stubs added for Tier 3 (item_check, load_room, follow, mount, etc.)
+- Critical engine gaps: gold API, practice sessions, charm system, event system, constants
 - K2.6 agent swarms handle script restoration in parallel
-- Tier 1 engine stubs: done
-- Tier 2 (combat AI): next
 - See `SWARM-PLAN.md` for full execution plan and script tier breakdown
 
 ---

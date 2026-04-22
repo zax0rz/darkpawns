@@ -178,9 +178,13 @@ Key source files:
 - Memory bootstrap in auth response
 - Session consolidation script + salience decay cron
 
-### 🔲 Phase 5b — World Restoration (SWARM-PLAN.md)
+### 🔄 Phase 5b — World Restoration (SWARM-PLAN.md) — IN PROGRESS
+**Tier 2 Combat AI (10/10)** ✅ — fighter/magic_user/cleric/sorcery + 6 specialized scripts
+**Tier 3 Economy (10/10)** ✅ — shopkeeper, merchant_inn, merchant_walk, teacher, identifier, stable, pet_store, remove_curse, recruiter, shop_give
+**Tier 4 Environmental (0/10)** — next after OpenClaw 4.20 upgrade
 - K2.6 agent swarms restore all 92 RESTORE scripts
-- Tier 1 engine stubs done; Tier 2 (combat AI) next
+- Engine stubs: 17 added for Tier 3 (item_check, load_room, follow, mount, etc.)
+- Critical engine gaps: gold API, practice sessions, charm system, event system, constants
 - See `SWARM-PLAN.md` for execution plan
 
 ### ⬜ Phase 6 — Polish & Public Server
