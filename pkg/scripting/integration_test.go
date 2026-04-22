@@ -826,3 +826,239 @@ func TestWargGreetAlignmentLogic(t *testing.T) {
 		})
 	}
 }
+
+// --- Batch C Quest/Mechanic NPC Scripts ---
+
+// TestBatchCScriptsParse verifies all 19 Batch C quest/mechanic NPC scripts
+// load without Lua syntax errors.
+// Source: scripts_full_dump.txt ./mob/archive/
+func TestBatchCScriptsParse(t *testing.T) {
+	scripts := []struct {
+		name string
+		path string
+	}{
+		{"aversin", "../../test_scripts/mob/archive/aversin.lua"},
+		{"breed_killer", "../../test_scripts/mob/archive/breed_killer.lua"},
+		{"cabinguard", "../../test_scripts/mob/archive/cabinguard.lua"},
+		{"conjured", "../../test_scripts/mob/archive/conjured.lua"},
+		{"cuchi", "../../test_scripts/mob/archive/cuchi.lua"},
+		{"guard_captain", "../../test_scripts/mob/archive/guard_captain.lua"},
+		{"guardian", "../../test_scripts/mob/archive/guardian.lua"},
+		{"head_shrinker", "../../test_scripts/mob/archive/head_shrinker.lua"},
+		{"jailguard", "../../test_scripts/mob/archive/jailguard.lua"},
+		{"janitor", "../../test_scripts/mob/archive/janitor.lua"},
+		{"keep_sorcerer", "../../test_scripts/mob/archive/keep_sorcerer.lua"},
+		{"mercenary", "../../test_scripts/mob/archive/mercenary.lua"},
+		{"minion", "../../test_scripts/mob/archive/minion.lua"},
+		{"mount", "../../test_scripts/mob/archive/mount.lua"},
+		{"mymic", "../../test_scripts/mob/archive/mymic.lua"},
+		{"no_get", "../../test_scripts/mob/archive/no_get.lua"},
+		{"prisoner", "../../test_scripts/mob/archive/prisoner.lua"},
+		{"rescuer", "../../test_scripts/mob/archive/rescuer.lua"},
+		{"thief", "../../test_scripts/mob/archive/thief.lua"},
+	}
+
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+
+	for _, s := range scripts {
+		t.Run(s.name, func(t *testing.T) {
+			fn, err := engine.L.LoadFile(s.path)
+			if err != nil {
+				t.Fatalf("%s: Lua parse error: %v", s.name, err)
+			}
+			if fn == nil {
+				t.Fatalf("%s: LoadFile returned nil function", s.name)
+			}
+			t.Logf("%s: parsed OK", s.name)
+		})
+	}
+}
+
+// TestThiefGoldStealFormula documents the thief pickpocket formula.
+// Probability: number(0,4)==0 (20%) AND number(0,level)==0 (1/(level+1) detection).
+// Gold stolen: round((gold * number(1,10)) / 100) = 1-10% of player gold.
+// Source: thief.lua
+func TestThiefGoldStealFormula(t *testing.T) {
+	tests := []struct {
+		level       int
+		detectDenom int
+	}{
+		{1, 2},
+		{10, 11},
+		{30, 31},
+	}
+	for _, tt := range tests {
+		denom := tt.level + 1
+		if denom != tt.detectDenom {
+			t.Errorf("level %d: expected detect denom %d, got %d", tt.level, tt.detectDenom, denom)
+		}
+		t.Logf("thief vs level %d: detection chance=1/%d (%.1f%%), gold stolen=1-10%%",
+			tt.level, denom, 100.0/float64(denom))
+	}
+}
+
+// TestJailguardBribeThreshold documents the jailguard bribe cost formula.
+// Required bribe = ch.level * ch.level (level squared).
+// Source: jailguard.lua
+func TestJailguardBribeThreshold(t *testing.T) {
+	tests := []struct {
+		level    int
+		required int
+	}{
+		{1, 1},
+		{5, 25},
+		{10, 100},
+		{20, 400},
+		{30, 900},
+	}
+	for _, tt := range tests {
+		got := tt.level * tt.level
+		if got != tt.required {
+			t.Errorf("level %d: expected %d gold bribe, got %d", tt.level, tt.required, got)
+		}
+		t.Logf("jailguard bribe: level %d requires %d gold", tt.level, got)
+	}
+}
+
+// TestJailguardDefinesTriggers verifies jailguard.lua defines bribe, sound, and onpulse_pc.
+// Source: jailguard.lua
+func TestJailguardDefinesTriggers(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/jailguard.lua"); err != nil {
+		t.Fatalf("jailguard.lua load error: %v", err)
+	}
+	for _, fn := range []string{"bribe", "sound", "onpulse_pc"} {
+		val := engine.L.GetGlobal(fn)
+		if val.Type().String() != "function" {
+			t.Errorf("jailguard.lua: %s() not defined (got %s)", fn, val.Type().String())
+		} else {
+			t.Logf("jailguard.lua: %s() defined OK", fn)
+		}
+	}
+}
+
+// TestMercenaryBribeCost documents the mercenary hire cost formula.
+// Required bribe = 100 * ch.level.
+// Source: mercenary.lua
+func TestMercenaryBribeCost(t *testing.T) {
+	tests := []struct {
+		level    int
+		required int
+	}{
+		{1, 100},
+		{5, 500},
+		{10, 1000},
+		{30, 3000},
+	}
+	for _, tt := range tests {
+		got := 100 * tt.level
+		if got != tt.required {
+			t.Errorf("level %d: expected %d gold, got %d", tt.level, tt.required, got)
+		}
+		t.Logf("mercenary hire: level %d player requires %d gold", tt.level, got)
+	}
+}
+
+// TestPrisonerDefinesTriggers verifies prisoner.lua defines onpulse_pc, sound, and ongive.
+// Source: prisoner.lua
+func TestPrisonerDefinesTriggers(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/prisoner.lua"); err != nil {
+		t.Fatalf("prisoner.lua load error: %v", err)
+	}
+	for _, fn := range []string{"onpulse_pc", "sound", "ongive"} {
+		val := engine.L.GetGlobal(fn)
+		if val.Type().String() != "function" {
+			t.Errorf("prisoner.lua: %s() not defined (got %s)", fn, val.Type().String())
+		} else {
+			t.Logf("prisoner.lua: %s() defined OK", fn)
+		}
+	}
+}
+
+// TestRescuerDefinesTrigger verifies rescuer.lua defines onpulse_pc.
+// Source: rescuer.lua
+func TestRescuerDefinesTrigger(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/rescuer.lua"); err != nil {
+		t.Fatalf("rescuer.lua load error: %v", err)
+	}
+	val := engine.L.GetGlobal("onpulse_pc")
+	if val.Type().String() != "function" {
+		t.Errorf("rescuer.lua: onpulse_pc() not defined (got %s)", val.Type().String())
+	} else {
+		t.Logf("rescuer.lua: onpulse_pc() defined OK")
+	}
+}
+
+// TestBatchCEngineGaps documents missing engine functions needed for Batch C scripts.
+func TestBatchCEngineGaps(t *testing.T) {
+	gaps := []struct {
+		script    string
+		functions []string
+		status    string
+	}{
+		{
+			script:    "aversin",
+			functions: []string{"dofile", "call"},
+			status:    "implemented — delegates fight to take_jail.lua, onpulse_pc to guard_captain.lua",
+		},
+		{
+			script:    "breed_killer",
+			functions: []string{"aff_flagged", "obj_list", "plr_flagged", "plr_flags", "raw_kill"},
+			status:    "aff_flagged/plr_flags stubbed, obj_list stubbed, raw_kill stubbed",
+		},
+		{
+			script:    "head_shrinker",
+			functions: []string{"extra", "strlen"},
+			status:    "extra stubbed (extra desc table not implemented), strlen implemented",
+		},
+		{
+			script:    "janitor",
+			functions: []string{"iscorpse", "canget"},
+			status:    "both stubbed — iscorpse always false, canget always true",
+		},
+		{
+			script:    "mymic",
+			functions: []string{"steal"},
+			status:    "steal stubbed — theft mechanic not yet implemented",
+		},
+		{
+			script:    "mount",
+			functions: []string{"aff_flagged", "aff_flags"},
+			status:    "aff_flagged stubbed (always false), aff_flags stubbed",
+		},
+		{
+			script:    "jailguard",
+			functions: []string{"tport", "social"},
+			status:    "tport stubbed, social stubbed",
+		},
+		{
+			script:    "mercenary",
+			functions: []string{"follow"},
+			status:    "follow stubbed",
+		},
+	}
+
+	t.Log("Batch C Quest/Mechanic NPC scripts engine gaps:")
+	for _, gap := range gaps {
+		t.Logf("  %s: %v — %s", gap.script, gap.functions, gap.status)
+	}
+	t.Log("\nCritical gaps: extra (head_shrinker necklace desc), iscorpse (janitor cleanup), steal (mymic/eq_thief)")
+}

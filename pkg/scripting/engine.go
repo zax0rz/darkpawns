@@ -268,6 +268,13 @@ func (e *Engine) registerFunctions() {
 	// echo(ch, type, msg) — zone-wide sound broadcast. Used by werewolf.lua.
 	// TODO: requires zone broadcast implementation
 	e.L.SetGlobal("echo", e.L.NewFunction(e.luaEcho))
+
+	// Stubs needed by Batch C Quest/Mechanic NPC scripts
+	e.L.SetGlobal("extra", e.L.NewFunction(e.luaExtra))
+	e.L.SetGlobal("strlen", e.L.NewFunction(e.luaStrlen))
+	e.L.SetGlobal("iscorpse", e.L.NewFunction(e.luaIsCorpse))
+	e.L.SetGlobal("canget", e.L.NewFunction(e.luaCanGet))
+	e.L.SetGlobal("steal", e.L.NewFunction(e.luaSteal))
 }
 
 // loadGlobals loads the globals.lua file.
@@ -1865,6 +1872,50 @@ func (e *Engine) luaEquipChar(L *lua.LState) int {
 	// equip_char(mob, obj) - equip a mob with an object.
 	// Source: phoenix.lua line 14 — equips rider with trident.
 	log.Printf("[STUB] equip_char(mob, obj)")
+	return 0
+}
+
+// --- Batch C Quest/Mechanic NPC stubs ---
+
+func (e *Engine) luaExtra(L *lua.LState) int {
+	// extra(obj, text) - set extra description on an object.
+	// Source: head_shrinker.lua — writes head names into necklace extra desc.
+	// Engine gap: extra description table not yet implemented.
+	log.Printf("[STUB] extra(obj, text)")
+	return 0
+}
+
+func (e *Engine) luaStrlen(L *lua.LState) int {
+	// strlen(s) - Lua 4 compat string length function.
+	// Source: head_shrinker.lua make_necklace() — pads owner name to 29 chars.
+	s := L.ToString(1)
+	L.Push(lua.LNumber(len(s)))
+	return 1
+}
+
+func (e *Engine) luaIsCorpse(L *lua.LState) int {
+	// iscorpse(obj) - returns true if the object is a player or mob corpse.
+	// Source: janitor.lua — skips corpses when picking up trash.
+	// Engine gap: corpse type not yet exposed on object tables.
+	log.Printf("[STUB] iscorpse(obj)")
+	L.Push(lua.LBool(false))
+	return 1
+}
+
+func (e *Engine) luaCanGet(L *lua.LState) int {
+	// canget(obj) - returns true if the mob is permitted to pick up the object.
+	// Source: janitor.lua — checks ITEM_WEAR_TAKE and weight before picking up.
+	// Engine gap: carry-weight and item permission checks not yet implemented.
+	log.Printf("[STUB] canget(obj)")
+	L.Push(lua.LBool(true))
+	return 1
+}
+
+func (e *Engine) luaSteal(L *lua.LState) int {
+	// steal(ch, obj) - steal an item from a character's inventory.
+	// Source: mymic.lua — steals food items; eq_thief.lua — steals equipment.
+	// Engine gap: theft mechanic not yet implemented.
+	log.Printf("[STUB] steal(ch, obj)")
 	return 0
 }
 
