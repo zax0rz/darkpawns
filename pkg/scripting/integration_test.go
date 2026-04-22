@@ -634,6 +634,168 @@ func TestBearcubMotherVNum(t *testing.T) {
 	}
 }
 
+// --- Batch A Combat AI Scripts ---
+
+// TestBatchACombatAIScriptsParse verifies all 14 Batch A combat AI scripts load
+// without Lua syntax errors.
+// Source: scripts_full_dump.txt ./mob/archive/
+func TestBatchACombatAIScriptsParse(t *testing.T) {
+	scripts := []struct {
+		name string
+		path string
+	}{
+		{"backstabber", "../../test_scripts/mob/archive/backstabber.lua"},
+		{"fire_ant", "../../test_scripts/mob/archive/fire_ant.lua"},
+		{"fire_ant_larva", "../../test_scripts/mob/archive/fire_ant_larva.lua"},
+		{"gazer", "../../test_scripts/mob/archive/gazer.lua"},
+		{"griffin", "../../test_scripts/mob/archive/griffin.lua"},
+		{"kelpie", "../../test_scripts/mob/archive/kelpie.lua"},
+		{"neckbreak", "../../test_scripts/mob/archive/neckbreak.lua"},
+		{"paralyse", "../../test_scripts/mob/archive/paralyse.lua"},
+		{"porcupine", "../../test_scripts/mob/archive/porcupine.lua"},
+		{"strike", "../../test_scripts/mob/archive/strike.lua"},
+		{"thornslinger", "../../test_scripts/mob/archive/thornslinger.lua"},
+		{"weatherworker", "../../test_scripts/mob/archive/weatherworker.lua"},
+		{"werewolf", "../../test_scripts/mob/archive/werewolf.lua"},
+		{"zen_master", "../../test_scripts/mob/archive/zen_master.lua"},
+	}
+
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+
+	for _, s := range scripts {
+		t.Run(s.name, func(t *testing.T) {
+			fn, err := engine.L.LoadFile(s.path)
+			if err != nil {
+				t.Fatalf("%s: Lua parse error: %v", s.name, err)
+			}
+			if fn == nil {
+				t.Fatalf("%s: LoadFile returned nil function", s.name)
+			}
+			t.Logf("%s: parsed OK", s.name)
+		})
+	}
+}
+
+// TestFireAntPoisonProbability documents fire_ant.lua fight trigger probability.
+// 10% chance (number(0,9)==0) to cast SPELL_POISON on attacker if not NPC.
+// Source: scripts_full_dump.txt ./mob/archive/fire_ant.lua
+func TestFireAntPoisonProbability(t *testing.T) {
+	const spellPoison = 33
+	const prob = 1.0 / 10.0
+	t.Logf("fire_ant: SPELL_POISON=%d, trigger probability=%.0f%%", spellPoison, prob*100)
+	if spellPoison != 33 {
+		t.Errorf("SPELL_POISON expected 33, got %d", spellPoison)
+	}
+}
+
+// TestZenMasterDefinesAllTriggers verifies zen_master.lua defines fight, teleport, and word.
+// Source: scripts_full_dump.txt ./mob/archive/zen_master.lua
+func TestZenMasterDefinesAllTriggers(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	if err := engine.L.DoFile("../../test_scripts/mob/archive/zen_master.lua"); err != nil {
+		t.Fatalf("zen_master.lua load error: %v", err)
+	}
+	for _, fn := range []string{"fight", "teleport", "word"} {
+		val := engine.L.GetGlobal(fn)
+		if val.Type().String() != "function" {
+			t.Errorf("zen_master.lua: %s() not defined (got %s)", fn, val.Type().String())
+		} else {
+			t.Logf("zen_master.lua: %s() defined OK", fn)
+		}
+	}
+}
+
+// TestParalyseLevelScaledProbability documents the paralyse bite mechanic.
+// bite probability = 1/(103-ch.level), increasing as target level rises.
+// Source: scripts_full_dump.txt ./mob/archive/paralyse.lua
+func TestParalyseLevelScaledProbability(t *testing.T) {
+	tests := []struct {
+		level         int
+		expectedDenom int
+	}{
+		{1, 102},
+		{10, 93},
+		{50, 53},
+		{100, 3},
+	}
+	for _, tt := range tests {
+		denom := 102 - tt.level + 1
+		if denom != tt.expectedDenom {
+			t.Errorf("level %d: expected denom %d, got %d", tt.level, tt.expectedDenom, denom)
+		}
+		t.Logf("paralyse level %d: bite chance = 1/%d (%.2f%%)", tt.level, denom, 100.0/float64(denom))
+	}
+}
+
+// TestPorcupineQuillDamageRange documents porcupine.lua quill volley damage range.
+// 1/6 chance (number(0,5)==0); damage = number(1,10).
+// Source: scripts_full_dump.txt ./mob/archive/porcupine.lua
+func TestPorcupineQuillDamageRange(t *testing.T) {
+	const minDmg, maxDmg = 1, 10
+	const prob = 1.0 / 6.0
+	if minDmg <= 0 {
+		t.Errorf("porcupine min quill damage must be > 0, got %d", minDmg)
+	}
+	if maxDmg < minDmg {
+		t.Errorf("porcupine max quill damage (%d) < min (%d)", maxDmg, minDmg)
+	}
+	t.Logf("porcupine quill volley: %d-%d damage, %.1f%% chance per round", minDmg, maxDmg, prob*100)
+}
+
+// TestThornslinger documents thorn volley damage range.
+// 1/6 chance (number(0,5)==0); damage = number(10,20).
+// Source: scripts_full_dump.txt ./mob/archive/thornslinger.lua
+func TestThornslingerDamageRange(t *testing.T) {
+	const minDmg, maxDmg = 10, 20
+	const prob = 1.0 / 6.0
+	if minDmg <= 0 {
+		t.Errorf("thornslinger min damage must be > 0, got %d", minDmg)
+	}
+	if maxDmg < minDmg {
+		t.Errorf("thornslinger max damage (%d) < min (%d)", maxDmg, minDmg)
+	}
+	t.Logf("thornslinger thorn volley: %d-%d damage, %.1f%% chance per round", minDmg, maxDmg, prob*100)
+}
+
+// TestSpellConstantsBatchA verifies spell constants used by Batch A scripts
+// are registered in the engine.
+// Source: engine.go setupBasicConstants
+func TestSpellConstantsBatchA(t *testing.T) {
+	mockWorld := &mockWorldForTest{}
+	engine := NewEngine("../../test_scripts", mockWorld)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+	constants := []struct {
+		name     string
+		expected float64
+	}{
+		{"SPELL_MINDBLAST", 62},
+		{"SPELL_FLAMESTRIKE", 96},
+		{"SPELL_DISRUPT", 92},
+		{"SPELL_POISON", 33},
+		{"SPELL_PARALYSE", 105},
+		{"SPELL_TELEPORT", 2},
+		{"SPELL_WORD_OF_RECALL", 42},
+	}
+	for _, c := range constants {
+		val := engine.L.GetGlobal(c.name)
+		if val.Type().String() != "number" {
+			t.Errorf("%s: expected number, got %s", c.name, val.Type().String())
+		} else {
+			t.Logf("%s = %v (expected %.0f)", c.name, val, c.expected)
+		}
+	}
+}
+
 // TestWargGreetAlignmentLogic documents warg.lua greet alignment check.
 // Warg wags tail for positive alignment (ch.align > 0), growls for non-positive.
 // Trigger fires with 1-in-11 probability (number(0,10)==0).

@@ -265,6 +265,9 @@ func (e *Engine) registerFunctions() {
 	e.L.SetGlobal("skill_group", e.L.NewFunction(e.luaSkillGroup))
 	e.L.SetGlobal("unaffect", e.L.NewFunction(e.luaUnaffect))
 	e.L.SetGlobal("equip_char", e.L.NewFunction(e.luaEquipChar))
+	// echo(ch, type, msg) — zone-wide sound broadcast. Used by werewolf.lua.
+	// TODO: requires zone broadcast implementation
+	e.L.SetGlobal("echo", e.L.NewFunction(e.luaEcho))
 }
 
 // loadGlobals loads the globals.lua file.
@@ -396,6 +399,9 @@ func (e *Engine) setupBasicConstants() {
 	e.L.SetGlobal("SPELL_FLAMESTRIKE", lua.LNumber(96))
 	e.L.SetGlobal("SPELL_PSIBLAST", lua.LNumber(100))
 	e.L.SetGlobal("SPELL_PETRIFY", lua.LNumber(104))
+	// SPELL_PARALYSE: not in original globals.lua; assigned 105 as next available value.
+	// Used by paralyse.lua and head_shrinker.lua. TODO: verify against original spells.h.
+	e.L.SetGlobal("SPELL_PARALYSE", lua.LNumber(105))
 	
 	// Dragon Breath spells
 	e.L.SetGlobal("SPELL_FIRE_BREATH", lua.LNumber(202))
@@ -1859,5 +1865,18 @@ func (e *Engine) luaEquipChar(L *lua.LState) int {
 	// equip_char(mob, obj) - equip a mob with an object.
 	// Source: phoenix.lua line 14 — equips rider with trident.
 	log.Printf("[STUB] equip_char(mob, obj)")
+	return 0
+}
+
+func (e *Engine) luaEcho(L *lua.LState) int {
+	// echo(ch, type, msg) — broadcast a message to a zone or room.
+	// type="zone" sends to all players in the mob's zone.
+	// type="room" sends to all players in the current room.
+	// Based on lua_echo() in scripts.c lines 308-345.
+	// Source: werewolf.lua — echo(me, "zone", "You hear a loud howling...")
+	// TODO: requires zone broadcast implementation; currently logs only.
+	msg := L.ToString(3)
+	echoType := L.ToString(2)
+	log.Printf("[STUB] echo(ch, %q, %q)", echoType, msg)
 	return 0
 }
