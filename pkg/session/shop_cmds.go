@@ -169,14 +169,21 @@ func cmdBuy(s *Session, args []string) error {
 			break
 		}
 
-		// Deduct gold and create item
-		s.player.Gold -= pricePerItem
-		item := game.NewObjectInstance(matchedProto, -1)
-		item.Carrier = s.player
-		if err := s.player.Inventory.AddItem(item); err != nil {
-			s.player.Gold += pricePerItem // refund — add failed
+		// Check gold before creating item
+		if s.player.Gold < pricePerItem {
+			if bought == 0 {
+				s.Send("You can't afford it!")
+				return nil
+			}
 			break
 		}
+
+		// Create item
+		item := game.NewObjectInstance(matchedProto, -1)
+		if err := s.player.Inventory.AddItem(item); err != nil {
+			break
+		}
+		s.player.Gold -= pricePerItem
 		bought++
 	}
 
