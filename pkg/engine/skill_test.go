@@ -409,7 +409,8 @@ func TestSkillManagerTeachSkill(t *testing.T) {
 	skill.Level = 60 // High enough to teach
 
 	teacher.AddSkillPoints(10)
-	teacher.LearnSkill(skill, 20, 15) // Teacher learns at high level
+	teacher.LearnSkill(skill, 20, 15) // Teacher learns (Learn() resets level to 1)
+	skill.Level = 60                  // Boost after learning so CanTeach passes
 
 	student.AddSkillPoints(10)
 
