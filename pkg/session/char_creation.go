@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -131,8 +132,14 @@ func (s *Session) completeCharCreation() error {
 	s.charHometown = 0
 	s.charStats = game.CharStats{}
 
-	// Send welcome
-	s.sendWelcome()
+	// Generate JWT token
+	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID)
+	if err != nil {
+		log.Printf("Failed to generate JWT token: %v", err)
+	}
+
+	// Send welcome with token
+	s.sendWelcome(token)
 
 	// Broadcast arrival
 	enterMsg, _ := json.Marshal(ServerMessage{

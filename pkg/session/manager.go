@@ -457,8 +457,14 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			return err
 		}
 
-		// Send welcome
-		s.sendWelcome()
+		// Generate JWT token for API access
+		token, err := auth.GenerateJWT(login.PlayerName, s.isAgent, s.agentKeyID)
+		if err != nil {
+			log.Printf("Failed to generate JWT token: %v", err)
+		}
+
+		// Send welcome with token
+		s.sendWelcome(token)
 
 		// Agents get a full variable dump + memory bootstrap immediately after login
 		if s.isAgent {
@@ -507,7 +513,7 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 }
 
 // sendWelcome sends the initial game state to the player.
-func (s *Session) sendWelcome() {
+func (s *Session) sendWelcome(token string) {
 	room, _ := s.manager.world.GetRoom(s.player.GetRoom())
 
 	state := StateData{
@@ -531,6 +537,7 @@ func (s *Session) sendWelcome() {
 			Description: room.Description,
 			Exits:       getExitNames(room.Exits),
 		},
+		Token: token,
 	}
 
 	msg, _ := json.Marshal(ServerMessage{

@@ -61,6 +61,7 @@ type CommandData struct {
 type StateData struct {
 	Player PlayerState `json:"player"`
 	Room   RoomState   `json:"room"`
+	Token  string      `json:"token,omitempty"` // JWT token for API access
 }
 
 // PlayerState represents player info in state.
