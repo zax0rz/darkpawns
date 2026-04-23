@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Pawns - 1994 MUD Resurrected</title>
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-darker: #050505;
+            --bg-card: #1a1a1a;
+            --text-primary: #f0f0f0;
+            --text-secondary: #b0b0b0;
+            --accent-purple: #8a2be2;
+            --accent-red: #dc143c;
+            --accent-gold: #ffd700;
+            --border: #333;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            background-image: radial-gradient(circle at 20% 30%, #1a0a1a 0%, transparent 50%),
+                              radial-gradient(circle at 80% 70%, #0a1a1a 0%, transparent 50%);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        
+        .logo span {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        nav a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+        
+        nav a:hover {
+            color: var(--accent-purple);
+            background: rgba(138, 43, 226, 0.1);
+        }
+        
+        .cta-button {
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-red));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(138, 43, 226, 0.3);
+        }
+        
+        /* Hero */
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero h2 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-gold), var(--accent-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        /* Features */
+        .features {
+            padding: 4rem 0;
+            background: var(--bg-darker);
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-title h3 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .section-title p {
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-purple);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-purple);
+        }
+        
+        .feature-card h4 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .feature-card p {
+            color: var(--text-secondary);
+        }
+        
+        /* Map Preview */
+        .map-preview {
+            padding: 4rem 0;
+        }
+        
+        .map-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .map-placeholder {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 4rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        
+        /* History */
+        .history {
+            padding: 4rem 0;
+            background: var(--bg-darker);
+        }
+        
+        .timeline {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .timeline-item {
+            display: flex;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .timeline-year {
+            flex: 0 0 100px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+        }
+        
+        .timeline-content {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+        }
+        
+        .timeline-content::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 20px;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-purple);
+            border-radius: 50%;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--bg-darker);
+            border-top: 1px solid var(--border);
+            padding: 3rem 0;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--accent-purple);
+        }
+        
+        .copyright {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero h2 {
+                font-size: 2.5rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>DARK PAWNS</h1>
+                    <span>1994 MUD Resurrected</span>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="#play">Play</a></li>
+                        <li><a href="#map">Map</a></li>
+                        <li><a href="#history">History</a></li>
+                        <li><a href="#community">Community</a></li>
+                        <li><a href="#development">Development</a></li>
+                    </ul>
+                </nav>
+                <button class="cta-button">Play Now</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h2>Enter the World of Dark Pawns</h2>
+                <p>A 1994 Multi-User Dungeon resurrected with modern technology, AI agents, and preserved history. Explore a living world where every decision matters.</p>
+                <div class="hero-buttons">
+                    <button class="cta-button">Play in Browser</button>
+                    <button class="cta-button" style="background: transparent; border: 2px solid var(--accent-purple);">Telnet Connection</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <div class="section-title">
+                    <h3>Why Dark Pawns?</h3>
+                    <p>Experience the nostalgia of classic MUD gameplay with modern enhancements</p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎮</div>
+                        <h4>Classic MUD Gameplay</h4>
+                        <p>Faithful recreation of the original 1994 Dark Pawns experience with text-based adventure, combat, and exploration.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <h4>AI Agents</h4>
+                        <p>Intelligent NPCs with narrative memory, forming relationships and remembering player interactions.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🗺️</div>
+                        <h4>Interactive Map</h4>
+                        <p>Explore the world with our detailed interactive map, showing rooms, exits, and points of interest.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📜</div>
+                        <h4>Preserved History</h4>
+                        <p>Access the complete 1994-2004 archive including player quotes, guides, and community stories.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h4>Modern Technology</h4>
+                        <p>Built with Go 2026, performance optimizations, and secure architecture while preserving the original feel.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌐</div>
+                        <h4>Agent-Friendly</h4>
+                        <p>Dual-rendering website with content negotiation for both humans and AI agents exploring the narrative.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="map-preview" id="map">
+            <div class="container">
+                <div class="section-title">
+                    <h3>Explore the World</h3>
+                    <p>Interactive map of the Dark Pawns universe with room details and navigation</p>
+                </div>
+                <div class="map-container">
+                    <div class="map-placeholder">
+                        <h4>Interactive Map Preview</h4>
+                        <p>Generated from game world data with zoom, search, and room details.</p>
+                        <p><em>Actual interactive map available at /maps/interactive_map.html</em></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="history" id="history">
+            <div class="container">
+                <div class="section-title">
+                    <h3>Historical Timeline</h3>
+                    <p>From 1994 to today - the story of Dark Pawns</p>
+                </div>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-year">1994</div>
+                        <div class="timeline-content">
+                            <h4>Dark Pawns Created</h4>
+                            <p>Original CircleMUD 3.0 based game launched by original staff.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">1997</div>
+                        <div class="timeline-content">
+                            <h4>Public Announcement</h4>
+                            <p>Game officially announced to the MUD community.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2004</div>
+                        <div class="timeline-content">
+                            <h4>dp-players.com Archive</h4>
+                            <p>Player community website created with guides, quotes, and history.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2026</div>
+                        <div class="timeline-content">
+                            <h4>Resurrection & Modernization</h4>
+                            <p>Full port to Go, AI agent integration, and historical preservation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo">
+                    <h1 style="font-size: 1.5rem;">DARK PAWNS</h1>
+                </div>
+                <div class="footer-links">
+                    <a href="#play">Play</a>
+                    <a href="#map">Map</a>
+                    <a href="#history">History</a>
+                    <a href="#community">Community</a>
+                    <a href="#development">Development</a>
+                    <a href="https://github.com/zax0rz/darkpawns">GitHub</a>
+                </div>
+                <div class="copyright">
+                    &copy; 2026 Dark Pawns Resurrection Project. Original game © 1994-2004.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // CTA button functionality
+        document.querySelectorAll('.cta-button').forEach(button => {
+            button.addEventListener('click', function() {
+                if (this.textContent.includes('Play')) {
+                    alert('Redirecting to web client... (Placeholder)');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

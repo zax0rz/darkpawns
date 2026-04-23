@@ -1,0 +1,40 @@
+digraph DarkPawnsMap {
+  rankdir=TB;
+  node [shape=box, style=filled, fillcolor=lightblue, fontname="Helvetica"];
+  edge [fontname="Helvetica", fontsize=10];
+  graph [bgcolor="transparent"];
+
+  room100 [label="<b>#100: The Morgue</b>\nArea: Midgaard\nMobs: 1\nItems: 2", fillcolor="gray"];
+  room101 [label="<b>#101: Corridor of Echoes</b>\nArea: Midgaard\nItems: 2", fillcolor="lightblue"];
+  room102 [label="<b>#102: Apothecary's Chamber</b>\nArea: Midgaard\nMobs: 1\nItems: 3", fillcolor="lightblue"];
+  room103 [label="<b>#103: Guard Room</b>\nArea: Midgaard\nMobs: 2\nItems: 3", fillcolor="lightblue"];
+  room104 [label="<b>#104: Storage Room</b>\nArea: Midgaard\nMobs: 1\nItems: 3", fillcolor="lightblue"];
+  room105 [label="<b>#105: Secret Laboratory</b>\nArea: Midgaard\nMobs: 1\nItems: 3", fillcolor="lightcoral"];
+  room106 [label="<b>#106: Courtyard</b>\nArea: Midgaard\nMobs: 2\nItems: 3", fillcolor="lightgreen"];
+  room107 [label="<b>#107: Underground Cavern</b>\nArea: Midgaard\nMobs: 2\nItems: 3", fillcolor="wheat"];
+  room108 [label="<b>#108: Main Gate</b>\nArea: Midgaard\nMobs: 2\nItems: 3", fillcolor="lightblue"];
+  room109 [label="<b>#109: Garden</b>\nArea: Midgaard\nMobs: 1\nItems: 4", fillcolor="lightgreen"];
+
+  room100 -> room101 [label="south", color="brown"];
+  room100 -> room102 [label="east", color="black"];
+  room101 -> room100 [label="north", color="brown"];
+  room101 -> room103 [label="south", color="black"];
+  room101 -> room104 [label="west", color="black"];
+  room102 -> room100 [label="west", color="black"];
+  room102 -> room105 [label="east", color="red", style="dashed"];
+  room103 -> room101 [label="north", color="black"];
+  room103 -> room106 [label="east", color="brown"];
+  room104 -> room101 [label="east", color="black"];
+  room105 -> room102 [label="west", color="red", style="dashed"];
+  room105 -> room107 [label="down", color="purple", style="dotted"];
+  room106 -> room103 [label="west", color="brown"];
+  room106 -> room108 [label="north", color="brown"];
+  room106 -> room109 [label="south", color="black"];
+  room107 -> room105 [label="up", color="purple", style="dotted"];
+  room107 -> room110 [label="east", color="black", dir="forward"];
+  room107 -> room111 [label="west", color="blue", dir="forward"];
+  room108 -> room106 [label="south", color="brown"];
+  room108 -> room112 [label="north", color="black", dir="forward"];
+  room109 -> room106 [label="north", color="black"];
+  room109 -> room113 [label="east", color="black", dir="forward"];
+}

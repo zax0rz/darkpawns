@@ -1,0 +1,224 @@
+{
+  "rooms": [
+    {
+      "vnum": 100,
+      "name": "The Morgue",
+      "description": "A cold, damp room with stone walls. Several stone slabs line the walls, each holding a shrouded figure. The air smells of decay and formaldehyde.",
+      "exits": [
+        {"direction": "south", "to_room": 101, "flags": ["door"]},
+        {"direction": "east", "to_room": 102, "flags": []}
+      ],
+      "players": [],
+      "mobs": [
+        {"id": 1, "name": "mortician", "level": 5, "type": "npc"}
+      ],
+      "items": [
+        {"id": 1, "name": "stone slab", "type": "furniture"},
+        {"id": 2, "name": "shrouded figure", "type": "corpse"}
+      ],
+      "area": "Midgaard",
+      "terrain": "indoors",
+      "light": "dim"
+    },
+    {
+      "vnum": 101,
+      "name": "Corridor of Echoes",
+      "description": "A narrow stone corridor that echoes with every footstep. Torches flicker in iron sconces along the walls, casting long shadows.",
+      "exits": [
+        {"direction": "north", "to_room": 100, "flags": ["door"]},
+        {"direction": "south", "to_room": 103, "flags": []},
+        {"direction": "west", "to_room": 104, "flags": []}
+      ],
+      "players": [],
+      "mobs": [],
+      "items": [
+        {"id": 3, "name": "iron sconce", "type": "fixture"},
+        {"id": 4, "name": "flickering torch", "type": "light"}
+      ],
+      "area": "Midgaard",
+      "terrain": "indoors",
+      "light": "torch"
+    },
+    {
+      "vnum": 102,
+      "name": "Apothecary's Chamber",
+      "description": "Shelves line the walls, filled with jars of herbs, powders, and strange liquids. A workbench in the center holds various alchemical apparatus.",
+      "exits": [
+        {"direction": "west", "to_room": 100, "flags": []},
+        {"direction": "east", "to_room": 105, "flags": ["door", "locked"]}
+      ],
+      "players": [],
+      "mobs": [
+        {"id": 2, "name": "apothecary", "level": 8, "type": "npc"}
+      ],
+      "items": [
+        {"id": 5, "name": "herb jar", "type": "container"},
+        {"id": 6, "name": "alchemical apparatus", "type": "tool"},
+        {"id": 7, "name": "workbench", "type": "furniture"}
+      ],
+      "area": "Midgaard",
+      "terrain": "indoors",
+      "light": "bright"
+    },
+    {
+      "vnum": 103,
+      "name": "Guard Room",
+      "description": "A small room with a wooden table and two chairs. Weapons racks line the walls, holding various arms and armor.",
+      "exits": [
+        {"direction": "north", "to_room": 101, "flags": []},
+        {"direction": "east", "to_room": 106, "flags": ["door"]}
+      ],
+      "players": [],
+      "mobs": [
+        {"id": 3, "name": "guard", "level": 12, "type": "npc"},
+        {"id": 4, "name": "guard", "level": 12, "type": "npc"}
+      ],
+      "items": [
+        {"id": 8, "name": "wooden table", "type": "furniture"},
+        {"id": 9, "name": "weapons rack", "type": "container"},
+        {"id": 10, "name": "longsword", "type": "weapon"}
+      ],
+      "area": "Midgaard",
+      "terrain": "indoors",
+      "light": "torch"
+    },
+    {
+      "vnum": 104,
+      "name": "Storage Room",
+      "description": "Crates and barrels are stacked haphazardly in this dusty storage room. Cobwebs hang from the ceiling corners.",
+      "exits": [
+        {"direction": "east", "to_room": 101, "flags": []}
+      ],
+      "players": [],
+      "mobs": [
+        {"id": 5, "name": "giant spider", "level": 6, "type": "mob"}
+      ],
+      "items": [
+        {"id": 11, "name": "wooden crate", "type": "container"},
+        {"id": 12, "name": "dusty barrel", "type": "container"},
+        {"id": 13, "name": "cobweb", "type": "obstacle"}
+      ],
+      "area": "Midgaard",
+      "terrain": "indoors",
+      "light": "dark"
+    },
+    {
+      "vnum": 105,
+      "name": "Secret Laboratory",
+      "description": "A hidden room filled with strange machinery and bubbling cauldrons. The air crackles with magical energy.",
+      "exits": [
+        {"direction": "west", "to_room": 102, "flags": ["door", "locked"]},
+        {"direction": "down", "to_room": 107, "flags": ["trapdoor"]}
+      ],
+      "players": [],
+      "mobs": [
+        {"id": 6, "name": "mad alchemist", "level": 15, "type": "npc"}
+      ],
+      "items": [
+        {"id": 14, "name": "bubbling cauldron", "type": "fixture"},
+        {"id": 15, "name": "arcane machinery", "type": "tool"},
+        {"id": 16, "name": "ancient tome", "type": "book"}
+      ],
+      "area": "Midgaard",
+      "terrain": "indoors",
+      "light": "magical"
+    },
+    {
+      "vnum": 106,
+      "name": "Courtyard",
+      "description": "An open courtyard with a stone fountain in the center. Benches line the perimeter under arching trees.",
+      "exits": [
+        {"direction": "west", "to_room": 103, "flags": ["door"]},
+        {"direction": "north", "to_room": 108, "flags": ["gate"]},
+        {"direction": "south", "to_room": 109, "flags": []}
+      ],
+      "players": [],
+      "mobs": [
+        {"id": 7, "name": "pigeon", "level": 1, "type": "mob"},
+        {"id": 8, "name": "pigeon", "level": 1, "type": "mob"}
+      ],
+      "items": [
+        {"id": 17, "name": "stone fountain", "type": "fixture"},
+        {"id": 18, "name": "wooden bench", "type": "furniture"},
+        {"id": 19, "name": "fallen leaves", "type": "ground"}
+      ],
+      "area": "Midgaard",
+      "terrain": "outdoors",
+      "light": "daylight"
+    },
+    {
+      "vnum": 107,
+      "name": "Underground Cavern",
+      "description": "A natural cavern with glowing mushrooms providing faint illumination. A small stream trickles through the center.",
+      "exits": [
+        {"direction": "up", "to_room": 105, "flags": ["trapdoor"]},
+        {"direction": "east", "to_room": 110, "flags": []},
+        {"direction": "west", "to_room": 111, "flags": ["water"]}
+      ],
+      "players": [],
+      "mobs": [
+        {"id": 9, "name": "cave bat", "level": 3, "type": "mob"},
+        {"id": 10, "name": "cave bat", "level": 3, "type": "mob"}
+      ],
+      "items": [
+        {"id": 20, "name": "glowing mushroom", "type": "plant"},
+        {"id": 21, "name": "small stream", "type": "water"},
+        {"id": 22, "name": "mossy rock", "type": "ground"}
+      ],
+      "area": "Midgaard",
+      "terrain": "cavern",
+      "light": "glow"
+    },
+    {
+      "vnum": 108,
+      "name": "Main Gate",
+      "description": "A massive iron gate stands open, leading to the city beyond. Two stone towers flank the entrance.",
+      "exits": [
+        {"direction": "south", "to_room": 106, "flags": ["gate"]},
+        {"direction": "north", "to_room": 112, "flags": ["road"]}
+      ],
+      "players": [],
+      "mobs": [
+        {"id": 11, "name": "gate guard", "level": 10, "type": "npc"},
+        {"id": 12, "name": "gate guard", "level": 10, "type": "npc"}
+      ],
+      "items": [
+        {"id": 23, "name": "iron gate", "type": "fixture"},
+        {"id": 24, "name": "stone tower", "type": "structure"},
+        {"id": 25, "name": "cobblestone road", "type": "ground"}
+      ],
+      "area": "Midgaard",
+      "terrain": "outdoors",
+      "light": "daylight"
+    },
+    {
+      "vnum": 109,
+      "name": "Garden",
+      "description": "A well-tended garden with rows of herbs and flowers. A small shed stands in one corner.",
+      "exits": [
+        {"direction": "north", "to_room": 106, "flags": []},
+        {"direction": "east", "to_room": 113, "flags": ["hedge"]}
+      ],
+      "players": [],
+      "mobs": [
+        {"id": 13, "name": "gardener", "level": 7, "type": "npc"}
+      ],
+      "items": [
+        {"id": 26, "name": "herb patch", "type": "plant"},
+        {"id": 27, "name": "flower bed", "type": "plant"},
+        {"id": 28, "name": "wooden shed", "type": "structure"},
+        {"id": 29, "name": "watering can", "type": "tool"}
+      ],
+      "area": "Midgaard",
+      "terrain": "outdoors",
+      "light": "daylight"
+    }
+  ],
+  "metadata": {
+    "total_rooms": 10,
+    "areas": ["Midgaard"],
+    "generated_at": "2026-04-22T23:32:00Z",
+    "source": "Dark Pawns MUD - Sample Data",
+    "version": "1.0"
+  }
+}
