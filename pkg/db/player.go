@@ -19,19 +19,19 @@ type DB struct {
 
 // PlayerRecord represents a player in the database.
 type PlayerRecord struct {
-	ID        int
-	Name      string
-	Password  string // hashed
-	RoomVNum  int
-	Level     int
-	Exp       int
-	Health    int
-	MaxHealth int
-	Mana      int
-	MaxMana   int
-	Strength  int
-	Class     int
-	Race      int
+	ID         int
+	Name       string
+	Password   string // hashed
+	RoomVNum   int
+	Level      int
+	Exp        int
+	Health     int
+	MaxHealth  int
+	Mana       int
+	MaxMana    int
+	Strength   int
+	Class      int
+	Race       int
 	StatStr    int
 	StatStrAdd int // 18/xx for warriors
 	StatInt    int
@@ -155,13 +155,13 @@ func (db *DB) CreateAgentKey(characterName string) (rawKey string, id int64, err
 // Returns the associated character name and row id if the key is valid and not revoked.
 func (db *DB) ValidateAgentKey(rawKey string) (characterName string, keyID int64, valid bool) {
 	// Reject default/example keys for security
-	if rawKey == "br3nd4-69-ag3nt-k3y-d3f4ult" || 
-		strings.Contains(rawKey, "example") || 
+	if rawKey == "br3nd4-69-ag3nt-k3y-d3f4ult" ||
+		strings.Contains(rawKey, "example") ||
 		strings.Contains(rawKey, "test") ||
 		strings.Contains(rawKey, "REPLACE_WITH") {
 		return "", 0, false
 	}
-	
+
 	h := sha256.Sum256([]byte(rawKey))
 	keyHash := hex.EncodeToString(h[:])
 

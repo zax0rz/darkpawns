@@ -124,7 +124,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 	for _, item := range deadMob.Equipment {
 		equipmentItems = append(equipmentItems, item)
 	}
-	
+
 	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(deadMob, deadMob.Inventory, equipmentItems, roomVNum)
@@ -147,9 +147,11 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 
 // handlePlayerDeath implements die()/die_with_killer() + raw_kill() for players.
 // Original:
-//   die_with_killer(): gain_exp(ch, -(GET_EXP(ch)/37))  (combat death)
-//   die():             gain_exp(ch, -(GET_EXP(ch)/3))   (non-combat death)
-//   raw_kill(): stop_fighting, make_corpse, extract_char
+//
+//	die_with_killer(): gain_exp(ch, -(GET_EXP(ch)/37))  (combat death)
+//	die():             gain_exp(ch, -(GET_EXP(ch)/3))   (non-combat death)
+//	raw_kill(): stop_fighting, make_corpse, extract_char
+//
 // Modern addition: respawn at MortalStartRoom, heal to full.
 func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int) {
 	roomVNum := victim.GetRoom()
@@ -183,7 +185,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	// make_corpse: transfer inventory and equipment to corpse
 	var inventoryItems []*ObjectInstance
 	var equipmentItems []*ObjectInstance
-	
+
 	if player.Inventory != nil {
 		// Get all items from inventory
 		inventoryItems = player.Inventory.FindItems("")
@@ -196,7 +198,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		}
 		player.Inventory.Clear()
 	}
-	
+
 	if player.Equipment != nil {
 		// Get all equipped items
 		equipped := player.Equipment.GetEquippedItems()
@@ -246,21 +248,21 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 type CorpseAttackType int
 
 const (
-	AttackUndefined  CorpseAttackType = iota // TYPE_UNDEFINED: "The corpse of X is lying here."
-	AttackFire                               // fire spells: "The charred corpse of X is lying here, still smoking."
-	AttackCold                               // chill touch: "The frozen corpse of X is thawing here."
-	AttackBlast                              // COLOR_SPRAY/DISRUPT: "A blasted corpse lies here in pieces."
-	AttackEnergyDrain                        // ENERGY_DRAIN: "A dried up husk of a corpse is lying here."
-	AttackLightning                          // LIGHTNING_BOLT: "The shocked looking corpse of X is lying here."
-	AttackPsiblast                           // PSIBLAST: "The corpse of X is lying here, brains exploded everywhere."
-	AttackSlash                              // TYPE_SLASH/SKILL_BITE: "The hacked up, bloody corpse of X is lying here."
-	AttackDisembowel                         // SKILL_DISEMBOWEL: "The corpse of X is lying here, guts spilled everywhere."
-	AttackDrowning                           // SPELL_DROWNING: "The bloated, waterlogged corpse of X is lying here."
-	AttackPetrify                            // SPELL_PETRIFY: "The corpse of X is here, frozen in stone."
-	AttackCrush                              // TYPE_CRUSH/MAUL: "The crushed, barely recognizable corpse of X is lying here."
-	AttackBruised                            // BASH/KICK/PUNCH etc: "The bruised, battered corpse of X is lying here."
-	AttackPierce                             // TYPE_PIERCE/STAB: "The well-ventilated corpse of X is lying here."
-	AttackNeckBreak                          // SKILL_NECKBREAK: "The corpse of X is lying here, his/her neck snapped in two."
+	AttackUndefined   CorpseAttackType = iota // TYPE_UNDEFINED: "The corpse of X is lying here."
+	AttackFire                                // fire spells: "The charred corpse of X is lying here, still smoking."
+	AttackCold                                // chill touch: "The frozen corpse of X is thawing here."
+	AttackBlast                               // COLOR_SPRAY/DISRUPT: "A blasted corpse lies here in pieces."
+	AttackEnergyDrain                         // ENERGY_DRAIN: "A dried up husk of a corpse is lying here."
+	AttackLightning                           // LIGHTNING_BOLT: "The shocked looking corpse of X is lying here."
+	AttackPsiblast                            // PSIBLAST: "The corpse of X is lying here, brains exploded everywhere."
+	AttackSlash                               // TYPE_SLASH/SKILL_BITE: "The hacked up, bloody corpse of X is lying here."
+	AttackDisembowel                          // SKILL_DISEMBOWEL: "The corpse of X is lying here, guts spilled everywhere."
+	AttackDrowning                            // SPELL_DROWNING: "The bloated, waterlogged corpse of X is lying here."
+	AttackPetrify                             // SPELL_PETRIFY: "The corpse of X is here, frozen in stone."
+	AttackCrush                               // TYPE_CRUSH/MAUL: "The crushed, barely recognizable corpse of X is lying here."
+	AttackBruised                             // BASH/KICK/PUNCH etc: "The bruised, battered corpse of X is lying here."
+	AttackPierce                              // TYPE_PIERCE/STAB: "The well-ventilated corpse of X is lying here."
+	AttackNeckBreak                           // SKILL_NECKBREAK: "The corpse of X is lying here, his/her neck snapped in two."
 )
 
 // attackTypeToCorpseAttack converts numeric attack type to CorpseAttackType
@@ -339,11 +341,11 @@ func corpseAttackLongDesc(name string, attackType CorpseAttackType, gender strin
 // The corpse is an ObjectInstance with ITEM_NODONATE, containing the victim's inventory.
 func (w *World) makeCorpse(name string, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int) *ObjectInstance {
 	corpse := &ObjectInstance{
-		Prototype:     nil, // synthetic object, no prototype vnum
-		VNum:          -1,
-		RoomVNum:      roomVNum,
-		Contains:      make([]*ObjectInstance, 0),
-		CustomData:    map[string]interface{}{
+		Prototype: nil, // synthetic object, no prototype vnum
+		VNum:      -1,
+		RoomVNum:  roomVNum,
+		Contains:  make([]*ObjectInstance, 0),
+		CustomData: map[string]interface{}{
 			"is_corpse":   true,
 			"corpse_name": name,
 			// OBJ_VAL(3) = 1 in original (corpse identifier)
@@ -391,7 +393,7 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 			w.AddItemToRoom(item, roomVNum)
 		}
 	}
-	
+
 	// Scatter ALL equipment directly to room floor
 	for _, item := range equipment {
 		if item != nil {
@@ -402,23 +404,23 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 			w.AddItemToRoom(item, roomVNum)
 		}
 	}
-	
+
 	// Create ash object
 	ash := &ObjectInstance{
-		Prototype:     nil, // synthetic object
-		VNum:          -1,
-		RoomVNum:      roomVNum,
-		Contains:      make([]*ObjectInstance, 0),
-		CustomData:    map[string]interface{}{
-			"name":        "a pile of ash",
-			"short_desc":  "a pile of ash",
-			"long_desc":   "A small pile of ash is all that remains.",
-			"is_ash":      true,
+		Prototype: nil, // synthetic object
+		VNum:      -1,
+		RoomVNum:  roomVNum,
+		Contains:  make([]*ObjectInstance, 0),
+		CustomData: map[string]interface{}{
+			"name":       "a pile of ash",
+			"short_desc": "a pile of ash",
+			"long_desc":  "A small pile of ash is all that remains.",
+			"is_ash":     true,
 		},
 		EquipPosition: -1,
 	}
 	w.AddItemToRoom(ash, roomVNum)
-	
+
 	// Send room message
 	victimName := ""
 	switch v := victim.(type) {
@@ -427,7 +429,7 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 	case *MobInstance:
 		victimName = v.GetShortDesc()
 	}
-	
+
 	if victimName != "" {
 		players := w.GetPlayersInRoom(roomVNum)
 		for _, p := range players {

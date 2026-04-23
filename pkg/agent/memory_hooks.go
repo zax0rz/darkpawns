@@ -25,16 +25,16 @@ import (
 
 // PythonSystemConfig holds configuration for the Python AI system integration.
 type PythonSystemConfig struct {
-	BaseURL     string        // e.g., "http://localhost:8000"
-	Timeout     time.Duration // HTTP timeout
-	Enabled     bool          // Whether to send events to Python system
-	APIKey      string        // Optional API key for authentication
+	BaseURL string        // e.g., "http://localhost:8000"
+	Timeout time.Duration // HTTP timeout
+	Enabled bool          // Whether to send events to Python system
+	APIKey  string        // Optional API key for authentication
 }
 
 // MemoryEvent represents a memory event to send to the Python system.
 type MemoryEvent struct {
 	EventID       string    `json:"event_id"`
-	EventType     string    `json:"event_type"`     // "mob_kill", "mob_death", "social_interaction"
+	EventType     string    `json:"event_type"` // "mob_kill", "mob_death", "social_interaction"
 	AgentName     string    `json:"agent_name"`
 	Summary       string    `json:"summary"`
 	RoomVNum      int       `json:"room_vnum"`
@@ -51,8 +51,8 @@ type MemoryEvent struct {
 
 // REMSynthesisClient handles communication with the Python AI system.
 type REMSynthesisClient struct {
-	config   PythonSystemConfig
-	client   *http.Client
+	config    PythonSystemConfig
+	client    *http.Client
 	endpoints struct {
 		memoryEvent    string // POST /api/memory/event
 		remConsolidate string // POST /api/rem/consolidate
@@ -344,7 +344,7 @@ func (hm *HookManager) OnPlayerDeath(evt *game.PlayerDeathEvent, agentName, sess
 
 // OnSocialInteraction handles social interaction events.
 func (hm *HookManager) OnSocialInteraction(agentName, otherEntity, interactionType, summary, sessionID string, roomVNum int, roomName string) {
-	valence := 0 // neutral by default, can be adjusted
+	valence := 0                                       // neutral by default, can be adjusted
 	salience := db.SalienceScore(valence, true, false) // social events get bonus
 
 	mem := &db.NarrativeMemory{

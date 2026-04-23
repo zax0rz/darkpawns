@@ -9,9 +9,9 @@ import (
 
 // PrivacyLogger wraps the standard logger with PII filtering
 type PrivacyLogger struct {
-	client *Client
-	stdLog *log.Logger
-	mu     sync.Mutex
+	client  *Client
+	stdLog  *log.Logger
+	mu      sync.Mutex
 	enabled bool
 }
 
@@ -21,7 +21,7 @@ func NewPrivacyLogger(client *Client, prefix string, flag int) *PrivacyLogger {
 		// Create a disabled client for fallback
 		client = NewClient("disabled", DefaultFilterConfig())
 	}
-	
+
 	return &PrivacyLogger{
 		client:  client,
 		stdLog:  log.New(os.Stdout, prefix, flag),
@@ -48,12 +48,12 @@ func (pl *PrivacyLogger) Println(v ...interface{}) {
 func (pl *PrivacyLogger) log(msg string) {
 	pl.mu.Lock()
 	defer pl.mu.Unlock()
-	
+
 	if !pl.enabled {
 		pl.stdLog.Print(msg)
 		return
 	}
-	
+
 	filtered, detected, err := pl.client.FilterText(msg)
 	if err != nil {
 		// Log the error but still output the original message
@@ -61,12 +61,12 @@ func (pl *PrivacyLogger) log(msg string) {
 		pl.stdLog.Print(msg)
 		return
 	}
-	
+
 	if len(detected) > 0 && detected[0] != "fallback" {
 		// Add metadata about what was filtered
 		filtered = fmt.Sprintf("[PII filtered: %v] %s", detected, filtered)
 	}
-	
+
 	pl.stdLog.Print(filtered)
 }
 

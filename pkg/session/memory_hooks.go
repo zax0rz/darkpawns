@@ -125,11 +125,13 @@ func (s *Session) sessionID() string {
 // as a dedicated "memory_bootstrap" message. Called on agent login after sendFullVarDump().
 //
 // Message format:
-//   {"type": "memory_bootstrap", "data": {"block": "<formatted text>", "count": N}}
+//
+//	{"type": "memory_bootstrap", "data": {"block": "<formatted text>", "count": N}}
 //
 // Context budget (from PHASE4-AGENT-PROTOCOL.md):
-//   Default: 15 memories + last 3 session summaries ("medium" tier)
-//   Agents can request more in auth message (future: context_budget field)
+//
+//	Default: 15 memories + last 3 session summaries ("medium" tier)
+//	Agents can request more in auth message (future: context_budget field)
 func (s *Session) SendMemoryBootstrap() {
 	if !s.manager.hasDB {
 		return

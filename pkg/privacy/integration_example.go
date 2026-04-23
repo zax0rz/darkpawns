@@ -13,7 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	
+
 	"github.com/zax0rz/darkpawns/pkg/privacy"
 	"github.com/zax0rz/darkpawns/pkg/session"
 )
@@ -21,13 +21,13 @@ import (
 func main() {
 	// Load privacy filter configuration
 	privacyConfig := privacy.LoadConfig()
-	
+
 	// Create privacy filter client
 	var privacyClient *privacy.Client
 	if privacyConfig.Enabled {
 		filterConfig := privacyConfig.ToFilterConfig()
 		privacyClient = privacy.NewClient(privacyConfig.URL, filterConfig)
-		
+
 		// Test connection
 		if _, _, err := privacyClient.FilterText("test"); err != nil {
 			log.Printf("Warning: Privacy filter unavailable: %v", err)
@@ -39,33 +39,33 @@ func main() {
 		log.Println("Privacy filter disabled")
 		privacyClient = privacy.NewClient("disabled", privacy.DefaultFilterConfig())
 	}
-	
+
 	// Set up global logger with privacy filter
 	privacyLogger := privacy.NewPrivacyLogger(privacyClient, "[DARKPAWNS] ", log.LstdFlags)
-	
+
 	// Replace standard log with privacy-aware logger
 	log.SetOutput(privacyLogger)
-	
+
 	// Create session manager with privacy-aware logging
 	manager := session.NewManager(gameWorld, database)
-	
+
 	// Wrap HTTP handler with privacy middleware
 	handler := privacy.HTTPMiddleware(
 		http.HandlerFunc(manager.HandleWebSocket),
 		privacyClient,
 	)
-	
+
 	http.HandleFunc("/ws", handler)
-	
+
 	// Use privacy-aware logging throughout
 	privacy.Printf("Server starting on port %s", *port)
-	
+
 	// Example: Log player actions with PII filtering
 	logPlayerAction := func(playerName, action, details string) {
 		message := fmt.Sprintf("Player %s %s: %s", playerName, action, details)
 		privacy.Println(message)
 	}
-	
+
 	// In your game logic:
 	logPlayerAction("John Doe", "logged in", "from IP 192.168.1.100")
 	// Output: Player [REDACTED] logged in: from IP 192.168.1.100
@@ -87,9 +87,9 @@ func NewPrivacyAwareSession(sessionID string, client *privacy.Client) *PrivacyAw
 func (s *PrivacyAwareSession) HandleMessage(message string) {
 	// Log incoming message with PII filtering
 	s.wsLogger.LogIncoming(s.sessionID, message)
-	
+
 	// Process message...
-	
+
 	// Log outgoing response
 	response := "Welcome to Dark Pawns!"
 	s.wsLogger.LogOutgoing(s.sessionID, response)
@@ -111,7 +111,7 @@ func (padb *PrivacyAwareDatabase) LogQuery(query string, args ...interface{}) {
 			filteredQuery = strings.ReplaceAll(filteredQuery, str, filtered)
 		}
 	}
-	
+
 	log.Printf("DB Query: %s", filteredQuery)
 }
 
@@ -119,9 +119,9 @@ func (padb *PrivacyAwareDatabase) LogQuery(query string, args ...interface{}) {
 func LogCombatWithPrivacy(client *privacy.Client, attacker, defender string, damage int) {
 	// Only filter player names if configured
 	config := privacy.LoadConfig()
-	
+
 	message := fmt.Sprintf("%s attacks %s for %d damage", attacker, defender, damage)
-	
+
 	if config.FilterPlayerNames {
 		filtered, _, _ := client.FilterText(message)
 		privacy.Println(filtered)

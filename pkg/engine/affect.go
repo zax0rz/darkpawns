@@ -16,7 +16,7 @@ const (
 	AffectWisdom
 	AffectConstitution
 	AffectCharisma
-	
+
 	// Combat modifiers
 	AffectHitRoll
 	AffectDamageRoll
@@ -27,7 +27,7 @@ const (
 	AffectMana
 	AffectMaxMana
 	AffectMovement
-	
+
 	// Status effects
 	AffectBlind
 	AffectInvisible
@@ -61,22 +61,22 @@ const (
 // Affect represents a temporary effect on a character, mob, or object
 type Affect struct {
 	// Core properties
-	ID          string    // Unique identifier for this affect
-	Type        AffectType // What type of affect this is
-	Duration    int       // Duration in ticks (0 = permanent until removed)
-	Magnitude   int       // Magnitude of the effect (positive for buffs, negative for debuffs)
-	
+	ID        string     // Unique identifier for this affect
+	Type      AffectType // What type of affect this is
+	Duration  int        // Duration in ticks (0 = permanent until removed)
+	Magnitude int        // Magnitude of the effect (positive for buffs, negative for debuffs)
+
 	// Flags
-	Flags       uint64    // Bitmask of affect flags
-	
+	Flags uint64 // Bitmask of affect flags
+
 	// Metadata
-	Source      string    // Source of the affect (spell name, item name, etc.)
-	AppliedAt   time.Time // When the affect was applied
-	ExpiresAt   time.Time // When the affect expires (calculated from Duration)
-	
+	Source    string    // Source of the affect (spell name, item name, etc.)
+	AppliedAt time.Time // When the affect was applied
+	ExpiresAt time.Time // When the affect expires (calculated from Duration)
+
 	// Stacking information
-	StackID     string    // ID for stacking purposes (empty = doesn't stack)
-	MaxStacks   int       // Maximum number of stacks (0 = infinite, 1 = doesn't stack)
+	StackID   string // ID for stacking purposes (empty = doesn't stack)
+	MaxStacks int    // Maximum number of stacks (0 = infinite, 1 = doesn't stack)
 }
 
 // NewAffect creates a new affect with the given parameters
@@ -94,14 +94,14 @@ func NewAffect(affectType AffectType, duration int, magnitude int, source string
 		StackID:   "", // Default: doesn't stack
 		MaxStacks: 1,
 	}
-	
+
 	// Set default StackID for certain affect types
 	switch affectType {
 	case AffectPoison, AffectHaste, AffectSlow, AffectRegeneration:
 		affect.StackID = strconv.Itoa(int(affectType))
 		affect.MaxStacks = 1 // Most effects don't stack with themselves
 	}
-	
+
 	return affect
 }
 
@@ -118,13 +118,13 @@ func (a *Affect) Tick() bool {
 	if a.Duration == 0 {
 		return false // Permanent, never expires
 	}
-	
+
 	// Reduce duration
 	a.Duration--
 	if a.Duration <= 0 {
 		return true
 	}
-	
+
 	// Update expiration time
 	a.ExpiresAt = a.ExpiresAt.Add(-time.Second)
 	return false

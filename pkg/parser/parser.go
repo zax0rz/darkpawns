@@ -17,10 +17,10 @@ type World struct {
 func (w *World) Stats() string {
 	return fmt.Sprintf(
 		"World Stats:\n"+
-		"  Rooms: %d\n"+
-		"  Mobs:  %d\n"+
-		"  Objs:  %d\n"+
-		"  Zones: %d",
+			"  Rooms: %d\n"+
+			"  Mobs:  %d\n"+
+			"  Objs:  %d\n"+
+			"  Zones: %d",
 		len(w.Rooms), len(w.Mobs), len(w.Objs), len(w.Zones),
 	)
 }

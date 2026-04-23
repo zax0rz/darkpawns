@@ -10,13 +10,13 @@ import (
 
 // AIRequest represents a request to the AI service.
 type AIRequest struct {
-	ID        string
-	Prompt    string
-	Model     string
-	MaxTokens int
+	ID          string
+	Prompt      string
+	Model       string
+	MaxTokens   int
 	Temperature float64
-	Timestamp time.Time
-	Callback  func(AIResponse, error)
+	Timestamp   time.Time
+	Callback    func(AIResponse, error)
 }
 
 // AIResponse represents a response from the AI service.
@@ -55,7 +55,7 @@ func NewAIBatchProcessor(batchSize int, maxWaitTime time.Duration, processFunc f
 		batch:       make([]AIBatchItem, 0, batchSize),
 		processFunc: processFunc,
 	}
-	
+
 	bp.timer = time.AfterFunc(maxWaitTime, bp.processBatch)
 	return bp
 }
@@ -67,17 +67,17 @@ func (bp *AIBatchProcessor) Submit(req AIRequest) (AIResponse, error) {
 		bp.mu.Unlock()
 		return AIResponse{}, ErrPoolClosed
 	}
-	
+
 	item := AIBatchItem{
 		Request:  req,
 		Response: make(chan AIResponse, 1),
 		Error:    make(chan error, 1),
 	}
-	
+
 	bp.batch = append(bp.batch, item)
-	
+
 	shouldProcess := len(bp.batch) >= bp.batchSize
-	
+
 	if !shouldProcess {
 		// Reset timer
 		bp.timer.Stop()
@@ -87,12 +87,12 @@ func (bp *AIBatchProcessor) Submit(req AIRequest) (AIResponse, error) {
 		batch := bp.batch
 		bp.batch = make([]AIBatchItem, 0, bp.batchSize)
 		bp.mu.Unlock()
-		
+
 		// Process batch
 		if err := bp.processFunc(batch); err != nil {
 			return AIResponse{}, err
 		}
-		
+
 		// Wait for response
 		select {
 		case resp := <-item.Response:
@@ -103,7 +103,7 @@ func (bp *AIBatchProcessor) Submit(req AIRequest) (AIResponse, error) {
 			return AIResponse{}, fmt.Errorf("timeout waiting for AI response")
 		}
 	}
-	
+
 	// Wait for batch processing
 	select {
 	case resp := <-item.Response:
@@ -123,11 +123,11 @@ func (bp *AIBatchProcessor) processBatch() {
 		bp.mu.Unlock()
 		return
 	}
-	
+
 	batch := bp.batch
 	bp.batch = make([]AIBatchItem, 0, bp.batchSize)
 	bp.mu.Unlock()
-	
+
 	// Process batch
 	if err := bp.processFunc(batch); err != nil {
 		// Send errors to all items in batch
@@ -144,15 +144,15 @@ func (bp *AIBatchProcessor) processBatch() {
 func (bp *AIBatchProcessor) Close() error {
 	bp.mu.Lock()
 	defer bp.mu.Unlock()
-	
+
 	bp.closed = true
 	bp.timer.Stop()
-	
+
 	// Process any remaining items
 	if len(bp.batch) > 0 {
 		batch := bp.batch
 		bp.batch = nil
-		
+
 		go func() {
 			if err := bp.processFunc(batch); err != nil {
 				for _, item := range batch {
@@ -164,16 +164,16 @@ func (bp *AIBatchProcessor) Close() error {
 			}
 		}()
 	}
-	
+
 	return nil
 }
 
 // AICache provides caching for AI responses.
 type AICache struct {
-	mu     sync.RWMutex
-	cache  map[string]CacheEntry
+	mu      sync.RWMutex
+	cache   map[string]CacheEntry
 	maxSize int
-	ttl    time.Duration
+	ttl     time.Duration
 }
 
 // CacheEntry represents a cached AI response.
@@ -186,9 +186,9 @@ type CacheEntry struct {
 // NewAICache creates a new AI cache.
 func NewAICache(maxSize int, ttl time.Duration) *AICache {
 	return &AICache{
-		cache:  make(map[string]CacheEntry),
+		cache:   make(map[string]CacheEntry),
 		maxSize: maxSize,
-		ttl:    ttl,
+		ttl:     ttl,
 	}
 }
 
@@ -201,7 +201,7 @@ func (ac *AICache) GenerateCacheKey(req AIRequest) string {
 		"max_tokens": req.MaxTokens,
 		"temp":       req.Temperature,
 	}
-	
+
 	keyBytes, _ := json.Marshal(keyData)
 	return string(keyBytes)
 }
@@ -211,11 +211,11 @@ func (ac *AICache) Get(key string) (AIResponse, bool) {
 	ac.mu.RLock()
 	entry, exists := ac.cache[key]
 	ac.mu.RUnlock()
-	
+
 	if !exists {
 		return AIResponse{}, false
 	}
-	
+
 	// Check TTL
 	if time.Since(entry.Timestamp) > ac.ttl {
 		ac.mu.Lock()
@@ -223,13 +223,13 @@ func (ac *AICache) Get(key string) (AIResponse, bool) {
 		ac.mu.Unlock()
 		return AIResponse{}, false
 	}
-	
+
 	// Update hit count
 	ac.mu.Lock()
 	entry.Hits++
 	ac.cache[key] = entry
 	ac.mu.Unlock()
-	
+
 	return entry.Response, true
 }
 
@@ -237,12 +237,12 @@ func (ac *AICache) Get(key string) (AIResponse, bool) {
 func (ac *AICache) Set(key string, resp AIResponse) {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
-	
+
 	// Evict if cache is full
 	if len(ac.cache) >= ac.maxSize {
 		ac.evictOne()
 	}
-	
+
 	ac.cache[key] = CacheEntry{
 		Response:  resp,
 		Timestamp: time.Now(),
@@ -255,7 +255,7 @@ func (ac *AICache) evictOne() {
 	var oldestKey string
 	var oldestTime time.Time
 	var minHits = int(^uint(0) >> 1) // Max int
-	
+
 	// Simple eviction: find entry with fewest hits
 	for key, entry := range ac.cache {
 		if entry.Hits < minHits {
@@ -267,7 +267,7 @@ func (ac *AICache) evictOne() {
 			oldestTime = entry.Timestamp
 		}
 	}
-	
+
 	if oldestKey != "" {
 		delete(ac.cache, oldestKey)
 	}
@@ -277,28 +277,28 @@ func (ac *AICache) evictOne() {
 func (ac *AICache) Stats() map[string]interface{} {
 	ac.mu.RLock()
 	defer ac.mu.RUnlock()
-	
+
 	stats := make(map[string]interface{})
 	stats["size"] = len(ac.cache)
 	stats["max_size"] = ac.maxSize
 	stats["ttl"] = ac.ttl
-	
+
 	var totalHits int
 	now := time.Now()
 	expiredCount := 0
-	
+
 	for _, entry := range ac.cache {
 		totalHits += entry.Hits
 		if now.Sub(entry.Timestamp) > ac.ttl {
 			expiredCount++
 		}
 	}
-	
+
 	if len(ac.cache) > 0 {
 		stats["avg_hits"] = float64(totalHits) / float64(len(ac.cache))
 	}
 	stats["expired_count"] = expiredCount
-	
+
 	return stats
 }
 
@@ -311,11 +311,11 @@ func (ac *AICache) Clear() {
 
 // AsyncProcessor provides asynchronous AI request processing.
 type AsyncProcessor struct {
-	mu          sync.Mutex
-	workerPool  *WorkerPool
-	cache       *AICache
+	mu             sync.Mutex
+	workerPool     *WorkerPool
+	cache          *AICache
 	batchProcessor *AIBatchProcessor
-	timeout     time.Duration
+	timeout        time.Duration
 }
 
 // NewAsyncProcessor creates a new async AI processor.
@@ -325,10 +325,10 @@ func NewAsyncProcessor(workers int, cacheSize int, cacheTTL time.Duration, timeo
 		cache:      NewAICache(cacheSize, cacheTTL),
 		timeout:    timeout,
 	}
-	
+
 	// Initialize batch processor
 	ap.batchProcessor = NewAIBatchProcessor(10, 100*time.Millisecond, ap.processBatch)
-	
+
 	return ap
 }
 
@@ -340,22 +340,22 @@ func (ap *AsyncProcessor) Process(req AIRequest, callback func(AIResponse, error
 		callback(resp, nil)
 		return nil
 	}
-	
+
 	// Submit to worker pool for async processing
 	return ap.workerPool.Submit(func() {
 		_, cancel := context.WithTimeout(context.Background(), ap.timeout)
 		defer cancel()
-		
+
 		// Process through batch processor
 		resp, err := ap.batchProcessor.Submit(req)
 		if err != nil {
 			callback(AIResponse{}, err)
 			return
 		}
-		
+
 		// Cache the response
 		ap.cache.Set(cacheKey, resp)
-		
+
 		callback(resp, nil)
 	})
 }
@@ -372,13 +372,13 @@ func (ap *AsyncProcessor) processBatch(batch []AIBatchItem) error {
 			Latency: 100 * time.Millisecond,
 			Model:   item.Request.Model,
 		}
-		
+
 		select {
 		case item.Response <- resp:
 		default:
 		}
 	}
-	
+
 	return nil
 }
 
@@ -386,10 +386,10 @@ func (ap *AsyncProcessor) processBatch(batch []AIBatchItem) error {
 func (ap *AsyncProcessor) Close() error {
 	ap.mu.Lock()
 	defer ap.mu.Unlock()
-	
+
 	ap.batchProcessor.Close()
 	ap.workerPool.Close()
-	
+
 	return nil
 }
 

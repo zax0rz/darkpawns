@@ -14,15 +14,15 @@ import (
 
 // Manager handles all moderation operations.
 type Manager struct {
-	mu           sync.RWMutex
-	db           *sql.DB
-	hasDB        bool
-	
+	mu    sync.RWMutex
+	db    *sql.DB
+	hasDB bool
+
 	// In-memory caches for performance
 	activePenalties map[string][]PlayerPenalty // player -> penalties
 	wordFilters     []WordFilterEntry
 	spamConfig      SpamDetectionConfig
-	
+
 	// Spam tracking
 	messageHistory map[string][]time.Time // player -> timestamps of recent messages
 }
@@ -38,10 +38,10 @@ func NewManager(db *sql.DB) *Manager {
 		spamConfig: SpamDetectionConfig{
 			MessagesPerMinute: 10,
 			DuplicateWindow:   5 * time.Second,
-			Action:           FilterActionWarn,
+			Action:            FilterActionWarn,
 		},
 	}
-	
+
 	if m.hasDB {
 		if err := m.createTables(); err != nil {
 			log.Printf("Warning: Failed to create moderation tables: %v", err)
@@ -49,10 +49,10 @@ func NewManager(db *sql.DB) *Manager {
 		m.loadActivePenalties()
 		m.loadWordFilters()
 	}
-	
+
 	// Start cleanup goroutine
 	go m.cleanupRoutine()
-	
+
 	return m
 }
 
@@ -72,7 +72,7 @@ func (m *Manager) createTables() error {
 			reviewed_at TIMESTAMP,
 			resolution TEXT
 		)`,
-		
+
 		`CREATE TABLE IF NOT EXISTS admin_log (
 			id SERIAL PRIMARY KEY,
 			admin VARCHAR(32) NOT NULL,
@@ -83,7 +83,7 @@ func (m *Manager) createTables() error {
 			timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			ip_address VARCHAR(45)
 		)`,
-		
+
 		`CREATE TABLE IF NOT EXISTS player_penalties (
 			player_name VARCHAR(32) NOT NULL,
 			penalty_type VARCHAR(32) NOT NULL,
@@ -93,7 +93,7 @@ func (m *Manager) createTables() error {
 			issued_by VARCHAR(32) NOT NULL,
 			PRIMARY KEY (player_name, penalty_type, issued_at)
 		)`,
-		
+
 		`CREATE TABLE IF NOT EXISTS word_filters (
 			id SERIAL PRIMARY KEY,
 			pattern VARCHAR(255) NOT NULL,
@@ -103,13 +103,13 @@ func (m *Manager) createTables() error {
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)`,
 	}
-	
+
 	for _, query := range queries {
 		if _, err := m.db.Exec(query); err != nil {
 			return fmt.Errorf("create table: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -118,7 +118,7 @@ func (m *Manager) loadActivePenalties() {
 	if !m.hasDB {
 		return
 	}
-	
+
 	rows, err := m.db.Query(`
 		SELECT player_name, penalty_type, issued_at, expires_at, reason, issued_by
 		FROM player_penalties
@@ -129,25 +129,25 @@ func (m *Manager) loadActivePenalties() {
 		return
 	}
 	defer rows.Close()
-	
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	m.activePenalties = make(map[string][]PlayerPenalty)
-	
+
 	for rows.Next() {
 		var p PlayerPenalty
 		var expiresAt sql.NullTime
-		
+
 		if err := rows.Scan(&p.PlayerName, &p.PenaltyType, &p.IssuedAt, &expiresAt, &p.Reason, &p.IssuedBy); err != nil {
 			log.Printf("Failed to scan penalty: %v", err)
 			continue
 		}
-		
+
 		if expiresAt.Valid {
 			p.ExpiresAt = &expiresAt.Time
 		}
-		
+
 		m.activePenalties[p.PlayerName] = append(m.activePenalties[p.PlayerName], p)
 	}
 }
@@ -157,7 +157,7 @@ func (m *Manager) loadWordFilters() {
 	if !m.hasDB {
 		return
 	}
-	
+
 	rows, err := m.db.Query(`
 		SELECT id, pattern, is_regex, action, created_by, created_at
 		FROM word_filters
@@ -168,19 +168,19 @@ func (m *Manager) loadWordFilters() {
 		return
 	}
 	defer rows.Close()
-	
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	m.wordFilters = make([]WordFilterEntry, 0)
-	
+
 	for rows.Next() {
 		var wf WordFilterEntry
 		if err := rows.Scan(&wf.ID, &wf.Pattern, &wf.IsRegex, &wf.Action, &wf.CreatedBy, &wf.CreatedAt); err != nil {
 			log.Printf("Failed to scan word filter: %v", err)
 			continue
 		}
-		
+
 		m.wordFilters = append(m.wordFilters, wf)
 	}
 }
@@ -189,7 +189,7 @@ func (m *Manager) loadWordFilters() {
 func (m *Manager) cleanupRoutine() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
-	
+
 	for range ticker.C {
 		m.cleanupExpiredPenalties()
 		m.cleanupOldMessageHistory()
@@ -200,9 +200,9 @@ func (m *Manager) cleanupRoutine() {
 func (m *Manager) cleanupExpiredPenalties() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	now := time.Now()
-	
+
 	// Clean in-memory cache
 	for player, penalties := range m.activePenalties {
 		var active []PlayerPenalty
@@ -213,7 +213,7 @@ func (m *Manager) cleanupExpiredPenalties() {
 		}
 		m.activePenalties[player] = active
 	}
-	
+
 	// Clean database if available
 	if m.hasDB {
 		_, err := m.db.Exec(`
@@ -230,9 +230,9 @@ func (m *Manager) cleanupExpiredPenalties() {
 func (m *Manager) cleanupOldMessageHistory() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	cutoff := time.Now().Add(-5 * time.Minute)
-	
+
 	for player, timestamps := range m.messageHistory {
 		var recent []time.Time
 		for _, ts := range timestamps {
@@ -241,7 +241,7 @@ func (m *Manager) cleanupOldMessageHistory() {
 			}
 		}
 		m.messageHistory[player] = recent
-		
+
 		// Remove empty entries
 		if len(recent) == 0 {
 			delete(m.messageHistory, player)
@@ -254,20 +254,20 @@ func (m *Manager) cleanupOldMessageHistory() {
 func (m *Manager) CheckMessage(playerName, message string) (string, FilterAction, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	// Check for active mute penalty
 	if m.hasPenalty(playerName, ActionMute) {
 		return "", FilterActionBlock, true
 	}
-	
+
 	// Check word filters
 	filteredMsg := message
 	actionTaken := FilterActionLog // Default to just logging
-	
+
 	for _, wf := range m.wordFilters {
 		if wf.matches(message) {
 			actionTaken = wf.Action
-			
+
 			switch wf.Action {
 			case FilterActionCensor:
 				filteredMsg = wf.censor(message)
@@ -280,17 +280,17 @@ func (m *Manager) CheckMessage(playerName, message string) (string, FilterAction
 				// Just log, no modification
 				filteredMsg = message
 			}
-			
+
 			// For now, apply first matching filter
 			break
 		}
 	}
-	
+
 	// Check for spam
 	if m.isSpam(playerName) {
 		return filteredMsg, m.spamConfig.Action, m.spamConfig.Action == FilterActionBlock
 	}
-	
+
 	return filteredMsg, actionTaken, false
 }
 
@@ -298,7 +298,7 @@ func (m *Manager) CheckMessage(playerName, message string) (string, FilterAction
 func (m *Manager) RecordMessage(playerName string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	now := time.Now()
 	m.messageHistory[playerName] = append(m.messageHistory[playerName], now)
 }
@@ -309,14 +309,14 @@ func (m *Manager) hasPenalty(playerName string, penaltyType AdminAction) bool {
 	if !exists {
 		return false
 	}
-	
+
 	now := time.Now()
 	for _, p := range penalties {
 		if p.PenaltyType == penaltyType && (p.ExpiresAt == nil || p.ExpiresAt.After(now)) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -326,17 +326,17 @@ func (m *Manager) isSpam(playerName string) bool {
 	if !exists {
 		return false
 	}
-	
+
 	now := time.Now()
 	oneMinuteAgo := now.Add(-time.Minute)
-	
+
 	count := 0
 	for _, ts := range timestamps {
 		if ts.After(oneMinuteAgo) {
 			count++
 		}
 	}
-	
+
 	return count > m.spamConfig.MessagesPerMinute
 }
 
@@ -350,7 +350,7 @@ func (wf *WordFilterEntry) matches(message string) bool {
 		}
 		return re.MatchString(strings.ToLower(message))
 	}
-	
+
 	return strings.Contains(strings.ToLower(message), strings.ToLower(wf.Pattern))
 }
 
@@ -365,6 +365,6 @@ func (wf *WordFilterEntry) censor(message string) string {
 			return strings.Repeat("*", len(match))
 		})
 	}
-	
+
 	return strings.ReplaceAll(message, wf.Pattern, strings.Repeat("*", len(wf.Pattern)))
 }

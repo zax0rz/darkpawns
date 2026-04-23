@@ -19,18 +19,18 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 	}
 
 	return &PlayerRecord{
-		ID:        p.ID,
-		Name:      p.Name,
-		RoomVNum:  p.GetRoom(),
-		Level:     p.Level,
-		Exp:       p.Exp,
-		Health:    p.Health,
-		MaxHealth: p.MaxHealth,
-		Mana:      p.Mana,
-		MaxMana:   p.MaxMana,
-		Strength:  p.Strength,
-		Class:     p.Class,
-		Race:      p.Race,
+		ID:         p.ID,
+		Name:       p.Name,
+		RoomVNum:   p.GetRoom(),
+		Level:      p.Level,
+		Exp:        p.Exp,
+		Health:     p.Health,
+		MaxHealth:  p.MaxHealth,
+		Mana:       p.Mana,
+		MaxMana:    p.MaxMana,
+		Strength:   p.Strength,
+		Class:      p.Class,
+		Race:       p.Race,
 		StatStr:    p.Stats.Str,
 		StatStrAdd: p.Stats.StrAdd,
 		StatInt:    p.Stats.Int,
@@ -58,14 +58,14 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 		Cha:    r.StatCha,
 	}
 	p.Strength = r.StatStr
-	p.Level    = r.Level
-	p.Exp      = r.Exp
-	p.Health   = r.Health
+	p.Level = r.Level
+	p.Exp = r.Exp
+	p.Health = r.Health
 	p.MaxHealth = r.MaxHealth
-	p.Mana     = r.Mana
-	p.MaxMana  = r.MaxMana
+	p.Mana = r.Mana
+	p.MaxMana = r.MaxMana
 	p.SetRoom(r.RoomVNum)
-	p.ID       = r.ID
+	p.ID = r.ID
 
 	// Restore inventory from vnums
 	var invVnums []int

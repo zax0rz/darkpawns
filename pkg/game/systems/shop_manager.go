@@ -12,22 +12,22 @@ import (
 
 // ShopManager manages all shops in the game world.
 type ShopManager struct {
-	mu    sync.RWMutex
-	shops map[int]*Shop // key: shop ID
+	mu     sync.RWMutex
+	shops  map[int]*Shop // key: shop ID
 	nextID int
 
 	// NPC VNum to Shop ID mapping
-	npcToShop map[int]int // key: NPC VNum, value: shop ID
+	npcToShop  map[int]int   // key: NPC VNum, value: shop ID
 	roomToShop map[int][]int // key: room VNum, value: list of shop IDs
 }
 
 // NewShopManager creates a new shop manager.
 func NewShopManager() *ShopManager {
 	return &ShopManager{
-		shops:     make(map[int]*Shop),
-		npcToShop: make(map[int]int),
+		shops:      make(map[int]*Shop),
+		npcToShop:  make(map[int]int),
 		roomToShop: make(map[int][]int),
-		nextID:    1,
+		nextID:     1,
 	}
 }
 
@@ -39,10 +39,10 @@ func (sm *ShopManager) CreateShopConcrete(vnum int, name string, roomVNum int) *
 	shop := NewShop(sm.nextID, vnum, name, roomVNum)
 	sm.shops[shop.ID] = shop
 	sm.npcToShop[vnum] = shop.ID
-	
+
 	// Add to room mapping
 	sm.roomToShop[roomVNum] = append(sm.roomToShop[roomVNum], shop.ID)
-	
+
 	sm.nextID++
 	return shop
 }
@@ -65,7 +65,7 @@ func (sm *ShopManager) GetShopByNPCConcrete(vnum int) (*Shop, bool) {
 	if !exists {
 		return nil, false
 	}
-	
+
 	shop, exists := sm.shops[shopID]
 	return shop, exists
 }
@@ -101,7 +101,7 @@ func (sm *ShopManager) RemoveShop(id int) bool {
 
 	// Remove from NPC mapping
 	delete(sm.npcToShop, shop.VNum)
-	
+
 	// Remove from room mapping
 	if shopIDs, exists := sm.roomToShop[shop.RoomVNum]; exists {
 		for i, shopID := range shopIDs {
@@ -115,7 +115,7 @@ func (sm *ShopManager) RemoveShop(id int) bool {
 			delete(sm.roomToShop, shop.RoomVNum)
 		}
 	}
-	
+
 	// Remove from shops map
 	delete(sm.shops, id)
 	return true
@@ -141,14 +141,13 @@ func (sm *ShopManager) ProcessTransaction(shop *Shop, player *game.Player, item 
 
 	// Check if shop is open (simplified - always open for now)
 	// In a real implementation, we'd check game time
-	
+
 	if isBuy {
 		// Player buying from shop
 		return sm.processBuy(shop, player, item)
-	} else {
-		// Player selling to shop
-		return sm.processSell(shop, player, item)
 	}
+	// Player selling to shop
+	return sm.processSell(shop, player, item)
 }
 
 // processBuy handles a player buying an item from a shop.
@@ -157,27 +156,27 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 	if !shop.RemoveItem(item) {
 		return false, "That item is not for sale."
 	}
-	
+
 	// Calculate price
 	price := shop.CalculateSellPrice(item)
-	
+
 	// Check if player has enough gold
 	if player.Gold < price {
 		// Put item back in shop
 		shop.AddItem(item)
 		return false, fmt.Sprintf("You need %d gold to buy that.", price)
 	}
-	
+
 	// Check if player has inventory space
 	if player.Inventory.IsFull() {
 		// Put item back in shop
 		shop.AddItem(item)
 		return false, "Your inventory is full."
 	}
-	
+
 	// Transfer gold
 	player.Gold -= price
-	
+
 	// Transfer item to player
 	item.SetCarrier(nil) // Remove from shop carrier
 	// Type assert to *game.ObjectInstance for Inventory methods
@@ -194,7 +193,7 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 		shop.AddItem(item)
 		return false, fmt.Sprintf("Failed to add item to inventory: %v", err)
 	}
-	
+
 	return true, fmt.Sprintf("You buy %s for %d gold.", item.GetShortDesc(), price)
 }
 
@@ -204,7 +203,7 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 	if !shop.CanBuyType(item.GetTypeFlag()) {
 		return false, "The shopkeeper isn't interested in that type of item."
 	}
-	
+
 	// Check if item is in player's inventory
 	// Type assert to *game.ObjectInstance for Inventory methods
 	gameItem, ok := item.(*game.ObjectInstance)
@@ -214,23 +213,23 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 	if !player.Inventory.RemoveItem(gameItem) {
 		return false, "You don't have that item."
 	}
-	
+
 	// Calculate price
 	price := shop.CalculateBuyPrice(item)
-	
+
 	// Check if shop has enough gold (shops have unlimited gold for now)
 	// In a real implementation, shops would have limited funds
-	
+
 	// Check if shop has inventory space
 	if len(shop.GetInventory()) >= shop.MaxItems {
 		// Return item to player
 		player.Inventory.AddItem(gameItem)
 		return false, "The shop's inventory is full."
 	}
-	
+
 	// Transfer gold
 	player.Gold += price
-	
+
 	// Transfer item to shop
 	item.SetCarrier(nil) // Remove from player carrier
 	if !shop.AddItem(item) {
@@ -239,7 +238,7 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 		player.Inventory.AddItem(gameItem)
 		return false, "Failed to add item to shop inventory."
 	}
-	
+
 	return true, fmt.Sprintf("You sell %s for %d gold.", item.GetShortDesc(), price)
 }
 
@@ -248,7 +247,7 @@ func (sm *ShopManager) ProcessRepair(shop *Shop, player *game.Player, item commo
 	if shop == nil || player == nil || item == nil {
 		return false, "Invalid repair parameters."
 	}
-	
+
 	// Check if item is in player's inventory or equipment
 	// Type assert to *game.ObjectInstance for Inventory methods
 	gameItem, ok := item.(*game.ObjectInstance)
@@ -261,30 +260,30 @@ func (sm *ShopManager) ProcessRepair(shop *Shop, player *game.Player, item commo
 		// In a real implementation, we'd check equipment too
 		return false, "You don't have that item."
 	}
-	
+
 	// Calculate cost
 	cost := shop.CalculateRepairCost(item, damage)
-	
+
 	// Check if player has enough gold
 	if player.Gold < cost {
 		// Return item to player
 		player.Inventory.AddItem(gameItem)
 		return false, fmt.Sprintf("You need %d gold to repair that.", cost)
 	}
-	
+
 	// Check repair skill success
 	// In a real implementation, we'd use shop.RepairSkill
 	// For now, assume 100% success
-	
+
 	// Charge player
 	player.Gold -= cost
-	
+
 	// Repair item (in a real implementation, we'd update item condition)
 	// For now, we just return the item
-	
+
 	// Return item to player
 	player.Inventory.AddItem(gameItem)
-	
+
 	return true, fmt.Sprintf("You repair %s for %d gold.", item.GetShortDesc(), cost)
 }
 
@@ -293,7 +292,7 @@ func (sm *ShopManager) ProcessIdentify(shop *Shop, player *game.Player, item com
 	if shop == nil || player == nil || item == nil {
 		return false, "Invalid identify parameters."
 	}
-	
+
 	// Check if item is in player's inventory
 	// Type assert to *game.ObjectInstance for Inventory methods
 	gameItem, ok := item.(*game.ObjectInstance)
@@ -303,30 +302,30 @@ func (sm *ShopManager) ProcessIdentify(shop *Shop, player *game.Player, item com
 	if !player.Inventory.RemoveItem(gameItem) {
 		return false, "You don't have that item."
 	}
-	
+
 	// Calculate cost
 	cost := shop.CalculateIdentifyCost(item)
-	
+
 	// Check if player has enough gold
 	if player.Gold < cost {
 		// Return item to player
 		player.Inventory.AddItem(gameItem)
 		return false, fmt.Sprintf("You need %d gold to identify that.", cost)
 	}
-	
+
 	// Check identify skill success
 	// In a real implementation, we'd use shop.IdentifySkill
 	// For now, assume 100% success
-	
+
 	// Charge player
 	player.Gold -= cost
-	
+
 	// Identify item (in a real implementation, we'd reveal hidden properties)
 	// For now, we just return the item
-	
+
 	// Return item to player
 	player.Inventory.AddItem(gameItem)
-	
+
 	return true, fmt.Sprintf("You identify %s for %d gold.", item.GetShortDesc(), cost)
 }
 

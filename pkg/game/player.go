@@ -30,7 +30,7 @@ type Player struct {
 	Class int
 	Race  int
 	Stats CharStats
-	
+
 	// Combat stats
 	THAC0      int // To Hit Armor Class 0
 	AC         int // Armor Class
@@ -38,8 +38,8 @@ type Player struct {
 	Position   int // Current position (standing, fighting, etc.)
 
 	// Inventory and equipment
-	Inventory  *Inventory
-	Equipment  *Equipment
+	Inventory *Inventory
+	Equipment *Equipment
 
 	// Position
 	RoomVNum int // Current room
@@ -47,7 +47,7 @@ type Player struct {
 	// State
 	ConnectedAt time.Time
 	LastActive  time.Time
-	Fighting   string // Name of character being fought
+	Fighting    string // Name of character being fought
 
 	// Alignment: -1000 (evil) to +1000 (good), 0 = neutral
 	// Source: structs.h:930, utils.h:454-456
@@ -77,34 +77,34 @@ type Player struct {
 func NewPlayer(id int, name string, roomVNum int) *Player {
 	now := time.Now()
 	player := &Player{
-		ID:          id,
-		Name:        name,
-		RoomVNum:    roomVNum,
-		Health:      100,
-		MaxHealth:   100,
-		Mana:        100,
-		MaxMana:     100,
-		Level:       1,
-		Exp:         0,
-		Strength:    10, // Default strength
-		THAC0:       20, // Default THAC0
-		AC:          10, // Default AC
-		DamageRoll:  combat.DiceRoll{Num: 1, Sides: 4, Plus: 0}, // 1d4
-		Position:    8, // POS_STANDING
-		ConnectedAt: now,
-		LastActive:  now,
-		Fighting:    "", // Not fighting anyone
-		Send:        make(chan []byte, 256),
-		Alignment:   0, // Neutral by default
+		ID:           id,
+		Name:         name,
+		RoomVNum:     roomVNum,
+		Health:       100,
+		MaxHealth:    100,
+		Mana:         100,
+		MaxMana:      100,
+		Level:        1,
+		Exp:          0,
+		Strength:     10,                                         // Default strength
+		THAC0:        20,                                         // Default THAC0
+		AC:           10,                                         // Default AC
+		DamageRoll:   combat.DiceRoll{Num: 1, Sides: 4, Plus: 0}, // 1d4
+		Position:     8,                                          // POS_STANDING
+		ConnectedAt:  now,
+		LastActive:   now,
+		Fighting:     "", // Not fighting anyone
+		Send:         make(chan []byte, 256),
+		Alignment:    0, // Neutral by default
 		SkillManager: engine.NewSkillManager(),
 	}
-	
+
 	// Initialize inventory and equipment
 	player.Inventory = NewInventory()
 	player.Equipment = NewEquipment()
 	// Set default capacity (will be updated when stats are set)
 	player.Inventory.SetCapacity(10, 1) // Default DEX=10, level=1
-	
+
 	return player
 }
 
@@ -138,28 +138,28 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	// Set inventory capacity based on DEX and level
 	// Formula: 5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1)
 	p.Inventory.SetCapacity(p.Stats.Dex, p.Level)
-	
+
 	// Initialize default skills
 	p.SkillManager.InitializeDefaultSkills()
-	
+
 	return p
 }
 
 // thaco local reference for player creation
 // Full table lives in pkg/combat/formulas.go
 var thaco = [12][41]int{
-	{100,20,20,20,19,19,19,18,18,18,17,17,17,16,16,16,15,15,15,14,14,14,13,13,13,12,12,12,11,11,11,10,10,10,9,9,9,9,9,9,9},
-	{100,20,20,20,18,18,18,16,16,16,14,14,14,12,12,12,10,10,10,8,8,8,6,6,6,4,4,4,2,2,2,1,1,1,1,1,1,1,1,1,1},
-	{100,20,20,19,19,18,18,17,17,16,16,15,15,14,13,13,12,12,11,11,10,10,9,9,8,8,7,7,6,6,5,5,4,4,3,3,3,3,3,3,3},
-	{100,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-	{100,20,20,20,19,19,19,18,18,18,17,17,17,16,16,16,15,15,15,14,14,14,13,13,13,12,12,12,11,11,11,10,10,10,9,9,9,9,9,9,9},
-	{100,20,20,20,18,18,18,16,16,16,14,14,14,12,12,12,10,10,10,8,8,8,6,6,6,4,4,4,2,2,2,1,1,1,1,1,1,1,1,1,1},
-	{100,20,20,19,19,18,18,17,17,16,16,15,15,14,13,13,12,12,11,11,10,10,9,9,8,8,7,7,6,6,5,5,4,4,3,3,3,3,3,3,3},
-	{100,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-	{100,20,20,19,19,18,18,17,17,16,16,15,15,14,13,13,12,12,11,11,10,10,9,9,8,8,7,7,6,6,5,5,4,4,3,3,3,3,3,3,3},
-	{100,20,20,19,18,18,17,16,16,16,15,15,14,14,14,13,12,12,10,10,9,9,8,8,7,7,6,5,5,4,4,3,3,3,2,2,1,1,1,1,1},
-	{100,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-	{100,20,20,20,19,19,19,18,18,18,17,17,17,16,16,16,15,15,15,14,14,14,13,13,13,12,12,12,11,11,11,10,10,10,9,9,9,9,9,9,9},
+	{100, 20, 20, 20, 19, 19, 19, 18, 18, 18, 17, 17, 17, 16, 16, 16, 15, 15, 15, 14, 14, 14, 13, 13, 13, 12, 12, 12, 11, 11, 11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9},
+	{100, 20, 20, 20, 18, 18, 18, 16, 16, 16, 14, 14, 14, 12, 12, 12, 10, 10, 10, 8, 8, 8, 6, 6, 6, 4, 4, 4, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{100, 20, 20, 19, 19, 18, 18, 17, 17, 16, 16, 15, 15, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 3, 3, 3, 3, 3},
+	{100, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{100, 20, 20, 20, 19, 19, 19, 18, 18, 18, 17, 17, 17, 16, 16, 16, 15, 15, 15, 14, 14, 14, 13, 13, 13, 12, 12, 12, 11, 11, 11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9},
+	{100, 20, 20, 20, 18, 18, 18, 16, 16, 16, 14, 14, 14, 12, 12, 12, 10, 10, 10, 8, 8, 8, 6, 6, 6, 4, 4, 4, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{100, 20, 20, 19, 19, 18, 18, 17, 17, 16, 16, 15, 15, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 3, 3, 3, 3, 3},
+	{100, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{100, 20, 20, 19, 19, 18, 18, 17, 17, 16, 16, 15, 15, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 3, 3, 3, 3, 3},
+	{100, 20, 20, 19, 18, 18, 17, 16, 16, 16, 15, 15, 14, 14, 14, 13, 12, 12, 10, 10, 9, 9, 8, 8, 7, 7, 6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 1, 1, 1, 1, 1},
+	{100, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{100, 20, 20, 20, 19, 19, 19, 18, 18, 18, 17, 17, 17, 16, 16, 16, 15, 15, 15, 14, 14, 14, 13, 13, 13, 12, 12, 12, 11, 11, 11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9},
 }
 
 // UpdateActivity marks the player as active.

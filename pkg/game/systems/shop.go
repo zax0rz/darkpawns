@@ -16,10 +16,10 @@ type Shop struct {
 	mu sync.RWMutex
 
 	// Shop identification
-	ID        int
-	VNum      int // VNum of the NPC that runs this shop
-	Name      string
-	RoomVNum  int // Room where the shop is located
+	ID       int
+	VNum     int // VNum of the NPC that runs this shop
+	Name     string
+	RoomVNum int // Room where the shop is located
 
 	// Item types bought/sold
 	ItemTypes []int // Object type flags that this shop deals in
@@ -30,10 +30,10 @@ type Shop struct {
 	SellMultiplier int // Percentage of base cost the shop charges (e.g., 150 = 150%)
 
 	// Repair and identification
-	RepairSkill    int // 0-100 skill level for repairing items
-	IdentifySkill  int // 0-100 skill level for identifying items
-	RepairCost     int // Base cost per repair point
-	IdentifyCost   int // Base cost per identification
+	RepairSkill   int // 0-100 skill level for repairing items
+	IdentifySkill int // 0-100 skill level for identifying items
+	RepairCost    int // Base cost per repair point
+	IdentifyCost  int // Base cost per identification
 
 	// Shop inventory
 	Inventory []common.ObjectInstance
@@ -58,17 +58,17 @@ func NewShop(id, vnum int, name string, roomVNum int) *Shop {
 		RoomVNum:        roomVNum,
 		ItemTypes:       make([]int, 0),
 		BuyTypes:        make([]int, 0),
-		BuyMultiplier:   50,    // Default: pays 50% of item value
-		SellMultiplier:  150,   // Default: sells at 150% of item value
-		RepairSkill:     75,    // Default: 75% repair skill
-		IdentifySkill:   90,    // Default: 90% identify skill
-		RepairCost:      10,    // Default: 10 gold per repair point
-		IdentifyCost:    5,     // Default: 5 gold per identification
+		BuyMultiplier:   50,  // Default: pays 50% of item value
+		SellMultiplier:  150, // Default: sells at 150% of item value
+		RepairSkill:     75,  // Default: 75% repair skill
+		IdentifySkill:   90,  // Default: 90% identify skill
+		RepairCost:      10,  // Default: 10 gold per repair point
+		IdentifyCost:    5,   // Default: 5 gold per identification
 		Inventory:       make([]common.ObjectInstance, 0),
-		MaxItems:        50,    // Default: max 50 items in stock
-		RestockInterval: 100,   // Default: restock every 100 game ticks
-		RestockPercent:  30,    // Default: 30% chance to restock each item
-		OpenHour:        0,     // Always open by default
+		MaxItems:        50,  // Default: max 50 items in stock
+		RestockInterval: 100, // Default: restock every 100 game ticks
+		RestockPercent:  30,  // Default: 30% chance to restock each item
+		OpenHour:        0,   // Always open by default
 		CloseHour:       23,
 	}
 }
@@ -113,12 +113,12 @@ func (s *Shop) CalculateBuyPrice(item common.ObjectInstance) int {
 	baseCost := item.GetCost()
 	// Apply buy multiplier (percentage)
 	price := (baseCost * s.BuyMultiplier) / 100
-	
+
 	// Minimum price of 1 gold
 	if price < 1 {
 		price = 1
 	}
-	
+
 	return price
 }
 
@@ -130,12 +130,12 @@ func (s *Shop) CalculateSellPrice(item common.ObjectInstance) int {
 	baseCost := item.GetCost()
 	// Apply sell multiplier (percentage)
 	price := (baseCost * s.SellMultiplier) / 100
-	
+
 	// Minimum price of 1 gold
 	if price < 1 {
 		price = 1
 	}
-	
+
 	return price
 }
 
@@ -146,18 +146,18 @@ func (s *Shop) CalculateRepairCost(item common.ObjectInstance, damage int) int {
 
 	// Base cost per damage point
 	cost := damage * s.RepairCost
-	
+
 	// Apply item value modifier (more valuable items cost more to repair)
 	baseCost := item.GetCost()
 	if baseCost > 1000 {
 		cost = (cost * baseCost) / 1000
 	}
-	
+
 	// Minimum cost of 1 gold
 	if cost < 1 {
 		cost = 1
 	}
-	
+
 	return cost
 }
 
@@ -168,18 +168,18 @@ func (s *Shop) CalculateIdentifyCost(item common.ObjectInstance) int {
 
 	// Base identification cost
 	cost := s.IdentifyCost
-	
+
 	// Apply item value modifier (more valuable items cost more to identify)
 	baseCost := item.GetCost()
 	if baseCost > 1000 {
 		cost = (cost * baseCost) / 1000
 	}
-	
+
 	// Minimum cost of 1 gold
 	if cost < 1 {
 		cost = 1
 	}
-	
+
 	return cost
 }
 
@@ -191,7 +191,7 @@ func (s *Shop) AddItem(item common.ObjectInstance) bool {
 	if len(s.Inventory) >= s.MaxItems {
 		return false
 	}
-	
+
 	// Set item location to shop
 	item.SetRoomVNum(-1)
 	item.SetCarrier(s)
@@ -267,10 +267,9 @@ func (s *Shop) IsOpen(currentHour int) bool {
 	if s.OpenHour <= s.CloseHour {
 		// Normal hours (e.g., 9 AM to 5 PM)
 		return currentHour >= s.OpenHour && currentHour < s.CloseHour
-	} else {
-		// Overnight hours (e.g., 8 PM to 4 AM)
-		return currentHour >= s.OpenHour || currentHour < s.CloseHour
 	}
+	// Overnight hours (e.g., 8 PM to 4 AM)
+	return currentHour >= s.OpenHour || currentHour < s.CloseHour
 }
 
 // Restock attempts to restock the shop's inventory.

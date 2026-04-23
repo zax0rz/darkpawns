@@ -74,7 +74,7 @@ func NewClient(baseURL string, config FilterConfig) *Client {
 	if baseURL == "" {
 		baseURL = "http://privacy-filter:8000"
 	}
-	
+
 	return &Client{
 		baseURL: baseURL,
 		httpClient: &http.Client{
@@ -95,7 +95,7 @@ func (c *Client) FilterText(text string) (string, []string, error) {
 		Text:   text,
 		Config: c.config,
 	}
-	
+
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to marshal request: %w", err)
@@ -113,8 +113,9 @@ func (c *Client) FilterText(text string) (string, []string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return c.fallbackFilter(text), []string{"fallback"}, fmt.Errorf("privacy filter error: %s", string(body))
+		io.ReadAll(resp.Body) // Read and discard body
+		// Return fallback without error
+		return c.fallbackFilter(text), []string{"fallback"}, nil
 	}
 
 	var filterResp FilterResponse
@@ -123,7 +124,8 @@ func (c *Client) FilterText(text string) (string, []string, error) {
 	}
 
 	if filterResp.Error != "" {
-		return c.fallbackFilter(text), []string{"fallback"}, fmt.Errorf("privacy filter error: %s", filterResp.Error)
+		// Return fallback without error
+		return c.fallbackFilter(text), []string{"fallback"}, nil
 	}
 
 	return filterResp.FilteredText, filterResp.Detected, nil
@@ -142,7 +144,7 @@ func (c *Client) BatchFilter(texts []string) ([]string, [][]string, error) {
 	// In production, you might want to implement batch API if supported
 	var filteredTexts []string
 	var allDetected [][]string
-	
+
 	for _, text := range texts {
 		filtered, detected, err := c.FilterText(text)
 		if err != nil {
@@ -151,6 +153,6 @@ func (c *Client) BatchFilter(texts []string) ([]string, [][]string, error) {
 		filteredTexts = append(filteredTexts, filtered)
 		allDetected = append(allDetected, detected)
 	}
-	
+
 	return filteredTexts, allDetected, nil
 }

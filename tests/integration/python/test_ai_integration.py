@@ -61,6 +61,7 @@ class MockAIService:
             'relationships': []
         }
 
+@pytest.mark.skipif(not HAS_GO_AI, reason="Go AI modules not available")
 class TestAIIntegration:
     """Test AI system integration."""
     
@@ -174,6 +175,7 @@ class TestAIIntegration:
         assert context.memory_context == "Different memory"
         assert len(context.recent_events) == 2
 
+@pytest.mark.skipif(not HAS_GO_AI, reason="Go AI modules not available")
 class TestBehaviorSystem:
     """Test behavior system integration."""
     
@@ -398,6 +400,7 @@ class TestBehaviorSystem:
         
         assert selected is None
 
+@pytest.mark.skipif(not HAS_GO_AI, reason="Go AI modules not available")
 class TestAIMemoryIntegration:
     """Test AI memory system integration."""
     
@@ -536,6 +539,7 @@ class TestAIMemoryIntegration:
         forest_events = [e for e in context['events'] if 'forest' in e['description'].lower()]
         assert len(forest_events) > 0
 
+@pytest.mark.skipif(not HAS_GO_AI, reason="Go AI modules not available")
 class TestAIDecisionMaking:
     """Test AI decision making integration."""
     

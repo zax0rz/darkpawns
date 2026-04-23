@@ -55,9 +55,9 @@ func TestBatchDCraftingChainVNums(t *testing.T) {
 	// Crafting chain: wheat (5300) → miller → flour (15100) → baker_flour → dough (8015)
 	//                dough (8015) → baker_dough/baker_flour → bread (8010)
 	chain := []struct {
-		name     string
-		inputObj int
-		outputObj int
+		name       string
+		inputObj   int
+		outputObj  int
 		goldReward int
 	}{
 		{"farmer_wheat produces wheat", 0, 5300, 0},
@@ -82,10 +82,10 @@ func TestBatchDCraftingChainVNums(t *testing.T) {
 func TestBatchDForgerItemVNums(t *testing.T) {
 	// Crystal forger (mob 7923) — chunks (11701) → items
 	crystalItems := []struct {
-		slot      string
-		itemVNum  int
-		chunks    int
-		goldCost  int
+		slot     string
+		itemVNum int
+		chunks   int
+		goldCost int
 	}{
 		{"gloves", 11706, 1, 200},
 		{"leggings", 11707, 3, 500},
@@ -107,10 +107,10 @@ func TestBatchDForgerItemVNums(t *testing.T) {
 
 	// Dragon forger (mob 7917) — scales (10204) → items
 	dragonItems := []struct {
-		slot      string
-		itemVNum  int
-		scales    int
-		goldCost  int
+		slot     string
+		itemVNum int
+		scales   int
+		goldCost int
 	}{
 		{"gloves", 7906, 1, 5000},
 		{"leggings", 7907, 3, 5000},
@@ -186,11 +186,11 @@ func TestBatchDTownTeleportLocations(t *testing.T) {
 // Source: scripts_full_dump.txt golem_miner.lua, golem_to_crate.lua, golem_from_crate.lua
 func TestBatchDGolemMineChain(t *testing.T) {
 	const (
-		chunkVNum       = 11701 // crystalline chunk
-		crateVNum       = 11702 // wooden crate
-		transportGolem  = 11700 // mob that carries chunks to crates
-		miningGolem     = 11702 // mob that mines chunks
-		deliveryGolem   = 11706 // mob that retrieves from crate and deposits at entrance
+		chunkVNum        = 11701 // crystalline chunk
+		crateVNum        = 11702 // wooden crate
+		transportGolem   = 11700 // mob that carries chunks to crates
+		miningGolem      = 11702 // mob that mines chunks
+		deliveryGolem    = 11706 // mob that retrieves from crate and deposits at entrance
 		mineEntranceVNum = 11708 // room where chunks are deposited into bucket
 	)
 

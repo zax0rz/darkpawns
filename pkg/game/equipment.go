@@ -172,7 +172,7 @@ func NewEquipment() *Equipment {
 func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 	eq.mu.Lock()
 	defer eq.mu.Unlock()
-	
+
 	// Check if item can be equipped
 	wearFlags := eq.getWearFlags(item)
 	if len(wearFlags) == 0 {
@@ -183,7 +183,7 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 	// When equipping a ring/neck/wrist item, prefer the right/first slot;
 	// use the left/second if already occupied.
 	// Source: structs.h:391-405 - players have dual slots for rings, necks, wrists
-	
+
 	// Group dual slots
 	dualSlotGroups := map[EquipmentSlot][]EquipmentSlot{
 		SlotFingerR: {SlotFingerR, SlotFingerL},
@@ -193,7 +193,7 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 		SlotWristR:  {SlotWristR, SlotWristL},
 		SlotWristL:  {SlotWristR, SlotWristL},
 	}
-	
+
 	for _, slot := range wearFlags {
 		// Check if this slot is part of a dual slot group
 		if group, isDual := dualSlotGroups[slot]; isDual {
@@ -217,7 +217,7 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 			eq.Slots[group[0]] = item
 			return nil
 		}
-		
+
 		// Non-dual slot
 		if _, ok := eq.Slots[slot]; ok {
 			// Unequip existing item first
@@ -266,7 +266,7 @@ func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
 func (eq *Equipment) UnequipItem(item *ObjectInstance, inv *Inventory) bool {
 	eq.mu.Lock()
 	defer eq.mu.Unlock()
-	
+
 	for slot, eqItem := range eq.Slots {
 		if eqItem == item {
 			if err := eq.unequip(slot, inv); err == nil {
@@ -282,7 +282,7 @@ func (eq *Equipment) UnequipItem(item *ObjectInstance, inv *Inventory) bool {
 func (eq *Equipment) GetItemInSlot(slot EquipmentSlot) (*ObjectInstance, bool) {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
-	
+
 	item, ok := eq.Slots[slot]
 	return item, ok
 }
@@ -291,7 +291,7 @@ func (eq *Equipment) GetItemInSlot(slot EquipmentSlot) (*ObjectInstance, bool) {
 func (eq *Equipment) GetEquipmentBonus(stat string) int {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
-	
+
 	total := 0
 	for _, item := range eq.Slots {
 		for _, affect := range item.GetAffects() {
@@ -309,7 +309,7 @@ func (eq *Equipment) GetEquipmentBonus(stat string) int {
 func (eq *Equipment) GetArmorClass() int {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
-	
+
 	ac := 0
 	for _, item := range eq.Slots {
 		// Check if item is armor (type 9 is ITEM_ARMOR in CircleMUD)
@@ -325,7 +325,7 @@ func (eq *Equipment) GetArmorClass() int {
 func (eq *Equipment) GetWeaponDamage() (numDice, diceType int) {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
-	
+
 	if weapon, ok := eq.Slots[SlotWield]; ok {
 		// Check if item is a weapon (type 5 is ITEM_WEAPON in CircleMUD)
 		if weapon.GetTypeFlag() == 5 {
@@ -340,20 +340,20 @@ func (eq *Equipment) GetWeaponDamage() (numDice, diceType int) {
 // Maps ITEM_WEAR_* flags from structs.h:446-462 to EquipmentSlot
 func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 	var slots []EquipmentSlot
-	
+
 	// Check each wear flag position
 	for i, flag := range item.Prototype.WearFlags {
 		if flag == 0 {
 			continue
 		}
-		
+
 		// Convert Dark Pawns wear flags to our EquipmentSlot
 		// Source: structs.h:446-462 ITEM_WEAR_* constants
 		switch i {
 		case 0: // Primary wear flags (bits 0-15)
 			// ITEM_WEAR_TAKE (bit 0) = item can be picked up, NOT an equip slot
 			// Do NOT map to SlotHold for bit 0
-			
+
 			if flag&(1<<1) != 0 { // ITEM_WEAR_FINGER (bit 1)
 				// Can be worn on finger - map to both finger slots
 				slots = append(slots, SlotFingerR, SlotFingerL)
@@ -420,7 +420,7 @@ func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 			// Light items might be handled differently
 		}
 	}
-	
+
 	return slots
 }
 
@@ -457,7 +457,7 @@ func getStatLocation(stat string) int {
 func (eq *Equipment) GetEquippedItems() map[EquipmentSlot]*ObjectInstance {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
-	
+
 	// Return a copy to prevent external modification
 	result := make(map[EquipmentSlot]*ObjectInstance)
 	for k, v := range eq.Slots {

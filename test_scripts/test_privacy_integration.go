@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	
+
 	"github.com/zax0rz/darkpawns/pkg/privacy"
 )
 
-func test_privacy_integration() {
+func testPrivacyIntegration() {
 	fmt.Println("Testing Privacy Filter Integration for Dark Pawns")
 	fmt.Println("================================================")
-	
+
 	// Test 1: Configuration loading
 	fmt.Println("\n1. Testing configuration loading...")
 	config := privacy.LoadConfig()
@@ -19,13 +19,13 @@ func test_privacy_integration() {
 	fmt.Printf("   Enabled: %v\n", config.Enabled)
 	fmt.Printf("   Categories: %v\n", config.Categories)
 	fmt.Printf("   Filter Player Names: %v\n", config.FilterPlayerNames)
-	
+
 	// Test 2: Client creation
 	fmt.Println("\n2. Testing client creation...")
 	filterConfig := config.ToFilterConfig()
 	client := privacy.NewClient(config.URL, filterConfig)
 	fmt.Println("   Client created successfully")
-	
+
 	// Test 3: Basic filtering (with fallback since service likely not running)
 	fmt.Println("\n3. Testing text filtering...")
 	testTexts := []string{
@@ -34,7 +34,7 @@ func test_privacy_integration() {
 		"Credit card: 4111-1111-1111-1111, expiry: 12/25",
 		"Meeting on 2024-12-25 at 123 Main St, Apt 4B",
 	}
-	
+
 	for i, text := range testTexts {
 		filtered, detected, err := client.FilterText(text)
 		if err != nil {
@@ -46,12 +46,12 @@ func test_privacy_integration() {
 			fmt.Printf("     Detected: %v\n", detected)
 		}
 	}
-	
+
 	// Test 4: Logger integration
 	fmt.Println("\n4. Testing logger integration...")
 	logger := privacy.NewPrivacyLogger(client, "[TEST] ", log.LstdFlags)
 	logger.Println("Test log: Player Jane Smith (jane@company.com) purchased item #123")
-	
+
 	// Test 5: Batch filtering
 	fmt.Println("\n5. Testing batch filtering...")
 	filteredTexts, allDetected, err := client.BatchFilter(testTexts)
@@ -60,23 +60,23 @@ func test_privacy_integration() {
 	} else {
 		fmt.Printf("   Processed %d texts\n", len(filteredTexts))
 		for i, text := range filteredTexts {
-			fmt.Printf("   Text %d: %s (detected: %v)\n", i+1, 
+			fmt.Printf("   Text %d: %s (detected: %v)\n", i+1,
 				shorten(text, 50), allDetected[i])
 		}
 	}
-	
+
 	// Test 6: Environment variable override
 	fmt.Println("\n6. Testing environment variable override...")
 	os.Setenv("PRIVACY_FILTER_CATEGORIES", "email,phone")
 	os.Setenv("FILTER_PLAYER_NAMES", "false")
-	
+
 	config2 := privacy.LoadConfig()
 	fmt.Printf("   Overridden categories: %v\n", config2.Categories)
 	fmt.Printf("   Filter Player Names: %v\n", config2.FilterPlayerNames)
-	
+
 	os.Unsetenv("PRIVACY_FILTER_CATEGORIES")
 	os.Unsetenv("FILTER_PLAYER_NAMES")
-	
+
 	fmt.Println("\n================================================")
 	fmt.Println("Integration test complete!")
 	fmt.Println("\nNext steps:")

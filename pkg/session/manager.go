@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/audit"
+	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -31,14 +31,14 @@ var upgrader = websocket.Upgrader{
 		if os.Getenv("ENVIRONMENT") == "development" {
 			return true
 		}
-		
+
 		// Production: validate against allowed origins
 		allowedOrigins := []string{
 			"https://darkpawns.example.com",
 			"https://game.darkpawns.example.com",
 			// Add your production domains here
 		}
-		
+
 		origin := r.Header.Get("Origin")
 		if origin == "" {
 			// No Origin header, could be direct WebSocket connection
@@ -46,13 +46,13 @@ var upgrader = websocket.Upgrader{
 			log.Printf("WebSocket connection without Origin header from %s", r.RemoteAddr)
 			return true
 		}
-		
+
 		for _, allowed := range allowedOrigins {
 			if origin == allowed {
 				return true
 			}
 		}
-		
+
 		log.Printf("Rejected WebSocket connection from unauthorized origin: %s", origin)
 		return false
 	},
@@ -60,13 +60,13 @@ var upgrader = websocket.Upgrader{
 
 // Manager handles all active sessions.
 type Manager struct {
-	mu            sync.RWMutex
-	sessions      map[string]*Session // keyed by player name
-	world         *game.World
-	combatEngine  *combat.CombatEngine
-	db            db.DB
-	hasDB         bool
-	loginLimiter  *auth.IPRateLimiter // Rate limiter for login attempts
+	mu           sync.RWMutex
+	sessions     map[string]*Session // keyed by player name
+	world        *game.World
+	combatEngine *combat.CombatEngine
+	db           db.DB
+	hasDB        bool
+	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
 }
 
 // NewManager creates a new session manager.
@@ -81,7 +81,7 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		loginLimiter: auth.NewIPRateLimiter(),
 	}
 	if database != nil {
-		m.db    = *database
+		m.db = *database
 		m.hasDB = true
 	}
 	return m
@@ -231,12 +231,12 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 
 // Session represents a single WebSocket connection.
 type Session struct {
-	conn       *websocket.Conn
-	request    *http.Request // Store the original HTTP request for IP extraction
-	manager    *Manager
-	send       chan []byte
-	player     *game.Player
-	playerName string
+	conn          *websocket.Conn
+	request       *http.Request // Store the original HTTP request for IP extraction
+	manager       *Manager
+	send          chan []byte
+	player        *game.Player
+	playerName    string
 	authenticated bool
 
 	// Agent auth — set on login when mode="agent"
@@ -245,9 +245,9 @@ type Session struct {
 	connectedAt time.Time // set on session creation, used for sessionID()
 
 	// Agent subscription state — only populated when isAgent==true
-	subscribedVars map[string]bool  // vars this session subscribed to
-	dirtyVars      map[string]bool  // vars changed since last flush
-	pendingEvents  []interface{}    // queued EVENTS since last flush
+	subscribedVars map[string]bool // vars this session subscribed to
+	dirtyVars      map[string]bool // vars changed since last flush
+	pendingEvents  []interface{}   // queued EVENTS since last flush
 
 	// Character creation state
 	charCreating bool
@@ -407,7 +407,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		if err != nil {
 			log.Printf("DB load error for %s: %v", login.PlayerName, err)
 		}
-		
+
 		if rec != nil && !login.NewChar {
 			// Returning player — restore from DB
 			p, err := db.RecordToPlayer(rec, s.manager.world)
@@ -445,7 +445,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		game.GiveStartingSkills(s.player)
 		s.authenticated = true
 	}
-	
+
 	// If we created a player directly (not through char creation), proceed with registration
 	if s.authenticated && s.player != nil {
 		if err := s.manager.Register(login.PlayerName, s); err != nil {
@@ -476,7 +476,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		})
 		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 	}
-	
+
 	return nil
 }
 
@@ -690,7 +690,7 @@ func (m *Manager) RegisterCommand(name string, handler func(common.CommandSessio
 func (m *Manager) Sessions() []common.CommandSession {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	sessions := make([]common.CommandSession, 0, len(m.sessions))
 	for _, sess := range m.sessions {
 		// Create a wrapper that implements common.CommandSession

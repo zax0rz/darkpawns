@@ -43,11 +43,11 @@ func (p *WorkerPool) worker() {
 func (p *WorkerPool) Submit(task func()) error {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	
+
 	if p.closed {
 		return ErrPoolClosed
 	}
-	
+
 	select {
 	case p.taskQueue <- task:
 		return nil
@@ -60,11 +60,11 @@ func (p *WorkerPool) Submit(task func()) error {
 func (p *WorkerPool) Close() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	if p.closed {
 		return
 	}
-	
+
 	p.closed = true
 	close(p.taskQueue)
 	p.wg.Wait()
@@ -83,11 +83,11 @@ type ConnectionPool struct {
 
 // PoolStats holds connection pool statistics.
 type PoolStats struct {
-	TotalConnections int
+	TotalConnections  int
 	ActiveConnections int
-	IdleConnections  int
-	WaitCount        int64
-	WaitDuration     time.Duration
+	IdleConnections   int
+	WaitCount         int64
+	WaitDuration      time.Duration
 }
 
 // NewConnectionPool creates a new connection pool.
@@ -109,12 +109,12 @@ func NewConnectionPool(
 // Get acquires a connection from the pool.
 func (p *ConnectionPool) Get() (interface{}, error) {
 	start := time.Now()
-	
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	p.stats.WaitCount++
-	
+
 	// Try to get an idle connection
 	if len(p.connections) > 0 {
 		conn := p.connections[len(p.connections)-1]
@@ -124,7 +124,7 @@ func (p *ConnectionPool) Get() (interface{}, error) {
 		p.stats.WaitDuration += time.Since(start)
 		return conn, nil
 	}
-	
+
 	// Create new connection if under max size
 	if p.stats.TotalConnections < p.maxSize {
 		conn, err := p.createFunc()
@@ -137,7 +137,7 @@ func (p *ConnectionPool) Get() (interface{}, error) {
 		p.stats.WaitDuration += time.Since(start)
 		return conn, nil
 	}
-	
+
 	p.stats.WaitDuration += time.Since(start)
 	return nil, ErrPoolExhausted
 }
@@ -146,14 +146,14 @@ func (p *ConnectionPool) Get() (interface{}, error) {
 func (p *ConnectionPool) Put(conn interface{}) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	p.stats.ActiveConnections--
-	
+
 	// If pool is full or connection is bad, close it
 	if len(p.connections) >= p.maxSize {
 		return p.closeFunc(conn)
 	}
-	
+
 	p.connections = append(p.connections, conn)
 	p.stats.IdleConnections = len(p.connections)
 	return nil
@@ -170,7 +170,7 @@ func (p *ConnectionPool) Stats() PoolStats {
 func (p *ConnectionPool) Close() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	var err error
 	for _, conn := range p.connections {
 		if closeErr := p.closeFunc(conn); closeErr != nil && err == nil {
@@ -179,14 +179,14 @@ func (p *ConnectionPool) Close() error {
 	}
 	p.connections = nil
 	p.stats = PoolStats{}
-	
+
 	return err
 }
 
 // WebSocketPool manages WebSocket connection pooling for broadcast operations.
 type WebSocketPool struct {
-	mu       sync.RWMutex
-	sessions map[string]chan []byte
+	mu         sync.RWMutex
+	sessions   map[string]chan []byte
 	bufferSize int
 }
 
@@ -216,7 +216,7 @@ func (p *WebSocketPool) Unregister(sessionID string) {
 func (p *WebSocketPool) Broadcast(message []byte) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	
+
 	for _, sendChan := range p.sessions {
 		select {
 		case sendChan <- message:
@@ -230,7 +230,7 @@ func (p *WebSocketPool) Broadcast(message []byte) {
 func (p *WebSocketPool) BroadcastToRoom(roomVNum int, message []byte, excludeSession string, getRoomFunc func(string) int) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	
+
 	for sessionID, sendChan := range p.sessions {
 		if sessionID == excludeSession {
 			continue

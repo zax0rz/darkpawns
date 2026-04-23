@@ -22,33 +22,33 @@ func DocsContentNegotiationMiddleware(next http.Handler, docsDir string) http.Ha
 			if path == "" {
 				path = "/"
 			}
-			
+
 			// Handle content negotiation
 			accept := r.Header.Get("Accept")
-			
+
 			// Check for markdown request
 			if strings.Contains(accept, "text/markdown") {
 				serveMarkdownVersion(w, r, docsDir, path)
 				return
 			}
-			
+
 			// Check for JSON request (for search index)
 			if strings.Contains(accept, "application/json") && path == "/search-index.json" {
 				http.ServeFile(w, r, filepath.Join(docsDir, "public", "search-index.json"))
 				return
 			}
-			
+
 			// Check for OpenAPI spec
 			if path == "/api/openapi.json" {
 				http.ServeFile(w, r, filepath.Join(docsDir, "public", "api", "openapi.json"))
 				return
 			}
-			
+
 			// Default to Hugo-generated HTML
 			serveHugoContent(w, r, docsDir, path)
 			return
 		}
-		
+
 		// Pass through to next handler
 		next.ServeHTTP(w, r)
 	})
@@ -58,7 +58,7 @@ func DocsContentNegotiationMiddleware(next http.Handler, docsDir string) http.Ha
 func serveMarkdownVersion(w http.ResponseWriter, r *http.Request, docsDir, path string) {
 	// Try to find markdown file
 	mdPath := filepath.Join(docsDir, "content")
-	
+
 	// Handle root path
 	if path == "/" || path == "" {
 		mdPath = filepath.Join(mdPath, "_index.md")
@@ -67,14 +67,14 @@ func serveMarkdownVersion(w http.ResponseWriter, r *http.Request, docsDir, path 
 		if strings.HasSuffix(path, "/") {
 			path = path[:len(path)-1]
 		}
-		
+
 		// Try different markdown file locations
 		possiblePaths := []string{
 			filepath.Join(mdPath, path+".md"),
 			filepath.Join(mdPath, path, "_index.md"),
 			filepath.Join(mdPath, path, "index.md"),
 		}
-		
+
 		found := false
 		for _, p := range possiblePaths {
 			if _, err := os.Stat(p); err == nil {
@@ -83,20 +83,20 @@ func serveMarkdownVersion(w http.ResponseWriter, r *http.Request, docsDir, path 
 				break
 			}
 		}
-		
+
 		if !found {
 			http.NotFound(w, r)
 			return
 		}
 	}
-	
+
 	// Read and serve markdown file
 	content, err := os.ReadFile(mdPath)
 	if err != nil {
 		http.Error(w, "Error reading markdown file", http.StatusInternalServerError)
 		return
 	}
-	
+
 	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
 	w.Write(content)
 }
@@ -105,7 +105,7 @@ func serveMarkdownVersion(w http.ResponseWriter, r *http.Request, docsDir, path 
 func serveHugoContent(w http.ResponseWriter, r *http.Request, docsDir, path string) {
 	// Build the file path for Hugo-generated content
 	filePath := filepath.Join(docsDir, "public")
-	
+
 	// Handle root path
 	if path == "/" || path == "" {
 		filePath = filepath.Join(filePath, "index.html")
@@ -123,20 +123,20 @@ func serveHugoContent(w http.ResponseWriter, r *http.Request, docsDir, path stri
 			}
 		}
 	}
-	
+
 	// Check if file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		// Try with index.html
 		if !strings.HasSuffix(filePath, "index.html") {
 			filePath = filepath.Join(filepath.Dir(filePath), "index.html")
 		}
-		
+
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			http.NotFound(w, r)
 			return
 		}
 	}
-	
+
 	// Serve the file
 	http.ServeFile(w, r, filePath)
 }
@@ -168,7 +168,7 @@ func GenerateSearchIndex(docsDir string) error {
 			"tags":        []string{"api", "reference", "websocket"},
 		},
 	}
-	
+
 	// Create JSON file
 	jsonContent := "["
 	for i, item := range searchIndex {
@@ -180,7 +180,7 @@ func GenerateSearchIndex(docsDir string) error {
 			strings.Join(item["tags"].([]string), `","`))
 	}
 	jsonContent += "]"
-	
+
 	// Write to file
 	indexPath := filepath.Join(docsDir, "public", "search-index.json")
 	os.MkdirAll(filepath.Dir(indexPath), 0755)

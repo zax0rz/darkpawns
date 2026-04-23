@@ -20,7 +20,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	// Drive the state machine based on current stage
 	// We need to track which stage we're in. For now, implement a simple flow.
 	// TODO: Implement full state machine with stage tracking
-	
+
 	return nil
 }
 
@@ -29,7 +29,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 func (s *Session) startCharCreation(playerName string) {
 	s.charCreating = true
 	s.charName = playerName
-	
+
 	// Start with sex selection
 	s.sendCharCreatePrompt("sex", "Select your sex (M/F):", map[string]string{
 		"M": "Male",
@@ -44,12 +44,12 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options map[string]
 		Prompt:  prompt,
 		Options: options,
 	}
-	
+
 	msg, _ := json.Marshal(ServerMessage{
 		Type: MsgCharCreate,
 		Data: data,
 	})
-	
+
 	s.send <- msg
 }
 
@@ -63,21 +63,21 @@ func (s *Session) sendCharCreateStats(stats game.CharStats) {
 		Con: stats.Con,
 		Cha: stats.Cha,
 	}
-	
+
 	data := CharCreateData{
-		Stage:  "rollstats",
+		Stage: "rollstats",
 		Prompt: "Your rolled stats:\n" +
 			fmt.Sprintf("STR: %d/%d  INT: %d  WIS: %d\n", stats.Str, stats.StrAdd, stats.Int, stats.Wis) +
 			fmt.Sprintf("DEX: %d  CON: %d  CHA: %d\n", stats.Dex, stats.Con, stats.Cha) +
 			"Accept these stats? (Y/N)",
 		Stats: &display,
 	}
-	
+
 	msg, _ := json.Marshal(ServerMessage{
 		Type: MsgCharCreate,
 		Data: data,
 	})
-	
+
 	s.send <- msg
 }
 
@@ -86,13 +86,13 @@ func (s *Session) completeCharCreation() error {
 	// Create the player with collected attributes
 	s.player = game.NewCharacter(0, s.charName, s.charClass, s.charRace)
 	s.player.Stats = s.charStats
-	
+
 	// Set sex (for Phase 3 display)
 	// TODO: Store sex when Phase 3 implements display
-	
+
 	// Set hometown (for starting room)
 	// TODO: Set starting room based on hometown
-	
+
 	// Save to DB if available
 	if s.manager.hasDB {
 		if r, err := db.PlayerToRecord(s.player, nil); err == nil {
@@ -108,20 +108,20 @@ func (s *Session) completeCharCreation() error {
 		// Give starting items
 		s.manager.world.GiveStartingItems(s.player)
 	}
-	
+
 	// Register and add to world
 	s.authenticated = true
 	s.playerName = s.charName
-	
+
 	if err := s.manager.Register(s.charName, s); err != nil {
 		return err
 	}
-	
+
 	if err := s.manager.world.AddPlayer(s.player); err != nil {
 		s.manager.Unregister(s.charName)
 		return err
 	}
-	
+
 	// Clear char creation state
 	s.charCreating = false
 	s.charName = ""
@@ -130,10 +130,10 @@ func (s *Session) completeCharCreation() error {
 	s.charClass = 0
 	s.charHometown = 0
 	s.charStats = game.CharStats{}
-	
+
 	// Send welcome
 	s.sendWelcome()
-	
+
 	// Broadcast arrival
 	enterMsg, _ := json.Marshal(ServerMessage{
 		Type: MsgEvent,
@@ -143,6 +143,6 @@ func (s *Session) completeCharCreation() error {
 		},
 	})
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
-	
+
 	return nil
 }

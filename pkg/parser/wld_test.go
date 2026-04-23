@@ -10,7 +10,7 @@ func TestParseWldFile(t *testing.T) {
 	// Create a test file
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.wld")
-	
+
 	content := `#10011
 In the Stands~
 You are standing high in the stands of a large stadium. Down in the center
@@ -38,20 +38,20 @@ D3
 S
 $
 `
-	
+
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
-	
+
 	rooms, err := ParseWldFile(testFile)
 	if err != nil {
 		t.Fatalf("parse wld file: %v", err)
 	}
-	
+
 	if len(rooms) != 2 {
 		t.Errorf("expected 2 rooms, got %d", len(rooms))
 	}
-	
+
 	// Check first room
 	room := rooms[0]
 	if room.VNum != 10011 {
@@ -66,7 +66,7 @@ $
 	if len(room.Exits) != 2 {
 		t.Errorf("expected 2 exits, got %d", len(room.Exits))
 	}
-	
+
 	// Check east exit
 	east, ok := room.Exits["east"]
 	if !ok {
@@ -80,7 +80,7 @@ $
 
 func TestParseAllWldFiles(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	// Create test files
 	content1 := `#100
 Room One~
@@ -98,15 +98,15 @@ Description two.
 S
 $
 `
-	
+
 	os.WriteFile(filepath.Join(tmpDir, "1.wld"), []byte(content1), 0644)
 	os.WriteFile(filepath.Join(tmpDir, "2.wld"), []byte(content2), 0644)
-	
+
 	rooms, err := ParseAllWldFiles(tmpDir)
 	if err != nil {
 		t.Fatalf("parse all wld files: %v", err)
 	}
-	
+
 	if len(rooms) != 2 {
 		t.Errorf("expected 2 rooms total, got %d", len(rooms))
 	}

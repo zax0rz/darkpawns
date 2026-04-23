@@ -24,31 +24,31 @@ import (
 // NarrativeMemory is one server-written narrative fact about an agent's experience.
 // Stored in agent_narrative_memory, bootstrapped into agent LLM context on connect.
 type NarrativeMemory struct {
-	ID              int64
-	AgentName       string    // character name of the agent this memory belongs to
-	EventType       string    // "mob_kill", "mob_death", "item_loot", "player_encounter", "room_visit", "session_summary"
-	Summary         string    // human-readable narrative sentence, e.g. "Killed an orc in The Sewers (room 5042)"
-	RoomVNum        int       // where it happened (0 if not applicable)
-	RoomName        string    // denormalized for bootstrap readability
-	RelatedEntity   string    // mob/player/item name involved
-	RelatedVNum     int       // vnum of related mob/obj (0 if n/a)
-	Valence         int       // emotional weight: -3 (catastrophic) to +3 (triumphant). 0 = neutral
-	Salience        float64   // 0.0–1.0, decayed nightly by dp_salience_decay.py
-	SocialEventID   string    // UUID linking multiple agents' perspectives on the same event
-	SessionID       string    // which play session this came from
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID            int64
+	AgentName     string  // character name of the agent this memory belongs to
+	EventType     string  // "mob_kill", "mob_death", "item_loot", "player_encounter", "room_visit", "session_summary"
+	Summary       string  // human-readable narrative sentence, e.g. "Killed an orc in The Sewers (room 5042)"
+	RoomVNum      int     // where it happened (0 if not applicable)
+	RoomName      string  // denormalized for bootstrap readability
+	RelatedEntity string  // mob/player/item name involved
+	RelatedVNum   int     // vnum of related mob/obj (0 if n/a)
+	Valence       int     // emotional weight: -3 (catastrophic) to +3 (triumphant). 0 = neutral
+	Salience      float64 // 0.0–1.0, decayed nightly by dp_salience_decay.py
+	SocialEventID string  // UUID linking multiple agents' perspectives on the same event
+	SessionID     string  // which play session this came from
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 // NarrativeEventType constants — server writes these, never invent new ones without
 // adding a corresponding hook in pkg/session/manager.go.
 const (
-	NarrEventMobKill         = "mob_kill"          // agent killed a mob
-	NarrEventMobDeath        = "mob_death"          // agent was killed by a mob
-	NarrEventPlayerEncounter = "player_encounter"   // meaningful interaction with another player/agent
-	NarrEventItemLoot        = "item_loot"          // agent looted a significant item
-	NarrEventSessionSummary  = "session_summary"    // end-of-session LLM-generated consolidation
-	NarrEventRoomVisit       = "room_visit"         // agent visited a notable room (first time, death room, etc.)
+	NarrEventMobKill         = "mob_kill"         // agent killed a mob
+	NarrEventMobDeath        = "mob_death"        // agent was killed by a mob
+	NarrEventPlayerEncounter = "player_encounter" // meaningful interaction with another player/agent
+	NarrEventItemLoot        = "item_loot"        // agent looted a significant item
+	NarrEventSessionSummary  = "session_summary"  // end-of-session LLM-generated consolidation
+	NarrEventRoomVisit       = "room_visit"       // agent visited a notable room (first time, death room, etc.)
 )
 
 // InitNarrativeMemory creates the narrative memory tables if they don't exist.
@@ -128,10 +128,11 @@ func (db *DB) WriteNarrativeMemory(m *NarrativeMemory) (int64, error) {
 // then recency. Used to populate the LLM context block on agent connect.
 //
 // Context budget tiers (from PHASE4-AGENT-PROTOCOL.md):
-//   small:     5 memories  (~200 tokens)
-//   medium:   15 memories  (~600 tokens)
-//   large:    30 memories  (~1200 tokens)
-//   unlimited: no limit    (not recommended in production)
+//
+//	small:     5 memories  (~200 tokens)
+//	medium:   15 memories  (~600 tokens)
+//	large:    30 memories  (~1200 tokens)
+//	unlimited: no limit    (not recommended in production)
 func (db *DB) BootstrapMemories(agentName string, limit int) ([]*NarrativeMemory, error) {
 	rows, err := db.conn.Query(`
 		SELECT id, agent_name, event_type, summary, room_vnum, room_name,
@@ -283,10 +284,11 @@ func (db *DB) DecayStaleMemories(cutoffDays int) (decayed, pruned int, err error
 // Returns a value in [0.1, 1.0].
 //
 // Formula from PHASE4-AGENT-PROTOCOL.md:
-//   base = 0.5
-//   + valence component (high-magnitude events start higher)
-//   + social bonus (social_event_id present = other agents were involved)
-//   + novelty bonus (first time seeing this entity)
+//
+//	base = 0.5
+//	+ valence component (high-magnitude events start higher)
+//	+ social bonus (social_event_id present = other agents were involved)
+//	+ novelty bonus (first time seeing this entity)
 func SalienceScore(valence int, hasSocialEvent bool, isNovel bool) float64 {
 	base := 0.5
 	// Valence contributes up to ±0.3 — catastrophic/triumphant events start salient
@@ -305,7 +307,9 @@ func SalienceScore(valence int, hasSocialEvent bool, isNovel bool) float64 {
 
 // BootstrapBlock renders narrative memories as a formatted LLM context block.
 // Format matches PHASE4-AGENT-PROTOCOL.md section "Bootstrap Injection Format":
-//   CHARACTER HISTORY → WORLD KNOWLEDGE → ACTIVE WARNINGS → CURRENT GOALS
+//
+//	CHARACTER HISTORY → WORLD KNOWLEDGE → ACTIVE WARNINGS → CURRENT GOALS
+//
 // (goals are injected by dp_brenda.py, not here — this covers history + knowledge)
 func BootstrapBlock(memories []*NarrativeMemory, sessionSummaries []string) string {
 	if len(memories) == 0 && len(sessionSummaries) == 0 {

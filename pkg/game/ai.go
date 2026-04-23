@@ -221,13 +221,13 @@ func (w *World) wanderMob(mob *MobInstance) {
 		if !ok {
 			continue
 		}
-		
+
 		// MOB_STAY_ZONE: skip exits that lead to a different zone
 		// Source: mobact.c:127
 		if hasStayZone && targetRoom.Zone != room.Zone {
 			continue
 		}
-		
+
 		// Check ROOM_DEATH and ROOM_NOMOB before mob movement
 		// Source: mobact.c - before moving a mob to a room, checks !ROOM_DEATH and !ROOM_NOMOB
 		hasDeath := false
@@ -243,7 +243,7 @@ func (w *World) wanderMob(mob *MobInstance) {
 		if hasDeath || hasNoMob {
 			continue
 		}
-		
+
 		validDirections = append(validDirections, dir)
 	}
 

@@ -22,19 +22,19 @@ type mockPlayer struct {
 	roomVNum  int
 }
 
-func (p *mockPlayer) GetID() int              { return 1 }
-func (p *mockPlayer) GetName() string         { return p.name }
-func (p *mockPlayer) GetLevel() int           { return p.level }
-func (p *mockPlayer) GetHealth() int          { return p.health }
-func (p *mockPlayer) SetHealth(h int)         { p.health = h }
-func (p *mockPlayer) GetMaxHealth() int       { return p.maxHealth }
-func (p *mockPlayer) GetGold() int            { return p.gold }
-func (p *mockPlayer) SetGold(g int)           { p.gold = g }
-func (p *mockPlayer) GetRace() int            { return 0 }
-func (p *mockPlayer) GetClass() int           { return 0 }
-func (p *mockPlayer) GetAlignment() int       { return 0 }
-func (p *mockPlayer) GetRoomVNum() int        { return p.roomVNum }
-func (p *mockPlayer) SendMessage(msg string)  { fmt.Printf("[TO PLAYER] %s\n", msg) }
+func (p *mockPlayer) GetID() int             { return 1 }
+func (p *mockPlayer) GetName() string        { return p.name }
+func (p *mockPlayer) GetLevel() int          { return p.level }
+func (p *mockPlayer) GetHealth() int         { return p.health }
+func (p *mockPlayer) SetHealth(h int)        { p.health = h }
+func (p *mockPlayer) GetMaxHealth() int      { return p.maxHealth }
+func (p *mockPlayer) GetGold() int           { return p.gold }
+func (p *mockPlayer) SetGold(g int)          { p.gold = g }
+func (p *mockPlayer) GetRace() int           { return 0 }
+func (p *mockPlayer) GetClass() int          { return 0 }
+func (p *mockPlayer) GetAlignment() int      { return 0 }
+func (p *mockPlayer) GetRoomVNum() int       { return p.roomVNum }
+func (p *mockPlayer) SendMessage(msg string) { fmt.Printf("[TO PLAYER] %s\n", msg) }
 
 func test_scripts_simple() {
 	// Get the workspace directory
@@ -77,14 +77,14 @@ func test_scripts_simple() {
 		gold:      0,
 		roomVNum:  30,
 	}
-	
+
 	ctx := &scripting.ScriptContext{
 		Ch:       player,
 		RoomVNum: 30,
 		Argument: "",
 		World:    worldAdapter,
 	}
-	
+
 	handled, err := scriptEngine.RunScript(ctx, "room/30/pattern_dmg.lua", "onpulse")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -100,12 +100,12 @@ func test_scripts_simple() {
 		Argument: "north",
 		World:    worldAdapter,
 	}
-	
+
 	// Create a mock mob
 	mockMob := &game.MobInstance{}
 	// We need to set some fields, but for now just test loading
 	ctx2.Me = mockMob
-	
+
 	handled2, err2 := scriptEngine.RunScript(ctx2, "mob/no_move.lua", "oncmd")
 	if err2 != nil {
 		fmt.Printf("Error: %v\n", err2)

@@ -4,7 +4,6 @@ package testscripts
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
 
 	"github.com/zax0rz/darkpawns/pkg/scripting"
@@ -33,11 +32,11 @@ func test_minimal() {
 	fmt.Printf("Testing scripts in %s\n", scriptsDir)
 
 	world := &mockMinimalWorld{}
-	
+
 	// Create engine
 	engine := scripting.NewEngine(scriptsDir, world)
 	fmt.Println("Engine created")
-	
+
 	// Try to get a constant
 	fmt.Println("Testing if LVL_IMMORT is defined...")
 	// We can't directly check Lua globals from Go easily

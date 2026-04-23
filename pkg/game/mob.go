@@ -3,6 +3,7 @@ package game
 
 import (
 	"fmt"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
@@ -28,8 +29,8 @@ type MobInstance struct {
 	Equipment map[int]*ObjectInstance // key: equip position
 
 	// Combat state
-	Target    *MobInstance // or Player
-	Fighting  bool
+	Target         *MobInstance // or Player
+	Fighting       bool
 	FightingTarget string // Name of the target being fought
 
 	// Memory: names of players this mob remembers attacking it
@@ -50,15 +51,15 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	}
 
 	mob := &MobInstance{
-		Prototype: proto,
-		VNum:      proto.VNum,
-		RoomVNum:  roomVNum,
-		CurrentHP: hp,
-		MaxHP:     hp,
-		Status:    "standing",
-		Inventory: make([]*ObjectInstance, 0),
-		Equipment: make(map[int]*ObjectInstance),
-		Fighting:  false,
+		Prototype:      proto,
+		VNum:           proto.VNum,
+		RoomVNum:       roomVNum,
+		CurrentHP:      hp,
+		MaxHP:          hp,
+		Status:         "standing",
+		Inventory:      make([]*ObjectInstance, 0),
+		Equipment:      make(map[int]*ObjectInstance),
+		Fighting:       false,
 		FightingTarget: "",
 	}
 
@@ -104,10 +105,10 @@ func (m *MobInstance) Attack(player *Player, world *World) error {
 	// Simple attack implementation
 	damage := 10 // Default damage
 	player.TakeDamage(damage)
-	
+
 	// Send messages
 	player.Send <- []byte(fmt.Sprintf("%s attacks you for %d damage!\n", m.GetShortDesc(), damage))
-	
+
 	// Notify other players in the room
 	players := world.GetPlayersInRoom(m.RoomVNum)
 	for _, p := range players {
@@ -115,7 +116,7 @@ func (m *MobInstance) Attack(player *Player, world *World) error {
 			p.Send <- []byte(fmt.Sprintf("%s attacks %s!\n", m.GetShortDesc(), player.Name))
 		}
 	}
-	
+
 	return nil
 }
 
@@ -260,19 +261,19 @@ func (m *MobInstance) GetPosition() int {
 	// Convert status string to position constant
 	switch m.Status {
 	case "dead":
-		return 0 // POS_DEAD
+		return combat.PosDead
 	case "sleeping":
-		return 4 // POS_SLEEPING
+		return combat.PosSleeping
 	case "resting":
-		return 5 // POS_RESTING
+		return combat.PosResting
 	case "sitting":
-		return 6 // POS_SITTING
+		return combat.PosSitting
 	case "fighting":
-		return 7 // POS_FIGHTING
+		return combat.PosFighting
 	case "standing":
-		return 8 // POS_STANDING
+		return combat.PosStanding
 	default:
-		return 8 // Default to standing
+		return combat.PosStanding // Default to standing
 	}
 }
 

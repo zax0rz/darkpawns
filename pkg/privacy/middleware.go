@@ -50,10 +50,10 @@ func (lrw *LoggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		
+
 		// Create logging response writer
 		lrw := NewLoggingResponseWriter(w)
-		
+
 		// Read request body
 		var requestBody bytes.Buffer
 		if r.Body != nil {
@@ -61,37 +61,37 @@ func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 			requestBody.Write(bodyBytes)
 			r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
-		
+
 		// Process request
 		next.ServeHTTP(lrw, r)
-		
+
 		// Calculate duration
 		duration := time.Since(start)
-		
+
 		// Filter sensitive data from logs
 		logger := GetGlobalLogger()
 		if client != nil {
 			logger.SetClient(client)
 		}
-		
+
 		// Log request (filtered)
 		remoteAddr := r.RemoteAddr
 		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
 			remoteAddr = forwarded
 		}
-		
+
 		// Filter request body if it contains sensitive data
 		reqBodyStr := requestBody.String()
 		if len(reqBodyStr) > 1000 {
 			reqBodyStr = reqBodyStr[:1000] + "... [truncated]"
 		}
-		
+
 		// Filter response body if it contains sensitive data
 		respBodyStr := lrw.body.String()
 		if len(respBodyStr) > 1000 {
 			respBodyStr = respBodyStr[:1000] + "... [truncated]"
 		}
-		
+
 		logger.Printf("HTTP %s %s %s %d %v\nRequest: %s\nResponse: %s",
 			r.Method,
 			r.URL.Path,
@@ -124,7 +124,7 @@ func (wsl *WebSocketLogger) LogIncoming(sessionID, message string) {
 	if wsl.client != nil {
 		logger.SetClient(wsl.client)
 	}
-	
+
 	logger.Printf("%s [WS IN] [%s] %s", wsl.prefix, sessionID, message)
 }
 
@@ -134,7 +134,7 @@ func (wsl *WebSocketLogger) LogOutgoing(sessionID, message string) {
 	if wsl.client != nil {
 		logger.SetClient(wsl.client)
 	}
-	
+
 	logger.Printf("%s [WS OUT] [%s] %s", wsl.prefix, sessionID, message)
 }
 
@@ -144,7 +144,7 @@ func (wsl *WebSocketLogger) LogEvent(sessionID, eventType, details string) {
 	if wsl.client != nil {
 		logger.SetClient(wsl.client)
 	}
-	
+
 	fullDetails := fmt.Sprintf("Event: %s, Details: %s", eventType, details)
 	logger.Printf("%s [WS EVENT] [%s] %s", wsl.prefix, sessionID, fullDetails)
 }

@@ -22,10 +22,10 @@ import (
 
 func main() {
 	var (
-		worldDir  = flag.String("world", "", "Path to world files (lib directory)")
+		worldDir   = flag.String("world", "", "Path to world files (lib directory)")
 		scriptsDir = flag.String("scripts", "", "Path to Lua scripts (defaults to world/lib/scripts)")
-		port      = flag.String("port", "8080", "Server port")
-		dbURL     = flag.String("db", "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable", "Database URL")
+		port       = flag.String("port", "8080", "Server port")
+		dbURL      = flag.String("db", "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable", "Database URL")
 	)
 	flag.Parse()
 
@@ -125,12 +125,12 @@ Protocol:
 
 	// Create handler with security middleware
 	handler := web.SecurityHeaders(http.DefaultServeMux)
-	
+
 	// Check if TLS should be used
 	useTLS := os.Getenv("USE_TLS") == "true"
 	certFile := os.Getenv("TLS_CERT_FILE")
 	keyFile := os.Getenv("TLS_KEY_FILE")
-	
+
 	go func() {
 		if useTLS {
 			if certFile == "" || keyFile == "" {

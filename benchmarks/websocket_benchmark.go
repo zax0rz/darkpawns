@@ -22,14 +22,14 @@ func BenchmarkWebSocketConnection(b *testing.B) {
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-	
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
 		}
 		defer conn.Close()
-		
+
 		for {
 			_, _, err := conn.ReadMessage()
 			if err != nil {
@@ -38,12 +38,12 @@ func BenchmarkWebSocketConnection(b *testing.B) {
 			conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"pong"}`))
 		}
 	})
-	
+
 	server := httptest.NewServer(handler)
 	defer server.Close()
-	
+
 	url := "ws" + server.URL[4:] + "/ws"
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -63,26 +63,26 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 	const numClients = 100
 	var clients []*websocket.Conn
 	var server *httptest.Server
-	
+
 	// Create test server with broadcast capability
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-	
+
 	clientsMutex := sync.RWMutex{}
 	broadcastChan := make(chan []byte, 100)
-	
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
 		}
-		
+
 		clientsMutex.Lock()
 		clients = append(clients, conn)
 		clientsMutex.Unlock()
-		
+
 		go func() {
 			defer func() {
 				clientsMutex.Lock()
@@ -95,7 +95,7 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 				clientsMutex.Unlock()
 				conn.Close()
 			}()
-			
+
 			for {
 				_, _, err := conn.ReadMessage()
 				if err != nil {
@@ -104,10 +104,10 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 			}
 		}()
 	})
-	
+
 	server = httptest.NewServer(handler)
 	defer server.Close()
-	
+
 	// Connect clients
 	for i := 0; i < numClients; i++ {
 		conn, _, err := websocket.DefaultDialer.Dial("ws"+server.URL[4:]+"/ws", nil)
@@ -116,7 +116,7 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 		}
 		clients = append(clients, conn)
 	}
-	
+
 	// Start broadcast goroutine
 	go func() {
 		for msg := range broadcastChan {
@@ -127,16 +127,16 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 			clientsMutex.RUnlock()
 		}
 	}()
-	
+
 	message := []byte(`{"type":"broadcast","data":"test message"}`)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		broadcastChan <- message
 	}
-	
+
 	close(broadcastChan)
-	
+
 	// Cleanup
 	for _, conn := range clients {
 		conn.Close()
@@ -147,9 +147,9 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 func BenchmarkWorkerPool(b *testing.B) {
 	pool := optimization.NewWorkerPool(10)
 	defer pool.Close()
-	
+
 	var counter int64
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -159,7 +159,7 @@ func BenchmarkWorkerPool(b *testing.B) {
 			})
 		}
 	})
-	
+
 	b.StopTimer()
 	log.Printf("Worker pool processed %d tasks", atomic.LoadInt64(&counter))
 }
@@ -171,14 +171,14 @@ func BenchmarkConnectionPool(b *testing.B) {
 		time.Sleep(5 * time.Millisecond)
 		return "connection", nil
 	}
-	
+
 	closeFunc := func(conn interface{}) error {
 		return nil
 	}
-	
+
 	pool := optimization.NewConnectionPool(10, 30*time.Second, createFunc, closeFunc)
 	defer pool.Close()
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -197,7 +197,7 @@ func BenchmarkAIBatchProcessor(b *testing.B) {
 	processFunc := func(batch []optimization.AIBatchItem) error {
 		// Simulate batch processing
 		time.Sleep(10 * time.Millisecond)
-		
+
 		for _, item := range batch {
 			resp := optimization.AIResponse{
 				ID:      item.Request.ID,
@@ -207,13 +207,13 @@ func BenchmarkAIBatchProcessor(b *testing.B) {
 			}
 			item.Response <- resp
 		}
-		
+
 		return nil
 	}
-	
+
 	processor := optimization.NewAIBatchProcessor(10, 50*time.Millisecond, processFunc)
 	defer processor.Close()
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		reqID := 0
@@ -225,7 +225,7 @@ func BenchmarkAIBatchProcessor(b *testing.B) {
 				Model:     "test-model",
 				MaxTokens: 100,
 			}
-			
+
 			_, err := processor.Submit(req)
 			if err != nil {
 				b.Fatal(err)
@@ -237,7 +237,7 @@ func BenchmarkAIBatchProcessor(b *testing.B) {
 // BenchmarkAICache tests AI cache performance
 func BenchmarkAICache(b *testing.B) {
 	cache := optimization.NewAICache(1000, time.Minute)
-	
+
 	// Pre-populate cache
 	for i := 0; i < 100; i++ {
 		key := fmt.Sprintf("key-%d", i)
@@ -247,7 +247,7 @@ func BenchmarkAICache(b *testing.B) {
 		}
 		cache.Set(key, resp)
 	}
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
@@ -262,16 +262,16 @@ func BenchmarkAICache(b *testing.B) {
 // BenchmarkJSONMarshal tests JSON marshaling performance
 func BenchmarkJSONMarshal(b *testing.B) {
 	type TestMessage struct {
-		Type string                 `json:"type"`
-		Data map[string]interface{} `json:"data"`
-		Timestamp time.Time         `json:"timestamp"`
+		Type      string                 `json:"type"`
+		Data      map[string]interface{} `json:"data"`
+		Timestamp time.Time              `json:"timestamp"`
 	}
-	
+
 	message := TestMessage{
 		Type: "state",
 		Data: map[string]interface{}{
 			"room": map[string]interface{}{
-				"name": "Test Room",
+				"name":  "Test Room",
 				"exits": []string{"north", "south", "east", "west"},
 				"mobs": []map[string]interface{}{
 					{"name": "goblin", "health": 10},
@@ -286,7 +286,7 @@ func BenchmarkJSONMarshal(b *testing.B) {
 		},
 		Timestamp: time.Now(),
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		json.Marshal(message)
@@ -299,14 +299,14 @@ func BenchmarkSessionManager(b *testing.B) {
 	// For now, just test the data structures
 	sessions := make(map[string]chan []byte)
 	mutex := sync.RWMutex{}
-	
+
 	// Create test sessions
 	for i := 0; i < 1000; i++ {
 		sessions[fmt.Sprintf("player-%d", i)] = make(chan []byte, 256)
 	}
-	
+
 	message := []byte(`{"type":"broadcast","data":"test"}`)
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -321,7 +321,7 @@ func BenchmarkSessionManager(b *testing.B) {
 			mutex.RUnlock()
 		}
 	})
-	
+
 	// Cleanup
 	for _, ch := range sessions {
 		close(ch)
@@ -331,7 +331,7 @@ func BenchmarkSessionManager(b *testing.B) {
 func main() {
 	// Run benchmarks
 	fmt.Println("Running WebSocket benchmarks...")
-	
+
 	// Note: In real usage, run with: go test -bench=. -benchtime=10s ./benchmarks
 	fmt.Println("Benchmarks defined. Run with: go test -bench=. ./benchmarks")
 }

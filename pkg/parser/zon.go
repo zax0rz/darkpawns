@@ -11,12 +11,12 @@ import (
 
 // Zone represents a parsed zone from a .zon file.
 type Zone struct {
-	Number      int
-	Name        string
-	TopRoom     int
-	Lifespan    int // minutes between resets
-	ResetMode   int // 0=never, 1=if empty, 2=always
-	Commands    []ZoneCommand
+	Number    int
+	Name      string
+	TopRoom   int
+	Lifespan  int // minutes between resets
+	ResetMode int // 0=never, 1=if empty, 2=always
+	Commands  []ZoneCommand
 }
 
 // ZoneCommand represents a single reset command in a zone.
@@ -46,7 +46,7 @@ func ParseZonFile(path string) (*Zone, error) {
 	if !strings.HasPrefix(line, "#") {
 		return nil, fmt.Errorf("expected zone number, got: %s", line)
 	}
-	
+
 	zoneNum, err := strconv.Atoi(line[1:])
 	if err != nil {
 		return nil, fmt.Errorf("invalid zone number: %s", line)
@@ -100,7 +100,7 @@ func ParseZonFile(path string) (*Zone, error) {
 
 func parseZoneCommand(line string) (ZoneCommand, error) {
 	var cmd ZoneCommand
-	
+
 	fields := strings.Fields(line)
 	if len(fields) < 1 {
 		return cmd, fmt.Errorf("empty command")

@@ -136,11 +136,10 @@ func CmdPractice(s SessionInterface, args []string) error {
 	if leveledUp {
 		return s.SendMessage(fmt.Sprintf("You practice %s diligently and advance to level %d!\r\n",
 			skill.DisplayName, skill.Level))
-	} else {
-		progress := skill.GetProgress()
-		return s.SendMessage(fmt.Sprintf("You practice %s. Progress: %d%% (Level %d)\r\n",
-			skill.DisplayName, progress, skill.Level))
 	}
+	progress := skill.GetProgress()
+	return s.SendMessage(fmt.Sprintf("You practice %s. Progress: %d%% (Level %d)\r\n",
+		skill.DisplayName, progress, skill.Level))
 }
 
 // cmdLearn attempts to learn a new skill
@@ -206,9 +205,8 @@ func CmdLearn(s SessionInterface, args []string) error {
 	success := skillManager.LearnSkill(skill, player.GetLevel(), stat)
 	if success {
 		return s.SendMessage(fmt.Sprintf("You successfully learn %s!\r\n", skill.DisplayName))
-	} else {
-		return s.SendMessage(fmt.Sprintf("You failed to learn %s.\r\n", skill.DisplayName))
 	}
+	return s.SendMessage(fmt.Sprintf("You failed to learn %s.\r\n", skill.DisplayName))
 }
 
 // CmdListSkills shows all available skills

@@ -7,7 +7,7 @@ import (
 
 // TickManager manages the global tick system for affects
 type TickManager struct {
-	mu sync.RWMutex
+	mu            sync.RWMutex
 	affectManager *AffectManager
 	tickInterval  time.Duration
 	ticker        *time.Ticker
@@ -29,14 +29,14 @@ func NewTickManager(affectManager *AffectManager) *TickManager {
 func (tm *TickManager) Start() {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
-	
+
 	if tm.running {
 		return // Already running
 	}
-	
+
 	tm.ticker = time.NewTicker(tm.tickInterval)
 	tm.running = true
-	
+
 	go tm.tickLoop()
 }
 
@@ -44,11 +44,11 @@ func (tm *TickManager) Start() {
 func (tm *TickManager) Stop() {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
-	
+
 	if !tm.running {
 		return // Not running
 	}
-	
+
 	tm.ticker.Stop()
 	tm.done <- true
 	tm.running = false
@@ -58,9 +58,9 @@ func (tm *TickManager) Stop() {
 func (tm *TickManager) SetTickInterval(interval time.Duration) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
-	
+
 	tm.tickInterval = interval
-	
+
 	// Restart ticker if running
 	if tm.running && tm.ticker != nil {
 		tm.ticker.Stop()
@@ -98,7 +98,7 @@ func (tm *TickManager) tickLoop() {
 func (tm *TickManager) processTick() {
 	// Process all affects
 	tm.affectManager.Tick()
-	
+
 	// Additional tick processing could go here
 	// For example: update world time, process weather, etc.
 }
@@ -145,7 +145,7 @@ type AffectTickSystem struct {
 func NewAffectTickSystem() *AffectTickSystem {
 	affectManager := NewAffectManager()
 	tickManager := NewTickManager(affectManager)
-	
+
 	return &AffectTickSystem{
 		AffectManager: affectManager,
 		TickManager:   tickManager,

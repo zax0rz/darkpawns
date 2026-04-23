@@ -6,7 +6,7 @@ import "encoding/json"
 const (
 	MsgLogin     = "login"
 	MsgCommand   = "command"
-	MsgCharInput = "char_input"  // client → server: answers during char creation
+	MsgCharInput = "char_input" // client → server: answers during char creation
 )
 
 // Server to Client message types
@@ -44,8 +44,8 @@ type ServerMessage struct {
 type LoginData struct {
 	PlayerName string `json:"player_name"`
 	Password   string `json:"password,omitempty"`
-	Class      int    `json:"class,omitempty"` // 0-11, defaults to Warrior if omitted
-	Race       int    `json:"race,omitempty"`  // 0-6, defaults to Human if omitted
+	Class      int    `json:"class,omitempty"`    // 0-11, defaults to Warrior if omitted
+	Race       int    `json:"race,omitempty"`     // 0-6, defaults to Human if omitted
 	NewChar    bool   `json:"new_char,omitempty"` // true = create new character
 	APIKey     string `json:"api_key,omitempty"`  // agent auth key (dp_<32hex>)
 	Mode       string `json:"mode,omitempty"`     // "agent" or "" (human)
@@ -91,7 +91,7 @@ type RoomState struct {
 
 // EventData represents a game event.
 type EventData struct {
-	Type string `json:"type"`   // "enter", "leave", "say", "combat"
+	Type string `json:"type"` // "enter", "leave", "say", "combat"
 	From string `json:"from,omitempty"`
 	Text string `json:"text"`
 }
@@ -108,7 +108,7 @@ type TextData struct {
 
 // CharCreateData is sent to client during char creation.
 type CharCreateData struct {
-	Stage   string            `json:"stage"`   // "sex", "race", "class", "hometown", "rollstats", "confirm"
+	Stage   string            `json:"stage"` // "sex", "race", "class", "hometown", "rollstats", "confirm"
 	Prompt  string            `json:"prompt"`
 	Options map[string]string `json:"options,omitempty"` // key → description
 	Stats   *CharStatsDisplay `json:"stats,omitempty"`   // only on rollstats/confirm stage

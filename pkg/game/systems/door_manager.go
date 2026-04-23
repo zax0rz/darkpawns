@@ -30,7 +30,7 @@ func (dm *DoorManager) key(fromRoom int, direction string) string {
 func (dm *DoorManager) AddDoor(door *Door) {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
-	
+
 	key := dm.key(door.FromRoom, door.Direction)
 	dm.doors[key] = door
 }
@@ -39,7 +39,7 @@ func (dm *DoorManager) AddDoor(door *Door) {
 func (dm *DoorManager) GetDoor(fromRoom int, direction string) (*Door, bool) {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
-	
+
 	key := dm.key(fromRoom, direction)
 	door, ok := dm.doors[key]
 	return door, ok
@@ -49,14 +49,14 @@ func (dm *DoorManager) GetDoor(fromRoom int, direction string) (*Door, bool) {
 func (dm *DoorManager) GetDoorBetween(room1, room2 int) (*Door, bool) {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
-	
+
 	for _, door := range dm.doors {
 		if (door.FromRoom == room1 && door.ToRoom == room2) ||
 			(door.FromRoom == room2 && door.ToRoom == room1) {
 			return door, true
 		}
 	}
-	
+
 	return nil, false
 }
 
@@ -64,7 +64,7 @@ func (dm *DoorManager) GetDoorBetween(room1, room2 int) (*Door, bool) {
 func (dm *DoorManager) RemoveDoor(fromRoom int, direction string) {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
-	
+
 	key := dm.key(fromRoom, direction)
 	delete(dm.doors, key)
 }
@@ -73,7 +73,7 @@ func (dm *DoorManager) RemoveDoor(fromRoom int, direction string) {
 func (dm *DoorManager) LoadDoorsFromWorld(world *parser.World) {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
-	
+
 	for _, room := range world.Rooms {
 		for direction, exit := range room.Exits {
 			door := NewDoor(room.VNum, exit.ToRoom, direction, exit.DoorState, exit.Key)
@@ -86,7 +86,7 @@ func (dm *DoorManager) LoadDoorsFromWorld(world *parser.World) {
 func (dm *DoorManager) GetDoorsInRoom(roomVNum int) []*Door {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
-	
+
 	var doors []*Door
 	for key, door := range dm.doors {
 		// Check if key starts with roomVNum:
@@ -95,7 +95,7 @@ func (dm *DoorManager) GetDoorsInRoom(roomVNum int) []*Door {
 		}
 		_ = key // Avoid unused variable warning
 	}
-	
+
 	return doors
 }
 
@@ -103,13 +103,13 @@ func (dm *DoorManager) GetDoorsInRoom(roomVNum int) []*Door {
 func (dm *DoorManager) GetVisibleDoorsInRoom(roomVNum int) []*Door {
 	allDoors := dm.GetDoorsInRoom(roomVNum)
 	var visibleDoors []*Door
-	
+
 	for _, door := range allDoors {
 		if door.CanSee() {
 			visibleDoors = append(visibleDoors, door)
 		}
 	}
-	
+
 	return visibleDoors
 }
 
@@ -119,18 +119,18 @@ func (dm *DoorManager) CanPass(fromRoom int, direction string) (bool, string) {
 	if !ok {
 		return false, "There is no door there."
 	}
-	
+
 	if !door.CanSee() {
 		return false, "There is no door there."
 	}
-	
+
 	if !door.IsPassable() {
 		if door.Locked {
 			return false, "The door is locked."
 		}
 		return false, "The door is closed."
 	}
-	
+
 	return true, ""
 }
 
@@ -140,11 +140,11 @@ func (dm *DoorManager) OpenDoor(fromRoom int, direction string) (bool, string) {
 	if !ok {
 		return false, "There is no door there."
 	}
-	
+
 	if !door.CanSee() {
 		return false, "There is no door there."
 	}
-	
+
 	return door.Open()
 }
 
@@ -154,11 +154,11 @@ func (dm *DoorManager) CloseDoor(fromRoom int, direction string) (bool, string) 
 	if !ok {
 		return false, "There is no door there."
 	}
-	
+
 	if !door.CanSee() {
 		return false, "There is no door there."
 	}
-	
+
 	return door.Close()
 }
 
@@ -168,11 +168,11 @@ func (dm *DoorManager) LockDoor(fromRoom int, direction string, keyVNum int) (bo
 	if !ok {
 		return false, "There is no door there."
 	}
-	
+
 	if !door.CanSee() {
 		return false, "There is no door there."
 	}
-	
+
 	return door.Lock(keyVNum)
 }
 
@@ -182,11 +182,11 @@ func (dm *DoorManager) UnlockDoor(fromRoom int, direction string, keyVNum int) (
 	if !ok {
 		return false, "There is no door there."
 	}
-	
+
 	if !door.CanSee() {
 		return false, "There is no door there."
 	}
-	
+
 	return door.Unlock(keyVNum)
 }
 
@@ -196,11 +196,11 @@ func (dm *DoorManager) PickDoor(fromRoom int, direction string, skill int) (bool
 	if !ok {
 		return false, "There is no door there."
 	}
-	
+
 	if !door.CanSee() {
 		return false, "There is no door there."
 	}
-	
+
 	return door.Pick(skill)
 }
 
@@ -210,11 +210,11 @@ func (dm *DoorManager) BashDoor(fromRoom int, direction string, strength int) (b
 	if !ok {
 		return false, "There is no door there."
 	}
-	
+
 	if !door.CanSee() {
 		return false, "There is no door there."
 	}
-	
+
 	return door.Bash(strength)
 }
 
@@ -222,7 +222,7 @@ func (dm *DoorManager) BashDoor(fromRoom int, direction string, strength int) (b
 func (dm *DoorManager) ResetDoors() {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
-	
+
 	for _, door := range dm.doors {
 		door.Reset()
 	}
@@ -234,7 +234,7 @@ func (dm *DoorManager) GetDoorStatus(fromRoom int, direction string) (string, bo
 	if !ok {
 		return "", false
 	}
-	
+
 	return door.GetStatus(), true
 }
 
@@ -242,6 +242,6 @@ func (dm *DoorManager) GetDoorStatus(fromRoom int, direction string) (string, bo
 func (dm *DoorManager) Count() int {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
-	
+
 	return len(dm.doors)
 }

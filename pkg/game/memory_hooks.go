@@ -15,8 +15,8 @@ import "sync"
 
 // MobKillEvent carries the facts of a mob death.
 type MobKillEvent struct {
-	KillerName string // player/agent character name (empty if no single killer)
-	KillerIsNPC bool  // true if killer was a mob (rare, but possible)
+	KillerName  string // player/agent character name (empty if no single killer)
+	KillerIsNPC bool   // true if killer was a mob (rare, but possible)
 	VictimName  string
 	VictimVNum  int
 	RoomVNum    int
@@ -37,8 +37,8 @@ type PlayerDeathEvent struct {
 // hooks are registered at startup but could theoretically be called
 // from concurrent goroutines.
 type hookState struct {
-	mu          sync.RWMutex
-	onMobKill   func(*MobKillEvent)
+	mu            sync.RWMutex
+	onMobKill     func(*MobKillEvent)
 	onPlayerDeath func(*PlayerDeathEvent)
 }
 

@@ -8,23 +8,23 @@ import (
 
 // CombatPair represents two entities fighting each other
 type CombatPair struct {
-	Attacker Combatant
-	Defender Combatant
-	Started  time.Time
+	Attacker       Combatant
+	Defender       Combatant
+	Started        time.Time
 	LastAttackType int // Track what type of attack killed the victim (spell number, skill number, or TYPE_ constant)
 }
 
 // CombatEngine manages all active combat in the game
 type CombatEngine struct {
 	mu sync.RWMutex
-	
+
 	// Active combat pairs
 	combatPairs map[string]*CombatPair // key: attacker name
-	
+
 	// Combat ticker
 	ticker   *time.Ticker
 	stopChan chan struct{}
-	
+
 	// Message broadcaster function (set by game)
 	BroadcastFunc func(roomVNum int, message string, exclude string)
 
@@ -59,7 +59,7 @@ func (ce *CombatEngine) SetBroadcastFunc(fn func(roomVNum int, message string, e
 // Start begins the combat tick loop
 func (ce *CombatEngine) Start() {
 	ce.ticker = time.NewTicker(2 * time.Second) // Combat round every 2 seconds
-	
+
 	go func() {
 		for {
 			select {
@@ -82,26 +82,26 @@ func (ce *CombatEngine) Stop() {
 func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
-	
+
 	attackerName := attacker.GetName()
 	defenderName := defender.GetName()
-	
+
 	// Check if already fighting
 	if _, exists := ce.combatPairs[attackerName]; exists {
 		return fmt.Errorf("%s is already fighting", attackerName)
 	}
-	
+
 	// Set fighting state
 	attacker.SetFighting(defenderName)
 	defender.SetFighting(attackerName)
-	
+
 	// Start combat
 	ce.combatPairs[attackerName] = &CombatPair{
 		Attacker: attacker,
 		Defender: defender,
 		Started:  time.Now(),
 	}
-	
+
 	return nil
 }
 
@@ -109,7 +109,7 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 func (ce *CombatEngine) StopCombat(charName string) {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
-	
+
 	// Find and stop combat
 	if pair, exists := ce.combatPairs[charName]; exists {
 		pair.Attacker.StopFighting()
@@ -118,7 +118,7 @@ func (ce *CombatEngine) StopCombat(charName string) {
 		}
 		delete(ce.combatPairs, charName)
 	}
-	
+
 	// Also check if this character is being attacked
 	for attackerName, pair := range ce.combatPairs {
 		if pair.Defender.GetName() == charName {
@@ -134,34 +134,34 @@ func (ce *CombatEngine) StopCombat(charName string) {
 func (ce *CombatEngine) IsFighting(charName string) bool {
 	ce.mu.RLock()
 	defer ce.mu.RUnlock()
-	
+
 	// Check if attacking
 	if _, exists := ce.combatPairs[charName]; exists {
 		return true
 	}
-	
+
 	// Check if being attacked
 	for _, pair := range ce.combatPairs {
 		if pair.Defender.GetName() == charName {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
 // PerformRound executes one round of combat for all active fighters
 func (ce *CombatEngine) PerformRound() {
 	ce.mu.RLock()
-	
+
 	// Get all combat pairs
 	pairs := make([]*CombatPair, 0, len(ce.combatPairs))
 	for _, pair := range ce.combatPairs {
 		pairs = append(pairs, pair)
 	}
-	
+
 	ce.mu.RUnlock()
-	
+
 	// Process each combat pair
 	for _, pair := range pairs {
 		ce.processCombatPair(pair)
@@ -172,42 +172,42 @@ func (ce *CombatEngine) PerformRound() {
 func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	attacker := pair.Attacker
 	defender := pair.Defender
-	
+
 	// Check if both combatants are still valid and alive
 	if attacker.GetHP() <= 0 || defender.GetHP() <= 0 {
 		ce.StopCombat(attacker.GetName())
 		return
 	}
-	
+
 	// Check if they're in the same room
 	if attacker.GetRoom() != defender.GetRoom() {
 		ce.StopCombat(attacker.GetName())
 		return
 	}
-	
+
 	// Calculate number of attacks for attacker
 	numAttacks := 1
 	if attacker.IsNPC() {
 		numAttacks = GetAttacksPerRound(attacker, false, false)
 	}
-	
+
 	// Perform attacks
 	for i := 0; i < numAttacks; i++ {
 		// Check if defender is still alive
 		if defender.GetHP() <= 0 {
 			break
 		}
-		
+
 		// Check hit
 		if !CalculateHitChance(attacker, defender) {
 			ce.sendMissMessage(attacker, defender)
 			continue
 		}
-		
+
 		// Calculate damage
 		weaponDamage := attacker.GetDamageRoll()
 		damage := CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
-		
+
 		// Apply damage
 		defender.TakeDamage(damage)
 		if ce.DamageFunc != nil {
@@ -216,8 +216,8 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 
 		// Send combat messages
 		ce.sendHitMessage(attacker, defender, damage)
-		
-			// Check for death
+
+		// Check for death
 		if defender.GetHP() <= 0 {
 			ce.handleDeath(defender, attacker)
 			ce.StopCombat(attacker.GetName())
@@ -237,16 +237,16 @@ func (ce *CombatEngine) sendHitMessage(attacker, defender Combatant, damage int)
 	attackerName := attacker.GetName()
 	defenderName := defender.GetName()
 	roomVNum := attacker.GetRoom()
-	
+
 	// Message to attacker
 	attacker.SendMessage(fmt.Sprintf("You hit %s for %d damage!", defenderName, damage))
-	
+
 	// Message to defender
 	defender.SendMessage(fmt.Sprintf("%s hits you for %d damage!", attackerName, damage))
-	
+
 	// Message to room
 	if ce.BroadcastFunc != nil {
-		ce.BroadcastFunc(roomVNum, 
+		ce.BroadcastFunc(roomVNum,
 			fmt.Sprintf("%s hits %s!", attackerName, defenderName),
 			attackerName)
 	}
@@ -257,10 +257,10 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant) {
 	attackerName := attacker.GetName()
 	defenderName := defender.GetName()
 	roomVNum := attacker.GetRoom()
-	
+
 	attacker.SendMessage(fmt.Sprintf("You miss %s!", defenderName))
 	defender.SendMessage(fmt.Sprintf("%s misses you!", attackerName))
-	
+
 	if ce.BroadcastFunc != nil {
 		ce.BroadcastFunc(roomVNum,
 			fmt.Sprintf("%s misses %s!", attackerName, defenderName),
@@ -306,19 +306,19 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 func (ce *CombatEngine) GetCombatTarget(charName string) (Combatant, bool) {
 	ce.mu.RLock()
 	defer ce.mu.RUnlock()
-	
+
 	// Check if attacking someone
 	if pair, exists := ce.combatPairs[charName]; exists {
 		return pair.Defender, true
 	}
-	
+
 	// Check if being attacked
 	for _, pair := range ce.combatPairs {
 		if pair.Defender.GetName() == charName {
 			return pair.Attacker, true
 		}
 	}
-	
+
 	return nil, false
 }
 
@@ -326,16 +326,16 @@ func (ce *CombatEngine) GetCombatTarget(charName string) (Combatant, bool) {
 func (ce *CombatEngine) GetCombatStatus(charName string) string {
 	ce.mu.RLock()
 	defer ce.mu.RUnlock()
-	
+
 	if pair, exists := ce.combatPairs[charName]; exists {
 		return fmt.Sprintf("You are fighting %s", pair.Defender.GetName())
 	}
-	
+
 	for attacker, pair := range ce.combatPairs {
 		if pair.Defender.GetName() == charName {
 			return fmt.Sprintf("You are being attacked by %s", attacker)
 		}
 	}
-	
+
 	return "You are not in combat"
 }

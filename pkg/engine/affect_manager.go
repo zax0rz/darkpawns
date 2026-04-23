@@ -11,7 +11,7 @@ type Affectable interface {
 	SetAffects([]*Affect)
 	GetName() string
 	GetID() int
-	
+
 	// Stat getters/setters for affects to modify
 	GetStrength() int
 	SetStrength(int)
@@ -25,7 +25,7 @@ type Affectable interface {
 	SetConstitution(int)
 	GetCharisma() int
 	SetCharisma(int)
-	
+
 	GetHitRoll() int
 	SetHitRoll(int)
 	GetDamageRoll() int
@@ -34,7 +34,7 @@ type Affectable interface {
 	SetArmorClass(int)
 	GetTHAC0() int
 	SetTHAC0(int)
-	
+
 	GetHP() int
 	SetHP(int)
 	GetMaxHP() int
@@ -45,20 +45,20 @@ type Affectable interface {
 	SetMaxMana(int)
 	GetMovement() int
 	SetMovement(int)
-	
+
 	// Status flags
 	HasStatusFlag(flag uint64) bool
 	SetStatusFlag(flag uint64)
 	ClearStatusFlag(flag uint64)
-	
+
 	// Messaging
 	SendMessage(string)
 }
 
 // AffectManager manages affects for all affectable entities
 type AffectManager struct {
-	mu sync.RWMutex
-	affects map[string][]*Affect // entityID -> list of affects
+	mu        sync.RWMutex
+	affects   map[string][]*Affect  // entityID -> list of affects
 	entityMap map[string]Affectable // entityID -> entity
 }
 
@@ -74,10 +74,10 @@ func NewAffectManager() *AffectManager {
 func (am *AffectManager) RegisterEntity(entity Affectable) {
 	am.mu.Lock()
 	defer am.mu.Unlock()
-	
+
 	entityID := am.getEntityID(entity)
 	am.entityMap[entityID] = entity
-	
+
 	// Initialize empty affect list if not exists
 	if _, exists := am.affects[entityID]; !exists {
 		am.affects[entityID] = make([]*Affect, 0)
@@ -88,7 +88,7 @@ func (am *AffectManager) RegisterEntity(entity Affectable) {
 func (am *AffectManager) UnregisterEntity(entity Affectable) {
 	am.mu.Lock()
 	defer am.mu.Unlock()
-	
+
 	entityID := am.getEntityID(entity)
 	delete(am.entityMap, entityID)
 	delete(am.affects, entityID)
@@ -98,14 +98,14 @@ func (am *AffectManager) UnregisterEntity(entity Affectable) {
 func (am *AffectManager) ApplyAffect(entity Affectable, affect *Affect) bool {
 	am.mu.Lock()
 	defer am.mu.Unlock()
-	
+
 	entityID := am.getEntityID(entity)
-	
+
 	// Check if entity is registered
 	if _, exists := am.entityMap[entityID]; !exists {
 		am.RegisterEntity(entity)
 	}
-	
+
 	// Check stacking rules
 	if affect.StackID != "" {
 		// Remove existing affects with same StackID if MaxStacks is 1
@@ -120,16 +120,16 @@ func (am *AffectManager) ApplyAffect(entity Affectable, affect *Affect) bool {
 			}
 		}
 	}
-	
+
 	// Apply the affect immediately
 	am.applyAffectImmediate(entity, affect)
-	
+
 	// Add to affect list
 	am.affects[entityID] = append(am.affects[entityID], affect)
-	
+
 	// Send notification message
 	am.sendAffectMessage(entity, affect, true)
-	
+
 	return true
 }
 
@@ -137,25 +137,25 @@ func (am *AffectManager) ApplyAffect(entity Affectable, affect *Affect) bool {
 func (am *AffectManager) RemoveAffect(entity Affectable, affectID string) bool {
 	am.mu.Lock()
 	defer am.mu.Unlock()
-	
+
 	entityID := am.getEntityID(entity)
 	affects := am.affects[entityID]
-	
+
 	for i, aff := range affects {
 		if aff.ID == affectID {
 			// Remove affect effects before removing from list
 			am.removeAffectImmediate(entity, aff)
-			
+
 			// Remove from slice
 			am.affects[entityID] = append(affects[:i], affects[i+1:]...)
-			
+
 			// Send notification message
 			am.sendAffectMessage(entity, aff, false)
-			
+
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -163,11 +163,11 @@ func (am *AffectManager) RemoveAffect(entity Affectable, affectID string) bool {
 func (am *AffectManager) RemoveAffectsByType(entity Affectable, affectType AffectType) int {
 	am.mu.Lock()
 	defer am.mu.Unlock()
-	
+
 	entityID := am.getEntityID(entity)
 	affects := am.affects[entityID]
 	removed := 0
-	
+
 	var newAffects []*Affect
 	for _, aff := range affects {
 		if aff.Type == affectType {
@@ -178,7 +178,7 @@ func (am *AffectManager) RemoveAffectsByType(entity Affectable, affectType Affec
 			newAffects = append(newAffects, aff)
 		}
 	}
-	
+
 	am.affects[entityID] = newAffects
 	return removed
 }
@@ -187,16 +187,16 @@ func (am *AffectManager) RemoveAffectsByType(entity Affectable, affectType Affec
 func (am *AffectManager) RemoveAllAffects(entity Affectable) int {
 	am.mu.Lock()
 	defer am.mu.Unlock()
-	
+
 	entityID := am.getEntityID(entity)
 	affects := am.affects[entityID]
-	
+
 	// Remove all affect effects
 	for _, aff := range affects {
 		am.removeAffectImmediate(entity, aff)
 		am.sendAffectMessage(entity, aff, false)
 	}
-	
+
 	count := len(affects)
 	am.affects[entityID] = make([]*Affect, 0)
 	return count
@@ -206,16 +206,16 @@ func (am *AffectManager) RemoveAllAffects(entity Affectable) int {
 func (am *AffectManager) HasAffect(entity Affectable, affectType AffectType) bool {
 	am.mu.RLock()
 	defer am.mu.RUnlock()
-	
+
 	entityID := am.getEntityID(entity)
 	affects := am.affects[entityID]
-	
+
 	for _, aff := range affects {
 		if aff.Type == affectType {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -223,7 +223,7 @@ func (am *AffectManager) HasAffect(entity Affectable, affectType AffectType) boo
 func (am *AffectManager) GetAffects(entity Affectable) []*Affect {
 	am.mu.RLock()
 	defer am.mu.RUnlock()
-	
+
 	entityID := am.getEntityID(entity)
 	return am.affects[entityID]
 }
@@ -232,29 +232,29 @@ func (am *AffectManager) GetAffects(entity Affectable) []*Affect {
 func (am *AffectManager) Tick() {
 	am.mu.Lock()
 	defer am.mu.Unlock()
-	
+
 	for entityID, affects := range am.affects {
 		entity, exists := am.entityMap[entityID]
 		if !exists {
 			continue
 		}
-		
+
 		var newAffects []*Affect
 		for _, aff := range affects {
 			expired := aff.Tick()
-			
+
 			if expired {
 				// Affect expired, remove its effects
 				am.removeAffectImmediate(entity, aff)
 				am.sendAffectMessage(entity, aff, false)
 			} else {
 				newAffects = append(newAffects, aff)
-				
+
 				// Apply periodic effects (like poison damage, regeneration)
 				am.applyPeriodicEffect(entity, aff)
 			}
 		}
-		
+
 		am.affects[entityID] = newAffects
 	}
 }
@@ -274,7 +274,7 @@ func (am *AffectManager) applyAffectImmediate(entity Affectable, affect *Affect)
 		entity.SetConstitution(entity.GetConstitution() + affect.Magnitude)
 	case AffectCharisma:
 		entity.SetCharisma(entity.GetCharisma() + affect.Magnitude)
-		
+
 	case AffectHitRoll:
 		entity.SetHitRoll(entity.GetHitRoll() + affect.Magnitude)
 	case AffectDamageRoll:
@@ -283,7 +283,7 @@ func (am *AffectManager) applyAffectImmediate(entity Affectable, affect *Affect)
 		entity.SetArmorClass(entity.GetArmorClass() + affect.Magnitude)
 	case AffectTHAC0:
 		entity.SetTHAC0(entity.GetTHAC0() + affect.Magnitude)
-		
+
 	case AffectHP:
 		entity.SetHP(entity.GetHP() + affect.Magnitude)
 	case AffectMaxHP:
@@ -294,7 +294,7 @@ func (am *AffectManager) applyAffectImmediate(entity Affectable, affect *Affect)
 		entity.SetMaxMana(entity.GetMaxMana() + affect.Magnitude)
 	case AffectMovement:
 		entity.SetMovement(entity.GetMovement() + affect.Magnitude)
-		
+
 	// Status flags
 	case AffectBlind:
 		entity.SetStatusFlag(1 << 0)
@@ -368,7 +368,7 @@ func (am *AffectManager) removeAffectImmediate(entity Affectable, affect *Affect
 		entity.SetConstitution(entity.GetConstitution() - affect.Magnitude)
 	case AffectCharisma:
 		entity.SetCharisma(entity.GetCharisma() - affect.Magnitude)
-		
+
 	case AffectHitRoll:
 		entity.SetHitRoll(entity.GetHitRoll() - affect.Magnitude)
 	case AffectDamageRoll:
@@ -377,7 +377,7 @@ func (am *AffectManager) removeAffectImmediate(entity Affectable, affect *Affect
 		entity.SetArmorClass(entity.GetArmorClass() - affect.Magnitude)
 	case AffectTHAC0:
 		entity.SetTHAC0(entity.GetTHAC0() - affect.Magnitude)
-		
+
 	case AffectHP:
 		// Don't reduce current HP when affect is removed
 		// Only adjust if it was a max HP affect
@@ -397,7 +397,7 @@ func (am *AffectManager) removeAffectImmediate(entity Affectable, affect *Affect
 		}
 	case AffectMovement:
 		entity.SetMovement(entity.GetMovement() - affect.Magnitude)
-		
+
 	// Clear status flags
 	case AffectBlind:
 		entity.ClearStatusFlag(1 << 0)
@@ -468,17 +468,17 @@ func (am *AffectManager) applyPeriodicEffect(entity Affectable, affect *Affect) 
 		if damage == 0 {
 			damage = 1 // Default poison damage
 		}
-		
+
 		currentHP := entity.GetHP()
 		newHP := currentHP - damage
 		if newHP < 0 {
 			newHP = 0
 		}
 		entity.SetHP(newHP)
-		
+
 		// Send poison damage message
 		entity.SendMessage("The poison courses through your veins!")
-		
+
 	case AffectRegeneration:
 		// Regeneration heals each tick
 		heal := affect.Magnitude
@@ -488,7 +488,7 @@ func (am *AffectManager) applyPeriodicEffect(entity Affectable, affect *Affect) 
 		if heal == 0 {
 			heal = 1 // Default regeneration
 		}
-		
+
 		currentHP := entity.GetHP()
 		maxHP := entity.GetMaxHP()
 		newHP := currentHP + heal
@@ -496,16 +496,16 @@ func (am *AffectManager) applyPeriodicEffect(entity Affectable, affect *Affect) 
 			newHP = maxHP
 		}
 		entity.SetHP(newHP)
-		
+
 		// Send regeneration message
 		if heal > 0 {
 			entity.SendMessage("You feel your wounds healing.")
 		}
-		
+
 	case AffectHaste:
 		// Haste might give extra attacks, handled elsewhere
 		// For now, just a placeholder
-		
+
 	case AffectSlow:
 		// Slow might reduce attacks, handled elsewhere
 		// For now, just a placeholder
@@ -520,7 +520,7 @@ func (am *AffectManager) getEntityID(entity Affectable) string {
 func (am *AffectManager) removeAffectsByStackID(entityID, stackID string) {
 	affects := am.affects[entityID]
 	var newAffects []*Affect
-	
+
 	for _, aff := range affects {
 		if aff.StackID != stackID {
 			newAffects = append(newAffects, aff)
@@ -532,7 +532,7 @@ func (am *AffectManager) removeAffectsByStackID(entityID, stackID string) {
 			}
 		}
 	}
-	
+
 	am.affects[entityID] = newAffects
 }
 
@@ -550,7 +550,7 @@ func (am *AffectManager) removeOldestStack(entityID, stackID string) {
 	affects := am.affects[entityID]
 	var oldestIndex = -1
 	var oldestTime time.Time
-	
+
 	for i, aff := range affects {
 		if aff.StackID == stackID {
 			if oldestIndex == -1 || aff.AppliedAt.Before(oldestTime) {
@@ -559,7 +559,7 @@ func (am *AffectManager) removeOldestStack(entityID, stackID string) {
 			}
 		}
 	}
-	
+
 	if oldestIndex != -1 {
 		// Remove oldest affect
 		oldestAffect := affects[oldestIndex]
@@ -567,7 +567,7 @@ func (am *AffectManager) removeOldestStack(entityID, stackID string) {
 			am.removeAffectImmediate(entity, oldestAffect)
 			am.sendAffectMessage(entity, oldestAffect, false)
 		}
-		
+
 		am.affects[entityID] = append(affects[:oldestIndex], affects[oldestIndex+1:]...)
 	}
 }

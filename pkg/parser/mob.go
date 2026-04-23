@@ -67,12 +67,12 @@ func ParseMobFile(path string) ([]Mob, error) {
 
 		if strings.HasPrefix(line, "#") {
 			vnumStr := line[1:]
-			
+
 			// Special case: #99999 is end-of-file marker
 			if vnumStr == "99999" {
 				break
 			}
-			
+
 			vnum, err := strconv.Atoi(vnumStr)
 			if err != nil {
 				return nil, fmt.Errorf("invalid mob vnum: %s", line)
@@ -131,22 +131,22 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 		return mob, fmt.Errorf("expected mob flags line")
 	}
 	flagsLine := scanner.Text()
-	
+
 	// Parse until we hit E or S (Simple flag)
 	for !strings.HasSuffix(flagsLine, " E") && !strings.HasSuffix(flagsLine, "E") &&
-		  !strings.HasSuffix(flagsLine, " S") && !strings.HasSuffix(flagsLine, "S") {
+		!strings.HasSuffix(flagsLine, " S") && !strings.HasSuffix(flagsLine, "S") {
 		if !scanner.Scan() {
 			return mob, fmt.Errorf("expected end of flags (E or S)")
 		}
 		flagsLine = scanner.Text()
 	}
-	
+
 	// Remove trailing E or S and parse
 	flagsLine = strings.TrimSuffix(flagsLine, " E")
 	flagsLine = strings.TrimSuffix(flagsLine, "E")
 	flagsLine = strings.TrimSuffix(flagsLine, " S")
 	flagsLine = strings.TrimSuffix(flagsLine, "S")
-	
+
 	// Parse action flags (bitmask as string), affect flags (bitmask), alignment
 	// Format: <action_flags> <affect_flags> <alignment> <race>
 	fields := strings.Fields(flagsLine)
@@ -198,16 +198,16 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	// Parse optional fields (Race, Noise, Script, BareHandAttack, etc.)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		
+
 		if line == "E" || strings.HasPrefix(line, "$") || strings.HasPrefix(line, "#") {
 			// Put back the line if it's the next mob or end of file
 			break
 		}
-		
+
 		if strings.HasPrefix(line, "Race:") {
 			mob.RaceStr = strings.TrimSpace(strings.TrimPrefix(line, "Race:"))
 		}
-		
+
 		if strings.HasPrefix(line, "Noise:") {
 			// Noise might be on same line or next
 			noise := strings.TrimPrefix(line, "Noise:")
@@ -223,7 +223,7 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 				mob.Noise = noise
 			}
 		}
-		
+
 		if strings.HasPrefix(line, "Script:") {
 			// Format: "Script: filename bitmask"
 			// Example: "Script: 144/hisc.lua 512"
@@ -235,7 +235,7 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 				mob.LuaFunctions, _ = strconv.Atoi(fields[1])
 			}
 		}
-		
+
 		// Ignore other fields like BareHandAttack for now
 	}
 

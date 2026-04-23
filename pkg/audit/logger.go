@@ -8,13 +8,13 @@ import (
 )
 
 type AuditEvent struct {
-	Timestamp   time.Time `json:"timestamp"`
-	EventType   string    `json:"event_type"`
-	User        string    `json:"user,omitempty"`
-	IPAddress   string    `json:"ip_address,omitempty"`
-	Action      string    `json:"action"`
-	Details     string    `json:"details,omitempty"`
-	Success     bool      `json:"success"`
+	Timestamp time.Time `json:"timestamp"`
+	EventType string    `json:"event_type"`
+	User      string    `json:"user,omitempty"`
+	IPAddress string    `json:"ip_address,omitempty"`
+	Action    string    `json:"action"`
+	Details   string    `json:"details,omitempty"`
+	Success   bool      `json:"success"`
 }
 
 type AuditLogger struct {
@@ -26,24 +26,24 @@ func NewAuditLogger(filename string) (*AuditLogger, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &AuditLogger{file: file}, nil
 }
 
 func (a *AuditLogger) Log(event AuditEvent) {
 	event.Timestamp = time.Now()
-	
+
 	data, err := json.Marshal(event)
 	if err != nil {
 		log.Printf("Failed to marshal audit event: %v", err)
 		return
 	}
-	
+
 	a.file.Write(append(data, '\n'))
-	
+
 	// Also log to console for important events
 	if !event.Success || event.EventType == "security" {
-		log.Printf("[AUDIT] %s: %s (User: %s, IP: %s)", 
+		log.Printf("[AUDIT] %s: %s (User: %s, IP: %s)",
 			event.EventType, event.Action, event.User, event.IPAddress)
 	}
 }
@@ -81,11 +81,11 @@ func LogLoginAttempt(user, ip string, success bool) {
 		Action:    "login_attempt",
 		Success:   success,
 	}
-	
+
 	if !success {
 		event.Details = "Failed login attempt"
 	}
-	
+
 	LogEvent(event)
 }
 
@@ -98,7 +98,7 @@ func LogSecurityEvent(action, details, user, ip string) {
 		Details:   details,
 		Success:   false, // Security events are typically about issues
 	}
-	
+
 	LogEvent(event)
 }
 
@@ -110,6 +110,6 @@ func LogAdminAction(user, action, details string) {
 		Details:   details,
 		Success:   true,
 	}
-	
+
 	LogEvent(event)
 }

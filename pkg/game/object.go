@@ -12,13 +12,13 @@ type ObjectInstance struct {
 	VNum      int
 
 	// Location
-	RoomVNum int // -1 if not in a room
-	Carrier  interface{} // *MobInstance or *Player
+	RoomVNum  int             // -1 if not in a room
+	Carrier   interface{}     // *MobInstance or *Player
 	Container *ObjectInstance // if inside another object
-	
+
 	// Equipment state
-	EquippedOn   interface{} // *MobInstance or *Player
-	EquipPosition int // -1 if not equipped
+	EquippedOn    interface{} // *MobInstance or *Player
+	EquipPosition int         // -1 if not equipped
 
 	// Contents (for containers)
 	Contains []*ObjectInstance
@@ -30,11 +30,11 @@ type ObjectInstance struct {
 // NewObjectInstance creates a new object instance from a prototype.
 func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 	return &ObjectInstance{
-		Prototype:  proto,
-		VNum:       proto.VNum,
-		RoomVNum:   roomVNum,
-		Contains:   make([]*ObjectInstance, 0),
-		CustomData: make(map[string]interface{}),
+		Prototype:     proto,
+		VNum:          proto.VNum,
+		RoomVNum:      roomVNum,
+		Contains:      make([]*ObjectInstance, 0),
+		CustomData:    make(map[string]interface{}),
 		EquipPosition: -1,
 	}
 }
@@ -100,7 +100,7 @@ func (o *ObjectInstance) IsWearable() bool {
 	if o.Prototype == nil {
 		return false
 	}
-	
+
 	// If any wear flag is non-zero, it's wearable
 	for _, flag := range o.Prototype.WearFlags {
 		if flag != 0 {
@@ -127,7 +127,7 @@ func (o *ObjectInstance) AddToContainer(obj *ObjectInstance) bool {
 	if !o.IsContainer() {
 		return false
 	}
-	
+
 	obj.Container = o
 	o.Contains = append(o.Contains, obj)
 	return true
@@ -180,7 +180,7 @@ func (o *ObjectInstance) GetExtraDesc(keyword string) string {
 	if o.Prototype == nil {
 		return ""
 	}
-	
+
 	for _, ed := range o.Prototype.ExtraDescs {
 		// Simple keyword matching - in reality would need to parse keywords
 		if ed.Keywords == keyword {

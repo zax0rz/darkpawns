@@ -48,7 +48,7 @@ func (s *Skill) CanLearn(charLevel, stat int) bool {
 	if charLevel < s.Difficulty {
 		return false
 	}
-	
+
 	// Stat requirements based on skill type
 	switch s.Type {
 	case SkillTypeCombat:
@@ -79,27 +79,27 @@ func (s *Skill) PracticeSkill(charLevel, stat int) bool {
 	if !s.Learned {
 		return false
 	}
-	
+
 	// Can't practice beyond max level
 	if s.Level >= s.MaxLevel {
 		return false
 	}
-	
+
 	// Practice points accumulate
 	s.Practice += 10 + rand.Intn(20) // 10-30 practice points
-	
+
 	// Check if we can level up
 	if s.Practice >= 100 {
 		// Calculate success chance based on difficulty and stats
 		successChance := 50 + (stat * 2) - (s.Difficulty * 5) + (charLevel - s.Level)
-		
+
 		if successChance < 10 {
 			successChance = 10 // Minimum 10% chance
 		}
 		if successChance > 90 {
 			successChance = 90 // Maximum 90% chance
 		}
-		
+
 		// Roll for success
 		if rand.Intn(100) < successChance {
 			s.Level++
@@ -113,7 +113,7 @@ func (s *Skill) PracticeSkill(charLevel, stat int) bool {
 			}
 		}
 	}
-	
+
 	return false
 }
 
@@ -123,10 +123,10 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 	if !s.Learned {
 		return false, false
 	}
-	
+
 	now := time.Now()
 	improved := false
-	
+
 	// Check if we can attempt improvement (once per minute minimum)
 	if now.Sub(s.LastUsed) > time.Minute {
 		// Small chance to improve on use
@@ -138,11 +138,11 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 		}
 		s.LastUsed = now
 	}
-	
+
 	// Calculate success chance
 	baseSuccess := s.Level
 	modifier := stat - 10 // Stat bonus/penalty
-	
+
 	// Difficulty modifier based on target
 	difficultyMod := 0
 	if targetLevel > charLevel {
@@ -150,9 +150,9 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 	} else if targetLevel < charLevel {
 		difficultyMod = (charLevel - targetLevel) * 2
 	}
-	
+
 	successChance := baseSuccess + modifier + difficultyMod
-	
+
 	// Ensure reasonable bounds
 	if successChance < 5 {
 		successChance = 5 // Minimum 5% chance
@@ -160,15 +160,15 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 	if successChance > 95 {
 		successChance = 95 // Maximum 95% chance
 	}
-	
+
 	// Roll for success
 	success := rand.Intn(100) < successChance
-	
+
 	// If successful and we haven't already improved, check for practice
 	if success && !improved && now.Sub(s.LastUsed) > time.Minute {
 		s.Practice += 2 + rand.Intn(5)
 	}
-	
+
 	return success, improved
 }
 
@@ -177,7 +177,7 @@ func (s *Skill) GetDisplayLevel() string {
 	if !s.Learned {
 		return "unlearned"
 	}
-	
+
 	if s.Level < 25 {
 		return "novice"
 	} else if s.Level < 50 {

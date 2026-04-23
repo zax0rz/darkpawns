@@ -17,10 +17,10 @@ type Spawner struct {
 	world *World
 
 	// Track spawned instances
-	mobInstances    map[int][]*MobInstance    // key: mob vnum
-	objInstances    map[int][]*ObjectInstance // key: obj vnum
-	roomMobs        map[int][]*MobInstance    // key: room vnum
-	roomObjects     map[int][]*ObjectInstance // key: room vnum
+	mobInstances map[int][]*MobInstance    // key: mob vnum
+	objInstances map[int][]*ObjectInstance // key: obj vnum
+	roomMobs     map[int][]*MobInstance    // key: room vnum
+	roomObjects  map[int][]*ObjectInstance // key: room vnum
 
 	// Zone reset timers
 	zoneTimers map[int]*time.Timer // key: zone number
@@ -29,12 +29,12 @@ type Spawner struct {
 // NewSpawner creates a new spawner for the given world.
 func NewSpawner(world *World) *Spawner {
 	return &Spawner{
-		world:           world,
-		mobInstances:    make(map[int][]*MobInstance),
-		objInstances:    make(map[int][]*ObjectInstance),
-		roomMobs:        make(map[int][]*MobInstance),
-		roomObjects:     make(map[int][]*ObjectInstance),
-		zoneTimers:      make(map[int]*time.Timer),
+		world:        world,
+		mobInstances: make(map[int][]*MobInstance),
+		objInstances: make(map[int][]*ObjectInstance),
+		roomMobs:     make(map[int][]*MobInstance),
+		roomObjects:  make(map[int][]*ObjectInstance),
+		zoneTimers:   make(map[int]*time.Timer),
 	}
 }
 
@@ -46,10 +46,10 @@ func (s *Spawner) StartZoneResets() error {
 	// Get zones from world (need to access world's internal data)
 	// For now, we'll assume we can get zones somehow
 	// In a real implementation, we'd need to expose zones from World
-	
+
 	// This is a placeholder - actual implementation would iterate through zones
 	// and call ExecuteZoneReset for each
-	
+
 	return nil
 }
 
@@ -69,7 +69,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				fmt.Printf("Cannot spawn mob %d: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
 				continue
 			}
-			
+
 			mob, err := s.SpawnMob(cmd.Arg1, cmd.Arg3)
 			if err != nil {
 				// Log error but continue with other commands
@@ -84,7 +84,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				fmt.Printf("Cannot spawn object %d: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
 				continue
 			}
-			
+
 			_, err := s.SpawnObject(cmd.Arg1, cmd.Arg3)
 			if err != nil {
 				fmt.Printf("Error spawning object %d: %v\n", cmd.Arg1, err)
@@ -97,7 +97,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 					fmt.Printf("Cannot spawn object %d for mob: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
 					continue
 				}
-				
+
 				obj, err := s.SpawnObject(cmd.Arg1, -1) // -1 means give to mob, not room
 				if err != nil {
 					fmt.Printf("Error spawning object %d for mob: %v\n", cmd.Arg1, err)
@@ -113,7 +113,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 					fmt.Printf("Cannot spawn object %d for mob equip: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
 					continue
 				}
-				
+
 				obj, err := s.SpawnObject(cmd.Arg1, -1)
 				if err != nil {
 					fmt.Printf("Error spawning object %d for mob equip: %v\n", cmd.Arg1, err)
@@ -135,7 +135,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 					fmt.Printf("Cannot spawn object %d for container: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
 					continue
 				}
-				
+
 				obj, err := s.SpawnObject(cmd.Arg1, -1)
 				if err != nil {
 					fmt.Printf("Error spawning object %d for container: %v\n", cmd.Arg1, err)
@@ -179,8 +179,6 @@ func (s *Spawner) CanSpawn(vnum int, maxInWorld int) bool {
 	// No instances yet, so we can spawn
 	return maxInWorld > 0
 }
-
-
 
 // SpawnMob creates a new mob instance in the specified room.
 func (s *Spawner) SpawnMob(mobVNum, roomVNum int) (*MobInstance, error) {
@@ -249,7 +247,7 @@ func (s *Spawner) removeObjectFromRoom(roomVNum, objVNum int) {
 			if obj.VNum == objVNum {
 				// Remove from room
 				s.roomObjects[roomVNum] = append(instances[:i], instances[i+1:]...)
-				
+
 				// Remove from objInstances
 				if objInstances, ok2 := s.objInstances[objVNum]; ok2 {
 					for j, obj2 := range objInstances {
@@ -272,7 +270,7 @@ func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) {
 			if mob.VNum == mobVNum {
 				// Remove from room
 				s.roomMobs[roomVNum] = append(instances[:i], instances[i+1:]...)
-				
+
 				// Remove from mobInstances
 				if mobInstances, ok2 := s.mobInstances[mobVNum]; ok2 {
 					for j, mob2 := range mobInstances {

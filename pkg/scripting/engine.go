@@ -8,15 +8,16 @@ import (
 	"math/rand"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	lua "github.com/yuin/gopher-lua"
 )
 
 // Engine manages the Lua VM.
 // Based on boot_lua() in scripts.c lines 1703-1716.
 type Engine struct {
-	scriptsDir  string
-	L           *lua.LState
-	world       ScriptableWorld
+	scriptsDir   string
+	L            *lua.LState
+	world        ScriptableWorld
 	transitItems map[int]ScriptableObject // in-flight items moved by objfrom/objto
 }
 
@@ -24,21 +25,21 @@ type Engine struct {
 func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	L := lua.NewState()
 	engine := &Engine{
-		scriptsDir:  scriptsDir,
-		L:           L,
-		world:       world,
+		scriptsDir:   scriptsDir,
+		L:            L,
+		world:        world,
 		transitItems: make(map[int]ScriptableObject),
 	}
 
 	// Open standard libraries
 	L.OpenLibs()
-	
+
 	// Remove dangerous functions for security
 	// Remove file system access
 	L.SetGlobal("dofile", lua.LNil)
 	L.SetGlobal("loadfile", lua.LNil)
 	L.SetGlobal("load", lua.LNil)
-	
+
 	// Remove OS access
 	osTable := L.GetGlobal("os").(*lua.LTable)
 	osTable.RawSetString("execute", lua.LNil)
@@ -47,16 +48,16 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	osTable.RawSetString("rename", lua.LNil)
 	osTable.RawSetString("setlocale", lua.LNil)
 	osTable.RawSetString("tmpname", lua.LNil)
-	
+
 	// Remove package library (can load arbitrary code)
 	L.SetGlobal("package", lua.LNil)
-	
+
 	// Remove debug library
 	L.SetGlobal("debug", lua.LNil)
-	
+
 	// Remove io library
 	L.SetGlobal("io", lua.LNil)
-	
+
 	// Set memory limit
 	L.SetMx(1000) // Limit memory allocation
 
@@ -98,7 +99,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		// Create a room table with vnum and char array
 		roomTbl := e.L.NewTable()
 		roomTbl.RawSetString("vnum", lua.LNumber(ctx.RoomVNum))
-		
+
 		// Populate room.char with all players + mobs in the room
 		charTbl := e.L.NewTable()
 		idx := 1
@@ -110,7 +111,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 				pt.RawSetString("hp", lua.LNumber(p.GetHealth()))
 				pt.RawSetString("maxhp", lua.LNumber(p.GetMaxHealth()))
 				pt.RawSetString("evil", lua.LBool(p.GetAlignment() < -350))
-				pt.RawSetString("pos", lua.LNumber(8)) // POS_STANDING
+				pt.RawSetString("pos", lua.LNumber(combat.PosStanding)) // POS_STANDING
 				charTbl.RawSetInt(idx, pt)
 				idx++
 			}
@@ -123,7 +124,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 				// Check mob alignment (negative = evil)
 				alignment := m.GetPrototype().GetAlignment()
 				mt.RawSetString("evil", lua.LBool(alignment < 0))
-				mt.RawSetString("pos", lua.LNumber(8)) // POS_STANDING
+				mt.RawSetString("pos", lua.LNumber(combat.PosStanding)) // POS_STANDING
 				mt.RawSetString("vnum", lua.LNumber(m.GetVNum()))
 				mt.RawSetString("room", lua.LNumber(ctx.RoomVNum))
 				charTbl.RawSetInt(idx, mt)
@@ -131,7 +132,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			}
 		}
 		roomTbl.RawSetString("char", charTbl)
-		
+
 		e.L.SetGlobal("room", roomTbl)
 	}
 
@@ -168,7 +169,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	// Lua functions return 0 values by default, we treat that as false (not handled)
 	stackTop := e.L.GetTop()
 	log.Printf("[SCRIPT] Stack top after PCall: %d", stackTop)
-	
+
 	var ret lua.LValue = lua.LFalse
 	if stackTop > 0 {
 		ret = e.L.Get(-1)
@@ -254,11 +255,11 @@ func (e *Engine) registerFunctions() {
 	e.L.SetGlobal("set_skill", e.L.NewFunction(e.luaSetSkill))
 	e.L.SetGlobal("spell", e.L.NewFunction(e.luaSpell))
 	e.L.SetGlobal("tport", e.L.NewFunction(e.luaTport))
-	
+
 	// Additional functions needed for combat AI scripts
 	e.L.SetGlobal("isfighting", e.L.NewFunction(e.luaIsFighting))
 	e.L.SetGlobal("round", e.L.NewFunction(e.luaRound))
-	
+
 	// Functions needed for RESTORE scripts
 	e.L.SetGlobal("has_item", e.L.NewFunction(e.luaHasItem))
 	e.L.SetGlobal("obj_in_room", e.L.NewFunction(e.luaObjInRoom))
@@ -328,32 +329,32 @@ func (e *Engine) setupBasicConstants() {
 	e.L.SetGlobal("WEST", lua.LNumber(3))
 	e.L.SetGlobal("UP", lua.LNumber(4))
 	e.L.SetGlobal("DOWN", lua.LNumber(5))
-	
+
 	// Message types for act()
 	e.L.SetGlobal("TO_ROOM", lua.LNumber(1))
 	e.L.SetGlobal("TO_VICT", lua.LNumber(2))
 	e.L.SetGlobal("TO_NOTVICT", lua.LNumber(3))
 	e.L.SetGlobal("TO_CHAR", lua.LNumber(4))
-	
+
 	// Boolean constants
 	e.L.SetGlobal("TRUE", lua.LNumber(1))
 	e.L.SetGlobal("FALSE", lua.LNumber(0))
 	e.L.SetGlobal("NIL", lua.LNil)
-	
+
 	// Level constants
 	e.L.SetGlobal("LVL_IMMORT", lua.LNumber(31))
 	e.L.SetGlobal("LVL_IMPL", lua.LNumber(40))
-	
+
 	// Player flags
 	e.L.SetGlobal("PLR_OUTLAW", lua.LNumber(0))
 	e.L.SetGlobal("PLR_WEREWOLF", lua.LNumber(16))
 	e.L.SetGlobal("PLR_VAMPIRE", lua.LNumber(17))
-	
+
 	// Mob flags
 	e.L.SetGlobal("MOB_SENTINEL", lua.LNumber(1))
 	e.L.SetGlobal("MOB_HUNTER", lua.LNumber(18))
 	e.L.SetGlobal("MOB_MOUNTABLE", lua.LNumber(21))
-	
+
 	// Affect flags
 	e.L.SetGlobal("AFF_DETECT_MAGIC", lua.LNumber(4))
 	e.L.SetGlobal("AFF_GROUP", lua.LNumber(8))
@@ -363,17 +364,17 @@ func (e *Engine) setupBasicConstants() {
 	e.L.SetGlobal("AFF_WEREWOLF", lua.LNumber(27))
 	e.L.SetGlobal("AFF_VAMPIRE", lua.LNumber(28))
 	e.L.SetGlobal("AFF_MOUNT", lua.LNumber(29))
-	
+
 	// Position constants
-	e.L.SetGlobal("POS_DEAD", lua.LNumber(0))
+	e.L.SetGlobal("POS_DEAD", lua.LNumber(combat.PosDead))
 	e.L.SetGlobal("POS_MORTALLYW", lua.LNumber(1))
-	e.L.SetGlobal("POS_INCAP", lua.LNumber(2))
-	e.L.SetGlobal("POS_STUNNED", lua.LNumber(3))
-	e.L.SetGlobal("POS_SLEEPING", lua.LNumber(4))
-	e.L.SetGlobal("POS_RESTING", lua.LNumber(5))
-	e.L.SetGlobal("POS_SITTING", lua.LNumber(6))
-	e.L.SetGlobal("POS_STANDING", lua.LNumber(8))
-	
+	e.L.SetGlobal("POS_INCAP", lua.LNumber(combat.PosIncap))
+	e.L.SetGlobal("POS_STUNNED", lua.LNumber(combat.PosStunned))
+	e.L.SetGlobal("POS_SLEEPING", lua.LNumber(combat.PosSleeping))
+	e.L.SetGlobal("POS_RESTING", lua.LNumber(combat.PosResting))
+	e.L.SetGlobal("POS_SITTING", lua.LNumber(combat.PosSitting))
+	e.L.SetGlobal("POS_STANDING", lua.LNumber(combat.PosStanding))
+
 	// Item type constants
 	e.L.SetGlobal("ITEM_STAFF", lua.LNumber(4))
 	e.L.SetGlobal("ITEM_WEAPON", lua.LNumber(5))
@@ -385,16 +386,16 @@ func (e *Engine) setupBasicConstants() {
 	e.L.SetGlobal("ITEM_KEY", lua.LNumber(18))
 	e.L.SetGlobal("ITEM_FOOD", lua.LNumber(19))
 	e.L.SetGlobal("ITEM_PEN", lua.LNumber(21))
-	
+
 	// Object extra flags
 	e.L.SetGlobal("ITEM_GLOW", lua.LNumber(0))
 	e.L.SetGlobal("ITEM_MAGIC", lua.LNumber(6))
 	e.L.SetGlobal("ITEM_NODROP", lua.LNumber(7))
 	e.L.SetGlobal("ITEM_NOSELL", lua.LNumber(16))
-	
+
 	// Item wear positions
 	e.L.SetGlobal("ITEM_WEAR_TAKE", lua.LNumber(0))
-	
+
 	// Spell constants (from spells.h and globals.lua)
 	e.L.SetGlobal("SPELL_TELEPORT", lua.LNumber(2))
 	e.L.SetGlobal("SPELL_BLINDNESS", lua.LNumber(4))
@@ -437,14 +438,14 @@ func (e *Engine) setupBasicConstants() {
 	// SPELL_PARALYSE: not in original globals.lua; assigned 105 as next available value.
 	// Used by paralyse.lua and head_shrinker.lua. TODO: verify against original spells.h.
 	e.L.SetGlobal("SPELL_PARALYSE", lua.LNumber(105))
-	
+
 	// Dragon Breath spells
 	e.L.SetGlobal("SPELL_FIRE_BREATH", lua.LNumber(202))
 	e.L.SetGlobal("SPELL_GAS_BREATH", lua.LNumber(203))
 	e.L.SetGlobal("SPELL_FROST_BREATH", lua.LNumber(204))
 	e.L.SetGlobal("SPELL_ACID_BREATH", lua.LNumber(205))
 	e.L.SetGlobal("SPELL_LIGHTNING_BREATH", lua.LNumber(206))
-	
+
 	// Skill constants
 	e.L.SetGlobal("SKILL_BASH", lua.LNumber(132))
 	e.L.SetGlobal("SKILL_HEADBUTT", lua.LNumber(141))
@@ -452,10 +453,10 @@ func (e *Engine) setupBasicConstants() {
 	e.L.SetGlobal("SKILL_PARRY", lua.LNumber(172))
 	e.L.SetGlobal("SKILL_KICK", lua.LNumber(134))
 	e.L.SetGlobal("SKILL_TRIP", lua.LNumber(144))
-	
+
 	// Raw kill types
 	e.L.SetGlobal("TYPE_UNDEFINED", lua.LNumber(-1))
-	
+
 	// Sector types
 	e.L.SetGlobal("SECT_FOREST", lua.LNumber(3))
 	e.L.SetGlobal("SECT_UNDERWATER", lua.LNumber(8))
@@ -463,13 +464,13 @@ func (e *Engine) setupBasicConstants() {
 	e.L.SetGlobal("SECT_EARTH", lua.LNumber(12))
 	e.L.SetGlobal("SECT_WIND", lua.LNumber(13))
 	e.L.SetGlobal("SECT_WATER", lua.LNumber(14))
-	
+
 	// Exit flags
 	e.L.SetGlobal("EX_ISDOOR", lua.LNumber(0))
 	e.L.SetGlobal("EX_CLOSED", lua.LNumber(1))
 	e.L.SetGlobal("EX_LOCKED", lua.LNumber(2))
 	e.L.SetGlobal("EX_PICKPROOF", lua.LNumber(3))
-	
+
 	// Lua script flags
 	e.L.SetGlobal("LT_MOB", lua.LString("mob"))
 	e.L.SetGlobal("LT_OBJ", lua.LString("obj"))
@@ -492,7 +493,7 @@ func (e *Engine) charToTable(player ScriptablePlayer, globalName string) {
 	tbl.RawSetString("class", lua.LNumber(player.GetClass()))
 	tbl.RawSetString("alignment", lua.LNumber(player.GetAlignment()))
 	tbl.RawSetString("room", lua.LNumber(player.GetRoomVNum()))
-	
+
 	// Evil property (based on alignment - negative = evil)
 	alignment := player.GetAlignment()
 	evil := 0 // FALSE
@@ -526,7 +527,7 @@ func (e *Engine) mobToTable(mob ScriptableMob, globalName string) {
 	tbl := L.NewTable()
 
 	proto := mob.GetPrototype()
-	
+
 	// Basic fields
 	tbl.RawSetString("name", lua.LString(proto.GetShortDesc()))
 	tbl.RawSetString("level", lua.LNumber(proto.GetLevel()))
@@ -535,7 +536,7 @@ func (e *Engine) mobToTable(mob ScriptableMob, globalName string) {
 	tbl.RawSetString("vnum", lua.LNumber(mob.GetVNum()))
 	tbl.RawSetString("gold", lua.LNumber(proto.GetGold()))
 	tbl.RawSetString("room", lua.LNumber(mob.GetRoomVNum()))
-	
+
 	// Evil property (based on alignment - negative = evil)
 	// In Dark Pawns, alignment ranges from -1000 to +1000
 	// Negative alignment = evil (TRUE), positive = good (FALSE)
@@ -573,7 +574,7 @@ func (e *Engine) objToTable(obj ScriptableObject, globalName string) {
 	tbl.RawSetString("timer", lua.LNumber(obj.GetTimer()))
 
 	// Object prototype fields (stubbed)
-	tbl.RawSetString("perc_load", lua.LNumber(0))  // Default 0% load chance
+	tbl.RawSetString("perc_load", lua.LNumber(0)) // Default 0% load chance
 
 	// Store pointer to struct for write-back
 	tbl.RawSetString("struct", lua.LNumber(obj.GetVNum()))
@@ -670,7 +671,7 @@ func (e *Engine) luaAct(L *lua.LState) int {
 	}
 
 	players := e.world.GetPlayersInRoom(roomVNum)
-	
+
 	switch where {
 	case 1: // TO_ROOM
 		for _, player := range players {
@@ -712,11 +713,11 @@ func (e *Engine) luaDoDamage(L *lua.LState) int {
 				newHP = 0
 			}
 			L.Pop(1) // pop hp value
-			
+
 			// Update hp in table
 			L.Push(lua.LNumber(newHP))
 			L.SetField(L.Get(-2), "hp", lua.LNumber(newHP))
-			
+
 			// Check for death
 			if newHP <= 0 && e.world != nil {
 				// Get the actual player object from the world
@@ -736,7 +737,7 @@ func (e *Engine) luaSay(L *lua.LState) int {
 	// say(msg)
 	// Based on lua_say() (not shown in snippets but referenced)
 	msg := L.ToString(1)
-	
+
 	// Get me from global for room context
 	var roomVNum int
 	L.GetGlobal("me")
@@ -748,12 +749,12 @@ func (e *Engine) luaSay(L *lua.LState) int {
 		L.Pop(1)
 	}
 	L.Pop(1)
-	
+
 	if e.world == nil || roomVNum == 0 {
 		log.Printf("[SAY] No world or room context: %s", msg)
 		return 0
 	}
-	
+
 	// Format message: "mob says 'message'"
 	L.GetGlobal("me")
 	var mobName string = "someone"
@@ -765,13 +766,13 @@ func (e *Engine) luaSay(L *lua.LState) int {
 		L.Pop(1)
 	}
 	L.Pop(1)
-	
+
 	formattedMsg := mobName + " says '" + msg + "'\r\n"
 	players := e.world.GetPlayersInRoom(roomVNum)
 	for _, player := range players {
 		player.SendMessage(formattedMsg)
 	}
-	
+
 	return 0
 }
 
@@ -811,7 +812,7 @@ func (e *Engine) luaEmote(L *lua.LState) int {
 	// emote(msg)
 	// Based on lua_emote() in scripts.c lines 291-306
 	msg := L.ToString(1)
-	
+
 	// Get me from global for room context
 	var roomVNum int
 	L.GetGlobal("me")
@@ -823,12 +824,12 @@ func (e *Engine) luaEmote(L *lua.LState) int {
 		L.Pop(1)
 	}
 	L.Pop(1)
-	
+
 	if e.world == nil || roomVNum == 0 {
 		log.Printf("[EMOTE] No world or room context: %s", msg)
 		return 0
 	}
-	
+
 	// Format message: "mob message"
 	L.GetGlobal("me")
 	var mobName string = "someone"
@@ -840,13 +841,13 @@ func (e *Engine) luaEmote(L *lua.LState) int {
 		L.Pop(1)
 	}
 	L.Pop(1)
-	
+
 	formattedMsg := mobName + " " + msg + "\r\n"
 	players := e.world.GetPlayersInRoom(roomVNum)
 	for _, player := range players {
 		player.SendMessage(formattedMsg)
 	}
-	
+
 	return 0
 }
 
@@ -855,15 +856,15 @@ func (e *Engine) luaAction(L *lua.LState) int {
 	// Based on lua_action() in scripts.c lines 126-144
 	// mob would be table, cmdstr is string
 	// In real implementation: mob executes command
-	
+
 	// Get parameters
 	mobTbl := L.Get(1)
 	cmdStr := L.ToString(2)
-	
+
 	// Log the action for now
 	// TODO: Implement actual command execution for mobs
 	mobName := "unknown"
-	
+
 	if mobTbl.Type() == lua.LTTable {
 		L.GetField(mobTbl, "name")
 		if L.Get(-1).Type() == lua.LTString {
@@ -871,9 +872,9 @@ func (e *Engine) luaAction(L *lua.LState) int {
 		}
 		L.Pop(1)
 	}
-	
+
 	log.Printf("[ACTION] %s executes command: %s", mobName, cmdStr)
-	
+
 	return 0
 }
 
@@ -883,13 +884,13 @@ func (e *Engine) luaOload(L *lua.LState) int {
 	// target is ch table, vnum is number, location is string
 	vnum := L.ToInt(2)
 	location := L.ToString(3)
-	
+
 	if e.world == nil {
 		log.Printf("[OLOAD] No world context: vnum %d, location %s", vnum, location)
 		L.Push(lua.LNil)
 		return 1
 	}
-	
+
 	// Get object prototype
 	objProto := e.world.GetObjPrototype(vnum)
 	if objProto == nil {
@@ -897,7 +898,7 @@ func (e *Engine) luaOload(L *lua.LState) int {
 		L.Push(lua.LNil)
 		return 1
 	}
-	
+
 	// Create object instance from prototype
 	// For now, just return the prototype as a table
 	tbl := L.NewTable()
@@ -906,11 +907,11 @@ func (e *Engine) luaOload(L *lua.LState) int {
 	tbl.RawSetString("name", lua.LString(objProto.GetShortDesc()))
 	tbl.RawSetString("cost", lua.LNumber(objProto.GetCost()))
 	tbl.RawSetString("timer", lua.LNumber(objProto.GetTimer()))
-	
+
 	// TODO: Actually add to room or character inventory based on location
 	// For now, just log
 	log.Printf("[OLOAD] Created object vnum %d at location %s", vnum, location)
-	
+
 	L.Push(tbl)
 	return 1
 }
@@ -938,11 +939,11 @@ func (e *Engine) luaNumber(L *lua.LState) int {
 	// Based on lua_number() in scripts.c lines 817-830
 	low := L.ToInt(1)
 	high := L.ToInt(2)
-	
+
 	if low > high {
 		low, high = high, low
 	}
-	
+
 	result := low + rand.Intn(high-low+1)
 	L.Push(lua.LNumber(result))
 	return 1
@@ -953,17 +954,17 @@ func (e *Engine) luaSendToRoom(L *lua.LState) int {
 	// Based on lua_echo() with type="room" in scripts.c lines 308-345
 	msg := L.ToString(1)
 	roomVNum := L.ToInt(2)
-	
+
 	if e.world == nil {
 		log.Printf("[SEND_TO_ROOM] No world context: Room %d: %s", roomVNum, msg)
 		return 0
 	}
-	
+
 	players := e.world.GetPlayersInRoom(roomVNum)
 	for _, player := range players {
 		player.SendMessage(msg + "\r\n")
 	}
-	
+
 	return 0
 }
 
@@ -1019,7 +1020,7 @@ func (e *Engine) luaGetn(L *lua.LState) int {
 		L.Push(lua.LNumber(0))
 		return 1
 	}
-	
+
 	L.Push(lua.LNumber(L.ObjLen(tbl)))
 	return 1
 }
@@ -1087,13 +1088,13 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 	// target: table representing target (can be NIL)
 	// spellnum: spell number constant
 	// aggressive: boolean indicating if spell is offensive
-	
+
 	// Get parameters
 	casterTbl := L.Get(1)
 	targetTbl := L.Get(2)
 	spellNum := L.ToInt(3)
 	aggressive := L.ToBool(4)
-	
+
 	// Get caster level
 	casterLevel := 1
 	if casterTbl.Type() == lua.LTTable {
@@ -1103,7 +1104,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		}
 		L.Pop(1)
 	}
-	
+
 	// Helper function for dice rolls
 	dice := func(num, sides int) int {
 		total := 0
@@ -1112,7 +1113,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		}
 		return total
 	}
-	
+
 	// Handle different spell types
 	switch spellNum {
 	case 2: // SPELL_TELEPORT
@@ -1128,7 +1129,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			log.Printf("[SPELL] Teleported %s to room %d", targetName, newRoom)
 		}
 		return 0
-		
+
 	case 16: // SPELL_CURE_LIGHT
 		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
 			// Healing spell: dice(2,8) + 1 + (level >> 2) - magic.c mag_points() line ~1765
@@ -1147,7 +1148,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			log.Printf("[SPELL] Cure Light: healed %d HP (new HP: %d)", healAmount, newHP)
 		}
 		return 0
-		
+
 	case 28: // SPELL_HEAL
 		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
 			// Healing spell: 100 + dice(3,8) - magic.c mag_points() line ~1783
@@ -1166,7 +1167,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			log.Printf("[SPELL] Heal: restored %d HP (new HP: %d)", healAmount, newHP)
 		}
 		return 0
-		
+
 	case 67: // SPELL_VITALITY
 		if targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
 			// Healing spell: dice(5,10) HP + dice(10,10) move - magic.c mag_points() line ~1800
@@ -1187,7 +1188,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		}
 		return 0
 	}
-	
+
 	// For offensive spells (aggressive=true)
 	if aggressive && targetTbl.Type() == lua.LTTable && targetTbl != lua.LNil {
 		// Calculate damage based on spell type and caster level
@@ -1262,7 +1263,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			return 0
 		case 100: // SPELL_PSIBLAST
 			// magic.c mag_damage() line ~805
-			damage = dice(15, 13) + 3 * casterLevel
+			damage = dice(15, 13) + 3*casterLevel
 		case 104: // SPELL_PETRIFY
 			// SPELL_PETRIFY: raw_kill mechanic, not mag_damage
 			log.Printf("[SPELL] SPELL_PETRIFY: raw_kill mechanic, not mag_damage")
@@ -1287,19 +1288,19 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			maxDamage := casterLevel * 3
 			damage = casterLevel*2 + rand.Intn(maxDamage-minDamage+1) + minDamage
 		}
-		
+
 		// Get current HP
 		L.GetField(targetTbl, "hp")
 		currentHP := int(L.ToNumber(-1))
 		L.Pop(1)
-		
+
 		// Apply damage
 		newHP := currentHP - damage
 		if newHP < 0 {
 			newHP = 0
 		}
 		L.SetField(targetTbl, "hp", lua.LNumber(newHP))
-		
+
 		// Check for death
 		if newHP == 0 && e.world != nil {
 			// Get target name and room
@@ -1309,11 +1310,11 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			L.GetField(targetTbl, "room")
 			roomVNum := int(L.ToNumber(-1))
 			L.Pop(1)
-			
+
 			// Notify world of spell death
 			e.world.HandleSpellDeath(targetName, spellNum, roomVNum)
 		}
-		
+
 		// Log
 		L.GetField(casterTbl, "name")
 		casterName := L.ToString(-1)
@@ -1321,52 +1322,78 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		L.GetField(targetTbl, "name")
 		targetName := L.ToString(-1)
 		L.Pop(1)
-		
+
 		// Convert spell number to name for logging
 		spellName := fmt.Sprintf("SPELL_%d", spellNum)
 		switch spellNum {
-		case 32: spellName = "MAGIC_MISSILE"
-		case 5: spellName = "BURNING_HANDS"
-		case 30: spellName = "LIGHTNING_BOLT"
-		case 26: spellName = "FIREBALL"
-		case 58: spellName = "HELLFIRE"
-		case 10: spellName = "COLOR_SPRAY"
-		case 92: spellName = "DISRUPT"
-		case 93: spellName = "DISINTEGRATE"
-		case 96: spellName = "FLAMESTRIKE"
-		case 75: spellName = "ACID_BLAST"
-		case 22: spellName = "DISPEL_EVIL"
-		case 46: spellName = "DISPEL_GOOD"
-		case 27: spellName = "HARM"
-		case 4: spellName = "BLINDNESS"
-		case 17: spellName = "CURSE"
-		case 33: spellName = "POISON"
-		case 23: spellName = "EARTHQUAKE"
-		case 81: spellName = "DIVINE_INT"
-		case 82: spellName = "MIND_BAR"
-		case 8: spellName = "CHILL_TOUCH"
-		case 6: spellName = "CALL_LIGHTNING"
-		case 25: spellName = "ENERGY_DRAIN"
-		case 83: spellName = "SOUL_LEECH"
-		case 62: spellName = "MINDBLAST"
-		case 100: spellName = "PSIBLAST"
-		case 37: spellName = "SHOCKING_GRASP"
+		case 32:
+			spellName = "MAGIC_MISSILE"
+		case 5:
+			spellName = "BURNING_HANDS"
+		case 30:
+			spellName = "LIGHTNING_BOLT"
+		case 26:
+			spellName = "FIREBALL"
+		case 58:
+			spellName = "HELLFIRE"
+		case 10:
+			spellName = "COLOR_SPRAY"
+		case 92:
+			spellName = "DISRUPT"
+		case 93:
+			spellName = "DISINTEGRATE"
+		case 96:
+			spellName = "FLAMESTRIKE"
+		case 75:
+			spellName = "ACID_BLAST"
+		case 22:
+			spellName = "DISPEL_EVIL"
+		case 46:
+			spellName = "DISPEL_GOOD"
+		case 27:
+			spellName = "HARM"
+		case 4:
+			spellName = "BLINDNESS"
+		case 17:
+			spellName = "CURSE"
+		case 33:
+			spellName = "POISON"
+		case 23:
+			spellName = "EARTHQUAKE"
+		case 81:
+			spellName = "DIVINE_INT"
+		case 82:
+			spellName = "MIND_BAR"
+		case 8:
+			spellName = "CHILL_TOUCH"
+		case 6:
+			spellName = "CALL_LIGHTNING"
+		case 25:
+			spellName = "ENERGY_DRAIN"
+		case 83:
+			spellName = "SOUL_LEECH"
+		case 62:
+			spellName = "MINDBLAST"
+		case 100:
+			spellName = "PSIBLAST"
+		case 37:
+			spellName = "SHOCKING_GRASP"
 		}
-		
-		log.Printf("[SPELL] %s casts %s on %s for %d damage (HP: %d -> %d)", 
+
+		log.Printf("[SPELL] %s casts %s on %s for %d damage (HP: %d -> %d)",
 			casterName, spellName, targetName, damage, currentHP, newHP)
-		
+
 		// TODO: Handle death if newHP == 0
 	} else {
 		// Non-aggressive or no target
 		L.GetField(casterTbl, "name")
 		casterName := L.ToString(-1)
 		L.Pop(1)
-		
+
 		spellName := fmt.Sprintf("SPELL_%d", spellNum)
 		log.Printf("[SPELL] %s casts %s (non-aggressive or no target)", casterName, spellName)
 	}
-	
+
 	return 0
 }
 

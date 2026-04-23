@@ -6,8 +6,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/command"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // ExecuteCommand processes a game command.
@@ -23,7 +23,7 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		if len(args) > 0 {
 			fullCommand = cmdStr + " " + strings.Join(args, " ")
 		}
-		
+
 		// Check each mob for oncmd script
 		for _, mob := range mobs {
 			if mob.HasScript("oncmd") {
@@ -130,9 +130,6 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		s.sendText(fmt.Sprintf("Unknown command: %s", cmdStr))
 		return nil
 	}
-	
-	// This should never be reached
-	return nil
 }
 
 // cmdLook shows the current room.
@@ -371,7 +368,7 @@ func cmdWear(s *Session, args []string) error {
 	}
 
 	itemName := strings.Join(args, " ")
-	
+
 	// Find item in inventory
 	item, found := s.player.Inventory.FindItem(itemName)
 	if !found {
@@ -403,7 +400,7 @@ func cmdRemove(s *Session, args []string) error {
 	}
 
 	itemName := strings.Join(args, " ")
-	
+
 	// Find the item in equipment
 	var itemToRemove *game.ObjectInstance
 	var slotToRemove game.EquipmentSlot
@@ -442,7 +439,7 @@ func cmdWield(s *Session, args []string) error {
 	}
 
 	itemName := strings.Join(args, " ")
-	
+
 	// Find item in inventory
 	item, found := s.player.Inventory.FindItem(itemName)
 	if !found {
@@ -486,7 +483,7 @@ func cmdHold(s *Session, args []string) error {
 	}
 
 	itemName := strings.Join(args, " ")
-	
+
 	// Find item in inventory
 	item, found := s.player.Inventory.FindItem(itemName)
 	if !found {
@@ -540,7 +537,7 @@ func cmdGet(s *Session, args []string) error {
 				s.sendText("You can't get that.")
 				return nil
 			}
-			
+
 			// Add to inventory
 			if err := s.player.Inventory.AddItem(item); err != nil {
 				// Put back in room

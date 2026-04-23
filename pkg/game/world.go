@@ -23,18 +23,18 @@ type World struct {
 	zones map[int]*parser.Zone
 
 	// Runtime state
-	players map[string]*Player // keyed by player name
-	activeMobs map[int]*MobInstance    // keyed by instance ID
+	players    map[string]*Player   // keyed by player name
+	activeMobs map[int]*MobInstance // keyed by instance ID
 	nextMobID  int
-	
+
 	// Room items: room VNum -> list of object instances
 	roomItems map[int][]*ObjectInstance
 	nextObjID int
-	
+
 	// AI tick management
 	aiticker *time.Ticker
 	done     chan bool
-	
+
 	// Spawner
 	spawner *Spawner
 
@@ -45,16 +45,16 @@ type World struct {
 // NewWorld creates a new game world from parsed data.
 func NewWorld(parsed *parser.World) (*World, error) {
 	w := &World{
-		rooms:      make(map[int]*parser.Room),
-		mobs:       make(map[int]*parser.Mob),
-		objs:       make(map[int]*parser.Obj),
-		zones:      make(map[int]*parser.Zone),
-		players:    make(map[string]*Player),
-		activeMobs: make(map[int]*MobInstance),
-		nextMobID:  1,
-		roomItems:  make(map[int][]*ObjectInstance),
+		rooms:       make(map[int]*parser.Room),
+		mobs:        make(map[int]*parser.Mob),
+		objs:        make(map[int]*parser.Obj),
+		zones:       make(map[int]*parser.Zone),
+		players:     make(map[string]*Player),
+		activeMobs:  make(map[int]*MobInstance),
+		nextMobID:   1,
+		roomItems:   make(map[int][]*ObjectInstance),
 		nextObjID:   1,
-		done:       make(chan bool),
+		done:        make(chan bool),
 		shopManager: nil, // Will be set via SetShopManager
 	}
 
@@ -270,7 +270,7 @@ func (w *World) AddItemToRoom(item *ObjectInstance, roomVNum int) {
 func (w *World) RemoveItemFromRoom(item *ObjectInstance, roomVNum int) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	
+
 	items := w.roomItems[roomVNum]
 	for i, it := range items {
 		if it == item {
@@ -335,7 +335,7 @@ func (w *World) StartZoneResets() error {
 	if w.spawner == nil {
 		w.spawner = NewSpawner(w)
 	}
-	
+
 	zones := w.GetAllZones()
 	for _, zone := range zones {
 		if err := w.spawner.ExecuteZoneReset(zone); err != nil {
@@ -395,9 +395,9 @@ func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int, ce CombatEngine)
 func (w *World) GiveStartingItems(p *Player) {
 	// Pack (8038) is created first, filled with bread (8010) + waterskin (8063)
 	// then given to player
-	
+
 	packProto, packOK := w.GetObjPrototype(8038)
-	
+
 	// Class-specific items (given directly to player)
 	switch p.Class {
 	case ClassThief, ClassAssassin:
@@ -417,14 +417,14 @@ func (w *World) GiveStartingItems(p *Player) {
 	default:
 		w.giveItem(p, 8023) // club
 	}
-	
+
 	w.giveItem(p, 8019) // tunic (all classes)
-	
+
 	// Create pack and fill it
 	if packOK {
 		pack := NewObjectInstance(packProto, -1)
 		pack.Contains = make([]*ObjectInstance, 0)
-		
+
 		// bread + waterskin always in pack
 		if bread, ok := w.GetObjPrototype(8010); ok {
 			pack.Contains = append(pack.Contains, NewObjectInstance(bread, -1))
@@ -438,7 +438,7 @@ func (w *World) GiveStartingItems(p *Player) {
 				pack.Contains = append(pack.Contains, NewObjectInstance(picks, -1))
 			}
 		}
-		
+
 		_ = p.Inventory.AddItem(pack)
 	}
 }
@@ -480,13 +480,11 @@ func (w *World) GetPlayersInRoomScriptable(roomVNum int) []scripting.ScriptableP
 	return players
 }
 
-
-
 // GetObjPrototypeScriptable returns an object prototype by vnum as ScriptableObject.
 func (w *World) GetObjPrototypeScriptable(vnum int) scripting.ScriptableObject {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
-	
+
 	obj, ok := w.objs[vnum]
 	if !ok {
 		return nil
@@ -522,7 +520,7 @@ func (w *World) HandleNonCombatDeathScriptable(player scripting.ScriptablePlayer
 // HandleSpellDeathScriptable handles death caused by a spell.
 func (w *World) HandleSpellDeathScriptable(victimName string, spellNum int, roomVNum int) {
 	log.Printf("[SCRIPT] HandleSpellDeath: %s died to spell %d in room %d", victimName, spellNum, roomVNum)
-	
+
 	// First, check if it's a player
 	if player, ok := w.GetPlayer(victimName); ok {
 		// Player died to spell
@@ -532,7 +530,7 @@ func (w *World) HandleSpellDeathScriptable(victimName string, spellNum int, room
 		w.handlePlayerDeath(player, true, spellNum)
 		return
 	}
-	
+
 	// Check if it's a mob
 	w.mu.RLock()
 	for _, mob := range w.activeMobs {

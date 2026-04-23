@@ -20,19 +20,19 @@ type mockPlayer struct {
 	roomVNum  int
 }
 
-func (p *mockPlayer) GetID() int              { return 1 }
-func (p *mockPlayer) GetName() string         { return p.name }
-func (p *mockPlayer) GetLevel() int           { return p.level }
-func (p *mockPlayer) GetHealth() int          { return p.health }
-func (p *mockPlayer) SetHealth(h int)         { p.health = h }
-func (p *mockPlayer) GetMaxHealth() int       { return p.maxHealth }
-func (p *mockPlayer) GetGold() int            { return p.gold }
-func (p *mockPlayer) SetGold(g int)           { p.gold = g }
-func (p *mockPlayer) GetRace() int            { return 0 }
-func (p *mockPlayer) GetClass() int           { return 0 }
-func (p *mockPlayer) GetAlignment() int       { return 0 }
-func (p *mockPlayer) GetRoomVNum() int        { return p.roomVNum }
-func (p *mockPlayer) SendMessage(msg string)  { fmt.Printf("[TO PLAYER] %s\n", msg) }
+func (p *mockPlayer) GetID() int             { return 1 }
+func (p *mockPlayer) GetName() string        { return p.name }
+func (p *mockPlayer) GetLevel() int          { return p.level }
+func (p *mockPlayer) GetHealth() int         { return p.health }
+func (p *mockPlayer) SetHealth(h int)        { p.health = h }
+func (p *mockPlayer) GetMaxHealth() int      { return p.maxHealth }
+func (p *mockPlayer) GetGold() int           { return p.gold }
+func (p *mockPlayer) SetGold(g int)          { p.gold = g }
+func (p *mockPlayer) GetRace() int           { return 0 }
+func (p *mockPlayer) GetClass() int          { return 0 }
+func (p *mockPlayer) GetAlignment() int      { return 0 }
+func (p *mockPlayer) GetRoomVNum() int       { return p.roomVNum }
+func (p *mockPlayer) SendMessage(msg string) { fmt.Printf("[TO PLAYER] %s\n", msg) }
 
 // mockDebugWorld implements ScriptableWorld for debug testing
 type mockDebugWorld struct{}
@@ -60,11 +60,11 @@ func test_debug() {
 	fmt.Printf("Testing scripts in %s\n", scriptsDir)
 
 	world := &mockDebugWorld{}
-	
+
 	// Create engine
 	engine := scripting.NewEngine(scriptsDir, world)
 	fmt.Println("Engine created")
-	
+
 	// Create a player
 	player := &mockPlayer{
 		name:      "TestPlayer",
@@ -74,7 +74,7 @@ func test_debug() {
 		gold:      0,
 		roomVNum:  30,
 	}
-	
+
 	// Create context
 	ctx := &scripting.ScriptContext{
 		Ch:       player,
@@ -82,7 +82,7 @@ func test_debug() {
 		Argument: "",
 		World:    world,
 	}
-	
+
 	// Test with simple script
 	fmt.Println("\nTesting simple script...")
 	handled, err := engine.RunScript(ctx, "test_simple.lua", "test")

@@ -41,7 +41,7 @@ func test_scripts() {
 
 	// Test loading globals.lua
 	fmt.Println("Testing globals.lua...")
-	
+
 	// Create a test context
 	ctx := &scripting.ScriptContext{
 		RoomVNum: 30, // Pattern room
@@ -60,14 +60,14 @@ func test_scripts() {
 
 	// Test loading mob scripts
 	fmt.Println("\nTesting mob scripts...")
-	
+
 	// Test no_move.lua
 	ctx2 := &scripting.ScriptContext{
 		RoomVNum: 30,
 		Argument: "north",
 		World:    worldAdapter,
 	}
-	
+
 	handled2, err2 := scriptEngine.RunScript(ctx2, "mob/no_move.lua", "oncmd")
 	if err2 != nil {
 		fmt.Printf("Error loading no_move.lua: %v\n", err2)

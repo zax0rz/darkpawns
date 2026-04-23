@@ -3,7 +3,7 @@ package game
 
 import (
 	"log"
-	
+
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
@@ -67,7 +67,7 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 
 	// Run the script
 	handled, err := ScriptEngine.RunScript(ctx, m.Prototype.ScriptName, trigger)
-	
+
 	// Handle assembler.lua silent return issue
 	// If ongive returns false/nil, send default message
 	if trigger == "ongive" && !handled && err == nil && ctx.Ch != nil {
@@ -75,7 +75,7 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 		// In real implementation: ctx.Ch.SendMessage("You can't give that here.\r\n")
 		log.Printf("[SCRIPT] ongive returned false for mob %d, player %s", m.GetVNum(), ctx.Ch.GetName())
 	}
-	
+
 	return handled, err
 }
 

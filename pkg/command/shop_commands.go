@@ -29,7 +29,7 @@ func (sc *ShopCommands) getPlayer(s common.CommandSession) (*game.Player, error)
 	if !s.HasPlayer() {
 		return nil, fmt.Errorf("you must be logged in to use this command")
 	}
-	
+
 	playerInterface := s.GetPlayer()
 	if playerInterface == nil {
 		return nil, fmt.Errorf("internal error: invalid player object")
@@ -62,10 +62,10 @@ func (sc *ShopCommands) CmdListShop(s common.CommandSession, args []string) erro
 
 	// For now, use the first shop in the room
 	shop := shops[0]
-	
+
 	// Get shop inventory
 	inventory := shop.GetInventory()
-	
+
 	if len(inventory) == 0 {
 		s.Send("The shop has nothing for sale.\r\n")
 		return nil
@@ -75,16 +75,16 @@ func (sc *ShopCommands) CmdListShop(s common.CommandSession, args []string) erro
 	var output strings.Builder
 	output.WriteString(fmt.Sprintf("%s's inventory:\r\n", shop.Name))
 	output.WriteString("----------------------------------------\r\n")
-	
+
 	for i, item := range inventory {
 		price := shop.CalculateSellPrice(item)
-		output.WriteString(fmt.Sprintf("%2d) %-30s %5d gold\r\n", 
+		output.WriteString(fmt.Sprintf("%2d) %-30s %5d gold\r\n",
 			i+1, item.GetShortDesc(), price))
 	}
-	
+
 	output.WriteString("----------------------------------------\r\n")
 	output.WriteString(fmt.Sprintf("You have %d gold.\r\n", player.Gold))
-	
+
 	s.Send(output.String())
 	return nil
 }
@@ -114,10 +114,10 @@ func (sc *ShopCommands) CmdBuy(s common.CommandSession, args []string) error {
 
 	// For now, use the first shop in the room
 	shop := shops[0]
-	
+
 	// Get shop inventory
 	inventory := shop.GetInventory()
-	
+
 	if len(inventory) == 0 {
 		return fmt.Errorf("the shop has nothing for sale")
 	}
@@ -141,11 +141,11 @@ func (sc *ShopCommands) CmdBuy(s common.CommandSession, args []string) error {
 
 	// Process the transaction
 	success, message := sc.shopManager.ProcessTransaction(shop, player, item, true)
-	
+
 	if !success {
 		return fmt.Errorf("%s", message)
 	}
-	
+
 	s.Send(message + "\r\n")
 	return nil
 }
@@ -175,7 +175,7 @@ func (sc *ShopCommands) CmdSell(s common.CommandSession, args []string) error {
 
 	// For now, use the first shop in the room
 	shop := shops[0]
-	
+
 	// Find item in player's inventory
 	itemName := strings.Join(args, " ")
 	item, found := player.Inventory.FindItem(itemName)
@@ -185,11 +185,11 @@ func (sc *ShopCommands) CmdSell(s common.CommandSession, args []string) error {
 
 	// Process the transaction
 	success, message := sc.shopManager.ProcessTransaction(shop, player, item, false)
-	
+
 	if !success {
 		return fmt.Errorf("%s", message)
 	}
-	
+
 	s.Send(message + "\r\n")
 	return nil
 }
@@ -219,7 +219,7 @@ func (sc *ShopCommands) CmdRepair(s common.CommandSession, args []string) error 
 
 	// For now, use the first shop in the room
 	shop := shops[0]
-	
+
 	// Find item in player's inventory
 	itemName := strings.Join(args, " ")
 	item, found := player.Inventory.FindItem(itemName)
@@ -229,18 +229,18 @@ func (sc *ShopCommands) CmdRepair(s common.CommandSession, args []string) error 
 
 	// Check if shop can repair this type of item
 	// For now, assume all shops can repair all items
-	
+
 	// Calculate damage (in a real implementation, we'd track item condition)
 	// For now, use a fixed damage value
 	damage := 10
-	
+
 	// Process the repair
 	success, message := sc.shopManager.ProcessRepair(shop, player, item, damage)
-	
+
 	if !success {
 		return fmt.Errorf("%s", message)
 	}
-	
+
 	s.Send(message + "\r\n")
 	return nil
 }
@@ -270,7 +270,7 @@ func (sc *ShopCommands) CmdIdentify(s common.CommandSession, args []string) erro
 
 	// For now, use the first shop in the room
 	shop := shops[0]
-	
+
 	// Find item in player's inventory
 	itemName := strings.Join(args, " ")
 	item, found := player.Inventory.FindItem(itemName)
@@ -280,11 +280,11 @@ func (sc *ShopCommands) CmdIdentify(s common.CommandSession, args []string) erro
 
 	// Process the identification
 	success, message := sc.shopManager.ProcessIdentify(shop, player, item)
-	
+
 	if !success {
 		return fmt.Errorf("%s", message)
 	}
-	
+
 	s.Send(message + "\r\n")
 	return nil
 }
@@ -314,7 +314,7 @@ func (sc *ShopCommands) CmdValue(s common.CommandSession, args []string) error {
 
 	// For now, use the first shop in the room
 	shop := shops[0]
-	
+
 	// Find item in player's inventory
 	itemName := strings.Join(args, " ")
 	item, found := player.Inventory.FindItem(itemName)
@@ -331,12 +331,12 @@ func (sc *ShopCommands) CmdValue(s common.CommandSession, args []string) error {
 	// Calculate prices
 	buyPrice := shop.CalculateBuyPrice(item)
 	sellPrice := shop.CalculateSellPrice(item)
-	
+
 	s.Send(fmt.Sprintf("%s:\r\n", item.GetShortDesc()))
 	s.Send(fmt.Sprintf("  Shop will buy for:  %5d gold\r\n", buyPrice))
 	s.Send(fmt.Sprintf("  Shop sells for:     %5d gold\r\n", sellPrice))
 	s.Send(fmt.Sprintf("  Base value:         %5d gold\r\n", item.GetCost()))
-	
+
 	return nil
 }
 

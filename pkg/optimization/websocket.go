@@ -38,7 +38,7 @@ type MessageBatch struct {
 
 // CompressedWebSocket extends the standard WebSocket with compression.
 type CompressedWebSocket struct {
-	conn *websocket.Conn
+	conn             *websocket.Conn
 	compressionLevel int
 	readBuffer       bytes.Buffer
 	writeBuffer      bytes.Buffer
@@ -59,26 +59,26 @@ func NewCompressedWebSocket(conn *websocket.Conn, compressionLevel int) *Compres
 func (cws *CompressedWebSocket) WriteMessage(messageType int, data []byte) error {
 	cws.mu.Lock()
 	defer cws.mu.Unlock()
-	
+
 	if cws.compressionLevel == gzip.NoCompression {
 		return cws.conn.WriteMessage(messageType, data)
 	}
-	
+
 	// Compress the data
 	cws.writeBuffer.Reset()
 	gzipWriter, err := gzip.NewWriterLevel(&cws.writeBuffer, cws.compressionLevel)
 	if err != nil {
 		return err
 	}
-	
+
 	if _, err := gzipWriter.Write(data); err != nil {
 		return err
 	}
-	
+
 	if err := gzipWriter.Close(); err != nil {
 		return err
 	}
-	
+
 	return cws.conn.WriteMessage(messageType, cws.writeBuffer.Bytes())
 }
 
@@ -88,15 +88,15 @@ func (cws *CompressedWebSocket) ReadMessage() (int, []byte, error) {
 	if err != nil {
 		return messageType, nil, err
 	}
-	
+
 	if cws.compressionLevel == gzip.NoCompression {
 		return messageType, data, nil
 	}
-	
+
 	// Decompress the data
 	cws.readBuffer.Reset()
 	cws.readBuffer.Write(data)
-	
+
 	if cws.gzipReader == nil {
 		cws.gzipReader, err = gzip.NewReader(&cws.readBuffer)
 		if err != nil {
@@ -107,12 +107,12 @@ func (cws *CompressedWebSocket) ReadMessage() (int, []byte, error) {
 			return messageType, nil, err
 		}
 	}
-	
+
 	decompressed, err := io.ReadAll(cws.gzipReader)
 	if err != nil {
 		return messageType, nil, err
 	}
-	
+
 	return messageType, decompressed, nil
 }
 
@@ -120,27 +120,27 @@ func (cws *CompressedWebSocket) ReadMessage() (int, []byte, error) {
 func (cws *CompressedWebSocket) Close() error {
 	cws.mu.Lock()
 	defer cws.mu.Unlock()
-	
+
 	if cws.gzipReader != nil {
 		cws.gzipReader.Close()
 	}
 	if cws.gzipWriter != nil {
 		cws.gzipWriter.Close()
 	}
-	
+
 	return cws.conn.Close()
 }
 
 // BatchedSender manages batched WebSocket message sending.
 type BatchedSender struct {
-	mu          sync.Mutex
-	batch       *MessageBatch
-	batchWindow time.Duration
+	mu           sync.Mutex
+	batch        *MessageBatch
+	batchWindow  time.Duration
 	maxBatchSize int
-	sendFunc    func([]json.RawMessage) error
-	timer       *time.Timer
-	flushChan   chan struct{}
-	closed      bool
+	sendFunc     func([]json.RawMessage) error
+	timer        *time.Timer
+	flushChan    chan struct{}
+	closed       bool
 }
 
 // NewBatchedSender creates a new batched sender.
@@ -151,7 +151,7 @@ func NewBatchedSender(batchWindow time.Duration, maxBatchSize int, sendFunc func
 		sendFunc:     sendFunc,
 		flushChan:    make(chan struct{}, 1),
 	}
-	
+
 	bs.timer = time.AfterFunc(batchWindow, bs.flushTimer)
 	return bs
 }
@@ -160,29 +160,29 @@ func NewBatchedSender(batchWindow time.Duration, maxBatchSize int, sendFunc func
 func (bs *BatchedSender) Send(message json.RawMessage) error {
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	
+
 	if bs.closed {
 		return ErrPoolClosed
 	}
-	
+
 	if bs.batch == nil {
 		bs.batch = &MessageBatch{
 			Messages: make([]json.RawMessage, 0, bs.maxBatchSize),
 			SentAt:   time.Now(),
 		}
 	}
-	
+
 	bs.batch.Messages = append(bs.batch.Messages, message)
-	
+
 	// Flush if batch is full
 	if len(bs.batch.Messages) >= bs.maxBatchSize {
 		return bs.flushLocked()
 	}
-	
+
 	// Reset timer
 	bs.timer.Stop()
 	bs.timer.Reset(bs.batchWindow)
-	
+
 	return nil
 }
 
@@ -198,10 +198,10 @@ func (bs *BatchedSender) flushLocked() error {
 	if bs.batch == nil || len(bs.batch.Messages) == 0 {
 		return nil
 	}
-	
+
 	batch := bs.batch
 	bs.batch = nil
-	
+
 	// Send batch asynchronously
 	go func() {
 		if err := bs.sendFunc(batch.Messages); err != nil {
@@ -209,7 +209,7 @@ func (bs *BatchedSender) flushLocked() error {
 			// TODO: Add proper error handling
 		}
 	}()
-	
+
 	return nil
 }
 
@@ -217,7 +217,7 @@ func (bs *BatchedSender) flushLocked() error {
 func (bs *BatchedSender) flushTimer() {
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	
+
 	if bs.batch != nil && len(bs.batch.Messages) > 0 {
 		bs.flushLocked()
 	}
@@ -227,27 +227,27 @@ func (bs *BatchedSender) flushTimer() {
 func (bs *BatchedSender) Close() error {
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	
+
 	bs.closed = true
 	bs.timer.Stop()
-	
+
 	// Flush any remaining messages
 	return bs.flushLocked()
 }
 
 // BackpressureMonitor monitors WebSocket backpressure.
 type BackpressureMonitor struct {
-	mu            sync.RWMutex
-	sendChanSizes map[string]int
-	maxBufferSize int
+	mu             sync.RWMutex
+	sendChanSizes  map[string]int
+	maxBufferSize  int
 	alertThreshold float64 // 0.0 to 1.0
 }
 
 // NewBackpressureMonitor creates a new backpressure monitor.
 func NewBackpressureMonitor(maxBufferSize int, alertThreshold float64) *BackpressureMonitor {
 	return &BackpressureMonitor{
-		sendChanSizes: make(map[string]int),
-		maxBufferSize: maxBufferSize,
+		sendChanSizes:  make(map[string]int),
+		maxBufferSize:  maxBufferSize,
 		alertThreshold: alertThreshold,
 	}
 }
@@ -270,16 +270,16 @@ func (bm *BackpressureMonitor) Remove(sessionID string) {
 func (bm *BackpressureMonitor) CheckBackpressure() []string {
 	bm.mu.RLock()
 	defer bm.mu.RUnlock()
-	
+
 	var problematic []string
 	threshold := int(float64(bm.maxBufferSize) * bm.alertThreshold)
-	
+
 	for sessionID, size := range bm.sendChanSizes {
 		if size > threshold {
 			problematic = append(problematic, sessionID)
 		}
 	}
-	
+
 	return problematic
 }
 
@@ -287,19 +287,19 @@ func (bm *BackpressureMonitor) CheckBackpressure() []string {
 func (bm *BackpressureMonitor) GetStats() map[string]interface{} {
 	bm.mu.RLock()
 	defer bm.mu.RUnlock()
-	
+
 	stats := make(map[string]interface{})
 	stats["total_sessions"] = len(bm.sendChanSizes)
-	
+
 	var totalBuffer int
 	for _, size := range bm.sendChanSizes {
 		totalBuffer += size
 	}
-	
+
 	if len(bm.sendChanSizes) > 0 {
 		stats["avg_buffer_size"] = totalBuffer / len(bm.sendChanSizes)
 		stats["max_buffer_size"] = bm.maxBufferSize
 	}
-	
+
 	return stats
 }

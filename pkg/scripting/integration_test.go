@@ -8,13 +8,13 @@ import (
 func TestIsFightingBasic(t *testing.T) {
 	// Create a simple test that doesn't import game package
 	// This test verifies that the engine can be created and basic functions work
-	
+
 	mockWorld := &mockWorldForTest{}
 	engine := NewEngine("../../test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	
+
 	t.Log("Engine created successfully with mock world")
 }
 
@@ -45,18 +45,18 @@ func (m *mockWorldForTest) HandleNonCombatDeath(player ScriptablePlayer) {}
 
 func (m *mockWorldForTest) HandleSpellDeath(victimName string, spellNum int, roomVNum int) {}
 
-func (m *mockWorldForTest) SendTell(targetName, message string) {}
-func (m *mockWorldForTest) GetItemsInRoom(roomVNum int) []ScriptableObject        { return nil }
-func (m *mockWorldForTest) HasItemByVNum(charName string, vnum int) bool           { return false }
-func (m *mockWorldForTest) RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject { return nil }
+func (m *mockWorldForTest) SendTell(targetName, message string)                           {}
+func (m *mockWorldForTest) GetItemsInRoom(roomVNum int) []ScriptableObject                { return nil }
+func (m *mockWorldForTest) HasItemByVNum(charName string, vnum int) bool                  { return false }
+func (m *mockWorldForTest) RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject    { return nil }
 func (m *mockWorldForTest) RemoveItemFromChar(charName string, vnum int) ScriptableObject { return nil }
-func (m *mockWorldForTest) GiveItemToChar(charName string, obj ScriptableObject) error { return nil }
+func (m *mockWorldForTest) GiveItemToChar(charName string, obj ScriptableObject) error    { return nil }
 
 // TestSpellDamageFormulas tests that spell damage formulas are implemented
 func TestSpellDamageFormulas(t *testing.T) {
 	// This test doesn't actually run Lua code, but verifies our understanding
 	// of the spell damage formulas from the original Dark Pawns source
-	
+
 	// Test dice roll helper (would be in luaSpell function)
 	dice := func(num, sides int) int {
 		total := 0
@@ -66,21 +66,21 @@ func TestSpellDamageFormulas(t *testing.T) {
 		}
 		return total
 	}
-	
+
 	// Test some spell damage formulas
 	casterLevel := 10
-	
+
 	tests := []struct {
-		name   string
-		spellNum int
+		name        string
+		spellNum    int
 		expectedMin int // Minimum expected damage
 	}{
 		{"MAGIC_MISSILE", 32, dice(4, 3) + casterLevel},
 		{"BURNING_HANDS", 5, dice(4, 5) + casterLevel},
 		{"FIREBALL", 26, dice(9, 7) + casterLevel},
-		{"HELLFIRE", 58, dice(12, 5) + (2*casterLevel) - 10},
+		{"HELLFIRE", 58, dice(12, 5) + (2 * casterLevel) - 10},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify the formula would produce positive damage
@@ -109,7 +109,6 @@ func TestRoomTable(t *testing.T) {
 	t.Log("When ctx.RoomVNum > 0, engine creates room table with vnum and char fields")
 	t.Log("char field contains tables for players and mobs in the room")
 }
-
 
 // --- Tier 2 Combat AI — Batch A (dragon_breath/anhkheg/drake/bradle/caerroil) ---
 
@@ -471,58 +470,58 @@ func TestTier4EnvironmentalScriptsParse(t *testing.T) {
 func TestTier4EnvironmentalEngineGaps(t *testing.T) {
 	// Document engine functions that are stubbed or missing
 	gaps := []struct {
-		script string
-		functions []string
+		script      string
+		functions   []string
 		description string
 	}{
 		{
-			script: "aurumvorax",
-			functions: []string{"obj_list", "extobj", "action"},
+			script:      "aurumvorax",
+			functions:   []string{"obj_list", "extobj", "action"},
 			description: "obj_list is stubbed, needs proper item search implementation",
 		},
 		{
-			script: "beholder",
-			functions: []string{"strfind", "strsub", "gsub", "number", "getn", "spell"},
+			script:      "beholder",
+			functions:   []string{"strfind", "strsub", "gsub", "number", "getn", "spell"},
 			description: "All functions implemented, spell needs proper targeting",
 		},
 		{
-			script: "brain_eater",
-			functions: []string{"iscorpse", "strfind", "action", "getn"},
+			script:      "brain_eater",
+			functions:   []string{"iscorpse", "strfind", "action", "getn"},
 			description: "iscorpse not implemented, needs corpse detection logic",
 		},
 		{
-			script: "donation",
-			functions: []string{"canget", "strfind", "strsub", "obj_flagged", "action"},
+			script:      "donation",
+			functions:   []string{"canget", "strfind", "strsub", "obj_flagged", "action"},
 			description: "canget and obj_flagged not implemented, needs item permission and flag checks",
 		},
 		{
-			script: "eq_thief",
-			functions: []string{"isfighting", "canget", "steal"},
+			script:      "eq_thief",
+			functions:   []string{"isfighting", "canget", "steal"},
 			description: "steal not implemented, needs theft mechanics",
 		},
 		{
-			script: "memory_moss",
-			functions: []string{"cansee", "unaffect"},
+			script:      "memory_moss",
+			functions:   []string{"cansee", "unaffect"},
 			description: "cansee and unaffect not implemented, needs visibility and spell removal",
 		},
 		{
-			script: "medusa",
-			functions: []string{"raw_kill", "dofile", "call"},
+			script:      "medusa",
+			functions:   []string{"raw_kill", "dofile", "call"},
 			description: "raw_kill not implemented, needs instant death mechanic",
 		},
 		{
-			script: "sandstorm",
-			functions: []string{"create_event", "tport"},
+			script:      "sandstorm",
+			functions:   []string{"create_event", "tport"},
 			description: "create_event not implemented, needs event scheduling system",
 		},
 		{
-			script: "phoenix",
-			functions: []string{"mload", "oload", "equip_char", "extobj", "extchar"},
+			script:      "phoenix",
+			functions:   []string{"mload", "oload", "equip_char", "extobj", "extchar"},
 			description: "mload, oload, equip_char partially implemented, needs full mob/item loading",
 		},
 		{
-			script: "souleater",
-			functions: []string{"tport"},
+			script:      "souleater",
+			functions:   []string{"tport"},
 			description: "tport not implemented, needs teleportation mechanics",
 		},
 	}

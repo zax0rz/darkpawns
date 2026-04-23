@@ -28,5 +28,5 @@ type SessionInterface interface {
 	ClearTempData(key string)
 
 	// Random number generation
-	RandomInt(max int) int
+	RandomInt(maxValue int) int
 }

@@ -8,8 +8,8 @@ import (
 
 // Inventory represents a player's inventory.
 type Inventory struct {
-	mu       sync.RWMutex
-	Items    []*ObjectInstance
+	mu    sync.RWMutex
+	Items []*ObjectInstance
 	// Capacity is based on strength (default 20 + strength * 5)
 	Capacity int
 }
@@ -26,7 +26,7 @@ func NewInventory() *Inventory {
 func (inv *Inventory) AddItem(item *ObjectInstance) error {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
-	
+
 	if len(inv.Items) >= inv.Capacity {
 		return fmt.Errorf("inventory is full")
 	}
@@ -42,7 +42,7 @@ func (inv *Inventory) AddItem(item *ObjectInstance) error {
 func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
-	
+
 	for i, invItem := range inv.Items {
 		if invItem == item {
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
@@ -57,7 +57,7 @@ func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
 func (inv *Inventory) RemoveItemByVNum(vnum int) (*ObjectInstance, bool) {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
-	
+
 	for i, item := range inv.Items {
 		if item.VNum == vnum {
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
@@ -72,7 +72,7 @@ func (inv *Inventory) RemoveItemByVNum(vnum int) (*ObjectInstance, bool) {
 func (inv *Inventory) FindItem(name string) (*ObjectInstance, bool) {
 	inv.mu.RLock()
 	defer inv.mu.RUnlock()
-	
+
 	lowerName := strings.ToLower(name)
 	for _, item := range inv.Items {
 		// Check keywords
@@ -94,14 +94,14 @@ func (inv *Inventory) FindItem(name string) (*ObjectInstance, bool) {
 func (inv *Inventory) FindItems(name string) []*ObjectInstance {
 	inv.mu.RLock()
 	defer inv.mu.RUnlock()
-	
+
 	if name == "" {
 		// Return a copy of all items
 		allItems := make([]*ObjectInstance, len(inv.Items))
 		copy(allItems, inv.Items)
 		return allItems
 	}
-	
+
 	lowerName := strings.ToLower(name)
 	var matches []*ObjectInstance
 	for _, item := range inv.Items {
@@ -138,7 +138,7 @@ func (inv *Inventory) IsFull() bool {
 func (inv *Inventory) GetWeight() int {
 	inv.mu.RLock()
 	defer inv.mu.RUnlock()
-	
+
 	total := 0
 	for _, item := range inv.Items {
 		total += item.GetTotalWeight()

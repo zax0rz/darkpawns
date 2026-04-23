@@ -16,14 +16,15 @@ class TestWebClientE2E:
     """End-to-end tests for web client functionality."""
     
     @pytest.fixture
-    def base_url(self):
-        """Base URL for the Dark Pawns server."""
-        return "http://localhost:4350"
-    
-    @pytest.fixture
-    def ws_url(self):
+    def ws_url(self, base_url):
         """WebSocket URL for the Dark Pawns server."""
-        return "ws://localhost:4350/ws"
+        # Convert http:// to ws://
+        if base_url.startswith("http://"):
+            return base_url.replace("http://", "ws://") + "/ws"
+        elif base_url.startswith("https://"):
+            return base_url.replace("https://", "wss://") + "/ws"
+        else:
+            return f"ws://{base_url}/ws"
     
     @pytest.fixture
     def test_player(self):
@@ -529,11 +530,6 @@ class TestWebClientE2E:
 class TestWebAPIE2E:
     """End-to-end tests for web API endpoints."""
     
-    @pytest.fixture
-    def base_url(self):
-        """Base URL for the Dark Pawns server."""
-        return "http://localhost:4350"
-    
     def test_api_endpoints_exist(self, base_url):
         """Test that API endpoints exist and return proper responses."""
         
@@ -617,11 +613,6 @@ class TestWebAPIE2E:
 
 class TestWebSecurityE2E:
     """End-to-end security tests for web interface."""
-    
-    @pytest.fixture
-    def base_url(self):
-        """Base URL for the Dark Pawns server."""
-        return "http://localhost:4350"
     
     def test_https_redirect(self, base_url):
         """Test HTTPS redirect (if configured)."""

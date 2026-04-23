@@ -161,12 +161,12 @@ func TestPrivacyLogger(t *testing.T) {
 
 	config := DefaultFilterConfig()
 	client := NewClient(server.URL, config)
-	
+
 	// Capture log output
 	var buf bytes.Buffer
 	logger := &PrivacyLogger{
-		client: client,
-		stdLog: log.New(&buf, "", 0),
+		client:  client,
+		stdLog:  log.New(&buf, "", 0),
 		enabled: true,
 	}
 

@@ -41,32 +41,32 @@ func (sm *SkillManager) HasSkill(name string) bool {
 func (sm *SkillManager) LearnSkill(skill *Skill, charLevel, stat int) bool {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	// Check if already learned
 	if existing, exists := sm.skills[skill.Name]; exists && existing.Learned {
 		return false
 	}
-	
+
 	// Check requirements
 	if !skill.CanLearn(charLevel, stat) {
 		return false
 	}
-	
+
 	// Check if we have available slots
 	if len(sm.getLearnedSkills()) >= sm.slots {
 		return false
 	}
-	
+
 	// Check if we have enough skill points
 	if sm.points < skill.Difficulty {
 		return false
 	}
-	
+
 	// Learn the skill
 	skill.Learn()
 	sm.skills[skill.Name] = skill
 	sm.points -= skill.Difficulty
-	
+
 	return true
 }
 
@@ -74,12 +74,12 @@ func (sm *SkillManager) LearnSkill(skill *Skill, charLevel, stat int) bool {
 func (sm *SkillManager) PracticeSkill(name string, charLevel, stat int) bool {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	skill, exists := sm.skills[name]
 	if !exists || !skill.Learned {
 		return false
 	}
-	
+
 	return skill.PracticeSkill(charLevel, stat)
 }
 
@@ -87,12 +87,12 @@ func (sm *SkillManager) PracticeSkill(name string, charLevel, stat int) bool {
 func (sm *SkillManager) UseSkill(name string, charLevel, stat, targetLevel int) (bool, bool) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	skill, exists := sm.skills[name]
 	if !exists || !skill.Learned {
 		return false, false
 	}
-	
+
 	return skill.UseSkill(charLevel, stat, targetLevel)
 }
 
@@ -142,17 +142,17 @@ func (sm *SkillManager) IncreaseSlots(additional int) {
 func (sm *SkillManager) GetAllSkills() []*Skill {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
-	
+
 	var skills []*Skill
 	for _, skill := range sm.skills {
 		skills = append(skills, skill)
 	}
-	
+
 	// Sort by name
 	sort.Slice(skills, func(i, j int) bool {
 		return skills[i].Name < skills[j].Name
 	})
-	
+
 	return skills
 }
 
@@ -171,7 +171,7 @@ func (sm *SkillManager) getLearnedSkills() []*Skill {
 			learned = append(learned, skill)
 		}
 	}
-	
+
 	// Sort by level (descending), then by name
 	sort.Slice(learned, func(i, j int) bool {
 		if learned[i].Level != learned[j].Level {
@@ -179,7 +179,7 @@ func (sm *SkillManager) getLearnedSkills() []*Skill {
 		}
 		return learned[i].Name < learned[j].Name
 	})
-	
+
 	return learned
 }
 
@@ -187,12 +187,12 @@ func (sm *SkillManager) getLearnedSkills() []*Skill {
 func (sm *SkillManager) GetSkillLevel(name string) int {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
-	
+
 	skill, exists := sm.skills[name]
 	if !exists || !skill.Learned {
 		return 0
 	}
-	
+
 	return skill.Level
 }
 
@@ -200,14 +200,14 @@ func (sm *SkillManager) GetSkillLevel(name string) int {
 func (sm *SkillManager) RegisterSkill(skill *Skill) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	// Don't overwrite if already exists with higher level
 	if existing, exists := sm.skills[skill.Name]; exists {
 		if existing.Learned && existing.Level > skill.Level {
 			return
 		}
 	}
-	
+
 	sm.skills[skill.Name] = skill
 }
 
@@ -215,21 +215,21 @@ func (sm *SkillManager) RegisterSkill(skill *Skill) {
 func (sm *SkillManager) ForgetSkill(name string) bool {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	skill, exists := sm.skills[name]
 	if !exists || !skill.Learned {
 		return false
 	}
-	
+
 	// Refund half the difficulty points (rounded up)
 	refund := (skill.Difficulty + 1) / 2
 	sm.points += refund
-	
+
 	// Mark as unlearned but keep in registry
 	skill.Learned = false
 	skill.Level = 0
 	skill.Practice = 0
-	
+
 	return true
 }
 
@@ -239,24 +239,24 @@ func (sm *SkillManager) TeachSkill(skillName string, target *SkillManager, teach
 	target.mu.Lock()
 	defer sm.mu.RUnlock()
 	defer target.mu.Unlock()
-	
+
 	// Get the skill from teacher
 	skill, exists := sm.skills[skillName]
 	if !exists || !skill.Learned {
 		return false
 	}
-	
+
 	// Check if teacher can teach this skill
 	if !skill.CanTeach(teacherLevel) {
 		return false
 	}
-	
+
 	// Create a copy of the skill for teaching (starts at lower level)
 	taughtSkill := *skill
 	taughtSkill.Level = 1 // Start at level 1 when taught
 	taughtSkill.Practice = 0
 	taughtSkill.Learned = false // Will be set by LearnSkill
-	
+
 	// Try to learn the skill
 	return target.LearnSkill(&taughtSkill, studentLevel, studentStat)
 }
@@ -274,7 +274,7 @@ func (sm *SkillManager) InitializeDefaultSkills() {
 	sm.RegisterSkill(NewSkill("shield", "Shield Use", SkillTypeCombat, 2))
 	sm.RegisterSkill(NewSkill("parry", "Parrying", SkillTypeCombat, 3))
 	sm.RegisterSkill(NewSkill("dodge", "Dodging", SkillTypeCombat, 3))
-	
+
 	// Magic skills
 	sm.RegisterSkill(NewSkill("evocation", "Evocation Magic", SkillTypeMagic, 6))
 	sm.RegisterSkill(NewSkill("abjuration", "Abjuration Magic", SkillTypeMagic, 5))
@@ -284,7 +284,7 @@ func (sm *SkillManager) InitializeDefaultSkills() {
 	sm.RegisterSkill(NewSkill("illusion", "Illusion Magic", SkillTypeMagic, 5))
 	sm.RegisterSkill(NewSkill("necromancy", "Necromancy", SkillTypeMagic, 8))
 	sm.RegisterSkill(NewSkill("transmutation", "Transmutation Magic", SkillTypeMagic, 7))
-	
+
 	// Utility skills
 	sm.RegisterSkill(NewSkill("stealth", "Stealth", SkillTypeUtility, 3))
 	sm.RegisterSkill(NewSkill("lockpick", "Lock Picking", SkillTypeUtility, 4))
