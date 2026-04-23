@@ -29,7 +29,7 @@ const (
 
 // Class constants — from class.h (NUM_CLASSES = 13)
 const (
-	ClassMage     = 0
+	ClassMage     = 0 // Deprecated: use game.ClassMageUser instead
 	ClassCleric   = 1
 	ClassThief    = 2
 	ClassWarrior  = 3

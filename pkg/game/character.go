@@ -229,6 +229,9 @@ type StartItems struct {
 	InPack  []int // vnums to put in pack(8038)
 }
 
+// DoStart returns starting items and base stats for a new character of the given class.
+// Implements do_start() from class.c lines 501-591.
+// The returned CharStats is zeroed; callers should use RollRealAbils() for actual stats.
 func DoStart(class int) (StartItems, CharStats) {
 	// Stats will be properly rolled — for now return zeroed
 	// (caller should pass in already-rolled stats)

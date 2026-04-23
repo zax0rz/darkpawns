@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -106,7 +107,7 @@ func (s *Session) completeCharCreation() error {
 	if s.manager.hasDB {
 		if r, err := db.PlayerToRecord(s.player, nil); err == nil {
 			if err := s.manager.db.CreatePlayer(r); err != nil {
-				log.Printf("DB create error during char creation: %v", err)
+				slog.Error("DB create error during char creation", "error", err)
 			} else {
 				s.player.ID = r.ID
 				// Give starting items
@@ -143,7 +144,7 @@ func (s *Session) completeCharCreation() error {
 	// Generate JWT token
 	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID)
 	if err != nil {
-		log.Printf("Failed to generate JWT token: %v", err)
+		slog.Error("failed to generate JWT token", "error", err)
 	}
 
 	// Send welcome with token

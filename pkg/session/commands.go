@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -157,7 +158,7 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 				handled, err := mob.RunScript("oncmd", ctx)
 				if err != nil {
 					// Log error but continue
-					log.Printf("Error running oncmd script for mob %v: %v", mob.GetVNum(), err)
+					slog.Error("error running oncmd script", "mob_vnum", mob.GetVNum(), "error", err)
 				}
 				if handled {
 					// Script handled the command, don't process further

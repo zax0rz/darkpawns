@@ -39,6 +39,8 @@ type PlayerAffectable struct {
 	affects            []*Affect
 }
 
+// NewPlayerAffectable wraps a Player to implement the Affectable interface.
+// Initializes modified stats from the player's base stats.
 func NewPlayerAffectable(player *game.Player) *PlayerAffectable {
 	return &PlayerAffectable{
 		player: player,

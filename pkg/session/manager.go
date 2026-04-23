@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
@@ -44,7 +45,7 @@ var upgrader = websocket.Upgrader{
 		if origin == "" {
 			// No Origin header, could be direct WebSocket connection
 			// Allow but log for monitoring
-			log.Printf("WebSocket connection without Origin header from %s", r.RemoteAddr)
+			slog.Warn("WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
 			return true
 		}
 
@@ -54,7 +55,7 @@ var upgrader = websocket.Upgrader{
 			}
 		}
 
-		log.Printf("Rejected WebSocket connection from unauthorized origin: %s", origin)
+		slog.Warn("rejected WebSocket connection from unauthorized origin", "origin", origin)
 		return false
 	},
 }
@@ -156,7 +157,7 @@ func (m *Manager) SetScriptFightFunc() {
 func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("WebSocket upgrade failed: %v", err)
+		slog.Error("WebSocket upgrade failed", "error", err)
 		return
 	}
 
@@ -205,7 +206,7 @@ func (m *Manager) Unregister(playerName string) {
 		if m.hasDB && s.player != nil && s.player.ID > 0 {
 			if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
 				if err := m.db.SavePlayer(rec); err != nil {
-					log.Printf("DB save error for %s: %v", playerName, err)
+					slog.Error("DB save error", "player", playerName, "error", err)
 				}
 			}
 		}
@@ -297,13 +298,13 @@ func (s *Session) readPump() {
 		_, message, err := s.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("WebSocket error: %v", err)
+				slog.Error("WebSocket error", "error", err)
 			}
 			break
 		}
 
 		if err := s.handleMessage(message); err != nil {
-			log.Printf("Handle message error: %v", err)
+			slog.Error("handle message error", "error", err)
 			s.sendError(err.Error())
 		}
 	}
@@ -417,14 +418,14 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if s.manager.hasDB {
 		rec, err := s.manager.db.GetPlayer(login.PlayerName)
 		if err != nil {
-			log.Printf("DB load error for %s: %v", login.PlayerName, err)
+			slog.Error("DB load error", "player", login.PlayerName, "error", err)
 		}
 
 		if rec != nil && !login.NewChar {
 			// Returning player — restore from DB
 			p, err := db.RecordToPlayer(rec, s.manager.world)
 			if err != nil {
-				log.Printf("RecordToPlayer error: %v", err)
+				slog.Error("RecordToPlayer error", "error", err)
 				// Fall back to character creation
 				s.startCharCreation(login.PlayerName)
 				return nil
@@ -439,7 +440,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			// Save immediately to get an ID
 			if r, err := db.PlayerToRecord(s.player, nil); err == nil {
 				if err := s.manager.db.CreatePlayer(r); err != nil {
-					log.Printf("DB create error: %v", err)
+					slog.Error("DB create error", "error", err)
 				} else {
 					s.player.ID = r.ID
 					// Give starting items and skills — do_start() from class.c
@@ -472,7 +473,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		// Generate JWT token for API access
 		token, err := auth.GenerateJWT(login.PlayerName, s.isAgent, s.agentKeyID)
 		if err != nil {
-			log.Printf("Failed to generate JWT token: %v", err)
+			slog.Error("failed to generate JWT token", "error", err)
 		}
 
 		// Send welcome with token

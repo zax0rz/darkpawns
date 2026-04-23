@@ -4,7 +4,6 @@ package game
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"sync"
 	"time"

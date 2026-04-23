@@ -25,7 +25,8 @@ const (
 	LiqSlime     = 9
 	LiqMilk      = 10
 	LiqTea       = 11
-	LiqCoffe     = 12
+	LiqCoffee    = 12
+	LiqCoffe     = 12 // Deprecated: use LiqCoffee instead
 	LiqBlood     = 13
 	LiqSaltwater = 14
 	LiqClearwater = 15
@@ -47,7 +48,7 @@ var Liquids = []Liquid{
 	LiqSlime:     {Name: "slime mold juice", Color: "green", DrunkAffect: 0, FullAffect: 4, ThirstAffect: -8},
 	LiqMilk:      {Name: "milk",         Color: "white", DrunkAffect: 0,  FullAffect: 3,  ThirstAffect: 6},
 	LiqTea:       {Name: "tea",          Color: "brown", DrunkAffect: 0,  FullAffect: 1,  ThirstAffect: 6},
-	LiqCoffe:     {Name: "coffee",       Color: "black", DrunkAffect: 0,  FullAffect: 1,  ThirstAffect: 6},
+	LiqCoffee:    {Name: "coffee",       Color: "black", DrunkAffect: 0,  FullAffect: 1,  ThirstAffect: 6},
 	LiqBlood:     {Name: "blood",        Color: "red",   DrunkAffect: 0,  FullAffect: 2,  ThirstAffect: -1},
 	LiqSaltwater: {Name: "salt water",   Color: "clear", DrunkAffect: 0,  FullAffect: 1,  ThirstAffect: -2},
 	LiqClearwater:{Name: "clear water",  Color: "clear", DrunkAffect: 0,  FullAffect: 0,  ThirstAffect: 13},
@@ -67,7 +68,7 @@ var LiquidNames = []string{
 	LiqSlime:     "slime mold juice",
 	LiqMilk:      "milk",
 	LiqTea:       "tea",
-	LiqCoffe:     "coffee",
+	LiqCoffee:    "coffee",
 	LiqBlood:     "blood",
 	LiqSaltwater: "salt water",
 	LiqClearwater:"clear water",
