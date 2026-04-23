@@ -80,14 +80,22 @@ type PlayerState struct {
 	Cha       int    `json:"cha,omitempty"`
 }
 
+// DoorInfo represents door state for display.
+type DoorInfo struct {
+	Direction string `json:"direction"`
+	Closed    bool   `json:"closed"`
+	Locked    bool   `json:"locked"`
+}
+
 // RoomState represents room info in state.
 type RoomState struct {
-	VNum        int      `json:"vnum"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Exits       []string `json:"exits"`
-	Players     []string `json:"players,omitempty"`
-	Items       []string `json:"items,omitempty"`
+	VNum        int        `json:"vnum"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Exits       []string   `json:"exits"`
+	Doors       []DoorInfo `json:"doors,omitempty"`
+	Players     []string   `json:"players,omitempty"`
+	Items       []string   `json:"items,omitempty"`
 }
 
 // EventData represents a game event.

@@ -19,10 +19,11 @@ type World struct {
 	mu sync.RWMutex
 
 	// Static world data (from parsed files)
-	rooms map[int]*parser.Room
-	mobs  map[int]*parser.Mob
-	objs  map[int]*parser.Obj
-	zones map[int]*parser.Zone
+	rooms      map[int]*parser.Room
+	mobs       map[int]*parser.Mob
+	objs       map[int]*parser.Obj
+	zones      map[int]*parser.Zone
+	parsedData *parser.World // original parsed data, nil after boot
 
 	// Runtime state
 	players    map[string]*Player   // keyed by player name
@@ -62,6 +63,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		nextObjID:   1,
 		done:        make(chan bool),
 		shopManager: nil, // Will be set via SetShopManager
+		parsedData:  parsed, // Keep reference for door loading etc.
 	}
 
 	// Index rooms by VNum
@@ -101,6 +103,14 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	w.StartPointUpdateTicker(30 * time.Second)
 
 	return w, nil
+}
+
+// GetParsedWorld returns the original parsed world data used to create this world.
+// Returns nil if the world was not created from parsed data.
+func (w *World) GetParsedWorld() *parser.World {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.parsedData
 }
 
 // GetRoom returns a room by VNum.
@@ -153,7 +163,7 @@ func (w *World) GetPlayersInRoom(roomVNum int) []*Player {
 	return players
 }
 
-// MovePlayer moves a player to a new room if the exit exists.
+// MovePlayer moves a player to a new room if the exit exists and doors permit.
 func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()

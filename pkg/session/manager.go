@@ -18,6 +18,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/game/systems"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/validation"
 	"golang.org/x/time/rate"
@@ -67,6 +68,7 @@ type Manager struct {
 	db           db.DB
 	hasDB        bool
 	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
+	doorManager  *systems.DoorManager
 }
 
 // NewManager creates a new session manager.
@@ -74,11 +76,17 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 	ce := combat.NewCombatEngine()
 	ce.Start()
 
+	dm := systems.NewDoorManager()
+	if pw := world.GetParsedWorld(); pw != nil {
+		dm.LoadDoorsFromWorld(pw)
+	}
+
 	m := &Manager{
 		sessions:     make(map[string]*Session),
 		world:        world,
 		combatEngine: ce,
 		loginLimiter: auth.NewIPRateLimiter(),
+		doorManager:  dm,
 	}
 	if database != nil {
 		m.db = *database
@@ -536,6 +544,7 @@ func (s *Session) sendWelcome(token string) {
 			Name:        room.Name,
 			Description: room.Description,
 			Exits:       getExitNames(room.Exits),
+			Doors:       getDoorInfo(s.manager.doorManager, room.VNum, room.Exits),
 		},
 		Token: token,
 	}
@@ -565,6 +574,31 @@ func getExitNames(exits map[string]parser.Exit) []string {
 		names = append(names, dir)
 	}
 	return names
+}
+
+func getDoorInfo(dm *systems.DoorManager, roomVNum int, exits map[string]parser.Exit) []DoorInfo {
+	if dm == nil {
+		return nil
+	}
+	var doors []DoorInfo
+	for dir := range exits {
+		door, ok := dm.GetDoor(roomVNum, dir)
+		if !ok {
+			continue
+		}
+		if !door.CanSee() {
+			continue
+		}
+		doors = append(doors, DoorInfo{
+			Direction: dir,
+			Closed:    door.Closed,
+			Locked:    door.Locked,
+		})
+	}
+	if len(doors) == 0 {
+		return nil
+	}
+	return doors
 }
 
 // GetPlayer returns the player associated with this session

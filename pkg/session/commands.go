@@ -9,6 +9,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/game/systems"
 )
 
 // cmdRegistry is the global command registry, initialized on first use.
@@ -81,6 +82,13 @@ func init() {
 
 	// Admin / debug
 	cmdRegistry.Register("summon", wrapArgs(cmdSummon), "Summon a player to your room.", 0, 0)
+
+	// Doors
+	cmdRegistry.Register("open", wrapArgs(cmdOpen), "Open a door in a direction: open <north|south|east|west|up|down>", 0, 0)
+	cmdRegistry.Register("close", wrapArgs(cmdClose), "Close a door in a direction: close <north|south|east|west|up|down>", 0, 0)
+	cmdRegistry.Register("lock", wrapArgs(cmdLock), "Lock a door with your key: lock <north|south|east|west|up|down>", 0, 0)
+	cmdRegistry.Register("unlock", wrapArgs(cmdUnlock), "Unlock a door with your key: unlock <north|south|east|west|up|down>", 0, 0)
+	cmdRegistry.Register("pick", wrapArgs(cmdPick), "Pick a door lock: pick <north|south|east|west|up|down>", 0, 0)
 
 	// Quit
 	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0)
@@ -190,6 +198,7 @@ func cmdLook(s *Session, args []string) error {
 			Name:        room.Name,
 			Description: room.Description,
 			Exits:       getExitNames(room.Exits),
+			Doors:       getDoorInfo(s.manager.doorManager, room.VNum, room.Exits),
 			Players:     playerNames,
 			Items:       itemDescs,
 		},
@@ -208,6 +217,16 @@ func cmdLook(s *Session, args []string) error {
 // Source: act.movement.c do_follow() — followers move when leader moves
 func cmdMove(s *Session, direction string) error {
 	oldRoom := s.player.GetRoom()
+
+	// Check if a door blocks the exit
+	dm := s.manager.doorManager
+	if dm != nil {
+		canPass, msg := dm.CanPass(oldRoom, direction)
+		if !canPass {
+			s.sendText(msg)
+			return nil
+		}
+	}
 
 	// Collect followers in this room before moving (cannot query after move holds lock)
 	followers := s.manager.world.GetFollowersInRoom(s.player.Name, oldRoom)
@@ -1243,10 +1262,276 @@ func cmdHelp(s *Session, args []string) error {
 	if len(args) == 0 {
 		s.sendText("Available commands: look, north/south/east/west/up/down, say, hit, flee, " +
 			"inventory, equipment, wear, remove, wield, hold, get, drop, " +
-			"score, who, tell, emote, shout, where, quit\n" +
+			"score, who, tell, emote, shout, where, quit, " +
+			"open, close, lock, unlock, pick\n" +
 			"Type 'help <topic>' for more info (stub — full help coming later).")
 		return nil
 	}
 	s.sendText(fmt.Sprintf("No help available for '%s' yet.", strings.Join(args, " ")))
+	return nil
+}
+
+// directions maps abbreviated direction names to full names.
+var directions = map[string]string{
+	"north": "north", "n": "north",
+	"east":  "east",  "e": "east",
+	"south": "south", "s": "south",
+	"west":  "west",  "w": "west",
+	"up":    "up",    "u": "up",
+	"down":  "down",  "d": "down",
+}
+
+// resolveDirection returns the full direction name or empty string if invalid.
+func resolveDirection(input string) string {
+	if dir, ok := directions[input]; ok {
+		return dir
+	}
+	return ""
+}
+
+// doorBroadcast sends a door-related message to all players in the same room, excluding the actor.
+func doorBroadcast(s *Session, message string) {
+	if s.player == nil {
+		return
+	}
+	roomVNum := s.player.GetRoom()
+	msg, _ := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "door",
+			Text: message,
+		},
+	})
+	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
+}
+
+// playerHasKey checks if the player has an item with the given VNum in their inventory.
+func playerHasKey(s *Session, keyVNum int) bool {
+	if s.player == nil {
+		return false
+	}
+	inv := s.player.Inventory
+	if inv == nil {
+		return false
+	}
+	for _, item := range inv.Items {
+		if item.VNum == keyVNum {
+			return true
+		}
+	}
+	return false
+}
+
+// getDoorManager returns the DoorManager from the world.
+func getDoorManager(s *Session) *systems.DoorManager {
+	if s.manager == nil {
+		return nil
+	}
+	return s.manager.doorManager
+}
+
+// CmdOpen handles 'open <direction>' — open a closed door.
+// Source: act.door.c do_open()
+func cmdOpen(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Open what?")
+		return nil
+	}
+
+	dir := resolveDirection(strings.ToLower(args[0]))
+	if dir == "" {
+		s.sendText("Open what?  Try north, south, east, west, up, or down.")
+		return nil
+	}
+
+	dm := getDoorManager(s)
+	if dm == nil {
+		s.sendText("You can't do that right now.")
+		return nil
+	}
+
+	roomVNum := s.player.GetRoomVNum()
+	success, msg := dm.OpenDoor(roomVNum, dir)
+	if !success {
+		s.sendText(msg)
+		return nil
+	}
+
+	s.sendText(msg)
+	doorBroadcast(s, fmt.Sprintf("%s opens the %s door.", s.player.Name, dir))
+	return nil
+}
+
+// CmdClose handles 'close <direction>' — close an open door.
+// Source: act.door.c do_close()
+func cmdClose(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Close what?")
+		return nil
+	}
+
+	dir := resolveDirection(strings.ToLower(args[0]))
+	if dir == "" {
+		s.sendText("Close what?  Try north, south, east, west, up, or down.")
+		return nil
+	}
+
+	dm := getDoorManager(s)
+	if dm == nil {
+		s.sendText("You can't do that right now.")
+		return nil
+	}
+
+	roomVNum := s.player.GetRoomVNum()
+	success, msg := dm.CloseDoor(roomVNum, dir)
+	if !success {
+		s.sendText(msg)
+		return nil
+	}
+
+	s.sendText(msg)
+	doorBroadcast(s, fmt.Sprintf("%s closes the %s door.", s.player.Name, dir))
+	return nil
+}
+
+// CmdLock handles 'lock <direction>' — lock a closed door with the correct key.
+// Source: act.door.c do_lock()
+func cmdLock(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Lock what?")
+		return nil
+	}
+
+	dir := resolveDirection(strings.ToLower(args[0]))
+	if dir == "" {
+		s.sendText("Lock what?  Try north, south, east, west, up, or down.")
+		return nil
+	}
+
+	dm := getDoorManager(s)
+	if dm == nil {
+		s.sendText("You can't do that right now.")
+		return nil
+	}
+
+	roomVNum := s.player.GetRoomVNum()
+	door, ok := dm.GetDoor(roomVNum, dir)
+	if !ok {
+		s.sendText("There is no door there.")
+		return nil
+	}
+
+	if door.KeyVNum == -1 {
+		s.sendText("This door doesn't require a key.")
+		return nil
+	}
+
+	if !playerHasKey(s, door.KeyVNum) {
+		s.sendText("You don't have the right key.")
+		return nil
+	}
+
+	success, msg := dm.LockDoor(roomVNum, dir, door.KeyVNum)
+	if !success {
+		s.sendText(msg)
+		return nil
+	}
+
+	s.sendText(msg)
+	doorBroadcast(s, fmt.Sprintf("%s locks the %s door.", s.player.Name, dir))
+	return nil
+}
+
+// CmdUnlock handles 'unlock <direction>' — unlock a locked door with the correct key.
+// Source: act.door.c do_unlock()
+func cmdUnlock(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Unlock what?")
+		return nil
+	}
+
+	dir := resolveDirection(strings.ToLower(args[0]))
+	if dir == "" {
+		s.sendText("Unlock what?  Try north, south, east, west, up, or down.")
+		return nil
+	}
+
+	dm := getDoorManager(s)
+	if dm == nil {
+		s.sendText("You can't do that right now.")
+		return nil
+	}
+
+	roomVNum := s.player.GetRoomVNum()
+	door, ok := dm.GetDoor(roomVNum, dir)
+	if !ok {
+		s.sendText("There is no door there.")
+		return nil
+	}
+
+	if door.KeyVNum == -1 {
+		s.sendText("This door doesn't require a key.")
+		return nil
+	}
+
+	if !playerHasKey(s, door.KeyVNum) {
+		s.sendText("You don't have the right key.")
+		return nil
+	}
+
+	success, msg := dm.UnlockDoor(roomVNum, dir, door.KeyVNum)
+	if !success {
+		s.sendText(msg)
+		return nil
+	}
+
+	s.sendText(msg)
+	doorBroadcast(s, fmt.Sprintf("%s unlocks the %s door.", s.player.Name, dir))
+	return nil
+}
+
+// CmdPick handles 'pick <direction>' — pick a locked door's lock.
+// Uses the player's Dexterity and thief/assassin level to determine success.
+// Source: act.door.c do_pick()
+func cmdPick(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.sendText("Pick what?")
+		return nil
+	}
+
+	dir := resolveDirection(strings.ToLower(args[0]))
+	if dir == "" {
+		s.sendText("Pick what?  Try north, south, east, west, up, or down.")
+		return nil
+	}
+
+	dm := getDoorManager(s)
+	if dm == nil {
+		s.sendText("You can't do that right now.")
+		return nil
+	}
+
+	roomVNum := s.player.GetRoomVNum()
+
+	// Calculate pick skill based on class and level
+	// Thieves (class 2) and Assassins (class 6) get bonus
+	// Base skill = level * 5 + DEX bonus
+	classBonus := 0
+	if s.player.Class == 2 || s.player.Class == 6 {
+		classBonus = 20 // thieves/assassins are naturally better
+	}
+	skill := s.player.Level*5 + s.player.Stats.Dex + classBonus
+	if skill > 95 {
+		skill = 95 // cap at 95% — there's always a chance of failure
+	}
+
+	success, msg := dm.PickDoor(roomVNum, dir, skill)
+	if !success {
+		s.sendText(msg)
+		return nil
+	}
+
+	s.sendText(msg)
+	doorBroadcast(s, fmt.Sprintf("%s picks the lock on the %s door.", s.player.Name, dir))
 	return nil
 }
