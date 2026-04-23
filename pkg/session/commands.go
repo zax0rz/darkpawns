@@ -88,7 +88,7 @@ func init() {
 	cmdRegistry.Register("listskills", wrapSkill(command.CmdListSkills), "List available skills.", 0, 0, "skills")
 
 	// Shop
-	cmdRegistry.Register("list", wrapArgs(cmdList), "List items for sale at a shop.", 0, 0, "l")
+	cmdRegistry.Register("list", wrapArgs(cmdList), "List items for sale at a shop.", 0, 0)
 	cmdRegistry.Register("buy", wrapArgs(cmdBuy), "Buy an item from a shop.", 0, 0)
 	cmdRegistry.Register("sell", wrapArgs(cmdSell), "Sell an item to a shop.", 0, 0)
 	cmdRegistry.Register("forget", wrapSkill(command.CmdForget), "Forget a skill.", 0, 0)

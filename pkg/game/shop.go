@@ -90,49 +90,49 @@ func (sm *ShopManager) GetShopsInRoom(roomVNum int) []interface{} {
 }
 
 // BuyPrice calculates the price a player pays to buy an item from the shop.
-// Formula from src/shop.c: price = OBJ_COST(item) * shop->profit_buy
-// CHA modifier: CHA >= 21 -> 110%, CHA 16-20 -> 100%, CHA 1-15 -> worse prices
-// For now, since max CHA is 18, we use: CHA 18 -> best, lower -> worse.
+// Matches src/shop.c buy_price() exactly:
+//   price = (int)(GET_OBJ_COST(obj) * SHOP_BUYPROFIT(shop_nr))
+//   if (GET_CHA(ch)) price -= price*(GET_CHA(ch)*.005)
+//   return MAX(MAX(price, 1), GET_OBJ_COST(obj))
 func (s *Shop) BuyPrice(itemCost int, cha int) int {
 	price := float64(itemCost) * s.ProfitBuy
 
-	// CHA discount: higher CHA = lower price
-	// Original: price -= price*(GET_CHA(ch)*.005)
-	// At CHA 18: price *= 0.91, at CHA 10: price *= 0.95
+	// CHA discount: price -= price * (CHA * 0.005)
 	if cha > 0 {
-		price -= price*(float64(cha)*0.005)
+		price -= price * (float64(cha) * 0.005)
 	}
 
-	// Clamp: at least 1, at most base cost
+	// C: MAX(MAX(price, 1), GET_OBJ_COST(obj)) — buy price is at least item cost
 	if price < 1 {
 		price = 1
 	}
-	if price > float64(itemCost) {
+	if float64(itemCost) > price {
 		price = float64(itemCost)
 	}
 	return int(price)
 }
 
 // SellPrice calculates the price a shop pays the player for an item.
-// Formula from src/shop.c: price = OBJ_COST(item) * shop->profit_sell
-// CHA modifier: higher CHA = better sell price
-// Also ensures sell price never exceeds buy price.
+// Matches src/shop.c sell_price() exactly:
+//   price = (int)(GET_OBJ_COST(obj) * SHOP_SELLPROFIT(shop_nr))
+//   if (GET_CHA(ch)) price += price*(GET_CHA(ch)*.005)
+//   if ((bprice = buy_price(ch, obj, shop_nr)) < price) price = bprice
+//   return MIN(MAX(1, price), GET_OBJ_COST(obj))
 func (s *Shop) SellPrice(itemCost int, cha int) int {
 	price := float64(itemCost) * s.ProfitSell
 
-	// CHA bonus: higher CHA = higher sell price
-	// Original: price += price*(GET_CHA(ch)*.005)
+	// CHARISMA modifier: price += price * (CHA * 0.005)
 	if cha > 0 {
-		price += price*(float64(cha)*0.005)
+		price += price * (float64(cha) * 0.005)
 	}
 
-	// Ensure sell price doesn't exceed buy price for same item
+	// C: if buy_price < price, cap at buy_price
 	buyPrice := s.BuyPrice(itemCost, cha)
-	if int(price) > buyPrice {
+	if buyPrice < int(price) {
 		price = float64(buyPrice)
 	}
 
-	// Clamp: at least 1, at most base cost
+	// C: MIN(MAX(1, price), GET_OBJ_COST(obj))
 	if price < 1 {
 		price = 1
 	}
