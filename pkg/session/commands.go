@@ -66,6 +66,9 @@ func init() {
 	cmdRegistry.Register("hold", wrapArgs(cmdHold), "Hold an item.", 0, 0)
 	cmdRegistry.Register("get", wrapArgs(cmdGet), "Pick up an item from the room.", 0, 0, "take")
 	cmdRegistry.Register("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.", 0, 0)
+	cmdRegistry.Register("eat", wrapArgs(cmdEat), "Eat some food.", 0, 0)
+	cmdRegistry.Register("drink", wrapArgs(cmdDrink), "Drink from a container.", 0, 0)
+	cmdRegistry.Register("quaff", wrapArgs(cmdQuaff), "Quaff a potion.", 0, 0, "q")
 
 	// Info
 	cmdRegistry.Register("score", wrapNoArgs(cmdScore), "Show your character stats.", 0, 0, "sc")
@@ -82,7 +85,12 @@ func init() {
 	cmdRegistry.Register("skills", wrapSkill(command.CmdSkills), "Show your learned skills.", 0, 0, "sk")
 	cmdRegistry.Register("practice", wrapSkill(command.CmdPractice), "Practice a skill.", 0, 0)
 	cmdRegistry.Register("learn", wrapSkill(command.CmdLearn), "Learn a new skill.", 0, 0)
-	cmdRegistry.Register("list", wrapSkill(command.CmdListSkills), "List available skills.", 0, 0, "listskills")
+	cmdRegistry.Register("listskills", wrapSkill(command.CmdListSkills), "List available skills.", 0, 0, "skills")
+
+	// Shop
+	cmdRegistry.Register("list", wrapArgs(cmdList), "List items for sale at a shop.", 0, 0, "l")
+	cmdRegistry.Register("buy", wrapArgs(cmdBuy), "Buy an item from a shop.", 0, 0)
+	cmdRegistry.Register("sell", wrapArgs(cmdSell), "Sell an item to a shop.", 0, 0)
 	cmdRegistry.Register("forget", wrapSkill(command.CmdForget), "Forget a skill.", 0, 0)
 	cmdRegistry.Register("confirm", wrapSkill(command.CmdConfirmForget), "Confirm forgetting a skill.", 0, 0, "confirm forget")
 	cmdRegistry.Register("use", wrapSkill(command.CmdUseSkill), "Use a skill.", 0, 0)
