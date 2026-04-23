@@ -426,20 +426,48 @@ func (p *Player) GetWis() int {
 
 // GetHitroll returns the player's hitroll bonus (Phase 2c addition)
 // Source: fight.c uses GET_HITROLL(ch) macro
-// TODO: Phase 3 - implement equipment bonuses
+// Sums APPLY_HITROLL (location 18) from all equipped items.
 func (p *Player) GetHitroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return 0 // No equipment bonuses yet
+
+	total := 0
+	if p.Equipment != nil {
+		for _, item := range p.Equipment.Slots {
+			if item == nil || item.Prototype == nil {
+				continue
+			}
+			for _, aff := range item.Prototype.Affects {
+				if aff.Location == 18 { // APPLY_HITROLL
+					total += aff.Modifier
+				}
+			}
+		}
+	}
+	return total
 }
 
 // GetDamroll returns the player's damroll bonus (Phase 2c addition)
 // Source: fight.c uses GET_DAMROLL(ch) macro
-// TODO: Phase 3 - implement equipment bonuses
+// Sums APPLY_DAMROLL (location 19) from all equipped items.
 func (p *Player) GetDamroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return 0 // No equipment bonuses yet
+
+	total := 0
+	if p.Equipment != nil {
+		for _, item := range p.Equipment.Slots {
+			if item == nil || item.Prototype == nil {
+				continue
+			}
+			for _, aff := range item.Prototype.Affects {
+				if aff.Location == 19 { // APPLY_DAMROLL
+					total += aff.Modifier
+				}
+			}
+		}
+	}
+	return total
 }
 
 // GetStrAdd returns the player's strength add (exceptional strength)
