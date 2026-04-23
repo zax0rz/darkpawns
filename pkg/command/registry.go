@@ -23,16 +23,21 @@ type Entry struct {
 	Aliases     []string
 }
 
-// Registry is a thread-safe command registry.
+// Middleware wraps a Handler to add cross-cutting behavior (logging, auth, rate limiting).
+type Middleware func(Handler) Handler
+
+// Registry is a thread-safe command registry with middleware support.
 type Registry struct {
-	mu       sync.RWMutex
-	commands map[string]*Entry // keyed by primary name and aliases
+	mu         sync.RWMutex
+	commands   map[string]*Entry // keyed by primary name and aliases
+	middleware []Middleware       // global middleware chain
 }
 
 // NewRegistry creates a new command registry.
 func NewRegistry() *Registry {
 	return &Registry{
-		commands: make(map[string]*Entry),
+		commands:   make(map[string]*Entry),
+		middleware: make([]Middleware, 0),
 	}
 }
 
@@ -42,9 +47,15 @@ func (r *Registry) Register(name string, handler Handler, helpText string, minLe
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// Wrap handler through middleware chain
+	wrapped := handler
+	for i := len(r.middleware) - 1; i >= 0; i-- {
+		wrapped = r.middleware[i](wrapped)
+	}
+
 	entry := &Entry{
 		Name:        name,
-		Handler:     handler,
+		Handler:     wrapped,
 		HelpText:    helpText,
 		MinLevel:    minLevel,
 		MinPosition: minPosition,
@@ -58,6 +69,24 @@ func (r *Registry) Register(name string, handler Handler, helpText string, minLe
 	for _, alias := range aliases {
 		r.commands[strings.ToLower(alias)] = entry
 	}
+}
+
+// Use adds a middleware function to the global chain.
+// Middleware are executed in order, each wrapping the next.
+// All future Execute calls through the registry will run through the chain.
+func (r *Registry) Use(mw Middleware) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.middleware = append(r.middleware, mw)
+}
+
+// buildChain wraps a handler through all registered middleware.
+// Returns a handler that runs the full chain and finally the original handler.
+func (r *Registry) buildChain(h Handler) Handler {
+	for i := len(r.middleware) - 1; i >= 0; i-- {
+		h = r.middleware[i](h)
+	}
+	return h
 }
 
 // Lookup finds a command entry by name (case-insensitive).
