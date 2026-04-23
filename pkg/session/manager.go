@@ -639,6 +639,16 @@ func (s *Session) GetManager() interface{} {
 	return s.manager
 }
 
+// GetWorld returns the game world.
+func (s *Session) GetWorld() *game.World {
+	return s.manager.world
+}
+
+// GetCombatEngine returns the combat engine.
+func (s *Session) GetCombatEngine() interface{} {
+	return s.manager.combatEngine
+}
+
 // GetPlayerName returns the name of the player associated with this session
 func (s *Session) GetPlayerName() string {
 	if s.player != nil {

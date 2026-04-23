@@ -297,4 +297,15 @@ func (sm *SkillManager) InitializeDefaultSkills() {
 	sm.RegisterSkill(NewSkill("appraise", "Appraisal", SkillTypeUtility, 2))
 	sm.RegisterSkill(NewSkill("diplomacy", "Diplomacy", SkillTypeUtility, 4))
 	sm.RegisterSkill(NewSkill("intimidate", "Intimidation", SkillTypeUtility, 3))
+
+	// Dark Pawns core skills (backstab, bash, kick, trip, rescue, sneak, hide, steal, pick_lock)
+	sm.RegisterSkill(NewSkill("backstab", "Backstab", SkillTypeCombat, 3))
+	sm.RegisterSkill(NewSkill("bash", "Bash", SkillTypeCombat, 3))
+	sm.RegisterSkill(NewSkill("kick", "Kick", SkillTypeCombat, 1))
+	sm.RegisterSkill(NewSkill("trip", "Trip", SkillTypeCombat, 4))
+	sm.RegisterSkill(NewSkill("rescue", "Rescue", SkillTypeCombat, 3))
+	sm.RegisterSkill(NewSkill("sneak", "Sneak", SkillTypeUtility, 2))
+	sm.RegisterSkill(NewSkill("hide", "Hide", SkillTypeUtility, 2))
+	sm.RegisterSkill(NewSkill("steal", "Steal", SkillTypeUtility, 3))
+	sm.RegisterSkill(NewSkill("pick_lock", "Pick Lock", SkillTypeUtility, 3))
 }

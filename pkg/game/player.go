@@ -159,6 +159,27 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	// Initialize default skills
 	p.SkillManager.InitializeDefaultSkills()
 
+	// Set starting skill levels based on class — from class.c do_start()
+	// Thieves and Assassins get starting thief skills
+	if p.Class == ClassThief || p.Class == ClassAssassin {
+		p.SetSkill("sneak", 10)
+		p.SetSkill("hide", 5)
+		p.SetSkill("steal", 15)
+		p.SetSkill("backstab", 10)
+		p.SetSkill("pick_lock", 10)
+	}
+	// Kender get bonus steal
+	if p.Race == RaceKender {
+		p.SetSkill("steal", 25)
+	}
+	// All classes get kick at level 1
+	p.SetSkill("kick", 10)
+	// Warrior-types get bash and rescue
+	if p.Class == ClassWarrior || p.Class == ClassPaladin || p.Class == ClassRanger {
+		p.SetSkill("bash", 10)
+		p.SetSkill("rescue", 10)
+	}
+
 	return p
 }
 

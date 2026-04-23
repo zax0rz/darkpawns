@@ -5,7 +5,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // cmdSkills displays all learned skills
@@ -540,6 +542,311 @@ func CmdSkillInfo(s SessionInterface, args []string) error {
 	}
 
 	return s.SendMessage(output.String())
+}
+
+// ---------------------------------------------------------------------------
+// Dark Pawns skill commands — backstab, bash, kick, trip, rescue, sneak, hide, steal, pick
+// ---------------------------------------------------------------------------
+
+// CmdBackstab handles the backstab command.
+func CmdBackstab(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Backstab who?\r\n")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillBackstab)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	// Find target in room
+	targetName := strings.Join(args, " ")
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	if !found {
+		return s.SendMessage("They don't seem to be here.\r\n")
+	}
+
+	// Can't backstab self
+	if target.GetName() == ch.Name {
+		return s.SendMessage("How can you sneak up on yourself?\r\n")
+	}
+
+	result := game.DoBackstab(ch, target, world)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdBash handles the bash command.
+func CmdBash(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillBash)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	// Find target — if in combat, default to fighting target
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+	if ch.GetFighting() != "" && len(args) == 0 {
+		return s.SendMessage("Bash who?\r\n")
+	} else if len(args) > 0 {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Bash who?\r\n")
+		}
+	} else {
+		return s.SendMessage("Bash who?\r\n")
+	}
+
+	if target.GetName() == ch.Name {
+		return s.SendMessage("Aren't we funny today...\r\n")
+	}
+
+	result := game.DoBash(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdKick handles the kick command.
+func CmdKick(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillKick)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+	if ch.GetFighting() != "" && len(args) == 0 {
+		return s.SendMessage("Kick who?\r\n")
+	} else if len(args) > 0 {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Kick who?\r\n")
+		}
+	} else {
+		return s.SendMessage("Kick who?\r\n")
+	}
+
+	if target.GetName() == ch.Name {
+		return s.SendMessage("Aren't we funny today...\r\n")
+	}
+
+	result := game.DoKick(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdTrip handles the trip command.
+func CmdTrip(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillTrip)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+	if ch.GetFighting() != "" && len(args) == 0 {
+		return s.SendMessage("Trip who?\r\n")
+	} else if len(args) > 0 {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Trip who?\r\n")
+		}
+	} else {
+		return s.SendMessage("Trip who?\r\n")
+	}
+
+	if target.GetName() == ch.Name {
+		return s.SendMessage("You trip over your shoe laces...\r\n")
+	}
+
+	result := game.DoTrip(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdRescue handles the rescue command.
+func CmdRescue(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Whom do you want to rescue?\r\n")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillRescue)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	targetName := strings.Join(args, " ")
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	if !found {
+		return s.SendMessage("They don't seem to be here.\r\n")
+	}
+
+	if target.GetName() == ch.Name {
+		return s.SendMessage("What about fleeing instead?\r\n")
+	}
+
+	// Need combat engine for rescue
+	return s.SendMessage("Rescue is not fully implemented yet.\r\n")
+}
+
+// CmdSneak handles the sneak command.
+func CmdSneak(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillSneak)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	result := game.DoSneak(ch)
+	return s.SendMessage(result.MessageToCh + "\r\n")
+}
+
+// CmdHide handles the hide command.
+func CmdHide(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillHide)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	result := game.DoHide(ch)
+	return s.SendMessage(result.MessageToCh + "\r\n")
+}
+
+// CmdSteal handles the steal command.
+func CmdSteal(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) < 2 {
+		return s.SendMessage("Steal what from who?\r\n")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillSteal)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	// Parse: "steal <item> <target>" or "steal coins <target>"
+	itemName := args[0]
+	targetName := strings.Join(args[1:], " ")
+	world := s.GetWorld()
+
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	if !found {
+		return s.SendMessage("Steal what from who?\r\n")
+	}
+
+	result := game.DoSteal(ch, target, itemName)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdPickLock handles the pick command.
+func CmdPickLock(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillPickLock)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	result := game.DoPickLock(ch)
+	return s.SendMessage(result.MessageToCh + "\r\n")
+}
+
+// ---------------------------------------------------------------------------
+// Helper: send skill result to player, victim, and room
+// ---------------------------------------------------------------------------
+
+func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatant, result game.SkillResult) error {
+	// Send to character
+	if result.MessageToCh != "" {
+		s.SendMessage(result.MessageToCh + "\r\n")
+	}
+
+	// Apply damage
+	if result.Damage > 0 {
+		target.TakeDamage(result.Damage)
+		if target.GetHP() <= 0 {
+			s.SendMessage(fmt.Sprintf("%s is dead!\r\n", target.GetName()))
+		}
+	}
+
+	// Apply position changes
+	if result.SelfStumble {
+		ch.SetPosition(combat.PosSitting)
+		s.SendMessage("You fall to the ground!\r\n")
+	}
+	if result.TargetFalls {
+		if p, ok := target.(*game.Player); ok {
+			p.SetPosition(combat.PosSitting)
+		}
+		// Mobs don't have SetPosition in current interface — would need Combatant extension
+	}
+
+	// Send to victim
+	if result.MessageToVict != "" {
+		if p, ok := target.(*game.Player); ok {
+			p.SendMessage(result.MessageToVict + "\r\n")
+		}
+	}
+
+	// Send to room (excluding ch and target)
+	if result.MessageToRoom != "" {
+		roomVNum := ch.GetRoom()
+		world := s.GetWorld()
+		players := world.GetPlayersInRoom(roomVNum)
+		for _, p := range players {
+			if p.Name == ch.Name {
+				continue
+			}
+			if p.Name == target.GetName() {
+				continue
+			}
+			p.SendMessage(result.MessageToRoom + "\r\n")
+		}
+	}
+
+	return nil
 }
 
 // RegisterSkillCommands registers all skill-related commands

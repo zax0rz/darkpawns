@@ -22,6 +22,12 @@ type SessionInterface interface {
 	// GetManager returns the session manager (needed for some admin commands)
 	GetManager() interface{}
 
+	// GetWorld returns the game world
+	GetWorld() *game.World
+
+	// GetCombatEngine returns the combat engine
+	GetCombatEngine() interface{}
+
 	// Temporary data storage methods
 	SetTempData(key string, value interface{})
 	GetTempData(key string) interface{}
