@@ -46,10 +46,14 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options map[string]
 		Options: options,
 	}
 
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgCharCreate,
 		Data: data,
 	})
+	if err != nil {
+		log.Printf("json.Marshal failed in sendCharCreatePrompt: %v", err)
+		return
+	}
 
 	s.send <- msg
 }
@@ -74,10 +78,14 @@ func (s *Session) sendCharCreateStats(stats game.CharStats) {
 		Stats: &display,
 	}
 
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgCharCreate,
 		Data: data,
 	})
+	if err != nil {
+		log.Printf("json.Marshal failed in sendCharCreateStats: %v", err)
+		return
+	}
 
 	s.send <- msg
 }

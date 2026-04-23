@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -95,7 +96,11 @@ func (s *Session) flushDirtyVars() {
 		data[varName] = s.buildVarValue(varName)
 	}
 	s.dirtyVars = make(map[string]bool)
-	msg, _ := json.Marshal(ServerMessage{Type: MsgVars, Data: data})
+	msg, err := json.Marshal(ServerMessage{Type: MsgVars, Data: data})
+	if err != nil {
+		log.Printf("json.Marshal failed in flushDirtyVars: %v", err)
+		return
+	}
 	select {
 	case s.send <- msg:
 	default:
@@ -109,7 +114,11 @@ func (s *Session) sendFullVarDump() {
 	for _, varName := range AllVariables {
 		data[varName] = s.buildVarValue(varName)
 	}
-	msg, _ := json.Marshal(ServerMessage{Type: MsgVars, Data: data})
+	msg, err := json.Marshal(ServerMessage{Type: MsgVars, Data: data})
+	if err != nil {
+		log.Printf("json.Marshal failed in sendFullVarDump: %v", err)
+		return
+	}
 	select {
 	case s.send <- msg:
 	default:

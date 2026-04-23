@@ -91,13 +91,17 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 // Must be called after the manager is created and before combat starts.
 func (m *Manager) SetCombatBroadcastFunc() {
 	m.combatEngine.SetBroadcastFunc(func(roomVNum int, message string, exclude string) {
-		msg, _ := json.Marshal(ServerMessage{
+		msg, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
 			Data: EventData{
 				Type: "combat",
 				Text: message,
 			},
 		})
+		if err != nil {
+			log.Printf("json.Marshal failed in SetCombatBroadcastFunc: %v", err)
+			return
+		}
 		m.BroadcastToRoom(roomVNum, msg, exclude)
 	})
 }
@@ -540,19 +544,27 @@ func (s *Session) sendWelcome(token string) {
 		Token: token,
 	}
 
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgState,
 		Data: state,
 	})
+	if err != nil {
+		log.Printf("json.Marshal failed in sendState: %v", err)
+		return
+	}
 	s.send <- msg
 }
 
 // sendError sends an error message to the player.
 func (s *Session) sendError(text string) {
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgError,
 		Data: ErrorData{Message: text},
 	})
+	if err != nil {
+		log.Printf("json.Marshal failed in sendError: %v", err)
+		return
+	}
 	select {
 	case s.send <- msg:
 	default:

@@ -172,10 +172,13 @@ func cmdLook(s *Session, args []string) error {
 		},
 	}
 
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgState,
 		Data: state,
 	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
 	s.send <- msg
 	return nil
 }
@@ -285,7 +288,7 @@ func cmdSay(s *Session, args []string) error {
 	s.sendText(fmt.Sprintf("You say, \"%s\"", text))
 
 	// Broadcast to room
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "say",
@@ -293,6 +296,9 @@ func cmdSay(s *Session, args []string) error {
 			Text: fmt.Sprintf("%s says, \"%s\"", s.player.Name, text),
 		},
 	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
 
 	return nil
@@ -303,7 +309,7 @@ func cmdQuit(s *Session) error {
 	room := s.player.GetRoom()
 
 	// Notify room
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "leave",
@@ -311,6 +317,9 @@ func cmdQuit(s *Session) error {
 			Text: fmt.Sprintf("%s has left the game.", s.player.Name),
 		},
 	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
 	s.manager.BroadcastToRoom(room, msg, s.player.Name)
 
 	// Remove from world and close connection
@@ -550,7 +559,7 @@ func cmdGet(s *Session, args []string) error {
 			s.markDirty(VarInventory, VarRoomItems)
 
 			// Notify room
-			msg, _ := json.Marshal(ServerMessage{
+			msg, err := json.Marshal(ServerMessage{
 				Type: MsgEvent,
 				Data: EventData{
 					Type: "get",
@@ -558,6 +567,9 @@ func cmdGet(s *Session, args []string) error {
 					Text: fmt.Sprintf("%s picks up %s.", s.player.Name, item.GetShortDesc()),
 				},
 			})
+			if err != nil {
+				return fmt.Errorf("json.Marshal: %w", err)
+			}
 			s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
 			return nil
 		}
@@ -591,7 +603,7 @@ func cmdDrop(s *Session, args []string) error {
 	s.sendText(fmt.Sprintf("You drop %s.", item.GetShortDesc()))
 	s.markDirty(VarInventory, VarRoomItems)
 
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "drop",
@@ -599,6 +611,9 @@ func cmdDrop(s *Session, args []string) error {
 			Text: fmt.Sprintf("%s drops %s.", s.player.Name, item.GetShortDesc()),
 		},
 	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
 	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
 
 	return nil
@@ -612,10 +627,14 @@ func broadcastEquipmentChange(s *Session, action string, item *game.ObjectInstan
 		Text: fmt.Sprintf("%s %s %s.", s.player.Name, action, item.GetShortDesc()),
 	}
 
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: event,
 	})
+	if err != nil {
+		log.Printf("json.Marshal failed in broadcastEquipmentChange: %v", err)
+		return
+	}
 
 	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
 }
@@ -880,10 +899,14 @@ func cmdGtell(s *Session, args []string) error {
 
 // sendText sends a simple text message to the player.
 func (s *Session) sendText(text string) {
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgText,
 		Data: TextData{Text: text},
 	})
+	if err != nil {
+		log.Printf("json.Marshal failed in sendText: %v", err)
+		return
+	}
 	select {
 	case s.send <- msg:
 	default:
@@ -1092,7 +1115,7 @@ func cmdEmote(s *Session, args []string) error {
 	text := fmt.Sprintf("%s %s", s.player.Name, action)
 
 	s.sendText(text)
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "emote",
@@ -1100,6 +1123,9 @@ func cmdEmote(s *Session, args []string) error {
 			Text: text,
 		},
 	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
 	return nil
 }
@@ -1139,7 +1165,7 @@ func cmdShout(s *Session, args []string) error {
 	}
 	s.manager.mu.RUnlock()
 
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "shout",
@@ -1147,6 +1173,9 @@ func cmdShout(s *Session, args []string) error {
 			Text: text,
 		},
 	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
 	for _, sess := range targets {
 		select {
 		case sess.send <- msg:

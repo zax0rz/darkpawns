@@ -46,7 +46,7 @@ func cmdHit(s *Session, args []string) error {
 			s.markDirty(VarFighting)
 
 			// Notify room
-			msg, _ := json.Marshal(ServerMessage{
+			msg, err := json.Marshal(ServerMessage{
 				Type: MsgEvent,
 				Data: EventData{
 					Type: "combat",
@@ -54,6 +54,9 @@ func cmdHit(s *Session, args []string) error {
 					Text: fmt.Sprintf("%s attacks %s!", s.player.Name, mob.GetShortDesc()),
 				},
 			})
+			if err != nil {
+				return fmt.Errorf("json.Marshal: %w", err)
+			}
 			s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
 
 			return nil
@@ -81,7 +84,7 @@ func cmdHit(s *Session, args []string) error {
 			}
 
 			// Notify room
-			msg, _ := json.Marshal(ServerMessage{
+			msg, err := json.Marshal(ServerMessage{
 				Type: MsgEvent,
 				Data: EventData{
 					Type: "combat",
@@ -89,6 +92,9 @@ func cmdHit(s *Session, args []string) error {
 					Text: fmt.Sprintf("%s attacks %s!", s.player.Name, p.Name),
 				},
 			})
+			if err != nil {
+				return fmt.Errorf("json.Marshal: %w", err)
+			}
 			s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
 
 			return nil
