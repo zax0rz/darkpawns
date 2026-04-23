@@ -20,21 +20,21 @@ func cmdStand(s *Session) error {
 
 	switch pos {
 	case combat.PosStanding:
-		s.sendText("You are already standing.")
+		s.Send("You are already standing.")
 	case combat.PosSitting:
-		s.sendText("You stand up.")
+		s.Send("You stand up.")
 		broadcastToRoom(s, fmt.Sprintf("%s clambers to %s feet.", s.player.Name, genderHisHer(s.player)))
 		s.player.SetPosition(combat.PosStanding)
 	case combat.PosResting:
-		s.sendText("You stop resting, and stand up.")
+		s.Send("You stop resting, and stand up.")
 		broadcastToRoom(s, fmt.Sprintf("%s stops resting, and clambers on %s feet.", s.player.Name, genderHisHer(s.player)))
 		s.player.SetPosition(combat.PosStanding)
 	case combat.PosSleeping:
-		s.sendText("You have to wake up first!")
+		s.Send("You have to wake up first!")
 	case combat.PosFighting:
-		s.sendText("Do you not consider fighting as standing?")
+		s.Send("Do you not consider fighting as standing?")
 	default:
-		s.sendText("You stop floating around, and put your feet on the ground.")
+		s.Send("You stop floating around, and put your feet on the ground.")
 		broadcastToRoom(s, fmt.Sprintf("%s stops floating around, and puts %s feet on the ground.", s.player.Name, genderHisHer(s.player)))
 		s.player.SetPosition(combat.PosStanding)
 	}
@@ -48,21 +48,21 @@ func cmdSit(s *Session) error {
 
 	switch pos {
 	case combat.PosStanding:
-		s.sendText("You sit down.")
+		s.Send("You sit down.")
 		broadcastToRoom(s, fmt.Sprintf("%s sits down.", s.player.Name))
 		s.player.SetPosition(combat.PosSitting)
 	case combat.PosSitting:
-		s.sendText("You're sitting already.")
+		s.Send("You're sitting already.")
 	case combat.PosResting:
-		s.sendText("You stop resting, and sit up.")
+		s.Send("You stop resting, and sit up.")
 		broadcastToRoom(s, fmt.Sprintf("%s stops resting.", s.player.Name))
 		s.player.SetPosition(combat.PosSitting)
 	case combat.PosSleeping:
-		s.sendText("You have to wake up first.")
+		s.Send("You have to wake up first.")
 	case combat.PosFighting:
-		s.sendText("Sit down while fighting? are you MAD?")
+		s.Send("Sit down while fighting? are you MAD?")
 	default:
-		s.sendText("You stop floating around, and sit down.")
+		s.Send("You stop floating around, and sit down.")
 		broadcastToRoom(s, fmt.Sprintf("%s stops floating around, and sits down.", s.player.Name))
 		s.player.SetPosition(combat.PosSitting)
 	}
@@ -76,21 +76,21 @@ func cmdRest(s *Session) error {
 
 	switch pos {
 	case combat.PosStanding:
-		s.sendText("You sit down and rest your tired bones.")
+		s.Send("You sit down and rest your tired bones.")
 		broadcastToRoom(s, fmt.Sprintf("%s sits down and rests.", s.player.Name))
 		s.player.SetPosition(combat.PosResting)
 	case combat.PosSitting:
-		s.sendText("You rest your tired bones.")
+		s.Send("You rest your tired bones.")
 		broadcastToRoom(s, fmt.Sprintf("%s rests.", s.player.Name))
 		s.player.SetPosition(combat.PosResting)
 	case combat.PosResting:
-		s.sendText("You are already resting.")
+		s.Send("You are already resting.")
 	case combat.PosSleeping:
-		s.sendText("You have to wake up first.")
+		s.Send("You have to wake up first.")
 	case combat.PosFighting:
-		s.sendText("Rest while fighting?  Are you MAD?")
+		s.Send("Rest while fighting?  Are you MAD?")
 	default:
-		s.sendText("You stop floating around, and stop to rest your tired bones.")
+		s.Send("You stop floating around, and stop to rest your tired bones.")
 		broadcastToRoom(s, fmt.Sprintf("%s stops floating around, and rests.", s.player.Name))
 		s.player.SetPosition(combat.PosResting)
 	}
@@ -104,15 +104,15 @@ func cmdSleep(s *Session) error {
 
 	switch pos {
 	case combat.PosStanding, combat.PosSitting, combat.PosResting:
-		s.sendText("You go to sleep.")
+		s.Send("You go to sleep.")
 		broadcastToRoom(s, fmt.Sprintf("%s lies down and falls asleep.", s.player.Name))
 		s.player.SetPosition(combat.PosSleeping)
 	case combat.PosSleeping:
-		s.sendText("You are already sound asleep.")
+		s.Send("You are already sound asleep.")
 	case combat.PosFighting:
-		s.sendText("Sleep while fighting?  Are you MAD?")
+		s.Send("Sleep while fighting?  Are you MAD?")
 	default:
-		s.sendText("You stop floating around, and lie down to sleep.")
+		s.Send("You stop floating around, and lie down to sleep.")
 		broadcastToRoom(s, fmt.Sprintf("%s stops floating around, and lie down to sleep.", s.player.Name))
 		s.player.SetPosition(combat.PosSleeping)
 	}
@@ -127,32 +127,32 @@ func cmdWake(s *Session, args []string) error {
 
 		// Can't wake others while sleeping
 		if s.player.GetPosition() == combat.PosSleeping {
-			s.sendText("Maybe you should wake yourself up first.")
+			s.Send("Maybe you should wake yourself up first.")
 			return nil
 		}
 
 		// Find target in room
 		target, ok := s.manager.world.GetPlayer(targetName)
 		if !ok {
-			s.sendText("There is no one by that name here.")
+			s.Send("There is no one by that name here.")
 			return nil
 		}
 		if target.GetRoom() != s.player.GetRoom() {
-			s.sendText("They are not here.")
+			s.Send("They are not here.")
 			return nil
 		}
 
 		if target == s.player {
 			// Fall through to self-wake below
 		} else if target.GetPosition() > combat.PosSleeping {
-			s.sendText(fmt.Sprintf("%s is already awake.", target.Name))
+			s.Send(fmt.Sprintf("%s is already awake.", target.Name))
 			return nil
 		} else if target.GetPosition() < combat.PosSleeping {
-			s.sendText(fmt.Sprintf("%s's in pretty bad shape!", target.Name))
+			s.Send(fmt.Sprintf("%s's in pretty bad shape!", target.Name))
 			return nil
 		} else {
 			// Wake the target
-			s.sendText(fmt.Sprintf("You wake %s up.", target.Name))
+			s.Send(fmt.Sprintf("You wake %s up.", target.Name))
 			target.SendMessage(fmt.Sprintf("%s wakes you up.", s.player.Name))
 			broadcastToRoomExcept(s, fmt.Sprintf("%s wakes up %s.", s.player.Name, target.Name), target.Name)
 			target.SetPosition(combat.PosSitting)
@@ -162,11 +162,11 @@ func cmdWake(s *Session, args []string) error {
 
 	// Self-wake
 	if s.player.GetPosition() > combat.PosSleeping {
-		s.sendText("You are already awake...")
+		s.Send("You are already awake...")
 		return nil
 	}
 
-	s.sendText("You awaken, and sit up.")
+	s.Send("You awaken, and sit up.")
 	broadcastToRoom(s, fmt.Sprintf("%s awakens.", s.player.Name))
 	s.player.SetPosition(combat.PosSitting)
 	return nil
@@ -179,13 +179,13 @@ func cmdWake(s *Session, args []string) error {
 func cmdFleeMovement(s *Session) error {
 	// Must be fighting
 	if !s.manager.combatEngine.IsFighting(s.player.Name) {
-		s.sendText("You're not fighting anyone!")
+		s.Send("You're not fighting anyone!")
 		return nil
 	}
 
 	// Must be on feet
 	if s.player.GetPosition() < combat.PosFighting {
-		s.sendText("Get on your feet first!")
+		s.Send("Get on your feet first!")
 		return nil
 	}
 
@@ -197,7 +197,7 @@ func cmdFleeMovement(s *Session) error {
 
 	// Get available exits
 	if len(room.Exits) == 0 {
-		s.sendText("There's nowhere to flee!")
+		s.Send("There's nowhere to flee!")
 		return nil
 	}
 
@@ -249,7 +249,7 @@ func cmdFleeMovement(s *Session) error {
 			xpLoss += int(500 * (float64(level) / 2.6))
 			s.player.LoseExp(xpLoss)
 			if xpLoss > 0 {
-				s.sendText(fmt.Sprintf("You lose %d experience points for fleeing.", xpLoss))
+				s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", xpLoss))
 			}
 		}
 
@@ -277,7 +277,7 @@ func cmdFleeMovement(s *Session) error {
 		})
 		s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
 
-		s.sendText("You flee head over heels.")
+		s.Send("You flee head over heels.")
 		s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
 
 		// Send new room state
@@ -285,7 +285,7 @@ func cmdFleeMovement(s *Session) error {
 	}
 
 	if !fled {
-		s.sendText("PANIC!  You couldn't escape!")
+		s.Send("PANIC!  You couldn't escape!")
 		broadcastToRoom(s, fmt.Sprintf("%s tries to flee, but can't!", s.player.Name))
 	}
 	return nil
@@ -297,7 +297,7 @@ func cmdFleeMovement(s *Session) error {
 // Source: act.movement.c do_follow() lines 883–951
 func cmdFollowMovement(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.sendText("Whom do you wish to follow?")
+		s.Send("Whom do you wish to follow?")
 		return nil
 	}
 
@@ -306,13 +306,13 @@ func cmdFollowMovement(s *Session, args []string) error {
 	// follow self = stop following
 	if strings.EqualFold(targetName, s.player.Name) {
 		if s.player.Following == "" {
-			s.sendText("You are already following yourself.")
+			s.Send("You are already following yourself.")
 			return nil
 		}
 		oldLeader := s.player.Following
 		s.player.Following = ""
 		s.player.InGroup = false
-		s.sendText(fmt.Sprintf("You stop following %s.", oldLeader))
+		s.Send(fmt.Sprintf("You stop following %s.", oldLeader))
 		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
 			leader.SendMessage(fmt.Sprintf("%s stops following you.\r\n", s.player.Name))
 		}
@@ -322,17 +322,17 @@ func cmdFollowMovement(s *Session, args []string) error {
 	// Find target in room
 	target, ok := s.manager.world.GetPlayer(targetName)
 	if !ok {
-		s.sendText("There is no one by that name here.")
+		s.Send("There is no one by that name here.")
 		return nil
 	}
 	if target.GetRoom() != s.player.GetRoom() {
-		s.sendText("They are not here.")
+		s.Send("They are not here.")
 		return nil
 	}
 
 	// Already following?
 	if s.player.Following == target.Name {
-		s.sendText(fmt.Sprintf("You are already following %s.", target.Name))
+		s.Send(fmt.Sprintf("You are already following %s.", target.Name))
 		return nil
 	}
 
@@ -348,7 +348,7 @@ func cmdFollowMovement(s *Session, args []string) error {
 	s.player.Following = target.Name
 	s.player.InGroup = false
 
-	s.sendText(fmt.Sprintf("You now follow %s.", target.Name))
+	s.Send(fmt.Sprintf("You now follow %s.", target.Name))
 	target.SendMessage(fmt.Sprintf("%s now follows you.\r\n", s.player.Name))
 	return nil
 }
@@ -361,7 +361,7 @@ func cmdSneak(s *Session) error {
 	// Sneak is already registered as a skill command in commands.go init()
 	// via wrapSkill(command.CmdSneak). This stub exists for any direct
 	// routing needs but the skill path handles it.
-	s.sendText("You attempt to move silently.")
+	s.Send("You attempt to move silently.")
 	return nil
 }
 

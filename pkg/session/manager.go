@@ -278,6 +278,11 @@ type Session struct {
 
 	// Temporary data storage for command handlers
 	tempData map[string]interface{}
+
+	// Communication state
+	lastTeller string   // Last player who told us (for reply)
+	snooping  *Session  // Session being snooped (for wizard snoop)
+	snoopBy   *Session  // Session that is snooping us
 }
 
 // readPump reads messages from the WebSocket.

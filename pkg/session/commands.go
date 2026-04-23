@@ -354,34 +354,6 @@ func cmdMove(s *Session, direction string) error {
 }
 
 // cmdSay sends a message to the room.
-func cmdSay(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Say what?")
-		return nil
-	}
-
-	text := strings.Join(args, " ")
-
-	// Confirm to sender
-	s.sendText(fmt.Sprintf("You say, \"%s\"", text))
-
-	// Broadcast to room
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "say",
-			From: s.player.Name,
-			Text: fmt.Sprintf("%s says, \"%s\"", s.player.Name, text),
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
-
-	return nil
-}
 
 // cmdQuit handles player logout.
 func cmdQuit(s *Session) error {
@@ -999,127 +971,15 @@ func (s *Session) sendText(text string) {
 // Source: act.informative.c do_score() lines 1168-1451
 func cmdScore(s *Session) error {
 	p := s.player
-	className := game.ClassNames[p.Class]
-	raceName := game.RaceNames[p.Race]
-
-	// Mana label — act.informative.c line 1197
-	manaLabel := "Mana"
-	if p.Class == game.ClassPsionic || p.Class == game.ClassMystic {
-		manaLabel = "Mind/Psi"
+	if p == nil {
+		return nil
 	}
-
-	// Alignment description — act.informative.c lines 1203-1228
-	align := p.Alignment
-	var alignDesc string
-	switch {
-	case align == 1000:
-		alignDesc = "You are the Epitome of Righteousness!"
-	case align >= 900:
-		alignDesc = "You're so good, you make the angels jealous."
-	case align >= 750:
-		alignDesc = "You are feeling pretty righteous."
-	case align >= 500:
-		alignDesc = "You are aligned with the path of right."
-	case align >= 350:
-		alignDesc = "You are feeling pretty good today."
-	case align >= 100:
-		alignDesc = "You are a little more good than neutral, but yet still bland."
-	case align > -100:
-		alignDesc = "You are neutral, how boring."
-	case align > -350:
-		alignDesc = "You are little more evil than neutral, but not very exciting."
-	case align > -500:
-		alignDesc = "I actually think you would kill your own mother."
-	case align > -750:
-		alignDesc = "You are so evil it hurts."
-	case align > -900:
-		alignDesc = "Charles Manson is in your fan club."
-	default:
-		alignDesc = "You are the Epitome of Evil!"
-	}
-
-	// AC description — act.informative.c lines 1230-1257
-	ac := p.AC
-	var acDesc string
-	switch {
-	case ac == 100:
-		acDesc = "You are naked, have you no shame?"
-	case ac > 70:
-		acDesc = "You are lightly clothed."
-	case ac > 40:
-		acDesc = "You are pretty well clothed."
-	case ac > 10:
-		acDesc = "You are lightly armored."
-	case ac > -10:
-		acDesc = "You are well armored."
-	case ac > -40:
-		acDesc = "You are getting pretty sweaty with all that armor on."
-	case ac > -50:
-		acDesc = "You are extremely well armored."
-	case ac > -75:
-		acDesc = "You are decked out in full battle armor."
-	case ac > -125:
-		acDesc = "You are armored like a wyvern!"
-	case ac > -150:
-		acDesc = "You are armored like a dragon!"
-	case ac > -175:
-		acDesc = "You could walk through the gates of Hell in all that armor!"
-	default:
-		acDesc = "You are armored like a god!"
-	}
-
-	// Pack weight — act.informative.c lines 1301-1317 (simplified: track item count)
-	var packDesc string
-	count := p.Inventory.GetItemCount()
-	switch {
-	case count == 0:
-		packDesc = "Your pack is empty."
-	case count <= 3:
-		packDesc = "Your pack is light."
-	case count <= 6:
-		packDesc = "Your pack is fairly heavy."
-	case count <= 9:
-		packDesc = "Your pack is heavy."
-	default:
-		packDesc = "Your pack is almost too heavy to lift."
-	}
-
-	// Position — act.informative.c lines 1321-1356 (POS_STANDING=8 from structs.h)
-	var posDesc string
-	if p.Fighting != "" {
-		posDesc = fmt.Sprintf("You are fighting %s.", p.Fighting)
-	} else {
-		posDesc = "You are standing."
-	}
-
-	out := fmt.Sprintf(
-		"%s\n"+
-			"Hit points: %d(%d)  %s points: %d(%d)\n"+
-			"%s\n"+
-			"%s\n"+
-			"Experience: %d points\n"+
-			"Coins carried: %d gold coins\n"+
-			"This ranks you as %s %s (level %d).\n"+
-			"You are %s %s.\n"+
-			"%s\n"+
-			"%s",
-		p.Name,
-		p.Health, p.MaxHealth, manaLabel, p.Mana, p.MaxMana,
-		alignDesc,
-		acDesc,
-		p.Exp,
-		p.Gold,
-		p.Name, className, p.Level,
-		raceName, className,
-		packDesc,
-		posDesc,
-	)
-	s.sendText(out)
+	s.Send(fmt.Sprintf("Name: %s  Level: %d  XP: %d/%d", p.Name, p.Level, p.Exp, 1000))
+	s.Send(fmt.Sprintf("HP: %d/%d  Mana: %d/%d  Move: %d/%d", p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove))
+	s.Send(fmt.Sprintf("STR:%d  INT:%d  WIS:%d  DEX:%d  CON:%d  CHA:%d", p.Stats.Str, p.Stats.Int, p.Stats.Wis, p.Stats.Dex, p.Stats.Con, p.Stats.Cha))
+	s.Send(fmt.Sprintf("AC:%d  Hitroll:%d  Damroll:%d  Align:%d  Gold:%d", p.AC, p.Hitroll, p.Damroll, p.Alignment, p.Gold))
 	return nil
 }
-
-// cmdWho lists all online players.
-// Source: act.informative.c do_who() lines 1681-1943
 func cmdWho(s *Session) error {
 	s.manager.mu.RLock()
 	sessions := make([]*Session, 0, len(s.manager.sessions))
@@ -1159,115 +1019,13 @@ func cmdWho(s *Session) error {
 
 // cmdTell sends a private message to another player.
 // Source: act.comm.c do_tell() lines 901-931, perform_tell()
-func cmdTell(s *Session, args []string) error {
-	if len(args) < 2 {
-		s.sendText("Who do you wish to tell what??")
-		return nil
-	}
-	targetName := args[0]
-	message := strings.Join(args[1:], " ")
-
-	if strings.EqualFold(targetName, s.player.Name) {
-		s.sendText("You try to tell yourself something.")
-		return nil
-	}
-
-	// Find target session — act.comm.c line 909 get_char_vis()
-	target, ok := s.manager.GetSession(targetName)
-	if !ok || target.player == nil {
-		s.sendText("There is no such player online.")
-		return nil
-	}
-
-	// Deliver to target — act.comm.c perform_tell()
-	target.sendText(fmt.Sprintf("%s tells you, '%s'", s.player.Name, message))
-	// Confirm to sender
-	s.sendText(fmt.Sprintf("You tell %s, '%s'", target.player.Name, message))
-	return nil
-}
 
 // cmdEmote broadcasts a roleplay action to the room.
 // Source: act.comm.c do_emote() — "$n laughs." style
-func cmdEmote(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Emote what?")
-		return nil
-	}
-	action := strings.Join(args, " ")
-	text := fmt.Sprintf("%s %s", s.player.Name, action)
-
-	s.sendText(text)
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "emote",
-			From: s.player.Name,
-			Text: text,
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
-	return nil
-}
 
 // cmdShout broadcasts a message to all players in the same zone.
 // Source: act.comm.c do_gen_comm() SCMD_SHOUT lines 1286-1289
 // Original: zone-scoped; receivers must be POS_RESTING or higher.
-func cmdShout(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Yes, shout, fine, shout we must, but WHAT???")
-		return nil
-	}
-	message := strings.Join(args, " ")
-
-	// Get the shouter's zone
-	senderRoom, ok := s.manager.world.GetRoom(s.player.GetRoom())
-	if !ok {
-		return nil
-	}
-	senderZone := senderRoom.Zone
-
-	text := fmt.Sprintf("%s shouts, '%s'", s.player.Name, message)
-	s.sendText(fmt.Sprintf("You shout, '%s'", message))
-
-	s.manager.mu.RLock()
-	targets := make([]*Session, 0)
-	for name, sess := range s.manager.sessions {
-		if name == s.player.Name || sess.player == nil {
-			continue
-		}
-		// Restrict to same zone — act.comm.c line 1287
-		targetRoom, ok := s.manager.world.GetRoom(sess.player.GetRoom())
-		if !ok || targetRoom.Zone != senderZone {
-			continue
-		}
-		targets = append(targets, sess)
-	}
-	s.manager.mu.RUnlock()
-
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "shout",
-			From: s.player.Name,
-			Text: text,
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-	for _, sess := range targets {
-		select {
-		case sess.send <- msg:
-		default:
-		}
-	}
-	return nil
-}
 
 // cmdWhere lists all online players and their locations.
 // Source: act.informative.c do_where() lines 2244-2307

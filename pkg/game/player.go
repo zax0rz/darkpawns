@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -80,6 +81,13 @@ type Player struct {
 
 	// Communication
 	Send chan []byte // Channel for sending messages to player
+
+	// AFK state
+	AFK        bool   // Player is away from keyboard
+	AFKMessage string // Optional AFK message
+
+	// Ignore list: map of player names the player is ignoring
+	IgnoredPlayers map[string]bool
 }
 
 // NewPlayer creates a new player with default stats (no class/race yet).
@@ -105,6 +113,8 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		LastActive:   now,
 		Fighting:     "", // Not fighting anyone
 		Send:         make(chan []byte, 256),
+		AFK:          false,
+		AFKMessage:   "",
 		Alignment:    0, // Neutral by default
 		SkillManager: engine.NewSkillManager(),
 	}
@@ -631,4 +641,48 @@ func (p *Player) SetPlrFlag(bit int, val bool) {
 	} else {
 		p.Flags &^= 1 << uint(bit)
 	}
+}
+
+// IsIgnoring returns true if this player is ignoring the given player name.
+func (p *Player) IsIgnoring(name string) bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if p.IgnoredPlayers == nil {
+		return false
+	}
+	return p.IgnoredPlayers[strings.ToLower(name)]
+}
+
+// AddIgnore adds a player to the ignore list.
+func (p *Player) AddIgnore(name string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.IgnoredPlayers == nil {
+		p.IgnoredPlayers = make(map[string]bool)
+	}
+	p.IgnoredPlayers[strings.ToLower(name)] = true
+}
+
+// RemoveIgnore removes a player from the ignore list.
+func (p *Player) RemoveIgnore(name string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.IgnoredPlayers == nil {
+		return
+	}
+	delete(p.IgnoredPlayers, strings.ToLower(name))
+}
+
+// GetIgnoredPlayers returns a list of all ignored player names.
+func (p *Player) GetIgnoredPlayers() []string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if p.IgnoredPlayers == nil {
+		return nil
+	}
+	var names []string
+	for name := range p.IgnoredPlayers {
+		names = append(names, name)
+	}
+	return names
 }

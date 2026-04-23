@@ -13,7 +13,7 @@ import (
 // StartCombat enrolls the player; PerformRound fires autonomously.
 func cmdHit(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.sendText("Hit whom?")
+		s.Send("Hit whom?")
 		return nil
 	}
 
@@ -21,7 +21,7 @@ func cmdHit(s *Session, args []string) error {
 
 	// Check if already fighting
 	if s.manager.combatEngine.IsFighting(s.player.Name) {
-		s.sendText("You're already fighting!")
+		s.Send("You're already fighting!")
 		return nil
 	}
 
@@ -38,12 +38,12 @@ func cmdHit(s *Session, args []string) error {
 			// Start combat
 			err := s.manager.combatEngine.StartCombat(s.player, mob)
 			if err != nil {
-				s.sendText(err.Error())
+				s.Send(err.Error())
 				return nil
 			}
 
 			// Notify player
-			s.sendText(fmt.Sprintf("You attack %s!", mob.GetShortDesc()))
+			s.Send(fmt.Sprintf("You attack %s!", mob.GetShortDesc()))
 			s.markDirty(VarFighting)
 
 			// Notify room
@@ -72,17 +72,17 @@ func cmdHit(s *Session, args []string) error {
 			// Start combat with player
 			err := s.manager.combatEngine.StartCombat(s.player, p)
 			if err != nil {
-				s.sendText(err.Error())
+				s.Send(err.Error())
 				return nil
 			}
 
 			// Notify both players
-			s.sendText(fmt.Sprintf("You attack %s!", p.Name))
+			s.Send(fmt.Sprintf("You attack %s!", p.Name))
 			s.markDirty(VarFighting)
 
 			// Notify target
 			if targetSession, ok := s.manager.GetSession(p.Name); ok {
-				targetSession.sendText(fmt.Sprintf("%s attacks you!", s.player.Name))
+				targetSession.Send(fmt.Sprintf("%s attacks you!", s.player.Name))
 			}
 
 			// Notify room
@@ -104,7 +104,7 @@ func cmdHit(s *Session, args []string) error {
 		}
 	}
 
-	s.sendText("They aren't here.")
+	s.Send("They aren't here.")
 	return nil
 }
 
@@ -113,7 +113,7 @@ func cmdHit(s *Session, args []string) error {
 func cmdFlee(s *Session) error {
 	// Check if in combat
 	if !s.manager.combatEngine.IsFighting(s.player.Name) {
-		s.sendText("You're not fighting anyone!")
+		s.Send("You're not fighting anyone!")
 		return nil
 	}
 
@@ -125,7 +125,7 @@ func cmdFlee(s *Session) error {
 
 	// Get available exits
 	if len(room.Exits) == 0 {
-		s.sendText("There's nowhere to flee!")
+		s.Send("There's nowhere to flee!")
 		return nil
 	}
 
@@ -137,7 +137,7 @@ func cmdFlee(s *Session) error {
 
 	// 50% chance to flee successfully
 	if rand.Intn(100) > 50 {
-		s.sendText("You attempt to flee but fail!")
+		s.Send("You attempt to flee but fail!")
 		return nil
 	}
 
@@ -159,7 +159,7 @@ func cmdFlee(s *Session) error {
 		xpLoss += int(500 * (float64(level) / 2.6))
 		s.player.LoseExp(xpLoss)
 		if xpLoss > 0 {
-			s.sendText(fmt.Sprintf("You lose %d experience points for fleeing.", xpLoss))
+			s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", xpLoss))
 		}
 	}
 
@@ -173,7 +173,7 @@ func cmdFlee(s *Session) error {
 	oldRoom := s.player.GetRoom()
 	newRoom, err := s.manager.world.MovePlayer(s.player, direction)
 	if err != nil {
-		s.sendText("You panic and can't find an exit!")
+		s.Send("You panic and can't find an exit!")
 		return nil
 	}
 
@@ -207,7 +207,7 @@ func cmdFlee(s *Session) error {
 	}
 	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
 
-	s.sendText("You flee head over heels.")
+	s.Send("You flee head over heels.")
 	s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
 
 	// Send new room state
