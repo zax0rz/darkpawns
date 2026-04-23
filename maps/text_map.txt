@@ -1,0 +1,37 @@
+============================================================
+DARK PAWNS - ASCII MAP
+============================================================
+
+     --- --- --- ---
+     |0|.|2|.|7|.|0|
+     --- --- --- ---
+ --- --- ---        
+ |4|.|1| |8|        
+ --- --- ---        
+     --- ---        
+     |3|.|6|        
+     --- ---        
+         --- ---    
+         |9|.|3|    
+         --- ---    
+
+============================================================
+LEGEND:
+  [0-9] - Room number (last digit)
+  +     - Room corner
+  -|    - Room walls
+  .     - Connection path
+============================================================
+
+ROOM LIST:
+----------------------------------------
+#100 The Morgue                     [south→101, east→102]
+#101 Corridor of Echoes             [north→100, south→103, west→104]
+#102 Apothecary's Chamber           [west→100, east→105]
+#103 Guard Room                     [north→101, east→106]
+#104 Storage Room                   [east→101]
+#105 Secret Laboratory              [west→102, down→107]
+#106 Courtyard                      [west→103, north→108, south→109]
+#107 Underground Cavern             [up→105, east→110, west→111]
+#108 Main Gate                      [south→106, north→112]
+#109 Garden                         [north→106, east→113]

@@ -78,11 +78,11 @@ type ConnectionPool struct {
 	idleTimeout time.Duration
 	createFunc  func() (interface{}, error)
 	closeFunc   func(interface{}) error
-	stats       PoolStats
+	stats       ConnectionPoolStats
 }
 
-// PoolStats holds connection pool statistics.
-type PoolStats struct {
+// ConnectionPoolStats holds connection pool statistics.
+type ConnectionPoolStats struct {
 	TotalConnections  int
 	ActiveConnections int
 	IdleConnections   int
@@ -160,7 +160,7 @@ func (p *ConnectionPool) Put(conn interface{}) error {
 }
 
 // Stats returns current pool statistics.
-func (p *ConnectionPool) Stats() PoolStats {
+func (p *ConnectionPool) Stats() ConnectionPoolStats {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.stats
@@ -178,7 +178,7 @@ func (p *ConnectionPool) Close() error {
 		}
 	}
 	p.connections = nil
-	p.stats = PoolStats{}
+	p.stats = ConnectionPoolStats{}
 
 	return err
 }

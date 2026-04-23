@@ -22,4 +22,7 @@ var (
 
 	// Rate limiting errors
 	ErrRateLimitExceeded = errors.New("rate limit exceeded")
+
+	// Pool errors
+	ErrInvalidPoolSize = errors.New("invalid pool size")
 )
