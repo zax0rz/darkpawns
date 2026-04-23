@@ -22,12 +22,23 @@ type Player struct {
 	MaxHealth int
 	Mana      int
 	MaxMana   int
-	Move      int
-	MaxMove   int
+	Move      int // Movement points — ported from limits.c/structs.h GET_MOVE
+	MaxMove   int // Max movement points
+
 	Level     int
 	Exp       int
 	Gold      int // Currency, used by Lua scripts
 	Strength  int // For inventory capacity
+
+	// Hunger/thirst/drunk conditions — limits.c:366, structs.h:566-568
+	// Index: CondDrunk=0, CondFull=1, CondThirst=2
+	// Value: -1 = immortal (no change), 0 = depleted, 1-48 = current level
+	Conditions [3]int
+
+	// Affect flags bitmask — structs.h AFF_* constants
+	// Bit 11 = AFF_POISON, bit 25 = AFF_CUTTHROAT, bit 31 = AFF_FLAMING
+	// Source: structs.h:321,335,341
+	Affects uint64
 
 	// Character identity — from do_start()/roll_real_abils() in class.c
 	Class int
@@ -94,9 +105,6 @@ type Player struct {
 	// Auto-exit display toggle
 	AutoExit bool // Show exits automatically in room descriptions
 
-	// Active spell affects
-	Affects []*engine.Affect // Active spell/affect effects
-
 	// Known spells: map of spell name → level learned
 	SpellMap map[string]int
 
@@ -120,6 +128,8 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		MaxHealth:    100,
 		Mana:         100,
 		MaxMana:      100,
+		Move:         100, // Default move points
+		MaxMove:      100,
 		Level:        1,
 		Exp:          0,
 		Strength:     10,                                         // Default strength
@@ -136,8 +146,11 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		Alignment:    0, // Neutral by default
 		SkillManager: engine.NewSkillManager(),
 		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
-		Affects:      make([]*engine.Affect, 0),
+
 		SpellMap:     make(map[string]int),
+		// Conditions: DRUNK=0, FULL=1, THIRST=2 — start at 24 (half-full) for mortals
+		// Source: class.c do_start() — conditions initialized to 24 at creation
+		Conditions: [3]int{0, 24, 24},
 	}
 
 	// Initialize inventory and equipment
@@ -646,6 +659,66 @@ func (p *Player) GetRoomVNum() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.RoomVNum
+}
+
+// GetMove returns the player's current move points.
+func (p *Player) GetMove() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Move
+}
+
+// GetMaxMove returns the player's maximum move points.
+func (p *Player) GetMaxMove() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.MaxMove
+}
+
+// GetCondition returns the value of condition cond (CondDrunk=0, CondFull=1, CondThirst=2).
+// Source: structs.h:566-568, utils.h GET_COND() macro.
+func (p *Player) GetCondition(cond int) int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if cond < 0 || cond >= len(p.Conditions) {
+		return 0
+	}
+	return p.Conditions[cond]
+}
+
+// SetCondition sets condition cond to val, clamped to [0,48], or -1 for immortal.
+func (p *Player) SetCondition(cond, val int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if cond < 0 || cond >= len(p.Conditions) {
+		return
+	}
+	p.Conditions[cond] = val
+}
+
+// IsAffected returns true if AFF flag bit n is set.
+// Source: structs.h AFF_* constants, utils.h IS_AFFECTED() macro.
+func (p *Player) IsAffected(affBit int) bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if affBit < 0 || affBit >= 64 {
+		return false
+	}
+	return p.Affects&(1<<uint(affBit)) != 0
+}
+
+// SetAffect sets or clears AFF flag bit n.
+func (p *Player) SetAffect(affBit int, val bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if affBit < 0 || affBit >= 64 {
+		return
+	}
+	if val {
+		p.Affects |= 1 << uint(affBit)
+	} else {
+		p.Affects &^= 1 << uint(affBit)
+	}
 }
 
 // GetFlags returns the raw PLR flags bitmask.
