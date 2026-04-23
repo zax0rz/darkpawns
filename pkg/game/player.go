@@ -86,6 +86,19 @@ type Player struct {
 	AFK        bool   // Player is away from keyboard
 	AFKMessage string // Optional AFK message
 
+	// Character title and description
+	Title       string // Character title (shown in who list)
+	Description string // Character description (shown on examine)
+
+	// Auto-exit display toggle
+	AutoExit bool // Show exits automatically in room descriptions
+
+	// Active spell affects
+	Affects []*engine.Affect // Active spell/affect effects
+
+	// Known spells: map of spell name → level learned
+	SpellMap map[string]int
+
 	// Ignore list: map of player names the player is ignoring
 	IgnoredPlayers map[string]bool
 }
@@ -117,6 +130,9 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		AFKMessage:   "",
 		Alignment:    0, // Neutral by default
 		SkillManager: engine.NewSkillManager(),
+		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
+		Affects:      make([]*engine.Affect, 0),
+		SpellMap:     make(map[string]int),
 	}
 
 	// Initialize inventory and equipment

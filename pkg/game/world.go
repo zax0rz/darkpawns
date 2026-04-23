@@ -344,6 +344,21 @@ func (w *World) SetShopManager(manager common.ShopManager) {
 	w.shopManager = manager
 }
 
+// GetShopByKeeper returns a shop by keeper NPC VNum.
+// Uses the concrete *ShopManager if available.
+func (w *World) GetShopByKeeper(vnum int) (*Shop, bool) {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	// Try the concrete ShopManager first
+	if sm, ok := w.shopManager.(*ShopManager); ok {
+		shop := sm.GetShopByKeeper(vnum)
+		return shop, shop != nil
+	}
+
+	return nil, false
+}
+
 // GetAllZones returns all zones.
 func (w *World) GetAllZones() []*parser.Zone {
 	w.mu.RLock()

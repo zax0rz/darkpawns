@@ -131,6 +131,17 @@ func init() {
 	cmdRegistry.Register("advance", wrapArgs(cmdAdvance), "Advance a player's level.", LVL_GRGOD, 0)
 	cmdRegistry.Register("reload", wrapArgs(cmdReload), "Reload world data.", LVL_GOD, 0)
 
+	// Informative
+	cmdRegistry.Register("consider", wrapArgs(cmdConsider), "Compare yourself to a target.", 0, 0, "con")
+	cmdRegistry.Register("examine", wrapArgs(cmdExamine), "Examine something in detail.", 0, 0, "exa")
+	cmdRegistry.Register("time", wrapArgs(cmdTime), "Show the current time.", 0, 0)
+	cmdRegistry.Register("weather", wrapArgs(cmdWeather), "Show the current weather.", 0, 0)
+	cmdRegistry.Register("affects", wrapArgs(cmdAffects), "Show active affects.", 0, 0)
+	cmdRegistry.Register("autoexit", wrapArgs(cmdAutoExit), "Toggle auto-exit display.", 0, 0)
+	cmdRegistry.Register("title", wrapArgs(cmdTitle), "Set your title.", 0, 0)
+	cmdRegistry.Register("describe", wrapArgs(cmdDescribe), "Set your description.", 0, 0, "desc")
+	cmdRegistry.Register("spells", wrapArgs(cmdSpells), "List known spells.", 0, 0)
+
 	// Quit
 	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0)
 }
