@@ -4,7 +4,7 @@ package scripting
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"math/rand"
 	"strings"
 
@@ -80,9 +80,9 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	// Based on run_script() lines 1732-1761
 	if ctx.Ch != nil {
 		e.charToTable(ctx.Ch, "ch")
-		log.Printf("[SCRIPT] Set ch global for player %s", ctx.Ch.GetName())
+		slog.Debug("set ch global", "player", ctx.Ch.GetName())
 	} else {
-		log.Printf("[SCRIPT] ctx.Ch is nil")
+		slog.Debug("ctx.Ch is nil")
 	}
 	if ctx.Me != nil {
 		e.mobToTable(ctx.Me, "me")
@@ -140,24 +140,24 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	// Based on open_lua_file() in scripts.c lines 1641-1701
 	scriptPath := e.scriptsDir + "/" + fname
 	if err := e.L.DoFile(scriptPath); err != nil {
-		log.Printf("[Lua] Error loading script %s: %v", fname, err)
+		slog.Error("error loading script", "file", fname, "error", err)
 		return false, err
 	}
 
 	// Call the trigger function
 	// Based on run_script() lines 1780-1795
 	fn := e.L.GetGlobal(triggerName)
-	log.Printf("[SCRIPT] Calling function %s, type: %v", triggerName, fn.Type())
+	slog.Debug("calling function", "trigger", triggerName, "type", fn.Type())
 	e.L.Push(fn)
 	if fn.Type() == lua.LTNil {
 		// Function doesn't exist
 		e.L.Pop(1)
-		log.Printf("[SCRIPT] Function %s not found in script %s", triggerName, fname)
+		slog.Debug("function not found in script", "trigger", triggerName, "file", fname)
 		return false, nil
 	}
 
 	if err := e.L.PCall(0, 1, nil); err != nil {
-		log.Printf("[Lua] Error calling function %s in script %s: %v", triggerName, fname, err)
+		slog.Error("error calling function", "trigger", triggerName, "file", fname, "error", err)
 		// Pop the error from stack if it exists
 		if e.L.GetTop() > 0 {
 			e.L.Pop(1)
@@ -168,27 +168,27 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	// Get return value (0 or 1 results)
 	// Lua functions return 0 values by default, we treat that as false (not handled)
 	stackTop := e.L.GetTop()
-	log.Printf("[SCRIPT] Stack top after PCall: %d", stackTop)
+	slog.Debug("stack top after PCall", "top", stackTop)
 
 	var ret lua.LValue = lua.LFalse
 	if stackTop > 0 {
 		ret = e.L.Get(-1)
-		log.Printf("[SCRIPT] Function returned: type=%v, value=%v", ret.Type(), ret)
+		slog.Debug("function returned", "type", ret.Type(), "value", ret)
 		e.L.Pop(1)
 	}
 
 	// Read back changes from tables
 	// Based on run_script() lines 1797-1808
 	if ctx.Ch != nil {
-		log.Printf("[SCRIPT] Reading back ch changes, stack top: %d", e.L.GetTop())
+		slog.Debug("reading back ch changes", "stack_top", e.L.GetTop())
 		// Get the global value
 		chVal := e.L.GetGlobal("ch")
-		log.Printf("[SCRIPT] ch global type: %v", chVal.Type())
+		slog.Debug("ch global type", "type", chVal.Type())
 		if chVal.Type() != lua.LTNil {
 			// Push onto stack for tableToChar
 			e.L.Push(chVal)
 			e.tableToChar(ctx.Ch)
-			log.Printf("[SCRIPT] After tableToChar, stack top: %d", e.L.GetTop())
+			slog.Debug("after tableToChar", "stack_top", e.L.GetTop())
 			// tableToChar should leave the table on stack, pop it
 			if e.L.GetTop() > 0 {
 				e.L.Pop(1)
@@ -199,7 +199,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	if ctx.Me != nil {
 		// Get the global value
 		meVal := e.L.GetGlobal("me")
-		log.Printf("[SCRIPT] me global type: %v", meVal.Type())
+		slog.Debug("me global type", "type", meVal.Type())
 		if meVal.Type() != lua.LTNil {
 			// Push onto stack for tableToMob
 			e.L.Push(meVal)
@@ -310,11 +310,11 @@ func (e *Engine) registerFunctions() {
 // Based on boot_lua() lines 1711-1714.
 func (e *Engine) loadGlobals() {
 	globalsPath := e.scriptsDir + "/globals.lua"
-	log.Printf("[SCRIPT] Loading globals from %s", globalsPath)
+	slog.Debug("loading globals", "path", globalsPath)
 	if err := e.L.DoFile(globalsPath); err != nil {
-		log.Printf("[Lua] Warning: Could not load globals.lua: %v", err)
+		slog.Warn("could not load globals.lua", "error", err)
 	} else {
-		log.Printf("[SCRIPT] globals.lua loaded successfully")
+		slog.Debug("globals.lua loaded successfully")
 	}
 	// Always set up basic constants
 	e.setupBasicConstants()
@@ -517,7 +517,7 @@ func (e *Engine) charToTable(player ScriptablePlayer, globalName string) {
 	tbl.RawSetString("struct", lua.LNumber(player.GetID()))
 
 	L.SetGlobal(globalName, tbl)
-	log.Printf("[SCRIPT] Set global %s with level=%d", globalName, player.GetLevel())
+	slog.Debug("set global", "name", globalName, "level", player.GetLevel())
 }
 
 // mobToTable converts a ScriptableMob to a Lua table.
@@ -586,25 +586,25 @@ func (e *Engine) objToTable(obj ScriptableObject, globalName string) {
 // Based on table_to_char() in scripts.c lines 2018-2116.
 func (e *Engine) tableToChar(player ScriptablePlayer) {
 	L := e.L
-	log.Printf("[tableToChar] Stack top: %d", L.GetTop())
+	slog.Debug("tableToChar", "stack_top", L.GetTop())
 	tbl := L.Get(-1)
-	log.Printf("[tableToChar] tbl type: %v", tbl.Type())
+	slog.Debug("tableToChar tbl type", "type", tbl.Type())
 
 	if tbl.Type() != lua.LTTable {
-		log.Printf("[tableToChar] Not a table, returning")
+		slog.Debug("tableToChar: not a table, returning")
 		return
 	}
 
 	// Read hp changes
 	hpVal := L.GetField(tbl, "hp")
-	log.Printf("[tableToChar] hp field: %v (type: %v)", hpVal, hpVal.Type())
+	slog.Debug("tableToChar hp field", "value", hpVal, "type", hpVal.Type())
 	if hpVal.Type() == lua.LTNumber {
 		player.SetHealth(int(hpVal.(lua.LNumber)))
 	}
 
 	// Read gold changes
 	goldVal := L.GetField(tbl, "gold")
-	log.Printf("[tableToChar] gold field: %v (type: %v)", goldVal, goldVal.Type())
+	slog.Debug("tableToChar gold field", "value", goldVal, "type", goldVal.Type())
 	if goldVal.Type() == lua.LTNumber {
 		player.SetGold(int(goldVal.(lua.LNumber)))
 	}
@@ -666,7 +666,7 @@ func (e *Engine) luaAct(L *lua.LState) int {
 	L.Pop(1)
 
 	if e.world == nil || roomVNum == 0 {
-		log.Printf("[ACT] No world or room context: %s (type: %d)", msg, where)
+		slog.Debug("act: no world or room context", "msg", msg, "where", where)
 		return 0
 	}
 
@@ -722,7 +722,7 @@ func (e *Engine) luaDoDamage(L *lua.LState) int {
 			if newHP <= 0 && e.world != nil {
 				// Get the actual player object from the world
 				// For now, just log
-				log.Printf("[DO_DAMAGE] Player would die from %d damage", amount)
+				slog.Debug("do_damage: player would die", "damage", amount)
 			}
 		} else {
 			L.Pop(1)
@@ -751,7 +751,7 @@ func (e *Engine) luaSay(L *lua.LState) int {
 	L.Pop(1)
 
 	if e.world == nil || roomVNum == 0 {
-		log.Printf("[SAY] No world or room context: %s", msg)
+		slog.Debug("say: no world or room context", "msg", msg)
 		return 0
 	}
 
@@ -797,7 +797,7 @@ func (e *Engine) luaGossip(L *lua.LState) int {
 
 	// TODO: send to all online players when global channel is implemented
 	if e.world == nil || roomVNum == 0 {
-		log.Printf("[GOSSIP] %s", msg)
+		slog.Debug("gossip", "msg", msg)
 		return 0
 	}
 
@@ -826,7 +826,7 @@ func (e *Engine) luaEmote(L *lua.LState) int {
 	L.Pop(1)
 
 	if e.world == nil || roomVNum == 0 {
-		log.Printf("[EMOTE] No world or room context: %s", msg)
+		slog.Debug("emote: no world or room context", "msg", msg)
 		return 0
 	}
 
@@ -873,7 +873,7 @@ func (e *Engine) luaAction(L *lua.LState) int {
 		L.Pop(1)
 	}
 
-	log.Printf("[ACTION] %s executes command: %s", mobName, cmdStr)
+	slog.Debug("mob executes command", "mob_name", mobName, "command", cmdStr)
 
 	return 0
 }
@@ -886,7 +886,7 @@ func (e *Engine) luaOload(L *lua.LState) int {
 	location := L.ToString(3)
 
 	if e.world == nil {
-		log.Printf("[OLOAD] No world context: vnum %d, location %s", vnum, location)
+		slog.Debug("oload: no world context", "vnum", vnum, "location", location)
 		L.Push(lua.LNil)
 		return 1
 	}
@@ -894,7 +894,7 @@ func (e *Engine) luaOload(L *lua.LState) int {
 	// Get object prototype
 	objProto := e.world.GetObjPrototype(vnum)
 	if objProto == nil {
-		log.Printf("[OLOAD] Object prototype not found: vnum %d", vnum)
+		slog.Debug("oload: object prototype not found", "vnum", vnum)
 		L.Push(lua.LNil)
 		return 1
 	}
@@ -910,7 +910,7 @@ func (e *Engine) luaOload(L *lua.LState) int {
 
 	// TODO: Actually add to room or character inventory based on location
 	// For now, just log
-	log.Printf("[OLOAD] Created object vnum %d at location %s", vnum, location)
+	slog.Debug("oload: created object", "vnum", vnum, "location", location)
 
 	L.Push(tbl)
 	return 1
@@ -956,7 +956,7 @@ func (e *Engine) luaSendToRoom(L *lua.LState) int {
 	roomVNum := L.ToInt(2)
 
 	if e.world == nil {
-		log.Printf("[SEND_TO_ROOM] No world context: Room %d: %s", roomVNum, msg)
+		slog.Debug("send_to_room: no world context", "room_vnum", roomVNum, "msg", msg)
 		return 0
 	}
 
@@ -1047,7 +1047,7 @@ func (e *Engine) luaLog(L *lua.LState) int {
 	// log(txt)
 	// Based on lua_log() in scripts.c lines 690-703
 	txt := L.ToString(1)
-	log.Printf("[LUA LOG] %s", txt)
+	slog.Debug("lua log", "text", txt)
 	return 0
 }
 
@@ -1126,7 +1126,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			L.GetField(targetTbl, "name")
 			targetName := L.ToString(-1)
 			L.Pop(1)
-			log.Printf("[SPELL] Teleported %s to room %d", targetName, newRoom)
+			slog.Debug("spell teleport", "target", targetName, "room", newRoom)
 		}
 		return 0
 
@@ -1145,7 +1145,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 				newHP = maxHP
 			}
 			L.SetField(targetTbl, "hp", lua.LNumber(newHP))
-			log.Printf("[SPELL] Cure Light: healed %d HP (new HP: %d)", healAmount, newHP)
+			slog.Debug("spell cure light", "heal_amount", healAmount, "new_hp", newHP)
 		}
 		return 0
 
@@ -1164,7 +1164,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 				newHP = maxHP
 			}
 			L.SetField(targetTbl, "hp", lua.LNumber(newHP))
-			log.Printf("[SPELL] Heal: restored %d HP (new HP: %d)", healAmount, newHP)
+			slog.Debug("spell heal", "heal_amount", healAmount, "new_hp", newHP)
 		}
 		return 0
 
@@ -1184,7 +1184,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			}
 			L.SetField(targetTbl, "hp", lua.LNumber(newHP))
 			// TODO: Restore move points when move tracking is implemented
-			log.Printf("[SPELL] Vitality: restored %d HP (new HP: %d)", healAmount, newHP)
+			slog.Debug("spell vitality", "heal_amount", healAmount, "new_hp", newHP)
 		}
 		return 0
 	}
@@ -1210,7 +1210,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			damage = dice(12, 8) + casterLevel*2
 		case 58: // SPELL_HELLFIRE
 			// SPELL_HELLFIRE: disabled in original source (magic.c spell_hellfire - dummy) line ~1583
-			log.Printf("[SPELL] SPELL_HELLFIRE: disabled in original source")
+			slog.Debug("spell hellfire: disabled in original source")
 			return 0
 		case 92: // SPELL_DISRUPT
 			// magic.c mag_damage() line ~720 - non-mage formula
@@ -1220,7 +1220,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			damage = dice(18, 8) + casterLevel
 		case 96: // SPELL_FLAMESTRIKE
 			// SPELL_FLAMESTRIKE: NOT a direct damage spell in mag_damage() - it's an outdoor AFF_FLAMING affect
-			log.Printf("[SPELL] SPELL_FLAMESTRIKE: outdoor affect spell, not direct damage")
+			slog.Debug("spell flamestrike: outdoor affect spell, not direct damage")
 			return 0
 		case 75: // SPELL_ACID_BLAST
 			// magic.c mag_damage() line ~790
@@ -1236,37 +1236,37 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			damage = dice(12, 8) + casterLevel*2
 		case 4: // SPELL_BLINDNESS
 			// SPELL_BLINDNESS: affect only, not damage
-			log.Printf("[SPELL] SPELL_BLINDNESS: affect only, not damage")
+			slog.Debug("spell blindness: affect only, not damage")
 			return 0
 		case 17: // SPELL_CURSE
 			// SPELL_CURSE: affect only, not damage
-			log.Printf("[SPELL] SPELL_CURSE: affect only, not damage")
+			slog.Debug("spell curse: affect only, not damage")
 			return 0
 		case 33: // SPELL_POISON
 			// SPELL_POISON: affect only, not damage
-			log.Printf("[SPELL] SPELL_POISON: affect only, not damage")
+			slog.Debug("spell poison: affect only, not damage")
 			return 0
 		case 23: // SPELL_EARTHQUAKE
 			// magic.c mag_damage() line ~785
 			damage = dice(7, 7) + casterLevel
 		case 81: // SPELL_DIVINE_INT
 			// SPELL_DIVINE_INT: NOT a damage spell — it summons an angel
-			log.Printf("[SPELL] SPELL_DIVINE_INT: summon spell, not damage")
+			slog.Debug("spell divine int: summon spell, not damage")
 			return 0
 		case 82: // SPELL_MIND_BAR
 			// SPELL_MIND_BAR: NOT a damage spell — it's an INT debuff affect
-			log.Printf("[SPELL] SPELL_MIND_BAR: INT debuff affect, not damage")
+			slog.Debug("spell mind bar: INT debuff affect, not damage")
 			return 0
 		case 41: // SPELL_METEOR_SWARM
 			// SPELL_METEOR_SWARM: Area spell that calls damage() per person in room — not single-target damage
-			log.Printf("[SPELL] SPELL_METEOR_SWARM: area spell handled separately")
+			slog.Debug("spell meteor swarm: area spell handled separately")
 			return 0
 		case 100: // SPELL_PSIBLAST
 			// magic.c mag_damage() line ~805
 			damage = dice(15, 13) + 3*casterLevel
 		case 104: // SPELL_PETRIFY
 			// SPELL_PETRIFY: raw_kill mechanic, not mag_damage
-			log.Printf("[SPELL] SPELL_PETRIFY: raw_kill mechanic, not mag_damage")
+			slog.Debug("spell petrify: raw_kill mechanic, not mag_damage")
 			return 0
 		case 8: // SPELL_CHILL_TOUCH
 			// magic.c mag_damage() line ~636
@@ -1380,8 +1380,14 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			spellName = "SHOCKING_GRASP"
 		}
 
-		log.Printf("[SPELL] %s casts %s on %s for %d damage (HP: %d -> %d)",
-			casterName, spellName, targetName, damage, currentHP, newHP)
+		slog.Debug("spell cast",
+			"caster", casterName,
+			"spell", spellName,
+			"target", targetName,
+			"damage", damage,
+			"hp_before", currentHP,
+			"hp_after", newHP,
+		)
 
 		// TODO: Handle death if newHP == 0
 	} else {
@@ -1391,7 +1397,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		L.Pop(1)
 
 		spellName := fmt.Sprintf("SPELL_%d", spellNum)
-		log.Printf("[SPELL] %s casts %s (non-aggressive or no target)", casterName, spellName)
+		slog.Debug("spell cast (non-aggressive)", "caster", casterName, "spell", spellName)
 	}
 
 	return 0
@@ -1449,7 +1455,7 @@ func (e *Engine) luaDofile(L *lua.LState) int {
 	}
 	fullPath := e.scriptsDir + "/" + path
 	if err := e.L.DoFile(fullPath); err != nil {
-		log.Printf("[SCRIPT] dofile(%s): %v", path, err)
+		slog.Debug("dofile error", "path", path, "error", err)
 	}
 	return 0
 }
@@ -1472,7 +1478,7 @@ func (e *Engine) luaCall(L *lua.LState) int {
 		}
 		fn = L.GetGlobal(fnName)
 		if fn.Type() == lua.LTNil {
-			log.Printf("[SCRIPT] call: function %s not found", fnName)
+			slog.Debug("call: function not found", "name", fnName)
 			return 0
 		}
 	}
@@ -1482,7 +1488,7 @@ func (e *Engine) luaCall(L *lua.LState) int {
 		L.Push(L.Get(i))
 	}
 	if err := L.PCall(nArgs, 0, nil); err != nil {
-		log.Printf("[SCRIPT] call: %v", err)
+		slog.Debug("call error", "error", err)
 	}
 	return 0
 }
@@ -1601,7 +1607,7 @@ func (e *Engine) luaObjFrom(L *lua.LState) int {
 	if removed != nil {
 		e.transitItems[vnum] = removed
 	} else {
-		log.Printf("[OBJFROM] item vnum %d not found in location %q", vnum, location)
+		slog.Debug("objfrom: item not found", "vnum", vnum, "location", location)
 	}
 	return 0
 }
@@ -1626,7 +1632,7 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 
 	item, ok := e.transitItems[vnum]
 	if !ok {
-		log.Printf("[OBJTO] no in-transit item for vnum %d", vnum)
+		slog.Debug("objto: no in-transit item", "vnum", vnum)
 		return 0
 	}
 
@@ -1640,11 +1646,11 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 			}
 		}
 		if charName == "" {
-			log.Printf("[OBJTO] 'char' target has no name")
+			slog.Debug("objto: char target has no name")
 			return 0
 		}
 		if err := e.world.GiveItemToChar(charName, item); err != nil {
-			log.Printf("[OBJTO] GiveItemToChar(%s, vnum %d): %v", charName, vnum, err)
+			slog.Debug("objto: GiveItemToChar error", "char", charName, "vnum", vnum, "error", err)
 		} else {
 			delete(e.transitItems, vnum)
 		}
@@ -1664,11 +1670,11 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 			}
 		}
 		if roomVNum == 0 {
-			log.Printf("[OBJTO] 'room' target: room vnum is 0")
+			slog.Debug("objto: room target vnum is 0")
 			return 0
 		}
 		if err := e.world.AddItemToRoom(item, roomVNum); err != nil {
-			log.Printf("[OBJTO] AddItemToRoom(room %d, vnum %d): %v", roomVNum, vnum, err)
+			slog.Debug("objto: AddItemToRoom error", "room_vnum", roomVNum, "vnum", vnum, "error", err)
 		} else {
 			delete(e.transitItems, vnum)
 		}
@@ -1679,7 +1685,7 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 
 func (e *Engine) luaObjExtra(L *lua.LState) int {
 	// obj_extra(item, operation, flag) - set/clear object extra flags
-	log.Printf("[STUB] obj_extra(item, operation, flag)")
+	slog.Debug("stub: obj_extra", "item", "item", "operation", "operation", "flag", "flag")
 	return 0
 }
 
@@ -1701,7 +1707,7 @@ func (e *Engine) luaCreateEvent(L *lua.LState) int {
 	// conversion in WorldScriptableAdapter.CreateEvent().
 
 	if e.world == nil {
-		log.Printf("[EVENT] create_event: no world available")
+		slog.Debug("create_event: no world available")
 		return 0
 	}
 
@@ -1747,7 +1753,7 @@ func (e *Engine) luaCreateEvent(L *lua.LState) int {
 		trigger = L.Get(5).String()
 	}
 	if trigger == "" {
-		log.Printf("[EVENT] create_event: no trigger specified")
+		slog.Debug("create_event: no trigger specified")
 		return 0
 	}
 
@@ -1769,9 +1775,9 @@ func (e *Engine) luaCreateEvent(L *lua.LState) int {
 	// Schedule the event
 	eventID := e.world.CreateEvent(delay, sourceID, targetID, objVNum, argValue, trigger, eventType)
 	if eventID > 0 {
-		log.Printf("[EVENT] Created event %d: trigger=%q delay=%d type=%d source=%d", eventID, trigger, delay, eventType, sourceID)
+		slog.Debug("created event", "event_id", eventID, "trigger", trigger, "delay", delay, "event_type", eventType, "source_id", sourceID)
 	} else {
-		log.Printf("[EVENT] Failed to create event: trigger=%q delay=%d type=%d source=%d", trigger, delay, eventType, sourceID)
+		slog.Debug("failed to create event", "trigger", trigger, "delay", delay, "event_type", eventType, "source_id", sourceID)
 	}
 
 	// Return the event ID to Lua (allows scripts to cancel events if needed)
@@ -1873,7 +1879,7 @@ func (e *Engine) luaIsNPC(L *lua.LState) int {
 func (e *Engine) luaAffFlagged(L *lua.LState) int {
 	// aff_flagged(ch, flag) - check if character has affect flag set (e.g. AFF_VAMPIRE)
 	// Based on AFF_FLAGGED() macro in utils.h
-	log.Printf("[STUB] aff_flagged(ch, flag)")
+	slog.Debug("stub: aff_flagged")
 	L.Push(lua.LBool(false))
 	return 1
 }
@@ -1882,7 +1888,7 @@ func (e *Engine) luaPlrFlags(L *lua.LState) int {
 	// plr_flags(ch, operation, flag) - set or remove a player flag
 	// operation is "set" or "remove"; flag is PLR_* constant
 	// Based on PLR_FLAGS() macro in utils.h
-	log.Printf("[STUB] plr_flags(ch, operation, flag)")
+	slog.Debug("stub: plr_flags")
 	return 0
 }
 
@@ -1891,7 +1897,7 @@ func (e *Engine) luaObjList(L *lua.LState) int {
 	// location: "char" = mob's inventory, "room" = room floor, "vict" = player inventory
 	// Returns the object table if found, NIL otherwise
 	// Based on lua_obj_list() pattern in scripts.c
-	log.Printf("[STUB] obj_list(keyword, location)")
+	slog.Debug("stub: obj_list")
 	L.Push(lua.LNil)
 	return 1
 }
@@ -1902,7 +1908,7 @@ func (e *Engine) luaItemCheck(L *lua.LState) int {
 	// item_check(obj) - validates whether object is a production item for the shop.
 	// Source: shop_give.lua — checks if given item is valid shop production.
 	// Engine gap: always returns false — shop production tables not yet implemented.
-	log.Printf("[STUB] item_check(obj) — always returns false")
+	slog.Debug("stub: item_check")
 	L.Push(lua.LBool(false))
 	return 1
 }
@@ -1910,7 +1916,7 @@ func (e *Engine) luaItemCheck(L *lua.LState) int {
 func (e *Engine) luaLoadRoom(L *lua.LState) int {
 	// load_room(vnum) - returns a room table with vnum, char, exit, objs fields.
 	// Source: pet_store.lua, merchant_inn.lua — loads adjacent room for pet listing.
-	log.Printf("[STUB] load_room(vnum)")
+	slog.Debug("stub: load_room")
 	vnum := L.ToInt(1)
 	tbl := L.NewTable()
 	tbl.RawSetString("vnum", lua.LNumber(vnum))
@@ -1924,7 +1930,7 @@ func (e *Engine) luaLoadRoom(L *lua.LState) int {
 func (e *Engine) luaInworld(L *lua.LState) int {
 	// inworld(type, vnum) - check if a mob/obj with given vnum exists in the world.
 	// Source: merchant_inn.lua — checks if travelling merchant (6805) already exists.
-	log.Printf("[STUB] inworld(type, vnum)")
+	slog.Debug("stub: inworld")
 	L.Push(lua.LNil)
 	return 1
 }
@@ -1932,7 +1938,7 @@ func (e *Engine) luaInworld(L *lua.LState) int {
 func (e *Engine) luaMobFlagged(L *lua.LState) int {
 	// mob_flagged(mob, flag) - check if mob has given MOB_* flag set.
 	// Source: stable.lua find_mount() — checks MOB_MOUNTABLE.
-	log.Printf("[STUB] mob_flagged(mob, flag)")
+	slog.Debug("stub: mob_flagged")
 	L.Push(lua.LBool(false))
 	return 1
 }
@@ -1940,28 +1946,28 @@ func (e *Engine) luaMobFlagged(L *lua.LState) int {
 func (e *Engine) luaAffFlags(L *lua.LState) int {
 	// aff_flags(ch, operation, flag) - set or remove an affect flag on a character.
 	// Source: stable.lua — removes AFF_CHARM from mount when stabling.
-	log.Printf("[STUB] aff_flags(ch, operation, flag)")
+	slog.Debug("stub: aff_flags")
 	return 0
 }
 
 func (e *Engine) luaFollow(L *lua.LState) int {
 	// follow(ch, charm) - makes mob follow ch, optionally charmed.
 	// Source: pet_store.lua — makes purchased pet follow the buyer.
-	log.Printf("[STUB] follow(ch, charm)")
+	slog.Debug("stub: follow")
 	return 0
 }
 
 func (e *Engine) luaMount(L *lua.LState) int {
 	// mount(ch, nil, "unmount") - dismount a player from their mount.
 	// Source: stable.lua — dismounts player before stabling.
-	log.Printf("[STUB] mount(ch, nil, operation)")
+	slog.Debug("stub: mount")
 	return 0
 }
 
 func (e *Engine) luaDirection(L *lua.LState) int {
 	// direction(from_vnum, to_vnum) - returns direction (0-5) from one room to another.
 	// Source: merchant_walk.lua — pathfinding from current room toward target room 4860.
-	log.Printf("[STUB] direction(from, to)")
+	slog.Debug("stub: direction")
 	L.Push(lua.LNumber(-1))
 	return 1
 }
@@ -1969,7 +1975,7 @@ func (e *Engine) luaDirection(L *lua.LState) int {
 func (e *Engine) luaSetHunt(L *lua.LState) int {
 	// set_hunt(hunter, prey) - set mob to hunt a target.
 	// Source: merchant_walk.lua attack_time() — bandits hunt merchant and escort.
-	log.Printf("[STUB] set_hunt(hunter, prey)")
+	slog.Debug("stub: set_hunt")
 	return 0
 }
 
@@ -1995,14 +2001,14 @@ func (e *Engine) luaSkipSpaces(L *lua.LState) int {
 func (e *Engine) luaSocial(L *lua.LState) int {
 	// social(mob, social_name) - perform a social command.
 	// Source: remove_curse.lua — performs "cough" social.
-	log.Printf("[STUB] social(mob, social_name)")
+	slog.Debug("stub: social")
 	return 0
 }
 
 func (e *Engine) luaObjFlagged(L *lua.LState) int {
 	// obj_flagged(obj, flag) - check if object has given ITEM_* flag set.
 	// Source: identifier.lua — checks ITEM_MAGIC; remove_curse.lua — checks ITEM_NODROP.
-	log.Printf("[STUB] obj_flagged(obj, flag)")
+	slog.Debug("stub: obj_flagged")
 	L.Push(lua.LBool(false))
 	return 1
 }
@@ -2010,7 +2016,7 @@ func (e *Engine) luaObjFlagged(L *lua.LState) int {
 func (e *Engine) luaGetGroupLvl(L *lua.LState) int {
 	// get_group_lvl(ch, group[, newval]) - get or set character's skill group level.
 	// Source: teacher.lua — reads and writes group level for skill training.
-	log.Printf("[STUB] get_group_lvl(ch, group[, newval])")
+	slog.Debug("stub: get_group_lvl")
 	if L.GetTop() >= 3 {
 		// Set mode: update ch.group_lvl (stub — no-op)
 		return 0
@@ -2022,7 +2028,7 @@ func (e *Engine) luaGetGroupLvl(L *lua.LState) int {
 func (e *Engine) luaGetGroupPts(L *lua.LState) int {
 	// get_group_pts(ch[, newval]) - get or set character's available group points.
 	// Source: teacher.lua — reads and writes group points for skill training.
-	log.Printf("[STUB] get_group_pts(ch[, newval])")
+	slog.Debug("stub: get_group_pts")
 	if L.GetTop() >= 2 {
 		return 0
 	}
@@ -2033,7 +2039,7 @@ func (e *Engine) luaGetGroupPts(L *lua.LState) int {
 func (e *Engine) luaSkillGroup(L *lua.LState) int {
 	// skill_group(name) - converts skill group name to numeric ID.
 	// Source: teacher.lua — maps group names like "Rejuvenation" to IDs.
-	log.Printf("[STUB] skill_group(name)")
+	slog.Debug("stub: skill_group")
 	L.Push(lua.LNumber(0))
 	return 1
 }
@@ -2041,14 +2047,14 @@ func (e *Engine) luaSkillGroup(L *lua.LState) int {
 func (e *Engine) luaUnaffect(L *lua.LState) int {
 	// unaffect(ch) - remove all spell affections from character.
 	// Source: memory_moss.lua line 33 — removes all spell affects from victim.
-	log.Printf("[STUB] unaffect(ch)")
+	slog.Debug("stub: unaffect")
 	return 0
 }
 
 func (e *Engine) luaEquipChar(L *lua.LState) int {
 	// equip_char(mob, obj) - equip a mob with an object.
 	// Source: phoenix.lua line 14 — equips rider with trident.
-	log.Printf("[STUB] equip_char(mob, obj)")
+	slog.Debug("stub: equip_char")
 	return 0
 }
 
@@ -2058,7 +2064,7 @@ func (e *Engine) luaExtra(L *lua.LState) int {
 	// extra(obj, text) - set extra description on an object.
 	// Source: head_shrinker.lua — writes head names into necklace extra desc.
 	// Engine gap: extra description table not yet implemented.
-	log.Printf("[STUB] extra(obj, text)")
+	slog.Debug("stub: extra")
 	return 0
 }
 
@@ -2074,7 +2080,7 @@ func (e *Engine) luaIsCorpse(L *lua.LState) int {
 	// iscorpse(obj) - returns true if the object is a player or mob corpse.
 	// Source: janitor.lua — skips corpses when picking up trash.
 	// Engine gap: corpse type not yet exposed on object tables.
-	log.Printf("[STUB] iscorpse(obj)")
+	slog.Debug("stub: iscorpse")
 	L.Push(lua.LBool(false))
 	return 1
 }
@@ -2083,7 +2089,7 @@ func (e *Engine) luaCanGet(L *lua.LState) int {
 	// canget(obj) - returns true if the mob is permitted to pick up the object.
 	// Source: janitor.lua — checks ITEM_WEAR_TAKE and weight before picking up.
 	// Engine gap: carry-weight and item permission checks not yet implemented.
-	log.Printf("[STUB] canget(obj)")
+	slog.Debug("stub: canget")
 	L.Push(lua.LBool(true))
 	return 1
 }
@@ -2092,7 +2098,7 @@ func (e *Engine) luaSteal(L *lua.LState) int {
 	// steal(ch, obj) - steal an item from a character's inventory.
 	// Source: mymic.lua — steals food items; eq_thief.lua — steals equipment.
 	// Engine gap: theft mechanic not yet implemented.
-	log.Printf("[STUB] steal(ch, obj)")
+	slog.Debug("stub: steal")
 	return 0
 }
 
@@ -2105,6 +2111,6 @@ func (e *Engine) luaEcho(L *lua.LState) int {
 	// TODO: requires zone broadcast implementation; currently logs only.
 	msg := L.ToString(3)
 	echoType := L.ToString(2)
-	log.Printf("[STUB] echo(ch, %q, %q)", echoType, msg)
+	slog.Debug("stub: echo", "echo_type", echoType, "msg", msg)
 	return 0
 }

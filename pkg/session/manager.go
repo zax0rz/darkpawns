@@ -4,7 +4,6 @@ package session
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 	"math/rand"
 	"net/http"
@@ -108,7 +107,7 @@ func (m *Manager) SetCombatBroadcastFunc() {
 			},
 		})
 		if err != nil {
-			log.Printf("json.Marshal error: %v", err)
+			slog.Error("json.Marshal error", "error", err)
 			return
 		}
 		m.BroadcastToRoom(roomVNum, msg, exclude)
@@ -494,7 +493,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			},
 		})
 		if err != nil {
-			log.Printf("json.Marshal error: %v", err)
+			slog.Error("json.Marshal error", "error", err)
 			return nil
 		}
 		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
@@ -563,7 +562,7 @@ func (s *Session) sendWelcome(token string) {
 		Data: state,
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return
 	}
 	s.send <- msg
@@ -576,7 +575,7 @@ func (s *Session) sendError(text string) {
 		Data: ErrorData{Message: text},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return
 	}
 	select {
@@ -790,7 +789,7 @@ var (
 func (m *Manager) RegisterCommand(name string, handler func(common.CommandSession, []string) error) {
 	// This is a stub implementation
 	// In a real implementation, this would register the command with the session manager
-	log.Printf("RegisterCommand called for %s (stub implementation)", name)
+	slog.Debug("RegisterCommand called (stub)", "name", name)
 }
 
 // Sessions returns all active sessions

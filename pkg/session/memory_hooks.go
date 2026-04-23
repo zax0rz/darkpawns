@@ -11,7 +11,7 @@ package session
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -62,10 +62,10 @@ func (m *Manager) onMobKill(evt *game.MobKillEvent) {
 
 	id, err := m.db.WriteNarrativeMemory(mem)
 	if err != nil {
-		log.Printf("[MEMORY] failed to write mob_kill for %s: %v", evt.KillerName, err)
+		slog.Error("failed to write mob_kill", "agent_name", evt.KillerName, "error", err)
 		return
 	}
-	log.Printf("[MEMORY] mob_kill recorded for agent %s (id=%d): %s", evt.KillerName, id, mem.Summary)
+	slog.Info("mob_kill recorded", "agent_name", evt.KillerName, "memory_id", id, "summary", mem.Summary)
 }
 
 // onPlayerDeath is called when any player/agent dies.
@@ -109,10 +109,10 @@ func (m *Manager) onPlayerDeath(evt *game.PlayerDeathEvent) {
 
 	id, err := m.db.WriteNarrativeMemory(mem)
 	if err != nil {
-		log.Printf("[MEMORY] failed to write mob_death for %s: %v", evt.VictimName, err)
+		slog.Error("failed to write mob_death", "agent_name", evt.VictimName, "error", err)
 		return
 	}
-	log.Printf("[MEMORY] mob_death recorded for agent %s (id=%d): %s", evt.VictimName, id, mem.Summary)
+	slog.Info("mob_death recorded", "agent_name", evt.VictimName, "memory_id", id, "summary", mem.Summary)
 }
 
 // sessionID returns a stable session identifier for the current connection.
@@ -140,25 +140,25 @@ func (s *Session) SendMemoryBootstrap() {
 	// Medium tier: 15 memories + 3 session summaries
 	memories, err := s.manager.db.BootstrapMemories(s.playerName, 15)
 	if err != nil {
-		log.Printf("[MEMORY] bootstrap fetch error for %s: %v", s.playerName, err)
+		slog.Error("bootstrap fetch error", "agent_name", s.playerName, "error", err)
 		return
 	}
 
 	summaries, err := s.manager.db.GetSessionSummaries(s.playerName, 3)
 	if err != nil {
-		log.Printf("[MEMORY] summary fetch error for %s: %v", s.playerName, err)
+		slog.Error("summary fetch error", "agent_name", s.playerName, "error", err)
 		// Non-fatal: continue with just memories
 	}
 
 	if len(memories) == 0 && len(summaries) == 0 {
 		// No memories yet — still send the message so agent knows bootstrap completed
-		log.Printf("[MEMORY] no memories for agent %s (first session)", s.playerName)
+		slog.Info("no memories for agent (first session)", "agent_name", s.playerName)
 	}
 
 	block := db.BootstrapBlock(memories, summaries)
 
 	// Send as a structured message — agent reads data.block into LLM context
-	msg, err := json.Marshal(map[string]interface{}{
+	msg, _ := json.Marshal(map[string]interface{}{
 		"type": "memory_bootstrap",
 		"data": map[string]interface{}{
 			"block":     block,
@@ -166,15 +166,11 @@ func (s *Session) SendMemoryBootstrap() {
 			"summaries": len(summaries),
 		},
 	})
-	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
-		return
-	}
 	select {
 	case s.send <- msg:
-		log.Printf("[MEMORY] sent bootstrap to agent %s: %d memories, %d summaries", s.playerName, len(memories), len(summaries))
+		slog.Info("sent bootstrap to agent", "agent_name", s.playerName, "memory_count", len(memories), "summary_count", len(summaries))
 	default:
-		log.Printf("[MEMORY] bootstrap send blocked for %s (channel full)", s.playerName)
+		slog.Warn("bootstrap send blocked (channel full)", "agent_name", s.playerName)
 	}
 }
 

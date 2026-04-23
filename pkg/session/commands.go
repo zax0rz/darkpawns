@@ -3,7 +3,6 @@ package session
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 	"strings"
 
@@ -222,7 +221,7 @@ func cmdLook(s *Session, args []string) error {
 		Data: state,
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.send <- msg
@@ -264,7 +263,7 @@ func cmdMove(s *Session, direction string) error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
@@ -279,7 +278,7 @@ func cmdMove(s *Session, direction string) error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
@@ -314,7 +313,7 @@ func cmdMove(s *Session, direction string) error {
 				},
 			})
 			if err != nil {
-				log.Printf("json.Marshal error: %v", err)
+				slog.Error("json.Marshal error", "error", err)
 				continue
 			}
 			s.manager.BroadcastToRoom(followerOldRoom, fleaveMsg, follower.Name)
@@ -328,7 +327,7 @@ func cmdMove(s *Session, direction string) error {
 				},
 			})
 			if err != nil {
-				log.Printf("json.Marshal error: %v", err)
+				slog.Error("json.Marshal error", "error", err)
 				continue
 			}
 			s.manager.BroadcastToRoom(newRoom.VNum, fenterMsg, follower.Name)
@@ -369,7 +368,7 @@ func cmdSay(s *Session, args []string) error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
@@ -391,7 +390,7 @@ func cmdQuit(s *Session) error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.manager.BroadcastToRoom(room, msg, s.player.Name)
@@ -642,7 +641,7 @@ func cmdGet(s *Session, args []string) error {
 				},
 			})
 			if err != nil {
-				log.Printf("json.Marshal error: %v", err)
+				slog.Error("json.Marshal error", "error", err)
 				return nil
 			}
 			s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
@@ -687,7 +686,7 @@ func cmdDrop(s *Session, args []string) error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
@@ -708,7 +707,7 @@ func broadcastEquipmentChange(s *Session, action string, item *game.ObjectInstan
 		Data: event,
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return
 	}
 
@@ -980,7 +979,7 @@ func (s *Session) sendText(text string) {
 		Data: TextData{Text: text},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return
 	}
 	select {
@@ -1200,7 +1199,7 @@ func cmdEmote(s *Session, args []string) error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
@@ -1251,7 +1250,7 @@ func cmdShout(s *Session, args []string) error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	for _, sess := range targets {
@@ -1368,7 +1367,7 @@ func doorBroadcast(s *Session, message string) {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return
 	}
 	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)

@@ -3,7 +3,6 @@ package session
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
@@ -52,7 +51,7 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options map[string]
 		Data: data,
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return
 	}
 
@@ -84,7 +83,7 @@ func (s *Session) sendCharCreateStats(stats game.CharStats) {
 		Data: data,
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return
 	}
 
@@ -159,7 +158,7 @@ func (s *Session) completeCharCreation() error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)

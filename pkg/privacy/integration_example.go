@@ -11,6 +11,7 @@ package main
 import (
 	"flag"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -30,13 +31,13 @@ func main() {
 
 		// Test connection
 		if _, _, err := privacyClient.FilterText("test"); err != nil {
-			log.Printf("Warning: Privacy filter unavailable: %v", err)
-			log.Println("Continuing with fallback filtering...")
+			slog.Warn("Privacy filter unavailable", "error", err)
+			slog.Info("Continuing with fallback filtering...")
 		} else {
-			log.Println("Privacy filter connected successfully")
+			slog.Info("Privacy filter connected successfully")
 		}
 	} else {
-		log.Println("Privacy filter disabled")
+		slog.Info("Privacy filter disabled")
 		privacyClient = privacy.NewClient("disabled", privacy.DefaultFilterConfig())
 	}
 
@@ -112,7 +113,7 @@ func (padb *PrivacyAwareDatabase) LogQuery(query string, args ...interface{}) {
 		}
 	}
 
-	log.Printf("DB Query: %s", filteredQuery)
+	slog.Info("DB Query", "query", filteredQuery)
 }
 
 // Combat logging example

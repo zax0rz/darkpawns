@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -204,7 +205,7 @@ func (ac *AICache) GenerateCacheKey(req AIRequest) string {
 
 	keyBytes, err := json.Marshal(keyData)
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return ""
 	}
 	return string(keyBytes)

@@ -5,7 +5,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"strings"
 	"time"
@@ -34,13 +34,13 @@ func Listen(port int, manager *session.Manager) error {
 	if err != nil {
 		return fmt.Errorf("telnet listen: %w", err)
 	}
-	log.Printf("Telnet listening on %s", addr)
+	slog.Info("Telnet listening", "address", addr)
 
 	go func() {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				log.Printf("Telnet accept error: %v", err)
+				slog.Error("Telnet accept error", "error", err)
 				return
 			}
 			go handleConn(conn, manager)
@@ -64,7 +64,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	defer rawConn.Close()
 
 	remoteAddr := rawConn.RemoteAddr().String()
-	log.Printf("Telnet connect from %s", remoteAddr)
+	slog.Info("Telnet connect", "remote_addr", remoteAddr)
 
 	// Send initial negotiation
 	tc.write([]byte{IAC, WILL, OPT_ECHO})
@@ -124,7 +124,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	// Cleanup
 	s.Manager().Unregister(s.PlayerName())
 	s.CloseSend()
-	log.Printf("Telnet disconnect: %s (%s)", remoteAddr, s.PlayerName())
+	slog.Info("Telnet disconnect", "remote_addr", remoteAddr, "player", s.PlayerName())
 }
 
 // writeLoop reads from the session's send channel and writes formatted output to the telnet conn.

@@ -3,7 +3,7 @@ package session
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 )
 
@@ -98,7 +98,7 @@ func (s *Session) flushDirtyVars() {
 	s.dirtyVars = make(map[string]bool)
 	msg, err := json.Marshal(ServerMessage{Type: MsgVars, Data: data})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return
 	}
 	select {
@@ -116,7 +116,7 @@ func (s *Session) sendFullVarDump() {
 	}
 	msg, err := json.Marshal(ServerMessage{Type: MsgVars, Data: data})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return
 	}
 	select {

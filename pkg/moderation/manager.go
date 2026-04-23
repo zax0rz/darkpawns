@@ -3,7 +3,7 @@ package moderation
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"regexp"
 	"strings"
 	"sync"
@@ -44,7 +44,7 @@ func NewManager(db *sql.DB) *Manager {
 
 	if m.hasDB {
 		if err := m.createTables(); err != nil {
-			log.Printf("Warning: Failed to create moderation tables: %v", err)
+			slog.Warn("Failed to create moderation tables", "error", err)
 		}
 		m.loadActivePenalties()
 		m.loadWordFilters()
@@ -125,7 +125,7 @@ func (m *Manager) loadActivePenalties() {
 		WHERE expires_at IS NULL OR expires_at > NOW()
 	`)
 	if err != nil {
-		log.Printf("Failed to load penalties: %v", err)
+		slog.Error("Failed to load penalties", "error", err)
 		return
 	}
 	defer rows.Close()
@@ -140,7 +140,7 @@ func (m *Manager) loadActivePenalties() {
 		var expiresAt sql.NullTime
 
 		if err := rows.Scan(&p.PlayerName, &p.PenaltyType, &p.IssuedAt, &expiresAt, &p.Reason, &p.IssuedBy); err != nil {
-			log.Printf("Failed to scan penalty: %v", err)
+			slog.Error("Failed to scan penalty", "error", err)
 			continue
 		}
 
@@ -164,7 +164,7 @@ func (m *Manager) loadWordFilters() {
 		ORDER BY created_at DESC
 	`)
 	if err != nil {
-		log.Printf("Failed to load word filters: %v", err)
+		slog.Error("Failed to load word filters", "error", err)
 		return
 	}
 	defer rows.Close()
@@ -177,7 +177,7 @@ func (m *Manager) loadWordFilters() {
 	for rows.Next() {
 		var wf WordFilterEntry
 		if err := rows.Scan(&wf.ID, &wf.Pattern, &wf.IsRegex, &wf.Action, &wf.CreatedBy, &wf.CreatedAt); err != nil {
-			log.Printf("Failed to scan word filter: %v", err)
+			slog.Error("Failed to scan word filter", "error", err)
 			continue
 		}
 
@@ -221,7 +221,7 @@ func (m *Manager) cleanupExpiredPenalties() {
 			WHERE expires_at IS NOT NULL AND expires_at <= NOW()
 		`)
 		if err != nil {
-			log.Printf("Failed to clean expired penalties: %v", err)
+			slog.Error("Failed to clean expired penalties", "error", err)
 		}
 	}
 }
@@ -345,7 +345,7 @@ func (wf *WordFilterEntry) matches(message string) bool {
 	if wf.IsRegex {
 		re, err := regexp.Compile(wf.Pattern)
 		if err != nil {
-			log.Printf("Invalid regex pattern %q: %v", wf.Pattern, err)
+			slog.Error("Invalid regex pattern", "pattern", wf.Pattern, "error", err)
 			return false
 		}
 		return re.MatchString(strings.ToLower(message))

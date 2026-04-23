@@ -3,7 +3,7 @@ package session
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"math/rand"
 	"strings"
 )
@@ -56,7 +56,7 @@ func cmdHit(s *Session, args []string) error {
 				},
 			})
 			if err != nil {
-				log.Printf("json.Marshal error: %v", err)
+				slog.Error("json.Marshal error", "error", err)
 				return nil
 			}
 			s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
@@ -95,7 +95,7 @@ func cmdHit(s *Session, args []string) error {
 				},
 			})
 			if err != nil {
-				log.Printf("json.Marshal error: %v", err)
+				slog.Error("json.Marshal error", "error", err)
 				return nil
 			}
 			s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
@@ -187,7 +187,7 @@ func cmdFlee(s *Session) error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
@@ -202,7 +202,7 @@ func cmdFlee(s *Session) error {
 		},
 	})
 	if err != nil {
-		log.Printf("json.Marshal error: %v", err)
+		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
 	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
