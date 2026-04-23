@@ -47,21 +47,7 @@ AI adventuring together through the same world we loved the first time around.
 
 **Phase 5b complete.** All 115 original Lua scripts ported and working. BRENDA69 is alive and adventuring.
 
-| Phase | Status | What It Covers |
-|-------|--------|----------------|
-| 0 — World Parser | ✅ Done | 10,057 rooms, 1,313 mobs, 1,620 objects, 95 zones |
-| 1 — Minimal Engine | ✅ Done | Login, movement, look, say |
-| 2 — Core Systems | ✅ Done | Combat, mob AI, death/respawn, full inventory/equip |
-| 2b — Full Play Loop | ✅ Done | Items, character creation, PostgreSQL persistence |
-| 2c — Correctness Pass | ✅ Done | Full QA audit against original C source |
-| 3A-3D — Lua Engine | ✅ Done | gopher-lua, all triggers, newbie pipeline, combat AI |
-| 4 — Agent Protocol | ✅ Done | API keys, variable subscriptions, dp_bot.py, rate limiting |
-| 5 — BRENDA Plays | ✅ Done | dp_brenda.py live, party/group/social commands, mem0 memory |
-| 5b — World Restoration | ✅ Done | **All 115 scripts ported** — Combat AI, Economy, Environmental, Crafting chains, Ambient/flavor |
-| 5c — Engine Completeness | 🔄 In Progress | Event queue, affect system, doors, shop commands, skills |
-| 6 — Public Server | ⬜ Planned | Web client, Telnet, darkpawns.labz0rz.com |
-
-See [ROADMAP.md](ROADMAP.md) for the full plan.
+See [ROADMAP.md](ROADMAP.md) for the complete phase history and current progress.
 
 ---
 

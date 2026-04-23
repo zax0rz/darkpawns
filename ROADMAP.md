@@ -190,7 +190,7 @@ Smoke test confirmed: agent auth, variable subscription, ROOM_MOBS targeting all
 
 ---
 
-### 🔲 Phase 5c — Engine Completeness
+### 🔄 Phase 5c — Engine Completeness (CURRENT)
 **Goal:** The engine gaps that scripts are waiting on.
 
 - **`create_event` / event queue** — timer-based callbacks; unblocks ~20 scripts with TODO stubs
