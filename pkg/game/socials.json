@@ -1,0 +1,2492 @@
+[
+  {
+    "name": "accuse",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "Accuse who??",
+      "#",
+      "You look accusingly at $M.",
+      "$n looks accusingly at $N.",
+      "$n looks accusingly at you.",
+      "Accuse somebody who's not even there??",
+      "You accuse yourself.",
+      "$n seems to have a bad conscience."
+    ]
+  },
+  {
+    "name": "agree",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You seem very agreeable today.",
+      "$n seems very agreeable today.",
+      "You agree with $N.",
+      "$n agrees with $N.",
+      "$n agrees with you.",
+      "Really now?",
+      "Feeling a little smug?",
+      "$n agrees with $mself.  How arrogant."
+    ]
+  },
+  {
+    "name": "applaud",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Clap, clap, clap.",
+      "$n gives a round of applause.",
+      "You give $N a round of applause.",
+      "$n applauds you for a job well done.",
+      "$n gives $N a round of applause.",
+      "Your appreciation goes unappreciated.",
+      "Feeling a little smug?",
+      "#"
+    ]
+  },
+  {
+    "name": "beg",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You beg the gods for mercy.  (No way you're gonna get it! :-))",
+      "The gods fall down laughing at $n's request for mercy.",
+      "You desperately try to squeeze a few coins from $M.",
+      "$n begs you for money.  You graciously let $m peep at your fortune.",
+      "$n begs $N for a dime or two -- or twenty!",
+      "Your money-lender seems to be out for the moment.",
+      "How? - begging yourself for money doesn't help.",
+      "#"
+    ]
+  },
+  {
+    "name": "blush",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Your cheeks are burning.",
+      "$n blushes.",
+      "#"
+    ]
+  },
+  {
+    "name": "bonk",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Who do you want to bonk?",
+      "$n waves $s hands around.",
+      "You bonk $M on the head.",
+      "$n bonks $N on the head.",
+      "$n bonks you on the head..",
+      "Who's that?",
+      "You bonk yourself on the head.",
+      "$n bonks $mself on the head."
+    ]
+  },
+  {
+    "name": "boink",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Who do you want to boink?",
+      "$n looks around, puzzled.",
+      "You boink $M.",
+      "$n boinks $N with ultimate passion.",
+      "$n boinks you passionately.",
+      "Who's that?",
+      "You boink yourself on the head.",
+      "$n boinks $mself on the head."
+    ]
+  },
+  {
+    "name": "bounce",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "BOIINNNNNNGG!",
+      "$n bounces around.",
+      "You bounce up and down on top of $M.",
+      "$n bounces up and down on top of $N.",
+      "$n bounces up and down on top of you.",
+      "Who?  You missed.",
+      "You bounce up and down on top of yourself.  Strange.",
+      "$n bounces up and down in $s seat."
+    ]
+  },
+  {
+    "name": "bow",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You bow deeply.",
+      "$n bows deeply.",
+      "You bow before $M.",
+      "$n bows before $N.",
+      "$n bows before you.",
+      "Who's that?",
+      "You kiss your toes.",
+      "$n folds up like a jacknife and kisses $s own toes."
+    ]
+  },
+  {
+    "name": "brb",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Come back soon!",
+      "$n will be right back!",
+      "#"
+    ]
+  },
+  {
+    "name": "burp",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You burp loudly.",
+      "$n burps loudly.",
+      "#"
+    ]
+  },
+  {
+    "name": "cackle",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You cackle gleefully.",
+      "$n throws back $s head and cackles with insane glee!",
+      "#"
+    ]
+  },
+  {
+    "name": "chuckle",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You chuckle politely.",
+      "$n chuckles politely.",
+      "#"
+    ]
+  },
+  {
+    "name": "clap",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You clap your hands together.",
+      "$n shows $s approval by clapping $s hands together.",
+      "#"
+    ]
+  },
+  {
+    "name": "comb",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You comb your hair -- perfect.",
+      "$n combs $s hair, what a dashing specimen!",
+      "You patiently untangle $N's hair -- what a mess!",
+      "$n tries patiently to untangle $N's hair.",
+      "$n pulls your hair in an attempt to comb it.",
+      "That person is not here.",
+      "You pull your hair, but it will not be combed.",
+      "$n tries to comb $s tangled hair."
+    ]
+  },
+  {
+    "name": "comfort",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "Do you feel uncomfortable?",
+      "#",
+      "You comfort $M.",
+      "$n comforts $N.",
+      "$n comforts you.",
+      "Comfort who?",
+      "You make a vain attempt to comfort yourself.",
+      "#"
+    ]
+  },
+  {
+    "name": "cough",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Yuck, try to cover your mouth next time!",
+      "$n coughs loudly.",
+      "#"
+    ]
+  },
+  {
+    "name": "cringe",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You cringe in terror.",
+      "$n cringes in terror!",
+      "You cringe away from $M.",
+      "$n cringes away from $N in mortal terror.",
+      "$n cringes away from you.",
+      "I don't see anyone by that name here.. what are you afraid of?",
+      "I beg your pardon?",
+      "#"
+    ]
+  },
+  {
+    "name": "cry",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You burst into tears.",
+      "$n bursts into tears.",
+      "You cry on $S shoulder.",
+      "$n cries on $N's shoulder.",
+      "$n cries on your shoulder.",
+      "Who's that?",
+      "You cry to yourself.",
+      "$n sobs quietly to $mself."
+    ]
+  },
+  {
+    "name": "cuddle",
+    "min_level": 1,
+    "hide_flag": 5,
+    "messages": [
+      "Who do you feel like cuddling today?",
+      "#",
+      "You cuddle $M.",
+      "$n cuddles $N.",
+      "$n cuddles you.",
+      "They aren't here.",
+      "You must feel very cuddly indeed..   :)",
+      "#"
+    ]
+  },
+  {
+    "name": "curse",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You swear loudly for a long time.",
+      "$n swears: #@*\"*&^$$%@*&!!!!!!",
+      "#"
+    ]
+  },
+  {
+    "name": "curtsey",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You curtsey to your audience.",
+      "$n curtseys gracefully.",
+      "#"
+    ]
+  },
+  {
+    "name": "dance",
+    "min_level": 1,
+    "hide_flag": 8,
+    "messages": [
+      "Feels silly, doesn't it?",
+      "$n tries to breakdance but nearly breaks $s neck!",
+      "You lead $M to the dancefloor.",
+      "$n sends $N across the dancefloor.",
+      "$n sends you across the dancefloor.",
+      "Eh, WHO?",
+      "You skip and dance around by yourself.",
+      "$n skips a light Fandango."
+    ]
+  },
+  {
+    "name": "daydream",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You dream of better times.",
+      "$n looks absent-minded, $s eyes staring into space.",
+      "#"
+    ]
+  },
+  {
+    "name": "drool",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You start to drool.",
+      "$n starts to drool.",
+      "You drool all over $N.",
+      "$n drools all over $N.",
+      "$n drools all over you.",
+      "Pardon??",
+      "Sure, go ahead and drool...yuk!",
+      "$n drools on $mself.  What a sight."
+    ]
+  },
+  {
+    "name": "embrace",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You reach but come away empty.  :(",
+      "$n reaches out for an embrace, but no one is there.",
+      "You embrace $M warmly.",
+      "$n embraces $N warmly.",
+      "$n embraces you warmly.",
+      "Alas, your embracee is not here.",
+      "You embrace yourself??",
+      "$n wraps $s arms around $mself for a warm self-embrace."
+    ]
+  },
+  {
+    "name": "fade",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You disappear into the void.",
+      "$n slowly fades out of existence.",
+      "You make $N disappear.",
+      "$n makes $N fade out of existence.",
+      "You follow $n and disappear into the void.",
+      "Already gone.  Good Job.",
+      "You disappear into the void.",
+      "$n slowly fades out of existence."
+    ]
+  },
+  {
+    "name": "faint",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "The world fades to black...to black... to black....",
+      "$n faints.  Luckily, you catch $m in time.",
+      "#"
+    ]
+  },
+  {
+    "name": "fart",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Where are your manners?",
+      "$n lets off a real rip-roarer!",
+      "#"
+    ]
+  },
+  {
+    "name": "flip",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You flip head over heels.",
+      "$n flips head over heels.",
+      "You flip $M over your head.",
+      "$n flips $M over $s head.",
+      "$n flips you over $s head.",
+      "Who?",
+      "#"
+    ]
+  },
+  {
+    "name": "flirt",
+    "min_level": 1,
+    "hide_flag": 5,
+    "messages": [
+      "You flirt outrageously.",
+      "$n flirts outragously.",
+      "You flirt outrageously with $N.",
+      "$n flirts outrageously with $N.",
+      "$n flirts outrageously with you.",
+      "Sorry, your dearly beloved is not around.",
+      "You flirt with yourself.  Must look stupid.",
+      "$n thinks $e is the most wonderful person in the world."
+    ]
+  },
+  {
+    "name": "fondle",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "Who needs to be fondled?",
+      "#",
+      "You fondly fondle $M.",
+      "$n fondly fondles $N.",
+      "$n fondly fondles you.",
+      "You fondly try to fondle someone not in the room, but who cares.",
+      "You fondly fondle yourself, feels funny doesn't it?",
+      "$n fondly fondles $mself -- this is going too far!!"
+    ]
+  },
+  {
+    "name": "french",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "French whom??",
+      "#",
+      "You give $N a long and passionate kiss, it seems to take forever...",
+      "$n kisses $N passionately.",
+      "$n gives you a long and passionate kiss, it seems to take forever...",
+      "Your heart is filled with despair as that person is not here.",
+      "You gather yourself in your arms and try to kiss yourself.",
+      "$n makes an attempt at kissing $mself."
+    ]
+  },
+  {
+    "name": "frown",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "What's bothering you?",
+      "$n frowns.",
+      "#"
+    ]
+  },
+  {
+    "name": "fume",
+    "min_level": 1,
+    "hide_flag": 5,
+    "messages": [
+      "Take it easy now!  Count to ten, very slowly.",
+      "$n grits $s teeth and fumes with rage.",
+      "You stare at $M, fuming.",
+      "$n stares at $N, fuming with rage.",
+      "$n stares at you, fuming with rage!",
+      "Fume away.. they ain't here.",
+      "That's right - hate yourself!",
+      "$n clenches $s fists and stomps his feet, fuming with anger."
+    ]
+  },
+  {
+    "name": "fwap",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Backhand to the left cheek. Shoots.  Scores!",
+      "$n backhands a pesky fly.",
+      "You backhand $N right in the face.  FWAP!",
+      "$n fwaps $N.  Ouch, that really HURT.",
+      "$n fwaps you in the face.  Ouch, that really HURT.",
+      "Backhand to the right cheek.  BUZZZ.  Missed.",
+      "Wham!  You fwap yourself in the face.  Ouch.",
+      "$n fwaps $mself in the face.  Ouch, that really HURT."
+    ]
+  },
+  {
+    "name": "gasp",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You gasp in astonishment.",
+      "$n gasps in astonishment.",
+      "#"
+    ]
+  },
+  {
+    "name": "giggle",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You giggle.",
+      "$n giggles.",
+      "#"
+    ]
+  },
+  {
+    "name": "glare",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You glare at nothing in particular.",
+      "$n glares around $m.",
+      "You glare icily at $M.",
+      "$n glares at $N.",
+      "$n glares icily at you, you feel cold to your bones.",
+      "You try to glare at somebody who is not present.",
+      "You glare icily at your feet, they are suddenly very cold.",
+      "$n glares at $s feet, what is bothering $m?"
+    ]
+  },
+  {
+    "name": "greet",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Greet Who?",
+      "#",
+      "You greet $M with a light kiss on $S cheek.",
+      "$n greets $N with a light kiss on the cheek.",
+      "$n greets you with a light kiss on your cheek.",
+      "Please -- try someone who is here?",
+      "So, you've finally discovered yourself!",
+      "$n greets $mself.. $e always was a strange one."
+    ]
+  },
+  {
+    "name": "grimace",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You grimace.",
+      "$n grimaces.",
+      "#"
+    ]
+  },
+  {
+    "name": "grin",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You grin evilly.",
+      "$n grins evilly.",
+      "You grin at $M.",
+      "$n grins at $N.",
+      "$n grins at you.",
+      "Grin at whom?",
+      "You sit back with a smug grin.",
+      "$n grins smugly."
+    ]
+  },
+  {
+    "name": "groan",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You groan loudly.",
+      "$n groans loudly.",
+      "#"
+    ]
+  },
+  {
+    "name": "grope",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "Whom do you wish to grope??",
+      "#",
+      "Well, what sort of noise do you expect here?",
+      "$n gropes $N.",
+      "$n gropes you.",
+      "Try someone who's here.",
+      "You grope yourself -- YUCK.",
+      "$n gropes $mself -- YUCK."
+    ]
+  },
+  {
+    "name": "grovel",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You grovel in the dirt.",
+      "$n grovels in the dirt.",
+      "You grovel before $M.",
+      "$n grovels in the dirt before $N.",
+      "$n grovels in the dirt before you.",
+      "Who?",
+      "That seems a little silly to me..",
+      "#"
+    ]
+  },
+  {
+    "name": "growl",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Grrrrrrrrrr...",
+      "$n growls.",
+      "#"
+    ]
+  },
+  {
+    "name": "grumble",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You grumble about life.",
+      "$n grumbles to $mself.",
+      "#"
+    ]
+  },
+  {
+    "name": "hiccup",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "*HIC*",
+      "$n hiccups.",
+      "#"
+    ]
+  },
+  {
+    "name": "highfive",
+    "min_level": 1,
+    "hide_flag": 5,
+    "messages": [
+      "You give the air some skin.",
+      "$n gives everyone a highfive.",
+      "You whoop in joy and give $M a highfive.",
+      "$n whoops in joy and gives $N a highfive.",
+      "$n whoops in joy and gives you a highfive.",
+      "Sorry, friend, I can't see that person here.",
+      "You highfive yourself in satisfaction.",
+      "$n highfives $mself.  How strange."
+    ]
+  },
+  {
+    "name": "hiss",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You hiss disdainfully at the world.",
+      "$n hisses disdainfully.",
+      "You hiss maliciously at $N!",
+      "$n hisses maliciously at $N, who draws back in fear.",
+      "You draw back in fear as $n hisses at you!",
+      "Hiss at who??",
+      "You hiss at yourself! Good for you!",
+      "$n hisses at $mself. How strange."
+    ]
+  },
+  {
+    "name": "hop",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Hello, Mister hippity-hop!",
+      "$n hops around like a crazed rabbit.",
+      "You hop all over $M.",
+      "$n hops up and down over $N like a demented rabbit.",
+      "$n hops up and down over you like a demented rabbit.",
+      "WHO?",
+      "Hello, Mister hippity-hop!",
+      "$n hops around like a demented bunny."
+    ]
+  },
+  {
+    "name": "hug",
+    "min_level": 1,
+    "hide_flag": 5,
+    "messages": [
+      "Hug who?",
+      "#",
+      "You hug $M.",
+      "$n hugs $N.",
+      "$n hugs you.",
+      "Sorry, friend, I can't see that person here.",
+      "You hug yourself.",
+      "$n hugs $mself."
+    ]
+  },
+  {
+    "name": "jeer",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Smirk all you like.  Just don't come whining when you lose all your friends.",
+      "$n jeers.",
+      "You start jeering at $N.",
+      "$n starts jeering at $N.",
+      "$n jeers at you -- how rude!",
+      "Smirk all you like.",
+      "Eh?  Why would you want to do that?",
+      "#"
+    ]
+  },
+  {
+    "name": "kiss",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Isn't there someone you want to kiss?",
+      "#",
+      "You kiss $M.",
+      "$n kisses $N.",
+      "$n kisses you.",
+      "Never around when required.",
+      "All the lonely people :(",
+      "#"
+    ]
+  },
+  {
+    "name": "kneel",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You kneel down on one knee.",
+      "$n kneels down on one knee.",
+      "You kneel before $N.",
+      "$n kneels before $N.",
+      "$n kneels before you.",
+      "Sorry, friend, I can't see that person here.",
+      "You would need a mirror to see that.",
+      "#"
+    ]
+  },
+  {
+    "name": "leer",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Keep those nasty thoughts to yourself!",
+      "$n leers at no one in particular.",
+      "You start leering at $M.",
+      "$n starts leering at $N.",
+      "$n leers at you.  How rude.",
+      "Smirk all you like.",
+      "Eh?  Why would you want to do that?",
+      "#"
+    ]
+  },
+  {
+    "name": "lick",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You lick your mouth and smile.",
+      "$n licks $s mouth and smiles.",
+      "You lick $M.",
+      "$n licks $N.",
+      "$n licks you.",
+      "Lick away, nobody's here with that name.",
+      "You lick yourself.",
+      "$n licks $mself -- YUCK."
+    ]
+  },
+  {
+    "name": "love",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You love the whole world.",
+      "$n loves everybody in the world.",
+      "You tell your true feelings to $N.",
+      "$n whispers softly to $N.",
+      "$n whispers to you sweet words of love.",
+      "Alas, your love is not present...",
+      "Well, we already know you love yourself (lucky someone does!)",
+      "$n loves $mself, can you believe it?"
+    ]
+  },
+  {
+    "name": "massage",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Massage what, thin air?",
+      "#",
+      "You gently massage $N's shoulders.",
+      "$n massages $N's shoulders.",
+      "$n gently massages your shoulders...ahhhhhhhhhh...",
+      "You can only massage someone in the same room as you.",
+      "You practice yoga as you try to massage yourself.",
+      "$n gives a show on yoga-positions, trying to massage $mself."
+    ]
+  },
+  {
+    "name": "moan",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You start to moan.",
+      "$n starts moaning.",
+      "#"
+    ]
+  },
+  {
+    "name": "muhaha",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "MUHAHAHAHA!!!!!!!",
+      "$n throws $s head back and laughs with draconian terror.",
+      "#"
+    ]
+  },
+  {
+    "name": "mumble",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You mumble.",
+      "$n mumbles something under $s breath.",
+      "You mumble at $N.",
+      "$n mumbles something under $s breath to $N.",
+      "$n mumbles something under $s breath to you.",
+      "You mumble something to no one in particular.",
+      "You mumble to yourself.",
+      "$n mumbles something under $s breath to $mself."
+    ]
+  },
+  {
+    "name": "mutter",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You mutter.",
+      "$n mutters something under $s breath.",
+      "You mutter something at $N.",
+      "$n mutters something under $s breath to $N.",
+      "$n mutters something under $s breath to you.",
+      "You mutter something to no one in particular.",
+      "You mutter to yourself.",
+      "$n mutters something under $s breath to $mself."
+    ]
+  },
+  {
+    "name": "nibble",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Nibble on who?",
+      "#",
+      "You nibble on $N's ear.",
+      "$n nibbles on $N's ear.",
+      "$n nibbles on your ear.",
+      "Sorry, not here, better go back to dreaming about it.",
+      "You nibble on your OWN ear???????????????????",
+      "$n nibbles on $s OWN ear (I wonder how it is done!!)."
+    ]
+  },
+  {
+    "name": "nudge",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Nudge?  Nudge???  The HELL you say!!!!",
+      "#",
+      "You nudge $M with your elbow.",
+      "$n nudges $N suggestively with $s elbow.",
+      "$n nudges you suggestively.  You two have an understanding.",
+      "Eh?  That person isn't here, you know.",
+      "Well, just nudge yourself, but how do you get your elbow in that position?",
+      "$n nudges $mself with $s elbows, making $m look like a large chicken."
+    ]
+  },
+  {
+    "name": "nuzzle",
+    "min_level": 1,
+    "hide_flag": 5,
+    "messages": [
+      "Nuzzle who??",
+      "#",
+      "You nuzzle $S neck softly.",
+      "$n softly nuzzles $N's neck.",
+      "$n softly nuzzles your neck.",
+      "No.. they aren't here..",
+      "I'm sorry, friend, but that's impossible.",
+      "#"
+    ]
+  },
+  {
+    "name": "pat",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Pat who??",
+      "#",
+      "You pat $N on $S head.",
+      "$n pats $N on $S head.",
+      "$n pats you on your head.",
+      "Who, where, what??",
+      "You pat yourself on your head, very reassuring.",
+      "$n pats $mself on the head."
+    ]
+  },
+  {
+    "name": "peer",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You peer around you, uncertain that what you see is actually true.",
+      "$n peers around, looking as if $e has trouble seeing everything clearly.",
+      "You peer at $M uncertainly.",
+      "$n peers at $N uncertainly.",
+      "$n peers at you uncertainly.",
+      "You peer at someone from a distance.",
+      "You peer around you, uncertain that what you see is actually true.",
+      "$n peers around, looking as if $e has trouble seeing everything clearly."
+    ]
+  },
+  {
+    "name": "poke",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Poke who??",
+      "#",
+      "You poke $M in the ribs.",
+      "$n pokes $N in the ribs.",
+      "$n pokes you in the ribs.",
+      "You can't poke someone who's not here!",
+      "You poke yourself in the ribs, feeling very silly.",
+      "$n pokes $mself in the ribs, looking very sheepish."
+    ]
+  },
+  {
+    "name": "ponder",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You ponder over matters as they appear to you at this moment.",
+      "$n sinks deeply into $s own thoughts.",
+      "#"
+    ]
+  },
+  {
+    "name": "pose",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You stand as tall as the gods themselves.",
+      "$n suffers from a severe case of schizophrenic megalomania.",
+      "#"
+    ]
+  },
+  {
+    "name": "pout",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Ah, don't take it so hard.",
+      "$n pouts.",
+      "#"
+    ]
+  },
+  {
+    "name": "pray",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You feel righteous, and maybe a little foolish.",
+      "$n begs and grovels to the powers that be.",
+      "You crawl in the dust before $M.",
+      "$n falls down and grovels in the dirt before $N.",
+      "$n kisses the dirt at your feet.",
+      "No such person around; your prayers vanish into the endless voids.",
+      "Talk about narcissism...",
+      "$n performs some strange yoga-exercises and mumbles a prayer to $mself."
+    ]
+  },
+  {
+    "name": "puke",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You puke.",
+      "$n pukes.",
+      "You puke on $M.",
+      "$n pukes on $N.",
+      "$n pukes on your clothes!",
+      "Once again?",
+      "You puke on yourself.",
+      "$n pukes on $s clothes."
+    ]
+  },
+  {
+    "name": "punch",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Punch the air?  Sure, go ahead, fine by me...",
+      "$n starts shadow-boxing.",
+      "You punch $M right in the face!  Yuck, the BLOOD!",
+      "$n punches weakly at $N, missing by miles.",
+      "$n tries a punch at you but misses by a good quarter-mile...",
+      "Punch who?",
+      "You punch yourself in the face resulting in your own nose being bloodied.",
+      "$n punches $mself in the face, looking kind of stupid."
+    ]
+  },
+  {
+    "name": "purr",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "MMMMEEEEEEEEOOOOOOOOOWWWWWWWWWWWW.",
+      "$n purrs contentedly.",
+      "#"
+    ]
+  },
+  {
+    "name": "ren",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Oh! Happy Happy, Joy Joy!",
+      "$n jumps up and shouts: \"Oh, Happy Happy, Joy Joy!!\"",
+      "You turn to $M and shout: \"You eeediot!!\"",
+      "$n turns to $N and shouts: \"You eeediot!!\"",
+      "$n turns to you and shouts: \"You eeediot!!\"",
+      "You eeediot!!!",
+      "Oh! Happy Happy, Joy Joy!",
+      "$n sniffs $mself and says: \"Sttteeenky!!!\""
+    ]
+  },
+  {
+    "name": "roll",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You roll your eyes in disgust.",
+      "$n rolls $s eyes in disgust.",
+      "You look at $M and roll your eyes in disgust.",
+      "$n looks at $N in contempt and rolls $s eyes with disgust.",
+      "$n stares at you and rolls $s eyes in digust.",
+      "Um... who?",
+      "You roll your eyes, disgusted with your own incompetence.",
+      "$n rolls $s eyes, disgusted with $mself."
+    ]
+  },
+  {
+    "name": "ruffle",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You've got to ruffle SOMEONE.",
+      "#",
+      "You ruffle $N's hair playfully.",
+      "$n ruffles $N's hair playfully.",
+      "$n ruffles your hair playfully.",
+      "Might be a bit difficult.",
+      "You ruffle your hair, wondering how far you can go before the rest think you're crazy.",
+      "$n ruffles $s hair -- weirdo!"
+    ]
+  },
+  {
+    "name": "scream",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "ARRRRRRRRRRGH!!!!!",
+      "$n screams loudly!",
+      "#"
+    ]
+  },
+  {
+    "name": "shake",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You shake your head.",
+      "$n shakes $s head.",
+      "You shake $S hand.",
+      "$n shakes $N's hand.",
+      "$n shakes your hand.",
+      "Sorry good buddy, but that person doesn't seem to be here.",
+      "You are shaken by yourself.",
+      "$n shakes and quivers like a bowlful of jelly."
+    ]
+  },
+  {
+    "name": "shishkabob",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You whip out your kabobing tools.",
+      "$n whips out $s kabobing tools and prepares lunch.",
+      "You shishkabob $M right through $S heart.",
+      "$n shishkabobs $N right through $S heart.",
+      "$n shishkabobs you right through your heart.",
+      "Sorry good chef, but that person doesn't seem to be here.",
+      "You stab yourself in the arm.  I hope you're not planning to eat that!",
+      "$n kabobs $mself right in the arm... YUCK!!!"
+    ]
+  },
+  {
+    "name": "shiver",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Brrrrrrrrr.",
+      "$n shivers uncomfortably.",
+      "#"
+    ]
+  },
+  {
+    "name": "shrug",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You shrug.",
+      "$n shrugs.",
+      "#"
+    ]
+  },
+  {
+    "name": "shudder",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You shudder in fear.",
+      "$n shudders in fear.",
+      "#"
+    ]
+  },
+  {
+    "name": "sigh",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You sigh.",
+      "$n sighs loudly.",
+      "#"
+    ]
+  },
+  {
+    "name": "sing",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You raise your clear (?) voice towards the sky.",
+      "SEEK SHELTER AT ONCE!  $n has begun to sing.",
+      "You begin to seranade $M. Lalala...",
+      "$n raises $s voice and beings to seranade $N. Lalala.",
+      "$n raises $s voice and beings to seranade you. Lalala.",
+      "They can't hear you, wherever they are.",
+      "You sing to yourself.  Ladidadida.",
+      "$n sings to $mself.  Ladidadida."
+    ]
+  },
+  {
+    "name": "slap",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Normally you slap SOMEBODY.",
+      "#",
+      "You slap $N.",
+      "$n slaps $N.",
+      "You are slapped by $n.",
+      "How about slapping someone in the same room as you??",
+      "You slap yourself, silly you.",
+      "$n slaps $mself, really strange..."
+    ]
+  },
+  {
+    "name": "smile",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You smile happily.",
+      "$n smiles happily.",
+      "You smile at $M.",
+      "$n beams a smile at $N.",
+      "$n smiles at you.",
+      "There's no one by that name around.",
+      "You smile at yourself.",
+      "$n smiles at $mself."
+    ]
+  },
+  {
+    "name": "smirk",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You smirk.",
+      "$n smirks.",
+      "#"
+    ]
+  },
+  {
+    "name": "snap",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "PRONTO!  You snap your fingers.",
+      "$n snaps $s fingers.",
+      "#"
+    ]
+  },
+  {
+    "name": "snarl",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You snarl like a vicious animal.",
+      "$n snarls like a cornered, vicious animal.",
+      "You snarl at $M angrily.  Control yourself!",
+      "$n snarls angrily at $N.  $e seems incapable of controlling $mself.",
+      "$n snarls viciously at you.  $s self-control seems to have gone bananas.",
+      "Eh?  Who?  Not here, my friend.",
+      "You snarl at yourself, obviously suffering from schizophrenia.",
+      "$n snarls at $mself, and suddenly looks very frightened."
+    ]
+  },
+  {
+    "name": "sneeze",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Gesundheit!",
+      "$n sneezes.",
+      "You sneeze all over $S face.",
+      "$n sneezes all over your face.",
+      "$n sneezes all over $N's face.",
+      "You missed.",
+      "You sneeze all over yourself, ICKY!",
+      "Eww! $n just sneezed all over $mself."
+    ]
+  },
+  {
+    "name": "snicker",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You snicker softly.",
+      "$n snickers softly.",
+      "You snicker at $N.",
+      "$n snickers at $N.",
+      "$n snickers at you.",
+      "Who?",
+      "#"
+    ]
+  },
+  {
+    "name": "sniff",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You sniff sadly.  *SNIFF*",
+      "$n sniffs sadly.",
+      "#"
+    ]
+  },
+  {
+    "name": "snore",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Zzzzzzzzzzzzzzzzz.",
+      "$n snores loudly.",
+      "#"
+    ]
+  },
+  {
+    "name": "snowball",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Who do you want to throw a snowball at??",
+      "#",
+      "You throw a snowball in $N's face.",
+      "$n conjures a snowball from thin air and throws it at $N.",
+      "$n conjures a snowball from thin air and throws it at you.",
+      "You stand with the snowball in your hand because your victim is not here.",
+      "You conjure a snowball from thin air and throw it at yourself.",
+      "$n conjures a snowball out of the thin air and throws it at $mself."
+    ]
+  },
+  {
+    "name": "snuggle",
+    "min_level": 1,
+    "hide_flag": 5,
+    "messages": [
+      "Who?",
+      "#",
+      "you snuggle $M.",
+      "$n snuggles up to $N.",
+      "$n snuggles up to you.",
+      "They aren't here.",
+      "Hmmm...",
+      "#"
+    ]
+  },
+  {
+    "name": "spank",
+    "min_level": 0,
+    "hide_flag": 8,
+    "messages": [
+      "You spank WHO?  Eh?  How?  Naaah, you'd never.",
+      "$n spanks the thin air with a flat hand.",
+      "You spank $M vigorously, long and hard.  Your hand hurts.",
+      "$n spanks $N over $s knee.  It hurts to even watch.",
+      "$n spanks you long and hard.  You feel like a naughty child.",
+      "Are you sure about this?  I mean, that person isn't even here!",
+      "Hmm, not likely.",
+      "#"
+    ]
+  },
+  {
+    "name": "spew",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "SPEW!!!!!",
+      "EWW!!! $n spews all over.",
+      "EWW!!! You spew all over $M.",
+      "YECK!!! $n spews all over $N.",
+      "YECK!!! $n spews all over you!",
+      "Again?",
+      "You spew all over yourself.",
+      "$n spews all over $s own clothes."
+    ]
+  },
+  {
+    "name": "spit",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You spit over your left shoulder.",
+      "$n spits over $s left shoulder.",
+      "You spit on $M.",
+      "$n spits in $N's face.",
+      "$n spits in your face.",
+      "Can you spit that far?",
+      "You drool down your front.",
+      "$n drools down $s front."
+    ]
+  },
+  {
+    "name": "squeeze",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Where, what, how, WHO???",
+      "#",
+      "You squeeze $M fondly.",
+      "$n squeezes $N fondly.",
+      "$n squeezes you fondly.",
+      "Where, what, how, WHO???",
+      "You squeeze yourself -- try to relax a little!",
+      "$n squeezes $mself."
+    ]
+  },
+  {
+    "name": "stare",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You stare at the sky.",
+      "$n stares at the sky.",
+      "You stare dreamily at $N, completely lost in $S eyes..",
+      "$n stares dreamily at $N.",
+      "$n stares dreamily at you, completely lost in your eyes.",
+      "You stare and stare but can't see that person anywhere...",
+      "You stare dreamily at yourself - enough narcissism for now.",
+      "$n stares dreamily at $mself - NARCISSIST!"
+    ]
+  },
+  {
+    "name": "steam",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You let out some steam, much to the others' relief (and your own!)",
+      "$n lets out a lot of steam, much to your relief.",
+      "#"
+    ]
+  },
+  {
+    "name": "stimpy",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Oh! Happy Happy, Joy Joy!",
+      "$n jumps up and shouts: \"Oh, Happy Happy, Joy Joy!!\"",
+      "You turn to $M and shout: \"Oh, Happy Happy, Joy Joy!\"",
+      "$n turns to $N and shouts: \"Oh, Happy Happy, Joy Joy!\"",
+      "$n turns to you and shouts: \"Oh, Happy Happy, Joy Joy!\"",
+      "Oh! Happy Happy, Joy Joy!",
+      "Oh! Happy Happy, Joy Joy!",
+      "$n sniffs $mself and says: \"Sttteeenky!!!\""
+    ]
+  },
+  {
+    "name": "stroke",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Whose thigh would you like to stroke?",
+      "#",
+      "You gently stroke $S inner thigh.",
+      "$n gently strokes $N's inner thigh... hmm...",
+      "$n gently strokes your inner thigh with feathery touches.",
+      "That person is not within reach.",
+      "You are about to do something you would rather not be caught doing.",
+      "$n starts to do something disgusting and then stops."
+    ]
+  },
+  {
+    "name": "strut",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Strut your stuff.",
+      "$n struts proudly.",
+      "#"
+    ]
+  },
+  {
+    "name": "sulk",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You sulk.",
+      "$n sulks in the corner.",
+      "#"
+    ]
+  },
+  {
+    "name": "tackle",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You tackle the air.  It stands not a chance.",
+      "$n starts running around $mself in a desperate attempt to tackle the air.",
+      "You ruthlessly tackle $M to the ground.",
+      "$n ruthlessly tackles $N, pinning $M to the ground.",
+      "$n suddenly lunges at you and tackles you to the ground!",
+      "That person isn't here (lucky for them, it would seem...)",
+      "Tackle yourself?  Yeah, right....",
+      "$n makes a dextrous move and kicks $s left leg away with $s right."
+    ]
+  },
+  {
+    "name": "tango",
+    "min_level": 0,
+    "hide_flag": 8,
+    "messages": [
+      "With whom would you like to tango?",
+      "$n puts a rose between $s teeth, but takes out it since noone joins $m.",
+      "You put a rose between your teeth and tango with $M seductively.",
+      "$n puts a rose between $s teeth and tangos with $N seductively.",
+      "$n puts a rose between $s teeth and tangos with you seductively.",
+      "That person isn't around.  Better sit this one out.",
+      "Feels rather stupid, doesn't it?",
+      "$n puts a rose between $s teeth and tries to tango with $mself."
+    ]
+  },
+  {
+    "name": "tap",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You seem very impatient today.",
+      "$n taps $s foot impatiently.",
+      "You reach over and tap $N on the shoulder.",
+      "$n reaches over and taps $N on the shoulder.",
+      "$n reaches over and taps you on the shoulder.",
+      "Really now?",
+      "You tap yourself and go horizontal.",
+      "$n taps $mself and goes horizontal."
+    ]
+  },
+  {
+    "name": "taunt",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You taunt the nothing in front of you.",
+      "$n taunts something that seems to be right in front of $m.",
+      "You taunt $M, to your own delight.",
+      "$n taunts $N rather insultingly.  $n seems to enjoy it tremendously.",
+      "$n taunts you.  It really hurts your feelings.",
+      "Hmmmmmmm.....nope, no one by that name here.",
+      "You taunt yourself, almost making you cry...:(",
+      "$n taunts $mself to tears."
+    ]
+  },
+  {
+    "name": "thank",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "Thank you too.",
+      "#",
+      "You thank $N heartily.",
+      "$n thanks $N heartily.",
+      "$n thanks you heartily.",
+      "No one answers to that name here.",
+      "You thank yourself since nobody else wants to!",
+      "$n thanks $mself since you won't."
+    ]
+  },
+  {
+    "name": "thumbsup",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You seem very happy today.",
+      "$n gives everyone a big thumbs up.",
+      "You give $N a big thumbs up.",
+      "$n gives $N a big thumbs up.",
+      "$n gives you a big thumbs up.",
+      "You don't see that person.",
+      "You feel extremely silly.",
+      "$n gives $mself a big thumbs up.  How silly."
+    ]
+  },
+  {
+    "name": "tickle",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Who do you want to tickle??",
+      "#",
+      "You tickle $N.",
+      "$n tickles $N.",
+      "$n tickles you - hee hee hee.",
+      "Who is that??",
+      "You tickle yourself, how funny!",
+      "$n tickles $mself."
+    ]
+  },
+  {
+    "name": "twiddle",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You patiently twiddle your thumbs.",
+      "$n patiently twiddles $s thumbs.",
+      "#"
+    ]
+  },
+  {
+    "name": "wave",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You wave.",
+      "$n waves happily.",
+      "You wave goodbye to $N.",
+      "$n waves goodbye to $N.",
+      "$n waves goodbye to you.  Have a good journey.",
+      "They didn't wait for you to wave goodbye.",
+      "Are you going on adventures as well??",
+      "$n waves goodbye to $mself."
+    ]
+  },
+  {
+    "name": "wee",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Weeeee!!!!!!",
+      "Flapping $s hands up and down like a bird, $n runs around screaming: \"Weeee!!!\"",
+      "#"
+    ]
+  },
+  {
+    "name": "weep",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Boo, hoo, hoo... boo, hoo, hoo...",
+      "$n weeps with regal sadness.",
+      "#"
+    ]
+  },
+  {
+    "name": "whimper",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You whimper cowardly.",
+      "$n whimpers in the corner, what a coward.",
+      "#"
+    ]
+  },
+  {
+    "name": "whine",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You whine pitifully.",
+      "$n whines pitifully about the whole situation.",
+      "#"
+    ]
+  },
+  {
+    "name": "whistle",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You whistle appreciatively.",
+      "$n whistles appreciatively.",
+      "#"
+    ]
+  },
+  {
+    "name": "wiggle",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You wiggle your bottom.",
+      "$n wiggles $s bottom.",
+      "#"
+    ]
+  },
+  {
+    "name": "wink",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "Have you got something in your eye?",
+      "$n winks suggestively.",
+      "You wink suggestively at $N.",
+      "$n winks at $N.",
+      "$n winks suggestively at you.",
+      "No one with that name is present.",
+      "You wink at yourself?? -- what are you up to?",
+      "$n winks at $mself -- something strange is going on..."
+    ]
+  },
+  {
+    "name": "worship",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You find yourself head-down in the dirt, worshipping.",
+      "$n starts worshipping nothing at all.",
+      "You fall to your knees and worship $M deeply.",
+      "$n falls to $s knees, worshipping $N with uncanny dedication.",
+      "$n kneels before you in solemn worship.",
+      "Uh.. who?  They're not here, pal.",
+      "You seem sure to have found a true deity.....",
+      "$n falls to $s knees and humbly worships $mself."
+    ]
+  },
+  {
+    "name": "yawn",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You yawn, bored and tired.",
+      "$n yawns.",
+      "#"
+    ]
+  },
+  {
+    "name": "yodel",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You start yodelling loudly and rather beautifully in your own ears.",
+      "$n starts a yodelling session that goes right to the bone.",
+      "#"
+    ]
+  },
+  {
+    "name": "laugh",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You laugh.",
+      "$n laughs.",
+      "You laugh at $M.",
+      "$n laughs at $N.",
+      "$n laughs at you.",
+      "Laugh at who?",
+      "You laugh at yourself.",
+      "$n laughs at $mself."
+    ]
+  },
+  {
+    "name": "nod",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You nod.",
+      "$n nods.",
+      "You nod at $M.",
+      "$n nods at $N.",
+      "$n nods at you.",
+      "Who?",
+      "#"
+    ]
+  },
+  {
+    "name": "throttle",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You really feel like throttling someone!",
+      "$n looks like $e could throttle someone!",
+      "You wrap your hands around $S neck and throttle $M!",
+      "$n wraps $s hands around $N's neck and throttles $M!",
+      "$n grabs you by the neck and throttles you!",
+      "Noone here by that name...",
+      "You try to throttle yourself.",
+      "$n tries to throttle $mself."
+    ]
+  },
+  {
+    "name": "bellow",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You bellow loudly.",
+      "$n makes a thunderous noise.",
+      "You bellow loudly at $M.",
+      "$n bellows loudly in $N's direction.",
+      "$n bellows loudly at you.",
+      "Moron! Noone here wants to hear your crap!",
+      "You bellow loudly, stretching your vocal chords.",
+      "$n tries to bellow to $mself but everyone takes notice."
+    ]
+  },
+  {
+    "name": "piss",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You take a piss in the corner.",
+      "$n takes a piss.",
+      "You piss on $M.",
+      "$n lifts up $s hind leg and pisses on $N.",
+      "$n lifts up $s hind leg and pisses on you.",
+      "There's no one by that name around.",
+      "You piss on yourself.",
+      "$n pisses all over $mself."
+    ]
+  },
+  {
+    "name": "howl",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You howl loudly and mournfully.",
+      "$n howls loudly and mournfully, ah-OOOOoooooo...",
+      "#"
+    ]
+  },
+  {
+    "name": "reel",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You reel around the room drunkenly.",
+      "$n reels around like a drunken sot.",
+      "You reel up to $N and breathe alcohol into $S face.",
+      "$n reels up to $N and tries to steady $mself, and they both fall down.",
+      "$n reels up to you and grabs on to you for support, knocking you over.",
+      "Who? *laugh* Not here, buddy.",
+      "You reel around, feeling quite suave in your lack of sobriety.",
+      "$n reels around and looks like it's time to visit the porcelain god."
+    ]
+  },
+  {
+    "name": "plot",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "A plot begins to form in your mind.",
+      "$n's eyes light up with an evil glow as $e forms a plot.",
+      "You make your dastardly plot against $N.",
+      "$n looks perfectly evil as $e forms a plot against $N.",
+      "You knew it!  You just knew $n was plotting against you!",
+      "You plot against thin air.",
+      "You set your evil plan in motion -- against yourself!",
+      "$n forms a deadly plot against $mself.  Scary."
+    ]
+  },
+  {
+    "name": "tug",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You go around looking for someone to tug on.",
+      "$n looks for someone's sleeve to tug on.",
+      "You tug on $N's sleeve and whine.",
+      "$n tugs on $N's sleeve and whines.",
+      "$n tugs on your sleeve to get your attention.",
+      "You tug on a non-existent sleeve.",
+      "You tug on your own sleeve.  Whoops, you tore your shirt.",
+      "$n tugs on $s own sleeve, creating a big hole in $s shirt."
+    ]
+  },
+  {
+    "name": "spackle",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You inspect the walls for damage.",
+      "$n hauls out $s pail of spackle and looks for a crack to repair.",
+      "You thoroughly coat $N with a bumpy sheen of spackle.",
+      "$n puts a liberal coating of spackle on $N.",
+      "$n spackles you all over.",
+      "You throw spackle all over in frustration because $N is not here.",
+      "You dump a pail of spackle over your head.",
+      "$n thoroughly spackles $mself."
+    ]
+  },
+  {
+    "name": "smell",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "You take a whiff.  Phew!",
+      "$n sniffs around the room and wrinkles $s nose.",
+      "You snuffle around the crotch of $N.",
+      "$n plants $s nose in the crotch of $N and snuffles around like a dog.",
+      "$n sticks $s nose right in your crotch.",
+      "You smell... the invisible man!",
+      "You smell your armpits.  Perhaps you should bathe.",
+      "$n takes a big whiff of $s armpits and wonders if $e needs a bath."
+    ]
+  },
+  {
+    "name": "violate",
+    "min_level": 1,
+    "hide_flag": 0,
+    "messages": [
+      "They call you... The Violater!",
+      "$n looks like $e is just about to go on a violation rampage.",
+      "You disgustingly violate $N.",
+      "$N looks appalled as $n positively violates $M.",
+      "$n violates you in unspeakable ways.",
+      "You could get arrested for violating the air, you know.",
+      "You feel violated!",
+      "$n looks like $e's been violated."
+    ]
+  },
+  {
+    "name": "boggle",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You boggle at the concept.",
+      "$n boggles at the concept.",
+      "You boggle at $M in disbelief.",
+      "$n boggles at $N in disbelief.",
+      "$n boggles at you in disbelief.",
+      "Boggle away, they aren't here.",
+      "You boggle in disbelief at yourself.",
+      "$n seems to be having an inner struggle."
+    ]
+  },
+  {
+    "name": "cheer",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You cheer wildly!",
+      "$n cheers wildly for the home team!",
+      "You cheer $N on.. GO $N! GO $N! GO $N!!",
+      "$n cheers $N on.. GO $N! GO $N! GO $N!",
+      "$n cheers you on. You RULE in $s eyes!",
+      "You cheer wildly for someone who has already left.",
+      "You cheer yourself on to greater conquests!",
+      "$n thinks $e is hot shit!"
+    ]
+  },
+  {
+    "name": "whap",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You whap the ground.",
+      "$n whaps the ground.",
+      "You whap $N upside the head.",
+      "$n whaps $N upside the head.",
+      "$n whaps you upside the head.",
+      "Whap who? They aren't here.",
+      "You whap yourself upside the head.",
+      "$n tries to knock some sense into $mself."
+    ]
+  },
+  {
+    "name": "bitch",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You make a back-handed sweep in the air to convey your feelings.",
+      "$n bitch-slaps $s imaginary friend.",
+      "You bitch-slap $M across the room.",
+      "$n bitch-slaps $N all over the place!",
+      "$n bitch-slaps you all over the place!",
+      "They're not here. Bitch away.",
+      "You bitch-slap yourself... hard to do, isnt it?",
+      "$n tries to inflict some self discipline."
+    ]
+  },
+  {
+    "name": "gag",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You gag.",
+      "$n looks like $e is about to gag.",
+      "You attempt to gag $M with your fingers?",
+      "$n tries to shove $s fingers? down $N's throat.",
+      "$n shoves $s ... fingers ... into your mouth in an attempt to gag you.",
+      "Sorry, but that person doesn't seem to be here.",
+      "You stick your fingers down your throat.",
+      "$n sticks $s fingers down $s throat, and gags $sself."
+    ]
+  },
+  {
+    "name": "flex",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You flex your huge muscles.",
+      "You are in awe as $n flexes $s muscles.",
+      "You flex at $N, is that sexual harassment?",
+      "You see $n flexing at $N, how scary!",
+      "$n is flexing $m muscles at you, how scary!",
+      "Flex at who?",
+      "You impress yourself with your muscles.",
+      "You watch in disgust as $n flexes $s muscles in the mirror."
+    ]
+  },
+  {
+    "name": "beckon",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You beckon to all around you.",
+      "$n beckons for everyone to join $m.",
+      "You beckon $N to join you.",
+      "$n beckons $N over to $m.",
+      "$n beckons you.",
+      "Sorry, but that person doesn't seem to be here.",
+      "#"
+    ]
+  },
+  {
+    "name": "pant",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You pant.",
+      "$n pants.",
+      "You pant in $N's direction.",
+      "$n pants at $N.",
+      "$n pants at you.",
+      "Sorry, but that person doesn't seem to be here.",
+      "You quitely pant to yourself.",
+      "$n seems to be having a breathing problem."
+    ]
+  },
+  {
+    "name": "pace",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You pace back and forth.",
+      "$n paces back and forth.",
+      "#"
+    ]
+  },
+  {
+    "name": "hump",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You hump around.",
+      "$n humps around.",
+      "You hump $N's leg.",
+      "$n humps $N's leg.",
+      "$n humps your leg.",
+      "Keep it in your pants, that person isn't here.",
+      "You hump your own leg, how talented you are.",
+      "$n humps all over $mself."
+    ]
+  },
+  {
+    "name": "thpbt",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You stick out your tongue and go 'thhppbbbttt!'",
+      "$n sticks out $s tongue and goes 'thhppbbbttt!'",
+      "#"
+    ]
+  },
+  {
+    "name": "rofl",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You roll on the floor laughing.",
+      "$n rolls on the floor laughing.",
+      "$n rolls on the floor laughing at $N.",
+      "$n rolls on the floor laughing at you.",
+      "Laugh at who? They aren't here.",
+      "You roll on the floor laughing at yourself.",
+      "$n rolls on the floor laughing at $mself.",
+      "#"
+    ]
+  },
+  {
+    "name": "yuball",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You teach everyone how to do the \"Yub! Yub!\" song and dance.",
+      "$n teaches you how to do the \"Yub! Yub!\" song and dance.",
+      "#"
+    ]
+  },
+  {
+    "name": "salute",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You salute with a quick snap of the wrist.",
+      "$n snaps to attention and does a salute.",
+      "You salute $N.",
+      "$n salutes $N.",
+      "$n salutes you.",
+      "Salute who? They aren't here.",
+      "You try to salute yourself.",
+      "$n nearly breaks $s wrist trying to salute $mself."
+    ]
+  },
+  {
+    "name": "sweat",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You break out in a cold sweat.",
+      "$n starts to sweat profusely.",
+      "#"
+    ]
+  },
+  {
+    "name": "thunk",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You hit your head and hear a hollow thunk.",
+      "$n hits $s head with a hollow thunk.",
+      "You thunk $N hollowly on the head.",
+      "$n thunks $N hollowly on the head.",
+      "$n thunks you hollowly on the head.",
+      "Thunk who?",
+      "You hit your head and hear a hollow thunk.",
+      "$n hits $s head with a hollow thunk."
+    ]
+  },
+  {
+    "name": "anguish",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You feel burning anguish inside and know it won't go away.",
+      "You see burning anguish in the life of $n as they sink into despair.",
+      "#"
+    ]
+  },
+  {
+    "name": "bleed",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You bleed.",
+      "$n bleeds.",
+      "You bleed on $N.",
+      "$n bleeds on $N.",
+      "$n bleeds on you.",
+      "Sorry, but that person doesn't seem to be here.",
+      "You bleed yourself.",
+      "$n bleeds $mself."
+    ]
+  },
+  {
+    "name": "mosh",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You thrash your head around in circles, damn your neck hurts!",
+      "You think $n looks like a silly chicken thrashing about.",
+      "You slam your body into $N.",
+      "Damn, that really must have hurt $N when $n hit $M with that mosh.",
+      "$n slams into you with and incredible mosh.",
+      "Mosh who?",
+      "You mosh into a wall!",
+      "$n looks injured moshing $mself into the wall."
+    ]
+  },
+  {
+    "name": "wedgie",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You pull your underwear out of your crack!",
+      "You watch as $n un-wedgies $mself.",
+      "You grab $N's underwear and pull up HARD.",
+      "You see $n give a painful wedgie to $N.",
+      "$n almost rips your underwear off with an incredible wedgie.",
+      "Wedgie who?",
+      "You give yourself a wedgie.",
+      "You watch $n pull $s underwear nearly over $s head."
+    ]
+  },
+  {
+    "name": "raise",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You raise your eyebrows in question.",
+      "$n raises one of $s eyebrows in question.",
+      "You raise your eyebrows in question at $N.",
+      "You see $n raise $s eyebrows at $N in question.",
+      "$n raises $s eyebrows at you in question.",
+      "Raise your eyebrows at who?",
+      "You try to see yourself raising your eyebrows.",
+      "You watch $n contort $s face to watch $s eyebrows."
+    ]
+  },
+  {
+    "name": "threaten",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You threaten the room wildly.",
+      "You watch as $n threatens everyone in the room.",
+      "You threaten $N, that dirty rat!",
+      "You see $n threaten $N, maybe you should step in and calm things down.",
+      "$n threatens you, how mean!",
+      "Threaten who?",
+      "#"
+    ]
+  },
+  {
+    "name": "blame",
+    "min_level": 0,
+    "hide_flag": 5,
+    "messages": [
+      "You blame everyone in the room for your troubles.",
+      "You watch $n blame everyone in the room for life's troubles.",
+      "You blame $N.",
+      "You see $n blame $N, how rude!",
+      "$n blames you.",
+      "Blame who?",
+      "Don't blame yourself...things will get better.",
+      "$n blames $mself for a long time."
+    ]
+  },
+  {
+    "name": "doh",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You smack your hand to your forehead, 'DOH!'",
+      "You see $n smack $s hand to $s head exclaiming, 'DOH!'",
+      "#"
+    ]
+  },
+  {
+    "name": "waltz",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You waltz around the room.",
+      "$n waltzs around the room.",
+      "You waltz with $N.",
+      "$n waltzs with $N.",
+      "$n waltzs around the room with you.",
+      "There's no one by that name around.",
+      "You waltz around with an air partner, looking like Fred Astaire.",
+      "$n waltzs around with an air partner, looking like Fred Astaire."
+    ]
+  },
+  {
+    "name": "shame",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You spin around shaming everyone.",
+      "$n spins around the room shaming everyone.",
+      "You shame $N.",
+      "$n shames $N.",
+      "$n shames you.",
+      "Who?!?",
+      "You shame yourself.",
+      "$n shames $mself."
+    ]
+  },
+  {
+    "name": "stretch",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You stretch your arms out.",
+      "$n stretchs $s arms out and lets out a yawn.",
+      "#"
+    ]
+  },
+  {
+    "name": "heh",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You heh.",
+      "$n hehs.",
+      "#"
+    ]
+  },
+  {
+    "name": "listen",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You listen.",
+      "$n listens.",
+      "#"
+    ]
+  },
+  {
+    "name": "hum",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You hum all innocent-like.",
+      "$n hums innocently.",
+      "#"
+    ]
+  },
+  {
+    "name": "bah",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You say \"Bah!\" and wave off the whole idea.",
+      "$n says \"Bah!\" and waves $s hand negligently.",
+      "#"
+    ]
+  },
+  {
+    "name": "blink",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You blink your eyelashes innocently.",
+      "$n blinks $s eyelashes innocently.",
+      "#"
+    ]
+  },
+  {
+    "name": "chide",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You generally chide someone...",
+      "#",
+      "You gently chide $N.",
+      "$n chides $N gently.",
+      "$n chides you with a disapproving glance.",
+      "Chide who?",
+      "You chide yourself, laying a guilt trip on everyone.",
+      "$n chides $mself, laying a guilt trip on you."
+    ]
+  },
+  {
+    "name": "sneer",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You curl your lip in a sneer.",
+      "$n sneers.",
+      "You sneer at $N.",
+      "$n sneers at $N.",
+      "$n sneers at you.",
+      "Sneer at whom?",
+      "You curl your lip in a sneer.",
+      "$n sneers."
+    ]
+  },
+  {
+    "name": "apologize",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You apologize to the entire room.",
+      "$n apologizes profusely.",
+      "You profusely apologize to $N.",
+      "$n apologizes profusely to $N.",
+      "$n apologizes to you profusely.",
+      "Apologize to whom?",
+      "Eh, what?",
+      "#"
+    ]
+  },
+  {
+    "name": "scratch",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You scratch your head in puzzlement.",
+      "$n scratches $s head in puzzlement.",
+      "#"
+    ]
+  },
+  {
+    "name": "noogie",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Generally you noogie SOMEONE.",
+      "#",
+      "You give $M a good noogie.",
+      "$n grabs $N in a headlock and noogies $M.",
+      "$n gives you a rough noogie.",
+      "Noogie who?",
+      "You nearly break your arm in the effort.",
+      "$n nearly breaks $s arm trying to give $mself a noogie."
+    ]
+  },
+  {
+    "name": "scoff",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You scoff at the idea.",
+      "$n scoffs at the idea.",
+      "#"
+    ]
+  },
+  {
+    "name": "goose",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Goose who?",
+      "#",
+      "You goose $M. MMmmMM",
+      "$n sticks out $s thumb and gooses $N.",
+      "$n gooses you.. woo woo!",
+      "Goose who?",
+      "That's disgusting!",
+      "$n sticks $s thumb up $s butt."
+    ]
+  },
+  {
+    "name": "pinch",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "Pinch who?",
+      "#",
+      "You pinch $M right on the butt.",
+      "$n pinches $N on the butt.",
+      "$n pinches your butt.",
+      "Pinch who?",
+      "You pinch yourself to see if you're dreaming.",
+      "$n pinches $mself to makes sure $e's awake."
+    ]
+  },
+  {
+    "name": "farewell",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You wave farewell.",
+      "$n waves farewell.",
+      "You bid $M a fond farewell.",
+      "$n bids a fond farewell to $N.",
+      "$n bids you a fond farewell.",
+      "Farewell to whom?",
+      "Eh?",
+      "#"
+    ]
+  },
+  {
+    "name": "lambada",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You do the forbidden dance with yourself.",
+      "$n does a dance.. which if not already forbidden, it should be.",
+      "You lambada with $N, getting quite horny but making $M nauseous.",
+      "$n does the forbidden dance with $N.",
+      "$n leads you in the steps of the forbidden dance.",
+      "Really now?",
+      "Feeling a little horny?",
+      "$n does a dance.. which if not already forbidden, it should be."
+    ]
+  },
+  {
+    "name": "startle",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You flinch, startled from your reverie.",
+      "$n flinches, startled from $s reverie.",
+      "You sneak up on $N and scare $M out of $S wits.",
+      "$n sneaks up on $N and scares $M out of $S wits.",
+      "$n sneaks up on you and scares you out of your wits.",
+      "You're startled by the fact THEY'RE NOT HERE!",
+      "You flinch, startled from your reverie.",
+      "$n flinches, startled from $s reverie."
+    ]
+  },
+  {
+    "name": "hush",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You shut up before it's too late.",
+      "$n shuts up before it's too late.",
+      "You hush $M with a firm backhand to the mouth.",
+      "$n hushes $N with a firm backhand to the mouth.",
+      "$n hushes you with a firm backhand to the mouth.",
+      "They are extremely quiet.. somewhere else.",
+      "You shut up before it's too late.",
+      "$n shuts up before it's too late."
+    ]
+  },
+  {
+    "name": "tilt",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You tilt your head in question.",
+      "$n tilts $s head in question.",
+      "You adjust $s head a little to the left.. perfect!",
+      "$n adjusts $N's head a little to the left... perfect!",
+      "$n adjusts your head a little to the left... perfect!",
+      "Tilt who? where?",
+      "You tilt your head in question.",
+      "$n tilts $s head in question."
+    ]
+  },
+  {
+    "name": "bless",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You mumble \"Bless you.\"",
+      "$n mumbles \"Bless you.\"",
+      "You nod at $M with mumbled \"Bless you.\"",
+      "$n nods at $N and mumbles \"Bless you.\"",
+      "$n nods at you and mumbles \"Bless you.\"",
+      "Bless who?",
+      "You bless yourself, since noone else will.",
+      "$n blesses $mself, since noone else will."
+    ]
+  },
+  {
+    "name": "bird",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You give the room the bird.",
+      "$n flicks you the bird.",
+      "You flick him the bird.",
+      "$n flicks the bird at $N.",
+      "$n flicks you the bird.",
+      "Bird who?",
+      "Eh?",
+      "#"
+    ]
+  },
+  {
+    "name": "roar",
+    "min_level": 0,
+    "hide_flag": 0,
+    "messages": [
+      "You let out a viscious roar!",
+      "$n raises $s head and lets out a viscious roar!",
+      "Your let out a viscious roar at $M!",
+      "$n lets out a viscious roar at $N!",
+      "$n lets out a viscious roar at you!",
+      "Roar at whom?",
+      "You let out a viscious roar!",
+      "$n raises $s head and lets out a viscious roar!"
+    ]
+  }
+]
