@@ -70,6 +70,26 @@ func (sm *SkillManager) LearnSkill(skill *Skill, charLevel, stat int) bool {
 	return true
 }
 
+// learnSkillLocked is the internal version of LearnSkill — assumes sm.mu is already held.
+func (sm *SkillManager) learnSkillLocked(skill *Skill, charLevel, stat int) bool {
+	if existing, exists := sm.skills[skill.Name]; exists && existing.Learned {
+		return false
+	}
+	if !skill.CanLearn(charLevel, stat) {
+		return false
+	}
+	if len(sm.getLearnedSkills()) >= sm.slots {
+		return false
+	}
+	if sm.points < skill.Difficulty {
+		return false
+	}
+	skill.Learn()
+	sm.skills[skill.Name] = skill
+	sm.points -= skill.Difficulty
+	return true
+}
+
 // PracticeSkill attempts to practice a skill
 func (sm *SkillManager) PracticeSkill(name string, charLevel, stat int) bool {
 	sm.mu.Lock()
@@ -257,8 +277,8 @@ func (sm *SkillManager) TeachSkill(skillName string, target *SkillManager, teach
 	taughtSkill.Practice = 0
 	taughtSkill.Learned = false // Will be set by LearnSkill
 
-	// Try to learn the skill
-	return target.LearnSkill(&taughtSkill, studentLevel, studentStat)
+	// Try to learn the skill — call internal version since target.mu is already held
+	return target.learnSkillLocked(&taughtSkill, studentLevel, studentStat)
 }
 
 // InitializeDefaultSkills registers common MUD skills

@@ -305,9 +305,9 @@ func TestPeriodicEffect(t *testing.T) {
 	am.Tick() // Tick 2
 	am.Tick() // Tick 3 (should expire)
 
-	// Poison should have done damage each tick
-	// Default poison damage is 1 per tick if magnitude is 0
-	expectedHP := initialHP - 3 // 3 ticks of poison damage
+	// Poison does magnitude damage per tick. Tick 3 expires the affect (no damage on expiry).
+	// Ticks 1 and 2 apply periodic effect (magnitude=5 each), tick 3 expires.
+	expectedHP := initialHP - 10 // 2 active ticks * 5 damage
 	if mock.GetHP() != expectedHP {
 		t.Errorf("Expected HP %d after poison, got %d", expectedHP, mock.GetHP())
 	}
@@ -337,9 +337,9 @@ func TestRegenerationAffect(t *testing.T) {
 	am.Tick() // Tick 2
 	am.Tick() // Tick 3 (should expire)
 
-	// Regeneration should have healed each tick
-	// Default regeneration is 1 per tick if magnitude is 0
-	expectedHP := 50 + 3 // 3 ticks of regeneration
+	// Regeneration heals magnitude per tick. Tick 3 expires (no heal on expiry).
+	// Ticks 1 and 2 apply periodic effect (magnitude=5 each), tick 3 expires.
+	expectedHP := 50 + 10 // 2 active ticks * 5 healing
 	if mock.GetHP() != expectedHP {
 		t.Errorf("Expected HP %d after regeneration, got %d", expectedHP, mock.GetHP())
 	}
@@ -365,8 +365,8 @@ func TestTickManager(t *testing.T) {
 	// Manual tick should still work
 	tm.ManualTick()
 
-	if !tm.IsRunning() {
-		t.Error("Tick manager should report running while active")
+	if tm.IsRunning() {
+		t.Error("Tick manager should not be running after Stop()")
 	}
 }
 

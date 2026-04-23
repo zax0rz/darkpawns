@@ -20,7 +20,7 @@ func NewTickManager(affectManager *AffectManager) *TickManager {
 	return &TickManager{
 		affectManager: affectManager,
 		tickInterval:  time.Second, // Default: 1 tick per second
-		done:          make(chan bool),
+		done:          make(chan bool, 1),
 		running:       false,
 	}
 }
