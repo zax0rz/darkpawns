@@ -7,8 +7,112 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/command"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
+
+// cmdRegistry is the global command registry, initialized on first use.
+var cmdRegistry = command.NewRegistry()
+
+// commandSession wraps a *Session to satisfy common.CommandSession.
+// It adapts GetPlayer() *game.Player to GetPlayer() interface{}.
+type commandSession struct {
+	*Session
+}
+
+func (cs *commandSession) GetPlayer() interface{} {
+	return cs.Session.GetPlayer()
+}
+
+// init registers all built-in commands at package initialization.
+func init() {
+	// Movement
+	cmdRegistry.Register("north", wrapMove("north"), "Move north.", 0, 0, "n")
+	cmdRegistry.Register("east", wrapMove("east"), "Move east.", 0, 0, "e")
+	cmdRegistry.Register("south", wrapMove("south"), "Move south.", 0, 0, "s")
+	cmdRegistry.Register("west", wrapMove("west"), "Move west.", 0, 0, "w")
+	cmdRegistry.Register("up", wrapMove("up"), "Move up.", 0, 0, "u")
+	cmdRegistry.Register("down", wrapMove("down"), "Move down.", 0, 0, "d")
+
+	// Look
+	cmdRegistry.Register("look", wrapArgs(cmdLook), "Look around the room.", 0, 0, "l")
+
+	// Communication
+	cmdRegistry.Register("say", wrapArgs(cmdSay), "Say something to the room.", 0, 0)
+	cmdRegistry.Register("tell", wrapArgs(cmdTell), "Send a private message to a player.", 0, 0)
+	cmdRegistry.Register("emote", wrapArgs(cmdEmote), "Perform a roleplay action.", 0, 0, "me")
+	cmdRegistry.Register("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.", 0, 0)
+	cmdRegistry.Register("gtell", wrapArgs(cmdGtell), "Send a message to your group.", 0, 0, "gsay")
+
+	// Combat
+	cmdRegistry.Register("hit", wrapArgs(cmdHit), "Attack a target.", 0, 0, "attack", "kill")
+	cmdRegistry.Register("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.", 0, 0)
+
+	// Items
+	cmdRegistry.Register("inventory", wrapArgs(cmdInventory), "Show your inventory.", 0, 0, "i", "inv")
+	cmdRegistry.Register("equipment", wrapArgs(cmdEquipment), "Show your equipped items.", 0, 0, "eq")
+	cmdRegistry.Register("wear", wrapArgs(cmdWear), "Wear an item from your inventory.", 0, 0)
+	cmdRegistry.Register("remove", wrapArgs(cmdRemove), "Remove an equipped item.", 0, 0)
+	cmdRegistry.Register("wield", wrapArgs(cmdWield), "Wield a weapon.", 0, 0)
+	cmdRegistry.Register("hold", wrapArgs(cmdHold), "Hold an item.", 0, 0)
+	cmdRegistry.Register("get", wrapArgs(cmdGet), "Pick up an item from the room.", 0, 0, "take")
+	cmdRegistry.Register("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.", 0, 0)
+
+	// Info
+	cmdRegistry.Register("score", wrapNoArgs(cmdScore), "Show your character stats.", 0, 0, "sc")
+	cmdRegistry.Register("who", wrapNoArgs(cmdWho), "List all online players.", 0, 0)
+	cmdRegistry.Register("where", wrapNoArgs(cmdWhere), "Show player locations.", 0, 0)
+	cmdRegistry.Register("help", wrapArgs(cmdHelp), "Show available commands or help for a topic.", 0, 0)
+
+	// Group
+	cmdRegistry.Register("follow", wrapArgs(cmdFollow), "Follow another player.", 0, 0)
+	cmdRegistry.Register("group", wrapArgs(cmdGroup), "Manage your group.", 0, 0, "party")
+	cmdRegistry.Register("ungroup", wrapArgs(cmdUngroup), "Disband or leave a group.", 0, 0, "disband")
+
+	// Skills (delegated to pkg/command)
+	cmdRegistry.Register("skills", wrapSkill(command.CmdSkills), "Show your learned skills.", 0, 0, "sk")
+	cmdRegistry.Register("practice", wrapSkill(command.CmdPractice), "Practice a skill.", 0, 0)
+	cmdRegistry.Register("learn", wrapSkill(command.CmdLearn), "Learn a new skill.", 0, 0)
+	cmdRegistry.Register("list", wrapSkill(command.CmdListSkills), "List available skills.", 0, 0, "listskills")
+	cmdRegistry.Register("forget", wrapSkill(command.CmdForget), "Forget a skill.", 0, 0)
+	cmdRegistry.Register("confirm", wrapSkill(command.CmdConfirmForget), "Confirm forgetting a skill.", 0, 0, "confirm forget")
+	cmdRegistry.Register("use", wrapSkill(command.CmdUseSkill), "Use a skill.", 0, 0)
+	cmdRegistry.Register("skillinfo", wrapSkill(command.CmdSkillInfo), "Show info about a skill.", 0, 0, "sinfo")
+
+	// Admin / debug
+	cmdRegistry.Register("summon", wrapArgs(cmdSummon), "Summon a player to your room.", 0, 0)
+
+	// Quit
+	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0)
+}
+
+// wrapArgs adapts a func(*Session, []string) error to command.Handler.
+func wrapArgs(fn func(*Session, []string) error) command.Handler {
+	return func(s common.CommandSession, args []string) error {
+		return fn(s.(*commandSession).Session, args)
+	}
+}
+
+// wrapNoArgs adapts a func(*Session) error to command.Handler.
+func wrapNoArgs(fn func(*Session) error) command.Handler {
+	return func(s common.CommandSession, args []string) error {
+		return fn(s.(*commandSession).Session)
+	}
+}
+
+// wrapMove adapts cmdMove to the registry handler signature.
+func wrapMove(direction string) command.Handler {
+	return func(s common.CommandSession, args []string) error {
+		return cmdMove(s.(*commandSession).Session, direction)
+	}
+}
+
+// wrapSkill adapts a skill command (which uses command.SessionInterface) to command.Handler.
+func wrapSkill(fn func(command.SessionInterface, []string) error) command.Handler {
+	return func(s common.CommandSession, args []string) error {
+		return fn(s.(*commandSession).Session, args)
+	}
+}
 
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, cmdStr string, args []string) error {
@@ -43,93 +147,12 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		}
 	}
 
-	switch cmd {
-	case "look", "l":
-		return cmdLook(s, args)
-	case "north", "n":
-		return cmdMove(s, "north")
-	case "east", "e":
-		return cmdMove(s, "east")
-	case "south", "s":
-		return cmdMove(s, "south")
-	case "west", "w":
-		return cmdMove(s, "west")
-	case "up", "u":
-		return cmdMove(s, "up")
-	case "down", "d":
-		return cmdMove(s, "down")
-	case "say":
-		return cmdSay(s, args)
-	case "hit", "attack", "kill":
-		return cmdHit(s, args)
-	case "flee":
-		return cmdFlee(s)
-	case "quit":
-		return cmdQuit(s)
-	// Item commands
-	case "inventory", "i", "inv":
-		return cmdInventory(s, args)
-	case "equipment", "eq":
-		return cmdEquipment(s, args)
-	case "wear":
-		return cmdWear(s, args)
-	case "remove":
-		return cmdRemove(s, args)
-	case "wield":
-		return cmdWield(s, args)
-	case "hold":
-		return cmdHold(s, args)
-	case "get", "take":
-		return cmdGet(s, args)
-	case "drop":
-		return cmdDrop(s, args)
-	// Social / info commands
-	case "score", "sc":
-		return cmdScore(s)
-	case "who":
-		return cmdWho(s)
-	case "tell":
-		return cmdTell(s, args)
-	case "emote", "me":
-		return cmdEmote(s, args)
-	case "shout":
-		return cmdShout(s, args)
-	case "where":
-		return cmdWhere(s)
-	case "help":
-		return cmdHelp(s, args)
-	// Group / party commands
-	case "follow":
-		return cmdFollow(s, args)
-	case "group", "party":
-		return cmdGroup(s, args)
-	case "ungroup", "disband":
-		return cmdUngroup(s, args)
-	case "gtell", "gsay":
-		return cmdGtell(s, args)
-	// Skill commands
-	case "skills", "sk":
-		return command.CmdSkills(s, args)
-	case "practice":
-		return command.CmdPractice(s, args)
-	case "learn":
-		return command.CmdLearn(s, args)
-	case "list", "listskills":
-		return command.CmdListSkills(s, args)
-	case "forget":
-		return command.CmdForget(s, args)
-	case "confirm", "confirm forget":
-		return command.CmdConfirmForget(s, args)
-	case "use":
-		return command.CmdUseSkill(s, args)
-	case "skillinfo", "sinfo":
-		return command.CmdSkillInfo(s, args)
-	case "summon":
-		return cmdSummon(s, args)
-	default:
+	entry, ok := cmdRegistry.Lookup(cmd)
+	if !ok {
 		s.sendText(fmt.Sprintf("Unknown command: %s", cmdStr))
 		return nil
 	}
+	return entry.Handler(&commandSession{Session: s}, args)
 }
 
 // cmdLook shows the current room.
