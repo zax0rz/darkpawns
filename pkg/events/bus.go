@@ -5,17 +5,17 @@ import (
 	"sync"
 )
 
-// Event is a structured message on the bus.
-type Event interface {
+// BusEvent is a structured message on the bus.
+type BusEvent interface {
 	Type() string
 }
 
 // Handler processes an event.
-type Handler func(ctx context.Context, event Event) error
+type Handler func(ctx context.Context, event BusEvent) error
 
 // Bus is a publish/subscribe event bus.
 type Bus interface {
-	Publish(ctx context.Context, event Event) error
+	Publish(ctx context.Context, event BusEvent) error
 	Subscribe(eventType string, handler Handler) (unsubscribe func())
 }
 
@@ -33,7 +33,7 @@ func NewInProcessBus() *InProcessBus {
 }
 
 // Publish sends an event to all subscribed handlers. Handlers run sequentially.
-func (b *InProcessBus) Publish(ctx context.Context, event Event) error {
+func (b *InProcessBus) Publish(ctx context.Context, event BusEvent) error {
 	b.mu.RLock()
 	handlers := b.handlers[event.Type()]
 	b.mu.RUnlock()
