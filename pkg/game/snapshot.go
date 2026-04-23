@@ -58,7 +58,7 @@ func (sm *SnapshotManager) SnapshotGeneration() uint64 {
 }
 
 // GetRoomFromSnapshot returns a room by VNum from the current snapshot, lock-free.
-func (w *World) GetRoomFromSnapshot(vnum int) (*parser.Room, bool) {
+func (w *World) GetRoom(vnum int) (*parser.Room, bool) {
 	snap := w.snapshots.Snapshot()
 	if snap == nil {
 		return nil, false

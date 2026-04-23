@@ -193,7 +193,8 @@ func (w *World) runMobAI(mob *MobInstance) {
 
 // wanderMob moves a mob to a random adjacent room
 func (w *World) wanderMob(mob *MobInstance) {
-	room, ok := w.rooms[mob.RoomVNum]
+	snap := w.snapshots.Snapshot()
+	room, ok := snap.Rooms[mob.RoomVNum]
 	if !ok {
 		return
 	}
@@ -218,7 +219,7 @@ func (w *World) wanderMob(mob *MobInstance) {
 	var validDirections []string
 	for dir, exit := range room.Exits {
 		// Check if target room exists
-		targetRoom, ok := w.rooms[exit.ToRoom]
+		targetRoom, ok := snap.Rooms[exit.ToRoom]
 		if !ok {
 			continue
 		}
@@ -254,7 +255,7 @@ func (w *World) wanderMob(mob *MobInstance) {
 
 	direction := validDirections[rand.Intn(len(validDirections))]
 	exit := room.Exits[direction]
-	targetRoom := w.rooms[exit.ToRoom]
+	targetRoom := snap.Rooms[exit.ToRoom]
 
 	// Move mob
 	oldRoom := mob.RoomVNum

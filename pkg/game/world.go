@@ -132,13 +132,6 @@ func (w *World) GetParsedWorld() *parser.World {
 }
 
 // GetRoom returns a room by VNum.
-func (w *World) GetRoom(vnum int) (*parser.Room, bool) {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	room, ok := w.rooms[vnum]
-	return room, ok
-}
-
 // GetPlayer returns a player by name.
 func (w *World) GetPlayer(name string) (*Player, bool) {
 	w.mu.RLock()
