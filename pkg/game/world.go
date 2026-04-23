@@ -53,6 +53,9 @@ type World struct {
 
 	// Events is the typed event bus for decoupled subsystem communication.
 	Events events.Bus
+
+	// Zone dispatcher for per-zone goroutine processing
+	zoneDispatcher *ZoneDispatcher
 }
 
 // NewWorld creates a new game world from parsed data.
@@ -103,6 +106,10 @@ func NewWorld(parsed *parser.World) (*World, error) {
 
 	// Initialize typed event bus
 	w.Events = events.NewInProcessBus()
+
+	// Initialize zone dispatcher (per-zone goroutine processing)
+	// Interval matches game pulse rate (~100ms)
+	w.zoneDispatcher = NewZoneDispatcher(w, 100*time.Millisecond)
 
 	// Start AI ticker
 	w.StartAITicker()
@@ -394,6 +401,25 @@ func (w *World) StartZoneResets() error {
 		}
 	}
 	return nil
+}
+
+// StartZoneDispatcher starts per-zone goroutines for resets and AI.
+func (w *World) StartZoneDispatcher() {
+	if w.zoneDispatcher != nil {
+		w.zoneDispatcher.Start()
+	}
+}
+
+// StopZoneDispatcher gracefully stops all zone goroutines.
+func (w *World) StopZoneDispatcher() {
+	if w.zoneDispatcher != nil {
+		w.zoneDispatcher.Stop()
+	}
+}
+
+// GetZoneDispatcher returns the zone dispatcher.
+func (w *World) GetZoneDispatcher() *ZoneDispatcher {
+	return w.zoneDispatcher
 }
 
 // StartPeriodicResets starts periodic zone reset checks.
