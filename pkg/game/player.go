@@ -36,6 +36,8 @@ type Player struct {
 	// Combat stats
 	THAC0      int // To Hit Armor Class 0
 	AC         int // Armor Class
+	Hitroll    int // Hitroll bonus (modified by affects, spell-based)
+	Damroll    int // Damroll bonus (modified by affects, spell-based)
 	DamageRoll combat.DiceRoll
 	Position   int // Current position (standing, fighting, etc.)
 
@@ -469,12 +471,13 @@ func (p *Player) GetWis() int {
 
 // GetHitroll returns the player's hitroll bonus (Phase 2c addition)
 // Source: fight.c uses GET_HITROLL(ch) macro
-// Sums APPLY_HITROLL (location 18) from all equipped items.
+// Sums APPLY_HITROLL (location 18) from all equipped items PLUS affect-modified hitroll.
+// In the original C code, GET_HITROLL is a field that aggregates both equipment and spell-based modifiers.
 func (p *Player) GetHitroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	total := 0
+	total := p.Hitroll
 	if p.Equipment != nil {
 		for _, item := range p.Equipment.Slots {
 			if item == nil || item.Prototype == nil {
@@ -490,14 +493,22 @@ func (p *Player) GetHitroll() int {
 	return total
 }
 
+// SetHitroll sets the player's affect-modified hitroll bonus.
+func (p *Player) SetHitroll(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Hitroll = v
+}
+
 // GetDamroll returns the player's damroll bonus (Phase 2c addition)
 // Source: fight.c uses GET_DAMROLL(ch) macro
-// Sums APPLY_DAMROLL (location 19) from all equipped items.
+// Sums APPLY_DAMROLL (location 19) from all equipped items PLUS affect-modified damroll.
+// In the original C code, GET_DAMROLL is a field that aggregates both equipment and spell-based modifiers.
 func (p *Player) GetDamroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	total := 0
+	total := p.Damroll
 	if p.Equipment != nil {
 		for _, item := range p.Equipment.Slots {
 			if item == nil || item.Prototype == nil {
@@ -511,6 +522,13 @@ func (p *Player) GetDamroll() int {
 		}
 	}
 	return total
+}
+
+// SetDamroll sets the player's affect-modified damroll bonus.
+func (p *Player) SetDamroll(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Damroll = v
 }
 
 // GetStrAdd returns the player's strength add (exceptional strength)

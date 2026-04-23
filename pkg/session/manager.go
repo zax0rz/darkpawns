@@ -631,6 +631,45 @@ func (s *Session) HasPlayer() bool {
 	return s.player != nil
 }
 
+// NewSession creates a bare session not associated with any WebSocket (for telnet/embed use).
+func (m *Manager) NewSession() *Session {
+	return &Session{
+		manager:        m,
+		send:           make(chan []byte, 256),
+		limiter:        rate.NewLimiter(rate.Limit(10), 10),
+		subscribedVars: make(map[string]bool),
+		dirtyVars:      make(map[string]bool),
+		connectedAt:    time.Now(),
+	}
+}
+
+// Manager returns the session manager that owns this session.
+func (s *Session) Manager() *Manager {
+	return s.manager
+}
+
+// PlayerName returns the player name associated with this session.
+func (s *Session) PlayerName() string {
+	return s.playerName
+}
+
+// CloseSend closes the session's outgoing message channel.
+func (s *Session) CloseSend() {
+	if s.send != nil {
+		close(s.send)
+	}
+}
+
+// SendChannel returns the session's outgoing message channel (for telnet/embed).
+func (s *Session) SendChannel() <-chan []byte {
+	return s.send
+}
+
+// HandleMessage is the exported version of handleMessage (for telnet/embed).
+func (s *Session) HandleMessage(data []byte) error {
+	return s.handleMessage(data)
+}
+
 // Close closes the session
 func (s *Session) Close() {
 	// Close the connection and channel

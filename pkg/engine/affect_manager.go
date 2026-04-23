@@ -11,6 +11,8 @@ type Affectable interface {
 	SetAffects([]*Affect)
 	GetName() string
 	GetID() int
+	// IsNPC returns true if this entity is a non-player character
+	IsNPC() bool
 
 	// Stat getters/setters for affects to modify
 	GetStrength() int
@@ -259,28 +261,91 @@ func (am *AffectManager) Tick() {
 	}
 }
 
+// statClampPC clamps an attribute value to the PC-appropriate range [3, 18].
+func statClampPC(v int) int {
+	if v < 3 {
+		return 3
+	}
+	if v > 18 {
+		return 18
+	}
+	return v
+}
+
+// statClampNPC clamps an attribute value to the NPC-appropriate range [3, 25].
+func statClampNPC(v int) int {
+	if v < 3 {
+		return 3
+	}
+	if v > 25 {
+		return 25
+	}
+	return v
+}
+
+// statClamp clamps an attribute based on whether the entity is an NPC.
+func statClamp(entity Affectable, v int) int {
+	if entity.IsNPC() {
+		return statClampNPC(v)
+	}
+	return statClampPC(v)
+}
+
+// hitrollClamp clamps a hitroll bonus to [-100, 100].
+func hitrollClamp(v int) int {
+	if v < -100 {
+		return -100
+	}
+	if v > 100 {
+		return 100
+	}
+	return v
+}
+
+// damrollClamp clamps a damage roll bonus to [-100, 100].
+func damrollClamp(v int) int {
+	if v < -100 {
+		return -100
+	}
+	if v > 100 {
+		return 100
+	}
+	return v
+}
+
+// armorClassClamp clamps an AC value to [-100, 100].
+func armorClassClamp(v int) int {
+	if v < -100 {
+		return -100
+	}
+	if v > 100 {
+		return 100
+	}
+	return v
+}
+
 // applyAffectImmediate applies the immediate effects of an affect
 func (am *AffectManager) applyAffectImmediate(entity Affectable, affect *Affect) {
 	switch affect.Type {
 	case AffectStrength:
-		entity.SetStrength(entity.GetStrength() + affect.Magnitude)
+		entity.SetStrength(statClamp(entity, entity.GetStrength()+affect.Magnitude))
 	case AffectDexterity:
-		entity.SetDexterity(entity.GetDexterity() + affect.Magnitude)
+		entity.SetDexterity(statClamp(entity, entity.GetDexterity()+affect.Magnitude))
 	case AffectIntelligence:
-		entity.SetIntelligence(entity.GetIntelligence() + affect.Magnitude)
+		entity.SetIntelligence(statClamp(entity, entity.GetIntelligence()+affect.Magnitude))
 	case AffectWisdom:
-		entity.SetWisdom(entity.GetWisdom() + affect.Magnitude)
+		entity.SetWisdom(statClamp(entity, entity.GetWisdom()+affect.Magnitude))
 	case AffectConstitution:
-		entity.SetConstitution(entity.GetConstitution() + affect.Magnitude)
+		entity.SetConstitution(statClamp(entity, entity.GetConstitution()+affect.Magnitude))
 	case AffectCharisma:
-		entity.SetCharisma(entity.GetCharisma() + affect.Magnitude)
+		entity.SetCharisma(statClamp(entity, entity.GetCharisma()+affect.Magnitude))
 
 	case AffectHitRoll:
-		entity.SetHitRoll(entity.GetHitRoll() + affect.Magnitude)
+		entity.SetHitRoll(hitrollClamp(entity.GetHitRoll() + affect.Magnitude))
 	case AffectDamageRoll:
-		entity.SetDamageRoll(entity.GetDamageRoll() + affect.Magnitude)
+		entity.SetDamageRoll(damrollClamp(entity.GetDamageRoll() + affect.Magnitude))
 	case AffectArmorClass:
-		entity.SetArmorClass(entity.GetArmorClass() + affect.Magnitude)
+		entity.SetArmorClass(armorClassClamp(entity.GetArmorClass() + affect.Magnitude))
 	case AffectTHAC0:
 		entity.SetTHAC0(entity.GetTHAC0() + affect.Magnitude)
 
@@ -357,24 +422,24 @@ func (am *AffectManager) applyAffectImmediate(entity Affectable, affect *Affect)
 func (am *AffectManager) removeAffectImmediate(entity Affectable, affect *Affect) {
 	switch affect.Type {
 	case AffectStrength:
-		entity.SetStrength(entity.GetStrength() - affect.Magnitude)
+		entity.SetStrength(statClamp(entity, entity.GetStrength()-affect.Magnitude))
 	case AffectDexterity:
-		entity.SetDexterity(entity.GetDexterity() - affect.Magnitude)
+		entity.SetDexterity(statClamp(entity, entity.GetDexterity()-affect.Magnitude))
 	case AffectIntelligence:
-		entity.SetIntelligence(entity.GetIntelligence() - affect.Magnitude)
+		entity.SetIntelligence(statClamp(entity, entity.GetIntelligence()-affect.Magnitude))
 	case AffectWisdom:
-		entity.SetWisdom(entity.GetWisdom() - affect.Magnitude)
+		entity.SetWisdom(statClamp(entity, entity.GetWisdom()-affect.Magnitude))
 	case AffectConstitution:
-		entity.SetConstitution(entity.GetConstitution() - affect.Magnitude)
+		entity.SetConstitution(statClamp(entity, entity.GetConstitution()-affect.Magnitude))
 	case AffectCharisma:
-		entity.SetCharisma(entity.GetCharisma() - affect.Magnitude)
+		entity.SetCharisma(statClamp(entity, entity.GetCharisma()-affect.Magnitude))
 
 	case AffectHitRoll:
-		entity.SetHitRoll(entity.GetHitRoll() - affect.Magnitude)
+		entity.SetHitRoll(hitrollClamp(entity.GetHitRoll() - affect.Magnitude))
 	case AffectDamageRoll:
-		entity.SetDamageRoll(entity.GetDamageRoll() - affect.Magnitude)
+		entity.SetDamageRoll(damrollClamp(entity.GetDamageRoll() - affect.Magnitude))
 	case AffectArmorClass:
-		entity.SetArmorClass(entity.GetArmorClass() - affect.Magnitude)
+		entity.SetArmorClass(armorClassClamp(entity.GetArmorClass() - affect.Magnitude))
 	case AffectTHAC0:
 		entity.SetTHAC0(entity.GetTHAC0() - affect.Magnitude)
 
