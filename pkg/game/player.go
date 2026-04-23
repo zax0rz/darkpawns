@@ -21,6 +21,8 @@ type Player struct {
 	MaxHealth int
 	Mana      int
 	MaxMana   int
+	Move      int
+	MaxMove   int
 	Level     int
 	Exp       int
 	Gold      int // Currency, used by Lua scripts
@@ -48,6 +50,12 @@ type Player struct {
 	ConnectedAt time.Time
 	LastActive  time.Time
 	Fighting    string // Name of character being fought
+
+	// Conditions: hunger/thirst/drunk — from limits.c
+	// Range: -1 (gone) to 24 (full); clamped 0-48 in original gain_condition
+	Hunger int
+	Thirst int
+	Drunk  int
 
 	// Alignment: -1000 (evil) to +1000 (good), 0 = neutral
 	// Source: structs.h:930, utils.h:454-456
@@ -125,6 +133,13 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	p.Health = 10
 	p.MaxMana = 100
 	p.Mana = 100
+	p.MaxMove = 100
+	p.Move = 100
+
+	// Start fully fed/hydrated/sober — limits.c
+	p.Hunger = 24
+	p.Thirst = 24
+	p.Drunk = 0
 
 	// THAC0 from class table
 	if class >= 0 && class < 12 {
@@ -225,6 +240,34 @@ func (p *Player) GetMaxHP() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.MaxHealth
+}
+
+// GetMove returns the player's current movement points.
+func (p *Player) GetMove() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Move
+}
+
+// SetMove sets the player's current movement points.
+func (p *Player) SetMove(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Move = v
+}
+
+// GetMaxMove returns the player's maximum movement points.
+func (p *Player) GetMaxMove() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.MaxMove
+}
+
+// SetMaxMove sets the player's maximum movement points.
+func (p *Player) SetMaxMove(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.MaxMove = v
 }
 
 // GetDamageRoll returns the player's damage dice including weapon.

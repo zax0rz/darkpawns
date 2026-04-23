@@ -39,6 +39,11 @@ type PlayerRecord struct {
 	StatDex    int
 	StatCon    int
 	StatCha    int
+	Hunger     int
+	Thirst     int
+	Drunk      int
+	Move       int
+	MaxMove    int
 	Inventory  []byte // JSONB encoded inventory
 	Equipment  []byte // JSONB encoded equipment
 }
@@ -84,6 +89,8 @@ func (db *DB) createTables() error {
 		max_health INTEGER DEFAULT 10,
 		mana INTEGER DEFAULT 100,
 		max_mana INTEGER DEFAULT 100,
+		move INTEGER DEFAULT 100,
+		max_move INTEGER DEFAULT 100,
 		strength INTEGER DEFAULT 10,
 		class INTEGER DEFAULT 3,
 		race INTEGER DEFAULT 0,
@@ -93,6 +100,9 @@ func (db *DB) createTables() error {
 		stat_dex INTEGER DEFAULT 10,
 		stat_con INTEGER DEFAULT 10,
 		stat_cha INTEGER DEFAULT 10,
+		hunger INTEGER DEFAULT 24,
+		thirst INTEGER DEFAULT 24,
+		drunk INTEGER DEFAULT 0,
 		inventory JSONB DEFAULT '[]',
 		equipment JSONB DEFAULT '{}',
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -111,6 +121,11 @@ func (db *DB) createTables() error {
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_cha INTEGER DEFAULT 10;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS inventory JSONB DEFAULT '[]';
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS equipment JSONB DEFAULT '{}';
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS move INTEGER DEFAULT 100;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS max_move INTEGER DEFAULT 100;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS hunger INTEGER DEFAULT 24;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS thirst INTEGER DEFAULT 24;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS drunk INTEGER DEFAULT 0;
 
 	CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
 
@@ -179,16 +194,18 @@ func (db *DB) ValidateAgentKey(rawKey string) (characterName string, keyID int64
 func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 	query := `
 		SELECT id, name, COALESCE(password_hash,''), room_vnum, level, exp,
-		       health, max_health, mana, max_mana, strength,
+		       health, max_health, mana, max_mana, move, max_move, strength,
 		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
+		       hunger, thirst, drunk,
 		       inventory, equipment
 		FROM players WHERE name = $1
 	`
 	var p PlayerRecord
 	err := db.conn.QueryRow(query, name).Scan(
 		&p.ID, &p.Name, &p.Password, &p.RoomVNum, &p.Level, &p.Exp,
-		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana, &p.Strength,
+		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana, &p.Move, &p.MaxMove, &p.Strength,
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
+		&p.Hunger, &p.Thirst, &p.Drunk,
 		&p.Inventory, &p.Equipment,
 	)
 	if err == sql.ErrNoRows {
@@ -204,15 +221,17 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 func (db *DB) CreatePlayer(p *PlayerRecord) error {
 	query := `
 		INSERT INTO players
-		  (name, room_vnum, level, exp, health, max_health, mana, max_mana, strength,
+		  (name, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
 		   class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
+		   hunger, thirst, drunk,
 		   inventory, equipment)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
 		RETURNING id
 	`
 	return db.conn.QueryRow(query,
-		p.Name, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Strength,
+		p.Name, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
+		p.Hunger, p.Thirst, p.Drunk,
 		p.Inventory, p.Equipment,
 	).Scan(&p.ID)
 }
@@ -222,17 +241,19 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 	query := `
 		UPDATE players SET
 		  room_vnum=$1, level=$2, exp=$3, health=$4, max_health=$5,
-		  mana=$6, max_mana=$7, strength=$8,
-		  class=$9, race=$10,
-		  stat_str=$11, stat_str_add=$12, stat_int=$13, stat_wis=$14, stat_dex=$15, stat_con=$16, stat_cha=$17,
-		  inventory=$18, equipment=$19, updated_at=CURRENT_TIMESTAMP
-		WHERE id=$20
+		  mana=$6, max_mana=$7, move=$8, max_move=$9, strength=$10,
+		  class=$11, race=$12,
+		  stat_str=$13, stat_str_add=$14, stat_int=$15, stat_wis=$16, stat_dex=$17, stat_con=$18, stat_cha=$19,
+		  hunger=$20, thirst=$21, drunk=$22,
+		  inventory=$23, equipment=$24, updated_at=CURRENT_TIMESTAMP
+		WHERE id=$25
 	`
 	_, err := db.conn.Exec(query,
 		p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth,
-		p.Mana, p.MaxMana, p.Strength,
+		p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race,
 		p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
+		p.Hunger, p.Thirst, p.Drunk,
 		p.Inventory, p.Equipment, p.ID,
 	)
 	return err

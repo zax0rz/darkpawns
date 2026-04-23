@@ -117,6 +117,13 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 		return
 	}
 
+	// Cancel all pending events for this mob.
+	// Source: events.c event_cancel() — in original, extract_char would
+	// clean up any pending events tied to the character.
+	if w.EventQueue != nil {
+		w.EventQueue.CancelBySource(deadMobID)
+	}
+
 	// make_corpse: create a container object in the room
 	// Transfer BOTH inventory items AND all equipped slots into the corpse container
 	// Source: fight.c:make_corpse() lines ~383-410

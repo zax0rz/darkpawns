@@ -28,6 +28,8 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 		MaxHealth:  p.MaxHealth,
 		Mana:       p.Mana,
 		MaxMana:    p.MaxMana,
+		Move:       p.Move,
+		MaxMove:    p.MaxMove,
 		Strength:   p.Strength,
 		Class:      p.Class,
 		Race:       p.Race,
@@ -38,6 +40,9 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 		StatDex:    p.Stats.Dex,
 		StatCon:    p.Stats.Con,
 		StatCha:    p.Stats.Cha,
+		Hunger:     p.Hunger,
+		Thirst:     p.Thirst,
+		Drunk:      p.Drunk,
 		Inventory:  invBytes,
 		Equipment:  eqBytes,
 	}, nil
@@ -64,6 +69,11 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	p.MaxHealth = r.MaxHealth
 	p.Mana = r.Mana
 	p.MaxMana = r.MaxMana
+	p.Move = r.Move
+	p.MaxMove = r.MaxMove
+	p.Hunger = r.Hunger
+	p.Thirst = r.Thirst
+	p.Drunk = r.Drunk
 	p.SetRoom(r.RoomVNum)
 	p.ID = r.ID
 

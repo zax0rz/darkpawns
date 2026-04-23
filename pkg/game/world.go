@@ -2,12 +2,14 @@
 package game
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
+	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
@@ -40,6 +42,10 @@ type World struct {
 
 	// Shop manager
 	shopManager common.ShopManager
+
+	// Event queue for timer-based scripted events
+	// Source: events.c event_init() — global event_q
+	EventQueue *events.EventQueue
 }
 
 // NewWorld creates a new game world from parsed data.
@@ -82,8 +88,17 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		w.zones[zone.Number] = zone
 	}
 
+	// Initialize event queue
+	// Source: events.c event_init() — called in init_game() before boot_db()
+	// In original: 1 pulse = 1/10 second (OPT_USEC = 100000)
+	w.EventQueue = events.NewEventQueue(100 * time.Millisecond)
+
 	// Start AI ticker
 	w.StartAITicker()
+
+	// Start point update ticker (regen + hunger/thirst) — limits.c point_update()
+	// Called every ~30 seconds (Dark Pawns may have faster ticks than stock CircleMUD)
+	w.StartPointUpdateTicker(30 * time.Second)
 
 	return w, nil
 }
@@ -614,6 +629,32 @@ func (a *WorldScriptableAdapter) GiveItemToChar(charName string, obj scripting.S
 	return a.world.GiveItemToCharScriptable(charName, obj)
 }
 
+// CreateEvent schedules a timed event on the world's event queue.
+// Source: scripts.c lua_create_event() — create_event(source, target, obj, argument, trigger, delay, type)
+func (a *WorldScriptableAdapter) CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64 {
+	if a.world.EventQueue == nil {
+		log.Printf("[EVENT] Cannot create event: EventQueue is nil")
+		return 0
+	}
+
+	// In the original C code, delay is in PULSE_VIOLENCE units (2 seconds = 20 pulses).
+	// The Lua scripts pass small integers like 1, 6, 10 meaning "N * PULSE_VIOLENCE".
+	// We convert to pulses: 1 delay unit = 20 pulses = 2 seconds.
+	// Source: scripts.c line 306: event->count = PULSE_VIOLENCE * time
+	// Source: structs.h: PULSE_VIOLENCE = (2 RL_SEC) = 20 pulses
+	pulseDelay := int64(delay) * 20
+
+	return a.world.EventQueue.Create(pulseDelay, source, target, obj, argument, trigger, eventType,
+		func(ctx context.Context, src, tgt, o, arg int, trig string, et int) int64 {
+			// When the event fires, dispatch the Lua trigger on the mob.
+			// Source: events.c event_process() — calls the_event->func(event_obj)
+			// The original lua_create_event stored a script_event struct with
+			// me, obj, room, fname, type and called run_script() when fired.
+			a.world.dispatchScriptEvent(src, tgt, o, arg, trig, et)
+			return 0
+		})
+}
+
 // scriptableObjWrapper wraps parser.Obj to implement ScriptableObject
 type scriptableObjWrapper struct {
 	obj *parser.Obj
@@ -785,5 +826,56 @@ func (w *World) FireMobFightScript(mobName string, targetName string, roomVNum i
 	if _, err := mob.RunScript("fight", ctx); err != nil {
 		// Script errors are non-fatal — log and continue
 		_ = err
+	}
+}
+
+// dispatchScriptEvent dispatches a Lua trigger when a scheduled event fires.
+// This is the callback registered with EventQueue.Create() for script events.
+// Based on the original lua_create_event() in scripts.c lines 247-316.
+//
+// The original stored: me, ch, obj, room, fname (trigger), type
+// and called run_script() when the event fired.
+func (w *World) dispatchScriptEvent(source, target, objVNum, argument int, trigger string, eventType int) {
+	if ScriptEngine == nil {
+		return
+	}
+
+	// Find the mob by instance ID (source)
+	w.mu.RLock()
+	var mob *MobInstance
+	if source > 0 {
+		mob = w.activeMobs[source]
+	}
+	w.mu.RUnlock()
+
+	if mob == nil {
+		// Mob may have died or been extracted — event is a no-op
+		// This matches original behavior where extract_char cleans up events
+		return
+	}
+
+	// Build script context
+	ctx := mob.CreateScriptContext(nil, nil, "")
+	ctx.World = NewWorldScriptableAdapter(w)
+	ctx.RoomVNum = mob.GetRoom()
+
+	// If target is a player name hash/ID, try to resolve it
+	// In the original, target was a char_data pointer. In our Go version,
+	// we store the target as an int (could be player ID or mob ID).
+	// For now, we only support mob-source events firing on themselves.
+	// TODO: Resolve target player by ID when target > 0 and target != source
+
+	// Run the trigger function in the mob's script
+	// The trigger name is the Lua function to call (e.g., "port", "jail", "bane_one")
+	if mob.HasScript(trigger) {
+		if _, err := mob.RunScript(trigger, ctx); err != nil {
+			log.Printf("[EVENT] Script error for mob %d trigger %q: %v", mob.GetVNum(), trigger, err)
+		}
+	} else {
+		// The mob's prototype may not have the trigger bit set, but the
+		// function might still exist in the Lua file — try anyway
+		if _, err := ScriptEngine.RunScript(ctx, mob.Prototype.ScriptName, trigger); err != nil {
+			log.Printf("[EVENT] Script error for mob %d trigger %q: %v", mob.GetVNum(), trigger, err)
+		}
 	}
 }

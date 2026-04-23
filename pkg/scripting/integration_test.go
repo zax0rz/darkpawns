@@ -51,6 +51,7 @@ func (m *mockWorldForTest) HasItemByVNum(charName string, vnum int) bool        
 func (m *mockWorldForTest) RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject    { return nil }
 func (m *mockWorldForTest) RemoveItemFromChar(charName string, vnum int) ScriptableObject { return nil }
 func (m *mockWorldForTest) GiveItemToChar(charName string, obj ScriptableObject) error    { return nil }
+func (m *mockWorldForTest) CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64 { return 0 }
 
 // TestSpellDamageFormulas tests that spell damage formulas are implemented
 func TestSpellDamageFormulas(t *testing.T) {

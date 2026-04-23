@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dark Pawns — A Dark Fantasy World, Resurrected</title>
+  <meta name="description" content="Dark Pawns MUD — the dark fantasy world that ran from 1997 to 2010. Play in your browser.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♟</text></svg>">
+</head>
+<body>
+
+  <!-- ─── Landing ─── -->
+  <section class="landing" id="top">
+    <h1 class="title">Dark Pawns</h1>
+    <p class="tagline">A dark fantasy world — resurrected.</p>
+    <p class="lore">
+      Dark Pawns ran from 1997 to 2010. Players made friends here.
+      Characters died here. It's back.
+    </p>
+    <div class="ctas">
+      <a href="#terminal" class="btn btn-primary">Play Now</a>
+      <a href="https://github.com/zax0rz/darkpawns" class="btn btn-secondary" target="_blank">View Source</a>
+    </div>
+    <p class="telnet-note">Connect via Telnet: darkpawns.labz0rz.com:4000</p>
+  </section>
+
+  <!-- ─── Terminal ─── -->
+  <section class="terminal-section" id="terminal">
+    <div class="terminal-frame">
+      <div class="terminal-header">
+        <span>Dark Pawns</span>
+        <div class="conn-status disconnected">
+          <span class="dot"></span>
+          <span>Disconnected</span>
+        </div>
+        <button id="reconnect-btn">Reconnect</button>
+      </div>
+      <div id="terminal"></div>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>

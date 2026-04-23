@@ -1685,8 +1685,98 @@ func (e *Engine) luaObjExtra(L *lua.LState) int {
 
 func (e *Engine) luaCreateEvent(L *lua.LState) int {
 	// create_event(source, target, obj, argument, trigger, delay, type)
-	log.Printf("[STUB] create_event(source, target, obj, argument, trigger, delay, type)")
-	return 0
+	// Source: scripts.c lua_create_event() lines 247-316 (commented out in original)
+	//
+	// Arguments:
+	//   source  — me (mob table) or NIL
+	//   target  — ch (player/mob table) or NIL
+	//   obj     — obj (object table) or NIL
+	//   argument — numeric argument or string (stored as int if numeric)
+	//   trigger — Lua function name to call when event fires (e.g., "port", "jail")
+	//   delay   — delay in PULSE_VIOLENCE units (1 = 2 seconds, 6 = 12 seconds)
+	//   type    — event type: LT_MOB (1), LT_OBJ (2), LT_ROOM (3)
+	//
+	// In the original C code, delay was multiplied by PULSE_VIOLENCE (20 pulses)
+	// to get the actual pulse count. The Go implementation does the same
+	// conversion in WorldScriptableAdapter.CreateEvent().
+
+	if e.world == nil {
+		log.Printf("[EVENT] create_event: no world available")
+		return 0
+	}
+
+	// Parse source (arg 1) — extract mob instance ID from table
+	sourceID := 0
+	if srcTbl, ok := L.Get(1).(*lua.LTable); ok {
+		// Try to get the "id" field (instance ID) or "vnum" field
+		if idVal := srcTbl.RawGetString("id"); idVal.Type() == lua.LTNumber {
+			sourceID = int(lua.LVAsNumber(idVal))
+		} else if vnumVal := srcTbl.RawGetString("vnum"); vnumVal.Type() == lua.LTNumber {
+			// Fallback: use vnum (less precise but works for simple cases)
+			sourceID = int(lua.LVAsNumber(vnumVal))
+		}
+	}
+
+	// Parse target (arg 2) — extract target ID from table
+	targetID := 0
+	if tgtTbl, ok := L.Get(2).(*lua.LTable); ok {
+		if idVal := tgtTbl.RawGetString("id"); idVal.Type() == lua.LTNumber {
+			targetID = int(lua.LVAsNumber(idVal))
+		} else if vnumVal := tgtTbl.RawGetString("vnum"); vnumVal.Type() == lua.LTNumber {
+			targetID = int(lua.LVAsNumber(vnumVal))
+		}
+	}
+
+	// Parse obj (arg 3) — extract object vnum from table
+	objVNum := 0
+	if objTbl, ok := L.Get(3).(*lua.LTable); ok {
+		if vnumVal := objTbl.RawGetString("vnum"); vnumVal.Type() == lua.LTNumber {
+			objVNum = int(lua.LVAsNumber(vnumVal))
+		}
+	}
+
+	// Parse argument (arg 4) — can be number or string
+	argValue := 0
+	if L.Get(4).Type() == lua.LTNumber {
+		argValue = int(lua.LVAsNumber(L.Get(4)))
+	}
+
+	// Parse trigger (arg 5)
+	trigger := ""
+	if L.Get(5).Type() == lua.LTString {
+		trigger = L.Get(5).String()
+	}
+	if trigger == "" {
+		log.Printf("[EVENT] create_event: no trigger specified")
+		return 0
+	}
+
+	// Parse delay (arg 6) — in PULSE_VIOLENCE units
+	delay := 1
+	if L.Get(6).Type() == lua.LTNumber {
+		delay = int(lua.LVAsNumber(L.Get(6)))
+	}
+	if delay < 1 {
+		delay = 1 // events.c: "make sure its in the future"
+	}
+
+	// Parse event type (arg 7) — LT_MOB (1), LT_OBJ (2), LT_ROOM (3)
+	eventType := 1 // default to LT_MOB
+	if L.Get(7).Type() == lua.LTNumber {
+		eventType = int(lua.LVAsNumber(L.Get(7)))
+	}
+
+	// Schedule the event
+	eventID := e.world.CreateEvent(delay, sourceID, targetID, objVNum, argValue, trigger, eventType)
+	if eventID > 0 {
+		log.Printf("[EVENT] Created event %d: trigger=%q delay=%d type=%d source=%d", eventID, trigger, delay, eventType, sourceID)
+	} else {
+		log.Printf("[EVENT] Failed to create event: trigger=%q delay=%d type=%d source=%d", trigger, delay, eventType, sourceID)
+	}
+
+	// Return the event ID to Lua (allows scripts to cancel events if needed)
+	L.Push(lua.LNumber(eventID))
+	return 1
 }
 
 // luaTell sends a private message to a named player.

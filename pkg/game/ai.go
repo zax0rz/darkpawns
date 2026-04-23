@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"math/rand"
 	"time"
 
@@ -272,7 +273,10 @@ func (w *World) wanderMob(mob *MobInstance) {
 	}
 }
 
-// StartAITicker starts the AI tick loop
+// StartAITicker starts the AI tick loop and event processing loop.
+// The event loop runs at 10 pulses per second (100ms), matching the
+// original C code: OPT_USEC = 100000, PASSES_PER_SEC = 10.
+// Source: comm.c game_loop() — heartbeat(++pulse) calls event_process().
 func (w *World) StartAITicker() {
 	w.aiticker = time.NewTicker(10 * time.Second)
 	go func() {
@@ -282,6 +286,31 @@ func (w *World) StartAITicker() {
 				w.AITick()
 			case <-w.done:
 				w.aiticker.Stop()
+				return
+			}
+		}
+	}()
+
+	// Start event processing loop
+	// Source: events.c event_process() — called once per pulse in heartbeat()
+	if w.EventQueue != nil {
+		ctx := context.Background()
+		w.EventQueue.Start(ctx)
+	}
+}
+
+// StartPointUpdateTicker starts the regen/hunger/thirst tick loop.
+// Source: limits.c point_update() — called every ~75 pulses in stock CircleMUD.
+// Dark Pawns uses a faster tick (30 seconds).
+func (w *World) StartPointUpdateTicker(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				PointUpdate(w)
+			case <-w.done:
+				ticker.Stop()
 				return
 			}
 		}

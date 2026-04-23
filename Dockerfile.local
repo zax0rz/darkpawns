@@ -1,0 +1,11 @@
+FROM postgres:16-alpine AS base
+
+FROM scratch
+
+COPY --from=base /lib /lib
+COPY --from=base /lib64 /lib64 2>/dev/null || true
+COPY server-bin /server
+
+EXPOSE 8080 4000
+
+CMD ["/server"]
