@@ -4,7 +4,7 @@ package main
 
 import (
 	"flag"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -30,44 +30,46 @@ func main() {
 	flag.Parse()
 
 	if *worldDir == "" {
-		log.Fatal("Usage: server -world <path-to-lib>")
+		slog.Error("Usage: server -world <path-to-lib>")
+		os.Exit(1)
 	}
 
-	log.Println("Dark Pawns Phase 1 Server Starting...")
+	slog.Info("Dark Pawns Phase 1 Server Starting...")
 
 	// Parse world files
-	log.Printf("Loading world from %s...", *worldDir)
+	slog.Info("Loading world", "path", *worldDir)
 	parsedWorld, err := parser.ParseWorld(*worldDir)
 	if err != nil {
-		log.Fatalf("Failed to parse world: %v", err)
+		slog.Error("Failed to parse world", "error", err)
+		os.Exit(1)
 	}
-	log.Println(parsedWorld.Stats())
+	slog.Info(parsedWorld.Stats())
 
 	// Create game world
 	gameWorld, err := game.NewWorld(parsedWorld)
 	if err != nil {
-		log.Fatalf("Failed to create game world: %v", err)
+		slog.Error("Failed to create game world", "error", err)
+		os.Exit(1)
 	}
 
 	// Initialize scripting engine
 	if *scriptsDir == "" {
 		*scriptsDir = *worldDir + "/scripts"
 	}
-	log.Printf("Loading scripts from %s...", *scriptsDir)
+	slog.Info("Loading scripts", "path", *scriptsDir)
 	worldAdapter := game.NewWorldScriptableAdapter(gameWorld)
 	scriptEngine := scripting.NewEngine(*scriptsDir, worldAdapter)
 	game.ScriptEngine = scriptEngine
 
 	// Connect to database
-	log.Println("Connecting to database...")
+	slog.Info("Connecting to database...")
 	database, err := db.New(*dbURL)
 	if err != nil {
-		log.Printf("Warning: Database connection failed: %v", err)
-		log.Println("Continuing without persistence...")
+		slog.Warn("Database connection failed, continuing without persistence", "error", err)
 		database = nil
 	} else {
 		defer database.Close()
-		log.Println("Database connected.")
+		slog.Info("Database connected.")
 	}
 
 	// Create session manager
@@ -105,19 +107,19 @@ Protocol:
 
 	// Start zone resets in background (initial + periodic every 60s)
 	go func() {
-		log.Printf("Starting zone resets...")
+		slog.Info("Starting zone resets...")
 		if err := gameWorld.StartZoneResets(); err != nil {
-			log.Printf("Zone reset error: %v", err)
+			slog.Error("Zone reset error", "error", err)
 		} else {
-			log.Printf("Zone resets complete")
+			slog.Info("Zone resets complete")
 		}
 		gameWorld.StartPeriodicResets(60 * time.Second)
 	}()
 
 	// Start server
 	addr := ":" + *port
-	log.Printf("Server listening on %s", addr)
-	log.Printf("WebSocket endpoint: ws://localhost%s/ws", addr)
+	slog.Info("Server listening", "address", addr)
+	slog.Info("WebSocket endpoint", "url", "ws://localhost"+addr+"/ws")
 
 	// Handle shutdown gracefully
 	sigChan := make(chan os.Signal, 1)
@@ -134,20 +136,23 @@ Protocol:
 	go func() {
 		if useTLS {
 			if certFile == "" || keyFile == "" {
-				log.Fatal("TLS_CERT_FILE and TLS_KEY_FILE environment variables must be set for TLS")
+				slog.Error("TLS_CERT_FILE and TLS_KEY_FILE environment variables must be set for TLS")
+				os.Exit(1)
 			}
-			log.Printf("Starting HTTPS server on %s", addr)
+			slog.Info("Starting HTTPS server", "address", addr)
 			if err := http.ListenAndServeTLS(addr, certFile, keyFile, handler); err != nil {
-				log.Fatalf("Server error: %v", err)
+				slog.Error("Server error", "error", err)
+				os.Exit(1)
 			}
 		} else {
-			log.Printf("Starting HTTP server on %s (WARNING: Not secure for production)", addr)
+			slog.Warn("Starting HTTP server (not secure for production)", "address", addr)
 			if err := http.ListenAndServe(addr, handler); err != nil {
-				log.Fatalf("Server error: %v", err)
+				slog.Error("Server error", "error", err)
+				os.Exit(1)
 			}
 		}
 	}()
 
 	<-sigChan
-	log.Println("Shutting down...")
+	slog.Info("Shutting down...")
 }

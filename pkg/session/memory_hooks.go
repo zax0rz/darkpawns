@@ -158,7 +158,7 @@ func (s *Session) SendMemoryBootstrap() {
 	block := db.BootstrapBlock(memories, summaries)
 
 	// Send as a structured message — agent reads data.block into LLM context
-	msg, _ := json.Marshal(map[string]interface{}{
+	msg, err := json.Marshal(map[string]interface{}{
 		"type": "memory_bootstrap",
 		"data": map[string]interface{}{
 			"block":     block,
@@ -166,6 +166,10 @@ func (s *Session) SendMemoryBootstrap() {
 			"summaries": len(summaries),
 		},
 	})
+	if err != nil {
+		log.Printf("json.Marshal error: %v", err)
+		return
+	}
 	select {
 	case s.send <- msg:
 		log.Printf("[MEMORY] sent bootstrap to agent %s: %d memories, %d summaries", s.playerName, len(memories), len(summaries))

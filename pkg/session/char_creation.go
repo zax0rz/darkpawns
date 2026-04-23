@@ -46,10 +46,14 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options map[string]
 		Options: options,
 	}
 
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgCharCreate,
 		Data: data,
 	})
+	if err != nil {
+		log.Printf("json.Marshal error: %v", err)
+		return
+	}
 
 	s.send <- msg
 }
@@ -74,10 +78,14 @@ func (s *Session) sendCharCreateStats(stats game.CharStats) {
 		Stats: &display,
 	}
 
-	msg, _ := json.Marshal(ServerMessage{
+	msg, err := json.Marshal(ServerMessage{
 		Type: MsgCharCreate,
 		Data: data,
 	})
+	if err != nil {
+		log.Printf("json.Marshal error: %v", err)
+		return
+	}
 
 	s.send <- msg
 }
@@ -142,13 +150,17 @@ func (s *Session) completeCharCreation() error {
 	s.sendWelcome(token)
 
 	// Broadcast arrival
-	enterMsg, _ := json.Marshal(ServerMessage{
+	enterMsg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "enter",
 			Text: s.player.Name + " has arrived.",
 		},
 	})
+	if err != nil {
+		log.Printf("json.Marshal error: %v", err)
+		return nil
+	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 
 	return nil

@@ -14,7 +14,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -38,13 +38,15 @@ func main() {
 
 	database, err := db.New(*dsn)
 	if err != nil {
-		log.Fatalf("connect to database: %v", err)
+		slog.Error("connect to database", "error", err)
+		os.Exit(1)
 	}
 	defer database.Close()
 
 	rawKey, id, err := database.CreateAgentKey(*name)
 	if err != nil {
-		log.Fatalf("create agent key: %v", err)
+		slog.Error("create agent key", "error", err)
+		os.Exit(1)
 	}
 
 	fmt.Printf("Character: %s\n", *name)

@@ -301,24 +301,36 @@ func (tc *telnetConn) writeLine(s string) {
 }
 
 func sendLogin(s *session.Session, name string) error {
-	loginData, _ := json.Marshal(map[string]interface{}{
+	loginData, err := json.Marshal(map[string]interface{}{
 		"player_name": name,
 	})
-	loginMsg, _ := json.Marshal(map[string]string{
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
+	loginMsg, err := json.Marshal(map[string]string{
 		"type": "login",
 		"data": string(loginData),
 	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
 	return s.HandleMessage(loginMsg)
 }
 
 func sendCommand(s *session.Session, cmd string, args []string) error {
-	cmdData, _ := json.Marshal(map[string]interface{}{
+	cmdData, err := json.Marshal(map[string]interface{}{
 		"command": cmd,
 		"args":    args,
 	})
-	cmdMsg, _ := json.Marshal(map[string]string{
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
+	cmdMsg, err := json.Marshal(map[string]string{
 		"type": "command",
 		"data": string(cmdData),
 	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
 	return s.HandleMessage(cmdMsg)
 }

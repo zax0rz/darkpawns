@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -538,13 +539,13 @@ func (w *World) AddItemToRoomScriptable(obj scripting.ScriptableObject, roomVNum
 
 // HandleNonCombatDeathScriptable handles player death from non-combat damage.
 func (w *World) HandleNonCombatDeathScriptable(player scripting.ScriptablePlayer) {
-	log.Printf("[SCRIPT] Player %s would die from non-combat damage", player.GetName())
+	slog.Debug("player would die from non-combat damage", "player", player.GetName())
 	// TODO: Implement death handling
 }
 
 // HandleSpellDeathScriptable handles death caused by a spell.
 func (w *World) HandleSpellDeathScriptable(victimName string, spellNum int, roomVNum int) {
-	log.Printf("[SCRIPT] HandleSpellDeath: %s died to spell %d in room %d", victimName, spellNum, roomVNum)
+	slog.Info("spell death", "victim", victimName, "spell_num", spellNum, "room_vnum", roomVNum)
 
 	// First, check if it's a player
 	if player, ok := w.GetPlayer(victimName); ok {
@@ -643,7 +644,7 @@ func (a *WorldScriptableAdapter) GiveItemToChar(charName string, obj scripting.S
 // Source: scripts.c lua_create_event() — create_event(source, target, obj, argument, trigger, delay, type)
 func (a *WorldScriptableAdapter) CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64 {
 	if a.world.EventQueue == nil {
-		log.Printf("[EVENT] Cannot create event: EventQueue is nil")
+		slog.Error("cannot create event: EventQueue is nil")
 		return 0
 	}
 
@@ -879,13 +880,13 @@ func (w *World) dispatchScriptEvent(source, target, objVNum, argument int, trigg
 	// The trigger name is the Lua function to call (e.g., "port", "jail", "bane_one")
 	if mob.HasScript(trigger) {
 		if _, err := mob.RunScript(trigger, ctx); err != nil {
-			log.Printf("[EVENT] Script error for mob %d trigger %q: %v", mob.GetVNum(), trigger, err)
+			slog.Error("script error", "mob_vnum", mob.GetVNum(), "trigger", trigger, "error", err)
 		}
 	} else {
 		// The mob's prototype may not have the trigger bit set, but the
 		// function might still exist in the Lua file — try anyway
 		if _, err := ScriptEngine.RunScript(ctx, mob.Prototype.ScriptName, trigger); err != nil {
-			log.Printf("[EVENT] Script error for mob %d trigger %q: %v", mob.GetVNum(), trigger, err)
+			slog.Error("script error", "mob_vnum", mob.GetVNum(), "trigger", trigger, "error", err)
 		}
 	}
 }

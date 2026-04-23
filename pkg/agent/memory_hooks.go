@@ -15,7 +15,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -119,7 +119,7 @@ func (c *REMSynthesisClient) SendMemoryEvent(event *MemoryEvent) error {
 		return fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}
 
-	log.Printf("[REM] memory event sent to Python system: %s for %s", event.EventType, event.AgentName)
+	slog.Info("memory event sent to Python system", "event_type", event.EventType, "agent_name", event.AgentName)
 	return nil
 }
 
@@ -160,7 +160,7 @@ func (c *REMSynthesisClient) TriggerREMSynthesis(agentName string) error {
 		return fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}
 
-	log.Printf("[REM] synthesis triggered for agent: %s", agentName)
+	slog.Info("synthesis triggered for agent", "agent_name", agentName)
 	return nil
 }
 
@@ -287,7 +287,7 @@ func (hm *HookManager) OnMobKill(evt *game.MobKillEvent, agentName, sessionID st
 
 	id, err := hm.db.WriteNarrativeMemory(mem)
 	if err != nil {
-		log.Printf("[REM] failed to write mob_kill for %s: %v", agentName, err)
+		slog.Error("failed to write mob_kill", "agent_name", agentName, "error", err)
 		return
 	}
 	mem.ID = id
@@ -296,7 +296,7 @@ func (hm *HookManager) OnMobKill(evt *game.MobKillEvent, agentName, sessionID st
 	event := ConvertNarrativeMemoryToEvent(mem, evt)
 	go func() {
 		if err := hm.client.SendMemoryEvent(event); err != nil {
-			log.Printf("[REM] failed to send mob_kill to Python system: %v", err)
+			slog.Error("failed to send mob_kill to Python system", "error", err)
 		}
 	}()
 }
@@ -328,7 +328,7 @@ func (hm *HookManager) OnPlayerDeath(evt *game.PlayerDeathEvent, agentName, sess
 
 	id, err := hm.db.WriteNarrativeMemory(mem)
 	if err != nil {
-		log.Printf("[REM] failed to write mob_death for %s: %v", agentName, err)
+		slog.Error("failed to write mob_death", "agent_name", agentName, "error", err)
 		return
 	}
 	mem.ID = id
@@ -337,7 +337,7 @@ func (hm *HookManager) OnPlayerDeath(evt *game.PlayerDeathEvent, agentName, sess
 	event := ConvertNarrativeMemoryToEvent(mem, evt)
 	go func() {
 		if err := hm.client.SendMemoryEvent(event); err != nil {
-			log.Printf("[REM] failed to send mob_death to Python system: %v", err)
+			slog.Error("failed to send mob_death to Python system", "error", err)
 		}
 	}()
 }
@@ -362,7 +362,7 @@ func (hm *HookManager) OnSocialInteraction(agentName, otherEntity, interactionTy
 
 	id, err := hm.db.WriteNarrativeMemory(mem)
 	if err != nil {
-		log.Printf("[REM] failed to write social interaction for %s: %v", agentName, err)
+		slog.Error("failed to write social interaction", "agent_name", agentName, "error", err)
 		return
 	}
 	mem.ID = id
@@ -371,7 +371,7 @@ func (hm *HookManager) OnSocialInteraction(agentName, otherEntity, interactionTy
 	event := ConvertNarrativeMemoryToEvent(mem, nil)
 	go func() {
 		if err := hm.client.SendMemoryEvent(event); err != nil {
-			log.Printf("[REM] failed to send social interaction to Python system: %v", err)
+			slog.Error("failed to send social interaction to Python system", "error", err)
 		}
 	}()
 }
@@ -380,7 +380,7 @@ func (hm *HookManager) OnSocialInteraction(agentName, otherEntity, interactionTy
 func (hm *HookManager) OnMemoryRetrieved(agentName, memoryID, context string) {
 	go func() {
 		if err := hm.client.LogRetrieval(agentName, memoryID, context); err != nil {
-			log.Printf("[REM] failed to log retrieval: %v", err)
+			slog.Error("failed to log retrieval", "error", err)
 		}
 	}()
 }
@@ -389,7 +389,7 @@ func (hm *HookManager) OnMemoryRetrieved(agentName, memoryID, context string) {
 func (hm *HookManager) TriggerAgentREMSynthesis(agentName string) {
 	go func() {
 		if err := hm.client.TriggerREMSynthesis(agentName); err != nil {
-			log.Printf("[REM] failed to trigger REM synthesis: %v", err)
+			slog.Error("failed to trigger REM synthesis", "error", err)
 		}
 	}()
 }

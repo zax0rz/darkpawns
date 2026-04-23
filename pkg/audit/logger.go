@@ -2,7 +2,7 @@ package audit
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 )
@@ -35,7 +35,7 @@ func (a *AuditLogger) Log(event AuditEvent) {
 
 	data, err := json.Marshal(event)
 	if err != nil {
-		log.Printf("Failed to marshal audit event: %v", err)
+		slog.Error("Failed to marshal audit event", "error", err)
 		return
 	}
 
@@ -43,8 +43,12 @@ func (a *AuditLogger) Log(event AuditEvent) {
 
 	// Also log to console for important events
 	if !event.Success || event.EventType == "security" {
-		log.Printf("[AUDIT] %s: %s (User: %s, IP: %s)",
-			event.EventType, event.Action, event.User, event.IPAddress)
+		slog.Warn("audit event",
+			"event_type", event.EventType,
+			"action", event.Action,
+			"user", event.User,
+			"ip_address", event.IPAddress,
+		)
 	}
 }
 

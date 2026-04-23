@@ -202,7 +202,11 @@ func (ac *AICache) GenerateCacheKey(req AIRequest) string {
 		"temp":       req.Temperature,
 	}
 
-	keyBytes, _ := json.Marshal(keyData)
+	keyBytes, err := json.Marshal(keyData)
+	if err != nil {
+		log.Printf("json.Marshal error: %v", err)
+		return ""
+	}
 	return string(keyBytes)
 }
 

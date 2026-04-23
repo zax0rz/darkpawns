@@ -2,7 +2,7 @@
 package game
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
@@ -73,7 +73,7 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 	if trigger == "ongive" && !handled && err == nil && ctx.Ch != nil {
 		// Send default "You can't give that here." message
 		// In real implementation: ctx.Ch.SendMessage("You can't give that here.\r\n")
-		log.Printf("[SCRIPT] ongive returned false for mob %d, player %s", m.GetVNum(), ctx.Ch.GetName())
+		slog.Debug("ongive returned false", "mob_vnum", m.GetVNum(), "player", ctx.Ch.GetName())
 	}
 
 	return handled, err

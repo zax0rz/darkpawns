@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"strings"
 )
@@ -46,7 +47,7 @@ func cmdHit(s *Session, args []string) error {
 			s.markDirty(VarFighting)
 
 			// Notify room
-			msg, _ := json.Marshal(ServerMessage{
+			msg, err := json.Marshal(ServerMessage{
 				Type: MsgEvent,
 				Data: EventData{
 					Type: "combat",
@@ -54,6 +55,10 @@ func cmdHit(s *Session, args []string) error {
 					Text: fmt.Sprintf("%s attacks %s!", s.player.Name, mob.GetShortDesc()),
 				},
 			})
+			if err != nil {
+				log.Printf("json.Marshal error: %v", err)
+				return nil
+			}
 			s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
 
 			return nil
@@ -81,7 +86,7 @@ func cmdHit(s *Session, args []string) error {
 			}
 
 			// Notify room
-			msg, _ := json.Marshal(ServerMessage{
+			msg, err := json.Marshal(ServerMessage{
 				Type: MsgEvent,
 				Data: EventData{
 					Type: "combat",
@@ -89,6 +94,10 @@ func cmdHit(s *Session, args []string) error {
 					Text: fmt.Sprintf("%s attacks %s!", s.player.Name, p.Name),
 				},
 			})
+			if err != nil {
+				log.Printf("json.Marshal error: %v", err)
+				return nil
+			}
 			s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
 
 			return nil
@@ -169,7 +178,7 @@ func cmdFlee(s *Session) error {
 	}
 
 	// Notify old room
-	leaveMsg, _ := json.Marshal(ServerMessage{
+	leaveMsg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "flee",
@@ -177,10 +186,14 @@ func cmdFlee(s *Session) error {
 			Text: fmt.Sprintf("%s panics, and attempts to flee!", s.player.Name),
 		},
 	})
+	if err != nil {
+		log.Printf("json.Marshal error: %v", err)
+		return nil
+	}
 	s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
 
 	// Notify new room
-	enterMsg, _ := json.Marshal(ServerMessage{
+	enterMsg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "enter",
@@ -188,6 +201,10 @@ func cmdFlee(s *Session) error {
 			Text: fmt.Sprintf("%s has arrived, fleeing from combat!", s.player.Name),
 		},
 	})
+	if err != nil {
+		log.Printf("json.Marshal error: %v", err)
+		return nil
+	}
 	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
 
 	s.sendText("You flee head over heels.")

@@ -378,58 +378,154 @@ func (w *World) GetAllPlayers() []*Player {
 // Eat / Drink helpers
 // ---------------------------------------------------------------------------
 
-// EatFood attempts to eat an item. Returns true if successful.
-// Item must be ITEM_FOOD (type 19). Value[0] = hours of fullness.
-func EatFood(p *Player, item *ObjectInstance) error {
+// EatFood consumes a food item from inventory, applying condition changes.
+// Ported from src/act.item.c ACMD(do_eat).
+// Item must be ITEM_FOOD (type 19). Values[0] = hours of fullness.
+// Returns the amount of fullness restored, or an error.
+func EatFood(p *Player, item *ObjectInstance) (int, error) {
 	if item == nil || item.Prototype == nil {
-		return fmt.Errorf("You can't eat that!")
+		return 0, fmt.Errorf("You can't eat that!")
 	}
 	if item.Prototype.TypeFlag != 19 { // ITEM_FOOD
-		return fmt.Errorf("You can't eat that!")
+		return 0, fmt.Errorf("You can't eat that!")
 	}
 
-	// Value[0] = hours of fullness (how much hunger it restores)
-	restore := item.Prototype.Values[0]
-	if restore <= 0 {
-		restore = 1
+	// Values[0] = hours of fullness restored
+	amount := item.Prototype.Values[0]
+	if amount <= 0 {
+		amount = 1
 	}
 
-	p.mu.Lock()
-	p.Hunger += restore
-	if p.Hunger > 24 {
-		p.Hunger = 24
-	}
-	p.mu.Unlock()
+	GainCondition(p, CondFull, amount)
 
-	p.SendMessage(fmt.Sprintf("You eat %s.\r\n", item.GetShortDesc()))
+	p.mu.RLock()
+	isFull := p.Hunger >= 20
+	p.mu.RUnlock()
+
+	_ = isFull // caller handles fullness messages
+
+	return amount, nil
+}
+
+// DrinkLiquid consumes liquid from a drink container.
+// Ported from src/act.item.c ACMD(do_drink).
+// Returns the amount consumed and liquid index, or error.
+func DrinkLiquid(p *Player, item *ObjectInstance) (amount int, liqIndex int, err error) {
+	if item == nil || item.Prototype == nil {
+		return 0, 0, fmt.Errorf("You can't drink from that!")
+	}
+	if item.Prototype.TypeFlag != 17 && item.Prototype.TypeFlag != 23 { // ITEM_DRINKCON or ITEM_FOUNTAIN
+		return 0, 0, fmt.Errorf("You can't drink from that!")
+	}
+
+	// Values[1] = drinks left
+	if item.Prototype.Values[1] <= 0 {
+		return 0, 0, fmt.Errorf("It's empty.")
+	}
+
+	// Values[2] = liquid type
+	liqIndex = item.Prototype.Values[2]
+
+	// Calculate amount to drink
+	drunkThirst := 0
+	if liqIndex >= 0 && liqIndex < len(Liquids) {
+		drunkThirst = Liquids[liqIndex].DrunkAffect
+	}
+
+	if drunkThirst > 0 {
+		// Drink enough to fill thirst
+		p.mu.RLock()
+		curThirst := p.Thirst
+		p.mu.RUnlock()
+		amount = (25 - curThirst) / drunkThirst
+		if amount < 1 {
+			amount = 1
+		}
+	} else {
+		amount = 4 // reasonable default
+	}
+
+	// Cap to available liquid
+	if amount > item.Prototype.Values[1] {
+		amount = item.Prototype.Values[1]
+	}
+
+	// Apply condition changes from drink_aff
+	if liqIndex >= 0 && liqIndex < len(Liquids) {
+		liq := Liquids[liqIndex]
+		drunkVal := (liq.DrunkAffect * amount) / 4
+		fullVal := (liq.FullAffect * amount) / 4
+		thirstVal := (liq.ThirstAffect * amount) / 4
+
+		GainCondition(p, CondDrunk, drunkVal)
+		GainCondition(p, CondFull, fullVal)
+		GainCondition(p, CondThirst, thirstVal)
+	}
+
+	return amount, liqIndex, nil
+}
+
+// FillContainer fills a drink container from a source (fountain or another container).
+// Ported from src/act.item.c ACMD(do_pour) SCMD_FILL.
+func FillContainer(toObj, fromObj *ObjectInstance) error {
+	if toObj == nil || fromObj == nil || toObj.Prototype == nil || fromObj.Prototype == nil {
+		return fmt.Errorf("You can't fill that!")
+	}
+	if toObj.Prototype.TypeFlag != 17 { // ITEM_DRINKCON
+		return fmt.Errorf("You can't fill that!")
+	}
+	if fromObj.Prototype.TypeFlag != 23 { // ITEM_FOUNTAIN
+		return fmt.Errorf("You can't fill something from that!")
+	}
+
+	// Check source has liquid
+	if fromObj.Prototype.Values[1] <= 0 {
+		return fmt.Errorf("The %s is empty.", fromObj.GetShortDesc())
+	}
+
+	fromLiq := fromObj.Prototype.Values[2]
+
+	// Check destination doesn't have a different liquid
+	if toObj.Prototype.Values[1] > 0 && toObj.Prototype.Values[2] != fromLiq {
+		return fmt.Errorf("There is already another liquid in it!")
+	}
+
+	// Check destination has room
+	if toObj.Prototype.Values[1] >= toObj.Prototype.Values[0] {
+		return fmt.Errorf("There is no room for more.")
+	}
+
+	// Set liquid type on destination
+	toObj.Prototype.Values[2] = fromLiq
+
+	// Calculate amount to transfer
+	space := toObj.Prototype.Values[0] - toObj.Prototype.Values[1]
+	available := fromObj.Prototype.Values[1]
+
+	transfer := space
+	if transfer > available {
+		transfer = available
+	}
+
+	toObj.Prototype.Values[1] += transfer
+	fromObj.Prototype.Values[1] -= transfer
+
+	// If source emptied, reset
+	if fromObj.Prototype.Values[1] <= 0 {
+		fromObj.Prototype.Values[1] = 0
+		fromObj.Prototype.Values[2] = 0
+		fromObj.Prototype.Values[3] = 0
+	}
+
+	// Transfer poison flag
+	toObj.Prototype.Values[3] = boolToInt(toObj.Prototype.Values[3] == 1 || fromObj.Prototype.Values[3] == 1)
+
 	return nil
 }
 
-// DrinkLiquid attempts to drink from an item. Returns true if successful.
-// Item must be ITEM_DRINKCON (type 17). Value[0] = liquid total, Value[1] = liquid left, Value[2] = liquid type.
-func DrinkLiquid(p *Player, item *ObjectInstance) error {
-	if item == nil || item.Prototype == nil {
-		return fmt.Errorf("You can't drink from that!")
+func boolToInt(b bool) int {
+	if b {
+		return 1
 	}
-	if item.Prototype.TypeFlag != 17 { // ITEM_DRINKCON
-		return fmt.Errorf("You can't drink from that!")
-	}
-
-	// Value[1] = drinks left
-	drinksLeft := item.Prototype.Values[1]
-	if drinksLeft <= 0 {
-		return fmt.Errorf("It's empty.")
-	}
-
-	// Each drink restores some thirst
-	p.mu.Lock()
-	p.Thirst += 4 // ~4 drinks to go from 0 to full
-	if p.Thirst > 24 {
-		p.Thirst = 24
-	}
-	// TODO: Decrement drinks left on the object instance when mutable state is added
-	p.mu.Unlock()
-
-	p.SendMessage(fmt.Sprintf("You drink %s.\r\n", item.GetShortDesc()))
-	return nil
+	return 0
 }

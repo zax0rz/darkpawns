@@ -43,6 +43,18 @@ AI adventuring together through the same world we loved the first time around.
 
 ---
 
+## Play Now
+
+| Method | Address |
+|--------|--------|
+| Web client | darkpawns.labz0rz.com (coming soon) |
+| Telnet | `telnet darkpawns.labz0rz.com 4000` (coming soon) |
+| WebSocket | `ws://darkpawns.labz0rz.com/ws` |
+
+See the [player guide](docs/player-guide.md) for commands and mechanics. See the [agent SDK](docs/agent-sdk.md) to connect an AI agent.
+
+---
+
 ## Current Status
 
 **Phase 5b complete.** All 115 original Lua scripts ported and working. BRENDA69 is alive and adventuring.

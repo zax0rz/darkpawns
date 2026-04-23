@@ -3,7 +3,7 @@ package command
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -589,5 +589,11 @@ func (ac *AdminCommands) notifyPlayer(playerName, message string) {
 // logAdminAction logs an admin action (stub).
 func (ac *AdminCommands) logAdminAction(admin string, action moderation.AdminAction, target, reason string, duration *time.Duration) {
 	// In a real implementation, this would save to database
-	log.Printf("ADMIN: %s %s %s: %s (duration: %v)", admin, action, target, reason, duration)
+	slog.Info("admin action",
+		"admin", admin,
+		"action", action,
+		"target", target,
+		"reason", reason,
+		"duration", duration,
+	)
 }
