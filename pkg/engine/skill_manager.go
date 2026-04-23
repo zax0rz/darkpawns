@@ -236,18 +236,17 @@ func (sm *SkillManager) ForgetSkill(name string) bool {
 // TeachSkill attempts to teach a skill to another skill manager
 func (sm *SkillManager) TeachSkill(skillName string, target *SkillManager, teacherLevel, studentLevel, studentStat int) bool {
 	sm.mu.RLock()
-	target.mu.Lock()
-	defer sm.mu.RUnlock()
-	defer target.mu.Unlock()
 
 	// Get the skill from teacher
 	skill, exists := sm.skills[skillName]
 	if !exists || !skill.Learned {
+		sm.mu.RUnlock()
 		return false
 	}
 
 	// Check if teacher can teach this skill
 	if !skill.CanTeach(teacherLevel) {
+		sm.mu.RUnlock()
 		return false
 	}
 
@@ -257,7 +256,9 @@ func (sm *SkillManager) TeachSkill(skillName string, target *SkillManager, teach
 	taughtSkill.Practice = 0
 	taughtSkill.Learned = false // Will be set by LearnSkill
 
-	// Try to learn the skill
+	sm.mu.RUnlock()
+
+	// Try to learn the skill (no locks held, LearnSkill will lock target)
 	return target.LearnSkill(&taughtSkill, studentLevel, studentStat)
 }
 

@@ -404,12 +404,12 @@ func TestSkillManagerTeachSkill(t *testing.T) {
 	teacher := NewSkillManager()
 	student := NewSkillManager()
 
-	// Create a teachable skill
+	// Create a teachable skill at level 60 (high enough to teach)
 	skill := NewSkill("teachable", "Teachable Skill", SkillTypeCombat, 3)
-	skill.Level = 60 // High enough to teach
-
+	skill.Learned = true
+	skill.Level = 60
+	teacher.RegisterSkill(skill)
 	teacher.AddSkillPoints(10)
-	teacher.LearnSkill(skill, 20, 15) // Teacher learns at high level
 
 	student.AddSkillPoints(10)
 

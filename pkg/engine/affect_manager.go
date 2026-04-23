@@ -105,7 +105,8 @@ func (am *AffectManager) ApplyAffect(entity Affectable, affect *Affect) bool {
 
 	// Check if entity is registered
 	if _, exists := am.entityMap[entityID]; !exists {
-		am.RegisterEntity(entity)
+		am.entityMap[entityID] = entity
+		am.affects[entityID] = make([]*Affect, 0)
 	}
 
 	// Check stacking rules
