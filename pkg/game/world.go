@@ -18,6 +18,9 @@ import (
 type World struct {
 	mu sync.RWMutex
 
+	// Snapshot manager for lock-free reads
+	snapshots *SnapshotManager
+
 	// Static world data (from parsed files)
 	rooms      map[int]*parser.Room
 	mobs       map[int]*parser.Mob
@@ -47,6 +50,9 @@ type World struct {
 	// Event queue for timer-based scripted events
 	// Source: events.c event_init() — global event_q
 	EventQueue *events.EventQueue
+
+	// Events is the typed event bus for decoupled subsystem communication.
+	Events events.Bus
 }
 
 // NewWorld creates a new game world from parsed data.
@@ -95,6 +101,9 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	// In original: 1 pulse = 1/10 second (OPT_USEC = 100000)
 	w.EventQueue = events.NewEventQueue(100 * time.Millisecond)
 
+	// Initialize typed event bus
+	w.Events = events.NewInProcessBus()
+
 	// Start AI ticker
 	w.StartAITicker()
 
@@ -102,7 +111,16 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	// Called every ~30 seconds (Dark Pawns may have faster ticks than stock CircleMUD)
 	w.StartPointUpdateTicker(30 * time.Second)
 
+	// Initialize snapshot manager and publish initial snapshot
+	w.snapshots = NewSnapshotManager()
+	w.snapshots.Publish(w.rooms)
+
 	return w, nil
+}
+
+// GetSnapshotManager returns the world's snapshot manager.
+func (w *World) GetSnapshotManager() *SnapshotManager {
+	return w.snapshots
 }
 
 // GetParsedWorld returns the original parsed world data used to create this world.
