@@ -311,11 +311,15 @@ func (p *Player) AdvanceLevel() {
 
 	p.MaxHealth += addHP
 	p.MaxMana += addMana
-	// TODO: Add move points when implemented
+	p.MaxMove += addMove // limits.c point_update uses GET_MAX_MOVE
+	if p.MaxMove < 1 {
+		p.MaxMove = 1
+	}
 
 	// Heal to new max
 	p.Health = p.MaxHealth
 	p.Mana = p.MaxMana
+	p.Move = p.MaxMove
 
 	// TODO: Handle immortal level conditions (LVL_IMMORT)
 	// TODO: Save character
