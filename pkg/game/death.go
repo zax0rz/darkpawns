@@ -15,9 +15,11 @@ package game
 //   resurrection mechanics later.
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/events"
 )
 
 // MortalStartRoom is the vnum of the mortal start room (config.c: mortal_start_room = 8004)
@@ -57,6 +59,14 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			RoomName:    roomName,
 		})
 		w.handleMobDeath(victim, attackType)
+		// Publish typed event bus event
+		if w.Events != nil {
+			w.Events.Publish(context.Background(), events.MobKilledEvent{
+				KillerID: killerName,
+				MobVNum:  mobVNum,
+				RoomVNum: victim.GetRoom(),
+			})
+		}
 		// Award XP to killer and party members — fight.c group_gain()
 		if mobExp > 0 {
 			w.AwardMobKillXP(killer, mobExp)
@@ -82,6 +92,14 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			IsCombat:    true,
 		})
 		w.handlePlayerDeath(victim, true, attackType) // combat death
+		// Publish typed event bus event
+		if w.Events != nil {
+			w.Events.Publish(context.Background(), events.PlayerKilledEvent{
+				KillerID: killerName,
+				VictimID: victim.GetName(),
+				RoomVNum: victim.GetRoom(),
+			})
+		}
 	}
 }
 
