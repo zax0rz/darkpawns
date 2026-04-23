@@ -485,3 +485,17 @@ func cmdAdvance(s *Session, args []string) error {
 	target.Send(fmt.Sprintf("You have been advanced from level %d to %d!", oldLevel, newLevel))
 	return nil
 }
+
+// ---------------------------------------------------------------------------
+// reload — reload world data (LVL_GOD)
+// ---------------------------------------------------------------------------
+func cmdReload(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	s.Send("Reloading world data...")
+	// TODO: implement world reload from parsed files
+	s.Send("World reload not yet implemented.")
+	return nil
+}

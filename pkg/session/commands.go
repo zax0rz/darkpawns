@@ -109,6 +109,28 @@ func init() {
 	cmdRegistry.Register("unlock", wrapArgs(cmdUnlock), "Unlock a door with your key: unlock <north|south|east|west|up|down>", 0, 0)
 	cmdRegistry.Register("pick", wrapArgs(cmdPick), "Pick a door lock: pick <north|south|east|west|up|down>", 0, 0)
 
+	// Wizard commands
+	cmdRegistry.Register("goto", wrapArgs(cmdGoto), "Teleport to a room by VNum.", LVL_IMMORT, 0)
+	cmdRegistry.Register("at", wrapArgs(cmdAt), "Execute a command at another room.", LVL_IMMORT, 0)
+	cmdRegistry.Register("load", wrapArgs(cmdLoad), "Load a mob or object by VNum.", LVL_IMMORT, 0)
+	cmdRegistry.Register("purge", wrapArgs(cmdPurge), "Remove all mobs/items from a room.", LVL_GOD, 0)
+	cmdRegistry.Register("teleport", wrapArgs(cmdTeleport), "Teleport another player to a room.", LVL_GOD, 0)
+	cmdRegistry.Register("heal", wrapArgs(cmdHeal), "Fully heal a target.", LVL_IMMORT, 0)
+	cmdRegistry.Register("restore", wrapArgs(cmdRestore), "Restore all stats of a target.", LVL_IMMORT, 0)
+	cmdRegistry.Register("set", wrapArgs(cmdSet), "Set character fields.", LVL_IMMORT, 0)
+	cmdRegistry.Register("switch", wrapArgs(cmdSwitch), "Enter another character's body.", LVL_IMMORT, 0)
+	cmdRegistry.Register("return", wrapArgs(cmdReturn), "Return from switched body.", LVL_IMMORT, 0)
+	cmdRegistry.Register("invis", wrapArgs(cmdInvis), "Become invisible to players.", LVL_IMMORT, 0)
+	cmdRegistry.Register("vis", wrapArgs(cmdVis), "Become visible again.", LVL_IMMORT, 0)
+	cmdRegistry.Register("gecho", wrapArgs(cmdGecho), "Echo a message to all players.", LVL_GOD, 0)
+	cmdRegistry.Register("echo", wrapArgs(cmdEcho), "Echo a message to the room.", LVL_IMMORT, 0)
+	cmdRegistry.Register("send", wrapArgs(cmdSend), "Send a message to another character.", LVL_GOD, 0)
+	cmdRegistry.Register("force", wrapArgs(cmdForce), "Force a command on another character.", LVL_GRGOD, 0)
+	cmdRegistry.Register("shutdown", wrapArgs(cmdShutdown), "Shutdown the server.", LVL_GRGOD, 0)
+	cmdRegistry.Register("snoop", wrapArgs(cmdSnoop), "Spy on a player's input.", LVL_GOD, 0)
+	cmdRegistry.Register("advance", wrapArgs(cmdAdvance), "Advance a player's level.", LVL_GRGOD, 0)
+	cmdRegistry.Register("reload", wrapArgs(cmdReload), "Reload world data.", LVL_GOD, 0)
+
 	// Quit
 	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0)
 }
