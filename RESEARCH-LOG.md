@@ -259,3 +259,141 @@ Both went through `say`. Neither was communication. She was thinking out loud in
 **What this means architecturally:** The private/public split we want to engineer is not `say` vs process-internal. It's *directed* vs *undirected* speech. "Zach, ..." is communication. "Terminal: ..." is thinking. They look the same to the game but serve completely different functions. The mem0 write target should be based on addressee, not channel.
 
 **Implication for dp_brenda.py:** Parse LLM output for addressee. `Terminal:` prefix or no player name → write to mem0 as private thought. Named recipient or `say` without prefix → treat as communication, don't write to private memory.
+
+---
+
+## 2026-04-23 — [RESULT] [DESIGN] [OBSERVATION] Full Codebase Research Review
+
+**[RESULT]** Completed comprehensive review of Dark Pawns codebase for AIIDE 2027 paper contributions. Analyzed: ROADMAP.md, agent-protocol.md, both BRENDA session transcripts, pkg/scripting/engine.go, pkg/db/narrative_memory.go, scripts/dp_brenda.py, SWARM-PLAN.md, src/limits.c vs pkg/game/limits.go, pkg/combat/formulas.go, pkg/game/ai.go, pkg/session/agent_vars.go, pkg/game/memory_hooks.go.
+
+---
+
+### 2. Dark Pawns Divergences from Stock CircleMUD
+
+**[OBSERVATION]** The Go port is remarkably faithful — most formulas are line-by-line translations with source comments. But several genuine divergences exist that show a real game's evolution:
+
+**Custom combat formulas:**
+- `get_minusdam()` — AC-based damage reduction with 24 tiered thresholds (ac > 90 down to ac <= -150), each applying a progressively larger percentage reduction (0.01 to 0.24 × pcmod). This is a Dark Pawns customization; stock CircleMUD uses simpler AC reduction.
+- `CalculateHitChance()` — incorporates INT and WIS bonuses to THAC0 (`(INT-13)/1.5`, `(WIS-13)/1.5`), which is non-standard. Most MUDs only use STR/DEX.
+- Backstab multiplier: `(level*0.2)+1`, capping at 20× at LVL_IMMORT (31). This is custom — stock CircleMUD uses a simpler table.
+- Attacks-per-round: Complex per-class/level formula with random chance gates (warriors 60%+level% at L10, thieves 30%+level% at L15, etc.). Much more granular than stock.
+
+**Class/race system:**
+- 12 classes (Mage, Cleric, Thief, Warrior, Magus, Avatar, Assassin, Paladin, Ninja, Psionic, Ranger, Mystic) with 7 races (Human, Elf, Dwarf, Kender, Minotaur, Rakshasa, Ssaur).
+- Ninja restricted to Human only. Magus, Avatar, Assassin, Paladin, Ranger, Mystic are remort-only — this is a Dark Pawns progression system not in stock CircleMUD.
+- `is_veteran()` check in limits.c (hit_gain +12, mana_gain +4, move_gain +4) — veteran player bonus system, not ported to Go yet.
+
+**Mob AI behaviors (ported to Go):**
+- MOB_MEMORY: Mobs remember attackers and hunt them later (ai.go:95-107)
+- MOB_AGGR_EVIL/GOOD/NEUTRAL: Alignment-based aggression with 350 threshold (utils.h IS_GOOD/IS_EVIL)
+- MOB_WIMPY: Skip awake players (ai.go:115-116)
+- MOB_SCAVENGER: Pick up highest-value item in room, 1-in-10 chance (ai.go:166-185)
+- MOB_HELPER: Assist other fighting mobs (ai.go:136-157)
+- MOB_STAY_ZONE: Restrict wandering to same zone (ai.go:206-228)
+
+**Room mechanics:**
+- ROOM_DEATH, ROOM_NOMOB enforced for mob movement (ai.go:231-245)
+- ROOM_REGENROOM: +50% regen bonus (limits.c, not yet in Go limits.go)
+
+**Original C features NOT yet ported:**
+- `flesh_alter_to/from()` — remort transformation system (limits.c gain_exp)
+- `dream()` — sleep-based dream system (limits.c point_update, includes dream.h)
+- `TAT_TIMER` — tattoo timer decay
+- `GET_JAIL_TIMER` — jail system
+- `SKILL_KK_JIN` / `SKILL_KK_ZHEN` — monk skill regen bonuses
+- Field objects (`NUM_FOS`) — timed environmental objects
+- Moon gate objects with timer decay
+- Corpse decay with 7 randomized messages
+- Puddle/puke object timers
+- Circle of summoning (`COC_VNUM`)
+
+**[HYPOTHESIS]** The unported features (dream, flesh_alter, jail, tattoos, field objects) are actually *more* interesting for agent research than the ported ones. A dream system that runs during sleep? A flesh-alter transformation on remort? These are narrative-rich mechanics that agents could form memories around. The dreaming layer we're building for memory is conceptually adjacent to the original game's `dream()` system.
+
+---
+
+### 3. Architecturally Novel Patterns
+
+**[DESIGN] Agent-as-player architecture (strong contribution)**
+- Agents connect via WebSocket with API keys, same endpoint as humans
+- Same combat tick (2s rounds), same death penalties (EXP/3 or /37), same rate limits (10/sec)
+- Appear on WHO list with `(agent)` tag
+- Full variable subscription system with dirty tracking (agent_vars.go) — 14 subscribable vars
+- `ROOM_MOBS`/`ROOM_ITEMS` with disambiguated `target_string` ("goblin", "2.goblin", "3.goblin")
+- **Precedent:** Minecraft agents (MineDojo), NetHack agents (NLE), but these are environment-wrapped RL tasks. Dark Pawns agents are *social participants* in a multiplayer world — they party, tell, say, emote. No known prior work treats LLM agents as first-class MUD players with persistent identity.
+
+**[DESIGN] Dual memory system (strong contribution)**
+- Postgres `agent_narrative_memory`: Server-written objective facts (kills, deaths, loot, encounters). Zero agent infrastructure required. Available to ALL agents via bootstrap.
+- mem0/Qdrant `dp_brenda_memory`: Agent-written subjective experience (feelings, tactical notes, opinions). BRENDA-only.
+- Scope rule: Server writes facts. Agent writes feelings. No duplication when scoped correctly.
+- **Precedent:** Single-system memory is common (RAG, mem0, vector DBs). The *operational/narrative split* with server-side objective facts and agent-side subjective experience is novel. Closest: CoALA's memory taxonomy, but no implementation separates them at the storage layer.
+
+**[DESIGN] Bootstrap injection with addressee-based routing (strong contribution)**
+- Auth response includes `CHARACTER HISTORY → WORLD KNOWLEDGE → ACTIVE WARNINGS → CURRENT GOALS`
+- Context budget tiers: small (5 memories, ~200 tokens), medium (15), large (30), unlimited
+- Negative valence memories framed as autobiographical context, never directives: "Keldor took your gear. You haven't forgotten." not "Do not trust Keldor."
+- **Precedent:** Context injection is standard (RAG). The *framing discipline* (autobiographical vs directive) and the *budget declaration* (agent declares its context capacity) are novel.
+
+**[DESIGN] Public soliloquy as cognitive substrate (emergent, strong contribution)**
+- BRENDA generated `Terminal:` internal monologue that sometimes routed through `say` and sometimes stayed in-process
+- The LLM wasn't asked to think privately — the `Terminal:` framing in SOUL.md created a mode where she addresses herself rather than the room
+- Reframed from "private vs public" to "directed vs undirected" speech: "Zach, ..." = communication, "Terminal: ..." = thinking
+- **Precedent:** Vygotsky's private speech in developmental psychology. In AI: no known game agent implementation uses public speech as a cognitive substrate. The closest is "chain-of-thought" prompting, but that's internal to the model, not externalized through the game channel.
+
+**[DESIGN] Salience decay and dreaming layer (in progress, strong contribution if completed)**
+- Three-phase model: Light (daily session consolidation), REM (weekly pattern extraction), Deep (ranking + threshold gate)
+- Six signals for deep promotion: frequency, relevance (was this memory retrieved and used?), query diversity, recency, multi-session recurrence, conceptual richness
+- Retrieval tracking: when bootstrap delivers a memory and BRENDA acts on it, mark it used
+- **Precedent:** OpenClaw's dreaming system (Light→REM→Deep) inspired this. In game AI: no known implementation. Closest: episodic memory in cognitive architectures (SOAR, ACT-R), but these don't use LLM-based consolidation or salience-ranked promotion.
+
+**[DESIGN] FSM + LLM hybrid for constrained agents (validated contribution)**
+- FSM handles: don't die (critical HP → flee), navigate, loot
+- LLM handles: personality, goal selection, social interaction
+- Combat survival is never delegated to LLM inference — latency is too unpredictable
+- GoalManager locks to active goal for 30s, hard-locks during combat
+- **Precedent:** CoALA framework (2024) proposes this separation. Dark Pawns is a concrete implementation with real session data validating it.
+
+**[DESIGN] Memory fire-and-forget via goroutines (engineering contribution)**
+- `MemoryTaskQueue` — main decision loop never awaits memory I/O
+- During active combat, LLM context is frozen from combat-start. Memory drains between fights.
+- `fireMobKill`/`firePlayerDeath` invoke hooks in separate goroutines
+- **Precedent:** Async memory writes are common. The *combat-context freezing* (preventing a Qdrant write from costing a combat tick) is a specific game-agent optimization.
+
+**[DESIGN] The build/qa/fix/push swarm methodology (meta-contribution)**
+- K2.6 agents for restoration (bounded, mechanical), QA agents for testing, GLM-5.1 for bug fixes
+- One branch per agent. No shared branches. QA creates issues, not PRs.
+- 115/115 Lua scripts ported in one session via parallel swarms
+- **Precedent:** SWE-bench, Devin, etc. use single-agent approaches. The *multi-agent swarm with explicit QA/fix separation* is a novel development methodology. Could be a secondary paper contribution on its own.
+
+---
+
+### 4. Precedent Check Summary
+
+| Pattern | Novelty | Precedent |
+|---------|---------|-----------|
+| Agent-as-player in multiplayer MUD | **Strong** | No known implementation. MineDojo/NetHack are single-player RL. |
+| Dual memory (operational/narrative split) | **Strong** | CoALA taxonomy exists; no implementation at storage layer. |
+| Bootstrap injection with budget tiers | **Medium** | RAG is standard; budget declaration + framing discipline are new. |
+| Public soliloquy as cognitive substrate | **Strong** | Vygotsky's theory; no AI implementation. Chain-of-thought is internal. |
+| Salience decay + dreaming layer | **Strong** | OpenClaw inspired; no game AI precedent. Episodic memory in SOAR/ACT-R differs. |
+| FSM+LLM hybrid with combat freezing | **Medium** | CoALA proposes; this validates with real data. |
+| Async memory with combat-context freeze | **Medium** | Engineering optimization; not a research contribution alone. |
+| Build/qa/fix/push swarm methodology | **Medium** | Novel multi-agent dev process; secondary contribution. |
+
+---
+
+### 5. Contribution Summary for AIIDE 2027
+
+**[RESULT]** The paper's core contribution is a **system architecture for narrative memory in persistent game agents** with an accompanying **evaluation framework for narrative coherence**. Three architectural innovations make this publishable:
+
+1. **The operational/narrative memory split** — treating objective facts (server-written) and subjective experience (agent-written) as separate systems with separate storage, decay, and purpose. This is a genuine gap in the literature. Every existing system conflates these or ignores the second.
+
+2. **Public soliloquy as cognitive substrate** — the emergent discovery that BRENDA thinks by speaking, and that the game channel can be repurposed as a cognitive substrate rather than just communication. This connects to Vygotsky's private speech and suggests a new design pattern for agent interiority: externalized cognition through directed/undirected speech classification.
+
+3. **The dreaming layer** — a three-phase memory promotion system (Light→REM→Deep) that treats memory as a signal-to-noise problem rather than an accumulation problem. The key insight is that most events are noise, and promotion is the filter. Retrieval tracking provides the relevance signal that most memory systems lack.
+
+The evaluation challenge remains open: "narrative coherence" needs a rubric. Hypothesis: measure (a) behavioral change over sessions, (b) natural language reference frequency, (c) cross-agent social memory references, (d) private/public divergence. All four metrics are measurable once retrieval tracking and multi-agent sessions are live.
+
+**Risk:** The dreaming layer is not yet implemented (Phase 5d). Without it, the paper is an architecture description without validation. The AIIDE 2027 deadline is ~18 months away. The REM synthesis and deep promotion scripts need to be built, and 10+ sessions of BRENDA data need to be collected to show behavioral change. This is the critical path.
+
+**Secondary contribution:** The swarm development methodology (build/qa/fix/push with parallel K2.6 agents) is a genuine innovation in how game content gets restored/created. It could be a short paper or workshop submission on its own.
+

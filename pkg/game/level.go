@@ -51,32 +51,32 @@ type wisAppType struct {
 // wisApp is the wis_app[] table from constants.c:1152-1178
 // Index is WIS score (0-25)
 var wisApp = []wisAppType{
-	{-50}, // wis = 0
-	{-45}, // wis = 1
-	{-40},
-	{-35},
-	{-30},
-	{-25}, // wis = 5
-	{-20},
-	{-15},
-	{-10},
-	{-5},
+	{0}, // wis = 0
+	{0}, // wis = 1
+	{0},
+	{0},
+	{0},
+	{0}, // wis = 5
+	{0},
+	{0},
+	{0},
+	{0},
 	{0}, // wis = 10
 	{0},
-	{0},
-	{0},
-	{0},
-	{1}, // wis = 15
-	{1},
 	{2},
 	{2},
-	{2},
-	{3}, // wis = 20
 	{3},
+	{3}, // wis = 15
 	{3},
-	{3},
-	{3},
-	{3}, // wis = 25
+	{4},
+	{5}, // wis = 18
+	{6},
+	{6}, // wis = 20
+	{6},
+	{6},
+	{7},
+	{7},
+	{7}, // wis = 25
 }
 
 // AdvanceLevel implements advance_level() from class.c:600-720

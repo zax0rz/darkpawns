@@ -379,8 +379,33 @@ func getMinusDam(dam int, ac int) int {
 		return dam - int(float64(dam)*(0.23*pcmod))
 	}
 
-	// ac <= -150
-	return dam - int(float64(dam)*(0.24*pcmod))
+	if ac > -170 {
+		return dam - int(float64(dam)*(0.24*pcmod))
+	}
+	if ac > -190 {
+		return dam - int(float64(dam)*(0.25*pcmod))
+	}
+	if ac > -210 {
+		return dam - int(float64(dam)*(0.26*pcmod))
+	}
+	if ac > -230 {
+		return dam - int(float64(dam)*(0.27*pcmod))
+	}
+	if ac > -250 {
+		return dam - int(float64(dam)*(0.28*pcmod))
+	}
+	if ac > -270 {
+		return dam - int(float64(dam)*(0.29*pcmod))
+	}
+	if ac > -290 {
+		return dam - int(float64(dam)*(0.30*pcmod))
+	}
+	if ac > -310 {
+		return dam - int(float64(dam)*(0.31*pcmod))
+	}
+
+	// ac <= -310
+	return dam - int(float64(dam)*(0.32*pcmod))
 }
 
 // CalculateDamage implements the original damage calculation from fight.c lines 1840–1858.
@@ -414,9 +439,10 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 	// Position multiplier — from fight.c comment:
 	//   sitting  x1.33, resting x1.66, sleeping x2.00,
 	//   stunned  x2.33, incap   x2.66, mortally  x3.00
+	// Source: fight.c line 1859: dam *= 1 + (POS_FIGHTING - GET_POS(victim)) / 3
 	defPos := defender.GetPosition()
 	if defPos < PosFighting {
-		dam = dam * (1 + (PosFighting - defPos)) / 3
+		dam = int(float64(dam) * (1.0 + float64(PosFighting-defPos)/3.0))
 	}
 
 	// Apply AC damage reduction (get_minusdam) - fight.c line 1882
