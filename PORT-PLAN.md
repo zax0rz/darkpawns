@@ -26,13 +26,11 @@ Build:             go build ./cmd/server passes clean
 - **Shops, eat/drink, spell affects, socials** (20+ command categories) — Go implementations
 - **BRENDA memory system:** `agent_narrative_memory` schema, kill/death hooks, bootstrap injection, salience decay, session consolidation crons — all active
 
-**Unmerged but on zax0rz remote (real code):**
-1. `feat/engine-stubs-2` — `has_item`, `obj_in_room`, `objfrom`, `objto` implementations (one commit behind main)
-2. `feat/party-follow-group` — party/follow/group/gtell commands
-3. `feat/social-commands` — score/who/tell/emote/shout/where/help
-4. `fix/lua-script-bugs` — fight trigger arg fix, nil ch fix, bane state machine, breed_killer obj
-5. `feat/regen-limits` — go test passes, combat_test.go fixed
-6. `fix/ci-engine-tests` — PR #10 open, fixes mutex deadlocks + test failures (+40/-25 lines)
+**Branches evaluated (2026-04-24):**
+- `feat/engine-stubs-2`, `feat/party-follow-group`, `feat/social-commands`, `fix/lua-script-bugs` — **all merged into main** (batch 1, code already present)
+- `feat/regen-limits` — **superseded.** `regen.go` content already in `pkg/game/limits.go` with correct bitmask-based `Affects` API. Branch written against old `[]*engine.Affect` field.
+- `fix/ci-engine-tests` — **superseded.** CI YAML and engine fixes already in main.
+- Only actionable change cherry-picked: `memory_hooks.go` json.Marshal error logging (commit `923a190`)
 
 ---
 
