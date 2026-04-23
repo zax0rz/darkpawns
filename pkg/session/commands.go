@@ -50,6 +50,13 @@ func init() {
 	cmdRegistry.Register("hit", wrapArgs(cmdHit), "Attack a target.", 0, 0, "attack", "kill")
 	cmdRegistry.Register("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.", 0, 0)
 
+	// Position / Movement
+	cmdRegistry.Register("stand", wrapNoArgs(cmdStand), "Stand up.", 0, 0)
+	cmdRegistry.Register("sit", wrapNoArgs(cmdSit), "Sit down.", 0, 0)
+	cmdRegistry.Register("rest", wrapNoArgs(cmdRest), "Rest.", 0, 0)
+	cmdRegistry.Register("sleep", wrapNoArgs(cmdSleep), "Go to sleep.", 0, 0)
+	cmdRegistry.Register("wake", wrapArgs(cmdWake), "Wake up or wake someone else.", 0, 0)
+
 	// Items
 	cmdRegistry.Register("inventory", wrapArgs(cmdInventory), "Show your inventory.", 0, 0, "i", "inv")
 	cmdRegistry.Register("equipment", wrapArgs(cmdEquipment), "Show your equipped items.", 0, 0, "eq")
