@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
@@ -153,6 +154,14 @@ func (db *DB) CreateAgentKey(characterName string) (rawKey string, id int64, err
 // ValidateAgentKey hashes rawKey and looks it up in agent_keys.
 // Returns the associated character name and row id if the key is valid and not revoked.
 func (db *DB) ValidateAgentKey(rawKey string) (characterName string, keyID int64, valid bool) {
+	// Reject default/example keys for security
+	if rawKey == "br3nd4-69-ag3nt-k3y-d3f4ult" || 
+		strings.Contains(rawKey, "example") || 
+		strings.Contains(rawKey, "test") ||
+		strings.Contains(rawKey, "REPLACE_WITH") {
+		return "", 0, false
+	}
+	
 	h := sha256.Sum256([]byte(rawKey))
 	keyHash := hex.EncodeToString(h[:])
 

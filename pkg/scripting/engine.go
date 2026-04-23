@@ -32,6 +32,33 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 
 	// Open standard libraries
 	L.OpenLibs()
+	
+	// Remove dangerous functions for security
+	// Remove file system access
+	L.SetGlobal("dofile", lua.LNil)
+	L.SetGlobal("loadfile", lua.LNil)
+	L.SetGlobal("load", lua.LNil)
+	
+	// Remove OS access
+	osTable := L.GetGlobal("os").(*lua.LTable)
+	osTable.RawSetString("execute", lua.LNil)
+	osTable.RawSetString("exit", lua.LNil)
+	osTable.RawSetString("remove", lua.LNil)
+	osTable.RawSetString("rename", lua.LNil)
+	osTable.RawSetString("setlocale", lua.LNil)
+	osTable.RawSetString("tmpname", lua.LNil)
+	
+	// Remove package library (can load arbitrary code)
+	L.SetGlobal("package", lua.LNil)
+	
+	// Remove debug library
+	L.SetGlobal("debug", lua.LNil)
+	
+	// Remove io library
+	L.SetGlobal("io", lua.LNil)
+	
+	// Set memory limit
+	L.SetMx(1000) // Limit memory allocation
 
 	// Register our custom functions
 	engine.registerFunctions()

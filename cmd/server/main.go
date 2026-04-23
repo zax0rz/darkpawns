@@ -1,3 +1,5 @@
+//go:build !web
+
 package main
 
 import (
@@ -11,9 +13,11 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/session"
+	"github.com/zax0rz/darkpawns/web"
 )
 
 func main() {
@@ -81,10 +85,15 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK\n"))
 	})
+	http.HandleFunc("/metrics", metrics.Handler().ServeHTTP)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`Dark Pawns Phase 1 Server
 
 Connect via WebSocket: ws://` + r.Host + `/ws
+
+Endpoints:
+  /health - Health check
+  /metrics - Prometheus metrics
 
 Protocol:
   {"type":"login","data":{"player_name":"YourName"}}
@@ -114,9 +123,28 @@ Protocol:
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
+	// Create handler with security middleware
+	handler := web.SecurityHeaders(http.DefaultServeMux)
+	
+	// Check if TLS should be used
+	useTLS := os.Getenv("USE_TLS") == "true"
+	certFile := os.Getenv("TLS_CERT_FILE")
+	keyFile := os.Getenv("TLS_KEY_FILE")
+	
 	go func() {
-		if err := http.ListenAndServe(addr, nil); err != nil {
-			log.Fatalf("Server error: %v", err)
+		if useTLS {
+			if certFile == "" || keyFile == "" {
+				log.Fatal("TLS_CERT_FILE and TLS_KEY_FILE environment variables must be set for TLS")
+			}
+			log.Printf("Starting HTTPS server on %s", addr)
+			if err := http.ListenAndServeTLS(addr, certFile, keyFile, handler); err != nil {
+				log.Fatalf("Server error: %v", err)
+			}
+		} else {
+			log.Printf("Starting HTTP server on %s (WARNING: Not secure for production)", addr)
+			if err := http.ListenAndServe(addr, handler); err != nil {
+				log.Fatalf("Server error: %v", err)
+			}
 		}
 	}()
 

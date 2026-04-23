@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database for moderation data
+  moderation-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: darkpawns_moderation
+      POSTGRES_USER: moderator
+      POSTGRES_PASSWORD: moderation_pass
+    volumes:
+      - moderation-data:/var/lib/postgresql/data
+      - ./scripts/init-moderation-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moderator"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Admin web interface (placeholder - would be built)
+  admin-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://moderator:moderation_pass@moderation-db:5432/darkpawns_moderation
+      DARKPAWNS_API_URL: http://darkpawns-server:8080
+    depends_on:
+      moderation-db:
+        condition: service_healthy
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+
+  # Moderation API service
+  moderation-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ./moderation-api
+    ports:
+      - "8081:8081"
+    environment:
+      DATABASE_URL: postgres://moderator:moderation_pass@moderation-db:5432/darkpawns_moderation
+      DARKPAWNS_WS_URL: ws://darkpawns-server:8080/ws
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-changeme}
+    depends_on:
+      moderation-db:
+        condition: service_healthy
+    volumes:
+      - ./pkg/moderation:/app/pkg/moderation
+
+  # Redis for caching and rate limiting
+  moderation-cache:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
+volumes:
+  moderation-data:
+  redis-data:

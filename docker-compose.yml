@@ -9,12 +9,26 @@ services:
       POSTGRES_DB: darkpawns
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
       - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 5
 
   server:
@@ -25,14 +39,39 @@ services:
       - WORLD_DIR=/app/lib
       - PORT=8080
       - DATABASE_URL=postgres://postgres:postgres@postgres/darkpawns?sslmode=disable
+      - REDIS_URL=redis://redis:6379/0
+      - AI_ENABLED=true
     volumes:
       - ${WORLD_DIR:-./lib}:/app/lib:ro
+      - ./scripts:/app/scripts:ro
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     command: ["./server", "-world", "/app/lib", "-port", "8080", "-db", "postgres://postgres:postgres@postgres/darkpawns?sslmode=disable"]
+
+  ai-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai-agent
+    environment:
+      - SERVER_URL=ws://server:8080/ws
+      - API_KEY=${AI_API_KEY:-default_key}
+      - AGENT_NAME=brenda69
+      - REDIS_URL=redis://redis:6379/0
+      - MEM0_API_KEY=${MEM0_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      server:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  redis_data:

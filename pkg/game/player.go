@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // Player represents an active player in the game.
@@ -55,7 +56,7 @@ type Player struct {
 
 	// Skills: map of skill name → proficiency (0-100)
 	// Populated by DoStart() and advance_level(). Used by Phase 3 Lua scripts.
-	Skills map[string]int
+	SkillManager *engine.SkillManager
 
 	// Group/follow state
 	// Source: act.movement.c (ch->master), structs.h AFF_GROUP flag
@@ -95,7 +96,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		Fighting:    "", // Not fighting anyone
 		Send:        make(chan []byte, 256),
 		Alignment:   0, // Neutral by default
-		Skills:      make(map[string]int),
+		SkillManager: engine.NewSkillManager(),
 	}
 	
 	// Initialize inventory and equipment
@@ -137,6 +138,10 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	// Set inventory capacity based on DEX and level
 	// Formula: 5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1)
 	p.Inventory.SetCapacity(p.Stats.Dex, p.Level)
+	
+	// Initialize default skills
+	p.SkillManager.InitializeDefaultSkills()
+	
 	return p
 }
 
@@ -302,20 +307,31 @@ func (p *Player) IsNeutral() bool { return !p.IsGood() && !p.IsEvil() }
 func (p *Player) SetSkill(name string, level int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.Skills == nil {
-		p.Skills = make(map[string]int)
+	if p.SkillManager == nil {
+		p.SkillManager = engine.NewSkillManager()
 	}
-	p.Skills[name] = level
+	// Create or update skill in manager
+	skill := p.SkillManager.GetSkill(name)
+	if skill == nil {
+		// Create new skill with default values
+		skill = engine.NewSkill(name, name, engine.SkillTypeUtility, 3)
+		p.SkillManager.RegisterSkill(skill)
+	}
+	skill.Learned = true
+	skill.Level = level
+	if level > 0 {
+		skill.Learned = true
+	}
 }
 
 // GetSkill returns a skill level (0 if not set).
 func (p *Player) GetSkill(name string) int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	if p.Skills == nil {
+	if p.SkillManager == nil {
 		return 0
 	}
-	return p.Skills[name]
+	return p.SkillManager.GetSkillLevel(name)
 }
 
 // LoseExp deducts experience from the player, floored at 0.

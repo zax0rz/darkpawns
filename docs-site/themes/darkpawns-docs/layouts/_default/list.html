@@ -1,0 +1,80 @@
+{{ define "main" }}
+<div class="home">
+    <section class="hero">
+        <div class="hero-body">
+            <h1 class="title">{{ .Title }}</h1>
+            <p class="subtitle">{{ .Site.Params.description }}</p>
+            
+            <div class="hero-buttons">
+                <a href="{{ "getting-started" | relURL }}" class="button is-primary is-large">
+                    <i class="fas fa-rocket"></i> Get Started
+                </a>
+                <a href="{{ "api" | relURL }}" class="button is-info is-large">
+                    <i class="fas fa-code"></i> API Reference
+                </a>
+                <a href="{{ "agents" | relURL }}" class="button is-success is-large">
+                    <i class="fas fa-robot"></i> Agent Guide
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <section class="features">
+        <div class="columns">
+            <div class="column">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3>Game Documentation</h3>
+                    <p>Complete documentation of Dark Pawns mechanics, commands, and world.</p>
+                </div>
+            </div>
+            <div class="column">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>Agent-Friendly</h3>
+                    <p>Dual rendering with markdown for agents, copy/paste commands, structured data.</p>
+                </div>
+            </div>
+            <div class="column">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <h3>API Reference</h3>
+                    <p>Complete OpenAPI specification and WebSocket protocol documentation.</p>
+                </div>
+            </div>
+            <div class="column">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Searchable</h3>
+                    <p>Full-text search for both humans and agents across all documentation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="recent-content">
+        <h2 class="section-title">Documentation Sections</h2>
+        <div class="columns">
+            {{ range where .Site.RegularPages "Section" "in" (slice "getting-started" "api" "agents" "game") }}
+            <div class="column is-one-third">
+                <div class="content-card">
+                    <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+                    <p>{{ .Description }}</p>
+                    {{ if .Params.agent_friendly }}
+                    <span class="tag is-success">Agent-Friendly</span>
+                    {{ end }}
+                </div>
+            </div>
+            {{ end }}
+        </div>
+    </section>
+</div>
+{{ end }}

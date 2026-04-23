@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: darkpawns-ai-agent
+  namespace: darkpawns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: darkpawns-ai-agent
+  template:
+    metadata:
+      labels:
+        app: darkpawns-ai-agent
+    spec:
+      containers:
+      - name: ai-agent
+        image: ghcr.io/zax0rz/darkpawns-ai-agent:latest
+        imagePullPolicy: Always
+        env:
+        - name: SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: darkpawns-config
+              key: SERVER_URL
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: darkpawns-secrets
+              key: AI_API_KEY
+        - name: AGENT_NAME
+          value: "brenda69"
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: darkpawns-config
+              key: REDIS_URL
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: darkpawns-secrets
+              key: OPENAI_API_KEY
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: darkpawns-secrets
+              key: ANTHROPIC_API_KEY
+        - name: MEM0_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: darkpawns-secrets
+              key: MEM0_API_KEY
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+        restartPolicy: Always

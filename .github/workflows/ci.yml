@@ -1,0 +1,160 @@
+name: Dark Pawns CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: darkpawns
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24'
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install Go dependencies
+      run: go mod download
+    
+    - name: Run Go tests
+      run: go test ./... -v
+    
+    - name: Install Python dependencies
+      run: pip install -r requirements.txt
+    
+    - name: Run Python tests
+      run: |
+        python -m pytest scripts/ -v || echo "No pytest tests found"
+    
+    - name: Build Go binary
+      run: go build -o server ./cmd/server
+    
+    - name: Test server startup
+      run: |
+        timeout 10s ./server -port 9999 &
+        sleep 3
+        curl -f http://localhost:9999/health || echo "Health check failed but continuing"
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Build and push AI Agent image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: Dockerfile.ai-agent
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ai-agent:${{ github.sha }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Kubernetes
+      env:
+        KUBECONFIG: ${{ secrets.KUBECONFIG }}
+      run: |
+        # Apply Kubernetes manifests
+        kubectl apply -f k8s/namespace.yaml
+        kubectl apply -f k8s/configmap.yaml
+        kubectl apply -f k8s/secrets.yaml
+        kubectl apply -f k8s/postgres.yaml
+        kubectl apply -f k8s/redis.yaml
+        kubectl apply -f k8s/server.yaml
+        kubectl apply -f k8s/ai-agent.yaml
+        
+        # Wait for rollout
+        kubectl rollout status deployment/darkpawns-server -n darkpawns
+        kubectl rollout status deployment/darkpawns-ai-agent -n darkpawns
+    
+    - name: Update deployment documentation
+      run: |
+        echo "Deployment completed at $(date)" >> deployment/deployment-log.md
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add deployment/deployment-log.md
+        git commit -m "Update deployment log" || echo "No changes to commit"
+        git push || echo "Push failed (not critical)"

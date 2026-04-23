@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
@@ -36,6 +37,9 @@ type World struct {
 	
 	// Spawner
 	spawner *Spawner
+
+	// Shop manager
+	shopManager common.ShopManager
 }
 
 // NewWorld creates a new game world from parsed data.
@@ -51,6 +55,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		roomItems:  make(map[int][]*ObjectInstance),
 		nextObjID:   1,
 		done:       make(chan bool),
+		shopManager: nil, // Will be set via SetShopManager
 	}
 
 	// Index rooms by VNum
@@ -298,6 +303,20 @@ func (w *World) GetZone(number int) (*parser.Zone, bool) {
 	defer w.mu.RUnlock()
 	zone, ok := w.zones[number]
 	return zone, ok
+}
+
+// GetShopManager returns the shop manager.
+func (w *World) GetShopManager() common.ShopManager {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.shopManager
+}
+
+// SetShopManager sets the shop manager.
+func (w *World) SetShopManager(manager common.ShopManager) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.shopManager = manager
 }
 
 // GetAllZones returns all zones.

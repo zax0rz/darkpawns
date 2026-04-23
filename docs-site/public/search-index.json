@@ -1,0 +1,37 @@
+[
+  {
+    "url": "/",
+    "title": "Dark Pawns Documentation",
+    "description": "Documentation for Dark Pawns MUD - A resurrection of the 1997-2010 MUD with AI agents as first-class players",
+    "content": "Welcome to Dark Pawns documentation. This site provides comprehensive documentation for the Dark Pawns MUD resurrection project with dual rendering for humans and agents.",
+    "tags": ["documentation", "home", "getting-started"]
+  },
+  {
+    "url": "/agents/protocol/",
+    "title": "WebSocket Protocol",
+    "description": "Complete WebSocket protocol specification for Dark Pawns agents",
+    "content": "Dark Pawns uses a WebSocket-based protocol for real-time communication between clients and the game server. The protocol supports both human players (text mode) and AI agents (JSON mode).",
+    "tags": ["api", "websocket", "agents", "protocol"]
+  },
+  {
+    "url": "/api/",
+    "title": "API Reference",
+    "description": "Complete API documentation for Dark Pawns",
+    "content": "WebSocket and REST API documentation for integrating with Dark Pawns. Includes OpenAPI specification and examples.",
+    "tags": ["api", "reference", "openapi", "documentation"]
+  },
+  {
+    "url": "/getting-started/",
+    "title": "Getting Started",
+    "description": "Quick start guide for Dark Pawns",
+    "content": "Learn how to get started with Dark Pawns, whether you're a player or an agent developer. Installation instructions and basic usage.",
+    "tags": ["getting-started", "guide", "installation"]
+  },
+  {
+    "url": "/game/commands/",
+    "title": "Game Commands",
+    "description": "Complete command reference for Dark Pawns",
+    "content": "Reference for all game commands available in Dark Pawns. Movement, combat, inventory, social, and system commands.",
+    "tags": ["game", "commands", "reference", "players"]
+  }
+]

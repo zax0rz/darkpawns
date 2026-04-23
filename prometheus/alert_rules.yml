@@ -1,0 +1,62 @@
+groups:
+  - name: darkpawns_alerts
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: rate(darkpawns_errors_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected in Dark Pawns"
+          description: "Error rate is {{ $value }} errors per second over the last 5 minutes"
+
+      # Low connections alert
+      - alert: LowConnections
+        expr: darkpawns_connections_active < 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No active connections to Dark Pawns"
+          description: "Server has had 0 active connections for 5 minutes"
+
+      # High command latency alert
+      - alert: HighCommandLatency
+        expr: histogram_quantile(0.95, rate(darkpawns_command_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High command processing latency"
+          description: "95th percentile command latency is {{ $value }} seconds"
+
+      # Database query latency alert
+      - alert: HighDBLatency
+        expr: histogram_quantile(0.95, rate(darkpawns_db_query_duration_seconds_bucket[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database query latency"
+          description: "95th percentile database query latency is {{ $value }} seconds"
+
+      # Memory pressure alert
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / process_virtual_memory_bytes > 0.8
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High memory usage"
+          description: "Process memory usage is {{ $value }}% of available memory"
+
+      # Process down alert
+      - alert: DarkPawnsDown
+        expr: up{job="darkpawns"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Dark Pawns server is down"
+          description: "Dark Pawns server has been down for more than 1 minute"

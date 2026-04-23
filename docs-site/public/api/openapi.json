@@ -1,0 +1,280 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Dark Pawns API",
+    "description": "API documentation for Dark Pawns MUD - WebSocket protocol for human players and AI agents",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Dark Pawns Team",
+      "url": "https://darkpawns.labz0rz.com",
+      "email": "hello@labz0rz.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "ws://localhost:4350",
+      "description": "Local development server"
+    },
+    {
+      "url": "wss://darkpawns.labz0rz.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "authentication",
+      "description": "Login and authentication endpoints"
+    },
+    {
+      "name": "game",
+      "description": "Game commands and state management"
+    },
+    {
+      "name": "agents",
+      "description": "Agent-specific features and protocols"
+    }
+  ],
+  "paths": {
+    "/ws": {
+      "get": {
+        "summary": "WebSocket connection endpoint",
+        "description": "Establish a WebSocket connection to the Dark Pawns game server. Supports both human players (text mode) and AI agents (JSON mode).",
+        "tags": ["authentication"],
+        "responses": {
+          "101": {
+            "description": "Switching Protocols - WebSocket connection established"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["login"],
+            "description": "Message type"
+          },
+          "data": {
+            "$ref": "#/components/schemas/LoginData"
+          }
+        },
+        "example": {
+          "type": "login",
+          "data": {
+            "player_name": "brenda69",
+            "api_key": "agent-key-123",
+            "mode": "agent"
+          }
+        }
+      },
+      "LoginData": {
+        "type": "object",
+        "required": ["player_name"],
+        "properties": {
+          "player_name": {
+            "type": "string",
+            "description": "Player character name"
+          },
+          "api_key": {
+            "type": "string",
+            "description": "API key for agent authentication (required for agent mode)"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["human", "agent"],
+            "default": "human",
+            "description": "Connection mode - 'human' for text interface, 'agent' for JSON API"
+          }
+        }
+      },
+      "CommandRequest": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["command"],
+            "description": "Message type"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CommandData"
+          }
+        },
+        "example": {
+          "type": "command",
+          "data": {
+            "command": "look",
+            "args": []
+          }
+        }
+      },
+      "CommandData": {
+        "type": "object",
+        "required": ["command"],
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Game command to execute"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Command arguments",
+            "default": []
+          }
+        }
+      },
+      "SubscriptionRequest": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["subscribe"],
+            "description": "Message type"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SubscriptionData"
+          }
+        },
+        "example": {
+          "type": "subscribe",
+          "data": {
+            "variables": ["HEALTH", "ROOM_VNUM", "ROOM_MOBS"]
+          }
+        }
+      },
+      "SubscriptionData": {
+        "type": "object",
+        "required": ["variables"],
+        "properties": {
+          "variables": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["HEALTH", "MAX_HEALTH", "MANA", "LEVEL", "ROOM_VNUM", "ROOM_NAME", "ROOM_EXITS", "ROOM_MOBS", "ROOM_ITEMS", "FIGHTING", "INVENTORY", "EQUIPMENT", "EVENTS"]
+            },
+            "description": "List of game state variables to subscribe to"
+          }
+        }
+      },
+      "GameStateUpdate": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["state_update"],
+            "description": "Message type"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Game state variables that have changed"
+          }
+        },
+        "example": {
+          "type": "state_update",
+          "data": {
+            "HEALTH": 85,
+            "MAX_HEALTH": 100,
+            "ROOM_VNUM": 3001,
+            "ROOM_NAME": "The Town Square",
+            "ROOM_EXITS": ["north", "east", "south", "west"],
+            "ROOM_MOBS": [
+              {
+                "vnum": 1001,
+                "name": "a town guard",
+                "short_desc": "A vigilant town guard stands here.",
+                "health": 100
+              }
+            ]
+          }
+        }
+      },
+      "CommandResponse": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["command_response"],
+            "description": "Message type"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "description": "Whether the command was successful"
+              },
+              "message": {
+                "type": "string",
+                "description": "Response message"
+              },
+              "output": {
+                "type": "string",
+                "description": "Command output (for human mode)"
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["error"],
+            "description": "Message type"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code"
+              },
+              "message": {
+                "type": "string",
+                "description": "Error message"
+              }
+            }
+          }
+        },
+        "example": {
+          "type": "error",
+          "data": {
+            "code": "AUTH_FAILED",
+            "message": "Invalid API key"
+          }
+        }
+      }
+    },
+    "messages": {
+      "WebSocketMessages": {
+        "description": "All WebSocket message types",
+        "oneOf": [
+          { "$ref": "#/components/schemas/LoginRequest" },
+          { "$ref": "#/components/schemas/CommandRequest" },
+          { "$ref": "#/components/schemas/SubscriptionRequest" },
+          { "$ref": "#/components/schemas/GameStateUpdate" },
+          { "$ref": "#/components/schemas/CommandResponse" },
+          { "$ref": "#/components/schemas/ErrorResponse" }
+        ]
+      }
+    }
+  }
+}

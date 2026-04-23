@@ -253,7 +253,7 @@ Connect via WebSocket at `ws://localhost:4350/ws`:
 
 | File | Purpose |
 |------|---------|
-| `PHASE4-AGENT-PROTOCOL.md` | Full agent protocol spec + narrative memory architecture (64KB) |
+| `docs/agent-protocol.md` | Full agent protocol spec |
 | `RESEARCH-LOG.md` | Living research log — update when making significant design decisions |
 | `SWARM-PLAN.md` | World restoration execution plan for K2.6 agent swarms |
 | `scripts/dp_brenda.py` | BRENDA69 agent (SOUL.md + mem0 + minimax-m2.7) |

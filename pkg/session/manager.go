@@ -5,15 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/zax0rz/darkpawns/pkg/auth"
+	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/validation"
 	"golang.org/x/time/rate"
 )
 
@@ -21,7 +27,34 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins for development
+		// Development: allow all origins
+		if os.Getenv("ENVIRONMENT") == "development" {
+			return true
+		}
+		
+		// Production: validate against allowed origins
+		allowedOrigins := []string{
+			"https://darkpawns.example.com",
+			"https://game.darkpawns.example.com",
+			// Add your production domains here
+		}
+		
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			// No Origin header, could be direct WebSocket connection
+			// Allow but log for monitoring
+			log.Printf("WebSocket connection without Origin header from %s", r.RemoteAddr)
+			return true
+		}
+		
+		for _, allowed := range allowedOrigins {
+			if origin == allowed {
+				return true
+			}
+		}
+		
+		log.Printf("Rejected WebSocket connection from unauthorized origin: %s", origin)
+		return false
 	},
 }
 
@@ -33,6 +66,7 @@ type Manager struct {
 	combatEngine  *combat.CombatEngine
 	db            db.DB
 	hasDB         bool
+	loginLimiter  *auth.IPRateLimiter // Rate limiter for login attempts
 }
 
 // NewManager creates a new session manager.
@@ -44,6 +78,7 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		sessions:     make(map[string]*Session),
 		world:        world,
 		combatEngine: ce,
+		loginLimiter: auth.NewIPRateLimiter(),
 	}
 	if database != nil {
 		m.db    = *database
@@ -115,6 +150,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	session := &Session{
 		conn:           conn,
+		request:        r, // Store the HTTP request for IP extraction
 		manager:        m,
 		send:           make(chan []byte, 256),
 		limiter:        rate.NewLimiter(rate.Limit(10), 10),
@@ -196,6 +232,7 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 // Session represents a single WebSocket connection.
 type Session struct {
 	conn       *websocket.Conn
+	request    *http.Request // Store the original HTTP request for IP extraction
 	manager    *Manager
 	send       chan []byte
 	player     *game.Player
@@ -226,6 +263,9 @@ type Session struct {
 	// Agents must implement their own circuit breakers for LLM-level loop detection.
 	// See scripts/dp_bot.py for reference implementation.
 	limiter *rate.Limiter
+
+	// Temporary data storage for command handlers
+	tempData map[string]interface{}
 }
 
 // readPump reads messages from the WebSocket.
@@ -321,6 +361,15 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return err
 	}
 
+	// Apply IP-based rate limiting for login attempts
+	ip := auth.GetIPFromRequest(s.request)
+	if !s.manager.loginLimiter.GetLimiter(ip).Allow() {
+		s.sendError("Too many login attempts. Please try again later.")
+		s.conn.Close()
+		audit.LogSecurityEvent("rate_limit_exceeded", "Login rate limit exceeded", login.PlayerName, ip)
+		return nil
+	}
+
 	// Agent auth path — mode="agent" with api_key
 	if login.Mode == "agent" && login.APIKey != "" {
 		if !s.manager.hasDB {
@@ -342,6 +391,14 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 	if login.PlayerName == "" {
 		return ErrInvalidPlayerName
+	}
+
+	// Validate player name
+	if !validation.IsValidPlayerName(login.PlayerName) {
+		s.sendError("Invalid player name. Names must be 2-32 characters and contain only letters, numbers, spaces, dots, dashes, and underscores.")
+		s.conn.Close()
+		audit.LogSecurityEvent("invalid_player_name", "Invalid player name format", login.PlayerName, ip)
+		return nil
 	}
 
 	// Load from DB if available
@@ -503,6 +560,114 @@ func getExitNames(exits map[string]parser.Exit) []string {
 	return names
 }
 
+// GetPlayer returns the player associated with this session
+func (s *Session) GetPlayer() *game.Player {
+	return s.player
+}
+
+// GetPlayerInterface returns the player as interface{} for common.CommandSession
+func (s *Session) GetPlayerInterface() interface{} {
+	return s.player
+}
+
+// SendMessage sends a message to the client
+func (s *Session) SendMessage(message string) error {
+	if s.player == nil {
+		return fmt.Errorf("no player associated with session")
+	}
+	s.player.SendMessage(message)
+	return nil
+}
+
+// Send sends a message to the client (alternative method name)
+func (s *Session) Send(message string) {
+	if s.player != nil {
+		s.player.SendMessage(message)
+	}
+}
+
+// MarkDirty marks a variable as dirty for agent subscriptions
+func (s *Session) MarkDirty(vars ...string) {
+	for _, v := range vars {
+		s.dirtyVars[v] = true
+	}
+}
+
+// GetManager returns the session manager (needed for some admin commands)
+func (s *Session) GetManager() interface{} {
+	return s.manager
+}
+
+// GetPlayerName returns the name of the player associated with this session
+func (s *Session) GetPlayerName() string {
+	if s.player != nil {
+		return s.player.Name
+	}
+	return s.playerName
+}
+
+// IsAuthenticated returns whether the session is authenticated
+func (s *Session) IsAuthenticated() bool {
+	return s.authenticated
+}
+
+// GetPlayerRoomVNum returns the room VNum where the player is located
+func (s *Session) GetPlayerRoomVNum() int {
+	if s.player != nil {
+		return s.player.GetRoomVNum()
+	}
+	return 0
+}
+
+// HasPlayer returns true if the session has a player associated with it
+func (s *Session) HasPlayer() bool {
+	return s.player != nil
+}
+
+// Close closes the session
+func (s *Session) Close() {
+	// Close the connection and channel
+	if s.conn != nil {
+		s.conn.Close()
+	}
+	if s.send != nil {
+		close(s.send)
+	}
+}
+
+// SetTempData stores temporary data in the session
+func (s *Session) SetTempData(key string, value interface{}) {
+	if s.tempData == nil {
+		s.tempData = make(map[string]interface{})
+	}
+	s.tempData[key] = value
+}
+
+// GetTempData retrieves temporary data from the session
+func (s *Session) GetTempData(key string) interface{} {
+	if s.tempData == nil {
+		return nil
+	}
+	return s.tempData[key]
+}
+
+// ClearTempData removes temporary data from the session
+func (s *Session) ClearTempData(key string) {
+	if s.tempData != nil {
+		delete(s.tempData, key)
+	}
+}
+
+// RandomInt generates a random integer in range [0, n)
+func (s *Session) RandomInt(n int) int {
+	if n <= 0 {
+		return 0
+	}
+	// Use math/rand for randomness
+	// Note: In production, you might want to use a cryptographically secure random source
+	return rand.Intn(n)
+}
+
 // Errors
 var (
 	ErrPlayerAlreadyOnline = fmt.Errorf("player already online")
@@ -511,3 +676,84 @@ var (
 	ErrInvalidPlayerName   = fmt.Errorf("invalid player name")
 	ErrNotInCharCreation   = fmt.Errorf("not in character creation")
 )
+
+// Command management methods to implement common.CommandManager interface
+
+// RegisterCommand registers a command handler
+func (m *Manager) RegisterCommand(name string, handler func(common.CommandSession, []string) error) {
+	// This is a stub implementation
+	// In a real implementation, this would register the command with the session manager
+	log.Printf("RegisterCommand called for %s (stub implementation)", name)
+}
+
+// Sessions returns all active sessions
+func (m *Manager) Sessions() []common.CommandSession {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	
+	sessions := make([]common.CommandSession, 0, len(m.sessions))
+	for _, sess := range m.sessions {
+		// Create a wrapper that implements common.CommandSession
+		wrapper := &commandSessionWrapper{session: sess}
+		sessions = append(sessions, wrapper)
+	}
+	return sessions
+}
+
+// commandSessionWrapper wraps a Session to implement common.CommandSession
+type commandSessionWrapper struct {
+	session *Session
+}
+
+func (w *commandSessionWrapper) Send(msg string) {
+	w.session.Send(msg)
+}
+
+func (w *commandSessionWrapper) Close() {
+	w.session.Close()
+}
+
+func (w *commandSessionWrapper) GetPlayer() interface{} {
+	return w.session.GetPlayer()
+}
+
+func (w *commandSessionWrapper) GetPlayerName() string {
+	return w.session.GetPlayerName()
+}
+
+func (w *commandSessionWrapper) GetPlayerRoomVNum() int {
+	return w.session.GetPlayerRoomVNum()
+}
+
+func (w *commandSessionWrapper) IsAuthenticated() bool {
+	return w.session.IsAuthenticated()
+}
+
+func (w *commandSessionWrapper) HasPlayer() bool {
+	return w.session.HasPlayer()
+}
+
+// Lock locks the manager mutex
+func (m *Manager) Lock() {
+	m.mu.Lock()
+}
+
+// Unlock unlocks the manager mutex
+func (m *Manager) Unlock() {
+	m.mu.Unlock()
+}
+
+// RLock locks the manager mutex for reading
+func (m *Manager) RLock() {
+	m.mu.RLock()
+}
+
+// RUnlock unlocks the manager mutex for reading
+func (m *Manager) RUnlock() {
+	m.mu.RUnlock()
+}
+
+// Mu returns the mutex for synchronization
+func (m *Manager) Mu() interface{} {
+	return &m.mu
+}

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
+    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+    
+    {{ $style := resources.Get "css/style.css" | minify | fingerprint }}
+    <link rel="stylesheet" href="{{ $style.Permalink }}">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    
+    {{ if .Site.Params.github_repo }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+    {{ end }}
+</head>
+<body>
+    {{ if .Site.Params.github_repo }}
+    <a class="github-fork-ribbon" href="{{ .Site.Params.github_repo }}" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+    {{ end }}
+    
+    <header class="site-header">
+        <div class="container">
+            <nav class="navbar">
+                <div class="navbar-brand">
+                    <a href="{{ .Site.BaseURL }}">
+                        <h1 class="title">Dark Pawns</h1>
+                        <p class="subtitle">Documentation</p>
+                    </a>
+                </div>
+                <div class="navbar-menu">
+                    {{ $currentPage := . }}
+                    {{ range .Site.Menus.main }}
+                    <a href="{{ .URL }}" class="{{ if $currentPage.IsMenuCurrent "main" . }}active{{ end }}">
+                        {{ .Name }}
+                    </a>
+                    {{ end }}
+                    {{ if .Site.Params.discord }}
+                    <a href="{{ .Site.Params.discord }}" class="button discord-button">
+                        <i class="fab fa-discord"></i> Discord
+                    </a>
+                    {{ end }}
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="columns">
+            <aside class="sidebar column is-one-quarter">
+                {{ partial "sidebar.html" . }}
+            </aside>
+            <div class="content column is-three-quarters">
+                {{ block "main" . }}{{ end }}
+                
+                {{ if .IsPage }}
+                <div class="content-format-selector">
+                    <p class="format-label">View this page as:</p>
+                    <div class="buttons">
+                        <a href="{{ .Permalink }}" class="button is-small {{ if eq (.OutputFormats.Get "HTML").RelPermalink .RelPermalink }}is-active{{ end }}">
+                            HTML
+                        </a>
+                        {{ with .OutputFormats.Get "Markdown" }}
+                        <a href="{{ .Permalink }}" class="button is-small {{ if eq .RelPermalink $.RelPermalink }}is-active{{ end }}">
+                            Markdown
+                        </a>
+                        {{ end }}
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="content has-text-centered">
+                <p>
+                    <strong>Dark Pawns Documentation</strong> by <a href="https://github.com/zax0rz">zax0rz</a>.
+                    The source code is licensed <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
+                </p>
+                <p>
+                    Dark Pawns was originally created by the Dark Pawns Coding Team (1997–2010).
+                    This is a faithful resurrection with modern infrastructure.
+                </p>
+                <p>
+                    <a href="{{ .Site.BaseURL }}api/openapi.json">OpenAPI Spec</a> |
+                    <a href="{{ .Site.BaseURL }}search">Search</a> |
+                    <a href="https://github.com/zax0rz/darkpawns/issues">Report Issues</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    {{ $js := resources.Get "js/main.js" | minify | fingerprint }}
+    <script src="{{ $js.Permalink }}"></script>
+</body>
+</html>

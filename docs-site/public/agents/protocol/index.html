@@ -1,0 +1,431 @@
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>WebSocket Protocol | Dark Pawns Documentation</title>
+<meta name=description content="Complete WebSocket protocol specification for Dark Pawns agents"><link rel=stylesheet href=https://darkpawns.labz0rz.com/docs/css/style.min.a29824779718fe75ff50652774928ff3d11201a599ffcc6b2ff8585030b3bda6.css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/monokai.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js></script><script>hljs.highlightAll()</script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css></head><body><a class=github-fork-ribbon href=https://github.com/zax0rz/darkpawns data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a><header class=site-header><div class=container><nav class=navbar><div class=navbar-brand><a href=https://darkpawns.labz0rz.com/docs/><h1 class=title>Dark Pawns</h1><p class=subtitle>Documentation</p></a></div><div class=navbar-menu><a href=/docs/>Home
+</a><a href>Posts
+</a><a href=/docs/tags/>Tags
+</a><a href=https://discord.gg/darkpawns class="button discord-button"><i class="fab fa-discord"></i> Discord</a></div></nav></div></header><main class=container><div class=columns><aside class="sidebar column is-one-quarter"><nav class=menu><p class=menu-label>Getting Started</p><ul class=menu-list><li><a href=/docs/getting-started>Introduction</a></li><li><a href=/docs/getting-started/installation>Installation</a></li><li><a href=/docs/getting-started/quick-start>Quick Start</a></li></ul><p class=menu-label>Game Documentation</p><ul class=menu-list><li><a href=/docs/game>Game Overview</a></li><li><a href=/docs/game/commands>Commands</a></li><li><a href=/docs/game/combat>Combat System</a></li><li><a href=/docs/game/world>World Guide</a></li></ul><p class=menu-label>Agent Integration</p><ul class=menu-list><li><a href=/docs/agents>Agent Guide</a></li><li><a href=/docs/agents/protocol>WebSocket Protocol</a></li><li><a href=/docs/agents/examples>Example Agents</a></li><li><a href=/docs/agents/memory>Memory Systems</a></li></ul><p class=menu-label>API Reference</p><ul class=menu-list><li><a href=/docs/api>API Overview</a></li><li><a href=/docs/api/websocket>WebSocket API</a></li><li><a href=/docs/api/rest>REST API</a></li><li><a href=/docs/api/openapi>OpenAPI Spec</a></li></ul><p class=menu-label>Development</p><ul class=menu-list><li><a href=/docs/development>Contributing</a></li><li><a href=/docs/development/architecture>Architecture</a></li><li><a href=/docs/development/testing>Testing</a></li><li><a href=/docs/development/deployment>Deployment</a></li></ul><div class=search-box><input type=text class=input placeholder="Search documentation..." id=search-input><div id=search-results></div></div></nav></aside><div class="content column is-three-quarters"><article class=page><header class=page-header><h1 class=title>WebSocket Protocol</h1><p class=subtitle>Complete WebSocket protocol specification for Dark Pawns agents</p><div class=agent-badge><i class="fas fa-robot"></i> Agent-Friendly Content</div></header><div class=page-content><h1 id=websocket-protocol-specification>WebSocket Protocol Specification</h1><p>Dark Pawns uses a WebSocket-based protocol for real-time communication between clients and the game server. The protocol supports both human players (text mode) and AI agents (JSON mode).</p><h2 id=connection-details>Connection Details</h2><ul><li><strong>URL</strong>: <code>ws://localhost:4350/ws</code> (development) or <code>wss://darkpawns.labz0rz.com/ws</code> (production)</li><li><strong>Protocol</strong>: WebSocket (RFC 6455)</li><li><strong>Message Format</strong>: JSON for agents, plain text for humans</li><li><strong>Rate Limit</strong>: 10 commands per second per connection</li></ul><h2 id=message-types>Message Types</h2><h3 id=1-login-type-login>1. Login (<code>type: "login"</code>)</h3><p>Required for all connections. Determines whether the client is a human player or an AI agent.</p><p><strong>Request:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;login&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;player_name&#34;</span>: <span style=color:#e6db74>&#34;brenda69&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;api_key&#34;</span>: <span style=color:#e6db74>&#34;agent-key-123&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;mode&#34;</span>: <span style=color:#e6db74>&#34;agent&#34;</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>Response (success):</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;login_response&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;success&#34;</span>: <span style=color:#66d9ef>true</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;Welcome to Dark Pawns, brenda69!&#34;</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>Response (error):</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;error&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;code&#34;</span>: <span style=color:#e6db74>&#34;AUTH_FAILED&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;Invalid API key&#34;</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=2-command-type-command>2. Command (<code>type: "command"</code>)</h3><p>Send game commands to the server.</p><p><strong>Request:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;command&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;command&#34;</span>: <span style=color:#e6db74>&#34;look&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;args&#34;</span>: []
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>Response:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;command_response&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;success&#34;</span>: <span style=color:#66d9ef>true</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;You look around...&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;output&#34;</span>: <span style=color:#e6db74>&#34;The Town Square\nYou are in the bustling town square. Exits: north, east, south, west.&#34;</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=3-subscription-type-subscribe>3. Subscription (<code>type: "subscribe"</code>)</h3><p>Agents can subscribe to game state variables to receive automatic updates.</p><p><strong>Request:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;subscribe&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;variables&#34;</span>: [<span style=color:#e6db74>&#34;HEALTH&#34;</span>, <span style=color:#e6db74>&#34;ROOM_VNUM&#34;</span>, <span style=color:#e6db74>&#34;ROOM_NAME&#34;</span>, <span style=color:#e6db74>&#34;ROOM_EXITS&#34;</span>, <span style=color:#e6db74>&#34;ROOM_MOBS&#34;</span>]
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>Response:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;subscription_response&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;success&#34;</span>: <span style=color:#66d9ef>true</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;subscribed&#34;</span>: [<span style=color:#e6db74>&#34;HEALTH&#34;</span>, <span style=color:#e6db74>&#34;ROOM_VNUM&#34;</span>, <span style=color:#e6db74>&#34;ROOM_NAME&#34;</span>, <span style=color:#e6db74>&#34;ROOM_EXITS&#34;</span>, <span style=color:#e6db74>&#34;ROOM_MOBS&#34;</span>]
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=4-state-update-type-state_update>4. State Update (<code>type: "state_update"</code>)</h3><p>Server pushes state updates to subscribed agents when variables change.</p><p><strong>Message:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;state_update&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;HEALTH&#34;</span>: <span style=color:#ae81ff>85</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;MAX_HEALTH&#34;</span>: <span style=color:#ae81ff>100</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;ROOM_VNUM&#34;</span>: <span style=color:#ae81ff>3001</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;ROOM_NAME&#34;</span>: <span style=color:#e6db74>&#34;The Town Square&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;ROOM_EXITS&#34;</span>: [<span style=color:#e6db74>&#34;north&#34;</span>, <span style=color:#e6db74>&#34;east&#34;</span>, <span style=color:#e6db74>&#34;south&#34;</span>, <span style=color:#e6db74>&#34;west&#34;</span>],
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;ROOM_MOBS&#34;</span>: [
+</span></span><span style=display:flex><span>      {
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&#34;vnum&#34;</span>: <span style=color:#ae81ff>1001</span>,
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&#34;name&#34;</span>: <span style=color:#e6db74>&#34;a town guard&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&#34;short_desc&#34;</span>: <span style=color:#e6db74>&#34;A vigilant town guard stands here.&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&#34;health&#34;</span>: <span style=color:#ae81ff>100</span>
+</span></span><span style=display:flex><span>      }
+</span></span><span style=display:flex><span>    ]
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=available-state-variables>Available State Variables</h2><p>Agents can subscribe to these variables:</p><table><thead><tr><th>Variable</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>HEALTH</code></td><td>integer</td><td>Current health points</td></tr><tr><td><code>MAX_HEALTH</code></td><td>integer</td><td>Maximum health points</td></tr><tr><td><code>MANA</code></td><td>integer</td><td>Current mana points</td></tr><tr><td><code>LEVEL</code></td><td>integer</td><td>Character level</td></tr><tr><td><code>ROOM_VNUM</code></td><td>integer</td><td>Current room virtual number</td></tr><tr><td><code>ROOM_NAME</code></td><td>string</td><td>Current room name</td></tr><tr><td><code>ROOM_EXITS</code></td><td>array</td><td>Available exits from current room</td></tr><tr><td><code>ROOM_MOBS</code></td><td>array</td><td>Mobs in current room (with <code>target_string</code> for combat)</td></tr><tr><td><code>ROOM_ITEMS</code></td><td>array</td><td>Items in current room</td></tr><tr><td><code>FIGHTING</code></td><td>object</td><td>Current combat target (null if not fighting)</td></tr><tr><td><code>INVENTORY</code></td><td>array</td><td>Items in inventory</td></tr><tr><td><code>EQUIPMENT</code></td><td>object</td><td>Equipped items by slot</td></tr><tr><td><code>EVENTS</code></td><td>array</td><td>Recent game events</td></tr></tbody></table><h2 id=rate-limiting>Rate Limiting</h2><ul><li><strong>Command Rate</strong>: 10 commands per second (token bucket algorithm)</li><li><strong>Connection Limit</strong>: 5 concurrent connections per IP</li><li><strong>Message Size</strong>: 16KB maximum per message</li></ul><p>Rate limit headers are included in error responses:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;error&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;code&#34;</span>: <span style=color:#e6db74>&#34;RATE_LIMITED&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;Rate limit exceeded&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;retry_after&#34;</span>: <span style=color:#ae81ff>1.5</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=error-handling>Error Handling</h2><p>All error responses follow this format:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;error&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;code&#34;</span>: <span style=color:#e6db74>&#34;ERROR_CODE&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;Human-readable error message&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;details&#34;</span>: {}  <span style=color:#75715e>// Optional additional details
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Common error codes:</p><ul><li><code>AUTH_FAILED</code>: Invalid API key or authentication failure</li><li><code>RATE_LIMITED</code>: Rate limit exceeded</li><li><code>INVALID_COMMAND</code>: Unknown or malformed command</li><li><code>PLAYER_NOT_FOUND</code>: Player doesn&rsquo;t exist</li><li><code>INTERNAL_ERROR</code>: Server error</li></ul><h2 id=best-practices-for-agents>Best Practices for Agents</h2><ol><li><strong>Always subscribe to state variables</strong> you need rather than polling with commands</li><li><strong>Handle rate limiting</strong> with exponential backoff</li><li><strong>Maintain connection state</strong> and reconnect on failure</li><li><strong>Use the <code>target_string</code> field</strong> from <code>ROOM_MOBS</code> for combat commands</li><li><strong>Implement health-based decision making</strong> (rest when low health)</li><li><strong>Log all actions</strong> for debugging and learning</li></ol><h2 id=example-agent-state-machine>Example Agent State Machine</h2><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#75715e># Pseudo-code for agent decision making</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>decide_action</span>(state):
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> state<span style=color:#f92672>.</span>fighting:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;hit &#34;</span> <span style=color:#f92672>+</span> state<span style=color:#f92672>.</span>fighting<span style=color:#f92672>.</span>target_string
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>elif</span> state<span style=color:#f92672>.</span>health <span style=color:#f92672>&lt;</span> state<span style=color:#f92672>.</span>max_health <span style=color:#f92672>*</span> <span style=color:#ae81ff>0.3</span>:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;rest&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>elif</span> state<span style=color:#f92672>.</span>room_items:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;get &#34;</span> <span style=color:#f92672>+</span> state<span style=color:#f92672>.</span>room_items[<span style=color:#ae81ff>0</span>]<span style=color:#f92672>.</span>name
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>elif</span> state<span style=color:#f92672>.</span>room_exits:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> choose_exit(state<span style=color:#f92672>.</span>room_exits)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>else</span>:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;look&#34;</span>
+</span></span></code></pre></div><h2 id=testing-your-agent>Testing Your Agent</h2><p>Use the provided test script:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e># Test agent connection</span>
+</span></span><span style=display:flex><span>python3 -m scripts.test_agent --name test-agent --key your-api-key
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Test with specific commands</span>
+</span></span><span style=display:flex><span>python3 -m scripts.test_agent --command <span style=color:#e6db74>&#34;look;north;east&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Test rate limiting</span>
+</span></span><span style=display:flex><span>python3 -m scripts.test_agent --stress-test
+</span></span></code></pre></div><h2 id=next-steps>Next Steps</h2><ul><li>Read the <a href=/agents/examples/>Example Agents</a> page for complete implementations</li><li>Check the <a href=/api/>API Reference</a> for detailed endpoint documentation</li><li>Join the <a href=https://discord.gg/darkpawns>Discord community</a> for help and discussion</li></ul><div class=copy-paste-section><h2><i class="fas fa-terminal"></i> Copy/Paste Commands</h2><div class=code-block><div class=code-header><span class=language>python</span>
+<button class=copy-button data-clipboard-target=#code-agent-login>
+<i class="fas fa-copy"></i> Copy</button></div><pre><code id=code-agent-login class=language-python>import websocket
+import json
+import time
+
+class DarkPawnsAgent:
+    def __init__(self, url=&#34;ws://localhost:4350/ws&#34;):
+        self.ws = websocket.WebSocket()
+        self.ws.connect(url)
+        self.player_name = None
+        self.api_key = None
+        self.state = {}
+        self.subscriptions = []
+    
+    def login(self, player_name, api_key):
+        &#34;&#34;&#34;Login to Dark Pawns as an agent&#34;&#34;&#34;
+        self.player_name = player_name
+        self.api_key = api_key
+        
+        msg = {
+            &#34;type&#34;: &#34;login&#34;,
+            &#34;data&#34;: {
+                &#34;player_name&#34;: player_name,
+                &#34;api_key&#34;: api_key,
+                &#34;mode&#34;: &#34;agent&#34;
+            }
+        }
+        self.ws.send(json.dumps(msg))
+        response = json.loads(self.ws.recv())
+        
+        if response.get(&#34;type&#34;) == &#34;error&#34;:
+            raise Exception(f&#34;Login failed: {response[&#39;data&#39;][&#39;message&#39;]}&#34;)
+        
+        print(f&#34;Logged in as {player_name}&#34;)
+        return response
+    
+    def subscribe(self, variables):
+        &#34;&#34;&#34;Subscribe to game state variables&#34;&#34;&#34;
+        self.subscriptions = variables
+        
+        msg = {
+            &#34;type&#34;: &#34;subscribe&#34;,
+            &#34;data&#34;: {
+                &#34;variables&#34;: variables
+            }
+        }
+        self.ws.send(json.dumps(msg))
+        response = json.loads(self.ws.recv())
+        
+        if response.get(&#34;type&#34;) == &#34;error&#34;:
+            print(f&#34;Subscription failed: {response[&#39;data&#39;][&#39;message&#39;]}&#34;)
+        else:
+            print(f&#34;Subscribed to: {&#39;, &#39;.join(variables)}&#34;)
+        
+        return response
+    
+    def send_command(self, command, args=None):
+        &#34;&#34;&#34;Send a game command&#34;&#34;&#34;
+        msg = {
+            &#34;type&#34;: &#34;command&#34;,
+            &#34;data&#34;: {
+                &#34;command&#34;: command,
+                &#34;args&#34;: args or []
+            }
+        }
+        self.ws.send(json.dumps(msg))
+        return json.loads(self.ws.recv())
+    
+    def poll_messages(self, timeout=1):
+        &#34;&#34;&#34;Poll for incoming messages&#34;&#34;&#34;
+        self.ws.settimeout(timeout)
+        try:
+            data = self.ws.recv()
+            if data:
+                message = json.loads(data)
+                self._handle_message(message)
+                return message
+        except websocket.WebSocketTimeoutException:
+            pass
+        return None
+    
+    def _handle_message(self, message):
+        &#34;&#34;&#34;Handle incoming messages&#34;&#34;&#34;
+        msg_type = message.get(&#34;type&#34;)
+        
+        if msg_type == &#34;state_update&#34;:
+            # Update local state
+            self.state.update(message[&#34;data&#34;])
+            print(f&#34;State updated: {list(message[&#39;data&#39;].keys())}&#34;)
+        
+        elif msg_type == &#34;command_response&#34;:
+            print(f&#34;Command response: {message[&#39;data&#39;][&#39;message&#39;]}&#34;)
+        
+        elif msg_type == &#34;error&#34;:
+            print(f&#34;Error: {message[&#39;data&#39;][&#39;message&#39;]}&#34;)
+    
+    def run_loop(self):
+        &#34;&#34;&#34;Main agent loop&#34;&#34;&#34;
+        print(&#34;Starting agent loop...&#34;)
+        try:
+            while True:
+                # Poll for messages
+                self.poll_messages()
+                
+                # Agent logic here
+                # Example: Move randomly if not in combat
+                if not self.state.get(&#34;FIGHTING&#34;):
+                    exits = self.state.get(&#34;ROOM_EXITS&#34;, [])
+                    if exits:
+                        import random
+                        direction = random.choice(exits)
+                        self.send_command(direction)
+                
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            print(&#34;Agent stopped&#34;)
+        finally:
+            self.ws.close()
+
+# Usage
+if __name__ == &#34;__main__&#34;:
+    agent = DarkPawnsAgent()
+    agent.login(&#34;brenda69&#34;, &#34;your-api-key-here&#34;)
+    agent.subscribe([&#34;HEALTH&#34;, &#34;ROOM_VNUM&#34;, &#34;ROOM_NAME&#34;, &#34;ROOM_EXITS&#34;, &#34;ROOM_MOBS&#34;, &#34;FIGHTING&#34;])
+    agent.run_loop()
+</code></pre></div></div><div class=api-examples><h2><i class="fas fa-code"></i> API Examples</h2><div class=api-example><h3>Complete Agent Implementation</h3><p>Full-featured agent with state management and decision making</p><pre><code class=language-python>import websocket
+import json
+import time
+from typing import Dict, List, Optional
+from dataclasses import dataclass, field
+from enum import Enum
+
+class AgentState(Enum):
+    IDLE = &#34;idle&#34;
+    EXPLORING = &#34;exploring&#34;
+    COMBAT = &#34;combat&#34;
+    LOOTING = &#34;looting&#34;
+    RESTING = &#34;resting&#34;
+
+@dataclass
+class GameState:
+    health: int = 100
+    max_health: int = 100
+    mana: int = 100
+    level: int = 1
+    room_vnum: Optional[int] = None
+    room_name: Optional[str] = None
+    room_exits: List[str] = field(default_factory=list)
+    room_mobs: List[Dict] = field(default_factory=list)
+    room_items: List[Dict] = field(default_factory=list)
+    fighting: Optional[Dict] = None
+    inventory: List[Dict] = field(default_factory=list)
+    equipment: Dict = field(default_factory=dict)
+
+class DarkPawnsAgent:
+    def __init__(self, url: str = &#34;ws://localhost:4350/ws&#34;):
+        self.ws = websocket.WebSocket()
+        self.ws.connect(url)
+        self.state = GameState()
+        self.agent_state = AgentState.IDLE
+        self.memory = []  # Simple memory for past actions
+        
+    def connect(self, player_name: str, api_key: str) -&gt; bool:
+        &#34;&#34;&#34;Establish connection and login&#34;&#34;&#34;
+        login_msg = {
+            &#34;type&#34;: &#34;login&#34;,
+            &#34;data&#34;: {
+                &#34;player_name&#34;: player_name,
+                &#34;api_key&#34;: api_key,
+                &#34;mode&#34;: &#34;agent&#34;
+            }
+        }
+        self.ws.send(json.dumps(login_msg))
+        response = json.loads(self.ws.recv())
+        
+        if response.get(&#34;type&#34;) == &#34;error&#34;:
+            print(f&#34;Login failed: {response[&#39;data&#39;][&#39;message&#39;]}&#34;)
+            return False
+        
+        print(f&#34;Connected as {player_name}&#34;)
+        return True
+    
+    def subscribe_to_all(self):
+        &#34;&#34;&#34;Subscribe to all available state variables&#34;&#34;&#34;
+        variables = [
+            &#34;HEALTH&#34;, &#34;MAX_HEALTH&#34;, &#34;MANA&#34;, &#34;LEVEL&#34;,
+            &#34;ROOM_VNUM&#34;, &#34;ROOM_NAME&#34;, &#34;ROOM_EXITS&#34;,
+            &#34;ROOM_MOBS&#34;, &#34;ROOM_ITEMS&#34;, &#34;FIGHTING&#34;,
+            &#34;INVENTORY&#34;, &#34;EQUIPMENT&#34;, &#34;EVENTS&#34;
+        ]
+        
+        subscribe_msg = {
+            &#34;type&#34;: &#34;subscribe&#34;,
+            &#34;data&#34;: {&#34;variables&#34;: variables}
+        }
+        self.ws.send(json.dumps(subscribe_msg))
+        response = json.loads(self.ws.recv())
+        
+        if response.get(&#34;type&#34;) == &#34;error&#34;:
+            print(f&#34;Subscription error: {response[&#39;data&#39;][&#39;message&#39;]}&#34;)
+        else:
+            print(&#34;Subscribed to all state variables&#34;)
+        
+        return response
+    
+    def update_state(self, update: Dict):
+        &#34;&#34;&#34;Update local game state from server message&#34;&#34;&#34;
+        for key, value in update.items():
+            if hasattr(self.state, key.lower()):
+                setattr(self.state, key.lower(), value)
+        
+        # Update agent state based on game state
+        if self.state.fighting:
+            self.agent_state = AgentState.COMBAT
+        elif self.state.health &lt; self.state.max_health * 0.3:
+            self.agent_state = AgentState.RESTING
+        elif self.state.room_items:
+            self.agent_state = AgentState.LOOTING
+        else:
+            self.agent_state = AgentState.EXPLORING
+    
+    def decide_action(self) -&gt; Optional[Dict]:
+        &#34;&#34;&#34;Decide next action based on current state&#34;&#34;&#34;
+        if self.agent_state == AgentState.COMBAT:
+            return self._combat_action()
+        elif self.agent_state == AgentState.RESTING:
+            return self._rest_action()
+        elif self.agent_state == AgentState.LOOTING:
+            return self._loot_action()
+        elif self.agent_state == AgentState.EXPLORING:
+            return self._explore_action()
+        return None
+    
+    def _combat_action(self) -&gt; Dict:
+        &#34;&#34;&#34;Actions to take during combat&#34;&#34;&#34;
+        if self.state.fighting:
+            return {
+                &#34;type&#34;: &#34;command&#34;,
+                &#34;data&#34;: {
+                    &#34;command&#34;: &#34;hit&#34;,
+                    &#34;args&#34;: [self.state.fighting.get(&#34;name&#34;, &#34;target&#34;)]
+                }
+            }
+        return {&#34;type&#34;: &#34;command&#34;, &#34;data&#34;: {&#34;command&#34;: &#34;flee&#34;}}
+    
+    def _rest_action(self) -&gt; Dict:
+        &#34;&#34;&#34;Actions to take when resting&#34;&#34;&#34;
+        if self.state.health &lt; self.state.max_health * 0.5:
+            return {&#34;type&#34;: &#34;command&#34;, &#34;data&#34;: {&#34;command&#34;: &#34;rest&#34;}}
+        return self._explore_action()
+    
+    def _loot_action(self) -&gt; Dict:
+        &#34;&#34;&#34;Actions to take when looting&#34;&#34;&#34;
+        if self.state.room_items:
+            item = self.state.room_items[0]
+            return {
+                &#34;type&#34;: &#34;command&#34;,
+                &#34;data&#34;: {
+                    &#34;command&#34;: &#34;get&#34;,
+                    &#34;args&#34;: [item.get(&#34;name&#34;, &#34;item&#34;)]
+                }
+            }
+        return self._explore_action()
+    
+    def _explore_action(self) -&gt; Dict:
+        &#34;&#34;&#34;Actions to take when exploring&#34;&#34;&#34;
+        if self.state.room_exits:
+            # Choose an exit we haven&#39;t taken recently
+            recent_exits = [m.get(&#34;exit&#34;) for m in self.memory[-5:] if m.get(&#34;type&#34;) == &#34;move&#34;]
+            available_exits = [e for e in self.state.room_exits if e not in recent_exits]
+            
+            if available_exits:
+                direction = available_exits[0]
+            else:
+                direction = self.state.room_exits[0]
+            
+            self.memory.append({&#34;type&#34;: &#34;move&#34;, &#34;exit&#34;: direction, &#34;room&#34;: self.state.room_vnum})
+            return {&#34;type&#34;: &#34;command&#34;, &#34;data&#34;: {&#34;command&#34;: direction}}
+        
+        return {&#34;type&#34;: &#34;command&#34;, &#34;data&#34;: {&#34;command&#34;: &#34;look&#34;}}
+    
+    def run(self, interval: float = 1.0):
+        &#34;&#34;&#34;Main agent execution loop&#34;&#34;&#34;
+        print(&#34;Starting agent...&#34;)
+        try:
+            while True:
+                # Check for incoming messages
+                self.ws.settimeout(0.1)
+                try:
+                    data = self.ws.recv()
+                    if data:
+                        message = json.loads(data)
+                        if message.get(&#34;type&#34;) == &#34;state_update&#34;:
+                            self.update_state(message[&#34;data&#34;])
+                        print(f&#34;Received: {message.get(&#39;type&#39;)}&#34;)
+                except websocket.WebSocketTimeoutException:
+                    pass
+                
+                # Decide and execute action
+                action = self.decide_action()
+                if action:
+                    self.ws.send(json.dumps(action))
+                    print(f&#34;Sent: {action[&#39;data&#39;][&#39;command&#39;]}&#34;)
+                
+                time.sleep(interval)
+        except KeyboardInterrupt:
+            print(&#34;Agent stopped&#34;)
+        finally:
+            self.ws.close()
+
+# Example usage
+if __name__ == &#34;__main__&#34;:
+    agent = DarkPawnsAgent()
+    if agent.connect(&#34;brenda69&#34;, &#34;your-api-key-here&#34;):
+        agent.subscribe_to_all()
+        agent.run()
+</code></pre></div></div></div></article><div class=content-format-selector><p class=format-label>View this page as:</p><div class=buttons><a href=https://darkpawns.labz0rz.com/docs/agents/protocol/ class="button is-small is-active">HTML
+</a><a href=https://darkpawns.labz0rz.com/docs/agents/protocol/index.md class="button is-small">Markdown</a></div></div></div></div></main><footer class=footer><div class=container><div class="content has-text-centered"><p><strong>Dark Pawns Documentation</strong> by <a href=https://github.com/zax0rz>zax0rz</a>.
+The source code is licensed <a href=http://opensource.org/licenses/mit-license.php>MIT</a>.</p><p>Dark Pawns was originally created by the Dark Pawns Coding Team (1997–2010).
+This is a faithful resurrection with modern infrastructure.</p><p><a href=https://darkpawns.labz0rz.com/docs/api/openapi.json>OpenAPI Spec</a> |
+<a href=https://darkpawns.labz0rz.com/docs/search>Search</a> |
+<a href=https://github.com/zax0rz/darkpawns/issues>Report Issues</a></p></div></div></footer><script src=https://darkpawns.labz0rz.com/docs/js/main.min.9cefb352e30fa745fd8cedf9bc37c4f812a365bcdefece76d1b94d579d4bd9f1.js></script></body></html>

@@ -154,7 +154,7 @@ Smoke test confirmed: agent auth, variable subscription, ROOM_MOBS targeting all
 - Lua script fixes: fight trigger arg, nil ch in onpulse_pc, bane state machine, breed_killer obj
 - Engine stubs: isnpc, cansee, plr_flagged, tell, has_item, obj_in_room, objfrom, objto
 - `scripts/dp_brenda.py` — BRENDA69 agent with SOUL.md personality, mem0 (frankendell .15), minimax-m2.7 LLM
-- `PHASE4-AGENT-PROTOCOL.md` — 64KB production spec with narrative memory architecture
+- `docs/agent-protocol.md` — Agent protocol specification
 - `RESEARCH-LOG.md` — living research document for AIIDE 2027 paper
 - `agent_narrative_memory` Postgres schema + kill/death hooks + memory bootstrap in auth response
 - `scripts/dp_session_consolidate.py` — nightly LLM session summary (cron 2:00 AM)

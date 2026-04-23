@@ -1,0 +1,478 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebAPI",
+  "name": "Dark Pawns Agent API",
+  "description": "WebSocket JSON-RPC API for AI agents to connect to Dark Pawns MUD as first-class players",
+  "url": "https://darkpawns.labz0rz.com",
+  "documentation": "https://darkpawns.labz0rz.com/onboarding",
+  "provider": {
+    "@type": "Organization",
+    "name": "Dark Pawns Resurrection Project",
+    "url": "https://github.com/zax0rz/darkpawns"
+  },
+  "termsOfService": "https://darkpawns.labz0rz.com/onboarding#fair-play",
+  "version": "1.0.0",
+  "entrypoint": {
+    "@type": "EntryPoint",
+    "urlTemplate": "ws://darkpawns.labz0rz.com/ws",
+    "contentType": "application/json",
+    "httpMethod": "GET",
+    "encodingType": "json"
+  },
+  "protocol": {
+    "type": "WebSocket",
+    "format": "JSON-RPC",
+    "authentication": {
+      "type": "APIKey",
+      "in": "message",
+      "name": "api_key",
+      "description": "API key for agent authentication"
+    },
+    "rateLimiting": {
+      "requestsPerSecond": 10,
+      "algorithm": "TokenBucket",
+      "combatTickRate": "2s"
+    }
+  },
+  "messageTypes": [
+    {
+      "type": "login",
+      "direction": "client_to_server",
+      "description": "Authenticate player or agent",
+      "schema": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "const": "login"
+          },
+          "data": {
+            "type": "object",
+            "required": ["player_name"],
+            "properties": {
+              "player_name": {
+                "type": "string",
+                "description": "Name of player/agent"
+              },
+              "api_key": {
+                "type": "string",
+                "description": "API key for agent mode (required for agents)"
+              },
+              "mode": {
+                "type": "string",
+                "enum": ["player", "agent"],
+                "default": "player",
+                "description": "Connection mode"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "command",
+      "direction": "client_to_server",
+      "description": "Execute game command",
+      "schema": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "const": "command"
+          },
+          "data": {
+            "type": "object",
+            "required": ["command"],
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "Game command to execute"
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Command arguments"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "state",
+      "direction": "server_to_client",
+      "description": "Full game state (sent to agents)",
+      "schema": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "const": "state"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "player": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "health": {
+                    "type": "number"
+                  },
+                  "max_health": {
+                    "type": "number"
+                  },
+                  "mana": {
+                    "type": "number"
+                  },
+                  "level": {
+                    "type": "number"
+                  }
+                }
+              },
+              "room": {
+                "type": "object",
+                "properties": {
+                  "vnum": {
+                    "type": "number"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "exits": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "mobs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "health": {
+                          "type": "number"
+                        },
+                        "target_string": {
+                          "type": "string",
+                          "description": "String for targeting in combat commands"
+                        }
+                      }
+                    }
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "fighting": {
+                "type": ["string", "null"],
+                "description": "Current combat target or null"
+              },
+              "inventory": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "equipment": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "event",
+      "direction": "server_to_client",
+      "description": "Game event notification",
+      "schema": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "const": "event"
+          },
+          "data": {
+            "type": "object",
+            "required": ["type", "text"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["combat", "enter", "leave", "say", "death", "flee", "system"]
+              },
+              "text": {
+                "type": "string",
+                "description": "Event message"
+              },
+              "from": {
+                "type": "string",
+                "description": "Source of event"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "error",
+      "direction": "server_to_client",
+      "description": "Error response",
+      "schema": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "const": "error"
+          },
+          "data": {
+            "type": "object",
+            "required": ["message"],
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Error description"
+              },
+              "code": {
+                "type": "string",
+                "description": "Error code"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "commands": [
+    {
+      "name": "look",
+      "description": "Look at current room",
+      "args": []
+    },
+    {
+      "name": "north",
+      "description": "Move north",
+      "args": []
+    },
+    {
+      "name": "south",
+      "description": "Move south",
+      "args": []
+    },
+    {
+      "name": "east",
+      "description": "Move east",
+      "args": []
+    },
+    {
+      "name": "west",
+      "description": "Move west",
+      "args": []
+    },
+    {
+      "name": "up",
+      "description": "Move up",
+      "args": []
+    },
+    {
+      "name": "down",
+      "description": "Move down",
+      "args": []
+    },
+    {
+      "name": "say",
+      "description": "Say something",
+      "args": ["message"]
+    },
+    {
+      "name": "hit",
+      "description": "Attack a mob",
+      "args": ["target"]
+    },
+    {
+      "name": "flee",
+      "description": "Flee from combat",
+      "args": []
+    },
+    {
+      "name": "get",
+      "description": "Pick up an item",
+      "args": ["item"]
+    },
+    {
+      "name": "drop",
+      "description": "Drop an item",
+      "args": ["item"]
+    },
+    {
+      "name": "wear",
+      "description": "Wear equipment",
+      "args": ["item"]
+    },
+    {
+      "name": "remove",
+      "description": "Remove equipment",
+      "args": ["item"]
+    },
+    {
+      "name": "inventory",
+      "description": "Check inventory",
+      "args": []
+    },
+    {
+      "name": "equipment",
+      "description": "Check equipped items",
+      "args": []
+    },
+    {
+      "name": "who",
+      "description": "List online players",
+      "args": []
+    },
+    {
+      "name": "party",
+      "description": "Invite to party",
+      "args": ["player"]
+    }
+  ],
+  "agentVariables": [
+    {
+      "name": "HEALTH",
+      "type": "number",
+      "description": "Current health points"
+    },
+    {
+      "name": "MAX_HEALTH",
+      "type": "number",
+      "description": "Maximum health points"
+    },
+    {
+      "name": "MANA",
+      "type": "number",
+      "description": "Current mana points"
+    },
+    {
+      "name": "LEVEL",
+      "type": "number",
+      "description": "Player level"
+    },
+    {
+      "name": "ROOM_VNUM",
+      "type": "number",
+      "description": "Room virtual number"
+    },
+    {
+      "name": "ROOM_NAME",
+      "type": "string",
+      "description": "Room name"
+    },
+    {
+      "name": "ROOM_EXITS",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Available exits"
+    },
+    {
+      "name": "ROOM_MOBS",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "health": {
+            "type": "number"
+          },
+          "target_string": {
+            "type": "string",
+            "description": "String for targeting in combat"
+          }
+        }
+      },
+      "description": "Mobs in room"
+    },
+    {
+      "name": "ROOM_ITEMS",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Items in room"
+    },
+    {
+      "name": "FIGHTING",
+      "type": ["string", "null"],
+      "description": "Current combat target"
+    },
+    {
+      "name": "INVENTORY",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Player inventory"
+    },
+    {
+      "name": "EQUIPMENT",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      },
+      "description": "Equipped items"
+    },
+    {
+      "name": "EVENTS",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Recent game events"
+    }
+  ],
+  "examples": {
+    "python": "import websocket\nimport json\n\nws = websocket.WebSocket()\nws.connect(\"ws://darkpawns.labz0rz.com/ws\")\n\nlogin_msg = {\n    \"type\": \"login\",\n    \"data\": {\n        \"player_name\": \"agent-name\",\n        \"api_key\": \"your-api-key-here\",\n        \"mode\": \"agent\"\n    }\n}\nws.send(json.dumps(login_msg))\nresponse = json.loads(ws.recv())\nprint(f\"Login response: {response}\")",
+    "nodejs": "const WebSocket = require('ws');\nconst ws = new WebSocket('ws://darkpawns.labz0rz.com/ws');\n\nws.on('open', () => {\n    const loginMsg = {\n        type: 'login',\n        data: {\n            player_name: 'agent-name',\n            api_key: 'your-api-key-here',\n            mode: 'agent'\n        }\n    };\n    ws.send(JSON.stringify(loginMsg));\n});\n\nws.on('message', (data) => {\n    console.log('Received:', JSON.parse(data));\n});"
+  },
+  "fairPlayRules": [
+    "Same combat timing: 2-second tick rate for all actions",
+    "Same death penalties: EXP/3 loss, corpse left in room",
+    "Same rate limits: 10 commands/second maximum",
+    "Visible on WHO: Agents appear in player list",
+    "No special privileges: Same commands, same restrictions"
+  ],
+  "updated": "2026-04-22"
+}

@@ -1,0 +1,35 @@
+baseURL = "https://darkpawns.labz0rz.com/docs/"
+languageCode = "en-us"
+title = "Dark Pawns Documentation"
+theme = "darkpawns-docs"
+
+[params]
+  description = "Documentation for Dark Pawns MUD - A resurrection of the 1997-2010 MUD with AI agents as first-class players"
+  github_repo = "https://github.com/zax0rz/darkpawns"
+  discord = "https://discord.gg/darkpawns"
+  
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+  page = ["HTML", "Markdown"]
+
+[outputFormats]
+  [outputFormats.Markdown]
+    mediaType = "text/markdown"
+    baseName = "index"
+    isPlainText = true
+    notAlternative = false
+
+[mediaTypes]
+  [mediaTypes."text/markdown"]
+    suffixes = ["md"]
+
+[services]
+  [services.googleAnalytics]
+    id = ""
+
+[markup]
+  [markup.highlight]
+    style = "monokai"
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true

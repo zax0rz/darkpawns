@@ -1,0 +1,284 @@
+# Dark Pawns Performance Configuration
+# Generated: 2026-04-22
+# Purpose: Centralized performance tuning settings
+
+server:
+  # WebSocket Configuration
+  websocket:
+    read_buffer_size: 4096      # 4KB
+    write_buffer_size: 4096     # 4KB
+    max_message_size: 65536     # 64KB
+    enable_compression: true
+    compression_level: 6        # Balanced compression
+    read_timeout: 30s
+    write_timeout: 10s
+    ping_interval: 60s
+    pong_timeout: 30s
+    max_connections: 2000       # Maximum concurrent connections
+    
+  # Connection Pooling
+  connection_pools:
+    database:
+      max_connections: 100
+      min_connections: 10
+      max_idle_time: 5m
+      max_lifetime: 30m
+      health_check_interval: 30s
+      
+    websocket:
+      max_pool_size: 1000
+      eviction_policy: "lru"    # Least Recently Used
+      warmup_size: 100
+      
+    worker:
+      max_goroutines: 1000
+      queue_size: 5000
+      worker_timeout: 30s
+
+  # Memory Management
+  memory:
+    object_pools:
+      player:
+        pool_size: 1000
+        reset_on_return: true
+        
+      mob:
+        pool_size: 5000
+        reset_on_return: true
+        
+      item:
+        pool_size: 10000
+        reset_on_return: true
+        
+    buffer_pools:
+      small: 1024    # 1KB buffers
+      medium: 4096   # 4KB buffers  
+      large: 16384   # 16KB buffers
+      
+    gc_target: 100   # GOGC value
+    mem_limit: "8GiB" # GOMEMLIMIT
+
+  # Concurrency
+  concurrency:
+    max_procs: 8     # GOMAXPROCS (matches CPU cores)
+    io_multiplier: 2 # I/O bound multiplier
+    cpu_multiplier: 1 # CPU bound multiplier
+
+database:
+  # PostgreSQL Configuration
+  postgresql:
+    max_connections: 200
+    shared_buffers: "4GB"
+    effective_cache_size: "12GB"
+    maintenance_work_mem: "1GB"
+    checkpoint_completion_target: 0.9
+    wal_buffers: "16MB"
+    default_statistics_target: 100
+    random_page_cost: 1.1
+    effective_io_concurrency: 200
+    work_mem: "8MB"
+    
+  # Query Optimization
+  query:
+    slow_threshold: 100ms
+    explain_analyze: true
+    track_slow_queries: true
+    auto_index_suggestions: true
+    
+  # Connection Settings
+  connection:
+    max_open: 100
+    max_idle: 20
+    max_lifetime: 30m
+    idle_timeout: 5m
+
+ai:
+  # AI Integration Performance
+  request:
+    batch_size: 10
+    batch_timeout: 100ms
+    max_concurrent: 50
+    timeout: 30s
+    retry_attempts: 3
+    retry_delay: 1s
+    
+  # Caching
+  cache:
+    enabled: true
+    ttl: 5m
+    max_size: 1000
+    eviction_policy: "lru"
+    
+  # Rate Limiting
+  rate_limit:
+    requests_per_second: 10
+    burst_size: 50
+
+monitoring:
+  # Metrics Collection
+  metrics:
+    scrape_interval: 5s
+    retention_period: 7d
+    enable_histograms: true
+    enable_summaries: true
+    
+  # Alerting Thresholds
+  alerts:
+    websocket_connections:
+      warning: 800
+      critical: 1500
+      
+    message_latency_p95:
+      warning: 50ms
+      critical: 100ms
+      
+    message_latency_p99:
+      warning: 100ms
+      critical: 250ms
+      
+    database_connections:
+      warning: 80%
+      critical: 90%
+      
+    memory_usage:
+      warning: 70%
+      critical: 85%
+      
+    cpu_usage:
+      warning: 70%
+      critical: 90%
+
+load_testing:
+  # Test Scenarios
+  scenarios:
+    baseline:
+      clients: 100
+      duration: 30s
+      messages_per_sec: 2
+      ramp_up: 10s
+      
+    medium:
+      clients: 500
+      duration: 60s
+      messages_per_sec: 1
+      ramp_up: 30s
+      
+    stress:
+      clients: 1000
+      duration: 120s
+      messages_per_sec: 0.5
+      ramp_up: 60s
+      
+    endurance:
+      clients: 300
+      duration: 1h
+      messages_per_sec: 0.1
+      ramp_up: 5m
+      
+  # Success Criteria
+  success_criteria:
+    throughput:
+      baseline: 200 msg/sec
+      medium: 500 msg/sec
+      stress: 500 msg/sec
+      
+    latency_p95:
+      baseline: 50ms
+      medium: 100ms
+      stress: 250ms
+      
+    latency_p99:
+      baseline: 100ms
+      medium: 200ms
+      stress: 500ms
+      
+    error_rate:
+      max: 1%
+      
+    connection_success:
+      min: 95%
+
+profiling:
+  # Performance Profiling
+  cpu:
+    enabled: true
+    duration: 30s
+    frequency: 100  # Hz
+    
+  memory:
+    enabled: true
+    rate: 1         # 1 allocation per 512KB
+    
+  goroutine:
+    enabled: true
+    threshold: 1000 # Profile when goroutines exceed
+    
+  block:
+    enabled: true
+    rate: 1         # 1 nanosecond
+    
+  mutex:
+    enabled: true
+    fraction: 0.1   # 10% of mutex contention
+    
+  # Automatic Profiling Triggers
+  triggers:
+    high_latency: true
+    high_memory: true
+    goroutine_leak: true
+    deadlock_suspected: true
+
+logging:
+  # Performance Logging
+  level: "info"
+  format: "json"
+  
+  # Structured Log Fields
+  fields:
+    request_id: true
+    session_id: true
+    player_id: true
+    duration_ms: true
+    message_size: true
+    
+  # Performance-specific Logs
+  performance:
+    slow_queries: true
+    high_latency_requests: true
+    memory_allocation_events: true
+    goroutine_creation: false  # Can be noisy
+    
+  # Log Rotation
+  rotation:
+    max_size: "100MB"
+    max_age: 7
+    max_backups: 10
+    compress: true
+
+# Environment-specific Overrides
+environments:
+  development:
+    server:
+      websocket:
+        max_connections: 100
+      connection_pools:
+        database:
+          max_connections: 20
+          
+  staging:
+    server:
+      websocket:
+        max_connections: 500
+        
+  production:
+    server:
+      websocket:
+        max_connections: 2000
+      connection_pools:
+        database:
+          max_connections: 100
+    monitoring:
+      alerts:
+        websocket_connections:
+          warning: 1500
+          critical: 1800

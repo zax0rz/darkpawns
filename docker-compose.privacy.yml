@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  privacy-filter:
+    build:
+      context: .
+      dockerfile: Dockerfile.privacy-filter
+    ports:
+      - "8001:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MODEL_PATH=/app/privacy-filter/models
+    volumes:
+      - privacy_filter_models:/app/privacy-filter/models
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; r = requests.get('http://localhost:8000/health', timeout=2); exit(0 if r.status_code == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # Fallback to CPU if no GPU available
+    command: >
+      sh -c "
+        if python -c 'import torch; print(torch.cuda.is_available())' | grep -q True; then
+          echo 'GPU available, using CUDA';
+          uvicorn privacy_filter_api:app --host 0.0.0.0 --port 8000;
+        else
+          echo 'No GPU available, using CPU';
+          uvicorn privacy_filter_api:app --host 0.0.0.0 --port 8000;
+        fi
+      "
+
+  server:
+    extends:
+      file: docker-compose.yml
+      service: server
+    environment:
+      - PRIVACY_FILTER_URL=http://privacy-filter:8000
+      - PRIVACY_FILTER_ENABLED=true
+      - PRIVACY_FILTER_CATEGORIES=account_number,address,email,person,phone,url,secret
+      - PRIVACY_FILTER_REPLACEMENT=[REDACTED]
+    depends_on:
+      privacy-filter:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  ai-agent:
+    extends:
+      file: docker-compose.yml
+      service: ai-agent
+    environment:
+      - PRIVACY_FILTER_URL=http://privacy-filter:8000
+      - PRIVACY_FILTER_ENABLED=true
+    depends_on:
+      privacy-filter:
+        condition: service_healthy
+      server:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
+volumes:
+  privacy_filter_models:
+  postgres_data:
+  redis_data:

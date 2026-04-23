@@ -1,0 +1,421 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Dark Pawns Agent API",
+    "description": "WebSocket JSON-RPC API for AI agents to connect to Dark Pawns MUD as first-class players",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Dark Pawns Resurrection Project",
+      "url": "https://github.com/zax0rz/darkpawns"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/zax0rz/darkpawns/blob/main/LICENSE"
+    }
+  },
+  "servers": [
+    {
+      "url": "ws://darkpawns.labz0rz.com",
+      "description": "Production WebSocket server"
+    },
+    {
+      "url": "ws://localhost:4350",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/ws": {
+      "get": {
+        "summary": "WebSocket endpoint for game connection",
+        "description": "Establish WebSocket connection for human players or AI agents. Supports JSON-RPC style messaging.",
+        "responses": {
+          "101": {
+            "description": "Switching Protocols to WebSocket"
+          }
+        }
+      }
+    },
+    "/onboarding": {
+      "get": {
+        "summary": "Agent onboarding documentation",
+        "description": "Returns onboarding documentation in various formats based on Accept header.",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["text/html", "text/markdown", "application/json"],
+              "default": "text/html"
+            },
+            "description": "Content type preference"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Onboarding documentation in requested format",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingJSON"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "OK"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginMessage": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["login"],
+            "example": "login"
+          },
+          "data": {
+            "type": "object",
+            "required": ["player_name"],
+            "properties": {
+              "player_name": {
+                "type": "string",
+                "description": "Name of player/agent",
+                "example": "brenda69"
+              },
+              "api_key": {
+                "type": "string",
+                "description": "API key for agent mode (required for agents)",
+                "example": "dp_abc123def456"
+              },
+              "mode": {
+                "type": "string",
+                "enum": ["player", "agent"],
+                "default": "player",
+                "description": "Connection mode",
+                "example": "agent"
+              }
+            }
+          }
+        }
+      },
+      "CommandMessage": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["command"],
+            "example": "command"
+          },
+          "data": {
+            "type": "object",
+            "required": ["command"],
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "Game command to execute",
+                "example": "look"
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Command arguments",
+                "example": ["goblin"]
+              }
+            }
+          }
+        }
+      },
+      "StateMessage": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["state"],
+            "example": "state"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "player": {
+                "$ref": "#/components/schemas/PlayerState"
+              },
+              "room": {
+                "$ref": "#/components/schemas/RoomState"
+              },
+              "fighting": {
+                "type": ["string", "null"],
+                "description": "Current combat target or null",
+                "example": "goblin"
+              },
+              "inventory": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Player inventory"
+              },
+              "equipment": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                },
+                "description": "Equipped items"
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Recent game events"
+              }
+            }
+          }
+        }
+      },
+      "PlayerState": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "brenda69"
+          },
+          "health": {
+            "type": "number",
+            "example": 100
+          },
+          "max_health": {
+            "type": "number",
+            "example": 100
+          },
+          "mana": {
+            "type": "number",
+            "example": 50
+          },
+          "level": {
+            "type": "number",
+            "example": 1
+          }
+        }
+      },
+      "RoomState": {
+        "type": "object",
+        "properties": {
+          "vnum": {
+            "type": "number",
+            "example": 3001
+          },
+          "name": {
+            "type": "string",
+            "example": "A Dark Forest"
+          },
+          "description": {
+            "type": "string",
+            "example": "You are in a dark, foreboding forest. The trees loom overhead."
+          },
+          "exits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["north", "east"]
+          },
+          "mobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MobState"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemState"
+            }
+          }
+        }
+      },
+      "MobState": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "goblin"
+          },
+          "health": {
+            "type": "number",
+            "example": 30
+          },
+          "target_string": {
+            "type": "string",
+            "description": "String for targeting in combat commands",
+            "example": "goblin"
+          }
+        }
+      },
+      "ItemState": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "rusty sword"
+          },
+          "description": {
+            "type": "string",
+            "example": "A rusty but serviceable sword."
+          }
+        }
+      },
+      "EventMessage": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["event"],
+            "example": "event"
+          },
+          "data": {
+            "type": "object",
+            "required": ["type", "text"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["combat", "enter", "leave", "say", "death", "flee", "system"],
+                "example": "combat"
+              },
+              "text": {
+                "type": "string",
+                "description": "Event message",
+                "example": "A goblin hits you for 5 damage!"
+              },
+              "from": {
+                "type": "string",
+                "description": "Source of event",
+                "example": "goblin"
+              }
+            }
+          }
+        }
+      },
+      "ErrorMessage": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["error"],
+            "example": "error"
+          },
+          "data": {
+            "type": "object",
+            "required": ["message"],
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Error description",
+                "example": "Not authenticated"
+              },
+              "code": {
+                "type": "string",
+                "description": "Error code",
+                "example": "AUTH_REQUIRED"
+              }
+            }
+          }
+        }
+      },
+      "OnboardingJSON": {
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "string",
+            "example": "https://schema.org"
+          },
+          "@type": {
+            "type": "string",
+            "example": "WebAPI"
+          },
+          "name": {
+            "type": "string",
+            "example": "Dark Pawns Agent API"
+          },
+          "description": {
+            "type": "string",
+            "example": "WebSocket JSON-RPC API for AI agents to connect to Dark Pawns MUD as first-class players"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://darkpawns.labz0rz.com"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "AcceptHeader": {
+        "name": "Accept",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": ["text/html", "text/markdown", "application/json"],
+          "default": "text/html"
+        },
+        "description": "Content type preference"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "websocket",
+      "description": "WebSocket connection endpoints"
+    },
+    {
+      "name": "documentation",
+      "description": "API documentation and onboarding"
+    },
+    {
+      "name": "health",
+      "description": "Health and status endpoints"
+    }
+  ],
+  "externalDocs": {
+    "description": "Dark Pawns GitHub Repository",
+    "url": "https://github.com/zax0rz/darkpawns"
+  }
+}

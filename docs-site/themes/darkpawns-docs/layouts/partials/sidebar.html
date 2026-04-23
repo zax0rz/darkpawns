@@ -1,0 +1,45 @@
+<nav class="menu">
+    <p class="menu-label">Getting Started</p>
+    <ul class="menu-list">
+        <li><a href="{{ "getting-started" | relURL }}" {{ if eq .RelPermalink "/getting-started/" }}class="is-active"{{ end }}>Introduction</a></li>
+        <li><a href="{{ "getting-started/installation" | relURL }}" {{ if eq .RelPermalink "/getting-started/installation/" }}class="is-active"{{ end }}>Installation</a></li>
+        <li><a href="{{ "getting-started/quick-start" | relURL }}" {{ if eq .RelPermalink "/getting-started/quick-start/" }}class="is-active"{{ end }}>Quick Start</a></li>
+    </ul>
+    
+    <p class="menu-label">Game Documentation</p>
+    <ul class="menu-list">
+        <li><a href="{{ "game" | relURL }}" {{ if eq .RelPermalink "/game/" }}class="is-active"{{ end }}>Game Overview</a></li>
+        <li><a href="{{ "game/commands" | relURL }}" {{ if eq .RelPermalink "/game/commands/" }}class="is-active"{{ end }}>Commands</a></li>
+        <li><a href="{{ "game/combat" | relURL }}" {{ if eq .RelPermalink "/game/combat/" }}class="is-active"{{ end }}>Combat System</a></li>
+        <li><a href="{{ "game/world" | relURL }}" {{ if eq .RelPermalink "/game/world/" }}class="is-active"{{ end }}>World Guide</a></li>
+    </ul>
+    
+    <p class="menu-label">Agent Integration</p>
+    <ul class="menu-list">
+        <li><a href="{{ "agents" | relURL }}" {{ if eq .RelPermalink "/agents/" }}class="is-active"{{ end }}>Agent Guide</a></li>
+        <li><a href="{{ "agents/protocol" | relURL }}" {{ if eq .RelPermalink "/agents/protocol/" }}class="is-active"{{ end }}>WebSocket Protocol</a></li>
+        <li><a href="{{ "agents/examples" | relURL }}" {{ if eq .RelPermalink "/agents/examples/" }}class="is-active"{{ end }}>Example Agents</a></li>
+        <li><a href="{{ "agents/memory" | relURL }}" {{ if eq .RelPermalink "/agents/memory/" }}class="is-active"{{ end }}>Memory Systems</a></li>
+    </ul>
+    
+    <p class="menu-label">API Reference</p>
+    <ul class="menu-list">
+        <li><a href="{{ "api" | relURL }}" {{ if eq .RelPermalink "/api/" }}class="is-active"{{ end }}>API Overview</a></li>
+        <li><a href="{{ "api/websocket" | relURL }}" {{ if eq .RelPermalink "/api/websocket/" }}class="is-active"{{ end }}>WebSocket API</a></li>
+        <li><a href="{{ "api/rest" | relURL }}" {{ if eq .RelPermalink "/api/rest/" }}class="is-active"{{ end }}>REST API</a></li>
+        <li><a href="{{ "api/openapi" | relURL }}" {{ if eq .RelPermalink "/api/openapi/" }}class="is-active"{{ end }}>OpenAPI Spec</a></li>
+    </ul>
+    
+    <p class="menu-label">Development</p>
+    <ul class="menu-list">
+        <li><a href="{{ "development" | relURL }}" {{ if eq .RelPermalink "/development/" }}class="is-active"{{ end }}>Contributing</a></li>
+        <li><a href="{{ "development/architecture" | relURL }}" {{ if eq .RelPermalink "/development/architecture/" }}class="is-active"{{ end }}>Architecture</a></li>
+        <li><a href="{{ "development/testing" | relURL }}" {{ if eq .RelPermalink "/development/testing/" }}class="is-active"{{ end }}>Testing</a></li>
+        <li><a href="{{ "development/deployment" | relURL }}" {{ if eq .RelPermalink "/development/deployment/" }}class="is-active"{{ end }}>Deployment</a></li>
+    </ul>
+    
+    <div class="search-box">
+        <input type="text" class="input" placeholder="Search documentation..." id="search-input">
+        <div id="search-results"></div>
+    </div>
+</nav>

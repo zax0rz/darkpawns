@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: darkpawns-config
+  namespace: darkpawns
+data:
+  WORLD_DIR: "/app/lib"
+  PORT: "8080"
+  DATABASE_URL: "postgres://postgres:$(POSTGRES_PASSWORD)@darkpawns-postgres/darkpawns?sslmode=disable"
+  REDIS_URL: "redis://darkpawns-redis:6379/0"
+  AI_ENABLED: "true"
+  SERVER_URL: "ws://darkpawns-server:8080/ws"

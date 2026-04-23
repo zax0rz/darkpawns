@@ -212,6 +212,22 @@ func (o *ObjectInstance) GetVNum() int {
 	return o.VNum
 }
 
+func (o *ObjectInstance) GetRoomVNum() int {
+	return o.RoomVNum
+}
+
+func (o *ObjectInstance) SetRoomVNum(roomVNum int) {
+	o.RoomVNum = roomVNum
+}
+
+func (o *ObjectInstance) GetCarrier() interface{} {
+	return o.Carrier
+}
+
+func (o *ObjectInstance) SetCarrier(carrier interface{}) {
+	o.Carrier = carrier
+}
+
 func (o *ObjectInstance) GetTimer() int {
 	// TODO: Add timer field to ObjectInstance
 	return 0

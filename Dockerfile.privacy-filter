@@ -1,0 +1,39 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone and install OpenAI Privacy Filter
+RUN git clone https://github.com/openai/privacy-filter.git /app/privacy-filter
+
+WORKDIR /app/privacy-filter
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install the package in development mode
+RUN pip install -e .
+
+# Create a simple FastAPI wrapper
+COPY ./deployment/privacy_filter_api.py /app/privacy-filter-api/
+
+WORKDIR /app/privacy-filter-api
+
+# Install FastAPI and uvicorn
+RUN pip install --no-cache-dir fastapi uvicorn pydantic
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD python -c "import requests; r = requests.get('http://localhost:8000/health', timeout=2); exit(0 if r.status_code == 200 else 1)"
+
+# Run the API
+CMD ["uvicorn", "privacy_filter_api:app", "--host", "0.0.0.0", "--port", "8000"]

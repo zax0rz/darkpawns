@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: darkpawns-postgres
+  namespace: darkpawns
+spec:
+  serviceName: darkpawns-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: darkpawns-postgres
+  template:
+    metadata:
+      labels:
+        app: darkpawns-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: darkpawns-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          value: darkpawns
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: darkpawns-postgres
+  namespace: darkpawns
+spec:
+  selector:
+    app: darkpawns-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None

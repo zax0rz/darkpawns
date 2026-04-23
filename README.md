@@ -3,6 +3,17 @@ tags: [active]
 ---
 # Dark Pawns
 
+```
+  _____             _    _____                      
+ |  __ \           | |  |  __ \                     
+ | |  | | __ _ _ __| | _| |__) |_ _ _ __   ___ _ __ 
+ | |  | |/ _` | '__| |/ /  ___/ _` | '_ \ / _ \ '__|
+ | |__| | (_| | |  |   <| |  | (_| | |_) |  __/ |   
+ |_____/ \__,_|_|  |_|\_\_|   \__,_| .__/ \___|_|   
+                                   | |              
+                                   |_|              
+```
+
 A resurrection of the Dark Pawns MUD (1997–2010).
 
 ---
@@ -34,7 +45,7 @@ AI adventuring together through the same world we loved the first time around.
 
 ## Current Status
 
-**Phase 5 in progress (~65%).** BRENDA69 is alive. Party play is next.
+**Phase 5b complete.** All 115 original Lua scripts ported and working. BRENDA69 is alive and adventuring.
 
 | Phase | Status | What It Covers |
 |-------|--------|----------------|
@@ -45,8 +56,9 @@ AI adventuring together through the same world we loved the first time around.
 | 2c — Correctness Pass | ✅ Done | Full QA audit against original C source |
 | 3A-3D — Lua Engine | ✅ Done | gopher-lua, all triggers, newbie pipeline, combat AI |
 | 4 — Agent Protocol | ✅ Done | API keys, variable subscriptions, dp_bot.py, rate limiting |
-| 5 — BRENDA Plays | 🔄 In Progress | dp_brenda.py live, party/group/social commands, mem0 memory |
-| 5b — World Restoration | 🔄 In Progress | **Tier 2 Combat AI (10/10)** ✅, **Tier 3 Economy (10/10)** ✅, Tier 4 Environmental (0/10) — K2.6 agent swarms restore all 92 RESTORE scripts (SWARM-PLAN.md) |
+| 5 — BRENDA Plays | ✅ Done | dp_brenda.py live, party/group/social commands, mem0 memory |
+| 5b — World Restoration | ✅ Done | **All 115 scripts ported** — Combat AI, Economy, Environmental, Crafting chains, Ambient/flavor |
+| 5c — Engine Completeness | 🔄 In Progress | Event queue, affect system, doors, shop commands, skills |
 | 6 — Public Server | ⬜ Planned | Web client, Telnet, darkpawns.labz0rz.com |
 
 See [ROADMAP.md](ROADMAP.md) for the full plan.
@@ -65,20 +77,39 @@ See [ROADMAP.md](ROADMAP.md) for the full plan.
 
 ## Quick Start
 
+### Local Development
 ```bash
 git clone https://github.com/zax0rz/darkpawns.git
-cd darkpawns-phase1
-
-# World files are gitignored — restore if missing:
-# git checkout origin/master -- lib/world/
+cd darkpawns
 
 go build ./cmd/server
 ./server \
-  -world /home/zach/.openclaw/workspace/darkpawns/lib/world \
+  -world ./lib/world \
   -port 4350 \
   -db "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable" \
   -scripts ./test_scripts
 ```
+
+### Docker Deployment
+```bash
+# Quick start with Docker Compose
+./deployment/deploy-local.sh
+
+# Or manually:
+docker-compose build
+docker-compose up -d
+```
+
+### Kubernetes Deployment
+```bash
+# Deploy to Kubernetes cluster
+./deployment/deploy-k8s.sh
+
+# Or manually apply manifests:
+kubectl apply -f k8s/
+```
+
+See [deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md) for detailed instructions.
 
 > **Note:** The compiled binary lives at `/tmp/dp-server6`. Rebuild from source after any merge.
 
@@ -112,7 +143,7 @@ Agents connect via WebSocket with `"mode":"agent"` and receive structured JSON s
 - **Rate limiting:** Token bucket, 10 commands/sec via `golang.org/x/time/rate`
 - **Reference agents:** `scripts/dp_bot.py` (638-line deterministic FSM), `scripts/dp_brenda.py` (BRENDA69 with SOUL.md + mem0)
 
-Full spec: [PHASE4-AGENT-PROTOCOL.md](PHASE4-AGENT-PROTOCOL.md)
+Full spec: [docs/agent-protocol.md](docs/agent-protocol.md)
 
 ---
 

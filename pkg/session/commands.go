@@ -7,20 +7,21 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/command"
 )
 
 // ExecuteCommand processes a game command.
-func ExecuteCommand(s *Session, command string, args []string) error {
-	cmd := strings.ToLower(command)
+func ExecuteCommand(s *Session, cmdStr string, args []string) error {
+	cmd := strings.ToLower(cmdStr)
 
 	// Check for mob scripts with oncmd trigger before processing
 	// Based on the original MUD's script handling
 	if s.player != nil && s.player.GetRoomVNum() > 0 {
 		// Get mobs in the room
 		mobs := s.manager.world.GetMobsInRoom(s.player.GetRoomVNum())
-		fullCommand := command
+		fullCommand := cmdStr
 		if len(args) > 0 {
-			fullCommand = command + " " + strings.Join(args, " ")
+			fullCommand = cmdStr + " " + strings.Join(args, " ")
 		}
 		
 		// Check each mob for oncmd script
@@ -106,12 +107,32 @@ func ExecuteCommand(s *Session, command string, args []string) error {
 		return cmdUngroup(s, args)
 	case "gtell", "gsay":
 		return cmdGtell(s, args)
+	// Skill commands
+	case "skills", "sk":
+		return command.CmdSkills(s, args)
+	case "practice":
+		return command.CmdPractice(s, args)
+	case "learn":
+		return command.CmdLearn(s, args)
+	case "list", "listskills":
+		return command.CmdListSkills(s, args)
+	case "forget":
+		return command.CmdForget(s, args)
+	case "confirm", "confirm forget":
+		return command.CmdConfirmForget(s, args)
+	case "use":
+		return command.CmdUseSkill(s, args)
+	case "skillinfo", "sinfo":
+		return command.CmdSkillInfo(s, args)
 	case "summon":
 		return cmdSummon(s, args)
 	default:
-		s.sendText(fmt.Sprintf("Unknown command: %s", command))
+		s.sendText(fmt.Sprintf("Unknown command: %s", cmdStr))
 		return nil
 	}
+	
+	// This should never be reached
+	return nil
 }
 
 // cmdLook shows the current room.

@@ -1,0 +1,237 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "darkpawns-overview",
+    "title": "Dark Pawns - Overview",
+    "tags": ["darkpawns", "game", "monitoring"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Connections",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+        "targets": [{
+          "expr": "darkpawns_connections_active",
+          "legendFormat": "Connections"
+        }],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Players Online",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+        "targets": [{
+          "expr": "darkpawns_players_online",
+          "legendFormat": "Players"
+        }],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Commands Processed (5m)",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+        "targets": [{
+          "expr": "rate(darkpawns_commands_processed_total[5m])",
+          "legendFormat": "Commands/s"
+        }],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "continuous-BlYlRd"},
+            "unit": "ops"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Error Rate (5m)",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+        "targets": [{
+          "expr": "rate(darkpawns_errors_total[5m])",
+          "legendFormat": "Errors/s"
+        }],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 1},
+                {"color": "red", "value": 5}
+              ]
+            },
+            "unit": "ops"
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Command Latency (95th percentile)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [{
+          "expr": "histogram_quantile(0.95, rate(darkpawns_command_duration_seconds_bucket[5m]))",
+          "legendFormat": "{{type}}"
+        }],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Connections Over Time",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "darkpawns_connections_active",
+            "legendFormat": "Active"
+          },
+          {
+            "expr": "rate(darkpawns_connections_total[5m])",
+            "legendFormat": "New/s"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Combat Activity",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(darkpawns_combat_rounds_total[5m])",
+            "legendFormat": "Rounds/s"
+          },
+          {
+            "expr": "rate(darkpawns_damage_dealt_total[5m])",
+            "legendFormat": "Damage/s"
+          },
+          {
+            "expr": "rate(darkpawns_deaths_total[5m])",
+            "legendFormat": "Deaths/s"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Memory Operations",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(darkpawns_memory_writes_total[5m])",
+            "legendFormat": "Writes/s"
+          },
+          {
+            "expr": "rate(darkpawns_memory_reads_total[5m])",
+            "legendFormat": "Reads/s"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Database Performance",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(darkpawns_db_queries_total[5m])",
+            "legendFormat": "Queries/s"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(darkpawns_db_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th %ile Latency"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Game State",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "darkpawns_players_online",
+            "legendFormat": "Players"
+          },
+          {
+            "expr": "darkpawns_rooms_active",
+            "legendFormat": "Active Rooms"
+          },
+          {
+            "expr": "darkpawns_mobs_active",
+            "legendFormat": "Active Mobs"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  },
+  "overwrite": true
+}
