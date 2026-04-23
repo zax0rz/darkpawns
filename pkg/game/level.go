@@ -1,6 +1,7 @@
 package game
 
 import (
+	"log/slog"
 	"math/rand"
 )
 
@@ -318,6 +319,11 @@ func (p *Player) AdvanceLevel() {
 	p.Mana = p.MaxMana
 
 	// TODO: Handle immortal level conditions (LVL_IMMORT)
-	// TODO: Save character
+
+	// Save after leveling up
+	if err := SavePlayer(p); err != nil {
+		slog.Error("Failed to save player after leveling up", "name", p.Name, "error", err)
+	}
+
 	// TODO: Log advancement
 }

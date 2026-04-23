@@ -32,6 +32,7 @@ type Player struct {
 	// Character identity — from do_start()/roll_real_abils() in class.c
 	Class int
 	Race  int
+	Sex   int // 0=male, 1=female, 2=neutral (matching C SEX_* constants)
 	Stats CharStats
 
 	// Combat stats

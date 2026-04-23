@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -235,17 +236,17 @@ func (p *Profiler) MemoryStats() map[string]interface{} {
 func (p *Profiler) PrintMemoryStats() {
 	stats := p.MemoryStats()
 
-	fmt.Println("\n=== Memory Statistics ===")
-	fmt.Printf("Allocated:          %d bytes\n", stats["alloc"])
-	fmt.Printf("Total Allocated:    %d bytes\n", stats["total_alloc"])
-	fmt.Printf("System:             %d bytes\n", stats["sys"])
-	fmt.Printf("Heap Allocated:     %d bytes\n", stats["heap_alloc"])
-	fmt.Printf("Heap System:        %d bytes\n", stats["heap_sys"])
-	fmt.Printf("Heap In Use:        %d bytes\n", stats["heap_in_use"])
-	fmt.Printf("Heap Objects:       %d\n", stats["heap_objects"])
-	fmt.Printf("Goroutines:         %d\n", stats["num_goroutines"])
-	fmt.Printf("GC Cycles:          %d\n", stats["num_gc"])
-	fmt.Printf("GC CPU Fraction:    %.4f\n", stats["gc_cpu_fraction"])
+	slog.Info("=== Memory Statistics ===")
+	slog.Info("Allocated", "bytes", stats["alloc"])
+	slog.Info("Total Allocated", "bytes", stats["total_alloc"])
+	slog.Info("System", "bytes", stats["sys"])
+	slog.Info("Heap Allocated", "bytes", stats["heap_alloc"])
+	slog.Info("Heap System", "bytes", stats["heap_sys"])
+	slog.Info("Heap In Use", "bytes", stats["heap_in_use"])
+	slog.Info("Heap Objects", "count", stats["heap_objects"])
+	slog.Info("Goroutines", "count", stats["num_goroutines"])
+	slog.Info("GC Cycles", "count", stats["num_gc"])
+	slog.Info("GC CPU Fraction", "fraction", stats["gc_cpu_fraction"])
 }
 
 // PerformanceMonitor continuously monitors performance
@@ -424,15 +425,15 @@ func RunProfilingSession(profileDir string, duration time.Duration) error {
 	// Print analysis
 	analysis := monitor.AnalyzeMetrics()
 	if analysis != nil {
-		fmt.Println("\n=== Performance Analysis ===")
-		fmt.Printf("Duration:           %v\n", analysis["duration"])
-		fmt.Printf("Samples:            %d\n", analysis["sample_count"])
-		fmt.Printf("Avg Memory:         %d bytes\n", analysis["avg_memory"])
-		fmt.Printf("Min Memory:         %d bytes\n", analysis["min_memory"])
-		fmt.Printf("Max Memory:         %d bytes\n", analysis["max_memory"])
-		fmt.Printf("Avg Goroutines:     %d\n", analysis["avg_goroutines"])
-		fmt.Printf("Min Goroutines:     %d\n", analysis["min_goroutines"])
-		fmt.Printf("Max Goroutines:     %d\n", analysis["max_goroutines"])
+		slog.Info("=== Performance Analysis ===")
+		slog.Info("Duration", "value", analysis["duration"])
+		slog.Info("Samples", "count", analysis["sample_count"])
+		slog.Info("Avg Memory", "bytes", analysis["avg_memory"])
+		slog.Info("Min Memory", "bytes", analysis["min_memory"])
+		slog.Info("Max Memory", "bytes", analysis["max_memory"])
+		slog.Info("Avg Goroutines", "count", analysis["avg_goroutines"])
+		slog.Info("Min Goroutines", "count", analysis["min_goroutines"])
+		slog.Info("Max Goroutines", "count", analysis["max_goroutines"])
 	}
 
 	profiler.PrintMemoryStats()

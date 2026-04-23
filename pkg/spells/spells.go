@@ -28,6 +28,29 @@ const (
 	SpellEarthquake    = 23
 	SpellDivineInt     = 81
 	SpellMindBar       = 82
+	SpellShockingGrasp = 37
+	SpellChillTouch    = 8
+	SpellEnergyDrain   = 21
+	SpellSoulLeech     = 94
+	SpellPsiblast      = 100
+	SpellPetrify       = 104
+	SpellDrowning      = 24
+	SpellCallLightning = 15
+	SpellMeteorSwarm   = 41
+	SpellSleep         = 38
+	SpellCharm         = 7
+	SpellSanctuary     = 36
+	SpellRemovePoison  = 43
+	SpellEnchantArmor  = 59
+	SpellEnchantWeapon = 24
+	SpellIdentify      = 60
+	SpellWordOfRecall  = 42
+	SpellInvulnerability = 66
+	SpellFireBreath    = 202
+	SpellGasBreath     = 203
+	SpellFrostBreath   = 204
+	SpellAcidBreath    = 205
+	SpellLightningBreath = 206
 
 	// Skill constants referenced in fighter.lua
 	SkillHeadbutt = 141

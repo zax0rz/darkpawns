@@ -3,6 +3,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -147,7 +148,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 
 		case "D": // Door state
 			// TODO: Implement door state changes
-			fmt.Printf("Door command for room %d, dir %d, state %d\n", cmd.Arg1, cmd.Arg2, cmd.Arg3)
+			slog.Info("Door command", "room", cmd.Arg1, "dir", cmd.Arg2, "state", cmd.Arg3)
 
 		case "R": // Remove obj/mob from room
 			if cmd.Arg3 == 1 { // Remove object
@@ -303,5 +304,5 @@ func (s *Spawner) resetEmptyZones() {
 
 	// This would iterate through zones and check if they're empty
 	// For now, just a placeholder
-	fmt.Println("Periodic zone reset check")
+	slog.Info("Periodic zone reset check")
 }
