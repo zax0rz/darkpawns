@@ -279,6 +279,39 @@ func saveDataToPlayer(data savePlayerData) *Player {
 	}
 }
 
+// SerializePlayer serializes a player to JSON for storage backends.
+func SerializePlayer(p *Player) (string, error) {
+	data := playerToSaveData(p)
+	out, err := json.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("marshal player: %w", err)
+	}
+	return string(out), nil
+}
+
+// DeserializePlayer deserializes a player from JSON produced by SerializePlayer.
+func DeserializePlayer(data string) (*Player, error) {
+	var sd savePlayerData
+	if err := json.Unmarshal([]byte(data), &sd); err != nil {
+		return nil, fmt.Errorf("unmarshal player: %w", err)
+	}
+	return saveDataToPlayer(sd), nil
+}
+
+// SerializeWorld serializes world state to JSON.
+func SerializeWorld(w *World) (string, error) {
+	// World serialization is a stub for future use — world data is loaded from
+	// parser data files, not persisted state. This function will evolve when
+	// dynamic world state (zone resets, mob spawns, lock states) needs saving.
+	return "{}", nil
+}
+
+// DeserializeWorld deserializes world state from JSON.
+func DeserializeWorld(data string) (*World, error) {
+	// Stub: world state is loaded from static parser files.
+	return nil, fmt.Errorf("world deserialization not implemented yet")
+}
+
 // sanitizeName ensures the player name is safe for use as a filename.
 func sanitizeName(name string) string {
 	safe := make([]byte, 0, len(name))
