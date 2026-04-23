@@ -40,3 +40,15 @@ temp/
 __pycache__/
 *.pyc
 *.pyo
+
+# Build artifacts
+server-bin
+config.status
+bin/
+
+# Logs
+log/
+
+# Original C object files (compiled intermediates, no source)
+src/*.o
+src/*.Po
