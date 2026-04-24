@@ -25,6 +25,10 @@ type ObjectInstance struct {
 
 	// Custom state
 	CustomData map[string]interface{}
+
+	// Runtime flags
+	IsCorpse  bool // true if this is a corpse object
+	CanPickUp bool // true if ITEM_WEAR_TAKE flag is set
 }
 
 // NewObjectInstance creates a new object instance from a prototype.

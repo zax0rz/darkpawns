@@ -100,6 +100,10 @@ type Player struct {
 	// Known spells: map of spell name → level learned
 	SpellMap map[string]int
 
+	// Tattoo — from tattoo.c
+	Tattoo   int // tattoo type constant (TATTOO_*)
+	TatTimer int // hours remaining before tattoo can be used again
+
 	// Ignore list: map of player names the player is ignoring
 	IgnoredPlayers map[string]bool
 }

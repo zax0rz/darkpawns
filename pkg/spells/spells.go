@@ -41,6 +41,9 @@ const (
 	SpellMeteorSwarm   = 41
 	SpellSleep         = 38
 	SpellCharm         = 7
+	SpellBless         = 3
+	SpellGreatPercept  = 70
+	SpellChangeDensity = 74
 	SpellSanctuary     = 36
 	SpellRemovePoison  = 43
 	SpellEnchantArmor  = 59

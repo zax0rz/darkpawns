@@ -405,3 +405,39 @@ The evaluation challenge remains open: "narrative coherence" needs a rubric. Hyp
 
 **Secondary contribution:** The swarm development methodology (build/qa/fix/push with parallel K2.6 agents) is a genuine innovation in how game content gets restored/created. It could be a short paper or workshop submission on its own.
 
+## [SURPRISE] [DESIGN] [RESULT] DeepSeek V4 drops — swarm model learnings
+
+### Date: 2026-04-24
+
+**News:** DeepSeek V4 preview dropped today (April 24). Two models:
+- **V4-Pro**: 1.6T total / 49B active params — GPT-5.2 to 5.4 range
+- **V4-Flash**: 284B / 13B active — cost-effective daily driver
+
+1M native context window (not bolted on). Hybrid attention (CSA+HCA) that at 1M tokens uses only 10% of V3.2's KV cache. Trained entirely on Huawei chips — all Chinese hardware, no export-controlled NVIDIA needed. Open weights on HuggingFace. API supports both OpenAI and Anthropic formats natively.
+
+Pricing per million tokens:
+- **V4-Flash**: $0.028 (cache hit) / $0.14 (cache miss) in, $0.28 out
+- **V4-Pro**: $0.145 (cache hit) / $1.74 (cache miss) in, $3.48 out
+
+By contrast: Kimi K2.6 is $0.60/$2.80, Sonnet is $3/$15, GLM-5.1 is $10/mo flat. V4-Flash at $0.14/$0.28 is 4-10x cheaper than K2.6 for comparable agent task quality.
+
+CNBC article explicitly states V4 is "optimized for use with Claude Code and **OpenClaw**." Not clear if DeepSeek courted us or we were named as a reference — either way, it's a distinct signal.
+
+**Swarm learnings from this session:**
+
+1. **Don't parallelize on the same provider.** Launched 3 GLM-5.1 subagents in parallel. Wave 4b was killed by rate limit in 2 seconds — GLM-5.1's API can't handle concurrent requests from the same key. Mitigation: mix providers within a swarm wave. GLM-5.1 for one, Kimi K2.6 for another, DeepSeek V4-Flash for a third.
+
+2. **Right-size per-subagent scope.** The subagent that succeeded (spec_assign.c, 642 lines, 160+ entries) ran clean in 2m28s for 40.6k tokens. The one that got rate-limited (spec_procs.c first half, ~1200 lines) never got past reading the C file. **600-line C files or ~50K tokens seems to be the sweet spot for reliable completion** on GLM-5.1.
+
+3. **Kimi K2.6 is slower than GLM-5.1 for code.** Wave 3 subagents (display, map, tattoo — ported via K2.6) ran ~90-110 seconds each vs GLM-5.1's typical 20-30s burst. Tradeoff K2.6 makes: longer wall time but less rate-limit prone because Moonshot's API handles parallel requests better.
+
+4. **V4-Flash should be the new daily driver for mechanical tasks.** At $0.14/$0.28 it's cheaper than any active model in the ladder and (claimed) V4-Pro-adjacent on agent tasks. If it handles file creation and iteration as well as advertised, it replaces both DeepSeek Chat and most GLM-5.1 calls for porting work.
+
+5. **Sequential > parallel for large-file swarms.** 1200+ line C files should be sequential sub-waves — one agent finishes starting the next — rather than launching both simultaneously and hoping neither gets rate-limited. The throughput is the same but reliability goes up.
+
+**Action items:**
+- Wire DeepSeek V4-Flash onto the LiteLLM proxy (already in progress this session)
+- Update AGENTS.md model ladder to include V4-Flash as daily driver
+- Pre-chunk C-source port files to ~600 line max for subagent consumption
+- Future swarm work: assign one agent per provider within a wave, not all to the same provider
+
