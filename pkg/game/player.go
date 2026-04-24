@@ -587,6 +587,13 @@ func (p *Player) GetStrAdd() int {
 	return p.Stats.StrAdd
 }
 
+// GetSex returns the player's sex.
+func (p *Player) GetSex() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Sex
+}
+
 // Scripting interface implementations
 
 func (p *Player) GetID() int {

@@ -391,6 +391,14 @@ Both went through `say`. Neither was communication. She was thinking out loud in
 
 3. **The dreaming layer** — a three-phase memory promotion system (Light→REM→Deep) that treats memory as a signal-to-noise problem rather than an accumulation problem. The key insight is that most events are noise, and promotion is the filter. Retrieval tracking provides the relevance signal that most memory systems lack.
 
+**[PLAN]** Port plan formalized at PORT-PLAN.md. ~29K C lines remaining (~42% of codebase). 13 waves, ~5 days. First real inventory of what's genuinely unported vs just-referenced.
+
+**[DESIGN]** Key lesson: the "ported" C files (fight.c, handler.c, etc.) had Go shells that referenced the C names but didn't translate C logic to Go functions. Real ported % is ~58%, not 75% as initially claimed. Need actual function-level equivalence, not file-name matching.
+
+**[DESIGN]** Multi-day project needs real documentation. PORT-PLAN.md + SWARM-LEARNINGS.md + RESEARCH-LOG.md = survival kit for session-to-session continuity. Without these, compaction loses the plan every time.
+
+---
+
 The evaluation challenge remains open: "narrative coherence" needs a rubric. Hypothesis: measure (a) behavioral change over sessions, (b) natural language reference frequency, (c) cross-agent social memory references, (d) private/public divergence. All four metrics are measurable once retrieval tracking and multi-agent sessions are live.
 
 **Risk:** The dreaming layer is not yet implemented (Phase 5d). Without it, the paper is an architecture description without validation. The AIIDE 2027 deadline is ~18 months away. The REM synthesis and deep promotion scripts need to be built, and 10+ sessions of BRENDA data need to be collected to show behavioral change. This is the critical path.

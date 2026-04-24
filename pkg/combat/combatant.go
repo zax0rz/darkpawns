@@ -35,6 +35,7 @@ type Combatant interface {
 	GetWis() int
 	GetHitroll() int
 	GetDamroll() int
+	GetSex() int
 
 	// Combat actions
 	TakeDamage(amount int)

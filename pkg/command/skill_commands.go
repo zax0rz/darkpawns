@@ -832,6 +832,398 @@ func CmdPickLock(s SessionInterface, args []string) error {
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
 
+// CmdCarve handles the carve command.
+func CmdCarve(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("You want to carve what?!?!\r\n")
+	}
+
+	ch := s.GetPlayer()
+	if ch.GetPosition() == combat.PosFighting {
+		return s.SendMessage("How can you think of food at a time like this?!?!\r\n")
+	}
+
+	canUse, msg := game.CanUseSkill(ch, game.SkillCarve)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	targetName := strings.ToLower(strings.Join(args, " "))
+	world := s.GetWorld()
+
+	// Check if target is a character
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	if found {
+		if target.GetName() == ch.Name {
+			return s.SendMessage("This game doesn't support self-mutilation!\r\n")
+		}
+		return s.SendMessage("You kill it first and THEN you can eat it!\r\n")
+	}
+
+	result := game.DoCarve(ch, targetName, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdCutthroat handles the cutthroat command.
+func CmdCutthroat(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Cut what throat where?\n\r")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillCutthroat)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	// Find target
+	targetName := strings.Join(args, " ")
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	if !found {
+		return s.SendMessage("Cut what throat where?\n\r")
+	}
+
+	if target.GetName() == ch.Name {
+		return s.SendMessage("That would be bad.\n\r")
+	}
+
+	result := game.DoCutthroat(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdStrike handles the strike command.
+func CmdStrike(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillStrike)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	// Determine target
+	var target combat.Combatant
+	var found bool
+
+	if len(args) == 0 {
+		// Try to strike whoever we're fighting
+		fighting := ch.GetFighting()
+		if fighting == "" {
+			return s.SendMessage("Strike who?\r\n")
+		}
+		// Find fighter by name
+		world := s.GetWorld()
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), fighting, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	} else {
+		targetName := strings.Join(args, " ")
+		world := s.GetWorld()
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	}
+
+	if target.GetName() == ch.Name {
+		ch.SendMessage("You beat yourself about the face and neck.\r\n")
+		// Send room act
+		roomVNum := ch.GetRoom()
+		world := s.GetWorld()
+		players := world.GetPlayersInRoom(roomVNum)
+		for _, p := range players {
+			if p.Name != ch.Name {
+				p.SendMessage(fmt.Sprintf("%s slaps %s around a little.\r\n",
+					ch.Name, genderPronoun(ch.Sex)))
+			}
+		}
+		return nil
+	}
+
+	result := game.DoStrike(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdCompare handles the compare command.
+func CmdCompare(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	if ch.GetPosition() == combat.PosFighting {
+		return s.SendMessage("You're pretty busy right now!\n\r")
+	}
+
+	canUse, msg := game.CanUseSkill(ch, game.SkillCompare)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	if len(args) == 0 {
+		return s.SendMessage("Compare what and what?\r\n")
+	}
+
+	var objName1, objName2 string
+	var compareToEquipped bool
+
+	if len(args) == 1 {
+		// Compare with equipped item
+		objName1 = args[0]
+		compareToEquipped = true
+	} else {
+		objName1 = args[0]
+		objName2 = strings.Join(args[1:], " ")
+	}
+
+	result := game.DoCompare(ch, objName1, objName2, compareToEquipped)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdScan handles the scan command.
+func CmdScan(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillScan)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	world := s.GetWorld()
+	result := game.DoScan(ch, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdSharpen handles the sharpen command.
+func CmdSharpen(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Sharpen what?\r\n")
+	}
+
+	ch := s.GetPlayer()
+	if ch.GetPosition() == combat.PosFighting {
+		return s.SendMessage("You're too busy to be sharpening anything!\n\r")
+	}
+
+	canUse, msg := game.CanUseSkill(ch, game.SkillSharpen)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	objName := strings.Join(args, " ")
+	result := game.DoSharpen(ch, objName)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdScrounge handles the scrounge command.
+func CmdScrounge(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	world := s.GetWorld()
+	result := game.DoScrounge(ch, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdFirstAid handles the first aid command.
+func CmdFirstAid(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Aid who?\r\n")
+	}
+
+	ch := s.GetPlayer()
+	targetName := strings.Join(args, " ")
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+	if !found {
+		return s.SendMessage("They don't seem to be here.\r\n")
+	}
+
+	result := game.DoFirstAid(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdDisarm handles the disarm command.
+func CmdDisarm(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+
+	// Determine target: either specified or current fighting target
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+
+	if len(args) == 0 {
+		fighting := ch.GetFighting()
+		if fighting == "" {
+			return s.SendMessage("Disarm who?\r\n")
+		}
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	} else {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	}
+
+	result := game.DoDisarm(ch, target, world)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdMindlink handles the mindlink command.
+func CmdMindlink(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Link your mind to whose?\r\n")
+	}
+
+	ch := s.GetPlayer()
+	targetName := strings.Join(args, " ")
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+	if !found {
+		return s.SendMessage("They don't seem to be here.\r\n")
+	}
+
+	result := game.DoMindlink(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdDetect handles the detect command.
+func CmdDetect(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	world := s.GetWorld()
+	result := game.DoDetect(ch, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdSerpentKick handles the serpent kick command.
+func CmdSerpentKick(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+
+	if len(args) == 0 {
+		// Try to kick whoever we're fighting
+		fighting := ch.GetFighting()
+		if fighting == "" {
+			return s.SendMessage("Kick who?\r\n")
+		}
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	} else {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	}
+
+	result := game.DoSerpentKick(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdDig handles the dig command.
+func CmdDig(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	world := s.GetWorld()
+	result := game.DoDig(ch, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdTurn handles the turn command.
+func CmdTurn(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	world := s.GetWorld()
+
+	// Turn affects ALL undead in the room, but for simplicity we
+	// target a specific enemy if specified or whoever we're fighting
+	var target combat.Combatant
+	var found bool
+
+	if len(args) == 0 {
+		fighting := ch.GetFighting()
+		if fighting == "" {
+			return s.SendMessage("Turn who?\r\n")
+		}
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	} else {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	}
+
+	result := game.DoTurn(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// genderPronoun returns the appropriate "himself" / "herself" / "itself" pronoun.
+func genderPronoun(sex int) string {
+	switch sex {
+	case 1:
+		return "himself"
+	case 0:
+		return "herself"
+	default:
+		return "itself"
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Helper: send skill result to player, victim, and room
 // ---------------------------------------------------------------------------
@@ -843,7 +1235,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	}
 
 	// Apply damage
-	if result.Damage > 0 {
+	if result.Damage > 0 && target != nil {
 		target.TakeDamage(result.Damage)
 		if target.GetHP() <= 0 {
 			s.SendMessage(fmt.Sprintf("%s is dead!\r\n", target.GetName()))
@@ -855,7 +1247,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		ch.SetPosition(combat.PosSitting)
 		s.SendMessage("You fall to the ground!\r\n")
 	}
-	if result.TargetFalls {
+	if result.TargetFalls && target != nil {
 		if p, ok := target.(*game.Player); ok {
 			p.SetPosition(combat.PosSitting)
 		}
@@ -863,7 +1255,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	}
 
 	// Send to victim
-	if result.MessageToVict != "" {
+	if result.MessageToVict != "" && target != nil {
 		if p, ok := target.(*game.Player); ok {
 			p.SendMessage(result.MessageToVict + "\r\n")
 		}
@@ -878,7 +1270,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			if p.Name == ch.Name {
 				continue
 			}
-			if p.Name == target.GetName() {
+			if target != nil && p.Name == target.GetName() {
 				continue
 			}
 			p.SendMessage(result.MessageToRoom + "\r\n")
@@ -888,8 +1280,308 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	return nil
 }
 
-// RegisterSkillCommands registers all skill-related commands
+// CmdMold handles the mold command — rename/redescribe clay items.
+func CmdMold(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	// Need 3 args: <object> <new_name> <new_description>
+	if len(args) < 3 {
+		return s.SendMessage("Usage: mold <object> <new name> <new description>\r\n")
+	}
+
+	objName := args[0]
+	newName := args[1]
+	newDesc := strings.Join(args[2:], " ")
+
+	result := game.DoMold(ch, objName, newName, newDesc)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdBehead handles the behead command.
+func CmdBehead(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	if ch.GetPosition() == combat.PosFighting {
+		return s.SendMessage("You're a little busy for that!\r\n")
+	}
+
+	if len(args) == 0 {
+		return s.SendMessage("Behead what?\r\n")
+	}
+
+	targetName := strings.Join(args, " ")
+	world := s.GetWorld()
+	result := game.DoBehead(ch, targetName, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdBearhug handles the bearhug command.
+func CmdBearhug(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	canUse, msg := game.CanUseSkill(ch, game.SkillBearhug)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+
+	if len(args) == 0 {
+		fighting := ch.GetFighting()
+		if fighting == "" {
+			return s.SendMessage("Bear hug who?\r\n")
+		}
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	} else {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+		if !found {
+			return s.SendMessage("Bear hug who?\r\n")
+		}
+	}
+
+	result := game.DoBearhug(ch, target, world)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdSlug handles the slug command.
+func CmdSlug(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	canUse, msg := game.CanUseSkill(ch, game.SkillSlug)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+
+	if len(args) == 0 {
+		fighting := ch.GetFighting()
+		if fighting == "" {
+			return s.SendMessage("Slug who?\r\n")
+		}
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	} else {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+		if !found {
+			return s.SendMessage("Slug who?\r\n")
+		}
+	}
+
+	result := game.DoSlug(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdSmackheads handles the smackheads command.
+func CmdSmackheads(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	canUse, msg := game.CanUseSkill(ch, game.SkillSmackheads)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	if len(args) < 2 {
+		return s.SendMessage("Smack whose heads together?\r\n")
+	}
+
+	victim1Name := args[0]
+	victim2Name := args[1]
+	world := s.GetWorld()
+	result := game.DoSmackheads(ch, victim1Name, victim2Name, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdBite handles the bite command.
+func CmdBite(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+
+	if len(args) == 0 {
+		fighting := ch.GetFighting()
+		if fighting == "" {
+			return s.SendMessage("Bite who?\r\n")
+		}
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	} else {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+		if !found {
+			return s.SendMessage("Bite who?\r\n")
+		}
+	}
+
+	result := game.DoBite(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdTag handles the tag command.
+func CmdTag(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	if len(args) == 0 {
+		return s.SendMessage("Tag who?\r\n")
+	}
+
+	targetName := strings.Join(args, " ")
+	world := s.GetWorld()
+	result := game.DoTag(ch, targetName, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdPoint handles the point command.
+func CmdPoint(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	targetName := ""
+	if len(args) > 0 {
+		targetName = strings.Join(args, " ")
+	}
+
+	world := s.GetWorld()
+	result := game.DoPoint(ch, targetName, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdGroinrip handles the groinrip command.
+func CmdGroinrip(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	canUse, msg := game.CanUseSkill(ch, game.SkillGroinrip)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+
+	if len(args) == 0 {
+		fighting := ch.GetFighting()
+		if fighting == "" {
+			return s.SendMessage("Groinrip who?\r\n")
+		}
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		if !found {
+			return s.SendMessage("They don't seem to be here.\r\n")
+		}
+	} else {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+		if !found {
+			return s.SendMessage("Groinrip who?\r\n")
+		}
+	}
+
+	result := game.DoGroinrip(ch, target, world)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdReview handles the review command — show recent gossip history.
+func CmdReview(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	result := game.DoReview(ch)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdWhois handles the whois command — check player info.
+func CmdWhois(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	if len(args) == 0 {
+		return s.SendMessage("For whom do you wish to search?\r\n")
+	}
+
+	targetName := strings.Join(args, " ")
+	result := game.DoWhois(ch, targetName)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdPalm handles the palm command — hide a small item up your sleeve.
+func CmdPalm(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	if len(args) == 0 {
+		return s.SendMessage("Palm what?\r\n")
+	}
+
+	objName := strings.Join(args, " ")
+	world := s.GetWorld()
+	result := game.DoPalm(ch, objName, world)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// CmdFleshAlter handles the flesh_alter command — transform your hand into a weapon.
+func CmdFleshAlter(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+
+	canUse, msg := game.CanUseSkill(ch, game.SkillFleshAlter)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	result := game.DoFleshAlter(ch)
+	return sendSkillResult(s, ch, nil, result)
+}
+
+// RegisterSkillCommands registers all skill-related commands.
 func RegisterSkillCommands() {
-	// Check if session package has command registry
-	// This would typically be called during server initialization
+	// Registration placeholder — commands are called directly via Cmd* handlers.
 }
