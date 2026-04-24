@@ -747,8 +747,12 @@ func CmdRescue(s SessionInterface, args []string) error {
 		return s.SendMessage("What about fleeing instead?\r\n")
 	}
 
-	// Need combat engine for rescue
-	return s.SendMessage("Rescue is not fully implemented yet.\r\n")
+	// Execute the rescue
+	result := game.DoRescue(ch, target, world, s.GetCombatEngine().(interface {
+		StartCombat(combat.Combatant, combat.Combatant) error
+		StopCombat(string)
+	}))
+	return sendSkillResult(s, ch, target, result)
 }
 
 // CmdSneak handles the sneak command.

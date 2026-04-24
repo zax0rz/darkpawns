@@ -3,6 +3,7 @@
 package scripting
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"math/rand"
@@ -187,9 +188,17 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 
 	// Load and execute the script file
 	// Based on open_lua_file() in scripts.c lines 1641-1701
+	// Execution timeout prevents tight loops from hanging the server indefinitely.
 	scriptPath := e.scriptsDir + "/" + fname
+
+	scriptCtx, scriptCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer scriptCancel()
+	L.SetContext(scriptCtx)
+
 	if err := L.DoFile(scriptPath); err != nil {
 		slog.Error("error loading script", "file", fname, "error", err)
+		L.RemoveContext()
+		scriptCancel()
 		return false, err
 	}
 
@@ -201,6 +210,8 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	if fn.Type() == lua.LTNil {
 		// Function doesn't exist
 		L.Pop(1)
+		L.RemoveContext()
+		scriptCancel()
 		slog.Debug("function not found in script", "trigger", triggerName, "file", fname)
 		return false, nil
 	}
@@ -210,6 +221,8 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		if L.GetTop() > 0 {
 			L.Pop(1)
 		}
+		L.RemoveContext()
+		scriptCancel()
 		return false, err
 	}
 
@@ -250,6 +263,9 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			}
 		}
 	}
+
+	L.RemoveContext()
+	scriptCancel()
 
 	// Check return value
 	if ret.Type() == lua.LTNumber {

@@ -75,6 +75,45 @@ func (ce *CombatEngine) Start() {
 	}()
 }
 
+// PositionedMob is an interface for entities that can be knocked down and need position recovery.
+type PositionedMob interface {
+	GetName() string
+	GetStatus() string
+	SetStatus(string)
+	GetFighting() string
+}
+
+// StartMobPositionRecovery starts a goroutine that periodically checks mob positions.
+// Mobs that are sitting/resting/sleeping and not in combat are stood back up.
+// getMobs returns all mobs that should be checked for position recovery.
+// Separate from the combat ticker so position recovery runs at its own cadence.
+func (ce *CombatEngine) StartMobPositionRecovery(getMobs func() []PositionedMob) {
+	go func() {
+		ticker := time.NewTicker(3 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				mobs := getMobs()
+				for _, mob := range mobs {
+					status := mob.GetStatus()
+					fighting := mob.GetFighting()
+					if fighting != "" {
+						continue
+					}
+					if status != "sleeping" && status != "resting" && status != "sitting" {
+						continue
+					}
+					mob.SetStatus("standing")
+				}
+			case <-ce.stopChan:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+}
+
 // Stop halts the combat engine
 func (ce *CombatEngine) Stop() {
 	if ce.stopped.CompareAndSwap(false, true) {

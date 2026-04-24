@@ -66,6 +66,7 @@ type Manager struct {
 	sessions     map[string]*Session // keyed by player name
 	world        *game.World
 	combatEngine *combat.CombatEngine
+	shopManager  *systems.ShopManager
 	db           db.DB
 	hasDB        bool
 	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
@@ -86,6 +87,7 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		sessions:     make(map[string]*Session),
 		world:        world,
 		combatEngine: ce,
+		shopManager:  systems.NewShopManager(),
 		loginLimiter: auth.NewIPRateLimiter(),
 		doorManager:  dm,
 	}

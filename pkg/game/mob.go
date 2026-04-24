@@ -289,6 +289,20 @@ func (m *MobInstance) IsNPC() bool {
 	return true
 }
 
+// GetStatus returns the mob's status string.
+func (m *MobInstance) GetStatus() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Status
+}
+
+// SetStatus sets the mob's status string.
+func (m *MobInstance) SetStatus(status string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Status = status
+}
+
 // GetPosition returns the mob's current position.
 func (m *MobInstance) GetPosition() int {
 	m.mu.RLock()
@@ -375,14 +389,42 @@ func (m *MobInstance) GetWis() int {
 	return 10
 }
 
-// GetHitroll returns the mob's hitroll bonus
+// GetHitroll returns the mob's hitroll bonus from equipment
+// Sums APPLY_HITROLL (location 18) from all equipped items.
 func (m *MobInstance) GetHitroll() int {
-	return 0
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	total := 0
+	for _, item := range m.Equipment {
+		if item == nil || item.Prototype == nil {
+			continue
+		}
+		for _, aff := range item.Prototype.Affects {
+			if aff.Location == 18 {
+				total += aff.Modifier
+			}
+		}
+	}
+	return total
 }
 
-// GetDamroll returns the mob's damroll bonus
+// GetDamroll returns the mob's damroll bonus from equipment
+// Sums APPLY_DAMROLL (location 19) from all equipped items.
 func (m *MobInstance) GetDamroll() int {
-	return 0
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	total := 0
+	for _, item := range m.Equipment {
+		if item == nil || item.Prototype == nil {
+			continue
+		}
+		for _, aff := range item.Prototype.Affects {
+			if aff.Location == 19 {
+				total += aff.Modifier
+			}
+		}
+	}
+	return total
 }
 
 // GetStrAdd returns the mob's strength add

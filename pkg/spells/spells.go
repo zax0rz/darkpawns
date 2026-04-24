@@ -2,6 +2,8 @@
 // Based on original spells.h and spell constants from globals.lua.
 package spells
 
+import "github.com/zax0rz/darkpawns/pkg/engine"
+
 // Spell constants from spells.h and globals.lua
 const (
 	// Core spells referenced in combat AI scripts
@@ -64,12 +66,24 @@ const (
 	ItemStaff = 4
 )
 
-// Cast simulates casting a spell. For now, it's a stub that logs the action.
-// Based on lua_spell() function that would be called from Lua scripts.
-func Cast(_ interface{}, _ interface{}, _ int, _ bool) {
-	// TODO: Implement actual spell casting logic
-	// For now, just log that a spell was cast
-	// caster and target would be ScriptablePlayer/ScriptableMob interfaces
-	// spellNum is one of the SPELL_* constants above
-	// aggressive indicates if it's an offensive spell
+// Cast executes a spell. For non-damage affect spells (blindness, curse, poison,
+// sleep, sanctuary), it routes through ApplySpellAffects to create and apply an
+// engine.Affect to the target.
+//
+// caster and target are the involved entities (must implement engine.Affectable).
+// spellNum is one of the Spell* constants above.
+// casterLevel scales duration and magnitude of affects.
+// aggressive indicates if it's an offensive spell (not yet used).
+func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int, am *engine.AffectManager) {
+	// Route non-damage affect spells through ApplySpellAffects
+	switch spellNum {
+	case SpellBlindness, SpellCurse, SpellPoison, SpellSleep, SpellSanctuary:
+		targetAffectable, ok := target.(engine.Affectable)
+		if !ok {
+			return
+		}
+		ApplySpellAffects(targetAffectable, spellNum, casterLevel, am)
+	default:
+		// TODO: Implement damage spells and other spell types
+	}
 }
