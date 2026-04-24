@@ -86,3 +86,37 @@ Subagent completion notifications (OpenClaw inter-session messages) often arrive
 6. **Commit sweep** — squash, message cleanup
 
 Spawn 3-5 per wave, not 15 all at once. Use one model consistently per wave. Verify branch before every commit instruction.
+
+---
+
+## Early Wave Learnings (Waves 0–1, 2026-04-22)
+
+Archived from root-level SWARM-LEARNINGS.md. These are the foundational lessons that shaped the swarm methodology documented above.
+
+### WAVE 0: Initial swarm dispatch
+
+- **Model routing broken:** All subagents ran on DeepSeek Chat instead of their assigned models (K2.6, GLM-5.1). Reason: default model is DeepSeek Chat, and `model` wasn't explicitly passed to `sessions_spawn`.
+  - *Fix:* Always pass `model=` when spawning subagents.
+- **QA waves skipped:** Wave 3 (Sonnet QA) and Wave 4 (Opus security) didn't run. Push included un-reviewed code.
+  - *Fix:* Enforce wave gating. Next wave doesn't start until QA signs off.
+- **Session context lost on compaction:** Long threads get compacted, bot loses the plan.
+  - *Fix:* Write plans to files. PORT-PLAN.md and this file survive compaction.
+- **Files compiled but incomplete:** Go files had struct/enum equivalents but C business logic wasn't ported to Go functions — just references to C/Lua.
+  - *Lesson:* Don't count a C file as "ported" until there's a Go function that implements the same logic, not just references the C.
+
+### QA GATE RULE (enforced from Wave 3 onward)
+
+Build subagents must NOT commit. Their job ends at `go build ./... passes`.
+
+1. Build agents write Go files and report build result — no git operations.
+2. Orchestrator waits for all waves in a batch to go green.
+3. Orchestrator spawns a QA agent with the full diff and relevant C source files.
+4. QA outputs APPROVED or BLOCKED + issues.
+5. Commit happens only after APPROVED.
+
+### WAVE 1: First real C-to-Go translation
+
+- **Subagent model matters less than context:** GLM-5.1 and K2.6 both produced reasonable translations when given the full C file content.
+  - *Takeaway:* Prompt engineering > model selection for translation work.
+- **Build + fix pattern works:** K2.6 does fast first pass, GLM-5.1 does cleanup and compilation fixes.
+- **Control flow diverging:** Go uses goroutines/maps/slices where C uses arrays/loops. Edge cases (null pointers, negative indices) need explicit bounds checks.
