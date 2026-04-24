@@ -8,9 +8,11 @@ import (
 	"log/slog"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/session"
+	"github.com/zax0rz/darkpawns/pkg/validation"
 )
 
 // Telnet protocol bytes
@@ -25,6 +27,15 @@ const (
 
 	OPT_ECHO byte = 1
 	OPT_SGA  byte = 3
+
+	maxConnsPerIP = 3
+	maxTotalConns = 200
+)
+
+var (
+	connMu    sync.Mutex
+	connCount int
+	connPerIP = map[string]int{}
 )
 
 // Listen starts a TCP telnet server on the given port. Returns immediately.
@@ -43,10 +54,46 @@ func Listen(port int, manager *session.Manager) error {
 				slog.Error("Telnet accept error", "error", err)
 				return
 			}
-			go handleConn(conn, manager)
+			remoteIP := ipFromAddr(conn.RemoteAddr().String())
+
+			connMu.Lock()
+			if connCount >= maxTotalConns {
+				connMu.Unlock()
+				conn.Close()
+				slog.Warn("Telnet: max total connections reached, rejecting", "remote_addr", conn.RemoteAddr())
+				continue
+			}
+			if connPerIP[remoteIP] >= maxConnsPerIP {
+				connMu.Unlock()
+				conn.Close()
+				slog.Warn("Telnet: max per-IP connections reached, rejecting", "remote_addr", conn.RemoteAddr())
+				continue
+			}
+			connCount++
+			connPerIP[remoteIP]++
+			connMu.Unlock()
+
+			go func(ip string) {
+				handleConn(conn, manager)
+				connMu.Lock()
+				connCount--
+				connPerIP[ip]--
+				if connPerIP[ip] <= 0 {
+					delete(connPerIP, ip)
+				}
+				connMu.Unlock()
+			}(remoteIP)
 		}
 	}()
 	return nil
+}
+
+func ipFromAddr(addr string) string {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr
+	}
+	return host
 }
 
 type telnetConn struct {
@@ -81,6 +128,12 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		tc.writeLine("\r\nGoodbye.\r\n")
+		return
+	}
+
+	// Validate player name (same rules as WebSocket path)
+	if !validation.IsValidPlayerName(name) {
+		tc.writeLine("\r\nInvalid name. Use 2-32 characters: letters, numbers, spaces, dots, dashes, underscores.\r\n")
 		return
 	}
 

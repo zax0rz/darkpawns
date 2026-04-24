@@ -915,7 +915,7 @@ var Socials = map[string]*Social{
 		Name:     "rofl",
 		MinLevel: 0,
 		HideFlag: 5,
-		Messages: []string{"You roll on the floor laughing.", "$n rolls on the floor laughing.", "$n rolls on the floor laughing at $N.", "$n rolls on the floor laughing at you.", "Laugh at who? They aren't here.", "You roll on the floor laughing at yourself.", "$n rolls on the floor laughing at $mself.", "#"},
+		Messages: []string{"You roll on the floor laughing.", "$n rolls on the floor laughing.", "$n rolls on the floor laughing at $N.", "$n rolls on the floor laughing at you.", "Laugh at who? They aren't here.", "You roll on the floor laughing at yourself.", "$n rolls on the floor laughing at $mself."},
 	},
 	"yuball": {
 		Name:     "yuball",

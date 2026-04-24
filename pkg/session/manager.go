@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
+	"golang.org/x/crypto/bcrypt"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -426,7 +427,20 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		}
 
 		if rec != nil && !login.NewChar {
-			// Returning player — restore from DB
+			// Returning player — verify password
+			if rec.Password != "" {
+				if login.Password == "" {
+					s.sendError("Password required.")
+					s.conn.Close()
+					return nil
+				}
+				if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)); err != nil {
+					s.sendError("Invalid password.")
+					s.conn.Close()
+					audit.LogSecurityEvent("login_failed", "Invalid password", login.PlayerName, ip)
+					return nil
+				}
+			}
 			p, err := db.RecordToPlayer(rec, s.manager.world)
 			if err != nil {
 				slog.Error("RecordToPlayer error", "error", err)
@@ -437,12 +451,23 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			s.player = p
 			s.authenticated = true
 		} else {
-			// New character or explicit new_char flag
-			// For Phase 2b, we still use the direct creation for agents
-			// Character creation flow will be implemented for humans in Phase 3
+			// New character — require password
+			if login.Password == "" {
+				s.sendError("Password required for new characters.")
+				s.conn.Close()
+				return nil
+			}
+			hashedPwd, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
+			if err != nil {
+				slog.Error("bcrypt hash error", "error", err)
+				s.sendError("Internal error during character creation.")
+				s.conn.Close()
+				return nil
+			}
 			s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
 			// Save immediately to get an ID
 			if r, err := db.PlayerToRecord(s.player, nil); err == nil {
+				r.Password = string(hashedPwd)
 				if err := s.manager.db.CreatePlayer(r); err != nil {
 					slog.Error("DB create error", "error", err)
 				} else {
@@ -737,12 +762,9 @@ func (s *Session) HandleMessage(data []byte) error {
 
 // Close closes the session
 func (s *Session) Close() {
-	// Close the connection and channel
+	// Close the connection only; channel close is handled by Unregister()
 	if s.conn != nil {
 		s.conn.Close()
-	}
-	if s.send != nil {
-		close(s.send)
 	}
 }
 

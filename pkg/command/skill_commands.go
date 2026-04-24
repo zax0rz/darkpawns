@@ -686,6 +686,41 @@ func CmdTrip(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, result)
 }
 
+// CmdHeadbutt handles the headbutt command.
+func CmdHeadbutt(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillHeadbutt)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	var target combat.Combatant
+	var found bool
+	world := s.GetWorld()
+	if ch.GetFighting() != "" && len(args) == 0 {
+		return s.SendMessage("Headbutt who?\r\n")
+	} else if len(args) > 0 {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Headbutt who?\r\n")
+		}
+	} else {
+		return s.SendMessage("Headbutt who?\r\n")
+	}
+
+	if target.GetName() == ch.Name {
+		return s.SendMessage("You contemplate headbutting yourself... maybe later.\r\n")
+	}
+
+	result := game.DoHeadbutt(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
 // CmdRescue handles the rescue command.
 func CmdRescue(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {

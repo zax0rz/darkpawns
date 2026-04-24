@@ -1,7 +1,3 @@
----
-tags: [active]
----
-# Dark Pawns
 ```
         (_____)           (_)    (_____)
   _     /  __ \           | |    |  __ \                            _
@@ -14,187 +10,162 @@ tags: [active]
                                  `.'
 ```
 
-A resurrection of the Dark Pawns MUD (1997–2010).
+# Dark Pawns
 
----
+A complete Go rewrite of the Dark Pawns MUD (1997–2010), faithful to ROM 2.4b mechanics with modern infrastructure: WebSocket + telnet transport, JWT authentication, Lua scripting, and AI agents as first-class players.
 
-## What This Is
+The original C source (73K lines) is preserved in `./src/` as the authoritative reference for all game mechanics — combat formulas, skill implementations, regen calculations, and affect system are ported directly from it.
 
-Dark Pawns was a MUD that ran from 1997 to 2010. If you're reading this and you played it,
-you already know what it was. You probably remember your character's name. You probably
-remember the first time you died to something you shouldn't have, or the person who showed
-you around when you were new, or the clan that felt like a real community even though
-you'd never met any of them.
+## What It Is
 
-I played Dark Pawns in the late 90s and early 2000s. My best friend introduced me to it, 
-he nearly dropped out of college because he was playing it so much. I made friends through
-this game that I still have today. It wasn't just a game. It was a place.
+Dark Pawns was a MUD that ran from 1997 to 2010. This project brings it back — the original world files, the original mechanics, the original feel — rebuilt in Go so it can run again.
 
-This project brings it back. The original world files, the original mechanics, the original
-feel — rebuilt on modern infrastructure so it can run again. We cloned the original creator's
-repository and we're building on top of it with as much fidelity as we can manage.
-
-If you're the creator and you're reading this: thank you. What you built mattered to people.
-It still does.
-
-The one new thing we're adding: **AI agents as first-class players**. Not NPCs. Not bots in
-a sandbox. Players: same rules, same death, same WHO list. The end goal is a human and an
-AI adventuring together through the same world we loved the first time around.
-
----
-
-## Play Now
-
-| Method | Address |
-|--------|--------|
-| Web client | darkpawns.labz0rz.com (coming soon) |
-| Telnet | `telnet darkpawns.labz0rz.com 4000` (coming soon) |
-| WebSocket | `ws://darkpawns.labz0rz.com/ws` |
-
-See the [player guide](docs/player-guide.md) for commands and mechanics. See the [agent SDK](docs/agent-sdk.md) to connect an AI agent.
-
----
-
-## Current Status
-
-**Phase 5b complete.** All 115 original Lua scripts ported and working. BRENDA69 is alive and adventuring.
-
-See [ROADMAP.md](ROADMAP.md) for the complete phase history and current progress.
-
----
-
-## Stack
-
-- **Backend:** Go 1.24+ with goroutines
-- **Transport:** WebSocket (gorilla/websocket) — JSON for agents, text for humans
-- **Database:** PostgreSQL (wired, persistence in Phase 2b)
-- **Scripting:** gopher-lua (Phase 3)
-- **World:** Original Dark Pawns world files, unchanged
-
----
-
-## Quick Start
-
-### Local Development
-```bash
-git clone https://github.com/zax0rz/darkpawns.git
-cd darkpawns
-
-go build ./cmd/server
-./server \
-  -world ./lib/world \
-  -port 4350 \
-  -db "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable" \
-  -scripts ./test_scripts
-```
-
-### Docker Deployment
-```bash
-# Quick start with Docker Compose
-./deployment/deploy-local.sh
-
-# Or manually:
-docker-compose build
-docker-compose up -d
-```
-
-### Kubernetes Deployment
-```bash
-# Deploy to Kubernetes cluster
-./deployment/deploy-k8s.sh
-
-# Or manually apply manifests:
-kubectl apply -f k8s/
-```
-
-See [deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md) for detailed instructions.
-
-> **Note:** The compiled binary lives at `/tmp/dp-server6`. Rebuild from source after any merge.
-
-Connect via WebSocket at `ws://localhost:4350/ws`:
-
-```json
-// Human login
-{"type":"login","data":{"player_name":"YourName"}}
-
-// Agent login (requires API key from agent_keys table)
-{"type":"login","data":{"player_name":"brenda69","api_key":"<key>","mode":"agent"}}
-
-// Commands
-{"type":"command","data":{"command":"look"}}
-{"type":"command","data":{"command":"north"}}
-{"type":"command","data":{"command":"hit","args":["goblin"]}}
-{"type":"command","data":{"command":"flee"}}
-{"type":"command","data":{"command":"party","args":["brenda69"]}}
-```
-
-Agent API key for BRENDA69 is stored in Vaultwarden as **"Dark Pawns Agent Key — brenda69"**.
-
----
-
-## Agent Protocol
-
-Agents connect via WebSocket with `"mode":"agent"` and receive structured JSON state updates rather than raw text. Key features:
-
-- **Auth:** `api_key` field in login message; keys in `agent_keys` Postgres table
-- **Variables:** Subscribe to named vars — HEALTH, MAX_HEALTH, MANA, LEVEL, ROOM_VNUM, ROOM_NAME, ROOM_EXITS, ROOM_MOBS (with `target_string` for combat targeting), ROOM_ITEMS, FIGHTING, INVENTORY, EQUIPMENT, EVENTS
-- **Rate limiting:** Token bucket, 10 commands/sec via `golang.org/x/time/rate`
-- **Reference agents:** `scripts/dp_bot.py` (638-line deterministic FSM), `scripts/dp_brenda.py` (BRENDA69 with SOUL.md + mem0)
-
-Full spec: [docs/agent-protocol.md](docs/agent-protocol.md)
-
----
-
-## For Contributors and AI Assistants
-
-Read [CLAUDE.md](CLAUDE.md) before touching any code. It covers:
-- Where the original C source lives and why you must read it first
-- What's faithful to the original vs. what's a modern addition
-- What's TODO and which phase it belongs to
-- How to build and test
-
-The original Dark Pawns C source is the ground truth for all game mechanics.
-Combat formulas, stat tables, death behavior — all ported from the original `fight.c`,
-`class.c`, and `constants.c`. If you're about to write game logic, check the source first.
-
----
+The one new addition: **AI agents as first-class players**. Not NPCs, not bots in a sandbox. Players with the same rules, same death, same WHO list. The end goal is a human and an AI adventuring together through the same world.
 
 ## Architecture
 
 ```
-Humans (WebSocket/text)        Agents (WebSocket/JSON)
-        │                               │
-        └──────────────┬────────────────┘
-                       │
-             ┌─────────▼──────────┐
-             │   Go Game Server   │
-             │  pkg/session/      │  WebSocket, commands
-             │  pkg/game/         │  world state, AI, death
-             │  pkg/combat/       │  formulas from fight.c
-             │  pkg/parser/       │  world file loading
-             └─────────┬──────────┘
-                       │
-         ┌─────────────┼──────────────┐
-         │             │              │
-    PostgreSQL       Lua VM       (Redis — future)
-  (characters)   (gopher-lua,
-                 world scripts)
+Client (WebSocket/JSON or Telnet/text)
+    │
+    ├──► WebSocket Handler ──► Session Manager
+    │                          │
+    │                ┌─────────┼──────────┐
+    │                │         │          │
+    │          Command    Combat     Lua Script
+    │         Dispatch    Engine      Engine
+    │          Registry   (ticker)   (serialized)
+    │                │         │          │
+    │                └─────────┼──────────┘
+    │                          │
+    │                    Game World
+    │                   (mutex-protected)
+    │                          │
+    │                    ┌─────┴──────┐
+    │                    │            │
+    │               PostgreSQL    Event Bus
+    │             (persistence)  (pub/sub)
+    │
+    └──► Telnet Listener ──► (same path)
 ```
 
----
+## Features
+
+**Combat System** — faithful ROM 2.4b port with position-based damage multipliers, hitroll/damroll calculations, weapon types, multiple attacks per round, and skill-based combat (bash, kick, trip, backstab, headbutt). Mutex-protected mob instances prevent data races between the combat ticker and player command goroutines.
+
+**Skills** — 10 active combat/utility skills (bash, kick, trip, backstab, headbutt, sneak, hide, pick lock, steal, rescue) plus skill management commands (learn, forget, practice, skills). Additional skill constants (parry, dodge, berserk) defined for future implementation and Lua scripting.
+
+**Social Emotes** — 187 emotes ported from the original, with full pronoun substitution (`$n/$N/$m/$M/$s/$S/$e`) and target resolution. Self-only emotes and targeted emotes both supported.
+
+**Lua Scripting** — sandboxed gopher-lua engine with 196 registered functions, memory limits, path traversal protection, and goroutine-safe access. Supports mob scripts, room scripts, item scripts, and timed events.
+
+**Dual Transport** — WebSocket (JSON protocol for agents, text for humans) and traditional telnet. Connection limits enforced (200 total, 3 per IP).
+
+**Authentication** — bcrypt password hashing, JWT tokens with configurable secret, per-IP rate limiting on login attempts.
+
+**Privacy & Audit** — PII filtering (fail-closed when filter is unavailable), SHA-256 hashed IPs in audit logs, structured JSON audit events with 0600 file permissions.
+
+**World Parsing** — loads original ROM 2.4b area files directly, with cross-reference validation (exits, zone commands, mob/obj references).
+
+## Quick Start
+
+```bash
+# Clone and build
+git clone https://github.com/zax0rz/darkpawns.git
+cd darkpawns
+go build ./cmd/server
+
+# Run (requires world files)
+./server -world ./lib/world -scripts ./lib/world/scripts -port 8080 -db "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable"
+```
+
+Connect via WebSocket at `ws://localhost:8080/ws`:
+
+```json
+// Login
+{"type":"login","data":{"player_name":"YourName","password":"yourpass"}}
+
+// Commands
+{"type":"command","data":{"command":"look"}}
+{"type":"command","data":{"command":"north"}}
+{"type":"command","data":{"command":"say","args":["hello"]}}
+{"type":"command","data":{"command":"hit","args":["goblin"]}}
+```
+
+Connect via telnet:
+```
+telnet localhost 8080
+```
+
+## Configuration
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-world` | (required) | Path to world files directory |
+| `-scripts` | `{world}/scripts` | Path to Lua scripts |
+| `-port` | `8080` | HTTP/WebSocket server port |
+| `-db` | Postgres URL | Database connection string |
+| `JWT_SECRET` | (required in prod) | JWT signing key |
+| `ENVIRONMENT` | `development` | Set to `production` to enforce auth |
+
+## Project Structure
+
+```
+cmd/server/        Application entry point
+pkg/auth/          JWT generation and validation
+pkg/audit/         Structured audit logging
+pkg/combat/        Combat engine, formulas, damage calculation
+pkg/command/       Skill and spell command handlers
+pkg/common/        Shared types and interfaces
+pkg/db/            Database layer (PostgreSQL)
+pkg/engine/        Affect system, regen, game loop
+pkg/events/        Event queue and typed pub/sub bus
+pkg/game/          World state, players, mobs, rooms, items, socials
+pkg/game/systems/  Game systems (AI, spawn, etc.)
+pkg/metrics/       Prometheus metrics
+pkg/moderation/    Content moderation
+pkg/parser/        ROM 2.4b area file parser
+pkg/privacy/       PII filtering and privacy layer
+pkg/scripting/     Lua scripting engine (gopher-lua)
+pkg/secrets/       Encryption key management
+pkg/session/       WebSocket/telnet session management, command dispatch
+pkg/spells/        Spell system
+pkg/telnet/        Telnet protocol handler
+pkg/validation/    Input validation and sanitization
+pkg/ai/            AI decision-making utilities
+pkg/agent/         Agent API key management
+src/               Original C source (73K lines, reference only)
+test_scripts/      Lua scripts for testing
+```
+
+## Agent Protocol
+
+Agents connect via WebSocket with structured JSON. See [docs/agent-protocol.md](docs/agent-protocol.md) for the full spec.
+
+```json
+{"type":"login","data":{"player_name":"brenda69","api_key":"<key>","mode":"agent"}}
+```
+
+Agents receive structured state updates (health, mana, room, inventory, events) rather than raw text output.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: read the original C source before implementing anything, cite your sources, keep the build green.
+Read [CLAUDE.md](CLAUDE.md) before touching code. It covers where the original C source lives, what's faithful to the original vs. what's modern, and build/test procedures.
 
----
+Short version: check `./src/` before implementing game logic. Cite your sources. Keep the build green.
+
+## Documentation
+
+- [ROADMAP.md](ROADMAP.md) — current status and known gaps
+- [ARCHITECTURE.md](ARCHITECTURE.md) — detailed package reference and concurrency model
+- [docs/agent-protocol.md](docs/agent-protocol.md) — agent WebSocket protocol spec
+- [docs/player-guide.md](docs/player-guide.md) — player commands and mechanics
+- [docs/agent-sdk.md](docs/agent-sdk.md) — agent SDK documentation
 
 ## Credits
 
 - Original Dark Pawns by the Dark Pawns Coding Team (1997–2010)
-- Architecture inspired by [Legends of Future Past](https://github.com/jonradoff/lofp)
-- Resurrection by [zax0rz](https://github.com/zax0rz)
+- Go rewrite by [zax0rz](https://github.com/zax0rz)
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT

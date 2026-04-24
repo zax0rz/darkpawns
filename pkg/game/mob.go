@@ -3,6 +3,7 @@ package game
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -11,6 +12,8 @@ import (
 
 // MobInstance represents a spawned mob in the world.
 type MobInstance struct {
+	mu sync.RWMutex
+
 	// Link to prototype
 	Prototype *parser.Mob
 	VNum      int
@@ -74,6 +77,14 @@ func NewMobInstance(proto *parser.Mob, roomVNum int) *MobInstance {
 	return NewMob(proto, roomVNum)
 }
 
+// GetSex returns the mob's sex (0=male, 1=female, 2=neutral).
+func (m *MobInstance) GetSex() int {
+	if m.Prototype != nil {
+		return m.Prototype.Sex
+	}
+	return 2 // neutral default
+}
+
 // GetShortDesc returns the mob's short description.
 func (m *MobInstance) GetShortDesc() string {
 	if m.Prototype != nil {
@@ -84,11 +95,15 @@ func (m *MobInstance) GetShortDesc() string {
 
 // GetRoom returns the mob's current room.
 func (m *MobInstance) GetRoom() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.RoomVNum
 }
 
 // SetRoom sets the mob's current room.
 func (m *MobInstance) SetRoom(vnum int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.RoomVNum = vnum
 }
 
@@ -138,6 +153,8 @@ func (m *MobInstance) GetLongDesc() string {
 
 // TakeDamage applies damage to the mob.
 func (m *MobInstance) TakeDamage(amount int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.CurrentHP -= amount
 	if m.CurrentHP < 0 {
 		m.CurrentHP = 0
@@ -147,6 +164,8 @@ func (m *MobInstance) TakeDamage(amount int) {
 
 // Heal restores HP to the mob.
 func (m *MobInstance) Heal(amount int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.CurrentHP += amount
 	if m.CurrentHP > m.MaxHP {
 		m.CurrentHP = m.MaxHP
@@ -155,6 +174,8 @@ func (m *MobInstance) Heal(amount int) {
 
 // IsAlive returns true if the mob is alive.
 func (m *MobInstance) IsAlive() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.CurrentHP > 0
 }
 
@@ -205,6 +226,8 @@ func (m *MobInstance) UnequipItem(position int) *ObjectInstance {
 
 // GetAC returns the mob's armor class.
 func (m *MobInstance) GetAC() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if m.Prototype != nil {
 		return m.Prototype.AC
 	}
@@ -213,6 +236,8 @@ func (m *MobInstance) GetAC() int {
 
 // GetLevel returns the mob's level.
 func (m *MobInstance) GetLevel() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if m.Prototype != nil {
 		return m.Prototype.Level
 	}
@@ -221,6 +246,8 @@ func (m *MobInstance) GetLevel() int {
 
 // GetDamageRoll returns the damage dice for the mob's attacks.
 func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if m.Prototype != nil {
 		return combat.DiceRoll{
 			Num:   m.Prototype.Damage.Num,
@@ -228,13 +255,15 @@ func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
 			Plus:  m.Prototype.Damage.Plus,
 		}
 	}
-	return combat.DiceRoll{Num: 1, Sides: 4, Plus: 0} // 1d4 default
+	return combat.DiceRoll{Num: 0, Sides: 0, Plus: 0} // bare hands
 }
 
 // Combatant interface implementation
 
 // GetTHAC0 returns the mob's THAC0.
 func (m *MobInstance) GetTHAC0() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if m.Prototype != nil {
 		return m.Prototype.THAC0
 	}
@@ -243,11 +272,15 @@ func (m *MobInstance) GetTHAC0() int {
 
 // GetHP returns the mob's current health.
 func (m *MobInstance) GetHP() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.CurrentHP
 }
 
 // GetMaxHP returns the mob's maximum health.
 func (m *MobInstance) GetMaxHP() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.MaxHP
 }
 
@@ -258,6 +291,8 @@ func (m *MobInstance) IsNPC() bool {
 
 // GetPosition returns the mob's current position.
 func (m *MobInstance) GetPosition() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	// Convert status string to position constant
 	switch m.Status {
 	case "dead":
@@ -284,11 +319,13 @@ func (m *MobInstance) GetName() string {
 
 // SendMessage sends a message to the mob (no-op for mobs, but needed for interface).
 func (m *MobInstance) SendMessage(msg string) {
-	// Mobs don't receive messages, but we could log this
+	// Mobs don't receive messages
 }
 
 // SetFighting sets who the mob is fighting.
 func (m *MobInstance) SetFighting(target string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.Status = "fighting"
 	m.Fighting = true
 	m.FightingTarget = target
@@ -296,6 +333,8 @@ func (m *MobInstance) SetFighting(target string) {
 
 // StopFighting clears the fighting state.
 func (m *MobInstance) StopFighting() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.Status = "standing"
 	m.Fighting = false
 	m.FightingTarget = ""
@@ -303,63 +342,50 @@ func (m *MobInstance) StopFighting() {
 
 // GetFighting returns who the mob is fighting (empty string if not fighting).
 func (m *MobInstance) GetFighting() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if m.Fighting || m.Status == "fighting" {
 		return m.FightingTarget
 	}
 	return ""
 }
 
-// GetClass returns the mob's class (Phase 2c addition)
-// Mobs don't have classes in Dark Pawns, return 0 (CLASS_MAGE) as default
-// Source: fight.c - mobs don't use class-based THAC0
+// GetClass returns the mob's class
 func (m *MobInstance) GetClass() int {
 	return 0 // CLASS_MAGE
 }
 
-// GetStr returns the mob's strength (Phase 2c addition)
-// Mobs don't have STR stats, return 10 (average) as default
-// Source: fight.c - mobs don't use str_app[]
+// GetStr returns the mob's strength
 func (m *MobInstance) GetStr() int {
 	return 10
 }
 
-// GetDex returns the mob's dexterity (Phase 2c addition)
-// Mobs don't have DEX stats, return 10 (average) as default
-// Source: fight.c - mobs don't use dex_app[]
+// GetDex returns the mob's dexterity
 func (m *MobInstance) GetDex() int {
 	return 10
 }
 
-// GetInt returns the mob's intelligence (Phase 2c addition)
-// Mobs don't have INT stats, return 10 (average) as default
-// Source: fight.c - mobs don't use INT for THAC0
+// GetInt returns the mob's intelligence
 func (m *MobInstance) GetInt() int {
 	return 10
 }
 
-// GetWis returns the mob's wisdom (Phase 2c addition)
-// Mobs don't have WIS stats, return 10 (average) as default
-// Source: fight.c - mobs don't use WIS for THAC0
+// GetWis returns the mob's wisdom
 func (m *MobInstance) GetWis() int {
 	return 10
 }
 
-// GetHitroll returns the mob's hitroll bonus (Phase 2c addition)
-// Mobs don't have hitroll, return 0 as default
-// Source: fight.c - mobs don't use GET_HITROLL()
+// GetHitroll returns the mob's hitroll bonus
 func (m *MobInstance) GetHitroll() int {
 	return 0
 }
 
-// GetDamroll returns the mob's damroll bonus (Phase 2c addition)
-// Mobs don't have damroll, return 0 as default
-// Source: fight.c - mobs don't use GET_DAMROLL()
+// GetDamroll returns the mob's damroll bonus
 func (m *MobInstance) GetDamroll() int {
 	return 0
 }
 
-// GetStrAdd returns the mob's strength add (exceptional strength)
-// Mobs don't have exceptional strength, return 0 as default
+// GetStrAdd returns the mob's strength add
 func (m *MobInstance) GetStrAdd() int {
 	return 0
 }
@@ -367,22 +393,32 @@ func (m *MobInstance) GetStrAdd() int {
 // Scripting interface implementations
 
 func (m *MobInstance) GetVNum() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.VNum
 }
 
 func (m *MobInstance) GetHealth() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.CurrentHP
 }
 
 func (m *MobInstance) SetHealth(health int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.CurrentHP = health
 }
 
 func (m *MobInstance) GetMaxHealth() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.MaxHP
 }
 
 func (m *MobInstance) GetGold() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if m.Prototype != nil {
 		return m.Prototype.Gold
 	}
@@ -390,6 +426,8 @@ func (m *MobInstance) GetGold() int {
 }
 
 func (m *MobInstance) GetRoomVNum() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.RoomVNum
 }
 

@@ -101,6 +101,7 @@ func init() {
 	cmdRegistry.Register("bash", wrapSkill(command.CmdBash), "Bash a target, potentially stunning them.", 0, combat.PosFighting)
 	cmdRegistry.Register("kick", wrapSkill(command.CmdKick), "Kick a target for damage.", 0, combat.PosFighting)
 	cmdRegistry.Register("trip", wrapSkill(command.CmdTrip), "Trip a target, knocking them down.", 0, combat.PosFighting)
+	cmdRegistry.Register("headbutt", wrapSkill(command.CmdHeadbutt), "Headbutt a target for high damage.", 0, combat.PosFighting)
 	cmdRegistry.Register("rescue", wrapSkill(command.CmdRescue), "Rescue someone from combat.", 0, combat.PosStanding)
 	cmdRegistry.Register("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.", 0, combat.PosStanding)
 	cmdRegistry.Register("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.", 0, combat.PosResting)
@@ -115,7 +116,7 @@ func init() {
 	cmdRegistry.Register("close", wrapArgs(cmdClose), "Close a door in a direction: close <north|south|east|west|up|down>", 0, 0)
 	cmdRegistry.Register("lock", wrapArgs(cmdLock), "Lock a door with your key: lock <north|south|east|west|up|down>", 0, 0)
 	cmdRegistry.Register("unlock", wrapArgs(cmdUnlock), "Unlock a door with your key: unlock <north|south|east|west|up|down>", 0, 0)
-	cmdRegistry.Register("pick", wrapArgs(cmdPick), "Pick a door lock: pick <north|south|east|west|up|down>", 0, 0)
+	cmdRegistry.Register("knock", wrapArgs(cmdKnock), "Knock on a door: knock <north|south|east|west|up|down>", 0, 0)
 
 	// Wizard commands
 	cmdRegistry.Register("goto", wrapArgs(cmdGoto), "Teleport to a room by VNum.", LVL_IMMORT, 0)
@@ -217,10 +218,171 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 
 	entry, ok := cmdRegistry.Lookup(cmd)
 	if !ok {
+		// Check social emotes before giving up
+		if social, found := game.Socials[cmd]; found {
+			return cmdSocial(s, social, args)
+		}
 		s.sendText(fmt.Sprintf("Unknown command: %s", cmdStr))
 		return nil
 	}
 	return entry.Handler(&commandSession{Session: s}, args)
+}
+
+// cmdSocial performs a social emote.
+// Based on the original ROM: act.social.c do_action()
+func cmdSocial(s *Session, social *game.Social, args []string) error {
+	msgs := social.Messages
+	if len(msgs) == 0 {
+		return nil
+	}
+
+	// Extract target name from args
+	targetName := strings.TrimSpace(strings.Join(args, " "))
+
+	// Check if this is a 3-message (self-only) social
+	// Convention: 3 messages means: [0]=char_no_arg, [1]=others_no_arg, [2]="#" (terminator)
+	threeMsg := len(msgs) == 3 && msgs[2] == "#"
+
+	// Helper to replace $n/$N/$m/$M/$s/$S/$e in a message
+	// $n = character name, $N = target name
+	// $m = target obj pronoun (him/her/it), $M = target obj pronoun
+	// $s = target poss pronoun (his/her/its), $S = target poss pronoun
+	// $e = target subj pronoun (he/she/it)
+	actSubst := func(msg string, charName, targetName string, targetSex int) string {
+		msg = strings.ReplaceAll(msg, "$n", charName)
+		msg = strings.ReplaceAll(msg, "$N", targetName)
+		switch targetSex {
+		case 0:
+			msg = strings.ReplaceAll(msg, "$m", "him")
+			msg = strings.ReplaceAll(msg, "$M", "him")
+			msg = strings.ReplaceAll(msg, "$s", "his")
+			msg = strings.ReplaceAll(msg, "$S", "his")
+			msg = strings.ReplaceAll(msg, "$e", "he")
+		case 1:
+			msg = strings.ReplaceAll(msg, "$m", "her")
+			msg = strings.ReplaceAll(msg, "$M", "her")
+			msg = strings.ReplaceAll(msg, "$s", "her")
+			msg = strings.ReplaceAll(msg, "$S", "her")
+			msg = strings.ReplaceAll(msg, "$e", "she")
+		default:
+			msg = strings.ReplaceAll(msg, "$m", "it")
+			msg = strings.ReplaceAll(msg, "$M", "it")
+			msg = strings.ReplaceAll(msg, "$s", "its")
+			msg = strings.ReplaceAll(msg, "$S", "its")
+			msg = strings.ReplaceAll(msg, "$e", "it")
+		}
+		return msg
+	}
+
+	// Helper to send a message to char; skip "#" sentinel
+	sendToChar := func(msg string) {
+		if msg == "#" || msg == "" {
+			return
+		}
+		s.sendText(msg)
+	}
+
+	// Helper to send message to everyone in room except sender
+	sendToRoom := func(msg string) {
+		if msg == "#" || msg == "" {
+			return
+		}
+		s.manager.BroadcastToRoom(s.player.GetRoom(), []byte(msg), s.player.Name)
+	}
+
+	// Helper to send to a specific player (victim)
+	sendToVictim := func(msg string, victimName string) {
+		if msg == "#" || msg == "" {
+			return
+		}
+		victim, ok := s.manager.world.GetPlayer(victimName)
+		if ok {
+			victim.SendMessage(msg)
+		}
+	}
+
+	if targetName == "" || threeMsg {
+		// No argument or 3-message self-only social
+		if len(msgs) >= 1 {
+			sendToChar(actSubst(msgs[0], s.player.Name, "", 0))
+		}
+		if len(msgs) >= 2 {
+			sendToRoom(actSubst(msgs[1], s.player.Name, "", 0))
+		}
+		return nil
+	}
+
+	// Try to find target in the room
+	// Check players first
+	victimName := ""
+	victimSex := 2
+	players := s.manager.world.GetPlayersInRoom(s.player.GetRoom())
+	for _, p := range players {
+		if strings.EqualFold(p.Name, targetName) && p.Name != s.player.Name {
+			victimName = p.Name
+			victimSex = p.Sex
+			break
+		}
+	}
+
+	// Also check mobs in room
+	if victimName == "" {
+		mobs := s.manager.world.GetMobsInRoom(s.player.GetRoom())
+		for _, m := range mobs {
+			if strings.EqualFold(m.GetShortDesc(), targetName) || strings.EqualFold(m.GetName(), targetName) {
+				victimName = m.GetShortDesc()
+				victimSex = m.GetSex()
+				break
+			}
+		}
+	}
+
+	// Player name with self-target
+	if victimName == "" && strings.EqualFold(targetName, s.player.Name) {
+		victimName = s.player.Name
+	}
+
+	if victimName == "" {
+		// Not found message
+		// Messages[5] = not_found (6th entry, 0-indexed=5)
+		if len(msgs) >= 6 && msgs[5] != "#" {
+			sendToChar(actSubst(msgs[5], s.player.Name, targetName, 0))
+		} else if len(msgs) >= 5 {
+			// vict_found used as fallback when targeting someone not there
+			_ = msgs
+			s.sendText("They aren't here.")
+		}
+		return nil
+	}
+
+	if strings.EqualFold(victimName, s.player.Name) {
+		// Targetting self
+		// Messages[6] = char_auto (7th entry, 0-indexed=6)
+		// Messages[7] = others_auto (8th entry)
+		if len(msgs) >= 7 && msgs[6] != "#" {
+			sendToChar(actSubst(msgs[6], s.player.Name, s.player.Name, 0))
+		}
+		if len(msgs) >= 8 && msgs[7] != "#" {
+			sendToRoom(actSubst(msgs[7], s.player.Name, s.player.Name, 0))
+		}
+		return nil
+	}
+
+	// Normal target found
+	// Messages[2] = char_found
+	// Messages[3] = others_found
+	// Messages[4] = vict_found
+	if len(msgs) >= 3 && msgs[2] != "#" {
+		sendToChar(actSubst(msgs[2], s.player.Name, victimName, victimSex))
+	}
+	if len(msgs) >= 4 && msgs[3] != "#" {
+		sendToRoom(actSubst(msgs[3], s.player.Name, victimName, victimSex))
+	}
+	if len(msgs) >= 5 && msgs[4] != "#" {
+		sendToVictim(actSubst(msgs[4], s.player.Name, victimName, victimSex), victimName)
+	}
+
+	return nil
 }
 
 // cmdLook shows the current room.
@@ -1407,5 +1569,50 @@ func cmdPick(s *Session, args []string) error {
 
 	s.sendText(msg)
 	doorBroadcast(s, fmt.Sprintf("%s picks the lock on the %s door.", s.player.Name, dir))
+	return nil
+}
+
+// cmdKnock handles 'knock <direction>' — knock on a closed door.
+// Source: ROM act.movement.c do_knock()
+func cmdKnock(s *Session, args []string) error {
+	dir := ""
+	if len(args) > 0 {
+		dir = resolveDirection(strings.ToLower(args[0]))
+	}
+
+	if dir == "" {
+		s.sendText("Knock on what?  Try north, south, east, west, up, or down.")
+		return nil
+	}
+
+	roomVNum := s.player.GetRoomVNum()
+	room, ok := s.manager.world.GetRoom(roomVNum)
+	if !ok {
+		return nil
+	}
+
+	exit, exists := room.Exits[dir]
+	if !exists {
+		s.sendText("There is nothing to knock on in that direction.")
+		return nil
+	}
+
+	var doorDesc string
+	if exit.Keywords != "" {
+		doorDesc = exit.Keywords
+	} else {
+		doorDesc = dir
+	}
+
+	s.sendText(fmt.Sprintf("You knock on the %s.", doorDesc))
+
+	// Notify the room the player is in
+	s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s knocks on the %s.", s.player.Name, doorDesc)), s.player.Name)
+
+	// If the door has a to_room, notify that room too
+	if exit.ToRoom > 0 {
+		s.manager.BroadcastToRoom(exit.ToRoom, []byte(fmt.Sprintf("Someone knocks on the door from the other side.")), "")
+	}
+
 	return nil
 }

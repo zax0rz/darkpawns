@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -11,11 +9,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// ErrInvalidToken indicates the JWT could not be parsed or has an invalid signature.
 var (
 	ErrInvalidToken = errors.New("invalid token")
+
+	// ErrExpiredToken indicates the JWT has passed its expiration time.
 	ErrExpiredToken = errors.New("token expired")
 )
 
+// Claims holds the custom JWT payload for Dark Pawns: player identity, agent mode, and optional agent key ID.
 type Claims struct {
 	PlayerName string `json:"player_name"`
 	IsAgent    bool   `json:"is_agent"`
@@ -23,16 +25,12 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// GenerateJWT creates a signed HS256 JWT valid for 24 hours. The JWT_SECRET environment variable must be set.
 func GenerateJWT(playerName string, isAgent bool, agentKeyID int64) (string, error) {
-	// Get JWT secret from environment
+	// JWT secret is REQUIRED — no fallback
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		// Generate a random secret if not set (for development only)
-		if os.Getenv("ENVIRONMENT") == "development" {
-			secret = generateRandomSecret()
-		} else {
-			return "", errors.New("JWT_SECRET environment variable not set")
-		}
+		return "", errors.New("JWT_SECRET environment variable not set")
 	}
 	
 	// Set token expiration
@@ -55,10 +53,14 @@ func GenerateJWT(playerName string, isAgent bool, agentKeyID int64) (string, err
 	return token.SignedString([]byte(secret))
 }
 
+// ValidateJWT parses and validates a JWT string, returning the embedded Claims on success.
 func ValidateJWT(tokenString string) (*Claims, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		return nil, errors.New("JWT_SECRET environment variable not set")
+	}
+	if len(secret) < 32 {
+		return nil, errors.New("JWT_SECRET must be at least 32 characters")
 	}
 	
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
@@ -78,13 +80,4 @@ func ValidateJWT(tokenString string) (*Claims, error) {
 	}
 	
 	return nil, ErrInvalidToken
-}
-
-func generateRandomSecret() string {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		// Fallback to timestamp-based secret
-		return fmt.Sprintf("dev-secret-%d", time.Now().UnixNano())
-	}
-	return base64.URLEncoding.EncodeToString(bytes)
 }

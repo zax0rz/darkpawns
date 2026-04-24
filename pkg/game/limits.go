@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // Condition constants — from structs.h
@@ -96,7 +97,7 @@ func (p *Player) sendLocked(msg string) {
 // ---------------------------------------------------------------------------
 // Calculates mana regeneration per tick. Dark Pawns uses flat base values
 // with position/class modifiers, not percentage-of-max like stock CircleMUD.
-func ManaGain(p *Player) int {
+func ManaGain(p *Player, world *World) int {
 	if p == nil {
 		return 0
 	}
@@ -130,10 +131,11 @@ func ManaGain(p *Player) int {
 		gain <<= 1 // x2
 	}
 
-	// TODO: Equipment mana regen bonuses (APPLY_MANA_REGEN) — Phase 3
-	// TODO: Poison/flaming/cutthroat affect checks — Phase 3
-	// TODO: Hunger/thirst reduction — Phase 3
-	// TODO: Regen room bonus — Phase 3
+	// Equipment mana regen bonuses
+	gain += sumApplyRegen(p, 20 /* APPLY_MANA_REGEN */)
+
+	// Poison/hunger reduction and room bonus all happen after position/class
+	gain = applyRegenModifiers(p, gain, "mana", world)
 
 	if gain < 0 {
 		gain = 0
@@ -144,7 +146,7 @@ func ManaGain(p *Player) int {
 // ---------------------------------------------------------------------------
 // HitGain — from limits.c hit_gain()
 // ---------------------------------------------------------------------------
-func HitGain(p *Player) int {
+func HitGain(p *Player, world *World) int {
 	if p == nil {
 		return 0
 	}
@@ -160,7 +162,8 @@ func HitGain(p *Player) int {
 	switch pos {
 	case combat.PosSleeping:
 		gain += gain >> 1 // +50%
-		// TODO: Equipment hit regen bonuses while sleeping — Phase 3
+		// Equipment hit regen bonuses while sleeping
+		gain += sumApplyRegen(p, 18 /* APPLY_HIT_REGEN */)
 	case combat.PosResting:
 		gain += gain >> 2 // +25%
 	case combat.PosSitting:
@@ -172,10 +175,19 @@ func HitGain(p *Player) int {
 		gain >>= 1 // Half for casters
 	}
 
-	// TODO: KK_JIN skill bonus when not fighting — Phase 3
-	// TODO: Poison/flaming/cutthroat affect checks — Phase 3
-	// TODO: Hunger/thirst reduction — Phase 3
-	// TODO: Regen room bonus — Phase 3
+	// KK_JIN skill bonus when not fighting
+	p.mu.RLock()
+	fighting := p.Fighting
+	p.mu.RUnlock()
+	if fighting == "" && pos >= combat.PosStanding {
+		jinLvl := getSkillLevel(p, "kk_jin")
+		if jinLvl > 0 {
+			gain += jinLvl / 10
+		}
+	}
+
+	// Poison/hunger reduction and room bonus
+	gain = applyRegenModifiers(p, gain, "hit", world)
 
 	if gain < 0 {
 		gain = 0
@@ -186,7 +198,7 @@ func HitGain(p *Player) int {
 // ---------------------------------------------------------------------------
 // MoveGain — from limits.c move_gain()
 // ---------------------------------------------------------------------------
-func MoveGain(p *Player) int {
+func MoveGain(p *Player, world *World) int {
 	if p == nil {
 		return 0
 	}
@@ -200,18 +212,28 @@ func MoveGain(p *Player) int {
 	// Position calculations
 	switch pos {
 	case combat.PosSleeping:
-		// TODO: Equipment move regen bonuses while sleeping — Phase 3
 		gain += gain >> 1 // +50%
+		// Equipment move regen bonuses while sleeping
+		gain += sumApplyRegen(p, 19 /* APPLY_MOVE_REGEN */)
 	case combat.PosResting:
 		gain += gain >> 2 // +25%
 	case combat.PosSitting:
 		gain += gain >> 3 // +12.5%
 	}
 
-	// TODO: KK_ZHEN skill bonus when not fighting — Phase 3
-	// TODO: Poison/flaming/cutthroat affect checks — Phase 3
-	// TODO: Hunger/thirst reduction — Phase 3
-	// TODO: Regen room bonus — Phase 3
+	// KK_ZHEN skill bonus when not fighting
+	p.mu.RLock()
+	fighting := p.Fighting
+	p.mu.RUnlock()
+	if fighting == "" && pos >= combat.PosStanding {
+		zhenLvl := getSkillLevel(p, "kk_zhen")
+		if zhenLvl > 0 {
+			gain += zhenLvl / 10
+		}
+	}
+
+	// Poison/hunger reduction and room bonus
+	gain = applyRegenModifiers(p, gain, "move", world)
 
 	if gain < 0 {
 		gain = 0
@@ -256,7 +278,7 @@ func PointUpdate(world *World) {
 		if pos >= combat.PosStunned {
 			// HP regen
 			if hp < maxHP {
-				gain := HitGain(p)
+				gain := HitGain(p, world)
 				newHP := hp + gain
 				if newHP > maxHP {
 					newHP = maxHP
@@ -268,7 +290,7 @@ func PointUpdate(world *World) {
 
 			// Mana regen
 			if mana < maxMana {
-				gain := ManaGain(p)
+				gain := ManaGain(p, world)
 				newMana := mana + gain
 				if newMana > maxMana {
 					newMana = maxMana
@@ -279,7 +301,7 @@ func PointUpdate(world *World) {
 			}
 
 			// Move regen (always regen move, even at max)
-			gain := MoveGain(p)
+			gain := MoveGain(p, world)
 			newMove := move + gain
 			if newMove > maxMove {
 				newMove = maxMove
@@ -288,8 +310,27 @@ func PointUpdate(world *World) {
 			p.Move = newMove
 			p.mu.Unlock()
 
-			// TODO: Poison damage — Phase 3 (damage(i, i, 10, SPELL_POISON))
-			// TODO: Cutthroat damage — Phase 3 (damage(i, i, 13, SKILL_CUTTHROAT))
+			// Poison damage
+			if hasAffectType(p, engine.AffectPoison) {
+				p.mu.RLock()
+				hasHP := p.Health > 0
+				p.mu.RUnlock()
+				if hasHP {
+					p.TakeDamage(10)
+					p.SendMessage("You feel the poison burning through your veins!\r\n")
+				}
+			}
+
+			// Cutthroat damage (bleed effect)
+			if hasAffectType(p, engine.AffectFlaming) {
+				p.mu.RLock()
+				hasHP := p.Health > 0
+				p.mu.RUnlock()
+				if hasHP {
+					p.TakeDamage(13)
+					p.SendMessage("You are bleeding from your wounds!\r\n")
+				}
+			}
 
 			// Update position if HP dropped below thresholds
 			p.mu.RLock()
@@ -528,4 +569,110 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+// ---------------------------------------------------------------------------
+// Regen helpers — equipment bonuses, poison, hunger, sector
+// ---------------------------------------------------------------------------
+
+// sumApplyRegen sums equipment apply values at the given location.
+func sumApplyRegen(p *Player, location int) int {
+	total := 0
+	if p.Equipment == nil {
+		return 0
+	}
+	for _, item := range p.Equipment.Slots {
+		if item == nil || item.Prototype == nil {
+			continue
+		}
+		for _, aff := range item.Prototype.Affects {
+			if aff.Location == location {
+				total += aff.Modifier
+			}
+		}
+	}
+	return total
+}
+
+// hasAffectType checks whether the player has an affect of the given type.
+func hasAffectType(p *Player, at engine.AffectType) bool {
+	for _, a := range p.Affects {
+		if a.Type == at {
+			return true
+		}
+	}
+	return false
+}
+
+// getSkillLevel returns the player's level for a named skill, or 0 if not learned.
+func getSkillLevel(p *Player, skillName string) int {
+	if p.SkillManager == nil {
+		return 0
+	}
+	skill := p.SkillManager.GetSkill(skillName)
+	if skill == nil || !skill.Learned {
+		return 0
+	}
+	return skill.Level
+}
+
+// sectorRegenMultiplier returns the regen multiplier for a given room sector.
+// Based on stock CircleMUD/ROM sector types.
+func sectorRegenMultiplier(sector int) float64 {
+	switch sector {
+	case 0: // city
+		return 1.5
+	case 1: // inside
+		return 1.25
+	case 2: // field
+		return 1.0
+	case 3: // forest
+		return 0.75
+	case 4: // water
+		return 0.5
+	case 5: // underwater
+		return 0.25
+	case 6: // air
+		return 0.5
+	default:
+		return 1.0
+	}
+}
+
+// applyRegenModifiers applies common modifiers to a regen gain value:
+// - Poison: -50%
+// - Hunger/thirst < 2: -25%
+// - Room sector multiplier
+func applyRegenModifiers(p *Player, gain int, regenType string, world *World) int {
+	out := gain
+
+	// Poison reduction
+	if hasAffectType(p, engine.AffectPoison) {
+		out >>= 1 // -50%
+	}
+
+	// Hunger/thirst reduction
+	p.mu.RLock()
+	hunger := p.Hunger
+	thirst := p.Thirst
+	roomVNum := p.RoomVNum
+	p.mu.RUnlock()
+
+	if hunger < 2 || thirst < 2 {
+		out -= out >> 2 // -25%
+	}
+
+	// Room sector bonus
+	if world != nil {
+		room := world.GetRoomInWorld(roomVNum)
+		if room != nil {
+			mult := sectorRegenMultiplier(room.Sector)
+			out = int(float64(out) * mult)
+		}
+	}
+
+	if out < 0 {
+		out = 0
+	}
+	return out
 }

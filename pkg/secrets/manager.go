@@ -12,8 +12,11 @@ import (
 	"strings"
 )
 
+// ErrSecretNotFound is returned when a requested secret is neither in the environment nor on disk.
 var (
 	ErrSecretNotFound   = errors.New("secret not found")
+
+	// ErrDecryptionFailed is returned when AES-GCM decryption fails (wrong key or corrupted ciphertext).
 	ErrDecryptionFailed = errors.New("decryption failed")
 )
 
@@ -26,25 +29,17 @@ type SecretManager struct {
 func NewSecretManager() (*SecretManager, error) {
 	key := os.Getenv("ENCRYPTION_KEY")
 	if key == "" {
-		// In development, generate a temporary key
-		if os.Getenv("ENVIRONMENT") == "development" {
-			key = generateTempKey()
-		} else {
-			return nil, errors.New("ENCRYPTION_KEY environment variable not set")
-		}
+		return nil, errors.New("ENCRYPTION_KEY environment variable not set")
 	}
-	
-	// Ensure key is proper length (32 bytes for AES-256)
+
+	// Key must be at least 32 bytes for AES-256
 	keyBytes := []byte(key)
 	if len(keyBytes) < 32 {
-		// Pad with zeros (not secure for production!)
-		padded := make([]byte, 32)
-		copy(padded, keyBytes)
-		keyBytes = padded
+		return nil, errors.New("ENCRYPTION_KEY must be at least 32 bytes")
 	} else if len(keyBytes) > 32 {
 		keyBytes = keyBytes[:32]
 	}
-	
+
 	return &SecretManager{
 		encryptionKey: keyBytes,
 	}, nil
@@ -126,12 +121,4 @@ func (sm *SecretManager) decrypt(encrypted string) (string, error) {
 	}
 	
 	return string(plaintext), nil
-}
-
-func generateTempKey() string {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return "dev-temp-key-do-not-use-in-production-12345"
-	}
-	return base64.StdEncoding.EncodeToString(bytes)
 }

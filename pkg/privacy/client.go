@@ -131,11 +131,9 @@ func (c *Client) FilterText(text string) (string, []string, error) {
 	return filterResp.FilteredText, filterResp.Detected, nil
 }
 
-// fallbackFilter provides basic PII filtering when the service is unavailable
+// fallbackFilter blocks content entirely when privacy service is unavailable
 func (c *Client) fallbackFilter(text string) string {
-	// Simple regex-based fallback - in production this would be more sophisticated
-	// For now, just return the text with a note that filtering was unavailable
-	return text + " [PII FILTERING UNAVAILABLE - REVIEW MANUALLY]"
+	return "[FILTERED]"
 }
 
 // BatchFilter filters multiple texts at once

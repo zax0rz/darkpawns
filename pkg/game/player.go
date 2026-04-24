@@ -333,8 +333,8 @@ func (p *Player) GetDamageRoll() combat.DiceRoll {
 		}
 	}
 
-	// Return bare hands damage
-	return p.DamageRoll
+	// No weapon equipped — bare hands
+	return combat.DiceRoll{Num: 0, Sides: 0, Plus: 0}
 }
 
 // IsNPC returns false for players.

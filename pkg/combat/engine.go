@@ -3,6 +3,7 @@ package combat
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -24,6 +25,7 @@ type CombatEngine struct {
 	// Combat ticker
 	ticker   *time.Ticker
 	stopChan chan struct{}
+	stopped atomic.Bool
 
 	// Message broadcaster function (set by game)
 	BroadcastFunc func(roomVNum int, message string, exclude string)
@@ -75,7 +77,9 @@ func (ce *CombatEngine) Start() {
 
 // Stop halts the combat engine
 func (ce *CombatEngine) Stop() {
-	close(ce.stopChan)
+	if ce.stopped.CompareAndSwap(false, true) {
+		close(ce.stopChan)
+	}
 }
 
 // StartCombat initiates combat between two combatants
@@ -152,15 +156,15 @@ func (ce *CombatEngine) IsFighting(charName string) bool {
 
 // PerformRound executes one round of combat for all active fighters
 func (ce *CombatEngine) PerformRound() {
-	ce.mu.RLock()
+	ce.mu.Lock()
 
-	// Get all combat pairs
+	// Snapshot pairs under write lock to prevent TOCTOU races
 	pairs := make([]*CombatPair, 0, len(ce.combatPairs))
 	for _, pair := range ce.combatPairs {
 		pairs = append(pairs, pair)
 	}
 
-	ce.mu.RUnlock()
+	ce.mu.Unlock()
 
 	// Process each combat pair
 	for _, pair := range pairs {
@@ -186,10 +190,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	}
 
 	// Calculate number of attacks for attacker
-	numAttacks := 1
-	if attacker.IsNPC() {
-		numAttacks = GetAttacksPerRound(attacker, false, false)
-	}
+	numAttacks := GetAttacksPerRound(attacker, false, false)
 
 	// Perform attacks
 	for i := 0; i < numAttacks; i++ {

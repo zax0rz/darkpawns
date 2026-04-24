@@ -136,7 +136,7 @@ func TestTier2CombatAIScriptsParse(t *testing.T) {
 
 	for _, s := range scripts {
 		t.Run(s.name, func(t *testing.T) {
-			fn, err := engine.L.LoadFile(s.path)
+			fn, err := engine.l.LoadFile(s.path)
 			if err != nil {
 				t.Fatalf("%s: Lua parse error: %v", s.name, err)
 			}
@@ -172,7 +172,7 @@ func TestDragonBreathSpellConstants(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			val := engine.L.GetGlobal(tt.global)
+			val := engine.l.GetGlobal(tt.global)
 			if val == nil {
 				t.Fatalf("%s: global not set in engine", tt.name)
 			}
@@ -240,7 +240,7 @@ func TestBatchBScriptsParse(t *testing.T) {
 
 	for _, s := range scripts {
 		t.Run(s.name, func(t *testing.T) {
-			fn, err := engine.L.LoadFile(s.path)
+			fn, err := engine.l.LoadFile(s.path)
 			if err != nil {
 				t.Fatalf("%s: Lua parse error: %v", s.name, err)
 			}
@@ -260,11 +260,11 @@ func TestTrollDefinesBothTriggers(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/troll.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/troll.lua"); err != nil {
 		t.Fatalf("troll.lua load error: %v", err)
 	}
 	for _, fn := range []string{"fight", "onpulse_all"} {
-		val := engine.L.GetGlobal(fn)
+		val := engine.l.GetGlobal(fn)
 		if val.Type().String() != "function" {
 			t.Errorf("troll.lua: %s() not defined (got %s)", fn, val.Type().String())
 		} else {
@@ -316,7 +316,7 @@ func TestMindflayerSpellConstants(t *testing.T) {
 		t.Fatal("Failed to create engine")
 	}
 	for _, name := range []string{"SPELL_SOUL_LEECH", "SPELL_PSIBLAST"} {
-		val := engine.L.GetGlobal(name)
+		val := engine.l.GetGlobal(name)
 		if val.Type().String() != "number" {
 			t.Errorf("%s: expected number, got %s", name, val.Type().String())
 		} else {
@@ -354,7 +354,7 @@ func TestTier3EconomyScriptsParse(t *testing.T) {
 
 	for _, s := range scripts {
 		t.Run(s.name, func(t *testing.T) {
-			fn, err := engine.L.LoadFile(s.path)
+			fn, err := engine.l.LoadFile(s.path)
 			if err != nil {
 				t.Fatalf("%s: Lua parse error: %v", s.name, err)
 			}
@@ -373,11 +373,11 @@ func TestMerchantWalkDefinesTriggers(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/merchant_walk.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/merchant_walk.lua"); err != nil {
 		t.Fatalf("merchant_walk.lua load error: %v", err)
 	}
 	for _, fn := range []string{"onpulse_all", "oncmd"} {
-		val := engine.L.GetGlobal(fn)
+		val := engine.l.GetGlobal(fn)
 		if val.Type().String() != "function" {
 			t.Errorf("merchant_walk.lua: %s() not defined (got %s)", fn, val.Type().String())
 		} else {
@@ -393,11 +393,11 @@ func TestRemoveCurseDefinesTriggers(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/remove_curse.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/remove_curse.lua"); err != nil {
 		t.Fatalf("remove_curse.lua load error: %v", err)
 	}
 	for _, fn := range []string{"oncmd", "greet"} {
-		val := engine.L.GetGlobal(fn)
+		val := engine.l.GetGlobal(fn)
 		if val.Type().String() != "function" {
 			t.Errorf("remove_curse.lua: %s() not defined (got %s)", fn, val.Type().String())
 		} else {
@@ -415,7 +415,7 @@ func TestPaladinSpellConstants(t *testing.T) {
 		t.Fatal("Failed to create engine")
 	}
 	for _, name := range []string{"SPELL_DISPEL_EVIL", "SPELL_DISPEL_GOOD"} {
-		val := engine.L.GetGlobal(name)
+		val := engine.l.GetGlobal(name)
 		if val.Type().String() != "number" {
 			t.Errorf("%s: expected number, got %s", name, val.Type().String())
 		} else {
@@ -454,7 +454,7 @@ func TestTier4EnvironmentalScriptsParse(t *testing.T) {
 
 	for _, s := range scripts {
 		t.Run(s.name, func(t *testing.T) {
-			fn, err := engine.L.LoadFile(s.path)
+			fn, err := engine.l.LoadFile(s.path)
 			if err != nil {
 				t.Fatalf("%s: Lua parse error: %v", s.name, err)
 			}
@@ -573,7 +573,7 @@ func TestBatchBAmbientScriptsParse(t *testing.T) {
 
 	for _, s := range scripts {
 		t.Run(s.name, func(t *testing.T) {
-			fn, err := engine.L.LoadFile(s.path)
+			fn, err := engine.l.LoadFile(s.path)
 			if err != nil {
 				t.Fatalf("%s: Lua parse error: %v", s.name, err)
 			}
@@ -668,7 +668,7 @@ func TestBatchACombatAIScriptsParse(t *testing.T) {
 
 	for _, s := range scripts {
 		t.Run(s.name, func(t *testing.T) {
-			fn, err := engine.L.LoadFile(s.path)
+			fn, err := engine.l.LoadFile(s.path)
 			if err != nil {
 				t.Fatalf("%s: Lua parse error: %v", s.name, err)
 			}
@@ -700,11 +700,11 @@ func TestZenMasterDefinesAllTriggers(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/zen_master.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/zen_master.lua"); err != nil {
 		t.Fatalf("zen_master.lua load error: %v", err)
 	}
 	for _, fn := range []string{"fight", "teleport", "word"} {
-		val := engine.L.GetGlobal(fn)
+		val := engine.l.GetGlobal(fn)
 		if val.Type().String() != "function" {
 			t.Errorf("zen_master.lua: %s() not defined (got %s)", fn, val.Type().String())
 		} else {
@@ -787,7 +787,7 @@ func TestSpellConstantsBatchA(t *testing.T) {
 		{"SPELL_WORD_OF_RECALL", 42},
 	}
 	for _, c := range constants {
-		val := engine.L.GetGlobal(c.name)
+		val := engine.l.GetGlobal(c.name)
 		if val.Type().String() != "number" {
 			t.Errorf("%s: expected number, got %s", c.name, val.Type().String())
 		} else {
@@ -866,7 +866,7 @@ func TestBatchCScriptsParse(t *testing.T) {
 
 	for _, s := range scripts {
 		t.Run(s.name, func(t *testing.T) {
-			fn, err := engine.L.LoadFile(s.path)
+			fn, err := engine.l.LoadFile(s.path)
 			if err != nil {
 				t.Fatalf("%s: Lua parse error: %v", s.name, err)
 			}
@@ -932,11 +932,11 @@ func TestJailguardDefinesTriggers(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/jailguard.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/jailguard.lua"); err != nil {
 		t.Fatalf("jailguard.lua load error: %v", err)
 	}
 	for _, fn := range []string{"bribe", "sound", "onpulse_pc"} {
-		val := engine.L.GetGlobal(fn)
+		val := engine.l.GetGlobal(fn)
 		if val.Type().String() != "function" {
 			t.Errorf("jailguard.lua: %s() not defined (got %s)", fn, val.Type().String())
 		} else {
@@ -975,11 +975,11 @@ func TestPrisonerDefinesTriggers(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/prisoner.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/prisoner.lua"); err != nil {
 		t.Fatalf("prisoner.lua load error: %v", err)
 	}
 	for _, fn := range []string{"onpulse_pc", "sound", "ongive"} {
-		val := engine.L.GetGlobal(fn)
+		val := engine.l.GetGlobal(fn)
 		if val.Type().String() != "function" {
 			t.Errorf("prisoner.lua: %s() not defined (got %s)", fn, val.Type().String())
 		} else {
@@ -996,10 +996,10 @@ func TestRescuerDefinesTrigger(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/rescuer.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/rescuer.lua"); err != nil {
 		t.Fatalf("rescuer.lua load error: %v", err)
 	}
-	val := engine.L.GetGlobal("onpulse_pc")
+	val := engine.l.GetGlobal("onpulse_pc")
 	if val.Type().String() != "function" {
 		t.Errorf("rescuer.lua: onpulse_pc() not defined (got %s)", val.Type().String())
 	} else {
@@ -1073,10 +1073,10 @@ func TestNeverDieDefinesTrigger(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/never_die.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/never_die.lua"); err != nil {
 		t.Fatalf("never_die.lua load error: %v", err)
 	}
-	val := engine.L.GetGlobal("onpulse_all")
+	val := engine.l.GetGlobal("onpulse_all")
 	if val.Type().String() != "function" {
 		t.Errorf("never_die.lua: onpulse_all() not defined (got %s)", val.Type().String())
 	} else {
@@ -1092,10 +1092,10 @@ func TestSungodDefinesTrigger(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/sungod.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/sungod.lua"); err != nil {
 		t.Fatalf("sungod.lua load error: %v", err)
 	}
-	val := engine.L.GetGlobal("onpulse_all")
+	val := engine.l.GetGlobal("onpulse_all")
 	if val.Type().String() != "function" {
 		t.Errorf("sungod.lua: onpulse_all() not defined (got %s)", val.Type().String())
 	} else {
@@ -1111,10 +1111,10 @@ func TestTeleporterDefinesTrigger(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/teleporter.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/teleporter.lua"); err != nil {
 		t.Fatalf("teleporter.lua load error: %v", err)
 	}
-	val := engine.L.GetGlobal("fight")
+	val := engine.l.GetGlobal("fight")
 	if val.Type().String() != "function" {
 		t.Errorf("teleporter.lua: fight() not defined (got %s)", val.Type().String())
 	} else {
@@ -1130,10 +1130,10 @@ func TestTeleportVictDefinesTrigger(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/teleport_vict.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/teleport_vict.lua"); err != nil {
 		t.Fatalf("teleport_vict.lua load error: %v", err)
 	}
-	val := engine.L.GetGlobal("fight")
+	val := engine.l.GetGlobal("fight")
 	if val.Type().String() != "function" {
 		t.Errorf("teleport_vict.lua: fight() not defined (got %s)", val.Type().String())
 	} else {
@@ -1149,11 +1149,11 @@ func TestTakeJailDefinesTriggers(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/take_jail.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/take_jail.lua"); err != nil {
 		t.Fatalf("take_jail.lua load error: %v", err)
 	}
 	for _, fn := range []string{"fight", "onpulse_pc", "jail"} {
-		val := engine.L.GetGlobal(fn)
+		val := engine.l.GetGlobal(fn)
 		if val.Type().String() != "function" {
 			t.Errorf("take_jail.lua: %s() not defined (got %s)", fn, val.Type().String())
 		} else {
@@ -1170,10 +1170,10 @@ func TestQuanloDefinesTrigger(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/quanlo.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/quanlo.lua"); err != nil {
 		t.Fatalf("quanlo.lua load error: %v", err)
 	}
-	val := engine.L.GetGlobal("oncmd")
+	val := engine.l.GetGlobal("oncmd")
 	if val.Type().String() != "function" {
 		t.Errorf("quanlo.lua: oncmd() not defined (got %s)", val.Type().String())
 	} else {
@@ -1189,11 +1189,11 @@ func TestTriflowerDefinesTriggers(t *testing.T) {
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.L.DoFile("../../test_scripts/mob/archive/triflower.lua"); err != nil {
+	if err := engine.l.DoFile("../../test_scripts/mob/archive/triflower.lua"); err != nil {
 		t.Fatalf("triflower.lua load error: %v", err)
 	}
 	for _, fn := range []string{"onpulse_pc", "fight"} {
-		val := engine.L.GetGlobal(fn)
+		val := engine.l.GetGlobal(fn)
 		if val.Type().String() != "function" {
 			t.Errorf("triflower.lua: %s() not defined (got %s)", fn, val.Type().String())
 		} else {

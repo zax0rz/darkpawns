@@ -73,8 +73,8 @@ func TestClient_FilterText_Disabled(t *testing.T) {
 		t.Errorf("Expected fallback detection, got %v", detected)
 	}
 
-	if !strings.Contains(filtered, "PII FILTERING UNAVAILABLE") {
-		t.Error("Expected fallback message in filtered text")
+	if filtered != "[FILTERED]" {
+		t.Errorf("Expected [FILTERED], got %q", filtered)
 	}
 }
 

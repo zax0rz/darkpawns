@@ -36,7 +36,7 @@ func TestBatchDScriptsParse(t *testing.T) {
 
 	for _, s := range scripts {
 		t.Run(s.name, func(t *testing.T) {
-			fn, err := engine.L.LoadFile(s.path)
+			fn, err := engine.l.LoadFile(s.path)
 			if err != nil {
 				t.Fatalf("%s: Lua parse error: %v", s.name, err)
 			}

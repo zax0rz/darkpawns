@@ -64,7 +64,7 @@ func TestLuaCreateEventBinding(t *testing.T) {
 		LT_MOB = 1
 		result = create_event(me, NIL, NIL, NIL, "port", 1, LT_MOB)
 	`
-	if err := engine.L.DoString(script); err != nil {
+	if err := engine.LState().DoString(script); err != nil {
 		t.Fatalf("Failed to run test script: %v", err)
 	}
 
@@ -114,7 +114,7 @@ func TestLuaCreateEventWithTarget(t *testing.T) {
 		LT_MOB = 1
 		result = create_event(me, ch, NIL, NIL, "bane_one", 10, LT_MOB)
 	`
-	if err := engine.L.DoString(script); err != nil {
+	if err := engine.LState().DoString(script); err != nil {
 		t.Fatalf("Failed to run test script: %v", err)
 	}
 
@@ -170,7 +170,7 @@ func TestLuaCreateEventCancel(t *testing.T) {
 		LT_MOB = 1
 		event_id = create_event(me, NIL, NIL, NIL, "test_trigger", 5, LT_MOB)
 	`
-	if err := engine.L.DoString(script); err != nil {
+	if err := engine.LState().DoString(script); err != nil {
 		t.Fatalf("Failed to run test script: %v", err)
 	}
 
@@ -221,7 +221,7 @@ func TestLuaCreateEventDelayClamping(t *testing.T) {
 		LT_MOB = 1
 		create_event(me, NIL, NIL, NIL, "now", 0, LT_MOB)
 	`
-	if err := engine.L.DoString(script); err != nil {
+	if err := engine.LState().DoString(script); err != nil {
 		t.Fatalf("Failed to run test script: %v", err)
 	}
 
@@ -252,12 +252,12 @@ func TestLuaCreateEventReturnsID(t *testing.T) {
 		event_id = create_event(me, NIL, NIL, NIL, "test", 1, LT_MOB)
 		return event_id
 	`
-	fn, err := engine.L.LoadString(script)
+	fn, err := engine.LState().LoadString(script)
 	if err != nil {
 		t.Fatalf("Failed to load script: %v", err)
 	}
 
-	L := engine.L
+	L := engine.LState()
 	L.Push(fn)
 	if err := L.PCall(0, 1, nil); err != nil {
 		t.Fatalf("Failed to call script: %v", err)

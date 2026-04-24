@@ -17,6 +17,7 @@ const (
 	SkillBash      = "bash"
 	SkillKick      = "kick"
 	SkillTrip      = "trip"
+	SkillHeadbutt  = "headbutt"
 	SkillRescue    = "rescue"
 	SkillSneak     = "sneak"
 	SkillHide      = "hide"
@@ -59,6 +60,11 @@ var SkillClassReq = map[string]map[int]int{
 		ClassThief:    9,
 		ClassAssassin: 9,
 	},
+	SkillHeadbutt: {
+		ClassWarrior: 5,
+		ClassPaladin: 5,
+		ClassRanger:  7,
+	},
 	SkillRescue: {
 		ClassWarrior: 4,
 		ClassPaladin: 3,
@@ -94,6 +100,7 @@ var SkillPosReq = map[string]int{
 	SkillBash:     combat.PosFighting,
 	SkillKick:     combat.PosFighting,
 	SkillTrip:     combat.PosFighting,
+	SkillHeadbutt: combat.PosFighting,
 	SkillRescue:   combat.PosStanding,
 	SkillSneak:    combat.PosStanding,
 	SkillHide:     combat.PosResting,
@@ -424,6 +431,67 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 		MessageToVict: ActMessage("$n trips you sending you crashing to the ground!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n trips $N sending $M crashing to the ground!", chPronouns, &victPronouns, ""),
 		TargetFalls:   true,
+	}
+}
+
+// DoHeadbutt implements headbutt — high damage melee with self-stun risk.
+// Formula: hitroll = DAMAGE_ROLL(skill_level) - 10, damage = DAMAGE_ROLL(skill_level) + 4.
+// On miss: 25% chance attacker takes half damage and is stunned 1 round.
+func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
+	if ch.GetSkill(SkillHeadbutt) == 0 {
+		return SkillResult{Success: false, MessageToCh: "You'd better leave all the martial arts to fighters."}
+	}
+
+	if target.GetPosition() <= combat.PosSleeping {
+		return SkillResult{Success: false, MessageToCh: "What's the point of doing that now?"}
+	}
+
+	// Check move points
+	if ch.Move < 15 {
+		return SkillResult{Success: false, MessageToCh: "You haven't the energy!"}
+	}
+	ch.Move -= 15
+
+	skillLevel := ch.GetSkill(SkillHeadbutt)
+	hitRoll := (skillLevel/2 + 1) - 10 // DAMAGE_ROLL approximation minus accuracy penalty
+	if hitRoll < 1 {
+		hitRoll = 1
+	}
+	damage := (skillLevel/2 + 1) + 4 // higher base damage
+
+	percent := rand.Intn(101) + 1
+
+	chPronouns := GetPronouns(ch.Name, 1)
+	victPronouns := GetPronouns(target.GetName(), 1)
+
+	if percent > skillLevel {
+		// Miss
+		result := SkillResult{
+			Success:       false,
+			MessageToCh:   ActMessage("You try to headbutt $N but miss!", chPronouns, &victPronouns, ""),
+			MessageToVict: ActMessage("$n tries to headbutt you but misses!", chPronouns, &victPronouns, ""),
+			MessageToRoom: ActMessage("$n tries to headbutt $N but misses!", chPronouns, &victPronouns, ""),
+		}
+		// 25% self-stun on failure
+		if rand.Intn(4) == 0 {
+			selfDam := damage / 2
+			if selfDam < 1 {
+				selfDam = 1
+			}
+			ch.TakeDamage(selfDam)
+			result.SelfStumble = true
+			result.MessageToCh += " You crack your skull against thin air and see stars!\r\n"
+		}
+		return result
+	}
+
+	return SkillResult{
+		Success:     true,
+		Damage:      damage,
+		MessageToCh: ActMessage("You slam your forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
+		MessageToVict: ActMessage("$n slams $s forehead into you with a sickening crack!", chPronouns, &victPronouns, ""),
+		MessageToRoom: ActMessage("$n slams $s forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
+		StunTarget:   true,
 	}
 }
 

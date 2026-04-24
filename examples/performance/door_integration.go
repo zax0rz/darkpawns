@@ -1,7 +1,7 @@
 // Example: Door System Integration
 // This shows how to integrate the door system with Dark Pawns.
 
-package examples
+package main
 
 import (
 	"fmt"
