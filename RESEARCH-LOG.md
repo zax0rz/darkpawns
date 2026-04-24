@@ -441,3 +441,38 @@ CNBC article explicitly states V4 is "optimized for use with Claude Code and **O
 - Pre-chunk C-source port files to ~600 line max for subagent consumption
 - Future swarm work: assign one agent per provider within a wave, not all to the same provider
 
+
+## Session: DeepSeek V4 Config + Wave 5 Prep
+**Date:** 2026-04-24
+**Tags:** `[DESIGN]` `[INFRA]` `[RESULT]`
+
+### What happened
+DeepSeek V4-Flash and V4-Pro configured as a native OpenClaw provider using `anthropic-messages` API format — no LiteLLM middleman. Direct endpoint: `https://api.deepseek.com/anthropic`. V4-Flash confirmed working (2s response time in test spawn).
+
+### Config details
+- New provider `deepseek-v4` with `api: anthropic-messages` (same pattern as Z.AI)
+- Models: `deepseek-v4-flash` (non-reasoning, daily driver), `deepseek-v4-pro` (reasoning, heavy lifting)
+- Added to `agents.defaults.models` allowlist and `model.primary`/`agents.defaults.model.primary`
+- Cost config: V4-Flash $0.15/$0.30/M, V4-Pro $0.25/$0.40/M (approx, will refine)
+- Context window: 64K native (not 1M — need to verify actual limits)
+- Key shared via `apiKey: __OPENCLAW_REDACTED__` — reuses same DeepSeek API key
+
+### Model ladder (current)
+Primary: deepseek-v4/deepseek-v4-flash
+Fallbacks: litellm/kimi-k2.6 → deepseek-v4/deepseek-v4-pro → litellm/deepseek-chat
+
+### Open questions
+Stacked here for fresh-session pickup:
+1. **Dark Pawns Wave 5** — remaining half of spec_procs.c + first half of spec_procs2.c. Should use V4-Flash for subagent swarm (cheaper, faster, no rate limit issues from parallel spawns)
+2. **spec_procs.go fix-up** — existing partial port references `me.GetMeleeTarget()`, `engine.ClassType`, `spells.Cast()` that don't exist yet
+3. **GetRoomMap export** — map_cmds.go blocked on World needing an exported room accessor
+4. **CI deploy** — gated on KUBECONFIG secret, no cluster provisioned yet (low priority)
+5. **V4 actual context window** — DeepSeek claims 1M but we configured 64K. Need to test and adjust.
+
+### Key files touched
+- `/home/zach/.openclaw/openclaw.json` — added `models.providers.deepseek-v4` block
+- `/home/zach/.openclaw/workspace/AGENTS.md` — V4 models added to ladder (previous session)
+
+### CITATION
+DeepSeek V4 Anthropic API docs: https://api-docs.deepseek.com/guides/anthropic_api
+(base URL: https://api.deepseek.com/anthropic, supports thinking blocks, tool_use/tool_result)
