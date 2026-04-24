@@ -8,6 +8,8 @@ package game
 import (
 	"fmt"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // ---------------------------------------------------------------------------
@@ -42,27 +44,27 @@ const (
 )
 
 // ---------------------------------------------------------------------------
-// Position constants
+// Position constants — canonical source: pkg/combat/formulas.go
 // ---------------------------------------------------------------------------
 const (
-	posDead            = 0
-	posMortallyWounded = 1
-	posIncapacitated   = 2
-	posStunned         = 3
-	posSleeping        = 4
-	posResting         = 5
-	posSitting         = 6
-	posFighting        = 7
-	posStanding        = 8
+	posDead            = combat.PosDead
+	posMortallyWounded = combat.PosMortally
+	posIncapacitated   = combat.PosIncap
+	posStunned         = combat.PosStunned
+	posSleeping        = combat.PosSleeping
+	posResting         = combat.PosResting
+	posSitting         = combat.PosSitting
+	posFighting        = combat.PosFighting
+	posStanding        = combat.PosStanding
 )
 
 // ---------------------------------------------------------------------------
-// Condition indices
+// Condition indices — canonical source: pkg/game/limits.go
 // ---------------------------------------------------------------------------
 const (
-	condFull  = 0
-	condThirst = 1
-	condDrunk  = 2
+	condFull  = CondFull
+	condThirst = CondThirst
+	condDrunk  = CondDrunk
 )
 
 // ---------------------------------------------------------------------------
@@ -70,12 +72,12 @@ const (
 // These go into p.Flags (uint64).
 // ---------------------------------------------------------------------------
 const (
-	plrNoShout uint64 = 1 << 0
-	_                 = 1 << 1
-	_                 = 1 << 2
-	_                 = 1 << 3
-	plrWriting uint64 = 1 << 4
-	plrOutlaw  uint64 = 1 << 5
+	plrNoShout   uint64 = 1 << 0
+	PLR_INVISIBLE uint64 = 1 << 1
+	_                    = 1 << 2
+	_                    = 1 << 3
+	plrWriting    uint64 = 1 << 4
+	plrOutlaw     uint64 = 1 << 5
 )
 
 // ---------------------------------------------------------------------------

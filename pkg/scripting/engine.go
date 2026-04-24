@@ -4,6 +4,7 @@ package scripting
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"math/rand"
@@ -33,34 +34,51 @@ func (e *Engine) LState() *lua.LState {
 	return e.l
 }
 
-// NewEngine creates a new Lua scripting engine.
-func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
+// newSafeLState creates a fresh LState with all sandboxing applied:
+// standard libraries opened, dangerous functions removed, and custom
+// API functions registered. Used both for initial engine creation and
+// for state recreation after a script timeout or crash.
+func (e *Engine) newSafeLState() *lua.LState {
 	L := lua.NewState()
-	engine := &Engine{
-		scriptsDir:   scriptsDir,
-		l:            L,
-		world:        world,
-		transitItems: make(map[int]*transitEntry),
-	}
 
 	// Open standard libraries
 	L.OpenLibs()
 
 	// Remove dangerous functions for security
-	// Remove file system access
+	// Remove file system access (load arbitrary code)
 	L.SetGlobal("dofile", lua.LNil)
 	L.SetGlobal("loadfile", lua.LNil)
 	L.SetGlobal("load", lua.LNil)
 	L.SetGlobal("loadstring", lua.LNil)
 
-	// Remove OS access
-	osTable := L.GetGlobal("os").(*lua.LTable)
-	osTable.RawSetString("execute", lua.LNil)
-	osTable.RawSetString("exit", lua.LNil)
-	osTable.RawSetString("remove", lua.LNil)
-	osTable.RawSetString("rename", lua.LNil)
-	osTable.RawSetString("setlocale", lua.LNil)
-	osTable.RawSetString("tmpname", lua.LNil)
+	// Remove OS access — filesystem, process control, environment
+	if osTable := L.GetGlobal("os"); osTable.Type() == lua.LTTable {
+		tb := osTable.(*lua.LTable)
+		tb.RawSetString("clock", lua.LNil)   // DoS: timing-detection busy loop
+		tb.RawSetString("execute", lua.LNil)  // arbitrary command execution
+		tb.RawSetString("exit", lua.LNil)     // crash the server
+		tb.RawSetString("getenv", lua.LNil)   // information disclosure
+		tb.RawSetString("remove", lua.LNil)   // file deletion
+		tb.RawSetString("rename", lua.LNil)   // file manipulation
+		tb.RawSetString("setenv", lua.LNil)   // affect other processes
+		tb.RawSetString("setlocale", lua.LNil)
+		tb.RawSetString("tmpname", lua.LNil)  // temp file creation
+	}
+
+	// Remove string.dump — produces bytecode that can exploit VM bugs
+	if stringTable := L.GetGlobal("string"); stringTable.Type() == lua.LTTable {
+		if tb, ok := stringTable.(*lua.LTable); ok {
+			tb.RawSetString("dump", lua.LNil)
+		}
+	}
+
+	// Remove math.randomseed — with a known seed a script can predict or
+	// break randomness for all subsequent scripts sharing the LState.
+	if mathTable := L.GetGlobal("math"); mathTable.Type() == lua.LTTable {
+		if tb, ok := mathTable.(*lua.LTable); ok {
+			tb.RawSetString("randomseed", lua.LNil)
+		}
+	}
 
 	// Remove package library (can load arbitrary code)
 	L.SetGlobal("package", lua.LNil)
@@ -71,14 +89,25 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	// Remove io library
 	L.SetGlobal("io", lua.LNil)
 
-	// Set memory limit — 10MB default (configurable via WithMemoryLimit option)
-	L.SetMx(10 * 1024 * 1024)
-
-	// Register our custom functions
-	engine.registerFunctions()
+	// Register our custom functions on the fresh state
+	e.registerFunctionsOn(L)
 
 	// Load globals.lua
-	engine.loadGlobals()
+	e.loadGlobalsOn(L)
+
+	return L
+}
+
+// NewEngine creates a new Lua scripting engine.
+func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
+	engine := &Engine{
+		scriptsDir:   scriptsDir,
+		transitItems: make(map[int]*transitEntry),
+		world:        world,
+	}
+
+	// Create a properly sandboxed LState
+	engine.l = engine.newSafeLState()
 
 	// Start transitItems cleanup goroutine — items orphaned for >5s are logged and removed.
 	go engine.cleanTransitItems()
@@ -118,10 +147,18 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	// Recover from Lua panics (instruction limit, etc.)
+	// Recover from Lua panics (instruction limit, context timeout, Go triggers, etc.)
+	// and recreate the LState so a single poisoned script doesn't corrupt the engine.
+	var needsRecreate bool
 	defer func() {
 		if r := recover(); r != nil {
-			slog.Warn("lua script panic", "reason", r)
+			slog.Warn("lua script panic, recreating LState", "reason", r, "file", fname, "trigger", triggerName)
+			needsRecreate = true
+		}
+		if needsRecreate {
+			slog.Info("recreating Lua state after script crash", "file", fname)
+			e.l.Close()
+			e.l = e.newSafeLState()
 		}
 	}()
 
@@ -196,7 +233,12 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	L.SetContext(scriptCtx)
 
 	if err := L.DoFile(scriptPath); err != nil {
-		slog.Error("error loading script", "file", fname, "error", err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			slog.Error("script timed out during load", "file", fname, "error", err)
+			needsRecreate = true
+		} else {
+			slog.Error("error loading script", "file", fname, "error", err)
+		}
 		L.RemoveContext()
 		scriptCancel()
 		return false, err
@@ -217,7 +259,12 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	}
 
 	if err := L.PCall(0, 1, nil); err != nil {
-		slog.Error("error calling function", "trigger", triggerName, "file", fname, "error", err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			slog.Error("script timed out during execution", "trigger", triggerName, "file", fname, "error", err)
+			needsRecreate = true
+		} else {
+			slog.Error("error calling function", "trigger", triggerName, "file", fname, "error", err)
+		}
 		if L.GetTop() > 0 {
 			L.Pop(1)
 		}
@@ -276,261 +323,276 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 
 // registerFunctions registers all Lua API functions.
 // Based on cmdlib array in scripts.c lines 1609-1668.
-func (e *Engine) registerFunctions() {
+// registerFunctionsOn registers all Lua API functions on the given LState.
+// This is separate from the state setup so it can be called on a fresh state
+// after a timeout-induced recreation.
+func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	// Core functions mentioned in the task
-	e.l.SetGlobal("act", e.l.NewFunction(e.luaAct))
-	e.l.SetGlobal("do_damage", e.l.NewFunction(e.luaDoDamage))
-	e.l.SetGlobal("say", e.l.NewFunction(e.luaSay))
-	e.l.SetGlobal("gossip", e.l.NewFunction(e.luaGossip))
-	e.l.SetGlobal("emote", e.l.NewFunction(e.luaEmote))
-	e.l.SetGlobal("action", e.l.NewFunction(e.luaAction))
-	e.l.SetGlobal("oload", e.l.NewFunction(e.luaOload))
-	e.l.SetGlobal("mload", e.l.NewFunction(e.luaMload))
-	e.l.SetGlobal("extobj", e.l.NewFunction(e.luaExtobj))
-	e.l.SetGlobal("extchar", e.l.NewFunction(e.luaExtchar))
-	e.l.SetGlobal("number", e.l.NewFunction(e.luaNumber))
-	e.l.SetGlobal("send_to_room", e.l.NewFunction(e.luaSendToRoom))
-	e.l.SetGlobal("strlower", e.l.NewFunction(e.luaStrlower))
-	e.l.SetGlobal("strfind", e.l.NewFunction(e.luaStrfind))
-	e.l.SetGlobal("strsub", e.l.NewFunction(e.luaStrsub))
-	e.l.SetGlobal("gsub", e.l.NewFunction(e.luaGsub))
-	e.l.SetGlobal("getn", e.l.NewFunction(e.luaGetn))
-	e.l.SetGlobal("tonumber", e.l.NewFunction(e.luaTonumber))
+	L.SetGlobal("act", L.NewFunction(e.luaAct))
+	L.SetGlobal("do_damage", L.NewFunction(e.luaDoDamage))
+	L.SetGlobal("say", L.NewFunction(e.luaSay))
+	L.SetGlobal("gossip", L.NewFunction(e.luaGossip))
+	L.SetGlobal("emote", L.NewFunction(e.luaEmote))
+	L.SetGlobal("action", L.NewFunction(e.luaAction))
+	L.SetGlobal("oload", L.NewFunction(e.luaOload))
+	L.SetGlobal("mload", L.NewFunction(e.luaMload))
+	L.SetGlobal("extobj", L.NewFunction(e.luaExtobj))
+	L.SetGlobal("extchar", L.NewFunction(e.luaExtchar))
+	L.SetGlobal("number", L.NewFunction(e.luaNumber))
+	L.SetGlobal("send_to_room", L.NewFunction(e.luaSendToRoom))
+	L.SetGlobal("strlower", L.NewFunction(e.luaStrlower))
+	L.SetGlobal("strfind", L.NewFunction(e.luaStrfind))
+	L.SetGlobal("strsub", L.NewFunction(e.luaStrsub))
+	L.SetGlobal("gsub", L.NewFunction(e.luaGsub))
+	L.SetGlobal("getn", L.NewFunction(e.luaGetn))
+	L.SetGlobal("tonumber", L.NewFunction(e.luaTonumber))
 	// Don't override tostring - it's a Lua built-in
-	// e.l.SetGlobal("tostring", e.l.NewFunction(e.luaTostring))
+	// L.SetGlobal("tostring", L.NewFunction(e.luaTostring))
 
 	// Additional functions from cmdlib that might be needed
-	e.l.SetGlobal("log", e.l.NewFunction(e.luaLog))
-	e.l.SetGlobal("raw_kill", e.l.NewFunction(e.luaRawKill))
-	e.l.SetGlobal("save_char", e.l.NewFunction(e.luaSaveChar))
-	e.l.SetGlobal("save_obj", e.l.NewFunction(e.luaSaveObj))
+	L.SetGlobal("log", L.NewFunction(e.luaLog))
+	L.SetGlobal("raw_kill", L.NewFunction(e.luaRawKill))
+	L.SetGlobal("save_char", L.NewFunction(e.luaSaveChar))
+	L.SetGlobal("save_obj", L.NewFunction(e.luaSaveObj))
 	// dofile/call: shared-script delegation pattern used by cityguard, breed_killer, etc.
-	e.l.SetGlobal("dofile", e.l.NewFunction(e.luaDofile))
-	e.l.SetGlobal("call", e.l.NewFunction(e.luaCall))
-	e.l.SetGlobal("save_room", e.l.NewFunction(e.luaSaveRoom))
-	e.l.SetGlobal("set_skill", e.l.NewFunction(e.luaSetSkill))
-	e.l.SetGlobal("spell", e.l.NewFunction(e.luaSpell))
-	e.l.SetGlobal("tport", e.l.NewFunction(e.luaTport))
+	L.SetGlobal("dofile", L.NewFunction(e.luaDofile))
+	L.SetGlobal("call", L.NewFunction(e.luaCall))
+	L.SetGlobal("save_room", L.NewFunction(e.luaSaveRoom))
+	L.SetGlobal("set_skill", L.NewFunction(e.luaSetSkill))
+	L.SetGlobal("spell", L.NewFunction(e.luaSpell))
+	L.SetGlobal("tport", L.NewFunction(e.luaTport))
 
 	// Additional functions needed for combat AI scripts
-	e.l.SetGlobal("isfighting", e.l.NewFunction(e.luaIsFighting))
-	e.l.SetGlobal("round", e.l.NewFunction(e.luaRound))
+	L.SetGlobal("isfighting", L.NewFunction(e.luaIsFighting))
+	L.SetGlobal("round", L.NewFunction(e.luaRound))
 
 	// Functions needed for RESTORE scripts
-	e.l.SetGlobal("has_item", e.l.NewFunction(e.luaHasItem))
-	e.l.SetGlobal("obj_in_room", e.l.NewFunction(e.luaObjInRoom))
-	e.l.SetGlobal("objfrom", e.l.NewFunction(e.luaObjFrom))
-	e.l.SetGlobal("objto", e.l.NewFunction(e.luaObjTo))
-	e.l.SetGlobal("obj_extra", e.l.NewFunction(e.luaObjExtra))
-	e.l.SetGlobal("create_event", e.l.NewFunction(e.luaCreateEvent))
-	e.l.SetGlobal("tell", e.l.NewFunction(e.luaTell))
-	e.l.SetGlobal("plr_flagged", e.l.NewFunction(e.luaPlrFlagged))
-	e.l.SetGlobal("cansee", e.l.NewFunction(e.luaCanSee))
-	e.l.SetGlobal("isnpc", e.l.NewFunction(e.luaIsNPC))
-	e.l.SetGlobal("aff_flagged", e.l.NewFunction(e.luaAffFlagged))
-	e.l.SetGlobal("plr_flags", e.l.NewFunction(e.luaPlrFlags))
-	e.l.SetGlobal("obj_list", e.l.NewFunction(e.luaObjList))
+	L.SetGlobal("has_item", L.NewFunction(e.luaHasItem))
+	L.SetGlobal("obj_in_room", L.NewFunction(e.luaObjInRoom))
+	L.SetGlobal("objfrom", L.NewFunction(e.luaObjFrom))
+	L.SetGlobal("objto", L.NewFunction(e.luaObjTo))
+	L.SetGlobal("obj_extra", L.NewFunction(e.luaObjExtra))
+	L.SetGlobal("create_event", L.NewFunction(e.luaCreateEvent))
+	L.SetGlobal("tell", L.NewFunction(e.luaTell))
+	L.SetGlobal("plr_flagged", L.NewFunction(e.luaPlrFlagged))
+	L.SetGlobal("cansee", L.NewFunction(e.luaCanSee))
+	L.SetGlobal("isnpc", L.NewFunction(e.luaIsNPC))
+	L.SetGlobal("aff_flagged", L.NewFunction(e.luaAffFlagged))
+	L.SetGlobal("plr_flags", L.NewFunction(e.luaPlrFlags))
+	L.SetGlobal("obj_list", L.NewFunction(e.luaObjList))
 
 	// Stubs needed by Tier 3 Economy scripts
-	e.l.SetGlobal("item_check", e.l.NewFunction(e.luaItemCheck))
-	e.l.SetGlobal("load_room", e.l.NewFunction(e.luaLoadRoom))
-	e.l.SetGlobal("inworld", e.l.NewFunction(e.luaInworld))
-	e.l.SetGlobal("mob_flagged", e.l.NewFunction(e.luaMobFlagged))
-	e.l.SetGlobal("aff_flags", e.l.NewFunction(e.luaAffFlags))
-	e.l.SetGlobal("follow", e.l.NewFunction(e.luaFollow))
-	e.l.SetGlobal("mount", e.l.NewFunction(e.luaMount))
-	e.l.SetGlobal("direction", e.l.NewFunction(e.luaDirection))
-	e.l.SetGlobal("set_hunt", e.l.NewFunction(e.luaSetHunt))
-	e.l.SetGlobal("mxp", e.l.NewFunction(e.luaMxp))
-	e.l.SetGlobal("skip_spaces", e.l.NewFunction(e.luaSkipSpaces))
-	e.l.SetGlobal("social", e.l.NewFunction(e.luaSocial))
-	e.l.SetGlobal("obj_flagged", e.l.NewFunction(e.luaObjFlagged))
-	e.l.SetGlobal("get_group_lvl", e.l.NewFunction(e.luaGetGroupLvl))
-	e.l.SetGlobal("get_group_pts", e.l.NewFunction(e.luaGetGroupPts))
-	e.l.SetGlobal("skill_group", e.l.NewFunction(e.luaSkillGroup))
-	e.l.SetGlobal("unaffect", e.l.NewFunction(e.luaUnaffect))
-	e.l.SetGlobal("equip_char", e.l.NewFunction(e.luaEquipChar))
+	L.SetGlobal("item_check", L.NewFunction(e.luaItemCheck))
+	L.SetGlobal("load_room", L.NewFunction(e.luaLoadRoom))
+	L.SetGlobal("inworld", L.NewFunction(e.luaInworld))
+	L.SetGlobal("mob_flagged", L.NewFunction(e.luaMobFlagged))
+	L.SetGlobal("aff_flags", L.NewFunction(e.luaAffFlags))
+	L.SetGlobal("follow", L.NewFunction(e.luaFollow))
+	L.SetGlobal("mount", L.NewFunction(e.luaMount))
+	L.SetGlobal("direction", L.NewFunction(e.luaDirection))
+	L.SetGlobal("set_hunt", L.NewFunction(e.luaSetHunt))
+	L.SetGlobal("mxp", L.NewFunction(e.luaMxp))
+	L.SetGlobal("skip_spaces", L.NewFunction(e.luaSkipSpaces))
+	L.SetGlobal("social", L.NewFunction(e.luaSocial))
+	L.SetGlobal("obj_flagged", L.NewFunction(e.luaObjFlagged))
+	L.SetGlobal("get_group_lvl", L.NewFunction(e.luaGetGroupLvl))
+	L.SetGlobal("get_group_pts", L.NewFunction(e.luaGetGroupPts))
+	L.SetGlobal("skill_group", L.NewFunction(e.luaSkillGroup))
+	L.SetGlobal("unaffect", L.NewFunction(e.luaUnaffect))
+	L.SetGlobal("equip_char", L.NewFunction(e.luaEquipChar))
 	// echo(ch, type, msg) — zone-wide sound broadcast. Used by werewolf.lua.
 	// TODO: requires zone broadcast implementation
-	e.l.SetGlobal("echo", e.l.NewFunction(e.luaEcho))
+	L.SetGlobal("echo", L.NewFunction(e.luaEcho))
 
 	// Stubs needed by Batch C Quest/Mechanic NPC scripts
-	e.l.SetGlobal("extra", e.l.NewFunction(e.luaExtra))
-	e.l.SetGlobal("strlen", e.l.NewFunction(e.luaStrlen))
-	e.l.SetGlobal("iscorpse", e.l.NewFunction(e.luaIsCorpse))
-	e.l.SetGlobal("canget", e.l.NewFunction(e.luaCanGet))
-	e.l.SetGlobal("steal", e.l.NewFunction(e.luaSteal))
+	L.SetGlobal("extra", L.NewFunction(e.luaExtra))
+	L.SetGlobal("strlen", L.NewFunction(e.luaStrlen))
+	L.SetGlobal("iscorpse", L.NewFunction(e.luaIsCorpse))
+	L.SetGlobal("canget", L.NewFunction(e.luaCanGet))
+	L.SetGlobal("steal", L.NewFunction(e.luaSteal))
+}
+
+// registerFunctions is a convenience wrapper for the engine's own LState.
+// Deprecated: use registerFunctionsOn for explicit LState targeting.
+func (e *Engine) registerFunctions() {
+	e.registerFunctionsOn(e.l)
 }
 
 // loadGlobals loads the globals.lua file.
 // Based on boot_lua() lines 1711-1714.
-func (e *Engine) loadGlobals() {
+// loadGlobalsOn loads the globals.lua file onto the given LState.
+func (e *Engine) loadGlobalsOn(L *lua.LState) {
 	globalsPath := e.scriptsDir + "/globals.lua"
 	slog.Debug("loading globals", "path", globalsPath)
-	if err := e.l.DoFile(globalsPath); err != nil {
+	if err := L.DoFile(globalsPath); err != nil {
 		slog.Warn("could not load globals.lua", "error", err)
 	} else {
 		slog.Debug("globals.lua loaded successfully")
 	}
 	// Always set up basic constants
-	e.setupBasicConstants()
+	e.setupBasicConstantsOn(L)
 }
 
-// setupBasicConstants sets up essential constants when globals.lua is missing.
-func (e *Engine) setupBasicConstants() {
+// loadGlobals loads globals onto the engine's own LState.
+func (e *Engine) loadGlobals() {
+	e.loadGlobalsOn(e.l)
+}
+
+// setupBasicConstantsOn sets up essential constants on the given LState.
+func (e *Engine) setupBasicConstantsOn(L *lua.LState) {
 	// Direction constants
-	e.l.SetGlobal("NORTH", lua.LNumber(0))
-	e.l.SetGlobal("EAST", lua.LNumber(1))
-	e.l.SetGlobal("SOUTH", lua.LNumber(2))
-	e.l.SetGlobal("WEST", lua.LNumber(3))
-	e.l.SetGlobal("UP", lua.LNumber(4))
-	e.l.SetGlobal("DOWN", lua.LNumber(5))
+	L.SetGlobal("NORTH", lua.LNumber(0))
+	L.SetGlobal("EAST", lua.LNumber(1))
+	L.SetGlobal("SOUTH", lua.LNumber(2))
+	L.SetGlobal("WEST", lua.LNumber(3))
+	L.SetGlobal("UP", lua.LNumber(4))
+	L.SetGlobal("DOWN", lua.LNumber(5))
 
 	// Message types for act()
-	e.l.SetGlobal("TO_ROOM", lua.LNumber(1))
-	e.l.SetGlobal("TO_VICT", lua.LNumber(2))
-	e.l.SetGlobal("TO_NOTVICT", lua.LNumber(3))
-	e.l.SetGlobal("TO_CHAR", lua.LNumber(4))
+	L.SetGlobal("TO_ROOM", lua.LNumber(1))
+	L.SetGlobal("TO_VICT", lua.LNumber(2))
+	L.SetGlobal("TO_NOTVICT", lua.LNumber(3))
+	L.SetGlobal("TO_CHAR", lua.LNumber(4))
 
 	// Boolean constants
-	e.l.SetGlobal("TRUE", lua.LNumber(1))
-	e.l.SetGlobal("FALSE", lua.LNumber(0))
-	e.l.SetGlobal("NIL", lua.LNil)
+	L.SetGlobal("TRUE", lua.LNumber(1))
+	L.SetGlobal("FALSE", lua.LNumber(0))
+	L.SetGlobal("NIL", lua.LNil)
 
 	// Level constants
-	e.l.SetGlobal("LVL_IMMORT", lua.LNumber(31))
-	e.l.SetGlobal("LVL_IMPL", lua.LNumber(40))
+	L.SetGlobal("LVL_IMMORT", lua.LNumber(31))
+	L.SetGlobal("LVL_IMPL", lua.LNumber(40))
 
 	// Player flags
-	e.l.SetGlobal("PLR_OUTLAW", lua.LNumber(0))
-	e.l.SetGlobal("PLR_WEREWOLF", lua.LNumber(16))
-	e.l.SetGlobal("PLR_VAMPIRE", lua.LNumber(17))
+	L.SetGlobal("PLR_OUTLAW", lua.LNumber(0))
+	L.SetGlobal("PLR_WEREWOLF", lua.LNumber(16))
+	L.SetGlobal("PLR_VAMPIRE", lua.LNumber(17))
 
 	// Mob flags
-	e.l.SetGlobal("MOB_SENTINEL", lua.LNumber(1))
-	e.l.SetGlobal("MOB_HUNTER", lua.LNumber(18))
-	e.l.SetGlobal("MOB_MOUNTABLE", lua.LNumber(21))
+	L.SetGlobal("MOB_SENTINEL", lua.LNumber(1))
+	L.SetGlobal("MOB_HUNTER", lua.LNumber(18))
+	L.SetGlobal("MOB_MOUNTABLE", lua.LNumber(21))
 
 	// Affect flags
-	e.l.SetGlobal("AFF_DETECT_MAGIC", lua.LNumber(4))
-	e.l.SetGlobal("AFF_GROUP", lua.LNumber(8))
-	e.l.SetGlobal("AFF_POISON", lua.LNumber(11))
-	e.l.SetGlobal("AFF_CHARM", lua.LNumber(21))
-	e.l.SetGlobal("AFF_FLY", lua.LNumber(26))
-	e.l.SetGlobal("AFF_WEREWOLF", lua.LNumber(27))
-	e.l.SetGlobal("AFF_VAMPIRE", lua.LNumber(28))
-	e.l.SetGlobal("AFF_MOUNT", lua.LNumber(29))
+	L.SetGlobal("AFF_DETECT_MAGIC", lua.LNumber(4))
+	L.SetGlobal("AFF_GROUP", lua.LNumber(8))
+	L.SetGlobal("AFF_POISON", lua.LNumber(11))
+	L.SetGlobal("AFF_CHARM", lua.LNumber(21))
+	L.SetGlobal("AFF_FLY", lua.LNumber(26))
+	L.SetGlobal("AFF_WEREWOLF", lua.LNumber(27))
+	L.SetGlobal("AFF_VAMPIRE", lua.LNumber(28))
+	L.SetGlobal("AFF_MOUNT", lua.LNumber(29))
 
 	// Position constants
-	e.l.SetGlobal("POS_DEAD", lua.LNumber(combat.PosDead))
-	e.l.SetGlobal("POS_MORTALLYW", lua.LNumber(1))
-	e.l.SetGlobal("POS_INCAP", lua.LNumber(combat.PosIncap))
-	e.l.SetGlobal("POS_STUNNED", lua.LNumber(combat.PosStunned))
-	e.l.SetGlobal("POS_SLEEPING", lua.LNumber(combat.PosSleeping))
-	e.l.SetGlobal("POS_RESTING", lua.LNumber(combat.PosResting))
-	e.l.SetGlobal("POS_SITTING", lua.LNumber(combat.PosSitting))
-	e.l.SetGlobal("POS_STANDING", lua.LNumber(combat.PosStanding))
+	L.SetGlobal("POS_DEAD", lua.LNumber(combat.PosDead))
+	L.SetGlobal("POS_MORTALLYW", lua.LNumber(1))
+	L.SetGlobal("POS_INCAP", lua.LNumber(combat.PosIncap))
+	L.SetGlobal("POS_STUNNED", lua.LNumber(combat.PosStunned))
+	L.SetGlobal("POS_SLEEPING", lua.LNumber(combat.PosSleeping))
+	L.SetGlobal("POS_RESTING", lua.LNumber(combat.PosResting))
+	L.SetGlobal("POS_SITTING", lua.LNumber(combat.PosSitting))
+	L.SetGlobal("POS_STANDING", lua.LNumber(combat.PosStanding))
 
 	// Item type constants
-	e.l.SetGlobal("ITEM_STAFF", lua.LNumber(4))
-	e.l.SetGlobal("ITEM_WEAPON", lua.LNumber(5))
-	e.l.SetGlobal("ITEM_ARMOR", lua.LNumber(9))
-	e.l.SetGlobal("ITEM_WORN", lua.LNumber(11))
-	e.l.SetGlobal("ITEM_TRASH", lua.LNumber(13))
-	e.l.SetGlobal("ITEM_NOTE", lua.LNumber(16))
-	e.l.SetGlobal("ITEM_DRINKCON", lua.LNumber(17))
-	e.l.SetGlobal("ITEM_KEY", lua.LNumber(18))
-	e.l.SetGlobal("ITEM_FOOD", lua.LNumber(19))
-	e.l.SetGlobal("ITEM_PEN", lua.LNumber(21))
+	L.SetGlobal("ITEM_STAFF", lua.LNumber(4))
+	L.SetGlobal("ITEM_WEAPON", lua.LNumber(5))
+	L.SetGlobal("ITEM_ARMOR", lua.LNumber(9))
+	L.SetGlobal("ITEM_WORN", lua.LNumber(11))
+	L.SetGlobal("ITEM_TRASH", lua.LNumber(13))
+	L.SetGlobal("ITEM_NOTE", lua.LNumber(16))
+	L.SetGlobal("ITEM_DRINKCON", lua.LNumber(17))
+	L.SetGlobal("ITEM_KEY", lua.LNumber(18))
+	L.SetGlobal("ITEM_FOOD", lua.LNumber(19))
+	L.SetGlobal("ITEM_PEN", lua.LNumber(21))
 
 	// Object extra flags
-	e.l.SetGlobal("ITEM_GLOW", lua.LNumber(0))
-	e.l.SetGlobal("ITEM_MAGIC", lua.LNumber(6))
-	e.l.SetGlobal("ITEM_NODROP", lua.LNumber(7))
-	e.l.SetGlobal("ITEM_NOSELL", lua.LNumber(16))
+	L.SetGlobal("ITEM_GLOW", lua.LNumber(0))
+	L.SetGlobal("ITEM_MAGIC", lua.LNumber(6))
+	L.SetGlobal("ITEM_NODROP", lua.LNumber(7))
+	L.SetGlobal("ITEM_NOSELL", lua.LNumber(16))
 
 	// Item wear positions
-	e.l.SetGlobal("ITEM_WEAR_TAKE", lua.LNumber(0))
+	L.SetGlobal("ITEM_WEAR_TAKE", lua.LNumber(0))
 
 	// Spell constants (from spells.h and globals.lua)
-	e.l.SetGlobal("SPELL_TELEPORT", lua.LNumber(2))
-	e.l.SetGlobal("SPELL_BLINDNESS", lua.LNumber(4))
-	e.l.SetGlobal("SPELL_BURNING_HANDS", lua.LNumber(5))
-	e.l.SetGlobal("SPELL_CHARM", lua.LNumber(7))
-	e.l.SetGlobal("SPELL_COLOR_SPRAY", lua.LNumber(10))
-	e.l.SetGlobal("SPELL_CURE_LIGHT", lua.LNumber(16))
-	e.l.SetGlobal("SPELL_CURSE", lua.LNumber(17))
-	e.l.SetGlobal("SPELL_DISPEL_EVIL", lua.LNumber(22))
-	e.l.SetGlobal("SPELL_EARTHQUAKE", lua.LNumber(23))
-	e.l.SetGlobal("SPELL_ENCHANT_WEAPON", lua.LNumber(24))
-	e.l.SetGlobal("SPELL_FIREBALL", lua.LNumber(26))
-	e.l.SetGlobal("SPELL_HARM", lua.LNumber(27))
-	e.l.SetGlobal("SPELL_HEAL", lua.LNumber(28))
-	e.l.SetGlobal("SPELL_LIGHTNING_BOLT", lua.LNumber(30))
-	e.l.SetGlobal("SPELL_MAGIC_MISSILE", lua.LNumber(32))
-	e.l.SetGlobal("SPELL_POISON", lua.LNumber(33))
-	e.l.SetGlobal("SPELL_SANCTUARY", lua.LNumber(36))
-	e.l.SetGlobal("SPELL_SHOCKING_GRASP", lua.LNumber(37))
-	e.l.SetGlobal("SPELL_SLEEP", lua.LNumber(38))
-	e.l.SetGlobal("SPELL_METEOR_SWARM", lua.LNumber(41))
-	e.l.SetGlobal("SPELL_WORD_OF_RECALL", lua.LNumber(42))
-	e.l.SetGlobal("SPELL_REMOVE_POISON", lua.LNumber(43))
-	e.l.SetGlobal("SPELL_DISPEL_GOOD", lua.LNumber(46))
-	e.l.SetGlobal("SPELL_HELLFIRE", lua.LNumber(58))
-	e.l.SetGlobal("SPELL_ENCHANT_ARMOR", lua.LNumber(59))
-	e.l.SetGlobal("SPELL_IDENTIFY", lua.LNumber(60))
-	e.l.SetGlobal("SPELL_MINDBLAST", lua.LNumber(62))
-	e.l.SetGlobal("SPELL_INVULNERABILITY", lua.LNumber(66))
-	e.l.SetGlobal("SPELL_VITALITY", lua.LNumber(67))
-	e.l.SetGlobal("SPELL_ACID_BLAST", lua.LNumber(75))
-	e.l.SetGlobal("SPELL_DIVINE_INT", lua.LNumber(81))
-	e.l.SetGlobal("SPELL_MIND_BAR", lua.LNumber(82))
-	e.l.SetGlobal("SPELL_SOUL_LEECH", lua.LNumber(83))
-	e.l.SetGlobal("SPELL_DISRUPT", lua.LNumber(92))
-	e.l.SetGlobal("SPELL_DISINTEGRATE", lua.LNumber(93))
-	e.l.SetGlobal("SPELL_FLAMESTRIKE", lua.LNumber(96))
-	e.l.SetGlobal("SPELL_PSIBLAST", lua.LNumber(100))
-	e.l.SetGlobal("SPELL_PETRIFY", lua.LNumber(104))
+	L.SetGlobal("SPELL_TELEPORT", lua.LNumber(2))
+	L.SetGlobal("SPELL_BLINDNESS", lua.LNumber(4))
+	L.SetGlobal("SPELL_BURNING_HANDS", lua.LNumber(5))
+	L.SetGlobal("SPELL_CHARM", lua.LNumber(7))
+	L.SetGlobal("SPELL_COLOR_SPRAY", lua.LNumber(10))
+	L.SetGlobal("SPELL_CURE_LIGHT", lua.LNumber(16))
+	L.SetGlobal("SPELL_CURSE", lua.LNumber(17))
+	L.SetGlobal("SPELL_DISPEL_EVIL", lua.LNumber(22))
+	L.SetGlobal("SPELL_EARTHQUAKE", lua.LNumber(23))
+	L.SetGlobal("SPELL_ENCHANT_WEAPON", lua.LNumber(24))
+	L.SetGlobal("SPELL_FIREBALL", lua.LNumber(26))
+	L.SetGlobal("SPELL_HARM", lua.LNumber(27))
+	L.SetGlobal("SPELL_HEAL", lua.LNumber(28))
+	L.SetGlobal("SPELL_LIGHTNING_BOLT", lua.LNumber(30))
+	L.SetGlobal("SPELL_MAGIC_MISSILE", lua.LNumber(32))
+	L.SetGlobal("SPELL_POISON", lua.LNumber(33))
+	L.SetGlobal("SPELL_SANCTUARY", lua.LNumber(36))
+	L.SetGlobal("SPELL_SHOCKING_GRASP", lua.LNumber(37))
+	L.SetGlobal("SPELL_SLEEP", lua.LNumber(38))
+	L.SetGlobal("SPELL_METEOR_SWARM", lua.LNumber(41))
+	L.SetGlobal("SPELL_WORD_OF_RECALL", lua.LNumber(42))
+	L.SetGlobal("SPELL_REMOVE_POISON", lua.LNumber(43))
+	L.SetGlobal("SPELL_DISPEL_GOOD", lua.LNumber(46))
+	L.SetGlobal("SPELL_HELLFIRE", lua.LNumber(58))
+	L.SetGlobal("SPELL_ENCHANT_ARMOR", lua.LNumber(59))
+	L.SetGlobal("SPELL_IDENTIFY", lua.LNumber(60))
+	L.SetGlobal("SPELL_MINDBLAST", lua.LNumber(62))
+	L.SetGlobal("SPELL_INVULNERABILITY", lua.LNumber(66))
+	L.SetGlobal("SPELL_VITALITY", lua.LNumber(67))
+	L.SetGlobal("SPELL_ACID_BLAST", lua.LNumber(75))
+	L.SetGlobal("SPELL_DIVINE_INT", lua.LNumber(81))
+	L.SetGlobal("SPELL_MIND_BAR", lua.LNumber(82))
+	L.SetGlobal("SPELL_SOUL_LEECH", lua.LNumber(83))
+	L.SetGlobal("SPELL_DISRUPT", lua.LNumber(92))
+	L.SetGlobal("SPELL_DISINTEGRATE", lua.LNumber(93))
+	L.SetGlobal("SPELL_FLAMESTRIKE", lua.LNumber(96))
+	L.SetGlobal("SPELL_PSIBLAST", lua.LNumber(100))
+	L.SetGlobal("SPELL_PETRIFY", lua.LNumber(104))
 	// SPELL_PARALYSE: not in original globals.lua; assigned 105 as next available value.
 	// Used by paralyse.lua and head_shrinker.lua. TODO: verify against original spells.h.
-	e.l.SetGlobal("SPELL_PARALYSE", lua.LNumber(105))
+	L.SetGlobal("SPELL_PARALYSE", lua.LNumber(105))
 
 	// Dragon Breath spells
-	e.l.SetGlobal("SPELL_FIRE_BREATH", lua.LNumber(202))
-	e.l.SetGlobal("SPELL_GAS_BREATH", lua.LNumber(203))
-	e.l.SetGlobal("SPELL_FROST_BREATH", lua.LNumber(204))
-	e.l.SetGlobal("SPELL_ACID_BREATH", lua.LNumber(205))
-	e.l.SetGlobal("SPELL_LIGHTNING_BREATH", lua.LNumber(206))
+	L.SetGlobal("SPELL_FIRE_BREATH", lua.LNumber(202))
+	L.SetGlobal("SPELL_GAS_BREATH", lua.LNumber(203))
+	L.SetGlobal("SPELL_FROST_BREATH", lua.LNumber(204))
+	L.SetGlobal("SPELL_ACID_BREATH", lua.LNumber(205))
+	L.SetGlobal("SPELL_LIGHTNING_BREATH", lua.LNumber(206))
 
 	// Skill constants
-	e.l.SetGlobal("SKILL_BASH", lua.LNumber(132))
-	e.l.SetGlobal("SKILL_HEADBUTT", lua.LNumber(141))
-	e.l.SetGlobal("SKILL_BERSERK", lua.LNumber(171))
-	e.l.SetGlobal("SKILL_PARRY", lua.LNumber(172))
-	e.l.SetGlobal("SKILL_KICK", lua.LNumber(134))
-	e.l.SetGlobal("SKILL_TRIP", lua.LNumber(144))
+	L.SetGlobal("SKILL_BASH", lua.LNumber(132))
+	L.SetGlobal("SKILL_HEADBUTT", lua.LNumber(141))
+	L.SetGlobal("SKILL_BERSERK", lua.LNumber(171))
+	L.SetGlobal("SKILL_PARRY", lua.LNumber(172))
+	L.SetGlobal("SKILL_KICK", lua.LNumber(134))
+	L.SetGlobal("SKILL_TRIP", lua.LNumber(144))
 
 	// Raw kill types
-	e.l.SetGlobal("TYPE_UNDEFINED", lua.LNumber(-1))
+	L.SetGlobal("TYPE_UNDEFINED", lua.LNumber(-1))
 
 	// Sector types
-	e.l.SetGlobal("SECT_FOREST", lua.LNumber(3))
-	e.l.SetGlobal("SECT_UNDERWATER", lua.LNumber(8))
-	e.l.SetGlobal("SECT_FIRE", lua.LNumber(11))
-	e.l.SetGlobal("SECT_EARTH", lua.LNumber(12))
-	e.l.SetGlobal("SECT_WIND", lua.LNumber(13))
-	e.l.SetGlobal("SECT_WATER", lua.LNumber(14))
+	L.SetGlobal("SECT_FOREST", lua.LNumber(3))
+	L.SetGlobal("SECT_UNDERWATER", lua.LNumber(8))
+	L.SetGlobal("SECT_FIRE", lua.LNumber(11))
+	L.SetGlobal("SECT_EARTH", lua.LNumber(12))
+	L.SetGlobal("SECT_WIND", lua.LNumber(13))
+	L.SetGlobal("SECT_WATER", lua.LNumber(14))
 
 	// Exit flags
-	e.l.SetGlobal("EX_ISDOOR", lua.LNumber(0))
-	e.l.SetGlobal("EX_CLOSED", lua.LNumber(1))
-	e.l.SetGlobal("EX_LOCKED", lua.LNumber(2))
-	e.l.SetGlobal("EX_PICKPROOF", lua.LNumber(3))
+	L.SetGlobal("EX_ISDOOR", lua.LNumber(0))
+	L.SetGlobal("EX_CLOSED", lua.LNumber(1))
+	L.SetGlobal("EX_LOCKED", lua.LNumber(2))
+	L.SetGlobal("EX_PICKPROOF", lua.LNumber(3))
 
 	// Lua script flags
-	e.l.SetGlobal("LT_MOB", lua.LString("mob"))
-	e.l.SetGlobal("LT_OBJ", lua.LString("obj"))
-	e.l.SetGlobal("LT_ROOM", lua.LString("room"))
+	L.SetGlobal("LT_MOB", lua.LString("mob"))
+	L.SetGlobal("LT_OBJ", lua.LString("obj"))
+	L.SetGlobal("LT_ROOM", lua.LString("room"))
 }
 
 // charToTableLocked converts a ScriptablePlayer to a Lua table. Caller must hold e.mu.

@@ -109,8 +109,17 @@ type Player struct {
 	Title       string // Character title (shown in who list)
 	Description string // Character description (shown on examine)
 
+	// Misc stats — act.other.c
+	WimpLevel int `json:"wimp_level"`
+	Kills     int `json:"kills"`
+	PKs       int `json:"pks"`
+	Deaths    int `json:"deaths"`
+
 	// Auto-exit display toggle
 	AutoExit bool // Show exits automatically in room descriptions
+
+	// NoBroadcast indicates the player has toggled off global broadcasts (PRF_NOBROAD).
+	NoBroadcast bool
 
 	// Known spells: map of spell name → level learned
 	SpellMap map[string]int

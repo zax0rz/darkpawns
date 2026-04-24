@@ -105,6 +105,20 @@ Protocol:
 `))
 	})
 
+	// Setup API handler chain: Auth → ContentNegotiation
+	// The ContentNegotiationMiddleware serves OpenAPI spec and JSON responses.
+	// AuthMiddleware protects all /api/ endpoints with JWT bearer tokens.
+	apiMux := http.NewServeMux()
+	apiMux.HandleFunc("/api/openapi.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "web/api/openapi.json")
+	})
+	apiMux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error": "API endpoint not found", "docs": "/api/openapi.json"}`))
+	})
+	http.Handle("/api/", web.AuthMiddleware(apiMux))
+
 	// Start zone resets in background (initial + periodic every 60s)
 	go func() {
 		slog.Info("Starting zone resets...")

@@ -32,7 +32,10 @@ func GenerateJWT(playerName string, isAgent bool, agentKeyID int64) (string, err
 	if secret == "" {
 		return "", errors.New("JWT_SECRET environment variable not set")
 	}
-	
+	if len(secret) < 32 {
+		return "", errors.New("JWT_SECRET must be at least 32 characters")
+	}
+
 	// Set token expiration
 	expirationTime := time.Now().Add(24 * time.Hour) // 24-hour tokens
 	

@@ -106,7 +106,7 @@ func init() {
 	cmdRegistry.Register("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.", 0, combat.PosStanding)
 	cmdRegistry.Register("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.", 0, combat.PosResting)
 	cmdRegistry.Register("steal", wrapSkill(command.CmdSteal), "Steal from a target.", 0, combat.PosStanding)
-	cmdRegistry.Register("pick", wrapSkill(command.CmdPickLock), "Pick a lock on a door.", 0, combat.PosStanding, "pick lock")
+	cmdRegistry.Register("pick", wrapArgs(cmdPick), "Pick a lock on a door.", 0, combat.PosStanding, "pick lock")
 
 	// Admin / debug
 	cmdRegistry.Register("summon", wrapArgs(cmdSummon), "Summon a player to your room.", 0, 0)
@@ -140,6 +140,33 @@ func init() {
 	cmdRegistry.Register("advance", wrapArgs(cmdAdvance), "Advance a player's level.", LVL_GRGOD, 0)
 	cmdRegistry.Register("reload", wrapArgs(cmdReload), "Reload world data.", LVL_GOD, 0)
 
+	// Wizard — stat/info
+	cmdRegistry.Register("stat", wrapArgs(cmdStat), "Inspect a character, room, or object.", LVL_IMMORT, 0)
+	cmdRegistry.Register("vnum", wrapArgs(cmdVnum), "Search for vnums by keyword.", LVL_IMMORT, 0)
+	cmdRegistry.Register("vstat", wrapArgs(cmdVstat), "Show detailed prototype info by vnum.", LVL_IMMORT, 0)
+	cmdRegistry.Register("wizlock", wrapArgs(cmdWizlock), "Toggle wizard-only login.", LVL_IMPL, 0)
+	cmdRegistry.Register("dc", wrapArgs(cmdDc), "Disconnect a player.", LVL_GOD, 0)
+	cmdRegistry.Register("home", wrapArgs(cmdHome), "Teleport to home room or specified room.", LVL_IMMORT, 0)
+	cmdRegistry.Register("date", wrapArgs(cmdDate), "Show current system time or uptime.", LVL_IMMORT, 0)
+	cmdRegistry.Register("last", wrapArgs(cmdLast), "Show last login info for a player.", LVL_IMMORT, 0)
+	cmdRegistry.Register("wizutil", wrapArgs(cmdWizutil), "Player utility commands (reroll/pardon/notitle/squelch/freeze/thaw/unaffect).", LVL_IMMORT, 0)
+	cmdRegistry.Register("show", wrapArgs(cmdShow), "Show system info (players/uptime/stats/reset).", LVL_IMMORT, 0)
+	cmdRegistry.Register("dark", wrapArgs(cmdDark), "Stop combat in the current room.", LVL_IMMORT, 0)
+	cmdRegistry.Register("syslog", wrapArgs(cmdSyslog), "Toggle system logging level.", LVL_IMMORT, 0)
+	cmdRegistry.Register("idlist", wrapArgs(cmdIdlist), "Dump object ID list to file.", LVL_IMPL, 0)
+	cmdRegistry.Register("checkload", wrapArgs(cmdCheckload), "Check zone load info for a mob/obj.", LVL_IMMORT, 0)
+	cmdRegistry.Register("poofset", wrapArgs(cmdPoofset), "Set poof in/out messages.", LVL_IMMORT, 0)
+	cmdRegistry.Register("wiznet", wrapArgs(cmdWiznet), "Send message on wizard net.", LVL_IMMORT, 0)
+	cmdRegistry.Register("zreset", wrapArgs(cmdZreset), "Reset a zone by number.", LVL_GOD, 0)
+	cmdRegistry.Register("zlist", wrapArgs(cmdZlist), "List zones matching a filter.", LVL_IMMORT, 0)
+	cmdRegistry.Register("rlist", wrapArgs(cmdRlist), "List rooms matching a keyword.", LVL_IMMORT, 0)
+	cmdRegistry.Register("olist", wrapArgs(cmdOlist), "List objects matching a keyword.", LVL_IMMORT, 0)
+	cmdRegistry.Register("mlist", wrapArgs(cmdMlist), "List mobiles matching a keyword.", LVL_IMMORT, 0)
+	cmdRegistry.Register("sysfile", wrapArgs(cmdSysfile), "Show system file path.", LVL_IMMORT, 0)
+	cmdRegistry.Register("sethunt", wrapArgs(cmdSethunt), "Set hunt target for a character.", LVL_IMMORT, 0)
+	cmdRegistry.Register("tick", wrapArgs(cmdTick), "Show current tick info.", LVL_IMMORT, 0)
+	cmdRegistry.Register("newbie", wrapArgs(cmdNewbie), "Give newbie equipment to a player.", LVL_IMMORT, 0)
+
 	// Informative
 	cmdRegistry.Register("consider", wrapArgs(cmdConsider), "Compare yourself to a target.", 0, 0, "con")
 	cmdRegistry.Register("examine", wrapArgs(cmdExamine), "Examine something in detail.", 0, 0, "exa")
@@ -153,6 +180,32 @@ func init() {
 
 	// Quit
 	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0)
+
+	// Offensive commands (act_offensive.go)
+	cmdRegistry.Register("assist", wrapArgs(cmdAssist), "Assist a target in combat.", LVL_IMMORT, 0)
+	cmdRegistry.Register("kill", wrapArgs(cmdKill), "Attack a mob target.", 0, 0)
+	cmdRegistry.Register("backstab", wrapArgs(cmdBackstab), "Backstab a target with a piercing weapon.", 0, 0, "bs")
+	cmdRegistry.Register("bash", wrapArgs(cmdBash), "Bash a target, potentially stunning them.", 0, 0)
+	cmdRegistry.Register("disembowel", wrapArgs(cmdDisembowel), "Disembowel a target.", 0, 0)
+	cmdRegistry.Register("rescue", wrapArgs(cmdRescue), "Rescue someone from combat.", 0, 0)
+	cmdRegistry.Register("kick", wrapArgs(cmdKick), "Kick a target for damage.", 0, 0)
+	cmdRegistry.Register("dragonkick", wrapArgs(cmdDragonKick), "Dragon-style kick attack.", 0, 0, "dkick")
+	cmdRegistry.Register("tigerpunch", wrapArgs(cmdTigerPunch), "Tiger-style punch attack.", 0, 0, "tpunch")
+	cmdRegistry.Register("shoot", wrapArgs(cmdShoot), "Shoot a target with a ranged weapon.", 0, 0)
+	cmdRegistry.Register("subdue", wrapArgs(cmdSubdue), "Subdue a target (non-lethal).", 0, 0)
+	cmdRegistry.Register("sleeper", wrapArgs(cmdSleeper), "Apply a sleeper hold to a target.", 0, 0)
+	cmdRegistry.Register("neckbreak", wrapArgs(cmdNeckbreak), "Lethal stealth attack.", 0, 0)
+	cmdRegistry.Register("ambush", wrapArgs(cmdAmbush), "Ambush a target from hiding.", 0, 0)
+	cmdRegistry.Register("order", wrapArgs(cmdOrder), "Order a pet or follower.", LVL_IMMORT, 0)
+
+	// Informative commands (act_informative.go)
+	cmdRegistry.Register("color", wrapArgs(cmdColor), "Toggle ANSI color.", 0, 0)
+	cmdRegistry.Register("commands", wrapArgs(cmdCommands), "List available commands.", 0, 0, "cmds")
+	cmdRegistry.Register("description", wrapArgs(cmdDescription), "Set your character description.", 0, 0)
+	cmdRegistry.Register("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", 0, 0, "diag")
+	cmdRegistry.Register("skills", wrapArgs(cmdSkills), "Show your known skills.", 0, 0, "sk")
+	cmdRegistry.Register("toggle", wrapArgs(cmdToggle), "Toggle a player preference.", 0, 0)
+	cmdRegistry.Register("users", wrapArgs(cmdUsers), "Show connected players.", LVL_IMMORT, 0)
 }
 
 // wrapArgs adapts a func(*Session, []string) error to command.Handler.
@@ -1364,255 +1417,4 @@ func getDoorManager(s *Session) *systems.DoorManager {
 		return nil
 	}
 	return s.manager.doorManager
-}
-
-// CmdOpen handles 'open <direction>' — open a closed door.
-// Source: act.door.c do_open()
-func cmdOpen(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Open what?")
-		return nil
-	}
-
-	dir := resolveDirection(strings.ToLower(args[0]))
-	if dir == "" {
-		s.sendText("Open what?  Try north, south, east, west, up, or down.")
-		return nil
-	}
-
-	dm := getDoorManager(s)
-	if dm == nil {
-		s.sendText("You can't do that right now.")
-		return nil
-	}
-
-	roomVNum := s.player.GetRoomVNum()
-	success, msg := dm.OpenDoor(roomVNum, dir)
-	if !success {
-		s.sendText(msg)
-		return nil
-	}
-
-	s.sendText(msg)
-	doorBroadcast(s, fmt.Sprintf("%s opens the %s door.", s.player.Name, dir))
-	return nil
-}
-
-// CmdClose handles 'close <direction>' — close an open door.
-// Source: act.door.c do_close()
-func cmdClose(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Close what?")
-		return nil
-	}
-
-	dir := resolveDirection(strings.ToLower(args[0]))
-	if dir == "" {
-		s.sendText("Close what?  Try north, south, east, west, up, or down.")
-		return nil
-	}
-
-	dm := getDoorManager(s)
-	if dm == nil {
-		s.sendText("You can't do that right now.")
-		return nil
-	}
-
-	roomVNum := s.player.GetRoomVNum()
-	success, msg := dm.CloseDoor(roomVNum, dir)
-	if !success {
-		s.sendText(msg)
-		return nil
-	}
-
-	s.sendText(msg)
-	doorBroadcast(s, fmt.Sprintf("%s closes the %s door.", s.player.Name, dir))
-	return nil
-}
-
-// CmdLock handles 'lock <direction>' — lock a closed door with the correct key.
-// Source: act.door.c do_lock()
-func cmdLock(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Lock what?")
-		return nil
-	}
-
-	dir := resolveDirection(strings.ToLower(args[0]))
-	if dir == "" {
-		s.sendText("Lock what?  Try north, south, east, west, up, or down.")
-		return nil
-	}
-
-	dm := getDoorManager(s)
-	if dm == nil {
-		s.sendText("You can't do that right now.")
-		return nil
-	}
-
-	roomVNum := s.player.GetRoomVNum()
-	door, ok := dm.GetDoor(roomVNum, dir)
-	if !ok {
-		s.sendText("There is no door there.")
-		return nil
-	}
-
-	if door.KeyVNum == -1 {
-		s.sendText("This door doesn't require a key.")
-		return nil
-	}
-
-	if !playerHasKey(s, door.KeyVNum) {
-		s.sendText("You don't have the right key.")
-		return nil
-	}
-
-	success, msg := dm.LockDoor(roomVNum, dir, door.KeyVNum)
-	if !success {
-		s.sendText(msg)
-		return nil
-	}
-
-	s.sendText(msg)
-	doorBroadcast(s, fmt.Sprintf("%s locks the %s door.", s.player.Name, dir))
-	return nil
-}
-
-// CmdUnlock handles 'unlock <direction>' — unlock a locked door with the correct key.
-// Source: act.door.c do_unlock()
-func cmdUnlock(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Unlock what?")
-		return nil
-	}
-
-	dir := resolveDirection(strings.ToLower(args[0]))
-	if dir == "" {
-		s.sendText("Unlock what?  Try north, south, east, west, up, or down.")
-		return nil
-	}
-
-	dm := getDoorManager(s)
-	if dm == nil {
-		s.sendText("You can't do that right now.")
-		return nil
-	}
-
-	roomVNum := s.player.GetRoomVNum()
-	door, ok := dm.GetDoor(roomVNum, dir)
-	if !ok {
-		s.sendText("There is no door there.")
-		return nil
-	}
-
-	if door.KeyVNum == -1 {
-		s.sendText("This door doesn't require a key.")
-		return nil
-	}
-
-	if !playerHasKey(s, door.KeyVNum) {
-		s.sendText("You don't have the right key.")
-		return nil
-	}
-
-	success, msg := dm.UnlockDoor(roomVNum, dir, door.KeyVNum)
-	if !success {
-		s.sendText(msg)
-		return nil
-	}
-
-	s.sendText(msg)
-	doorBroadcast(s, fmt.Sprintf("%s unlocks the %s door.", s.player.Name, dir))
-	return nil
-}
-
-// CmdPick handles 'pick <direction>' — pick a locked door's lock.
-// Uses the player's Dexterity and thief/assassin level to determine success.
-// Source: act.door.c do_pick()
-func cmdPick(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Pick what?")
-		return nil
-	}
-
-	dir := resolveDirection(strings.ToLower(args[0]))
-	if dir == "" {
-		s.sendText("Pick what?  Try north, south, east, west, up, or down.")
-		return nil
-	}
-
-	dm := getDoorManager(s)
-	if dm == nil {
-		s.sendText("You can't do that right now.")
-		return nil
-	}
-
-	roomVNum := s.player.GetRoomVNum()
-
-	// Calculate pick skill based on class and level
-	// Thieves (class 2) and Assassins (class 6) get bonus
-	// Base skill = level * 5 + DEX bonus
-	classBonus := 0
-	if s.player.Class == 2 || s.player.Class == 6 {
-		classBonus = 20 // thieves/assassins are naturally better
-	}
-	skill := s.player.Level*5 + s.player.Stats.Dex + classBonus
-	if skill > 95 {
-		skill = 95 // cap at 95% — there's always a chance of failure
-	}
-
-	success, msg := dm.PickDoor(roomVNum, dir, skill)
-	if !success {
-		s.sendText(msg)
-		return nil
-	}
-
-	s.sendText(msg)
-	doorBroadcast(s, fmt.Sprintf("%s picks the lock on the %s door.", s.player.Name, dir))
-	return nil
-}
-
-// cmdKnock handles 'knock <direction>' — knock on a closed door.
-// Source: ROM act.movement.c do_knock()
-func cmdKnock(s *Session, args []string) error {
-	dir := ""
-	if len(args) > 0 {
-		dir = resolveDirection(strings.ToLower(args[0]))
-	}
-
-	if dir == "" {
-		s.sendText("Knock on what?  Try north, south, east, west, up, or down.")
-		return nil
-	}
-
-	roomVNum := s.player.GetRoomVNum()
-	room, ok := s.manager.world.GetRoom(roomVNum)
-	if !ok {
-		return nil
-	}
-
-	exit, exists := room.Exits[dir]
-	if !exists {
-		s.sendText("There is nothing to knock on in that direction.")
-		return nil
-	}
-
-	var doorDesc string
-	if exit.Keywords != "" {
-		doorDesc = exit.Keywords
-	} else {
-		doorDesc = dir
-	}
-
-	s.sendText(fmt.Sprintf("You knock on the %s.", doorDesc))
-
-	// Notify the room the player is in
-	s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s knocks on the %s.", s.player.Name, doorDesc)), s.player.Name)
-
-	// If the door has a to_room, notify that room too
-	if exit.ToRoom > 0 {
-		s.manager.BroadcastToRoom(exit.ToRoom, []byte(fmt.Sprintf("Someone knocks on the door from the other side.")), "")
-	}
-
-	return nil
 }

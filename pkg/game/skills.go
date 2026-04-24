@@ -33,6 +33,12 @@ const (
 
 	// Wave 2 skills (new_cmds2.c)
 	SkillScrounge     = "scrounge"
+
+	// act.other.c skills
+	SkillPeek     = "peek"
+	SkillStealth  = "stealth"
+	SkillAppraise = "appraise"
+	SkillScout    = "scout"
 	SkillFirstAid     = "first_aid"
 	SkillDisarm       = "disarm"
 	SkillMindlink     = "mindlink"

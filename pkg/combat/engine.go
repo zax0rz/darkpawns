@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+// CombatPairKey uniquely identifies a combat pair by both participants.
+type CombatPairKey struct {
+	Attacker string
+	Target   string
+}
+
 // CombatPair represents two entities fighting each other
 type CombatPair struct {
 	Attacker       Combatant
@@ -20,7 +26,7 @@ type CombatEngine struct {
 	mu sync.RWMutex
 
 	// Active combat pairs
-	combatPairs map[string]*CombatPair // key: attacker name
+	combatPairs map[CombatPairKey]*CombatPair // key: (attacker, target)
 
 	// Combat ticker
 	ticker   *time.Ticker
@@ -48,7 +54,7 @@ type CombatEngine struct {
 // NewCombatEngine creates a new combat engine
 func NewCombatEngine() *CombatEngine {
 	return &CombatEngine{
-		combatPairs: make(map[string]*CombatPair),
+		combatPairs: make(map[CombatPairKey]*CombatPair),
 		stopChan:    make(chan struct{}),
 	}
 }
@@ -129,9 +135,22 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	attackerName := attacker.GetName()
 	defenderName := defender.GetName()
 
+	// Build composite key
+	key := CombatPairKey{
+		Attacker: attackerName,
+		Target:   defenderName,
+	}
+
 	// Check if already fighting
-	if _, exists := ce.combatPairs[attackerName]; exists {
+	if _, exists := ce.combatPairs[key]; exists {
 		return fmt.Errorf("%s is already fighting", attackerName)
+	}
+
+	// Also check same attacker attacking different target (prevent silent overwrite)
+	for k := range ce.combatPairs {
+		if k.Attacker == attackerName {
+			return fmt.Errorf("%s is already fighting", attackerName)
+		}
 	}
 
 	// Set fighting state
@@ -139,7 +158,7 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	defender.SetFighting(attackerName)
 
 	// Start combat
-	ce.combatPairs[attackerName] = &CombatPair{
+	ce.combatPairs[key] = &CombatPair{
 		Attacker: attacker,
 		Defender: defender,
 		Started:  time.Now(),
@@ -153,22 +172,14 @@ func (ce *CombatEngine) StopCombat(charName string) {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
-	// Find and stop combat
-	if pair, exists := ce.combatPairs[charName]; exists {
-		pair.Attacker.StopFighting()
-		if pair.Defender.GetFighting() == charName {
-			pair.Defender.StopFighting()
-		}
-		delete(ce.combatPairs, charName)
-	}
-
-	// Also check if this character is being attacked
-	for attackerName, pair := range ce.combatPairs {
-		if pair.Defender.GetName() == charName {
-			pair.Defender.StopFighting()
+	// Find and stop combat — iterate all pairs to find matches by attacker or defender
+	for key, pair := range ce.combatPairs {
+		if key.Attacker == charName || pair.Defender.GetName() == charName {
 			pair.Attacker.StopFighting()
-			delete(ce.combatPairs, attackerName)
-			break
+			if pair.Defender.GetFighting() == key.Attacker {
+				pair.Defender.StopFighting()
+			}
+			delete(ce.combatPairs, key)
 		}
 	}
 }
@@ -178,14 +189,9 @@ func (ce *CombatEngine) IsFighting(charName string) bool {
 	ce.mu.RLock()
 	defer ce.mu.RUnlock()
 
-	// Check if attacking
-	if _, exists := ce.combatPairs[charName]; exists {
-		return true
-	}
-
-	// Check if being attacked
-	for _, pair := range ce.combatPairs {
-		if pair.Defender.GetName() == charName {
+	// Check if attacking or being attacked — must iterate with composite keys
+	for key, pair := range ce.combatPairs {
+		if key.Attacker == charName || pair.Defender.GetName() == charName {
 			return true
 		}
 	}
@@ -334,8 +340,11 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 		// Get attack type from combat pair if available
 		attackType := -1 // TYPE_UNDEFINED
 		ce.mu.RLock()
-		if pair, exists := ce.combatPairs[killerName]; exists {
-			attackType = pair.LastAttackType
+		for key, pair := range ce.combatPairs {
+			if key.Attacker == killerName {
+				attackType = pair.LastAttackType
+				break
+			}
 		}
 		ce.mu.RUnlock()
 		ce.DeathFunc(victim, killer, attackType)
@@ -347,13 +356,11 @@ func (ce *CombatEngine) GetCombatTarget(charName string) (Combatant, bool) {
 	ce.mu.RLock()
 	defer ce.mu.RUnlock()
 
-	// Check if attacking someone
-	if pair, exists := ce.combatPairs[charName]; exists {
-		return pair.Defender, true
-	}
-
-	// Check if being attacked
-	for _, pair := range ce.combatPairs {
+	// Check if attacking someone or being attacked — must iterate with composite keys
+	for key, pair := range ce.combatPairs {
+		if key.Attacker == charName {
+			return pair.Defender, true
+		}
 		if pair.Defender.GetName() == charName {
 			return pair.Attacker, true
 		}
@@ -367,13 +374,12 @@ func (ce *CombatEngine) GetCombatStatus(charName string) string {
 	ce.mu.RLock()
 	defer ce.mu.RUnlock()
 
-	if pair, exists := ce.combatPairs[charName]; exists {
-		return fmt.Sprintf("You are fighting %s", pair.Defender.GetName())
-	}
-
-	for attacker, pair := range ce.combatPairs {
+	for key, pair := range ce.combatPairs {
+		if key.Attacker == charName {
+			return fmt.Sprintf("You are fighting %s", pair.Defender.GetName())
+		}
 		if pair.Defender.GetName() == charName {
-			return fmt.Sprintf("You are being attacked by %s", attacker)
+			return fmt.Sprintf("You are being attacked by %s", key.Attacker)
 		}
 	}
 

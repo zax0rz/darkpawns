@@ -302,15 +302,15 @@ func attackTypeToCorpseAttack(attackType int) CorpseAttackType {
 		return AttackCold
 	case 10, 92: // SPELL_COLOR_SPRAY, SPELL_DISRUPT
 		return AttackBlast
-	case 21, 94: // SPELL_ENERGY_DRAIN, SPELL_SOUL_LEECH
+	case 21, 83: // SPELL_ENERGY_DRAIN, SPELL_SOUL_LEECH (was incorrectly 94 before fix)
 		return AttackEnergyDrain
-	case 30, 15, 31: // SPELL_LIGHTNING_BOLT, SPELL_CALL_LIGHTNING, SPELL_SHOCKING_GRASP
+	case 30, 6, 31: // SPELL_LIGHTNING_BOLT, SPELL_CALL_LIGHTNING (was incorrectly 15 before fix), SPELL_SHOCKING_GRASP
 		return AttackLightning
 	case 34: // SPELL_PSIBLAST
 		return AttackPsiblast
 	case 93: // SPELL_DISINTEGRATE - handled separately in makeDust
 		return AttackUndefined // Should not reach here for disintegrate
-	case 24: // SPELL_DROWNING
+	case 103: // SPELL_DROWNING (was incorrectly 24 before fix)
 		return AttackDrowning
 	case 35: // SPELL_PETRIFY
 		return AttackPetrify

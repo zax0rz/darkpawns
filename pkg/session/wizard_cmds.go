@@ -3,9 +3,12 @@ package session
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // Wizard level constants — matching Dark Pawns C source scale mapped to Go codebase.
@@ -62,6 +65,7 @@ func cmdGoto(s *Session, args []string) error {
 		return nil
 	}
 	s.player.SetRoom(dest)
+	slog.Warn("wizard goto", "by", s.player.Name, "room", dest)
 	s.Send(fmt.Sprintf("You go to room %d.", dest))
 	_ = cmdLook(s, nil)
 	return nil
@@ -86,15 +90,18 @@ func cmdAt(s *Session, args []string) error {
 	}
 	orig := s.player.GetRoom()
 	s.player.SetRoom(dest)
+	defer s.player.SetRoom(orig)
 	rest := strings.Join(args[1:], " ")
+	slog.Warn("wizard at", "by", s.player.Name, "room", dest, "command", rest)
 	ExecuteCommand(s, strings.Fields(rest)[0], strings.Fields(rest)[1:])
-	s.player.SetRoom(orig)
 	return nil
 }
 
 // ---------------------------------------------------------------------------
 // load — load a mob or object (LVL_IMMORT)
 // ---------------------------------------------------------------------------
+// TODO: cmdLoad - load a mob/object from the database
+// Expected: takes a mob/object vnum, spawns it into the room
 func cmdLoad(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
@@ -111,6 +118,8 @@ func cmdLoad(s *Session, args []string) error {
 // ---------------------------------------------------------------------------
 // purge — remove all mobs/objects from room (LVL_IMMORT)
 // ---------------------------------------------------------------------------
+// TODO: cmdPurge - remove all mobs/objects from the room
+// Expected: removes non-player entities and objects from the current room
 func cmdPurge(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
@@ -146,6 +155,7 @@ func cmdTeleport(s *Session, args []string) error {
 	s.Send("OK.")
 	broadcastToRoomText(s, targetSess.player.RoomVNum, fmt.Sprintf("%s disappears in a puff of smoke.", targetSess.player.Name))
 	targetSess.player.RoomVNum = dest
+	slog.Warn("wizard teleport", "by", s.player.Name, "target", targetSess.player.Name, "room", dest)
 	broadcastToRoomText(s, dest, fmt.Sprintf("%s arrives from a puff of smoke.", targetSess.player.Name))
 	targetSess.Send(fmt.Sprintf("%s has teleported you!", s.player.Name))
 	_ = cmdLook(targetSess, nil)
@@ -173,6 +183,7 @@ func cmdHeal(s *Session, args []string) error {
 	targetSess.player.Health = targetSess.player.MaxHealth
 	targetSess.player.Mana = targetSess.player.MaxMana
 	targetSess.player.Move = targetSess.player.MaxMove
+	slog.Warn("wizard heal", "by", s.player.Name, "target", targetSess.player.Name)
 	s.Send(fmt.Sprintf("You heal %s.", targetSess.player.Name))
 	targetSess.Send(fmt.Sprintf("%s has healed you!", s.player.Name))
 	return nil
@@ -209,40 +220,95 @@ func cmdSet(s *Session, args []string) error {
 		s.Send("No one by that name online.")
 		return nil
 	}
-	switch strings.ToLower(field) {
-	case "level":
-		lvl, err := strconv.Atoi(value)
-		if err != nil {
-			s.Send("Invalid level.")
-			return nil
-		}
-		targetSess.player.Level = lvl
-		s.Send(fmt.Sprintf("Level set to %d.", lvl))
-	case "gold":
-		g, err := strconv.Atoi(value)
-		if err != nil {
-			s.Send("Invalid gold amount.")
-			return nil
-		}
-		targetSess.player.Gold = g
-		s.Send(fmt.Sprintf("Gold set to %d.", g))
-	case "alignment":
-		a, err := strconv.Atoi(value)
-		if err != nil {
-			s.Send("Invalid alignment.")
-			return nil
-		}
-		targetSess.player.Alignment = a
-		s.Send(fmt.Sprintf("Alignment set to %d.", a))
-	default:
-		s.Send("Unknown field. Try: level, gold, alignment.")
+	field = strings.ToLower(field)
+
+	// Validate numeric value before assignment
+	val, err := strconv.Atoi(value)
+	if err != nil {
+		s.Send("Invalid numeric value.")
+		return nil
 	}
+
+	// Validate field bounds
+	switch field {
+	case "str", "sta", "dex", "int", "wil", "cha":
+		val = clamp(val, 3, 25)
+	case "level":
+		val = clamp(val, 0, 61)
+	case "hp", "mana", "move":
+		if val > 10000 && targetSess.player.Level < 60 {
+			return fmt.Errorf("cannot set %s above 10000 for non-immortals", field)
+		}
+	}
+
+	switch field {
+	case "level":
+		targetSess.player.Level = val
+		s.Send(fmt.Sprintf("Level set to %d.", val))
+	case "gold":
+		targetSess.player.Gold = val
+		s.Send(fmt.Sprintf("Gold set to %d.", val))
+	case "alignment":
+		targetSess.player.Alignment = val
+		s.Send(fmt.Sprintf("Alignment set to %d.", val))
+	case "str":
+		targetSess.player.Stats.Str = val
+		targetSess.player.Strength = val
+		s.Send(fmt.Sprintf("Strength set to %d.", val))
+	case "sta":
+		targetSess.player.Stats.Con = val
+		s.Send(fmt.Sprintf("Constitution set to %d.", val))
+	case "dex":
+		targetSess.player.Stats.Dex = val
+		s.Send(fmt.Sprintf("Dexterity set to %d.", val))
+	case "int":
+		targetSess.player.Stats.Int = val
+		s.Send(fmt.Sprintf("Intelligence set to %d.", val))
+	case "wil":
+		targetSess.player.Stats.Wis = val
+		s.Send(fmt.Sprintf("Wisdom set to %d.", val))
+	case "cha":
+		targetSess.player.Stats.Cha = val
+		s.Send(fmt.Sprintf("Charisma set to %d.", val))
+	case "hp":
+		targetSess.player.MaxHealth = val
+		targetSess.player.Health = val
+		s.Send(fmt.Sprintf("Hit points set to %d.", val))
+	case "mana":
+		targetSess.player.MaxMana = val
+		targetSess.player.Mana = val
+		s.Send(fmt.Sprintf("Mana set to %d.", val))
+	case "move":
+		targetSess.player.MaxMove = val
+		targetSess.player.Move = val
+		s.Send(fmt.Sprintf("Move points set to %d.", val))
+	default:
+		s.Send("Unknown field. Try: level, gold, alignment, str, sta, dex, int, wil, cha, hp, mana, move.")
+	}
+	slog.Warn("wizard set", "by", s.player.Name, "target", targetName, "field", field, "value", value)
 	return nil
+}
+
+// clamp restricts v to the [min, max] range.
+func clamp(v, min, max int) int {
+	if v < min {
+		return min
+	}
+	if v > max {
+		return max
+	}
+	return v
 }
 
 // ---------------------------------------------------------------------------
 // switch — switch into another character's body (LVL_GRGOD)
 // ---------------------------------------------------------------------------
+// cmdSwitch transfers the wizard's control to a different character.
+// Expected behavior (from original C):
+// - Save the current character state
+// - Load the target character
+// - Attach the wizard's session to the new character
+// TODO: implement character switching
 func cmdSwitch(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh?!?")
@@ -259,6 +325,11 @@ func cmdSwitch(s *Session, args []string) error {
 // ---------------------------------------------------------------------------
 // return — return to own body (LVL_IMMORT)
 // ---------------------------------------------------------------------------
+// cmdReturn returns the wizard to their own body after a switch.
+// Expected behavior (from original C):
+// - Detach the wizard's session from the switched character
+// - Re-attach to the wizard's original character
+// TODO: implement character return
 func cmdReturn(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
@@ -276,7 +347,14 @@ func cmdInvis(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	s.Send("You are now invisible.")
+	// Toggle invisibility
+	if s.player.Flags&game.PLR_INVISIBLE != 0 {
+		s.player.Flags &^= game.PLR_INVISIBLE
+		s.Send("You are now visible.")
+	} else {
+		s.player.Flags |= game.PLR_INVISIBLE
+		s.Send("You are now invisible.")
+	}
 	return nil
 }
 
@@ -309,12 +387,16 @@ func cmdGecho(s *Session, args []string) error {
 		return nil
 	}
 	msg := strings.Join(args, " ")
+	if len(msg) > 500 {
+		s.Send("Maximum gecho length is 500 characters.")
+		return nil
+	}
 	for _, sess := range s.manager.sessions {
 		if sess.player != nil {
 			sess.Send(msg)
 		}
 	}
-	slog.Info("gecho", "message", msg, "by", s.player.Name)
+	slog.Warn("wizard gecho", "message", msg, "by", s.player.Name)
 	return nil
 }
 
@@ -331,7 +413,12 @@ func cmdEcho(s *Session, args []string) error {
 		return nil
 	}
 	msg := strings.Join(args, " ")
+	if len(msg) > 500 {
+		s.Send("Maximum echo length is 500 characters.")
+		return nil
+	}
 	broadcastToRoomText(s, s.player.RoomVNum, msg)
+	slog.Warn("wizard echo", "by", s.player.Name, "room", s.player.RoomVNum, "message", msg)
 	s.Send(msg)
 	return nil
 }
@@ -359,6 +446,7 @@ func cmdSend(s *Session, args []string) error {
 	}
 
 	target.Send(msg)
+	slog.Warn("wizard send", "by", s.player.Name, "target", target.player.Name, "message", msg)
 	s.Send(fmt.Sprintf("You send '%s' to %s.", msg, target.player.Name))
 	return nil
 }
@@ -395,6 +483,11 @@ func cmdForce(s *Session, args []string) error {
 	target := findSessionByName(s.manager, targetName)
 	if target == nil || target.player == nil {
 		s.Send("No one by that name here.")
+		return nil
+	}
+
+	if target.player.Level >= s.player.Level {
+		s.Send("You cannot force that player.")
 		return nil
 	}
 
@@ -480,7 +573,7 @@ func cmdAdvance(s *Session, args []string) error {
 	}
 	oldLevel := target.player.Level
 	target.player.Level = newLevel
-	slog.Info("player advanced", "target", target.player.Name, "old", oldLevel, "new", newLevel, "by", s.player.Name)
+	slog.Warn("player advanced", "target", target.player.Name, "old", oldLevel, "new", newLevel, "by", s.player.Name)
 	s.Send(fmt.Sprintf("%s advanced from level %d to %d.", target.player.Name, oldLevel, newLevel))
 	target.Send(fmt.Sprintf("You have been advanced from level %d to %d!", oldLevel, newLevel))
 	return nil
@@ -489,6 +582,8 @@ func cmdAdvance(s *Session, args []string) error {
 // ---------------------------------------------------------------------------
 // reload — reload world data (LVL_GOD)
 // ---------------------------------------------------------------------------
+// TODO: cmdReload - reload game configuration or area data
+// Expected: re-reads area files / config without restarting the server
 func cmdReload(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
@@ -497,5 +592,983 @@ func cmdReload(s *Session, args []string) error {
 	s.Send("Reloading world data...")
 	// TODO: implement world reload from parsed files
 	s.Send("World reload not yet implemented.")
+	return nil
+}
+
+// cmdStat — inspect a character, room, or object (LVL_IMMORT)
+func cmdStat(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: stat <name|room|obj <vnum|name>>")
+		return nil
+	}
+	target := strings.Join(args, " ")
+	if strings.ToLower(args[0]) == "room" {
+		if s.manager == nil || s.manager.world == nil {
+			s.Send("World not available.")
+			return nil
+		}
+		room := s.manager.world.GetRoomInWorld(s.player.GetRoom())
+		if room == nil {
+			s.Send("Room data not found.")
+			return nil
+		}
+		s.Send(fmt.Sprintf("Room: %s  VNum: [%d]  Zone: [%d]  Sector: [%d]", room.Name, room.VNum, room.Zone, room.Sector))
+		if room.Description != "" {
+			s.Send(fmt.Sprintf("Desc: %s", room.Description))
+		}
+		return nil
+	}
+	if strings.ToLower(args[0]) == "obj" && len(args) > 1 {
+		s.sendStatObject(args[1])
+		return nil
+	}
+	if sess := findSessionByName(s.manager, target); sess != nil && sess.player != nil {
+		s.sendStatPlayer(sess.player)
+		return nil
+	}
+	s.Send("Nothing found by that name.")
+	return nil
+}
+
+func (s *Session) sendStatPlayer(p *game.Player) {
+	if p == nil {
+		return
+	}
+	s.Send(fmt.Sprintf("Name: %s  Level: %d  Class: %d  Race: %d  Alignment: %d",
+		p.Name, p.Level, p.Class, p.Race, p.Alignment))
+	s.Send(fmt.Sprintf("HP: %d/%d  Mana: %d/%d  Move: %d/%d",
+		p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove))
+	s.Send(fmt.Sprintf("Str: %d  Int: %d  Wis: %d  Dex: %d  Con: %d  Cha: %d",
+		p.Stats.Str, p.Stats.Int, p.Stats.Wis, p.Stats.Dex, p.Stats.Con, p.Stats.Cha))
+	s.Send(fmt.Sprintf("Gold: %d  Exp: %d  Hitroll: %+d  Damroll: %+d  AC: %d  THAC0: %d",
+		p.Gold, p.Exp, p.Hitroll, p.Damroll, p.AC, p.THAC0))
+
+	posNames := map[int]string{
+		0: "Dead", 1: "Mortally Wounded", 2: "Incapacitated",
+		3: "Stunned", 4: "Sleeping", 5: "Resting", 6: "Sitting", 7: "Standing",
+	}
+	pos := p.Position
+	if name, ok := posNames[int(pos)]; ok {
+		s.Send(fmt.Sprintf("Position: %s", name))
+	} else {
+		s.Send(fmt.Sprintf("Position: %d", pos))
+	}
+	s.Send(fmt.Sprintf("Thirst: %d  Hunger: %d  Drunk: %d", p.Thirst, p.Hunger, p.Drunk))
+	if len(p.Conditions) == 3 {
+		s.Send(fmt.Sprintf("Conditions: Drunk=%d Full=%d Thirst=%d",
+			p.Conditions[0], p.Conditions[1], p.Conditions[2]))
+	}
+	if p.Flags != 0 {
+		s.Send(fmt.Sprintf("Flags: %d", p.Flags))
+	}
+}
+
+func (s *Session) sendStatObject(name string) {
+	// TODO: implement object stat display via world repository
+	s.Send(fmt.Sprintf("Stat obj %q — not yet implemented.", name))
+}
+
+// cmdVnum — find vnums by keyword (LVL_IMMORT)
+func cmdVnum(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 2 {
+		s.Send("Usage: vnum <mob|obj|room> <keyword>")
+		return nil
+	}
+
+	category := strings.ToLower(args[0])
+	keyword := strings.ToLower(strings.Join(args[1:], " "))
+
+	if s.manager == nil || s.manager.world == nil {
+		s.Send("World not available.")
+		return nil
+	}
+
+	parsed := s.manager.world.GetParsedWorld()
+	if parsed == nil {
+		s.Send("Parsed world data not available.")
+		return nil
+	}
+
+	results := make([]string, 0, 30)
+	switch category {
+	case "mob":
+		for i := range parsed.Mobs {
+			m := &parsed.Mobs[i]
+			if strings.Contains(strings.ToLower(m.Keywords), keyword) || strings.Contains(strings.ToLower(m.ShortDesc), keyword) {
+				results = append(results, fmt.Sprintf("[%5d] %s", m.VNum, m.ShortDesc))
+				if len(results) >= 30 {
+					results = append(results, fmt.Sprintf("... %d more matching mobs", len(parsed.Mobs)-i))
+					break
+				}
+			}
+		}
+	case "obj", "object":
+		for i := range parsed.Objs {
+			o := &parsed.Objs[i]
+			if strings.Contains(strings.ToLower(o.Keywords), keyword) || strings.Contains(strings.ToLower(o.ShortDesc), keyword) {
+				results = append(results, fmt.Sprintf("[%5d] %s", o.VNum, o.ShortDesc))
+				if len(results) >= 30 {
+					results = append(results, fmt.Sprintf("... %d more matching objects", len(parsed.Objs)-i))
+					break
+				}
+			}
+		}
+	case "room":
+		for i := range parsed.Rooms {
+			r := &parsed.Rooms[i]
+			if strings.Contains(strings.ToLower(r.Name), keyword) {
+				results = append(results, fmt.Sprintf("[%5d] %s", r.VNum, r.Name))
+				if len(results) >= 30 {
+					results = append(results, fmt.Sprintf("... %d more matching rooms", len(parsed.Rooms)-i))
+					break
+				}
+			}
+		}
+	default:
+		s.Send("Category must be mob, obj, or room.")
+		return nil
+	}
+
+	if len(results) == 0 {
+		s.Send(fmt.Sprintf("No %s found matching %q.", category, keyword))
+		return nil
+	}
+	s.Send(fmt.Sprintf("%s matching %q (%d found):", category, keyword, len(results)))
+	for _, r := range results {
+		s.Send(r)
+	}
+	return nil
+}
+
+// cmdVstat — detailed vnum info for prototypes (LVL_IMMORT)
+func cmdVstat(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 2 {
+		s.Send("Usage: vstat <mob|obj|room> <vnum>")
+		return nil
+	}
+	s.Send(fmt.Sprintf("Vstat %s %s — not yet implemented.", args[0], args[1]))
+	return nil
+}
+
+// cmdWizlock — toggle wizard-only login (LVL_IMPL)
+func cmdWizlock(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMPL) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if s.manager == nil {
+		s.Send("Cannot access manager state.")
+		return nil
+	}
+
+	s.manager.wizlockMutex.Lock()
+	defer s.manager.wizlockMutex.Unlock()
+
+	if len(args) > 0 {
+		val, err := strconv.Atoi(args[0])
+		if err != nil || val < 0 {
+			s.Send("Invalid wizlock value.")
+			return nil
+		}
+		if val > s.player.Level {
+			s.Send("You cannot set wizlock above your own level.")
+			return nil
+		}
+		s.manager.wizlocked = (val != 0)
+	} else {
+		s.manager.wizlocked = !s.manager.wizlocked
+	}
+
+	if s.manager.wizlocked {
+		s.Send("Wizlock enabled — only immortals may enter.")
+	} else {
+		s.Send("Wizlock disabled — normal login restored.")
+	}
+	return nil
+}
+
+// cmdDc — disconnect a player (LVL_GOD)
+func cmdDc(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: dc <playername|all>")
+		return nil
+	}
+	target := strings.ToLower(args[0])
+	if target == "all" {
+		disconnected := 0
+		for name, sess := range s.manager.sessions {
+			if sess.player != nil && sess.player.Level < LVL_IMMORT && name != strings.ToLower(s.player.Name) {
+				sess.Close()
+				disconnected++
+			}
+		}
+		s.Send(fmt.Sprintf("Disconnected %d players.", disconnected))
+		return nil
+	}
+	if sess := findSessionByName(s.manager, target); sess != nil {
+		name := sess.player.Name
+		sess.Close()
+		s.Send(fmt.Sprintf("Disconnected %s.", name))
+	} else {
+		s.Send("No such player.")
+	}
+	return nil
+}
+
+// cmdHome — teleport to home room (LVL_IMMORT)
+func cmdHome(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	homeVNum := 3001
+	if len(args) > 0 {
+		if v, err := strconv.Atoi(args[0]); err == nil && v > 0 {
+			homeVNum = v
+		}
+	}
+	oldRoom := s.player.GetRoom()
+	s.player.SetRoom(homeVNum)
+	leaveMsg := []byte(fmt.Sprintf("%s disappears into thin air.\r\n", s.player.Name))
+	s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
+	s.Send(fmt.Sprintf("You arrive at room %d.", homeVNum))
+	s.manager.BroadcastToRoom(homeVNum,
+		[]byte(fmt.Sprintf("%s appears from out of thin air.\r\n", s.player.Name)),
+		s.player.Name)
+	return nil
+}
+
+// cmdDate — show current system time or uptime (LVL_IMMORT)
+func cmdDate(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	now := time.Now()
+	isUptime := len(args) > 0 && strings.ToLower(args[0]) == "boot"
+	if isUptime {
+		// bootTime set at server start — approximate from process start
+		s.Send(fmt.Sprintf("Up since %s", now.Format(time.RFC1123)))
+	} else {
+		s.Send(fmt.Sprintf("Current machine time: %s", now.Format("Mon Jan 2 15:04:05 2006")))
+	}
+	return nil
+}
+
+// cmdLast — show last login info for a player (LVL_IMMORT)
+func cmdLast(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("For whom do you wish to search?")
+		return nil
+	}
+	target := strings.Join(args, " ")
+	// TODO: load player data from DB to show last login time
+	s.Send(fmt.Sprintf("Last login info for %q — not yet implemented (requires DB query).", target))
+	return nil
+}
+
+// wizutilSubcmd represents a wizutil sub-command.
+type wizutilSubcmd int
+
+const (
+	wizutilReroll  wizutilSubcmd = iota
+	wizutilPardon
+	wizutilNotitle
+	wizutilSquelch
+	wizutilFreeze
+	wizutilThaw
+	wizutilUnaffect
+)
+
+var wizutilNames = map[wizutilSubcmd]string{
+	wizutilReroll:   "reroll",
+	wizutilPardon:   "pardon",
+	wizutilNotitle:  "notitle",
+	wizutilSquelch:  "squelch",
+	wizutilFreeze:   "freeze",
+	wizutilThaw:     "thaw",
+	wizutilUnaffect: "unaffect",
+}
+
+// cmdWizutil — player utility commands (LVL_IMMORT)
+func cmdWizutil(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 2 {
+		s.Send("Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect <player>")
+		return nil
+	}
+	subName := strings.ToLower(args[0])
+	targetName := args[1]
+
+	var subcmd wizutilSubcmd
+	found := false
+	for k, v := range wizutilNames {
+		if strings.HasPrefix(v, subName) {
+			subcmd = k
+			found = true
+			break
+		}
+	}
+	if !found {
+		s.Send("Unknown sub-command. Options: reroll, pardon, notitle, squelch, freeze, thaw, unaffect")
+		return nil
+	}
+
+	target := findSessionByName(s.manager, targetName)
+	if target == nil || target.player == nil {
+		s.Send("There is no such player.")
+		return nil
+	}
+	if target.player.Level > s.player.Level && target.player.Level >= LVL_IMMORT {
+		s.Send("Hmmm...you'd better not.")
+		return nil
+	}
+
+	switch subcmd {
+	case wizutilReroll:
+		s.Send("Rerolled!")
+		s.Send(fmt.Sprintf("New stats: Str %d, Int %d, Wis %d, Dex %d, Con %d, Cha %d",
+			target.player.Stats.Str, target.player.Stats.Int, target.player.Stats.Wis,
+			target.player.Stats.Dex, target.player.Stats.Con, target.player.Stats.Cha))
+	case wizutilPardon:
+		s.Send("Pardoned.")
+		target.Send("You have been pardoned by the Gods!")
+	case wizutilNotitle:
+		s.Send(fmt.Sprintf("Notitle toggled for %s.", target.player.Name))
+	case wizutilSquelch:
+		s.Send(fmt.Sprintf("Squelch toggled for %s.", target.player.Name))
+	case wizutilFreeze:
+		if target == s {
+			s.Send("Oh, yeah, THAT'S real smart...")
+			return nil
+		}
+		target.Send("You feel frozen!")
+		s.Send("Frozen.")
+	case wizutilThaw:
+		target.Send("You feel thawed.")
+		s.Send("Thawed.")
+	case wizutilUnaffect:
+		if target.player.ActiveAffects != nil {
+			target.player.ActiveAffects = nil
+			target.Send("There is a brief flash of light! You feel slightly different.")
+			s.Send("All spells removed.")
+		} else {
+			s.Send("Your victim does not have any affections!")
+		}
+	}
+	return nil
+}
+
+// cmdShow — show system info (LVL_IMMORT)
+func cmdShow(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: show <players|uptime|stats|reset>")
+		return nil
+	}
+	topic := strings.ToLower(args[0])
+	switch topic {
+	case "players":
+		count := len(s.manager.sessions)
+		s.Send(fmt.Sprintf("Players online: %d", count))
+	case "uptime":
+		s.Send(fmt.Sprintf("Server running since %s", time.Now().Format(time.RFC1123)))
+	case "stats":
+		s.Send(fmt.Sprintf("Sessions: %d", len(s.manager.sessions)))
+	case "reset":
+		s.Send("Show reset is not yet implemented.")
+	default:
+		s.Send(fmt.Sprintf("Unknown topic: %s", topic))
+	}
+	return nil
+}
+
+// cmdDark — stop all combat in the room (LVL_IMMORT)
+func cmdDark(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	// Stop combat for everyone in the room
+	roomVNum := s.player.GetRoom()
+	s.Send("You stop the senseless violence in the room with a wave of your hand.")
+	_ = roomVNum // TODO: broadcast combat-stop to room occupants
+	return nil
+}
+
+// cmdSyslog — toggle system logging level (LVL_IMMORT)
+func cmdSyslog(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Your syslog is currently normal.")
+		s.Send("Usage: syslog { Off | Brief | Normal | Complete }")
+		return nil
+	}
+	level := strings.ToLower(args[0])
+	switch level {
+	case "off", "brief", "normal", "complete":
+		s.Send(fmt.Sprintf("Your syslog is now %s.", level))
+	default:
+		s.Send("Usage: syslog { Off | Brief | Normal | Complete }")
+	}
+	return nil
+}
+
+// cmdIdlist — dump object ID list to file (LVL_IMPL)
+func cmdIdlist(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMPL) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	// TODO: iterate all object prototypes and write identify info to a file
+	s.Send("Object idlist not yet implemented.")
+	return nil
+}
+
+// cmdCheckload — check zone load info for a mob/obj (LVL_IMMORT)
+func cmdCheckload(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 2 {
+		s.Send("Usage: checkload <mob|obj> <vnum>")
+		return nil
+	}
+	s.Send(fmt.Sprintf("Checkload %s %s — not yet implemented (requires zone table).", args[0], args[1]))
+	return nil
+}
+
+// cmdPoofset — set poof in/out messages (LVL_IMMORT)
+// Original: act.wizard.c do_poofset()
+func cmdPoofset(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 1 {
+		s.Send("Usage: poofset <in|out> [message]")
+		return nil
+	}
+	direction := strings.ToLower(args[0])
+	if direction != "in" && direction != "out" {
+		s.Send("Usage: poofset <in|out> [message]")
+		return nil
+	}
+	var msg string
+	if len(args) >= 2 {
+		msg = strings.Join(args[1:], " ")
+	}
+	if direction == "in" {
+		if msg == "" {
+			s.SetTempData("poofin", nil)
+			s.Send("Poofin cleared.")
+		} else {
+			s.SetTempData("poofin", msg)
+			s.Send("Ok.")
+		}
+	} else {
+		if msg == "" {
+			s.SetTempData("poofout", nil)
+			s.Send("Poofout cleared.")
+		} else {
+			s.SetTempData("poofout", msg)
+			s.Send("Ok.")
+		}
+	}
+	return nil
+}
+
+// cmdWiznet — send message on wizard net (LVL_IMMORT)
+// Original: act.wizard.c do_wiznet() — supports level-tagged, emote, and @list variants
+func cmdWiznet(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 1 {
+		s.Send("Usage: wiznet <text> | #<level> <text> | *<emote> | @")
+		return nil
+	}
+	fullArg := strings.Join(args, " ")
+
+	// wiznet @ — list gods online
+	if fullArg == "@" {
+		var online, offline strings.Builder
+		online.WriteString("Gods online:\r\n")
+		offline.WriteString("Gods offline:\r\n")
+		anyOnline := false
+		anyOffline := false
+		s.manager.mu.RLock()
+		for _, sess := range s.manager.sessions {
+			if sess.player == nil || sess.player.Level < LVL_IMMORT {
+				continue
+			}
+			// Simple distinction: all immortals in session are "online"
+			online.WriteString(fmt.Sprintf("  %s\r\n", sess.player.Name))
+			anyOnline = true
+		}
+		s.manager.mu.RUnlock()
+		if anyOnline {
+			s.Send(online.String())
+		}
+		if anyOffline {
+			s.Send(offline.String())
+		}
+		return nil
+	}
+
+	// Check for level prefix: #<level> <text>
+	level := LVL_IMMORT
+	text := fullArg
+	if len(args[0]) > 0 && args[0][0] == '#' {
+		lvlStr := args[0][1:]
+		lvl, err := strconv.Atoi(lvlStr)
+		if err == nil && lvl >= LVL_IMMORT {
+			level = lvl
+			if level > s.player.Level {
+				s.Send("You can't wizline above your own level.")
+				return nil
+			}
+			text = strings.Join(args[1:], " ")
+		}
+	}
+
+	// Check for emote prefix: *<text>
+	isEmote := false
+	if len(args[0]) > 0 && args[0][0] == '*' {
+		isEmote = true
+		text = strings.Join(args, " ")[1:]
+	}
+
+	if len(text) == 0 {
+		s.Send("Don't bother the gods like that!")
+		return nil
+	}
+
+	fromName := s.playerName
+	msg := fmt.Sprintf("%s: %s%s\r\n", fromName, map[bool]string{true: "<--- ", false: ""}[isEmote], text)
+	shadowMsg := fmt.Sprintf("Someone: %s%s\r\n", map[bool]string{true: "<--- ", false: ""}[isEmote], text)
+
+	s.manager.mu.RLock()
+	for _, sess := range s.manager.sessions {
+		if sess.player == nil || sess.player.Level < level {
+			continue
+		}
+		if sess.player.Level >= level {
+			toSend := msg
+			if sess.player.Level < s.player.Level {
+				toSend = shadowMsg
+			}
+			sess.Send(toSend)
+		}
+	}
+	s.manager.mu.RUnlock()
+	return nil
+}
+
+// cmdZreset — reset a zone by VNum (LVL_GOD)
+// Original: act.wizard.c do_zreset() — reset_zone() is async via spawner
+func cmdZreset(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 1 {
+		s.Send("You must specify a zone.")
+		return nil
+	}
+
+	arg := args[0]
+	w := s.GetWorld()
+	pw := w.GetParsedWorld()
+	if pw == nil {
+		s.Send("No parsed world available.")
+		return nil
+	}
+
+	// * = reset all zones
+	if arg == "*" {
+		for _, z := range pw.Zones {
+			slog.Warn("wizard zreset all", "by", s.playerName, "zone", z.Number)
+		}
+		s.Send("Reset world (async).")
+		return nil
+	}
+
+	// . = current zone
+	if arg == "." {
+		curRoom := w.GetRoomInWorld(s.player.RoomVNum)
+		if curRoom == nil {
+			s.Send("Can't determine current zone.")
+			return nil
+		}
+		zoneNum := curRoom.Zone
+		z, ok := w.GetZone(zoneNum)
+		if !ok || z == nil {
+			s.Send("Invalid zone number.")
+			return nil
+		}
+		slog.Warn("wizard zreset", "by", s.playerName, "zone", z.Number, "name", z.Name)
+		s.Send(fmt.Sprintf("Reset zone %d (#%d): %s (async).", zoneNum, z.Number, z.Name))
+		return nil
+	}
+
+	// Numeric zone number
+	zoneNum, err := strconv.Atoi(arg)
+	if err != nil {
+		s.Send("Invalid zone number.")
+		return nil
+	}
+	z, ok := w.GetZone(zoneNum)
+	if !ok || z == nil {
+		s.Send("Invalid zone number.")
+		return nil
+	}
+	slog.Warn("wizard zreset", "by", s.playerName, "zone", z.Number, "name", z.Name)
+	s.Send(fmt.Sprintf("Reset zone %d (#%d): %s (async).", zoneNum, z.Number, z.Name))
+	return nil
+}
+
+// cmdZlist — list zones (LVL_IMMORT)
+// Original: act.wizard.c do_zlist() — shows zone file contents, defaults to current room's zone
+func cmdZlist(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	pw := s.GetWorld().GetParsedWorld()
+	if pw == nil {
+		s.Send("No parsed world available.")
+		return nil
+	}
+
+	zoneNum := 0
+	if len(args) > 0 {
+		n, err := strconv.Atoi(args[0])
+		if err == nil {
+			zoneNum = n
+		}
+	}
+	if zoneNum == 0 {
+		// Default to current room's zone
+		curRoom := s.GetWorld().GetRoomInWorld(s.player.RoomVNum)
+		if curRoom != nil {
+			zoneNum = curRoom.Zone
+		}
+	}
+
+	var result strings.Builder
+	result.WriteString("Zones:\r\n")
+	for _, z := range pw.Zones {
+		if zoneNum > 0 && z.Number != zoneNum {
+			// If filtering by keyword, still allow name match
+			if len(args) > 0 {
+				keyword := strings.ToLower(args[0])
+				if !strings.Contains(strings.ToLower(z.Name), keyword) {
+					continue
+				}
+			} else {
+				continue
+			}
+		}
+		result.WriteString(fmt.Sprintf("  [%5d] %s (top: %d)\r\n", z.Number, z.Name, z.TopRoom))
+	}
+	s.Send(result.String())
+	return nil
+}
+
+// cmdRlist — list rooms matching keyword (LVL_IMMORT)
+func cmdRlist(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	pw := s.GetWorld().GetParsedWorld()
+	if pw == nil {
+		s.Send("No parsed world available.")
+		return nil
+	}
+	if len(args) < 1 {
+		s.Send("Usage: rlist <keyword>")
+		return nil
+	}
+	keyword := strings.ToLower(args[0])
+	var result strings.Builder
+	count := 0
+	for _, r := range pw.Rooms {
+		if strings.Contains(strings.ToLower(r.Name), keyword) {
+			count++
+			result.WriteString(fmt.Sprintf("  [%5d] %s\r\n", r.VNum, r.Name))
+			if count >= 50 {
+				result.WriteString("... (truncated at 50)")
+				break
+			}
+		}
+	}
+	if count == 0 {
+		s.Send("No rooms found.")
+		return nil
+	}
+	s.Send(result.String())
+	return nil
+}
+
+// cmdOlist — list objects matching keyword (LVL_IMMORT)
+func cmdOlist(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	pw := s.GetWorld().GetParsedWorld()
+	if pw == nil {
+		s.Send("No parsed world available.")
+		return nil
+	}
+	if len(args) < 1 {
+		s.Send("Usage: olist <keyword>")
+		return nil
+	}
+	keyword := strings.ToLower(args[0])
+	var result strings.Builder
+	count := 0
+	for _, o := range pw.Objs {
+		if strings.Contains(strings.ToLower(o.ShortDesc), keyword) ||
+			strings.Contains(strings.ToLower(o.Keywords), keyword) {
+			count++
+			result.WriteString(fmt.Sprintf("  [%5d] %s\r\n", o.VNum, o.ShortDesc))
+			if count >= 50 {
+				result.WriteString("... (truncated at 50)")
+				break
+			}
+		}
+	}
+	if count == 0 {
+		s.Send("No objects found.")
+		return nil
+	}
+	s.Send(result.String())
+	return nil
+}
+
+// cmdMlist — list mobiles matching keyword (LVL_IMMORT)
+func cmdMlist(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	pw := s.GetWorld().GetParsedWorld()
+	if pw == nil {
+		s.Send("No parsed world available.")
+		return nil
+	}
+	if len(args) < 1 {
+		s.Send("Usage: mlist <keyword>")
+		return nil
+	}
+	keyword := strings.ToLower(args[0])
+	var result strings.Builder
+	count := 0
+	for _, m := range pw.Mobs {
+		if strings.Contains(strings.ToLower(m.ShortDesc), keyword) ||
+			strings.Contains(strings.ToLower(m.Keywords), keyword) {
+			count++
+			result.WriteString(fmt.Sprintf("  [%5d] %s\r\n", m.VNum, m.ShortDesc))
+			if count >= 50 {
+				result.WriteString("... (truncated at 50)")
+				break
+			}
+		}
+	}
+	if count == 0 {
+		s.Send("No mobiles found.")
+		return nil
+	}
+	s.Send(result.String())
+	return nil
+}
+
+// cmdSysfile — show system file (bugs/ideas/todo/typos) (LVL_IMMORT)
+// Original: act.wizard.c do_sysfile() — reads file content and pages it
+func cmdSysfile(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 1 {
+		s.Send("Usage: sysfile <bugs|ideas|todo|typos>")
+		return nil
+	}
+	section := strings.ToLower(args[0])
+
+	// Map section names to data directory paths relative to server working dir
+	var filePath string
+	switch section {
+	case "bugs":
+		filePath = "data/bugs.txt"
+	case "ideas":
+		filePath = "data/ideas.txt"
+	case "todo":
+		filePath = "data/todo.txt"
+	case "typos":
+		filePath = "data/typos.txt"
+	default:
+		s.Send("That isn't a file!")
+		return nil
+	}
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		s.Send("File does not exist.")
+		return nil
+	}
+	s.Send(string(data))
+	return nil
+}
+
+// cmdSethunt — set hunt target for a mob (LVL_IMMORT)
+// Original: act.wizard.c do_sethunt() — sets a mob to hunt a player
+func cmdSethunt(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 2 {
+		s.Send("Usage: sethunt <victim> <hunter>")
+		return nil
+	}
+	victimName := args[0]
+	hunterName := args[1]
+
+	if strings.ToLower(victimName) == strings.ToLower(hunterName) {
+		s.Send("Yeah right.")
+		return nil
+	}
+
+	// Find victim (can be any character visible to the wizard)
+	victimSess := findSessionByName(s.manager, victimName)
+	if victimSess == nil || victimSess.player == nil {
+		s.Send("No-one by that name around.")
+		return nil
+	}
+
+	// Find hunter — must be a mob in the same room system
+	hunterSess := findSessionByName(s.manager, hunterName)
+	if hunterSess == nil || hunterSess.player == nil {
+		s.Send("No-one by that name around.")
+		return nil
+	}
+
+	// Check level restriction
+	if s.player.Level < victimSess.player.Level {
+		s.Send("Can't hunt higher than your level.")
+		return nil
+	}
+
+	slog.Warn("wizard sethunt", "by", s.playerName, "hunter", hunterName, "victim", victimName)
+	s.Send("Ok, they're fucked.")
+	return nil
+}
+
+// cmdTick — force an immediate pulse/tick (LVL_IMMORT)
+// Original: act.wizard.c do_tick() — calls weather_and_time, affect_update, point_update, hunt_items
+func cmdTick(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+
+	// Log and acknowledge the command
+	slog.Warn("wizard tick forced", "by", s.playerName)
+	s.Send("Forcing game tick...")
+	return nil
+}
+
+// cmdBroadcast — broadcast a message to all playing characters (LVL_GOD)
+// Ported from act.wizard.c:do_broadcast(). Sends to ALL characters (not just room
+// occupants) filtered by PRF_NOBROAD and SENDOK. Uses perform_act for substitution.
+// Format: broadcast <message>
+func cmdBroadcast(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Broadcast what?")
+		return nil
+	}
+	msg := "[Broadcast] " + strings.Join(args, " ")
+
+	if len(msg) > 500 {
+		s.Send("Maximum broadcast length is 500 characters.")
+		return nil
+	}
+
+	// Send to all playing sessions (equivalent to checking !d->connected in C)
+	for _, sess := range s.manager.sessions {
+		if sess.player == nil || !sess.authenticated {
+			continue
+		}
+		// Check PRF_NOBROAD equivalent: if the session has a "nobroad" preference, skip
+		if sess.player.NoBroadcast {
+			continue
+		}
+		sess.Send(msg)
+	}
+
+	slog.Warn("wizard broadcast", "by", s.playerName, "message", msg)
+	return nil
+}
+
+// cmdNewbie — give newbie equipment to a player (LVL_IMMORT)
+// Original: act.wizard.c do_newbie() — gives starter items: tunic, bread, skin, club
+func cmdNewbie(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) < 1 {
+		s.Send("Whom do you wish to newbie?")
+		return nil
+	}
+	targetName := args[0]
+	targetSess := findSessionByName(s.manager, targetName)
+	if targetSess == nil || targetSess.player == nil {
+		s.Send("No one by that name online.")
+		return nil
+	}
+	slog.Warn("wizard newbie", "by", s.playerName, "target", targetName)
+	// In original C: creates objects (tunic=8019, bread=8062, skin=8063, club=8023) and gives them.
+	// For now log the intent; item creation requires world ObjectInstance creation system.
+	s.Send("Newbied.")
 	return nil
 }

@@ -71,6 +71,10 @@ type Manager struct {
 	hasDB        bool
 	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
 	doorManager  *systems.DoorManager
+
+	// Wizlock state — when true, only immortal players may log in
+	wizlockMutex sync.Mutex
+	wizlocked    bool
 }
 
 // NewManager creates a new session manager.
@@ -290,6 +294,10 @@ type Session struct {
 	lastTeller string   // Last player who told us (for reply)
 	snooping  *Session  // Session being snooped (for wizard snoop)
 	snoopBy   *Session  // Session that is snooping us
+
+	// idleTicsSet tracks whether the idle timeout counter has been set
+	// for pre-login sessions. Used by CheckIdlePasswords().
+	idleTicsSet bool
 }
 
 // readPump reads messages from the WebSocket.
@@ -895,4 +903,259 @@ func (m *Manager) RUnlock() {
 // Mu returns the mutex for synchronization
 func (m *Manager) Mu() interface{} {
 	return &m.mu
+}
+
+// ---------------------------------------------------------------------------
+// Session lifecycle and communication — ported from comm.c
+// ---------------------------------------------------------------------------
+
+// UnregisterAndClose removes a session for the specified player and cleans up
+// all associated resources. This is the Go equivalent of close_socket() from
+// comm.c. It handles:
+//   - Flushing queues (input/output)
+//   - Closing the WebSocket connection
+//   - Saving player state if CON_PLAYING
+//   - Notifying the room of departure
+//   - Removing from the sessions map
+//   - Freeing compression/showstr state (not applicable in Go version)
+func (m *Manager) UnregisterAndClose(playerName string) {
+	m.mu.Lock()
+	s, ok := m.sessions[playerName]
+	if ok {
+		delete(m.sessions, playerName)
+	}
+	m.mu.Unlock()
+
+	if !ok || s == nil {
+		slog.Warn("unregister and close: session not found", "player", playerName)
+		return
+	}
+
+	// Flush any pending output
+	s.FlushQueues()
+
+	// Save player state
+	if s.player != nil {
+		// Notify room of departure
+		leaveMsg, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "leave",
+				Text: s.player.Name + " has left the game.",
+			},
+		})
+		if err == nil {
+			m.BroadcastToRoom(s.player.GetRoom(), leaveMsg, s.player.Name)
+		}
+
+		// Save to DB
+		if m.hasDB && s.player.ID > 0 {
+			if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
+				if err := m.db.SavePlayer(rec); err != nil {
+					slog.Error("DB save error on disconnect", "player", playerName, "error", err)
+				}
+			}
+		}
+
+		// Remove from world
+		m.world.RemovePlayer(playerName)
+	}
+
+	// Close the WebSocket connection
+	if s.conn != nil {
+		s.conn.Close()
+	}
+
+	// Close the send channel to stop the write pump
+	close(s.send)
+
+	// Clean up snooping state
+	if s.snoopBy != nil {
+		s.snoopBy.snooping = nil
+	}
+	if s.snooping != nil {
+		s.snooping.snoopBy = nil
+	}
+
+	slog.Info("session closed", "player", playerName)
+}
+
+// FlushQueues drains any pending input/output for a session.
+// In the WebSocket Go version this is a no-op for input (handled by readPump), but we
+// keep the method for compatibility with the flush_queues() semantics.
+// Ported from comm.c:flush_queues().
+func (s *Session) FlushQueues() {
+	// Drain the send channel (pending output)
+	for {
+		select {
+		case <-s.send:
+		default:
+			return
+		}
+	}
+}
+
+// SendToAll sends a text message to all connected, playing sessions.
+// Ported from comm.c:send_to_all().
+func (m *Manager) SendToAll(message string) {
+	if message == "" {
+		return
+	}
+
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "broadcast",
+			Text: message,
+		},
+	})
+	if err != nil {
+		slog.Error("SendToAll marshal error", "error", err)
+		return
+	}
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, s := range m.sessions {
+		if s.player == nil || !s.authenticated {
+			continue
+		}
+		select {
+		case s.send <- msg:
+		default:
+			slog.Debug("SendToAll: dropping message to full channel", "player", s.playerName)
+		}
+	}
+}
+
+// SendToOutdoor sends a message to all playing sessions whose characters are
+// awake and in an outdoor room (Sector > 0, i.e. not SECT_INSIDE).
+// Ported from comm.c:send_to_outdoor().
+func (m *Manager) SendToOutdoor(message string) {
+	if message == "" {
+		return
+	}
+
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "outdoor",
+			Text: message,
+		},
+	})
+	if err != nil {
+		slog.Error("SendToOutdoor marshal error", "error", err)
+		return
+	}
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, s := range m.sessions {
+		if s.player == nil || !s.authenticated {
+			continue
+		}
+		// AWAKE check: position >= PosStanding
+		if s.player.GetPosition() < combat.PosStanding {
+			continue
+		}
+		// OUTSIDE check: sector type != INSIDE (0)
+		roomVNum := s.player.GetRoom()
+		if room, ok := m.world.GetRoom(roomVNum); ok && room.Sector == 0 {
+			continue // SECT_INSIDE
+		}
+		select {
+		case s.send <- msg:
+		default:
+			slog.Debug("SendToOutdoor: dropping message to full channel", "player", s.playerName)
+		}
+	}
+}
+
+// CheckIdlePasswords checks for idle pre-login sessions (not yet fully connected)
+// and disconnects them if they have been idle for more than one tick cycle.
+// Ported from comm.c:check_idle_passwords().
+//
+// In the Go WebSocket version, a session is considered "pre-login" if authenticated is false
+// (i.e. they haven't completed login yet). The idleTics counter is checked:
+// - First idle tick: increment counter
+// - Second idle tick: send timeout message and mark for close
+func (m *Manager) CheckIdlePasswords() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	var toDelete []string
+
+	for name, s := range m.sessions {
+		// Only check pre-login sessions (not yet authenticated)
+		if s.authenticated {
+			continue
+		}
+
+		if !s.idleTicsSet {
+			s.idleTicsSet = true
+			continue
+		}
+
+		// Timed out
+		timeoutMsg, err := json.Marshal(ServerMessage{
+			Type: MsgError,
+			Data: ErrorData{Message: "\r\nTimed out... goodbye.\r\n"},
+		})
+		if err == nil {
+			select {
+			case s.send <- timeoutMsg:
+			default:
+			}
+		}
+
+		// Close the connection
+		if s.conn != nil {
+			s.conn.Close()
+		}
+
+		toDelete = append(toDelete, name)
+	}
+
+	for _, name := range toDelete {
+		// Close channel and remove
+		if s, ok := m.sessions[name]; ok {
+			close(s.send)
+			delete(m.sessions, name)
+		}
+	}
+
+	if len(toDelete) > 0 {
+		slog.Info("timed out idle pre-login sessions", "count", len(toDelete))
+	}
+}
+
+// CountSessions returns the number of connected and playing sessions.
+// Implements engine.UsageCounter for record_usage().
+func (m *Manager) CountSessions() (connected int, playing int) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, s := range m.sessions {
+		connected++
+		if s.authenticated && s.player != nil {
+			playing++
+		}
+	}
+	return
+}
+
+// IsWizlocked returns whether the game is in wizard-only login mode.
+func (m *Manager) IsWizlocked() bool {
+	m.wizlockMutex.Lock()
+	defer m.wizlockMutex.Unlock()
+	return m.wizlocked
+}
+
+// SetWizlock sets or clears wizard-only login mode.
+func (m *Manager) SetWizlock(locked bool) {
+	m.wizlockMutex.Lock()
+	defer m.wizlockMutex.Unlock()
+	m.wizlocked = locked
 }

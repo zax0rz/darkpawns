@@ -15,6 +15,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"time"
@@ -84,6 +85,39 @@ func NewREMSynthesisClient(config PythonSystemConfig) *REMSynthesisClient {
 
 // SendMemoryEvent sends a memory event to the Python system for processing.
 // This includes emotional tagging, forgetting policy evaluation, and privacy disclosure.
+// doMemoryHookWithRetry sends an HTTP request with retries for transient failures.
+func doMemoryHookWithRetry(httpClient *http.Client, req *http.Request) error {
+	var body []byte
+	if req.Body != nil {
+		body, _ = io.ReadAll(req.Body)
+		req.Body.Close()
+	}
+
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 && body != nil {
+			// Re-create body for retry
+			req.Body = io.NopCloser(bytes.NewReader(body))
+		}
+
+		resp, err := httpClient.Do(req)
+		if err == nil && resp.StatusCode < 500 {
+			resp.Body.Close()
+			return nil
+		}
+		if resp != nil {
+			resp.Body.Close()
+		}
+		if err != nil {
+			lastErr = err
+		}
+		if attempt < 2 {
+			time.Sleep(time.Duration(100*(attempt+1)) * time.Millisecond)
+		}
+	}
+	return lastErr
+}
+
 func (c *REMSynthesisClient) SendMemoryEvent(event *MemoryEvent) error {
 	if !c.config.Enabled {
 		return nil // silently skip if disabled
@@ -109,14 +143,8 @@ func (c *REMSynthesisClient) SendMemoryEvent(event *MemoryEvent) error {
 		req.Header.Set("Authorization", "Bearer "+c.config.APIKey)
 	}
 
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("send memory event: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		return fmt.Errorf("unexpected status: %d", resp.StatusCode)
+	if err := doMemoryHookWithRetry(c.client, req); err != nil {
+		return fmt.Errorf("send memory event after retries: %w", err)
 	}
 
 	slog.Info("memory event sent to Python system", "event_type", event.EventType, "agent_name", event.AgentName)
@@ -150,14 +178,8 @@ func (c *REMSynthesisClient) TriggerREMSynthesis(agentName string) error {
 		req.Header.Set("Authorization", "Bearer "+c.config.APIKey)
 	}
 
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("trigger REM synthesis: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		return fmt.Errorf("unexpected status: %d", resp.StatusCode)
+	if err := doMemoryHookWithRetry(c.client, req); err != nil {
+		return fmt.Errorf("trigger REM synthesis after retries: %w", err)
 	}
 
 	slog.Info("synthesis triggered for agent", "agent_name", agentName)
@@ -192,14 +214,8 @@ func (c *REMSynthesisClient) LogRetrieval(agentName, memoryID, context string) e
 		req.Header.Set("Authorization", "Bearer "+c.config.APIKey)
 	}
 
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("log retrieval: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		return fmt.Errorf("unexpected status: %d", resp.StatusCode)
+	if err := doMemoryHookWithRetry(c.client, req); err != nil {
+		return fmt.Errorf("log retrieval after retries: %w", err)
 	}
 
 	return nil

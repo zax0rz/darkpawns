@@ -2,131 +2,179 @@
 
 > **Goal:** 100% faithful C-to-Go port of all ~68K lines of Dark Pawns MUD source.
 > **Strategy:** 13 waves. Each wave = build → QA → fix → push.
-> **Update (2026-04-24):** Waves 1-4a COMPLETED. See Current State below.
-> **Model update:** DeepSeek V4 Flash is now the daily driver for mechanical tasks, replacing GLM-5.1 for most build work. See model routing section.
+> **Update (2026-04-24):** Waves 1-4a COMPLETED. Reality-audited and documented. See Current State below.
+> **Model note:** DeepSeek V4 Flash is the daily driver. Documented here so any model can pick up without loss.
 
 ---
 
-## Current State (as of 2026-04-24)
+## Current State (as of 2026-04-24) — REALITY-AUDITED
 
 ```
-C source:          ~68,792 lines across 59 files
-Already in Go:     ~34,509 lines across 150 files (partial equivalents)
-Genuinely unported: ~29,155 lines across 28 C files
-Build:             go build ./cmd/server passes clean
+C source:            68,823 lines across 67 .c files
+Go codebase:         46,337 lines across 134 .go files (non-test)
+Genuinely unported:  ~32,000 lines across ~20 C files (unaddressed)
+Partially ported:    ~20,000 lines across 10+ C files (needs more coverage)
+Replaced by SPA:     7,830 lines across 11 editor C files (OLC etc.)
+Build:               go build ./cmd/server passes clean
+Git status:          2 untracked files (act_informative.go, modify.go)
 ```
 
-**What's actually merged into main:**
-- **115 Lua scripts** in `test_scripts/mob/archive/` — combat AI, economy, environmental, crafting chains, newbie pipeline, specials
-- **Engine stubs:** `create_event`, `tell`, `plr_flagged`, `cansee`, `isnpc`, `has_item`, `obj_in_room`, `objfrom`, `objto` — all registered as Lua globals
-- **Combat AI:** `feat/combat-ai-1` and `feat/combat-ai-2` both merged
-- **Wave 3:** Display, map, tattoo — `pkg/session/display_cmds.go`, `map_cmds.go`, `tattoo.go` exist
-- **Wave 4a:** `spec_assign.go` exists
-- **Waves 1-2:** All skill commands in `pkg/command/skill_commands.go` + `new_cmds.c`/`new_cmds2.c` equivalents
-- **Shops, eat/drink, spell affects, socials** (20+ command categories) — Go implementations
-- **BRENDA memory system:** `agent_narrative_memory` schema, kill/death hooks, bootstrap injection, salience decay, session consolidation crons — all active
+### Line counts by package (non-test Go files)
 
-**Branches evaluated (2026-04-24):**
-- `feat/engine-stubs-2`, `feat/party-follow-group`, `feat/social-commands`, `fix/lua-script-bugs` — **all merged into main** (batch 1, code already present)
-- `feat/regen-limits` — **superseded.** `regen.go` content already in `pkg/game/limits.go` with correct bitmask-based `Affects` API. Branch written against old `[]*engine.Affect` field.
-- `fix/ci-engine-tests` — **superseded.** CI YAML and engine fixes already in main.
-- Only actionable change cherry-picked: `memory_hooks.go` json.Marshal error logging (commit `923a190`)
+| Package | Lines | C source mapped to | Notes |
+|---|---|---|---|
+| `pkg/session/` | 11,363 | act.*.c, interpreter.c, comm.c | Commands, display, wizard |
+| `pkg/game/` | ~17,600 | All act_*.c, spec_*.c, shop.c, limits.c, class.c, modify.c | Core game logic |
+| `pkg/command/` | 3,610 | new_cmds.c, new_cmds2.c, shop.c | Skill + shop commands |
+| `pkg/engine/` | 1,389 | affect system, skill system | Pure Go additions |
+| `pkg/combat/` | 999 | fight.c | Combat engine |
+| `pkg/scripting/` | 2,356 | scripts.c | Lua engine |
+| `pkg/telnet/` | 389 | comm.c | Network listener |
+| `pkg/parser/` | 1,293 | db.c, world files | World file parsing |
+| `pkg/db/` | 772 | db.c | Player DB + narrative memory |
+| `pkg/agent/` | 395 | — | BRENDA agent system |
+| `pkg/optimization/` | 1,779 | — | Pooling, caching, etc. |
+| `pkg/ai/` | ~140 | — | AI behaviors |
+| `pkg/events/` | ~500 | events.c | Event bus |
+| `pkg/spells/` | 152 | spells.c, magic.c, spell_parser.c | **Severely under-ported** |
+| Other pkgs | ~2,400 | ban.c, mail.c, weather.c, etc. | Misc systems |
+| **Total** | **46,337** | 67 C files | 134 .go files |
+
+### What's actually merged (confirmed present):
+### Confirmed merged into main
+
+| Area | Go files | C source | Lines (Go) | Status |
+|------|----------|----------|-----------|--------|
+| Skill commands | `pkg/command/skill_commands.go` | `new_cmds.c` (~2792) | 1,587 | ✅ Complete |
+| Misc player commands | `pkg/command/skill_commands.go` (embedded) | `new_cmds2.c` (~1027) | — | ✅ Complete (no standalone file) |
+| Display | `pkg/session/display_cmds.go` | `act.display.c` (~717) | 460 | ✅ Good coverage |
+| Map | `pkg/session/map_cmds.go` | `mapcode.c` | 284 | ✅ Complete |
+| Tattoo | `pkg/session/tattoo.go` | `tattoo.c` | 248 | ✅ Complete |
+| Socials | `pkg/game/socials.go`, `act_social.go` | `act.social.c` (~305) | 1,356 | ✅ Complete (expanded) |
+| Spec assign | `pkg/game/spec_assign.go` | `spec_assign.c` (~642) | 450 | ✅ Complete |
+| Spec procs | `pkg/game/spec_procs*.go` (4 files) | `spec_procs.c`/2/3 (~6,063) | 2,924 | 🔶 48% — Lua scripts fill gap |
+| Shop system | `pkg/game/shop.go`, `*systems/shop*.go`, `*command/shop_commands.go`, `*session/shop_cmds.go`, `*common/shop.go` | `shop.c` (~1445) | 1,548 | ✅ Complete |
+| Doors | `pkg/game/systems/door*.go`, `pkg/game/act_movement.go` | `act.movement.c` | 1,332 | ✅ Complete (refactored) |
+| Eat/drink | `pkg/session/eat_cmds.go` | — | 297 | ✅ Complete |
+| Affects | `pkg/session/affects_informative.go`, `pkg/engine/affect*.go` | — | 1,179 | ✅ Complete |
+| Movement | `pkg/session/movement_cmds.go` | `act.movement.c` | 419 | ✅ Complete |
+| Combat engine | `pkg/combat/engine.go`, `formulas.go`, `combatant.go` | `fight.c` (~2033) | 999 | 🔶 ~50% — hitroll/damroll from eq missing |
+| Wizard commands | `pkg/session/wizard_cmds.go` | `act.wizard.c` (~3863) | 501 | 🔶 ~13% — mostly unported |
+| Act informative | `pkg/game/act_informative.go` | `act.informative.c` (~2803) | 910 | 🔶 ~32% |
+| BRENDA memory | `pkg/agent/memory_hooks.go`, `pkg/db/narrative_memory.go`, `pkg/session/memory_hooks.go` | — | 951 | ✅ Complete (pure Go addition) |
+| 115 Lua scripts | `test_scripts/mob/archive/` | — | — | ✅ All merged |
+
+**Files uncommitted but present:** `act_informative.go` (910 lines), `modify.go` (188 lines)
+
+### What does NOT exist yet (fully unported)
+
+| C Source | Lines | Go target | Priority |
+|----------|-------|-----------|----------|
+| `clan.c` | 1,574 | `pkg/game/clans.go` | ⭐ High |
+| `house.c` | 744 | `pkg/game/houses.go` | ⭐ High |
+| `boards.c` | 551 | `pkg/game/boards.go` | ⭐ High |
+| `whod.c` | 532 | `pkg/game/whod.go` | Medium |
+| `objsave.c` | 1,250 | `pkg/game/objsave.go` | Medium |
+| `mobprog.c` | 646 | `pkg/game/mobprogs.go` | Medium (partially via Lua) |
+| `pkg/admin/` | — | New package | Low (Web API exists at `web/`) |
+
+### Heavily under-ported areas
+
+| C Source | Lines | Go | Coverage | Issue |
+|----------|-------|-----|----------|-------|
+| `act.wizard.c` | 3,863 | 501 | ~13% | Massive file, admin commands |
+| `magic.c` + `spells.c` + `spell_parser.c` | 4,843 | 441 | ~10% | Cast_cmds exists, spells.go tiny |
+| `act.informative.c` | 2,803 | 1,083 | ~39% | 3 Go files, incomplete |
+| `act.other.c` | 1,947 | 243 | ~12% | Barely started |
+| `handler.c` | 1,616 | 1,495 | ~92% | Nearly done |
+| `fight.c` | 2,033 | 999 | ~49% | Hitroll/damroll from equipment missing |
+| `comm.c` | 2,637 | 1,426 | ~54% | Listener + manager done |
+| `interpreter.c` | 2,365 | 1,855 | ~78% | Commands.go covers most |
+
+### C files replaced by Web Admin SPA (NOT ported)
+
+| File | Lines | Reason |
+|------|-------|--------|
+| `oedit.c` | 1,564 | SPA object editor |
+| `redit.c` | 1,078 | SPA room editor |
+| `medit.c` | 1,126 | SPA mob editor |
+| `sedit.c` | 1,178 | SPA shop editor |
+| `zedit.c` | 1,276 | SPA zone editor |
+| `olc.c` | 524 | SPA OLC framework |
+| `improved-edit.c` | 627 | SPA text editor |
+| `luaedit.c` | 58 | Monaco editor |
+| `tedit.c` | 98 | SPA trigger editor |
+| `poof.c` | 102 | SPA poof messages |
+| `file-edit.c` | 199 | SPA file upload |
+| **Total** | **7,830** | All replaced by Web Admin |
 
 ---
 
-## Wave Plan
+## Wave Plan (Updated 2026-04-24)
 
 ### ✅ Wave 1 — Skill Commands (`new_cmds.c`, ~2792 lines) [COMPLETED]
-**What:** bash, backstab, kick, trip, rescue, sneak, hide, steal, pick lock, berserk, charge, parry, headbutt, spike
 **Go target:** `pkg/command/skill_commands.go` (expanded)
-**Status:** ✅ DONE. All skill commands ported to Go with faithful formulas. Skill system wired (`SkillManager`, skill points, practice/learn/forget).
+**Status:** ✅ DONE. All skill commands ported. Skill system wired (SkillManager, skill points, practice/learn/forget).
 
 ### ✅ Wave 2 — Misc Player Commands (`new_cmds2.c`, ~1027 lines) [COMPLETED]
-**What:** scrounge, first_aid, disarm, mindlink, detect, serpent_kick, dig, turn
-**Go target:** `pkg/session/new_cmds2.go`
+**Go target:** Content lives inside `pkg/command/skill_commands.go` (no standalone `new_cmds2.go`)
 **Status:** ✅ DONE. Ported alongside Wave 1.
 
 ### ✅ Wave 3 — Display + Map + Tattoo (`act.display.c`, `mapcode.c`, `tattoo.c`, ~1129 lines) [COMPLETED]
-**What:** lines, infobar, map command, tattoo/eq protection
 **Go targets:** `pkg/session/display_cmds.go`, `pkg/session/map_cmds.go`, `pkg/session/tattoo.go`
-**Status:** ✅ DONE. All three Go targets exist and build.
+**Status:** ✅ DONE.
 
-### ✅ Wave 4a — Spec Assign (`spec_assign.c`) [COMPLETED]
-**What:** Assignment table mapping zone numbers → special procedures
+### ✅ Wave 4a — Spec Assign (`spec_assign.c`, ~642 lines) [COMPLETED]
 **Go target:** `pkg/game/spec_assign.go`
-**Status:** ✅ DONE. `spec_assign.go` exists.
+**Status:** ✅ DONE.
 
-### 🔶 Wave 4b — Spec Procs Batch 1 (`spec_procs.c` first half, ~1800 lines) [PARTIALLY DONE via Lua]
-**What:** First 20 spec procs (bank, mayor, guild, dragon_breath, elevator, janitor, pet_shops, etc.)
-**Go target:** `pkg/game/spec_procs.go`
-**Status:** 🔶 Lua scripts ported for most of these. The Go `spec_procs.go` structure exists but references functions (`me.GetMeleeTarget()`, `engine.ClassType`, `spells.Cast()`) that need their Go implementations wired. The C spec_procs logic is mostly handled through the Lua script layer now.
+### 🔶 Wave 4b — Spec Procs (`spec_procs.c/2/3`, ~6063 lines total) [PARTIALLY DONE — 48%]
+**Go targets:** `pkg/game/spec_procs.go`, `spec_procs2.go`, `spec_procs3.go`, `spec_procs4.go`
+**Status:** 🔶 2,924 lines ported across 4 Go files (~48%). Lua scripts fill gaps. Remaining spec procs need Go implementations wired (GetMeleeTarget, ClassType, spells.Cast).
 
-### Wave 5 — Spec Procs Batch 2 (`spec_procs.c` rest, `spec_procs2.c` first half, ~2500 lines)
-**What:** Remaining `spec_procs.c` specials + first 20 from `spec_procs2.c` (assassin, backstabber, shop_keeper, teleporter, medusa, bat, etc.)
-**Go target:** `pkg/game/spec_procs.go` (appended)
+### Wave 5 — Game Loop + Core (comm.c + interpreter.c + handler.c, ~6618 lines)
+**Functions to port:** close_socket, flush_queues, nonblock, signal_setup, record_usage, check_idle_passwords, boot_db, boot_world, zone_update, affect_update, point_update, mobile_activity, perform_violence, room_activity, object_activity, hunt_items, write_to_q, send_to_all, send_to_outdoor, do_broadcast, string_add, show_string, save_clans, InfoBarUpdate, setup_log, init_char, free_char, remove_follower, set_hunting, aff_apply_modify, affect_modify_ar, affect_total, master_affect_to_char, affect_to_char2, affect_remove, affect_from_char, affect_join, obj_from_obj, object_list_new_owner, update_object, update_char_objects, extract_pending_chars
+**~42 functions, ~3500 lines new Go code**
+**Go targets:** `pkg/game/engine.go` (new), augment `pkg/session/manager.go`, `pkg/events/`
 
-### Wave 6 — Spec Procs Batch 3 (`spec_procs2.c` rest, `spec_procs3.c` all, ~2000 lines)
-**What:** Remaining `spec_procs2.c` + all of `spec_procs3.c` (butler, conjured, werewolf, mirror, turn_undead, recruiter, etc.)
-**Go target:** `pkg/game/spec_procs.go` (appended)
+### Wave 6 — Admin commands (act.wizard.c, ~3863 lines)
+**Functions to port:** do_stat_room, do_stat_object, stop_snooping, perform_immort_vis, perform_immort_invis, print_zone_to_buf
+**~6 functions (but BIG ones), ~3000 lines new Go code**
+**Go target:** `pkg/session/wizard_cmds.go`
 
-### Wave 7 — World Interactivity (`boards.c`, `objsave.c`, `mobprog.c`, ~2447 lines)
-**What:** Bulletin boards, cryogenic storage + receptionist, mob programs (triggers on enter/speech/kill/give)
-**Go targets:** `pkg/game/boards.go`, `pkg/game/objsave.go`, `pkg/game/mobprogs.go`
+### Wave 7 — Spell system (magic.c + spells.c + spell_parser.c, ~4843 lines)
+**Functions to port:** unused_spell, mag_assign_spells, weight_change_object, add_follower, send_to_zone, plus all spell effect functions
+**~6 primary + ~60 spell effects, ~3000 lines new Go code**
+**Go targets:** `pkg/spells/effects.go`, augment `pkg/spells/spells.go`
 
-### 🚫 Waves 8-10 — OLC Editors (REPLACED by Web Admin)
+### Wave 8 — Logging + Utility (utils.c, ~980 lines)
+**Functions to port:** basic_mud_log, mudlog, alog, log_death_trap, sprintbit, sprinttype, sprintbitarray, die_follower, core_dump_real
+**~7 functions, ~700 lines new Go code**
+**Go target:** `pkg/game/logging.go`
 
-**Decision: Do NOT port.** These ~7,800 lines of OLC C code are replaced by the Web Admin SPA.
+### Wave 9 — Persistence (objsave.c, ~1250 lines)
+**Functions to port:** Crash_listrent, auto_equip, Crash_restore_weight, Crash_extract_objs, Crash_extract_norents, Crash_extract_norents_from_equipped, Crash_extract_expensive, Crash_calculate_rent, Crash_crashsave, Crash_idlesave, Crash_cryosave, Crash_rent_deadline, Crash_report_rent, Crash_save_all
+**~14 functions, ~1000 lines new Go code**
+**Go target:** `pkg/game/objsave.go`
 
-See `PLAN-web-admin-architecture.md` for the full replacement plan.
+### Wave 10 — Clan + Housing (clan.c + house.c, ~2318 lines)
+**Functions to port:** string_write, save_char_file_u (clan), House_restore_weight, House_crashsave, House_delete_file, House_listrent, House_save_control, House_boot, hcontrol_list_houses, hcontrol_build_house, hcontrol_destroy_house, hcontrol_pay_house, House_save_all, hcontrol_set_key
+**~14 functions, ~1800 lines new Go code**
+**Go targets:** `pkg/game/clans.go`, `pkg/game/houses.go`
 
-**Reference only (data model knowledge needed):**
-- `src/improved-edit.c` — text editor engine (study for extra description editing patterns)
-- `src/olc.c` — OLC framework concepts (study for vnum management patterns)
-- `src/redit.c` — room editor logic (28 flags, exits, extra descr)
-- `src/oedit.c` — object editor logic (24 item types, contextual values)
-- `src/medit.c` — mob editor logic (25 flags, dice notation, scripts)
-- `src/sedit.c` — shop editor logic (multi-room, producing array)
-- `src/zedit.c` — zone editor logic (reset command chain, if_flag)
-- `src/poof.c` — poof messages (nylon-pouch migration pattern)
+### Wave 11 — Boards + Misc (boards.c + alias.c + ban.c + dream.c + weather.c, ~1936 lines)
+**Functions to port:** Board_save_board, Board_load_board, Board_reset_board, Board_write_message, init_boards, read_aliases, write_aliases, load_banned, _write_one_node, write_ban_list, Read_Invalid_List, dream, dream_travel, weather_and_time (remaining), another_hour, weather_change, prng_seed
+**~17 functions, ~1200 lines new Go code**
+**Go targets:** `pkg/game/boards.go`, `pkg/game/aliases.go`, `pkg/game/bans.go`, `pkg/game/dreams.go`
 
-**C files that remain in scope for future porting (non-editor):**
-- `src/tedit.c` — trigger editor. Maps to admin's Lua script editor, but the trigger *triggering* logic is in `pkg/scripting/` already.
-- `src/luaedit.c` — Lua script editor. Maps to admin's Monaco editor.
-- `src/file-edit.c` — file editor. Not a priority (admin handles files via upload/export).
+### 🚫 Waves 12-14 — OLC Editors (REPLACED by Web Admin SPA)
+**Decision: Do NOT port.** ~7,830 lines replaced by Web Admin SPA.
 
-### Wave 11 — Systems (`clan.c`, `house.c`, `whod.c`, ~2850 lines)
-**What:** Clan system (create/disband/invite/kick, rankings, halls). Player housing (rent, decorate, lock/unlock, visitors). External WHO daemon.
-**Go targets:** `pkg/game/clans.go`, `pkg/game/houses.go`, `pkg/game/whod.go`
+### Wave 15 — Sonnet QA Audit
+Review full Go codebase for faithfulness, compilation, correctness, error handling, logging.
 
-### 🆕 Wave 12a — Admin Foundation & Web Terminal
-**What:** Build the web admin REST API, persistence layer, auth, and web terminal SPA tab.
-**Go target:** `pkg/admin/` (new package)
-**Frontend:** React SPA in `web/` (new directory)
-**See:** `PLAN-web-admin-architecture.md` — Phases 0-2
-
-### Wave 12b — Read-Only Viewers
-**What:** Zone, room, mob, object, shop, trigger read-only viewers in the admin SPA.
-**See:** `PLAN-web-admin-architecture.md` — Phase 3
-
-### Wave 12c — Game Editors (Admin SPA)
-**What:** Full CRUD editors for rooms, zones, mobs, objects, shops, reset commands, Lua scripts.
-**See:** `PLAN-web-admin-architecture.md` — Phase 4
-
-### Wave 12d — Operations Panel
-**What:** System metrics, live logs, zone reset control, backups, player list.
-**See:** `PLAN-web-admin-architecture.md` — Phase 5
-
-### Wave 12e — AI & Research Panel
-**What:** Agent roster, config, narrative viewer, LLM traces, data export.
-**See:** `PLAN-web-admin-architecture.md` — Phase 6
-
-### Wave 13 — Sonnet QA Audit
-**What:** Review the full Go codebase for faithfulness to C original, compilation, logical correctness, proper error handling, logging.
-**Output:** Issues list + fix recommendations
-
-### Wave 14 — Opus Security Audit
-**What:** Security review (command injection, Lua sandbox bypass, privilege escalation, DoS vectors, memory safety, admin auth)
-**Output:** Security report + fixes
+### Wave 16 — Opus Security Audit
+Security review: command injection, Lua sandbox bypass, privilege escalation, DoS vectors, admin auth.
 
 ---
 
@@ -160,16 +208,185 @@ These are the highest-priority items before continuing Waves 5+:
 
 ---
 
+## Function-Level Gap Map (Updated 2026-04-24)
+
+> Each entry below = a C function that has NO corresponding Go implementation yet.
+> Status: ❌ = not ported, ⚠️ = partial, ✅ = exists in Go.
+
+### Tier 1 — Game Loop & Core (comm.c, interpreter.c, handler.c)
+
+#### `comm.c` (2637 lines, ~70% unported)
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `init_game` | ✅ In Go | — | Game initialization |
+| `game_loop` | ⚠️ Partial | P1 | Main loop exists but no connection event dispatch |
+| `heartbeat` | ✅ In Go (`pkg/events/`) | — | Tick system ported as event bus |
+| `send_to_char` | ✅ In Go | — | Character messaging |
+| `send_to_room` | ✅ In Go | — | Room messaging |
+| `act` / `perform_act` | ✅ In Go | — | Action messaging |
+| `close_socket` | ❌ MISSING | P1 | Descriptor cleanup |
+| `flush_queues` | ❌ MISSING | P1 | Output buffer flush |
+| `nonblock` | ❌ MISSING | P2 | Socket nonblocking mode |
+| `signal_setup` | ❌ MISSING | P2 | Signal handlers (SIGINT, SIGHUP) |
+| `record_usage` | ❌ MISSING | P3 | Usage statistics |
+| `check_idle_passwords` | ❌ MISSING | P3 | Idle connection timeout |
+| `boot_db` / `boot_world` | ⚠️ Partial | P1 | Area loading, partially in `pkg/parser/` |
+| `zone_update` | ❌ MISSING | P1 | Zone reset/reload |
+| `affect_update` | ❌ MISSING | P1 | Affect tick processing |
+| `point_update` | ❌ MISSING | P1 | Regen tick (HP/mana/move) |
+| `mobile_activity` | ❌ MISSING | P1 | Mob AI tick |
+| `perform_violence` | ❌ MISSING | P1 | Combat round |
+| `room_activity` / `object_activity` | ❌ MISSING | P2 | Room/object tick processing |
+| `hunt_items` | ❌ MISSING | P2 | Item hunting |
+| `write_to_q` | ❌ MISSING | P2 | Queue management |
+| `send_to_all` | ❌ MISSING | P2 | Broadcast to all players |
+| `send_to_outdoor` | ❌ MISSING | P3 | Outdoor room broadcast |
+| `do_broadcast` | ❌ MISSING | P3 | Immortal broadcast command |
+| `string_add` / `show_string` | ❌ MISSING | P2 | String display helpers |
+| `save_clans` | ❌ MISSING | P2 | Clan persistence |
+| `InfoBarUpdate` | ❌ MISSING | P3 | Info bar refresh |
+| `setup_log` / `basic_mud_log` | ❌ MISSING | P2 | Logging infrastructure |
+
+#### `handler.c` (1616 lines, ~48% unported)
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `free_char` | ❌ MISSING | P1 | Free mob/player struct |
+| `stop_fighting` | ✅ In Go | — | Combat stop |
+| `remove_follower` | ❌ MISSING | P1 | Remove from follower chain |
+| `clearMemory` | ✅ In Go | — | Mob memory clearing |
+| `raw_kill` | ✅ In Go | — | Kill/remove char |
+| `tattoo_af` | ✅ In Go | — | Tattoo affect handler |
+| `set_hunting` | ❌ MISSING | P1 | Set mob hunt target |
+| `aff_apply_modify` | ❌ MISSING | P2 | Apply affect modification |
+| `affect_modify_ar` | ❌ MISSING | P2 | Affect AC modification |
+| `affect_total` | ❌ MISSING | P2 | Sum all affects |
+| `master_affect_to_char` | ❌ MISSING | P2 | Master affect list |
+| `affect_to_char` | ✅ In Go | — | Single affect apply |
+| `affect_to_char2` | ❌ MISSING | P2 | Secondary affect apply |
+| `affect_remove` | ❌ MISSING | P2 | Affect removal |
+| `affect_from_char` | ❌ MISSING | P2 | Affect extraction |
+| `affect_join` | ❌ MISSING | P2 | Affect merging |
+| `char_from_room` / `char_to_room` | ✅ In Go | — | Room movement |
+| `obj_to_char` / `obj_from_char` | ✅ In Go | — | Object inventory |
+| `equip_char` | ✅ In Go | — | Equipment |
+| `obj_to_room` / `obj_from_room` | ✅ In Go | — | Room objects |
+| `obj_to_obj` / `obj_from_obj` | ❌ MISSING | P2 | Container items |
+| `object_list_new_owner` | ❌ MISSING | P2 | Owner tracking |
+| `extract_obj` | ✅ In Go | — | Object removal |
+| `update_object` | ❌ MISSING | P2 | Tick-based object updates |
+| `update_char_objects` | ❌ MISSING | P2 | Tick-based char equipment updates |
+| `extract_char` | ✅ In Go | — | Character removal |
+| `extract_pending_chars` | ❌ MISSING | P2 | Batch char cleanup |
+
+#### `interpreter.c` (2365 lines, ~26% unported)
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `command_interpreter` | ✅ In Go | — | Command routing (Go port uses `pkg/command/registry.go`) |
+| `perform_complex_alias` | ❌ MISSING | P3 | Alias expansion |
+| `do_start` | ✅ In Go | — | Character creation init |
+| `init_char` | ❌ MISSING | P1 | Character struct initialization |
+| `roll_real_abils` | ✅ In Go | — | Ability score rolling |
+| `read_aliases` | ❌ MISSING | P3 | Alias file loading |
+| `read_poofs` | ❌ MISSING | P3 | Poof message loading |
+| `echo_on` / `echo_off` | ❌ MISSING | P2 | Terminal echo control |
+| `skip_spaces` / `half_chop` / `one_space_half_chop` | ✅ Partial | P3 | String parsing utils |
+| `free_alias` | ❌ MISSING | P3 | Alias cleanup |
+| OLC editor parse fns (6) | 🚫 Replaced by SPA | — | Not porting |
+
+### Tier 2 — Admin Commands (act.wizard.c, 3863 lines, ~87% unported)
+
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `do_stat_room` | ❌ MISSING | P1 | Room stats display |
+| `do_stat_object` | ❌ MISSING | P1 | Object stats display |
+| `stop_snooping` | ❌ MISSING | P2 | Snoop management |
+| `perform_immort_vis` / `invis` | ❌ MISSING | P2 | Immortal visibility control |
+| `print_zone_to_buf` | ❌ MISSING | P2 | Zone display helper |
+
+### Tier 3 — Spell System (magic.c + spells.c + spell_parser.c, ~4843 lines)
+
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `spell_level` | ✅ In Go | — | Spell level lookup |
+| `spello` | ✅ In Go | — | Spell name lookup |
+| `unused_spell` | ❌ MISSING | P2 | Spell registration |
+| `mag_assign_spells` | ❌ MISSING | P2 | Spell assignment to classes |
+| `weight_change_object` | ❌ MISSING | P2 | Inventory weight tracking |
+| `add_follower` | ❌ MISSING | P1 | Follower chain management |
+| `send_to_zone` | ❌ MISSING | P2 | Zone-wide messaging |
+
+### Tier 4 — Informative Commands (act.informative.c, 2803 lines)
+
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `kender_steal` | ❌ MISSING | P2 | Kender theft system |
+| `do_description` | ❌ MISSING | P2 | Character description commands |
+
+### Tier 5 — Utility / Logging (utils.c, 980 lines)
+
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `basic_mud_log` | ❌ MISSING | P1 | Core logging function |
+| `mudlog` | ❌ MISSING | P1 | Level-filtered logging |
+| `alog` | ❌ MISSING | P1 | Admin logging |
+| `log_death_trap` | ❌ MISSING | P3 | Death trap logging |
+| `sprintbit` / `sprinttype` / `sprintbitarray` | ❌ MISSING | P2 | Bit/type-to-string helpers |
+| `die_follower` | ❌ MISSING | P2 | Follower death cleanup |
+| `core_dump_real` | ❌ MISSING | P3 | Crash dump |
+
+### Tier 6 — Persistence (objsave.c, 1250 lines)
+
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `Crash_*` (all 14 functions) | ❌ MISSING | P2 | Object persistence system |
+
+### Tier 7 — Social / Clan / Housing (clan.c + house.c + boards.c, ~2869 lines)
+
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `string_write` | ❌ MISSING | P2 | Clan motd write |
+| `save_char_file_u` | ❌ MISSING | P1 | Player file save (clan field) |
+| `House_*` (all 12 functions) | ❌ MISSING | P2 | Housing system |
+| `Board_*` (all 8 functions) | ❌ MISSING | P2 | Bulletin boards |
+| `init_boards` | ❌ MISSING | P2 | Board init |
+
+### Tier 8 — Mob AI / Activity (mobact.c + mobprog.c, ~1054 lines)
+
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `hunt_victim` | ❌ MISSING | P2 | Mob tracking/hunting |
+| `mp_sound` | ❌ MISSING | P2 | Mob prog sound effect |
+| `mobile_activity` | ❌ MISSING | P1 | Mob AI tick |
+| `remember` | ✅ In Go | — | Mob memory |
+
+### Tier 9 — Misc (alias.c + ban.c + dream.c + gate.c + weather.c, ~1926 lines)
+
+| C Function | Go Status | Priority | Notes |
+|---|---|---|---|
+| `read_aliases` / `write_aliases` | ❌ MISSING | P3 | Player alias persistence |
+| `load_banned` / `write_ban_list` | ❌ MISSING | P2 | Site ban system |
+| `Read_Invalid_List` | ❌ MISSING | P2 | Invalid name filter |
+| `dream` / `dream_travel` | ❌ MISSING | P3 | Dream sequences |
+| `weather_and_time` | ✅ In Go | — | Weather/time system |
+| `another_hour` / `weather_change` | ❌ MISSING | P2 | Weather cycle functions |
+| `prng_seed` | ❌ MISSING | P2 | RNG seed control |
+
 ## Model Routing Rules (Updated 2026-04-24)
 
 | Model | Role | Rules |
 |-------|------|-------|
-| `deepseek-v4-flash` | **Daily driver / mechanical tasks** | Default for coding subagents. 284B/13B active params, 1M context, $0.14/$0.28/M. Fast, cheap, good enough for most builds. |
-| `moonshot/kimi-k2.6` | **Build (secondary)** | Good for creative/interpretive translation when V4 isn't getting the nuance. Slower (~90-110s per file). |
-| `zai/glm-5.1` | **Fix / long-horizon** | Slow (~44 tok/s), deep. Best for compilation fixing and complex refactors. Still active on $10/mo plan. |
-| `deepseek-v4-pro` | **Reasoning / heavy lifting** | 1.6T/49B, $1.74/$3.48/M. Use when Flash isn't enough but Sonnet is overkill. Subagent only. |
-| `anthropic/claude-sonnet-4-6` | **QA + architecture** | Architectural review and complex builds. **Requires approval** — expensive. |
-| `anthropic/claude-opus-4-6` | **Security final** | Final pass after QA. One shot, expensive. Requires approval. |
+| `deepseek-v4-flash` | **Daily driver / mechanical tasks** | Default for coding subagents. 284B/13B active, 1M ctx, $0.14/$0.28/M. Default for main session too. |
+| `litellm/deepseek-chat` | **Fallback** | Used when V4 Flash unavailable. Slow fallback. |
+| `moonshot/kimi-k2.6` | **Build (secondary)** | Creative/interpretive translation when V4 misses nuance. ~90-110s per file. |
+| `zai/glm-5.1` | **Fix / long-horizon** | Slow (~44 tok/s), deep. Best for compilation fixing and complex refactors. $10/mo plan. |
+| `deepseek-v4-pro` | **Reasoning / heavy lifting** | 1.6T/49B, $1.74/$3.48/M. Subagent only. Use when Flash isn't enough but Sonnet is overkill. |
+| `anthropic/claude-sonnet-4-6` | **QA + architecture** | Architectural review. **Requires approval** — rate limited, expensive. |
+| `anthropic/claude-opus-4-6` | **Security final** | Final pass only. Expensive, requires approval. |
+
+### Current model (as of this writing)
+- **Primary:** `deepseek-v4-flash` (via models.json API key)
+- **Fallback:** `litellm/deepseek-chat` (via LiteLLM env key)
+- Sonnet was rate-limited and fell back, prompting this audit
 
 ### Swarm discipline (from SWARM-LEARNINGS.md):
 1. **Don't parallelize on same provider** — rate limits kill the whole batch
@@ -191,38 +408,43 @@ Do NOT implement these improvements. Just document them.
 
 ---
 
-## File Structure Convention
+## File Structure Convention (Updated 2026-04-24)
 
-| C Source | Go Target |
-|----------|-----------|
-| `src/act.display.c` | `pkg/session/display_cmds.go` |
-| `src/act.social.c` | `pkg/game/socials.go` |
-| `src/act.wizard.c` | `pkg/session/wizard_cmds.go` |
-| `src/boards.c` | `pkg/game/boards.go` |
-| `src/clan.c` | `pkg/game/clans.go` |
-| `src/file-edit.c` | **REPLACED by admin SPA** (file upload/export) |
-| `src/house.c` | `pkg/game/houses.go` |
-| `src/improved-edit.c` | **REPLACED by admin SPA** (study for extra descr patterns) |
-| `src/luaedit.c` | **REPLACED by admin SPA** (Monaco Lua editor) |
-| `src/mapcode.c` | `pkg/session/map_cmds.go` |
-| `src/medit.c` | **REPLACED by admin SPA** (data model reference only) |
-| `src/mobprog.c` | `pkg/game/mobprogs.go` |
-| `src/new_cmds.c` | `pkg/command/skill_commands.go` |
-| `src/new_cmds2.c` | `pkg/session/new_cmds2.go` |
-| `src/objsave.c` | `pkg/game/objsave.go` |
-| `src/oedit.c` | **REPLACED by admin SPA** (data model reference only) |
-| `src/olc.c` | **REPLACED by admin SPA** (vnum management patterns) |
-| `src/poof.c` | **REPLACED by admin SPA** |
-| `src/redit.c` | **REPLACED by admin SPA** (data model reference only) |
-| `src/sedit.c` | **REPLACED by admin SPA** (multi-room shop pattern) |
-| `src/spec_assign.c` | `pkg/game/spec_assign.go` |
-| `src/spec_procs.c` | `pkg/game/spec_procs.go` |
-| `src/spec_procs2.c` | `pkg/game/spec_procs.go` |
-| `src/spec_procs3.c` | `pkg/game/spec_procs.go` |
-| `src/tattoo.c` | `pkg/session/tattoo.go` |
-| `src/tedit.c` | `pkg/olc/triggers.go` |
-| `src/whod.c` | `pkg/game/whod.go` |
-| `src/zedit.c` | `pkg/olc/zones.go` |
+| C Source | Go Target | Status |
+|----------|-----------|--------|
+| `src/act.display.c` | `pkg/session/display_cmds.go` | ✅ |
+| `src/act.social.c` | `pkg/game/socials.go` + `act_social.go` | ✅ |
+| `src/act.wizard.c` | `pkg/session/wizard_cmds.go` | 🔶 501/3863 lines |
+| `src/act.informative.c` | `pkg/game/act_informative.go` + `pkg/session/info_cmds.go` + `informative_cmds.go` | 🔶 1083/2803 |
+| `src/act.other.c` | `pkg/game/act_other.go` | 🔶 243/1947 |
+| `src/act.movement.c` | `pkg/game/act_movement.go` + `pkg/session/movement_cmds.go` + `pkg/game/systems/door*.go` | ✅ Refactored to systems |
+| `src/act.item.c` | `pkg/game/act_item.go` | 🔶 May exceed C (new features added) |
+| `src/act.comm.c` | `pkg/game/act_comm.go` + `pkg/session/comm_cmds.go` | ✅ |
+| `src/act.offensive.c` | `pkg/game/act_offensive.go` + `pkg/session/combat_cmds.go` | ✅ |
+| `src/boards.c` | `pkg/game/boards.go` | ❌ NOT PORTED |
+| `src/clan.c` | `pkg/game/clans.go` | ❌ NOT PORTED |
+| `src/house.c` | `pkg/game/houses.go` | ❌ NOT PORTED |
+| `src/whod.c` | `pkg/game/whod.go` | ❌ NOT PORTED |
+| `src/objsave.c` | `pkg/game/objsave.go` | ❌ NOT PORTED |
+| `src/mobprog.c` | `pkg/game/mobprogs.go` | ❌ NOT PORTED (partially via Lua) |
+| `src/shop.c` | `pkg/game/shop.go`, `*systems/shop*.go`, `*command/shop_commands.go`, `*session/shop_cmds.go`, `*common/shop.go` | ✅ Distributed across pkgs |
+| `src/mapcode.c` | `pkg/session/map_cmds.go` | ✅ |
+| `src/tattoo.c` | `pkg/session/tattoo.go` | ✅ |
+| `src/new_cmds.c` | `pkg/command/skill_commands.go` | ✅ |
+| `src/new_cmds2.c` | Content in `pkg/command/skill_commands.go` (no standalone file) | ✅ |
+| `src/spec_assign.c` | `pkg/game/spec_assign.go` | ✅ |
+| `src/spec_procs.c`/2/3 | `pkg/game/spec_procs.go`, `spec_procs2.go`, `spec_procs3.go`, `spec_procs4.go` | 🔶 48% |
+| `src/magic.c` + `spells.c` + `spell_parser.c` | `pkg/spells/spells.go`, `affect_effects.go`, `pkg/session/cast_cmds.go` | 💡 ~10% (huge gap) |
+| `src/fight.c` | `pkg/combat/engine.go`, `formulas.go`, `combatant.go` | 🔶 ~50% |
+| `src/handler.c` | `pkg/game/serialize.go`, `save.go`, `player.go`, `character.go` | 🔶 ~92% |
+| `src/interpreter.c` | `pkg/session/commands.go`, `pkg/command/interface.go`, `registry.go`, `middleware.go` | 🔶 ~78% |
+| `src/comm.c` | `pkg/telnet/listener.go`, `pkg/session/manager.go`, `protocol.go` | 🔶 ~54% |
+| `src/limits.c` | `pkg/game/limits.go` | ✅ (expanded with regen) |
+| `src/modify.c` | `pkg/game/modify.go` | 🔶 188/869 (untracked) |
+| `src/weather.c` | `pkg/session/time_weather.go` | ✅ |
+| `src/constants.c` | `pkg/common/common.go` | 🔶 Sparse |
+| `src/class.c` | `pkg/game/level.go` | 🔶 329/1191 |
+| Editor files (11) | SPA replacement | 🚫 NOT PORTED (~7,830 lines skipped) |
 
 ---
 
