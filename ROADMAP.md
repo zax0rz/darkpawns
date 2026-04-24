@@ -5,6 +5,9 @@ tags: [active]
 
 > **For AI assistants:** Read `CLAUDE.md` first. This document tells you what's built.
 > `CLAUDE.md` tells you how to build it without making stuff up.
+> 
+> **Active execution plan → `PORT-PLAN.md`** — Wave details, completion status, model routing, and immediate next steps.
+> `ROADMAP.md` = high-level vision and feature inventory.
 
 ---
 
@@ -183,36 +186,18 @@ SkillManager with progression, slots, skill points — `pkg/engine/skill.go`, `p
 
 ---
 
+> **Active execution plan → `PORT-PLAN.md`** — See "Immediate Next Steps" section for canonical status.
+
 ## In Progress
 
-### Doors
-- Door data parsed from zone files (D commands in zone resets)
-- `pkg/command/door_commands.go` was deleted in recent commit — needs rewrite
-- No open/close/lock/unlock commands currently wired
+See `PORT-PLAN.md` → **Immediate Next Steps** for the full breakdown. Summary:
 
-### Shop System
-- `pkg/command/shop_commands.go` exists with `ShopCommands` struct
-- `pkg/game/systems.ShopManager` referenced but needs verification
-- 10 shop scripts ported (shopkeeper, shop_give, etc.) — engine buy/sell commands missing
-
-### Rescue Skill
-- `DoRescue()` — target swap between attacker and defender
-
----
-
-## Next
-
-1. **Door commands** — port `act.movement.c` do_gen_door() (open/close/lock/unlock/pick). Door data is parsed, just need the command handlers.
-
-2. **Shop buy/sell/list commands** — port `shop.c` (1,445 lines). Scripts exist and fire triggers; engine needs the actual transaction commands.
-
-3. **Wire rescue to combat engine** — `DoRescue()` needs `StopCombat()` + `StartCombat()` swap on the combat engine interface.
-
-4. **Hitroll/damroll from equipment** — `formulas.go` currently returns 0 for equipment hit/dam bonuses. Wire `APPLY_HITROLL`/`APPLY_DAMROLL` from equipped items.
-
-5. **Spell effects beyond damage** — blindness, curse, poison, sleep, sanctuary, etc. Affect system exists; wire spell → affect application.
-
-6. **Memory dreaming layer** — REM synthesis (`dp_rem_synthesis.py`) and deep promotion (`dp_memory_promote.py`). Light phase and salience decay already running.
+1. **Door commands** — port `act.movement.c` do_gen_door() (open/close/lock/unlock/pick)
+2. **Shop buy/sell/list** — port `shop.c` (~1,445 lines). Scripts exist; engine commands missing
+3. **Rescue combat wiring** — `DoRescue()` needs `StopCombat()`/`StartCombat()` swap
+4. **Hitroll/damroll from equipment** — `formulas.go` returns 0 for gear bonuses
+5. **Spell effects beyond damage** — affects exist; need wiring from spell dispatch
+6. **Memory dreaming layer** — REM synthesis (`dp_rem_synthesis.py`) and deep promotion (`dp_memory_promote.py`)
 
 ---
 
@@ -288,7 +273,10 @@ Humans (WebSocket/Telnet)          Agents (WebSocket/JSON)
 | Original Dark Pawns source | `src/` |
 | Original world files | `lib/` |
 | GitHub | https://github.com/zax0rz/darkpawns |
-| Research docs | `RESEARCH-LOG.md` |
+| Active execution plan | `PORT-PLAN.md` |
+| Architecture research | `docs/research.md` |
+| Session journal | `RESEARCH-LOG.md` |
+| Swarm learnings | `docs/SWARM-LEARNINGS.md` |
 | BRENDA's soul | `/home/zach/.openclaw/workspace/SOUL.md` |
 | Agent protocol spec | `docs/agent-protocol.md` |
 | First fight transcript | `docs/brenda-first-fight-2026-04-21.txt` |
