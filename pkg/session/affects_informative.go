@@ -9,12 +9,12 @@ import (
 // cmdAffects lists the player's active spell affects.
 // Source: act.informative.c ACMD(do_affects)
 func cmdAffects(s *Session, args []string) error {
-	if len(s.player.Affects) == 0 {
+	if len(s.player.ActiveAffects) == 0 {
 		s.Send("You are not affected by any spells.")
 		return nil
 	}
 
-	for _, aff := range s.player.Affects {
+	for _, aff := range s.player.ActiveAffects {
 		spellName := aff.Source
 		if spellName == "" {
 			spellName = "unknown"

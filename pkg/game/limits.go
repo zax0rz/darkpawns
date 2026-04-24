@@ -596,7 +596,7 @@ func sumApplyRegen(p *Player, location int) int {
 
 // hasAffectType checks whether the player has an affect of the given type.
 func hasAffectType(p *Player, at engine.AffectType) bool {
-	for _, a := range p.Affects {
+	for _, a := range p.ActiveAffects {
 		if a.Type == at {
 			return true
 		}

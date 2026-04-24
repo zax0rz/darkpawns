@@ -221,7 +221,7 @@ func playerToSaveData(p *Player) savePlayerData {
 	}
 
 	// Serialize active affects
-	for _, aff := range p.Affects {
+	for _, aff := range p.ActiveAffects {
 		data.Affects = append(data.Affects, saveAffect{
 			Type:      aff.Type,
 			Duration:  aff.Duration,
@@ -269,7 +269,7 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		Flags:        data.Flags,
 		AutoExit:     data.AutoExit,
 		Stats:        data.Stats,
-		Affects:      make([]*engine.Affect, len(data.Affects)),
+		ActiveAffects: make([]*engine.Affect, len(data.Affects)),
 		SpellMap:     data.SpellMap,
 		ConnectedAt:  time.Now(),
 		LastActive:   time.Now(),

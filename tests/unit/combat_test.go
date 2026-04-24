@@ -52,6 +52,7 @@ func (m *mockCombatant) Heal(amount int)                    { m.hp += amount }
 func (m *mockCombatant) SetFighting(target string)          { m.fighting = target }
 func (m *mockCombatant) StopFighting()                      { m.fighting = "" }
 func (m *mockCombatant) GetFighting() string                { return m.fighting }
+func (m *mockCombatant) GetSex() int                          { return 0 }
 func (m *mockCombatant) SendMessage(msg string)             {}
 
 func TestCalculateHitChance(t *testing.T) {

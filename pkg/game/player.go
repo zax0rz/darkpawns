@@ -40,6 +40,12 @@ type Player struct {
 	// Source: structs.h:321,335,341
 	Affects uint64
 
+	// ActiveAffects is a list of active spell/status effects on this player.
+	// This is separate from the Affects bitmask — bitmask tracks AFF_* flags,
+	// while ActiveAffects tracks spell effects with duration/stacking.
+	// Used by save/load, not persisted to JSON yet.
+	ActiveAffects []*engine.Affect
+
 	// Character identity — from do_start()/roll_real_abils() in class.c
 	Class int
 	Race  int
@@ -659,10 +665,6 @@ func (p *Player) GetRoomVNum() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.RoomVNum
-}
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.MaxMove
 }
 
 // GetCondition returns the value of condition cond (CondDrunk=0, CondFull=1, CondThirst=2).
