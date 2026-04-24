@@ -57,7 +57,10 @@ jobs:
 
     - name: Run Go tests
       run: go test $(go list ./... | grep -v /tests/unit) -v
-
+    
+    - name: Verify all packages build
+      run: go build ./...
+    
     - name: Install Python dependencies
       run: pip install -r requirements.txt
 
