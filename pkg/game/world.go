@@ -60,6 +60,9 @@ type World struct {
 
 	// Zone dispatcher for per-zone goroutine processing
 	zoneDispatcher *ZoneDispatcher
+
+	// Last tellers tracking for reply command
+	lastTellers *lastTellersData
 }
 
 // NewWorld creates a new game world from parsed data.

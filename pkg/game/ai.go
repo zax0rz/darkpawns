@@ -309,7 +309,7 @@ func (w *World) StartPointUpdateTicker(interval time.Duration) {
 		for {
 			select {
 			case <-ticker.C:
-				PointUpdate(w)
+				w.PointUpdate()
 			case <-w.done:
 				ticker.Stop()
 				return

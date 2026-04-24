@@ -2,9 +2,9 @@ package game
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
-	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // Condition constants — from structs.h
@@ -14,665 +14,791 @@ const (
 	CondThirst = 2
 )
 
-// Position constants from combat package (for reference)
-// POS_DEAD=0, POS_MORTALLY=1, POS_INCAP=2, POS_STUNNED=3,
-// POS_SLEEPING=4, POS_RESTING=5, POS_SITTING=6, POS_FIGHTING=7, POS_STANDING=8
+// Level/immortal constants — from structs.h LVL_*
+const (
+	LVL_IMMORT = 50
+	LVL_IMPL   = 54
+	LVL_GOD    = 50
 
-// ---------------------------------------------------------------------------
-// GainCondition — from limits.c gain_condition()
-// ---------------------------------------------------------------------------
-// Tracks hunger/thirst/drunk for players. Values range -1 (gone) to 24 (full).
-// In the original, clamped to 0-48. We clamp to 0-24 for player-facing range.
-// Called every point_update tick.
-func GainCondition(p *Player, condition int, value int) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+	// Idle time limits — from limits.c
+	IDLE_TO_VOID     = 20 // cycles before being pulled into void
+	IDLE_DISCONNECT  = 30 // cycles before forced disconnect
+	MAX_TITLE_LENGTH = 80 // from structs.h
+)
 
-	var current *int
-	switch condition {
-	case CondFull:
-		current = &p.Hunger
-	case CondThirst:
-		current = &p.Thirst
-	case CondDrunk:
-		current = &p.Drunk
-	default:
-		return
-	}
+// maxExpGain and maxExpLoss cap XP per single kill/death.
+// Source: limits.c extern int max_exp_gain, max_exp_loss
+var (
+	maxExpGain = 100000
+	maxExpLoss = 50000
+)
 
-	if *current == -1 {
-		return // No change
-	}
-
-	wasIntoxicated := p.Drunk > 0
-
-	*current += value
-	if *current < 0 {
-		*current = 0
-	}
-	if *current > 48 {
-		*current = 48
-	}
-
-	// Messages only when crossing thresholds
-	if *current > 1 {
-		return
-	}
-
-	if *current > 0 {
-		switch condition {
-		case CondFull:
-			p.sendLocked("Your stomach growls with hunger.\r\n")
-		case CondThirst:
-			p.sendLocked("You feel a bit parched.\r\n")
-		case CondDrunk:
-			if wasIntoxicated {
-				p.sendLocked("Your head starts to clear.\r\n")
-			}
-		}
-	} else {
-		switch condition {
-		case CondFull:
-			p.sendLocked("You are hungry.\r\n")
-		case CondThirst:
-			p.sendLocked("You are thirsty.\r\n")
-		case CondDrunk:
-			if wasIntoxicated {
-				p.sendLocked("You are now sober.\r\n")
-			}
-		}
-	}
+// Titles is the class title string array.
+// Source: class.c:1087-1099 titles[NUM_CLASSES]
+var Titles = []string{
+	"the Mage", "the Cleric", "the Thief", "the Warrior", "the Magus",
+	"the Avatar", "the Assassin", "the Paladin", "the Ninja", "the Psionic",
+	"the Ranger", "the Mystic",
 }
 
-// sendLocked sends a message without acquiring the lock (caller must hold it).
-func (p *Player) sendLocked(msg string) {
-	select {
-	case p.Send <- []byte(msg):
-	default:
-	}
+// Position constants re-exported from combat package for use within game package.
+// Source: structs.h POS_* constants (structs.h:130-138), ported to pkg/combat/formulas.go
+const (
+	PosDead      = combat.PosDead
+	PosMortally  = combat.PosMortally
+	PosIncap     = combat.PosIncap
+	PosStunned   = combat.PosStunned
+	PosSleeping  = combat.PosSleeping
+	PosResting   = combat.PosResting
+	PosSitting   = combat.PosSitting
+	PosFighting  = combat.PosFighting
+	PosStanding  = combat.PosStanding
+)
+
+// FieldObject represents a field object entry.
+// Source: limits.c field_object_data_t field_objs[NUM_FOS]
+type FieldObject struct {
+	ObjVNum       int
+	WornOffObjNum int
+	WearOffMsg    string
 }
 
+// fieldObjs is the field objects list.
+var fieldObjs []FieldObject
+
+// Affect bit constants — from structs.h:321,335,341
+const (
+	AffPoison    = 11 // AFF_POISON — structs.h:321
+	AffCutthroat = 25 // AFF_CUTTHROAT — structs.h:335
+	AffFlaming   = 31 // AFF_FLAMING — structs.h:341
+)
+
 // ---------------------------------------------------------------------------
-// ManaGain — from limits.c mana_gain()
+// isMystic — from src/utils.h IS_MYSTIC() macro
 // ---------------------------------------------------------------------------
-// Calculates mana regeneration per tick. Dark Pawns uses flat base values
-// with position/class modifiers, not percentage-of-max like stock CircleMUD.
-func ManaGain(p *Player, world *World) int {
+func isMystic(p *Player) bool {
 	if p == nil {
-		return 0
+		return false
 	}
-
-	p.mu.RLock()
-	class := p.Class
-	pos := p.Position
-	p.mu.RUnlock()
-
-	gain := 14
-
-	// Position calculations
-	switch pos {
-	case combat.PosSleeping:
-		gain <<= 1 // x2
-	case combat.PosResting:
-		gain += gain >> 1 // +50%
-	case combat.PosSitting:
-		gain += gain >> 2 // +25%
-	}
-
-	// Class calculations
-	switch class {
-	case ClassMageUser, ClassCleric:
-		gain <<= 1 // x2
-	case ClassMagus, ClassAvatar:
-		gain <<= 1 // x2
-	case ClassPsionic, ClassNinja:
-		gain += gain >> 2 // +25%
-	case ClassMystic:
-		gain <<= 1 // x2
-	}
-
-	// Equipment mana regen bonuses
-	gain += sumApplyRegen(p, 20 /* APPLY_MANA_REGEN */)
-
-	// Poison/hunger reduction and room bonus all happen after position/class
-	gain = applyRegenModifiers(p, gain, "mana", world)
-
-	if gain < 0 {
-		gain = 0
-	}
-	return gain
+	return p.Class == ClassMystic
 }
 
 // ---------------------------------------------------------------------------
-// HitGain — from limits.c hit_gain()
+// isVeteran — from utils.c:358-362
 // ---------------------------------------------------------------------------
-func HitGain(p *Player, world *World) int {
-	if p == nil {
-		return 0
-	}
-
-	p.mu.RLock()
-	class := p.Class
-	pos := p.Position
-	p.mu.RUnlock()
-
-	gain := 20
-
-	// Position calculations
-	switch pos {
-	case combat.PosSleeping:
-		gain += gain >> 1 // +50%
-		// Equipment hit regen bonuses while sleeping
-		gain += sumApplyRegen(p, 18 /* APPLY_HIT_REGEN */)
-	case combat.PosResting:
-		gain += gain >> 2 // +25%
-	case combat.PosSitting:
-		gain += gain >> 3 // +12.5%
-	}
-
-	// Class calculations
-	if class == ClassMageUser || class == ClassCleric {
-		gain >>= 1 // Half for casters
-	}
-
-	// KK_JIN skill bonus when not fighting
-	p.mu.RLock()
-	fighting := p.Fighting
-	p.mu.RUnlock()
-	if fighting == "" && pos >= combat.PosStanding {
-		jinLvl := getSkillLevel(p, "kk_jin")
-		if jinLvl > 0 {
-			gain += jinLvl / 10
-		}
-	}
-
-	// Poison/hunger reduction and room bonus
-	gain = applyRegenModifiers(p, gain, "hit", world)
-
-	if gain < 0 {
-		gain = 0
-	}
-	return gain
+// playing_time(ch).day >= 30 && GET_KILLS(ch) >= 10000
+// TODO: implement when playing_time and kill count fields are added.
+func isVeteran(_ *Player) bool {
+	return false
 }
 
 // ---------------------------------------------------------------------------
-// MoveGain — from limits.c move_gain()
+// roomHasFlag — checks room flags
 // ---------------------------------------------------------------------------
-func MoveGain(p *Player, world *World) int {
-	if p == nil {
-		return 0
+func (w *World) roomHasFlag(roomVNum int, flag string) bool {
+	room := w.GetRoomInWorld(roomVNum)
+	if room == nil {
+		return false
 	}
-
-	p.mu.RLock()
-	pos := p.Position
-	p.mu.RUnlock()
-
-	gain := 20
-
-	// Position calculations
-	switch pos {
-	case combat.PosSleeping:
-		gain += gain >> 1 // +50%
-		// Equipment move regen bonuses while sleeping
-		gain += sumApplyRegen(p, 19 /* APPLY_MOVE_REGEN */)
-	case combat.PosResting:
-		gain += gain >> 2 // +25%
-	case combat.PosSitting:
-		gain += gain >> 3 // +12.5%
-	}
-
-	// KK_ZHEN skill bonus when not fighting
-	p.mu.RLock()
-	fighting := p.Fighting
-	p.mu.RUnlock()
-	if fighting == "" && pos >= combat.PosStanding {
-		zhenLvl := getSkillLevel(p, "kk_zhen")
-		if zhenLvl > 0 {
-			gain += zhenLvl / 10
-		}
-	}
-
-	// Poison/hunger reduction and room bonus
-	gain = applyRegenModifiers(p, gain, "move", world)
-
-	if gain < 0 {
-		gain = 0
-	}
-	return gain
-}
-
-// ---------------------------------------------------------------------------
-// PointUpdate — from limits.c point_update()
-// ---------------------------------------------------------------------------
-// Main tick function called every ~30 seconds. Iterates all players,
-// applies condition decay, and regenerates HMV.
-func PointUpdate(world *World) {
-	if world == nil {
-		return
-	}
-
-	players := world.GetAllPlayers()
-
-	for _, p := range players {
-		if p == nil {
-			continue
-		}
-
-		// Condition decay — only if not "inactive" (chat mode)
-		// TODO: Check PRF_INACTIVE flag when preferences are implemented
-		GainCondition(p, CondFull, -1)
-		GainCondition(p, CondDrunk, -1)
-		GainCondition(p, CondThirst, -1)
-
-		// Regeneration only if position >= POS_STUNNED
-		p.mu.RLock()
-		pos := p.Position
-		hp := p.Health
-		maxHP := p.MaxHealth
-		mana := p.Mana
-		maxMana := p.MaxMana
-		move := p.Move
-		maxMove := p.MaxMove
-		p.mu.RUnlock()
-
-		if pos >= combat.PosStunned {
-			// HP regen
-			if hp < maxHP {
-				gain := HitGain(p, world)
-				newHP := hp + gain
-				if newHP > maxHP {
-					newHP = maxHP
-				}
-				p.mu.Lock()
-				p.Health = newHP
-				p.mu.Unlock()
-			}
-
-			// Mana regen
-			if mana < maxMana {
-				gain := ManaGain(p, world)
-				newMana := mana + gain
-				if newMana > maxMana {
-					newMana = maxMana
-				}
-				p.mu.Lock()
-				p.Mana = newMana
-				p.mu.Unlock()
-			}
-
-			// Move regen (always regen move, even at max)
-			gain := MoveGain(p, world)
-			newMove := move + gain
-			if newMove > maxMove {
-				newMove = maxMove
-			}
-			p.mu.Lock()
-			p.Move = newMove
-			p.mu.Unlock()
-
-			// Poison damage
-			if hasAffectType(p, engine.AffectPoison) {
-				p.mu.RLock()
-				hasHP := p.Health > 0
-				p.mu.RUnlock()
-				if hasHP {
-					p.TakeDamage(10)
-					p.SendMessage("You feel the poison burning through your veins!\r\n")
-				}
-			}
-
-			// Cutthroat damage (bleed effect)
-			if hasAffectType(p, engine.AffectFlaming) {
-				p.mu.RLock()
-				hasHP := p.Health > 0
-				p.mu.RUnlock()
-				if hasHP {
-					p.TakeDamage(13)
-					p.SendMessage("You are bleeding from your wounds!\r\n")
-				}
-			}
-
-			// Update position if HP dropped below thresholds
-			p.mu.RLock()
-			hp = p.Health
-			p.mu.RUnlock()
-			updatePosFromHP(p, hp)
-		} else if pos == combat.PosIncap {
-			// Incapacitated: 1 damage per tick
-			p.TakeDamage(1)
-			p.mu.RLock()
-			hp := p.Health
-			p.mu.RUnlock()
-			updatePosFromHP(p, hp)
-		} else if pos == combat.PosMortally {
-			// Mortally wounded: 2 damage per tick
-			p.TakeDamage(2)
-			p.mu.RLock()
-			hp := p.Health
-			p.mu.RUnlock()
-			updatePosFromHP(p, hp)
-		}
-
-		// Hunger/thirst damage when at 0
-		p.mu.RLock()
-		hunger := p.Hunger
-		thirst := p.Thirst
-		hp = p.Health
-		p.mu.RUnlock()
-
-		if hunger <= 0 || thirst <= 0 {
-			if hp > 0 {
-				p.TakeDamage(1)
-				if hunger <= 0 {
-					p.SendMessage("You are STARVING!\r\n")
-				}
-				if thirst <= 0 {
-					p.SendMessage("You are DYING OF THIRST!\r\n")
-				}
-				p.mu.RLock()
-				hp = p.Health
-				p.mu.RUnlock()
-				updatePosFromHP(p, hp)
-			}
-		}
-	}
-}
-
-// updatePosFromHP updates player position based on HP, mirroring update_pos() from fight.c.
-func updatePosFromHP(p *Player, hp int) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if hp > 0 && p.Position > combat.PosStunned {
-		return
-	}
-	if hp > 0 {
-		p.Position = combat.PosStanding
-		return
-	}
-	if hp <= -11 {
-		p.Position = combat.PosDead
-	} else if hp <= -6 {
-		p.Position = combat.PosMortally
-	} else if hp <= -3 {
-		p.Position = combat.PosIncap
-	} else {
-		p.Position = combat.PosStunned
-	}
-}
-
-// ---------------------------------------------------------------------------
-// GetAllPlayers returns a snapshot of all online players.
-// ---------------------------------------------------------------------------
-func (w *World) GetAllPlayers() []*Player {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	return players
-}
-
-// ---------------------------------------------------------------------------
-// Eat / Drink helpers
-// ---------------------------------------------------------------------------
-
-// EatFood consumes a food item from inventory, applying condition changes.
-// Ported from src/act.item.c ACMD(do_eat).
-// Item must be ITEM_FOOD (type 19). Values[0] = hours of fullness.
-// Returns the amount of fullness restored, or an error.
-func EatFood(p *Player, item *ObjectInstance) (int, error) {
-	if item == nil || item.Prototype == nil {
-		return 0, fmt.Errorf("You can't eat that!")
-	}
-	if item.Prototype.TypeFlag != 19 { // ITEM_FOOD
-		return 0, fmt.Errorf("You can't eat that!")
-	}
-
-	// Values[0] = hours of fullness restored
-	amount := item.Prototype.Values[0]
-	if amount <= 0 {
-		amount = 1
-	}
-
-	GainCondition(p, CondFull, amount)
-
-	p.mu.RLock()
-	isFull := p.Hunger >= 20
-	p.mu.RUnlock()
-
-	_ = isFull // caller handles fullness messages
-
-	return amount, nil
-}
-
-// DrinkLiquid consumes liquid from a drink container.
-// Ported from src/act.item.c ACMD(do_drink).
-// Returns the amount consumed and liquid index, or error.
-func DrinkLiquid(p *Player, item *ObjectInstance) (amount int, liqIndex int, err error) {
-	if item == nil || item.Prototype == nil {
-		return 0, 0, fmt.Errorf("You can't drink from that!")
-	}
-	if item.Prototype.TypeFlag != 17 && item.Prototype.TypeFlag != 23 { // ITEM_DRINKCON or ITEM_FOUNTAIN
-		return 0, 0, fmt.Errorf("You can't drink from that!")
-	}
-
-	// Values[1] = drinks left
-	if item.Prototype.Values[1] <= 0 {
-		return 0, 0, fmt.Errorf("It's empty.")
-	}
-
-	// Values[2] = liquid type
-	liqIndex = item.Prototype.Values[2]
-
-	// Calculate amount to drink
-	drunkThirst := 0
-	if liqIndex >= 0 && liqIndex < len(Liquids) {
-		drunkThirst = Liquids[liqIndex].DrunkAffect
-	}
-
-	if drunkThirst > 0 {
-		// Drink enough to fill thirst
-		p.mu.RLock()
-		curThirst := p.Thirst
-		p.mu.RUnlock()
-		amount = (25 - curThirst) / drunkThirst
-		if amount < 1 {
-			amount = 1
-		}
-	} else {
-		amount = 4 // reasonable default
-	}
-
-	// Cap to available liquid
-	if amount > item.Prototype.Values[1] {
-		amount = item.Prototype.Values[1]
-	}
-
-	// Apply condition changes from drink_aff
-	if liqIndex >= 0 && liqIndex < len(Liquids) {
-		liq := Liquids[liqIndex]
-		drunkVal := (liq.DrunkAffect * amount) / 4
-		fullVal := (liq.FullAffect * amount) / 4
-		thirstVal := (liq.ThirstAffect * amount) / 4
-
-		GainCondition(p, CondDrunk, drunkVal)
-		GainCondition(p, CondFull, fullVal)
-		GainCondition(p, CondThirst, thirstVal)
-	}
-
-	return amount, liqIndex, nil
-}
-
-// FillContainer fills a drink container from a source (fountain or another container).
-// Ported from src/act.item.c ACMD(do_pour) SCMD_FILL.
-func FillContainer(toObj, fromObj *ObjectInstance) error {
-	if toObj == nil || fromObj == nil || toObj.Prototype == nil || fromObj.Prototype == nil {
-		return fmt.Errorf("You can't fill that!")
-	}
-	if toObj.Prototype.TypeFlag != 17 { // ITEM_DRINKCON
-		return fmt.Errorf("You can't fill that!")
-	}
-	if fromObj.Prototype.TypeFlag != 23 { // ITEM_FOUNTAIN
-		return fmt.Errorf("You can't fill something from that!")
-	}
-
-	// Check source has liquid
-	if fromObj.Prototype.Values[1] <= 0 {
-		return fmt.Errorf("The %s is empty.", fromObj.GetShortDesc())
-	}
-
-	fromLiq := fromObj.Prototype.Values[2]
-
-	// Check destination doesn't have a different liquid
-	if toObj.Prototype.Values[1] > 0 && toObj.Prototype.Values[2] != fromLiq {
-		return fmt.Errorf("There is already another liquid in it!")
-	}
-
-	// Check destination has room
-	if toObj.Prototype.Values[1] >= toObj.Prototype.Values[0] {
-		return fmt.Errorf("There is no room for more.")
-	}
-
-	// Set liquid type on destination
-	toObj.Prototype.Values[2] = fromLiq
-
-	// Calculate amount to transfer
-	space := toObj.Prototype.Values[0] - toObj.Prototype.Values[1]
-	available := fromObj.Prototype.Values[1]
-
-	transfer := space
-	if transfer > available {
-		transfer = available
-	}
-
-	toObj.Prototype.Values[1] += transfer
-	fromObj.Prototype.Values[1] -= transfer
-
-	// If source emptied, reset
-	if fromObj.Prototype.Values[1] <= 0 {
-		fromObj.Prototype.Values[1] = 0
-		fromObj.Prototype.Values[2] = 0
-		fromObj.Prototype.Values[3] = 0
-	}
-
-	// Transfer poison flag
-	toObj.Prototype.Values[3] = boolToInt(toObj.Prototype.Values[3] == 1 || fromObj.Prototype.Values[3] == 1)
-
-	return nil
-}
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}
-
-// ---------------------------------------------------------------------------
-// Regen helpers — equipment bonuses, poison, hunger, sector
-// ---------------------------------------------------------------------------
-
-// sumApplyRegen sums equipment apply values at the given location.
-func sumApplyRegen(p *Player, location int) int {
-	total := 0
-	if p.Equipment == nil {
-		return 0
-	}
-	for _, item := range p.Equipment.Slots {
-		if item == nil || item.Prototype == nil {
-			continue
-		}
-		for _, aff := range item.Prototype.Affects {
-			if aff.Location == location {
-				total += aff.Modifier
-			}
-		}
-	}
-	return total
-}
-
-// hasAffectType checks whether the player has an affect of the given type.
-func hasAffectType(p *Player, at engine.AffectType) bool {
-	for _, a := range p.ActiveAffects {
-		if a.Type == at {
+	for _, f := range room.Flags {
+		if f == flag {
 			return true
 		}
 	}
 	return false
 }
 
-// getSkillLevel returns the player's level for a named skill, or 0 if not learned.
-func getSkillLevel(p *Player, skillName string) int {
-	if p.SkillManager == nil {
-		return 0
-	}
-	skill := p.SkillManager.GetSkill(skillName)
-	if skill == nil || !skill.Learned {
-		return 0
-	}
-	return skill.Level
-}
-
-// sectorRegenMultiplier returns the regen multiplier for a given room sector.
-// Based on stock CircleMUD/ROM sector types.
-func sectorRegenMultiplier(sector int) float64 {
-	switch sector {
-	case 0: // city
-		return 1.5
-	case 1: // inside
-		return 1.25
-	case 2: // field
-		return 1.0
-	case 3: // forest
-		return 0.75
-	case 4: // water
-		return 0.5
-	case 5: // underwater
-		return 0.25
-	case 6: // air
-		return 0.5
-	default:
-		return 1.0
-	}
-}
-
-// applyRegenModifiers applies common modifiers to a regen gain value:
-// - Poison: -50%
-// - Hunger/thirst < 2: -25%
-// - Room sector multiplier
-func applyRegenModifiers(p *Player, gain int, regenType string, world *World) int {
-	out := gain
-
-	// Poison reduction
-	if hasAffectType(p, engine.AffectPoison) {
-		out >>= 1 // -50%
-	}
-
-	// Hunger/thirst reduction
+// ---------------------------------------------------------------------------
+// ManaGain — from limits.c mana_gain() (lines 59-125)
+// ---------------------------------------------------------------------------
+func (w *World) ManaGain(p *Player) int {
 	p.mu.RLock()
-	hunger := p.Hunger
-	thirst := p.Thirst
+	class := p.Class
+	pos := p.Position
 	roomVNum := p.RoomVNum
+	cFull := p.Conditions[CondFull]
+	cThirst := p.Conditions[CondThirst]
+	veteran := isVeteran(p)
+	mystic := isMystic(p)
+	poisoned := p.Affects&(1<<AffPoison) != 0
+	flaming := p.Affects&(1<<AffFlaming) != 0
+	cutthroat := p.Affects&(1<<AffCutthroat) != 0
 	p.mu.RUnlock()
 
-	if hunger < 2 || thirst < 2 {
-		out -= out >> 2 // -25%
+	gain := 14
+
+	if veteran {
+		gain += 4
 	}
 
-	// Room sector bonus
-	if world != nil {
-		room := world.GetRoomInWorld(roomVNum)
-		if room != nil {
-			mult := sectorRegenMultiplier(room.Sector)
-			out = int(float64(out) * mult)
+	// Position calculations — limits.c:72-85
+	switch pos {
+	case PosSleeping:
+		gain <<= 1 // doubled
+	case PosResting:
+		gain += gain >> 1
+	case PosSitting:
+		gain += gain >> 2
+	}
+
+	// Class calculations — limits.c:97-104
+	if class == ClassMageUser || class == ClassCleric {
+		gain <<= 1
+	}
+	if class == ClassMagus || class == ClassAvatar {
+		gain <<= 1
+	} else if class == ClassPsionic || class == ClassNinja {
+		gain += gain >> 2
+	} else if mystic {
+		gain <<= 1
+	}
+
+	// Skill/Spell calculations — limits.c:108-115
+	if poisoned {
+		gain >>= 2
+	}
+	if flaming {
+		gain >>= 2
+	}
+	if cutthroat {
+		gain >>= 2
+	}
+
+	// Hunger or thirst — limits.c:117-118
+	if cFull == 0 || cThirst == 0 {
+		gain >>= 2
+	}
+
+	// ROOM_REGENROOM — limits.c:120-122
+	if roomVNum > 0 && w.roomHasFlag(roomVNum, "regenroom") {
+		gain += gain >> 1
+	}
+
+	return gain
+}
+
+// ---------------------------------------------------------------------------
+// ManaGainNPC — from limits.c mana_gain() NPC branch
+// ---------------------------------------------------------------------------
+func ManaGainNPC(m *MobInstance) int {
+	return m.GetLevel()
+}
+
+// ---------------------------------------------------------------------------
+// HitGain — from limits.c hit_gain() (lines 128-193)
+// ---------------------------------------------------------------------------
+func (w *World) HitGain(p *Player) int {
+	p.mu.RLock()
+	class := p.Class
+	pos := p.Position
+	roomVNum := p.RoomVNum
+	cFull := p.Conditions[CondFull]
+	cThirst := p.Conditions[CondThirst]
+	veteran := isVeteran(p)
+	poisoned := p.Affects&(1<<AffPoison) != 0
+	flaming := p.Affects&(1<<AffFlaming) != 0
+	cutthroat := p.Affects&(1<<AffCutthroat) != 0
+	p.mu.RUnlock()
+
+	gain := 20
+
+	if veteran {
+		gain += 12
+	}
+
+	// Position calculations — limits.c:149-167
+	switch pos {
+	case PosSleeping:
+		gain += gain >> 1 // ×1.5
+	case PosResting:
+		gain += gain >> 2 // ×1.25
+	case PosSitting:
+		gain += gain >> 3 // ×1.125
+	}
+
+	// Class/Level calculations — limits.c:171-173
+	if class == ClassMageUser || class == ClassCleric {
+		gain >>= 1
+	}
+
+	// Skill/Spell calculations — limits.c:176-192
+	if poisoned {
+		gain >>= 2
+	}
+	if flaming {
+		gain >>= 2
+	}
+	if cutthroat {
+		gain >>= 2
+	}
+
+	// Hunger or thirst — limits.c:185-186
+	if cFull == 0 || cThirst == 0 {
+		gain >>= 2
+	}
+
+	// ROOM_REGENROOM — limits.c:188-190
+	if roomVNum > 0 && w.roomHasFlag(roomVNum, "regenroom") {
+		gain += gain >> 1
+	}
+
+	return gain
+}
+
+// ---------------------------------------------------------------------------
+// MobHitGain — from limits.c hit_gain() NPC branch (lines 133-137)
+// ---------------------------------------------------------------------------
+func MobHitGain(m *MobInstance) int {
+	lvl := m.GetLevel()
+	if lvl < 23 {
+		return (lvl*5 + 1) / 2 // integer approximation of 2.5×level
+	}
+	return 4 * lvl
+}
+
+// ---------------------------------------------------------------------------
+// MoveGain — from limits.c move_gain() (lines 197-253)
+// ---------------------------------------------------------------------------
+func (w *World) MoveGain(p *Player) int {
+	p.mu.RLock()
+	pos := p.Position
+	roomVNum := p.RoomVNum
+	cFull := p.Conditions[CondFull]
+	cThirst := p.Conditions[CondThirst]
+	veteran := isVeteran(p)
+	poisoned := p.Affects&(1<<AffPoison) != 0
+	flaming := p.Affects&(1<<AffFlaming) != 0
+	cutthroat := p.Affects&(1<<AffCutthroat) != 0
+	p.mu.RUnlock()
+
+	gain := 20
+
+	if veteran {
+		gain += 4
+	}
+
+	// Position calculations — limits.c:217-235
+	switch pos {
+	case PosSleeping:
+		gain += gain >> 1
+	case PosResting:
+		gain += gain >> 2
+	case PosSitting:
+		gain += gain >> 3
+	}
+
+	// Skill/Spell calculations — limits.c:239-247
+	if poisoned || flaming {
+		gain >>= 2
+	}
+	if cutthroat {
+		gain >>= 2
+	}
+	if cFull == 0 || cThirst == 0 {
+		gain >>= 2
+	}
+
+	// ROOM_REGENROOM — limits.c:248-250
+	if roomVNum > 0 && w.roomHasFlag(roomVNum, "regenroom") {
+		gain += gain >> 1
+	}
+
+	return gain
+}
+
+// ---------------------------------------------------------------------------
+// MoveGainNPC — from limits.c move_gain() NPC branch
+// ---------------------------------------------------------------------------
+func MoveGainNPC(m *MobInstance) int {
+	return m.GetLevel()
+}
+
+// ---------------------------------------------------------------------------
+// GainCondition — from limits.c gain_condition() (lines 366-417)
+// ---------------------------------------------------------------------------
+// Applies a delta to a player's condition (hunger/thirst/drunk).
+// Value -1 means "immortal" — no change applied.
+// Clamps to [0, 48].
+// Sends flavour messages at threshold crossings.
+func GainCondition(p *Player, condition int, value int) {
+	p.mu.RLock()
+	cond := p.Conditions[condition]
+	p.mu.RUnlock()
+
+	if cond == -1 { // Immortal / no change
+		return
+	}
+
+	intoxicated := false
+	p.mu.RLock()
+	if p.Conditions[CondDrunk] > 0 {
+		intoxicated = true
+	}
+	p.mu.RUnlock()
+
+	p.mu.Lock()
+	p.Conditions[condition] += value
+	if p.Conditions[condition] < 0 {
+		p.Conditions[condition] = 0
+	}
+	if p.Conditions[condition] > 48 {
+		p.Conditions[condition] = 48
+	}
+	newCond := p.Conditions[condition]
+	p.mu.Unlock()
+
+	// Messages only at threshold 0 or 1
+	if newCond > 1 {
+		return
+	}
+
+	// Also skip messages if player is writing (PLR_WRITING flag)
+	// PLR_WRITING = bit 4 — check p.Flags
+	p.mu.RLock()
+	writing := p.Flags&(1<<4) != 0
+	p.mu.RUnlock()
+	if writing {
+		return
+	}
+
+	var msg string
+	if newCond > 0 {
+		switch condition {
+		case CondFull:
+			msg = "Your stomach growls with hunger.\r\n"
+		case CondThirst:
+			msg = "You feel a bit parched.\r\n"
+		case CondDrunk:
+			if intoxicated {
+				msg = "Your head starts to clear.\r\n"
+			}
+		}
+	} else {
+		switch condition {
+		case CondFull:
+			msg = "You are hungry.\r\n"
+		case CondThirst:
+			msg = "You are thirsty.\r\n"
+		case CondDrunk:
+			if intoxicated {
+				msg = "You are now sober.\r\n"
+			}
 		}
 	}
 
-	if out < 0 {
-		out = 0
+	if msg != "" {
+		p.SendMessage(msg)
 	}
-	return out
 }
+
+// ---------------------------------------------------------------------------
+// PointUpdate — from limits.c point_update() (lines 460-686)
+// ---------------------------------------------------------------------------
+// Main tick function called periodically. Iterates all players and NPCs,
+// applies condition decay, regenerates HMV, processes poison/cutthroat
+// damage, memory clearing, idle checks, and object decay.
+func (w *World) PointUpdate() {
+	// Snapshot players under read lock, operate without lock
+	w.mu.RLock()
+	players := make([]*Player, 0, len(w.players))
+	for _, p := range w.players {
+		players = append(players, p)
+	}
+	mobs := make([]*MobInstance, 0, len(w.activeMobs))
+	for _, m := range w.activeMobs {
+		mobs = append(mobs, m)
+	}
+	w.mu.RUnlock()
+
+	// --- Players ---
+	for _, p := range players {
+		p.mu.RLock()
+		pos := p.Position
+		p.mu.RUnlock()
+
+		// Condition decay — skip if inactive (PRF_INACTIVE)
+		// TODO: PRF_INACTIVE flag check using p.Flags
+		GainCondition(p, CondFull, -1)
+		GainCondition(p, CondDrunk, -1)
+		GainCondition(p, CondThirst, -1)
+
+		// Tattoo timer
+		p.mu.Lock()
+		if p.TatTimer > 0 {
+			p.TatTimer--
+		}
+		p.mu.Unlock()
+
+		// Dream processing for sleeping characters
+		// TODO: call dream when implemented — limits.c:476
+		_ = pos
+		// if pos == PosSleeping { dream(p, w) }
+
+		if pos >= PosStunned {
+			p.mu.RLock()
+			hp := p.Health
+			maxHP := p.MaxHealth
+			mana := p.Mana
+			maxMana := p.MaxMana
+			move := p.Move
+			maxMove := p.MaxMove
+			poisoned := p.Affects&(1<<AffPoison) != 0
+			cutthroat := p.Affects&(1<<AffCutthroat) != 0
+			curPos := p.Position
+			p.mu.RUnlock()
+
+			// HP regen
+			if hp < maxHP {
+				gain := w.HitGain(p)
+				hp += gain
+				if hp > maxHP {
+					hp = maxHP
+				}
+				p.mu.Lock()
+				p.Health = hp
+				p.mu.Unlock()
+			}
+
+			// Mana regen
+			if mana < maxMana {
+				gain := w.ManaGain(p)
+				mana += gain
+				if mana > maxMana {
+					mana = maxMana
+				}
+				p.mu.Lock()
+				p.Mana = mana
+				p.mu.Unlock()
+			}
+
+			// Move regen — always (even at max, original limits.c:501)
+			mvGain := w.MoveGain(p)
+			move += mvGain
+			if move > maxMove {
+				move = maxMove
+			}
+			p.mu.Lock()
+			p.Move = move
+			p.mu.Unlock()
+
+			// Poison damage — limits.c:503-504
+			if poisoned {
+				p.TakeDamage(10)
+			}
+
+			// Cutthroat damage — limits.c:505-506
+			if cutthroat {
+				p.TakeDamage(13)
+			}
+
+			// Update position if HP has dropped low — limits.c:507-508
+			if curPos <= PosStunned {
+				p.mu.RLock()
+				hp := p.Health
+				p.mu.RUnlock()
+				updatePosFromHP(p, hp)
+			}
+		} else if pos == PosIncap {
+			// Incapacitated: 1 damage per tick — limits.c:511
+			p.TakeDamage(1)
+		} else if pos == PosMortally {
+			// Mortally wounded: 2 damage per tick — limits.c:513
+			p.TakeDamage(2)
+		}
+
+		// Memory clearing for NPCs — limits.c:516-518
+		// (handled in NPC section below)
+
+		// Idle check for players — limits.c:521-524
+		w.CheckIdling(p)
+	}
+
+	// --- NPCs ---
+	for _, m := range mobs {
+		pos := m.GetPosition()
+		roomVNum := m.GetRoomVNum()
+
+		if pos >= PosStunned {
+			if m.CurrentHP < m.MaxHP {
+				gain := MobHitGain(m)
+				m.CurrentHP += gain
+				if m.CurrentHP > m.MaxHP {
+					m.CurrentHP = m.MaxHP
+				}
+			}
+		} else if pos == PosIncap {
+			m.TakeDamage(1)
+		} else if pos == PosMortally {
+			m.TakeDamage(2)
+		}
+
+		// Memory clearing — limits.c:516-518
+		// 1 in 99 chance of clearing mob memory
+		if m.Memory != nil && rand.Intn(99) == 0 {
+			clearMemory(m)
+		}
+
+		// Object decay for things in this mob's room
+		_ = roomVNum
+		w.decayObjectsInRoom(roomVNum)
+	}
+}
+
+// clearMemory clears a mob's memory — from handler.c
+func clearMemory(m *MobInstance) {
+	m.Memory = nil
+}
+
+// decayObjectsInRoom decays objects in the given room.
+// Ported from limits.c point_update() object section (lines 527-686).
+func (w *World) decayObjectsInRoom(roomVNum int) {
+	items := w.GetItemsInRoom(roomVNum)
+	for _, obj := range items {
+		if obj.Prototype == nil {
+			continue
+		}
+		objVNum := obj.GetVNum()
+
+		// Moongate — VNum defined in constants
+		_ = objVNum
+
+		// TODO: object decay (puddle/puke/dust/corpse/circle of summoning/field objects)
+		// Requires: obj timer fields, special object VNums, field object table
+		// See limits.c:527-686 for full implementation
+	}
+}
+
+// updatePosFromHP updates a player's position based on their HP.
+// Ported from fight.c update_pos()
+func updatePosFromHP(p *Player, hp int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if hp > 0 {
+		if p.Position > PosStunned {
+			return
+		}
+		p.Position = PosStanding
+		return
+	}
+	if hp <= -11 {
+		p.Position = PosDead
+	} else if hp <= -6 {
+		p.Position = PosMortally
+	} else if hp <= -3 {
+		p.Position = PosIncap
+	} else {
+		p.Position = PosStunned
+	}
+}
+
+// ---------------------------------------------------------------------------
+// SetTitle — from limits.c set_title()
+// ---------------------------------------------------------------------------
+func SetTitle(p *Player, title string) {
+	if title == "" {
+		class := p.Class
+		if class >= 0 && class < len(Titles) {
+			title = Titles[class]
+		} else {
+			title = "the Adventurer"
+		}
+	}
+	if len(title) > MAX_TITLE_LENGTH {
+		title = title[:MAX_TITLE_LENGTH]
+	}
+	p.Title = title
+}
+
+// ---------------------------------------------------------------------------
+// CheckAutowiz — from limits.c check_autowiz()
+// ---------------------------------------------------------------------------
+func CheckAutowiz(p *Player) {
+	_ = p
+	// Stub: the autowiz shell script is CircleMUD-specific.
+	// TODO: implement wizlist update when admin system is built.
+}
+
+// ---------------------------------------------------------------------------
+// FindExp — from class.c find_exp()
+// ---------------------------------------------------------------------------
+func FindExp(class int, level int) int {
+	var modifier float64
+
+	switch class {
+	case ClassMageUser:
+		modifier = 0.3
+	case ClassCleric:
+		modifier = 0.4
+	case ClassWarrior:
+		modifier = 0.7
+	case ClassThief:
+		modifier = 0.1
+	case ClassMagus, ClassMystic:
+		modifier = 1.5
+	case ClassAvatar:
+		modifier = 1.6
+	case ClassAssassin:
+		modifier = 1.2
+	case ClassPaladin, ClassRanger:
+		modifier = 1.9
+	case ClassNinja, ClassPsionic:
+		modifier = 0.6
+	default:
+		modifier = 1.0
+	}
+
+	switch {
+	case level <= 0:
+		return 1
+	case level == 1:
+		return 1500
+	case level == 2:
+		return 3000
+	case level == 3:
+		return 6000
+	case level == 4:
+		return 11000
+	case level == 5:
+		return 21000
+	case level == 6:
+		return 42000
+	case level == 7:
+		return 80000
+	case level == 8:
+		return 155000
+	case level == 9:
+		return 300000
+	case level == 10:
+		return 450000
+	case level == 11:
+		return 650000
+	case level == 12:
+		return 870000
+	default:
+		return 900000 + ((level-13)*level*20000) + (level*level*1000) + int(modifier*10000*float64(level))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ExpNeededForLevel — from class.c exp_needed_for_level()
+// ---------------------------------------------------------------------------
+func ExpNeededForLevel(p *Player) int {
+	return FindExp(p.Class, p.Level)
+}
+
+// ---------------------------------------------------------------------------
+// GainExp — from limits.c gain_exp()
+// ---------------------------------------------------------------------------
+func (w *World) GainExp(p *Player, gain int) {
+	if p == nil {
+		return
+	}
+
+	if p.IsNPC() {
+		p.Exp += gain
+		return
+	}
+
+	if p.Level < 1 || p.Level >= LVL_IMMORT {
+		return
+	}
+
+	if gain > 0 {
+		if gain > maxExpGain {
+			gain = maxExpGain
+		}
+
+		maxExp := FindExp(p.Class, p.Level+1) - p.Exp
+		if gain > maxExp-1 {
+			gain = maxExp - 1
+			if gain < 1 {
+				gain = 1
+			}
+		}
+
+		p.Exp += gain
+
+		if p.Level < LVL_IMPL-1 && p.Exp >= ExpNeededForLevel(p) {
+			// TODO: AFF_FLESH_ALTER handling
+			p.Level++
+			p.AdvanceLevel()
+			sendToChar(p, fmt.Sprintf("You advance to level %d!\r\n", p.Level))
+		}
+	} else if gain < 0 {
+		if gain < -maxExpLoss {
+			gain = -maxExpLoss
+		}
+		p.Exp += gain
+		if p.Exp < 0 {
+			p.Exp = 0
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// GainExpRegardless — from limits.c gain_exp_regardless()
+// ---------------------------------------------------------------------------
+func (w *World) GainExpRegardless(p *Player, gain int) {
+	if p == nil {
+		return
+	}
+
+	p.Exp += gain
+	if p.Exp < 0 {
+		p.Exp = 0
+	}
+
+	if p.IsNPC() {
+		return
+	}
+
+	numLevels := 0
+	for p.Level < LVL_IMPL && p.Exp >= ExpNeededForLevel(p) {
+		// TODO: AFF_FLESH_ALTER handling
+		p.Level++
+		numLevels++
+		p.AdvanceLevel()
+	}
+
+	if numLevels > 0 {
+		if numLevels == 1 {
+			sendToChar(p, "You rise a level!\r\n")
+		} else {
+			sendToChar(p, fmt.Sprintf("You rise %d levels!\r\n", numLevels))
+		}
+		CheckAutowiz(p)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// CheckIdling — from limits.c check_idling()
+// ---------------------------------------------------------------------------
+func (w *World) CheckIdling(p *Player) {
+	if p == nil {
+		return
+	}
+
+	p.mu.RLock()
+	level := p.Level
+	roomVNum := p.RoomVNum
+	p.mu.RUnlock()
+
+	// Idle time tracking is handled externally via UpdateActivity/LastActive.
+	// For immortals and NPCs, skip idle handling.
+	if level >= LVL_IMMORT || p.IsNPC() {
+		return
+	}
+
+	// TODO: Full idle handling when char_data.timer, was_in, and desc fields
+	// are implemented. Requires:
+	//   - p.IdleTimer field
+	//   - WasIn room tracking
+	//   - char_from_room / char_to_room for void room (VNum 1, 3)
+	//   - close_socket for disconnected players
+	//   - Crash_rentsave / Crash_idlesave
+	//   - extract_char
+	_ = roomVNum
+}
+
+

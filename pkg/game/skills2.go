@@ -79,7 +79,7 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 		}
 		obj := NewObjectInstance(proto, ch.RoomVNum)
 		if obj != nil {
-			ch.Move = ch.Move // placeholder: add item to inventory
+			// placeholder: add item to inventory
 			msg := "You find $p."
 			if !isFind {
 				msg = "You capture and kill $p."
