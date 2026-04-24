@@ -209,6 +209,47 @@ Typed event bus for decoupled subsystem communication. Event types:
 
 Handlers subscribe by event type string. Events are processed sequentially per publish call.
 
+## Snapshot System (lock-free reads)
+
+`WorldSnapshot` + `SnapshotManager` provide an atomic pointer-swapped read-only view of world rooms.
+
+**How it works:**
+- `World` holds a `SnapshotManager` with an `atomic.Pointer[WorldSnapshot]`
+- World writers mutate the live `rooms` map under World's write lock, then call `PublishSnapshot()`
+- `PublishSnapshot` allocates a new `WorldSnapshot`, copies the rooms map, then atomically stores the pointer
+- Readers call `World.Snapshot()` which does a load-free pointer read — no locks held
+
+**Status:** Initialized and publishing on world boot. Readers (GetRoom, look, movement) still use the mutex path via `World.rooms`. Transition readers to `Snapshot()` for zero-lock lookups in performance-critical paths.
+
+### Generation tracking
+`SnapshotManager.generation` (`atomic.Uint64`) increments on each publish, enabling stale-snapshot detection for readers that hold references across yields.
+
+## Middleware Pipeline
+
+`command.Registry` supports a decorator-style middleware chain: each registered handler is wrapped through all registered middleware at lookup time, outermost first.
+
+```go
+type Middleware func(Handler) Handler
+
+cmdRegistry.Use(LoggingMiddleware())
+cmdRegistry.Use(RateLimitMiddleware(250 * time.Millisecond))
+```
+
+**Built-in middleware (pkg/command/middleware.go):**
+- **LoggingMiddleware** — logs command name, duration, and error status at slog.Debug level
+- **RateLimitMiddleware** — enforces minimum interval between commands per session
+
+**Status:** Functions exist, `Registry.Use()` is implemented. No middleware is currently wired onto the registry. Intended for production — logging middleware adds noise during active development.
+
+## Persistence (SQLite)
+
+`pkg/storage/` provides an optional SQLite persistence backend via mattn/go-sqlite3 with WAL mode:
+- **Players table:** serialized JSON player state with timestamps
+- **World state:** zone reset tracking, mob respawn timers
+- **Narrative memory:** agent long-term memory (future use)
+
+**Status:** Backend implemented and tested. Server (`cmd/server/main.go`) does not wire it in yet — currently in-memory only. Wire-in: `NewSQLiteBackend(path)` → pass through World constructor.
+
 ## Lua Scripting
 
 ### Loading

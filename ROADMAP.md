@@ -101,6 +101,36 @@ Commands: `skills`, `practice`, `learn`, `forget`, `skillinfo`, `listskills`, pl
 
 SkillManager with progression, slots, skill points — `pkg/engine/skill.go`, `pkg/engine/skill_manager.go`.
 
+### Snapshot System (lock-free reads)
+- `SnapshotManager` with `atomic.Pointer[WorldSnapshot]` — atomic pointer swap
+- World writers mutate under write lock, then `PublishSnapshot()` copies the rooms map
+- Readers get zero-lock reads of a consistent world view
+- Wired into World initialization; generation tracking via `atomic.Uint64`
+
+### Middleware Pipeline
+- `command.Registry` supports decorator-style middleware chain
+- `LoggingMiddleware()` — logs command name, duration, error status
+- `RateLimitMiddleware()` — enforces minimum interval between commands
+- `Registry.Use()` API ready; currently no middleware wired on (logging adds noise during dev)
+
+### SQLite Persistence Backend
+- `pkg/storage/sqlite.go` — mattn/go-sqlite3 with WAL mode, write-optimized connection pool
+- Auto-migration on init: players table with serialized JSON state + timestamps
+- Zone reset tracking, mob respawn timers (prepared)
+- Not yet wired into `cmd/server/main.go` (currently in-memory only)
+
+### Event Bus (typed pub/sub)
+- `events.InProcessBus` — typed events with subscriber pattern
+- Event types: `combat.*`, `player.*`, `economy.*`, `world.*`, `game.*`, `admin.*`
+- Handlers run sequentially per publish call; subscribe returns unsubscribe function
+- Wired into death handling: publishes `MobKilledEvent` and `PlayerKilledEvent`
+
+### Zone Dispatcher (per-zone goroutines)
+- `ZoneDispatcher` spawns one goroutine per zone for isolated reset processing
+- Initialized with 100ms tick in World setup
+- 95 zones each get their own goroutine for resets, AI processing, and state
+- `context.Context` per worker for graceful shutdown; separate from serial zone reset loop
+
 ### Socials
 - ~100 emotes from `lib/misc/socials` in `pkg/game/socials.go` (1,136 lines)
 - Wired to command dispatch in `pkg/session/commands.go` via `cmdSocial()`
