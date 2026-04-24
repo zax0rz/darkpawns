@@ -46,6 +46,7 @@ type Player struct {
 	// Used by save/load, not persisted to JSON yet.
 	ActiveAffects []*engine.Affect
 
+
 	// Character identity — from do_start()/roll_real_abils() in class.c
 	Class int
 	Race  int
@@ -134,8 +135,6 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		MaxHealth:    100,
 		Mana:         100,
 		MaxMana:      100,
-		Move:         100, // Default move points
-		MaxMove:      100,
 		Level:        1,
 		Exp:          0,
 		Strength:     10,                                         // Default strength
@@ -154,9 +153,6 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
 
 		SpellMap:     make(map[string]int),
-		// Conditions: DRUNK=0, FULL=1, THIRST=2 — start at 24 (half-full) for mortals
-		// Source: class.c do_start() — conditions initialized to 24 at creation
-		Conditions: [3]int{0, 24, 24},
 	}
 
 	// Initialize inventory and equipment
@@ -712,6 +708,7 @@ func (p *Player) SetAffect(affBit int, val bool) {
 		p.Affects &^= 1 << uint(affBit)
 	}
 }
+
 
 // GetFlags returns the raw PLR flags bitmask.
 // Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.

@@ -936,17 +936,7 @@ func firstWord(keywords string) string {
 	return keywords
 }
 
-// an returns "an" for vowel-starting words, "a" otherwise.
-func an(s string) string {
-	if s == "" {
-		return "a"
-	}
-	switch s[0] {
-	case 'a', 'e', 'i', 'o', 'u':
-		return "an"
-	}
-	return "a"
-}
+// an is defined in act_item.go
 
 // verbIs returns "are" if the word ends with 's', "is" otherwise.
 // Rough approximation of "this door is" vs "these doors are".

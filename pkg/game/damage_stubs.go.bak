@@ -1,0 +1,187 @@
+package game
+
+import (
+	"fmt"
+	"math"
+)
+
+// ---------------------------------------------------------------------------
+// Damage helper stubs for act_offensive.go
+// These match the CircleMUD fight.c patterns: damage() and hit_skill()
+// ---------------------------------------------------------------------------
+
+// doDamage applies damage to a target. This is a simplified version of fight.c damage()
+// that sends the result to death/exp gain. The full damage() function from fight.c
+// will be ported properly in fight.go later.
+func (w *World) doDamage(ch, vict interface{}, dam int, skill string) {
+	victim, ok := vict.(*Player)
+	if !ok {
+		return // Can't damage non-players yet (mob handling coming in fight.go)
+	}
+
+	if dam <= 0 {
+		// Miss/glance
+		victim.SendMessage(fmt.Sprintf("%s hits you, but it doesn't hurt!\r\n", getAttackerName(ch)))
+		return
+	}
+
+	// Apply damage
+	victim.TakeDamage(dam)
+	victim.SetFighting(getAttackerName(ch))
+
+	// Check for death
+	if victim.GetHP() <= 0 {
+		w.rawKill(victim, 303) // TYPE_SLASH default
+	}
+}
+
+// hitSkill performs a skill-based hit (fight.c: hit_skill())
+// Simplified version that generates some base damage and applies it.
+func (w *World) hitSkill(ch, vict interface{}, skill string) {
+	victim, ok := vict.(*Player)
+	if !ok {
+		return
+	}
+
+	// Base damage: like a basic hit with the skill
+	dam := randRange(1, 8) + 2 // Simple die roll, skill-based in original
+
+	w.doDamage(ch, vict, dam, skill)
+
+	// The following checks for mortally wounded/incap etc would go here
+	// in the full implementation. For now, doDamage handles death.
+	_ = victim // silence unused
+}
+
+// getAttackerName returns the name of the attacker for messages.
+func getAttackerName(ch interface{}) string {
+	switch a := ch.(type) {
+	case *Player:
+		return a.Name
+	case *MobInstance:
+		return a.GetShortDesc()
+	default:
+		return "Someone"
+	}
+}
+
+// ---------------------------------------------------------------------------
+// executeCommand — stub for do_flee/do_backstab etc that call w.executeCommand
+// Full implementation in interpreter.go.
+// ---------------------------------------------------------------------------
+
+// executeCommand sends a command to a character (player or mob wrap).
+// This runs the command through the normal command interpreter loop.
+// In the full interpreter port, this will dispatch to the command table.
+func (w *World) executeCommand(ch *Player, me *MobInstance, cmd string, arg string) bool {
+	// Build the full command string
+	fullCmd := cmd
+	if arg != "" {
+		fullCmd = cmd + " " + arg
+	}
+	return w.InterpretCommand(ch, me, fullCmd)
+}
+
+// ---------------------------------------------------------------------------
+// interpretCommand — stub command interpreter for w.executeCommand
+// In the full port this dispatches to the command table.
+// ---------------------------------------------------------------------------
+
+// InterpretCommand is a minimal command interpreter that dispatches to World methods.
+func (w *World) InterpretCommand(ch *Player, me *MobInstance, input string) bool {
+	if ch.IsNPC() || me != nil {
+		return w.handleMobCommand(me, input)
+	}
+	return w.handlePlayerCommand(ch, input)
+}
+
+// handlePlayerCommand dispatches a player command.
+func (w *World) handlePlayerCommand(ch *Player, input string) bool {
+	parts := strings.Fields(input)
+	if len(parts) == 0 {
+		return false
+	}
+	cmd := strings.ToLower(parts[0])
+	arg := ""
+	if len(parts) > 1 {
+		arg = input[len(parts[0])+1:]
+	}
+
+	// Dispatch to known commands
+	switch cmd {
+	case "flee":
+		return w.doFlee(ch, nil, cmd, arg)
+	case "backstab":
+		return w.doBackstab(ch, nil, cmd, arg)
+	case "hit", "kill":
+		return w.doHit(ch, nil, cmd, arg)
+	case "murder":
+		return w.doMurder(ch, nil, cmd, arg)
+	case "assist":
+		return w.doAssist(ch, nil, cmd, arg)
+	default:
+		return false
+	}
+}
+
+// handleMobCommand dispatches a mob command (mobprog).
+func (w *World) handleMobCommand(me *MobInstance, input string) bool {
+	return false
+}
+
+// ---------------------------------------------------------------------------
+// doDamage constant helpers
+// ---------------------------------------------------------------------------
+
+const (
+	// DAM_{size} constants for dice-based damage
+	diceMin = 1
+	diceMax = 100
+)
+
+// diceRoll rolls n s-sided dice.
+func diceRoll(n, s int) int {
+	if n <= 0 || s <= 0 {
+		return 0
+	}
+	total := 0
+	for range n {
+		total += randRange(1, s)
+	}
+	return total
+}
+
+// damMessage returns a damage message based on severity.
+func damMessage(dam int) string {
+	switch {
+	case dam <= 0:
+		return "miss"
+	case dam < 5:
+		return "scratch"
+	case dam < 10:
+		return "hit"
+	case dam < 20:
+		return "hard hit"
+	case dam < 30:
+		return "critical hit"
+	case dam < 50:
+		return "devastating blow"
+	case dam < 75:
+		return "massive strike"
+	default:
+		return "catastrophic hit"
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Rounding utility for damage calculations
+// ---------------------------------------------------------------------------
+
+func roundFloat(f float64) int {
+	return int(math.Round(f))
+}
+
+// ---------------------------------------------------------------------------
+// doFlee stub — players flee from combat
+// ---------------------------------------------------------------------------
+

@@ -41,10 +41,6 @@ type World struct {
 	aiticker *time.Ticker
 	done     chan bool
 
-	// Regen tick — fires PointUpdate() for HP/mana/move recovery and condition decay
-	// Source: comm.c PULSE_VIOLENCE / limits.c point_update()
-	regenTicker *time.Ticker
-
 	// Spawner
 	spawner *Spawner
 
@@ -220,32 +216,11 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 	return newRoom, nil
 }
 
-// StopAITicker stops the AI tick loop (and the regen ticker via shared done channel).
+// StopAITicker stops the AI tick loop.
 func (w *World) StopAITicker() {
 	if w.done != nil {
 		close(w.done)
 	}
-}
-
-// StartRegenTicker starts the regen tick loop.
-// Original: point_update() fired from comm.c heartbeat every PULSE_REGEN intervals.
-// PULSE_PER_MUD_HOUR = 75 pulses × PASSES_PER_SEC (typically 1s), so roughly 75s per MUD hour.
-// Source: comm.c heartbeat(), limits.c point_update()
-func (w *World) StartRegenTicker(interval time.Duration) {
-	w.regenTicker = time.NewTicker(interval)
-	go func() {
-		for {
-			select {
-			case <-w.regenTicker.C:
-				w.PointUpdate()
-			case <-w.done:
-				if w.regenTicker != nil {
-					w.regenTicker.Stop()
-				}
-				return
-			}
-		}
-	}()
 }
 
 // SpawnMob spawns a mob in the world.

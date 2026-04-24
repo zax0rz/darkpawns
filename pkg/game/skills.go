@@ -14,6 +14,7 @@ import (
 
 const (
 	SkillBackstab  = "backstab"
+	SkillFlee      = "flee"
 	SkillBash      = "bash"
 	SkillKick      = "kick"
 	SkillTrip      = "trip"
@@ -128,6 +129,7 @@ var SkillClassReq = map[string]map[int]int{
 // Source: interpreter.c cmd_info[] entries.
 var SkillPosReq = map[string]int{
 	SkillBackstab: combat.PosStanding,
+	SkillFlee:     combat.PosFighting,
 	SkillBash:     combat.PosFighting,
 	SkillKick:     combat.PosFighting,
 	SkillTrip:     combat.PosFighting,

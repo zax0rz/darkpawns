@@ -166,7 +166,6 @@ func parseRoomFlags(bitmask int) []string {
 		13: "atrium",      // ROOM_ATRIUM
 		14: "olc",         // ROOM_OLC
 		15: "bspace",      // ROOM_BSPACE
-		18: "regenroom",   // ROOM_REGENROOM — heightened regeneration (structs.h:74)
 	}
 
 	for bit, name := range flagMap {
