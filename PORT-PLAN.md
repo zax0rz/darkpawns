@@ -73,28 +73,59 @@ Build:             go build ./cmd/server passes clean
 **What:** Bulletin boards, cryogenic storage + receptionist, mob programs (triggers on enter/speech/kill/give)
 **Go targets:** `pkg/game/boards.go`, `pkg/game/objsave.go`, `pkg/game/mobprogs.go`
 
-### Wave 8 — OLC Framework (`improved-edit.c`, `olc.c`, `poof.c`, `tedit.c`, `luaedit.c`, `file-edit.c`, ~1608 lines)
-**What:** Text editor engine, OLC framework, poof messages, trigger editor, Lua editor, file editor
-**Go targets:** `pkg/olc/editor.go`, `pkg/olc/olc.go`, `pkg/olc/poof.go`, `pkg/olc/triggers.go`, `pkg/olc/files.go`
+### 🚫 Waves 8-10 — OLC Editors (REPLACED by Web Admin)
 
-### Wave 9 — OLC Room + Object Editors (`redit.c`, `oedit.c`, ~2642 lines)
-**What:** Room editor (descriptions, exits, flags, progs). Object editor (values, flags, wear locations, affects)
-**Go targets:** `pkg/olc/rooms.go`, `pkg/olc/objects.go`
+**Decision: Do NOT port.** These ~7,800 lines of OLC C code are replaced by the Web Admin SPA.
 
-### Wave 10 — OLC Mob + Shop + Zone Editors (`medit.c`, `sedit.c`, `zedit.c`, ~3580 lines)
-**What:** Mob editor, shop editor, zone editor (zone flags, reset commands, commands table)
-**Go targets:** `pkg/olc/mobs.go`, `pkg/olc/shops.go`, `pkg/olc/zones.go`
+See `PLAN-web-admin-architecture.md` for the full replacement plan.
+
+**Reference only (data model knowledge needed):**
+- `src/improved-edit.c` — text editor engine (study for extra description editing patterns)
+- `src/olc.c` — OLC framework concepts (study for vnum management patterns)
+- `src/redit.c` — room editor logic (28 flags, exits, extra descr)
+- `src/oedit.c` — object editor logic (24 item types, contextual values)
+- `src/medit.c` — mob editor logic (25 flags, dice notation, scripts)
+- `src/sedit.c` — shop editor logic (multi-room, producing array)
+- `src/zedit.c` — zone editor logic (reset command chain, if_flag)
+- `src/poof.c` — poof messages (nylon-pouch migration pattern)
+
+**C files that remain in scope for future porting (non-editor):**
+- `src/tedit.c` — trigger editor. Maps to admin's Lua script editor, but the trigger *triggering* logic is in `pkg/scripting/` already.
+- `src/luaedit.c` — Lua script editor. Maps to admin's Monaco editor.
+- `src/file-edit.c` — file editor. Not a priority (admin handles files via upload/export).
 
 ### Wave 11 — Systems (`clan.c`, `house.c`, `whod.c`, ~2850 lines)
 **What:** Clan system (create/disband/invite/kick, rankings, halls). Player housing (rent, decorate, lock/unlock, visitors). External WHO daemon.
 **Go targets:** `pkg/game/clans.go`, `pkg/game/houses.go`, `pkg/game/whod.go`
 
-### Wave 12 — Sonnet QA Audit
+### 🆕 Wave 12a — Admin Foundation & Web Terminal
+**What:** Build the web admin REST API, persistence layer, auth, and web terminal SPA tab.
+**Go target:** `pkg/admin/` (new package)
+**Frontend:** React SPA in `web/` (new directory)
+**See:** `PLAN-web-admin-architecture.md` — Phases 0-2
+
+### Wave 12b — Read-Only Viewers
+**What:** Zone, room, mob, object, shop, trigger read-only viewers in the admin SPA.
+**See:** `PLAN-web-admin-architecture.md` — Phase 3
+
+### Wave 12c — Game Editors (Admin SPA)
+**What:** Full CRUD editors for rooms, zones, mobs, objects, shops, reset commands, Lua scripts.
+**See:** `PLAN-web-admin-architecture.md` — Phase 4
+
+### Wave 12d — Operations Panel
+**What:** System metrics, live logs, zone reset control, backups, player list.
+**See:** `PLAN-web-admin-architecture.md` — Phase 5
+
+### Wave 12e — AI & Research Panel
+**What:** Agent roster, config, narrative viewer, LLM traces, data export.
+**See:** `PLAN-web-admin-architecture.md` — Phase 6
+
+### Wave 13 — Sonnet QA Audit
 **What:** Review the full Go codebase for faithfulness to C original, compilation, logical correctness, proper error handling, logging.
 **Output:** Issues list + fix recommendations
 
-### Wave 13 — Opus Security Audit
-**What:** Security review (command injection, Lua sandbox bypass, privilege escalation, DoS vectors, memory safety)
+### Wave 14 — Opus Security Audit
+**What:** Security review (command injection, Lua sandbox bypass, privilege escalation, DoS vectors, memory safety, admin auth)
 **Output:** Security report + fixes
 
 ---
@@ -169,21 +200,21 @@ Do NOT implement these improvements. Just document them.
 | `src/act.wizard.c` | `pkg/session/wizard_cmds.go` |
 | `src/boards.c` | `pkg/game/boards.go` |
 | `src/clan.c` | `pkg/game/clans.go` |
-| `src/file-edit.c` | `pkg/olc/files.go` |
+| `src/file-edit.c` | **REPLACED by admin SPA** (file upload/export) |
 | `src/house.c` | `pkg/game/houses.go` |
-| `src/improved-edit.c` | `pkg/olc/editor.go` |
-| `src/luaedit.c` | `pkg/olc/lua_editor.go` |
+| `src/improved-edit.c` | **REPLACED by admin SPA** (study for extra descr patterns) |
+| `src/luaedit.c` | **REPLACED by admin SPA** (Monaco Lua editor) |
 | `src/mapcode.c` | `pkg/session/map_cmds.go` |
-| `src/medit.c` | `pkg/olc/mobs.go` |
+| `src/medit.c` | **REPLACED by admin SPA** (data model reference only) |
 | `src/mobprog.c` | `pkg/game/mobprogs.go` |
 | `src/new_cmds.c` | `pkg/command/skill_commands.go` |
 | `src/new_cmds2.c` | `pkg/session/new_cmds2.go` |
 | `src/objsave.c` | `pkg/game/objsave.go` |
-| `src/oedit.c` | `pkg/olc/objects.go` |
-| `src/olc.c` | `pkg/olc/olc.go` |
-| `src/poof.c` | `pkg/olc/poof.go` |
-| `src/redit.c` | `pkg/olc/rooms.go` |
-| `src/sedit.c` | `pkg/olc/shops.go` |
+| `src/oedit.c` | **REPLACED by admin SPA** (data model reference only) |
+| `src/olc.c` | **REPLACED by admin SPA** (vnum management patterns) |
+| `src/poof.c` | **REPLACED by admin SPA** |
+| `src/redit.c` | **REPLACED by admin SPA** (data model reference only) |
+| `src/sedit.c` | **REPLACED by admin SPA** (multi-room shop pattern) |
 | `src/spec_assign.c` | `pkg/game/spec_assign.go` |
 | `src/spec_procs.c` | `pkg/game/spec_procs.go` |
 | `src/spec_procs2.c` | `pkg/game/spec_procs.go` |

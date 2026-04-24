@@ -660,16 +660,6 @@ func (p *Player) GetRoomVNum() int {
 	defer p.mu.RUnlock()
 	return p.RoomVNum
 }
-
-// GetMove returns the player's current move points.
-func (p *Player) GetMove() int {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.Move
-}
-
-// GetMaxMove returns the player's maximum move points.
-func (p *Player) GetMaxMove() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.MaxMove

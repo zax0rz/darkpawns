@@ -20,15 +20,6 @@ const (
 	AffFlaming   = 31 // AFF_FLAMING — structs.h:341
 )
 
-// Condition index constants — from structs.h:566-568
-// Matches GET_COND(ch, cond) macro: char_specials.conditions[cond]
-const (
-	CondDrunk  = 0 // DRUNK — structs.h:566
-	CondFull   = 1 // FULL  — structs.h:567
-	CondThirst = 2 // THIRST — structs.h:568
-)
-
-// PLR flag constants for regen — from structs.h:225
 const (
 	PlrWriting = 4 // PLR_WRITING — structs.h:225
 )
@@ -314,77 +305,6 @@ func MoveGainNPC(m *MobInstance) int {
 // Value -1 means "immortal" — no change applied.
 // Clamps to [0, 48].
 // Sends flavour messages at threshold crossings.
-func GainCondition(p *Player, cond, value int) {
-	p.mu.Lock()
-	if cond < 0 || cond >= len(p.Conditions) {
-		p.mu.Unlock()
-		return
-	}
-	current := p.Conditions[cond]
-	if current == -1 { // immortal — no change
-		p.mu.Unlock()
-		return
-	}
-
-	wasIntoxicated := p.Conditions[CondDrunk] > 0 // captured before change
-
-	newVal := current + value
-	if newVal < 0 {
-		newVal = 0
-	}
-	if newVal > 48 {
-		newVal = 48
-	}
-	p.Conditions[cond] = newVal
-
-	// PLR_WRITING (bit 4) — no messages while player is composing
-	writing := p.Flags&(1<<PlrWriting) != 0
-
-	p.mu.Unlock()
-
-	// Only send threshold messages — limits.c:380-416
-	if newVal > 1 || writing {
-		return
-	}
-
-	if newVal == 1 {
-		// Approaching depletion warning
-		switch cond {
-		case CondFull:
-			p.SendMessage("Your stomach growls with hunger.\r\n")
-		case CondThirst:
-			p.SendMessage("You feel a bit parched.\r\n")
-		case CondDrunk:
-			if wasIntoxicated {
-				p.SendMessage("Your head starts to clear.\r\n")
-			}
-		}
-		return
-	}
-
-	// newVal == 0 — fully depleted
-	switch cond {
-	case CondFull:
-		p.SendMessage("You are hungry.\r\n")
-	case CondThirst:
-		p.SendMessage("You are thirsty.\r\n")
-	case CondDrunk:
-		if wasIntoxicated {
-			p.SendMessage("You are now sober.\r\n")
-		}
-	}
-}
-
-// PointUpdate runs the per-tick regen and condition decay for all players and mobs.
-// Source: limits.c:460-686 point_update() — character portion.
-//
-// Called from the world's regen ticker every PULSE_REGEN (75 seconds in the original,
-// which fires once per MUD hour). Here we call it every 75 seconds via StartRegenTicker.
-//
-// Per character (PRF_INACTIVE skips hunger/regen — limits.c:476-501):
-//   1. Decay FULL, DRUNK, THIRST by -1
-//   2. If POS >= POS_STUNNED: regenerate HP, mana, move
-//   3. Poison/cutthroat damage (damage() calls — TODO: phase N full damage system)
 func (w *World) PointUpdate() {
 	// Snapshot players under read lock, operate without lock
 	w.mu.RLock()

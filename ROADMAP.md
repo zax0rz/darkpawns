@@ -217,13 +217,16 @@ See `PORT-PLAN.md` → **Immediate Next Steps** for the full breakdown. Summary:
 
 ## Out of Scope
 
-- **Web client** (React/VT100) — Phase 6, post-engine-completeness
 - **GMCP/MXP** — telnet protocol extensions, Phase 6
-- **Admin tools** (zone editor, spawn commands) — Phase 6
 - **Public hosting** (VPS/Fly.io) — Phase 6
 - **Redis** — future caching layer, not needed yet
 - **Original C codebase** — reference only, not running
 - **Mobile companion app** — never planned
+
+## In Scope (Previously Out of Scope)
+
+- **Web admin + client** — now active. See `PLAN-web-admin-architecture.md` and Waves 12a-12e in PORT-PLAN.md
+- **Admin tools** (zone editor, room editor, mob/object editors, etc.) — delivered via web admin SPA, replacing 7,800 lines of C OLC code
 
 ---
 
