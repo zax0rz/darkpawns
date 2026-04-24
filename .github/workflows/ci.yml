@@ -133,7 +133,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && (env.KUBECONFIG != '' || secrets.KUBECONFIG != '')
     runs-on: ubuntu-latest
     environment: production
 
