@@ -307,9 +307,10 @@ func TestPeriodicEffect(t *testing.T) {
 	am.Tick() // Tick 2
 	am.Tick() // Tick 3 (should expire)
 
-	// Poison should have done damage each tick before expiration
-	// Magnitude is 5, damage is 5/tick for 2 active ticks (3rd expires)
-	expectedHP := initialHP - (5 * 2) // 2 ticks of poison damage at magnitude 5
+	// Poison should have done damage each tick before expiration.
+	// applyPeriodicEffect runs BEFORE Tick(), so a Duration=3 affect
+	// deals damage on all 3 Tick() calls (tick 1, 2, 3, then expires).
+	expectedHP := initialHP - (5 * 3) // 3 ticks of poison damage at magnitude 5
 	if mock.GetHP() != expectedHP {
 		t.Errorf("Expected HP %d after poison, got %d", expectedHP, mock.GetHP())
 	}
@@ -339,9 +340,10 @@ func TestRegenerationAffect(t *testing.T) {
 	am.Tick() // Tick 2
 	am.Tick() // Tick 3 (should expire)
 
-	// Regeneration should have healed each tick before expiration
-	// Magnitude is 5, heal is 5/tick for 2 active ticks (3rd expires)
-	expectedHP := 50 + (5 * 2) // 2 ticks of regeneration at magnitude 5
+	// Regeneration should have healed each tick before expiration.
+	// applyPeriodicEffect runs BEFORE Tick(), so a Duration=3 affect
+	// heals on all 3 Tick() calls (tick 1, 2, 3, then expires).
+	expectedHP := 50 + (5 * 3) // 3 ticks of regeneration at magnitude 5
 	if mock.GetHP() != expectedHP {
 		t.Errorf("Expected HP %d after regeneration, got %d", expectedHP, mock.GetHP())
 	}
