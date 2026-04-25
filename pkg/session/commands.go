@@ -233,6 +233,16 @@ func init() {
 	cmdRegistry.Register("idea", wrapArgs(cmdIdea), "Submit an idea.", 0, 0)
 	cmdRegistry.Register("todo", wrapArgs(cmdTodo), "Submit a todo suggestion.", 0, 0)
 	cmdRegistry.Register("afk", wrapArgs(cmdAFK), "Toggle away-from-keyboard status.", 0, 0)
+	cmdRegistry.Register("gossip", wrapArgs(cmdGossip), "Gossip on the channel.", 0, 0)
+	cmdRegistry.Register("reply", wrapArgs(cmdReply), "Reply to the last tell.", 0, 0, "r")
+	cmdRegistry.Register("write", wrapArgs(cmdWrite), "Write on an object.", 0, 0)
+	cmdRegistry.Register("page", wrapArgs(cmdPage), "Page a player.", 0, 0)
+	cmdRegistry.Register("ignore", wrapArgs(cmdIgnore), "Ignore or stop ignoring a player.", 0, 0)
+	cmdRegistry.Register("race_say", wrapArgs(cmdRaceSay), "Say something in your racial language.", 0, 0, "rac")
+	cmdRegistry.Register("whisper", wrapArgs(cmdWhisper), "Whisper to someone in your room.", 0, 0, "whis")
+	cmdRegistry.Register("ask", wrapArgs(cmdAsk), "Ask someone a question.", 0, 0)
+	cmdRegistry.Register("qcomm", wrapArgs(cmdQcomm), "Send a team message.", 0, 0, "team")
+	cmdRegistry.Register("think", wrapArgs(cmdThink), "Think out loud (only you hear it).", 0, 0)
 }
 
 // wrapArgs adapts a func(*Session, []string) error to command.Handler.
