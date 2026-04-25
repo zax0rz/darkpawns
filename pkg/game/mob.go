@@ -204,7 +204,6 @@ func (m *MobInstance) IsAlive() bool {
 
 // AddToInventory adds an object to the mob's inventory.
 func (m *MobInstance) AddToInventory(obj *ObjectInstance) {
-	obj.Carrier = m
 	obj.Location = LocInventoryMob(m.GetID())
 	m.Inventory = append(m.Inventory, obj)
 }
@@ -214,7 +213,6 @@ func (m *MobInstance) RemoveFromInventory(obj *ObjectInstance) bool {
 	for i, item := range m.Inventory {
 		if item == obj {
 			m.Inventory = append(m.Inventory[:i], m.Inventory[i+1:]...)
-			obj.Carrier = nil
 			obj.Location = LocNowhere()
 			return true
 		}
@@ -231,8 +229,6 @@ func (m *MobInstance) EquipItem(obj *ObjectInstance, position int) bool {
 		// For now, just equip it
 	}
 
-	obj.EquippedOn = m
-	obj.EquipPosition = position
 	obj.Location = LocEquippedMob(m.GetID(), EquipmentSlot(position))
 	m.Equipment[position] = obj
 	return true
@@ -242,8 +238,6 @@ func (m *MobInstance) EquipItem(obj *ObjectInstance, position int) bool {
 func (m *MobInstance) UnequipItem(position int) *ObjectInstance {
 	if obj, ok := m.Equipment[position]; ok {
 		delete(m.Equipment, position)
-		obj.EquippedOn = nil
-		obj.EquipPosition = -1
 		obj.Location = LocNowhere()
 		m.AddToInventory(obj)
 		return obj

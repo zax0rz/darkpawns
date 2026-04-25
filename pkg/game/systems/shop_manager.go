@@ -178,7 +178,7 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 	player.Gold -= price
 
 	// Transfer item to player
-	item.SetCarrier(nil) // Remove from shop carrier
+	if g, ok := item.(*game.ObjectInstance); ok { g.Location = game.LocNowhere() }
 	// Type assert to *game.ObjectInstance for Inventory methods
 	gameItem, ok := item.(*game.ObjectInstance)
 	if !ok {
@@ -231,7 +231,7 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 	player.Gold += price
 
 	// Transfer item to shop
-	item.SetCarrier(nil) // Remove from player carrier
+	if g, ok := item.(*game.ObjectInstance); ok { g.Location = game.LocNowhere() }
 	if !shop.AddItem(item) {
 		// Failed to add to shop, refund and return item
 		player.Gold -= price

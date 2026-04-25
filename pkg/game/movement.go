@@ -7,28 +7,8 @@ import (
 // detachObjectLocked removes an object from its current location.
 // Caller MUST hold w.mu.
 // Returns the old location for reference.
-//
-// During Phase B migration, we check both obj.Location (the new source of truth)
-// AND legacy fields (Carrier, RoomVNum, Container, EquippedOn) because pre-MoveObject
-// call sites (e.g. player.Inventory.AddItem) do not update obj.Location.
 func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) {
 	old := obj.Location
-
-	// Detach from Carrier — handle all known Carrier types including *Inventory
-	// (the dual-write case where AddItem set Carrier=*Inventory but didn't update Location)
-	if obj.Carrier != nil {
-		switch c := obj.Carrier.(type) {
-		case *Player:
-			c.Inventory.RemoveItem(obj)
-		case *MobInstance:
-			c.RemoveFromInventory(obj)
-		case *Inventory:
-			c.RemoveItem(obj)
-		case *ObjectInstance:
-			c.RemoveFromContainer(obj)
-		}
-		obj.Carrier = nil
-	}
 
 	// Detach based on Location field
 	switch old.Kind {
@@ -60,8 +40,6 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				delete(m.Equipment, int(old.Slot))
 			}
 		}
-		obj.EquippedOn = nil
-		obj.EquipPosition = -1
 
 	case ObjInContainer:
 		if old.ContainerObjID > 0 {
@@ -69,7 +47,6 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				container.RemoveFromContainer(obj)
 			}
 		}
-		obj.Container = nil
 
 	case ObjInShop:
 		// for now just clear old fields
@@ -119,7 +96,6 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 				}
 			}
 		}
-		obj.EquippedOn = obj.Carrier
 
 	case ObjInContainer:
 		if dst.ContainerObjID > 0 {
@@ -133,7 +109,6 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 		}
 
 	case ObjInShop:
-		obj.Carrier = nil
 	}
 
 	return nil

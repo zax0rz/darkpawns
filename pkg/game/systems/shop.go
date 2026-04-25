@@ -194,7 +194,9 @@ func (s *Shop) AddItem(item common.ObjectInstance) bool {
 
 	// Set item location to shop
 	item.SetRoomVNum(-1)
-	item.SetCarrier(s)
+	if g, ok := item.(*game.ObjectInstance); ok {
+		g.Location = game.LocShop(s.VNum)
+	}
 	s.Inventory = append(s.Inventory, item)
 	return true
 }
@@ -207,7 +209,9 @@ func (s *Shop) RemoveItem(item common.ObjectInstance) bool {
 	for i, shopItem := range s.Inventory {
 		if shopItem == item {
 			s.Inventory = append(s.Inventory[:i], s.Inventory[i+1:]...)
-			item.SetCarrier(nil)
+			if g, ok := item.(*game.ObjectInstance); ok {
+				g.Location = game.LocNowhere()
+			}
 			return true
 		}
 	}
@@ -297,7 +301,7 @@ func (s *Shop) Restock(prototypes []*parser.Obj, currentTick int) int {
 		// For now, we'll just add if we have space
 		if len(s.Inventory) < s.MaxItems {
 			item := game.NewObjectInstance(proto, -1)
-			item.Carrier = s
+			item.Location = game.LocShop(s.VNum)
 			s.Inventory = append(s.Inventory, item)
 			restocked++
 		}

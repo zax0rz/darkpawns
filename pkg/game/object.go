@@ -16,12 +16,7 @@ type ObjectInstance struct {
 
 	// Location
 	RoomVNum  int             // -1 if not in a room
-	Carrier   interface{}     // *MobInstance or *Player
-	Container *ObjectInstance // if inside another object
 
-	// Equipment state
-	EquippedOn    interface{} // *MobInstance or *Player
-	EquipPosition int         // -1 if not equipped
 	Location      ObjectLocation
 
 	// Contents (for containers)
@@ -46,7 +41,7 @@ func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 		RoomVNum:      roomVNum,
 		Contains:      make([]*ObjectInstance, 0),
 		CustomData:    make(map[string]interface{}),
-		EquipPosition: -1,
+
 	}
 	if roomVNum > 0 {
 		obj.Location = LocRoom(roomVNum)
@@ -145,7 +140,6 @@ func (o *ObjectInstance) AddToContainer(obj *ObjectInstance) bool {
 		return false
 	}
 
-	obj.Container = o
 	o.Contains = append(o.Contains, obj)
 	return true
 }
@@ -155,7 +149,6 @@ func (o *ObjectInstance) RemoveFromContainer(obj *ObjectInstance) bool {
 	for i, item := range o.Contains {
 		if item == obj {
 			o.Contains = append(o.Contains[:i], o.Contains[i+1:]...)
-			obj.Container = nil
 			return true
 		}
 	}
@@ -248,22 +241,6 @@ func (o *ObjectInstance) SetRoomVNum(roomVNum int) {
 	} else {
 		o.Location = LocNowhere()
 	}
-}
-
-func (o *ObjectInstance) GetCarrier() interface{} {
-	return o.Carrier
-}
-
-func (o *ObjectInstance) SetCarrier(carrier interface{}) {
-	o.Carrier = carrier
-	// Update Location based on carrier type
-	if p, ok := carrier.(*Player); ok {
-		o.Location = LocInventoryPlayer(p.Name)
-	} else if m, ok := carrier.(*MobInstance); ok {
-		o.Location = LocInventoryMob(m.GetID())
-	}
-	// Note: *Inventory carrier doesn't have a clean mapping — this is the
-	// mismatch the ObjectLocation refactor is designed to fix.
 }
 
 func (o *ObjectInstance) GetTimer() int {

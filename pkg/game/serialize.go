@@ -96,8 +96,6 @@ func DeserializeEquipment(data []byte, worldObjs map[int]*parser.Obj, playerName
 
 		if obj, ok := worldObjs[vnum]; ok {
 			objInst := NewObjectInstance(obj, -1)
-			objInst.EquippedOn = eq
-			objInst.EquipPosition = int(slot)
 			objInst.Location = LocEquippedPlayer(playerName, slot)
 			eq.Slots[slot] = objInst
 		} else {

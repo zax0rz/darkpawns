@@ -29,10 +29,6 @@ func (inv *Inventory) AddItem(item *ObjectInstance) error {
 	if len(inv.Items) >= inv.Capacity {
 		return ErrInventoryFull
 	}
-	// Set carrier and clear room location
-	item.Carrier = inv
-	item.RoomVNum = -1
-	item.Container = nil
 	inv.Items = append(inv.Items, item)
 	return nil
 }
@@ -45,7 +41,6 @@ func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
 	for i, invItem := range inv.Items {
 		if invItem == item {
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
-			item.Carrier = nil
 			return true
 		}
 	}
@@ -60,7 +55,6 @@ func (inv *Inventory) RemoveItemByVNum(vnum int) (*ObjectInstance, bool) {
 	for i, item := range inv.Items {
 		if item.VNum == vnum {
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
-			item.Carrier = nil
 			return item, true
 		}
 	}
@@ -160,8 +154,5 @@ func (inv *Inventory) SetCapacity(dex int, level int) {
 func (inv *Inventory) Clear() {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
-	for _, item := range inv.Items {
-		item.Carrier = nil
-	}
 	inv.Items = make([]*ObjectInstance, 0)
 }

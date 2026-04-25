@@ -20,8 +20,6 @@ type ObjectInstance interface {
 	GetVNum() int
 	GetRoomVNum() int
 	SetRoomVNum(int)
-	GetCarrier() interface{}
-	SetCarrier(interface{})
 	IsContainer() bool
 	IsWearable() bool
 	IsWeapon() bool

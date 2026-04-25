@@ -413,20 +413,27 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 	// Remove from room (inline to avoid lock reentrancy — RemoveItemFromRoom also locks)
 	w.removeItemFromRoomLocked(obj, roomVNum)
 
-	// Remove from carrier if carried
-	if obj.Carrier != nil {
-		if p, ok := obj.Carrier.(*Player); ok {
-			p.Inventory.RemoveItem(obj)
-		} else if m, ok := obj.Carrier.(*MobInstance); ok {
-			m.RemoveFromInventory(obj)
+	// Remove from carrier (inventory) based on Location
+	switch obj.Location.Kind {
+	case ObjInInventory:
+		if obj.Location.OwnerKind == OwnerPlayer {
+			if p, ok := w.players[obj.Location.PlayerName]; ok {
+				p.Inventory.RemoveItem(obj)
+			}
+		} else if obj.Location.OwnerKind == OwnerMob {
+			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
+				m.RemoveFromInventory(obj)
+			}
 		}
-		obj.Carrier = nil
+	case ObjEquipped:
+		// handled by the equipment system through inventory remove
 	}
 
-	// Remove from container if inside one
-	if obj.Container != nil {
-		obj.Container.RemoveFromContainer(obj)
-		obj.Container = nil
+	// Remove from container based on Location
+	if obj.Location.Kind == ObjInContainer && obj.Location.ContainerObjID > 0 {
+		if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok {
+			container.RemoveFromContainer(obj)
+		}
 	}
 
 	obj.Location = LocNowhere()

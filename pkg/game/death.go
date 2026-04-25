@@ -383,7 +383,6 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 			// OBJ_VAL(3) = 1 in original (corpse identifier)
 			"corpse_id": 1,
 		},
-		EquipPosition: -1,
 	}
 
 	// Name and descriptions — from make_corpse() in fight.c
@@ -452,7 +451,6 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 			"long_desc":  "A small pile of ash is all that remains.",
 			"is_ash":     true,
 		},
-		EquipPosition: -1,
 	}
 	w.AddItemToRoom(ash, roomVNum)
 

@@ -101,7 +101,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 				}
 				if proto, ok := world.GetObjPrototype(vnum); ok {
 					obj := game.NewObjectInstance(proto, -1)
-					obj.EquipPosition = int(slot)
+					obj.Location = game.LocEquippedPlayer(p.Name, slot)
 					p.Equipment.Slots[slot] = obj
 				}
 			}

@@ -202,8 +202,6 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 			for _, trySlot := range group {
 				if _, occupied := eq.Slots[trySlot]; !occupied {
 					// Found empty slot
-					item.EquippedOn = eq
-					item.EquipPosition = int(trySlot)
 					item.Location = LocEquippedPlayer(eq.OwnerName, trySlot)
 					eq.Slots[trySlot] = item
 					return nil
@@ -214,8 +212,6 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 				return fmt.Errorf("cannot unequip existing %s: %v", group[0], err)
 			}
 			// Now equip in first slot
-			item.EquippedOn = eq
-			item.EquipPosition = int(group[0])
 			item.Location = LocEquippedPlayer(eq.OwnerName, group[0])
 			eq.Slots[group[0]] = item
 			return nil
@@ -229,8 +225,6 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 			}
 		}
 		// Set equipment state
-		item.EquippedOn = eq
-		item.EquipPosition = int(slot)
 		item.Location = LocEquippedPlayer(eq.OwnerName, slot)
 		eq.Slots[slot] = item
 		return nil
@@ -254,8 +248,6 @@ func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
 	}
 
 	// Clear equipment state
-	item.EquippedOn = nil
-	item.EquipPosition = -1
 
 	// Try to add to inventory
 	if err := inv.AddItem(item); err != nil {

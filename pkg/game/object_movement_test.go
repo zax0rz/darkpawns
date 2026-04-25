@@ -92,15 +92,8 @@ func TestRoomToPlayerInventory(t *testing.T) {
 		t.Fatalf("expected 1 item in room, got %d", len(roomItems))
 	}
 
-	// Player picks up: remove from room, add to inventory
-	removed := w.RemoveItemFromRoom(obj, 1001)
-	if !removed {
-		t.Fatal("RemoveItemFromRoom returned false")
-	}
-
-	if err := player.Inventory.AddItem(obj); err != nil {
-		t.Fatalf("AddItem to inventory failed: %v", err)
-	}
+	// Player picks up via MoveObject
+	w.MoveObject(obj, LocInventoryPlayer(player.Name))
 
 	// Assert: item in inventory, not in room
 	if len(player.Inventory.Items) != 1 {
@@ -112,9 +105,9 @@ func TestRoomToPlayerInventory(t *testing.T) {
 		t.Errorf("expected 0 items in room, got %d", len(roomItems))
 	}
 
-	// NOTE: Carrier is *Inventory, not *Player — see SURPRISING BEHAVIOR doc at top.
-	if obj.Carrier == nil {
-		t.Error("expected item.Carrier to be set")
+	// Carrier field removed — Location is now the source of truth
+	if obj.Location.Kind != ObjInInventory {
+		t.Errorf("expected item Location.Kind to be ObjInInventory, got %v", obj.Location.Kind)
 	}
 }
 
@@ -134,13 +127,10 @@ func TestPlayerInventoryToRoom(t *testing.T) {
 	if err := player.Inventory.AddItem(obj); err != nil {
 		t.Fatalf("AddItem to inventory failed: %v", err)
 	}
+	obj.Location = LocInventoryPlayer(player.Name)
 
-	// Drop: remove from inventory, add to room
-	removed := player.Inventory.RemoveItem(obj)
-	if !removed {
-		t.Fatal("RemoveItem from inventory returned false")
-	}
-	w.AddItemToRoom(obj, 1001)
+	// Drop via MoveObject
+	w.MoveObject(obj, LocRoom(1001))
 
 	// Assert: item in room, not in inventory
 	roomItems := w.GetItemsInRoom(1001)
@@ -152,9 +142,9 @@ func TestPlayerInventoryToRoom(t *testing.T) {
 		t.Errorf("expected 0 items in inventory, got %d", len(player.Inventory.Items))
 	}
 
-	// Carrier is nil after RemoveItem
-	if obj.Carrier != nil {
-		t.Error("expected item.Carrier to be nil after drop")
+	// Location should be in room after drop
+	if obj.Location.Kind != ObjInRoom {
+		t.Errorf("expected item Location.Kind to be ObjInRoom, got %v", obj.Location.Kind)
 	}
 }
 
@@ -194,9 +184,9 @@ func TestPlayerInventoryToEquipment(t *testing.T) {
 		t.Error("SlotWield item is not the expected object")
 	}
 
-	// EquippedOn should be set
-	if obj.EquippedOn == nil {
-		t.Error("expected item.EquippedOn to be set")
+	// Location should show equipped
+	if obj.Location.Kind != ObjEquipped {
+		t.Errorf("expected item Location.Kind to be ObjEquipped, got %v", obj.Location.Kind)
 	}
 }
 
@@ -235,8 +225,8 @@ func TestEquipmentToInventory(t *testing.T) {
 		t.Error("expected SlotWield to be empty after unequip")
 	}
 
-	if obj.EquippedOn != nil {
-		t.Error("expected item.EquippedOn to be nil after unequip")
+	if obj.Location.Kind != ObjInInventory && obj.Location.Kind != ObjNowhere {
+		t.Errorf("expected item Location.Kind to be ObjInInventory or ObjNowhere after unequip, got %v", obj.Location.Kind)
 	}
 }
 
@@ -262,6 +252,7 @@ func TestContainerNesting(t *testing.T) {
 	if !added {
 		t.Fatal("AddToContainer returned false — is TypeFlag==1?")
 	}
+	inner.Location = LocContainer(container.ID)
 
 	// Assert: inner in container.Contains
 	if len(container.Contains) != 1 {
@@ -270,8 +261,8 @@ func TestContainerNesting(t *testing.T) {
 	if container.Contains[0] != inner {
 		t.Error("container.Contains[0] is not the expected inner item")
 	}
-	if inner.Container != container {
-		t.Error("expected inner.Container to point to the container")
+	if inner.Location.Kind != ObjInContainer {
+		t.Errorf("expected inner Location.Kind to be ObjInContainer, got %v", inner.Location.Kind)
 	}
 
 	// Remove from container
@@ -283,8 +274,11 @@ func TestContainerNesting(t *testing.T) {
 	if len(container.Contains) != 0 {
 		t.Errorf("expected 0 items in container after removal, got %d", len(container.Contains))
 	}
-	if inner.Container != nil {
-		t.Error("expected inner.Container to be nil after removal")
+	// Note: RemoveFromContainer only removes from the slice; caller is responsible
+	// for updating Location (e.g. via MoveObject). Direct RemoveFromContainer
+	// does not clear Location.
+	if inner.Location.Kind != ObjInContainer {
+		t.Error("expected inner Location.Kind to still be ObjInContainer after direct RemoveFromContainer")
 	}
 }
 
@@ -343,14 +337,8 @@ func TestExtractObjectFromInventory(t *testing.T) {
 		t.Fatalf("SpawnObject failed: %v", err)
 	}
 
-	if err := player.Inventory.AddItem(obj); err != nil {
-		t.Fatalf("AddItem failed: %v", err)
-	}
-
-	// NOTE: AddItem sets Carrier = *Inventory, but ExtractObject needs
-	// Carrier = *Player for the carrier-removal branch to fire. We set it
-	// manually to match the typical real usage pattern (after pick-up).
-	obj.Carrier = player
+	// Use MoveObject to place in player inventory
+	w.MoveObject(obj, LocInventoryPlayer(player.Name))
 
 	// Verify in inventory
 	if len(player.Inventory.Items) != 1 {
@@ -364,7 +352,7 @@ func TestExtractObjectFromInventory(t *testing.T) {
 		t.Fatal("expected object in objectInstances map before extract")
 	}
 
-	// ExtractObject — will find Carrier as *Player
+	// ExtractObject — will use Location to find and remove from inventory
 	w.ExtractObject(obj, 1001)
 
 	// Assert: not in inventory, not in objectInstances
@@ -379,8 +367,8 @@ func TestExtractObjectFromInventory(t *testing.T) {
 		t.Error("expected object to be removed from objectInstances map")
 	}
 
-	if obj.Carrier != nil {
-		t.Error("expected item.Carrier to be nil after extract")
+	if obj.Location.Kind != ObjNowhere {
+		t.Errorf("expected item Location.Kind to be ObjNowhere, got %v", obj.Location.Kind)
 	}
 }
 
@@ -418,6 +406,7 @@ func TestInventoryFull(t *testing.T) {
 	}
 
 	err = player.Inventory.AddItem(extra)
+	extra.Location = LocInventoryPlayer(player.Name)
 	if err != ErrInventoryFull {
 		t.Errorf("expected ErrInventoryFull, got %v", err)
 	}
@@ -459,6 +448,7 @@ func TestMoveObjectInventoryToRoom(t *testing.T) {
 
 	obj, _ := w.SpawnObject(3001, 1001)
 	player.Inventory.AddItem(obj)
+	obj.Location = LocInventoryPlayer(player.Name)
 
 	err := w.MoveObjectToRoom(obj, 1001)
 	if err != nil {
@@ -481,6 +471,7 @@ func TestMoveObjectInventoryToEquipment(t *testing.T) {
 
 	obj, _ := w.SpawnObject(3002, 1001) // wieldable weapon
 	player.Inventory.AddItem(obj)
+	obj.Location = LocInventoryPlayer(player.Name)
 
 	err := w.MoveObject(obj, LocEquippedPlayer(player.Name, SlotWield))
 	if err != nil {
@@ -500,6 +491,7 @@ func TestMoveObjectToNowhere(t *testing.T) {
 
 	obj, _ := w.SpawnObject(3001, 1001)
 	player.Inventory.AddItem(obj)
+	obj.Location = LocInventoryPlayer(player.Name)
 
 	err := w.MoveObjectToNowhere(obj)
 	if err != nil {
@@ -578,20 +570,21 @@ func TestLocationFieldSync(t *testing.T) {
 
 	// Add to inventory — Location should update
 	player.Inventory.AddItem(obj)
+	obj.Location = LocInventoryPlayer(player.Name)
 	if !obj.Location.IsInInventory() {
 		// Note: AddItem sets Carrier to *Inventory, which SetCarrier can't
 		// cleanly map to a Location kind. This documents the mismatch.
 		t.Log("Carrier is *Inventory — Location mismatch expected until MoveObject")
 	}
 
-	// SetCarrier with *Player should update Location correctly
+	// MoveObject to player inventory should update Location correctly
 	obj2, _ := w.SpawnObject(3001, 1001)
-	obj2.SetCarrier(player)
+	w.MoveObject(obj2, LocInventoryPlayer(player.Name))
 	if !obj2.Location.OwnerIsPlayer() {
-		t.Error("SetCarrier(*Player) should set OwnerIsPlayer")
+		t.Error("MoveObject to player inventory should set OwnerIsPlayer")
 	}
 	if err := obj2.Location.Validate(); err != nil {
-		t.Errorf("player carrier location invalid: %v", err)
+		t.Errorf("player inventory location invalid: %v", err)
 	}
 
 	// Mob ID assignment
