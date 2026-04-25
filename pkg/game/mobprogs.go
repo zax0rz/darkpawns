@@ -166,9 +166,7 @@ func (w *World) MpGive(ch *Player, mob *MobInstance, obj *ObjectInstance) {
 				mob.GetShortDesc(), obj.GetShortDesc(), hisHer(mob.GetSex())))
 			mob.RemoveFromInventory(obj)
 			w.RemoveItemFromRoom(obj, mob.RoomVNum)
-			// extract_obj — drop reference
-			obj.RoomVNum = -1
-			obj.Carrier = nil
+			extractObj(obj)
 		} else {
 			w.roomMessage(mob.RoomVNum, fmt.Sprintf("%s sniffs around and plays with %s for a while.",
 				mob.GetShortDesc(), obj.GetShortDesc()))
@@ -200,8 +198,7 @@ func (w *World) MpGive(ch *Player, mob *MobInstance, obj *ObjectInstance) {
 
 			// Create portal (vnum 19611)
 			mob.RemoveFromInventory(obj)
-			obj.RoomVNum = -1
-			obj.Carrier = nil
+			extractObj(obj)
 
 			if proto, ok := w.GetObjPrototype(19611); ok {
 				portal := NewObjectInstance(proto, mob.RoomVNum)
@@ -225,6 +222,26 @@ func (w *World) MpGive(ch *Player, mob *MobInstance, obj *ObjectInstance) {
 				mob.GetShortDesc()))
 		}
 	}
+}
+
+// extractObj removes an object from the world, properly handling any carrier.
+// If the object is carried by a Player, removes it from their inventory first.
+// If carried by a MobInstance, removes it from the mob's inventory first.
+// Source: mobprog.c extract_obj()
+func extractObj(obj *ObjectInstance) {
+	if obj == nil {
+		return
+	}
+	switch carrier := obj.Carrier.(type) {
+	case *Player:
+		if carrier.Inventory != nil {
+			carrier.Inventory.RemoveItem(obj)
+		}
+	case *MobInstance:
+		carrier.RemoveFromInventory(obj)
+	}
+	obj.RoomVNum = -1
+	obj.Carrier = nil
 }
 
 // DoSayMob makes a mob say something in the room.
