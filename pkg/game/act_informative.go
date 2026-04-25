@@ -849,6 +849,18 @@ func chCanSee(ch *Player, target interface{}) bool {
 	return true
 }
 
+// mobCanSee checks whether a mob can see. Uses the mob's AffectFlags for blindness.
+func mobCanSee(m *MobInstance) bool {
+	if m.Prototype != nil {
+		for _, aff := range m.Prototype.AffectFlags {
+			if strings.EqualFold(aff, "BLIND") {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
 	ef := obj.Prototype.ExtraFlags
 	if len(ef) > 0 && ef[0]&1 != 0 {

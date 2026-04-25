@@ -88,6 +88,10 @@ type Player struct {
 	Thirst int
 	Drunk  int
 
+	// Hometown index — 0=default, 1=Midgaard, 2=Thalos, 3=New Thalos
+	// Source: spec_procs3.c specReceptionist
+	Hometown int
+
 	// Alignment: -1000 (evil) to +1000 (good), 0 = neutral
 	// Source: structs.h:930, utils.h:454-456
 	// IS_GOOD: >= 350, IS_EVIL: <= -350, IS_NEUTRAL: between
@@ -664,6 +668,14 @@ func (p *Player) GetGold() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.Gold
+}
+
+// GetInventory returns the player's inventory items.
+func (p *Player) GetInventory() []*ObjectInstance {
+	if p.Inventory == nil {
+		return nil
+	}
+	return p.Inventory.Items
 }
 
 func (p *Player) SetGold(gold int) {

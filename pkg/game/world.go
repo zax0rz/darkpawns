@@ -208,6 +208,32 @@ func (w *World) GetRoomInWorld(vnum int) *parser.Room {
 	return w.rooms[vnum]
 }
 
+// Rooms returns all rooms in the world.
+func (w *World) Rooms() []parser.Room {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	var result []parser.Room
+	for _, r := range w.rooms {
+		result = append(result, *r)
+	}
+	return result
+}
+
+// sendToZone sends a message to all players in the same zone as the given room.
+func (w *World) sendToZone(roomVNum int, msg string) {
+	room := w.GetRoomInWorld(roomVNum)
+	if room == nil {
+		return
+	}
+	zone := room.Zone
+	for _, p := range w.players {
+		pr := w.GetRoomInWorld(p.RoomVNum)
+		if pr != nil && pr.Zone == zone {
+			p.SendMessage(msg)
+		}
+	}
+}
+
 // GetPlayersInRoom returns all players in a given room.
 func (w *World) GetPlayersInRoom(roomVNum int) []*Player {
 	w.mu.RLock()

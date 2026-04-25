@@ -46,6 +46,9 @@ type MobInstance struct {
 	// Hunting: name of player being hunted — from src/utils.c
 	Hunting   string
 	HuntingID string
+
+	// CustomData stores arbitrary per-instance data (e.g., damroll bonus for brain eater)
+	CustomData map[string]interface{}
 }
 
 // NewMob creates a new mob instance from a prototype.
@@ -71,6 +74,7 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Equipment:      make(map[int]*ObjectInstance),
 		Fighting:       false,
 		FightingTarget: "",
+		CustomData:     make(map[string]interface{}),
 	}
 
 	// Create AI brain

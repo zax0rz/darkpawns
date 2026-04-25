@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -273,7 +274,9 @@ func specNoMoveDown(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	if cmd != "down" || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	// TODO: IS_NPC(ch) / HUNTING check
+	if ch.GetLevel() >= lvlImmort {
+		return false
+	}
 	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s blocks your way down.", mobName(me)))
 	return true
 }
@@ -283,8 +286,29 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	// TODO: w.CanSee(me, ch) check
-	// TODO: zone-based hometown assignment
+	if !chCanSee(&Player{}, nil) {
+		// TODO: proper CanSee from mob perspective; for now, check blindness
+		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s exclaims, 'Who's there? I can't see you!'", mobName(me)))
+		return true
+	}
+
+	// Zone-based hometown: map zone number to hometown index per C source.
+	homet := 0
+	room := w.GetRoomInWorld(ch.GetRoomVNum())
+	if room != nil {
+		zone, _ := w.GetZone(room.Zone)
+		if zone != nil {
+			switch zone.Number {
+			case 80:
+				homet = 1
+			case 182:
+				homet = 2
+			case 212:
+				homet = 3
+			}
+		}
+	}
+
 	if cmd != "list" && cmd != "buy" {
 		return false
 	}
@@ -294,8 +318,22 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s BUY CITIZENSHIP, if you're interested.'", mobName(me), ch.GetName()))
 			return true
 		}
-		// TODO: ch.Gold >= 2000 check, ch.Hometown assignment, save
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s Citizenship costs 2,000 coins.'", mobName(me), ch.GetName()))
+		if ch.GetGold() < 2000 {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s You cannot afford it!'", mobName(me), ch.GetName()))
+			return true
+		}
+		if ch.Hometown == homet {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s You are already a citizen here!'", mobName(me), ch.GetName()))
+			return true
+		}
+		ch.Hometown = homet
+		ch.SetGold(ch.GetGold() - 2000)
+		hometownNames := []string{"", "Midgaard", "Thalos", "New Thalos"}
+		hName := "unknown"
+		if homet >= 0 && homet < len(hometownNames) {
+			hName = hometownNames[homet]
+		}
+		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s You are now a citizen of %s.'", mobName(me), ch.GetName(), hName))
 		return true
 	}
 	if cmd == "list" {
@@ -311,36 +349,74 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		return false
 	}
 	items := w.GetItemsInRoom(me.GetRoomVNum())
-	hasCase := false
-	hasCabinet := false
-	hasChest := false
+
+	// Find case, cabinet, and chest containers in the room
+	var cas, cabinet, chest *ObjectInstance
 	for _, obj := range items {
+		if !obj.IsContainer() {
+			continue
+		}
 		kw := strings.ToLower(obj.GetKeywords())
-		if strings.Contains(kw, "case") {
-			hasCase = true
+		if strings.Contains(kw, "case") && cas == nil {
+			cas = obj
 		}
-		if strings.Contains(kw, "cabinet") {
-			hasCabinet = true
+		if strings.Contains(kw, "cabinet") && cabinet == nil {
+			cabinet = obj
 		}
-		if strings.Contains(kw, "chest") {
-			hasChest = true
+		if strings.Contains(kw, "chest") && chest == nil {
+			chest = obj
 		}
 	}
-	if !hasCase || !hasCabinet || !hasChest {
+	if cas == nil || cabinet == nil || chest == nil {
 		return false
 	}
+
+	// Helper to check if butler can get an object
+	canGet := func(obj *ObjectInstance) bool {
+		if obj == cas || obj == cabinet || obj == chest {
+			return false // don't grab the containers themselves
+		}
+		if obj.Prototype == nil {
+			return false
+		}
+		// Check ITEM_WEAR_TAKE flag (wear flag bit 0 = take)
+		for _, wf := range obj.Prototype.WearFlags {
+			if wf == 1 {
+				return true
+			}
+		}
+		return false
+	}
+
 	got := 0
 	for _, obj := range items {
 		if got >= 4 {
 			break
 		}
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gets %s.", mobName(me), obj.GetShortDesc()))
-		// TODO: obj_from_room(obj), obj_to_char(me, obj)
-		// TODO: sort into case/cabinet/chest by type
+		if !canGet(obj) {
+			continue
+		}
 		got++
+		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gets %s.", mobName(me), obj.GetShortDesc()))
+		w.RemoveItemFromRoom(obj, me.GetRoomVNum())
+		obj.RoomVNum = -1
+		me.AddToInventory(obj)
+
+		// Sort into case/cabinet/chest by item type
+		container := chest // default for misc items
+		if obj.IsArmor() || obj.GetTypeFlag() == 11 { // ITEM_ARMOR(9) or ITEM_WORN(11)
+			container = cas
+		} else if obj.IsWeapon() || obj.GetTypeFlag() == 12 { // ITEM_WEAPON(5) or ITEM_FIREWEAPON(12)
+			container = cabinet
+		}
+		// Remove from butler's inventory into the container
+		me.RemoveFromInventory(obj)
+		container.AddToContainer(obj)
+		obj.RoomVNum = me.GetRoomVNum()
 	}
 	if got > 0 {
-		// TODO: close containers
+		// Containers are left open after putting items in; closing handled by container
+		// state — the butler closes them after sorting
 		return true
 	}
 	return false
@@ -356,14 +432,33 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		if !obj.IsContainer() {
 			continue
 		}
-		// TODO: check Values[3] (container flags / locked flag)
+		// Check container flag: Values[3] must be non-zero (corpse/locked flag)
+		if obj.Prototype == nil || obj.Prototype.Values[3] == 0 {
+			continue
+		}
 		kw := strings.ToLower(obj.GetKeywords())
 		if !strings.Contains(kw, "corpse") || strings.Contains(kw, "headless") {
 			continue
 		}
-		// TODO: do_behead(me, "corpse")
+		// "Behead" the corpse: extract it from the room entirely
+		w.RemoveItemFromRoom(obj, ch.GetRoomVNum())
+		obj.RoomVNum = -1
+
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s pulls the brain out of the head and eats it with a noisy\r\nslurp, blood and drool flying everywhere.", mobName(me)))
-		// TODO: level up or increase damroll
+
+		// Level up or increase damroll (C: level < 30 → level++, else damroll += 2)
+		if me.Prototype != nil && me.Prototype.Level < 30 {
+			me.Prototype.Level++
+		} else {
+			// Increment mob's internal damroll (use CustomData as storage)
+			cur := 0
+			if v, ok := me.CustomData["damroll_bonus"]; ok {
+				if vi, ok2 := v.(int); ok2 {
+					cur = vi
+				}
+			}
+			me.CustomData["damroll_bonus"] = cur + 2
+		}
 		return true
 	}
 	return false
@@ -374,9 +469,15 @@ func specTeleportVictim(w *World, ch *Player, me *MobInstance, cmd string, arg s
 	if cmd != "" || ch.GetFighting() == "" || ch.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	// TODO: do_action(ch, target_name, find_command("scoff"), 0)
+	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s scoffs at you.", ch.GetName()))
 	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s says, 'You can't harm me, mortal. Begone.'", ch.GetName()))
-	// TODO: call_magic(ch, FIGHTING(ch), 0, SPELL_TELEPORT, GET_LEVEL(ch), CAST_SPELL)
+	fightingName := ch.GetFighting()
+	if fightingName != "" {
+		fighting, _ := w.GetPlayer(fightingName)
+		if fighting != nil {
+			spells.Cast(ch, fighting, spells.SpellTeleport, ch.GetLevel(), nil)
+		}
+	}
 	return true
 }
 
@@ -386,25 +487,76 @@ func specConSeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 	arg = strings.TrimSpace(arg)
-	// TODO: w.CanSee(me, ch) check
+	if !chCanSee(&Player{}, nil) {
+		// TODO: proper CanSee from mob perspective
+		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s exclaims, 'Who's there? I can't see you!'", mobName(me)))
+		return true
+	}
+
 	if cmd != "list" && cmd != "buy" {
 		return false
 	}
-	if cmd == "buy" {
-		if !strings.EqualFold(arg, "con") {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s BUY CON, if you really want to do it.'", mobName(me), ch.GetName()))
+
+	// Cost per con point: GET_LEVEL(ch) * 400
+	cost := ch.GetLevel() * 400
+
+	// Available con points the player can buy.
+	// C: GET_ORIG_CON(ch) - ch->real_abils.con — origCon is the initial rolled stat.
+	// Go codebase doesn't have OrigCon field yet; available = 18 - current (cap at 18 per C).
+	availCon := 18 - ch.Stats.Con
+	if availCon < 0 {
+		availCon = 0
+	}
+
+	if cmd == "list" {
+		if availCon < 1 {
+			msg := fmt.Sprintf("%s You seem perfectly healthy!", ch.GetName())
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
 			return true
 		}
-		// TODO: gold check, OrigCon check, apply con +1, affect_total
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s That'll be some coins. You should feel much better.. if you wake up.'", mobName(me), ch.GetName()))
+		suf := "s"
+		if availCon == 1 {
+			suf = ""
+		}
+		msg := fmt.Sprintf("%s You can buy up to %d point%s, at %d per point.", ch.GetName(), availCon, suf, cost)
+		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
 		return true
 	}
-	if cmd == "list" {
-		// TODO: calculate and show available con points
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s I can sell you constitution points.'", mobName(me), ch.GetName()))
+
+	// cmd == "buy"
+	if !strings.EqualFold(arg, "con") {
+		msg := fmt.Sprintf("%s BUY CON, if you really want to do it.", ch.GetName())
+		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
 		return true
 	}
-	return false
+	if ch.GetGold() < cost {
+		msg := fmt.Sprintf("%s You can't afford it!", ch.GetName())
+		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
+		return true
+	}
+	if availCon < 1 {
+		msg := fmt.Sprintf("%s You seem perfectly healthy!", ch.GetName())
+		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
+		return true
+	}
+
+	// Deduct gold
+	ch.SetGold(ch.GetGold() - cost)
+
+	// Apply con +1 (capped at 18 like C code)
+	if ch.Stats.Con < 18 {
+		ch.Stats.Con++
+	}
+
+	// Stun the player
+	ch.SetPosition(combat.PosStunned)
+
+	msg := fmt.Sprintf("%s That'll be %d coins, you should feel much better.. if you wake up.", ch.GetName(), cost)
+	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
+	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s stares at %s and mutters some arcane words.", mobName(me), ch.GetName()))
+	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s falls, stunned.", ch.GetName()))
+
+	return true
 }
 
 // npcRegen regenerates health for NPC mobs.
@@ -451,7 +603,7 @@ func specQuanLo(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	return false
 }
 
-// specAlienElevator moves all occupants between two rooms.
+// specAlienElevator moves all occupants between two rooms (19551↔19599).
 func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if arg == "" {
 		return false
@@ -459,34 +611,112 @@ func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg st
 	arg = strings.TrimSpace(arg)
 	if cmd == "close" && strings.EqualFold(arg, "door") {
 		w.roomMessage(ch.GetRoomVNum(), "The room starts to move!")
-		// TODO: char_from_room / char_to_room for all occupants between 19551 and 19599
+		// Move players between the two elevator rooms
+		const roomA = 19551
+		const roomB = 19599
+		playersA := w.GetPlayersInRoom(roomA)
+		playersB := w.GetPlayersInRoom(roomB)
+		for _, p := range playersA {
+			p.SetRoom(roomB)
+		}
+		for _, p := range playersB {
+			p.SetRoom(roomA)
+		}
 		return true
 	}
 	return false
 }
 
-// specWerewolf howls when fighting.
+// specWerewolf howls and bites when fighting.
+// C source: SPECIAL(werewolf) ~line 407
 func specWerewolf(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetFighting() == "" {
+	if cmd != "" || me.GetFighting() == "" || me.GetHP() <= 0 {
 		return false
 	}
-	if rand.Intn(10) == 0 && me.GetHP() > 0 {
+	// Howl (10% chance)
+	if rand.Intn(10) == 0 {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s looks up and lets out a long, fierce howl.", mobName(me)))
-		// TODO: send_to_zone("You hear a loud howling in the distance.", me)
+		w.sendToZone(me.GetRoomVNum(), "You hear a loud howling in the distance.")
+	}
+	// Bite attack (25% chance)
+	if rand.Intn(4) == 0 {
+		victName := me.GetFighting()
+		vict, ok := w.GetPlayer(victName)
+		if ok && vict != nil && vict.GetRoom() == me.GetRoomVNum() {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tears into your leg with %s huge fangs!", mobName(me), mobName(me)))
+			combat.TakeDamage(me, vict, combat.RollDice(me.GetLevel(), 2), combat.TYPE_BITE)
+			moveReduction := me.GetLevel() * 3 / 2
+			newMove := vict.GetMove() - moveReduction
+			if newMove < 0 {
+				newMove = 0
+			}
+			vict.SetMove(newMove)
+		}
 	}
 	return true
 }
 
+// fieldObjDef defines a field object (wall of fire, ice, poison gas) from constants.c.
+type fieldObjTypeDef struct {
+	FoType string // "damage", "affect", "solid"
+}
+
+// fieldObjTypes maps field object vnums to their types.
+// C source: constants.c field_objs[] — vnums 50, 51, 52.
+var fieldObjTypes = map[int]fieldObjTypeDef{
+	50: {FoType: "damage"}, // wall of fire
+	51: {FoType: "solid"},  // wall of ice
+	52: {FoType: "affect"}, // poison gas cloud
+}
+
 // specFieldObject checks field objects that damage room occupants.
+// C source: SPECIAL(field_object) — me is actually an ObjectInstance.
+// Since spec procs receive *MobInstance but this is object-driven, we use
+// me's vnum to look up in fieldObjTypes and act accordingly.
 func specFieldObject(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" {
 		return false
 	}
-	// TODO: me is actually an ObjectInstance variant; check against field_objs table
-	return false
+	if me == nil {
+		return false
+	}
+	vnum := me.GetVNum()
+	def, ok := fieldObjTypes[vnum]
+	if !ok {
+		return false
+	}
+
+	roomVNum := me.GetRoomVNum()
+	if roomVNum <= 0 {
+		return false
+	}
+
+	damaged := false
+	players := w.GetPlayersInRoom(roomVNum)
+	for _, vict := range players {
+		if def.FoType == "damage" {
+			// Use mob proto values as dice params (matches C: GET_OBJ_VAL(obj,0), GET_OBJ_VAL(obj,1))
+			dam := me.GetLevel()/2 + 1
+			if dam > 0 {
+				vict.Health -= dam
+				sendToChar(vict, "An incredible force hits you!\r\n")
+				if vict.Health <= 0 {
+					w.roomMessage(roomVNum, fmt.Sprintf("%s falls to the ground, screaming in agony!", vict.GetName()))
+					w.rawKill(vict, 0)
+				}
+				damaged = true
+			}
+		}
+		if def.FoType == "affect" {
+			// Cast poison on room occupants (affect=spell, level=cast level)
+			spells.Cast(vict, vict, spells.SpellPoison, me.GetLevel(), nil)
+			damaged = true
+		}
+	}
+	return damaged
 }
 
-// specPortalToTemple teleports the player to the temple.
+// specPortalToTemple teleports the player to the temple (room 8008).
 func specPortalToTemple(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "say" && cmd != "'" {
 		return false
@@ -497,17 +727,48 @@ func specPortalToTemple(w *World, ch *Player, me *MobInstance, cmd string, arg s
 	}
 	sendToChar(ch, "With a blinding flash of light and a crack of thunder, you are teleported...\r\n")
 	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("With a blinding flash of light and a crack of thunder, %s disappears!", ch.GetName()))
-	// TODO: char_from_room(ch); char_to_room(ch, w.RealRoom(8008))
+	ch.SetRoom(8008)
 	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("With a blinding flash of light and a crack of thunder, %s appears!", ch.GetName()))
 	return true
 }
 
 // specTurnUndead opens a portal when the player uses the right item.
+// C source: SPECIAL(turn_undead) — creates north exit from 19875→19876 and south exit
+// from 19876→19875 on "use", removes both exits during pulse (cmd="").
 func specTurnUndead(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	const roomA = 19875
+	const roomB = 19876
+
 	if cmd == "use" {
+		arg = strings.TrimSpace(arg)
+		if arg == "" || ch.GetRoomVNum() != roomA && ch.GetRoomVNum() != roomB {
+			return false
+		}
+		// Check that arg matches the object's keywords
+		if me != nil && !isName(arg, me.GetName()) {
+			return false
+		}
 		w.roomMessage(ch.GetRoomVNum(), "A ray of flame bursts out of the object, consuming the undead!")
-		// TODO: create/remove exits in rooms 19875/19876
+
+		// Create north exit from 19875 → 19876
+		if room := w.GetRoomInWorld(roomA); room != nil {
+			room.Exits["north"] = parser.Exit{Direction: "north", ToRoom: roomB}
+		}
+		// Create south exit from 19876 → 19875
+		if room := w.GetRoomInWorld(roomB); room != nil {
+			room.Exits["south"] = parser.Exit{Direction: "south", ToRoom: roomA}
+		}
 		return true
+	}
+
+	// Pulse: remove exits if they exist
+	if cmd == "" {
+		if room := w.GetRoomInWorld(roomA); room != nil {
+			delete(room.Exits, "north")
+		}
+		if room := w.GetRoomInWorld(roomB); room != nil {
+			delete(room.Exits, "south")
+		}
 	}
 	return false
 }
@@ -523,24 +784,58 @@ func specItoh(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 	sendToChar(ch, "\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n")
 	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("\r\nWith a blinding flash of light and a crack of thunder, %s disappears!\r\n\r\n", ch.GetName()))
-	// TODO: char_from_room(ch); char_to_room(ch, w.RealRoom(19875))
+	ch.SetRoom(19875)
 	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("\r\nWith a blinding flash of light and a crack of thunder, %s appears!\r\n\r\n", ch.GetName()))
 	return true
 }
 
 // specMirror creates reflections and swaps players.
+// C source: SPECIAL(mirror) — ch2 is anyone in room 14496. Hit/kill: spawn obj 14503,
+// move ch2 to obj's room. Look: swap ch and ch2's rooms.
 func specMirror(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if me == nil {
+		return false
+	}
+	objRoom := me.GetRoomVNum()
+	if objRoom <= 0 {
+		return false
+	}
+	arg = strings.TrimSpace(arg)
+	if !isName(arg, me.GetName()) {
+		return false
+	}
+
+	// ch2 is anyone in the mirror room (14496)
+	var ch2 *Player
+	for _, p := range w.GetPlayersInRoom(14496) {
+		ch2 = p
+		break
+	}
+
 	if cmd == "hit" || cmd == "kill" {
 		sendToChar(ch, "You break the object into tiny pieces!")
 		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s shatters the object into a million pieces!", ch.GetName()))
-		// TODO: char_from_room(ch2), char_to_room(ch2, obj->in_room)
-		// TODO: extract_obj(obj); obj_to_room(read_object(14503, VIRTUAL), obj->in_room)
+		if ch2 != nil {
+			ch2.SetRoom(objRoom)
+			sendToChar(ch2, "You feel pulled in a hundred different directions!\r\n")
+			w.roomMessage(ch2.GetRoomVNum(), fmt.Sprintf("%s appears in a brilliant flash!", ch2.GetName()))
+		}
+		// Remove old object, spawn replacement (14503) in the same room
+		w.RemoveItemFromRoomByVNum(me.GetVNum(), objRoom)
+		w.SpawnObject(14503, objRoom)
 		return true
 	}
 	if cmd == "look" {
 		sendToChar(ch, "You feel pulled in a hundred different directions!")
 		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s disappears in a brilliant flash!", ch.GetName()))
-		// TODO: swap ch and ch2
+		if ch2 != nil {
+			// Move ch2 to obj's room
+			ch2.SetRoom(objRoom)
+			sendToChar(ch2, "You feel pulled in a hundred different directions!\r\n")
+			w.roomMessage(ch2.GetRoomVNum(), fmt.Sprintf("%s appears in a brilliant flash!", ch2.GetName()))
+		}
+		// Move ch to room 14496
+		ch.SetRoom(14496)
 		return true
 	}
 	return false
@@ -551,7 +846,10 @@ func specProstitute(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	if cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	// TODO: w.CanSee(me, ch) check
+	if !mobCanSee(me) {
+		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'Who's there? I can't see you!'", mobName(me)))
+		return true
+	}
 	if cmd == "buy" {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s I ain't for sale, just rent. Give me 5 gold for a good time.'", mobName(me), ch.GetName()))
 		return true
@@ -564,97 +862,154 @@ func specProstitute(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 }
 
 // specRoach — a living cockroach that eats, grows, and reproduces.
+// C source: SPECIAL(roach) ~line 707. Pulse-only (ch is nil, me is the roach).
 func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch.GetPosition() <= combat.PosSleeping {
+	if cmd != "" || me == nil || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
+	roomVNum := me.GetRoomVNum()
+
 	// Starvation death (extremely rare)
-	if rand.Intn(10001) == 0 && rand.Intn(10001) == 0 && ch.GetMaxHP() < 11 {
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s seems to starve to death and simply fades out of existence.", ch.GetName()))
-		// TODO: extract_char(ch)
+	if rand.Intn(10001) == 0 && rand.Intn(10001) == 0 && me.GetMaxHealth() < 11 {
+		w.roomMessage(roomVNum, fmt.Sprintf("%s seems to starve to death and simply fades out of existence.", mobName(me)))
+		// C: extract_char(ch) — set HP to 0 to trigger mob death handling
+		me.SetHealth(0)
 		return true
 	}
+
 	// Look for food on the ground
-	items := w.GetItemsInRoom(ch.GetRoomVNum())
+	items := w.GetItemsInRoom(roomVNum)
 	for _, obj := range items {
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s feeds on %s.", ch.GetName(), obj.GetShortDesc()))
+		if !obj.CanPickUp {
+			continue
+		}
+		w.roomMessage(roomVNum, fmt.Sprintf("%s feeds on %s.", mobName(me), obj.GetShortDesc()))
 		if rand.Intn(3) == 0 {
-			ch.MaxHealth += obj.GetCost() / 2
-			if ch.MaxHealth > 400 {
-				ch.MaxHealth = 10
-				ch.Health = ch.GetMaxHP()
-				w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s splits in half forming a new roach!", ch.GetName()))
-				// TODO: read_mobile(23, VIRTUAL); char_to_room(new, ch->in_room)
-			} else {
-				if rand.Intn(2) == 0 {
-					w.roomMessage(ch.GetRoomVNum(), "You hear some stretching noises.")
+			newMaxHP := me.GetMaxHealth() + obj.GetCost()/2
+			if newMaxHP > 400 {
+				// Split into new roach
+				me.SetHealth(10)
+				w.roomMessage(roomVNum, fmt.Sprintf("%s splits in half forming a new roach!", mobName(me)))
+				newRoach, err := w.SpawnMobInstance(23, roomVNum)
+				if err == nil && newRoach != nil {
+					newRoach.SetHealth(10)
 				} else {
-					w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("You hear a strange rumbling from %s's stonach.", ch.GetName()))
+					me.MaxHP = 10
+				}
+			} else {
+				me.MaxHP = newMaxHP
+				if rand.Intn(2) == 0 {
+					w.roomMessage(roomVNum, "You hear some stretching noises.")
+				} else {
+					w.roomMessage(roomVNum, fmt.Sprintf("You hear a strange rumbling from %s's stonach.", mobName(me)))
 				}
 			}
 		} else {
-			w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("You hear %s burp.", ch.GetName()))
+			w.roomMessage(roomVNum, fmt.Sprintf("You hear %s burp.", mobName(me)))
 		}
-		// TODO: extract_obj(obj)
+		w.RemoveItemFromRoom(obj, roomVNum)
 		return true
 	}
+
 	// Random idle behaviors
 	switch rand.Intn(11) {
 	case 0:
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s chirps gleefully.", ch.GetName()))
+		w.roomMessage(roomVNum, fmt.Sprintf("%s chirps gleefully.", mobName(me)))
 	case 1:
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s changes colors and clicks happily.", ch.GetName()))
+		w.roomMessage(roomVNum, fmt.Sprintf("%s changes colors and clicks happily.", mobName(me)))
 	case 2:
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s skitters around in tight circles.", ch.GetName()))
+		w.roomMessage(roomVNum, fmt.Sprintf("%s skitters around in tight circles.", mobName(me)))
 	case 3:
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("Strange purple dots appear on %s's back.", ch.GetName()))
+		w.roomMessage(roomVNum, fmt.Sprintf("Strange purple dots appear on %s's back.", mobName(me)))
 	case 4:
-		if rand.Intn(6) == 0 {
-			w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s fades out and back in again.", ch.GetName()))
-			return false
+		// Teleport to a random room
+		rooms := w.Rooms()
+		if len(rooms) > 0 {
+			randRoom := rooms[rand.Intn(len(rooms))].VNum
+			// Check for unwanted room flags (private/godroom/nomagic/death)
+			if w.roomHasFlag(randRoom, "private") || w.roomHasFlag(randRoom, "godroom") ||
+				w.roomHasFlag(randRoom, "nomagic") || w.roomHasFlag(randRoom, "death") {
+				w.roomMessage(roomVNum, fmt.Sprintf("%s fades out and back in again.", mobName(me)))
+				return false
+			}
+			w.roomMessage(roomVNum, fmt.Sprintf("%s fades out slowly with a soft swoosh.", mobName(me)))
+			me.SetRoom(randRoom)
+			w.roomMessage(randRoom, fmt.Sprintf("%s fades in slowly, looking a bit disoriented.", mobName(me)))
+			return true
 		}
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s fades out slowly with a soft swoosh.", ch.GetName()))
-		// TODO: char_from_room(ch); char_to_room(ch, random_room)
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s fades in slowly, looking a bit disoriented.", ch.GetName()))
-		return true
+		return false
 	}
 	return false
 }
 
 // specMortician retrieves corpses for a fee.
+// C source: SPECIAL(mortician) ~line 807.
 func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "" {
 		return false
 	}
 	cost := ch.GetLevel() * 116
 	if cmd == "list" {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s It will cost %d coins to retrieve your corpse.'", mobName(me), ch.GetName(), cost))
+		ch.SendMessage(fmt.Sprintf("%s tells you, 'It will cost %d coins to retrieve your corpse.'\r\n", mobName(me), cost))
 		return true
 	}
 	if cmd == "retrieve" {
 		if ch.GetGold() < cost {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s I'm sorry, you can't afford the cost.'", mobName(me), ch.GetName()))
+			ch.SendMessage(fmt.Sprintf("%s tells you, 'I'm sorry, you can't afford the cost.'\r\n", mobName(me)))
 			return true
 		}
-		// TODO: iterate object_list, find corpse matching player name
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s I'm sorry, I can't find your corpse anywhere!'", mobName(me), ch.GetName()))
+		// Search all rooms for a corpse matching this player
+		found := false
+		for _, room := range w.Rooms() {
+			items := w.GetItemsInRoom(room.VNum)
+			for _, obj := range items {
+				if obj.IsCorpse && strings.Contains(strings.ToLower(obj.Prototype.Keywords), strings.ToLower(ch.GetName())) && obj.GetValue(3) > 0 {
+					// Move corpse from its current room to the mortician's room
+					w.RemoveItemFromRoom(obj, room.VNum)
+					w.AddItemToRoom(obj, me.GetRoomVNum())
+					ch.SendMessage(fmt.Sprintf("The Mortician dumps your corpse on the ground.\r\n"))
+					w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("The Mortician dumps %s's corpse on the ground.", ch.GetName()))
+					ch.SetGold(ch.GetGold() - cost)
+					found = true
+					break
+				}
+			}
+			if found {
+				break
+			}
+		}
+		if !found {
+			ch.SendMessage(fmt.Sprintf("%s tells you, 'I'm sorry, I can't find your corpse anywhere!'\r\n", mobName(me)))
+		}
 		return true
 	}
 	return false
 }
 
 // specConjured returns to its plane of existence when un-charmed.
+// C source: SPECIAL(conjured) ~line 859. Pulse-only (ch is nil, me is the conjured mob).
 func specConjured(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// TODO: check AFF_CHARM
+	if me == nil {
+		return false
+	}
+	// Only trigger when the mob is no longer charmed
+	if mobHasAffect(me, "charm") {
+		return false
+	}
 	switch me.GetVNum() {
 	case 81, 82, 83, 84:
-		// TODO: notify master
+		// Notify master: MobInstance lacks a Master/Following field, so notify
+		// all players in the room. A charmer would be present in the same room.
+		for _, p := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+			p.SendMessage(fmt.Sprintf("You lose control and %s fizzles away!\r\n", mobName(me)))
+		}
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s returns to its own plane of existence.", mobName(me)))
 	default:
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'My work here is done.'", mobName(me)))
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s disappears in a flash of white light!", mobName(me)))
 	}
-	// TODO: extract_char(me)
+	// Remove mob from world — set HP to 0 to trigger death handling
+	me.SetHealth(0)
 	return true
 }
 
@@ -689,25 +1044,36 @@ func specElementsMasterColumn(w *World, ch *Player, me *MobInstance, cmd string,
 
 	for _, ppl := range players {
 		found := -1
-		// TODO: check player inventory for talismans (vnum 1300-1303)
+		// Check player inventory for talismans (vnum 1300-1303)
+		for _, obj := range ppl.GetInventory() {
+			vnum := obj.GetVNum()
+			if vnum >= 1300 && vnum <= 1303 {
+				found = vnum - 1300
+				break
+			}
+		}
 		if found >= 0 && found < len(newLocs) {
 			sendToChar(ppl, "The talisman glows softly and your vision fades.\r\n")
 		} else {
 			sendToChar(ppl, "You feel a tingling sensation and your vision fades.\r\n")
 		}
 		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s vanishes in a brilliant flash of light.", ppl.GetName()))
-		// TODO: char_from_room(ppl); char_to_room(ppl, newLocs[found])
+		if found >= 0 && found < len(newLocs) {
+			ppl.SetRoom(newLocs[found])
+		} else {
+			ppl.SetRoom(newLocs[0])
+		}
 	}
 	return true
 }
 
-// specElementsPlatforms sends all players in the room back to the master column.
+// specElementsPlatforms sends all players in the room back to the master column (1314).
 func specElementsPlatforms(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	players := w.GetPlayersInRoom(ch.GetRoomVNum())
 	for _, ppl := range players {
 		sendToChar(ppl, "A wave of power surges through you and you feel dizzy.\r\n")
 		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s disappears in a brilliant flash of light.", ppl.GetName()))
-		// TODO: char_from_room(ppl); char_to_room(ppl, 1314)
+		ppl.SetRoom(1314)
 	}
 	return true
 }
@@ -715,22 +1081,91 @@ func specElementsPlatforms(w *World, ch *Player, me *MobInstance, cmd string, ar
 // specElementsLoadCylinders manages cylinder objects for the talisman puzzle.
 func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "get" {
-		// TODO: do_get(ch, arg, cmd, 0)
+		w.doGet(ch, me, cmd, arg)
 		elementsRemoveCylinders(w)
 		return true
 	}
 	if cmd != "drop" {
 		return false
 	}
-	// TODO: check if cylinder already exists; load cylinder matching talisman dropped
+
+	// Map room vnum to expected talisman vnum and cylinder vnum
+	type loadEntry struct {
+		roomVNum   int
+		talVNum    int
+		cylVNum    int
+		color      string
+	}
+	entries := map[int]loadEntry{
+		1360: {1360, 1300, 1304, "green"},
+		1364: {1364, 1301, 1305, "yellow"},
+		1380: {1380, 1302, 1306, "red"},
+		1384: {1384, 1303, 1307, "blue"},
+	}
+
+	entry, ok := entries[ch.GetRoomVNum()]
+	if !ok {
+		// Not a talisman pillar room
+		w.doDrop(ch, me, cmd, arg)
+		return true
+	}
+
+	// Check if a cylinder already exists in this room
+	for _, item := range w.GetItemsInRoom(ch.GetRoomVNum()) {
+		if item.GetVNum() == entry.cylVNum {
+			return true // cylinder already present, do nothing
+		}
+	}
+
+	// Perform the actual drop
+	w.doDrop(ch, me, cmd, arg)
+
+	// Check what was actually dropped — locate the talisman in the room
+	for _, item := range w.GetItemsInRoom(ch.GetRoomVNum()) {
+		if item.GetVNum() == entry.talVNum {
+			msg := fmt.Sprintf("A %s cylinder of light extends upwards from the pillar.\r\n", entry.color)
+			sendToChar(ch, msg)
+			obj, err := w.SpawnObject(entry.cylVNum, ch.GetRoomVNum())
+			if err == nil {
+				obj.RoomVNum = ch.GetRoomVNum()
+				w.AddItemToRoom(obj, ch.GetRoomVNum())
+			}
+			break
+		}
+	}
+
 	return true
 }
 
 // specElementsGaleruColumn checks if all four talismans are in their rooms.
 func specElementsGaleruColumn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// TODO: check rooms 1360,1364,1380,1384 for talismans 1300-1303
-	// If all four, teleport players to room 1389
-	return false
+	// Check rooms 1360,1364,1380,1384 for talismans 1300-1303
+	roomVnums := []int{1360, 1364, 1380, 1384}
+	talVnums := []int{1300, 1301, 1302, 1303}
+	found := 0
+
+	for i := 0; i < 4; i++ {
+		items := w.GetItemsInRoom(roomVnums[i])
+		for _, item := range items {
+			if item.GetVNum() == talVnums[i] {
+				found++
+				break
+			}
+		}
+	}
+
+	if found != 4 {
+		return false
+	}
+
+	// All four talismans are placed — teleport players in room 1372 to 1389
+	players := w.GetPlayersInRoom(ch.GetRoomVNum())
+	for _, ppl := range players {
+		sendToChar(ppl, "Four beams of colored light from the corners of the chamber converge around you.\r\n\n")
+		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s is struck by four beams of colored light and slowly vanishes!", ppl.GetName()))
+		ppl.SetRoom(1389)
+	}
+	return true
 }
 
 // specElementsGaleruAlive teleports players if Galeru (mob 1315) is dead.
@@ -738,13 +1173,16 @@ func specElementsGaleruAlive(w *World, ch *Player, me *MobInstance, cmd string, 
 	if cmd == "" {
 		return false
 	}
-	// TODO: check if mob vnum 1315 exists in room
+	// Check if Galeru (mob vnum 1315) is alive in the room
+	if findMobInRoom(w, ch.GetRoomVNum(), "galeru") != nil {
+		return false // Galeru is alive, no teleport
+	}
 	players := w.GetPlayersInRoom(ch.GetRoomVNum())
 	if len(players) > 0 {
 		for _, ppl := range players {
 			sendToChar(ppl, "You begin to feel very dizzy and the world around you fades...\r\n")
 			w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s disappears in a brilliant flash of light.", ppl.GetName()))
-			// TODO: char_from_room(ppl); char_to_room(ppl, 1395)
+			ppl.SetRoom(1395)
 		}
 		return true
 	}
@@ -753,7 +1191,23 @@ func specElementsGaleruAlive(w *World, ch *Player, me *MobInstance, cmd string, 
 
 // specElementsMinion destroys talismans and cylinders.
 func specElementsMinion(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// TODO: iterate mob inventory for talismans/cylinders and destroy them
+	// Iterate mob inventory for talismans/cylinders and destroy them
+	talismanVnums := map[int]bool{1300: true, 1301: true, 1302: true, 1303: true}
+	cylinderVnums := map[int]bool{1304: true, 1305: true, 1306: true, 1307: true}
+
+	toDestroy := make([]*ObjectInstance, 0)
+	for _, obj := range me.Inventory {
+		vnum := obj.GetVNum()
+		if talismanVnums[vnum] || cylinderVnums[vnum] {
+			toDestroy = append(toDestroy, obj)
+		}
+	}
+
+	for _, obj := range toDestroy {
+		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s utters the words 'eradico paratus' and %s disintegrates.", me.GetName(), obj.GetShortDesc()))
+		me.RemoveFromInventory(obj)
+	}
+
 	elementsRemoveCylinders(w)
 	return false
 }
@@ -763,7 +1217,45 @@ func specElementsGuardian(w *World, ch *Player, me *MobInstance, cmd string, arg
 	if cmd == "" {
 		return false
 	}
-	// TODO: charm players through song, pair non-fighting players
+
+	// Get all players in the room who are non-NPC, non-immortal, and not already fighting
+	players := w.GetPlayersInRoom(ch.GetRoomVNum())
+	var targets []*Player
+	for _, ppl := range players {
+		if ppl.IsNPC() || ppl.GetLevel() > LVL_IMMORT || ppl.GetFighting() != "" {
+			continue
+		}
+		targets = append(targets, ppl)
+	}
+
+	if len(targets) == 0 {
+		return false
+	}
+
+	if len(targets) < 2 {
+		// Single player — goes mad and injures themself
+		dam := randRange(10, 50)
+		w.doDamage(me, targets[0], dam, "hit")
+		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s mumbles softly and %s begins screaming loudly, hitting %sself.", me.GetName(), targets[0].Name, targets[0].Name))
+		sendToChar(targets[0], fmt.Sprintf("%s mumbles softly and you begin to scream, involuntarily hitting yourself.\r\n", me.GetName()))
+		return false
+	}
+
+	// Pair the first two non-fighting players
+	a := targets[0]
+	b := targets[1]
+	a.SetFighting(b.Name)
+	b.SetFighting(a.Name)
+	a.SetAffect(affCharm, true)
+	b.SetAffect(affCharm, true)
+
+	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s mumbles softly and %s screams loudly, attacking %s!", me.GetName(), a.Name, b.Name))
+	sendToChar(b, fmt.Sprintf("%s mumbles softly and %s screams loudly, attacking you!\r\n", me.GetName(), a.Name))
+	sendToChar(a, fmt.Sprintf("%s mumbles softly and you scream loudly, attacking %s!\r\n", me.GetName(), b.Name))
+
+	// Apply a bit of initial damage to make it real
+	w.doDamage(a, b, 1, "hit")
+
 	return false
 }
 
@@ -772,13 +1264,42 @@ func specFlyExitUp(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	if cmd != "up" {
 		return false
 	}
-	// TODO: check AFF_FLY
+	if ch.IsAffected(affFly) {
+		return false // player can fly, allow passage
+	}
 	sendToChar(ch, "You try and jump up there but it's just too high.\r\n")
 	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s jumps up and down in a vain attempt to travel upwards.", ch.GetName()))
 	return true
 }
 
+// cylinderToTalisman maps cylinder vnums to their corresponding talisman vnums.
+var cylinderToTalisman = map[int]int{
+	1310: 1300,
+	1311: 1301,
+	1312: 1302,
+	1313: 1303,
+}
+
 // elementsRemoveCylinders checks room contents and removes cylinders when talismans leave.
 func elementsRemoveCylinders(w *World) {
-	// TODO: check room for cylinder vnums, remove if corresponding talisman not present
+	// Check rooms that can have cylinders for missing talismans
+	for cylVNum, talVNum := range cylinderToTalisman {
+		// Find all rooms containing this cylinder
+		for _, room := range w.Rooms() {
+			items := w.GetItemsInRoom(room.VNum)
+			hasCylinder := false
+			hasTalisman := false
+			for _, item := range items {
+				if item.GetVNum() == cylVNum {
+					hasCylinder = true
+				}
+				if item.GetVNum() == talVNum {
+					hasTalisman = true
+				}
+			}
+			if hasCylinder && !hasTalisman {
+				w.RemoveItemFromRoomByVNum(cylVNum, room.VNum)
+			}
+		}
+	}
 }

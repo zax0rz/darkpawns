@@ -216,6 +216,14 @@ func (o *ObjectInstance) GetVNum() int {
 	return o.VNum
 }
 
+// GetValue returns the object's Values[idx] from its prototype, or 0.
+func (o *ObjectInstance) GetValue(idx int) int {
+	if o.Prototype == nil || idx < 0 || idx >= len(o.Prototype.Values) {
+		return 0
+	}
+	return o.Prototype.Values[idx]
+}
+
 func (o *ObjectInstance) GetRoomVNum() int {
 	return o.RoomVNum
 }
