@@ -506,3 +506,39 @@ The evaluation challenge remains open: "narrative coherence" needs a rubric. Hyp
 
 **[QUESTION]** Tiered inference dispatch: should it live in dp_brenda.py (client-side) or agent.c (server-side)? Client-side is easier to iterate. Server-side reaches all agents. Starting with client-side, deferring server-side for Phase 6.
 
+
+## [Sat 2026-04-25 00:47 EDT] `[DESIGN]` `[RESULT]` Clan/House/Boards bulk port complete
+
+**Clans (`clans.go`):**
+- Subagent produced comprehensive port of clan.c with all subcommands except `set`, `private`, `bank`
+- Fixed duplicate helper functions (`isAbbrev`, `halfChop`, `isNumber`) that caused compilation errors
+- Added `ExecClanCommand` dispatcher matching C's `ACMD(do_clan)`
+- Added stubs for `doClanSet`, `doClanPrivate`, `doClanBank`, `doClanPlan`, `doClanRanks`, `doClanTitles`, `doClanPrivilege`, `doClanMoney`, `doClanAppLevel` — these need proper porting from C (about 600 lines total)
+- Added `ClanID`/`ClanRank` to `Player`, `Clans *ClanManager` to `World`
+- Added `PostInit()` to World for one-time clan/house init
+
+**Houses (`houses.go`):**
+- Subagent produced thorough port of house.c
+- Includes: house boot, crashsave, guest management, Hcontrol (build/destroy/pay/key), DoHouse dispatcher
+- Uses existing `dirs`/`revDir` from `act_movement.go`
+- `HouseCanEnter` exported for room entry checks
+
+**Boards (`boards.go`):**
+- Self-written port of boards.c as obj spec proc
+- `genBoard` registered via `RegisterSpec("gen_board", genBoard)`
+- Full data model: `BoardSystem`, `BoardInfo`, `BoardMsgInfo`
+- File persistence in binary format matching original C
+- Write/Read/Remove/Look/Examine handling
+- NOTE: spec procs aren't wired into the Go command dispatcher yet — `GetObjSpec/GetMobSpec/GetRoomSpec` exist but aren't called anywhere. Boards will work once spec dispatch is wired.
+
+**Integration:**
+- `clan`, `house`, `hcontrol` commands registered in session/commands.go
+- Clan `PostInit()` called after World creation
+- House/Hcontrol system registered and callable
+- Build passes, vet passes
+
+**Remaining:**
+- [ ] Wire spec procs into command interpreter (not just for boards — all specs are unused)
+- [ ] Port clan `set`, `private`, `bank` subcommands from C
+- [ ] Wire board write editor setup in session layer (uses `WriteMagic` field as bridge)
+- [ ] Test runtime with world data

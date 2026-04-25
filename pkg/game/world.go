@@ -59,6 +59,15 @@ type World struct {
 
 	// Last tellers tracking for reply command
 	lastTellers *lastTellersData
+
+	// House control records — loaded by HouseBoot() during initialization
+	HouseControl []HouseControl
+
+	// Clans manager — loaded by InitClans() during initialization
+	Clans *ClanManager
+
+	// Boards system — initialized via GetOrInitBoards()
+	Boards *BoardSystem
 }
 
 // NewWorld creates a new game world from parsed data.
@@ -74,7 +83,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		roomItems:   make(map[int][]*ObjectInstance),
 		nextObjID:   1,
 		done:        make(chan bool),
-		shopManager: nil, // Will be set via SetShopManager
+		shopManager: nil,    // Will be set via SetShopManager
 		parsedData:  parsed, // Keep reference for door loading etc.
 	}
 
@@ -125,7 +134,18 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	w.snapshots = NewSnapshotManager()
 	w.snapshots.Publish(w.rooms)
 
+	// Initialize house control and board system
+	w.HouseControl = make([]HouseControl, 0)
+
 	return w, nil
+}
+
+// PostInit performs first-time initialization of systems that depend on
+// the world being fully constructed (house boot, clan init).
+// Must be called after NewWorld but before starting the main loop.
+func (w *World) PostInit() {
+	w.Clans = InitClans("./data/clans.json")
+	w.HouseBoot()
 }
 
 // GetSnapshotManager returns the world's snapshot manager.

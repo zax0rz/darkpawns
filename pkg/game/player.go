@@ -25,10 +25,20 @@ type Player struct {
 	Move      int // Movement points — ported from limits.c/structs.h GET_MOVE
 	MaxMove   int // Max movement points
 
-	Level     int
-	Exp       int
-	Gold      int // Currency, used by Lua scripts
-	Strength  int // For inventory capacity
+	Level int
+	Exp   int
+	Gold  int // Currency, used by Lua scripts
+
+	// Clan system (ported from clan.c)
+	Strength int // For inventory capacity
+
+	// Clan membership — ported from src/clan.c clan_rec/_clan / _clan_rank
+	ClanID   int `json:"clan_id"`
+	ClanRank int `json:"clan_rank"`
+
+	// WriteMagic — set by gen_board spec proc to indicate session-level editor
+	// should start for board writing. Value is board_type + BOARD_MAGIC.
+	WriteMagic int
 
 	// Hunger/thirst/drunk conditions — limits.c:366, structs.h:566-568
 	// Index: CondDrunk=0, CondFull=1, CondThirst=2
@@ -45,7 +55,6 @@ type Player struct {
 	// while ActiveAffects tracks spell effects with duration/stacking.
 	// Used by save/load, not persisted to JSON yet.
 	ActiveAffects []*engine.Affect
-
 
 	// Character identity — from do_start()/roll_real_abils() in class.c
 	Class int
@@ -164,7 +173,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		SkillManager: engine.NewSkillManager(),
 		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
 
-		SpellMap:     make(map[string]int),
+		SpellMap: make(map[string]int),
 	}
 
 	// Initialize inventory and equipment
@@ -720,7 +729,6 @@ func (p *Player) SetAffect(affBit int, val bool) {
 		p.Affects &^= 1 << uint(affBit)
 	}
 }
-
 
 // GetFlags returns the raw PLR flags bitmask.
 // Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.

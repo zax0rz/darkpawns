@@ -233,6 +233,13 @@ func init() {
 	cmdRegistry.Register("idea", wrapArgs(cmdIdea), "Submit an idea.", 0, 0)
 	cmdRegistry.Register("todo", wrapArgs(cmdTodo), "Submit a todo suggestion.", 0, 0)
 	cmdRegistry.Register("afk", wrapArgs(cmdAFK), "Toggle away-from-keyboard status.", 0, 0)
+
+	// Clan system (ported from clan.c)
+	cmdRegistry.Register("clan", wrapArgs(cmdClan), "Clan management commands.", 0, 0, "clans")
+
+	// Houses (ported from house.c)
+	cmdRegistry.Register("house", wrapArgs(cmdHouse), "House management commands.", 0, 0)
+	cmdRegistry.Register("hcontrol", wrapArgs(cmdHcontrol), "Admin house control.", 0, 0)
 	cmdRegistry.Register("gossip", wrapArgs(cmdGossip), "Gossip on the channel.", 0, 0)
 	cmdRegistry.Register("reply", wrapArgs(cmdReply), "Reply to the last tell.", 0, 0, "r")
 	cmdRegistry.Register("write", wrapArgs(cmdWrite), "Write on an object.", 0, 0)
@@ -1396,11 +1403,11 @@ func cmdHelp(s *Session, args []string) error {
 // directions maps abbreviated direction names to full names.
 var directions = map[string]string{
 	"north": "north", "n": "north",
-	"east":  "east",  "e": "east",
+	"east": "east", "e": "east",
 	"south": "south", "s": "south",
-	"west":  "west",  "w": "west",
-	"up":    "up",    "u": "up",
-	"down":  "down",  "d": "down",
+	"west": "west", "w": "west",
+	"up": "up", "u": "up",
+	"down": "down", "d": "down",
 }
 
 // resolveDirection returns the full direction name or empty string if invalid.
@@ -1597,5 +1604,23 @@ func cmdTodo(s *Session, args []string) error {
 // cmdAFK toggles away-from-keyboard status.
 func cmdAFK(s *Session, args []string) error {
 	s.manager.world.ExecAFK(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdClan — player-facing clan management (ported from clan.c)
+func cmdClan(s *Session, args []string) error {
+	s.manager.world.ExecClanCommand(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdHcontrol — admin house control (ported from house.c)
+func cmdHcontrol(s *Session, args []string) error {
+	s.manager.world.Hcontrol(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdHouse — player-facing house management (ported from house.c)
+func cmdHouse(s *Session, args []string) error {
+	s.manager.world.DoHouse(s.player, strings.Join(args, " "))
 	return nil
 }

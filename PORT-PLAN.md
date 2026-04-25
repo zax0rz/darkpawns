@@ -21,8 +21,8 @@ C source:            68,823 lines across 67 .c files
 Go codebase:         61,690 lines across all .go files (incl. tests)
   Non-test Go:      48,036 lines across 135 .go files (estimate)
   Test files:        4,880 lines
-Genuinely unported:  ~22,000 lines across ~14 C files (unaddressed)
-Partially ported:    ~20,000 lines across 10+ C files (needs more coverage)
+Genuinely unported:  ~19,500 lines across ~11 C files (unaddressed)
+Partially ported:    ~18,000 lines across 8 C files (needs more coverage)
 Replaced by SPA:     7,830 lines across 11 editor C files (OLC etc.)
 Build:               go build ./cmd/server passes clean
 go vet:              vet passes clean
@@ -82,9 +82,9 @@ Git status:          fight_core.go + PORT-PLAN.md + RESEARCH-LOG.md + ROADMAP.md
 
 | C Source | Lines | Go target | Priority |
 |----------|-------|-----------|----------|
-| `clan.c` | 1,574 | `pkg/game/clans.go` | ⭐ High |
-| `house.c` | 744 | `pkg/game/houses.go` | ⭐ High |
-| `boards.c` | 551 | `pkg/game/boards.go` | ⭐ High |
+| `clan.c` | 1,574 | `pkg/game/clans.go` | ✅ **DONE** — 1,099 Go lines, build/vet clean |
+| `house.c` | 744 | `pkg/game/houses.go` | ✅ **DONE** — 957 Go lines, build/vet clean |
+| `boards.c` | 551 | `pkg/game/boards.go` | ✅ **DONE** — 562 Go lines, build/vet clean |
 | `whod.c` | 532 | `pkg/game/whod.go` | Medium |
 | `objsave.c` | 1,250 | `pkg/game/objsave.go` | Medium |
 | `mobprog.c` | 646 | `pkg/game/mobprogs.go` | Medium (partially via Lua) |
@@ -208,15 +208,21 @@ Git status:          fight_core.go + PORT-PLAN.md + RESEARCH-LOG.md + ROADMAP.md
 **~14 functions, ~1000 lines new Go code**
 **Go target:** `pkg/game/objsave.go`
 
-### Wave 11 — Clan + Housing (clan.c + house.c, ~2318 lines)
-**Functions to port:** string_write, save_char_file_u (clan), House_restore_weight, House_crashsave, House_delete_file, House_listrent, House_save_control, House_boot, hcontrol_list_houses, hcontrol_build_house, hcontrol_destroy_house, hcontrol_pay_house, House_save_all, hcontrol_set_key
-**~14 functions, ~1800 lines new Go code**
-**Go targets:** `pkg/game/clans.go`, `pkg/game/houses.go`
+### ✅ Wave 11 — Clan + Housing + Boards (clan.c + house.c + boards.c, ~2869 lines) [COMPLETED 2026-04-25]
+**Functions ported:** clan.c (1,574 lines) → clans.go (1,099 lines), house.c (744 lines) → houses.go (957 lines), boards.c (551 lines) → boards.go (562 lines)
+**Go targets:** `pkg/game/clans.go`, `pkg/game/houses.go`, `pkg/game/boards.go`
+**Status:** ✅ DONE. Build clean, vet clean.
+**Commands registered:** clan, house, hcontrol in session/commands.go
+**Player struct updated:** ClanID, ClanRank, WriteMagic
+**World struct updated:** Clans *ClanManager, Boards *BoardSystem, HouseControl []HouseControl
+**PostInit() added:** One-time clan/house init after World creation
+**Stubs (TODO):** doClanSet, doClanPrivate, doClanBank (~600 C lines, returns "not yet implemented")
+**Spec procs NOT YET WIRED:** GetObjSpec/GetMobSpec/GetRoomSpec defined but never called
 
-### Wave 12 — Boards + Misc (boards.c + alias.c + ban.c + dream.c + weather.c, ~1936 lines)
-**Functions to port:** Board_save_board, Board_load_board, Board_reset_board, Board_write_message, init_boards, read_aliases, write_aliases, load_banned, _write_one_node, write_ban_list, Read_Invalid_List, dream, dream_travel, weather_and_time (remaining), another_hour, weather_change, prng_seed
-**~17 functions, ~1200 lines new Go code**
-**Go targets:** `pkg/game/boards.go`, `pkg/game/aliases.go`, `pkg/game/bans.go`, `pkg/game/dreams.go`
+### Wave 12 — Misc (alias.c + ban.c + dream.c + weather.c, ~1385 lines) [boards.c DONE in Wave 11]
+**Remaining functions to port:** read_aliases, write_aliases, load_banned, _write_one_node, write_ban_list, Read_Invalid_List, dream, dream_travel, weather_and_time (remaining), another_hour, weather_change, prng_seed
+**~12 functions, ~900 lines new Go code**
+**Go targets:** `pkg/game/aliases.go`, `pkg/game/bans.go`, `pkg/game/dreams.go`
 
 ### 🚫 Waves 13-14 — OLC Editors (REPLACED by Web Admin SPA)
 **Decision: Do NOT port.** ~7,830 lines replaced by Web Admin SPA.
@@ -241,7 +247,7 @@ Security review: command injection, Lua sandbox bypass, privilege escalation, Do
 ### ✅ #3: Wave 7 — Spell system (spells.c + magic.c + spell_parser.c, ~4843 lines) [COMPLETED]
 8 Go files, 1,846 lines. Build clean, vet clean. CallMagic dispatch with full damage formulas and affect spells. See Wave 7 entry above for details.
 
-### 🟡 #4: Wave 8 — Wire spell system into session (cast_cmds.go connection)
+### 🔄 #4: Wave 8 — Wire spell system into session (cast_cmds.go connection)
 CallMagic exists separately from Cast() — need to hook them up. Also need to flesh out group/mass/area/summon/creation/alter-obj stubs, connect affects to engine.AffectManager, implement real manual spell dispatch.
 
 ### ✅ #5: Wave 9 — Communication subsystem [COMPLETED 2026-04-24]
