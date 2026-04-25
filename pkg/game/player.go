@@ -142,6 +142,14 @@ type Player struct {
 
 	// Ignore list: map of player names the player is ignoring
 	IgnoredPlayers map[string]bool
+
+	// Aliases — from src/alias.c
+	// Per-player command aliases stored in data/aliases/
+	Aliases []PlayerAlias
+
+	// LastDeath — timestamp of last death (unix time).
+	// Used by dream.c for nightmare progression.
+	LastDeath int64
 }
 
 // NewPlayer creates a new player with default stats (no class/race yet).
@@ -492,6 +500,21 @@ func (p *Player) GetName() string {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.Name
+}
+
+// GetLastDeath returns the last death timestamp (unix time).
+// Used by dream.c for nightmare progression.
+func (p *Player) GetLastDeath() int64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.LastDeath
+}
+
+// SetLastDeath sets the last death timestamp (unix time).
+func (p *Player) SetLastDeath(t int64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.LastDeath = t
 }
 
 // SendMessage sends a message to the player.
