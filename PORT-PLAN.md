@@ -521,7 +521,7 @@ Do NOT implement these improvements. Just document them.
 
 ---
 
-## File Structure Convention (Updated 2026-04-24)
+## File Structure Convention (Updated 2026-04-25, Wave 13)
 
 | C Source | Go Target | Status |
 |----------|-----------|--------|
@@ -534,11 +534,15 @@ Do NOT implement these improvements. Just document them.
 | `src/act.item.c` | `pkg/game/act_item.go` | 🔶 May exceed C (new features added) |
 | `src/act.comm.c` | `pkg/game/act_comm.go` + `pkg/session/comm_cmds.go` | ✅ |
 | `src/act.offensive.c` | `pkg/game/act_offensive.go` + `pkg/session/combat_cmds.go` | ✅ |
-| `src/boards.c` | `pkg/game/boards.go` | ❌ NOT PORTED |
-| `src/clan.c` | `pkg/game/clans.go` | ❌ NOT PORTED |
-| `src/house.c` | `pkg/game/houses.go` | ❌ NOT PORTED |
-| `src/whod.c` | `pkg/game/whod.go` | ❌ NOT PORTED |
-| `src/objsave.c` | `pkg/game/objsave.go` | ❌ NOT PORTED |
+| `src/boards.c` | `pkg/game/boards.go` | ✅ Wave 11 — 562 Go lines |
+| `src/clan.c` | `pkg/game/clans.go` | ✅ Wave 11 — 1,099 Go lines |
+| `src/house.c` | `pkg/game/houses.go` | ✅ Wave 11 — 957 Go lines |
+| `src/whod.c` | `pkg/game/whod.go` | ✅ Wave 13 — 321 Go lines |
+| `src/alias.c` | `pkg/game/aliases.go` | ✅ Wave 13 — 229 Go lines |
+| `src/ban.c` | `pkg/game/bans.go` | ✅ Wave 13 — 362 Go lines |
+| `src/dream.c` | `pkg/game/dreams.go` | ✅ Wave 13 — 242 Go lines |
+| `src/objsave.c` | `pkg/game/objsave.go` | ✅ Wave 10 — persistence system |
+| `src/mobact.c` | `pkg/game/mobact.go` | ✅ Wave 12 — 171 Go lines |
 | `src/mobprog.c` | `pkg/game/mobprogs.go` | ❌ NOT PORTED (partially via Lua) |
 | `src/shop.c` | `pkg/game/shop.go`, `*systems/shop*.go`, `*command/shop_commands.go`, `*session/shop_cmds.go`, `*common/shop.go` | ✅ Distributed across pkgs |
 | `src/mapcode.c` | `pkg/session/map_cmds.go` | ✅ |
@@ -627,7 +631,7 @@ See Wave 14 — Spec Procs for hunt_victim wiring. Lua scripting system handles 
 ## Session Startup
 
 Each new session working on this plan should:
-1. Read `PORT-PLAN.md` — this file (updated as of 2026-04-25, Wave 12)
+1. Read `PORT-PLAN.md` — this file (updated as of 2026-04-25, Wave 13)
 2. Read `RESEARCH-LOG.md` — recent session journal
 3. Read `docs/SWARM-LEARNINGS.md` — lessons from previous waves
 4. Check `git log --oneline -5` — latest commits
