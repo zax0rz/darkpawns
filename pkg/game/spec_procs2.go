@@ -933,7 +933,7 @@ func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg 
 		return false
 	}
 
-	if cmd == "east" && me != ch && !isOwner(w, ch, me.GetRoomVNum()+2) {
+	if cmd == "east" && !isOwner(w, ch, me.GetRoomVNum()+2) {
 		if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s snaps to attention as %s passes.", me.GetShortDesc(), ch.GetName()))
 		} else {
@@ -1104,7 +1104,7 @@ func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg 
 		return false
 	}
 
-	if cmd == "down" && me != ch && !isOwner(w, ch, me.GetRoomVNum()+2) {
+	if cmd == "down" && !isOwner(w, ch, me.GetRoomVNum()+2) {
 		if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
 		} else {
@@ -1141,7 +1141,7 @@ func specCastleGuardUp(w *World, ch *Player, me *MobInstance, cmd string, arg st
 		return false
 	}
 
-	if cmd == "up" && me != ch && !isOwner(w, ch, me.GetRoomVNum()+1) {
+	if cmd == "up" && !isOwner(w, ch, me.GetRoomVNum()+1) {
 		// Group check: uses current room, not +1
 		if isOwnerGrouped(w, ch, me.GetRoomVNum()) {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
@@ -1178,7 +1178,7 @@ func specCastleGuardNorth(w *World, ch *Player, me *MobInstance, cmd string, arg
 		return false
 	}
 
-	if cmd == "north" && me != ch && !isOwner(w, ch, me.GetRoomVNum()+2) {
+	if cmd == "north" && !isOwner(w, ch, me.GetRoomVNum()+2) {
 		if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
 		} else {
