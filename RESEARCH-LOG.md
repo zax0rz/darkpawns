@@ -76,8 +76,22 @@
 
 **Status:** Player struct uses `Following string` (name) and `GetFollowers() []string` — not C-style linked list. Good abstraction.
 
+## 2026-04-25 — Wave 9 Complete: Communication Subsystem
+
+[RESULT]
+
+**Status:** comm.c + act.comm.c (4,203 C lines → 559 Go lines, 4 files).
+- comm_infra.go (402 lines): timediff/timeadd wrappers, nonblock no-op, SetWriteBuffer, TxtQ queue, perform_subst, perform_alias, make_prompt (full ANSI prompt), setup_log/open_logfile stubs
+- act_comm_bridge.go (58 lines): Exec race/spec/think/qcomm/gencomm/ctell wrappers
+- act_comm.go expanded (+89 lines): cmdRaceSay, cmdGsay, cmdCtell, cmdSpecComm, cmdQcomm, cmdThink, cmdGenComm, cmdWhisper, cmdAsk
+- commands.go (+10 lines): gossip, reply, write, page, ignore, race_say, whisper, ask, qcomm, think
+
+**Key insight:** make_prompt port was the biggest lift — C version handles connected/playing/pager/AFK/invis/combat states with ANSI color thresholds. Go version preserves all states.
+
+**Remaining:** 3 waves: 10 (objsave), 11 (clan/house), 12 (boards/misc). Then QA + security audits.
+
 ## 2026-04-25 — Port Strategy
 
 [HYPOTHESIS]
 
-The architecture is converging. Game core (World, Player, Room) stable. Session/command layer mostly wired. Remaining: comms (Wave 9), combat AI (Wave 11), save/load (Wave 12). The real work after that is testing — commands need actual exercise against in-memory state.
+The architecture is converging. Game core (World, Player, Room) stable. Session/command layer mostly wired. Remaining: comms (Wave 9 done), combat AI (Wave 11), save/load (Wave 12). The real work after that is testing — commands need actual exercise against in-memory state.

@@ -8,6 +8,7 @@
 > **Wave 6 reality check:** Wave 6 (act.wizard.c admin commands) was actually completed within Wave 5's partial commit. 46 wizard commands registered and implemented in `pkg/session/wizard_cmds.go` (1,574 lines).
 > **Wave 7 complete (2026-04-24):** Spell system fully ported — magic.c, spells.c, spell_parser.c (~4,843 C lines) → 8 Go files (1,846 lines) in pkg/spells/. CallMagic dispatch, MagDamage (all spell formulas), MagAffects (20+ spells), saving throws (full 6×21×5 table), SaySpell (syllable substitution), spell_info template system, object magic, manual spell dispatch. Build and vet both clean.
 > **Wave 8 complete (2026-04-24):** utils.c (~980 lines) → pkg/game/logging.go (392 lines). 9 functions ported: BasicMudLog, Alog, MudLog, LogDeathTrap, Sprintbit, Sprinttype, SprintbitArray, DieFollower, CoreDump. Build/vet both clean.
+> **Wave 9 complete (2026-04-24):** comm.c + act.comm.c — 4203 C lines → 559 Go lines. comm_infra.go (timediff, nonblock, set_sendbuf, TxtQ, perform_subst, perform_alias, make_prompt, setup_log). act_comm_bridge.go (Exec wrappers). act_comm.go expanded (9 cmd wrappers). commands.go (+10 registrations). Build/vet clean. Commit fa2c4eb.
 > **Model note:** DeepSeek V4 Flash is the daily driver. Documented here so any model can pick up without loss.
 
 ---
@@ -188,22 +189,28 @@ Git status:          PORT-PLAN.md only (uncommitted update)
 **~7 functions, ~700 lines new Go code**
 **Go target:** `pkg/game/logging.go`
 
-### Wave 9 — Persistence (objsave.c, ~1250 lines)
+### ✅ Wave 9 — Communication subsystem (comm.c + act.comm.c, ~4203 lines) [COMPLETED 2026-04-24]
+**Go targets:** `pkg/engine/comm_infra.go` (402 lines — infrastructure helpers), `pkg/game/act_comm_bridge.go` (58 lines — bridge wrappers), `pkg/session/act_comm.go` (+89 lines — session command wrappers), `pkg/session/commands.go` (+10 registrations)
+**Status:** ✅ DONE. Build clean, vet clean. Commit fa2c4eb.
+**Infra ported:** timediff/timeadd, nonblock, set_sendbuf, TxtQ queue, perform_subst, perform_alias, make_prompt (full ANSI-colored), setup_log/open_logfile stubs
+**Commands wired:** gossip, reply, write, page, ignore, race_say, whisper, ask, qcomm, think
+
+### Wave 10 — Persistence (objsave.c, ~1250 lines)
 **Functions to port:** Crash_listrent, auto_equip, Crash_restore_weight, Crash_extract_objs, Crash_extract_norents, Crash_extract_norents_from_equipped, Crash_extract_expensive, Crash_calculate_rent, Crash_crashsave, Crash_idlesave, Crash_cryosave, Crash_rent_deadline, Crash_report_rent, Crash_save_all
 **~14 functions, ~1000 lines new Go code**
 **Go target:** `pkg/game/objsave.go`
 
-### Wave 10 — Clan + Housing (clan.c + house.c, ~2318 lines)
+### Wave 11 — Clan + Housing (clan.c + house.c, ~2318 lines)
 **Functions to port:** string_write, save_char_file_u (clan), House_restore_weight, House_crashsave, House_delete_file, House_listrent, House_save_control, House_boot, hcontrol_list_houses, hcontrol_build_house, hcontrol_destroy_house, hcontrol_pay_house, House_save_all, hcontrol_set_key
 **~14 functions, ~1800 lines new Go code**
 **Go targets:** `pkg/game/clans.go`, `pkg/game/houses.go`
 
-### Wave 11 — Boards + Misc (boards.c + alias.c + ban.c + dream.c + weather.c, ~1936 lines)
+### Wave 12 — Boards + Misc (boards.c + alias.c + ban.c + dream.c + weather.c, ~1936 lines)
 **Functions to port:** Board_save_board, Board_load_board, Board_reset_board, Board_write_message, init_boards, read_aliases, write_aliases, load_banned, _write_one_node, write_ban_list, Read_Invalid_List, dream, dream_travel, weather_and_time (remaining), another_hour, weather_change, prng_seed
 **~17 functions, ~1200 lines new Go code**
 **Go targets:** `pkg/game/boards.go`, `pkg/game/aliases.go`, `pkg/game/bans.go`, `pkg/game/dreams.go`
 
-### 🚫 Waves 12-14 — OLC Editors (REPLACED by Web Admin SPA)
+### 🚫 Waves 13-14 — OLC Editors (REPLACED by Web Admin SPA)
 **Decision: Do NOT port.** ~7,830 lines replaced by Web Admin SPA.
 
 ### Wave 15 — Sonnet QA Audit
@@ -229,8 +236,11 @@ Security review: command injection, Lua sandbox bypass, privilege escalation, Do
 ### 🟡 #4: Wave 8 — Wire spell system into session (cast_cmds.go connection)
 CallMagic exists separately from Cast() — need to hook them up. Also need to flesh out group/mass/area/summon/creation/alter-obj stubs, connect affects to engine.AffectManager, implement real manual spell dispatch.
 
-### 🟡 #5: Wave 9+ — Hitroll/Damroll from equipment, persistence, remaining systems
-See Wave plan below for full order.
+### ✅ #5: Wave 9 — Communication subsystem [COMPLETED 2026-04-24]
+4203 C lines → 559 Go lines. comm_infra.go + act_comm_bridge.go + act_comm.go + commands.go. Build/vet clean.
+
+### 🔄 Next: Wave 10 — Persistence (objsave.c, ~1250 lines)
+Hitroll/Damroll from equipment, crash saves, idle saves, rent system. Then Clan/Housing, Boards/Misc, QA, Security.
 
 ---
 
