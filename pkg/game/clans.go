@@ -1146,11 +1146,49 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 	w.SaveClans()
 }
 
-// doClanPrivate manages private room access for a clan.
+// doClanPrivate toggles a clan between public and private room access.
 // In C: do_clan_private()
 func (w *World) doClanPrivate(ch *Player, arg string) {
-	// TODO: port do_clan_private (275 lines in C)
-	ch.SendMessage("Clan private rooms not yet implemented.\r\n")
+	var clanNum int
+	var c *Clan
+
+	if ch.Level < LVL_IMMORT {
+		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+		if ch.ClanRank != c.Ranks {
+			ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+			return
+		}
+	} else {
+		if ch.Level < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		clanNum, c = w.Clans.FindClan(arg)
+		if c == nil {
+			ch.SendMessage("Unknown clan.\r\n")
+			return
+		}
+	}
+
+	_ = clanNum
+
+	if c.Private == ClanPublic {
+		c.Private = ClanPrivate
+		ch.SendMessage("Your clan is now private.\r\n")
+		w.SaveClans()
+		return
+	}
+
+	if c.Private == ClanPrivate {
+		c.Private = ClanPublic
+		ch.SendMessage("Your clan is now public.\r\n")
+		w.SaveClans()
+		return
+	}
 }
 
 // doClanPlan shows/edits the clan's plan (description).
