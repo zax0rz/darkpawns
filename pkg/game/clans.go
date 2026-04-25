@@ -1075,62 +1075,585 @@ func (w *World) ExecClanCommand(ch *Player, argument string) {
 // doClanBank handles bank operations for a clan (deposit/withdraw).
 // In C: do_clan_bank()
 func (w *World) doClanBank(ch *Player, arg string, action int) {
-	clanNum, c, ok := w.resolveClanContext(ch, "", -1)
-	if !ok {
+	var clanNum int
+	var c *Clan
+	var immcom bool
+
+	if arg == "" {
+		w.sendClanFormat(ch)
 		return
 	}
-	if action == CBDeposit {
-		// TODO: port do_clan_bank deposit logic
-		ch.SendMessage("Clan bank deposit not yet implemented.\r\n")
-	} else if action == CBWithdraw {
-		// TODO: port do_clan_bank withdraw logic
-		ch.SendMessage("Clan bank withdraw not yet implemented.\r\n")
+
+	if ch.Level < LVL_IMMORT {
+		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil || ch.ClanRank == 0 {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+	} else {
+		if ch.Level < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		immcom = true
+		arg1, arg2 := halfChop(arg)
+		arg = arg1
+		clanNum, c = w.Clans.FindClan(arg2)
+		if c == nil {
+			ch.SendMessage("Unknown clan.\r\n")
+			return
+		}
 	}
+
+	if ch.ClanRank < c.Privilege[CPWithdraw] && !immcom && action == CBWithdraw {
+		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+		return
+	}
+
+	if arg == "" {
+		switch action {
+		case CBDeposit:
+			ch.SendMessage("Deposit how much?\r\n")
+		case CBWithdraw:
+			ch.SendMessage("Withdraw how much?\r\n")
+		default:
+			ch.SendMessage("Bad clan banking call, please report to a God.\r\n")
+		}
+		return
+	}
+
+	if !isNumber(arg) {
+		switch action {
+		case CBDeposit:
+			ch.SendMessage("Deposit what?\r\n")
+		case CBWithdraw:
+			ch.SendMessage("Withdraw what?\r\n")
+		default:
+			ch.SendMessage("Bad clan banking call, please report to a God.\r\n")
+		}
+		return
+	}
+
+	amount, _ := strconv.Atoi(arg)
+
+	switch action {
+	case CBWithdraw:
+		if c.Treasure < int64(amount) {
+			ch.SendMessage("The clan is not wealthy enough for your needs!\r\n")
+			return
+		}
+		ch.Gold += amount
+		c.Treasure -= int64(amount)
+		ch.SendMessage("You withdraw from the clan's treasure.\r\n")
+		MudLog(fmt.Sprintf("%s withdraws %d coins from %s clan account.", ch.Name, amount, c.Name), 0, LVL_IMMORT, true)
+	case CBDeposit:
+		if !immcom && ch.Gold < amount {
+			ch.SendMessage("You do not have that kind of money!\r\n")
+			return
+		}
+		if !immcom {
+			ch.Gold -= amount
+		}
+		c.Treasure += int64(amount)
+		ch.SendMessage("You add to the clan's treasure.\r\n")
+		MudLog(fmt.Sprintf("%s adds %d coins to %s clan account.", ch.Name, amount, c.Name), 0, LVL_IMMORT, true)
+	default:
+		ch.SendMessage("Problem in command, please report.\r\n")
+	}
+
 	_ = clanNum
-	_ = c
+	w.SaveClans()
 }
 
 // doClanPrivate manages private room access for a clan.
 // In C: do_clan_private()
 func (w *World) doClanPrivate(ch *Player, arg string) {
-	// TODO: port do_clan_private (275 lines in C)
-	ch.SendMessage("Clan private rooms not yet implemented.\r\n")
+	var clanNum int
+	var c *Clan
+
+	if ch.Level < LVL_IMMORT {
+		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+		if ch.ClanRank != c.Ranks {
+			ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+			return
+		}
+	} else {
+		if ch.Level < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		clanNum, c = w.Clans.FindClan(arg)
+		if c == nil {
+			ch.SendMessage("Unknown clan.\r\n")
+			return
+		}
+	}
+
+	_ = clanNum
+
+	if c.Private == ClanPublic {
+		c.Private = ClanPrivate
+		ch.SendMessage("Your clan is now private.\r\n")
+		w.SaveClans()
+		return
+	}
+
+	if c.Private == ClanPrivate {
+		c.Private = ClanPublic
+		ch.SendMessage("Your clan is now public.\r\n")
+		w.SaveClans()
+		return
+	}
 }
 
 // doClanPlan shows/edits the clan's plan (description).
-// In C: do_clan_plan()
+// In C: do_clan_plan() — uses string_write (descriptor-based editor).
+// TODO: implement string_write pattern via session layer when available.
 func (w *World) doClanPlan(ch *Player, arg string) {
-	ch.SendMessage("Clan plan editing not yet implemented.\r\n")
+	var clanNum int
+	var c *Clan
+
+	if ch.Level < LVL_IMMORT {
+		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+		if ch.ClanRank < c.Privilege[CPSetPlan] {
+			ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+			return
+		}
+	} else {
+		if ch.Level < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		if arg == "" {
+			w.sendClanFormat(ch)
+			return
+		}
+		clanNum, c = w.Clans.FindClan(arg)
+		if c == nil {
+			ch.SendMessage("Unknown clan.\r\n")
+			return
+		}
+	}
+
+	_ = clanNum
+
+	if c.Plan != "" {
+		ch.SendMessage(fmt.Sprintf("Old plan for clan <<%s>>:\r\n%s\r\n", c.Name, c.Plan))
+	}
+	ch.SendMessage(fmt.Sprintf("Enter the description, or plan for clan <<%s>>.\r\n", c.Name))
+	ch.SendMessage("End with @ on a line by itself.\r\n")
+	c.Plan = ""
+	// C uses string_write(ch->desc, &clan[clan_num].plan, CLAN_PLAN_LENGTH, 0, NULL)
+	// This requires session-layer descriptor access, which is not yet ported.
+	w.SaveClans()
 }
 
-// doClanRanks manages clan rank names.
+// doClanRanks manages clan rank names and adjusts existing members' ranks.
 // In C: do_clan_ranks()
 func (w *World) doClanRanks(ch *Player, arg string) {
-	ch.SendMessage("Clan rank management not yet implemented.\r\n")
+	var clanNum int
+	var c *Clan
+	var immcom bool
+
+	if arg == "" {
+		w.sendClanFormat(ch)
+		return
+	}
+
+	if ch.Level < LVL_IMMORT {
+		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+	} else {
+		if ch.Level < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		immcom = true
+		a1, _ := halfChop(arg)
+		arg = a1
+		clanNum, c = w.Clans.FindClan(a1)
+		if c == nil {
+			ch.SendMessage("Unknown clan.\r\n")
+			return
+		}
+	}
+
+	if ch.ClanRank != c.Ranks && !immcom {
+		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+		return
+	}
+
+	if arg == "" {
+		ch.SendMessage("Set how many ranks?\r\n")
+		return
+	}
+
+	if !isNumber(arg) {
+		ch.SendMessage("Set the ranks to what?\r\n")
+		return
+	}
+
+	newRanks, _ := strconv.Atoi(arg)
+
+	if newRanks == c.Ranks {
+		ch.SendMessage("The clan already has this number of ranks.\r\n")
+		return
+	}
+
+	if newRanks < 2 || newRanks > 20 {
+		ch.SendMessage("Clans must have from 2 to 20 ranks.\r\n")
+		return
+	}
+
+	if ch.Gold < 5000 && !immcom {
+		ch.SendMessage("Changing the clan hierarchy requires 5,000 coins!\r\n")
+		return
+	}
+
+	if !immcom {
+		ch.Gold -= 5000
+	}
+
+	// Adjust existing clan members' ranks
+	for _, p := range w.allPlayers() {
+		if p.ClanID == c.ID {
+			if p.ClanRank < c.Ranks && p.ClanRank > 0 {
+				p.ClanRank = 1
+			}
+			if p.ClanRank == c.Ranks {
+				p.ClanRank = newRanks
+			}
+		}
+	}
+
+	_ = clanNum
+
+	c.Ranks = newRanks
+	for i := 0; i < c.Ranks-1; i++ {
+		c.RankName[i] = "Member"
+	}
+	c.RankName[c.Ranks-1] = "Leader"
+	for i := 0; i < NumCP; i++ {
+		c.Privilege[i] = newRanks
+	}
+
+	w.SaveClans()
 }
 
 // doClanTitles manages clan rank titles.
 // In C: do_clan_titles()
 func (w *World) doClanTitles(ch *Player, arg string) {
-	ch.SendMessage("Clan title management not yet implemented.\r\n")
+	var clanNum int
+	var c *Clan
+
+	if arg == "" {
+		w.sendClanFormat(ch)
+		return
+	}
+
+	if ch.Level < LVL_IMMORT {
+		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+		if ch.ClanRank != c.Ranks {
+			ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+			return
+		}
+	} else {
+		if ch.Level < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		a1, a2 := halfChop(arg)
+		arg = a2
+		if !isNumber(a1) {
+			ch.SendMessage("You need to specify a clan number.\r\n")
+			return
+		}
+		idx, _ := strconv.Atoi(a1)
+		c = w.Clans.GetClanByIndex(idx)
+		if c == nil {
+			ch.SendMessage("There is no clan with that number.\r\n")
+			return
+		}
+		clanNum = idx
+	}
+
+	a1, a2 := halfChop(arg)
+
+	if !isNumber(a1) {
+		ch.SendMessage("You need to specify a rank number.\r\n")
+		return
+	}
+
+	rank, _ := strconv.Atoi(a1)
+
+	if rank < 1 || rank > c.Ranks {
+		ch.SendMessage("This clan has no such rank number.\r\n")
+		return
+	}
+
+	if len(a2) < 1 || len(a2) > 19 {
+		ch.SendMessage("You need a clan title of under 20 characters.\r\n")
+		return
+	}
+
+	_ = clanNum
+
+	c.RankName[rank-1] = a2
+	w.SaveClans()
+	ch.SendMessage("Done.\r\n")
 }
 
 // doClanPrivilege manages clan privilege levels for ranks.
 // In C: do_clan_privilege()
 func (w *World) doClanPrivilege(ch *Player, arg string) {
-	ch.SendMessage("Clan privilege management not yet implemented.\r\n")
+	a1, a2 := halfChop(arg)
+
+	if isAbbrev(a1, "setplan") {
+		w.doClanSP(ch, a2, CPSetPlan)
+		return
+	}
+	if isAbbrev(a1, "enroll") {
+		w.doClanSP(ch, a2, CPEnroll)
+		return
+	}
+	if isAbbrev(a1, "expel") {
+		w.doClanSP(ch, a2, CPExpel)
+		return
+	}
+	if isAbbrev(a1, "promote") {
+		w.doClanSP(ch, a2, CPPromote)
+		return
+	}
+	if isAbbrev(a1, "demote") {
+		w.doClanSP(ch, a2, CPDemote)
+		return
+	}
+	if isAbbrev(a1, "withdraw") {
+		w.doClanSP(ch, a2, CPWithdraw)
+		return
+	}
+	if isAbbrev(a1, "setfees") {
+		w.doClanSP(ch, a2, CPSetFees)
+		return
+	}
+	if isAbbrev(a1, "setapplev") {
+		w.doClanSP(ch, a2, CPSetAppLev)
+		return
+	}
+
+	ch.SendMessage("\r\nClan privileges:\r\n")
+	for i := 0; i < NumCP; i++ {
+		ch.SendMessage(fmt.Sprintf("\t%s\r\n", clanPrivileges[i]))
+	}
+}
+
+// doClanSP manages a single clan privilege for a rank.
+// In C: do_clan_sp()
+func (w *World) doClanSP(ch *Player, arg string, priv int) {
+	var clanNum int
+	var c *Clan
+	var immcom bool
+
+	if arg == "" {
+		w.sendClanFormat(ch)
+		return
+	}
+
+	if ch.Level < LVL_IMMORT {
+		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+	} else {
+		if ch.Level < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		immcom = true
+		arg1, _ := halfChop(arg)
+		arg = arg1
+		// In C: uses arg1 (the clan name) for find_clan, same arg updated
+		clanNum, c = w.Clans.FindClan(arg1)
+		if c == nil {
+			ch.SendMessage("Unknown clan.\r\n")
+			return
+		}
+	}
+
+	if ch.ClanRank != c.Ranks && !immcom {
+		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+		return
+	}
+
+	if arg == "" {
+		ch.SendMessage("Set the privilege to which rank?\r\n")
+		return
+	}
+
+	if !isNumber(arg) {
+		ch.SendMessage("Set the privilege to what?\r\n")
+		return
+	}
+
+	rank, _ := strconv.Atoi(arg)
+
+	if rank < 1 || rank > c.Ranks {
+		ch.SendMessage("There is no such rank in the clan.\r\n")
+		return
+	}
+
+	_ = clanNum
+
+	c.Privilege[priv] = rank
+	w.SaveClans()
 }
 
 // doClanMoney manages clan dues and app fees.
 // In C: do_clan_money()
 func (w *World) doClanMoney(ch *Player, arg string, action int) {
-	ch.SendMessage("Clan money management not yet implemented.\r\n")
+	var clanNum int
+	var c *Clan
+	var immcom bool
+
+	if arg == "" {
+		w.sendClanFormat(ch)
+		return
+	}
+
+	if ch.Level < LVL_IMMORT {
+		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+	} else {
+		if ch.Level < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		immcom = true
+		arg1, arg2 := halfChop(arg)
+		arg = arg1
+		clanNum, c = w.Clans.FindClan(arg2)
+		if c == nil {
+			ch.SendMessage("Unknown clan.\r\n")
+			return
+		}
+	}
+
+	if ch.ClanRank < c.Privilege[CPSetFees] && !immcom {
+		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+		return
+	}
+
+	if arg == "" {
+		ch.SendMessage("Set it to how much?\r\n")
+		return
+	}
+
+	if !isNumber(arg) {
+		ch.SendMessage("Set it to what?\r\n")
+		return
+	}
+
+	amount, _ := strconv.Atoi(arg)
+
+	if amount < 0 || amount > 10000 {
+		ch.SendMessage("Please pick a number between 0 and 10,000 coins.\r\n")
+		return
+	}
+
+	_ = clanNum
+
+	switch action {
+	case CMAppFee:
+		c.AppFee = amount
+		ch.SendMessage("You change the application fee.\r\n")
+	case CMDues:
+		c.Dues = amount
+		ch.SendMessage("You change the monthly dues.\r\n")
+	default:
+		ch.SendMessage("Problem in command, please report.\r\n")
+	}
+
+	w.SaveClans()
 }
 
 // doClanAppLevel manages clan application level requirements.
 // In C: do_clan_application()
 func (w *World) doClanAppLevel(ch *Player, arg string) {
-	ch.SendMessage("Clan application level requirements not yet implemented.\r\n")
+	var clanNum int
+	var c *Clan
+	var immcom bool
+
+	if arg == "" {
+		w.sendClanFormat(ch)
+		return
+	}
+
+	if ch.Level < LVL_IMMORT {
+		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+	} else {
+		if ch.Level < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		immcom = true
+		arg1, arg2 := halfChop(arg)
+		arg = arg1
+		clanNum, c = w.Clans.FindClan(arg2)
+		if c == nil {
+			ch.SendMessage("Unknown clan.\r\n")
+			return
+		}
+	}
+
+	if ch.ClanRank < c.Privilege[CPSetAppLev] && !immcom {
+		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+		return
+	}
+
+	if arg == "" {
+		ch.SendMessage("Set to which level?\r\n")
+		return
+	}
+
+	if !isNumber(arg) {
+		ch.SendMessage("Set the application level to what?\r\n")
+		return
+	}
+
+	appLevel, _ := strconv.Atoi(arg)
+
+	if appLevel < 1 || appLevel > 30 {
+		ch.SendMessage("The application level can go from 1 to 30.\r\n")
+		return
+	}
+
+	_ = clanNum
+
+	c.ApplLevel = appLevel
+	w.SaveClans()
 }
 
 // doClanSet dispatches the "clan set" subcommand.
