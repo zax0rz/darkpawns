@@ -60,7 +60,7 @@ func (w *World) runMobAI(mob *MobInstance) {
 	}
 
 	// Delegate to the faithful mobact.c port
-	w.MobileActivity(mob)
+	w.MobileActivity()
 
 	// Post-activity: wandering (handled separately in mobact.c movement section
 	// and ai.go wanderMob). The original C wandering is inside mobile_activity(),
