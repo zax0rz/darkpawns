@@ -93,16 +93,19 @@ func HouseGetFilename(vnum int) string {
 // Obj_from_store / Obj_to_store stubs
 // ---------------------------------------------------------------------------
 
-// ObjFromStore reconstructs an object from serialized data.
-// Stub — returns nil. Replace with actual object deserialization when the
-// object persistence system is implemented (C: Obj_from_store()).
-func ObjFromStore(data interface{}) interface{} {
+// ObjFromStore reconstructs a game object from serialized data (C: Obj_from_store).
+// Stub — returns nil. Wire this to the actual object-deserialization system
+// (binary obj_file_elem → *ObjectInstance) when objsave persistence is
+// implemented. The house system calls this from houseLoad/HouseListrent.
+func ObjFromStore(data interface{}) *ObjectInstance {
 	return nil
 }
 
-// ObjToStore serializes an object to the given file.
-// Stub — returns false. Replace with actual serialization (C: Obj_to_store()).
-func ObjToStore(obj interface{}, fp *os.File) bool {
+// ObjToStore serializes a game object to an open file (C: Obj_to_store).
+// Stub — returns false. Wire to the actual object-serialization system
+// (*ObjectInstance → binary obj_file_elem) when objsave persistence is
+// implemented. The house system calls this from HouseSaveObjects.
+func ObjToStore(obj *ObjectInstance, fp *os.File) bool {
 	return false
 }
 
@@ -303,18 +306,49 @@ func (w *World) saveHouseControl() {
 
 // houseLoad loads objects for a house from its save file into the room.
 // In C: House_load() — reads .house file, calls Obj_from_store + obj_to_room.
+// When ObjFromStore is wired, this will deserialize each binary record and
+// place surviving objects in the room. Currently a no-op — the file is
+// opened to verify it exists, and any future persistence wire-up will fill
+// in the read loop via ObjFromStore.
 func (w *World) houseLoad(vnum int) bool {
-	// TODO: Implement full object loading when ObjFromStore is wired.
-	// For now this is a no-op. The C version:
-	//   - reads binary obj_file_elem structs from "house/<vnum>.house"
-	//   - calls Obj_from_store() for each
-	//   - skips unrentable objects (extract_obj)
-	//   - adds rest to room via obj_to_room()
+	realRoom := w.GetRoomInWorld(vnum)
+	if realRoom == nil {
+		return false
+	}
+
+	fname := HouseGetFilename(vnum)
+	if fname == "" {
+		return false
+	}
+
+	fp, err := os.Open(fname)
+	if err != nil {
+		// No file found — not necessarily an error
+		return false
+	}
+	defer fp.Close()
+
+	BasicMudLogf("House_load: reading %s for room %d", fname, vnum)
+
+	// TODO: When ObjFromStore is wired, loop reading obj_file_elem-sized
+	// chunks from fp, call ObjFromStore for each, skip unrentables, and
+	// place survivors in the room via w.AddItemToRoom(). The C equivalent:
+	//   while (!feof(fl)) {
+	//     fread(&object, sizeof(struct obj_file_elem), 1, fl);
+	//     obj = Obj_from_store(object);
+	//     if (Crash_is_unrentable(obj)) extract_obj(obj);
+	//     else obj_to_room(obj, rnum);
+	//   }
+
 	return true
 }
 
 // houseCrashsave saves a house's objects to its save file.
-// In C: House_crashsave() — opens file, calls House_save, clears crash flag.
+// In C: House_crashsave() — opens file, calls House_save (recursive),
+// clears ROOM_HOUSE_CRASH flag, then restores container weights.
+// When ObjToStore is wired, this writes every object in the room via
+// HouseSaveObjects, then restores the container-weight adjustments the
+// save process made.
 func (w *World) houseCrashsave(vnum int) {
 	realHouse := w.GetRoomInWorld(vnum)
 	if realHouse == nil {
@@ -333,8 +367,80 @@ func (w *World) houseCrashsave(vnum int) {
 		return
 	}
 
+	fp, err := os.Create(fname)
+	if err != nil {
+		BasicMudLog(fmt.Sprintf("SYSERR: Error saving house file #%d: %v", vnum, err))
+		return
+	}
+	defer fp.Close()
+
+	// Recursively save objects in the room (C: House_save)
+	objects := w.GetItemsInRoom(vnum)
+	for _, obj := range objects {
+		w.HouseSaveObjects(obj, fp)
+	}
+
+	// Restore container weights that were adjusted during save (C: House_restore_weight)
+	for _, obj := range objects {
+		w.HouseRestoreWeight(obj)
+	}
+
 	// Clear the crash flag
 	removeRoomFlag(realHouse, RoomFlagCrash)
+}
+
+// HouseSaveObjects recursively writes an object and its contents to the
+// save file, adjusting container weights for storage (C: House_save).
+// The recursive calls walk (contains) then (next_content / siblings),
+// mirroring the C linked-list traversal. Each leaf object is written via
+// ObjToStore, and each container's weight is decremented by the child's
+// weight during save (restored afterward by HouseRestoreWeight).
+func (w *World) HouseSaveObjects(obj *ObjectInstance, fp *os.File) {
+	if obj == nil {
+		return
+	}
+
+	// Recurse into contents first
+	for _, contained := range obj.Contains {
+		w.HouseSaveObjects(contained, fp)
+	}
+
+	// Write this object to the file
+	result := ObjToStore(obj, fp)
+	if !result {
+		// ObjToStore is still a stub; this will succeed once wired
+		return
+	}
+
+	// Decrement container weight for the saved child's weight
+	// (matched by HouseRestoreWeight to restore after save is done)
+	if obj.Container != nil {
+		if obj.Prototype != nil {
+			obj.Container.Prototype.Weight -= obj.Prototype.Weight
+			if obj.Container.Prototype.Weight < 1 {
+				obj.Container.Prototype.Weight = 1 // sanity check
+			}
+		}
+	}
+}
+
+// HouseRestoreWeight recursively restores container weights after a save
+// operation adjusted them (C: House_restore_weight). Called once per room
+// object after houseCrashsave finishes writing.
+func (w *World) HouseRestoreWeight(obj *ObjectInstance) {
+	if obj == nil {
+		return
+	}
+
+	// Recurse into contents first
+	for _, contained := range obj.Contains {
+		w.HouseRestoreWeight(contained)
+	}
+
+	// Restore the weight adjustment
+	if obj.Container != nil && obj.Prototype != nil {
+		obj.Container.Prototype.Weight += obj.Prototype.Weight
+	}
 }
 
 // houseDeleteFile removes a house's save file.
@@ -355,6 +461,9 @@ func houseDeleteFile(vnum int) {
 
 // HouseListrent lists all objects in a house's save file.
 // In C: House_listrent() — reads .house file, prints obj vnum/weight/name.
+// When ObjFromStore is wired, each record will be deserialized and its
+// name/vnum/value shown to the player. Currently reports the file exists
+// and its size, since the object-persistence layer is not yet connected.
 func (w *World) HouseListrent(ch *Player, vnum int) {
 	fname := HouseGetFilename(vnum)
 	if fname == "" {
@@ -373,14 +482,26 @@ func (w *World) HouseListrent(ch *Player, vnum int) {
 		return
 	}
 
-	// Stub: minimal output
 	if len(data) == 0 {
 		sendToChar(ch, fmt.Sprintf("No objects on file for house #%d.\r\n", vnum))
 		return
 	}
 
-	sendToChar(ch, fmt.Sprintf("Objects stored for house #%d (stub - full listing requires ObjFromStore):\r\n", vnum))
-	sendToChar(ch, fmt.Sprintf("  File size: %d bytes\r\n", len(data)))
+	// TODO: When ObjFromStore is wired, loop over binary records in data,
+	// call ObjFromStore for each, and format a table of vnum/weight/name.
+	// The C equivalent:
+	//   while (!feof(fl)) {
+	//     fread(&object, sizeof(struct obj_file_elem), 1, fl);
+	//     if ((obj = Obj_from_store(object)) != NULL) {
+	//       sprintf(buf, "%s [%5d] (%.2fau) %s\r\n",
+	//           buf, GET_OBJ_VNUM(obj), GET_OBJ_COST(obj),
+	//           obj->short_description);
+	//       free_obj(obj);
+	//     }
+	//   }
+
+	sendToChar(ch, fmt.Sprintf("Objects stored for house #%d:\r\n", vnum))
+	sendToChar(ch, fmt.Sprintf("  File size: %d bytes (requires ObjFromStore to decode)\r\n", len(data)))
 }
 
 // ---------------------------------------------------------------------------
