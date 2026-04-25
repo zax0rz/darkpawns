@@ -9,7 +9,10 @@
 > **Wave 7 complete (2026-04-24):** Spell system fully ported — magic.c, spells.c, spell_parser.c (~4,843 C lines) → 8 Go files (1,846 lines) in pkg/spells/. CallMagic dispatch, MagDamage (all spell formulas), MagAffects (20+ spells), saving throws (full 6×21×5 table), SaySpell (syllable substitution), spell_info template system, object magic, manual spell dispatch. Build and vet both clean.
 > **Wave 8 complete (2026-04-24):** utils.c (~980 lines) → pkg/game/logging.go (392 lines). 9 functions ported: BasicMudLog, Alog, MudLog, LogDeathTrap, Sprintbit, Sprinttype, SprintbitArray, DieFollower, CoreDump. Build/vet both clean.
 > **Wave 9 complete (2026-04-24):** comm.c + act.comm.c — 4203 C lines → 559 Go lines. comm_infra.go (timediff, nonblock, set_sendbuf, TxtQ, perform_subst, perform_alias, make_prompt, setup_log). act_comm_bridge.go (Exec wrappers). act_comm.go expanded (9 cmd wrappers). commands.go (+10 registrations). Build/vet clean. Commit fa2c4eb.
-> **Wave 9.5 complete (2026-04-25):** fight.c (~2033 C lines) → pkg/combat/fight_core.go (990 Go lines). 49 functions covering the core combat loop: attack roll (MakeHit), damage (TakeDamage), position tracking (GetPositionFromHP), death processing (Die, RawKill, MakeCorpse, MakeDust), XP distribution (GroupGain, CalcLevelDiff), and mob AI triggers (CounterProcs, AttitudeLoot). Game-layer hooks via var block (55 function pointers) — zero direct game state access. Build/vet both clean. Combatant interface reverted to original (no GetMaster/GetSendMessage).
+> **Wave 9.5 complete (2026-04-25):** fight.c (~2033 C lines) → pkg/combat/fight_core.go (990 Go lines).
+**Wave 10 complete (2026-04-25):** objsave.c → pkg/game/objsave.go — persistence system.
+**Wave 11 complete (2026-04-25):** clan.c + house.c + boards.c (~2869 C lines) → clans.go, houses.go, boards.go.
+**Wave 12 complete (2026-04-25):** mobact.c (~409 C lines) → pkg/game/mobact.go (171 Go lines). MobileActivity() AI tick: spec dispatch, scavenger, wandering, aggression (wimpy/alignment/aggr24), memory revenge, helper assist. build/vet/test clean. Commit c143439.
 > **Model note:** DeepSeek V4 Flash is the daily driver. Documented here so any model can pick up without loss.
 
 ---
@@ -21,13 +24,13 @@ C source:            68,823 lines across 67 .c files
 Go codebase:         61,690 lines across all .go files (incl. tests)
   Non-test Go:      48,036 lines across 135 .go files (estimate)
   Test files:        4,880 lines
-Genuinely unported:  ~19,500 lines across ~11 C files (unaddressed)
+Genuinely unported:  ~18,600 lines across ~10 C files (unaddressed)
 Partially ported:    ~18,000 lines across 8 C files (needs more coverage)
 Replaced by SPA:     7,830 lines across 11 editor C files (OLC etc.)
 Build:               go build ./cmd/server passes clean
 go vet:              vet passes clean
 go test:             41 tests pass in pkg/game/systems/
-Git status:          fight_core.go + PORT-PLAN.md + RESEARCH-LOG.md + ROADMAP.md pending
+Git status:          clean — all Waves 1-12 committed
 ```
 
 ### Line counts by package (non-test Go files)
@@ -219,7 +222,7 @@ Git status:          fight_core.go + PORT-PLAN.md + RESEARCH-LOG.md + ROADMAP.md
 **Stubs (TODO):** doClanSet, doClanPrivate, doClanBank (~600 C lines, returns "not yet implemented")
 **Spec procs NOT YET WIRED:** GetObjSpec/GetMobSpec/GetRoomSpec defined but never called
 
-### Wave 12 — Misc (alias.c + ban.c + dream.c + weather.c, ~1385 lines) [boards.c DONE in Wave 11]
+### Wave 13 — Misc (alias.c + ban.c + dream.c + weather.c, ~1385 lines) [boards.c and mobact.c DONE]
 **Remaining functions to port:** read_aliases, write_aliases, load_banned, _write_one_node, write_ban_list, Read_Invalid_List, dream, dream_travel, weather_and_time (remaining), another_hour, weather_change, prng_seed
 **~12 functions, ~900 lines new Go code**
 **Go targets:** `pkg/game/aliases.go`, `pkg/game/bans.go`, `pkg/game/dreams.go`
@@ -256,8 +259,20 @@ CallMagic exists separately from Cast() — need to hook them up. Also need to f
 ### ✅ #6: Wave 9.5 — Combat engine core (fight.c, ~2033 lines) [COMPLETED 2026-04-25]
 pkg/combat/fight_core.go — 990 Go lines, 49 functions. Attack roll, damage, death, XP, mob AI. Build/vet clean.
 
-### 🔄 Next: Wave 10 — Persistence (objsave.c, ~1250 lines)
-Hitroll/Damroll from equipment, crash saves, idle saves, rent system. Then Clan/Housing, Boards/Misc, QA, Security.
+### ✅ #2: Wave 10 — Persistence (objsave.c) [COMPLETED 2026-04-25]
+objsave.go — Crash_* functions, hitroll/damroll from equipment.
+
+### ✅ #3: Wave 11 — Clan + Housing + Boards [COMPLETED 2026-04-25]
+clans.go, houses.go, boards.go.
+
+### ✅ #4: Wave 12 — Mob AI (mobact.c) [COMPLETED 2026-04-25]
+mobact.go — MobileActivity() AI dispatch. Commit c143439.
+
+### 🔄 Next: Wave 13 — Misc (alias.c + ban.c + dream.c + weather.c, ~1385 lines)
+Port read_aliases, write_aliases, load_banned, write_ban_list, Read_Invalid_List, dream/dream_travel, remaining weather functions.
+
+### 🔄 Wave 14 — Spec Procs — hunt_victim + remaining
+hunt_victim needed for MOB_HUNTER call sites. Wire GetObjSpec/GetMobSpec/GetRoomSpec.
 
 ---
 
@@ -447,8 +462,8 @@ Functions exist in `pkg/game/act_other.go` (1,718 lines). **Wave 6.5 COMPLETE** 
 |---|---|---|---|
 | `hunt_victim` | ❌ MISSING | P2 | Mob tracking/hunting |
 | `mp_sound` | ❌ MISSING | P2 | Mob prog sound effect |
-| `mobile_activity` | ❌ MISSING | P1 | Mob AI tick |
-| `remember` | ✅ In Go | — | Mob memory |
+| `mobile_activity` | ✅ In Go (mobact.go) | — | Mob AI tick — commit c143439 |
+| `remember` / `forget` / `clearMemory` | ✅ In Go | — | Mob memory routines |
 
 ### Tier 9 — Misc (alias.c + ban.c + dream.c + gate.c + weather.c, ~1926 lines)
 
@@ -577,48 +592,35 @@ These are **not** a general mob programming language — they're hand-coded per-
 
 **Key:** ✅ = simple port (Lua SOUND/GIVE/BRIBE trigger would cover it). ⚠️ = has state, conditions, or game object creation that needs careful Lua porting.
 
-### `mobile_activity()` — The Pulse Loop (mobact.c, 408 lines)
+### `mobile_activity()` — The Pulse Loop (mobact.c, 408 lines) ✅ PORTED in Wave 12
 
-This runs every pulse for every awake non-fighting mob. Most behaviors are already in Lua:
+`mobact.go` (171 Go lines, commit c143439) covers the full pulse loop faithfully:
 
-| Behavior | C Location | Go/Lua Status |
-|----------|-----------|---------------|
-| Hunter chase (HUNTER flag + hunt_victim) | `mobile_activity()` | 🔶 Needs game-loop pulse hook |
-| Spec proc call (MOB_SPEC → mob_index[].func) | `mobile_activity()` | 🔶 GetMobSpec defined but not wired |
-| Wake/stand recovery | `mobile_activity()` | 🔶 Cleanup needed |
-| Scavenger item pickup | `mobile_activity()` | ✅ Lua SCAVENGER trigger? |
-| Random movement (not sentinel, not stay-zone) | `mobile_activity()` | 🔶 Needs game-loop pulse hook |
-| `mp_sound()` function call | `mobile_activity()` | ✅ Partially via Lua SOUND |
-| Lua MS_SOUND/MS_ONPULSE_ALL/MS_ONPULSE_PC | `mobile_activity()` | ✅ **Already in Lua** |
-| Aggression (AGGR, AGGR_EVIL/NEUTRAL/GOOD) | `mobile_activity()` | ✅ Lua scripts + spec procs |
-| Race hate attacks | `mobile_activity()` | 🔶 Not in Go yet |
-| Mob memory attacks (remember/forget) | `mobile_activity()` | 🔶 Not in Go yet |
-| Helper attacks (aid allied NPCs) | `mobile_activity()` | 🔶 Not in Go yet |
-| MOB_AGGR24 (attack level 24+) | `mobile_activity()` | 🔶 Not in Go yet |
-| AGGR24+AGGR (attack weaker mobs) | `mobile_activity()` | 🔶 Not in Go yet |
+| Behavior | C Location | Go Status |
+|----------|-----------|----------|
+| Hunter chase (HUNTER + hunt_victim) | `mobile_activity()` | 🔶 TODO site — deferred to spec_procs.c port |
+| Spec proc dispatch (MOB_SPEC) | `mobile_activity()` | ✅ getMobVNumSpec() + SpecFunc |
+| Wake/stand recovery | `mobile_activity()` | ✅ ch.SetStatus("standing") |
+| Scavenger item pickup | `mobile_activity()` | ✅ GetItemsInRoom + RemoveItemFromRoom |
+| Random wandering | `mobile_activity()` | ✅ wanderMob() with sentinel guard |
+| Aggression flags | `mobile_activity()` | ✅ Full: wimpy skip, alignment match, protection checks |
+| Mob memory revenge | `mobile_activity()` | ✅ MobInstance.Memory iteration |
+| Helper assists | `mobile_activity()` | ✅ GetMobsInRoom + GetPlayersInRoom |
+| MOB_AGGR24 | `mobile_activity()` | ✅ Level >= 24 check |
+| AGGR24+AGGR weaker mobs | `mobile_activity()` | ✅ Level+3 < mob level check |
+| Race hate attacks | `mobile_activity()` | 🔶 TODO — needs race data
+| `mp_sound()` / Lua onpulse | `mobile_activity()` | 🔶 Deferred to scripting system wiring |
 
-### Lua Scripting Plan
+### Remaining pulse behaviors (beyond Wave 12)
 
-For each unique behavior (⚠️ above), the path is:
-1. **Simple behaviors ✅**: Create a Lua SOUND script using existing infrastructure (`run_script(mob, mob, nil, room, nil, "sound", LT_MOB)`)
-2. **Give/bribe interactions ⚠️**: `mp_give` and `mp_bribe` → need a Lua GIVE/BRIBE event trigger (currently no such hook in the Lua engine)
-3. **Pulse behaviors 🔶**: `mobile_activity()` logic → need a Go game-loop Tick() that delegates to Lua onpulse hooks and spec procs
-4. **Demon soul trade ⚠️**: Requires object creation (`read_object`), portal val setting, alignment state — most complex single behavior. Best as a spec proc or dedicated Lua script.
-
-### Priority for New Session
-
-When we circle back to mobprog, start with:
-1. GIVE/BRIBE Lua event triggers (unlocks 8 behaviors immediately)
-2. Game-loop pulse hook for `mobile_activity()` (unlocks all remaining pulse behaviors)
-3. Port `mp_sound` behaviors as Lua SOUND scripts (12 NPCs, straightforward)
-4. Custom Lua script for demon soul trade (most complex, most unique)
+See Wave 14 — Spec Procs for hunt_victim wiring. Lua scripting system handles `mp_sound` and onpulse hooks.
 
 ---
 
 ## Session Startup
 
 Each new session working on this plan should:
-1. Read `PORT-PLAN.md` — this file (updated as of 2026-04-24)
+1. Read `PORT-PLAN.md` — this file (updated as of 2026-04-25, Wave 12)
 2. Read `RESEARCH-LOG.md` — recent session journal
 3. Read `docs/SWARM-LEARNINGS.md` — lessons from previous waves
 4. Check `git log --oneline -5` — latest commits
