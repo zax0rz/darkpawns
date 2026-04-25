@@ -507,38 +507,28 @@ The evaluation challenge remains open: "narrative coherence" needs a rubric. Hyp
 **[QUESTION]** Tiered inference dispatch: should it live in dp_brenda.py (client-side) or agent.c (server-side)? Client-side is easier to iterate. Server-side reaches all agents. Starting with client-side, deferring server-side for Phase 6.
 
 
-## [Sat 2026-04-25 00:47 EDT] `[DESIGN]` `[RESULT]` Clan/House/Boards bulk port complete
+## 2026-04-25 — Wave 12 Complete: mobact.c ported
 
-**Clans (`clans.go`):**
-- Subagent produced comprehensive port of clan.c with all subcommands except `set`, `private`, `bank`
-- Fixed duplicate helper functions (`isAbbrev`, `halfChop`, `isNumber`) that caused compilation errors
-- Added `ExecClanCommand` dispatcher matching C's `ACMD(do_clan)`
-- Added stubs for `doClanSet`, `doClanPrivate`, `doClanBank`, `doClanPlan`, `doClanRanks`, `doClanTitles`, `doClanPrivilege`, `doClanMoney`, `doClanAppLevel` — these need proper porting from C (about 600 lines total)
-- Added `ClanID`/`ClanRank` to `Player`, `Clans *ClanManager` to `World`
-- Added `PostInit()` to World for one-time clan/house init
+[DESIGN] [RESULT]
 
-**Houses (`houses.go`):**
-- Subagent produced thorough port of house.c
-- Includes: house boot, crashsave, guest management, Hcontrol (build/destroy/pay/key), DoHouse dispatcher
-- Uses existing `dirs`/`revDir` from `act_movement.go`
-- `HouseCanEnter` exported for room entry checks
+**File:** `src/mobact.c` (409 C lines) → `pkg/game/mobact.go` (171 Go lines)
+**Commit:** c143439
 
-**Boards (`boards.go`):**
-- Self-written port of boards.c as obj spec proc
-- `genBoard` registered via `RegisterSpec("gen_board", genBoard)`
-- Full data model: `BoardSystem`, `BoardInfo`, `BoardMsgInfo`
-- File persistence in binary format matching original C
-- Write/Read/Remove/Look/Examine handling
-- NOTE: spec procs aren't wired into the Go command dispatcher yet — `GetObjSpec/GetMobSpec/GetRoomSpec` exist but aren't called anywhere. Boards will work once spec dispatch is wired.
+**What went well:**
+- DeepSeek V4 Flash produced a clean first draft of the Go translation
+- Subagent handled ~200 Go lines in one go — good scope sizing
+- Build → vet → test all green on first attempt after manual fix
+- Alignment QA bug caught quickly — C source had edge case in aggr_evil/good/neutral logic
 
-**Integration:**
-- `clan`, `house`, `hcontrol` commands registered in session/commands.go
-- Clan `PostInit()` called after World creation
-- House/Hcontrol system registered and callable
-- Build passes, vet passes
+**What I learned:**
+- Memory routines (remember/forget/clearMemory) were already ported in deferred_fight_fns.go and limits.go — don't re-port them
+- `GetFighting()` returns string (empty = not fighting) — verified via grep
+- MobInstance.Memory []string exists and is populated elsewhere
+- The protection spells (AFF_PROTECT_EVIL/GOOD) have a random 5-in-6 bypass check in the C — easy to miss
 
-**Remaining:**
-- [ ] Wire spec procs into command interpreter (not just for boards — all specs are unused)
-- [ ] Port clan `set`, `private`, `bank` subcommands from C
-- [ ] Wire board write editor setup in session layer (uses `WriteMagic` field as bridge)
-- [ ] Test runtime with world data
+**Deferred from Wave 12:**
+- hunt_victim call sites (MOB_HUNTER) — depends on spec_procs.c port
+- Race hate attacks — needs race data structure
+- mp_sound() / Lua onpulse hooks — scripting system wiring
+
+**Next up:** Wave 13 — alias.c + ban.c + dream.c + weather.c (~1385 C lines, ~12 functions)
