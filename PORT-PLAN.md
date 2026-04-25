@@ -9,24 +9,25 @@
 > **Wave 7 complete (2026-04-24):** Spell system fully ported — magic.c, spells.c, spell_parser.c (~4,843 C lines) → 8 Go files (1,846 lines) in pkg/spells/. CallMagic dispatch, MagDamage (all spell formulas), MagAffects (20+ spells), saving throws (full 6×21×5 table), SaySpell (syllable substitution), spell_info template system, object magic, manual spell dispatch. Build and vet both clean.
 > **Wave 8 complete (2026-04-24):** utils.c (~980 lines) → pkg/game/logging.go (392 lines). 9 functions ported: BasicMudLog, Alog, MudLog, LogDeathTrap, Sprintbit, Sprinttype, SprintbitArray, DieFollower, CoreDump. Build/vet both clean.
 > **Wave 9 complete (2026-04-24):** comm.c + act.comm.c — 4203 C lines → 559 Go lines. comm_infra.go (timediff, nonblock, set_sendbuf, TxtQ, perform_subst, perform_alias, make_prompt, setup_log). act_comm_bridge.go (Exec wrappers). act_comm.go expanded (9 cmd wrappers). commands.go (+10 registrations). Build/vet clean. Commit fa2c4eb.
+> **Wave 9.5 complete (2026-04-25):** fight.c (~2033 C lines) → pkg/combat/fight_core.go (990 Go lines). 49 functions covering the core combat loop: attack roll (MakeHit), damage (TakeDamage), position tracking (GetPositionFromHP), death processing (Die, RawKill, MakeCorpse, MakeDust), XP distribution (GroupGain, CalcLevelDiff), and mob AI triggers (CounterProcs, AttitudeLoot). Game-layer hooks via var block (55 function pointers) — zero direct game state access. Build/vet both clean. Combatant interface reverted to original (no GetMaster/GetSendMessage).
 > **Model note:** DeepSeek V4 Flash is the daily driver. Documented here so any model can pick up without loss.
 
 ---
 
-## Current State (as of 2026-04-24, re-audited 2026-04-24) — REALITY-AUDITED
+## Current State (as of 2026-04-25, post-fight.c port) — REALITY-AUDITED
 
 ```
 C source:            68,823 lines across 67 .c files
-Go codebase:         59,700 lines across all .go files (incl. tests)
-  Non-test Go:      46,337 lines across 134 .go files (estimate)
+Go codebase:         61,690 lines across all .go files (incl. tests)
+  Non-test Go:      48,036 lines across 135 .go files (estimate)
   Test files:        4,880 lines
-Genuinely unported:  ~24,000 lines across ~15 C files (unaddressed)
+Genuinely unported:  ~22,000 lines across ~14 C files (unaddressed)
 Partially ported:    ~20,000 lines across 10+ C files (needs more coverage)
 Replaced by SPA:     7,830 lines across 11 editor C files (OLC etc.)
 Build:               go build ./cmd/server passes clean
 go vet:              vet passes clean
 go test:             41 tests pass in pkg/game/systems/
-Git status:          PORT-PLAN.md only (uncommitted update)
+Git status:          fight_core.go + PORT-PLAN.md + RESEARCH-LOG.md + ROADMAP.md pending
 ```
 
 ### Line counts by package (non-test Go files)
@@ -37,7 +38,7 @@ Git status:          PORT-PLAN.md only (uncommitted update)
 | `pkg/game/` | ~24,506 | All act_*.c, spec_*.c, shop.c, limits.c, class.c, modify.c | Core game logic. act_other_bridge.go provides exported wrappers for session access. |
 | `pkg/command/` | ~2,787 | new_cmds.c, new_cmds2.c, shop.c | Skill + shop commands |
 | `pkg/engine/` | ~3,425 | affect system, skill system | Pure Go additions |
-| `pkg/combat/` | ~1,005 | fight.c | Combat engine |
+| `pkg/combat/` | ~1,995 | fight.c + formulas.go + combatant.go | Combat engine |
 | `pkg/scripting/` | ~3,801 | scripts.c | Lua engine |
 | `pkg/telnet/` | ~389 | comm.c | Network listener |
 | `pkg/parser/` | ~1,293 | db.c, world files | World file parsing |
@@ -68,7 +69,7 @@ Git status:          PORT-PLAN.md only (uncommitted update)
 | Eat/drink | `pkg/session/eat_cmds.go` | — | 297 | ✅ Complete |
 | Affects | `pkg/session/affects_informative.go`, `pkg/engine/affect*.go` | — | 1,179 | ✅ Complete |
 | Movement | `pkg/session/movement_cmds.go` | `act.movement.c` | 419 | ✅ Complete |
-| Combat engine | `pkg/combat/engine.go`, `formulas.go`, `combatant.go` | `fight.c` (~2033) | 1,005 | 🔶 ~50% — hitroll/damroll from eq missing |
+| Combat engine | `pkg/combat/engine.go`, `formulas.go`, `combatant.go`, `fight_core.go` | `fight.c` (~2033) | 1,995 | ✅ ~98% — hitroll/damroll from eq still missing, peripheral functions deferred |
 | Wizard commands | `pkg/session/wizard_cmds.go` | `act.wizard.c` (~3863) | 1,574 | ✅ **Actually complete — 46 cmds registered** |
 | Act other | `pkg/game/act_other.go` + `act_other_bridge.go` + `pkg/session/commands.go` | `act.other.c` (~1947) | 1,718 game + bridge | ✅ **Wave 6.5 done** — 22 commands wired, all registered |
 | Act informative | `pkg/game/act_informative.go` | `act.informative.c` (~2803) | 910 | 🔶 ~32% |
@@ -98,7 +99,7 @@ Git status:          PORT-PLAN.md only (uncommitted update)
 | `magic.c` + `spells.c` + `spell_parser.c` | 4,843 | ~192 | 🔴 ~10% | Huge gap — spell effects missing |
 | `act.informative.c` | 2,803 | 1,083 | 🔶 ~39% | 3 Go files, incomplete |
 | `handler.c` | 1,616 | 1,495 | ✅ ~92% | Nearly done |
-| `fight.c` | 2,033 | 1,005 | 🔶 ~49% | Hitroll/damroll from equipment missing |
+| `fight.c` | 2,033 | 1,995 | ✅ ~98% | Hitroll/damroll from equipment missing. Deferred: forget/remember, stop_follower, tattoo_af, unmount, set_hunting |
 | `comm.c` | 2,637 | 1,426 | 🔶 ~54% | Listener + manager done |
 | `interpreter.c` | 2,365 | 1,855 | 🔶 ~78% | Commands.go covers most |
 
@@ -179,6 +180,13 @@ Git status:          PORT-PLAN.md only (uncommitted update)
 **Pending (Wave 8):** Wire CallMagic into session/cast_cmds.go, flesh out group/mass/area/summon/creation/alter-obj stubs, connect affects to engine.AffectManager, implement ExecuteManualSpell dispatch with real implementations.
 
 ### Wave 8 — Wire spell system + Logging/Utility (cast_cmds.go + utils.c)
+
+### ✅ Wave 9.5 — Combat engine core (fight.c, ~2033 lines) [COMPLETED 2026-04-25]
+**Go target:** `pkg/combat/fight_core.go` (990 Go lines, 49 functions)
+**Status:** ✅ DONE. Build clean, vet clean.
+**Ported functions:** MakeHit, TakeDamage, GetPositionFromHP, ChangeAlignment, DeathCry, RawKill, Die, DieWithKiller, MakeCorpse, MakeDust, CounterProcs, AttitudeLoot, GroupGain, PerformGroupGain, CalcLevelDiff, IsInGroup, DamMessage + 14-tier damage message table, AttackHitTexts, fight constants (TYPE_HIT..TYPE_BLAST, SKILL_BACKSTAB..SKILL_PARRY, AFF_*, LVL_IMMORT)
+**Deferred (peripheral):** forget/remember, stop_follower, tattoo_af, unmount, set_hunting, can_speak — belong in game/AI layer
+**Architecture:** 55 game-layer function pointers in var block — zero direct game state. Combatant interface unchanged (no GetMaster/GetSendMessage added).
 **Work:**
 - Connect CallMagic into session/cast_cmds.go (replace Cast stub with real dispatch)
 - Implement group/mass/area/summon/creation/alter-obj in affect_spells.go
@@ -238,6 +246,9 @@ CallMagic exists separately from Cast() — need to hook them up. Also need to f
 
 ### ✅ #5: Wave 9 — Communication subsystem [COMPLETED 2026-04-24]
 4203 C lines → 559 Go lines. comm_infra.go + act_comm_bridge.go + act_comm.go + commands.go. Build/vet clean.
+
+### ✅ #6: Wave 9.5 — Combat engine core (fight.c, ~2033 lines) [COMPLETED 2026-04-25]
+pkg/combat/fight_core.go — 990 Go lines, 49 functions. Attack roll, damage, death, XP, mob AI. Build/vet clean.
 
 ### 🔄 Next: Wave 10 — Persistence (objsave.c, ~1250 lines)
 Hitroll/Damroll from equipment, crash saves, idle saves, rent system. Then Clan/Housing, Boards/Misc, QA, Security.
@@ -509,7 +520,7 @@ Do NOT implement these improvements. Just document them.
 | `src/spec_assign.c` | `pkg/game/spec_assign.go` | ✅ |
 | `src/spec_procs.c`/2/3 | `pkg/game/spec_procs.go`, `spec_procs2.go`, `spec_procs3.go`, `spec_procs4.go` | 🔶 48% |
 | `src/magic.c` + `spells.c` + `spell_parser.c` | `pkg/spells/` (8 files) | ✅ **Wave 7 done — 1,846 lines across 8 files** |
-| `src/fight.c` | `pkg/combat/engine.go`, `formulas.go`, `combatant.go` | 🔶 ~50% |
+| `src/fight.c` | `pkg/combat/engine.go`, `formulas.go`, `combatant.go`, `fight_core.go` | ✅ ~98% |
 | `src/handler.c` | `pkg/game/serialize.go`, `save.go`, `player.go`, `character.go` | 🔶 ~92% |
 | `src/interpreter.c` | `pkg/session/commands.go`, `pkg/command/interface.go`, `registry.go`, `middleware.go` | 🔶 ~78% |
 | `src/comm.c` | `pkg/telnet/listener.go`, `pkg/session/manager.go`, `protocol.go` | 🔶 ~54% |
