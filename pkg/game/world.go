@@ -326,6 +326,18 @@ func (w *World) GetMobsInRoom(roomVNum int) []*MobInstance {
 	return mobs
 }
 
+// GetAllMobs returns all active mobs in the world.
+func (w *World) GetAllMobs() []*MobInstance {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	mobs := make([]*MobInstance, 0, len(w.activeMobs))
+	for _, m := range w.activeMobs {
+		mobs = append(mobs, m)
+	}
+	return mobs
+}
+
 // GetItemsInRoom returns all items in a given room.
 func (w *World) GetItemsInRoom(roomVNum int) []*ObjectInstance {
 	w.mu.RLock()
