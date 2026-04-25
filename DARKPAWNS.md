@@ -119,3 +119,20 @@ BRENDA is the first implementation. The protocol is designed for multiple agents
 - `RESEARCH-LOG.md` — Session journal, design decisions, observations, surprises
 - `docs/research.md` — Architecture rationale, literature review, agent protocol spec
 - `docs/SWARM-LEARNINGS.md` — Lessons learned from previous port waves
+
+## Wave 16 (2026-04-25) — objsave binary serialization layer
+
+**Files ported:** `src/objsave.c` (binary types + serialization)
+
+**Changes:**
+- Defined `ObjFileElem`, `RentInfo`, `ObjAffect` Go types matching C binary structs
+- `ObjFromBinary()` — deserializes 592-byte `obj_file_elem` to `*ObjectInstance`
+- `ObjToBinary()` — serializes `*ObjectInstance` to 592-byte binary blob
+- `DecodeRentInfo()` / `EncodeRentInfo()` — 56-byte rent header read/write
+- `CrashIsUnrentable()` — checks ITEM_NORENT flag and ITEM_KEY type
+- Wired `houses.go` `ObjFromStore`/`ObjToStore` to real binary functions
+- Removed unused `sync` import, fixed `currentWorld` → world param
+
+**Next:** Remaining objsave work: Crash_load, Crash_save, Crash_crashsave,
+Crash_rentsave, receptionist handler, crash file cleanup, rent calculation
+(these need player/descriptor wiring first)
