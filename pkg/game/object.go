@@ -7,9 +7,12 @@ import (
 
 // ObjectInstance represents a spawned object in the world.
 type ObjectInstance struct {
+	// Instance identity
+	ID    int // unique instance ID, assigned by World
+	VNum  int // prototype VNum
+
 	// Link to prototype
 	Prototype *parser.Obj
-	VNum      int
 
 	// Location
 	RoomVNum  int             // -1 if not in a room
@@ -25,6 +28,9 @@ type ObjectInstance struct {
 
 	// Custom state
 	CustomData map[string]interface{}
+
+	// Timer — ticks until object decays (0 = permanent/no timer)
+	Timer int
 
 	// Runtime flags
 	IsCorpse  bool // true if this is a corpse object
@@ -241,10 +247,9 @@ func (o *ObjectInstance) SetCarrier(carrier interface{}) {
 }
 
 func (o *ObjectInstance) GetTimer() int {
-	// TODO: Add timer field to ObjectInstance
-	return 0
+	return o.Timer
 }
 
 func (o *ObjectInstance) SetTimer(timer int) {
-	// TODO: Add timer field to ObjectInstance
+	o.Timer = timer
 }

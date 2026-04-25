@@ -148,7 +148,7 @@ func MudLog(str string, typ int, level int, toFile bool) {
 	// Colors from screen.h (in C): CCGRN(ch, C_NRM) / CCNRM(ch, C_NRM)
 	// We disable color in the Go version for simplicity; the message is
 	// sent as-is. If color is wanted, the caller can embed ANSI codes in str.
-	// TODO: Add color support if PRF_COLOR flags are tracked.
+	// Color support: embed ANSI codes in str if PRF_COLOR is tracked per-player.
 
 	// Try to iterate sessions if a provider is set.
 	// If no provider is registered, we just log to stderr.

@@ -1128,8 +1128,7 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 	}
 
 	// Create head object (proto vnum 16)
-	head := world.GetItemsInRoom(ch.GetRoomVNum())
-	_ = head // not used directly, creating inline
+	_ = world.GetItemsInRoom(ch.GetRoomVNum()) // room items ref
 
 	// Since we can't easily create objects from proto, store modified name on corpse
 	// and use the corpse's short desc for the room message
@@ -1139,8 +1138,17 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 	// For now, mark the corpse as beheaded and dump its contents
 	world.RemoveItemFromRoom(corpse, ch.GetRoomVNum())
 
-	// TODO: create head (vnum 16) and headless corpse (vnum 17) objects
-	// This requires object prototype loading infrastructure
+	// Create head (vnum 16) and headless corpse (vnum 17) objects
+	headObj, err := world.SpawnObject(16, ch.GetRoomVNum())
+	if err == nil && headObj != nil {
+		headObj.CustomData["short_desc"] = fmt.Sprintf("the severed head of %s", ch.Name)
+		headObj.CustomData["name"] = fmt.Sprintf("head %s", ch.Name)
+	}
+	headlessCorpseObj, err := world.SpawnObject(17, ch.GetRoomVNum())
+	if err == nil && headlessCorpseObj != nil {
+		headlessCorpseObj.CustomData["short_desc"] = fmt.Sprintf("the headless corpse of %s", ch.Name)
+		headlessCorpseObj.CustomData["name"] = fmt.Sprintf("corpse headless %s", ch.Name)
+	}
 
 	return SkillResult{
 		Success:      true,

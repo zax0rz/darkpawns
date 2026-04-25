@@ -147,8 +147,24 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 			}
 
 		case "D": // Door state
-			// TODO: Implement door state changes
-			slog.Info("Door command", "room", cmd.Arg1, "dir", cmd.Arg2, "state", cmd.Arg3)
+		{
+			dirs := []string{"north", "east", "south", "west", "up", "down"}
+			if cmd.Arg3 < 0 || cmd.Arg3 >= len(dirs) {
+				slog.Warn("Invalid door direction", "dir", cmd.Arg3, "room", cmd.Arg1)
+				continue
+			}
+			room := s.world.GetRoomInWorld(cmd.Arg1)
+			if room == nil {
+				slog.Warn("Door command: room not found", "room", cmd.Arg1)
+				continue
+			}
+			ext, ok := room.Exits[dirs[cmd.Arg3]]
+			if !ok {
+				slog.Warn("Door command: exit not found", "room", cmd.Arg1, "dir", dirs[cmd.Arg3])
+				continue
+			}
+			ext.DoorState = cmd.Arg2
+		}
 
 		case "R": // Remove obj/mob from room
 			if cmd.Arg3 == 1 { // Remove object
@@ -228,9 +244,7 @@ func (s *Spawner) GetMobsInRoom(roomVNum int) []*MobInstance {
 
 // GetObjectsInRoom returns all object instances in a room.
 func (s *Spawner) GetObjectsInRoom(roomVNum int) []*ObjectInstance {
-	// TODO: Implement object tracking in world
-	// For now, return empty slice
-	return []*ObjectInstance{}
+	return s.world.GetItemsInRoom(roomVNum)
 }
 
 // findObjectInstance finds an object instance by vnum (simple implementation).

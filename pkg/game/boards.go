@@ -332,7 +332,8 @@ func (bs *BoardSystem) ShowBoard(boardType int, ch *Player) bool {
 		return true
 	}
 
-	// TODO: room echo "$n studies the board."
+	// Room echo TODO: BoardSystem has no World reference; cannot call actToRoom.
+	// Will be addressed when BoardSystem gains world access or an event bus is added.
 
 	var buf strings.Builder
 	buf.WriteString("This is a bulletin board.  Usage: READ/REMOVE <messg #>, WRITE <header>.\r\n" +
@@ -485,7 +486,7 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch *Player, arg string) bool {
 	bs.numOfMsgs[boardType]--
 
 	ch.SendMessage("Message removed.\r\n")
-	// TODO: room echo "$n just removed message %d."
+	// Room echo TODO: BoardSystem has no World reference; cannot call actToRoom.
 
 	// Save after removal (release lock first)
 	bs.mu.Unlock()

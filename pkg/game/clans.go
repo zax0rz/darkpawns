@@ -86,6 +86,14 @@ type Clan struct {
 // ClanManager
 // ---------------------------------------------------------------------------
 
+// CanWithdraw returns true if the player has sufficient clan rank to withdraw.
+func (c *Clan) CanWithdraw(ch *Player) bool {
+	if ch.Level >= LVL_IMMORT {
+		return true
+	}
+	return ch.ClanRank >= c.Privilege[CPWithdraw]
+}
+
 type ClanManager struct {
 	mu     sync.RWMutex
 	Clans  []*Clan `json:"clans"`
@@ -1079,15 +1087,63 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 	if !ok {
 		return
 	}
-	if action == CBDeposit {
-		// TODO: port do_clan_bank deposit logic
-		ch.SendMessage("Clan bank deposit not yet implemented.\r\n")
-	} else if action == CBWithdraw {
-		// TODO: port do_clan_bank withdraw logic
-		ch.SendMessage("Clan bank withdraw not yet implemented.\r\n")
+
+	if action == CBWithdraw && !c.CanWithdraw(ch) {
+		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+		return
 	}
+
+	if arg == "" {
+		switch action {
+		case CBDeposit:
+			ch.SendMessage("Deposit how much?\r\n")
+		case CBWithdraw:
+			ch.SendMessage("Withdraw how much?\r\n")
+		default:
+			ch.SendMessage("Bad clan banking call, please report to a God.\r\n")
+		}
+		return
+	}
+
+	if !isNumber(arg) {
+		switch action {
+		case CBDeposit:
+			ch.SendMessage("Deposit what?\r\n")
+		case CBWithdraw:
+			ch.SendMessage("Withdraw what?\r\n")
+		default:
+			ch.SendMessage("Bad clan banking call, please report to a God.\r\n")
+		}
+		return
+	}
+
+	amount, _ := strconv.Atoi(arg)
+	if amount <= 0 {
+		ch.SendMessage("Amount must be positive.\r\n")
+		return
+	}
+
 	_ = clanNum
-	_ = c
+	switch action {
+	case CBWithdraw:
+		if c.Treasure < int64(amount) {
+			ch.SendMessage("The clan is not wealthy enough for your needs!\r\n")
+			return
+		}
+		ch.SetGold(ch.GetGold() + amount)
+		c.Treasure -= int64(amount)
+		ch.SendMessage("You withdraw from the clan's treasure.\r\n")
+	case CBDeposit:
+		if ch.GetGold() < amount {
+			ch.SendMessage("You do not have that kind of money!\r\n")
+			return
+		}
+		ch.SetGold(ch.GetGold() - amount)
+		c.Treasure += int64(amount)
+		ch.SendMessage("You add to the clan's treasure.\r\n")
+	}
+
+	w.SaveClans()
 }
 
 // doClanPrivate manages private room access for a clan.

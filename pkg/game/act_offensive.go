@@ -20,6 +20,7 @@ package game
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -79,11 +80,22 @@ func isPiercingWeapon(obj *ObjectInstance) bool {
 	return obj.Prototype.Values[3] == 11
 }
 
-// improveSkill is a stub for skill improvement.
+// improveSkill implements CircleMUD-style skill improvement.
+// Random chance based on current skill level and player stats.
 func improveSkill(ch *Player, skill string) {
-	// TODO: Implement proper skill improvement logic
-	_ = ch
-	_ = skill
+	cur := ch.GetSkill(skill)
+	if cur <= 0 || cur >= 100 {
+		return
+	}
+	// Higher skill = harder to improve (like CircleMUD)
+	if rand.Intn(100)+1 > cur {
+		// Stat-based check: INT/WIS average gives improvement chance
+		chance := (ch.GetInt() + ch.GetWis()) / 4
+		if rand.Intn(100) < chance {
+			ch.SetSkill(skill, cur+1)
+			ch.SendMessage(fmt.Sprintf("You feel a bit more competent in %s.\r\n", skill))
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -94,7 +106,7 @@ func improveSkill(ch *Player, skill string) {
 func (w *World) rawKill(victim *Player, attackType int) {
 	// Handle death via existing infrastructure
 	// Make a corpse first so items are preserved
-	corpse := w.makeCorpse(victim.GetName(), nil, nil, victim.RoomVNum, attackType)
+	corpse := w.makeCorpse(victim.GetName(), victim.GetSex(), nil, nil, victim.RoomVNum, attackType)
 	_ = corpse // corpse is placed in the room by makeCorpse
 
 	// Trigger death processing

@@ -559,12 +559,90 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 		}
 		objVNum := obj.GetVNum()
 
-		// Moongate — VNum defined in constants
-		_ = objVNum
+		// Corpse decay — ITEM_CONTAINER with val[3] set (corpse flag)
+		if obj.IsContainer() && obj.GetValue(3) != 0 {
+			if obj.GetTimer() > 0 {
+				obj.SetTimer(obj.GetTimer() - 1)
+			}
+			if obj.GetTimer() == 0 {
+				// Scatter contents to room
+				for _, contained := range obj.GetContents() {
+					obj.RemoveFromContainer(contained)
+					contained.SetRoomVNum(roomVNum)
+					w.AddItemToRoom(contained, roomVNum)
+				}
+				// Random decay message
+				msgs := []string{
+					"A quivering horde of maggots consumes %s.\r\n",
+					"Dissolving into the ground, %s disappears.\r\n",
+					"Dissolving into the ground, %s disappears.\r\n",
+					"A horde of flesh-eating ants consumes %s.\r\n",
+					"A horde of flesh-eating ants consumes %s.\r\n",
+					"The earth opens up and swallows %s.\r\n",
+					"The earth opens up and swallows %s.\r\n",
+				}
+				msg := fmt.Sprintf(msgs[rand.Intn(len(msgs))], obj.GetShortDesc())
+				w.SendToRoom(roomVNum, msg)
+				w.ExtractObject(obj, roomVNum)
+				continue
+			}
+		}
 
-		// TODO: object decay (puddle/puke/dust/corpse/circle of summoning/field objects)
-		// Requires: obj timer fields, special object VNums, field object table
-		// See limits.c:527-686 for full implementation
+		// Puddle/puke decay
+		if objVNum == 20 || objVNum == 21 {
+			if obj.GetTimer() > 0 {
+				obj.SetTimer(obj.GetTimer() - 1)
+			}
+			if obj.GetTimer() == 0 {
+				w.ExtractObject(obj, roomVNum)
+				continue
+			}
+		}
+
+		// Dust decay
+		if objVNum == 18 {
+			if obj.GetTimer() > 0 {
+				obj.SetTimer(obj.GetTimer() - 1)
+			}
+			if obj.GetTimer() == 0 {
+				w.SendToRoom(roomVNum, "The pile of dust is blown away by a draft of wind.\r\n")
+				w.ExtractObject(obj, roomVNum)
+				continue
+			}
+		}
+
+		// Circle of summoning (COC_VNUM = 64)
+		if objVNum == 64 {
+			if obj.GetTimer() > 0 {
+				obj.SetTimer(obj.GetTimer() - 1)
+			}
+			if obj.GetTimer() <= 0 {
+				w.SendToRoom(roomVNum, "The circle on the ground slowly fades away.\r\n")
+				w.ExtractObject(obj, roomVNum)
+				continue
+			}
+		}
+
+		// Field objects — check against fieldObjs table
+		for _, fo := range fieldObjs {
+			if objVNum == fo.ObjVNum {
+				if obj.GetTimer() > 0 {
+					obj.SetTimer(obj.GetTimer() - 1)
+				}
+				if obj.GetTimer() == 0 {
+					if fo.WornOffObjNum > 0 {
+						if proto, ok := w.GetObjPrototype(fo.WornOffObjNum); ok {
+							spawned := NewObjectInstance(proto, roomVNum)
+							spawned.SetTimer(2)
+							w.AddItemToRoom(spawned, roomVNum)
+						}
+					}
+					w.SendToRoom(roomVNum, fo.WearOffMsg+"\r\n")
+					w.ExtractObject(obj, roomVNum)
+				}
+				break
+			}
+		}
 	}
 }
 

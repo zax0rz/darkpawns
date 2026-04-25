@@ -37,6 +37,9 @@ type World struct {
 	roomItems map[int][]*ObjectInstance
 	nextObjID int
 
+	// All live object instances: instance ID -> ObjectInstance
+	objectInstances map[int]*ObjectInstance
+
 	// AI tick management
 	aiticker *time.Ticker
 	done     chan bool
@@ -86,8 +89,9 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		players:     make(map[string]*Player),
 		activeMobs:  make(map[int]*MobInstance),
 		nextMobID:   1,
-		roomItems:   make(map[int][]*ObjectInstance),
-		nextObjID:   1,
+		roomItems:        make(map[int][]*ObjectInstance),
+		nextObjID:         1,
+		objectInstances:  make(map[int]*ObjectInstance),
 		done:        make(chan bool),
 		shopManager: nil,    // Will be set via SetShopManager
 		parsedData:  parsed, // Keep reference for door loading etc.
@@ -336,7 +340,9 @@ func (w *World) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 	}
 
 	obj := NewObjectInstance(proto, roomVNum)
-	// TODO: Track object instances in world
+	obj.ID = w.nextObjID
+	w.nextObjID++
+	w.objectInstances[obj.ID] = obj
 	return obj, nil
 }
 
@@ -386,6 +392,35 @@ func (w *World) AddItemToRoom(item *ObjectInstance, roomVNum int) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
+}
+
+// ExtractObject removes an object from the world entirely.
+// Removes from room, carrier, container, and the global instance map.
+func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	// Remove from room
+	w.RemoveItemFromRoom(obj, roomVNum)
+
+	// Remove from carrier if carried
+	if obj.Carrier != nil {
+		if p, ok := obj.Carrier.(*Player); ok {
+			p.Inventory.RemoveItem(obj)
+		} else if m, ok := obj.Carrier.(*MobInstance); ok {
+			m.RemoveFromInventory(obj)
+		}
+		obj.Carrier = nil
+	}
+
+	// Remove from container if inside one
+	if obj.Container != nil {
+		obj.Container.RemoveFromContainer(obj)
+		obj.Container = nil
+	}
+
+	// Remove from global instance map
+	delete(w.objectInstances, obj.ID)
 }
 
 // RemoveItemFromRoom removes an item from a room.
@@ -822,7 +857,7 @@ func (w *scriptableObjWrapper) GetTimer() int {
 }
 
 func (w *scriptableObjWrapper) SetTimer(timer int) {
-	// TODO: timer mutation on parser.Obj not supported — Phase 3 tracks timer on ObjectInstance
+	// No-op: parser.Obj is a prototype — timer tracked on ObjectInstance at runtime
 }
 
 // scriptableObjInstanceWrapper wraps ObjectInstance to implement ScriptableObject.

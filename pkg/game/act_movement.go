@@ -175,7 +175,22 @@ func hasBoat(w *World, ch *Player) bool {
 	if ch.IsAffected(affFly) {
 		return true
 	}
-	// TODO: check for ITEM_BOAT objects in inventory/equipment
+	// Check inventory for ITEM_BOAT
+	if ch.Inventory != nil {
+		for _, obj := range ch.Inventory.Items {
+			if obj != nil && obj.Prototype != nil && obj.Prototype.TypeFlag == ITEM_BOAT {
+				return true
+			}
+		}
+	}
+	// Check equipment for ITEM_BOAT
+	if ch.Equipment != nil {
+		for _, obj := range ch.Equipment.Slots {
+			if obj != nil && obj.Prototype != nil && obj.Prototype.TypeFlag == ITEM_BOAT {
+				return true
+			}
+		}
+	}
 	return false
 }
 

@@ -154,7 +154,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(deadMob, deadMob.Inventory, equipmentItems, roomVNum)
 	} else {
-		corpse := w.makeCorpse(deadMob.GetName(), deadMob.Inventory, equipmentItems, roomVNum, attackType)
+		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), deadMob.Inventory, equipmentItems, roomVNum, attackType)
 		w.AddItemToRoom(corpse, roomVNum)
 	}
 
@@ -244,7 +244,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum)
 	} else {
-		corpse := w.makeCorpse(player.Name, inventoryItems, equipmentItems, roomVNum, attackType)
+		corpse := w.makeCorpse(player.Name, player.Sex, inventoryItems, equipmentItems, roomVNum, attackType)
 		w.AddItemToRoom(corpse, roomVNum)
 	}
 
@@ -364,7 +364,19 @@ func corpseAttackLongDesc(name string, attackType CorpseAttackType, gender strin
 
 // makeCorpse creates a corpse container object, faithfully to make_corpse() in fight.c.
 // The corpse is an ObjectInstance with ITEM_NODONATE, containing the victim's inventory.
-func (w *World) makeCorpse(name string, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int) *ObjectInstance {
+// genderPronoun returns the possessive pronoun for the given sex value.
+func genderPronoun(sex int) string {
+	switch sex {
+	case 1:
+		return "her"
+	case 2:
+		return "its"
+	default:
+		return "his"
+	}
+}
+
+func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int) *ObjectInstance {
 	corpse := &ObjectInstance{
 		Prototype: nil, // synthetic object, no prototype vnum
 		VNum:      -1,
@@ -384,8 +396,7 @@ func (w *World) makeCorpse(name string, inventory []*ObjectInstance, equipment [
 	corpse.CustomData["short_desc"] = fmt.Sprintf("the corpse of %s", name)
 	// Convert attack type to corpse description
 	corpseAttackType := attackTypeToCorpseAttack(attackType)
-	// For now, use "his" as default gender - TODO: get actual gender from victim
-	gender := "his"
+	gender := genderPronoun(sex)
 	corpse.CustomData["long_desc"] = corpseAttackLongDesc(name, corpseAttackType, gender)
 
 	// Transfer inventory into corpse (obj_to_obj in original)
