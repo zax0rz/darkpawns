@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -917,4 +918,136 @@ func (w *World) findObjNear(ch *Player, name string) *ObjectInstance {
 		}
 	}
 	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Under-ported helpers (from act.informative.c / act.wizard.c / spec_procs2.c)
+// ---------------------------------------------------------------------------
+
+// FindTargetRoom resolves a target room string to a VNum (from act.wizard.c:184).
+func (w *World) FindTargetRoom(ch *Player, raw string) int {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return -1
+	}
+	vnum := 0
+	if _, err := fmt.Sscanf(raw, "%d", &vnum); err == nil && vnum > 0 {
+		if _, ok := w.rooms[vnum]; ok {
+			return vnum
+		}
+		return -1
+	}
+	lower := strings.ToLower(raw)
+	for vnum, room := range w.rooms {
+		if room == nil {
+			continue
+		}
+		if strings.Contains(strings.ToLower(room.Name), lower) {
+			return vnum
+		}
+	}
+	return -1
+}
+
+// PrintObjectLocation formats where an object is (in room, carried, worn, inside another).
+func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, recur bool) string {
+	var b strings.Builder
+	if num > 0 {
+		b.WriteString(fmt.Sprintf("O%3d. %-25s - ", num, obj.Prototype.ShortDesc))
+	} else {
+		b.WriteString(fmt.Sprintf("%33s", " - "))
+	}
+	switch {
+	case obj.RoomVNum > 0:
+		if room, ok := w.rooms[obj.RoomVNum]; ok && room != nil {
+			b.WriteString(fmt.Sprintf("[%5d] %s\r\n", obj.RoomVNum, room.Name))
+		} else {
+			b.WriteString(fmt.Sprintf("[%5d] (unknown room)\r\n", obj.RoomVNum))
+		}
+	case obj.Carrier != nil:
+		name := "someone"
+		if p, ok := obj.Carrier.(*Player); ok {
+			name = p.GetName()
+		} else if m, ok := obj.Carrier.(*MobInstance); ok {
+			name = m.GetName()
+		}
+		b.WriteString(fmt.Sprintf("carried by %s\r\n", name))
+	case obj.EquippedOn != nil:
+		name := "someone"
+		if p, ok := obj.EquippedOn.(*Player); ok {
+			name = p.GetName()
+		} else if m, ok := obj.EquippedOn.(*MobInstance); ok {
+			name = m.GetName()
+		}
+		b.WriteString(fmt.Sprintf("worn by %s\r\n", name))
+	case obj.Container != nil:
+		b.WriteString(fmt.Sprintf("inside %s\r\n", obj.Container.Prototype.ShortDesc))
+	default:
+		b.WriteString("in an unknown location\r\n")
+	}
+	return b.String()
+}
+
+// KenderSteal attempts to pilfer a random item from a mob (from spec_procs2.c:594).
+func (w *World) KenderSteal(ch *Player, mob *MobInstance) {
+	if mob == nil || len(mob.Inventory) == 0 {
+		return
+	}
+	for _, obj := range mob.Inventory {
+		if obj == nil || obj.Prototype == nil || !chCanSeeObj(ch, obj) {
+			continue
+		}
+		if int(w.randPct()%601) >= ch.GetLevel() {
+			continue
+		}
+		percent := int(w.randPct()%100) + 1
+		if mob.GetPosition() < posSleeping {
+			percent = -1
+		}
+		if ch.GetLevel() >= lvlImmort {
+			percent = 101
+		}
+		if ch.GetLevel() <= 10 || mob.GetLevel() <= 10 {
+			return
+		}
+		if percent < 0 {
+			mob.RemoveFromInventory(obj)
+			ch.Inventory.AddItem(obj)
+			ch.SendMessage("You stealthily filch an item.\r\n")
+			return
+		}
+	}
+}
+
+// FindClassBitvector maps a class letter to a bitvector bit for skill/spell filtering.
+func FindClassBitvector(arg byte) int64 {
+	switch arg {
+	case 'm':
+		return 1 << 0 // mage
+	case 'c':
+		return 1 << 1 // cleric
+	case 't':
+		return 1 << 2 // thief
+	case 'w':
+		return 1 << 3 // warrior
+	case 'a':
+		return 1 << 4 // magus
+	case 'v':
+		return 1 << 5 // avatar
+	case 's':
+		return 1 << 6 // assassin
+	case 'p':
+		return 1 << 7 // paladin
+	case 'n':
+		return 1 << 8 // ninja
+	case 'i':
+		return 1 << 9 // psionic
+	default:
+		return 0
+	}
+}
+
+// randPct returns a simple pseudo-random uint64 for game RNG needs.
+func (w *World) randPct() uint64 {
+	return uint64(time.Now().UnixNano()) * 6364136223846793005 % (1 << 32)
 }

@@ -227,34 +227,85 @@ Git status:          clean (all on main)
 ### Wave 15 — Sonnet QA Audit
 Review full Go codebase for faithfulness, compilation, correctness, error handling, logging.
 
-### Wave 16 — Opus Security Audit
-Security review: command injection, Lua sandbox bypass, privilege escalation, DoS vectors, admin auth.
+### Wave 15 — Remaining Port Waves (clan.c, house.c, boards.c, whod.c, objsave.c, mobprog.c)
+
+### Wave 15 — Remaining Port Waves (clan.c, house.c, boards.c, whod.c, objsave.c, mobprog.c)
+
+| C Source | Lines | Go target | Priority |
+|----------|-------|-----------|----------|
+| `clan.c` | 1,574 | `pkg/game/clans.go` | ⭐ High |
+| `house.c` | 744 | `pkg/game/houses.go` | ⭐ High |
+| `boards.c` | 551 | `pkg/game/boards.go` | ⭐ High |
+| `whod.c` | 532 | `pkg/game/whod.go` | Medium |
+| `objsave.c` | 1,250 | `pkg/game/objsave.go` | Medium |
+| `mobprog.c` | 646 | `pkg/game/mobprogs.go` | Medium (partially via Lua) |
+
+Also: under-ported areas needing coverage:
+- `act.informative.c` (~2,803 lines, ~39% ported) — kender_steal, do_description
+- Hitroll/damroll from equipment (fight.c peripheral, deferred)
+- dream-related PRNG, tattoo timer dock, night/weather event stubs
+
+### Wave 16 — GPT-5.5 Pro Modernization Review
+
+**Rationale:** GPT-5.5 Pro just launched (2026-04-24). Terminal-Bench 82.7%, Expert-SWE 73.1%, "first coding model with serious conceptual clarity" (Dan Shipper). Perfectly suited to review the completed Go codebase for modernization — not rewriting, not changing the game, but bringing everything to April 2026 Go idioms and best practices.
+
+**Scoping:**
+- Feed the entire Go codebase to GPT-5.5 Pro as a code review target
+- Target areas: go 1.24 idioms, error wrapping patterns, context propagation, goroutine hygiene, package boundaries, naming conventions, dead code, unnecessary indirection
+- Do NOT change: game logic, formulas, protocol, database schema, public API surface
+- Output: a list of refactoring candidates with priority and diff sketches
+- Model: GPT-5.5 Pro (API access required)
+
+**Philosophy:** This is the "it just works" phase. Nothing user-facing changes. The game behaves identically. But the code is brought up to current standards so that everything built after (admin, agents, features) has a clean foundation.
+
+**Success criteria:**
+- go build ./... && go vet ./... both clean after each modernization commit
+- All existing tests pass
+- No behavioral change observable in game
+- Code in Go is idiomatic to Q1 2026 conventions
+
+### Wave 17 — QA + Security + Ship
+
+Two phases, parallelizable:
+
+**Phase A — QA Audit:** Full codebase review for faithfulness, compilation, correctness, error handling, logging. Focus on: are there paths where the port dropped edge cases? Are error messages preserved? Is logging consistent?
+
+**Phase B — Security Audit:** Command injection, Lua sandbox bypass, privilege escalation, DoS vectors, admin auth, websocket session hijacking. Recommended model: Opus 4.6 or equivalent.
+
+### Wave 18 — Admin Dashboards + Agent Hooks ("The Fun Phase")
+
+Once the port is finished, modernized, QA'd, and secured:
+- Web admin dashboard (prosecco integration?)
+- Agent management UI
+- BRENDA session monitoring
+- In-game admin tools
+- Real-time telemetry
 
 ---
 
-## Immediate Next Steps (Updated 2026-04-24 — reality-audited)
+## Immediate Next Steps (Updated 2026-04-25 — post-GPT-5.5 launch, reconfigured)
 
-### ✅ #1: Wave 6.5 — Wire act.other.c commands [COMPLETED 2026-04-24]
-22 commands wired and registered. See Wave 6.5 description above.
+### 🔴 PRIORITY 1: Finish the port (Wave 15)
+Last C files standing:
+- clan.c (1,574) → clans.go
+- house.c (744) → houses.go
+- boards.c (551) → boards.go
+- whod.c (532) → whod.go
+- objsave.c (1,250) → objsave.go
+- mobprog.c (646) → mobprogs.go
+- Act.informative.c coverage (kender_steal, do_description)
+- Hitroll/damroll from equipment
+- Dream/tattoo/weather event stubs
 
-### 🟡 #2: Wave 6.5 follow-up — QA + test the wired commands
-- Build check: ✅ go build ./... && go vet ./... pass
-- Manual smoke test needed: save → quit, afk, peek, recall, bug/typo/idea/todo, gentog
+### 🔵 PRIORITY 2: GPT-5.5 Pro Modernization (Wave 16)
+Feed complete Go codebase to GPT-5.5 Pro for code review. Target: go 1.24+ idioms, error wrapping, context, goroutines, package boundaries. Zero behavioral change.
 
-### ✅ #3: Wave 7 — Spell system (spells.c + magic.c + spell_parser.c, ~4843 lines) [COMPLETED]
-8 Go files, 1,846 lines. Build clean, vet clean. CallMagic dispatch with full damage formulas and affect spells. See Wave 7 entry above for details.
+### 🟢 PRIORITY 3: QA + Security (Wave 17)
+Phase A: Full QA review — faithfulness, edge cases, error messages, logging.
+Phase B: Security audit — injection, sandbox, privilege escalation, auth, websocket.
 
-### 🟡 #4: Wave 8 — Wire spell system into session (cast_cmds.go connection)
-CallMagic exists separately from Cast() — need to hook them up. Also need to flesh out group/mass/area/summon/creation/alter-obj stubs, connect affects to engine.AffectManager, implement real manual spell dispatch.
-
-### ✅ #5: Wave 9 — Communication subsystem [COMPLETED 2026-04-24]
-4203 C lines → 559 Go lines. comm_infra.go + act_comm_bridge.go + act_comm.go + commands.go. Build/vet clean.
-
-### ✅ #6: Wave 9.5 — Combat engine core (fight.c, ~2033 lines) [COMPLETED 2026-04-25]
-pkg/combat/fight_core.go — 990 Go lines, 49 functions. Attack roll, damage, death, XP, mob AI. Build/vet clean.
-
-### 🟡 Next: Wave 10 — Persistence (objsave.c, ~1250 lines)
-Hitroll/Damroll from equipment, crash saves, idle saves, rent system. Then Clan/Housing, Boards, QA, Security.
+### 🟣 PRIORITY 4: Admin + Agent Features (Wave 18 — The Fun Phase)
+Web admin dashboard, agent management UI, BRENDA monitoring, telemetry.
 
 ---
 
@@ -545,11 +596,12 @@ Do NOT implement these improvements. Just document them.
 ## Session Startup
 
 Each new session working on this plan should:
-1. Read `PORT-PLAN.md` — this file (updated as of 2026-04-24)
-2. Read `RESEARCH-LOG.md` — recent session journal
-3. Read `docs/SWARM-LEARNINGS.md` — lessons from previous waves
-4. Check `git log --oneline -5` — latest commits
-5. Check what wave is next or in progress (look for uncommitted changes)
-6. Check the "Immediate Next Steps" section above for highest-priority items
-7. Read `docs/research.md` for architecture rationale (when designing new systems)
-8. Proceed
+1. Read `PORT-PLAN.md` — this file (updated 2026-04-25)
+2. Read `DARKPAWNS.md` — master strategy doc (BRENDA's perspective)
+3. Read `RESEARCH-LOG.md` — recent session journal
+4. Read `docs/SWARM-LEARNINGS.md` — lessons from previous waves
+5. Check `git log --oneline -5` — latest commits
+6. Check what wave is next or in progress (look for uncommitted changes)
+7. Check the "Immediate Next Steps" section above for highest-priority items
+8. Read `docs/research.md` for architecture rationale (when designing new systems)
+9. Proceed

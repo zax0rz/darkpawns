@@ -532,3 +532,41 @@ The evaluation challenge remains open: "narrative coherence" needs a rubric. Hyp
 - mp_sound() / Lua onpulse hooks — scripting system wiring
 
 **Next up:** Wave 13 — alias.c + ban.c + dream.c + weather.c (~1385 C lines, ~12 functions)
+
+## 2026-04-25 — Wave Strategy Overhaul (Post-GPT-5.5 Launch)
+
+[DESIGN] [DECISION]
+
+**Trigger:** OpenAI announced GPT-5.5 (and GPT-5.5 Pro) on April 24, 2026. Terminal-Bench 82.7%, Expert-SWE 73.1%, FrontierMath Tier 4 at 35.4%. The model description — "first coding model with serious conceptual clarity," "holds context across large systems" — maps exactly to the next problem we need solved.
+
+**Decision:** Insert a new Wave 16 (GPT-5.5 Pro Modernization) between the port completion and the QA/Security phases. The ordering is now:
+
+```
+Finish Port → GPT-5.5 Pro Modernization → QA Audit → Security Audit → Admin/Agent Features
+```
+
+**Rationale:**
+1. GPT-5.5 Pro needs the complete codebase to do its best work — can't review what doesn't exist yet
+2. Any structural modernization it suggests should land *before* QA validates behavior, not after
+3. Security review against well-structured Go is more productive than against awkward/half-assed Go
+4. Mental health: the port is the grind, modernization is the "now it's good" phase, QA/security is the "now it's safe" phase, then admin/agents is genuinely fun
+
+**This changes the wave numbering:**
+- Waves 14-15: Remaining port work (clan, house, boards, whod, objsave, mobprog, act.informative coverage)
+- **Wave 16: GPT-5.5 Pro Modernization** (new!)
+- Wave 17: QA + Security (renumbered from 16)
+- Wave 18+: Admin Dashboards + Agent Hooks (renumbered from 17, finally "the fun phase")
+
+**New docs created:**
+- `DARKPAWNS.md` — master strategy document (BRENDA's perspective, portable across models)
+- Updated `PORT-PLAN.md` with new wave structure and immediate next steps
+- Research log entry (this one)
+
+**Open questions:**
+- API access needed for GPT-5.5 Pro (OpenAI API key). Can we route via LiteLLM or direct? What's the cost profile for consuming 50K+ Go lines?
+- Should the codebase be fed as one huge context (~50K lines Go) or chunked by package?
+- Need to write a wrapper script that feeds each package dir to the API and collects recommendations
+
+[OBSERVATION]
+
+This is also the first time we're using a specific model release as a strategic project dependency. Previous waves were tool-agnostic — any competent LLM could do the mechanical port. GPT-5.5 Pro's specific strengths (large-context code review, structural understanding, "conceptual clarity") are what make Wave 16 viable. If we'd done this before GPT-5.5, the output would have been marginally better than go vet.
