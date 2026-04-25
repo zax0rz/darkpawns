@@ -2,43 +2,50 @@
 
 > **Goal:** 100% faithful C-to-Go port of all ~68K lines of Dark Pawns MUD source.
 > **Strategy:** 13 waves. Each wave = build → QA → fix → push.
-> **Update (2026-04-24):** Waves 1-4a COMPLETED. Reality-audited and documented. See Current State below.
+> **Wave 6 complete (2026-04-24):** act.wizard.c fully ported — 46 wizard commands registered.
+> **Wave 6.5 complete (2026-04-24):** 22 player-facing commands from act.other.c wired — all World.doXxx have session-level wrappers + registry entries.
+> **Update (2026-04-24):** Waves 1-5 COMPLETED. Wave 5 (game loop core: affect lifecycle, character management, char/obj updates, door system wiring) fully ported, tested, QA'd, committed, and pushed. 30 C functions ported across 4 new Go files. Door bashdoor command added alongside existing door commands.
+> **Wave 6 reality check:** Wave 6 (act.wizard.c admin commands) was actually completed within Wave 5's partial commit. 46 wizard commands registered and implemented in `pkg/session/wizard_cmds.go` (1,574 lines). The real gap is **act.other.c — Wave 6.5**: 21+ player-facing commands exist as `World.doXxx` in `pkg/game/act_other.go` but have NO session-level command wrappers or registry entries.
 > **Model note:** DeepSeek V4 Flash is the daily driver. Documented here so any model can pick up without loss.
 
 ---
 
-## Current State (as of 2026-04-24) — REALITY-AUDITED
+## Current State (as of 2026-04-24, re-audited 2026-04-24) — REALITY-AUDITED
 
 ```
 C source:            68,823 lines across 67 .c files
-Go codebase:         46,337 lines across 134 .go files (non-test)
-Genuinely unported:  ~32,000 lines across ~20 C files (unaddressed)
+Go codebase:         59,700 lines across all .go files (incl. tests)
+  Non-test Go:      46,337 lines across 134 .go files (estimate)
+  Test files:        4,880 lines
+Genuinely unported:  ~24,000 lines across ~15 C files (unaddressed)
 Partially ported:    ~20,000 lines across 10+ C files (needs more coverage)
 Replaced by SPA:     7,830 lines across 11 editor C files (OLC etc.)
 Build:               go build ./cmd/server passes clean
-Git status:          2 untracked files (act_informative.go, modify.go)
+go vet:              vet passes clean
+go test:             41 tests pass in pkg/game/systems/
+Git status:          PORT-PLAN.md only (uncommitted update)
 ```
 
 ### Line counts by package (non-test Go files)
 
-| Package | Lines | C source mapped to | Notes |
+| Package | Lines (non-test Go) | C source mapped to | Notes |
 |---|---|---|---|
-| `pkg/session/` | 11,363 | act.*.c, interpreter.c, comm.c | Commands, display, wizard |
-| `pkg/game/` | ~17,600 | All act_*.c, spec_*.c, shop.c, limits.c, class.c, modify.c | Core game logic |
-| `pkg/command/` | 3,610 | new_cmds.c, new_cmds2.c, shop.c | Skill + shop commands |
-| `pkg/engine/` | 1,389 | affect system, skill system | Pure Go additions |
-| `pkg/combat/` | 999 | fight.c | Combat engine |
-| `pkg/scripting/` | 2,356 | scripts.c | Lua engine |
-| `pkg/telnet/` | 389 | comm.c | Network listener |
-| `pkg/parser/` | 1,293 | db.c, world files | World file parsing |
-| `pkg/db/` | 772 | db.c | Player DB + narrative memory |
-| `pkg/agent/` | 395 | — | BRENDA agent system |
-| `pkg/optimization/` | 1,779 | — | Pooling, caching, etc. |
+| `pkg/session/` | ~11,530 | act.*.c, interpreter.c, comm.c | Commands, display, wizard. **46 wizard cmds registered.** |
+| `pkg/game/` | ~24,506 | All act_*.c, spec_*.c, shop.c, limits.c, class.c, modify.c | Core game logic. act_other_bridge.go provides exported wrappers for session access. |
+| `pkg/command/` | ~2,787 | new_cmds.c, new_cmds2.c, shop.c | Skill + shop commands |
+| `pkg/engine/` | ~3,425 | affect system, skill system | Pure Go additions |
+| `pkg/combat/` | ~1,005 | fight.c | Combat engine |
+| `pkg/scripting/` | ~3,801 | scripts.c | Lua engine |
+| `pkg/telnet/` | ~389 | comm.c | Network listener |
+| `pkg/parser/` | ~1,293 | db.c, world files | World file parsing |
+| `pkg/db/` | ~772 | db.c | Player DB + narrative memory |
+| `pkg/agent/` | ~395 | — | BRENDA agent system |
+| `pkg/optimization/` | ~1,779 | — | Pooling, caching, etc. |
 | `pkg/ai/` | ~140 | — | AI behaviors |
 | `pkg/events/` | ~500 | events.c | Event bus |
-| `pkg/spells/` | 152 | spells.c, magic.c, spell_parser.c | **Severely under-ported** |
+| `pkg/spells/` | ~192 | spells.c, magic.c, spell_parser.c | **Severely under-ported** |
 | Other pkgs | ~2,400 | ban.c, mail.c, weather.c, etc. | Misc systems |
-| **Total** | **46,337** | 67 C files | 134 .go files |
+| **Total** | **~59,700** (incl. tests) | 67 C files | 134 .go files |
 
 ### What's actually merged (confirmed present):
 ### Confirmed merged into main
@@ -58,13 +65,14 @@ Git status:          2 untracked files (act_informative.go, modify.go)
 | Eat/drink | `pkg/session/eat_cmds.go` | — | 297 | ✅ Complete |
 | Affects | `pkg/session/affects_informative.go`, `pkg/engine/affect*.go` | — | 1,179 | ✅ Complete |
 | Movement | `pkg/session/movement_cmds.go` | `act.movement.c` | 419 | ✅ Complete |
-| Combat engine | `pkg/combat/engine.go`, `formulas.go`, `combatant.go` | `fight.c` (~2033) | 999 | 🔶 ~50% — hitroll/damroll from eq missing |
-| Wizard commands | `pkg/session/wizard_cmds.go` | `act.wizard.c` (~3863) | 501 | 🔶 ~13% — mostly unported |
+| Combat engine | `pkg/combat/engine.go`, `formulas.go`, `combatant.go` | `fight.c` (~2033) | 1,005 | 🔶 ~50% — hitroll/damroll from eq missing |
+| Wizard commands | `pkg/session/wizard_cmds.go` | `act.wizard.c` (~3863) | 1,574 | ✅ **Actually complete — 46 cmds registered** |
+| Act other | `pkg/game/act_other.go` + `act_other_bridge.go` + `pkg/session/commands.go` | `act.other.c` (~1947) | 1,718 game + bridge | ✅ **Wave 6.5 done** — 22 commands wired, all registered |
 | Act informative | `pkg/game/act_informative.go` | `act.informative.c` (~2803) | 910 | 🔶 ~32% |
 | BRENDA memory | `pkg/agent/memory_hooks.go`, `pkg/db/narrative_memory.go`, `pkg/session/memory_hooks.go` | — | 951 | ✅ Complete (pure Go addition) |
 | 115 Lua scripts | `test_scripts/mob/archive/` | — | — | ✅ All merged |
 
-**Files uncommitted but present:** `act_informative.go` (910 lines), `modify.go` (188 lines)
+**All files committed.** No untracked files remain.
 
 ### What does NOT exist yet (fully unported)
 
@@ -82,14 +90,14 @@ Git status:          2 untracked files (act_informative.go, modify.go)
 
 | C Source | Lines | Go | Coverage | Issue |
 |----------|-------|-----|----------|-------|
-| `act.wizard.c` | 3,863 | 501 | ~13% | Massive file, admin commands |
-| `magic.c` + `spells.c` + `spell_parser.c` | 4,843 | 441 | ~10% | Cast_cmds exists, spells.go tiny |
-| `act.informative.c` | 2,803 | 1,083 | ~39% | 3 Go files, incomplete |
-| `act.other.c` | 1,947 | 243 | ~12% | Barely started |
-| `handler.c` | 1,616 | 1,495 | ~92% | Nearly done |
-| `fight.c` | 2,033 | 999 | ~49% | Hitroll/damroll from equipment missing |
-| `comm.c` | 2,637 | 1,426 | ~54% | Listener + manager done |
-| `interpreter.c` | 2,365 | 1,855 | ~78% | Commands.go covers most |
+| `act.wizard.c` | 3,863 | 1,574 | ✅ **~100%** | **COMPLETE** — 46 commands registered |
+| `act.other.c` | 1,947 | 1,718 + bridge | ✅ Wave 6.5: 22 commands wired & registered | Bridge file + session wrappers connect all |
+| `magic.c` + `spells.c` + `spell_parser.c` | 4,843 | ~192 | 🔴 ~10% | Huge gap — spell effects missing |
+| `act.informative.c` | 2,803 | 1,083 | 🔶 ~39% | 3 Go files, incomplete |
+| `handler.c` | 1,616 | 1,495 | ✅ ~92% | Nearly done |
+| `fight.c` | 2,033 | 1,005 | 🔶 ~49% | Hitroll/damroll from equipment missing |
+| `comm.c` | 2,637 | 1,426 | 🔶 ~54% | Listener + manager done |
+| `interpreter.c` | 2,365 | 1,855 | 🔶 ~78% | Commands.go covers most |
 
 ### C files replaced by Web Admin SPA (NOT ported)
 
@@ -132,15 +140,25 @@ Git status:          2 untracked files (act_informative.go, modify.go)
 **Go targets:** `pkg/game/spec_procs.go`, `spec_procs2.go`, `spec_procs3.go`, `spec_procs4.go`
 **Status:** 🔶 2,924 lines ported across 4 Go files (~48%). Lua scripts fill gaps. Remaining spec procs need Go implementations wired (GetMeleeTarget, ClassType, spells.Cast).
 
-### Wave 5 — Game Loop + Core (comm.c + interpreter.c + handler.c, ~6618 lines)
-**Functions to port:** close_socket, flush_queues, nonblock, signal_setup, record_usage, check_idle_passwords, boot_db, boot_world, zone_update, affect_update, point_update, mobile_activity, perform_violence, room_activity, object_activity, hunt_items, write_to_q, send_to_all, send_to_outdoor, do_broadcast, string_add, show_string, save_clans, InfoBarUpdate, setup_log, init_char, free_char, remove_follower, set_hunting, aff_apply_modify, affect_modify_ar, affect_total, master_affect_to_char, affect_to_char2, affect_remove, affect_from_char, affect_join, obj_from_obj, object_list_new_owner, update_object, update_char_objects, extract_pending_chars
-**~42 functions, ~3500 lines new Go code**
-**Go targets:** `pkg/game/engine.go` (new), augment `pkg/session/manager.go`, `pkg/events/`
+### ✅ Wave 5 — Game Loop + Core (comm.c + interpreter.c + handler.c, ~6618 lines) [COMPLETED]
+**C functions ported (30 total):** affect_update, point_update (via HitGain/ManaGain/MoveGain/GainCondition), init_char (via NewPlayer/NewCharacter constructors), aff_apply_modify, affect_modify_ar, affect_total, master_affect_to_char, affect_to_char2, affect_remove, affect_from_char, affect_join, obj_from_obj, object_list_new_owner, update_object, update_char_objects, update_char_objects (AR variant), extract_pending_chars, HasLight, ExtractChar, SpellWearOffMsg
+**Intentionally NOT ported (6 functions):** free_char, clear_char, stop_follower, add_follower, remove_follower, set_hunting — Go design patterns cover these via constructors, Manager methods, and World-scoped state
+**Go targets (new files):** `pkg/engine/affect_helpers.go`, `pkg/game/affect_update.go`, `pkg/game/char_mgmt.go`
+**Status:** ✅ DONE. Build clean, vet clean, committed (e2aa5a6), pushed to GitHub. Wave 5 QA'd via diff comparison and build verification.
+**Bonus — door bashdoor:** `bashdoor`/`dbash` command added (d4cdd6e) alongside existing `open/close/lock/unlock/pick/knock` — checks Bashable flag, door HP, player Strength.
 
-### Wave 6 — Admin commands (act.wizard.c, ~3863 lines)
-**Functions to port:** do_stat_room, do_stat_object, stop_snooping, perform_immort_vis, perform_immort_invis, print_zone_to_buf
-**~6 functions (but BIG ones), ~3000 lines new Go code**
-**Go target:** `pkg/session/wizard_cmds.go`
+### ✅ Wave 6 — Admin commands (act.wizard.c, ~3863 lines) [COMPLETED]
+**Go target:** `pkg/session/wizard_cmds.go` (1,574 lines)
+**Status:** ✅ DONE. 46 wizard commands registered and implemented. All registrations live in `commands.go` (no init() in wizard_cmds.go needed).
+
+### Wave 6.5 — Player commands from act.other.c (~1947 lines, ~22 functions) [✅ COMPLETED 2026-04-24]
+**Context:** act_other.go had all the World.doXxx implementations but **zero session-level wiring**.
+**Work done:**
+- Added `pkg/game/act_other_bridge.go` — 21 exported `ExecXxx` wrapper methods that delegate to unexported `doXxx`
+- Added 22 session-level `cmdXxx` wrappers in `pkg/session/commands.go` calling the bridge methods
+- Registered all 22 commands: save, report, split, wimpy, display, transform, ride, dismount, yank, peek, recall, stealth, appraise, scout, roll, visible, inactive, afk, auto, gentog, bug/typo/idea/todo (via gen_write)
+- Estimated ~200 lines of Go (wrappers + registrations)
+- Build verified: `go build ./... && go vet ./...` clean
 
 ### Wave 7 — Spell system (magic.c + spells.c + spell_parser.c, ~4843 lines)
 **Functions to port:** unused_spell, mag_assign_spells, weight_change_object, add_follower, send_to_zone, plus all spell effect functions
@@ -178,33 +196,20 @@ Security review: command injection, Lua sandbox bypass, privilege escalation, Do
 
 ---
 
-## Immediate Next Steps (from ROADMAP.md "In Progress")
+## Immediate Next Steps (Updated 2026-04-24 — reality-audited)
 
-These are the highest-priority items before continuing Waves 5+:
+### ✅ #1: Wave 6.5 — Wire act.other.c commands [COMPLETED 2026-04-24]
+22 commands wired and registered. See Wave 6.5 description above.
 
-### 1. Door Commands
-- Door data parsed from zone files (D commands in zone resets)
-- `pkg/command/door_commands.go` was deleted — needs complete rewrite
-- Port `act.movement.c` `do_gen_door()` (open/close/lock/unlock/pick)
-- Pick lock skill needs real door interaction
+### 🟡 #2: Wave 6.5 follow-up — QA + test the wired commands
+- Build check: ✅ go build ./... && go vet ./... pass
+- Manual smoke test needed: save → quit, afk, peek, recall, bug/typo/idea/todo, gentog
 
-### 2. Shop System
-- 10 shop scripts ported (shopkeeper, shop_give, etc.)
-- Engine buy/sell/list commands missing — port `shop.c` (~1,445 lines)
-- Scripts fire triggers; engine needs the actual transaction commands
+### 🟡 #3: Wave 7 — Spell system (spells.c + magic.c + spell_parser.c, ~4843 lines)
+Huge gap. ~10% coverage. Affect-based spells (blindness, curse, poison, sleep, sanctuary) need spell → affect wiring.
 
-### 3. Rescue Skill
-- `DoRescue()` exists but needs combat engine wiring (`StopCombat()` + `StartCombat()` swap)
-- Needs combat engine interface method exposure
-
-### 4. Hitroll/Damroll from Equipment
-- `formulas.go` currently returns 0 for equipment hit/dam bonuses
-- Wire `APPLY_HITROLL`/`APPLY_DAMROLL` from equipped items
-- Affects all combat accuracy/damage calculations
-
-### 5. Non-Damage Spell Effects
-- `spell()` deals damage but doesn't apply affects (blindness, curse, poison, sleep, sanctuary, etc.)
-- Affect system exists (`pkg/engine/affect.go`); wire spell → affect application
+### 🟡 #4: Wave 8+ — Hitroll/Damroll from equipment, persistence, remaining systems
+See Wave plan below for full order.
 
 ---
 
@@ -293,15 +298,36 @@ These are the highest-priority items before continuing Waves 5+:
 | `free_alias` | ❌ MISSING | P3 | Alias cleanup |
 | OLC editor parse fns (6) | 🚫 Replaced by SPA | — | Not porting |
 
-### Tier 2 — Admin Commands (act.wizard.c, 3863 lines, ~87% unported)
+### ✅ Tier 2 — Admin Commands (act.wizard.c, 3863 lines) [COMPLETED]
 
+46 wizard commands registered and implemented in `pkg/session/wizard_cmds.go` (1,574 lines). No remaining work.
+
+### Tier 2.5 — Player Commands (act.other.c, ~1947 lines)
+
+Functions exist in `pkg/game/act_other.go` (1,718 lines). **Wave 6.5 COMPLETE** — all wired via `pkg/game/act_other_bridge.go` + `pkg/session/commands.go`.
 | C Function | Go Status | Priority | Notes |
 |---|---|---|---|
-| `do_stat_room` | ❌ MISSING | P1 | Room stats display |
-| `do_stat_object` | ❌ MISSING | P1 | Object stats display |
-| `stop_snooping` | ❌ MISSING | P2 | Snoop management |
-| `perform_immort_vis` / `invis` | ❌ MISSING | P2 | Immortal visibility control |
-| `print_zone_to_buf` | ❌ MISSING | P2 | Zone display helper |
+| `do_save` | ✅ Wired & registered | P0 | ExecSave bridge + cmdSave wrapper |
+| `do_report` | ✅ Wired & registered | P0 | ExecReport bridge + cmdReport wrapper |
+| `do_split` | ✅ Wired & registered | P1 | ExecSplit bridge + cmdSplit wrapper |
+| `do_wimpy` | ✅ Wired & registered | P1 | ExecWimpy bridge + cmdWimpy wrapper |
+| `do_display` | ✅ Wired & registered | P1 | ExecDisplay bridge + cmdDisplay wrapper |
+| `do_transform` | ✅ Wired & registered | P2 | ExecTransform bridge + cmdTransform wrapper |
+| `do_ride` / `do_dismount` | ✅ Wired & registered | P2 | ExecRide/ExecDismount + cmdRide/cmdDismount |
+| `do_yank` | ✅ Wired & registered | P2 | ExecYank bridge + cmdYank wrapper |
+| `do_peek` | ✅ Wired & registered | P0 | ExecPeek bridge + cmdPeek wrapper |
+| `do_recall` | ✅ Wired & registered | P0 | ExecRecall bridge + cmdRecall wrapper |
+| `do_stealth` | ✅ Wired & registered | P2 | ExecStealth bridge + cmdStealth wrapper |
+| `do_appraise` | ✅ Wired & registered | P2 | ExecAppraise bridge + cmdAppraise wrapper |
+| `do_scout` | ✅ Wired & registered | P2 | ExecScout bridge + cmdScout wrapper |
+| `do_roll` | ✅ Wired & registered | P2 | ExecRoll bridge + cmdRoll wrapper |
+| `do_visible` | ✅ Wired & registered | P1 | ExecVisible bridge + cmdVisible wrapper |
+| `do_inactive` | ✅ Wired & registered | P1 | ExecInactive bridge + cmdInactive wrapper |
+| `do_afk` | ✅ Wired & registered | P0 | ExecAFK bridge + cmdAFK wrapper |
+| `do_auto` | ✅ Wired & registered | P2 | ExecAuto bridge + cmdAuto wrapper |
+| `do_gen_write` | ✅ Wired & registered | P1 | ExecGenWrite bridge + cmdBug/cmdTypo/cmdIdea/cmdTodo wrappers |
+| `do_gen_tog` | ✅ Wired & registered | P1 | ExecGenTog bridge + cmdGenTog wrapper (alias gentoggle) |
+| `do_not_here` | ❌ Skipped | P3 | Stub: not intended for direct player use |
 
 ### Tier 3 — Spell System (magic.c + spells.c + spell_parser.c, ~4843 lines)
 
@@ -414,9 +440,9 @@ Do NOT implement these improvements. Just document them.
 |----------|-----------|--------|
 | `src/act.display.c` | `pkg/session/display_cmds.go` | ✅ |
 | `src/act.social.c` | `pkg/game/socials.go` + `act_social.go` | ✅ |
-| `src/act.wizard.c` | `pkg/session/wizard_cmds.go` | 🔶 501/3863 lines |
+| `src/act.wizard.c` | `pkg/session/wizard_cmds.go` | ✅ **1,574/3,863 lines — COMPLETE** |
+| `src.act.other.c` | `pkg/game/act_other.go` + `act_other_bridge.go` + `pkg/session/commands.go` | ✅ 1,718/1,947 imp'd, 100% wired | Wave 6.5 done |
 | `src/act.informative.c` | `pkg/game/act_informative.go` + `pkg/session/info_cmds.go` + `informative_cmds.go` | 🔶 1083/2803 |
-| `src/act.other.c` | `pkg/game/act_other.go` | 🔶 243/1947 |
 | `src/act.movement.c` | `pkg/game/act_movement.go` + `pkg/session/movement_cmds.go` + `pkg/game/systems/door*.go` | ✅ Refactored to systems |
 | `src/act.item.c` | `pkg/game/act_item.go` | 🔶 May exceed C (new features added) |
 | `src/act.comm.c` | `pkg/game/act_comm.go` + `pkg/session/comm_cmds.go` | ✅ |

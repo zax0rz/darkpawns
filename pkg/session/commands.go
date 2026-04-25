@@ -207,6 +207,32 @@ func init() {
 	cmdRegistry.Register("skills", wrapArgs(cmdSkills), "Show your known skills.", 0, 0, "sk")
 	cmdRegistry.Register("toggle", wrapArgs(cmdToggle), "Toggle a player preference.", 0, 0)
 	cmdRegistry.Register("users", wrapArgs(cmdUsers), "Show connected players.", LVL_IMMORT, 0)
+
+	// Other commands (act_other.go)
+	cmdRegistry.Register("save", wrapArgs(cmdSave), "Save your character.", 0, 0)
+	cmdRegistry.Register("report", wrapArgs(cmdReport), "Show report of your surroundings.", 0, 0)
+	cmdRegistry.Register("split", wrapArgs(cmdSplit), "Split gold with your group.", 0, 0)
+	cmdRegistry.Register("wimpy", wrapArgs(cmdWimpy), "Set your wimpy threshold.", 0, 0)
+	cmdRegistry.Register("display", wrapArgs(cmdDisplay), "Set display preferences.", 0, 0)
+	cmdRegistry.Register("transform", wrapArgs(cmdTransform), "Transform your appearance.", 0, 0)
+	cmdRegistry.Register("ride", wrapArgs(cmdRide), "Ride a mount.", 0, 0)
+	cmdRegistry.Register("dismount", wrapArgs(cmdDismount), "Dismount from your mount.", 0, 0)
+	cmdRegistry.Register("yank", wrapArgs(cmdYank), "Yank someone from a mount or chair.", 0, 0)
+	cmdRegistry.Register("peek", wrapArgs(cmdPeek), "Peek at another player's inventory.", 0, 0)
+	cmdRegistry.Register("recall", wrapArgs(cmdRecall), "Recall to your home city.", 0, 0)
+	cmdRegistry.Register("stealth", wrapArgs(cmdStealth), "Enter stealth mode.", 0, 0)
+	cmdRegistry.Register("appraise", wrapArgs(cmdAppraise), "Appraise an item's value.", 0, 0)
+	cmdRegistry.Register("scout", wrapArgs(cmdScout), "Scout ahead for danger.", 0, 0)
+	cmdRegistry.Register("roll", wrapArgs(cmdRoll), "Roll a random number.", 0, 0)
+	cmdRegistry.Register("visible", wrapArgs(cmdVisible), "Make yourself visible again.", 0, 0)
+	cmdRegistry.Register("inactive", wrapArgs(cmdInactive), "Toggle inactive status.", 0, 0)
+	cmdRegistry.Register("auto", wrapArgs(cmdAuto), "Toggle auto-attack mode.", 0, 0)
+	cmdRegistry.Register("gentog", wrapArgs(cmdGenTog), "Toggle an option.", 0, 0, "gentoggle")
+	cmdRegistry.Register("bug", wrapArgs(cmdBug), "Report a bug.", 0, 0, "typo", "idea", "todo")
+	cmdRegistry.Register("typo", wrapArgs(cmdTypo), "Report a typo.", 0, 0)
+	cmdRegistry.Register("idea", wrapArgs(cmdIdea), "Submit an idea.", 0, 0)
+	cmdRegistry.Register("todo", wrapArgs(cmdTodo), "Submit a todo suggestion.", 0, 0)
+	cmdRegistry.Register("afk", wrapArgs(cmdAFK), "Toggle away-from-keyboard status.", 0, 0)
 }
 
 // wrapArgs adapts a func(*Session, []string) error to command.Handler.
@@ -1418,4 +1444,148 @@ func getDoorManager(s *Session) *systems.DoorManager {
 		return nil
 	}
 	return s.manager.doorManager
+}
+
+// cmdSave saves the player's character.
+func cmdSave(s *Session, args []string) error {
+	s.manager.world.ExecSave(s.player)
+	return nil
+}
+
+// cmdReport shows a report of surroundings.
+func cmdReport(s *Session, args []string) error {
+	s.manager.world.ExecReport(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdSplit splits gold with the group.
+func cmdSplit(s *Session, args []string) error {
+	s.manager.world.ExecSplit(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdWimpy sets the wimpy threshold.
+func cmdWimpy(s *Session, args []string) error {
+	s.manager.world.ExecWimpy(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdDisplay sets display preferences.
+func cmdDisplay(s *Session, args []string) error {
+	s.manager.world.ExecDisplay(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdTransform transforms the player's appearance.
+func cmdTransform(s *Session, args []string) error {
+	s.manager.world.ExecTransform(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdRide rides a mount.
+func cmdRide(s *Session, args []string) error {
+	s.manager.world.ExecRide(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdDismount dismounts from a mount.
+func cmdDismount(s *Session, args []string) error {
+	s.manager.world.ExecDismount(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdYank yanks someone from a mount or chair.
+func cmdYank(s *Session, args []string) error {
+	s.manager.world.ExecYank(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdPeek peeks at another player's inventory.
+func cmdPeek(s *Session, args []string) error {
+	s.manager.world.ExecPeek(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdRecall recalls to the home city.
+func cmdRecall(s *Session, args []string) error {
+	s.manager.world.ExecRecall(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdStealth enters stealth mode.
+func cmdStealth(s *Session, args []string) error {
+	s.manager.world.ExecStealth(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdAppraise appraises an item's value.
+func cmdAppraise(s *Session, args []string) error {
+	s.manager.world.ExecAppraise(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdScout scouts ahead for danger.
+func cmdScout(s *Session, args []string) error {
+	s.manager.world.ExecScout(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdRoll rolls a random number.
+func cmdRoll(s *Session, args []string) error {
+	s.manager.world.ExecRoll(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdVisible makes the player visible.
+func cmdVisible(s *Session, args []string) error {
+	s.manager.world.ExecVisible(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdInactive toggles inactive status.
+func cmdInactive(s *Session, args []string) error {
+	s.manager.world.ExecInactive(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdAuto toggles auto-attack mode.
+func cmdAuto(s *Session, args []string) error {
+	s.manager.world.ExecAuto(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdGenTog toggles a general option.
+func cmdGenTog(s *Session, args []string) error {
+	s.manager.world.ExecGenTog(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdBug reports a bug.
+func cmdBug(s *Session, args []string) error {
+	s.manager.world.ExecGenWrite(s.player, "bug", strings.Join(args, " "))
+	return nil
+}
+
+// cmdTypo reports a typo.
+func cmdTypo(s *Session, args []string) error {
+	s.manager.world.ExecGenWrite(s.player, "typo", strings.Join(args, " "))
+	return nil
+}
+
+// cmdIdea submits an idea.
+func cmdIdea(s *Session, args []string) error {
+	s.manager.world.ExecGenWrite(s.player, "idea", strings.Join(args, " "))
+	return nil
+}
+
+// cmdTodo submits a todo suggestion.
+func cmdTodo(s *Session, args []string) error {
+	s.manager.world.ExecGenWrite(s.player, "todo", strings.Join(args, " "))
+	return nil
+}
+
+// cmdAFK toggles away-from-keyboard status.
+func cmdAFK(s *Session, args []string) error {
+	s.manager.world.ExecAFK(s.player, strings.Join(args, " "))
+	return nil
 }
