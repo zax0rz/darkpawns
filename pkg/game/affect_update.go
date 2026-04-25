@@ -13,7 +13,14 @@ import (
 // SpellWearOffMsg returns the wear-off message for a given spell type.
 // Source: src/spells.c spell_wear_off_msg[].
 // Extended list matching CircleMUD original messages.
+// wearOffMessages maps spell type index to wear-off message.
 var wearOffMessages = map[int]string{}
+
+func init() {
+	for i, msg := range SpellWearOffMessages {
+		wearOffMessages[i] = msg
+	}
+}
 
 // SpellWearOffMsg gets the wear-off message for a spell type.
 func SpellWearOffMsg(spellType int) string {
