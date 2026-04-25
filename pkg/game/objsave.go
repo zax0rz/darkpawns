@@ -9,8 +9,13 @@
 package game
 
 import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
 	"log"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Rent codes — used in persistence to track why a player's items are saved.
@@ -123,6 +128,190 @@ func cWearPosCanWearFlag(cPos int) int {
 }
 
 // Flag constants matching ITEM_* from structs.h used for alignment checks.
+// --------------------------------------------------------------------------
+// Binary data types matching C structs from src/structs.h
+// --------------------------------------------------------------------------
+
+const (
+	EFArrayMax   = 4
+	AFArrayMax   = 4
+	MaxObjAffect = 6
+
+	// ObjFileElemSize is the exact binary size of obj_file_elem: 592 bytes.
+	// Layout: 4 + 2 + 4*4 + 4*4 + 4 + 4 + 4*4 + 6*2 + 128 + 128 + 256 = 592
+	ObjsaveElemSize = 592
+
+	// RentInfoSize is the exact binary size of rent_info: 56 bytes (14 int32).
+	RentInfoSize = 56
+)
+
+// ObjAffect is a single stat-modifier pair matching the C obj_affected_type.
+type ObjAffect struct {
+	Location uint8
+	Modifier int8
+}
+
+// ObjFileElem is the on-disk binary record for one saved object, matching
+// the C struct obj_file_elem from src/structs.h.
+type ObjFileElem struct {
+	ItemNumber int32
+	Locate     int16
+	Value      [4]int32
+	ExtraFlags [4]int32
+	Weight     int32
+	Timer      int32
+	Bitvector  [4]int32
+	Affects    [6]ObjAffect
+	Name       [128]byte
+	ShortDesc  [128]byte
+	Desc       [256]byte
+}
+
+// RentInfo is the on-disk binary record for player rent/account data,
+// matching the C struct rent_info from src/structs.h.
+type RentInfo struct {
+	Time           int32
+	RentCode       int32
+	NetCostPerDiem int32
+	Gold           int32
+	Account        int32
+	NItems         int32
+	Spare          [8]int32
+}
+
+// ObjFromBinary deserializes a 592-byte binary blob into an ObjectInstance.
+// Returns the object and the C-style locate offset (1-based wear position).
+func ObjFromBinary(data []byte, world *World) (*ObjectInstance, int) {
+	if len(data) < ObjsaveElemSize {
+		return nil, 0
+	}
+
+	var elem ObjFileElem
+	buf := bytes.NewReader(data[:ObjsaveElemSize])
+	if err := binary.Read(buf, binary.LittleEndian, &elem); err != nil {
+		return nil, 0
+	}
+
+	var proto *parser.Obj
+	if world != nil {
+		if p, ok := world.GetObjPrototype(int(elem.ItemNumber)); ok {
+			proto = p
+		}
+	}
+
+	obj := &ObjectInstance{
+		Prototype: proto,
+		VNum:      int(elem.ItemNumber),
+	}
+
+	return obj, int(elem.Locate)
+}
+
+// ObjToBinary serializes an ObjectInstance into the 592-byte binary blob.
+func ObjToBinary(obj *ObjectInstance, locate int) ([]byte, error) {
+	var elem ObjFileElem
+
+	elem.ItemNumber = int32(obj.VNum)
+	elem.Locate = int16(locate)
+
+	if obj.Prototype != nil {
+		elem.Weight = int32(obj.Prototype.Weight)
+
+		// Copy values (up to 4)
+		for i := 0; i < 4 && i < len(obj.Prototype.Values); i++ {
+			elem.Value[i] = int32(obj.Prototype.Values[i])
+		}
+
+		// Copy extra flags (up to 4)
+		for i := 0; i < 4 && i < len(obj.Prototype.ExtraFlags); i++ {
+			elem.ExtraFlags[i] = int32(obj.Prototype.ExtraFlags[i])
+		}
+
+		// Copy affects (up to 6)
+		for i := 0; i < MaxObjAffect && i < len(obj.Prototype.Affects); i++ {
+			elem.Affects[i] = ObjAffect{
+				Location: uint8(obj.Prototype.Affects[i].Location),
+				Modifier: int8(obj.Prototype.Affects[i].Modifier),
+			}
+		}
+
+		// Copy name strings as fixed-size C-style buffers.
+		copyStringToFixedBytes(elem.Name[:], obj.Prototype.Keywords)
+		copyStringToFixedBytes(elem.ShortDesc[:], obj.Prototype.ShortDesc)
+		copyStringToFixedBytes(elem.Desc[:], obj.Prototype.LongDesc)
+	}
+
+	var buf bytes.Buffer
+	if err := binary.Write(&buf, binary.LittleEndian, &elem); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// CrashIsUnrentable checks whether an object should be dropped during crash
+// recovery. Matches the C Crash_is_unrentable() logic:
+//   - Prototype is nil (deleted object)
+//   - TypeFlag == ITEM_KEY (13 in CircleMUD)
+//   - Has ITEM_NORENT flag (extra_flags[0] bit 1 = 2)
+func CrashIsUnrentable(obj *ObjectInstance) bool {
+	if obj == nil {
+		return true
+	}
+	if obj.Prototype == nil {
+		return true
+	}
+	// ITEM_KEY = 13
+	if obj.Prototype.TypeFlag == 13 {
+		return true
+	}
+	// ITEM_NORENT = (1 << 1) = 2
+	if len(obj.Prototype.ExtraFlags) > 0 && (obj.Prototype.ExtraFlags[0]&2) != 0 {
+		return true
+	}
+	return false
+}
+
+// DecodeRentInfo deserializes a 56-byte rent_info blob.
+func DecodeRentInfo(data []byte) (*RentInfo, error) {
+	if len(data) < RentInfoSize {
+		return nil, ErrBadRentSize
+	}
+	var ri RentInfo
+	buf := bytes.NewReader(data[:RentInfoSize])
+	if err := binary.Read(buf, binary.LittleEndian, &ri); err != nil {
+		return nil, err
+	}
+	return &ri, nil
+}
+
+// EncodeRentInfo serializes a RentInfo into a 56-byte binary blob.
+func EncodeRentInfo(ri *RentInfo) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := binary.Write(&buf, binary.LittleEndian, ri); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// copyStringToFixedBytes copies a Go string into a fixed-size byte slice,
+// null-terminated (C-style), truncating if too long.
+func copyStringToFixedBytes(dst []byte, src string) {
+	n := len(src)
+	if n >= len(dst) {
+		n = len(dst) - 1
+	}
+	for i := 0; i < n; i++ {
+		dst[i] = src[i]
+	}
+	// Null-terminate
+	if n < len(dst) {
+		dst[n] = 0
+	}
+}
+
+// ErrBadRentSize is returned when rent info data is too short.
+var ErrBadRentSize = fmt.Errorf("rent info data too short: need %d bytes", RentInfoSize)
+
 const (
 	FlagAntiGood    = 1 << 2  // ITEM_ANTI_GOOD
 	FlagAntiEvil    = 1 << 3  // ITEM_ANTI_EVIL

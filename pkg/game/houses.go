@@ -97,16 +97,14 @@ func HouseGetFilename(vnum int) string {
 // Stub — returns nil. Wire this to the actual object-deserialization system
 // (binary obj_file_elem → *ObjectInstance) when objsave persistence is
 // implemented. The house system calls this from houseLoad/HouseListrent.
-func ObjFromStore(data interface{}) *ObjectInstance {
-	return nil
+func ObjFromStore(data []byte, w *World) (*ObjectInstance, int) {
+	return ObjFromBinary(data, w)
 }
 
-// ObjToStore serializes a game object to an open file (C: Obj_to_store).
-// Stub — returns false. Wire to the actual object-serialization system
-// (*ObjectInstance → binary obj_file_elem) when objsave persistence is
-// implemented. The house system calls this from HouseSaveObjects.
-func ObjToStore(obj *ObjectInstance, fp *os.File) bool {
-	return false
+// ObjToStore serializes a game object to binary on-disk format (C: Obj_to_store).
+// Returns the 592-byte binary blob for the caller to write to a file.
+func ObjToStore(obj *ObjectInstance, locate int) ([]byte, error) {
+	return ObjToBinary(obj, locate)
 }
 
 // ---------------------------------------------------------------------------
@@ -406,9 +404,13 @@ func (w *World) HouseSaveObjects(obj *ObjectInstance, fp *os.File) {
 	}
 
 	// Write this object to the file
-	result := ObjToStore(obj, fp)
-	if !result {
-		// ObjToStore is still a stub; this will succeed once wired
+	data, err := ObjToStore(obj, 0)
+	if err != nil {
+		BasicMudLog(fmt.Sprintf("HouseSaveObjects: ObjToStore failed for vnum %d: %v", obj.VNum, err))
+		return
+	}
+	if _, err := fp.Write(data); err != nil {
+		BasicMudLog(fmt.Sprintf("HouseSaveObjects: write failed for vnum %d: %v", obj.VNum, err))
 		return
 	}
 
