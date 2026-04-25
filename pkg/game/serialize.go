@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -52,7 +53,7 @@ func DeserializeInventory(data []byte, worldObjs map[int]*parser.Obj) (*Inventor
 			inv.Items = append(inv.Items, objInst)
 		} else {
 			// Log warning but continue
-			fmt.Printf("Warning: Object VNum %d not found in world\n", vnum)
+			slog.Warn("object not found in world", "vnum", vnum)
 		}
 	}
 
@@ -89,7 +90,7 @@ func DeserializeEquipment(data []byte, worldObjs map[int]*parser.Obj) (*Equipmen
 	for slotName, vnum := range eqData.Slots {
 		slot, ok := ParseEquipmentSlot(slotName)
 		if !ok {
-			fmt.Printf("Warning: Unknown equipment slot %s\n", slotName)
+			slog.Warn("unknown equipment slot", "slot", slotName)
 			continue
 		}
 
@@ -99,7 +100,7 @@ func DeserializeEquipment(data []byte, worldObjs map[int]*parser.Obj) (*Equipmen
 			objInst.EquipPosition = int(slot)
 			eq.Slots[slot] = objInst
 		} else {
-			fmt.Printf("Warning: Object VNum %d not found in world for slot %s\n", vnum, slotName)
+			slog.Warn("object not found for equipment slot", "vnum", vnum, "slot", slotName)
 		}
 	}
 

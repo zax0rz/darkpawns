@@ -2,7 +2,6 @@
 package game
 
 import (
-	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -67,41 +66,41 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 		case "M": // Load mobile
 			// Check if we can spawn more of this mob
 			if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
-				fmt.Printf("Cannot spawn mob %d: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
+				slog.Warn("cannot spawn mob: max in world reached", "mob_vnum", cmd.Arg1, "max_in_world", cmd.Arg2)
 				continue
 			}
 
 			mob, err := s.SpawnMob(cmd.Arg1, cmd.Arg3)
 			if err != nil {
 				// Log error but continue with other commands
-				fmt.Printf("Error spawning mob %d: %v\n", cmd.Arg1, err)
+				slog.Error("error spawning mob", "mob_vnum", cmd.Arg1, "error", err)
 				continue
 			}
 			lastMob = mob
 
 		case "O": // Load object to room
 			// Check if we can spawn more of this object
-			if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
-				fmt.Printf("Cannot spawn object %d: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
+		if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
+				slog.Warn("cannot spawn object: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2)
 				continue
 			}
 
 			_, err := s.SpawnObject(cmd.Arg1, cmd.Arg3)
 			if err != nil {
-				fmt.Printf("Error spawning object %d: %v\n", cmd.Arg1, err)
+				slog.Error("error spawning object", "obj_vnum", cmd.Arg1, "error", err)
 			}
 
 		case "G": // Give object to last loaded mob
 			if lastMob != nil {
 				// Check if we can spawn more of this object
 				if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
-					fmt.Printf("Cannot spawn object %d for mob: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
+					slog.Warn("cannot spawn object for mob: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "mob_inventory")
 					continue
 				}
 
 				obj, err := s.SpawnObject(cmd.Arg1, -1) // -1 means give to mob, not room
 				if err != nil {
-					fmt.Printf("Error spawning object %d for mob: %v\n", cmd.Arg1, err)
+					slog.Error("error spawning object for mob", "obj_vnum", cmd.Arg1, "error", err, "context", "mob_inventory")
 					continue
 				}
 				lastMob.Inventory = append(lastMob.Inventory, obj)
@@ -111,13 +110,13 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 			if lastMob != nil {
 				// Check if we can spawn more of this object
 				if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
-					fmt.Printf("Cannot spawn object %d for mob equip: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
+					slog.Warn("cannot spawn object for mob equip: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "mob_equip")
 					continue
 				}
 
 				obj, err := s.SpawnObject(cmd.Arg1, -1)
 				if err != nil {
-					fmt.Printf("Error spawning object %d for mob equip: %v\n", cmd.Arg1, err)
+					slog.Error("error spawning object for mob equip", "obj_vnum", cmd.Arg1, "error", err, "context", "mob_equip")
 					continue
 				}
 				// Simple equipment - just add to equipment map
@@ -133,13 +132,13 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 			if container != nil {
 				// Check if we can spawn more of this object
 				if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
-					fmt.Printf("Cannot spawn object %d for container: max in world (%d) reached\n", cmd.Arg1, cmd.Arg2)
+					slog.Warn("cannot spawn object for container: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "container")
 					continue
 				}
 
 				obj, err := s.SpawnObject(cmd.Arg1, -1)
 				if err != nil {
-					fmt.Printf("Error spawning object %d for container: %v\n", cmd.Arg1, err)
+					slog.Error("error spawning object for container", "obj_vnum", cmd.Arg1, "error", err, "context", "container")
 					continue
 				}
 				obj.Container = container
