@@ -539,6 +539,82 @@ Do NOT implement these improvements. Just document them.
 
 ---
 
+## 🧩 Mobprog Preservation — Hand-Coded NPC Behaviors
+
+**Source:** `src/mobprog.c` (646 lines) + `src/mobact.c` (408 lines) = 1,054 lines total.
+
+These are **not** a general mob programming language — they're hand-coded per-NPC interactions that give the world its texture. The Lua scripting system (115 scripts, ported) handles most pulse-driven behavior already, but these C functions contain unique interactions that must be preserved.
+
+### Unique Behaviors — Each Must Survive
+
+| VNUM | NPC | Behavior | Trigger | Status |
+|------|-----|----------|---------|--------|
+| 8063/8065 | Dogs | Growl at evil, lick at good on room entry | `mp_greet()` | 🔶 Lua SOUND can cover, but unique affect check |
+| 8063/8065 | Dogs | Eat food objects given, drop non-food in room | `mp_give()` | ✅ Easily ported as Lua GIVE script |
+| 8063/8065 | Dogs | Bark, pee, sleep, sniff periodically | `mp_sound()` + `mobile_activity()` | 🔶 Dog creates puddle object (vnum 20) on 1/26 pulse |
+| 8061 | Janitor | Thanks for junk, thanks for non-junk | `mp_give()` | ✅ Simple Lua GIVE script |
+| 14401 | Demon | Checks soul stone (vnum 9900), creates portal (vnum 19611) | `mp_give()` | ⚠️ **COMPLEX** — portal creation, val setting, alignment counter |
+| 14401 | Demon | Alignment-based dialogue (1000/999 toggle) | `mp_sound()` | ⚠️ Stateful alignment field swaps, unique |
+| 3063 | Mercenary | Bribe > 99g → CHARM + add_follower | `mp_bribe()` | ✅ Simple charm+follow |
+| 8088 | Cell guard | Bribe < level² → "not enough", ≥ level² → teleport to room 8117 | `mp_bribe()` | ⚠️ Conditional transfer with mount handling |
+| Cityguards | Guards | Bribe < 200 or unlucky → HIT, otherwise sleep on job | `mp_bribe()` | ✅ Flavor + state change |
+| 8023 | Prostitute | Bribe ≥ 5 → shadow emote | `mp_bribe()` | ✅ Flavor |
+| 13108 | Gremlin | Bribe ≥ 1000 → teleport to room 13154, else room 13193 | `mp_bribe()` | ⚠️ Portal-tunnel flavor with mount handling |
+| Citizens | Generic | Bow on bribe | `mp_bribe()` | ✅ Flavor |
+| 8059 | Captain Aversin | Entry → barks at sleeping guards, snaps to attention | `entry_prog()` | ✅ Simple state check + room loop |
+| 8066 | Petitioner | Random "Sign this!" speech | `mp_sound()` | ✅ SOUND script |
+| 8067 | Carpenter | Random emote about tool belt | `mp_sound()` | ✅ SOUND script |
+| 8068 | Town crier | Random event announcements | `mp_sound()` | ✅ SOUND script |
+| 8069 | Zealot | "Repent!" speech | `mp_sound()` | ✅ SOUND script |
+| 8071 | Beggar | Random coin request / jingle cup | `mp_sound()` | ✅ SOUND script |
+| 8072 | Singing drunk | Off-key war ditty | `mp_sound()` | ✅ SOUND script |
+| 8074 | Minstrel | Song about your mother or battles | `mp_sound()` | ✅ SOUND script |
+| 8079 | Mime | Invisible box emote | `mp_sound()` | ✅ SOUND script |
+| 14202 | Bhang | Tokes up emote | `mp_sound()` | ✅ SOUND script |
+| 16300 | KD recruiter | Smiles / shuffles papers | `mp_sound()` | ✅ SOUND script |
+| 8059 | Aversin | "Carry on, citizen" speech | `mp_sound()` | ✅ SOUND script |
+| — | Shopkeepers | Attack dogs in shop | `mp_greet()` | ⚠️ Non-trivial: calls hit() directly, rare edge case |
+
+**Key:** ✅ = simple port (Lua SOUND/GIVE/BRIBE trigger would cover it). ⚠️ = has state, conditions, or game object creation that needs careful Lua porting.
+
+### `mobile_activity()` — The Pulse Loop (mobact.c, 408 lines)
+
+This runs every pulse for every awake non-fighting mob. Most behaviors are already in Lua:
+
+| Behavior | C Location | Go/Lua Status |
+|----------|-----------|---------------|
+| Hunter chase (HUNTER flag + hunt_victim) | `mobile_activity()` | 🔶 Needs game-loop pulse hook |
+| Spec proc call (MOB_SPEC → mob_index[].func) | `mobile_activity()` | 🔶 GetMobSpec defined but not wired |
+| Wake/stand recovery | `mobile_activity()` | 🔶 Cleanup needed |
+| Scavenger item pickup | `mobile_activity()` | ✅ Lua SCAVENGER trigger? |
+| Random movement (not sentinel, not stay-zone) | `mobile_activity()` | 🔶 Needs game-loop pulse hook |
+| `mp_sound()` function call | `mobile_activity()` | ✅ Partially via Lua SOUND |
+| Lua MS_SOUND/MS_ONPULSE_ALL/MS_ONPULSE_PC | `mobile_activity()` | ✅ **Already in Lua** |
+| Aggression (AGGR, AGGR_EVIL/NEUTRAL/GOOD) | `mobile_activity()` | ✅ Lua scripts + spec procs |
+| Race hate attacks | `mobile_activity()` | 🔶 Not in Go yet |
+| Mob memory attacks (remember/forget) | `mobile_activity()` | 🔶 Not in Go yet |
+| Helper attacks (aid allied NPCs) | `mobile_activity()` | 🔶 Not in Go yet |
+| MOB_AGGR24 (attack level 24+) | `mobile_activity()` | 🔶 Not in Go yet |
+| AGGR24+AGGR (attack weaker mobs) | `mobile_activity()` | 🔶 Not in Go yet |
+
+### Lua Scripting Plan
+
+For each unique behavior (⚠️ above), the path is:
+1. **Simple behaviors ✅**: Create a Lua SOUND script using existing infrastructure (`run_script(mob, mob, nil, room, nil, "sound", LT_MOB)`)
+2. **Give/bribe interactions ⚠️**: `mp_give` and `mp_bribe` → need a Lua GIVE/BRIBE event trigger (currently no such hook in the Lua engine)
+3. **Pulse behaviors 🔶**: `mobile_activity()` logic → need a Go game-loop Tick() that delegates to Lua onpulse hooks and spec procs
+4. **Demon soul trade ⚠️**: Requires object creation (`read_object`), portal val setting, alignment state — most complex single behavior. Best as a spec proc or dedicated Lua script.
+
+### Priority for New Session
+
+When we circle back to mobprog, start with:
+1. GIVE/BRIBE Lua event triggers (unlocks 8 behaviors immediately)
+2. Game-loop pulse hook for `mobile_activity()` (unlocks all remaining pulse behaviors)
+3. Port `mp_sound` behaviors as Lua SOUND scripts (12 NPCs, straightforward)
+4. Custom Lua script for demon soul trade (most complex, most unique)
+
+---
+
 ## Session Startup
 
 Each new session working on this plan should:
