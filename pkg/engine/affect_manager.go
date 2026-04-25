@@ -244,6 +244,9 @@ func (am *AffectManager) Tick() {
 
 		var newAffects []*Affect
 		for _, aff := range affects {
+			// Apply periodic effects before ticking (so effects apply on the last tick)
+			am.applyPeriodicEffect(entity, aff)
+			
 			expired := aff.Tick()
 
 			if expired {
@@ -252,9 +255,6 @@ func (am *AffectManager) Tick() {
 				am.sendAffectMessage(entity, aff, false)
 			} else {
 				newAffects = append(newAffects, aff)
-
-				// Apply periodic effects (like poison damage, regeneration)
-				am.applyPeriodicEffect(entity, aff)
 			}
 		}
 
