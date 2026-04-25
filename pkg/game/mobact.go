@@ -276,6 +276,28 @@ func (w *World) MobileActivity() {
 	}
 }
 
+// scanForMob finds the first mob in a room matching a predicate.
+// Returns nil if no match found.
+func (w *World) scanForMob(roomVNum int, fn func(m *MobInstance) bool) *MobInstance {
+	for _, m := range w.GetMobsInRoom(roomVNum) {
+		if fn(m) {
+			return m
+		}
+	}
+	return nil
+}
+
+// scanForPlayer finds the first player in a room matching a predicate.
+// Returns nil if no match found.
+func (w *World) scanForPlayer(roomVNum int, fn func(p *Player) bool) *Player {
+	for _, p := range w.GetPlayersInRoom(roomVNum) {
+		if fn(p) {
+			return p
+		}
+	}
+	return nil
+}
+
 // mobAlive returns true if the mob's HP > 0.
 func mobAlive(mob *MobInstance) bool {
 	return mob != nil && mob.GetHP() > 0
