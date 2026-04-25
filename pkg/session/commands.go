@@ -234,6 +234,13 @@ func init() {
 	cmdRegistry.Register("todo", wrapArgs(cmdTodo), "Submit a todo suggestion.", 0, 0)
 	cmdRegistry.Register("afk", wrapArgs(cmdAFK), "Toggle away-from-keyboard status.", 0, 0)
 
+	// Ban system (ported from ban.c)
+	cmdRegistry.Register("ban", wrapArgs(cmdBan), "Ban a site (admin only).", LVL_GOD, 0)
+	cmdRegistry.Register("unban", wrapArgs(cmdUnban), "Unban a site (admin only).", LVL_GOD, 0)
+
+	// WHOD (ported from whod.c)
+	cmdRegistry.Register("whod", wrapArgs(cmdWhod), "Toggle WHOD display mode (admin only).", LVL_IMMORT, 0)
+
 	// Clan system (ported from clan.c)
 	cmdRegistry.Register("clan", wrapArgs(cmdClan), "Clan management commands.", 0, 0, "clans")
 
@@ -1622,5 +1629,26 @@ func cmdHcontrol(s *Session, args []string) error {
 // cmdHouse — player-facing house management (ported from house.c)
 func cmdHouse(s *Session, args []string) error {
 	s.manager.world.DoHouse(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdBan handles the "ban" admin command (ported from ban.c do_ban).
+func cmdBan(s *Session, args []string) error {
+	msg := s.manager.world.ExecBan(s.player, strings.Join(args, " "))
+	s.sendText(msg)
+	return nil
+}
+
+// cmdUnban handles the "unban" admin command (ported from ban.c do_unban).
+func cmdUnban(s *Session, args []string) error {
+	msg := s.manager.world.ExecUnban(s.player, strings.Join(args, " "))
+	s.sendText(msg)
+	return nil
+}
+
+// cmdWhod handles the "whod" admin command (ported from whod.c do_whod).
+func cmdWhod(s *Session, args []string) error {
+	msg := s.manager.world.ExecWhod(s.player, strings.Join(args, " "))
+	s.sendText(msg)
 	return nil
 }

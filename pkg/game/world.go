@@ -68,6 +68,12 @@ type World struct {
 
 	// Boards system — initialized via GetOrInitBoards()
 	Boards *BoardSystem
+
+	// Bans — site ban list + invalid name filter (ported from ban.c)
+	Bans *BanManager
+
+	// Whod — who-daemon display mode flags (ported from whod.c)
+	WhodDisplay *Whod
 }
 
 // NewWorld creates a new game world from parsed data.
@@ -136,6 +142,10 @@ func NewWorld(parsed *parser.World) (*World, error) {
 
 	// Initialize house control and board system
 	w.HouseControl = make([]HouseControl, 0)
+
+	// Initialize ban manager and WHOD display (ported from ban.c + whod.c)
+	w.Bans = NewBanManager()
+	w.WhodDisplay = NewWhod()
 
 	return w, nil
 }

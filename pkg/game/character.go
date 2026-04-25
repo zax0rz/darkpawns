@@ -32,6 +32,23 @@ const (
 	RaceSsaur    = 6
 )
 
+// ClassAbbrevs maps class int to 2-character abbreviation.
+// Source: class.c class_abbrevs[] lines 51–65
+var ClassAbbrevs = []string{
+	"Mu", // ClassMageUser = 0
+	"Cl", // ClassCleric   = 1
+	"Th", // ClassThief    = 2
+	"Wa", // ClassWarrior  = 3
+	"Ma", // ClassMagus    = 4
+	"Av", // ClassAvatar   = 5
+	"As", // ClassAssassin = 6
+	"Pa", // ClassPaladin  = 7
+	"Ni", // ClassNinja    = 8
+	"Ps", // ClassPsionic  = 9
+	"Ra", // ClassRanger   = 10
+	"My", // ClassMystic   = 11
+}
+
 // ClassNames maps class int to display name
 var ClassNames = map[int]string{
 	ClassMageUser: "Mage",

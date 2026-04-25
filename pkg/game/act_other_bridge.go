@@ -69,3 +69,30 @@ func (w *World) ExecGenWrite(ch *Player, cmd, arg string) { w.doGenWrite(ch, nil
 
 // ExecGenTog toggles a player option (brief, compact, notell, etc.).
 func (w *World) ExecGenTog(ch *Player, arg string) { w.doGenTog(ch, nil, "gentog", arg) }
+
+// ExecBan handles the "ban" admin command (ported from ban.c do_ban).
+// Returns the message to send to the player.
+func (w *World) ExecBan(ch *Player, arg string) string {
+	if w.Bans == nil {
+		return "Ban system not initialized.\r\n"
+	}
+	return w.Bans.DoBan("./data/badsites", ch.Name, arg)
+}
+
+// ExecUnban handles the "unban" admin command (ported from ban.c do_unban).
+// Returns the message to send to the player.
+func (w *World) ExecUnban(ch *Player, arg string) string {
+	if w.Bans == nil {
+		return "Ban system not initialized.\r\n"
+	}
+	return w.Bans.DoUnban("./data/badsites", ch.Name, arg)
+}
+
+// ExecWhod handles the "whod" admin command (ported from whod.c do_whod).
+// Returns the message to send to the player.
+func (w *World) ExecWhod(ch *Player, arg string) string {
+	if w.WhodDisplay == nil {
+		return "WHOD not initialized.\r\n"
+	}
+	return w.WhodDisplay.DoWhod(ch.Name, arg)
+}

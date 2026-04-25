@@ -222,10 +222,17 @@ Git status:          clean — all Waves 1-12 committed
 **Stubs (TODO):** doClanSet, doClanPrivate, doClanBank (~600 C lines, returns "not yet implemented")
 **Spec procs NOT YET WIRED:** GetObjSpec/GetMobSpec/GetRoomSpec defined but never called
 
-### Wave 13 — Misc (alias.c + ban.c + dream.c + weather.c, ~1385 lines) [boards.c and mobact.c DONE]
-**Remaining functions to port:** read_aliases, write_aliases, load_banned, _write_one_node, write_ban_list, Read_Invalid_List, dream, dream_travel, weather_and_time (remaining), another_hour, weather_change, prng_seed
-**~12 functions, ~900 lines new Go code**
-**Go targets:** `pkg/game/aliases.go`, `pkg/game/bans.go`, `pkg/game/dreams.go`
+### ✅ Wave 13 — Misc (alias.c + ban.c + dream.c + whod.c + weather.c, ~1385 lines) [COMPLETED 2026-04-25]
+**Ported files (Go line counts):**
+- `pkg/game/aliases.go` — 229 lines (alias persistence: read_aliases, write_aliases, free_aliases, perform_limited_alias)
+- `pkg/game/bans.go` — 362 lines (ban system: load_banned, IsSiteBanned, ValidName, do_ban, do_unban, free_ban_list, WriteBanList)
+- `pkg/game/dreams.go` — 242 lines (dream sequences: dream, dream_travel, do_wake)
+- `pkg/game/whod.go` — 321 lines (WHOD display: whod_mode flags, do_whod command, format_player_list)
+- `pkg/session/time_weather.go` — weather cycle (AnotherHour, WeatherChange, WeatherAndTime)
+**Total: 1,154 Go lines**
+**Commands wired:** ban (LVL_GOD), unban (LVL_GOD), whod (LVL_IMMORT), wake (player level)
+**Build status:** `go build ./... && go vet ./...` clean
+**Commit:** Wave 13: port alias.c + ban.c + dream.c + whod.c → Go
 
 ### 🚫 Waves 13-14 — OLC Editors (REPLACED by Web Admin SPA)
 **Decision: Do NOT port.** ~7,830 lines replaced by Web Admin SPA.
@@ -268,8 +275,8 @@ clans.go, houses.go, boards.go.
 ### ✅ #4: Wave 12 — Mob AI (mobact.c) [COMPLETED 2026-04-25]
 mobact.go — MobileActivity() AI dispatch. Commit c143439.
 
-### 🔄 Next: Wave 13 — Misc (alias.c + ban.c + dream.c + weather.c, ~1385 lines)
-Port read_aliases, write_aliases, load_banned, write_ban_list, Read_Invalid_List, dream/dream_travel, remaining weather functions.
+### ✅ Wave 13 — Misc (alias.c + ban.c + dream.c + whod.c + weather.c) [COMPLETED 2026-04-25]
+1,154 Go lines committed across 5 files. See Wave 13 entry above for details.
 
 ### 🔄 Wave 14 — Spec Procs — hunt_victim + remaining
 hunt_victim needed for MOB_HUNTER call sites. Wire GetObjSpec/GetMobSpec/GetRoomSpec.
@@ -465,17 +472,17 @@ Functions exist in `pkg/game/act_other.go` (1,718 lines). **Wave 6.5 COMPLETE** 
 | `mobile_activity` | ✅ In Go (mobact.go) | — | Mob AI tick — commit c143439 |
 | `remember` / `forget` / `clearMemory` | ✅ In Go | — | Mob memory routines |
 
-### Tier 9 — Misc (alias.c + ban.c + dream.c + gate.c + weather.c, ~1926 lines)
+### ✅ Tier 9 — Misc (alias.c + ban.c + dream.c + whod.c + weather.c, ~1926 lines) [WAVE 13 COMPLETE 2026-04-25]
 
 | C Function | Go Status | Priority | Notes |
 |---|---|---|---|
-| `read_aliases` / `write_aliases` | ❌ MISSING | P3 | Player alias persistence |
-| `load_banned` / `write_ban_list` | ❌ MISSING | P2 | Site ban system |
-| `Read_Invalid_List` | ❌ MISSING | P2 | Invalid name filter |
-| `dream` / `dream_travel` | ❌ MISSING | P3 | Dream sequences |
+| `read_aliases` / `write_aliases` / `free_alias` / `perform_limited_alias` | ✅ In Go (pkg/game/aliases.go) | — | Player alias persistence |
+| `load_banned` / `WriteBanList` / `IsSiteBanned` / `ValidName` | ✅ In Go (pkg/game/bans.go) | — | Site ban system + invalid name filter |
+| `dream` / `dream_travel` / `do_wake` | ✅ In Go (pkg/game/dreams.go) | — | Dream sequences |
+| `whod_mode` / `do_whod` / `format_player_list` | ✅ In Go (pkg/game/whod.go) | — | WHO display system |
 | `weather_and_time` | ✅ In Go | — | Weather/time system |
-| `another_hour` / `weather_change` | ❌ MISSING | P2 | Weather cycle functions |
-| `prng_seed` | ❌ MISSING | P2 | RNG seed control |
+| `another_hour` / `weather_change` | ✅ In Go (pkg/session/time_weather.go) | — | Weather cycle functions |
+| `prng_seed` | NOT ported (RNG seed handled by Go runtime) | — | Go's math/rand seeds automatically at init |
 
 ## Model Routing Rules (Updated 2026-04-24)
 
