@@ -17,6 +17,7 @@ const (
 	doorSCMDUnlock = 2
 	doorSCMDLock   = 3
 	doorSCMDPick   = 4
+	doorSCMDBash   = 5
 )
 
 // doGenDoor handles door operations for all subcommands, mirroring the C
@@ -34,6 +35,8 @@ func (s *Session) doGenDoor(subcmd int, args []string) {
 			s.Send("Lock what? (Try: lock door north)")
 		case doorSCMDPick:
 			s.Send("Pick what? (Try: pick door north)")
+		case doorSCMDBash:
+			s.Send("Bash what? (Try: bash door north)")
 		default:
 			s.Send("Do what with which door?")
 		}
@@ -70,6 +73,8 @@ func (s *Session) doGenDoor(subcmd int, args []string) {
 		s.doDoorLock(door, roomVNum, dir)
 	case doorSCMDPick:
 		s.doDoorPick(door, roomVNum, dir)
+	case doorSCMDBash:
+		s.doDoorBash(door, roomVNum, dir)
 	}
 }
 
@@ -85,6 +90,8 @@ func cmdDoorName(subcmd int) string {
 		return "lock"
 	case doorSCMDPick:
 		return "pick"
+	case doorSCMDBash:
+		return "bash"
 	default:
 		return "do"
 	}
@@ -215,6 +222,32 @@ func (s *Session) doDoorPick(door *systems.Door, roomVNum int, dir string) {
 	}
 }
 
+func (s *Session) doDoorBash(door *systems.Door, roomVNum int, dir string) {
+	if !door.Closed {
+		s.Send("It's already open.")
+		return
+	}
+	if !door.Bashable {
+		s.Send("This door cannot be bashed.")
+		return
+	}
+	if door.Hp <= 0 {
+		s.Send("The door has already been destroyed.")
+		return
+	}
+
+	// Rough strength calc — stats system coming later
+	str := 50 + s.player.Strength/2
+	dm := getDoorManager(s)
+	success, msg := dm.BashDoor(roomVNum, dir, str)
+	if success {
+		s.Send(msg)
+		doorBroadcast(s, fmt.Sprintf("%s bashes down the %s door!", s.player.Name, dir))
+	} else {
+		s.Send(msg)
+	}
+}
+
 func (s *Session) findKeyForDoor(door *systems.Door) int {
 	if door.KeyVNum >= 0 {
 		if playerHasKey(s, door.KeyVNum) {
@@ -295,6 +328,12 @@ func getOppositeDirection(dir string) string {
 	default:
 		return ""
 	}
+}
+
+// cmdBashDoor handles the 'bash' command for doors (not combat bash).
+func cmdBashDoor(s *Session, args []string) error {
+	s.doGenDoor(doorSCMDBash, args)
+	return nil
 }
 
 // cmdOpen handles the 'open' command.

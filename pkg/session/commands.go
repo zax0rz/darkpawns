@@ -117,6 +117,7 @@ func init() {
 	cmdRegistry.Register("lock", wrapArgs(cmdLock), "Lock a door with your key: lock <north|south|east|west|up|down>", 0, 0)
 	cmdRegistry.Register("unlock", wrapArgs(cmdUnlock), "Unlock a door with your key: unlock <north|south|east|west|up|down>", 0, 0)
 	cmdRegistry.Register("knock", wrapArgs(cmdKnock), "Knock on a door: knock <north|south|east|west|up|down>", 0, 0)
+	cmdRegistry.Register("bashdoor", wrapArgs(cmdBashDoor), "Bash down a door: bashdoor <north|south|east|west|up|down>", 0, 0, "dbash")
 
 	// Wizard commands
 	cmdRegistry.Register("goto", wrapArgs(cmdGoto), "Teleport to a room by VNum.", LVL_IMMORT, 0)
@@ -1348,7 +1349,7 @@ func cmdHelp(s *Session, args []string) error {
 		s.sendText("Available commands: look, north/south/east/west/up/down, say, hit, flee, " +
 			"inventory, equipment, wear, remove, wield, hold, get, drop, " +
 			"score, who, tell, emote, shout, where, quit, " +
-			"open, close, lock, unlock, pick\n" +
+			"open, close, lock, unlock, pick, bashdoor\n" +
 			"Type 'help <topic>' for more info (stub — full help coming later).")
 		return nil
 	}
