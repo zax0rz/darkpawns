@@ -27,6 +27,32 @@ func findMobInRoom(w *World, roomVNum int, name string) *MobInstance {
 	return nil
 }
 
+// mobHasAffect checks if a MobInstance has a given affect flag string in its prototype.
+func mobHasAffect(me *MobInstance, affect string) bool {
+	for _, f := range me.Prototype.AffectFlags {
+		if strings.EqualFold(f, affect) {
+			return true
+		}
+	}
+	return false
+}
+
+// findTargetInRoom finds a mob or player by name in a room. Returns the target
+// as an interface{} suitable for passing to spells.Cast (which accepts interface{}).
+func findTargetInRoom(w *World, roomVNum int, name string) interface{} {
+	for _, m := range w.GetMobsInRoom(roomVNum) {
+		if m.GetName() == name {
+			return m
+		}
+	}
+	for _, p := range w.GetPlayersInRoom(roomVNum) {
+		if p.GetName() == name {
+			return p
+		}
+	}
+	return nil
+}
+
 func init() {
 	RegisterSpec("clerk", specClerk)
 	RegisterSpec("butler", specButler)
@@ -68,100 +94,119 @@ func specShopKeeper(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 
 // specCleric — cleric mob: heals self, casts offensive/defensive spells while fighting.
 // Ported from SPECIAL(cleric) in spec_procs.c (line 1425).
+// Uses `me` (MobInstance) for all mob state — `ch` is nil during pulse calls.
 func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if !ch.IsNPC() || cmd != "" || ch.GetHP() < 0 {
+	// In C, IS_NPC(ch) and AWAKE(ch) guard on the mob. In Go, `me` is always the mob.
+	// If ch != nil and ch is not an NPC, a player triggered this via command — not our spec.
+	if ch != nil {
+		return false
+	}
+	if cmd != "" || me.GetHP() < 0 {
 		return false
 	}
 
-	// Stand up if between sleeping/resting and standing
-	if ch.GetPosition() != combat.PosFighting {
-		if ch.GetPosition() > combat.PosStunned && ch.GetPosition() < combat.PosStanding {
-			doStand(w, ch)
+	// Stand up if between stunned and standing (C: AWAKE check + do_stand)
+	if me.GetPosition() != combat.PosFighting {
+		if me.GetPosition() > combat.PosStunned && me.GetPosition() < combat.PosStanding {
+			me.SetStatus("standing")
 		}
 	}
 
 	// Do nothing in peaceful rooms
-	if w.roomHasFlag(ch.GetRoomVNum(), "peaceful") {
+	if w.roomHasFlag(me.GetRoomVNum(), "peaceful") {
 		return false
 	}
 
 	// If not fighting and below max HP-10, heal self
-	if ch.GetFighting() == "" && ch.GetHP() < ch.GetMaxHP()-10 {
+	if me.GetFighting() == "" && me.GetHP() < me.GetMaxHP()-10 {
 		switch {
-		case ch.GetLevel() >= 20:
-			spells.Cast(ch, ch, spells.SpellHeal, ch.GetLevel(), nil)
-		case ch.GetLevel() > 12:
-			spells.Cast(ch, ch, spells.SpellCureCritic, ch.GetLevel(), nil)
+		case me.GetLevel() >= 20:
+			spells.Cast(me, me, spells.SpellHeal, me.GetLevel(), nil)
+		case me.GetLevel() > 12:
+			spells.Cast(me, me, spells.SpellCureCritic, me.GetLevel(), nil)
 		default:
-			spells.Cast(ch, ch, spells.SpellCureLight, ch.GetLevel(), nil)
+			spells.Cast(me, me, spells.SpellCureLight, me.GetLevel(), nil)
 		}
 	}
 
-	// If not fighting, try summoner sub-spec
-	victName := ch.GetFighting()
+	// Find a dude to do evil things upon
+	victName := me.GetFighting()
 	if victName == "" {
 		return specSummoner(w, ch, me, "", "")
 	}
 
 	// lspell = number(0, GET_LEVEL(ch)) + GET_LEVEL(ch)/5, capped at GET_LEVEL, min 1
-	lspell := rand.Intn(ch.GetLevel() + 1)
-	lspell += ch.GetLevel() / 5
-	if lspell > ch.GetLevel() {
-		lspell = ch.GetLevel()
+	lspell := rand.Intn(me.GetLevel() + 1)
+	lspell += me.GetLevel() / 5
+	if lspell > me.GetLevel() {
+		lspell = me.GetLevel()
 	}
 	if lspell < 1 {
 		lspell = 1
 	}
 
-	// Prevent dispel-self if same alignment (lspell < 3)
+	// Prevent dispel-self if same alignment as victim (lspell < 3)
 	if lspell < 3 {
-		for _, m := range w.GetMobsInRoom(ch.GetRoomVNum()) {
+		casterAlign := me.Prototype.Alignment
+		// Check mobs in room for target
+		for _, m := range w.GetMobsInRoom(me.GetRoomVNum()) {
 			if m.GetName() == victName {
-				// TODO: MobInstance doesn't have alignment yet — skip same-align check
-					// if mob and caster share alignment, bump lspell
+				if (casterAlign <= -350 && m.Prototype.Alignment <= -350) ||
+					(casterAlign >= 350 && m.Prototype.Alignment >= 350) {
 					lspell = 4
+				}
+				break
+			}
+		}
+		// Also check players in room for target
+		for _, p := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+			if p.GetName() == victName {
+				if (casterAlign <= -350 && p.IsEvil()) ||
+					(casterAlign >= 350 && p.IsGood()) {
+					lspell = 4
+				}
 				break
 			}
 		}
 	}
 
 	// Emergency teleport: HP < 25%, lspell > 25, not aggressive
-	if ch.GetHP() < ch.GetMaxHP()/4 && lspell > 25 /* TODO: aggressive check needs MobInstance */ {
-		vict := findMobInRoom(w, ch.GetRoomVNum(), victName)
+	if me.GetHP() < me.GetMaxHP()/4 && lspell > 25 && !me.HasFlag("aggressive") {
+		vict := findTargetInRoom(w, me.GetRoomVNum(), victName)
 		if vict != nil {
 			if rand.Intn(3) != 0 {
-				spells.Cast(ch, vict, spells.SpellTeleport, ch.GetLevel(), nil)
+				spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), nil)
 			} else {
-				spells.Cast(ch, ch, spells.SpellTeleport, ch.GetLevel(), nil)
+				spells.Cast(me, me, spells.SpellTeleport, me.GetLevel(), nil)
 			}
 		}
 		return false
 	}
 
-	// Determine heal priority threshold (matches C: most injured → highest healperc)
+	// Determine heal priority threshold (matches C faithfully, including unreachable branches)
 	healPerc := 0
 	switch {
-	case ch.GetHP() < ch.GetMaxHP()/2:
+	case me.GetHP() < me.GetMaxHP()/2:
 		healPerc = 7
-	case ch.GetHP() < ch.GetMaxHP()/4:
+	case me.GetHP() < me.GetMaxHP()/4:
 		healPerc = 5
-	case ch.GetHP() < ch.GetMaxHP()/8:
+	case me.GetHP() < me.GetMaxHP()/8:
 		healPerc = 3
 	}
 
-	// Roll: heal self (>=3) vs hit foe (<2), out of (healPerc+2)
+	// Roll: hit foe (<3) vs heal self (>=3), out of (healPerc+2)
 	if rand.Intn(healPerc+2) >= 2 {
 		// Heal self — check curses, poisons, blindness
-		if ch.IsAffected(affBlind) && lspell >= 4 && rand.Intn(4) == 0 {
-			spells.Cast(ch, ch, spells.SpellCureBlind, ch.GetLevel(), nil)
+		if mobHasAffect(me, "blind") && lspell >= 4 && rand.Intn(4) == 0 {
+			spells.Cast(me, me, spells.SpellCureBlind, me.GetLevel(), nil)
 			return true
 		}
-		if ch.IsAffected(affCurse) && lspell >= 6 && rand.Intn(7) == 0 {
-			spells.Cast(ch, ch, spells.SpellRemoveCurse, ch.GetLevel(), nil)
+		if mobHasAffect(me, "curse") && lspell >= 6 && rand.Intn(7) == 0 {
+			spells.Cast(me, me, spells.SpellRemoveCurse, me.GetLevel(), nil)
 			return true
 		}
-		if ch.IsAffected(affPoison) && lspell >= 5 && rand.Intn(7) == 0 {
-			spells.Cast(ch, ch, spells.SpellRemovePoison, ch.GetLevel(), nil)
+		if mobHasAffect(me, "poison") && lspell >= 5 && rand.Intn(7) == 0 {
+			spells.Cast(me, me, spells.SpellRemovePoison, me.GetLevel(), nil)
 			return true
 		}
 
@@ -169,55 +214,55 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		if rand.Intn(4) == 0 {
 			switch {
 			case lspell <= 5:
-				spells.Cast(ch, ch, spells.SpellCureLight, ch.GetLevel(), nil)
+				spells.Cast(me, me, spells.SpellCureLight, me.GetLevel(), nil)
 			case lspell <= 17:
-				// Intentionally do nothing
+				// Intentionally do nothing (matches C: cases 6-17 break)
 			case lspell == 18:
-				spells.Cast(ch, ch, spells.SpellCureCritic, ch.GetLevel(), nil)
+				spells.Cast(me, me, spells.SpellCureCritic, me.GetLevel(), nil)
 			default:
-				if !ch.IsAffected(affSanctuary) {
-					spells.Cast(ch, ch, spells.SpellSanctuary, ch.GetLevel(), nil)
+				if !mobHasAffect(me, "sanctuary") {
+					spells.Cast(me, me, spells.SpellSanctuary, me.GetLevel(), nil)
 				} else {
-					spells.Cast(ch, ch, spells.SpellHeal, ch.GetLevel(), nil)
+					spells.Cast(me, me, spells.SpellHeal, me.GetLevel(), nil)
 				}
 			}
 		}
 		return true
 	}
 
-	// Hit a foe — find the victim mob
-	vict := findMobInRoom(w, ch.GetRoomVNum(), victName)
+	// Hit a foe — find the victim
+	vict := findTargetInRoom(w, me.GetRoomVNum(), victName)
 	if vict == nil {
 		return false
 	}
 
-	// Call lightning if outside, raining, lspell >= 15 (1-in-6)
-	room := w.GetRoomInWorld(ch.GetRoomVNum())
+	// Call lightning if outside, lspell >= 15 (1-in-6)
+	room := w.GetRoomInWorld(me.GetRoomVNum())
 	if room != nil && room.Sector != SECT_INSIDE && lspell >= 15 && rand.Intn(6) == 0 {
-		spells.Cast(ch, vict, spells.SpellCallLightning, ch.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellCallLightning, me.GetLevel(), nil)
 		return true
 	}
 
 	// Offensive spells by lspell
 	switch {
 	case lspell <= 3:
-		if ch.IsEvil() {
-			spells.Cast(ch, vict, spells.SpellDispelGood, ch.GetLevel(), nil)
+		if me.Prototype.Alignment <= -350 {
+			spells.Cast(me, vict, spells.SpellDispelGood, me.GetLevel(), nil)
 		} else {
-			spells.Cast(ch, vict, spells.SpellDispelEvil, ch.GetLevel(), nil)
+			spells.Cast(me, vict, spells.SpellDispelEvil, me.GetLevel(), nil)
 		}
 	case lspell <= 6:
-		spells.Cast(ch, vict, spells.SpellBlindness, ch.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellBlindness, me.GetLevel(), nil)
 	case lspell == 7:
-		spells.Cast(ch, vict, spells.SpellCurse, ch.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellCurse, me.GetLevel(), nil)
 	case lspell <= 16:
-		spells.Cast(ch, vict, spells.SpellPoison, ch.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellPoison, me.GetLevel(), nil)
 	case lspell <= 19:
-		spells.Cast(ch, vict, spells.SpellEarthquake, ch.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellEarthquake, me.GetLevel(), nil)
 	case lspell <= 24:
-		// Intentionally do nothing (matches C: break)
+		// Intentionally do nothing (matches C: cases 20-24 break)
 	default:
-		spells.Cast(ch, vict, spells.SpellHarm, ch.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellHarm, me.GetLevel(), nil)
 	}
 
 	return true
