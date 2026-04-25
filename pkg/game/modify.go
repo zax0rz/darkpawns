@@ -14,21 +14,329 @@ import (
 // Original C: modify.c ~300 lines total
 // ---------------------------------------------------------------------------
 
-// TODO: implement do_set - full character field editor
-// Expected: allows immortals to inspect and modify any character field by name
-// Original: modify.c ~200 lines
+// do_set — full character field editor (immortal command)
+func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool {
+	name, rest := splitArg(arg)
+	field, value := splitArg(rest)
+	if name == "" || field == "" {
+		ch.SendMessage("Usage: set <victim> <field> <value>\r\n")
+		return true
+	}
 
-// TODO: implement do_stat - character inspection command
-// Expected: shows detailed stats for a target character
-// Original: modify.c ~50 lines (do_stat + helper display functions)
+	// Find target
+	targetPl, targetMob := w.findCharInRoom(ch, ch.RoomVNum, name)
+	var target *Player
+	if targetPl != nil {
+		target = targetPl
+	} else if targetMob != nil {
+		ch.SendMessage("You can't set fields on mobs yet.\r\n")
+		return true
+	} else {
+		ch.SendMessage("There is no such creature.\r\n")
+		return true
+	}
 
-// TODO: implement do_gecho - broadcast message to entire game
-// Expected: sends a message to every player on the server
-// Original: modify.c ~20 lines
+	// Level check
+	if target.Level >= ch.Level && target != ch {
+		ch.SendMessage("Maybe that's not such a great idea...\r\n")
+		return true
+	}
 
-// TODO: implement do_social - social/toggle command
-// Expected: sets social struct fields on the player
-// Original: modify.c ~30 lines
+	switch strings.ToLower(field) {
+	case "level":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's level: %d\r\n", target.GetName(), target.Level))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil || v < 0 || v > 110 {
+			ch.SendMessage("Value must be 0-110.\r\n")
+			return true
+		}
+		target.Level = v
+		ch.SendMessage(fmt.Sprintf("%s's level set to %d.\r\n", target.GetName(), v))
+	case "gold":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's gold: %d\r\n", target.GetName(), target.Gold))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.Gold = v
+		ch.SendMessage(fmt.Sprintf("%s's gold set to %d.\r\n", target.GetName(), v))
+	case "hit", "hp", "health":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's hit: %d/%d\r\n", target.GetName(), target.Health, target.MaxHealth))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.Health = v
+		ch.SendMessage(fmt.Sprintf("%s's hit set to %d.\r\n", target.GetName(), v))
+	case "mana":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's mana: %d/%d\r\n", target.GetName(), target.Mana, target.MaxMana))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.Mana = v
+		ch.SendMessage(fmt.Sprintf("%s's mana set to %d.\r\n", target.GetName(), v))
+	case "maxhit":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's maxhit: %d\r\n", target.GetName(), target.MaxHealth))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.MaxHealth = v
+		ch.SendMessage(fmt.Sprintf("%s's maxhit set to %d.\r\n", target.GetName(), v))
+	case "maxmana":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's maxmana: %d\r\n", target.GetName(), target.MaxMana))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.MaxMana = v
+		ch.SendMessage(fmt.Sprintf("%s's maxmana set to %d.\r\n", target.GetName(), v))
+	case "maxmove":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's maxmove: %d\r\n", target.GetName(), target.MaxMove))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.MaxMove = v
+		ch.SendMessage(fmt.Sprintf("%s's maxmove set to %d.\r\n", target.GetName(), v))
+	case "move":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's move: %d/%d\r\n", target.GetName(), target.Move, target.MaxMove))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.Move = v
+		ch.SendMessage(fmt.Sprintf("%s's move set to %d.\r\n", target.GetName(), v))
+	case "align", "alignment":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's alignment: %d\r\n", target.GetName(), target.Alignment))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil || v < -1000 || v > 1000 {
+			ch.SendMessage("Value must be -1000 to 1000.\r\n")
+			return true
+		}
+		target.Alignment = v
+		ch.SendMessage(fmt.Sprintf("%s's alignment set to %d.\r\n", target.GetName(), v))
+	case "ac":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's AC: %d\r\n", target.GetName(), target.AC))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.AC = v
+		ch.SendMessage(fmt.Sprintf("%s's AC set to %d.\r\n", target.GetName(), v))
+	case "hitroll":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's hitroll: %d\r\n", target.GetName(), target.Hitroll))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.Hitroll = v
+		ch.SendMessage(fmt.Sprintf("%s's hitroll set to %d.\r\n", target.GetName(), v))
+	case "damroll":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's damroll: %d\r\n", target.GetName(), target.Damroll))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be numeric.\r\n")
+			return true
+		}
+		target.Damroll = v
+		ch.SendMessage(fmt.Sprintf("%s's damroll set to %d.\r\n", target.GetName(), v))
+	case "exp", "experience":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's exp: %d\r\n", target.GetName(), target.Exp))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil || v < 0 {
+			ch.SendMessage("Value must be >= 0.\r\n")
+			return true
+		}
+		target.Exp = v
+		ch.SendMessage(fmt.Sprintf("%s's exp set to %d.\r\n", target.GetName(), v))
+	case "practices":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's practices: %d\r\n", target.GetName(), target.Practices))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil || v < 0 {
+			ch.SendMessage("Value must be >= 0.\r\n")
+			return true
+		}
+		target.Practices = v
+		ch.SendMessage(fmt.Sprintf("%s's practices set to %d.\r\n", target.GetName(), v))
+	case "roomflag":
+		target.RoomFlags = !target.RoomFlags
+		if target.RoomFlags {
+			ch.SendMessage("Room flags on.\r\n")
+		} else {
+			ch.SendMessage("Room flags off.\r\n")
+		}
+	case "name":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's name: %s\r\n", target.GetName(), target.Name))
+			return true
+		}
+		target.Name = value
+		ch.SendMessage(fmt.Sprintf("Name set to %s.\r\n", value))
+	case "sex":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's sex: %d\r\n", target.GetName(), target.Sex))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil || v < 0 || v > 2 {
+			ch.SendMessage("Value must be 0-2 (male/female/neutral).\r\n")
+			return true
+		}
+		target.Sex = v
+		ch.SendMessage(fmt.Sprintf("%s's sex set to %d.\r\n", target.GetName(), v))
+	case "room":
+		if value == "" {
+			ch.SendMessage(fmt.Sprintf("%s's room: %d\r\n", target.GetName(), target.RoomVNum))
+			return true
+		}
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			ch.SendMessage("Value must be a room vnum.\r\n")
+			return true
+		}
+		target.RoomVNum = v
+		ch.SendMessage(fmt.Sprintf("%s's room set to %d.\r\n", target.GetName(), v))
+	default:
+		ch.SendMessage(fmt.Sprintf("Unknown field: %s\r\n", field))
+	}
+	return true
+}
+
+// do_stat — character inspection command
+func (w *World) doStat(ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if arg == "" {
+		ch.SendMessage("Stats on who or what?\r\n")
+		return true
+	}
+
+	// Try room first
+	if strings.HasPrefix(strings.ToLower(arg), "room") {
+		room := w.GetRoomInWorld(ch.RoomVNum)
+		if room != nil {
+			ch.SendMessage(fmt.Sprintf("Room: [%d] %s\r\nSector: %d  Flags: %v\r\n", room.VNum, room.Name, room.Sector, room.Flags))
+		}
+		return true
+	}
+
+	// Try player
+	targetPl, _ := w.findCharInRoom(ch, ch.RoomVNum, arg)
+	if targetPl != nil {
+		t := targetPl
+		ch.SendMessage(fmt.Sprintf("Name: %s  Level: %d  Class: %d  Race: %d\r\n", t.Name, t.Level, t.Class, t.Race))
+		ch.SendMessage(fmt.Sprintf("Hit: %d/%d  Mana: %d/%d  Move: %d/%d\r\n", t.Health, t.MaxHealth, t.Mana, t.MaxMana, t.Move, t.MaxMove))
+		ch.SendMessage(fmt.Sprintf("AC: %d  Hitroll: %d  Damroll: %d  Align: %d\r\n", t.AC, t.Hitroll, t.Damroll, t.Alignment))
+		ch.SendMessage(fmt.Sprintf("Gold: %d  Exp: %d  Practices: %d  Room: %d\r\n", t.Gold, t.Exp, t.Practices, t.RoomVNum))
+		ch.SendMessage(fmt.Sprintf("Str: %d  Int: %d  Wis: %d  Dex: %d  Con: %d  Cha: %d\r\n",
+			t.Stats.Str, t.Stats.Int, t.Stats.Wis, t.Stats.Dex, t.Stats.Con, t.Stats.Cha))
+		return true
+	}
+
+	// Try object
+	obj := w.findObjNear(ch, arg)
+	if obj != nil {
+		p := obj.Prototype
+		ch.SendMessage(fmt.Sprintf("Object: %s  VNum: %d  Type: %d\r\n", p.ShortDesc, p.VNum, p.TypeFlag))
+		ch.SendMessage(fmt.Sprintf("Keywords: %s  Weight: %d  Cost: %d\r\n", p.Keywords, p.Weight, p.Cost))
+		return true
+	}
+
+	ch.SendMessage("Nothing around by that name.\r\n")
+	return true
+}
+
+// do_gecho — broadcast message to entire game
+func (w *World) doGecho(ch *Player, me *MobInstance, cmd string, arg string) bool {
+	arg = strings.TrimSpace(arg)
+	if arg == "" {
+		ch.SendMessage("That must be a mistake...\r\n")
+		return true
+	}
+	msg := arg + "\r\n"
+	w.mu.RLock()
+	for _, p := range w.players {
+		p.SendMessage(msg)
+	}
+	w.mu.RUnlock()
+	return true
+}
+
+// do_social — social action command
+func (w *World) doSocial(ch *Player, me *MobInstance, cmd string, arg string) bool {
+	arg = strings.TrimSpace(arg)
+	if arg == "" {
+		ch.SendMessage("What social action?\r\n")
+		return true
+	}
+
+	// Broadcast social message to the room
+	parts := strings.SplitN(arg, " ", 2)
+	socialName := strings.ToLower(parts[0])
+	targetArg := ""
+	if len(parts) > 1 {
+		targetArg = parts[1]
+	}
+
+	// Simple social format: player does <social> [at <target>]
+	if targetArg != "" {
+		w.SendToRoom(ch.RoomVNum, fmt.Sprintf("%s %s %s.\r\n", ch.GetName(), socialName, targetArg))
+	} else {
+		w.SendToRoom(ch.RoomVNum, fmt.Sprintf("%s %s.\r\n", ch.GetName(), socialName))
+	}
+	return true
+}
 
 // ---------------------------------------------------------------------------
 // modify.go — ported from modify.c (skillset, string editing)

@@ -49,6 +49,12 @@ type MobInstance struct {
 
 	// CustomData stores arbitrary per-instance data (e.g., damroll bonus for brain eater)
 	CustomData map[string]interface{}
+
+	// Affect flags bitmask — same bit positions as AFF_* constants used by Player
+	Affects uint64
+
+	// Following — name of player this mob follows (for charmed pets, etc.)
+	Following string
 }
 
 // NewMob creates a new mob instance from a prototype.
@@ -476,6 +482,27 @@ func (m *MobInstance) GetGold() int {
 		return m.Prototype.Gold
 	}
 	return 0
+}
+
+// IsAffected returns true if the given AFF bit is set on the mob.
+func (m *MobInstance) IsAffected(bit int) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Affects&(1<<bit) != 0
+}
+
+// SetAffected sets the given AFF bit on the mob.
+func (m *MobInstance) SetAffected(bit int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Affects |= (1 << bit)
+}
+
+// RemoveAffected clears the given AFF bit on the mob.
+func (m *MobInstance) RemoveAffected(bit int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Affects &^= (1 << bit)
 }
 
 func (m *MobInstance) GetRoomVNum() int {

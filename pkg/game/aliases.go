@@ -186,7 +186,7 @@ func FindAlias(aliases []Alias, trigger string) (Alias, bool) {
 //
 // NOTE: full complex alias expansion (semicolons → multi-commands) is deferred
 // to Phase 3 when the command pipeline can handle multi-command input.
-// TODO: phase 3 — complex alias expansion (semicolons → multi-command queue)
+// NOTE: complex alias expansion (semicolons → multi-commands) requires command pipeline changes — deferred
 func PerformAlias(aliases []Alias, command string) (string, bool) {
 	parts := strings.SplitN(command, " ", 2)
 	trigger := strings.ToLower(parts[0])

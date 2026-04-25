@@ -313,6 +313,18 @@ func (w *World) SpawnMobInstance(vnum int, roomVNum int) (*MobInstance, error) {
 	return w.SpawnMob(vnum, roomVNum)
 }
 
+// extractMob removes a mob instance from the world (extract_char equivalent).
+func (w *World) extractMob(mob *MobInstance) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for id, m := range w.activeMobs {
+		if m == mob {
+			delete(w.activeMobs, id)
+			break
+		}
+	}
+}
+
 // SpawnObject spawns an object in the specified room.
 func (w *World) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 	w.mu.Lock()

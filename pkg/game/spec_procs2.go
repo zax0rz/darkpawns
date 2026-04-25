@@ -2,7 +2,9 @@ package game
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/spells"
@@ -221,11 +223,28 @@ func specWhirlpool(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	specOccurred := false
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 		if !pl.IsNPC() {
-			// TODO: pick random room 4600-4699 that isn't private/godroom/death/nomob
-			// char_from_room(pl); char_to_room(pl, to_room)
+			// Pick random room 4600-4699 that isn't private/godroom/death/nomob
+			var toRoom int
+			for i := 0; i < 100; i++ {
+				candidate := 4600 + rand.Intn(100)
+				r := w.GetRoomInWorld(candidate)
+				if r == nil {
+					continue
+				}
+				if w.roomHasFlag(candidate, "private") || w.roomHasFlag(candidate, "godroom") ||
+					w.roomHasFlag(candidate, "death") || w.roomHasFlag(candidate, "nomob") {
+					continue
+				}
+				toRoom = candidate
+				break
+			}
+			if toRoom == 0 {
+				continue
+			}
+			pl.SetRoom(toRoom)
 			sendToChar(pl, "A ravaging whirlpool sucks you under!\r\n")
 			sendToChar(pl, "You finally surface, sputtering...\r\n\r\n")
-			// TODO: look_at_room(vict, 0)
+			w.LookAtRoom(pl, false)
 			specOccurred = true
 		}
 	}
@@ -294,21 +313,87 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			return true
 		}
 		ch.SetGold(ch.GetGold() - 300)
-		// TODO: horse = read_mobile(HORSE_VNUM, VIRTUAL); char_to_room(horse, ch->in_room)
-		// TODO: SET_BIT(AFF_FLAGS(horse), AFF_CHARM); add_follower(horse, ch)
-		// TODO: GET_MOVE(horse) = 230; GET_MAX_MOVE(horse) = 230
+		horse, err := w.SpawnMob(horseVnum, ch.GetRoom())
+		if err != nil {
+			tellFromMob(me, ch, "Sorry we are all out of mounts at the moment, try again later.")
+			return true
+		}
+		horse.SetAffected(affCharm)
+		horse.Following = ch.Name
+		horse.CustomData["carryW"] = 1000
+		horse.CustomData["carryN"] = 100
+		horse.CustomData["move"] = 230
+		horse.CustomData["maxMove"] = 230
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s brings %s up from the stables out back.", mobName(me), mobName(horse)))
 		tellFromMob(me, ch, "That'll be 300 coins, treat'er well")
 		return true
 
 	case "stable":
-		// TODO: unmount logic, stop_follower, set rent time/cost
-		// GET_MOUNT_RENT_TIME(ch) = time(0); GET_MOUNT_NUM(ch) = mob vnum; GET_MOUNT_COST_DAY(ch) = 5
-		tellFromMob(me, ch, "How do you expect to stable a mount, you don't have a mount!")
+		var horse *MobInstance
+		if ch.IsMounted() {
+			// Find the mount mob and unmount
+			for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
+				if m.MountRider == ch.Name {
+					horse = m
+					Unmount(ch, horse)
+					break
+				}
+			}
+		} else {
+			// Find a mountable follower (charmed mob in room following player)
+			for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
+				if m.Following == ch.Name && m.IsAffected(affCharm) {
+					horse = m
+					break
+				}
+			}
+		}
+		if horse == nil {
+			tellFromMob(me, ch, "How do you expect to stable a mount, you don't have a mount!")
+			return true
+		}
+		horse.RemoveAffected(affCharm)
+		horse.Following = ""
+		ch.MountRentTime = time.Now().Unix()
+		ch.MountVNum = horse.VNum
+		ch.MountCostDay = 5
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s takes %s out back to the stables.", mobName(me), mobName(horse)))
+		w.extractMob(horse)
+		tellFromMob(me, ch, fmt.Sprintf("I will take good care of 'em, for %d coins a day.", ch.MountCostDay))
 		return true
 
 	case "collect":
-		// TODO: retrieve stabled horse, charge days * cost
-		tellFromMob(me, ch, "Hey now, you need to have stabled a mount to pick one up.")
+		if ch.MountVNum == 0 {
+			tellFromMob(me, ch, "Hey now, you need to have stabled a mount to pick one up.")
+			return true
+		}
+		rentDuration := time.Now().Unix() - ch.MountRentTime
+		days := int(rentDuration / 86400)
+		if days < 1 {
+			days = 1
+		}
+		cost := ch.MountCostDay * days
+		if cost > ch.GetGold() {
+			tellFromMob(me, ch, fmt.Sprintf("Hey man, you can't afford the %d gold you need to get your mount outa' hock.", cost))
+			return true
+		}
+		horse, err := w.SpawnMob(ch.MountVNum, ch.GetRoom())
+		if err != nil {
+			tellFromMob(me, ch, "Sorry, we are unable to gather your mount, try back later.")
+			return true
+		}
+		ch.MountVNum = 0
+		ch.MountCostDay = 0
+		ch.MountRentTime = 0
+		horse.SetAffected(affCharm)
+		horse.Following = ch.Name
+		horse.CustomData["carryW"] = 1000
+		horse.CustomData["carryN"] = 100
+		horse.CustomData["move"] = 230
+		horse.CustomData["maxMove"] = 230
+		ch.SetGold(ch.GetGold() - cost)
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s brings %s up from the stables out back.", mobName(me), mobName(horse)))
+		tellFromMob(me, ch, fmt.Sprintf("Here ya go pal, all patted down and ready to go... cost ya %d to keep 'em here.", cost))
 		return true
 	}
 	return false
@@ -380,7 +465,6 @@ func specPissedalchemist(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	if ch.GetHP() > ch.GetMaxHP()/4 {
 		return false
 	}
-	// TODO: find a potion in zone 194, give it
 	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s throws a potion at the ground, and a large globe of thick black mushroom cloud creeps up toward the heavens!", mobName(me)))
 	ch.Health = ch.GetMaxHP()
 	ch.Move = ch.GetMaxMove()
@@ -431,8 +515,17 @@ func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	if !ch.IsNPC() {
 		return false
 	}
-	// TODO: check if master is fighting; if so, attack master's opponent
-	// For now: stub
+	// Check if master is fighting; if so, attack master's opponent
+	if me.Following != "" {
+		if master, ok := w.GetPlayer(me.Following); ok {
+			if target := master.GetFighting(); target != "" {
+				if vict, ok2 := w.GetPlayer(target); ok2 {
+					me.Attack(vict, w)
+					return true
+				}
+			}
+		}
+	}
 	return false
 }
 
@@ -777,8 +870,10 @@ func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 				if !pl.IsNPC() {
-					// TODO: save check SAVE_PETRIFY — if fail, hit
-					me.Attack(pl, w)
+					// Save vs petrify: level-based saving throw
+					if randN(100) >= pl.GetLevel()*2 {
+						me.Attack(pl, w)
+					}
 				}
 			}
 		}
@@ -811,9 +906,17 @@ func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	if a == "" {
 		return false
 	}
-	// TODO: iterate ch->carrying, for each item visible that has GET_OBJ_RENT(obj) == 0:
-	//   obj_from_char(obj); extract_obj(obj); count++
-	sendToChar(ch, "The eq thief steals 0 items!\r\n")
+	count := 0
+	items := ch.GetInventory()
+	for i := len(items) - 1; i >= 0; i-- {
+		obj := items[i]
+		// Steal items with zero cost (junk/free items)
+		if obj.GetCost() == 0 {
+			ch.Inventory.RemoveItem(obj)
+			count++
+		}
+	}
+	sendToChar(ch, fmt.Sprintf("The eq thief steals %d items!\r\n", count))
 	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gets stripped of equipment by the eq thief!", ch.GetName()))
 	ch.Move = 0
 	ch.Health = 1
@@ -828,7 +931,12 @@ func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		if !ch.IsNPC() && randN(2) != 0 {
 			sendToChar(ch, "A shimmering portal appears and sucks you in!\r\n")
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s stumbles through a shimmering portal!", ch.GetName()))
-			// TODO: char_from_room(ch); char_to_room(ch, get_random_room())
+			// Teleport to a random room
+			rooms := w.Rooms()
+			if len(rooms) > 0 {
+				target := rooms[rand.Intn(len(rooms))]
+				ch.SetRoom(target.VNum)
+			}
 			sendToChar(ch, "You tumble out into a strange place...\r\n")
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s appears from a shimmering portal!", ch.GetName()))
 			return true
@@ -1037,7 +1145,7 @@ func specMindflayer(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 		if !pl.IsNPC() && pl.GetLevel() < 50 && randN(5) == 0 {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s stares at %s with hollow, empty eyes!", mobName(me), pl.GetName()))
-			// TODO: drain intelligence (GET_INT) by 1
+			pl.Stats.Int = max(3, pl.Stats.Int-1)
 			sendToChar(pl, "You feel your intelligence draining away...\r\n")
 			return true
 		}
@@ -1073,8 +1181,21 @@ func specTeleporter(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		return false
 	}
 	if !ch.IsNPC() && randN(4) == 0 {
-		// TODO: pick random room, ensure not private/godroom/death/nomob
-		// char_from_room(ch); char_to_room(ch, random_room)
+		// Pick random room, ensure not private/godroom/death/nomob
+		rooms := w.Rooms()
+		var toRoom int
+		for i := 0; i < 200; i++ {
+			candidate := rooms[rand.Intn(len(rooms))]
+			if w.roomHasFlag(candidate.VNum, "private") || w.roomHasFlag(candidate.VNum, "godroom") ||
+				w.roomHasFlag(candidate.VNum, "death") || w.roomHasFlag(candidate.VNum, "nomob") {
+				continue
+			}
+			toRoom = candidate.VNum
+			break
+		}
+		if toRoom != 0 {
+			ch.SetRoom(toRoom)
+		}
 		sendToChar(ch, "You are suddenly yanked through the fabric of reality!\r\n")
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s suddenly vanishes!", ch.GetName()))
 		return true

@@ -122,7 +122,7 @@ func (p *Player) AdvanceLevel() {
 		if practices < 2 {
 			practices = 2
 		}
-		// TODO: Add practices to player when implemented
+		p.Practices += practices
 
 	case ClassCleric, ClassAvatar:
 		addHP += rand.Intn(5) + 5                          // number(5, 9)
@@ -143,7 +143,7 @@ func (p *Player) AdvanceLevel() {
 		if practices < 2 {
 			practices = 2
 		}
-		// TODO: Add practices to player when implemented
+		p.Practices += practices
 
 	case ClassAssassin:
 		addHP += rand.Intn(7) + 8                          // number(8, 14)
@@ -167,7 +167,7 @@ func (p *Player) AdvanceLevel() {
 		if practices > 2 {
 			practices = 2
 		}
-		// TODO: Add practices to player when implemented
+		p.Practices += practices
 
 	case ClassThief:
 		addHP += rand.Intn(7) + 7  // number(7, 13)
@@ -187,7 +187,7 @@ func (p *Player) AdvanceLevel() {
 		if practices > 2 {
 			practices = 2
 		}
-		// TODO: Add practices to player when implemented
+		p.Practices += practices
 
 	case ClassPaladin:
 		addMana = rand.Intn(2*p.Level-p.Level+1) + p.Level // number(GET_LEVEL(ch), (int)(2 * GET_LEVEL(ch)))
@@ -211,7 +211,7 @@ func (p *Player) AdvanceLevel() {
 		if practices > 2 {
 			practices = 2
 		}
-		// TODO: Add practices to player when implemented
+		p.Practices += practices
 
 	case ClassRanger:
 		addHP += rand.Intn(4) + 13 // number(13, 16)
@@ -231,7 +231,7 @@ func (p *Player) AdvanceLevel() {
 		if practices > 2 {
 			practices = 2
 		}
-		// TODO: Add practices to player when implemented
+		p.Practices += practices
 
 	case ClassWarrior:
 		addHP += rand.Intn(4) + 11 // number(11, 14)
@@ -251,7 +251,7 @@ func (p *Player) AdvanceLevel() {
 		if practices > 2 {
 			practices = 2
 		}
-		// TODO: Add practices to player when implemented
+		p.Practices += practices
 
 	case ClassNinja:
 		addHP += rand.Intn(6) + 8                          // number(8, 13)
@@ -275,7 +275,7 @@ func (p *Player) AdvanceLevel() {
 		if practices > 2 {
 			practices = 2
 		}
-		// TODO: Add practices to player when implemented
+		p.Practices += practices
 
 	case ClassPsionic, ClassMystic:
 		addHP += rand.Intn(5) + 4 // number(4,8) for psionic, (5,9) for mystic
@@ -299,7 +299,7 @@ func (p *Player) AdvanceLevel() {
 		if practices < 2 {
 			practices = 2
 		}
-		// TODO: Add practices to player when implemented
+		p.Practices += practices
 	}
 
 	// Apply gains with minimum of 1
@@ -312,18 +312,25 @@ func (p *Player) AdvanceLevel() {
 
 	p.MaxHealth += addHP
 	p.MaxMana += addMana
-	// TODO: Add move points when implemented
+	p.MaxMove += addMove
 
-	// Heal to new max
+	// Heal to new max, including move points
 	p.Health = p.MaxHealth
 	p.Mana = p.MaxMana
+	p.Move = p.MaxMove
 
-	// TODO: Handle immortal level conditions (LVL_IMMORT)
+	// Immortal perks
+	if p.Level >= LVL_IMMORT {
+		for i := 0; i < 3; i++ {
+			p.SetCondition(i, -1)
+		}
+		p.HolyLight = true
+	}
 
 	// Save after leveling up
 	if err := SavePlayer(p); err != nil {
 		slog.Error("Failed to save player after leveling up", "name", p.Name, "error", err)
 	}
 
-	// TODO: Log advancement
+	slog.Info("advanced to level", "name", p.Name, "level", p.Level)
 }

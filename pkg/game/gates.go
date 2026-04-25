@@ -142,7 +142,11 @@ func (w *World) SpellGate(caster *Player) bool {
 		if rnum == casterRoom {
 			redGate := w.CreateObject(RedPortalVNum, casterRoom)
 			if redGate != nil {
-				redGate.SetTimer(2) // TODO: +1 if level 30
+				timer := 2
+				if caster.GetLevel() >= 30 {
+					timer++
+				}
+				redGate.SetTimer(timer)
 				caster.SendMessage("The magick flows through you, then out into the world, changing it....\r\n")
 				w.SendToRoom(casterRoom, "A shimmering red portal fades into existence.\r\n")
 			}
@@ -168,7 +172,18 @@ func (w *World) SendToRoom(rnum int, msg string) {
 
 // RawKill kills a player.
 func (w *World) RawKill(ch *Player, attackType string) {
-	w.rawKill(ch, 0) // TODO: map string attackType to int
+	at := 0
+	switch attackType {
+	case "slash", "slice":
+		at = 1
+	case "stab", "pierce":
+		at = 2
+	case "bludgeon", "bash", "crush":
+		at = 3
+	case "hit", "pound":
+		at = 4
+	}
+	w.rawKill(ch, at)
 }
 
 

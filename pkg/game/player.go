@@ -24,6 +24,7 @@ type Player struct {
 	MaxMana   int
 	Move      int // Movement points — ported from limits.c/structs.h GET_MOVE
 	MaxMove   int // Max movement points
+	Practices int // Practice sessions for skill training
 
 	Level int
 	Exp   int
@@ -109,6 +110,11 @@ type Player struct {
 	// Mount state — from src/utils.c
 	MountName string // Name of mount mob being ridden
 
+	// Stabled mount state — from src/spec_procs2.c stableboy
+	MountRentTime int64 // Unix timestamp when mount was stabled
+	MountVNum     int   // VNum of stabled mount (0 = none)
+	MountCostDay  int   // Gold per day to keep mount stabled
+
 	// Player flags bitmask — PLR_* constants from structs.h
 	// Bit N corresponds to PLR flag N (e.g. PLR_WEREWOLF=16, PLR_VAMPIRE=17).
 	// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.
@@ -132,7 +138,9 @@ type Player struct {
 	Deaths    int `json:"deaths"`
 
 	// Auto-exit display toggle
-	AutoExit bool // Show exits automatically in room descriptions
+	AutoExit   bool // Show exits automatically in room descriptions
+	HolyLight  bool // Can see in the dark (PRF_HOLYLIGHT)
+	RoomFlags  bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
 
 	// NoBroadcast indicates the player has toggled off global broadcasts (PRF_NOBROAD).
 	NoBroadcast bool
@@ -362,6 +370,20 @@ func (p *Player) SetMaxMove(v int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.MaxMove = v
+}
+
+// GetPractices returns the player's practice sessions.
+func (p *Player) GetPractices() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Practices
+}
+
+// SetPractices sets the player's practice sessions.
+func (p *Player) SetPractices(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Practices = v
 }
 
 // GetDamageRoll returns the player's damage dice including weapon.

@@ -111,7 +111,9 @@ func (w *World) lookAtRoom(ch *Player, ignoreBrief bool) {
 
 	// Room name line
 	roomLine := room.Name
-	// TODO: PRF_ROOMFLAGS check — roomLine = fmt.Sprintf("[%5d] %s [%s]", ...)
+	if ch.RoomFlags {
+		roomLine = fmt.Sprintf("[%5d] %s", room.VNum, room.Name)
+	}
 	ch.SendMessage(roomLine + "\r\n\r\n")
 
 	// Room description
@@ -388,8 +390,15 @@ func (w *World) lookInObj(ch *Player, arg string) {
 		return
 	}
 	ch.SendMessage("When you look inside, you see:\r\n")
-	// TODO: list container contents
-	ch.SendMessage("  It's empty.\r\n")
+	// List container contents
+	contents := obj.GetContents()
+	if len(contents) == 0 {
+		ch.SendMessage("  It's empty.\r\n")
+	} else {
+		for _, item := range contents {
+			ch.SendMessage(fmt.Sprintf("  %s\r\n", item.GetShortDesc()))
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -845,7 +854,6 @@ func chCanSee(ch *Player, target interface{}) bool {
 	if ch.IsAffected(affBlind) {
 		return false
 	}
-	// TODO: light level check
 	return true
 }
 
@@ -864,7 +872,11 @@ func mobCanSee(m *MobInstance) bool {
 func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
 	ef := obj.Prototype.ExtraFlags
 	if len(ef) > 0 && ef[0]&1 != 0 {
-		return false // ITEM_INVISIBLE — TODO: detect magic
+		// ITEM_INVISIBLE - immortals can see invisible items
+		if ch.Level >= 31 {
+			return true
+		}
+		return false
 	}
 	return chCanSee(ch, nil)
 }
@@ -874,7 +886,15 @@ func chCanSeeInDark(ch *Player) bool {
 }
 
 func (w *World) isRoomDark(vnum int) bool {
-	// TODO: check room flags for light
+	room := w.GetRoomInWorld(vnum)
+	if room == nil {
+		return false
+	}
+	for _, f := range room.Flags {
+		if f == "dark" {
+			return true
+		}
+	}
 	return false
 }
 
