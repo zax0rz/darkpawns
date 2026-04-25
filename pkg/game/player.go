@@ -93,6 +93,9 @@ type Player struct {
 	Following string // Name of player being followed (ch->master in original)
 	InGroup   bool   // Whether in a group (AFF_GROUP flag in original)
 
+	// Mount state — from src/utils.c
+	MountName string // Name of mount mob being ridden
+
 	// Player flags bitmask — PLR_* constants from structs.h
 	// Bit N corresponds to PLR flag N (e.g. PLR_WEREWOLF=16, PLR_VAMPIRE=17).
 	// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.

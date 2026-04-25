@@ -39,6 +39,13 @@ type MobInstance struct {
 	// Memory: names of players this mob remembers attacking it
 	// Source: mobact.c:262-285, remember()/forget() in mobact.c:346-407
 	Memory []string
+
+	// MountRider: name of player riding this mount — from src/utils.c
+	MountRider string
+
+	// Hunting: name of player being hunted — from src/utils.c
+	Hunting   string
+	HuntingID string
 }
 
 // NewMob creates a new mob instance from a prototype.
