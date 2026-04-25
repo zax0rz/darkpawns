@@ -400,8 +400,8 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	// Remove from room
-	w.RemoveItemFromRoom(obj, roomVNum)
+	// Remove from room (inline to avoid lock reentrancy — RemoveItemFromRoom also locks)
+	w.removeItemFromRoomLocked(obj, roomVNum)
 
 	// Remove from carrier if carried
 	if obj.Carrier != nil {
@@ -428,6 +428,18 @@ func (w *World) RemoveItemFromRoom(item *ObjectInstance, roomVNum int) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
+	items := w.roomItems[roomVNum]
+	for i, it := range items {
+		if it == item {
+			w.roomItems[roomVNum] = append(items[:i], items[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// removeItemFromRoomLocked removes an item from a room. Caller must hold w.mu.
+func (w *World) removeItemFromRoomLocked(item *ObjectInstance, roomVNum int) bool {
 	items := w.roomItems[roomVNum]
 	for i, it := range items {
 		if it == item {
