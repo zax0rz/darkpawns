@@ -742,7 +742,13 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 	if mode == findObjInv || w.canTakeObj(ch, obj) {
 		cont.RemoveFromContainer(obj)
 		obj.Container = nil
-		ch.Inventory.AddItem(obj)
+		if err := ch.Inventory.AddItem(obj); err != nil {
+			w.actToChar(ch, "You can't carry that much.\n", nil, nil)
+			// Put item back in container
+			obj.Container = cont
+			cont.Contains = append(cont.Contains, obj)
+			return
+		}
 		w.actToChar(ch, "You get $p from $P.", obj, cont)
 		w.actToRoom(ch, "$n gets $p from $P.", obj, cont)
 		w.getCheckMoney(ch, obj)
@@ -759,7 +765,12 @@ func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
 			w.RemoveItemFromRoom(obj, ch.RoomVNum)
 		}
 		obj.RoomVNum = -1
-		ch.Inventory.AddItem(obj)
+		if err := ch.Inventory.AddItem(obj); err != nil {
+			w.actToChar(ch, "You can't carry that much.\n", nil, nil)
+			// Put item back in room
+			w.AddItemToRoom(obj, ch.RoomVNum)
+			return
+		}
 		w.actToChar(ch, "You get $p.", obj, nil)
 		w.actToRoom(ch, "$n gets $p.", obj, nil)
 		w.getCheckMoney(ch, obj)
@@ -999,7 +1010,12 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 		return
 	}
 	ch.Inventory.RemoveItem(obj)
-	vict.Inventory.AddItem(obj)
+	if err := vict.Inventory.AddItem(obj); err != nil {
+		w.actToChar(ch, "$E can't carry any more.\n", vict, nil)
+		// Give item back to giver
+		ch.Inventory.AddItem(obj)
+		return
+	}
 	w.actToChar(ch, "You give $p to $N.", obj, vict)
 	actToVictim(ch, vict, "$n gives you $p.", obj, nil)
 	w.actToRoomExclude(ch, vict, "$n gives $p to $N.", obj, vict)
@@ -1700,7 +1716,12 @@ func (w *World) performRemove(ch *Player, pos int) {
 
 	// Unequip
 	w.UnequipItem(ch, pos)
-	ch.Inventory.AddItem(obj)
+	if err := ch.Inventory.AddItem(obj); err != nil {
+		w.actToChar(ch, "You have no room for $p.\n", obj, nil)
+		// Re-equip it
+		ch.Equipment.Equip(obj, ch.Inventory)
+		return
+	}
 
 	w.actToChar(ch, "You stop using $p.", obj, nil)
 	w.actToRoom(ch, "$n stops using $p.", obj, nil)

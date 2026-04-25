@@ -630,7 +630,10 @@ func (w *World) GiveStartingItems(p *Player) {
 			}
 		}
 
-		_ = p.Inventory.AddItem(pack)
+		if err := p.Inventory.AddItem(pack); err != nil {
+			slog.Warn("starting pack failed", "player", p.Name, "error", err)
+			return
+		}
 	}
 }
 
@@ -641,7 +644,9 @@ func (w *World) giveItem(p *Player, vnum int) {
 		return
 	}
 	obj := NewObjectInstance(proto, -1)
-	_ = p.Inventory.AddItem(obj)
+	if err := p.Inventory.AddItem(obj); err != nil {
+		slog.Warn("giveItem failed", "player", p.Name, "vnum", vnum, "error", err)
+	}
 }
 
 // Stats returns world statistics.

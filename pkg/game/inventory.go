@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 )
@@ -28,7 +27,7 @@ func (inv *Inventory) AddItem(item *ObjectInstance) error {
 	defer inv.mu.Unlock()
 
 	if len(inv.Items) >= inv.Capacity {
-		return fmt.Errorf("inventory is full")
+		return ErrInventoryFull
 	}
 	// Set carrier and clear room location
 	item.Carrier = inv

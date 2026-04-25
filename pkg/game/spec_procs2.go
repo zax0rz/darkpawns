@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"strings"
 	"time"
@@ -547,7 +548,9 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			ch.Move = ch.GetMaxMove()
 			if obj, err := w.SpawnObject(7103, ch.GetRoom()); err == nil {
 				if ch.Inventory != nil {
-					ch.Inventory.AddItem(obj)
+					if err := ch.Inventory.AddItem(obj); err != nil {
+						slog.Warn("spec proc item grant failed", "vnum", 7103, "player", ch.Name, "error", err)
+					}
 				}
 			}
 		}
@@ -576,7 +579,9 @@ func specTattoo2(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 				for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 					if !pl.IsNPC() && pl != ch {
 						if pl.Inventory != nil {
-							pl.Inventory.AddItem(obj)
+							if err := pl.Inventory.AddItem(obj); err != nil {
+								slog.Warn("spec proc item grant failed", "vnum", 7107, "player", pl.Name, "error", err)
+							}
 						}
 						break
 					}
@@ -603,7 +608,9 @@ func specTattoo3(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		ch.SetGold(ch.GetGold() - 500)
 		if obj, err := w.SpawnObject(7103, ch.GetRoom()); err == nil {
 			if ch.Inventory != nil {
-				ch.Inventory.AddItem(obj)
+				if err := ch.Inventory.AddItem(obj); err != nil {
+					slog.Warn("spec proc item grant failed", "vnum", 7103, "player", ch.Name, "error", err)
+				}
 			}
 		}
 		sendToChar(ch, "You buy a cheap 'tramp stamp' tattoo.\r\n")
@@ -741,7 +748,9 @@ func specLittleBoy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		sendToChar(ch, "The boy smiles and hands you a small note.\r\n")
 		if obj, err := w.SpawnObject(7107, ch.GetRoom()); err == nil {
 			if ch.Inventory != nil {
-				ch.Inventory.AddItem(obj)
+				if err := ch.Inventory.AddItem(obj); err != nil {
+					slog.Warn("spec proc item grant failed", "vnum", 7107, "player", ch.Name, "error", err)
+				}
 			}
 		}
 		sendToChar(ch, "The little boy runs off!\r\n")
@@ -1088,7 +1097,9 @@ func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			ch.SetGold(ch.GetGold() - 50)
 			if obj, err := w.SpawnObject(5181, ch.GetRoom()); err == nil {
 				if ch.Inventory != nil {
-					ch.Inventory.AddItem(obj)
+					if err := ch.Inventory.AddItem(obj); err != nil {
+						slog.Warn("spec proc item grant failed", "vnum", 5181, "player", ch.Name, "error", err)
+					}
 				}
 			}
 			sendToChar(ch, "You buy an old rusty key.\r\n")

@@ -776,7 +776,12 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 
 		// Steal the item
 		p.Inventory.RemoveItem(item)
-		ch.Inventory.AddItem(item)
+		if err := ch.Inventory.AddItem(item); err != nil {
+			return SkillResult{
+				Success:     false,
+				MessageToCh: ActMessage("You can't carry that much!\r\n", chPronouns, nil, ""),
+			}
+		}
 		return SkillResult{
 			Success:       true,
 			MessageToCh:   ActMessage("You deftly steal $p from $N's pocket!", chPronouns, &victPronouns, item.GetShortDesc()),
@@ -1469,7 +1474,12 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 	if prob > percent {
 		// Success — add to inventory
 		world.RemoveItemFromRoom(targetItem, ch.GetRoomVNum())
-		_ = ch.Inventory.AddItem(targetItem)
+		if err := ch.Inventory.AddItem(targetItem); err != nil {
+			return SkillResult{
+				Success:     false,
+				MessageToCh: "You can't carry that much.\r\n",
+			}
+		}
 		return SkillResult{
 			Success:      true,
 			MessageToCh:  "You palm the item skillfully.\r\n",
