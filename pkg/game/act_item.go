@@ -580,10 +580,10 @@ func (w *World) performPut(ch *Player, obj, cont *ObjectInstance) {
 		w.actToChar(ch, "$p won't fit in $P.", obj, cont)
 		return
 	}
-	ch.Inventory.RemoveItem(obj)
-	cont.Contains = append(cont.Contains, obj)
-	obj.SetCarrier(nil)
-	obj.Container = cont
+	if err := w.MoveObjectToContainer(obj, cont); err != nil {
+		w.actToChar(ch, "You can't put that in there.", obj, cont)
+		return
+	}
 	w.actToChar(ch, "You put $p in $P.", obj, cont)
 	w.actToRoom(ch, "$n puts $p in $P.", obj, cont)
 }
@@ -740,13 +740,12 @@ func (w *World) getCheckMoney(ch *Player, obj *ObjectInstance) {
 // ---------------------------------------------------------------------------
 func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, mode int) {
 	if mode == findObjInv || w.canTakeObj(ch, obj) {
-		cont.RemoveFromContainer(obj)
-		obj.Container = nil
-		if err := ch.Inventory.AddItem(obj); err != nil {
+		// Ensure Location is set so MoveObject's detach can find the container
+		obj.Location = LocContainer(cont.ID)
+		if err := w.MoveObjectToPlayerInventory(obj, ch); err != nil {
 			w.actToChar(ch, "You can't carry that much.\n", nil, nil)
-			// Put item back in container
-			obj.Container = cont
-			cont.Contains = append(cont.Contains, obj)
+			// Rollback: move back into container (MoveObject handles re-attach)
+			w.MoveObjectToContainer(obj, cont)
 			return
 		}
 		w.actToChar(ch, "You get $p from $P.", obj, cont)
@@ -760,15 +759,9 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 // ---------------------------------------------------------------------------
 func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
 	if w.canTakeObj(ch, obj) {
-		room := w.GetRoomInWorld(ch.GetRoomVNum())
-		if room != nil {
-			w.RemoveItemFromRoom(obj, ch.RoomVNum)
-		}
-		obj.RoomVNum = -1
-		if err := ch.Inventory.AddItem(obj); err != nil {
+		if err := w.MoveObjectToPlayerInventory(obj, ch); err != nil {
 			w.actToChar(ch, "You can't carry that much.\n", nil, nil)
-			// Put item back in room
-			w.AddItemToRoom(obj, ch.RoomVNum)
+			// Put item back in room (MoveObject handles rollback internally)
 			return
 		}
 		w.actToChar(ch, "You get $p.", obj, nil)
@@ -921,14 +914,7 @@ func (w *World) performDrop(ch *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "You can't let go of $p!!  Yeech!", obj, nil)
 		return
 	}
-	ch.Inventory.RemoveItem(obj)
-	room := w.GetRoomInWorld(ch.GetRoomVNum())
-	if room != nil {
-		w.roomItems[ch.RoomVNum] = append(w.roomItems[ch.RoomVNum], obj)
-	}
-	obj.RoomVNum = ch.GetRoomVNum()
-	obj.SetCarrier(nil)
-	obj.Container = nil
+	w.MoveObjectToRoom(obj, ch.GetRoomVNum())
 	w.actToChar(ch, "You drop $p.", obj, nil)
 	w.actToRoom(ch, "$n drops $p.", obj, nil)
 }
@@ -1009,11 +995,10 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "$E can't carry that much weight.", vict, nil)
 		return
 	}
-	ch.Inventory.RemoveItem(obj)
-	if err := vict.Inventory.AddItem(obj); err != nil {
+	if err := w.MoveObjectToPlayerInventory(obj, vict); err != nil {
 		w.actToChar(ch, "$E can't carry any more.\n", vict, nil)
 		// Give item back to giver
-		ch.Inventory.AddItem(obj)
+		w.MoveObjectToPlayerInventory(obj, ch)
 		return
 	}
 	w.actToChar(ch, "You give $p to $N.", obj, vict)
@@ -1565,6 +1550,7 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 	// Remove from inventory and equip
 	ch.Inventory.RemoveItem(obj)
 	w.EquipItem(ch, obj, where)
+	obj.Location = LocEquippedPlayer(ch.Name, EquipmentSlot(obj.EquipPosition))
 	w.wearMessage(ch, obj, where)
 }
 
@@ -1716,10 +1702,12 @@ func (w *World) performRemove(ch *Player, pos int) {
 
 	// Unequip
 	w.UnequipItem(ch, pos)
+	obj.Location = LocInventoryPlayer(ch.Name)
 	if err := ch.Inventory.AddItem(obj); err != nil {
 		w.actToChar(ch, "You have no room for $p.\n", obj, nil)
 		// Re-equip it
 		ch.Equipment.Equip(obj, ch.Inventory)
+		obj.Location = LocEquippedPlayer(ch.Name, EquipmentSlot(obj.EquipPosition))
 		return
 	}
 

@@ -145,6 +145,10 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 	// make_corpse: create a container object in the room
 	// Transfer BOTH inventory items AND all equipped slots into the corpse container
 	// Source: fight.c:make_corpse() lines ~383-410
+	var inventoryItems []*ObjectInstance
+	for _, item := range deadMob.Inventory {
+		inventoryItems = append(inventoryItems, item)
+	}
 	var equipmentItems []*ObjectInstance
 	for _, item := range deadMob.Equipment {
 		equipmentItems = append(equipmentItems, item)
@@ -152,9 +156,9 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 
 	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
 	if attackType == 93 { // SPELL_DISINTEGRATE
-		w.makeDust(deadMob, deadMob.Inventory, equipmentItems, roomVNum)
+		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum)
 	} else {
-		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), deadMob.Inventory, equipmentItems, roomVNum, attackType)
+		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType)
 		w.AddItemToRoom(corpse, roomVNum)
 	}
 
@@ -214,25 +218,16 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	if player.Inventory != nil {
 		// Get all items from inventory
 		inventoryItems = player.Inventory.FindItems("")
-		// Clear inventory and update item states
-		for _, item := range inventoryItems {
-			item.Carrier = nil
-			item.Container = nil
-			item.EquippedOn = nil
-			item.EquipPosition = -1
-		}
+		// makeCorpse's MoveObjectToContainer will handle detach from old location
 		player.Inventory.Clear()
 	}
 
 	if player.Equipment != nil {
 		// Get all equipped items
+		// makeCorpse's MoveObjectToContainer will handle detach from equipment
 		equipped := player.Equipment.GetEquippedItems()
 		for _, item := range equipped {
 			equipmentItems = append(equipmentItems, item)
-			item.EquippedOn = nil
-			item.EquipPosition = -1
-			item.Carrier = nil
-			item.Container = nil
 		}
 		// Clear equipment slots
 		player.Equipment.mu.Lock()
@@ -399,19 +394,29 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	gender := genderPronoun(sex)
 	corpse.CustomData["long_desc"] = corpseAttackLongDesc(name, corpseAttackType, gender)
 
+	// Give the corpse a unique ID before MoveObjectToContainer (needs valid ContainerObjID)
+	w.mu.Lock()
+	corpse.ID = w.nextObjID
+	w.nextObjID++
+	w.objectInstances[corpse.ID] = corpse
+	w.mu.Unlock()
+
+	// Copy inventory slice to avoid mutation issues during MoveObjectToContainer
+	// (MoveObjectToContainer's detach will modify the mob's Inventory backing slice)
+	invCopy := make([]*ObjectInstance, len(inventory))
+	copy(invCopy, inventory)
+	equipCopy := make([]*ObjectInstance, len(equipment))
+	copy(equipCopy, equipment)
+
 	// Transfer inventory into corpse (obj_to_obj in original)
-	for _, item := range inventory {
+	for _, item := range invCopy {
 		if item != nil {
-			item.Container = corpse
-			item.RoomVNum = -1
-			corpse.Contains = append(corpse.Contains, item)
+			_ = w.MoveObjectToContainer(item, corpse)
 		}
 	}
-	for _, item := range equipment {
+	for _, item := range equipCopy {
 		if item != nil {
-			item.Container = corpse
-			item.RoomVNum = -1
-			corpse.Contains = append(corpse.Contains, item)
+			_ = w.MoveObjectToContainer(item, corpse)
 		}
 	}
 
@@ -424,20 +429,14 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 	// Scatter ALL inventory items directly to room floor
 	for _, item := range inventory {
 		if item != nil {
-			item.Container = nil
-			item.RoomVNum = roomVNum
-			w.AddItemToRoom(item, roomVNum)
+			_ = w.MoveObjectToRoom(item, roomVNum)
 		}
 	}
 
 	// Scatter ALL equipment directly to room floor
 	for _, item := range equipment {
 		if item != nil {
-			item.Container = nil
-			item.RoomVNum = roomVNum
-			item.EquippedOn = nil
-			item.EquipPosition = -1
-			w.AddItemToRoom(item, roomVNum)
+			_ = w.MoveObjectToRoom(item, roomVNum)
 		}
 	}
 

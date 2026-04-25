@@ -191,6 +191,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 	// Initialize inventory and equipment
 	player.Inventory = NewInventory()
 	player.Equipment = NewEquipment()
+	player.Equipment.OwnerName = player.Name
 	// Set default capacity (will be updated when stats are set)
 	player.Inventory.SetCapacity(10, 1) // Default DEX=10, level=1
 

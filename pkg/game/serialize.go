@@ -78,7 +78,7 @@ func SerializeEquipment(eq *Equipment, worldObjs map[int]*parser.Obj) ([]byte, e
 }
 
 // DeserializeEquipment creates equipment from JSON bytes.
-func DeserializeEquipment(data []byte, worldObjs map[int]*parser.Obj) (*Equipment, error) {
+func DeserializeEquipment(data []byte, worldObjs map[int]*parser.Obj, playerName string) (*Equipment, error) {
 	var eqData EquipmentData
 	if err := json.Unmarshal(data, &eqData); err != nil {
 		return nil, fmt.Errorf("unmarshal equipment: %w", err)
@@ -98,6 +98,7 @@ func DeserializeEquipment(data []byte, worldObjs map[int]*parser.Obj) (*Equipmen
 			objInst := NewObjectInstance(obj, -1)
 			objInst.EquippedOn = eq
 			objInst.EquipPosition = int(slot)
+			objInst.Location = LocEquippedPlayer(playerName, slot)
 			eq.Slots[slot] = objInst
 		} else {
 			slog.Warn("object not found for equipment slot", "vnum", vnum, "slot", slotName)

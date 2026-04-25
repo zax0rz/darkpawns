@@ -429,6 +429,8 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 		obj.Container = nil
 	}
 
+	obj.Location = LocNowhere()
+
 	// Remove from global instance map
 	delete(w.objectInstances, obj.ID)
 }
@@ -724,9 +726,7 @@ func (w *World) AddItemToRoomScriptable(obj scripting.ScriptableObject, roomVNum
 		}
 		item = NewObjectInstance(proto, roomVNum)
 	}
-	item.RoomVNum = roomVNum
-	w.AddItemToRoom(item, roomVNum)
-	return nil
+	return w.MoveObjectToRoom(item, roomVNum)
 }
 
 // HandleNonCombatDeathScriptable handles player death from non-combat damage.

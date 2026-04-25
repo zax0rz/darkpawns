@@ -397,9 +397,7 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		}
 		got++
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gets %s.", mobName(me), obj.GetShortDesc()))
-		w.RemoveItemFromRoom(obj, me.GetRoomVNum())
-		obj.RoomVNum = -1
-		me.AddToInventory(obj)
+		w.MoveObjectToMobInventory(obj, me)
 
 		// Sort into case/cabinet/chest by item type
 		container := chest // default for misc items
@@ -409,9 +407,7 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 			container = cabinet
 		}
 		// Remove from butler's inventory into the container
-		me.RemoveFromInventory(obj)
-		container.AddToContainer(obj)
-		obj.RoomVNum = me.GetRoomVNum()
+		w.MoveObjectToContainer(obj, container)
 	}
 	if got > 0 {
 		// Containers are left open after putting items in; closing handled by container
@@ -440,8 +436,7 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			continue
 		}
 		// "Behead" the corpse: extract it from the room entirely
-		w.RemoveItemFromRoom(obj, ch.GetRoomVNum())
-		obj.RoomVNum = -1
+		w.MoveObjectToNowhere(obj)
 
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s pulls the brain out of the head and eats it with a noisy\r\nslurp, blood and drool flying everywhere.", mobName(me)))
 
@@ -1125,8 +1120,7 @@ func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string
 			sendToChar(ch, msg)
 			obj, err := w.SpawnObject(entry.cylVNum, ch.GetRoomVNum())
 			if err == nil {
-				obj.RoomVNum = ch.GetRoomVNum()
-				w.AddItemToRoom(obj, ch.GetRoomVNum())
+				w.MoveObjectToRoom(obj, ch.GetRoomVNum())
 			}
 			break
 		}

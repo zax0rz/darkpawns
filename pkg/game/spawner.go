@@ -141,8 +141,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 					slog.Error("error spawning object for container", "obj_vnum", cmd.Arg1, "error", err, "context", "container")
 					continue
 				}
-				obj.Container = container
-				container.Contains = append(container.Contains, obj)
+				s.world.MoveObjectToContainer(obj, container)
 			}
 
 		case "D": // Door state

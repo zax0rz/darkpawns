@@ -157,8 +157,9 @@ func ParseEquipmentSlot(s string) (EquipmentSlot, bool) {
 
 // Equipment represents a player's equipped items.
 type Equipment struct {
-	mu    sync.RWMutex
-	Slots map[EquipmentSlot]*ObjectInstance
+	mu        sync.RWMutex
+	Slots     map[EquipmentSlot]*ObjectInstance
+	OwnerName string
 }
 
 // NewEquipment creates a new empty equipment set.
@@ -203,6 +204,7 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 					// Found empty slot
 					item.EquippedOn = eq
 					item.EquipPosition = int(trySlot)
+					item.Location = LocEquippedPlayer(eq.OwnerName, trySlot)
 					eq.Slots[trySlot] = item
 					return nil
 				}
@@ -214,6 +216,7 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 			// Now equip in first slot
 			item.EquippedOn = eq
 			item.EquipPosition = int(group[0])
+			item.Location = LocEquippedPlayer(eq.OwnerName, group[0])
 			eq.Slots[group[0]] = item
 			return nil
 		}
@@ -228,6 +231,7 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 		// Set equipment state
 		item.EquippedOn = eq
 		item.EquipPosition = int(slot)
+		item.Location = LocEquippedPlayer(eq.OwnerName, slot)
 		eq.Slots[slot] = item
 		return nil
 	}
@@ -257,6 +261,8 @@ func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
 	if err := inv.AddItem(item); err != nil {
 		return fmt.Errorf("inventory full, cannot unequip")
 	}
+
+	item.Location = LocInventoryPlayer(eq.OwnerName)
 
 	delete(eq.Slots, slot)
 	return nil
