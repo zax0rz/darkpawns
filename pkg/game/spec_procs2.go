@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 func init() {
@@ -246,11 +247,21 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	}
 	for _, obj := range w.GetItemsInRoom(me.GetRoomVNum()) {
 		if strings.Contains(obj.GetKeywords(), "couch") {
-			// TODO: obj_from_room(obj); extract_obj(obj)
-			// TODO: find mimic at MIMIC_ROOM_VNUM; char_from_room(mimic); char_to_room(mimic, ch->in_room)
+			w.RemoveItemFromRoom(obj, me.GetRoomVNum())
+			// Find mimic mob in its home room and move it here
+			playerRoom := me.GetRoomVNum()
+			for _, m := range w.GetMobsInRoom(mimicRoomVnum) {
+				m.SetRoom(playerRoom)
+				break
+			}
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("Starved and needing food to make more pillows, the couch attacks!"))
 			sendToChar(ch, "Starved and needing food to make more pillows, the couch attacks you!\r\n\r\n")
-			// TODO: hit(mimic, ch, TYPE_UNDEFINED) — need mimic mob ref
+			for _, m := range w.GetMobsInRoom(playerRoom) {
+				if m.GetRoomVNum() == playerRoom && m != me {
+					m.Attack(ch, w)
+					break
+				}
+			}
 			return true
 		}
 	}
@@ -348,7 +359,7 @@ func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 		if !pl.IsNPC() && pl.GetLevel() < 50 && pl.GetFighting() != "" {
 			sendToChar(ch, fmt.Sprintf("%s says 'Fear not! I shall rescue you!'\r\n", mobName(me)))
-			// TODO: do_rescue(me, GET_NAME(victim), 0, 0)
+			w.doRescue(ch, me, "rescue", pl.GetName())
 			me.Attack(pl, w)
 			return true
 		}
@@ -441,7 +452,11 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing %s scarab tattoo...", ch.GetName(), hisHer(ch.GetSex())))
 			ch.Health = ch.GetMaxHP()
 			ch.Move = ch.GetMaxMove()
-			// TODO: obj = read_object(7103, VIRTUAL); obj_to_char(obj, ch)
+			if obj, err := w.SpawnObject(7103, ch.GetRoom()); err == nil {
+				if ch.Inventory != nil {
+					ch.Inventory.AddItem(obj)
+				}
+			}
 		}
 		return true
 	}
@@ -463,7 +478,17 @@ func specTattoo2(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing %s tattoo...", ch.GetName(), hisHer(ch.GetSex())))
 			ch.Health = ch.GetMaxHP()
 			ch.Move = ch.GetMaxMove()
-			// TODO: read_object(7104, VIRTUAL); give to another player in room
+			if obj, err := w.SpawnObject(7104, ch.GetRoom()); err == nil {
+				// Give to another player in the room
+				for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+					if !pl.IsNPC() && pl != ch {
+						if pl.Inventory != nil {
+							pl.Inventory.AddItem(obj)
+						}
+						break
+					}
+				}
+			}
 		}
 		return true
 	}
@@ -483,7 +508,11 @@ func specTattoo3(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			return true
 		}
 		ch.SetGold(ch.GetGold() - 500)
-		// TODO: read_object(7103, VIRTUAL); obj_to_char(obj, ch)
+		if obj, err := w.SpawnObject(7103, ch.GetRoom()); err == nil {
+			if ch.Inventory != nil {
+				ch.Inventory.AddItem(obj)
+			}
+		}
 		sendToChar(ch, "You buy a cheap 'tramp stamp' tattoo.\r\n")
 		return true
 	}
@@ -501,10 +530,25 @@ func specEviltrade(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 	if cmd == "trade" {
-		sendToChar(ch, "You trade your key for some experience.\r\n")
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s trades in some keys for experience!", ch.GetName()))
-		// TODO: iterate ch->carrying for key items, GET_EXP(ch) += (GET_OBJ_LEVEL(obj) * 200)
-		// TODO: obj_from_char/obj_from_room; extract_obj
+		// Check for gold watch (VNum 13111) in inventory
+		if ch.Inventory != nil {
+			var toRemove []*ObjectInstance
+			for _, item := range ch.Inventory.Items {
+				if item.GetVNum() == 13111 {
+					ch.Exp += (ch.GetLevel() * 200)
+					toRemove = append(toRemove, item)
+				}
+			}
+			for _, item := range toRemove {
+				ch.Inventory.RemoveItem(item)
+			}
+			if len(toRemove) > 0 {
+				sendToChar(ch, fmt.Sprintf("You trade your key for %d experience.\r\n", ch.GetLevel()*200*len(toRemove)))
+				w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s trades in some keys for experience!", ch.GetName()))
+			} else {
+				sendToChar(ch, "You don't have anything to trade.\r\n")
+			}
+		}
 		return true
 	}
 	return false
@@ -531,8 +575,17 @@ func specIdentifier(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		return true
 	}
 	ch.SetGold(ch.GetGold() - cost)
-	// TODO: look up item in inventory (get_obj_in_list_vis) or char in room (get_char_in_room)
-	// TODO: call identify() function
+	// Look up item in inventory by name
+	if ch.Inventory != nil {
+		items := ch.Inventory.FindItems(a)
+		if len(items) > 0 {
+			obj := items[0]
+			sendToChar(ch, fmt.Sprintf("%s studies %s carefully...\r\n", mobName(me), obj.GetShortDesc()))
+			// Cast identify on the object
+			spells.Cast(ch, obj, spells.SpellIdentify, ch.GetLevel(), nil)
+			return true
+		}
+	}
 	sendToChar(ch, "No such thing around.\r\n")
 	return true
 }
@@ -593,9 +646,19 @@ func specLittleBoy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	if cmd == "give" && strings.Contains(arg, "flower") {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gives a flower to the little boy.", ch.GetName()))
 		sendToChar(ch, "The boy smiles and hands you a small note.\r\n")
-		// TODO: read_object(7107, VIRTUAL); obj_to_char(obj, ch)
+		if obj, err := w.SpawnObject(7107, ch.GetRoom()); err == nil {
+			if ch.Inventory != nil {
+				ch.Inventory.AddItem(obj)
+			}
+		}
 		sendToChar(ch, "The little boy runs off!\r\n")
-		// TODO: extract_char(little boy)
+		// Remove the little boy mob from the room
+		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
+			if mob != me && mob.GetVNum() == littleBoyVnum {
+				mob.SetStatus("dead")
+				break
+			}
+		}
 		return true
 	}
 	return false
@@ -654,8 +717,8 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		}
 		sendToChar(ch, fmt.Sprintf("%s says 'You're under arrest!'\r\n", mobName(me)))
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s grabs %s and drags them off to jail!", mobName(me), pl.GetName()))
-		// TODO: char_from_room(pl); char_to_room(pl, JAIL_ROOM)
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s drags %s into the room and throws them in a cell!", mobName(me), pl.GetName()))
+		pl.SetRoom(jailRoomVnum)
+		w.roomMessage(jailRoomVnum, fmt.Sprintf("%s drags %s into the room and throws them in a cell!", mobName(me), pl.GetName()))
 		sendToChar(ch, fmt.Sprintf("%s says 'You'll rot in there!'\r\n", mobName(me)))
 		return true
 	}
@@ -681,9 +744,9 @@ func specJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		ch.SetGold(ch.GetGold() - gold)
 		ch.Move = ch.GetMove() - move
 		sendToChar(ch, "A guard opens the cell door and lets you out.\r\n")
-		// TODO: char_from_room(ch); char_to_room(ch, was_in_room or 2001)
+		ch.SetRoom(8117) // release room per C source
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s is released from jail.", ch.GetName()))
-		// TODO: GET_POS(ch) = POSITION_STANDING
+		ch.SetPosition(combat.PosStanding)
 		return true
 	}
 	return false
@@ -915,7 +978,11 @@ func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 				return true
 			}
 			ch.SetGold(ch.GetGold() - 50)
-			// TODO: read_object(5181, VIRTUAL); obj_to_char(obj, ch)
+			if obj, err := w.SpawnObject(5181, ch.GetRoom()); err == nil {
+				if ch.Inventory != nil {
+					ch.Inventory.AddItem(obj)
+				}
+			}
 			sendToChar(ch, "You buy an old rusty key.\r\n")
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s buys an old rusty key.", ch.GetName()))
 			return true
