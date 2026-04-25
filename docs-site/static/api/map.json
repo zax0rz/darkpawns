@@ -1,0 +1,222 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-04-22T23:32:00Z",
+  "areas": [
+    {
+      "id": 1,
+      "name": "Starting Village",
+      "description": "A quiet village where new adventurers begin their journey. The village has a rustic charm with cobblestone streets and timber-framed buildings.",
+      "color": "#4CAF50",
+      "min_level": 1,
+      "max_level": 5,
+      "room_count": 8
+    },
+    {
+      "id": 2,
+      "name": "Dark Forest",
+      "description": "A mysterious forest filled with ancient trees, hidden paths, and dangerous creatures. The canopy blocks most sunlight, creating perpetual twilight.",
+      "color": "#2E7D32",
+      "min_level": 3,
+      "max_level": 10,
+      "room_count": 15
+    },
+    {
+      "id": 3,
+      "name": "Ancient Ruins",
+      "description": "Crumbling structures of a forgotten civilization. Strange magic still lingers in these ruins, and valuable artifacts can be found among the debris.",
+      "color": "#795548",
+      "min_level": 5,
+      "max_level": 15,
+      "room_count": 12
+    },
+    {
+      "id": 4,
+      "name": "Underground Caverns",
+      "description": "Dark, winding tunnels beneath the surface. These caverns are home to strange fungi, glowing crystals, and creatures that have never seen sunlight.",
+      "color": "#37474F",
+      "min_level": 8,
+      "max_level": 20,
+      "room_count": 20
+    },
+    {
+      "id": 5,
+      "name": "Frozen Peaks",
+      "description": "Icy mountain peaks where the air is thin and the winds are fierce. Ancient dragons are said to nest in the highest caves.",
+      "color": "#29B6F6",
+      "min_level": 15,
+      "max_level": 30,
+      "room_count": 10
+    }
+  ],
+  "rooms": [
+    {
+      "id": 1,
+      "name": "Village Square",
+      "description": "The central gathering place of the village. A stone fountain stands in the center, and notice boards post quests and announcements.",
+      "x": 100,
+      "y": 100,
+      "z": 0,
+      "areaId": 1,
+      "connections": [2, 3, 4],
+      "npcs": ["Village Elder", "Town Crier"],
+      "quests": ["Welcome to Dark Pawns", "Basic Training"],
+      "shop": false,
+      "safe": true
+    },
+    {
+      "id": 2,
+      "name": "Blacksmith Shop",
+      "description": "Weapons and armor line the walls. The sound of hammer on anvil echoes through the building. Grimbold the Blacksmith works here.",
+      "x": 200,
+      "y": 100,
+      "z": 0,
+      "areaId": 1,
+      "connections": [1],
+      "npcs": ["Grimbold the Blacksmith"],
+      "quests": ["Repair the Anvil", "Deliver Ore"],
+      "shop": true,
+      "safe": true
+    },
+    {
+      "id": 3,
+      "name": "Rusty Tankard Tavern",
+      "description": "A rowdy tavern filled with adventurers sharing tales over ale. The air smells of smoke, spilled beer, and roasted meat.",
+      "x": 100,
+      "y": 200,
+      "z": 0,
+      "areaId": 1,
+      "connections": [1, 5],
+      "npcs": ["Barkeep", "Mysterious Stranger", "Drunken Sailor"],
+      "quests": ["Find Lost Keg", "Deliver Message", "Brawl Champion"],
+      "shop": true,
+      "safe": true
+    },
+    {
+      "id": 4,
+      "name": "Training Grounds",
+      "description": "An open field where new adventurers practice combat. Straw dummies and training weapons are available for use.",
+      "x": 0,
+      "y": 100,
+      "z": 0,
+      "areaId": 1,
+      "connections": [1],
+      "npcs": ["Training Master"],
+      "quests": ["Learn to Fight", "Practice Makes Perfect"],
+      "shop": false,
+      "safe": true
+    },
+    {
+      "id": 5,
+      "name": "Forest Path Entrance",
+      "description": "The beginning of a narrow path that leads into the Dark Forest. The trees seem to lean closer here, blocking out the sky.",
+      "x": 300,
+      "y": 200,
+      "z": 0,
+      "areaId": 2,
+      "connections": [3, 6, 7],
+      "npcs": ["Forest Guide"],
+      "quests": ["Explore the Forest", "Gather Herbs"],
+      "shop": false,
+      "safe": false
+    },
+    {
+      "id": 6,
+      "name": "Ancient Temple Entrance",
+      "description": "A massive stone doorway carved with forgotten runes. The air here feels heavy with ancient magic.",
+      "x": 400,
+      "y": 300,
+      "z": 0,
+      "areaId": 3,
+      "connections": [5, 8],
+      "npcs": [],
+      "quests": ["Investigate the Ruins", "Recover Artifacts"],
+      "shop": false,
+      "safe": false
+    },
+    {
+      "id": 7,
+      "name": "Cave Entrance",
+      "description": "A dark opening in the hillside. Cool, damp air flows from within, carrying the scent of earth and mushrooms.",
+      "x": 500,
+      "y": 400,
+      "z": 0,
+      "areaId": 4,
+      "connections": [5, 9],
+      "npcs": ["Cave Explorer"],
+      "quests": ["Explore the Caverns", "Mine Crystals"],
+      "shop": false,
+      "safe": false
+    },
+    {
+      "id": 8,
+      "name": "Temple Inner Sanctum",
+      "description": "The heart of the ancient temple. A massive crystal floats in the center of the room, pulsing with soft light.",
+      "x": 450,
+      "y": 350,
+      "z": 0,
+      "areaId": 3,
+      "connections": [6],
+      "npcs": ["Temple Guardian"],
+      "quests": ["Activate the Crystal", "Defeat the Guardian"],
+      "shop": false,
+      "safe": false
+    },
+    {
+      "id": 9,
+      "name": "Crystal Cavern",
+      "description": "A vast cavern filled with glowing crystals that illuminate the space with soft blue light. The crystals hum with energy.",
+      "x": 550,
+      "y": 450,
+      "z": 0,
+      "areaId": 4,
+      "connections": [7, 10],
+      "npcs": ["Crystal Keeper"],
+      "quests": ["Harvest Crystals", "Protect the Cavern"],
+      "shop": false,
+      "safe": false
+    },
+    {
+      "id": 10,
+      "name": "Frozen Pass",
+      "description": "A narrow mountain pass covered in ice and snow. The wind howls through the gap, making it difficult to stand.",
+      "x": 600,
+      "y": 500,
+      "z": 1,
+      "areaId": 5,
+      "connections": [9],
+      "npcs": ["Frozen Traveler"],
+      "quests": ["Cross the Mountains", "Find the Dragon's Lair"],
+      "shop": false,
+      "safe": false
+    }
+  ],
+  "connections": [
+    {"from": 1, "to": 2, "type": "standard", "direction": "east"},
+    {"from": 1, "to": 3, "type": "standard", "direction": "south"},
+    {"from": 1, "to": 4, "type": "standard", "direction": "west"},
+    {"from": 3, "to": 5, "type": "standard", "direction": "east"},
+    {"from": 5, "to": 6, "type": "standard", "direction": "east"},
+    {"from": 5, "to": 7, "type": "standard", "direction": "southeast"},
+    {"from": 6, "to": 8, "type": "standard", "direction": "south"},
+    {"from": 7, "to": 9, "type": "standard", "direction": "southeast"},
+    {"from": 9, "to": 10, "type": "portal", "direction": "up"}
+  ],
+  "metadata": {
+    "total_rooms": 10,
+    "total_areas": 5,
+    "total_connections": 9,
+    "coordinate_range": {
+      "x_min": 0,
+      "x_max": 600,
+      "y_min": 100,
+      "y_max": 500,
+      "z_levels": [0, 1]
+    },
+    "accessibility": {
+      "keyboard_navigation": true,
+      "screen_reader_support": true,
+      "high_contrast_mode": true,
+      "zoom_compatible": true
+    }
+  }
+}

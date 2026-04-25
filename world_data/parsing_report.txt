@@ -1,0 +1,142 @@
+================================================================================
+DARK PAWNS WORLD PARSING REPORT
+================================================================================
+World directory: /home/zach/.openclaw/workspace/rparet-darkpawns/lib
+Total rooms parsed: 9666
+Total zones: 93
+Rooms with exits: 7003 (72.4%)
+Total exits: 20535
+Average exits per room: 2.12
+
+Zone Statistics:
+----------------------------------------
+Zone 0: 17 rooms
+Zone 10: 2 rooms
+Zone 12: 10 rooms
+Zone 13: 97 rooms
+Zone 21: 100 rooms
+Zone 25: 146 rooms
+Zone 27: 373 rooms
+Zone 31: 199 rooms
+Zone 33: 62 rooms
+Zone 34: 1 rooms
+Zone 35: 100 rooms
+Zone 36: 1 rooms
+Zone 40: 17 rooms
+Zone 41: 8 rooms
+Zone 42: 99 rooms
+Zone 43: 34 rooms
+Zone 45: 68 rooms
+Zone 46: 100 rooms
+Zone 47: 81 rooms
+Zone 48: 100 rooms
+Zone 49: 100 rooms
+Zone 50: 100 rooms
+Zone 51: 63 rooms
+Zone 52: 46 rooms
+Zone 55: 100 rooms
+Zone 57: 100 rooms
+Zone 58: 99 rooms
+Zone 70: 80 rooms
+Zone 79: 3 rooms
+Zone 80: 155 rooms
+Zone 85: 49 rooms
+Zone 91: 724 rooms
+Zone 93: 90 rooms
+Zone 94: 83 rooms
+Zone 95: 176 rooms
+Zone 99: 67 rooms
+Zone 100: 39 rooms
+Zone 110: 502 rooms
+Zone 117: 65 rooms
+Zone 121: 84 rooms
+Zone 122: 135 rooms
+Zone 124: 100 rooms
+Zone 125: 100 rooms
+Zone 126: 98 rooms
+Zone 127: 13 rooms
+Zone 128: 46 rooms
+Zone 129: 40 rooms
+Zone 131: 100 rooms
+Zone 132: 199 rooms
+Zone 140: 6 rooms
+Zone 141: 35 rooms
+Zone 142: 26 rooms
+Zone 143: 27 rooms
+Zone 144: 98 rooms
+Zone 145: 32 rooms
+Zone 150: 53 rooms
+Zone 151: 608 rooms
+Zone 158: 100 rooms
+Zone 160: 82 rooms
+Zone 161: 100 rooms
+Zone 162: 53 rooms
+Zone 163: 26 rooms
+Zone 164: 12 rooms
+Zone 165: 23 rooms
+Zone 180: 142 rooms
+Zone 181: 13 rooms
+Zone 182: 98 rooms
+Zone 183: 87 rooms
+Zone 184: 184 rooms
+Zone 186: 53 rooms
+Zone 187: 31 rooms
+Zone 188: 61 rooms
+Zone 190: 1 rooms
+Zone 191: 75 rooms
+Zone 192: 1 rooms
+Zone 193: 1 rooms
+Zone 194: 65 rooms
+Zone 195: 100 rooms
+Zone 196: 82 rooms
+Zone 197: 95 rooms
+Zone 198: 1 rooms
+Zone 199: 25 rooms
+Zone 200: 226 rooms
+Zone 203: 899 rooms
+Zone 212: 96 rooms
+Zone 213: 67 rooms
+Zone 214: 899 rooms
+Zone 223: 57 rooms
+Zone 225: 102 rooms
+Zone 300: 1 rooms
+Zone 301: 71 rooms
+Zone 302: 67 rooms
+Zone 303: 5 rooms
+
+Room Flag Statistics:
+----------------------------------------
+indoors: 2742 rooms (28.4%)
+bspace: 1756 rooms (18.2%)
+dark: 1316 rooms (13.6%)
+nomob: 555 rooms (5.7%)
+private: 207 rooms (2.1%)
+notrack: 186 rooms (1.9%)
+soundproof: 129 rooms (1.3%)
+tunnel: 126 rooms (1.3%)
+nomagic: 113 rooms (1.2%)
+peaceful: 95 rooms (1.0%)
+death: 19 rooms (0.2%)
+godroom: 11 rooms (0.1%)
+atrium: 6 rooms (0.1%)
+house: 5 rooms (0.1%)
+house_crash: 3 rooms (0.0%)
+
+Sector Type Statistics:
+----------------------------------------
+Sector 0: 9666 rooms (100.0%)
+
+Top 10 Rooms by Description Length:
+----------------------------------------
+#5070 'Sandstone Monoliths' - 996 chars
+#9954 'The Room Of Lust' - 994 chars
+#19645 'The Sacrifical Altar' - 965 chars
+#9919 'AL II:49-60' - 942 chars
+#18111 'Bottomless Chasm' - 808 chars
+#19643 'Azarith's Bedroom' - 759 chars
+#15801 'The Entrance to the Lighthouse' - 749 chars
+#9918 'AL III:34' - 749 chars
+#4963 'The Master Chamber' - 748 chars
+#19446 'Inside the Fire Pagoda' - 732 chars
+
+================================================================================

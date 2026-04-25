@@ -115,10 +115,15 @@ func (m *MobInstance) SetRoom(vnum int) {
 }
 
 // HasFlag checks if the mob has a specific flag.
-// This is a simplified implementation.
 func (m *MobInstance) HasFlag(flag string) bool {
-	// In a real implementation, we'd check the prototype's action flags
-	// For now, return false for all flags
+	if m == nil || m.Prototype == nil || len(m.Prototype.ActionFlags) == 0 {
+		return false
+	}
+	for _, f := range m.Prototype.ActionFlags {
+		if f == flag {
+			return true
+		}
+	}
 	return false
 }
 

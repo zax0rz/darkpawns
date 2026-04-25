@@ -1,0 +1,86 @@
+{
+  "areas": [
+    {
+      "id": 1,
+      "name": "Starting Village",
+      "description": "A quiet village where new adventurers begin their journey. The village has a rustic charm with cobblestone streets and timber-framed buildings.",
+      "color": "#4CAF50",
+      "min_level": 1,
+      "max_level": 5,
+      "room_count": 8,
+      "rooms": [1, 2, 3, 4],
+      "entrances": [1],
+      "exits": [5],
+      "danger_level": "low",
+      "recommended_party_size": 1,
+      "estimated_clear_time": "30 minutes"
+    },
+    {
+      "id": 2,
+      "name": "Dark Forest",
+      "description": "A mysterious forest filled with ancient trees, hidden paths, and dangerous creatures. The canopy blocks most sunlight, creating perpetual twilight.",
+      "color": "#2E7D32",
+      "min_level": 3,
+      "max_level": 10,
+      "room_count": 15,
+      "rooms": [5],
+      "entrances": [5],
+      "exits": [6, 7],
+      "danger_level": "medium",
+      "recommended_party_size": 2,
+      "estimated_clear_time": "2 hours"
+    },
+    {
+      "id": 3,
+      "name": "Ancient Ruins",
+      "description": "Crumbling structures of a forgotten civilization. Strange magic still lingers in these ruins, and valuable artifacts can be found among the debris.",
+      "color": "#795548",
+      "min_level": 5,
+      "max_level": 15,
+      "room_count": 12,
+      "rooms": [6, 8],
+      "entrances": [6],
+      "exits": [],
+      "danger_level": "high",
+      "recommended_party_size": 3,
+      "estimated_clear_time": "3 hours"
+    },
+    {
+      "id": 4,
+      "name": "Underground Caverns",
+      "description": "Dark, winding tunnels beneath the surface. These caverns are home to strange fungi, glowing crystals, and creatures that have never seen sunlight.",
+      "color": "#37474F",
+      "min_level": 8,
+      "max_level": 20,
+      "room_count": 20,
+      "rooms": [7, 9],
+      "entrances": [7],
+      "exits": [10],
+      "danger_level": "high",
+      "recommended_party_size": 4,
+      "estimated_clear_time": "4 hours"
+    },
+    {
+      "id": 5,
+      "name": "Frozen Peaks",
+      "description": "Icy mountain peaks where the air is thin and the winds are fierce. Ancient dragons are said to nest in the highest caves.",
+      "color": "#29B6F6",
+      "min_level": 15,
+      "max_level": 30,
+      "room_count": 10,
+      "rooms": [10],
+      "entrances": [10],
+      "exits": [],
+      "danger_level": "extreme",
+      "recommended_party_size": 5,
+      "estimated_clear_time": "6 hours"
+    }
+  ],
+  "metadata": {
+    "total_areas": 5,
+    "total_rooms": 65,
+    "average_rooms_per_area": 13,
+    "level_range": "1-30",
+    "update_frequency": "weekly"
+  }
+}
