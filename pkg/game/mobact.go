@@ -172,18 +172,20 @@ func (w *World) MobileActivity() {
 				if vict.IsAffected(13) && mobIsGood(ch) && rand.Intn(6) != 0 {
 					continue
 				}
-				// Alignment matching
+				// Alignment matching faithful to mobact.c:
+				// If NONE of the per-alignment flags are set, hit everyone (plain MOB_AGGRESSIVE).
+				// If SOME are set, only hit matching alignments.
 				shouldHit := false
 				if hasAlignAggr {
-					if !isAggrEvil && isAggrNeutral && isAggrGood {
+					vAlign := vict.GetAlignment()
+					if isAggrEvil && vAlign <= -350 {
 						shouldHit = true
-					} else {
-						vAlign := vict.GetAlignment()
-						if (isAggrEvil && vAlign <= -350) ||
-							(isAggrNeutral && vAlign > -350 && vAlign < 350) ||
-							(isAggrGood && vAlign >= 350) {
-							shouldHit = true
-						}
+					}
+					if isAggrNeutral && vAlign > -350 && vAlign < 350 {
+						shouldHit = true
+					}
+					if isAggrGood && vAlign >= 350 {
+						shouldHit = true
 					}
 				}
 				if shouldHit || isAggressive {
