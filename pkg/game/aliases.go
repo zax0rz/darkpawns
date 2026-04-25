@@ -221,7 +221,7 @@ func PerformAlias(aliases []Alias, command string) (string, bool) {
 //
 // 5. ENCODING: C stored lengths as separate lines for fscanf compatibility. The Go
 //    port preserves this format for backwards file compatibility but could use JSON
-//    or a simpler line-per-field format in a future migration (TODO: phase 4).
+//    or a simpler line-per-field format in a future migration (deferred: phase 4).
 //
 // 6. POTENTIAL MODERNIZATION (do not implement now):
 //    - Store aliases in PostgreSQL alongside player data rather than flat files.

@@ -286,8 +286,7 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	if !chCanSee(&Player{}, nil) {
-		// TODO: proper CanSee from mob perspective; for now, check blindness
+	if !mobCanSee(me) {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s exclaims, 'Who's there? I can't see you!'", mobName(me)))
 		return true
 	}
@@ -487,8 +486,7 @@ func specConSeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 	arg = strings.TrimSpace(arg)
-	if !chCanSee(&Player{}, nil) {
-		// TODO: proper CanSee from mob perspective
+	if !mobCanSee(me) {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s exclaims, 'Who's there? I can't see you!'", mobName(me)))
 		return true
 	}
