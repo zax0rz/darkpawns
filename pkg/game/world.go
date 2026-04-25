@@ -299,6 +299,7 @@ func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	}
 
 	mob := NewMob(proto, roomVNum)
+	mob.ID = w.nextMobID
 	w.activeMobs[w.nextMobID] = mob
 	w.nextMobID++
 
@@ -342,6 +343,7 @@ func (w *World) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 	obj := NewObjectInstance(proto, roomVNum)
 	obj.ID = w.nextObjID
 	w.nextObjID++
+	obj.Location = LocRoom(roomVNum)
 	w.objectInstances[obj.ID] = obj
 	return obj, nil
 }
@@ -364,6 +366,14 @@ func (w *World) GetMobByVNumAndRoomScriptable(vnum int, roomVNum int) scripting.
 		}
 	}
 	return nil
+}
+
+// GetMobByID returns a mob instance by its world-assigned ID.
+func (w *World) GetMobByID(id int) (*MobInstance, bool) {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	mob, ok := w.activeMobs[id]
+	return mob, ok
 }
 
 // GetMobsInRoom returns all mobs in a given room.

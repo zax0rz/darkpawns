@@ -22,6 +22,7 @@ type ObjectInstance struct {
 	// Equipment state
 	EquippedOn    interface{} // *MobInstance or *Player
 	EquipPosition int         // -1 if not equipped
+	Location      ObjectLocation
 
 	// Contents (for containers)
 	Contains []*ObjectInstance
@@ -39,7 +40,7 @@ type ObjectInstance struct {
 
 // NewObjectInstance creates a new object instance from a prototype.
 func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
-	return &ObjectInstance{
+	obj := &ObjectInstance{
 		Prototype:     proto,
 		VNum:          proto.VNum,
 		RoomVNum:      roomVNum,
@@ -47,6 +48,12 @@ func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 		CustomData:    make(map[string]interface{}),
 		EquipPosition: -1,
 	}
+	if roomVNum > 0 {
+		obj.Location = LocRoom(roomVNum)
+	} else {
+		obj.Location = LocNowhere()
+	}
+	return obj
 }
 
 // GetShortDesc returns the object's short description.
@@ -236,6 +243,11 @@ func (o *ObjectInstance) GetRoomVNum() int {
 
 func (o *ObjectInstance) SetRoomVNum(roomVNum int) {
 	o.RoomVNum = roomVNum
+	if roomVNum > 0 {
+		o.Location = LocRoom(roomVNum)
+	} else {
+		o.Location = LocNowhere()
+	}
 }
 
 func (o *ObjectInstance) GetCarrier() interface{} {
@@ -244,6 +256,14 @@ func (o *ObjectInstance) GetCarrier() interface{} {
 
 func (o *ObjectInstance) SetCarrier(carrier interface{}) {
 	o.Carrier = carrier
+	// Update Location based on carrier type
+	if p, ok := carrier.(*Player); ok {
+		o.Location = LocInventoryPlayer(p.Name)
+	} else if m, ok := carrier.(*MobInstance); ok {
+		o.Location = LocInventoryMob(m.GetID())
+	}
+	// Note: *Inventory carrier doesn't have a clean mapping — this is the
+	// mismatch the ObjectLocation refactor is designed to fix.
 }
 
 func (o *ObjectInstance) GetTimer() int {

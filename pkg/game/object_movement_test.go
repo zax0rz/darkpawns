@@ -422,3 +422,184 @@ func TestInventoryFull(t *testing.T) {
 		t.Errorf("expected ErrInventoryFull, got %v", err)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// TestMoveObjectRoomToInventory — MoveObject room-to-inventory
+// ---------------------------------------------------------------------------
+
+func TestMoveObjectRoomToInventory(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	obj, _ := w.SpawnObject(3001, 1001)
+	w.AddItemToRoom(obj, 1001)
+
+	// Move via MoveObject
+	err := w.MoveObjectToPlayerInventory(obj, player)
+	if err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory failed: %v", err)
+	}
+
+	// Verify location
+	if !obj.Location.IsInInventory() || !obj.Location.OwnerIsPlayer() {
+		t.Error("expected ObjInInventory with OwnerPlayer")
+	}
+	if len(w.GetItemsInRoom(1001)) != 0 {
+		t.Error("item should be removed from room")
+	}
+	if len(player.Inventory.Items) != 1 {
+		t.Errorf("expected 1 item in inventory, got %d", len(player.Inventory.Items))
+	}
+	if err := obj.Location.Validate(); err != nil {
+		t.Errorf("location invalid: %v", err)
+	}
+}
+
+func TestMoveObjectInventoryToRoom(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	obj, _ := w.SpawnObject(3001, 1001)
+	player.Inventory.AddItem(obj)
+
+	err := w.MoveObjectToRoom(obj, 1001)
+	if err != nil {
+		t.Fatalf("MoveObjectToRoom failed: %v", err)
+	}
+
+	if !obj.Location.IsInRoom() {
+		t.Error("expected ObjInRoom")
+	}
+	if len(player.Inventory.Items) != 0 {
+		t.Errorf("expected 0 items in inventory, got %d", len(player.Inventory.Items))
+	}
+	if len(w.GetItemsInRoom(1001)) != 1 {
+		t.Errorf("expected 1 item in room, got %d", len(w.GetItemsInRoom(1001)))
+	}
+}
+
+func TestMoveObjectInventoryToEquipment(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	obj, _ := w.SpawnObject(3002, 1001) // wieldable weapon
+	player.Inventory.AddItem(obj)
+
+	err := w.MoveObject(obj, LocEquippedPlayer(player.Name, SlotWield))
+	if err != nil {
+		t.Fatalf("MoveObject to equipment failed: %v", err)
+	}
+
+	if !obj.Location.IsEquipped() {
+		t.Error("expected ObjEquipped")
+	}
+	if len(player.Inventory.Items) != 0 {
+		t.Errorf("expected 0 items in inventory, got %d", len(player.Inventory.Items))
+	}
+}
+
+func TestMoveObjectToNowhere(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	obj, _ := w.SpawnObject(3001, 1001)
+	player.Inventory.AddItem(obj)
+
+	err := w.MoveObjectToNowhere(obj)
+	if err != nil {
+		t.Fatalf("MoveObjectToNowhere failed: %v", err)
+	}
+
+	if !obj.Location.IsNowhere() {
+		t.Error("expected ObjNowhere")
+	}
+	if len(player.Inventory.Items) != 0 {
+		t.Errorf("expected 0 items in inventory, got %d", len(player.Inventory.Items))
+	}
+}
+
+func TestMoveObjectInventoryFull(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	// Fill inventory
+	for i := 0; i < player.Inventory.Capacity; i++ {
+		o, _ := w.SpawnObject(3001, 1001)
+		player.Inventory.AddItem(o)
+	}
+
+	extra, _ := w.SpawnObject(3001, 1001)
+	w.AddItemToRoom(extra, 1001)
+
+	err := w.MoveObjectToPlayerInventory(extra, player)
+	if err == nil {
+		t.Fatal("expected error when moving to full inventory")
+	}
+
+	// Item should stay in room (rollback)
+	if len(w.GetItemsInRoom(1001)) != 1 {
+		t.Errorf("expected 1 item in room, got %d", len(w.GetItemsInRoom(1001)))
+	}
+}
+
+func TestMoveObjectInvalidDestination(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	obj, _ := w.SpawnObject(3001, 1001)
+
+	// Invalid: ObjInRoom with roomVNum <= 0
+	err := w.MoveObject(obj, LocRoom(-1))
+	if err == nil {
+		t.Fatal("expected error for invalid room VNum")
+	}
+
+	// Invalid: ObjInInventory with empty player name
+	err = w.MoveObject(obj, LocInventoryPlayer(""))
+	if err == nil {
+		t.Fatal("expected error for empty player name")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestLocationFieldSync — validates ObjectLocation field sync on ObjectInstance
+// ---------------------------------------------------------------------------
+
+func TestLocationFieldSync(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	// Spawn in room — Location should be ObjInRoom
+	obj, _ := w.SpawnObject(3001, 1001)
+	if !obj.Location.IsInRoom() {
+		t.Error("spawned object should be ObjInRoom")
+	}
+	if obj.Location.RoomVNum != 1001 {
+		t.Errorf("expected RoomVNum 1001, got %d", obj.Location.RoomVNum)
+	}
+
+	// Validate Location
+	if err := obj.Location.Validate(); err != nil {
+		t.Errorf("spawned location invalid: %v", err)
+	}
+
+	// Add to inventory — Location should update
+	player.Inventory.AddItem(obj)
+	if !obj.Location.IsInInventory() {
+		// Note: AddItem sets Carrier to *Inventory, which SetCarrier can't
+		// cleanly map to a Location kind. This documents the mismatch.
+		t.Log("Carrier is *Inventory — Location mismatch expected until MoveObject")
+	}
+
+	// SetCarrier with *Player should update Location correctly
+	obj2, _ := w.SpawnObject(3001, 1001)
+	obj2.SetCarrier(player)
+	if !obj2.Location.OwnerIsPlayer() {
+		t.Error("SetCarrier(*Player) should set OwnerIsPlayer")
+	}
+	if err := obj2.Location.Validate(); err != nil {
+		t.Errorf("player carrier location invalid: %v", err)
+	}
+
+	// Mob ID assignment
+	mob, _ := w.SpawnMob(2001, 1001)
+	if mob.GetID() <= 0 {
+		t.Error("mob should have positive ID after spawn")
+	}
+	if found, ok := w.GetMobByID(mob.GetID()); !ok || found != mob {
+		t.Error("GetMobByID should find the spawned mob")
+	}
+}

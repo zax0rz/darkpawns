@@ -27,6 +27,17 @@
 
 package game
 
+import "fmt"
+
+// ObjectOwnerKind describes the type of entity that owns an object location.
+type ObjectOwnerKind uint8
+
+const (
+	OwnerNone   ObjectOwnerKind = iota
+	OwnerPlayer
+	OwnerMob
+)
+
 // ObjectLocationKind describes where an object is in the world.
 type ObjectLocationKind uint8
 
@@ -43,6 +54,7 @@ const (
 // Exactly one of the key fields should be meaningful depending on Kind.
 type ObjectLocation struct {
 	Kind          ObjectLocationKind
+	OwnerKind     ObjectOwnerKind
 	RoomVNum      int    // ObjInRoom: which room
 	PlayerName    string // ObjInInventory, ObjEquipped: which player
 	MobID         int    // ObjInInventory, ObjEquipped: which mob (World-assigned ID)
@@ -62,19 +74,19 @@ func LocNowhere() ObjectLocation {
 }
 
 func LocInventoryPlayer(name string) ObjectLocation {
-	return ObjectLocation{Kind: ObjInInventory, PlayerName: name}
+	return ObjectLocation{Kind: ObjInInventory, OwnerKind: OwnerPlayer, PlayerName: name}
 }
 
 func LocInventoryMob(mobID int) ObjectLocation {
-	return ObjectLocation{Kind: ObjInInventory, MobID: mobID}
+	return ObjectLocation{Kind: ObjInInventory, OwnerKind: OwnerMob, MobID: mobID}
 }
 
 func LocEquippedPlayer(name string, slot EquipmentSlot) ObjectLocation {
-	return ObjectLocation{Kind: ObjEquipped, PlayerName: name, Slot: slot}
+	return ObjectLocation{Kind: ObjEquipped, OwnerKind: OwnerPlayer, PlayerName: name, Slot: slot}
 }
 
 func LocEquippedMob(mobID int, slot EquipmentSlot) ObjectLocation {
-	return ObjectLocation{Kind: ObjEquipped, MobID: mobID, Slot: slot}
+	return ObjectLocation{Kind: ObjEquipped, OwnerKind: OwnerMob, MobID: mobID, Slot: slot}
 }
 
 func LocContainer(containerObjID int) ObjectLocation {
@@ -109,3 +121,40 @@ func (l ObjectLocation) InInventoryOfMob(mobID int) bool {
 func (l ObjectLocation) InContainerOf(objID int) bool {
 	return l.Kind == ObjInContainer && l.ContainerObjID == objID
 }
+
+// Validate checks that the ObjectLocation is internally consistent.
+func (l ObjectLocation) Validate() error {
+	switch l.Kind {
+	case ObjNowhere:
+		if l.OwnerKind != OwnerNone || l.RoomVNum != 0 || l.PlayerName != "" || l.MobID != 0 {
+			return fmt.Errorf("ObjNowhere should have no owner or location fields")
+		}
+	case ObjInRoom:
+		if l.RoomVNum <= 0 {
+			return fmt.Errorf("ObjInRoom requires positive RoomVNum, got %d", l.RoomVNum)
+		}
+	case ObjInInventory, ObjEquipped:
+		if l.OwnerKind == OwnerPlayer && l.PlayerName == "" {
+			return fmt.Errorf("OwnerPlayer requires non-empty PlayerName")
+		}
+		if l.OwnerKind == OwnerMob && l.MobID <= 0 {
+			return fmt.Errorf("OwnerMob requires positive MobID, got %d", l.MobID)
+		}
+		if l.Kind == ObjEquipped && l.Slot < 0 {
+			return fmt.Errorf("ObjEquipped requires valid Slot")
+		}
+	case ObjInContainer:
+		if l.ContainerObjID <= 0 {
+			return fmt.Errorf("ObjInContainer requires positive ContainerObjID")
+		}
+	case ObjInShop:
+		if l.ShopVNum <= 0 {
+			return fmt.Errorf("ObjInShop requires positive ShopVNum")
+		}
+	}
+	return nil
+}
+
+func (l ObjectLocation) OwnerIsPlayer() bool { return l.OwnerKind == OwnerPlayer }
+func (l ObjectLocation) OwnerIsMob() bool    { return l.OwnerKind == OwnerMob }
+func (l ObjectLocation) IsZero() bool        { return l.Kind == ObjNowhere }

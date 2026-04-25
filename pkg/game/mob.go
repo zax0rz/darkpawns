@@ -17,6 +17,7 @@ type MobInstance struct {
 	// Link to prototype
 	Prototype *parser.Mob
 	VNum      int
+	ID        int    // World-assigned instance ID
 
 	// Current state
 	RoomVNum  int // -1 if not in a room (carried, etc.)
@@ -87,6 +88,11 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	// mob.Brain = ai.NewBrain(mob) // Temporarily commented out
 
 	return mob
+}
+
+// GetID returns the world-assigned instance ID.
+func (m *MobInstance) GetID() int {
+	return m.ID
 }
 
 // NewMobInstance is an alias for NewMob for compatibility.
