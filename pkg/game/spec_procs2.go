@@ -70,7 +70,73 @@ func init() {
 // Helpers
 // ================================================================
 
+// isOwner checks if a player owns (or is a guest of) the house at roomVNum.
+// C equivalent: is_owner() in spec_procs2.c:1844-1876
+func isOwner(w *World, ch *Player, roomVNum int) bool {
+	if ch.IsNPC() {
+		return false
+	}
+	i := findHouse(w.HouseControl, roomVNum)
+	if i < 0 {
+		return false
+	}
+	h := w.HouseControl[i]
+	if int64(ch.GetID()) == h.Owner {
+		return true
+	}
+	for j := 0; j < h.NumOfGuests; j++ {
+		if int64(ch.GetID()) == h.Guests[j] {
+			return true
+		}
+	}
+	return false
+}
 
+// guardCanAct returns false if the guard is asleep/dead or player is immortal.
+func guardCanAct(ch *Player, me *MobInstance) bool {
+	if me.GetPosition() <= combat.PosSleeping {
+		return false
+	}
+	if !ch.IsNPC() && ch.GetLevel() >= LVL_IMMORT {
+		return false
+	}
+	return true
+}
+
+// guardAssist checks if any mob in the room with the same spec vnum is fighting,
+// and if so, joins combat. Returns true if assisted.
+func guardAssist(w *World, me *MobInstance, specVNum int) bool {
+	if me.GetFighting() != "" || me.GetPosition() <= combat.PosSleeping {
+		return false
+	}
+	for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
+		if mob == me {
+			continue
+		}
+		if mob.GetVNum() == specVNum && mob.Fighting {
+			// Find who the mob is fighting
+			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+					me.Attack(pl, w)
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// isOwnerGrouped checks if a player is grouped with the house owner.
+func isOwnerGrouped(w *World, ch *Player, roomVNum int) bool {
+	if ch.Following == "" {
+		return false
+	}
+	leader, ok := w.GetPlayer(ch.Following)
+	if !ok {
+		return false
+	}
+	return isOwner(w, leader, roomVNum)
+}
 
 // tellFromMob sends a tell-style message from a mob to a player.
 func tellFromMob(me *MobInstance, target *Player, msg string) {
@@ -859,21 +925,38 @@ func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 }
 
 // ================================================================
-// specCastleGuardEast — Blocks entrance to castle
+// specCastleGuardEast — Blocks movement east into the castle.
+// C equivalent: castle_guard_east in spec_procs2.c:1934-1994
 // ================================================================
 func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.GetPosition() <= combat.PosSleeping || me.GetPosition() <= combat.PosSleeping {
+	if ch.IsNPC() || !guardCanAct(ch, me) {
 		return false
 	}
-	if cmd == "east" {
-		for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-			if pl != ch && !pl.IsNPC() && pl.GetLevel() < 50 {
-				sendToChar(ch, fmt.Sprintf("%s says 'HALT! Who goes there?'\r\n", mobName(me)))
-				sendToChar(ch, "The guard blocks your way!\r\n")
-				return true
+
+	if cmd == "east" && me != ch && !isOwner(w, ch, me.GetRoomVNum()+2) {
+		if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s snaps to attention as %s passes.", me.GetShortDesc(), ch.GetName()))
+		} else {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s yells, 'Stay outta there!'", me.GetShortDesc()))
+			me.Attack(ch, w)
+			return true
+		}
+	}
+
+	if cmd == "" && me.GetFighting() == "" {
+		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
+			if mob == me || !mob.Fighting || mob.FightingTarget == "" {
+				continue
+			}
+			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+					me.Attack(pl, w)
+					return true
+				}
 			}
 		}
 	}
+
 	return false
 }
 
@@ -1013,77 +1096,182 @@ func specChosenGuard(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 }
 
 // ================================================================
-// specCastleGuardDown — Blocks downward movement in castle
+// specCastleGuardDown — Blocks movement down into the castle.
+// C equivalent: castle_guard_down in spec_procs2.c:2123-2184
 // ================================================================
 func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.GetPosition() <= combat.PosSleeping || me.GetPosition() <= combat.PosSleeping {
+	if ch.IsNPC() || !guardCanAct(ch, me) {
 		return false
 	}
-	if cmd == "down" {
-		for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-			if pl != ch && !pl.IsNPC() && pl.GetLevel() < 50 {
-				sendToChar(ch, fmt.Sprintf("%s says 'You shall not pass!'\r\n", mobName(me)))
-				sendToChar(ch, "The guard blocks your way!\r\n")
-				return true
+
+	if cmd == "down" && me != ch && !isOwner(w, ch, me.GetRoomVNum()+2) {
+		if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
+		} else {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s states, 'Thou shalt not pass.'", me.GetShortDesc()))
+			me.Attack(ch, w)
+			return true
+		}
+	}
+
+	if cmd == "" && me.GetFighting() == "" {
+		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
+			if mob == me || !mob.Fighting || mob.FightingTarget == "" {
+				continue
+			}
+			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+					me.Attack(pl, w)
+					return true
+				}
 			}
 		}
 	}
+
 	return false
 }
 
 // ================================================================
-// specCastleGuardUp — Blocks upward movement in castle
+// specCastleGuardUp — Blocks movement up into the castle.
+// C equivalent: castle_guard_up in spec_procs2.c:2186-2259
+// Uses +1 for the house check (vs +2 for other guards).
 // ================================================================
 func specCastleGuardUp(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.GetPosition() <= combat.PosSleeping || me.GetPosition() <= combat.PosSleeping {
+	if ch.IsNPC() || !guardCanAct(ch, me) {
 		return false
 	}
-	if cmd == "up" {
-		for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-			if pl != ch && !pl.IsNPC() && pl.GetLevel() < 50 {
-				sendToChar(ch, fmt.Sprintf("%s says 'Halt! State your business!'\r\n", mobName(me)))
-				sendToChar(ch, "The guard blocks your way!\r\n")
-				return true
+
+	if cmd == "up" && me != ch && !isOwner(w, ch, me.GetRoomVNum()+1) {
+		// Group check: uses current room, not +1
+		if isOwnerGrouped(w, ch, me.GetRoomVNum()) {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
+		} else {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s states, 'Thou shalt not pass.'", me.GetShortDesc()))
+			me.Attack(ch, w)
+			return true
+		}
+	}
+
+	if cmd == "" && me.GetFighting() == "" {
+		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
+			if mob == me || !mob.Fighting || mob.FightingTarget == "" {
+				continue
+			}
+			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+					me.Attack(pl, w)
+					return true
+				}
 			}
 		}
 	}
+
 	return false
 }
 
 // ================================================================
-// specCastleGuardNorth — Blocks northward movement in castle
+// specCastleGuardNorth — Blocks movement north into the castle.
+// C equivalent: castle_guard_north in spec_procs2.c:2078-2122
 // ================================================================
 func specCastleGuardNorth(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.GetPosition() <= combat.PosSleeping || me.GetPosition() <= combat.PosSleeping {
+	if ch.IsNPC() || !guardCanAct(ch, me) {
 		return false
 	}
-	if cmd == "north" {
-		for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-			if pl != ch && !pl.IsNPC() && pl.GetLevel() < 50 {
-				sendToChar(ch, fmt.Sprintf("%s says 'Avast there! Who goes? Pay yer toll!'\r\n", mobName(me)))
-				sendToChar(ch, "The guard blocks your way!\r\n")
-				return true
+
+	if cmd == "north" && me != ch && !isOwner(w, ch, me.GetRoomVNum()+2) {
+		if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
+		} else {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s states, 'Thou shalt not pass.'", me.GetShortDesc()))
+			me.Attack(ch, w)
+			return true
+		}
+	}
+
+	if cmd == "" && me.GetFighting() == "" {
+		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
+			if mob == me || !mob.Fighting || mob.FightingTarget == "" {
+				continue
+			}
+			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+					me.Attack(pl, w)
+					return true
+				}
 			}
 		}
 	}
+
 	return false
 }
 
 // ================================================================
-// specWallGuardNS — Guards a wall passage (north-south corridor)
+// specWallGuardNS — Patrols north-south corridor, walks wall.
+// C equivalent: wall_guard_ns in spec_procs2.c:2260-2310
+// Uses package-level state for patrol direction and talk flag.
 // ================================================================
+
+// Direction constants for mob movement specs.
+const (
+	DIR_NORTH = 1
+	DIR_SOUTH = 2
+	DIR_EAST  = 3
+	DIR_WEST  = 4
+	DIR_UP    = 5
+	DIR_DOWN  = 6
+)
+
+var (
+	wallGuardDirToMove int
+	wallGuardTalk      bool = true
+)
+
 func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.GetPosition() <= combat.PosSleeping || me.GetPosition() <= combat.PosSleeping {
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFighting() != "" {
 		return false
 	}
-	if cmd == "north" || cmd == "south" {
-		for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-			if pl != ch && !pl.IsNPC() && pl.GetLevel() < 50 {
-				sendToChar(ch, fmt.Sprintf("%s says 'Halt! This area is restricted!'\r\n", mobName(me)))
-				sendToChar(ch, "The guard blocks your way!\r\n")
-				return true
-			}
+
+	room := w.GetRoomInWorld(me.GetRoomVNum())
+	if room == nil {
+		return false
+	}
+
+	_, hasNorth := room.Exits["north"]
+	_, hasSouth := room.Exits["south"]
+
+	if hasSouth && !hasNorth {
+		wallGuardDirToMove = DIR_NORTH
+	}
+	if hasNorth && !hasSouth {
+		wallGuardDirToMove = DIR_SOUTH
+	}
+
+	// Walk the wall: move the mob
+	switch wallGuardDirToMove {
+	case DIR_NORTH:
+		if exit, ok := room.Exits["north"]; ok {
+			me.SetRoom(exit.ToRoom)
+		}
+	case DIR_SOUTH:
+		if exit, ok := room.Exits["south"]; ok {
+			me.SetRoom(exit.ToRoom)
 		}
 	}
+
+	// Greet church guard (VNum 8020) when encountered on patrol
+	for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
+		if mob == me {
+			continue
+		}
+		if mob.IsNPC() && mob.GetVNum() == 8020 && wallGuardTalk {
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s snaps to attention and salutes %s!", me.GetShortDesc(), mob.GetShortDesc()))
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'Hello gents!'", me.GetShortDesc()))
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s nods at %s.", mob.GetShortDesc(), me.GetShortDesc()))
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'On your way, soldier!'", mob.GetShortDesc()))
+			wallGuardTalk = false
+		}
+	}
+
+	wallGuardTalk = true
 	return false
 }
