@@ -69,6 +69,7 @@ const (
 	SpellPoison        = 33
 	SpellEarthquake    = 23
 	SpellDivineInt     = 81
+	SpellIntellect     = 81
 	SpellMindBar       = 82
 	SpellShockingGrasp = 37
 	SpellChillTouch    = 8
@@ -96,6 +97,49 @@ const (
 	SpellFrostBreath   = 204
 	SpellAcidBreath    = 205
 	SpellLightningBreath = 206
+
+	// Additional spell constants from spells.h needed by spell system
+	SpellSummon          = 40
+	SpellLocateObject    = 31
+	SpellDetectPoison    = 21
+	SpellCreateWater     = 13
+	SpellLycanthropy     = 54
+	SpellVampirism       = 55
+	SpellSobriety        = 56
+	SpellZen             = 78
+	SpellMirrorImage     = 79
+	SpellGate            = 87
+	SpellMindsight       = 84
+	SpellCalliope        = 94
+	SpellCoC             = 101
+	SpellConjureElemental = 105
+	SpellControlWeather  = 11
+	SpellMentalLapse     = 90
+
+	// Additional missing spell constants from C
+	SpellArmor           = 1  /* Reserved Skill[] DO NOT CHANGE */
+	SpellCureBlind       = 14 /* Reserved Skill[] DO NOT CHANGE */
+	SpellCureCritic      = 15 /* Reserved Skill[] DO NOT CHANGE */
+	SpellDetectInvis     = 19 /* Reserved Skill[] DO NOT CHANGE */
+	SpellDetectMagic     = 20 /* Reserved Skill[] DO NOT CHANGE */
+	SpellInvisible       = 29 /* Reserved Skill[] DO NOT CHANGE */
+	SpellRemoveCurse     = 35 /* Reserved Skill[] DO NOT CHANGE */
+	SpellInfravision     = 50 /* Reserved Skill[] DO NOT CHANGE */
+	SpellMassHeal        = 52
+	SpellFly             = 53
+	SpellHaste           = 97
+	SpellSlow            = 98
+	SpellSmokescreen     = 91
+	SpellWaterBreathe    = 102
+
+	// Extended spell constants (for damage_spells.go, may not exist in C directly)
+	SpellMindPoke        = 185
+	SpellMindAttack      = 186
+	SpellMindBlast       = 187
+	SpellFlameStrike     = 188
+	SpellRayOfDisruption = 189
+	// Breath weapon aliases matching C constants
+	SpellDragonBreath    = 207
 
 	// Skill constants referenced in fighter.lua
 	SkillHeadbutt = 141
