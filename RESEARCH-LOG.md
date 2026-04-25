@@ -570,3 +570,23 @@ Finish Port → GPT-5.5 Pro Modernization → QA Audit → Security Audit → Ad
 [OBSERVATION]
 
 This is also the first time we're using a specific model release as a strategic project dependency. Previous waves were tool-agnostic — any competent LLM could do the mechanical port. GPT-5.5 Pro's specific strengths (large-context code review, structural understanding, "conceptual clarity") are what make Wave 16 viable. If we'd done this before GPT-5.5, the output would have been marginally better than go vet.
+
+---
+
+## 2026-04-25 — Wave 15f: gate.c, graph.c, mail.c
+
+**[RESULT]** Three more C files ported in one focused session. gate.c (90 Go lines — moon gate phase tables, night/day helpers), graph.c (202 Go lines — BFS findFirstStep), mail.c (632 Go lines — postmaster special, file-backed mail storage, read/delete). All building clean, committed on main.
+
+**[DESIGN]** mail.c was the most interesting port because it's the first file-bound persistence layer: BLOCK_SIZE=100 byte records, LE64-encoded headers, linked blocks via free list in the file. The Go port uses fixed-size [100]byte arrays with byte-level accessors (LE64 read/write, c-string truncation) — same contract as C, no serialization overhead. The C style of "this file IS the data structure" maps well to Go if you resist the urge to abstract it.
+
+**[DESIGN]** graph.c port reveals a structural truth: BFS pathfinding is cleanly separable (pure function on worldRooms slice + marks), but do_track and hunt_victim need combat types (FIGHTING/ch, skills, remember/forget) that don't exist in Go yet. This is the pattern for most "partially ported" files — the core algorithm ports cleanly, the outer callers need integration code that doesn't exist yet.
+
+**[DESIGN]** gate.c was the simplest port: a night_gate phase table and some is_after_sunset/is_night_gate helpers. Nothing structurally interesting — just confirming that even the trivial files need to exist for completeness.
+
+**[OBSERVATION]** Go codebase is now 71,175 total lines, 67,801 non-test. C source is 73,469 lines. The Go codebase has surpassed the C codebase in raw line count, but that includes pure-Go additions (agent system, optimization, tests, web admin). The genuinely unported C is ~14,000 lines across ~15 files.
+
+**[OBSERVATION]** The mail.go integration point is worth documenting: postmaster is registered via RegisterSpec("postmaster", postmaster) — the same pattern used by all spec_procs. The mail file path is a package var (mailFilePath = "mail") configurable at boot. ScanFile() needs to be called during initialization. Player name↔ID resolution uses delegate functions (SetMailResolveFuncs) — set at boot by the World/Manager. This is the standard "wire at boot" pattern for any new subsystem.
+
+**[SURPRISE]** C source line count is actually 73,469 — significantly higher than the 68,823 reported by earlier estimates. Some of this is header files (which don't port 1:1), but some is genuine missed C code. The gap is larger than we thought.
+
+**[NEXT]** Next session should start with the updated PORT-PLAN.md and tackle the highest-priority unported files. Remaining big items: clan.c (1,574), house.c (744), boards.c (551), constants.c, class.c, act.informative.c coverage. Fight.c is ~98% via pkg/combat/fight_core.go.

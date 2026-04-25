@@ -30,9 +30,11 @@ Dark Pawns is a 20-year-old DikuMUD derivate running ~68K lines of C. It works. 
 The grind. Faithful C-to-Go translation of all ~68K lines. No rewrites. No redesigns. The game behaves identically. The only innovations are structural (packages, interfaces, goroutines instead of monolithic C files).
 
 **What remains:**
-- Remaining C files: clan.c, house.c, boards.c, whod.c, objsave.c, mobprog.c
-- Under-ported areas: act.informative.c (~39%), hitroll/damroll from equipment, dream/weather stubs
-- ~5,000-7,000 lines of Go to write
+- Remaining C files: clan.c, house.c, boards.c, whod.c, objsave.c, mobprog.c, constants.c, class.c
+- Under-ported areas: act.informative.c (~39%), handler.c (~92%), interpreter.c (~78%), hitroll/damroll from equipment
+- ~14,000 lines of Go to write across ~15 unaddressed C files
+- Wired into session boot: gate helpers (get_gate_phase from World), mail scan_file needs boot hook
+- graph.c remaining: do_track, hunt_victim (deferred — needs combat types)
 
 **Tools:** DeepSeek V4 Flash for mechanical porting. Build → vet → commit per file.
 
@@ -106,6 +108,7 @@ BRENDA is the first implementation. The protocol is designed for multiple agents
 |------|----------|-----------|
 | 2026-04-25 | Wave 16 = GPT-5.5 Pro modernization | Best tool for post-port code review. Coming after port complete, before QA/security. |
 | 2026-04-25 | Wave 17 split into QA + Security | Different skills, different tools, parallelizable. QA = faithfulness, Security = injection/access. |
+| 2026-04-25 | Wave 15f = gate.c, graph.c, mail.c | 3 more C files ported (924 Go lines). gate.c (moongate helpers), graph.c (BFS pathfinding), mail.c (postmaster + mail file I/O). All building clean. |
 | 2026-04-25 | Wave 18 = Admin + Agent features | Lock admin features behind a clean foundation. Don't build dashboard on top of bad code. |
 
 ---

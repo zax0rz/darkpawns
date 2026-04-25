@@ -11,18 +11,19 @@
 > **Wave 9 complete (2026-04-24):** comm.c + act.comm.c — 4203 C lines → 559 Go lines. comm_infra.go (timediff, nonblock, set_sendbuf, TxtQ, perform_subst, perform_alias, make_prompt, setup_log). act_comm_bridge.go (Exec wrappers). act_comm.go expanded (9 cmd wrappers). commands.go (+10 registrations). Build/vet clean. Commit fa2c4eb.
 > **Wave 9.5 complete (2026-04-25):** fight.c (~2033 C lines) → pkg/combat/fight_core.go (990 Go lines). 49 functions covering the core combat loop: attack roll (MakeHit), damage (TakeDamage), position tracking (GetPositionFromHP), death processing (Die, RawKill, MakeCorpse, MakeDust), XP distribution (GroupGain, CalcLevelDiff), and mob AI triggers (CounterProcs, AttitudeLoot). Game-layer hooks via var block (55 function pointers) — zero direct game state access. Build/vet both clean. Combatant interface reverted to original (no GetMaster/GetSendMessage).
 > **Wave 13 (Wave 12 in plan) complete (2026-04-25):** alias.c, ban.c, dream.c, weather.c (879 C lines) → 4 Go files (1,083 lines) in pkg/game/. Session commands wired (alias, ban, unban, dream). Player struct extended (Aliases, LastDeath). Manager wires HasActiveCharacter callback, loads ban/invalid lists at startup. Build/vet both clean. Commit a8ed79e.
+> **Wave 15f complete (2026-04-25):** gate.c (90 lines) → pkg/game/gate.go — moongate portal helpers + gate phase table. graph.c (202 lines) → pkg/game/graph.go — BFS pathfinding (find_first_step). mail.c + mail.h (632 lines) → pkg/game/mail.go — postmaster special, mail file I/O, read/delete. All building clean, committed on main.
 > **Model note:** DeepSeek V4 Flash is the daily driver. Documented here so any model can pick up without loss.
 
 ---
 
-## Current State (as of 2026-04-25, post-fight.c port) — REALITY-AUDITED
+## Current State (as of 2026-04-25, post-wave-15f) — REALITY-AUDITED
 
 ```
-C source:            68,823 lines across 67 .c files
-Go codebase:         61,690 lines across all .go files (incl. tests)
-  Non-test Go:      49,119 lines across 139 .go files (estimate)
+C source:            73,469 lines across 67 .c files + .h headers
+Go codebase:         71,175 lines across all .go files (incl. tests)
+  Non-test Go:      67,801 lines across .go files
   Test files:        4,880 lines
-Genuinely unported:  ~21,000 lines across ~14 C files (unaddressed)
+Genuinely unported:  ~14,000 lines across ~15 C files (unaddressed)
 Partially ported:    ~20,000 lines across 10+ C files (needs more coverage)
 Replaced by SPA:     7,830 lines across 11 editor C files (OLC etc.)
 Build:               go build ./... passes clean
@@ -36,7 +37,7 @@ Git status:          clean (all on main)
 | Package | Lines (non-test Go) | C source mapped to | Notes |
 |---|---|---|---|
 | `pkg/session/` | ~11,530 | act.*.c, interpreter.c, comm.c | Commands, display, wizard. **46 wizard cmds registered.** |
-| `pkg/game/` | ~24,506 | All act_*.c, spec_*.c, shop.c, limits.c, class.c, modify.c | Core game logic. act_other_bridge.go provides exported wrappers for session access. |
+| `pkg/game/` | ~26,090 | All act_*.c, spec_*.c, shop.c, limits.c, class.c, modify.c, gate.c, graph.c, mail.c | Core game logic + portals + pathfinding + mail system |
 | `pkg/command/` | ~2,787 | new_cmds.c, new_cmds2.c, shop.c | Skill + shop commands |
 | `pkg/engine/` | ~3,425 | affect system, skill system | Pure Go additions |
 | `pkg/combat/` | ~1,995 | fight.c + formulas.go + combatant.go | Combat engine |
@@ -50,7 +51,7 @@ Git status:          clean (all on main)
 | `pkg/events/` | ~500 | events.c | Event bus |
 | `pkg/spells/` | 1,846 | spells.c, magic.c, spell_parser.c | ✅ **Wave 7 — 8 Go files** |
 | Other pkgs | ~2,400 | ban.c, mail.c, weather.c, etc. | Misc systems |
-| **Total** | **~61,500** (incl. tests) | 67 C files | 142 .go files |
+| **Total** | **~67,801** (non-test Go) | 67 C files | 143+ .go files |
 
 ### What's actually merged (confirmed present):
 ### Confirmed merged into main
@@ -573,6 +574,9 @@ Do NOT implement these improvements. Just document them.
 | `src/objsave.c` | `pkg/game/objsave.go` | ❌ NOT PORTED |
 | `src/mobprog.c` | `pkg/game/mobprogs.go` | ❌ NOT PORTED (partially via Lua) |
 | `src/shop.c` | `pkg/game/shop.go`, `*systems/shop*.go`, `*command/shop_commands.go`, `*session/shop_cmds.go`, `*common/shop.go` | ✅ Distributed across pkgs |
+| `src/gate.c` | `pkg/game/gate.go` | ✅ Wave 15f |
+| `src/graph.c` | `pkg/game/graph.go` | ✅ Wave 15f |
+| `src/mail.c` + `mail.h` | `pkg/game/mail.go` | ✅ Wave 15f |
 | `src/mapcode.c` | `pkg/session/map_cmds.go` | ✅ |
 | `src/tattoo.c` | `pkg/session/tattoo.go` | ✅ |
 | `src/new_cmds.c` | `pkg/command/skill_commands.go` | ✅ |
