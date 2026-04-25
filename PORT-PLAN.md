@@ -7,6 +7,7 @@
 > **Update (2026-04-24):** Waves 1-5 COMPLETED. Wave 5 (game loop core: affect lifecycle, character management, char/obj updates, door system wiring) fully ported, tested, QA'd, committed, and pushed. 30 C functions ported across 4 new Go files. Door bashdoor command added alongside existing door commands.
 > **Wave 6 reality check:** Wave 6 (act.wizard.c admin commands) was actually completed within Wave 5's partial commit. 46 wizard commands registered and implemented in `pkg/session/wizard_cmds.go` (1,574 lines).
 > **Wave 7 complete (2026-04-24):** Spell system fully ported — magic.c, spells.c, spell_parser.c (~4,843 C lines) → 8 Go files (1,846 lines) in pkg/spells/. CallMagic dispatch, MagDamage (all spell formulas), MagAffects (20+ spells), saving throws (full 6×21×5 table), SaySpell (syllable substitution), spell_info template system, object magic, manual spell dispatch. Build and vet both clean.
+> **Wave 8 complete (2026-04-24):** utils.c (~980 lines) → pkg/game/logging.go (392 lines). 9 functions ported: BasicMudLog, Alog, MudLog, LogDeathTrap, Sprintbit, Sprinttype, SprintbitArray, DieFollower, CoreDump. Build/vet both clean.
 > **Model note:** DeepSeek V4 Flash is the daily driver. Documented here so any model can pick up without loss.
 
 ---
