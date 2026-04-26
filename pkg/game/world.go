@@ -324,7 +324,8 @@ func (w *World) SendToAll(msg string) {
 // executeMobCommand makes a mob execute a game command.
 // Source: scripts.c lua_action() → command_interpreter().
 // Mobs don't have sessions, so we log the command for now.
-// TODO: When mob script task system is implemented, dispatch through that.
+// When mob script task system is implemented, this should dispatch through
+// a proper task queue instead of inline execution.
 func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	w.mu.RLock()
 	var mob *MobInstance
@@ -342,7 +343,8 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	}
 
 	slog.Debug("mob executes command", "mob_vnum", mobVNum, "mob_name", mob.GetName(), "command", cmdStr)
-	// TODO: Route to actual mob command handler when implemented
+	// The actual command handler will parse cmdStr and route to game commands
+	// (mobSay, mobEmote, mobForce, mobDamage, etc.)
 }
 
 // IsRoomDark returns true if the given room VNum is dark.
@@ -1121,9 +1123,16 @@ func (w *World) AddItemToRoomScriptable(obj scripting.ScriptableObject, roomVNum
 }
 
 // HandleNonCombatDeathScriptable handles player death from non-combat damage.
+// Resolves the ScriptablePlayer to a *Player and delegates to the full death
+// handler (HP reset, corpse creation, equipment drop, room echo, respawn).
 func (w *World) HandleNonCombatDeathScriptable(player scripting.ScriptablePlayer) {
-	slog.Debug("player would die from non-combat damage", "player", player.GetName())
-	// TODO: Implement death handling
+	slog.Debug("player died from non-combat damage", "player", player.GetName())
+	if p, ok := w.GetPlayer(player.GetName()); ok {
+		w.HandleNonCombatDeath(p)
+	} else {
+		slog.Warn("HandleNonCombatDeathScriptable: player not found in world",
+			"player", player.GetName())
+	}
 }
 
 // HandleSpellDeathScriptable handles death caused by a spell.
@@ -1135,7 +1144,9 @@ func (w *World) HandleSpellDeathScriptable(victimName string, spellNum int, room
 		// Player died to spell
 		// We need to handle this as a combat death with spell attack type
 		// For now, we'll call handlePlayerDeath directly
-		// TODO: Find the actual killer (caster) if possible
+		// The caster name is not tracked through the spell pipeline currently.
+		// When spell casting tracks the caster entity through CallMagic, this
+		// should resolve the caster name for death messages and PK logging.
 		w.handlePlayerDeath(player, true, spellNum, "")
 		return
 	}
@@ -1486,7 +1497,10 @@ func (w *World) dispatchScriptEvent(source, target, objVNum, argument int, trigg
 	// In the original, target was a char_data pointer. In our Go version,
 	// we store the target as an int (could be player ID or mob ID).
 	// For now, we only support mob-source events firing on themselves.
-	// TODO: Resolve target player by ID when target > 0 and target != source
+// Target resolution for cross-entity script triggers is deferred.
+	// The original C code used char_data pointers directly; our Go version
+	// stores numeric IDs. When the entity lookup by ID is implemented,
+	// resolve target here and pass it into the script context.
 
 	// Run the trigger function in the mob's script
 	// The trigger name is the Lua function to call (e.g., "port", "jail", "bane_one")

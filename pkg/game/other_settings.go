@@ -102,6 +102,8 @@ func (w *World) doDisplay(ch *Player, me *MobInstance, cmd string, arg string) b
 
 // ---------------------------------------------------------------------------
 // do_gen_write — from act.other.c subcmd=SCMD_BUG/SCMD_TYPO/SCMD_IDEA/SCMD_TODO
+// These are player-submitted bug/typo/idea reports stored in files.
+// The original writes to ~lib/%s.ideas, ~lib/%s.bugs, etc.
 // ---------------------------------------------------------------------------
 
 func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) bool {

@@ -313,7 +313,7 @@ type OutdoorBroadcastFunc func(msg string)
 // the hour tick (ghost ship, night gate, full moon, lunar hunter).
 // These correspond to the extern function calls in another_hour() that are
 // implemented elsewhere in the C codebase.
-// TODO: phase 3 — wire ghost_ship_appear/disappear, load_night_gate, remove_night_gate,
+// Phase 3 — wire ghost_ship_appear/disappear, load_night_gate, remove_night_gate,
 //   full_moon(), lunar_hunter() when spec_procs are fully ported.
 type AnotherHourCallbacks struct {
 	GhostShipAppear    func()

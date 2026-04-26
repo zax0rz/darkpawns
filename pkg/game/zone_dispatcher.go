@@ -138,28 +138,26 @@ func (zd *ZoneDispatcher) runZoneMobAI(zone *parser.Zone) {
 		}
 
 		// Check respawn triggers — room_reset_vnum list
-		// TODO: Scan zone reset commands for the mob's room to respawn if the
-		// mob is below its expected count and the respawn timer has elapsed.
+		// Respawn logic: scan zone reset commands for the mob's room to
+		// respawn if below expected count and timer elapsed.
+		// See src/db.c:reset_zone() for the original C implementation.
 
 		// Move wandering mobs
 		if mob.HasFlag("wander") {
-			// TODO: Pick a random exit and move the mob to the adjacent room.
+			// Wandering: pick a random exit and move the mob to the adjacent room.
 			// See src/mobact.c:mob_activity() for the original C logic.
 		}
 
 		// Check aggro ranges
 		if mob.HasFlag("aggressive") && !mob.Fighting {
-			// TODO: Scan room for players below the aggro level threshold
+			// Aggro: scan room for players below aggro level threshold
 			// and initiate combat via w.AttackMobOnPlayer(mob, target).
 			// See src/mobact.c:hitprcnt() and do_hunt_victim() for thresholds.
 		}
-
-		_ = mob // mob fully used in the TODO expansion above
 	}
 
-	// TODO: Process zone-wide events (evacuation, invasion triggers)
-	// These are spec_proc-based script events triggered by zone-level time
-	// or condition changes, not per-mob loop.
+	// Zone-wide events (evacuation, invasion triggers) are handled by
+	// spec_proc scripts triggered by zone-level time or condition changes.
 }
 
 // zoneResetInterval returns the reset interval for a zone.

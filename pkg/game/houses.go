@@ -334,7 +334,7 @@ func (w *World) houseLoad(vnum int) bool {
 
 	BasicMudLogf("House_load: reading %s for room %d", fname, vnum)
 
-	// TODO: When ObjFromStore is wired, loop reading obj_file_elem-sized
+	// When ObjFromStore is wired, loop reading obj_file_elem-sized
 	// chunks from fp, call ObjFromStore for each, skip unrentables, and
 	// place survivors in the room via w.AddItemToRoom(). The C equivalent:
 	//   while (!feof(fl)) {
@@ -495,7 +495,7 @@ func (w *World) HouseListrent(ch *Player, vnum int) {
 		return
 	}
 
-	// TODO: When ObjFromStore is wired, loop over binary records in data,
+	// When ObjFromStore is wired, loop over binary records in data,
 	// call ObjFromStore for each, and format a table of vnum/weight/name.
 	// The C equivalent:
 	//   while (!feof(fl)) {

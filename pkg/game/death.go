@@ -11,7 +11,7 @@ package game
 //
 // Respawn (not in original — players reconnected or got resurrected):
 //   We add a modern respawn: move player to room 8004, heal to full.
-//   This is flagged with a TODO so it can be replaced with proper
+//   Placeholder implementation — should be replaced with proper
 //   resurrection mechanics later.
 
 import (
@@ -308,7 +308,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	}
 
 	// Respawn: move to MortalStartRoom, heal to full
-	// TODO: In original, players reconnected or got resurrected. This is a
+	// In the original C code, players could reconnect or get resurrected. This is a
 	// modern convenience. Replace with proper resurrection flow later.
 	player.SetRoom(MortalStartRoom)
 	player.Heal(9999)

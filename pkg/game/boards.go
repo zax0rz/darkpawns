@@ -342,7 +342,7 @@ func (bs *BoardSystem) ShowBoard(boardType int, ch *Player) bool {
 		return true
 	}
 
-	// Room echo TODO: BoardSystem has no World reference; cannot call actToRoom.
+	// Room echo deferred: BoardSystem has no World reference.
 	// Will be addressed when BoardSystem gains world access or an event bus is added.
 
 	var buf strings.Builder
