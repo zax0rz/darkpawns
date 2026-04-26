@@ -440,9 +440,13 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 	//   sitting  x1.33, resting x1.66, sleeping x2.00,
 	//   stunned  x2.33, incap   x2.66, mortally  x3.00
 	// Source: fight.c line 1859: dam *= 1 + (POS_FIGHTING - GET_POS(victim)) / 3
+	// Note: C uses integer division, so sitting/resting = no change (1/3=0, 2/3=0),
+	// sleeping = x2 (3/3=1), stunned = x2, incap = x2, mortally = x3.
+	// Comments in C claim 1.33/1.66 etc but integer math doesn't produce those.
 	defPos := defender.GetPosition()
 	if defPos < PosFighting {
-		dam = int(float64(dam) * (1.0 + float64(PosFighting-defPos)/3.0))
+		delta := PosFighting - defPos
+		dam *= 1 + delta/3
 	}
 
 	// Apply AC damage reduction (get_minusdam) - fight.c line 1882

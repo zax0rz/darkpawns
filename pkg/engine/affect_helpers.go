@@ -69,6 +69,20 @@ type StatModifiable interface {
 	}
 }
 
+// EquipAffectData holds location/modifier/bitvector for one equipment affect.
+type EquipAffectData struct {
+	Location  int
+	Modifier  int
+	Bitvector uint64
+}
+
+// EquipAffectProvider is an optional interface for characters with equipment.
+// If AffectTotal's target implements this, equipment affects are included
+// in the strip-and-reapply cycle (matching C's affect_total).
+type EquipAffectProvider interface {
+	GetEquipAffects() []EquipAffectData
+}
+
 // ApplyFunction is the signature for aff_apply_modify style callbacks.
 type ApplyFunction func(ch interface{}, loc int, mod int, msg string)
 
@@ -203,16 +217,25 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 	// Actually modify the ch's actual fields by calling DefaultApplyModify
 	// in the right order (remove eq, remove affects, reapply eq, reapply affects)
 	masterAffects := sm.GetMasterAffects()
-	if masterAffects == nil {
-		return
+
+	// Check for equipment affects
+	var equipAffects []EquipAffectData
+	if ep, ok := ch.(EquipAffectProvider); ok {
+		equipAffects = ep.GetEquipAffects()
 	}
 
-	// Remove pass
+	// Remove pass — equipment first, then master affects
+	for _, ea := range equipAffects {
+		AffectModifyAR(ch, ea.Location, ea.Modifier, ea.Bitvector, false, applyFn)
+	}
 	for _, af := range masterAffects {
 		AffModify(ch, af.Location, af.Modifier, af.Bitvector, false, applyFn)
 	}
 
-	// Re-apply pass
+	// Re-apply pass — equipment first, then master affects
+	for _, ea := range equipAffects {
+		AffectModifyAR(ch, ea.Location, ea.Modifier, ea.Bitvector, true, applyFn)
+	}
 	for _, af := range masterAffects {
 		AffModify(ch, af.Location, af.Modifier, af.Bitvector, true, applyFn)
 	}

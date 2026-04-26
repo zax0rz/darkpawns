@@ -598,6 +598,35 @@ func (p *Player) RemoveMasterAffect(af *engine.MasterAffect) {
 
 // GetEquipment returns the player's equipment iterator.
 // Returns nil as the nested interface is complex and not yet wired for Go types.
+// GetEquipAffects returns all equipment affects for the AffectTotal recalculation.
+// Matches C's affect_total() equipment loop.
+func (p *Player) GetEquipAffects() []engine.EquipAffectData {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if p.Equipment == nil {
+		return nil
+	}
+	var result []engine.EquipAffectData
+	for _, item := range p.Equipment.GetEquippedItems() {
+		if item == nil || item.Prototype == nil {
+			continue
+		}
+		// Compute bitvector from ExtraFlags
+		var bv uint64
+		for i, f := range item.Prototype.ExtraFlags {
+			bv |= uint64(f) << (uint(i) * 32)
+		}
+		for _, af := range item.Prototype.Affects {
+			result = append(result, engine.EquipAffectData{
+				Location:  af.Location,
+				Modifier:  af.Modifier,
+				Bitvector: bv,
+			})
+		}
+	}
+	return result
+}
+
 func (p *Player) GetEquipment() interface {
 	GetItems() []interface {
 		GetAffects() []interface{ GetLocation() int; GetModifier() int }
