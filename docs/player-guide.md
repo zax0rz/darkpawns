@@ -4,9 +4,9 @@
 
 | Method | Address |
 |--------|---------|
-| Web client | darkpawns.labz0rz.com (coming soon) |
-| Telnet | `telnet darkpawns.labz0rz.com 4000` (coming soon) |
-| WebSocket | `ws://darkpawns.labz0rz.com/ws` |
+| Web client | https://darkpawns.labz0rz.com |
+| WebSocket | `wss://darkpawns.labz0rz.com/ws` |
+| Telnet | `telnet darkpawns.labz0rz.com 4000` |
 
 ---
 

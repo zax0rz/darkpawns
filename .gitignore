@@ -1,7 +1,12 @@
 # Binaries
 server
+server-bin
 darkpawns
+agentkeygen
 *.exe
+config.log
+config.status
+website-mockup.html
 
 # Go
 vendor/
@@ -42,8 +47,6 @@ __pycache__/
 *.pyo
 
 # Build artifacts
-server-bin
-config.status
 bin/
 
 # Logs
@@ -54,3 +57,5 @@ src/*.o
 src/*.Po
 __pycache__/
 maps/world_data.json
+performance_config.yaml
+Makefile.optimization
