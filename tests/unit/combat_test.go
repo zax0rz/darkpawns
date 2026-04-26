@@ -75,7 +75,7 @@ func TestCalculateHitChance(t *testing.T) {
 	hits := 0
 	runs := 100
 	for i := 0; i < runs; i++ {
-		if combat.CalculateHitChance(attacker, defender) {
+		if combat.CalculateHitChance(attacker, defender, combat.HitModifiers{}) {
 			hits++
 		}
 	}

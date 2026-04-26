@@ -245,7 +245,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		}
 
 		// Check hit
-		if !CalculateHitChance(attacker, defender) {
+		if !CalculateHitChance(attacker, defender, HitModifiers{}) {
 			ce.sendMissMessage(attacker, defender)
 			continue
 		}

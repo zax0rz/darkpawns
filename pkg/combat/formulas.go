@@ -250,6 +250,13 @@ func getTHAC0(c Combatant) int {
 	return thaco[class][level]
 }
 
+// HitModifiers holds optional combat modifiers for CalculateHitChance.
+// Zero values mean "not applicable."
+type HitModifiers struct {
+	WeaponBlessed bool // ITEM_BLESS on wielded weapon: -1 to calc_thaco
+	DrunkLevel    int  // GET_COND(ch, DRUNK): +2 to calc_thaco if > 1
+}
+
 // CalculateHitChance implements the original hit() logic from fight.c lines 1783–1830.
 //
 // Original formula:
@@ -265,10 +272,20 @@ func getTHAC0(c Combatant) int {
 //	victim_ac = max(-10, victim_ac)
 //	MISS if: diceroll < 20 AND AWAKE AND (diceroll==1 OR calc_thaco-diceroll > victim_ac)
 //	HIT  otherwise
-func CalculateHitChance(attacker, defender Combatant) bool {
+func CalculateHitChance(attacker, defender Combatant, mods HitModifiers) bool {
 	calcThaco := getTHAC0(attacker)
 	calcThaco -= strApp[strIndex(attacker)].ToHit
 	calcThaco -= attacker.GetHitroll() // fight.c line 1812
+
+	// Blessed weapon THAC0 bonus - fight.c line 1796
+	if mods.WeaponBlessed {
+		calcThaco -= 1
+	}
+
+	// Drunk THAC0 penalty - fight.c line 1806
+	if mods.DrunkLevel > 1 {
+		calcThaco += 2
+	}
 
 	// INT and WIS THAC0 reduction - fight.c lines 1813-1814
 	intBonus := int(float64(attacker.GetInt()-13) / 1.5)
