@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -205,8 +206,9 @@ func (bs *BatchedSender) flushLocked() error {
 	// Send batch asynchronously
 	go func() {
 		if err := bs.sendFunc(batch.Messages); err != nil {
-			// Log error but don't block sender
-			// TODO: Add proper error handling
+			slog.Warn("batched send failed",
+				"batch_size", len(batch.Messages),
+				"error", err)
 		}
 	}()
 

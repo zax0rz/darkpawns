@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -238,11 +239,31 @@ func (bp *BatchProcessor) flushLocked() error {
 	operations := bp.operations
 	bp.operations = make([]BatchOperation, 0, bp.batchSize)
 
-	// Process batch asynchronously
+	// Process batch asynchronously with retry
 	go func() {
-		if err := bp.flushFunc(operations); err != nil {
-			// TODO: Add proper error handling and retry logic
-			fmt.Printf("Batch processing error: %v\n", err)
+		const maxRetries = 3
+		var lastErr error
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			if attempt > 0 {
+				// Exponential backoff: 100ms, 400ms, 900ms
+				time.Sleep(time.Duration(attempt*attempt*100) * time.Millisecond)
+			}
+			if err := bp.flushFunc(operations); err != nil {
+				lastErr = err
+				slog.Warn("batch flush failed, retrying",
+					"attempt", attempt+1,
+					"batch_size", len(operations),
+					"error", err)
+				continue
+			}
+			lastErr = nil
+			break
+		}
+		if lastErr != nil {
+			slog.Error("batch flush failed after retries",
+				"max_retries", maxRetries,
+				"batch_size", len(operations),
+				"error", lastErr)
 		}
 	}()
 
