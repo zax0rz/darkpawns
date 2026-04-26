@@ -126,7 +126,7 @@ func (l ObjectLocation) InContainerOf(objID int) bool {
 func (l ObjectLocation) Validate() error {
 	switch l.Kind {
 	case ObjNowhere:
-		if l.OwnerKind != OwnerNone || l.RoomVNum != 0 || l.PlayerName != "" || l.MobID != 0 {
+		if l.OwnerKind != OwnerNone || l.RoomVNum != 0 || l.PlayerName != "" || l.MobID != 0 || l.ContainerObjID != 0 || l.ShopVNum != 0 {
 			return fmt.Errorf("ObjNowhere should have no owner or location fields")
 		}
 	case ObjInRoom:

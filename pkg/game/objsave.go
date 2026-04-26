@@ -238,7 +238,9 @@ func CrashLoad(p *Player, invItems []*ObjectInstance, eqSlots map[EquipmentSlot]
 	}
 	for _, obj := range invItems {
 		if obj != nil {
-			p.Inventory.addItem(obj)
+			if err := p.Inventory.addItem(obj); err == nil {
+				obj.Location = LocInventoryPlayer(p.Name)
+			}
 		}
 	}
 	return true
