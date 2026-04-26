@@ -406,7 +406,7 @@ func wearBitForPosition(where int) int {
 }
 
 // canWearObject checks if object can be worn in given position.
-// WearFlags is [3]int bitmask from parser (ITEM_WEAR_* constants from structs.h).
+// WearFlags is [4]int bitmask from parser (ITEM_WEAR_* constants from structs.h).
 // Source: act.item.c can_take_obj() / wear checks.
 func canWearObject(obj *ObjectInstance, where int) bool {
 	bit := wearBitForPosition(where)

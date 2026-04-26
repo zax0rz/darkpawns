@@ -11,24 +11,29 @@ import (
 
 // Room represents a parsed room from a .wld file.
 type Room struct {
-	VNum        int
-	Name        string
-	Description string
-	Zone        int
-	Flags       []string
-	Sector      int
-	Exits       map[string]Exit
+	VNum            int
+	Name            string
+	Description     string
+	Zone            int
+	Flags           []string // 4-element array of flag bitmask hex strings
+	Sector          int
+	Exits           map[string]Exit
+	ExtraDescs      []ExtraDesc
+	ScriptName      string
+	ScriptFunctions int
 }
 
 // Exit represents a room exit.
 type Exit struct {
-	Direction   string
-	ToRoom      int
-	DoorState   int // 0=open, 1=closed, 2=locked
-	Key         int // vnum of key, or -1
-	Keywords    string
-	Description string
+	Direction    string
+	ToRoom       int
+	DoorState    int // 0=open, 1=EX_ISDOOR, 2=EX_ISDOOR|EX_PICKPROOF
+	Key          int // vnum of key, or -1
+	Keywords     string
+	Description  string
 }
+
+
 
 // ParseWldFile parses a single .wld file and returns all rooms.
 func ParseWldFile(path string) ([]Room, error) {
@@ -78,6 +83,20 @@ func ParseWldFile(path string) ([]Room, error) {
 	return rooms, nil
 }
 
+// readTildeString reads a ~-terminated string that may span multiple lines.
+func readTildeString(scanner *bufio.Scanner) (string, error) {
+	var parts []string
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasSuffix(line, "~") {
+			parts = append(parts, strings.TrimSuffix(line, "~"))
+			return strings.Join(parts, "\n"), nil
+		}
+		parts = append(parts, line)
+	}
+	return "", fmt.Errorf("unexpected EOF while reading ~-terminated string")
+}
+
 // parseRoom parses a single room from the scanner.
 func parseRoom(scanner *bufio.Scanner, vnum int) (Room, error) {
 	room := Room{
@@ -85,58 +104,68 @@ func parseRoom(scanner *bufio.Scanner, vnum int) (Room, error) {
 		Exits: make(map[string]Exit),
 	}
 
-	// Parse name (ends with ~)
-	if !scanner.Scan() {
-		return room, fmt.Errorf("expected room name")
+	// Parse name (~-terminated, may span multiple lines)
+	name, err := readTildeString(scanner)
+	if err != nil {
+		return room, fmt.Errorf("expected room name: %w", err)
 	}
-	room.Name = strings.TrimSuffix(scanner.Text(), "~")
+	room.Name = name
 
-	// Parse description (ends with ~)
-	var descLines []string
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasSuffix(line, "~") {
-			descLines = append(descLines, strings.TrimSuffix(line, "~"))
-			break
-		}
-		descLines = append(descLines, line)
+	// Parse description (~-terminated, may span multiple lines)
+	desc, err := readTildeString(scanner)
+	if err != nil {
+		return room, fmt.Errorf("expected room description: %w", err)
 	}
-	room.Description = strings.Join(descLines, "\n")
+	room.Description = desc
 
-	// Parse numeric line: zone flags sector 0 0 0
+	// Parse numeric line: zone flags[0] flags[1] flags[2] flags[3] sector
 	if !scanner.Scan() {
 		return room, fmt.Errorf("expected numeric line")
 	}
-	nums := strings.Fields(scanner.Text())
-	if len(nums) < 6 {
-		return room, fmt.Errorf("numeric line has %d fields, expected 6", len(nums))
+	fields := strings.Fields(scanner.Text())
+	if len(fields) < 6 {
+		return room, fmt.Errorf("numeric line has %d fields, expected 6", len(fields))
 	}
 
-	room.Zone, _ = strconv.Atoi(nums[0])
-	// nums[1] = flags (bitmask)
-	flags, _ := strconv.Atoi(nums[1])
-	room.Flags = parseRoomFlags(flags)
-	// nums[2] = sector type
-	room.Sector, _ = strconv.Atoi(nums[2])
+	room.Zone, _ = strconv.Atoi(fields[0])
+	room.Flags = []string{fields[1], fields[2], fields[3], fields[4]}
+	room.Sector, _ = strconv.Atoi(fields[5])
 
-	// Parse exits and other sections until 'S'
+	// Parse sections until 'S' (end of room)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-
 		if line == "S" {
-			break // End of room
+			break
 		}
 
-		if strings.HasPrefix(line, "D") && len(line) == 2 {
-			// Exit: D0-D5 (N,E,S,W,U,D)
-			dirNum, _ := strconv.Atoi(line[1:])
+		if strings.HasPrefix(line, "D") {
+			dirNum, err := strconv.Atoi(line[1:])
+			if err != nil || dirNum < 0 || dirNum >= 6 {
+				continue
+			}
 			directions := []string{"north", "east", "south", "west", "up", "down"}
-			if dirNum >= 0 && dirNum < 6 {
-				exit, err := parseExit(scanner, directions[dirNum])
-				if err != nil {
-					return room, fmt.Errorf("parse exit %s: %w", directions[dirNum], err)
-				}
-				room.Exits[directions[dirNum]] = exit
+			exit, err := parseExit(scanner, directions[dirNum])
+			if err != nil {
+				return room, fmt.Errorf("parse exit %s in room %d: %w", directions[dirNum], vnum, err)
+			}
+			room.Exits[directions[dirNum]] = exit
+		} else if strings.HasPrefix(line, "E") {
+			// Extra description block
+			extra, err := parseExtraDesc(scanner)
+			if err != nil {
+				return room, fmt.Errorf("parse extra desc in room %d: %w", vnum, err)
+			}
+			room.ExtraDescs = append(room.ExtraDescs, extra)
+		} else if strings.HasPrefix(line, "R") {
+			// Room script line: R <script_name> <functions>
+			rest := strings.TrimSpace(line[1:])
+			scriptParts := strings.Fields(rest)
+			if len(scriptParts) >= 2 {
+				room.ScriptName = scriptParts[0]
+				fnCount, _ := strconv.Atoi(scriptParts[1])
+				room.ScriptFunctions = fnCount
+			} else if len(scriptParts) == 1 {
+				room.ScriptName = scriptParts[0]
 			}
 		}
 	}
@@ -144,53 +173,38 @@ func parseRoom(scanner *bufio.Scanner, vnum int) (Room, error) {
 	return room, nil
 }
 
-// parseRoomFlags converts a bitmask integer to flag names.
-// Source: structs.h - ROOM_DEATH = 1 (bit 1), ROOM_NOMOB = 2 (bit 2)
-func parseRoomFlags(bitmask int) []string {
-	var flags []string
-	// Map bit positions to flag names (from structs.h)
-	flagMap := map[int]string{
-		0:  "dark",        // ROOM_DARK
-		1:  "death",       // ROOM_DEATH
-		2:  "nomob",       // ROOM_NOMOB
-		3:  "indoors",     // ROOM_INDOORS
-		4:  "peaceful",    // ROOM_PEACEFUL
-		5:  "soundproof",  // ROOM_SOUNDPROOF
-		6:  "notrack",     // ROOM_NOTRACK
-		7:  "nomagic",     // ROOM_NOMAGIC
-		8:  "tunnel",      // ROOM_TUNNEL
-		9:  "private",     // ROOM_PRIVATE
-		10: "godroom",     // ROOM_GODROOM
-		11: "house",       // ROOM_HOUSE
-		12: "house_crash", // ROOM_HOUSE_CRASH
-		13: "atrium",      // ROOM_ATRIUM
-		14: "olc",         // ROOM_OLC
-		15: "bspace",      // ROOM_BSPACE
+// parseExtraDesc parses an 'E' extra description block: keyword line + ~-terminated description.
+func parseExtraDesc(scanner *bufio.Scanner) (ExtraDesc, error) {
+	keyword, err := readTildeString(scanner)
+	if err != nil {
+		return ExtraDesc{}, fmt.Errorf("expected extra desc keyword: %w", err)
 	}
 
-	for bit, name := range flagMap {
-		if bitmask&(1<<bit) != 0 {
-			flags = append(flags, name)
-		}
+	desc, err := readTildeString(scanner)
+	if err != nil {
+		return ExtraDesc{}, fmt.Errorf("expected extra desc text: %w", err)
 	}
-	return flags
+
+	return ExtraDesc{Keywords: keyword, Description: desc}, nil
 }
 
 // parseExit parses a single exit section.
 func parseExit(scanner *bufio.Scanner, direction string) (Exit, error) {
 	exit := Exit{Direction: direction}
 
-	// Description (ends with ~)
-	if !scanner.Scan() {
-		return exit, fmt.Errorf("expected exit description")
+	// Description (~-terminated, may span multiple lines)
+	desc, err := readTildeString(scanner)
+	if err != nil {
+		return exit, fmt.Errorf("expected exit description: %w", err)
 	}
-	exit.Description = strings.TrimSuffix(scanner.Text(), "~")
+	exit.Description = desc
 
-	// Keywords (ends with ~)
-	if !scanner.Scan() {
-		return exit, fmt.Errorf("expected exit keywords")
+	// Keywords (~-terminated, may span multiple lines)
+	kw, err := readTildeString(scanner)
+	if err != nil {
+		return exit, fmt.Errorf("expected exit keywords: %w", err)
 	}
-	exit.Keywords = strings.TrimSuffix(scanner.Text(), "~")
+	exit.Keywords = kw
 
 	// Numeric line: door_state key to_room
 	if !scanner.Scan() {

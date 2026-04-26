@@ -33,19 +33,19 @@ func newTestWorld(t *testing.T) (*World, *Player) {
 			{
 				VNum: 3001, Keywords: "test object", ShortDesc: "a test object",
 				LongDesc: "A test object lies here.", TypeFlag: 0,
-				WearFlags: [3]int{0, 0, 0},
+				WearFlags: [4]int{0, 0, 0, 0},
 				Values:    [4]int{0, 0, 0, 0},
 			},
 			{
 				VNum: 3002, Keywords: "test weapon", ShortDesc: "a test weapon",
 				LongDesc: "A test weapon lies here.", TypeFlag: 5,
-				WearFlags: [3]int{1 << 13, 0, 0}, // ITEM_WEAR_WIELD
+				WearFlags: [4]int{1 << 13, 0, 0, 0}, // ITEM_WEAR_WIELD
 				Values:    [4]int{0, 1, 4, 0},
 			},
 			{
 				VNum: 3003, Keywords: "test container", ShortDesc: "a test container",
 				LongDesc: "A test container lies here.", TypeFlag: 1,
-				WearFlags: [3]int{0, 0, 0},
+				WearFlags: [4]int{0, 0, 0, 0},
 				Values:    [4]int{0, 0, 0, 0},
 			},
 		},

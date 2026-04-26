@@ -4,36 +4,48 @@ package parser
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // Mob represents a parsed mobile from a .mob file.
 type Mob struct {
-	VNum         int
-	Keywords     string
-	ShortDesc    string
-	LongDesc     string
-	DetailedDesc string
-	ActionFlags  []string
-	AffectFlags  []string
-	Alignment    int
-	Race         int
-	Level        int
-	THAC0        int
-	AC           int
-	HP           DiceRoll
-	Damage       DiceRoll
-	Gold         int
-	Exp          int
-	Position     int
-	DefaultPos   int
-	Sex          int
-	RaceStr      string
-	Noise        string
-	ScriptName   string
-	LuaFunctions int
+	VNum           int
+	Keywords       string
+	ShortDesc      string
+	LongDesc       string
+	DetailedDesc   string
+	ActionFlags    []string
+	AffectFlags    []string
+	Alignment      int
+	Race           int
+	Level          int
+	THAC0          int
+	AC             int
+	HP             DiceRoll
+	Damage         DiceRoll
+	Gold           int
+	Exp            int
+	Position       int
+	DefaultPos     int
+	Sex            int
+	Weight         int
+	Height         int
+	RaceStr        string
+	Noise          string
+	BareHandAttack int
+	Str            int
+	StrAdd         int
+	Int            int
+	Wis            int
+	Dex            int
+	Con            int
+	Cha            int
+	ScriptName     string
+	LuaFunctions   int
 }
 
 // DiceRoll represents a dice expression like 5d10+20.
@@ -108,6 +120,37 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	}
 	mob.ShortDesc = strings.TrimSuffix(scanner.Text(), "~")
 
+	// C source (parse_mobile): auto-lowercase articles in short_desc
+	// "A", "An", "The" at start of short desc -> "a", "an", "the"
+	{
+		sd := mob.ShortDesc
+		if sd != "" {
+			// Find first run of non-space starting word
+			trimmed := strings.TrimLeftFunc(sd, unicode.IsSpace)
+			if trimmed != sd {
+				// Skip leading spaces, store them
+				leadLen := len(sd) - len(trimmed)
+				// Find first word
+				fields := strings.Fields(trimmed)
+				if len(fields) > 0 {
+					lw := strings.ToLower(fields[0])
+					if lw == "a" || lw == "an" || lw == "the" {
+						offset := leadLen
+						mob.ShortDesc = sd[:offset] + lw + sd[offset+len(fields[0]):]
+					}
+				}
+			} else {
+				fields := strings.Fields(sd)
+				if len(fields) > 0 {
+					lw := strings.ToLower(fields[0])
+					if lw == "a" || lw == "an" || lw == "the" {
+						mob.ShortDesc = lw + sd[len(fields[0]):]
+					}
+				}
+			}
+		}
+	}
+
 	// Long description (ends with ~)
 	if !scanner.Scan() {
 		return mob, fmt.Errorf("expected mob long desc")
@@ -155,6 +198,9 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	}
 	if len(fields) >= 4 {
 		mob.Race, _ = strconv.Atoi(fields[3])
+	} else {
+		// C source: default race = RACE_OTHER (7)
+		mob.Race = 7
 	}
 
 	// Stats line: level thac0 ac hpdice damagedice
@@ -165,13 +211,45 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	if len(stats) >= 9 {
 		mob.Level, _ = strconv.Atoi(stats[0])
 		mob.THAC0, _ = strconv.Atoi(stats[1])
-		mob.AC, _ = strconv.Atoi(stats[2])
+
+		// C source: mob_proto[i].points.armor = 10 * t[2]
+		// AC in area file is raw; C multiplies by 10
+		rawAC, _ := strconv.Atoi(stats[2])
+		mob.AC = 10 * rawAC
+
 		mob.HP.Num, _ = strconv.Atoi(stats[3])
 		mob.HP.Sides, _ = strconv.Atoi(stats[4])
 		mob.HP.Plus, _ = strconv.Atoi(stats[5])
 		mob.Damage.Num, _ = strconv.Atoi(stats[6])
 		mob.Damage.Sides, _ = strconv.Atoi(stats[7])
 		mob.Damage.Plus, _ = strconv.Atoi(stats[8])
+	}
+
+	// C source (parse_simple_mob): base stats start at 11
+	mob.Str = 11
+	mob.Int = 11
+	mob.Wis = 11
+	mob.Dex = 11
+	mob.Con = 11
+	mob.Cha = 11
+
+	// C source (parse_simple_mob): level-based stat boosts for mobs level 15+
+	// For each stat: stat += MIN(number(0, statmod), 7) where statmod = level - 15
+	if mob.Level > 15 {
+		statmod := mob.Level - 15
+		add := func() int {
+			v := rand.Intn(statmod + 1) // number(0, statmod) = rand.Intn(statmod+1)
+			if v > 7 {
+				return 7
+			}
+			return v
+		}
+		mob.Str += add()
+		mob.Int += add()
+		mob.Wis += add()
+		mob.Dex += add()
+		mob.Con += add()
+		mob.Cha += add()
 	}
 
 	// Gold and exp line
@@ -195,48 +273,165 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 		mob.Sex, _ = strconv.Atoi(pos[2])
 	}
 
-	// Parse optional fields (Race, Noise, Script, BareHandAttack, etc.)
+	// C source: default weight=200, height=198
+	mob.Weight = 200
+	mob.Height = 198
+
+	// Parse optional fields (E-specs: Race, Noise, Script, BareHandAttack, etc.)
+	// C source: interpret_espec() handles these E-spec keywords
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
 		if line == "E" || strings.HasPrefix(line, "$") || strings.HasPrefix(line, "#") {
-			// Put back the line if it's the next mob or end of file
 			break
 		}
 
+		if strings.HasPrefix(line, "BareHandAttack:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "BareHandAttack:"))
+			if v, err := strconv.Atoi(val); err == nil {
+				if v < 0 {
+					v = 0
+				}
+				if v > 99 {
+					v = 99
+				}
+				mob.BareHandAttack = v
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, "Str:") && !strings.HasPrefix(line, "StrAdd:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "Str:"))
+			if v, err := strconv.Atoi(val); err == nil {
+				if v < 3 {
+					v = 3
+				}
+				if v > 25 {
+					v = 25
+				}
+				mob.Str = v
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, "StrAdd:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "StrAdd:"))
+			if v, err := strconv.Atoi(val); err == nil {
+				if v < 0 {
+					v = 0
+				}
+				if v > 100 {
+					v = 100
+				}
+				mob.StrAdd = v
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, "Int:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "Int:"))
+			if v, err := strconv.Atoi(val); err == nil {
+				if v < 3 {
+					v = 3
+				}
+				if v > 25 {
+					v = 25
+				}
+				mob.Int = v
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, "Wis:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "Wis:"))
+			if v, err := strconv.Atoi(val); err == nil {
+				if v < 3 {
+					v = 3
+				}
+				if v > 25 {
+					v = 25
+				}
+				mob.Wis = v
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, "Dex:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "Dex:"))
+			if v, err := strconv.Atoi(val); err == nil {
+				if v < 3 {
+					v = 3
+				}
+				if v > 25 {
+					v = 25
+				}
+				mob.Dex = v
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, "Con:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "Con:"))
+			if v, err := strconv.Atoi(val); err == nil {
+				if v < 3 {
+					v = 3
+				}
+				if v > 25 {
+					v = 25
+				}
+				mob.Con = v
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, "Cha:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "Cha:"))
+			if v, err := strconv.Atoi(val); err == nil {
+				if v < 3 {
+					v = 3
+				}
+				if v > 25 {
+					v = 25
+				}
+				mob.Cha = v
+			}
+			continue
+		}
+
 		if strings.HasPrefix(line, "Race:") {
-			mob.RaceStr = strings.TrimSpace(strings.TrimPrefix(line, "Race:"))
+			val := strings.TrimSpace(strings.TrimPrefix(line, "Race:"))
+			if r, err := strconv.Atoi(val); err == nil {
+				mob.Race = r
+			}
+			mob.RaceStr = val
+			continue
 		}
 
 		if strings.HasPrefix(line, "Noise:") {
-			// Noise might be on same line or next
 			noise := strings.TrimPrefix(line, "Noise:")
 			noise = strings.TrimSpace(noise)
 			if strings.HasSuffix(noise, "~") {
 				mob.Noise = strings.TrimSuffix(noise, "~")
 			} else if noise == "" {
-				// Noise is on next line
 				if scanner.Scan() {
 					mob.Noise = strings.TrimSuffix(scanner.Text(), "~")
 				}
 			} else {
 				mob.Noise = noise
 			}
+			continue
 		}
 
 		if strings.HasPrefix(line, "Script:") {
-			// Format: "Script: filename bitmask"
-			// Example: "Script: 144/hisc.lua 512"
 			scriptLine := strings.TrimPrefix(line, "Script:")
 			scriptLine = strings.TrimSpace(scriptLine)
-			fields := strings.Fields(scriptLine)
-			if len(fields) >= 2 {
-				mob.ScriptName = fields[0]
-				mob.LuaFunctions, _ = strconv.Atoi(fields[1])
+			sf := strings.Fields(scriptLine)
+			if len(sf) >= 2 {
+				mob.ScriptName = sf[0]
+				mob.LuaFunctions, _ = strconv.Atoi(sf[1])
 			}
+			continue
 		}
-
-		// Ignore other fields like BareHandAttack for now
 	}
 
 	return mob, nil

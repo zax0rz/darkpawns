@@ -9,6 +9,15 @@ import (
 	"strings"
 )
 
+const (
+	// Max object affects, matching C's MAX_OBJ_AFFECT (structs.h line 656)
+	MAX_OBJ_AFFECT = 6
+
+	// Item type constants matching structs.h (used for container weight validation)
+	ITEM_DRINKCON = 17
+	ITEM_FOUNTAIN  = 23
+)
+
 // Obj represents a parsed object from a .obj file.
 type Obj struct {
 	VNum         int
@@ -18,7 +27,7 @@ type Obj struct {
 	ActionDesc   string
 	TypeFlag     int
 	ExtraFlags   [4]int
-	WearFlags    [3]int
+	WearFlags    [4]int
 	Values       [4]int
 	Weight       int
 	Cost         int
@@ -159,7 +168,7 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 		for i := 0; i < 4; i++ {
 			obj.ExtraFlags[i] = parseFlag(flags[1+i])
 		}
-		for i := 0; i < 3; i++ {
+		for i := 0; i < 4; i++ {
 			obj.WearFlags[i] = parseFlag(flags[5+i])
 		}
 	}
@@ -184,7 +193,22 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 		obj.LoadPercent, _ = strconv.ParseFloat(wcl[2], 64)
 	}
 
-	// Parse extra descriptions (E) and affects (A) until "$" or next "#VNUM".
+	// Auto-cap the first letter of the long description (matching C behavior in parse_object)
+	if len(obj.LongDesc) > 0 {
+		runes := []rune(obj.LongDesc)
+		runes[0] = toUpper(runes[0])
+		obj.LongDesc = string(runes)
+	}
+
+	// Container weight validation (matching C behavior in parse_object)
+	// For drink containers and fountains, ensure weight >= max fill volume
+	if obj.TypeFlag == ITEM_DRINKCON || obj.TypeFlag == ITEM_FOUNTAIN {
+		if obj.Weight < obj.Values[1] {
+			obj.Weight = obj.Values[1] + 5
+		}
+	}
+
+	// Parse extra descriptions (E), affects (A), and scripts (S) until "$" or next "#VNUM".
 	// When we see a "#" line, return it as nextLine so the caller can unread it.
 	var nextLine string
 	for lb.Scan() {
@@ -219,8 +243,31 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 			obj.ExtraDescs = append(obj.ExtraDescs, ed)
 		}
 
+		if line == "S" {
+			// Script line: S <name> <lua_functions>
+			// Matching C behavior in parse_object (case 'S')
+			if lb.Scan() {
+				scriptLine := strings.TrimSpace(lb.Text())
+				scriptFields := strings.Fields(scriptLine)
+				if len(scriptFields) >= 1 {
+					obj.ScriptName = scriptFields[0]
+				}
+				if len(scriptFields) >= 2 {
+					obj.LuaFunctions, _ = strconv.Atoi(scriptFields[1])
+				}
+			}
+		}
+
 		if line == "A" {
 			// Affect: location modifier
+			// C enforces MAX_OBJ_AFFECT (structs.h:656) — limit in Go too
+			if len(obj.Affects) >= MAX_OBJ_AFFECT {
+				// Consume the affect line but discard it
+				if lb.Scan() {
+					// consumed and discarded
+				}
+				continue
+			}
 			if lb.Scan() {
 				affectFields := strings.Fields(lb.Text())
 				if len(affectFields) >= 2 {
@@ -239,12 +286,13 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 // parseFlag converts a flag value to an integer.
 // Dark Pawns stores flags as plain integers (e.g. "8193"), not CircleMUD's
 // letter-encoded bitmasks. We try integer parse first, fall back to letters.
+// This matches C's asciiflag_conv() in db.c:751-772 which does the same logic.
 func parseFlag(s string) int {
 	// Try plain integer first (Dark Pawns format)
 	if v, err := strconv.Atoi(s); err == nil {
 		return v
 	}
-	// Fall back to letter-encoded bitmask (original CircleMUD format)
+	// Fall back to letter-encoded bitmask (original CircleMUD format, asciiflag_conv)
 	result := 0
 	for _, c := range s {
 		if c >= 'a' && c <= 'z' {
@@ -254,6 +302,14 @@ func parseFlag(s string) int {
 		}
 	}
 	return result
+}
+
+// toUpper converts a rune to uppercase, matching C toupper() behavior.
+func toUpper(r rune) rune {
+	if r >= 'a' && r <= 'z' {
+		return r - 32
+	}
+	return r
 }
 
 // ParseAllObjFiles parses all .obj files in a directory.
