@@ -1493,14 +1493,13 @@ func (w *World) dispatchScriptEvent(source, target, objVNum, argument int, trigg
 	ctx.World = NewWorldScriptableAdapter(w)
 	ctx.RoomVNum = mob.GetRoom()
 
-	// If target is a player name hash/ID, try to resolve it
-	// In the original, target was a char_data pointer. In our Go version,
-	// we store the target as an int (could be player ID or mob ID).
-	// For now, we only support mob-source events firing on themselves.
-// Target resolution for cross-entity script triggers is deferred.
-	// The original C code used char_data pointers directly; our Go version
-	// stores numeric IDs. When the entity lookup by ID is implemented,
-	// resolve target here and pass it into the script context.
+	// Target resolution for cross-entity script triggers.
+	// In the original C code, target was a char_data pointer directly.
+	// Our Go version stores target as a numeric int that may be a player ID,
+	// mob instance ID, or 0 (no target). For now we only support events
+	// where the mob is its own target (target == source). When an entity
+	// lookup by ID is added (e.g., GetPlayerByID, GetMobByID), resolve
+	// target here and pass the resulting entity name into ctx as needed.
 
 	// Run the trigger function in the mob's script
 	// The trigger name is the Lua function to call (e.g., "port", "jail", "bane_one")
