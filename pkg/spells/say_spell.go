@@ -311,9 +311,15 @@ func selfTarget(ch, tch interface{}) bool {
 	return ch == tch
 }
 
-// sameRoom is a stub — returns true (assumes same room) until world integration.
+// sameRoom checks if two characters are in the same room.
 func sameRoom(ch, tch interface{}) bool {
-	return true
+	type roomed interface{ GetRoomVNum() int }
+	cr, ok1 := ch.(roomed)
+	tr, ok2 := tch.(roomed)
+	if !ok1 || !ok2 {
+		return false
+	}
+	return cr.GetRoomVNum() == tr.GetRoomVNum()
 }
 
 // sameRoomWithObj is a stub — returns true.
@@ -321,21 +327,70 @@ func sameRoomWithObj(ch, tobj interface{}) bool {
 	return true
 }
 
-// sendToRoom sends act-formatted messages to the room.
-// This is a stub that delegates to world for real room iteration.
+// roomIterable is the interface needed from world for room iteration.
+// Uses ForEach-style callbacks to avoid importing game package types.
+type roomIterable interface {
+	ForEachPlayerInRoomInterface(int, func(interface{}))
+	ForEachMobInRoomInterface(int, func(interface{}))
+}
+
+// sendToRoom sends act-formatted messages to all characters in the caster's room.
+// Players of the same class as the caster see realName; others see obfuscated.
 func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated string, world interface{}) {
-	// TODO: Real room iteration — iterate world[ch.in_room].people
-	// For each person: if same class as caster, use realName; else use obfuscated
-	// For now, just send to ch
-	type sender interface{ SendMessage(string) }
-	if s, ok := ch.(sender); ok {
-		msg := strings.Replace(format, "%s", realName, 1)
-		msg = strings.ReplaceAll(msg, "$n", "Someone")
-		msg = strings.ReplaceAll(msg, "$N", "someone")
-		msg = strings.ReplaceAll(msg, "$s", "their")
-		msg = strings.ReplaceAll(msg, "$p", "something")
-		s.SendMessage(msg)
+	type roomed interface{ GetRoomVNum() int }
+	type classed interface{ GetClass() int }
+
+	rg, hasRoom := ch.(roomed)
+	casterClass := -1
+	if cc, ok := ch.(classed); ok {
+		casterClass = cc.GetClass()
 	}
+	if !hasRoom {
+		return
+	}
+	roomVNum := rg.GetRoomVNum()
+
+	w, ok := world.(roomIterable)
+	if !ok {
+		type sender interface{ SendMessage(string) }
+		if s, ok := ch.(sender); ok {
+			s.SendMessage(strings.Replace(format, "%s", realName, 1))
+		}
+		return
+	}
+
+	type msgSender interface{ SendMessage(string) }
+	type msgNamed interface{ GetName() string }
+	type msgClassed interface{ GetClass() int }
+
+	w.ForEachPlayerInRoomInterface(roomVNum, func(p interface{}) {
+		rp, ok := p.(msgSender)
+		if !ok {
+			return
+		}
+		name := realName
+		if rc, ok := p.(msgClassed); ok && rc.GetClass() != casterClass {
+			name = obfuscated
+		}
+		msg := strings.Replace(format, "%s", name, 1)
+		msg = strings.ReplaceAll(msg, "$n", name)
+		if tch != nil {
+			if vn, ok := tch.(msgNamed); ok {
+				msg = strings.ReplaceAll(msg, "$N", vn.GetName())
+			}
+		}
+		msg = strings.ReplaceAll(msg, "$s", "their")
+		if tobj != nil {
+			if on, ok := tobj.(msgNamed); ok {
+				msg = strings.ReplaceAll(msg, "$p", on.GetName())
+			} else {
+				msg = strings.ReplaceAll(msg, "$p", "something")
+			}
+		} else {
+			msg = strings.ReplaceAll(msg, "$p", "something")
+		}
+		rp.SendMessage(msg)
+	})
 }
 
 // sendAct is a minimal act() replacement.

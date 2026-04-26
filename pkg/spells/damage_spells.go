@@ -312,11 +312,35 @@ func getHP(ch interface{}) int {
 	return 0
 }
 
+// zoneMessager is the interface for world to send messages to all players in a zone.
+type zoneMessager interface {
+	ForEachPlayerInZoneInterface(int, func(interface{}))
+}
+
 func sendToZone(msg string, ch interface{}, world interface{}) {
-	// TODO: Iterate players in the same zone and send msg
-	_ = msg
-	_ = ch
-	_ = world
+	w, ok := world.(zoneMessager)
+	if !ok {
+		return
+	}
+	type roomed interface{ GetRoomVNum() int }
+	rg, ok := ch.(roomed)
+	if !ok {
+		return
+	}
+	// Get caster's zone from world
+	type zoner interface{ GetRoomZone(int) int }
+	zw, ok := world.(zoner)
+	if !ok {
+		return
+	}
+	zone := zw.GetRoomZone(rg.GetRoomVNum())
+
+	type sender interface{ SendMessage(string) }
+	w.ForEachPlayerInZoneInterface(zone, func(p interface{}) {
+		if s, ok := p.(sender); ok {
+			s.SendMessage(msg)
+		}
+	})
 }
 
 func randBool(denom int) bool {

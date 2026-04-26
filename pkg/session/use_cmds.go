@@ -114,7 +114,7 @@ func cmdRecite(s *Session, args []string) error {
 		if spellNum <= 0 {
 			continue
 		}
-		spells.Cast(s.player, target, spellNum, spellLevel, am)
+		spells.Cast(s.player, target, spellNum, spellLevel, nil, am)
 	}
 
 	return nil
@@ -224,7 +224,7 @@ func cmdZap(s *Session, args []string) error {
 
 	// Cast the spell
 	am := engine.NewAffectManager()
-	spells.Cast(s.player, target, spellNum, spellLevel, am)
+	spells.Cast(s.player, target, spellNum, spellLevel, nil, am)
 
 	s.markDirty(VarInventory)
 

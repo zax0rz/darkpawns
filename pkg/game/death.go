@@ -319,6 +319,49 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
 }
 
+// Attack type constants (TYPE_*) from spells.h:266-283
+// Weapon types: TYPE_HIT(300) through TYPE_SUFFERING(399)
+const (
+	TypeUndefined = -1
+	TypeHit      = 300
+	TypeSting    = 301
+	TypeWhip     = 302
+	TypeSlash    = 303
+	TypeBite     = 304
+	TypeBludgeon = 305
+	TypeCrush    = 306
+	TypePound    = 307
+	TypeClaw     = 308
+	TypeMaul     = 309
+	TypeThrash   = 310
+	TypePierce   = 311
+	TypeBlast    = 312
+	TypePunch    = 313
+	TypeStab     = 314
+	TypeSuffering = 399
+)
+
+// Skill numeric IDs from spells.h — used in attack type resolution.
+// Note: skills.go uses string identifiers; these numeric values match C source.
+// Only defined here because attackTypeToCorpseAttack receives int (C-style numeric type).
+const (
+	SkillBackstabNum   = 131
+	SkillBashNum       = 132
+	SkillKickNum       = 134
+	SkillPunchNum      = 136
+	SkillBiteNum       = 150
+	SkillHeadbuttNum   = 141
+	SkillSmackheadsNum = 145
+	SkillSlugNum       = 146
+	SkillSerpentKickNum = 156
+	SkillCircleNum     = 173
+	SkillDisembowelNum = 184
+	SkillSleeperNum    = 187
+	SkillNeckbreakNum  = 190
+	SkillDragonKickNum  = 222
+	SkillTigerPunchNum  = 223
+)
+
 // CorpseAttackType describes what killed the victim, for corpse descriptions.
 // Source: fight.c:283-370
 type CorpseAttackType int
@@ -365,7 +408,21 @@ func attackTypeToCorpseAttack(attackType int) CorpseAttackType {
 		return AttackDrowning
 	case 35: // SPELL_PETRIFY
 		return AttackPetrify
-	// TODO: Add TYPE_ and SKILL_ constants when they're defined
+	case TypeBludgeon, TypePound, TypePunch, TypeWhip,
+		SkillBashNum, SkillKickNum, SkillPunchNum, SkillDragonKickNum, SkillTigerPunchNum,
+		SkillHeadbuttNum, SkillSmackheadsNum, SkillSlugNum, SkillSerpentKickNum:
+		return AttackBruised
+	case SkillBiteNum, TypeBite, TypeClaw, TypeSlash,
+		SkillBackstabNum, SkillCircleNum:
+		return AttackSlash
+	case SkillDisembowelNum:
+		return AttackDisembowel
+	case SkillNeckbreakNum:
+		return AttackNeckBreak
+	case TypeCrush, TypeMaul, TypeThrash:
+		return AttackCrush
+	case TypePierce, TypeStab:
+		return AttackPierce
 	default:
 		// Check if it's a negative number (TYPE_UNDEFINED or non-combat death)
 		if attackType < 0 {

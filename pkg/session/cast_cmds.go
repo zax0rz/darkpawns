@@ -257,7 +257,7 @@ func cmdCast(s *Session, args []string) error {
 
 	// Execute the spell
 	am := engine.NewAffectManager()
-	spells.Cast(s.player, target, sd.SpellNum, casterLevel, am)
+	spells.Cast(s.player, target, sd.SpellNum, casterLevel, nil, am)
 
 	// Send confirmation
 	if target == s.player {

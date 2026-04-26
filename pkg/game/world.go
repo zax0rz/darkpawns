@@ -220,6 +220,54 @@ func (w *World) RemovePlayer(name string) {
 	delete(w.players, name)
 }
 
+// ForEachPlayer calls fn for each player in the world. Thread-safe.
+func (w *World) ForEachPlayer(fn func(p *Player)) {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	for _, p := range w.players {
+		fn(p)
+	}
+}
+
+// ForEachPlayerInZone calls fn for each player in the given zone. Thread-safe.
+func (w *World) ForEachPlayerInZone(zoneNum int, fn func(p *Player)) {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	for _, p := range w.players {
+		roomVNum := p.GetRoom()
+		zone := w.GetRoomZone(roomVNum)
+		if zone == zoneNum {
+			fn(p)
+		}
+	}
+}
+
+// ForEachPlayerInZoneInterface is like ForEachPlayerInZone but accepts interface{} callback
+// for use from packages that can't import game types (e.g., spells).
+func (w *World) ForEachPlayerInZoneInterface(zoneNum int, fn func(p interface{})) {
+	w.ForEachPlayerInZone(zoneNum, func(p *Player) { fn(p) })
+}
+
+// ForEachPlayerInRoomInterface iterates players in a room with interface{} callback.
+// For use from packages that can't import game types (e.g., spells).
+func (w *World) ForEachPlayerInRoomInterface(roomVNum int, fn func(p interface{})) {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	for _, p := range w.players {
+		if p.GetRoom() == roomVNum {
+			fn(p)
+		}
+	}
+}
+
+// ForEachMobInRoomInterface iterates mobs in a room with interface{} callback.
+// For use from packages that can't import game types (e.g., spells).
+func (w *World) ForEachMobInRoomInterface(roomVNum int, fn func(m interface{})) {
+	for _, m := range w.GetMobsInRoom(roomVNum) {
+		fn(m)
+	}
+}
+
 // GetRoomInWorld returns a room by VNum, or nil if not found.
 // Deprecated: use GetRoom (snapshot version) instead.
 func (w *World) GetRoomInWorld(vnum int) *parser.Room {

@@ -178,7 +178,7 @@ func specSnake(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		return false
 	}
 	w.roomMessage(me.RoomVNum, me.GetName()+" bites "+melee.GetName()+"!")
-	spells.Cast(me, melee, spells.SpellPoison, me.GetLevel(), nil)
+	spells.Cast(me, melee, spells.SpellPoison, me.GetLevel(), nil, nil)
 	return true
 }
 
@@ -210,7 +210,7 @@ func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 	}
 	if vict != nil && randN(4) == 0 {
-		spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), nil, nil)
 		if me.RoomVNum == vict.GetRoomVNum() {
 			me.Fighting = true
 			me.FightingTarget = vict.Name
@@ -278,41 +278,41 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	spellRoll := randN(me.GetLevel()/2+1) + me.GetLevel()/2
 	switch {
 	case spellRoll <= 5:
-		spells.Cast(me, vict, spells.SpellMagicMissile, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellMagicMissile, me.GetLevel(), nil, nil)
 	case spellRoll <= 7:
-		spells.Cast(me, vict, spells.SpellChillTouch, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellChillTouch, me.GetLevel(), nil, nil)
 	case spellRoll <= 9:
-		spells.Cast(me, vict, spells.SpellBurningHands, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellBurningHands, me.GetLevel(), nil, nil)
 	case spellRoll <= 11:
-		spells.Cast(me, vict, spells.SpellShockingGrasp, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellShockingGrasp, me.GetLevel(), nil, nil)
 	case spellRoll == 12:
-		spells.Cast(me, vict, spells.SpellDispelGood, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellDispelGood, me.GetLevel(), nil, nil)
 	case spellRoll == 13:
-		spells.Cast(me, vict, spells.SpellLightningBolt, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellLightningBolt, me.GetLevel(), nil, nil)
 	case spellRoll == 14:
 		if randN(11) == 0 {
-			spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), nil)
+			spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), nil, nil)
 		}
 	case spellRoll >= 15 && spellRoll <= 17:
-		spells.Cast(me, vict, spells.SpellColorSpray, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellColorSpray, me.GetLevel(), nil, nil)
 	case spellRoll == 20:
-		spells.Cast(me, vict, spells.SpellHellfire, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellHellfire, me.GetLevel(), nil, nil)
 	case spellRoll == 25:
-		spells.Cast(me, vict, spells.SpellFlamestrike, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellFlamestrike, me.GetLevel(), nil, nil)
 	case spellRoll == 30:
-		spells.Cast(me, vict, spells.SpellDisintegrate, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellDisintegrate, me.GetLevel(), nil, nil)
 	case spellRoll >= 31 && spellRoll <= 33:
-		spells.Cast(me, vict, spells.SpellDisrupt, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellDisrupt, me.GetLevel(), nil, nil)
 	case spellRoll == 34:
-		spells.Cast(me, vict, spells.SpellInvulnerability, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellInvulnerability, me.GetLevel(), nil, nil)
 	case spellRoll >= 35 && spellRoll <= 36:
-		spells.Cast(me, vict, spells.SpellFlamestrike, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellFlamestrike, me.GetLevel(), nil, nil)
 	case spellRoll == 37:
-		spells.Cast(me, vict, spells.SpellMeteorSwarm, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellMeteorSwarm, me.GetLevel(), nil, nil)
 	case spellRoll == 38:
-		spells.Cast(me, vict, spells.SpellDisrupt, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellDisrupt, me.GetLevel(), nil, nil)
 	default:
-		spells.Cast(me, vict, spells.SpellFireball, me.GetLevel(), nil)
+		spells.Cast(me, vict, spells.SpellFireball, me.GetLevel(), nil, nil)
 	}
 	return true
 }
@@ -358,7 +358,7 @@ func specPaladin(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	case 2:
 		w.roomMessage(me.RoomVNum, me.GetName()+" charges "+melee.GetName()+"!")
 	case 3:
-		spells.Cast(me, melee, spells.SpellDispelEvil, me.GetLevel(), nil)
+		spells.Cast(me, melee, spells.SpellDispelEvil, me.GetLevel(), nil, nil)
 	case 5:
 		w.roomMessage(me.RoomVNum, me.GetName()+" disarms "+melee.GetName()+"!")
 	}
@@ -551,7 +551,7 @@ func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg str
 	breathNames := []string{"fire", "gas", "frost", "acid", "lightning"}
 	n := randN(len(breathSpells))
 	w.roomMessage(me.RoomVNum, me.GetName()+" breathes "+breathNames[n]+" at "+melee.GetName()+"!")
-	spells.Cast(me, melee, breathSpells[n], me.GetLevel(), nil)
+	spells.Cast(me, melee, breathSpells[n], me.GetLevel(), nil, nil)
 	return true
 }
 

@@ -5,7 +5,7 @@
 //   Implemented (in Cast() switch → ApplySpellAffects):
 //     SPELL_BLINDNESS, SPELL_CURSE, SPELL_POISON, SPELL_SLEEP, SPELL_SANCTUARY
 //
-//   TODO: Damage & effect spells — Cast() default case is a stub:
+//   Routed through CallMagic for damage, healing, points, summons, etc.:
 //     SPELL_MAGIC_MISSILE, SPELL_BURNING_HANDS, SPELL_LIGHTNING_BOLT, SPELL_FIREBALL,
 //     SPELL_HELLFIRE, SPELL_COLOR_SPRAY, SPELL_DISRUPT, SPELL_DISINTEGRATE,
 //     SPELL_FLAMESTRIKE, SPELL_ACID_BLAST, SPELL_TELEPORT, SPELL_DISPEL_EVIL,
@@ -37,7 +37,7 @@
 //     SPELL_CREATE_FOOD, SPELL_CREATE_WATER, SPELL_CONTROL_WEATHER,
 //     SPELL_CLONE, SPELL_ARMOR
 //
-// TODO: Skills (fighter.lua) — called but not yet ported to Go:
+//   Skills (fighter.lua) — handled by skill system in game package:
 //     SKILL_HEADBUTT, SKILL_PARRY, SKILL_BASH, SKILL_BERSERK,
 //     SKILL_KICK, SKILL_TRIP
 package spells
@@ -171,13 +171,15 @@ const (
 
 // Cast executes a spell. For non-damage affect spells (blindness, curse, poison,
 // sleep, sanctuary), it routes through ApplySpellAffects to create and apply an
-// engine.Affect to the target.
+// engine.Affect to the target. For all other spells (damage, points, summons, etc.),
+// it routes through CallMagic for full dispatch.
 //
 // caster and target are the involved entities (must implement engine.Affectable).
 // spellNum is one of the Spell* constants above.
 // casterLevel scales duration and magnitude of affects.
-// aggressive indicates if it's an offensive spell (not yet used).
-func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int, am *engine.AffectManager) {
+// world is the game world reference (interface{} to avoid circular imports); may be nil.
+// am is the affect manager for buff spells; may be nil.
+func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int, world interface{}, am *engine.AffectManager) {
 	// Route non-damage affect spells through ApplySpellAffects
 	switch spellNum {
 	case SpellBlindness, SpellCurse, SpellPoison, SpellSleep, SpellSanctuary:
@@ -187,6 +189,7 @@ func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int,
 		}
 		ApplySpellAffects(targetAffectable, spellNum, casterLevel, am)
 	default:
-		// TODO: Implement damage spells and other spell types
+		// Route through CallMagic for damage, healing, points, summons, etc.
+		CallMagic(caster, target, nil, spellNum, casterLevel, CastSpell, world)
 	}
 }

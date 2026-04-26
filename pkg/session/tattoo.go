@@ -78,15 +78,15 @@ func useTattoo(ch *Session) bool {
 
 	case TatEye:
 		// call_magic(ch, ch, NULL, SPELL_GREATPERCEPT, DEFAULT_WAND_LVL, CAST_WAND)
-		spells.Cast(ch.player, ch.player, spells.SpellGreatPercept, DefaultWandLvl, nil)
+		spells.Cast(ch.player, ch.player, spells.SpellGreatPercept, DefaultWandLvl, nil, nil)
 
 	case TatShip:
 		// call_magic(ch, ch, NULL, SPELL_CHANGE_DENSITY, DEFAULT_WAND_LVL, CAST_WAND)
-		spells.Cast(ch.player, ch.player, spells.SpellChangeDensity, DefaultWandLvl, nil)
+		spells.Cast(ch.player, ch.player, spells.SpellChangeDensity, DefaultWandLvl, nil, nil)
 
 	case TatAngel:
 		// call_magic(ch, ch, NULL, SPELL_BLESS, DEFAULT_WAND_LVL, CAST_WAND)
-		spells.Cast(ch.player, ch.player, spells.SpellBless, DefaultWandLvl, nil)
+		spells.Cast(ch.player, ch.player, spells.SpellBless, DefaultWandLvl, nil, nil)
 
 	default:
 		ch.Send("Your tattoo can't be 'use'd.\r\n")

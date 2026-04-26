@@ -676,7 +676,7 @@ func specIdentifier(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			obj := items[0]
 			sendToChar(ch, fmt.Sprintf("%s studies %s carefully...\r\n", mobName(me), obj.GetShortDesc()))
 			// Cast identify on the object
-			spells.Cast(ch, obj, spells.SpellIdentify, ch.GetLevel(), nil)
+			spells.Cast(ch, obj, spells.SpellIdentify, ch.GetLevel(), nil, nil)
 			return true
 		}
 	}
