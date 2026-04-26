@@ -176,7 +176,16 @@ func (w *World) doTrack(ch *Player, me *MobInstance, argument string) bool {
 		ch.SendMessage("You can't sense a trail to them from here.\r\n")
 	default:
 		num := rand.IntN(102) // 0-101, 101% is complete failure
-		// TODO: Weather penalty when Weather system is implemented
+
+		// Weather penalty — not yet implemented.
+		// When the weather system is active, apply a skill penalty for
+		// adverse conditions (rain, snow, wind, darkness) that reduce
+		// tracking effectiveness. Expected logic:
+		//   if weather.IsPrecipitating(room.Zone) || weather.IsDark(room.Zone) {
+		//       num += weather.TrackingPenalty(room.Zone) // 0-20
+		//   }
+		// See src/weather.c:weather_change() and src/graph.c:find_first_step()
+		// for the original C interaction.
 
 		if num >= skill {
 			// Skill failure — pick a random valid direction

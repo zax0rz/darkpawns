@@ -1199,7 +1199,17 @@ func (w *World) doClanPrivate(ch *Player, arg string) {
 
 // doClanPlan shows/edits the clan's plan (description).
 // In C: do_clan_plan() — uses string_write (descriptor-based editor).
-// TODO: implement string_write pattern via session layer when available.
+//
+// string_write is a descriptor-based multi-line editor activated by setting
+// ch.WriteMagic and storing a callback. The session layer intercepts all
+// subsequent input until a line containing only "@" is received, then calls
+// the callback with the accumulated text.
+//
+// For now the plan is set via simple single-argument input from the god
+// command, or cleared in anticipation of session-layer editor support.
+// When the session editor layer is wired (string_write in session/), set
+// ch.WriteMagic = magicToken and register a callback that writes the
+// accumulated text into c.Plan.
 func (w *World) doClanPlan(ch *Player, arg string) {
 	var clanNum int
 	var c *Clan
@@ -1239,7 +1249,12 @@ func (w *World) doClanPlan(ch *Player, arg string) {
 	ch.SendMessage("End with @ on a line by itself.\r\n")
 	c.Plan = ""
 	// C uses string_write(ch->desc, &clan[clan_num].plan, CLAN_PLAN_LENGTH, 0, NULL)
-	// This requires session-layer descriptor access, which is not yet ported.
+	// The session layer should check ch.WriteMagic after each input line
+	// and accumulate text until "@" alone appears, then call the registered
+	// callback. Once wired, this function would set:
+	//   ch.WriteMagic = someToken
+	// and register a callback that assigns c.Plan = accumulatedText and
+	// calls w.SaveClans().
 	w.SaveClans()
 }
 

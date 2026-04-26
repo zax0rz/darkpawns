@@ -61,12 +61,16 @@ var houseControlFilename = "house/house_control.json"
 
 // getPlayerNameByID looks up a player's name by their numeric ID.
 // In the C code this was get_name_by_id(id).
-// TODO: Implement proper lookup via player database or in-memory cache.
+// Implemented as a dependency-injected function pointer. Register via
+// RegisterHousePlayerLookup() during server initialization, backing the
+// lookup with a player database or in-memory player name cache indexed by ID.
 var getPlayerNameByID func(id int64) string
 
 // getPlayerIDByName looks up a player's numeric ID by their name.
 // In the C code this was get_id_by_name(name).
-// TODO: Implement proper lookup via player database or in-memory cache.
+// Implemented as a dependency-injected function pointer. Register via
+// RegisterHousePlayerLookup() during server initialization, backing the
+// lookup with a player database or in-memory player ID cache indexed by name.
 var getPlayerIDByName func(name string) int64
 
 // RegisterHousePlayerLookup sets the player-name lookup functions used by

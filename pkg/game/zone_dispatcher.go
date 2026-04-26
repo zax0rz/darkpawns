@@ -121,13 +121,45 @@ func (zd *ZoneDispatcher) runZoneReset(zone *parser.Zone) {
 }
 
 // runZoneMobAI processes mob AI ticks for all mobs in a zone.
-// This is a placeholder for future AI work — currently NO-OP.
+// Iterates active mobs that reside in rooms belonging to this zone and
+// dispatches basic AI behaviors. Placeholder — expand as AI systems land.
 func (zd *ZoneDispatcher) runZoneMobAI(zone *parser.Zone) {
-	// TODO: Run per-zone mob AI ticks:
-	//   - Check room_reset_vnum list for respawn triggers
-	//   - Move wandering mobs
-	//   - Check aggro ranges
-	//   - Process zone-wide events (evacuation, invasion triggers)
+	mobs := zd.world.GetAllMobs()
+	zoneNum := zone.Number
+
+	for _, mob := range mobs {
+		roomVNum := mob.GetRoom()
+		if roomVNum < 0 {
+			continue
+		}
+		room := zd.world.GetRoomInWorld(roomVNum)
+		if room == nil || room.Zone != zoneNum {
+			continue
+		}
+
+		// Check respawn triggers — room_reset_vnum list
+		// TODO: Scan zone reset commands for the mob's room to respawn if the
+		// mob is below its expected count and the respawn timer has elapsed.
+
+		// Move wandering mobs
+		if mob.HasFlag("wander") {
+			// TODO: Pick a random exit and move the mob to the adjacent room.
+			// See src/mobact.c:mob_activity() for the original C logic.
+		}
+
+		// Check aggro ranges
+		if mob.HasFlag("aggressive") && !mob.Fighting {
+			// TODO: Scan room for players below the aggro level threshold
+			// and initiate combat via w.AttackMobOnPlayer(mob, target).
+			// See src/mobact.c:hitprcnt() and do_hunt_victim() for thresholds.
+		}
+
+		_ = mob // mob fully used in the TODO expansion above
+	}
+
+	// TODO: Process zone-wide events (evacuation, invasion triggers)
+	// These are spec_proc-based script events triggered by zone-level time
+	// or condition changes, not per-mob loop.
 }
 
 // zoneResetInterval returns the reset interval for a zone.

@@ -56,6 +56,16 @@ type BoardSystem struct {
 	msgStorageTaken [NumBoards*MaxBoardMessages + 5]bool
 	loaded          bool
 	BasePath        string // directory for board save files
+
+	// World reference for room-level echoes (actToRoom, broadcast).
+	// Set via SetWorld() after BoardSystem construction.
+	world *World
+}
+
+// SetWorld attaches a World reference to the BoardSystem, enabling room
+// echoes and broadcasts for board operations (read, write, remove).
+func (bs *BoardSystem) SetWorld(w *World) {
+	bs.world = w
 }
 
 var defaultBoardInfo = []BoardInfo{
@@ -486,7 +496,12 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch *Player, arg string) bool {
 	bs.numOfMsgs[boardType]--
 
 	ch.SendMessage("Message removed.\r\n")
-	// Room echo TODO: BoardSystem has no World reference; cannot call actToRoom.
+	// Room echo when a message is removed
+	if bs.world != nil {
+		actToRoom(bs.world, ch.GetRoomVNum(),
+			fmt.Sprintf("%s removed a message from the board.\r\n", ch.Name),
+			ch.Name)
+	}
 
 	// Save after removal (release lock first)
 	bs.mu.Unlock()
