@@ -206,4 +206,20 @@ Completed:
 - ✅ Gender pronouns in movement
 - ✅ Tattoo skull mob spawn + charm + follow
 
-Next up: Batch 3 (scripting engine TODOs), Batch 4 (wizard commands), Batch 5 (spell cleanup), then Tier 2 (Go modernization).
+### Session 2 — 2026-04-26 5:48 PM EDT
+**Commits:** dfa6c7c, 0ad9293
+**TODOs killed:** 19 (45 → 26)
+
+Completed:
+- ✅ Batch 3: All 8 scripting engine TODOs (SendToAll, SendToZone, can_see, ExecuteMobCommand, etc.)
+- ✅ Batch 4: All 9 wizard command TODOs (cmdLoad, cmdPurge, cmdSwitch, cmdReturn, cmdReload, obj stat, wizlist, combat-stop, idlist)
+- ✅ Stale cleanup: backstab TODO (already implemented), SPELL_PARALYSE verified
+
+Subagent learnings:
+- GLM-5.1 crashes on large files (wizard_cmds.go 1574 + act.wizard.c 3863 = too much)
+- Batch 4 done manually after 2 failed subagent attempts
+- DeepSeek V4 Pro model ID is `deepseek-v4/deepseek-v4-pro`, not `zai/deepseek-v4-pro`
+- Unexported→exported method renames cascade across files
+- Parser.World uses `Objs` not `Objects`
+
+Next up: Batch 5 (spell system — Cast() routing, room iteration stubs), then Tier 2 (Go modernization).
