@@ -1,45 +1,45 @@
-## Dark Pawns Wave 18 — Spell System Porting (Continued)
+# Dark Pawns — Next Session Prompt
 
-Context is at ~/darkpawns/. Start here:
+**Context:** Wave 18 (Spell System Porting) is **COMPLETE** — all 24 manual spells implemented and pushed (10 commits, CI green).
 
-1. GBrain page: `gbrain get_page darkpawns/wave18-spell-port` — full session state, what's done, what's blocked
-2. `docs/SPELL_PORT_SCOPE.md` — master scope of all 24 manual spells
-3. `git log --oneline -10` — recent commits
+**Branch:** main  
+**Working dir:** `~/darkpawns/`  
+**GBrain page:** `gbrain get_page darkpawns/wave18-spell-port` (full session state)  
+**Audit doc:** `docs/SOURCE_ACCURACY_AUDIT.md` (8 systems audited, priority fixes listed)
 
-### What Was Completed (4 commits, pushed to main)
-- PLR flags (PlayerFlags uint64, 22 constants, HasPLRFlag/SetPLRFlag/ClearPLRFlag)
-- MOB flags (Flags uint64 on MobInstance, 26 bit constants, HasMobFlag/SetMobFlag)
-- Wave A: 9 LOW spells (sobriety, zen, detect_poison, calliope, lycanthropy, vampirism, control_weather, coc, mental_lapse)
-- Wave B: 4 MEDIUM spells (enchant_weapon, enchant_armor, create_water, identify) + silken_missile
-- ObjectInstance copy-on-write overrides (ExtraFlags, Affects, Values)
-- SetValue on ObjectInstance
+## Priority: Equipment Regen Bonuses
 
-### Current State: 15/24 manual spells implemented
+Per SOURCE_ACCURACY_AUDIT.md Section 4b/4c, these are the next Phase 3 items:
 
-### Priority: Infrastructure unblocking
+1. **APPLY_MANA_REGEN** — equipment bonus to mana regen tick
+2. **APPLY_HIT_REGEN** — equipment bonus to HP regen tick  
+3. **APPLY_MOVE_REGEN** — equipment bonus to move regen tick
 
-The remaining 9 spells all need one or more of these infrastructure pieces. Pick the one with the most unblocking power:
+### Where to look
+- **C source:** `src/limits.c` — `mana_gain()`, `hit_gain()`, `move_gain()` — equipment regen bonuses are applied inside these functions after position modifiers
+- **Go source:** `pkg/game/limits.go` — regen functions with TODO comments for equipment bonuses
+- **Affect system:** `pkg/engine/affect.go` — `AffectType` enum needs regen affect types added
+- **Equipment:** `pkg/game/equipment.go` — `GetAffects()` already returns per-slot affects
 
-1. **Room character iteration** (`world.PlayersInRoom()` exists but mobs aren't included) — unblocks hellfire, meteor_swarm, mindsight (3 spells)
-2. **Room transfer** (char_from_room/char_to_room) — unblocks recall, teleport, summon, mindsight (4 spells)
-3. **Follower system** — unblocks charm, conjure_elemental, divine_int (3 spells)
+### Approach
+1. Read `src/limits.c` to find the exact equipment regen formula for each stat
+2. Check what APPLY_* constants C uses (likely APPLY_MANA_REGEN, APPLY_HIT_REGEN, APPLY_MOVE_REGEN in `src/structs.h`)
+3. Add corresponding `AffectType` values in `pkg/engine/affect.go`
+4. Wire equipment regen bonuses into `pkg/game/limits.go` regen functions
+5. Add regen affect types to `AffectTotal()` recalculation
+6. `go build ./...` after every change
 
-### Key Files
-- `pkg/spells/affect_spells.go` — all manual spell implementations + dispatch
-- `pkg/spells/spell_info.go` — spell template system
-- `pkg/spells/call_magic.go` — main spell dispatch
-- `pkg/game/world.go` — World struct with SpawnObject, ExtractObject, AddItemToRoom, GetPlayersInRoom
-- `pkg/game/player.go` — Player struct (PlayerFlags, conditions, affects)
-- `pkg/game/mob.go` — MobInstance (Flags, Hunting, Following)
-- `src/spells.c` — C source (authoritative)
-- `src/structs.h` — C flag/type constants (authoritative)
+### Also worth fixing (from audit priority list)
+The audit doc lists higher-priority items if equipment regen goes fast:
+- **wis_app table** (System 2a) — completely wrong values, affects practice economy
+- **Position damage multiplier** (System 1a) — wrong formula in `CalculateDamage`
+- **getMinusDam high-AC entries** (System 1b) — missing -170 to -290
 
 ### Rules
 - Read before write. Check interfaces before calling them.
 - `go build ./...` after every significant change.
 - Use `slog` not `log` or `fmt` for logging.
 - No globals — pass dependencies through params.
-- C source is authoritative: `src/` directory. Fix C bugs noted in scope doc during port.
-- **Import cycle**: spells→game creates a cycle. Use interface assertions on all game types.
+- C source is authoritative: `src/` directory. Fix C bugs noted during port.
+- Import cycle: spells→game creates a cycle. Use interface assertions.
 - For Claude Code subagents: always prepend `unset ANTHROPIC_API_KEY &&` to use subscription OAuth.
-- Claude Code --print mode OOMs on large prompts here. Prefer direct implementation or `sessions_spawn` with bounded tasks.
