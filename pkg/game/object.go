@@ -40,6 +40,7 @@ type ObjectInstance struct {
 	// Source: src/spells.c spell_enchant_weapon/armor, spell_silken_missile.
 	ExtraFlagsOverride [4]int
 	AffectsOverride    []parser.ObjAffect
+	ValuesOverride     *[4]int // copy-on-write override of prototype Values
 }
 
 // NewObjectInstance creates a new object instance from a prototype.
@@ -302,12 +303,29 @@ func (o *ObjectInstance) GetVNum() int {
 	return o.VNum
 }
 
-// GetValue returns the object's Values[idx] from its prototype, or 0.
+// GetValue returns the object's Values[idx], preferring instance override.
 func (o *ObjectInstance) GetValue(idx int) int {
+	if o.ValuesOverride != nil && idx >= 0 && idx < len(*o.ValuesOverride) {
+		return (*o.ValuesOverride)[idx]
+	}
 	if o.Prototype == nil || idx < 0 || idx >= len(o.Prototype.Values) {
 		return 0
 	}
 	return o.Prototype.Values[idx]
+}
+
+// SetValue sets an object value at the given index. Creates a copy-on-write
+// override so the prototype isn't mutated. Used by create_water and similar spells.
+func (o *ObjectInstance) SetValue(idx, val int) {
+	if o.Prototype == nil || idx < 0 || idx >= len(o.Prototype.Values) {
+		return
+	}
+	// Copy-on-write: create instance values override when first mutating
+	if o.ValuesOverride == nil {
+		copy := o.Prototype.Values
+		o.ValuesOverride = &copy
+	}
+	o.ValuesOverride[idx] = val
 }
 
 func (o *ObjectInstance) GetRoomVNum() int {
