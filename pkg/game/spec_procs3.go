@@ -623,7 +623,7 @@ func specWerewolf(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	// Howl (10% chance)
 	if rand.Intn(10) == 0 {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s looks up and lets out a long, fierce howl.", mobName(me)))
-		w.sendToZone(me.GetRoomVNum(), "You hear a loud howling in the distance.")
+		w.SendToZone(me.GetRoomVNum(), "You hear a loud howling in the distance.")
 	}
 	// Bite attack (25% chance)
 	if rand.Intn(4) == 0 {

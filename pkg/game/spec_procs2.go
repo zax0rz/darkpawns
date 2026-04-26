@@ -356,7 +356,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		ch.MountVNum = horse.VNum
 		ch.MountCostDay = 5
 		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s takes %s out back to the stables.", mobName(me), mobName(horse)))
-		w.extractMob(horse)
+		w.ExtractMob(horse)
 		tellFromMob(me, ch, fmt.Sprintf("I will take good care of 'em, for %d coins a day.", ch.MountCostDay))
 		return true
 

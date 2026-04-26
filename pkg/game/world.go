@@ -28,6 +28,9 @@ type World struct {
 	zones      map[int]*parser.Zone
 	parsedData *parser.World // original parsed data, nil after boot
 
+	// World path for reload support
+	WorldPath  string
+
 	// Runtime state
 	players    map[string]*Player   // keyed by player name
 	activeMobs map[int]*MobInstance // keyed by instance ID
@@ -95,6 +98,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		done:        make(chan bool),
 		shopManager: nil,    // Will be set via SetShopManager
 		parsedData:  parsed, // Keep reference for door loading etc.
+		WorldPath:   "", // Set externally for reload support
 	}
 
 	// Index rooms by VNum
@@ -175,6 +179,18 @@ func (w *World) GetParsedWorld() *parser.World {
 	return w.parsedData
 }
 
+// ReplaceParsedWorld swaps the in-memory world data with a fresh parse.
+// Used by the reload wizard command.
+func (w *World) ReplaceParsedWorld(pw *parser.World) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.parsedData = pw
+	w.rooms = make(map[int]*parser.Room)
+	for i := range pw.Rooms {
+		w.rooms[pw.Rooms[i].VNum] = &pw.Rooms[i]
+	}
+}
+
 // GetRoom returns a room by VNum.
 // GetPlayer returns a player by name.
 func (w *World) GetPlayer(name string) (*Player, bool) {
@@ -232,7 +248,7 @@ func (w *World) Rooms() []parser.Room {
 }
 
 // sendToZone sends a message to all players in the same zone as the given room.
-func (w *World) sendToZone(roomVNum int, msg string) {
+func (w *World) SendToZone(roomVNum int, msg string) {
 	room := w.GetRoomInWorld(roomVNum)
 	if room == nil {
 		return
@@ -244,6 +260,61 @@ func (w *World) sendToZone(roomVNum int, msg string) {
 			p.SendMessage(msg)
 		}
 	}
+}
+
+// sendToAll sends a message to all online players.
+// Source: comm.c send_to_all().
+func (w *World) SendToAll(msg string) {
+	if msg == "" {
+		return
+	}
+	for _, p := range w.players {
+		p.SendMessage(msg)
+	}
+}
+
+// executeMobCommand makes a mob execute a game command.
+// Source: scripts.c lua_action() → command_interpreter().
+// Mobs don't have sessions, so we log the command for now.
+// TODO: When mob script task system is implemented, dispatch through that.
+func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
+	w.mu.RLock()
+	var mob *MobInstance
+	for _, m := range w.activeMobs {
+		if m.GetVNum() == mobVNum {
+			mob = m
+			break
+		}
+	}
+	w.mu.RUnlock()
+
+	if mob == nil {
+		slog.Debug("executeMobCommand: mob not found", "vnum", mobVNum, "command", cmdStr)
+		return
+	}
+
+	slog.Debug("mob executes command", "mob_vnum", mobVNum, "mob_name", mob.GetName(), "command", cmdStr)
+	// TODO: Route to actual mob command handler when implemented
+}
+
+// IsRoomDark returns true if the given room VNum is dark.
+// Based on utils.h IS_DARK() macro — checks ROOM_DARK flag.
+func (w *World) IsRoomDark(roomVNum int) bool {
+	room := w.GetRoomInWorld(roomVNum)
+	if room == nil {
+		return false
+	}
+	// Check ROOM_DARK flag (bit 0)
+	return room.HasFlag(0)
+}
+
+// GetRoomZone returns the zone number for a given room VNum.
+func (w *World) GetRoomZone(roomVNum int) int {
+	room := w.GetRoomInWorld(roomVNum)
+	if room == nil {
+		return -1
+	}
+	return room.Zone
 }
 
 // GetPlayersInRoom returns all players in a given room.
@@ -369,7 +440,7 @@ func (w *World) LookAtRoomSimple(roomVNum int, sender interface{}) {
 }
 
 // extractMob removes a mob instance from the world (extract_char equivalent).
-func (w *World) extractMob(mob *MobInstance) {
+func (w *World) ExtractMob(mob *MobInstance) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	for id, m := range w.activeMobs {
@@ -1102,6 +1173,35 @@ func (a *WorldScriptableAdapter) RemoveItemFromChar(charName string, vnum int) s
 
 func (a *WorldScriptableAdapter) GiveItemToChar(charName string, obj scripting.ScriptableObject) error {
 	return a.world.GiveItemToCharScriptable(charName, obj)
+}
+
+// SendToZone sends a message to all players in the same zone as the given room.
+// Source: comm.c send_to_zone().
+func (a *WorldScriptableAdapter) SendToZone(roomVNum int, msg string) {
+	a.world.SendToZone(roomVNum, msg)
+}
+
+// SendToAll sends a message to all online players.
+// Source: comm.c send_to_all().
+func (a *WorldScriptableAdapter) SendToAll(msg string) {
+	a.world.SendToAll(msg)
+}
+
+// ExecuteMobCommand makes a mob execute a game command.
+// Source: scripts.c lua_action() → command_interpreter().
+func (a *WorldScriptableAdapter) ExecuteMobCommand(mobVNum int, cmdStr string) {
+	a.world.executeMobCommand(mobVNum, cmdStr)
+}
+
+// IsRoomDark returns true if the given room VNum is dark.
+// Based on utils.h IS_DARK() macro — checks ROOM_DARK flag.
+func (a *WorldScriptableAdapter) IsRoomDark(roomVNum int) bool {
+	return a.world.IsRoomDark(roomVNum)
+}
+
+// GetRoomZone returns the zone number for a given room VNum.
+func (a *WorldScriptableAdapter) GetRoomZone(roomVNum int) int {
+	return a.world.GetRoomZone(roomVNum)
 }
 
 // CreateEvent schedules a timed event on the world's event queue.

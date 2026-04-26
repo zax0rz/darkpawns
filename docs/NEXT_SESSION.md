@@ -1,45 +1,60 @@
 # Dark Pawns — Next Session Prompt
 
-**Context:** Wave 18 (Spell System Porting) is **COMPLETE** — all 24 manual spells implemented and pushed (10 commits, CI green).
-
 **Branch:** main  
 **Working dir:** `~/darkpawns/`  
-**GBrain page:** `gbrain get_page darkpawns/wave18-spell-port` (full session state)  
-**Audit doc:** `docs/SOURCE_ACCURACY_AUDIT.md` (8 systems audited, priority fixes listed)
+**Plan:** `docs/PORT_COMPLETION_PLAN.md` (read this first — has full scope, session log, and remaining items)  
+**Audit doc:** `docs/SOURCE_ACCURACY_AUDIT.md` (now stale — most items already fixed)
 
-## Priority: Equipment Regen Bonuses
+## Context
 
-Per SOURCE_ACCURACY_AUDIT.md Section 4b/4c, these are the next Phase 3 items:
+Wave 19 is in progress — closing out the remaining 45 TODOs to complete the C-to-Go port. Prior session killed 11 TODOs (equipment regen, veteran, kill counter, autosplit, KK_JIN/KK_ZHEN, PRF_INACTIVE, AFF_FLESH_ALTER, idle handling, dreams, autowiz, char creation, gender pronouns, tattoo spawn). All committed, CI green.
 
-1. **APPLY_MANA_REGEN** — equipment bonus to mana regen tick
-2. **APPLY_HIT_REGEN** — equipment bonus to HP regen tick  
-3. **APPLY_MOVE_REGEN** — equipment bonus to move regen tick
+**Run `git log --oneline -5` and `grep -rn 'TODO' pkg/ --include='*.go' | grep -v '_test.go\|.bak' | wc -l` at session start.**
 
-### Where to look
-- **C source:** `src/limits.c` — `mana_gain()`, `hit_gain()`, `move_gain()` — equipment regen bonuses are applied inside these functions after position modifiers
-- **Go source:** `pkg/game/limits.go` — regen functions with TODO comments for equipment bonuses
-- **Affect system:** `pkg/engine/affect.go` — `AffectType` enum needs regen affect types added
-- **Equipment:** `pkg/game/equipment.go` — `GetAffects()` already returns per-slot affects
+## Priority: Continue PORT_COMPLETION_PLAN.md
 
-### Approach
-1. Read `src/limits.c` to find the exact equipment regen formula for each stat
-2. Check what APPLY_* constants C uses (likely APPLY_MANA_REGEN, APPLY_HIT_REGEN, APPLY_MOVE_REGEN in `src/structs.h`)
-3. Add corresponding `AffectType` values in `pkg/engine/affect.go`
-4. Wire equipment regen bonuses into `pkg/game/limits.go` regen functions
-5. Add regen affect types to `AffectTotal()` recalculation
-6. `go build ./...` after every change
+### Batch 3: Scripting Engine TODOs (~600 lines)
+8 TODOs in `pkg/scripting/engine.go`. These are good subagent candidates — read the file, match each TODO against the C source, implement. Key items:
+- Zone broadcast (2 TODOs) — send to all players in a zone
+- Mob command execution — mobs can run game commands
+- Soul leech heal — caster heals dam/3
+- Move points restoration
+- Death handling in scripts
+- Object placement (room vs char inventory)
+- Full can_see (PLR_INVISIBLE, room DARK, AFF_BLIND)
+- Global channel broadcast
 
-### Also worth fixing (from audit priority list)
-The audit doc lists higher-priority items if equipment regen goes fast:
-- **wis_app table** (System 2a) — completely wrong values, affects practice economy
-- **Position damage multiplier** (System 1a) — wrong formula in `CalculateDamage`
-- **getMinusDam high-AC entries** (System 1b) — missing -170 to -290
+### Batch 4: Wizard Commands (~800 lines)
+8 TODOs in `pkg/session/wizard_cmds.go`. Good subagent candidate — read C's act.wizard.c, implement:
+- cmdLoad, cmdPurge, character switch/return, cmdReload, object stat, wizlist/last login, combat-stop broadcast
 
-### Rules
-- Read before write. Check interfaces before calling them.
-- `go build ./...` after every significant change.
-- Use `slog` not `log` or `fmt` for logging.
-- No globals — pass dependencies through params.
-- C source is authoritative: `src/` directory. Fix C bugs noted during port.
-- Import cycle: spells→game creates a cycle. Use interface assertions.
-- For Claude Code subagents: always prepend `unset ANTHROPIC_API_KEY &&` to use subscription OAuth.
+### Batch 5: Spell System Cleanup (~400 lines)
+- `pkg/spells/spells.go` — Cast() default case, damage spell stubs
+- `pkg/spells/say_spell.go:327` — room iteration for zone messages
+- `pkg/spells/damage_spells.go:316` — same
+- `pkg/game/death.go:368` — death attack type constants
+- `pkg/combat/formulas.go:565` — backstab function (not just TODO stub)
+
+### Tier 2: Go Modernization (~800 lines)
+- Database error handling + retry (2 TODOs in optimization/)
+- Board room echo (2 TODOs)
+- House storage (2 TODOs)
+- Clan string_write, weather graph, zone mob AI, world target resolution, world death handling, death reconnection, other settings
+
+## Rules
+- Read before write. `go build ./...` after every change. `go test ./...` before commits.
+- slog not log/fmt. No globals. C source (`src/`) is authoritative.
+- Import cycle: spells→game. Use interface assertions.
+- Use subagents for Batch 3 and 4 — they're large and self-contained. Feed them the C source + Go file + specific TODOs.
+- Commit after each batch. Update PORT_COMPLETION_PLAN.md session log.
+
+## Post-Completion
+Once all TODOs are gone:
+1. `grep -rn 'TODO' pkg/ --include='*.go' | grep -v '_test.go\|.bak'` — should return 0
+2. `go vet ./...` + `go test ./...`
+3. Remove all .bak files
+4. Update PORT_COMPLETION_PLAN.md with "PORT COMPLETE" status
+
+Then dispatch reviews:
+- **Sonnet QA:** Split into 4 passes pairing Go subsystems with C source (see plan)
+- **Opus security:** Input validation, overflow, race conditions, auth, Lua injection

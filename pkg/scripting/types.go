@@ -84,6 +84,20 @@ type ScriptableWorld interface {
 	RemoveItemFromChar(charName string, vnum int) ScriptableObject
 	// GiveItemToChar adds an item to the named character's inventory.
 	GiveItemToChar(charName string, obj ScriptableObject) error
+	// IsRoomDark returns true if the given room VNum is dark.
+	// Based on utils.h IS_DARK() macro — checks ROOM_DARK flag.
+	IsRoomDark(roomVNum int) bool
+	// GetRoomZone returns the zone number for a given room VNum.
+	GetRoomZone(roomVNum int) int
+	// SendToZone sends a message to all players in the same zone as the given room.
+	// Source: comm.c send_to_zone().
+	SendToZone(roomVNum int, msg string)
+	// SendToAll sends a message to all online players.
+	// Source: comm.c send_to_all().
+	SendToAll(msg string)
+	// ExecuteMobCommand makes a mob execute a game command.
+	// Source: scripts.c lua_action() → command_interpreter().
+	ExecuteMobCommand(mobVNum int, cmdStr string)
 	// CreateEvent schedules a timed event on the world's event queue.
 	// delay is in game pulses (1 pulse = 1/10 second in original C).
 	// trigger is the Lua function name to call when the event fires.

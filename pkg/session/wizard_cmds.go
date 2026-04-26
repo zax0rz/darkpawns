@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Wizard level constants — matching Dark Pawns C source scale mapped to Go codebase.
@@ -100,32 +101,99 @@ func cmdAt(s *Session, args []string) error {
 // ---------------------------------------------------------------------------
 // load — load a mob or object (LVL_IMMORT)
 // ---------------------------------------------------------------------------
-// TODO: cmdLoad - load a mob/object from the database
-// Expected: takes a mob/object vnum, spawns it into the room
 func cmdLoad(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
 	}
 	if len(args) < 2 {
-		s.Send("Usage: load <mob|obj> <vnum>")
+		s.Send("Usage: load { obj | mob } <number>\r\n")
 		return nil
 	}
-	s.Send("Load not yet implemented.")
+	kind := strings.ToLower(args[0])
+	vnumStr := args[1]
+	var vnum int
+	if _, err := fmt.Sscanf(vnumStr, "%d", &vnum); err != nil {
+		s.Send("That's not a valid number.\r\n")
+		return nil
+	}
+	if vnum < 0 {
+		s.Send("A NEGATIVE number??\r\n")
+		return nil
+	}
+	roomVNum := s.player.GetRoom()
+
+	if strings.HasPrefix(kind, "mob") {
+		mob, err := s.manager.world.SpawnMob(vnum, roomVNum)
+		if err != nil {
+			s.Send(fmt.Sprintf("There is no monster with that number.\r\n"))
+			return nil
+		}
+		slog.Info("(GC) load mob", "who", s.player.Name, "mob", mob.GetShortDesc(), "room", roomVNum)
+		s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s makes a strange magickal gesture.\r\n", s.player.Name)), s.playerName)
+		s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s has created %s!\r\n", s.player.Name, mob.GetShortDesc())), s.playerName)
+		s.Send(fmt.Sprintf("You create %s.\r\n", mob.GetShortDesc()))
+	} else if strings.HasPrefix(kind, "obj") {
+		obj, err := s.manager.world.SpawnObject(vnum, roomVNum)
+		if err != nil {
+			s.Send("There is no object with that number.\r\n")
+			return nil
+		}
+		slog.Info("(GC) load obj", "who", s.player.Name, "obj", obj.GetShortDesc(), "room", roomVNum)
+		s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s makes a strange magickal gesture.\r\n", s.player.Name)), s.playerName)
+		s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s has created %s!\r\n", s.player.Name, obj.GetShortDesc())), s.playerName)
+		s.Send(fmt.Sprintf("You create %s.\r\n", obj.GetShortDesc()))
+	} else {
+		s.Send("That'll have to be either 'obj' or 'mob'.\r\n")
+	}
 	return nil
 }
 
 // ---------------------------------------------------------------------------
 // purge — remove all mobs/objects from room (LVL_IMMORT)
 // ---------------------------------------------------------------------------
-// TODO: cmdPurge - remove all mobs/objects from the room
-// Expected: removes non-player entities and objects from the current room
 func cmdPurge(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	s.Send("Purge not yet implemented.")
+	roomVNum := s.player.GetRoom()
+	if len(args) >= 1 && args[0] != "" {
+		// Purge a specific target by name
+		targetName := strings.ToLower(strings.Join(args, " "))
+		mobs := s.manager.world.GetMobsInRoom(roomVNum)
+		for _, mob := range mobs {
+			if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
+				s.manager.world.ExtractMob(mob)
+				s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s disintegrates %s.\r\n", s.player.Name, mob.GetShortDesc())), s.playerName)
+				s.Send("Ok.\r\n")
+				slog.Info("(GC) purge", "who", s.player.Name, "target", mob.GetShortDesc())
+				return nil
+			}
+		}
+		items := s.manager.world.GetItemsInRoom(roomVNum)
+		for _, item := range items {
+			if strings.Contains(strings.ToLower(item.GetShortDesc()), targetName) {
+				s.manager.world.ExtractObject(item, roomVNum)
+				s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s destroys %s.\r\n", s.player.Name, item.GetShortDesc())), s.playerName)
+				s.Send("Ok.\r\n")
+				slog.Info("(GC) purge obj", "who", s.player.Name, "target", item.GetShortDesc())
+				return nil
+			}
+		}
+		s.Send("Nothing here by that name.\r\n")
+		return nil
+	}
+	// No argument — purge entire room
+	s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s gestures... You are surrounded by scorching flames!\r\n", s.player.Name)), s.playerName)
+	for _, mob := range s.manager.world.GetMobsInRoom(roomVNum) {
+		s.manager.world.ExtractMob(mob)
+	}
+	for _, item := range s.manager.world.GetItemsInRoom(roomVNum) {
+		s.manager.world.ExtractObject(item, roomVNum)
+	}
+	s.manager.BroadcastToRoom(roomVNum, []byte("The world seems a little cleaner.\r\n"), s.playerName)
+	s.Send("Ok.\r\n")
 	return nil
 }
 
@@ -308,17 +376,49 @@ func clamp(v, min, max int) int {
 // - Save the current character state
 // - Load the target character
 // - Attach the wizard's session to the new character
-// TODO: implement character switching
 func cmdSwitch(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Switch into whom?")
+		s.Send("Switch into whom?\r\n")
 		return nil
 	}
-	s.Send("Switch not yet implemented.")
+	targetName := strings.ToLower(args[0])
+	roomVNum := s.player.GetRoom()
+
+	// Look for a mob in the room
+	mobs := s.manager.world.GetMobsInRoom(roomVNum)
+	for _, mob := range mobs {
+		if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
+			// Store original player reference for return
+			s.switchedOriginal = s.player
+			s.switchedMob = mob
+			s.isSwitched = true
+			slog.Info("(GC) switch", "who", s.player.Name, "into", mob.GetShortDesc())
+			s.Send(fmt.Sprintf("You switch into %s.\r\n", mob.GetShortDesc()))
+			return nil
+		}
+	}
+
+	// Look for a player in the room
+	players := s.manager.world.GetPlayersInRoom(roomVNum)
+	for _, p := range players {
+		if strings.ToLower(p.GetName()) == targetName {
+			if p.Level >= s.player.Level {
+				s.Send("Fuuuuuuuuu!\r\n")
+				return nil
+			}
+			s.switchedOriginal = s.player
+			s.switchedPlayer = p
+			s.isSwitched = true
+			slog.Info("(GC) switch", "who", s.player.Name, "into", p.GetName())
+			s.Send(fmt.Sprintf("You switch into %s.\r\n", p.GetName()))
+			return nil
+		}
+	}
+	s.Send("No one here by that name.\r\n")
 	return nil
 }
 
@@ -329,13 +429,26 @@ func cmdSwitch(s *Session, args []string) error {
 // Expected behavior (from original C):
 // - Detach the wizard's session from the switched character
 // - Re-attach to the wizard's original character
-// TODO: implement character return
 func cmdReturn(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	s.Send("Return not yet implemented.")
+	if !s.isSwitched || s.switchedOriginal == nil {
+		s.Send("You aren't switched.\r\n")
+		return nil
+	}
+	if s.switchedMob != nil {
+		slog.Info("(GC) return", "who", s.player.Name, "from", s.switchedMob.GetShortDesc())
+	} else if s.switchedPlayer != nil {
+		slog.Info("(GC) return", "who", s.player.Name, "from", s.switchedPlayer.GetName())
+	}
+	s.isSwitched = false
+	s.switchedMob = nil
+	s.switchedPlayer = nil
+	s.player = s.switchedOriginal
+	s.switchedOriginal = nil
+	s.Send("You return to your own body.\r\n")
 	return nil
 }
 
@@ -582,16 +695,31 @@ func cmdAdvance(s *Session, args []string) error {
 // ---------------------------------------------------------------------------
 // reload — reload world data (LVL_GOD)
 // ---------------------------------------------------------------------------
-// TODO: cmdReload - reload game configuration or area data
-// Expected: re-reads area files / config without restarting the server
+// reload — reload world data (LVL_GOD)
+// Re-reads world files from disk and replaces the in-memory world.
 func cmdReload(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	s.Send("Reloading world data...")
-	// TODO: implement world reload from parsed files
-	s.Send("World reload not yet implemented.")
+	slog.Info("(GC) reload initiated", "by", s.player.Name)
+	s.Send("Reloading world data...\r\n")
+
+	// Notify all online players
+	s.manager.SendToAll("\\r\\n*** World data reload initiated by %s. ***\\r\\n")
+
+	pw, err := parser.ParseWorld("world/")
+	if err != nil {
+		slog.Error("world reload failed", "error", err)
+		s.Send(fmt.Sprintf("Reload failed: %v\r\n", err))
+		s.manager.SendToAll("\\r\\n*** World reload FAILED. ***\\r\\n")
+		return nil
+	}
+	s.manager.world.ReplaceParsedWorld(pw)
+	slog.Info("(GC) reload complete", "by", s.player.Name, "rooms", len(pw.Rooms))
+	s.Send(fmt.Sprintf("World reloaded: %d rooms, %d mobs, %d objects.\r\n",
+		len(pw.Rooms), len(pw.Mobs), len(pw.Objs)))
+	s.manager.SendToAll("\\r\\n*** World reload complete. ***\\r\\n")
 	return nil
 }
 
@@ -668,8 +796,52 @@ func (s *Session) sendStatPlayer(p *game.Player) {
 }
 
 func (s *Session) sendStatObject(name string) {
-	// TODO: implement object stat display via world repository
-	s.Send(fmt.Sprintf("Stat obj %q — not yet implemented.", name))
+	if s.manager == nil || s.manager.world == nil {
+		s.Send("World not available.")
+		return
+	}
+	// Try as vnum first
+	vnum, err := strconv.Atoi(name)
+	if err == nil {
+		if proto, ok := s.manager.world.GetObjPrototype(vnum); ok {
+			s.sendObjProto(proto)
+			return
+		}
+		s.Send("No object with that VNum.\r\n")
+		return
+	}
+	// Search by keyword
+	pw := s.manager.world.GetParsedWorld()
+	if pw == nil {
+		s.Send("World data not loaded.")
+		return
+	}
+	nameLower := strings.ToLower(name)
+	for i := range pw.Objs {
+		if strings.Contains(strings.ToLower(pw.Objs[i].ShortDesc), nameLower) ||
+			strings.Contains(strings.ToLower(pw.Objs[i].Keywords), nameLower) {
+			s.sendObjProto(&pw.Objs[i])
+			return
+		}
+	}
+	s.Send("No object found by that name.\r\n")
+}
+
+func (s *Session) sendObjProto(o *parser.Obj) {
+	s.Send(fmt.Sprintf("Object: [%d] %s\r\n", o.VNum, o.ShortDesc))
+	s.Send(fmt.Sprintf("Keywords: %s\r\n", o.Keywords))
+	s.Send(fmt.Sprintf("Type: %d  Weight: %d  Cost: %d\r\n", o.TypeFlag, o.Weight, o.Cost))
+	s.Send(fmt.Sprintf("ExtraFlags: %v  WearFlags: %v\r\n", o.ExtraFlags, o.WearFlags))
+	s.Send(fmt.Sprintf("Values: [%d] [%d] [%d] [%d]\r\n", o.Values[0], o.Values[1], o.Values[2], o.Values[3]))
+	if len(o.Affects) > 0 {
+		s.Send("Affects:")
+		for _, aff := range o.Affects {
+			s.Send(fmt.Sprintf("  Apply: %d  Modifier: %d\r\n", aff.Location, aff.Modifier))
+		}
+	}
+	if o.ScriptName != "" {
+		s.Send(fmt.Sprintf("Script: %s\r\n", o.ScriptName))
+	}
 }
 
 // cmdVnum — find vnums by keyword (LVL_IMMORT)
@@ -878,12 +1050,20 @@ func cmdLast(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("For whom do you wish to search?")
+		s.Send("For whom do you wish to search?\r\n")
 		return nil
 	}
 	target := strings.Join(args, " ")
-	// TODO: load player data from DB to show last login time
-	s.Send(fmt.Sprintf("Last login info for %q — not yet implemented (requires DB query).", target))
+	if s.manager == nil || !s.manager.hasDB {
+		s.Send("No database available.\r\n")
+		return nil
+	}
+	rec, err := s.manager.db.GetPlayer(target)
+	if err != nil || rec == nil {
+		s.Send("There is no such player.\r\n")
+		return nil
+	}
+	s.Send(fmt.Sprintf("[%d] [%2d] %-12s : Level %d\r\n", rec.ID, rec.Level, rec.Name, rec.Level))
 	return nil
 }
 
@@ -1017,8 +1197,20 @@ func cmdDark(s *Session, args []string) error {
 	}
 	// Stop combat for everyone in the room
 	roomVNum := s.player.GetRoom()
-	s.Send("You stop the senseless violence in the room with a wave of your hand.")
-	_ = roomVNum // TODO: broadcast combat-stop to room occupants
+	s.Send("You stop the senseless violence in the room with a wave of your hand.\r\n")
+	s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s raises a hand and combat freezes!\r\n", s.player.Name)), s.playerName)
+	// Stop fighting for all mobs in the room
+	for _, mob := range s.manager.world.GetMobsInRoom(roomVNum) {
+		if stopper, ok := interface{}(mob).(interface{ StopFighting() }); ok {
+			stopper.StopFighting()
+		}
+	}
+	// Stop fighting for all players in the room
+	for _, p := range s.manager.world.GetPlayersInRoom(roomVNum) {
+		if p != s.player {
+			p.StopFighting()
+		}
+	}
 	return nil
 }
 
@@ -1049,8 +1241,32 @@ func cmdIdlist(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	// TODO: iterate all object prototypes and write identify info to a file
-	s.Send("Object idlist not yet implemented.")
+	if s.manager == nil || s.manager.world == nil {
+		s.Send("World not available.")
+		return nil
+	}
+	pw := s.manager.world.GetParsedWorld()
+	if pw == nil {
+		s.Send("World data not loaded.")
+		return nil
+	}
+	filename := "idlist.txt"
+	if len(args) > 0 {
+		filename = args[0]
+	}
+	f, err := os.Create(filename)
+	if err != nil {
+		s.Send(fmt.Sprintf("Could not create %s: %v\r\n", filename, err))
+		return nil
+	}
+	defer f.Close()
+	for _, obj := range pw.Objs {
+		fmt.Fprintf(f, "[%d] %s\n", obj.VNum, obj.ShortDesc)
+		fmt.Fprintf(f, "  Keywords: %s  Type: %d  Cost: %d\n", obj.Keywords, obj.TypeFlag, obj.Cost)
+		fmt.Fprintf(f, "  Values: [%d] [%d] [%d] [%d]\n", obj.Values[0], obj.Values[1], obj.Values[2], obj.Values[3])
+	}
+	s.Send(fmt.Sprintf("Wrote %d objects to %s\r\n", len(pw.Objs), filename))
+	slog.Info("(GC) idlist", "who", s.player.Name, "file", filename, "count", len(pw.Objs))
 	return nil
 }
 

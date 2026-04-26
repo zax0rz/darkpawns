@@ -323,6 +323,12 @@ type Session struct {
 	charHometown int
 	charStats    game.CharStats
 
+	// Character switch state (wizard commands)
+	isSwitched       bool
+	switchedOriginal *game.Player
+	switchedMob      *game.MobInstance
+	switchedPlayer   *game.Player
+
 	// Rate limit: capacity=10, refill=10/sec (token bucket via golang.org/x/time/rate)
 	// This protects the server from command floods — it does NOT protect API costs.
 	// Agents must implement their own circuit breakers for LLM-level loop detection.

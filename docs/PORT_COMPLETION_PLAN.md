@@ -181,3 +181,29 @@
 - Tier 2: Subagent (infrastructure polish)
 - Tier 3: Parallel Opus/Sonnet review subagents
 - Build + test after every commit
+
+---
+
+## Session Log
+
+### Session 1 — 2026-04-26 5:16 PM EDT
+**Commits:** fc613b7, 11c1558, aaac0b3, 361d4aa, be13e59
+**TODOs killed:** 11 (73 → 62, verified 45 remaining after session)
+
+Completed:
+- ✅ Equipment regen bonuses (APPLY_MANA/HIT/MOVE_REGEN)
+- ✅ is_veteran wired to PlayedDuration + Kills
+- ✅ Kill counter rewards (CounterProcs with C fallthrough bug)
+- ✅ Auto-split (PRF_AUTOSPLIT gold division)
+- ✅ affected_by_spell infrastructure (SpellID on Affect, HasSpellAffect)
+- ✅ KK_JIN/KK_ZHEN skill bonuses in regen
+- ✅ PRF_INACTIVE check in PointUpdate
+- ✅ AFF_FLESH_ALTER handling in level-up
+- ✅ CheckIdling full implementation (void pull + disconnect)
+- ✅ Dream system wired into PointUpdate (PlayerDreamAdapter)
+- ✅ CheckAutowiz (log instead of shell exec)
+- ✅ Character creation state machine (sex→race→class→confirm)
+- ✅ Gender pronouns in movement
+- ✅ Tattoo skull mob spawn + charm + follow
+
+Next up: Batch 3 (scripting engine TODOs), Batch 4 (wizard commands), Batch 5 (spell cleanup), then Tier 2 (Go modernization).
