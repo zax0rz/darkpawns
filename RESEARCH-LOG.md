@@ -607,3 +607,19 @@ This is also the first time we're using a specific model release as a strategic 
 
 **[OBSERVATION]** The affect system architectural mismatch (audit item #5) is the root cause. C uses affect_total() full recalculation. Go uses incremental apply/remove. Without StatModifiable on Player, the incremental path is dead code. Implementing StatModifiable would partially fix this but won't handle the "two affects share a bitvector" issue without affect_total.
 
+## 2026-04-26 — Session: Wave 17 Fidelity Audit Continuation
+
+**[RESULT]** Implemented StatModifiable interface on Player (15 methods, 211 lines). This was the single highest-impact fidelity bug — all spell affects modifying hitroll/damroll/AC/stats were silently no-oping. Now they work.
+
+**[RESULT]** Wired equipment affects into AffectTotal via EquipAffectProvider interface. C's affect_total() processes equipment first, then spell affects — Go now matches.
+
+**[RESULT]** Fixed position damage multiplier. Go was using float64 division (1.33x sitting, 1.66x resting) when C uses integer division (no change for sitting/resting, x2 for sleeping). The C comments claiming fractional multipliers are wrong — they document intent, not actual behavior.
+
+**[RESULT]** Added blessed weapon THAC0 (-1) and drunk THAC0 (+2) modifiers to hit chance calc.
+
+**[OBSERVATION]** Three of four "remaining audit items" were phantom. getMinusDam high-AC entries were already present past -310. Alignment change was already ported. CON loss on death (con_app.shock) doesn't exist in C source either — the field is defined but never referenced. The audit over-reported by checking formulas.go in isolation without verifying fight_core.go and the C source.
+
+**[OBSERVATION]** Sanctuary, protection evil/good, and race hate damage modifiers were already implemented in fight_core.go. The audit flagged them as missing because it only checked formulas.go (the pure math layer), not fight_core.go (the actual combat pipeline that calls it).
+
+**[DESIGN]** HitModifiers struct pattern for optional combat modifiers — cleaner than bloating the Combatant interface. Zero value = no modifier. Easy to extend with future modifiers (haste, flesh_alter, etc.).
+
