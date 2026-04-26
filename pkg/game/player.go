@@ -183,6 +183,8 @@ type Player struct {
 	// Tattoo — from tattoo.c
 	Tattoo   int // tattoo type constant (TATTOO_*)
 	TatTimer int // hours remaining before tattoo can be used again
+	IdleTimer int // ticks of inactivity — limits.c check_idling()
+	WasInRoom int // previous room before void pull — limits.c GET_WAS_IN()
 
 	// Ignore list: map of player names the player is ignoring
 	IgnoredPlayers map[string]bool
@@ -598,6 +600,13 @@ func (p *Player) RemoveMasterAffect(af *engine.MasterAffect) {
 			return
 		}
 	}
+}
+
+// RemoveAffectBit clears a bit from the player's Affects bitmask.
+func (p *Player) RemoveAffectBit(bit int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Affects &^= 1 << uint(bit)
 }
 
 // GetEquipment returns the player's equipment iterator.

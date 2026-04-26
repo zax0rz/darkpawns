@@ -6,6 +6,7 @@ package game
 import (
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 // NumDreams is the number of entries in the dream travel table.
@@ -241,4 +242,26 @@ const LVLImmort = 31
 //    - The dream_travel loop bug: C iterates i <= NUM_DREAMS (9 entries, index 0–8)
 //      but DreamTravelTable has exactly 9 entries (indices 0–8). The loop condition
 //      should be i < NumDreams to be safe; we preserve the <= for faithfulness.
-//    - Add Dream() call into the point_update sleeping character tick.
+// PlayerDreamAdapter wraps a Player and World to implement DreamContext.
+// Used by PointUpdate to call Dream() for sleeping players.
+type PlayerDreamAdapter struct {
+	p *Player
+	w *World
+}
+
+func (a *PlayerDreamAdapter) GetLevel() int                              { return a.p.Level }
+func (a *PlayerDreamAdapter) GetLastDeath() int64                       { return a.p.GetLastDeath() }
+func (a *PlayerDreamAdapter) SetLastDeath(t int64)                       { a.p.SetLastDeath(t) }
+func (a *PlayerDreamAdapter) HasAffect(bitNum int) bool                  { return a.p.Affects&(1<<uint(bitNum)) != 0 }
+func (a *PlayerDreamAdapter) RemoveAffect(bitNum int)                    { a.p.RemoveAffectBit(bitNum) }
+func (a *PlayerDreamAdapter) SendToChar(msg string)                      { a.p.SendMessage(msg) }
+func (a *PlayerDreamAdapter) SendToRoom(msg string)                      { a.w.roomMessage(a.p.RoomVNum, msg) }
+func (a *PlayerDreamAdapter) WakeUp() {
+	if a.p.GetPosition() == PosSleeping {
+		a.p.SetPosition(PosStanding)
+	}
+}
+func (a *PlayerDreamAdapter) MoveToRoom(roomVNum int) {
+	a.w.PlayerTransfer(a.p, roomVNum)
+}
+func (a *PlayerDreamAdapter) CurrentTime() int64                        { return time.Now().Unix() }

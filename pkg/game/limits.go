@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -448,10 +449,11 @@ func (w *World) PointUpdate() {
 		p.mu.RUnlock()
 
 		// Condition decay — skip if inactive (PRF_INACTIVE)
-		// TODO: PRF_INACTIVE flag check using p.Flags
-		GainCondition(p, CondFull, -1)
-		GainCondition(p, CondDrunk, -1)
-		GainCondition(p, CondThirst, -1)
+		if p.Flags&(1<<PrfInactive) == 0 {
+			GainCondition(p, CondFull, -1)
+			GainCondition(p, CondDrunk, -1)
+			GainCondition(p, CondThirst, -1)
+		}
 
 		// Tattoo timer
 		p.mu.Lock()
@@ -461,9 +463,11 @@ func (w *World) PointUpdate() {
 		p.mu.Unlock()
 
 		// Dream processing for sleeping characters
-		// TODO: call dream when implemented — limits.c:476
-		_ = pos
-		// if pos == PosSleeping { dream(p, w) }
+		// Source: limits.c:476
+		if pos == PosSleeping {
+			adapter := &PlayerDreamAdapter{p: p, w: w}
+			Dream(adapter)
+		}
 
 		if pos >= PosStunned {
 			p.mu.RLock()
@@ -723,9 +727,12 @@ func SetTitle(p *Player, title string) {
 // CheckAutowiz — from limits.c check_autowiz()
 // ---------------------------------------------------------------------------
 func CheckAutowiz(p *Player) {
-	_ = p
-	// Stub: the autowiz shell script is CircleMUD-specific.
-	// TODO: implement wizlist update when admin system is built.
+	if p == nil || p.Level < LVL_IMMORT {
+		return
+	}
+	// C spawns autowiz external binary. In Go, log and defer to admin system.
+	// Source: src/limits.c:268-281
+	slog.Info("autowiz triggered", "player", p.Name, "level", p.Level)
 }
 
 // ---------------------------------------------------------------------------
@@ -829,9 +836,27 @@ func (w *World) GainExp(p *Player, gain int) {
 		p.Exp += gain
 
 		if p.Level < LVL_IMPL-1 && p.Exp >= ExpNeededForLevel(p) {
-			// TODO: AFF_FLESH_ALTER handling
+			// AFF_FLESH_ALTER handling — adjust hit/damroll before/after level-up
+			// C: flesh_alter_from() removes bonuses, advance_level(), flesh_alter_to() restores
+			// Source: src/new_cmds.c:1751-1769, src/limits.c:305-311
+			const affFleshAlterBit = 16 // AFF_FLESH_ALTER from structs.h:326
+			hasFleshAlter := p.Affects&(1<<affFleshAlterBit) != 0
+			if hasFleshAlter {
+				// flesh_alter_from: temporarily remove flesh alter bonuses
+				p.mu.Lock()
+				p.Hitroll -= (p.Level/3) + 1
+				p.Damroll -= (p.Level/2) + 1
+				p.mu.Unlock()
+			}
 			p.Level++
 			p.AdvanceLevel()
+			if hasFleshAlter {
+				// flesh_alter_to: restore flesh alter bonuses at new level
+				p.mu.Lock()
+				p.Hitroll += (p.Level/3) + 1
+				p.Damroll += (p.Level/2) + 1
+				p.mu.Unlock()
+			}
 			sendToChar(p, fmt.Sprintf("You advance to level %d!\r\n", p.Level))
 		}
 	} else if gain < 0 {
@@ -863,11 +888,24 @@ func (w *World) GainExpRegardless(p *Player, gain int) {
 	}
 
 	numLevels := 0
+	const affFleshAlterBit = 16 // AFF_FLESH_ALTER from structs.h:326
 	for p.Level < LVL_IMPL && p.Exp >= ExpNeededForLevel(p) {
-		// TODO: AFF_FLESH_ALTER handling
+		hasFleshAlter := p.Affects&(1<<affFleshAlterBit) != 0
+		if hasFleshAlter {
+			p.mu.Lock()
+			p.Hitroll -= (p.Level/3) + 1
+			p.Damroll -= (p.Level/2) + 1
+			p.mu.Unlock()
+		}
 		p.Level++
 		numLevels++
 		p.AdvanceLevel()
+		if hasFleshAlter {
+			p.mu.Lock()
+			p.Hitroll += (p.Level/3) + 1
+			p.Damroll += (p.Level/2) + 1
+			p.mu.Unlock()
+		}
 	}
 
 	if numLevels > 0 {
@@ -881,8 +919,8 @@ func (w *World) GainExpRegardless(p *Player, gain int) {
 }
 
 // ---------------------------------------------------------------------------
-// CheckIdling — from limits.c check_idling()
-// ---------------------------------------------------------------------------
+// CheckIdling — from limits.c check_idling() (lines 419-441)
+// Tracks idle time, pulls idle players to void, disconnects after extended idle.
 func (w *World) CheckIdling(p *Player) {
 	if p == nil {
 		return
@@ -890,24 +928,48 @@ func (w *World) CheckIdling(p *Player) {
 
 	p.mu.RLock()
 	level := p.Level
-	roomVNum := p.RoomVNum
 	p.mu.RUnlock()
 
-	// Idle time tracking is handled externally via UpdateActivity/LastActive.
-	// For immortals and NPCs, skip idle handling.
 	if level >= LVL_IMMORT || p.IsNPC() {
 		return
 	}
 
-	// TODO: Full idle handling when char_data.timer, was_in, and desc fields
-	// are implemented. Requires:
-	//   - p.IdleTimer field
-	//   - WasIn room tracking
-	//   - char_from_room / char_to_room for void room (VNum 1, 3)
-	//   - close_socket for disconnected players
-	//   - Crash_rentsave / Crash_idlesave
-	//   - extract_char
-	_ = roomVNum
+	p.mu.Lock()
+	p.IdleTimer++
+	timer := p.IdleTimer
+	p.mu.Unlock()
+
+	if timer > IDLE_TO_VOID {
+		p.mu.Lock()
+		wasIn := p.WasInRoom
+		roomVNum := p.RoomVNum
+		fighting := p.Fighting
+		p.mu.Unlock()
+
+		if wasIn == 0 && roomVNum > 0 {
+			// First idle threshold — pull to void room (vnum 1)
+			p.mu.Lock()
+			p.WasInRoom = roomVNum
+			if fighting != "" {
+					p.Fighting = ""
+			}
+			p.mu.Unlock()
+
+			w.PlayerTransfer(p, 1)
+			p.SendMessage("You have been idle, and are pulled into a void.\r\n")
+			w.SendToRoom(roomVNum, fmt.Sprintf("%s disappears into the void.\r\n", p.Name))
+		} else if timer > IDLE_DISCONNECT {
+			// Second threshold — force rent and disconnect
+			p.mu.Lock()
+			p.WasInRoom = 0
+			p.mu.Unlock()
+
+			w.PlayerTransfer(p, 3)
+
+			slog.Info("player idle extracted", "name", p.Name)
+			ExtractChar(p)
+		}
+	}
 }
 
 // sumEquipAffect sums equipment affect modifiers for a given location.
