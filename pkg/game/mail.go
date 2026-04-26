@@ -486,7 +486,7 @@ func (w *World) CreateMailObject(ch *Player, mailText string) *ObjectInstance {
 		VNum:     -1, // no prototype
 		CanPickUp: true,
 	}
-	obj.CustomData["mail_text"] = mailText
+	obj.Runtime.MailText = mailText
 	return obj
 }
 

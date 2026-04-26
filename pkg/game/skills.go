@@ -831,10 +831,7 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 		VNum:    corpse.VNum,
 		RoomVNum: ch.GetRoomVNum(),
 	}
-	if food.CustomData == nil {
-		food.CustomData = make(map[string]interface{})
-	}
-	food.CustomData["short_desc_override"] = "some carved meat from " + corpse.GetShortDesc()
+	food.Runtime.ShortDescOverride = "some carved meat from " + corpse.GetShortDesc()
 
 	if err := ch.Inventory.AddItem(food); err != nil {
 		world.AddItemToRoom(food, ch.GetRoomVNum())
@@ -1049,11 +1046,8 @@ func DoMold(ch *Player, objName, newName, newDesc string) SkillResult {
 	}
 
 	// Store custom mold data
-	if obj.CustomData == nil {
-		obj.CustomData = make(map[string]interface{})
-	}
-	obj.CustomData["mold_name"] = newName
-	obj.CustomData["mold_desc"] = newDesc
+	obj.Runtime.MoldName = newName
+	obj.Runtime.MoldDesc = newDesc
 
 	return SkillResult{
 		Success:     true,
@@ -1146,13 +1140,13 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 	// Create head (vnum 16) and headless corpse (vnum 17) objects
 	headObj, err := world.SpawnObject(16, ch.GetRoomVNum())
 	if err == nil && headObj != nil {
-		headObj.CustomData["short_desc"] = fmt.Sprintf("the severed head of %s", ch.Name)
-		headObj.CustomData["name"] = fmt.Sprintf("head %s", ch.Name)
+		headObj.Runtime.ShortDesc = fmt.Sprintf("the severed head of %s", ch.Name)
+		headObj.Runtime.Name = fmt.Sprintf("head %s", ch.Name)
 	}
 	headlessCorpseObj, err := world.SpawnObject(17, ch.GetRoomVNum())
 	if err == nil && headlessCorpseObj != nil {
-		headlessCorpseObj.CustomData["short_desc"] = fmt.Sprintf("the headless corpse of %s", ch.Name)
-		headlessCorpseObj.CustomData["name"] = fmt.Sprintf("corpse headless %s", ch.Name)
+		headlessCorpseObj.Runtime.ShortDesc = fmt.Sprintf("the headless corpse of %s", ch.Name)
+		headlessCorpseObj.Runtime.Name = fmt.Sprintf("corpse headless %s", ch.Name)
 	}
 
 	return SkillResult{

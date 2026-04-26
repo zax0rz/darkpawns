@@ -25,6 +25,9 @@ type ObjectInstance struct {
 	// Custom state
 	CustomData map[string]interface{}
 
+	// Runtime state — typed replacement for CustomData
+	Runtime ObjectRuntimeState
+
 	// Timer — ticks until object decays (0 = permanent/no timer)
 	Timer int
 
@@ -41,7 +44,7 @@ func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 		RoomVNum:      roomVNum,
 		Contains:      make([]*ObjectInstance, 0),
 		CustomData:    make(map[string]interface{}),
-
+		Runtime:       ObjectRuntimeState{},
 	}
 	if roomVNum > 0 {
 		obj.Location = LocRoom(roomVNum)
@@ -214,6 +217,74 @@ func (o *ObjectInstance) GetCustomData(key string) interface{} {
 		return nil
 	}
 	return o.CustomData[key]
+}
+
+// MigrateCustomData copies known keys from CustomData to Runtime and deletes them
+// from CustomData. It is safe to call multiple times. Designed for save/load
+// backward compatibility during the transition from untyped map to typed struct.
+func (o *ObjectInstance) MigrateCustomData() {
+	if o.CustomData == nil {
+		return
+	}
+
+	type strCopy struct {
+		key string
+		dst *string
+	}
+	for _, sc := range []strCopy{
+		{"name", &o.Runtime.Name},
+		{"short_desc", &o.Runtime.ShortDesc},
+		{"long_desc", &o.Runtime.LongDesc},
+		{"short_desc_override", &o.Runtime.ShortDescOverride},
+		{"mold_name", &o.Runtime.MoldName},
+		{"mold_desc", &o.Runtime.MoldDesc},
+		{"mail_text", &o.Runtime.MailText},
+	} {
+		if v, ok := o.CustomData[sc.key]; ok {
+			if s, ok2 := v.(string); ok2 && s != "" {
+				*sc.dst = s
+			}
+			delete(o.CustomData, sc.key)
+		}
+	}
+
+	// Horse state: extract int keys (check in separate block)
+	hasCarryW := false
+	hasCarryN := false
+	hasMove := false
+	hasMaxMove := false
+	if _, ok := o.CustomData["carryW"]; ok {
+		hasCarryW = true
+	}
+	if _, ok := o.CustomData["carryN"]; ok {
+		hasCarryN = true
+	}
+	if _, ok := o.CustomData["move"]; ok {
+		hasMove = true
+	}
+	if _, ok := o.CustomData["maxMove"]; ok {
+		hasMaxMove = true
+	}
+
+	if hasCarryW || hasCarryN || hasMove || hasMaxMove {
+		if o.Runtime.Horse == nil {
+			o.Runtime.Horse = &HorseState{}
+		}
+
+		for key, dst := range map[string]*int{
+			"carryW":  &o.Runtime.Horse.CarryWeight,
+			"carryN":  &o.Runtime.Horse.CarryNumber,
+			"move":    &o.Runtime.Horse.Move,
+			"maxMove": &o.Runtime.Horse.MaxMove,
+		} {
+			if v, ok := o.CustomData[key]; ok {
+				if iv, ok2 := v.(int); ok2 {
+					*dst = iv
+				}
+				delete(o.CustomData, key)
+			}
+		}
+	}
 }
 
 // Scripting interface implementations

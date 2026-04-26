@@ -444,14 +444,8 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		if me.Prototype != nil && me.Prototype.Level < 30 {
 			me.Prototype.Level++
 		} else {
-			// Increment mob's internal damroll (use CustomData as storage)
-			cur := 0
-			if v, ok := me.CustomData["damroll_bonus"]; ok {
-				if vi, ok2 := v.(int); ok2 {
-					cur = vi
-				}
-			}
-			me.CustomData["damroll_bonus"] = cur + 2
+			// Increment mob's internal damroll
+			me.Runtime.DamrollBonus += 2
 		}
 		return true
 	}

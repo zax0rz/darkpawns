@@ -51,6 +51,9 @@ type MobInstance struct {
 	// CustomData stores arbitrary per-instance data (e.g., damroll bonus for brain eater)
 	CustomData map[string]interface{}
 
+	// Runtime state — typed replacement for CustomData (e.g., damroll_bonus)
+	Runtime MobRuntimeState
+
 	// Affect flags bitmask — same bit positions as AFF_* constants used by Player
 	Affects uint64
 
@@ -82,6 +85,7 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Fighting:       false,
 		FightingTarget: "",
 		CustomData:     make(map[string]interface{}),
+		Runtime:        MobRuntimeState{},
 	}
 
 	// Create AI brain

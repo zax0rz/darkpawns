@@ -386,12 +386,12 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	}
 
 	// Name and descriptions — from make_corpse() in fight.c
-	corpse.CustomData["name"] = fmt.Sprintf("%s corpse", name)
-	corpse.CustomData["short_desc"] = fmt.Sprintf("the corpse of %s", name)
+	corpse.Runtime.Name = fmt.Sprintf("%s corpse", name)
+	corpse.Runtime.ShortDesc = fmt.Sprintf("the corpse of %s", name)
 	// Convert attack type to corpse description
 	corpseAttackType := attackTypeToCorpseAttack(attackType)
 	gender := genderPronoun(sex)
-	corpse.CustomData["long_desc"] = corpseAttackLongDesc(name, corpseAttackType, gender)
+	corpse.Runtime.LongDesc = corpseAttackLongDesc(name, corpseAttackType, gender)
 
 	// Give the corpse a unique ID before MoveObjectToContainer (needs valid ContainerObjID)
 	w.mu.Lock()
