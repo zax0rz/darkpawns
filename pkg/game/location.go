@@ -133,23 +133,99 @@ func (l ObjectLocation) Validate() error {
 		if l.RoomVNum <= 0 {
 			return fmt.Errorf("ObjInRoom requires positive RoomVNum, got %d", l.RoomVNum)
 		}
-	case ObjInInventory, ObjEquipped:
+		if l.OwnerKind != OwnerNone {
+			return fmt.Errorf("ObjInRoom should not have an owner kind")
+		}
+		if l.PlayerName != "" {
+			return fmt.Errorf("ObjInRoom should not have a player name")
+		}
+		if l.MobID != 0 {
+			return fmt.Errorf("ObjInRoom should not have a MobID")
+		}
+		if l.ContainerObjID != 0 {
+			return fmt.Errorf("ObjInRoom should not have a ContainerObjID")
+		}
+	case ObjInInventory:
 		if l.OwnerKind == OwnerPlayer && l.PlayerName == "" {
 			return fmt.Errorf("OwnerPlayer requires non-empty PlayerName")
 		}
 		if l.OwnerKind == OwnerMob && l.MobID <= 0 {
 			return fmt.Errorf("OwnerMob requires positive MobID, got %d", l.MobID)
 		}
-		if l.Kind == ObjEquipped && l.Slot < 0 {
-			return fmt.Errorf("ObjEquipped requires valid Slot")
+		if l.OwnerKind == OwnerPlayer && l.MobID != 0 {
+			return fmt.Errorf("ObjInInventory with OwnerPlayer should not have MobID")
+		}
+		if l.OwnerKind == OwnerMob && l.PlayerName != "" {
+			return fmt.Errorf("ObjInInventory with OwnerMob should not have PlayerName")
+		}
+		if l.RoomVNum != 0 {
+			return fmt.Errorf("ObjInInventory should not have RoomVNum")
+		}
+		if l.ContainerObjID != 0 {
+			return fmt.Errorf("ObjInInventory should not have ContainerObjID")
+		}
+		if l.ShopVNum != 0 {
+			return fmt.Errorf("ObjInInventory should not have ShopVNum")
+		}
+	case ObjEquipped:
+		if l.OwnerKind == OwnerPlayer && l.PlayerName == "" {
+			return fmt.Errorf("OwnerPlayer requires non-empty PlayerName")
+		}
+		if l.OwnerKind == OwnerMob && l.MobID <= 0 {
+			return fmt.Errorf("OwnerMob requires positive MobID, got %d", l.MobID)
+		}
+		if l.OwnerKind == OwnerPlayer && l.MobID != 0 {
+			return fmt.Errorf("ObjEquipped with OwnerPlayer should not have MobID")
+		}
+		if l.OwnerKind == OwnerMob && l.PlayerName != "" {
+			return fmt.Errorf("ObjEquipped with OwnerMob should not have PlayerName")
+		}
+		if l.Slot < 0 {
+			return fmt.Errorf("ObjEquipped requires non-negative Slot, got %d", l.Slot)
+		}
+		if l.RoomVNum != 0 {
+			return fmt.Errorf("ObjEquipped should not have RoomVNum")
+		}
+		if l.ContainerObjID != 0 {
+			return fmt.Errorf("ObjEquipped should not have ContainerObjID")
+		}
+		if l.ShopVNum != 0 {
+			return fmt.Errorf("ObjEquipped should not have ShopVNum")
 		}
 	case ObjInContainer:
 		if l.ContainerObjID <= 0 {
 			return fmt.Errorf("ObjInContainer requires positive ContainerObjID")
 		}
+		if l.OwnerKind != OwnerNone {
+			return fmt.Errorf("ObjInContainer should not have an owner kind")
+		}
+		if l.RoomVNum != 0 {
+			return fmt.Errorf("ObjInContainer should not have RoomVNum")
+		}
+		if l.PlayerName != "" {
+			return fmt.Errorf("ObjInContainer should not have PlayerName")
+		}
+		if l.MobID != 0 {
+			return fmt.Errorf("ObjInContainer should not have MobID")
+		}
+		if l.ShopVNum != 0 {
+			return fmt.Errorf("ObjInContainer should not have ShopVNum")
+		}
 	case ObjInShop:
 		if l.ShopVNum <= 0 {
 			return fmt.Errorf("ObjInShop requires positive ShopVNum")
+		}
+		if l.OwnerKind != OwnerNone {
+			return fmt.Errorf("ObjInShop should not have an owner kind")
+		}
+		if l.PlayerName != "" {
+			return fmt.Errorf("ObjInShop should not have PlayerName")
+		}
+		if l.MobID != 0 {
+			return fmt.Errorf("ObjInShop should not have MobID")
+		}
+		if l.ContainerObjID != 0 {
+			return fmt.Errorf("ObjInShop should not have ContainerObjID")
 		}
 	}
 	return nil

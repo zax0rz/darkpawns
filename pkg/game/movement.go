@@ -1,7 +1,13 @@
+// Lock ordering (MUST be maintained to prevent deadlocks):
+//   w.mu → Equipment.mu → Inventory.mu
+// World movement code owns location changes. Equipment/Inventory
+// methods should not call back into World.
+
 package game
 
 import (
 	"fmt"
+	"log/slog"
 )
 
 // detachObjectLocked removes an object from its current location.
@@ -38,6 +44,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 		} else if old.OwnerKind == OwnerMob {
 			if m, ok := w.activeMobs[old.MobID]; ok {
 				delete(m.Equipment, int(old.Slot))
+				m.AddToInventory(obj) // return to inventory on unequip
 			}
 		}
 
@@ -93,13 +100,34 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 				m.AddToInventory(obj)
 				if m.Equipment != nil {
 					m.Equipment[int(dst.Slot)] = obj
+					// Remove from inventory since it's now equipped
+					m.RemoveFromInventory(obj)
 				}
 			}
 		}
 
 	case ObjInContainer:
 		if dst.ContainerObjID > 0 {
+			// Prevent container cycles: A contains B contains A
 			if container, ok := w.objectInstances[dst.ContainerObjID]; ok {
+				current := container
+				depth := 0
+				for current != nil && depth < 10 {
+					if current.ID == obj.ID {
+						return fmt.Errorf("container cycle detected: object %d would contain itself", obj.ID)
+					}
+					if current.Location.Kind == ObjInContainer && current.Location.ContainerObjID > 0 {
+						if parent, ok := w.objectInstances[current.Location.ContainerObjID]; ok {
+							current = parent
+						} else {
+							break
+						}
+					} else {
+						break
+					}
+					depth++
+				}
+
 				if !container.AddToContainer(obj) {
 					return fmt.Errorf("container %d cannot hold object", dst.ContainerObjID)
 				}
@@ -133,7 +161,15 @@ func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
 	// Attach to new location
 	if err := w.attachObjectLocked(obj, dst); err != nil {
 		// Best-effort re-attach to old Location on failure
-		w.attachObjectLocked(obj, obj.Location)
+		if rollbackErr := w.attachObjectLocked(obj, obj.Location); rollbackErr != nil {
+			slog.Error("move object rollback failed",
+				"obj_id", obj.ID, "obj_vnum", obj.VNum,
+				"target", dst.Kind,
+				"error", err,
+				"rollback_error", rollbackErr,
+			)
+			obj.Location = LocNowhere()
+		}
 		return fmt.Errorf("attach failed: %w", err)
 	}
 
