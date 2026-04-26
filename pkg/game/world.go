@@ -326,6 +326,16 @@ func (w *World) SpawnMobInstance(vnum int, roomVNum int) (*MobInstance, error) {
 	return w.SpawnMob(vnum, roomVNum)
 }
 
+// SpawnMobWithLevelI creates a mob with overridden level, returns interface{} for spell layer.
+func (w *World) SpawnMobWithLevelI(vnum int, roomVNum int, level int) (interface{}, error) {
+	mob, err := w.SpawnMob(vnum, roomVNum)
+	if err != nil {
+		return nil, err
+	}
+	mob.SetLevel(level)
+	return mob, nil
+}
+
 // extractMob removes a mob instance from the world (extract_char equivalent).
 func (w *World) extractMob(mob *MobInstance) {
 	w.mu.Lock()
@@ -531,10 +541,92 @@ func (w *World) MobTransfer(m *MobInstance, toRoomVNum int) error {
 }
 
 // GetItemsInRoom returns all items in a given room.
+
+// AddFollowerQuietInterface adds a follower via interface{} params (for spell layer access).
+func (w *World) AddFollowerQuiet(ch, leader interface{}) {
+	switch c := ch.(type) {
+	case *Player:
+		switch l := leader.(type) {
+		case *Player:
+			AddFollowerQuiet(c, l)
+		}
+	case *MobInstance:
+		switch l := leader.(type) {
+		case *Player:
+			AddFollowerQuietMob(c, l)
+		}
+	}
+}
+
+// StopFollowerByName removes a named character from following via string lookup.
+func (w *World) StopFollowerByName(name string) {
+	if p, ok := w.players[name]; ok {
+		StopFollower(w, p)
+		return
+	}
+	for _, m := range w.activeMobs {
+		if m.GetName() == name {
+			StopFollowerMob(w, m)
+			return
+		}
+	}
+}
+
+// CircleFollowByName checks if following would create a loop via string names.
+func (w *World) CircleFollowByName(followerName, leaderName string) bool {
+	ch, chOk := w.players[followerName]
+	victim, vOk := w.players[leaderName]
+	if chOk && vOk {
+		return CircleFollow(w, ch, victim)
+	}
+	// Simple chain walk for mob followers
+	cur := leaderName
+	for {
+		if cur == followerName {
+			return true
+		}
+		if p, ok := w.players[cur]; ok {
+			cur = p.Following
+			if cur == "" {
+				return false
+			}
+			continue
+		}
+		return false
+	}
+}
+
+// NumFollowers returns the count of characters following leaderName.
+func (w *World) NumFollowers(leaderName string) int {
+	count := 0
+	for _, p := range w.players {
+		if p.Following == leaderName {
+			count++
+		}
+	}
+	for _, m := range w.activeMobs {
+		if m.GetFollowing() == leaderName {
+			count++
+		}
+	}
+	return count
+}
 func (w *World) GetItemsInRoom(roomVNum int) []*ObjectInstance {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return w.roomItems[roomVNum]
+}
+
+// GetItemsInRoomI returns room items as []interface{} for spell layer access.
+func (w *World) GetItemsInRoomI(roomVNum int) []interface{} {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	items := w.roomItems[roomVNum]
+	result := make([]interface{}, len(items))
+	for i, item := range items {
+		result[i] = item
+	}
+	return result
 }
 
 // Deprecated: AddItemToRoom only appends to roomItems without setting Location or RoomVNum.

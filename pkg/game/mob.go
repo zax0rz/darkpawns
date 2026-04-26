@@ -24,6 +24,7 @@ type MobInstance struct {
 	CurrentHP int
 	MaxHP     int
 	Status    string // "standing", "sleeping", "fighting", etc.
+	Level     int    // Level override (0 = use prototype level)
 
 	// AI
 	// Brain *ai.Brain // Temporarily commented out to fix circular import
@@ -135,6 +136,20 @@ func (m *MobInstance) SetRoom(vnum int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.RoomVNum = vnum
+}
+
+// SetFollowing changes who the mob is following.
+func (m *MobInstance) SetFollowing(leader string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Following = leader
+}
+
+// GetFollowing returns who the mob is following.
+func (m *MobInstance) GetFollowing() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Following
 }
 
 // HasFlag checks if the mob has a specific flag.
@@ -267,14 +282,24 @@ func (m *MobInstance) GetAC() int {
 	return 0
 }
 
-// GetLevel returns the mob's level.
+// GetLevel returns the mob's effective level (override or prototype).
 func (m *MobInstance) GetLevel() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+	if m.Level > 0 {
+		return m.Level
+	}
 	if m.Prototype != nil {
 		return m.Prototype.Level
 	}
 	return 1
+}
+
+// SetLevel overrides the mob's level (used by conjure_elemental, divine_int, etc.)
+func (m *MobInstance) SetLevel(level int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Level = level
 }
 
 // GetDamageRoll returns the damage dice for the mob's attacks.

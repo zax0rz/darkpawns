@@ -248,6 +248,14 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 		castMeteorSwarm(level, ch, world)
 	case SpellHellfire:
 		castHellfire(level, ch, world)
+	case SpellCharm:
+		castCharm(level, ch, cvict, world)
+	case SpellSummon:
+		castSummon(level, ch, cvict, world)
+	case SpellDivineInt:
+		castDivineInt(level, ch, world)
+	case SpellConjureElemental:
+		castConjureElemental(level, ch, world)
 	default:
 		sendToCaster(ch, "Spell not yet implemented.\r\n")
 	}
@@ -353,6 +361,10 @@ func init() {
 	setupSpellInfo(SpellTeleport, PosFighting, 60, 50, 3, RoutineManual, false, TarCharRoom|TarFightVict)
 	setupSpellInfo(SpellMeteorSwarm, PosFighting, 80, 120, 8, RoutineManual, true, TarIgnore)
 	setupSpellInfo(SpellHellfire, PosFighting, 100, 150, 10, RoutineManual, true, TarIgnore)
+	setupSpellInfo(SpellCharm, PosFighting, 50, 50, 1, RoutineManual, false, TarCharRoom|TarFightVict)
+	setupSpellInfo(SpellSummon, PosFighting, 100, 100, 5, RoutineManual, false, TarCharRoom)
+	setupSpellInfo(SpellDivineInt, PosFighting, 200, 200, 10, RoutineManual, false, TarIgnore)
+	setupSpellInfo(SpellConjureElemental, PosFighting, 150, 150, 5, RoutineManual, false, TarIgnore)
 }
 
 // --- Wave A manual spell implementations ---
@@ -1140,6 +1152,15 @@ type (
 	}
 
 	npcChecker2 interface{ IsNPC() bool }
+
+	// Interfaces for follower operations via type assertion on interface{}
+	// These match signatures in follow.go but use interface{} to avoid circular imports.
+	followerWorld interface {
+		AddFollowerQuiet(ch interface{}, leader interface{})
+		StopFollowerByName(name string)
+		CircleFollowByName(followerName, leaderName string) bool
+		NumFollowers(leaderName string) int
+	}
 )
 
 // areGrouped returns true if two characters are in the same group.
@@ -1455,3 +1476,416 @@ func castHellfire(level int, ch, world interface{}) {
 }
 
 
+
+// castCharm ports src/spells.c spell_charm (lines 407-476).
+// Charms a mob to follow the caster. Checks: MOB_NOCHARM, level, circle follow,
+// saving throw, max followers (CHA/2), PC-victims blocked.
+func castCharm(level int, ch, cvict, world interface{}) {
+	if cvict == nil || ch == nil {
+		return
+	}
+
+	type namer interface{ GetName() string }
+	type lever interface{ GetLevel() int }
+	type intGetter interface{ GetInt() int }
+	type npcCheck interface{ IsNPC() bool }
+
+	chName := ""
+	if n, ok := ch.(namer); ok {
+		chName = n.GetName()
+	}
+	victName := ""
+	if n, ok := cvict.(namer); ok {
+		victName = n.GetName()
+	}
+
+	if chName == victName {
+		sendToCaster(ch, "You like yourself even better!\r\n")
+		return
+	}
+
+	victIsNPC := true
+	if nc, ok := cvict.(npcCheck); ok {
+		victIsNPC = nc.IsNPC()
+	}
+
+	// MOB_NOCHARM check on mob victim
+	if victIsNPC {
+		type mobFlagger interface{ HasMobFlag(flag uint64) bool }
+		if mf, ok := cvict.(mobFlagger); ok && mf.HasMobFlag(1<<4) {
+			sendToCaster(ch, "Your victim resists!\r\n")
+			return
+		}
+	}
+
+	// Level check
+	if victL, ok := cvict.(lever); ok {
+		if level < victL.GetLevel() {
+			sendToCaster(ch, "You fail.\r\n")
+			return
+		}
+	}
+
+	// Circle follow check
+	if fw, ok := world.(followerWorld); ok {
+		if fw.CircleFollowByName(victName, chName) {
+			sendToCaster(ch, "Sorry, following in circles can not be allowed.\r\n")
+			return
+		}
+	}
+
+	// Saving throw
+	if victIsNPC && magSavingThrow(cvict, int(SaveParalysis)) {
+		sendToCaster(ch, "Your victim resists!\r\n")
+		return
+	}
+
+	// Max followers check (CHA/2)
+	if fw, ok := world.(followerWorld); ok {
+		chCha := 10
+		if ci, ok := ch.(intGetter); ok {
+			chCha = ci.GetInt()
+		}
+		if fw.NumFollowers(chName) >= chCha/2 {
+			sendToCaster(ch, "You can't have any more followers!\r\n")
+			return
+		}
+	}
+
+	// No charming PCs
+	if !victIsNPC {
+		sendToCaster(ch, "You can't charm other players!\r\n")
+		return
+	}
+
+	// Stop victim's current following, add as our follower
+	if fw, ok := world.(followerWorld); ok {
+		fw.StopFollowerByName(victName)
+		fw.AddFollowerQuiet(cvict, ch)
+	}
+
+	sendToCaster(ch, "They are now your loyal servant.\r\n")
+}
+
+// castSummon ports src/spells.c spell_summon (lines 220-355).
+// Summons victim to caster's room. Complex: circle check, PRF flags, MOB_NOSUMMON,
+// room exit check, saving throw with backfire, room transfer with mount handling.
+func castSummon(level int, ch, cvict, world interface{}) {
+	if ch == nil || cvict == nil {
+		return
+	}
+
+	type namer interface{ GetName() string }
+	type lever interface{ GetLevel() int }
+	type roomGet interface{ GetRoomVNum() int }
+	type npcCheck interface{ IsNPC() bool }
+	type mobFlagger interface{ HasMobFlag(flag uint64) bool }
+
+	chName := ""
+	if n, ok := ch.(namer); ok {
+		chName = n.GetName()
+	}
+	victName := ""
+	if n, ok := cvict.(namer); ok {
+		victName = n.GetName()
+	}
+	chRoom := 0
+	if rg, ok := ch.(roomGet); ok {
+		chRoom = rg.GetRoomVNum()
+	}
+	victRoom := 0
+	if rg, ok := cvict.(roomGet); ok {
+		victRoom = rg.GetRoomVNum()
+	}
+
+	chIsNPC := false
+	if nc, ok := ch.(npcCheck); ok {
+		chIsNPC = nc.IsNPC()
+	}
+	victIsNPC := false
+	if nc, ok := cvict.(npcCheck); ok {
+		victIsNPC = nc.IsNPC()
+	}
+
+	// Level check: can't summon someone > level+3
+	if vl, ok := cvict.(lever); ok {
+		victLevel := vl.GetLevel()
+		if victLevel > level+3 {
+			sendToCaster(ch, "You failed.\r\n")
+			if vs, ok := cvict.(interface{ SendMessage(string) }); ok {
+				vs.SendMessage(fmt.Sprintf("%s just tried to summon you but failed.\r\n", chName))
+			}
+			return
+		}
+	}
+
+	// MOB_NOSUMMON check
+	if victIsNPC {
+		if mf, ok := cvict.(mobFlagger); ok && mf.HasMobFlag(1<<12) { // MOB_NOSUMMON
+			sendToCaster(ch, "You failed.\r\n")
+			return
+		}
+	}
+
+	// MOB_NOCHARM check (C checks this in summon too)
+	if victIsNPC {
+		if mf, ok := cvict.(mobFlagger); ok && mf.HasMobFlag(1<<4) { // MOB_NOCHARM
+			sendToCaster(ch, "You failed.\r\n")
+			return
+		}
+	}
+
+	// Peaceful room check for NPC victims
+	type worldRoom interface{ GetRoomInWorld(vnum int) *parser.Room }
+	if wr, ok := world.(worldRoom); ok {
+		chRoomData := wr.GetRoomInWorld(chRoom)
+		if chRoomData != nil && chRoomData.HasFlag(RoomPeaceful) && victIsNPC {
+			// Fail silently for peaceful room + NPC victim
+			sendToCaster(ch, "You failed.\r\n")
+			return
+		}
+		// NOMAGIC check on victim's room
+		victRoomData := wr.GetRoomInWorld(victRoom)
+		if victRoomData != nil && victRoomData.HasFlag(RoomNoMagic) {
+			sendToCaster(ch, "You failed.\r\n")
+			return
+		}
+	}
+
+	// Room exit check: caster's room must have at least one open exit
+	type worldExits interface{ GetRoomInWorld(vnum int) *parser.Room }
+	roomOK := false
+	if we, ok := world.(worldExits); ok {
+		roomData := we.GetRoomInWorld(chRoom)
+		if roomData != nil && len(roomData.Exits) > 0 {
+			roomOK = true
+		}
+	}
+	if !roomOK {
+		sendToCaster(ch, "You failed.\r\n")
+		return
+	}
+
+	// Saving throw with backfire
+	if victIsNPC && magSavingThrow(cvict, int(SaveSpell)) {
+		// 10% backfire chance for PC casters
+		if !chIsNPC && rand.Intn(10) == 0 {
+			sendToCaster(ch, "Your spell backfires!\r\n")
+			// Transfer caster to victim's room instead
+			type transferWorld interface{ PlayerTransfer(ch interface{}, toRoomVNum int) error; MobTransfer(ch interface{}, toRoomVNum int) error }
+			if tw, ok := world.(transferWorld); ok {
+				if chIsNPC {
+					tw.MobTransfer(ch, victRoom)
+				} else {
+					tw.PlayerTransfer(ch, victRoom)
+				}
+			}
+			return
+		}
+		sendToCaster(ch, "You failed.\r\n")
+		if vs, ok := cvict.(interface{ SendMessage(string) }); ok {
+			vs.SendMessage(fmt.Sprintf("%s just tried to summon you but failed.\r\n", chName))
+		}
+		return
+	}
+
+	// Success — transfer victim to caster's room
+	type transferWorld interface{ PlayerTransfer(ch interface{}, toRoomVNum int) error; MobTransfer(ch interface{}, toRoomVNum int) error }
+	if tw, ok := world.(transferWorld); ok {
+		if victIsNPC {
+			tw.MobTransfer(cvict, chRoom)
+		} else {
+			tw.PlayerTransfer(cvict, chRoom)
+		}
+	}
+
+	if vs, ok := cvict.(interface{ SendMessage(string) }); ok {
+		vs.SendMessage(fmt.Sprintf("%s has summoned you!\r\n", chName))
+	}
+	sendToCaster(ch, fmt.Sprintf("%s has been summoned.\r\n", victName))
+}
+
+// castDivineInt ports src/spells.c spell_divine_int (lines 1170-1215).
+// Spawns an angel mob based on caster's alignment. Good→85, Evil→86, Neutral fails.
+// Saving throw determines success. Alignment extremes (±1000) spawn 2 angels.
+func castDivineInt(level int, ch, world interface{}) {
+	if ch == nil {
+		return
+	}
+
+	type aligner interface{ GetAlignment() int }
+	type roomGet interface{ GetRoomVNum() int }
+
+	alignment := 0
+	if a, ok := ch.(aligner); ok {
+		alignment = a.GetAlignment()
+	}
+
+	// Neutral alignment fails
+	if alignment == 0 {
+		sendToCaster(ch, "Your request for intervention falls on deaf ears.\r\n")
+		return
+	}
+
+	// Saving throw — caster must FAIL for it to work (C quirk: !mag_savingthrow = success)
+	// Actually re-reading C: if (!mag_savingthrow(ch, SAVING_SPELL)) → caster failed save → nothing happens
+	// So if caster saves, the spell works. If caster fails, nothing happens.
+	// Wait, let me re-read: "if (!mag_savingthrow(ch, SAVING_SPELL)) { stc('Nothing seems to happen.'); return; }"
+	// So if saving throw FAILS (returns false), nothing happens. If saving throw SUCCEEDS (returns true), proceed.
+	// That's backwards from usual. This is a C quirk — divine intervention requires the caster to resist.
+	if !magSavingThrow(ch, int(SaveSpell)) {
+		sendToCaster(ch, "Nothing seems to happen.\r\n")
+		return
+	}
+
+	// Determine angel type
+	mobVNum := 86 // default evil angel
+	if alignment > 0 {
+		mobVNum = 85 // good angel
+	}
+
+	roomVNum := 0
+	if rg, ok := ch.(roomGet); ok {
+		roomVNum = rg.GetRoomVNum()
+	}
+	if roomVNum <= 0 {
+		sendToCaster(ch, "You can't do that here.\r\n")
+		return
+	}
+
+	number := 1
+	if alignment == -1000 || alignment == 1000 {
+		number = 2
+	}
+
+	sendToCaster(ch, "You pray for the intervention of your deity.\r\n")
+	sendToCaster(ch, "Suddenly, a portal of light appears out of nowhere!\r\n")
+
+	type mobSpawner interface {
+		SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
+	}
+	spawner, ok := world.(mobSpawner)
+	if !ok {
+		sendToCaster(ch, "The magic fails.\r\n")
+		return
+	}
+
+	type followerAdder interface{ AddFollowerQuiet(ch, leader interface{}) }
+	fa, ok := world.(followerAdder)
+
+	for i := 0; i < number; i++ {
+		mobLevel := level / 2
+		if mobLevel < 1 {
+			mobLevel = 1
+		}
+		mob, err := spawner.SpawnMobWithLevelI(mobVNum, roomVNum, mobLevel)
+		if err != nil {
+			slog.Warn("spell_divine_int: failed to spawn angel", "error", err, "vnum", mobVNum)
+			continue
+		}
+		if fa != nil {
+			fa.AddFollowerQuiet(mob, ch)
+		}
+	}
+}
+
+// castConjureElemental ports src/spells.c spell_conjure_elemental (lines 1039-1086).
+// Conjures an elemental by consuming a component object from the room.
+// Components: earth(81→81), water(82→82), wind(83→83), fire(84→84).
+// The elemental mob VNUM matches the component VNUM.
+func castConjureElemental(level int, ch, world interface{}) {
+	if ch == nil {
+		return
+	}
+
+	type roomGet interface{ GetRoomVNum() int }
+	roomVNum := 0
+	if rg, ok := ch.(roomGet); ok {
+		roomVNum = rg.GetRoomVNum()
+	}
+	if roomVNum <= 0 {
+		sendToCaster(ch, "You can't do that here.\r\n")
+		return
+	}
+
+	// Elemental components: [mobVNum, componentVNum]
+	elemComponents := [][2]int{
+		{81, 81}, // earth
+		{82, 82}, // water
+		{83, 83}, // wind
+		{84, 84}, // fire
+	}
+
+	// Find a component in the room
+	type itemChecker interface{ GetVNum() int; GetName() string }
+	type roomItems interface{ GetItemsInRoomI(roomVNum int) []interface{} }
+
+	ri, ok := world.(roomItems)
+	if !ok {
+		sendToCaster(ch, "The magic fails.\r\n")
+		return
+	}
+
+	var component interface{}
+	var componentVNum int
+	var mobVNum int
+
+	for _, ec := range elemComponents {
+		items := ri.GetItemsInRoomI(roomVNum)
+		for _, item := range items {
+			if ic, ok := item.(itemChecker); ok && ic.GetVNum() == ec[1] {
+				component = item
+				componentVNum = ec[1]
+				mobVNum = ec[0]
+				break
+			}
+		}
+		if component != nil {
+			break
+		}
+	}
+
+	if component == nil {
+		sendToCaster(ch, "You begin to chant, but nothing seems to happen.\r\n")
+		return
+	}
+
+	compName := ""
+	if ic, ok := component.(itemChecker); ok {
+		compName = ic.GetName()
+	}
+	sendToCaster(ch, fmt.Sprintf("You begin to chant slowly, drawing power from %s.\r\n", compName))
+
+	// Spawn the elemental
+	mobLevel := level/2 + 3
+	type mobSpawner interface {
+		SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
+	}
+	spawner, ok := world.(mobSpawner)
+	if !ok {
+		sendToCaster(ch, "The magic fails.\r\n")
+		return
+	}
+
+	mob, err := spawner.SpawnMobWithLevelI(mobVNum, roomVNum, mobLevel)
+	if err != nil {
+		slog.Warn("spell_conjure_elemental: failed to spawn", "error", err, "vnum", mobVNum)
+		sendToCaster(ch, "The magic fails.\r\n")
+		return
+	}
+
+	// Add as follower
+	type followerAdder interface{ AddFollowerQuiet(ch, leader interface{}) }
+	if fa, ok := world.(followerAdder); ok {
+		fa.AddFollowerQuiet(mob, ch)
+	}
+
+	// Extract the component
+	type extractor interface{ ExtractFromRoom(roomVNum int) }
+	if ex, ok := component.(extractor); ok {
+		ex.ExtractFromRoom(roomVNum)
+	}
+
+	sendToCaster(ch, "An elemental appears before you!\r\n")
+	_ = componentVNum
+}
