@@ -21,6 +21,9 @@ const (
 
 // Alias represents a single player command alias.
 // Source: structs.h struct alias { char *alias; char *replacement; int type; struct alias *next; }
+// PlayerAlias is the type used in the Player struct for alias storage.
+type PlayerAlias = Alias
+
 type Alias struct {
 	Alias       string // The trigger word (what the player types)
 	Replacement string // What it expands to (always stored with leading space, per C original)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -12,35 +11,6 @@ import (
 // Social commands (ported from act.other.c / act.social.c)
 // ---------------------------------------------------------------------------
 
-// cmdDream handles the 'dream' command — shows dream state while sleeping.
-// Calls game.ProcessDream for dream message generation.
-func cmdDream(s *Session, args []string) error {
-	_ = args
-
-	pos := s.player.GetPosition()
-	if pos != combat.PosSleeping {
-		s.Send("You are awake.")
-		return nil
-	}
-
-	lastDeath := s.player.GetLastDeath()
-	result := game.ProcessDream(s.player, lastDeath)
-	if result == nil {
-		return nil
-	}
-
-	if result.PlayerMessage != "" {
-		s.Send(result.PlayerMessage)
-	}
-	if result.RoomMessage != "" {
-		broadcastToRoomText(s, s.player.GetRoomVNum(), result.RoomMessage)
-	}
-	if result.WakeUp {
-		s.player.SetPosition(combat.PosStanding)
-	}
-
-	return nil
-}
 
 // cmdAlias manages a player's command aliases.
 func cmdAlias(s *Session, args []string) error {
@@ -105,40 +75,6 @@ func cmdAlias(s *Session, args []string) error {
 		return nil
 	}
 	s.Send("Alias added.")
-	return nil
-}
-
-// cmdBan bans a site. Admin only (LVL_IMMORT+).
-func cmdBan(s *Session, args []string) error {
-	if len(args) < 2 {
-		s.Send("Usage: ban <site> <type>  (types: new, select, all)")
-		return nil
-	}
-
-	site := args[0]
-	flag := args[1]
-
-	if err := game.AddBan(site, s.player.Name, flag); err != nil {
-		s.Send(fmt.Sprintf("Ban failed: %s", err))
-		return nil
-	}
-	s.Send(fmt.Sprintf("%s has been banned (%s).", site, game.BanTypeName(game.IsBanned(site))))
-	return nil
-}
-
-// cmdUnban unbans a site. Admin only (LVL_IMMORT+).
-func cmdUnban(s *Session, args []string) error {
-	if len(args) < 1 {
-		s.Send("Usage: unban <site>")
-		return nil
-	}
-
-	site := args[0]
-	if err := game.RemoveBan(site); err != nil {
-		s.Send(fmt.Sprintf("Unban failed: %s", err))
-		return nil
-	}
-	s.Send(fmt.Sprintf("%s has been unbanned.", site))
 	return nil
 }
 

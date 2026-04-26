@@ -55,9 +55,11 @@ type DreamContext interface {
 
 // DreamResult describes what the dream function decided to do.
 type DreamResult struct {
-	Traveled    bool   // Character was dream-teleported to a new room
-	DestRoomNum int    // If Traveled, destination room VNum
-	Woke        bool   // Character was woken up
+	Traveled      bool   // Character was dream-teleported to a new room
+	DestRoomNum   int    // If Traveled, destination room VNum
+	Woke          bool   // Character was woken up
+	PlayerMessage string // Message sent to the player (bridge/session use)
+	RoomMessage   string // Message sent to the room (bridge/session use)
 }
 
 // Dream processes a sleeping character's dream tick.

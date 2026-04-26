@@ -1088,7 +1088,6 @@ func (w *World) ExecClanCommand(ch *Player, argument string) {
 func (w *World) doClanBank(ch *Player, arg string, action int) {
 	var clanNum int
 	var c *Clan
-	var immcom bool
 
 	if arg == "" {
 		w.sendClanFormat(ch)

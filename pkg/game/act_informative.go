@@ -996,24 +996,28 @@ func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, re
 		} else {
 			b.WriteString(fmt.Sprintf("[%5d] (unknown room)\r\n", obj.RoomVNum))
 		}
-	case obj.Carrier != nil:
+	case obj.Location.Kind == ObjInInventory || obj.Location.Kind == ObjEquipped:
 		name := "someone"
-		if p, ok := obj.Carrier.(*Player); ok {
-			name = p.GetName()
-		} else if m, ok := obj.Carrier.(*MobInstance); ok {
-			name = m.GetName()
+		if obj.Location.OwnerKind == OwnerPlayer {
+			if p, ok := w.players[obj.Location.PlayerName]; ok {
+				name = p.GetName()
+			}
+		} else if obj.Location.OwnerKind == OwnerMob {
+			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
+				name = m.GetName()
+			}
 		}
-		b.WriteString(fmt.Sprintf("carried by %s\r\n", name))
-	case obj.EquippedOn != nil:
-		name := "someone"
-		if p, ok := obj.EquippedOn.(*Player); ok {
-			name = p.GetName()
-		} else if m, ok := obj.EquippedOn.(*MobInstance); ok {
-			name = m.GetName()
+		if obj.Location.Kind == ObjEquipped {
+			b.WriteString(fmt.Sprintf("worn by %s\r\n", name))
+		} else {
+			b.WriteString(fmt.Sprintf("carried by %s\r\n", name))
 		}
-		b.WriteString(fmt.Sprintf("worn by %s\r\n", name))
-	case obj.Container != nil:
-		b.WriteString(fmt.Sprintf("inside %s\r\n", obj.Container.Prototype.ShortDesc))
+	case obj.Location.Kind == ObjInContainer:
+		if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok {
+			b.WriteString(fmt.Sprintf("inside %s\r\n", container.Prototype.ShortDesc))
+		} else {
+			b.WriteString("in an unknown container\r\n")
+		}
 	default:
 		b.WriteString("in an unknown location\r\n")
 	}

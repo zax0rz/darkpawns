@@ -195,7 +195,7 @@ func WeatherChange(sendToOutdoor func(string)) {
 		}
 	}
 
-	change := (number(1, 4) * diff) + number(2, 6) - number(2, 6)
+	change := (dice(1, 4) * diff) + dice(2, 6) - dice(2, 6)
 
 	weatherInfo.Change += change
 
@@ -303,8 +303,8 @@ func WeatherChange(sendToOutdoor func(string)) {
 	}
 }
 
-// number simulates the C dice() function: roll "num" dice with "size" sides.
-func number(num, size int) int {
+// dice simulates the C number() dice roll: roll "num" dice with "size" sides.
+func dice(num, size int) int {
 	if size <= 0 {
 		return 0
 	}

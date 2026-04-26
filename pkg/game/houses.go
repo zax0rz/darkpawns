@@ -414,11 +414,13 @@ func (w *World) HouseSaveObjects(obj *ObjectInstance, fp *os.File) {
 
 	// Decrement container weight for the saved child's weight
 	// (matched by HouseRestoreWeight to restore after save is done)
-	if obj.Container != nil {
-		if obj.Prototype != nil {
-			obj.Container.Prototype.Weight -= obj.Prototype.Weight
-			if obj.Container.Prototype.Weight < 1 {
-				obj.Container.Prototype.Weight = 1 // sanity check
+	if obj.Location.Kind == ObjInContainer {
+		if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok {
+			if obj.Prototype != nil {
+				container.Prototype.Weight -= obj.Prototype.Weight
+				if container.Prototype.Weight < 1 {
+					container.Prototype.Weight = 1
+				}
 			}
 		}
 	}
@@ -438,8 +440,10 @@ func (w *World) HouseRestoreWeight(obj *ObjectInstance) {
 	}
 
 	// Restore the weight adjustment
-	if obj.Container != nil && obj.Prototype != nil {
-		obj.Container.Prototype.Weight += obj.Prototype.Weight
+	if obj.Location.Kind == ObjInContainer {
+		if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok && obj.Prototype != nil {
+			container.Prototype.Weight += obj.Prototype.Weight
+		}
 	}
 }
 

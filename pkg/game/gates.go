@@ -8,21 +8,6 @@ package game
 import (
 )
 
-// ---------------------------------------------------------------------------
-// Moon phase constants
-// ---------------------------------------------------------------------------
-
-const (
-	MoonNew          = 0
-	MoonQuarterFull  = 1
-	MoonHalfFull     = 2
-	MoonThreeFull    = 3
-	MoonFull         = 4
-	MoonQuarterEmpty = 5
-	MoonHalfEmpty    = 6
-	MoonThreeEmpty   = 7
-)
-
 const (
 	BluePortalVNum = 4001
 	RedPortalVNum  = 4002

@@ -257,7 +257,6 @@ func init() {
 	cmdRegistry.Register("ask", wrapArgs(cmdAsk), "Ask someone a question.", 0, 0)
 	cmdRegistry.Register("qcomm", wrapArgs(cmdQcomm), "Send a team message.", 0, 0, "team")
 	// Social (act_social.go)
-	cmdRegistry.Register("dream", wrapArgs(cmdDream), "Experience your dreams while sleeping.", 0, combat.PosSleeping)
 
 	// Alias (game pkg)
 	cmdRegistry.Register("alias", wrapArgs(cmdAlias), "Manage command aliases.", 0, 0)

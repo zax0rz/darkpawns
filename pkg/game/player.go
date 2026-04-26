@@ -158,7 +158,7 @@ type Player struct {
 
 	// Aliases — from src/alias.c
 	// Per-player command aliases stored in data/aliases/
-	Aliases []PlayerAlias
+	Aliases []Alias
 
 	// LastDeath — timestamp of last death (unix time).
 	// Used by dream.c for nightmare progression.
