@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 const (
@@ -52,15 +53,24 @@ type savePlayerData struct {
 	Stats       CharStats           `json:"stats"`
 	SpellMap    map[string]int      `json:"spell_map"`
 	Skills      map[string]int      `json:"skills"`
+	BankGold    int                 `json:"bank_gold"`
 	Inventory   []saveItemData      `json:"inventory"`
 	Equipment   []saveItemData      `json:"equipment"`
 	Affects     []saveAffect        `json:"affects"`
+
+	// Rent metadata — tracks why/how items were saved.
+	RentCode      int   `json:"rent_code"`       // RentCrash, RentRented, RentCryo, RentTimedOut, RentForced
+	RentTime      int64 `json:"rent_time"`       // Unix timestamp when saved
+	NetCostPerDiem int  `json:"net_cost_per_diem"` // daily rent cost
+	SavedGold      int  `json:"saved_gold"`       // gold at time of save
+	SavedBankGold  int  `json:"saved_bank_gold"`   // bank gold at time of save
 }
 
 type saveItemData struct {
-	VNum  int                    `json:"vnum"`
-	Count int                    `json:"count"`
-	State map[string]interface{} `json:"state,omitempty"`
+	VNum   int                    `json:"vnum"`
+	Count  int                    `json:"count"`
+	Locate int                    `json:"locate"` // 0=inventory, 1+=wear slot (C WEAR_*+1)
+	State  map[string]interface{} `json:"state,omitempty"`
 }
 
 type saveAffect struct {
@@ -153,6 +163,7 @@ func playerToSaveData(p *Player) savePlayerData {
 		Move:        p.Move,
 		MaxMove:     p.MaxMove,
 		Gold:        p.Gold,
+		BankGold:    p.BankGold,
 		Exp:         p.Exp,
 		Alignment:   p.Alignment,
 		RoomVNum:    p.RoomVNum,
@@ -198,14 +209,15 @@ func playerToSaveData(p *Player) savePlayerData {
 			vnum = item.Prototype.VNum
 		}
 		data.Inventory = append(data.Inventory, saveItemData{
-			VNum:  vnum,
-			Count: 1,
-			State: item.CustomData,
+			VNum:   vnum,
+			Count:  1,
+			Locate: 0,
+			State:  item.CustomData,
 		})
 	}
 
-	// Flatten equipment to VNUM + state (from hit/mana/move save_data in merc.h:479-483)
-	for _, item := range p.Equipment.Slots {
+	// Flatten equipment to VNUM + state + locate (C WEAR_*+1)
+	for slot, item := range p.Equipment.Slots {
 		if item == nil {
 			continue
 		}
@@ -213,10 +225,16 @@ func playerToSaveData(p *Player) savePlayerData {
 		if item.Prototype != nil {
 			vnum = item.Prototype.VNum
 		}
+		cPos, ok := goSlotToCWearPos(slot)
+		locate := 0
+		if ok {
+			locate = cPos + 1 // C: locate = j+1 for equipped items
+		}
 		data.Equipment = append(data.Equipment, saveItemData{
-			VNum:  vnum,
-			Count: 1,
-			State: item.CustomData,
+			VNum:   vnum,
+			Count:  1,
+			Locate: locate,
+			State:  item.CustomData,
 		})
 	}
 
@@ -252,6 +270,7 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		Move:         data.Move,
 		MaxMove:      data.MaxMove,
 		Gold:         data.Gold,
+		BankGold:     data.BankGold,
 		Exp:          data.Exp,
 		Alignment:    data.Alignment,
 		RoomVNum:     data.RoomVNum,
@@ -310,6 +329,149 @@ func SerializeWorld(w *World) (string, error) {
 func DeserializeWorld(data string) (*World, error) {
 	// Stub: world state is loaded from static parser files.
 	return nil, fmt.Errorf("world deserialization not implemented yet")
+}
+
+// SavePlayerWithRent saves a player with rent metadata (rent code, cost, timestamp).
+// Used by CrashSave, RentSave, CryoSave, Idlesave.
+func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
+	if p == nil {
+		return fmt.Errorf("cannot save nil player")
+	}
+	if err := os.MkdirAll(saveDir, 0750); err != nil {
+		return fmt.Errorf("create save dir: %w", err)
+	}
+
+	data := playerToSaveData(p)
+	data.RentCode = rentCode
+	data.RentTime = time.Now().Unix()
+	data.NetCostPerDiem = netCostPerDiem
+	data.SavedGold = p.Gold
+	data.SavedBankGold = p.BankGold
+
+	path := filepath.Join(saveDir, sanitizeName(p.Name)+".json")
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("create save file: %w", err)
+	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		return fmt.Errorf("encode save data: %w", err)
+	}
+
+	slog.Debug("Player saved with rent", "name", p.Name, "rent_code", rentCode, "cost", netCostPerDiem)
+	return nil
+}
+
+// LoadSaveData loads raw save data (without creating a Player) for inspection.
+// Used by CleanCrashFile and CrashLoad to check rent metadata.
+func LoadSaveData(name string) (savePlayerData, error) {
+	path := filepath.Join(saveDir, sanitizeName(name)+".json")
+	f, err := os.Open(path)
+	if err != nil {
+		return savePlayerData{}, fmt.Errorf("open save file: %w", err)
+	}
+	defer f.Close()
+
+	var data savePlayerData
+	if err := json.NewDecoder(f).Decode(&data); err != nil {
+		return savePlayerData{}, fmt.Errorf("decode save data: %w", err)
+	}
+	return data, nil
+}
+
+// CrashLoad loads a player's saved items and handles rent cost deduction.
+// Ported from C Crash_load() — returns:
+//   0: successful load (rented/cryo), keep in rent room
+//   1: crash load or failure, put in temple
+//   2: rented equipment lost (no gold)
+//
+// getProto is a callback to look up object prototypes by vnum.
+func CrashLoad(p *Player, getProto func(vnum int) (*parser.Obj, bool)) int {
+	if p == nil {
+		return 1
+	}
+
+	data, err := LoadSaveData(p.GetName())
+	if err != nil {
+		slog.Debug("CrashLoad: no save file", "name", p.GetName())
+		p.SendMessage("No saved equipment found.\r\n")
+		return 1
+	}
+
+	origRentCode := data.RentCode
+
+	// Handle rent cost deduction for rented/timedout saves.
+	if data.RentCode == RentRented || data.RentCode == RentTimedOut {
+		numDays := float64(time.Now().Unix()-data.RentTime) / 86400.0
+		cost := int(float64(data.NetCostPerDiem) * numDays)
+		if cost > p.Gold+p.BankGold {
+			slog.Info("Player rented equipment lost (no $)", "name", p.GetName())
+			// Overwrite with crash save (C: Crash_crashsave)
+			SavePlayerWithRent(p, RentCrash, 0)
+			return 2
+		}
+		// Deduct cost from bank first, then gold.
+		p.BankGold -= max(cost-p.Gold, 0)
+		p.Gold = max(p.Gold-cost, 0)
+		SavePlayer(p)
+	}
+
+	// Log entry.
+	switch origRentCode {
+	case RentRented:
+		slog.Info("Player un-renting", "name", p.GetName())
+	case RentCrash:
+		slog.Info("Player retrieving crash-saved items", "name", p.GetName())
+	case RentCryo:
+		slog.Info("Player un-cryo'ing", "name", p.GetName())
+	case RentForced, RentTimedOut:
+		slog.Info("Player retrieving force-saved items", "name", p.GetName())
+	default:
+		slog.Warn("Player entering with undefined rent code", "name", p.GetName(), "code", origRentCode)
+	}
+
+	// Restore inventory items with AutoEquip.
+	for _, item := range data.Inventory {
+		proto, ok := getProto(item.VNum)
+		if !ok {
+			slog.Warn("CrashLoad: missing inv proto", "vnum", item.VNum)
+			continue
+		}
+		obj := NewObjectInstance(proto, -1)
+		if item.State != nil {
+			for k, v := range item.State {
+				obj.CustomData[k] = v
+			}
+		}
+		AutoEquip(p, obj, item.Locate)
+	}
+
+	// Restore equipment items with AutoEquip.
+	for _, item := range data.Equipment {
+		proto, ok := getProto(item.VNum)
+		if !ok {
+			slog.Warn("CrashLoad: missing eq proto", "vnum", item.VNum)
+			continue
+		}
+		obj := NewObjectInstance(proto, -1)
+		if item.State != nil {
+			for k, v := range item.State {
+				obj.CustomData[k] = v
+			}
+		}
+		AutoEquip(p, obj, item.Locate)
+	}
+
+	// Convert to crash save (rent.rentcode = RENT_CRASH, rewrite control block).
+	SavePlayerWithRent(p, RentCrash, 0)
+
+	if origRentCode == RentRented || origRentCode == RentCryo {
+		return 0
+	}
+	return 1
 }
 
 // sanitizeName ensures the player name is safe for use as a filename.

@@ -30,6 +30,7 @@ type Player struct {
 	Exp   int
 	Gold  int // Currency, used by Lua scripts
 	GoldMu sync.Mutex // Mutex for Gold field (C6)
+	BankGold int // Bank account — from structs.h GET_BANK_GOLD
 
 	// Clan system (ported from clan.c)
 	Strength int // For inventory capacity

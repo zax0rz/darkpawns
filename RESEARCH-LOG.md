@@ -590,3 +590,20 @@ This is also the first time we're using a specific model release as a strategic 
 **[SURPRISE]** C source line count is actually 73,469 — significantly higher than the 68,823 reported by earlier estimates. Some of this is header files (which don't port 1:1), but some is genuine missed C code. The gap is larger than we thought.
 
 **[NEXT]** Next session should start with the updated PORT-PLAN.md and tackle the highest-priority unported files. Remaining big items: clan.c (1,574), house.c (744), boards.c (551), constants.c, class.c, act.informative.c coverage. Fight.c is ~98% via pkg/combat/fight_core.go.
+
+## 2026-04-26 — Wave 17: QA Fidelity Audit + objsave Port
+
+**[FAILURE]** DeepSeek Chat was running as main session model, couldn't dispatch subagents. Left 12+ build errors in objsave.go — wrong type comparisons (TypeFlag==ItemType), wrong method signatures (UnequipItem missing 2nd arg), phantom methods (removeAt, IsEmpty). Model hadn't checked actual interfaces before writing code.
+
+**[RESULT]** Fixed all 12 build errors. Root causes: (1) TypeFlag is `int`, ItemType constants are `ItemType` — needs cast; (2) UnequipItem takes (item, *Inventory) not just item; (3) removeAt doesn't exist on Inventory — use removeItem; (4) IsEmpty doesn't exist on Equipment — use len(Slots)==0.
+
+**[RESULT]** Opus audit (docs/SOURCE_ACCURACY_AUDIT.md) was already partially addressed in codebase: wis_app table correct, position damage multiplier correct (float64), getMinusDam extended to -310. Only mana-at-level-1 was still missing — fixed.
+
+**[RESULT]** Wired objsave persistence to JSON save layer. CrashSave, CrashLoad, Idlesave, RentSave, CryoSave now actually read/write disk. Added rent metadata (RentCode, RentTime, NetCostPerDiem, SavedGold, SavedBankGold) to savePlayerData. Added BankGold to Player struct. Added Locate field to saveItemData for inventory vs equipment tracking. DeleteCrashFile and CleanCrashFile now functional.
+
+**[DESIGN]** Chose JSON save over binary rent files for Go port. C uses fwrite of struct rent_info + struct obj_file_elem. Go already had save.go with JSON player serialization including inventory/equipment. Adding rent metadata to JSON is simpler than porting binary format, and the JSON save already works for player stats.
+
+**[OBSERVATION]** Biggest remaining fidelity gap: Player doesn't implement StatModifiable interface. Spell affects (bless, sanctuary, protection) silently do nothing — addStat/getStat calls fail the type assertion. This means spell-based hitroll/damroll/AC modifiers have zero effect. Only equipment prototype affects work. This is the single highest-impact bug for actual gameplay.
+
+**[OBSERVATION]** The affect system architectural mismatch (audit item #5) is the root cause. C uses affect_total() full recalculation. Go uses incremental apply/remove. Without StatModifiable on Player, the incremental path is dead code. Implementing StatModifiable would partially fix this but won't handle the "two affects share a bitvector" issue without affect_total.
+

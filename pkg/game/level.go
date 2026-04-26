@@ -311,7 +311,9 @@ func (p *Player) AdvanceLevel() {
 	}
 
 	p.MaxHealth += addHP
-	p.MaxMana += addMana
+	if p.Level > 1 {
+		p.MaxMana += addMana
+	}
 	p.MaxMove += addMove
 
 	// Heal to new max, including move points
