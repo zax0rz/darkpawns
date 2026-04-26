@@ -227,7 +227,7 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellControlWeather:
 		castControlWeather(level, ch, arg, world)
 	case SpellCoC:
-		castCoC(level, ch, cvict)
+		castCoC(level, ch, world)
 	case SpellMentalLapse:
 		castMentalLapse(level, ch, cvict)
 	case SpellEnchantWeapon:
@@ -238,6 +238,8 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 		castCreateWater(level, ch, ovict)
 	case SpellIdentify:
 		castIdentify(level, ch, cvict, ovict)
+	case SpellSilkenMissile:
+		castSilkenMissile(level, ch, ovict, world)
 	default:
 		sendToCaster(ch, "Spell not yet implemented.\r\n")
 	}
@@ -556,12 +558,121 @@ func castControlWeather(level int, ch interface{}, arg string, world interface{}
 	}
 }
 
-// castCoC — circle of summoning. STUB until runtime object creation exists.
-// C source: spells.c:1012-1039. COC_VNUM = 64, timer = level/2 + rand(-2,1).
-func castCoC(level int, ch, cvict interface{}) {
-	_ = cvict
-	slog.Info("spell_coc: runtime object creation not yet implemented", "vnum", CocVnum, "level", level)
+// castCoC — circle of summoning. Creates a COC object in the caster's room.
+// C source: spells.c:1012-1039. COC_VNUM=64, timer=level/2+rand(-2,1).
+func castCoC(level int, ch interface{}, world interface{}) {
+	type roomGetter interface{ GetRoomVNum() int }
+	type spawner interface {
+		SpawnObject(int, int) (interface{}, error)
+		AddItemToRoom(interface{}, int)
+	}
+
+	s, ok := world.(spawner)
+	if !ok {
+		slog.Warn("spell_coc: world does not support object spawning")
+		sendToCaster(ch, "The magic fails.\r\n")
+		return
+	}
+
+	// Get caster's room
+	rg, _ := ch.(roomGetter)
+	roomVNum := 0
+	if rg != nil {
+		roomVNum = rg.GetRoomVNum()
+	}
+	if roomVNum <= 0 {
+		sendToCaster(ch, "You can't do that here.\r\n")
+		return
+	}
+
+	obj, err := s.SpawnObject(CocVnum, roomVNum)
+	if err != nil {
+		slog.Error("spell_coc: failed to spawn COC object", "error", err, "vnum", CocVnum)
+		sendToCaster(ch, "The magic fails.\r\n")
+		return
+	}
+
+	s.AddItemToRoom(obj, roomVNum)
+
+	// Set timer
+	type timerSetter interface{ SetTimer(int) }
+	if ts, ok := obj.(timerSetter); ok {
+		timer := level/2 + rand.Intn(4) - 2 // rand(-2, 1)
+		if timer < 1 {
+			timer = 1
+		}
+		ts.SetTimer(timer)
+	}
+
 	sendToCaster(ch, "You draw a magic circle on the ground.\r\n")
+}
+
+// castSilkenMissile — converts armor/clothing into a missile arrow.
+// C source: spells.c:883-912. MISSILE VNUM=3.
+func castSilkenMissile(level int, ch, ovict interface{}, world interface{}) {
+	_ = level
+	if ovict == nil {
+		return
+	}
+
+	type typeFlagger interface{ GetTypeFlag() int }
+	tf, ok := ovict.(typeFlagger)
+	if !ok {
+		sendToCaster(ch, "You can't make anything useful from that.\r\n")
+		return
+	}
+
+	objType := tf.GetTypeFlag()
+	if objType != 11 && objType != 9 { // ITEM_WORN=11, ITEM_ARMOR=9
+		sendToCaster(ch, "You can't make anything useful from that.\r\n")
+		return
+	}
+
+	type spawner interface {
+		SpawnObject(int, int) (interface{}, error)
+		AddItemToRoom(interface{}, int)
+		ExtractObject(interface{}, int)
+	}
+	type roomGetter interface{ GetRoomVNum() int }
+	type inventoryGetter interface{ GetInventory() []interface{} }
+	type inventoryAdder interface{ AddItemToInventory(interface{}) error }
+
+	s, ok := world.(spawner)
+	if !ok {
+		slog.Warn("spell_silken_missile: world does not support object operations")
+		return
+	}
+
+	// Get caster's room
+	rg, _ := ch.(roomGetter)
+	roomVNum := 0
+	if rg != nil {
+		roomVNum = rg.GetRoomVNum()
+	}
+
+	// Spawn missile arrow
+	missile, err := s.SpawnObject(MissileVnum, roomVNum)
+	if err != nil {
+		slog.Error("spell_silken_missile: failed to spawn missile", "error", err, "vnum", MissileVnum)
+		sendToCaster(ch, "Error, please tell a god.\r\n")
+		return
+	}
+
+	// Give missile to caster (try inventory, fall back to room)
+	added := false
+	if ia, ok := ch.(inventoryAdder); ok {
+		if err := ia.AddItemToInventory(missile); err == nil {
+			added = true
+		}
+	}
+	if !added && roomVNum > 0 {
+		s.AddItemToRoom(missile, roomVNum)
+	}
+
+	// Extract source object
+	s.ExtractObject(ovict, roomVNum)
+
+	sendToCaster(ch, "You create an arrow from it.\r\n")
 }
 
 // castMentalLapse — clears mob hunting target. Partial implementation.
