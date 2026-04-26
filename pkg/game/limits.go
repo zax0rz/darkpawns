@@ -14,6 +14,13 @@ const (
 	CondThirst = 2
 )
 
+// Equipment affect location constants — from structs.h:525-527
+const (
+	ApplyHitRegen  = 26
+	ApplyManaRegen = 27
+	ApplyMoveRegen = 28
+)
+
 // Level/immortal constants — from structs.h LVL_*
 const (
 	LVL_IMMORT = 50
@@ -141,6 +148,10 @@ func (w *World) ManaGain(p *Player) int {
 		gain += gain >> 2
 	}
 
+	// Equipment mana regen — limits.c:89-95
+	// Positive modifier only applies while sleeping; negative always applies.
+	gain += p.sumEquipAffect(ApplyManaRegen, pos == PosSleeping)
+
 	// Class calculations — limits.c:97-104
 	if class == ClassMageUser || class == ClassCleric {
 		gain <<= 1
@@ -210,6 +221,8 @@ func (w *World) HitGain(p *Player) int {
 	switch pos {
 	case PosSleeping:
 		gain += gain >> 1 // ×1.5
+		// Equipment hit regen — limits.c:156-162, only while sleeping
+		gain += p.sumEquipAffect(ApplyHitRegen, false)
 	case PosResting:
 		gain += gain >> 2 // ×1.25
 	case PosSitting:
@@ -280,6 +293,8 @@ func (w *World) MoveGain(p *Player) int {
 	// Position calculations — limits.c:217-235
 	switch pos {
 	case PosSleeping:
+		// Equipment move regen — limits.c:224-230, applied before position multiplier
+		gain += p.sumEquipAffect(ApplyMoveRegen, false)
 		gain += gain >> 1
 	case PosResting:
 		gain += gain >> 2
@@ -877,6 +892,32 @@ func (w *World) CheckIdling(p *Player) {
 	//   - Crash_rentsave / Crash_idlesave
 	//   - extract_char
 	_ = roomVNum
+}
+
+// sumEquipAffect sums equipment affect modifiers for a given location.
+// If requireSleeping is true, positive modifiers are only counted when sleeping.
+// Negative modifiers always apply (matching limits.c behavior).
+// Source: limits.c:89-95, 156-162, 224-230
+func (p *Player) sumEquipAffect(location int, requireSleeping bool) int {
+	if p.Equipment == nil {
+		return 0
+	}
+	total := 0
+	for _, item := range p.Equipment.GetEquippedItems() {
+		if item == nil || item.Prototype == nil {
+			continue
+		}
+		for _, af := range item.Prototype.Affects {
+			if af.Location != location {
+				continue
+			}
+			if requireSleeping && af.Modifier > 0 {
+				continue
+			}
+			total += af.Modifier
+		}
+	}
+	return total
 }
 
 
