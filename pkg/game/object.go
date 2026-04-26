@@ -34,6 +34,12 @@ type ObjectInstance struct {
 	// Runtime flags
 	IsCorpse  bool // true if this is a corpse object
 	CanPickUp bool // true if ITEM_WEAR_TAKE flag is set
+
+	// Instance-level overrides for enchantment spells.
+	// When non-nil, these override the prototype values.
+	// Source: src/spells.c spell_enchant_weapon/armor, spell_silken_missile.
+	ExtraFlagsOverride [4]int
+	AffectsOverride    []parser.ObjAffect
 }
 
 // NewObjectInstance creates a new object instance from a prototype.
@@ -174,6 +180,9 @@ func (o *ObjectInstance) GetTotalWeight() int {
 
 // GetAffects returns the object's affect modifiers.
 func (o *ObjectInstance) GetAffects() []parser.ObjAffect {
+	if o.AffectsOverride != nil {
+		return o.AffectsOverride
+	}
 	if o.Prototype != nil {
 		return o.Prototype.Affects
 	}
@@ -320,4 +329,33 @@ func (o *ObjectInstance) GetTimer() int {
 
 func (o *ObjectInstance) SetTimer(timer int) {
 	o.Timer = timer
+}
+
+// GetExtraFlags returns the effective extra flags, preferring instance overrides.
+// Returns all 4 flag words as a slice.
+func (o *ObjectInstance) GetExtraFlags() [4]int {
+	if o.ExtraFlagsOverride != [4]int{} {
+		return o.ExtraFlagsOverride
+	}
+	if o.Prototype != nil {
+		return o.Prototype.ExtraFlags
+	}
+	return [4]int{}
+}
+
+// SetExtraFlag sets a bit in the instance-level extra flags override.
+// word is the flag word index (0-3), bit is the bit position.
+func (o *ObjectInstance) SetExtraFlag(word, bit int) {
+	o.ExtraFlagsOverride[word] |= (1 << uint(bit))
+}
+
+// HasExtraFlag checks if a bit is set in the effective extra flags.
+func (o *ObjectInstance) HasExtraFlag(word, bit int) bool {
+	ef := o.GetExtraFlags()
+	return ef[word]&(1<<uint(bit)) != 0
+}
+
+// SetAffectsOverride sets the instance-level affect overrides.
+func (o *ObjectInstance) SetAffectsOverride(affects []parser.ObjAffect) {
+	o.AffectsOverride = affects
 }
