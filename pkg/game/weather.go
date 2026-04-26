@@ -325,4 +325,12 @@ func lunarHunter()       {}
 func loadNightGate()     {}
 func removeNightGate()   {}
 func ghostShipAppear()   {}
-func ghostShipDisappear() {}
+func ghostShipDisappear() {} 
+
+// ModifyWeatherChange adjusts the weather change variable.
+// Used by spell_control_weather.
+func ModifyWeatherChange(delta int) {
+	weatherMu.Lock()
+	weatherInfo.Change += delta
+	weatherMu.Unlock()
+}

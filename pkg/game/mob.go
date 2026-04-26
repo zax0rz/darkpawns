@@ -57,6 +57,9 @@ type MobInstance struct {
 	// Affect flags bitmask — same bit positions as AFF_* constants used by Player
 	Affects uint64
 
+	// Mob flags bitmask — from src/structs.h MOB_* defines
+	Flags uint64
+
 	// Following — name of player this mob follows (for charmed pets, etc.)
 	Following string
 }
@@ -526,4 +529,36 @@ func (m *MobInstance) GetRoomVNum() int {
 
 func (m *MobInstance) GetPrototype() scripting.ScriptableMobPrototype {
 	return m.Prototype
+}
+
+// HasMobFlag returns true if the given MOB flag bit is set.
+func (m *MobInstance) HasMobFlag(bit int) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if bit < 0 || bit >= 64 {
+		return false
+	}
+	return m.Flags&(1<<uint(bit)) != 0
+}
+
+// SetMobFlag sets the given MOB flag bit.
+func (m *MobInstance) SetMobFlag(bit int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Flags |= 1 << uint(bit)
+}
+
+// GetHunting returns the mob's current hunting target name.
+func (m *MobInstance) GetHunting() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Hunting
+}
+
+// ClearHunting clears the mob's hunting target.
+func (m *MobInstance) ClearHunting() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Hunting = ""
+	m.HuntingID = ""
 }

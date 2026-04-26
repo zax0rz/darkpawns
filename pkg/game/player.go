@@ -53,6 +53,10 @@ type Player struct {
 	// Source: structs.h:321,335,341
 	Affects uint64
 
+	// Player flags bitmask — structs.h PLR_* constants
+	// Source: structs.h:221-244
+	PlayerFlags uint64
+
 	// ActiveAffects is a list of active spell/status effects on this player.
 	// This is separate from the Affects bitmask — bitmask tracks AFF_* flags,
 	// while ActiveAffects tracks spell effects with duration/stacking.
@@ -980,6 +984,30 @@ func (p *Player) SetCondition(cond, val int) {
 		return
 	}
 	p.Conditions[cond] = val
+}
+
+// HasPLRFlag returns true if PLR flag bit n is set.
+func (p *Player) HasPLRFlag(bit int) bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if bit < 0 || bit >= 64 {
+		return false
+	}
+	return p.PlayerFlags&(1<<uint(bit)) != 0
+}
+
+// SetPLRFlag sets PLR flag bit n.
+func (p *Player) SetPLRFlag(bit int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.PlayerFlags |= 1 << uint(bit)
+}
+
+// ClearPLRFlag clears PLR flag bit n.
+func (p *Player) ClearPLRFlag(bit int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.PlayerFlags &= ^(1 << uint(bit))
 }
 
 // IsAffected returns true if AFF flag bit n is set.

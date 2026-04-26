@@ -151,6 +151,9 @@ const (
 
 	// Item type constants
 	ItemStaff = 4
+
+	// Object VNUMs used by spells
+	CocVnum = 64
 )
 
 // Cast executes a spell. For non-damage affect spells (blindness, curse, poison,
