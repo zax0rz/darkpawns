@@ -242,10 +242,12 @@ func npcSteal(w *World, me *MobInstance, victim *Player) {
 		w.roomMessage(me.RoomVNum, me.GetName()+" tries to steal gold from "+victim.GetName()+".")
 		sendToChar(victim, "You discover that "+me.GetName()+" has its hands in your wallet.")
 	} else {
+		victim.GoldMu.Lock()
 		gold := (victim.Gold * randRange(1, 10)) / 100
 		if gold > 0 {
 			victim.Gold -= gold
 		}
+		victim.GoldMu.Unlock()
 	}
 }
 
@@ -601,10 +603,14 @@ func specMiniThief(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
 		if !p.IsNPC() && randN(2) == 0 {
 			stealAmt := randRange(1, 20)
+			p.GoldMu.Lock()
 			if p.Gold >= stealAmt {
 				p.Gold -= stealAmt
+				p.GoldMu.Unlock()
 				w.roomMessage(me.RoomVNum, me.GetName()+" snatches some coins and giggles!")
 				sendToChar(p, "You notice your coin purse feels lighter...")
+			} else {
+				p.GoldMu.Unlock()
 			}
 			return true
 		}

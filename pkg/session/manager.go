@@ -72,6 +72,10 @@ type Manager struct {
 	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
 	doorManager  *systems.DoorManager
 
+	// Per-IP connection tracking (C5)
+	ipConnCount map[string]int
+	ipConnMu    sync.Mutex
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
@@ -94,6 +98,7 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		shopManager:  systems.NewShopManager(),
 		loginLimiter: auth.NewIPRateLimiter(),
 		doorManager:  dm,
+		ipConnCount:  make(map[string]int),
 	}
 	if database != nil {
 		m.db = *database
@@ -167,6 +172,19 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ip := auth.GetIPFromRequest(r)
+
+	// Per-IP connection limit (C5)
+	m.ipConnMu.Lock()
+	if m.ipConnCount[ip] >= 5 {
+		m.ipConnMu.Unlock()
+		conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "too many connections from your IP"))
+		conn.Close()
+		return
+	}
+	m.ipConnCount[ip]++
+	m.ipConnMu.Unlock()
+
 	session := &Session{
 		conn:           conn,
 		request:        r, // Store the HTTP request for IP extraction
@@ -208,6 +226,17 @@ func (m *Manager) Unregister(playerName string) {
 	m.mu.Unlock()
 
 	if ok {
+		// Decrement per-IP connection count (C5)
+		if s.request != nil {
+			ip := auth.GetIPFromRequest(s.request)
+			m.ipConnMu.Lock()
+			m.ipConnCount[ip]--
+			if m.ipConnCount[ip] <= 0 {
+				delete(m.ipConnCount, ip)
+			}
+			m.ipConnMu.Unlock()
+		}
+
 		// Save to DB on disconnect
 		if m.hasDB && s.player != nil && s.player.ID > 0 {
 			if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
@@ -307,6 +336,7 @@ func (s *Session) readPump() {
 		s.conn.Close()
 	}()
 
+	s.conn.SetReadLimit(16384) // 16KB max message size (C4)
 	s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	s.conn.SetPongHandler(func(string) error {
 		s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))

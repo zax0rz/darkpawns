@@ -161,7 +161,9 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 	price := shop.CalculateSellPrice(item)
 
 	// Check if player has enough gold
+	player.GoldMu.Lock()
 	if player.Gold < price {
+		player.GoldMu.Unlock()
 		// Put item back in shop
 		shop.AddItem(item)
 		return false, fmt.Sprintf("You need %d gold to buy that.", price)
@@ -169,6 +171,7 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 
 	// Check if player has inventory space
 	if player.Inventory.IsFull() {
+		player.GoldMu.Unlock()
 		// Put item back in shop
 		shop.AddItem(item)
 		return false, "Your inventory is full."
@@ -184,15 +187,18 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 	if !ok {
 		// This shouldn't happen, but handle it gracefully
 		player.Gold += price
+		player.GoldMu.Unlock()
 		shop.AddItem(item)
 		return false, "Internal error: item type mismatch"
 	}
 	if err := player.Inventory.AddItem(gameItem); err != nil {
 		// Failed to add to inventory, refund and return item
 		player.Gold += price
+		player.GoldMu.Unlock()
 		shop.AddItem(item)
 		return false, fmt.Sprintf("Failed to add item to inventory: %v", err)
 	}
+	player.GoldMu.Unlock()
 
 	return true, fmt.Sprintf("You buy %s for %d gold.", item.GetShortDesc(), price)
 }
@@ -228,13 +234,17 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 	}
 
 	// Transfer gold
+	player.GoldMu.Lock()
 	player.Gold += price
+	player.GoldMu.Unlock()
 
 	// Transfer item to shop
 	if g, ok := item.(*game.ObjectInstance); ok { g.Location = game.LocNowhere() }
 	if !shop.AddItem(item) {
 		// Failed to add to shop, refund and return item
+		player.GoldMu.Lock()
 		player.Gold -= price
+		player.GoldMu.Unlock()
 		player.Inventory.AddItem(gameItem)
 		return false, "Failed to add item to shop inventory."
 	}
@@ -265,7 +275,9 @@ func (sm *ShopManager) ProcessRepair(shop *Shop, player *game.Player, item commo
 	cost := shop.CalculateRepairCost(item, damage)
 
 	// Check if player has enough gold
+	player.GoldMu.Lock()
 	if player.Gold < cost {
+		player.GoldMu.Unlock()
 		// Return item to player
 		player.Inventory.AddItem(gameItem)
 		return false, fmt.Sprintf("You need %d gold to repair that.", cost)
@@ -277,6 +289,7 @@ func (sm *ShopManager) ProcessRepair(shop *Shop, player *game.Player, item commo
 
 	// Charge player
 	player.Gold -= cost
+	player.GoldMu.Unlock()
 
 	// Repair item (in a real implementation, we'd update item condition)
 	// For now, we just return the item
@@ -307,7 +320,9 @@ func (sm *ShopManager) ProcessIdentify(shop *Shop, player *game.Player, item com
 	cost := shop.CalculateIdentifyCost(item)
 
 	// Check if player has enough gold
+	player.GoldMu.Lock()
 	if player.Gold < cost {
+		player.GoldMu.Unlock()
 		// Return item to player
 		player.Inventory.AddItem(gameItem)
 		return false, fmt.Sprintf("You need %d gold to identify that.", cost)
@@ -319,6 +334,7 @@ func (sm *ShopManager) ProcessIdentify(shop *Shop, player *game.Player, item com
 
 	// Charge player
 	player.Gold -= cost
+	player.GoldMu.Unlock()
 
 	// Identify item (in a real implementation, we'd reveal hidden properties)
 	// For now, we just return the item

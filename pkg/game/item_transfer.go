@@ -235,7 +235,9 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 			ch.SendMessage("You don't seem to be carrying anything.\r\n")
 			return true
 		}
-		for _, obj := range ch.Inventory.Items {
+		items := make([]*ObjectInstance, len(ch.Inventory.Items))
+		copy(items, ch.Inventory.Items)
+		for _, obj := range items {
 			w.performDrop(ch, obj)
 		}
 		return true
@@ -247,8 +249,10 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 			ch.SendMessage(fmt.Sprintf("What do you want to %s all of?\r\n", sname))
 			return true
 		}
+		items := make([]*ObjectInstance, len(ch.Inventory.Items))
+		copy(items, ch.Inventory.Items)
 		found := false
-		for _, obj := range ch.Inventory.Items {
+		for _, obj := range items {
 			if isname(keyword, obj.GetKeywords()) {
 				w.performDrop(ch, obj)
 				found = true
@@ -325,17 +329,34 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 		ch.SendMessage("Heh heh heh ... we are jolly funny today, eh?\r\n")
 		return
 	}
+
+	ch.GoldMu.Lock()
+	if ch != vict {
+		vict.GoldMu.Lock()
+	}
+
 	if ch.Gold < amount && ch.GetLevel() < lvlGod {
+		if ch != vict {
+			vict.GoldMu.Unlock()
+		}
+		ch.GoldMu.Unlock()
 		ch.SendMessage("You don't have that many coins!\r\n")
 		return
 	}
+
 	ch.SendMessage("Ok.\r\n")
 	actToVictim(ch, vict, "$n gives you %d gold coins.", nil, nil)
 	w.actToRoomExclude(ch, vict, "$n gives %s to $N.", nil, vict)
+
 	if ch.GetLevel() < lvlGod {
 		ch.Gold -= amount
 	}
 	vict.Gold += amount
+
+	if ch != vict {
+		vict.GoldMu.Unlock()
+	}
+	ch.GoldMu.Unlock()
 }
 
 // doGive handles the give command
@@ -410,7 +431,9 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 			ch.SendMessage("You don't seem to be holding anything.\r\n")
 			return true
 		}
-		for _, obj := range ch.Inventory.Items {
+		items := make([]*ObjectInstance, len(ch.Inventory.Items))
+		copy(items, ch.Inventory.Items)
+		for _, obj := range items {
 			if objHasFlag(obj, 1<<4) {
 				continue
 			}

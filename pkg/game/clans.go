@@ -920,12 +920,15 @@ func (w *World) doClanApply(ch *Player, arg string) {
 		ch.SendMessage("You are not mighty enough to apply to this clan.\r\n")
 		return
 	}
+	ch.GoldMu.Lock()
 	if ch.Gold < c.AppFee {
+		ch.GoldMu.Unlock()
 		ch.SendMessage("You cannot afford the application fee!\r\n")
 		return
 	}
 
 	ch.Gold -= c.AppFee
+	ch.GoldMu.Unlock()
 	c.Treasure += int64(c.AppFee)
 	w.SaveClans()
 
