@@ -104,6 +104,22 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		m.db = *database
 		m.hasDB = true
 	}
+
+	// Wire game-level callbacks
+	// HasActiveCharacter allows game.ValidName to check against active sessions.
+	game.HasActiveCharacter = func(name string) bool {
+		_, ok := m.GetSession(name)
+		return ok
+	}
+
+	// Load ban list and invalid name list at startup
+	if err := game.LoadBanned(); err != nil {
+		slog.Warn("Failed to load ban list", "error", err)
+	}
+	if err := game.ReadInvalidList(); err != nil {
+		slog.Warn("Failed to load invalid name list", "error", err)
+	}
+
 	return m
 }
 
@@ -460,6 +476,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		s.sendError("Invalid player name. Names must be 2-32 characters and contain only letters, numbers, spaces, dots, dashes, and underscores.")
 		s.conn.Close()
 		audit.LogSecurityEvent("invalid_player_name", "Invalid player name format", login.PlayerName, ip)
+		return nil
+	}
+
+	// Check against invalid name list (profanity filter) — from game/ban.c
+	if !game.ValidName(login.PlayerName) {
+		s.sendError("Invalid player name. Please choose another.")
+		s.conn.Close()
 		return nil
 	}
 

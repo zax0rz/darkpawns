@@ -507,38 +507,86 @@ The evaluation challenge remains open: "narrative coherence" needs a rubric. Hyp
 **[QUESTION]** Tiered inference dispatch: should it live in dp_brenda.py (client-side) or agent.c (server-side)? Client-side is easier to iterate. Server-side reaches all agents. Starting with client-side, deferring server-side for Phase 6.
 
 
-## [Sat 2026-04-25 00:47 EDT] `[DESIGN]` `[RESULT]` Clan/House/Boards bulk port complete
+## 2026-04-25 — Wave 12 Complete: mobact.c ported
 
-**Clans (`clans.go`):**
-- Subagent produced comprehensive port of clan.c with all subcommands except `set`, `private`, `bank`
-- Fixed duplicate helper functions (`isAbbrev`, `halfChop`, `isNumber`) that caused compilation errors
-- Added `ExecClanCommand` dispatcher matching C's `ACMD(do_clan)`
-- Added stubs for `doClanSet`, `doClanPrivate`, `doClanBank`, `doClanPlan`, `doClanRanks`, `doClanTitles`, `doClanPrivilege`, `doClanMoney`, `doClanAppLevel` — these need proper porting from C (about 600 lines total)
-- Added `ClanID`/`ClanRank` to `Player`, `Clans *ClanManager` to `World`
-- Added `PostInit()` to World for one-time clan/house init
+[DESIGN] [RESULT]
 
-**Houses (`houses.go`):**
-- Subagent produced thorough port of house.c
-- Includes: house boot, crashsave, guest management, Hcontrol (build/destroy/pay/key), DoHouse dispatcher
-- Uses existing `dirs`/`revDir` from `act_movement.go`
-- `HouseCanEnter` exported for room entry checks
+**File:** `src/mobact.c` (409 C lines) → `pkg/game/mobact.go` (171 Go lines)
+**Commit:** c143439
 
-**Boards (`boards.go`):**
-- Self-written port of boards.c as obj spec proc
-- `genBoard` registered via `RegisterSpec("gen_board", genBoard)`
-- Full data model: `BoardSystem`, `BoardInfo`, `BoardMsgInfo`
-- File persistence in binary format matching original C
-- Write/Read/Remove/Look/Examine handling
-- NOTE: spec procs aren't wired into the Go command dispatcher yet — `GetObjSpec/GetMobSpec/GetRoomSpec` exist but aren't called anywhere. Boards will work once spec dispatch is wired.
+**What went well:**
+- DeepSeek V4 Flash produced a clean first draft of the Go translation
+- Subagent handled ~200 Go lines in one go — good scope sizing
+- Build → vet → test all green on first attempt after manual fix
+- Alignment QA bug caught quickly — C source had edge case in aggr_evil/good/neutral logic
 
-**Integration:**
-- `clan`, `house`, `hcontrol` commands registered in session/commands.go
-- Clan `PostInit()` called after World creation
-- House/Hcontrol system registered and callable
-- Build passes, vet passes
+**What I learned:**
+- Memory routines (remember/forget/clearMemory) were already ported in deferred_fight_fns.go and limits.go — don't re-port them
+- `GetFighting()` returns string (empty = not fighting) — verified via grep
+- MobInstance.Memory []string exists and is populated elsewhere
+- The protection spells (AFF_PROTECT_EVIL/GOOD) have a random 5-in-6 bypass check in the C — easy to miss
 
-**Remaining:**
-- [ ] Wire spec procs into command interpreter (not just for boards — all specs are unused)
-- [ ] Port clan `set`, `private`, `bank` subcommands from C
-- [ ] Wire board write editor setup in session layer (uses `WriteMagic` field as bridge)
-- [ ] Test runtime with world data
+**Deferred from Wave 12:**
+- hunt_victim call sites (MOB_HUNTER) — depends on spec_procs.c port
+- Race hate attacks — needs race data structure
+- mp_sound() / Lua onpulse hooks — scripting system wiring
+
+**Next up:** Wave 13 — alias.c + ban.c + dream.c + weather.c (~1385 C lines, ~12 functions)
+
+## 2026-04-25 — Wave Strategy Overhaul (Post-GPT-5.5 Launch)
+
+[DESIGN] [DECISION]
+
+**Trigger:** OpenAI announced GPT-5.5 (and GPT-5.5 Pro) on April 24, 2026. Terminal-Bench 82.7%, Expert-SWE 73.1%, FrontierMath Tier 4 at 35.4%. The model description — "first coding model with serious conceptual clarity," "holds context across large systems" — maps exactly to the next problem we need solved.
+
+**Decision:** Insert a new Wave 16 (GPT-5.5 Pro Modernization) between the port completion and the QA/Security phases. The ordering is now:
+
+```
+Finish Port → GPT-5.5 Pro Modernization → QA Audit → Security Audit → Admin/Agent Features
+```
+
+**Rationale:**
+1. GPT-5.5 Pro needs the complete codebase to do its best work — can't review what doesn't exist yet
+2. Any structural modernization it suggests should land *before* QA validates behavior, not after
+3. Security review against well-structured Go is more productive than against awkward/half-assed Go
+4. Mental health: the port is the grind, modernization is the "now it's good" phase, QA/security is the "now it's safe" phase, then admin/agents is genuinely fun
+
+**This changes the wave numbering:**
+- Waves 14-15: Remaining port work (clan, house, boards, whod, objsave, mobprog, act.informative coverage)
+- **Wave 16: GPT-5.5 Pro Modernization** (new!)
+- Wave 17: QA + Security (renumbered from 16)
+- Wave 18+: Admin Dashboards + Agent Hooks (renumbered from 17, finally "the fun phase")
+
+**New docs created:**
+- `DARKPAWNS.md` — master strategy document (BRENDA's perspective, portable across models)
+- Updated `PORT-PLAN.md` with new wave structure and immediate next steps
+- Research log entry (this one)
+
+**Open questions:**
+- API access needed for GPT-5.5 Pro (OpenAI API key). Can we route via LiteLLM or direct? What's the cost profile for consuming 50K+ Go lines?
+- Should the codebase be fed as one huge context (~50K lines Go) or chunked by package?
+- Need to write a wrapper script that feeds each package dir to the API and collects recommendations
+
+[OBSERVATION]
+
+This is also the first time we're using a specific model release as a strategic project dependency. Previous waves were tool-agnostic — any competent LLM could do the mechanical port. GPT-5.5 Pro's specific strengths (large-context code review, structural understanding, "conceptual clarity") are what make Wave 16 viable. If we'd done this before GPT-5.5, the output would have been marginally better than go vet.
+
+---
+
+## 2026-04-25 — Wave 15f: gate.c, graph.c, mail.c
+
+**[RESULT]** Three more C files ported in one focused session. gate.c (90 Go lines — moon gate phase tables, night/day helpers), graph.c (202 Go lines — BFS findFirstStep), mail.c (632 Go lines — postmaster special, file-backed mail storage, read/delete). All building clean, committed on main.
+
+**[DESIGN]** mail.c was the most interesting port because it's the first file-bound persistence layer: BLOCK_SIZE=100 byte records, LE64-encoded headers, linked blocks via free list in the file. The Go port uses fixed-size [100]byte arrays with byte-level accessors (LE64 read/write, c-string truncation) — same contract as C, no serialization overhead. The C style of "this file IS the data structure" maps well to Go if you resist the urge to abstract it.
+
+**[DESIGN]** graph.c port reveals a structural truth: BFS pathfinding is cleanly separable (pure function on worldRooms slice + marks), but do_track and hunt_victim need combat types (FIGHTING/ch, skills, remember/forget) that don't exist in Go yet. This is the pattern for most "partially ported" files — the core algorithm ports cleanly, the outer callers need integration code that doesn't exist yet.
+
+**[DESIGN]** gate.c was the simplest port: a night_gate phase table and some is_after_sunset/is_night_gate helpers. Nothing structurally interesting — just confirming that even the trivial files need to exist for completeness.
+
+**[OBSERVATION]** Go codebase is now 71,175 total lines, 67,801 non-test. C source is 73,469 lines. The Go codebase has surpassed the C codebase in raw line count, but that includes pure-Go additions (agent system, optimization, tests, web admin). The genuinely unported C is ~14,000 lines across ~15 files.
+
+**[OBSERVATION]** The mail.go integration point is worth documenting: postmaster is registered via RegisterSpec("postmaster", postmaster) — the same pattern used by all spec_procs. The mail file path is a package var (mailFilePath = "mail") configurable at boot. ScanFile() needs to be called during initialization. Player name↔ID resolution uses delegate functions (SetMailResolveFuncs) — set at boot by the World/Manager. This is the standard "wire at boot" pattern for any new subsystem.
+
+**[SURPRISE]** C source line count is actually 73,469 — significantly higher than the 68,823 reported by earlier estimates. Some of this is header files (which don't port 1:1), but some is genuine missed C code. The gap is larger than we thought.
+
+**[NEXT]** Next session should start with the updated PORT-PLAN.md and tackle the highest-priority unported files. Remaining big items: clan.c (1,574), house.c (744), boards.c (551), constants.c, class.c, act.informative.c coverage. Fight.c is ~98% via pkg/combat/fight_core.go.

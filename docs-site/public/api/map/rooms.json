@@ -1,0 +1,230 @@
+{
+  "rooms": [
+    {
+      "id": 1,
+      "name": "Village Square",
+      "description": "The central gathering place of the village. A stone fountain stands in the center, and notice boards post quests and announcements.",
+      "x": 100,
+      "y": 100,
+      "z": 0,
+      "areaId": 1,
+      "areaName": "Starting Village",
+      "connections": [2, 3, 4],
+      "connection_details": [
+        {"roomId": 2, "direction": "east", "type": "standard"},
+        {"roomId": 3, "direction": "south", "type": "standard"},
+        {"roomId": 4, "direction": "west", "type": "standard"}
+      ],
+      "npcs": ["Village Elder", "Town Crier"],
+      "quests": ["Welcome to Dark Pawns", "Basic Training"],
+      "shop": false,
+      "safe": true,
+      "environment": "village",
+      "lighting": "daylight",
+      "terrain": "cobblestone"
+    },
+    {
+      "id": 2,
+      "name": "Blacksmith Shop",
+      "description": "Weapons and armor line the walls. The sound of hammer on anvil echoes through the building. Grimbold the Blacksmith works here.",
+      "x": 200,
+      "y": 100,
+      "z": 0,
+      "areaId": 1,
+      "areaName": "Starting Village",
+      "connections": [1],
+      "connection_details": [
+        {"roomId": 1, "direction": "west", "type": "standard"}
+      ],
+      "npcs": ["Grimbold the Blacksmith"],
+      "quests": ["Repair the Anvil", "Deliver Ore"],
+      "shop": true,
+      "safe": true,
+      "environment": "indoors",
+      "lighting": "torchlight",
+      "terrain": "wooden_floor"
+    },
+    {
+      "id": 3,
+      "name": "Rusty Tankard Tavern",
+      "description": "A rowdy tavern filled with adventurers sharing tales over ale. The air smells of smoke, spilled beer, and roasted meat.",
+      "x": 100,
+      "y": 200,
+      "z": 0,
+      "areaId": 1,
+      "areaName": "Starting Village",
+      "connections": [1, 5],
+      "connection_details": [
+        {"roomId": 1, "direction": "north", "type": "standard"},
+        {"roomId": 5, "direction": "east", "type": "standard"}
+      ],
+      "npcs": ["Barkeep", "Mysterious Stranger", "Drunken Sailor"],
+      "quests": ["Find Lost Keg", "Deliver Message", "Brawl Champion"],
+      "shop": true,
+      "safe": true,
+      "environment": "indoors",
+      "lighting": "firelight",
+      "terrain": "wooden_floor"
+    },
+    {
+      "id": 4,
+      "name": "Training Grounds",
+      "description": "An open field where new adventurers practice combat. Straw dummies and training weapons are available for use.",
+      "x": 0,
+      "y": 100,
+      "z": 0,
+      "areaId": 1,
+      "areaName": "Starting Village",
+      "connections": [1],
+      "connection_details": [
+        {"roomId": 1, "direction": "east", "type": "standard"}
+      ],
+      "npcs": ["Training Master"],
+      "quests": ["Learn to Fight", "Practice Makes Perfect"],
+      "shop": false,
+      "safe": true,
+      "environment": "outdoors",
+      "lighting": "daylight",
+      "terrain": "grass"
+    },
+    {
+      "id": 5,
+      "name": "Forest Path Entrance",
+      "description": "The beginning of a narrow path that leads into the Dark Forest. The trees seem to lean closer here, blocking out the sky.",
+      "x": 300,
+      "y": 200,
+      "z": 0,
+      "areaId": 2,
+      "areaName": "Dark Forest",
+      "connections": [3, 6, 7],
+      "connection_details": [
+        {"roomId": 3, "direction": "west", "type": "standard"},
+        {"roomId": 6, "direction": "east", "type": "standard"},
+        {"roomId": 7, "direction": "southeast", "type": "standard"}
+      ],
+      "npcs": ["Forest Guide"],
+      "quests": ["Explore the Forest", "Gather Herbs"],
+      "shop": false,
+      "safe": false,
+      "environment": "forest",
+      "lighting": "twilight",
+      "terrain": "dirt_path"
+    },
+    {
+      "id": 6,
+      "name": "Ancient Temple Entrance",
+      "description": "A massive stone doorway carved with forgotten runes. The air here feels heavy with ancient magic.",
+      "x": 400,
+      "y": 300,
+      "z": 0,
+      "areaId": 3,
+      "areaName": "Ancient Ruins",
+      "connections": [5, 8],
+      "connection_details": [
+        {"roomId": 5, "direction": "west", "type": "standard"},
+        {"roomId": 8, "direction": "south", "type": "standard"}
+      ],
+      "npcs": [],
+      "quests": ["Investigate the Ruins", "Recover Artifacts"],
+      "shop": false,
+      "safe": false,
+      "environment": "ruins",
+      "lighting": "magical_glow",
+      "terrain": "stone"
+    },
+    {
+      "id": 7,
+      "name": "Cave Entrance",
+      "description": "A dark opening in the hillside. Cool, damp air flows from within, carrying the scent of earth and mushrooms.",
+      "x": 500,
+      "y": 400,
+      "z": 0,
+      "areaId": 4,
+      "areaName": "Underground Caverns",
+      "connections": [5, 9],
+      "connection_details": [
+        {"roomId": 5, "direction": "northwest", "type": "standard"},
+        {"roomId": 9, "direction": "southeast", "type": "standard"}
+      ],
+      "npcs": ["Cave Explorer"],
+      "quests": ["Explore the Caverns", "Mine Crystals"],
+      "shop": false,
+      "safe": false,
+      "environment": "cave",
+      "lighting": "dim",
+      "terrain": "rocky"
+    },
+    {
+      "id": 8,
+      "name": "Temple Inner Sanctum",
+      "description": "The heart of the ancient temple. A massive crystal floats in the center of the room, pulsing with soft light.",
+      "x": 450,
+      "y": 350,
+      "z": 0,
+      "areaId": 3,
+      "areaName": "Ancient Ruins",
+      "connections": [6],
+      "connection_details": [
+        {"roomId": 6, "direction": "north", "type": "standard"}
+      ],
+      "npcs": ["Temple Guardian"],
+      "quests": ["Activate the Crystal", "Defeat the Guardian"],
+      "shop": false,
+      "safe": false,
+      "environment": "sanctum",
+      "lighting": "crystal_light",
+      "terrain": "marble"
+    },
+    {
+      "id": 9,
+      "name": "Crystal Cavern",
+      "description": "A vast cavern filled with glowing crystals that illuminate the space with soft blue light. The crystals hum with energy.",
+      "x": 550,
+      "y": 450,
+      "z": 0,
+      "areaId": 4,
+      "areaName": "Underground Caverns",
+      "connections": [7, 10],
+      "connection_details": [
+        {"roomId": 7, "direction": "northwest", "type": "standard"},
+        {"roomId": 10, "direction": "up", "type": "portal"}
+      ],
+      "npcs": ["Crystal Keeper"],
+      "quests": ["Harvest Crystals", "Protect the Cavern"],
+      "shop": false,
+      "safe": false,
+      "environment": "cavern",
+      "lighting": "crystal_glow",
+      "terrain": "crystal_floor"
+    },
+    {
+      "id": 10,
+      "name": "Frozen Pass",
+      "description": "A narrow mountain pass covered in ice and snow. The wind howls through the gap, making it difficult to stand.",
+      "x": 600,
+      "y": 500,
+      "z": 1,
+      "areaId": 5,
+      "areaName": "Frozen Peaks",
+      "connections": [9],
+      "connection_details": [
+        {"roomId": 9, "direction": "down", "type": "portal"}
+      ],
+      "npcs": ["Frozen Traveler"],
+      "quests": ["Cross the Mountains", "Find the Dragon's Lair"],
+      "shop": false,
+      "safe": false,
+      "environment": "mountain",
+      "lighting": "daylight",
+      "terrain": "ice"
+    }
+  ],
+  "metadata": {
+    "total_rooms": 10,
+    "rooms_with_npcs": 9,
+    "rooms_with_quests": 10,
+    "rooms_with_shops": 2,
+    "safe_rooms": 4,
+    "average_connections_per_room": 2.0
+  }
+}

@@ -256,7 +256,15 @@ func init() {
 	cmdRegistry.Register("whisper", wrapArgs(cmdWhisper), "Whisper to someone in your room.", 0, 0, "whis")
 	cmdRegistry.Register("ask", wrapArgs(cmdAsk), "Ask someone a question.", 0, 0)
 	cmdRegistry.Register("qcomm", wrapArgs(cmdQcomm), "Send a team message.", 0, 0, "team")
-	cmdRegistry.Register("think", wrapArgs(cmdThink), "Think out loud (only you hear it).", 0, 0)
+	// Social (act_social.go)
+	cmdRegistry.Register("dream", wrapArgs(cmdDream), "Experience your dreams while sleeping.", 0, combat.PosSleeping)
+
+	// Alias (game pkg)
+	cmdRegistry.Register("alias", wrapArgs(cmdAlias), "Manage command aliases.", 0, 0)
+
+	// Admin commands (game pkg bans)
+	cmdRegistry.Register("ban", wrapArgs(cmdBan), "Ban a site from the MUD.", LVL_IMMORT, 0)
+	cmdRegistry.Register("unban", wrapArgs(cmdUnban), "Unban a site from the MUD.", LVL_IMMORT, 0)
 }
 
 // wrapArgs adapts a func(*Session, []string) error to command.Handler.

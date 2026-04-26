@@ -12,6 +12,7 @@ import (
 type CombatEngine interface {
 	StartCombat(attacker, defender combat.Combatant) error
 	IsFighting(name string) bool
+	GetCombatTarget(charName string) (combat.Combatant, bool)
 }
 
 // AIBehavior defines mob AI behavior
@@ -45,43 +46,12 @@ func (w *World) AITick() {
 	}
 }
 
-// runMobAI runs AI for a single mob
+// runMobAI runs AI for a single mob.
+// This is the integration layer that delegates to the faithful
+// mobact.go:MobileActivity() and then handles wandering.
 func (w *World) runMobAI(mob *MobInstance) {
 	if mob.Prototype == nil {
 		return
-	}
-
-	// Parse mob flags once
-	isSentinel := false
-	isAggressive := false
-	isAggrEvil := false
-	isAggrGood := false
-	isAggrNeutral := false
-	isWimpy := false
-	isMemory := false
-	isHelper := false
-	isScavenger := false
-	for _, flag := range mob.Prototype.ActionFlags {
-		switch flag {
-		case "sentinel":
-			isSentinel = true
-		case "aggressive":
-			isAggressive = true
-		case "aggr_evil":
-			isAggrEvil = true
-		case "aggr_good":
-			isAggrGood = true
-		case "aggr_neutral":
-			isAggrNeutral = true
-		case "wimpy":
-			isWimpy = true
-		case "memory":
-			isMemory = true
-		case "helper":
-			isHelper = true
-		case "scavenger":
-			isScavenger = true
-		}
 	}
 
 	// Don't act if already fighting
@@ -89,98 +59,22 @@ func (w *World) runMobAI(mob *MobInstance) {
 		return
 	}
 
-	players := w.GetPlayersInRoom(mob.RoomVNum)
+	// Delegate to the faithful mobact.c port
+	w.MobileActivity()
 
-	// MOB_MEMORY: hunt players this mob remembers attacking it
-	// Source: mobact.c:262-285
-	if isMemory && len(mob.Memory) > 0 {
-		for _, player := range players {
-			for _, name := range mob.Memory {
-				if name == player.GetName() {
-					player.SendMessage("'Hey!  You're the fiend that attacked me!!!', exclaims " + mob.GetShortDesc() + ".\r\n")
-					if aiCombatEngine != nil {
-						aiCombatEngine.StartCombat(mob, player)
-					}
-					return
-				}
-			}
-		}
-	}
-
-	// Aggression checks
-	// MOB_SENTINEL only prevents movement, NOT aggression — mobact.c:110-132
-	hasAlignAggr := isAggrEvil || isAggrGood || isAggrNeutral
-	if isAggressive || hasAlignAggr {
-		for _, player := range players {
-			// MOB_WIMPY: skip awake players — mobact.c:209
-			if isWimpy {
-				continue // all players considered awake for now
-			}
-			// Alignment-based aggression — mobact.c:217-225
-			// IS_GOOD: alignment >= 350, IS_EVIL: <= -350 (utils.h:454-455)
-			if hasAlignAggr {
-				align := player.GetAlignment()
-				isGood := align >= 350
-				isEvil := align <= -350
-				isNeutral := !isGood && !isEvil
-				if !((isAggrEvil && isEvil) || (isAggrGood && isGood) || (isAggrNeutral && isNeutral)) {
-					continue
-				}
-			}
-			if aiCombatEngine != nil {
-				aiCombatEngine.StartCombat(mob, player)
-			}
-			return
-		}
-	}
-
-	// MOB_HELPER: assist other fighting mobs against players
-	// Source: mobact.c:286-302
-	if isHelper {
-		w.mu.RLock()
-		for _, otherMob := range w.activeMobs {
-			if otherMob == mob || otherMob.RoomVNum != mob.RoomVNum {
-				continue
-			}
-			if otherMob.Fighting && otherMob.Target == nil {
-				// otherMob is fighting a player — join in
-				for _, player := range players {
-					player.SendMessage(mob.GetShortDesc() + " jumps to the aid of " + otherMob.GetShortDesc() + "!\r\n")
-					if aiCombatEngine != nil {
-						aiCombatEngine.StartCombat(mob, player)
-					}
-					w.mu.RUnlock()
-					return
-				}
-			}
-		}
-		w.mu.RUnlock()
-	}
-
-	// Call sound scripts (ambient pulse)
-	// Based on original ambient pulse handling
-	if mob.HasScript("sound") && rand.Intn(100) < 10 { // 10% chance per tick
-		ctx := mob.CreateScriptContext(nil, nil, "")
-		mob.RunScript("sound", ctx)
-	}
-
-	// MOB_SCAVENGER: pick up highest-value item in room — mobact.c:103-115
-	// Only triggers 1 in 10 times (number(0,10) == 0 in original)
-	if isScavenger && rand.Intn(11) == 0 {
-		items := w.GetItemsInRoom(mob.RoomVNum)
-		var bestItem *ObjectInstance
-		bestCost := 0
-		for _, item := range items {
-			if item.GetCost() > bestCost {
-				bestCost = item.GetCost()
-				bestItem = item
-			}
-		}
-		if bestItem != nil {
-			w.RemoveItemFromRoom(bestItem, mob.RoomVNum)
-			mob.Inventory = append(mob.Inventory, bestItem)
-			for _, player := range players {
-				player.SendMessage(mob.GetShortDesc() + " picks up " + bestItem.GetShortDesc() + ".\r\n")
+	// Post-activity: wandering (handled separately in mobact.c movement section
+	// and ai.go wanderMob). The original C wandering is inside mobile_activity(),
+	// but the existing Dark Pawns Go architecture handles wandering in this
+	// integration layer. We keep wanderMob() here as well since ai.go already
+	// has the infrastructure.
+	//
+	// Parse sentinel flag
+	isSentinel := false
+	if mob.Prototype != nil {
+		for _, flag := range mob.Prototype.ActionFlags {
+			if flag == "sentinel" {
+				isSentinel = true
+				break
 			}
 		}
 	}
