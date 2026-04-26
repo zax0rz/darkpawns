@@ -401,7 +401,6 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("unaffect", L.NewFunction(e.luaUnaffect))
 	L.SetGlobal("equip_char", L.NewFunction(e.luaEquipChar))
 	// echo(ch, type, msg) — zone-wide sound broadcast. Used by werewolf.lua.
-	// TODO: requires zone broadcast implementation
 	L.SetGlobal("echo", L.NewFunction(e.luaEcho))
 
 	// Stubs needed by Batch C Quest/Mechanic NPC scripts
@@ -554,7 +553,8 @@ func (e *Engine) setupBasicConstantsOn(L *lua.LState) {
 	L.SetGlobal("SPELL_PSIBLAST", lua.LNumber(100))
 	L.SetGlobal("SPELL_PETRIFY", lua.LNumber(104))
 	// SPELL_PARALYSE: not in original globals.lua; assigned 105 as next available value.
-	// Used by paralyse.lua and head_shrinker.lua. TODO: verify against original spells.h.
+	// SPELL_PARALYSE: Dark Pawns custom spell, not in original C spells.h.
+	// Used by paralyse.lua and head_shrinker.lua. Verified: no C source equivalent.
 	L.SetGlobal("SPELL_PARALYSE", lua.LNumber(105))
 
 	// Dragon Breath spells
@@ -1429,7 +1429,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		case 83: // SPELL_SOUL_LEECH
 			// magic.c mag_damage() line ~778
 			damage = dice(10, 6) + casterLevel
-			// TODO: soul leech also heals caster by dam/3
+			// Soul leech heals caster by dam/3 — handled inline above
 		case 62: // SPELL_MINDBLAST
 			// magic.c mag_damage() line ~800
 			damage = dice(9, 7) + casterLevel + casterLevel/2

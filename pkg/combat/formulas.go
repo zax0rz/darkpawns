@@ -561,8 +561,6 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 	return attacks
 }
 
-// backstabMult returns the backstab multiplier from backstab_mult() in skills.c.
-// TODO: port the actual function when we add skills in Phase 3.
 // backstabMult returns the backstab damage multiplier.
 // Source: class.c:720-729 backstab_mult()
 // Original: if level < LVL_IMMORT return (level*0.2)+1; else return 20
