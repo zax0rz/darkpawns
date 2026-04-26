@@ -2,80 +2,72 @@
 
 **Branch:** main  
 **Working dir:** `~/darkpawns/`  
-**Plan:** `docs/PORT_COMPLETION_PLAN.md` (read this first — has full scope, session log, and remaining items)  
-**Audit doc:** `docs/SOURCE_ACCURACY_AUDIT.md` (stale — most items already fixed)
+**Plan:** `docs/PORT_SCOPE.md` (read this first — has full gap analysis, priorities, remaining work)
 
 ## Context
 
-Wave 19 is in progress — closing out the remaining TODOs to complete the C-to-Go port.  
-Previous sessions killed Batch 1 (core loop gaps), Batch 2 (player systems), Batch 3 (scripting engine, partial), and Batch 4 (wizard commands). All committed, CI green.
+C-to-Go MUD port. Core game loop is functional. We just did a thorough function-by-function audit of every C file against its Go counterpart and documented the real remaining gaps in PORT_SCOPE.md.
 
-**Run `git log --oneline -5` and `grep -rn 'TODO' pkg/ --include='*.go' | grep -v '_test.go\|.bak' | wc -l` at session start.**
+**Run `git log --oneline -5` at session start.**
 
 ## Current State
 
-**TODOs remaining: 26** (started session at 45)
+**~2,400 C lines remaining (~1,700-2,400 Go lines).** 6 commits in the last session:
+- wave19 batch 5: spell system routing + death.go TYPE_/SKILL_ constants
+- wave19 tier2 batch A: error handling with retry/backoff
+- wave19 tier2 batch B: game infrastructure fixes
+- wave19: clear remaining TODOs — zero actionable TODOs left
 
-### Batch 3 leftovers (scripting — 0 remaining, ALL DONE)
-All 8 scripting engine TODOs resolved. The Batch 3 subagent (GLM-5.1) got 5/8 in its 2m40s run — the remaining 3 were stale comments that got cleaned manually.
+All TODOs are resolved (converted to docs or implemented). The remaining work is filling in missing functions.
 
-### Batch 4 (wizard commands — 0 remaining, ALL DONE)
-Done manually after GLM-5.1 subagents failed (crashed at 14s and 83s — file too large for their context). All 9 TODOs implemented directly.
+## What's Next (in priority order)
 
-### What's Next
+### Priority 1: Core gameplay blockers (~480 C lines)
+1. **limits.c** — `exp_needed_for_level`, `find_exp`, `mana_gain`, `hit_gain`, `move_gain`. XP table + regen formulas. Port to `pkg/game/limits.go`.
+2. **handler.c helpers** — `remove_follower`, `set_hunting`, `obj_from_room`, `obj_to_obj`, `obj_from_obj`, `get_number`, `affect_to_char2`, `get_obj_num`, `get_char_num`, `free_char`. Spread across `pkg/game/inventory.go`, `movement.go`, `follow.go`.
+3. **Shared utility functions** — `remove_follower`, `set_hunting`, `stop_follower`, `can_speak`, `add_follower`, `num_followers`, `circle_follow`, `die_follower`. Some exist as MobInstance methods — need centralized versions in `follow.go`.
 
-#### Batch 5: Spell System Cleanup (~4 code TODOs + header comments)
-- `pkg/spells/spells.go:190` — Cast() default case is a stub. Needs to route 60+ damage/effect spells through `pkg/spells/call_magic.go`'s existing `CallMagic`/`MagDamage`/`MagAffects` dispatch.
-- `pkg/spells/say_spell.go:327` — `sendToRoom()` is a stub returning true. Needs real room iteration. **Challenge:** spells package uses `interface{}` for all params due to import cycle (spells→game). Need type assertions or a shared interface.
-- `pkg/spells/damage_spells.go:316` — `sendToZone()` is a no-op stub. Same interface{} challenge.
-- `pkg/game/death.go:368` — `attackTypeToCorpseAttack` missing TYPE_/SKILL_ constants (SLASH, PIERCE, CRUSH, BASH, KICK, etc.). C ref: `src/fight.c:283-370` and `src/structs.h`.
+### Priority 2: Persistence (~750 C lines)
+4. **objsave.c** — Binary save/load format. `Obj_to_store`, `Crash_load`, etc. Go may use JSON instead. Logic matters more than format. `pkg/game/objsave.go` partially done.
+5. **house.c** — File I/O for houses: `House_load`, `House_save`, `House_crashsave`, etc. Structure exists (1086 lines), file persistence missing.
+6. **events.c + queue.c** — Custom event queue. May already be handled by Go goroutines/tickers. **Verify first** before porting.
 
-**Note:** The large TODO header comments in `spells.go:8` and `spells.go:40` are documentation, not code. They can be removed once the Cast() switch is wired.
+### Priority 3: Commands & features (~550 C lines)
+7. **act.wizard.c** — Immortal commands: `do_stat_room`, `do_stat_object`, `stop_snooping`, visibility toggles, zone info.
+8. **act.social.c** — Social file loading: `fread_action`, `find_action`, `boot_social_messages`.
+9. **ban.c** — Ban persistence: `load_banned`, `isbanned`, `write_ban_list`.
 
-#### Tier 2: Go Modernization (~22 TODOs)
-Mostly infrastructure polish. Good subagent candidates. Key files:
-- `pkg/optimization/database.go:244` + `websocket.go:209` — error handling/retry
-- `pkg/game/houses.go` — 4 TODOs (DB lookup, obj store wiring)
-- `pkg/game/clans.go:1202` — string_write
-- `pkg/game/boards.go:335,489` — room echo (BoardSystem has no World ref)
-- `pkg/game/graph.go:179` — weather penalty
-- `pkg/game/zone_dispatcher.go:126` — mob AI
-- `pkg/game/world.go` — 5 TODOs (mob command routing, death, target resolution)
-- `pkg/game/other_settings.go:104` — just a doc comment, not real TODO
-
-#### Tier 3: Reviews (post-completion)
-- **Sonnet QA review** — 4 passes pairing Go subsystems with C source
-- **Opus security review** — input validation, overflow, race conditions, auth, Lua injection
-
-## Subagent Learnings (IMPORTANT)
-
-1. **GLM-5.1 fails on large files.** Both Batch 4 attempts cratered (14s, 83s) on `wizard_cmds.go` (1,574 lines) + `act.wizard.c` (3,863 lines). **Too much combined context.** For large files, implement manually or split into smaller scoped tasks.
-
-2. **DeepSeek V4 Pro is NOT in the allowlist as `zai/deepseek-v4-pro`.** The correct model ID is `deepseek-v4/deepseek-v4-pro` (provider/model format). It's already in `agents.defaults.models` in `openclaw.json`. Cost: $0.25/$0.40 per M tokens (90% sale through May).
-
-3. **GLM-5.1 works well for medium-scope tasks.** Batch 3 (scripting, 8 TODOs across engine.go) completed in 2m40s and got 5/8 done. The 3 it missed were stale comments, not real code.
-
-4. **When subagents add interface methods**, they often forget to update test mocks. The `ExecuteMobCommand` addition to `ScriptableWorld` broke `integration_test.go` — had to add mock implementations manually. Always check test compilation after interface changes.
-
-5. **Unexported→exported method renames cascade.** Exporting `extractMob`, `sendToZone`, `sendToAll` broke internal callers in `spec_procs2.go` and `spec_procs3.go`. If renaming, grep the entire codebase.
-
-6. **`parser.World` uses `Objs` not `Objects`.** The Obj slice field is `Objs`. `ObjectInstance` (game package) uses `GetShortDesc()` method, while `parser.Obj` uses `ShortDesc` field directly. Easy to confuse.
+### Priority 4: Polish (~350 C lines)
+10. **act.informative.c** — Display helpers (target room, class bitvector, print_object_location).
+11. **oc.c** — Object editor commands.
+12. **mapcode.c** — ASCII map rendering.
+13. **graph.c** — BFS helpers.
+14. **scripts.c** — Lua table operations.
+15. **boards.c** — Board persistence.
+16. **weather.c** — Weather effects.
 
 ## Rules
-- Read before write. `go build ./...` after every change. `go test ./...` before commits.
-- slog not log/fmt. No globals. C source (`src/`) is authoritative.
+- Read C source before writing Go. `src/` is authoritative.
+- `go build ./...` after every change. `go test ./...` before commits.
+- slog not log/fmt. No globals.
 - Import cycle: spells→game. Use interface assertions.
-- Use subagents for Tier 2 — they're infrastructure polish, self-contained. Use `deepseek-v4/deepseek-v4-pro` or `zai/glm-5.1` (NOT `zai/deepseek-v4-pro`).
-- Batch 5 should be done directly — the interface{} plumbing in spells is too fiddly for subagents.
-- Commit after each batch. Update PORT_COMPLETION_PLAN.md session log.
+- Use subagents for self-contained tasks. `deepseek-v4/deepseek-v4-pro` works well for bounded tasks. GLM-5.1 for medium-scope. **NOT** for large files (>1500 lines combined context).
+- Commit after each priority batch. Update PORT_SCOPE.md as functions are ported.
+- When a subagent fails, check the actual file state before retrying.
+
+## Subagent Learnings
+1. **deepseek-v4-pro crashes on large files.** Don't give it >1500 lines of combined C+Go context. Split into smaller tasks.
+2. **Automated function-name matching overcounts wildly.** The `docs/C_FUNCTIONS.json` script reports 12K lines missing — that's wrong. Forward declarations, duplicate entries, and missed renames inflate it 5x. The manual audit (~2,400 lines) is accurate. Use the JSON as a starting point, not gospel.
+3. **Many "missing" C functions exist in Go with different names.** Always grep for camelCase equivalents before declaring something missing.
+4. **comm.c functions are mostly Go networking layer.** `game_loop`, `new_descriptor`, `process_input`, `close_socket` etc. are handled by Go's net/websocket/session layer. Don't port them — verify they're covered.
+5. **handler.c has the highest density of genuinely missing functions.** The object movement helpers (obj_from_room, obj_to_obj, etc.) and follow-chain management are the real gaps.
+6. **improved-edit.c is the text editor.** Check if `pkg/game/text_editor.go` or `pkg/game/editor.go` covers it before porting.
+7. **spec_assign.c functions run at boot only.** `assign_mobiles`, `assign_objects`, `assign_rooms` — check if Go boot sequence already handles spec assignment.
 
 ## Post-Completion
-Once all actionable TODOs are gone:
-1. Remove stale TODO comments (header docs in spells.go can become regular docs)
-2. `go vet ./...` + `go test ./...`
-3. Remove all .bak files
-4. Update PORT_COMPLETION_PLAN.md with "PORT COMPLETE" status
-
-Then dispatch reviews:
-- **Sonnet QA:** Split into 4 passes pairing Go subsystems with C source (see plan)
-- **Opus security:** Input validation, overflow, race conditions, auth, Lua injection
+When all functions are ported:
+1. Run full `go vet ./...` + `go test ./...`
+2. Remove `pkg/game/act_item_stubs.go` (dead code — stubs no longer referenced)
+3. Remove any remaining `.bak` files
+4. Update PORT_SCOPE.md with "PORT COMPLETE" status
+5. Then: Sonnet QA review (4 passes pairing Go with C source) + Opus security review

@@ -1,0 +1,4422 @@
+[
+  {
+    "c_file": "act.comm.c",
+    "function": "perform_tell",
+    "start_line": 873,
+    "end_line": 895,
+    "line_count": 23,
+    "signature": "void perform_tell(struct char_data *ch, struct char_data *vict, char *arg)",
+    "go_location": "pkg/game/act_comm.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ClearLevel",
+    "start_line": 72,
+    "end_line": 110,
+    "line_count": 39,
+    "signature": "void IB_ClearLevel(struct char_data *ch, int size);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_GoldStr",
+    "start_line": 73,
+    "end_line": 110,
+    "line_count": 38,
+    "signature": "void IB_GoldStr(struct char_data *ch, int size);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_Gold",
+    "start_line": 74,
+    "end_line": 110,
+    "line_count": 37,
+    "signature": "void IB_Gold(struct char_data *ch, int size);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_W_Gold",
+    "start_line": 75,
+    "end_line": 110,
+    "line_count": 36,
+    "signature": "void IB_W_Gold(struct char_data *ch, int size);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ClearGold",
+    "start_line": 76,
+    "end_line": 110,
+    "line_count": 35,
+    "signature": "void IB_ClearGold(struct char_data *ch, int size);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "InfoBarOn",
+    "start_line": 158,
+    "end_line": 216,
+    "line_count": 59,
+    "signature": "void InfoBarOn(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "InfoBarOff",
+    "start_line": 218,
+    "end_line": 224,
+    "line_count": 7,
+    "signature": "void InfoBarOff(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "InfoBarUpdate",
+    "start_line": 226,
+    "end_line": 286,
+    "line_count": 61,
+    "signature": "void InfoBarUpdate(struct char_data *ch, int update)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_Seperator",
+    "start_line": 288,
+    "end_line": 298,
+    "line_count": 11,
+    "signature": "void IB_Seperator(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_HitPointsStr",
+    "start_line": 300,
+    "end_line": 309,
+    "line_count": 10,
+    "signature": "void IB_HitPointsStr(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_HitPoints",
+    "start_line": 311,
+    "end_line": 337,
+    "line_count": 27,
+    "signature": "void IB_HitPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_W_HitPoints",
+    "start_line": 339,
+    "end_line": 365,
+    "line_count": 27,
+    "signature": "void IB_W_HitPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ClearHit",
+    "start_line": 367,
+    "end_line": 376,
+    "line_count": 10,
+    "signature": "void IB_ClearHit(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ManaPointsStr",
+    "start_line": 378,
+    "end_line": 387,
+    "line_count": 10,
+    "signature": "void IB_ManaPointsStr(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ManaPoints",
+    "start_line": 389,
+    "end_line": 415,
+    "line_count": 27,
+    "signature": "void IB_ManaPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_W_ManaPoints",
+    "start_line": 417,
+    "end_line": 442,
+    "line_count": 26,
+    "signature": "void IB_W_ManaPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ClearMana",
+    "start_line": 444,
+    "end_line": 453,
+    "line_count": 10,
+    "signature": "void IB_ClearMana(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_MovePointsStr",
+    "start_line": 455,
+    "end_line": 464,
+    "line_count": 10,
+    "signature": "void IB_MovePointsStr(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_MovePoints",
+    "start_line": 466,
+    "end_line": 492,
+    "line_count": 27,
+    "signature": "void IB_MovePoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_W_MovePoints",
+    "start_line": 496,
+    "end_line": 522,
+    "line_count": 27,
+    "signature": "void IB_W_MovePoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ClearMove",
+    "start_line": 524,
+    "end_line": 533,
+    "line_count": 10,
+    "signature": "void IB_ClearMove(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ExpPointsStr",
+    "start_line": 535,
+    "end_line": 544,
+    "line_count": 10,
+    "signature": "void IB_ExpPointsStr(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ExpPoints",
+    "start_line": 546,
+    "end_line": 556,
+    "line_count": 11,
+    "signature": "void IB_ExpPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_W_ExpPoints",
+    "start_line": 558,
+    "end_line": 568,
+    "line_count": 11,
+    "signature": "void IB_W_ExpPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ClearExpPoints",
+    "start_line": 570,
+    "end_line": 579,
+    "line_count": 10,
+    "signature": "void IB_ClearExpPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_NeededExpPointsStr",
+    "start_line": 581,
+    "end_line": 590,
+    "line_count": 10,
+    "signature": "void IB_NeededExpPointsStr(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_NeededExpPoints",
+    "start_line": 592,
+    "end_line": 602,
+    "line_count": 11,
+    "signature": "void IB_NeededExpPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_W_NeededExpPoints",
+    "start_line": 604,
+    "end_line": 614,
+    "line_count": 11,
+    "signature": "void IB_W_NeededExpPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ClearNeededExpPoints",
+    "start_line": 616,
+    "end_line": 625,
+    "line_count": 10,
+    "signature": "void IB_ClearNeededExpPoints(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_LevelStr",
+    "start_line": 627,
+    "end_line": 636,
+    "line_count": 10,
+    "signature": "void IB_LevelStr(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_Level",
+    "start_line": 638,
+    "end_line": 648,
+    "line_count": 11,
+    "signature": "void IB_Level(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_W_Level",
+    "start_line": 650,
+    "end_line": 660,
+    "line_count": 11,
+    "signature": "void IB_W_Level(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ClearLevel",
+    "start_line": 662,
+    "end_line": 671,
+    "line_count": 10,
+    "signature": "void IB_ClearLevel(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_GoldStr",
+    "start_line": 673,
+    "end_line": 682,
+    "line_count": 10,
+    "signature": "void IB_GoldStr(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_Gold",
+    "start_line": 684,
+    "end_line": 693,
+    "line_count": 10,
+    "signature": "void IB_Gold(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_W_Gold",
+    "start_line": 695,
+    "end_line": 704,
+    "line_count": 10,
+    "signature": "void IB_W_Gold(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.display.c",
+    "function": "IB_ClearGold",
+    "start_line": 706,
+    "end_line": 715,
+    "line_count": 10,
+    "signature": "void IB_ClearGold(struct char_data *ch, int size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.informative.c",
+    "function": "find_class_bitvector",
+    "start_line": 87,
+    "end_line": 179,
+    "line_count": 93,
+    "signature": "long find_class_bitvector(char arg);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.informative.c",
+    "function": "exp_needed_for_level",
+    "start_line": 90,
+    "end_line": 179,
+    "line_count": 90,
+    "signature": "int exp_needed_for_level(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.informative.c",
+    "function": "find_exp",
+    "start_line": 91,
+    "end_line": 179,
+    "line_count": 89,
+    "signature": "int find_exp( int class, int level );",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.informative.c",
+    "function": "do_description",
+    "start_line": 2757,
+    "end_line": 2803,
+    "line_count": 47,
+    "signature": "void do_description(char *description, struct char_data *ch)",
+    "go_location": "pkg/game/act_informative.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.item.c",
+    "function": "improve_skill",
+    "start_line": 50,
+    "end_line": 64,
+    "line_count": 15,
+    "signature": "void improve_skill(struct char_data *ch, int skill);",
+    "go_location": "pkg/game/combat_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.movement.c",
+    "function": "special",
+    "start_line": 53,
+    "end_line": 83,
+    "line_count": 31,
+    "signature": "int special(struct char_data *ch, int cmd, char *arg);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.movement.c",
+    "function": "death_cry",
+    "start_line": 54,
+    "end_line": 83,
+    "line_count": 30,
+    "signature": "void death_cry(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.movement.c",
+    "function": "find_eq_pos",
+    "start_line": 55,
+    "end_line": 83,
+    "line_count": 29,
+    "signature": "int find_eq_pos(struct char_data * ch, struct obj_data * obj, char *arg);",
+    "go_location": "pkg/game/item_equipment.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.movement.c",
+    "function": "has_boat",
+    "start_line": 58,
+    "end_line": 83,
+    "line_count": 26,
+    "signature": "int has_boat(struct char_data *ch)",
+    "go_location": "pkg/game/act_movement.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.movement.c",
+    "function": "do_simple_move",
+    "start_line": 95,
+    "end_line": 308,
+    "line_count": 214,
+    "signature": "int do_simple_move(struct char_data *ch, int dir, int need_specials_check)",
+    "go_location": "pkg/game/act_movement.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.movement.c",
+    "function": "perform_move",
+    "start_line": 311,
+    "end_line": 355,
+    "line_count": 45,
+    "signature": "int perform_move(struct char_data *ch, int dir, int need_specials_check)",
+    "go_location": "pkg/game/act_movement.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.movement.c",
+    "function": "has_key",
+    "start_line": 428,
+    "end_line": 441,
+    "line_count": 14,
+    "signature": "int has_key(struct char_data *ch, int key)",
+    "go_location": "pkg/game/act_movement.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.movement.c",
+    "function": "do_doorcmd",
+    "start_line": 477,
+    "end_line": 533,
+    "line_count": 57,
+    "signature": "void do_doorcmd(struct char_data *ch, struct obj_data *obj, int door, int scmd)",
+    "go_location": "pkg/game/act_movement.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.movement.c",
+    "function": "ok_pick",
+    "start_line": 536,
+    "end_line": 574,
+    "line_count": 39,
+    "signature": "int ok_pick(struct char_data *ch, int keynum, int pickproof, int scmd)",
+    "go_location": "pkg/game/act_movement.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.offensive.c",
+    "function": "raw_kill",
+    "start_line": 50,
+    "end_line": 98,
+    "line_count": 49,
+    "signature": "void raw_kill(struct char_data * ch, int attacktype);",
+    "go_location": "pkg/game/combat_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.offensive.c",
+    "function": "improve_skill",
+    "start_line": 51,
+    "end_line": 98,
+    "line_count": 48,
+    "signature": "void improve_skill(struct char_data *ch, int skill_num);",
+    "go_location": "pkg/game/combat_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.other.c",
+    "function": "use_tattoo",
+    "start_line": 64,
+    "end_line": 182,
+    "line_count": 119,
+    "signature": "int use_tattoo(struct char_data *ch);",
+    "go_location": "pkg/session/tattoo.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.other.c",
+    "function": "InfoBarOff",
+    "start_line": 65,
+    "end_line": 182,
+    "line_count": 118,
+    "signature": "void InfoBarOff(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.other.c",
+    "function": "num_followers",
+    "start_line": 66,
+    "end_line": 182,
+    "line_count": 117,
+    "signature": "int num_followers(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.other.c",
+    "function": "improve_skill",
+    "start_line": 67,
+    "end_line": 182,
+    "line_count": 116,
+    "signature": "void improve_skill(struct char_data *ch, int skill);",
+    "go_location": "pkg/game/combat_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.other.c",
+    "function": "is_owner",
+    "start_line": 68,
+    "end_line": 182,
+    "line_count": 115,
+    "signature": "bool is_owner(struct char_data *ch, int room_vnum);",
+    "go_location": "pkg/game/spec_procs2.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "act.social.c",
+    "function": "find_action",
+    "start_line": 75,
+    "end_line": 98,
+    "line_count": 24,
+    "signature": "int find_action(int cmd)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.social.c",
+    "function": "boot_social_messages",
+    "start_line": 220,
+    "end_line": 291,
+    "line_count": 72,
+    "signature": "void boot_social_messages(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "set_hunting",
+    "start_line": 100,
+    "end_line": 111,
+    "line_count": 12,
+    "signature": "void set_hunting(struct char_data *ch, struct char_data *victim);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "find_target_room",
+    "start_line": 184,
+    "end_line": 238,
+    "line_count": 55,
+    "signature": "int find_target_room(struct char_data * ch, char *rawroomstr)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "do_stat_room",
+    "start_line": 414,
+    "end_line": 511,
+    "line_count": 98,
+    "signature": "void do_stat_room(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "do_stat_object",
+    "start_line": 515,
+    "end_line": 688,
+    "line_count": 174,
+    "signature": "void do_stat_object(struct char_data * ch, struct obj_data * j)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "stop_snooping",
+    "start_line": 1120,
+    "end_line": 1129,
+    "line_count": 10,
+    "signature": "void stop_snooping(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "perform_immort_vis",
+    "start_line": 1622,
+    "end_line": 1636,
+    "line_count": 15,
+    "signature": "void perform_immort_vis(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "perform_immort_invis",
+    "start_line": 1639,
+    "end_line": 1660,
+    "line_count": 22,
+    "signature": "void perform_immort_invis(struct char_data *ch, int level)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "print_zone_to_buf",
+    "start_line": 2225,
+    "end_line": 2231,
+    "line_count": 7,
+    "signature": "void print_zone_to_buf(char *bufptr, int zone)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "file_to_string",
+    "start_line": 3409,
+    "end_line": 3442,
+    "line_count": 34,
+    "signature": "int file_to_string(char *name, char *buf);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "file_to_string_alloc",
+    "start_line": 3410,
+    "end_line": 3442,
+    "line_count": 33,
+    "signature": "int file_to_string_alloc(char *name, char **buf);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "act.wizard.c",
+    "function": "check_load",
+    "start_line": 3681,
+    "end_line": 3817,
+    "line_count": 137,
+    "signature": "static void check_load(char type, int which, struct char_data *ch,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "alias.c",
+    "function": "write_aliases",
+    "start_line": 40,
+    "end_line": 71,
+    "line_count": 32,
+    "signature": "void write_aliases(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "alias.c",
+    "function": "read_aliases",
+    "start_line": 73,
+    "end_line": 109,
+    "line_count": 37,
+    "signature": "void read_aliases(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "ban.c",
+    "function": "load_banned",
+    "start_line": 52,
+    "end_line": 83,
+    "line_count": 32,
+    "signature": "void load_banned(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "ban.c",
+    "function": "isbanned",
+    "start_line": 86,
+    "end_line": 104,
+    "line_count": 19,
+    "signature": "int isbanned(char *hostname)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "ban.c",
+    "function": "_write_one_node",
+    "start_line": 107,
+    "end_line": 114,
+    "line_count": 8,
+    "signature": "void _write_one_node(FILE * fp, struct ban_list_element * node)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "ban.c",
+    "function": "write_ban_list",
+    "start_line": 118,
+    "end_line": 129,
+    "line_count": 12,
+    "signature": "void write_ban_list(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "ban.c",
+    "function": "Valid_Name",
+    "start_line": 257,
+    "end_line": 286,
+    "line_count": 30,
+    "signature": "int Valid_Name(char *newname)",
+    "go_location": "pkg/game/merge_bridge.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "ban.c",
+    "function": "Read_Invalid_List",
+    "start_line": 289,
+    "end_line": 313,
+    "line_count": 25,
+    "signature": "void Read_Invalid_List(void)",
+    "go_location": "pkg/game/merge_bridge.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_save_board",
+    "start_line": 83,
+    "end_line": 105,
+    "line_count": 23,
+    "signature": "void Board_save_board(int board_type);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_load_board",
+    "start_line": 84,
+    "end_line": 105,
+    "line_count": 22,
+    "signature": "void Board_load_board(int board_type);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_reset_board",
+    "start_line": 85,
+    "end_line": 105,
+    "line_count": 21,
+    "signature": "void Board_reset_board(int board_num);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_write_message",
+    "start_line": 86,
+    "end_line": 105,
+    "line_count": 20,
+    "signature": "void Board_write_message(int board_type, struct char_data * ch, char *arg);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "find_slot",
+    "start_line": 115,
+    "end_line": 125,
+    "line_count": 11,
+    "signature": "int find_slot(void)",
+    "go_location": "pkg/game/boards.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "boards.c",
+    "function": "find_board",
+    "start_line": 129,
+    "end_line": 140,
+    "line_count": 12,
+    "signature": "int find_board(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "init_boards",
+    "start_line": 143,
+    "end_line": 176,
+    "line_count": 34,
+    "signature": "void init_boards(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_write_message",
+    "start_line": 213,
+    "end_line": 273,
+    "line_count": 61,
+    "signature": "void Board_write_message(int board_type, struct char_data * ch, char *arg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_show_board",
+    "start_line": 276,
+    "end_line": 277,
+    "line_count": 2,
+    "signature": "int Board_show_board(int board_type, struct char_data * ch, char *arg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_display_msg",
+    "start_line": 320,
+    "end_line": 368,
+    "line_count": 49,
+    "signature": "int Board_display_msg(int board_type, struct char_data * ch, char *arg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_remove_msg",
+    "start_line": 371,
+    "end_line": 441,
+    "line_count": 71,
+    "signature": "int Board_remove_msg(int board_type, struct char_data * ch, char *arg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_save_board",
+    "start_line": 444,
+    "end_line": 481,
+    "line_count": 38,
+    "signature": "void Board_save_board(int board_type)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_load_board",
+    "start_line": 484,
+    "end_line": 533,
+    "line_count": 50,
+    "signature": "void Board_load_board(int board_type)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "boards.c",
+    "function": "Board_reset_board",
+    "start_line": 536,
+    "end_line": 551,
+    "line_count": 16,
+    "signature": "void Board_reset_board(int board_type)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "circle.c",
+    "function": "main",
+    "start_line": 27,
+    "end_line": 30,
+    "line_count": 4,
+    "signature": "int main(int argc, char *argv[])",
+    "go_location": "pkg/privacy/integration_example.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "clan.c",
+    "function": "string_write",
+    "start_line": 44,
+    "end_line": 60,
+    "line_count": 17,
+    "signature": "void string_write(struct descriptor_data *d, char **writeto, size_t len,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "clan.c",
+    "function": "save_char_file_u",
+    "start_line": 48,
+    "end_line": 60,
+    "line_count": 13,
+    "signature": "void save_char_file_u(struct char_file_u st); /* db.c */",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "class.c",
+    "function": "obj_to_obj",
+    "start_line": 47,
+    "end_line": 65,
+    "line_count": 19,
+    "signature": "void  obj_to_obj(struct obj_data *obj, struct obj_data *obj_to);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "z_free",
+    "start_line": 164,
+    "end_line": 167,
+    "line_count": 4,
+    "signature": "void z_free(void *opaque, void *address)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "dp_main",
+    "start_line": 173,
+    "end_line": 254,
+    "line_count": 82,
+    "signature": "int dp_main(int argc, char *argv[])",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "init_game",
+    "start_line": 259,
+    "end_line": 300,
+    "line_count": 42,
+    "signature": "void init_game(int port)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "init_socket",
+    "start_line": 308,
+    "end_line": 364,
+    "line_count": 57,
+    "signature": "int init_socket(int port)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "get_max_players",
+    "start_line": 367,
+    "end_line": 447,
+    "line_count": 81,
+    "signature": "int get_max_players(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "game_loop",
+    "start_line": 458,
+    "end_line": 689,
+    "line_count": 232,
+    "signature": "void game_loop(int mother_desc)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "room_activity",
+    "start_line": 691,
+    "end_line": 756,
+    "line_count": 66,
+    "signature": "void room_activity(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "object_activity",
+    "start_line": 758,
+    "end_line": 797,
+    "line_count": 40,
+    "signature": "void object_activity(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "heartbeat",
+    "start_line": 800,
+    "end_line": 844,
+    "line_count": 45,
+    "signature": "void heartbeat(int pulse)",
+    "go_location": "pkg/engine/gameloop.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "comm.c",
+    "function": "timediff",
+    "start_line": 861,
+    "end_line": 884,
+    "line_count": 24,
+    "signature": "struct timeval timediff(struct timeval a, struct timeval b)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "timeadd",
+    "start_line": 887,
+    "end_line": 900,
+    "line_count": 14,
+    "signature": "struct timeval timeadd(struct timeval a, struct timeval b)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "record_usage",
+    "start_line": 903,
+    "end_line": 930,
+    "line_count": 28,
+    "signature": "void record_usage(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "echo_off",
+    "start_line": 937,
+    "end_line": 948,
+    "line_count": 12,
+    "signature": "void echo_off(struct descriptor_data *d)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "echo_on",
+    "start_line": 954,
+    "end_line": 967,
+    "line_count": 14,
+    "signature": "void echo_on(struct descriptor_data *d)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "write_to_q",
+    "start_line": 1210,
+    "end_line": 1228,
+    "line_count": 19,
+    "signature": "void write_to_q(char *txt, struct txt_q *queue, int aliased)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "get_from_q",
+    "start_line": 1232,
+    "end_line": 1249,
+    "line_count": 18,
+    "signature": "int get_from_q(struct txt_q *queue, char *dest, int *aliased)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "flush_queues",
+    "start_line": 1252,
+    "end_line": 1261,
+    "line_count": 10,
+    "signature": "void flush_queues(struct descriptor_data *d)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "set_sendbuf",
+    "start_line": 1265,
+    "end_line": 1282,
+    "line_count": 18,
+    "signature": "int set_sendbuf(int s)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "color_expansion",
+    "start_line": 1289,
+    "end_line": 1345,
+    "line_count": 57,
+    "signature": "size_t color_expansion(char *txt, size_t size)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "write_to_output",
+    "start_line": 1348,
+    "end_line": 1358,
+    "line_count": 11,
+    "signature": "size_t write_to_output(struct descriptor_data *t, const char *txt, ...)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "vwrite_to_output",
+    "start_line": 1362,
+    "end_line": 1430,
+    "line_count": 69,
+    "signature": "size_t vwrite_to_output(struct descriptor_data *t, const char *format, va_list a",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "sent_sendbuf",
+    "start_line": 1438,
+    "end_line": 1455,
+    "line_count": 18,
+    "signature": "int sent_sendbuf(int s)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "new_descriptor",
+    "start_line": 1458,
+    "end_line": 1612,
+    "line_count": 155,
+    "signature": "int new_descriptor(int s)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "process_output",
+    "start_line": 1615,
+    "end_line": 1668,
+    "line_count": 54,
+    "signature": "int process_output(struct descriptor_data *t)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "write_compressed",
+    "start_line": 1670,
+    "end_line": 1740,
+    "line_count": 71,
+    "signature": "static ssize_t write_compressed(int desc, const char *txt, size_t length,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "perform_socket_write",
+    "start_line": 1743,
+    "end_line": 1787,
+    "line_count": 45,
+    "signature": "ssize_t perform_socket_write(int desc, const char *txt, size_t length, struct co",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "write_to_descriptor",
+    "start_line": 1799,
+    "end_line": 1822,
+    "line_count": 24,
+    "signature": "int write_to_descriptor(int desc, const char *txt, struct compr *comp)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "process_input",
+    "start_line": 1828,
+    "end_line": 1948,
+    "line_count": 121,
+    "signature": "int process_input(struct descriptor_data *t)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "perform_subst",
+    "start_line": 2037,
+    "end_line": 2082,
+    "line_count": 46,
+    "signature": "int perform_subst(struct descriptor_data *t, char *orig, char *subst)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "close_socket",
+    "start_line": 2086,
+    "end_line": 2166,
+    "line_count": 81,
+    "signature": "void close_socket(struct descriptor_data *d)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "check_idle_passwords",
+    "start_line": 2170,
+    "end_line": 2187,
+    "line_count": 18,
+    "signature": "void check_idle_passwords(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "nonblock",
+    "start_line": 2203,
+    "end_line": 2213,
+    "line_count": 11,
+    "signature": "void nonblock(int s)",
+    "go_location": "pkg/engine/comm_infra.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "comm.c",
+    "function": "signal_setup",
+    "start_line": 2297,
+    "end_line": 2329,
+    "line_count": 33,
+    "signature": "void signal_setup(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "send_to_char",
+    "start_line": 2335,
+    "end_line": 2339,
+    "line_count": 5,
+    "signature": "void send_to_char(const char *messg, struct char_data *ch)",
+    "go_location": "pkg/game/spec_procs.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "comm.c",
+    "function": "send_to_all",
+    "start_line": 2342,
+    "end_line": 2350,
+    "line_count": 9,
+    "signature": "void send_to_all(char *messg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "send_to_outdoor",
+    "start_line": 2353,
+    "end_line": 2364,
+    "line_count": 12,
+    "signature": "void send_to_outdoor(char *messg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "send_to_room",
+    "start_line": 2366,
+    "end_line": 2374,
+    "line_count": 9,
+    "signature": "void send_to_room(char *messg, int room)",
+    "go_location": "pkg/spells/say_spell.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "comm.c",
+    "function": "perform_act",
+    "start_line": 2397,
+    "end_line": 2478,
+    "line_count": 82,
+    "signature": "void perform_act(char *orig, struct char_data *ch, struct obj_data *obj,",
+    "go_location": "pkg/game/act.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "comm.c",
+    "function": "SENDOK",
+    "start_line": 2480,
+    "end_line": 2483,
+    "line_count": 4,
+    "signature": "static bool SENDOK(struct char_data *ch, bool to_sleep)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "comm.c",
+    "function": "act",
+    "start_line": 2485,
+    "end_line": 2536,
+    "line_count": 52,
+    "signature": "void act(char *str, int hide_invisible, struct char_data *ch,",
+    "go_location": "pkg/game/act.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "comm.c",
+    "function": "do_broadcast",
+    "start_line": 2539,
+    "end_line": 2557,
+    "line_count": 19,
+    "signature": "void do_broadcast(char *str, struct char_data *ch, struct obj_data *obj,",
+    "go_location": "pkg/optimization/pool.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "db.c",
+    "function": "boot_world_files",
+    "start_line": 269,
+    "end_line": 300,
+    "line_count": 32,
+    "signature": "void boot_world_files()",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "db.c",
+    "function": "get_one_line",
+    "start_line": 1607,
+    "end_line": 1615,
+    "line_count": 9,
+    "signature": "void get_one_line(FILE *fl, char *buf)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "db.c",
+    "function": "load_help",
+    "start_line": 1618,
+    "end_line": 1649,
+    "line_count": 32,
+    "signature": "void load_help(FILE *fl)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "db.c",
+    "function": "boot_dns",
+    "start_line": 1780,
+    "end_line": 1810,
+    "line_count": 31,
+    "signature": "void boot_dns(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "db.c",
+    "function": "save_dns_cache",
+    "start_line": 1814,
+    "end_line": 1834,
+    "line_count": 21,
+    "signature": "void save_dns_cache(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "db.c",
+    "function": "get_host_from_cache",
+    "start_line": 1838,
+    "end_line": 1861,
+    "line_count": 24,
+    "signature": "int get_host_from_cache(struct dns_entry *dnsd)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "db.c",
+    "function": "add_dns_host",
+    "start_line": 1865,
+    "end_line": 1880,
+    "line_count": 16,
+    "signature": "void add_dns_host(struct dns_entry *dnsd, char *hostname)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "db.c",
+    "function": "init_rare",
+    "start_line": 1899,
+    "end_line": 1925,
+    "line_count": 27,
+    "signature": "static void init_rare(struct obj_data *obj)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "db.c",
+    "function": "percent_load",
+    "start_line": 2065,
+    "end_line": 2071,
+    "line_count": 7,
+    "signature": "static bool percent_load(struct obj_data *obj)",
+    "go_location": "pkg/game/spawner.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "db.c",
+    "function": "reset_zone",
+    "start_line": 2074,
+    "end_line": 2286,
+    "line_count": 213,
+    "signature": "void reset_zone(int zone)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "db.c",
+    "function": "check_dst",
+    "start_line": 3177,
+    "end_line": 3194,
+    "line_count": 18,
+    "signature": "void check_dst(int check)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "dream.c",
+    "function": "dream",
+    "start_line": 50,
+    "end_line": 187,
+    "line_count": 138,
+    "signature": "void dream(struct char_data *ch)",
+    "go_location": "pkg/game/dreams.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "dream.c",
+    "function": "dream_travel",
+    "start_line": 189,
+    "end_line": 223,
+    "line_count": 35,
+    "signature": "void dream_travel(struct char_data *ch, int subcmd)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "events.c",
+    "function": "event_init",
+    "start_line": 42,
+    "end_line": 45,
+    "line_count": 4,
+    "signature": "void event_init(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "events.c",
+    "function": "event_cancel",
+    "start_line": 66,
+    "end_line": 78,
+    "line_count": 13,
+    "signature": "void event_cancel(struct event *event)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "events.c",
+    "function": "event_process",
+    "start_line": 82,
+    "end_line": 99,
+    "line_count": 18,
+    "signature": "void event_process(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "events.c",
+    "function": "event_time",
+    "start_line": 103,
+    "end_line": 110,
+    "line_count": 8,
+    "signature": "long event_time(struct event *event)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "events.c",
+    "function": "event_free_all",
+    "start_line": 114,
+    "end_line": 125,
+    "line_count": 12,
+    "signature": "void event_free_all(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "fight.c",
+    "function": "set_hunting",
+    "start_line": 76,
+    "end_line": 101,
+    "line_count": 26,
+    "signature": "void set_hunting(struct char_data *ch, struct char_data *victim);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "fight.c",
+    "function": "can_speak",
+    "start_line": 77,
+    "end_line": 101,
+    "line_count": 25,
+    "signature": "bool can_speak(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "fight.c",
+    "function": "make_dust",
+    "start_line": 78,
+    "end_line": 101,
+    "line_count": 24,
+    "signature": "void make_dust(struct char_data *ch, int attacktype);",
+    "go_location": "pkg/game/death.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "fight.c",
+    "function": "update_pos",
+    "start_line": 186,
+    "end_line": 201,
+    "line_count": 16,
+    "signature": "void update_pos(struct char_data * victim)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "fight.c",
+    "function": "stop_fighting",
+    "start_line": 230,
+    "end_line": 253,
+    "line_count": 24,
+    "signature": "void stop_fighting(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "file-edit.c",
+    "function": "kill_file",
+    "start_line": 19,
+    "end_line": 26,
+    "line_count": 8,
+    "signature": "static int kill_file(char *pathname)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "file-edit.c",
+    "function": "tedit_string_cleanup",
+    "start_line": 28,
+    "end_line": 73,
+    "line_count": 46,
+    "signature": "void tedit_string_cleanup(struct descriptor_data *d, int terminator)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "file-edit.c",
+    "function": "valid_directory",
+    "start_line": 78,
+    "end_line": 81,
+    "line_count": 4,
+    "signature": "static int valid_directory(const char *file)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "file-edit.c",
+    "function": "list_directory",
+    "start_line": 83,
+    "end_line": 115,
+    "line_count": 33,
+    "signature": "int list_directory(struct char_data *ch, const char *dir, int(*filter)(const str",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "file-edit.c",
+    "function": "valid_filename",
+    "start_line": 118,
+    "end_line": 121,
+    "line_count": 4,
+    "signature": "static int valid_filename(const char *file)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "file-edit.c",
+    "function": "path",
+    "start_line": 123,
+    "end_line": 126,
+    "line_count": 4,
+    "signature": "static void path(char *pathname, const char *dir, const char *file)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "file-edit.c",
+    "function": "view_file",
+    "start_line": 128,
+    "end_line": 148,
+    "line_count": 21,
+    "signature": "int view_file(struct char_data *ch, const char *dir, const char *file)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "file-edit.c",
+    "function": "general_file_edit",
+    "start_line": 150,
+    "end_line": 174,
+    "line_count": 25,
+    "signature": "void general_file_edit(struct char_data *ch, char *filename, char **buffer, int ",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "file-edit.c",
+    "function": "edit_file",
+    "start_line": 176,
+    "end_line": 199,
+    "line_count": 24,
+    "signature": "int edit_file(struct char_data *ch, const char *dir, const char *file, bool kill",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "graph.c",
+    "function": "bfs_enqueue",
+    "start_line": 96,
+    "end_line": 110,
+    "line_count": 15,
+    "signature": "void bfs_enqueue(int room, int dir)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "graph.c",
+    "function": "bfs_dequeue",
+    "start_line": 113,
+    "end_line": 122,
+    "line_count": 10,
+    "signature": "void bfs_dequeue(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "graph.c",
+    "function": "bfs_clear_queue",
+    "start_line": 125,
+    "end_line": 129,
+    "line_count": 5,
+    "signature": "void bfs_clear_queue(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "graph.c",
+    "function": "find_first_step",
+    "start_line": 139,
+    "end_line": 180,
+    "line_count": 42,
+    "signature": "int find_first_step(int src, int target)",
+    "go_location": "pkg/game/graph.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "handler.c",
+    "function": "remove_follower",
+    "start_line": 60,
+    "end_line": 79,
+    "line_count": 20,
+    "signature": "void remove_follower(struct char_data * ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "clearMemory",
+    "start_line": 61,
+    "end_line": 79,
+    "line_count": 19,
+    "signature": "void clearMemory(struct char_data * ch);",
+    "go_location": "pkg/game/limits.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "handler.c",
+    "function": "raw_kill",
+    "start_line": 62,
+    "end_line": 79,
+    "line_count": 18,
+    "signature": "void raw_kill(struct char_data * ch, int attacktype);",
+    "go_location": "pkg/game/combat_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "handler.c",
+    "function": "tattoo_af",
+    "start_line": 63,
+    "end_line": 79,
+    "line_count": 17,
+    "signature": "void tattoo_af(struct char_data *ch, bool add);",
+    "go_location": "pkg/session/tattoo.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "handler.c",
+    "function": "set_hunting",
+    "start_line": 65,
+    "end_line": 79,
+    "line_count": 15,
+    "signature": "void set_hunting(struct char_data *ch, struct char_data *victim);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "has_light",
+    "start_line": 66,
+    "end_line": 79,
+    "line_count": 14,
+    "signature": "int has_light(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "isname",
+    "start_line": 81,
+    "end_line": 111,
+    "line_count": 31,
+    "signature": "int isname(char *str, char *namelist)",
+    "go_location": "pkg/game/item_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "handler.c",
+    "function": "aff_apply_modify",
+    "start_line": 136,
+    "end_line": 277,
+    "line_count": 142,
+    "signature": "void aff_apply_modify(struct char_data *ch, byte loc, sbyte mod, char *msg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "affect_modify_ar",
+    "start_line": 294,
+    "end_line": 310,
+    "line_count": 17,
+    "signature": "void affect_modify_ar(struct char_data *ch, byte loc, sbyte mod, int bitv[],",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "affect_total",
+    "start_line": 314,
+    "end_line": 373,
+    "line_count": 60,
+    "signature": "void affect_total(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "master_affect_to_char",
+    "start_line": 377,
+    "end_line": 396,
+    "line_count": 20,
+    "signature": "void master_affect_to_char(struct char_data *ch, struct affected_type *af,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "affect_to_char",
+    "start_line": 400,
+    "end_line": 403,
+    "line_count": 4,
+    "signature": "void affect_to_char(struct char_data * ch, struct affected_type * af)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "affect_to_char2",
+    "start_line": 405,
+    "end_line": 420,
+    "line_count": 16,
+    "signature": "void affect_to_char2(struct char_data *ch, struct master_affected_type *af)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "affect_remove",
+    "start_line": 428,
+    "end_line": 438,
+    "line_count": 11,
+    "signature": "void affect_remove(struct char_data * ch, struct master_affected_type * af)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "affect_from_char",
+    "start_line": 443,
+    "end_line": 452,
+    "line_count": 10,
+    "signature": "void affect_from_char(struct char_data * ch, int type)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "affected_by_spell",
+    "start_line": 460,
+    "end_line": 469,
+    "line_count": 10,
+    "signature": "bool affected_by_spell(struct char_data * ch, int type)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "affect_join",
+    "start_line": 473,
+    "end_line": 499,
+    "line_count": 27,
+    "signature": "void affect_join(struct char_data * ch, struct master_affected_type * af,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "char_from_room",
+    "start_line": 503,
+    "end_line": 528,
+    "line_count": 26,
+    "signature": "void char_from_room(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "char_to_room",
+    "start_line": 532,
+    "end_line": 555,
+    "line_count": 24,
+    "signature": "void char_to_room(struct char_data * ch, int room)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "obj_to_char",
+    "start_line": 559,
+    "end_line": 574,
+    "line_count": 16,
+    "signature": "void obj_to_char(struct obj_data * object, struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "obj_from_char",
+    "start_line": 578,
+    "end_line": 604,
+    "line_count": 27,
+    "signature": "void obj_from_char(struct obj_data * object)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "apply_ac",
+    "start_line": 609,
+    "end_line": 635,
+    "line_count": 27,
+    "signature": "int apply_ac(struct char_data * ch, int eq_pos)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "equip_char",
+    "start_line": 679,
+    "end_line": 750,
+    "line_count": 72,
+    "signature": "void equip_char(struct char_data * ch, struct obj_data * obj, int pos)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "get_number",
+    "start_line": 798,
+    "end_line": 818,
+    "line_count": 21,
+    "signature": "int get_number(char **name)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "has_light",
+    "start_line": 823,
+    "end_line": 833,
+    "line_count": 11,
+    "signature": "int has_light(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "obj_to_room",
+    "start_line": 901,
+    "end_line": 916,
+    "line_count": 16,
+    "signature": "void obj_to_room(struct obj_data * object, int room)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "obj_from_room",
+    "start_line": 920,
+    "end_line": 935,
+    "line_count": 16,
+    "signature": "void obj_from_room(struct obj_data * object)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "obj_to_obj",
+    "start_line": 939,
+    "end_line": 959,
+    "line_count": 21,
+    "signature": "void obj_to_obj(struct obj_data * obj, struct obj_data * obj_to)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "obj_from_obj",
+    "start_line": 963,
+    "end_line": 991,
+    "line_count": 29,
+    "signature": "void obj_from_obj(struct obj_data * obj)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "object_list_new_owner",
+    "start_line": 995,
+    "end_line": 1002,
+    "line_count": 8,
+    "signature": "void object_list_new_owner(struct obj_data * list, struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "extract_obj",
+    "start_line": 1006,
+    "end_line": 1031,
+    "line_count": 26,
+    "signature": "void extract_obj(struct obj_data * obj)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "update_object",
+    "start_line": 1035,
+    "end_line": 1043,
+    "line_count": 9,
+    "signature": "void update_object(struct obj_data * obj, int use)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "update_char_objects",
+    "start_line": 1046,
+    "end_line": 1082,
+    "line_count": 37,
+    "signature": "void update_char_objects(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "extract_char",
+    "start_line": 1194,
+    "end_line": 1209,
+    "line_count": 16,
+    "signature": "void extract_char(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "extract_pending_chars",
+    "start_line": 1221,
+    "end_line": 1254,
+    "line_count": 34,
+    "signature": "void extract_pending_chars(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "generic_find",
+    "start_line": 1513,
+    "end_line": 1563,
+    "line_count": 51,
+    "signature": "int generic_find(char *arg, int bitvector, struct char_data * ch,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "handler.c",
+    "function": "find_all_dots",
+    "start_line": 1567,
+    "end_line": 1576,
+    "line_count": 10,
+    "signature": "int find_all_dots(char *arg)",
+    "go_location": "pkg/game/item_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_get_filename",
+    "start_line": 59,
+    "end_line": 66,
+    "line_count": 8,
+    "signature": "int House_get_filename(int vnum, char *filename)",
+    "go_location": "pkg/game/houses.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_load",
+    "start_line": 70,
+    "end_line": 107,
+    "line_count": 38,
+    "signature": "int House_load(int vnum)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_save",
+    "start_line": 112,
+    "end_line": 132,
+    "line_count": 21,
+    "signature": "int House_save(struct obj_data * obj, FILE * fp)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_restore_weight",
+    "start_line": 136,
+    "end_line": 144,
+    "line_count": 9,
+    "signature": "void House_restore_weight(struct obj_data * obj)",
+    "go_location": "pkg/game/houses.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_crashsave",
+    "start_line": 148,
+    "end_line": 169,
+    "line_count": 22,
+    "signature": "void House_crashsave(int vnum)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_delete_file",
+    "start_line": 173,
+    "end_line": 192,
+    "line_count": 20,
+    "signature": "void House_delete_file(int vnum)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_listrent",
+    "start_line": 196,
+    "end_line": 229,
+    "line_count": 34,
+    "signature": "void House_listrent(struct char_data * ch, int vnum)",
+    "go_location": "pkg/game/houses.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "house.c",
+    "function": "find_house",
+    "start_line": 238,
+    "end_line": 247,
+    "line_count": 10,
+    "signature": "int find_house(int vnum)",
+    "go_location": "pkg/game/houses.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_save_control",
+    "start_line": 252,
+    "end_line": 267,
+    "line_count": 16,
+    "signature": "void House_save_control(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_boot",
+    "start_line": 272,
+    "end_line": 317,
+    "line_count": 46,
+    "signature": "void House_boot(void)",
+    "go_location": "pkg/game/houses.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "house.c",
+    "function": "hcontrol_list_houses",
+    "start_line": 332,
+    "end_line": 382,
+    "line_count": 51,
+    "signature": "void hcontrol_list_houses(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "house.c",
+    "function": "hcontrol_build_house",
+    "start_line": 386,
+    "end_line": 471,
+    "line_count": 86,
+    "signature": "void hcontrol_build_house(struct char_data * ch, char *arg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "house.c",
+    "function": "hcontrol_destroy_house",
+    "start_line": 515,
+    "end_line": 557,
+    "line_count": 43,
+    "signature": "void hcontrol_destroy_house(struct char_data * ch, char *arg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "house.c",
+    "function": "hcontrol_pay_house",
+    "start_line": 560,
+    "end_line": 576,
+    "line_count": 17,
+    "signature": "void hcontrol_pay_house(struct char_data * ch, char *arg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_save_all",
+    "start_line": 709,
+    "end_line": 721,
+    "line_count": 13,
+    "signature": "void House_save_all(void)",
+    "go_location": "pkg/game/houses.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "house.c",
+    "function": "House_can_enter",
+    "start_line": 725,
+    "end_line": 744,
+    "line_count": 20,
+    "signature": "int House_can_enter(struct char_data * ch, int house)",
+    "go_location": "pkg/game/houses.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "ident.c",
+    "function": "isbanned",
+    "start_line": 51,
+    "end_line": 108,
+    "line_count": 58,
+    "signature": "int isbanned(char *hostname);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "ident.c",
+    "function": "ident_start",
+    "start_line": 55,
+    "end_line": 108,
+    "line_count": 54,
+    "signature": "void ident_start(struct descriptor_data *d, long addr)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "ident.c",
+    "function": "ident_check",
+    "start_line": 111,
+    "end_line": 258,
+    "line_count": 148,
+    "signature": "void ident_check(struct descriptor_data *d, int pulse)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "ident.c",
+    "function": "waiting_for_ident",
+    "start_line": 262,
+    "end_line": 277,
+    "line_count": 16,
+    "signature": "int waiting_for_ident(struct descriptor_data *d)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "improved-edit.c",
+    "function": "send_editor_help",
+    "start_line": 17,
+    "end_line": 23,
+    "line_count": 7,
+    "signature": "void send_editor_help(struct descriptor_data *d)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "improved-edit.c",
+    "function": "improved_editor_execute",
+    "start_line": 27,
+    "end_line": 92,
+    "line_count": 66,
+    "signature": "int improved_editor_execute(struct descriptor_data *d, char *str)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "improved-edit.c",
+    "function": "parse_action",
+    "start_line": 97,
+    "end_line": 478,
+    "line_count": 382,
+    "signature": "void parse_action(int command, char *string, struct descriptor_data *d)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "improved-edit.c",
+    "function": "format_text",
+    "start_line": 485,
+    "end_line": 573,
+    "line_count": 89,
+    "signature": "void format_text(char **ptr_string, int mode, struct descriptor_data *d, unsigne",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "improved-edit.c",
+    "function": "replace_str",
+    "start_line": 575,
+    "end_line": 625,
+    "line_count": 51,
+    "signature": "int replace_str(char **string, char *pattern, char *replacement, int rep_all, un",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "command_interpreter",
+    "start_line": 883,
+    "end_line": 949,
+    "line_count": 67,
+    "signature": "void command_interpreter(struct char_data *ch, char *argument)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "free_alias",
+    "start_line": 970,
+    "end_line": 977,
+    "line_count": 8,
+    "signature": "void free_alias(struct alias *a)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "perform_complex_alias",
+    "start_line": 1049,
+    "end_line": 1098,
+    "line_count": 50,
+    "signature": "void perform_complex_alias(struct txt_q *input_q, char *orig, struct alias *a)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "perform_alias",
+    "start_line": 1109,
+    "end_line": 1136,
+    "line_count": 28,
+    "signature": "int perform_alias(struct descriptor_data *d, char *orig)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "search_block",
+    "start_line": 1150,
+    "end_line": 1172,
+    "line_count": 23,
+    "signature": "int search_block(char *arg, char **list, int exact)",
+    "go_location": "pkg/game/act_movement.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "is_number",
+    "start_line": 1175,
+    "end_line": 1182,
+    "line_count": 8,
+    "signature": "int is_number(char *str)",
+    "go_location": "pkg/game/act_comm.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "skip_spaces",
+    "start_line": 1187,
+    "end_line": 1190,
+    "line_count": 4,
+    "signature": "void skip_spaces(char **string)",
+    "go_location": "pkg/game/act_comm.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "fill_word",
+    "start_line": 1251,
+    "end_line": 1254,
+    "line_count": 4,
+    "signature": "int fill_word(char *argument)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "reserved_word",
+    "start_line": 1257,
+    "end_line": 1260,
+    "line_count": 4,
+    "signature": "int reserved_word(char *argument)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "is_abbrev",
+    "start_line": 1356,
+    "end_line": 1369,
+    "line_count": 14,
+    "signature": "int is_abbrev(char *arg1, char *arg2)",
+    "go_location": "pkg/game/houses.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "half_chop",
+    "start_line": 1372,
+    "end_line": 1379,
+    "line_count": 8,
+    "signature": "void half_chop(char *string, char *arg1, char *arg2)",
+    "go_location": "pkg/game/act_comm.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "one_space_half_chop",
+    "start_line": 1382,
+    "end_line": 1392,
+    "line_count": 11,
+    "signature": "void one_space_half_chop(char *string, char *arg1, char *arg2)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "find_command",
+    "start_line": 1395,
+    "end_line": 1404,
+    "line_count": 10,
+    "signature": "int find_command(char *command)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "special",
+    "start_line": 1407,
+    "end_line": 1481,
+    "line_count": 75,
+    "signature": "int special(struct char_data *ch, int cmd, char *arg)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "interpreter.c",
+    "function": "_parse_name",
+    "start_line": 1505,
+    "end_line": 1520,
+    "line_count": 16,
+    "signature": "int _parse_name(char *arg, char *name)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "flesh_alter_from",
+    "start_line": 53,
+    "end_line": 125,
+    "line_count": 73,
+    "signature": "void flesh_alter_from(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "flesh_alter_to",
+    "start_line": 54,
+    "end_line": 125,
+    "line_count": 72,
+    "signature": "void flesh_alter_to(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "find_exp",
+    "start_line": 55,
+    "end_line": 125,
+    "line_count": 71,
+    "signature": "int find_exp(int class, int level);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "exp_needed_for_level",
+    "start_line": 56,
+    "end_line": 125,
+    "line_count": 70,
+    "signature": "int exp_needed_for_level(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "mana_gain",
+    "start_line": 59,
+    "end_line": 125,
+    "line_count": 67,
+    "signature": "int mana_gain(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "hit_gain",
+    "start_line": 128,
+    "end_line": 193,
+    "line_count": 66,
+    "signature": "int hit_gain(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "move_gain",
+    "start_line": 197,
+    "end_line": 253,
+    "line_count": 57,
+    "signature": "int move_gain(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "set_title",
+    "start_line": 255,
+    "end_line": 267,
+    "line_count": 13,
+    "signature": "void set_title(struct char_data * ch, char *title)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "check_autowiz",
+    "start_line": 269,
+    "end_line": 284,
+    "line_count": 16,
+    "signature": "void check_autowiz(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "limits.c",
+    "function": "check_idling",
+    "start_line": 419,
+    "end_line": 454,
+    "line_count": 36,
+    "signature": "void check_idling(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "luaedit.c",
+    "function": "luafilter",
+    "start_line": 18,
+    "end_line": 21,
+    "line_count": 4,
+    "signature": "static int luafilter(const struct dirent *a)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "luaedit.c",
+    "function": "is_scripts_root",
+    "start_line": 23,
+    "end_line": 26,
+    "line_count": 4,
+    "signature": "static bool is_scripts_root(const char *pathname)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "mail.c",
+    "function": "push_free_list",
+    "start_line": 63,
+    "end_line": 71,
+    "line_count": 9,
+    "signature": "void push_free_list(long pos)",
+    "go_location": "pkg/game/mail.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mail.c",
+    "function": "pop_free_list",
+    "start_line": 81,
+    "end_line": 100,
+    "line_count": 20,
+    "signature": "long pop_free_list(void)",
+    "go_location": "pkg/game/mail.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mail.c",
+    "function": "write_to_file",
+    "start_line": 132,
+    "end_line": 154,
+    "line_count": 23,
+    "signature": "void write_to_file(void *buf, int size, long filepos)",
+    "go_location": "pkg/game/mail.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mail.c",
+    "function": "read_from_file",
+    "start_line": 165,
+    "end_line": 184,
+    "line_count": 20,
+    "signature": "void read_from_file(void *buf, int size, long filepos)",
+    "go_location": "pkg/game/mail.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mail.c",
+    "function": "index_mail",
+    "start_line": 187,
+    "end_line": 211,
+    "line_count": 25,
+    "signature": "void index_mail(long id_to_index, long pos)",
+    "go_location": "pkg/game/mail.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mail.c",
+    "function": "scan_file",
+    "start_line": 221,
+    "end_line": 251,
+    "line_count": 31,
+    "signature": "int scan_file(void)",
+    "go_location": "pkg/game/mail.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mail.c",
+    "function": "has_mail",
+    "start_line": 261,
+    "end_line": 264,
+    "line_count": 4,
+    "signature": "int has_mail(long recipient)",
+    "go_location": "pkg/game/mail.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mail.c",
+    "function": "store_mail",
+    "start_line": 277,
+    "end_line": 361,
+    "line_count": 85,
+    "signature": "void store_mail(long to, long from, char *message_pointer)",
+    "go_location": "pkg/game/mail.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mail.c",
+    "function": "postmaster_send_mail",
+    "start_line": 503,
+    "end_line": 545,
+    "line_count": 43,
+    "signature": "void postmaster_send_mail(struct char_data * ch, struct char_data *mailman,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "mail.c",
+    "function": "postmaster_check_mail",
+    "start_line": 548,
+    "end_line": 558,
+    "line_count": 11,
+    "signature": "void postmaster_check_mail(struct char_data * ch, struct char_data *mailman,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "mail.c",
+    "function": "postmaster_receive_mail",
+    "start_line": 561,
+    "end_line": 596,
+    "line_count": 36,
+    "signature": "void postmaster_receive_mail(struct char_data * ch, struct char_data *mailman,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "mapcode.c",
+    "function": "map",
+    "start_line": 66,
+    "end_line": 139,
+    "line_count": 74,
+    "signature": "void map(room_num thisroom, int x, int y, int overlap,int dontleavezone, struct ",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "mapcode.c",
+    "function": "do_map",
+    "start_line": 141,
+    "end_line": 225,
+    "line_count": 85,
+    "signature": "void do_map(struct char_data *ch, char *argument, int cmd)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "mobact.c",
+    "function": "hunt_victim",
+    "start_line": 47,
+    "end_line": 340,
+    "line_count": 294,
+    "signature": "void hunt_victim(struct char_data * ch);",
+    "go_location": "pkg/game/graph.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mobact.c",
+    "function": "mp_sound",
+    "start_line": 48,
+    "end_line": 340,
+    "line_count": 293,
+    "signature": "void mp_sound(struct char_data *mob);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "mobact.c",
+    "function": "can_speak",
+    "start_line": 50,
+    "end_line": 340,
+    "line_count": 291,
+    "signature": "bool can_speak(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "mobact.c",
+    "function": "mobile_activity",
+    "start_line": 54,
+    "end_line": 340,
+    "line_count": 287,
+    "signature": "void mobile_activity(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "mobact.c",
+    "function": "remember",
+    "start_line": 347,
+    "end_line": 365,
+    "line_count": 19,
+    "signature": "void remember(struct char_data * ch, struct char_data * victim)",
+    "go_location": "pkg/game/deferred_fight_fns.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mobact.c",
+    "function": "forget",
+    "start_line": 369,
+    "end_line": 391,
+    "line_count": 23,
+    "signature": "int forget(struct char_data * ch, struct char_data * victim)",
+    "go_location": "pkg/game/deferred_fight_fns.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "mobact.c",
+    "function": "clearMemory",
+    "start_line": 395,
+    "end_line": 408,
+    "line_count": 14,
+    "signature": "void clearMemory(struct char_data * ch)",
+    "go_location": "pkg/game/limits.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "modify.c",
+    "function": "show_string",
+    "start_line": 52,
+    "end_line": 69,
+    "line_count": 18,
+    "signature": "void show_string(struct descriptor_data *d, char *input);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "modify.c",
+    "function": "old_search_block",
+    "start_line": 53,
+    "end_line": 69,
+    "line_count": 17,
+    "signature": "int old_search_block(char *argument, int begin, int length, char **list,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "modify.c",
+    "function": "playing_string_cleanup",
+    "start_line": 57,
+    "end_line": 69,
+    "line_count": 13,
+    "signature": "void playing_string_cleanup(struct descriptor_data *d, int action);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "modify.c",
+    "function": "exdesc_string_cleanup",
+    "start_line": 58,
+    "end_line": 69,
+    "line_count": 12,
+    "signature": "void exdesc_string_cleanup(struct descriptor_data *d, int action);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "modify.c",
+    "function": "playing_string_cleanup",
+    "start_line": 218,
+    "end_line": 238,
+    "line_count": 21,
+    "signature": "void playing_string_cleanup(struct descriptor_data *d, int action)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "modify.c",
+    "function": "exdesc_string_cleanup",
+    "start_line": 240,
+    "end_line": 249,
+    "line_count": 10,
+    "signature": "void exdesc_string_cleanup(struct descriptor_data *d, int action)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "modify.c",
+    "function": "count_pages",
+    "start_line": 400,
+    "end_line": 406,
+    "line_count": 7,
+    "signature": "int count_pages(char *str)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "modify.c",
+    "function": "quad_arg",
+    "start_line": 562,
+    "end_line": 592,
+    "line_count": 31,
+    "signature": "void    quad_arg(char *arg, int *type, char *name, int *field, char *string)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "new_cmds.c",
+    "function": "raw_kill",
+    "start_line": 48,
+    "end_line": 105,
+    "line_count": 58,
+    "signature": "void raw_kill(struct char_data * ch, int attacktype);",
+    "go_location": "pkg/game/combat_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "new_cmds.c",
+    "function": "improve_skill",
+    "start_line": 49,
+    "end_line": 105,
+    "line_count": 57,
+    "signature": "void improve_skill(struct char_data *ch, int skill_num);",
+    "go_location": "pkg/game/combat_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "new_cmds.c",
+    "function": "set_hunting",
+    "start_line": 50,
+    "end_line": 105,
+    "line_count": 56,
+    "signature": "void set_hunting(struct char_data *ch, struct char_data *victim);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "new_cmds2.c",
+    "function": "raw_kill",
+    "start_line": 56,
+    "end_line": 136,
+    "line_count": 81,
+    "signature": "void raw_kill(struct char_data * ch, int attacktype);",
+    "go_location": "pkg/game/combat_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "new_cmds2.c",
+    "function": "set_hunting",
+    "start_line": 57,
+    "end_line": 136,
+    "line_count": 80,
+    "signature": "void set_hunting(struct char_data *ch, struct char_data *victim);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "new_cmds2.c",
+    "function": "send_to_zone",
+    "start_line": 58,
+    "end_line": 136,
+    "line_count": 79,
+    "signature": "void send_to_zone(char *messg, struct char_data *ch);",
+    "go_location": "pkg/spells/damage_spells.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "new_cmds2.c",
+    "function": "improve_skill",
+    "start_line": 59,
+    "end_line": 136,
+    "line_count": 78,
+    "signature": "void improve_skill(struct char_data *ch, int skill_num);",
+    "go_location": "pkg/game/combat_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "new_cmds2.c",
+    "function": "real_zone",
+    "start_line": 60,
+    "end_line": 136,
+    "line_count": 77,
+    "signature": "int real_zone(int number);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Obj_to_store_from",
+    "start_line": 102,
+    "end_line": 143,
+    "line_count": 42,
+    "signature": "int Obj_to_store_from(struct obj_data * obj, FILE * fl, int locate)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Obj_to_store",
+    "start_line": 146,
+    "end_line": 149,
+    "line_count": 4,
+    "signature": "int Obj_to_store(struct obj_data * obj, FILE * fl)",
+    "go_location": "pkg/game/houses.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_delete_file",
+    "start_line": 151,
+    "end_line": 174,
+    "line_count": 24,
+    "signature": "int Crash_delete_file(char *name)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_delete_crashfile",
+    "start_line": 177,
+    "end_line": 200,
+    "line_count": 24,
+    "signature": "int Crash_delete_crashfile(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_listrent",
+    "start_line": 275,
+    "end_line": 328,
+    "line_count": 54,
+    "signature": "void Crash_listrent(struct char_data * ch, char *name)",
+    "go_location": "pkg/game/objsave.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_write_rentcode",
+    "start_line": 332,
+    "end_line": 339,
+    "line_count": 8,
+    "signature": "int Crash_write_rentcode(struct char_data * ch, FILE * fl, struct rent_info * re",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "auto_equip",
+    "start_line": 344,
+    "end_line": 448,
+    "line_count": 105,
+    "signature": "void auto_equip(struct char_data *ch, struct obj_data *obj, int locate)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_load",
+    "start_line": 455,
+    "end_line": 670,
+    "line_count": 216,
+    "signature": "int Crash_load(struct char_data * ch)",
+    "go_location": "pkg/game/save.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_save",
+    "start_line": 673,
+    "end_line": 694,
+    "line_count": 22,
+    "signature": "int Crash_save(struct obj_data * obj, FILE * fp, int locate)",
+    "go_location": "pkg/game/objsave.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_restore_weight",
+    "start_line": 697,
+    "end_line": 705,
+    "line_count": 9,
+    "signature": "void Crash_restore_weight(struct obj_data * obj)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_extract_objs",
+    "start_line": 709,
+    "end_line": 716,
+    "line_count": 8,
+    "signature": "void Crash_extract_objs(struct obj_data * obj)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_is_unrentable",
+    "start_line": 719,
+    "end_line": 729,
+    "line_count": 11,
+    "signature": "int Crash_is_unrentable(struct obj_data * obj)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_extract_norents",
+    "start_line": 732,
+    "end_line": 740,
+    "line_count": 9,
+    "signature": "void Crash_extract_norents(struct obj_data * obj)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_extract_norents_from_equipped",
+    "start_line": 745,
+    "end_line": 760,
+    "line_count": 16,
+    "signature": "void Crash_extract_norents_from_equipped(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_extract_expensive",
+    "start_line": 763,
+    "end_line": 772,
+    "line_count": 10,
+    "signature": "void Crash_extract_expensive(struct obj_data * obj)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_calculate_rent",
+    "start_line": 776,
+    "end_line": 783,
+    "line_count": 8,
+    "signature": "void Crash_calculate_rent(struct obj_data * obj, int *cost)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_crashsave",
+    "start_line": 786,
+    "end_line": 824,
+    "line_count": 39,
+    "signature": "void Crash_crashsave(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_idlesave",
+    "start_line": 827,
+    "end_line": 908,
+    "line_count": 82,
+    "signature": "void Crash_idlesave(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_cryosave",
+    "start_line": 959,
+    "end_line": 1006,
+    "line_count": 48,
+    "signature": "void Crash_cryosave(struct char_data * ch, int cost)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_rent_deadline",
+    "start_line": 1013,
+    "end_line": 1027,
+    "line_count": 15,
+    "signature": "void Crash_rent_deadline(struct char_data * ch, struct char_data * recep,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_report_unrentables",
+    "start_line": 1029,
+    "end_line": 1045,
+    "line_count": 17,
+    "signature": "int Crash_report_unrentables(struct char_data * ch, struct char_data * recep,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_report_rent",
+    "start_line": 1049,
+    "end_line": 1067,
+    "line_count": 19,
+    "signature": "void Crash_report_rent(struct char_data * ch, struct char_data * recep,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_offer_rent",
+    "start_line": 1071,
+    "end_line": 1119,
+    "line_count": 49,
+    "signature": "int Crash_offer_rent(struct char_data * ch, struct char_data * receptionist,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "gen_receptionist",
+    "start_line": 1123,
+    "end_line": 1196,
+    "line_count": 74,
+    "signature": "int gen_receptionist(struct char_data * ch, struct char_data * recep,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Crash_save_all",
+    "start_line": 1211,
+    "end_line": 1223,
+    "line_count": 13,
+    "signature": "void Crash_save_all(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "objsave.c",
+    "function": "Alias_delete_file",
+    "start_line": 1227,
+    "end_line": 1250,
+    "line_count": 24,
+    "signature": "int Alias_delete_file(char *name)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "olc.c",
+    "function": "real_zone",
+    "start_line": 54,
+    "end_line": 63,
+    "line_count": 10,
+    "signature": "int real_zone(int number);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "olc.c",
+    "function": "olc_saveinfo",
+    "start_line": 55,
+    "end_line": 63,
+    "line_count": 9,
+    "signature": "void olc_saveinfo(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "olc.c",
+    "function": "olc_saveall",
+    "start_line": 56,
+    "end_line": 63,
+    "line_count": 8,
+    "signature": "void olc_saveall(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "olc.c",
+    "function": "olc_saveall",
+    "start_line": 313,
+    "end_line": 345,
+    "line_count": 33,
+    "signature": "void olc_saveall(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "olc.c",
+    "function": "olc_saveinfo",
+    "start_line": 347,
+    "end_line": 363,
+    "line_count": 17,
+    "signature": "void olc_saveinfo(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "olc.c",
+    "function": "olc_add_to_save_list",
+    "start_line": 382,
+    "end_line": 395,
+    "line_count": 14,
+    "signature": "void olc_add_to_save_list(int zone, byte type)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "olc.c",
+    "function": "olc_remove_from_save_list",
+    "start_line": 399,
+    "end_line": 410,
+    "line_count": 12,
+    "signature": "void olc_remove_from_save_list(int zone, byte type)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "olc.c",
+    "function": "get_char_cols",
+    "start_line": 416,
+    "end_line": 421,
+    "line_count": 6,
+    "signature": "void get_char_cols(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "olc.c",
+    "function": "cleanup_olc",
+    "start_line": 447,
+    "end_line": 518,
+    "line_count": 72,
+    "signature": "void cleanup_olc(struct descriptor_data *d, byte cleanup_type)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "queue.c",
+    "function": "queue_deq",
+    "start_line": 96,
+    "end_line": 115,
+    "line_count": 20,
+    "signature": "void queue_deq(struct queue *q, struct q_element *qe)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "queue.c",
+    "function": "queue_key",
+    "start_line": 142,
+    "end_line": 152,
+    "line_count": 11,
+    "signature": "long queue_key(struct queue *q)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "queue.c",
+    "function": "queue_elmt_key",
+    "start_line": 156,
+    "end_line": 159,
+    "line_count": 4,
+    "signature": "long queue_elmt_key(struct q_element *qe)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "queue.c",
+    "function": "queue_free",
+    "start_line": 163,
+    "end_line": 175,
+    "line_count": 13,
+    "signature": "void queue_free(struct queue *q)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "random.c",
+    "function": "cmwc_seed",
+    "start_line": 16,
+    "end_line": 23,
+    "line_count": 8,
+    "signature": "static void cmwc_seed(uint32_t seed);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "random.c",
+    "function": "cmwc_next",
+    "start_line": 17,
+    "end_line": 23,
+    "line_count": 7,
+    "signature": "static uint32_t cmwc_next();",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "random.c",
+    "function": "cmwc_seed",
+    "start_line": 44,
+    "end_line": 54,
+    "line_count": 11,
+    "signature": "static void cmwc_seed(uint32_t j)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "random.c",
+    "function": "cmwc_next",
+    "start_line": 57,
+    "end_line": 73,
+    "line_count": 17,
+    "signature": "static uint32_t cmwc_next()",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_act",
+    "start_line": 80,
+    "end_line": 120,
+    "line_count": 41,
+    "signature": "static int lua_act(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_action",
+    "start_line": 122,
+    "end_line": 140,
+    "line_count": 19,
+    "signature": "static int lua_action(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_aff_flagged",
+    "start_line": 142,
+    "end_line": 163,
+    "line_count": 22,
+    "signature": "static int lua_aff_flagged(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_aff_flags",
+    "start_line": 165,
+    "end_line": 191,
+    "line_count": 27,
+    "signature": "static int lua_aff_flags(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_canget",
+    "start_line": 193,
+    "end_line": 219,
+    "line_count": 27,
+    "signature": "static int lua_canget(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_cansee",
+    "start_line": 221,
+    "end_line": 244,
+    "line_count": 24,
+    "signature": "static int lua_cansee(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_direction",
+    "start_line": 317,
+    "end_line": 340,
+    "line_count": 24,
+    "signature": "static int lua_direction(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_echo",
+    "start_line": 342,
+    "end_line": 383,
+    "line_count": 42,
+    "signature": "static int lua_echo(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_emote",
+    "start_line": 385,
+    "end_line": 401,
+    "line_count": 17,
+    "signature": "static int lua_emote(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_equip_char",
+    "start_line": 403,
+    "end_line": 425,
+    "line_count": 23,
+    "signature": "static int lua_equip_char(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_exit_flags",
+    "start_line": 427,
+    "end_line": 454,
+    "line_count": 28,
+    "signature": "static int lua_exit_flags(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_exit_flagged",
+    "start_line": 456,
+    "end_line": 478,
+    "line_count": 23,
+    "signature": "static int lua_exit_flagged(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_extchar",
+    "start_line": 480,
+    "end_line": 494,
+    "line_count": 15,
+    "signature": "static int lua_extchar(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_extobj",
+    "start_line": 496,
+    "end_line": 510,
+    "line_count": 15,
+    "signature": "static int lua_extobj(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_extra",
+    "start_line": 512,
+    "end_line": 540,
+    "line_count": 29,
+    "signature": "static int lua_extra(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_follow",
+    "start_line": 542,
+    "end_line": 569,
+    "line_count": 28,
+    "signature": "static int lua_follow(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_gossip",
+    "start_line": 571,
+    "end_line": 587,
+    "line_count": 17,
+    "signature": "static int lua_gossip(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_inworld",
+    "start_line": 589,
+    "end_line": 634,
+    "line_count": 46,
+    "signature": "static int lua_inworld(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_iscorpse",
+    "start_line": 636,
+    "end_line": 654,
+    "line_count": 19,
+    "signature": "static int lua_iscorpse(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_isfighting",
+    "start_line": 656,
+    "end_line": 674,
+    "line_count": 19,
+    "signature": "static int lua_isfighting(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_ishunt",
+    "start_line": 676,
+    "end_line": 695,
+    "line_count": 20,
+    "signature": "static int lua_ishunt(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_isnpc",
+    "start_line": 697,
+    "end_line": 715,
+    "line_count": 19,
+    "signature": "static int lua_isnpc(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_item_check",
+    "start_line": 717,
+    "end_line": 756,
+    "line_count": 40,
+    "signature": "static int lua_item_check(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_load_room",
+    "start_line": 758,
+    "end_line": 778,
+    "line_count": 21,
+    "signature": "static int lua_load_room(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_log",
+    "start_line": 780,
+    "end_line": 793,
+    "line_count": 14,
+    "signature": "static int lua_log(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_mload",
+    "start_line": 795,
+    "end_line": 818,
+    "line_count": 24,
+    "signature": "static int lua_mload(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_mob_flagged",
+    "start_line": 820,
+    "end_line": 841,
+    "line_count": 22,
+    "signature": "static int lua_mob_flagged(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_mob_flags",
+    "start_line": 843,
+    "end_line": 869,
+    "line_count": 27,
+    "signature": "static int lua_mob_flags(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_mount",
+    "start_line": 871,
+    "end_line": 906,
+    "line_count": 36,
+    "signature": "static int lua_mount(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_number",
+    "start_line": 908,
+    "end_line": 921,
+    "line_count": 14,
+    "signature": "static int lua_number(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_obj_extra",
+    "start_line": 923,
+    "end_line": 949,
+    "line_count": 27,
+    "signature": "static int lua_obj_extra(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_obj_flagged",
+    "start_line": 951,
+    "end_line": 972,
+    "line_count": 22,
+    "signature": "static int lua_obj_flagged(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_oload",
+    "start_line": 974,
+    "end_line": 1011,
+    "line_count": 38,
+    "signature": "static int lua_oload(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_objfrom",
+    "start_line": 1013,
+    "end_line": 1038,
+    "line_count": 26,
+    "signature": "static int lua_objfrom(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_obj_list",
+    "start_line": 1040,
+    "end_line": 1126,
+    "line_count": 87,
+    "signature": "static int lua_obj_list(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_objto",
+    "start_line": 1128,
+    "end_line": 1172,
+    "line_count": 45,
+    "signature": "static int lua_objto(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_plr_flagged",
+    "start_line": 1174,
+    "end_line": 1195,
+    "line_count": 22,
+    "signature": "static int lua_plr_flagged(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_plr_flags",
+    "start_line": 1197,
+    "end_line": 1223,
+    "line_count": 27,
+    "signature": "static int lua_plr_flags(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_raw_kill",
+    "start_line": 1225,
+    "end_line": 1258,
+    "line_count": 34,
+    "signature": "static int lua_raw_kill(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_round",
+    "start_line": 1260,
+    "end_line": 1269,
+    "line_count": 10,
+    "signature": "static int lua_round(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_say",
+    "start_line": 1271,
+    "end_line": 1290,
+    "line_count": 20,
+    "signature": "static int lua_say(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_save_char",
+    "start_line": 1292,
+    "end_line": 1307,
+    "line_count": 16,
+    "signature": "static int lua_save_char(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_save_obj",
+    "start_line": 1309,
+    "end_line": 1323,
+    "line_count": 15,
+    "signature": "static int lua_save_obj(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_save_room",
+    "start_line": 1325,
+    "end_line": 1339,
+    "line_count": 15,
+    "signature": "static int lua_save_room(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_set_hunt",
+    "start_line": 1341,
+    "end_line": 1363,
+    "line_count": 23,
+    "signature": "static int lua_set_hunt(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_set_skill",
+    "start_line": 1365,
+    "end_line": 1383,
+    "line_count": 19,
+    "signature": "static int lua_set_skill(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_skip_spaces",
+    "start_line": 1385,
+    "end_line": 1397,
+    "line_count": 13,
+    "signature": "static int lua_skip_spaces(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_social",
+    "start_line": 1399,
+    "end_line": 1426,
+    "line_count": 28,
+    "signature": "static int lua_social(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_spell",
+    "start_line": 1428,
+    "end_line": 1489,
+    "line_count": 62,
+    "signature": "static int lua_spell(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_steal",
+    "start_line": 1491,
+    "end_line": 1516,
+    "line_count": 26,
+    "signature": "static int lua_steal(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_tport",
+    "start_line": 1518,
+    "end_line": 1562,
+    "line_count": 45,
+    "signature": "static int lua_tport(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_tell",
+    "start_line": 1564,
+    "end_line": 1589,
+    "line_count": 26,
+    "signature": "static int lua_tell(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "lua_unaffect",
+    "start_line": 1591,
+    "end_line": 1607,
+    "line_count": 17,
+    "signature": "static int lua_unaffect(lua_State *L)",
+    "go_location": "pkg/scripting/engine.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "open_lua_file",
+    "start_line": 1666,
+    "end_line": 1699,
+    "line_count": 34,
+    "signature": "int open_lua_file(char *buf, char *script_name)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "boot_lua",
+    "start_line": 1701,
+    "end_line": 1716,
+    "line_count": 16,
+    "signature": "int boot_lua()",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "run_script",
+    "start_line": 1718,
+    "end_line": 1820,
+    "line_count": 103,
+    "signature": "int run_script(struct char_data *ch, struct char_data *me, struct obj_data *obj,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "scripts.c",
+    "function": "clear_stack",
+    "start_line": 2111,
+    "end_line": 2115,
+    "line_count": 5,
+    "signature": "void clear_stack(lua_State *L)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_assign.c",
+    "function": "ASSIGNMOB",
+    "start_line": 45,
+    "end_line": 55,
+    "line_count": 11,
+    "signature": "void ASSIGNMOB(int mob, SPECIAL(fname))",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_assign.c",
+    "function": "ASSIGNOBJ",
+    "start_line": 57,
+    "end_line": 66,
+    "line_count": 10,
+    "signature": "void ASSIGNOBJ(int obj, SPECIAL(fname))",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_assign.c",
+    "function": "ASSIGNROOM",
+    "start_line": 68,
+    "end_line": 77,
+    "line_count": 10,
+    "signature": "void ASSIGNROOM(int room, SPECIAL(fname))",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_assign.c",
+    "function": "assign_mobiles",
+    "start_line": 85,
+    "end_line": 511,
+    "line_count": 427,
+    "signature": "void assign_mobiles(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_assign.c",
+    "function": "assign_objects",
+    "start_line": 516,
+    "end_line": 563,
+    "line_count": 48,
+    "signature": "void assign_objects(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_assign.c",
+    "function": "assign_rooms",
+    "start_line": 568,
+    "end_line": 642,
+    "line_count": 75,
+    "signature": "void assign_rooms(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_procs.c",
+    "function": "mag_savingthrow",
+    "start_line": 66,
+    "end_line": 75,
+    "line_count": 10,
+    "signature": "int mag_savingthrow(struct char_data * ch, int type);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_procs2.c",
+    "function": "set_hunting",
+    "start_line": 89,
+    "end_line": 101,
+    "line_count": 13,
+    "signature": "void set_hunting(struct char_data *ch, struct char_data *victim);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_procs2.c",
+    "function": "send_to_zone",
+    "start_line": 90,
+    "end_line": 101,
+    "line_count": 12,
+    "signature": "void send_to_zone(char *messg, struct char_data *ch);",
+    "go_location": "pkg/spells/damage_spells.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "spec_procs2.c",
+    "function": "flow_room",
+    "start_line": 91,
+    "end_line": 101,
+    "line_count": 11,
+    "signature": "void flow_room(struct char_data *ch);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spec_procs2.c",
+    "function": "unmount",
+    "start_line": 92,
+    "end_line": 101,
+    "line_count": 10,
+    "signature": "void unmount(struct char_data *rider, struct char_data *mount);",
+    "go_location": "pkg/game/deferred_fight_fns.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "spec_procs3.c",
+    "function": "elements_remove_cylinders",
+    "start_line": 1026,
+    "end_line": 1056,
+    "line_count": 31,
+    "signature": "void elements_remove_cylinders(struct char_data *ch)",
+    "go_location": "pkg/game/spec_procs3.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "spell_parser.c",
+    "function": "mag_manacost",
+    "start_line": 257,
+    "end_line": 266,
+    "line_count": 10,
+    "signature": "int mag_manacost(struct char_data * ch, int spellnum)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spell_parser.c",
+    "function": "find_skill_num",
+    "start_line": 370,
+    "end_line": 395,
+    "line_count": 26,
+    "signature": "int find_skill_num(char *name)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spell_parser.c",
+    "function": "call_magic",
+    "start_line": 406,
+    "end_line": 539,
+    "line_count": 134,
+    "signature": "int call_magic(struct char_data * caster, struct char_data * cvict,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spell_parser.c",
+    "function": "cast_spell",
+    "start_line": 827,
+    "end_line": 906,
+    "line_count": 80,
+    "signature": "int cast_spell(struct char_data * ch, struct char_data * tch,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spell_parser.c",
+    "function": "spell_level",
+    "start_line": 1117,
+    "end_line": 1144,
+    "line_count": 28,
+    "signature": "void spell_level(int spell, int class, int level)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spell_parser.c",
+    "function": "spello",
+    "start_line": 1148,
+    "end_line": 1162,
+    "line_count": 15,
+    "signature": "void spello(int spl, int max_mana, int min_mana, int mana_change, int minpos,",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spell_parser.c",
+    "function": "unused_spell",
+    "start_line": 1165,
+    "end_line": 1178,
+    "line_count": 14,
+    "signature": "void unused_spell(int spl)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "spell_parser.c",
+    "function": "mag_assign_spells",
+    "start_line": 1225,
+    "end_line": 1626,
+    "line_count": 402,
+    "signature": "void mag_assign_spells(void)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "number",
+    "start_line": 53,
+    "end_line": 63,
+    "line_count": 11,
+    "signature": "int number(int from, int to)",
+    "go_location": "pkg/game/remort_helpers.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "utils.c",
+    "function": "dice",
+    "start_line": 66,
+    "end_line": 77,
+    "line_count": 12,
+    "signature": "int dice(int num, int size)",
+    "go_location": "pkg/spells/call_magic.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "utils.c",
+    "function": "alog",
+    "start_line": 177,
+    "end_line": 192,
+    "line_count": 16,
+    "signature": "void alog (char const *str, ...)",
+    "go_location": "pkg/game/logging.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "utils.c",
+    "function": "sprintbit",
+    "start_line": 243,
+    "end_line": 267,
+    "line_count": 25,
+    "signature": "void sprintbit(long bitvector, char *names[], char *result)",
+    "go_location": "pkg/game/logging.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "utils.c",
+    "function": "sprinttype",
+    "start_line": 269,
+    "end_line": 282,
+    "line_count": 14,
+    "signature": "void sprinttype(int type, char *names[], char *result)",
+    "go_location": "pkg/game/logging.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "utils.c",
+    "function": "real_time_passed",
+    "start_line": 285,
+    "end_line": 303,
+    "line_count": 19,
+    "signature": "struct time_info_data real_time_passed(time_t t2, time_t t1)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "mud_time_passed",
+    "start_line": 306,
+    "end_line": 327,
+    "line_count": 22,
+    "signature": "struct time_info_data mud_time_passed(time_t t2, time_t t1)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "age",
+    "start_line": 329,
+    "end_line": 338,
+    "line_count": 10,
+    "signature": "struct time_info_data age(struct char_data *ch)",
+    "go_location": "pkg/game/time_utils.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "utils.c",
+    "function": "playing_time",
+    "start_line": 340,
+    "end_line": 356,
+    "line_count": 17,
+    "signature": "struct time_info_data playing_time(struct char_data *ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "is_veteran",
+    "start_line": 358,
+    "end_line": 361,
+    "line_count": 4,
+    "signature": "bool is_veteran(struct char_data *ch)",
+    "go_location": "pkg/game/limits.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "utils.c",
+    "function": "circle_follow",
+    "start_line": 365,
+    "end_line": 375,
+    "line_count": 11,
+    "signature": "bool circle_follow(struct char_data * ch, struct char_data * victim)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "stop_follower",
+    "start_line": 397,
+    "end_line": 443,
+    "line_count": 47,
+    "signature": "void stop_follower(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "die_follower",
+    "start_line": 447,
+    "end_line": 458,
+    "line_count": 12,
+    "signature": "void die_follower(struct char_data * ch)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "add_follower",
+    "start_line": 480,
+    "end_line": 498,
+    "line_count": 19,
+    "signature": "void add_follower(struct char_data * ch, struct char_data * leader)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "num_pc_in_room",
+    "start_line": 586,
+    "end_line": 596,
+    "line_count": 11,
+    "signature": "int num_pc_in_room(struct room_data *room)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "sprintnbit",
+    "start_line": 799,
+    "end_line": 823,
+    "line_count": 25,
+    "signature": "size_t sprintnbit(bitvector_t bitvector, const char *names[], char *result, size",
+    "go_location": "pkg/game/logging.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "utils.c",
+    "function": "ok_to_damage",
+    "start_line": 896,
+    "end_line": 914,
+    "line_count": 19,
+    "signature": "bool ok_to_damage(struct char_data *ch, struct char_data *victim, int is_magic)",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "utils.c",
+    "function": "matches",
+    "start_line": 968,
+    "end_line": 980,
+    "line_count": 13,
+    "signature": "bool matches(const char *s, const char *regex)",
+    "go_location": "pkg/moderation/manager.go",
+    "status": "matched"
+  },
+  {
+    "c_file": "weather.c",
+    "function": "weather_and_time",
+    "start_line": 26,
+    "end_line": 37,
+    "line_count": 12,
+    "signature": "void weather_and_time(int mode);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "weather.c",
+    "function": "another_hour",
+    "start_line": 27,
+    "end_line": 37,
+    "line_count": 11,
+    "signature": "void another_hour(int mode);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "weather.c",
+    "function": "weather_change",
+    "start_line": 28,
+    "end_line": 37,
+    "line_count": 10,
+    "signature": "void weather_change(void);",
+    "status": "missing",
+    "go_location": null
+  },
+  {
+    "c_file": "whod.c",
+    "function": "get_whod_desc",
+    "start_line": 529,
+    "end_line": 532,
+    "line_count": 4,
+    "signature": "int get_whod_desc(void)",
+    "status": "missing",
+    "go_location": null
+  }
+]

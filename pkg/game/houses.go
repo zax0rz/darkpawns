@@ -5,6 +5,7 @@ package game
 
 import (
 	"encoding/json"
+	"log/slog"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -97,20 +98,63 @@ func HouseGetFilename(vnum int) string {
 // Obj_from_store / Obj_to_store stubs
 // ---------------------------------------------------------------------------
 
-// ObjFromStore reconstructs a game object from serialized data (C: Obj_from_store).
-// Stub — returns nil. Wire this to the actual object-deserialization system
-// (binary obj_file_elem → *ObjectInstance) when objsave persistence is
-// implemented. The house system calls this from houseLoad/HouseListrent.
-func ObjFromStore(data interface{}) *ObjectInstance {
-	return nil
+// houseSaveItem represents a single object in a house save file.
+// Uses JSON instead of C's binary obj_file_elem for readability and simplicity.
+type houseSaveItem struct {
+	VNum        int                    `json:"vnum"`
+	ContainerID int                    `json:"container_id,omitempty"`
+	State       map[string]interface{} `json:"state,omitempty"`
 }
 
-// ObjToStore serializes a game object to an open file (C: Obj_to_store).
-// Stub — returns false. Wire to the actual object-serialization system
-// (*ObjectInstance → binary obj_file_elem) when objsave persistence is
-// implemented. The house system calls this from HouseSaveObjects.
-func ObjToStore(obj *ObjectInstance, fp *os.File) bool {
-	return false
+// houseSaveData is the top-level structure for a house save file.
+type houseSaveData struct {
+	RoomVNum int             `json:"room_vnum"`
+	Items    []houseSaveItem `json:"items"`
+}
+
+// ObjFromStore reconstructs a game object from a houseSaveItem.
+// Ported from C Obj_from_store() — creates ObjectInstance from prototype.
+// The data parameter must be a *houseSaveItem.
+// Returns nil if the prototype can't be found.
+func ObjFromStore(data *houseSaveItem, getProto func(vnum int) (*parser.Obj, bool)) *ObjectInstance {
+	if data == nil {
+		return nil
+	}
+	proto, ok := getProto(data.VNum)
+	if !ok {
+		return nil
+	}
+	obj := NewObjectInstance(proto, -1)
+	if data.State != nil {
+		obj.CustomData = make(map[string]interface{}, len(data.State))
+		for k, v := range data.State {
+			obj.CustomData[k] = v
+		}
+	}
+	return obj
+}
+
+// ObjToStore converts an ObjectInstance to a houseSaveItem.
+// Ported from C Obj_to_store() — serializes object for house save.
+// Returns the save item, or nil if the object is invalid.
+func ObjToStore(obj *ObjectInstance) *houseSaveItem {
+	if obj == nil || obj.Prototype == nil {
+		return nil
+	}
+	item := &houseSaveItem{
+		VNum:        obj.Prototype.VNum,
+		ContainerID: -1,
+	}
+	if obj.Location.Kind == ObjInContainer {
+		item.ContainerID = obj.Location.ContainerObjID
+	}
+	if obj.CustomData != nil && len(obj.CustomData) > 0 {
+		item.State = make(map[string]interface{}, len(obj.CustomData))
+		for k, v := range obj.CustomData {
+			item.State[k] = v
+		}
+	}
+	return item
 }
 
 // ---------------------------------------------------------------------------
@@ -325,24 +369,64 @@ func (w *World) houseLoad(vnum int) bool {
 		return false
 	}
 
-	fp, err := os.Open(fname)
+	data, err := os.ReadFile(fname)
 	if err != nil {
 		// No file found — not necessarily an error
 		return false
 	}
-	defer fp.Close()
 
 	BasicMudLogf("House_load: reading %s for room %d", fname, vnum)
 
-	// When ObjFromStore is wired, loop reading obj_file_elem-sized
-	// chunks from fp, call ObjFromStore for each, skip unrentables, and
-	// place survivors in the room via w.AddItemToRoom(). The C equivalent:
-	//   while (!feof(fl)) {
-	//     fread(&object, sizeof(struct obj_file_elem), 1, fl);
-	//     obj = Obj_from_store(object);
-	//     if (Crash_is_unrentable(obj)) extract_obj(obj);
-	//     else obj_to_room(obj, rnum);
-	//   }
+	var saveData houseSaveData
+	if err := json.Unmarshal(data, &saveData); err != nil {
+		slog.Error("houseLoad: failed to parse save file", "file", fname, "error", err)
+		return false
+	}
+
+	// Build container map for nesting. We load items in two passes:
+	// first pass creates all objects, second pass places them.
+	objMap := make(map[int]*ObjectInstance) // keyed by slice index for container resolution
+	for i := range saveData.Items {
+		item := &saveData.Items[i]
+		// Look up object prototype by vnum
+		var proto *parser.Obj
+		for i := range w.GetParsedWorld().Objs {
+			if w.GetParsedWorld().Objs[i].VNum == item.VNum {
+				proto = &w.GetParsedWorld().Objs[i]
+				break
+			}
+		}
+		obj := ObjFromStore(item, func(vnum int) (*parser.Obj, bool) {
+			if proto != nil && proto.VNum == vnum {
+				return proto, true
+			}
+			return nil, false
+		})
+		if obj == nil {
+			slog.Warn("houseLoad: missing prototype", "vnum", item.VNum)
+			continue
+		}
+		if IsUnrentable(obj) {
+			continue
+		}
+		objMap[i] = obj
+	}
+
+	// Place objects in room. Items with container_id >= 0 go into containers.
+	for i, obj := range objMap {
+		item := &saveData.Items[i]
+		if item.ContainerID >= 0 {
+			// Find container by iterating — container was saved first (recursive)
+			for _, candidate := range objMap {
+				if candidate.ID == item.ContainerID {
+				candidate.Contains = append(candidate.Contains, obj)
+					break
+				}
+			}
+			continue
+		}
+		w.AddItemToRoom(obj, vnum)
+	}
 
 	return true
 }
@@ -378,10 +462,19 @@ func (w *World) houseCrashsave(vnum int) {
 	}
 	defer fp.Close()
 
-	// Recursively save objects in the room (C: House_save)
+	// Collect all objects in the room and serialize to JSON
 	objects := w.GetItemsInRoom(vnum)
+	var items []houseSaveItem
 	for _, obj := range objects {
-		w.HouseSaveObjects(obj, fp)
+		w.collectHouseItems(obj, &items)
+	}
+
+	// Write JSON
+	data := houseSaveData{RoomVNum: vnum, Items: items}
+	enc := json.NewEncoder(fp)
+	if err := enc.Encode(data); err != nil {
+		BasicMudLog(fmt.Sprintf("SYSERR: Error encoding house #%d: %v", vnum, err))
+		return
 	}
 
 	// Restore container weights that were adjusted during save (C: House_restore_weight)
@@ -393,34 +486,22 @@ func (w *World) houseCrashsave(vnum int) {
 	removeRoomFlag(realHouse, RoomFlagCrash)
 }
 
-// HouseSaveObjects recursively writes an object and its contents to the
-// save file, adjusting container weights for storage (C: House_save).
-// The recursive calls walk (contains) then (next_content / siblings),
-// mirroring the C linked-list traversal. Each leaf object is written via
-// ObjToStore, and each container's weight is decremented by the child's
-// weight during save (restored afterward by HouseRestoreWeight).
-func (w *World) HouseSaveObjects(obj *ObjectInstance, fp *os.File) {
+// collectHouseItems recursively collects objects into the items slice.
+// Replaces C's House_save. Adjusts container weights for storage.
+func (w *World) collectHouseItems(obj *ObjectInstance, items *[]houseSaveItem) {
 	if obj == nil {
 		return
 	}
-
 	// Recurse into contents first
 	for _, contained := range obj.Contains {
-		w.HouseSaveObjects(contained, fp)
+		w.collectHouseItems(contained, items)
 	}
-
-	// Write this object to the file
-	result := ObjToStore(obj, fp)
-	if !result {
-		// ObjToStore is still a stub; this will succeed once wired
-		return
-	}
-
-	// Decrement container weight for the saved child's weight
-	// (matched by HouseRestoreWeight to restore after save is done)
-	if obj.Location.Kind == ObjInContainer {
-		if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok {
-			if obj.Prototype != nil {
+	// Add this object
+	if item := ObjToStore(obj); item != nil {
+		*items = append(*items, *item)
+		// Decrement container weight for the saved child
+		if obj.Location.Kind == ObjInContainer {
+			if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok && obj.Prototype != nil {
 				container.Prototype.Weight -= obj.Prototype.Weight
 				if container.Prototype.Weight < 1 {
 					container.Prototype.Weight = 1
@@ -509,10 +590,25 @@ func (w *World) HouseListrent(ch *Player, vnum int) {
 	//   }
 
 	sendToChar(ch, fmt.Sprintf("Objects stored for house #%d:\r\n", vnum))
-	sendToChar(ch, fmt.Sprintf("  File size: %d bytes (requires ObjFromStore to decode)\r\n", len(data)))
+	var saveData houseSaveData
+	if err := json.Unmarshal(data, &saveData); err != nil {
+		sendToChar(ch, "Error reading house file.\r\n")
+		return
+	}
+	for _, item := range saveData.Items {
+		var name string
+		for i := range w.GetParsedWorld().Objs {
+			if w.GetParsedWorld().Objs[i].VNum == item.VNum {
+				name = w.GetParsedWorld().Objs[i].ShortDesc
+				break
+			}
+		}
+		if name == "" {
+			name = "unknown item"
+		}
+		sendToChar(ch, fmt.Sprintf("  [%5d] %s\r\n", item.VNum, name))
+	}
 }
-
-// ---------------------------------------------------------------------------
 // House_can_enter — check if a player may enter a house
 // ---------------------------------------------------------------------------
 
