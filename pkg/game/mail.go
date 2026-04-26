@@ -8,6 +8,7 @@ package game
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
@@ -493,7 +494,9 @@ func (w *World) CreateMailObject(ch *Player, mailText string) *ObjectInstance {
 // GiveObjectToChar adds an object to the player's inventory.
 func (w *World) GiveObjectToChar(obj *ObjectInstance, ch *Player) {
 	if ch.Inventory != nil {
-		ch.Inventory.AddItem(obj)
+		if err := w.MoveObjectToPlayerInventory(obj, ch); err != nil {
+			slog.Warn("GiveObjectToChar failed", "player", ch.Name, "error", err)
+		}
 	}
 }
 

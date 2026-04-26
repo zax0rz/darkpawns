@@ -894,7 +894,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		} else {
 			w.roomMessage(roomVNum, fmt.Sprintf("You hear %s burp.", mobName(me)))
 		}
-		w.RemoveItemFromRoom(obj, roomVNum)
+		w.MoveObjectToNowhere(obj)
 		return true
 	}
 
@@ -952,8 +952,7 @@ func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			for _, obj := range items {
 				if obj.IsCorpse && strings.Contains(strings.ToLower(obj.Prototype.Keywords), strings.ToLower(ch.GetName())) && obj.GetValue(3) > 0 {
 					// Move corpse from its current room to the mortician's room
-					w.RemoveItemFromRoom(obj, room.VNum)
-					w.AddItemToRoom(obj, me.GetRoomVNum())
+					w.MoveObjectToRoom(obj, me.GetRoomVNum())
 					ch.SendMessage(fmt.Sprintf("The Mortician dumps your corpse on the ground.\r\n"))
 					w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("The Mortician dumps %s's corpse on the ground.", ch.GetName()))
 					ch.SetGold(ch.GetGold() - cost)

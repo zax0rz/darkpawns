@@ -140,9 +140,8 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 	}
 
 	// Remove from inventory and equip
-	ch.Inventory.RemoveItem(obj)
+	ch.Inventory.removeItem(obj)
 	w.EquipItem(ch, obj, where)
-	obj.Location = LocEquippedPlayer(ch.Name, EquipmentSlot(where))
 	w.wearMessage(ch, obj, where)
 }
 
@@ -288,16 +287,7 @@ func (w *World) performRemove(ch *Player, pos int) {
 		return
 	}
 
-	// Unequip
 	w.UnequipItem(ch, pos)
-	obj.Location = LocInventoryPlayer(ch.Name)
-	if err := ch.Inventory.AddItem(obj); err != nil {
-		w.actToChar(ch, "You have no room for $p.\n", obj, nil)
-		// Re-equip it
-		ch.Equipment.Equip(obj, ch.Inventory)
-		obj.Location = LocEquippedPlayer(ch.Name, EquipmentSlot(pos))
-		return
-	}
 
 	w.actToChar(ch, "You stop using $p.", obj, nil)
 	w.actToRoom(ch, "$n stops using $p.", obj, nil)

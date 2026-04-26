@@ -33,7 +33,7 @@ func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
 // getCheckMoney handles auto-conversion of money items on pickup
 func (w *World) getCheckMoney(ch *Player, obj *ObjectInstance) {
 	if obj.GetTypeFlag() == ITEM_MONEY && obj.Prototype.Values[0] > 0 {
-		ch.Inventory.RemoveItem(obj)
+		ch.Inventory.removeItem(obj)
 		amount := obj.Prototype.Values[0]
 		if amount > 1 {
 			ch.SendMessage(fmt.Sprintf("There were %d coins.\r\n", amount))

@@ -21,11 +21,8 @@ func NewInventory() *Inventory {
 	}
 }
 
-// AddItem adds an item to the inventory.
-func (inv *Inventory) AddItem(item *ObjectInstance) error {
-	inv.mu.Lock()
-	defer inv.mu.Unlock()
-
+// addItem adds an item to the inventory (internal — no lock, caller must hold appropriate locks).
+func (inv *Inventory) addItem(item *ObjectInstance) error {
 	if len(inv.Items) >= inv.Capacity {
 		return ErrInventoryFull
 	}
@@ -33,11 +30,8 @@ func (inv *Inventory) AddItem(item *ObjectInstance) error {
 	return nil
 }
 
-// RemoveItem removes an item from the inventory by reference.
-func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
-	inv.mu.Lock()
-	defer inv.mu.Unlock()
-
+// removeItem removes an item from the inventory by reference (internal — no lock).
+func (inv *Inventory) removeItem(item *ObjectInstance) bool {
 	for i, invItem := range inv.Items {
 		if invItem == item {
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
@@ -47,11 +41,8 @@ func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
 	return false
 }
 
-// RemoveItemByVNum removes an item from the inventory by VNum.
-func (inv *Inventory) RemoveItemByVNum(vnum int) (*ObjectInstance, bool) {
-	inv.mu.Lock()
-	defer inv.mu.Unlock()
-
+// removeItemByVNum removes an item from the inventory by VNum (internal — no lock).
+func (inv *Inventory) removeItemByVNum(vnum int) (*ObjectInstance, bool) {
 	for i, item := range inv.Items {
 		if item.VNum == vnum {
 			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
@@ -150,9 +141,22 @@ func (inv *Inventory) SetCapacity(dex int, level int) {
 	inv.Capacity = 5 + (dex / 2) + (level / 2)
 }
 
-// Clear removes all items from inventory.
-func (inv *Inventory) Clear() {
-	inv.mu.Lock()
-	defer inv.mu.Unlock()
+// clear removes all items from inventory (internal — no lock).
+func (inv *Inventory) clear() {
 	inv.Items = make([]*ObjectInstance, 0)
+}
+
+// Deprecated: Use MoveObject helpers instead. These exported wrappers exist for
+// cross-package callers (db, systems) that cannot access unexported methods.
+
+func (inv *Inventory) AddItem(item *ObjectInstance) error {
+	return inv.addItem(item)
+}
+
+func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
+	return inv.removeItem(item)
+}
+
+func (inv *Inventory) Clear() {
+	inv.clear()
 }

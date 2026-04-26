@@ -775,8 +775,8 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		}
 
 		// Steal the item
-		p.Inventory.RemoveItem(item)
-		if err := ch.Inventory.AddItem(item); err != nil {
+		p.Inventory.removeItem(item)
+		if err := ch.Inventory.addItem(item); err != nil {
 			return SkillResult{
 				Success:     false,
 				MessageToCh: ActMessage("You can't carry that much!\r\n", chPronouns, nil, ""),
@@ -833,12 +833,12 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 	}
 	food.Runtime.ShortDescOverride = "some carved meat from " + corpse.GetShortDesc()
 
-	if err := ch.Inventory.AddItem(food); err != nil {
-		world.AddItemToRoom(food, ch.GetRoomVNum())
+	if err := world.MoveObjectToPlayerInventory(food, ch); err != nil {
+		world.MoveObjectToRoom(food, ch.GetRoomVNum())
 	}
 
 	// Remove corpse from room
-	world.RemoveItemFromRoom(corpse, ch.GetRoomVNum())
+	world.MoveObjectToNowhere(corpse)
 
 	return SkillResult{
 		Success:     true,
@@ -1135,7 +1135,7 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 	// Dump corpse contents and remove it
 	// In a full port we'd create head + headless_corpse objects
 	// For now, mark the corpse as beheaded and dump its contents
-	world.RemoveItemFromRoom(corpse, ch.GetRoomVNum())
+	world.MoveObjectToNowhere(corpse)
 
 	// Create head (vnum 16) and headless corpse (vnum 17) objects
 	headObj, err := world.SpawnObject(16, ch.GetRoomVNum())
@@ -1466,9 +1466,8 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 	prob := ch.GetSkill(SkillPalm)
 
 	if prob > percent {
-		// Success — add to inventory
-		world.RemoveItemFromRoom(targetItem, ch.GetRoomVNum())
-		if err := ch.Inventory.AddItem(targetItem); err != nil {
+		// Success — move to inventory
+		if err := world.MoveObjectToPlayerInventory(targetItem, ch); err != nil {
 			return SkillResult{
 				Success:     false,
 				MessageToCh: "You can't carry that much.\r\n",
@@ -1481,8 +1480,7 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 		}
 	}
 
-	// Failure
-	world.RemoveItemFromRoom(targetItem, ch.GetRoomVNum())
+	// Failure — item stays on ground
 	return SkillResult{
 		Success:      true,
 		MessageToCh:  fmt.Sprintf("You try to palm %s but fumble it!\r\n", targetItem.GetShortDesc()),

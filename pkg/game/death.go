@@ -159,7 +159,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum)
 	} else {
 		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType)
-		w.AddItemToRoom(corpse, roomVNum)
+		w.MoveObjectToRoom(corpse, roomVNum)
 	}
 
 	// Notify players in room
@@ -219,7 +219,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		// Get all items from inventory
 		inventoryItems = player.Inventory.FindItems("")
 		// makeCorpse's MoveObjectToContainer will handle detach from old location
-		player.Inventory.Clear()
+		player.Inventory.clear()
 	}
 
 	if player.Equipment != nil {
@@ -240,7 +240,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum)
 	} else {
 		corpse := w.makeCorpse(player.Name, player.Sex, inventoryItems, equipmentItems, roomVNum, attackType)
-		w.AddItemToRoom(corpse, roomVNum)
+		w.MoveObjectToRoom(corpse, roomVNum)
 	}
 
 	// Notify room
@@ -452,7 +452,7 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 			"is_ash":     true,
 		},
 	}
-	w.AddItemToRoom(ash, roomVNum)
+	w.MoveObjectToRoom(ash, roomVNum)
 
 	// Send room message
 	victimName := ""

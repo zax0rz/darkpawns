@@ -542,7 +542,7 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			ch.Move = ch.GetMaxMove()
 			if obj, err := w.SpawnObject(7103, ch.GetRoom()); err == nil {
 				if ch.Inventory != nil {
-					if err := ch.Inventory.AddItem(obj); err != nil {
+					if err := ch.Inventory.addItem(obj); err != nil {
 						slog.Warn("spec proc item grant failed", "vnum", 7103, "player", ch.Name, "error", err)
 					}
 				}
@@ -573,7 +573,7 @@ func specTattoo2(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 				for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 					if !pl.IsNPC() && pl != ch {
 						if pl.Inventory != nil {
-							if err := pl.Inventory.AddItem(obj); err != nil {
+							if err := pl.Inventory.addItem(obj); err != nil {
 								slog.Warn("spec proc item grant failed", "vnum", 7107, "player", pl.Name, "error", err)
 							}
 						}
@@ -602,7 +602,7 @@ func specTattoo3(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		ch.SetGold(ch.GetGold() - 500)
 		if obj, err := w.SpawnObject(7103, ch.GetRoom()); err == nil {
 			if ch.Inventory != nil {
-				if err := ch.Inventory.AddItem(obj); err != nil {
+				if err := ch.Inventory.addItem(obj); err != nil {
 					slog.Warn("spec proc item grant failed", "vnum", 7103, "player", ch.Name, "error", err)
 				}
 			}
@@ -634,7 +634,7 @@ func specEviltrade(w *World, ch *Player, me *MobInstance, cmd string, arg string
 				}
 			}
 			for _, item := range toRemove {
-				ch.Inventory.RemoveItem(item)
+				ch.Inventory.removeItem(item)
 			}
 			if len(toRemove) > 0 {
 				sendToChar(ch, fmt.Sprintf("You trade your key for %d experience.\r\n", ch.GetLevel()*200*len(toRemove)))
@@ -742,7 +742,7 @@ func specLittleBoy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		sendToChar(ch, "The boy smiles and hands you a small note.\r\n")
 		if obj, err := w.SpawnObject(7107, ch.GetRoom()); err == nil {
 			if ch.Inventory != nil {
-				if err := ch.Inventory.AddItem(obj); err != nil {
+				if err := ch.Inventory.addItem(obj); err != nil {
 					slog.Warn("spec proc item grant failed", "vnum", 7107, "player", ch.Name, "error", err)
 				}
 			}
@@ -915,7 +915,7 @@ func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		obj := items[i]
 		// Steal items with zero cost (junk/free items)
 		if obj.GetCost() == 0 {
-			ch.Inventory.RemoveItem(obj)
+			ch.Inventory.removeItem(obj)
 			count++
 		}
 	}
@@ -1091,7 +1091,7 @@ func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			ch.SetGold(ch.GetGold() - 50)
 			if obj, err := w.SpawnObject(5181, ch.GetRoom()); err == nil {
 				if ch.Inventory != nil {
-					if err := ch.Inventory.AddItem(obj); err != nil {
+					if err := ch.Inventory.addItem(obj); err != nil {
 						slog.Warn("spec proc item grant failed", "vnum", 5181, "player", ch.Name, "error", err)
 					}
 				}

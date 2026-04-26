@@ -144,13 +144,13 @@ const (
 
 func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 	if locate <= 0 {
-		p.Inventory.AddItem(obj)
+		p.Inventory.addItem(obj)
 		return
 	}
 	cPos := locate - 1
 	_, ok := cWearPosToGoSlot(cPos)
 	if !ok {
-		p.Inventory.AddItem(obj)
+		p.Inventory.addItem(obj)
 		return
 	}
 	rf := cWearPosCanWearFlag(cPos)
@@ -163,7 +163,7 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 		}
 	}
 	if !wears {
-		p.Inventory.AddItem(obj)
+		p.Inventory.addItem(obj)
 		return
 	}
 	// Alignment restrictions.
@@ -171,11 +171,11 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 	if (xf&FlagAntiEvil != 0 && p.IsEvil()) ||
 		(xf&FlagAntiGood != 0 && p.IsGood()) ||
 		(xf&FlagAntiNeutral != 0 && p.IsNeutral()) {
-		p.Inventory.AddItem(obj)
+		p.Inventory.addItem(obj)
 		return
 	}
 	if err := p.Equipment.Equip(obj, p.Inventory); err != nil {
-		p.Inventory.AddItem(obj)
+		p.Inventory.addItem(obj)
 	}
 }
 
@@ -224,7 +224,7 @@ func CrashLoad(p *Player, invItems []*ObjectInstance, eqSlots map[EquipmentSlot]
 	if p == nil {
 		return false
 	}
-	p.Inventory.Clear()
+	p.Inventory.clear()
 	p.Equipment = NewEquipment()
 	for slot, obj := range eqSlots {
 		if obj == nil {
@@ -238,7 +238,7 @@ func CrashLoad(p *Player, invItems []*ObjectInstance, eqSlots map[EquipmentSlot]
 	}
 	for _, obj := range invItems {
 		if obj != nil {
-			p.Inventory.AddItem(obj)
+			p.Inventory.addItem(obj)
 		}
 	}
 	return true

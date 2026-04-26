@@ -548,6 +548,207 @@ func TestMoveObjectInvalidDestination(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// TestContainerCyclePrevention — A contains B; putting A into B must fail
+// ---------------------------------------------------------------------------
+//
+// BUG: This test currently FAILS. attachObjectLocked(ObjInContainer) has no
+// cycle check. MoveObjectToContainer(A, B) succeeds even when B is already
+// inside A, creating a reference cycle that corrupts GetTotalWeight and any
+// code that recursively walks Contains.
+
+func TestContainerCyclePrevention(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	containerA, err := w.SpawnObject(3003, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject A failed: %v", err)
+	}
+	containerB, err := w.SpawnObject(3003, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject B failed: %v", err)
+	}
+	// Register both in room so detach finds them
+	w.AddItemToRoom(containerA, 1001)
+	w.AddItemToRoom(containerB, 1001)
+
+	// Put B inside A
+	if err := w.MoveObjectToContainer(containerB, containerA); err != nil {
+		t.Fatalf("setup MoveObjectToContainer(B→A) failed: %v", err)
+	}
+
+	// Now try to put A inside B — must fail (would create A→B→A cycle)
+	err = w.MoveObjectToContainer(containerA, containerB)
+	if err == nil {
+		t.Error("BUG: MoveObjectToContainer(A into B) succeeded, creating a container cycle")
+	}
+
+	// containerA must still be in the room, not inside containerB
+	if containerA.Location.Kind == ObjInContainer {
+		t.Errorf("containerA.Location should not be ObjInContainer after failed cycle attempt, got %v", containerA.Location.Kind)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestMobEquipInEquipmentNotInventory — equip puts in Equipment, not Inventory
+// ---------------------------------------------------------------------------
+//
+// BUG: This test currently FAILS. attachObjectLocked(ObjEquipped, OwnerMob)
+// calls m.AddToInventory(obj) before setting Equipment[slot], so the item
+// ends up in BOTH Inventory and Equipment. Correct behavior: Equipment only.
+// Location is set correctly by the final obj.Location = dst assignment.
+
+func TestMobEquipInEquipmentNotInventory(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	mob, err := w.SpawnMob(2001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+
+	obj, err := w.SpawnObject(3002, 1001) // wieldable weapon (WearFlags bit 13)
+	if err != nil {
+		t.Fatalf("SpawnObject failed: %v", err)
+	}
+
+	// Move to mob inventory first so detach has a valid prior location
+	if err := w.MoveObjectToMobInventory(obj, mob); err != nil {
+		t.Fatalf("MoveObjectToMobInventory failed: %v", err)
+	}
+
+	// Equip via MoveObject
+	if err := w.MoveObject(obj, LocEquippedMob(mob.GetID(), SlotWield)); err != nil {
+		t.Fatalf("MoveObject equip failed: %v", err)
+	}
+
+	// Location must reflect equipped state
+	if !obj.Location.IsEquipped() {
+		t.Errorf("Location.Kind = %v, want ObjEquipped", obj.Location.Kind)
+	}
+	if _, ok := mob.Equipment[int(SlotWield)]; !ok {
+		t.Error("item missing from Equipment map after equip")
+	}
+
+	// Invariant: item must NOT appear in the Inventory slice
+	for _, invItem := range mob.Inventory {
+		if invItem == obj {
+			t.Error("BUG: equipped item still present in mob Inventory slice — should be Equipment only")
+			break
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestMobUnequipToInventory — unequip moves from Equipment to Inventory
+// ---------------------------------------------------------------------------
+
+func TestMobUnequipToInventory(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	mob, err := w.SpawnMob(2001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+
+	obj, err := w.SpawnObject(3002, 1001) // wieldable weapon
+	if err != nil {
+		t.Fatalf("SpawnObject failed: %v", err)
+	}
+
+	// Equip directly via mob method (bypasses MoveObject, item in Equipment only)
+	obj.Location = LocEquippedMob(mob.GetID(), SlotWield)
+	mob.Equipment[int(SlotWield)] = obj
+
+	// Unequip: move to mob inventory via MoveObject
+	if err := w.MoveObjectToMobInventory(obj, mob); err != nil {
+		t.Fatalf("MoveObjectToMobInventory failed: %v", err)
+	}
+
+	// Equipment slot must be empty
+	if _, ok := mob.Equipment[int(SlotWield)]; ok {
+		t.Error("item still in Equipment map after unequip to inventory")
+	}
+
+	// Item must be in Inventory
+	found := false
+	for _, invItem := range mob.Inventory {
+		if invItem == obj {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("item not found in mob Inventory after unequip")
+	}
+
+	if !obj.Location.IsInInventory() {
+		t.Errorf("Location.Kind = %v, want ObjInInventory", obj.Location.Kind)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestMoveObjectRollbackStrandedLocation — both attach and rollback-attach fail
+// ---------------------------------------------------------------------------
+//
+// BUG: This test currently FAILS. When MoveObject's primary attach fails AND
+// the rollback re-attach also fails, obj.Location retains the original (stale)
+// value even though the object is in neither location.  Correct behavior:
+// obj.Location should be set to LocNowhere() so callers know the object is
+// stranded and not to trust the old pointer.
+
+func TestMoveObjectRollbackStrandedLocation(t *testing.T) {
+	w, playerA := newTestWorld(t)
+
+	playerB := NewPlayer(2, "PlayerB", 1001)
+	if err := w.AddPlayer(playerB); err != nil {
+		t.Fatalf("AddPlayer B failed: %v", err)
+	}
+
+	// Fill playerA to capacity so any addItem call fails
+	for i := 0; i < playerA.Inventory.Capacity; i++ {
+		o, _ := w.SpawnObject(3001, 1001)
+		playerA.Inventory.addItem(o)
+	}
+
+	// Fill playerB to capacity
+	for i := 0; i < playerB.Inventory.Capacity; i++ {
+		o, _ := w.SpawnObject(3001, 1001)
+		playerB.Inventory.addItem(o)
+	}
+
+	// Force target into playerB beyond the capacity check by direct slice append.
+	// After detach, playerB will again be exactly at capacity, so the rollback
+	// addItem will also return ErrInventoryFull — stranding the item.
+	target, _ := w.SpawnObject(3001, 1001)
+	playerB.Inventory.Items = append(playerB.Inventory.Items, target)
+	target.Location = LocInventoryPlayer(playerB.Name)
+
+	// Attempt move: detach from B (succeeds), attach to A (fails: full),
+	// rollback to B (fails: B is now exactly at Capacity after the detach).
+	err := w.MoveObjectToPlayerInventory(target, playerA)
+	if err == nil {
+		t.Fatal("expected an error when moving to a full inventory")
+	}
+
+	// Confirm item is in neither inventory
+	for _, item := range playerA.Inventory.Items {
+		if item == target {
+			t.Error("target should not be in playerA inventory")
+		}
+	}
+	for _, item := range playerB.Inventory.Items {
+		if item == target {
+			t.Error("target should not be in playerB inventory after failed rollback")
+		}
+	}
+
+	// Expected invariant: stranded object gets Location = LocNowhere
+	// Actual (bug): Location is stale LocInventoryPlayer(playerB)
+	if !target.Location.IsNowhere() {
+		t.Errorf("BUG: stranded object Location = %+v, want LocNowhere", target.Location)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // TestLocationFieldSync — validates ObjectLocation field sync on ObjectInstance
 // ---------------------------------------------------------------------------
 

@@ -569,7 +569,7 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 				for _, contained := range obj.GetContents() {
 					obj.RemoveFromContainer(contained)
 					contained.SetRoomVNum(roomVNum)
-					w.AddItemToRoom(contained, roomVNum)
+					w.MoveObjectToRoom(contained, roomVNum)
 				}
 				// Random decay message
 				msgs := []string{
@@ -634,7 +634,7 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 						if proto, ok := w.GetObjPrototype(fo.WornOffObjNum); ok {
 							spawned := NewObjectInstance(proto, roomVNum)
 							spawned.SetTimer(2)
-							w.AddItemToRoom(spawned, roomVNum)
+							w.MoveObjectToRoom(spawned, roomVNum)
 						}
 					}
 					w.SendToRoom(roomVNum, fo.WearOffMsg+"\r\n")

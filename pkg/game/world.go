@@ -397,7 +397,8 @@ func (w *World) GetItemsInRoom(roomVNum int) []*ObjectInstance {
 	return w.roomItems[roomVNum]
 }
 
-// AddItemToRoom adds an item to a room.
+// Deprecated: AddItemToRoom only appends to roomItems without setting Location or RoomVNum.
+// Use MoveObjectToRoom instead, which properly handles detach/attach and location tracking.
 func (w *World) AddItemToRoom(item *ObjectInstance, roomVNum int) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -418,7 +419,7 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 	case ObjInInventory:
 		if obj.Location.OwnerKind == OwnerPlayer {
 			if p, ok := w.players[obj.Location.PlayerName]; ok {
-				p.Inventory.RemoveItem(obj)
+				p.Inventory.removeItem(obj)
 			}
 		} else if obj.Location.OwnerKind == OwnerMob {
 			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
@@ -661,7 +662,7 @@ func (w *World) GiveStartingItems(p *Player) {
 			}
 		}
 
-		if err := p.Inventory.AddItem(pack); err != nil {
+		if err := w.MoveObjectToPlayerInventory(pack, p); err != nil {
 			slog.Warn("starting pack failed", "player", p.Name, "error", err)
 			return
 		}
@@ -675,7 +676,7 @@ func (w *World) giveItem(p *Player, vnum int) {
 		return
 	}
 	obj := NewObjectInstance(proto, -1)
-	if err := p.Inventory.AddItem(obj); err != nil {
+	if err := w.MoveObjectToPlayerInventory(obj, p); err != nil {
 		slog.Warn("giveItem failed", "player", p.Name, "vnum", vnum, "error", err)
 	}
 }
@@ -971,7 +972,7 @@ func (w *World) RemoveItemFromCharByVNum(charName string, vnum int) scripting.Sc
 	if !ok {
 		return nil
 	}
-	item, found := p.Inventory.RemoveItemByVNum(vnum)
+	item, found := p.Inventory.removeItemByVNum(vnum)
 	if !found {
 		return nil
 	}
@@ -990,7 +991,7 @@ func (w *World) GiveItemToCharScriptable(charName string, obj scripting.Scriptab
 	if item == nil {
 		return fmt.Errorf("GiveItemToChar: object is not an ObjectInstance")
 	}
-	return p.Inventory.AddItem(item)
+	return p.Inventory.addItem(item)
 }
 
 // FireMobFightScript fires the "fight" trigger on a mob after a combat round.

@@ -173,7 +173,11 @@ func NewEquipment() *Equipment {
 func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 	eq.mu.Lock()
 	defer eq.mu.Unlock()
+	return eq.equip(item, inv)
+}
 
+// equip is the internal implementation without locking.
+func (eq *Equipment) equip(item *ObjectInstance, inv *Inventory) error {
 	// Check if item can be equipped
 	wearFlags := eq.getWearFlags(item)
 	if len(wearFlags) == 0 {
@@ -250,7 +254,7 @@ func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
 	// Clear equipment state
 
 	// Try to add to inventory
-	if err := inv.AddItem(item); err != nil {
+	if err := inv.addItem(item); err != nil {
 		return fmt.Errorf("inventory full, cannot unequip")
 	}
 

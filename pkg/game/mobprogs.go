@@ -438,7 +438,7 @@ func (w *World) CreateObject(vnum int, roomVNum int) *ObjectInstance {
 		return nil
 	}
 	obj := NewObjectInstance(proto, roomVNum)
-	w.AddItemToRoom(obj, roomVNum)
+	w.MoveObjectToRoom(obj, roomVNum)
 	return obj
 }
 

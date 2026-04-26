@@ -28,7 +28,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 	case ObjInInventory:
 		if old.OwnerKind == OwnerPlayer {
 			if p, ok := w.players[old.PlayerName]; ok {
-				p.Inventory.RemoveItem(obj)
+				p.Inventory.removeItem(obj)
 			}
 		} else if old.OwnerKind == OwnerMob {
 			if m, ok := w.activeMobs[old.MobID]; ok {
@@ -39,7 +39,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 	case ObjEquipped:
 		if old.OwnerKind == OwnerPlayer {
 			if p, ok := w.players[old.PlayerName]; ok && p.Equipment != nil {
-				p.Equipment.Unequip(old.Slot, p.Inventory)
+				p.Equipment.unequip(old.Slot, p.Inventory)
 			}
 		} else if old.OwnerKind == OwnerMob {
 			if m, ok := w.activeMobs[old.MobID]; ok {
@@ -76,7 +76,7 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 	case ObjInInventory:
 		if dst.OwnerKind == OwnerPlayer {
 			if p, ok := w.players[dst.PlayerName]; ok {
-				if err := p.Inventory.AddItem(obj); err != nil {
+				if err := p.Inventory.addItem(obj); err != nil {
 					return fmt.Errorf("attach to player %s inventory: %w", dst.PlayerName, err)
 				}
 			}
@@ -90,8 +90,8 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 		if dst.OwnerKind == OwnerPlayer {
 			if p, ok := w.players[dst.PlayerName]; ok && p.Equipment != nil {
 				// Remove from inventory first if it's there
-				p.Inventory.RemoveItem(obj)
-				if err := p.Equipment.Equip(obj, p.Inventory); err != nil {
+				p.Inventory.removeItem(obj)
+				if err := p.Equipment.equip(obj, p.Inventory); err != nil {
 					return fmt.Errorf("equip on player %s: %w", dst.PlayerName, err)
 				}
 			}
