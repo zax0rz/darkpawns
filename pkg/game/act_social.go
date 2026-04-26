@@ -30,6 +30,7 @@ type socialTarget interface {
 	GetName() string
 	SendMessage(msg string)
 	GetSex() int
+	GetRoom() int
 }
 
 // ensure Player satisfies socialTarget
@@ -51,13 +52,11 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 
 	// Extract target name from argument
 	targetName := extractArg(argument)
-	chPronouns := GetPronouns(ch.GetName(), ch.GetSex())
 
 	// No argument supplied — use no_arg messages
 	if targetName == "" {
-		ch.SendMessage(social.Messages[socCharNoArg] + "\r\n")
-		msgOthers := ActMessage(social.Messages[socOthersNoArg], chPronouns, nil, "")
-		w.roomMessage(ch.GetRoomVNum(), msgOthers)
+		Act(nil, false, ch, nil, nil, nil, social.Messages[socCharNoArg], "", ToChar)
+		Act(w, false, ch, nil, nil, nil, social.Messages[socOthersNoArg], "", ToRoom)
 		return true
 	}
 
@@ -67,39 +66,35 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 	if target == nil {
 		// Target not found
 		if socNotFound < len(social.Messages) {
-			ch.SendMessage(social.Messages[socNotFound] + "\r\n")
+			Act(nil, false, ch, nil, nil, nil, social.Messages[socNotFound], "", ToChar)
 		}
 		return true
 	}
 
 	// Check if target is self
+	targetActor := target.(Actor)
 	if target.GetName() == ch.Name {
 		if socCharAuto < len(social.Messages) {
-			ch.SendMessage(social.Messages[socCharAuto] + "\r\n")
+			Act(nil, false, ch, nil, nil, nil, social.Messages[socCharAuto], "", ToChar)
 		}
 		if socOthersAuto < len(social.Messages) {
-			msgOthers := ActMessage(social.Messages[socOthersAuto], chPronouns, nil, "")
-			w.roomMessage(ch.GetRoomVNum(), msgOthers)
+			Act(w, false, ch, nil, nil, nil, social.Messages[socOthersAuto], "", ToRoom)
 		}
 		return true
 	}
 
 	// Target is another character — send messages to actor, room, and target
+	// using the new Act() engine which handles $-codes, capitalization, \r\n
 	if socCharFound < len(social.Messages) {
-		msgCh := ActMessage(social.Messages[socCharFound], chPronouns, nil, "")
-		ch.SendMessage(msgCh + "\r\n")
+		Act(nil, false, ch, targetActor, nil, nil, social.Messages[socCharFound], "", ToChar)
 	}
 
 	if socOthersFound < len(social.Messages) {
-		targetPron := GetPronouns(target.GetName(), target.GetSex())
-		msgRoom := ActMessage(social.Messages[socOthersFound], chPronouns, &targetPron, "")
-		w.roomMessageExcludeTwo(ch.GetRoomVNum(), msgRoom, ch.Name, target.GetName())
+		Act(w, false, ch, targetActor, nil, nil, social.Messages[socOthersFound], "", ToNotVict)
 	}
 
 	if socVictFound < len(social.Messages) {
-		targetPron := GetPronouns(target.GetName(), target.GetSex())
-		msgVict := ActMessage(social.Messages[socVictFound], chPronouns, &targetPron, "")
-		target.SendMessage(msgVict + "\r\n")
+		Act(nil, false, ch, targetActor, nil, nil, social.Messages[socVictFound], "", ToVict)
 	}
 
 	return true
@@ -121,45 +116,41 @@ func DoInsult(w *World, ch *Player, argument string) {
 		return
 	}
 
-	chPron := GetPronouns(ch.GetName(), ch.GetSex())
-
 	if target.GetName() == ch.Name {
 		ch.SendMessage("You feel insulted.\r\n")
 		return
 	}
 
+	targetActor := target.(Actor)
+
 	ch.SendMessage(fmt.Sprintf("You insult %s.\r\n", target.GetName()))
 
-	// Pick a random insult
-	victPron := GetPronouns(target.GetName(), target.GetSex())
+	// Pick a random insult — send to target via Act()
+	var insultFormat string
 	switch rand.Intn(3) {
 	case 0:
 		if ch.GetSex() == 1 { // male
 			if target.GetSex() == 1 {
-				target.SendMessage(ActMessage("$n accuses you of fighting like a woman!", chPron, &victPron, "") + "\r\n")
+				insultFormat = "$n accuses you of fighting like a woman!"
 			} else {
-				target.SendMessage(ActMessage("$n says that women can't fight.", chPron, &victPron, "") + "\r\n")
+				insultFormat = "$n says that women can't fight."
 			}
 		} else { // female or neutral
 			if target.GetSex() == 1 {
-				target.SendMessage(ActMessage("$n accuses you of having the smallest... (brain?)", chPron, &victPron, "") + "\r\n")
+				insultFormat = "$n accuses you of having the smallest... (brain?)"
 			} else {
-				target.SendMessage(ActMessage("$n tells you that you'd lose a beauty contest against a troll.", chPron, &victPron, "") + "\r\n")
+				insultFormat = "$n tells you that you'd lose a beauty contest against a troll."
 			}
 		}
 	case 1:
-		target.SendMessage(ActMessage("$n calls your mother a bitch!", chPron, &victPron, "") + "\r\n")
+		insultFormat = "$n calls your mother a bitch!"
 	default:
-		target.SendMessage(ActMessage("$n tells you to get lost!", chPron, &victPron, "") + "\r\n")
+		insultFormat = "$n tells you to get lost!"
 	}
+	Act(nil, false, ch, targetActor, nil, nil, insultFormat, "", ToVict)
 
 	// Message to everyone else in the room
-	roomMsg := ActMessage("$n insults $N.", chPron, &victPron, "")
-	for _, p := range w.GetPlayersInRoom(ch.GetRoomVNum()) {
-		if p.Name != ch.Name && p.Name != target.GetName() {
-			p.SendMessage(roomMsg + "\r\n")
-		}
-	}
+	Act(w, false, ch, targetActor, nil, nil, "$n insults $N.", "", ToNotVict)
 }
 
 // DoDream implements do_dream() from act.social.c.
@@ -169,10 +160,11 @@ func DoDream(w *World, ch *Player) {
 		return
 	}
 
-	chPron := GetPronouns(ch.GetName(), ch.GetSex())
-	roomMsg := ActMessage("$n dreams of running naked through a field of tulips.", chPron, nil, "")
-	w.roomMessage(ch.GetRoomVNum(), roomMsg)
+	// Send to self
 	ch.SendMessage("You dream of running naked through a field of tulips.\r\n")
+
+	// Send to room (excluding ch), with ToSleep bit so sleeping chars still see it
+	Act(w, false, ch, nil, nil, nil, "$n dreams of running naked through a field of tulips.", "", ToRoom|ToSleep)
 }
 
 // extractArg returns the first word of argument, or "" if empty.
