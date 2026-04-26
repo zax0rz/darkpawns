@@ -156,6 +156,17 @@ const (
 	// Object VNUMs used by spells
 	CocVnum    = 64
 	MissileVnum = 3
+
+	// Room flag bits (from src/structs.h)
+	RoomPeaceful = 4
+	RoomPrivate  = 9
+	RoomNoMagic  = 20
+	RoomBFR      = 17 // bad for recall
+
+	// Start room VNUMs (from src/config.c)
+	MortalStartRoom  = 8004
+	KiroshiStartRoom = 18201
+	AlaozarStartRoom = 21258
 )
 
 // Cast executes a spell. For non-damage affect spells (blindness, curse, poison,

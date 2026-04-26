@@ -965,6 +965,20 @@ func (p *Player) GetRoomVNum() int {
 	return p.RoomVNum
 }
 
+// GetHometown returns the player's hometown index.
+func (p *Player) GetHometown() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Hometown
+}
+
+// GetMountName returns the name of the mount the player is riding (empty if none).
+func (p *Player) GetMountName() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.MountName
+}
+
 // GetCondition returns the value of condition cond (CondDrunk=0, CondFull=1, CondThirst=2).
 // Source: structs.h:566-568, utils.h GET_COND() macro.
 func (p *Player) GetCondition(cond int) int {

@@ -240,6 +240,10 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 		castIdentify(level, ch, cvict, ovict)
 	case SpellSilkenMissile:
 		castSilkenMissile(level, ch, ovict, world)
+	case SpellWordOfRecall:
+		castWordOfRecall(level, ch, cvict, world)
+	case SpellTeleport:
+		castTeleport(level, ch, cvict, world)
 	default:
 		sendToCaster(ch, "Spell not yet implemented.\r\n")
 	}
@@ -341,6 +345,8 @@ func init() {
 	setupSpellInfo(SpellEnchantWeapon, PosStanding, 150, 200, 10, RoutineManual, false, TarObjInv|TarObjEquip)
 	setupSpellInfo(SpellEnchantArmor, PosStanding, 130, 150, 10, RoutineManual, false, TarObjInv|TarObjEquip)
 	setupSpellInfo(SpellIdentify, PosStanding, 100, 125, 10, RoutineManual, false, TarCharRoom|TarObjInv|TarObjRoom)
+	setupSpellInfo(SpellWordOfRecall, PosFighting, 50, 50, 1, RoutineManual, false, TarCharRoom)
+	setupSpellInfo(SpellTeleport, PosFighting, 60, 50, 3, RoutineManual, false, TarCharRoom|TarFightVict)
 }
 
 // --- Wave A manual spell implementations ---
@@ -1044,6 +1050,156 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 	if h, ok := cvict.(hper); ok {
 		sendToCaster(ch, fmt.Sprintf("AC: %d, Hitroll: %d, Damroll: %d\r\n", h.GetAC(), h.GetHitroll(), h.GetDamroll()))
 	}
+}
+
+// --- Room transfer spells ---
+
+// Interfaces for room transfer spells.
+type (
+	roomGetter2 interface{ GetRoomVNum() int }
+	fighter2   interface{ IsFighting() bool }
+	mounter2   interface{ GetMountName() string }
+	hometowner interface{ GetHometown() int }
+
+	worldTransfer interface {
+		PlayerTransfer(ch interface{}, toRoomVNum int) error
+		MobTransfer(m interface{}, toRoomVNum int) error
+		GetRoomInWorld(vnum int) interface { HasFlag(bit int) bool }
+		GetRoomCount() int
+	}
+)
+
+// spell_recall ports src/spells.c spell_recall (lines 124–165).
+// Teleports the victim to their hometown. Can't use while fighting or in BFR rooms.
+// Unmounts on arrival. Uses room transfer system.
+func castWordOfRecall(level int, ch, cvict, world interface{}) {
+	_ = level
+
+	// Only works on player victims
+	type npcChecker interface{ IsNPC() bool }
+	if v, ok := cvict.(npcChecker); ok && v.IsNPC() {
+		return
+	}
+	if cvict == nil {
+		return
+	}
+
+	w, ok := world.(worldTransfer)
+	if !ok {
+		sendToCaster(ch, "Recall failed: world interface not available.\r\n")
+		return
+	}
+
+	// Check BFR flag on caster's room and victim's room
+	chRoom := ch.(roomGetter2).GetRoomVNum()
+	chRoomData := w.GetRoomInWorld(chRoom)
+	if chRoomData != nil && chRoomData.HasFlag(RoomBFR) {
+		sendToCaster(ch, "Your magic ebbs and dissolves as you lose your concentration.\r\n")
+		return
+	}
+	victRoom := cvict.(roomGetter2).GetRoomVNum()
+	victRoomData := w.GetRoomInWorld(victRoom)
+	if victRoomData != nil && victRoomData.HasFlag(RoomBFR) {
+		sendToVictim(cvict, "Your magic ebbs and dissolves as you lose your concentration.\r\n")
+		return
+	}
+
+	// Can't recall while fighting
+	if f, ok := ch.(fighter2); ok && f.IsFighting() {
+		sendToCaster(ch, "Your concentration is broken by your fighting!\r\n")
+		return
+	}
+
+	// Determine hometown room
+	var destRoom int
+	if ht, ok := cvict.(hometowner); ok {
+		switch ht.GetHometown() {
+		case 2:
+			destRoom = KiroshiStartRoom
+		case 3:
+			destRoom = AlaozarStartRoom
+		default:
+			destRoom = MortalStartRoom
+		}
+	} else {
+		destRoom = MortalStartRoom
+	}
+
+	// Transfer the victim
+	sendToVictim(cvict, "You feel a brief tingling sensation...\r\n")
+	if err := w.PlayerTransfer(cvict, destRoom); err != nil {
+		sendToCaster(ch, fmt.Sprintf("Recall failed: %s\r\n", err))
+		return
+	}
+
+	sendToVictim(cvict, "You have a strange dream about falling..\r\n")
+}
+
+// spell_teleport ports src/spells.c spell_teleport (lines 168–217).
+// Random room teleport. Self-only for PCs. NPCs get saving throw.
+// Can't use in peaceful rooms. Avoids PRIVATE rooms.
+func castTeleport(level int, ch, cvict, world interface{}) {
+	_ = level
+
+	w, ok := world.(worldTransfer)
+	if !ok {
+		sendToCaster(ch, "Teleport failed: world interface not available.\r\n")
+		return
+	}
+
+	if cvict == nil {
+		sendToCaster(ch, "Who do you want this done to?\r\n")
+		return
+	}
+
+	// Check peaceful room
+	chRoom := ch.(roomGetter2).GetRoomVNum()
+	chRoomData := w.GetRoomInWorld(chRoom)
+	if chRoomData != nil && chRoomData.HasFlag(RoomPeaceful) {
+		sendToCaster(ch, "The gods deny thy magick.\r\n")
+		return
+	}
+
+	// PCs can only teleport self
+	type npcChecker interface{ IsNPC() bool }
+	if chCaster, ok := ch.(npcChecker); ok && !chCaster.IsNPC() {
+		type namer interface{ GetName() string }
+		chName := ch.(namer).GetName()
+		victName := cvict.(namer).GetName()
+		if chName != victName {
+			sendToCaster(ch, "You can only will this power upon yourself!\r\n")
+			return
+		}
+	}
+
+	// NPCs get a saving throw
+	if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() {
+		if magSavingThrow(cvict, int(SaveSpell)) {
+			sendToCaster(ch, "The magic words fail to form properly.\r\n")
+			return
+		}
+	}
+
+	// Pick a random room, avoiding PRIVATE
+	roomCount := w.GetRoomCount()
+	for attempts := 0; attempts < 100; attempts++ {
+		toRoom := rand.Intn(roomCount)
+		roomData := w.GetRoomInWorld(toRoom)
+		if roomData != nil && !roomData.HasFlag(RoomPrivate) {
+			sendToCaster(ch, "The world around you turns black and you suddenly find yourself..\r\n")
+			sendToVictim(cvict, "The world around you turns black and you suddenly find yourself..\r\n")
+
+			// Transfer — use CharTransfer via appropriate path
+			if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() {
+				w.MobTransfer(cvict, toRoom)
+			} else {
+				w.PlayerTransfer(cvict, toRoom)
+			}
+			return
+		}
+	}
+
+	sendToCaster(ch, "The magic fails to find a destination.\r\n")
 }
 
 

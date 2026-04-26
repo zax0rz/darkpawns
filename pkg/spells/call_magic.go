@@ -1,6 +1,10 @@
 package spells
 
-import "math/rand"
+import (
+	"math/rand"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
 
 // CallMagic is the central spell dispatch function, ported from src/spell_parser.c call_magic().
 //
@@ -107,10 +111,22 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 }
 
 // roomHasNoMagic checks if the room has the NOMAGIC flag set.
-// Stub until World interface is defined.
 func roomHasNoMagic(ch interface{}, world interface{}) bool {
-	// TODO: Check room flags via World.GetRoom(ch.GetRoom()).Flags
-	return false
+	type rg interface{ GetRoomVNum() int }
+	c, ok := ch.(rg)
+	if !ok {
+		return false
+	}
+	type wI interface { GetRoomInWorld(vnum int) *parser.Room }
+	w, ok := world.(wI)
+	if !ok {
+		return false
+	}
+	room := w.GetRoomInWorld(c.GetRoomVNum())
+	if room == nil {
+		return false
+	}
+	return room.HasFlag(RoomNoMagic)
 }
 
 // checkPosition verifies the caster is in a valid position to cast.
@@ -142,8 +158,21 @@ func checkPosition(ch interface{}, si *SpellInfo) bool {
 
 // roomIsPeaceful checks if the room has the PEACEFUL flag set.
 func roomIsPeaceful(ch interface{}, world interface{}) bool {
-	// TODO: Check room flags
-	return false
+	type rg interface{ GetRoomVNum() int }
+	c, ok := ch.(rg)
+	if !ok {
+		return false
+	}
+	type wI interface { GetRoomInWorld(vnum int) *parser.Room }
+	w, ok := world.(wI)
+	if !ok {
+		return false
+	}
+	room := w.GetRoomInWorld(c.GetRoomVNum())
+	if room == nil {
+		return false
+	}
+	return room.HasFlag(RoomPeaceful)
 }
 
 // magSavingThrow performs a saving throw check based on level, class, and save type.
