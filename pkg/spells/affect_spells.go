@@ -244,6 +244,10 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 		castWordOfRecall(level, ch, cvict, world)
 	case SpellTeleport:
 		castTeleport(level, ch, cvict, world)
+	case SpellMeteorSwarm:
+		castMeteorSwarm(level, ch, world)
+	case SpellHellfire:
+		castHellfire(level, ch, world)
 	default:
 		sendToCaster(ch, "Spell not yet implemented.\r\n")
 	}
@@ -347,6 +351,8 @@ func init() {
 	setupSpellInfo(SpellIdentify, PosStanding, 100, 125, 10, RoutineManual, false, TarCharRoom|TarObjInv|TarObjRoom)
 	setupSpellInfo(SpellWordOfRecall, PosFighting, 50, 50, 1, RoutineManual, false, TarCharRoom)
 	setupSpellInfo(SpellTeleport, PosFighting, 60, 50, 3, RoutineManual, false, TarCharRoom|TarFightVict)
+	setupSpellInfo(SpellMeteorSwarm, PosFighting, 80, 120, 8, RoutineManual, true, TarIgnore)
+	setupSpellInfo(SpellHellfire, PosFighting, 100, 150, 10, RoutineManual, true, TarIgnore)
 }
 
 // --- Wave A manual spell implementations ---
@@ -1110,7 +1116,66 @@ type (
 		GetRoomInWorld(vnum int) interface { HasFlag(bit int) bool }
 		GetRoomCount() int
 	}
+
+	// grouper for are_grouped checks
+	grouper interface{ IsInGroup() bool; GetFollowing() string; GetName() string }
+
+	// Room AoE interface for meteor_swarm / hellfire
+	// charInRoom for AoE iteration — all methods needed by meteor_swarm/hellfire
+	charInRoom interface {
+		GetName() string
+		GetRoomVNum() int
+		GetLevel() int
+		GetDex() int
+		SetPosition(int)
+		IsInGroup() bool
+		GetFollowing() string
+	}
+
+	// worldAoe for AoE damage spells — get chars + deal damage
+	worldAoe interface {
+		GetAllCharsInRoom(roomVNum int) []interface{}
+		DoSpellDamage(attacker, victim interface{}, dam int, skill string) bool
+		GetRoomInWorld(vnum int) *parser.Room
+	}
+
+	npcChecker2 interface{ IsNPC() bool }
 )
+
+// areGrouped returns true if two characters are in the same group.
+// C source: utils.c are_grouped() — checks AFF_GROUP, then walks follower chain.
+// Simplified Go: both InGroup + same master or follower relationship.
+func areGrouped(ch, victim interface{}) bool {
+	cg, ok := ch.(grouper)
+	if !ok {
+		return false
+	}
+	vg, ok := victim.(grouper)
+	if !ok {
+		return false
+	}
+	if !cg.IsInGroup() || !vg.IsInGroup() {
+		return false
+	}
+	if cg.GetName() == vg.GetName() {
+		return true
+	}
+	chMaster := cg.GetFollowing()
+	if chMaster == "" {
+		chMaster = cg.GetName()
+	}
+	vMaster := vg.GetFollowing()
+	if vMaster == "" {
+		vMaster = vg.GetName()
+	}
+	if chMaster == vMaster {
+		return true
+	}
+	if chMaster == vg.GetName() || vMaster == cg.GetName() {
+		return true
+	}
+	return false
+}
 
 // spell_recall ports src/spells.c spell_recall (lines 124–165).
 // Teleports the victim to their hometown. Can't use while fighting or in BFR rooms.
@@ -1243,6 +1308,150 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 	}
 
 	sendToCaster(ch, "The magic fails to find a destination.\r\n")
+}
+
+// castMeteorSwarm ports src/spells.c spell_meteor_swarm (lines 1088-1133).
+// AoE damage to all non-grouped characters in room. Must be outdoors.
+func castMeteorSwarm(level int, ch, world interface{}) {
+	w, ok := world.(worldAoe)
+	if !ok {
+		sendToCaster(ch, "The magic fizzles.\r\n")
+		return
+	}
+
+	chRG, _ := ch.(roomGetter2)
+	if chRG == nil {
+		return
+	}
+	roomVNum := chRG.GetRoomVNum()
+
+	// Peaceful room check
+	roomData := w.GetRoomInWorld(roomVNum)
+	if roomData != nil && roomData.HasFlag(RoomPeaceful) {
+		sendToCaster(ch, "This room just has such a peaceful, easy feeling..\r\n")
+		return
+	}
+
+	// OUTSIDE check: not INDOORS flag OR sector != INSIDE
+	if roomData != nil && roomData.HasFlag(3) && roomData.Sector == 0 {
+		sendToCaster(ch, "You can only do this outdoors!\r\n")
+		return
+	}
+
+	dam := level*6 + rand.Intn(level*3+1) - 10
+	if dam < 1 {
+		dam = 1
+	}
+
+	sendToCaster(ch, "Your incantation brings the heavens down upon your victims!\r\n")
+
+	// Damage all non-grouped, non-immort, non-caster chars in room
+	casterName := ""
+	if cn, ok := ch.(interface{ GetName() string }); ok {
+		casterName = cn.GetName()
+	}
+	casterLevel := 0
+	if cl, ok := ch.(interface{ GetLevel() int }); ok {
+		casterLevel = cl.GetLevel()
+	}
+
+	chars := w.GetAllCharsInRoom(roomVNum)
+	for _, c := range chars {
+		if c == ch {
+			continue
+		}
+		cn, _ := c.(charInRoom)
+		if cn == nil {
+			continue
+		}
+		// Skip immortals (non-NPCs level >= 100)
+		if nc, ok := c.(npcChecker2); ok && !nc.IsNPC() && cn.GetLevel() >= 100 {
+			continue
+		}
+		// Skip grouped
+		if areGrouped(ch, c) {
+			continue
+		}
+		w.DoSpellDamage(ch, c, dam, "meteor swarm")
+	}
+
+	_ = casterName
+	_ = casterLevel
+}
+
+// castHellfire ports src/spells.c spell_hellfire (lines 701-767).
+// AoE fire damage. DEX check can knock targets to sitting.
+// C bug: iterates character_list instead of room people (inefficient but functionally same).
+func castHellfire(level int, ch, world interface{}) {
+	w, ok := world.(worldAoe)
+	if !ok {
+		sendToCaster(ch, "The magic fizzles.\r\n")
+		return
+	}
+
+	chRG, _ := ch.(roomGetter2)
+	if chRG == nil {
+		return
+	}
+	roomVNum := chRG.GetRoomVNum()
+
+	// Peaceful room check
+	roomData := w.GetRoomInWorld(roomVNum)
+	if roomData != nil && roomData.HasFlag(RoomPeaceful) {
+		sendToCaster(ch, "This room just has such a peaceful, easy feeling..\r\n")
+		return
+	}
+
+	dam := dice(level/5+1, 12) + (2*level) - 10
+	if dam < 1 {
+		dam = 1
+	}
+
+	sendToCaster(ch, "The bowels of hell open beneath your feet!!\r\n")
+
+	// Dice function
+	// dice(num, sides) — need this
+	chars := w.GetAllCharsInRoom(roomVNum)
+	for _, c := range chars {
+		if c == ch {
+			continue
+		}
+		cn, ok := c.(charInRoom)
+		if !ok {
+			continue
+		}
+		// Skip immortals
+		if nc, ok := c.(npcChecker2); ok && !nc.IsNPC() && cn.GetLevel() >= 100 {
+			continue
+		}
+		// Skip level <= 4
+		if cn.GetLevel() <= 4 {
+			continue
+		}
+		// Skip grouped
+		if areGrouped(ch, c) {
+			continue
+		}
+
+		// Send damage messages
+		if vn, ok := c.(interface{ SendMessage(string) }); ok {
+			vn.SendMessage("The fires of hell bring blisters on your skin!\r\n")
+		}
+
+		w.DoSpellDamage(ch, c, dam, "hellfire")
+
+		// DEX check: if random(1,20) > caster DEX, knock to sitting
+		chDex := 0
+		if cd, ok := ch.(charInRoom); ok {
+			chDex = cd.GetDex()
+		}
+		if rand.Intn(20)+1 > chDex {
+			cn.SetPosition(2) // POS_SITTING
+			if vn, ok := c.(interface{ SendMessage(string) }); ok {
+				vn.SendMessage("The fires of hell bring you to your knees!\r\n")
+			}
+		}
+	}
 }
 
 

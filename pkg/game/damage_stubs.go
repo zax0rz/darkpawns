@@ -11,6 +11,35 @@ import (
 // ---------------------------------------------------------------------------
 
 // doDamage applies damage to a target.
+// DoSpellDamage applies damage to a player or mob, handling death.
+// Used by damage spells (hellfire, meteor_swarm, etc.) that need to hit any character type.
+func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill string) bool {
+	if dam <= 0 {
+		return false
+	}
+
+	attackerName := getAttackerName(attacker)
+
+	switch v := victim.(type) {
+	case *Player:
+		v.TakeDamage(dam)
+		v.SetFighting(attackerName)
+		if v.GetHP() <= 0 {
+			w.rawKill(v, 303)
+		}
+		return true
+	case *MobInstance:
+		v.TakeDamage(dam)
+		v.SetFighting(attackerName)
+		if v.GetHP() <= 0 {
+			w.handleMobDeath(v, 303)
+		}
+		return true
+	default:
+		return false
+	}
+}
+
 func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 	victim, ok := vict.(*Player)
 	if !ok {

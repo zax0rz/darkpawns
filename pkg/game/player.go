@@ -986,6 +986,20 @@ func (p *Player) GetCon() int {
 	return p.Stats.Con
 }
 
+// IsInGroup returns whether the player is in a group.
+func (p *Player) IsInGroup() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.InGroup
+}
+
+// GetFollowing returns the name of the player's group leader (empty if leading).
+func (p *Player) GetFollowing() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Following
+}
+
 // GetCha returns the player's charisma.
 func (p *Player) GetCha() int {
 	p.mu.RLock()
