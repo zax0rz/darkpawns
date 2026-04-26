@@ -68,6 +68,10 @@ var (
 	PerformCommand              func(chName, cmd string)
 	BroadChatFunc               func(chName string, msg string)
 	IsInRoom                    func(name string, roomVNum int) bool
+	IncreaseMaxStat              func(name string, stat string) // "hp", "mana", or "move"
+	HealAllPlayers               func()                     // Heal all connected players to full
+	GetGold                      func(name string) int
+	SetGold                      func(name string, gold int)
 )
 
 // ---------------------------------------------------------------------------
@@ -550,6 +554,30 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 					}
 				}
 
+				// autosplit — fight.c:756-830
+				if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOSPLIT") && GetGold != nil && SetGold != nil && ApplyToGroupMembers != nil {
+					gold := GetGold(chName)
+					if gold > 0 {
+						numMembers := CountGroupMembers(chName, ch.GetRoom())
+						if numMembers > 1 {
+							perMember := gold / numMembers
+							if perMember > 0 {
+								ApplyToGroupMembers(chName, ch.GetRoom(), func(memberName string) {
+									if memberName != chName {
+										if SetGold != nil {
+												SetGold(memberName, GetGold(memberName)+perMember)
+											}
+										}
+									})
+								ch.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", perMember))
+								SetGold(chName, GetGold(chName)-gold+perMember+(gold%numMembers))
+							} else {
+								ch.SendMessage("You split no gold, you got none.\r\n")
+							}
+						}
+					}
+				}
+
 				ChangeAlignment(ch, victim)
 			}
 		}
@@ -988,15 +1016,50 @@ func MakeDust(victim Combatant, attackType int) {
 // **********************************
 
 func CounterProcs(ch Combatant) {
+	if ch.IsNPC() {
+		return
+	}
 	kills := int64(0)
 	if GetKills != nil {
 		kills = GetKills(ch.GetName())
 	}
-	if kills > 0 && kills%100 == 0 {
 
+	reward := false
+	switch kills {
+	case 5000, 15000, 25000, 35000, 45000:
+		// Minor milestones: full heal + global blessing
+		ch.SendMessage("The gods reward your glory in battle!\r\n")
+		ch.Heal(ch.GetMaxHP() - ch.GetHP())
+		reward = true
+	case 1000, 2000, 10000, 20000, 30000, 40000, 50000:
+		// Major milestones: random +1 max stat, full heal, global blessing
+		ch.SendMessage("The gods reward your many victories!\r\n")
+		reward = true
+		// C has a bug: missing break in switch cases means all 3 branches execute.
+		// Reproducing the bug for fidelity.
+		// In C: case 1: GET_MAX_HIT++; case 2: GET_MAX_MANA++; case 3: GET_MAX_MOVE++;
+		//            default: GET_MAX_HIT++; break;
+		// Since case 3 falls through to default and all lack breaks,
+		// ALL THREE stats get +1 (case 1+3 hit, case 2 mana, case 3 move).
+		if IncreaseMaxStat != nil {
+			IncreaseMaxStat(ch.GetName(), "hp")
+			IncreaseMaxStat(ch.GetName(), "mana")
+			IncreaseMaxStat(ch.GetName(), "move")
+		}
+		ch.Heal(ch.GetMaxHP() - ch.GetHP())
+	default:
+		return
 	}
-	if kills > 0 && kills%50 == 0 {
 
+	if reward {
+		// Global blessing — heal all connected players
+		if HealAllPlayers != nil {
+			HealAllPlayers()
+		}
+		// Log milestone
+		if LogMessage != nil {
+			LogMessage(fmt.Sprintf("%s hit %d kills.", ch.GetName(), kills), "NRM", LVL_IMMORT, false)
+		}
 	}
 }
 

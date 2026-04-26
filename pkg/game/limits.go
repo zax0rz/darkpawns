@@ -94,9 +94,15 @@ func isMystic(p *Player) bool {
 // isVeteran — from utils.c:358-362
 // ---------------------------------------------------------------------------
 // playing_time(ch).day >= 30 && GET_KILLS(ch) >= 10000
-// TODO: implement when playing_time and kill count fields are added.
-func isVeteran(_ *Player) bool {
-	return false
+func isVeteran(p *Player) bool {
+	if p == nil {
+		return false
+	}
+	if p.PlayedDuration <= 0 {
+		return false
+	}
+	pt := PlayingTime(p.ConnectedAt, p.PlayedDuration)
+	return pt.Day >= 30 && p.Kills >= 10000
 }
 
 // ---------------------------------------------------------------------------
@@ -217,6 +223,12 @@ func (w *World) HitGain(p *Player) int {
 		gain += 12
 	}
 
+	// KK_JIN skill bonus — limits.c:144-146, +25% regen when not fighting
+	// TODO: implement when affected_by_spell(SKILL_KK_JIN=162) is available
+	// if !isFighting && hasSpellAffect(p, 162) {
+	// 	gain += gain >> 2
+	// }
+
 	// Position calculations — limits.c:149-167
 	switch pos {
 	case PosSleeping:
@@ -289,6 +301,12 @@ func (w *World) MoveGain(p *Player) int {
 	if veteran {
 		gain += 4
 	}
+
+	// KK_ZHEN skill bonus — limits.c:212-214, +25% regen when not fighting
+	// TODO: implement when affected_by_spell(SKILL_KK_ZHEN=165) is available
+	// if !isFighting && hasSpellAffect(p, 165) {
+	// 	gain += gain >> 2
+	// }
 
 	// Position calculations — limits.c:217-235
 	switch pos {
