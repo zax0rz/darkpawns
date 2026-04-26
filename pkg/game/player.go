@@ -82,7 +82,17 @@ type Player struct {
 	// State
 	ConnectedAt time.Time
 	LastActive  time.Time
-	Fighting    string // Name of character being fought
+
+	// Birth — Unix timestamp of character creation (ch->player.time.birth).
+	// Used by Age() to calculate character age in MUD years.
+	Birth int64
+
+	// PlayedDuration — total accumulated play time in real seconds (ch->player.time.played).
+	// Updated on disconnect: PlayedDuration += time.Since(ConnectedAt).
+	// Used by PlayingTime() for formatted play-time display.
+	PlayedDuration int64
+
+	Fighting string // Name of character being fought
 
 	// Conditions: hunger/thirst/drunk — from limits.c
 	// Range: -1 (gone) to 24 (full); clamped 0-48 in original gain_condition
@@ -143,6 +153,14 @@ type Player struct {
 	HolyLight  bool // Can see in the dark (PRF_HOLYLIGHT)
 	RoomFlags  bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
 
+	// AutoGold indicates the player auto-loots gold from killed victims (PRF_AUTOGOLD = 24).
+	// Source: structs.h:#define PRF_AUTOGOLD 24
+	AutoGold  bool
+
+	// AutoSplit indicates the player splits gold among group members (PRF_AUTOSPLIT = 25).
+	// Source: structs.h:#define PRF_AUTOSPLIT 25
+	AutoSplit bool
+
 	// NoBroadcast indicates the player has toggled off global broadcasts (PRF_NOBROAD).
 	NoBroadcast bool
 
@@ -186,10 +204,13 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		Position:     8,                                          // POS_STANDING
 		ConnectedAt:  now,
 		LastActive:   now,
+		Birth:       now.Unix(), // character creation timestamp
 		Fighting:     "", // Not fighting anyone
 		Send:         make(chan []byte, 256),
 		AFK:          false,
 		AFKMessage:   "",
+		AutoGold:     false, // Autogold off by default
+		AutoSplit:    false, // Autosplit off by default
 		Alignment:    0, // Neutral by default
 		SkillManager: engine.NewSkillManager(),
 		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original

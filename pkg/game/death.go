@@ -22,6 +22,26 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/events"
 )
 
+// Con loss probability thresholds — from fight.c die_with_killer()
+// These exactly mirror the C logic:
+//   level 1-4:  always lose 1 con (no random check)
+//   level 5-9:  lose 1 con on !number(0,1) = 50% (ConLossLevel5Chance = 2 means 1-in-2)
+//   level 10+:  lose 1 con on !number(0,2) = 33% (ConLossLevel10Chance = 3 means 1-in-3)
+//   level 5+:   also get the first check (GET_LEVEL(ch) > 5 && !number(0,3) in C)
+// The C code actually does:
+//   if (GET_LEVEL(ch) > 5 && !number(0,3)) // 1/4 chance, 3/4 no loss
+//   if (GET_LEVEL(ch) > 20 && !number(0,5)) // 1/6 additional chance for second con
+// This means:
+//   level 1-5:   no CON loss from die_with_killer (the >5 check fails)
+//   level 6-20:  !number(0,3) = 25% chance lose 1 con
+//   level 21+:   same 25% + additional !number(0,5) = 16.7% chance for 2nd con
+const (
+	ConLossCheckChance = 4  // !number(0,3) = 3/4 chance skip, 1/4 chance lose 1 con
+	ConLossSecondChance = 6 // !number(0,5) = 5/6 chance skip, 1/6 chance lose 2nd con
+	ConLossMinLevel     = 6  // Level > 5 → minimum level 6 for any CON loss
+	ConLossSecondLevel  = 21 // Level > 20 → minimum level 21 for second CON loss
+)
+
 // MortalStartRoom is the vnum of the mortal start room (config.c: mortal_start_room = 8004)
 const MortalStartRoom = 8004
 
@@ -31,12 +51,14 @@ const MortalStartRoom = 8004
 // Source: fight.c die_with_killer() uses GET_EXP(ch)/37
 func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 	if victim.IsNPC() {
-		// Capture mob vnum/exp before the mob is removed from the world.
+		// Capture mob vnum/exp/gold before the mob is removed from the world.
 		// Source: fight.c die_with_killer() line 1638 — group_gain(ch, victim)
 		mobExp := 0
+		mobGold := 0
 		mobVNum := 0
 		if mob, ok := victim.(*MobInstance); ok && mob.Prototype != nil {
 			mobExp = mob.Prototype.Exp
+			mobGold = mob.Prototype.Gold
 			mobVNum = mob.Prototype.VNum
 		}
 		// Fire memory hook before removing mob from active list
@@ -67,10 +89,8 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 				RoomVNum: victim.GetRoom(),
 			})
 		}
-		// Award XP to killer and party members — fight.c group_gain()
-		if mobExp > 0 {
-			w.AwardMobKillXP(killer, mobExp)
-		}
+		// Award XP and gold to killer and party members — fight.c group_gain() lines 708-830
+		w.AwardMobKillXP(killer, mobExp, mobGold)
 	} else {
 		// Fire player death hook
 		killerName := ""
@@ -91,7 +111,7 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			RoomName:    roomName,
 			IsCombat:    true,
 		})
-		w.handlePlayerDeath(victim, true, attackType) // combat death
+		w.handlePlayerDeath(victim, true, attackType, killerName) // combat death with killer
 		// Publish typed event bus event
 		if w.Events != nil {
 			w.Events.Publish(context.Background(), events.PlayerKilledEvent{
@@ -109,7 +129,7 @@ func (w *World) HandleNonCombatDeath(victim combat.Combatant) {
 	if victim.IsNPC() {
 		w.handleMobDeath(victim, -1) // TYPE_UNDEFINED
 	} else {
-		w.handlePlayerDeath(victim, false, -1) // non-combat death, TYPE_UNDEFINED
+		w.handlePlayerDeath(victim, false, -1, "") // non-combat death, TYPE_UNDEFINED, no killer
 	}
 }
 
@@ -154,11 +174,14 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 		equipmentItems = append(equipmentItems, item)
 	}
 
+	// Transfer gold into corpse (as money objects)
+	mobGold := deadMob.GetGold()
+
 	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
 	if attackType == 93 { // SPELL_DISINTEGRATE
-		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum)
+		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, mobGold)
 	} else {
-		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType)
+		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, mobGold)
 		w.MoveObjectToRoom(corpse, roomVNum)
 	}
 
@@ -181,8 +204,12 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 //	die():             gain_exp(ch, -(GET_EXP(ch)/3))   (non-combat death)
 //	raw_kill(): stop_fighting, make_corpse, extract_char
 //
+// CON loss (die_with_killer only, fight.c lines 598-607):
+//   if GET_LEVEL(ch) > 5 && !number(0,3):  lose 1 con (1/4 chance)
+//   if GET_LEVEL(ch) > 20 && !number(0,5): lose 1 more con (1/6 additional chance)
+//
 // Modern addition: respawn at MortalStartRoom, heal to full.
-func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int) {
+func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int, killerName string) {
 	roomVNum := victim.GetRoom()
 
 	// Find the Player
@@ -211,6 +238,29 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		player.SendMessage(fmt.Sprintf("You lose %d experience points.\r\n", expLoss))
 	}
 
+	// CON loss — fight.c die_with_killer() lines 598-607
+	// Only applies to combat deaths (die_with_killer path)
+	if isCombatDeath && player.Level > ConLossMinLevel-1 {
+		// GET_LEVEL(ch) > 5 means level 6+
+		if number(0, ConLossCheckChance-1) == 0 {
+			player.Stats.Con--
+			if player.Stats.Con < 1 {
+				player.Stats.Con = 1
+			}
+			// GET_LEVEL(ch) > 20 means level 21+
+			if player.Level >= ConLossSecondLevel && number(0, ConLossSecondChance-1) == 0 {
+				player.Stats.Con--
+				if player.Stats.Con < 1 {
+					player.Stats.Con = 1
+				}
+			}
+			// affect_total(ch) — sends updated stats message
+			player.SendMessage(fmt.Sprintf(
+				"You lose some constitution! Your Constitution is now %d.\r\n",
+				player.Stats.Con))
+		}
+	}
+
 	// make_corpse: transfer inventory and equipment to corpse
 	var inventoryItems []*ObjectInstance
 	var equipmentItems []*ObjectInstance
@@ -235,11 +285,17 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		player.Equipment.mu.Unlock()
 	}
 
+	// Transfer gold — fight.c make_corpse() line 410: GET_GOLD(ch) -> create_money -> obj_to_obj(corpse)
+	player.mu.Lock()
+	playerGold := player.Gold
+	player.Gold = 0
+	player.mu.Unlock()
+
 	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
 	if attackType == 93 { // SPELL_DISINTEGRATE
-		w.makeDust(player, inventoryItems, equipmentItems, roomVNum)
+		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
 	} else {
-		corpse := w.makeCorpse(player.Name, player.Sex, inventoryItems, equipmentItems, roomVNum, attackType)
+		corpse := w.makeCorpse(player.Name, player.Sex, inventoryItems, equipmentItems, roomVNum, attackType, playerGold)
 		w.MoveObjectToRoom(corpse, roomVNum)
 	}
 
@@ -359,6 +415,69 @@ func corpseAttackLongDesc(name string, attackType CorpseAttackType, gender strin
 
 // makeCorpse creates a corpse container object, faithfully to make_corpse() in fight.c.
 // The corpse is an ObjectInstance with ITEM_NODONATE, containing the victim's inventory.
+// createMoneyObject creates a gold coin/money object with the given amount.
+// Source: handler.c create_money() — creates a container-type object representing coins.
+// In the original, this is a special object without a prototype VNum.
+func (w *World) createMoneyObject(amount int) *ObjectInstance {
+	if amount <= 0 {
+		return nil
+	}
+	// Build description based on amount (matching handler.c create_money())
+	var shortDesc, longDesc, name string
+	if amount == 1 {
+		name = "coin gold"
+		shortDesc = "a gold coin"
+		longDesc = "One miserable gold coin is lying here."
+	} else {
+		name = "coins gold"
+		shortDesc = createMoneyDesc(amount)
+		longDesc = fmt.Sprintf("%s is lying here.", capitalize(createMoneyDesc(amount)))
+	}
+
+	money := &ObjectInstance{
+		Prototype: nil, // synthetic object, no prototype
+		VNum:      -1,
+		RoomVNum:  -1,
+		Contains:  make([]*ObjectInstance, 0),
+		CustomData: map[string]interface{}{
+			"is_money":    true,
+			"money_amount": amount,
+		},
+	}
+	money.Runtime.Name = name
+	money.Runtime.ShortDesc = shortDesc
+	money.Runtime.LongDesc = longDesc
+
+	w.mu.Lock()
+	money.ID = w.nextObjID
+	w.nextObjID++
+	w.objectInstances[money.ID] = money
+	w.mu.Unlock()
+
+	return money
+}
+
+// createMoneyDesc wraps the amount for the short description (like handler.c money_desc())
+func createMoneyDesc(amount int) string {
+	if amount == 1 {
+		return "a gold coin"
+	}
+	// Simplified version of money_desc() — C has specific ranges
+	return fmt.Sprintf("a pile of %d gold coins", amount)
+}
+
+// capitalize capitalizes the first letter of a string.
+func capitalize(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	r := []rune(s)
+	if r[0] >= 'a' && r[0] <= 'z' {
+		r[0] = r[0] - 32
+	}
+	return string(r)
+}
+
 // genderPronoun returns the possessive pronoun for the given sex value.
 func genderPronoun(sex int) string {
 	switch sex {
@@ -371,7 +490,7 @@ func genderPronoun(sex int) string {
 	}
 }
 
-func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int) *ObjectInstance {
+func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int) *ObjectInstance {
 	corpse := &ObjectInstance{
 		Prototype: nil, // synthetic object, no prototype vnum
 		VNum:      -1,
@@ -419,12 +538,19 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 		}
 	}
 
+	// Transfer gold — fight.c make_corpse() lines 406-413:
+	// if (GET_GOLD(ch) > 0) { money = create_money(GET_GOLD(ch)); obj_to_obj(money, corpse); GET_GOLD(ch) = 0; }
+	if gold > 0 {
+		moneyObj := w.createMoneyObject(gold)
+		_ = w.MoveObjectToContainer(moneyObj, corpse)
+	}
+
 	return corpse
 }
 
 // makeDust implements make_dust() for SPELL_DISINTEGRATE
 // Source: fight.c lines 433-480
-func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int) {
+func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, gold int) {
 	// Scatter ALL inventory items directly to room floor
 	for _, item := range inventory {
 		if item != nil {
@@ -437,6 +563,12 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 		if item != nil {
 			_ = w.MoveObjectToRoom(item, roomVNum)
 		}
+	}
+
+	// Scatter gold as money objects to room floor (original make_dust also drops gold)
+	if gold > 0 {
+		moneyObj := w.createMoneyObject(gold)
+		_ = w.MoveObjectToRoom(moneyObj, roomVNum)
 	}
 
 	// Create ash object

@@ -79,14 +79,97 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 
 // AwardMobKillXP distributes experience to the killer and all grouped members in the same room.
 // For solo kills (no group), the killer gets the full victimExp.
+// If victimGold > 0 and the killer has AutoGold enabled, gold is looted/split
+// according to the autosplit preference.
 // Source: fight.c group_gain() lines 708–745, called at die_with_killer() line 1638
-func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int) {
-	if victimExp <= 0 {
+func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGold int) {
+	if victimExp <= 0 && victimGold <= 0 {
 		return
 	}
 
 	killerName := killer.GetName()
 	killerRoom := killer.GetRoom()
+
+	// Look up the killer as a Player for preference flags
+	kp, isPlayer := w.GetPlayer(killerName)
+
+	// --- Gold handling (fight.c group_gain() lines 747+) ---
+	// Source: fight.c lines 747-830
+	if isPlayer && victimGold > 0 && kp.AutoGold {
+		// Base gold for distribution — fight.c: gold_looted = GET_GOLD(victim); GET_GOLD(victim) = 0
+		goldLooted := victimGold
+
+		if kp.AutoSplit {
+			// Autosplit path — fight.c lines 756-830
+			// Announce the loot to killer
+			kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
+				goldLooted, killerName))
+
+			// Get group members in the room
+			members := w.GetGroupMembers(killerName)
+			var inRoom []*Player
+			for _, m := range members {
+				if m.GetRoom() == killerRoom {
+					inRoom = append(inRoom, m)
+				}
+			}
+			totMembers := len(inRoom)
+
+			// If we have group members, distribute
+			if totMembers > 1 {
+				goldPerMember := goldLooted / totMembers
+				remaining := goldLooted
+
+				for _, m := range inRoom {
+					if m == kp {
+						continue // handle leader last
+					}
+					if goldPerMember > 0 {
+						m.SendMessage(fmt.Sprintf("%s splits some gold with you, you get %d.\r\n",
+							kp.Name, goldPerMember))
+						kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
+							goldPerMember, m.Name))
+						m.mu.Lock()
+						m.Gold += goldPerMember
+						m.mu.Unlock()
+						remaining -= goldPerMember
+					} else {
+						kp.SendMessage(fmt.Sprintf("You would share gold with %s, but there was none to split!\r\n",
+							m.Name))
+						m.SendMessage(fmt.Sprintf("%s would have shared some gold with you but there was none to split!\r\n",
+							kp.Name))
+					}
+				}
+
+				// Killer keeps the remainder
+				if remaining > 0 {
+					kp.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", remaining))
+					kp.mu.Lock()
+					kp.Gold += remaining
+					kp.mu.Unlock()
+				} else {
+					kp.SendMessage("When you split no gold, you got none.\r\n")
+				}
+			} else {
+				// Solo kill with autogold+autosplit but no group — just take all
+				kp.mu.Lock()
+				kp.Gold += goldLooted
+				kp.mu.Unlock()
+				kp.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", goldLooted))
+			}
+		} else {
+			// AutoGold without AutoSplit — just loot
+			kp.mu.Lock()
+			kp.Gold += goldLooted
+			kp.mu.Unlock()
+			kp.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", goldLooted))
+		}
+	}
+
+	// --- Experience handling ---
+	if victimExp <= 0 {
+		return
+	}
 
 	members := w.GetGroupMembers(killerName)
 

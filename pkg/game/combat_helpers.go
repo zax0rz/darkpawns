@@ -103,7 +103,7 @@ func improveSkill(ch *Player, skill string) {
 func (w *World) rawKill(victim *Player, attackType int) {
 	// Handle death via existing infrastructure
 	// Make a corpse first so items are preserved
-	corpse := w.makeCorpse(victim.GetName(), victim.GetSex(), nil, nil, victim.RoomVNum, attackType)
+	corpse := w.makeCorpse(victim.GetName(), victim.GetSex(), nil, nil, victim.RoomVNum, attackType, 0)
 	_ = corpse // corpse is placed in the room by makeCorpse
 
 	// Trigger death processing

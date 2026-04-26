@@ -765,7 +765,7 @@ func (w *World) HandleSpellDeathScriptable(victimName string, spellNum int, room
 		// We need to handle this as a combat death with spell attack type
 		// For now, we'll call handlePlayerDeath directly
 		// TODO: Find the actual killer (caster) if possible
-		w.handlePlayerDeath(player, true, spellNum)
+		w.handlePlayerDeath(player, true, spellNum, "")
 		return
 	}
 

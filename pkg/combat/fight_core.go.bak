@@ -31,11 +31,9 @@ var (
 	RunFightScript              func(mob, target string, roomVNum int)
 	HasScriptFlag               func(name string, flag string) bool
 	HasMobFlag                  func(name string, flag string) bool
-	HasMobVNum                  func(name string, vnum int) bool
 	HasRoomFlag                 func(roomVNum int, flag string) bool
 	HasPrfFlag                  func(name string, flag string) bool
 	HasPlrFlag                  func(name string, flag string) bool
-	SetPlrFlag                  func(name string) bool
 	IsMounted                   func(name string) bool
 	Dismount                    func(name string)
 	GetWimpyLev                 func(name string) int
@@ -312,77 +310,12 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		return false
 	}
 
-	// jail guard logic (fight.c:1370): guards respond to PK in cities
-	if ch.IsNPC() && !victim.IsNPC() && HasMobVNum != nil &&
-		(HasMobVNum(chName, 8102) || HasMobVNum(chName, 8103)) {
-		if dam > 0 && ch.GetHP() > ch.GetMaxHP()/2 {
-			hasVampire := HasAffectStr != nil && HasAffectStr(victimName, AFF_STR_VAMPIRE)
-			hasWerewolf := HasAffectStr != nil && HasAffectStr(victimName, AFF_STR_WEREWOLF)
-			if !hasVampire && !hasWerewolf {
-				if BroadcastMessage != nil {
-					BroadcastMessage(roomVNum,
-						fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
-							chName, victimName, victimName), "")
-				}
-				victim.StopFighting()
-				return false
-			}
-		}
-	}
-
 	if victimName != chName && ch.GetPosition() > PosStunned {
 		if ch.GetFighting() == "" {
 			ch.SetFighting(victimName)
 		}
-
-		// charm retarget (fight.c:1410): charmed NPC attacking their master's friend
-		// In C: if victim is charmed and master in room, hit(ch, victim->master, TYPE_UNDEFINED)
-		// Can't construct a Combatant for master here — game layer handles via hooks.
-		// We leave a comment; the PerformCommand/Flee/etc hooks should cover it.
-
-		// NPC target switching (fight.c:1420): high-level NPCs switch to highest-damage attacker
-		if ch.IsNPC() && ch.GetLevel() > 20 {
-			if HasMobFlag != nil && HasMobFlag(victimName, "HAS_AGGR_LIST") {
-				// Aggro list tracking would be done via game-layer hooks.
-				// The C code iterates room people to find FIGHTING(vict)==ch, remembers via memory.
-				// This is inherently game-layer; we signal intent via PerformCommand if possible.
-			}
-		}
-
 		if victim.GetPosition() > PosStunned && victim.GetFighting() == "" {
 			victim.SetFighting(chName)
-			// MOB_MEMORY: NPC remembers PC attacker (fight.c:1445)
-			if HasMobFlag != nil && HasMobFlag(victimName, "MOB_MEMORY") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
-				if PerformCommand != nil {
-					PerformCommand(victimName, fmt.Sprintf("remember %s", chName))
-				}
-			}
-			// MOB_HUNTER: NPC starts hunting PC attacker (fight.c:1449)
-			if HasMobFlag != nil && HasMobFlag(victimName, "MOB_HUNTER") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
-				if PerformCommand != nil {
-					PerformCommand(victimName, fmt.Sprintf("hunt %s", chName))
-				}
-			}
-		}
-		// MOB_HUNTER: attacker also hunts victim (fight.c:1453)
-		if HasMobFlag != nil && HasMobFlag(chName, "MOB_HUNTER") && !victim.IsNPC() && victim.GetLevel() < LVL_IMMORT {
-			if PerformCommand != nil {
-				PerformCommand(chName, fmt.Sprintf("hunt %s", victimName))
-			}
-		}
-	}
-
-	// stop_follower: if victim follows ch, break following (fight.c:1457)
-	// Handled via game-layer hooks.
-
-	// AFF_HIDE: attacker becomes visible on offensive action (fight.c:1459)
-	if HasAffect != nil && HasAffect(chName, AFF_HIDE) {
-		if RemoveAffect != nil {
-			RemoveAffect(chName, AFF_HIDE)
-		}
-		if BroadcastMessage != nil {
-			BroadcastMessage(roomVNum,
-				fmt.Sprintf("%s slowly fades into existence.", chName), chName)
 		}
 	}
 
@@ -390,7 +323,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		victimRace := GetRace(victimName)
 		for i := 0; i < 5; i++ {
 			if GetRaceHate(chName, i) == victimRace {
-				dam += ch.GetLevel() // no break — C applies for every matching slot
+				dam += ch.GetLevel()
+				break
 			}
 		}
 	}
@@ -468,8 +402,10 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 	}
 
-	switch newPos {
-	case PosMortally:
+	pos := GetPositionFromHP(dam)
+	switch pos {
+
+		case PosMortally:
 			victim.SendMessage("You are mortally wounded, and will die soon, if not aided.\r\n")
 			if BroadcastMessage != nil {
 				BroadcastMessage(roomVNum,
@@ -542,35 +478,19 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 				if !ch.IsNPC() && GainExp != nil {
 					GainExp(chName, exp)
 				}
-
-				// autogold on kill (fight.c:1654)
-				if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOGOLD") {
-					if PerformCommand != nil {
-						PerformCommand(chName, "get all gold corpse")
-					}
-				}
-
 				ChangeAlignment(ch, victim)
 			}
 		}
 
-		// player death section (fight.c:1665)
 		if !victim.IsNPC() {
 			if !ch.IsNPC() && chName != victimName {
-				// Pkill (fight.c:1672)
 				if LogMessage != nil {
-					LogMessage(fmt.Sprintf("(PK) %s killed by %s at room %d", victimName, chName, roomVNum),
+					LogMessage(fmt.Sprintf("(PK) %s killed by %s", victimName, chName),
 						"BRF", LVL_IMMORT, true)
-				}
-				// flag killer as outlaw if victim wasn't one (fight.c:1675)
-				if HasPlrFlag != nil && !HasPlrFlag(victimName, "PLR_OUTLAW") {
-					if SetPlrFlag != nil {
-						SetPlrFlag(chName)
-					}
 				}
 			} else {
 				if LogMessage != nil {
-					LogMessage(fmt.Sprintf("%s killed by %s at room %d", victimName, chName, roomVNum),
+					LogMessage(fmt.Sprintf("%s killed by %s", victimName, chName),
 						"BRF", LVL_IMMORT, true)
 				}
 			}
@@ -596,21 +516,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			(HasMobFlag(chName, "MOB_AGGR24") || HasMobFlag(chName, "MOB_LOOTS")) {
 			AttitudeLoot(ch, victim)
 		}
-
-		// autoloot on kill (fight.c:1708)
-		if !ch.IsNPC() && victim.IsNPC() && chName != victimName {
-			if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOLOOT") {
-				if PerformCommand != nil {
-					PerformCommand(chName, "get all corpse")
-				}
-			}
-		}
 	}
-
-	if dam > 0 {
-		return true
-	}
-	return false
+	return true
 }
 
 var NowUnix = func() int64 { return 0 }
