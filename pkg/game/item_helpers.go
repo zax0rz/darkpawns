@@ -5,45 +5,96 @@ import (
 	"strings"
 )
 
+// ItemType represents a CircleMUD item type constant.
+type ItemType int
+
 // Item type constants matching src/structs.h
 const (
-	ITEM_LIGHT       = 1
-	ITEM_SCROLL      = 2
-	ITEM_WAND        = 3
-	ITEM_STAFF       = 4
-	ITEM_WEAPON      = 5
-	ITEM_FIRE_WEAPON = 6
-	ITEM_MISSILE     = 7
-	ITEM_TREASURE    = 8
-	ITEM_ARMOR       = 9
-	ITEM_POTION      = 10
-	ITEM_WORN        = 11
-	ITEM_OTHER       = 12
-	ITEM_TRASH       = 13
-	ITEM_TRAP        = 14
-	ITEM_CONTAINER   = 15
-	ITEM_NOTE        = 16
-	ITEM_DRINKCON    = 17
-	ITEM_KEY         = 18
-	ITEM_FOOD        = 19
-	ITEM_MONEY       = 20
-	ITEM_PEN         = 21
-	ITEM_BOAT        = 22
-	ITEM_FOUNTAIN    = 23
-	ITEM_VEHICLE     = 24
-	ITEM_ONION       = 25
-	ITEM_ARMOR_PIECE = 26
-	ITEM_TATTOO      = 27
-	ITEM_RAWMAT      = 28
-	ITEM_WEAPON_PART = 29
-	ITEM_TOOL        = 30
-	ITEM_GEM         = 31
-	ITEM_JEWELRY     = 32
-	ITEM_FURNITURE   = 33
-	ITEM_BAG         = 35
-	ITEM_BACKPACK    = 36
-	ITEM_CORPSE      = 37
+	ItemLight       ItemType = 1
+	ItemScroll      ItemType = 2
+	ItemWand        ItemType = 3
+	ItemStaff       ItemType = 4
+	ItemWeaponType  ItemType = 5
+	ItemFireWeapon  ItemType = 6
+	ItemMissile     ItemType = 7
+	ItemTreasure    ItemType = 8
+	ItemArmor       ItemType = 9
+	ItemPotion      ItemType = 10
+	ItemWorn        ItemType = 11
+	ItemOther       ItemType = 12
+	ItemTrash       ItemType = 13
+	ItemTrap        ItemType = 14
+	ItemContainer   ItemType = 15
+	ItemNote        ItemType = 16
+	ItemDrinkcon    ItemType = 17
+	ItemKey         ItemType = 18
+	ItemFood        ItemType = 19
+	ItemMoney       ItemType = 20
+	ItemPen         ItemType = 21
+	ItemBoat        ItemType = 22
+	ItemFountain    ItemType = 23
+	ItemVehicle     ItemType = 24
+	ItemOnion       ItemType = 25
+	ItemArmorPiece  ItemType = 26
+	ItemTattoo      ItemType = 27
+	ItemRawmat      ItemType = 28
+	ItemWeaponPart  ItemType = 29
+	ItemTool        ItemType = 30
+	ItemGem         ItemType = 31
+	ItemJewelry     ItemType = 32
+	ItemFurniture   ItemType = 33
+	ItemBag         ItemType = 35
+	ItemBackpack    ItemType = 36
+	ItemCorpse      ItemType = 37
 )
+
+// Legacy aliases for backward compatibility (typed as int so they work with
+// parser.Obj.TypeFlag = int without requiring casts everywhere).
+const (
+	ITEM_LIGHT       int = 1
+	ITEM_SCROLL      int = 2
+	ITEM_WAND        int = 3
+	ITEM_STAFF       int = 4
+	ITEM_WEAPON      int = 5
+	ITEM_FIRE_WEAPON int = 6
+	ITEM_MISSILE     int = 7
+	ITEM_TREASURE    int = 8
+	ITEM_ARMOR       int = 9
+	ITEM_POTION      int = 10
+	ITEM_WORN        int = 11
+	ITEM_OTHER       int = 12
+	ITEM_TRASH       int = 13
+	ITEM_TRAP        int = 14
+	ITEM_CONTAINER   int = 15
+	ITEM_NOTE        int = 16
+	ITEM_DRINKCON    int = 17
+	ITEM_KEY         int = 18
+	ITEM_FOOD        int = 19
+	ITEM_MONEY       int = 20
+	ITEM_PEN         int = 21
+	ITEM_BOAT        int = 22
+	ITEM_FOUNTAIN    int = 23
+	ITEM_VEHICLE     int = 24
+	ITEM_ONION       int = 25
+	ITEM_ARMOR_PIECE int = 26
+	ITEM_TATTOO      int = 27
+	ITEM_RAWMAT      int = 28
+	ITEM_WEAPON_PART int = 29
+	ITEM_TOOL        int = 30
+	ITEM_GEM         int = 31
+	ITEM_JEWELRY     int = 32
+	ITEM_FURNITURE   int = 33
+	ITEM_BAG         int = 35
+	ITEM_BACKPACK    int = 36
+	ITEM_CORPSE      int = 37
+)
+
+// ItemType helper methods
+func (t ItemType) IsContainer() bool { return t == ItemContainer }
+func (t ItemType) IsWeapon() bool    { return t == ItemWeaponType || t == ItemFireWeapon || t == ItemMissile }
+func (t ItemType) IsArmor() bool     { return t == ItemArmor || t == ItemArmorPiece || t == ItemWorn }
+func (t ItemType) IsFood() bool      { return t == ItemFood || t == ItemDrinkcon }
+func (t ItemType) IsReadable() bool  { return t == ItemScroll || t == ItemNote || t == ItemPen }
 
 // Container value indices
 const (
