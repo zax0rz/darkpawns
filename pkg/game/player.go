@@ -65,6 +65,14 @@ type Player struct {
 	Sex   int // 0=male, 1=female, 2=neutral (matching C SEX_* constants)
 	Stats CharStats
 
+	// SavingThrows — array of 5 saving throw values: para, rod, petri, breath, spell
+	// Source: structs.h saving_throws[5]
+	SavingThrows [5]int
+
+	// MasterAffects — active spell/status effects used by the engine for affect iteration.
+	// Replaces ActiveAffects for engine interaction; ActiveAffects remains for serialization.
+	MasterAffects []*engine.MasterAffect
+
 	// Combat stats
 	THAC0      int // To Hit Armor Class 0
 	AC         int // Armor Class
@@ -438,6 +446,165 @@ func (p *Player) GetDamageRoll() combat.DiceRoll {
 // IsNPC returns false for players.
 func (p *Player) IsNPC() bool {
 	return false
+}
+
+// ──── StatModifiable interface implementation ────
+
+// GetMapping returns the stat name → field pointer mapping used by GetStat/SetStat.
+func statMapping(p *Player) map[string]*int {
+	return map[string]*int{
+		"STR":       &p.Stats.Str,
+		"DEX":       &p.Stats.Dex,
+		"INT":       &p.Stats.Int,
+		"WIS":       &p.Stats.Wis,
+		"CON":       &p.Stats.Con,
+		"CHA":       &p.Stats.Cha,
+		"HP":        &p.MaxHealth,
+		"Mana":      &p.MaxMana,
+		"Move":      &p.MaxMove,
+		"Hitroll":   &p.Hitroll,
+		"Damroll":   &p.Damroll,
+		"AC":        &p.AC,
+		"Level":     &p.Level,
+		"Alignment": &p.Alignment,
+		"StrAdd":    &p.Stats.StrAdd,
+	}
+}
+
+// GetStat returns the current value of a named stat.
+func (p *Player) GetStat(name string) int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if name == "Age" {
+		// Age in MUD years: roughly 100 real seconds = 1 MUD year
+		birth := time.Unix(p.Birth, 0)
+		age := int(time.Since(birth).Seconds() / 100)
+		if age < 1 {
+			age = 1
+		}
+		return age
+	}
+	if ptr, ok := statMapping(p)[name]; ok {
+		return *ptr
+	}
+	return 0
+}
+
+// SetStat sets the value of a named stat.
+func (p *Player) SetStat(name string, val int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if ptr, ok := statMapping(p)[name]; ok {
+		*ptr = val
+	}
+}
+
+// GetMaxStat returns the maximum value for a stat (same as GetStat for now).
+func (p *Player) GetMaxStat(name string) int {
+	return p.GetStat(name)
+}
+
+// SetMaxStat sets the maximum value for a stat (same as SetStat for now).
+func (p *Player) SetMaxStat(name string, val int) {
+	p.SetStat(name, val)
+}
+
+// AddStat adds delta to a named stat.
+func (p *Player) AddStat(name string, delta int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if ptr, ok := statMapping(p)[name]; ok {
+		*ptr += delta
+	}
+}
+
+// GetSavingThrow returns the saving throw value at the given index (0-4).
+func (p *Player) GetSavingThrow(idx int) int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if idx < 0 || idx >= 5 {
+		return 0
+	}
+	return p.SavingThrows[idx]
+}
+
+// SetSavingThrow sets the saving throw value at the given index (0-4).
+func (p *Player) SetSavingThrow(idx int, val int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if idx < 0 || idx >= 5 {
+		return
+	}
+	p.SavingThrows[idx] = val
+}
+
+// GetAffectBitVector returns the affect bitmask.
+func (p *Player) GetAffectBitVector() uint64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Affects
+}
+
+// SetAffectBitVector sets the affect bitmask.
+func (p *Player) SetAffectBitVector(v uint64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Affects = v
+}
+
+// SetAffectBit sets or clears a specific bit in the affect bitmask.
+func (p *Player) SetAffectBit(bit uint64, val bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if val {
+		p.Affects |= 1 << uint(bit)
+	} else {
+		p.Affects &^= 1 << uint(bit)
+	}
+}
+
+// GetMasterAffects returns the list of active master affects.
+func (p *Player) GetMasterAffects() []*engine.MasterAffect {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.MasterAffects
+}
+
+// SetMasterAffects replaces the list of active master affects.
+func (p *Player) SetMasterAffects(affects []*engine.MasterAffect) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.MasterAffects = affects
+}
+
+// AddMasterAffect prepends a master affect to the list.
+func (p *Player) AddMasterAffect(af *engine.MasterAffect) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.MasterAffects = append([]*engine.MasterAffect{af}, p.MasterAffects...)
+}
+
+// RemoveMasterAffect removes a master affect from the list by pointer equality.
+func (p *Player) RemoveMasterAffect(af *engine.MasterAffect) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for i, ma := range p.MasterAffects {
+		if ma == af {
+			p.MasterAffects = append(p.MasterAffects[:i], p.MasterAffects[i+1:]...)
+			return
+		}
+	}
+}
+
+// GetEquipment returns the player's equipment iterator.
+// Returns nil as the nested interface is complex and not yet wired for Go types.
+func (p *Player) GetEquipment() interface {
+	GetItems() []interface {
+		GetAffects() []interface{ GetLocation() int; GetModifier() int }
+		GetBitvector() uint64
+	}
+} {
+	return nil
 }
 
 // GetPosition returns the player's current position.

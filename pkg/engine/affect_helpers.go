@@ -216,6 +216,50 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 	for _, af := range masterAffects {
 		AffModify(ch, af.Location, af.Modifier, af.Bitvector, true, applyFn)
 	}
+
+	// Clamping pass — ensure all values are within valid ranges
+	isNPC := false
+	if npc, ok := ch.(interface{ IsNPC() bool }); ok {
+		isNPC = npc.IsNPC()
+	}
+	maxStat := 18
+	if isNPC {
+		maxStat = 25
+	}
+
+	// DEX, INT, WIS, CON: clamp 0..maxStat
+	for _, s := range []string{"DEX", "INT", "WIS", "CON"} {
+		v := sm.GetStat(s)
+		if v < 0 {
+			sm.SetStat(s, 0)
+		} else if v > maxStat {
+			sm.SetStat(s, maxStat)
+		}
+	}
+
+	// STR: minimum 0; convert excess over 18 to StrAdd for PCs
+	str := sm.GetStat("STR")
+	if str < 0 {
+		sm.SetStat("STR", 0)
+	} else if str > 18 && !isNPC {
+		strAdd := sm.GetStat("StrAdd")
+		i := strAdd + ((str - 18) * 10)
+		if i > 100 {
+			i = 100
+		}
+		sm.SetStat("STR", 18)
+		sm.SetStat("StrAdd", i)
+	} else if str > maxStat {
+		sm.SetStat("STR", maxStat)
+	}
+
+	// Alignment: clamp -1000..1000
+	align := sm.GetStat("Alignment")
+	if align < -1000 {
+		sm.SetStat("Alignment", -1000)
+	} else if align > 1000 {
+		sm.SetStat("Alignment", 1000)
+	}
 }
 
 // MasterAffectToChar implements master_affect_to_char from handler.c lines 377-396.
