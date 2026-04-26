@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -159,4 +160,66 @@ func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
 
 func (inv *Inventory) Clear() {
 	inv.clear()
+}
+
+// ==========================================================================
+// Handler.c utility functions — on-demand helpers
+// ==========================================================================
+
+// GetNumber parses a leading number from a dot-separated string.
+// C: int get_number(char **name) — returns the number before a '.' separator.
+// If no dot is found, returns 1.
+// Used by get_char_room, get_obj_in_list_vis etc. for "2.guard" → 2 syntax.
+func GetNumber(name *string) int {
+	dot := strings.IndexByte(*name, '.')
+	if dot < 0 {
+		return 1
+	}
+	numStr := (*name)[:dot]
+	*name = (*name)[dot+1:]
+	for _, c := range numStr {
+		if c < '0' || c > '9' {
+			return 0
+		}
+	}
+	n, _ := strconv.Atoi(numStr)
+	return n
+}
+
+// GetObjNum finds an object instance by its prototype rnum.
+// C: struct obj_data *get_obj_num(int nr) — linear search of object_list.
+// Go: search World's objectInstances by prototype index.
+func (w *World) GetObjNum(rnum int) *ObjectInstance {
+	for _, obj := range w.objectInstances {
+		if obj.Prototype != nil && obj.Prototype.VNum == rnum {
+			return obj
+		}
+	}
+	return nil
+}
+
+// GetCharNum finds a mob instance by its prototype rnum.
+// C: struct char_data *get_char_num(int nr) — linear search of character_list.
+func (w *World) GetCharNum(rnum int) *MobInstance {
+	for _, mob := range w.activeMobs {
+		if mob.Prototype != nil && mob.Prototype.VNum == rnum {
+			return mob
+		}
+	}
+	return nil
+}
+
+// RemoveFollower removes a specific player from someone's follower list.
+// C: void remove_follower(struct char_data *ch) — removes ch from master's list.
+// Unlike StopFollower (which makes you stop following), this removes a specific
+// person who is following you.
+func (w *World) RemoveFollower(ch *Player) {
+	if ch == nil || ch.Following == "" {
+		return
+	}
+	_, _ = w.GetPlayer(ch.Following) // verify leader exists
+	// The follower removes itself from the leader's perspective
+	ch.Following = ""
+	ch.RemoveAffectBit(affCharm)
+	ch.RemoveAffectBit(affGroup)
 }
