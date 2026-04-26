@@ -224,10 +224,9 @@ func (w *World) HitGain(p *Player) int {
 	}
 
 	// KK_JIN skill bonus — limits.c:144-146, +25% regen when not fighting
-	// TODO: implement when affected_by_spell(SKILL_KK_JIN=162) is available
-	// if !isFighting && hasSpellAffect(p, 162) {
-	// 	gain += gain >> 2
-	// }
+	if !isFighting(p) && p.HasSpellAffect(162) { // SKILL_KK_JIN
+		gain += gain >> 2
+	}
 
 	// Position calculations — limits.c:149-167
 	switch pos {
@@ -303,10 +302,9 @@ func (w *World) MoveGain(p *Player) int {
 	}
 
 	// KK_ZHEN skill bonus — limits.c:212-214, +25% regen when not fighting
-	// TODO: implement when affected_by_spell(SKILL_KK_ZHEN=165) is available
-	// if !isFighting && hasSpellAffect(p, 165) {
-	// 	gain += gain >> 2
-	// }
+	if !isFighting(p) && p.HasSpellAffect(165) { // SKILL_KK_ZHEN
+		gain += gain >> 2
+	}
 
 	// Position calculations — limits.c:217-235
 	switch pos {
@@ -936,6 +934,14 @@ func (p *Player) sumEquipAffect(location int, requireSleeping bool) int {
 		}
 	}
 	return total
+}
+
+// isFighting returns true if the player is currently in combat.
+// Equivalent to C's FIGHTING(ch) macro.
+func isFighting(p *Player) bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Fighting != ""
 }
 
 

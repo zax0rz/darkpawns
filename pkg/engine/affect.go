@@ -62,7 +62,8 @@ const (
 type Affect struct {
 	// Core properties
 	ID        string     // Unique identifier for this affect
-	Type      AffectType // What type of affect this is
+	Type      AffectType // What type of affect this is (stat modifier, status, etc.)
+	SpellID   int        // The spell/skill number (SKILL_* constant from C) that created this affect. 0 = not spell-based.
 	Duration  int        // Duration in ticks (0 = permanent until removed)
 	Magnitude int        // Magnitude of the effect (positive for buffs, negative for debuffs)
 

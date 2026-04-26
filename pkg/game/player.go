@@ -640,6 +640,19 @@ func (p *Player) GetEquipment() interface {
 	return nil
 }
 
+// HasSpellAffect checks if the player has an active affect from a specific spell/skill.
+// Equivalent to C's affected_by_spell(ch, type) — src/handler.c:460.
+func (p *Player) HasSpellAffect(spellID int) bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	for _, af := range p.ActiveAffects {
+		if af != nil && af.SpellID == spellID {
+			return true
+		}
+	}
+	return false
+}
+
 // GetPosition returns the player's current position.
 func (p *Player) GetPosition() int {
 	p.mu.RLock()
