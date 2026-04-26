@@ -63,24 +63,18 @@ func useTattoo(ch *Session) bool {
 		ch.Send("You don't have a tattoo.\r\n")
 
 	case TatSkull:
-		// TODO: mob spawn + follow system
-		// Original C code:
-		//   struct char_data *skull = read_mobile(9, VIRTUAL);
-		//   char_to_room(skull, ch->in_room);
-		//   add_follower_quiet(skull, ch);
-		//   IS_CARRYING_W(skull) = 0;
-		//   IS_CARRYING_N(skull) = 0;
-		//   af.type = SPELL_CHARM;
-		//   af.duration = 20;
-		//   af.modifier = 0;
-		//   af.location = 0;
-		//   af.bitvector = AFF_CHARM;
-		//   affect_to_char(skull, &af);
-		//   act("...glows brightly...$N appears!", ...)
-		//
-		// Stubbed: sends the act messages but does not spawn/follow yet.
-		broadcastToRoom(ch, "$n's tattoo glows brightly for a second, and a skull appears!")
-		ch.Send("Your tattoo glows brightly for a second, and a skull appears!\r\n")
+		// Spawn skull mob (vnum 9), charm it, add as follower
+		// Source: src/tattoo.c
+		if mob, err := ch.manager.world.SpawnMob(9, ch.player.RoomVNum); err == nil {
+			mob.SetFollowing(ch.player.Name)
+			mob.SetLevel(1)
+			mob.SetAffected(3) // AFF_CHARM bit
+			broadcastToRoom(ch, "$n's tattoo glows brightly for a second, and a skull appears!")
+			broadcastToRoom(ch, "$n's tattoo glows brightly for a second, and a skull appears!")
+			ch.Send("Your tattoo glows brightly for a second, and a skull appears!\r\n")
+		} else {
+			ch.Send("Your tattoo flickers but nothing happens.\r\n")
+		}
 
 	case TatEye:
 		// call_magic(ch, ch, NULL, SPELL_GREATPERCEPT, DEFAULT_WAND_LVL, CAST_WAND)

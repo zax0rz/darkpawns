@@ -315,6 +315,7 @@ type Session struct {
 
 	// Character creation state
 	charCreating bool
+	charStage    string // current stage in creation flow (sex, race, class, confirm)
 	charName     string
 	charSex      int
 	charRace     int

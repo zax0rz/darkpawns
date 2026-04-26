@@ -18,10 +18,48 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		return err
 	}
 
-	// Drive the state machine based on current stage
-	// We need to track which stage we're in. For now, implement a simple flow.
-	// TODO: Implement full state machine with stage tracking
-
+	switch s.charStage {
+	case "sex":
+		switch input.Choice {
+		case "M", "m":
+			s.charSex = 0
+			s.advanceCharStage("race", "Select your race:", nil)
+		case "F", "f":
+			s.charSex = 1
+			s.advanceCharStage("race", "Select your race:", nil)
+		default:
+			s.sendCharCreatePrompt("sex", "Invalid choice. Select your sex (M/F):", map[string]string{"M": "Male", "F": "Female"})
+		}
+	case "race":
+		if race, ok := s.getRaceOptions()[input.Choice]; ok {
+			s.charRace = race
+			s.advanceCharStage("class", "Select your class:", nil)
+		} else {
+			s.sendCharCreatePrompt("race", "Invalid race. Select your race:", nil)
+		}
+	case "class":
+		if classID, ok := s.getClassOptions()[input.Choice]; ok {
+			s.charClass = classID
+			s.advanceCharStage("confirm", fmt.Sprintf("Create %s? (Y/N)", s.charName), nil)
+		} else {
+			s.sendCharCreatePrompt("class", "Invalid class. Select your class:", nil)
+		}
+	case "confirm":
+		switch input.Choice {
+		case "Y", "y":
+			if err := s.completeCharCreation(); err != nil {
+				slog.Error("char creation failed", "error", err)
+			}
+		case "N", "n":
+			s.charCreating = false
+			s.charStage = ""
+			s.SendMessage("Character creation cancelled.\r\n")
+		default:
+			s.sendCharCreatePrompt("confirm", fmt.Sprintf("Create %s? (Y/N)", s.charName), nil)
+		}
+	default:
+		return fmt.Errorf("unexpected char creation stage: %s", s.charStage)
+	}
 	return nil
 }
 
@@ -96,11 +134,19 @@ func (s *Session) completeCharCreation() error {
 	s.player = game.NewCharacter(0, s.charName, s.charClass, s.charRace)
 	s.player.Stats = s.charStats
 
-	// Set sex (for Phase 3 display)
-	// TODO: Store sex when Phase 3 implements display
+	// Set sex
+	s.player.Sex = s.charSex
 
-	// Set hometown (for starting room)
-	// TODO: Set starting room based on hometown
+	// Set hometown starting room — C: interpreter.c assigns start rooms per hometown
+	// MortalStartRoom=8004, KiroshiStartRoom=18201, AlaozarStartRoom=21258
+	switch s.charHometown {
+	case 1: // Kiroshi
+		s.player.RoomVNum = 18201
+	case 2: // Alaozar
+		s.player.RoomVNum = 21258
+	default: // Mortal
+		s.player.RoomVNum = 8004
+	}
 
 	// Save to DB if available
 	if s.manager.hasDB {
@@ -164,4 +210,41 @@ func (s *Session) completeCharCreation() error {
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 
 	return nil
+}
+
+// advanceCharStage moves to the next char creation stage.
+func (s *Session) advanceCharStage(stage, prompt string, options map[string]string) {
+	s.charStage = stage
+	s.sendCharCreatePrompt(stage, prompt, options)
+}
+
+// getRaceOptions returns available races for character creation.
+func (s *Session) getRaceOptions() map[string]int {
+	return map[string]int{
+		"0": 0,  // Human
+		"1": 1,  // Elf
+		"2": 2,  // Dwarf
+		"3": 3,  // Halfling
+		"4": 4,  // Pixie
+		"5": 5,  // Kiroshi
+		"6": 6,  // Alaozar
+	}
+}
+
+// getClassOptions returns available classes for character creation.
+func (s *Session) getClassOptions() map[string]int {
+	return map[string]int{
+		"0": 0,  // Mage
+		"1": 1,  // Cleric
+		"2": 2,  // Thief
+		"3": 3,  // Warrior
+		"4": 4,  // Magus
+		"5": 5,  // Avatar
+		"6": 6,  // Assassin
+		"7": 7,  // Paladin
+		"8": 8,  // Ninja
+		"9": 9,  // Psionic
+		"10": 10, // Ranger
+		"11": 11, // Mystic
+	}
 }

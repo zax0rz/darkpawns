@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // Ensure slog is used
@@ -412,8 +413,16 @@ func broadcastToRoomExcept(s *Session, text string, exclude string) {
 }
 
 // genderHisHer returns "his" or "her" based on player gender.
-// Default to "his" since gender isn't tracked yet.
 func genderHisHer(p interface{}) string {
-	// TODO: Add gender field to Player and return appropriate pronoun
+	if pl, ok := p.(*game.Player); ok {
+		switch pl.GetSex() {
+		case 0:
+			return "his"
+		case 1:
+			return "her"
+		default:
+			return "its"
+		}
+	}
 	return "his"
 }
