@@ -336,6 +336,38 @@ func (w *World) SpawnMobWithLevelI(vnum int, roomVNum int, level int) (interface
 	return mob, nil
 }
 
+// LookAtRoomSimple sends a basic room description to a player via interface{}.
+// Used by mindsight which temporarily transfers the caster to another room.
+func (w *World) LookAtRoomSimple(roomVNum int, sender interface{}) {
+	sm, ok := sender.(interface{ SendMessage(string) })
+	if !ok {
+		return
+	}
+
+	room := w.GetRoomInWorld(roomVNum)
+	if room == nil {
+		sm.SendMessage("You see nothing but void.\r\n")
+		return
+	}
+
+	sm.SendMessage(fmt.Sprintf("%s\r\n", room.Name))
+	if room.Description != "" {
+		sm.SendMessage(room.Description + "\r\n")
+	}
+
+	// List characters in room
+	for _, m := range w.GetMobsInRoom(roomVNum) {
+		sm.SendMessage(fmt.Sprintf("%s is here.\r\n", m.GetShortDesc()))
+	}
+	for _, p := range w.GetPlayersInRoom(roomVNum) {
+		if pn, ok := sender.(interface{ GetName() string }); ok {
+			if pn.GetName() != p.GetName() {
+				sm.SendMessage(fmt.Sprintf("%s is here.\r\n", p.GetName()))
+			}
+		}
+	}
+}
+
 // extractMob removes a mob instance from the world (extract_char equivalent).
 func (w *World) extractMob(mob *MobInstance) {
 	w.mu.Lock()

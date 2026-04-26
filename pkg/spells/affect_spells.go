@@ -256,6 +256,8 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 		castDivineInt(level, ch, world)
 	case SpellConjureElemental:
 		castConjureElemental(level, ch, world)
+	case SpellMindsight:
+		castMindsight(level, ch, cvict, world)
 	default:
 		sendToCaster(ch, "Spell not yet implemented.\r\n")
 	}
@@ -365,6 +367,7 @@ func init() {
 	setupSpellInfo(SpellSummon, PosFighting, 100, 100, 5, RoutineManual, false, TarCharRoom)
 	setupSpellInfo(SpellDivineInt, PosFighting, 200, 200, 10, RoutineManual, false, TarIgnore)
 	setupSpellInfo(SpellConjureElemental, PosFighting, 150, 150, 5, RoutineManual, false, TarIgnore)
+	setupSpellInfo(SpellMindsight, PosFighting, 80, 120, 5, RoutineManual, false, TarCharRoom)
 }
 
 // --- Wave A manual spell implementations ---
@@ -1888,4 +1891,68 @@ func castConjureElemental(level int, ch, world interface{}) {
 
 	sendToCaster(ch, "An elemental appears before you!\r\n")
 	_ = componentVNum
+}
+
+
+// castMindsight ports src/spells.c spell_mindsight (lines 912-955).
+func castMindsight(level int, ch, cvict, world interface{}) {
+	_ = level
+	if cvict == nil || ch == nil {
+		return
+	}
+
+	type lever interface{ GetLevel() int }
+	type roomGet interface{ GetRoomVNum() int }
+	type npcCheck interface{ IsNPC() bool }
+
+	chRoom := 0
+	if rg, ok := ch.(roomGet); ok {
+		chRoom = rg.GetRoomVNum()
+	}
+
+	victIsNPC := false
+	if nc, ok := cvict.(npcCheck); ok {
+		victIsNPC = nc.IsNPC()
+	}
+
+	// Level resist check
+	victLevel := 0
+	if vl, ok := cvict.(lever); ok {
+		victLevel = vl.GetLevel()
+	}
+	casterLevel := 0
+	if cl, ok := ch.(lever); ok {
+		casterLevel = cl.GetLevel()
+	}
+
+	if (victLevel > casterLevel+4 && rand.Intn(5) == 0) ||
+		(!victIsNPC && victLevel >= 100 && casterLevel <= victLevel) {
+		sendToCaster(ch, "With a searing pain, your psionic energy recoils!\r\n")
+		return
+	}
+
+	victRoom := 0
+	if rg, ok := cvict.(roomGet); ok {
+		victRoom = rg.GetRoomVNum()
+	}
+	if victRoom <= 0 {
+		return
+	}
+
+	// Transfer caster to victim's room, look, transfer back
+	type transferWorld interface {
+		PlayerTransfer(ch interface{}, toRoomVNum int) error
+		LookAtRoomSimple(roomVNum int, sender interface{})
+	}
+	tw, ok := world.(transferWorld)
+	if !ok {
+		sendToCaster(ch, "The magic fails.\r\n")
+		return
+	}
+
+	tw.PlayerTransfer(ch, victRoom)
+	tw.LookAtRoomSimple(victRoom, ch)
+	tw.PlayerTransfer(ch, chRoom)
+
+	sendToCaster(ch, "You have a strange dream about seeing...\r\n")
 }
