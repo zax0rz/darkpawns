@@ -979,6 +979,20 @@ func (p *Player) GetMountName() string {
 	return p.MountName
 }
 
+// GetCon returns the player's constitution.
+func (p *Player) GetCon() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Stats.Con
+}
+
+// GetCha returns the player's charisma.
+func (p *Player) GetCha() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Stats.Cha
+}
+
 // GetCondition returns the value of condition cond (CondDrunk=0, CondFull=1, CondThirst=2).
 // Source: structs.h:566-568, utils.h GET_COND() macro.
 func (p *Player) GetCondition(cond int) int {

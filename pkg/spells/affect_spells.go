@@ -878,22 +878,21 @@ func castEnchantArmor(level int, ch, ovict interface{}) {
 }
 
 // castCreateWater — fills a drink container with water.
-// C source: spells.c:87-120. Poisons non-water liquid. Needs drink name helpers.
+// C source: spells.c:87-120. Poisons non-water liquid. Drink name helpers are cosmetic.
 func castCreateWater(level int, ch, ovict interface{}) {
+	_ = level
 	if ovict == nil {
 		return
 	}
 
 	type typeFlagger interface{ GetTypeFlag() int }
-	type valuer interface{ GetValue(int) int }
-	type nameable interface{ SetDrinkName(string) }
-
 	tf, ok := ovict.(typeFlagger)
 	if !ok || tf.GetTypeFlag() != 17 { // ITEM_DRINKCON
 		sendToCaster(ch, "It's not a drink container.\r\n")
 		return
 	}
 
+	type valuer interface{ GetValue(int) int }
 	v, ok := ovict.(valuer)
 	if !ok {
 		return
@@ -903,37 +902,29 @@ func castCreateWater(level int, ch, ovict interface{}) {
 	liquidType := v.GetValue(2)
 	current := v.GetValue(1)
 
-	// LIQ_WATER = 0, LIQ_SLIME = 2 (from structs.h)
+	type drinkSetter interface{ SetValue(int, int) }
+	ds, ok := ovict.(drinkSetter)
+	if !ok {
+		return
+	}
+
+	// LIQ_WATER = 0, LIQ_SLIME = 9 (from structs.h)
 	if liquidType != 0 && current != 0 {
-		// Poison non-water liquid
-		// TODO: name_from_drinkcon/name_to_drinkcon — needs SetDrinkName interface
-		slog.Info("spell_create_water: poisoned non-water liquid")
+		// Poison non-water liquid — set to slime
+		ds.SetValue(2, 9) // LIQ_SLIME
 		sendToCaster(ch, "The water mixes with the liquid...\r\n")
 		return
 	}
 
-	// Fill with water — need SetDrinkValue interface
-	type drinkSetter interface{ SetValue(int, int) }
-	if ds, ok := ovict.(drinkSetter); ok {
-		maxCap := v.GetValue(0)
-		water := maxCap - current
-		if water < 0 {
-			water = 0
-		}
-		if water > 0 {
-			clampedLevel := level
-			if clampedLevel < 1 {
-				clampedLevel = 1
-			}
-			if clampedLevel > 100 {
-				clampedLevel = 100
-			}
-			ds.SetValue(2, 0) // LIQ_WATER
-			ds.SetValue(1, current+water)
-			sendToCaster(ch, "It is filled.\r\n")
-		} else {
-			sendToCaster(ch, "You cannot create water in that!\r\n")
-		}
+	// Fill with water up to capacity
+	maxCap := v.GetValue(0)
+	water := maxCap - current
+	if water > 0 {
+		ds.SetValue(2, 0) // LIQ_WATER
+		ds.SetValue(1, current+water)
+		sendToCaster(ch, "It is filled.\r\n")
+	} else {
+		sendToCaster(ch, "You cannot create water in that!\r\n")
 	}
 }
 
@@ -1035,6 +1026,21 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 	type lever interface{ GetLevel() int }
 	type stater interface{ GetHP() int; GetMaxHP() int; GetMana() int }
 	type hper interface{ GetHitroll() int; GetDamroll() int; GetAC() int }
+	type npcChecker interface{ IsNPC() bool }
+
+	// C: identify on NPCs fails and aggros
+	if nc, ok := cvict.(npcChecker); ok && nc.IsNPC() {
+		sendToCaster(ch, "The magicks fail horribly!\r\n")
+		return
+	}
+
+	// C: identify on PCs level <= 5 is blocked
+	if l, ok := cvict.(lever); ok {
+		if nc, ok := cvict.(npcChecker); ok && !nc.IsNPC() && l.GetLevel() <= 5 {
+			sendToCaster(ch, "You cannot identify them yet.\r\n")
+			return
+		}
+	}
 
 	sendToCaster(ch, "You feel informed:\r\n")
 
@@ -1049,6 +1055,43 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 	}
 	if h, ok := cvict.(hper); ok {
 		sendToCaster(ch, fmt.Sprintf("AC: %d, Hitroll: %d, Damroll: %d\r\n", h.GetAC(), h.GetHitroll(), h.GetDamroll()))
+	}
+
+	// Full stat line
+	type strGetter interface{ GetStr() int; GetStrAdd() int }
+	type intGetter interface{ GetInt() int }
+	type wisGetter interface{ GetWis() int }
+	type dexGetter interface{ GetDex() int }
+	type conGetter interface{ GetCon() int }
+	type chaGetter interface{ GetCha() int }
+
+	if sg, ok := cvict.(strGetter); ok {
+		str, strAdd := sg.GetStr(), sg.GetStrAdd()
+		var strStr string
+		if str == 18 && strAdd > 0 {
+			strStr = fmt.Sprintf("%d/%d", str, strAdd)
+		} else {
+			strStr = fmt.Sprintf("%d", str)
+		}
+		line := fmt.Sprintf("Str: %s", strStr)
+
+		if ig, ok := cvict.(intGetter); ok {
+			line += fmt.Sprintf(", Int: %d", ig.GetInt())
+		}
+		if wg, ok := cvict.(wisGetter); ok {
+			line += fmt.Sprintf(", Wis: %d", wg.GetWis())
+		}
+		if dg, ok := cvict.(dexGetter); ok {
+			line += fmt.Sprintf(", Dex: %d", dg.GetDex())
+		}
+		if cg, ok := cvict.(conGetter); ok {
+			line += fmt.Sprintf(", Con: %d", cg.GetCon())
+		}
+		if chg, ok := cvict.(chaGetter); ok {
+			line += fmt.Sprintf(", Cha: %d", chg.GetCha())
+		}
+		line += "\r\n"
+		sendToCaster(ch, line)
 	}
 }
 
