@@ -11,7 +11,7 @@ type TickManager struct {
 	affectManager *AffectManager
 	tickInterval  time.Duration
 	ticker        *time.Ticker
-	done          chan bool
+	done          chan struct{}
 	running       bool
 }
 
@@ -20,7 +20,7 @@ func NewTickManager(affectManager *AffectManager) *TickManager {
 	return &TickManager{
 		affectManager: affectManager,
 		tickInterval:  time.Second, // Default: 1 tick per second
-		done:          make(chan bool, 1),
+		done:          make(chan struct{}),
 		running:       false,
 	}
 }
@@ -50,22 +50,24 @@ func (tm *TickManager) Stop() {
 	}
 
 	tm.ticker.Stop()
-	tm.done <- true
+	close(tm.done)
 	tm.running = false
 }
 
-// SetTickInterval changes the tick interval
+// SetTickInterval changes the tick interval, stopping the old goroutine
+// and starting a new one with the updated interval.
 func (tm *TickManager) SetTickInterval(interval time.Duration) {
 	tm.mu.Lock()
-	defer tm.mu.Unlock()
-
 	tm.tickInterval = interval
 
-	// Restart ticker if running
-	if tm.running && tm.ticker != nil {
+	if tm.running {
 		tm.ticker.Stop()
+		close(tm.done)
+		tm.done = make(chan struct{})
 		tm.ticker = time.NewTicker(tm.tickInterval)
+		go tm.tickLoop()
 	}
+	tm.mu.Unlock()
 }
 
 // GetTickInterval returns the current tick interval
