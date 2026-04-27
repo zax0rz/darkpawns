@@ -4,233 +4,215 @@ import (
 	"math/rand"
 )
 
-// numClasses is the number of playable classes in the C source (MAGIC_USER=0, CLERIC=1, etc.)
+// numClasses matches NUM_CLASSES from src/structs.h (12 classes, indices 0-11).
 const numClasses = 12
 
-// maxLevel is the max level for saving throw tables
-const maxLevel = 21
+// maxLevel is the max level index in the saving throw table (41 entries: levels 0-40).
+const maxLevelIndex = 41
 
-// savThrows[class][level-1][saveType] = target roll needed to succeed
-// Ported from src/spell_parser.c sav_throws[][][].
-// Rows: MAGIC_USER=0, CLERIC=1, THIEF=2, WARRIOR=3, RANGER=4,
-//        PSIONIC=5, BARBARIAN=6, MYSTIC=7, ROGUE=8, DRUID=9,
-//        ASSASSIN=10, PALADIN=11
-// Cols per class: level 1..21
-// Entries per row: [para, rod, petri, breath, spell]
-var savThrows = [numClasses][maxLevel][SaveCount]int{
-	// MAGIC_USER (0)
+// SavingThrowTable is indexed [class][saveType][level].
+// saveType order: PARA=0, ROD=1, PETRI=2, BREATH=3, SPELL=4
+// level: 0-40 (0 = untrained/level 0, LVL_IMMORT at 30+)
+// Values: 0-90. Higher = harder to save (target must roll above this).
+// Ported verbatim from src/magic.c saving_throws[][][] table.
+//
+// C comparison: MAX(1, save) < number(0, 99) means FAILED save.
+// So: if MAX(1, tableValue) < d100Roll, the target fails to save.
+// Equivalently: target saves if d100Roll <= MAX(1, tableValue).
+// Or: target saves if tableValue >= d100Roll (since table values are always >= 0).
+//
+// A value of 0 means always save (immortal). A value of 90 means almost never save.
+var savingThrowTable = [numClasses][SaveCount][maxLevelIndex]int{
+	// CLASS_MAGIC_USER (0)
 	{
-		{14, 14, 13, 16, 15},  // lvl 1
-		{14, 14, 13, 16, 15},  // lvl 2
-		{14, 14, 13, 16, 14},  // lvl 3
-		{14, 14, 13, 16, 14},  // lvl 4
-		{14, 14, 13, 16, 13},  // lvl 5
-		{13, 13, 11, 14, 13},  // lvl 6 (transition)
-		{13, 13, 11, 14, 12},
-		{13, 13, 11, 14, 12},
-		{13, 13, 11, 14, 11},
-		{13, 13, 11, 14, 11},
-		{11, 11, 9, 12, 10},
-		{11, 11, 9, 12, 10},
-		{11, 11, 9, 12, 9},
-		{11, 11, 9, 12, 9},
-		{11, 11, 9, 12, 8},
-		{10, 10, 7, 10, 8},
-		{10, 10, 7, 10, 7},
-		{10, 10, 7, 10, 7},
-		{10, 10, 7, 10, 6},
-		{10, 10, 7, 10, 6},
-		{10, 10, 7, 10, 5},
+		// PARA
+		{90, 70, 69, 68, 67, 66, 65, 63, 61, 60, 59, 57, 55, 54, 53, 53, 52, 51, 50, 48, 46, 45, 44, 42, 40, 38, 36, 34, 32, 30, 28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		// ROD
+		{90, 55, 53, 51, 49, 47, 45, 43, 41, 40, 39, 37, 35, 33, 31, 30, 29, 27, 25, 23, 21, 20, 19, 17, 15, 14, 13, 12, 11, 10, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		// PETRI
+		{90, 65, 63, 61, 59, 57, 55, 53, 51, 50, 49, 47, 45, 43, 41, 40, 39, 37, 35, 33, 31, 30, 29, 27, 25, 23, 21, 19, 17, 15, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		// BREATH
+		{90, 75, 73, 71, 69, 67, 65, 63, 61, 60, 59, 57, 55, 53, 51, 50, 49, 47, 45, 43, 41, 40, 39, 37, 35, 33, 31, 29, 27, 25, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		// SPELL
+		{90, 60, 58, 56, 54, 52, 50, 48, 46, 45, 44, 42, 40, 38, 36, 35, 34, 32, 30, 28, 26, 25, 24, 22, 20, 18, 16, 14, 12, 10, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	},
-	// CLERIC (1)
+	// CLASS_CLERIC (1)
 	{
-		{12, 14, 13, 16, 15},  // lvl 1
-		{12, 14, 13, 16, 15},
-		{12, 14, 13, 16, 15},
-		{12, 14, 13, 16, 15},
-		{12, 14, 13, 16, 15},
-		{10, 12, 11, 14, 12},  // lvl 6
-		{10, 12, 11, 14, 12},
-		{10, 12, 11, 14, 12},
-		{10, 12, 11, 14, 12},
-		{10, 12, 11, 14, 12},
-		{8, 10, 9, 12, 10},
-		{8, 10, 9, 12, 10},
-		{8, 10, 9, 12, 10},
-		{8, 10, 9, 12, 10},
-		{8, 10, 9, 12, 10},
-		{6, 8, 7, 10, 8},
-		{6, 8, 7, 10, 8},
-		{6, 8, 7, 10, 8},
-		{6, 8, 7, 10, 8},
-		{6, 8, 7, 10, 8},
-		{6, 8, 7, 10, 8},
+		{90, 50, 59, 48, 46, 45, 43, 40, 37, 35, 34, 33, 31, 30, 29, 27, 26, 25, 24, 23, 22, 21, 20, 18, 15, 14, 12, 10, 9, 8, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 70, 69, 68, 66, 65, 63, 60, 57, 55, 54, 53, 51, 50, 49, 47, 46, 45, 44, 43, 42, 41, 40, 38, 35, 34, 32, 30, 29, 28, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 65, 64, 63, 61, 60, 58, 55, 53, 50, 49, 48, 46, 45, 44, 43, 41, 40, 39, 38, 37, 36, 35, 33, 31, 29, 27, 25, 24, 23, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 80, 79, 78, 76, 75, 73, 70, 67, 65, 64, 63, 61, 60, 59, 57, 56, 55, 54, 53, 52, 51, 50, 48, 45, 44, 42, 40, 39, 38, 37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 75, 74, 73, 71, 70, 68, 65, 63, 60, 59, 58, 56, 55, 54, 53, 51, 50, 49, 48, 47, 46, 45, 43, 41, 39, 37, 35, 34, 33, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	},
-	// THIEF (2)
+	// CLASS_THIEF (2)
 	{
-		{13, 14, 13, 16, 15},
-		{13, 14, 13, 16, 15},
-		{13, 14, 13, 16, 15},
-		{13, 14, 13, 16, 15},
-		{13, 14, 13, 16, 15},
-		{11, 12, 11, 14, 13},
-		{11, 12, 11, 14, 13},
-		{11, 12, 11, 14, 13},
-		{11, 12, 11, 14, 13},
-		{11, 12, 11, 14, 13},
-		{9, 10, 9, 12, 11},
-		{9, 10, 9, 12, 11},
-		{9, 10, 9, 12, 11},
-		{9, 10, 9, 12, 11},
-		{9, 10, 9, 12, 11},
-		{7, 8, 7, 10, 9},
-		{7, 8, 7, 10, 9},
-		{7, 8, 7, 10, 9},
-		{7, 8, 7, 10, 9},
-		{7, 8, 7, 10, 9},
-		{7, 8, 7, 10, 9},
+		{90, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 70, 68, 66, 64, 62, 60, 58, 56, 54, 52, 50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 60, 59, 58, 58, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 75, 73, 71, 69, 67, 65, 63, 61, 59, 57, 55, 53, 51, 49, 47, 45, 43, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 19, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	},
-	// WARRIOR (3)
+	// CLASS_WARRIOR (3)
 	{
-		{14, 15, 14, 17, 16},
-		{14, 15, 14, 17, 16},
-		{14, 15, 14, 17, 16},
-		{14, 15, 14, 17, 16},
-		{14, 15, 14, 17, 16},
-		{12, 13, 11, 14, 13},
-		{12, 13, 11, 14, 13},
-		{12, 13, 11, 14, 13},
-		{12, 13, 11, 14, 13},
-		{12, 13, 11, 14, 13},
-		{10, 11, 9, 12, 11},
-		{10, 11, 9, 12, 11},
-		{10, 11, 9, 12, 11},
-		{10, 11, 9, 12, 11},
-		{10, 11, 9, 12, 11},
-		{8, 9, 7, 10, 9},
-		{8, 9, 7, 10, 9},
-		{8, 9, 7, 10, 9},
-		{8, 9, 7, 10, 9},
-		{8, 9, 7, 10, 9},
-		{8, 9, 7, 10, 9},
+		{90, 70, 68, 67, 65, 62, 58, 55, 53, 52, 50, 47, 43, 40, 38, 37, 35, 32, 28, 25, 24, 23, 22, 20, 19, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2},
+		{90, 80, 78, 77, 75, 72, 68, 65, 63, 62, 60, 57, 53, 50, 48, 47, 45, 42, 38, 35, 34, 33, 32, 30, 29, 27, 26, 25, 24, 23, 22, 20, 18, 16, 14, 12, 10, 8, 6, 5, 4},
+		{90, 75, 73, 72, 70, 67, 63, 60, 58, 57, 55, 52, 48, 45, 43, 42, 40, 37, 33, 30, 29, 28, 26, 25, 24, 23, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7},
+		{90, 85, 83, 82, 80, 75, 70, 65, 63, 62, 60, 55, 50, 45, 43, 42, 40, 37, 33, 30, 29, 28, 26, 25, 24, 23, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7},
+		{90, 85, 83, 82, 80, 77, 73, 70, 68, 67, 65, 62, 58, 55, 53, 52, 50, 47, 43, 40, 39, 38, 36, 35, 34, 33, 31, 30, 29, 28, 27, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7},
 	},
-	// RANGER (4)
+	// CLASS_MAGUS (4) — same as Magic User in C
 	{
-		{14, 15, 14, 16, 15},
-		{14, 15, 14, 16, 15},
-		{14, 15, 14, 16, 15},
-		{14, 15, 14, 16, 15},
-		{14, 15, 14, 16, 15},
-		{12, 13, 12, 14, 13},
-		{12, 13, 12, 14, 13},
-		{12, 13, 12, 14, 13},
-		{12, 13, 12, 14, 13},
-		{12, 13, 12, 14, 13},
-		{10, 11, 10, 12, 11},
-		{10, 11, 10, 12, 11},
-		{10, 11, 10, 12, 11},
-		{10, 11, 10, 12, 11},
-		{10, 11, 10, 12, 11},
-		{8, 9, 8, 10, 9},
-		{8, 9, 8, 10, 9},
-		{8, 9, 8, 10, 9},
-		{8, 9, 8, 10, 9},
-		{8, 9, 8, 10, 9},
-		{8, 9, 8, 10, 9},
+		{90, 70, 69, 68, 67, 66, 65, 63, 61, 60, 59, 57, 55, 54, 53, 53, 52, 51, 50, 48, 46, 45, 44, 42, 40, 38, 36, 34, 32, 30, 28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 55, 53, 51, 49, 47, 45, 43, 41, 40, 39, 37, 35, 33, 31, 30, 29, 27, 25, 23, 21, 20, 19, 17, 15, 14, 13, 12, 11, 10, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 65, 63, 61, 59, 57, 55, 53, 51, 50, 49, 47, 45, 43, 41, 40, 39, 37, 35, 33, 31, 30, 29, 27, 25, 23, 21, 19, 17, 15, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 75, 73, 71, 69, 67, 65, 63, 61, 60, 59, 57, 55, 53, 51, 50, 49, 47, 45, 43, 41, 40, 39, 37, 35, 33, 31, 29, 27, 25, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 60, 58, 56, 54, 52, 50, 48, 46, 45, 44, 42, 40, 38, 36, 35, 34, 32, 30, 28, 26, 25, 24, 22, 20, 18, 16, 14, 12, 10, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	},
-	// Additional classes simplified — same structure, using CLERIC saves as placeholder
-	// PSIONIC (5), BARBARIAN (6), MYSTIC (7), ROGUE (8), DRUID (9), ASSASSIN (10), PALADIN (11)
+	// CLASS_AVATAR (5) — same as Cleric in C
+	{
+		{90, 50, 59, 48, 46, 45, 43, 40, 37, 35, 34, 33, 31, 30, 29, 27, 26, 25, 24, 23, 22, 21, 20, 18, 15, 14, 12, 10, 9, 8, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 70, 69, 68, 66, 65, 63, 60, 57, 55, 54, 53, 51, 50, 49, 47, 46, 45, 44, 43, 42, 41, 40, 38, 35, 34, 32, 30, 29, 28, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 65, 64, 63, 61, 60, 58, 55, 53, 50, 49, 48, 46, 45, 44, 43, 41, 40, 39, 38, 37, 36, 35, 33, 31, 29, 27, 25, 24, 23, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 80, 79, 78, 76, 75, 73, 70, 67, 65, 64, 63, 61, 60, 59, 57, 56, 55, 54, 53, 52, 51, 50, 48, 45, 44, 42, 40, 39, 38, 37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 75, 74, 73, 71, 70, 68, 65, 63, 60, 59, 58, 56, 55, 54, 53, 51, 50, 49, 48, 47, 46, 45, 43, 41, 39, 37, 35, 34, 33, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	},
+	// CLASS_ASSASSIN (6) — same as Thief in C
+	{
+		{90, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 70, 68, 66, 64, 62, 60, 58, 56, 54, 52, 50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 60, 59, 58, 58, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 75, 73, 71, 69, 67, 65, 63, 61, 59, 57, 55, 53, 51, 49, 47, 45, 43, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 19, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	},
+	// CLASS_PALADIN (7) — same as Warrior in C
+	{
+		{90, 70, 68, 67, 65, 62, 58, 55, 53, 52, 50, 47, 43, 40, 38, 37, 35, 32, 28, 25, 24, 23, 22, 20, 19, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2},
+		{90, 80, 78, 77, 75, 72, 68, 65, 63, 62, 60, 57, 53, 50, 48, 47, 45, 42, 38, 35, 34, 33, 32, 30, 29, 27, 26, 25, 24, 23, 22, 20, 18, 16, 14, 12, 10, 8, 6, 5, 4},
+		{90, 75, 73, 72, 70, 67, 63, 60, 58, 57, 55, 52, 48, 45, 43, 42, 40, 37, 33, 30, 29, 28, 26, 25, 24, 23, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7},
+		{90, 85, 83, 82, 80, 75, 70, 65, 63, 62, 60, 55, 50, 45, 43, 42, 40, 37, 33, 30, 29, 28, 26, 25, 24, 23, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7},
+		{90, 85, 83, 82, 80, 77, 73, 70, 68, 67, 65, 62, 58, 55, 53, 52, 50, 47, 43, 40, 39, 38, 36, 35, 34, 33, 31, 30, 29, 28, 27, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7},
+	},
+	// CLASS_NINJA (8) — same as Thief in C
+	{
+		{90, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 70, 68, 66, 64, 62, 60, 58, 56, 54, 52, 50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 60, 59, 58, 58, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 75, 73, 71, 69, 67, 65, 63, 61, 59, 57, 55, 53, 51, 49, 47, 45, 43, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 19, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	},
+	// CLASS_PSIONIC (9) — same as Thief in C
+	{
+		{90, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 70, 68, 66, 64, 62, 60, 58, 56, 54, 52, 50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 60, 59, 58, 58, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 75, 73, 71, 69, 67, 65, 63, 61, 59, 57, 55, 53, 51, 49, 47, 45, 43, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 19, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	},
+	// CLASS_RANGER (10) — same as Warrior in C
+	{
+		{90, 70, 68, 67, 65, 62, 58, 55, 53, 52, 50, 47, 43, 40, 38, 37, 35, 32, 28, 25, 24, 23, 22, 20, 19, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2},
+		{90, 80, 78, 77, 75, 72, 68, 65, 63, 62, 60, 57, 53, 50, 48, 47, 45, 42, 38, 35, 34, 33, 32, 30, 29, 27, 26, 25, 24, 23, 22, 20, 18, 16, 14, 12, 10, 8, 6, 5, 4},
+		{90, 75, 73, 72, 70, 67, 63, 60, 58, 57, 55, 52, 48, 45, 43, 42, 40, 37, 33, 30, 29, 28, 26, 25, 24, 23, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7},
+		{90, 85, 83, 82, 80, 75, 70, 65, 63, 62, 60, 55, 50, 45, 43, 42, 40, 37, 33, 30, 29, 28, 26, 25, 24, 23, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7},
+		{90, 85, 83, 82, 80, 77, 73, 70, 68, 67, 65, 62, 58, 55, 53, 52, 50, 47, 43, 40, 39, 38, 36, 35, 34, 33, 31, 30, 29, 28, 27, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7},
+	},
+	// CLASS_MYSTIC (11) — same as Thief in C
+	{
+		{90, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 70, 68, 66, 64, 62, 60, 58, 56, 54, 52, 50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 60, 59, 58, 58, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{90, 75, 73, 71, 69, 67, 65, 63, 61, 59, 57, 55, 53, 51, 49, 47, 45, 43, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 19, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	},
 }
 
-func init() {
-	// Fill remaining classes with their saving throw tables.
-	// For now, copy from nearest analog class.
-
-	// PSIONIC (5) — use magic-user saves
-	for lvl := 0; lvl < maxLevel; lvl++ {
-		savThrows[5][lvl] = savThrows[0][lvl]
-	}
-	// BARBARIAN (6) — use warrior saves
-	for lvl := 0; lvl < maxLevel; lvl++ {
-		savThrows[6][lvl] = savThrows[3][lvl]
-	}
-	// MYSTIC (7) — use cleric saves
-	for lvl := 0; lvl < maxLevel; lvl++ {
-		savThrows[7][lvl] = savThrows[1][lvl]
-	}
-	// ROGUE (8) — use thief saves
-	for lvl := 0; lvl < maxLevel; lvl++ {
-		savThrows[8][lvl] = savThrows[2][lvl]
-	}
-	// DRUID (9) — use cleric saves
-	for lvl := 0; lvl < maxLevel; lvl++ {
-		savThrows[9][lvl] = savThrows[1][lvl]
-	}
-	// ASSASSIN (10) — use thief saves
-	for lvl := 0; lvl < maxLevel; lvl++ {
-		savThrows[10][lvl] = savThrows[2][lvl]
-	}
-	// PALADIN (11) — use warrior saves
-	for lvl := 0; lvl < maxLevel; lvl++ {
-		savThrows[11][lvl] = savThrows[3][lvl]
-	}
+// savingThrowClass is an optional interface for characters that carry per-save modifiers.
+// This mirrors C's GET_SAVE(ch, type) which adds apply_saving_throw bonuses.
+type savingThrowClass interface {
+	GetClass() int
+	GetLevel() int
+	GetSavingThrow(idx int) int
 }
 
-// GetSavingThrow gets the target saving throw for a character of given class and level.
-// class: character class (0-11)
-// level: character level (1-50+, clamped to maxLevel)
-// saveType: PARALYSIS=0, ROD=1, PETRIFY=2, BREATH=3, SPELL=4
-// Returns the target number the d20 roll must meet or exceed to save.
+// GetSavingThrow looks up the base saving throw value from the table.
+// In C: saving_throws[class][type][level] — higher value = harder to save.
+//
+// class: CLASS_MAGIC_USER(0) .. CLASS_MYSTIC(11)
+// level: character level (0-50+, clamped to table bounds)
+// saveType: SaveParalysis(0), SaveRodStaff(1), SavePetrify(2), SaveBreath(3), SaveSpell(4)
+//
+// Returns the base save value (0-90). Apply character modifiers separately.
 func GetSavingThrow(class, level int, saveType SavingThrowType) int {
 	if class < 0 || class >= numClasses {
 		class = 0
 	}
-	idx := level - 1
+	idx := level
 	if idx < 0 {
 		idx = 0
 	}
-	if idx >= maxLevel {
-		idx = maxLevel - 1
+	if idx >= maxLevelIndex {
+		idx = maxLevelIndex - 1
 	}
 	if saveType < 0 || int(saveType) >= SaveCount {
 		saveType = SaveSpell
 	}
-	return savThrows[class][idx][saveType]
+	return savingThrowTable[class][saveType][idx]
 }
 
-// CheckSavingThrow rolls a d20 and returns true if the character saves against
-// the given save type. (roll >= target = save succeeds)
-// ch must implement:
+// CheckSavingThrow rolls d100 and returns true if the target SUCCEEDS in saving.
+// Matches C semantics: mag_savingthrow(ch, type) returns TRUE on success.
 //
-//	GetClass() int
-//	GetLevel() int
+// C logic: if (MAX(1, save) < number(0, 99)) return TRUE (saved)
+// Save values range 0-90 (table). Lower save value = better save.
+// Equipment/gear bonuses are negative values (lower = better), matching C.
+// A save value of 0 means the target almost always saves (MAX(1,0)=1, roll must exceed 1).
+// A save value of 90 means the target almost never saves.
+//
+// NPC handling: NPCs use CLASS_WARRIOR (3) tables per C source.
 func CheckSavingThrow(ch interface{}, saveType SavingThrowType) bool {
-	caster := getClassGetter(ch)
-	if caster == nil {
-		return false
+	type baseClass interface {
+		GetClass() int
+		GetLevel() int
 	}
-	target := GetSavingThrow(caster.GetClass(), caster.GetLevel(), saveType)
+
+	class := 0
+	level := 1
+	saveMod := 0
+	isNPC := false
+
+	// Try full interface with save modifiers
+	if stc, ok := ch.(savingThrowClass); ok {
+		class = stc.GetClass()
+		level = stc.GetLevel()
+		saveMod = stc.GetSavingThrow(int(saveType))
+		if npc, ok := ch.(interface{ IsNPC() bool }); ok {
+			isNPC = npc.IsNPC()
+		}
+	} else if bc, ok := ch.(baseClass); ok {
+		class = bc.GetClass()
+		level = bc.GetLevel()
+		if npc, ok := ch.(interface{ IsNPC() bool }); ok {
+			isNPC = npc.IsNPC()
+		}
+	} else {
+		return false // Can't determine class, fail to save
+	}
+
+	if isNPC {
+		class = 3 // CLASS_WARRIOR per C source
+	}
+
+	save := GetSavingThrow(class, level, saveType)
+	save += saveMod // C: save += GET_SAVE(ch, type)
+
+	// C: "negative apply_saving_throw values make saving throws better!"
+	// C: if (MAX(1, save) < number(0, 99)) return TRUE
+	if save < 1 {
+		save = 1
+	}
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-	roll := rand.Intn(20) + 1
-	return roll >= target
-}
-
-// classGetter is a minimal interface for saving throw checks.
-type classGetter interface {
-	GetClass() int
-	GetLevel() int
-}
-
-func getClassGetter(ch interface{}) classGetter {
-	if ch == nil {
-		return nil
-	}
-	cg, ok := ch.(classGetter)
-	if !ok {
-		return nil
-	}
-	return cg
+	roll := rand.Intn(100) // number(0, 99) in C
+	return save < roll      // TRUE = successful save
 }
 
 // Dice rolls N dice of S sides and returns the total (e.g. dice(2,6) = 2d6).
@@ -241,9 +223,7 @@ func Dice(num, sides int) int {
 	total := 0
 	for i := 0; i < num; i++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
 		total += rand.Intn(sides) + 1
 	}
 	return total
 }
-

@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+// TickDuration is the real-world duration of one affect tick.
+// In C: affect_update() fires every SECS_PER_MUD_HOUR (63s) * PASSES_PER_SEC,
+// so each duration unit = 1 mud hour. In Go the gameloop fires every 60s,
+// so 1 tick = 60 real seconds.
+const TickDuration = 60 * time.Second
+
 // AffectType represents the type of modifier an affect applies
 type AffectType int
 
@@ -90,7 +96,7 @@ func NewAffect(affectType AffectType, duration int, magnitude int, source string
 		Magnitude: magnitude,
 		Source:    source,
 		AppliedAt: now,
-		ExpiresAt: now.Add(time.Duration(duration) * time.Second), // Assuming 1 tick = 1 second for now
+		ExpiresAt: now.Add(time.Duration(duration) * TickDuration), // 1 tick = 1 mud hour = 60 real seconds
 		Flags:     0,
 		StackID:   "", // Default: doesn't stack
 		MaxStacks: 1,
@@ -114,7 +120,8 @@ func (a *Affect) IsExpired() bool {
 	return time.Now().After(a.ExpiresAt)
 }
 
-// Tick reduces the duration by one tick and returns true if expired
+// Tick reduces the duration by one tick and returns true if expired.
+// Each tick represents one mud hour (60 real seconds).
 func (a *Affect) Tick() bool {
 	if a.Duration == 0 {
 		return false // Permanent, never expires
@@ -127,7 +134,7 @@ func (a *Affect) Tick() bool {
 	}
 
 	// Update expiration time
-	a.ExpiresAt = a.ExpiresAt.Add(-time.Second)
+	a.ExpiresAt = a.ExpiresAt.Add(-TickDuration)
 	return false
 }
 
