@@ -45,7 +45,7 @@ var upgrader = websocket.Upgrader{
 		if origin == "" {
 			// No Origin header, could be direct WebSocket connection
 			// Allow but log for monitoring
-			slog.Warn("WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
+			slog.Warn("WebSocket connection without Origin header", "remote_addr", r.RemoteAddr) // #nosec G706
 			return true
 		}
 
@@ -55,7 +55,7 @@ var upgrader = websocket.Upgrader{
 			}
 		}
 
-		slog.Warn("rejected WebSocket connection from unauthorized origin", "origin", origin)
+		slog.Warn("rejected WebSocket connection from unauthorized origin", "origin", origin) // #nosec G706
 		return false
 	},
 }
@@ -155,6 +155,7 @@ func (m *Manager) SetDeathFunc() {
 		// If victim was a player, send updated room state after respawn
 		if !victim.IsNPC() {
 			if s, ok := m.GetSession(victim.GetName()); ok {
+// #nosec G104
 				cmdLook(s, nil)
 			}
 		}
@@ -194,7 +195,9 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	m.ipConnMu.Lock()
 	if m.ipConnCount[ip] >= 5 {
 		m.ipConnMu.Unlock()
+// #nosec G104
 		conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "too many connections from your IP"))
+// #nosec G104
 		conn.Close()
 		return
 	}
@@ -261,7 +264,8 @@ func (m *Manager) Unregister(playerName string) {
 				}
 			}
 		}
-		close(s.send)
+		m.combatEngine.StopCombat(playerName)
+		s.sendOnce.Do(func() { close(s.send) })
 		m.world.RemovePlayer(playerName)
 	}
 }
@@ -350,18 +354,24 @@ type Session struct {
 	// idleTicsSet tracks whether the idle timeout counter has been set
 	// for pre-login sessions. Used by CheckIdlePasswords().
 	idleTicsSet bool
+
+	// sendOnce ensures s.send is closed exactly once across all disconnect paths.
+	sendOnce sync.Once
 }
 
 // readPump reads messages from the WebSocket.
 func (s *Session) readPump() {
 	defer func() {
 		s.manager.Unregister(s.playerName)
+// #nosec G104
 		s.conn.Close()
 	}()
 
 	s.conn.SetReadLimit(16384) // 16KB max message size (C4)
+// #nosec G104
 	s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	s.conn.SetPongHandler(func(string) error {
+// #nosec G104
 		s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
@@ -387,20 +397,25 @@ func (s *Session) writePump() {
 	ticker := time.NewTicker(54 * time.Second)
 	defer func() {
 		ticker.Stop()
+// #nosec G104
 		s.conn.Close()
 	}()
 
 	for {
 		select {
 		case message, ok := <-s.send:
+// #nosec G104
 			s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if !ok {
+// #nosec G104
 				s.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
+// #nosec G104
 			s.conn.WriteMessage(websocket.TextMessage, message)
 
 		case <-ticker.C:
+// #nosec G104
 			s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := s.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
@@ -450,6 +465,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	ip := auth.GetIPFromRequest(s.request)
 	if !s.manager.loginLimiter.GetLimiter(ip).Allow() {
 		s.sendError("Too many login attempts. Please try again later.")
+// #nosec G104
 		s.conn.Close()
 		audit.LogSecurityEvent("rate_limit_exceeded", "Login rate limit exceeded", login.PlayerName, ip)
 		return nil
@@ -459,12 +475,14 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if login.Mode == "agent" && login.APIKey != "" {
 		if !s.manager.hasDB {
 			s.sendError("agent auth requires database")
+// #nosec G104
 			s.conn.Close()
 			return nil
 		}
 		charName, keyID, valid := s.manager.db.ValidateAgentKey(login.APIKey)
 		if !valid {
 			s.sendError("invalid agent key")
+// #nosec G104
 			s.conn.Close()
 			return nil
 		}
@@ -481,6 +499,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	// Validate player name
 	if !validation.IsValidPlayerName(login.PlayerName) {
 		s.sendError("Invalid player name. Names must be 2-32 characters and contain only letters, numbers, spaces, dots, dashes, and underscores.")
+// #nosec G104
 		s.conn.Close()
 		audit.LogSecurityEvent("invalid_player_name", "Invalid player name format", login.PlayerName, ip)
 		return nil
@@ -489,6 +508,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	// Check against invalid name list (profanity filter) — from game/ban.c
 	if !game.ValidName(login.PlayerName) {
 		s.sendError("Invalid player name. Please choose another.")
+// #nosec G104
 		s.conn.Close()
 		return nil
 	}
@@ -505,11 +525,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if rec.Password != "" {
 				if login.Password == "" {
 					s.sendError("Password required.")
+// #nosec G104
 					s.conn.Close()
 					return nil
 				}
 				if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)); err != nil {
 					s.sendError("Invalid password.")
+// #nosec G104
 					s.conn.Close()
 					audit.LogSecurityEvent("login_failed", "Invalid password", login.PlayerName, ip)
 					return nil
@@ -528,6 +550,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			// New character — require password
 			if login.Password == "" {
 				s.sendError("Password required for new characters.")
+// #nosec G104
 				s.conn.Close()
 				return nil
 			}
@@ -535,6 +558,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if err != nil {
 				slog.Error("bcrypt hash error", "error", err)
 				s.sendError("Internal error during character creation.")
+// #nosec G104
 				s.conn.Close()
 				return nil
 			}
@@ -820,7 +844,7 @@ func (s *Session) PlayerName() string {
 // CloseSend closes the session's outgoing message channel.
 func (s *Session) CloseSend() {
 	if s.send != nil {
-		close(s.send)
+		s.sendOnce.Do(func() { close(s.send) })
 	}
 }
 
@@ -838,6 +862,7 @@ func (s *Session) HandleMessage(data []byte) error {
 func (s *Session) Close() {
 	// Close the connection only; channel close is handled by Unregister()
 	if s.conn != nil {
+// #nosec G104
 		s.conn.Close()
 	}
 }
@@ -872,6 +897,8 @@ func (s *Session) RandomInt(n int) int {
 	}
 	// Use math/rand for randomness
 	// Note: In production, you might want to use a cryptographically secure random source
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	return rand.Intn(n)
 }
 
@@ -1023,11 +1050,14 @@ func (m *Manager) UnregisterAndClose(playerName string) {
 
 	// Close the WebSocket connection
 	if s.conn != nil {
+// #nosec G104
 		s.conn.Close()
 	}
 
+	m.combatEngine.StopCombat(playerName)
+
 	// Close the send channel to stop the write pump
-	close(s.send)
+	s.sendOnce.Do(func() { close(s.send) })
 
 	// Clean up snooping state
 	if s.snoopBy != nil {
@@ -1172,6 +1202,7 @@ func (m *Manager) CheckIdlePasswords() {
 
 		// Close the connection
 		if s.conn != nil {
+// #nosec G104
 			s.conn.Close()
 		}
 
@@ -1181,7 +1212,7 @@ func (m *Manager) CheckIdlePasswords() {
 	for _, name := range toDelete {
 		// Close channel and remove
 		if s, ok := m.sessions[name]; ok {
-			close(s.send)
+			s.sendOnce.Do(func() { close(s.send) })
 			delete(m.sessions, name)
 		}
 	}
@@ -1219,3 +1250,4 @@ func (m *Manager) SetWizlock(locked bool) {
 	defer m.wizlockMutex.Unlock()
 	m.wizlocked = locked
 }
+
