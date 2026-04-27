@@ -25,9 +25,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// LoginAttemptConfig exports the auth config type for convenience.
-type LoginAttemptConfig = auth.LoginAttemptConfig
-
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -72,9 +69,8 @@ type Manager struct {
 	shopManager  *systems.ShopManager
 	db           db.DB
 	hasDB        bool
-	loginLimiter    *auth.IPRateLimiter       // Rate limiter for login attempts
-	loginAttempts   *auth.LoginAttemptTracker // Lockout tracker (H-15)
-	doorManager     *systems.DoorManager
+	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
+	doorManager  *systems.DoorManager
 
 	// Per-IP connection tracking (C5)
 	ipConnCount map[string]int
@@ -96,14 +92,13 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 	}
 
 	m := &Manager{
-		sessions:      make(map[string]*Session),
-		world:         world,
-		combatEngine:  ce,
-		shopManager:   systems.NewShopManager(),
-		loginLimiter:  auth.NewIPRateLimiter(),
-		loginAttempts: auth.NewLoginAttemptTracker(auth.DefaultLoginAttemptConfig()),
-		doorManager:   dm,
-		ipConnCount:   make(map[string]int),
+		sessions:     make(map[string]*Session),
+		world:        world,
+		combatEngine: ce,
+		shopManager:  systems.NewShopManager(),
+		loginLimiter: auth.NewIPRateLimiter(),
+		doorManager:  dm,
+		ipConnCount:  make(map[string]int),
 	}
 	if database != nil {
 		m.db = *database
@@ -131,10 +126,7 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		select {
 		case s.send <- wrapped:
 		default:
-			slog.Warn("dropping MessageSink message: player channel full",
-				"player", playerName,
-				"message_preview", truncateStr(string(msg), 120),
-			)
+			// Channel full, drop
 		}
 	}
 
@@ -329,16 +321,8 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 			select {
 			case s.send <- message:
 			default:
-				// Channel full, drop message — log for observability
-				msgPreview := string(message)
-				if len(msgPreview) > 120 {
-					msgPreview = msgPreview[:120] + "..."
-				}
-				slog.Warn("dropping broadcast message: player channel full",
-					"player", name,
-					"room", roomVNum,
-					"message_preview", truncateStr(string(message), 120),
-				)
+				// Channel full, drop message
+			}
 		}
 	}
 }
@@ -510,19 +494,8 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return err
 	}
 
-	// Apply IP-based rate limiting and lockout enforcement (H-12 + H-15)
+	// Apply IP-based rate limiting for login attempts
 	ip := auth.GetIPFromRequest(s.request)
-
-	// H-15: Check if IP is locked out from previous failed attempts
-	if locked, remaining := s.manager.loginAttempts.IsLocked(ip); locked {
-		s.sendError(fmt.Sprintf("Too many failed login attempts. Try again in %d minutes.", int(remaining.Minutes())+1))
-// #nosec G104
-		s.conn.Close()
-		audit.LogSecurityEvent("login_locked_out", "IP locked out from failed login attempts", login.PlayerName, ip)
-		return nil
-	}
-
-	// H-12: Per-second rate limiting (uses actual TCP IP, not spoofable headers)
 	if !s.manager.loginLimiter.GetLimiter(ip).Allow() {
 		s.sendError("Too many login attempts. Please try again later.")
 // #nosec G104
@@ -976,14 +949,6 @@ func (s *Session) RandomInt(n int) int {
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
 	return rand.Intn(n)
-}
-
-// truncateStr returns s truncated to maxLen characters with "..." appended if needed.
-func truncateStr(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
 }
 
 // Errors

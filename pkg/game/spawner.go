@@ -48,9 +48,6 @@ type Spawner struct {
 
 	// Zone reset timers
 	zoneTimers map[int]*time.Timer // key: zone number
-
-	// Shutdown signal for periodic reset goroutine
-	done chan struct{}
 }
 
 // NewSpawner creates a new spawner for the given world.
@@ -581,40 +578,13 @@ func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) {
 }
 
 // StartPeriodicResets starts the periodic zone reset timer.
-// The goroutine exits when StopPeriodicResets() is called or the spawner is
-// garbage-collected (done channel is closed).
 func (s *Spawner) StartPeriodicResets(interval time.Duration) {
-	s.mu.Lock()
-	if s.done != nil {
-		// Already running; close old to stop previous goroutine before restarting
-		close(s.done)
-	}
-	s.done = make(chan struct{})
-	done := s.done
-	s.mu.Unlock()
-
 	ticker := time.NewTicker(interval)
 	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				s.resetEmptyZones()
-			case <-done:
-				ticker.Stop()
-				return
-			}
+		for range ticker.C {
+			s.resetEmptyZones()
 		}
 	}()
-}
-
-// StopPeriodicResets stops the periodic zone reset goroutine.
-func (s *Spawner) StopPeriodicResets() {
-	s.mu.Lock()
-	if s.done != nil {
-		close(s.done)
-		s.done = nil
-	}
-	s.mu.Unlock()
 }
 
 // resetEmptyZones resets zones that are empty (no players or mobs).

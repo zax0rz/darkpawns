@@ -107,11 +107,6 @@ type Player struct {
 
 	Fighting string // Name of character being fought
 
-	// C-10: WAIT_STATE — cooldown in PULSE_VIOLENCE ticks (1 tick = 2 seconds).
-	// Set by combat skills (bash, kick, etc.), decremented each violence pulse.
-	WaitState  int
-	ParryActive bool // C-11: parry stance toggle
-
 	// Conditions: hunger/thirst/drunk — from limits.c
 	// Range: -1 (gone) to 24 (full); clamped 0-48 in original gain_condition
 	Hunger int
@@ -696,43 +691,6 @@ func (p *Player) SetFighting(target string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Fighting = target
-}
-
-// GetWaitState returns the current wait state (PULSE_VIOLENCE ticks).
-func (p *Player) GetWaitState() int {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.WaitState
-}
-
-// SetWaitState sets the wait state cooldown.
-func (p *Player) SetWaitState(ticks int) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.WaitState = ticks
-}
-
-// DecrementWaitState reduces wait state by 1 (called each PULSE_VIOLENCE).
-func (p *Player) DecrementWaitState() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.WaitState > 0 {
-		p.WaitState--
-	}
-}
-
-// IsParrying returns whether parry stance is active.
-func (p *Player) IsParrying() bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.ParryActive
-}
-
-// SetParry toggles parry stance on/off.
-func (p *Player) SetParry(active bool) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.ParryActive = active
 }
 
 // TakeDamage applies damage to the player.

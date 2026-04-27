@@ -60,7 +60,6 @@ const (
 	affFly       = 4 // AFF_FLY
 	affWaterWalk = 5 // AFF_WATERWALK
 	affGroup     = 6 // AFF_GROUP
-	affDodge     = 7 // AFF_DODGE (NPC dodge / PC shadow) — fight.c:1970
 )
 
 // Direction name array (matching dirs[] from constants.c).
