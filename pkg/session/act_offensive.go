@@ -34,14 +34,23 @@ func findMobInRoom(s *Session) func(name string) interface{ GetShortDesc() strin
 	return nil // see inline usage below
 }
 
-// cmdAssist — assist a target in their combat (LVL_IMMORT).
+// cmdAssist — assist a target in their combat.
+// Ported from do_assist() in src/act.offensive.c lines 54-96.
 func cmdAssist(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
+	// 1. Player must not already be fighting
+	if s.manager.combatEngine.IsFighting(s.player.Name) {
+		s.Send("You're already fighting! How can you assist someone else?\r\n")
 		return nil
 	}
+
+	// 2. If mounted, must dismount first
+	if s.player.IsMounted() {
+		s.Send("Dismount first!\r\n")
+		return nil
+	}
+
 	if len(args) == 0 {
-		s.Send("Assist whom?")
+		s.Send("Whom do you wish to assist?\r\n")
 		return nil
 	}
 
@@ -51,7 +60,10 @@ func cmdAssist(s *Session, args []string) error {
 		return fmt.Errorf("invalid room")
 	}
 
-	// Find the player being assisted
+	// 3. Find the target character in the room (players and mobs)
+	var helpee combat.Combatant
+	helpeeName := ""
+
 	for _, p := range s.manager.world.GetPlayersInRoom(room.VNum) {
 		if p.Name == s.player.Name {
 			continue
@@ -59,28 +71,48 @@ func cmdAssist(s *Session, args []string) error {
 		if !strings.Contains(strings.ToLower(p.Name), targetName) {
 			continue
 		}
-		// Find who they're fighting
-		opponent, fighting := s.manager.combatEngine.GetCombatTarget(p.Name)
-		if !fighting {
-			s.Send(fmt.Sprintf("%s is not in combat.", p.Name))
-			return nil
+		helpee = p
+		helpeeName = p.Name
+		break
+	}
+	if helpee == nil {
+		for _, m := range s.manager.world.GetMobsInRoom(room.VNum) {
+			if !strings.Contains(strings.ToLower(m.GetShortDesc()), targetName) &&
+				!strings.Contains(strings.ToLower(m.GetName()), targetName) {
+				continue
+			}
+			helpee = m
+			helpeeName = m.GetShortDesc()
+			break
 		}
-		if s.manager.combatEngine.IsFighting(s.player.Name) {
-			s.Send("You're already fighting someone!")
-			return nil
-		}
-		if err := s.manager.combatEngine.StartCombat(s.player, opponent); err != nil {
-			s.Send(err.Error())
-			return nil
-		}
-		s.Send(fmt.Sprintf("You jump to the aid of %s!", p.Name))
-		broadcastCombatMsg(s, room.VNum, "assist",
-			fmt.Sprintf("%s jumps to the aid of %s!", s.player.Name, p.Name))
-		s.markDirty(VarFighting)
+	}
+	if helpee == nil {
+		s.Send("They don't seem to be here.\r\n")
 		return nil
 	}
 
-	s.Send("They aren't here.")
+	// Find who is fighting the helpee
+	opponent, fighting := s.manager.combatEngine.GetCombatTarget(helpeeName)
+	if !fighting {
+		s.Send(fmt.Sprintf("But nobody is fighting %s!\r\n", helpeeName))
+		return nil
+	}
+
+	// 4. Player joins the fight
+	if err := s.manager.combatEngine.StartCombat(s.player, opponent); err != nil {
+		s.Send(err.Error())
+		return nil
+	}
+	s.Send("You join the fight!\r\n")
+	// Notify the helpee
+	if !helpee.IsNPC() {
+		if helpeeSess, ok := s.manager.GetSession(helpeeName); ok {
+			helpeeSess.Send(fmt.Sprintf("%s assists you!\r\n", s.player.Name))
+		}
+	}
+	broadcastCombatMsg(s, room.VNum, "assist",
+		fmt.Sprintf("%s assists %s.", s.player.Name, helpeeName))
+	s.markDirty(VarFighting)
 	return nil
 }
 
@@ -434,10 +466,12 @@ func cmdDisembowel(s *Session, args []string) error {
 	return nil
 }
 
-// cmdRescue — rescue another player from combat.
+// cmdRescue — rescue another character from combat.
+// Ported from do_rescue() in src/act.offensive.c lines 501-567.
+// The rescuer takes the victim's place: victim stops fighting, rescuer starts fighting the attacker.
 func cmdRescue(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.Send("Rescue who?")
+		s.Send("Whom do you want to rescue?\r\n")
 		return nil
 	}
 
@@ -447,6 +481,10 @@ func cmdRescue(s *Session, args []string) error {
 		return fmt.Errorf("invalid room")
 	}
 
+	// Find the target character in the room (players and mobs)
+	var vict combat.Combatant
+	victName := ""
+
 	for _, p := range s.manager.world.GetPlayersInRoom(room.VNum) {
 		if p.Name == s.player.Name {
 			continue
@@ -454,28 +492,76 @@ func cmdRescue(s *Session, args []string) error {
 		if !strings.Contains(strings.ToLower(p.Name), targetName) {
 			continue
 		}
-		// Take their combat opponent
-		opponent, fighting := s.manager.combatEngine.GetCombatTarget(p.Name)
-		if !fighting {
-			s.Send(fmt.Sprintf("%s doesn't need rescuing!", p.Name))
-			return nil
+		vict = p
+		victName = p.Name
+		break
+	}
+	if vict == nil {
+		for _, m := range s.manager.world.GetMobsInRoom(room.VNum) {
+			if !strings.Contains(strings.ToLower(m.GetShortDesc()), targetName) &&
+				!strings.Contains(strings.ToLower(m.GetName()), targetName) {
+				continue
+			}
+			vict = m
+			victName = m.GetShortDesc()
+			break
 		}
-		s.manager.combatEngine.StopCombat(p.Name)
-		if err := s.manager.combatEngine.StartCombat(s.player, opponent); err != nil {
-			s.Send(err.Error())
-			return nil
-		}
-		s.Send(fmt.Sprintf("You valiantly rescue %s!", p.Name))
-		if target, ok := s.manager.GetSession(p.Name); ok {
-			target.Send(fmt.Sprintf("%s rescues you!", s.player.Name))
-		}
-		broadcastCombatMsg(s, room.VNum, "rescue",
-			fmt.Sprintf("%s rescues %s!", s.player.Name, p.Name))
-		s.markDirty(VarFighting)
+	}
+	if vict == nil {
+		s.Send("They don't seem to be here.\r\n")
 		return nil
 	}
 
-	s.Send("They aren't here.")
+	// Can't rescue yourself
+	if victName == s.player.Name {
+		s.Send("What about fleeing instead?\r\n")
+		return nil
+	}
+
+	// Can't rescue someone you're fighting
+	if myTarget, ok := s.manager.combatEngine.GetCombatTarget(s.player.Name); ok {
+		if myTarget.GetName() == victName {
+			s.Send("How can you rescue someone you are trying to kill?\r\n")
+			return nil
+		}
+	}
+
+	// Must dismount first
+	if s.player.IsMounted() {
+		s.Send("Dismount first!\r\n")
+		return nil
+	}
+
+	// Find who is fighting the victim (the attacker)
+	attacker, fighting := s.manager.combatEngine.GetCombatTarget(victName)
+	if !fighting {
+		s.Send(fmt.Sprintf("But nobody is fighting %s!\r\n", victName))
+		return nil
+	}
+
+	// Perform the rescue swap:
+	// 1. Stop victim's combat
+	s.manager.combatEngine.StopCombat(victName)
+	// 2. Stop attacker's combat
+	s.manager.combatEngine.StopCombat(attacker.GetName())
+	// 3. Stop rescuer's combat if fighting anyone else
+	s.manager.combatEngine.StopCombat(s.player.Name)
+	// 4. Start new fight: rescuer vs attacker
+	if err := s.manager.combatEngine.StartCombat(s.player, attacker); err != nil {
+		s.Send(err.Error())
+		return nil
+	}
+
+	s.Send("Banzai! To the rescue...\r\n")
+	// Notify the victim
+	if !vict.IsNPC() {
+		if victSess, ok := s.manager.GetSession(victName); ok {
+			victSess.Send(fmt.Sprintf("You are rescued by %s, you are confused!\r\n", s.player.Name))
+		}
+	}
+	broadcastCombatMsg(s, room.VNum, "rescue",
+		fmt.Sprintf("%s heroically rescues %s!", s.player.Name, victName))
+	s.markDirty(VarFighting)
 	return nil
 }
 
