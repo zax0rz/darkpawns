@@ -1,6 +1,7 @@
 package web
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -38,37 +39,57 @@ func getAllowedOrigins() []string {
 	if envOrigins := os.Getenv("CORS_ALLOWED_ORIGINS"); envOrigins != "" {
 		return strings.Split(envOrigins, ",")
 	}
-	
+
 	// Default development origins
-	if os.Getenv("ENVIRONMENT") == "development" {
+	if isDevMode() {
 		return []string{"http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"}
 	}
-	
-	// Production defaults
+
+	// Production defaults — explicit list only, no wildcards
 	return []string{
 		"https://darkpawns.example.com",
 		"https://game.darkpawns.example.com",
 	}
 }
 
+// allowedSubdomains lists the specific subdomains permitted for CORS.
+// M-12: No wildcard matching — only explicitly listed subdomains are allowed.
+var allowedSubdomains = map[string][]string{
+	"darkpawns.example.com": {"game", "www", "api"},
+}
+
+func isDevMode() bool {
+	return os.Getenv("ENVIRONMENT") == "development"
+}
+
 func isOriginAllowed(origin string, allowed []string) bool {
-	// Development mode allows all origins
-	if os.Getenv("ENVIRONMENT") == "development" {
+	// M-13: Development mode allows all origins.
+	// This must NEVER activate in production. The guard is explicitly
+	// checking ENVIRONMENT and cannot be overridden via CORS_ALLOWED_ORIGINS.
+	if isDevMode() {
+		log.Printf("[CORS] WARNING: dev mode — allowing origin %q (NEVER ship this config)", origin)
 		return true
 	}
-	
+
+	// Production: only exact matches or explicitly listed subdomains
 	for _, allowedOrigin := range allowed {
 		if origin == allowedOrigin {
 			return true
 		}
-		// Support wildcard subdomains
-		if strings.HasPrefix(allowedOrigin, "*.") {
-			domain := strings.TrimPrefix(allowedOrigin, "*.")
-			if strings.HasSuffix(origin, domain) {
-				return true
+	}
+
+	// Check against explicit subdomain allowlists per base domain
+	for baseDomain, subs := range allowedSubdomains {
+		suffix := "." + baseDomain
+		if strings.HasSuffix(origin, suffix) {
+			prefix := strings.TrimSuffix(origin, suffix)
+			for _, sub := range subs {
+				if prefix == sub {
+					return true
+				}
 			}
 		}
 	}
-	
+
 	return false
 }

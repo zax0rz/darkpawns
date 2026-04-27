@@ -11,12 +11,13 @@ const (
 
 // Server to Client message types
 const (
-	MsgState      = "state"
-	MsgEvent      = "event"
-	MsgError      = "error"
-	MsgText       = "text"
-	MsgCharCreate = "char_create" // server → client: prompts during char creation
-	MsgVars       = "vars"        // server → agent: variable state update
+	MsgState        = "state"
+	MsgEvent        = "event"
+	MsgError        = "error"
+	MsgText         = "text"
+	MsgCharCreate   = "char_create" // server → client: prompts during char creation
+	MsgVars         = "vars"        // server → agent: variable state update
+	MsgTokenRefresh = "token_refresh" // server → client: proactively rotated JWT
 )
 
 // Client to Server message types (agent-specific)

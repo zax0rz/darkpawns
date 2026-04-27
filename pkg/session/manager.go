@@ -43,10 +43,9 @@ var upgrader = websocket.Upgrader{
 
 		origin := r.Header.Get("Origin")
 		if origin == "" {
-			// No Origin header, could be direct WebSocket connection
-			// Allow but log for monitoring
-			slog.Warn("WebSocket connection without Origin header", "remote_addr", r.RemoteAddr) // #nosec G706
-			return true
+			// H-13: No Origin header in production — reject direct WS connections
+			slog.Warn("rejected WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
+			return false
 		}
 
 		for _, allowed := range allowedOrigins {

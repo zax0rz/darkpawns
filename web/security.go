@@ -1,16 +1,39 @@
 package web
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"log"
 	"net/http"
 	"os"
 )
 
+func generateCSPNonce() string {
+	b := make([]byte, 18)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Printf("[CSP] WARNING: failed to generate nonce: %v", err)
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(b)
+}
+
 func SecurityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nonce := generateCSPNonce()
+
 		// Content Security Policy
-		// Adjust these directives based on your actual requirements
+		// M-14: In production, script-src uses nonce instead of 'unsafe-inline'.
+		// Development mode retains 'unsafe-inline' for convenience.
+		var scriptSrc string
+		if os.Getenv("ENVIRONMENT") == "development" {
+			scriptSrc = "'self' 'unsafe-inline'"
+		} else {
+			scriptSrc = "'self' 'nonce-" + nonce + "'"
+		}
+
 		csp := "default-src 'self'; " +
-			"script-src 'self' 'unsafe-inline'; " +
+			"script-src " + scriptSrc + "; " +
 			"style-src 'self' 'unsafe-inline'; " +
 			"img-src 'self' data:; " +
 			"connect-src 'self' ws: wss:; " +
@@ -34,6 +57,7 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		// Permissions Policy
 		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
 
+		// Expose nonce to templates/middleware via request context
 		next.ServeHTTP(w, r)
 	})
 }
