@@ -211,6 +211,24 @@ func (m *Manager) SetScriptFightFunc() {
 	}
 }
 
+// SetParryDodgeFuncs wires C-11 parry and dodge checks into the combat engine.
+func (m *Manager) SetParryDodgeFuncs() {
+	m.combatEngine.ParryCheckFunc = func(defenderName string) bool {
+		p, ok := m.world.GetPlayer(defenderName)
+		if !ok {
+			return false
+		}
+		return game.CheckParry(p)
+	}
+	m.combatEngine.DodgeCheckFunc = func(defenderName string) bool {
+		mob := m.world.GetMobByName(defenderName)
+		if mob == nil {
+			return false
+		}
+		return game.CheckNPCDodge(mob)
+	}
+}
+
 // HandleWebSocket upgrades HTTP to WebSocket and manages the session.
 func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -322,6 +340,10 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 			case s.send <- message:
 			default:
 				// Channel full, drop message
+				slog.Warn("dropping broadcast: channel full",
+					"player", name,
+					"room", roomVNum,
+				)
 			}
 		}
 	}
