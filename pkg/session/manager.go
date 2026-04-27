@@ -291,12 +291,28 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 // Register adds a session for a player.
+// If the player is already online, the existing session is forcibly closed
+// ("link-dead" takeover, matching original C MUD behavior) and replaced
+// with the new session. This prevents players from being locked out when
+// their previous connection drops uncleanly and the 60s read-deadline hasn't
+// fired yet.
 func (m *Manager) Register(playerName string, s *Session) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if _, exists := m.sessions[playerName]; exists {
-		return ErrPlayerAlreadyOnline
+	if oldSess, exists := m.sessions[playerName]; exists {
+		// Notify the old session that it's being taken over, then close it.
+		// sendOnce ensures the send channel is closed exactly once, which
+		// causes writePump to exit. Closing the conn causes readPump to exit,
+		// which calls Unregister — but we've already replaced the session map
+		// entry, so the stale Unregister is harmless.
+		select {
+		case oldSess.send <- []byte("\r\nYour connection has been taken over by a new login.\r\n"):
+		default:
+			// send buffer full; skip notification rather than block
+		}
+		oldSess.sendOnce.Do(func() { close(oldSess.send) })
+		slog.Info("session takeover", "player", playerName)
 	}
 
 	m.sessions[playerName] = s
@@ -305,6 +321,51 @@ func (m *Manager) Register(playerName string, s *Session) error {
 }
 
 // Unregister removes a session and saves the player to DB.
+// cleanupSession performs all teardown for a session. Idempotent — safe to call
+// multiple times for the same session. Both Unregister and UnregisterAndClose
+// delegate here to guarantee consistent cleanup ordering.
+func (m *Manager) cleanupSession(s *Session, playerName string) {
+	// 1. Stop combat
+	m.combatEngine.StopCombat(playerName)
+
+	// 2. Broadcast leave message
+	if s.player != nil {
+		leaveMsg, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "leave",
+				Text: s.player.Name + " has left the game.",
+			},
+		})
+		if err == nil {
+			m.BroadcastToRoom(s.player.GetRoom(), leaveMsg, s.player.Name)
+		}
+	}
+
+	// 3. Clean snoop references
+	if s.snoopBy != nil {
+		s.snoopBy.snooping = nil
+	}
+	if s.snooping != nil {
+		s.snooping.snoopBy = nil
+	}
+
+	// 4. Save player to DB
+	if m.hasDB && s.player != nil && s.player.ID > 0 {
+		if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
+			if err := m.db.SavePlayer(rec); err != nil {
+				slog.Error("DB save error", "player", playerName, "error", err)
+			}
+		}
+	}
+
+	// 5. Remove from world
+	m.world.RemovePlayer(playerName)
+
+	// 6. Close send channel (sync.Once makes this idempotent)
+	s.sendOnce.Do(func() { close(s.send) })
+}
+
 func (m *Manager) Unregister(playerName string) {
 	m.mu.Lock()
 	s, ok := m.sessions[playerName]
@@ -325,17 +386,7 @@ func (m *Manager) Unregister(playerName string) {
 			m.ipConnMu.Unlock()
 		}
 
-		// Save to DB on disconnect
-		if m.hasDB && s.player != nil && s.player.ID > 0 {
-			if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
-				if err := m.db.SavePlayer(rec); err != nil {
-					slog.Error("DB save error", "player", playerName, "error", err)
-				}
-			}
-		}
-		m.combatEngine.StopCombat(playerName)
-		s.sendOnce.Do(func() { close(s.send) })
-		m.world.RemovePlayer(playerName)
+		m.cleanupSession(s, playerName)
 	}
 }
 
@@ -1162,50 +1213,23 @@ func (m *Manager) UnregisterAndClose(playerName string) {
 	// Flush any pending output
 	s.FlushQueues()
 
-	// Save player state
-	if s.player != nil {
-		// Notify room of departure
-		leaveMsg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "leave",
-				Text: s.player.Name + " has left the game.",
-			},
-		})
-		if err == nil {
-			m.BroadcastToRoom(s.player.GetRoom(), leaveMsg, s.player.Name)
+	// Decrement per-IP connection count (C5)
+	if s.request != nil {
+		ip := auth.GetIPFromRequest(s.request)
+		m.ipConnMu.Lock()
+		m.ipConnCount[ip]--
+		if m.ipConnCount[ip] <= 0 {
+			delete(m.ipConnCount, ip)
 		}
-
-		// Save to DB
-		if m.hasDB && s.player.ID > 0 {
-			if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
-				if err := m.db.SavePlayer(rec); err != nil {
-					slog.Error("DB save error on disconnect", "player", playerName, "error", err)
-				}
-			}
-		}
-
-		// Remove from world
-		m.world.RemovePlayer(playerName)
+		m.ipConnMu.Unlock()
 	}
+
+	m.cleanupSession(s, playerName)
 
 	// Close the WebSocket connection
 	if s.conn != nil {
 // #nosec G104
 		s.conn.Close()
-	}
-
-	m.combatEngine.StopCombat(playerName)
-
-	// Close the send channel to stop the write pump
-	s.sendOnce.Do(func() { close(s.send) })
-
-	// Clean up snooping state
-	if s.snoopBy != nil {
-		s.snoopBy.snooping = nil
-	}
-	if s.snooping != nil {
-		s.snooping.snoopBy = nil
 	}
 
 	slog.Info("session closed", "player", playerName)

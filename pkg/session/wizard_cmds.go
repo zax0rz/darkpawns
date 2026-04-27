@@ -391,6 +391,32 @@ func clamp(v, min, max int) int {
 // ---------------------------------------------------------------------------
 // switch — switch into another character's body (LVL_GRGOD)
 // ---------------------------------------------------------------------------
+// SECURITY NOTE: This is intentionally cosmetic-only.
+//
+// The original C MUD's switch command fully swapped the session's player
+// reference, allowing the wizard to run commands as the target character.
+// That design has significant security implications:
+//
+//   - The wizard could execute any command with the target's permissions,
+//     including commands the target's level shouldn't have access to.
+//   - Inventory manipulation, save data corruption, and privilege escalation
+//     are all possible if the swap isn't handled carefully.
+//   - If the target player reconnects during a switch, ownership of the
+//     session becomes ambiguous.
+//
+// Full body switching would require:
+//   1. Swapping Session.player to the target Player pointer
+//   2. Updating world.RemovePlayer/AddPlayer for both characters
+//   3. Preventing the target from receiving commands during the switch
+//   4. Auditing command execution to ensure permission isolation
+//   5. Coordinating with the session-takeover logic (M-28) for edge cases
+//
+// TODO(M-16): Implement a safe player reference swap with:
+//   - A permission wrapper that gates commands by the *original* wizard level
+//   - Save-state snapshots before and after the switch
+//   - A timeout that auto-returns if the wizard disconnects mid-switch
+//   - Logging all commands executed while switched for audit trail
+//
 // cmdSwitch transfers the wizard's control to a different character.
 // Expected behavior (from original C):
 // - Save the current character state
