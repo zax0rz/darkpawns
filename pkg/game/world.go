@@ -1049,7 +1049,7 @@ func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int, ce CombatEngine)
 			if !ce.IsFighting(mob.GetName()) {
 				go func(m *MobInstance) {
 					if err := ce.StartCombat(m, player); err != nil {
-						// Combat might fail if already fighting, that's ok
+						slog.Debug("aggro combat start failed", "mob", m.GetName(), "target", player.Name, "error", err)
 					}
 				}(mob)
 				return true
@@ -1520,8 +1520,7 @@ func (w *World) FireMobFightScript(mobName string, targetName string, roomVNum i
 	ctx.RoomVNum = roomVNum
 
 	if _, err := mob.RunScript("fight", ctx); err != nil {
-		// Script errors are non-fatal — log and continue
-		_ = err
+		slog.Warn("fight script error", "mob_vnum", mob.GetVNum(), "mob_name", mob.GetName(), "error", err)
 	}
 }
 

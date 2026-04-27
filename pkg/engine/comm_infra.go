@@ -2,6 +2,12 @@
 // comm.c (nonblock, set_sendbuf, get_from_q, timediff, timeadd,
 // perform_subst, perform_alias, make_prompt, setup_log, open_logfile).
 //
+// DEPRECATED: This file contains dead code — none of these functions are
+// called anywhere outside this file. The Go runtime and stdlib handle most
+// low-level socket concerns that these wrappers were porting from C.
+// Kept for reference during the CircleMUD-to-Go port. Should be removed
+// once the port stabilizes. See M-02 audit.
+//
 // Many of these are thin wrappers around Go standard library equivalents
 // since Go's runtime and stdlib handle most low-level socket concerns.
 package engine

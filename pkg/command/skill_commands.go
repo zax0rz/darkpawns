@@ -1720,6 +1720,12 @@ func CmdFleshAlter(s SessionInterface, args []string) error {
 }
 
 // RegisterSkillCommands registers all skill-related commands.
+//
+// NOTE (M-04): This is currently a no-op placeholder. Skill commands are
+// registered via init() functions in pkg/command/ files and wired through
+// the session layer. This function should be the explicit entry point for
+// all skill command registration once the init()-based pattern is migrated.
+// See pkg/command/registry.go for the migration plan.
 func RegisterSkillCommands() {
 	// Registration placeholder — commands are called directly via Cmd* handlers.
 }

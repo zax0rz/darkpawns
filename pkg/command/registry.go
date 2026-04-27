@@ -1,4 +1,11 @@
 // Package command provides a command registry for Dark Pawns.
+//
+// NOTE (M-04): Several packages (pkg/session, pkg/game) use init() functions
+// to register commands via cmdRegistry.Register(). This implicit initialization
+// makes order-of-initialization hard to test and reason about. These should
+// eventually migrate to explicit registration in main.go or a top-level
+// RegisterCommands() function that is called at startup. See cmd/server/main.go
+// and pkg/session/commands.go for the current init()-based registration sites.
 package command
 
 import (

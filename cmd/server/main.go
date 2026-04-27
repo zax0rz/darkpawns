@@ -86,14 +86,13 @@ func main() {
 	http.HandleFunc("/ws", manager.HandleWebSocket)
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-// #nosec G104
-		w.Write([]byte("OK\n"))
+		if _, err := w.Write([]byte("OK\n")); err != nil {
+			slog.Warn("health check write failed", "error", err)
+		}
 	})
 	http.HandleFunc("/metrics", metrics.Handler().ServeHTTP)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-// #nosec G104
-// #nosec G705
-		w.Write([]byte(`Dark Pawns Phase 1 Server
+		if _, err := w.Write([]byte(`Dark Pawns Phase 1 Server
 
 Connect via WebSocket: ws://` + r.Host + `/ws
 
@@ -106,7 +105,9 @@ Protocol:
   {"type":"command","data":{"command":"look"}}
   {"type":"command","data":{"command":"north"}}
   {"type":"command","data":{"command":"say","args":["hello"]}}
-`))
+`)); err != nil {
+			slog.Warn("index page write failed", "error", err)
+		}
 	})
 
 	// Setup API handler chain: Auth → ContentNegotiation
@@ -119,8 +120,9 @@ Protocol:
 	apiMux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-// #nosec G104
-		w.Write([]byte(`{"error": "API endpoint not found", "docs": "/api/openapi.json"}`))
+		if _, err := w.Write([]byte(`{"error": "API endpoint not found", "docs": "/api/openapi.json"}`)); err != nil {
+			slog.Warn("API 404 write failed", "error", err)
+		}
 	})
 	http.Handle("/api/", web.AuthMiddleware(apiMux))
 
