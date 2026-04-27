@@ -323,7 +323,16 @@ func (w *World) SendToZone(roomVNum int, msg string) {
 		return
 	}
 	zone := room.Zone
+
+	// H-07: Acquire read lock before iterating w.players map.
+	w.mu.RLock()
+	players := make([]*Player, 0, len(w.players))
 	for _, p := range w.players {
+		players = append(players, p)
+	}
+	w.mu.RUnlock()
+
+	for _, p := range players {
 		pr := w.GetRoomInWorld(p.RoomVNum)
 		if pr != nil && pr.Zone == zone {
 			p.SendMessage(msg)
@@ -337,7 +346,16 @@ func (w *World) SendToAll(msg string) {
 	if msg == "" {
 		return
 	}
+
+	// H-07: Acquire read lock before iterating w.players map.
+	w.mu.RLock()
+	players := make([]*Player, 0, len(w.players))
 	for _, p := range w.players {
+		players = append(players, p)
+	}
+	w.mu.RUnlock()
+
+	for _, p := range players {
 		p.SendMessage(msg)
 	}
 }
@@ -435,16 +453,19 @@ func (w *World) StopAITicker() {
 
 // SpawnMob spawns a mob in the world.
 func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
+	// H-11: Split into two phases to avoid blocking SendMessage while holding the write lock.
 
+	// Phase 1: Create mob under write lock.
+	w.mu.Lock()
 	proto, ok := w.mobs[vnum]
 	if !ok {
+		w.mu.Unlock()
 		return nil, fmt.Errorf("mob prototype %d not found", vnum)
 	}
 
 	_, ok = w.rooms[roomVNum]
 	if !ok {
+		w.mu.Unlock()
 		return nil, fmt.Errorf("room %d not found", roomVNum)
 	}
 
@@ -453,11 +474,18 @@ func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	w.activeMobs[w.nextMobID] = mob
 	w.nextMobID++
 
-	// Notify players in the room — use SendMessage (routes through session layer)
+	// Copy players in the room while holding the lock.
+	var targets []*Player
 	for _, player := range w.players {
 		if player.GetRoom() == roomVNum {
-			player.SendMessage(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
+			targets = append(targets, player)
 		}
+	}
+	w.mu.Unlock()
+
+	// Phase 2: Notify outside the lock (SendMessage may block on channel buffer).
+	for _, player := range targets {
+		player.SendMessage(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
 	}
 
 	return mob, nil
