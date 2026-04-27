@@ -111,9 +111,18 @@ func (i *IPRateLimiter) cleanupLoop() {
 	defer ticker.Stop()
 	for range ticker.C {
 		i.mu.Lock()
-		// If map gets very large, rebuild with recent entries
+		// Remove stale entries individually rather than nuking the entire map.
+		// The old approach (replace with empty map) let any IP with a full
+		// burst get a fresh limiter and bypass the rate limit window.
 		if len(i.ips) > 10000 {
-			i.ips = make(map[string]*rate.Limiter)
+			// Keep entries that still have tokens remaining (recently active).
+			fresh := make(map[string]*rate.Limiter, len(i.ips))
+			for ip, limiter := range i.ips {
+				if limiter.Tokens() < float64(limiter.Burst()) {
+					fresh[ip] = limiter
+				}
+			}
+			i.ips = fresh
 		}
 		i.mu.Unlock()
 	}

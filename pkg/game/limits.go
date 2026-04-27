@@ -827,8 +827,19 @@ func (w *World) GainExp(p *Player, gain int) {
 	}
 
 	if gain > 0 {
+		// Per-level XP cap: limits single-kill XP to level * 1000.
+		// Prevents low-level characters from gaining disproportionate XP
+		// from high-level kills, while still allowing meaningful gains at
+		// higher levels. This scales with level rather than being a flat cap.
+		perLevelCap := p.Level * 1000
+		if perLevelCap < 1000 {
+			perLevelCap = 1000
+		}
 		if gain > maxExpGain {
 			gain = maxExpGain
+		}
+		if gain > perLevelCap {
+			gain = perLevelCap
 		}
 
 		maxExp := FindExp(p.Class, p.Level+1) - p.Exp

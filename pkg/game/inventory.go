@@ -151,14 +151,20 @@ func (inv *Inventory) clear() {
 // cross-package callers (db, systems) that cannot access unexported methods.
 
 func (inv *Inventory) AddItem(item *ObjectInstance) error {
+	inv.mu.Lock()
+	defer inv.mu.Unlock()
 	return inv.addItem(item)
 }
 
 func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
+	inv.mu.Lock()
+	defer inv.mu.Unlock()
 	return inv.removeItem(item)
 }
 
 func (inv *Inventory) Clear() {
+	inv.mu.Lock()
+	defer inv.mu.Unlock()
 	inv.clear()
 }
 

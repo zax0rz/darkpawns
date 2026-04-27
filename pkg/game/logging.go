@@ -201,12 +201,18 @@ func MudLog(str string, typ int, level int, toFile bool) {
 // Immortal session provider registration (bridge pattern)
 // ---------------------------------------------------------------------------
 
-var immortalSessionProvider ImmortalSessionProvider
+var (
+	immortalSessionProvider     ImmortalSessionProvider
+	immortalSessionProviderOnce sync.Once
+)
 
 // SetImmortalSessionProvider registers a session provider for MudLog broadcasts.
 // Called during server initialization to avoid circular imports.
+// Safe for concurrent use — only the first call wins; subsequent calls are no-ops.
 func SetImmortalSessionProvider(provider ImmortalSessionProvider) {
-	immortalSessionProvider = provider
+	immortalSessionProviderOnce.Do(func() {
+		immortalSessionProvider = provider
+	})
 }
 
 func getImmortalSessionProvider() ImmortalSessionProvider {
