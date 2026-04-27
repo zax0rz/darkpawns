@@ -76,6 +76,9 @@ type Manager struct {
 	ipConnCount map[string]int
 	ipConnMu    sync.Mutex
 
+	// Login attempt lockout tracker (H-15)
+	loginAttempts *auth.LoginAttemptTracker
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
@@ -96,7 +99,11 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		world:        world,
 		combatEngine: ce,
 		shopManager:  systems.NewShopManager(),
-		loginLimiter: auth.NewIPRateLimiter(),
+		loginLimiter:  auth.NewIPRateLimiter(),
+		loginAttempts: auth.NewLoginAttemptTracker(auth.LoginAttemptConfig{
+			Threshold: 10,
+			Lockout:   15 * time.Minute,
+		}),
 		doorManager:  dm,
 		ipConnCount:  make(map[string]int),
 	}
@@ -226,6 +233,12 @@ func (m *Manager) SetParryDodgeFuncs() {
 			return false
 		}
 		return game.CheckNPCDodge(mob)
+	}
+	// C-10: decrement all player wait states each combat round
+	m.combatEngine.OnRoundEnd = func() {
+		m.world.ForEachPlayer(func(p *game.Player) {
+			p.DecrementWaitState()
+		})
 	}
 }
 
@@ -526,6 +539,16 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return nil
 	}
 
+	// H-15: Check login attempt lockout BEFORE auth attempt
+	if locked, remaining := s.manager.loginAttempts.IsLocked(ip); locked {
+		mins := int(remaining.Minutes()) + 1
+		s.sendError(fmt.Sprintf("Too many failed login attempts. Try again in %d minutes.", mins))
+// #nosec G104
+		s.conn.Close()
+		audit.LogSecurityEvent("login_locked_out", "Login locked out due to repeated failures", login.PlayerName, ip)
+		return nil
+	}
+
 	// Agent auth path — mode="agent" with api_key
 	if login.Mode == "agent" && login.APIKey != "" {
 		if !s.manager.hasDB {
@@ -585,6 +608,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 					return nil
 				}
 				if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)); err != nil {
+					s.manager.loginAttempts.RecordFailure(ip)
 					s.sendError("Invalid password.")
 // #nosec G104
 					s.conn.Close()
@@ -643,6 +667,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 	// If we created a player directly (not through char creation), proceed with registration
 	if s.authenticated && s.player != nil {
+		s.manager.loginAttempts.RecordSuccess(ip)
 		if err := s.manager.Register(login.PlayerName, s); err != nil {
 			return err
 		}
