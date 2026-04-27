@@ -90,9 +90,7 @@ func improveSkill(ch *Player, skill string) {
 // rawKill immediately kills the target with the given attack type.
 func (w *World) rawKill(victim *Player, attackType int) {
 	// Handle death via existing infrastructure
-	// Make a corpse first so items are preserved
-	corpse := w.makeCorpse(victim.GetName(), victim.GetSex(), nil, nil, victim.RoomVNum, attackType, 0)
-	_ = corpse // corpse is placed in the room by makeCorpse
+	// Corpse creation is handled by HandleDeath -> handlePlayerDeath
 
 	// Trigger death processing
 	w.HandleDeath(victim, nil, attackType)

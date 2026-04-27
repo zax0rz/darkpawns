@@ -827,7 +827,7 @@ func MakeHit(ch, victim Combatant) {
 
 		defPos := victim.GetPosition()
 		if defPos < PosFighting {
-			dam = int(float64(dam) * (1.0 + float64(PosFighting-defPos)/3.0))
+			dam *= 1 + (PosFighting - defPos) / 3
 		}
 		if dam < 1 {
 			dam = 1
@@ -994,11 +994,17 @@ func DieWithKiller(ch, killer Combatant, attackType int) {
 	}
 
 	if !ch.IsNPC() && GetConstitution != nil && SetConstitution != nil {
-		conVal := GetConstitution(chName) - 1
-		if conVal < 0 {
-			conVal = 0
+		level := ch.GetLevel()
+		if level > 5 && rand.Intn(4) == 0 { // 25% chance (C: !number(0,3))
+			conVal := GetConstitution(chName) - 1
+			if level > 20 && rand.Intn(6) == 0 { // ~17% chance (C: !number(0,5))
+				conVal--
+			}
+			if conVal < 0 {
+				conVal = 0
+			}
+			SetConstitution(chName, conVal)
 		}
-		SetConstitution(chName, conVal)
 	}
 
 	roomVNum := ch.GetRoom()
