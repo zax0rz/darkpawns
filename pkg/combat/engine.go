@@ -264,20 +264,26 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 			continue
 		}
 
-		// C-11: Parry/Dodge check
-		if ce.ParryCheckFunc != nil && ce.ParryCheckFunc(defender.GetName()) {
-			attacker.SendMessage(fmt.Sprintf("%s parries your attack!\r\n", defender.GetName()))
-			defender.SendMessage(fmt.Sprintf("You parry %s's attack!\r\n", attacker.GetName()))
+		// Parry check — checked before damage
+		parryResult := CheckParry(defender, attacker)
+		if parryResult == ParrySuccess {
+			attacker.SendMessage(fmt.Sprintf("With a dazzling show of swordplay, %s parries your attack!\r\n", defender.GetName()))
+			defender.SendMessage("With a dazzling show of swordplay, you parry the attack!\r\n")
 			if ce.BroadcastFunc != nil {
-				ce.BroadcastFunc(attacker.GetRoom(), fmt.Sprintf("%s parries %s's attack!", defender.GetName(), attacker.GetName()), "")
+				ce.BroadcastFunc(attacker.GetRoom(),
+					fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's blow!", defender.GetName(), attacker.GetName()), "")
 			}
 			continue
 		}
-		if ce.DodgeCheckFunc != nil && ce.DodgeCheckFunc(defender.GetName()) {
+
+		// Dodge check — checked after parry
+		dodgeResult := CheckDodge(defender, attacker)
+		if dodgeResult == DodgeSuccess {
 			attacker.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", defender.GetName()))
-			defender.SendMessage(fmt.Sprintf("You dodge %s's attack!\r\n", attacker.GetName()))
+			defender.SendMessage("You dodge the attack!\r\n")
 			if ce.BroadcastFunc != nil {
-				ce.BroadcastFunc(attacker.GetRoom(), fmt.Sprintf("%s dodges %s's attack!", defender.GetName(), attacker.GetName()), "")
+				ce.BroadcastFunc(attacker.GetRoom(),
+					fmt.Sprintf("%s dodges %s's attack!", defender.GetName(), attacker.GetName()), "")
 			}
 			continue
 		}

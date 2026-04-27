@@ -4,6 +4,24 @@ import (
 	"math/rand"
 )
 
+// ParryResult describes the outcome of a parry check.
+type ParryResult int
+
+const (
+	ParryFail       ParryResult = iota // parry not available or check failed
+	ParrySuccess                         // defender parried the attack
+	ParryUnarmed                         // defender has parry skill but no weapon
+)
+
+// DodgeResult describes the outcome of a dodge check.
+type DodgeResult int
+
+const (
+	DodgeFail      DodgeResult = iota // dodge not available or check failed
+	DodgeSuccess                       // defender dodged the attack
+	DodgeIncapable                     // defender sleeping/stunned
+)
+
 // AttackType represents different types of attacks
 type AttackType int
 
@@ -521,10 +539,11 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		class := c.GetClass()
 
 		// Warriors/Paladins/Rangers: +1 at level 10+ (60% + level% chance)
+		// C: number(1,100) returns 1-100; rand.Intn(100) returns 0-99 → add 1 for fidelity
 		if (class == ClassWarrior || class == ClassPaladin || class == ClassRanger) &&
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			level > 10 && rand.Intn(100) < (60+level) {
+			level > 10 && (rand.Intn(100)+1) < (60+level) {
 			attacks++
 		}
 
@@ -532,7 +551,7 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		if (class == ClassNinja || class == ClassAvatar) &&
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			level > 12 && rand.Intn(100) < (60+level) {
+			level > 12 && (rand.Intn(100)+1) < (60+level) {
 			attacks++
 		}
 
@@ -540,14 +559,14 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		if (class == ClassThief || class == ClassAssassin) &&
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			level > 15 && rand.Intn(100) < (30+level) {
+			level > 15 && (rand.Intn(100)+1) < (30+level) {
 			attacks++
 		}
 
 		// All players: +1 at level 25+ (75% chance)
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if level > 25 && rand.Intn(100) < 75 {
+		if level > 25 && (rand.Intn(100)+1) < 75 {
 			attacks++
 		}
 
@@ -589,6 +608,103 @@ func backstabMult(level int) float64 {
 		return 20.0
 	}
 	return float64(level)*0.2 + 1.0
+}
+
+// CheckParry implements the CircleMUD parry skill check for a single attack.
+// Source: fight.c:1949-1963, new_cmds.c do_parry()
+//
+// Parry requirements:
+//   - Defender must be a player (not NPC)
+//   - Defender must have the parry skill (GET_SKILL > 0)
+//   - Defender must be wielding a weapon
+//   - Defender must be awake (position > PosSleeping)
+//   - Attacker must be an "aware" mob — mob-aware mobs can't be parried
+//
+// Formula: percent = rand(1, 101); prob = skill level
+// If percent > prob, parry fails.
+//
+// Returns ParrySuccess if the attack is parried, ParryUnarmed if skill exists
+// but no weapon is equipped, ParryFail otherwise.
+func CheckParry(defender, attacker Combatant) ParryResult {
+	if defender.IsNPC() {
+		return ParryFail
+	}
+
+	// Must have parry skill
+	if GetSkill == nil {
+		return ParryFail
+	}
+	skill := GetSkill(defender.GetName(), SKILL_PARRY)
+	if skill <= 0 {
+		return ParryFail
+	}
+
+	// Must be awake
+	if defender.GetPosition() <= PosSleeping {
+		return ParryFail
+	}
+
+	// Mob-aware mobs can't be parried
+	if attacker.IsNPC() && HasMobFlag != nil && HasMobFlag(attacker.GetName(), "MOB_AWARE") {
+		return ParryFail
+	}
+
+	// Must be wielding a weapon
+	if GetWeaponInfo != nil {
+		wType, _, _, _ := GetWeaponInfo(defender.GetName())
+		if wType <= TYPE_HIT {
+			return ParryUnarmed
+		}
+	}
+
+	// C: percent = number(1, 101); prob = GET_SKILL(ch, SKILL_PARRY)
+	// If percent > prob, parry fails.
+	//nolint:g404 // game RNG, not cryptographic
+	percent := rand.Intn(101) + 1
+	if percent > skill {
+		return ParryFail
+	}
+
+	return ParrySuccess
+}
+
+// CheckDodge implements the CircleMUD dodge skill check for a single attack.
+// Source: fight.c:1965-1971
+//
+// Dodge requirements:
+//   - Defender must have the dodge skill
+//   - Defender must be awake (not sleeping, stunned, etc.)
+//   - Works without weapons
+//
+// Formula: percent = rand(1, 101); prob = skill level
+// If percent > prob, dodge fails.
+//
+// Returns DodgeSuccess if the attack is dodged, DodgeIncapable if the
+// defender is sleeping/stunned, DodgeFail otherwise.
+func CheckDodge(defender, attacker Combatant) DodgeResult {
+	// Must be awake — sleeping/stunned can't dodge
+	if defender.GetPosition() <= PosSleeping {
+		return DodgeIncapable
+	}
+
+	// Must have dodge skill
+	if GetSkill == nil {
+		return DodgeFail
+	}
+	skill := GetSkill(defender.GetName(), SKILL_DODGE)
+	if skill <= 0 {
+		return DodgeFail
+	}
+
+	// C: percent = number(1, 101); prob = skill level
+	// If percent > prob, dodge fails.
+	//nolint:g404 // game RNG, not cryptographic
+	percent := rand.Intn(101) + 1
+	if percent > skill {
+		return DodgeFail
+	}
+
+	return DodgeSuccess
 }
 
 // RollDice rolls num d-sides dice and returns the sum.

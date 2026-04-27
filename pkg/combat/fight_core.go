@@ -130,6 +130,7 @@ const (
 	SKILL_RETREAT      = 114
 	SKILL_ESCAPE       = 115
 	SKILL_PARRY        = 116
+	SKILL_DODGE        = 117
 )
 
 const (
@@ -324,7 +325,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			hasWerewolf := HasAffectStr != nil && HasAffectStr(victimName, AFF_STR_WEREWOLF)
 			if !hasVampire && !hasWerewolf {
 				if BroadcastMessage != nil {
-					BroadcastMessage(roomVNum,
+					BroadcastMessage(ch.GetRoom(),
 						fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
 							chName, victimName, victimName), "")
 				}
@@ -385,7 +386,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			RemoveAffect(chName, AFF_HIDE)
 		}
 		if BroadcastMessage != nil {
-			BroadcastMessage(roomVNum,
+			BroadcastMessage(ch.GetRoom(),
 				fmt.Sprintf("%s slowly fades into existence.", chName), chName)
 		}
 	}
@@ -478,19 +479,19 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	case PosMortally:
 			victim.SendMessage("You are mortally wounded, and will die soon, if not aided.\r\n")
 			if BroadcastMessage != nil {
-				BroadcastMessage(roomVNum,
+				BroadcastMessage(ch.GetRoom(),
 					fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", victimName), "")
 			}
 		case PosIncap:
 			victim.SendMessage("You are incapacitated and will slowly die, if not aided.\r\n")
 			if BroadcastMessage != nil {
-				BroadcastMessage(roomVNum,
+				BroadcastMessage(ch.GetRoom(),
 					fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", victimName), "")
 			}
 		case PosStunned:
 			victim.SendMessage("You're stunned, but will probably regain consciousness again.\r\n")
 			if BroadcastMessage != nil {
-				BroadcastMessage(roomVNum,
+				BroadcastMessage(ch.GetRoom(),
 					fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", victimName), "")
 			}
 		case PosDead:
@@ -787,6 +788,30 @@ func MakeHit(ch, victim Combatant) {
 	}
 
 	if !isMiss {
+		// Parry check — before any damage is calculated or applied
+		parryResult := CheckParry(victim, ch)
+		if parryResult == ParrySuccess {
+			ch.SendMessage(fmt.Sprintf("With a dazzling show of swordplay, %s parries your attack!\r\n", victimName))
+			victim.SendMessage("With a dazzling show of swordplay, you parry the attack!\r\n")
+			if BroadcastMessage != nil {
+				BroadcastMessage(ch.GetRoom(),
+					fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's blow!", victimName, chName), "")
+			}
+			return
+		}
+
+		// Dodge check — checked after parry, works without weapons
+		dodgeResult := CheckDodge(victim, ch)
+		if dodgeResult == DodgeSuccess {
+			ch.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", victimName))
+			victim.SendMessage("You dodge the attack!\r\n")
+			if BroadcastMessage != nil {
+				BroadcastMessage(ch.GetRoom(),
+					fmt.Sprintf("%s dodges %s's attack!", victimName, chName), "")
+			}
+			return
+		}
+
 		dam := 0
 		if strIdx < len(strApp) {
 			dam = strApp[strIdx].ToDam
