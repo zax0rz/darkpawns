@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // broadcastCombatMsg encodes and broadcasts a combat event message to a room.
@@ -118,10 +122,21 @@ func cmdKill(s *Session, args []string) error {
 	return nil
 }
 
-// cmdBackstab — backstab a target (requires piercing weapon, sneak/hide).
+// cmdBackstab — backstab a target.
+// Ported from do_backstab() in src/act.offensive.c lines 165-220.
+// Requires: piercing weapon, target not fighting, not mounted.
+// MOB_AWARE mobs that are awake will strike back.
+// Skill check: percent=rand(1,101), prob=skill level.
+// On hit: damage = weapon_dice * backstab_mult(level).
 func cmdBackstab(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.Send("Backstab who?")
+		s.Send("Backstab who?\r\n")
+		return nil
+	}
+
+	// Skill check
+	if s.player.GetSkill(game.SkillBackstab) == 0 {
+		s.Send("You have no idea how.\r\n")
 		return nil
 	}
 
@@ -131,28 +146,131 @@ func cmdBackstab(s *Session, args []string) error {
 		return fmt.Errorf("invalid room")
 	}
 
+	// 1. Player must NOT be fighting already
 	if s.manager.combatEngine.IsFighting(s.player.Name) {
-		s.Send("You can't backstab while you're fighting!")
+		s.Send("You can't backstab while you're fighting!\r\n")
 		return nil
 	}
 
+	// Find target mob in room
 	mobs := s.manager.world.GetMobsInRoom(room.VNum)
+	var target combat.Combatant
+	var targetMob *game.MobInstance
 	for _, mob := range mobs {
 		if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) ||
 			strings.Contains(strings.ToLower(mob.GetName()), targetName) {
-			if err := s.manager.combatEngine.StartCombat(s.player, mob); err != nil {
-				s.Send(err.Error())
-				return nil
+			target = mob
+			targetMob = mob
+			break
+		}
+	}
+	if target == nil {
+		s.Send("Backstab who?\r\n")
+		return nil
+	}
+	targetDesc := target.GetName()
+
+	// Target must not be self
+	if target.GetName() == s.player.Name || targetDesc == s.player.Name {
+		s.Send("How can you sneak up on yourself?\r\n")
+		return nil
+	}
+
+	// 2. Target must NOT be fighting someone else
+	if target.GetFighting() != "" {
+		s.Send("You can't backstab a fighting person -- they're too alert!\r\n")
+		return nil
+	}
+
+	// Must wield a weapon
+	wielded, hasWeapon := s.player.Equipment.GetItemInSlot(game.SlotWield)
+	if !hasWeapon {
+		s.Send("You need to wield a weapon to make it a success.\r\n")
+		return nil
+	}
+
+	// Weapon must be piercing (TYPE_PIERCE = 11, matching values[3] in C)
+	if wielded.Prototype != nil && wielded.Prototype.Values[3] != 11 {
+		s.Send("Only piercing weapons can be used for backstabbing.\r\n")
+		return nil
+	}
+
+	// 3. If mounted, dismount first
+	if s.player.IsMounted() {
+		s.Send("Dismount first!\r\n")
+		return nil
+	}
+
+	// 4. MOB_AWARE check — aware mobs that are awake hit back instead
+	if targetMob != nil && targetMob.HasMobFlag(game.MobFlagAware) && targetMob.GetPosition() > combat.PosSleeping {
+		s.Send(fmt.Sprintf("%s notices you lunging!\r\n", targetDesc))
+		broadcastCombatMsg(s, room.VNum, "backstab",
+			fmt.Sprintf("%s notices %s lunging!\r\n", targetDesc, s.player.Name))
+		// Mob hits back
+		combat.TakeDamage(target, s.player, 1, combat.TYPE_UNDEFINED)
+		return nil
+	}
+
+	// 5. Skill check: percent = rand(1,101), prob = skill level
+	// #nosec G404 — game RNG, not cryptographic
+	percent := rand.Intn(101) + 1
+	prob := s.player.GetSkill(game.SkillBackstab)
+
+	awake := target.GetPosition() > combat.PosSleeping
+
+	if awake && percent > prob {
+		// Miss — deal 0 damage, still start combat
+		s.Send(fmt.Sprintf("You try to backstab %s, but %s notices you!\r\n", targetDesc, targetDesc))
+		broadcastCombatMsg(s, room.VNum, "backstab",
+			fmt.Sprintf("%s tries to backstab %s, but fails.\r\n", s.player.Name, targetDesc))
+		// Start combat even on miss (C: damage(ch, vict, 0, SKILL_BACKSTAB) still engages)
+		_ = s.manager.combatEngine.StartCombat(s.player, target)
+		s.markDirty(VarFighting)
+	} else {
+		// Hit — calculate damage using backstab multiplier
+		weaponNum, weaponSides := s.player.Equipment.GetWeaponDamage()
+		weaponDam := combat.RollDice(weaponNum, weaponSides)
+		// backstab_mult() from class.c: level*0.2+1, capped at 20.0
+		mult := float64(s.player.Level)*0.2 + 1.0
+		if mult > 20.0 {
+			mult = 20.0
+		}
+		dam := int(float64(weaponDam) * mult)
+
+		s.Send(fmt.Sprintf("You plunge your blade into the back of %s!\r\n", targetDesc))
+		broadcastCombatMsg(s, room.VNum, "backstab",
+			fmt.Sprintf("%s backstabs %s!\r\n", s.player.Name, targetDesc))
+
+		// Apply damage via combat system
+		combat.TakeDamage(s.player, target, dam, combat.SKILL_BACKSTAB)
+
+		// Start combat
+		if !s.manager.combatEngine.IsFighting(s.player.Name) {
+			_ = s.manager.combatEngine.StartCombat(s.player, target)
+		}
+		s.markDirty(VarFighting)
+
+		// 7. Improve skill on success (inline CircleMUD improve_skill logic)
+		// Higher skill = harder to improve. INT/WIS affect chance.
+		{
+			cur := s.player.GetSkill(game.SkillBackstab)
+			if cur > 0 && cur < 100 {
+				// #nosec G404 — game RNG, not cryptographic
+				if rand.Intn(100)+1 > cur {
+					chance := (s.player.GetInt() + s.player.GetWis()) / 4
+					// #nosec G404 — game RNG, not cryptographic
+					if rand.Intn(100) < chance {
+						s.player.SetSkill(game.SkillBackstab, cur+1)
+						s.Send("You feel more competent in backstab.\r\n")
+					}
+				}
 			}
-			s.Send(fmt.Sprintf("You plunge your blade into the back of %s!", mob.GetShortDesc()))
-			broadcastCombatMsg(s, room.VNum, "backstab",
-				fmt.Sprintf("%s backstabs %s!", s.player.Name, mob.GetShortDesc()))
-			s.markDirty(VarFighting)
-			return nil
 		}
 	}
 
-	s.Send("They aren't here.")
+	// 6. Apply WAIT_STATE (PULSE_VIOLENCE = 1 tick)
+	s.player.SetWaitState(1)
+
 	return nil
 }
 
