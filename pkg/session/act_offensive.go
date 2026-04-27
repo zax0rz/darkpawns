@@ -274,35 +274,131 @@ func cmdBackstab(s *Session, args []string) error {
 	return nil
 }
 
-// cmdBash — bash a target.
+// cmdBash — bash a target. Ported from C ACMD(do_bash).
 func cmdBash(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Bash who?")
+	// 1. Must have the skill
+	if s.player.GetSkill(game.SkillBash) == 0 {
+		s.Send("You'd better leave all the martial arts to fighters.\r\n")
 		return nil
 	}
 
-	targetName := strings.ToLower(args[0])
 	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
 	if !ok {
 		return fmt.Errorf("invalid room")
 	}
 
-	mobs := s.manager.world.GetMobsInRoom(room.VNum)
-	for _, mob := range mobs {
-		if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) ||
-			strings.Contains(strings.ToLower(mob.GetName()), targetName) {
-			if !s.manager.combatEngine.IsFighting(s.player.Name) {
-				_ = s.manager.combatEngine.StartCombat(s.player, mob)
+	// 2. Find target — by name argument, or fall back to current fight opponent
+	var target combat.Combatant
+	var targetDesc string
+	if len(args) > 0 {
+		targetName := strings.ToLower(args[0])
+		mobs := s.manager.world.GetMobsInRoom(room.VNum)
+		for _, mob := range mobs {
+			if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) ||
+				strings.Contains(strings.ToLower(mob.GetName()), targetName) {
+				target = mob
+				targetDesc = mob.GetShortDesc()
+				break
 			}
-			s.Send(fmt.Sprintf("You bash %s with all your might!", mob.GetShortDesc()))
-			broadcastCombatMsg(s, room.VNum, "bash",
-				fmt.Sprintf("%s bashes %s!", s.player.Name, mob.GetShortDesc()))
-			s.markDirty(VarFighting)
+		}
+	}
+	if target == nil {
+		// Fall back to whoever the player is fighting
+		opponent, fighting := s.manager.combatEngine.GetCombatTarget(s.player.Name)
+		if fighting {
+			target = opponent
+			targetDesc = opponent.GetName()
+		} else {
+			s.Send("Bash who?\r\n")
 			return nil
 		}
 	}
 
-	s.Send("They aren't here.")
+	// 3. Can't bash yourself
+	if target.GetName() == s.player.Name {
+		s.Send("Aren't we funny today...\r\n")
+		return nil
+	}
+
+	// 4. Target must be standing/fighting (position >= PosFighting)
+	if target.GetPosition() < combat.PosFighting {
+		s.Send("You can't bash someone who's sitting already!\r\n")
+		return nil
+	}
+
+	// 5. Can't bash while mounted
+	if s.player.IsMounted() {
+		s.Send("Dismount first!\r\n")
+		return nil
+	}
+
+	// 6. Movement cost: 10 move points
+	const neededMoves = 10
+	if s.player.GetMove() < neededMoves {
+		s.Send("You haven't the energy!\r\n")
+		return nil
+	}
+	s.player.SetMove(s.player.GetMove() - neededMoves)
+
+	// 7. Skill check: percent = ((5 - (GET_AC(vict) / 10)) << 1) + rand(1,101)
+	//    prob = GET_SKILL(ch, SKILL_BASH)
+	// #nosec G404 — game RNG, not cryptographic
+	percent := ((5-(target.GetAC()/10))<<1) + (rand.Intn(101) + 1)
+	prob := s.player.GetSkill(game.SkillBash)
+
+	// Sleeping targets always get bashed
+	if target.GetPosition() <= combat.PosSleeping {
+		percent = 0
+	}
+
+	if percent > prob {
+		// Fail — deal 0 damage, attacker falls to sitting
+		s.Send(fmt.Sprintf("You try to bash %s, but stumble and fall down!\r\n", targetDesc))
+		broadcastCombatMsg(s, room.VNum, "bash",
+			fmt.Sprintf("%s tries to bash %s, but stumbles and falls!\r\n", s.player.Name, targetDesc))
+		combat.TakeDamage(s.player, target, 0, combat.SKILL_BASH)
+		// Attacker falls to sitting on failure
+		s.player.SetPosition(combat.PosSitting)
+	} else if combat.TakeDamage(s.player, target, (s.player.Level/2)+1, combat.SKILL_BASH) {
+		// Success — target gets knocked to sitting, takes damage
+		s.Send(fmt.Sprintf("You slam into %s and send %s sprawling!\r\n", targetDesc, targetDesc))
+		broadcastCombatMsg(s, room.VNum, "bash",
+			fmt.Sprintf("%s sends %s sprawling with a powerful bash!\r\n", s.player.Name, targetDesc))
+
+		// Knock target to sitting
+		switch t := target.(type) {
+		case *game.Player:
+			t.SetPosition(combat.PosSitting)
+		case *game.MobInstance:
+			t.SetStatus("sitting")
+		}
+
+		// Improve skill on success (inline CircleMUD improve_skill logic)
+		{
+			cur := s.player.GetSkill(game.SkillBash)
+			if cur > 0 && cur < 100 {
+				// #nosec G404 — game RNG, not cryptographic
+				if rand.Intn(100)+1 > cur {
+					chance := (s.player.GetInt() + s.player.GetWis()) / 4
+					// #nosec G404 — game RNG, not cryptographic
+					if rand.Intn(100) < chance {
+						s.player.SetSkill(game.SkillBash, cur+1)
+						s.Send("You feel more competent in bash.\r\n")
+					}
+				}
+			}
+		}
+	}
+
+	// Ensure we're in combat
+	if !s.manager.combatEngine.IsFighting(s.player.Name) {
+		_ = s.manager.combatEngine.StartCombat(s.player, target)
+	}
+	s.markDirty(VarFighting)
+
+	// Attacker WAIT_STATE: PULSE_VIOLENCE * 2
+	s.player.SetWaitState(2)
+
 	return nil
 }
 
