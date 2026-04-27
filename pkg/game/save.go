@@ -150,7 +150,11 @@ func PlayerSaveExists(name string) bool {
 }
 
 // playerToSaveData converts a Player to the serializable savePlayerData.
+// Acquires p.mu.RLock to prevent torn reads from concurrent mutations.
 func playerToSaveData(p *Player) savePlayerData {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
 	data := savePlayerData{
 		ID:          p.ID,
 		Name:        p.Name,

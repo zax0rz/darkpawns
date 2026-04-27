@@ -85,7 +85,6 @@ var wisApp = []wisAppType{
 // Called from do_start() at level 1, so even level 1 chars get more than 10 HP.
 func (p *Player) AdvanceLevel() {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 
 	addHP := 0
 	addMana := 0
@@ -379,11 +378,16 @@ func (p *Player) AdvanceLevel() {
 		p.HolyLight = true
 	}
 
-	// Save after leveling up
+	// Release lock before I/O — SavePlayer acquires RLock via playerToSaveData.
+	level := p.Level
+	name := p.Name
+	p.mu.Unlock()
+
+	// Save after leveling up (outside lock to avoid deadlock with playerToSaveData's RLock)
 	if err := SavePlayer(p); err != nil {
-		slog.Error("Failed to save player after leveling up", "name", p.Name, "error", err)
+		slog.Error("Failed to save player after leveling up", "name", name, "error", err)
 	}
 
-	slog.Info("advanced to level", "name", p.Name, "level", p.Level)
+	slog.Info("advanced to level", "name", name, "level", level)
 }
 
