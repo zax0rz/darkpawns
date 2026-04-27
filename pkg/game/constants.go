@@ -629,20 +629,21 @@ var ReverseDirection = []int{
 }
 
 // Movement loss by sector type (movement_loss[])
+// Ported from src/constants.c movement_loss[] — per-sector move point cost.
 var MovementLoss = []int{
-	0, // INSIDE
-	1, // CITY
-	1, // FIELD
-	2, // FOREST
-	2, // HILLS
-	4, // MOUNTAIN
-	3, // WATER_SWIM
-	5, // WATER_NOSWIM
+	2, // INSIDE
+	2, // CITY
+	3, // FIELD
+	4, // FOREST
+	5, // HILLS
+	7, // MOUNTAIN
+	5, // WATER_SWIM
+	6, // WATER_NOSWIM
 	2, // AIR
-	2, // DESERT
-	2, // UNDERGROUND
-	0, // OCEAN
-	0, // TUNDRA
+	8, // DESERT
+	4, // UNDERGROUND
+	6, // OCEAN
+	6, // TUNDRA
 }
 
 // Day names (weekdays[])

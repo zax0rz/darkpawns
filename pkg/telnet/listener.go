@@ -270,6 +270,9 @@ func formatState(sm session.ServerMessage) string {
 
 // readLine reads a line, handling IAC negotiation and responding appropriately.
 // Returns empty string on EOF/error.
+// Input exceeding maxInputLen bytes is truncated and logged.
+const maxInputLen = 1024
+
 func (tc *telnetConn) readLine() string {
 	var line []byte
 	for {
@@ -339,9 +342,17 @@ func (tc *telnetConn) readLine() string {
 // #nosec G104
 				tc.br.ReadByte()
 			}
+			if len(line) > maxInputLen {
+				slog.Warn("telnet: input truncated", "length", len(line), "max", maxInputLen)
+				line = line[:maxInputLen]
+			}
 			return string(line)
 		}
 		if b == '\n' {
+			if len(line) > maxInputLen {
+				slog.Warn("telnet: input truncated", "length", len(line), "max", maxInputLen)
+				line = line[:maxInputLen]
+			}
 			return string(line)
 		}
 		line = append(line, b)

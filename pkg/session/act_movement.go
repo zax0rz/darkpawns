@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // ---------------------------------------------------------------------------
@@ -174,6 +175,31 @@ func cmdSimpleMove(s *Session, args []string) error {
 	}
 
 	oldRoomVNum := s.player.GetRoomVNum()
+
+	// Sector-based movement cost (ported from act.movement.c lines 135-136)
+	currentRoom, roomOk := s.manager.world.GetRoom(oldRoomVNum)
+	if roomOk && currentRoom.Sector < len(game.MovementLoss) {
+		// Compute cost: average of source and destination sector losses
+		cost := game.MovementLoss[currentRoom.Sector]
+
+		// Look ahead at destination room for averaged cost
+		exitMap := s.manager.world.GetParsedWorld().Rooms[oldRoomVNum].Exits
+		if ext, extOk := exitMap[dir]; extOk && ext.ToRoom > 0 {
+			if destRoom, destOk := s.manager.world.GetRoom(ext.ToRoom); destOk && destRoom.Sector < len(game.MovementLoss) {
+				cost = (game.MovementLoss[currentRoom.Sector] + game.MovementLoss[destRoom.Sector]) / 2
+			}
+		}
+
+		if s.player.GetMove() < cost {
+			s.Send("You are too exhausted.\r\n")
+			return nil
+		}
+
+		// Deduct after successful move (below)
+		defer func() {
+			s.player.SetMove(s.player.GetMove() - cost)
+		}()
+	}
 
 	// Check if a door blocks the exit
 	dm := s.manager.doorManager

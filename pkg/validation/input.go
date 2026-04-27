@@ -38,6 +38,8 @@ var (
 )
 
 // ValidateInput checks for common injection attacks
+//
+// Deprecated: unused — remove in future cleanup
 func ValidateInput(input string) (bool, string) {
 	// Check length
 	if utf8.RuneCountInString(input) > 1000 {
