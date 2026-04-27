@@ -76,6 +76,10 @@ func cmdGoto(s *Session, args []string) error {
 // ---------------------------------------------------------------------------
 // at — run a command at another location (LVL_IMMORT)
 // ---------------------------------------------------------------------------
+// Recursion is capped at 3 levels to prevent stack overflow from chained
+// "at" commands (e.g. "at 100 at 200 at 300 shutdown").
+const maxAtDepth = 3
+
 func cmdAt(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
@@ -90,11 +94,25 @@ func cmdAt(s *Session, args []string) error {
 		s.Send("That's not a valid room number.")
 		return nil
 	}
+
+	// Check and increment recursion depth.
+	// Stored on Session so it survives the ExecuteCommand dispatch back to cmdAt.
+	depth := 0
+	if v := s.GetTempData("atDepth"); v != nil {
+		depth = v.(int)
+	}
+	if depth >= maxAtDepth {
+		s.Send("Nope, not going deeper.")
+		return nil
+	}
+	s.SetTempData("atDepth", depth+1)
+	defer s.SetTempData("atDepth", depth) // restore on return
+
 	orig := s.player.GetRoom()
 	s.player.SetRoom(dest)
 	defer s.player.SetRoom(orig)
 	rest := strings.Join(args[1:], " ")
-	slog.Warn("wizard at", "by", s.player.Name, "room", dest, "command", rest)
+	slog.Warn("wizard at", "by", s.player.Name, "room", dest, "command", rest, "depth", depth+1)
 // #nosec G104
 	ExecuteCommand(s, strings.Fields(rest)[0], strings.Fields(rest)[1:])
 	return nil
@@ -569,6 +587,37 @@ func cmdSend(s *Session, args []string) error {
 // ---------------------------------------------------------------------------
 // force — force command on another character (LVL_GRGOD)
 // ---------------------------------------------------------------------------
+//
+// *** INTENTIONAL STUB — command is logged but NOT executed. ***
+//
+// This is a safety-first stub. Before activating, the following MUST be implemented:
+//
+//  1. Privilege level: The forced command must execute at the TARGET's privilege
+//     level, not the wizard's. A level-50 wizard force on a level-1 player must not
+//     let that player run immortal commands.
+//
+//  TODO: Add a forced-player privilege mask or temporary level override that
+//  scopes only the single forced command execution.
+//
+//  2. No transitive force chains: If player A forces player B, player B must NOT
+//     be able to force player C. This prevents force amplification attacks.
+//
+//  TODO: Add a session flag (e.g. s.isForced) that is checked before any force
+//  command can execute, and cleared after the forced command completes.
+//
+//  3. Dangerous command blocklist: Commands like "force", "shutdown", "purge",
+//     "set", and "advance" should not be forceable even with correct privilege.
+//
+//  TODO: Add a denylist of commands that cannot be forced, similar to the original
+//  C codebase's do_force() restrictions.
+//
+//  4. Audit trail: Every forced command must be logged with full context (wizard,
+//     target, command text, timestamp). The current slog.Info call covers this.
+//
+//  5. Rate limiting: A wizard should not be able to spam force commands on a target.
+//
+//  TODO: Add a per-target cooldown or global force-rate limit.
+//
 func cmdForce(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh?!?")

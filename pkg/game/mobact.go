@@ -113,7 +113,7 @@ func (w *World) MobileActivity() {
 				continue
 			}
 		}
-		if !mobAlive(ch) || ch.RoomVNum < 0 {
+		if !mobAlive(ch) || ch.GetRoom() < 0 {
 			continue
 		}
 
@@ -126,7 +126,7 @@ func (w *World) MobileActivity() {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
 		if hasMobFlag(ch, "scavenger") && rand.Intn(11) == 0 {
-			items := w.GetItemsInRoom(ch.RoomVNum)
+			items := w.GetItemsInRoom(ch.GetRoom())
 			if len(items) > 0 {
 				best := items[0]
 				bestCost := best.GetCost()
@@ -136,7 +136,7 @@ func (w *World) MobileActivity() {
 						best = obj
 					}
 				}
-				w.RemoveItemFromRoom(best, ch.RoomVNum)
+				w.RemoveItemFromRoom(best, ch.GetRoom())
 				ch.AddToInventory(best)
 			}
 		}
@@ -145,7 +145,7 @@ func (w *World) MobileActivity() {
 		if !hasMobFlag(ch, "sentinel") && ch.GetPosition() >= combat.PosStanding {
 			w.wanderMob(ch)
 		}
-		if !mobAlive(ch) || ch.RoomVNum < 0 {
+		if !mobAlive(ch) || ch.GetRoom() < 0 {
 			continue
 		}
 
@@ -158,7 +158,7 @@ func (w *World) MobileActivity() {
 		hasAlignAggr := isAggrEvil || isAggrGood || isAggrNeutral
 
 		if isAggressive || hasAlignAggr {
-			for _, vict := range w.GetPlayersInRoom(ch.RoomVNum) {
+			for _, vict := range w.GetPlayersInRoom(ch.GetRoom()) {
 				if vict.IsNPC() {
 					continue
 				}
@@ -203,13 +203,13 @@ func (w *World) MobileActivity() {
 				}
 			}
 		}
-		if !mobAlive(ch) || ch.RoomVNum < 0 {
+		if !mobAlive(ch) || ch.GetRoom() < 0 {
 			continue
 		}
 
 		// -- Mob Memory --
 		if hasMobFlag(ch, "memory") && len(ch.Memory) > 0 {
-			for _, vict := range w.GetPlayersInRoom(ch.RoomVNum) {
+			for _, vict := range w.GetPlayersInRoom(ch.GetRoom()) {
 				if vict.IsNPC() {
 					continue
 				}
@@ -224,13 +224,13 @@ func (w *World) MobileActivity() {
 				}
 			}
 		}
-		if !mobAlive(ch) || ch.RoomVNum < 0 {
+		if !mobAlive(ch) || ch.GetRoom() < 0 {
 			continue
 		}
 
 		// -- Helper Mobs --
 		if hasMobFlag(ch, "helper") {
-			for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
+			for _, vict := range w.GetMobsInRoom(ch.GetRoom()) {
 				if vict == ch {
 					continue
 				}
@@ -238,7 +238,7 @@ func (w *World) MobileActivity() {
 				if target == "" {
 					continue
 				}
-				for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+				for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 					if p.GetName() == target {
 						if aiCombatEngine != nil {
 // #nosec G104
@@ -249,13 +249,13 @@ func (w *World) MobileActivity() {
 				}
 			}
 		}
-		if !mobAlive(ch) || ch.RoomVNum < 0 {
+		if !mobAlive(ch) || ch.GetRoom() < 0 {
 			continue
 		}
 
 		// -- MOB_AGGR24: attack players level 24+ --
 		if hasMobFlag(ch, "aggr24") {
-			for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+			for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 				if p.GetLevel() >= 24 {
 					if aiCombatEngine != nil {
 // #nosec G104
@@ -265,13 +265,13 @@ func (w *World) MobileActivity() {
 				}
 			}
 		}
-		if !mobAlive(ch) || ch.RoomVNum < 0 {
+		if !mobAlive(ch) || ch.GetRoom() < 0 {
 			continue
 		}
 
 		// -- AGGR24 + AGGRESSIVE + Full HP: attack weaker NPCs --
 		if hasMobFlag(ch, "aggr24") && hasMobFlag(ch, "aggressive") && ch.GetHP() >= ch.GetMaxHP() {
-			for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
+			for _, vict := range w.GetMobsInRoom(ch.GetRoom()) {
 				if vict == ch {
 					continue
 				}
