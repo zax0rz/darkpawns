@@ -33,26 +33,38 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	case SpellBless:
 		aff = engine.NewAffect(engine.AffectHitRoll, 6, 2, "bless")
 		applyAffect(victim, aff)
-		aff = engine.NewAffect(engine.AffectArmorClass, 6, -2, "bless")
+		aff = engine.NewAffect(engine.AffectType(engine.ApplySavingSpell), 6, -2, "bless")
 	case SpellArmor:
 		aff = engine.NewAffect(engine.AffectArmorClass, 24, -15, "armor")
 	case SpellBlindness, SpellSmokescreen:
+		reag := 0
+		if isClassMage(ch) {
+			reag = checkReagents(ch, SpellBlindness, level)
+			if reag > 0 {
+				sendToCaster(ch, "You crush a small lens under your heel.\r\n")
+			}
+		}
 		if magSavingThrow(victim, savetype) {
-			sendToVictim(victim, "You shake off the blinding effect.\r\n")
+			if spellNum == SpellBlindness {
+				sendToCaster(ch, "Your magic fades, then dies out totally.\r\n")
+			}
+			npcRetaliate(victim, ch)
 			return
 		}
-		aff = engine.NewAffect(engine.AffectHitRoll, 2, -(4), "blindness")
+		aff = engine.NewAffect(engine.AffectHitRoll, 2, -(4+reag), "blindness")
 		applyAffect(victim, aff)
-		aff = engine.NewAffect(engine.AffectBlind, 2, 40, "blindness")
+		aff = engine.NewAffect(engine.AffectBlind, 2+reag, 40, "blindness")
 		sendToVictim(victim, "You have been blinded!\r\n")
 	case SpellCurse:
 		if magSavingThrow(victim, savetype) {
 			sendToVictim(victim, "The spell had no effect.\r\n")
+			npcRetaliate(victim, ch)
 			return
 		}
-		aff = engine.NewAffect(engine.AffectCurse, getLevel(ch)/2, -(3), "curse")
+		curseDur := 1 + (getLevel(ch) >> 1)
+		aff = engine.NewAffect(engine.AffectCurse, curseDur, -(3), "curse")
 		applyAffect(victim, aff)
-		aff = engine.NewAffect(engine.AffectDamageRoll, getLevel(ch)/2, -(3), "curse")
+		aff = engine.NewAffect(engine.AffectDamageRoll, curseDur, -(3), "curse")
 	case SpellInvisible:
 		aff = engine.NewAffect(engine.AffectInvisible, 12+getLevel(ch)/4, 0, "invisibility")
 	case SpellSanctuary:
@@ -65,6 +77,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		aff = engine.NewAffect(engine.AffectSleep, 4+getLevel(ch)/4, 0, "sleep")
 	case SpellPoison:
 		if magSavingThrow(victim, savetype) {
+			npcRetaliate(victim, ch)
 			return
 		}
 		dur := (level / 2) - 2
@@ -331,6 +344,21 @@ func healHP(victim interface{}, amount int) {
 		s.SetHealth(newHP)
 	} else if s, ok := victim.(hpSetter); ok {
 		s.SetHP(newHP)
+	}
+}
+
+// npcRetaliate makes an NPC victim auto-attack the caster on a failed spell save.
+// Matches C: if (IS_NPC(victim)) hit(victim, ch, TYPE_UNDEFINED);
+func npcRetaliate(victim, ch interface{}) {
+	type npcCheck interface{ IsNPC() bool }
+	type attacker interface{ StartCombatWith(target string) }
+	type namer interface{ GetName() string }
+	if nc, ok := victim.(npcCheck); ok && nc.IsNPC() {
+		if a, ok := victim.(attacker); ok {
+			if n, ok := ch.(namer); ok {
+				a.StartCombatWith(n.GetName())
+			}
+		}
 	}
 }
 
