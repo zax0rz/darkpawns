@@ -203,16 +203,17 @@ func init() {
 	// Quit
 	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0)
 
-	// Offensive commands (act_offensive.go)
+	// Offensive commands — delegated to pkg/command (C-10: real damage formulas)
 	cmdRegistry.Register("assist", wrapArgs(cmdAssist), "Assist a target in combat.", LVL_IMMORT, combat.PosFighting)
-	cmdRegistry.Register("disembowel", wrapArgs(cmdDisembowel), "Disembowel a target.", 0, combat.PosFighting)
-	cmdRegistry.Register("dragonkick", wrapArgs(cmdDragonKick), "Dragon-style kick attack.", 0, combat.PosFighting, "dkick")
-	cmdRegistry.Register("tigerpunch", wrapArgs(cmdTigerPunch), "Tiger-style punch attack.", 0, combat.PosFighting, "tpunch")
-	cmdRegistry.Register("shoot", wrapArgs(cmdShoot), "Shoot a target with a ranged weapon.", 0, combat.PosStanding)
-	cmdRegistry.Register("subdue", wrapArgs(cmdSubdue), "Subdue a target (non-lethal).", 0, combat.PosStanding)
-	cmdRegistry.Register("sleeper", wrapArgs(cmdSleeper), "Apply a sleeper hold to a target.", 0, combat.PosStanding)
-	cmdRegistry.Register("neckbreak", wrapArgs(cmdNeckbreak), "Lethal stealth attack.", 0, combat.PosStanding)
-	cmdRegistry.Register("ambush", wrapArgs(cmdAmbush), "Ambush a target from hiding.", 0, combat.PosStanding)
+	cmdRegistry.Register("disembowel", wrapSkill(command.CmdDisembowel), "Disembowel a target with a piercing weapon.", 0, combat.PosFighting, "gut")
+	cmdRegistry.Register("dragonkick", wrapSkill(command.CmdDragonKick), "Dragon-style kick attack.", 0, combat.PosFighting, "dkick")
+	cmdRegistry.Register("tigerpunch", wrapSkill(command.CmdTigerPunch), "Tiger-style punch attack (bare hands).", 0, combat.PosFighting, "tpunch")
+	cmdRegistry.Register("shoot", wrapSkill(command.CmdShoot), "Shoot a target with a ranged weapon.", 0, combat.PosStanding)
+	cmdRegistry.Register("subdue", wrapSkill(command.CmdSubdue), "Subdue a target (non-lethal).", 0, combat.PosStanding)
+	cmdRegistry.Register("sleeper", wrapSkill(command.CmdSleeper), "Apply a sleeper hold to a target.", 0, combat.PosStanding)
+	cmdRegistry.Register("neckbreak", wrapSkill(command.CmdNeckbreak), "Break a target's neck (bare hands).", 0, combat.PosStanding)
+	cmdRegistry.Register("ambush", wrapSkill(command.CmdAmbush), "Ambush a target from hiding.", 0, combat.PosStanding)
+	cmdRegistry.Register("parry", wrapSkill(command.CmdParry), "Toggle parry stance to deflect attacks.", 0, combat.PosStanding)
 	cmdRegistry.Register("order", wrapArgs(cmdOrder), "Order a pet or follower.", LVL_IMMORT, 0)
 
 	// Informative commands (act_informative.go)
@@ -358,6 +359,12 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 			s.sendText(positionFailMessage(playerPos))
 			return nil
 		}
+	}
+
+	// C-10: WAIT_STATE enforcement — combat skills set cooldowns
+	if s.player != nil && s.player.GetWaitState() > 0 {
+		s.sendText("You're too busy!\r\n")
+		return nil
 	}
 
 	return entry.Handler(&commandSession{Session: s}, args)

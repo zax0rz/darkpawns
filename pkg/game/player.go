@@ -166,6 +166,11 @@ type Player struct {
 	// Auto-exit display toggle
 	AutoExit   bool // Show exits automatically in room descriptions
 	HolyLight  bool // Can see in the dark (PRF_HOLYLIGHT)
+
+	// C-10: WAIT_STATE cooldown in PULSE_VIOLENCE ticks (1 tick = 2 seconds).
+	WaitState int
+	// C-11: parry stance toggle
+	Parrying bool
 	RoomFlags  bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
 
 	// AutoGold indicates the player auto-loots gold from killed victims (PRF_AUTOGOLD = 24).
@@ -230,6 +235,8 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		Alignment:    0, // Neutral by default
 		SkillManager: engine.NewSkillManager(),
 		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
+		WaitState:    0,
+		Parrying:    false,
 
 		SpellMap: make(map[string]int),
 	}
@@ -691,6 +698,43 @@ func (p *Player) SetFighting(target string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Fighting = target
+}
+
+// GetWaitState returns the current wait state (PULSE_VIOLENCE ticks).
+func (p *Player) GetWaitState() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.WaitState
+}
+
+// SetWaitState sets the wait state cooldown.
+func (p *Player) SetWaitState(ticks int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.WaitState = ticks
+}
+
+// DecrementWaitState reduces wait state by 1 (called each PULSE_VIOLENCE).
+func (p *Player) DecrementWaitState() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.WaitState > 0 {
+		p.WaitState--
+	}
+}
+
+// IsParrying returns whether parry stance is active.
+func (p *Player) IsParrying() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Parrying
+}
+
+// SetParry toggles parry stance on/off.
+func (p *Player) SetParry(active bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Parrying = active
 }
 
 // TakeDamage applies damage to the player.

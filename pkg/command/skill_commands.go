@@ -756,6 +756,130 @@ func CmdRescue(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, result)
 }
 
+
+// CmdDisembowel handles the disembowel command (C-10).
+func CmdDisembowel(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil { return fmt.Errorf("not logged in") }
+	ch := s.GetPlayer()
+	if canUse, msg := game.CanUseSkill(ch, game.SkillDisembowel); !canUse { return s.SendMessage(msg + "\r\n") }
+	var target combat.Combatant; var found bool; world := s.GetWorld()
+	if len(args) > 0 {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+		if !found { return s.SendMessage("Disembowel who?\r\n") }
+	} else if ch.GetFighting() != "" {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		if !found { return s.SendMessage("Disembowel who?\r\n") }
+	} else { return s.SendMessage("Disembowel who?\r\n") }
+	if target.GetName() == ch.Name { return s.SendMessage("Nah. Hari Kari is for wimps.\r\n") }
+	return sendSkillResult(s, ch, target, game.DoDisembowel(ch, target))
+}
+
+// CmdDragonKick handles the dragon kick command (C-10).
+func CmdDragonKick(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil { return fmt.Errorf("not logged in") }
+	ch := s.GetPlayer()
+	if canUse, msg := game.CanUseSkill(ch, game.SkillDragonKick); !canUse { return s.SendMessage(msg + "\r\n") }
+	var target combat.Combatant; var found bool; world := s.GetWorld()
+	if len(args) > 0 {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+		if !found { return s.SendMessage("Dragon kick whom?\r\n") }
+	} else if ch.GetFighting() != "" {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		if !found { return s.SendMessage("Dragon kick whom?\r\n") }
+	} else { return s.SendMessage("Dragon kick whom?\r\n") }
+	if target.GetName() == ch.Name { return s.SendMessage("Aren't we funny today...\r\n") }
+	return sendSkillResult(s, ch, target, game.DoDragonKick(ch, target))
+}
+
+// CmdTigerPunch handles the tiger punch command (C-10).
+func CmdTigerPunch(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil { return fmt.Errorf("not logged in") }
+	ch := s.GetPlayer()
+	if canUse, msg := game.CanUseSkill(ch, game.SkillTigerPunch); !canUse { return s.SendMessage(msg + "\r\n") }
+	var target combat.Combatant; var found bool; world := s.GetWorld()
+	if len(args) > 0 {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+		if !found { return s.SendMessage("Tiger punch whom?\r\n") }
+	} else if ch.GetFighting() != "" {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		if !found { return s.SendMessage("Tiger punch whom?\r\n") }
+	} else { return s.SendMessage("Tiger punch whom?\r\n") }
+	if target.GetName() == ch.Name { return s.SendMessage("Aren't we funny today...\r\n") }
+	return sendSkillResult(s, ch, target, game.DoTigerPunch(ch, target))
+}
+
+// CmdShoot handles the shoot command (C-10).
+func CmdShoot(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil { return fmt.Errorf("not logged in") }
+	ch := s.GetPlayer()
+	if canUse, msg := game.CanUseSkill(ch, game.SkillShoot); !canUse { return s.SendMessage(msg + "\r\n") }
+	if len(args) == 0 { return s.SendMessage("Shoot whom?\r\n") }
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+	if !found { return s.SendMessage("They aren't here.\r\n") }
+	return sendSkillResult(s, ch, target, game.DoShoot(ch, target))
+}
+
+// CmdSubdue handles the subdue command (C-10).
+func CmdSubdue(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil { return fmt.Errorf("not logged in") }
+	ch := s.GetPlayer()
+	if canUse, msg := game.CanUseSkill(ch, game.SkillSubdue); !canUse { return s.SendMessage(msg + "\r\n") }
+	if len(args) == 0 { return s.SendMessage("Subdue who?\r\n") }
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+	if !found { return s.SendMessage("They aren't here.\r\n") }
+	if target.GetName() == ch.Name { return s.SendMessage("Aren't we funny today...\r\n") }
+	return sendSkillResult(s, ch, target, game.DoSubdue(ch, target))
+}
+
+// CmdSleeper handles the sleeper hold command (C-10).
+func CmdSleeper(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil { return fmt.Errorf("not logged in") }
+	ch := s.GetPlayer()
+	if canUse, msg := game.CanUseSkill(ch, game.SkillSleeper); !canUse { return s.SendMessage(msg + "\r\n") }
+	if len(args) == 0 { return s.SendMessage("Use a sleeper hold on who?\r\n") }
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+	if !found { return s.SendMessage("They aren't here.\r\n") }
+	if target.GetName() == ch.Name { return s.SendMessage("Can't get to sleep fast enough, huh?\r\n") }
+	return sendSkillResult(s, ch, target, game.DoSleeper(ch, target))
+}
+
+// CmdNeckbreak handles the neck break command (C-10).
+func CmdNeckbreak(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil { return fmt.Errorf("not logged in") }
+	ch := s.GetPlayer()
+	if canUse, msg := game.CanUseSkill(ch, game.SkillNeckbreak); !canUse { return s.SendMessage(msg + "\r\n") }
+	if len(args) == 0 { return s.SendMessage("Neckbreak whom?\r\n") }
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+	if !found { return s.SendMessage("They aren't here.\r\n") }
+	if target.GetName() == ch.Name { return s.SendMessage("Aren't we funny today...\r\n") }
+	return sendSkillResult(s, ch, target, game.DoNeckbreak(ch, target))
+}
+
+// CmdAmbush handles the ambush command (C-10).
+func CmdAmbush(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil { return fmt.Errorf("not logged in") }
+	ch := s.GetPlayer()
+	if canUse, msg := game.CanUseSkill(ch, game.SkillAmbush); !canUse { return s.SendMessage(msg + "\r\n") }
+	if len(args) == 0 { return s.SendMessage("Ambush whom?\r\n") }
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+	if !found { return s.SendMessage("They aren't here.\r\n") }
+	if target.GetName() == ch.Name { return s.SendMessage("Ambush yourself? You idiot!\r\n") }
+	return sendSkillResult(s, ch, target, game.DoAmbush(ch, target))
+}
+
+// CmdParry handles the parry toggle command (C-11).
+func CmdParry(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil { return fmt.Errorf("not logged in") }
+	ch := s.GetPlayer()
+	result := game.DoParry(ch)
+	return s.SendMessage(result.MessageToCh)
+}
+
 // CmdSneak handles the sneak command.
 func CmdSneak(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
@@ -1278,6 +1402,16 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				continue
 			}
 			p.SendMessage(result.MessageToRoom + "\r\n")
+		}
+	}
+
+	// Apply WAIT_STATE (C-10: cooldown in PULSE_VIOLENCE ticks)
+	if result.WaitCh > 0 {
+		ch.SetWaitState(result.WaitCh)
+	}
+	if result.WaitTarget > 0 && target != nil {
+		if p, ok := target.(*game.Player); ok {
+			p.SetWaitState(result.WaitTarget)
 		}
 	}
 

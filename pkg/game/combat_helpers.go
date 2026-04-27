@@ -23,22 +23,6 @@ import (
 	"math/rand"
 )
 
-// Skill constants not yet defined in skills.go
-// ---------------------------------------------------------------------------
-
-const (
-	SkillDisembowel = "disembowel"
-	SkillEscape     = "escape"
-	SkillRetreat    = "retreat"
-	SkillShoot      = "shoot"
-	SkillDragonKick = "dragon_kick"
-	SkillTigerPunch = "tiger_punch"
-	SkillSubdue     = "subdue"
-	SkillSleeper    = "sleeper"
-	SkillNeckbreak  = "neckbreak"
-	SkillAmbush     = "ambush"
-)
-
 // lvlImpl — implementor level for kill command (LVL_IMPL in structs.h)
 // Source: act.offensive.c do_kill() check
 const lvlImpl = 40

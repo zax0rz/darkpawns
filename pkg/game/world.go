@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -565,6 +566,19 @@ func (w *World) GetMobByID(id int) (*MobInstance, bool) {
 	defer w.mu.RUnlock()
 	mob, ok := w.activeMobs[id]
 	return mob, ok
+}
+
+// GetMobByName finds an active mob by partial name match (case-insensitive).
+func (w *World) GetMobByName(name string) *MobInstance {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	nameLower := strings.ToLower(name)
+	for _, mob := range w.activeMobs {
+		if strings.Contains(strings.ToLower(mob.GetName()), nameLower) {
+			return mob
+		}
+	}
+	return nil
 }
 
 // GetMobsInRoom returns all mobs in a given room.

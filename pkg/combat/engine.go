@@ -49,6 +49,15 @@ type CombatEngine struct {
 	// Set by the session manager to propagate health changes to agent sessions.
 	// victimName is the name of the character who took damage.
 	DamageFunc func(victimName string)
+
+	// ParryCheckFunc checks if a defender parries an attack. C-11: fight.c:1958-1968.
+	ParryCheckFunc func(defenderName string) bool
+
+	// DodgeCheckFunc checks if an NPC dodges an attack. C-11: fight.c:1970-1975.
+	DodgeCheckFunc func(defenderName string) bool
+
+	// OnRoundEnd is called after each combat round. Used for wait state decrement.
+	OnRoundEnd func()
 }
 
 // NewCombatEngine creates a new combat engine
@@ -215,6 +224,11 @@ func (ce *CombatEngine) PerformRound() {
 	for _, pair := range pairs {
 		ce.processCombatPair(pair)
 	}
+
+	// C-10: decrement wait states each round
+	if ce.OnRoundEnd != nil {
+		ce.OnRoundEnd()
+	}
 }
 
 // processCombatPair handles a single combat exchange
@@ -247,6 +261,24 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		// Check hit
 		if !CalculateHitChance(attacker, defender, HitModifiers{}) {
 			ce.sendMissMessage(attacker, defender)
+			continue
+		}
+
+		// C-11: Parry/Dodge check
+		if ce.ParryCheckFunc != nil && ce.ParryCheckFunc(defender.GetName()) {
+			attacker.SendMessage(fmt.Sprintf("%s parries your attack!\r\n", defender.GetName()))
+			defender.SendMessage(fmt.Sprintf("You parry %s's attack!\r\n", attacker.GetName()))
+			if ce.BroadcastFunc != nil {
+				ce.BroadcastFunc(attacker.GetRoom(), fmt.Sprintf("%s parries %s's attack!", defender.GetName(), attacker.GetName()), "")
+			}
+			continue
+		}
+		if ce.DodgeCheckFunc != nil && ce.DodgeCheckFunc(defender.GetName()) {
+			attacker.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", defender.GetName()))
+			defender.SendMessage(fmt.Sprintf("You dodge %s's attack!\r\n", attacker.GetName()))
+			if ce.BroadcastFunc != nil {
+				ce.BroadcastFunc(attacker.GetRoom(), fmt.Sprintf("%s dodges %s's attack!", defender.GetName(), attacker.GetName()), "")
+			}
 			continue
 		}
 
