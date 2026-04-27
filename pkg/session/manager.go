@@ -560,7 +560,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 					s.sendError("Password required.")
 // #nosec G104
 					s.conn.Close()
-					s.manager.loginAttempts.RecordFailure(ip) // H-15: failed attempt (no password)
 					return nil
 				}
 				if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)); err != nil {
@@ -568,7 +567,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 // #nosec G104
 					s.conn.Close()
 					audit.LogSecurityEvent("login_failed", "Invalid password", login.PlayerName, ip)
-					s.manager.loginAttempts.RecordFailure(ip) // H-15: track failed attempt
 					return nil
 				}
 			}
@@ -623,8 +621,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 	// If we created a player directly (not through char creation), proceed with registration
 	if s.authenticated && s.player != nil {
-		s.manager.loginAttempts.RecordSuccess(ip) // H-15: clear failure history on success
-
 		if err := s.manager.Register(login.PlayerName, s); err != nil {
 			return err
 		}
