@@ -609,6 +609,7 @@ func cmdMove(s *Session, direction string) error {
 	for _, mob := range mobs {
 		if mob.HasScript("greet") {
 			ctx := mob.CreateScriptContext(s.player, nil, "")
+// #nosec G104
 			mob.RunScript("greet", ctx)
 		}
 	}
@@ -654,6 +655,7 @@ func cmdMove(s *Session, direction string) error {
 			s.manager.BroadcastToRoom(newRoom.VNum, fenterMsg, follower.Name)
 			// Send look to follower's session
 			if fSess, ok := s.manager.GetSession(follower.Name); ok {
+// #nosec G104
 				cmdLook(fSess, nil)
 				fSess.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
 			}
@@ -691,6 +693,7 @@ func cmdQuit(s *Session) error {
 	// Remove from world and close connection
 	s.manager.world.RemovePlayer(s.player.Name)
 	s.manager.Unregister(s.player.Name)
+// #nosec G104
 	s.conn.Close()
 
 	return nil

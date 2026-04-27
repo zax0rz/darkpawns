@@ -450,6 +450,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	if cmd == "deposit" {
 		amount := 0
+// #nosec G104
 		fmt.Sscanf(arg, "%d", &amount)
 		if amount <= 0 {
 			sendToChar(ch, "How much do you want to deposit?\r\n")
@@ -467,6 +468,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	if cmd == "withdraw" {
 		amount := 0
+// #nosec G104
 		fmt.Sscanf(arg, "%d", &amount)
 		if amount <= 0 {
 			sendToChar(ch, "How much do you want to withdraw?\r\n")

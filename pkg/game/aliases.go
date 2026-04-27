@@ -65,10 +65,11 @@ func WriteAliases(playerName string, aliases []Alias) error {
 	}
 
 	path := aliasFilePath(playerName)
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		return fmt.Errorf("WriteAliases: mkdir %s: %w", filepath.Dir(path), err)
 	}
 
+// #nosec G304
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("WriteAliases: create %s: %w", path, err)
@@ -99,6 +100,7 @@ func WriteAliases(playerName string, aliases []Alias) error {
 //   strcpy(temp_buf," "); strcat(temp_buf,buf); — alias.c line 97–98
 func ReadAliases(playerName string) ([]Alias, error) {
 	path := aliasFilePath(playerName)
+// #nosec G304
 	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {

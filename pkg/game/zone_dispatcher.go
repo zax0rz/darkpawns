@@ -62,7 +62,8 @@ func (zd *ZoneDispatcher) startZoneLocked(zone *parser.Zone) {
 		return // already started
 	}
 
-	ctx, cancel := context.WithCancel(zd.ctx)
+// #nosec G118
+	ctx, cancel := context.WithCancel(zd.ctx) // #nosec G118 — cancel stored in zoneWorker struct; parent cancel cascades in Stop()
 	worker := &zoneWorker{
 		zone:   zone,
 		ctx:    ctx,

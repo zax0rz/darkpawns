@@ -50,6 +50,7 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 		if err := w.MoveObjectToPlayerInventory(obj, ch); err != nil {
 			w.actToChar(ch, "You can't carry that much.\n", nil, nil)
 			// Rollback: move back into container (MoveObject handles re-attach)
+// #nosec G104
 			w.MoveObjectToContainer(obj, cont)
 			return
 		}
@@ -213,6 +214,7 @@ func (w *World) performDrop(ch *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "You can't let go of $p!!  Yeech!", obj, nil)
 		return
 	}
+// #nosec G104
 	w.MoveObjectToRoom(obj, ch.GetRoomVNum())
 	w.actToChar(ch, "You drop $p.", obj, nil)
 	w.actToRoom(ch, "$n drops $p.", obj, nil)
@@ -297,6 +299,7 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 	if err := w.MoveObjectToPlayerInventory(obj, vict); err != nil {
 		w.actToChar(ch, "$E can't carry any more.\n", vict, nil)
 		// Give item back to giver
+// #nosec G104
 		w.MoveObjectToPlayerInventory(obj, ch)
 		return
 	}

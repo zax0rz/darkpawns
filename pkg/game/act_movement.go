@@ -587,6 +587,8 @@ func okPick(_ *World, ch *Player, keynum int, _ bool, _ int) bool {
 		return false
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1
 	chance := 40 + (ch.GetLevel() * 5)
 	if chance > 95 {
@@ -961,3 +963,4 @@ func verbIs(s string) string {
 	}
 	return "is"
 }
+

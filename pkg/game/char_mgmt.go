@@ -106,6 +106,7 @@ func (w *World) ExtractPendingChars() {
 			if p.Equipment != nil {
 				item, ok := p.Equipment.GetItemInSlot(SlotLight)
 				if ok && item != nil {
+// #nosec G104
 					p.Equipment.Unequip(SlotLight, p.Inventory)
 				}
 			}

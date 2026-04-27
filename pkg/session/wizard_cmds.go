@@ -94,6 +94,7 @@ func cmdAt(s *Session, args []string) error {
 	defer s.player.SetRoom(orig)
 	rest := strings.Join(args[1:], " ")
 	slog.Warn("wizard at", "by", s.player.Name, "room", dest, "command", rest)
+// #nosec G104
 	ExecuteCommand(s, strings.Fields(rest)[0], strings.Fields(rest)[1:])
 	return nil
 }
@@ -1662,6 +1663,7 @@ func cmdSysfile(s *Session, args []string) error {
 		return nil
 	}
 
+// #nosec G304
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		s.Send("File does not exist.")

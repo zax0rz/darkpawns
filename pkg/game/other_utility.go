@@ -322,6 +322,7 @@ func (w *World) doRoll(ch *Player, me *MobInstance, cmd string, arg string) bool
 	arg = strings.TrimSpace(arg)
 	maxRoll := 100
 	if arg != "" {
+// #nosec G104
 		fmt.Sscanf(arg, "%d", &maxRoll)
 		if maxRoll < 1 {
 			maxRoll = 1

@@ -108,7 +108,11 @@ func (w *World) doMurder(ch *Player, me *MobInstance, cmd string, arg string) bo
 func diceRoll(n, d int) int {
 	total := 0
 	for i := 0; i < n; i++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		rand.Intn(d)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		total += rand.Intn(d) + 1
 	}
 	return total
@@ -133,3 +137,4 @@ func (w *World) updatePosFromHP(victim *Player) {
 		victim.SetPosition(posStunned)
 	}
 }
+

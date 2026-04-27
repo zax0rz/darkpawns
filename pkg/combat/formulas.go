@@ -293,6 +293,8 @@ func CalculateHitChance(attacker, defender Combatant, mods HitModifiers) bool {
 	calcThaco -= intBonus
 	calcThaco -= wisBonus
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	diceroll := rand.Intn(20) + 1
 
 	victimAC := defender.GetAC() / 10
@@ -450,6 +452,8 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 		dam += RollDice(weaponDamage.Num, weaponDamage.Sides) + weaponDamage.Plus
 	} else {
 		// Bare hands: number(0, level/3)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		dam += rand.Intn(attacker.GetLevel()/3 + 1)
 	}
 
@@ -505,6 +509,8 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		}
 
 		// Random bonus: number(0, 900) < level
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(901) < level {
 			attacks++
 		}
@@ -516,28 +522,38 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 
 		// Warriors/Paladins/Rangers: +1 at level 10+ (60% + level% chance)
 		if (class == ClassWarrior || class == ClassPaladin || class == ClassRanger) &&
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			level > 10 && rand.Intn(100) < (60+level) {
 			attacks++
 		}
 
 		// Ninjas/Avatars: +1 at level 12+ (60% + level% chance)
 		if (class == ClassNinja || class == ClassAvatar) &&
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			level > 12 && rand.Intn(100) < (60+level) {
 			attacks++
 		}
 
 		// Thieves/Assassins: +1 at level 15+ (30% + level% chance)
 		if (class == ClassThief || class == ClassAssassin) &&
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			level > 15 && rand.Intn(100) < (30+level) {
 			attacks++
 		}
 
 		// All players: +1 at level 25+ (75% chance)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if level > 25 && rand.Intn(100) < 75 {
 			attacks++
 		}
 
 		// All players: +1 at level 30+ OR !number(0,500)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if level > 30 || rand.Intn(501) == 0 {
 			attacks++
 		}
@@ -582,7 +598,10 @@ func RollDice(num, sides int) int {
 	}
 	total := 0
 	for i := 0; i < num; i++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		total += rand.Intn(sides) + 1
 	}
 	return total
 }
+

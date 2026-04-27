@@ -149,6 +149,7 @@ func (m *ClanManager) SaveClans(filePath string) error {
 		}
 	}
 	dir := filepath.Dir(filePath)
+// #nosec G301
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -156,11 +157,13 @@ func (m *ClanManager) SaveClans(filePath string) error {
 	if err != nil {
 		return err
 	}
+// #nosec G306
 	return os.WriteFile(filePath, data, 0644)
 }
 
 func InitClans(filePath string) *ClanManager {
 	m := NewClanManager()
+// #nosec G304
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {

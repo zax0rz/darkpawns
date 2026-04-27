@@ -80,6 +80,7 @@ func banTypeName(t int) string {
 func (bm *BanManager) LoadBanned(path string) {
 	bm.bans = nil
 
+// #nosec G304
 	f, err := os.Open(path)
 	if err != nil {
 		slog.Warn("unable to open ban file", "path", path, "error", err)
@@ -115,9 +116,10 @@ func (bm *BanManager) LoadBanned(path string) {
 // insertion order. We replicate that: write bans in reverse slice order so the
 // most recently added entry ends up last in the file (head-insertion order).
 func (bm *BanManager) WriteBanList(path string) error {
-	if err := os.MkdirAll(pathDir(path), 0o755); err != nil {
+	if err := os.MkdirAll(pathDir(path), 0o750); err != nil {
 		return fmt.Errorf("WriteBanList: mkdir: %w", err)
 	}
+// #nosec G304
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("WriteBanList: create %s: %w", path, err)
@@ -227,6 +229,7 @@ func (bm *BanManager) ListBans() string {
 func (bm *BanManager) ReadInvalidList(path string) {
 	bm.invalidNames = nil
 
+// #nosec G304
 	f, err := os.Open(path)
 	if err != nil {
 		slog.Warn("unable to open invalid name file", "path", path, "error", err)

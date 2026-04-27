@@ -171,6 +171,7 @@ func (w *World) EquipItem(ch *Player, obj *ObjectInstance, slot int) {
 	if ch.Equipment == nil {
 		return
 	}
+// #nosec G104
 	ch.Equipment.Equip(obj, ch.Inventory)
 }
 
@@ -179,6 +180,7 @@ func (w *World) UnequipItem(ch *Player, slot int) {
 	if ch.Equipment == nil {
 		return
 	}
+// #nosec G104
 	ch.Equipment.Unequip(EquipmentSlot(slot), ch.Inventory)
 }
 

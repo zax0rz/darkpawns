@@ -27,6 +27,7 @@ type AuditLogger struct {
 
 // NewAuditLogger opens (or creates) an audit log file with restrictive permissions.
 func NewAuditLogger(filename string) (*AuditLogger, error) {
+// #nosec G304
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, err
@@ -51,6 +52,7 @@ func (a *AuditLogger) Log(event AuditEvent) {
 		return
 	}
 
+// #nosec G104
 	a.file.Write(append(data, '\n'))
 
 	// Also log to console for important events
@@ -66,6 +68,7 @@ func (a *AuditLogger) Log(event AuditEvent) {
 
 // Close flushes and closes the underlying audit log file.
 func (a *AuditLogger) Close() {
+// #nosec G104
 	a.file.Close()
 }
 

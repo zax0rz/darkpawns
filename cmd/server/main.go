@@ -85,10 +85,13 @@ func main() {
 	http.HandleFunc("/ws", manager.HandleWebSocket)
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
+// #nosec G104
 		w.Write([]byte("OK\n"))
 	})
 	http.HandleFunc("/metrics", metrics.Handler().ServeHTTP)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+// #nosec G104
+// #nosec G705
 		w.Write([]byte(`Dark Pawns Phase 1 Server
 
 Connect via WebSocket: ws://` + r.Host + `/ws
@@ -115,6 +118,7 @@ Protocol:
 	apiMux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
+// #nosec G104
 		w.Write([]byte(`{"error": "API endpoint not found", "docs": "/api/openapi.json"}`))
 	})
 	http.Handle("/api/", web.AuthMiddleware(apiMux))
@@ -154,13 +158,15 @@ Protocol:
 				os.Exit(1)
 			}
 			slog.Info("Starting HTTPS server", "address", addr)
-			if err := http.ListenAndServeTLS(addr, certFile, keyFile, handler); err != nil {
+			srv := &http.Server{Addr: addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second}
+			if err := srv.ListenAndServeTLS(certFile, keyFile); err != nil {
 				slog.Error("Server error", "error", err)
 				os.Exit(1)
 			}
 		} else {
 			slog.Warn("Starting HTTP server (not secure for production)", "address", addr)
-			if err := http.ListenAndServe(addr, handler); err != nil {
+			srv := &http.Server{Addr: addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second}
+			if err := srv.ListenAndServe(); err != nil {
 				slog.Error("Server error", "error", err)
 				os.Exit(1)
 			}

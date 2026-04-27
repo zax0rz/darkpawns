@@ -570,6 +570,7 @@ func (m *MobInstance) HasMobFlag(bit int) bool {
 func (m *MobInstance) SetMobFlag(bit int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+// #nosec G115
 	m.Flags |= 1 << uint(bit)
 }
 

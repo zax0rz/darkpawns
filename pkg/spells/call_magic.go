@@ -200,6 +200,8 @@ func dice(num, sides int) int {
 	}
 	total := 0
 	for i := 0; i < num; i++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		total += rand.Intn(sides) + 1
 	}
 	return total
@@ -229,3 +231,4 @@ func applyDamageWithSave(victim interface{}, damage int, saveType int, world int
 
 	return damage
 }
+

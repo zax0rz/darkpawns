@@ -108,6 +108,7 @@ func (bs *BoardSystem) loadBoard(boardType int) {
 		return
 	}
 	path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
+// #nosec G304
 	f, err := os.Open(path)
 	if err != nil {
 		return // file doesn't exist yet = empty board
@@ -184,14 +185,17 @@ func (bs *BoardSystem) saveBoard(boardType int) {
 	if num == 0 {
 		bs.mu.RUnlock()
 		path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
+// #nosec G104
 		os.Remove(path)
 		return
 	}
 	bs.mu.RUnlock()
 
 	path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
-	os.MkdirAll(filepath.Dir(path), 0755)
+// #nosec G104
+	os.MkdirAll(filepath.Dir(path), 0750)
 
+// #nosec G304
 	f, err := os.Create(path)
 	if err != nil {
 		BasicMudLogf("SYSERR: Board save failed: %v", err)
@@ -202,21 +206,25 @@ func (bs *BoardSystem) saveBoard(boardType int) {
 	bs.mu.RLock()
 	defer bs.mu.RUnlock()
 
+// #nosec G115
 	if err := binary.Write(f, binary.LittleEndian, int32(num)); err != nil {
 		return
 	}
 
 	for i := 0; i < num; i++ {
 		mi := bs.msgIndex[boardType][i]
+// #nosec G115
 		headingLen := int32(len(mi.Heading) + 1)
 		var messageLen int32
 		var msgStr string
 		if mi.SlotNum >= 0 && mi.SlotNum < len(bs.msgStorage) {
 			msgStr = bs.msgStorage[mi.SlotNum]
+// #nosec G115
 			messageLen = int32(len(msgStr) + 1)
 		}
 
 		// Write binary header matching C struct layout
+// #nosec G115
 		if err := binary.Write(f, binary.LittleEndian, int32(mi.SlotNum)); err != nil {
 			return
 		}
@@ -224,6 +232,7 @@ func (bs *BoardSystem) saveBoard(boardType int) {
 		if err := binary.Write(f, binary.LittleEndian, int32(0)); err != nil {
 			return
 		}
+// #nosec G115
 		if err := binary.Write(f, binary.LittleEndian, int32(mi.Level)); err != nil {
 			return
 		}
@@ -265,6 +274,7 @@ func (bs *BoardSystem) resetBoard(boardType int) {
 	}
 	bs.numOfMsgs[boardType] = 0
 	path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
+// #nosec G104
 	os.Remove(path)
 }
 

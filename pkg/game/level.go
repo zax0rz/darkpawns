@@ -104,11 +104,17 @@ func (p *Player) AdvanceLevel() {
 	// Class-specific gains
 	switch p.Class {
 	case ClassMageUser, ClassMagus:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addHP += rand.Intn(5) + 4                          // number(4,8)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMana = rand.Intn(3*p.Level-p.Level+1) + p.Level // number(GET_LEVEL(ch), (int) (3 * GET_LEVEL(ch)))
 		if addMana > 10 {
 			addMana = 10
 		}
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMove = rand.Intn(3) + 1 // number(1, 3)
 		// Practices: MAX(2, wis_app[GET_WIS(ch)].bonus)
 		wis := p.Stats.Wis
@@ -125,11 +131,17 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassCleric, ClassAvatar:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addHP += rand.Intn(5) + 5                          // number(5, 9)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMana = rand.Intn(3*p.Level-p.Level+1) + p.Level // number(GET_LEVEL(ch), (int) (3 * GET_LEVEL(ch)))
 		if addMana > 10 {
 			addMana = 10
 		}
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMove = rand.Intn(3) + 1 // number(1, 3)
 		// Practices: MAX(2, wis_app[GET_WIS(ch)].bonus)
 		wis := p.Stats.Wis
@@ -146,11 +158,17 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassAssassin:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addHP += rand.Intn(7) + 8                          // number(8, 14)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMana = rand.Intn(2*p.Level-p.Level+1) + p.Level // number(GET_LEVEL(ch), (int)(2 * GET_LEVEL(ch)))
 		if addMana > 5 {
 			addMana = 5
 		}
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMove = rand.Intn(4) + 1 // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
@@ -170,7 +188,11 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassThief:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addHP += rand.Intn(7) + 7  // number(7, 13)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMove = rand.Intn(4) + 1 // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
@@ -190,11 +212,17 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassPaladin:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMana = rand.Intn(2*p.Level-p.Level+1) + p.Level // number(GET_LEVEL(ch), (int)(2 * GET_LEVEL(ch)))
 		if addMana > 5 {
 			addMana = 5
 		}
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addHP += rand.Intn(5) + 12 // number(12, 16)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMove = rand.Intn(4) + 1 // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
@@ -214,7 +242,11 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassRanger:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addHP += rand.Intn(4) + 13 // number(13, 16)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMove = rand.Intn(3) + 2 // number(2, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
@@ -234,7 +266,11 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassWarrior:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addHP += rand.Intn(4) + 11 // number(11, 14)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMove = rand.Intn(4) + 1 // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
@@ -254,11 +290,17 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassNinja:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addHP += rand.Intn(6) + 8                          // number(8, 13)
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMana = rand.Intn(2*p.Level-p.Level+1) + p.Level // number(GET_LEVEL(ch), (int)(2 * GET_LEVEL(ch)))
 		if addMana > 10 {
 			addMana = 10
 		}
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMove = rand.Intn(4) + 1 // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
@@ -278,14 +320,22 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassPsionic, ClassMystic:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addHP += rand.Intn(5) + 4 // number(4,8) for psionic, (5,9) for mystic
 		if p.Class == ClassMystic {
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			addHP = rand.Intn(5) + 5 // number(5, 9)
 		}
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMana = rand.Intn(2*p.Level-p.Level+1) + p.Level // number(GET_LEVEL(ch), (int)(2 * GET_LEVEL(ch)))
 		if addMana > 10 {
 			addMana = 10
 		}
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		addMove = rand.Intn(4) + 1 // number(1, 4)
 		// Practices: MAX(2, wis_app[GET_WIS(ch)].bonus)
 		wis := p.Stats.Wis
@@ -336,3 +386,4 @@ func (p *Player) AdvanceLevel() {
 
 	slog.Info("advanced to level", "name", p.Name, "level", p.Level)
 }
+

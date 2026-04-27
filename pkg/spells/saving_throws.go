@@ -210,6 +210,8 @@ func CheckSavingThrow(ch interface{}, saveType SavingThrowType) bool {
 		return false
 	}
 	target := GetSavingThrow(caster.GetClass(), caster.GetLevel(), saveType)
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	roll := rand.Intn(20) + 1
 	return roll >= target
 }
@@ -238,7 +240,10 @@ func Dice(num, sides int) int {
 	}
 	total := 0
 	for i := 0; i < num; i++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		total += rand.Intn(sides) + 1
 	}
 	return total
 }
+

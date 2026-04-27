@@ -43,6 +43,7 @@ func workerPoolExample() {
 	// Submit tasks
 	for i := 0; i < 20; i++ {
 		taskID := i
+// #nosec G104
 		pool.Submit(func() {
 			time.Sleep(10 * time.Millisecond)
 			fmt.Printf("  Task %d completed\n", taskID)
@@ -81,6 +82,7 @@ func connectionPoolExample() {
 		fmt.Printf("  Using connection: %v\n", conn)
 		time.Sleep(2 * time.Millisecond)
 
+// #nosec G104
 		pool.Put(conn)
 	}
 

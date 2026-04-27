@@ -86,6 +86,7 @@ func (w *World) RemoveNightGate(moonPhase int) {
 		objs := w.GetItemsInRoom(rnum)
 		for _, obj := range objs {
 			if obj.GetVNum() == BluePortalVNum {
+// #nosec G104
 				w.MoveObjectToNowhere(obj)
 				w.SendToRoom(rnum, "The shimmering blue portal of light fades out of existence.\r\n")
 			}
@@ -116,6 +117,7 @@ func (w *World) SpellGate(caster *Player) bool {
 			caster.SendMessage("In your final moments, the only thing you can feel is a\r\n" +
 				"wave of cosmic energy coursing through you, tearing your soul to shreds.\r\n")
 			w.RawKill(caster, "blast")
+// #nosec G104
 			w.MoveObjectToNowhere(obj)
 			return true
 		}

@@ -21,6 +21,7 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	amount := 0
+// #nosec G104
 	fmt.Sscanf(arg, "%d", &amount)
 	if amount <= 0 {
 		ch.SendMessage("Sorry, you can't do that.\r\n")

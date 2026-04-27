@@ -199,6 +199,8 @@ func getWeather(hour, month int) string {
 	for _, w := range weights {
 		totalWeight += w
 	}
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	roll := rand.Intn(totalWeight)
 	cumulative := 0
 	selected := options[0]
@@ -332,6 +334,8 @@ func dice(nDice, nSides int) int {
 	}
 	total := 0
 	for i := 0; i < nDice; i++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		total += rand.Intn(nSides) + 1
 	}
 	return total
@@ -578,3 +582,4 @@ func WeatherAndTime(state *WorldWeatherState, mode int, broadcast OutdoorBroadca
 //    - The existing getWeather() above uses a different, simplified algorithm.
 //      When WorldWeatherState is wired into the main game loop, getWeather() and
 //      weatherMessage() should delegate to WorldWeatherState.Sky for consistency.
+

@@ -83,6 +83,7 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		w.handleMobDeath(victim, attackType)
 		// Publish typed event bus event
 		if w.Events != nil {
+// #nosec G104
 			w.Events.Publish(context.Background(), events.MobKilledEvent{
 				KillerID: killerName,
 				MobVNum:  mobVNum,
@@ -114,6 +115,7 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		w.handlePlayerDeath(victim, true, attackType, killerName) // combat death with killer
 		// Publish typed event bus event
 		if w.Events != nil {
+// #nosec G104
 			w.Events.Publish(context.Background(), events.PlayerKilledEvent{
 				KillerID: killerName,
 				VictimID: victim.GetName(),
@@ -182,6 +184,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, mobGold)
 	} else {
 		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, mobGold)
+// #nosec G104
 		w.MoveObjectToRoom(corpse, roomVNum)
 	}
 
@@ -296,6 +299,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
 	} else {
 		corpse := w.makeCorpse(player.Name, player.Sex, inventoryItems, equipmentItems, roomVNum, attackType, playerGold)
+// #nosec G104
 		w.MoveObjectToRoom(corpse, roomVNum)
 	}
 
@@ -641,6 +645,7 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 			"is_ash":     true,
 		},
 	}
+// #nosec G104
 	w.MoveObjectToRoom(ash, roomVNum)
 
 	// Send room message

@@ -63,6 +63,8 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 		}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(100) + 1
 	prob := ch.GetSkill(SkillScrounge)
 
@@ -117,6 +119,8 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "They don't really need first aid.\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1 + target.GetLevel()
 	prob := ch.GetSkill(SkillFirstAid)
 
@@ -169,6 +173,8 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You can't disarm them if you aren't fighting them!\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1 + target.GetLevel()
 	prob := ch.GetSkill(SkillDisarm)
 
@@ -227,6 +233,8 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You don't have enough life to spare!\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(100) + 1
 	prob := ch.GetSkill(SkillMindlink)
 
@@ -235,6 +243,8 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 
 	if percent < prob {
 		// Success
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		x := 20 + ch.Level + rand.Intn(80) // number(20+level, 100)
 		ch.Health -= x
 		if ch.Health < 0 {
@@ -278,6 +288,8 @@ func DoDetect(ch *Player, world *World) SkillResult {
 	}
 
 	prob := ch.GetSkill(SkillDetect)
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	if prob <= rand.Intn(100)+1 {
 		return SkillResult{Success: false, MessageToCh: "You can't seem to find anything.\r\n"}
 	}
@@ -335,6 +347,8 @@ func DoSerpentKick(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "Aren't we funny today...\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := ((7 - (target.GetAC() / 10)) * 2) + rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillSerpentKick)
 
@@ -393,6 +407,8 @@ func DoDig(ch *Player, world *World) SkillResult {
 		}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(100) + 1
 	prob := ch.GetSkill(SkillDig)
 	if prob == 0 {
@@ -402,6 +418,8 @@ func DoDig(ch *Player, world *World) SkillResult {
 	if percent <= prob {
 		// Found something — random loot based on level
 		lootTypes := []string{"some coins", "a shiny rock", "an old bone", "a rusted coin", "a small gem"}
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		loot := lootTypes[rand.Intn(len(lootTypes))]
 
 		return SkillResult{
@@ -502,3 +520,4 @@ func DoTurn(ch *Player, target combat.Combatant) SkillResult {
 		MessageToRoom: fmt.Sprintf("%s is bathed in holy light!\r\n", ch.Name),
 	}
 }
+

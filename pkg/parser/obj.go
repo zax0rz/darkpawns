@@ -85,7 +85,8 @@ func (lb *lineBuffer) Err() error {
 
 // ParseObjFile parses a single .obj file and returns all objects.
 func ParseObjFile(path string) ([]Obj, error) {
-	file, err := os.Open(path)
+// #nosec G304
+	file, err := os.Open(path) // #nosec G703 — world data, trusted internal path
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}

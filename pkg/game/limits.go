@@ -569,6 +569,8 @@ func (w *World) PointUpdate() {
 
 		// Memory clearing — limits.c:516-518
 		// 1 in 99 chance of clearing mob memory
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if m.Memory != nil && rand.Intn(99) == 0 {
 			clearMemory(m)
 		}
@@ -604,6 +606,7 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 				for _, contained := range obj.GetContents() {
 					obj.RemoveFromContainer(contained)
 					contained.SetRoomVNum(roomVNum)
+// #nosec G104
 					w.MoveObjectToRoom(contained, roomVNum)
 				}
 				// Random decay message
@@ -616,6 +619,8 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 					"The earth opens up and swallows %s.\r\n",
 					"The earth opens up and swallows %s.\r\n",
 				}
+				// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 				msg := fmt.Sprintf(msgs[rand.Intn(len(msgs))], obj.GetShortDesc())
 				w.SendToRoom(roomVNum, msg)
 				w.ExtractObject(obj, roomVNum)
@@ -669,6 +674,7 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 						if proto, ok := w.GetObjPrototype(fo.WornOffObjNum); ok {
 							spawned := NewObjectInstance(proto, roomVNum)
 							spawned.SetTimer(2)
+// #nosec G104
 							w.MoveObjectToRoom(spawned, roomVNum)
 						}
 					}
@@ -955,6 +961,7 @@ func (w *World) CheckIdling(p *Player) {
 			}
 			p.mu.Unlock()
 
+// #nosec G104
 			w.PlayerTransfer(p, 1)
 			p.SendMessage("You have been idle, and are pulled into a void.\r\n")
 			w.SendToRoom(roomVNum, fmt.Sprintf("%s disappears into the void.\r\n", p.Name))
@@ -964,6 +971,7 @@ func (w *World) CheckIdling(p *Player) {
 			p.WasInRoom = 0
 			p.mu.Unlock()
 
+// #nosec G104
 			w.PlayerTransfer(p, 3)
 
 			slog.Info("player idle extracted", "name", p.Name)
@@ -1005,5 +1013,6 @@ func isFighting(p *Player) bool {
 	defer p.mu.RUnlock()
 	return p.Fighting != ""
 }
+
 
 

@@ -80,6 +80,8 @@ func (w *World) runMobAI(mob *MobInstance) {
 	}
 
 	// Wandering behavior — MOB_SENTINEL prevents movement only
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	if !isSentinel && rand.Intn(100) < 25 {
 		w.wanderMob(mob)
 	}
@@ -147,6 +149,8 @@ func (w *World) wanderMob(mob *MobInstance) {
 		return
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	direction := validDirections[rand.Intn(len(validDirections))]
 	exit := room.Exits[direction]
 	targetRoom := snap.Rooms[exit.ToRoom]
@@ -211,3 +215,4 @@ func (w *World) StartPointUpdateTicker(interval time.Duration) {
 		}
 	}()
 }
+

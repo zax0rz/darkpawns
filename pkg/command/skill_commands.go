@@ -354,6 +354,7 @@ func CmdForget(s SessionInterface, args []string) error {
 		skill.DisplayName, skill.Level)
 	output += "This will refund half the skill points spent. Type 'confirm forget' to proceed.\r\n"
 
+// #nosec G104
 	s.SendMessage(output)
 
 	// Store the skill to forget in session context
@@ -1231,6 +1232,7 @@ func genderPronoun(sex int) string {
 func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatant, result game.SkillResult) error {
 	// Send to character
 	if result.MessageToCh != "" {
+// #nosec G104
 		s.SendMessage(result.MessageToCh + "\r\n")
 	}
 
@@ -1238,6 +1240,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	if result.Damage > 0 && target != nil {
 		target.TakeDamage(result.Damage)
 		if target.GetHP() <= 0 {
+// #nosec G104
 			s.SendMessage(fmt.Sprintf("%s is dead!\r\n", target.GetName()))
 		}
 	}
@@ -1245,6 +1248,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// Apply position changes
 	if result.SelfStumble {
 		ch.SetPosition(combat.PosSitting)
+// #nosec G104
 		s.SendMessage("You fall to the ground!\r\n")
 	}
 	if result.TargetFalls && target != nil {

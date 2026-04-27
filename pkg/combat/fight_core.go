@@ -466,6 +466,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	if !victim.IsNPC() && IsMounted != nil && IsMounted(victimName) && dam > 0 && rand.Intn(100) < 10 {
 		if Dismount != nil {
 			Dismount(victimName)
@@ -757,6 +759,8 @@ func MakeHit(ch, victim Combatant) {
 	calcThaco -= int(float64(ch.GetInt()-13) / 1.5)
 	calcThaco -= int(float64(ch.GetWis()-13) / 1.5)
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	diceroll := rand.Intn(20) + 1
 
 	victimAC := 0
@@ -791,6 +795,8 @@ func MakeHit(ch, victim Combatant) {
 		if wieldDamNum > 0 && wieldDamSize > 0 {
 			dam += RollDice(wieldDamNum, wieldDamSize)
 		} else {
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			dam += rand.Intn(ch.GetLevel()/3 + 1)
 		}
 
@@ -1144,3 +1150,4 @@ func (n *namedCombatant) StopFighting()               {}
 func (n *namedCombatant) GetFighting() string         { return "" }
 func (n *namedCombatant) SendMessage(msg string)      {}
 func (n *namedCombatant) GetSendMessage(msg string)   {}
+

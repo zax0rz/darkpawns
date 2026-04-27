@@ -121,6 +121,7 @@ func guardAssist(w *World, me *MobInstance, specVNum int) bool {
 			// Find who the mob is fighting
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+// #nosec G104
 					me.Attack(pl, w)
 					return true
 				}
@@ -166,6 +167,7 @@ func specNormalChecker(w *World, ch *Player, me *MobInstance, cmd string, arg st
 		if !pl.IsNPC() && pl.GetLevel() < 50 {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s sees %s and jumps quite high!", mobName(me), pl.GetName()))
 			sendToChar(pl, fmt.Sprintf("%s sees you and jumps high, right at you!\r\n", mobName(me)))
+// #nosec G104
 			me.Attack(pl, w)
 			return true
 		}
@@ -190,6 +192,7 @@ func specNinelives(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		}
 		if cmd == "open" || cmd == "look" || cmd == "examine" {
 			if !ch.IsNPC() {
+// #nosec G104
 				me.Attack(ch, w)
 			}
 			return true
@@ -227,6 +230,8 @@ func specWhirlpool(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			// Pick random room 4600-4699 that isn't private/godroom/death/nomob
 			var toRoom int
 			for i := 0; i < 100; i++ {
+				// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 				candidate := 4600 + rand.Intn(100)
 				r := w.GetRoomInWorld(candidate)
 				if r == nil {
@@ -278,6 +283,7 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 			sendToChar(ch, "Starved and needing food to make more pillows, the couch attacks you!\r\n\r\n")
 			for _, m := range w.GetMobsInRoom(playerRoom) {
 				if m.GetRoomVNum() == playerRoom && m != me {
+// #nosec G104
 					m.Attack(ch, w)
 					break
 				}
@@ -440,6 +446,7 @@ func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		if !pl.IsNPC() && pl.GetLevel() < 50 && pl.GetFighting() != "" {
 			sendToChar(ch, fmt.Sprintf("%s says 'Fear not! I shall rescue you!'\r\n", mobName(me)))
 			w.doRescue(ch, me, "rescue", pl.GetName())
+// #nosec G104
 			me.Attack(pl, w)
 			return true
 		}
@@ -515,6 +522,7 @@ func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		if master, ok := w.GetPlayer(me.Following); ok {
 			if target := master.GetFighting(); target != "" {
 				if vict, ok2 := w.GetPlayer(target); ok2 {
+// #nosec G104
 					me.Attack(vict, w)
 					return true
 				}
@@ -721,6 +729,7 @@ func specEvilLead(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 		if !pl.IsNPC() && pl.GetAlignment() < 0 {
 			sendToChar(ch, fmt.Sprintf("%s says 'You're an evil one! That won't be allowed here!'\r\n", mobName(me)))
+// #nosec G104
 			me.Attack(pl, w)
 			return true
 		}
@@ -782,6 +791,7 @@ func specIra(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 		}
 		if randN(31) == 0 {
 			sendToChar(ch, fmt.Sprintf("%s says 'I don't like you, and you'd better leave before I make you!'\r\n", mobName(me)))
+// #nosec G104
 			me.Attack(pl, w)
 			return true
 		}
@@ -875,6 +885,7 @@ func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 				if !pl.IsNPC() {
 					// Save vs petrify: level-based saving throw
 					if randN(100) >= pl.GetLevel()*2 {
+// #nosec G104
 						me.Attack(pl, w)
 					}
 				}
@@ -937,6 +948,8 @@ func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			// Teleport to a random room
 			rooms := w.Rooms()
 			if len(rooms) > 0 {
+				// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 				target := rooms[rand.Intn(len(rooms))]
 				ch.SetRoom(target.VNum)
 			}
@@ -973,6 +986,7 @@ func specBreedKiller(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 			continue
 		}
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s lets out a blood-chilling screech!", mobName(me)))
+// #nosec G104
 		me.Attack(victim, w)
 		return true
 	}
@@ -999,6 +1013,7 @@ func specCarrion(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	for _, vict := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 		if !vict.IsNPC() && vict.GetName() != ch.GetName() {
 			if randRange(1, vict.GetLevel()) <= me.GetLevel() {
+// #nosec G104
 				me.Attack(vict, w)
 				return true
 			}
@@ -1048,6 +1063,7 @@ func specBat(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 	}
 	if strings.Contains(a, "dripping") && randN(4) == 0 {
 		sendToChar(ch, "A bat swoops down and attacks you!\r\n")
+// #nosec G104
 		me.Attack(ch, w)
 		return true
 	}
@@ -1118,6 +1134,7 @@ func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg 
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s snaps to attention as %s passes.", me.GetShortDesc(), ch.GetName()))
 		} else {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s yells, 'Stay outta there!'", me.GetShortDesc()))
+// #nosec G104
 			me.Attack(ch, w)
 			return true
 		}
@@ -1130,6 +1147,7 @@ func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg 
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+// #nosec G104
 					me.Attack(pl, w)
 					return true
 				}
@@ -1168,6 +1186,7 @@ func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 		if !pl.IsNPC() && pl.GetFighting() == "" && randN(3) == 0 {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("From the shadows, %s backstabs %s!", mobName(me), pl.GetName()))
+// #nosec G104
 			me.Attack(pl, w)
 			return true
 		}
@@ -1190,6 +1209,8 @@ func specTeleporter(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		rooms := w.Rooms()
 		var toRoom int
 		for i := 0; i < 200; i++ {
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			candidate := rooms[rand.Intn(len(rooms))]
 			if w.roomHasFlag(candidate.VNum, "private") || w.roomHasFlag(candidate.VNum, "godroom") ||
 				w.roomHasFlag(candidate.VNum, "death") || w.roomHasFlag(candidate.VNum, "nomob") {
@@ -1281,6 +1302,7 @@ func specChosenGuard(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 		if !pl.IsNPC() && pl.GetFighting() != "" {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says 'None shall harm the chosen!'", mobName(me)))
+// #nosec G104
 			me.Attack(pl, w)
 			return true
 		}
@@ -1302,6 +1324,7 @@ func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg 
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
 		} else {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s states, 'Thou shalt not pass.'", me.GetShortDesc()))
+// #nosec G104
 			me.Attack(ch, w)
 			return true
 		}
@@ -1314,6 +1337,7 @@ func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg 
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+// #nosec G104
 					me.Attack(pl, w)
 					return true
 				}
@@ -1340,6 +1364,7 @@ func specCastleGuardUp(w *World, ch *Player, me *MobInstance, cmd string, arg st
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
 		} else {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s states, 'Thou shalt not pass.'", me.GetShortDesc()))
+// #nosec G104
 			me.Attack(ch, w)
 			return true
 		}
@@ -1352,6 +1377,7 @@ func specCastleGuardUp(w *World, ch *Player, me *MobInstance, cmd string, arg st
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+// #nosec G104
 					me.Attack(pl, w)
 					return true
 				}
@@ -1376,6 +1402,7 @@ func specCastleGuardNorth(w *World, ch *Player, me *MobInstance, cmd string, arg
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
 		} else {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s states, 'Thou shalt not pass.'", me.GetShortDesc()))
+// #nosec G104
 			me.Attack(ch, w)
 			return true
 		}
@@ -1388,6 +1415,7 @@ func specCastleGuardNorth(w *World, ch *Player, me *MobInstance, cmd string, arg
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+// #nosec G104
 					me.Attack(pl, w)
 					return true
 				}
@@ -1468,3 +1496,4 @@ func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	wallGuardTalk = true
 	return false
 }
+

@@ -312,7 +312,10 @@ type Session struct {
 	agentKeyID  int64
 	connectedAt time.Time // set on session creation, used for sessionID()
 
-	// Agent subscription state — only populated when isAgent==true
+	// agentMu protects all agent-related state from concurrent access.
+	// readPump goroutine and combat ticker goroutine (via DamageFunc) both
+	// call markDirty/flushDirtyVars which touch the maps below.
+	agentMu        sync.Mutex
 	subscribedVars map[string]bool // vars this session subscribed to
 	dirtyVars      map[string]bool // vars changed since last flush
 	pendingEvents  []interface{}   // queued EVENTS since last flush
@@ -641,7 +644,9 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	if !s.limiter.Allow() {
 		s.sendError("rate limit exceeded — slow down")
 		if s.isAgent {
+			s.agentMu.Lock()
 			s.pendingEvents = append(s.pendingEvents, map[string]interface{}{"type": "rate_limited", "command": cmd.Command})
+			s.agentMu.Unlock()
 			s.markDirty(VarEvents)
 			s.flushDirtyVars()
 		}
@@ -771,11 +776,10 @@ func (s *Session) Send(message string) {
 	}
 }
 
-// MarkDirty marks a variable as dirty for agent subscriptions
+// MarkDirty marks a variable as dirty for agent subscriptions.
+// Deprecated: prefer markDirty (unexported) which uses the agent mutex.
 func (s *Session) MarkDirty(vars ...string) {
-	for _, v := range vars {
-		s.dirtyVars[v] = true
-	}
+	s.markDirty(vars...)
 }
 
 // GetManager returns the session manager (needed for some admin commands)

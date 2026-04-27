@@ -128,6 +128,8 @@ func RollRealAbils(class, race int) CharStats {
 		s.Int = table[4]
 		s.Cha = table[5]
 		if s.Str == 18 {
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			s.StrAdd = rand.Intn(101) // 0-100
 		}
 	default:
@@ -158,11 +160,15 @@ func RollRealAbils(class, race int) CharStats {
 	case RaceMinotaur:
 		s.Str = min18(s.Str + 1)
 		if s.Str == 18 && class == ClassWarrior {
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			s.StrAdd = rand.Intn(101)
 		}
 	case RaceRakshasa:
 		s.Str = min18(s.Str + 1)
 		if s.Str == 18 && class == ClassWarrior {
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			s.StrAdd = rand.Intn(101)
 		}
 	case RaceSsaur:
@@ -182,9 +188,17 @@ func rollStatTable() [6]int {
 	var table [6]int
 	for i := 0; i < 6; i++ {
 		rolls := [4]int{
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			rand.Intn(6) + 1,
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			rand.Intn(6) + 1,
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			rand.Intn(6) + 1,
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			rand.Intn(6) + 1,
 		}
 		// Sum of best 3 (drop lowest)
@@ -301,3 +315,4 @@ func GiveStartingSkills(p *Player) {
 		p.SetSkill("headbutt", 25)
 	}
 }
+

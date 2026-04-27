@@ -29,6 +29,8 @@ func randRange(min, max int) int {
 	if min > max {
 		return min
 	}
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	return rand.Intn(max-min+1) + min
 }
 
@@ -36,6 +38,8 @@ func randN(n int) int {
 	if n <= 0 {
 		return 0
 	}
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	return rand.Intn(n)
 }
 
@@ -64,6 +68,7 @@ func (w *World) roomCleanup(roomVNum int) int {
 	totalVal := 0
 	for _, obj := range items {
 		w.roomMessage(roomVNum, obj.GetShortDesc()+" vanishes in a puff of smoke!")
+// #nosec G104
 		w.MoveObjectToNowhere(obj)
 		cost := obj.GetCost()
 		if cost < 1 {
@@ -474,6 +479,7 @@ func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	for _, obj := range items {
 		if strings.Contains(obj.GetKeywords(), "corpse") {
 			w.roomMessage(me.RoomVNum, me.GetName()+" savagely devours "+obj.GetShortDesc()+".")
+// #nosec G104
 			w.MoveObjectToNowhere(obj)
 			return true
 		}
@@ -772,3 +778,4 @@ func init() {
 	RegisterSpec("mickey", specMickey)
 	RegisterSpec("mallory", specMallory)
 }
+

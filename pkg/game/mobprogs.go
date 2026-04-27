@@ -103,6 +103,8 @@ func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
 		}
 
 	case w.isCityguard(mob):
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(3) != 0 || amount < 200 {
 			w.roomMessage(mob.GetRoom(), "$n says, 'Are you trying to bribe me?  That's against the law you know...'")
 			w.StartRoomCombat(mob, ch)
@@ -231,6 +233,8 @@ func (w *World) getBadGuy(ch *MobInstance) *MobInstance {
 	if len(badGuys) == 0 {
 		return nil
 	}
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	iVictim := rand.Intn(len(badGuys) + 1)
 	if iVictim == 0 {
 		return nil
@@ -321,6 +325,8 @@ func (w *World) MpSound(mob *MobInstance) {
 
 	switch mob.GetVNum() {
 	case 8066:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(2) == 0 {
 			sound = "Sign this, please! There's too much violence!"
 		} else {
@@ -328,6 +334,8 @@ func (w *World) MpSound(mob *MobInstance) {
 		}
 		useSay = true
 	case 8067:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(2) == 0 {
 			sound = "adjusts his tool belt."
 		} else {
@@ -335,6 +343,8 @@ func (w *World) MpSound(mob *MobInstance) {
 		}
 		useSay = false
 	case 8068:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(2) == 0 {
 			sound = "Arch Bishop Dinive to arrive on the Day of Winter Dawning!"
 		} else {
@@ -345,6 +355,8 @@ func (w *World) MpSound(mob *MobInstance) {
 		sound = "Repent sinners! The end time is near!"
 		useSay = true
 	case 8071:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(2) == 0 {
 			sound = "Spare a coin, buddy?"
 			useSay = true
@@ -356,6 +368,8 @@ func (w *World) MpSound(mob *MobInstance) {
 		sound = "sings an old war ditty... badly off-key."
 		useSay = false
 	case 8074:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(2) == 0 {
 			sound = "plays a lilting tune about your mother's beauty."
 		} else {
@@ -376,6 +390,8 @@ func (w *World) MpSound(mob *MobInstance) {
 		sound = "jiggles in your direction."
 		useSay = false
 	case 16300:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(2) == 0 {
 			sound = "smiles at you."
 		} else {
@@ -392,11 +408,15 @@ func (w *World) MpSound(mob *MobInstance) {
 		w.roomMessage(mob.GetRoom(), fmt.Sprintf("$n %s", sound))
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	if isDemon(mob) && rand.Intn(3) != 0 {
 		w.roomMessage(mob.GetRoom(), "$n says, 'I seek the dull blackened stones in which the souls of mortals have been trapped!'")
 		w.roomMessage(mob.GetRoom(), "$n says, 'I shall open a portal to the Grey Fortress in exchange for a soul stone.'")
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	if isDog(mob) && rand.Intn(26) == 0 {
 		w.roomMessage(mob.GetRoom(), "$n relieves itself, nearly hitting your foot.")
 		puddle := w.CreateObject(20, mob.GetRoom())
@@ -438,6 +458,7 @@ func (w *World) CreateObject(vnum int, roomVNum int) *ObjectInstance {
 		return nil
 	}
 	obj := NewObjectInstance(proto, roomVNum)
+// #nosec G104
 	w.MoveObjectToRoom(obj, roomVNum)
 	return obj
 }
@@ -446,6 +467,7 @@ func (w *World) CreateObject(vnum int, roomVNum int) *ObjectInstance {
 // StartRoomCombat initiates combat between attacker and defender.
 func (w *World) StartRoomCombat(attacker, defender combat.Combatant) {
 	if aiCombatEngine != nil {
+// #nosec G104
 		aiCombatEngine.StartCombat(attacker, defender)
 	}
 }
@@ -453,6 +475,7 @@ func (w *World) StartRoomCombat(attacker, defender combat.Combatant) {
 // StartMobCombat initiates combat between two mobs.
 func (w *World) StartMobCombat(attacker, defender *MobInstance) {
 	if aiCombatEngine != nil {
+// #nosec G104
 		aiCombatEngine.StartCombat(attacker, defender)
 	}
 }
@@ -476,3 +499,4 @@ func (o *ObjectInstance) IsDrinkContainer() bool {
 	}
 	return o.Prototype.TypeFlag == 9 // ITEM_DRINKCON = 9
 }
+

@@ -1083,6 +1083,8 @@ func (e *Engine) luaNumber(L *lua.LState) int {
 		low, high = high, low
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	result := low + rand.Intn(high-low+1)
 	L.Push(lua.LNumber(result))
 	return 1
@@ -1248,6 +1250,8 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 	dice := func(num, sides int) int {
 		total := 0
 		for i := 0; i < num; i++ {
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			total += rand.Intn(sides) + 1
 		}
 		return total
@@ -1437,6 +1441,8 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			// Default formula for unknown offensive spells
 			minDamage := casterLevel
 			maxDamage := casterLevel * 3
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			damage = casterLevel*2 + rand.Intn(maxDamage-minDamage+1) + minDamage
 		}
 
@@ -2388,3 +2394,4 @@ func (e *Engine) luaEcho(L *lua.LState) int {
 		return 0
 	}
 }
+

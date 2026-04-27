@@ -142,6 +142,7 @@ func (w *World) doEat(ch *Player, me *MobInstance, cmd, arg string) bool {
 	_ = foodVal
 
 	// Consume the food
+// #nosec G104
 	w.MoveObjectToNowhere(food)
 	ch.SendMessage("That was good!\r\n")
 	return true

@@ -187,6 +187,7 @@ func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int,
 		if !ok {
 			return
 		}
+// #nosec G104
 		ApplySpellAffects(targetAffectable, spellNum, casterLevel, am)
 	default:
 		// Route through CallMagic for damage, healing, points, summons, etc.

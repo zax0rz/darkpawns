@@ -123,9 +123,11 @@ func (cws *CompressedWebSocket) Close() error {
 	defer cws.mu.Unlock()
 
 	if cws.gzipReader != nil {
+// #nosec G104
 		cws.gzipReader.Close()
 	}
 	if cws.gzipWriter != nil {
+// #nosec G104
 		cws.gzipWriter.Close()
 	}
 
@@ -221,6 +223,7 @@ func (bs *BatchedSender) flushTimer() {
 	defer bs.mu.Unlock()
 
 	if bs.batch != nil && len(bs.batch.Messages) > 0 {
+// #nosec G104
 		bs.flushLocked()
 	}
 }

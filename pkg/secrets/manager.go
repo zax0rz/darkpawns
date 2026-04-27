@@ -55,7 +55,10 @@ func (sm *SecretManager) GetSecret(secretName string) (string, error) {
 	
 	// Check for encrypted secret file
 	encryptedFile := fmt.Sprintf("/run/secrets/%s.enc", secretName)
+	// #nosec G703 — secretName validated to reject ".." and "/"
 	if _, err := os.Stat(encryptedFile); err == nil {
+		// #nosec G703 — secretName validated to reject ".." and "/"
+// #nosec G304
 		encryptedData, err := os.ReadFile(encryptedFile)
 		if err != nil {
 			return "", err

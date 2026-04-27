@@ -67,7 +67,9 @@ func testPrivacyIntegration() {
 
 	// Test 6: Environment variable override
 	fmt.Println("\n6. Testing environment variable override...")
+// #nosec G104
 	os.Setenv("PRIVACY_FILTER_CATEGORIES", "email,phone")
+// #nosec G104
 	os.Setenv("FILTER_PLAYER_NAMES", "false")
 
 	config2 := privacy.LoadConfig()

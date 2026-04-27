@@ -483,6 +483,8 @@ func castCalliope(level int, ch, cvict interface{}) {
 	hi := level * 2
 	missiles := lo
 	if hi > lo {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		missiles += rand.Intn(hi-lo+1)
 	}
 	if missiles < 4 {
@@ -624,6 +626,8 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	// Set timer
 	type timerSetter interface{ SetTimer(int) }
 	if ts, ok := obj.(timerSetter); ok {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		timer := level/2 + rand.Intn(4) - 2 // rand(-2, 1)
 		if timer < 1 {
 			timer = 1
@@ -1315,6 +1319,8 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 	// Pick a random room, avoiding PRIVATE
 	roomCount := w.GetRoomCount()
 	for attempts := 0; attempts < 100; attempts++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		toRoom := rand.Intn(roomCount)
 		roomData := w.GetRoomInWorld(toRoom)
 		if roomData != nil && !roomData.HasFlag(RoomPrivate) {
@@ -1323,8 +1329,10 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 
 			// Transfer — use CharTransfer via appropriate path
 			if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() {
+// #nosec G104
 				w.MobTransfer(cvict, toRoom)
 			} else {
+// #nosec G104
 				w.PlayerTransfer(cvict, toRoom)
 			}
 			return
@@ -1362,6 +1370,8 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 		return
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	dam := level*6 + rand.Intn(level*3+1) - 10
 	if dam < 1 {
 		dam = 1
@@ -1469,6 +1479,8 @@ func castHellfire(level int, ch, world interface{}) {
 		if cd, ok := ch.(charInRoom); ok {
 			chDex = cd.GetDex()
 		}
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(20)+1 > chDex {
 			cn.SetPosition(2) // POS_SITTING
 			if vn, ok := c.(interface{ SendMessage(string) }); ok {
@@ -1672,14 +1684,18 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	// Saving throw with backfire
 	if victIsNPC && magSavingThrow(cvict, int(SaveSpell)) {
 		// 10% backfire chance for PC casters
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if !chIsNPC && rand.Intn(10) == 0 {
 			sendToCaster(ch, "Your spell backfires!\r\n")
 			// Transfer caster to victim's room instead
 			type transferWorld interface{ PlayerTransfer(ch interface{}, toRoomVNum int) error; MobTransfer(ch interface{}, toRoomVNum int) error }
 			if tw, ok := world.(transferWorld); ok {
 				if chIsNPC {
+// #nosec G104
 					tw.MobTransfer(ch, victRoom)
 				} else {
+// #nosec G104
 					tw.PlayerTransfer(ch, victRoom)
 				}
 			}
@@ -1696,8 +1712,10 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	type transferWorld interface{ PlayerTransfer(ch interface{}, toRoomVNum int) error; MobTransfer(ch interface{}, toRoomVNum int) error }
 	if tw, ok := world.(transferWorld); ok {
 		if victIsNPC {
+// #nosec G104
 			tw.MobTransfer(cvict, chRoom)
 		} else {
+// #nosec G104
 			tw.PlayerTransfer(cvict, chRoom)
 		}
 	}
@@ -1925,6 +1943,8 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 		casterLevel = cl.GetLevel()
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	if (victLevel > casterLevel+4 && rand.Intn(5) == 0) ||
 		(!victIsNPC && victLevel >= 100 && casterLevel <= victLevel) {
 		sendToCaster(ch, "With a searing pain, your psionic energy recoils!\r\n")
@@ -1950,9 +1970,12 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 		return
 	}
 
+// #nosec G104
 	tw.PlayerTransfer(ch, victRoom)
 	tw.LookAtRoomSimple(victRoom, ch)
+// #nosec G104
 	tw.PlayerTransfer(ch, chRoom)
 
 	sendToCaster(ch, "You have a strange dream about seeing...\r\n")
 }
+

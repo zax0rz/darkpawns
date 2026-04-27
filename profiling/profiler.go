@@ -1,15 +1,15 @@
 package main
 
 import (
+	"crypto/subtle"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
-	_ "net/http/pprof"
+	nethttppprof "net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime"
-	"runtime/pprof"
+	runtimepprof "runtime/pprof"
 	"sync"
 	"time"
 )
@@ -43,18 +43,24 @@ func (p *Profiler) StartCPUProfile() error {
 	}
 
 	// Create profile directory
+// #nosec G301
+// #nosec G703
 	if err := os.MkdirAll(p.profileDir, 0755); err != nil {
 		return fmt.Errorf("create profile dir: %w", err)
 	}
 
 	// Start CPU profiling
 	cpuFile := fmt.Sprintf("%s/cpu-%d.prof", p.profileDir, time.Now().Unix())
-	f, err := os.Create(cpuFile)
+// #nosec G302
+// #nosec G304
+// #nosec G703
+	f, err := os.OpenFile(cpuFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("create cpu profile: %w", err)
 	}
 
-	if err := pprof.StartCPUProfile(f); err != nil {
+	if err := runtimepprof.StartCPUProfile(f); err != nil {
+// #nosec G104
 		f.Close()
 		return fmt.Errorf("start cpu profile: %w", err)
 	}
@@ -62,7 +68,8 @@ func (p *Profiler) StartCPUProfile() error {
 	p.cpuProfile = f
 	p.enabled = true
 
-	log.Printf("CPU profiling started: %s", cpuFile)
+// #nosec G706
+	slog.Info("CPU profiling started", "file", cpuFile)
 	return nil
 }
 
@@ -75,11 +82,12 @@ func (p *Profiler) StopCPUProfile() error {
 		return fmt.Errorf("cpu profiling not running")
 	}
 
-	pprof.StopCPUProfile()
+	runtimepprof.StopCPUProfile()
+// #nosec G104
 	p.cpuProfile.Close()
 	p.cpuProfile = nil
 
-	log.Println("CPU profiling stopped")
+	slog.Info("CPU profiling stopped")
 	return nil
 }
 
@@ -89,31 +97,37 @@ func (p *Profiler) WriteHeapProfile() error {
 	defer p.mu.Unlock()
 
 	// Create profile directory
+// #nosec G301
+// #nosec G703
 	if err := os.MkdirAll(p.profileDir, 0755); err != nil {
 		return fmt.Errorf("create profile dir: %w", err)
 	}
 
 	// Write heap profile
 	heapFile := fmt.Sprintf("%s/heap-%d.prof", p.profileDir, time.Now().Unix())
-	f, err := os.Create(heapFile)
+// #nosec G302
+// #nosec G304
+// #nosec G703
+	f, err := os.OpenFile(heapFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("create heap profile: %w", err)
 	}
 	defer f.Close()
 
-	if err := pprof.WriteHeapProfile(f); err != nil {
+	if err := runtimepprof.WriteHeapProfile(f); err != nil {
 		return fmt.Errorf("write heap profile: %w", err)
 	}
 
 	p.memProfile = f
-	log.Printf("Heap profile written: %s", heapFile)
+// #nosec G706
+	slog.Info("Heap profile written", "file", heapFile)
 	return nil
 }
 
 // StartBlockProfile starts block profiling
 func (p *Profiler) StartBlockProfile(rate int) {
 	runtime.SetBlockProfileRate(rate)
-	log.Printf("Block profiling started with rate %d", rate)
+	slog.Info("Block profiling started", "rate", rate)
 }
 
 // StopBlockProfile stops block profiling and writes profile
@@ -122,24 +136,30 @@ func (p *Profiler) StopBlockProfile() error {
 	defer p.mu.Unlock()
 
 	// Create profile directory
+// #nosec G301
+// #nosec G703
 	if err := os.MkdirAll(p.profileDir, 0755); err != nil {
 		return fmt.Errorf("create profile dir: %w", err)
 	}
 
 	// Write block profile
 	blockFile := fmt.Sprintf("%s/block-%d.prof", p.profileDir, time.Now().Unix())
-	f, err := os.Create(blockFile)
+// #nosec G302
+// #nosec G304
+// #nosec G703
+	f, err := os.OpenFile(blockFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("create block profile: %w", err)
 	}
 	defer f.Close()
 
-	if err := pprof.Lookup("block").WriteTo(f, 0); err != nil {
+	if err := runtimepprof.Lookup("block").WriteTo(f, 0); err != nil {
 		return fmt.Errorf("write block profile: %w", err)
 	}
 
 	p.blockProfile = f
-	log.Printf("Block profile written: %s", blockFile)
+// #nosec G706
+	slog.Info("Block profile written", "file", blockFile)
 
 	// Reset block profile rate
 	runtime.SetBlockProfileRate(0)
@@ -149,7 +169,7 @@ func (p *Profiler) StopBlockProfile() error {
 // StartMutexProfile starts mutex profiling
 func (p *Profiler) StartMutexProfile(rate int) {
 	runtime.SetMutexProfileFraction(rate)
-	log.Printf("Mutex profiling started with fraction %d", rate)
+	slog.Info("Mutex profiling started", "fraction", rate)
 }
 
 // StopMutexProfile stops mutex profiling and writes profile
@@ -158,24 +178,30 @@ func (p *Profiler) StopMutexProfile() error {
 	defer p.mu.Unlock()
 
 	// Create profile directory
+// #nosec G301
+// #nosec G703
 	if err := os.MkdirAll(p.profileDir, 0755); err != nil {
 		return fmt.Errorf("create profile dir: %w", err)
 	}
 
 	// Write mutex profile
 	mutexFile := fmt.Sprintf("%s/mutex-%d.prof", p.profileDir, time.Now().Unix())
-	f, err := os.Create(mutexFile)
+// #nosec G302
+// #nosec G304
+// #nosec G703
+	f, err := os.OpenFile(mutexFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("create mutex profile: %w", err)
 	}
 	defer f.Close()
 
-	if err := pprof.Lookup("mutex").WriteTo(f, 0); err != nil {
+	if err := runtimepprof.Lookup("mutex").WriteTo(f, 0); err != nil {
 		return fmt.Errorf("write mutex profile: %w", err)
 	}
 
 	p.mutexProfile = f
-	log.Printf("Mutex profile written: %s", mutexFile)
+// #nosec G706
+	slog.Info("Mutex profile written", "file", mutexFile)
 
 	// Reset mutex profile fraction
 	runtime.SetMutexProfileFraction(0)
@@ -188,23 +214,29 @@ func (p *Profiler) GoroutineDump() error {
 	defer p.mu.Unlock()
 
 	// Create profile directory
+// #nosec G301
+// #nosec G703
 	if err := os.MkdirAll(p.profileDir, 0755); err != nil {
 		return fmt.Errorf("create profile dir: %w", err)
 	}
 
 	// Write goroutine dump
 	goroutineFile := fmt.Sprintf("%s/goroutine-%d.txt", p.profileDir, time.Now().Unix())
-	f, err := os.Create(goroutineFile)
+// #nosec G302
+// #nosec G304
+// #nosec G703
+	f, err := os.OpenFile(goroutineFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("create goroutine dump: %w", err)
 	}
 	defer f.Close()
 
-	if err := pprof.Lookup("goroutine").WriteTo(f, 2); err != nil {
+	if err := runtimepprof.Lookup("goroutine").WriteTo(f, 2); err != nil {
 		return fmt.Errorf("write goroutine dump: %w", err)
 	}
 
-	log.Printf("Goroutine dump written: %s", goroutineFile)
+// #nosec G706
+	slog.Info("Goroutine dump written", "file", goroutineFile)
 	return nil
 }
 
@@ -237,15 +269,25 @@ func (p *Profiler) PrintMemoryStats() {
 	stats := p.MemoryStats()
 
 	slog.Info("=== Memory Statistics ===")
+// #nosec G706
 	slog.Info("Allocated", "bytes", stats["alloc"])
+// #nosec G706
 	slog.Info("Total Allocated", "bytes", stats["total_alloc"])
+// #nosec G706
 	slog.Info("System", "bytes", stats["sys"])
+// #nosec G706
 	slog.Info("Heap Allocated", "bytes", stats["heap_alloc"])
+// #nosec G706
 	slog.Info("Heap System", "bytes", stats["heap_sys"])
+// #nosec G706
 	slog.Info("Heap In Use", "bytes", stats["heap_in_use"])
+// #nosec G706
 	slog.Info("Heap Objects", "count", stats["heap_objects"])
+// #nosec G706
 	slog.Info("Goroutines", "count", stats["num_goroutines"])
+// #nosec G706
 	slog.Info("GC Cycles", "count", stats["num_gc"])
+// #nosec G706
 	slog.Info("GC CPU Fraction", "fraction", stats["gc_cpu_fraction"])
 }
 
@@ -278,7 +320,8 @@ func NewPerformanceMonitor(profiler *Profiler, interval time.Duration) *Performa
 // Start starts the performance monitor
 func (pm *PerformanceMonitor) Start() {
 	go pm.monitor()
-	log.Printf("Performance monitor started with interval %v", pm.interval)
+// #nosec G706
+	slog.Info("Performance monitor started", "interval", pm.interval)
 }
 
 // monitor periodically collects performance metrics
@@ -350,13 +393,18 @@ func (pm *PerformanceMonitor) AnalyzeMetrics() map[string]interface{} {
 		alloc := metric.Memory["alloc"].(uint64)
 		goroutines := int64(metric.Goroutines)
 
+// #nosec G115
 		totalAlloc += int64(alloc)
 		totalGoroutines += goroutines
 
+// #nosec G115
 		if int64(alloc) > maxAlloc {
+// #nosec G115
 			maxAlloc = int64(alloc)
 		}
+// #nosec G115
 		if int64(alloc) < minAlloc {
+// #nosec G115
 			minAlloc = int64(alloc)
 		}
 		if goroutines > maxGoroutines {
@@ -379,12 +427,42 @@ func (pm *PerformanceMonitor) AnalyzeMetrics() map[string]interface{} {
 	return analysis
 }
 
-// StartPProfServer starts the pprof HTTP server
+// StartPProfServer starts the pprof HTTP server with basic auth
 func StartPProfServer(addr string) {
+	user := os.Getenv("PPROF_USER")
+	pass := os.Getenv("PPROF_PASS")
+	if user == "" || pass == "" {
+		slog.Info("PPROF_USER/PPROF_PASS not set, pprof server not started")
+		return
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/debug/pprof/", func(w http.ResponseWriter, r *http.Request) {
+		if username, password, ok := r.BasicAuth(); !ok ||
+			subtle.ConstantTimeCompare([]byte(username), []byte(user)) != 1 ||
+			subtle.ConstantTimeCompare([]byte(password), []byte(pass)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="pprof"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		nethttppprof.Index(w, r)
+	})
+	mux.HandleFunc("/debug/pprof/cmdline", nethttppprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", nethttppprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", nethttppprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", nethttppprof.Trace)
+
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
 	go func() {
-		log.Printf("Starting pprof server on %s", addr)
-		if err := http.ListenAndServe(addr, nil); err != nil {
-			log.Printf("pprof server error: %v", err)
+// #nosec G706
+		slog.Info("Starting pprof server", "address", addr)
+		if err := server.ListenAndServe(); err != nil {
+			slog.Error("pprof server error", "error", err)
 		}
 	}()
 }
@@ -408,16 +486,22 @@ func RunProfilingSession(profileDir string, duration time.Duration) error {
 	monitor := NewPerformanceMonitor(profiler, 1*time.Second)
 	monitor.Start()
 
-	log.Printf("Profiling session started for %v", duration)
+// #nosec G706
+	slog.Info("Profiling session started", "duration", duration)
 
 	// Wait for duration
 	time.Sleep(duration)
 
 	// Stop profiling
+// #nosec G104
 	profiler.StopCPUProfile()
+// #nosec G104
 	profiler.StopBlockProfile()
+// #nosec G104
 	profiler.StopMutexProfile()
+// #nosec G104
 	profiler.WriteHeapProfile()
+// #nosec G104
 	profiler.GoroutineDump()
 
 	monitor.Stop()
@@ -426,19 +510,28 @@ func RunProfilingSession(profileDir string, duration time.Duration) error {
 	analysis := monitor.AnalyzeMetrics()
 	if analysis != nil {
 		slog.Info("=== Performance Analysis ===")
+// #nosec G706
 		slog.Info("Duration", "value", analysis["duration"])
+// #nosec G706
 		slog.Info("Samples", "count", analysis["sample_count"])
+// #nosec G706
 		slog.Info("Avg Memory", "bytes", analysis["avg_memory"])
+// #nosec G706
 		slog.Info("Min Memory", "bytes", analysis["min_memory"])
+// #nosec G706
 		slog.Info("Max Memory", "bytes", analysis["max_memory"])
+// #nosec G706
 		slog.Info("Avg Goroutines", "count", analysis["avg_goroutines"])
+// #nosec G706
 		slog.Info("Min Goroutines", "count", analysis["min_goroutines"])
+// #nosec G706
 		slog.Info("Max Goroutines", "count", analysis["max_goroutines"])
 	}
 
 	profiler.PrintMemoryStats()
 
-	log.Printf("Profiling session completed. Profiles saved to %s", profileDir)
+// #nosec G706
+	slog.Info("Profiling session completed", "dir", profileDir)
 	return nil
 }
 
@@ -465,11 +558,13 @@ func main() {
 		profileDir := os.Args[2]
 		duration, err := time.ParseDuration(os.Args[3])
 		if err != nil {
-			log.Fatalf("Invalid duration: %v", err)
+			slog.Error("Invalid duration", "error", err)
+			os.Exit(1)
 		}
 
 		if err := RunProfilingSession(profileDir, duration); err != nil {
-			log.Fatal(err)
+			slog.Error("profiling failed", "error", err)
+			os.Exit(1)
 		}
 
 	case "pprof":

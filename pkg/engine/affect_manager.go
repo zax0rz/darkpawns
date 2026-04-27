@@ -580,6 +580,7 @@ func (am *AffectManager) applyPeriodicEffect(entity Affectable, affect *Affect) 
 
 // Helper methods
 func (am *AffectManager) getEntityID(entity Affectable) string {
+// #nosec G115
 	return entity.GetName() + "_" + string(rune(entity.GetID()))
 }
 

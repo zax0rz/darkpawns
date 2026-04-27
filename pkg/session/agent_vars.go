@@ -56,7 +56,10 @@ type RoomItemVar struct {
 // handleSubscribe processes a subscribe message from an agent.
 // {"type":"subscribe","data":{"variables":["HEALTH","ROOM_VNUM",...]}}
 func (s *Session) handleSubscribe(data json.RawMessage) error {
-	if !s.isAgent {
+	s.agentMu.Lock()
+	isAgent := s.isAgent
+	s.agentMu.Unlock()
+	if !isAgent {
 		s.sendError("subscribe is only available to agents")
 		return nil
 	}
@@ -66,15 +69,20 @@ func (s *Session) handleSubscribe(data json.RawMessage) error {
 	if err := json.Unmarshal(data, &sub); err != nil {
 		return err
 	}
+	s.agentMu.Lock()
 	for _, v := range sub.Variables {
 		s.subscribedVars[v] = true
 	}
+	s.agentMu.Unlock()
 	return nil
 }
 
 // markDirty marks vars as needing a flush if this session is an agent
 // and the variable was subscribed.
+// Safe to call from any goroutine (readPump or combat ticker).
 func (s *Session) markDirty(vars ...string) {
+	s.agentMu.Lock()
+	defer s.agentMu.Unlock()
 	if !s.isAgent {
 		return
 	}
@@ -88,14 +96,24 @@ func (s *Session) markDirty(vars ...string) {
 // flushDirtyVars serializes all dirty variables and sends a single
 // {"type":"vars","data":{...}} message to the agent, then clears the set.
 func (s *Session) flushDirtyVars() {
+	s.agentMu.Lock()
 	if !s.isAgent || len(s.dirtyVars) == 0 {
+		s.agentMu.Unlock()
 		return
 	}
-	data := make(map[string]interface{}, len(s.dirtyVars))
-	for varName := range s.dirtyVars {
-		data[varName] = s.buildVarValue(varName)
+	// Copy dirty keys and clear under lock, then build values without lock
+	// (buildVarValue reads Player which has its own mutex).
+	dirty := make(map[string]bool, len(s.dirtyVars))
+	for k, v := range s.dirtyVars {
+		dirty[k] = v
 	}
 	s.dirtyVars = make(map[string]bool)
+	s.agentMu.Unlock()
+
+	data := make(map[string]interface{}, len(dirty))
+	for varName := range dirty {
+		data[varName] = s.buildVarValue(varName)
+	}
 	msg, err := json.Marshal(ServerMessage{Type: MsgVars, Data: data})
 	if err != nil {
 		slog.Error("json.Marshal error", "error", err)
@@ -165,8 +183,10 @@ func (s *Session) buildVarValue(varName string) interface{} {
 	case VarEquipment:
 		return s.buildEquipment()
 	case VarEvents:
+		s.agentMu.Lock()
 		events := s.pendingEvents
 		s.pendingEvents = nil
+		s.agentMu.Unlock()
 		if events == nil {
 			return []interface{}{}
 		}

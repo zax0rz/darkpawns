@@ -298,10 +298,14 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	// Roll for success
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1 // 1-101
 	skillLevel := ch.GetSkill(SkillBackstab)
 	prob := skillLevel
 	if prob == 0 {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		prob = rand.Intn(51) + 50 // 50-100 fallback
 	}
 
@@ -365,6 +369,8 @@ func DoBash(ch *Player, target combat.Combatant) SkillResult {
 
 	// Bash formula: percent = ((5 - (GET_AC(vict)/10)) << 1) + number(1,101)
 	// prob = GET_SKILL(ch, SKILL_BASH)
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.Intn(101) + 1)
 	prob := ch.GetSkill(SkillBash)
 
@@ -403,6 +409,8 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Formula: percent = ((7 - (GET_AC(vict)/10)) << 1) + number(1,101)
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.Intn(101) + 1)
 	prob := ch.GetSkill(SkillKick)
 
@@ -443,6 +451,8 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Formula: percent = number(1,121) + MAX(GET_LEVEL(vict)-GET_LEVEL(ch),0)
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(121) + 1
 	percent += max(target.GetLevel()-ch.Level, 0)
 	prob := ch.GetSkill(SkillTrip)
@@ -498,6 +508,8 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 	}
 	damage := (skillLevel/2 + 1) + 4 // higher base damage
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1
 
 	chPronouns := GetPronouns(ch.Name, 1)
@@ -512,6 +524,8 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 			MessageToRoom: ActMessage("$n tries to headbutt $N but misses!", chPronouns, &victPronouns, ""),
 		}
 		// 25% self-stun on failure
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(4) == 0 {
 			selfDam := damage / 2
 			if selfDam < 1 {
@@ -578,6 +592,8 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	}
 
 	// Roll for success
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillRescue)
 
@@ -605,34 +621,9 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 // ---------------------------------------------------------------------------
 // Sneak / Hide / Steal state
 // ---------------------------------------------------------------------------
-
-// PlayerSneakState tracks sneak mode per player.
-// In original: AFF_SNEAK affect flag.
-var playerSneakState = make(map[string]bool)
-
-// PlayerHideState tracks hide mode per player.
-// In original: AFF_HIDE affect flag.
-var playerHideState = make(map[string]bool)
-
-// IsSneaking returns true if the player is in sneak mode.
-func IsSneaking(name string) bool {
-	return playerSneakState[name]
-}
-
-// SetSneaking sets sneak mode.
-func SetSneaking(name string, val bool) {
-	playerSneakState[name] = val
-}
-
-// IsHidden returns true if the player is hidden.
-func IsHidden(name string) bool {
-	return playerHideState[name]
-}
-
-// SetHidden sets hide mode.
-func SetHidden(name string, val bool) {
-	playerHideState[name] = val
-}
+// Sneak and hide state are stored via Player.Affects bit vector using
+// affSneak (0) and affHide (1) constants from act_movement.go.
+// Player.mu protects all access. No global maps needed.
 
 // DoSneak implements do_sneak() from act.other.c lines 214-245.
 func DoSneak(ch *Player) SkillResult {
@@ -641,14 +632,16 @@ func DoSneak(ch *Player) SkillResult {
 	}
 
 	// Toggle off if already sneaking
-	if IsSneaking(ch.Name) {
-		SetSneaking(ch.Name, false)
+	if ch.IsAffected(affSneak) {
+		ch.SetAffect(affSneak, false)
 		return SkillResult{Success: true, MessageToCh: "You stop sneaking."}
 	}
 
 	// Roll for success: percent = number(1,101)
 	// prob = GET_SKILL(ch, SKILL_SNEAK) + dex_app_skill[GET_DEX(ch)].sneak
 	// We don't have dex_app_skill table yet, use raw skill
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillSneak)
 
@@ -656,7 +649,7 @@ func DoSneak(ch *Player) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You attempt to move silently, but make too much noise."}
 	}
 
-	SetSneaking(ch.Name, true)
+	ch.SetAffect(affSneak, true)
 	return SkillResult{Success: true, MessageToCh: "Okay, you'll try to move silently for a while."}
 }
 
@@ -667,12 +660,14 @@ func DoHide(ch *Player) SkillResult {
 	}
 
 	// Toggle off if already hidden
-	if IsHidden(ch.Name) {
-		SetHidden(ch.Name, false)
+	if ch.IsAffected(affHide) {
+		ch.SetAffect(affHide, false)
 		return SkillResult{Success: true, MessageToCh: "You step out of the shadows."}
 	}
 
 	// Roll for success
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillHide)
 
@@ -680,7 +675,7 @@ func DoHide(ch *Player) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You attempt to hide yourself, but fail."}
 	}
 
-	SetHidden(ch.Name, true)
+	ch.SetAffect(affHide, true)
 	return SkillResult{Success: true, MessageToCh: "You blend into the shadows."}
 }
 
@@ -706,6 +701,8 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 
 	// Steal gold
 	if itemName == "coins" || itemName == "gold" {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		percent := rand.Intn(101) + 1
 		prob := ch.GetSkill(SkillSteal)
 
@@ -722,6 +719,8 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		// We need access to target's gold — for players we can cast, for mobs we estimate
 		var gold int
 		if p, ok := target.(*Player); ok {
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			gold = (p.Gold * (rand.Intn(10) + 1)) / 100
 			if gold > 1782 {
 				gold = 1782
@@ -733,6 +732,8 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 			ch.Gold += gold
 		} else {
 			// Mob — steal small random amount
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			gold = rand.Intn(20) + 1
 			ch.Gold += gold
 		}
@@ -757,6 +758,8 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		}
 
 		// Roll with weight penalty
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		percent := rand.Intn(101) + 1
 		// Heavier items are harder to steal
 		// percent += GET_OBJ_WEIGHT(obj) — we don't have weight yet
@@ -834,10 +837,12 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 	food.Runtime.ShortDescOverride = "some carved meat from " + corpse.GetShortDesc()
 
 	if err := world.MoveObjectToPlayerInventory(food, ch); err != nil {
+// #nosec G104
 		world.MoveObjectToRoom(food, ch.GetRoomVNum())
 	}
 
 	// Remove corpse from room
+// #nosec G104
 	world.MoveObjectToNowhere(corpse)
 
 	return SkillResult{
@@ -857,6 +862,8 @@ func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Skill check: D100 vs skill
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	roll := rand.Intn(100) + 1
 	if roll > ch.GetSkill(SkillCutthroat) {
 		return SkillResult{
@@ -885,6 +892,8 @@ func DoStrike(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Simple damage based on level
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	damage := rand.Intn(ch.GetLevel()) + 1
 
 	return SkillResult{
@@ -977,6 +986,8 @@ func DoSharpen(ch *Player, objName string) SkillResult {
 	}
 
 	// Simple sharpen: success based on skill level
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	roll := rand.Intn(100) + 1
 	if roll <= ch.GetSkill(SkillSharpen) {
 		return SkillResult{
@@ -1135,6 +1146,7 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 	// Dump corpse contents and remove it
 	// In a full port we'd create head + headless_corpse objects
 	// For now, mark the corpse as beheaded and dump its contents
+// #nosec G104
 	world.MoveObjectToNowhere(corpse)
 
 	// Create head (vnum 16) and headless corpse (vnum 17) objects
@@ -1170,6 +1182,8 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You need to be bare handed to get a good grip.\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(150) + 1 // 1-150; 101+ is complete failure
 
 	// Immortals always succeed, sleeping targets always hit
@@ -1210,6 +1224,8 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You can't make a fist while wielding a weapon!\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillSlug)
 
@@ -1223,6 +1239,8 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	dam := (ch.GetLevel() * (rand.Intn(4) + 1)) / 2
 	return SkillResult{
 		Success:      true,
@@ -1258,6 +1276,8 @@ func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) Ski
 		return SkillResult{Success: false, MessageToCh: "You need your hands free to smack some heads!\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillSmackheads)
 
@@ -1383,6 +1403,8 @@ func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You're not trained in martial arts!\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(121) + 1 // 0-120; 101+ is complete failure
 
 	// Immortals always succeed
@@ -1462,6 +1484,8 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "That's too big to palm!\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillPalm)
 
@@ -1494,6 +1518,8 @@ func DoFleshAlter(ch *Player) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You know nothing of altering your flesh!\r\n"}
 	}
 
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	percent := rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillFleshAlter)
 
@@ -1547,3 +1573,4 @@ func hisHer(sex int) string {
 		return "its"
 	}
 }
+

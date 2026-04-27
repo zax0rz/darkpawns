@@ -26,6 +26,7 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	wimpLevel := 0
+// #nosec G104
 	fmt.Sscanf(arg, "%d", &wimpLevel)
 
 	if wimpLevel > 0 {

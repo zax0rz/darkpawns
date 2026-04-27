@@ -15,31 +15,32 @@ func ContentNegotiationMiddleware(next http.Handler) http.Handler {
 
 			// Check for markdown request
 			if strings.Contains(accept, "text/markdown") {
-				http.ServeFile(w, r, filepath.Join("web", "onboarding", "onboarding.md"))
+				http.ServeFile(w, r, filepath.Join("web", "onboarding", "onboarding.md")) // #nosec G703 — hardcoded path
 				return
 			}
 
 			// Check for JSON request
 			if strings.Contains(accept, "application/json") {
-				http.ServeFile(w, r, filepath.Join("web", "onboarding", "onboarding.json"))
+				http.ServeFile(w, r, filepath.Join("web", "onboarding", "onboarding.json")) // #nosec G703 — hardcoded path
 				return
 			}
 
 			// Default to HTML
-			http.ServeFile(w, r, filepath.Join("web", "onboarding", "index.html"))
+			http.ServeFile(w, r, filepath.Join("web", "onboarding", "index.html")) // #nosec G703 — hardcoded path
 			return
 		}
 
 		// Handle API requests
 		if strings.HasPrefix(r.URL.Path, "/api") {
 			if r.URL.Path == "/api/openapi.json" {
-				http.ServeFile(w, r, filepath.Join("web", "api", "openapi.json"))
+				http.ServeFile(w, r, filepath.Join("web", "api", "openapi.json")) // #nosec G703 — hardcoded path
 				return
 			}
 
 			// Default API response
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
+// #nosec G104
 			w.Write([]byte(`{"error": "API endpoint not found", "docs": "/api/openapi.json"}`))
 			return
 		}

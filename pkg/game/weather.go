@@ -310,6 +310,8 @@ func dice(num, size int) int {
 	}
 	total := 0
 	for i := 0; i < num; i++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		total += rand.Intn(size) + 1
 	}
 	return total
@@ -334,3 +336,4 @@ func ModifyWeatherChange(delta int) {
 	weatherInfo.Change += delta
 	weatherMu.Unlock()
 }
+

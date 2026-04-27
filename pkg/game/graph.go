@@ -159,6 +159,8 @@ func (w *World) doTrack(ch *Player, me *MobInstance, argument string) bool {
 	// Evasion check for player victims
 	if !vict.IsNPC() {
 		evasion := vict.GetSkill("evasion")
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if evasion > 0 && rand.IntN(151)+1 <= evasion {
 			ch.SendMessage("You sense no trail.\r\n")
 			return true
@@ -175,6 +177,8 @@ func (w *World) doTrack(ch *Player, me *MobInstance, argument string) bool {
 	case BFS_NO_PATH:
 		ch.SendMessage("You can't sense a trail to them from here.\r\n")
 	default:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		num := rand.IntN(102) // 0-101, 101% is complete failure
 
 		// Weather penalty — not yet implemented.
@@ -190,6 +194,8 @@ func (w *World) doTrack(ch *Player, me *MobInstance, argument string) bool {
 		if num >= skill {
 			// Skill failure — pick a random valid direction
 			for tries := 10; tries > 0; tries-- {
+				// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 				dir = rand.IntN(6)
 				if w.canGo(ch.GetRoom(), dir) {
 					break
@@ -227,7 +233,11 @@ func (w *World) huntVictim(m *MobInstance) {
 	}
 
 	// Evasion check
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	if evasion := target.GetSkill("evasion"); evasion > 0 && rand.IntN(151)+1 < evasion {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		r := rand.IntN(7)
 		if m.CanSpeak() && r == 0 {
 			w.mobSayTo(m, "Where the hell did my prey go?!")
@@ -275,10 +285,14 @@ func (w *World) huntVictim(m *MobInstance) {
 
 // huntTrashTalk delivers the classic mob trash-talk messages while hunting.
 func (w *World) huntTrashTalk(m *MobInstance, victimName string) {
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	switch rand.IntN(151) {
 	case 0:
 		w.mobTellPlayer(m, victimName, "Let's have an ass-kicking contest")
 	case 1:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		w.mobAuction(m, fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, rand.IntN(1001)+1000))
 	case 2:
 		w.mobTellPlayer(m, victimName, "Run to your momma, pansy!")
@@ -289,6 +303,8 @@ func (w *World) huntTrashTalk(m *MobInstance, victimName string) {
 	case 5:
 		w.mobGossip(m, fmt.Sprintf("Your momma ain't gonna save you this time, %s.", victimName))
 	case 6:
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.IntN(21) == 0 {
 			w.mobGossip(m, fmt.Sprintf("%s flees like a rabbit...", victimName))
 		}
@@ -436,6 +452,7 @@ func (w *World) mobPerformMove(m *MobInstance, dir int) {
 func (w *World) mobAttackPlayer(m *MobInstance, target *Player) {
 	m.SetFighting(target.GetName())
 	target.SetFighting(m.GetName())
+// #nosec G104
 	m.Attack(target, w)
 }
 
@@ -451,3 +468,4 @@ func mobIsIntelligent(m *MobInstance) bool {
 	}
 	return false
 }
+

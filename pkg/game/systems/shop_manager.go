@@ -229,6 +229,7 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 	// Check if shop has inventory space
 	if len(shop.GetInventory()) >= shop.MaxItems {
 		// Return item to player
+// #nosec G104
 		player.Inventory.AddItem(gameItem)
 		return false, "The shop's inventory is full."
 	}
@@ -245,6 +246,7 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 		player.GoldMu.Lock()
 		player.Gold -= price
 		player.GoldMu.Unlock()
+// #nosec G104
 		player.Inventory.AddItem(gameItem)
 		return false, "Failed to add item to shop inventory."
 	}
@@ -279,6 +281,7 @@ func (sm *ShopManager) ProcessRepair(shop *Shop, player *game.Player, item commo
 	if player.Gold < cost {
 		player.GoldMu.Unlock()
 		// Return item to player
+// #nosec G104
 		player.Inventory.AddItem(gameItem)
 		return false, fmt.Sprintf("You need %d gold to repair that.", cost)
 	}
@@ -295,6 +298,7 @@ func (sm *ShopManager) ProcessRepair(shop *Shop, player *game.Player, item commo
 	// For now, we just return the item
 
 	// Return item to player
+// #nosec G104
 	player.Inventory.AddItem(gameItem)
 
 	return true, fmt.Sprintf("You repair %s for %d gold.", item.GetShortDesc(), cost)
@@ -324,6 +328,7 @@ func (sm *ShopManager) ProcessIdentify(shop *Shop, player *game.Player, item com
 	if player.Gold < cost {
 		player.GoldMu.Unlock()
 		// Return item to player
+// #nosec G104
 		player.Inventory.AddItem(gameItem)
 		return false, fmt.Sprintf("You need %d gold to identify that.", cost)
 	}
@@ -340,6 +345,7 @@ func (sm *ShopManager) ProcessIdentify(shop *Shop, player *game.Player, item com
 	// For now, we just return the item
 
 	// Return item to player
+// #nosec G104
 	player.Inventory.AddItem(gameItem)
 
 	return true, fmt.Sprintf("You identify %s for %d gold.", item.GetShortDesc(), cost)

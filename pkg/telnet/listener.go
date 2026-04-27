@@ -59,12 +59,14 @@ func Listen(port int, manager *session.Manager) error {
 			connMu.Lock()
 			if connCount >= maxTotalConns {
 				connMu.Unlock()
+// #nosec G104
 				conn.Close()
 				slog.Warn("Telnet: max total connections reached, rejecting", "remote_addr", conn.RemoteAddr())
 				continue
 			}
 			if connPerIP[remoteIP] >= maxConnsPerIP {
 				connMu.Unlock()
+// #nosec G104
 				conn.Close()
 				slog.Warn("Telnet: max per-IP connections reached, rejecting", "remote_addr", conn.RemoteAddr())
 				continue
@@ -123,6 +125,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	tc.writeLine("\r\n  Dark Pawns\r\n\r\nEnter your name: ")
 
 	// Read name with timeout
+// #nosec G104
 	rawConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	name := tc.readLine()
 	name = strings.TrimSpace(name)
@@ -143,6 +146,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 		return
 	}
 
+// #nosec G104
 	rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
 	// Start output writer goroutine
@@ -165,6 +169,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 			continue
 		}
 
+// #nosec G104
 		rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
 		parts := strings.Fields(line)
@@ -331,6 +336,7 @@ func (tc *telnetConn) readLine() string {
 
 		if b == '\r' {
 			if next, _ := tc.br.Peek(1); len(next) > 0 && next[0] == '\n' {
+// #nosec G104
 				tc.br.ReadByte()
 			}
 			return string(line)
@@ -345,6 +351,7 @@ func (tc *telnetConn) readLine() string {
 // write sends bytes with a simple mutex to avoid interleaving.
 func (tc *telnetConn) write(data []byte) {
 	tc.wmu <- struct{}{}
+// #nosec G104
 	tc.Conn.Write(data)
 	<-tc.wmu
 }

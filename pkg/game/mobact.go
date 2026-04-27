@@ -123,6 +123,8 @@ func (w *World) MobileActivity() {
 		}
 
 		// -- Scavenger (pick up best item, ~1-in-10 chance) --
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if hasMobFlag(ch, "scavenger") && rand.Intn(11) == 0 {
 			items := w.GetItemsInRoom(ch.RoomVNum)
 			if len(items) > 0 {
@@ -165,10 +167,14 @@ func (w *World) MobileActivity() {
 					continue
 				}
 				// C: AFF_PROTECT_EVIL + IS_EVIL(ch) + !number(0,5)
+				// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 				if vict.IsAffected(12) && mobIsEvil(ch) && rand.Intn(6) != 0 {
 					continue
 				}
 				// C: AFF_PROTECT_GOOD + IS_GOOD(ch) + !number(0,5)
+				// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 				if vict.IsAffected(13) && mobIsGood(ch) && rand.Intn(6) != 0 {
 					continue
 				}
@@ -190,6 +196,7 @@ func (w *World) MobileActivity() {
 				}
 				if shouldHit || isAggressive {
 					if aiCombatEngine != nil {
+// #nosec G104
 						aiCombatEngine.StartCombat(ch, vict)
 					}
 					break
@@ -209,6 +216,7 @@ func (w *World) MobileActivity() {
 				for _, name := range ch.Memory {
 					if name == vict.GetName() {
 						if aiCombatEngine != nil {
+// #nosec G104
 							aiCombatEngine.StartCombat(ch, vict)
 						}
 						break
@@ -233,6 +241,7 @@ func (w *World) MobileActivity() {
 				for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
 					if p.GetName() == target {
 						if aiCombatEngine != nil {
+// #nosec G104
 							aiCombatEngine.StartCombat(ch, p)
 						}
 						break
@@ -249,6 +258,7 @@ func (w *World) MobileActivity() {
 			for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
 				if p.GetLevel() >= 24 {
 					if aiCombatEngine != nil {
+// #nosec G104
 						aiCombatEngine.StartCombat(ch, p)
 					}
 					break
@@ -267,6 +277,7 @@ func (w *World) MobileActivity() {
 				}
 				if vict.GetLevel()+3 < ch.GetLevel() {
 					if aiCombatEngine != nil {
+// #nosec G104
 						aiCombatEngine.StartCombat(ch, vict)
 					}
 					break
@@ -302,3 +313,4 @@ func (w *World) scanForPlayer(roomVNum int, fn func(p *Player) bool) *Player {
 func mobAlive(mob *MobInstance) bool {
 	return mob != nil && mob.GetHP() > 0
 }
+

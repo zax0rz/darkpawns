@@ -136,6 +136,8 @@ func cmdFlee(s *Session) error {
 	}
 
 	// 50% chance to flee successfully
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	if rand.Intn(100) > 50 {
 		s.Send("You attempt to flee but fail!")
 		return nil
@@ -167,6 +169,8 @@ func cmdFlee(s *Session) error {
 	s.manager.combatEngine.StopCombat(s.player.Name)
 
 	// Pick random direction
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	direction := directions[rand.Intn(len(directions))]
 
 	// Move player
@@ -213,3 +217,4 @@ func cmdFlee(s *Session) error {
 	// Send new room state
 	return cmdLook(s, nil)
 }
+

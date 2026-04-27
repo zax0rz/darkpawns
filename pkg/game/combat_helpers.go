@@ -85,9 +85,13 @@ func improveSkill(ch *Player, skill string) {
 		return
 	}
 	// Higher skill = harder to improve (like CircleMUD)
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	if rand.Intn(100)+1 > cur {
 		// Stat-based check: INT/WIS average gives improvement chance
 		chance := (ch.GetInt() + ch.GetWis()) / 4
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		if rand.Intn(100) < chance {
 			ch.SetSkill(skill, cur+1)
 			ch.SendMessage(fmt.Sprintf("You feel a bit more competent in %s.\r\n", skill))
@@ -109,3 +113,4 @@ func (w *World) rawKill(victim *Player, attackType int) {
 	// Trigger death processing
 	w.HandleDeath(victim, nil, attackType)
 }
+

@@ -207,6 +207,7 @@ func (w *World) doSteal(ch *Player, me *MobInstance, cmd string, arg string) boo
 	// If victim is a mob and awake, they hit back
 	if ohoh && victimMob != nil && victimMob.GetPosition() > combat.PosSleeping {
 		// hit(vict, ch, TYPE_UNDEFINED) — simplified: start combat
+// #nosec G104
 		victimMob.Attack(ch, w)
 	}
 

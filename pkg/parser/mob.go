@@ -61,7 +61,8 @@ func (d DiceRoll) String() string {
 
 // ParseMobFile parses a single .mob file and returns all mobs.
 func ParseMobFile(path string) ([]Mob, error) {
-	file, err := os.Open(path)
+// #nosec G304
+	file, err := os.Open(path) // #nosec G703 — world data, trusted internal path
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
@@ -238,6 +239,8 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	if mob.Level > 15 {
 		statmod := mob.Level - 15
 		add := func() int {
+			// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 			v := rand.Intn(statmod + 1) // number(0, statmod) = rand.Intn(statmod+1)
 			if v > 7 {
 				return 7
@@ -487,3 +490,4 @@ func (m *Mob) GetLuaFunctions() int {
 func (m *Mob) GetAlignment() int {
 	return m.Alignment
 }
+

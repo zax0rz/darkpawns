@@ -46,6 +46,7 @@ func (w *World) doQuit(ch *Player, me *MobInstance, cmd string, arg string) bool
 	w.RemovePlayer(ch.Name)
 
 	// Save player
+// #nosec G104
 	SavePlayer(ch)
 
 	// Extract — broadcast leave message

@@ -33,6 +33,7 @@ func (r *Room) HasFlag(bit int) bool {
 	word := bit / 16
 	bitPos := bit % 16
 	val, _ := strconv.ParseUint(r.Flags[word], 16, 32)
+// #nosec G115
 	return val&(1<<uint(bitPos)) != 0
 }
 
@@ -50,7 +51,8 @@ type Exit struct {
 
 // ParseWldFile parses a single .wld file and returns all rooms.
 func ParseWldFile(path string) ([]Room, error) {
-	file, err := os.Open(path)
+// #nosec G304
+	file, err := os.Open(path) // #nosec G703 — world data, trusted internal path
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}

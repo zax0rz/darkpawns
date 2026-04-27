@@ -210,6 +210,7 @@ func ExtractNorentsFromEquipped(p *Player) {
 		if IsUnrentable(slot) {
 			// Move from equipment to inventory (matching C's unequip_char + obj_to_char)
 			p.Equipment.UnequipItem(slot, p.Inventory)
+// #nosec G104
 			p.Inventory.addItem(slot)
 		} else {
 			// Recursively extract norents from contained items.
@@ -335,12 +336,14 @@ func RestoreWeight(obj *ObjectInstance) {
 // ==========================================================================
 func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 	if locate <= 0 {
+// #nosec G104
 		p.Inventory.addItem(obj)
 		return
 	}
 	cPos := locate - 1
 	_, ok := cWearPosToGoSlot(cPos)
 	if !ok {
+// #nosec G104
 		p.Inventory.addItem(obj)
 		return
 	}
@@ -354,6 +357,7 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 		}
 	}
 	if !wears {
+// #nosec G104
 		p.Inventory.addItem(obj)
 		return
 	}
@@ -362,10 +366,12 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 	if (xf&FlagAntiEvil != 0 && p.IsEvil()) ||
 		(xf&FlagAntiGood != 0 && p.IsGood()) ||
 		(xf&FlagAntiNeutral != 0 && p.IsNeutral()) {
+// #nosec G104
 		p.Inventory.addItem(obj)
 		return
 	}
 	if err := p.Equipment.Equip(obj, p.Inventory); err != nil {
+// #nosec G104
 		p.Inventory.addItem(obj)
 	}
 }

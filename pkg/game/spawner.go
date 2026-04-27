@@ -152,6 +152,8 @@ func (s *Spawner) pickRandomRoom() *parser.Room {
 
 	// Try random picks first
 	for attempt := 0; attempt < 5; attempt++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		idx := rand.Intn(len(rooms))
 		if isRoomValidForSpawn(&rooms[idx]) {
 			return &rooms[idx]
@@ -176,6 +178,8 @@ func (s *Spawner) pickRandomZoneRoom(zone int) *parser.Room {
 
 	// Try random picks first
 	for attempt := 0; attempt < 5; attempt++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		idx := rand.Intn(len(rooms))
 		if isRoomValidForRandZon(&rooms[idx], zone) {
 			return &rooms[idx]
@@ -197,6 +201,8 @@ func percentLoad(obj *parser.Obj) bool {
 	if obj == nil {
 		return true
 	}
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	return obj.LoadPercent > (rand.Float64() * 100.0)
 }
 
@@ -404,6 +410,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				slog.Error("error spawning object for container", "obj_vnum", cmd.Arg1, "error", err, "context", "container")
 				continue
 			}
+// #nosec G104
 			s.world.MoveObjectToContainer(obj, container)
 			lastCmd = 1
 
@@ -587,3 +594,4 @@ func (s *Spawner) resetEmptyZones() {
 
 	slog.Info("Periodic zone reset check")
 }
+

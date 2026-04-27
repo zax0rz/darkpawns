@@ -347,5 +347,8 @@ func randBool(denom int) bool {
 	if denom <= 1 {
 		return true
 	}
+	// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 	return rand.Intn(denom) == 0
 }
+

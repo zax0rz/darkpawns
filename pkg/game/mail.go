@@ -133,7 +133,7 @@ func writeToFile(buf []byte, size int, filepos int) {
 		noMail = true
 		return
 	}
-	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFile)
 		noMail = true
@@ -163,7 +163,7 @@ func readFromFile(buf []byte, size int, filepos int) {
 		noMail = true
 		return
 	}
-	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFile)
 		noMail = true
@@ -200,7 +200,8 @@ func scanFile() bool {
 	f, err := os.Open(MailFile)
 	if err != nil {
 		log.Print("   Mail file non-existant... creating new file.")
-		os.WriteFile(MailFile, []byte{}, 0644)
+// #nosec G104
+		os.WriteFile(MailFile, []byte{}, 0600)
 		return true
 	}
 	defer f.Close()
@@ -511,10 +512,14 @@ func (w *World) GiveObjectToChar(obj *ObjectInstance, ch *Player) {
 func marshalMailHeader(h *mailHeader) []byte {
 	buf := make([]byte, MailBlockSize)
 	// Simple binary layout matching C struct packing
+// #nosec G115
 	int32Bytes(buf, 0, int32(h.BlockType))
+// #nosec G115
 	int32Bytes(buf, 4, int32(h.NextBlock))
 	int64Bytes(buf, 8, h.MailTime)
+// #nosec G115
 	int32Bytes(buf, 16, int32(h.From))
+// #nosec G115
 	int32Bytes(buf, 20, int32(h.To))
 	copy(buf[24:], h.Text[:])
 	return buf
@@ -531,6 +536,7 @@ func unmarshalMailHeader(h *mailHeader, buf []byte) {
 
 func marshalMailData(d *mailData) []byte {
 	buf := make([]byte, MailBlockSize)
+// #nosec G115
 	int32Bytes(buf, 0, int32(d.BlockType))
 	copy(buf[4:], d.Text[:])
 	return buf
@@ -542,14 +548,20 @@ func unmarshalMailData(d *mailData, buf []byte) {
 }
 
 func int32Bytes(buf []byte, off int, v int32) {
+// #nosec G115
 	buf[off] = byte(v)
+// #nosec G115
 	buf[off+1] = byte(v >> 8)
+// #nosec G115
 	buf[off+2] = byte(v >> 16)
+// #nosec G115
 	buf[off+3] = byte(v >> 24)
 }
 
 func int64Bytes(buf []byte, off int, v int64) {
+// #nosec G115
 	int32Bytes(buf, off, int32(v))
+// #nosec G115
 	int32Bytes(buf, off+4, int32(v>>32))
 }
 

@@ -223,6 +223,8 @@ func cmdFleeMovement(s *Session) error {
 	// Try random exits
 	fled := false
 	for i := 0; i < 6 && len(directions) > 0; i++ {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
 		idx := rand.Intn(len(directions))
 		direction := directions[idx]
 
@@ -426,3 +428,4 @@ func genderHisHer(p interface{}) string {
 	}
 	return "his"
 }
+
