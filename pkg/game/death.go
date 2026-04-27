@@ -315,6 +315,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	// In the original C code, players could reconnect or get resurrected. This is a
 	// modern convenience. Replace with proper resurrection flow later.
 	player.SetRoom(MortalStartRoom)
+	player.SetPosition(combat.PosStanding)
 	player.Heal(9999)
 	player.StopFighting()
 

@@ -13,6 +13,27 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game/systems"
 )
 
+// positionFailMessage returns an appropriate rejection message when
+// the player's position is too low for a command.
+func positionFailMessage(pos int) string {
+	switch pos {
+	case combat.PosDead:
+		return "You are dead! You can't do that."
+	case combat.PosMortally:
+		return "You are mortally wounded and cannot do that."
+	case combat.PosIncap:
+		return "You are incapacitated and cannot do that."
+	case combat.PosStunned:
+		return "You are stunned and cannot do that."
+	case combat.PosSleeping:
+		return "You are asleep and cannot do that!"
+	case combat.PosResting:
+		return "You need to stand up first."
+	default:
+		return "You are in no position to do that!"
+	}
+}
+
 // cmdRegistry is the global command registry, initialized on first use.
 var cmdRegistry = command.NewRegistry()
 
@@ -29,12 +50,12 @@ func (cs *commandSession) GetPlayer() interface{} {
 // init registers all built-in commands at package initialization.
 func init() {
 	// Movement
-	cmdRegistry.Register("north", wrapMove("north"), "Move north.", 0, 0, "n")
-	cmdRegistry.Register("east", wrapMove("east"), "Move east.", 0, 0, "e")
-	cmdRegistry.Register("south", wrapMove("south"), "Move south.", 0, 0, "s")
-	cmdRegistry.Register("west", wrapMove("west"), "Move west.", 0, 0, "w")
-	cmdRegistry.Register("up", wrapMove("up"), "Move up.", 0, 0, "u")
-	cmdRegistry.Register("down", wrapMove("down"), "Move down.", 0, 0, "d")
+	cmdRegistry.Register("north", wrapMove("north"), "Move north.", 0, combat.PosStanding, "n")
+	cmdRegistry.Register("east", wrapMove("east"), "Move east.", 0, combat.PosStanding, "e")
+	cmdRegistry.Register("south", wrapMove("south"), "Move south.", 0, combat.PosStanding, "s")
+	cmdRegistry.Register("west", wrapMove("west"), "Move west.", 0, combat.PosStanding, "w")
+	cmdRegistry.Register("up", wrapMove("up"), "Move up.", 0, combat.PosStanding, "u")
+	cmdRegistry.Register("down", wrapMove("down"), "Move down.", 0, combat.PosStanding, "d")
 
 	// Look
 	cmdRegistry.Register("look", wrapArgs(cmdLook), "Look around the room.", 0, 0, "l")
@@ -47,8 +68,8 @@ func init() {
 	cmdRegistry.Register("gtell", wrapArgs(cmdGtell), "Send a message to your group.", 0, 0, "gsay")
 
 	// Combat
-	cmdRegistry.Register("hit", wrapArgs(cmdHit), "Attack a target.", 0, 0, "attack", "kill")
-	cmdRegistry.Register("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.", 0, 0)
+	cmdRegistry.Register("hit", wrapArgs(cmdHit), "Attack a target.", 0, combat.PosStanding, "attack", "kill")
+	cmdRegistry.Register("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.", 0, combat.PosFighting)
 
 	// Position / Movement
 	cmdRegistry.Register("stand", wrapNoArgs(cmdStand), "Stand up.", 0, 0)
@@ -183,20 +204,15 @@ func init() {
 	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0)
 
 	// Offensive commands (act_offensive.go)
-	cmdRegistry.Register("assist", wrapArgs(cmdAssist), "Assist a target in combat.", LVL_IMMORT, 0)
-	cmdRegistry.Register("kill", wrapArgs(cmdKill), "Attack a mob target.", 0, 0)
-	cmdRegistry.Register("backstab", wrapArgs(cmdBackstab), "Backstab a target with a piercing weapon.", 0, 0, "bs")
-	cmdRegistry.Register("bash", wrapArgs(cmdBash), "Bash a target, potentially stunning them.", 0, 0)
-	cmdRegistry.Register("disembowel", wrapArgs(cmdDisembowel), "Disembowel a target.", 0, 0)
-	cmdRegistry.Register("rescue", wrapArgs(cmdRescue), "Rescue someone from combat.", 0, 0)
-	cmdRegistry.Register("kick", wrapArgs(cmdKick), "Kick a target for damage.", 0, 0)
-	cmdRegistry.Register("dragonkick", wrapArgs(cmdDragonKick), "Dragon-style kick attack.", 0, 0, "dkick")
-	cmdRegistry.Register("tigerpunch", wrapArgs(cmdTigerPunch), "Tiger-style punch attack.", 0, 0, "tpunch")
-	cmdRegistry.Register("shoot", wrapArgs(cmdShoot), "Shoot a target with a ranged weapon.", 0, 0)
-	cmdRegistry.Register("subdue", wrapArgs(cmdSubdue), "Subdue a target (non-lethal).", 0, 0)
-	cmdRegistry.Register("sleeper", wrapArgs(cmdSleeper), "Apply a sleeper hold to a target.", 0, 0)
-	cmdRegistry.Register("neckbreak", wrapArgs(cmdNeckbreak), "Lethal stealth attack.", 0, 0)
-	cmdRegistry.Register("ambush", wrapArgs(cmdAmbush), "Ambush a target from hiding.", 0, 0)
+	cmdRegistry.Register("assist", wrapArgs(cmdAssist), "Assist a target in combat.", LVL_IMMORT, combat.PosFighting)
+	cmdRegistry.Register("disembowel", wrapArgs(cmdDisembowel), "Disembowel a target.", 0, combat.PosFighting)
+	cmdRegistry.Register("dragonkick", wrapArgs(cmdDragonKick), "Dragon-style kick attack.", 0, combat.PosFighting, "dkick")
+	cmdRegistry.Register("tigerpunch", wrapArgs(cmdTigerPunch), "Tiger-style punch attack.", 0, combat.PosFighting, "tpunch")
+	cmdRegistry.Register("shoot", wrapArgs(cmdShoot), "Shoot a target with a ranged weapon.", 0, combat.PosStanding)
+	cmdRegistry.Register("subdue", wrapArgs(cmdSubdue), "Subdue a target (non-lethal).", 0, combat.PosStanding)
+	cmdRegistry.Register("sleeper", wrapArgs(cmdSleeper), "Apply a sleeper hold to a target.", 0, combat.PosStanding)
+	cmdRegistry.Register("neckbreak", wrapArgs(cmdNeckbreak), "Lethal stealth attack.", 0, combat.PosStanding)
+	cmdRegistry.Register("ambush", wrapArgs(cmdAmbush), "Ambush a target from hiding.", 0, combat.PosStanding)
 	cmdRegistry.Register("order", wrapArgs(cmdOrder), "Order a pet or follower.", LVL_IMMORT, 0)
 
 	// Informative commands (act_informative.go)
@@ -204,7 +220,6 @@ func init() {
 	cmdRegistry.Register("commands", wrapArgs(cmdCommands), "List available commands.", 0, 0, "cmds")
 	cmdRegistry.Register("description", wrapArgs(cmdDescription), "Set your character description.", 0, 0)
 	cmdRegistry.Register("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", 0, 0, "diag")
-	cmdRegistry.Register("skills", wrapArgs(cmdSkills), "Show your known skills.", 0, 0, "sk")
 	cmdRegistry.Register("toggle", wrapArgs(cmdToggle), "Toggle a player preference.", 0, 0)
 	cmdRegistry.Register("users", wrapArgs(cmdUsers), "Show connected players.", LVL_IMMORT, 0)
 
@@ -261,9 +276,8 @@ func init() {
 	// Alias (game pkg)
 	cmdRegistry.Register("alias", wrapArgs(cmdAlias), "Manage command aliases.", 0, 0)
 
-	// Admin commands (game pkg bans)
-	cmdRegistry.Register("ban", wrapArgs(cmdBan), "Ban a site from the MUD.", LVL_IMMORT, 0)
-	cmdRegistry.Register("unban", wrapArgs(cmdUnban), "Unban a site from the MUD.", LVL_IMMORT, 0)
+	// Admin commands (game pkg bans) — duplicate of whod.c port; let the first one win
+	// (no re-register here to avoid overwriting minPosition)
 }
 
 // wrapArgs adapts a func(*Session, []string) error to command.Handler.
@@ -336,6 +350,16 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		s.sendText(fmt.Sprintf("Unknown command: %s", cmdStr))
 		return nil
 	}
+
+	// Enforce MinPosition gate — dead players can't attack, sleeping players can't backstab, etc.
+	if entry.MinPosition > 0 && s.player != nil {
+		playerPos := s.player.GetPosition()
+		if playerPos < entry.MinPosition {
+			s.sendText(positionFailMessage(playerPos))
+			return nil
+		}
+	}
+
 	return entry.Handler(&commandSession{Session: s}, args)
 }
 
