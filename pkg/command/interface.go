@@ -1,3 +1,14 @@
+// ARCHITECTURAL NOTE [M-06]: This is the canonical session interface.
+//
+// command.SessionInterface is the preferred contract for command handlers.
+// See pkg/common/command_interfaces.go for the competing common.CommandSession
+// interface and the full migration plan. Once migration completes, that file
+// will be removed and this becomes the sole session abstraction.
+//
+// Methods still needed from common.CommandSession:
+//   IsAuthenticated() bool, HasPlayer() bool, Close()
+// These should be added here before deprecating the common package interface.
+
 package command
 
 import (

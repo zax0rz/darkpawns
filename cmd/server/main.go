@@ -1,3 +1,37 @@
+// ARCHITECTURAL NOTE [M-07]: Manual wiring with no lifecycle management
+//
+// This main.go constructs and wires all dependencies in init-order-dependent
+// imperative code. Initialization must happen in exact sequence:
+//   1. Parse world files
+//   2. Create game world
+//   3. Init scripting engine (depends on world)
+//   4. Connect to database (optional, graceful fallback)
+//   5. Create session manager (depends on world + db)
+//   6. Register manager hooks: combat broadcast, death, memory, damage, scripts, parry/dodge
+//   7. Setup HTTP routes
+//   8. Start zone reset goroutine
+//   9. Start HTTP server
+// 10. Block on signal for shutdown
+//
+// Problems:
+//   - Init order is implicit and fragile — reordering breaks at runtime.
+//   - No graceful shutdown of in-flight connections or goroutines.
+//   - No centralized error handling for partial-init failures.
+//   - Hook registration is scattered across multiple Set*Func() calls.
+//
+// Suggested improvement: App struct with explicit Start/Stop lifecycle.
+//   type App struct {
+//       world    *game.World
+//       db       *db.DB
+//       manager  *session.Manager
+//       script   *scripting.Engine
+//       server   *http.Server
+//   }
+//   func (a *App) Start(ctx context.Context) error  // init all, start serving
+//   func (a *App) Stop(ctx context.Context) error    // graceful drain + cleanup
+//
+// Deferred to future refactor. See RESEARCH-LOG.md [DESIGN].
+
 //go:build !web
 
 package main

@@ -1,7 +1,37 @@
+// ARCHITECTURAL NOTE [M-06]: Competing command session interfaces
+//
+// This file defines common.CommandSession and common.CommandManager.
+// There is a parallel interface at pkg/command/interface.go
+// (command.SessionInterface) that serves a similar purpose.
+//
+// common.CommandSession:
+//   - Defined here to break circular dependencies between pkg/session and consumers.
+//   - Returns GetPlayer() as interface{} — loses type safety.
+//   - Used by: pkg/command command registrations (legacy path).
+//
+// command.SessionInterface (pkg/command/interface.go):
+//   - Returns GetPlayer() as *game.Player — full type safety.
+//   - Exposes GetWorld(), GetCombatEngine(), temp data, and RNG.
+//   - Used by: newer command handlers that need rich session context.
+//
+// Canonical: command.SessionInterface should be the single session contract.
+//   It provides type-safe player access and the richer context that
+//   command handlers actually need.
+//
+// Migration path:
+//   1. Add missing methods from CommandSession to SessionInterface
+//      (IsAuthenticated, HasPlayer, Close).
+//   2. Update command.CommandManager to use SessionInterface instead.
+//   3. Deprecate common.CommandSession and common.CommandManager.
+//   4. Remove this file once all callers migrate.
+//
+// Deferred to future refactor. See RESEARCH-LOG.md [DESIGN].
+
 // Package common provides shared interfaces and types to break circular dependencies.
 package common
 
 // CommandSession defines the interface for a session that can execute commands.
+// DEPRECATED: prefer command.SessionInterface. See architectural note above.
 type CommandSession interface {
 	// Send sends a message to the session
 	Send(string)
