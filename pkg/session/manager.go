@@ -25,6 +25,15 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// jwtEffectiveLifetime is the effective token lifetime before the session
+// rotates the JWT. The underlying JWT library issues 24h tokens, but the
+// session layer treats tokens as expired after this duration and proactively
+// refreshes them starting at jwtRefreshWindow before expiry.
+const (
+	jwtEffectiveLifetime = 1 * time.Hour
+	jwtRefreshWindow   = 15 * time.Minute
+)
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -376,6 +385,9 @@ type Session struct {
 	agentKeyID  int64
 	connectedAt time.Time // set on session creation, used for sessionID()
 
+	// H-25: JWT token rotation state
+	tokenIssuedAt time.Time // when the current JWT was issued
+
 	// agentMu protects all agent-related state from concurrent access.
 	// readPump goroutine and combat ticker goroutine (via DamageFunc) both
 	// call markDirty/flushDirtyVars which touch the maps below.
@@ -681,6 +693,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		if err != nil {
 			slog.Error("failed to generate JWT token", "error", err)
 		}
+		s.tokenIssuedAt = time.Now()
 
 		// Send welcome with token
 		s.sendWelcome(token)
@@ -730,6 +743,11 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	}
 
 	err := ExecuteCommand(s, cmd.Command, cmd.Args)
+
+	// H-25: Proactive JWT refresh — if token is within refresh window,
+	// generate a new one and push it to the client.
+	s.maybeRefreshToken()
+
 	// Flush dirty vars for agents after every command dispatch
 	if s.isAgent {
 		s.flushDirtyVars()
@@ -991,6 +1009,38 @@ func (s *Session) RandomInt(n int) int {
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
 	return rand.Intn(n)
+}
+
+// maybeRefreshToken checks if the session's JWT is within the refresh
+// window (15 minutes before the 1-hour effective expiry). If so, it generates
+// a new token and sends it to the client as a token_refresh message.
+func (s *Session) maybeRefreshToken() {
+	if s.tokenIssuedAt.IsZero() {
+		return
+	}
+	remaining := s.tokenIssuedAt.Add(jwtEffectiveLifetime).Sub(time.Now())
+	if remaining > jwtRefreshWindow {
+		return
+	}
+	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID)
+	if err != nil {
+		slog.Error("failed to refresh JWT token", "player", s.player.Name, "error", err)
+		return
+	}
+	s.tokenIssuedAt = time.Now()
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgTokenRefresh,
+		Data: map[string]string{"token": token},
+	})
+	if err != nil {
+		slog.Error("json.Marshal token_refresh error", "error", err)
+		return
+	}
+	select {
+	case s.send <- msg:
+	default:
+		slog.Warn("dropping token_refresh: channel full", "player", s.player.Name)
+	}
 }
 
 // Errors
