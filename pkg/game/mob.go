@@ -172,13 +172,13 @@ func (m *MobInstance) Attack(player *Player, world *World) error {
 	player.TakeDamage(damage)
 
 	// Send messages
-	player.Send <- []byte(fmt.Sprintf("%s attacks you for %d damage!\n", m.GetShortDesc(), damage))
+	player.SendMessage(fmt.Sprintf("%s attacks you for %d damage!\n", m.GetShortDesc(), damage))
 
 	// Notify other players in the room
 	players := world.GetPlayersInRoom(m.RoomVNum)
 	for _, p := range players {
 		if p != player {
-			p.Send <- []byte(fmt.Sprintf("%s attacks %s!\n", m.GetShortDesc(), player.Name))
+			p.SendMessage(fmt.Sprintf("%s attacks %s!\n", m.GetShortDesc(), player.Name))
 		}
 	}
 

@@ -14,6 +14,15 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
+// MessageSinkFunc is the callback type for delivering messages to a player.
+// The session manager sets this on World initialization so that game-layer
+// SendMessage calls route through Session.send (which writePump reads).
+type MessageSinkFunc func(playerName string, msg []byte)
+
+// CloseConnectionFunc is called when a player session should be forcibly closed
+// (e.g., do_quit). Set by the session manager.
+type CloseConnectionFunc func(playerName string)
+
 // World represents the active game world with runtime state.
 type World struct {
 	mu sync.RWMutex
@@ -80,6 +89,13 @@ type World struct {
 
 	// Whod — who-daemon display mode flags (ported from whod.c)
 	WhodDisplay *Whod
+
+	// MessageSink routes player messages through the session layer.
+	// Set by the session manager on initialization. If nil, messages are silently dropped.
+	MessageSink MessageSinkFunc
+
+	// CloseConnection routes close requests through the session layer.
+	CloseConn CloseConnectionFunc
 }
 
 // NewWorld creates a new game world from parsed data.
@@ -208,6 +224,10 @@ func (w *World) AddPlayer(p *Player) error {
 	if _, exists := w.players[p.Name]; exists {
 		return fmt.Errorf("player %s already online", p.Name)
 	}
+
+	p.mu.Lock()
+	p.worldRef = w
+	p.mu.Unlock()
 
 	w.players[p.Name] = p
 	return nil
@@ -432,10 +452,10 @@ func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	w.activeMobs[w.nextMobID] = mob
 	w.nextMobID++
 
-	// Notify players in the room — use internal unlocked access since we hold w.mu.Lock()
+	// Notify players in the room — use SendMessage (routes through session layer)
 	for _, player := range w.players {
 		if player.GetRoom() == roomVNum {
-			player.Send <- []byte(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
+			player.SendMessage(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
 		}
 	}
 

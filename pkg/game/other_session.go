@@ -3,6 +3,8 @@ package game
 import (
 	"fmt"
 
+	"log/slog"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -55,8 +57,13 @@ func (w *World) doQuit(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	ch.SendMessage("Good bye... Come again soon!\r\n")
 
-	// Signal disconnect
-	ch.Send <- []byte("CLOSE_CONNECTION")
+	// Signal disconnect via session layer
+	if w.CloseConn != nil {
+		w.CloseConn(ch.Name)
+	} else {
+		// Fallback: direct channel send (should not happen in normal operation)
+		slog.Warn("doQuit: no CloseConn sink set, player may not be disconnected", "player", ch.Name)
+	}
 
 	return true
 }

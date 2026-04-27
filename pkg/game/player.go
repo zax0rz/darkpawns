@@ -144,8 +144,10 @@ type Player struct {
 	// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.
 	Flags uint64
 
-	// Communication
-	Send chan []byte // Channel for sending messages to player
+	// worldRef holds a reference to the World this player belongs to.
+	// Used by SendMessage to route through the session layer's MessageSink.
+	// Set when the player is added to the world via AddPlayer.
+	worldRef *World
 
 	// AFK state
 	AFK        bool   // Player is away from keyboard
@@ -221,7 +223,6 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		LastActive:   now,
 		Birth:       now.Unix(), // character creation timestamp
 		Fighting:     "", // Not fighting anyone
-		Send:         make(chan []byte, 256),
 		AFK:          false,
 		AFKMessage:   "",
 		AutoGold:     false, // Autogold off by default
@@ -791,12 +792,21 @@ func (p *Player) SetLastDeath(t int64) {
 	p.LastDeath = t
 }
 
-// SendMessage sends a message to the player.
+// SendMessage sends a message to the player through the session layer.
+// If the player has no world reference or the world has no MessageSink,
+// the message is silently dropped (non-blocking).
 func (p *Player) SendMessage(msg string) {
-	select {
-	case p.Send <- []byte(msg):
-	default:
-		// Channel full, drop message
+	p.mu.RLock()
+	w := p.worldRef
+	p.mu.RUnlock()
+	if w == nil {
+		return
+	}
+	w.mu.RLock()
+	sink := w.MessageSink
+	w.mu.RUnlock()
+	if sink != nil {
+		sink(p.Name, []byte(msg))
 	}
 }
 

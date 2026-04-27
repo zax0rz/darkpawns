@@ -294,7 +294,6 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		SpellMap:     data.SpellMap,
 		ConnectedAt:  time.Now(),
 		LastActive:   time.Now(),
-		Send:         make(chan []byte, 100),
 		Inventory:    NewInventory(),
 		Equipment:    NewEquipment(),
 	}

@@ -105,6 +105,36 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		m.hasDB = true
 	}
 
+	// Wire MessageSink so that Player.SendMessage routes through Session.send
+	world.MessageSink = func(playerName string, msg []byte) {
+		s, ok := m.GetSession(playerName)
+		if !ok || s == nil {
+			return
+		}
+		// Wrap in JSON event envelope for WebSocket clients
+		wrapped, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "text",
+				Text: string(msg),
+			},
+		})
+		if err != nil {
+			slog.Error("MessageSink marshal error", "error", err)
+			return
+		}
+		select {
+		case s.send <- wrapped:
+		default:
+			// Channel full, drop
+		}
+	}
+
+	// Wire CloseConnection so game-layer close requests route through the session
+	world.CloseConn = func(playerName string) {
+		m.UnregisterAndClose(playerName)
+	}
+
 	// Wire game-level callbacks
 	// HasActiveCharacter allows game.ValidName to check against active sessions.
 	game.HasActiveCharacter = func(name string) bool {
@@ -760,20 +790,31 @@ func (s *Session) GetPlayerInterface() interface{} {
 	return s.player
 }
 
-// SendMessage sends a message to the client
+// SendMessage sends a message to the client.
+// Routes through Session.send (which writePump reads) — not through Player.Send.
 func (s *Session) SendMessage(message string) error {
-	if s.player == nil {
-		return fmt.Errorf("no player associated with session")
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "text",
+			Text: message,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("marshal error: %w", err)
 	}
-	s.player.SendMessage(message)
+	select {
+	case s.send <- msg:
+	default:
+		// Channel full, drop message
+	}
 	return nil
 }
 
-// Send sends a message to the client (alternative method name)
+// Send sends a text message to the client (alternative method name).
+// Routes through Session.send directly — not through Player.Send.
 func (s *Session) Send(message string) {
-	if s.player != nil {
-		s.player.SendMessage(message)
-	}
+	_ = s.SendMessage(message)
 }
 
 // MarkDirty marks a variable as dirty for agent subscriptions.
