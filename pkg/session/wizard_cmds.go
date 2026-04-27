@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -1754,9 +1755,15 @@ func cmdSysfile(s *Session, args []string) error {
 	}
 
 // #nosec G304
-	data, err := os.ReadFile(filePath)
+	f, err := os.Open(filePath)
 	if err != nil {
 		s.Send("File does not exist.")
+		return nil
+	}
+	defer f.Close()
+	data, err := io.ReadAll(io.LimitReader(f, 64*1024))
+	if err != nil {
+		s.Send("Error reading file.")
 		return nil
 	}
 	s.Send(string(data))

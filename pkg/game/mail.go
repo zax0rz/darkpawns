@@ -426,16 +426,16 @@ func (w *World) PostmasterSendMail(ch *Player, mailman *MobInstance, arg string)
 	}
 	name := arg[:spaceIdx]
 
-	ch.GoldMu.Lock()
+	ch.mu.Lock()
 	if ch.Gold < MailStampPrice {
-		ch.GoldMu.Unlock()
+		ch.mu.Unlock()
 		ch.SendMessage(fmt.Sprintf("$n tells you, 'A stamp costs %d coins.'\r\n$n tells you, '...which I see you can't afford.'\r\n", MailStampPrice))
 		return
 	}
 
 	recipient := GetIDByName(name)
 	if recipient < 0 {
-		ch.GoldMu.Unlock()
+		ch.mu.Unlock()
 		ch.SendMessage("$n tells you, 'No one by that name is registered here!'\r\n")
 		return
 	}
@@ -444,7 +444,7 @@ func (w *World) PostmasterSendMail(ch *Player, mailman *MobInstance, arg string)
 	if ch.Gold < 0 {
 		ch.Gold = 0
 	}
-	ch.GoldMu.Unlock()
+	ch.mu.Unlock()
 
 	// In C this sets PLR_MAILING flag and starts string_write.
 	// For now, store a stub message.

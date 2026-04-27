@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	playerNameRegex     = regexp.MustCompile(`^[a-zA-Z0-9_\-\. ]+$`)
+	playerNameRegex     = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 	maxPlayerNameLength = 32
 	minPlayerNameLength = 2
 )
@@ -42,7 +42,7 @@ func SanitizePlayerName(name string) string {
 	var result []rune
 	for _, r := range runes {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
-			(r >= '0' && r <= '9') || r == '_' || r == '-' || r == '.' || r == ' ' {
+			(r >= '0' && r <= '9') || r == '_' {
 			result = append(result, r)
 		}
 	}

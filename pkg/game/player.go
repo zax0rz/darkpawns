@@ -29,7 +29,6 @@ type Player struct {
 	Level int
 	Exp   int
 	Gold  int // Currency, used by Lua scripts
-	GoldMu sync.Mutex // Mutex for Gold field (C6)
 	BankGold int // Bank account — from structs.h GET_BANK_GOLD
 
 	// Clan system (ported from clan.c)
@@ -813,6 +812,12 @@ func (p *Player) Heal(amount int) {
 		p.Health = p.MaxHealth
 	}
 }
+
+// Lock acquires the player's mutex. Exported for cross-package atomic
+// check-and-modify patterns (e.g., gold transactions in shop_manager).
+// Prefer fine-grained Get*/Set* methods when possible.
+func (p *Player) Lock()   { p.mu.Lock() }
+func (p *Player) Unlock() { p.mu.Unlock() }
 
 // GetName returns the player's name.
 func (p *Player) GetName() string {

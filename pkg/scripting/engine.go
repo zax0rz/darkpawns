@@ -46,6 +46,8 @@ func (e *Engine) newSafeLState() *lua.LState {
 
 	// Remove dangerous functions for security
 	// Remove file system access (load arbitrary code)
+	// These are intentionally nilled here and re-registered in registerFunctionsOn()
+	// with sandboxed implementations, since each script runs in its own Lua state.
 	L.SetGlobal("dofile", lua.LNil)
 	L.SetGlobal("loadfile", lua.LNil)
 	L.SetGlobal("load", lua.LNil)
@@ -355,6 +357,9 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("save_char", L.NewFunction(e.luaSaveChar))
 	L.SetGlobal("save_obj", L.NewFunction(e.luaSaveObj))
 	// dofile/call: shared-script delegation pattern used by cityguard, breed_killer, etc.
+	// NOTE: dofile is re-registered below after being nilled in newSafeLState().
+	// This is intentional — each script file is loaded into its own sandboxed Lua state,
+	// so re-registration is expected behavior.
 	L.SetGlobal("dofile", L.NewFunction(e.luaDofile))
 	L.SetGlobal("call", L.NewFunction(e.luaCall))
 	L.SetGlobal("save_room", L.NewFunction(e.luaSaveRoom))

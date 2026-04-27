@@ -3,6 +3,8 @@ package engine
 import (
 	"strconv"
 	"time"
+
+	"math/rand/v2"
 )
 
 // TickDuration is the real-world duration of one affect tick.
@@ -163,13 +165,12 @@ func generateAffectID() string {
 	return "aff_" + time.Now().Format("20060102150405") + "_" + randomString(8)
 }
 
-// Helper function to generate a random string
+// randomString generates a random alphanumeric string of the given length.
 func randomString(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
 	for i := range b {
-		// Simple pseudo-random for demo purposes
-		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+		b[i] = charset[rand.IntN(len(charset))]
 	}
 	return string(b)
 }

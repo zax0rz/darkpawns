@@ -333,16 +333,16 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 		return
 	}
 
-	ch.GoldMu.Lock()
+	ch.mu.Lock()
 	if ch != vict {
-		vict.GoldMu.Lock()
+		vict.mu.Lock()
 	}
 
 	if ch.Gold < amount && ch.GetLevel() < lvlGod {
 		if ch != vict {
-			vict.GoldMu.Unlock()
+			vict.mu.Unlock()
 		}
-		ch.GoldMu.Unlock()
+		ch.mu.Unlock()
 		ch.SendMessage("You don't have that many coins!\r\n")
 		return
 	}
@@ -357,9 +357,9 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 	vict.Gold += amount
 
 	if ch != vict {
-		vict.GoldMu.Unlock()
+		vict.mu.Unlock()
 	}
-	ch.GoldMu.Unlock()
+	ch.mu.Unlock()
 }
 
 // doGive handles the give command

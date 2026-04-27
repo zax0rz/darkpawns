@@ -27,9 +27,9 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 		ch.SendMessage("Sorry, you can't do that.\r\n")
 		return true
 	}
-	ch.GoldMu.Lock()
+	ch.mu.Lock()
 	if amount > ch.Gold {
-		ch.GoldMu.Unlock()
+		ch.mu.Unlock()
 		ch.SendMessage("You don't seem to have that much gold to split.\r\n")
 		return true
 	}
@@ -55,14 +55,14 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	if num <= 1 || !ch.IsAffected(affGroup) {
-		ch.GoldMu.Unlock()
+		ch.mu.Unlock()
 		ch.SendMessage("With whom do you wish to share your gold?\r\n")
 		return true
 	}
 
 	share := amount / num
 	ch.Gold -= share * (num - 1)
-	ch.GoldMu.Unlock()
+	ch.mu.Unlock()
 
 	for _, p := range players {
 		if p.IsNPC() {
@@ -74,9 +74,9 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 		if !p.IsAffected(affGroup) || p.Name == ch.Name {
 			continue
 		}
-		p.GoldMu.Lock()
+		p.mu.Lock()
 		p.Gold += share
-		p.GoldMu.Unlock()
+		p.mu.Unlock()
 		p.SendMessage(fmt.Sprintf("%s splits %d coins; you receive %d.\r\n", ch.Name, amount, share))
 	}
 

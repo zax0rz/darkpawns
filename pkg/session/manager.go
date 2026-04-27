@@ -808,7 +808,16 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 
 // sendWelcome sends the initial game state to the player.
 func (s *Session) sendWelcome(token string) {
-	room, _ := s.manager.world.GetRoom(s.player.GetRoom())
+	roomVNum := s.player.GetRoom()
+	room, ok := s.manager.world.GetRoom(roomVNum)
+	if !ok || room == nil {
+		roomVNum = game.MortalStartRoom
+		room, ok = s.manager.world.GetRoom(roomVNum)
+		if !ok || room == nil {
+			slog.Error("sendWelcome: mortal start room not found", "vnum", roomVNum)
+			return
+		}
+	}
 
 	state := StateData{
 		Player: PlayerState{
@@ -1048,6 +1057,42 @@ func (s *Session) ClearTempData(key string) {
 	if s.tempData != nil {
 		delete(s.tempData, key)
 	}
+}
+
+// GetTempInt retrieves temporary data as an int.
+// Returns the value and true if the key exists and is an int, zero and false otherwise.
+func (s *Session) GetTempInt(key string) (int, bool) {
+	if s.tempData == nil {
+		return 0, false
+	}
+	v, ok := s.tempData[key]
+	if !ok {
+		return 0, false
+	}
+	i, ok := v.(int)
+	return i, ok
+}
+
+// GetTempString retrieves temporary data as a string.
+// Returns the value and true if the key exists and is a string, empty and false otherwise.
+func (s *Session) GetTempString(key string) (string, bool) {
+	if s.tempData == nil {
+		return "", false
+	}
+	v, ok := s.tempData[key]
+	if !ok {
+		return "", false
+	}
+	str, ok := v.(string)
+	return str, ok
+}
+
+// SetTemp stores temporary data in the session.
+func (s *Session) SetTemp(key string, value interface{}) {
+	if s.tempData == nil {
+		s.tempData = make(map[string]interface{})
+	}
+	s.tempData[key] = value
 }
 
 // RandomInt generates a random integer in range [0, n)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -26,7 +27,7 @@ type ZoneDispatcher struct {
 // zoneWorker holds per-zone goroutine state.
 type zoneWorker struct {
 	zone   *parser.Zone
-	ticks  uint64
+	ticks  atomic.Uint64
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -97,7 +98,7 @@ func (zd *ZoneDispatcher) zoneLoop(worker *zoneWorker) {
 			return
 
 		case <-ticker.C:
-			worker.ticks++
+			worker.ticks.Add(1)
 
 			// Run zone reset on interval
 			if time.Since(lastReset) >= resetInterval {
@@ -192,7 +193,7 @@ func (zd *ZoneDispatcher) ZoneTicks(zoneNum int) uint64 {
 	zd.mu.RLock()
 	defer zd.mu.RUnlock()
 	if w, ok := zd.zones[zoneNum]; ok {
-		return w.ticks
+		return w.ticks.Load()
 	}
 	return 0
 }

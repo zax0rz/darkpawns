@@ -355,6 +355,20 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant) {
 
 // handleDeath processes character death.
 //
+// Lock ordering contract (MUST be maintained to prevent deadlocks):
+//   1. CombatEngine.mu (ce.mu) — guards combat pair map
+//   2. World.mu — guards player/mob maps (AddPlayer, RemovePlayer)
+//   3. Player.mu — guards individual player fields
+//
+// Acquisition order in this function:
+//   - ce.mu.RLock (to read LastAttackType from combat pair)
+//   - DeathFunc callback acquires World.mu → Player.mu (via HandleDeath)
+//   - StopCombat acquires ce.mu.Lock (after DeathFunc returns)
+//
+// Why this order: combat engine state must be read before any game-layer
+// mutations (corpse creation, respawn). World/player locks are never held
+// when acquiring ce.mu, preventing ABBA deadlocks with PerformRound.
+//
 // Faithful to Dark Pawns die()/raw_kill() in fight.c:
 //   - Player: lose EXP/3, create corpse with inventory+equipment+gold, send to room 8004
 //   - Mob: create corpse, remove from world

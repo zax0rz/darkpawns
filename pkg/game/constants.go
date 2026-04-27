@@ -3,6 +3,10 @@
 
 package game
 
+// sendBufSize is the buffer size for player send channels.
+// Must be consistent across all session/player creation paths.
+const sendBufSize = 256
+
 // Phase names (phases[])
 var Phases = []string{
 	"New Moon",
