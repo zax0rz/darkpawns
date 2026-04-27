@@ -12,6 +12,17 @@ import (
 //
 // Writers mutate the live World state under its write lock, then call
 // PublishSnapshot() to atomically make changes visible to readers.
+//
+// TODO(M-03): Snapshot coverage is currently limited to room topology.
+// Missing from snapshots:
+//   - Player state (HP, mana, position, inventory, effects)
+//   - Mob state (HP, position, AI state, aggro tables)
+//   - Item state (ownership, location, container nesting)
+//   - Combat state (active pairs, round timers)
+//   - Zone/global state (weather, time-of-day, respawn queues)
+// A full world snapshot should capture everything needed to reconstruct
+// the game world at a point in time (e.g., for crash recovery or
+// deterministic replay).
 type WorldSnapshot struct {
 	Rooms map[int]*parser.Room
 }

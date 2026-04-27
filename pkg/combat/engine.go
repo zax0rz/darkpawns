@@ -210,15 +210,16 @@ func (ce *CombatEngine) IsFighting(charName string) bool {
 
 // PerformRound executes one round of combat for all active fighters
 func (ce *CombatEngine) PerformRound() {
-	ce.mu.Lock()
+	ce.mu.RLock()
 
-	// Snapshot pairs under write lock to prevent TOCTOU races
+	// Snapshot pairs under read lock — we only iterate, never modify combatPairs.
+	// Actual pair processing (mutations) happens after releasing the lock.
 	pairs := make([]*CombatPair, 0, len(ce.combatPairs))
 	for _, pair := range ce.combatPairs {
 		pairs = append(pairs, pair)
 	}
 
-	ce.mu.Unlock()
+	ce.mu.RUnlock()
 
 	// Process each combat pair
 	for _, pair := range pairs {
