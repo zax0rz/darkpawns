@@ -43,85 +43,85 @@
 
 ## CRITICAL Findings
 
-### C-01: Dual Send Channel — Messages Silently Lost
+### ~~C-01✅: Dual Send Channel — Messages Silently Lost~~
 **Source:** Pass 1 (CRITICAL-1), Pass 2 (C1), Pass 5 (M5-2)  
 **Files:** `pkg/game/player.go:148,795-800`, `pkg/session/manager.go:210,391-420,764-767`, `pkg/game/world.go:438`, `pkg/game/mob.go:175,181`  
 **Description:** `Player.Send` (buffered 256) and `Session.send` (buffered 256) are two separate channels. `writePump` reads only from `Session.send`. Nothing ever reads `Player.Send`. All game-layer messages (combat output, room broadcasts, mob actions, death notifications, XP/gold messages) are written to `Player.Send` and silently lost. Blocking sends in `SpawnMob` and `AttackPlayer` can permanently hang goroutines when the buffer fills.  
 **Fix:** Remove `Player.Send` entirely. Route all messages through `Session.send` via a `MessageSink` interface or manager method. This also fixes H-11 (SpawnMob deadlock).
 
-### C-02: 70+ Package-Level Mutable `var` Function Hooks in `combat`
+### ~~C-02🔶: 70+ Package-Level Mutable `var` Function Hooks in `combat`~~ (deferred — structural refactor)
 **Source:** Pass 1 (CRITICAL-2)  
 **Files:** `pkg/combat/fight_core.go:15-82`  
 **Description:** The `combat` package declares ~70 package-level `var` function pointers (`BroadcastMessage`, `SkillMessageFunc`, `GainExp`, etc.) set at runtime by session/game packages. Race condition: written by one goroutine, read by combat ticker goroutine with no synchronization. Any function called before being set panics (no nil checks). Untestable — can't run two engines with different configs.  
 **Fix:** Replace with a `GameCallbacks` struct injected into `CombatEngine` at construction time. Validate all callbacks at construction to prevent nil panics.
 
-### C-03: `game` Package is a 38K-Line God Package
+### ~~C-03🔶: `game` Package is a 38K-Line God Package~~ (deferred — structural refactor)
 **Source:** Pass 1 (CRITICAL-3)  
 **Files:** `pkg/game/` (entire directory)  
 **Description:** Contains World, Player, MobInstance, Inventory, Equipment, Skills, Spells integration, Movement, Communication, Combat hooks, AI, Zone resets, Spawner, Shops, Houses, Clans, Boards, Bans, Death handling, Dreams, Socials, Spec procs. Every new mechanic increases blast radius.  
 **Fix:** Split incrementally: `game/world`, `game/player`, `game/mob`, `game/social`, `game/clan`, `game/housing`, `game/board`, `game/ban`. Each sub-package interacts through interfaces in `common`.
 
-### C-04: `save.go` Reads Player Fields Without Any Locking
+### ~~C-04✅: `save.go` Reads Player Fields Without Any Locking~~
 **Source:** Pass 2 (C2), Pass 5 (C5-2)  
 **Files:** `pkg/game/save.go:130-200`  
 **Description:** `playerToSaveData(p *Player)` reads every Player field — Health, Mana, Gold, Exp, SpellMap (Go map), Inventory.Items (slice), ActiveAffects — without acquiring `p.mu`. Called concurrently with combat, game loop, and commands. Concurrent read of Go map during write = fatal panic. Produces corrupted save files with torn reads.  
 **Fix:** Acquire `p.mu.RLock()` in `playerToSaveData`. Must coordinate with C-13 (AdvanceLevel holds lock during save) to avoid deadlock.
 
-### C-05: Session Agent Fields Mutated Cross-Goroutine — Map Panic
+### ~~C-05✅: Session Agent Fields Mutated Cross-Goroutine — Map Panic~~
 **Source:** Pass 2 (C3)  
 **Files:** `pkg/session/manager.go:165,773`, `pkg/session/agent_vars.go:70,77-83,91-98,168-169`  
 **Description:** `s.dirtyVars`, `s.subscribedVars` are Go maps accessed from both the readPump goroutine and combat ticker goroutine (via `DamageFunc` callback calling `markDirty`). Concurrent map read/write = fatal runtime panic during any combat round involving an agent session.  
 **Fix:** Add `sync.Mutex` to Session for agent state fields, or use a channel to serialize mutations.
 
-### C-06: Global Mutable Maps `playerSneakState`/`playerHideState` Without Synchronization
+### ~~C-06✅: Global Mutable Maps `playerSneakState`/`playerHideState` Without Synchronization~~
 **Source:** Pass 2 (C4)  
 **Files:** `pkg/game/skills.go:627-650`  
 **Description:** Package-level Go maps accessed from command handlers (per-player goroutines), AI ticker goroutine, and zone dispatcher goroutines. Concurrent map access = fatal panic. These maps are redundant — `Player.Affects` already has `AFF_SNEAK`/`AFF_HIDE` bits.  
 **Fix:** Remove the global maps. Use existing affect flags on `Player` (which already has `p.mu`).
 
-### C-07: Telnet Login Bypasses Password Authentication
+### ~~C-07✅: Telnet Login Bypasses Password Authentication~~
 **Source:** Pass 3 (C1), Pass 5 (C5-3)  
 **Files:** `pkg/telnet/listener.go:129-138`, `pkg/session/manager.go:489-499`  
 **Description:** Telnet `sendLogin()` sends only `player_name` — no password. In no-DB mode, all logins succeed with zero authentication. In DB mode, telnet is functionally broken (always rejected for existing characters). Additionally serves as a DoS vector via name-squatting rate limiter consumption.  
 **Fix:** Add password prompt to telnet `handleConn()` before calling `sendLogin()`. For no-DB mode, either disable telnet or add a server-level password.
 
-### C-08: Wizard `idlist` Command — Arbitrary File Write
+### ~~C-08✅: Wizard `idlist` Command — Arbitrary File Write~~
 **Source:** Pass 3 (C2), Pass 5 (H5-4)  
 **Files:** `pkg/session/wizard_cmds.go:1240-1270` (or :670-696 per Pass 5)  
 **Description:** `cmdIdlist` passes user-supplied filename directly to `os.Create(filename)`. A wizard (level 61) can write to any server-writable path: `/etc/cron.d/backdoor`, `../../../root/.ssh/authorized_keys`, etc. `ValidateInput` catches `../` but not absolute paths like `/tmp/evil`.  
 **Fix:** Restrict to `filepath.Base(args[0])` and force output to a safe directory like `data/`.
 
-### C-09: Saving Throw System Completely Rewritten (d100 → d20, Wrong Tables)
+### ~~C-09✅: Saving Throw System Completely Rewritten (d100 → d20, Wrong Tables)~~
 **Source:** Pass 4 (C1)  
 **Files:** `pkg/spells/saving_throws.go` vs `src/magic.c:83-406`  
 **Description:** C uses d100 roll with tables valued 0-90 across 41 levels. Go uses d20 roll with tables valued 5-17 across 21 levels. Every spell that checks a saving throw produces wildly different save rates. Example: C Mage level 1 vs SPELL = ~60% save rate; Go = ~75%. Classes 5-11 are copy-pasted from base classes instead of using actual C tables. Breaks the entire spell balance.  
 **Fix:** Port the actual `saving_throws[NUM_CLASSES][5][41]` table from `src/magic.c` verbatim. Change roll to `rand.Intn(100)` and comparison to match C's `MAX(1, save) < roll`.
 
-### C-10: Combat Commands Are Stubs — No Damage Calculation
+### ~~C-10✅: Combat Commands Are Stubs — No Damage Calculation~~
 **Source:** Pass 4 (C2)  
 **Files:** `pkg/session/act_offensive.go` vs `src/act.offensive.c`  
 **Description:** All combat commands (backstab, kick, bash, dragon_kick, tiger_punch, disembowel, neckbreak) are display-only stubs that print flavor text and call `StartCombat()` but never calculate damage, check skill percentages, apply WAIT_STATE, or call `improve_skill()`. The entire skill-based combat system is non-functional.  
 **Fix:** Port each command's damage formula, skill check, WAIT_STATE, success/failure logic, and `improve_skill()` call from C source.
 
-### C-11: Parry/Dodge System Not Implemented
+### ~~C-11✅: Parry/Dodge System Not Implemented~~
 **Source:** Pass 4 (C3)  
 **Files:** `pkg/session/fight.go` vs `src/fight.c:1958-1975`  
 **Description:** `cmdParry()` is a 3-line stub. Parry skill is registered but never used in combat resolution. NPC dodge (AFF_DODGE) is also not checked. A core defensive mechanic is completely missing, making combat significantly more lethal than intended.  
 **Fix:** Implement parry check in combat round resolution. Track IS_PARRIED state. Apply attack reduction. Implement NPC dodge check.
 
-### C-12: Double-Close of `s.send` Channel Causes Panic
+### ~~C-12✅: Double-Close of `s.send` Channel Causes Panic~~
 **Source:** Pass 2 (H4), Pass 5 (C5-1)  
 **Files:** `pkg/session/manager.go:267,843,1054,1209`  
 **Description:** `s.send` is closed in four+ locations: `Unregister()`, `CloseSend()`, `UnregisterAndClose()`, `CheckIdlePasswords()`. No `sync.Once` or closed-flag guards. `readPump` defer calls `Unregister`; if another cleanup path fires for the same session, the channel is closed twice → runtime panic. `cmdQuit` (Pass5-L5-7) also triggers this by calling `Unregister` + `conn.Close`, then readPump's defer calls `Unregister` again.  
 **Fix:** Add `sendClosed sync.Once` to Session. All close paths use `s.sendClosed.Do(func() { close(s.send) })`.
 
-### C-13: `AdvanceLevel` + Save Creates Deadlock When C-04 Is Fixed
+### ~~C-13✅: `AdvanceLevel` + Save Creates Deadlock When C-04 Is Fixed~~
 **Source:** Pass 5 (C5-4)  
 **Files:** `pkg/game/level.go:87,307`  
 **Description:** `AdvanceLevel` holds `p.mu.Lock()` for ~220 lines including `SavePlayer(p)` at the end. If C-04 is fixed by adding `p.mu.RLock()` to `playerToSaveData`, this will deadlock (RLock under Lock on non-reentrant mutex). Also holds lock during file I/O (Pass5-M5-5), blocking combat reads.  
 **Fix:** Restructure `AdvanceLevel` to release lock before saving. Compute all gains under lock, release, then save.
 
-### C-14: Combat Engine Holds Stale References to Disconnected Players
+### ~~C-14✅: Combat Engine Holds Stale References to Disconnected Players~~
 **Source:** Pass 5 (C5-5)  
 **Files:** `pkg/combat/engine.go:165-230`, `pkg/session/manager.go:255-268`  
 **Description:** When a player disconnects, `Unregister` removes them from the session map and closes `s.send`, but never calls `combatEngine.StopCombat(playerName)`. The combat engine still holds `Combatant` pointers and will call `SendMessage()` on the dead `Player.Send` channel — writing to a closed channel panics.  
@@ -131,145 +131,145 @@
 
 ## HIGH Findings
 
-### H-01: Package-Level `var` for Cross-Package Wiring Throughout
+### ~~H-01🔶: Package-Level `var` for Cross-Package Wiring Throughout~~ (deferred — structural refactor)
 **Source:** Pass 1 (HIGH-1)  
 **Files:** `pkg/game/scripts.go:14`, `pkg/game/ai.go:28`, `pkg/game/merge_bridge.go:28`, `cmd/server/main.go:64,78`  
 **Description:** Mutable package-level variables (`game.ScriptEngine`, `game.HasActiveCharacter`, `aiCombatEngine`) used for DI. Written at startup, read at runtime — race conditions, test pollution, fragile boot order. Related to C-02 but broader scope.  
 **Fix:** Pass dependencies through constructors. `World` accepts `ScriptEngine` in `NewWorld()`.
 
-### H-02: Session/Command Split is Confused
+### ~~H-02🔶: Session/Command Split is Confused~~ (deferred — structural refactor)
 **Source:** Pass 1 (HIGH-2)  
 **Files:** `pkg/session/commands.go` (1,664 lines), `pkg/session/wizard_cmds.go` (1,792 lines), `pkg/command/registry.go`, `pkg/command/skill_commands.go` (1,591 lines)  
 **Description:** Command handlers split between `session/` and `command/` with no clear principle. `command.SessionInterface` imports `*game.Player` directly. Multiple competing session interfaces. The good `Registry` pattern in `command/` is underused.  
 **Fix:** Move all command handlers to `pkg/command/`. Session handles only WebSocket lifecycle + dispatch. Use interfaces from `common` instead of importing `game`.
 
-### H-03: `World` Struct Does Too Much (20+ Concerns, Single RWMutex)
+### ~~H-03🔶: `World` Struct Does Too Much (20+ Concerns, Single RWMutex)~~ (deferred — structural refactor)
 **Source:** Pass 1 (HIGH-3)  
 **Files:** `pkg/game/world.go:21-73`  
 **Description:** World owns rooms, mobs, objects, zones, players, AI ticker, spawner, shopManager, EventQueue, event bus, zone dispatcher, houses, clans, boards, bans, snapshot manager — all behind a single `sync.RWMutex`. Any write blocks all reads. `CharTransfer()` holds write lock while iterating all players and mobs.  
 **Fix:** Factor out subsystems with own locks: `PlayerRegistry`, `MobManager`, `ItemManager`. World becomes thin coordinator.
 
-### H-04: `interface{}` Used to Break Import Cycles
+### ~~H-04🔶: `interface{}` Used to Break Import Cycles~~ (deferred — structural refactor)
 **Source:** Pass 1 (HIGH-4)  
 **Files:** `pkg/game/world.go:247-270,451,462,668,699,774`  
 **Description:** Methods accept/return `interface{}` to avoid cycles: `ForEachPlayerInRoomInterface`, `LookAtRoomSimple(sender interface{})`, `AddFollowerQuiet(ch, leader interface{})`, `GetAllCharsInRoom` returns `[]interface{}`. Erases type safety, requires runtime assertions that can panic.  
 **Fix:** Define narrow interfaces in `common`: `MessageSender`, `Character`, etc.
 
-### H-05: Mutex Discipline Inconsistencies
+### ~~H-05🔶: Mutex Discipline Inconsistencies~~ (deferred — structural refactor)
 **Source:** Pass 1 (HIGH-5)  
 **Files:** `pkg/game/world.go` (various)  
 **Description:** `SendToZone` iterates `w.players` without lock. `OnPlayerEnterRoom` calls `GetMobsInRoom` (RLock) while potentially holding write lock → deadlock. `removeItemFromRoomLocked` pattern is fragile with no compile-time enforcement. Overlaps with Pass 2 findings (H-07, H-08, H-09).  
 **Fix:** Adopt consistent locking strategy. Add `// requires: w.mu held` comments. Use `go test -race` extensively.
 
-### H-06: `common` Package Interfaces Are Too Wide
+### ~~H-06🔶: `common` Package Interfaces Are Too Wide~~ (deferred — structural refactor)
 **Source:** Pass 1 (HIGH-6)  
 **Files:** `pkg/common/common.go:7-73`  
 **Description:** `Affectable` interface has 27 methods. `CommandManager` leaks `Lock()/Unlock()/Mu()`. `ShopManager` returns `interface{}` everywhere.  
 **Fix:** Split `Affectable` into `StatBlock`, `CombatStats`, `StatusEffectable`. Remove mutex methods from interfaces.
 
-### H-07: `SendToZone`/`SendToAll` Iterate `w.players` Without Lock
+### ~~H-07✅: `SendToZone`/`SendToAll` Iterate `w.players` Without Lock~~
 **Source:** Pass 2 (H1)  
 **Files:** `pkg/game/world.go:333-347`  
 **Description:** `w.players` is a Go map mutated by `AddPlayer`/`RemovePlayer` under `w.mu.Lock()`. `SendToZone` and `SendToAll` iterate it without holding `w.mu.RLock()`. Races with any player login/logout. Also reads `p.RoomVNum` directly instead of via `p.GetRoom()`.  
 **Fix:** Hold `w.mu.RLock()` for iteration. Use `p.GetRoom()` for field access.
 
-### H-08: `mobact.go` Accesses `MobInstance.RoomVNum` Directly, Bypassing Mutex
+### ~~H-08✅: `mobact.go` Accesses `MobInstance.RoomVNum` Directly, Bypassing Mutex~~
 **Source:** Pass 2 (H2)  
 **Files:** `pkg/game/mobact.go:116,129,139,148,161,206,212,227,233,241,252,258,274`  
 **Description:** `MobileActivity()` accesses `ch.RoomVNum` directly (15 occurrences) instead of `ch.GetRoom()`. Races with `SetRoom()` calls from zone dispatcher, combat movement, player commands.  
 **Fix:** Replace all `ch.RoomVNum` with `ch.GetRoom()` in mobact.go.
 
-### H-09: `PointUpdate` Reads `p.Flags` Without Lock
+### ~~H-09✅: `PointUpdate` Reads `p.Flags` Without Lock~~
 **Source:** Pass 2 (H3)  
 **Files:** `pkg/game/limits.go:455`  
 **Description:** Reads `p.Flags` without `p.mu` on PointUpdate timer goroutine. Commands on readPump goroutine may be writing `p.Flags` via `SetPlrFlag()`.  
 **Fix:** Use `p.GetFlags()` (which acquires `p.mu.RLock()`).
 
-### H-10: Spawner Goroutine Leak — No Shutdown Mechanism
+### ~~H-10✅: Spawner Goroutine Leak — No Shutdown Mechanism~~
 **Source:** Pass 2 (H5)  
 **Files:** `pkg/game/spawner.go:580-588`  
 **Description:** `StartPeriodicResets` spawns a goroutine with no done channel, no context, and no way to stop. Ticker never stopped. On server shutdown, goroutine leaks.  
 **Fix:** Add `stopCh` to Spawner and select on it, or use `context.Context`.
 
-### H-11: `SpawnMob` Blocking Send While Holding `w.mu.Lock`
+### ~~H-11✅: `SpawnMob` Blocking Send While Holding `w.mu.Lock`~~
 **Source:** Pass 2 (H6)  
 **Files:** `pkg/game/world.go:434-440`  
 **Description:** Blocking `player.Send <-` while holding `w.mu.Lock()`. Since Player.Send is never read (C-01), buffer fills and this deadlocks the entire world. Resolves automatically when C-01 is fixed.  
 **Fix:** Resolved by C-01 fix. Otherwise: move notification outside lock or use `select`/`default`.
 
-### H-12: X-Forwarded-For Header Trusted Without Proxy Validation
+### ~~H-12✅: X-Forwarded-For Header Trusted Without Proxy Validation~~
 **Source:** Pass 3 (H1)  
 **Files:** `pkg/auth/ratelimit.go:66-77`  
 **Description:** `GetIPFromRequest()` blindly trusts `X-Forwarded-For`. Any client can spoof IP, bypassing login rate limiting and per-IP connection limits. Enables brute-force attacks.  
 **Fix:** Only trust `X-Forwarded-For` from configured trusted proxy IPs. Take the rightmost untrusted IP.
 
-### H-13: WebSocket Allows Connections Without Origin Header in Production
+### ~~H-13✅: WebSocket Allows Connections Without Origin Header in Production~~
 **Source:** Pass 3 (H2)  
 **Files:** `pkg/session/manager.go:45-51`  
 **Description:** When no `Origin` header present, connection is allowed even in production. Removes a defense-in-depth layer.  
 **Fix:** In production, reject connections without Origin or require explicit config flag.
 
-### H-14: `cmdAt` — Recursive Wizard Command Execution Without Depth Limit
+### ~~H-14✅: `cmdAt` — Recursive Wizard Command Execution Without Depth Limit~~
 **Source:** Pass 3 (H3)  
 **Files:** `pkg/session/wizard_cmds.go:70-85`  
 **Description:** `at` command allows `at 100 at 200 at 300 shutdown` — no recursion depth limit. Potential stack exhaustion DoS; audit log evasion for intermediate rooms.  
 **Fix:** Add recursion counter to Session. Cap at 3 levels.
 
-### H-15: No Account-Level Lockout for Failed Login Attempts
+### ~~H-15✅: No Account-Level Lockout for Failed Login Attempts~~
 **Source:** Pass 3 (H6)  
 **Files:** `pkg/session/manager.go:461-469`, `pkg/auth/ratelimit.go`  
 **Description:** Rate limiter is per-IP only (5 req/s, burst 10). Combined with H-12 (X-Forwarded-For bypass), unlimited password attempts against any account.  
 **Fix:** Add per-account rate limiting with escalating lockout durations.
 
-### H-16: Affect Durations 75× Too Short (Seconds vs Game-Hours)
+### ~~H-16✅: Affect Durations 75× Too Short (Seconds vs Game-Hours)~~
 **Source:** Pass 4 (H4)  
 **Files:** `pkg/engine/affect.go:82-85`  
 **Description:** Go uses 1 tick = 1 second. C uses 1 tick = 75 seconds (game hour). A spell with `duration = 24` lasts 24 seconds in Go vs 30 minutes in C. Sanctuary lasts 4 seconds instead of 5 minutes. All buffs/debuffs are effectively useless.  
 **Fix:** Multiply durations by 75, or set tick interval to 75 seconds, or convert to game-hour durations.
 
-### H-17: Position Damage Multiplier Uses Float Division (Should Be Integer)
+### ~~H-17✅: Position Damage Multiplier Uses Float Division (Should Be Integer)~~
 **Source:** Pass 4 (H1)  
 **Files:** `pkg/combat/fight_core.go:806` vs `pkg/combat/formulas.go:445`  
 **Description:** `MakeHit()` (actual combat path) uses float division: sitting targets take ~33% more damage than C. `formulas.go` has the correct integer version but it's not used in the hot path.  
 **Fix:** Use integer division in `MakeHit()`: `dam *= 1 + (PosFighting-defPos)/3`.
 
-### H-18: Constitution Loss on Death Is Deterministic (C Is Probabilistic)
+### ~~H-18✅: Constitution Loss on Death Is Deterministic (C Is Probabilistic)~~
 **Source:** Pass 4 (H2)  
 **Files:** `pkg/combat/fight_core.go` (`DieWithKiller`) vs `src/fight.c:601-611`  
 **Description:** C: level ≤5 never loses CON; level >5 has 25% chance; level >20 has additional ~17% chance of -2 CON. Go: every death always costs 1 CON regardless of level. Death is vastly more punishing, especially for low-level characters.  
 **Fix:** Add level checks and random rolls matching C's formula. Call `affect_total` equivalent.
 
-### H-19: `number(1,100)` vs `rand.Intn(100)` Off-By-One in Attack Count
+### ~~H-19✅: `number(1,100)` vs `rand.Intn(100)` Off-By-One in Attack Count~~
 **Source:** Pass 4 (H5)  
 **Files:** `pkg/combat/formulas.go:527` vs `src/fight.c:1928`  
 **Description:** C's `number(1,100)` = 1-100; Go's `rand.Intn(100)` = 0-99. ~1% probability shift per attack-count roll, compounding across multi-attack builds.  
 **Fix:** Use `rand.Intn(100) + 1` to match C's range.
 
-### H-20: `handlePlayerDeath` Inconsistent Locking on `Stats.Con`
+### ~~H-20✅: `handlePlayerDeath` Inconsistent Locking on `Stats.Con`~~
 **Source:** Pass 5 (H5-1)  
 **Files:** `pkg/game/death.go:178-265`  
 **Description:** Acquires `player.mu.Lock()` for EXP and gold but modifies `Stats.Con` (lines 206-215) completely unprotected. `Inventory.FindItems` and `Equipment.GetEquippedItems` also called without their locks. Con could go below 1 with simultaneous deaths.  
 **Fix:** Consolidate all field modifications into a single locked section.
 
-### H-21: `rawKill` Creates Duplicate Corpse
+### ~~H-21✅: `rawKill` Creates Duplicate Corpse~~
 **Source:** Pass 5 (H5-2)  
 **Files:** `pkg/game/combat_helpers.go:103-109`  
 **Description:** `rawKill` calls `makeCorpse` (empty corpse), then `HandleDeath` calls `handlePlayerDeath` which calls `makeCorpse` again (with items). Two corpses per death — one empty, one with inventory. Item duplication vector.  
 **Fix:** Remove the `makeCorpse` call from `rawKill`. Let `HandleDeath` handle it exclusively.
 
-### H-22: No Position Check Enforced for Combat Commands
+### ~~H-22✅: No Position Check Enforced for Combat Commands~~
 **Source:** Pass 5 (H5-3)  
 **Files:** `pkg/game/combat_basic.go`, `pkg/session/commands.go`  
 **Description:** Command registry has `minPosition` field but `ExecuteCommand` never reads or enforces it. Dead players can attack. Sleeping players can backstab. Position-based state machine completely broken.  
 **Fix:** Add `if s.player.GetPosition() < entry.MinPosition` check in `ExecuteCommand`. Set correct minPosition for all combat commands.
 
-### H-23: `BroadcastToRoom` Silently Drops Messages on Full Channel
+### ~~H-23✅: `BroadcastToRoom` Silently Drops Messages on Full Channel~~
 **Source:** Pass 5 (H5-5)  
 **Files:** `pkg/session/manager.go:275-288`  
 **Description:** `select/default` pattern drops messages when buffer (256) is full. No logging at warn level. During long fights, players stop receiving combat output, death messages, and room updates while combat continues dealing invisible damage.  
 **Fix:** Log dropped messages at Warning level. Consider backpressure or larger buffers for combat-active sessions.
 
-### H-24: `force` Command Is a Stub — Dangerous When Implemented
+### ~~H-24✅: `force` Command Is a Stub — Dangerous When Implemented~~
 **Source:** Pass 3 (H4)  
 **Files:** `pkg/session/wizard_cmds.go:450-477`  
 **Description:** Logs intent but never calls `ExecuteCommand()`. Currently a security positive, but the code structure suggests it will be filled in without review. Needs transitive force chain prevention, privilege level enforcement, and full arg parsing when implemented.  
@@ -281,7 +281,7 @@
 **Description:** JWT sent over WebSocket with 24-hour lifetime and no refresh mechanism. If intercepted (especially over unencrypted WS in dev), provides full API access for a full day.  
 **Fix:** Reduce to 1-hour lifetime with refresh mechanism. Enforce WSS in production.
 
-### H-26: Counter_procs Fall-Through Not Faithfully Reproduced
+### ~~H-26✅: Counter_procs Fall-Through Not Faithfully Reproduced~~
 **Source:** Pass 4 (H6)  
 **Files:** `pkg/combat/fight_core.go:984-988` vs `src/fight.c:1283-1296`  
 **Description:** C switch has intentional fall-through giving variable stat bonuses. Go always gives +1 to all three stats. Only triggers at kill milestones (1000, 2000, 10000). Minor impact.  
@@ -357,19 +357,19 @@
 **Description:** Written at startup, read from MudLog on any goroutine. Go memory model doesn't guarantee visibility.  
 **Fix:** Use `atomic.Pointer` or `sync.Once`.
 
-### M-12: CORS Wildcard Subdomain Matching Overly Permissive
+### ~~M-12✅: CORS Wildcard Subdomain Matching Overly Permissive~~
 **Source:** Pass 3 (M1)  
 **Files:** `web/cors.go:53-58`  
 **Description:** `HasSuffix` doesn't check dot boundary. `*.darkpawns.example.com` matches `evil-darkpawns.example.com`.  
 **Fix:** Check for dot boundary: `strings.HasSuffix(origin, "."+domain)`.
 
-### M-13: Development Mode CORS Allows All Origins
+### ~~M-13✅: Development Mode CORS Allows All Origins~~
 **Source:** Pass 3 (M2)  
 **Files:** `web/cors.go:44-46`  
 **Description:** `ENVIRONMENT=development` allows all origins. Risk of accidental deployment with wrong env var.  
 **Fix:** Require explicit `ALLOW_ALL_ORIGINS=true`.
 
-### M-14: CSP Allows `unsafe-inline` for Scripts
+### ~~M-14✅: CSP Allows `unsafe-inline` for Scripts~~
 **Source:** Pass 3 (M3)  
 **Files:** `web/security.go:14-15`  
 **Description:** `script-src 'self' 'unsafe-inline'` defeats CSP against XSS. Player names, room descriptions, chat messages could contain XSS payloads.  
@@ -447,7 +447,7 @@
 **Description:** `addItem`/`removeItem` (internal) don't hold `inv.mu`. Concurrent `AddItem` (autoloot/script) and `FindItems` (inventory command) race on the `Items` slice. Slice corruption, panic, or item loss.  
 **Fix:** `addItem`/`removeItem` must acquire `inv.mu.Lock()`.
 
-### M-27: Player Position Not Reset After Death/Respawn
+### ~~M-27✅: Player Position Not Reset After Death/Respawn~~
 **Source:** Pass 5 (M5-4)  
 **Files:** `pkg/game/death.go:175-265`  
 **Description:** After death, player respawns at full health in temple but position remains `PosFighting`. Incorrect state machine behavior affects position-dependent checks.  
