@@ -230,17 +230,21 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	} else {
 		expLoss = player.Exp / 3
 	}
+	// Consolidate ALL player state mutations under a single lock.
+	// Previously: EXP and gold were locked, but CON/inventory/equipment were not.
+	var (
+		playerGold     int
+		conLossMessage string
+	)
+	var inventoryItems []*ObjectInstance
+	var equipmentItems []*ObjectInstance
+
 	player.mu.Lock()
+	// EXP loss
 	player.Exp -= expLoss
 	if player.Exp < 0 {
 		player.Exp = 0
 	}
-	player.mu.Unlock()
-
-	if expLoss > 0 {
-		player.SendMessage(fmt.Sprintf("You lose %d experience points.\r\n", expLoss))
-	}
-
 	// CON loss — fight.c die_with_killer() lines 598-607
 	// Only applies to combat deaths (die_with_killer path)
 	if isCombatDeath && player.Level > ConLossMinLevel-1 {
@@ -257,42 +261,39 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 					player.Stats.Con = 1
 				}
 			}
-			// affect_total(ch) — sends updated stats message
-			player.SendMessage(fmt.Sprintf(
+			conLossMessage = fmt.Sprintf(
 				"You lose some constitution! Your Constitution is now %d.\r\n",
-				player.Stats.Con))
+				player.Stats.Con)
 		}
 	}
-
-	// make_corpse: transfer inventory and equipment to corpse
-	var inventoryItems []*ObjectInstance
-	var equipmentItems []*ObjectInstance
-
+	// Inventory — FindItems acquires its own RLock internally
 	if player.Inventory != nil {
-		// Get all items from inventory
 		inventoryItems = player.Inventory.FindItems("")
-		// makeCorpse's MoveObjectToContainer will handle detach from old location
 		player.Inventory.clear()
 	}
-
+	// Equipment — GetEquippedItems acquires its own RLock internally
 	if player.Equipment != nil {
-		// Get all equipped items
-		// makeCorpse's MoveObjectToContainer will handle detach from equipment
 		equipped := player.Equipment.GetEquippedItems()
 		for _, item := range equipped {
 			equipmentItems = append(equipmentItems, item)
 		}
-		// Clear equipment slots
+		// Clear equipment slots (Equipment.mu is safe to acquire here;
+		// no ordering hierarchy places it above player.mu)
 		player.Equipment.mu.Lock()
 		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
 		player.Equipment.mu.Unlock()
 	}
-
-	// Transfer gold — fight.c make_corpse() line 410: GET_GOLD(ch) -> create_money -> obj_to_obj(corpse)
-	player.mu.Lock()
-	playerGold := player.Gold
+	// Gold
+	playerGold = player.Gold
 	player.Gold = 0
 	player.mu.Unlock()
+
+	if expLoss > 0 {
+		player.SendMessage(fmt.Sprintf("You lose %d experience points.\r\n", expLoss))
+	}
+	if conLossMessage != "" {
+		player.SendMessage(conLossMessage)
+	}
 
 	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
 	if attackType == 93 { // SPELL_DISINTEGRATE
