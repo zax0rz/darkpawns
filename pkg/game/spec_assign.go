@@ -388,6 +388,13 @@ var RoomSpecAssign = map[int]string{
 
 // SpecRegistry holds concrete spec proc implementations keyed by name.
 // Populated by init() or registration calls in spec_procs.go.
+//
+// CONTRACT: All spec_proc registrations (via RegisterSpec) must complete
+// before the game world Start() is called. SpecRegistry is a plain map
+// with no synchronization — concurrent reads after init are safe, but
+// any write after game start is a data race. The startup validator
+// (AllSpecNames) should be called during world init to catch missing
+// registrations early.
 var SpecRegistry = map[string]SpecFunc{}
 
 // RegisterSpec registers a special procedure handler by name.

@@ -294,13 +294,38 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		Flags:        data.Flags,
 		AutoExit:     data.AutoExit,
 		Stats:        data.Stats,
-		ActiveAffects: make([]*engine.Affect, len(data.Affects)),
+		ActiveAffects: restoreAffects(data.Affects),
 		SpellMap:     data.SpellMap,
 		ConnectedAt:  time.Now(),
 		LastActive:   time.Now(),
 		Inventory:    NewInventory(),
 		Equipment:    NewEquipment(),
 	}
+}
+
+// restoreAffects converts saved affect data back into engine.Affect objects.
+// Reconstructs proper Affect structs with computed timestamps.
+func restoreAffects(saved []saveAffect) []*engine.Affect {
+	if len(saved) == 0 {
+		return nil
+	}
+	affects := make([]*engine.Affect, 0, len(saved))
+	now := time.Now()
+	for _, sa := range saved {
+		a := &engine.Affect{
+			Type:      sa.Type,
+			Duration:  sa.Duration,
+			Magnitude: sa.Magnitude,
+			Flags:     sa.Flags,
+			Source:    sa.Source,
+			StackID:   sa.StackID,
+			MaxStacks: sa.MaxStacks,
+			AppliedAt: now,
+			ExpiresAt: now.Add(time.Duration(sa.Duration) * engine.TickDuration),
+		}
+		affects = append(affects, a)
+	}
+	return affects
 }
 
 // SerializePlayer serializes a player to JSON for storage backends.

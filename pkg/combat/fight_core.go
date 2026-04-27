@@ -175,6 +175,30 @@ const (
 	RACE_VAMPIRE = 8
 )
 
+// fleshAlteredType returns the attack_hit_text index for unarmed NPCs with
+// AFF_FLESH_ALTER based on mob level.
+// Ported from flesh_altered_type() in new_cmds.c:1783.
+// Maps level ranges to attack type indices matching the C implementation.
+// Note: if attack_hit_text is changed, this function must be updated too.
+func fleshAlteredType(level int) int {
+	switch {
+	case level <= 3:
+		return 7 // pound
+	case level <= 6:
+		return 11 // pierce
+	case level <= 9:
+		return 3 // slash
+	case level <= 15:
+		return 7 // pound
+	case level <= 21:
+		return 3 // slash
+	case level <= 24:
+		return 7 // pound
+	default:
+		return 3 // slash (level >= 25)
+	}
+}
+
 // **********************************
 // 1. appear()
 // **********************************
@@ -691,9 +715,10 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 	singular := AttackHitTexts[attackType].Singular
 	plural := AttackHitTexts[attackType].Plural
 
-	roomMsg := replaceMessageTokens(tier.Room, ch.GetName(), victim.GetName(), singular, plural)
-	_ = replaceMessageTokens(tier.Char, ch.GetName(), victim.GetName(), singular, plural)
-	_ = replaceMessageTokens(tier.Victim, ch.GetName(), victim.GetName(), singular, plural)
+	sex := ch.GetSex()
+	roomMsg := replaceMessageTokens(tier.Room, ch.GetName(), victim.GetName(), singular, plural, sex)
+	_ = replaceMessageTokens(tier.Char, ch.GetName(), victim.GetName(), singular, plural, sex)
+	_ = replaceMessageTokens(tier.Victim, ch.GetName(), victim.GetName(), singular, plural, sex)
 
 	if BroadcastMessage != nil {
 		BroadcastMessage(ch.GetRoom(), roomMsg, ch.GetName()+" "+victim.GetName())
@@ -703,13 +728,23 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 }
 
 // replaceMessageTokens substitutes $n, $N, $e, #w, #W in a message template.
-func replaceMessageTokens(msg, chName, victimName, singular, plural string) string {
+// sex follows C SEX_* constants: 0=male, 1=female, 2=neutral/other.
+func replaceMessageTokens(msg, chName, victimName, singular, plural string, sex int) string {
+	var subject, object, possessive string
+	switch sex {
+	case 1:
+		subject, object, possessive = "she", "her", "her"
+	case 0:
+		subject, object, possessive = "he", "him", "his"
+	default:
+		subject, object, possessive = "it", "it", "its"
+	}
 	result := msg
 	result = strings.ReplaceAll(result, "$n", chName)
 	result = strings.ReplaceAll(result, "$N", victimName)
-	result = strings.ReplaceAll(result, "$e", "he")
-	result = strings.ReplaceAll(result, "$E", "him")
-	result = strings.ReplaceAll(result, "$s", "his")
+	result = strings.ReplaceAll(result, "$e", subject)
+	result = strings.ReplaceAll(result, "$E", object)
+	result = strings.ReplaceAll(result, "$s", possessive)
 	result = strings.ReplaceAll(result, "$m", chName)
 	result = strings.ReplaceAll(result, "$M", victimName)
 	result = strings.ReplaceAll(result, "#w", singular)
@@ -749,7 +784,17 @@ func MakeHit(ch, victim Combatant) {
 		dr := ch.GetDamageRoll()
 		wieldDamNum, wieldDamSize = dr.Num, dr.Sides
 	} else if GetNPCData != nil {
-		_, wieldDamNum, wieldDamSize = GetNPCData(chName)
+		npcAttackType, npcDamDice, npcDamSize := GetNPCData(chName)
+		wieldDamNum, wieldDamSize = npcDamDice, npcDamSize
+		if npcAttackType != 0 {
+			wType = TYPE_HIT + npcAttackType
+		} else if HasAffectStr != nil && HasAffectStr(chName, AFF_STR_FLESH_ALT) {
+			// flesh_altered_type (new_cmds.c:1783): unarmed NPCs with
+			// AFF_FLESH_ALTER get a damage type override based on level.
+			wType = TYPE_HIT + fleshAlteredType(ch.GetLevel())
+		}
+	} else if HasAffectStr != nil && HasAffectStr(chName, AFF_STR_FLESH_ALT) {
+		wType = TYPE_HIT + fleshAlteredType(ch.GetLevel())
 	}
 
 	if isBlessed {
