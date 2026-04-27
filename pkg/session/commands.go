@@ -222,7 +222,7 @@ func init() {
 	cmdRegistry.Register("description", wrapArgs(cmdDescription), "Set your character description.", 0, 0)
 	cmdRegistry.Register("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", 0, 0, "diag")
 	cmdRegistry.Register("toggle", wrapArgs(cmdToggle), "Toggle a player preference.", 0, 0)
-	cmdRegistry.Register("users", wrapArgs(cmdUsers), "Show connected players.", LVL_IMMORT, 0)
+	cmdRegistry.Register("users", wrapArgs(cmdUsersSafe), "Show connected players.", LVL_IMMORT, 0)
 
 	// Other commands (act_other.go)
 	cmdRegistry.Register("save", wrapArgs(cmdSave), "Save your character.", 0, 0)
@@ -1328,6 +1328,63 @@ func cmdScore(s *Session) error {
 	s.Send(fmt.Sprintf("AC:%d  Hitroll:%d  Damroll:%d  Align:%d  Gold:%d", p.AC, p.Hitroll, p.Damroll, p.Alignment, p.Gold))
 	return nil
 }
+
+// cmdUsersSafe replaces cmdUsers to gate IP display behind LVL_GOD+.
+// Regular immortals see name/level only; gods and above see IPs.
+func cmdUsersSafe(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.sendText("Huh?!?")
+		return nil
+	}
+
+	showIPs := s.player.Level >= LVL_GOD
+
+	filter := ""
+	if len(args) > 0 {
+		filter = strings.ToLower(args[0])
+	}
+
+	var buf strings.Builder
+	if showIPs {
+		buf.WriteString(fmt.Sprintf("%-15s %-6s %-20s\n", "Name", "Level", "Remote Addr"))
+		buf.WriteString(strings.Repeat("-", 45) + "\n")
+	} else {
+		buf.WriteString(fmt.Sprintf("%-15s %-6s\n", "Name", "Level"))
+		buf.WriteString(strings.Repeat("-", 25) + "\n")
+	}
+
+	count := 0
+	for _, sess := range s.manager.sessions {
+		if sess.player == nil {
+			continue
+		}
+		name := sess.player.Name
+		level := sess.player.GetLevel()
+
+		if filter != "" && !strings.Contains(strings.ToLower(name), filter) {
+			continue
+		}
+
+		if showIPs {
+			ip := "unknown"
+			if sess.request != nil {
+				ip = sess.request.RemoteAddr
+				if fwd := sess.request.Header.Get("X-Forwarded-For"); fwd != "" {
+					ip = fwd
+				}
+			}
+			buf.WriteString(fmt.Sprintf("%-15s %-6d %-20s\n", name, level, ip))
+		} else {
+			buf.WriteString(fmt.Sprintf("%-15s %-6d\n", name, level))
+		}
+		count++
+	}
+
+	buf.WriteString(fmt.Sprintf("\n%d player(s) connected.\n", count))
+	s.sendText(buf.String())
+	return nil
+}
+
 func cmdWho(s *Session) error {
 	s.manager.mu.RLock()
 	sessions := make([]*Session, 0, len(s.manager.sessions))
@@ -1335,6 +1392,8 @@ func cmdWho(s *Session) error {
 		sessions = append(sessions, sess)
 	}
 	s.manager.mu.RUnlock()
+
+	isImm := s.player != nil && s.player.Level >= LVL_IMMORT
 
 	out := "Players\n-------\n"
 	count := 0
@@ -1347,7 +1406,7 @@ func cmdWho(s *Session) error {
 		raceName := game.RaceNames[p.Race]
 		// Format: [ LV  Class ] Name Race — act.informative.c line 1874
 		tag := "player"
-		if sess.isAgent {
+		if sess.isAgent && isImm {
 			tag = "agent"
 		}
 		out += fmt.Sprintf("[ %2d  %-8s] %-15s (%s, %s, %s)\n",
