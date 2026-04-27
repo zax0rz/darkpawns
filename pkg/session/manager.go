@@ -1296,3 +1296,8 @@ func (m *Manager) SetWizlock(locked bool) {
 	m.wizlocked = locked
 }
 
+// HasDB returns whether a database backend is configured.
+func (m *Manager) HasDB() bool {
+	return m.hasDB
+}
+

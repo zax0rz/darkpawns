@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -1237,6 +1238,9 @@ func cmdSyslog(s *Session, args []string) error {
 }
 
 // cmdIdlist — dump object ID list to file (LVL_IMPL)
+// Security: filename is always sanitized via filepath.Base() to prevent path traversal,
+// and output is restricted to the data/ directory. Even though the filename is currently
+// hardcoded, this defense-in-depth guard prevents regression if user args are re-enabled.
 func cmdIdlist(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMPL) {
 		s.Send("Huh?!?")
@@ -1251,13 +1255,24 @@ func cmdIdlist(s *Session, args []string) error {
 		s.Send("World data not loaded.")
 		return nil
 	}
+
+	// Sanitize filename — strip any path components to prevent directory traversal
 	filename := "idlist.txt"
 	if len(args) > 0 {
-		filename = args[0]
+		filename = filepath.Base(args[0])
 	}
-	f, err := os.Create(filename)
+
+	// Force output into data/ directory
+	const safeDir = "data"
+	if err := os.MkdirAll(safeDir, 0755); err != nil {
+		s.Send(fmt.Sprintf("Could not create %s directory: %v\r\n", safeDir, err))
+		return nil
+	}
+	safePath := filepath.Join(safeDir, filename)
+
+	f, err := os.Create(safePath)
 	if err != nil {
-		s.Send(fmt.Sprintf("Could not create %s: %v\r\n", filename, err))
+		s.Send(fmt.Sprintf("Could not create %s: %v\r\n", safePath, err))
 		return nil
 	}
 	defer f.Close()
@@ -1266,8 +1281,8 @@ func cmdIdlist(s *Session, args []string) error {
 		fmt.Fprintf(f, "  Keywords: %s  Type: %d  Cost: %d\n", obj.Keywords, obj.TypeFlag, obj.Cost)
 		fmt.Fprintf(f, "  Values: [%d] [%d] [%d] [%d]\n", obj.Values[0], obj.Values[1], obj.Values[2], obj.Values[3])
 	}
-	s.Send(fmt.Sprintf("Wrote %d objects to %s\r\n", len(pw.Objs), filename))
-	slog.Info("(GC) idlist", "who", s.player.Name, "file", filename, "count", len(pw.Objs))
+	s.Send(fmt.Sprintf("Wrote %d objects to %s\r\n", len(pw.Objs), safePath))
+	slog.Info("(GC) idlist", "who", s.player.Name, "file", safePath, "count", len(pw.Objs))
 	return nil
 }
 
