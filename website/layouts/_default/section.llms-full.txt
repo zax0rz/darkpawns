@@ -1,0 +1,19 @@
+{{- define "main" -}}
+# {{ .Title }}
+
+{{ .Params.description | default (printf "Content from the %s section of Dark Pawns." .Title) }}
+
+{{- if .Content -}}
+{{ .Content }}
+{{- end }}
+
+## Pages
+
+{{- range .Pages.ByWeight }}
+### {{ .Title }}
+
+{{ .Content }}
+
+---
+{{- end }}
+{{- end }}

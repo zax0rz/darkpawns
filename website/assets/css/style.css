@@ -431,6 +431,28 @@ pre code {
   flex-wrap: wrap;
 }
 
+.splash-divider {
+  border: none;
+  border-top: 1px solid var(--rule);
+  max-width: 10rem;
+  margin: 3rem auto;
+}
+
+.splash-links {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.splash-link {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+  border-bottom: none;
+}
+
 /* ---- Prose Content ---- */
 
 .prose {
