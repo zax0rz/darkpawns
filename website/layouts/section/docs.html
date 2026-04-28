@@ -1,13 +1,18 @@
 {{ define "main" }}
 <div class="container content-narrow">
-  <h1>{{ .Title }}</h1>
-  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
-  <ul class="page-list">
-    {{ range .Pages }}
-    <li>
-      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-    </li>
-    {{ end }}
-  </ul>
+  <header class="section-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  </header>
+  {{ range .Sections }}
+  <section>
+    <h2>{{ .Title }}</h2>
+    <ul class="page-list">
+      {{ range .Pages }}
+      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+      {{ end }}
+    </ul>
+  </section>
+  {{ end }}
 </div>
 {{ end }}

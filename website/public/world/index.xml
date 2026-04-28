@@ -1,19 +1,9 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Worlds on Dark Pawns</title>
-    <link>https://darkpawns.labz0rz.com/world/</link>
-    <description>Recent content in Worlds on Dark Pawns</description>
-    <generator>Hugo</generator>
-    <language>en-us</language>
-    <lastBuildDate>Tue, 28 Apr 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://darkpawns.labz0rz.com/world/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Classes</title>
-      <link>https://darkpawns.labz0rz.com/world/classes/classes/</link>
-      <pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate>
-      <guid>https://darkpawns.labz0rz.com/world/classes/classes/</guid>
-      <description>&lt;h1 id=&#34;classes&#34;&gt;Classes&lt;/h1&gt;&#xA;&lt;blockquote&gt;&#xA;&lt;p&gt;Source: darkpawns.com/class.html&lt;br&gt;&#xA;Author: R.E. Paret (Frontline)&lt;br&gt;&#xA;Preserved from Wayback Machine capture&lt;/p&gt;&lt;/blockquote&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;base-classes&#34;&gt;Base Classes&lt;/h2&gt;&#xA;&lt;h3 id=&#34;thieves&#34;&gt;THIEVES&lt;/h3&gt;&#xA;&lt;p&gt;Thieves are a shifty lot, and are known to have qualities that no other class offers. They are known to have dabbled in the Black Arts, and possess certain unique skills that make them a valuable addition to any adventuring party. Although prefering to stay inside cities, thieves can be found worldwide, eeking out an existance by robbing other humanoids blind.&lt;/p&gt;</description>
-    </item>
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>World on Dark Pawns</title><link>https://darkpawns.labz0rz.com/world/</link><description>Recent content in World on Dark Pawns</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 28 Apr 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://darkpawns.labz0rz.com/world/index.xml" rel="self" type="application/rss+xml"/><item><title>Classes</title><link>https://darkpawns.labz0rz.com/world/classes/classes/</link><pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate><guid>https://darkpawns.labz0rz.com/world/classes/classes/</guid><description>&lt;h1 id="classes">Classes&lt;/h1>
+&lt;blockquote>
+&lt;p>Source: darkpawns.com/class.html&lt;br>
+Author: R.E. Paret (Frontline)&lt;br>
+Preserved from Wayback Machine capture&lt;/p>&lt;/blockquote>
+&lt;hr>
+&lt;h2 id="base-classes">Base Classes&lt;/h2>
+&lt;h3 id="thieves">THIEVES&lt;/h3>
+&lt;p>Thieves are a shifty lot, and are known to have qualities that no other class offers. They are known to have dabbled in the Black Arts, and possess certain unique skills that make them a valuable addition to any adventuring party. Although prefering to stay inside cities, thieves can be found worldwide, eeking out an existance by robbing other humanoids blind.&lt;/p></description></item></channel></rss>

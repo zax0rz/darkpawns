@@ -1,13 +1,19 @@
 {{ define "main" }}
 <div class="container content-narrow">
-  <h1>{{ .Title }}</h1>
-  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
-  {{ range .Pages.ByDate.Reverse }}
-  <article class="news-entry">
-    <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
-    <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
-    {{ with .Params.summary }}<p class="summary">{{ . }}</p>{{ end }}
-  </article>
+  <header class="section-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  </header>
+  {{ if .Pages }}
+    {{ range .Pages.ByDate.Reverse }}
+    <article class="news-entry">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
+      <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+      {{ with .Params.summary }}<p>{{ . }}</p>{{ end }}
+    </article>
+    {{ end }}
+  {{ else }}
+    <p class="lead">No posts yet.</p>
   {{ end }}
 </div>
 {{ end }}

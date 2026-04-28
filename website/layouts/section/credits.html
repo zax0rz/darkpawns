@@ -1,0 +1,19 @@
+{{ define "main" }}
+<div class="container content-narrow">
+  <header class="section-header">
+    <h1>Credits</h1>
+    {{ with .Params.description }}<p class="lead">{{ . }}</p>{{ end }}
+  </header>
+
+  {{ if .Pages }}
+    <ul class="page-list">
+      {{ range .Pages }}
+      <li>
+        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+        {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+      </li>
+      {{ end }}
+    </ul>
+  {{ end }}
+</div>
+{{ end }}

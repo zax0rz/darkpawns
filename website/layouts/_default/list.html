@@ -1,6 +1,9 @@
 {{ define "main" }}
 <div class="container content-narrow">
-  <h1>{{ .Title }}</h1>
+  <header class="section-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+  </header>
   {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
   <ul class="page-list">
     {{ range .Pages }}

@@ -1,19 +1,8 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Lores on Dark Pawns</title>
-    <link>https://darkpawns.labz0rz.com/lore/</link>
-    <description>Recent content in Lores on Dark Pawns</description>
-    <generator>Hugo</generator>
-    <language>en-us</language>
-    <lastBuildDate>Tue, 28 Apr 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://darkpawns.labz0rz.com/lore/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>World Creation — The Letter of Friar Drake</title>
-      <link>https://darkpawns.labz0rz.com/lore/world-creation/</link>
-      <pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate>
-      <guid>https://darkpawns.labz0rz.com/lore/world-creation/</guid>
-      <description>&lt;h1 id=&#34;background--world-lore&#34;&gt;Background — World Lore&lt;/h1&gt;&#xA;&lt;blockquote&gt;&#xA;&lt;p&gt;Source: darkpawns.com/background.html&lt;br&gt;&#xA;Author: R.E. Paret (Frontline)&lt;br&gt;&#xA;Preserved from Wayback Machine capture&lt;/p&gt;&lt;/blockquote&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;The gods have always been, and always will be. And having free will, given to them by Chaos, they created their own and brought forth likenesses, who strive to become as gods, and join them in their omnipotence.&lt;/p&gt;&#xA;&lt;p&gt;Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.&lt;/p&gt;</description>
-    </item>
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Lore on Dark Pawns</title><link>https://darkpawns.labz0rz.com/lore/</link><description>Recent content in Lore on Dark Pawns</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 28 Apr 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://darkpawns.labz0rz.com/lore/index.xml" rel="self" type="application/rss+xml"/><item><title>World Creation — The Letter of Friar Drake</title><link>https://darkpawns.labz0rz.com/lore/world-creation/</link><pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate><guid>https://darkpawns.labz0rz.com/lore/world-creation/</guid><description>&lt;h1 id="background--world-lore">Background — World Lore&lt;/h1>
+&lt;blockquote>
+&lt;p>Source: darkpawns.com/background.html&lt;br>
+Author: R.E. Paret (Frontline)&lt;br>
+Preserved from Wayback Machine capture&lt;/p>&lt;/blockquote>
+&lt;hr>
+&lt;p>The gods have always been, and always will be. And having free will, given to them by Chaos, they created their own and brought forth likenesses, who strive to become as gods, and join them in their omnipotence.&lt;/p>
+&lt;p>Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.&lt;/p></description></item></channel></rss>

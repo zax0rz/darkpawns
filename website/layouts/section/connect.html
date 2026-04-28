@@ -1,0 +1,25 @@
+{{ define "main" }}
+<div class="container content-narrow">
+  <header class="section-header">
+    <h1>Connect</h1>
+    {{ with .Params.description }}<p class="lead">{{ . }}</p>{{ end }}
+  </header>
+
+  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+
+  {{ if .Pages }}
+    <div class="help-grid">
+      {{ range .Pages }}
+      <article class="card">
+        <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+      </article>
+      {{ end }}
+    </div>
+  {{ end }}
+
+  <div style="text-align:center; margin-top: var(--space-xl);">
+    <a href="/play" class="btn btn-primary">Play Now</a>
+  </div>
+</div>
+{{ end }}

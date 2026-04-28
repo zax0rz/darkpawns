@@ -1,0 +1,25 @@
+{{ define "main" }}
+<div class="container content-narrow">
+  <header class="section-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}<p class="lead">{{ . }}</p>{{ end }}
+  </header>
+
+  {{ if .Pages }}
+    {{ $pages := .Pages.ByDate.Reverse }}
+    {{ range $i, $p := $pages }}
+    <article class="news-entry">
+      {{ with $p.Params.date }}<time datetime="{{ $p.Date.Format "2006-01-02" }}">{{ $p.Date.Format "January 2, 2006" }}</time>{{ end }}
+      <h2><a href="{{ $p.RelPermalink }}">{{ $p.Title }}</a></h2>
+      {{ with $p.Params.description }}<p class="lead">{{ . }}</p>{{ end }}
+      <p><a href="{{ $p.RelPermalink }}">Read more &rarr;</a></p>
+    </article>
+    {{ if lt $i (sub (len $pages) 1) }}<hr>{{ end }}
+    {{ end }}
+  {{ else }}
+    <div class="prose">
+      <p class="lead">No tales recorded yet. The bards are silent.</p>
+    </div>
+  {{ end }}
+</div>
+{{ end }}

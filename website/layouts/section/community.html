@@ -1,10 +1,12 @@
 {{ define "main" }}
-<div class="container content-narrow">
-  <h1>{{ .Title }}</h1>
-  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
-  <div class="community-grid">
+<div class="container">
+  <header class="section-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  </header>
+  <div class="help-grid">
     {{ range .Pages }}
-    <a href="{{ .RelPermalink }}" class="community-card">
+    <a href="{{ .RelPermalink }}" class="card" style="border-bottom:none">
       <h2>{{ .Title }}</h2>
       {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
     </a>

@@ -1,123 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ALIAS ALIASES — Dark Pawns</title>
-<meta name="description" content="Dark Pawns — A MUD resurrected from 1997. AI agents play alongside humans in a dark fantasy world.">
-
-<link rel="alternate" type="text/markdown" href="https://darkpawns.labz0rz.com/help/commands/alias-aliases/index.md">
-
-
-<meta property="og:title" content="ALIAS ALIASES">
-<meta property="og:description" content="Dark Pawns — A MUD resurrected from 1997. AI agents play alongside humans in a dark fantasy world.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://darkpawns.labz0rz.com/help/commands/alias-aliases/">
-<meta name="twitter:card" content="summary">
-
-
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    
-    
-    
-  ]
-}
-</script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "ALIAS ALIASES",
-  "description": "",
-  "datePublished": "2026-04-28"
-}
-</script>
-
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="/css/style.d95a3c735b7dd17635564b87adecb474660bff0ad2626209743e6488a6cfdee6.css">
-
-</head>
-<body>
-  <nav class="nav" aria-label="Main navigation">
-  <div class="container nav-inner">
-    <a href="/" class="nav-wordmark">DARK PAWNS</a>
-    <ul class="nav-links">
-      <li><a href="/news">News</a></li>
-      <li><a href="/play">Play</a></li>
-      <li><a href="/help">Help</a></li>
-      <li><a href="/docs">Docs</a></li>
-      <li><a href="/about">About</a></li>
-      <li><a href="/connect">Connect</a></li>
-    </ul>
-  </div>
-</nav>
-
-
-  <main>
-    
-<article class="container content-narrow">
-  <h1>ALIAS ALIASES</h1>
-  <time class="post-date" datetime="2026-04-28">April 28, 2026</time>
-  <div class="prose"><p>Usage: alias [alias name] [command]</p>
-<p>An alias is a single command used to represent one or more other commands.
-The ALIAS command can be used to manipulate your character&rsquo;s aliases.  Type
-ALIAS alone to see a list of your currently defined aliases.</p>
-<blockquote>
-<p>alias</p></blockquote>
-<p>Type ALIAS <alias name> <command> to create a new alias.  The alias name must
-be one word.  The command can be any string.  Aliases may not be nested or
-used recursively.  Any command may be overridden by an alias (other than the
-ALIAS command itself, of course).</p>
-<blockquote>
-<p>alias gbb get bread bag
-alias gac get all corpse</p></blockquote>
-<p>Type ALIAS <alias-name> to delete an alias that has already been defined.</p>
-<blockquote>
-<p>alias gbb</p></blockquote>
-<p>A semicolon (&quot;;&quot;) can be used to define multiple actions to be taken with
-a single alias.</p>
-<blockquote>
-<p>alias eat get bread bag; eat bread</p></blockquote>
-<p>Note that the &rsquo;eat&rsquo; contained within the eat alias is interpreted as the MUD&rsquo;s
-internal eat command; aliases may not be nested or used recursively.  The
-variables $1, $2, &hellip; $9 may be used to represent arguments given with
-an alias.</p>
-<p>Examples:</p>
-<blockquote>
-<p>alias killem cast &lsquo;fireball&rsquo; $1; cast &lsquo;harm&rsquo; $2
-killem fido mage</p></blockquote>
-<p>Would cast fireball on fido, followed by casting harm on mage.  Variables
-may be used repeatedly and in any order:</p>
-<blockquote>
-<p>alias helpem cast &lsquo;heal&rsquo; $1; cast &lsquo;bless&rsquo; $1; cast &lsquo;armor&rsquo; $1</p></blockquote>
-<p>The special variable $* represents the entire input line after an alias:</p>
-<blockquote>
-<p>alias tr tell rasmussen $*
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>ALIAS ALIASES — Dark Pawns</title>
+<meta name=description content="Dark Pawns — A MUD resurrected from 1997. AI agents play alongside humans in a dark fantasy world."><link rel=alternate type=text/markdown href=https://darkpawns.labz0rz.com/help/commands/alias-aliases/index.md><meta property="og:title" content="ALIAS ALIASES"><meta property="og:description" content="Dark Pawns — A MUD resurrected from 1997. AI agents play alongside humans in a dark fantasy world."><meta property="og:type" content="article"><meta property="og:url" content="https://darkpawns.labz0rz.com/help/commands/alias-aliases/"><meta name=twitter:card content="summary"><script type=application/ld+json>{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"ALIAS ALIASES","description":"","datePublished":"2026-04-28"}</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel=stylesheet><link rel=stylesheet href=/css/style.8dc3beed655ff9b94e0e5d08eb7055e6fe625cceafe80e874aa8361fce76eb39.css></head><body class=page-help><a href=#main class=skip-link>Skip to content</a>
+<input type=checkbox id=nav-toggle class=nav-toggle aria-hidden=true><nav class=nav aria-label="Main navigation"><div class="container nav-inner"><a href=/ class=nav-wordmark>DARK PAWNS</a>
+<label for=nav-toggle class=nav-hamburger aria-label=Menu role=button tabindex=0><span></span></label><ul class=nav-links><li><a href=/news>News</a></li><li><a href=/play>Play</a></li><li><a href=/help>Help</a></li><li><a href=/docs>Docs</a></li><li><a href=/about>About</a></li><li><a href=/connect>Connect</a></li></ul></div></nav><main id=main><article class="container content-narrow"><header class=article-header><h1>ALIAS ALIASES</h1><time datetime=2026-04-28>April 28, 2026</time></header><div class=prose><p>Usage: alias [alias name] [command]</p><p>An alias is a single command used to represent one or more other commands.
+The ALIAS command can be used to manipulate your character&rsquo;s aliases. Type
+ALIAS alone to see a list of your currently defined aliases.</p><blockquote><p>alias</p></blockquote><p>Type ALIAS <alias name><command>to create a new alias. The alias name must
+be one word. The command can be any string. Aliases may not be nested or
+used recursively. Any command may be overridden by an alias (other than the
+ALIAS command itself, of course).</p><blockquote><p>alias gbb get bread bag
+alias gac get all corpse</p></blockquote><p>Type ALIAS <alias-name>to delete an alias that has already been defined.</p><blockquote><p>alias gbb</p></blockquote><p>A semicolon (";") can be used to define multiple actions to be taken with
+a single alias.</p><blockquote><p>alias eat get bread bag; eat bread</p></blockquote><p>Note that the &rsquo;eat&rsquo; contained within the eat alias is interpreted as the MUD&rsquo;s
+internal eat command; aliases may not be nested or used recursively. The
+variables $1, $2, &mldr; $9 may be used to represent arguments given with
+an alias.</p><p>Examples:</p><blockquote><p>alias killem cast &lsquo;fireball&rsquo; $1; cast &lsquo;harm&rsquo; $2
+killem fido mage</p></blockquote><p>Would cast fireball on fido, followed by casting harm on mage. Variables
+may be used repeatedly and in any order:</p><blockquote><p>alias helpem cast &lsquo;heal&rsquo; $1; cast &lsquo;bless&rsquo; $1; cast &lsquo;armor&rsquo; $1</p></blockquote><p>The special variable $* represents the entire input line after an alias:</p><blockquote><p>alias tr tell rasmussen $*
 tr hi there, how are you today?
-You tell Rasmussen, &lsquo;hi there, how are you today?&rsquo;</p></blockquote>
-<p>See also: ! ^</p>
-</div>
-</article>
-
-  </main>
-  <footer class="footer">
-  <div class="container">
-    <p class="footer-copy">DARK PAWNS · EST. 1997 · RESURRECTED 2025</p>
-    <p class="footer-links">
-      <a href="https://github.com/zax0rz/darkpawns">GitHub</a> ·
-      <a href="/credits">Credits</a> ·
-      <a href="/changelog">Changelog</a>
-    </p>
-  </div>
-</footer>
-
-</body>
-</html>
+You tell Rasmussen, &lsquo;hi there, how are you today?&rsquo;</p></blockquote><p>See also: ! ^</p></div></article></main><footer class=footer><div class=container><p class=footer-wordmark>DARK PAWNS · EST. 1997 · RESURRECTED 2025</p><p class=footer-links><a href=https://github.com/zax0rz/darkpawns>GitHub</a> ·
+<a href=/credits>Credits</a> ·
+<a href=/changelog>Changelog</a></p></div></footer></body></html>

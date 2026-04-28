@@ -1,10 +1,13 @@
 {{ define "main" }}
 <div class="container">
-  <h1>{{ .Title }}</h1>
-  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  <header class="section-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  </header>
+  <p class="lead">Use your browser's find (Ctrl+F) or browse by category.</p>
   <div class="help-grid">
     {{ range .Pages }}
-    <a href="{{ .RelPermalink }}" class="help-card">
+    <a href="{{ .RelPermalink }}" class="card" style="border-bottom:none">
       <h2>{{ .Title }}</h2>
       {{ with .Params.summary }}<p>{{ . }}</p>{{ end }}
     </a>

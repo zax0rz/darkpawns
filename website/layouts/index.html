@@ -1,6 +1,6 @@
 {{ define "main" }}
-<div class="splash">
-  <div class="container" style="text-align:center; padding: 4rem 0;">
+<section class="splash">
+  <div class="container">
     <h1 class="wordmark">DARK<br>PAWNS</h1>
     <p class="tagline">{{ .Site.Params.tagline }}</p>
     <p class="splash-desc">{{ .Site.Params.description }}</p>
@@ -8,6 +8,12 @@
       <a href="/play" class="btn btn-primary">Play Now</a>
       <a href="/about" class="btn btn-secondary">Learn More</a>
     </div>
+    <hr style="border:none;border-top:1px solid var(--rule);max-width:10rem;margin:3rem auto">
+    <div style="margin-top:0;display:flex;gap:2rem;justify-content:center;">
+      <a href="/news/" style="font-family:var(--font-display);text-transform:uppercase;letter-spacing:0.1em;font-size:0.8125rem;color:var(--ink-muted);">News</a>
+      <a href="/help/" style="font-family:var(--font-display);text-transform:uppercase;letter-spacing:0.1em;font-size:0.8125rem;color:var(--ink-muted);">Help</a>
+      <a href="/docs/" style="font-family:var(--font-display);text-transform:uppercase;letter-spacing:0.1em;font-size:0.8125rem;color:var(--ink-muted);">Docs</a>
+    </div>
   </div>
-</div>
+</section>
 {{ end }}

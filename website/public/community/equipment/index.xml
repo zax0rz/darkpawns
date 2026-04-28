@@ -1,19 +1,9 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Equipment on Dark Pawns</title>
-    <link>https://darkpawns.labz0rz.com/community/equipment/</link>
-    <description>Recent content in Equipment on Dark Pawns</description>
-    <generator>Hugo</generator>
-    <language>en-us</language>
-    <lastBuildDate>Tue, 28 Apr 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://darkpawns.labz0rz.com/community/equipment/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Equipment Database</title>
-      <link>https://darkpawns.labz0rz.com/community/equipment/equipment-database/</link>
-      <pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate>
-      <guid>https://darkpawns.labz0rz.com/community/equipment/equipment-database/</guid>
-      <description>&lt;h1 id=&#34;equipment&#34;&gt;equipment*&lt;/h1&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;This is the equipment section of the page. By no means is this meant to be a complete&#xA;list of the extensive equipment available on Dark Pawns, but it is a reference for some&#xA;of the best items you can attain, as well as &amp;ldquo;basic&amp;rdquo; items. Also available are racial&#xA;weapons, the list of battleground items    you need to make SBA, and much more. I&amp;rsquo;ve&#xA;identified the equipment so you don&amp;rsquo;t have to. If you would    like to contribute an&#xA;item&amp;rsquo;s statistics that I&amp;rsquo;ve forgotten, please don&amp;rsquo;t hesitate to send the webmaster an&#xA;&lt;a href=&#34;https://web.archive.org/web/20040717141615/mailto:aidan@dp-players.com&#34;&gt;email&lt;/a&gt;.&lt;/p&gt;</description>
-    </item>
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Equipment on Dark Pawns</title><link>https://darkpawns.labz0rz.com/community/equipment/</link><description>Recent content in Equipment on Dark Pawns</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 28 Apr 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://darkpawns.labz0rz.com/community/equipment/index.xml" rel="self" type="application/rss+xml"/><item><title>Equipment Database</title><link>https://darkpawns.labz0rz.com/community/equipment/equipment-database/</link><pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate><guid>https://darkpawns.labz0rz.com/community/equipment/equipment-database/</guid><description>&lt;h1 id="equipment">equipment*&lt;/h1>
+&lt;hr>
+&lt;p>This is the equipment section of the page. By no means is this meant to be a complete
+list of the extensive equipment available on Dark Pawns, but it is a reference for some
+of the best items you can attain, as well as &amp;ldquo;basic&amp;rdquo; items. Also available are racial
+weapons, the list of battleground items you need to make SBA, and much more. I&amp;rsquo;ve
+identified the equipment so you don&amp;rsquo;t have to. If you would like to contribute an
+item&amp;rsquo;s statistics that I&amp;rsquo;ve forgotten, please don&amp;rsquo;t hesitate to send the webmaster an
+&lt;a href="https://web.archive.org/web/20040717141615/mailto:aidan@dp-players.com">email&lt;/a>.&lt;/p></description></item></channel></rss>

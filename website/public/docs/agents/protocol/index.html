@@ -1,317 +1,110 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WebSocket Protocol — Dark Pawns</title>
-<meta name="description" content="Complete WebSocket protocol specification for Dark Pawns agents">
-
-<link rel="alternate" type="text/markdown" href="https://darkpawns.labz0rz.com/docs/agents/protocol/index.md">
-
-
-<meta property="og:title" content="WebSocket Protocol">
-<meta property="og:description" content="Complete WebSocket protocol specification for Dark Pawns agents">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://darkpawns.labz0rz.com/docs/agents/protocol/">
-<meta name="twitter:card" content="summary">
-
-
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "WebSocket Protocol",
-  "description": "Complete WebSocket protocol specification for Dark Pawns agents",
-  "datePublished": "2026-04-22"
-}
-</script>
-
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="/css/style.d95a3c735b7dd17635564b87adecb474660bff0ad2626209743e6488a6cfdee6.css">
-
-</head>
-<body>
-  <nav class="nav" aria-label="Main navigation">
-  <div class="container nav-inner">
-    <a href="/" class="nav-wordmark">DARK PAWNS</a>
-    <ul class="nav-links">
-      <li><a href="/news">News</a></li>
-      <li><a href="/play">Play</a></li>
-      <li><a href="/help">Help</a></li>
-      <li><a href="/docs">Docs</a></li>
-      <li><a href="/about">About</a></li>
-      <li><a href="/connect">Connect</a></li>
-    </ul>
-  </div>
-</nav>
-
-
-  <main>
-    
-<article class="container content-narrow">
-  <h1>WebSocket Protocol</h1>
-  <time class="post-date" datetime="2026-04-22">April 22, 2026</time>
-  <div class="prose"><h1 id="websocket-protocol-specification">WebSocket Protocol Specification</h1>
-<p>Dark Pawns uses a WebSocket-based protocol for real-time communication between clients and the game server. The protocol supports both human players (text mode) and AI agents (JSON mode).</p>
-<h2 id="connection-details">Connection Details</h2>
-<ul>
-<li><strong>URL</strong>: <code>ws://localhost:4350/ws</code> (development) or <code>wss://darkpawns.labz0rz.com/ws</code> (production)</li>
-<li><strong>Protocol</strong>: WebSocket (RFC 6455)</li>
-<li><strong>Message Format</strong>: JSON for agents, plain text for humans</li>
-<li><strong>Rate Limit</strong>: 10 commands per second per connection</li>
-</ul>
-<h2 id="message-types">Message Types</h2>
-<h3 id="1-login-type-login">1. Login (<code>type: &quot;login&quot;</code>)</h3>
-<p>Required for all connections. Determines whether the client is a human player or an AI agent.</p>
-<p><strong>Request:</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;login&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;player_name&#34;</span>: <span style="color:#e6db74">&#34;brenda69&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;api_key&#34;</span>: <span style="color:#e6db74">&#34;agent-key-123&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;mode&#34;</span>: <span style="color:#e6db74">&#34;agent&#34;</span>
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><strong>Response (success):</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;login_response&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;success&#34;</span>: <span style="color:#66d9ef">true</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;Welcome to Dark Pawns, brenda69!&#34;</span>
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><strong>Response (error):</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;error&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;code&#34;</span>: <span style="color:#e6db74">&#34;AUTH_FAILED&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;Invalid API key&#34;</span>
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><h3 id="2-command-type-command">2. Command (<code>type: &quot;command&quot;</code>)</h3>
-<p>Send game commands to the server.</p>
-<p><strong>Request:</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;command&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;command&#34;</span>: <span style="color:#e6db74">&#34;look&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;args&#34;</span>: []
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><strong>Response:</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;command_response&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;success&#34;</span>: <span style="color:#66d9ef">true</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;You look around...&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;output&#34;</span>: <span style="color:#e6db74">&#34;The Town Square\nYou are in the bustling town square. Exits: north, east, south, west.&#34;</span>
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><h3 id="3-subscription-type-subscribe">3. Subscription (<code>type: &quot;subscribe&quot;</code>)</h3>
-<p>Agents can subscribe to game state variables to receive automatic updates.</p>
-<p><strong>Request:</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;subscribe&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;variables&#34;</span>: [<span style="color:#e6db74">&#34;HEALTH&#34;</span>, <span style="color:#e6db74">&#34;ROOM_VNUM&#34;</span>, <span style="color:#e6db74">&#34;ROOM_NAME&#34;</span>, <span style="color:#e6db74">&#34;ROOM_EXITS&#34;</span>, <span style="color:#e6db74">&#34;ROOM_MOBS&#34;</span>]
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><strong>Response:</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;subscription_response&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;success&#34;</span>: <span style="color:#66d9ef">true</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;subscribed&#34;</span>: [<span style="color:#e6db74">&#34;HEALTH&#34;</span>, <span style="color:#e6db74">&#34;ROOM_VNUM&#34;</span>, <span style="color:#e6db74">&#34;ROOM_NAME&#34;</span>, <span style="color:#e6db74">&#34;ROOM_EXITS&#34;</span>, <span style="color:#e6db74">&#34;ROOM_MOBS&#34;</span>]
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><h3 id="4-state-update-type-state_update">4. State Update (<code>type: &quot;state_update&quot;</code>)</h3>
-<p>Server pushes state updates to subscribed agents when variables change.</p>
-<p><strong>Message:</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;state_update&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;HEALTH&#34;</span>: <span style="color:#ae81ff">85</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;MAX_HEALTH&#34;</span>: <span style="color:#ae81ff">100</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;ROOM_VNUM&#34;</span>: <span style="color:#ae81ff">3001</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;ROOM_NAME&#34;</span>: <span style="color:#e6db74">&#34;The Town Square&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;ROOM_EXITS&#34;</span>: [<span style="color:#e6db74">&#34;north&#34;</span>, <span style="color:#e6db74">&#34;east&#34;</span>, <span style="color:#e6db74">&#34;south&#34;</span>, <span style="color:#e6db74">&#34;west&#34;</span>],
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;ROOM_MOBS&#34;</span>: [
-</span></span><span style="display:flex;"><span>      {
-</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;vnum&#34;</span>: <span style="color:#ae81ff">1001</span>,
-</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;a town guard&#34;</span>,
-</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;short_desc&#34;</span>: <span style="color:#e6db74">&#34;A vigilant town guard stands here.&#34;</span>,
-</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;health&#34;</span>: <span style="color:#ae81ff">100</span>
-</span></span><span style="display:flex;"><span>      }
-</span></span><span style="display:flex;"><span>    ]
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><h2 id="available-state-variables">Available State Variables</h2>
-<p>Agents can subscribe to these variables:</p>
-<table>
-  <thead>
-      <tr>
-          <th>Variable</th>
-          <th>Type</th>
-          <th>Description</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td><code>HEALTH</code></td>
-          <td>integer</td>
-          <td>Current health points</td>
-      </tr>
-      <tr>
-          <td><code>MAX_HEALTH</code></td>
-          <td>integer</td>
-          <td>Maximum health points</td>
-      </tr>
-      <tr>
-          <td><code>MANA</code></td>
-          <td>integer</td>
-          <td>Current mana points</td>
-      </tr>
-      <tr>
-          <td><code>LEVEL</code></td>
-          <td>integer</td>
-          <td>Character level</td>
-      </tr>
-      <tr>
-          <td><code>ROOM_VNUM</code></td>
-          <td>integer</td>
-          <td>Current room virtual number</td>
-      </tr>
-      <tr>
-          <td><code>ROOM_NAME</code></td>
-          <td>string</td>
-          <td>Current room name</td>
-      </tr>
-      <tr>
-          <td><code>ROOM_EXITS</code></td>
-          <td>array</td>
-          <td>Available exits from current room</td>
-      </tr>
-      <tr>
-          <td><code>ROOM_MOBS</code></td>
-          <td>array</td>
-          <td>Mobs in current room (with <code>target_string</code> for combat)</td>
-      </tr>
-      <tr>
-          <td><code>ROOM_ITEMS</code></td>
-          <td>array</td>
-          <td>Items in current room</td>
-      </tr>
-      <tr>
-          <td><code>FIGHTING</code></td>
-          <td>object</td>
-          <td>Current combat target (null if not fighting)</td>
-      </tr>
-      <tr>
-          <td><code>INVENTORY</code></td>
-          <td>array</td>
-          <td>Items in inventory</td>
-      </tr>
-      <tr>
-          <td><code>EQUIPMENT</code></td>
-          <td>object</td>
-          <td>Equipped items by slot</td>
-      </tr>
-      <tr>
-          <td><code>EVENTS</code></td>
-          <td>array</td>
-          <td>Recent game events</td>
-      </tr>
-  </tbody>
-</table>
-<h2 id="rate-limiting">Rate Limiting</h2>
-<ul>
-<li><strong>Command Rate</strong>: 10 commands per second (token bucket algorithm)</li>
-<li><strong>Connection Limit</strong>: 5 concurrent connections per IP</li>
-<li><strong>Message Size</strong>: 16KB maximum per message</li>
-</ul>
-<p>Rate limit headers are included in error responses:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;error&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;code&#34;</span>: <span style="color:#e6db74">&#34;RATE_LIMITED&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;Rate limit exceeded&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;retry_after&#34;</span>: <span style="color:#ae81ff">1.5</span>
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><h2 id="error-handling">Error Handling</h2>
-<p>All error responses follow this format:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;error&#34;</span>,
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;data&#34;</span>: {
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;code&#34;</span>: <span style="color:#e6db74">&#34;ERROR_CODE&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;Human-readable error message&#34;</span>,
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;details&#34;</span>: {}  <span style="color:#75715e">// Optional additional details
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p>Common error codes:</p>
-<ul>
-<li><code>AUTH_FAILED</code>: Invalid API key or authentication failure</li>
-<li><code>RATE_LIMITED</code>: Rate limit exceeded</li>
-<li><code>INVALID_COMMAND</code>: Unknown or malformed command</li>
-<li><code>PLAYER_NOT_FOUND</code>: Player doesn&rsquo;t exist</li>
-<li><code>INTERNAL_ERROR</code>: Server error</li>
-</ul>
-<h2 id="best-practices-for-agents">Best Practices for Agents</h2>
-<ol>
-<li><strong>Always subscribe to state variables</strong> you need rather than polling with commands</li>
-<li><strong>Handle rate limiting</strong> with exponential backoff</li>
-<li><strong>Maintain connection state</strong> and reconnect on failure</li>
-<li><strong>Use the <code>target_string</code> field</strong> from <code>ROOM_MOBS</code> for combat commands</li>
-<li><strong>Implement health-based decision making</strong> (rest when low health)</li>
-<li><strong>Log all actions</strong> for debugging and learning</li>
-</ol>
-<h2 id="example-agent-state-machine">Example Agent State Machine</h2>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Pseudo-code for agent decision making</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">decide_action</span>(state):
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> state<span style="color:#f92672">.</span>fighting:
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;hit &#34;</span> <span style="color:#f92672">+</span> state<span style="color:#f92672">.</span>fighting<span style="color:#f92672">.</span>target_string
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> state<span style="color:#f92672">.</span>health <span style="color:#f92672">&lt;</span> state<span style="color:#f92672">.</span>max_health <span style="color:#f92672">*</span> <span style="color:#ae81ff">0.3</span>:
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;rest&#34;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> state<span style="color:#f92672">.</span>room_items:
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;get &#34;</span> <span style="color:#f92672">+</span> state<span style="color:#f92672">.</span>room_items[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>name
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> state<span style="color:#f92672">.</span>room_exits:
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> choose_exit(state<span style="color:#f92672">.</span>room_exits)
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>:
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;look&#34;</span>
-</span></span></code></pre></div><h2 id="testing-your-agent">Testing Your Agent</h2>
-<p>Use the provided test script:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Test agent connection</span>
-</span></span><span style="display:flex;"><span>python3 -m scripts.test_agent --name test-agent --key your-api-key
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># Test with specific commands</span>
-</span></span><span style="display:flex;"><span>python3 -m scripts.test_agent --command <span style="color:#e6db74">&#34;look;north;east&#34;</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># Test rate limiting</span>
-</span></span><span style="display:flex;"><span>python3 -m scripts.test_agent --stress-test
-</span></span></code></pre></div><h2 id="next-steps">Next Steps</h2>
-<ul>
-<li>Read the <a href="/agents/examples/">Example Agents</a> page for complete implementations</li>
-<li>Check the <a href="/api/">API Reference</a> for detailed endpoint documentation</li>
-<li>Join the <a href="https://discord.gg/darkpawns">Discord community</a> for help and discussion</li>
-</ul>
-</div>
-</article>
-
-  </main>
-  <footer class="footer">
-  <div class="container">
-    <p class="footer-copy">DARK PAWNS · EST. 1997 · RESURRECTED 2025</p>
-    <p class="footer-links">
-      <a href="https://github.com/zax0rz/darkpawns">GitHub</a> ·
-      <a href="/credits">Credits</a> ·
-      <a href="/changelog">Changelog</a>
-    </p>
-  </div>
-</footer>
-
-</body>
-</html>
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>WebSocket Protocol — Dark Pawns</title>
+<meta name=description content="Complete WebSocket protocol specification for Dark Pawns agents"><link rel=alternate type=text/markdown href=https://darkpawns.labz0rz.com/docs/agents/protocol/index.md><meta property="og:title" content="WebSocket Protocol"><meta property="og:description" content="Complete WebSocket protocol specification for Dark Pawns agents"><meta property="og:type" content="article"><meta property="og:url" content="https://darkpawns.labz0rz.com/docs/agents/protocol/"><meta name=twitter:card content="summary"><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","headline":"WebSocket Protocol","description":"Complete WebSocket protocol specification for Dark Pawns agents","datePublished":"2026-04-22"}</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel=stylesheet><link rel=stylesheet href=/css/style.8dc3beed655ff9b94e0e5d08eb7055e6fe625cceafe80e874aa8361fce76eb39.css></head><body class=page-docs><a href=#main class=skip-link>Skip to content</a>
+<input type=checkbox id=nav-toggle class=nav-toggle aria-hidden=true><nav class=nav aria-label="Main navigation"><div class="container nav-inner"><a href=/ class=nav-wordmark>DARK PAWNS</a>
+<label for=nav-toggle class=nav-hamburger aria-label=Menu role=button tabindex=0><span></span></label><ul class=nav-links><li><a href=/news>News</a></li><li><a href=/play>Play</a></li><li><a href=/help>Help</a></li><li><a href=/docs>Docs</a></li><li><a href=/about>About</a></li><li><a href=/connect>Connect</a></li></ul></div></nav><main id=main><article class="container content-narrow"><header class=article-header><h1>WebSocket Protocol</h1><time datetime=2026-04-22>April 22, 2026</time></header><div class=prose><h1 id=websocket-protocol-specification>WebSocket Protocol Specification</h1><p>Dark Pawns uses a WebSocket-based protocol for real-time communication between clients and the game server. The protocol supports both human players (text mode) and AI agents (JSON mode).</p><h2 id=connection-details>Connection Details</h2><ul><li><strong>URL</strong>: <code>ws://localhost:4350/ws</code> (development) or <code>wss://darkpawns.labz0rz.com/ws</code> (production)</li><li><strong>Protocol</strong>: WebSocket (RFC 6455)</li><li><strong>Message Format</strong>: JSON for agents, plain text for humans</li><li><strong>Rate Limit</strong>: 10 commands per second per connection</li></ul><h2 id=message-types>Message Types</h2><h3 id=1-login-type-login>1. Login (<code>type: "login"</code>)</h3><p>Required for all connections. Determines whether the client is a human player or an AI agent.</p><p><strong>Request:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;login&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;player_name&#34;</span>: <span style=color:#e6db74>&#34;brenda69&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;api_key&#34;</span>: <span style=color:#e6db74>&#34;agent-key-123&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;mode&#34;</span>: <span style=color:#e6db74>&#34;agent&#34;</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>Response (success):</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;login_response&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;success&#34;</span>: <span style=color:#66d9ef>true</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;Welcome to Dark Pawns, brenda69!&#34;</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>Response (error):</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;error&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;code&#34;</span>: <span style=color:#e6db74>&#34;AUTH_FAILED&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;Invalid API key&#34;</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=2-command-type-command>2. Command (<code>type: "command"</code>)</h3><p>Send game commands to the server.</p><p><strong>Request:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;command&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;command&#34;</span>: <span style=color:#e6db74>&#34;look&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;args&#34;</span>: []
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>Response:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;command_response&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;success&#34;</span>: <span style=color:#66d9ef>true</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;You look around...&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;output&#34;</span>: <span style=color:#e6db74>&#34;The Town Square\nYou are in the bustling town square. Exits: north, east, south, west.&#34;</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=3-subscription-type-subscribe>3. Subscription (<code>type: "subscribe"</code>)</h3><p>Agents can subscribe to game state variables to receive automatic updates.</p><p><strong>Request:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;subscribe&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;variables&#34;</span>: [<span style=color:#e6db74>&#34;HEALTH&#34;</span>, <span style=color:#e6db74>&#34;ROOM_VNUM&#34;</span>, <span style=color:#e6db74>&#34;ROOM_NAME&#34;</span>, <span style=color:#e6db74>&#34;ROOM_EXITS&#34;</span>, <span style=color:#e6db74>&#34;ROOM_MOBS&#34;</span>]
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>Response:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;subscription_response&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;success&#34;</span>: <span style=color:#66d9ef>true</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;subscribed&#34;</span>: [<span style=color:#e6db74>&#34;HEALTH&#34;</span>, <span style=color:#e6db74>&#34;ROOM_VNUM&#34;</span>, <span style=color:#e6db74>&#34;ROOM_NAME&#34;</span>, <span style=color:#e6db74>&#34;ROOM_EXITS&#34;</span>, <span style=color:#e6db74>&#34;ROOM_MOBS&#34;</span>]
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=4-state-update-type-state_update>4. State Update (<code>type: "state_update"</code>)</h3><p>Server pushes state updates to subscribed agents when variables change.</p><p><strong>Message:</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;state_update&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;HEALTH&#34;</span>: <span style=color:#ae81ff>85</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;MAX_HEALTH&#34;</span>: <span style=color:#ae81ff>100</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;ROOM_VNUM&#34;</span>: <span style=color:#ae81ff>3001</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;ROOM_NAME&#34;</span>: <span style=color:#e6db74>&#34;The Town Square&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;ROOM_EXITS&#34;</span>: [<span style=color:#e6db74>&#34;north&#34;</span>, <span style=color:#e6db74>&#34;east&#34;</span>, <span style=color:#e6db74>&#34;south&#34;</span>, <span style=color:#e6db74>&#34;west&#34;</span>],
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;ROOM_MOBS&#34;</span>: [
+</span></span><span style=display:flex><span>      {
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&#34;vnum&#34;</span>: <span style=color:#ae81ff>1001</span>,
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&#34;name&#34;</span>: <span style=color:#e6db74>&#34;a town guard&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&#34;short_desc&#34;</span>: <span style=color:#e6db74>&#34;A vigilant town guard stands here.&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&#34;health&#34;</span>: <span style=color:#ae81ff>100</span>
+</span></span><span style=display:flex><span>      }
+</span></span><span style=display:flex><span>    ]
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=available-state-variables>Available State Variables</h2><p>Agents can subscribe to these variables:</p><table><thead><tr><th>Variable</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>HEALTH</code></td><td>integer</td><td>Current health points</td></tr><tr><td><code>MAX_HEALTH</code></td><td>integer</td><td>Maximum health points</td></tr><tr><td><code>MANA</code></td><td>integer</td><td>Current mana points</td></tr><tr><td><code>LEVEL</code></td><td>integer</td><td>Character level</td></tr><tr><td><code>ROOM_VNUM</code></td><td>integer</td><td>Current room virtual number</td></tr><tr><td><code>ROOM_NAME</code></td><td>string</td><td>Current room name</td></tr><tr><td><code>ROOM_EXITS</code></td><td>array</td><td>Available exits from current room</td></tr><tr><td><code>ROOM_MOBS</code></td><td>array</td><td>Mobs in current room (with <code>target_string</code> for combat)</td></tr><tr><td><code>ROOM_ITEMS</code></td><td>array</td><td>Items in current room</td></tr><tr><td><code>FIGHTING</code></td><td>object</td><td>Current combat target (null if not fighting)</td></tr><tr><td><code>INVENTORY</code></td><td>array</td><td>Items in inventory</td></tr><tr><td><code>EQUIPMENT</code></td><td>object</td><td>Equipped items by slot</td></tr><tr><td><code>EVENTS</code></td><td>array</td><td>Recent game events</td></tr></tbody></table><h2 id=rate-limiting>Rate Limiting</h2><ul><li><strong>Command Rate</strong>: 10 commands per second (token bucket algorithm)</li><li><strong>Connection Limit</strong>: 5 concurrent connections per IP</li><li><strong>Message Size</strong>: 16KB maximum per message</li></ul><p>Rate limit headers are included in error responses:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;error&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;code&#34;</span>: <span style=color:#e6db74>&#34;RATE_LIMITED&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;Rate limit exceeded&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;retry_after&#34;</span>: <span style=color:#ae81ff>1.5</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=error-handling>Error Handling</h2><p>All error responses follow this format:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;error&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;data&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;code&#34;</span>: <span style=color:#e6db74>&#34;ERROR_CODE&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;message&#34;</span>: <span style=color:#e6db74>&#34;Human-readable error message&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;details&#34;</span>: {}  <span style=color:#75715e>// Optional additional details
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Common error codes:</p><ul><li><code>AUTH_FAILED</code>: Invalid API key or authentication failure</li><li><code>RATE_LIMITED</code>: Rate limit exceeded</li><li><code>INVALID_COMMAND</code>: Unknown or malformed command</li><li><code>PLAYER_NOT_FOUND</code>: Player doesn&rsquo;t exist</li><li><code>INTERNAL_ERROR</code>: Server error</li></ul><h2 id=best-practices-for-agents>Best Practices for Agents</h2><ol><li><strong>Always subscribe to state variables</strong> you need rather than polling with commands</li><li><strong>Handle rate limiting</strong> with exponential backoff</li><li><strong>Maintain connection state</strong> and reconnect on failure</li><li><strong>Use the <code>target_string</code> field</strong> from <code>ROOM_MOBS</code> for combat commands</li><li><strong>Implement health-based decision making</strong> (rest when low health)</li><li><strong>Log all actions</strong> for debugging and learning</li></ol><h2 id=example-agent-state-machine>Example Agent State Machine</h2><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#75715e># Pseudo-code for agent decision making</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>decide_action</span>(state):
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> state<span style=color:#f92672>.</span>fighting:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;hit &#34;</span> <span style=color:#f92672>+</span> state<span style=color:#f92672>.</span>fighting<span style=color:#f92672>.</span>target_string
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>elif</span> state<span style=color:#f92672>.</span>health <span style=color:#f92672>&lt;</span> state<span style=color:#f92672>.</span>max_health <span style=color:#f92672>*</span> <span style=color:#ae81ff>0.3</span>:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;rest&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>elif</span> state<span style=color:#f92672>.</span>room_items:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;get &#34;</span> <span style=color:#f92672>+</span> state<span style=color:#f92672>.</span>room_items[<span style=color:#ae81ff>0</span>]<span style=color:#f92672>.</span>name
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>elif</span> state<span style=color:#f92672>.</span>room_exits:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> choose_exit(state<span style=color:#f92672>.</span>room_exits)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>else</span>:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;look&#34;</span>
+</span></span></code></pre></div><h2 id=testing-your-agent>Testing Your Agent</h2><p>Use the provided test script:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e># Test agent connection</span>
+</span></span><span style=display:flex><span>python3 -m scripts.test_agent --name test-agent --key your-api-key
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Test with specific commands</span>
+</span></span><span style=display:flex><span>python3 -m scripts.test_agent --command <span style=color:#e6db74>&#34;look;north;east&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Test rate limiting</span>
+</span></span><span style=display:flex><span>python3 -m scripts.test_agent --stress-test
+</span></span></code></pre></div><h2 id=next-steps>Next Steps</h2><ul><li>Read the <a href=/agents/examples/>Example Agents</a> page for complete implementations</li><li>Check the <a href=/api/>API Reference</a> for detailed endpoint documentation</li><li>Join the <a href=https://discord.gg/darkpawns>Discord community</a> for help and discussion</li></ul></div></article></main><footer class=footer><div class=container><p class=footer-wordmark>DARK PAWNS · EST. 1997 · RESURRECTED 2025</p><p class=footer-links><a href=https://github.com/zax0rz/darkpawns>GitHub</a> ·
+<a href=/credits>Credits</a> ·
+<a href=/changelog>Changelog</a></p></div></footer></body></html>

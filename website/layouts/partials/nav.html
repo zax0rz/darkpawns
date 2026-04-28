@@ -1,13 +1,17 @@
+<input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true">
 <nav class="nav" aria-label="Main navigation">
   <div class="container nav-inner">
     <a href="/" class="nav-wordmark">DARK PAWNS</a>
+    <label for="nav-toggle" class="nav-hamburger" aria-label="Menu" role="button" tabindex="0">
+      <span></span>
+    </label>
     <ul class="nav-links">
-      <li><a href="/news">News</a></li>
-      <li><a href="/play">Play</a></li>
-      <li><a href="/help">Help</a></li>
-      <li><a href="/docs">Docs</a></li>
-      <li><a href="/about">About</a></li>
-      <li><a href="/connect">Connect</a></li>
+      <li><a href="/news"{{ if eq .RelPermalink "/news/" }} class="active"{{ end }}>News</a></li>
+      <li><a href="/play"{{ if eq .RelPermalink "/play/" }} class="active"{{ end }}>Play</a></li>
+      <li><a href="/help"{{ if eq .RelPermalink "/help/" }} class="active"{{ end }}>Help</a></li>
+      <li><a href="/docs"{{ if eq .RelPermalink "/docs/" }} class="active"{{ end }}>Docs</a></li>
+      <li><a href="/about"{{ if eq .RelPermalink "/about/" }} class="active"{{ end }}>About</a></li>
+      <li><a href="/connect"{{ if eq .RelPermalink "/connect/" }} class="active"{{ end }}>Connect</a></li>
     </ul>
   </div>
 </nav>

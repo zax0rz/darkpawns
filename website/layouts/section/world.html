@@ -1,0 +1,42 @@
+{{ define "main" }}
+<section class="container">
+  <header class="section-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}<p class="lead">{{ . }}</p>{{ end }}
+  </header>
+
+  {{/* Direct pages (top-level content, not in sub-sections) */}}
+  {{ if .Pages }}
+    <div class="help-grid">
+      {{ range .Pages }}
+      <article class="card">
+        <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+      </article>
+      {{ end }}
+    </div>
+  {{ end }}
+
+  {{/* Sub-sections (classes, races, skills, etc.) */}}
+  {{ if .Sections }}
+    {{ range .Sections }}
+    <h2>{{ .Title }}</h2>
+    {{ with .Params.description }}<p class="lead">{{ . }}</p>{{ end }}
+    {{ if .Pages }}
+      <div class="help-grid">
+        {{ range .Pages }}
+        <article class="card">
+          <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+          {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+        </article>
+        {{ end }}
+      </div>
+    {{ end }}
+    {{ end }}
+  {{ end }}
+
+  {{ if not .Pages }}
+    <p class="lead">Coming soon.</p>
+  {{ end }}
+</section>
+{{ end }}

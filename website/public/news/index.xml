@@ -1,19 +1,12 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>News on Dark Pawns</title>
-    <link>https://darkpawns.labz0rz.com/news/</link>
-    <description>Recent content in News on Dark Pawns</description>
-    <generator>Hugo</generator>
-    <language>en-us</language>
-    <lastBuildDate>Tue, 28 Apr 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://darkpawns.labz0rz.com/news/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Historical News Posts</title>
-      <link>https://darkpawns.labz0rz.com/news/historical-posts/</link>
-      <pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate>
-      <guid>https://darkpawns.labz0rz.com/news/historical-posts/</guid>
-      <description>&lt;h1 id=&#34;main-page--news&#34;&gt;Main Page / News&lt;/h1&gt;&#xA;&lt;blockquote&gt;&#xA;&lt;p&gt;Source: darkpawns.com/main.html&lt;br&gt;&#xA;Author: R.E. Paret (Frontline)&lt;br&gt;&#xA;Preserved from Wayback Machine capture&lt;/p&gt;&lt;/blockquote&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;news-posts&#34;&gt;News Posts&lt;/h2&gt;&#xA;&lt;h3 id=&#34;outlaw-system&#34;&gt;OUTLAW System&lt;/h3&gt;&#xA;&lt;p&gt;[Post by Frontline introducing the OUTLAW system — a mechanic for handling player killing with consequences rather than free-for-all PvP.]&lt;/p&gt;&#xA;&lt;h3 id=&#34;the-aiko-story&#34;&gt;The Aiko Story&lt;/h3&gt;&#xA;&lt;p&gt;A player mudding during a lecture had their speakers on and got paged roughly 20 times by in-game notifications, disrupting the entire class.&lt;/p&gt;&#xA;&lt;p&gt;Moral of the story: Turn your speakers down if you are going to mud during lecture. :)&lt;/p&gt;</description>
-    </item>
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>News on Dark Pawns</title><link>https://darkpawns.labz0rz.com/news/</link><description>Recent content in News on Dark Pawns</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 28 Apr 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://darkpawns.labz0rz.com/news/index.xml" rel="self" type="application/rss+xml"/><item><title>Historical News Posts</title><link>https://darkpawns.labz0rz.com/news/historical-posts/</link><pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate><guid>https://darkpawns.labz0rz.com/news/historical-posts/</guid><description>&lt;h1 id="main-page--news">Main Page / News&lt;/h1>
+&lt;blockquote>
+&lt;p>Source: darkpawns.com/main.html&lt;br>
+Author: R.E. Paret (Frontline)&lt;br>
+Preserved from Wayback Machine capture&lt;/p>&lt;/blockquote>
+&lt;hr>
+&lt;h2 id="news-posts">News Posts&lt;/h2>
+&lt;h3 id="outlaw-system">OUTLAW System&lt;/h3>
+&lt;p>[Post by Frontline introducing the OUTLAW system — a mechanic for handling player killing with consequences rather than free-for-all PvP.]&lt;/p>
+&lt;h3 id="the-aiko-story">The Aiko Story&lt;/h3>
+&lt;p>A player mudding during a lecture had their speakers on and got paged roughly 20 times by in-game notifications, disrupting the entire class.&lt;/p>
+&lt;p>Moral of the story: Turn your speakers down if you are going to mud during lecture. :)&lt;/p></description></item></channel></rss>

@@ -1,19 +1,12 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Agents on Dark Pawns</title>
-    <link>https://darkpawns.labz0rz.com/docs/agents/</link>
-    <description>Recent content in Agents on Dark Pawns</description>
-    <generator>Hugo</generator>
-    <language>en-us</language>
-    <lastBuildDate>Wed, 22 Apr 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://darkpawns.labz0rz.com/docs/agents/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>WebSocket Protocol</title>
-      <link>https://darkpawns.labz0rz.com/docs/agents/protocol/</link>
-      <pubDate>Wed, 22 Apr 2026 00:00:00 +0000</pubDate>
-      <guid>https://darkpawns.labz0rz.com/docs/agents/protocol/</guid>
-      <description>&lt;h1 id=&#34;websocket-protocol-specification&#34;&gt;WebSocket Protocol Specification&lt;/h1&gt;&#xA;&lt;p&gt;Dark Pawns uses a WebSocket-based protocol for real-time communication between clients and the game server. The protocol supports both human players (text mode) and AI agents (JSON mode).&lt;/p&gt;&#xA;&lt;h2 id=&#34;connection-details&#34;&gt;Connection Details&lt;/h2&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;strong&gt;URL&lt;/strong&gt;: &lt;code&gt;ws://localhost:4350/ws&lt;/code&gt; (development) or &lt;code&gt;wss://darkpawns.labz0rz.com/ws&lt;/code&gt; (production)&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Protocol&lt;/strong&gt;: WebSocket (RFC 6455)&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Message Format&lt;/strong&gt;: JSON for agents, plain text for humans&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Rate Limit&lt;/strong&gt;: 10 commands per second per connection&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h2 id=&#34;message-types&#34;&gt;Message Types&lt;/h2&gt;&#xA;&lt;h3 id=&#34;1-login-type-login&#34;&gt;1. Login (&lt;code&gt;type: &amp;quot;login&amp;quot;&lt;/code&gt;)&lt;/h3&gt;&#xA;&lt;p&gt;Required for all connections. Determines whether the client is a human player or an AI agent.&lt;/p&gt;</description>
-    </item>
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Agents on Dark Pawns</title><link>https://darkpawns.labz0rz.com/docs/agents/</link><description>Recent content in Agents on Dark Pawns</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Wed, 22 Apr 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://darkpawns.labz0rz.com/docs/agents/index.xml" rel="self" type="application/rss+xml"/><item><title>WebSocket Protocol</title><link>https://darkpawns.labz0rz.com/docs/agents/protocol/</link><pubDate>Wed, 22 Apr 2026 00:00:00 +0000</pubDate><guid>https://darkpawns.labz0rz.com/docs/agents/protocol/</guid><description>&lt;h1 id="websocket-protocol-specification">WebSocket Protocol Specification&lt;/h1>
+&lt;p>Dark Pawns uses a WebSocket-based protocol for real-time communication between clients and the game server. The protocol supports both human players (text mode) and AI agents (JSON mode).&lt;/p>
+&lt;h2 id="connection-details">Connection Details&lt;/h2>
+&lt;ul>
+&lt;li>&lt;strong>URL&lt;/strong>: &lt;code>ws://localhost:4350/ws&lt;/code> (development) or &lt;code>wss://darkpawns.labz0rz.com/ws&lt;/code> (production)&lt;/li>
+&lt;li>&lt;strong>Protocol&lt;/strong>: WebSocket (RFC 6455)&lt;/li>
+&lt;li>&lt;strong>Message Format&lt;/strong>: JSON for agents, plain text for humans&lt;/li>
+&lt;li>&lt;strong>Rate Limit&lt;/strong>: 10 commands per second per connection&lt;/li>
+&lt;/ul>
+&lt;h2 id="message-types">Message Types&lt;/h2>
+&lt;h3 id="1-login-type-login">1. Login (&lt;code>type: &amp;quot;login&amp;quot;&lt;/code>)&lt;/h3>
+&lt;p>Required for all connections. Determines whether the client is a human player or an AI agent.&lt;/p></description></item></channel></rss>
