@@ -4,6 +4,11 @@
     <h1>{{ .Title }}</h1>
     {{ with .Params.date }}<time datetime="{{ .Format "2006-01-02" }}">{{ .Format "January 2, 2006" }}</time>{{ end }}
   </header>
-  <div class="prose">{{ .Content }}</div>
+  {{ if .Params.status }}
+    {{ partial "status.html" . }}
+  {{ end }}
+  {{ if .Content }}
+    <div class="prose">{{ .Content }}</div>
+  {{ end }}
 </article>
 {{ end }}

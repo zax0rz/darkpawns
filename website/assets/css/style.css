@@ -747,6 +747,67 @@ pre code {
 }
 
 /* ============================================
+   Status Page
+   ============================================ */
+
+.page-status .status-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.page-status .status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.page-status .status-indicator {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ink-muted);
+}
+.page-status .status-indicator--online { background: #3a8a3a; }
+.page-status .status-indicator--offline { background: var(--accent); }
+.page-status .status-indicator--unknown { background: var(--ink-muted); opacity: 0.5; }
+.page-status .status-indicator--loading {
+  background: var(--ink-muted);
+  animation: status-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.page-status .status-label {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+.page-status .status-key {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+  min-width: 9rem;
+}
+.page-status .status-value {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+.page-status .status-note {
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+  margin-top: 1rem;
+  line-height: 1.6;
+}
+
+/* ============================================
    Play Page — Web Client
    ============================================ */
 
