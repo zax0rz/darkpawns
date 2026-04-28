@@ -1,0 +1,168 @@
+{{ define "main" }}
+<article class="container content-narrow">
+  <header class="article-header">
+    <h1>{{ .Title }}</h1>
+  </header>
+
+  <div class="card" id="status-card">
+    <div aria-live="polite" id="status-display">
+      <!-- Loading state -->
+      <div id="status-loading" class="status-row">
+        <span class="status-indicator status-indicator--loading"></span>
+        <span class="status-label">Checking server status…</span>
+      </div>
+
+      <!-- Live state (filled by JS) -->
+      <div id="status-live" style="display:none">
+        <div class="status-grid">
+          <div class="status-row">
+            <span class="status-indicator" id="status-dot"></span>
+            <span class="status-label" id="status-text">—</span>
+          </div>
+          <div class="status-row">
+            <span class="status-key">Players Online</span>
+            <span class="status-value" id="player-count">—</span>
+          </div>
+          <div class="status-row">
+            <span class="status-key">Server Version</span>
+            <span class="status-value" id="server-version">—</span>
+          </div>
+          <div class="status-row">
+            <span class="status-key">Uptime</span>
+            <span class="status-value" id="server-uptime">—</span>
+          </div>
+        </div>
+        <p class="status-note" id="status-timestamp"></p>
+      </div>
+
+      <!-- Fallback state -->
+      <div id="status-fallback" style="display:none">
+        <div class="status-row">
+          <span class="status-indicator status-indicator--unknown"></span>
+          <span class="status-label">Server status unavailable</span>
+        </div>
+        <p class="status-note">
+          The game server may be offline or undergoing maintenance. Check the
+          <a href="/community/">community channels</a> for updates.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <h2>What This Means</h2>
+    <p>
+      This page checks the live game server status. If the server is unreachable,
+      you'll see the message above. The data refreshes each time you load the page.
+    </p>
+    <h2>Having Trouble Connecting?</h2>
+    <p>
+      See the <a href="/connect/connection-instructions/">connection instructions</a>
+      for client setup, or visit the <a href="/help/">help section</a> for common issues.
+    </p>
+  </div>
+</article>
+
+<style>
+  .status-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .status-indicator {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--ink-muted);
+  }
+  .status-indicator--online { background: #3a8a3a; }
+  .status-indicator--offline { background: var(--accent); }
+  .status-indicator--unknown { background: var(--ink-muted); opacity: 0.5; }
+  .status-indicator--loading {
+    background: var(--ink-muted);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  .status-label {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.9375rem;
+    color: var(--ink);
+  }
+  .status-key {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+    min-width: 9rem;
+  }
+  .status-value {
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    color: var(--ink);
+  }
+  .status-note {
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+    margin-top: 1rem;
+    line-height: 1.6;
+  }
+</style>
+
+<script>
+(function () {
+  var loading = document.getElementById('status-loading');
+  var live = document.getElementById('status-live');
+  var fallback = document.getElementById('status-fallback');
+  var dot = document.getElementById('status-dot');
+  var text = document.getElementById('status-text');
+  var players = document.getElementById('player-count');
+  var version = document.getElementById('server-version');
+  var uptime = document.getElementById('server-uptime');
+  var ts = document.getElementById('status-timestamp');
+
+  function show(el) { el.style.display = ''; }
+  function hide(el) { el.style.display = 'none'; }
+
+  fetch('/api/status', { signal: AbortSignal.timeout(5000) })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (d) {
+      hide(loading);
+
+      if (d.online !== false) {
+        dot.classList.add('status-indicator--online');
+        text.textContent = 'Online';
+      } else {
+        dot.classList.add('status-indicator--offline');
+        text.textContent = 'Offline';
+      }
+
+      players.textContent = (d.players != null) ? String(d.players) : '0';
+      version.textContent = d.version || 'dev';
+      uptime.textContent = d.uptime || 'unknown';
+
+      ts.textContent = 'Last checked: ' + new Date().toLocaleTimeString();
+      show(live);
+    })
+    .catch(function () {
+      hide(loading);
+      show(fallback);
+    });
+})();
+</script>
+{{ end }}
