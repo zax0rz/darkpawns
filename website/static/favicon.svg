@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="2" fill="#1A1614"/>
+  <g fill="#A8201A">
+    <!-- Pawn silhouette -->
+    <circle cx="16" cy="9" r="5"/>
+    <path d="M9 14 c0-2 3-4 7-4 s7 2 7 4 c0 1.5-1 3-3 4 l1 4 h-10 l1-4 c-2-1-3-2.5-3-4z"/>
+    <rect x="8" y="24" width="16" height="3" rx="1"/>
+    <rect x="6" y="27" width="20" height="2" rx="1"/>
+  </g>
+</svg>
