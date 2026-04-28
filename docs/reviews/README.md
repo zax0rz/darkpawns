@@ -1,18 +1,18 @@
-# Opus Review Progress
+# Code Review Progress
 
 **Started:** 2026-04-26  
 **All passes complete:** 2026-04-26  
-**Budget spent:** ~$24.57 Anthropic payg
+**Fix session:** 2026-04-27 (37 commits, 4019 insertions, 433 deletions)
 
 ## Pass Status
 
 | # | Focus | Status | Report |
 |---|-------|--------|--------|
-| 1 | Architecture & Idiomatic Go | ✅ Done | `pass1-architecture.md` |
+| 1 | Architecture & Idiomatic Go | ✅ Done | (removed) |
 | 2 | Concurrency & Data Integrity | ✅ Done | `pass2-concurrency.md` |
 | 3 | Security Deep Dive | ✅ Done | `pass3-security.md` |
 | 4 | Fidelity to C Source | ✅ Done | `pass4-fidelity.md` |
-| 5 | QA & Edge Cases | ✅ Done | `pass5-qa.md` |
+| 5 | QA & Edge Cases | ✅ Done | (removed) |
 
 ## Backlog
 
@@ -22,7 +22,7 @@ Consolidated findings in `BACKLOG.md` — 86 deduplicated findings (14 CRITICAL,
 
 **COMPLETE.** All 5 port completion tiers finished (waves 17–20). Build clean. 1 TODO remaining (cosmetic). See `docs/architecture/PORT_SCOPE.md` for details.
 
-## Fix Progress (updated 2026-04-27 16:09)
+## Fix Progress (updated 2026-04-27 16:48)
 
 ### CRITICAL (14 total — 12 fixed, 2 deferred)
 
@@ -43,7 +43,7 @@ Consolidated findings in `BACKLOG.md` — 86 deduplicated findings (14 CRITICAL,
 | C-13 | AdvanceLevel + Save deadlock when C-04 fixed | ✅ Fixed | 865881e |
 | C-14 | Combat engine holds stale refs on disconnect | ✅ Fixed | 2c13697 |
 
-### HIGH (26 total — 17 fixed, 6 deferred, 3 open)
+### HIGH (26 total — 20 fixed, 5 deferred, 1 open)
 
 | ID | Finding | Status | Commit |
 |----|---------|--------|--------|
@@ -74,42 +74,96 @@ Consolidated findings in `BACKLOG.md` — 86 deduplicated findings (14 CRITICAL,
 | H-25 | JWT 24-hour lifetime, no rotation | ⏳ Open | |
 | H-26 | Counter_procs fall-through not faithful | ✅ Fixed | 1ea6f0d |
 
-### MEDIUM (30 total — 5 fixed, 25 open)
+### MEDIUM (30 total — 27 fixed, 1 deferred, 2 open)
 
 | ID | Finding | Status | Commit |
 |----|---------|--------|--------|
-| M-12 | CORS wildcard subdomain matching too permissive | ✅ Fixed | 463c0a7 |
+| M-01 | Error handling inconsistent | ✅ Fixed | a1ef2fe |
+| M-02 | engine/comm_infra.go dead code | ✅ Fixed | a1ef2fe |
+| M-03 | Snapshot manager only covers rooms | ✅ Fixed | d4deb1b |
+| M-04 | init() used for command registration | ✅ Fixed | a1ef2fe |
+| M-05 | Combatant interface too wide | ✅ Fixed | af5a0a5 |
+| M-06 | Two competing command session interfaces | ✅ Fixed | af5a0a5 |
+| M-07 | main.go manual wiring, no lifecycle | ✅ Fixed | af5a0a5 |
+| M-08 | PerformRound uses write lock for read-only | ✅ Fixed | d4deb1b |
+| M-09 | SetTickInterval replaces ticker without notifying goroutine | ✅ Fixed | 8f94d0f |
+| M-10 | Event bus unsubscribe broken (pointer comparison) | ✅ Fixed | d4deb1b |
+| M-11 | immortalSessionProvider global unsynced | ✅ Fixed | 90e33e9 |
+| M-12 | CORS wildcard subdomain too permissive | ✅ Fixed | 463c0a7 |
 | M-13 | Dev mode CORS allows all origins | ✅ Fixed | 463c0a7 |
 | M-14 | CSP allows unsafe-inline for scripts | ✅ Fixed | 463c0a7 |
-| M-15 | cmdUsers exposes player IPs to all wizards | ⏳ Open | Rate limited — pending retry |
-| M-18 | who command reveals agent status to players | ⏳ Open | Rate limited — pending retry |
-| M-19 | Spell affect durations don't match C | ⏳ Open | Subagent in flight |
-| M-20 | Bless applies AC instead of saving throw | ⏳ Open | Subagent in flight |
-| M-21 | Blindness missing reagent bonus + NPC retaliation | ⏳ Open | Subagent in flight |
-| M-01–M-11, M-16–M-17, M-22–M-30 | Various | ❌ Open | See BACKLOG.md |
+| M-15 | cmdUsers exposes IPs to all wizards | ✅ Fixed | cmdUsersSafe commit |
+| M-16 | cmdSwitch doesn't implement body switching | ✅ Fixed | session takeover commit |
+| M-17 | Rate limiter cleanup enables bypass | ✅ Fixed | 90e33e9 |
+| M-18 | who reveals agent status to players | ✅ Fixed | cmdUsersSafe commit |
+| M-19 | Spell affect durations don't match C | ✅ Fixed | affect_spells commit |
+| M-20 | Bless applies AC instead of saving throw | ✅ Fixed | affect_spells commit |
+| M-21 | Blindness missing reagent bonus + NPC retaliation | ✅ Fixed | affect_spells commit |
+| M-22 | Movement missing sector-based move costs | ✅ Fixed | a163fba |
+| M-23 | Mob AI not fully ported | 🔶 Deferred | Large port from mobact.c |
+| M-24 | Missing single-level XP cap | ✅ Fixed | 90e33e9 |
+| M-25 | Inconsistent cleanup between Unregister paths | ✅ Fixed | 8f94d0f |
+| M-26 | Inventory operations race without locks | ✅ Fixed | 90e33e9 |
+| M-27 | Player position not reset after respawn | ✅ Fixed | a934f3d |
+| M-28 | No reconnection/session-takeover | ✅ Fixed | session takeover commit |
+| M-29 | No input length limit on telnet | ✅ Fixed | a163fba |
+| M-30 | ValidateInput is dead code | ✅ Fixed | a163fba |
 
-### LOW (16 total — 0 fixed)
+### LOW (16 total — 16 fixed)
 
-All 16 LOW findings open. See BACKLOG.md.
+| ID | Finding | Status |
+|----|---------|--------|
+| L-01 | Redundant GoldMu on Player | ✅ Fixed |
+| L-02 | SpecRegistry init-time safety undocumented | ✅ Fixed |
+| L-03 | Zone worker ticks not atomic | ✅ Fixed |
+| L-04 | sysfile no size limit on file reads | ✅ Fixed |
+| L-05 | Lua dofile re-registration confusing | ✅ Fixed |
+| L-06 | randomString uses broken PRNG | ✅ Fixed |
+| L-07 | Gender-unaware message tokens | ✅ Fixed |
+| L-08 | Missing flesh_altered_type for unarmed NPCs | ✅ Fixed |
+| L-09 | sendWelcome panics if room not found | ✅ Fixed |
+| L-10 | Inconsistent send buffer sizes | ✅ Fixed |
+| L-11 | ActiveAffects not restored from save | ✅ Fixed |
+| L-12 | cmdForce doesn't execute command | ✅ Fixed (documented with H-24) |
+| L-13 | Session tempData has no type safety | ✅ Fixed |
+| L-14 | Player name validation allows dots/spaces | ✅ Fixed |
+| L-15 | Damage message thresholds need verification | ✅ Fixed |
+| L-16 | handleDeath lock ordering fragile | ✅ Fixed |
 
 ## Summary
 
 | Severity | Total | Fixed | Open | Deferred |
 |----------|-------|-------|------|----------|
 | CRITICAL | 14 | 12 | 0 | 2 |
-| HIGH | 26 | 17 | 1 | 6 |
-| MEDIUM | 30 | 3 | 27 | 0 |
-| LOW | 16 | 0 | 16 | 0 |
-| **Total** | **86** | **32** | **44** | **8** |
+| HIGH | 26 | 20 | 1 | 5 |
+| MEDIUM | 30 | 27 | 0 | 1 |
+| LOW | 16 | 16 | 0 | 0 |
+| **Total** | **86** | **75** | **1** | **8** |
+| **% Fixed** | | **87%** | | |
 
-### Deferred items (structural refactors)
-- **C-02 + H-01**: Combat globals → injected callbacks
-- **C-03 + H-02–H-06**: God package split, session/command split, interface cleanup
+### Remaining items
 
-These are code quality improvements, not functional bugs. Planned after remaining MEDIUM/LOW items clear.
+**Open:**
+- H-25: JWT lifetime reduction + rotation
+
+**Deferred (structural refactors):**
+- C-02 + H-01: Combat globals → injected callbacks
+- C-03 + H-02–H-06: God package split, session/command split, interface cleanup
+- M-23: Mob AI full port from src/mobact.c
+
+These are code quality improvements, not functional bugs. The game is fully playable as-is.
+
+## Fix Session Stats (2026-04-27)
+
+- **37 commits** (excluding 2 reverts)
+- **4,019 lines added, 433 removed** across 145 files
+- **Build:** `go build ./...` clean ✅
+- **Vet:** `go vet ./...` clean ✅
+- **Models used:** DeepSeek V4 Flash (primary worker), DeepSeek V4 Pro (complex tasks)
+- **Pattern:** Sequential single-file dispatch per task, parallel across non-overlapping files
+- **Key lesson:** Split large tasks into individual commands/functions (C-10: 14 commands → 5 sequential dispatches)
 
 ## Key Files
 
-- `BACKLOG.md` — Full consolidated backlog with file:line references
+- `BACKLOG.md` — Full consolidated backlog with fix status strikethroughs
 - `docs/architecture/PORT_SCOPE.md` — Port completion status
-- `docs/architecture/PORT_COMPLETION_PLAN.md` — Historical port plan (port is done)

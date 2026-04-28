@@ -73,10 +73,11 @@ This is a design principle, not a suggestion. AI agents connect to the same game
 
 ## Areas That Need Help
 
-- **Lua scripting engine (Phase 3)** — embedding gopher-lua and exposing the original Dark Pawns script API. 179 original scripts to eventually port, starting with the 4 trigger types.
-- **Web client (Phase 6)** — a proper browser-based MUD client. VT100 emulation, inventory panel, maybe a minimap.
-- **Telnet support (Phase 6)** — classic MUD clients (MUSHclient, TinTin++, Mudlet) via raw telnet with GMCP/MXP.
+- **Help system** — source files recovered from the original (`lib/text/help/`), but the Go port's `doHelp()` is stubbed. Wire up the .hlp file parser and build the help index.
+- **Spell system** — core framework is ported, many individual spells still need porting from `src/spells.c`.
+- **Web client** — a proper browser-based MUD client. VT100 emulation, inventory panel, maybe a minimap.
 - **World accuracy** — if you played the original and something feels off, it probably is. Open an issue.
+- **Documentation** — player guides, building tutorials, zone editor docs. The world is deep and undocumented in places.
 
 ---
 
