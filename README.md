@@ -215,7 +215,6 @@ Original C source: [rparet/darkpawns](https://github.com/rparet/darkpawns)
 
 ## Documentation
 
-- [Project plan & status](docs/GITHUB-REWRITE-PLAN.md) — this rewrite and what's next
 - [Architecture](docs/architecture/ARCHITECTURE.md) — detailed package reference and concurrency model
 - [Agent protocol](docs/architecture/agent-protocol.md) — agent WebSocket protocol spec
 - [Agent SDK](docs/architecture/agent-sdk.md) — agent SDK documentation
