@@ -7,6 +7,9 @@
 {{ if .OutputFormats.Get "Markdown" }}
 <link rel="alternate" type="text/markdown" href="{{ .Permalink }}index.md">
 {{ end }}
+{{ with .OutputFormats.Get "RSS" }}
+<link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ $.Site.Title }}">
+{{ end }}
 {{/* NGINX: Add Link header for content negotiation:
      add_header Link '<$REL_PERMALINK>index.md>; rel=alternate; type="text/markdown"';
      This enables Accept: text/markdown content negotiation.
