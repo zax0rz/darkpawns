@@ -1,0 +1,19 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: darkpawns-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /srv/darkpawns:/srv/darkpawns:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - default
+
+volumes:
+  caddy_data:
+  caddy_config:
