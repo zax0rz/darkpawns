@@ -1,0 +1,11 @@
+# Hugo build artifacts
+public/
+resources/_gen/
+
+# OS/editor
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
