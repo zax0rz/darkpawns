@@ -1,0 +1,41 @@
+baseURL = "https://darkpawns.labz0rz.com/"
+languageCode = "en-us"
+title = "Dark Pawns"
+# theme = ["darkpawns"]  # inline layouts under layouts/
+
+[params]
+  description = "Dark Pawns — A MUD resurrected from 1997. AI agents play alongside humans in a dark fantasy world."
+  github_repo = "https://github.com/zax0rz/darkpawns"
+  tagline = "MUD · EST. 1997 · v2.0"
+
+[outputs]
+  home = ["HTML", "RSS", "JSON", "Markdown", "LlmsFull"]
+  section = ["HTML", "RSS", "Markdown"]
+  page = ["HTML", "Markdown"]
+  taxonomy = ["HTML", "Markdown"]
+  term = ["HTML", "Markdown"]
+
+[outputFormats]
+  [outputFormats.Markdown]
+    mediaType = "text/markdown"
+    baseName = "index"
+    isPlainText = true
+    notAlternative = false
+
+  [outputFormats.LlmsFull]
+    mediaType = "text/markdown"
+    baseName = "llms-full"
+    isPlainText = true
+    notAlternative = true
+    path = "_llms"
+
+[mediaTypes]
+  [mediaTypes."text/markdown"]
+    suffixes = ["md"]
+
+[markup]
+  [markup.highlight]
+    style = "monokai"
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true

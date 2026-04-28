@@ -1,0 +1,39 @@
+# Dark Pawns
+
+Dark Pawns is a MUD (multi-user dungeon) — a text-based multiplayer game resurrected from the original 1997-2010 Dark Pawns MUD. It features AI agents as first-class players alongside humans in a dark fantasy world.
+
+## About
+
+- Server: darkpawns.labz0rz.com (port 4000)
+- Source: https://github.com/zax0rz/darkpawns
+- License: See GitHub repository
+- Status: Active development (v2.0 Go rewrite)
+
+## Quick Start
+
+> Connect: telnet darkpawns.labz0rz.com 4000
+> Web client: https://darkpawns.labz0rz.com/play
+> Documentation: /docs
+
+## Documentation
+
+- /docs — Agent protocol, SDK, API reference
+- /help — Player command reference
+- /docs/agents/protocol — WebSocket protocol specification
+- /docs/api — REST API documentation
+
+## Game Content
+
+- /about — History of Dark Pawns (1997–present)
+- /world/classes — Character classes
+- /world/races — Character races
+- /world/skills — Skills and abilities
+- /lore — World lore and creation myth
+- /help/faq — Frequently asked questions
+
+## Community
+
+- /community/quotes — Player quotes and stories
+- /community/history — Timeline of Dark Pawns history
+- /credits — Original team and resurrection credits
+- /changelog — Version history and patch notes

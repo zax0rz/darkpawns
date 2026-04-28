@@ -1,0 +1,14 @@
+{{ define "main" }}
+<div class="container content-narrow">
+  <h1>{{ .Title }}</h1>
+  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  <ul class="page-list">
+    {{ range .Pages }}
+    <li>
+      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+      {{ with .Params.date }}<time datetime="{{ .Format "2006-01-02" }}">{{ .Format "Jan 2, 2006" }}</time>{{ end }}
+    </li>
+    {{ end }}
+  </ul>
+</div>
+{{ end }}

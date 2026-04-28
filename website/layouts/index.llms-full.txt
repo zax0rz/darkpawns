@@ -1,0 +1,39 @@
+{{- define "main" -}}
+# {{ .Site.Title }}
+
+{{ .Site.Params.description }}
+
+## Pages
+
+{{- range .Site.RegularPages.ByWeight }}
+### {{ .Title }}
+
+{{ .Content }}
+
+---
+{{- end }}
+
+{{- range where .Site.Sections "Section" "docs" }}
+## {{ .Title }}
+
+{{- range .Pages }}
+### {{ .Title }}
+
+{{ .Content }}
+
+---
+{{- end }}
+{{- end }}
+
+{{- range where .Site.Sections "Section" "help" }}
+## {{ .Title }}
+
+{{- range .Pages }}
+### {{ .Title }}
+
+{{ .Content }}
+
+---
+{{- end }}
+{{- end }}
+{{- end }}

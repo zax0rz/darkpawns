@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Disallow: /play/
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://darkpawns.labz0rz.com/sitemap.xml

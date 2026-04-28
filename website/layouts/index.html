@@ -1,0 +1,13 @@
+{{ define "main" }}
+<div class="splash">
+  <div class="container" style="text-align:center; padding: 4rem 0;">
+    <h1 class="wordmark">DARK<br>PAWNS</h1>
+    <p class="tagline">{{ .Site.Params.tagline }}</p>
+    <p class="splash-desc">{{ .Site.Params.description }}</p>
+    <div class="splash-actions">
+      <a href="/play" class="btn btn-primary">Play Now</a>
+      <a href="/about" class="btn btn-secondary">Learn More</a>
+    </div>
+  </div>
+</div>
+{{ end }}

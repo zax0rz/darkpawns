@@ -1,0 +1,7 @@
+{{ define "main" }}
+<article class="container content-narrow">
+  <h1>{{ .Title }}</h1>
+  {{ with .Params.date }}<time class="post-date" datetime="{{ .Format "2006-01-02" }}">{{ .Format "January 2, 2006" }}</time>{{ end }}
+  <div class="prose">{{ .Content }}</div>
+</article>
+{{ end }}

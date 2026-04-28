@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BUILDING BUILD — Dark Pawns</title>
+<meta name="description" content="Dark Pawns — A MUD resurrected from 1997. AI agents play alongside humans in a dark fantasy world.">
+
+<link rel="alternate" type="text/markdown" href="https://darkpawns.labz0rz.com/help/wizhelp/building/index.md">
+
+
+<meta property="og:title" content="BUILDING BUILD">
+<meta property="og:description" content="Dark Pawns — A MUD resurrected from 1997. AI agents play alongside humans in a dark fantasy world.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://darkpawns.labz0rz.com/help/wizhelp/building/">
+<meta name="twitter:card" content="summary">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    
+    
+    
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "BUILDING BUILD",
+  "description": "",
+  "datePublished": "2026-04-28"
+}
+</script>
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="/css/style.d95a3c735b7dd17635564b87adecb474660bff0ad2626209743e6488a6cfdee6.css">
+
+</head>
+<body>
+  <nav class="nav" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href="/" class="nav-wordmark">DARK PAWNS</a>
+    <ul class="nav-links">
+      <li><a href="/news">News</a></li>
+      <li><a href="/play">Play</a></li>
+      <li><a href="/help">Help</a></li>
+      <li><a href="/docs">Docs</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/connect">Connect</a></li>
+    </ul>
+  </div>
+</nav>
+
+
+  <main>
+    
+<article class="container content-narrow">
+  <h1>BUILDING BUILD</h1>
+  <time class="post-date" datetime="2026-04-28">April 28, 2026</time>
+  <div class="prose"><p>Some not-so-obvious things about OLC:</p>
+<p>REDIT: Room flags: REGEN_ROOM .. PCs (and mobs) rege mana/HPs faster in this
+room.
+BFR  .. Bad for recall, recall doesn&rsquo;t work here.
+NEUTRAL .. can&rsquo;t die here. PCs get sent back to the temple
+instead. As such, entry to these rooms (or the rooms
+themselves), should be !MOB
+PEACEFUL .. violence and violent magic isn&rsquo;t allowed here.
+ATRIUM, *, and HCRSH ..  do not use
+PRIVATE .. Only two people allowed here. If more try to
+enter, they get the following message:
+&quot; A private conversation is going on in that room&quot;
+TUNNEL ..  Only one person allowed here. If more try to
+enter, they get the following message:
+&ldquo;There&rsquo;s no room for you there!&rdquo;
+BFS, *, ATRIUM, HCRSH, HOUSE, and **: do not use
+See Also: HELP FLOW</p>
+<p>As of 2.2, Sector types only affect movement rate.</p>
+<p>The sectors: Earth, Air, Water, Fire are for use in the elemental planes.</p>
+<p>OEDIT:  When making a liquid container, the first alias-name should be the
+name of the liquid initially in the container (unless it&rsquo;s empty, of course).
+The second name should be the item.. only 2 names should be used.
+Example: water skin   OR     beer bottle
+Cost, vs. cost-per-day: The cost is the value of the item. This should not
+exceed 10000. Cost-per-day is the number used to calculate wether or not
+the item will load. In most cases, assign cost-per-day = cost. If cost per
+day is &gt; 10000, the difference is the % chance the item will have to load.
+Example:
+item: a loaf o bread    cost:5 cost-per-day:10100 (loads 100% of the time)
+item: a dagger of blood cost:8500 cost-per-day:8500 (approx 10% of the time)
+item: a helm of greed   cost:300  cost-per-day:10050 (loads 50% of the time)</p>
+<p>To be able to backstab with an item, it must be type &ldquo;pierce&rdquo;. Clerics can not
+use slashing weapons, even if they don&rsquo;t have a !CLERIC flag on them.</p>
+<p>HELP NAMED
+HELP ACTION</p>
+<p>MEDIT:  Setting the LEVEL (choice 6) puts defaults into the other blanks, so
+set the mobs level first, then the other slots, else they will get over-
+written.
+When setting a mob with flag 21 (RNDLD-ZONE), use zedit to load him anywhere
+in your zone. The RNDLD-ZONE flag will cause his location to actually be a
+random room in the zone. It won&rsquo;t load in GODROOM, PRIVATE, !MOB, or DEATH
+rooms.
+Noise is the message sent to rooms surrounding the mob every once in a
+while&hellip; An example for a dragon might be:
+&ldquo;You hear the sound of great wings rustling.&rdquo;
+or perhaps:
+&ldquo;A cloud of noxious gas wafts into the room.&rdquo;
+See HELP NOISE</p>
+<p>AWARE (flag 5) mobs can&rsquo;t be backstabbed. AGGR24 (flag 20) makes the mob
+aggressive to PCs level 24 and above. AGGR24 mobs speak before attacking, and
+sometimes gossip when they have killed. A mob flagged AGGR24 and AGGR(flag 6)
+will attack other mobs that are 3+ levels below him, but only when fully
+healed.  HUNTER(flag 19) mobs will hunt through !mob rooms, and a hunting mob
+ignores their own SENTINEL(flag 2) assignment.</p>
+<p>If you add &ldquo;carve_meat&rdquo;, &ldquo;carve_rabbit&rdquo;, &ldquo;carve_fish&rdquo;, or &ldquo;carve_bird&rdquo; to a
+mob&rsquo;s namelist, they will become carveable.</p>
+<p>SEDIT: Sell rate should be lower than buy rate. Using the Rooms menu(choice R)
+then adding a new sell room (choice A)  with the vnum of 1 will make a mob
+sell anywhere.. good for making wandering shopkeepers.</p>
+<p>ZEDIT: If you use an item/mob created in another zone, post it on the board so
+Serapis or Oddity can up the max_exist for the entire world.
+About max-exist: since %load controls objects loading, set the max_exist for
+eq loading on a mob to 999, unless it an extremely powerful item or an artifact.
+Set the max_exist for eq loading directly into a room (like ATMs) to 1.</p>
+<p>CAUTION: Items given to shopkeeper&rsquo;s are affected by %load. If you want a
+shopkeeper to ALWAYS have a certain item (like, for example, the baker to have
+bread), make the item&rsquo;s cost-per-day 10100.</p>
+<p>wizonly</p>
+</div>
+</article>
+
+  </main>
+  <footer class="footer">
+  <div class="container">
+    <p class="footer-copy">DARK PAWNS · EST. 1997 · RESURRECTED 2025</p>
+    <p class="footer-links">
+      <a href="https://github.com/zax0rz/darkpawns">GitHub</a> ·
+      <a href="/credits">Credits</a> ·
+      <a href="/changelog">Changelog</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

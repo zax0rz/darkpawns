@@ -1,0 +1,99 @@
+{{ if .IsHome }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "{{ .Site.Title }}",
+  "description": "{{ .Site.Params.description }}",
+  "url": "{{ .Site.BaseURL }}"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Dark Pawns",
+  "applicationCategory": "Game",
+  "operatingSystem": "Any",
+  "description": "{{ .Site.Params.description }}",
+  "url": "{{ .Site.BaseURL }}",
+  "installUrl": "{{ .Site.BaseURL }}play",
+  "softwareVersion": "2.0",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+{{ else if .IsSection }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "{{ .Site.BaseURL }}"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ .Title }}",
+      "item": "{{ .Permalink }}"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ .Title }}",
+  "description": "{{ with .Params.description }}{{ . }}{{ end }}",
+  "datePublished": "{{ .Date.Format "2006-01-02" }}"
+}
+</script>
+{{ else if and (eq .Section "help") .Params.section }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {{ $pages := .Pages }}
+    {{ $len := len $pages }}
+    {{ range $i, $p := $pages }}
+    {
+      "@type": "Question",
+      "name": "{{ $p.Title }}",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": {{ $p.Plain | jsonify }}
+      }
+    }{{ if lt (add $i 1) $len }},{{ end }}
+    {{ end }}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ .Title }}",
+  "description": "{{ with .Params.description }}{{ . }}{{ end }}",
+  "datePublished": "{{ .Date.Format "2006-01-02" }}"
+}
+</script>
+{{ else }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ .Title }}",
+  "description": "{{ with .Params.description }}{{ . }}{{ end }}",
+  "datePublished": "{{ .Date.Format "2006-01-02" }}"
+}
+</script>
+{{ end }}
