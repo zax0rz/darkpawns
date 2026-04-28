@@ -163,7 +163,7 @@ func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
 	if err := w.attachObjectLocked(obj, dst); err != nil {
 		// Best-effort re-attach to old Location on failure
 		if rollbackErr := w.attachObjectLocked(obj, obj.Location); rollbackErr != nil {
-			slog.Error("move object rollback failed",
+			slog.Warn("move object rollback failed",
 				"obj_id", obj.ID, "obj_vnum", obj.VNum,
 				"target", dst.Kind,
 				"error", err,

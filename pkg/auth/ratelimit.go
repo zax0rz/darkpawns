@@ -94,60 +94,60 @@ func GetIPFromRequest(r *http.Request) string {
 
 // IPRateLimiter provides per-IP token-bucket rate limiting.
 type IPRateLimiter struct {
-	ips map[string]*rate.Limiter
-	mu  sync.RWMutex
+	ips    sync.Map // string -> *rate.Limiter
+	stopCh chan struct{}
+	once   sync.Once
 }
 
 func NewIPRateLimiter() *IPRateLimiter {
 	rl := &IPRateLimiter{
-		ips: make(map[string]*rate.Limiter),
+		stopCh: make(chan struct{}),
 	}
 	go rl.cleanupLoop()
 	return rl
 }
 
+// Stop terminates the background cleanup goroutine. Safe to call multiple times.
+func (i *IPRateLimiter) Stop() {
+	i.once.Do(func() { close(i.stopCh) })
+}
+
 func (i *IPRateLimiter) cleanupLoop() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		i.mu.Lock()
-		// Remove stale entries individually rather than nuking the entire map.
-		// The old approach (replace with empty map) let any IP with a full
-		// burst get a fresh limiter and bypass the rate limit window.
-		if len(i.ips) > 10000 {
-			// Keep entries that still have tokens remaining (recently active).
-			fresh := make(map[string]*rate.Limiter, len(i.ips))
-			for ip, limiter := range i.ips {
-				if limiter.Tokens() < float64(limiter.Burst()) {
-					fresh[ip] = limiter
+	for {
+		select {
+		case <-ticker.C:
+			// Remove stale entries individually rather than nuking the entire map.
+			// The old approach (replace with empty map) let any IP with a full
+			// burst get a fresh limiter and bypass the rate limit window.
+			count := 0
+			i.ips.Range(func(key, value any) bool {
+				count++
+				limiter := value.(*rate.Limiter)
+				if count > 10000 && limiter.Tokens() >= float64(limiter.Burst()) {
+					i.ips.Delete(key)
 				}
-			}
-			i.ips = fresh
+				return true
+			})
+		case <-i.stopCh:
+			return
 		}
-		i.mu.Unlock()
 	}
 }
 
 func (i *IPRateLimiter) AddIP(ip string) *rate.Limiter {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-
 	limiter := rate.NewLimiter(rate.Limit(5), 10) // 5 requests per second, burst of 10
-	i.ips[ip] = limiter
-
-	return limiter
+	actual, _ := i.ips.LoadOrStore(ip, limiter)
+	return actual.(*rate.Limiter)
 }
 
 func (i *IPRateLimiter) GetLimiter(ip string) *rate.Limiter {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-
-	limiter, exists := i.ips[ip]
-	if !exists {
-		return i.AddIP(ip)
+	actual, ok := i.ips.Load(ip)
+	if ok {
+		return actual.(*rate.Limiter)
 	}
-
-	return limiter
+	return i.AddIP(ip)
 }
 
 // ---------------------------------------------------------------------------

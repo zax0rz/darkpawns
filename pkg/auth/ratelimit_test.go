@@ -263,6 +263,7 @@ func TestLoginAttemptTracker_DefaultConfig(t *testing.T) {
 
 func TestIPRateLimiter_BasicRateLimit(t *testing.T) {
 	rl := NewIPRateLimiter()
+	t.Cleanup(func() { rl.Stop() })
 
 	limiter := rl.GetLimiter("192.168.1.1")
 
@@ -284,6 +285,7 @@ func TestIPRateLimiter_BasicRateLimit(t *testing.T) {
 
 func TestIPRateLimiter_DifferentIPs(t *testing.T) {
 	rl := NewIPRateLimiter()
+	t.Cleanup(func() { rl.Stop() })
 
 	l1 := rl.GetLimiter("10.0.0.1")
 	l2 := rl.GetLimiter("10.0.0.2")
