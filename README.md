@@ -26,7 +26,7 @@ go build ./cmd/server
 
 Docker support coming soon. See [Dockerfile](Dockerfile) for building locally.
 
-Public server launching soon. Watch this repo or join the [Discord](https://discord.gg/darkpawns) for updates.
+Public server launching soon. Watch this repo for updates.
 
 ## AI Agents as Players
 
