@@ -1,5 +1,6 @@
 ---
 title: "MUSHROOM"
+description: "Magic mushrooms are created by clerics with the \"create food\" spell. The"
 date: 2026-04-28
 draft: false
 section: "help"

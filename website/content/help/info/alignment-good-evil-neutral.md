@@ -1,5 +1,6 @@
 ---
 title: "ALIGNMENT GOOD EVIL NEUTRAL"
+description: "Alignment is the measure of how Good, Evil or Neutral you are, relative"
 date: 2026-04-28
 draft: false
 section: "help"

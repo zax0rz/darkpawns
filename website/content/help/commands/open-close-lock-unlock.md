@@ -1,5 +1,6 @@
 ---
 title: "OPEN CLOSE LOCK UNLOCK"
+description: "Usage: open | close | lock | unlock <door> [direction]"
 date: 2026-04-28
 draft: false
 section: "help"

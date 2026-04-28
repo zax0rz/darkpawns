@@ -1,5 +1,6 @@
 ---
 title: "'ACT FLAGS'"
+description: "Each control character is preceded by a '$'."
 date: 2026-04-28
 draft: false
 section: "help"

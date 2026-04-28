@@ -1,5 +1,6 @@
 ---
 title: "WIZAT"
+description: "Usage: at <room VNUM | item | mob | player name> <command> <arguments>"
 date: 2026-04-28
 draft: false
 section: "help"

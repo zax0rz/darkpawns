@@ -1,5 +1,6 @@
 ---
 title: "'DISPEL GOOD'"
+description: "Usage       : cast 'dispel good' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

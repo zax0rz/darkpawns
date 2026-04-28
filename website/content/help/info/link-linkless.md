@@ -1,5 +1,6 @@
 ---
 title: "LINK LINKLESS"
+description: "A lot of players have problems with their links to the game.  This can be"
 date: 2026-04-28
 draft: false
 section: "help"

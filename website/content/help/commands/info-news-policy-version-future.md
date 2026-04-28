@@ -1,5 +1,6 @@
 ---
 title: "INFO NEWS POLICY VERSION FUTURE"
+description: "These commands show you important information about Dark Pawns.  It is a good"
 date: 2026-04-28
 draft: false
 section: "help"

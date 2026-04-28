@@ -1,5 +1,6 @@
 ---
 title: "KENDER"
+description: "Kender are small, kind, but somewhat annoying, elf-like beings that have"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "QUAFF POTION POTIONS"
+description: "Usage: quaff <potion>"
 date: 2026-04-28
 draft: false
 section: "help"

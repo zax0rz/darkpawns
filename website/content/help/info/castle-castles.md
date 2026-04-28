@@ -1,5 +1,6 @@
 ---
 title: "CASTLE CASTLES"
+description: "On Dark Pawns, castles are a generic term for structures owned"
 date: 2026-04-28
 draft: false
 section: "help"

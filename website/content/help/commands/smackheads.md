@@ -1,5 +1,6 @@
 ---
 title: "SMACKHEADS"
+description: "Usage: smackheads <victim1> <victim2>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "GUILD GUILDS"
+description: "The Guildhouse is the place where mortals may go to escape the troubles"
 date: 2026-04-28
 draft: false
 section: "help"

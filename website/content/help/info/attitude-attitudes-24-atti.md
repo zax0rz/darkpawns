@@ -1,5 +1,6 @@
 ---
 title: "ATTITUDE ATTITUDES 24 ATTI"
+description: "At level 24, certain high-level mobs start paying a lot more attention to"
 date: 2026-04-28
 draft: false
 section: "help"

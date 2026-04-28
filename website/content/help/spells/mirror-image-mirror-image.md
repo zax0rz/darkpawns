@@ -1,5 +1,6 @@
 ---
 title: "'MIRROR IMAGE' MIRROR IMAGE"
+description: "Usage: will 'mirror image'"
 date: 2026-04-28
 draft: false
 section: "help"

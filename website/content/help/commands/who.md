@@ -1,5 +1,6 @@
 ---
 title: "WHO"
+description: "Usage: who [minlev[-maxlev]] [-n sname] [-c classlist] [-s] [-o] [-q]"
 date: 2026-04-28
 draft: false
 section: "help"

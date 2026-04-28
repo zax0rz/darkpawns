@@ -1,5 +1,6 @@
 ---
 title: "'CHILL TOUCH'"
+description: "Usage       : cast 'chill touch' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

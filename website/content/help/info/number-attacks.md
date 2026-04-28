@@ -1,5 +1,6 @@
 ---
 title: "NUMBER ATTACKS"
+description: "All classes get a chance for a third attack at level 30, warrior and"
 date: 2026-04-28
 draft: false
 section: "help"

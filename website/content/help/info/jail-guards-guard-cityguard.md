@@ -1,5 +1,6 @@
 ---
 title: "JAIL GUARDS GUARD CITYGUARD"
+description: "Kir Drax'in Law states that no violence is allowed in the city. Offenders"
 date: 2026-04-28
 draft: false
 section: "help"

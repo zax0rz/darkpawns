@@ -1,5 +1,6 @@
 ---
 title: "PK 'PLAYER KILLING' PKILL PKILLING PKILLER"
+description: "Player killing is allowed on Dark Pawns but, as in life, there can be"
 date: 2026-04-28
 draft: false
 section: "help"

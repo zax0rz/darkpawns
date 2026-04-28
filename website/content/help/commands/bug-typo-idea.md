@@ -1,5 +1,6 @@
 ---
 title: "BUG TYPO IDEA"
+description: "Usage: bug <bug report>"
 date: 2026-04-28
 draft: false
 section: "help"

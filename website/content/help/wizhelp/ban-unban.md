@@ -1,5 +1,6 @@
 ---
 title: "BAN UNBAN"
+description: "Usage: ban [<all | new | select> <site>]"
 date: 2026-04-28
 draft: false
 section: "help"

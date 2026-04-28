@@ -1,5 +1,6 @@
 ---
 title: "TURN"
+description: "With this power, a cleric or avatar can cause undead forces in the same"
 date: 2026-04-28
 draft: false
 section: "help"

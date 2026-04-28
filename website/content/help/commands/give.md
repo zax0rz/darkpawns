@@ -1,5 +1,6 @@
 ---
 title: "GIVE"
+description: "Usage: give <object> <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

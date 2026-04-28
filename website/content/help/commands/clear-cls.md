@@ -1,5 +1,6 @@
 ---
 title: "CLEAR CLS"
+description: "Clears the screen."
 date: 2026-04-28
 draft: false
 section: "help"

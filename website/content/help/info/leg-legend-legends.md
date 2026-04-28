@@ -1,5 +1,6 @@
 ---
 title: "LEG LEGEND LEGENDS"
+description: "These are gods that have contributed a lot to the world that is Dark Pawns."
 date: 2026-04-28
 draft: false
 section: "help"

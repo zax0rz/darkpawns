@@ -1,5 +1,6 @@
 ---
 title: "CIRCLE"
+description: "Usage	: 	circle <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

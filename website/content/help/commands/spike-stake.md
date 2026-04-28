@@ -1,5 +1,6 @@
 ---
 title: "SPIKE STAKE"
+description: "Usage: SPIKE <werewolf name>"
 date: 2026-04-28
 draft: false
 section: "help"

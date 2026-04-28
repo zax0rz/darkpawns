@@ -1,5 +1,6 @@
 ---
 title: "'HOLY WARD' WARD"
+description: "Usage	    : cast 'holy ward' <target>"
 date: 2026-04-28
 draft: false
 section: "help"

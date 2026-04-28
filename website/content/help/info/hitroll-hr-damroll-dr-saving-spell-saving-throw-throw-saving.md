@@ -1,5 +1,6 @@
 ---
 title: "HITROLL HR DAMROLL DR 'SAVING SPELL' 'SAVING THROW' THROW SAVING"
+description: "Hitroll, Damroll and Saving Throws are some of the raw mechanics"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "WIZNET ;"
+description: "The immortal communication channel."
 date: 2026-04-28
 draft: false
 section: "help"

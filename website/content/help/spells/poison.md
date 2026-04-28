@@ -1,5 +1,6 @@
 ---
 title: "POISON"
+description: "Usage       : cast 'poison' <victim | food | drink>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "CODE CODING"
+description: "The source code that runs Dark Pawns was originally based on CircleMUD"
 date: 2026-04-28
 draft: false
 section: "help"

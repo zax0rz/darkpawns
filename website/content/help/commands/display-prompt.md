@@ -1,5 +1,6 @@
 ---
 title: "DISPLAY PROMPT"
+description: "Usage: prompt < H | M | V | T | F | all | off >"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "BRIBE HIRE"
+description: "Mercenaries can be hired, the current market rate is about 100 coins."
 date: 2026-04-28
 draft: false
 section: "help"

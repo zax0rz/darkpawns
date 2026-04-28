@@ -1,5 +1,6 @@
 ---
 title: "ALIAS ALIASES"
+description: "Usage: alias [alias name] [command]"
 date: 2026-04-28
 draft: false
 section: "help"

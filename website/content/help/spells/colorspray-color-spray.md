@@ -1,5 +1,6 @@
 ---
 title: "COLORSPRAY 'COLOR SPRAY'"
+description: "Usage       : cast 'color spray' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "'DEATH TRAP' DT"
+description: "A \"death-trap\" is a place in the world which upon entering you are"
 date: 2026-04-28
 draft: false
 section: "help"

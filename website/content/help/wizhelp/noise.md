@@ -1,5 +1,6 @@
 ---
 title: "NOISE"
+description: "The noise option for mobs adds an interesting element to the mud."
 date: 2026-04-28
 draft: false
 section: "help"

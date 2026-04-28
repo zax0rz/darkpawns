@@ -1,5 +1,6 @@
 ---
 title: "LEVITATE"
+description: "Usage	: will 'levitate' <self>"
 date: 2026-04-28
 draft: false
 section: "help"

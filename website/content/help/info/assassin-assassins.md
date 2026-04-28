@@ -1,5 +1,6 @@
 ---
 title: "ASSASSIN ASSASSINS"
+description: "Assassins are cold and deadly killers for hire, whose knowledge of"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "COMPARE"
+description: "Usage	:	compare <item1> <item2>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "AVATAR AVATARS"
+description: "Avatars are the emissaries of the Holy Forces in the land, deriving their"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "VNUM"
+description: "Usage: vnum <mob | obj> <name>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "TANK"
+description: "The tank is defined as \"the person being hit by the person you are"
 date: 2026-04-28
 draft: false
 section: "help"

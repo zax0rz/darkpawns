@@ -1,5 +1,6 @@
 ---
 title: "PSIONICIST PSIONICS PSIONIST PSIONIC PSIONICS"
+description: "A Psionicist (Psionic) is the master of the mind. The amazing mental"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "REROLL"
+description: "Usage: reroll <player>"
 date: 2026-04-28
 draft: false
 section: "help"

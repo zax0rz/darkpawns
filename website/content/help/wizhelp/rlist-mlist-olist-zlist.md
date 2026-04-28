@@ -1,5 +1,6 @@
 ---
 title: "RLIST MLIST OLIST ZLIST"
+description: "Usage: rlist <zone-number>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "WRITE"
+description: "Usage: write <object>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "QUIT"
+description: "When you get tired of playing, you can leave the game by typing 'quit'."
 date: 2026-04-28
 draft: false
 section: "help"

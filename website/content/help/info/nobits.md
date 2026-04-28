@@ -1,5 +1,6 @@
 ---
 title: "NOBITS"
+description: "The term \"NOBITS\" is mud slang for \"Has no bits\". What it means,"
 date: 2026-04-28
 draft: false
 section: "help"

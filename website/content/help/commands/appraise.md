@@ -1,5 +1,6 @@
 ---
 title: "APPRAISE"
+description: "Usage	: appraise <object in inventory>"
 date: 2026-04-28
 draft: false
 section: "help"

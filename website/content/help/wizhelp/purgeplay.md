@@ -1,5 +1,6 @@
 ---
 title: "PURGEPLAY"
+description: "This is done periodically by an admin to clean out stale players.  These"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "EXPERIENCE XP"
+description: "Whenever you kill a monster, you earn experience points.  When enough"
 date: 2026-04-28
 draft: false
 section: "help"

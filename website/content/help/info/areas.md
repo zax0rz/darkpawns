@@ -1,5 +1,6 @@
 ---
 title: "AREAS"
+description: "Yep, there are some, go find 'em. The world is designed to be contiguous;"
 date: 2026-04-28
 draft: false
 section: "help"

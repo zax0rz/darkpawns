@@ -1,5 +1,6 @@
 ---
 title: "CHARISMA WISDOM INTELLIGENCE STRENGTH DEXTERITY CONSTITUTION STATISTICS STATS"
+description: "Statistics affect more facets of the game than can be listed."
 date: 2026-04-28
 draft: false
 section: "help"

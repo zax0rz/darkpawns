@@ -1,5 +1,6 @@
 ---
 title: "CHECK MAIL RECEIVE"
+description: "Usage: check"
 date: 2026-04-28
 draft: false
 section: "help"

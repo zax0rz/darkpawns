@@ -1,5 +1,6 @@
 ---
 title: "RACE RACES"
+description: "Your race is pretty much class independent; Certain things are affected,"
 date: 2026-04-28
 draft: false
 section: "help"

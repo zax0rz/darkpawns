@@ -1,5 +1,6 @@
 ---
 title: "'SHOCKING GRASP'"
+description: "Usage       : cast 'shocking grasp' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

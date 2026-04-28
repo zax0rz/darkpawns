@@ -1,5 +1,6 @@
 ---
 title: "USE WAND STAFF STAFFS WANDS"
+description: "Usage: use <staff>"
 date: 2026-04-28
 draft: false
 section: "help"

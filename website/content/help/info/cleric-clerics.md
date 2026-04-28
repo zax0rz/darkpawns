@@ -1,5 +1,6 @@
 ---
 title: "CLERIC CLERICS"
+description: "Clerics have an ancient belief in not carrying sharp weapons.  Hence,"
 date: 2026-04-28
 draft: false
 section: "help"

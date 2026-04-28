@@ -1,5 +1,6 @@
 ---
 title: "'MENTAL LAPSE' MENTAL LAPSE"
+description: "Usage	: will 'mental lapse' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

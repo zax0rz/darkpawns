@@ -1,5 +1,6 @@
 ---
 title: "REIMBURSE REIMBURSEMENT"
+description: "If you loose your equipment as a result of a crash or other game"
 date: 2026-04-28
 draft: false
 section: "help"

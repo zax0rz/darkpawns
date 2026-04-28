@@ -1,5 +1,6 @@
 ---
 title: "SLEEPER"
+description: "The legendary sleeper hold. Just grab your opponent by the neck and soon"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "'PSYCHIC SHIELD' PSYCHIC"
+description: "Usage: will 'psychic shield' self"
 date: 2026-04-28
 draft: false
 section: "help"

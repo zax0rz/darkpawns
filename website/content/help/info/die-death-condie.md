@@ -1,5 +1,6 @@
 ---
 title: "DIE DEATH CONDIE"
+description: "When you die, you come back into the game in the temple. (Unless you own"
 date: 2026-04-28
 draft: false
 section: "help"

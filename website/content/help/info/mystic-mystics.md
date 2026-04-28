@@ -1,5 +1,6 @@
 ---
 title: "MYSTIC MYSTICS"
+description: "The Mystic is an esthetic, a psionicist who has achieved a level of peace"
 date: 2026-04-28
 draft: false
 section: "help"

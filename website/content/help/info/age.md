@@ -1,5 +1,6 @@
 ---
 title: "AGE"
+description: "Age is the game mechanic that measures how old your character is in"
 date: 2026-04-28
 draft: false
 section: "help"

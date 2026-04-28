@@ -1,5 +1,6 @@
 ---
 title: "BUILDING BUILD"
+description: "Some not-so-obvious things about OLC:"
 date: 2026-04-28
 draft: false
 section: "help"

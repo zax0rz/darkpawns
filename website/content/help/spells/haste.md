@@ -1,5 +1,6 @@
 ---
 title: "HASTE"
+description: "Usage		: will 'haste' <self>"
 date: 2026-04-28
 draft: false
 section: "help"

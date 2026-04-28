@@ -1,5 +1,6 @@
 ---
 title: "WHOD"
+description: "The who daemon is run on a separate port. The following commands exists:"
 date: 2026-04-28
 draft: false
 section: "help"

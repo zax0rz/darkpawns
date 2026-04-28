@@ -1,5 +1,6 @@
 ---
 title: "'CONTROL WEATHER'"
+description: "Usage       : cast 'control weather' <'better' | 'worse'>"
 date: 2026-04-28
 draft: false
 section: "help"

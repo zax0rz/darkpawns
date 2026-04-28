@@ -1,5 +1,6 @@
 ---
 title: "'CHARM PERSON'"
+description: "Usage       : cast 'charm person' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

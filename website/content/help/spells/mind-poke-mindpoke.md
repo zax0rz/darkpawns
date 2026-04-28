@@ -1,5 +1,6 @@
 ---
 title: "'MIND POKE' MINDPOKE"
+description: "Usage: will 'mind poke' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "MULTI MULTIPLAY MULTI-PLAY"
+description: "Dark Pawns has been designed to be a challenging mud.  Because of this,"
 date: 2026-04-28
 draft: false
 section: "help"

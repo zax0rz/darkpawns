@@ -1,5 +1,6 @@
 ---
 title: "MAGUS"
+description: "The Magus represents the extreme power of magickal spellcraft, wielding"
 date: 2026-04-28
 draft: false
 section: "help"

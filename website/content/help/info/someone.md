@@ -1,5 +1,6 @@
 ---
 title: "SOMEONE"
+description: "When you see something like:"
 date: 2026-04-28
 draft: false
 section: "help"

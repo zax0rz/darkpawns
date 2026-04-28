@@ -1,5 +1,6 @@
 ---
 title: "OUTLAW OUTLAWS"
+description: "You are an OUTLAW on Dark Pawns if you have pkilled or stolen from another"
 date: 2026-04-28
 draft: false
 section: "help"

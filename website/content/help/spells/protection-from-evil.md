@@ -1,5 +1,6 @@
 ---
 title: "'PROTECTION FROM EVIL'"
+description: "Usage       : cast 'protection from evil' <self>"
 date: 2026-04-28
 draft: false
 section: "help"

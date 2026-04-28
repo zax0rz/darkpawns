@@ -1,5 +1,6 @@
 ---
 title: "DC"
+description: "Usage: dc <descriptor number>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "'MASS HEAL'"
+description: "Usage: cast 'mass heal' <target>"
 date: 2026-04-28
 draft: false
 section: "help"

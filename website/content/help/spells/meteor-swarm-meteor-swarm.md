@@ -1,5 +1,6 @@
 ---
 title: "'METEOR SWARM' METEOR SWARM"
+description: "Usage: cast 'meteor swarm'"
 date: 2026-04-28
 draft: false
 section: "help"

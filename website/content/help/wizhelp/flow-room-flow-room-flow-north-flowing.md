@@ -1,5 +1,6 @@
 ---
 title: "FLOW ROOM_FLOW ROOM_FLOW_NORTH FLOWING"
+description: "These rooms push the inhabitants in the direction specified. The message"
 date: 2026-04-28
 draft: false
 section: "help"

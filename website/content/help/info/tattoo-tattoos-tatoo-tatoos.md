@@ -1,5 +1,6 @@
 ---
 title: "TATTOO TATTOOS TATOO TATOOS"
+description: "Tattoos are available from tattooists in most major cities, plus various"
 date: 2026-04-28
 draft: false
 section: "help"

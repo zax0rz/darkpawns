@@ -1,5 +1,6 @@
 ---
 title: "AUTO LOOT SPLIT"
+description: "Usage: auto [ <option> ]"
 date: 2026-04-28
 draft: false
 section: "help"

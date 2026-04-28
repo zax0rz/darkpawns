@@ -1,5 +1,6 @@
 ---
 title: "'ENERGY DRAIN'"
+description: "Usage       : cast 'energy drain' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

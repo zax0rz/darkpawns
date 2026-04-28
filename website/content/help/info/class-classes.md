@@ -1,5 +1,6 @@
 ---
 title: "CLASS CLASSES"
+description: "See help on individual classes: THIEF CLERIC WARRIOR MAGE NINJA PSIONIC"
 date: 2026-04-28
 draft: false
 section: "help"

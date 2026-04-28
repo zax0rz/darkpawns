@@ -1,5 +1,6 @@
 ---
 title: "ANSI COLOR"
+description: "Usage: color [off | sparse | normal | complete]"
 date: 2026-04-28
 draft: false
 section: "help"

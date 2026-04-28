@@ -1,5 +1,6 @@
 ---
 title: "CIRCLEMUD"
+description: "C  I  R  C  L  E  M  U  D     3  .  0"
 date: 2026-04-28
 draft: false
 section: "help"

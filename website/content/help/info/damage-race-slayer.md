@@ -1,5 +1,6 @@
 ---
 title: "DAMAGE RACE_SLAYER"
+description: "Some equipment is identified as: \"Does extra damage to race: <xxx>\""
 date: 2026-04-28
 draft: false
 section: "help"

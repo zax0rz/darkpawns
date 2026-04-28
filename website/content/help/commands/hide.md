@@ -1,5 +1,6 @@
 ---
 title: "HIDE"
+description: "When you type hide there is a chance that you hide in the room.  If hidden"
 date: 2026-04-28
 draft: false
 section: "help"

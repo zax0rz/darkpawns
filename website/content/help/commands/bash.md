@@ -1,5 +1,6 @@
 ---
 title: "BASH"
+description: "The success of a bash depends upon how well you are learned.  To bash someone"
 date: 2026-04-28
 draft: false
 section: "help"

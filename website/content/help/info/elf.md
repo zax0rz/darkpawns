@@ -1,5 +1,6 @@
 ---
 title: "ELF"
+description: "Though their lives span several human generations, elves appear at first"
 date: 2026-04-28
 draft: false
 section: "help"

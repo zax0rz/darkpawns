@@ -1,5 +1,6 @@
 ---
 title: "PSTEAL 'PLAYER STEALING' PSTEALING"
+description: "Stealing from other players is allowed on Dark Pawns."
 date: 2026-04-28
 draft: false
 section: "help"

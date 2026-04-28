@@ -1,5 +1,6 @@
 ---
 title: "'ESCAPE OF THE MONGOOSE' ESCAPE"
+description: "Usage: escape"
 date: 2026-04-28
 draft: false
 section: "help"

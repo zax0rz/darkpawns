@@ -1,5 +1,6 @@
 ---
 title: "GOD GODS"
+description: "The Gods of Dark Pawns are a mysterious lot, preferring to remain"
 date: 2026-04-28
 draft: false
 section: "help"

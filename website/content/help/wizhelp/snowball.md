@@ -1,5 +1,6 @@
 ---
 title: "SNOWBALL"
+description: "Snowball is just a social -- it prints a funny message, and nothing more."
 date: 2026-04-28
 draft: false
 section: "help"

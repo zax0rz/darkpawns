@@ -1,5 +1,6 @@
 ---
 title: "ACTION A-DESC"
+description: "The A-desc (action desc) of objs is used for held wands, held staves, scrolls"
 date: 2026-04-28
 draft: false
 section: "help"

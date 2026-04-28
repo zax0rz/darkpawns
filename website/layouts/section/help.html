@@ -9,7 +9,7 @@
     {{ range .Pages }}
     <a href="{{ .RelPermalink }}" class="card" style="border-bottom:none">
       <h2>{{ .Title }}</h2>
-      {{ with .Params.summary }}<p>{{ . }}</p>{{ end }}
+      {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
     </a>
     {{ end }}
   </div>

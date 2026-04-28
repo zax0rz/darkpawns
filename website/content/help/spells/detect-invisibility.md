@@ -1,5 +1,6 @@
 ---
 title: "'DETECT INVISIBILITY'"
+description: "Usage       : cast 'detect invisibility' [self]"
 date: 2026-04-28
 draft: false
 section: "help"

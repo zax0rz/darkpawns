@@ -1,5 +1,6 @@
 ---
 title: "SHOOT BOW ARROW"
+description: "Usage: shoot <projectile name> <direction> <target name>"
 date: 2026-04-28
 draft: false
 section: "help"

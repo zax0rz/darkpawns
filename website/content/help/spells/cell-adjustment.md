@@ -1,5 +1,6 @@
 ---
 title: "'CELL ADJUSTMENT'"
+description: "Usage       : will 'cell adjustment' <self>"
 date: 2026-04-28
 draft: false
 section: "help"

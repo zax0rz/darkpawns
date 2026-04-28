@@ -1,5 +1,6 @@
 ---
 title: "NAMED"
+description: "Named items: These objects should have a namelist consisting of the short"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "BOARDS"
+description: "Bulletin boards are the forum of inter-player communication on the MUD."
 date: 2026-04-28
 draft: false
 section: "help"

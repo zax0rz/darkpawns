@@ -1,5 +1,6 @@
 ---
 title: "MANA"
+description: "Mana is used when casting spells.  You must have a certain amount of mana"
 date: 2026-04-28
 draft: false
 section: "help"

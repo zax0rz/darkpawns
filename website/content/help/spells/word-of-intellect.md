@@ -1,5 +1,6 @@
 ---
 title: "'WORD OF INTELLECT'"
+description: "Usage       : cast 'word of intellect'"
 date: 2026-04-28
 draft: false
 section: "help"

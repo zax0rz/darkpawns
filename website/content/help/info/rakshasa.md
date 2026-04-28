@@ -1,5 +1,6 @@
 ---
 title: "RAKSHASA"
+description: "Rakshasas are a race of malevolent spirits encased in flesh that hunt and"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "SETHUNT"
+description: "Usage: sethunt <victim> <hunter>"
 date: 2026-04-28
 draft: false
 section: "help"

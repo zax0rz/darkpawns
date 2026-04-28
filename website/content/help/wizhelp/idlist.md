@@ -1,5 +1,6 @@
 ---
 title: "IDLIST"
+description: "This creates a text file on the server with a list of all the items in the"
 date: 2026-04-28
 draft: false
 section: "help"

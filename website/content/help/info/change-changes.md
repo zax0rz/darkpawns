@@ -1,5 +1,6 @@
 ---
 title: "CHANGE CHANGES"
+description: "Too many things have changed on Dark Pawns 2.2 for them to be listed here."
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "NINJA NINJAS"
+description: "The ninja is a member of the oriental society of mercenaries; A master"
 date: 2026-04-28
 draft: false
 section: "help"

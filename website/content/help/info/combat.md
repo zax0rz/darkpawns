@@ -1,5 +1,6 @@
 ---
 title: "COMBAT"
+description: "Combat is the very essence of Dark Pawns, when it is just the player or"
 date: 2026-04-28
 draft: false
 section: "help"

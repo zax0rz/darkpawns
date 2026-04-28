@@ -1,5 +1,6 @@
 ---
 title: "'PICK LOCKS' LOCKS LOCKPICKS PICKS"
+description: "Usage: pick <lock name> [direction]"
 date: 2026-04-28
 draft: false
 section: "help"

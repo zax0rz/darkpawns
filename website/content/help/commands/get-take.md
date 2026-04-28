@@ -1,5 +1,6 @@
 ---
 title: "GET TAKE"
+description: "\"Get\" and \"take\" are exactly the same and can be used interchangeably."
 date: 2026-04-28
 draft: false
 section: "help"

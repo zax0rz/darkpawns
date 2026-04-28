@@ -9,7 +9,7 @@
     <article class="news-entry">
       <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
       <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
-      {{ with .Params.summary }}<p>{{ . }}</p>{{ end }}
+      {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
     </article>
     {{ end }}
   {{ else }}

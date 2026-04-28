@@ -1,5 +1,6 @@
 ---
 title: "EAT DRINK SIP TASTE"
+description: "Usage: eat <item>"
 date: 2026-04-28
 draft: false
 section: "help"

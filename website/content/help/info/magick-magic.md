@@ -1,5 +1,6 @@
 ---
 title: "MAGICK MAGIC"
+description: "Magick is defined as the energy field that surrounds the world, giving"
 date: 2026-04-28
 draft: false
 section: "help"

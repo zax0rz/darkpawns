@@ -1,5 +1,6 @@
 ---
 title: "'CONJURE ELEMENTAL' CONJURE ELEMENTAL"
+description: "Usage		: cast 'conjure elemental'"
 date: 2026-04-28
 draft: false
 section: "help"

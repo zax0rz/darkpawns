@@ -1,5 +1,6 @@
 ---
 title: "VAMPIRISM VAMPIRE VAMPIRES"
+description: "Notorious for their sharp fangs and aversion to wooden STAKEs and garlic,"
 date: 2026-04-28
 draft: false
 section: "help"

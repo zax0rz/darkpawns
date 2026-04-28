@@ -1,5 +1,6 @@
 ---
 title: "SAY TELL ASK WHISPER SHOUT HOLLER '"
+description: "Usage: say | shout | holler <string>"
 date: 2026-04-28
 draft: false
 section: "help"

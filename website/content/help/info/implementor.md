@@ -1,5 +1,6 @@
 ---
 title: "IMPLEMENTOR"
+description: "The most powerful being in existence."
 date: 2026-04-28
 draft: false
 section: "help"

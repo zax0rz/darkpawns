@@ -1,5 +1,6 @@
 ---
 title: "SMOKESCREEN SMOKE"
+description: "Usage       : cast 'smokescreen'"
 date: 2026-04-28
 draft: false
 section: "help"

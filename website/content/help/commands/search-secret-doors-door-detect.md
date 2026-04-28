@@ -1,5 +1,6 @@
 ---
 title: "SEARCH SECRET DOORS DOOR DETECT"
+description: "Usage: search"
 date: 2026-04-28
 draft: false
 section: "help"

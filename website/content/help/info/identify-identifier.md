@@ -1,5 +1,6 @@
 ---
 title: "IDENTIFY IDENTIFIER"
+description: "Ferrenx the Identifer, whose shop is located off of Main Street in the"
 date: 2026-04-28
 draft: false
 section: "help"

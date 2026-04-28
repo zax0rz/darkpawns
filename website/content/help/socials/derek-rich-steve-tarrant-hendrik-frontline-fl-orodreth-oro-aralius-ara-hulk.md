@@ -1,5 +1,6 @@
 ---
 title: "DEREK RICH STEVE TARRANT HENDRIK FRONTLINE FL ORODRETH ORO ARALIUS ARA HULK"
+description: "Shit, he's beyond help."
 date: 2026-04-28
 draft: false
 section: "help"

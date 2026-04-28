@@ -1,5 +1,6 @@
 ---
 title: "MOONGATE MOON"
+description: "There exists an extraordinary cosmic association between the gravity of"
 date: 2026-04-28
 draft: false
 section: "help"

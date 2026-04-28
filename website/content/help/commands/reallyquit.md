@@ -1,5 +1,6 @@
 ---
 title: "REALLYQUIT"
+description: "Use this command if you really want to quit and lose all your equipment."
 date: 2026-04-28
 draft: false
 section: "help"

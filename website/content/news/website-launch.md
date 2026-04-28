@@ -1,7 +1,7 @@
 ---
 title: "A Proper Website (Finally)"
 date: 2026-04-28
-summary: "The archive is online. 475 help files, class descriptions, lore, quotes, and a cream-paper design that would make Stephen King nod."
+description: "The archive is online. 475 help files, class descriptions, lore, quotes, and a cream-paper design that would make Stephen King nod."
 draft: false
 ---
 

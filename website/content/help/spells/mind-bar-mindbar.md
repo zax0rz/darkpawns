@@ -1,5 +1,6 @@
 ---
 title: "'MIND BAR' MINDBAR"
+description: "Usage: will 'mind bar' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

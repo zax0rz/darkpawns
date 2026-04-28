@@ -1,5 +1,6 @@
 ---
 title: "REMOVE"
+description: "Usage: remove <item>"
 date: 2026-04-28
 draft: false
 section: "help"

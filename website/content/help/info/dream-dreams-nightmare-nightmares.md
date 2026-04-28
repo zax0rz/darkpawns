@@ -1,5 +1,6 @@
 ---
 title: "DREAM DREAMS NIGHTMARE NIGHTMARES"
+description: "When you sleep on Dark Pawns, there is a good chance that you might DREAM."
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "SYSLOG"
+description: "Usage: syslog [off | brief | normal | complete]"
 date: 2026-04-28
 draft: false
 section: "help"

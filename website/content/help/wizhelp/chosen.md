@@ -1,5 +1,6 @@
 ---
 title: "CHOSEN"
+description: "The CHOSEN flag means a mortal is chosen of the gods."
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "HOMETOWN HOMETOWNS"
+description: "Your hometown is the city that you have residence in.  Being a citizen in"
 date: 2026-04-28
 draft: false
 section: "help"

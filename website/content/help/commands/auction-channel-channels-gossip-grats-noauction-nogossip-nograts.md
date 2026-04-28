@@ -1,5 +1,6 @@
 ---
 title: "AUCTION CHANNEL CHANNELS GOSSIP GRATS NOAUCTION NOGOSSIP NOGRATS"
+description: "Usage: auction <message>"
 date: 2026-04-28
 draft: false
 section: "help"

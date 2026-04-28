@@ -1,5 +1,6 @@
 ---
 title: "CREDITS"
+description: "The 'credits' command lists the DikuMUD credits."
 date: 2026-04-28
 draft: false
 section: "help"

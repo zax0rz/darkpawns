@@ -1,5 +1,6 @@
 ---
 title: "ENCUMBRANCE WEIGHT ENCUMBERANCE PTS"
+description: "Encumbrance is a three-dimensional assessment of mass, weight, and"
 date: 2026-04-28
 draft: false
 section: "help"

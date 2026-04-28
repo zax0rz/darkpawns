@@ -1,5 +1,6 @@
 ---
 title: "PALM"
+description: "Usage	:	palm <item in room>"
 date: 2026-04-28
 draft: false
 section: "help"

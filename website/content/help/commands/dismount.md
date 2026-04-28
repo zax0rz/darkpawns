@@ -1,5 +1,6 @@
 ---
 title: "DISMOUNT"
+description: "Usage: dismount"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "RESTORE"
+description: "Usage: restore <player | mobile>"
 date: 2026-04-28
 draft: false
 section: "help"

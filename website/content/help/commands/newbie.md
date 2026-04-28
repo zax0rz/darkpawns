@@ -1,5 +1,6 @@
 ---
 title: "NEWBIE"
+description: "Newbie is a term used to describe people who are new to MUDding, and sometimes"
 date: 2026-04-28
 draft: false
 section: "help"

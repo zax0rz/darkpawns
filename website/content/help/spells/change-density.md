@@ -1,5 +1,6 @@
 ---
 title: "'CHANGE DENSITY'"
+description: "Usage       : will 'change density' <self>"
 date: 2026-04-28
 draft: false
 section: "help"

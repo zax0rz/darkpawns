@@ -1,5 +1,6 @@
 ---
 title: "KUJI-KIRI RIN KYO TOH SHA KAI JIN RETSU ZAI ZHEN"
+description: "Kuji-Kiri (\"nine ways cutting\") is a form of mystical meditation involving"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "WIZLIST IMMLIST"
+description: "Usage: wizlist | immlist"
 date: 2026-04-28
 draft: false
 section: "help"

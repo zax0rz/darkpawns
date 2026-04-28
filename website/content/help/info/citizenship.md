@@ -1,5 +1,6 @@
 ---
 title: "CITIZENSHIP"
+description: "You can buy citizenship in several cities in Dark Pawns for a small fee."
 date: 2026-04-28
 draft: false
 section: "help"

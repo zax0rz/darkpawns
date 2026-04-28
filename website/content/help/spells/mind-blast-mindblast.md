@@ -1,5 +1,6 @@
 ---
 title: "'MIND BLAST' MINDBLAST"
+description: "Usage: will 'mind blast' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

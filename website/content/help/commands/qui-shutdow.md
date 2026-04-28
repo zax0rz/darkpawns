@@ -1,5 +1,6 @@
 ---
 title: "QUI SHUTDOW"
+description: "Just to prevent accidental quittings and/or shutdowns."
 date: 2026-04-28
 draft: false
 section: "help"

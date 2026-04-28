@@ -1,5 +1,6 @@
 ---
 title: "'REMOVE CURSE'"
+description: "Usage       : cast 'remove curse' <victim | object>"
 date: 2026-04-28
 draft: false
 section: "help"

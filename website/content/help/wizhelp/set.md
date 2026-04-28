@@ -1,5 +1,6 @@
 ---
 title: "SET"
+description: "Usage: set [ file | player ] <character> <field> <value>"
 date: 2026-04-28
 draft: false
 section: "help"

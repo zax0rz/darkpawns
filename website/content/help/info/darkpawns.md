@@ -1,5 +1,6 @@
 ---
 title: "DARKPAWNS"
+description: "D  A  R  K     P  A  W  N  S    2  .  2"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "BANK WITHDRAW DEPOSIT BALANCE"
+description: "Commands to take money out of the bank, put money in the bank, or see how"
 date: 2026-04-28
 draft: false
 section: "help"

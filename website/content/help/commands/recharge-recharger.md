@@ -1,5 +1,6 @@
 ---
 title: "RECHARGE RECHARGER"
+description: "Find the recharger and he will recharge your staves and wands,"
 date: 2026-04-28
 draft: false
 section: "help"

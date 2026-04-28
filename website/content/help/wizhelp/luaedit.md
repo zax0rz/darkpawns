@@ -1,5 +1,6 @@
 ---
 title: "LUAEDIT"
+description: "Usage: lua [directory] [file[.lua]]"
 date: 2026-04-28
 draft: false
 section: "help"

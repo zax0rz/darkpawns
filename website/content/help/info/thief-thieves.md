@@ -1,5 +1,6 @@
 ---
 title: "THIEF THIEVES"
+description: "Thieves are known to have very special qualities, that no other class"
 date: 2026-04-28
 draft: false
 section: "help"

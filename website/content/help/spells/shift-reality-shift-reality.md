@@ -1,5 +1,6 @@
 ---
 title: "'SHIFT REALITY' SHIFT REALITY"
+description: "Usage		: will 'shift reality'"
 date: 2026-04-28
 draft: false
 section: "help"

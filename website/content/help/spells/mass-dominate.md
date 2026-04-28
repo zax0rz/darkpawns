@@ -1,5 +1,6 @@
 ---
 title: "'MASS DOMINATE'"
+description: "Usage: will 'mass dominate'"
 date: 2026-04-28
 draft: false
 section: "help"

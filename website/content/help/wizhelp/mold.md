@@ -1,5 +1,6 @@
 ---
 title: "MOLD"
+description: "Usage: mold <object> <name> <description>"
 date: 2026-04-28
 draft: false
 section: "help"

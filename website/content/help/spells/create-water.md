@@ -1,5 +1,6 @@
 ---
 title: "'CREATE WATER'"
+description: "Usage       : cast 'create water' <drink container>"
 date: 2026-04-28
 draft: false
 section: "help"

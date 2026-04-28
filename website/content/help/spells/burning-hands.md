@@ -1,5 +1,6 @@
 ---
 title: "'BURNING HANDS'"
+description: "Usage       : cast 'burning hands' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "'CREATE FOOD'"
+description: "Usage       : cast 'create food'"
 date: 2026-04-28
 draft: false
 section: "help"

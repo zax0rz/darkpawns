@@ -1,5 +1,6 @@
 ---
 title: "CLAN CLANS"
+description: "On Dark Pawns, CLANS are associations of players that have banded together"
 date: 2026-04-28
 draft: false
 section: "help"

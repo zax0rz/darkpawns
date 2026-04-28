@@ -1,5 +1,6 @@
 ---
 title: "RANGER RANGERS"
+description: "Rangers are the warriors and guardians of the wilderness.  They are"
 date: 2026-04-28
 draft: false
 section: "help"

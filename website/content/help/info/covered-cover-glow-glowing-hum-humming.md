@@ -1,5 +1,6 @@
 ---
 title: "COVERED COVER GLOW GLOWING HUM HUMMING"
+description: "If you see something in your EQUIPMENT list that has \"covered\" by it, it"
 date: 2026-04-28
 draft: false
 section: "help"

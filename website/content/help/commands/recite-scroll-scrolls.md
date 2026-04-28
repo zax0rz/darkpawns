@@ -1,5 +1,6 @@
 ---
 title: "RECITE SCROLL SCROLLS"
+description: "Usage: recite <scroll> [Target]"
 date: 2026-04-28
 draft: false
 section: "help"

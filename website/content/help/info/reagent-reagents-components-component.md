@@ -1,5 +1,6 @@
 ---
 title: "REAGENT REAGENTS COMPONENTS COMPONENT"
+description: "Reagents (or spell components) are used to cast (or enhance the casting)"
 date: 2026-04-28
 draft: false
 section: "help"

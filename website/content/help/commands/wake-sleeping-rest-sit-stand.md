@@ -1,5 +1,6 @@
 ---
 title: "WAKE SLEEPING REST SIT STAND"
+description: "Commands for changing your position.  If you feel weary, it's probably"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "TITAN"
+description: "These beings have moved beyond mere immortality, and into godhood..."
 date: 2026-04-28
 draft: false
 section: "help"

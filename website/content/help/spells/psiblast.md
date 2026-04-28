@@ -1,5 +1,6 @@
 ---
 title: "PSIBLAST"
+description: "Usage		: will 'psiblast' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "STAT"
+description: "Usage: stat [player | object | mobile | file | room] <name>"
 date: 2026-04-28
 draft: false
 section: "help"

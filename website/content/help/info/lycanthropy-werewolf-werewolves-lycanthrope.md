@@ -1,5 +1,6 @@
 ---
 title: "LYCANTHROPY WEREWOLF WEREWOLVES LYCANTHROPE"
+description: "Werewolves (also known as lycanthropes) are part man and part wolf, known"
 date: 2026-04-28
 draft: false
 section: "help"

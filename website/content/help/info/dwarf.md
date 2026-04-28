@@ -1,5 +1,6 @@
 ---
 title: "DWARF"
+description: "Dwarves are a noble race of demihumans who dwell under the earth, forging"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "'DETECT MAGIC'"
+description: "Usage       : cast 'detect magic' [self]"
 date: 2026-04-28
 draft: false
 section: "help"

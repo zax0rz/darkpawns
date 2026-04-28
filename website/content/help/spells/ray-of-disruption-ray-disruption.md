@@ -1,5 +1,6 @@
 ---
 title: "'RAY OF DISRUPTION' RAY DISRUPTION"
+description: "Usage	:	cast 'ray of disruption' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

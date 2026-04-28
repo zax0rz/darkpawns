@@ -1,5 +1,6 @@
 ---
 title: "SPLIT"
+description: "Usage: split <amount to split>"
 date: 2026-04-28
 draft: false
 section: "help"

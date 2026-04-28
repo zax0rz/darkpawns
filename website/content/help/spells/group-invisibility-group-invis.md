@@ -1,5 +1,6 @@
 ---
 title: "'GROUP INVISIBILITY' 'GROUP INVIS'"
+description: "Usage		: cast 'group invisibility'"
 date: 2026-04-28
 draft: false
 section: "help"

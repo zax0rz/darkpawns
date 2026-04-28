@@ -1,5 +1,6 @@
 ---
 title: "MAP"
+description: "ASCII map of the Dark Pawns world, showing zones and connections."
 date: 2026-04-28
 draft: false
 section: "help"

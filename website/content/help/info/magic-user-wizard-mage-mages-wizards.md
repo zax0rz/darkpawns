@@ -1,5 +1,6 @@
 ---
 title: "'MAGIC USER' WIZARD MAGE MAGES WIZARDS"
+description: "This is the class of powerful and violent magick, but the magic user does"
 date: 2026-04-28
 draft: false
 section: "help"

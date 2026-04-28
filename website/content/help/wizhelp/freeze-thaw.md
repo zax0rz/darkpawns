@@ -1,5 +1,6 @@
 ---
 title: "FREEZE THAW"
+description: "Usage: freeze <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "SSAUR"
+description: "Ssaurs are a relatively new race in the world. They are a more evolved"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "'LESSER PERCEPTION'"
+description: "Conquering the realm of the unseen, the psionic can focus his mental"
 date: 2026-04-28
 draft: false
 section: "help"

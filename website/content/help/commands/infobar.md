@@ -1,5 +1,6 @@
 ---
 title: "INFOBAR"
+description: "Usage: infobar"
 date: 2026-04-28
 draft: false
 section: "help"

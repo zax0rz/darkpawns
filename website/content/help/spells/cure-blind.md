@@ -1,5 +1,6 @@
 ---
 title: "'CURE BLIND'"
+description: "Usage       : cast 'cure blind' <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

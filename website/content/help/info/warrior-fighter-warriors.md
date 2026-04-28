@@ -1,5 +1,6 @@
 ---
 title: "WARRIOR FIGHTER WARRIORS"
+description: "Warriors are known to have more strength than the average class. This"
 date: 2026-04-28
 draft: false
 section: "help"

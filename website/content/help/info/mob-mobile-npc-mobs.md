@@ -1,5 +1,6 @@
 ---
 title: "MOB MOBILE NPC MOBS"
+description: "Generic term for any Non-Playing Character in the game.. i.e. \"monsters\"."
 date: 2026-04-28
 draft: false
 section: "help"

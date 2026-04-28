@@ -1,5 +1,6 @@
 ---
 title: "HUMAN"
+description: "Humans are the most common race on this world, and come in all sorts of"
 date: 2026-04-28
 draft: false
 section: "help"

@@ -1,5 +1,6 @@
 ---
 title: "'GLYPH OF SUMMONING'"
+description: "Usage		: cast 'glyph of summoning'"
 date: 2026-04-28
 draft: false
 section: "help"
