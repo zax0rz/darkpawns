@@ -439,7 +439,7 @@ Duration : Instantaneous&lt;/p>
 &lt;p>The caster will be transferred back to his home-town sanctuary
 (Whatever city you started in.) Word of Recall cannot be used during combat.
 This applies to all forms of Word of Recall, whether it is a cast spell,
-scroll, wand, etc. You must be out of combat to use any items with Word of Recall or cast the spell.&lt;/p></description></item><item><title>ABILITIES</title><link>https://darkpawns.labz0rz.com/help/commands/abilities/</link><pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate><guid>https://darkpawns.labz0rz.com/help/commands/abilities/</guid><description>&lt;p>Usage: abilities&lt;/p>
+scroll, wand, etc. You must be out of combat to use any items with Word of Recall or cast the spell.&lt;/p></description></item><item><title>A Proper Website (Finally)</title><link>https://darkpawns.labz0rz.com/news/website-launch/</link><pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate><guid>https://darkpawns.labz0rz.com/news/website-launch/</guid><description>The archive is online. 475 help files, class descriptions, lore, quotes, and a cream-paper design that would make Stephen King nod.</description></item><item><title>ABILITIES</title><link>https://darkpawns.labz0rz.com/help/commands/abilities/</link><pubDate>Tue, 28 Apr 2026 00:00:00 +0000</pubDate><guid>https://darkpawns.labz0rz.com/help/commands/abilities/</guid><description>&lt;p>Usage: abilities&lt;/p>
 &lt;p>This command will display your current ability scores in the following
 format:&lt;/p>
 &lt;p>Your current ability scores:
@@ -3502,4 +3502,4 @@ wizonly&lt;/p></description></item><item><title>Commands</title><link>https://da
 &lt;/ul>
 &lt;h2 id="message-types">Message Types&lt;/h2>
 &lt;h3 id="1-login-type-login">1. Login (&lt;code>type: &amp;quot;login&amp;quot;&lt;/code>)&lt;/h3>
-&lt;p>Required for all connections. Determines whether the client is a human player or an AI agent.&lt;/p></description></item></channel></rss>
+&lt;p>Required for all connections. Determines whether the client is a human player or an AI agent.&lt;/p></description></item><item><title>The Resurrection</title><link>https://darkpawns.labz0rz.com/news/resurrection/</link><pubDate>Sun, 01 Jun 2025 00:00:00 +0000</pubDate><guid>https://darkpawns.labz0rz.com/news/resurrection/</guid><description>Dark Pawns is back. A Go port, an open-source codebase, and a door that&amp;rsquo;s been closed for fifteen years is open again.</description></item></channel></rss>
