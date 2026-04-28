@@ -249,23 +249,24 @@ Three-layer framework + four pillars + Frontline's voice analysis. Key resource 
 
 | Page | Content Source | Status |
 |------|---------------|--------|
-| `/` (splash) | Brief section 9 | Design-ready, needs build |
-| `/news` | Brief section 9 + wayback `main.html` (historical posts) | Needs new devlog posts |
-| `/about` | Brief section 9 + dp-players `history.mud.md` + brand voice touchstones | Needs writing (3-act structure) |
-| `/play` | Existing `web/client.js` + `web/index.html` | Needs redesign (cream chrome) |
-| `/connect` | dp-players `directions.mud.md` | Needs update for current server |
-| `/help` | Wayback `help-files/` + wayback `faq.html` | Ready, needs Hugo formatting |
-| `/world/classes` | Wayback `class.html` | Ready |
-| `/world/races` | Wayback help-files (race entries) | Ready, needs extraction |
-| `/world/skills` | Wayback help-files (skill entries) | Ready, needs extraction |
-| `/docs/*` | Existing docs-site content | Ready, needs merge |
-| `/credits` | Wayback `wizlist.html` + dp-players `whois.mud.md` | Needs compilation |
-| `/quotes` | dp-players `quotes.mud.md` | Ready (400+ lines) |
-| `/history` | dp-players `history.mud.md` (Frontline's timeline) | Ready |
-| `/lore` | Wayback `background.html` (Friar Drake letter) | Ready |
-| `/changelog` | New — append-only stream | Needs start |
-| `llms.txt` | Auto-generated from IA | Needs template |
-| `llms-full.txt` | Hugo template concatenating all content | Needs template |
+| `/` (splash) | Brief section 9 | **DONE** — Phase 3 |
+| `/news` | Brief section 9 + wayback `main.html` (historical posts) | **DONE** — Phase 5 |
+| `/about` | Brief section 9 + dp-players `history.mud.md` + brand voice touchstones | **DONE** — Phase 5 |
+| `/play` | Existing `web/client.js` + `web/index.html` | **DONE** — Phase 4 |
+| `/connect` | dp-players `directions.mud.md` | **DONE** — Phase 5 |
+| `/help` | Wayback `help-files/` + wayback `faq.html` | **DONE** — 430 files, descriptions added (F-4) |
+| `/world/classes` | Wayback `class.html` | **DONE** |
+| `/world/races` | Wayback help-files (race entries) | STUB — "Coming soon" (needs extraction) |
+| `/world/skills` | Wayback help-files (skill entries) | STUB — "Coming soon" (needs extraction) |
+| `/docs/*` | Existing docs-site content | **DONE** — merged |
+| `/credits` | Wayback `wizlist.html` + dp-players `whois.mud.md` | **DONE** — Phase 5 |
+| `/quotes` | dp-players `quotes.mud.md` | **DONE** — under `/community/quotes/` |
+| `/history` | dp-players `history.mud.md` (Frontline's timeline) | **DONE** — under `/community/history/` |
+| `/lore` | Wayback `background.html` (Friar Drake letter) | **DONE** |
+| `/changelog` | New — append-only stream | **DONE** — Phase 5 |
+| `/status` | Live API widget | **DONE** + FIX (F-2: baseof extension) |
+| `llms.txt` | Auto-generated from IA | **DONE** — Phase 1 |
+| `llms-full.txt` | Hugo template concatenating all content | **DONE** + extended to sections (F-9) |
 
 ### 5.2 Deferred (v2)
 
@@ -282,21 +283,21 @@ Three-layer framework + four pillars + Frontline's voice analysis. Key resource 
 
 ## 6. Build Order
 
-### Phase 1: Infrastructure (no design dependency)
-1. Set up Hugo project with content negotiation (`Accept: text/markdown`)
-2. Create `llms.txt` template
-3. Create `llms-full.txt` template
-4. Set up `robots.txt` (allow AI crawlers)
-5. Add `<link rel="alternate">` tags to base template
-6. Add JSON-LD structured data to base template
+### Phase 1: Infrastructure ✅ COMPLETE (commit `7793842`)
+1. ~~Set up Hugo project with content negotiation (`Accept: text/markdown`)~~
+2. ~~Create `llms.txt` template~~
+3. ~~Create `llms-full.txt` template~~
+4. ~~Set up `robots.txt` (allow AI crawlers)~~
+5. ~~Add `<link rel="alternate">` tags to base template~~
+6. ~~Add JSON-LD structured data to base template~~
 
-### Phase 2: Content Pipeline
-1. Import wayback content into Hugo content sections
-2. Import dp-players content into Hugo content sections
-3. Merge docs-site content into `/docs/` section
-4. Set up content types (news, help, lore, class, etc.) with frontmatter schemas
+### Phase 2: Content Pipeline ✅ COMPLETE (commit `7793842`)
+1. ~~Import wayback content into Hugo content sections~~
+2. ~~Import dp-players content into Hugo content sections~~
+3. ~~Merge docs-site content into `/docs/` section~~
+4. ~~Set up content types (news, help, lore, class, etc.) with frontmatter schemas~~
 
-### Phase 3: Design & Templates
+### Phase 3: Design & Templates ✅ COMPLETE (commit `3079200`)
 1. Implement color tokens as CSS custom properties
 2. Set up type system (Archivo Narrow + Source Serif 4 + JetBrains Mono)
 3. Build splash page
@@ -308,26 +309,26 @@ Three-layer framework + four pillars + Frontline's voice analysis. Key resource 
 9. Build `/status` (live widget — fetch from Go API)
 10. Build remaining pages (credits, quotes, history, lore, changelog, connect)
 
-### Phase 4: Web Client Redesign
+### Phase 4: Web Client Redesign ✅ COMPLETE (commit `8ed166b`)
 1. Wrap existing `client.js` in cream-themed layout
 2. Dark terminal only inside client area
 3. Add sidebar with connection info + "for serious play use Mudlet/TinTin++"
 4. Test WebSocket connection to running game server
 
-### Phase 5: Content Writing
+### Phase 5: Content Writing ✅ COMPLETE (commit `92ea624`)
 1. Write `/about` — three-act structure (1997-2010 / gap / resurrection)
 2. Write new devlog posts for `/news`
 3. Compile `/credits` from wizlist + whois data
 4. Write `/connect` for current server
 5. Start `/changelog` with port history
 
-### Phase 6: Polish & Deploy
-1. Print stylesheet for `/help` and `/changelog`
-2. Accessibility audit (AA at 16px body — already verified by brief)
-3. Performance audit (static files, gzip, caching)
-4. Set up nginx with content negotiation rules
-5. Deploy to `darkpawns.labz0rz.com`
-6. Test agent readability (curl with `Accept: text/markdown`)
+### Phase 6: Polish & Deploy ✅ COMPLETE (commits `92ea624` + deploy commits)
+1. ~~Print stylesheet for `/help` and `/changelog`~~
+2. ~~Accessibility audit (AA at 16px body — already verified by brief)~~
+3. ~~Performance audit (static files, gzip, caching)~~
+4. ~~Set up Caddy with content negotiation rules~~ (Caddy, not nginx)
+5. ~~Deploy to `darkpawns.labz0rz.com`~~ (VM 666, Caddy Docker)
+6. ~~Test agent readability (curl with `Accept: text/markdown`)~~
 
 ---
 
