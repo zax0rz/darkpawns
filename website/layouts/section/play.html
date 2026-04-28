@@ -1,0 +1,37 @@
+{{ define "main" }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<div class="play-wrapper">
+  <div class="terminal-frame">
+    <div class="terminal-header">
+      <span class="terminal-title">DARK PAWNS</span>
+      <div class="conn-status disconnected">
+        <span class="dot"></span>
+        <span>Disconnected</span>
+      </div>
+      <button id="reconnect-btn">Reconnect</button>
+    </div>
+    <div id="terminal"></div>
+  </div>
+  <div class="play-sidebar">
+    <h3>Connecting</h3>
+    <p>Use the terminal above to log in with your character name.</p>
+    <div class="play-info">
+      <h4>For serious play</h4>
+      <p>Use a real MUD client for the full experience:</p>
+      <ul>
+        <li><strong>Mudlet</strong> — cross-platform, free</li>
+        <li><strong>TinTin++</strong> — terminal power user</li>
+        <li><strong>TinyFugue</strong> — UNIX classic</li>
+      </ul>
+    </div>
+    <div class="play-info">
+      <h4>Telnet</h4>
+      <p><code>darkpawns.labz0rz.com:4000</code></p>
+    </div>
+  </div>
+</div>
+{{/* xterm.js from CDN — loaded at end of body for performance */}}
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js" defer></script>
+<script src="/js/client.js" defer></script>
+{{ end }}
