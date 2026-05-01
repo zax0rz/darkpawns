@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -450,8 +451,9 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	if cmd == "deposit" {
 		amount := 0
-// #nosec G104
-		fmt.Sscanf(arg, "%d", &amount)
+		if _, err := fmt.Sscanf(arg, "%d", &amount); err != nil {
+			slog.Warn("fmt.Sscanf failed in deposit", "arg", arg, "error", err)
+		}
 		if amount <= 0 {
 			sendToChar(ch, "How much do you want to deposit?\r\n")
 			return true
@@ -468,8 +470,9 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	if cmd == "withdraw" {
 		amount := 0
-// #nosec G104
-		fmt.Sscanf(arg, "%d", &amount)
+		if _, err := fmt.Sscanf(arg, "%d", &amount); err != nil {
+			slog.Warn("fmt.Sscanf failed in withdraw", "arg", arg, "error", err)
+		}
 		if amount <= 0 {
 			sendToChar(ch, "How much do you want to withdraw?\r\n")
 			return true

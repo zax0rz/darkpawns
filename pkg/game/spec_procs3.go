@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"strings"
 
@@ -413,8 +414,9 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		}
 		got++
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gets %s.", mobName(me), obj.GetShortDesc()))
-// #nosec G104
-		w.MoveObjectToMobInventory(obj, me)
+		if err := w.MoveObjectToMobInventory(obj, me); err != nil {
+			slog.Warn("MoveObjectToMobInventory failed in butler spec", "obj", obj.GetVNum(), "mob", me.GetName(), "error", err)
+		}
 
 		// Sort into case/cabinet/chest by item type
 		container := chest // default for misc items
@@ -424,8 +426,9 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 			container = cabinet
 		}
 		// Remove from butler's inventory into the container
-// #nosec G104
-		w.MoveObjectToContainer(obj, container)
+		if err := w.MoveObjectToContainer(obj, container); err != nil {
+			slog.Warn("MoveObjectToContainer failed in butler spec", "obj", obj.GetVNum(), "container", container.GetVNum(), "error", err)
+		}
 	}
 	if got > 0 {
 		// Containers are left open after putting items in; closing handled by container
@@ -454,8 +457,9 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			continue
 		}
 		// "Behead" the corpse: extract it from the room entirely
-// #nosec G104
-		w.MoveObjectToNowhere(obj)
+		if err := w.MoveObjectToNowhere(obj); err != nil {
+			slog.Warn("MoveObjectToNowhere failed in brain eater", "obj", obj.GetVNum(), "error", err)
+		}
 
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s pulls the brain out of the head and eats it with a noisy\r\nslurp, blood and drool flying everywhere.", mobName(me)))
 
@@ -836,8 +840,9 @@ func specMirror(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		}
 		// Remove old object, spawn replacement (14503) in the same room
 		w.RemoveItemFromRoomByVNum(me.GetVNum(), objRoom)
-// #nosec G104
-		w.SpawnObject(14503, objRoom)
+		if _, err := w.SpawnObject(14503, objRoom); err != nil {
+			slog.Warn("SpawnObject failed in teleport spec", "vnum", 14503, "room", objRoom, "error", err)
+		}
 		return true
 	}
 	if cmd == "look" {
@@ -928,8 +933,9 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		} else {
 			w.roomMessage(roomVNum, fmt.Sprintf("You hear %s burp.", mobName(me)))
 		}
-// #nosec G104
-		w.MoveObjectToNowhere(obj)
+		if err := w.MoveObjectToNowhere(obj); err != nil {
+			slog.Warn("MoveObjectToNowhere failed in burp spec", "obj", obj.GetVNum(), "error", err)
+		}
 		return true
 	}
 
@@ -991,8 +997,9 @@ func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			for _, obj := range items {
 				if obj.IsCorpse && strings.Contains(strings.ToLower(obj.Prototype.Keywords), strings.ToLower(ch.GetName())) && obj.GetValue(3) > 0 {
 					// Move corpse from its current room to the mortician's room
-// #nosec G104
-					w.MoveObjectToRoom(obj, me.GetRoomVNum())
+					if err := w.MoveObjectToRoom(obj, me.GetRoomVNum()); err != nil {
+						slog.Warn("MoveObjectToRoom failed in mortician", "corpse", obj.GetVNum(), "room", me.GetRoomVNum(), "error", err)
+					}
 					ch.SendMessage(fmt.Sprintf("The Mortician dumps your corpse on the ground.\r\n"))
 					w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("The Mortician dumps %s's corpse on the ground.", ch.GetName()))
 					ch.SetGold(ch.GetGold() - cost)
@@ -1153,8 +1160,9 @@ func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string
 			sendToChar(ch, msg)
 			obj, err := w.SpawnObject(entry.cylVNum, ch.GetRoomVNum())
 			if err == nil {
-// #nosec G104
-				w.MoveObjectToRoom(obj, ch.GetRoomVNum())
+				if err2 := w.MoveObjectToRoom(obj, ch.GetRoomVNum()); err2 != nil {
+					slog.Warn("MoveObjectToRoom failed in talisman spec", "obj", obj.GetVNum(), "room", ch.GetRoomVNum(), "error", err2)
+				}
 			}
 			break
 		}
