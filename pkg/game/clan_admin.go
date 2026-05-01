@@ -3,6 +3,9 @@ package game
 import (
 	"strconv"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func (w *World) doClanRename(ch *Player, arg string) {
@@ -31,7 +34,7 @@ func (w *World) doClanRename(ch *Player, arg string) {
 	if len(arg2) > 32 {
 		arg2 = arg2[:32]
 	}
-	c.Name = strings.Title(strings.ToLower(arg2))
+	c.Name = cases.Title(language.English).String(strings.ToLower(arg2))
 	w.SaveClans()
 	ch.SendMessage("Clan renamed.\r\n")
 }
@@ -81,7 +84,7 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 	}
 
 	newClan := &Clan{
-		Name:      strings.Title(strings.ToLower(arg2)),
+		Name:      cases.Title(language.English).String(strings.ToLower(arg2)),
 		Ranks:     2,
 		Members:   1,
 		Power:     leader.Level,

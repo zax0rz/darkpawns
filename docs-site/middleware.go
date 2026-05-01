@@ -17,9 +17,7 @@ func DocsContentNegotiationMiddleware(next http.Handler, docsDir string) http.Ha
 		if strings.HasPrefix(r.URL.Path, "/docs") || r.URL.Path == "/" {
 			// Remove /docs prefix for Hugo site
 			path := r.URL.Path
-			if strings.HasPrefix(path, "/docs") {
-				path = strings.TrimPrefix(path, "/docs")
-			}
+			path = strings.TrimPrefix(path, "/docs")
 			if path == "" {
 				path = "/"
 			}
@@ -119,12 +117,7 @@ func serveMarkdownVersion(w http.ResponseWriter, r *http.Request, docsDir, path 
 	// #nosec G705
 
 	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	w.Write(content) // #nosec G705 // #nosec G104
-
-	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-// #nosec G104
-// #nosec G705
-	w.Write(content)
+	_, _ = w.Write(content)
 }
 
 // serveHugoContent serves Hugo-generated HTML content
@@ -212,6 +205,6 @@ func GenerateSearchIndex(docsDir string) error {
 
 	// Write to file
 	indexPath := filepath.Join(docsDir, "public", "search-index.json") // #nosec G703 — docsDir from config
-	os.MkdirAll(filepath.Dir(indexPath), 0755) // #nosec G301 — docsDir from config                           // #nosec G301 — docsDir from config // #nosec G104
+	_ = os.MkdirAll(filepath.Dir(indexPath), 0755) // #nosec G301 — docsDir from config
 	return os.WriteFile(indexPath, []byte(jsonContent), 0644) // #nosec G306 — search index world-readable            // #nosec G306
 }

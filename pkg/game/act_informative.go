@@ -49,10 +49,7 @@ func indexOf(list []string, item string) int {
 }
 
 func chCanSee(ch *Player, target interface{}) bool {
-	if ch.IsAffected(affBlind) {
-		return false
-	}
-	return true
+	return !ch.IsAffected(affBlind)
 }
 
 // mobCanSee checks whether a mob can see. Uses the mob's AffectFlags for blindness.
@@ -195,11 +192,12 @@ func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, re
 		}
 	case obj.Location.Kind == ObjInInventory || obj.Location.Kind == ObjEquipped:
 		name := "someone"
-		if obj.Location.OwnerKind == OwnerPlayer {
+		switch obj.Location.OwnerKind {
+		case OwnerPlayer:
 			if p, ok := w.players[obj.Location.PlayerName]; ok {
 				name = p.GetName()
 			}
-		} else if obj.Location.OwnerKind == OwnerMob {
+		case OwnerMob:
 			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
 				name = m.GetName()
 			}

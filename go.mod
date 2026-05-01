@@ -10,6 +10,7 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/yuin/gopher-lua v1.1.2
 	golang.org/x/crypto v0.50.0
+	golang.org/x/text v0.36.0
 	golang.org/x/time v0.15.0
 )
 

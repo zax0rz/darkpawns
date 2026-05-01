@@ -171,9 +171,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 	// Transfer BOTH inventory items AND all equipped slots into the corpse container
 	// Source: fight.c:make_corpse() lines ~383-410
 	var inventoryItems []*ObjectInstance
-	for _, item := range deadMob.Inventory {
-		inventoryItems = append(inventoryItems, item)
-	}
+	inventoryItems = append(inventoryItems, deadMob.Inventory...)
 	var equipmentItems []*ObjectInstance
 	for _, item := range deadMob.Equipment {
 		equipmentItems = append(equipmentItems, item)

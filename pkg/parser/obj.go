@@ -266,9 +266,7 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 			// C enforces MAX_OBJ_AFFECT (structs.h:656) — limit in Go too
 			if len(obj.Affects) >= MAX_OBJ_AFFECT {
 				// Consume the affect line but discard it
-				if lb.Scan() {
-					// consumed and discarded
-				}
+				lb.Scan() // consumed and discarded
 				continue
 			}
 			if lb.Scan() {

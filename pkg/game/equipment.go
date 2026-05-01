@@ -199,6 +199,7 @@ func (eq *Equipment) equip(item *ObjectInstance, inv *Inventory) error {
 		SlotWristL:  {SlotWristR, SlotWristL},
 	}
 
+	//nolint:staticcheck // Loop structure supports future multi-slot item handling
 	for _, slot := range wearFlags {
 		// Check if this slot is part of a dual slot group
 		if group, isDual := dualSlotGroups[slot]; isDual {
@@ -402,9 +403,7 @@ func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 			if flag&(1<<14) != 0 { // ITEM_WEAR_HOLD (bit 14)
 				slots = append(slots, SlotHold)
 			}
-			if flag&(1<<15) != 0 { // ITEM_WEAR_THROW (bit 15)
-				// Can be thrown - not an equip slot
-			}
+			// ITEM_WEAR_THROW (bit 15) — can be thrown, not an equip slot
 		case 1: // Secondary wear flags (bits 16-31)
 			if flag&(1<<0) != 0 { // ITEM_WEAR_ABLEGS (bit 16)
 				// Can be worn about legs

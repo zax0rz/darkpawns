@@ -145,17 +145,15 @@ func (zd *ZoneDispatcher) runZoneMobAI(zone *parser.Zone) {
 		// See src/db.c:reset_zone() for the original C implementation.
 
 		// Move wandering mobs
-		if mob.HasFlag("wander") {
-			// Wandering: pick a random exit and move the mob to the adjacent room.
-			// See src/mobact.c:mob_activity() for the original C logic.
-		}
+		// Wandering: pick a random exit and move the mob to the adjacent room.
+		// See src/mobact.c:mob_activity() for the original C logic.
+		// (Handled by mob.HasFlag("wander") check when implemented.)
 
 		// Check aggro ranges
-		if mob.HasFlag("aggressive") && !mob.Fighting {
-			// Aggro: scan room for players below aggro level threshold
-			// and initiate combat via w.AttackMobOnPlayer(mob, target).
-			// See src/mobact.c:hitprcnt() and do_hunt_victim() for thresholds.
-		}
+		// Aggro: scan room for players below aggro level threshold
+		// and initiate combat via w.AttackMobOnPlayer(mob, target).
+		// See src/mobact.c:hitprcnt() and do_hunt_victim() for thresholds.
+		// (Handled by mob.HasFlag("aggressive") && !mob.Fighting check when implemented.)
 	}
 
 	// Zone-wide events (evacuation, invasion triggers) are handled by

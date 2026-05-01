@@ -2,14 +2,11 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 
 	// Test all race bonuses
 	races := []struct {

@@ -290,7 +290,7 @@ func cmdSethunt(s *Session, args []string) error {
 	victimName := args[0]
 	hunterName := args[1]
 
-	if strings.ToLower(victimName) == strings.ToLower(hunterName) {
+	if strings.EqualFold(victimName, hunterName) {
 		s.Send("Yeah right.")
 		return nil
 	}

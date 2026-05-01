@@ -782,10 +782,9 @@ func (e *Engine) luaAct(L *lua.LState) int {
 	// Get ch from global for TO_VICT/TO_CHAR
 	L.GetGlobal("ch")
 	var ch ScriptablePlayer = nil
-	if L.Get(-1).Type() == lua.LTTable {
-		// In real implementation, we'd get the actual player pointer
-		// For now, we'll use the world to find players
-	}
+	// In real implementation, we'd get the actual player pointer from the Lua table.
+	// For now, we'll use the world to find players.
+	_ = ch // placeholder until Lua player lookup is implemented
 	L.Pop(1)
 
 	if e.world == nil || roomVNum == 0 {

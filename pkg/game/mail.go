@@ -216,10 +216,11 @@ func scanFile() bool {
 		if n == 0 || err != nil {
 			break
 		}
-		if nextBlock.BlockType == MailBlockHeader {
+		switch nextBlock.BlockType {
+		case MailBlockHeader:
 			indexMail(nextBlock.To, blockNum*MailBlockSize)
 			totalMessages++
-		} else if nextBlock.BlockType == MailBlockDeleted {
+		case MailBlockDeleted:
 			pushFreeList(blockNum * MailBlockSize)
 		}
 		blockNum++

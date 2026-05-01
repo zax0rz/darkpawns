@@ -370,13 +370,9 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		// We leave a comment; the PerformCommand/Flee/etc hooks should cover it.
 
 		// NPC target switching (fight.c:1420): high-level NPCs switch to highest-damage attacker
-		if ch.IsNPC() && ch.GetLevel() > 20 {
-			if HasMobFlag != nil && HasMobFlag(victimName, "HAS_AGGR_LIST") {
-				// Aggro list tracking would be done via game-layer hooks.
-				// The C code iterates room people to find FIGHTING(vict)==ch, remembers via memory.
-				// This is inherently game-layer; we signal intent via PerformCommand if possible.
-			}
-		}
+		// Aggro list tracking is done via game-layer hooks.
+		// The C code iterates room people to find FIGHTING(vict)==ch, remembers via memory.
+		// This is inherently game-layer; we signal intent via PerformCommand if possible.
 
 		if victim.GetPosition() > PosStunned && victim.GetFighting() == "" {
 			victim.SetFighting(chName)

@@ -891,7 +891,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	// Starvation death (extremely rare)
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	//nolint:staticcheck // Intentional: two independent RNG rolls for extremely rare event
 	if rand.Intn(10001) == 0 && rand.Intn(10001) == 0 && me.GetMaxHealth() < 11 {
 		w.roomMessage(roomVNum, fmt.Sprintf("%s seems to starve to death and simply fades out of existence.", mobName(me)))
 		// C: extract_char(ch) — set HP to 0 to trigger mob death handling
