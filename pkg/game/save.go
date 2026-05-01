@@ -97,8 +97,7 @@ func SavePlayer(player *Player) error {
 	data := playerToSaveData(player)
 
 	path := filepath.Join(saveDir, sanitizeName(player.Name)+".json")
-// #nosec G304
-	f, err := os.Create(path)
+	f, err := os.Create(filepath.Clean(path))
 	if err != nil {
 		return fmt.Errorf("create save file: %w", err)
 	}
@@ -118,8 +117,7 @@ func SavePlayer(player *Player) error {
 // Returns a Player with runtime fields initialized.
 func LoadPlayer(name string) (*Player, error) {
 	path := filepath.Join(saveDir, sanitizeName(name)+".json")
-// #nosec G304
-	f, err := os.Open(path)
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return nil, fmt.Errorf("open save file: %w", err)
 	}
@@ -379,8 +377,7 @@ func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
 	data.SavedBankGold = p.BankGold
 
 	path := filepath.Join(saveDir, sanitizeName(p.Name)+".json")
-// #nosec G304
-	f, err := os.Create(path)
+	f, err := os.Create(filepath.Clean(path))
 	if err != nil {
 		return fmt.Errorf("create save file: %w", err)
 	}
@@ -400,8 +397,7 @@ func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
 // Used by CleanCrashFile and CrashLoad to check rent metadata.
 func LoadSaveData(name string) (savePlayerData, error) {
 	path := filepath.Join(saveDir, sanitizeName(name)+".json")
-// #nosec G304
-	f, err := os.Open(path)
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return savePlayerData{}, fmt.Errorf("open save file: %w", err)
 	}
@@ -442,15 +438,17 @@ func CrashLoad(p *Player, getProto func(vnum int) (*parser.Obj, bool)) int {
 		if cost > p.Gold+p.BankGold {
 			slog.Info("Player rented equipment lost (no $)", "name", p.GetName())
 			// Overwrite with crash save (C: Crash_crashsave)
-// #nosec G104
-			SavePlayerWithRent(p, RentCrash, 0)
+			if err := SavePlayerWithRent(p, RentCrash, 0); err != nil {
+				slog.Error("SavePlayerWithRent failed in rent cost check", "player", p.GetName(), "error", err)
+			}
 			return 2
 		}
 		// Deduct cost from bank first, then gold.
 		p.BankGold -= max(cost-p.Gold, 0)
 		p.Gold = max(p.Gold-cost, 0)
-// #nosec G104
-		SavePlayer(p)
+		if err := SavePlayer(p); err != nil {
+			slog.Error("SavePlayer failed in rent unrent", "player", p.GetName(), "error", err)
+		}
 	}
 
 	// Log entry.
@@ -502,8 +500,9 @@ func CrashLoad(p *Player, getProto func(vnum int) (*parser.Obj, bool)) int {
 	}
 
 	// Convert to crash save (rent.rentcode = RENT_CRASH, rewrite control block).
-// #nosec G104
-	SavePlayerWithRent(p, RentCrash, 0)
+	if err := SavePlayerWithRent(p, RentCrash, 0); err != nil {
+		slog.Error("SavePlayerWithRent failed in crash save conversion", "player", p.GetName(), "error", err)
+	}
 
 	if origRentCode == RentRented || origRentCode == RentCryo {
 		return 0

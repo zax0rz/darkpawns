@@ -39,8 +39,9 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 	case ObjEquipped:
 		if old.OwnerKind == OwnerPlayer {
 			if p, ok := w.players[old.PlayerName]; ok && p.Equipment != nil {
-// #nosec G104
-				p.Equipment.unequip(old.Slot, p.Inventory)
+				if err := p.Equipment.unequip(old.Slot, p.Inventory); err != nil {
+					slog.Warn("unequip failed in detachObject", "player", p.Name, "slot", old.Slot, "error", err)
+				}
 			}
 		} else if old.OwnerKind == OwnerMob {
 			if m, ok := w.activeMobs[old.MobID]; ok {

@@ -287,7 +287,9 @@ func (p *Player) RemoveMasterAffect(af *engine.MasterAffect) {
 func (p *Player) RemoveAffectBit(bit int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-// #nosec G115
+	if bit < 0 || bit >= 64 {
+		return
+	}
 	p.Affects &^= 1 << uint(bit)
 }
 
@@ -309,7 +311,9 @@ func (p *Player) GetEquipAffects() []engine.EquipAffectData {
 		// Compute bitvector from ExtraFlags
 		var bv uint64
 		for i, f := range item.Prototype.ExtraFlags {
-// #nosec G115
+			if i < 0 || i >= 2 {
+				continue
+			}
 			bv |= uint64(f) << (uint(i) * 32)
 		}
 		for _, af := range item.Prototype.Affects {

@@ -14,6 +14,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"strings"
 
@@ -68,8 +69,9 @@ func (w *World) roomCleanup(roomVNum int) int {
 	totalVal := 0
 	for _, obj := range items {
 		w.roomMessage(roomVNum, obj.GetShortDesc()+" vanishes in a puff of smoke!")
-// #nosec G104
-		w.MoveObjectToNowhere(obj)
+		if err := w.MoveObjectToNowhere(obj); err != nil {
+			slog.Warn("MoveObjectToNowhere failed in room cleanup", "obj_vnum", obj.GetVNum(), "error", err)
+		}
 		cost := obj.GetCost()
 		if cost < 1 {
 			cost = 1
@@ -479,8 +481,9 @@ func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	for _, obj := range items {
 		if strings.Contains(obj.GetKeywords(), "corpse") {
 			w.roomMessage(me.RoomVNum, me.GetName()+" savagely devours "+obj.GetShortDesc()+".")
-// #nosec G104
-			w.MoveObjectToNowhere(obj)
+			if err := w.MoveObjectToNowhere(obj); err != nil {
+				slog.Warn("MoveObjectToNowhere failed in scavenger spec", "obj_vnum", obj.GetVNum(), "error", err)
+			}
 			return true
 		}
 	}

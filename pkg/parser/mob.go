@@ -61,7 +61,9 @@ func (d DiceRoll) String() string {
 
 // ParseMobFile parses a single .mob file and returns all mobs.
 func ParseMobFile(path string) ([]Mob, error) {
-// #nosec G304
+	if err := validateWorldPath(path); err != nil {
+		return nil, err
+	}
 	file, err := os.Open(path) // #nosec G703 — world data, trusted internal path
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)

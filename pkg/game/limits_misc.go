@@ -39,8 +39,9 @@ func (w *World) CheckIdling(p *Player) {
 			}
 			p.mu.Unlock()
 
-// #nosec G104
-			w.PlayerTransfer(p, 1)
+			if err := w.PlayerTransfer(p, 1); err != nil {
+				slog.Warn("PlayerTransfer failed in idle check", "player", p.Name, "error", err)
+			}
 			p.SendMessage("You have been idle, and are pulled into a void.\r\n")
 			w.SendToRoom(roomVNum, fmt.Sprintf("%s disappears into the void.\r\n", p.Name))
 		} else if timer > IDLE_DISCONNECT {
@@ -49,8 +50,9 @@ func (w *World) CheckIdling(p *Player) {
 			p.WasInRoom = 0
 			p.mu.Unlock()
 
-// #nosec G104
-			w.PlayerTransfer(p, 3)
+			if err := w.PlayerTransfer(p, 3); err != nil {
+				slog.Warn("PlayerTransfer failed in idle disconnect", "player", p.Name, "error", err)
+			}
 
 			slog.Info("player idle extracted", "name", p.Name)
 			ExtractChar(p)

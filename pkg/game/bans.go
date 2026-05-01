@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -80,8 +81,7 @@ func banTypeName(t int) string {
 func (bm *BanManager) LoadBanned(path string) {
 	bm.bans = nil
 
-// #nosec G304
-	f, err := os.Open(path)
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		slog.Warn("unable to open ban file", "path", path, "error", err)
 		return
@@ -119,8 +119,7 @@ func (bm *BanManager) WriteBanList(path string) error {
 	if err := os.MkdirAll(pathDir(path), 0o750); err != nil {
 		return fmt.Errorf("WriteBanList: mkdir: %w", err)
 	}
-// #nosec G304
-	f, err := os.Create(path)
+	f, err := os.Create(filepath.Clean(path))
 	if err != nil {
 		return fmt.Errorf("WriteBanList: create %s: %w", path, err)
 	}
@@ -229,8 +228,7 @@ func (bm *BanManager) ListBans() string {
 func (bm *BanManager) ReadInvalidList(path string) {
 	bm.invalidNames = nil
 
-// #nosec G304
-	f, err := os.Open(path)
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		slog.Warn("unable to open invalid name file", "path", path, "error", err)
 		return

@@ -107,8 +107,7 @@ func (s *Session) HandleMessage(data []byte) error {
 func (s *Session) Close() {
 	// Close the connection only; channel close is handled by Unregister()
 	if s.conn != nil {
-// #nosec G104
-		s.conn.Close()
+		_ = s.conn.Close()
 	}
 }
 

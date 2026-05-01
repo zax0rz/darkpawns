@@ -84,8 +84,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 			for _, vnum := range invVnums {
 				if proto, ok := world.GetObjPrototype(vnum); ok {
 					obj := game.NewObjectInstance(proto, -1)
-// #nosec G104
-					p.Inventory.AddItem(obj)
+					_ = p.Inventory.AddItem(obj)
 				}
 			}
 		}

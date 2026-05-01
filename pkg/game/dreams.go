@@ -5,6 +5,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"time"
 )
@@ -282,8 +283,12 @@ type PlayerDreamAdapter struct {
 func (a *PlayerDreamAdapter) GetLevel() int                              { return a.p.Level }
 func (a *PlayerDreamAdapter) GetLastDeath() int64                       { return a.p.GetLastDeath() }
 func (a *PlayerDreamAdapter) SetLastDeath(t int64)                       { a.p.SetLastDeath(t) }
-// #nosec G115
-func (a *PlayerDreamAdapter) HasAffect(bitNum int) bool                  { return a.p.Affects&(1<<uint(bitNum)) != 0 }
+func (a *PlayerDreamAdapter) HasAffect(bitNum int) bool {
+	if bitNum < 0 || bitNum >= 64 {
+		return false
+	}
+	return a.p.Affects&(1<<uint(bitNum)) != 0
+}
 func (a *PlayerDreamAdapter) RemoveAffect(bitNum int)                    { a.p.RemoveAffectBit(bitNum) }
 func (a *PlayerDreamAdapter) SendToChar(msg string)                      { a.p.SendMessage(msg) }
 func (a *PlayerDreamAdapter) SendToRoom(msg string)                      { a.w.roomMessage(a.p.RoomVNum, msg) }
@@ -293,8 +298,9 @@ func (a *PlayerDreamAdapter) WakeUp() {
 	}
 }
 func (a *PlayerDreamAdapter) MoveToRoom(roomVNum int) {
-// #nosec G104
-	a.w.PlayerTransfer(a.p, roomVNum)
+	if err := a.w.PlayerTransfer(a.p, roomVNum); err != nil {
+		slog.Warn("PlayerTransfer failed in dream", "player", a.p.Name, "room", roomVNum, "error", err)
+	}
 }
 func (a *PlayerDreamAdapter) CurrentTime() int64                        { return time.Now().Unix() }
 

@@ -194,8 +194,9 @@ func (m *Manager) SetDeathFunc() {
 		// If victim was a player, send updated room state after respawn
 		if !victim.IsNPC() {
 			if s, ok := m.GetSession(victim.GetName()); ok {
-// #nosec G104
-				cmdLook(s, nil)
+				if err := cmdLook(s, nil); err != nil {
+					slog.Error("cmdLook failed after death", "player", victim.GetName(), "error", err)
+				}
 			}
 		}
 	}
@@ -258,10 +259,8 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	m.ipConnMu.Lock()
 	if m.ipConnCount[ip] >= 5 {
 		m.ipConnMu.Unlock()
-// #nosec G104
-		conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "too many connections from your IP"))
-// #nosec G104
-		conn.Close()
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "too many connections from your IP"))
+		_ = conn.Close()
 		return
 	}
 	m.ipConnCount[ip]++

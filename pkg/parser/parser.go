@@ -4,7 +4,19 @@ package parser
 import (
 	"fmt"
 	"log/slog"
+	"path/filepath"
+	"strings"
 )
+
+// validateWorldPath ensures a path does not contain directory traversal
+// components before opening world data files.
+func validateWorldPath(path string) error {
+	clean := filepath.Clean(path)
+	if strings.Contains(clean, "..") {
+		return fmt.Errorf("invalid path contains '..': %s", path)
+	}
+	return nil
+}
 
 // World represents the entire parsed game world.
 type World struct {

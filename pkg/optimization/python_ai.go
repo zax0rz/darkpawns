@@ -392,8 +392,7 @@ func (ap *AsyncProcessor) Close() error {
 	ap.mu.Lock()
 	defer ap.mu.Unlock()
 
-// #nosec G104
-	ap.batchProcessor.Close()
+	_ = ap.batchProcessor.Close()
 	ap.workerPool.Close()
 
 	return nil

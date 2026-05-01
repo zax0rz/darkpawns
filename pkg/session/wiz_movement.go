@@ -68,8 +68,9 @@ func cmdAt(s *Session, args []string) error {
 	defer s.player.SetRoom(orig)
 	rest := strings.Join(args[1:], " ")
 	slog.Warn("wizard at", "by", s.player.Name, "room", dest, "command", rest, "depth", depth+1)
-// #nosec G104
-	ExecuteCommand(s, strings.Fields(rest)[0], strings.Fields(rest)[1:])
+	if err := ExecuteCommand(s, strings.Fields(rest)[0], strings.Fields(rest)[1:]); err != nil {
+		slog.Error("wizard at command failed", "command", rest, "error", err)
+	}
 	return nil
 }
 

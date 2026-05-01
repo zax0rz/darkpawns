@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -26,8 +27,11 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	wimpLevel := 0
-// #nosec G104
-	fmt.Sscanf(arg, "%d", &wimpLevel)
+	if _, err := fmt.Sscanf(arg, "%d", &wimpLevel); err != nil {
+		ch.SendMessage("That doesn't look like a number.\r\n")
+		slog.Warn("wimpy parse failed", "player", ch.Name, "arg", arg, "error", err)
+		return true
+	}
 
 	if wimpLevel > 0 {
 		if wimpLevel < 0 {

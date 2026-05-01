@@ -17,6 +17,7 @@ package game
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/events"
@@ -83,12 +84,13 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		w.handleMobDeath(victim, attackType)
 		// Publish typed event bus event
 		if w.Events != nil {
-// #nosec G104
-			w.Events.Publish(context.Background(), events.MobKilledEvent{
+			if err := w.Events.Publish(context.Background(), events.MobKilledEvent{
 				KillerID: killerName,
 				MobVNum:  mobVNum,
 				RoomVNum: victim.GetRoom(),
-			})
+			}); err != nil {
+				slog.Warn("Publish MobKilledEvent failed", "killer", killerName, "mob_vnum", mobVNum, "error", err)
+			}
 		}
 		// Award XP and gold to killer and party members — fight.c group_gain() lines 708-830
 		w.AwardMobKillXP(killer, mobExp, mobGold)
@@ -115,12 +117,13 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		w.handlePlayerDeath(victim, true, attackType, killerName) // combat death with killer
 		// Publish typed event bus event
 		if w.Events != nil {
-// #nosec G104
-			w.Events.Publish(context.Background(), events.PlayerKilledEvent{
+			if err := w.Events.Publish(context.Background(), events.PlayerKilledEvent{
 				KillerID: killerName,
 				VictimID: victim.GetName(),
 				RoomVNum: victim.GetRoom(),
-			})
+			}); err != nil {
+				slog.Warn("Publish PlayerKilledEvent failed", "killer", killerName, "victim", victim.GetName(), "error", err)
+			}
 		}
 	}
 }
@@ -184,8 +187,9 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, mobGold)
 	} else {
 		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, mobGold)
-// #nosec G104
-		w.MoveObjectToRoom(corpse, roomVNum)
+		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
+			slog.Warn("MoveObjectToRoom failed in mob death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
+		}
 	}
 
 	// Notify players in room
@@ -300,8 +304,9 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
 	} else {
 		corpse := w.makeCorpse(player.Name, player.Sex, inventoryItems, equipmentItems, roomVNum, attackType, playerGold)
-// #nosec G104
-		w.MoveObjectToRoom(corpse, roomVNum)
+		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
+			slog.Warn("MoveObjectToRoom failed in player death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
+		}
 	}
 
 	// Notify room
@@ -649,8 +654,9 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 			LongDesc:  "A small pile of ash is all that remains.",
 		},
 	}
-// #nosec G104
-	w.MoveObjectToRoom(ash, roomVNum)
+	if err := w.MoveObjectToRoom(ash, roomVNum); err != nil {
+		slog.Warn("MoveObjectToRoom failed in makeDust", "room", roomVNum, "error", err)
+	}
 
 	// Send room message
 	victimName := ""

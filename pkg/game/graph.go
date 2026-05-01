@@ -2,7 +2,7 @@ package game
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"math/rand/v2"
 	"strings"
 
@@ -452,8 +452,9 @@ func (w *World) mobPerformMove(m *MobInstance, dir int) {
 func (w *World) mobAttackPlayer(m *MobInstance, target *Player) {
 	m.SetFighting(target.GetName())
 	target.SetFighting(m.GetName())
-// #nosec G104
-	m.Attack(target, w)
+	if err := m.Attack(target, w); err != nil {
+		slog.Warn("Attack failed in mobAttackPlayer", "mob", m.GetName(), "target", target.Name, "error", err)
+	}
 }
 
 // mobIsIntelligent checks if a mob is intelligent enough to open doors.

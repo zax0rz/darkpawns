@@ -70,8 +70,7 @@ func (m *Manager) CheckIdlePasswords() {
 
 		// Close the connection
 		if s.conn != nil {
-// #nosec G104
-			s.conn.Close()
+			_ = s.conn.Close()
 		}
 
 		toDelete = append(toDelete, name)

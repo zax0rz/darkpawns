@@ -276,8 +276,7 @@ func (bp *BatchProcessor) flushTimer() {
 	defer bp.mu.Unlock()
 
 	if len(bp.operations) > 0 {
-// #nosec G104
-		bp.flushLocked()
+		_ = bp.flushLocked()
 	}
 }
 

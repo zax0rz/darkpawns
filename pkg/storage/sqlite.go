@@ -42,8 +42,7 @@ func NewSQLiteBackend(dbPath string) (*SQLiteBackend, error) {
 
 	b := &SQLiteBackend{db: db}
 	if err := b.migrate(); err != nil {
-// #nosec G104
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("migrate sqlite: %w", err)
 	}
 

@@ -77,8 +77,7 @@ func (m *Manager) UnregisterAndClose(playerName string) {
 
 	// Close the WebSocket connection
 	if s.conn != nil {
-// #nosec G104
-		s.conn.Close()
+		_ = s.conn.Close()
 	}
 
 	slog.Info("session closed", "player", playerName)

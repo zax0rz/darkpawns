@@ -7,6 +7,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -458,8 +459,9 @@ func (w *World) CreateObject(vnum int, roomVNum int) *ObjectInstance {
 		return nil
 	}
 	obj := NewObjectInstance(proto, roomVNum)
-// #nosec G104
-	w.MoveObjectToRoom(obj, roomVNum)
+	if err := w.MoveObjectToRoom(obj, roomVNum); err != nil {
+		slog.Warn("MoveObjectToRoom failed in CreateObject", "obj_vnum", obj.GetVNum(), "room", roomVNum, "error", err)
+	}
 	return obj
 }
 
@@ -467,16 +469,18 @@ func (w *World) CreateObject(vnum int, roomVNum int) *ObjectInstance {
 // StartRoomCombat initiates combat between attacker and defender.
 func (w *World) StartRoomCombat(attacker, defender combat.Combatant) {
 	if aiCombatEngine != nil {
-// #nosec G104
-		aiCombatEngine.StartCombat(attacker, defender)
+		if err := aiCombatEngine.StartCombat(attacker, defender); err != nil {
+			slog.Warn("StartCombat failed in StartRoomCombat", "error", err)
+		}
 	}
 }
 
 // StartMobCombat initiates combat between two mobs.
 func (w *World) StartMobCombat(attacker, defender *MobInstance) {
 	if aiCombatEngine != nil {
-// #nosec G104
-		aiCombatEngine.StartCombat(attacker, defender)
+		if err := aiCombatEngine.StartCombat(attacker, defender); err != nil {
+			slog.Warn("StartCombat failed in StartMobCombat", "error", err)
+		}
 	}
 }
 

@@ -428,14 +428,18 @@ func (o *ObjectInstance) GetExtraFlags() [4]int {
 // SetExtraFlag sets a bit in the instance-level extra flags override.
 // word is the flag word index (0-3), bit is the bit position.
 func (o *ObjectInstance) SetExtraFlag(word, bit int) {
-// #nosec G115
+	if word < 0 || word >= len(o.ExtraFlagsOverride) || bit < 0 || bit >= 32 {
+		return
+	}
 	o.ExtraFlagsOverride[word] |= (1 << uint(bit))
 }
 
 // HasExtraFlag checks if a bit is set in the effective extra flags.
 func (o *ObjectInstance) HasExtraFlag(word, bit int) bool {
 	ef := o.GetExtraFlags()
-// #nosec G115
+	if word < 0 || word >= len(ef) || bit < 0 || bit >= 32 {
+		return false
+	}
 	return ef[word]&(1<<uint(bit)) != 0
 }
 

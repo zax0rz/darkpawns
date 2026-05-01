@@ -7,6 +7,7 @@
 package game
 
 import (
+	"log/slog"
 	"math/rand"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -196,8 +197,9 @@ func (w *World) MobileActivity() {
 				}
 				if shouldHit || isAggressive {
 					if aiCombatEngine != nil {
-// #nosec G104
-						aiCombatEngine.StartCombat(ch, vict)
+						if err := aiCombatEngine.StartCombat(ch, vict); err != nil {
+							slog.Warn("StartCombat failed in aggressive mob", "mob", ch.GetName(), "error", err)
+						}
 					}
 					break
 				}
@@ -216,8 +218,9 @@ func (w *World) MobileActivity() {
 				for _, name := range ch.Memory {
 					if name == vict.GetName() {
 						if aiCombatEngine != nil {
-// #nosec G104
-							aiCombatEngine.StartCombat(ch, vict)
+							if err := aiCombatEngine.StartCombat(ch, vict); err != nil {
+								slog.Warn("StartCombat failed in memory mob", "mob", ch.GetName(), "error", err)
+							}
 						}
 						break
 					}
@@ -241,8 +244,9 @@ func (w *World) MobileActivity() {
 				for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 					if p.GetName() == target {
 						if aiCombatEngine != nil {
-// #nosec G104
-							aiCombatEngine.StartCombat(ch, p)
+							if err := aiCombatEngine.StartCombat(ch, p); err != nil {
+								slog.Warn("StartCombat failed in helper mob", "mob", ch.GetName(), "error", err)
+							}
 						}
 						break
 					}
@@ -258,8 +262,9 @@ func (w *World) MobileActivity() {
 			for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 				if p.GetLevel() >= 24 {
 					if aiCombatEngine != nil {
-// #nosec G104
-						aiCombatEngine.StartCombat(ch, p)
+						if err := aiCombatEngine.StartCombat(ch, p); err != nil {
+							slog.Warn("StartCombat failed in aggr24 mob", "mob", ch.GetName(), "error", err)
+						}
 					}
 					break
 				}
@@ -277,8 +282,9 @@ func (w *World) MobileActivity() {
 				}
 				if vict.GetLevel()+3 < ch.GetLevel() {
 					if aiCombatEngine != nil {
-// #nosec G104
-						aiCombatEngine.StartCombat(ch, vict)
+						if err := aiCombatEngine.StartCombat(ch, vict); err != nil {
+							slog.Warn("StartCombat failed in aggr24 mob vs mob", "mob", ch.GetName(), "error", err)
+						}
 					}
 					break
 				}

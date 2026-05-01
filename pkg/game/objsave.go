@@ -210,8 +210,9 @@ func ExtractNorentsFromEquipped(p *Player) {
 		if IsUnrentable(slot) {
 			// Move from equipment to inventory (matching C's unequip_char + obj_to_char)
 			p.Equipment.UnequipItem(slot, p.Inventory)
-// #nosec G104
-			p.Inventory.addItem(slot)
+			if err := p.Inventory.addItem(slot); err != nil {
+				slog.Warn("addItem failed in ExtractNorents", "player", p.Name, "obj_vnum", slot.GetVNum(), "error", err)
+			}
 		} else {
 			// Recursively extract norents from contained items.
 			for _, c := range slot.Contains {

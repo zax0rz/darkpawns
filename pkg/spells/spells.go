@@ -42,7 +42,11 @@
 //     SKILL_KICK, SKILL_TRIP
 package spells
 
-import "github.com/zax0rz/darkpawns/pkg/engine"
+import (
+	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/engine"
+)
 
 // Spell constants from spells.h and globals.lua
 const (
@@ -187,8 +191,9 @@ func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int,
 		if !ok {
 			return
 		}
-// #nosec G104
-		ApplySpellAffects(targetAffectable, spellNum, casterLevel, am)
+		if err := ApplySpellAffects(targetAffectable, spellNum, casterLevel, am); err != nil {
+			slog.Error("ApplySpellAffects failed", "spell", spellNum, "error", err)
+		}
 	default:
 		// Route through CallMagic for damage, healing, points, summons, etc.
 		CallMagic(caster, target, nil, spellNum, casterLevel, CastSpell, world)

@@ -155,14 +155,12 @@ func (m *ClanManager) SaveClans(filePath string) error {
 	if err != nil {
 		return err
 	}
-// #nosec G306
 	return os.WriteFile(filePath, data, 0644)
 }
 
 func InitClans(filePath string) *ClanManager {
 	m := NewClanManager()
-// #nosec G304
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(filepath.Clean(filePath))
 	if err != nil {
 		if os.IsNotExist(err) {
 			if saveErr := m.SaveClans(filePath); saveErr != nil {

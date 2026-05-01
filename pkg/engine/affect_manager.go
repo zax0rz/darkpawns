@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"strconv"
 	"sync"
 	"time"
 )
@@ -580,8 +581,7 @@ func (am *AffectManager) applyPeriodicEffect(entity Affectable, affect *Affect) 
 
 // Helper methods
 func (am *AffectManager) getEntityID(entity Affectable) string {
-// #nosec G115
-	return entity.GetName() + "_" + string(rune(entity.GetID()))
+	return entity.GetName() + "_" + strconv.Itoa(entity.GetID())
 }
 
 func (am *AffectManager) removeAffectsByStackID(entityID, stackID string) {

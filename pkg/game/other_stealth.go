@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -207,8 +208,9 @@ func (w *World) doSteal(ch *Player, me *MobInstance, cmd string, arg string) boo
 	// If victim is a mob and awake, they hit back
 	if ohoh && victimMob != nil && victimMob.GetPosition() > combat.PosSleeping {
 		// hit(vict, ch, TYPE_UNDEFINED) — simplified: start combat
-// #nosec G104
-		victimMob.Attack(ch, w)
+		if err := victimMob.Attack(ch, w); err != nil {
+			slog.Warn("Attack failed in steal", "mob", victimMob.GetName(), "target", ch.Name, "error", err)
+		}
 	}
 
 	if ohoh && victimPl != nil {

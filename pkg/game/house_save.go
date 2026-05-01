@@ -23,7 +23,6 @@ func (w *World) saveHouseControl() {
 		return
 	}
 
-// #nosec G306
 	if err := os.WriteFile(houseControlFilename, data, 0600); err != nil {
 		BasicMudLog(fmt.Sprintf("Error writing house control file: %v", err))
 	}
@@ -50,8 +49,7 @@ func (w *World) houseLoad(vnum int) bool {
 		return false
 	}
 
-// #nosec G304
-	data, err := os.ReadFile(fname)
+	data, err := os.ReadFile(filepath.Clean(fname))
 	if err != nil {
 		// No file found — not necessarily an error
 		return false
@@ -137,8 +135,7 @@ func (w *World) houseCrashsave(vnum int) {
 		return
 	}
 
-// #nosec G304
-	fp, err := os.Create(fname)
+	fp, err := os.Create(filepath.Clean(fname))
 	if err != nil {
 		BasicMudLog(fmt.Sprintf("SYSERR: Error saving house file #%d: %v", vnum, err))
 		return

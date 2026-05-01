@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"strings"
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -34,13 +35,15 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 	food.Runtime.ShortDescOverride = "some carved meat from " + corpse.GetShortDesc()
 
 	if err := world.MoveObjectToPlayerInventory(food, ch); err != nil {
-// #nosec G104
-		world.MoveObjectToRoom(food, ch.GetRoomVNum())
+		if err2 := world.MoveObjectToRoom(food, ch.GetRoomVNum()); err2 != nil {
+			slog.Warn("MoveObjectToRoom failed in carve fallback", "obj_vnum", food.GetVNum(), "error", err2)
+		}
 	}
 
 	// Remove corpse from room
-// #nosec G104
-	world.MoveObjectToNowhere(corpse)
+	if err := world.MoveObjectToNowhere(corpse); err != nil {
+		slog.Warn("MoveObjectToNowhere failed in carve", "obj_vnum", corpse.GetVNum(), "error", err)
+	}
 
 	return SkillResult{
 		Success:     true,

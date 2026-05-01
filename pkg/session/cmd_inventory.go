@@ -29,8 +29,7 @@ func cmdQuit(s *Session) error {
 	// Remove from world and close connection
 	s.manager.world.RemovePlayer(s.player.Name)
 	s.manager.Unregister(s.player.Name)
-// #nosec G104
-	s.conn.Close()
+	_ = s.conn.Close()
 
 	return nil
 }

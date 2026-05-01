@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"strings"
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -112,8 +113,9 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 	// Dump corpse contents and remove it
 	// In a full port we'd create head + headless_corpse objects
 	// For now, mark the corpse as beheaded and dump its contents
-// #nosec G104
-	world.MoveObjectToNowhere(corpse)
+	if err := world.MoveObjectToNowhere(corpse); err != nil {
+		slog.Warn("MoveObjectToNowhere failed in behead", "obj_vnum", corpse.GetVNum(), "error", err)
+	}
 
 	// Create head (vnum 16) and headless corpse (vnum 17) objects
 	headObj, err := world.SpawnObject(16, ch.GetRoomVNum())

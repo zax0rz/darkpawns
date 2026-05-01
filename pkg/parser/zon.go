@@ -30,7 +30,9 @@ type ZoneCommand struct {
 
 // ParseZonFile parses a single .zon file and returns the zone.
 func ParseZonFile(path string) (*Zone, error) {
-// #nosec G304
+	if err := validateWorldPath(path); err != nil {
+		return nil, err
+	}
 	file, err := os.Open(path) // #nosec G703 — world data, trusted internal path
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)

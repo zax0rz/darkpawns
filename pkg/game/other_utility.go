@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -322,8 +323,11 @@ func (w *World) doRoll(ch *Player, me *MobInstance, cmd string, arg string) bool
 	arg = strings.TrimSpace(arg)
 	maxRoll := 100
 	if arg != "" {
-// #nosec G104
-		fmt.Sscanf(arg, "%d", &maxRoll)
+		if _, err := fmt.Sscanf(arg, "%d", &maxRoll); err != nil {
+			ch.SendMessage("That doesn't look like a number.\r\n")
+			slog.Warn("roll parse failed", "player", ch.Name, "arg", arg, "error", err)
+			return true
+		}
 		if maxRoll < 1 {
 			maxRoll = 1
 		}

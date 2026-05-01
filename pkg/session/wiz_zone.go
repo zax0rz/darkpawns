@@ -257,7 +257,10 @@ func cmdSysfile(s *Session, args []string) error {
 		return nil
 	}
 
-// #nosec G304
+	if filePath == "" {
+		s.Send("That isn't a file!")
+		return nil
+	}
 	f, err := os.Open(filePath)
 	if err != nil {
 		s.Send("File does not exist.")

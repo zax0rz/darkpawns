@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"encoding/json"
 )
 
@@ -14,8 +15,7 @@ func (w *World) HouseListrent(ch *Player, vnum int) {
 	}
 
 	// Check if file exists
-// #nosec G304
-	data, err := os.ReadFile(fname)
+	data, err := os.ReadFile(filepath.Clean(fname))
 	if err != nil {
 		if os.IsNotExist(err) {
 			sendToChar(ch, fmt.Sprintf("No objects on file for house #%d.\r\n", vnum))

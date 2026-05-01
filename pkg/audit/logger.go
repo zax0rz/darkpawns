@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -27,8 +29,11 @@ type AuditLogger struct {
 
 // NewAuditLogger opens (or creates) an audit log file with restrictive permissions.
 func NewAuditLogger(filename string) (*AuditLogger, error) {
-// #nosec G304
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	clean := filepath.Clean(filename)
+	if strings.Contains(clean, "..") {
+		return nil, fmt.Errorf("invalid audit log path: %s", filename)
+	}
+	file, err := os.OpenFile(clean, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +57,9 @@ func (a *AuditLogger) Log(event AuditEvent) {
 		return
 	}
 
-// #nosec G104
-	a.file.Write(append(data, '\n'))
+	if _, err := a.file.Write(append(data, '\n')); err != nil {
+		slog.Error("audit log write failed", "error", err)
+	}
 
 	// Also log to console for important events
 	if !event.Success || event.EventType == "security" {
@@ -68,8 +74,7 @@ func (a *AuditLogger) Log(event AuditEvent) {
 
 // Close flushes and closes the underlying audit log file.
 func (a *AuditLogger) Close() {
-// #nosec G104
-	a.file.Close()
+	_ = a.file.Close()
 }
 
 // Global audit logger instance

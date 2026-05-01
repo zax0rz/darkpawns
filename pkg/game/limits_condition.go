@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 )
 
@@ -259,8 +260,9 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 				for _, contained := range obj.GetContents() {
 					obj.RemoveFromContainer(contained)
 					contained.SetRoomVNum(roomVNum)
-// #nosec G104
-					w.MoveObjectToRoom(contained, roomVNum)
+					if err := w.MoveObjectToRoom(contained, roomVNum); err != nil {
+						slog.Warn("MoveObjectToRoom failed in decay", "obj_vnum", contained.GetVNum(), "room", roomVNum, "error", err)
+					}
 				}
 				// Random decay message
 				msgs := []string{
@@ -327,8 +329,9 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 						if proto, ok := w.GetObjPrototype(fo.WornOffObjNum); ok {
 							spawned := NewObjectInstance(proto, roomVNum)
 							spawned.SetTimer(2)
-// #nosec G104
-							w.MoveObjectToRoom(spawned, roomVNum)
+							if err := w.MoveObjectToRoom(spawned, roomVNum); err != nil {
+								slog.Warn("MoveObjectToRoom failed in worn-off spawn", "obj_vnum", spawned.GetVNum(), "room", roomVNum, "error", err)
+							}
 						}
 					}
 					w.SendToRoom(roomVNum, fo.WearOffMsg+"\r\n")

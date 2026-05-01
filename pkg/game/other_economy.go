@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -21,8 +22,11 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	amount := 0
-// #nosec G104
-	fmt.Sscanf(arg, "%d", &amount)
+	if _, err := fmt.Sscanf(arg, "%d", &amount); err != nil {
+		ch.SendMessage("That doesn't look like a number.\r\n")
+		slog.Warn("split parse failed", "player", ch.Name, "arg", arg, "error", err)
+		return true
+	}
 	if amount <= 0 {
 		ch.SendMessage("Sorry, you can't do that.\r\n")
 		return true

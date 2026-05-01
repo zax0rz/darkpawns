@@ -78,7 +78,9 @@ func (p *Player) HasPLRFlag(bit int) bool {
 func (p *Player) SetPLRFlag(bit int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-// #nosec G115
+	if bit < 0 || bit >= 64 {
+		return
+	}
 	p.PlayerFlags |= 1 << uint(bit)
 }
 
@@ -86,7 +88,9 @@ func (p *Player) SetPLRFlag(bit int) {
 func (p *Player) ClearPLRFlag(bit int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-// #nosec G115
+	if bit < 0 || bit >= 64 {
+		return
+	}
 	p.PlayerFlags &= ^(1 << uint(bit))
 }
 

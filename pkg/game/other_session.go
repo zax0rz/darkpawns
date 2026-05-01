@@ -48,8 +48,9 @@ func (w *World) doQuit(ch *Player, me *MobInstance, cmd string, arg string) bool
 	w.RemovePlayer(ch.Name)
 
 	// Save player
-// #nosec G104
-	SavePlayer(ch)
+	if err := SavePlayer(ch); err != nil {
+		slog.Error("failed to save player on quit", "player", ch.Name, "error", err)
+	}
 
 	// Extract — broadcast leave message
 	msg := fmt.Sprintf("%s has left the game.\r\n", ch.Name)

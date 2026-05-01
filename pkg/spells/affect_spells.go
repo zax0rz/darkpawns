@@ -1357,11 +1357,13 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 
 			// Transfer — use CharTransfer via appropriate path
 			if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() {
-// #nosec G104
-				w.MobTransfer(cvict, toRoom)
+				if err := w.MobTransfer(cvict, toRoom); err != nil {
+					slog.Error("MobTransfer failed", "error", err)
+				}
 			} else {
-// #nosec G104
-				w.PlayerTransfer(cvict, toRoom)
+				if err := w.PlayerTransfer(cvict, toRoom); err != nil {
+					slog.Error("PlayerTransfer failed", "error", err)
+				}
 			}
 			return
 		}
@@ -1720,11 +1722,13 @@ func castSummon(level int, ch, cvict, world interface{}) {
 			type transferWorld interface{ PlayerTransfer(ch interface{}, toRoomVNum int) error; MobTransfer(ch interface{}, toRoomVNum int) error }
 			if tw, ok := world.(transferWorld); ok {
 				if chIsNPC {
-// #nosec G104
-					tw.MobTransfer(ch, victRoom)
+					if err := tw.MobTransfer(ch, victRoom); err != nil {
+						slog.Error("MobTransfer failed", "error", err)
+					}
 				} else {
-// #nosec G104
-					tw.PlayerTransfer(ch, victRoom)
+					if err := tw.PlayerTransfer(ch, victRoom); err != nil {
+						slog.Error("PlayerTransfer failed", "error", err)
+					}
 				}
 			}
 			return
@@ -1740,11 +1744,13 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	type transferWorld interface{ PlayerTransfer(ch interface{}, toRoomVNum int) error; MobTransfer(ch interface{}, toRoomVNum int) error }
 	if tw, ok := world.(transferWorld); ok {
 		if victIsNPC {
-// #nosec G104
-			tw.MobTransfer(cvict, chRoom)
+			if err := tw.MobTransfer(cvict, chRoom); err != nil {
+				slog.Error("MobTransfer failed", "error", err)
+			}
 		} else {
-// #nosec G104
-			tw.PlayerTransfer(cvict, chRoom)
+			if err := tw.PlayerTransfer(cvict, chRoom); err != nil {
+				slog.Error("PlayerTransfer failed", "error", err)
+			}
 		}
 	}
 
@@ -1998,12 +2004,13 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 		return
 	}
 
-// #nosec G104
-	tw.PlayerTransfer(ch, victRoom)
+	if err := tw.PlayerTransfer(ch, victRoom); err != nil {
+		slog.Error("PlayerTransfer failed", "error", err)
+	}
 	tw.LookAtRoomSimple(victRoom, ch)
-// #nosec G104
-	tw.PlayerTransfer(ch, chRoom)
-
+	if err := tw.PlayerTransfer(ch, chRoom); err != nil {
+		slog.Error("PlayerTransfer failed", "error", err)
+	}
 	sendToCaster(ch, "You have a strange dream about seeing...\r\n")
 }
 

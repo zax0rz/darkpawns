@@ -413,8 +413,9 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				slog.Error("error spawning object for container", "obj_vnum", cmd.Arg1, "error", err, "context", "container")
 				continue
 			}
-// #nosec G104
-			s.world.MoveObjectToContainer(obj, container)
+			if err := s.world.MoveObjectToContainer(obj, container); err != nil {
+				slog.Warn("MoveObjectToContainer failed in spawner", "obj_vnum", obj.GetVNum(), "error", err)
+			}
 			lastCmd = 1
 
 		case "D": // Door state: arg2=direction, arg3=state (0=open, 1=closed, 2=locked)

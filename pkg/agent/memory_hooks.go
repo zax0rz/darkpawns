@@ -90,8 +90,7 @@ func doMemoryHookWithRetry(httpClient *http.Client, req *http.Request) error {
 	var body []byte
 	if req.Body != nil {
 		body, _ = io.ReadAll(req.Body)
-// #nosec G104
-		req.Body.Close()
+		_ = req.Body.Close()
 	}
 
 	var lastErr error
@@ -104,13 +103,11 @@ func doMemoryHookWithRetry(httpClient *http.Client, req *http.Request) error {
 // #nosec G704
 		resp, err := httpClient.Do(req)
 		if err == nil && resp.StatusCode < 500 {
-// #nosec G104
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			return nil
 		}
 		if resp != nil {
-// #nosec G104
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 		if err != nil {
 			lastErr = err

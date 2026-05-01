@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -142,8 +143,9 @@ func (w *World) doEat(ch *Player, me *MobInstance, cmd, arg string) bool {
 	_ = foodVal
 
 	// Consume the food
-// #nosec G104
-	w.MoveObjectToNowhere(food)
+	if err := w.MoveObjectToNowhere(food); err != nil {
+		slog.Warn("MoveObjectToNowhere failed in doEat", "obj_vnum", food.GetVNum(), "error", err)
+	}
 	ch.SendMessage("That was good!\r\n")
 	return true
 }

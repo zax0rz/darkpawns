@@ -53,8 +53,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		case "N", "n":
 			s.charCreating = false
 			s.charStage = ""
-// #nosec G104
-			s.SendMessage("Character creation cancelled.\r\n")
+			_ = s.SendMessage("Character creation cancelled.\r\n")
 		default:
 			s.sendCharCreatePrompt("confirm", fmt.Sprintf("Create %s? (Y/N)", s.charName), nil)
 		}

@@ -25,8 +25,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	ip := auth.GetIPFromRequest(s.request)
 	if !s.manager.loginLimiter.GetLimiter(ip).Allow() {
 		s.sendError("Too many login attempts. Please try again later.")
-// #nosec G104
-		s.conn.Close()
+		_ = s.conn.Close()
 		audit.LogSecurityEvent("rate_limit_exceeded", "Login rate limit exceeded", login.PlayerName, ip)
 		return nil
 	}
@@ -35,8 +34,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if locked, remaining := s.manager.loginAttempts.IsLocked(ip); locked {
 		mins := int(remaining.Minutes()) + 1
 		s.sendError(fmt.Sprintf("Too many failed login attempts. Try again in %d minutes.", mins))
-// #nosec G104
-		s.conn.Close()
+		_ = s.conn.Close()
 		audit.LogSecurityEvent("login_locked_out", "Login locked out due to repeated failures", login.PlayerName, ip)
 		return nil
 	}
@@ -45,15 +43,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if login.Mode == "agent" && login.APIKey != "" {
 		if !s.manager.hasDB {
 			s.sendError("agent auth requires database")
-// #nosec G104
-			s.conn.Close()
+			_ = s.conn.Close()
 			return nil
 		}
 		charName, keyID, valid := s.manager.db.ValidateAgentKey(login.APIKey)
 		if !valid {
 			s.sendError("invalid agent key")
-// #nosec G104
-			s.conn.Close()
+			_ = s.conn.Close()
 			return nil
 		}
 		// Use character name from the key — ignore login.PlayerName for security
@@ -69,8 +65,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	// Validate player name
 	if !validation.IsValidPlayerName(login.PlayerName) {
 		s.sendError("Invalid player name. Names must be 2-32 characters and contain only letters, numbers, spaces, dots, dashes, and underscores.")
-// #nosec G104
-		s.conn.Close()
+		_ = s.conn.Close()
 		audit.LogSecurityEvent("invalid_player_name", "Invalid player name format", login.PlayerName, ip)
 		return nil
 	}
@@ -78,8 +73,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	// Check against invalid name list (profanity filter) — from game/ban.c
 	if !game.ValidName(login.PlayerName) {
 		s.sendError("Invalid player name. Please choose another.")
-// #nosec G104
-		s.conn.Close()
+		_ = s.conn.Close()
 		return nil
 	}
 
@@ -95,15 +89,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if rec.Password != "" {
 				if login.Password == "" {
 					s.sendError("Password required.")
-// #nosec G104
-					s.conn.Close()
+					_ = s.conn.Close()
 					return nil
 				}
 				if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)); err != nil {
 					s.manager.loginAttempts.RecordFailure(ip)
 					s.sendError("Invalid password.")
-// #nosec G104
-					s.conn.Close()
+					_ = s.conn.Close()
 					audit.LogSecurityEvent("login_failed", "Invalid password", login.PlayerName, ip)
 					return nil
 				}
@@ -121,16 +113,14 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			// New character — require password
 			if login.Password == "" {
 				s.sendError("Password required for new characters.")
-// #nosec G104
-				s.conn.Close()
+				_ = s.conn.Close()
 				return nil
 			}
 			hashedPwd, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
 			if err != nil {
 				slog.Error("bcrypt hash error", "error", err)
 				s.sendError("Internal error during character creation.")
-// #nosec G104
-				s.conn.Close()
+				_ = s.conn.Close()
 				return nil
 			}
 			s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)

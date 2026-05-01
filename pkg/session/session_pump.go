@@ -11,16 +11,13 @@ import "github.com/gorilla/websocket"
 func (s *Session) readPump() {
 	defer func() {
 		s.manager.Unregister(s.playerName)
-// #nosec G104
-		s.conn.Close()
+		_ = s.conn.Close()
 	}()
 
 	s.conn.SetReadLimit(16384) // 16KB max message size (C4)
-// #nosec G104
-	s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	_ = s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	s.conn.SetPongHandler(func(string) error {
-// #nosec G104
-		s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		_ = s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
 
@@ -45,26 +42,21 @@ func (s *Session) writePump() {
 	ticker := time.NewTicker(54 * time.Second)
 	defer func() {
 		ticker.Stop()
-// #nosec G104
-		s.conn.Close()
+		_ = s.conn.Close()
 	}()
 
 	for {
 		select {
 		case message, ok := <-s.send:
-// #nosec G104
-			s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			_ = s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if !ok {
-// #nosec G104
-				s.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = s.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-// #nosec G104
-			s.conn.WriteMessage(websocket.TextMessage, message)
+			_ = s.conn.WriteMessage(websocket.TextMessage, message)
 
 		case <-ticker.C:
-// #nosec G104
-			s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			_ = s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := s.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
