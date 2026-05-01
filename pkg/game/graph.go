@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"math/rand/v2"
 	"strings"
