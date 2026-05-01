@@ -177,7 +177,7 @@ func getWeather(hour, month int) string {
 
 	// Determine possible weather types based on season (month)
 	var options []string
-	weights := []int{}
+	var weights []int
 
 	switch {
 	case month >= 0 && month <= 3: // Winter

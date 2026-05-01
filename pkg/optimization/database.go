@@ -138,7 +138,7 @@ func (ia *IndexAnalyzer) AnalyzeTable(tableName string) ([]IndexRecommendation, 
 	if err != nil {
 		return nil, fmt.Errorf("query pg_stats: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var recommendations []IndexRecommendation
 

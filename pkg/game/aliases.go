@@ -73,7 +73,7 @@ func WriteAliases(playerName string, aliases []Alias) error {
 	if err != nil {
 		return fmt.Errorf("WriteAliases: create %s: %w", path, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	w := bufio.NewWriter(f)
 	for _, a := range aliases {
@@ -106,7 +106,7 @@ func ReadAliases(playerName string) ([]Alias, error) {
 		}
 		return nil, fmt.Errorf("ReadAliases: open %s: %w", path, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var aliases []Alias
 	scanner := bufio.NewScanner(f)

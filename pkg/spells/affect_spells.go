@@ -1826,7 +1826,7 @@ func castDivineInt(level int, ch, world interface{}) {
 	}
 
 	type followerAdder interface{ AddFollowerQuiet(ch, leader interface{}) }
-	fa, ok := world.(followerAdder)
+	fa, _ := world.(followerAdder)
 
 	for i := 0; i < number; i++ {
 		mobLevel := level / 2
@@ -1931,7 +1931,7 @@ func castConjureElemental(level int, ch, world interface{}) {
 
 	// Add as follower
 	type followerAdder interface{ AddFollowerQuiet(ch, leader interface{}) }
-	if fa, ok := world.(followerAdder); ok {
+	if fa, _ := world.(followerAdder); ok {
 		fa.AddFollowerQuiet(mob, ch)
 	}
 

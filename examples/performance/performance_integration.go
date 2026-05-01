@@ -68,7 +68,7 @@ func main() {
 	for i := 0; i < 10; i++ {
 		taskID := i
 // #nosec G104
-		pool.Submit(func() {
+		_ = pool.Submit(func() {
 			time.Sleep(100 * time.Millisecond)
 			fmt.Printf("Task %d completed\n", taskID)
 		})
@@ -76,7 +76,7 @@ func main() {
 	
 	// Submit high priority task
 // #nosec G104
-	pool.SubmitWithPriority(func() {
+	_ = pool.SubmitWithPriority(func() {
 		fmt.Println("High priority task completed immediately")
 	}, 2)
 	

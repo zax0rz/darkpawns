@@ -113,7 +113,7 @@ func mapRecurse(thisroom int, x, y, overlap, dontleavezone int, display *[][]int
 
 					// Same as C: if(!dontleavezone || (world[thisroom].zone == world[nextroom].zone))
 					nextRoomPtr := rooms[nextroom]
-					if !(dontleavezone != 0) || (thisRoomPtr.Zone == nextRoomPtr.Zone) {
+					if dontleavezone == 0 || (thisRoomPtr.Zone == nextRoomPtr.Zone) {
 						mapRecurse(nextroom, x+3*offX[dir], y+3*offY[dir], overlap, dontleavezone, display, rooms)
 					}
 				}

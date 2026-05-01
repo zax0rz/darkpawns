@@ -26,24 +26,26 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 		obj.RoomVNum = -1
 
 	case ObjInInventory:
-		if old.OwnerKind == OwnerPlayer {
+		switch old.OwnerKind {
+		case OwnerPlayer:
 			if p, ok := w.players[old.PlayerName]; ok {
 				p.Inventory.removeItem(obj)
 			}
-		} else if old.OwnerKind == OwnerMob {
+		case OwnerMob:
 			if m, ok := w.activeMobs[old.MobID]; ok {
 				m.RemoveFromInventory(obj)
 			}
 		}
 
 	case ObjEquipped:
-		if old.OwnerKind == OwnerPlayer {
+		switch old.OwnerKind {
+		case OwnerPlayer:
 			if p, ok := w.players[old.PlayerName]; ok && p.Equipment != nil {
 				if err := p.Equipment.unequip(old.Slot, p.Inventory); err != nil {
 					slog.Warn("unequip failed in detachObject", "player", p.Name, "slot", old.Slot, "error", err)
 				}
 			}
-		} else if old.OwnerKind == OwnerMob {
+		case OwnerMob:
 			if m, ok := w.activeMobs[old.MobID]; ok {
 				delete(m.Equipment, int(old.Slot))
 				m.AddToInventory(obj) // return to inventory on unequip
@@ -76,20 +78,22 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 		obj.RoomVNum = dst.RoomVNum
 
 	case ObjInInventory:
-		if dst.OwnerKind == OwnerPlayer {
+		switch dst.OwnerKind {
+		case OwnerPlayer:
 			if p, ok := w.players[dst.PlayerName]; ok {
 				if err := p.Inventory.addItem(obj); err != nil {
 					return fmt.Errorf("attach to player %s inventory: %w", dst.PlayerName, err)
 				}
 			}
-		} else if dst.OwnerKind == OwnerMob {
+		case OwnerMob:
 			if m, ok := w.activeMobs[dst.MobID]; ok {
 				m.AddToInventory(obj)
 			}
 		}
 
 	case ObjEquipped:
-		if dst.OwnerKind == OwnerPlayer {
+		switch dst.OwnerKind {
+		case OwnerPlayer:
 			if p, ok := w.players[dst.PlayerName]; ok && p.Equipment != nil {
 				// Remove from inventory first if it's there
 				p.Inventory.removeItem(obj)
@@ -97,7 +101,7 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 					return fmt.Errorf("equip on player %s: %w", dst.PlayerName, err)
 				}
 			}
-		} else if dst.OwnerKind == OwnerMob {
+		case OwnerMob:
 			if m, ok := w.activeMobs[dst.MobID]; ok {
 				m.AddToInventory(obj)
 				if m.Equipment != nil {

@@ -322,7 +322,7 @@ func (w *World) isShopkeeper(ch *MobInstance) bool {
 
 func (w *World) MpSound(mob *MobInstance) {
 	sound := ""
-	useSay := true
+	useSay := false
 
 	switch mob.GetVNum() {
 	case 8066:

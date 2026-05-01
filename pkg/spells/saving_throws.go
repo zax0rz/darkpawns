@@ -175,8 +175,7 @@ func CheckSavingThrow(ch interface{}, saveType SavingThrowType) bool {
 		GetLevel() int
 	}
 
-	class := 0
-	level := 1
+	var class, level int
 	saveMod := 0
 	isNPC := false
 

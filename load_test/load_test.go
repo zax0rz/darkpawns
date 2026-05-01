@@ -81,25 +81,25 @@ func (c *LoadTestClient) Connect() error {
 	}
 
 	if err := conn.WriteJSON(loginMsg); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("client %d login: %w", c.ID, err)
 	}
 
 	// Wait for login response
 	_, message, err := conn.ReadMessage()
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("client %d login response: %w", c.ID, err)
 	}
 
 	var response map[string]interface{}
 	if err := json.Unmarshal(message, &response); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("client %d parse response: %w", c.ID, err)
 	}
 
 	if response["type"] != "state" {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("client %d unexpected response: %v", c.ID, response)
 	}
 
@@ -126,7 +126,7 @@ func (c *LoadTestClient) Start() {
 			c.sendMessage()
 		case <-c.StopChan:
 			close(readDone)
-			c.Conn.Close()
+			_ = c.Conn.Close()
 			return
 		}
 	}
@@ -165,7 +165,7 @@ func (c *LoadTestClient) readLoop(done chan struct{}) {
 		case <-done:
 			return
 		default:
-			c.Conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+			_ = c.Conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 			_, _, err := c.Conn.ReadMessage()
 			if err != nil {
 				atomic.AddInt64(&c.Errors, 1)
@@ -369,7 +369,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Server not running: %v", err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	fmt.Println("Server is running. Starting load test...")
 

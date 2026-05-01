@@ -38,7 +38,7 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 	//   29 = roots/tubers (field/hills), 30 = small desert creature,
 	//   31 = mountain herbs
 	var foodVNum int
-	isFind := true
+	var isFind bool
 
 	switch sector {
 	case 3: // SECT_FOREST

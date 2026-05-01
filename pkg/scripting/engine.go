@@ -879,7 +879,7 @@ func (e *Engine) luaSay(L *lua.LState) int {
 
 	// Format message: "mob says 'message'"
 	L.GetGlobal("me")
-	var mobName string = "someone"
+	var mobName = "someone"
 	if L.Get(-1).Type() == lua.LTTable {
 		L.GetField(L.Get(-1), "name")
 		if L.Get(-1).Type() == lua.LTString {
@@ -939,7 +939,7 @@ func (e *Engine) luaEmote(L *lua.LState) int {
 
 	// Format message: "mob message"
 	L.GetGlobal("me")
-	var mobName string = "someone"
+	var mobName = "someone"
 	if L.Get(-1).Type() == lua.LTTable {
 		L.GetField(L.Get(-1), "name")
 		if L.Get(-1).Type() == lua.LTString {
@@ -2038,7 +2038,7 @@ func (e *Engine) luaCanSee(L *lua.LState) int {
 	}
 
 	// Get the observer's level from the 'me' table (the mob casting the spell / running the script)
-	var observerLevel int = 0
+	var observerLevel = 0
 	L.GetGlobal("me")
 	if meTbl, meOk := L.Get(-1).(*lua.LTable); meOk {
 		lvlL := meTbl.RawGetString("level")

@@ -44,7 +44,7 @@ func workerPoolExample() {
 	for i := 0; i < 20; i++ {
 		taskID := i
 // #nosec G104
-		pool.Submit(func() {
+		_ = pool.Submit(func() {
 			time.Sleep(10 * time.Millisecond)
 			fmt.Printf("  Task %d completed\n", taskID)
 		})
@@ -83,7 +83,7 @@ func connectionPoolExample() {
 		time.Sleep(2 * time.Millisecond)
 
 // #nosec G104
-		pool.Put(conn)
+		_ = pool.Put(conn)
 	}
 
 	// Print pool stats
@@ -114,7 +114,7 @@ func aiBatchProcessingExample() {
 
 		return nil
 	})
-	defer processor.Close()
+	defer func() { _ = processor.Close() }()
 
 	// Submit requests
 	for i := 0; i < 15; i++ {

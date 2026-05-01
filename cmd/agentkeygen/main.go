@@ -41,7 +41,7 @@ func main() {
 		slog.Error("connect to database", "error", err)
 		os.Exit(1)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 
 	rawKey, id, err := database.CreateAgentKey(*name)
 	if err != nil {

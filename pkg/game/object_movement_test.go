@@ -93,7 +93,7 @@ func TestRoomToPlayerInventory(t *testing.T) {
 	}
 
 	// Player picks up via MoveObject
-	w.MoveObject(obj, LocInventoryPlayer(player.Name))
+	_ = w.MoveObject(obj, LocInventoryPlayer(player.Name))
 
 	// Assert: item in inventory, not in room
 	if len(player.Inventory.Items) != 1 {
@@ -130,7 +130,7 @@ func TestPlayerInventoryToRoom(t *testing.T) {
 	obj.Location = LocInventoryPlayer(player.Name)
 
 	// Drop via MoveObject
-	w.MoveObject(obj, LocRoom(1001))
+	_ = w.MoveObject(obj, LocRoom(1001))
 
 	// Assert: item in room, not in inventory
 	roomItems := w.GetItemsInRoom(1001)
@@ -338,7 +338,7 @@ func TestExtractObjectFromInventory(t *testing.T) {
 	}
 
 	// Use MoveObject to place in player inventory
-	w.MoveObject(obj, LocInventoryPlayer(player.Name))
+	_ = w.MoveObject(obj, LocInventoryPlayer(player.Name))
 
 	// Verify in inventory
 	if len(player.Inventory.Items) != 1 {
@@ -447,7 +447,7 @@ func TestMoveObjectInventoryToRoom(t *testing.T) {
 	w, player := newTestWorld(t)
 
 	obj, _ := w.SpawnObject(3001, 1001)
-	player.Inventory.AddItem(obj)
+	_ = player.Inventory.AddItem(obj)
 	obj.Location = LocInventoryPlayer(player.Name)
 
 	err := w.MoveObjectToRoom(obj, 1001)
@@ -470,7 +470,7 @@ func TestMoveObjectInventoryToEquipment(t *testing.T) {
 	w, player := newTestWorld(t)
 
 	obj, _ := w.SpawnObject(3002, 1001) // wieldable weapon
-	player.Inventory.AddItem(obj)
+	_ = player.Inventory.AddItem(obj)
 	obj.Location = LocInventoryPlayer(player.Name)
 
 	err := w.MoveObject(obj, LocEquippedPlayer(player.Name, SlotWield))
@@ -490,7 +490,7 @@ func TestMoveObjectToNowhere(t *testing.T) {
 	w, player := newTestWorld(t)
 
 	obj, _ := w.SpawnObject(3001, 1001)
-	player.Inventory.AddItem(obj)
+	_ = player.Inventory.AddItem(obj)
 	obj.Location = LocInventoryPlayer(player.Name)
 
 	err := w.MoveObjectToNowhere(obj)
@@ -706,13 +706,13 @@ func TestMoveObjectRollbackStrandedLocation(t *testing.T) {
 	// Fill playerA to capacity so any addItem call fails
 	for i := 0; i < playerA.Inventory.Capacity; i++ {
 		o, _ := w.SpawnObject(3001, 1001)
-		playerA.Inventory.addItem(o)
+		_ = playerA.Inventory.addItem(o)
 	}
 
 	// Fill playerB to capacity
 	for i := 0; i < playerB.Inventory.Capacity; i++ {
 		o, _ := w.SpawnObject(3001, 1001)
-		playerB.Inventory.addItem(o)
+		_ = playerB.Inventory.addItem(o)
 	}
 
 	// Force target into playerB beyond the capacity check by direct slice append.
@@ -1107,7 +1107,7 @@ func TestLocationFieldSync(t *testing.T) {
 	}
 
 	// Add to inventory — Location should update
-	player.Inventory.AddItem(obj)
+	_ = player.Inventory.AddItem(obj)
 	obj.Location = LocInventoryPlayer(player.Name)
 	if !obj.Location.IsInInventory() {
 		// Note: AddItem sets Carrier to *Inventory, which SetCarrier can't

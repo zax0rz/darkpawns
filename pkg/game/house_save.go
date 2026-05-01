@@ -140,7 +140,7 @@ func (w *World) houseCrashsave(vnum int) {
 		BasicMudLog(fmt.Sprintf("SYSERR: Error saving house file #%d: %v", vnum, err))
 		return
 	}
-	defer fp.Close()
+	defer func() { _ = fp.Close() }()
 
 	// Collect all objects in the room and serialize to JSON
 	objects := w.GetItemsInRoom(vnum)

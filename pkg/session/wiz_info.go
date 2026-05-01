@@ -119,7 +119,7 @@ func cmdIdlist(s *Session, args []string) error {
 		s.Send(fmt.Sprintf("Could not create %s: %v\r\n", safePath, err))
 		return nil
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	for _, obj := range pw.Objs {
 		fmt.Fprintf(f, "[%d] %s\n", obj.VNum, obj.ShortDesc)
 		fmt.Fprintf(f, "  Keywords: %s  Type: %d  Cost: %d\n", obj.Keywords, obj.TypeFlag, obj.Cost)

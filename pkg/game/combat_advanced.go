@@ -311,10 +311,6 @@ func (w *World) doSleeper(ch *Player, me *MobInstance, cmd string, arg string) b
 		vict.SetPosition(combat.PosSleeping)
 
 		// Add AFF_SLEEP affect
-		duration := ch.GetLevel() / 9
-		if duration < 1 {
-			duration = 1
-		}
 		vict.SetAffect(affSleep, true)
 
 		improveSkill(ch, SkillSleeper)

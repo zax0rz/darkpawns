@@ -242,10 +242,6 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 	ch.Move -= 15
 
 	skillLevel := ch.GetSkill(SkillHeadbutt)
-	hitRoll := (skillLevel/2 + 1) - 10 // DAMAGE_ROLL approximation minus accuracy penalty
-	if hitRoll < 1 {
-		hitRoll = 1
-	}
 	damage := (skillLevel/2 + 1) + 4 // higher base damage
 
 	// #nosec G404 — game RNG, not cryptographic

@@ -68,7 +68,7 @@ func ParseMobFile(path string) ([]Mob, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var mobs []Mob
 	scanner := bufio.NewScanner(file)

@@ -38,11 +38,12 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 	// Remove from carrier (inventory) based on Location
 	switch obj.Location.Kind {
 	case ObjInInventory:
-		if obj.Location.OwnerKind == OwnerPlayer {
+		switch obj.Location.OwnerKind {
+		case OwnerPlayer:
 			if p, ok := w.players[obj.Location.PlayerName]; ok {
 				p.Inventory.removeItem(obj)
 			}
-		} else if obj.Location.OwnerKind == OwnerMob {
+		case OwnerMob:
 			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
 				m.RemoveFromInventory(obj)
 			}

@@ -429,13 +429,6 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 		}
 		w.performGive(ch, vict, obj)
 	} else {
-		if dotmode == findAlldot && len(parts) > 0 {
-			// Strip all. prefix
-			keyword := arg1[4:]
-			if keyword == "" && len(parts) > 1 {
-				keyword = parts[0]
-			}
-		}
 		if len(ch.Inventory.Items) == 0 {
 			ch.SendMessage("You don't seem to be holding anything.\r\n")
 			return true

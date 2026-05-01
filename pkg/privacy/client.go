@@ -110,7 +110,7 @@ func (c *Client) FilterText(text string) (string, []string, error) {
 		// Fallback to simple filtering if service is unavailable
 		return c.fallbackFilter(text), []string{"fallback"}, nil
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		_, _ = io.ReadAll(resp.Body) // Read and discard body

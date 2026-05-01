@@ -60,7 +60,7 @@ func ParseWldFile(path string) ([]Room, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var rooms []Room
 	scanner := bufio.NewScanner(file)

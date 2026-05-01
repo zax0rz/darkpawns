@@ -266,7 +266,7 @@ func cmdSysfile(s *Session, args []string) error {
 		s.Send("File does not exist.")
 		return nil
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	data, err := io.ReadAll(io.LimitReader(f, 64*1024))
 	if err != nil {
 		s.Send("Error reading file.")

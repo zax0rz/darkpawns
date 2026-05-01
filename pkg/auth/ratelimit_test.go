@@ -36,7 +36,7 @@ func TestGetIPFromRequest_TrustedProxy(t *testing.T) {
 	resetTrustedProxies()
 
 	// Configure the server's own network (e.g. Docker bridge) as trusted
-	SetTrustedProxies([]string{"10.0.0.0/8", "172.16.0.0/12"})
+	_ = SetTrustedProxies([]string{"10.0.0.0/8", "172.16.0.0/12"})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.RemoteAddr = "10.0.0.5:43210"
@@ -50,7 +50,7 @@ func TestGetIPFromRequest_TrustedProxy(t *testing.T) {
 
 func TestGetIPFromRequest_TrustedProxy_MultipleForwards(t *testing.T) {
 	resetTrustedProxies()
-	SetTrustedProxies([]string{"10.0.0.0/8"})
+	_ = SetTrustedProxies([]string{"10.0.0.0/8"})
 
 	// Multiple proxies: first entry is the original client
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -65,7 +65,7 @@ func TestGetIPFromRequest_TrustedProxy_MultipleForwards(t *testing.T) {
 
 func TestGetIPFromRequest_UntrustedProxy_IgnoresHeader(t *testing.T) {
 	resetTrustedProxies()
-	SetTrustedProxies([]string{"10.0.0.0/8"})
+	_ = SetTrustedProxies([]string{"10.0.0.0/8"})
 
 	// Connection from an untrusted IP — should ignore X-Forwarded-For
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -314,7 +314,7 @@ func TestIPRateLimiter_DifferentIPs(t *testing.T) {
 // Benchmark for GetIPFromRequest with trusted proxy
 func BenchmarkGetIPFromRequest_TrustedProxy(b *testing.B) {
 	resetTrustedProxies()
-	SetTrustedProxies([]string{"10.0.0.0/8"})
+	_ = SetTrustedProxies([]string{"10.0.0.0/8"})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.RemoteAddr = "10.0.0.5:43210"

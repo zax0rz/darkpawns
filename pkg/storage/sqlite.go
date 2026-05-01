@@ -130,7 +130,7 @@ func (b *SQLiteBackend) List() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list players from sqlite: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var names []string
 	for rows.Next() {

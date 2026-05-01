@@ -270,7 +270,7 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		return false
 	}
 	a := strings.TrimSpace(arg)
-	if !((cmd == "look" || cmd == "examine") && strings.Contains(a, "couch")) {
+	if (cmd != "look" && cmd != "examine") || !strings.Contains(a, "couch") {
 		return false
 	}
 	for _, obj := range w.GetItemsInRoom(me.GetRoomVNum()) {

@@ -13,7 +13,7 @@ func (s *Session) maybeRefreshToken() {
 	if s.tokenIssuedAt.IsZero() {
 		return
 	}
-	remaining := s.tokenIssuedAt.Add(jwtEffectiveLifetime).Sub(time.Now())
+	remaining := time.Until(s.tokenIssuedAt.Add(jwtEffectiveLifetime))
 	if remaining > jwtRefreshWindow {
 		return
 	}

@@ -35,7 +35,7 @@ func BenchmarkWebSocketConnection(b *testing.B) {
 			if err != nil {
 				break
 			}
-			conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"pong"}`)) // #nosec G104 — websocket WriteMessage error handled by connection close
+			_ = conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"pong"}`)) // #nosec G104 — websocket WriteMessage error handled by connection close
 		}
 	})
 
@@ -51,7 +51,7 @@ func BenchmarkWebSocketConnection(b *testing.B) {
 			if err != nil {
 				b.Fatal(err)
 			}
-			conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"ping"}`)) // #nosec G104 — websocket WriteMessage error handled by connection close
+			_ = conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"ping"}`)) // #nosec G104 — websocket WriteMessage error handled by connection close
 			conn.ReadMessage() // #nosec G104 — benchmark test, websocket ReadMessage
 			conn.Close() // #nosec G104 — benchmark test conn.Close
 		}
