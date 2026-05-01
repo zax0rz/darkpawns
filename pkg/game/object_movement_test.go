@@ -749,6 +749,343 @@ func TestMoveObjectRollbackStrandedLocation(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// TestExtractObjectFromPlayerEquipment — extract an object equipped on a player
+// ---------------------------------------------------------------------------
+//
+// BUG: This test currently FAILS. ExtractObject's ObjEquipped branch is a
+// no-op comment ("handled by the equipment system through inventory remove").
+// The item remains in player.Equipment.Slots after ExtractObject, and the
+// Equipment system has no cleanup hook. ExtractObject must call
+// p.Equipment.unequip() or equivalent to remove from the slot map.
+
+func TestExtractObjectFromPlayerEquipment(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	obj, _ := w.SpawnObject(3002, 1001) // wieldable
+	if err := w.MoveObject(obj, LocEquippedPlayer(player.Name, SlotWield)); err != nil {
+		t.Fatalf("MoveObject to equip failed: %v", err)
+	}
+
+	if _, ok := player.Equipment.GetItemInSlot(SlotWield); !ok {
+		t.Fatal("expected item equipped before extract")
+	}
+
+	w.ExtractObject(obj, 1001)
+
+	// Item must be removed from equipment
+	if _, ok := player.Equipment.GetItemInSlot(SlotWield); ok {
+		t.Error("BUG: equipped item still in Equipment.Slots after ExtractObject")
+	}
+
+	// Item must be removed from global instance map
+	w.mu.RLock()
+	_, exists := w.objectInstances[obj.ID]
+	w.mu.RUnlock()
+	if exists {
+		t.Error("expected object removed from objectInstances map")
+	}
+
+	if !obj.Location.IsNowhere() {
+		t.Errorf("expected Location=LocNowhere after extract, got %+v", obj.Location)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestExtractObjectFromContainer — extract an object inside a container
+// ---------------------------------------------------------------------------
+
+func TestExtractObjectFromContainer(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	container, _ := w.SpawnObject(3003, 1001)
+	inner, _ := w.SpawnObject(3001, 1001)
+
+	w.AddItemToRoom(container, 1001)
+	if err := w.MoveObjectToContainer(inner, container); err != nil {
+		t.Fatalf("MoveObjectToContainer failed: %v", err)
+	}
+
+	if len(container.Contains) != 1 {
+		t.Fatalf("expected 1 item in container, got %d", len(container.Contains))
+	}
+
+	w.ExtractObject(inner, 1001)
+
+	if len(container.Contains) != 0 {
+		t.Errorf("expected 0 items in container after extract, got %d", len(container.Contains))
+	}
+
+	w.mu.RLock()
+	_, exists := w.objectInstances[inner.ID]
+	w.mu.RUnlock()
+	if exists {
+		t.Error("expected inner object removed from objectInstances map")
+	}
+
+	if !inner.Location.IsNowhere() {
+		t.Errorf("expected inner Location=LocNowhere, got %+v", inner.Location)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestExtractObjectFromMobEquipment — extract an object equipped on a mob
+// ---------------------------------------------------------------------------
+//
+// BUG: This test currently FAILS. Same root cause as
+// TestExtractObjectFromPlayerEquipment — ExtractObject's ObjEquipped branch
+// is a no-op for both OwnerPlayer and OwnerMob.
+
+func TestExtractObjectFromMobEquipment(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	mob, _ := w.SpawnMob(2001, 1001)
+	obj, _ := w.SpawnObject(3002, 1001) // wieldable
+
+	if err := w.MoveObject(obj, LocEquippedMob(mob.GetID(), SlotWield)); err != nil {
+		t.Fatalf("MoveObject to mob equip failed: %v", err)
+	}
+
+	if _, ok := mob.Equipment[int(SlotWield)]; !ok {
+		t.Fatal("expected item in mob Equipment before extract")
+	}
+
+	w.ExtractObject(obj, 1001)
+
+	if _, ok := mob.Equipment[int(SlotWield)]; ok {
+		t.Error("BUG: equipped item still in mob Equipment map after ExtractObject")
+	}
+
+	w.mu.RLock()
+	_, exists := w.objectInstances[obj.ID]
+	w.mu.RUnlock()
+	if exists {
+		t.Error("expected object removed from objectInstances map")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestMoveObjectRoomToContainer — put an item from room into a container
+// ---------------------------------------------------------------------------
+
+func TestMoveObjectRoomToContainer(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	container, _ := w.SpawnObject(3003, 1001)
+	obj, _ := w.SpawnObject(3001, 1001)
+
+	w.AddItemToRoom(container, 1001)
+	w.AddItemToRoom(obj, 1001)
+
+	if err := w.MoveObjectToContainer(obj, container); err != nil {
+		t.Fatalf("MoveObjectToContainer failed: %v", err)
+	}
+
+	if !obj.Location.IsInContainer() {
+		t.Errorf("expected ObjInContainer, got %v", obj.Location.Kind)
+	}
+	if obj.Location.ContainerObjID != container.ID {
+		t.Errorf("expected ContainerObjID=%d, got %d", container.ID, obj.Location.ContainerObjID)
+	}
+	if len(container.Contains) != 1 {
+		t.Errorf("expected 1 item in container, got %d", len(container.Contains))
+	}
+
+	roomItems := w.GetItemsInRoom(1001)
+	for _, it := range roomItems {
+		if it == obj {
+			t.Error("item should not be in room after moving to container")
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestMoveObjectContainerToRoom — take an item out of a container to room
+// ---------------------------------------------------------------------------
+
+func TestMoveObjectContainerToRoom(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	container, _ := w.SpawnObject(3003, 1001)
+	obj, _ := w.SpawnObject(3001, 1001)
+
+	w.AddItemToRoom(container, 1001)
+	if err := w.MoveObjectToContainer(obj, container); err != nil {
+		t.Fatalf("setup MoveObjectToContainer failed: %v", err)
+	}
+
+	if err := w.MoveObjectToRoom(obj, 1001); err != nil {
+		t.Fatalf("MoveObjectToRoom failed: %v", err)
+	}
+
+	if !obj.Location.IsInRoom() {
+		t.Errorf("expected ObjInRoom, got %v", obj.Location.Kind)
+	}
+	if obj.Location.RoomVNum != 1001 {
+		t.Errorf("expected RoomVNum=1001, got %d", obj.Location.RoomVNum)
+	}
+	if len(container.Contains) != 0 {
+		t.Errorf("expected 0 items in container, got %d", len(container.Contains))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestMoveObjectContainerToContainer — nested container moves
+// ---------------------------------------------------------------------------
+
+func TestMoveObjectContainerToContainer(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	bagA, _ := w.SpawnObject(3003, 1001)
+	bagB, _ := w.SpawnObject(3003, 1001)
+	obj, _ := w.SpawnObject(3001, 1001)
+
+	w.AddItemToRoom(bagA, 1001)
+	w.AddItemToRoom(bagB, 1001)
+
+	if err := w.MoveObjectToContainer(obj, bagA); err != nil {
+		t.Fatalf("setup: MoveObjectToContainer(obj→A) failed: %v", err)
+	}
+
+	if err := w.MoveObjectToContainer(obj, bagB); err != nil {
+		t.Fatalf("MoveObjectToContainer(obj→B) failed: %v", err)
+	}
+
+	if !obj.Location.IsInContainer() || obj.Location.ContainerObjID != bagB.ID {
+		t.Errorf("expected obj in bagB (ContainerObjID=%d), got %+v", bagB.ID, obj.Location)
+	}
+	if len(bagA.Contains) != 0 {
+		t.Errorf("expected bagA empty, got %d items", len(bagA.Contains))
+	}
+	if len(bagB.Contains) != 1 {
+		t.Errorf("expected bagB has 1 item, got %d", len(bagB.Contains))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestMoveObjectPlayerToMobInventory — transfer from player to mob
+// ---------------------------------------------------------------------------
+
+func TestMoveObjectPlayerToMobInventory(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	mob, _ := w.SpawnMob(2001, 1001)
+	obj, _ := w.SpawnObject(3001, 1001)
+
+	if err := w.MoveObjectToPlayerInventory(obj, player); err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory failed: %v", err)
+	}
+
+	if err := w.MoveObjectToMobInventory(obj, mob); err != nil {
+		t.Fatalf("MoveObjectToMobInventory failed: %v", err)
+	}
+
+	if !obj.Location.IsInInventory() || !obj.Location.OwnerIsMob() {
+		t.Errorf("expected ObjInInventory OwnerMob, got %+v", obj.Location)
+	}
+	if obj.Location.MobID != mob.GetID() {
+		t.Errorf("expected MobID=%d, got %d", mob.GetID(), obj.Location.MobID)
+	}
+
+	for _, it := range player.Inventory.Items {
+		if it == obj {
+			t.Error("item should not be in player inventory after transfer to mob")
+		}
+	}
+
+	found := false
+	for _, it := range mob.Inventory {
+		if it == obj {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("item not found in mob inventory after transfer")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestSaveLoadLocationRoundTrip — save/load preserves item location
+// ---------------------------------------------------------------------------
+//
+// BUG: This test documents a design gap. saveItemData uses a C-style Locate
+// field (0=inventory, 1+=wear slot) and does NOT serialize ObjectLocation.
+// After load, objsave.go's AutoEquip puts items into Inventory/Equipment
+// slices but never sets ObjectLocation.  Items loaded from disk have
+// Location={} (Kind=ObjNowhere) even though they are in the player's
+// Inventory slice. This is silent data corruption for any code that trusts
+// Location (ExtractObject, MoveObject, scripting).
+//
+// The test validates the save-data layer directly (playerToSaveData) and
+// shows that Location is lost.  It does NOT fail on load because
+// saveDataToPlayer creates empty Inventory/Equipment — item reconstruction
+// happens in objsave.go, which also doesn't set Location.
+
+func TestSaveLoadLocationRoundTrip(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	// Give player an inventory item and an equipped item
+	invObj, _ := w.SpawnObject(3001, 1001)
+	eqObj, _ := w.SpawnObject(3002, 1001)
+
+	if err := w.MoveObjectToPlayerInventory(invObj, player); err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory failed: %v", err)
+	}
+	if err := w.MoveObject(eqObj, LocEquippedPlayer(player.Name, SlotWield)); err != nil {
+		t.Fatalf("MoveObject to equip failed: %v", err)
+	}
+
+	// Save
+	data := playerToSaveData(player)
+
+	// saveItemData must contain the items
+	if len(data.Inventory) != 1 {
+		t.Fatalf("expected 1 saved inventory item, got %d", len(data.Inventory))
+	}
+	if len(data.Equipment) != 1 {
+		t.Fatalf("expected 1 saved equipment item, got %d", len(data.Equipment))
+	}
+
+	// Verify C-style Locate is present but Location is NOT
+	if data.Inventory[0].Locate != 0 {
+		t.Errorf("expected inventory Locate=0, got %d", data.Inventory[0].Locate)
+	}
+	if data.Equipment[0].Locate == 0 {
+		t.Errorf("expected equipment Locate>0, got %d", data.Equipment[0].Locate)
+	}
+
+	// Load — saveDataToPlayer does NOT reconstruct items (that's objsave.go)
+	// so Inventory/Equipment are empty at this layer. We simulate objsave
+	// reconstruction with AutoEquip to show the Location bug.
+	restored := saveDataToPlayer(data)
+
+	// Simulate what objsave does: create fresh items and auto-equip
+	loadedInv := NewObjectInstance(invObj.Prototype, 1001)
+	AutoEquip(restored, loadedInv, 0) // locate=0 => inventory
+	loadedEq := NewObjectInstance(eqObj.Prototype, 1001)
+	// C WEAR_WIELD = 16, so locate = 16+1 = 17 (not Go SlotWield+1)
+	AutoEquip(restored, loadedEq, 17) // locate=17 => wield slot
+
+	// Items are in the right slices but Location may be wrong
+	if len(restored.Inventory.Items) != 1 {
+		t.Fatalf("expected 1 item in restored inventory, got %d", len(restored.Inventory.Items))
+	}
+	// Inventory item: AutoEquip(locate=0) calls addItem but does NOT update Location.
+	// It retains the LocRoom(1001) from NewObjectInstance.
+	if !loadedInv.Location.IsInInventory() {
+		t.Errorf("BUG: reconstructed inventory item Location.Kind=%v, want ObjInInventory (AutoEquip did not set Location)", loadedInv.Location.Kind)
+	}
+
+	if _, ok := restored.Equipment.GetItemInSlot(SlotWield); !ok {
+		t.Fatal("expected equipped item in SlotWield after AutoEquip")
+	}
+	// Equipped item: Equipment.Equip DOES set Location to ObjEquipped.
+	if !loadedEq.Location.IsEquipped() {
+		t.Errorf("BUG: reconstructed equipped item Location.Kind=%v, want ObjEquipped", loadedEq.Location.Kind)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // TestLocationFieldSync — validates ObjectLocation field sync on ObjectInstance
 // ---------------------------------------------------------------------------
 
