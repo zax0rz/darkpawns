@@ -130,6 +130,7 @@ func ObjFromStore(data *houseSaveItem, getProto func(vnum int) (*parser.Obj, boo
 		for k, v := range data.State {
 			obj.CustomData[k] = v
 		}
+		obj.MigrateCustomData()
 	}
 	return obj
 }
@@ -148,11 +149,8 @@ func ObjToStore(obj *ObjectInstance) *houseSaveItem {
 	if obj.Location.Kind == ObjInContainer {
 		item.ContainerID = obj.Location.ContainerObjID
 	}
-	if obj.CustomData != nil && len(obj.CustomData) > 0 {
-		item.State = make(map[string]interface{}, len(obj.CustomData))
-		for k, v := range obj.CustomData {
-			item.State[k] = v
-		}
+	if state := obj.GetSaveState(); state != nil {
+		item.State = state
 	}
 	return item
 }

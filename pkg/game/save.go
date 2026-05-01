@@ -218,7 +218,7 @@ func playerToSaveData(p *Player) savePlayerData {
 			VNum:   vnum,
 			Count:  1,
 			Locate: 0,
-			State:  item.CustomData,
+			State:  item.GetSaveState(),
 		})
 	}
 
@@ -240,7 +240,7 @@ func playerToSaveData(p *Player) savePlayerData {
 			VNum:   vnum,
 			Count:  1,
 			Locate: locate,
-			State:  item.CustomData,
+			State:  item.GetSaveState(),
 		})
 	}
 
@@ -479,6 +479,7 @@ func CrashLoad(p *Player, getProto func(vnum int) (*parser.Obj, bool)) int {
 			for k, v := range item.State {
 				obj.CustomData[k] = v
 			}
+			obj.MigrateCustomData()
 		}
 		AutoEquip(p, obj, item.Locate)
 	}
@@ -495,6 +496,7 @@ func CrashLoad(p *Player, getProto func(vnum int) (*parser.Obj, bool)) int {
 			for k, v := range item.State {
 				obj.CustomData[k] = v
 			}
+			obj.MigrateCustomData()
 		}
 		AutoEquip(p, obj, item.Locate)
 	}

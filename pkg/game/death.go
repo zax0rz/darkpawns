@@ -641,10 +641,12 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 		RoomVNum:  roomVNum,
 		Contains:  make([]*ObjectInstance, 0),
 		CustomData: map[string]interface{}{
-			"name":       "a pile of ash",
-			"short_desc": "a pile of ash",
-			"long_desc":  "A small pile of ash is all that remains.",
-			"is_ash":     true,
+			"is_ash": true,
+		},
+		Runtime: ObjectRuntimeState{
+			Name:      "a pile of ash",
+			ShortDesc: "a pile of ash",
+			LongDesc:  "A small pile of ash is all that remains.",
 		},
 	}
 // #nosec G104

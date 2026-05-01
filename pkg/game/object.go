@@ -297,6 +297,70 @@ func (o *ObjectInstance) MigrateCustomData() {
 	}
 }
 
+// GetSaveState returns a map merging remaining CustomData entries with known
+// Runtime fields for serialization. It is the inverse of MigrateCustomData:
+// on load, MigrateCustomData moves known keys from CustomData to Runtime;
+// on save, GetSaveState puts them back so the JSON state map is complete.
+// Returns nil when there is no custom state to persist.
+func (o *ObjectInstance) GetSaveState() map[string]interface{} {
+	if o.CustomData == nil {
+		o.CustomData = make(map[string]interface{})
+	}
+	hasRuntime := o.Runtime.Name != "" || o.Runtime.ShortDesc != "" ||
+		o.Runtime.LongDesc != "" || o.Runtime.ShortDescOverride != "" ||
+		o.Runtime.MoldName != "" || o.Runtime.MoldDesc != "" ||
+		o.Runtime.MailText != "" || o.Runtime.Horse != nil ||
+		len(o.Runtime.Script) > 0
+
+	if len(o.CustomData) == 0 && !hasRuntime {
+		return nil
+	}
+
+	state := make(map[string]interface{}, len(o.CustomData)+8)
+	for k, v := range o.CustomData {
+		state[k] = v
+	}
+	if o.Runtime.Name != "" {
+		state["name"] = o.Runtime.Name
+	}
+	if o.Runtime.ShortDesc != "" {
+		state["short_desc"] = o.Runtime.ShortDesc
+	}
+	if o.Runtime.LongDesc != "" {
+		state["long_desc"] = o.Runtime.LongDesc
+	}
+	if o.Runtime.ShortDescOverride != "" {
+		state["short_desc_override"] = o.Runtime.ShortDescOverride
+	}
+	if o.Runtime.MoldName != "" {
+		state["mold_name"] = o.Runtime.MoldName
+	}
+	if o.Runtime.MoldDesc != "" {
+		state["mold_desc"] = o.Runtime.MoldDesc
+	}
+	if o.Runtime.MailText != "" {
+		state["mail_text"] = o.Runtime.MailText
+	}
+	if o.Runtime.Horse != nil {
+		if o.Runtime.Horse.CarryWeight != 0 {
+			state["carryW"] = o.Runtime.Horse.CarryWeight
+		}
+		if o.Runtime.Horse.CarryNumber != 0 {
+			state["carryN"] = o.Runtime.Horse.CarryNumber
+		}
+		if o.Runtime.Horse.Move != 0 {
+			state["move"] = o.Runtime.Horse.Move
+		}
+		if o.Runtime.Horse.MaxMove != 0 {
+			state["maxMove"] = o.Runtime.Horse.MaxMove
+		}
+	}
+	for k, v := range o.Runtime.Script {
+		state[k] = v
+	}
+	return state
+}
+
 // Scripting interface implementations
 
 func (o *ObjectInstance) GetVNum() int {

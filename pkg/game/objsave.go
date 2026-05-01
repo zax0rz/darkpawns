@@ -859,6 +859,7 @@ func RestoreItemsFromSave(inv []saveItemData, eq []saveItemData, getProto func(v
 			for k, v := range s.State {
 				obj.CustomData[k] = v
 			}
+			obj.MigrateCustomData()
 		}
 		invItems = append(invItems, obj)
 	}
@@ -875,6 +876,7 @@ func RestoreItemsFromSave(inv []saveItemData, eq []saveItemData, getProto func(v
 			for k, v := range s.State {
 				obj.CustomData[k] = v
 			}
+			obj.MigrateCustomData()
 		}
 		eqItems[0] = obj // slot mapping handled by AutoEquip
 	}
