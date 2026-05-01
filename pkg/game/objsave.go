@@ -336,15 +336,19 @@ func RestoreWeight(obj *ObjectInstance) {
 // ==========================================================================
 func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 	if locate <= 0 {
-// #nosec G104
-		p.Inventory.addItem(obj)
+		obj.Location = LocInventoryPlayer(p.Name)
+		if err := p.Inventory.addItem(obj); err != nil {
+			slog.Error("autoequip: inventory full on load", "player", p.Name, "obj_vnum", obj.VNum)
+		}
 		return
 	}
 	cPos := locate - 1
 	_, ok := cWearPosToGoSlot(cPos)
 	if !ok {
-// #nosec G104
-		p.Inventory.addItem(obj)
+		obj.Location = LocInventoryPlayer(p.Name)
+		if err := p.Inventory.addItem(obj); err != nil {
+			slog.Error("autoequip: inventory full on load (invalid pos)", "player", p.Name, "obj_vnum", obj.VNum)
+		}
 		return
 	}
 	rf := cWearPosCanWearFlag(cPos)
@@ -357,8 +361,10 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 		}
 	}
 	if !wears {
-// #nosec G104
-		p.Inventory.addItem(obj)
+		obj.Location = LocInventoryPlayer(p.Name)
+		if err := p.Inventory.addItem(obj); err != nil {
+			slog.Error("autoequip: inventory full on load (cant wear)", "player", p.Name, "obj_vnum", obj.VNum)
+		}
 		return
 	}
 	// Alignment restrictions.
@@ -366,13 +372,17 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 	if (xf&FlagAntiEvil != 0 && p.IsEvil()) ||
 		(xf&FlagAntiGood != 0 && p.IsGood()) ||
 		(xf&FlagAntiNeutral != 0 && p.IsNeutral()) {
-// #nosec G104
-		p.Inventory.addItem(obj)
+		obj.Location = LocInventoryPlayer(p.Name)
+		if err := p.Inventory.addItem(obj); err != nil {
+			slog.Error("autoequip: inventory full on load (alignment)", "player", p.Name, "obj_vnum", obj.VNum)
+		}
 		return
 	}
 	if err := p.Equipment.Equip(obj, p.Inventory); err != nil {
-// #nosec G104
-		p.Inventory.addItem(obj)
+		obj.Location = LocInventoryPlayer(p.Name)
+		if err := p.Inventory.addItem(obj); err != nil {
+			slog.Error("autoequip: inventory full on load (equip failed)", "player", p.Name, "obj_vnum", obj.VNum, "original_err", err)
+		}
 	}
 }
 

@@ -874,7 +874,23 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 			}
 		}
 	case ObjEquipped:
-		// handled by the equipment system through inventory remove
+		// Actually unequip the item before extraction
+		if obj.Location.OwnerKind == OwnerPlayer {
+			if p, ok := w.players[obj.Location.PlayerName]; ok && p.Equipment != nil {
+				p.Equipment.UnequipItem(obj, p.Inventory)
+			}
+		} else if obj.Location.OwnerKind == OwnerMob {
+			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
+				// Mobs use int-keyed equipment map
+				for pos, eqItem := range m.Equipment {
+					if eqItem == obj {
+						delete(m.Equipment, pos)
+						m.RemoveFromInventory(obj)
+						break
+					}
+				}
+			}
+		}
 	}
 
 	// Remove from container based on Location
