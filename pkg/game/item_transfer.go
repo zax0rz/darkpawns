@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -50,8 +51,9 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 		if err := w.MoveObjectToPlayerInventory(obj, ch); err != nil {
 			w.actToChar(ch, "You can't carry that much.\n", nil, nil)
 			// Rollback: move back into container (MoveObject handles re-attach)
-// #nosec G104
-			w.MoveObjectToContainer(obj, cont)
+			if rbErr := w.MoveObjectToContainer(obj, cont); rbErr != nil {
+				slog.Error("rollback after failed get: container restore failed", "player", ch.Name, "obj_vnum", obj.VNum, "error", rbErr)
+			}
 			return
 		}
 		w.actToChar(ch, "You get $p from $P.", obj, cont)
@@ -214,8 +216,11 @@ func (w *World) performDrop(ch *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "You can't let go of $p!!  Yeech!", obj, nil)
 		return
 	}
-// #nosec G104
-	w.MoveObjectToRoom(obj, ch.GetRoomVNum())
+	if err := w.MoveObjectToRoom(obj, ch.GetRoomVNum()); err != nil {
+		slog.Error("drop failed: MoveObjectToRoom", "player", ch.Name, "obj_vnum", obj.VNum, "error", err)
+		w.actToChar(ch, "You can't drop that right now.\n", nil, nil)
+		return
+	}
 	w.actToChar(ch, "You drop $p.", obj, nil)
 	w.actToRoom(ch, "$n drops $p.", obj, nil)
 }
@@ -299,8 +304,9 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 	if err := w.MoveObjectToPlayerInventory(obj, vict); err != nil {
 		w.actToChar(ch, "$E can't carry any more.\n", vict, nil)
 		// Give item back to giver
-// #nosec G104
-		w.MoveObjectToPlayerInventory(obj, ch)
+		if rbErr := w.MoveObjectToPlayerInventory(obj, ch); rbErr != nil {
+			slog.Error("rollback after failed give: restore to giver failed", "player", ch.Name, "obj_vnum", obj.VNum, "error", rbErr)
+		}
 		return
 	}
 	w.actToChar(ch, "You give $p to $N.", obj, vict)

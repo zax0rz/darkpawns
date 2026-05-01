@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -141,7 +142,15 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 
 	// Remove from inventory and equip
 	ch.Inventory.removeItem(obj)
-	w.EquipItem(ch, obj, where)
+	if err := w.EquipItem(ch, obj, where); err != nil {
+		slog.Warn("equip failed during wear", "player", ch.Name, "slot", where, "error", err)
+		// Put item back in inventory on failure
+		if rbErr := ch.Inventory.AddItem(obj); rbErr != nil {
+			slog.Error("rollback after failed equip: restore to inventory failed", "player", ch.Name, "obj_vnum", obj.VNum, "error", rbErr)
+		}
+		ch.SendMessage("You can't wear that right now.\r\n")
+		return
+	}
 	w.wearMessage(ch, obj, where)
 }
 
@@ -166,22 +175,20 @@ func (w *World) GetEquipped(ch *Player, slot int) *ObjectInstance {
 	return item
 }
 
-// EquipItem equips an item at the given slot
-func (w *World) EquipItem(ch *Player, obj *ObjectInstance, slot int) {
+// EquipItem equips an item at the given slot.
+func (w *World) EquipItem(ch *Player, obj *ObjectInstance, slot int) error {
 	if ch.Equipment == nil {
-		return
+		return nil
 	}
-// #nosec G104
-	ch.Equipment.Equip(obj, ch.Inventory)
+	return ch.Equipment.Equip(obj, ch.Inventory)
 }
 
-// UnequipItem removes an item from a slot
-func (w *World) UnequipItem(ch *Player, slot int) {
+// UnequipItem removes an item from a slot.
+func (w *World) UnequipItem(ch *Player, slot int) error {
 	if ch.Equipment == nil {
-		return
+		return nil
 	}
-// #nosec G104
-	ch.Equipment.Unequip(EquipmentSlot(slot), ch.Inventory)
+	return ch.Equipment.Unequip(EquipmentSlot(slot), ch.Inventory)
 }
 
 // doWear handles the wear command
@@ -289,7 +296,11 @@ func (w *World) performRemove(ch *Player, pos int) {
 		return
 	}
 
-	w.UnequipItem(ch, pos)
+	if err := w.UnequipItem(ch, pos); err != nil {
+		slog.Warn("unequip failed during remove", "player", ch.Name, "slot", pos, "error", err)
+		ch.SendMessage("You can't remove that right now.\r\n")
+		return
+	}
 
 	w.actToChar(ch, "You stop using $p.", obj, nil)
 	w.actToRoom(ch, "$n stops using $p.", obj, nil)

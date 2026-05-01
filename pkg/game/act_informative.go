@@ -1048,8 +1048,10 @@ func (w *World) KenderSteal(ch *Player, mob *MobInstance) {
 		}
 		if percent < 0 {
 			mob.RemoveFromInventory(obj)
-// #nosec G104
-			ch.Inventory.AddItem(obj)
+			if err := ch.Inventory.AddItem(obj); err != nil {
+				mob.AddToInventory(obj) // restore on failure
+				return
+			}
 			ch.SendMessage("You stealthily filch an item.\r\n")
 			return
 		}

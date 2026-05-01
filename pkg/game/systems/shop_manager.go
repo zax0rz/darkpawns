@@ -3,6 +3,7 @@ package systems
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
@@ -229,8 +230,9 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 	// Check if shop has inventory space
 	if len(shop.GetInventory()) >= shop.MaxItems {
 		// Return item to player
-// #nosec G104
-		player.Inventory.AddItem(gameItem)
+		if err := player.Inventory.AddItem(gameItem); err != nil {
+			slog.Error("shop sell rollback: inventory full, failed to restore item", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
+		}
 		return false, "The shop's inventory is full."
 	}
 
@@ -246,8 +248,9 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 		player.Lock()
 		player.Gold -= price
 		player.Unlock()
-// #nosec G104
-		player.Inventory.AddItem(gameItem)
+		if err := player.Inventory.AddItem(gameItem); err != nil {
+			slog.Error("shop sell rollback: failed shop add, failed to restore item", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
+		}
 		return false, "Failed to add item to shop inventory."
 	}
 
@@ -281,8 +284,9 @@ func (sm *ShopManager) ProcessRepair(shop *Shop, player *game.Player, item commo
 	if player.Gold < cost {
 		player.Unlock()
 		// Return item to player
-// #nosec G104
-		player.Inventory.AddItem(gameItem)
+		if err := player.Inventory.AddItem(gameItem); err != nil {
+			slog.Error("shop operation: failed to restore item to player inventory", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
+		}
 		return false, fmt.Sprintf("You need %d gold to repair that.", cost)
 	}
 
@@ -298,8 +302,9 @@ func (sm *ShopManager) ProcessRepair(shop *Shop, player *game.Player, item commo
 	// For now, we just return the item
 
 	// Return item to player
-// #nosec G104
-	player.Inventory.AddItem(gameItem)
+	if err := player.Inventory.AddItem(gameItem); err != nil {
+		slog.Error("shop operation: failed to restore item to player inventory", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
+	}
 
 	return true, fmt.Sprintf("You repair %s for %d gold.", item.GetShortDesc(), cost)
 }
@@ -328,8 +333,9 @@ func (sm *ShopManager) ProcessIdentify(shop *Shop, player *game.Player, item com
 	if player.Gold < cost {
 		player.Unlock()
 		// Return item to player
-// #nosec G104
-		player.Inventory.AddItem(gameItem)
+		if err := player.Inventory.AddItem(gameItem); err != nil {
+			slog.Error("shop operation: failed to restore item to player inventory", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
+		}
 		return false, fmt.Sprintf("You need %d gold to identify that.", cost)
 	}
 
@@ -345,8 +351,9 @@ func (sm *ShopManager) ProcessIdentify(shop *Shop, player *game.Player, item com
 	// For now, we just return the item
 
 	// Return item to player
-// #nosec G104
-	player.Inventory.AddItem(gameItem)
+	if err := player.Inventory.AddItem(gameItem); err != nil {
+		slog.Error("shop operation: failed to restore item to player inventory", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
+	}
 
 	return true, fmt.Sprintf("You identify %s for %d gold.", item.GetShortDesc(), cost)
 }
