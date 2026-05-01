@@ -59,8 +59,9 @@ func (p *Player) UpdateCharObjects() {
 			p.SendMessage("Your light source flickers and sputters.\r\n")
 		} else if item.Prototype.Values[1] <= 0 {
 			p.SendMessage("Your light source has gone out.\r\n")
-			removed := p.Equipment.Unequip(SlotLight, p.Inventory)
-			_ = removed
+			if err := p.Equipment.Unequip(SlotLight, p.Inventory); err != nil {
+				slog.Warn("light unequip failed", "player", p.Name, "error", err)
+			}
 		}
 	}
 }
@@ -106,8 +107,9 @@ func (w *World) ExtractPendingChars() {
 			if p.Equipment != nil {
 				item, ok := p.Equipment.GetItemInSlot(SlotLight)
 				if ok && item != nil {
-// #nosec G104
-					p.Equipment.Unequip(SlotLight, p.Inventory)
+if err := p.Equipment.Unequip(SlotLight, p.Inventory); err != nil {
+						slog.Warn("light unequip failed during extraction", "player", p.Name, "error", err)
+					}
 				}
 			}
 

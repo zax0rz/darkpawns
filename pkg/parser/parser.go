@@ -3,6 +3,7 @@ package parser
 
 import (
 	"fmt"
+	"log/slog"
 )
 
 // World represents the entire parsed game world.
@@ -91,7 +92,8 @@ func (w *World) ValidateCrossReferences() {
 				continue // NOWHERE is valid
 			}
 			if !roomVnums[exit.ToRoom] {
-				fmt.Printf("[WARN] Room %d exit %q points to non-existent room vnum %d\n", r.VNum, dir, exit.ToRoom)
+				slog.Warn("exit points to non-existent room",
+					"room_vnum", r.VNum, "direction", dir, "target_vnum", exit.ToRoom)
 			}
 		}
 	}
@@ -106,60 +108,74 @@ func (w *World) ValidateCrossReferences() {
 			case "M":
 				// 'M' <mob_vnum> <max_in_world> <room_vnum>
 				if !mobVnums[cmd.Arg1] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('M'): mob vnum %d not found\n", z.Number, i, cmd.Arg1)
+					slog.Warn("zone command references non-existent mob",
+						"zone", z.Number, "cmd_index", i, "command", "M", "mob_vnum", cmd.Arg1)
 				}
 				if cmd.Arg3 > 0 && !roomVnums[cmd.Arg3] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('M'): room vnum %d not found\n", z.Number, i, cmd.Arg3)
+					slog.Warn("zone command references non-existent room",
+						"zone", z.Number, "cmd_index", i, "command", "M", "room_vnum", cmd.Arg3)
 				}
 			case "O":
 				// 'O' <obj_vnum> <max_in_world> <room_vnum>
 				if !objVnums[cmd.Arg1] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('O'): obj vnum %d not found\n", z.Number, i, cmd.Arg1)
+					slog.Warn("zone command references non-existent object",
+						"zone", z.Number, "cmd_index", i, "command", "O", "obj_vnum", cmd.Arg1)
 				}
 				if cmd.Arg3 > 0 && !roomVnums[cmd.Arg3] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('O'): room vnum %d not found\n", z.Number, i, cmd.Arg3)
+					slog.Warn("zone command references non-existent room",
+						"zone", z.Number, "cmd_index", i, "command", "O", "room_vnum", cmd.Arg3)
 				}
 			case "G":
 				// 'G' <obj_vnum> <max_in_world> (give to object)
 				if !objVnums[cmd.Arg1] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('G'): obj vnum %d not found\n", z.Number, i, cmd.Arg1)
+					slog.Warn("zone command references non-existent object",
+						"zone", z.Number, "cmd_index", i, "command", "G", "obj_vnum", cmd.Arg1)
 				}
 			case "E":
 				// 'E' <obj_vnum> <equip_position> <room_vnum>
 				if !objVnums[cmd.Arg1] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('E'): obj vnum %d not found\n", z.Number, i, cmd.Arg1)
+					slog.Warn("zone command references non-existent object",
+						"zone", z.Number, "cmd_index", i, "command", "E", "obj_vnum", cmd.Arg1)
 				}
 				if cmd.Arg3 > 0 && !roomVnums[cmd.Arg3] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('E'): room vnum %d not found\n", z.Number, i, cmd.Arg3)
+					slog.Warn("zone command references non-existent room",
+						"zone", z.Number, "cmd_index", i, "command", "E", "room_vnum", cmd.Arg3)
 				}
 			case "P":
 				// 'P' <obj_vnum> <max_in_world> <container_vnum>
 				if !objVnums[cmd.Arg1] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('P'): obj vnum %d not found\n", z.Number, i, cmd.Arg1)
+					slog.Warn("zone command references non-existent object",
+						"zone", z.Number, "cmd_index", i, "command", "P", "obj_vnum", cmd.Arg1)
 				}
 				if cmd.Arg3 > 0 && !objVnums[cmd.Arg3] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('P'): container obj vnum %d not found\n", z.Number, i, cmd.Arg3)
+					slog.Warn("zone command references non-existent container",
+						"zone", z.Number, "cmd_index", i, "command", "P", "container_vnum", cmd.Arg3)
 				}
 			case "D":
 				// 'D' <room_vnum> <door_state> <key_vnum>
 				if !roomVnums[cmd.Arg1] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('D'): room vnum %d not found\n", z.Number, i, cmd.Arg1)
+					slog.Warn("zone command references non-existent room",
+						"zone", z.Number, "cmd_index", i, "command", "D", "room_vnum", cmd.Arg1)
 				}
 				if cmd.Arg3 > 0 && !objVnums[cmd.Arg3] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('D'): key obj vnum %d not found\n", z.Number, i, cmd.Arg3)
+					slog.Warn("zone command references non-existent key object",
+						"zone", z.Number, "cmd_index", i, "command", "D", "key_vnum", cmd.Arg3)
 				}
 			case "L":
 				// 'L' <room_vnum> <door_state> <key_vnum> (like 'D')
 				if !roomVnums[cmd.Arg1] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('L'): room vnum %d not found\n", z.Number, i, cmd.Arg1)
+					slog.Warn("zone command references non-existent room",
+						"zone", z.Number, "cmd_index", i, "command", "L", "room_vnum", cmd.Arg1)
 				}
 				if cmd.Arg3 > 0 && !objVnums[cmd.Arg3] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('L'): key obj vnum %d not found\n", z.Number, i, cmd.Arg3)
+					slog.Warn("zone command references non-existent key object",
+						"zone", z.Number, "cmd_index", i, "command", "L", "key_vnum", cmd.Arg3)
 				}
 			case "R":
 				// 'R' <room_vnum> <last_room> (remove rooms... unclear)
 				if cmd.Arg1 > 0 && !roomVnums[cmd.Arg1] {
-					fmt.Printf("[WARN] Zone %d cmd[%d] ('R'): room vnum %d not found\n", z.Number, i, cmd.Arg1)
+					slog.Warn("zone command references non-existent room",
+						"zone", z.Number, "cmd_index", i, "command", "R", "room_vnum", cmd.Arg1)
 				}
 			}
 		}
