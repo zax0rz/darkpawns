@@ -44,7 +44,11 @@
 //	SKILL_KICK, SKILL_TRIP
 package spells
 
-import "github.com/zax0rz/darkpawns/pkg/engine"
+import (
+	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/engine"
+)
 
 // Spell constants from spells.h and globals.lua
 const (
@@ -171,7 +175,9 @@ func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int,
 		if !ok {
 			return
 		}
-		ApplySpellAffects(targetAffectable, spellNum, casterLevel, am)
+		if err := ApplySpellAffects(targetAffectable, spellNum, casterLevel, am); err != nil {
+			slog.Warn("apply spell affects failed", "spell", spellNum, "error", err)
+		}
 	default:
 		// TODO: Implement damage spells and other spell types
 	}

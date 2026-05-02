@@ -150,7 +150,7 @@ func (m *Manager) SetDeathFunc() {
 		// If victim was a player, send updated room state after respawn
 		if !victim.IsNPC() {
 			if s, ok := m.GetSession(victim.GetName()); ok {
-				cmdLook(s, nil)
+				_ = cmdLook(s, nil)
 			}
 		}
 	}
@@ -323,9 +323,9 @@ func (s *Session) readPump() {
 		s.conn.Close()
 	}()
 
-	s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	_ = s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	s.conn.SetPongHandler(func(string) error {
-		s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		_ = s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
 
@@ -356,7 +356,7 @@ func (s *Session) writePump() {
 	for {
 		select {
 		case message, ok := <-s.send:
-			s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			_ = s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if !ok {
 				s.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
@@ -364,7 +364,7 @@ func (s *Session) writePump() {
 			s.conn.WriteMessage(websocket.TextMessage, message)
 
 		case <-ticker.C:
-			s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			_ = s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := s.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}

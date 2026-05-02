@@ -113,7 +113,7 @@ func (c *Client) FilterText(text string) (string, []string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		io.ReadAll(resp.Body) // Read and discard body
+		io.Copy(io.Discard, resp.Body) // Read and discard body
 		// Return fallback without error
 		return c.fallbackFilter(text), []string{"fallback"}, nil
 	}

@@ -1,6 +1,5 @@
 package session
 
-import "fmt"
 
 // ---------------------------------------------------------------------------
 // Informative command stubs (act.informative.c)
@@ -18,7 +17,7 @@ func cmdTitle(s *Session, args []string) error {
 		s.Send("Set your title to what?")
 		return nil
 	}
-	s.player.Title = fmt.Sprintf("%s", args[0])
+	s.player.Title = args[0]
 	s.Send("Title set.")
 	return nil
 }
@@ -28,7 +27,7 @@ func cmdDescribe(s *Session, args []string) error {
 		s.Send("Describe yourself with what?")
 		return nil
 	}
-	s.player.Description = fmt.Sprintf("%s", args[0])
+	s.player.Description = args[0]
 	s.Send("Description set.")
 	return nil
 }

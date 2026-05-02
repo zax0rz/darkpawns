@@ -8,6 +8,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -194,7 +195,9 @@ func (w *World) doQuit(ch *Player, me *MobInstance, cmd string, arg string) bool
 	w.RemovePlayer(ch.Name)
 
 	// Save player
-	SavePlayer(ch)
+	if err := SavePlayer(ch); err != nil {
+		slog.Warn("failed to save player on quit", "error", err)
+	}
 
 	// Extract — broadcast leave message
 	msg := fmt.Sprintf("%s has left the game.\r\n", ch.Name)

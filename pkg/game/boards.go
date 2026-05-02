@@ -11,6 +11,7 @@ package game
 
 import (
 	"encoding/binary"
+	"log/slog"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -180,7 +181,9 @@ func (bs *BoardSystem) saveBoard(boardType int) {
 	bs.mu.RUnlock()
 
 	path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
-	os.MkdirAll(filepath.Dir(path), 0755)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		slog.Warn("failed to create board directory", "path", filepath.Dir(path), "error", err)
+	}
 
 	f, err := os.Create(path)
 	if err != nil {

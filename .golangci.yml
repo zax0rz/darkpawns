@@ -88,6 +88,18 @@ linters:
       - linters:
           - gocritic
         text: "evalOrder"
+      # gocritic: sprintfQuotedString false positive in JSON template literal
+      - linters:
+          - gocritic
+        text: "sprintfQuotedString"
+      # gocritic: appendAssign false positive (different variable names)
+      - linters:
+          - gocritic
+        text: "appendAssign"
+      # gocritic: redundantSprint handled separately
+      - linters:
+          - gocritic
+        text: "redundantSprint"
       # staticcheck: intentional patterns
       - linters:
           - staticcheck

@@ -216,7 +216,7 @@ func (bs *BatchedSender) flushTimer() {
 	defer bs.mu.Unlock()
 
 	if bs.batch != nil && len(bs.batch.Messages) > 0 {
-		bs.flushLocked()
+		_ = bs.flushLocked()
 	}
 }
 

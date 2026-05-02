@@ -93,7 +93,7 @@ func cmdAt(s *Session, args []string) error {
 	defer s.player.SetRoom(orig)
 	rest := strings.Join(args[1:], " ")
 	slog.Warn("wizard at", "by", s.player.Name, "room", dest, "command", rest)
-	ExecuteCommand(s, strings.Fields(rest)[0], strings.Fields(rest)[1:])
+	_ = ExecuteCommand(s, strings.Fields(rest)[0], strings.Fields(rest)[1:])
 	return nil
 }
 
@@ -1469,7 +1469,7 @@ func cmdSethunt(s *Session, args []string) error {
 	victimName := args[0]
 	hunterName := args[1]
 
-	if strings.ToLower(victimName) == strings.ToLower(hunterName) {
+	if strings.EqualFold(victimName, hunterName) {
 		s.Send("Yeah right.")
 		return nil
 	}

@@ -123,7 +123,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	tc.writeLine("\r\n  Dark Pawns\r\n\r\nEnter your name: ")
 
 	// Read name with timeout
-	rawConn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	_ = rawConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	name := tc.readLine()
 	name = strings.TrimSpace(name)
 	if name == "" {
@@ -143,7 +143,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 		return
 	}
 
-	rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
 	// Start output writer goroutine
 	done := make(chan struct{})
@@ -165,7 +165,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 			continue
 		}
 
-		rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+		_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
 		parts := strings.Fields(line)
 		if err := sendCommand(s, parts[0], parts[1:]); err != nil {
@@ -331,7 +331,7 @@ func (tc *telnetConn) readLine() string {
 
 		if b == '\r' {
 			if next, _ := tc.br.Peek(1); len(next) > 0 && next[0] == '\n' {
-				tc.br.ReadByte()
+				tc.br.ReadByte() // consume \n after \r
 			}
 			return string(line)
 		}

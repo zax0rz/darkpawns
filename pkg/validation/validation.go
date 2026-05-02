@@ -38,9 +38,11 @@ func IsValidPlayerName(name string) bool {
 
 func SanitizePlayerName(name string) string {
 	// Remove invalid characters
-	runes := []rune(name)
+	if len(name) == 0 {
+		return name
+	}
 	var result []rune
-	for _, r := range runes {
+	for _, r := range name {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
 			(r >= '0' && r <= '9') || r == '_' || r == '-' || r == '.' || r == ' ' {
 			result = append(result, r)

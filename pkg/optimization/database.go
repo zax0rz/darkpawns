@@ -255,7 +255,7 @@ func (bp *BatchProcessor) flushTimer() {
 	defer bp.mu.Unlock()
 
 	if len(bp.operations) > 0 {
-		bp.flushLocked()
+		_ = bp.flushLocked()
 	}
 }
 
