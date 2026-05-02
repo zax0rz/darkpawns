@@ -181,7 +181,7 @@ func cmdCast(s *Session, args []string) error {
 	// Look up spell
 	sd, ok := spellByName[spellName]
 	if !ok {
-		s.Send(fmt.Sprintf("You don't know any spells of that name."))
+		s.Send("You don't know any spells of that name.")
 		return nil
 	}
 

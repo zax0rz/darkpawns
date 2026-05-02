@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 // Package session provides command handlers and WebSocket-based player sessions.
 package session
 

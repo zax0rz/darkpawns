@@ -31,7 +31,7 @@ func cmdLoad(s *Session, args []string) error {
 	if strings.HasPrefix(kind, "mob") {
 		mob, err := s.manager.world.SpawnMob(vnum, roomVNum)
 		if err != nil {
-			s.Send(fmt.Sprintf("There is no monster with that number.\r\n"))
+			s.Send("There is no monster with that number.\r\n")
 			return nil
 		}
 		slog.Info("(GC) load mob", "who", s.player.Name, "mob", mob.GetShortDesc(), "room", roomVNum)

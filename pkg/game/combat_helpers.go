@@ -1,3 +1,4 @@
+//nolint:unused // Combat helpers — not yet wired.
 package game
 
 // combat_helpers.go — helper functions for combat

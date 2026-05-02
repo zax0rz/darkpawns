@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -1000,7 +1001,7 @@ func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string
 					if err := w.MoveObjectToRoom(obj, me.GetRoomVNum()); err != nil {
 						slog.Warn("MoveObjectToRoom failed in mortician", "corpse", obj.GetVNum(), "room", me.GetRoomVNum(), "error", err)
 					}
-					ch.SendMessage(fmt.Sprintf("The Mortician dumps your corpse on the ground.\r\n"))
+					ch.SendMessage("The Mortician dumps your corpse on the ground.\r\n")
 					w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("The Mortician dumps %s's corpse on the ground.", ch.GetName()))
 					ch.SetGold(ch.GetGold() - cost)
 					found = true

@@ -1,3 +1,4 @@
+//nolint:unused // Infobar display system — not yet wired to command registry.
 // Package session — display commands ported from act.display.c
 //
 // Infobar display commands for the Dark Pawns MUD.

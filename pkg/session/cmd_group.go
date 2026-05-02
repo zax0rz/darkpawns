@@ -163,15 +163,15 @@ func printGroup(s *Session) error {
 	var sb strings.Builder
 	sb.WriteString("Your group consists of:\r\n")
 	if leader.InGroup {
-		sb.WriteString(fmt.Sprintf("     [%3dH %3dM] [%2d] %s (Head of group)\r\n",
-			leader.Health, leader.Mana, leader.Level, leader.Name))
+		fmt.Fprintf(&sb, "     [%3dH %3dM] [%2d] %s (Head of group)\r\n",
+			leader.Health, leader.Mana, leader.Level, leader.Name)
 	}
 	for _, m := range s.manager.world.GetGroupMembers(leaderName) {
 		if m.Name == leaderName {
 			continue // already printed above
 		}
-		sb.WriteString(fmt.Sprintf("     [%3dH %3dM] [%2d] %s\r\n",
-			m.Health, m.Mana, m.Level, m.Name))
+		fmt.Fprintf(&sb, "     [%3dH %3dM] [%2d] %s\r\n",
+			m.Health, m.Mana, m.Level, m.Name)
 	}
 	s.sendText(sb.String())
 	return nil

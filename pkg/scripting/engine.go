@@ -416,12 +416,6 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("steal", L.NewFunction(e.luaSteal))
 }
 
-// registerFunctions is a convenience wrapper for the engine's own LState.
-// Deprecated: use registerFunctionsOn for explicit LState targeting.
-func (e *Engine) registerFunctions() {
-	e.registerFunctionsOn(e.l)
-}
-
 // loadGlobals loads the globals.lua file.
 // Based on boot_lua() lines 1711-1714.
 // loadGlobalsOn loads the globals.lua file onto the given LState.
@@ -435,11 +429,6 @@ func (e *Engine) loadGlobalsOn(L *lua.LState) {
 	}
 	// Always set up basic constants
 	e.setupBasicConstantsOn(L)
-}
-
-// loadGlobals loads globals onto the engine's own LState.
-func (e *Engine) loadGlobals() {
-	e.loadGlobalsOn(e.l)
 }
 
 // setupBasicConstantsOn sets up essential constants on the given LState.
@@ -1174,15 +1163,6 @@ func (e *Engine) luaTonumber(L *lua.LState) int {
 	// tonumber(s)
 	// Already in Lua 5.1, expose as global
 	L.GetGlobal("tonumber")
-	L.Push(L.Get(1))
-	L.Call(1, 1)
-	return 1
-}
-
-func (e *Engine) luaTostring(L *lua.LState) int {
-	// tostring(v)
-	// Already in Lua 5.1, expose as global
-	L.GetGlobal("tostring")
 	L.Push(L.Get(1))
 	L.Call(1, 1)
 	return 1

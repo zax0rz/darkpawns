@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 // mail.go — Ported from src/mail.c
 //
 // MUD mail system: store, read, and delete mail messages for players.
@@ -71,7 +72,7 @@ var (
 	mailIndex     *MailIndex
 	freeList      *MailPosList
 	fileEndPos    int64
-	noMail        bool
+	noMail        bool //nolint:unused // mail system flag
 	worldNameFunc func(id int) string
 	worldIDFunc   func(name string) int
 )
@@ -105,7 +106,7 @@ func pushFreeList(pos int) {
 	freeList = &MailPosList{Position: pos, Next: freeList}
 }
 
-func popFreeList() int {
+func popFreeList() int { //nolint:unused // mail helper
 	if freeList == nil {
 		return int(fileEndPos)
 	}
@@ -139,7 +140,7 @@ func writeToFile(buf []byte, size int, filepos int) {
 		noMail = true
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	if _, err := f.Seek(int64(filepos), 0); err != nil {
 		log.Printf("SYSERR: Seek error in mail file: %v", err)
 		noMail = true
@@ -169,7 +170,7 @@ func readFromFile(buf []byte, size int, filepos int) {
 		noMail = true
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	if _, err := f.Seek(int64(filepos), 0); err != nil {
 		log.Printf("SYSERR: Seek error in mail file read: %v", err)
 		noMail = true
@@ -205,7 +206,7 @@ func scanFile() bool {
 		}
 		return true
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var nextBlock mailHeader
 	totalMessages := 0
@@ -246,7 +247,7 @@ func hasMail(recipient int) bool {
 	return findCharInIndex(recipient) != nil
 }
 
-func storeMail(to, from int, message string) {
+func storeMail(to, from int, message string) { //nolint:unused // mail helper
 	log.Printf("SYSERR: Mail system -- non-fatal error #5. (from == %d, to == %d)", from, to)
 	if from < 0 || to < 0 || message == "" {
 		return
@@ -377,9 +378,9 @@ func readDelete(recipient int) string {
 
 	var sb strings.Builder
 	sb.WriteString(" * * * * Dark Pawns Mail System * * * *\r\n")
-	sb.WriteString(fmt.Sprintf("Date: %s\r\n", tm))
-	sb.WriteString(fmt.Sprintf("  To: %s\r\n", toName))
-	sb.WriteString(fmt.Sprintf("From: %s\r\n\r\n", fromName))
+	fmt.Fprintf(&sb, "Date: %s\r\n", tm)
+	fmt.Fprintf(&sb, "  To: %s\r\n", toName)
+	fmt.Fprintf(&sb, "From: %s\r\n\r\n", fromName)
 	sb.WriteString(string(header.Text[:]))
 	message := sb.String()
 

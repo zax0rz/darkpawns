@@ -8,34 +8,34 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/optimization"
 )
 
-func optimizationIntegration() {
+func OptimizationIntegration() {
 	fmt.Println("Dark Pawns Optimization Integration Example")
 	fmt.Println("===========================================")
 
 	// Example 1: Worker Pool
 	fmt.Println("\n1. Worker Pool Example:")
-	workerPoolExample()
+	WorkerPoolExample()
 
 	// Example 2: Connection Pool
 	fmt.Println("\n2. Connection Pool Example:")
-	connectionPoolExample()
+	ConnectionPoolExample()
 
 	// Example 3: AI Batch Processing
 	fmt.Println("\n3. AI Batch Processing Example:")
-	aiBatchProcessingExample()
+	AiBatchProcessingExample()
 
 	// Example 4: WebSocket Optimization
 	fmt.Println("\n4. WebSocket Optimization Example:")
-	websocketOptimizationExample()
+	WebsocketOptimizationExample()
 
 	// Example 5: Query Optimization
 	fmt.Println("\n5. Query Optimization Example:")
-	queryOptimizationExample()
+	QueryOptimizationExample()
 
 	fmt.Println("\nAll examples completed!")
 }
 
-func workerPoolExample() {
+func WorkerPoolExample() {
 	// Create worker pool with 5 workers
 	pool := optimization.NewWorkerPool(5)
 	defer pool.Close()
@@ -54,7 +54,7 @@ func workerPoolExample() {
 	time.Sleep(200 * time.Millisecond)
 }
 
-func connectionPoolExample() {
+func ConnectionPoolExample() {
 	// Simulate connection creation
 	createFunc := func() (interface{}, error) {
 		fmt.Println("  Creating new connection...")
@@ -69,7 +69,7 @@ func connectionPoolExample() {
 
 	// Create connection pool
 	pool := optimization.NewConnectionPool(3, 30*time.Second, createFunc, closeFunc)
-	defer pool.Close()
+	defer func() { _ = pool.Close() }() //nolint:errcheck
 
 	// Get and use connections
 	for i := 0; i < 5; i++ {
@@ -92,7 +92,7 @@ func connectionPoolExample() {
 		stats.TotalConnections, stats.ActiveConnections, stats.IdleConnections)
 }
 
-func aiBatchProcessingExample() {
+func AiBatchProcessingExample() {
 	// Create batch processor
 	processor := optimization.NewAIBatchProcessor(5, 100*time.Millisecond, func(batch []optimization.AIBatchItem) error {
 		fmt.Printf("  Processing batch of %d requests\n", len(batch))
@@ -139,7 +139,7 @@ func aiBatchProcessingExample() {
 	time.Sleep(500 * time.Millisecond)
 }
 
-func websocketOptimizationExample() {
+func WebsocketOptimizationExample() {
 	// Create WebSocket pool
 	pool := optimization.NewWebSocketPool(256)
 
@@ -177,7 +177,7 @@ func websocketOptimizationExample() {
 	pool.Unregister("session-2")
 }
 
-func queryOptimizationExample() {
+func QueryOptimizationExample() {
 	// Create query optimizer
 	optimizer := optimization.NewQueryOptimizer(100, 50*time.Millisecond)
 
@@ -211,7 +211,7 @@ func queryOptimizationExample() {
 }
 
 // Integration with existing Dark Pawns server
-func integrateWithServer() {
+func IntegrateWithServer() {
 	/*
 		// Example integration with session manager
 		func (m *Manager) integrateOptimizations() {

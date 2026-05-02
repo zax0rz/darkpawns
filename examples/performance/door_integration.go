@@ -11,7 +11,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-func doorIntegration() {
+func DoorIntegration() {
 	// Example of integrating doors with the game world
 
 	// 1. Create a door manager

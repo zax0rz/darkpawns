@@ -35,10 +35,10 @@ func cmdUsersSafe(s *Session, args []string) error {
 
 	var buf strings.Builder
 	if showIPs {
-		buf.WriteString(fmt.Sprintf("%-15s %-6s %-20s\n", "Name", "Level", "Remote Addr"))
+		fmt.Fprintf(&buf, "%-15s %-6s %-20s\n", "Name", "Level", "Remote Addr")
 		buf.WriteString(strings.Repeat("-", 45) + "\n")
 	} else {
-		buf.WriteString(fmt.Sprintf("%-15s %-6s\n", "Name", "Level"))
+		fmt.Fprintf(&buf, "%-15s %-6s\n", "Name", "Level")
 		buf.WriteString(strings.Repeat("-", 25) + "\n")
 	}
 
@@ -62,14 +62,14 @@ func cmdUsersSafe(s *Session, args []string) error {
 					ip = fwd
 				}
 			}
-			buf.WriteString(fmt.Sprintf("%-15s %-6d %-20s\n", name, level, ip))
+			fmt.Fprintf(&buf, "%-15s %-6d %-20s\n", name, level, ip)
 		} else {
-			buf.WriteString(fmt.Sprintf("%-15s %-6d\n", name, level))
+			fmt.Fprintf(&buf, "%-15s %-6d\n", name, level)
 		}
 		count++
 	}
 
-	buf.WriteString(fmt.Sprintf("\n%d player(s) connected.\n", count))
+	fmt.Fprintf(&buf, "\n%d player(s) connected.\n", count)
 	s.sendText(buf.String())
 	return nil
 }

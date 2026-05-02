@@ -101,7 +101,7 @@ func SavePlayer(player *Player) error {
 	if err != nil {
 		return fmt.Errorf("create save file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
@@ -121,7 +121,7 @@ func LoadPlayer(name string) (*Player, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open save file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var data savePlayerData
 	if err := json.NewDecoder(f).Decode(&data); err != nil {
@@ -381,7 +381,7 @@ func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
 	if err != nil {
 		return fmt.Errorf("create save file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
@@ -401,7 +401,7 @@ func LoadSaveData(name string) (savePlayerData, error) {
 	if err != nil {
 		return savePlayerData{}, fmt.Errorf("open save file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var data savePlayerData
 	if err := json.NewDecoder(f).Decode(&data); err != nil {

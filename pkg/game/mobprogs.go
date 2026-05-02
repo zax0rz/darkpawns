@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 // mobprogs.go — Ported from src/mobprog.c
 //
 // Mobile program triggers: greeting, bribery, sound, rescue, and town-citizen
@@ -18,9 +19,9 @@ import (
 // ---------------------------------------------------------------------------
 
 func isDog(mob *MobInstance) bool        { v := mob.GetVNum(); return v == 8063 || v == 8065 }
-func isJanitor(mob *MobInstance) bool    { return mob.GetVNum() == 8061 }
+func isJanitor(mob *MobInstance) bool    { return mob.GetVNum() == 8061 } //nolint:unused // mobprog helper
 func isDemon(mob *MobInstance) bool      { return mob.GetVNum() == 14401 }
-func isMercenary(mob *MobInstance) bool  { return mob.GetVNum() == 3063 }
+func isMercenary(mob *MobInstance) bool  { return mob.GetVNum() == 3063 } //nolint:unused // mobprog helper
 
 func isWhore(mob *MobInstance) bool {
 	specName, ok := MobSpecAssign[mob.GetVNum()]
@@ -216,7 +217,7 @@ func (w *World) isCityguard(ch *MobInstance) bool {
 // getBadGuy / killBadGuy — port of get_bad_guy() and kill_bad_guy()
 // ---------------------------------------------------------------------------
 
-func (w *World) getBadGuy(ch *MobInstance) *MobInstance {
+func (w *World) getBadGuy(ch *MobInstance) *MobInstance { //nolint:unused // mobprog helper
 	candidates := w.GetMobsInRoom(ch.GetRoom())
 	var badGuys []*MobInstance
 	for _, m := range candidates {
@@ -243,7 +244,7 @@ func (w *World) getBadGuy(ch *MobInstance) *MobInstance {
 	return badGuys[iVictim-1]
 }
 
-func (w *World) killBadGuy(ch *MobInstance) bool {
+func (w *World) killBadGuy(ch *MobInstance) bool { //nolint:unused // mobprog helper
 	if ch.GetPosition() < 6 || ch.GetFighting() != "" {
 		return false
 	}
@@ -285,35 +286,6 @@ func (w *World) NpcRescue(chHero *MobInstance, chVictim *Player) bool {
 	chHero.SetFighting(chBadGuy.GetName())
 	chBadGuy.SetFighting(chHero.GetName())
 	return true
-}
-
-// ---------------------------------------------------------------------------
-// isJunk / isShopkeeper — port of is_junk() and is_shopkeeper()
-// ---------------------------------------------------------------------------
-
-func isJunk(obj *ObjectInstance) bool {
-	if obj == nil || obj.Prototype == nil {
-		return false
-	}
-	return obj.IsTakeable() && (obj.IsDrinkContainer() || obj.GetCost() <= 10)
-}
-
-func (w *World) isShopkeeper(ch *MobInstance) bool {
-	if ch == nil || !ch.IsNPC() {
-		return false
-	}
-	specName, ok := MobSpecAssign[ch.GetVNum()]
-	if ok {
-		switch specName {
-		case "shop_keeper", "guild", "guild_guard", "butler", "clerk":
-			return true
-		}
-	}
-	switch ch.GetVNum() {
-	case 8003, 8004, 8005, 8006, 8007, 8008, 8009, 8010, 8011, 8078:
-		return true
-	}
-	return false
 }
 
 // ---------------------------------------------------------------------------

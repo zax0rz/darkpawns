@@ -86,7 +86,7 @@ func (bm *BanManager) LoadBanned(path string) {
 		slog.Warn("unable to open ban file", "path", path, "error", err)
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -123,14 +123,14 @@ func (bm *BanManager) WriteBanList(path string) error {
 	if err != nil {
 		return fmt.Errorf("WriteBanList: create %s: %w", path, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	w := bufio.NewWriter(f)
 	// Write in reverse order to match C recursive _write_one_node() behavior.
 	// Source: ban.c _write_one_node() — recurses to end then writes on unwind.
 	for i := len(bm.bans) - 1; i >= 0; i-- {
 		entry := bm.bans[i]
-		fmt.Fprintf(w, "%s %s %d %s\n",
+		_, _ = fmt.Fprintf(w, "%s %s %d %s\n",
 			banTypeName(entry.BanType),
 			entry.Site,
 			entry.Date.Unix(),
@@ -213,8 +213,8 @@ func (bm *BanManager) ListBans() string {
 		if !entry.Date.IsZero() {
 			dateStr = entry.Date.Format("2006-01-02")
 		}
-		sb.WriteString(fmt.Sprintf("%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n",
-			entry.Site, banTypeName(entry.BanType), dateStr, entry.BannedBy))
+		fmt.Fprintf(&sb, "%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n",
+			entry.Site, banTypeName(entry.BanType), dateStr, entry.BannedBy)
 	}
 	return sb.String()
 }
@@ -233,7 +233,7 @@ func (bm *BanManager) ReadInvalidList(path string) {
 		slog.Warn("unable to open invalid name file", "path", path, "error", err)
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {

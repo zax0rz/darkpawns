@@ -15,7 +15,7 @@ func TestClient_FilterText(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"filtered_text": "Hello [REDACTED]", "detected_categories": ["person"]}`))
+		_, _ = w.Write([]byte(`{"filtered_text": "Hello [REDACTED]", "detected_categories": ["person"]}`))
 	}))
 	defer server.Close()
 
@@ -83,7 +83,7 @@ func TestBatchFilter(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"filtered_text": "[REDACTED]", "detected_categories": ["person"]}`))
+		_, _ = w.Write([]byte(`{"filtered_text": "[REDACTED]", "detected_categories": ["person"]}`))
 	}))
 	defer server.Close()
 
@@ -107,20 +107,20 @@ func TestBatchFilter(t *testing.T) {
 
 func TestConfig_LoadFromEnv(t *testing.T) {
 	// Set environment variables
-	os.Setenv("PRIVACY_FILTER_URL", "http://test:8000")
-	os.Setenv("PRIVACY_FILTER_ENABLED", "false")
-	os.Setenv("PRIVACY_FILTER_CATEGORIES", "email,phone")
-	os.Setenv("PRIVACY_FILTER_REPLACEMENT", "***")
-	os.Setenv("PRIVACY_FILTER_KEEP_LENGTH", "true")
-	os.Setenv("FILTER_PLAYER_NAMES", "false")
+	_ = os.Setenv("PRIVACY_FILTER_URL", "http://test:8000")
+	_ = os.Setenv("PRIVACY_FILTER_ENABLED", "false")
+	_ = os.Setenv("PRIVACY_FILTER_CATEGORIES", "email,phone")
+	_ = os.Setenv("PRIVACY_FILTER_REPLACEMENT", "***")
+	_ = os.Setenv("PRIVACY_FILTER_KEEP_LENGTH", "true")
+	_ = os.Setenv("FILTER_PLAYER_NAMES", "false")
 
 	defer func() {
-		os.Unsetenv("PRIVACY_FILTER_URL")
-		os.Unsetenv("PRIVACY_FILTER_ENABLED")
-		os.Unsetenv("PRIVACY_FILTER_CATEGORIES")
-		os.Unsetenv("PRIVACY_FILTER_REPLACEMENT")
-		os.Unsetenv("PRIVACY_FILTER_KEEP_LENGTH")
-		os.Unsetenv("FILTER_PLAYER_NAMES")
+		_ = os.Unsetenv("PRIVACY_FILTER_URL")
+		_ = os.Unsetenv("PRIVACY_FILTER_ENABLED")
+		_ = os.Unsetenv("PRIVACY_FILTER_CATEGORIES")
+		_ = os.Unsetenv("PRIVACY_FILTER_REPLACEMENT")
+		_ = os.Unsetenv("PRIVACY_FILTER_KEEP_LENGTH")
+		_ = os.Unsetenv("FILTER_PLAYER_NAMES")
 	}()
 
 	config := LoadConfig()
@@ -155,7 +155,7 @@ func TestPrivacyLogger(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"filtered_text": "Hello [REDACTED]", "detected_categories": ["person"]}`))
+		_, _ = w.Write([]byte(`{"filtered_text": "Hello [REDACTED]", "detected_categories": ["person"]}`))
 	}))
 	defer server.Close()
 
@@ -187,11 +187,4 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-// Helper function for string operations
-var stringHelpers = struct {
-	Contains func(string, string) bool
-}{
-	Contains: func(s, substr string) bool {
-		return strings.Contains(s, substr)
-	},
-}
+

@@ -28,14 +28,14 @@ func BenchmarkWebSocketConnection(b *testing.B) {
 		if err != nil {
 			return
 		}
-		defer conn.Close() // #nosec G104 — benchmark test conn.Close
+		defer func() { _ = conn.Close() }() //nolint:errcheck
 
 		for {
 			_, _, err := conn.ReadMessage() // #nosec G104 — benchmark test, websocket ReadMessage
 			if err != nil {
 				break
 			}
-			_ = conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"pong"}`)) // #nosec G104 — websocket WriteMessage error handled by connection close
+			_ = conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"pong"}`)) //nolint:errcheck
 		}
 	})
 
@@ -51,9 +51,9 @@ func BenchmarkWebSocketConnection(b *testing.B) {
 			if err != nil {
 				b.Fatal(err)
 			}
-			_ = conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"ping"}`)) // #nosec G104 — websocket WriteMessage error handled by connection close
-			conn.ReadMessage() // #nosec G104 — benchmark test, websocket ReadMessage
-			conn.Close() // #nosec G104 — benchmark test conn.Close
+			_ = conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"ping"}`)) //nolint:errcheck
+			_, _, _ = conn.ReadMessage() // #nosec G104 — benchmark test, websocket ReadMessage
+			_ = conn.Close() //nolint:errcheck
 		}
 	})
 }
@@ -93,7 +93,7 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 					}
 				}
 				clientsMutex.Unlock()
-				conn.Close() // #nosec G104 — benchmark test conn.Close
+				_ = conn.Close() //nolint:errcheck
 			}()
 
 			for {
@@ -122,7 +122,7 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 		for msg := range broadcastChan {
 			clientsMutex.RLock()
 			for _, conn := range clients {
-				conn.WriteMessage(websocket.TextMessage, msg) // #nosec G104 — websocket WriteMessage error handled by connection close
+				_ = conn.WriteMessage(websocket.TextMessage, msg) //nolint:errcheck
 			}
 			clientsMutex.RUnlock()
 		}
@@ -139,7 +139,7 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 
 	// Cleanup
 	for _, conn := range clients {
-		conn.Close() // #nosec G104 — benchmark test conn.Close
+		_ = conn.Close() //nolint:errcheck
 	}
 }
 
@@ -153,7 +153,7 @@ func BenchmarkWorkerPool(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			pool.Submit(func() { // #nosec G104 — benchmark test pool.Submit
+			_ = pool.Submit(func() { //nolint:errcheck
 				atomic.AddInt64(&counter, 1) // #nosec G104 — benchmark test, atomic op
 				time.Sleep(time.Microsecond) // Simulate work
 			})
@@ -177,7 +177,7 @@ func BenchmarkConnectionPool(b *testing.B) {
 	}
 
 	pool := optimization.NewConnectionPool(10, 30*time.Second, createFunc, closeFunc)
-	defer pool.Close()
+	defer func() { _ = pool.Close() }() //nolint:errcheck
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -187,7 +187,7 @@ func BenchmarkConnectionPool(b *testing.B) {
 				b.Fatal(err)
 			}
 			time.Sleep(100 * time.Microsecond) // Simulate work
-			pool.Put(conn) // #nosec G104 — benchmark test pool.Put
+			_ = pool.Put(conn) //nolint:errcheck
 		}
 	})
 }
@@ -212,7 +212,7 @@ func BenchmarkAIBatchProcessor(b *testing.B) {
 	}
 
 	processor := optimization.NewAIBatchProcessor(10, 50*time.Millisecond, processFunc)
-	defer processor.Close()
+	defer func() { _ = processor.Close() }() //nolint:errcheck
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -289,7 +289,7 @@ func BenchmarkJSONMarshal(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		json.Marshal(message) // #nosec G104 — benchmark test, json.Marshal
+		_, _ = json.Marshal(message) //nolint:errcheck
 	}
 }
 

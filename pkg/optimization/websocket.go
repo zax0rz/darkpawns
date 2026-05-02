@@ -14,7 +14,6 @@ import (
 
 // WebSocketOptimizer provides WebSocket performance optimizations.
 type WebSocketOptimizer struct {
-	mu                sync.RWMutex
 	compressionLevel  int
 	batchWindow       time.Duration
 	maxBatchSize      int

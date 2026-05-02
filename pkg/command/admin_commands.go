@@ -404,14 +404,14 @@ func (ac *AdminCommands) cmdInvestigate(s common.CommandSession, args []string) 
 	ac.manager.RUnlock()
 
 	var output strings.Builder
-	output.WriteString(fmt.Sprintf("Investigation report for: %s\n", target))
+	fmt.Fprintf(&output, "Investigation report for: %s\n", target)
 	output.WriteString("========================================\n")
 
 	if targetSess == nil {
 		output.WriteString("Status: OFFLINE\n")
 	} else {
 		output.WriteString("Status: ONLINE\n")
-		output.WriteString(fmt.Sprintf("Location: Room %d\n", targetSess.GetPlayerRoomVNum()))
+		fmt.Fprintf(&output, "Location: Room %d\n", targetSess.GetPlayerRoomVNum())
 		// Note: Player level and health would require additional interface methods
 		output.WriteString("Level: [Requires player interface]\n")
 		output.WriteString("Health: [Requires player interface]\n")

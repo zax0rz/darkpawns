@@ -148,7 +148,7 @@ func (db *DB) BootstrapMemories(agentName string, limit int) ([]*NarrativeMemory
 	if err != nil {
 		return nil, fmt.Errorf("bootstrap memories: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanNarrativeMemories(rows)
 }
 
@@ -167,7 +167,7 @@ func (db *DB) RecentMemories(agentName, sessionID string) ([]*NarrativeMemory, e
 	if err != nil {
 		return nil, fmt.Errorf("recent memories: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanNarrativeMemories(rows)
 }
 
@@ -189,7 +189,7 @@ func (db *DB) SocialEventMemories(socialEventID string) ([]*NarrativeMemory, err
 	if err != nil {
 		return nil, fmt.Errorf("social event memories: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanNarrativeMemories(rows)
 }
 
@@ -224,7 +224,7 @@ func (db *DB) GetSessionSummaries(agentName string, limit int) ([]string, error)
 	if err != nil {
 		return nil, fmt.Errorf("get session summaries: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var summaries []string
 	for rows.Next() {

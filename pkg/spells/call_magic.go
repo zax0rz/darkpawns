@@ -207,28 +207,3 @@ func dice(num, sides int) int {
 	return total
 }
 
-// applySavingThrow applies the effects of a saving throw — halves damage on success.
-func applyDamageWithSave(victim interface{}, damage int, saveType int, world interface{}) int {
-	if damage <= 0 {
-		return 0
-	}
-
-	if magSavingThrow(victim, saveType) {
-		damage = damage / 2
-		if damage < 1 {
-			damage = 1
-		}
-	}
-
-	// Apply damage to victim (if they implement TakeDamage)
-	type damager interface {
-		TakeDamage(int)
-		GetName() string
-	}
-	if d, ok := victim.(damager); ok {
-		d.TakeDamage(damage)
-	}
-
-	return damage
-}
-

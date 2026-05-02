@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 // mobact.go — Ported from src/mobact.c
 //
 // Mobile AI: generates intelligent (?) behavior in mobiles.
@@ -30,7 +31,7 @@ func hasMobFlag(mob *MobInstance, flag string) bool {
 	return false
 }
 
-func roomHasFlag(room *parser.Room, flag string) bool {
+func roomHasFlag(room *parser.Room, flag string) bool { //nolint:unused // mob helper
 	if room == nil {
 		return false
 	}
@@ -295,7 +296,7 @@ func (w *World) MobileActivity() {
 
 // scanForMob finds the first mob in a room matching a predicate.
 // Returns nil if no match found.
-func (w *World) scanForMob(roomVNum int, fn func(m *MobInstance) bool) *MobInstance {
+func (w *World) scanForMob(roomVNum int, fn func(m *MobInstance) bool) *MobInstance { //nolint:unused // mob helper
 	for _, m := range w.GetMobsInRoom(roomVNum) {
 		if fn(m) {
 			return m
@@ -306,7 +307,7 @@ func (w *World) scanForMob(roomVNum int, fn func(m *MobInstance) bool) *MobInsta
 
 // scanForPlayer finds the first player in a room matching a predicate.
 // Returns nil if no match found.
-func (w *World) scanForPlayer(roomVNum int, fn func(p *Player) bool) *Player {
+func (w *World) scanForPlayer(roomVNum int, fn func(p *Player) bool) *Player { //nolint:unused // mob helper
 	for _, p := range w.GetPlayersInRoom(roomVNum) {
 		if fn(p) {
 			return p

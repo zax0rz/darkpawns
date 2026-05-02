@@ -78,9 +78,7 @@ func serveMarkdownVersion(w http.ResponseWriter, r *http.Request, docsDir, path 
 		mdPath = filepath.Join(mdPath, "_index.md")
 	} else {
 		// Remove trailing slash
-		if strings.HasSuffix(path, "/") {
-			path = path[:len(path)-1]
-		}
+		path = strings.TrimSuffix(path, "/")
 
 		// Try different markdown file locations
 		possiblePaths := []string{

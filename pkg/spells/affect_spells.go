@@ -693,7 +693,6 @@ func castSilkenMissile(level int, ch, ovict interface{}, world interface{}) {
 		ExtractObject(interface{}, int)
 	}
 	type roomGetter interface{ GetRoomVNum() int }
-	type inventoryGetter interface{ GetInventory() []interface{} }
 	type inventoryAdder interface{ AddItemToInventory(interface{}) error }
 
 	s, ok := world.(spawner)
@@ -1154,7 +1153,6 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 type (
 	roomGetter2 interface{ GetRoomVNum() int }
 	fighter2   interface{ IsFighting() bool }
-	mounter2   interface{ GetMountName() string }
 	hometowner interface{ GetHometown() int }
 
 	worldTransfer interface {

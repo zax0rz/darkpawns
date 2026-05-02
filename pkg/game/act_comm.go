@@ -13,21 +13,6 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// Subcommand indices (matching act.comm.c subcmd enum, roughly)
-// ---------------------------------------------------------------------------
-const (
-	subcmdHoller  = 0
-	subcmdShout   = 1
-	subcmdGossip  = 2
-	subcmdAuction = 3
-	subcmdGratz   = 4
-	subcmdNewbie  = 5
-	subcmdWhisper = 6
-	subcmdAsk     = 7
-	subcmdQSay    = 8
-)
-
-// ---------------------------------------------------------------------------
 // Race constants (matching structs.h RACE_*)
 // ---------------------------------------------------------------------------
 const (
@@ -62,9 +47,7 @@ const (
 // Condition indices — canonical source: pkg/game/limits.go
 // ---------------------------------------------------------------------------
 const (
-	condFull  = CondFull
-	condThirst = CondThirst
-	condDrunk  = CondDrunk
+	condDrunk = CondDrunk //nolint:unused // used in comm_say.go
 )
 
 // ---------------------------------------------------------------------------
@@ -101,9 +84,7 @@ const (
 // Level constants. lvlImmort is declared in spec_procs4.go (31).
 // ---------------------------------------------------------------------------
 const (
-	lvlGod         = 34
-	lvlGreatGod    = 38
-	lvlImplementor = 40
+	lvlGod = 34 //nolint:unused // used in item_consumable.go, item_transfer.go
 )
 
 // ---------------------------------------------------------------------------
@@ -267,14 +248,7 @@ var deadspeakSyllables = []syllable{
 	{"u", "uu"}, {"the ", "theu "}, {"is", "eis"}, {"of", "eof"},
 }
 
-var undercommonSyllables = []syllable{
-	{" ", " "}, {"the ", "de "}, {"with", "wit"}, {"this", "dis"},
-	{"that", "dat"}, {"are", "be"}, {"is", "be"}, {"you", "du"},
-	{"i", "me"}, {"my", "me"}, {"or", "nor"}, {"your", "de"},
-	{"they", "dey"}, {"them", "dem"}, {"what", "wot"}, {"and", "an"},
-}
-
-var drunkSyllables = []syllable{
+var drunkSyllables = []syllable{ //nolint:unused // used by speakDrunk in comm_say.go
 	{" ", " "}, {"are", "arsh"}, {"and", "andsh"}, {"how", "howsh"},
 	{"what", "wha'"}, {"is", "ish"}, {"where", "whersh"},
 	{"kill", "murderize"}, {"ck", "shkin"}, {"the ", "th' "},
@@ -284,15 +258,14 @@ var drunkSyllables = []syllable{
 // Language translation functions
 // ---------------------------------------------------------------------------
 
-func speakRakshasan(said string) string   { return applySyllableSubstitution(said, rakSyllables) }
-func speakDwarven(said string) string     { return applySyllableSubstitution(said, dwarfSyllables) }
-func speakElven(said string) string       { return applySyllableSubstitution(said, elfSyllables) }
-func speakGnoll(said string) string       { return applySyllableSubstitution(said, gnollSyllables) }
-func speakDraconian(said string) string   { return applySyllableSubstitution(said, draconianSyllables) }
-func speakGiantish(said string) string    { return applySyllableSubstitution(said, giantishSyllables) }
-func speakDeadspeak(said string) string   { return applySyllableSubstitution(said, deadspeakSyllables) }
-func speakUndercommon(said string) string { return applySyllableSubstitution(said, undercommonSyllables) }
-func speakDrunk(said string) string       { return applySyllableSubstitution(said, drunkSyllables) }
+func speakRakshasan(said string) string { return applySyllableSubstitution(said, rakSyllables) }
+func speakDwarven(said string) string   { return applySyllableSubstitution(said, dwarfSyllables) }
+func speakElven(said string) string     { return applySyllableSubstitution(said, elfSyllables) }
+func speakGnoll(said string) string     { return applySyllableSubstitution(said, gnollSyllables) }
+func speakDraconian(said string) string { return applySyllableSubstitution(said, draconianSyllables) }
+func speakGiantish(said string) string  { return applySyllableSubstitution(said, giantishSyllables) }
+func speakDeadspeak(said string) string { return applySyllableSubstitution(said, deadspeakSyllables) }
+func speakDrunk(said string) string     { return applySyllableSubstitution(said, drunkSyllables) } //nolint:unused // used in comm_say.go
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -327,13 +300,6 @@ func halfChop(input string) (string, string) {
 	return oneArgument(input)
 }
 
-// twoArguments splits two words and the remainder.
-func twoArguments(input string) (string, string, string) {
-	a, r := oneArgument(input)
-	b, rest := oneArgument(r)
-	return a, b, rest
-}
-
 // allPlayers returns a snapshot of all connected players.
 func (w *World) allPlayers() []*Player {
 	w.mu.RLock()
@@ -346,7 +312,7 @@ func (w *World) allPlayers() []*Player {
 }
 
 // getCharVis finds a player by name anywhere in the world (case-insensitive, prefix).
-func (w *World) getCharVis(ch *Player, name string) *Player {
+func (w *World) getCharVis(ch *Player, name string) *Player { //nolint:unused // used in comm_channel.go, comm_tell.go, graph.go
 	for _, p := range w.allPlayers() {
 		if !p.IsNPC() && (strings.EqualFold(p.Name, name) ||
 			strings.HasPrefix(strings.ToLower(p.Name), strings.ToLower(name))) {
@@ -381,7 +347,7 @@ func isNumber(s string) bool {
 }
 
 // deleteAnsiControls strips ANSI escape sequences from a string.
-func deleteAnsiControls(s string) string {
+func deleteAnsiControls(s string) string { //nolint:unused // used in comm_say.go, comm_tell.go
 	var buf strings.Builder
 	for i := 0; i < len(s); i++ {
 		if s[i] == '\x1B' && i+1 < len(s) && s[i+1] == '[' {
@@ -428,29 +394,21 @@ func determineVerb(msg string) string {
 
 // lastTellers is a map of tellerID -> lastTellRecipientID.
 // Initialized lazily in getLastTellers/setLastTeller.
-type lastTellersData struct {
+type lastTellersData struct { //nolint:unused // used in world.go
 	store map[int]int
 }
 
-func (w *World) getLastTellers() *lastTellersData {
-	// World must have this accessible. We store it as a field on World
-	// via initLastTellers.
-	return w.lastTellers
-}
-
-// initLastTellers ensures the map is initialized. Called from acmd registration.
-func (w *World) initLastTellers() {
+func (w *World) initLastTellers() { //nolint:unused // used in setLastTeller/getLastTeller
 	if w.lastTellers == nil {
 		w.lastTellers = &lastTellersData{store: make(map[int]int)}
 	}
 }
-
-func (w *World) setLastTeller(chID, victID int) {
+func (w *World) setLastTeller(chID, victID int) { //nolint:unused // used in comm_tell.go
 	w.initLastTellers()
 	w.lastTellers.store[chID] = victID
 }
 
-func (w *World) getLastTeller(chID int) int {
+func (w *World) getLastTeller(chID int) int { //nolint:unused // used in comm_tell.go
 	w.initLastTellers()
 	if id, ok := w.lastTellers.store[chID]; ok {
 		return id

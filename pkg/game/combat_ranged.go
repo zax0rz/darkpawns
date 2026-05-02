@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 package game
 
 // combat_ranged.go — ranged combat: shoot

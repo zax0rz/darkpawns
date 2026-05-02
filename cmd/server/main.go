@@ -102,7 +102,7 @@ func main() {
 		slog.Warn("Database connection failed, continuing without persistence", "error", err)
 		database = nil
 	} else {
-		defer database.Close()
+		defer func() { _ = database.Close() }()
 		slog.Info("Database connected.")
 	}
 

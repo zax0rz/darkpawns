@@ -184,7 +184,7 @@ func cmdWiznet(s *Session, args []string) error {
 				continue
 			}
 			// Simple distinction: all immortals in session are "online"
-			online.WriteString(fmt.Sprintf("  %s\r\n", sess.player.Name))
+			fmt.Fprintf(&online, "  %s\r\n", sess.player.Name)
 			anyOnline = true
 		}
 		s.manager.mu.RUnlock()

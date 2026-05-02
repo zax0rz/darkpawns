@@ -1,3 +1,4 @@
+//nolint:unused // Fight commands — not yet wired to command registry.
 package session
 
 // ---------------------------------------------------------------------------

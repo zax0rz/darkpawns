@@ -1,3 +1,4 @@
+//nolint:unused // Examine system — not yet wired to command registry.
 package session
 
 import (

@@ -512,7 +512,7 @@ func TestMoveObjectInventoryFull(t *testing.T) {
 	// Fill inventory
 	for i := 0; i < player.Inventory.Capacity; i++ {
 		o, _ := w.SpawnObject(3001, 1001)
-		player.Inventory.AddItem(o)
+		_ = player.Inventory.AddItem(o)
 	}
 
 	extra, _ := w.SpawnObject(3001, 1001)
@@ -1117,7 +1117,7 @@ func TestLocationFieldSync(t *testing.T) {
 
 	// MoveObject to player inventory should update Location correctly
 	obj2, _ := w.SpawnObject(3001, 1001)
-	w.MoveObject(obj2, LocInventoryPlayer(player.Name))
+	_ = w.MoveObject(obj2, LocInventoryPlayer(player.Name))
 	if !obj2.Location.OwnerIsPlayer() {
 		t.Error("MoveObject to player inventory should set OwnerIsPlayer")
 	}

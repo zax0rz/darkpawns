@@ -72,8 +72,6 @@ type World struct {
 	// Zone dispatcher for per-zone goroutine processing
 	zoneDispatcher *ZoneDispatcher
 
-	// Last tellers tracking for reply command
-	lastTellers *lastTellersData
 
 	// House control records — loaded by HouseBoot() during initialization
 	HouseControl []HouseControl
@@ -96,6 +94,9 @@ type World struct {
 
 	// CloseConnection routes close requests through the session layer.
 	CloseConn CloseConnectionFunc
+
+	// lastTellers tracks last tell recipients per character ID.
+	lastTellers *lastTellersData //nolint:unused // used via methods in act_comm.go
 }
 
 // NewWorld creates a new game world from parsed data.

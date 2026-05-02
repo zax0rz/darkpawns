@@ -89,19 +89,19 @@ func cmdConsider(s *Session, args []string) error {
 	var firstLine string
 	switch {
 	case damdiff > 20:
-		firstLine = fmt.Sprintf("$N looks like $E could eat you for lunch, ")
+		firstLine = "$N looks like $E could eat you for lunch, "
 	case damdiff > 10:
-		firstLine = fmt.Sprintf("$N looks like $E could tear you up in a fight, ")
+		firstLine = "$N looks like $E could tear you up in a fight, "
 	case damdiff > 5:
-		firstLine = fmt.Sprintf("$N looks like $E could hurt you in a fight, ")
+		firstLine = "$N looks like $E could hurt you in a fight, "
 	case damdiff > -3:
-		firstLine = fmt.Sprintf("$N looks like a fair fight, ")
+		firstLine = "$N looks like a fair fight, "
 	case damdiff > -5:
-		firstLine = fmt.Sprintf("$N looks like an easy kill, ")
+		firstLine = "$N looks like an easy kill, "
 	case damdiff > -10:
-		firstLine = fmt.Sprintf("$N looks like a very easy kill, ")
+		firstLine = "$N looks like a very easy kill, "
 	default:
-		firstLine = fmt.Sprintf("$N might not even be worth the effort to kill, ")
+		firstLine = "$N might not even be worth the effort to kill, "
 	}
 
 	// Calculate hitdiff: compare hit points
@@ -112,17 +112,17 @@ func cmdConsider(s *Session, args []string) error {
 	var secondLine string
 	switch {
 	case hitdiff > 30:
-		secondLine = fmt.Sprintf("and you would need a lot of help to beat $M.")
+		secondLine = "and you would need a lot of help to beat $M."
 	case hitdiff > 10:
-		secondLine = fmt.Sprintf("and you would need some help to beat $M.")
+		secondLine = "and you would need some help to beat $M."
 	case hitdiff > -10:
-		secondLine = fmt.Sprintf("and you wouldn't need any help at all to beat $M.")
+		secondLine = "and you wouldn't need any help at all to beat $M."
 	case hitdiff > -30:
-		secondLine = fmt.Sprintf("and you think you could beat $M without too much help.")
+		secondLine = "and you think you could beat $M without too much help."
 	case hitdiff > -60:
-		secondLine = fmt.Sprintf("and you think it would be a fair fight for any group of your size.")
+		secondLine = "and you think it would be a fair fight for any group of your size."
 	default:
-		secondLine = fmt.Sprintf("")
+		secondLine = ""
 	}
 
 	// Substitute $N, $E, $S, $M with appropriate pronouns

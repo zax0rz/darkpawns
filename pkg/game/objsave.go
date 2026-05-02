@@ -799,10 +799,10 @@ func DeleteAliasFile(name string) bool {
 func CrashListrent(invDump []saveItemData, eqDump []saveItemData) string {
 	var b strings.Builder
 	for _, item := range invDump {
-		b.WriteString(fmt.Sprintf("  [%5d] inv %s\r\n", item.VNum, item.State))
+		fmt.Fprintf(&b, "  [%5d] inv %s\r\n", item.VNum, item.State)
 	}
 	for _, item := range eqDump {
-		b.WriteString(fmt.Sprintf("  [%5d] eq  %s\r\n", item.VNum, item.State))
+		fmt.Fprintf(&b, "  [%5d] eq  %s\r\n", item.VNum, item.State)
 	}
 	return b.String()
 }

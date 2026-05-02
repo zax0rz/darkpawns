@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 package game
 
 // combat_basic.go — basic combat actions: assist, hit, kill, backstab, disembowel

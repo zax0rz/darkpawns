@@ -51,7 +51,7 @@ func cmdCommands(s *Session, args []string) error {
 	var buf strings.Builder
 	buf.WriteString("Commands available:\r\n")
 	for i, name := range names {
-		buf.WriteString(fmt.Sprintf("%-16s", name))
+		fmt.Fprintf(&buf, "%-16s", name)
 		if (i+1)%5 == 0 {
 			buf.WriteString("\r\n")
 		}
@@ -154,41 +154,6 @@ func diagnoseLabel(pct int) string {
 	}
 }
 
-// cmdSkills — show the player's known skills and their proficiency.
-func cmdSkills(s *Session, args []string) error {
-	if s.player == nil {
-		return nil
-	}
-
-	sm := s.player.SkillManager
-	if sm == nil {
-		s.Send("You have no skills.")
-		return nil
-	}
-
-	learned := sm.GetLearnedSkills()
-	if len(learned) == 0 {
-		s.Send("You have not yet learned any skills.")
-		return nil
-	}
-
-	var buf strings.Builder
-	buf.WriteString("Your skills:\r\n")
-	buf.WriteString(fmt.Sprintf("%-20s %s\r\n", "Skill", "Level"))
-	buf.WriteString(strings.Repeat("-", 30) + "\r\n")
-	for _, sk := range learned {
-		name := sk.DisplayName
-		if name == "" {
-			name = sk.Name
-		}
-		buf.WriteString(fmt.Sprintf("%-20s %d%%\r\n", name, sk.Level))
-	}
-	buf.WriteString(fmt.Sprintf("\r\nSlots used: %d/%d\r\n",
-		sm.GetUsedSlots(), sm.GetSlots()))
-	s.Send(buf.String())
-	return nil
-}
-
 // cmdToggle — toggle a player preference flag.
 func cmdToggle(s *Session, args []string) error {
 	if s.player == nil {
@@ -199,7 +164,7 @@ func cmdToggle(s *Session, args []string) error {
 		// Show current toggles
 		var buf strings.Builder
 		buf.WriteString("Toggles:\r\n")
-		buf.WriteString(fmt.Sprintf("  %-12s : %s\r\n", "autoexit", boolStr(s.player.AutoExit)))
+		fmt.Fprintf(&buf, "  %-12s : %s\r\n", "autoexit", boolStr(s.player.AutoExit))
 		s.Send(buf.String())
 		return nil
 	}
@@ -222,83 +187,3 @@ func boolStr(b bool) string {
 	return "OFF"
 }
 
-// cmdUsers — list connected players with level and IP info (LVL_IMMORT).
-func cmdUsers(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
-
-	filter := ""
-	if len(args) > 0 {
-		filter = strings.ToLower(args[0])
-	}
-
-	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("%-15s %-6s %-20s\r\n", "Name", "Level", "Remote Addr"))
-	buf.WriteString(strings.Repeat("-", 45) + "\r\n")
-
-	count := 0
-	for _, sess := range s.manager.sessions {
-		if sess.player == nil {
-			continue
-		}
-		name := sess.player.Name
-		level := sess.player.GetLevel()
-		ip := "unknown"
-		if sess.request != nil {
-			ip = sess.request.RemoteAddr
-			if fwd := sess.request.Header.Get("X-Forwarded-For"); fwd != "" {
-				ip = fwd
-			}
-		}
-
-		if filter != "" && !strings.Contains(strings.ToLower(name), filter) {
-			continue
-		}
-
-		buf.WriteString(fmt.Sprintf("%-15s %-6d %-20s\r\n", name, level, ip))
-		count++
-	}
-
-	buf.WriteString(fmt.Sprintf("\r\n%d player(s) connected.\r\n", count))
-	s.Send(buf.String())
-	return nil
-}
-
-// cmdAbils shows the player's raw abilities/stats.
-// Source: act.informative.c do_abilities()
-func cmdAbils(s *Session, args []string) error {
-	if s.player == nil {
-		return nil
-	}
-
-	p := s.player
-	var buf strings.Builder
-	buf.WriteString("Abilities:\r\n")
-	buf.WriteString(strings.Repeat("-", 30) + "\r\n")
-	buf.WriteString(fmt.Sprintf("Level: %d\r\n", p.Level))
-	buf.WriteString(fmt.Sprintf("Health: %d/%d  Mana: %d/%d  Move: %d/%d\r\n",
-		p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove))
-	buf.WriteString(fmt.Sprintf("STR: %d  INT: %d  WIS: %d  DEX: %d  CON: %d  CHA: %d\r\n",
-		p.Stats.Str, p.Stats.Int, p.Stats.Wis, p.Stats.Dex, p.Stats.Con, p.Stats.Cha))
-	buf.WriteString(fmt.Sprintf("AC: %d  Hitroll: %d  Damroll: %d\r\n", p.AC, p.Hitroll, p.Damroll))
-	buf.WriteString(fmt.Sprintf("Gold: %d  XP: %d  Alignment: %d\r\n", p.Gold, p.Exp, p.Alignment))
-	s.Send(buf.String())
-	return nil
-}
-
-// cmdAutoExits toggles auto-exit display.
-// Source: act.informative.c do_auto_exits()
-func cmdAutoExits(s *Session, args []string) error {
-	if s.player == nil {
-		return nil
-	}
-	s.player.AutoExit = !s.player.AutoExit
-	state := "OFF"
-	if s.player.AutoExit {
-		state = "ON"
-	}
-	s.Send(fmt.Sprintf("Auto-exits %s.", state))
-	return nil
-}

@@ -1,3 +1,4 @@
+//nolint:unused // Combat system port — helpers not yet wired.
 package game
 
 // combat_advanced.go — advanced combat: retreat, subdue, sleeper, neckbreak, ambush, startCombatBetween
@@ -260,7 +261,7 @@ func (w *World) doSleeper(ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	if !vict.IsNPC() && !isOutlaw(ch) {
-		ch.SendMessage(fmt.Sprintf("You cannot sleeper them because you are not an Outlaw!\r\n"))
+		ch.SendMessage("You cannot sleeper them because you are not an Outlaw!\r\n")
 		vict.SendMessage(fmt.Sprintf("%s failed to sleeper you because %s is not an Outlaw.\r\n", ch.Name, ch.Name))
 		return true
 	}

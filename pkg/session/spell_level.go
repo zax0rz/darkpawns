@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 package session
 
 import "github.com/zax0rz/darkpawns/pkg/game"

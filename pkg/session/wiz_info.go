@@ -121,9 +121,9 @@ func cmdIdlist(s *Session, args []string) error {
 	}
 	defer func() { _ = f.Close() }()
 	for _, obj := range pw.Objs {
-		fmt.Fprintf(f, "[%d] %s\n", obj.VNum, obj.ShortDesc)
-		fmt.Fprintf(f, "  Keywords: %s  Type: %d  Cost: %d\n", obj.Keywords, obj.TypeFlag, obj.Cost)
-		fmt.Fprintf(f, "  Values: [%d] [%d] [%d] [%d]\n", obj.Values[0], obj.Values[1], obj.Values[2], obj.Values[3])
+		_, _ = fmt.Fprintf(f, "[%d] %s\n", obj.VNum, obj.ShortDesc)
+		_, _ = fmt.Fprintf(f, "  Keywords: %s  Type: %d  Cost: %d\n", obj.Keywords, obj.TypeFlag, obj.Cost)
+		_, _ = fmt.Fprintf(f, "  Values: [%d] [%d] [%d] [%d]\n", obj.Values[0], obj.Values[1], obj.Values[2], obj.Values[3])
 	}
 	s.Send(fmt.Sprintf("Wrote %d objects to %s\r\n", len(pw.Objs), safePath))
 	slog.Info("(GC) idlist", "who", s.player.Name, "file", safePath, "count", len(pw.Objs))

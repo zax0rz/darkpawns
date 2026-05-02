@@ -1,4 +1,5 @@
 // Package game — clan system, ported from src/clan.c
+//nolint:unused // Clan system port — helpers not yet wired.
 package game
 
 import (

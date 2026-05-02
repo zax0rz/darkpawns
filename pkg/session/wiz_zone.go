@@ -112,7 +112,7 @@ func cmdZlist(s *Session, args []string) error {
 				continue
 			}
 		}
-		result.WriteString(fmt.Sprintf("  [%5d] %s (top: %d)\r\n", z.Number, z.Name, z.TopRoom))
+		fmt.Fprintf(&result, "  [%5d] %s (top: %d)\r\n", z.Number, z.Name, z.TopRoom)
 	}
 	s.Send(result.String())
 	return nil
@@ -139,7 +139,7 @@ func cmdRlist(s *Session, args []string) error {
 	for _, r := range pw.Rooms {
 		if strings.Contains(strings.ToLower(r.Name), keyword) {
 			count++
-			result.WriteString(fmt.Sprintf("  [%5d] %s\r\n", r.VNum, r.Name))
+			fmt.Fprintf(&result, "  [%5d] %s\r\n", r.VNum, r.Name)
 			if count >= 50 {
 				result.WriteString("... (truncated at 50)")
 				break
@@ -176,7 +176,7 @@ func cmdOlist(s *Session, args []string) error {
 		if strings.Contains(strings.ToLower(o.ShortDesc), keyword) ||
 			strings.Contains(strings.ToLower(o.Keywords), keyword) {
 			count++
-			result.WriteString(fmt.Sprintf("  [%5d] %s\r\n", o.VNum, o.ShortDesc))
+			fmt.Fprintf(&result, "  [%5d] %s\r\n", o.VNum, o.ShortDesc)
 			if count >= 50 {
 				result.WriteString("... (truncated at 50)")
 				break
@@ -213,7 +213,7 @@ func cmdMlist(s *Session, args []string) error {
 		if strings.Contains(strings.ToLower(m.ShortDesc), keyword) ||
 			strings.Contains(strings.ToLower(m.Keywords), keyword) {
 			count++
-			result.WriteString(fmt.Sprintf("  [%5d] %s\r\n", m.VNum, m.ShortDesc))
+			fmt.Fprintf(&result, "  [%5d] %s\r\n", m.VNum, m.ShortDesc)
 			if count >= 50 {
 				result.WriteString("... (truncated at 50)")
 				break

@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -115,7 +116,8 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 	}
 
 	// Wielding checks
-	if where == eqWearWield {
+	switch where {
+	case eqWearWield:
 		if !canWearObject(obj, eqWearWield) {
 			ch.SendMessage("You can't wield that.\r\n")
 			return
@@ -129,7 +131,7 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 			ch.SendMessage("Both hands must be free to wield that.\r\n")
 			return
 		}
-	} else if where == eqWearHold || where == eqWearShield {
+	case eqWearHold, eqWearShield:
 		if w.IsEquipped(ch, eqWearWield) {
 			// Check if wielded weapon is two-handed
 			wpn := w.GetEquipped(ch, eqWearWield)

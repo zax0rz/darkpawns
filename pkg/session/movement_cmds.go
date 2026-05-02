@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 package session
 
 import (
@@ -244,7 +245,6 @@ func cmdFleeMovement(s *Session) error {
 		}
 
 		// Successful flee
-		fled = true
 
 		// Apply XP loss for players level > 10
 		level := s.player.GetLevel()

@@ -1,3 +1,4 @@
+//nolint:unused // Info commands — not yet wired to command registry.
 package session
 
 import (
@@ -97,34 +98,34 @@ func cmdInfo(s *Session, args []string) error {
 	buf.WriteString("╔" + strings.Repeat("═", 40) + "╗\n")
 	buf.WriteString("║" + nameLine + "║\n")
 	buf.WriteString("╠" + strings.Repeat("═", 40) + "╣\n")
-	buf.WriteString(fmt.Sprintf("║  %-18s│ %7d/%-3d║\n", "HIT POINTS", p.Health, p.MaxHealth))
-	buf.WriteString(fmt.Sprintf("║  %-18s│ %7d/%-3d║\n", "MANA", p.Mana, p.MaxMana))
-	buf.WriteString(fmt.Sprintf("║  %-18s│ %7d/%-3d║\n", "MOVE", p.Move, p.MaxMove))
+	fmt.Fprintf(&buf, "║  %-18s│ %7d/%-3d║\n", "HIT POINTS", p.Health, p.MaxHealth)
+	fmt.Fprintf(&buf, "║  %-18s│ %7d/%-3d║\n", "MANA", p.Mana, p.MaxMana)
+	fmt.Fprintf(&buf, "║  %-18s│ %7d/%-3d║\n", "MOVE", p.Move, p.MaxMove)
 	buf.WriteString("╠" + strings.Repeat("═", 19) + "╬" + strings.Repeat("═", 20) + "╣\n")
 
 	strStr := fmt.Sprintf("STR: %d/%d", p.Stats.Str, 18)
 	wisStr := fmt.Sprintf("WIS: %d/%d", p.Stats.Wis, 12)
-	buf.WriteString(fmt.Sprintf("║  %-19s│ %-19s║\n", strStr, wisStr))
+	fmt.Fprintf(&buf, "║  %-19s│ %-19s║\n", strStr, wisStr)
 	intStr := fmt.Sprintf("INT: %d/%d", p.Stats.Int, 13)
 	chaStr := fmt.Sprintf("CHA: %d/%d", p.Stats.Cha, 15)
-	buf.WriteString(fmt.Sprintf("║  %-19s│ %-19s║\n", intStr, chaStr))
+	fmt.Fprintf(&buf, "║  %-19s│ %-19s║\n", intStr, chaStr)
 	dexStr := fmt.Sprintf("DEX: %d/%d", p.Stats.Dex, 16)
 	conStr := fmt.Sprintf("CON: %d/%d", p.Stats.Con, 14)
-	buf.WriteString(fmt.Sprintf("║  %-19s│ %-19s║\n", dexStr, conStr))
+	fmt.Fprintf(&buf, "║  %-19s│ %-19s║\n", dexStr, conStr)
 
 	buf.WriteString("╠" + strings.Repeat("═", 19) + "╬" + strings.Repeat("═", 20) + "╣\n")
 
 	acStr := fmt.Sprintf("AC: %d", p.AC)
 	hitStr := fmt.Sprintf("HITROLL: %+d", p.Hitroll)
-	buf.WriteString(fmt.Sprintf("║  %-19s│ %-19s║\n", acStr, hitStr))
+	fmt.Fprintf(&buf, "║  %-19s│ %-19s║\n", acStr, hitStr)
 	damStr := fmt.Sprintf("DAMROLL: %+d", p.Damroll)
 	alignStr := fmt.Sprintf("ALIGN: %d", p.Alignment)
-	buf.WriteString(fmt.Sprintf("║  %-19s│ %-19s║\n", damStr, alignStr))
+	fmt.Fprintf(&buf, "║  %-19s│ %-19s║\n", damStr, alignStr)
 
 	buf.WriteString("╠" + strings.Repeat("═", 19) + "╩" + strings.Repeat("═", 20) + "╣\n")
-	buf.WriteString(fmt.Sprintf("║  %-38s║\n", "Conditions: "+conditionLabel(p)))
-	buf.WriteString(fmt.Sprintf("║  %-38s║\n", "Position: "+positionName(p.Position)))
-	buf.WriteString(fmt.Sprintf("║  %-38s║\n", "Gold: "+fmt.Sprintf("%d", p.Gold)))
+	fmt.Fprintf(&buf, "║  %-38s║\n", "Conditions: "+conditionLabel(p))
+	fmt.Fprintf(&buf, "║  %-38s║\n", "Position: "+positionName(p.Position))
+	fmt.Fprintf(&buf, "║  %-38s║\n", "Gold: "+fmt.Sprintf("%d", p.Gold))
 	buf.WriteString("╚" + strings.Repeat("═", 40) + "╝\n")
 
 	s.Send(buf.String())

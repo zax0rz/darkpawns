@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 // Ported from src/constants.c
 // Data tables: name arrays, stat tables, string constants
 
@@ -5,7 +6,7 @@ package game
 
 // sendBufSize is the buffer size for player send channels.
 // Must be consistent across all session/player creation paths.
-const sendBufSize = 256
+const sendBufSize = 256 //nolint:unused // buffer size constant
 
 // Phase names (phases[])
 var Phases = []string{

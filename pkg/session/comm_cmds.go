@@ -350,55 +350,6 @@ func cmdPage(s *Session, args []string) error {
 // AFK
 // ---------------------------------------------------------------------------
 
-// cmdAfk toggles away-from-keyboard status.
-// Source: act.comm.c PRF_AFK flag usage in perform_tell()
-func cmdAfk(s *Session, args []string) error {
-	// Toggle AFK state
-	s.player.AFK = !s.player.AFK
-
-	if s.player.AFK {
-		// Set AFK message if provided
-		if len(args) > 0 {
-			s.player.AFKMessage = strings.Join(args, " ")
-		} else {
-			s.player.AFKMessage = ""
-		}
-		s.Send("You are now AFK.")
-
-		// Notify room
-		msg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "afk",
-				From: s.player.Name,
-				Text: fmt.Sprintf("%s is now AFK.", s.player.Name),
-			},
-		})
-		if err != nil {
-			slog.Error("json.Marshal error", "error", err)
-		}
-		s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
-	} else {
-		s.player.AFKMessage = ""
-		s.Send("You are no longer AFK.")
-
-		// Notify room
-		msg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "afk",
-				From: s.player.Name,
-				Text: fmt.Sprintf("%s is no longer AFK.", s.player.Name),
-			},
-		})
-		if err != nil {
-			slog.Error("json.Marshal error", "error", err)
-		}
-		s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
-	}
-	return nil
-}
-
 // ---------------------------------------------------------------------------
 // Ignore
 // ---------------------------------------------------------------------------

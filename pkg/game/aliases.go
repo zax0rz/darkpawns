@@ -81,7 +81,7 @@ func WriteAliases(playerName string, aliases []Alias) error {
 		// matching the C str_dup(temp->replacement) / while(*++buf == ' ') idiom.
 		// Source: alias.c lines 62–65
 		trimmed := strings.TrimLeft(a.Replacement, " ")
-		fmt.Fprintf(w, "%d\n%s\n%d\n%s\n%d\n",
+		_, _ = fmt.Fprintf(w, "%d\n%s\n%d\n%s\n%d\n",
 			len(a.Alias), a.Alias,
 			len(trimmed), trimmed,
 			a.Type,

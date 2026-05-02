@@ -87,15 +87,6 @@ func (r *Registry) Use(mw Middleware) {
 	r.middleware = append(r.middleware, mw)
 }
 
-// buildChain wraps a handler through all registered middleware.
-// Returns a handler that runs the full chain and finally the original handler.
-func (r *Registry) buildChain(h Handler) Handler {
-	for i := len(r.middleware) - 1; i >= 0; i-- {
-		h = r.middleware[i](h)
-	}
-	return h
-}
-
 // Lookup finds a command entry by name (case-insensitive).
 func (r *Registry) Lookup(name string) (*Entry, bool) {
 	r.mu.RLock()

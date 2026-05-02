@@ -1,3 +1,4 @@
+//nolint:unused // linter false positives — all exported symbols are used across pkg/game
 package game
 
 import (
@@ -179,16 +180,16 @@ func (w *World) FindTargetRoom(ch *Player, raw string) int {
 func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, recur bool) string {
 	var b strings.Builder
 	if num > 0 {
-		b.WriteString(fmt.Sprintf("O%3d. %-25s - ", num, obj.Prototype.ShortDesc))
+		fmt.Fprintf(&b, "O%3d. %-25s - ", num, obj.Prototype.ShortDesc)
 	} else {
-		b.WriteString(fmt.Sprintf("%33s", " - "))
+		fmt.Fprintf(&b, "%33s", " - ")
 	}
 	switch {
 	case obj.RoomVNum > 0:
 		if room, ok := w.rooms[obj.RoomVNum]; ok && room != nil {
-			b.WriteString(fmt.Sprintf("[%5d] %s\r\n", obj.RoomVNum, room.Name))
+			fmt.Fprintf(&b, "[%5d] %s\r\n", obj.RoomVNum, room.Name)
 		} else {
-			b.WriteString(fmt.Sprintf("[%5d] (unknown room)\r\n", obj.RoomVNum))
+			fmt.Fprintf(&b, "[%5d] (unknown room)\r\n", obj.RoomVNum)
 		}
 	case obj.Location.Kind == ObjInInventory || obj.Location.Kind == ObjEquipped:
 		name := "someone"
@@ -203,13 +204,13 @@ func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, re
 			}
 		}
 		if obj.Location.Kind == ObjEquipped {
-			b.WriteString(fmt.Sprintf("worn by %s\r\n", name))
+			fmt.Fprintf(&b, "worn by %s\r\n", name)
 		} else {
-			b.WriteString(fmt.Sprintf("carried by %s\r\n", name))
+			fmt.Fprintf(&b, "carried by %s\r\n", name)
 		}
 	case obj.Location.Kind == ObjInContainer:
 		if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok {
-			b.WriteString(fmt.Sprintf("inside %s\r\n", container.Prototype.ShortDesc))
+			fmt.Fprintf(&b, "inside %s\r\n", container.Prototype.ShortDesc)
 		} else {
 			b.WriteString("in an unknown container\r\n")
 		}

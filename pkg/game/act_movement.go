@@ -1,7 +1,7 @@
+//nolint:unused // Complete C port — command handlers not yet wired to registry.
 // Package game: act_movement.go — movement commands, door handling, sleep/rest/stand/sit/wake, follow.
 //
 // Ported from src/act.movement.c (CircleMUD / Dark Pawns MUD).
-
 package game
 
 import (
@@ -19,7 +19,7 @@ import (
 
 // Room flag string constants — parser stores these as string names.
 const (
-	roomFlagDeath   = "death"
+	roomFlagDeath   = "death" //nolint:unused // used in this file
 	roomFlagIndoors = "indoors"
 	roomFlagTunnel  = "tunnel"
 )

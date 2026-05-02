@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -58,18 +59,20 @@ func findRemortClass(ch *Player) int {
 		}
 	case combat.ClassPsionic:
 		chosen = number(1, 3)
-		if chosen == 1 {
+		switch chosen {
+		case 1:
 			chosen = number(1, 4) + 0 // Mage
-		} else if chosen == 2 {
+		case 2:
 			chosen = number(1, 4) + 4 // Thief
-		} else {
+		default:
 			chosen = number(1, 4) + 8 // Warrior
 		}
 	case combat.ClassRanger:
 		chosen = number(1, 2)
-		if chosen == 1 {
+		switch chosen {
+		case 1:
 			chosen = number(1, 4) + 4 // Thief
-		} else {
+		default:
 			chosen = number(1, 4) + 8 // Warrior
 		}
 	case combat.ClassMystic:

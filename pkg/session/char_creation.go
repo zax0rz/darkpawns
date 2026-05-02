@@ -96,38 +96,6 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options map[string]
 	s.send <- msg
 }
 
-// sendCharCreateStats sends rolled stats to the client for confirmation.
-func (s *Session) sendCharCreateStats(stats game.CharStats) {
-	display := CharStatsDisplay{
-		Str: stats.Str,
-		Int: stats.Int,
-		Wis: stats.Wis,
-		Dex: stats.Dex,
-		Con: stats.Con,
-		Cha: stats.Cha,
-	}
-
-	data := CharCreateData{
-		Stage: "rollstats",
-		Prompt: "Your rolled stats:\n" +
-			fmt.Sprintf("STR: %d/%d  INT: %d  WIS: %d\n", stats.Str, stats.StrAdd, stats.Int, stats.Wis) +
-			fmt.Sprintf("DEX: %d  CON: %d  CHA: %d\n", stats.Dex, stats.Con, stats.Cha) +
-			"Accept these stats? (Y/N)",
-		Stats: &display,
-	}
-
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgCharCreate,
-		Data: data,
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return
-	}
-
-	s.send <- msg
-}
-
 // completeCharCreation finalizes character creation and enters the world.
 func (s *Session) completeCharCreation() error {
 	// Create the player with collected attributes

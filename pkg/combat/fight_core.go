@@ -1173,16 +1173,6 @@ func SkillMessage(dam int, ch, victim Combatant, attackType int) {
 }
 
 // **********************************
-// 17. replaceString()
-// **********************************
-
-func replaceString(msg, chName, victimName string) string {
-	result := strings.ReplaceAll(msg, "$n", chName)
-	result = strings.ReplaceAll(result, "$N", victimName)
-	return result
-}
-
-// **********************************
 // 21. stopFighting / setFighting helpers
 // **********************************
 

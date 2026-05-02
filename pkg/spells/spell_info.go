@@ -157,17 +157,6 @@ func setupSpellInfo(spellNum int, minPos Position, manaMin, manaMax, manaChange 
 	})
 }
 
-// setSpellLevel sets the minimum level for a given spell and class.
-func setSpellLevel(spellNum, class, level int) {
-	si := GetSpellInfo(spellNum)
-	if si == nil {
-		return
-	}
-	if class >= 0 && class < 12 {
-		si.MinLevel[class] = level
-	}
-}
-
 // AttackType holds the singular and plural forms for an attack type name.
 type AttackType struct {
 	Singular string

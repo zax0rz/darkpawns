@@ -145,7 +145,7 @@ func (w *Whod) DoWhod(playerName, argument string) string {
 		if w.Mode&WhodShowOff != 0 {
 			w.Mode &^= WhodShowOff
 			w.Mode |= WhodShowOn
-			return fmt.Sprintf("WHOD turned on.\n\r")
+			return "WHOD turned on.\n\r"
 		}
 		return "WHOD is not turned off.\n\r"
 	}
@@ -159,7 +159,7 @@ func (w *Whod) DoWhod(playerName, argument string) string {
 		if w.Mode&WhodShowOn != 0 {
 			w.Mode &^= WhodShowOn
 			w.Mode |= WhodShowOff
-			return fmt.Sprintf("WHOD turned off.\n\r")
+			return "WHOD turned off.\n\r"
 		}
 		return "WHOD is not turned on.\n\r"
 	}

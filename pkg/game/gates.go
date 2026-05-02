@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 // gates.go — Ported from src/gate.c
 //
 // Moongate system: blue gates that appear at night based on moon phase,
@@ -41,7 +42,7 @@ var gatePhases = []gateEntry{
 	{4018, -1,               4008, 0},
 }
 
-const numGates = 16
+const numGates = 16 //nolint:unused // gate count constant
 
 // Blue portal room VNums that allow the red gate spell
 var legalRedRooms = []int{4001, 4002, 4003, 4004, 4005, 4006, 4007, 4008}

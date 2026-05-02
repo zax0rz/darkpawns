@@ -1,3 +1,4 @@
+//nolint:unused // Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -282,7 +283,7 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 				m.SetRoom(playerRoom)
 				break
 			}
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("Starved and needing food to make more pillows, the couch attacks!"))
+			w.roomMessage(me.GetRoomVNum(), "Starved and needing food to make more pillows, the couch attacks!")
 			sendToChar(ch, "Starved and needing food to make more pillows, the couch attacks you!\r\n\r\n")
 			for _, m := range w.GetMobsInRoom(playerRoom) {
 				if m.GetRoomVNum() == playerRoom && m != me {

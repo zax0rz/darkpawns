@@ -59,15 +59,13 @@ func Listen(port int, manager *session.Manager) error {
 			connMu.Lock()
 			if connCount >= maxTotalConns {
 				connMu.Unlock()
-//nolint:errcheck // best-effort cleanup
-				conn.Close()
+				_ = conn.Close() //nolint:errcheck // best-effort cleanup
 				slog.Warn("Telnet: max total connections reached, rejecting", "remote_addr", conn.RemoteAddr())
 				continue
 			}
 			if connPerIP[remoteIP] >= maxConnsPerIP {
 				connMu.Unlock()
-//nolint:errcheck // best-effort cleanup
-				conn.Close()
+				_ = conn.Close() //nolint:errcheck // best-effort cleanup
 				slog.Warn("Telnet: max per-IP connections reached, rejecting", "remote_addr", conn.RemoteAddr())
 				continue
 			}
@@ -110,7 +108,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 		br:   bufio.NewReader(rawConn),
 		wmu:  make(chan struct{}, 1),
 	}
-	defer rawConn.Close()
+	defer func() { _ = rawConn.Close() }()
 
 	remoteAddr := rawConn.RemoteAddr().String()
 	slog.Info("Telnet connect", "remote_addr", remoteAddr)
@@ -146,8 +144,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 		return
 	}
 
-//nolint:errcheck // best-effort cleanup
-	rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
 	// Start output writer goroutine
 	done := make(chan struct{})
@@ -169,8 +166,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 			continue
 		}
 
-//nolint:errcheck // best-effort cleanup
-		rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+		_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
 		parts := strings.Fields(line)
 		if err := sendCommand(s, parts[0], parts[1:]); err != nil {
@@ -239,28 +235,28 @@ func formatState(sm session.ServerMessage) string {
 	b.WriteString("\r\n---\r\n")
 
 	if player, ok := d["player"].(map[string]interface{}); ok {
-		b.WriteString(fmt.Sprintf("  %s", player["name"]))
+		_, _ = fmt.Fprintf(&b, "  %s", player["name"])
 		if cls, ok := player["class"].(string); ok && cls != "" {
-			b.WriteString(fmt.Sprintf(" the %s", cls))
+			_, _ = fmt.Fprintf(&b, " the %s", cls)
 		}
 		if race, ok := player["race"].(string); ok && race != "" {
-			b.WriteString(fmt.Sprintf(" (%s)", race))
+			_, _ = fmt.Fprintf(&b, " (%s)", race)
 		}
-		b.WriteString(fmt.Sprintf("  Lvl %v  HP: %v/%v\r\n",
-			player["level"], player["health"], player["max_health"]))
+		_, _ = fmt.Fprintf(&b, "  Lvl %v  HP: %v/%v\r\n",
+			player["level"], player["health"], player["max_health"])
 	}
 
 	if room, ok := d["room"].(map[string]interface{}); ok {
-		b.WriteString(fmt.Sprintf("\r\n  %s [%v]\r\n", room["name"], room["vnum"]))
+		fmt.Fprintf(&b, "\r\n  %s [%v]\r\n", room["name"], room["vnum"])
 		if desc, ok := room["description"].(string); ok {
-			b.WriteString(fmt.Sprintf("  %s\r\n", desc))
+			fmt.Fprintf(&b, "  %s\r\n", desc)
 		}
 		if exits, ok := room["exits"].([]interface{}); ok && len(exits) > 0 {
 			names := make([]string, len(exits))
 			for i, e := range exits {
 				names[i] = fmt.Sprintf("%v", e)
 			}
-			b.WriteString(fmt.Sprintf("  Exits: %s\r\n", strings.Join(names, ", ")))
+			fmt.Fprintf(&b, "  Exits: %s\r\n", strings.Join(names, ", "))
 		}
 	}
 
@@ -339,8 +335,7 @@ func (tc *telnetConn) readLine() string {
 
 		if b == '\r' {
 			if next, _ := tc.br.Peek(1); len(next) > 0 && next[0] == '\n' {
-//nolint:errcheck // best-effort cleanup
-				tc.br.ReadByte()
+				_, _ = tc.br.ReadByte()
 			}
 			if len(line) > maxInputLen {
 				slog.Warn("telnet: input truncated", "length", len(line), "max", maxInputLen)
@@ -362,8 +357,7 @@ func (tc *telnetConn) readLine() string {
 // write sends bytes with a simple mutex to avoid interleaving.
 func (tc *telnetConn) write(data []byte) {
 	tc.wmu <- struct{}{}
-//nolint:errcheck // best-effort cleanup
-	tc.Conn.Write(data)
+	_, _ = tc.Write(data)
 	<-tc.wmu
 }
 

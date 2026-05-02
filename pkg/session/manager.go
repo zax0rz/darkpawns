@@ -466,8 +466,8 @@ type Session struct {
 	tempData map[string]interface{}
 
 	// Infobar / display state (from act.display.c)
-	screenSize  int // terminal height in lines; 0 = unset (defaults to 25)
-	infobarMode int // InfobarOff (0) or InfobarOn (1)
+	screenSize  int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)
+	infobarMode int //nolint:unused // InfobarOff (0) or InfobarOn (1)
 
 	// Communication state
 	lastTeller string   // Last player who told us (for reply)

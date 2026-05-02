@@ -596,20 +596,6 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 	return attacks
 }
 
-// backstabMult returns the backstab damage multiplier.
-// Source: class.c:720-729 backstab_mult()
-// Original: if level < LVL_IMMORT return (level*0.2)+1; else return 20
-// LVL_IMMORT = 31 in this codebase (structs.h)
-func backstabMult(level int) float64 {
-	if level <= 0 {
-		return 1.0
-	}
-	if level >= 31 { // LVL_IMMORT — structs.h
-		return 20.0
-	}
-	return float64(level)*0.2 + 1.0
-}
-
 // CheckParry implements the CircleMUD parry skill check for a single attack.
 // Source: fight.c:1949-1963, new_cmds.c do_parry()
 //

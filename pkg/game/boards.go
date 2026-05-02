@@ -122,7 +122,7 @@ func (bs *BoardSystem) loadBoard(boardType int) {
 	if err != nil {
 		return // file doesn't exist yet = empty board
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var num int32
 	if err := binary.Read(f, binary.LittleEndian, &num); err != nil {
@@ -211,7 +211,7 @@ func (bs *BoardSystem) saveBoard(boardType int) {
 		BasicMudLogf("SYSERR: Board save failed: %v", err)
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	bs.mu.RLock()
 	defer bs.mu.RUnlock()

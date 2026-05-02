@@ -128,7 +128,7 @@ func (m *Manager) loadActivePenalties() {
 		slog.Error("Failed to load penalties", "error", err)
 		return
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -167,7 +167,7 @@ func (m *Manager) loadWordFilters() {
 		slog.Error("Failed to load word filters", "error", err)
 		return
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	m.mu.Lock()
 	defer m.mu.Unlock()

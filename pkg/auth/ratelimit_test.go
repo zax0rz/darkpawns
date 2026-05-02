@@ -92,7 +92,7 @@ func TestGetIPFromRequest_NoHeader(t *testing.T) {
 
 func TestIsTrustedProxy(t *testing.T) {
 	resetTrustedProxies()
-	SetTrustedProxies([]string{"10.0.0.0/8", "192.168.1.0/24"})
+	_ = SetTrustedProxies([]string{"10.0.0.0/8", "192.168.1.0/24"})
 
 	tests := []struct {
 		ip   string

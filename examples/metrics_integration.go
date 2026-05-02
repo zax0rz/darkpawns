@@ -7,7 +7,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
-func metricsIntegration() {
+func MetricsIntegration() {
 	// Example of integrating metrics into Dark Pawns components
 
 	fmt.Println("Demonstrating Dark Pawns Metrics Integration")
