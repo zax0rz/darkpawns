@@ -248,10 +248,8 @@ func (p *AdvancedWorkerPool) Resize(newWorkers int) error {
 			p.wg.Add(1)
 			go p.advancedWorker(i)
 		}
-	} else if newWorkers < p.workers {
-		// Cannot easily reduce workers, they'll exit when pool closes
-		// For now, just update the count
 	}
+	// Worker reduction not yet implemented
 
 	p.workers = newWorkers
 	return nil

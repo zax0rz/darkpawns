@@ -204,10 +204,7 @@ func (bs *BatchedSender) flushLocked() error {
 
 	// Send batch asynchronously
 	go func() {
-		if err := bs.sendFunc(batch.Messages); err != nil {
-			// Log error but don't block sender
-			// TODO: Add proper error handling
-		}
+		_ = bs.sendFunc(batch.Messages) // TODO: add error handling
 	}()
 
 	return nil

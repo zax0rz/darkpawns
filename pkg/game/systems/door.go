@@ -2,7 +2,6 @@
 package systems
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -175,7 +174,7 @@ func (d *Door) Bash(strength int) (bool, string) {
 		return true, "You bash the door down!"
 	}
 
-	return false, fmt.Sprintf("You bash the door. It looks damaged.")
+	return false, "You bash the door. It looks damaged."
 }
 
 // GetStatus returns a string describing the door's state.

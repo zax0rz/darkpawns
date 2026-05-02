@@ -52,7 +52,7 @@ func cmdGenDoor(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send(fmt.Sprintf("What direction do you want to work on?"))
+		s.Send("What direction do you want to work on?")
 		return nil
 	}
 
@@ -111,7 +111,7 @@ func cmdEnter(s *Session, args []string) error {
 			// Move player to the exit's destination
 			_, err := s.manager.world.MovePlayer(s.player, dir)
 			if err != nil {
-				s.Send(fmt.Sprintf("You can't enter there."))
+				s.Send("You can't enter there.")
 				return nil
 			}
 			s.Send(fmt.Sprintf("You enter %s.", ext.Keywords))
@@ -206,7 +206,7 @@ func cmdSimpleMove(s *Session, args []string) error {
 			f.SendMessage(fmt.Sprintf("You follow %s.\r\n", s.player.Name))
 			_, err := s.manager.world.MovePlayer(f, dir)
 			if err != nil {
-				f.SendMessage(fmt.Sprintf("You can't follow.\r\n"))
+				f.SendMessage("You can't follow.\r\n")
 			}
 		}
 	}

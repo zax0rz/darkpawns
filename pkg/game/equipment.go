@@ -397,10 +397,7 @@ func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 			if flag&(1<<14) != 0 { // ITEM_WEAR_HOLD (bit 14)
 				slots = append(slots, SlotHold)
 			}
-			if flag&(1<<15) != 0 { // ITEM_WEAR_THROW (bit 15)
-				// Can be thrown - not an equip slot
-				// noop
-			}
+			// ITEM_WEAR_THROW handled separately (bit 15)
 		case 1: // Secondary wear flags (bits 16-31)
 			if flag&(1<<0) != 0 { // ITEM_WEAR_ABLEGS (bit 16)
 				// Can be worn about legs

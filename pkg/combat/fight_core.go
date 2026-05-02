@@ -894,16 +894,11 @@ func MakeDust(victim Combatant, attackType int) {
 // **********************************
 
 func CounterProcs(ch Combatant) {
-	kills := int64(0)
-	if GetKills != nil {
-		kills = GetKills(ch.GetName())
+	// TODO: implement kill milestones (100/50) using GetKills
+	if GetKills == nil {
+		return
 	}
-	if kills > 0 && kills%100 == 0 {
-		// noop: milestone handled elsewhere
-	}
-	if kills > 0 && kills%50 == 0 {
-		// noop: milestone handled elsewhere
-	}
+	_ = GetKills(ch.GetName())
 }
 
 // **********************************

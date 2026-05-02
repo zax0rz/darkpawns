@@ -55,10 +55,7 @@ func cmdEat(s *Session, args []string) error {
 	}
 
 	// Check for poison — Values[3] is poison flag (C: GET_OBJ_VAL(food, 3))
-	isPoisoned := false
-	if item.Prototype != nil && item.Prototype.Values[3] != 0 {
-		isPoisoned = true
-	}
+	isPoisoned := item.Prototype != nil && item.Prototype.Values[3] != 0
 
 	if isPoisoned {
 		s.Send("Oops, that tasted rather strange!")

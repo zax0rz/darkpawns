@@ -777,10 +777,7 @@ func (e *Engine) luaAct(L *lua.LState) int {
 	// Get ch from global for TO_VICT/TO_CHAR
 	L.GetGlobal("ch")
 	var ch ScriptablePlayer = nil
-	if L.Get(-1).Type() == lua.LTTable {
-		// In real implementation, we'd get the actual player pointer
-		// For now, we'll use the world to find players
-	}
+	// TODO: resolve player from Lua global (LTTable check)
 	L.Pop(1)
 
 	if e.world == nil || roomVNum == 0 {
@@ -875,7 +872,7 @@ func (e *Engine) luaSay(L *lua.LState) int {
 
 	// Format message: "mob says 'message'"
 	L.GetGlobal("me")
-	var mobName string = "someone"
+	var mobName = "someone"
 	if L.Get(-1).Type() == lua.LTTable {
 		L.GetField(L.Get(-1), "name")
 		if L.Get(-1).Type() == lua.LTString {
@@ -950,7 +947,7 @@ func (e *Engine) luaEmote(L *lua.LState) int {
 
 	// Format message: "mob message"
 	L.GetGlobal("me")
-	var mobName string = "someone"
+	var mobName = "someone"
 	if L.Get(-1).Type() == lua.LTTable {
 		L.GetField(L.Get(-1), "name")
 		if L.Get(-1).Type() == lua.LTString {

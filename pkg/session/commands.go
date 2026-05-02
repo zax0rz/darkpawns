@@ -1314,11 +1314,12 @@ func cmdWho(s *Session) error {
 			p.Level, className, p.Name, raceName, className, tag)
 		count++
 	}
-	if count == 0 {
+	switch {
+	case count == 0:
 		out += "\nNo-one at all!\n"
-	} else if count == 1 {
+	case count == 1:
 		out += "\nOne character displayed.\n"
-	} else {
+	default:
 		out += fmt.Sprintf("\n%d characters displayed.\n", count)
 	}
 	s.sendText(out)

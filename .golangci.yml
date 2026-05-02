@@ -88,6 +88,16 @@ linters:
       - linters:
           - gocritic
         text: "evalOrder"
+      # staticcheck: intentional patterns
+      - linters:
+          - staticcheck
+        text: "SA4000"  # intentional double rand roll in spec_procs3
+      - linters:
+          - staticcheck
+        text: "SA4004"  # intentional early return in spec_proc loop
+      - linters:
+          - staticcheck
+        text: "QF1008"  # intentional Conn embedding in telnet listener
       # Unused: exclude spec_proc function signature params (cmd, arg, me — required by interface)
       - linters:
           - unused

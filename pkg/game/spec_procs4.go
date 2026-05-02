@@ -205,7 +205,7 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 			_ = newPet // name would be set on prototype
 		}
 
-		w.roomMessage(me.RoomVNum, fmt.Sprintf("$n buys $N as a pet.\r\n"))
+		w.roomMessage(me.RoomVNum, "$n buys $N as a pet.\r\n")
 		sendToChar(ch, "May you enjoy your pet.\r\n")
 
 		return true

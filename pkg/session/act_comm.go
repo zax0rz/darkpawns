@@ -53,13 +53,7 @@ func cmdGsay(s *Session, args []string) error {
 	defer s.manager.mu.RUnlock()
 
 	leaderName := s.player.Following
-	isLeader := false
-
-	// Check if this player is a leader (others follow them)
-	if !s.player.InGroup && s.player.Following == "" && !s.player.IsNPC() {
-		// Player seems to be group leader — find followers
-		isLeader = true
-	}
+	isLeader := !s.player.InGroup && s.player.Following == "" && !s.player.IsNPC()
 
 	for _, sess := range s.manager.sessions {
 		if sess.player == nil || sess == s {

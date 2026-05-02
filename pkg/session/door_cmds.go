@@ -401,7 +401,7 @@ func cmdKnock(s *Session, args []string) error {
 
 	if exit.ToRoom > 0 {
 		s.manager.BroadcastToRoom(exit.ToRoom,
-			[]byte(fmt.Sprintf("Someone knocks on the door from the other side.")), "")
+			[]byte("Someone knocks on the door from the other side."), "")
 	}
 
 	return nil
