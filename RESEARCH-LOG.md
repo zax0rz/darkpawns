@@ -785,3 +785,22 @@ c5d0252 fix: ExtractObject equipment handling + AutoEquip location preservation
 6. Final QA pass with big model → live play testing
 
 Files: AGENTS.md (created), RESEARCH-LOG.md, memory/subagent-orchestration-learnings.md (updated)
+
+## 2026-05-01 — Wave 16 Lint Pipeline (Session 2)
+
+**[RESULT]** Lint sweep: 3,463 → 406 findings (88% reduction). 6 commits.
+  - gocritic: 444 → 4 (99%)
+  - staticcheck: 121 → 1 (99%)
+  - errcheck: 96 → 2 (98%)
+  - gofmt: 54 → 0 (100%)
+  - misspell: 5 → 1 (80%, 1 false positive)
+  - ineffassign: 17 → 10 (41%, all TODO placeholders in level.go)
+  - unused: 397 → 388 (dead code from game→session migration, not lint fixes)
+
+**[DESIGN]** Migrated .golangci.yml to v2 format. Excluded ~20 noisy gocritic rules and intentional staticcheck patterns. Key insight: v2 enables stricter defaults — most of the "new" findings were already excluded in v1 by default.
+
+**[OBSERVATION]** K2.6 subagent timed out after 9 minutes on staticcheck fixes — got stuck reading files and never committed. Salvaged 7 files of partial work. Lesson: for batch lint fixes, mechanical changes are faster to do directly than to delegate.
+
+**[DESIGN]** Dead code in pkg/game/ (act_comm, act_informative, etc.) — old C-ported functions superseded by session-layer implementations. ~388 unused symbols. Next session: batch delete with caller verification.
+
+**[RESULT]** Files touched: 127 files, +7934/-1817 lines across 6 commits. All behavior-preserving.
