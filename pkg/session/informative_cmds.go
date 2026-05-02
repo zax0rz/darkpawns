@@ -1,6 +1,5 @@
 package session
 
-
 // ---------------------------------------------------------------------------
 // Informative command stubs (act.informative.c)
 // These are referenced in commands.go but have partial implementations

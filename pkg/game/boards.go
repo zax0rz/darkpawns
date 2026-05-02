@@ -11,8 +11,8 @@ package game
 
 import (
 	"encoding/binary"
-	"log/slog"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"

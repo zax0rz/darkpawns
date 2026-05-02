@@ -487,7 +487,7 @@ func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int, ce CombatEngine)
 			// Check if mob is already fighting
 			if !ce.IsFighting(mob.GetName()) {
 				go func(m *MobInstance) {
-				_ = ce.StartCombat(m, player)
+					_ = ce.StartCombat(m, player)
 				}(mob)
 				return true
 			}

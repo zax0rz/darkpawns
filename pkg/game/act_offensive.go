@@ -1031,7 +1031,7 @@ func (w *World) doShoot(ch *Player, me *MobInstance, cmd string, arg string) boo
 				target.SendMessage(fmt.Sprintf("Suddenly some kind of %s pierces your arm!\r\n", projectileName))
 				target.TakeDamage(dam)
 				w.updatePosFromHP(target)
-			// Death state already handled by updatePosFromHP
+				// Death state already handled by updatePosFromHP
 				target.SendMessage("You decide to go investigate...\r\n")
 			}
 		} else {

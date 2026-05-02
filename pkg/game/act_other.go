@@ -1104,7 +1104,7 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-// TODO: noctell implementation (clan system)
+	// TODO: noctell implementation (clan system)
 
 	if ch.Flags&(1<<flag) != 0 {
 		ch.Flags &^= 1 << flag
