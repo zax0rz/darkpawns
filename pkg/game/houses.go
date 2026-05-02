@@ -288,12 +288,12 @@ func (w *World) saveHouseControl() {
 
 	// Ensure directory exists
 	dir := filepath.Dir(houseControlFilename)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		BasicMudLog(fmt.Sprintf("Error creating house directory: %v", err))
 		return
 	}
 
-	if err := os.WriteFile(houseControlFilename, data, 0644); err != nil {
+	if err := os.WriteFile(houseControlFilename, data, 0o644); err != nil {
 		BasicMudLog(fmt.Sprintf("Error writing house control file: %v", err))
 	}
 }
@@ -360,7 +360,7 @@ func (w *World) houseCrashsave(vnum int) {
 
 	// Ensure directory exists
 	dir := filepath.Dir(fname)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		BasicMudLog(fmt.Sprintf("Error creating house directory: %v", err))
 		return
 	}
@@ -1073,7 +1073,7 @@ func parseInt(s string) (int, error) {
 // isAbbrev checks if arg is a case-insensitive abbreviation of name.
 // In C: is_abbrev() — prefix match of length >= 1.
 func isAbbrev(arg, name string) bool {
-	if len(arg) == 0 || len(name) == 0 {
+	if arg == "" || len(name) == 0 {
 		return false
 	}
 	return strings.HasPrefix(strings.ToLower(name), strings.ToLower(arg))

@@ -1032,7 +1032,7 @@ func (w *World) doShoot(ch *Player, me *MobInstance, cmd string, arg string) boo
 				target.TakeDamage(dam)
 				w.updatePosFromHP(target)
 				if target.GetPosition() <= combat.PosDead {
-					// die
+					// noop: death handled by updatePosFromHP
 				}
 				target.SendMessage("You decide to go investigate...\r\n")
 			}
@@ -1280,7 +1280,7 @@ func (w *World) doSleeper(ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	if !vict.IsNPC() && !isOutlaw(ch) {
-		ch.SendMessage(fmt.Sprintf("You cannot sleeper them because you are not an Outlaw!\r\n"))
+		ch.SendMessage("You cannot sleeper them because you are not an Outlaw!\r\n")
 		vict.SendMessage(fmt.Sprintf("%s failed to sleeper you because %s is not an Outlaw.\r\n", ch.Name, ch.Name))
 		return true
 	}

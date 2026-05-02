@@ -106,16 +106,13 @@ func mapRecurse(thisroom int, x, y, overlap, dontleavezone int, display *[][]int
 			// Same as C: if((nextroom == thisroom)||(nextroom == -1))
 			if nextroom == thisroom || nextroom == -1 {
 				(*display)[x+offX[dir]][y+offY[dir]] = -4
-			} else {
-				// Same as C: if(nextroom > 0)
-				if nextroom > 0 {
-					(*display)[x+offX[dir]][y+offY[dir]] = link[dir]
+			} else if nextroom > 0 {
+				(*display)[x+offX[dir]][y+offY[dir]] = link[dir]
 
-					// Same as C: if(!dontleavezone || (world[thisroom].zone == world[nextroom].zone))
-					nextRoomPtr := rooms[nextroom]
-					if !(dontleavezone != 0) || (thisRoomPtr.Zone == nextRoomPtr.Zone) {
-						mapRecurse(nextroom, x+3*offX[dir], y+3*offY[dir], overlap, dontleavezone, display, rooms)
-					}
+				// Same as C: if(!dontleavezone || (world[thisroom].zone == world[nextroom].zone))
+				nextRoomPtr := rooms[nextroom]
+				if !(dontleavezone != 0) || (thisRoomPtr.Zone == nextRoomPtr.Zone) {
+					mapRecurse(nextroom, x+3*offX[dir], y+3*offY[dir], overlap, dontleavezone, display, rooms)
 				}
 			}
 		} else {
@@ -162,7 +159,7 @@ func CmdMap(s *Session, args []string) error {
 	// else i = 1;
 	var i int
 	arg := strings.Join(args, " ")
-	if len(arg) == 0 {
+	if arg == "" {
 		i = 1
 	} else if len(arg) >= 2 && arg[1] == 'a' {
 		i = 0

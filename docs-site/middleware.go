@@ -173,7 +173,7 @@ func GenerateSearchIndex(docsDir string) error {
 		if i > 0 {
 			jsonContent += ","
 		}
-		jsonContent += fmt.Sprintf(`{"url":"%s","title":"%s","description":"%s","content":"%s","tags":["%s"]}`,
+		jsonContent += fmt.Sprintf(`{"url":%q,"title":"%s","description":"%s","content":"%s","tags":["%s"]}`,
 			item["url"], item["title"], item["description"], item["content"],
 			strings.Join(item["tags"].([]string), `","`))
 	}
@@ -181,8 +181,8 @@ func GenerateSearchIndex(docsDir string) error {
 
 	// Write to file
 	indexPath := filepath.Join(docsDir, "public", "search-index.json")
-	if err := os.MkdirAll(filepath.Dir(indexPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(indexPath), 0o755); err != nil {
 		return fmt.Errorf("create search index directory: %w", err)
 	}
-	return os.WriteFile(indexPath, []byte(jsonContent), 0644)
+	return os.WriteFile(indexPath, []byte(jsonContent), 0o644)
 }

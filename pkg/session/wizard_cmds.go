@@ -1150,7 +1150,7 @@ func cmdWiznet(s *Session, args []string) error {
 	// Check for level prefix: #<level> <text>
 	level := LVL_IMMORT
 	text := fullArg
-	if len(args[0]) > 0 && args[0][0] == '#' {
+	if args[0] != "" && args[0][0] == '#' {
 		lvlStr := args[0][1:]
 		lvl, err := strconv.Atoi(lvlStr)
 		if err == nil && lvl >= LVL_IMMORT {
@@ -1170,7 +1170,7 @@ func cmdWiznet(s *Session, args []string) error {
 		text = strings.Join(args, " ")[1:]
 	}
 
-	if len(text) == 0 {
+	if text == "" {
 		s.Send("Don't bother the gods like that!")
 		return nil
 	}

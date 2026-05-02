@@ -183,7 +183,7 @@ func applyDamageWithSave(victim interface{}, damage int, saveType int, world int
 	}
 
 	if magSavingThrow(victim, saveType) {
-		damage = damage / 2
+		damage /= 2
 		if damage < 1 {
 			damage = 1
 		}

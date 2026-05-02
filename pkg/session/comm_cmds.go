@@ -246,7 +246,7 @@ func cmdSay(s *Session, args []string) error {
 
 	// Determine verb based on trailing punctuation — act.comm.c do_say() switch
 	verb := "says"
-	if len(text) > 0 {
+	if text != "" {
 		switch text[len(text)-1] {
 		case '!':
 			verb = "exclaims"

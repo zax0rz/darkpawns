@@ -9,7 +9,18 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode"
 )
+
+// capitalize returns s with its first Unicode letter mapped to its upper case.
+func capitalize(s string) string {
+	if s == "" {
+		return ""
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
 
 // ---------------------------------------------------------------------------
 // Clan constants
@@ -141,14 +152,14 @@ func (m *ClanManager) SaveClans(filePath string) error {
 		}
 	}
 	dir := filepath.Dir(filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(m.Clans, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filePath, data, 0644)
+	return os.WriteFile(filePath, data, 0o644)
 }
 
 func InitClans(filePath string) *ClanManager {
@@ -416,7 +427,7 @@ func (w *World) doClanRename(ch *Player, arg string) {
 	if len(arg2) > 32 {
 		arg2 = arg2[:32]
 	}
-	c.Name = strings.Title(strings.ToLower(arg2))
+	c.Name = capitalize(strings.ToLower(arg2))
 	w.SaveClans()
 	ch.SendMessage("Clan renamed.\r\n")
 }
@@ -466,7 +477,7 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 	}
 
 	newClan := &Clan{
-		Name:      strings.Title(strings.ToLower(arg2)),
+		Name:      capitalize(strings.ToLower(arg2)),
 		Ranks:     2,
 		Members:   1,
 		Power:     leader.Level,
@@ -690,7 +701,7 @@ func (w *World) doClanPromote(ch *Player, arg string) {
 		ch.SendMessage("They're not enrolled yet.\r\n")
 		return
 	}
-	if !immcom && victim.ClanRank+1 > ch.ClanRank {
+	if !immcom && victim.ClanRank >= ch.ClanRank {
 		ch.SendMessage("You cannot promote that person over your rank!\r\n")
 		return
 	}

@@ -302,7 +302,7 @@ func speakDrunk(said string) string { return applySyllableSubstitution(said, dru
 
 // skipSpaces trims leading spaces (matching skip_spaces from merc.h).
 func skipSpaces(s string) string {
-	for len(s) > 0 && s[0] == ' ' {
+	for s != "" && s[0] == ' ' {
 		s = s[1:]
 	}
 	return s

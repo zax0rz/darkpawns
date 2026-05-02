@@ -27,7 +27,7 @@ type AuditLogger struct {
 
 // NewAuditLogger opens (or creates) an audit log file with restrictive permissions.
 func NewAuditLogger(filename string) (*AuditLogger, error) {
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return nil, err
 	}

@@ -191,7 +191,8 @@ func (w *World) RemovePlayer(name string) {
 }
 
 // GetRoomInWorld returns a room by VNum, or nil if not found.
-// Deprecated: use GetRoom (snapshot version) instead.
+//
+//	Deprecated: use GetRoom (snapshot version) instead.
 func (w *World) GetRoomInWorld(vnum int) *parser.Room {
 	w.mu.RLock()
 	defer w.mu.RUnlock()

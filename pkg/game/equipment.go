@@ -194,45 +194,42 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 		SlotWristL:  {SlotWristR, SlotWristL},
 	}
 
-	for _, slot := range wearFlags {
-		// Check if this slot is part of a dual slot group
-		if group, isDual := dualSlotGroups[slot]; isDual {
-			// Try each slot in the group in order
-			for _, trySlot := range group {
-				if _, occupied := eq.Slots[trySlot]; !occupied {
-					// Found empty slot
-					item.EquippedOn = eq
-					item.EquipPosition = int(trySlot)
-					eq.Slots[trySlot] = item
-					return nil
-				}
-			}
-			// All slots in group are occupied, unequip from first slot
-			if err := eq.unequip(group[0], inv); err != nil {
-				return fmt.Errorf("cannot unequip existing %s: %v", group[0], err)
-			}
-			// Now equip in first slot
-			item.EquippedOn = eq
-			item.EquipPosition = int(group[0])
-			eq.Slots[group[0]] = item
-			return nil
-		}
-
-		// Non-dual slot
-		if _, ok := eq.Slots[slot]; ok {
-			// Unequip existing item first
-			if err := eq.unequip(slot, inv); err != nil {
-				return fmt.Errorf("cannot unequip existing %s: %v", slot, err)
+	slot := wearFlags[0]
+	// Check if this slot is part of a dual slot group
+	if group, isDual := dualSlotGroups[slot]; isDual {
+		// Try each slot in the group in order
+		for _, trySlot := range group {
+			if _, occupied := eq.Slots[trySlot]; !occupied {
+				// Found empty slot
+				item.EquippedOn = eq
+				item.EquipPosition = int(trySlot)
+				eq.Slots[trySlot] = item
+				return nil
 			}
 		}
-		// Set equipment state
+		// All slots in group are occupied, unequip from first slot
+		if err := eq.unequip(group[0], inv); err != nil {
+			return fmt.Errorf("cannot unequip existing %s: %v", group[0], err)
+		}
+		// Now equip in first slot
 		item.EquippedOn = eq
-		item.EquipPosition = int(slot)
-		eq.Slots[slot] = item
+		item.EquipPosition = int(group[0])
+		eq.Slots[group[0]] = item
 		return nil
 	}
 
-	return fmt.Errorf("no suitable slot found for item")
+	// Non-dual slot
+	if _, ok := eq.Slots[slot]; ok {
+		// Unequip existing item first
+		if err := eq.unequip(slot, inv); err != nil {
+			return fmt.Errorf("cannot unequip existing %s: %v", slot, err)
+		}
+	}
+	// Set equipment state
+	item.EquippedOn = eq
+	item.EquipPosition = int(slot)
+	eq.Slots[slot] = item
+	return nil
 }
 
 // Unequip removes an item from a slot and returns it to inventory.
@@ -402,6 +399,7 @@ func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 			}
 			if flag&(1<<15) != 0 { // ITEM_WEAR_THROW (bit 15)
 				// Can be thrown - not an equip slot
+				// noop
 			}
 		case 1: // Secondary wear flags (bits 16-31)
 			if flag&(1<<0) != 0 { // ITEM_WEAR_ABLEGS (bit 16)

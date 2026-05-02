@@ -80,7 +80,7 @@ func SavePlayer(player *Player) error {
 		return fmt.Errorf("cannot save nil player")
 	}
 
-	if err := os.MkdirAll(saveDir, 0750); err != nil {
+	if err := os.MkdirAll(saveDir, 0o750); err != nil {
 		return fmt.Errorf("create save dir: %w", err)
 	}
 

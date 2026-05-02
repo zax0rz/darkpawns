@@ -189,7 +189,7 @@ type AliasEntry struct {
 // input: the raw input line.
 // Returns (expanded, wasAliased).
 func PerformAlias(aliases []AliasEntry, input string) (string, bool) {
-	if len(input) == 0 || len(aliases) == 0 {
+	if input == "" || len(aliases) == 0 {
 		return input, false
 	}
 

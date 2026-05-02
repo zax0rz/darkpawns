@@ -185,7 +185,7 @@ func writeToFile(buf *mailBlock, filepos int64) {
 		noMail = true
 		return
 	}
-	f, err := os.OpenFile(MailFilePath, os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(MailFilePath, os.O_RDWR|os.O_CREATE, 0o644)
 	if err != nil {
 		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFilePath)
 		noMail = true
@@ -217,7 +217,7 @@ func readFromFile(m *mailBlock, filepos int64) {
 		noMail = true
 		return
 	}
-	f, err := os.OpenFile(MailFilePath, os.O_RDWR, 0644)
+	f, err := os.OpenFile(MailFilePath, os.O_RDWR, 0o644)
 	if err != nil {
 		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFilePath)
 		noMail = true
@@ -259,7 +259,7 @@ func ScanFile() bool {
 	f, err := os.Open(MailFilePath)
 	if err != nil {
 		log.Println("   Mail file non-existent... creating new file.")
-		_ = os.WriteFile(MailFilePath, []byte{}, 0644)
+		_ = os.WriteFile(MailFilePath, []byte{}, 0o644)
 		return true
 	}
 	defer f.Close()
@@ -302,7 +302,7 @@ func HasMail(recipient int64) bool {
 
 // StoreMail stores a mail message in the file.
 func StoreMail(to int64, from int64, message string) {
-	if from < 0 || to < 0 || len(message) == 0 {
+	if from < 0 || to < 0 || message == "" {
 		log.Printf("SYSERR: Mail system -- non-fatal error #5. (from == %d, to == %d)", from, to)
 		return
 	}

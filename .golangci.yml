@@ -68,6 +68,26 @@ linters:
       - linters:
           - gocritic
         text: "typeAssertChain"
+      # gocritic: builtinShadow (min/max as local vars is clear in context)
+      - linters:
+          - gocritic
+        text: "builtinShadow"
+      - linters:
+          - gocritic
+        text: "builtinShadowDecl"
+      # gocritic: acceptable in CLI/game code
+      - linters:
+          - gocritic
+        text: "exitAfterDefer"
+      - linters:
+          - gocritic
+        text: "singleCaseSwitch"
+      - linters:
+          - gocritic
+        text: "badCond"
+      - linters:
+          - gocritic
+        text: "evalOrder"
       # Unused: exclude spec_proc function signature params (cmd, arg, me — required by interface)
       - linters:
           - unused

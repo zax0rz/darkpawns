@@ -91,7 +91,7 @@ func cmdInfo(s *Session, args []string) error {
 		nameLine = nameLine[:38]
 	}
 	padding := 40 - len(nameLine)
-	nameLine = nameLine + strings.Repeat(" ", padding)
+	nameLine += strings.Repeat(" ", padding)
 
 	var buf strings.Builder
 	buf.WriteString("╔" + strings.Repeat("═", 40) + "╗\n")

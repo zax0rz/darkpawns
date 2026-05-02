@@ -60,7 +60,7 @@ func aliasFilePath(playerName string) string {
 // Format: length-prefixed text for compatibility with C.
 func WriteAliases(playerName string, aliases []PlayerAlias) error {
 	dir := AliasDir()
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("creating alias dir: %w", err)
 	}
 
@@ -114,11 +114,8 @@ func ReadAliases(playerName string) ([]PlayerAlias, error) {
 	var aliases []PlayerAlias
 	scanner := bufio.NewScanner(file)
 
-	for {
-		// Read alias length
-		if !scanner.Scan() {
-			break
-		}
+	// Read alias length
+	for scanner.Scan() {
 		lenStr := scanner.Text()
 		length, err := strconv.Atoi(lenStr)
 		if err != nil {

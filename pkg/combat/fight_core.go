@@ -899,10 +899,10 @@ func CounterProcs(ch Combatant) {
 		kills = GetKills(ch.GetName())
 	}
 	if kills > 0 && kills%100 == 0 {
-
+		// noop: milestone handled elsewhere
 	}
 	if kills > 0 && kills%50 == 0 {
-
+		// noop: milestone handled elsewhere
 	}
 }
 

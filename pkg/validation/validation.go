@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	playerNameRegex     = regexp.MustCompile(`^[a-zA-Z0-9_\-\. ]+$`)
+	playerNameRegex     = regexp.MustCompile(`^[a-zA-Z0-9_. -]+$`)
 	maxPlayerNameLength = 32
 	minPlayerNameLength = 2
 )

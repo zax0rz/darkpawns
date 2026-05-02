@@ -1103,6 +1103,7 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	if key == "noctell" {
 		// Clan check skipped — clan field not yet implemented
+		// noop
 	}
 
 	if ch.Flags&(1<<flag) != 0 {
