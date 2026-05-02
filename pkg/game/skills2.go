@@ -474,7 +474,7 @@ func DoTurn(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{
 			Success:       true,
 			Damage:        ch.Level * 2,
-			MessageToCh:   msgToCh + fmt.Sprintf("The undead creature shrieks and flees from your holiness!\r\n"),
+			MessageToCh:   msgToCh + "The undead creature shrieks and flees from your holiness!\r\n",
 			MessageToRoom: fmt.Sprintf("%s shrieks in terror!\r\n", target.GetName()),
 		}
 	}

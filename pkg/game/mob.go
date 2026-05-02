@@ -207,11 +207,8 @@ func (m *MobInstance) RemoveFromInventory(obj *ObjectInstance) bool {
 // EquipItem equips an object on the mob.
 func (m *MobInstance) EquipItem(obj *ObjectInstance, position int) bool {
 	// First remove from inventory if present
-	removed := m.RemoveFromInventory(obj)
-	if !removed {
-		// Object wasn't in inventory, maybe it was on the ground
-		// For now, just equip it
-	}
+	_ = m.RemoveFromInventory(obj)
+	// If not in inventory, maybe it was on the ground — equip anyway
 
 	obj.EquippedOn = m
 	obj.EquipPosition = position

@@ -173,14 +173,14 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		return false
 	}
 	a := strings.TrimSpace(arg)
-	if !((cmd == "look" || cmd == "examine") && strings.Contains(a, "couch")) {
+	if (cmd != "look" && cmd != "examine") || !strings.Contains(a, "couch") {
 		return false
 	}
 	for _, obj := range w.GetItemsInRoom(me.GetRoomVNum()) {
 		if strings.Contains(obj.GetKeywords(), "couch") {
 			// TODO: obj_from_room(obj); extract_obj(obj)
 			// TODO: find mimic at MIMIC_ROOM_VNUM; char_from_room(mimic); char_to_room(mimic, ch->in_room)
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("Starved and needing food to make more pillows, the couch attacks!"))
+			w.roomMessage(me.GetRoomVNum(), "Starved and needing food to make more pillows, the couch attacks!")
 			sendToChar(ch, "Starved and needing food to make more pillows, the couch attacks you!\r\n\r\n")
 			// TODO: hit(mimic, ch, TYPE_UNDEFINED) — need mimic mob ref
 			return true

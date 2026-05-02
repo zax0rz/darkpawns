@@ -1165,7 +1165,7 @@ func cmdWiznet(s *Session, args []string) error {
 
 	// Check for emote prefix: *<text>
 	isEmote := false
-	if len(args[0]) > 0 && args[0][0] == '*' {
+	if args[0] != "" && args[0][0] == '*' {
 		isEmote = true
 		text = strings.Join(args, " ")[1:]
 	}

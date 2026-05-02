@@ -1073,7 +1073,7 @@ func parseInt(s string) (int, error) {
 // isAbbrev checks if arg is a case-insensitive abbreviation of name.
 // In C: is_abbrev() — prefix match of length >= 1.
 func isAbbrev(arg, name string) bool {
-	if arg == "" || len(name) == 0 {
+	if arg == "" || name == "" {
 		return false
 	}
 	return strings.HasPrefix(strings.ToLower(name), strings.ToLower(arg))

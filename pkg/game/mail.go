@@ -274,10 +274,11 @@ func ScanFile() bool {
 			break
 		}
 		bt := block.blockType()
-		if bt == HeaderBlock {
+		switch bt {
+		case HeaderBlock:
 			indexMail(block.headerTo(), int64(blockNum)*BlockSize)
 			totalMessages++
-		} else if bt == DeletedBlock {
+		case DeletedBlock:
 			pushFreeList(int64(blockNum) * BlockSize)
 		}
 		blockNum++

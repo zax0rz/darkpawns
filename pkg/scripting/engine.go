@@ -413,7 +413,8 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 }
 
 // registerFunctions is a convenience wrapper for the engine's own LState.
-// Deprecated: use registerFunctionsOn for explicit LState targeting.
+//
+//	Deprecated: use registerFunctionsOn for explicit LState targeting.
 func (e *Engine) registerFunctions() {
 	e.registerFunctionsOn(e.l)
 }
