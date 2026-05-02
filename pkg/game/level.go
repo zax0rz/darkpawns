@@ -118,10 +118,6 @@ func (p *Player) AdvanceLevel() {
 		if wis >= len(wisApp) {
 			wis = len(wisApp) - 1
 		}
-		practices := wisApp[wis].Bonus
-		if practices < 2 {
-			practices = 2
-		}
 		// TODO: Add practices to player when implemented
 
 	case ClassCleric, ClassAvatar:
@@ -138,10 +134,6 @@ func (p *Player) AdvanceLevel() {
 		}
 		if wis >= len(wisApp) {
 			wis = len(wisApp) - 1
-		}
-		practices := wisApp[wis].Bonus
-		if practices < 2 {
-			practices = 2
 		}
 		// TODO: Add practices to player when implemented
 
@@ -160,13 +152,6 @@ func (p *Player) AdvanceLevel() {
 		if wis >= len(wisApp) {
 			wis = len(wisApp) - 1
 		}
-		practices := wisApp[wis].Bonus
-		if practices < 1 {
-			practices = 1
-		}
-		if practices > 2 {
-			practices = 2
-		}
 		// TODO: Add practices to player when implemented
 
 	case ClassThief:
@@ -179,13 +164,6 @@ func (p *Player) AdvanceLevel() {
 		}
 		if wis >= len(wisApp) {
 			wis = len(wisApp) - 1
-		}
-		practices := wisApp[wis].Bonus
-		if practices < 1 {
-			practices = 1
-		}
-		if practices > 2 {
-			practices = 2
 		}
 		// TODO: Add practices to player when implemented
 
@@ -204,13 +182,6 @@ func (p *Player) AdvanceLevel() {
 		if wis >= len(wisApp) {
 			wis = len(wisApp) - 1
 		}
-		practices := wisApp[wis].Bonus
-		if practices < 1 {
-			practices = 1
-		}
-		if practices > 2 {
-			practices = 2
-		}
 		// TODO: Add practices to player when implemented
 
 	case ClassRanger:
@@ -224,13 +195,6 @@ func (p *Player) AdvanceLevel() {
 		if wis >= len(wisApp) {
 			wis = len(wisApp) - 1
 		}
-		practices := wisApp[wis].Bonus
-		if practices < 1 {
-			practices = 1
-		}
-		if practices > 2 {
-			practices = 2
-		}
 		// TODO: Add practices to player when implemented
 
 	case ClassWarrior:
@@ -243,13 +207,6 @@ func (p *Player) AdvanceLevel() {
 		}
 		if wis >= len(wisApp) {
 			wis = len(wisApp) - 1
-		}
-		practices := wisApp[wis].Bonus
-		if practices < 1 {
-			practices = 1
-		}
-		if practices > 2 {
-			practices = 2
 		}
 		// TODO: Add practices to player when implemented
 
@@ -267,13 +224,6 @@ func (p *Player) AdvanceLevel() {
 		}
 		if wis >= len(wisApp) {
 			wis = len(wisApp) - 1
-		}
-		practices := wisApp[wis].Bonus
-		if practices < 1 {
-			practices = 1
-		}
-		if practices > 2 {
-			practices = 2
 		}
 		// TODO: Add practices to player when implemented
 
@@ -294,10 +244,6 @@ func (p *Player) AdvanceLevel() {
 		}
 		if wis >= len(wisApp) {
 			wis = len(wisApp) - 1
-		}
-		practices := wisApp[wis].Bonus
-		if practices < 2 {
-			practices = 2
 		}
 		// TODO: Add practices to player when implemented
 	}

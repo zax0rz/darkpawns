@@ -30,7 +30,7 @@ type Middleware func(Handler) Handler
 type Registry struct {
 	mu         sync.RWMutex
 	commands   map[string]*Entry // keyed by primary name and aliases
-	middleware []Middleware       // global middleware chain
+	middleware []Middleware      // global middleware chain
 }
 
 // NewRegistry creates a new command registry.

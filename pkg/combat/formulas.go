@@ -462,7 +462,7 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 // GetAttacksPerRound implements perform_violence() attack count from fight.c lines 1904–1945.
 // Source: fight.c perform_violence() function
 func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
-	attacks := 1
+	var attacks int
 	if c.IsNPC() {
 		// Mob attack calculation - fight.c lines 1904-1922
 		level := c.GetLevel()

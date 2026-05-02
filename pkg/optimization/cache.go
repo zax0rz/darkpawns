@@ -14,9 +14,9 @@ type Cache struct {
 }
 
 type cacheItem struct {
-	value      interface{}
-	expiresAt  time.Time
-	createdAt  time.Time
+	value       interface{}
+	expiresAt   time.Time
+	createdAt   time.Time
 	accessCount int
 }
 
@@ -27,10 +27,10 @@ func NewCache(ttl time.Duration) *Cache {
 		ttl:   ttl,
 		stop:  make(chan struct{}),
 	}
-	
+
 	// Start cleanup goroutine
 	go c.cleanup()
-	
+
 	return c
 }
 
@@ -38,11 +38,11 @@ func NewCache(ttl time.Duration) *Cache {
 func (c *Cache) Set(key string, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	c.items[key] = &cacheItem{
-		value:      value,
-		expiresAt:  time.Now().Add(c.ttl),
-		createdAt:  time.Now(),
+		value:       value,
+		expiresAt:   time.Now().Add(c.ttl),
+		createdAt:   time.Now(),
 		accessCount: 0,
 	}
 }
@@ -52,22 +52,22 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 	c.mu.RLock()
 	item, exists := c.items[key]
 	c.mu.RUnlock()
-	
+
 	if !exists {
 		return nil, false
 	}
-	
+
 	if time.Now().After(item.expiresAt) {
 		c.mu.Lock()
 		delete(c.items, key)
 		c.mu.Unlock()
 		return nil, false
 	}
-	
+
 	c.mu.Lock()
 	item.accessCount++
 	c.mu.Unlock()
-	
+
 	return item.value, true
 }
 
@@ -96,27 +96,27 @@ func (c *Cache) Size() int {
 func (c *Cache) Stats() map[string]interface{} {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	stats := make(map[string]interface{})
 	stats["size"] = len(c.items)
-	
+
 	var totalAccess int
 	now := time.Now()
 	expiredCount := 0
-	
+
 	for _, item := range c.items {
 		totalAccess += item.accessCount
 		if now.After(item.expiresAt) {
 			expiredCount++
 		}
 	}
-	
+
 	if len(c.items) > 0 {
 		stats["avg_access_per_item"] = totalAccess / len(c.items)
 		stats["expired_count"] = expiredCount
 		stats["hit_ratio"] = float64(totalAccess) / float64(len(c.items)+totalAccess)
 	}
-	
+
 	return stats
 }
 
@@ -124,7 +124,7 @@ func (c *Cache) Stats() map[string]interface{} {
 func (c *Cache) cleanup() {
 	ticker := time.NewTicker(c.ttl / 2)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ticker.C:

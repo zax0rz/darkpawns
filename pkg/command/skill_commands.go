@@ -53,8 +53,8 @@ func CmdSkills(s SessionInterface, args []string) error {
 		// Get progress percentage
 		progress := skill.GetProgress()
 
-		output.WriteString(fmt.Sprintf("║ %-22s ║ %4d ║ %3d%%   ║ %-9s ║\r\n",
-			displayName, skill.Level, progress, typeStr))
+		fmt.Fprintf(&output, "║ %-22s ║ %4d ║ %3d%%   ║ %-9s ║\r\n",
+			displayName, skill.Level, progress, typeStr)
 	}
 
 	output.WriteString("╚══════════════════════════╩══════╩════════╩═══════════╝\r\n")
@@ -65,8 +65,8 @@ func CmdSkills(s SessionInterface, args []string) error {
 	totalSlots := skillManager.GetSlots()
 	availableSlots := skillManager.GetAvailableSlots()
 
-	output.WriteString(fmt.Sprintf("\r\nSkill points: %d | Slots: %d/%d (%d available)\r\n",
-		points, usedSlots, totalSlots, availableSlots))
+	fmt.Fprintf(&output, "\r\nSkill points: %d | Slots: %d/%d (%d available)\r\n",
+		points, usedSlots, totalSlots, availableSlots)
 
 	return s.SendMessage(output.String())
 }
@@ -267,7 +267,7 @@ func CmdListSkills(s SessionInterface, args []string) error {
 	// Helper function to add skill section
 	addSkillSection := func(title string, skills []*engine.Skill) {
 		if len(skills) > 0 {
-			output.WriteString(fmt.Sprintf("║ %-58s ║\r\n", title))
+			fmt.Fprintf(&output, "║ %-58s ║\r\n", title)
 			output.WriteString("╠══════════════════════════════╦════════╦══════════════════╣\r\n")
 			output.WriteString("║ Skill                        ║ Diff.  ║ Status           ║\r\n")
 			output.WriteString("╠══════════════════════════════╬════════╬══════════════════╣\r\n")
@@ -299,8 +299,8 @@ func CmdListSkills(s SessionInterface, args []string) error {
 					}
 				}
 
-				output.WriteString(fmt.Sprintf("║ %-26s ║ %6d ║ %-16s ║\r\n",
-					displayName, skill.Difficulty, status))
+				fmt.Fprintf(&output, "║ %-26s ║ %6d ║ %-16s ║\r\n",
+					displayName, skill.Difficulty, status)
 			}
 			output.WriteString("╠══════════════════════════════╩════════╩══════════════════╣\r\n")
 		}
@@ -319,8 +319,8 @@ func CmdListSkills(s SessionInterface, args []string) error {
 	points := skillManager.GetSkillPoints()
 	availableSlots := skillManager.GetAvailableSlots()
 
-	output.WriteString(fmt.Sprintf("\r\nSkill points: %d | Available slots: %d\r\n",
-		points, availableSlots))
+	fmt.Fprintf(&output, "\r\nSkill points: %d | Available slots: %d\r\n",
+		points, availableSlots)
 
 	return s.SendMessage(output.String())
 }
@@ -444,10 +444,10 @@ func CmdUseSkill(s SessionInterface, args []string) error {
 	success, improved := skillManager.UseSkill(skillName, player.GetLevel(), stat, targetLevel)
 
 	var output strings.Builder
-	output.WriteString(fmt.Sprintf("You attempt to use %s", skill.DisplayName))
+	fmt.Fprintf(&output, "You attempt to use %s", skill.DisplayName)
 
 	if targetName != "" {
-		output.WriteString(fmt.Sprintf(" on %s", targetName))
+		fmt.Fprintf(&output, " on %s", targetName)
 	}
 	output.WriteString("... ")
 
@@ -489,7 +489,7 @@ func CmdSkillInfo(s SessionInterface, args []string) error {
 
 	var output strings.Builder
 	output.WriteString("╔══════════════════════════════════════════════════════╗\r\n")
-	output.WriteString(fmt.Sprintf("║ %-50s ║\r\n", skill.DisplayName))
+	fmt.Fprintf(&output, "║ %-50s ║\r\n", skill.DisplayName)
 	output.WriteString("╠══════════════════════════════════════════════════════╣\r\n")
 
 	// Skill type
@@ -500,16 +500,16 @@ func CmdSkillInfo(s SessionInterface, args []string) error {
 	case engine.SkillTypeMagic:
 		typeStr = "Magic"
 	}
-	output.WriteString(fmt.Sprintf("║ Type: %-44s ║\r\n", typeStr))
+	fmt.Fprintf(&output, "║ Type: %-44s ║\r\n", typeStr)
 
 	// Difficulty
-	output.WriteString(fmt.Sprintf("║ Difficulty: %-40d ║\r\n", skill.Difficulty))
+	fmt.Fprintf(&output, "║ Difficulty: %-40d ║\r\n", skill.Difficulty)
 
 	// Status
 	if skill.Learned {
-		output.WriteString(fmt.Sprintf("║ Status: Learned (Level %d) %30s ║\r\n", skill.Level, ""))
-		output.WriteString(fmt.Sprintf("║ Proficiency: %-38s ║\r\n", skill.GetDisplayLevel()))
-		output.WriteString(fmt.Sprintf("║ Practice Progress: %d%% %32s ║\r\n", skill.GetProgress(), ""))
+		fmt.Fprintf(&output, "║ Status: Learned (Level %d) %30s ║\r\n", skill.Level, "")
+		fmt.Fprintf(&output, "║ Proficiency: %-38s ║\r\n", skill.GetDisplayLevel())
+		fmt.Fprintf(&output, "║ Practice Progress: %d%% %32s ║\r\n", skill.GetProgress(), "")
 	} else {
 		output.WriteString("║ Status: Not learned %36s ║\r\n")
 
@@ -528,17 +528,17 @@ func CmdSkillInfo(s SessionInterface, args []string) error {
 			output.WriteString("║ Requirements: Met %37s ║\r\n")
 		} else {
 			output.WriteString("║ Requirements: Not met %35s ║\r\n")
-			output.WriteString(fmt.Sprintf("║ Needed: Level %d, Stat %d %30s ║\r\n",
-				skill.Difficulty, 10, ""))
+			fmt.Fprintf(&output, "║ Needed: Level %d, Stat %d %30s ║\r\n",
+				skill.Difficulty, 10, "")
 		}
 	}
 
 	output.WriteString("╚══════════════════════════════════════════════════════╝\r\n")
 
 	if skill.Learned {
-		output.WriteString(fmt.Sprintf("\r\nUse 'practice %s' to improve this skill.\r\n", skill.Name))
+		fmt.Fprintf(&output, "\r\nUse 'practice %s' to improve this skill.\r\n", skill.Name)
 	} else {
-		output.WriteString(fmt.Sprintf("\r\nUse 'learn %s' to learn this skill.\r\n", skill.Name))
+		fmt.Fprintf(&output, "\r\nUse 'learn %s' to learn this skill.\r\n", skill.Name)
 	}
 
 	return s.SendMessage(output.String())

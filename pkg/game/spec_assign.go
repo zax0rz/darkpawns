@@ -13,17 +13,17 @@ type SpecFunc func(w *World, ch *Player, me *MobInstance, cmd string, arg string
 // Source: assign_mobiles() in spec_assign.c
 var MobSpecAssign = map[int]string{
 	// General
-	1:    "puff",
-	4:    "remorter",
-	8:    "recharger",
-	23:   "roach",
-	81:   "conjured",
-	82:   "conjured",
-	83:   "conjured",
-	84:   "conjured",
-	85:   "conjured",
-	86:   "conjured",
-	71:   "paladin", // death dealer
+	1:  "puff",
+	4:  "remorter",
+	8:  "recharger",
+	23: "roach",
+	81: "conjured",
+	82: "conjured",
+	83: "conjured",
+	84: "conjured",
+	85: "conjured",
+	86: "conjured",
+	71: "paladin", // death dealer
 
 	// Elemental Temple
 	1313: "elements_minion",
@@ -47,7 +47,7 @@ var MobSpecAssign = map[int]string{
 	3010: "postmaster",
 
 	// Ironwood Forest
-	3119: "thief",   // cutthroat
+	3119: "thief", // cutthroat
 	3103: "magic_user",
 	3113: "magic_user",
 	3118: "magic_user",
@@ -61,7 +61,7 @@ var MobSpecAssign = map[int]string{
 	4209: "dragon_breath",
 
 	// Sulfur Fur Mountains
-	4704: "magic_user",   // ice mage
+	4704: "magic_user",    // ice mage
 	4705: "dragon_breath", // khal'mast
 
 	// Xixieqi
@@ -163,9 +163,9 @@ var MobSpecAssign = map[int]string{
 	11706: "magic_user",
 
 	// Haven
-	12111: "fighter",   // elven pirate
-	12115: "fido",      // seagull
-	12118: "eq_thief",  // kender
+	12111: "fighter",  // elven pirate
+	12115: "fido",     // seagull
+	12118: "eq_thief", // kender
 	12127: "thief",
 
 	// Temple
@@ -195,8 +195,8 @@ var MobSpecAssign = map[int]string{
 	14405: "teleport_victim",
 	14406: "magic_user",
 	14407: "fighter",
-	14410: "no_move_east",  // silk
-	14411: "teleporter",    // master
+	14410: "no_move_east", // silk
+	14411: "teleporter",   // master
 	14414: "mindflayer",
 	14415: "snake",
 	14416: "no_get",
@@ -236,10 +236,10 @@ var MobSpecAssign = map[int]string{
 	15814: "pissedalchemist",
 
 	// Mines
-	12848: "magic_user",    // demon knight
-	12850: "fighter",       // indy
-	12876: "no_move_east",  // guardian
-	12877: "cleric",        // soloman
+	12848: "magic_user",   // demon knight
+	12850: "fighter",      // indy
+	12876: "no_move_east", // guardian
+	12877: "cleric",       // soloman
 
 	// Temple (additional)
 	14110: "dracula", // Lothar
@@ -310,7 +310,7 @@ var MobSpecAssign = map[int]string{
 	21215: "guild",
 	21216: "guild",
 	21217: "guild",
-	21221: "cleric",     // high priest
+	21221: "cleric", // high priest
 	21225: "postmaster",
 	21227: "cityguard",
 	21228: "cityguard",
@@ -325,16 +325,16 @@ var MobSpecAssign = map[int]string{
 var ObjSpecAssign = map[int]string{
 	50:    "field_object",
 	52:    "field_object",
-	4001:  "moon_gate",  // blue portal
-	4002:  "moon_gate",  // red portal
-	8034:  "bank",       // KD atm
-	8064:  "gen_board",  // customs house
-	8065:  "gen_board",  // chosen
-	8096:  "gen_board",  // social board
-	8097:  "gen_board",  // freeze board
-	8098:  "gen_board",  // immortal board
-	8099:  "gen_board",  // mortal board
-	19601: "gen_board",  // clan board
+	4001:  "moon_gate", // blue portal
+	4002:  "moon_gate", // red portal
+	8034:  "bank",      // KD atm
+	8064:  "gen_board", // customs house
+	8065:  "gen_board", // chosen
+	8096:  "gen_board", // social board
+	8097:  "gen_board", // freeze board
+	8098:  "gen_board", // immortal board
+	8099:  "gen_board", // mortal board
+	19601: "gen_board", // clan board
 	19604: "moon_gate",
 	19605: "moon_gate",
 	19606: "moon_gate",
@@ -370,17 +370,17 @@ var RoomSpecAssign = map[int]string{
 	21235: "pet_shops",
 
 	// Elemental Temple
-	1315:  "elements_master_column",
-	1326:  "elements_platforms",
-	1337:  "elements_platforms",
-	1348:  "elements_platforms",
-	1359:  "elements_platforms",
-	1360:  "elements_load_cylinders",
-	1364:  "elements_load_cylinders",
-	1380:  "elements_load_cylinders",
-	1384:  "elements_load_cylinders",
-	1372:  "elements_galeru_column",
-	1394:  "elements_galeru_alive",
+	1315: "elements_master_column",
+	1326: "elements_platforms",
+	1337: "elements_platforms",
+	1348: "elements_platforms",
+	1359: "elements_platforms",
+	1360: "elements_load_cylinders",
+	1364: "elements_load_cylinders",
+	1380: "elements_load_cylinders",
+	1384: "elements_load_cylinders",
+	1372: "elements_galeru_column",
+	1394: "elements_galeru_alive",
 
 	// Multi-zone
 	1389: "fly_exit_up",

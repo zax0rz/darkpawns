@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
-	"golang.org/x/crypto/bcrypt"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -22,6 +21,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game/systems"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/validation"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/time/rate"
 )
 
@@ -308,8 +308,8 @@ type Session struct {
 
 	// Communication state
 	lastTeller string   // Last player who told us (for reply)
-	snooping  *Session  // Session being snooped (for wizard snoop)
-	snoopBy   *Session  // Session that is snooping us
+	snooping   *Session // Session being snooped (for wizard snoop)
+	snoopBy    *Session // Session that is snooping us
 
 	// idleTicsSet tracks whether the idle timeout counter has been set
 	// for pre-login sessions. Used by CheckIdlePasswords().

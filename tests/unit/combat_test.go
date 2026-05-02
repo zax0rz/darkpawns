@@ -29,31 +29,31 @@ type mockCombatant struct {
 	fighting string
 }
 
-func (m *mockCombatant) GetName() string                    { return m.name }
-func (m *mockCombatant) IsNPC() bool                        { return m.isNPC }
-func (m *mockCombatant) GetRoom() int                       { return m.room }
-func (m *mockCombatant) GetLevel() int                      { return m.level }
-func (m *mockCombatant) GetHP() int                         { return m.hp }
-func (m *mockCombatant) GetMaxHP() int                      { return m.maxHP }
-func (m *mockCombatant) GetAC() int                         { return m.ac }
-func (m *mockCombatant) GetTHAC0() int                      { return m.thac0 }
-func (m *mockCombatant) GetDamageRoll() combat.DiceRoll     { return m.damRoll }
-func (m *mockCombatant) GetPosition() int                   { return m.pos }
-func (m *mockCombatant) GetClass() int                      { return m.class }
-func (m *mockCombatant) GetStr() int                        { return m.str }
-func (m *mockCombatant) GetStrAdd() int                     { return m.strAdd }
-func (m *mockCombatant) GetDex() int                        { return m.dex }
-func (m *mockCombatant) GetInt() int                        { return m._int }
-func (m *mockCombatant) GetWis() int                        { return m.wis }
-func (m *mockCombatant) GetHitroll() int                    { return m.hitroll }
-func (m *mockCombatant) GetDamroll() int                    { return m.damroll }
-func (m *mockCombatant) TakeDamage(amount int)              { m.hp -= amount }
-func (m *mockCombatant) Heal(amount int)                    { m.hp += amount }
-func (m *mockCombatant) SetFighting(target string)          { m.fighting = target }
-func (m *mockCombatant) StopFighting()                      { m.fighting = "" }
-func (m *mockCombatant) GetFighting() string                { return m.fighting }
-func (m *mockCombatant) GetSex() int                          { return 0 }
-func (m *mockCombatant) SendMessage(msg string)             {}
+func (m *mockCombatant) GetName() string                { return m.name }
+func (m *mockCombatant) IsNPC() bool                    { return m.isNPC }
+func (m *mockCombatant) GetRoom() int                   { return m.room }
+func (m *mockCombatant) GetLevel() int                  { return m.level }
+func (m *mockCombatant) GetHP() int                     { return m.hp }
+func (m *mockCombatant) GetMaxHP() int                  { return m.maxHP }
+func (m *mockCombatant) GetAC() int                     { return m.ac }
+func (m *mockCombatant) GetTHAC0() int                  { return m.thac0 }
+func (m *mockCombatant) GetDamageRoll() combat.DiceRoll { return m.damRoll }
+func (m *mockCombatant) GetPosition() int               { return m.pos }
+func (m *mockCombatant) GetClass() int                  { return m.class }
+func (m *mockCombatant) GetStr() int                    { return m.str }
+func (m *mockCombatant) GetStrAdd() int                 { return m.strAdd }
+func (m *mockCombatant) GetDex() int                    { return m.dex }
+func (m *mockCombatant) GetInt() int                    { return m._int }
+func (m *mockCombatant) GetWis() int                    { return m.wis }
+func (m *mockCombatant) GetHitroll() int                { return m.hitroll }
+func (m *mockCombatant) GetDamroll() int                { return m.damroll }
+func (m *mockCombatant) TakeDamage(amount int)          { m.hp -= amount }
+func (m *mockCombatant) Heal(amount int)                { m.hp += amount }
+func (m *mockCombatant) SetFighting(target string)      { m.fighting = target }
+func (m *mockCombatant) StopFighting()                  { m.fighting = "" }
+func (m *mockCombatant) GetFighting() string            { return m.fighting }
+func (m *mockCombatant) GetSex() int                    { return 0 }
+func (m *mockCombatant) SendMessage(msg string)         {}
 
 func TestCalculateHitChance(t *testing.T) {
 	attacker := &mockCombatant{

@@ -14,7 +14,7 @@ import (
 
 // ErrSecretNotFound is returned when a requested secret is neither in the environment nor on disk.
 var (
-	ErrSecretNotFound   = errors.New("secret not found")
+	ErrSecretNotFound = errors.New("secret not found")
 
 	// ErrDecryptionFailed is returned when AES-GCM decryption fails (wrong key or corrupted ciphertext).
 	ErrDecryptionFailed = errors.New("decryption failed")
@@ -52,7 +52,7 @@ func (sm *SecretManager) GetSecret(secretName string) (string, error) {
 	if value := os.Getenv(envVar); value != "" {
 		return value, nil
 	}
-	
+
 	// Check for encrypted secret file
 	encryptedFile := fmt.Sprintf("/run/secrets/%s.enc", secretName)
 	if _, err := os.Stat(encryptedFile); err == nil {
@@ -60,10 +60,10 @@ func (sm *SecretManager) GetSecret(secretName string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		
+
 		return sm.decrypt(string(encryptedData))
 	}
-	
+
 	return "", ErrSecretNotFound
 }
 
@@ -73,19 +73,19 @@ func (sm *SecretManager) Encrypt(plaintext string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	// Create a GCM cipher
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return "", err
 	}
-	
+
 	// Create a nonce
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", err
 	}
-	
+
 	// Encrypt the data
 	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
@@ -98,27 +98,27 @@ func (sm *SecretManager) decrypt(encrypted string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	block, err := aes.NewCipher(sm.encryptionKey)
 	if err != nil {
 		return "", err
 	}
-	
+
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return "", err
 	}
-	
+
 	nonceSize := gcm.NonceSize()
 	if len(ciphertext) < nonceSize {
 		return "", ErrDecryptionFailed
 	}
-	
+
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
 		return "", err
 	}
-	
+
 	return string(plaintext), nil
 }

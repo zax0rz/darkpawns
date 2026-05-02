@@ -37,5 +37,3 @@ func cmdSpells(s *Session, args []string) error {
 	s.Send("You know no spells.")
 	return nil
 }
-
-

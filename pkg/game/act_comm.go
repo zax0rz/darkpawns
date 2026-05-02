@@ -62,7 +62,7 @@ const (
 // Condition indices — canonical source: pkg/game/limits.go
 // ---------------------------------------------------------------------------
 const (
-	condFull  = CondFull
+	condFull   = CondFull
 	condThirst = CondThirst
 	condDrunk  = CondDrunk
 )
@@ -72,7 +72,7 @@ const (
 // These go into p.Flags (uint64).
 // ---------------------------------------------------------------------------
 const (
-	plrNoShout   uint64 = 1 << 0
+	plrNoShout    uint64 = 1 << 0
 	PLR_INVISIBLE uint64 = 1 << 1
 	_                    = 1 << 2
 	_                    = 1 << 3
@@ -110,11 +110,11 @@ const (
 // Misc constants
 // ---------------------------------------------------------------------------
 const (
-	noBody           = -1
-	levelCanShout    = 5
-	levelCanGossip   = 5
-	hollerMoveCost   = 10
-	maxNoteLength    = 1000
+	noBody         = -1
+	levelCanShout  = 5
+	levelCanGossip = 5
+	hollerMoveCost = 10
+	maxNoteLength  = 1000
 )
 
 // ---------------------------------------------------------------------------
@@ -284,15 +284,17 @@ var drunkSyllables = []syllable{
 // Language translation functions
 // ---------------------------------------------------------------------------
 
-func speakRakshasan(said string) string   { return applySyllableSubstitution(said, rakSyllables) }
-func speakDwarven(said string) string     { return applySyllableSubstitution(said, dwarfSyllables) }
-func speakElven(said string) string       { return applySyllableSubstitution(said, elfSyllables) }
-func speakGnoll(said string) string       { return applySyllableSubstitution(said, gnollSyllables) }
-func speakDraconian(said string) string   { return applySyllableSubstitution(said, draconianSyllables) }
-func speakGiantish(said string) string    { return applySyllableSubstitution(said, giantishSyllables) }
-func speakDeadspeak(said string) string   { return applySyllableSubstitution(said, deadspeakSyllables) }
-func speakUndercommon(said string) string { return applySyllableSubstitution(said, undercommonSyllables) }
-func speakDrunk(said string) string       { return applySyllableSubstitution(said, drunkSyllables) }
+func speakRakshasan(said string) string { return applySyllableSubstitution(said, rakSyllables) }
+func speakDwarven(said string) string   { return applySyllableSubstitution(said, dwarfSyllables) }
+func speakElven(said string) string     { return applySyllableSubstitution(said, elfSyllables) }
+func speakGnoll(said string) string     { return applySyllableSubstitution(said, gnollSyllables) }
+func speakDraconian(said string) string { return applySyllableSubstitution(said, draconianSyllables) }
+func speakGiantish(said string) string  { return applySyllableSubstitution(said, giantishSyllables) }
+func speakDeadspeak(said string) string { return applySyllableSubstitution(said, deadspeakSyllables) }
+func speakUndercommon(said string) string {
+	return applySyllableSubstitution(said, undercommonSyllables)
+}
+func speakDrunk(said string) string { return applySyllableSubstitution(said, drunkSyllables) }
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -819,7 +821,7 @@ func (w *World) doWhisper(ch *Player, me *MobInstance, arg string) bool {
 	vict.SendMessage(fmt.Sprintf("\x1B[1;33m%s whispers, '%s'\033[0m\r\n", ch.Name, msg))
 	ch.SendMessage(fmt.Sprintf("You whisper to %s, '%s'\r\n", vict.Name, msg))
 
-		// Broadcast to rest of room that whisper occurred.
+	// Broadcast to rest of room that whisper occurred.
 	for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
 		if p.Name != ch.Name && p.Name != vict.Name {
 			p.SendMessage(fmt.Sprintf("%s whispers something to %s.\r\n", ch.Name, vict.Name))

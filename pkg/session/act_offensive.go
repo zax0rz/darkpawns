@@ -26,7 +26,10 @@ func broadcastCombatMsg(s *Session, roomVNum int, eventType, text string) {
 
 // findMobInRoom finds a mob in the player's current room by partial name match.
 // Returns nil if not found.
-func findMobInRoom(s *Session) func(name string) interface{ GetShortDesc() string; GetName() string } {
+func findMobInRoom(s *Session) func(name string) interface {
+	GetShortDesc() string
+	GetName() string
+} {
 	return nil // see inline usage below
 }
 

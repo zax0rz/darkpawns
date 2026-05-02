@@ -13,19 +13,21 @@ const maxLevel = 21
 // savThrows[class][level-1][saveType] = target roll needed to succeed
 // Ported from src/spell_parser.c sav_throws[][][].
 // Rows: MAGIC_USER=0, CLERIC=1, THIEF=2, WARRIOR=3, RANGER=4,
-//        PSIONIC=5, BARBARIAN=6, MYSTIC=7, ROGUE=8, DRUID=9,
-//        ASSASSIN=10, PALADIN=11
+//
+//	PSIONIC=5, BARBARIAN=6, MYSTIC=7, ROGUE=8, DRUID=9,
+//	ASSASSIN=10, PALADIN=11
+//
 // Cols per class: level 1..21
 // Entries per row: [para, rod, petri, breath, spell]
 var savThrows = [numClasses][maxLevel][SaveCount]int{
 	// MAGIC_USER (0)
 	{
-		{14, 14, 13, 16, 15},  // lvl 1
-		{14, 14, 13, 16, 15},  // lvl 2
-		{14, 14, 13, 16, 14},  // lvl 3
-		{14, 14, 13, 16, 14},  // lvl 4
-		{14, 14, 13, 16, 13},  // lvl 5
-		{13, 13, 11, 14, 13},  // lvl 6 (transition)
+		{14, 14, 13, 16, 15}, // lvl 1
+		{14, 14, 13, 16, 15}, // lvl 2
+		{14, 14, 13, 16, 14}, // lvl 3
+		{14, 14, 13, 16, 14}, // lvl 4
+		{14, 14, 13, 16, 13}, // lvl 5
+		{13, 13, 11, 14, 13}, // lvl 6 (transition)
 		{13, 13, 11, 14, 12},
 		{13, 13, 11, 14, 12},
 		{13, 13, 11, 14, 11},
@@ -44,12 +46,12 @@ var savThrows = [numClasses][maxLevel][SaveCount]int{
 	},
 	// CLERIC (1)
 	{
-		{12, 14, 13, 16, 15},  // lvl 1
+		{12, 14, 13, 16, 15}, // lvl 1
 		{12, 14, 13, 16, 15},
 		{12, 14, 13, 16, 15},
 		{12, 14, 13, 16, 15},
 		{12, 14, 13, 16, 15},
-		{10, 12, 11, 14, 12},  // lvl 6
+		{10, 12, 11, 14, 12}, // lvl 6
 		{10, 12, 11, 14, 12},
 		{10, 12, 11, 14, 12},
 		{10, 12, 11, 14, 12},

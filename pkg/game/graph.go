@@ -17,9 +17,9 @@ import (
 
 const (
 	// Symbolic error codes returned by findFirstStep
-	BFS_ERROR       = -1
+	BFS_ERROR         = -1
 	BFS_ALREADY_THERE = -2
-	BFS_NO_PATH     = -3
+	BFS_NO_PATH       = -3
 )
 
 // TrackSkill reference (from C SKILL_TRACK)
@@ -165,8 +165,6 @@ const (
 	sectWaterNoSwim = 12
 	numOfDirs       = 6
 )
-
-
 
 // =========================================================================
 // External hooks set by the game package

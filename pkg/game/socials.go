@@ -891,7 +891,7 @@ var Socials = map[string]*Social{
 		Name:     "pant",
 		MinLevel: 0,
 		HideFlag: 5,
-		Messages: []string{"You pant.", "$n pants.", "You pant in $N's direction.", "$n pants at $N.", "$n pants at you.", "Sorry, but that person doesn't seem to be here.", "You quitely pant to yourself.", "$n seems to be having a breathing problem."},
+		Messages: []string{"You pant.", "$n pants.", "You pant in $N's direction.", "$n pants at $N.", "$n pants at you.", "Sorry, but that person doesn't seem to be here.", "You quietly pant to yourself.", "$n seems to be having a breathing problem."},
 	},
 	"pace": {
 		Name:     "pace",
@@ -1005,7 +1005,7 @@ var Socials = map[string]*Social{
 		Name:     "stretch",
 		MinLevel: 0,
 		HideFlag: 0,
-		Messages: []string{"You stretch your arms out.", "$n stretchs $s arms out and lets out a yawn.", "#"},
+		Messages: []string{"You stretch your arms out.", "$n stretches $s arms out and lets out a yawn.", "#"},
 	},
 	"heh": {
 		Name:     "heh",

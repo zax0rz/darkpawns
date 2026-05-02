@@ -11,13 +11,13 @@ package game
 
 // APPLY_* constants — from structs.h
 const (
-	ApplyNone   = 0
-	ApplyStr    = 1
-	ApplyDex    = 2
-	ApplyInt    = 3
-	ApplyWis    = 4
-	ApplyCon    = 5
-	ApplyHitroll  = 18
+	ApplyNone    = 0
+	ApplyStr     = 1
+	ApplyDex     = 2
+	ApplyInt     = 3
+	ApplyWis     = 4
+	ApplyCon     = 5
+	ApplyHitroll = 18
 	ApplyDamroll = 19
 )
 

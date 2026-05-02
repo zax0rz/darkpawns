@@ -51,7 +51,7 @@ func cmdCommands(s *Session, args []string) error {
 	var buf strings.Builder
 	buf.WriteString("Commands available:\r\n")
 	for i, name := range names {
-		buf.WriteString(fmt.Sprintf("%-16s", name))
+		fmt.Fprintf(&buf, "%-16s", name)
 		if (i+1)%5 == 0 {
 			buf.WriteString("\r\n")
 		}
@@ -174,17 +174,17 @@ func cmdSkills(s *Session, args []string) error {
 
 	var buf strings.Builder
 	buf.WriteString("Your skills:\r\n")
-	buf.WriteString(fmt.Sprintf("%-20s %s\r\n", "Skill", "Level"))
+	fmt.Fprintf(&buf, "%-20s %s\r\n", "Skill", "Level")
 	buf.WriteString(strings.Repeat("-", 30) + "\r\n")
 	for _, sk := range learned {
 		name := sk.DisplayName
 		if name == "" {
 			name = sk.Name
 		}
-		buf.WriteString(fmt.Sprintf("%-20s %d%%\r\n", name, sk.Level))
+		fmt.Fprintf(&buf, "%-20s %d%%\r\n", name, sk.Level)
 	}
-	buf.WriteString(fmt.Sprintf("\r\nSlots used: %d/%d\r\n",
-		sm.GetUsedSlots(), sm.GetSlots()))
+	fmt.Fprintf(&buf, "\r\nSlots used: %d/%d\r\n",
+		sm.GetUsedSlots(), sm.GetSlots())
 	s.Send(buf.String())
 	return nil
 }
@@ -199,7 +199,7 @@ func cmdToggle(s *Session, args []string) error {
 		// Show current toggles
 		var buf strings.Builder
 		buf.WriteString("Toggles:\r\n")
-		buf.WriteString(fmt.Sprintf("  %-12s : %s\r\n", "autoexit", boolStr(s.player.AutoExit)))
+		fmt.Fprintf(&buf, "  %-12s : %s\r\n", "autoexit", boolStr(s.player.AutoExit))
 		s.Send(buf.String())
 		return nil
 	}
@@ -235,7 +235,7 @@ func cmdUsers(s *Session, args []string) error {
 	}
 
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("%-15s %-6s %-20s\r\n", "Name", "Level", "Remote Addr"))
+	fmt.Fprintf(&buf, "%-15s %-6s %-20s\r\n", "Name", "Level", "Remote Addr")
 	buf.WriteString(strings.Repeat("-", 45) + "\r\n")
 
 	count := 0
@@ -257,11 +257,11 @@ func cmdUsers(s *Session, args []string) error {
 			continue
 		}
 
-		buf.WriteString(fmt.Sprintf("%-15s %-6d %-20s\r\n", name, level, ip))
+		fmt.Fprintf(&buf, "%-15s %-6d %-20s\r\n", name, level, ip)
 		count++
 	}
 
-	buf.WriteString(fmt.Sprintf("\r\n%d player(s) connected.\r\n", count))
+	fmt.Fprintf(&buf, "\r\n%d player(s) connected.\r\n", count)
 	s.Send(buf.String())
 	return nil
 }
@@ -277,13 +277,13 @@ func cmdAbils(s *Session, args []string) error {
 	var buf strings.Builder
 	buf.WriteString("Abilities:\r\n")
 	buf.WriteString(strings.Repeat("-", 30) + "\r\n")
-	buf.WriteString(fmt.Sprintf("Level: %d\r\n", p.Level))
-	buf.WriteString(fmt.Sprintf("Health: %d/%d  Mana: %d/%d  Move: %d/%d\r\n",
-		p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove))
-	buf.WriteString(fmt.Sprintf("STR: %d  INT: %d  WIS: %d  DEX: %d  CON: %d  CHA: %d\r\n",
-		p.Stats.Str, p.Stats.Int, p.Stats.Wis, p.Stats.Dex, p.Stats.Con, p.Stats.Cha))
-	buf.WriteString(fmt.Sprintf("AC: %d  Hitroll: %d  Damroll: %d\r\n", p.AC, p.Hitroll, p.Damroll))
-	buf.WriteString(fmt.Sprintf("Gold: %d  XP: %d  Alignment: %d\r\n", p.Gold, p.Exp, p.Alignment))
+	fmt.Fprintf(&buf, "Level: %d\r\n", p.Level)
+	fmt.Fprintf(&buf, "Health: %d/%d  Mana: %d/%d  Move: %d/%d\r\n",
+		p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove)
+	fmt.Fprintf(&buf, "STR: %d  INT: %d  WIS: %d  DEX: %d  CON: %d  CHA: %d\r\n",
+		p.Stats.Str, p.Stats.Int, p.Stats.Wis, p.Stats.Dex, p.Stats.Con, p.Stats.Cha)
+	fmt.Fprintf(&buf, "AC: %d  Hitroll: %d  Damroll: %d\r\n", p.AC, p.Hitroll, p.Damroll)
+	fmt.Fprintf(&buf, "Gold: %d  XP: %d  Alignment: %d\r\n", p.Gold, p.Exp, p.Alignment)
 	s.Send(buf.String())
 	return nil
 }

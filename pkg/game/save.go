@@ -20,41 +20,41 @@ const (
 // savePlayerData is a JSON-serializable snapshot of a Player for save/load.
 // It excludes runtime-only fields (mu, Send, Fighting, ConnectedAt, LastActive, etc.).
 type savePlayerData struct {
-	ID          int                 `json:"id"`
-	Name        string              `json:"name"`
-	Sex         int                 `json:"sex"`
-	Level       int                 `json:"level"`
-	Class       int                 `json:"class"`
-	Race        int                 `json:"race"`
-	Health      int                 `json:"health"`
-	MaxHealth   int                 `json:"max_health"`
-	Mana        int                 `json:"mana"`
-	MaxMana     int                 `json:"max_mana"`
-	Move        int                 `json:"move"`
-	MaxMove     int                 `json:"max_move"`
-	Gold        int                 `json:"gold"`
-	Exp         int                 `json:"exp"`
-	Alignment   int                 `json:"alignment"`
-	RoomVNum    int                 `json:"room_vnum"`
-	Position    int                 `json:"position"`
-	Title       string              `json:"title"`
-	Description string              `json:"description"`
-	AC          int                 `json:"ac"`
-	Hitroll     int                 `json:"hitroll"`
-	Damroll     int                 `json:"damroll"`
-	Strength    int                 `json:"strength"`
-	THAC0       int                 `json:"thac0"`
-	Hunger      int                 `json:"hunger"`
-	Thirst      int                 `json:"thirst"`
-	Drunk       int                 `json:"drunk"`
-	Flags       uint64              `json:"flags"`
-	AutoExit    bool                `json:"auto_exit"`
-	Stats       CharStats           `json:"stats"`
-	SpellMap    map[string]int      `json:"spell_map"`
-	Skills      map[string]int      `json:"skills"`
-	Inventory   []saveItemData      `json:"inventory"`
-	Equipment   []saveItemData      `json:"equipment"`
-	Affects     []saveAffect        `json:"affects"`
+	ID          int            `json:"id"`
+	Name        string         `json:"name"`
+	Sex         int            `json:"sex"`
+	Level       int            `json:"level"`
+	Class       int            `json:"class"`
+	Race        int            `json:"race"`
+	Health      int            `json:"health"`
+	MaxHealth   int            `json:"max_health"`
+	Mana        int            `json:"mana"`
+	MaxMana     int            `json:"max_mana"`
+	Move        int            `json:"move"`
+	MaxMove     int            `json:"max_move"`
+	Gold        int            `json:"gold"`
+	Exp         int            `json:"exp"`
+	Alignment   int            `json:"alignment"`
+	RoomVNum    int            `json:"room_vnum"`
+	Position    int            `json:"position"`
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	AC          int            `json:"ac"`
+	Hitroll     int            `json:"hitroll"`
+	Damroll     int            `json:"damroll"`
+	Strength    int            `json:"strength"`
+	THAC0       int            `json:"thac0"`
+	Hunger      int            `json:"hunger"`
+	Thirst      int            `json:"thirst"`
+	Drunk       int            `json:"drunk"`
+	Flags       uint64         `json:"flags"`
+	AutoExit    bool           `json:"auto_exit"`
+	Stats       CharStats      `json:"stats"`
+	SpellMap    map[string]int `json:"spell_map"`
+	Skills      map[string]int `json:"skills"`
+	Inventory   []saveItemData `json:"inventory"`
+	Equipment   []saveItemData `json:"equipment"`
+	Affects     []saveAffect   `json:"affects"`
 }
 
 type saveItemData struct {
@@ -239,43 +239,43 @@ func playerToSaveData(p *Player) savePlayerData {
 // saveDataToPlayer converts savePlayerData back to a Player with runtime fields.
 func saveDataToPlayer(data savePlayerData) *Player {
 	return &Player{
-		ID:           data.ID,
-		Name:         data.Name,
-		Sex:          data.Sex,
-		Level:        data.Level,
-		Class:        data.Class,
-		Race:         data.Race,
-		Health:       data.Health,
-		MaxHealth:    data.MaxHealth,
-		Mana:         data.Mana,
-		MaxMana:      data.MaxMana,
-		Move:         data.Move,
-		MaxMove:      data.MaxMove,
-		Gold:         data.Gold,
-		Exp:          data.Exp,
-		Alignment:    data.Alignment,
-		RoomVNum:     data.RoomVNum,
-		Position:     data.Position,
-		Title:        data.Title,
-		Description:  data.Description,
-		AC:           data.AC,
-		Hitroll:      data.Hitroll,
-		Damroll:      data.Damroll,
-		Strength:     data.Strength,
-		THAC0:        data.THAC0,
-		Hunger:       data.Hunger,
-		Thirst:       data.Thirst,
-		Drunk:        data.Drunk,
-		Flags:        data.Flags,
-		AutoExit:     data.AutoExit,
-		Stats:        data.Stats,
+		ID:            data.ID,
+		Name:          data.Name,
+		Sex:           data.Sex,
+		Level:         data.Level,
+		Class:         data.Class,
+		Race:          data.Race,
+		Health:        data.Health,
+		MaxHealth:     data.MaxHealth,
+		Mana:          data.Mana,
+		MaxMana:       data.MaxMana,
+		Move:          data.Move,
+		MaxMove:       data.MaxMove,
+		Gold:          data.Gold,
+		Exp:           data.Exp,
+		Alignment:     data.Alignment,
+		RoomVNum:      data.RoomVNum,
+		Position:      data.Position,
+		Title:         data.Title,
+		Description:   data.Description,
+		AC:            data.AC,
+		Hitroll:       data.Hitroll,
+		Damroll:       data.Damroll,
+		Strength:      data.Strength,
+		THAC0:         data.THAC0,
+		Hunger:        data.Hunger,
+		Thirst:        data.Thirst,
+		Drunk:         data.Drunk,
+		Flags:         data.Flags,
+		AutoExit:      data.AutoExit,
+		Stats:         data.Stats,
 		ActiveAffects: make([]*engine.Affect, len(data.Affects)),
-		SpellMap:     data.SpellMap,
-		ConnectedAt:  time.Now(),
-		LastActive:   time.Now(),
-		Send:         make(chan []byte, 100),
-		Inventory:    NewInventory(),
-		Equipment:    NewEquipment(),
+		SpellMap:      data.SpellMap,
+		ConnectedAt:   time.Now(),
+		LastActive:    time.Now(),
+		Send:          make(chan []byte, 100),
+		Inventory:     NewInventory(),
+		Equipment:     NewEquipment(),
 	}
 }
 

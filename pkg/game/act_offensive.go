@@ -1036,7 +1036,7 @@ func (w *World) doShoot(ch *Player, me *MobInstance, cmd string, arg string) boo
 				}
 				target.SendMessage("You decide to go investigate...\r\n")
 			}
-			} else {
+		} else {
 			// Miss
 			target.SendMessage(fmt.Sprintf("Some kind of %s streaks in from %s and just misses you!\r\n", projectileName, from))
 			w.roomMessage(exit.ToRoom, fmt.Sprintf("Some kind of %s streaks in from %s and narrowly misses %s!", projectileName, from, target.GetName()))
@@ -1330,11 +1330,8 @@ func (w *World) doSleeper(ch *Player, me *MobInstance, cmd string, arg string) b
 		w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s puts %s in a sleeper hold.", ch.Name, vict.Name))
 		vict.SetPosition(combat.PosSleeping)
 
-		// Add AFF_SLEEP affect
-		duration := ch.GetLevel() / 9
-		if duration < 1 {
-			duration = 1
-		}
+		// TODO: pass duration to affect system when affect durations are implemented
+		_ = ch.GetLevel() / 9
 		vict.SetAffect(affSleep, true)
 
 		improveSkill(ch, SkillSleeper)
@@ -1450,7 +1447,11 @@ func (w *World) doAmbush(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-	room := w.GetRoomInWorld(ch.RoomVNum); sector := 0; if room != nil { sector = room.Sector }
+	room := w.GetRoomInWorld(ch.RoomVNum)
+	sector := 0
+	if room != nil {
+		sector = room.Sector
+	}
 	if sector != 3 && sector != 4 &&
 		sector != 5 && sector != 1 {
 		ch.SendMessage("Ambush someone here? Impossible!\r\n")

@@ -10,9 +10,9 @@ import (
 
 // CircleMUD constants used for character management.
 const (
-	plrExtractBit     = 21  // PLR_EXTRACT from structs.h (bit 21)
-	roomNowhere       = -1  // NOWHERE from structs.h
-	itemLightTypeFlag = 1   // ITEM_LIGHT from structs.h (type 1)
+	plrExtractBit     = 21 // PLR_EXTRACT from structs.h (bit 21)
+	roomNowhere       = -1 // NOWHERE from structs.h
+	itemLightTypeFlag = 1  // ITEM_LIGHT from structs.h (type 1)
 )
 
 // ---------------------------------------------------------------------------

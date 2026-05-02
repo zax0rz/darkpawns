@@ -273,5 +273,3 @@ func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int 
 	_ = reagents
 	return 0
 }
-
-

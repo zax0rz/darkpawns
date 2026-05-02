@@ -61,7 +61,6 @@ const (
 	contPickproofBit = 1 << 3
 )
 
-
 // dotMode constants
 const (
 	findIndiv = iota
@@ -704,7 +703,7 @@ func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
 		w.actToChar(ch, "$p: you can't carry that many items.", obj, nil)
 		return false
 	}
-	if ch.Inventory.GetWeight()+obj.GetWeight() > ch.Inventory.Capacity * 10 {
+	if ch.Inventory.GetWeight()+obj.GetWeight() > ch.Inventory.Capacity*10 {
 		w.actToChar(ch, "$p: you can't carry that much weight.", obj, nil)
 		return false
 	}
@@ -994,7 +993,7 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "$N seems to have $S hands full.", vict, obj)
 		return
 	}
-	if obj.GetWeight()+vict.Inventory.GetWeight() > vict.Inventory.Capacity * 10 {
+	if obj.GetWeight()+vict.Inventory.GetWeight() > vict.Inventory.Capacity*10 {
 		w.actToChar(ch, "$E can't carry that much weight.", vict, nil)
 		return
 	}
@@ -1117,11 +1116,8 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 		w.performGive(ch, vict, obj)
 	} else {
 		if dotmode == findAlldot && len(parts) > 0 {
-			// Strip all. prefix
-			keyword := arg1[4:]
-			if keyword == "" && len(parts) > 1 {
-				keyword = parts[0]
-			}
+			// Strip all. prefix — unused until dotmode give-all is implemented
+			_ = arg1[4:]
 		}
 		if len(ch.Inventory.Items) == 0 {
 			ch.SendMessage("You don't seem to be holding anything.\r\n")
@@ -1138,7 +1134,6 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	}
 	return true
 }
-
 
 // atoi converts string to int
 func atoi(s string) int {

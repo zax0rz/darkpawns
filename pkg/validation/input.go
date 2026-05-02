@@ -19,7 +19,7 @@ var (
 		regexp.MustCompile(`--`), // SQL comment
 		regexp.MustCompile(`;`),  // Statement separator
 	}
-	
+
 	// XSS patterns
 	xssPatterns = []*regexp.Regexp{
 		regexp.MustCompile(`<script.*?>.*?</script>`),
@@ -27,7 +27,7 @@ var (
 		regexp.MustCompile(`on\w+\s*=`),
 		regexp.MustCompile(`data:`),
 	}
-	
+
 	// Path traversal patterns
 	pathTraversalPatterns = []*regexp.Regexp{
 		regexp.MustCompile(`\.\./`),
@@ -43,28 +43,28 @@ func ValidateInput(input string) (bool, string) {
 	if utf8.RuneCountInString(input) > 1000 {
 		return false, "Input too long (max 1000 characters)"
 	}
-	
+
 	// Check for SQL injection
 	for _, pattern := range sqlInjectionPatterns {
 		if pattern.MatchString(input) {
 			return false, "Invalid input detected"
 		}
 	}
-	
+
 	// Check for XSS
 	for _, pattern := range xssPatterns {
 		if pattern.MatchString(input) {
 			return false, "Invalid input detected"
 		}
 	}
-	
+
 	// Check for path traversal
 	for _, pattern := range pathTraversalPatterns {
 		if pattern.MatchString(input) {
 			return false, "Invalid input detected"
 		}
 	}
-	
+
 	return true, ""
 }
 
@@ -77,19 +77,19 @@ func SanitizeInput(input string) string {
 		}
 		return r
 	}, input)
-	
+
 	// Escape HTML
 	input = strings.ReplaceAll(input, "&", "&amp;")
 	input = strings.ReplaceAll(input, "<", "&lt;")
 	input = strings.ReplaceAll(input, ">", "&gt;")
 	input = strings.ReplaceAll(input, "\"", "&quot;")
 	input = strings.ReplaceAll(input, "'", "&#39;")
-	
+
 	// Limit length
 	if utf8.RuneCountInString(input) > 1000 {
 		input = string([]rune(input)[:1000])
 	}
-	
+
 	return input
 }
 
@@ -99,13 +99,13 @@ func ValidateCommand(command string, args []string) (bool, string) {
 	if valid, msg := ValidateInput(command); !valid {
 		return false, msg
 	}
-	
+
 	// Validate each argument
 	for _, arg := range args {
 		if valid, msg := ValidateInput(arg); !valid {
 			return false, msg
 		}
 	}
-	
+
 	return true, ""
 }

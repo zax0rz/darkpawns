@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zax0rz/darkpawns/pkg/scripting"
 	lua "github.com/yuin/gopher-lua"
+	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
 // mockWorldForEvents is a minimal ScriptableWorld that supports event creation.

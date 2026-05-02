@@ -32,35 +32,35 @@ const (
 	SkillSharpen   = "sharpen"
 
 	// Wave 2 skills (new_cmds2.c)
-	SkillScrounge     = "scrounge"
+	SkillScrounge = "scrounge"
 
 	// act.other.c skills
-	SkillPeek     = "peek"
-	SkillStealth  = "stealth"
-	SkillAppraise = "appraise"
-	SkillScout    = "scout"
-	SkillFirstAid     = "first_aid"
-	SkillDisarm       = "disarm"
-	SkillMindlink     = "mindlink"
-	SkillDetect       = "detect"
-	SkillSerpentKick  = "serpent_kick"
-	SkillDig          = "dig"
-	SkillTurn         = "turn"
+	SkillPeek        = "peek"
+	SkillStealth     = "stealth"
+	SkillAppraise    = "appraise"
+	SkillScout       = "scout"
+	SkillFirstAid    = "first_aid"
+	SkillDisarm      = "disarm"
+	SkillMindlink    = "mindlink"
+	SkillDetect      = "detect"
+	SkillSerpentKick = "serpent_kick"
+	SkillDig         = "dig"
+	SkillTurn        = "turn"
 
 	// Wave 1 cleanup skills (new_cmds.c)
-	SkillMold        = "mold"
-	SkillBehead      = "behead"
-	SkillBearhug     = "bearhug"
-	SkillSlug        = "slug"
-	SkillSmackheads  = "smackheads"
-	SkillBite        = "bite"
-	SkillTag         = "tag"
-	SkillPoint       = "point"
-	SkillGroinrip    = "groinrip"
-	SkillReview      = "review"
-	SkillWhois       = "whois"
-	SkillPalm        = "palm"
-	SkillFleshAlter  = "flesh_alter"
+	SkillMold       = "mold"
+	SkillBehead     = "behead"
+	SkillBearhug    = "bearhug"
+	SkillSlug       = "slug"
+	SkillSmackheads = "smackheads"
+	SkillBite       = "bite"
+	SkillTag        = "tag"
+	SkillPoint      = "point"
+	SkillGroinrip   = "groinrip"
+	SkillReview     = "review"
+	SkillWhois      = "whois"
+	SkillPalm       = "palm"
+	SkillFleshAlter = "flesh_alter"
 )
 
 // ---------------------------------------------------------------------------
@@ -267,14 +267,14 @@ func ActMessage(msg string, chPronouns Pronouns, victPronouns *Pronouns, itemNam
 
 // SkillResult holds the outcome of a skill use.
 type SkillResult struct {
-	Success     bool
-	Damage      int
-	MessageToCh string
+	Success       bool
+	Damage        int
+	MessageToCh   string
 	MessageToVict string
 	MessageToRoom string
-	StunTarget  bool   // target loses a round
-	SelfStumble bool   // user falls (bash fail)
-	TargetFalls bool   // target position changes to sitting
+	StunTarget    bool // target loses a round
+	SelfStumble   bool // user falls (bash fail)
+	TargetFalls   bool // target position changes to sitting
 }
 
 // DoBackstab implements do_backstab() from act.offensive.c lines 172-220.
@@ -492,10 +492,8 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 	ch.Move -= 15
 
 	skillLevel := ch.GetSkill(SkillHeadbutt)
-	hitRoll := (skillLevel/2 + 1) - 10 // DAMAGE_ROLL approximation minus accuracy penalty
-	if hitRoll < 1 {
-		hitRoll = 1
-	}
+	// TODO: integrate hitRoll into accuracy calculation
+	_ = (skillLevel/2 + 1) - 10
 	damage := (skillLevel/2 + 1) + 4 // higher base damage
 
 	percent := rand.Intn(101) + 1
@@ -525,18 +523,21 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	return SkillResult{
-		Success:     true,
-		Damage:      damage,
-		MessageToCh: ActMessage("You slam your forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
+		Success:       true,
+		Damage:        damage,
+		MessageToCh:   ActMessage("You slam your forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n slams $s forehead into you with a sickening crack!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n slams $s forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
-		StunTarget:   true,
+		StunTarget:    true,
 	}
 }
 
 // DoRescue implements do_rescue() from act.offensive.c lines 480-539.
 // Interposes between attacker and target.
-func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine interface{ StartCombat(combat.Combatant, combat.Combatant) error; StopCombat(string) }) SkillResult {
+func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine interface {
+	StartCombat(combat.Combatant, combat.Combatant) error
+	StopCombat(string)
+}) SkillResult {
 	if ch.GetSkill(SkillRescue) == 0 {
 		return SkillResult{Success: false, MessageToCh: "But only true warriors can do this!"}
 	}
@@ -823,7 +824,7 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 
 	// Create food item
 	food := &ObjectInstance{
-		VNum:    corpse.VNum,
+		VNum:     corpse.VNum,
 		RoomVNum: ch.GetRoomVNum(),
 	}
 	if food.CustomData == nil {
@@ -868,9 +869,9 @@ func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
 	target.TakeDamage(damage)
 
 	return SkillResult{
-		Success:     true,
-		Damage:      damage,
-		MessageToCh: "You slash their throat!",
+		Success:       true,
+		Damage:        damage,
+		MessageToCh:   "You slash their throat!",
 		MessageToVict: "Your throat is slashed!",
 		MessageToRoom: fmt.Sprintf("%s slashes %s's throat!", ch.Name, target.GetName()),
 	}
@@ -886,9 +887,9 @@ func DoStrike(ch *Player, target combat.Combatant) SkillResult {
 	damage := rand.Intn(ch.GetLevel()) + 1
 
 	return SkillResult{
-		Success:     true,
-		Damage:      damage,
-		MessageToCh: fmt.Sprintf("You strike %s!", target.GetName()),
+		Success:       true,
+		Damage:        damage,
+		MessageToCh:   fmt.Sprintf("You strike %s!", target.GetName()),
 		MessageToVict: fmt.Sprintf("%s strikes you!", ch.Name),
 		MessageToRoom: fmt.Sprintf("%s strikes %s!", ch.Name, target.GetName()),
 	}
@@ -1143,8 +1144,8 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 	// This requires object prototype loading infrastructure
 
 	return SkillResult{
-		Success:      true,
-		MessageToCh:  msgToCh + "\r\n",
+		Success:       true,
+		MessageToCh:   msgToCh + "\r\n",
 		MessageToRoom: msgToRoom + "\r\n",
 	}
 }
@@ -1174,9 +1175,9 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	if percent > prob {
 		return SkillResult{
-			Success:      true,
-			Damage:       0,
-			MessageToCh:  "You try to bear hug but miss!\r\n",
+			Success:       true,
+			Damage:        0,
+			MessageToCh:   "You try to bear hug but miss!\r\n",
 			MessageToVict: "$n tries to bear hug you!\r\n",
 			MessageToRoom: fmt.Sprintf("%s tries to bear hug %s!\r\n", ch.Name, target.GetName()),
 		}
@@ -1185,9 +1186,9 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 	dam := ch.GetLevel() + (ch.GetLevel() / 2) // level * 1.5
 
 	return SkillResult{
-		Success:      true,
-		Damage:       dam,
-		MessageToCh:  "You squeeze your victim in a crushing bear hug!\r\n",
+		Success:       true,
+		Damage:        dam,
+		MessageToCh:   "You squeeze your victim in a crushing bear hug!\r\n",
 		MessageToVict: "You are crushed in a powerful bear hug!\r\n",
 		MessageToRoom: fmt.Sprintf("%s crushes %s in a powerful bear hug!\r\n", ch.Name, target.GetName()),
 	}
@@ -1208,9 +1209,9 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 
 	if percent > prob {
 		return SkillResult{
-			Success:      true,
-			Damage:       0,
-			MessageToCh:  "You swing wildly and miss!\r\n",
+			Success:       true,
+			Damage:        0,
+			MessageToCh:   "You swing wildly and miss!\r\n",
 			MessageToVict: "$n swings a fist at you and misses!\r\n",
 			MessageToRoom: fmt.Sprintf("%s swings a fist at %s and misses!\r\n", ch.Name, target.GetName()),
 		}
@@ -1218,9 +1219,9 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 
 	dam := (ch.GetLevel() * (rand.Intn(4) + 1)) / 2
 	return SkillResult{
-		Success:      true,
-		Damage:       dam,
-		MessageToCh:  "You slug your victim with a solid punch!\r\n",
+		Success:       true,
+		Damage:        dam,
+		MessageToCh:   "You slug your victim with a solid punch!\r\n",
 		MessageToVict: "You are slugged hard!\r\n",
 		MessageToRoom: fmt.Sprintf("%s slugs %s!\r\n", ch.Name, target.GetName()),
 	}
@@ -1258,8 +1259,8 @@ func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) Ski
 		// Failure — victims duck
 		msgToCh := fmt.Sprintf("%s and %s slip out of your hands!", vill.GetName(), vil2.GetName())
 		return SkillResult{
-			Success:      true,
-			MessageToCh:  msgToCh + "\r\n",
+			Success:       true,
+			MessageToCh:   msgToCh + "\r\n",
 			MessageToRoom: fmt.Sprintf("%s and %s duck as %s lunges at them!\r\n", vill.GetName(), vil2.GetName(), ch.Name),
 		}
 	}
@@ -1267,9 +1268,9 @@ func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) Ski
 	// Success — smack them together
 	dam := 3 * ch.GetLevel()
 	return SkillResult{
-		Success:      true,
-		Damage:       dam,
-		MessageToCh:  fmt.Sprintf("You grab the heads of %s and %s and bang them together with a sickening *SMACK*.\r\n", vill.GetName(), vil2.GetName()),
+		Success:       true,
+		Damage:        dam,
+		MessageToCh:   fmt.Sprintf("You grab the heads of %s and %s and bang them together with a sickening *SMACK*.\r\n", vill.GetName(), vil2.GetName()),
 		MessageToRoom: fmt.Sprintf("%s grabs the heads of %s and %s and bangs them together with a sickening *SMACK*.\r\n", ch.Name, vill.GetName(), vil2.GetName()),
 	}
 }
@@ -1283,9 +1284,9 @@ func DoBite(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	return SkillResult{
-		Success:      true,
-		Damage:       dam,
-		MessageToCh:  "You bite your victim!\r\n",
+		Success:       true,
+		Damage:        dam,
+		MessageToCh:   "You bite your victim!\r\n",
 		MessageToVict: "$n bites you!\r\n",
 		MessageToRoom: fmt.Sprintf("%s bites %s!\r\n", ch.Name, target.GetName()),
 	}
@@ -1308,8 +1309,8 @@ func DoTag(ch *Player, targetName string, world *World) SkillResult {
 	}
 
 	return SkillResult{
-		Success:      true,
-		MessageToCh:  fmt.Sprintf("You tap %s and scream, 'TAG! You're it!'\r\n", target.GetName()),
+		Success:       true,
+		MessageToCh:   fmt.Sprintf("You tap %s and scream, 'TAG! You're it!'\r\n", target.GetName()),
 		MessageToVict: fmt.Sprintf("%s taps you and screams, 'TAG! You're it!'\r\n", ch.Name),
 		MessageToRoom: fmt.Sprintf("%s taps %s and screams, 'TAG! You're it!'\r\n", ch.Name, target.GetName()),
 	}
@@ -1319,8 +1320,8 @@ func DoTag(ch *Player, targetName string, world *World) SkillResult {
 func DoPoint(ch *Player, targetName string, world *World) SkillResult {
 	if targetName == "" {
 		return SkillResult{
-			Success:      true,
-			MessageToCh:  "You point around the room.\r\n",
+			Success:       true,
+			MessageToCh:   "You point around the room.\r\n",
 			MessageToRoom: fmt.Sprintf("%s points around the room.\r\n", ch.Name),
 		}
 	}
@@ -1330,23 +1331,23 @@ func DoPoint(ch *Player, targetName string, world *World) SkillResult {
 		// Point at self
 		if strings.EqualFold(targetName, "self") || strings.EqualFold(targetName, "me") || strings.EqualFold(targetName, ch.Name) {
 			return SkillResult{
-				Success:      true,
-				MessageToCh:  "You point at yourself.\r\n",
+				Success:       true,
+				MessageToCh:   "You point at yourself.\r\n",
 				MessageToRoom: fmt.Sprintf("%s points at %s.\r\n", ch.Name, himHer(ch.GetSex())),
 			}
 		}
 		// Point at nothing specific
 		return SkillResult{
-			Success:      true,
-			MessageToCh:  "You point around the room.\r\n",
+			Success:       true,
+			MessageToCh:   "You point around the room.\r\n",
 			MessageToRoom: fmt.Sprintf("%s points around the room.\r\n", ch.Name),
 		}
 	}
 
 	if target.GetName() == ch.Name {
 		return SkillResult{
-			Success:      true,
-			MessageToCh:  "You point at yourself.\r\n",
+			Success:       true,
+			MessageToCh:   "You point at yourself.\r\n",
 			MessageToRoom: fmt.Sprintf("%s points at %s.\r\n", ch.Name, himHer(ch.GetSex())),
 		}
 	}
@@ -1355,16 +1356,16 @@ func DoPoint(ch *Player, targetName string, world *World) SkillResult {
 	if ch.Equipment != nil && len(ch.Equipment.Slots) > 0 && ch.Equipment.Slots[0] != nil {
 		weapon := ch.Equipment.Slots[0]
 		return SkillResult{
-			Success:      true,
-			MessageToCh:  fmt.Sprintf("You point %s at %s.\r\n", weapon.GetShortDesc(), target.GetName()),
+			Success:       true,
+			MessageToCh:   fmt.Sprintf("You point %s at %s.\r\n", weapon.GetShortDesc(), target.GetName()),
 			MessageToVict: fmt.Sprintf("%s points %s at you.\r\n", ch.Name, weapon.GetShortDesc()),
 			MessageToRoom: fmt.Sprintf("%s points %s at %s.\r\n", ch.Name, weapon.GetShortDesc(), target.GetName()),
 		}
 	}
 
 	return SkillResult{
-		Success:      true,
-		MessageToCh:  fmt.Sprintf("You point at %s.\r\n", target.GetName()),
+		Success:       true,
+		MessageToCh:   fmt.Sprintf("You point at %s.\r\n", target.GetName()),
 		MessageToVict: fmt.Sprintf("%s points at you.\r\n", ch.Name),
 		MessageToRoom: fmt.Sprintf("%s points at %s.\r\n", ch.Name, target.GetName()),
 	}
@@ -1389,9 +1390,9 @@ func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 		// Success
 		dam := ch.GetLevel()
 		return SkillResult{
-			Success:      true,
-			Damage:       dam,
-			MessageToCh:  "You grab your victim's groin and twist!\r\n",
+			Success:       true,
+			Damage:        dam,
+			MessageToCh:   "You grab your victim's groin and twist!\r\n",
 			MessageToVict: "You are grabbed in the groin and twisted! The pain is unbearable!\r\n",
 			MessageToRoom: fmt.Sprintf("%s falls to %s knees, clutching %s groin and throwing up everywhere!\r\n", target.GetName(), hisHer(ch.GetSex()), hisHer(ch.GetSex())),
 		}
@@ -1399,9 +1400,9 @@ func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// Miss
 	return SkillResult{
-		Success:      true,
-		Damage:       0,
-		MessageToCh:  "You try to grab your victim's groin but miss!\r\n",
+		Success:       true,
+		Damage:        0,
+		MessageToCh:   "You try to grab your victim's groin but miss!\r\n",
 		MessageToVict: "$n tries to grab your groin!\r\n",
 		MessageToRoom: fmt.Sprintf("%s tries to grab %s's groin!\r\n", ch.Name, target.GetName()),
 	}
@@ -1463,8 +1464,8 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 		world.RemoveItemFromRoom(targetItem, ch.GetRoomVNum())
 		_ = ch.Inventory.AddItem(targetItem)
 		return SkillResult{
-			Success:      true,
-			MessageToCh:  "You palm the item skillfully.\r\n",
+			Success:       true,
+			MessageToCh:   "You palm the item skillfully.\r\n",
 			MessageToRoom: fmt.Sprintf("%s deftly palms something.\r\n", ch.Name),
 		}
 	}
@@ -1472,8 +1473,8 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 	// Failure
 	world.RemoveItemFromRoom(targetItem, ch.GetRoomVNum())
 	return SkillResult{
-		Success:      true,
-		MessageToCh:  fmt.Sprintf("You try to palm %s but fumble it!\r\n", targetItem.GetShortDesc()),
+		Success:       true,
+		MessageToCh:   fmt.Sprintf("You try to palm %s but fumble it!\r\n", targetItem.GetShortDesc()),
 		MessageToRoom: fmt.Sprintf("%s fumbles with %s!\r\n", ch.Name, targetItem.GetShortDesc()),
 	}
 }
@@ -1496,8 +1497,8 @@ func DoFleshAlter(ch *Player) SkillResult {
 
 	// Toggle flesh alter state
 	return SkillResult{
-		Success:      true,
-		MessageToCh:  "Your hand turns into a weapon!\r\n",
+		Success:       true,
+		MessageToCh:   "Your hand turns into a weapon!\r\n",
 		MessageToRoom: fmt.Sprintf("%s's hand turns into a weapon!\r\n", ch.Name),
 	}
 }

@@ -114,16 +114,16 @@ var MobRaceNames = []string{
 
 // Intelligent races bitvector (intelligent_races[])
 var IntelligentRaces = []int{
-	1 << 0, // RACE_HUMAN
-	1 << 1, // RACE_ELF
-	1 << 2, // RACE_DWARF
-	1 << 3, // RACE_KENDER
-	1 << 4, // RACE_MINOTAUR
-	1 << 5, // RACE_RAKSHASA
-	1 << 6, // RACE_SSAUR
-	1 << 7, // RACE_HALFELF
-	1 << 8, // RACE_HALFOGRE
-	1 << 9, // RACE_GNOME
+	1 << 0,  // RACE_HUMAN
+	1 << 1,  // RACE_ELF
+	1 << 2,  // RACE_DWARF
+	1 << 3,  // RACE_KENDER
+	1 << 4,  // RACE_MINOTAUR
+	1 << 5,  // RACE_RAKSHASA
+	1 << 6,  // RACE_SSAUR
+	1 << 7,  // RACE_HALFELF
+	1 << 8,  // RACE_HALFOGRE
+	1 << 9,  // RACE_GNOME
 	1 << 10, // RACE_GOBLIN
 	1 << 11, // RACE_BARBARIAN
 	1 << 12, // RACE_HALFLING

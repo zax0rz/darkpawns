@@ -246,7 +246,7 @@ func (am *AffectManager) Tick() {
 		for _, aff := range affects {
 			// Apply periodic effects before ticking (so effects apply on the last tick)
 			am.applyPeriodicEffect(entity, aff)
-			
+
 			expired := aff.Tick()
 
 			if expired {

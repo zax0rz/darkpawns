@@ -74,7 +74,7 @@ func (m *MockAffectable) GetHitRoll() int     { return m.hitRoll }
 func (m *MockAffectable) SetHitRoll(v int)    { m.hitRoll = v }
 func (m *MockAffectable) GetDamageRoll() int  { return m.damageRoll }
 func (m *MockAffectable) SetDamageRoll(v int) { m.damageRoll = v }
-func (m *MockAffectable) IsNPC() bool { return false }
+func (m *MockAffectable) IsNPC() bool         { return false }
 
 func (m *MockAffectable) GetArmorClass() int  { return m.armorClass }
 func (m *MockAffectable) SetArmorClass(v int) { m.armorClass = v }

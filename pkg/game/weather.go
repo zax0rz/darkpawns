@@ -67,10 +67,10 @@ type TimeInfoData struct {
 // WeatherData holds the current weather state.
 // Ported from structs.h:struct weather_data.
 type WeatherData struct {
-	Pressure  int
-	Change    int
-	Sky       int
-	Sunlight  int
+	Pressure int
+	Change   int
+	Sky      int
+	Sunlight int
 }
 
 var (
@@ -82,10 +82,10 @@ var (
 		Moon:  MoonNew,
 	}
 	weatherInfo = WeatherData{
-		Pressure:  1013,
-		Change:    0,
-		Sky:       SkyCloudless,
-		Sunlight:  SunLight,
+		Pressure: 1013,
+		Change:   0,
+		Sky:      SkyCloudless,
+		Sunlight: SunLight,
 	}
 	weatherMu sync.RWMutex
 )
@@ -320,9 +320,9 @@ func number(num, size int) int {
 // These are declared as package-level functions matching the C void prototypes.
 // ---------------------------------------------------------------------------
 
-func fullMoon()          {}
-func lunarHunter()       {}
-func loadNightGate()     {}
-func removeNightGate()   {}
-func ghostShipAppear()   {}
+func fullMoon()           {}
+func lunarHunter()        {}
+func loadNightGate()      {}
+func removeNightGate()    {}
+func ghostShipAppear()    {}
 func ghostShipDisappear() {}

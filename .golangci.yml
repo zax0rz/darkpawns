@@ -1,0 +1,141 @@
+# Dark Pawns — golangci-lint config (v2)
+# Run: golangci-lint run ./...
+
+version: "2"
+
+run:
+  go: "1.25"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - gocritic
+    - misspell
+  settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
+        # MUD output — player writes are fire-and-forget
+        - (*github.com/zax0rz/darkpawns/pkg/session.Session).SendMessage
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+    govet:
+      enable-all: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # Tests can be looser
+      - linters:
+          - errcheck
+          - unused
+        path: _test\.go
+      # gocritic: exclude paramTypeCombine (style noise in game code)
+      - linters:
+          - gocritic
+        text: "paramTypeCombine"
+      # gocritic: exclude importShadow (common in game layer)
+      - linters:
+          - gocritic
+        text: "importShadow"
+      # gocritic: skip these — too noisy or style preference for game code
+      - linters:
+          - gocritic
+        text: "captLocal"
+      - linters:
+          - gocritic
+        text: "unnamedResult"
+      - linters:
+          - gocritic
+        text: "ifElseChain"
+      - linters:
+          - gocritic
+        text: "commentedOutCode"
+      - linters:
+          - gocritic
+        text: "nestingReduce"
+      - linters:
+          - gocritic
+        text: "typeAssertChain"
+      # Unused: exclude spec_proc function signature params (cmd, arg, me — required by interface)
+      - linters:
+          - unused
+        source: "^func\\(.*cmd string"
+      - linters:
+          - unused
+        source: "^func\\(.*arg string"
+      - linters:
+          - unused
+        source: "^func\\(.*me \\*MobInstance"
+      # errcheck: MUD output patterns — safe to ignore
+      - linters:
+          - errcheck
+        source: "SendMessage\\("
+      - linters:
+          - errcheck
+        source: "\\.Write\\("
+      - linters:
+          - errcheck
+        source: "WriteMessage\\("
+      - linters:
+          - errcheck
+        source: "Publish\\("
+      - linters:
+          - errcheck
+        source: "StartCombat\\("
+      - linters:
+          - errcheck
+        source: "AddItem\\("
+      - linters:
+          - errcheck
+        source: "Equip\\("
+      - linters:
+          - errcheck
+        source: "Unequip\\("
+      - linters:
+          - errcheck
+        source: "Sscanf\\("
+      - linters:
+          - errcheck
+        source: "Attack\\("
+      - linters:
+          - misspell
+        source: 'say_spell.go'
+    paths:
+      - archive
+      - lib
+      - src
+      - third_party$
+      - builtin$
+      - examples$
+      - benchmarks$
+
+issues:
+  # Show all issues by default
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - archive
+      - lib
+      - src
+      - third_party$
+      - builtin$
+      - examples$
+      - benchmarks$

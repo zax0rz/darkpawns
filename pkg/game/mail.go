@@ -57,6 +57,7 @@ var MailFilePath = "mail"
 //	[40:99] txt (up to 59 bytes for header, null-terminated)
 //
 // For data blocks the layout is simpler:
+//
 //	[0:8]   block_type (link to next block or LAST_BLOCK)
 //	[8:99]  txt (up to 91 bytes)
 type mailBlock [BlockSize]byte
@@ -96,8 +97,8 @@ var (
 // Block encoding helpers
 // =========================================================================
 
-func (b *mailBlock) setBlockType(bt int8)   { b[0] = byte(bt) }
-func (b *mailBlock) blockType() int8        { return int8(b[0]) }
+func (b *mailBlock) setBlockType(bt int8) { b[0] = byte(bt) }
+func (b *mailBlock) blockType() int8      { return int8(b[0]) }
 
 func readLE64(buf []byte) int64 {
 	return int64(buf[0]) | int64(buf[1])<<8 | int64(buf[2])<<16 | int64(buf[3])<<24 |

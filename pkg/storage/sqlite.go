@@ -32,7 +32,7 @@ func NewSQLiteBackend(dbPath string) (*SQLiteBackend, error) {
 	}
 
 	// Configure connection pool
-	db.SetMaxOpenConns(1)   // SQLite WAL still prefers single writer
+	db.SetMaxOpenConns(1) // SQLite WAL still prefers single writer
 	db.SetMaxIdleConns(1)
 	db.SetConnMaxLifetime(5 * time.Minute)
 

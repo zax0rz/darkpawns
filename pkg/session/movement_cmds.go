@@ -12,7 +12,6 @@ import (
 
 // Ensure slog is used
 
-
 // cmdStand handles the 'stand' command.
 // Source: act.movement.c do_stand() lines 691–730
 func cmdStand(s *Session) error {
@@ -220,7 +219,6 @@ func cmdFleeMovement(s *Session) error {
 	broadcastToRoom(s, fmt.Sprintf("%s panics, and attempts to flee!", s.player.Name))
 
 	// Try random exits
-	fled := false
 	for i := 0; i < 6 && len(directions) > 0; i++ {
 		idx := rand.Intn(len(directions))
 		direction := directions[idx]
@@ -241,7 +239,6 @@ func cmdFleeMovement(s *Session) error {
 		}
 
 		// Successful flee
-		fled = true
 
 		// Apply XP loss for players level > 10
 		level := s.player.GetLevel()
@@ -284,10 +281,8 @@ func cmdFleeMovement(s *Session) error {
 		return cmdLook(s, nil)
 	}
 
-	if !fled {
-		s.Send("PANIC!  You couldn't escape!")
-		broadcastToRoom(s, fmt.Sprintf("%s tries to flee, but can't!", s.player.Name))
-	}
+	s.Send("PANIC!  You couldn't escape!")
+	broadcastToRoom(s, fmt.Sprintf("%s tries to flee, but can't!", s.player.Name))
 	return nil
 }
 

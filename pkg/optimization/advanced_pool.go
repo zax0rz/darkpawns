@@ -8,32 +8,32 @@ import (
 
 // AdvancedWorkerPool provides enhanced worker pool with metrics
 type AdvancedWorkerPool struct {
-	workers     int
-	taskQueue   chan func()
+	workers       int
+	taskQueue     chan func()
 	priorityQueue chan priorityTask
-	wg          sync.WaitGroup
-	mu          sync.RWMutex
-	closed      bool
-	metrics     PoolMetrics
-	stop        chan struct{}
+	wg            sync.WaitGroup
+	mu            sync.RWMutex
+	closed        bool
+	metrics       PoolMetrics
+	stop          chan struct{}
 }
 
 // PoolMetrics tracks pool performance
 type PoolMetrics struct {
-	TasksSubmitted   int64
-	TasksCompleted   int64
-	TasksFailed      int64
-	QueueLength      int64
-	PriorityLength   int64
-	AvgWaitTime      time.Duration
-	MaxWaitTime      time.Duration
+	TasksSubmitted    int64
+	TasksCompleted    int64
+	TasksFailed       int64
+	QueueLength       int64
+	PriorityLength    int64
+	AvgWaitTime       time.Duration
+	MaxWaitTime       time.Duration
 	WorkerUtilization float64
-	TotalWaitTime    time.Duration
+	TotalWaitTime     time.Duration
 }
 
 type priorityTask struct {
-	task     func()
-	priority int // 0=low, 1=normal, 2=high
+	task      func()
+	priority  int // 0=low, 1=normal, 2=high
 	submitted time.Time
 }
 
@@ -45,16 +45,16 @@ func NewAdvancedWorkerPool(workers, queueSize int) *AdvancedWorkerPool {
 		priorityQueue: make(chan priorityTask, queueSize/2),
 		stop:          make(chan struct{}),
 	}
-	
+
 	// Start worker goroutines
 	for i := 0; i < workers; i++ {
 		pool.wg.Add(1)
 		go pool.advancedWorker(i)
 	}
-	
+
 	// Start priority dispatcher
 	go pool.priorityDispatcher()
-	
+
 	return pool
 }
 
@@ -64,7 +64,7 @@ func (p *AdvancedWorkerPool) priorityDispatcher() {
 		select {
 		case pt := <-p.priorityQueue:
 			atomic.AddInt64(&p.metrics.PriorityLength, -1)
-			
+
 			// Try to send immediately
 			select {
 			case p.taskQueue <- pt.task:
@@ -92,22 +92,22 @@ func (p *AdvancedWorkerPool) priorityDispatcher() {
 
 func (p *AdvancedWorkerPool) advancedWorker(id int) {
 	defer p.wg.Done()
-	
+
 	for task := range p.taskQueue {
 		start := time.Now()
 		atomic.AddInt64(&p.metrics.QueueLength, -1)
-		
+
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
 					atomic.AddInt64(&p.metrics.TasksFailed, 1)
 				}
 			}()
-			
+
 			task()
 			atomic.AddInt64(&p.metrics.TasksCompleted, 1)
 		}()
-		
+
 		// Update metrics
 		processTime := time.Since(start)
 		p.mu.Lock()
@@ -123,7 +123,7 @@ func (p *AdvancedWorkerPool) advancedWorker(id int) {
 func (p *AdvancedWorkerPool) updateWaitTime(waitTime time.Duration) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	p.metrics.TotalWaitTime += waitTime
 	if p.metrics.TasksCompleted > 0 {
 		p.metrics.AvgWaitTime = p.metrics.TotalWaitTime / time.Duration(p.metrics.TasksCompleted)
@@ -142,19 +142,19 @@ func (p *AdvancedWorkerPool) Submit(task func()) error {
 func (p *AdvancedWorkerPool) SubmitWithPriority(task func(), priority int) error {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	
+
 	if p.closed {
 		return ErrPoolClosed
 	}
-	
+
 	atomic.AddInt64(&p.metrics.TasksSubmitted, 1)
-	
+
 	pt := priorityTask{
-		task:     task,
-		priority: priority,
+		task:      task,
+		priority:  priority,
 		submitted: time.Now(),
 	}
-	
+
 	// High priority tasks go to priority queue
 	if priority >= 2 {
 		select {
@@ -166,7 +166,7 @@ func (p *AdvancedWorkerPool) SubmitWithPriority(task func(), priority int) error
 			return ErrPoolFull
 		}
 	}
-	
+
 	// Normal and low priority tasks
 	select {
 	case p.taskQueue <- task:
@@ -199,22 +199,22 @@ func (p *AdvancedWorkerPool) SubmitBatch(tasks []func()) error {
 func (p *AdvancedWorkerPool) GetMetrics() PoolMetrics {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	
+
 	metrics := p.metrics
 	metrics.QueueLength = atomic.LoadInt64(&p.metrics.QueueLength)
 	metrics.PriorityLength = atomic.LoadInt64(&p.metrics.PriorityLength)
-	
+
 	if metrics.TasksSubmitted > 0 {
 		metrics.WorkerUtilization = float64(metrics.TasksCompleted) / float64(metrics.TasksSubmitted)
 	}
-	
+
 	return metrics
 }
 
 // GetQueueStats returns detailed queue statistics
 func (p *AdvancedWorkerPool) GetQueueStats() map[string]interface{} {
 	metrics := p.GetMetrics()
-	
+
 	stats := make(map[string]interface{})
 	stats["total_tasks"] = metrics.TasksSubmitted
 	stats["completed_tasks"] = metrics.TasksCompleted
@@ -225,7 +225,7 @@ func (p *AdvancedWorkerPool) GetQueueStats() map[string]interface{} {
 	stats["max_wait_time_ms"] = metrics.MaxWaitTime.Milliseconds()
 	stats["worker_utilization"] = metrics.WorkerUtilization
 	stats["success_rate"] = float64(metrics.TasksCompleted) / float64(metrics.TasksSubmitted)
-	
+
 	return stats
 }
 
@@ -233,15 +233,15 @@ func (p *AdvancedWorkerPool) GetQueueStats() map[string]interface{} {
 func (p *AdvancedWorkerPool) Resize(newWorkers int) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	if p.closed {
 		return ErrPoolClosed
 	}
-	
+
 	if newWorkers < 1 {
 		return ErrInvalidPoolSize
 	}
-	
+
 	// Add more workers
 	if newWorkers > p.workers {
 		for i := p.workers; i < newWorkers; i++ {
@@ -252,7 +252,7 @@ func (p *AdvancedWorkerPool) Resize(newWorkers int) error {
 		// Cannot easily reduce workers, they'll exit when pool closes
 		// For now, just update the count
 	}
-	
+
 	p.workers = newWorkers
 	return nil
 }
@@ -261,11 +261,11 @@ func (p *AdvancedWorkerPool) Resize(newWorkers int) error {
 func (p *AdvancedWorkerPool) Close() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	if p.closed {
 		return
 	}
-	
+
 	p.closed = true
 	close(p.stop)
 	close(p.taskQueue)

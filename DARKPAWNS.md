@@ -25,42 +25,28 @@ Dark Pawns is a 20-year-old DikuMUD derivate running ~68K lines of C. It works. 
 ## Phases
 
 ### Phase 1: Port (Waves 1-18)
-**Current status: ~80-85% complete** (see PORT-PLAN.md for exact numbers)
+**Current status: ~88% of C lines with Go counterparts** (see PORT-PLAN.md for exact numbers)
 
 The grind. Faithful C-to-Go translation of all ~68K lines. No rewrites. No redesigns. The game behaves identically. The only innovations are structural (packages, interfaces, goroutines instead of monolithic C files).
 
-**What remains:**
-- Remaining C files: clan.c, house.c, boards.c, whod.c, objsave.c, mobprog.c, constants.c, class.c
-- Under-ported areas: act.informative.c (~39%), handler.c (~92%), interpreter.c (~78%), hitroll/damroll from equipment
-- ~14,000 lines of Go to write across ~15 unaddressed C files
-- Wired into session boot: gate helpers (get_gate_phase from World), mail scan_file needs boot hook
-- graph.c remaining: do_track, hunt_victim (deferred — needs combat types)
+**What remains for full port:**
+- Objsave logic layer: Crash_load, Crash_save, Crash_crashsave, rent calc, receptionist — ~900 lines pending player/descriptor wiring
+- House logic: crashsave, delete_file, listrent, hcontrol cmds — ~600 lines
+- Under-ported: act.informative.c (~39%), spec_procs (~48%)
+- Stubs needing flesh: hitroll/damroll from equipment, dream/tattoo/weather events
+- ~8,500 lines of C logic remaining across ~12 files (stubs exist for most)
+- **Not porting:** 11 editor C files (~7,830 lines) — replaced by SPA dashboard
 
 **Tools:** DeepSeek V4 Flash for mechanical porting. Build → vet → commit per file.
 
-### Phase 2: Modernize (Wave 16)
-**Tool: GPT-5.5 Pro** — just launched April 24, 2026
-
-Once the port is complete, GPT-5.5 Pro reads the whole codebase and identifies modernization opportunities:
-- Go 1.24+ idioms (range over func, clear(), slog improvements)
-- Error wrapping patterns (proper `%w` vs `%v` usage)
-- Context propagation (where's it missing?)
-- Goroutine hygiene (leaks? proper lifecycle?)
-- Package boundaries (circular deps? god packages?)
-- Dead code / unnecessary indirection
-
-**Zero behavioral change.** This is not a rewrite. It's a polish pass. Everything that compiles and passes tests stays the same game.
-
-**Why GPT-5.5 Pro specifically:** Terminal-Bench 82.7%, Expert-SWE 73.1%. It's the first model that demonstrably holds context across large codebases and makes genuinely good structural suggestions. The "conceptual clarity" improvement is exactly what this job needs.
-
-### Phase 3: QA + Ship (Wave 17)
+### Phase 2: QA + Security (Wave 17)
 **Tools: Opus 4.6 (security), various (QA)**
 
 Two parallel tracks:
 - **QA:** Full codebase review for faithfulness gaps, error handling holes, logging consistency, test coverage. Portal: does the port reproduce the original game faithfully?
 - **Security:** Command injection, Lua sandbox bypass, privilege escalation, DoS vectors, websocket session hijacking, admin auth. Portal: can this ship without embarrassing us?
 
-### Phase 4: The Fun Phase (Wave 18+)
+### Phase 3: The Fun Phase (Wave 18+)
 Everything that was blocked by C:
 
 - **Web admin dashboard** — replaces all 11 OLC editors (~7,830 C lines not ported)
@@ -76,15 +62,12 @@ Everything that was blocked by C:
 The ordering is load-bearing:
 
 ```
-Port → Modernize (GPT-5.5 Pro) → QA → Security → Ship
+Port → QA → Security → Ship
 ```
 
-GPT-5.5 Pro goes **after** the port but **before** QA and Security because:
-1. It can't do its best work on a half-ported codebase — it needs the complete picture
-2. If it finds modernization opportunities that need structural changes, those should happen *before* QA validates behavior
-3. Security review against well-structured Go is more productive than against awkward Go
+Once the port is ~95%+ and the codebase is complete and compilable, the QA + Security pass validates it's a faithful port that's safe to ship. No separate modernization phase — the refactoring will happen organically as new features get built on top of clean foundations.
 
-This is also a mental health play. The port is the grind. Modernization with GPT-5.5 Pro is the "now it's *good*" phase. QA + Security is the "now it's *safe*" phase. By the time you get to admin features and agent hooks, the code is clean, tested, and secure — and you're building from a position of strength, not fighting the port.
+By the time you get to admin features and agent hooks, the code is working, tested, and secure — and you're building from a position of strength, not fighting the port.
 
 ---
 
@@ -106,10 +89,11 @@ BRENDA is the first implementation. The protocol is designed for multiple agents
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-04-25 | Wave 16 = GPT-5.5 Pro modernization | Best tool for post-port code review. Coming after port complete, before QA/security. |
-| 2026-04-25 | Wave 17 split into QA + Security | Different skills, different tools, parallelizable. QA = faithfulness, Security = injection/access. |
-| 2026-04-25 | Wave 15f = gate.c, graph.c, mail.c | 3 more C files ported (924 Go lines). gate.c (moongate helpers), graph.c (BFS pathfinding), mail.c (postmaster + mail file I/O). All building clean. |
-| 2026-04-25 | Wave 18 = Admin + Agent features | Lock admin features behind a clean foundation. Don't build dashboard on top of bad code. |
+| 2026-04-25 | Wave 16 = objsave binary types (not GPT modernization) | Binary layer unblocked houses.go stubs. GPT modernization deferred — not needed when port is ~88% done and stubs are in place. |
+| 2026-04-25 | ObjFromBinary gets world *World param | Avoided global `currentWorld` variable by passing world reference through parameter. V4-Flash subagent had this wrong — fixed in QA. |
+| 2026-04-25 | Wave 15f = gate.c, graph.c, mail.c | 3 more C files ported (924 Go lines). mail.go is first file-bound persistence layer (BLOCK_SIZE=100, LE64, linked block free list). |
+| 2026-04-25 | Wave 15g = constants.c | Sprinttype name tables ported — materials, container flags, room bitvectors. Committed (5d1f144). |
+| 2026-04-25 | No separate modernization phase | Scrapped GPT-5.5 Pro plan. Refactoring happens organically during feature work. |
 
 ---
 
@@ -120,19 +104,32 @@ BRENDA is the first implementation. The protocol is designed for multiple agents
 - `docs/research.md` — Architecture rationale, literature review, agent protocol spec
 - `docs/SWARM-LEARNINGS.md` — Lessons learned from previous port waves
 
+## Wave 15g (2026-04-25) — Constants port
+
+**File ported:** `src/constants.c` (name tables) → `pkg/game/constants.go` (682 lines)
+
+**What moved:** All `Sprinttype`-compatible name tables: materials, container flags, room bitvectors, drink names, exit flags, sector types, equipment positions, etc. Everything that was previously scattered across `act_comm.go` now lives in one constants file.
+
+**Build:** Clean. Commit 5d1f144.
+
 ## Wave 16 (2026-04-25) — objsave binary serialization layer
 
-**Files ported:** `src/objsave.c` (binary types + serialization)
+**File ported:** `src/objsave.c` (binary types + serialization — ~350 lines of C, ~240 lines Go)
 
-**Changes:**
-- Defined `ObjFileElem`, `RentInfo`, `ObjAffect` Go types matching C binary structs
-- `ObjFromBinary()` — deserializes 592-byte `obj_file_elem` to `*ObjectInstance`
-- `ObjToBinary()` — serializes `*ObjectInstance` to 592-byte binary blob
-- `DecodeRentInfo()` / `EncodeRentInfo()` — 56-byte rent header read/write
-- `CrashIsUnrentable()` — checks ITEM_NORENT flag and ITEM_KEY type
-- Wired `houses.go` `ObjFromStore`/`ObjToStore` to real binary functions
-- Removed unused `sync` import, fixed `currentWorld` → world param
+**What moved:**
+- `ObjAffect` (Go struct mirroring C `obj_affected_type`)
+- `ObjFileElem` (Go struct, ~592 bytes, binary-compatible with C `obj_file_elem`)
+- `RentInfo` (Go struct, 56 bytes, binary-compatible with C `rent_info`)
+- `ObjFromBinary()` → deserializes raw bytes to `*ObjectInstance`
+- `ObjToBinary()` → serializes `*ObjectInstance` to raw bytes
+- `DecodeRentInfo()` / `EncodeRentInfo()` → rent file header I/O
+- `CrashIsUnrentable()` → checks ITEM_NORENT flag and ITEM_KEY
+- `AutoEquip()`, `OfferRent()`, `CrashLoad()`, `CrashSave()`, `DeleteCrashFile()`, `CleanCrashFile()`, `SaveAllPlayers()`, `DeleteAliasFile()`, `RentSave()`, `CrashSave()`, `CryoSave()`, `GenReceptionist()`, `UpdateObjFiles()` — all stubs that export the function signature
 
-**Next:** Remaining objsave work: Crash_load, Crash_save, Crash_crashsave,
-Crash_rentsave, receptionist handler, crash file cleanup, rent calculation
-(these need player/descriptor wiring first)
+**Wiring:** `houses.go` `ObjFromStore()` → calls `ObjFromBinary()` with world param. `ObjToStore()` → calls `ObjToBinary()`. `houses.go` `HouseSaveObjects` and `houseLoad` updated for new return types.
+
+**Regressions fixed:** `currentWorld` global removed — ObjFromBinary takes `*World` param. Unused `sync` import removed.
+
+**Build:** `go build ./...` + `go vet ./...` clean. Commit df8e4be (202 insertions, 11 deletions). Docs commit b1db3d8.
+
+**What remains in objsave.c:** Crash_load, Crash_save, Crash_crashsave, Crash_cryosave, Crash_rentsave, Crash_calculate_rent, Crash_rent_deadline, Crash_report_rent, Crash_save_all, receptionist handler, crash file cleanup — ~900 lines of player/descriptor-wired logic. These can't be ported until the Character/Descriptor interfaces are solidified.

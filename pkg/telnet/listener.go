@@ -98,8 +98,8 @@ func ipFromAddr(addr string) string {
 
 type telnetConn struct {
 	net.Conn
-	br    *bufio.Reader
-	wmu   chan struct{} // buffered(1) acts as a write mutex
+	br  *bufio.Reader
+	wmu chan struct{} // buffered(1) acts as a write mutex
 }
 
 func handleConn(rawConn net.Conn, manager *session.Manager) {
@@ -234,28 +234,28 @@ func formatState(sm session.ServerMessage) string {
 	b.WriteString("\r\n---\r\n")
 
 	if player, ok := d["player"].(map[string]interface{}); ok {
-		b.WriteString(fmt.Sprintf("  %s", player["name"]))
+		fmt.Fprintf(&b, "  %s", player["name"])
 		if cls, ok := player["class"].(string); ok && cls != "" {
-			b.WriteString(fmt.Sprintf(" the %s", cls))
+			fmt.Fprintf(&b, " the %s", cls)
 		}
 		if race, ok := player["race"].(string); ok && race != "" {
-			b.WriteString(fmt.Sprintf(" (%s)", race))
+			fmt.Fprintf(&b, " (%s)", race)
 		}
-		b.WriteString(fmt.Sprintf("  Lvl %v  HP: %v/%v\r\n",
-			player["level"], player["health"], player["max_health"]))
+		fmt.Fprintf(&b, "  Lvl %v  HP: %v/%v\r\n",
+			player["level"], player["health"], player["max_health"])
 	}
 
 	if room, ok := d["room"].(map[string]interface{}); ok {
-		b.WriteString(fmt.Sprintf("\r\n  %s [%v]\r\n", room["name"], room["vnum"]))
+		fmt.Fprintf(&b, "\r\n  %s [%v]\r\n", room["name"], room["vnum"])
 		if desc, ok := room["description"].(string); ok {
-			b.WriteString(fmt.Sprintf("  %s\r\n", desc))
+			fmt.Fprintf(&b, "  %s\r\n", desc)
 		}
 		if exits, ok := room["exits"].([]interface{}); ok && len(exits) > 0 {
 			names := make([]string, len(exits))
 			for i, e := range exits {
 				names[i] = fmt.Sprintf("%v", e)
 			}
-			b.WriteString(fmt.Sprintf("  Exits: %s\r\n", strings.Join(names, ", ")))
+			fmt.Fprintf(&b, "  Exits: %s\r\n", strings.Join(names, ", "))
 		}
 	}
 

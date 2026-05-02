@@ -63,7 +63,10 @@ type StatModifiable interface {
 	RemoveMasterAffect(af *MasterAffect)
 	GetEquipment() interface {
 		GetItems() []interface {
-			GetAffects() []interface{ GetLocation() int; GetModifier() int }
+			GetAffects() []interface {
+				GetLocation() int
+				GetModifier() int
+			}
 			GetBitvector() uint64
 		}
 	}

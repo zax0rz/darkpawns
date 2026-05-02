@@ -55,6 +55,12 @@ jobs:
     - name: Install Go dependencies
       run: go mod download
 
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v7
+      with:
+        version: latest
+      continue-on-error: true  # Non-blocking until baseline is cleaned up
+
     - name: Run Go tests
       run: go test $(go list ./... | grep -v /tests/unit) -v
     

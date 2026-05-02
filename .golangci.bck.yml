@@ -1,0 +1,46 @@
+# Dark Pawns — golangci-lint config
+# Run: golangci-lint run ./...
+
+run:
+  timeout: 5m
+  go: "1.25"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - gofmt
+    - misspell
+    - gocritic
+
+linters-settings:
+  errcheck:
+    # Exclude common safe patterns
+    exclude-functions:
+      - fmt.Fprintf
+      - fmt.Fprintln
+  govet:
+    enable-all: false
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+
+issues:
+  # Show all issues by default
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  # Exclude generated and test files from some checks
+  exclude-dirs:
+    - archive
+    - lib
+    - src
+  exclude-rules:
+    # Tests can be looser
+    - path: _test\.go
+      linters:
+        - errcheck
+        - unused

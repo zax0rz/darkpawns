@@ -15,8 +15,8 @@ import (
 
 // Affect bit positions (from structs.h AFF_*)
 const (
-	affBlind      = 0  // AFF_BLIND
-	affSenseLife  = 5  // AFF_SENSE_LIFE  Char can sense hidden life
+	affBlind       = 0  // AFF_BLIND
+	affSenseLife   = 5  // AFF_SENSE_LIFE  Char can sense hidden life
 	affInfravision = 10 // AFF_INFRAVISION Char can see in dark
 )
 
@@ -953,16 +953,16 @@ func (w *World) FindTargetRoom(ch *Player, raw string) int {
 func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, recur bool) string {
 	var b strings.Builder
 	if num > 0 {
-		b.WriteString(fmt.Sprintf("O%3d. %-25s - ", num, obj.Prototype.ShortDesc))
+		fmt.Fprintf(&b, "O%3d. %-25s - ", num, obj.Prototype.ShortDesc)
 	} else {
-		b.WriteString(fmt.Sprintf("%33s", " - "))
+		fmt.Fprintf(&b, "%33s", " - ")
 	}
 	switch {
 	case obj.RoomVNum > 0:
 		if room, ok := w.rooms[obj.RoomVNum]; ok && room != nil {
-			b.WriteString(fmt.Sprintf("[%5d] %s\r\n", obj.RoomVNum, room.Name))
+			fmt.Fprintf(&b, "[%5d] %s\r\n", obj.RoomVNum, room.Name)
 		} else {
-			b.WriteString(fmt.Sprintf("[%5d] (unknown room)\r\n", obj.RoomVNum))
+			fmt.Fprintf(&b, "[%5d] (unknown room)\r\n", obj.RoomVNum)
 		}
 	case obj.Carrier != nil:
 		name := "someone"
@@ -971,7 +971,7 @@ func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, re
 		} else if m, ok := obj.Carrier.(*MobInstance); ok {
 			name = m.GetName()
 		}
-		b.WriteString(fmt.Sprintf("carried by %s\r\n", name))
+		fmt.Fprintf(&b, "carried by %s\r\n", name)
 	case obj.EquippedOn != nil:
 		name := "someone"
 		if p, ok := obj.EquippedOn.(*Player); ok {
@@ -979,9 +979,9 @@ func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, re
 		} else if m, ok := obj.EquippedOn.(*MobInstance); ok {
 			name = m.GetName()
 		}
-		b.WriteString(fmt.Sprintf("worn by %s\r\n", name))
+		fmt.Fprintf(&b, "worn by %s\r\n", name)
 	case obj.Container != nil:
-		b.WriteString(fmt.Sprintf("inside %s\r\n", obj.Container.Prototype.ShortDesc))
+		fmt.Fprintf(&b, "inside %s\r\n", obj.Container.Prototype.ShortDesc)
 	default:
 		b.WriteString("in an unknown location\r\n")
 	}

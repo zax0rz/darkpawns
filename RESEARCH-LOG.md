@@ -590,3 +590,198 @@ This is also the first time we're using a specific model release as a strategic 
 **[SURPRISE]** C source line count is actually 73,469 — significantly higher than the 68,823 reported by earlier estimates. Some of this is header files (which don't port 1:1), but some is genuine missed C code. The gap is larger than we thought.
 
 **[NEXT]** Next session should start with the updated PORT-PLAN.md and tackle the highest-priority unported files. Remaining big items: clan.c (1,574), house.c (744), boards.c (551), constants.c, class.c, act.informative.c coverage. Fight.c is ~98% via pkg/combat/fight_core.go.
+
+---
+
+## 2026-04-25 — Wave 15g: constants.c port
+
+**[RESULT]** Ported `constants.c` (~1,450 C lines) → `pkg/game/constants.go` (682 Go lines). All `Sprinttype`-compatible name tables: materials, container flags, room bitvectors, drink names, exit flags, sector types, equipment positions, item types, wear flags, apply types, room flags, exit flags, container flags, liquid names, connected states, dir names, trigger types. Build clean (commit 5d1f144).
+
+**[OBSERVATION]** The constants file is pure data — no logic. Everything is `var`s initialized inline (`var ItemTypes = []string{...}`). The C version had a lot of `const char *xxx_name[]` that got name-mangled by the old C compiler. Go's typed slices are cleaner.
+
+---
+
+## 2026-04-25 — Wave 16: objsave.c binary serialization layer
+
+**[RESULT]** Ported binary serialization types and core functions from `src/objsave.c` (1,250 lines C) → `pkg/game/objsave.go` (~240 new Go lines). This unblocks the `houses.go` persistence stubs.
+
+**Types defined:**
+- `ObjAffect` — 3×int32, matches C `obj_affected_type` (location + modifier + unused)
+- `ObjFileElem` — ~592 bytes, binary-compatible with C `struct obj_file_elem`. Matches 1:1 field-by-field including padding: 0-index, virt, [4]int32 extra_flags, [4]obj_flags, wear_flags, type, weight, timer, [5]bag, values, apply[6], inside, [3]byte reserved, inside_amount, cost, rent_cost, equipped_by, [6]tmp. Complex: equipment mapping uses cWearPosToGoSlot lookup table (0-20 C positions → Go EquipmentSlot, -1 for unused).
+- `RentInfo` — 56 bytes, binary-compatible with C `struct rent_info`. Owner name (20 bytes), [2]int32 spare, obj_count, rent_id, rent_until, rent_owner, room_vnum, room_rnum, saved_time, rent_due, cost_per_day.
+
+**Core functions:**
+- `ObjFromBinary(data []byte, world *World) (*ObjectInstance, int)` — Deserializes 592-byte blob into a heap-allocated `ObjectInstance`. Maps wear positions via `cWearPosToGoSlot`. Validates object existence via `world.GetObjectProto(vnum)`. Returns (nil, 0) on failure.
+- `ObjToBinary(obj *ObjectInstance) ([]byte, error)` — Serializes `ObjectInstance` to 592-byte blob. Maps Go EquipmentSlot back to C wear position via `goSlotToCWearPos`. Zeroes reserved fields.
+- `CrashIsUnrentable(obj *ObjectInstance) bool` — Returns true if obj is equipped or has ITEM_NORENT or is ITEM_KEY.
+- `DecodeRentInfo(data []byte) (*RentInfo, error)` — Reads 56-byte header from rent file.
+- `EncodeRentInfo(rent *RentInfo) ([]byte, error)` — Writes 56-byte header to rent file.
+- Plus stubs: `AutoEquip`, `OfferRent`, `CrashLoad`, `CrashSave`, `DeleteCrashFile`, `CleanCrashFile`, `SaveAllPlayers`, `DeleteAliasFile`, `RentSave`, `CrashSave` (overload), `CryoSave`, `GenReceptionist`, `UpdateObjFiles`.
+
+**[WIRING]** `houses.go` `ObjFromStore()` now calls `ObjFromBinary(data, w.world)` with proper world reference. `ObjToStore()` calls `ObjToBinary(obj)`. `HouseSaveObjects` and `houseLoad` updated for new return types `([]byte, error)` and `(*ObjectInstance, int)`.
+
+**[REGRESSION FIX — FAILURE MODE]** The V4-Flash subagent introduced a `currentWorld` global variable reference in `ObjFromBinary` — but no such global exists in the Go codebase. Fixed by adding `*World` as a param. Also left an unused `sync` import. Lesson: subagent code always needs QA for assumed globals and unused imports.
+
+**[TOOLING — FAILURE MODE]** V4-Pro timed out writing code — consumed budget on reading context then ran out of output tokens. V4-Flash wrote the actual code but introduced the `currentWorld` bug. The combo workflow (Pro for planning, Flash for execution) almost worked but the handoff lost context. Future: feed both context AND explicit signature expectations to Flash direct.
+
+**[OBSERVATION]** The `ObjFileElem` contains `equipped_by` (int32) and `[6]tmp` fields that C uses for temporary runtime data (not persisted). The Go struct must still include these for binary compatibility, but readers should skip them. The `reserved` padding at byte offset ~555 is critical — C compilers insert it for alignment; Go structs with `[3]byte reserved` + `int32` afterwards need this to match.
+
+**[NEXT]** Remaining objsave logic needs player/descriptor wiring: Crash_load (file I/O → ObjFromBinary → read_into_player), Crash_save (read_from_player → ObjToBinary → file I/O), Crash_crashsave (resolve player file path → WriteToFile), Crash_rentsave, Crash_cryosave, Crash_calculate_rent (pure function with rent_info fields), Crash_rent_deadline (time arithmetic), Crash_report_rent (player-facing rent report), Crash_save_all (iterate world players), receptionist handler (player-to-data-files flow). These can be ported once Character/Descriptor interfaces provide GetName(), GetFileName(), and GetObjList() access.
+
+---
+
+## 2026-04-29 — Chad Paper Mode: Full Autonomous Pipeline
+
+**[DESIGN] [OBSERVATION]** Chad weather trader went live today with a fully autonomous paper trading pipeline. Notable patterns for agent orchestration:
+
+**Scanner fix was the critical insight:** The scanner was querying the demo API for market prices, which has no order book (`yes_bid=None`). Fix: always use the live API for *read-only* data (zero trade risk). The read path and write path must be separate concerns even in paper mode. This maps to an interesting pattern: a component that's read-only should never talk through a sandbox that restricts data quality.
+
+**Autonomous loop structure:** `Clock → Scanner (live prices) → Edge detection (≥7% threshold) → Executor (demo API) → Open positions → Monitor (stop-loss/trailing) → Settlement → Calibration feedback`. Each stage is independently cron-driven (scan at 10a/12p, execute at 12:10p, settle at 7:30a, calibrate at 7:45a, monitor every 30min). The agent never manages the loop — it's emergent from independent schedulers.
+
+**Position monitor auto-exited 4 of 6 trades within 30 minutes** — trailing stop and stop-loss triggered autonomously. The exit decisions were market-driven (prices moved), not agent-driven. The agent only set thresholds; the system executed. This is closer to a reactive planner than an autonomous agent, and it's more robust for financial applications.
+
+**Calibration is the learning loop:** `settlements.jsonl` (NWS actual vs forecast) → `run_calibration.py` → `source_calibration.json` (MAE/bias per city) → scanner overrides. The agent doesn't learn by introspection; it learns by having its predictions compared against objective ground truth (NWS weather station data). 10 samples minimum threshold before calibration kicks in (~2 weeks of data).
+
+**Relevance to DP:** The separation of read vs write paths, the emergent autonomy from independent schedulers, and the objective-ground-truth learning loop are patterns that could apply to NPC agent coordination in the MUD. An NPC doesn't need to "think" about everything — it just needs its perception path, decision thresholds, and action path to be independently scheduled with the right data flow between them.
+
+### 2026-04-30 19:05 — Soul Test Complete
+
+[RESULT] **Flash 4.55/5.0 (PASS), Pro 3.00/5.0 (FAIL)**
+
+The soul test ran 15 prompts against both MiMo v2.5 Flash and Pro, scored by Gemini 2.5 Pro on 10 weighted criteria.
+
+Flash results:
+- Register Selection: 5/5
+- Parenthetical Warmth: 5/5
+- Hostile Helpfulness: 5/5
+- Terminal Grime: 5/5
+- Vocabulary: 5/5
+- Frontline Fidelity: 5/5
+- Tonal Whiplash: 4/5
+- Anti-Hedge: 4/5
+- Silmarillion Undertone: 4/5
+- Length Discipline: 4/5
+
+Pro results:
+- Tonal Whiplash: 1/5 (catastrophic — markdown headers killed the character)
+- Parenthetical Warmth: 2/5
+- Length Discipline: 2/5
+- Pro consistently chose "helpful AI" over character authenticity
+
+[DESIGN] Flash exclusively for Daeron. Pro purged. If Flash goes down, Daeron goes offline.
+
+[DESIGN] Hedge fix applied: "Never begin with 'It seems', 'Perhaps', 'I think'" added to SOUL.md voice discipline section.
+
+[HYPOTHESIS] Inverse Scaling in Persona Fidelity — smaller models with less RLHF alignment are better character renderers for non-standard personalities. This is the AIIDE 2027 paper thesis. Testable against Claude/GPT with similarly non-standard characters.
+
+[SURPRISE] The model that's "worse" at general tasks is *better* at being Daeron. RLHF alignment is a tax on character fidelity. The cheaper renderer has less ego.
+
+[DESIGN] All artifacts locked in version control. soul-test-runner.py enables regression testing if Xiaomi pushes weight updates.
+
+Files: soul-test-results/, soul-test-evaluation.md, voice-coaching-output-v2.md, daeron-SOUL.md (updated with voice discipline), daeron-TOOLS.md (updated with results)
+
+### 2026-05-01 15:00 — Wave 16 Kickoff
+
+[RESULT] **Port confirmed complete.** 66 C files → Go. Build clean, go vet clean. 7 TODOs remaining (5 hardening comments, 2 trivial). All 12/14 CRITICAL review fixes applied. H-25 (JWT rotation) already implemented with 1-hour effective lifetime + 15-min proactive refresh.
+
+[DESIGN] **Wave 16 strategy: parallel subagent swarms, not monolithic GPT-5.5 dump.**
+- Sprint A (DeepSeek V4 Pro): Phase 3 slog cleanup + Phase 2 error handling audit — mechanical, fast
+- Sprint B (Kimi K2.6): Phase 1 prep — object movement tests + ObjectLocation refactor design
+- Phase 4 (CustomData typed): queued after Sprint B completes
+- Phase 5 (file splits): queued after phases land
+- Phase 6 (type aliases): ongoing, incremental
+
+[OBSERVATION] **Agent infrastructure is more complete than expected.** Full stack exists:
+- `pkg/db/narrative_memory.go` — Postgres narrative memory with salience decay, bootstrap rendering, social event cross-referencing
+- `pkg/session/memory_hooks.go` — Manager-level hooks for mob kill, player death, memory bootstrap on connect
+- `pkg/agent/memory_hooks.go` — Go→Python REM synthesis bridge (fire-and-forget HTTP to Python AI system)
+- `scripts/dp_brenda.py` — 744-line Python agent with mem0/Qdrant integration, FSM+LLM hybrid, BRENDA SOUL
+- `scripts/dp_session_consolidate.py` — End-of-session LLM narrative consolidation (190 lines)
+- `scripts/dp_salience_decay.py` — Nightly cron for memory decay (120 lines)
+
+[DESIGN] **Gap analysis for AIIDE 2027 paper.** The gap between "working" and "publishable":
+1. **REM dreaming layer** — Python-side implementation. The Go hooks exist (`TriggerREMSynthesis`, `LogRetrieval`) but the Python endpoint doesn't. Need: memory consolidation during agent downtime, emergence detection (pattern extraction across sessions), dream injection into bootstrap.
+2. **10+ play sessions with mem0 live** — Need BRENDA running with memory ON for sustained play. Current sessions were mostly debugging FSM/memory parsing.
+3. **Behavioral measurement framework** — Need a way to prove narrative memory changes behavior. Hypothesis: agent avoids rooms where it died, references past events without explicit prompting. Need logging and analysis pipeline.
+4. **Evaluation metric** — "narrative coherence" doesn't exist as a measurable quantity. Need to define it. Options: (a) human evaluation protocol, (b) automated coherence scoring (consistency of references across sessions), (c) behavioral consistency metric (does agent behavior correlate with memory content).
+5. **Baseline comparison** — Same agent, same scenarios, with and without narrative memory. Show the delta.
+
+[HYPOTHESIS] The modernization work (Wave 16) indirectly helps the paper by making the server more stable for longer play sessions. A server that crashes loses session continuity. Stable server = more data = better paper.
+
+### 2026-04-30 20:17 — TOOLS.md v2 + Soul Interconnection
+
+[DESIGN] TOOLS.md completely rewritten by Gemini 2.5 Pro in Daeron's voice. Technical content preserved, framing in-character. "This is not who I am. That is a matter for the soul."
+
+[DESIGN] Daeron capabilities expanded: can now read/write Go code, build, deploy, restart server, create world content, dispatch to Pro for heavy work. Domain boundary: inside the process = Daeron, outside = the Machine.
+
+[DESIGN] Canonical naming locked: "the Architect" (Zach), "the Machine" (BRENDA), "Daeron" (loremaster/keeper), "Reek" (code crawler), "Pro" (tool model). "the Builder" purged from all three SOULs.
+
+[DESIGN] Soul interconnection complete. Reek knows Daeron directly, has heard of the Architect, has sensed the Machine. Daeron knows all three. Cross-references verified: Reek→Daeron 10 refs, Daeron→Reek 9 refs, "good reek" in both SOULs.
+
+[DESIGN] Pro is a compiler, not a colleague. Dispatched by Daeron, returns raw output, Daeron revoices for the Architect. Never speaks externally.
+
+[HYPOTHESIS] The TOOLS.md voice rewrite raises a question: does the *operational manual* being in-character actually improve the model's voice adherence? If the model reads its own architecture doc written in its voice, does that reinforce the SOUL.md instructions? Testable when Daeron goes online.
+
+Files: daeron-SOUL.md (updated), daeron-TOOLS.md (Gemini rewrite), reek-SOUL.md (updated), daeron-TOOLS-v1.md (archived)
+
+---
+
+## Wave 16 Modernization Session (2026-05-01)
+
+**Scope:** Wave 16 (GPT-5.5 QA equivalent) — slog cleanup, error handling, bug fixes, nosec/lint sweeps, codebase modernization.
+
+**Key commits (12):**
+```
+930526a refactor: fix golangci-lint bulk findings (errcheck, unused, QF, gosimple)
+8cc5aa3 refactor: fix golangci-lint staticcheck SA* findings
+39bb9c2 refactor: fix #nosec G104/G115/G304/G306 in pkg/game/
+876920f fix: restore log import in graph.go
+bbfc471 refactor: split remaining large files by behavioral concern
+5a47d88 refactor: split large files into focused modules
+f422621 refactor: migrate remaining CustomData writes to typed Runtime fields
+c5d0252 fix: ExtractObject equipment handling + AutoEquip location preservation
+817be13 refactor: handle inventory/equipment error returns
+65c7343 feat: object movement tests + ObjectLocation design doc
+```
+
+**Bugs fixed (3 real bugs found by K2.6 tests):**
+- ExtractObject ObjEquipped branch was a no-op — items stayed equipped during extraction
+- AutoEquip didn't set obj.Location — items retained ObjInRoom from NewObjectInstance after load
+- Save/load didn't preserve ObjectLocation state
+
+**Linting progress:**
+- #nosec: 592 → 405 (all G104/G115/G304/G306 gone; 394 G404 intentional remain)
+- staticcheck: 15 → 0
+- bulk lint: 134 → ~30 remaining
+- Total non-intentional findings: ~30 (errcheck on Close(), a few unused vars, QF string optimizations)
+
+**K2.6 subagent dispatches (10 total, 7 successful):**
+- Sprint B (tests + design): ✅ excellent — 7 tests, 3 bugs documented, design doc
+- CustomData migration: ✅ clean commit, GetSaveState() + MigrateCustomData() on all load paths
+- File splits: ✅ 44 files, 17 game modules, 24 session modules
+- nosec non-game: ✅ 61 files, ~156 annotations fixed
+- staticcheck: ✅ 15 SA* findings fixed
+- nosec game: ✅ committed (v1 failed, v2 succeeded)
+- bulk lint v1: ❌ analyzed but didn't commit
+- bulk lint v2: ⚠️ partial — fixed ~100 findings but introduced 3 broken files (telnet syntax errors, deleted `weights` var, deleted `fled` var). Required cleanup.
+- bug fix: ❌ returned source dump instead of fixes
+
+[RESULT] K2.6 $50 budget is excellent ROI for analysis/test-writing/bulk-mechanical work. ~$0.15 spent this session. Weakness: unreliable at targeted code edits — about 60-70% clean, needs cleanup passes. Never trust self-reported build success.
+
+**DeepSeek-TUI installed:**
+- `deepseek` CLI (v0.8.2) + `deepseek-tui` binary at `~/.cargo/bin/`
+- Authenticated with DeepSeek API key
+- AGENTS.md created with build commands, architecture, conventions
+- `exec` and `review` headless modes don't support shell tool use (chat-only)
+- Real power is interactive TUI (needs terminal) or HTTP server (`deepseek serve --http`)
+- Set up for hands-on use at workstation
+
+**Pipeline remaining:**
+1. ~30 remaining lint findings (errcheck Close(), unused vars, QF string optimizations)
+2. 11 TODO/FIXME comments (7 actionable, 4 aspirational)
+3. Dead code cleanup (comm_infra.go, unused types in parsing)
+4. Test coverage gap analysis (combat, spells, session, most game logic untested)
+5. 9 deferred structural items (C-02 through H-06, M-23)
+6. Final QA pass with big model → live play testing
+
+Files: AGENTS.md (created), RESEARCH-LOG.md, memory/subagent-orchestration-learnings.md (updated)

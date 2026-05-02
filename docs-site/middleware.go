@@ -2,6 +2,7 @@ package docssite
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,10 +16,7 @@ func DocsContentNegotiationMiddleware(next http.Handler, docsDir string) http.Ha
 		// Handle documentation requests
 		if strings.HasPrefix(r.URL.Path, "/docs") || r.URL.Path == "/" {
 			// Remove /docs prefix for Hugo site
-			path := r.URL.Path
-			if strings.HasPrefix(path, "/docs") {
-				path = strings.TrimPrefix(path, "/docs")
-			}
+			path := strings.TrimPrefix(r.URL.Path, "/docs")
 			if path == "" {
 				path = "/"
 			}
@@ -64,9 +62,7 @@ func serveMarkdownVersion(w http.ResponseWriter, r *http.Request, docsDir, path 
 		mdPath = filepath.Join(mdPath, "_index.md")
 	} else {
 		// Remove trailing slash
-		if strings.HasSuffix(path, "/") {
-			path = path[:len(path)-1]
-		}
+		path = strings.TrimSuffix(path, "/")
 
 		// Try different markdown file locations
 		possiblePaths := []string{
@@ -98,7 +94,9 @@ func serveMarkdownVersion(w http.ResponseWriter, r *http.Request, docsDir, path 
 	}
 
 	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	w.Write(content)
+	if _, err := w.Write(content); err != nil {
+		slog.Error("write markdown response", "error", err)
+	}
 }
 
 // serveHugoContent serves Hugo-generated HTML content
@@ -183,6 +181,8 @@ func GenerateSearchIndex(docsDir string) error {
 
 	// Write to file
 	indexPath := filepath.Join(docsDir, "public", "search-index.json")
-	os.MkdirAll(filepath.Dir(indexPath), 0755)
+	if err := os.MkdirAll(filepath.Dir(indexPath), 0755); err != nil {
+		return fmt.Errorf("create search index directory: %w", err)
+	}
 	return os.WriteFile(indexPath, []byte(jsonContent), 0644)
 }

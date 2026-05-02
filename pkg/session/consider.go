@@ -126,7 +126,7 @@ func cmdConsider(s *Session, args []string) error {
 	}
 
 	// Substitute $N, $E, $S, $M with appropriate pronouns
-	msg := resolvePronouns(firstLine + secondLine, targetNameFound, targetSex)
+	msg := resolvePronouns(firstLine+secondLine, targetNameFound, targetSex)
 
 	s.Send(msg)
 

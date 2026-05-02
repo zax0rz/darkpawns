@@ -73,17 +73,17 @@ func (sc *ShopCommands) CmdListShop(s common.CommandSession, args []string) erro
 
 	// Display shop inventory
 	var output strings.Builder
-	output.WriteString(fmt.Sprintf("%s's inventory:\r\n", shop.Name))
+	fmt.Fprintf(&output, "%s's inventory:\r\n", shop.Name)
 	output.WriteString("----------------------------------------\r\n")
 
 	for i, item := range inventory {
 		price := shop.CalculateSellPrice(item)
-		output.WriteString(fmt.Sprintf("%2d) %-30s %5d gold\r\n",
-			i+1, item.GetShortDesc(), price))
+		fmt.Fprintf(&output, "%2d) %-30s %5d gold\r\n",
+			i+1, item.GetShortDesc(), price)
 	}
 
 	output.WriteString("----------------------------------------\r\n")
-	output.WriteString(fmt.Sprintf("You have %d gold.\r\n", player.Gold))
+	fmt.Fprintf(&output, "You have %d gold.\r\n", player.Gold)
 
 	s.Send(output.String())
 	return nil

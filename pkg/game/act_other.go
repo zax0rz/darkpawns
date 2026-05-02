@@ -19,11 +19,11 @@ import (
 // ---------------------------------------------------------------------------
 
 const (
-	PlrOutlaw    = 0
-	PlrNODELETE  = 13
-	PlrCRYO      = 15
-	PlrWerewolf  = 16
-	PlrVampire   = 17
+	PlrOutlaw   = 0
+	PlrNODELETE = 13
+	PlrCRYO     = 15
+	PlrWerewolf = 16
+	PlrVampire  = 17
 )
 
 // ---------------------------------------------------------------------------
@@ -835,7 +835,7 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 
 	parts := strings.SplitN(arg, " ", 2)
 	itemArg := strings.TrimSpace(parts[0])
-	_ = itemArg  // suppress unused
+	_ = itemArg // suppress unused
 	if len(parts) > 1 {
 		_ = strings.TrimSpace(parts[1]) // subArg placeholder
 	}

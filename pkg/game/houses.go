@@ -609,9 +609,9 @@ func (w *World) HcontrolListHouses(ch *Player) {
 			lastPay = time.Unix(h.LastPayment, 0).Format("Jan 2 2006")
 		}
 
-		b.WriteString(fmt.Sprintf("%7d %7d  %-10s    %2d    %-12s %-10s %d\r\n",
+		fmt.Fprintf(&b, "%7d %7d  %-10s    %2d    %-12s %-10s %d\r\n",
 			h.VNum, h.Atrium, builtOn, h.NumOfGuests,
-			toTitle(toLower(ownerName)), lastPay, h.Key))
+			toTitle(toLower(ownerName)), lastPay, h.Key)
 
 		if h.NumOfGuests > 0 {
 			b.WriteString("     Guests: ")

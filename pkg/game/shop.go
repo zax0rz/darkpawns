@@ -91,9 +91,10 @@ func (sm *ShopManager) GetShopsInRoom(roomVNum int) []interface{} {
 
 // BuyPrice calculates the price a player pays to buy an item from the shop.
 // Matches src/shop.c buy_price() exactly:
-//   price = (int)(GET_OBJ_COST(obj) * SHOP_BUYPROFIT(shop_nr))
-//   if (GET_CHA(ch)) price -= price*(GET_CHA(ch)*.005)
-//   return MAX(MAX(price, 1), GET_OBJ_COST(obj))
+//
+//	price = (int)(GET_OBJ_COST(obj) * SHOP_BUYPROFIT(shop_nr))
+//	if (GET_CHA(ch)) price -= price*(GET_CHA(ch)*.005)
+//	return MAX(MAX(price, 1), GET_OBJ_COST(obj))
 func (s *Shop) BuyPrice(itemCost int, cha int) int {
 	price := float64(itemCost) * s.ProfitBuy
 
@@ -114,10 +115,11 @@ func (s *Shop) BuyPrice(itemCost int, cha int) int {
 
 // SellPrice calculates the price a shop pays the player for an item.
 // Matches src/shop.c sell_price() exactly:
-//   price = (int)(GET_OBJ_COST(obj) * SHOP_SELLPROFIT(shop_nr))
-//   if (GET_CHA(ch)) price += price*(GET_CHA(ch)*.005)
-//   if ((bprice = buy_price(ch, obj, shop_nr)) < price) price = bprice
-//   return MIN(MAX(1, price), GET_OBJ_COST(obj))
+//
+//	price = (int)(GET_OBJ_COST(obj) * SHOP_SELLPROFIT(shop_nr))
+//	if (GET_CHA(ch)) price += price*(GET_CHA(ch)*.005)
+//	if ((bprice = buy_price(ch, obj, shop_nr)) < price) price = bprice
+//	return MIN(MAX(1, price), GET_OBJ_COST(obj))
 func (s *Shop) SellPrice(itemCost int, cha int) int {
 	price := float64(itemCost) * s.ProfitSell
 

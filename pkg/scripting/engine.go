@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	lua "github.com/yuin/gopher-lua"
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // Engine manages the Lua VM.
@@ -55,14 +55,14 @@ func (e *Engine) newSafeLState() *lua.LState {
 	if osTable := L.GetGlobal("os"); osTable.Type() == lua.LTTable {
 		tb := osTable.(*lua.LTable)
 		tb.RawSetString("clock", lua.LNil)   // DoS: timing-detection busy loop
-		tb.RawSetString("execute", lua.LNil)  // arbitrary command execution
-		tb.RawSetString("exit", lua.LNil)     // crash the server
-		tb.RawSetString("getenv", lua.LNil)   // information disclosure
-		tb.RawSetString("remove", lua.LNil)   // file deletion
-		tb.RawSetString("rename", lua.LNil)   // file manipulation
-		tb.RawSetString("setenv", lua.LNil)   // affect other processes
+		tb.RawSetString("execute", lua.LNil) // arbitrary command execution
+		tb.RawSetString("exit", lua.LNil)    // crash the server
+		tb.RawSetString("getenv", lua.LNil)  // information disclosure
+		tb.RawSetString("remove", lua.LNil)  // file deletion
+		tb.RawSetString("rename", lua.LNil)  // file manipulation
+		tb.RawSetString("setenv", lua.LNil)  // affect other processes
 		tb.RawSetString("setlocale", lua.LNil)
-		tb.RawSetString("tmpname", lua.LNil)  // temp file creation
+		tb.RawSetString("tmpname", lua.LNil) // temp file creation
 	}
 
 	// Remove string.dump — produces bytecode that can exploit VM bugs
@@ -118,8 +118,8 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 const transitItemTTL = 30 * time.Second
 
 type transitEntry struct {
-	obj       ScriptableObject
-	placedAt  time.Time
+	obj      ScriptableObject
+	placedAt time.Time
 }
 
 // cleanTransitItems periodically removes orphaned items from the transit map.
@@ -188,7 +188,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		roomTbl := e.l.NewTable()
 		roomTbl.RawSetString("vnum", lua.LNumber(ctx.RoomVNum))
 
-			charTbl := L.NewTable()
+		charTbl := L.NewTable()
 		idx := 1
 		if e.world != nil {
 			for _, p := range e.world.GetPlayersInRoom(ctx.RoomVNum) {

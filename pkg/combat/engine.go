@@ -31,7 +31,7 @@ type CombatEngine struct {
 	// Combat ticker
 	ticker   *time.Ticker
 	stopChan chan struct{}
-	stopped atomic.Bool
+	stopped  atomic.Bool
 
 	// Message broadcaster function (set by game)
 	BroadcastFunc func(roomVNum int, message string, exclude string)

@@ -179,7 +179,7 @@ func PerformSubst(orig, subst string) (string, bool) {
 
 // AliasEntry represents a single alias mapping.
 type AliasEntry struct {
-	Alias string
+	Alias     string
 	Expansion string
 }
 
@@ -224,23 +224,23 @@ func PerformAlias(aliases []AliasEntry, input string) (string, bool) {
 
 // PromptConfig holds settings that influence prompt rendering.
 type PromptConfig struct {
-	ShowHP    bool
-	ShowMana  bool
-	ShowMove  bool
+	ShowHP     bool
+	ShowMana   bool
+	ShowMove   bool
 	ShowTarget bool
-	ShowTank  bool
-	Color     bool // Enable ANSI colors
+	ShowTank   bool
+	Color      bool // Enable ANSI colors
 }
 
 // DefaultPromptConfig returns the default prompt configuration.
 func DefaultPromptConfig() PromptConfig {
 	return PromptConfig{
-		ShowHP:    true,
-		ShowMana:  true,
-		ShowMove:  true,
+		ShowHP:     true,
+		ShowMana:   true,
+		ShowMove:   true,
 		ShowTarget: false,
-		ShowTank:  false,
-		Color:     true,
+		ShowTank:   false,
+		Color:      true,
 	}
 }
 

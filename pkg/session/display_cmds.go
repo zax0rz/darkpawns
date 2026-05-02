@@ -30,17 +30,17 @@ const (
 
 // VT100 escape sequences — from vt100.h
 const (
-	vtHomeClr  = "\033[H\033[J"                 // VT_HOMECLR
-	vtMarSet   = "\033[%d;%dr"                  // VT_MARGSET
-	vtCurSp    = "\033[%d;%dH"                  // VT_CURSPOS
-	vtCurSave  = "\033[s"                       // VT_CURSAVE
-	vtCurRest  = "\033[u"                       // VT_CURREST
-	vtNorm     = "\033[0m"                      // CCNRM — reset
-	vtGreen    = "\033[32m"                     // CCGRN
-	vtYellow   = "\033[33m"                     // CCYEL
-	vtRed      = "\033[31m"                     // CCRED
-	vtBlue     = "\033[34m"                     // CCBLU
-	vtMagenta  = "\033[35m"                     // CCMAG
+	vtHomeClr = "\033[H\033[J" // VT_HOMECLR
+	vtMarSet  = "\033[%d;%dr"  // VT_MARGSET
+	vtCurSp   = "\033[%d;%dH"  // VT_CURSPOS
+	vtCurSave = "\033[s"       // VT_CURSAVE
+	vtCurRest = "\033[u"       // VT_CURREST
+	vtNorm    = "\033[0m"      // CCNRM — reset
+	vtGreen   = "\033[32m"     // CCGRN
+	vtYellow  = "\033[33m"     // CCYEL
+	vtRed     = "\033[31m"     // CCRED
+	vtBlue    = "\033[34m"     // CCBLU
+	vtMagenta = "\033[35m"     // CCMAG
 )
 
 // infobarSeparator draws the separator line in the infobar.

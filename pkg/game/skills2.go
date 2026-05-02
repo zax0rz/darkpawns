@@ -38,24 +38,18 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 	//   29 = roots/tubers (field/hills), 30 = small desert creature,
 	//   31 = mountain herbs
 	var foodVNum int
-	isFind := true
 
 	switch sector {
 	case 3: // SECT_FOREST
 		foodVNum = 28
-		isFind = false // capture/kill
 	case 4, 5: // SECT_FIELD, SECT_HILLS
 		foodVNum = 29
-		isFind = false
 	case 7: // SECT_DESERT
 		foodVNum = 30
-		isFind = false
 	case 10: // SECT_MOUNTAIN
 		foodVNum = 31
-		isFind = true
 	case 14, 15, 16: // SECT_WATER_SWIM, SECT_WATER_NOSWIM, SECT_UNDERWATER
 		foodVNum = 27
-		isFind = false
 	default:
 		return SkillResult{
 			Success:     false,
@@ -72,22 +66,16 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 		if !ok {
 			// Fallback: just give generic food
 			return SkillResult{
-				Success:     true,
-				MessageToCh: "You find some edible scraps.\r\n",
+				Success:       true,
+				MessageToCh:   "You find some edible scraps.\r\n",
 				MessageToRoom: fmt.Sprintf("%s searches and finds something to eat.\r\n", ch.Name),
 			}
 		}
 		obj := NewObjectInstance(proto, ch.RoomVNum)
 		if obj != nil {
-			// placeholder: add item to inventory
-			msg := "You find $p."
-			if !isFind {
-				msg = "You capture and kill $p."
-			}
-			_ = msg // Would use ActMessage with item name
 			return SkillResult{
-				Success:     true,
-				MessageToCh: fmt.Sprintf("You find %s.\r\n", proto.ShortDesc),
+				Success:       true,
+				MessageToCh:   fmt.Sprintf("You find %s.\r\n", proto.ShortDesc),
 				MessageToRoom: fmt.Sprintf("%s finds %s.\r\n", ch.Name, proto.ShortDesc),
 			}
 		}
@@ -369,7 +357,9 @@ func DoSerpentKick(ch *Player, target combat.Combatant) SkillResult {
 // Simplified version: dig in current room based on sector type.
 // WAIT_STATE, move cost.
 // Sector types:
-//   SECT_DIRT (2), SECT_FOREST (3), SECT_FIELD (4), SECT_HILLS (5)
+//
+//	SECT_DIRT (2), SECT_FOREST (3), SECT_FIELD (4), SECT_HILLS (5)
+//
 // Success chance based on SKILL_DIG. Finds random loot.
 // ---------------------------------------------------------------------------
 func DoDig(ch *Player, world *World) SkillResult {
@@ -405,15 +395,15 @@ func DoDig(ch *Player, world *World) SkillResult {
 		loot := lootTypes[rand.Intn(len(lootTypes))]
 
 		return SkillResult{
-			Success:     true,
-			MessageToCh: fmt.Sprintf("You dig in the earth and find %s!\r\n", loot),
+			Success:       true,
+			MessageToCh:   fmt.Sprintf("You dig in the earth and find %s!\r\n", loot),
 			MessageToRoom: fmt.Sprintf("%s digs in the earth and finds something!\r\n", ch.Name),
 		}
 	}
 
 	return SkillResult{
-		Success:     false,
-		MessageToCh: "You dig but find nothing.\r\n",
+		Success:       false,
+		MessageToCh:   "You dig but find nothing.\r\n",
 		MessageToRoom: fmt.Sprintf("%s digs around but finds nothing.\r\n", ch.Name),
 	}
 }
@@ -482,9 +472,9 @@ func DoTurn(ch *Player, target combat.Combatant) SkillResult {
 
 	if diff > 3 {
 		return SkillResult{
-			Success:     true,
-			Damage:      ch.Level * 2,
-			MessageToCh: msgToCh + fmt.Sprintf("The undead creature shrieks and flees from your holiness!\r\n"),
+			Success:       true,
+			Damage:        ch.Level * 2,
+			MessageToCh:   msgToCh + fmt.Sprintf("The undead creature shrieks and flees from your holiness!\r\n"),
 			MessageToRoom: fmt.Sprintf("%s shrieks in terror!\r\n", target.GetName()),
 		}
 	}

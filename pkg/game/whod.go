@@ -201,11 +201,11 @@ func FormatWHOExtended(players []*Player, world *World, flags WhodFlags) string 
 		}
 
 		// --- Idle time ---
-		b.WriteString(fmt.Sprintf(" [%d min]", idleMins))
+		fmt.Fprintf(&b, " [%d min]", idleMins)
 
 		// --- Location ---
 		if location != "" {
-			b.WriteString(fmt.Sprintf(" in %s", location))
+			fmt.Fprintf(&b, " in %s", location)
 		}
 
 		b.WriteString("\r\n")

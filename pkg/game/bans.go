@@ -263,8 +263,8 @@ func BanListSummary() string {
 	})
 
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("%-25s  %-8s  %-10s  %-16s\r\n",
-		"Banned Site Name", "Ban Type", "Banned On", "Banned By"))
+	fmt.Fprintf(&b, "%-25s  %-8s  %-10s  %-16s\r\n",
+		"Banned Site Name", "Ban Type", "Banned On", "Banned By")
 	b.WriteString(strings.Repeat("-", 25) + "  " +
 		strings.Repeat("-", 8) + "  " +
 		strings.Repeat("-", 10) + "  " +
@@ -275,8 +275,8 @@ func BanListSummary() string {
 		if !entry.Date.IsZero() {
 			dateStr = entry.Date.Format("2006-01-02")
 		}
-		b.WriteString(fmt.Sprintf("%-25s  %-8s  %-10s  %-16s\r\n",
-			entry.Site, BanTypeName(entry.Type), dateStr, entry.Name))
+		fmt.Fprintf(&b, "%-25s  %-8s  %-10s  %-16s\r\n",
+			entry.Site, BanTypeName(entry.Type), dateStr, entry.Name)
 	}
 	return b.String()
 }
@@ -325,8 +325,9 @@ func ReadInvalidList() error {
 var HasActiveCharacter func(name string) bool
 
 // ValidName checks if a character name is valid:
-//   1. Check for active login (same name logged in)
-//   2. Check against invalid name list (profanity filter)
+//  1. Check for active login (same name logged in)
+//  2. Check against invalid name list (profanity filter)
+//
 // Ported from Valid_Name() in ban.c.
 func ValidName(name string) bool {
 	if name == "" {
@@ -357,5 +358,3 @@ func ValidName(name string) bool {
 
 	return true
 }
-
-

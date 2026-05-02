@@ -44,7 +44,7 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 	}
 
 	// Determine saving throw type based on cast type
-	savetype := SaveSpell
+	var savetype SavingThrowType
 	switch castType {
 	case CastWand:
 		savetype = SaveParalysis
