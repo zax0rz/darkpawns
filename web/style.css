@@ -185,6 +185,68 @@ body {
 
 #terminal .xterm { padding: 8px; }
 
+/* ── Status Bar ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0.4em 0.8em;
+  background: #141210;
+  border-top: 1px solid #2a2218;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.75rem;
+  color: #a89880;
+  letter-spacing: 0.03em;
+  flex-wrap: wrap;
+}
+.status-bar.hidden { display: none; }
+
+.stat-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.stat-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  color: #8a7a6a;
+  min-width: 2.2em;
+}
+
+.bar-track {
+  width: 80px;
+  height: 8px;
+  background: #0a0908;
+  border: 1px solid #2a2218;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 1px;
+}
+
+.stat-value {
+  font-size: 0.7rem;
+  color: #c4b89a;
+  min-width: 4em;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 14px;
+  background: #2a2218;
+}
+
+.stat-info {
+  font-size: 0.7rem;
+  color: #c4b89a;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: #0d0b07; }

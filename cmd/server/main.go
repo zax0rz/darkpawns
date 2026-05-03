@@ -61,6 +61,7 @@ func main() {
 		scriptsDir = flag.String("scripts", "", "Path to Lua scripts (defaults to world/lib/scripts)")
 		port       = flag.String("port", "8080", "Server port")
 		dbURL      = flag.String("db", "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable", "Database URL")
+		webDir     = flag.String("web", "", "Path to web client files (index.html, client.js, style.css)")
 	)
 	flag.Parse()
 
@@ -141,24 +142,19 @@ func main() {
 		}
 	})
 	http.HandleFunc("/metrics", metrics.Handler().ServeHTTP)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := w.Write([]byte(`Dark Pawns Phase 1 Server
-
-Connect via WebSocket: ws://` + r.Host + `/ws
-
-Endpoints:
-  /health - Health check
-  /metrics - Prometheus metrics
-
-Protocol:
-  {"type":"login","data":{"player_name":"YourName"}}
-  {"type":"command","data":{"command":"look"}}
-  {"type":"command","data":{"command":"north"}}
-  {"type":"command","data":{"command":"say","args":["hello"]}}
-`)); err != nil {
-			slog.Warn("index page write failed", "error", err)
-		}
-	})
+	// Serve web client if -web flag provided, otherwise plain text index
+	if *webDir != "" {
+		fs := http.FileServer(http.Dir(*webDir))
+		http.Handle("/", fs)
+		slog.Info("Serving web client", "path", *webDir)
+	} else {
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/plain")
+			if _, err := w.Write([]byte("Dark Pawns Server\nWebSocket: ws://" + r.Host + "/ws\n")); err != nil {
+				slog.Warn("index page write failed", "error", err)
+			}
+		})
+	}
 
 	// Setup API handler chain: Auth → ContentNegotiation
 	// The ContentNegotiationMiddleware serves OpenAPI spec and JSON responses.
