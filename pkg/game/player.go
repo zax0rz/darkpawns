@@ -155,6 +155,10 @@ type Player struct {
 	Title       string // Character title (shown in who list)
 	Description string // Character description (shown on examine)
 
+	// Prompt settings
+	PromptOn  bool   // Whether to show a prompt
+	PromptStr string // Custom prompt format (%h/%H hp, %m/%M mana, %v/%V mv)
+
 	// Misc stats — act.other.c
 	WimpLevel int `json:"wimp_level"`
 	Kills     int `json:"kills"`

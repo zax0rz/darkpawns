@@ -77,6 +77,16 @@ func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
 	}
 }
 
+// DoGet is the exported wrapper for doGet. Handles player get commands.
+func (w *World) DoGet(ch *Player, arg string) {
+	w.doGet(ch, nil, "get", arg)
+}
+
+// DoGive is the exported wrapper for doGive. Handles player give commands.
+func (w *World) DoGive(ch *Player, arg string) {
+	w.doGive(ch, nil, "give", arg)
+}
+
 // doGet handles the get/take command
 func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 	parts := strings.SplitN(arg, " ", 2)

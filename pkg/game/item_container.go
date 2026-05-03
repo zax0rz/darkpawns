@@ -21,6 +21,11 @@ func (w *World) performPut(ch *Player, obj, cont *ObjectInstance) {
 }
 
 // doPut handles the put command
+// DoPut is the exported wrapper for doPut. Handles player put commands.
+func (w *World) DoPut(ch *Player, arg string) {
+	w.doPut(ch, nil, "put", arg)
+}
+
 func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 	parts := strings.SplitN(arg, " ", 2)
 	arg1 := ""

@@ -336,6 +336,12 @@ func contIsCloseable(obj *ObjectInstance) bool {
 func contIsClosed(obj *ObjectInstance) bool {
 	return obj.Prototype.Values[contFlags]&contClosed != 0
 }
+
+// IsContainerClosed is the exported version of contIsClosed for session layer use.
+func IsContainerClosed(obj *ObjectInstance) bool {
+	return contIsClosed(obj)
+}
+
 func contIsLocked(obj *ObjectInstance) bool {
 	return obj.Prototype.Values[contFlags]&contLocked != 0
 }

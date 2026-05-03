@@ -583,13 +583,55 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 		return nil, fmt.Errorf("no exit %s", direction)
 	}
 
+	// Check if exit is closed (door)
+	// Note: door checks are done in cmdMove (session layer) via doorManager.
+	// MovePlayer just validates exits and applies movement costs.
+
 	newRoom, ok := w.rooms[exit.ToRoom]
 	if !ok {
 		return nil, fmt.Errorf("exit leads to invalid room %d", exit.ToRoom)
 	}
 
+	// Movement point cost — average of source and destination sector costs
+	// C source: act.movement.c:161 — (movement_loss[src] + movement_loss[dst]) >> 1
+	moveCost := (sectorMoveCost(currentRoom.Sector) + sectorMoveCost(newRoom.Sector)) / 2
+	if p.GetMove() < moveCost {
+		p.SendMessage("You are too exhausted.\r\n")
+		return nil, fmt.Errorf("too exhausted")
+	}
+	p.SetMove(p.GetMove() - moveCost)
+
 	p.RoomVNum = newRoom.VNum
 	return newRoom, nil
+}
+
+// sectorMoveCost returns movement point cost for a sector type.
+// Ported from act.movement.c movement_loss[] table.
+func sectorMoveCost(sector int) int {
+	switch sector {
+	case 0: // SECT_INSIDE
+		return 1
+	case 1: // SECT_CITY
+		return 1
+	case 2: // SECT_FIELD
+		return 2
+	case 3: // SECT_FOREST
+		return 3
+	case 4: // SECT_HILLS
+		return 4
+	case 5: // SECT_MOUNTAIN
+		return 6
+	case 6: // SECT_WATER_SWIM
+		return 4
+	case 7: // SECT_WATER_NOSWIM
+		return 4
+	case 8: // SECT_UNDERWATER
+		return 4
+	case 9: // SECT_FLYING
+		return 1
+	default:
+		return 1
+	}
 }
 
 // StopAITicker stops the AI tick loop.

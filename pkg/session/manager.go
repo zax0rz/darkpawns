@@ -198,6 +198,25 @@ func (m *Manager) SetDeathFunc() {
 					slog.Error("cmdLook failed after death", "player", victim.GetName(), "error", err)
 				}
 			}
+			return
+		}
+
+		// Auto-loot: if killer has autoloot enabled, loot the corpse
+		if killer != nil && !killer.IsNPC() && IsAutoLootEnabled(killer.GetName()) {
+			if player, ok := m.world.GetPlayer(killer.GetName()); ok {
+				// Use doGet to transfer items from corpse to player inventory
+				items := m.world.GetItemsInRoom(victim.GetRoom())
+				for _, item := range items {
+					if item.IsCorpse && len(item.Contains) > 0 {
+						m.world.DoGet(player, "all "+item.GetShortDesc())
+						break
+					}
+				}
+				// Refresh killer's UI
+				if s, ok := m.GetSession(killer.GetName()); ok {
+					s.markDirty(VarInventory, VarRoomItems)
+				}
+			}
 		}
 	}
 }

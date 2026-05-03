@@ -225,64 +225,45 @@ func cmdHold(s *Session, args []string) error {
 	return nil
 }
 
-// cmdGet picks up an item from the room.
+// cmdGet picks up an item from the room, container, or corpse.
+// Delegates to game-layer doGet which handles:
+//   get <item>, get all, get all.<item>, get <item> <container>
 func cmdGet(s *Session, args []string) error {
-	if len(args) == 0 {
+	arg := strings.Join(args, " ")
+	if arg == "" {
 		s.sendText("Get what?")
 		return nil
 	}
+	s.manager.world.DoGet(s.player, arg)
+	s.markDirty(VarInventory, VarRoomItems)
+	return nil
+}
 
-	itemName := strings.Join(args, " ")
-	roomVNum := s.player.GetRoom()
-
-	// Check if inventory is full
-	if s.player.Inventory.IsFull() {
-		s.sendText("Your inventory is full.")
+// cmdGive gives an item or gold to another character.
+// Delegates to game-layer doGive which handles:
+//   give <item> <player>, give <N> coins <player>, give <N> <player>
+func cmdGive(s *Session, args []string) error {
+	arg := strings.Join(args, " ")
+	if arg == "" {
+		s.sendText("Give what to who?")
 		return nil
 	}
+	s.manager.world.DoGive(s.player, arg)
+	s.markDirty(VarInventory)
+	return nil
+}
 
-	// Find item in room
-	items := s.manager.world.GetItemsInRoom(roomVNum)
-	for _, item := range items {
-		if strings.Contains(strings.ToLower(item.GetShortDesc()), strings.ToLower(itemName)) {
-			// Remove from room
-			if !s.manager.world.RemoveItemFromRoom(item, roomVNum) {
-				s.sendText("You can't get that.")
-				return nil
-			}
-
-			// Add to inventory
-			if err := s.player.Inventory.AddItem(item); err != nil {
-				// Put back in room
-				if err := s.manager.world.MoveObjectToRoom(item, roomVNum); err != nil {
-					slog.Error("MoveObjectToRoom rollback failed", "error", err)
-				}
-				s.sendText(fmt.Sprintf("Can't pick that up: %v", err))
-				return nil
-			}
-
-			s.sendText(fmt.Sprintf("You pick up %s.", item.GetShortDesc()))
-			s.markDirty(VarInventory, VarRoomItems)
-
-			// Notify room
-			msg, err := json.Marshal(ServerMessage{
-				Type: MsgEvent,
-				Data: EventData{
-					Type: "get",
-					From: s.player.Name,
-					Text: fmt.Sprintf("%s picks up %s.", s.player.Name, item.GetShortDesc()),
-				},
-			})
-			if err != nil {
-				slog.Error("json.Marshal error", "error", err)
-				return nil
-			}
-			s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
-			return nil
-		}
+// cmdPut puts an item into a container.
+// Delegates to game-layer doPut which handles:
+//   put <item> <container>, put all <container>, put all.<item> <container>
+func cmdPut(s *Session, args []string) error {
+	arg := strings.Join(args, " ")
+	if arg == "" {
+		s.sendText("Put what in what?")
+		return nil
 	}
-
-	s.sendText("You don't see that here.")
+	s.manager.world.DoPut(s.player, arg)
+	s.markDirty(VarInventory, VarRoomItems)
 	return nil
 }
 
