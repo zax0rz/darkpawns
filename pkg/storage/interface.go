@@ -28,8 +28,9 @@ type WorldStore interface {
 	// SaveWorld persists the full world state (rooms, mobs, shops, etc.).
 	SaveWorld(w *game.World) error
 
-	// LoadWorld retrieves the full world state.
-	LoadWorld() (*game.World, error)
+	// LoadWorld restores dynamic world state into an existing World.
+	// Must be called after NewWorld() and zone resets so mobs are spawned.
+	LoadWorld(w *game.World) error
 }
 
 // FullBackend combines both stores into a single persistence backend.

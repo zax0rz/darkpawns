@@ -44,12 +44,33 @@ func isOutlaw(ch *Player) bool {
 	return ch.Flags&plrOutlaw != 0
 }
 
-// isShopkeeper checks if a victim is a shopkeeper mob.
+// shopSpecNames are spec procedure names that indicate a shopkeeper.
+var shopSpecNames = map[string]bool{
+	"shop_keeper": true,
+	"guild":       true,
+	"guild_guard": true,
+	"butler":      true,
+	"clerk":       true,
+}
+
+// isShopkeeper checks if a victim is a shopkeeper.
+// Players cannot be shopkeepers. Returns false for all *Player victims.
+// For mob checks, use IsMobShopkeeper(mobVNum) directly.
+//
+// In the C code this was: IS_SHOPKEEPER(ch) =
+//   (ch)->player_specials->saved.command_interpreter == shop_keeper
+// Our Go equivalent uses the MobSpecAssign lookup table instead.
 func isShopkeeper(w *World, victim *Player) bool {
-	// In the C code, this checks sh_int spec of the mob prototype.
-	// For simplicity, check if the victim is NPC and has shop-related specs.
-	// This is a placeholder implementation.
 	_ = w
+	// Players cannot be shopkeepers.
+	return false
+}
+
+// IsMobShopkeeper checks if a mob VNum is assigned a shopkeeper-related spec.
+func IsMobShopkeeper(mobVNum int) bool {
+	if specName, ok := MobSpecAssign[mobVNum]; ok {
+		return shopSpecNames[specName]
+	}
 	return false
 }
 

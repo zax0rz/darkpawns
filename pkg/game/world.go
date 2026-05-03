@@ -234,6 +234,35 @@ func (w *World) GetPlayerByID(id int) *Player {
 	return nil
 }
 
+// SetObjectExtraDesc stores a runtime extra description on an object instance
+// matching the given vnum. The extra desc is stored in the ObjectInstance's
+// CustomData so it persists for the lifetime of the instance and is picked up
+// by GetExtraDescs() and GetExtraDesc().
+func (w *World) SetObjectExtraDesc(vnum int, keyword string, description string) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	for _, obj := range w.objectInstances {
+		if obj.VNum == vnum {
+			// Get existing runtime extra descs from CustomData
+			var descs []parser.ExtraDesc
+			if raw, ok := obj.CustomData["extra_descs"]; ok {
+				descs, _ = raw.([]parser.ExtraDesc)
+			}
+			if descs == nil {
+				descs = make([]parser.ExtraDesc, 0)
+			}
+			descs = append(descs, parser.ExtraDesc{
+				Keywords:    keyword,
+				Description: description,
+			})
+			obj.SetCustomData("extra_descs", descs)
+			return true
+		}
+	}
+	return false
+}
+
 // AddPlayer adds a player to the world.
 func (w *World) AddPlayer(p *Player) error {
 	w.mu.Lock()

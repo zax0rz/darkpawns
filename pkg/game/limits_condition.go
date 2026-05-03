@@ -117,6 +117,17 @@ func (w *World) PointUpdate() {
 		}
 		p.mu.Unlock()
 
+		// Jail timer — decrement each tick, auto-release when it hits 0
+		p.mu.Lock()
+		if p.JailTimer > 0 {
+			p.JailTimer--
+			if p.JailTimer == 0 {
+				p.SetRoom(MortalStartRoom)
+				p.SendMessage("\r\nYour jail sentence is served. You are free!\r\n")
+			}
+		}
+		p.mu.Unlock()
+
 		// Dream processing for sleeping characters
 		// Source: limits.c:476
 		if pos == PosSleeping {

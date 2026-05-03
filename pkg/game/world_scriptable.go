@@ -276,6 +276,10 @@ func (a *WorldScriptableAdapter) GetPlayerByID(id int) scripting.ScriptablePlaye
 	return a.world.GetPlayerByID(id)
 }
 
+func (a *WorldScriptableAdapter) SetObjectExtraDesc(vnum int, keyword string, description string) bool {
+	return a.world.SetObjectExtraDesc(vnum, keyword, description)
+}
+
 // scriptableObjWrapper wraps parser.Obj to implement ScriptableObject
 type scriptableObjWrapper struct {
 	obj *parser.Obj

@@ -161,18 +161,18 @@ func (b *SQLiteBackend) SaveWorld(w *game.World) error {
 	return nil
 }
 
-// LoadWorld retrieves world state.
-func (b *SQLiteBackend) LoadWorld() (*game.World, error) {
+// LoadWorld restores world state into an existing World from SQLite.
+func (b *SQLiteBackend) LoadWorld(w *game.World) error {
 	var data string
 	err := b.db.QueryRow("SELECT data FROM world_state WHERE id = 1").Scan(&data)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("no saved world state")
+		return nil // no saved state — first boot
 	}
 	if err != nil {
-		return nil, fmt.Errorf("load world from sqlite: %w", err)
+		return fmt.Errorf("load world from sqlite: %w", err)
 	}
 
-	return game.DeserializeWorld(data)
+	return game.DeserializeWorld(data, w)
 }
 
 // Close releases the database connection.

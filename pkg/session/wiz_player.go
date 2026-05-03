@@ -157,6 +157,14 @@ func cmdSwitch(s *Session, args []string) error {
 	origLevel := s.player.Level
 	origPlayer := s.player
 
+	// Save wizard state before switching
+	if err := game.SavePlayer(origPlayer); err != nil {
+		slog.Error("cmdSwitch: failed to save wizard state checkpoint",
+			"wizard", origPlayer.Name, "error", err)
+	} else {
+		slog.Info("switch: saved wizard state checkpoint", "wizard", origPlayer.Name)
+	}
+
 	// Look for a mob in the room
 	mobs := s.manager.world.GetMobsInRoom(roomVNum)
 	for _, mob := range mobs {
@@ -184,6 +192,14 @@ func cmdSwitch(s *Session, args []string) error {
 				s.Send("Fuuuuuuuuu!\r\n")
 				return nil
 			}
+			// Save target player state before switching
+			if err := game.SavePlayer(p); err != nil {
+				slog.Error("cmdSwitch: failed to save target player checkpoint",
+					"target", p.Name, "error", err)
+			} else {
+				slog.Info("switch: saved target player state checkpoint", "target", p.Name)
+			}
+
 			s.switchedOriginal = origPlayer
 			s.switchedOriginalLevel = origLevel
 			s.switchedPlayer = p
@@ -233,6 +249,24 @@ func cmdReturn(s *Session, args []string) error {
 				"from_player", s.switchedPlayer.GetName(),
 				"duration", duration,
 			)
+	}
+
+	// Save target character state to persist any changes made while switched
+	if s.switchedPlayer != nil {
+		if err := game.SavePlayer(s.switchedPlayer); err != nil {
+			slog.Error("cmdReturn: failed to save switched player state",
+				"player", s.switchedPlayer.Name, "error", err)
+		} else {
+			slog.Info("return: saved switched player state", "player", s.switchedPlayer.Name)
+		}
+	}
+
+	// Save wizard state before restoring
+	if err := game.SavePlayer(s.switchedOriginal); err != nil {
+		slog.Error("cmdReturn: failed to save wizard state before restore",
+			"wizard", s.switchedOriginal.Name, "error", err)
+	} else {
+		slog.Info("return: saved wizard state before restore", "wizard", s.switchedOriginal.Name)
 	}
 
 	s.player = s.switchedOriginal

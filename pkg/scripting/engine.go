@@ -2402,8 +2402,47 @@ func (e *Engine) luaObjExtra(L *lua.LState) int {
 }
 
 func (e *Engine) luaExtra(L *lua.LState) int {
-	// extra(obj, text)
-	// Engine gap: extra descriptions not yet mutable from Lua
+	// extra(obj, text) — set extra description text on an object instance.
+	// obj is an object table (returned by oload or obj_list), text is the
+	// description string to show when the object is examined.
+	// Source: scripts.c lua_extra() — calls act_extra() to add extra desc.
+	//
+	// Usage in head_shrinker.lua:
+	//   necklace = oload(ch, 7925, "char")
+	//   extra(necklace, "A necklace with names engraved: ...")
+	objTbl := L.Get(1)
+	text := L.ToString(2)
+
+	if objTbl.Type() != lua.LTTable || text == "" {
+		return 0
+	}
+
+	// Extract vnum from the object table
+	vnumVal := L.GetField(objTbl, "vnum")
+	if vnumVal.Type() != lua.LTNumber {
+		slog.Debug("extra: no vnum in object table")
+		return 0
+	}
+	vnum := int(vnumVal.(lua.LNumber))
+
+	// Also try to extract a keyword from the object's alias/name for matching
+	keyword := ""
+	aliasVal := L.GetField(objTbl, "alias")
+	if aliasVal.Type() == lua.LTString {
+		keyword = string(aliasVal.(lua.LString))
+	} else {
+		nameVal := L.GetField(objTbl, "name")
+		if nameVal.Type() == lua.LTString {
+			keyword = string(nameVal.(lua.LString))
+		}
+	}
+
+	if e.world != nil {
+		if !e.world.SetObjectExtraDesc(vnum, keyword, text) {
+			slog.Debug("extra: no ObjectInstance found for vnum", "vnum", vnum)
+		}
+	}
+
 	return 0
 }
 

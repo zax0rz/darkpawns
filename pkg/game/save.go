@@ -345,21 +345,283 @@ func DeserializePlayer(data string) (*Player, error) {
 	return saveDataToPlayer(sd), nil
 }
 
-// SerializeWorld serializes world state to JSON.
+
+// ---------------------------------------------------------------------------
+// World serialization — persists dynamic world state across server restarts.
+//
+// What is saved:
+//   - Door states (opened/closed/locked by players)
+//   - Active mob positions (mobs that moved from their spawn room)
+//   - Room items (items on the ground)
+//   - NextID counters (nextMobID, nextObjID)
+//   - Gossip history (last 25 messages)
+//
+// What is NOT saved:
+//   - Static room/mob/obj/zone definitions (reloaded from parser files)
+//   - Player data (handled by SavePlayer/LoadPlayer)
+//   - Spawner zone timers / zone dispatcher state (restarted on boot)
+// ---------------------------------------------------------------------------
+
+const worldStateFile = "./data/world_state.json"
+
+// saveWorldData is the top-level JSON-serializable structure for world state.
+type saveWorldData struct {
+	NextMobID  int                    `json:"next_mob_id"`
+	NextObjID  int                    `json:"next_obj_id"`
+	DoorStates map[int]map[string]int `json:"door_states"` // roomVNum → direction → DoorState
+	Mobs       []saveMobPosition      `json:"mobs"`
+	RoomItems  map[int][]saveItemRef  `json:"room_items"` // roomVNum → items
+	Gossip     []saveGossipEntry      `json:"gossip"`
+}
+
+// saveMobPosition captures a mob's runtime position and state.
+type saveMobPosition struct {
+	VNum      int `json:"vnum"`
+	ID        int `json:"id"`
+	RoomVNum  int `json:"room_vnum"`
+	CurrentHP int `json:"current_hp"`
+	MaxHP     int `json:"max_hp"`
+}
+
+// saveItemRef is a lightweight reference to an object in a room.
+type saveItemRef struct {
+	VNum int `json:"vnum"`
+	ID   int `json:"id"`
+}
+
+// saveGossipEntry captures one gossip message for the review buffer.
+type saveGossipEntry struct {
+	Name    string `json:"name"`
+	Message string `json:"message"`
+	Invis   int    `json:"invis"`
+}
+
+// SerializeWorld serializes dynamic world state to JSON.
 func SerializeWorld(w *World) (string, error) {
-	// World serialization is a stub for future use — world data is loaded from
-	// parser data files, not persisted state. This function will evolve when
-	// dynamic world state (zone resets, mob spawns, lock states) needs saving.
-	return "{}", nil
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	data := saveWorldData{
+		NextMobID:  w.nextMobID,
+		NextObjID:  w.nextObjID,
+		DoorStates: make(map[int]map[string]int),
+		Mobs:       make([]saveMobPosition, 0, len(w.activeMobs)),
+		RoomItems:  make(map[int][]saveItemRef),
+		Gossip:     make([]saveGossipEntry, 0, len(w.gossipHistory)),
+	}
+
+	// Collect non-default door states.
+	for vnum, room := range w.rooms {
+		if room.Exits == nil {
+			continue
+		}
+		for dir, exit := range room.Exits {
+			if exit.DoorState != 0 {
+				if data.DoorStates[vnum] == nil {
+					data.DoorStates[vnum] = make(map[string]int)
+				}
+				data.DoorStates[vnum][dir] = exit.DoorState
+			}
+		}
+	}
+
+	// Collect active mob positions and HP.
+	for _, mob := range w.activeMobs {
+		mob.mu.RLock()
+		data.Mobs = append(data.Mobs, saveMobPosition{
+			VNum:      mob.VNum,
+			ID:        mob.ID,
+			RoomVNum:  mob.RoomVNum,
+			CurrentHP: mob.CurrentHP,
+			MaxHP:     mob.MaxHP,
+		})
+		mob.mu.RUnlock()
+	}
+
+	// Collect room items (objects on the ground).
+	for roomVNum, items := range w.roomItems {
+		refs := make([]saveItemRef, 0, len(items))
+		for _, item := range items {
+			refs = append(refs, saveItemRef{
+				VNum: item.VNum,
+				ID:   item.ID,
+			})
+		}
+		if len(refs) > 0 {
+			data.RoomItems[roomVNum] = refs
+		}
+	}
+
+	// Copy gossip history.
+	w.gossipMu.RLock()
+	for _, entry := range w.gossipHistory {
+		data.Gossip = append(data.Gossip, saveGossipEntry{
+			Name:    entry.Name,
+			Message: entry.Message,
+			Invis:   entry.Invis,
+		})
+	}
+	w.gossipMu.RUnlock()
+
+	out, err := json.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("marshal world state: %w", err)
+	}
+	return string(out), nil
 }
 
-// DeserializeWorld deserializes world state from JSON.
-func DeserializeWorld(data string) (*World, error) {
-	// Stub: world state is loaded from static parser files.
-	return nil, fmt.Errorf("world deserialization not implemented yet")
+// DeserializeWorld restores dynamic world state from JSON.
+// Must be called AFTER zone resets have spawned mobs (so we can reposition them).
+func DeserializeWorld(data string, w *World) error {
+	var sd saveWorldData
+	if err := json.Unmarshal([]byte(data), &sd); err != nil {
+		return fmt.Errorf("unmarshal world state: %w", err)
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	// Restore nextID counters — always take the saved value if higher.
+	if sd.NextMobID > w.nextMobID {
+		w.nextMobID = sd.NextMobID
+	}
+	if sd.NextObjID > w.nextObjID {
+		w.nextObjID = sd.NextObjID
+	}
+
+	// Restore door states.
+	for roomVNum, dirMap := range sd.DoorStates {
+		room, ok := w.rooms[roomVNum]
+		if !ok || room.Exits == nil {
+			continue
+		}
+		for dir, state := range dirMap {
+			if exit, ok := room.Exits[dir]; ok {
+				exit.DoorState = state
+				room.Exits[dir] = exit // map value — must reassign
+			}
+		}
+	}
+
+	// Reposition active mobs.
+	// Build a lookup: VNum → []*MobInstance (mobs spawned by zone resets).
+	mobsByVNum := make(map[int][]*MobInstance)
+	for _, mob := range w.activeMobs {
+		mobsByVNum[mob.VNum] = append(mobsByVNum[mob.VNum], mob)
+	}
+
+	// Track which mob instances have been matched so we don't reposition
+	// the same instance twice.
+	matched := make(map[int]bool)
+	for _, saved := range sd.Mobs {
+		candidates := mobsByVNum[saved.VNum]
+		for _, mob := range candidates {
+			if matched[mob.ID] {
+				continue
+			}
+			mob.mu.Lock()
+			mob.RoomVNum = saved.RoomVNum
+			if saved.CurrentHP > 0 {
+				mob.CurrentHP = saved.CurrentHP
+			}
+			if saved.MaxHP > 0 {
+				mob.MaxHP = saved.MaxHP
+			}
+			mob.mu.Unlock()
+			matched[mob.ID] = true
+			break
+		}
+	}
+
+	// Restore room items.
+	// Items dropped on the ground need to be recreated from prototypes.
+	for roomVNum, refs := range sd.RoomItems {
+		if _, ok := w.rooms[roomVNum]; !ok {
+			continue // room doesn't exist anymore
+		}
+		for _, ref := range refs {
+			proto, ok := w.objs[ref.VNum]
+			if !ok {
+				slog.Warn("DeserializeWorld: unknown obj vnum", "vnum", ref.VNum)
+				continue
+			}
+			obj := NewObjectInstance(proto, roomVNum)
+			obj.ID = w.nextObjID
+			w.nextObjID++
+			obj.Location = LocRoom(roomVNum)
+			w.objectInstances[obj.ID] = obj
+			w.roomItems[roomVNum] = append(w.roomItems[roomVNum], obj)
+		}
+	}
+
+	// Restore gossip history.
+	w.gossipMu.Lock()
+	w.gossipHistory = make([]gossipEntry, 0, len(sd.Gossip))
+	for _, entry := range sd.Gossip {
+		w.gossipHistory = append(w.gossipHistory, gossipEntry{
+			Name:    entry.Name,
+			Message: entry.Message,
+			Invis:   entry.Invis,
+		})
+	}
+	w.gossipMu.Unlock()
+
+	return nil
 }
 
-// SavePlayerWithRent saves a player with rent metadata (rent code, cost, timestamp).
+// SaveWorld persists the world state to disk.
+func SaveWorld(w *World) error {
+	data, err := SerializeWorld(w)
+	if err != nil {
+		return fmt.Errorf("serialize world: %w", err)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(worldStateFile), 0750); err != nil {
+		return fmt.Errorf("create data dir: %w", err)
+	}
+
+	f, err := os.Create(filepath.Clean(worldStateFile))
+	if err != nil {
+		return fmt.Errorf("create world state file: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		return fmt.Errorf("encode world state: %w", err)
+	}
+
+	slog.Info("World state saved", "path", worldStateFile)
+	return nil
+}
+
+// LoadWorld restores the world state from disk.
+// Must be called after NewWorld() and StartZoneResets() so that mobs are
+// already spawned and can be repositioned.
+func LoadWorld(w *World) error {
+	f, err := os.Open(filepath.Clean(worldStateFile))
+	if err != nil {
+		if os.IsNotExist(err) {
+			slog.Debug("No world state file found, starting fresh")
+			return nil // not an error — first boot
+		}
+		return fmt.Errorf("open world state file: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	var raw string
+	if err := json.NewDecoder(f).Decode(&raw); err != nil {
+		return fmt.Errorf("decode world state: %w", err)
+	}
+
+	if err := DeserializeWorld(raw, w); err != nil {
+		return fmt.Errorf("deserialize world: %w", err)
+	}
+
+	slog.Info("World state loaded", "path", worldStateFile)
+	return nil
+}
 // Used by CrashSave, RentSave, CryoSave, Idlesave.
 func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
 	if p == nil {

@@ -78,5 +78,7 @@ func clamp(v, min, max int) int {
 // Security: checkLevel uses getEffectiveLevel() which returns the wizard's
 // original level even when switched — no privilege escalation.
 //
-// TODO(future): Save-state snapshots before/after switch (requires DB
-// transaction support in the persistence layer).
+// Save-state snapshots: before each switch the wizard's state is checkpointed
+// to disk via game.SavePlayer, and returned players are saved to persist any
+// changes made while controlled. On return, both target and wizard state are
+// saved before restoring the wizard to their original body.

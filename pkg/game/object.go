@@ -190,21 +190,29 @@ func (o *ObjectInstance) GetAffects() []parser.ObjAffect {
 	return nil
 }
 
-// GetExtraDescs returns the object's extra descriptions.
+// GetExtraDescs returns the object's extra descriptions, including runtime
+// extra descriptions added via Lua extra() (stored in CustomData).
 func (o *ObjectInstance) GetExtraDescs() []parser.ExtraDesc {
+	var descs []parser.ExtraDesc
 	if o.Prototype != nil {
-		return o.Prototype.ExtraDescs
+		descs = o.Prototype.ExtraDescs
 	}
-	return nil
+	// Append runtime extra descs from CustomData (set by Lua extra())
+	if o.CustomData != nil {
+		if raw, ok := o.CustomData["extra_descs"]; ok {
+			if runtimeDescs, ok := raw.([]parser.ExtraDesc); ok {
+				descs = append(descs, runtimeDescs...)
+			}
+		}
+	}
+	return descs
 }
 
 // GetExtraDesc returns an extra description matching the given keyword.
+// Checks both prototype extra descs and runtime extra descs (from Lua extra()).
 func (o *ObjectInstance) GetExtraDesc(keyword string) string {
-	if o.Prototype == nil {
-		return ""
-	}
-
-	for _, ed := range o.Prototype.ExtraDescs {
+	// Check all extra descs via GetExtraDescs (includes runtime from CustomData)
+	for _, ed := range o.GetExtraDescs() {
 		// Simple keyword matching - in reality would need to parse keywords
 		if ed.Keywords == keyword {
 			return ed.Description

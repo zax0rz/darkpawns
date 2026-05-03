@@ -164,6 +164,12 @@ type ScriptableWorld interface {
 
 	// GetPlayerByID returns a player by instance ID, or nil if not found.
 	GetPlayerByID(id int) ScriptablePlayer
+
+	// SetObjectExtraDesc stores a runtime extra description on an object instance
+	// identified by vnum. Used by the Lua extra() function to attach custom text
+	// to spawned objects (e.g., "look trophy" showing engraved names on a necklace).
+	// Returns true if an instance was found and updated.
+	SetObjectExtraDesc(vnum int, keyword string, description string) bool
 }
 
 // ScriptContext holds the game objects exposed to Lua as globals.

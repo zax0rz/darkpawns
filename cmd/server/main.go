@@ -180,6 +180,15 @@ func main() {
 		} else {
 			slog.Info("Zone resets complete")
 		}
+
+		// Restore dynamic world state (door states, mob positions, room items, gossip)
+		// AFTER zone resets have spawned mobs.
+		if err := game.LoadWorld(gameWorld); err != nil {
+			slog.Error("Failed to load world state", "error", err)
+		} else {
+			slog.Info("World state restored")
+		}
+
 		gameWorld.StartPeriodicResets(60 * time.Second)
 	}()
 
@@ -224,4 +233,9 @@ func main() {
 
 	<-sigChan
 	slog.Info("Shutting down...")
+
+	// Save dynamic world state before exit.
+	if err := game.SaveWorld(gameWorld); err != nil {
+		slog.Error("Failed to save world state", "error", err)
+	}
 }

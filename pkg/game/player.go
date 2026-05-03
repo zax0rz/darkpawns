@@ -202,6 +202,12 @@ type Player struct {
 	// Per-player command aliases stored in data/aliases/
 	Aliases []Alias
 
+	// JailTimer — ticks remaining in jail (0 = not jailed).
+	// Decremented each PointUpdate tick. When it reaches 0,
+	// the player is auto-released to MortalStartRoom.
+	// Source: structs.h GET_JAIL_TIMER / limits.c point_update()
+	JailTimer int
+
 	// LastDeath — timestamp of last death (unix time).
 	// Used by dream.c for nightmare progression.
 	LastDeath int64
@@ -238,6 +244,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		SkillManager: engine.NewSkillManager(),
 		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
 		WaitState:    0,
+		JailTimer:    0,
 		Parrying:    false,
 
 		SpellMap: make(map[string]int),

@@ -234,7 +234,7 @@ func (w *World) lookAtTarget(ch *Player, arg string) {
 	room := w.GetRoomInWorld(ch.RoomVNum)
 	if room != nil {
 		for _, item := range w.roomItems[room.VNum] {
-			for _, ed := range item.Prototype.ExtraDescs {
+			for _, ed := range item.GetExtraDescs() {
 				if strings.Contains(strings.ToLower(ed.Keywords), strings.ToLower(arg)) {
 					ch.SendMessage(ed.Description + "\r\n")
 					found = true
@@ -253,7 +253,7 @@ func (w *World) lookAtTarget(ch *Player, arg string) {
 			if item == nil {
 				continue
 			}
-			for _, ed := range item.Prototype.ExtraDescs {
+			for _, ed := range item.GetExtraDescs() {
 				if strings.Contains(strings.ToLower(ed.Keywords), strings.ToLower(arg)) {
 					ch.SendMessage(ed.Description + "\r\n")
 					found = true
@@ -273,7 +273,7 @@ func (w *World) lookAtTarget(ch *Player, arg string) {
 			if !ok {
 				continue
 			}
-			for _, ed := range item.Prototype.ExtraDescs {
+			for _, ed := range item.GetExtraDescs() {
 				if strings.Contains(strings.ToLower(ed.Keywords), strings.ToLower(arg)) {
 					ch.SendMessage(ed.Description + "\r\n")
 					found = true
