@@ -119,23 +119,9 @@ func diceRoll(n, d int) int {
 	return total
 }
 
-// hisHer returns the correct possessive pronoun
-
-// updatePosFromHP updates player position based on HP (C: update_pos from fight.c)
+// updatePosFromHP delegates to the canonical free function in limits_exp.go.
+// Kept as a World method for combat callers that have World receiver.
 func (w *World) updatePosFromHP(victim *Player) {
-	hp := victim.GetHP()
-	if hp > 0 && victim.GetPosition() > posStunned {
-		return
-	} else if hp > 0 {
-		victim.SetPosition(posStanding)
-	} else if hp <= -11 {
-		victim.SetPosition(posDead)
-	} else if hp <= -6 {
-		victim.SetPosition(posMortallyWounded)
-	} else if hp <= -3 {
-		victim.SetPosition(posIncapacitated)
-	} else {
-		victim.SetPosition(posStunned)
-	}
+	updatePosFromHP(victim, victim.GetHP())
 }
 

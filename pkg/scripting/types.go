@@ -161,6 +161,9 @@ type ScriptableWorld interface {
 	// IsHunting returns true if the character is hunting.
 	// Source: scripts.c lua_ishunt()
 	IsHunting(charName string, isMob bool) bool
+
+	// GetPlayerByID returns a player by instance ID, or nil if not found.
+	GetPlayerByID(id int) ScriptablePlayer
 }
 
 // ScriptContext holds the game objects exposed to Lua as globals.

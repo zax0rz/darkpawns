@@ -217,6 +217,18 @@ func (w *World) GetPlayer(name string) (*Player, bool) {
 	return p, ok
 }
 
+// GetPlayerByID finds a player by their instance ID.
+func (w *World) GetPlayerByID(id int) *Player {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	for _, p := range w.players {
+		if p.GetID() == id {
+			return p
+		}
+	}
+	return nil
+}
+
 // AddPlayer adds a player to the world.
 func (w *World) AddPlayer(p *Player) error {
 	w.mu.Lock()
@@ -447,7 +459,7 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 
 	case "drop":
 		// Mob drops item(s) to the room. "drop all" drops everything.
-		if args == "all" || args == "all" {
+		if args == "all" {
 			for _, obj := range mob.Inventory {
 				w.AddItemToRoom(obj, mob.GetRoomVNum())
 			}

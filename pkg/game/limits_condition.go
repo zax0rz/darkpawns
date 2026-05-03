@@ -209,12 +209,21 @@ func (w *World) PointUpdate() {
 		roomVNum := m.GetRoomVNum()
 
 		if pos >= PosStunned {
+			// HP regen — limits.c:498-501
 			if m.CurrentHP < m.MaxHP {
 				gain := MobHitGain(m)
 				m.CurrentHP += gain
 				if m.CurrentHP > m.MaxHP {
 					m.CurrentHP = m.MaxHP
 				}
+			}
+			// Poison damage — limits.c:503-504 (applies to ALL chars including NPCs)
+			if m.Affects&(1<<AffPoison) != 0 {
+				m.TakeDamage(10)
+			}
+			// Cutthroat damage — limits.c:505-506
+			if m.Affects&(1<<AffCutthroat) != 0 {
+				m.TakeDamage(13)
 			}
 		} else if pos == PosIncap {
 			m.TakeDamage(1)

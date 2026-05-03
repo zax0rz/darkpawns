@@ -272,6 +272,10 @@ func (a *WorldScriptableAdapter) IsHunting(charName string, isMob bool) bool {
 	return a.world.IsHunting(charName, isMob)
 }
 
+func (a *WorldScriptableAdapter) GetPlayerByID(id int) scripting.ScriptablePlayer {
+	return a.world.GetPlayerByID(id)
+}
+
 // scriptableObjWrapper wraps parser.Obj to implement ScriptableObject
 type scriptableObjWrapper struct {
 	obj *parser.Obj
