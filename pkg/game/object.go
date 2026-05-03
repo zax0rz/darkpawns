@@ -451,6 +451,14 @@ func (o *ObjectInstance) HasExtraFlag(word, bit int) bool {
 	return ef[word]&(1<<uint(bit)) != 0
 }
 
+// RemoveExtraFlag clears a bit in the instance-level extra flags override.
+func (o *ObjectInstance) RemoveExtraFlag(word, bit int) {
+	if word < 0 || word >= len(o.ExtraFlagsOverride) || bit < 0 || bit >= 32 {
+		return
+	}
+	o.ExtraFlagsOverride[word] &^= (1 << uint(bit))
+}
+
 // SetAffectsOverride sets the instance-level affect overrides.
 func (o *ObjectInstance) SetAffectsOverride(affects []parser.ObjAffect) {
 	o.AffectsOverride = affects

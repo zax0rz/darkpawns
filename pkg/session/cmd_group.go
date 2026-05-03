@@ -236,6 +236,15 @@ func cmdGtell(s *Session, args []string) error {
 	}
 
 	text := strings.Join(args, " ")
+
+	// Word filter + spam check
+	filtered, block := filterCommMessage(s, text)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	text = filtered
+
 	broadcastMsg := fmt.Sprintf("%s tells the group, '%s'\r\n", s.player.Name, text)
 
 	// Find leader — act.comm.c do_gsay() line 838–841

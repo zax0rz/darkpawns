@@ -263,6 +263,46 @@ func (w *World) SetObjectExtraDesc(vnum int, keyword string, description string)
 	return false
 }
 
+// SetObjectExtraFlag sets or removes an extra flag on the first object instance
+// matching the given vnum.
+func (w *World) SetObjectExtraFlag(vnum int, flag int, set bool) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	word := flag / 32
+	bit := flag % 32
+
+	for _, obj := range w.objectInstances {
+		if obj.VNum == vnum {
+			if set {
+				obj.SetExtraFlag(word, bit)
+			} else {
+				obj.RemoveExtraFlag(word, bit)
+			}
+			return true
+		}
+	}
+	return false
+}
+
+// SetExitDoorState sets the door state for an exit in a room.
+func (w *World) SetExitDoorState(roomVNum int, direction string, state int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	room, ok := w.rooms[roomVNum]
+	if !ok {
+		return false
+	}
+	exit, ok := room.Exits[direction]
+	if !ok {
+		return false
+	}
+	exit.DoorState = state
+	room.Exits[direction] = exit
+	return true
+}
+
 // AddPlayer adds a player to the world.
 func (w *World) AddPlayer(p *Player) error {
 	w.mu.Lock()
@@ -539,7 +579,9 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 					if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.ShortDesc), strings.ToLower(itemName)) {
 						mob.Inventory = append(mob.Inventory[:i], mob.Inventory[i+1:]...)
 						if target.Inventory != nil {
-							target.Inventory.AddItem(obj)
+							if err := target.Inventory.AddItem(obj); err != nil {
+								slog.Debug("give: AddItem error", "error", err)
+							}
 						}
 						break
 					}
@@ -942,6 +984,18 @@ func (w *World) GetMobsInRoom(roomVNum int) []*MobInstance {
 		}
 	}
 	return mobs
+}
+
+// GetAllObjects returns all active object instances in the world.
+func (w *World) GetAllObjects() []*ObjectInstance {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	objs := make([]*ObjectInstance, 0, len(w.objectInstances))
+	for _, o := range w.objectInstances {
+		objs = append(objs, o)
+	}
+	return objs
 }
 
 // GetAllMobs returns all active mobs in the world.

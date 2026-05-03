@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -413,16 +414,28 @@ func (w *World) GetFirstMobInRoomByVNum(roomVNum int, vnum int) *MobInstance {
 	return nil
 }
 
-// MovePlayerToRoom moves a player to a room by VNum.
-func (w *World) MovePlayerToRoom(p *Player, vnum int) {
+// MovePlayerToRoom moves a player or mob to a room by VNum.
+func (w *World) MovePlayerToRoom(p interface{ SetRoom(int) }, vnum int) {
 	p.SetRoom(vnum)
 }
 
-// GetMount returns the player's mount if they have one (stub).
-func (w *World) GetMount(p *Player) *Player { return nil }
+// GetMount returns the player's mount if they have one.
+func (w *World) GetMount(p *Player) *MobInstance {
+	if !p.IsAffected(affMounted) {
+		return nil
+	}
+	for _, m := range w.activeMobs {
+		if m.MountRider == p.Name {
+			return m
+		}
+	}
+	return nil
+}
 
-// LookAtRoom sends the room description to the player (stub).
-func (w *World) LookAtRoom(p *Player, brief bool) {}
+// LookAtRoom sends the room description to the player.
+func (w *World) LookAtRoom(p *Player, brief bool) {
+	w.lookAtRoom(p, !brief)
+}
 
 // CreateObject creates an object instance from a prototype and spawns it in a room.
 func (w *World) CreateObject(vnum int, roomVNum int) *ObjectInstance {
@@ -456,8 +469,41 @@ func (w *World) StartMobCombat(attacker, defender *MobInstance) {
 	}
 }
 
-// hasPlrFlag checks if a player has a named flag (stub).
-func hasPlrFlag(p *Player, flag string) bool { return false }
+// plrFlagMap maps PLR flag names to their bit positions.
+var plrFlagMap = map[string]int{
+	"outlaw":    PlrOutlaw,
+	"open":      PlrOpen,
+	"frozen":    PlrFrozen,
+	"dontset":   PlrDontset,
+	"writing":   PlrWriting,
+	"mailing":   PlrMailing,
+	"crash":     PlrCrash,
+	"siteok":    PlrSiteok,
+	"noshout":   PlrNoshout,
+	"notitle":   PlrNotitle,
+	"deleted":   PlrDeleted,
+	"loadroom":  PlrLoadroom,
+	"nowizlist": PlrNowizlist,
+	"nodelete":  PlrNODELETE,
+	"invstart":  PlrInvstart,
+	"cryo":      PlrCRYO,
+	"werewolf":  PlrWerewolf,
+	"vampire":   PlrVampire,
+	"it":        PlrIt,
+	"chosen":    PlrChosen,
+	"remort":    PlrRemort,
+	"extract":   PlrExtract,
+	"calibrate": 22, // custom flag used by emporium guard mobprogs
+}
+
+// hasPlrFlag checks if a player has a named PLR flag.
+func hasPlrFlag(p *Player, flag string) bool {
+	bit, ok := plrFlagMap[strings.ToLower(flag)]
+	if !ok {
+		return false
+	}
+	return p.Flags&(1<<uint(bit)) != 0
+}
 
 // IsTakeable returns true if the object has ITEM_WEAR_TAKE flag.
 func (o *ObjectInstance) IsTakeable() bool {

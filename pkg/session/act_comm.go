@@ -73,6 +73,15 @@ func cmdWhisper(s *Session, args []string) error {
 
 	targetName := args[0]
 	message := strings.Join(args[1:], " ")
+
+	// Word filter + spam check
+	filtered, block := filterCommMessage(s, message)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	message = filtered
+
 	roomVNum := s.player.GetRoomVNum()
 
 	// Find target in the same room

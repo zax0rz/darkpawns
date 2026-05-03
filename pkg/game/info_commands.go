@@ -1,7 +1,10 @@
 //nolint:unused // Game logic port — not yet wired to command registry.
 package game
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 func (w *World) doScore(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	classNames := map[int]string{
@@ -118,13 +121,69 @@ func (w *World) doLevels(ch *Player, me *MobInstance, cmd string, arg string) bo
 // ---------------------------------------------------------------------------
 
 func (w *World) doColor(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	ch.SendMessage("Color is not yet implemented.\r\n")
+	arg = strings.TrimSpace(arg)
+	if arg == "" {
+		on := (ch.Flags&(1<<PrfColor1|1<<PrfColor2)) != 0
+		if on {
+			ch.SendMessage("Color is ON.\r\n")
+		} else {
+			ch.SendMessage("Color is OFF.\r\n")
+		}
+		return true
+	}
+
+	switch strings.ToLower(arg) {
+	case "on":
+		ch.Flags |= (1 << PrfColor1) | (1 << PrfColor2)
+		ch.SendMessage("Color is now ON.\r\n")
+	case "off":
+		ch.Flags &^= (1 << PrfColor1) | (1 << PrfColor2)
+		ch.SendMessage("Color is now OFF.\r\n")
+	default:
+		ch.SendMessage("Usage: color <on|off>\r\n")
+	}
 	return true
 }
 
 func (w *World) doToggle(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	ch.SendMessage("Toggles are not yet implemented.\r\n")
+	arg = strings.TrimSpace(arg)
+	if arg == "" {
+		ch.SendMessage("Toggles:\r\n")
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autoexit", onOff(ch.AutoExit)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "holylight", onOff(ch.HolyLight)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "roomflags", onOff(ch.RoomFlags)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autogold", onOff(ch.AutoGold)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autosplit", onOff(ch.AutoSplit)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "nobroadcast", onOff(ch.NoBroadcast)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "color", flagOnOff(ch.Flags, PrfColor1)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "brief", flagOnOff(ch.Flags, PrfBrief)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "compact", flagOnOff(ch.Flags, PrfCompact)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "notell", flagOnOff(ch.Flags, PrfNotell)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "deaf", flagOnOff(ch.Flags, PrfDeaf)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "nohassle", flagOnOff(ch.Flags, PrfNohassle)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "summonable", flagOnOff(ch.Flags, PrfSummonable)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "afk", onOff(ch.AFK)))
+		ch.SendMessage("Type 'toggle <name>' to change a setting.\r\n")
+		return true
+	}
+
+	// Delegate to doGenTog for individual toggle changes
+	w.doGenTog(ch, me, arg, "")
 	return true
+}
+
+func onOff(b bool) string {
+	if b {
+		return "ON"
+	}
+	return "OFF"
+}
+
+func flagOnOff(flags uint64, bit int) string {
+	if flags&(1<<bit) != 0 {
+		return "ON"
+	}
+	return "OFF"
 }
 
 // ---------------------------------------------------------------------------

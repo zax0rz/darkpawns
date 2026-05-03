@@ -17,8 +17,8 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 	if wielded.Prototype.Values[3] != 11 { // TYPE_PIERCE
 		return SkillResult{Success: false, MessageToCh: "Only piercing weapons can be used for disemboweling."}
 	}
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404 — game RNG
 	percent := rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillDisembowel)
@@ -51,8 +51,8 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You're too exhausted!"}
 	}
 	ch.Move -= 10
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := ((5 - (target.GetAC()/10))*2) + (rand.Intn(101) + 1)
 	prob := ch.GetSkill(SkillDragonKick)
@@ -83,8 +83,8 @@ func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 	if func() bool { _, ok := ch.Equipment.GetItemInSlot(SlotWield); return ok }() {
 		return SkillResult{Success: false, MessageToCh: "That's pretty tough to do while wielding a weapon."}
 	}
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := ((7 - (target.GetAC()/10))*2) + (rand.Intn(101) + 1)
 	prob := ch.GetSkill(SkillTigerPunch)
@@ -148,8 +148,8 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 	if target.GetFighting() != "" {
 		return SkillResult{Success: false, MessageToCh: "You can't get close enough!"}
 	}
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := rand.Intn(101+target.GetLevel()) + 1
 	prob := ch.GetSkill(SkillSubdue)
@@ -191,8 +191,8 @@ func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
 	if target.GetFighting() != "" {
 		return SkillResult{Success: false, MessageToCh: "You can't get a good grip on them while they're fighting!"}
 	}
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := rand.Intn(101+target.GetLevel()) + 1
 	prob := ch.GetSkill(SkillSleeper)
@@ -232,8 +232,8 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You haven't the energy to do this!"}
 	}
 	ch.Move -= 51
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := ((7 - (target.GetAC()/10))*2) + (rand.Intn(101) + 1)
 	prob := ch.GetSkill(SkillNeckbreak)
@@ -265,8 +265,8 @@ func DoAmbush(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "They're too alert for that, currently."}
 	}
 	ch.SendMessage("You crouch in the shadows and plan your ambush...\r\n")
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := rand.Intn(131) + 1
 	prob := ch.GetSkill(SkillAmbush)

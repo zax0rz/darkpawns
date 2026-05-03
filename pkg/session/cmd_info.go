@@ -2,8 +2,8 @@ package session
 
 import (
 	"fmt"
-	"strings"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"strings"
 )
 
 func cmdScore(s *Session) error {
@@ -182,18 +182,88 @@ func cmdSummon(s *Session, args []string) error {
 	return nil
 }
 
-// cmdHelp provides a basic help stub.
-// Full implementation deferred to a later phase.
+// Help topics provides category-based help beyond individual commands.
+// Each entry describes a theme or system within the game.
+var helpTopics = map[string]string{
+	"commands":      "Type 'commands' to see all available commands.",
+	"movement":      "Move around the world using: north, south, east, west, up, down (or n/s/e/w/u/d).",
+	"combat":        "Fighting commands: hit <target>, flee, bash <target>, kick <target>, backstab <target>, rescue <target>, trip <target>, headbutt <target>, disembowel <target>, dragonkick <target>, tigerpunch <target>, subdue <target>, shoot <target>, parry, sneak, hide, ambush, neckbreak, sleeper, consider <target>, diagnose <target>",
+	"communication": "Chat commands: say <text>, tell <player> <text>, reply <text>, whisper <player> <text>, emote <text>, shout <text>, gossip <text>, gtell/gsay <text>",
+	"items":         "Item commands: get <item>, drop <item>, inventory/i, equipment/eq, wear <item>, remove <item>, wield <item>, hold <item>, give <item> <player>, put <item> <container>, eat <item>, drink <container>, quaff <item>",
+	"doors":         "Door commands: open <dir>, close <dir>, lock <dir>, unlock <dir>, pick <dir>, bashdoor <dir>, knock <dir>",
+	"social":        "Social commands: wave, nod, grin, laugh, bow, curtsey, hug, kiss, cheer, cry, dance, smile, frown, shrug, clap, salute, yawn, stretch, scratch, sit, rest, sleep, wake, stand",
+	"info":          "Information commands: score, who, where, review, whois, consider, examine, time, weather, affects, autoexit, title, describe, spells, commands",
+	"account":       "Account commands: password <old> <new> (change password), prompt [string|on|off|all], save, quit",
+	"groups":        "Group commands: follow <player>, group <player>, ungroup/disband, gtell/gsay <text>, split <amount>, assist <target>",
+	"reporting":     "Player help: report <player> <type> [desc] — report abusive behavior. Types: harassment, spam, cheating, hate_speech, exploit, other. Also: bug, typo, idea, todo",
+	"admin":         "Admin commands (admin/mod only): warn <player> <reason>, mute <player> <duration> [reason], kick <player> <reason>, ban <player> <duration/permanent> [reason], reports [pending], penalties, investigate <player>, filter <add|remove|list>, spamconfig <threshold> [action], users, wizlock, last, snoop, force",
+	"wizard":        "Wizard commands (immortal+): goto <vnum/player>, at <vnum> <cmd>, stat <target>, vnum <keyword>, vstat <vnum>, load <vnum>, purge, heal <player>, restore <player>, set <target> <field> <value>, switch <target>, return, invis, vis, gecho <msg>, echo <msg>, send <target> <msg>, reload, shut down, advance <target>, poofset, wiznet, zreset, zlist, rlist, olist, mlist, home, date, last, wizutil, show, dark, syslog",
+	"mounts":        "Mount commands: ride <mount>, dismount, yank <player> from mount",
+	"ignore":        "Ignore system: ignore <player> to toggle ignoring someone, ignore alone shows your ignore list.",
+	"skills":        "Skill commands: skills (show learned skills), practice <skill>, learn <skill>, listskills (list available skills), skillinfo <skill> (show skill details), use <skill> <target>",
+	"shops":         "Shop commands: list (show items for sale), buy <item>, sell <item>, appraise <item>",
+	"clans":         "Clan commands: clan (shows clan info), clan create <name>, clan join <name>, clan leave, clan members, clan info",
+	"houses":        "House commands: house (manage your house), hcontrol (admin house control)",
+}
+
+// cmdHelp provides help on commands and game systems.
 func cmdHelp(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.sendText("Available commands: look, north/south/east/west/up/down, say, hit, flee, " +
-			"inventory, equipment, wear, remove, wield, hold, get, drop, " +
-			"score, who, tell, emote, shout, where, quit, " +
-			"open, close, lock, unlock, pick, bashdoor\n" +
-			"Type 'help <topic>' for more info (stub — full help coming later).")
+		// Show overview of categories
+		s.sendText("Help Topics\n===========\n" +
+			"Type 'help <topic>' for detailed help.\n\n" +
+			"Game topics: commands, movement, combat, communication, items, doors, social, info, account, groups, reporting, skills, shops, mounts, ignore, clans, houses\n" +
+			"Admin: admin, wizard\n" +
+			"Type 'help <topic>' for details, or 'help <command>' for a specific command.")
 		return nil
 	}
-	s.sendText(fmt.Sprintf("No help available for '%s' yet.", strings.Join(args, " ")))
+
+	topic := strings.ToLower(strings.Join(args, " "))
+
+	// Check helpTopics first
+	if text, ok := helpTopics[topic]; ok {
+		s.sendText("[" + topic + "]\n" + strings.Repeat("-", len(topic)+4) + "\n" + text)
+		return nil
+	}
+
+	// Check registered commands
+	if entry, ok := cmdRegistry.Lookup(topic); ok {
+		desc := entry.HelpText
+		if desc == "" {
+			desc = topic + " (command)"
+		}
+		aliases := ""
+		if len(entry.Aliases) > 0 {
+			aliases = "\nAliases: /" + strings.Join(entry.Aliases, ", /")
+		}
+		levelInfo := ""
+		if entry.MinLevel > 0 {
+			levelInfo = fmt.Sprintf("\nMinimum level: %d", entry.MinLevel)
+		}
+		s.sendText(fmt.Sprintf("%s%s%s", desc, aliases, levelInfo))
+		return nil
+	}
+
+	// Try fuzzy match on help topics
+	var suggestions []string
+	for helpTopic := range helpTopics {
+		if strings.Contains(helpTopic, topic) || strings.Contains(topic, helpTopic) {
+			suggestions = append(suggestions, helpTopic)
+		}
+	}
+	// Also fuzzy match on commands
+	for _, entry := range cmdRegistry.GetAll() {
+		if strings.Contains(entry.Name, topic) || strings.Contains(topic, entry.Name) {
+			suggestions = append(suggestions, entry.Name)
+		}
+	}
+
+	if len(suggestions) > 0 {
+		s.sendText(fmt.Sprintf("No exact match for '%s'. Did you mean:\n  %s",
+			topic, strings.Join(suggestions, ", ")))
+	} else {
+		s.sendText(fmt.Sprintf("No help available for '%s'. Try 'help' for a list of topics.", topic))
+	}
 	return nil
 }
 

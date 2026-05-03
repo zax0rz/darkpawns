@@ -3,6 +3,7 @@ package game
 // Shop represents a shopkeeper's shop, matching the CircleMUD shop_data structure.
 // Source: src/shop.h
 type Shop struct {
+	ID         int     // unique shop ID (assigned by ShopManager)
 	KeeperVNum int     // VNUM of the NPC shopkeeper
 	BuyTypes   []int   // item types this shop buys (list of TypeFlag values)
 	SellTypes  []int   // VNUMs of item prototypes this shop sells
@@ -10,20 +11,26 @@ type Shop struct {
 	ProfitSell float64 // markup factor when player sells (e.g., 0.80 = 80%)
 	Flags      int     // shop behavior flags (optional)
 	KeeperName string  // name of keeper for message formatting
+	RoomVNum   int     // room where the shop is located
 }
 
 // ShopManager holds all shops and provides lookup methods.
 type ShopManager struct {
-	shops []*Shop
+	shops  []*Shop
+	nextID int
 }
 
 // NewShopManager creates a new ShopManager.
 func NewShopManager() *ShopManager {
-	return &ShopManager{shops: make([]*Shop, 0)}
+	return &ShopManager{shops: make([]*Shop, 0), nextID: 1}
 }
 
-// AddShop adds a shop to the manager.
+// AddShop adds a shop to the manager and assigns it a unique ID.
 func (sm *ShopManager) AddShop(s *Shop) {
+	if s.ID == 0 {
+		s.ID = sm.nextID
+		sm.nextID++
+	}
 	sm.shops = append(sm.shops, s)
 }
 
@@ -62,15 +69,18 @@ func (sm *ShopManager) CreateShop(vnum int, name string, roomVNum int) interface
 		SellTypes:  make([]int, 0),
 		ProfitBuy:  1.0,
 		ProfitSell: 1.0,
+		RoomVNum:   roomVNum,
 	}
 	sm.AddShop(shop)
 	return shop
 }
 
-// GetShop implements common.ShopManager.GetShop (stub — shops don't have IDs).
+// GetShop implements common.ShopManager.GetShop.
 func (sm *ShopManager) GetShop(id int) (interface{}, bool) {
-	if id >= 0 && id < len(sm.shops) {
-		return sm.shops[id], true
+	for _, s := range sm.shops {
+		if s.ID == id {
+			return s, true
+		}
 	}
 	return nil, false
 }
@@ -84,9 +94,15 @@ func (sm *ShopManager) GetShopByNPC(vnum int) (interface{}, bool) {
 	return shop, true
 }
 
-// GetShopsInRoom implements common.ShopManager.GetShopsInRoom (stub).
+// GetShopsInRoom implements common.ShopManager.GetShopsInRoom.
 func (sm *ShopManager) GetShopsInRoom(roomVNum int) []interface{} {
-	return nil
+	var result []interface{}
+	for _, s := range sm.shops {
+		if s.RoomVNum == roomVNum {
+			result = append(result, s)
+		}
+	}
+	return result
 }
 
 // BuyPrice calculates the price a player pays to buy an item from the shop.

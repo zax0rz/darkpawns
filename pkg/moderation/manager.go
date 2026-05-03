@@ -368,3 +368,171 @@ func (wf *WordFilterEntry) censor(message string) string {
 
 	return strings.ReplaceAll(message, wf.Pattern, strings.Repeat("*", len(wf.Pattern)))
 }
+
+// AddPenalty stores a penalty (in-memory + DB if available).
+func (m *Manager) AddPenalty(p PlayerPenalty) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	playerName := strings.ToLower(p.PlayerName)
+	m.activePenalties[playerName] = append(m.activePenalties[playerName], p)
+
+	if m.hasDB {
+		var expiresAt *time.Time
+		if p.ExpiresAt != nil {
+			expiresAt = p.ExpiresAt
+		}
+		_, err := m.db.Exec(`
+			INSERT INTO player_penalties (player_name, penalty_type, issued_at, expires_at, reason, issued_by)
+			VALUES ($1, $2, $3, $4, $5, $6)`,
+			playerName, p.PenaltyType, p.IssuedAt, expiresAt, p.Reason, p.IssuedBy,
+		)
+		if err != nil {
+			slog.Error("failed to persist penalty", "error", err)
+		}
+	}
+}
+
+// GetPlayerPenalties returns all penalties for a player.
+func (m *Manager) GetPlayerPenalties(playerName string) []PlayerPenalty {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	playerName = strings.ToLower(playerName)
+	penalties, ok := m.activePenalties[playerName]
+	if !ok {
+		return nil
+	}
+
+	now := time.Now()
+	var active []PlayerPenalty
+	for _, p := range penalties {
+		if p.ExpiresAt == nil || p.ExpiresAt.After(now) {
+			active = append(active, p)
+		}
+	}
+	return active
+}
+
+// GetAllActivePenalties returns all current active penalties across all players.
+func (m *Manager) GetAllActivePenalties() []PlayerPenalty {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	now := time.Now()
+	var result []PlayerPenalty
+	for _, penalties := range m.activePenalties {
+		for _, p := range penalties {
+			if p.ExpiresAt == nil || p.ExpiresAt.After(now) {
+				result = append(result, p)
+			}
+		}
+	}
+	return result
+}
+
+// GetWordFilters returns all word filter entries.
+func (m *Manager) GetWordFilters() []WordFilterEntry {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	result := make([]WordFilterEntry, len(m.wordFilters))
+	copy(result, m.wordFilters)
+	return result
+}
+
+// AddWordFilter adds a new word filter entry.
+func (m *Manager) AddWordFilter(pattern string, isRegex bool, actionStr, createdBy string) {
+	action := FilterActionCensor
+	switch strings.ToLower(actionStr) {
+	case "censor":
+		action = FilterActionCensor
+	case "warn":
+		action = FilterActionWarn
+	case "block":
+		action = FilterActionBlock
+	case "log":
+		action = FilterActionLog
+	}
+
+	m.mu.Lock()
+	nextID := len(m.wordFilters) + 1
+	if len(m.wordFilters) > 0 {
+		nextID = m.wordFilters[len(m.wordFilters)-1].ID + 1
+	}
+	m.wordFilters = append(m.wordFilters, WordFilterEntry{
+		ID:        nextID,
+		Pattern:   pattern,
+		IsRegex:   isRegex,
+		Action:    action,
+		CreatedBy: createdBy,
+		CreatedAt: time.Now(),
+	})
+	m.mu.Unlock()
+
+	if m.hasDB {
+		_, err := m.db.Exec(`
+			INSERT INTO word_filters (pattern, is_regex, action, created_by)
+			VALUES ($1, $2, $3, $4)`,
+			pattern, isRegex, action, createdBy,
+		)
+		if err != nil {
+			slog.Error("failed to persist word filter", "error", err)
+		}
+	}
+}
+
+// RemoveWordFilter removes a word filter by ID.
+func (m *Manager) RemoveWordFilter(filterID int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for i, f := range m.wordFilters {
+		if f.ID == filterID {
+			m.wordFilters = append(m.wordFilters[:i], m.wordFilters[i+1:]...)
+			break
+		}
+	}
+
+	if m.hasDB {
+		_, err := m.db.Exec(`DELETE FROM word_filters WHERE id = $1`, filterID)
+		if err != nil {
+			slog.Error("failed to delete word filter", "error", err)
+		}
+	}
+}
+
+// GetSpamConfig returns the current spam detection config.
+func (m *Manager) GetSpamConfig() SpamDetectionConfig {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.spamConfig
+}
+
+// SetSpamConfig updates the spam detection config.
+func (m *Manager) SetSpamConfig(messagesPerMin int, actionStr string) {
+	action := FilterActionWarn
+	switch strings.ToLower(actionStr) {
+	case "log":
+		action = FilterActionLog
+	case "warn":
+		action = FilterActionWarn
+	case "block":
+		action = FilterActionBlock
+	}
+
+	m.mu.Lock()
+	m.spamConfig.MessagesPerMinute = messagesPerMin
+	m.spamConfig.Action = action
+	m.mu.Unlock()
+}
+
+// IsMuted checks if a player is currently muted.
+func (m *Manager) IsMuted(playerName string) bool {
+	return m.hasPenalty(playerName, ActionMute)
+}
+
+// IsBanned checks if a player is currently banned.
+func (m *Manager) IsBanned(playerName string) bool {
+	return m.hasPenalty(playerName, ActionBan)
+}

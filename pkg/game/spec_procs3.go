@@ -90,7 +90,14 @@ func init() {
 	RegisterSpec("cleric", specCleric)
 }
 
-// specShopKeeper is a stub — the full implementation is in shop.c/shop.h.
+// specShopKeeper is intentionally a no-op in the Go port.
+//
+// In CircleMUD, specShopKeeper intercepted "list", "buy", "sell", etc.
+// In the Go codebase, the command layer (cmdList/cmdBuy/cmdSell in
+// pkg/session/shop_cmds.go) handles shop lookup by scanning room mobs
+// and calling World.GetShopByKeeper directly. The spec proc only needs
+// to exist so that zone files can assign it to shopkeeper mobs; the
+// actual shop logic lives in the session command handlers.
 func specShopKeeper(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	return false
 }

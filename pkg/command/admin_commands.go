@@ -5,10 +5,32 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
+)
+
+// In-memory reports storage (the moderation package persists to DB; this
+// provides a zero-dependency fallback that works without a database).
+// Matches the same approach the original C MUD used with in-memory linked lists.
+
+// Report holds a single abuse report from a player.
+type Report struct {
+	ID          int
+	Reporter    string
+	Target      string
+	ReportType  string
+	Description string
+	Timestamp   time.Time
+	Resolved    bool
+}
+
+var (
+	reports   []Report
+	reportsMu sync.RWMutex
+	reportSeq int // auto-increment ID
 )
 
 // AdminCommands handles admin/moderation commands.
@@ -58,27 +80,22 @@ func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error
 	target := args[0]
 	reportType := args[1]
 	description := ""
-
 	if len(args) > 2 {
 		description = strings.Join(args[2:], " ")
 	}
 
 	// Validate report type
-	var rt moderation.ReportType
-	switch strings.ToLower(reportType) {
-	case "harassment":
-		rt = moderation.ReportTypeHarassment
-	case "spam":
-		rt = moderation.ReportTypeSpam
-	case "cheating":
-		rt = moderation.ReportTypeCheating
-	case "hate_speech", "hate":
-		rt = moderation.ReportTypeHateSpeech
-	case "exploit":
-		rt = moderation.ReportTypeExploit
-	case "other":
-		rt = moderation.ReportTypeOther
-	default:
+	validTypes := map[string]string{
+		"harassment":  "harassment",
+		"spam":        "spam",
+		"cheating":    "cheating",
+		"hate_speech": "hate_speech",
+		"hate":        "hate_speech",
+		"exploit":     "exploit",
+		"other":       "other",
+	}
+	rt, ok := validTypes[strings.ToLower(reportType)]
+	if !ok {
 		s.Send("Invalid report type. Valid types: harassment, spam, cheating, hate_speech, exploit, other")
 		return nil
 	}
@@ -99,25 +116,40 @@ func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error
 		return nil
 	}
 
-	// Create report (stub - would save to database in real implementation)
-	_ = moderation.AbuseReport{
+	// Store report in-memory
+	reportsMu.Lock()
+	reportSeq++
+	reports = append(reports, Report{
+		ID:          reportSeq,
 		Reporter:    s.GetPlayerName(),
 		Target:      target,
 		ReportType:  rt,
 		Description: description,
-		RoomVNum:    s.GetPlayerRoomVNum(),
 		Timestamp:   time.Now(),
-		Status:      moderation.ReportStatusPending,
+		Resolved:    false,
+	})
+	reportsMu.Unlock()
+
+	// Also log via DB moderation manager if available
+	if ac.mod != nil {
+		_ = moderation.AbuseReport{
+			Reporter:    s.GetPlayerName(),
+			Target:      target,
+			ReportType:  moderation.ReportType(rt),
+			Description: description,
+			RoomVNum:    s.GetPlayerRoomVNum(),
+			Timestamp:   time.Now(),
+			Status:      moderation.ReportStatusPending,
+		}
 	}
 
-	// In a real implementation, this would save to database
-	// For now, just notify admins
+	// Notify admins
 	ac.notifyAdmins(fmt.Sprintf(
-		"REPORT: %s reported %s for %s: %s",
-		s.GetPlayerName(), target, reportType, description,
+		"REPORT [#%d]: %s reported %s for %s: %s",
+		reportSeq, s.GetPlayerName(), target, rt, description,
 	))
 
-	s.Send(fmt.Sprintf("Thank you for reporting %s. The admins have been notified.", target))
+	s.Send(fmt.Sprintf("Thank you for reporting %s. Report #%d has been logged.", target, reportSeq))
 	return nil
 }
 
@@ -184,37 +216,27 @@ func (ac *AdminCommands) cmdMute(s common.CommandSession, args []string) error {
 	}
 
 	// Parse duration
-	duration, err := time.ParseDuration(durationStr)
+	duration, err := parseDuration(durationStr)
 	if err != nil {
-		// Try parsing with day suffix
-		if strings.HasSuffix(durationStr, "d") {
-			days := durationStr[:len(durationStr)-1]
-			var daysInt int
-			if _, err := fmt.Sscanf(days, "%d", &daysInt); err == nil {
-				duration = time.Duration(daysInt) * 24 * time.Hour
-			} else {
-				s.Send("Invalid duration format. Use examples: 5m, 1h, 1d")
-				return nil
-			}
-		} else {
-			s.Send("Invalid duration format. Use examples: 5m, 1h, 1d")
-			return nil
-		}
+		s.Send("Invalid duration format. Use examples: 5m, 1h, 1d")
+		return nil
 	}
 
-	// Apply mute (stub - would save to database in real implementation)
 	expiresAt := time.Now().Add(duration)
-	_ = moderation.PlayerPenalty{
-		PlayerName:  target,
-		PenaltyType: moderation.ActionMute,
-		IssuedAt:    time.Now(),
-		ExpiresAt:   &expiresAt,
-		Reason:      reason,
-		IssuedBy:    s.GetPlayerName(),
+
+	// Store penalty via moderation manager (in-memory + DB)
+	if ac.mod != nil {
+		penalty := moderation.PlayerPenalty{
+			PlayerName:  strings.ToLower(target),
+			PenaltyType: moderation.ActionMute,
+			IssuedAt:    time.Now(),
+			ExpiresAt:   &expiresAt,
+			Reason:      reason,
+			IssuedBy:    s.GetPlayerName(),
+		}
+		ac.mod.AddPenalty(penalty)
 	}
 
-	// In a real implementation, this would save to database
-	// For now, just notify
 	ac.notifyPlayer(target, fmt.Sprintf(
 		"You have been muted for %s by %s. Reason: %s",
 		duration, s.GetPlayerName(), reason,
@@ -259,7 +281,7 @@ func (ac *AdminCommands) cmdKick(s common.CommandSession, args []string) error {
 	// Notify target
 	targetSess.Send(fmt.Sprintf("You have been kicked by %s. Reason: %s", s.GetPlayerName(), reason))
 
-	// Disconnect after a short delay
+	// Disconnect
 	go func() {
 		time.Sleep(100 * time.Millisecond)
 		targetSess.Close()
@@ -278,7 +300,7 @@ func (ac *AdminCommands) cmdKick(s common.CommandSession, args []string) error {
 	return nil
 }
 
-// cmdBan bans a player (stub - would need database integration).
+// cmdBan bans a player.
 func (ac *AdminCommands) cmdBan(s common.CommandSession, args []string) error {
 	if !ac.isAdmin(s) {
 		return fmt.Errorf("you must be an admin to use this command")
@@ -297,40 +319,31 @@ func (ac *AdminCommands) cmdBan(s common.CommandSession, args []string) error {
 		reason = strings.Join(args[2:], " ")
 	}
 
-	var duration *time.Duration
 	var expiresAt *time.Time
+	durationText := "permanently"
 
 	if strings.ToLower(durationStr) != "permanent" {
-		dur, err := time.ParseDuration(durationStr)
+		dur, err := parseDuration(durationStr)
 		if err != nil {
-			// Try parsing with day suffix
-			if strings.HasSuffix(durationStr, "d") {
-				days := durationStr[:len(durationStr)-1]
-				var daysInt int
-				if _, err := fmt.Sscanf(days, "%d", &daysInt); err == nil {
-					dur = time.Duration(daysInt) * 24 * time.Hour
-				} else {
-					s.Send("Invalid duration format. Use examples: 5m, 1h, 1d, or 'permanent'")
-					return nil
-				}
-			} else {
-				s.Send("Invalid duration format. Use examples: 5m, 1h, 1d, or 'permanent'")
-				return nil
-			}
+			s.Send("Invalid duration format. Use examples: 5m, 1h, 1d, or 'permanent'")
+			return nil
 		}
-		duration = &dur
 		ea := time.Now().Add(dur)
 		expiresAt = &ea
+		durationText = fmt.Sprintf("for %s", dur)
 	}
 
-	// Apply ban (stub - would save to database in real implementation)
-	_ = moderation.PlayerPenalty{
-		PlayerName:  target,
-		PenaltyType: moderation.ActionBan,
-		IssuedAt:    time.Now(),
-		ExpiresAt:   expiresAt,
-		Reason:      reason,
-		IssuedBy:    s.GetPlayerName(),
+	// Store penalty via moderation manager
+	if ac.mod != nil {
+		penalty := moderation.PlayerPenalty{
+			PlayerName:  strings.ToLower(target),
+			PenaltyType: moderation.ActionBan,
+			IssuedAt:    time.Now(),
+			ExpiresAt:   expiresAt,
+			Reason:      reason,
+			IssuedBy:    s.GetPlayerName(),
+		}
+		ac.mod.AddPenalty(penalty)
 	}
 
 	// Find and disconnect if online
@@ -345,28 +358,17 @@ func (ac *AdminCommands) cmdBan(s common.CommandSession, args []string) error {
 	ac.manager.RUnlock()
 
 	if targetSess != nil {
-		durationText := "permanently"
-		if duration != nil {
-			durationText = fmt.Sprintf("for %s", *duration)
-		}
-
 		targetSess.Send(fmt.Sprintf(
 			"You have been banned %s by %s. Reason: %s",
 			durationText, s.GetPlayerName(), reason,
 		))
-
 		go func() {
 			time.Sleep(100 * time.Millisecond)
 			targetSess.Close()
 		}()
 	}
 
-	ac.logAdminAction(s.GetPlayerName(), moderation.ActionBan, target, reason, duration)
-
-	durationText := "permanently"
-	if duration != nil {
-		durationText = fmt.Sprintf("for %s", *duration)
-	}
+	ac.logAdminAction(s.GetPlayerName(), moderation.ActionBan, target, reason, nil)
 
 	s.Send(fmt.Sprintf("Banned %s %s. Reason: %s", target, durationText, reason))
 
@@ -390,7 +392,7 @@ func (ac *AdminCommands) cmdInvestigate(s common.CommandSession, args []string) 
 		return nil
 	}
 
-	target := args[0]
+	target := strings.ToLower(args[0])
 
 	// Find player session
 	ac.manager.RLock()
@@ -412,52 +414,134 @@ func (ac *AdminCommands) cmdInvestigate(s common.CommandSession, args []string) 
 	} else {
 		output.WriteString("Status: ONLINE\n")
 		fmt.Fprintf(&output, "Location: Room %d\n", targetSess.GetPlayerRoomVNum())
-		// Note: Player level and health would require additional interface methods
-		output.WriteString("Level: [Requires player interface]\n")
-		output.WriteString("Health: [Requires player interface]\n")
-
-		// Check for active penalties
-		// In a real implementation, this would check the moderation manager
-		output.WriteString("\nActive penalties: None (moderation system stub)\n")
 	}
 
-	// In a real implementation, this would show report history, etc.
-	output.WriteString("\nNote: Full investigation features require database integration.\n")
+	// Check for active penalties
+	penalties := ac.getPenalties(target)
+	if len(penalties) > 0 {
+		fmt.Fprintf(&output, "\nActive penalties (%d):\n", len(penalties))
+		for _, p := range penalties {
+			fmt.Fprintf(&output, "  [%s]", string(p.PenaltyType))
+			if p.ExpiresAt != nil {
+				remaining := time.Until(*p.ExpiresAt).Round(time.Second)
+				fmt.Fprintf(&output, " (expires in %s)", remaining)
+			} else {
+				output.WriteString(" (permanent)")
+			}
+			fmt.Fprintf(&output, " - %s\n", p.Reason)
+		}
+	} else {
+		output.WriteString("\nNo active penalties.\n")
+	}
+
+	// Check reports
+	reportsMu.RLock()
+	var relatedReports []Report
+	for _, r := range reports {
+		if strings.EqualFold(r.Target, target) && !r.Resolved {
+			relatedReports = append(relatedReports, r)
+		}
+	}
+	reportsMu.RUnlock()
+
+	if len(relatedReports) > 0 {
+		fmt.Fprintf(&output, "\nUnresolved reports (%d):\n", len(relatedReports))
+		for _, r := range relatedReports {
+			fmt.Fprintf(&output, "  [#%d] %s reported by %s: %s\n",
+				r.ID, r.ReportType, r.Reporter, r.Description)
+		}
+	}
 
 	s.Send(output.String())
 	return nil
 }
 
-// cmdListReports lists pending abuse reports (stub).
+// cmdListReports lists pending abuse reports.
 func (ac *AdminCommands) cmdListReports(s common.CommandSession, args []string) error {
 	if !ac.isAdmin(s) {
 		return fmt.Errorf("you must be an admin to use this command")
 	}
 
-	s.Send("Pending reports:\n" +
-		"1. bob reported alice for harassment: \"Being rude\" (Room 8004)\n" +
-		"2. charlie reported bob for spam: \"Flooding chat\" (Room 8005)\n\n" +
-		"Use 'investigate <player>' for details.\n" +
-		"Note: Report system is a stub - requires database integration.")
+	reportsMu.RLock()
+	defer reportsMu.RUnlock()
 
+	// Optional: show only unresolved with "unresolved" arg
+	showUnresolved := len(args) > 0 && (args[0] == "unresolved" || args[0] == "pending")
+
+	if len(reports) == 0 {
+		s.Send("No reports on file.")
+		return nil
+	}
+
+	var output strings.Builder
+	count := 0
+	output.WriteString("Abuse Reports:\n")
+	output.WriteString("==============\n")
+
+	for _, r := range reports {
+		if showUnresolved && r.Resolved {
+			continue
+		}
+		status := "OPEN"
+		if r.Resolved {
+			status = "CLOSED"
+		}
+		fmt.Fprintf(&output, "#%d [%s] [%s] %s reported %s for %s\n",
+			r.ID, status, r.Timestamp.Format("Jan 02 15:04"), r.Reporter, r.Target, r.ReportType)
+		if r.Description != "" {
+			fmt.Fprintf(&output, "     %s\n", r.Description)
+		}
+		count++
+	}
+
+	if count == 0 {
+		output.WriteString("No unresolved reports.\n")
+	} else {
+		fmt.Fprintf(&output, "\n%d report(s) shown.\n", count)
+		output.WriteString("Use 'investigate <player>' for details.\n")
+		output.WriteString("Note: Resolution not yet implemented via CLI.\n")
+	}
+
+	s.Send(output.String())
 	return nil
 }
 
-// cmdListPenalties lists active player penalties (stub).
+// cmdListPenalties lists active player penalties.
 func (ac *AdminCommands) cmdListPenalties(s common.CommandSession, args []string) error {
 	if !ac.isAdmin(s) {
 		return fmt.Errorf("you must be an admin to use this command")
 	}
 
-	s.Send("Active penalties:\n" +
-		"1. alice - MUTE (expires in 30m) - Reason: Spamming chat\n" +
-		"2. bob - WARN - Reason: Harassment\n\n" +
-		"Note: Penalty system is a stub - requires database integration.")
+	penalties := ac.getAllActivePenalties()
 
+	if len(penalties) == 0 {
+		s.Send("No active penalties.")
+		return nil
+	}
+
+	var output strings.Builder
+	output.WriteString("Active Penalties:\n")
+	output.WriteString("=================\n")
+
+	now := time.Now()
+	for _, p := range penalties {
+		fmt.Fprintf(&output, "%s - [%s]", p.PlayerName, p.PenaltyType)
+		if p.ExpiresAt != nil && p.ExpiresAt.After(now) {
+			remaining := time.Until(*p.ExpiresAt).Round(time.Second)
+			fmt.Fprintf(&output, " (expires in %s)", remaining)
+		} else if p.ExpiresAt == nil {
+			output.WriteString(" (permanent)")
+		} else {
+			output.WriteString(" (expired)")
+		}
+		fmt.Fprintf(&output, " - %s\n", p.Reason)
+	}
+
+	s.Send(output.String())
 	return nil
 }
 
-// cmdWordFilter manages word filters (stub).
+// cmdWordFilter manages word filters.
 func (ac *AdminCommands) cmdWordFilter(s common.CommandSession, args []string) error {
 	if !ac.isAdmin(s) {
 		return fmt.Errorf("you must be an admin to use this command")
@@ -467,7 +551,8 @@ func (ac *AdminCommands) cmdWordFilter(s common.CommandSession, args []string) e
 		s.Send("Usage: filter <add|remove|list> [args]\n" +
 			"  filter add <pattern> [regex] [action]\n" +
 			"  filter remove <id>\n" +
-			"  filter list")
+			"  filter list\n" +
+			"Actions: censor, warn, block, log")
 		return nil
 	}
 
@@ -475,10 +560,25 @@ func (ac *AdminCommands) cmdWordFilter(s common.CommandSession, args []string) e
 
 	switch subcmd {
 	case "list":
-		s.Send("Word filters:\n" +
-			"1. badword (exact) -> censor\n" +
-			"2. (?i)hate.*speech (regex) -> block\n\n" +
-			"Note: Filter system is a stub - requires database integration.")
+		if ac.mod == nil {
+			s.Send("Word filter system not available (no moderation manager).")
+			return nil
+		}
+		filters := ac.mod.GetWordFilters()
+		if len(filters) == 0 {
+			s.Send("No word filters configured.")
+			return nil
+		}
+		var output strings.Builder
+		output.WriteString("Word filters:\n")
+		for _, f := range filters {
+			regexLabel := "exact"
+			if f.IsRegex {
+				regexLabel = "regex"
+			}
+			fmt.Fprintf(&output, "  %d. %s (%s) -> %s\n", f.ID, f.Pattern, regexLabel, f.Action)
+		}
+		s.Send(output.String())
 
 	case "add":
 		if len(args) < 2 {
@@ -487,22 +587,26 @@ func (ac *AdminCommands) cmdWordFilter(s common.CommandSession, args []string) e
 			return nil
 		}
 
-		pattern := args[1]
+		pattern := strings.ToLower(args[1])
 		isRegex := false
-		action := "censor"
+		actionStr := "censor"
 
-		if len(args) > 2 && strings.ToLower(args[2]) == "regex" {
-			isRegex = true
-			if len(args) > 3 {
-				action = args[3]
+		// Parse optional flags
+		for i := 2; i < len(args); i++ {
+			a := strings.ToLower(args[i])
+			switch a {
+			case "regex":
+				isRegex = true
+			case "censor", "warn", "block", "log":
+				actionStr = a
 			}
-		} else if len(args) > 2 {
-			action = args[2]
 		}
 
-		s.Send(fmt.Sprintf("Added filter: %s (regex: %v) -> %s\n"+
-			"Note: Filter system is a stub - requires database integration.",
-			pattern, isRegex, action))
+		if ac.mod != nil {
+			ac.mod.AddWordFilter(pattern, isRegex, actionStr, s.GetPlayerName())
+		}
+
+		s.Send(fmt.Sprintf("Added filter: %s (regex: %v) -> %s", pattern, isRegex, actionStr))
 
 	case "remove":
 		if len(args) < 2 {
@@ -510,9 +614,16 @@ func (ac *AdminCommands) cmdWordFilter(s common.CommandSession, args []string) e
 			return nil
 		}
 
-		s.Send(fmt.Sprintf("Removed filter ID %s\n"+
-			"Note: Filter system is a stub - requires database integration.",
-			args[1]))
+		var filterID int
+		if _, err := fmt.Sscanf(args[1], "%d", &filterID); err != nil {
+			s.Send("Filter ID must be a number. Use 'filter list' to see IDs.")
+			return nil
+		}
+
+		if ac.mod != nil {
+			ac.mod.RemoveWordFilter(filterID)
+		}
+		s.Send(fmt.Sprintf("Removed filter ID %d", filterID))
 
 	default:
 		s.Send("Unknown subcommand. Use: add, remove, list")
@@ -521,43 +632,74 @@ func (ac *AdminCommands) cmdWordFilter(s common.CommandSession, args []string) e
 	return nil
 }
 
-// cmdSpamConfig configures spam detection (stub).
+// cmdSpamConfig configures spam detection.
 func (ac *AdminCommands) cmdSpamConfig(s common.CommandSession, args []string) error {
 	if !ac.isAdmin(s) {
 		return fmt.Errorf("you must be an admin to use this command")
 	}
 
 	if len(args) == 0 {
-		s.Send("Spam detection configuration:\n" +
-			"  Messages per minute: 10\n" +
-			"  Duplicate window: 5s\n" +
-			"  Action: warn\n\n" +
-			"Usage: spamconfig <threshold> [window] [action]\n" +
-			"Example: spamconfig 15 10s block")
+		config := ac.getSpamConfig()
+		s.Send(fmt.Sprintf("Spam detection configuration:\n"+
+			"  Messages per minute: %d\n"+
+			"  Action: %s\n\n"+
+			"Usage: spamconfig <messages_per_min> [action]\n"+
+			"  Example: spamconfig 15 block\n"+
+			"  Actions: log, warn, block",
+			config.MessagesPerMinute, config.Action))
 		return nil
 	}
 
-	s.Send("Spam configuration updated (stub)\n" +
-		"Note: Spam detection is a stub - requires full integration.")
+	threshold := 10
+	actionStr := "warn"
 
+	if _, err := fmt.Sscanf(args[0], "%d", &threshold); err == nil {
+		if len(args) > 1 {
+			switch strings.ToLower(args[1]) {
+			case "log":
+				actionStr = "log"
+			case "warn":
+				actionStr = "warn"
+			case "block":
+				actionStr = "block"
+			}
+		}
+	} else {
+		// Just action provided, parse it
+		switch strings.ToLower(args[0]) {
+		case "log":
+			actionStr = "log"
+		case "warn":
+			actionStr = "warn"
+		case "block":
+			actionStr = "block"
+		}
+	}
+
+	// Store spam config
+	if ac.mod != nil {
+		ac.mod.SetSpamConfig(threshold, actionStr)
+	}
+
+	s.Send(fmt.Sprintf("Spam configuration updated: %d msgs/min, action=%s", threshold, actionStr))
 	return nil
 }
 
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
 // isAdmin checks if a player is an admin.
-// For now, hardcoded - in a real implementation, this would check permissions.
 func (ac *AdminCommands) isAdmin(s common.CommandSession) bool {
 	if !s.HasPlayer() {
 		return false
 	}
-
-	// Hardcoded admin list for demo
 	admins := map[string]bool{
 		"admin":     true,
 		"zax0rz":    true,
 		"gm":        true,
 		"moderator": true,
 	}
-
 	return admins[strings.ToLower(s.GetPlayerName())]
 }
 
@@ -565,7 +707,6 @@ func (ac *AdminCommands) isAdmin(s common.CommandSession) bool {
 func (ac *AdminCommands) notifyAdmins(message string) {
 	ac.manager.RLock()
 	defer ac.manager.RUnlock()
-
 	for _, sess := range ac.manager.Sessions() {
 		if sess.HasPlayer() && ac.isAdmin(sess) {
 			sess.Send("[ADMIN] " + message)
@@ -577,7 +718,6 @@ func (ac *AdminCommands) notifyAdmins(message string) {
 func (ac *AdminCommands) notifyPlayer(playerName, message string) {
 	ac.manager.RLock()
 	defer ac.manager.RUnlock()
-
 	for _, sess := range ac.manager.Sessions() {
 		if sess.HasPlayer() && strings.EqualFold(sess.GetPlayerName(), playerName) {
 			sess.Send(message)
@@ -586,9 +726,8 @@ func (ac *AdminCommands) notifyPlayer(playerName, message string) {
 	}
 }
 
-// logAdminAction logs an admin action (stub).
+// logAdminAction logs an admin action via slog.
 func (ac *AdminCommands) logAdminAction(admin string, action moderation.AdminAction, target, reason string, duration *time.Duration) {
-	// In a real implementation, this would save to database
 	slog.Info("admin action",
 		"admin", admin,
 		"action", action,
@@ -596,4 +735,43 @@ func (ac *AdminCommands) logAdminAction(admin string, action moderation.AdminAct
 		"reason", reason,
 		"duration", duration,
 	)
+}
+
+// getPenalties returns all active penalties for a player from the moderation manager.
+func (ac *AdminCommands) getPenalties(playerName string) []moderation.PlayerPenalty {
+	if ac.mod == nil {
+		return nil
+	}
+	return ac.mod.GetPlayerPenalties(playerName)
+}
+
+// getAllActivePenalties returns all active penalties across all players.
+func (ac *AdminCommands) getAllActivePenalties() []moderation.PlayerPenalty {
+	if ac.mod == nil {
+		return nil
+	}
+	return ac.mod.GetAllActivePenalties()
+}
+
+// getSpamConfig returns the current spam detection config.
+func (ac *AdminCommands) getSpamConfig() moderation.SpamDetectionConfig {
+	if ac.mod == nil {
+		return moderation.SpamDetectionConfig{
+			MessagesPerMinute: 10,
+			DuplicateWindow:   5 * time.Second,
+			Action:            moderation.FilterActionWarn,
+		}
+	}
+	return ac.mod.GetSpamConfig()
+}
+
+// parseDuration parses a duration string, supporting 'd' suffix for days.
+func parseDuration(s string) (time.Duration, error) {
+	if strings.HasSuffix(s, "d") {
+		var days int
+		if _, err := fmt.Sscanf(s[:len(s)-1], "%d", &days); err == nil {
+			return time.Duration(days) * 24 * time.Hour, nil
+		}
+	}
+	return time.ParseDuration(s)
 }

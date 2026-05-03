@@ -60,8 +60,7 @@ func (p *Profiler) StartCPUProfile() error {
 	}
 
 	if err := runtimepprof.StartCPUProfile(f); err != nil {
-// #nosec G104
-		f.Close()
+		_ = f.Close()
 		return fmt.Errorf("start cpu profile: %w", err)
 	}
 
@@ -83,8 +82,7 @@ func (p *Profiler) StopCPUProfile() error {
 	}
 
 	runtimepprof.StopCPUProfile()
-// #nosec G104
-	p.cpuProfile.Close()
+	_ = p.cpuProfile.Close()
 	p.cpuProfile = nil
 
 	slog.Info("CPU profiling stopped")
@@ -112,7 +110,7 @@ func (p *Profiler) WriteHeapProfile() error {
 	if err != nil {
 		return fmt.Errorf("create heap profile: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := runtimepprof.WriteHeapProfile(f); err != nil {
 		return fmt.Errorf("write heap profile: %w", err)
@@ -151,7 +149,7 @@ func (p *Profiler) StopBlockProfile() error {
 	if err != nil {
 		return fmt.Errorf("create block profile: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := runtimepprof.Lookup("block").WriteTo(f, 0); err != nil {
 		return fmt.Errorf("write block profile: %w", err)
@@ -193,7 +191,7 @@ func (p *Profiler) StopMutexProfile() error {
 	if err != nil {
 		return fmt.Errorf("create mutex profile: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := runtimepprof.Lookup("mutex").WriteTo(f, 0); err != nil {
 		return fmt.Errorf("write mutex profile: %w", err)
@@ -229,7 +227,7 @@ func (p *Profiler) GoroutineDump() error {
 	if err != nil {
 		return fmt.Errorf("create goroutine dump: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := runtimepprof.Lookup("goroutine").WriteTo(f, 2); err != nil {
 		return fmt.Errorf("write goroutine dump: %w", err)
@@ -493,16 +491,11 @@ func RunProfilingSession(profileDir string, duration time.Duration) error {
 	time.Sleep(duration)
 
 	// Stop profiling
-// #nosec G104
-	profiler.StopCPUProfile()
-// #nosec G104
-	profiler.StopBlockProfile()
-// #nosec G104
-	profiler.StopMutexProfile()
-// #nosec G104
-	profiler.WriteHeapProfile()
-// #nosec G104
-	profiler.GoroutineDump()
+	_ = profiler.StopCPUProfile()
+	_ = profiler.StopBlockProfile()
+	_ = profiler.StopMutexProfile()
+	_ = profiler.WriteHeapProfile()
+	_ = profiler.GoroutineDump()
 
 	monitor.Stop()
 

@@ -81,9 +81,39 @@ type Manager struct {
 	// Login attempt lockout tracker (H-15)
 	loginAttempts *auth.LoginAttemptTracker
 
+	// Moderation manager for mute/filter/spam checks
+	modChecker ModerationChecker
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
+}
+
+// ModerationChecker defines the moderation interface the session layer needs.
+type ModerationChecker interface {
+	// CheckPreCommand is called before every command.
+	// Returns (error_message, should_reject). If should_reject, the command is blocked.
+	CheckPreCommand(playerName string, command string) (string, bool)
+
+	// CheckMessage filters a communication message for word filters.
+	// Returns (filtered_message, should_block).
+	CheckMessage(playerName string, message string) (string, bool)
+
+	// RecordMessage records a message for spam detection.
+	RecordMessage(playerName string)
+
+	// IsMuted checks if a player is muted.
+	IsMuted(playerName string) bool
+}
+
+// SetModerationChecker sets the moderation checker on the manager.
+func (m *Manager) SetModerationChecker(mc ModerationChecker) {
+	m.modChecker = mc
+}
+
+// GetModerationChecker returns the current moderation checker.
+func (m *Manager) GetModerationChecker() ModerationChecker {
+	return m.modChecker
 }
 
 // NewManager creates a new session manager.
@@ -182,6 +212,11 @@ func (m *Manager) SetCombatBroadcastFunc() {
 }
 
 // GetCombatEngine returns the combat engine for AI integration.
+// GetShopManager returns the session manager's shop manager.
+func (m *Manager) GetShopManager() *systems.ShopManager {
+	return m.shopManager
+}
+
 func (m *Manager) GetCombatEngine() *combat.CombatEngine {
 	return m.combatEngine
 }

@@ -130,8 +130,8 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 			p.Health = 1
 		}
 
-		chPronouns := GetPronouns(ch.Name, 1)
-		victPronouns := GetPronouns(target.GetName(), 1)
+		chPronouns := GetPronouns(ch.Name, ch.GetSex())
+		victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 		return SkillResult{
 			Success:       true,
@@ -142,7 +142,7 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Failure
-	chPronouns := GetPronouns(ch.Name, 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	return SkillResult{
 		Success:       false,
 		MessageToCh:   "You fumble and ruin the bandages.\r\n",
@@ -178,8 +178,8 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 	percent := rand.Intn(101) + 1 + target.GetLevel()
 	prob := ch.GetSkill(SkillDisarm)
 
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent < prob {
 		return SkillResult{
@@ -216,8 +216,8 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 
 	// Target must be an NPC (not a player)
 	if p, ok := target.(*Player); ok && !p.IsNPC() {
-		chPronouns := GetPronouns(ch.Name, 1)
-		victPronouns := GetPronouns(target.GetName(), 1)
+		chPronouns := GetPronouns(ch.Name, ch.GetSex())
+		victPronouns := GetPronouns(target.GetName(), target.GetSex())
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("$N stares at you blankly.", chPronouns, &victPronouns, ""),
@@ -238,8 +238,8 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 	percent := rand.Intn(100) + 1
 	prob := ch.GetSkill(SkillMindlink)
 
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent < prob {
 		// Success
@@ -356,8 +356,8 @@ func DoSerpentKick(ch *Player, target combat.Combatant) SkillResult {
 		prob = 110 // auto-hit sleeping targets
 	}
 
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent > prob {
 		return SkillResult{

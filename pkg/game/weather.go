@@ -87,8 +87,16 @@ var (
 		Sky:       SkyCloudless,
 		Sunlight:  SunLight,
 	}
-	weatherMu sync.RWMutex
+	weatherMu    sync.RWMutex
+	weatherWorld *World // set via SetWeatherWorld; used by event functions
 )
+
+// SetWeatherWorld sets the World reference used by weather event broadcasts.
+func SetWeatherWorld(w *World) {
+	weatherMu.Lock()
+	weatherWorld = w
+	weatherMu.Unlock()
+}
 
 // WeatherAndTime advances time and updates weather.
 // Ported from weather.c:weather_and_time().
@@ -318,16 +326,81 @@ func dice(num, size int) int {
 }
 
 // ---------------------------------------------------------------------------
-// Stub no-ops for special weather events (ported but not yet implemented).
-// These are declared as package-level functions matching the C void prototypes.
+// Special weather events — Dark Pawns-specific world effects.
+// These trigger at specific times/conditions and broadcast to all players.
 // ---------------------------------------------------------------------------
 
-func fullMoon()          {}
-func lunarHunter()       {}
-func loadNightGate()     {}
-func removeNightGate()   {}
-func ghostShipAppear()   {}
-func ghostShipDisappear() {} 
+// fullMoon broadcasts the full moon rise to all players.
+// Called on day 22-25 at hour 21 (sunset).
+func fullMoon() {
+	weatherMu.RLock()
+	w := weatherWorld
+	weatherMu.RUnlock()
+	if w == nil {
+		return
+	}
+	w.SendToAll("[ FULL MOON RISES ] The full moon casts an eerie glow across the land.\r\n")
+}
+
+// lunarHunter broadcasts the lunar hunter event.
+// Called alongside fullMoon on day 22-25 at hour 21.
+func lunarHunter() {
+	weatherMu.RLock()
+	w := weatherWorld
+	weatherMu.RUnlock()
+	if w == nil {
+		return
+	}
+	w.SendToAll("[ LUNAR HUNTER ] The lunar hunter rises in the east, its cry echoing across the valleys.\r\n")
+}
+
+// loadNightGate broadcasts the night gate appearance.
+// Called at hour 21 (sunset).
+func loadNightGate() {
+	weatherMu.RLock()
+	w := weatherWorld
+	weatherMu.RUnlock()
+	if w == nil {
+		return
+	}
+	w.SendToAll("[ NIGHT GATE ] A shimmering gate materializes in the darkness...\r\n")
+}
+
+// removeNightGate broadcasts the night gate removal.
+// Called at hour 5 (sunrise).
+func removeNightGate() {
+	weatherMu.RLock()
+	w := weatherWorld
+	weatherMu.RUnlock()
+	if w == nil {
+		return
+	}
+	w.SendToAll("[ NIGHT GATE ] The shimmering gate fades into nothingness.\r\n")
+}
+
+// ghostShipAppear broadcasts the ghost ship sighting.
+// Called at hour 21 (sunset).
+func ghostShipAppear() {
+	weatherMu.RLock()
+	w := weatherWorld
+	weatherMu.RUnlock()
+	if w == nil {
+		return
+	}
+	w.SendToAll("[ GHOST SHIP ] An eerie fog rolls in from the harbor... the ghost ship has been sighted!\r\n")
+}
+
+// ghostShipDisappear broadcasts the ghost ship departure.
+// Called at hour 5 (sunrise).
+func ghostShipDisappear() {
+	weatherMu.RLock()
+	w := weatherWorld
+	weatherMu.RUnlock()
+	if w == nil {
+		return
+	}
+	w.SendToAll("[ GHOST SHIP ] The fog lifts... the ghost ship vanishes into the mists.\r\n")
+} 
 
 // ModifyWeatherChange adjusts the weather change variable.
 // Used by spell_control_weather.

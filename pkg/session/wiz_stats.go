@@ -214,7 +214,72 @@ func cmdVstat(s *Session, args []string) error {
 		s.Send("Usage: vstat <mob|obj|room> <vnum>")
 		return nil
 	}
-	s.Send(fmt.Sprintf("Vstat %s %s — not yet implemented.", args[0], args[1]))
+
+	cat := strings.ToLower(args[0])
+	vnum, err := strconv.Atoi(args[1])
+	if err != nil {
+		s.Send("Invalid VNum.")
+		return nil
+	}
+
+	w := s.manager.world
+
+	switch cat {
+	case "mob":
+		proto, ok := w.GetMobPrototype(vnum)
+		if !ok {
+			s.Send(fmt.Sprintf("No mob with VNum %d.", vnum))
+			return nil
+		}
+		s.Send(fmt.Sprintf("Mob: [%5d] %-30s\r\n", proto.VNum, proto.ShortDesc))
+		s.Send(fmt.Sprintf("Keywords: %s\r\n", proto.Keywords))
+		s.Send(fmt.Sprintf("Level: %d  HP: %s  AC: %d  THAC0: %d\r\n", proto.Level, proto.HP.String(), proto.AC, proto.THAC0))
+		s.Send(fmt.Sprintf("Damage: %s  Alignment: %d  Exp: %d  Gold: %d\r\n", proto.Damage.String(), proto.Alignment, proto.Exp, proto.Gold))
+		s.Send(fmt.Sprintf("Str: %d  Int: %d  Wis: %d  Dex: %d  Con: %d  Cha: %d\r\n",
+			proto.Str, proto.Int, proto.Wis, proto.Dex, proto.Con, proto.Cha))
+		s.Send(fmt.Sprintf("Sex: %d  Weight: %d  Height: %d  Race: %s\r\n",
+			proto.Sex, proto.Weight, proto.Height, proto.RaceStr))
+		if proto.ScriptName != "" {
+			s.Send(fmt.Sprintf("Script: %s\r\n", proto.ScriptName))
+		}
+
+	case "obj":
+		proto, ok := w.GetObjPrototype(vnum)
+		if !ok {
+			s.Send(fmt.Sprintf("No object with VNum %d.", vnum))
+			return nil
+		}
+		s.Send(fmt.Sprintf("Object: [%5d] %s\r\n", proto.VNum, proto.ShortDesc))
+		s.Send(fmt.Sprintf("Keywords: %s\r\n", proto.Keywords))
+		s.Send(fmt.Sprintf("Type: %d  Weight: %d  Cost: %d\r\n", proto.TypeFlag, proto.Weight, proto.Cost))
+		s.Send(fmt.Sprintf("ExtraFlags: %v  WearFlags: %v\r\n", proto.ExtraFlags, proto.WearFlags))
+		s.Send(fmt.Sprintf("Values: [%d] [%d] [%d] [%d]\r\n", proto.Values[0], proto.Values[1], proto.Values[2], proto.Values[3]))
+		if len(proto.Affects) > 0 {
+			s.Send("Affects:")
+			for _, aff := range proto.Affects {
+				s.Send(fmt.Sprintf("  Apply: %d  Modifier: %d\r\n", aff.Location, aff.Modifier))
+			}
+		}
+
+	case "room":
+		room := w.GetRoomInWorld(vnum)
+		if room == nil {
+			s.Send(fmt.Sprintf("No room with VNum %d.", vnum))
+			return nil
+		}
+		s.Send(fmt.Sprintf("Room: [%5d] %s\r\n", room.VNum, room.Name))
+		s.Send(fmt.Sprintf("Zone: %d  Sector: %d\r\n", room.Zone, room.Sector))
+		s.Send(fmt.Sprintf("Description: %s\r\n", room.Description))
+		if len(room.ExtraDescs) > 0 {
+			s.Send("Extra Descriptions:")
+			for _, ed := range room.ExtraDescs {
+				s.Send(fmt.Sprintf("  %s: %s\r\n", ed.Keywords, ed.Description))
+			}
+		}
+
+	default:
+		s.Send("Usage: vstat <mob|obj|room> <vnum>")
+	}
 	return nil
 }
 

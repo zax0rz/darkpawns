@@ -34,8 +34,8 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 		prob = rand.Intn(51) + 50 // 50-100 fallback
 	}
 
-	chPronouns := GetPronouns(ch.Name, 1) // default male for now
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex()) // default male for now
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
 		// Miss
@@ -102,8 +102,8 @@ func DoBash(ch *Player, target combat.Combatant) SkillResult {
 	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.Intn(101) + 1)
 	prob := ch.GetSkill(SkillBash)
 
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent > prob {
 		// Failure
@@ -147,8 +147,8 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.Intn(101) + 1)
 	prob := ch.GetSkill(SkillKick)
 
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent > prob {
 		return SkillResult{
@@ -193,8 +193,8 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 	percent += max(target.GetLevel()-ch.Level, 0)
 	prob := ch.GetSkill(SkillTrip)
 
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent > prob {
 		// Failure — user falls
@@ -248,8 +248,8 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 // #nosec G404
 	percent := rand.Intn(101) + 1
 
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent > skillLevel {
 		// Miss
@@ -328,8 +328,8 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	}
 
 	if attacker == nil {
-		victPronouns := GetPronouns(target.GetName(), 1)
-		return SkillResult{Success: false, MessageToCh: ActMessage("But nobody is fighting $N!", GetPronouns(ch.Name, 1), &victPronouns, "")}
+		victPronouns := GetPronouns(target.GetName(), target.GetSex())
+		return SkillResult{Success: false, MessageToCh: ActMessage("But nobody is fighting $N!", GetPronouns(ch.Name, ch.GetSex()), &victPronouns, "")}
 	}
 
 	// Roll for success
@@ -338,8 +338,8 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	percent := rand.Intn(101) + 1
 	prob := ch.GetSkill(SkillRescue)
 
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent > prob {
 		return SkillResult{

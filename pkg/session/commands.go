@@ -317,6 +317,14 @@ func wrapSkill(fn func(command.SessionInterface, []string) error) command.Handle
 
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, cmdStr string, args []string) error {
+	// Moderation pre-check: mute, ban
+	if s.manager.modChecker != nil && s.player != nil {
+		errMsg, reject := s.manager.modChecker.CheckPreCommand(s.player.Name, cmdStr)
+		if reject {
+			s.sendText(errMsg)
+			return nil
+		}
+	}
 	// Split command from arguments if args not provided separately
 	if len(args) == 0 {
 		if idx := strings.IndexByte(cmdStr, ' '); idx >= 0 {

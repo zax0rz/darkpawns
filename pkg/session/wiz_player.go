@@ -310,7 +310,20 @@ func cmdVis(s *Session, args []string) error {
 		s.Send("Vis whom?")
 		return nil
 	}
-	s.Send("Vis not yet implemented.")
+	targetName := args[0]
+	target := findSessionByName(s.manager, targetName)
+	if target == nil || target.player == nil {
+		s.Send("There is no such player.")
+		return nil
+	}
+	// Clear their invisible flag to make them visible to lower-level players
+	if target.player.Flags&game.PLR_INVISIBLE != 0 {
+		target.player.Flags &^= game.PLR_INVISIBLE
+		target.Send("You have been revealed by a higher power!")
+		s.Send(fmt.Sprintf("%s is now visible to mortals.", target.player.Name))
+	} else {
+		s.Send(fmt.Sprintf("%s is already visible.", target.player.Name))
+	}
 	return nil
 }
 

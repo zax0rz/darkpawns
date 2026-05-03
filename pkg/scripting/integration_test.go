@@ -73,6 +73,8 @@ func (m *mockWorldForTest) IsHunting(charName string, isMob bool) bool          
 func (m *mockWorldForTest) EquipMob(mobVNum, roomVNum, objVNum int)                              {}
 func (m *mockWorldForTest) GetPlayerByID(id int) ScriptablePlayer                                 { return nil }
 func (m *mockWorldForTest) SetObjectExtraDesc(vnum int, keyword string, description string) bool { return false }
+func (m *mockWorldForTest) SetObjectExtraFlag(vnum int, flag int, set bool) bool                  { return false }
+func (m *mockWorldForTest) SetExitDoorState(roomVNum int, direction string, state int) bool       { return false }
 
 // TestSpellDamageFormulas tests that spell damage formulas are implemented
 func TestSpellDamageFormulas(t *testing.T) {

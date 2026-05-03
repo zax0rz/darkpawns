@@ -33,7 +33,7 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 		v.TakeDamage(dam)
 		v.SetFighting(attackerName)
 		if v.GetHP() <= 0 {
-			w.handleMobDeath(v, 303)
+			w.handleMobDeath(v, nil, 303)
 		}
 		return true
 	default:

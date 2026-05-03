@@ -76,8 +76,8 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You can't steal from someone who's fighting!"}
 	}
 
-	chPronouns := GetPronouns(ch.Name, 1)
-	victPronouns := GetPronouns(target.GetName(), 1)
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	// Steal gold
 	if itemName == "coins" || itemName == "gold" {
@@ -176,17 +176,16 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 	return SkillResult{Success: false, MessageToCh: "You can't steal that."}
 }
 
-// DoPickLock implements do_pick() — simplified version.
-// In original: act.movement.c do_gen_door() with SCMD_PICK.
-// For now, just a skill check with messaging.
-func DoPickLock(ch *Player) SkillResult {
+// DoPickLock implements do_pick() via doGenDoor() with SCMD_PICK.
+// Finds the door, checks pickability, rolls against pick lock skill, and unlocks.
+func DoPickLock(w *World, ch *Player, argument string) SkillResult {
 	if ch.GetSkill(SkillPickLock) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
 	}
 
-	// This is a placeholder — actual pick lock logic is in door_commands.go
-	// which handles the full door/unlock logic.
-	return SkillResult{Success: true, MessageToCh: "You attempt to pick the lock..."}
+	doGenDoor(w, ch, argument, scmdPick)
+	// doGenDoor handles its own messaging; return empty result
+	return SkillResult{Success: true}
 }
 
 // DoCarve implements do_carve() — carve food from a corpse.

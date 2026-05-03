@@ -455,11 +455,7 @@ func SerializeWorld(w *World) (string, error) {
 	// Copy gossip history.
 	w.gossipMu.RLock()
 	for _, entry := range w.gossipHistory {
-		data.Gossip = append(data.Gossip, saveGossipEntry{
-			Name:    entry.Name,
-			Message: entry.Message,
-			Invis:   entry.Invis,
-		})
+		data.Gossip = append(data.Gossip, saveGossipEntry(entry))
 	}
 	w.gossipMu.RUnlock()
 
@@ -558,11 +554,7 @@ func DeserializeWorld(data string, w *World) error {
 	w.gossipMu.Lock()
 	w.gossipHistory = make([]gossipEntry, 0, len(sd.Gossip))
 	for _, entry := range sd.Gossip {
-		w.gossipHistory = append(w.gossipHistory, gossipEntry{
-			Name:    entry.Name,
-			Message: entry.Message,
-			Invis:   entry.Invis,
-		})
+		w.gossipHistory = append(w.gossipHistory, gossipEntry(entry))
 	}
 	w.gossipMu.Unlock()
 

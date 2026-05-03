@@ -2,8 +2,11 @@
 package systems
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
@@ -371,17 +374,137 @@ func (sm *ShopManager) RestockAll(prototypes []*parser.Obj, currentTick int) int
 	return totalRestocked
 }
 
-// SaveShops saves all shops to the database (stub implementation).
+const shopsFile = "./data/shops.json"
+
+// saveShopData is a JSON-serializable snapshot of a Shop.
+type saveShopData struct {
+	ID              int    `json:"id"`
+	VNum            int    `json:"vnum"`
+	Name            string `json:"name"`
+	RoomVNum        int    `json:"room_vnum"`
+	ItemTypes       []int  `json:"item_types"`
+	BuyTypes        []int  `json:"buy_types"`
+	BuyMultiplier   int    `json:"buy_multiplier"`
+	SellMultiplier  int    `json:"sell_multiplier"`
+	RepairSkill     int    `json:"repair_skill"`
+	IdentifySkill   int    `json:"identify_skill"`
+	RepairCost      int    `json:"repair_cost"`
+	IdentifyCost    int    `json:"identify_cost"`
+	MaxItems        int    `json:"max_items"`
+	RestockInterval int    `json:"restock_interval"`
+	RestockPercent  int    `json:"restock_percent"`
+	OpenHour        int    `json:"open_hour"`
+	CloseHour       int    `json:"close_hour"`
+}
+
+// saveShopsData is the top-level JSON structure for shop persistence.
+type saveShopsData struct {
+	NextID int            `json:"next_id"`
+	Shops  []saveShopData `json:"shops"`
+}
+
+// SaveShops persists all shops to ./data/shops.json.
 func (sm *ShopManager) SaveShops() error {
-	// In a real implementation, this would save to database
-	// For now, just a stub
+	sm.mu.RLock()
+	defer sm.mu.RUnlock()
+
+	data := saveShopsData{
+		NextID: sm.nextID,
+		Shops:  make([]saveShopData, 0, len(sm.shops)),
+	}
+
+	for _, shop := range sm.shops {
+		shop.mu.RLock()
+		sd := saveShopData{
+			ID:              shop.ID,
+			VNum:            shop.VNum,
+			Name:            shop.Name,
+			RoomVNum:        shop.RoomVNum,
+			ItemTypes:       append([]int(nil), shop.ItemTypes...),
+			BuyTypes:        append([]int(nil), shop.BuyTypes...),
+			BuyMultiplier:   shop.BuyMultiplier,
+			SellMultiplier:  shop.SellMultiplier,
+			RepairSkill:     shop.RepairSkill,
+			IdentifySkill:   shop.IdentifySkill,
+			RepairCost:      shop.RepairCost,
+			IdentifyCost:    shop.IdentifyCost,
+			MaxItems:        shop.MaxItems,
+			RestockInterval: shop.RestockInterval,
+			RestockPercent:  shop.RestockPercent,
+			OpenHour:        shop.OpenHour,
+			CloseHour:       shop.CloseHour,
+		}
+		shop.mu.RUnlock()
+		data.Shops = append(data.Shops, sd)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(shopsFile), 0750); err != nil {
+		return fmt.Errorf("create shops dir: %w", err)
+	}
+
+	f, err := os.Create(filepath.Clean(shopsFile))
+	if err != nil {
+		return fmt.Errorf("create shops file: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		return fmt.Errorf("encode shops: %w", err)
+	}
+
+	slog.Debug("Shops saved", "path", shopsFile, "count", len(data.Shops))
 	return nil
 }
 
-// LoadShops loads all shops from the database (stub implementation).
+// LoadShops restores shops from ./data/shops.json.
+// If the file does not exist, returns nil (first boot).
 func (sm *ShopManager) LoadShops() error {
-	// In a real implementation, this would load from database
-	// For now, just a stub
+	f, err := os.Open(filepath.Clean(shopsFile))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("open shops file: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	var data saveShopsData
+	if err := json.NewDecoder(f).Decode(&data); err != nil {
+		return fmt.Errorf("decode shops: %w", err)
+	}
+
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	sm.nextID = data.NextID
+	if sm.nextID < 1 {
+		sm.nextID = 1
+	}
+
+	for _, sd := range data.Shops {
+		shop := NewShop(sd.ID, sd.VNum, sd.Name, sd.RoomVNum)
+		shop.ItemTypes = append([]int(nil), sd.ItemTypes...)
+		shop.BuyTypes = append([]int(nil), sd.BuyTypes...)
+		shop.BuyMultiplier = sd.BuyMultiplier
+		shop.SellMultiplier = sd.SellMultiplier
+		shop.RepairSkill = sd.RepairSkill
+		shop.IdentifySkill = sd.IdentifySkill
+		shop.RepairCost = sd.RepairCost
+		shop.IdentifyCost = sd.IdentifyCost
+		shop.MaxItems = sd.MaxItems
+		shop.RestockInterval = sd.RestockInterval
+		shop.RestockPercent = sd.RestockPercent
+		shop.OpenHour = sd.OpenHour
+		shop.CloseHour = sd.CloseHour
+
+		sm.shops[shop.ID] = shop
+		sm.npcToShop[shop.VNum] = shop.ID
+		sm.roomToShop[shop.RoomVNum] = append(sm.roomToShop[shop.RoomVNum], shop.ID)
+	}
+
+	slog.Info("Shops loaded", "path", shopsFile, "count", len(data.Shops))
 	return nil
 }
 

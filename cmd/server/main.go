@@ -110,6 +110,8 @@ func main() {
 
 	// Create session manager
 	manager := session.NewManager(gameWorld, database)
+	gameWorld.SetShopManager(manager.GetShopManager()) // Wire shop system to world
+	game.SetWeatherWorld(gameWorld)                     // Wire world for weather broadcasts
 	manager.SetCombatBroadcastFunc()                  // Enable combat messages to rooms
 	manager.SetDeathFunc()                            // Enable death/respawn handling
 	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death

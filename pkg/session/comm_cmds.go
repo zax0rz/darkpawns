@@ -14,6 +14,16 @@ import (
 // Tell / Reply
 // ---------------------------------------------------------------------------
 
+// filterCommMessage checks a message against word filters and records it for spam.
+// Returns the (potentially filtered) message and whether it should be blocked.
+func filterCommMessage(s *Session, message string) (string, bool) {
+	if s.manager.modChecker != nil && s.player != nil {
+		s.manager.modChecker.RecordMessage(s.player.Name)
+		return s.manager.modChecker.CheckMessage(s.player.Name, message)
+	}
+	return message, false
+}
+
 // cmdTell sends a private message to another player.
 // Source: act.comm.c do_tell() lines 901-931, perform_tell()
 func cmdTell(s *Session, args []string) error {
@@ -23,6 +33,14 @@ func cmdTell(s *Session, args []string) error {
 	}
 	targetName := args[0]
 	message := strings.Join(args[1:], " ")
+
+	// Word filter + spam check
+	filtered, block := filterCommMessage(s, message)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	message = filtered
 
 	if strings.EqualFold(targetName, s.player.Name) {
 		s.Send("You try to tell yourself something.")
@@ -115,6 +133,14 @@ func cmdShout(s *Session, args []string) error {
 	}
 	message := strings.Join(args, " ")
 
+	// Word filter + spam check
+	filtered, block := filterCommMessage(s, message)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	message = filtered
+
 	// Get the shouter's zone
 	senderRoom, ok := s.manager.world.GetRoom(s.player.GetRoom())
 	if !ok {
@@ -169,6 +195,14 @@ func cmdGossip(s *Session, args []string) error {
 	}
 	message := strings.Join(args, " ")
 
+	// Word filter + spam check
+	filtered, block := filterCommMessage(s, message)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	message = filtered
+
 	s.Send(fmt.Sprintf("You gossip, '%s'", message))
 
 	text := fmt.Sprintf("%s gossips, '%s'", s.player.Name, message)
@@ -213,6 +247,14 @@ func cmdEmote(s *Session, args []string) error {
 	}
 	action := strings.Join(args, " ")
 
+	// Word filter + spam check
+	filtered, block := filterCommMessage(s, action)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	action = filtered
+
 	// Sender sees: "You emit: $message"
 	s.Send(fmt.Sprintf("You emit: %s", action))
 
@@ -243,6 +285,14 @@ func cmdSay(s *Session, args []string) error {
 	}
 
 	text := strings.Join(args, " ")
+
+	// Word filter + spam check
+	filtered, block := filterCommMessage(s, text)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	text = filtered
 
 	// Determine verb based on trailing punctuation — act.comm.c do_say() switch
 	verb := "says"

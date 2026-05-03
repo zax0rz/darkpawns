@@ -210,9 +210,7 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		if len(cmd.Args) > 0 {
 			line += " " + strings.Join(cmd.Args, " ")
 		}
-		if game.HandleMailInput(s.player, line) {
-			// Mail complete (or cancelled) — PLR_WRITING cleared inside HandleMailInput
-		}
+		game.HandleMailInput(s.player, line) // returns true when mail complete; PLR_WRITING cleared inside
 		return nil
 	}
 

@@ -61,6 +61,7 @@ type ScriptableObject interface {
 	GetCost() int
 	GetTimer() int
 	SetTimer(int)
+	GetTypeFlag() int
 }
 
 // ScriptableWorld represents the game world for script context.
@@ -170,6 +171,14 @@ type ScriptableWorld interface {
 	// to spawned objects (e.g., "look trophy" showing engraved names on a necklace).
 	// Returns true if an instance was found and updated.
 	SetObjectExtraDesc(vnum int, keyword string, description string) bool
+
+	// SetObjectExtraFlag sets or removes an extra flag on the first object instance
+	// matching the given vnum. Used by the Lua obj_extra() function.
+	SetObjectExtraFlag(vnum int, flag int, set bool) bool
+
+	// SetExitDoorState sets the door state for an exit in a room.
+	// Used by the Lua exit_flags() function.
+	SetExitDoorState(roomVNum int, direction string, state int) bool
 }
 
 // ScriptContext holds the game objects exposed to Lua as globals.

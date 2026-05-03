@@ -236,6 +236,12 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 	).Scan(&p.ID)
 }
 
+// Exec runs a raw SQL query against the database.
+// Used for operations not covered by the typed methods.
+func (db *DB) Exec(query string, args ...interface{}) (interface{}, error) {
+	return db.conn.Exec(query, args...)
+}
+
 // SavePlayer persists a player's current state.
 func (db *DB) SavePlayer(p *PlayerRecord) error {
 	query := `

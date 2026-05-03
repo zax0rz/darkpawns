@@ -588,14 +588,15 @@ func okPick(_ *World, ch *Player, keynum int, _ bool, _ int) bool {
 		return false
 	}
 
-	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-	percent := rand.Intn(101) + 1
-	chance := 40 + (ch.GetLevel() * 5)
-	if chance > 95 {
-		chance = 95
+	skill := ch.GetSkill(SkillPickLock)
+	if skill == 0 {
+		sendToChar(ch, "You have no idea how to pick locks.\r\n")
+		return false
 	}
-	if percent > chance {
+
+	// #nosec G404 — game RNG, not cryptographic
+	percent := rand.Intn(101) + 1
+	if percent > skill {
 		sendToChar(ch, "You failed to pick the lock.\r\n")
 		return false
 	}

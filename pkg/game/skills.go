@@ -237,13 +237,13 @@ type Pronouns struct {
 }
 
 // GetPronouns returns pronouns for a character based on sex.
-// Sex: 0 = neutral, 1 = male, 2 = female (from structs.h)
+// Sex: 0 = male, 1 = female, 2 = neutral (matching Player.Sex / MobInstance.GetSex)
 func GetPronouns(name string, sex int) Pronouns {
 	var he, him, his string
 	switch sex {
-	case 2: // female
+	case 1: // female
 		he, him, his = "she", "her", "her"
-	case 1: // male
+	case 0: // male
 		he, him, his = "he", "him", "his"
 	default: // neutral
 		he, him, his = "it", "it", "its"

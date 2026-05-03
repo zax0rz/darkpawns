@@ -952,7 +952,9 @@ func CmdPickLock(s SessionInterface, args []string) error {
 		return s.SendMessage(msg + "\r\n")
 	}
 
-	result := game.DoPickLock(ch)
+	world := s.GetWorld()
+	argument := strings.Join(args, " ")
+	result := game.DoPickLock(world, ch, argument)
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
 

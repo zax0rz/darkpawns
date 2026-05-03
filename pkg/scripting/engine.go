@@ -706,6 +706,7 @@ func (e *Engine) objToTableLocked(obj ScriptableObject, globalName string) {
 	tbl.RawSetString("name", lua.LString(obj.GetShortDesc()))
 	tbl.RawSetString("cost", lua.LNumber(obj.GetCost()))
 	tbl.RawSetString("timer", lua.LNumber(obj.GetTimer()))
+	tbl.RawSetString("type", lua.LNumber(obj.GetTypeFlag()))
 
 	// Object prototype fields (stubbed)
 	tbl.RawSetString("perc_load", lua.LNumber(0)) // Default 0% load chance
@@ -1037,6 +1038,7 @@ func (e *Engine) luaOload(L *lua.LState) int {
 	tbl.RawSetString("name", lua.LString(objProto.GetShortDesc()))
 	tbl.RawSetString("cost", lua.LNumber(objProto.GetCost()))
 	tbl.RawSetString("timer", lua.LNumber(objProto.GetTimer()))
+	tbl.RawSetString("type", lua.LNumber(objProto.GetTypeFlag()))
 
 	// Based on C lua_oload(): if location is "room", add object to room via ch->in_room.
 	// If location is "char", add to the character's inventory.
@@ -2391,13 +2393,47 @@ func (e *Engine) luaSkillGroup(L *lua.LState) int {
 	return 1
 }
 
-// Flag check/set functions (ported from src/scripts.c) are in lua_aff_flags.go.
-// Remaining stubs (luaMobFlags, luaObjExtra, luaExitFlagged, luaExitFlags, luaExtra)
-// are defined below as placeholders until their table schemas are wired.
+// Flag check/set functions (ported from src/scripts.c).
+// luaMobFlags, luaObjExtra, luaExitFlagged, luaExitFlags, and luaExtra
+// are fully implemented below.
 
 func (e *Engine) luaObjExtra(L *lua.LState) int {
 	// obj_extra(obj, "set"|"remove", flag)
-	// Engine gap: obj extra flags not yet on obj tables
+	// Source: scripts.c — modifies GET_OBJ_EXTRA(obj)
+	objTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	op := L.ToString(2)
+	flag := L.ToInt(3)
+
+	vnumVal := objTbl.RawGetString("vnum")
+	if vnumVal.Type() == lua.LTNumber {
+		vnum := int(vnumVal.(lua.LNumber))
+		if e.world != nil {
+			switch op {
+			case "set":
+				e.world.SetObjectExtraFlag(vnum, flag, true)
+			case "remove":
+				e.world.SetObjectExtraFlag(vnum, flag, false)
+			}
+		}
+	}
+
+	// Update the Lua table for read-back consistency
+	val := objTbl.RawGetString("extra_flags_raw")
+	var bits uint64
+	if val.Type() == lua.LTNumber {
+		bits = uint64(val.(lua.LNumber))
+	}
+	switch op {
+	case "set":
+		bits |= 1 << uint(flag)
+	case "remove":
+		bits &^= 1 << uint(flag)
+	}
+	objTbl.RawSetString("extra_flags_raw", lua.LNumber(bits))
+
 	return 0
 }
 
@@ -2589,15 +2625,126 @@ func (e *Engine) luaObjFlagged(L *lua.LState) int {
 func (e *Engine) luaExitFlagged(L *lua.LState) int {
 	// exit_flagged(room, door, flag) → TRUE(1) or nil
 	// Source: scripts.c lines 456-478
-	// Engine gap: exit data not yet on room tables
-	L.Push(lua.LNil)
+	roomTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		L.Push(lua.LNil)
+		return 1
+	}
+	dir := L.ToString(2)
+	flag := L.ToInt(3)
+
+	vnumVal := roomTbl.RawGetString("vnum")
+	if vnumVal.Type() != lua.LTNumber {
+		L.Push(lua.LNil)
+		return 1
+	}
+	vnum := int(vnumVal.(lua.LNumber))
+
+	if e.world == nil {
+		L.Push(lua.LNil)
+		return 1
+	}
+
+	room := e.world.GetRoomInWorld(vnum)
+	if room == nil {
+		L.Push(lua.LNil)
+		return 1
+	}
+
+	exit, ok := room.Exits[dir]
+	if !ok {
+		L.Push(lua.LNil)
+		return 1
+	}
+
+	result := false
+	switch flag {
+	case 0: // EX_ISDOOR
+		result = exit.DoorState > 0
+	case 1: // EX_CLOSED
+		result = exit.DoorState >= 1
+	case 2: // EX_LOCKED
+		result = exit.DoorState == 2
+	case 3: // EX_PICKPROOF
+		// Can't reliably determine from runtime DoorState
+		result = false
+	}
+
+	if result {
+		L.Push(lua.LNumber(1))
+	} else {
+		L.Push(lua.LNil)
+	}
 	return 1
 }
 
 func (e *Engine) luaExitFlags(L *lua.LState) int {
 	// exit_flags(room, door, "set"|"remove", flag)
 	// Source: scripts.c lines 427-454
-	// Engine gap: exit data not yet on room tables
+	roomTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	dir := L.ToString(2)
+	op := L.ToString(3)
+	flag := L.ToInt(4)
+
+	vnumVal := roomTbl.RawGetString("vnum")
+	if vnumVal.Type() != lua.LTNumber {
+		return 0
+	}
+	vnum := int(vnumVal.(lua.LNumber))
+
+	if e.world == nil {
+		return 0
+	}
+
+	room := e.world.GetRoomInWorld(vnum)
+	if room == nil {
+		return 0
+	}
+
+	exit, ok := room.Exits[dir]
+	if !ok {
+		return 0
+	}
+
+	newState := exit.DoorState
+	switch op {
+	case "set":
+		switch flag {
+		case 0: // EX_ISDOOR
+			if newState == 0 {
+				newState = 1
+			}
+		case 1: // EX_CLOSED
+			if newState == 0 {
+				newState = 1
+			}
+		case 2: // EX_LOCKED
+			newState = 2
+		case 3: // EX_PICKPROOF
+			// Can't set pickproof at runtime
+		}
+	case "remove":
+		switch flag {
+		case 0: // EX_ISDOOR
+			newState = 0
+		case 1: // EX_CLOSED
+			newState = 0
+		case 2: // EX_LOCKED
+			if newState == 2 {
+				newState = 1
+			}
+		case 3: // EX_PICKPROOF
+			// Can't remove pickproof at runtime
+		}
+	}
+
+	if newState != exit.DoorState {
+		e.world.SetExitDoorState(vnum, dir, newState)
+	}
+
 	return 0
 }
 
@@ -2642,7 +2789,9 @@ func (e *Engine) luaSteal(L *lua.LState) int {
 	if roomVNum > 0 && victimName != "" {
 		obj := e.world.RemoveItemFromChar(victimName, 0) // vnum=0 means any item
 		if obj != nil {
-			e.world.AddItemToRoom(obj, roomVNum)
+			if err := e.world.AddItemToRoom(obj, roomVNum); err != nil {
+				slog.Debug("luaStealItem: AddItemToRoom error", "room_vnum", roomVNum, "error", err)
+			}
 		}
 	}
 	return 0

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -28,7 +29,30 @@ func cmdShow(s *Session, args []string) error {
 	case "stats":
 		s.Send(fmt.Sprintf("Sessions: %d", len(s.manager.sessions)))
 	case "reset":
-		s.Send("Show reset is not yet implemented.")
+		zones := s.manager.world.GetAllZones()
+		zd := s.manager.world.GetZoneDispatcher()
+		var buf strings.Builder
+		fmt.Fprintf(&buf, "Zone Reset Information (%d zones):\r\n", len(zones))
+		for _, z := range zones {
+			ticks := uint64(0)
+			if zd != nil {
+				ticks = zd.ZoneTicks(z.Number)
+			}
+			resetInterval := "never"
+			if z.Lifespan > 0 {
+				resetInterval = fmt.Sprintf("%d min", z.Lifespan)
+			}
+			resetMode := "never"
+			switch z.ResetMode {
+			case 1:
+				resetMode = "if empty"
+			case 2:
+				resetMode = "always"
+			}
+			fmt.Fprintf(&buf, "  [%5d] %-30s reset=%s mode=%s ticks=%d\r\n",
+				z.Number, z.Name, resetInterval, resetMode, ticks)
+		}
+		s.Send(buf.String())
 	default:
 		s.Send(fmt.Sprintf("Unknown topic: %s", topic))
 	}
@@ -140,7 +164,73 @@ func cmdCheckload(s *Session, args []string) error {
 		s.Send("Usage: checkload <mob|obj> <vnum>")
 		return nil
 	}
-	s.Send(fmt.Sprintf("Checkload %s %s — not yet implemented (requires zone table).", args[0], args[1]))
+
+	cat := strings.ToLower(args[0])
+	vnum, err := strconv.Atoi(args[1])
+	if err != nil {
+		s.Send("Invalid VNum.")
+		return nil
+	}
+
+	w := s.manager.world
+	count := 0
+	maxLoad := -1
+
+	switch cat {
+	case "mob":
+		if _, ok := w.GetMobPrototype(vnum); !ok {
+			s.Send(fmt.Sprintf("No mob prototype with VNum %d.", vnum))
+			return nil
+		}
+		// Count active mob instances with this VNum
+		for _, m := range w.GetAllMobs() {
+			if m.GetVNum() == vnum {
+				count++
+			}
+		}
+		// Scan zone reset commands for max load
+		for _, z := range w.GetAllZones() {
+			for _, cmd := range z.Commands {
+				if cmd.Command == "M" && cmd.Arg1 == vnum {
+					if maxLoad < 0 || cmd.Arg2 > maxLoad {
+						maxLoad = cmd.Arg2
+					}
+				}
+			}
+		}
+
+	case "obj":
+		if _, ok := w.GetObjPrototype(vnum); !ok {
+			s.Send(fmt.Sprintf("No object prototype with VNum %d.", vnum))
+			return nil
+		}
+		// Count active object instances with this VNum
+		for _, o := range w.GetAllObjects() {
+			if o.GetVNum() == vnum {
+				count++
+			}
+		}
+		// Scan zone reset commands for max load
+		for _, z := range w.GetAllZones() {
+			for _, cmd := range z.Commands {
+				if cmd.Command == "O" && cmd.Arg1 == vnum {
+					if maxLoad < 0 || cmd.Arg2 > maxLoad {
+						maxLoad = cmd.Arg2
+					}
+				}
+			}
+		}
+
+	default:
+		s.Send("Usage: checkload <mob|obj> <vnum>")
+		return nil
+	}
+
+	maxStr := "unknown"
+	if maxLoad >= 0 {
+		maxStr = fmt.Sprintf("%d", maxLoad)
+	}
+	s.Send(fmt.Sprintf("%s %d: %d of %s loaded.", cat, vnum, count, maxStr))
 	return nil
 }
 

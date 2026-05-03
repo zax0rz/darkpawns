@@ -84,7 +84,7 @@ func (w *World) HandleSpellDeathScriptable(victimName string, spellNum int, room
 	for _, mob := range w.activeMobs {
 		if mob.GetShortDesc() == victimName && mob.GetRoom() == roomVNum {
 			w.mu.RUnlock()
-			w.handleMobDeath(mob, spellNum)
+			w.handleMobDeath(mob, nil, spellNum)
 			return
 		}
 	}
@@ -280,6 +280,14 @@ func (a *WorldScriptableAdapter) SetObjectExtraDesc(vnum int, keyword string, de
 	return a.world.SetObjectExtraDesc(vnum, keyword, description)
 }
 
+func (a *WorldScriptableAdapter) SetObjectExtraFlag(vnum int, flag int, set bool) bool {
+	return a.world.SetObjectExtraFlag(vnum, flag, set)
+}
+
+func (a *WorldScriptableAdapter) SetExitDoorState(roomVNum int, direction string, state int) bool {
+	return a.world.SetExitDoorState(roomVNum, direction, state)
+}
+
 // scriptableObjWrapper wraps parser.Obj to implement ScriptableObject
 type scriptableObjWrapper struct {
 	obj *parser.Obj
@@ -309,6 +317,10 @@ func (w *scriptableObjWrapper) SetTimer(timer int) {
 	// No-op: parser.Obj is a prototype — timer tracked on ObjectInstance at runtime
 }
 
+func (w *scriptableObjWrapper) GetTypeFlag() int {
+	return w.obj.TypeFlag
+}
+
 // scriptableObjInstanceWrapper wraps ObjectInstance to implement ScriptableObject.
 // Used by item-transfer Lua functions (objfrom/objto) to carry live instances.
 type scriptableObjInstanceWrapper struct {
@@ -321,6 +333,7 @@ func (w *scriptableObjInstanceWrapper) GetShortDesc() string { return w.item.Get
 func (w *scriptableObjInstanceWrapper) GetCost() int         { return w.item.GetCost() }
 func (w *scriptableObjInstanceWrapper) GetTimer() int        { return w.item.GetTimer() }
 func (w *scriptableObjInstanceWrapper) SetTimer(t int)       { w.item.SetTimer(t) }
+func (w *scriptableObjInstanceWrapper) GetTypeFlag() int     { return w.item.GetTypeFlag() }
 
 // objectInstanceFromScriptable extracts the underlying ObjectInstance from a
 // scriptableObjInstanceWrapper, returning nil for other ScriptableObject types.

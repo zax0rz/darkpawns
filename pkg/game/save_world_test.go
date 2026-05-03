@@ -262,7 +262,7 @@ func TestSerializeWorldRoundTrip(t *testing.T) {
 	// Create a fresh world with same static data
 	w2, _ := NewWorld(pw)
 	// Simulate zone reset spawning the mob
-	w2.SpawnMob(3000, 100) // spawns in default room 100
+	_, _ = w2.SpawnMob(3000, 100) // spawns in default room 100
 
 	// Deserialize into the new world
 	if err := DeserializeWorld(data, w2); err != nil {
