@@ -311,6 +311,13 @@ func wrapSkill(fn func(command.SessionInterface, []string) error) command.Handle
 
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, cmdStr string, args []string) error {
+	// Split command from arguments if args not provided separately
+	if len(args) == 0 {
+		if idx := strings.IndexByte(cmdStr, ' '); idx >= 0 {
+			args = strings.Fields(cmdStr[idx+1:])
+			cmdStr = cmdStr[:idx]
+		}
+	}
 	cmd := strings.ToLower(cmdStr)
 
 	// Check for mob scripts with oncmd trigger before processing
