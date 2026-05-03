@@ -494,11 +494,9 @@ type Session struct {
 	snoopBy   *Session  // Session that is snooping us
 
 	// Force-command safety state
-	IsForced           bool      // true while executing a forced command (prevents transitive force)
-	ForcedPrivilegeLevel int     // target's privilege level during forced execution (0 = not forced)
-	// TODO: Wire ForcedPrivilegeLevel into the command dispatcher (checkLevel / privilege checks)
-	//       so forced commands execute at the TARGET's level, not the wizard's.
-	LastForceTime time.Time // last time this session was the target of a force command
+	IsForced              bool      // true while executing a forced command (prevents transitive force)
+	ForcedPrivilegeLevel  int       // target's privilege level during forced execution (0 = not forced)
+	LastForceTime         time.Time // last time this session was the target of a force command
 
 	// idleTicsSet tracks whether the idle timeout counter has been set
 	// for pre-login sessions. Used by CheckIdlePasswords().

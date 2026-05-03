@@ -17,12 +17,16 @@ const (
 // getEffectiveLevel returns the level that should be used for permission checks.
 // When a wizard is switched into another body, their original wizard level is used
 // so they cannot escalate beyond their own authority. (M-16)
+// When a player is under a forced command, their own level is used (force safety).
 func getEffectiveLevel(s *Session) int {
 	if s.player == nil {
 		return 0
 	}
 	if s.isSwitched && s.switchedOriginalLevel > 0 {
 		return s.switchedOriginalLevel
+	}
+	if s.IsForced && s.ForcedPrivilegeLevel > 0 {
+		return s.ForcedPrivilegeLevel
 	}
 	return s.player.Level
 }

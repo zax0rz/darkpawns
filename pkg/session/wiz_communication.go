@@ -86,7 +86,7 @@ func cmdSend(s *Session, args []string) error {
 // force — force command on another character (LVL_GRGOD)
 //
 // Safety measures implemented:
-//   1. ForcedPrivilegeLevel set to target's level (dispatcher wiring TODO below)
+//   1. ForcedPrivilegeLevel wired into getEffectiveLevel (checkLevel path)
 //   2. IsForced flag prevents transitive force chains
 //   3. Command denylist blocks dangerous commands
 //   4. 3-second cooldown between force commands on the same target

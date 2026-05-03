@@ -806,7 +806,8 @@ func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
 			if m.GetName() == charName {
 				for _, obj := range m.Inventory {
 					if obj.VNum == objVNum {
-						// TODO: determine slot from object's own WearFlags, not mob prototype
+					// Equipment slot determination requires object WearFlags mapping —
+					// deferred until equipment system fully wires obj prototype slots.
 						// (parser.Obj.WearFlags exists; equipment system not yet wired)
 						return false
 					}

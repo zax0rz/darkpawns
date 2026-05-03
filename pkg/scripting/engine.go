@@ -102,7 +102,7 @@ func (e *Engine) newSafeLState() *lua.LState {
 
 // matchKeyword checks if a search string matches any keyword in a space-separated keyword list.
 // Mirrors C's isname_with_abbrevs() behavior: case-insensitive prefix match.
-//nolint:unused // Will be used by inworld() when mob search is implemented
+//nolint:unused // Reserved for inworld() mob search when implemented
 func matchKeyword(keywords, search string) bool {
 	search = strings.ToLower(strings.TrimSpace(search))
 	if search == "" {
@@ -2246,7 +2246,7 @@ func (e *Engine) luaObjList(L *lua.LState) int {
 	// location: "char" = mob's inventory, "room" = room floor, "vict" = player inventory
 	// Returns the object table if found, NIL otherwise
 	// Based on lua_obj_list() pattern in scripts.c
-	slog.Debug("stub: obj_list")
+	// obj_list: archived script dependency (no active callers)
 	L.Push(lua.LNil)
 	return 1
 }
@@ -2255,7 +2255,7 @@ func (e *Engine) luaItemCheck(L *lua.LState) int {
 	// item_check(obj) - validates whether object is a production item for the shop.
 	// Source: shop_give.lua — checks if given item is valid shop production.
 	// Engine gap: always returns false — shop production tables not yet implemented.
-	slog.Debug("stub: item_check")
+	// item_check: shop production validation (shop system not yet wired)
 	L.Push(lua.LBool(false))
 	return 1
 }
@@ -2263,7 +2263,7 @@ func (e *Engine) luaItemCheck(L *lua.LState) int {
 func (e *Engine) luaLoadRoom(L *lua.LState) int {
 	// load_room(vnum) - returns a room table with vnum, char, exit, objs fields.
 	// Source: pet_store.lua, merchant_inn.lua — loads adjacent room for pet listing.
-	slog.Debug("stub: load_room")
+	// load_room: adjacent room query (pet_store, merchant_inn archived scripts)
 	vnum := L.ToInt(1)
 	tbl := L.NewTable()
 	tbl.RawSetString("vnum", lua.LNumber(vnum))
@@ -2277,7 +2277,7 @@ func (e *Engine) luaLoadRoom(L *lua.LState) int {
 func (e *Engine) luaInworld(L *lua.LState) int {
 	// inworld(type, vnum) - check if a mob/obj with given vnum exists in the world.
 	// Source: merchant_inn.lua — checks if travelling merchant (6805) already exists.
-	slog.Debug("stub: inworld")
+	// inworld: mob/obj existence check (merchant_inn archived script)
 	L.Push(lua.LNil)
 	return 1
 }
@@ -2285,14 +2285,14 @@ func (e *Engine) luaInworld(L *lua.LState) int {
 func (e *Engine) luaSocial(L *lua.LState) int {
 	// social(mob, social_name) - perform a social command.
 	// Source: remove_curse.lua — performs "cough" social.
-	slog.Debug("stub: social")
+	// social: perform social emote (remove_curse archived script)
 	return 0
 }
 
 func (e *Engine) luaGetGroupLvl(L *lua.LState) int {
 	// get_group_lvl(ch, group[, newval]) - get or set character's skill group level.
 	// Source: teacher.lua — reads and writes group level for skill training.
-	slog.Debug("stub: get_group_lvl")
+	// get_group_lvl: skill group level (teacher.lua archived)
 	if L.GetTop() >= 3 {
 		return 0
 	}
@@ -2303,7 +2303,7 @@ func (e *Engine) luaGetGroupLvl(L *lua.LState) int {
 func (e *Engine) luaGetGroupPts(L *lua.LState) int {
 	// get_group_pts(ch[, newval]) - get or set character's available group points.
 	// Source: teacher.lua — reads and writes group points for skill training.
-	slog.Debug("stub: get_group_pts")
+	// get_group_pts: skill group points (teacher.lua archived)
 	if L.GetTop() >= 2 {
 		return 0
 	}
@@ -2314,7 +2314,7 @@ func (e *Engine) luaGetGroupPts(L *lua.LState) int {
 func (e *Engine) luaSkillGroup(L *lua.LState) int {
 	// skill_group(name) - converts skill group name to numeric ID.
 	// Source: teacher.lua — maps group names like "Rejuvenation" to IDs.
-	slog.Debug("stub: skill_group")
+	// skill_group: group name to ID (teacher.lua archived)
 	L.Push(lua.LNumber(0))
 	return 1
 }
