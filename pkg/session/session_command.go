@@ -1,13 +1,17 @@
 // Package session manages WebSocket connections and player sessions.
 package session
 
-import "log/slog"
-import "github.com/zax0rz/darkpawns/pkg/common"
+import (
+	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
+	"github.com/zax0rz/darkpawns/pkg/command"
+)
 
 func (m *Manager) RegisterCommand(name string, handler func(common.CommandSession, []string) error) {
-	// This is a stub implementation
-	// In a real implementation, this would register the command with the session manager
-	slog.Debug("RegisterCommand called (stub)", "name", name)
+	// Bridge common.CommandSession handler into cmdRegistry.
+	cmdRegistry.Register(name, command.Handler(handler), name+" (registered via RegisterCommand)", 0, 0)
+	slog.Debug("RegisterCommand: registered", "name", name)
 }
 
 // Sessions returns all active sessions
@@ -17,9 +21,7 @@ func (m *Manager) Sessions() []common.CommandSession {
 
 	sessions := make([]common.CommandSession, 0, len(m.sessions))
 	for _, sess := range m.sessions {
-		// Create a wrapper that implements common.CommandSession
-		wrapper := &commandSessionWrapper{session: sess}
-		sessions = append(sessions, wrapper)
+		sessions = append(sessions, &commandSessionWrapper{session: sess})
 	}
 	return sessions
 }
@@ -57,4 +59,9 @@ func (w *commandSessionWrapper) HasPlayer() bool {
 	return w.session.HasPlayer()
 }
 
-// Lock locks the manager mutex
+func (w *commandSessionWrapper) Lock()   {}
+func (w *commandSessionWrapper) Unlock() {}
+
+func (w *commandSessionWrapper) GetManager() interface{} {
+	return w.session.manager
+}

@@ -446,13 +446,60 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 		}
 
 	case "drop":
-		slog.Debug("executeMobCommand: drop not yet implemented", "mob", mobVNum)
+		// Mob drops item(s) to the room. "drop all" drops everything.
+		if args == "all" || args == "all" {
+			for _, obj := range mob.Inventory {
+				w.AddItemToRoom(obj, mob.GetRoomVNum())
+			}
+			mob.Inventory = mob.Inventory[:0]
+		} else {
+			for i, obj := range mob.Inventory {
+				if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.ShortDesc), strings.ToLower(args)) {
+					mob.Inventory = append(mob.Inventory[:i], mob.Inventory[i+1:]...)
+					w.AddItemToRoom(obj, mob.GetRoomVNum())
+					break
+				}
+			}
+		}
 
 	case "get":
-		slog.Debug("executeMobCommand: get not yet implemented", "mob", mobVNum)
+		// Mob picks up item from room. "get all" picks up everything.
+		roomItems := w.GetItemsInRoom(mob.GetRoomVNum())
+		if args == "all" {
+			for _, obj := range roomItems {
+				w.RemoveItemFromRoom(obj, mob.GetRoomVNum())
+				mob.Inventory = append(mob.Inventory, obj)
+			}
+		} else {
+			for _, obj := range roomItems {
+				if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.ShortDesc), strings.ToLower(args)) {
+					w.RemoveItemFromRoom(obj, mob.GetRoomVNum())
+					mob.Inventory = append(mob.Inventory, obj)
+					break
+				}
+			}
+		}
 
 	case "give":
-		slog.Debug("executeMobCommand: give not yet implemented", "mob", mobVNum)
+		// Mob gives item to a player in the room.
+		// Usage: give <item> <player>
+		parts := strings.Fields(args)
+		if len(parts) >= 2 {
+			itemName := parts[0]
+			targetName := strings.Join(parts[1:], " ")
+			target := w.FindPlayerInRoom(mob.GetRoomVNum(), targetName)
+			if target != nil {
+				for i, obj := range mob.Inventory {
+					if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.ShortDesc), strings.ToLower(itemName)) {
+						mob.Inventory = append(mob.Inventory[:i], mob.Inventory[i+1:]...)
+						if target.Inventory != nil {
+							target.Inventory.AddItem(obj)
+						}
+						break
+					}
+				}
+			}
+		}
 
 	case "ride":
 		target := w.findPlayerByName(args)
@@ -596,17 +643,42 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 		return nil, fmt.Errorf("no exit %s", direction)
 	}
 
-	// Check if exit is closed (door)
-	// Note: door checks are done in cmdMove (session layer) via doorManager.
-	// MovePlayer just validates exits and applies movement costs.
+	// Door check — exit must be open to pass
+	if exit.DoorState > 0 {
+		p.SendMessage("The door is closed.\r\n")
+		return nil, fmt.Errorf("door closed")
+	}
 
 	newRoom, ok := w.rooms[exit.ToRoom]
 	if !ok {
 		return nil, fmt.Errorf("exit leads to invalid room %d", exit.ToRoom)
 	}
 
-	// Movement point cost — average of source and destination sector costs
-	// C source: act.movement.c:161 — (movement_loss[src] + movement_loss[dst]) >> 1
+	// Boat requirement for WATER_NOSWIM
+	// C source: act.movement.c:126-129 — needs boat for source or dest WATER_NOSWIM
+	if (currentRoom.Sector == 7 || newRoom.Sector == 7) { // SECT_WATER_NOSWIM
+		if !p.HasBoat() {
+			p.SendMessage("You need a boat to go there.\r\n")
+			return nil, fmt.Errorf("no boat")
+		}
+	}
+
+	// Room tunnel limit — only 1 PC allowed
+	// C source: act.movement.c:189-191 — ROOM_TUNNEL = bit 8
+	if roomHasFlagBit(newRoom.Flags, 8) {
+		pcCount := 0
+		for _, other := range w.players {
+			if other.RoomVNum == newRoom.VNum {
+				pcCount++
+			}
+		}
+		if pcCount >= 1 {
+			p.SendMessage("There isn’t enough room there!\r\n")
+			return nil, fmt.Errorf("room tunnel full")
+		}
+	}
+
+	// Movement point cost
 	moveCost := (sectorMoveCost(currentRoom.Sector) + sectorMoveCost(newRoom.Sector)) / 2
 	if p.GetMove() < moveCost {
 		p.SendMessage("You are too exhausted.\r\n")

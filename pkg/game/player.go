@@ -369,3 +369,17 @@ func (p *Player) MaxCarryWeight() int {
 }
 
 // UpdateActivity marks the player as active.
+
+// HasBoat returns true if the player has a boat item in inventory or equipment.
+// C source: act.movement.c has_boat() — checks ITEM_BOAT wear flag.
+func (p *Player) HasBoat() bool {
+	if p.Inventory == nil {
+		return false
+	}
+	for _, obj := range p.Inventory.Items {
+		if obj.Prototype != nil && hasWearFlag(obj.Prototype.WearFlags, 15) { // ITEM_WEAR_BOAT = bit 15
+			return true
+		}
+	}
+	return false
+}
