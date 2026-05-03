@@ -96,6 +96,7 @@ type RoomState struct {
 	Exits       []string   `json:"exits"`
 	Doors       []DoorInfo `json:"doors,omitempty"`
 	Players     []string   `json:"players,omitempty"`
+	Mobs        []string   `json:"mobs,omitempty"`
 	Items       []string   `json:"items,omitempty"`
 }
 

@@ -21,6 +21,19 @@ func cmdLook(s *Session, args []string) error {
 		}
 	}
 
+	// Get mobs in room
+	mobs := s.manager.world.GetMobsInRoom(room.VNum)
+	var mobDescs []string
+	for _, mob := range mobs {
+		desc := mob.GetShortDesc()
+		if mob.Fighting {
+			desc += " is here, fighting " + mob.FightingTarget
+		} else {
+			desc += " is here."
+		}
+		mobDescs = append(mobDescs, desc)
+	}
+
 	// Get items in room
 	items := s.manager.world.GetItemsInRoom(room.VNum)
 	var itemDescs []string
@@ -42,6 +55,7 @@ func cmdLook(s *Session, args []string) error {
 			Exits:       getExitNames(room.Exits),
 			Doors:       getDoorInfo(s.manager.doorManager, room.VNum, room.Exits),
 			Players:     playerNames,
+			Mobs:        mobDescs,
 			Items:       itemDescs,
 		},
 	}

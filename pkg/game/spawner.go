@@ -605,11 +605,30 @@ func (s *Spawner) StopPeriodicResets() {
 	}
 }
 
-// resetEmptyZones resets zones that are empty (no players or mobs).
+// resetEmptyZones resets zones that have no active players in them.
+// Matches C behavior: db.c's zone_point_update() resets a zone when its
+// timer fires AND no PCs are present (is_zone_empty check).
 func (s *Spawner) resetEmptyZones() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// Do NOT hold s.mu here — ExecuteZoneReset handles its own locking internally.
+	// Also need to check player rooms which requires world lock.
 
-	slog.Info("Periodic zone reset check")
+	zones := s.world.GetAllZones()
+	for _, zone := range zones {
+		if s.zoneHasPlayers(zone.Number) {
+			continue
+		}
+		if err := s.ExecuteZoneReset(zone); err != nil {
+			slog.Warn("periodic zone reset failed", "zone", zone.Number, "error", err)
+		}
+	}
+}
+
+// zoneHasPlayers returns true if any player is in a room belonging to the given zone.
+func (s *Spawner) zoneHasPlayers(zoneNum int) bool {
+	hasPlayer := false
+	s.world.ForEachPlayerInZone(zoneNum, func(p *Player) {
+		hasPlayer = true
+	})
+	return hasPlayer
 }
 
