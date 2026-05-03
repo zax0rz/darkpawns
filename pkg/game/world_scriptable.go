@@ -103,6 +103,10 @@ func NewWorldScriptableAdapter(w *World) *WorldScriptableAdapter {
 	return &WorldScriptableAdapter{world: w}
 }
 
+func (a *WorldScriptableAdapter) GetRoomInWorld(vnum int) *parser.Room {
+	return a.world.GetRoomInWorld(vnum)
+}
+
 func (a *WorldScriptableAdapter) GetPlayersInRoom(roomVNum int) []scripting.ScriptablePlayer {
 	return a.world.GetPlayersInRoomScriptable(roomVNum)
 }
@@ -180,6 +184,12 @@ func (a *WorldScriptableAdapter) ExecuteMobCommand(mobVNum int, cmdStr string) {
 	a.world.executeMobCommand(mobVNum, cmdStr)
 }
 
+// FindFirstStep returns direction (0-5) from src room to target room.
+// Delegates to World.FindFirstStep (public wrapper added to graph.go).
+func (a *WorldScriptableAdapter) FindFirstStep(src, target int) int {
+	return a.world.FindFirstStep(src, target)
+}
+
 // IsRoomDark returns true if the given room VNum is dark.
 // Based on utils.h IS_DARK() macro — checks ROOM_DARK flag.
 func (a *WorldScriptableAdapter) IsRoomDark(roomVNum int) bool {
@@ -215,6 +225,47 @@ func (a *WorldScriptableAdapter) CreateEvent(delay int, source, target, obj, arg
 			a.world.dispatchScriptEvent(src, tgt, o, arg, trig, et)
 			return 0
 		})
+}
+
+// ---------------------------------------------------------------------------
+// ScriptableWorld adapter — STATE MUTATIONS & LOOKUPS
+// (lua_batch2_mutations.go)
+// ---------------------------------------------------------------------------
+
+func (a *WorldScriptableAdapter) EquipChar(charName string, isMob bool, objVNum int) bool {
+	return a.world.EquipChar(charName, isMob, objVNum)
+}
+
+func (a *WorldScriptableAdapter) SetFollower(followerName, leaderName string, followerIsMob bool) error {
+	return a.world.SetFollower(followerName, leaderName, followerIsMob)
+}
+
+func (a *WorldScriptableAdapter) MountPlayer(playerName, mountName string) error {
+	return a.world.MountPlayer(playerName, mountName)
+}
+
+func (a *WorldScriptableAdapter) DismountPlayer(playerName string) error {
+	return a.world.DismountPlayer(playerName)
+}
+
+func (a *WorldScriptableAdapter) ClearAffects(charName string, isMob bool) {
+	a.world.ClearAffects(charName, isMob)
+}
+
+func (a *WorldScriptableAdapter) CanCarryObject(charName string, objVNum int) bool {
+	return a.world.CanCarryObject(charName, objVNum)
+}
+
+func (a *WorldScriptableAdapter) IsCorpseObj(objVNum int) bool {
+	return a.world.IsCorpseObj(objVNum)
+}
+
+func (a *WorldScriptableAdapter) SetHunting(hunterName, preyName string, hunterIsMob bool) {
+	a.world.SetHunting(hunterName, preyName, hunterIsMob)
+}
+
+func (a *WorldScriptableAdapter) IsHunting(charName string, isMob bool) bool {
+	return a.world.IsHunting(charName, isMob)
 }
 
 // scriptableObjWrapper wraps parser.Obj to implement ScriptableObject

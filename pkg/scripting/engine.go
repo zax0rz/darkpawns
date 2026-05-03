@@ -100,6 +100,21 @@ func (e *Engine) newSafeLState() *lua.LState {
 	return L
 }
 
+// matchKeyword checks if a search string matches any keyword in a space-separated keyword list.
+// Mirrors C's isname_with_abbrevs() behavior: case-insensitive prefix match.
+func matchKeyword(keywords, search string) bool {
+	search = strings.ToLower(strings.TrimSpace(search))
+	if search == "" {
+		return false
+	}
+	for _, kw := range strings.Fields(keywords) {
+		if strings.HasPrefix(strings.ToLower(kw), search) {
+			return true
+		}
+	}
+	return false
+}
+
 // NewEngine creates a new Lua scripting engine.
 func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	engine := &Engine{
@@ -396,10 +411,14 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("mount", L.NewFunction(e.luaMount))
 	L.SetGlobal("direction", L.NewFunction(e.luaDirection))
 	L.SetGlobal("set_hunt", L.NewFunction(e.luaSetHunt))
+	L.SetGlobal("ishunt", L.NewFunction(e.luaIshunt))
 	L.SetGlobal("mxp", L.NewFunction(e.luaMxp))
 	L.SetGlobal("skip_spaces", L.NewFunction(e.luaSkipSpaces))
 	L.SetGlobal("social", L.NewFunction(e.luaSocial))
 	L.SetGlobal("obj_flagged", L.NewFunction(e.luaObjFlagged))
+	L.SetGlobal("mob_flags", L.NewFunction(e.luaMobFlags))
+	L.SetGlobal("exit_flagged", L.NewFunction(e.luaExitFlagged))
+	L.SetGlobal("exit_flags", L.NewFunction(e.luaExitFlags))
 	L.SetGlobal("get_group_lvl", L.NewFunction(e.luaGetGroupLvl))
 	L.SetGlobal("get_group_pts", L.NewFunction(e.luaGetGroupPts))
 	L.SetGlobal("skill_group", L.NewFunction(e.luaSkillGroup))
@@ -1849,12 +1868,6 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 	return 0
 }
 
-func (e *Engine) luaObjExtra(L *lua.LState) int {
-	// obj_extra(item, operation, flag) - set/clear object extra flags
-	slog.Debug("stub: obj_extra", "item", "item", "operation", "operation", "flag", "flag")
-	return 0
-}
-
 func (e *Engine) luaCreateEvent(L *lua.LState) int {
 	// create_event(source, target, obj, argument, trigger, delay, type)
 	// Source: scripts.c lua_create_event() lines 247-316 (commented out in original)
@@ -2106,106 +2119,46 @@ func (e *Engine) luaIsNPC(L *lua.LState) int {
 	return 1
 }
 
-func (e *Engine) luaAffFlagged(L *lua.LState) int {
-	// aff_flagged(ch, flag) - check if character has affect flag set (e.g. AFF_VAMPIRE)
-	// Based on AFF_FLAGGED() macro in utils.h
-	slog.Debug("stub: aff_flagged")
-	L.Push(lua.LBool(false))
-	return 1
-}
-
-func (e *Engine) luaPlrFlags(L *lua.LState) int {
-	// plr_flags(ch, operation, flag) - set or remove a player flag
-	// operation is "set" or "remove"; flag is PLR_* constant
-	// Based on PLR_FLAGS() macro in utils.h
-	slog.Debug("stub: plr_flags")
-	return 0
-}
-
-func (e *Engine) luaObjList(L *lua.LState) int {
-	// obj_list(keyword, location) - search mob's inventory for item matching keyword
-	// location: "char" = mob's inventory, "room" = room floor, "vict" = player inventory
-	// Returns the object table if found, NIL otherwise
-	// Based on lua_obj_list() pattern in scripts.c
-	slog.Debug("stub: obj_list")
-	L.Push(lua.LNil)
-	return 1
-}
-
-// --- Tier 3 Economy stubs ---
-
-func (e *Engine) luaItemCheck(L *lua.LState) int {
-	// item_check(obj) - validates whether object is a production item for the shop.
-	// Source: shop_give.lua — checks if given item is valid shop production.
-	// Engine gap: always returns false — shop production tables not yet implemented.
-	slog.Debug("stub: item_check")
-	L.Push(lua.LBool(false))
-	return 1
-}
-
-func (e *Engine) luaLoadRoom(L *lua.LState) int {
-	// load_room(vnum) - returns a room table with vnum, char, exit, objs fields.
-	// Source: pet_store.lua, merchant_inn.lua — loads adjacent room for pet listing.
-	slog.Debug("stub: load_room")
-	vnum := L.ToInt(1)
-	tbl := L.NewTable()
-	tbl.RawSetString("vnum", lua.LNumber(vnum))
-	tbl.RawSetString("char", L.NewTable())
-	tbl.RawSetString("exit", L.NewTable())
-	tbl.RawSetString("objs", L.NewTable())
-	L.Push(tbl)
-	return 1
-}
-
-func (e *Engine) luaInworld(L *lua.LState) int {
-	// inworld(type, vnum) - check if a mob/obj with given vnum exists in the world.
-	// Source: merchant_inn.lua — checks if travelling merchant (6805) already exists.
-	slog.Debug("stub: inworld")
-	L.Push(lua.LNil)
-	return 1
-}
-
-func (e *Engine) luaMobFlagged(L *lua.LState) int {
-	// mob_flagged(mob, flag) - check if mob has given MOB_* flag set.
-	// Source: stable.lua find_mount() — checks MOB_MOUNTABLE.
-	slog.Debug("stub: mob_flagged")
-	L.Push(lua.LBool(false))
-	return 1
-}
-
-func (e *Engine) luaAffFlags(L *lua.LState) int {
-	// aff_flags(ch, operation, flag) - set or remove an affect flag on a character.
-	// Source: stable.lua — removes AFF_CHARM from mount when stabling.
-	slog.Debug("stub: aff_flags")
-	return 0
-}
-
 func (e *Engine) luaFollow(L *lua.LState) int {
-	// follow(ch, charm) - makes mob follow ch, optionally charmed.
-	// Source: pet_store.lua — makes purchased pet follow the buyer.
-	slog.Debug("stub: follow")
+	// follow(ch, charm) - makes mob follow ch, optionally setting AFF_CHARM.
+	// Source: scripts.c lua_follow() lines 542-569.
+	// Engine gap: mob-to-player follow requires AddFollowerQuietMob which
+	// needs World access not available through ScriptableWorld.
+	// For now, the mob's follow state is set via ScriptableMob if available.
+	slog.Debug("follow: not fully implemented — mob follow via scripting requires World access")
 	return 0
 }
 
 func (e *Engine) luaMount(L *lua.LState) int {
-	// mount(ch, nil, "unmount") - dismount a player from their mount.
-	// Source: stable.lua — dismounts player before stabling.
-	slog.Debug("stub: mount")
+	// mount(ch, mount_or_nil, position) - ride, dismount, or unmount.
+	// Source: scripts.c lua_mount() lines 871-906.
+	// position: "ride" = mount, "dismount" = dismount, "unmount" = force unmount.
+	// Engine gap: mounting system requires World.doRide/doDismount which
+	// needs actual Player/MobInstance objects, not available via ScriptableWorld.
+
+	slog.Debug("mount: not fully implemented — requires World access for ride/dismount")
 	return 0
 }
 
 func (e *Engine) luaDirection(L *lua.LState) int {
 	// direction(from_vnum, to_vnum) - returns direction (0-5) from one room to another.
-	// Source: merchant_walk.lua — pathfinding from current room toward target room 4860.
-	slog.Debug("stub: direction")
+	// Source: scripts.c lua_direction() lines 317-340.
+	// Returns -1 on error, -2 if already there, -3 if no path found.
+	// Engine gap: findFirstStep is private on World and not exposed via ScriptableWorld.
+	// This needs FindFirstStep(src, target int) int added to ScriptableWorld.
+
+	slog.Debug("direction: not implemented — findFirstStep not exposed to ScriptableWorld")
 	L.Push(lua.LNumber(-1))
 	return 1
 }
 
 func (e *Engine) luaSetHunt(L *lua.LState) int {
 	// set_hunt(hunter, prey) - set mob to hunt a target.
-	// Source: merchant_walk.lua attack_time() — bandits hunt merchant and escort.
-	slog.Debug("stub: set_hunt")
+	// Source: scripts.c lua_set_hunt() lines 1341-1363.
+	// Engine gap: SetHunting is available on MobInstance but not via ScriptableMob.
+	// This needs SetHunting(targetName string) added to ScriptableMob interface.
+
+	slog.Debug("set_hunt: not implemented — SetHunting not on ScriptableMob")
 	return 0
 }
 
@@ -2228,75 +2181,28 @@ func (e *Engine) luaSkipSpaces(L *lua.LState) int {
 	return 1
 }
 
-func (e *Engine) luaSocial(L *lua.LState) int {
-	// social(mob, social_name) - perform a social command.
-	// Source: remove_curse.lua — performs "cough" social.
-	slog.Debug("stub: social")
-	return 0
-}
-
-func (e *Engine) luaObjFlagged(L *lua.LState) int {
-	// obj_flagged(obj, flag) - check if object has given ITEM_* flag set.
-	// Source: identifier.lua — checks ITEM_MAGIC; remove_curse.lua — checks ITEM_NODROP.
-	slog.Debug("stub: obj_flagged")
-	L.Push(lua.LBool(false))
-	return 1
-}
-
-func (e *Engine) luaGetGroupLvl(L *lua.LState) int {
-	// get_group_lvl(ch, group[, newval]) - get or set character's skill group level.
-	// Source: teacher.lua — reads and writes group level for skill training.
-	slog.Debug("stub: get_group_lvl")
-	if L.GetTop() >= 3 {
-		// Set mode: update ch.group_lvl (stub — no-op)
-		return 0
-	}
-	L.Push(lua.LNumber(0))
-	return 1
-}
-
-func (e *Engine) luaGetGroupPts(L *lua.LState) int {
-	// get_group_pts(ch[, newval]) - get or set character's available group points.
-	// Source: teacher.lua — reads and writes group points for skill training.
-	slog.Debug("stub: get_group_pts")
-	if L.GetTop() >= 2 {
-		return 0
-	}
-	L.Push(lua.LNumber(0))
-	return 1
-}
-
-func (e *Engine) luaSkillGroup(L *lua.LState) int {
-	// skill_group(name) - converts skill group name to numeric ID.
-	// Source: teacher.lua — maps group names like "Rejuvenation" to IDs.
-	slog.Debug("stub: skill_group")
-	L.Push(lua.LNumber(0))
-	return 1
-}
-
 func (e *Engine) luaUnaffect(L *lua.LState) int {
 	// unaffect(ch) - remove all spell affections from character.
-	// Source: memory_moss.lua line 33 — removes all spell affects from victim.
-	slog.Debug("stub: unaffect")
+	// Source: scripts.c lua_unaffect() lines 1570-1607.
+	// Engine gap: full affect removal requires World access to clear ActiveAffects.
+	// This needs RemoveAllAffects() added to ScriptablePlayer.
+
+	slog.Debug("unaffect: not implemented — affect removal requires deeper World access")
 	return 0
 }
 
 func (e *Engine) luaEquipChar(L *lua.LState) int {
 	// equip_char(mob, obj) - equip a mob with an object.
-	// Source: phoenix.lua line 14 — equips rider with trident.
-	slog.Debug("stub: equip_char")
+	// Source: scripts.c lua_equip_char() lines 403-425.
+	// Removes object from inventory, equips in appropriate slot.
+	// Engine gap: equipment system requires World.equipChar which needs
+	// actual MobInstance, not available via ScriptableWorld.
+
+	slog.Debug("equip_char: not implemented — requires World access for equip_char")
 	return 0
 }
 
 // --- Batch C Quest/Mechanic NPC stubs ---
-
-func (e *Engine) luaExtra(L *lua.LState) int {
-	// extra(obj, text) - set extra description on an object.
-	// Source: head_shrinker.lua — writes head names into necklace extra desc.
-	// Engine gap: extra description table not yet implemented.
-	slog.Debug("stub: extra")
-	return 0
-}
 
 func (e *Engine) luaStrlen(L *lua.LState) int {
 	// strlen(s) - Lua 4 compat string length function.
@@ -2308,27 +2214,226 @@ func (e *Engine) luaStrlen(L *lua.LState) int {
 
 func (e *Engine) luaIsCorpse(L *lua.LState) int {
 	// iscorpse(obj) - returns true if the object is a player or mob corpse.
-	// Source: janitor.lua — skips corpses when picking up trash.
-	// Engine gap: corpse type not yet exposed on object tables.
-	slog.Debug("stub: iscorpse")
-	L.Push(lua.LBool(false))
+	// Source: scripts.c lua_iscorpse() lines 636-654.
+	// Checks OBJ_TYPE_CORPSE (ITEM_CORPSE) — type flag 18 in the original C.
+	// Engine gap: object type flag comparison needs GetTypeFlag() >= 18 check.
+
+	if tbl, ok := L.Get(1).(*lua.LTable); ok {
+		typeFlagL := tbl.RawGetString("type")
+		typeFlag, ok := typeFlagL.(lua.LNumber)
+		if ok && int(typeFlag) == 18 { // ITEM_CORPSE
+			L.Push(lua.LNumber(1))
+			return 1
+		}
+	}
+	L.Push(lua.LNil)
 	return 1
 }
 
 func (e *Engine) luaCanGet(L *lua.LState) int {
 	// canget(obj) - returns true if the mob is permitted to pick up the object.
-	// Source: janitor.lua — checks ITEM_WEAR_TAKE and weight before picking up.
-	// Engine gap: carry-weight and item permission checks not yet implemented.
-	slog.Debug("stub: canget")
-	L.Push(lua.LBool(true))
+	// Source: scripts.c lua_canget() lines 193-219.
+	// Checks CAN_GET_OBJ(ch, obj) — verifies ITEM_WEAR_TAKE flag and weight limits.
+	// Engine gap: carry-weight system not yet implemented.
+	// For now, return true (optimistic) since wear flags aren't fully mapped.
+	L.Push(lua.LNumber(1))
+	return 1
+}
+
+// Flag check/set functions (ported from src/scripts.c) are in lua_aff_flags.go.
+// Remaining stubs (luaMobFlags, luaObjExtra, luaExitFlagged, luaExitFlags, luaExtra)
+// are defined below as placeholders until their table schemas are wired.
+
+func (e *Engine) luaObjExtra(L *lua.LState) int {
+	// obj_extra(obj, "set"|"remove", flag)
+	// Engine gap: obj extra flags not yet on obj tables
+	return 0
+}
+
+func (e *Engine) luaExtra(L *lua.LState) int {
+	// extra(obj, text)
+	// Engine gap: extra descriptions not yet mutable from Lua
+	return 0
+}
+
+// --- Skill group stubs (archived teacher.lua, system not ported) ---
+
+func (e *Engine) luaAffFlagged(L *lua.LState) int {
+	// aff_flagged(ch, flag) → TRUE(1) or nil
+	// Source: scripts.c lines 142-163
+	tbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		L.Push(lua.LNil)
+		return 1
+	}
+	flag := L.ToInt(2)
+	// Check affects_raw on mob tables, plr_flags_raw on player tables
+	if val := tbl.RawGetString("affects_raw"); val.Type() == lua.LTNumber {
+		if int(val.(lua.LNumber))&(1<<flag) != 0 {
+			L.Push(lua.LNumber(1))
+			return 1
+		}
+	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func (e *Engine) luaAffFlags(L *lua.LState) int {
+	// aff_flags(ch, "set"|"remove", flag)
+	// Source: scripts.c lines 165-191
+	tbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	op := L.ToString(2)
+	flag := L.ToInt(3)
+	val := tbl.RawGetString("affects_raw")
+	if val.Type() != lua.LTNumber {
+		return 0
+	}
+	bits := int(val.(lua.LNumber))
+	switch op {
+	case "set":
+		bits |= 1 << flag
+	case "remove":
+		bits &^= 1 << flag
+	default:
+		return 0
+	}
+	tbl.RawSetString("affects_raw", lua.LNumber(bits))
+	return 0
+}
+
+func (e *Engine) luaPlrFlags(L *lua.LState) int {
+	// plr_flags(ch, "set"|"remove", flag)
+	// Source: scripts.c lines 1197-1223
+	tbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	op := L.ToString(2)
+	flag := L.ToInt(3)
+	val := tbl.RawGetString("plr_flags_raw")
+	if val.Type() != lua.LTNumber {
+		return 0
+	}
+	bits := int64(val.(lua.LNumber))
+	switch op {
+	case "set":
+		bits |= 1 << flag
+	case "remove":
+		bits &^= 1 << flag
+	default:
+		return 0
+	}
+	tbl.RawSetString("plr_flags_raw", lua.LNumber(bits))
+	return 0
+}
+
+func (e *Engine) luaMobFlagged(L *lua.LState) int {
+	// mob_flagged(mob, flag) → TRUE(1) or nil
+	// Source: scripts.c lines 820-841
+	tbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		L.Push(lua.LNil)
+		return 1
+	}
+	flag := L.ToInt(2)
+	val := tbl.RawGetString("mob_flags_raw")
+	if val.Type() == lua.LTNumber {
+		if int(val.(lua.LNumber))&(1<<flag) != 0 {
+			L.Push(lua.LNumber(1))
+			return 1
+		}
+	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func (e *Engine) luaMobFlags(L *lua.LState) int {
+	// mob_flags(mob, "set"|"remove", flag)
+	// Source: scripts.c lines 843-869
+	tbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	op := L.ToString(2)
+	flag := L.ToInt(3)
+	val := tbl.RawGetString("mob_flags_raw")
+	if val.Type() != lua.LTNumber {
+		return 0
+	}
+	bits := int(val.(lua.LNumber))
+	switch op {
+	case "set":
+		bits |= 1 << flag
+	case "remove":
+		bits &^= 1 << flag
+	default:
+		return 0
+	}
+	tbl.RawSetString("mob_flags_raw", lua.LNumber(bits))
+	return 0
+}
+
+func (e *Engine) luaObjFlagged(L *lua.LState) int {
+	// obj_flagged(obj, flag) → TRUE(1) or nil
+	// Source: scripts.c lines 951-974
+	tbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		L.Push(lua.LNil)
+		return 1
+	}
+	flag := L.ToInt(2)
+	val := tbl.RawGetString("obj_flags_raw")
+	if val.Type() == lua.LTNumber {
+		if int(val.(lua.LNumber))&(1<<flag) != 0 {
+			L.Push(lua.LNumber(1))
+			return 1
+		}
+	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func (e *Engine) luaExitFlagged(L *lua.LState) int {
+	// exit_flagged(room, door, flag) → TRUE(1) or nil
+	// Source: scripts.c lines 456-478
+	// Engine gap: exit data not yet on room tables
+	L.Push(lua.LNil)
+	return 1
+}
+
+func (e *Engine) luaExitFlags(L *lua.LState) int {
+	// exit_flags(room, door, "set"|"remove", flag)
+	// Source: scripts.c lines 427-454
+	// Engine gap: exit data not yet on room tables
+	return 0
+}
+
+func (e *Engine) luaIshunt(L *lua.LState) int {
+	// ishunt(ch) → TRUE(1) if mob is hunting, else nil
+	// Source: scripts.c lines 676-695
+	tbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		L.Push(lua.LNil)
+		return 1
+	}
+	val := tbl.RawGetString("hunting")
+	if val.Type() == lua.LTString && val.String() != "" {
+		L.Push(lua.LNumber(1))
+		return 1
+	}
+	L.Push(lua.LNil)
 	return 1
 }
 
 func (e *Engine) luaSteal(L *lua.LState) int {
 	// steal(ch, obj) - steal an item from a character's inventory.
-	// Source: mymic.lua — steals food items; eq_thief.lua — steals equipment.
+	// Source: scripts.c lua_steal() (if exists) or mob spec_proc theft patterns.
 	// Engine gap: theft mechanic not yet implemented.
-	slog.Debug("stub: steal")
+
+	slog.Debug("steal: not implemented — theft mechanic requires World access")
 	return 0
 }
 

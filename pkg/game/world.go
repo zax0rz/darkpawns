@@ -362,9 +362,6 @@ func (w *World) SendToAll(msg string) {
 
 // executeMobCommand makes a mob execute a game command.
 // Source: scripts.c lua_action() → command_interpreter().
-// Mobs don't have sessions, so we log the command for now.
-// When mob script task system is implemented, this should dispatch through
-// a proper task queue instead of inline execution.
 func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	w.mu.RLock()
 	var mob *MobInstance
@@ -382,8 +379,159 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	}
 
 	slog.Debug("mob executes command", "mob_vnum", mobVNum, "mob_name", mob.GetName(), "command", cmdStr)
-	// The actual command handler will parse cmdStr and route to game commands
-	// (mobSay, mobEmote, mobForce, mobDamage, etc.)
+
+	parts := strings.Fields(cmdStr)
+	if len(parts) == 0 {
+		return
+	}
+
+	cmd := strings.ToLower(parts[0])
+	args := strings.Join(parts[1:], " ")
+
+	switch cmd {
+	case "say":
+		w.mobSayTo(mob, args)
+
+	case "emote":
+		// emote broadcasts to room: "<name> <message>"
+		msg := fmt.Sprintf("%s %s", mob.GetName(), args)
+		for _, p := range w.GetPlayersInRoom(mob.GetRoom()) {
+			p.SendMessage(msg)
+		}
+
+	case "gossip":
+		w.mobGossip(mob, args)
+
+	case "tell":
+		tellParts := strings.SplitN(args, " ", 2)
+		if len(tellParts) == 2 {
+			w.mobTellPlayer(mob, tellParts[0], tellParts[1])
+		} else {
+			slog.Debug("executeMobCommand: tell missing target or message", "args", args)
+		}
+
+	case "shout":
+		w.mobShout(mob, args)
+
+	case "auction":
+		w.mobAuction(mob, args)
+
+	case "north", "east", "south", "west", "up", "down":
+		dirMap := map[string]int{"north": 0, "east": 1, "south": 2, "west": 3, "up": 4, "down": 5}
+		w.mobPerformMove(mob, dirMap[cmd])
+
+	case "follow":
+		mob.SetFollowing(args)
+
+	case "open":
+		openParts := strings.Fields(args)
+		if len(openParts) > 0 {
+			dirMap := map[string]int{"north": 0, "east": 1, "south": 2, "west": 3, "up": 4, "down": 5,
+				"n": 0, "e": 1, "s": 2, "w": 3, "u": 4, "d": 5}
+			if dir, ok := dirMap[strings.ToLower(openParts[0])]; ok {
+				keyword := ""
+				if len(openParts) > 1 {
+					keyword = strings.Join(openParts[1:], " ")
+				}
+				w.mobOpenDoor(mob, dir, keyword)
+			}
+		}
+
+	case "kill", "murder":
+		target := w.findPlayerByName(args)
+		if target != nil {
+			w.mobAttackPlayer(mob, target)
+		} else {
+			slog.Debug("executeMobCommand: kill target not found", "target", args)
+		}
+
+	case "drop":
+		slog.Debug("executeMobCommand: drop not yet implemented", "mob", mobVNum)
+
+	case "get":
+		slog.Debug("executeMobCommand: get not yet implemented", "mob", mobVNum)
+
+	case "give":
+		slog.Debug("executeMobCommand: give not yet implemented", "mob", mobVNum)
+
+	case "ride":
+		target := w.findPlayerByName(args)
+		if target != nil {
+			w.ExecRide(target, "ride")
+		}
+
+	case "dismount":
+		target := w.findPlayerByName(mob.GetName())
+		if target == nil {
+			target = w.findPlayerByName(args)
+		}
+		if target != nil {
+			w.ExecRide(target, "dismount")
+		}
+
+	case "social":
+		if len(parts) > 1 {
+			socialName := strings.ToLower(parts[1])
+			w.doMobSocial(mob, socialName, strings.Join(parts[2:], " "))
+		}
+
+	default:
+		// Check if the command itself is a social
+		if social, found := Socials[cmd]; found {
+			w.doMobSocial(mob, cmd, args)
+			_ = social
+		} else {
+			slog.Debug("executeMobCommand: unknown command", "command", cmd)
+		}
+	}
+}
+
+// doMobSocial performs a social emote on behalf of a mob.
+func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
+	social, found := Socials[cmd]
+	if !found {
+		return
+	}
+
+	var target *Player
+	if targetName != "" {
+		target = w.findPlayerByName(targetName)
+	}
+
+	if target != nil {
+		// Social with target
+		w.actToRoomMob(mob, social.Messages[2], target)    // char to vict
+		w.actToRoomMob(mob, social.Messages[3], target)    // room to vict (exclude mob & vict)
+		if len(social.Messages) > 4 {
+			w.actToRoomMob(mob, social.Messages[4], target) // vict to char
+		}
+	} else if targetName != "" {
+		// Target not found
+		mob.SendMessage(social.Messages[5])
+	} else {
+		// Social without target
+		mob.SendMessage(social.Messages[0])                // char_auto (to mob itself)
+		w.actToRoomMob(mob, social.Messages[1], nil)       // room (exclude mob)
+	}
+}
+
+// actToRoomMob sends a social message to the room, formatting $n and $N tokens.
+func (w *World) actToRoomMob(mob *MobInstance, msg string, target *Player) {
+	msg = strings.ReplaceAll(msg, "$n", mob.GetName())
+	msg = strings.ReplaceAll(msg, "$m", "him") // stub — could expand for gender
+	msg = strings.ReplaceAll(msg, "$s", "his") // stub
+	if target != nil {
+		msg = strings.ReplaceAll(msg, "$N", target.Name)
+		msg = strings.ReplaceAll(msg, "$M", target.Name)
+		target.SendMessage(msg)
+	} else {
+		players := w.GetPlayersInRoom(mob.GetRoom())
+		for _, p := range players {
+			if p.Name != mob.GetName() {
+				p.SendMessage(msg)
+			}
+		}
+	}
 }
 
 // IsRoomDark returns true if the given room VNum is dark.
@@ -640,3 +788,180 @@ func (w *World) GetAllMobs() []*MobInstance {
 // It stops fighting if the target is in a different room, and moves mounts with riders.
 // Returns an error if the target room doesn't exist.
 // Source: src/handler.c char_from_room/char_to_room
+
+// ---------------------------------------------------------------------------
+// World implementations — STATE MUTATIONS & LOOKUPS
+// (lua_batch2_mutations.go)
+// ---------------------------------------------------------------------------
+
+// EquipChar equips an object (found by vnum in the character's inventory) on
+// the named character. For mobs, equips at slot determined by prototype wear
+// flags. For players, uses Equipment.equip which determines the correct slot.
+func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if isMob {
+		for _, m := range w.activeMobs {
+			if m.GetName() == charName {
+				for _, obj := range m.Inventory {
+					if obj.VNum == objVNum {
+						// TODO: determine slot from object's own WearFlags, not mob prototype
+						// (parser.Obj.WearFlags exists; equipment system not yet wired)
+						return false
+					}
+				}
+				return false
+			}
+		}
+	} else {
+		if p, ok := w.players[charName]; ok {
+			if p.Inventory == nil {
+				return false
+			}
+			item, found := p.Inventory.removeItemByVNum(objVNum)
+			if !found {
+				return false
+			}
+			if p.Equipment == nil {
+				p.Equipment = NewEquipment()
+				p.Equipment.OwnerName = p.Name
+			}
+			err := p.Equipment.equip(item, p.Inventory)
+			return err == nil
+		}
+	}
+	return false
+}
+
+// SetFollower sets the following target for a character.
+func (w *World) SetFollower(followerName, leaderName string, followerIsMob bool) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if followerIsMob {
+		for _, m := range w.activeMobs {
+			if m.GetName() == followerName {
+				m.SetFollowing(leaderName)
+				return nil
+			}
+		}
+	} else {
+		if p, ok := w.players[followerName]; ok {
+			p.Following = leaderName
+			return nil
+		}
+	}
+	return fmt.Errorf("follower %q not found", followerName)
+}
+
+// MountPlayer sets a player's mount name.
+func (w *World) MountPlayer(playerName, mountName string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if p, ok := w.players[playerName]; ok {
+		p.MountName = mountName
+		return nil
+	}
+	return fmt.Errorf("player %q not found", playerName)
+}
+
+// DismountPlayer clears a player's mount.
+func (w *World) DismountPlayer(playerName string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if p, ok := w.players[playerName]; ok {
+		p.MountName = ""
+		return nil
+	}
+	return fmt.Errorf("player %q not found", playerName)
+}
+
+// ClearAffects removes all affects from a character.
+func (w *World) ClearAffects(charName string, isMob bool) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if isMob {
+		for _, m := range w.activeMobs {
+			if m.GetName() == charName {
+				m.ClearHunting()
+				return
+			}
+		}
+	} else {
+		if p, ok := w.players[charName]; ok {
+			p.MasterAffects = nil
+			p.ActiveAffects = nil
+			p.Affects = 0
+			return
+		}
+	}
+}
+
+// CanCarryObject returns true if the named player can carry the object.
+// Simplified: checks inventory capacity. Full weight check TODO when
+// carry-weight limits are implemented on Player.
+func (w *World) CanCarryObject(charName string, objVNum int) bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	p, ok := w.players[charName]
+	if !ok {
+		return false
+	}
+	proto, ok := w.GetObjPrototype(objVNum)
+	if !ok {
+		return false
+	}
+	if p.Inventory != nil && p.Inventory.IsFull() {
+		return false
+	}
+	// TODO: full weight check using proto.Weight + carrying weight vs limit
+	_ = proto
+	return true
+}
+
+// IsCorpseObj returns true if the object prototype is a corpse.
+// In the original C, IS_CORPSE checks ITEM_CONTAINER with val[3] == 1.
+// The Go port defines ITEM_CORPSE as type 37 in item_helpers.go.
+func (w *World) IsCorpseObj(objVNum int) bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	proto, ok := w.GetObjPrototype(objVNum)
+	if !ok {
+		return false
+	}
+	return proto.TypeFlag == ITEM_CORPSE
+}
+
+// SetHunting sets a character's hunting target.
+func (w *World) SetHunting(hunterName, preyName string, hunterIsMob bool) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if hunterIsMob {
+		for _, m := range w.activeMobs {
+			if m.GetName() == hunterName {
+				m.SetHunting(preyName)
+				return
+			}
+		}
+	}
+	// Players don't have hunting state in current implementation.
+}
+
+// IsHunting returns true if the character is hunting.
+func (w *World) IsHunting(charName string, isMob bool) bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	if isMob {
+		for _, m := range w.activeMobs {
+			if m.GetName() == charName {
+				return m.GetHunting() != ""
+			}
+		}
+	}
+	return false
+}

@@ -30,6 +30,13 @@ type bfsQueueEntry struct {
 	dir  int
 }
 
+// FindFirstStep returns the first direction on the shortest path from src to target.
+// Returns direction (0-5) or BFS_ERROR (-1) / BFS_ALREADY_THERE (-2) / BFS_NO_PATH (-3).
+// Public wrapper around the private findFirstStep, exposed for the scripting engine.
+func (w *World) FindFirstStep(src int, target int) int {
+	return w.findFirstStep(src, target)
+}
+
 // findFirstStep returns the first direction on the shortest path from src to target.
 // Returns direction (0-5) or BFS_ERROR/BFS_ALREADY_THERE/BFS_NO_PATH.
 func (w *World) findFirstStep(src int, target int) int {

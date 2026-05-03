@@ -579,6 +579,13 @@ func (m *MobInstance) GetHunting() string {
 	return m.Hunting
 }
 
+// IsHunting returns true if the mob has an active hunting target.
+func (m *MobInstance) IsHunting() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Hunting != ""
+}
+
 // ClearHunting clears the mob's hunting target.
 func (m *MobInstance) ClearHunting() {
 	m.mu.Lock()
@@ -586,3 +593,6 @@ func (m *MobInstance) ClearHunting() {
 	m.Hunting = ""
 	m.HuntingID = ""
 }
+
+// SetHunting — defined in deferred_fight_fns.go (full implementation with nil guard)
+// func (m *MobInstance) SetHunting(targetName string) — kept there

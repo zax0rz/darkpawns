@@ -2,6 +2,8 @@ package scripting
 
 import (
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // TestIsFightingBasic tests the basic isfighting() functionality
@@ -52,11 +54,22 @@ func (m *mockWorldForTest) RemoveItemFromRoom(vnum int, roomVNum int) Scriptable
 func (m *mockWorldForTest) RemoveItemFromChar(charName string, vnum int) ScriptableObject { return nil }
 func (m *mockWorldForTest) GiveItemToChar(charName string, obj ScriptableObject) error    { return nil }
 func (m *mockWorldForTest) CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64 { return 0 }
+func (m *mockWorldForTest) FindFirstStep(src, target int) int { return -1 }
+func (m *mockWorldForTest) GetRoomInWorld(vnum int) *parser.Room { return nil }
 func (m *mockWorldForTest) ExecuteMobCommand(mobVNum int, cmdStr string)                       {}
 func (m *mockWorldForTest) SendToAll(msg string)                                                {}
 func (m *mockWorldForTest) SendToZone(roomVNum int, msg string)                                {}
 func (m *mockWorldForTest) IsRoomDark(roomVNum int) bool                                       { return false }
 func (m *mockWorldForTest) GetRoomZone(roomVNum int) int                                       { return 0 }
+func (m *mockWorldForTest) CanCarryObject(charName string, objVNum int) bool                   { return true }
+func (m *mockWorldForTest) EquipChar(charName string, isMob bool, objVNum int) bool              { return false }
+func (m *mockWorldForTest) SetFollower(followerName, leaderName string, followerIsMob bool) error { return nil }
+func (m *mockWorldForTest) MountPlayer(playerName, mountName string) error                       { return nil }
+func (m *mockWorldForTest) DismountPlayer(playerName string) error                                { return nil }
+func (m *mockWorldForTest) ClearAffects(charName string, isMob bool)                              {}
+func (m *mockWorldForTest) IsCorpseObj(objVNum int) bool                                         { return false }
+func (m *mockWorldForTest) SetHunting(hunterName, preyName string, hunterIsMob bool)              {}
+func (m *mockWorldForTest) IsHunting(charName string, isMob bool) bool                           { return false }
 
 // TestSpellDamageFormulas tests that spell damage formulas are implemented
 func TestSpellDamageFormulas(t *testing.T) {
