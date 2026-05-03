@@ -252,6 +252,10 @@ func (a *WorldScriptableAdapter) ClearAffects(charName string, isMob bool) {
 	a.world.ClearAffects(charName, isMob)
 }
 
+func (a *WorldScriptableAdapter) EquipMob(mobVNum, roomVNum, objVNum int) {
+	a.world.EquipMobByVNum(mobVNum, roomVNum, objVNum)
+}
+
 func (a *WorldScriptableAdapter) CanCarryObject(charName string, objVNum int) bool {
 	return a.world.CanCarryObject(charName, objVNum)
 }

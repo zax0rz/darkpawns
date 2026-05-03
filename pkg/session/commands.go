@@ -246,7 +246,7 @@ func init() {
 	cmdRegistry.Register("inactive", wrapArgs(cmdInactive), "Toggle inactive status.", 0, 0)
 	cmdRegistry.Register("auto", wrapArgs(cmdAuto), "Toggle auto-attack mode.", 0, 0)
 	cmdRegistry.Register("gentog", wrapArgs(cmdGenTog), "Toggle an option.", 0, 0, "gentoggle")
-	cmdRegistry.Register("bug", wrapArgs(cmdBug), "Report a bug.", 0, 0, "typo", "idea", "todo")
+	cmdRegistry.Register("bug", wrapArgs(cmdBug), "Report a bug.", 0, 0)
 	cmdRegistry.Register("typo", wrapArgs(cmdTypo), "Report a typo.", 0, 0)
 	cmdRegistry.Register("idea", wrapArgs(cmdIdea), "Submit an idea.", 0, 0)
 	cmdRegistry.Register("todo", wrapArgs(cmdTodo), "Submit a todo suggestion.", 0, 0)

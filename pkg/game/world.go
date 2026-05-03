@@ -518,8 +518,21 @@ func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
 // actToRoomMob sends a social message to the room, formatting $n and $N tokens.
 func (w *World) actToRoomMob(mob *MobInstance, msg string, target *Player) {
 	msg = strings.ReplaceAll(msg, "$n", mob.GetName())
-	msg = strings.ReplaceAll(msg, "$m", "him") // stub — could expand for gender
-	msg = strings.ReplaceAll(msg, "$s", "his") // stub
+	// Gender-aware pronouns
+	switch mob.GetSex() {
+	case 0:
+		msg = strings.ReplaceAll(msg, "$m", "him")
+		msg = strings.ReplaceAll(msg, "$s", "his")
+		msg = strings.ReplaceAll(msg, "$e", "he")
+	case 1:
+		msg = strings.ReplaceAll(msg, "$m", "her")
+		msg = strings.ReplaceAll(msg, "$s", "her")
+		msg = strings.ReplaceAll(msg, "$e", "she")
+	default:
+		msg = strings.ReplaceAll(msg, "$m", "it")
+		msg = strings.ReplaceAll(msg, "$s", "its")
+		msg = strings.ReplaceAll(msg, "$e", "it")
+	}
 	if target != nil {
 		msg = strings.ReplaceAll(msg, "$N", target.Name)
 		msg = strings.ReplaceAll(msg, "$M", target.Name)
@@ -875,6 +888,52 @@ func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
 		}
 	}
 	return false
+}
+
+// EquipMobByVNum finds a mob by vnum and room, removes the object from its
+// inventory, and equips it. Used by the scripting engine's equip_char().
+func (w *World) EquipMobByVNum(mobVNum, roomVNum, objVNum int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	for _, m := range w.activeMobs {
+		if m.VNum == mobVNum && m.GetRoomVNum() == roomVNum {
+			for i, obj := range m.Inventory {
+				if obj.VNum == objVNum {
+					m.Inventory = append(m.Inventory[:i], m.Inventory[i+1:]...)
+					if obj.Prototype != nil && len(m.Equipment) == 0 {
+						m.Equipment = make(map[int]*ObjectInstance)
+					}
+					if obj.Prototype != nil {
+						slot := wearFlagToIntSlot(obj.Prototype.WearFlags)
+						if slot >= 0 {
+							m.Equipment[slot] = obj
+							return true
+						}
+					}
+					return false
+				}
+			}
+			return false
+		}
+	}
+	return false
+}
+
+// wearFlagToIntSlot maps object wear flags to equipment slot position (int).
+func wearFlagToIntSlot(wf [4]int) int {
+	var flags int
+	for _, w := range wf {
+		flags |= w
+	}
+	switch {
+	case flags&(1<<13) != 0: // ITEM_WEAR_WIELD
+		return 13
+	case flags&(1<<0) != 0: // ITEM_WEAR_TAKE
+		return 0
+	default:
+		return -1
+	}
 }
 
 // SetFollower sets the following target for a character.

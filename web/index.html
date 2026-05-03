@@ -38,6 +38,32 @@
         <button id="reconnect-btn">Reconnect</button>
       </div>
       <div id="terminal"></div>
+      <div id="status-bar" class="status-bar hidden">
+        <div class="stat-group">
+          <span class="stat-label">HP</span>
+          <div class="bar-track">
+            <div class="bar-fill hp-bar" id="hp-bar"></div>
+          </div>
+          <span class="stat-value" id="hp-text">—</span>
+        </div>
+        <div class="stat-group">
+          <span class="stat-label">Mana</span>
+          <div class="bar-track">
+            <div class="bar-fill mana-bar" id="mana-bar"></div>
+          </div>
+          <span class="stat-value" id="mana-text">—</span>
+        </div>
+        <div class="stat-group">
+          <span class="stat-label">Move</span>
+          <div class="bar-track">
+            <div class="bar-fill move-bar" id="move-bar"></div>
+          </div>
+          <span class="stat-value" id="move-text">—</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-info" id="level-info">Lv —</div>
+        <div class="stat-info" id="gold-info">Gold —</div>
+      </div>
     </div>
   </section>
 

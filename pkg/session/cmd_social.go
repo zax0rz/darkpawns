@@ -88,23 +88,23 @@ func cmdSocial(s *Session, social *game.Social, args []string) error {
 	}
 
 	// Try to find target in the room
-	// Check players first
+	// Check players first — partial name match
 	victimName := ""
 	victimSex := 2
 	players := s.manager.world.GetPlayersInRoom(s.player.GetRoom())
 	for _, p := range players {
-		if strings.EqualFold(p.Name, targetName) && p.Name != s.player.Name {
+		if (strings.EqualFold(p.Name, targetName) || strings.Contains(strings.ToLower(p.Name), strings.ToLower(targetName))) && p.Name != s.player.Name {
 			victimName = p.Name
 			victimSex = p.Sex
 			break
 		}
 	}
 
-	// Also check mobs in room
+	// Also check mobs in room — use keyword matching (not full short desc)
 	if victimName == "" {
 		mobs := s.manager.world.GetMobsInRoom(s.player.GetRoom())
 		for _, m := range mobs {
-			if strings.EqualFold(m.GetShortDesc(), targetName) || strings.EqualFold(m.GetName(), targetName) {
+			if (m.Prototype != nil && isnameMatch(targetName, m.Prototype.Keywords)) || strings.EqualFold(m.GetName(), targetName) {
 				victimName = m.GetShortDesc()
 				victimSex = m.GetSex()
 				break

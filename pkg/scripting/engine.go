@@ -2145,21 +2145,47 @@ func (e *Engine) luaDirection(L *lua.LState) int {
 	// direction(from_vnum, to_vnum) - returns direction (0-5) from one room to another.
 	// Source: scripts.c lua_direction() lines 317-340.
 	// Returns -1 on error, -2 if already there, -3 if no path found.
-	// Engine gap: findFirstStep is private on World and not exposed via ScriptableWorld.
-	// This needs FindFirstStep(src, target int) int added to ScriptableWorld.
-
-	slog.Debug("direction: not implemented — findFirstStep not exposed to ScriptableWorld")
-	L.Push(lua.LNumber(-1))
+	if e.world == nil {
+		L.Push(lua.LNumber(-1))
+		return 1
+	}
+	fromVNum := L.ToInt(1)
+	toVNum := L.ToInt(2)
+	if fromVNum == toVNum {
+		L.Push(lua.LNumber(-2))
+		return 1
+	}
+	result := e.world.FindFirstStep(fromVNum, toVNum)
+	L.Push(lua.LNumber(result))
 	return 1
 }
 
 func (e *Engine) luaSetHunt(L *lua.LState) int {
 	// set_hunt(hunter, prey) - set mob to hunt a target.
 	// Source: scripts.c lua_set_hunt() lines 1341-1363.
-	// Engine gap: SetHunting is available on MobInstance but not via ScriptableMob.
-	// This needs SetHunting(targetName string) added to ScriptableMob interface.
+	if e.world == nil {
+		return 0
+	}
+	hunterTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	victimName := L.ToString(2)
 
-	slog.Debug("set_hunt: not implemented — SetHunting not on ScriptableMob")
+	// Get mob's vnum and room from table, look up via ScriptableWorld
+	L.GetField(hunterTbl, "vnum")
+	vnum := int(L.ToNumber(-1))
+	L.Pop(1)
+	L.GetField(hunterTbl, "room")
+	roomVNum := int(L.ToNumber(-1))
+	L.Pop(1)
+
+	if vnum > 0 && roomVNum > 0 {
+		mob := e.world.GetMobByVNumAndRoom(vnum, roomVNum)
+		if mob != nil {
+			mob.SetHunting(victimName)
+		}
+	}
 	return 0
 }
 
@@ -2185,21 +2211,62 @@ func (e *Engine) luaSkipSpaces(L *lua.LState) int {
 func (e *Engine) luaUnaffect(L *lua.LState) int {
 	// unaffect(ch) - remove all spell affections from character.
 	// Source: scripts.c lua_unaffect() lines 1570-1607.
-	// Engine gap: full affect removal requires World access to clear ActiveAffects.
-	// This needs RemoveAllAffects() added to ScriptablePlayer.
-
-	slog.Debug("unaffect: not implemented — affect removal requires deeper World access")
+	if e.world == nil {
+		return 0
+	}
+	chTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	nameVal := chTbl.RawGetString("name")
+	if nameVal.Type() != lua.LTString {
+		return 0
+	}
+	charName := nameVal.String()
+	// Check if mob (has vnum field) or player
+	isMob := false
+	vnumVal := chTbl.RawGetString("vnum")
+	if vnumVal.Type() == lua.LTNumber {
+		isMob = true
+	}
+	e.world.ClearAffects(charName, isMob)
 	return 0
 }
 
 func (e *Engine) luaEquipChar(L *lua.LState) int {
 	// equip_char(mob, obj) - equip a mob with an object.
 	// Source: scripts.c lua_equip_char() lines 403-425.
-	// Removes object from inventory, equips in appropriate slot.
-	// Engine gap: equipment system requires World.equipChar which needs
-	// actual MobInstance, not available via ScriptableWorld.
+	// Removes object from mob's inventory and equips in appropriate slot.
+	if e.world == nil {
+		return 0
+	}
+	mobTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	objTbl, ok := L.Get(2).(*lua.LTable)
+	if !ok {
+		return 0
+	}
 
-	slog.Debug("equip_char: not implemented — requires World access for equip_char")
+	// Get mob vnum and room
+	L.GetField(mobTbl, "vnum")
+	mobVNum := int(L.ToNumber(-1))
+	L.Pop(1)
+	L.GetField(mobTbl, "room")
+	roomVNum := int(L.ToNumber(-1))
+	L.Pop(1)
+
+	// Get object vnum
+	objVNumVal := objTbl.RawGetString("vnum")
+	objVNum := int(0)
+	if objVNumVal.Type() == lua.LTNumber {
+		objVNum = int(objVNumVal.(lua.LNumber))
+	}
+
+	if mobVNum > 0 && roomVNum > 0 && objVNum > 0 {
+		e.world.EquipMob(mobVNum, roomVNum, objVNum)
+	}
 	return 0
 }
 
@@ -2509,10 +2576,31 @@ func (e *Engine) luaIshunt(L *lua.LState) int {
 
 func (e *Engine) luaSteal(L *lua.LState) int {
 	// steal(ch, obj) - steal an item from a character's inventory.
-	// Source: scripts.c lua_steal() (if exists) or mob spec_proc theft patterns.
-	// Engine gap: theft mechanic not yet implemented.
+	// Simplified: transfers the object from the victim to the mob.
+	if e.world == nil {
+		return 0
+	}
+	// Arguments: mob_table, victim_name (or victim_table)
+	if L.GetTop() < 2 {
+		return 0
+	}
+	victimName := L.ToString(2)
+	// Get mob room for the stolen item destination
+	mobTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	L.GetField(mobTbl, "room")
+	roomVNum := int(L.ToNumber(-1))
+	L.Pop(1)
 
-	slog.Debug("steal: not implemented — theft mechanic requires World access")
+	// Try to remove a random item from victim and give to mob room
+	if roomVNum > 0 && victimName != "" {
+		obj := e.world.RemoveItemFromChar(victimName, 0) // vnum=0 means any item
+		if obj != nil {
+			e.world.AddItemToRoom(obj, roomVNum)
+		}
+	}
 	return 0
 }
 

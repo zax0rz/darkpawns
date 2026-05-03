@@ -142,6 +142,9 @@ type ScriptableWorld interface {
 	// ClearAffects removes all affects from a character.
 	// Source: scripts.c lua_unaffect()
 	ClearAffects(charName string, isMob bool)
+	// EquipMob equips an object on a mob by vnums.
+	// Source: scripts.c lua_equip_char() lines 403-425.
+	EquipMob(mobVNum, roomVNum, objVNum int)
 
 	// CanCarryObject returns true if the named character can carry the object.
 	// Source: scripts.c lua_canget()
