@@ -354,7 +354,6 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	player.StopFighting()
 
 	player.SendMessage("\r\nYou feel your soul wrenched from your body...\r\n")
-	player.SendMessage(fmt.Sprintf("You lost %d experience.\r\n", expLoss))
 	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
 }
 

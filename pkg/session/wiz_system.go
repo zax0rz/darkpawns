@@ -134,11 +134,17 @@ func cmdDc(s *Session, args []string) error {
 	target := strings.ToLower(args[0])
 	if target == "all" {
 		disconnected := 0
+		s.manager.mu.RLock()
+		toClose := make([]*Session, 0)
 		for name, sess := range s.manager.sessions {
 			if sess.player != nil && sess.player.Level < LVL_IMMORT && name != strings.ToLower(s.player.Name) {
-				sess.Close()
-				disconnected++
+				toClose = append(toClose, sess)
 			}
+		}
+		s.manager.mu.RUnlock()
+		for _, sess := range toClose {
+			sess.Close()
+			disconnected++
 		}
 		s.Send(fmt.Sprintf("Disconnected %d players.", disconnected))
 		return nil
@@ -323,6 +329,7 @@ func cmdBroadcast(s *Session, args []string) error {
 	}
 
 	// Send to all playing sessions (equivalent to checking !d->connected in C)
+	s.manager.mu.RLock()
 	for _, sess := range s.manager.sessions {
 		if sess.player == nil || !sess.authenticated {
 			continue
@@ -333,6 +340,7 @@ func cmdBroadcast(s *Session, args []string) error {
 		}
 		sess.Send(msg)
 	}
+	s.manager.mu.RUnlock()
 
 	slog.Warn("wizard broadcast", "by", s.playerName, "message", msg)
 	return nil

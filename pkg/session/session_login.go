@@ -111,7 +111,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			s.player = p
 			s.authenticated = true
 		} else {
-			// New character — require password
+			// New character — require password, then enter creation flow
 			if login.Password == "" {
 				s.sendError("Password required for new characters.")
 				_ = s.conn.Close()
@@ -124,28 +124,37 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				_ = s.conn.Close()
 				return nil
 			}
-			s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
-			// Save immediately to get an ID
-			if r, err := db.PlayerToRecord(s.player, nil); err == nil {
-				r.Password = string(hashedPwd)
-				if err := s.manager.db.CreatePlayer(r); err != nil {
-					slog.Error("DB create error", "error", err)
-				} else {
-					s.player.ID = r.ID
-					// Give starting items and skills — do_start() from class.c
-					s.manager.world.GiveStartingItems(s.player)
-					game.GiveStartingSkills(s.player)
-				}
-			}
-			s.authenticated = true
+			s.charPassword = string(hashedPwd)
+			s.startCharCreation(login.PlayerName)
+			return nil
 		}
 	} else {
-		// No DB - always create new character
-		s.player = game.NewCharacter(0, login.PlayerName, login.Class, login.Race)
-		// Give starting items and skills — do_start() from class.c
-		s.manager.world.GiveStartingItems(s.player)
-		game.GiveStartingSkills(s.player)
-		s.authenticated = true
+		// No DB - still require password and go through creation flow
+		if login.Password == "" {
+			s.sendError("Password required for new characters.")
+			_ = s.conn.Close()
+			return nil
+		}
+		hashedPwd, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
+		if err != nil {
+			slog.Error("bcrypt hash error", "error", err)
+			s.sendError("Internal error during character creation.")
+			_ = s.conn.Close()
+			return nil
+		}
+		s.charPassword = string(hashedPwd)
+		s.startCharCreation(login.PlayerName)
+		return nil
+	}
+
+	// Check if player is banned before entering the game
+	if s.authenticated && s.player != nil && s.manager.modChecker != nil {
+		if errMsg, banned := s.manager.modChecker.CheckPreCommand(s.player.Name, ""); banned {
+			s.sendError(errMsg)
+			_ = s.conn.Close()
+			slog.Warn("banned player denied entry", "player", s.player.Name, "ip", ip)
+			return nil
+		}
 	}
 
 	// If we created a player directly (not through char creation), proceed with registration

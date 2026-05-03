@@ -59,6 +59,10 @@ func (w *commandSessionWrapper) HasPlayer() bool {
 	return w.session.HasPlayer()
 }
 
+func (w *commandSessionWrapper) GetPlayerLevel() int {
+	return w.session.GetPlayerLevel()
+}
+
 func (w *commandSessionWrapper) Lock()   {}
 func (w *commandSessionWrapper) Unlock() {}
 

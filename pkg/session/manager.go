@@ -16,6 +16,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/game/systems"
+	"github.com/zax0rz/darkpawns/pkg/moderation"
 	"golang.org/x/time/rate"
 )
 
@@ -25,7 +26,7 @@ import (
 // refreshes them starting at jwtRefreshWindow before expiry.
 const (
 	jwtEffectiveLifetime = 1 * time.Hour
-	jwtRefreshWindow   = 15 * time.Minute
+	jwtRefreshWindow     = 15 * time.Minute
 )
 
 var upgrader = websocket.Upgrader{
@@ -131,17 +132,24 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		world:        world,
 		combatEngine: ce,
 		shopManager:  systems.NewShopManager(),
-		loginLimiter:  auth.NewIPRateLimiter(),
+		loginLimiter: auth.NewIPRateLimiter(),
 		loginAttempts: auth.NewLoginAttemptTracker(auth.LoginAttemptConfig{
 			Threshold: 10,
 			Lockout:   15 * time.Minute,
 		}),
-		doorManager:  dm,
-		ipConnCount:  make(map[string]int),
+		doorManager: dm,
+		ipConnCount: make(map[string]int),
 	}
 	if database != nil {
 		m.db = *database
 		m.hasDB = true
+	}
+
+	// Wire moderation checker (in-memory when no DB, DB-backed when available).
+	if database != nil {
+		m.modChecker = NewModerationAdapter(moderation.NewManager(database.SQLDB()))
+	} else {
+		m.modChecker = NewModerationAdapter(moderation.NewManager(nil))
 	}
 
 	// Wire MessageSink so that Player.SendMessage routes through Session.send
@@ -165,7 +173,7 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		select {
 		case s.send <- wrapped:
 		default:
-			// Channel full, drop
+			slog.Warn("MessageSink channel full — dropping message", "player", playerName)
 		}
 	}
 
@@ -527,8 +535,10 @@ type Session struct {
 
 	// Character creation state
 	charCreating bool
-	charStage    string // current stage in creation flow (sex, race, class, confirm)
+	charStage    string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
 	charName     string
+	charPassword string // hashed password during creation
+	charColor    bool   // ANSI color preference
 	charSex      int
 	charRace     int
 	charClass    int
@@ -536,12 +546,12 @@ type Session struct {
 	charStats    game.CharStats
 
 	// Character switch state (wizard commands)
-	isSwitched          bool
-	switchedOriginal    *game.Player
-	switchedOriginalLevel int   // M-16: wizard's real level for permission gating
-	switchedStartTime   time.Time // M-16: when switch began
-	switchedMob         *game.MobInstance
-	switchedPlayer      *game.Player
+	isSwitched            bool
+	switchedOriginal      *game.Player
+	switchedOriginalLevel int       // M-16: wizard's real level for permission gating
+	switchedStartTime     time.Time // M-16: when switch began
+	switchedMob           *game.MobInstance
+	switchedPlayer        *game.Player
 
 	// Rate limit: capacity=10, refill=10/sec (token bucket via golang.org/x/time/rate)
 	// This protects the server from command floods — it does NOT protect API costs.
@@ -558,13 +568,13 @@ type Session struct {
 
 	// Communication state
 	lastTeller string   // Last player who told us (for reply)
-	snooping  *Session  // Session being snooped (for wizard snoop)
-	snoopBy   *Session  // Session that is snooping us
+	snooping   *Session // Session being snooped (for wizard snoop)
+	snoopBy    *Session // Session that is snooping us
 
 	// Force-command safety state
-	IsForced              bool      // true while executing a forced command (prevents transitive force)
-	ForcedPrivilegeLevel  int       // target's privilege level during forced execution (0 = not forced)
-	LastForceTime         time.Time // last time this session was the target of a force command
+	IsForced             bool      // true while executing a forced command (prevents transitive force)
+	ForcedPrivilegeLevel int       // target's privilege level during forced execution (0 = not forced)
+	LastForceTime        time.Time // last time this session was the target of a force command
 
 	// idleTicsSet tracks whether the idle timeout counter has been set
 	// for pre-login sessions. Used by CheckIdlePasswords().

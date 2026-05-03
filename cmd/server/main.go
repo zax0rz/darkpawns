@@ -49,6 +49,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
+	"github.com/zax0rz/darkpawns/pkg/moderation"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/session"
@@ -119,6 +120,16 @@ func main() {
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
 	manager.SetParryDodgeFuncs()                      // Enable parry/dodge checks (C-11)
 	game.SetAICombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
+
+	// Wire moderation: mute, ban, word filter, spam detection
+	if database != nil {
+		modManager := moderation.NewManager(database.SQLDB())
+		modAdapter := session.NewModerationAdapter(modManager)
+		manager.SetModerationChecker(modAdapter)
+		slog.Info("Moderation manager wired with database backend")
+	} else {
+		slog.Warn("No database — moderation disabled (mute/ban/spam filters unavailable)")
+	}
 
 	// Start game loop (heartbeat, point_update, mobile activity, combat ticks)
 	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{

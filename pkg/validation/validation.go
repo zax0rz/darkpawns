@@ -25,7 +25,11 @@ func IsValidPlayerName(name string) bool {
 	}
 
 	// Check for reserved names
-	reservedNames := []string{"admin", "system", "root", "server", "null", "undefined"}
+	reservedNames := []string{
+		"admin", "system", "root", "server", "null", "undefined",
+		"gm", "moderator", "god", "implementor", "imp", "staff", "dev", "bot", "agent",
+		"zax0rz",
+	}
 	lowerName := strings.ToLower(name)
 	for _, reserved := range reservedNames {
 		if lowerName == reserved {

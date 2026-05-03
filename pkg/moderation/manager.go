@@ -369,6 +369,20 @@ func (wf *WordFilterEntry) censor(message string) string {
 	return strings.ReplaceAll(message, wf.Pattern, strings.Repeat("*", len(wf.Pattern)))
 }
 
+// AddReport stores an abuse report (DB if available, always logs).
+func (m *Manager) AddReport(r AbuseReport) {
+	if m.hasDB {
+		_, err := m.db.Exec(`
+			INSERT INTO abuse_reports (reporter, target, report_type, description, room_vnum, timestamp, status)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			r.Reporter, r.Target, string(r.ReportType), r.Description, r.RoomVNum, r.Timestamp, string(r.Status),
+		)
+		if err != nil {
+			slog.Error("failed to persist abuse report", "error", err)
+		}
+	}
+}
+
 // AddPenalty stores a penalty (in-memory + DB if available).
 func (m *Manager) AddPenalty(p PlayerPenalty) {
 	m.mu.Lock()

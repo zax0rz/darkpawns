@@ -208,8 +208,7 @@ func (w *World) doBackstab(ch *Player, me *MobInstance, cmd string, arg string) 
 		// Could be a mob
 		for _, m := range w.GetMobsInRoom(ch.RoomVNum) {
 			if strings.Contains(strings.ToLower(m.GetName()), strings.ToLower(victName)) {
-				ch.SendMessage("They aren't here.\r\n")
-				return true
+				return w.doBackstabMob(ch, m)
 			}
 		}
 		ch.SendMessage("Backstab who?\r\n")
@@ -257,6 +256,42 @@ func (w *World) doBackstab(ch *Player, me *MobInstance, cmd string, arg string) 
 		w.doDamage(ch, vict, 0, SkillBackstab)
 	} else {
 		w.hitSkill(ch, vict, SkillBackstab)
+	}
+	return true
+}
+
+// doBackstabMob handles backstab against a mob target.
+func (w *World) doBackstabMob(ch *Player, m *MobInstance) bool {
+	wielded := w.GetEquipped(ch, eqWearWield)
+	if wielded == nil {
+		ch.SendMessage("You need to wield a weapon to make it a success.\r\n")
+		return true
+	}
+	if !isPiercingWeapon(wielded) {
+		ch.SendMessage("Only piercing weapons can be used for backstabbing.\r\n")
+		return true
+	}
+	if isMounted(ch) {
+		ch.SendMessage("Dismount first!\r\n")
+		return true
+	}
+	if m.GetPosition() >= combat.PosSleeping {
+		ch.SendMessage(fmt.Sprintf("%s notices you lunging at %s!\r\n", m.GetName(), himHer(m.GetSex())))
+		m.SendMessage(fmt.Sprintf("You notice %s lunging at you!\r\n", ch.Name))
+		w.roomMessageExcludeTwo(ch.RoomVNum,
+			fmt.Sprintf("%s notices %s lunging at %s!", m.GetName(), ch.Name, himHer(m.GetSex())),
+			ch.Name, m.GetName())
+		w.startCombatBetween(ch, nil)
+		ch.SetFighting(m.GetName())
+		return true
+	}
+
+	percent := randRange(1, 101)
+	prob := ch.GetSkill(SkillBackstab)
+	if percent > prob {
+		w.doDamage(ch, m, 0, SkillBackstab)
+	} else {
+		w.hitSkill(ch, m, SkillBackstab)
 	}
 	return true
 }

@@ -22,12 +22,17 @@ func cmdShow(s *Session, args []string) error {
 	topic := strings.ToLower(args[0])
 	switch topic {
 	case "players":
+		s.manager.mu.RLock()
 		count := len(s.manager.sessions)
+		s.manager.mu.RUnlock()
 		s.Send(fmt.Sprintf("Players online: %d", count))
 	case "uptime":
 		s.Send(fmt.Sprintf("Server running since %s", time.Now().Format(time.RFC1123)))
 	case "stats":
-		s.Send(fmt.Sprintf("Sessions: %d", len(s.manager.sessions)))
+		s.manager.mu.RLock()
+		sessionCount := len(s.manager.sessions)
+		s.manager.mu.RUnlock()
+		s.Send(fmt.Sprintf("Sessions: %d", sessionCount))
 	case "reset":
 		zones := s.manager.world.GetAllZones()
 		zd := s.manager.world.GetZoneDispatcher()

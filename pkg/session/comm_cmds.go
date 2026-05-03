@@ -32,7 +32,7 @@ func cmdTell(s *Session, args []string) error {
 		return nil
 	}
 	targetName := args[0]
-	message := strings.Join(args[1:], " ")
+	message := sanitizeMessage(strings.Join(args[1:], " "))
 
 	// Word filter + spam check
 	filtered, block := filterCommMessage(s, message)
@@ -131,7 +131,7 @@ func cmdShout(s *Session, args []string) error {
 		s.Send("Yes, shout, fine, shout we must, but WHAT???")
 		return nil
 	}
-	message := strings.Join(args, " ")
+	message := sanitizeMessage(strings.Join(args, " "))
 
 	// Word filter + spam check
 	filtered, block := filterCommMessage(s, message)
@@ -180,6 +180,7 @@ func cmdShout(s *Session, args []string) error {
 		select {
 		case sess.send <- msg:
 		default:
+			slog.Warn("shout send channel full — dropping message", "target", name)
 		}
 	}
 	s.manager.mu.RUnlock()
@@ -193,7 +194,7 @@ func cmdGossip(s *Session, args []string) error {
 		s.Send("Yes, gossip, fine, gossip we must, but WHAT???")
 		return nil
 	}
-	message := strings.Join(args, " ")
+	message := sanitizeMessage(strings.Join(args, " "))
 
 	// Word filter + spam check
 	filtered, block := filterCommMessage(s, message)
@@ -228,6 +229,7 @@ func cmdGossip(s *Session, args []string) error {
 		select {
 		case sess.send <- msg:
 		default:
+			slog.Warn("gossip send channel full — dropping message", "target", name)
 		}
 	}
 	s.manager.mu.RUnlock()
@@ -245,7 +247,7 @@ func cmdEmote(s *Session, args []string) error {
 		s.Send("Emote what?")
 		return nil
 	}
-	action := strings.Join(args, " ")
+	action := sanitizeMessage(strings.Join(args, " "))
 
 	// Word filter + spam check
 	filtered, block := filterCommMessage(s, action)
@@ -284,7 +286,7 @@ func cmdSay(s *Session, args []string) error {
 		return nil
 	}
 
-	text := strings.Join(args, " ")
+	text := sanitizeMessage(strings.Join(args, " "))
 
 	// Word filter + spam check
 	filtered, block := filterCommMessage(s, text)

@@ -285,6 +285,7 @@ func (s *Session) sendText(text string) {
 	select {
 	case s.send <- msg:
 	default:
+		slog.Warn("session sendText channel full — dropping message", "player", s.playerName)
 	}
 }
 

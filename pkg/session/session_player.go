@@ -64,6 +64,14 @@ func (s *Session) HasPlayer() bool {
 	return s.player != nil
 }
 
+// GetPlayerLevel returns the player's level (0 if no player).
+func (s *Session) GetPlayerLevel() int {
+	if s.player != nil {
+		return s.player.Level
+	}
+	return 0
+}
+
 // NewSession creates a bare session not associated with any WebSocket (for telnet/embed use).
 func (m *Manager) NewSession() *Session {
 	return &Session{

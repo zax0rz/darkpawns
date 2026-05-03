@@ -53,6 +53,9 @@ type CommandSession interface {
 
 	// HasPlayer returns true if the session has a player associated with it
 	HasPlayer() bool
+
+	// GetPlayerLevel returns the level of the player associated with this session (0 if none)
+	GetPlayerLevel() int
 }
 
 // CommandManager defines the interface for managing commands.

@@ -40,6 +40,8 @@ func checkLevel(s *Session, level int) bool {
 // findSessionByName searches all sessions for a player by name (case-insensitive).
 func findSessionByName(m *Manager, name string) *Session {
 	name = strings.ToLower(name)
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	for _, sess := range m.sessions {
 		if sess.player != nil && strings.ToLower(sess.player.Name) == name {
 			return sess

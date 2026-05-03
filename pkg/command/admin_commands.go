@@ -130,9 +130,9 @@ func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error
 	})
 	reportsMu.Unlock()
 
-	// Also log via DB moderation manager if available
+	// Also persist via DB moderation manager if available
 	if ac.mod != nil {
-		_ = moderation.AbuseReport{
+		ac.mod.AddReport(moderation.AbuseReport{
 			Reporter:    s.GetPlayerName(),
 			Target:      target,
 			ReportType:  moderation.ReportType(rt),
@@ -140,7 +140,7 @@ func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error
 			RoomVNum:    s.GetPlayerRoomVNum(),
 			Timestamp:   time.Now(),
 			Status:      moderation.ReportStatusPending,
-		}
+		})
 	}
 
 	// Notify admins
@@ -689,16 +689,22 @@ func (ac *AdminCommands) cmdSpamConfig(s common.CommandSession, args []string) e
 // Internal helpers
 // ---------------------------------------------------------------------------
 
+// lvlGod mirrors game.LVL_GOD to avoid a circular import.
+const lvlGod = 50
+
 // isAdmin checks if a player is an admin.
+// Primary gate: player level >= LVL_GOD (50). Name list is bootstrap-only.
 func (ac *AdminCommands) isAdmin(s common.CommandSession) bool {
 	if !s.HasPlayer() {
 		return false
 	}
+	if s.GetPlayerLevel() >= lvlGod {
+		return true
+	}
+	// Bootstrap: allow known admin names that haven't levelled up yet.
 	admins := map[string]bool{
-		"admin":     true,
-		"zax0rz":    true,
-		"gm":        true,
-		"moderator": true,
+		"admin": true,
+		"zax0rz": true,
 	}
 	return admins[strings.ToLower(s.GetPlayerName())]
 }

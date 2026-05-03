@@ -69,7 +69,11 @@ func (w *World) doInventory(ch *Player, me *MobInstance, cmd string, arg string)
 		if item == nil {
 			continue
 		}
-		ch.SendMessage(fmt.Sprintf("[%2d] %s\r\n", i+1, item.Prototype.ShortDesc))
+		desc := item.Runtime.ShortDesc
+		if desc == "" && item.Prototype != nil {
+			desc = item.Prototype.ShortDesc
+		}
+		ch.SendMessage(fmt.Sprintf("[%2d] %s\r\n", i+1, desc))
 	}
 	return true
 }
@@ -85,7 +89,11 @@ func (w *World) doEquipment(ch *Player, me *MobInstance, cmd string, arg string)
 		if !ok {
 			continue
 		}
-		ch.SendMessage(fmt.Sprintf("%-15s : %s\r\n", slot.String(), item.Prototype.ShortDesc))
+		desc := item.Runtime.ShortDesc
+		if desc == "" && item.Prototype != nil {
+			desc = item.Prototype.ShortDesc
+		}
+		ch.SendMessage(fmt.Sprintf("%-15s : %s\r\n", slot.String(), desc))
 	}
 	return true
 }

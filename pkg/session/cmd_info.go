@@ -43,6 +43,7 @@ func cmdUsersSafe(s *Session, args []string) error {
 	}
 
 	count := 0
+	s.manager.mu.RLock()
 	for _, sess := range s.manager.sessions {
 		if sess.player == nil {
 			continue
@@ -68,6 +69,7 @@ func cmdUsersSafe(s *Session, args []string) error {
 		}
 		count++
 	}
+	s.manager.mu.RUnlock()
 
 	fmt.Fprintf(&buf, "\n%d player(s) connected.\n", count)
 	s.sendText(buf.String())

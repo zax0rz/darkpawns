@@ -17,6 +17,11 @@ type DB struct {
 	conn *sql.DB
 }
 
+// SQLDB returns the underlying *sql.DB for use by other packages (e.g., moderation).
+func (db *DB) SQLDB() *sql.DB {
+	return db.conn
+}
+
 // PlayerRecord represents a player in the database.
 type PlayerRecord struct {
 	ID         int
@@ -44,6 +49,7 @@ type PlayerRecord struct {
 	Drunk      int
 	Move       int
 	MaxMove    int
+	Hometown   int
 	Inventory  []byte // JSONB encoded inventory
 	Equipment  []byte // JSONB encoded equipment
 }
@@ -103,6 +109,7 @@ func (db *DB) createTables() error {
 		hunger INTEGER DEFAULT 24,
 		thirst INTEGER DEFAULT 24,
 		drunk INTEGER DEFAULT 0,
+		hometown INTEGER DEFAULT 0,
 		inventory JSONB DEFAULT '[]',
 		equipment JSONB DEFAULT '{}',
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -126,6 +133,8 @@ func (db *DB) createTables() error {
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS hunger INTEGER DEFAULT 24;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS thirst INTEGER DEFAULT 24;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS drunk INTEGER DEFAULT 0;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS hometown INTEGER DEFAULT 0;
 
 	CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
 
@@ -221,19 +230,25 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 func (db *DB) CreatePlayer(p *PlayerRecord) error {
 	query := `
 		INSERT INTO players
-		  (name, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
+		  (name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
 		   class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		   hunger, thirst, drunk,
 		   inventory, equipment)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
 		RETURNING id
 	`
 	return db.conn.QueryRow(query,
-		p.Name, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
+		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk,
 		p.Inventory, p.Equipment,
 	).Scan(&p.ID)
+}
+
+// UpdatePassword updates a player's password hash.
+func (db *DB) UpdatePassword(playerID int, hash string) error {
+	_, err := db.conn.Exec(`UPDATE players SET password_hash = $1 WHERE id = $2`, hash, playerID)
+	return err
 }
 
 // Exec runs a raw SQL query against the database.

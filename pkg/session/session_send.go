@@ -104,7 +104,7 @@ func (s *Session) SendMessage(message string) error {
 	select {
 	case s.send <- msg:
 	default:
-		// Channel full, drop message
+		slog.Warn("session send channel full — dropping message", "player", s.playerName)
 	}
 	return nil
 }

@@ -19,7 +19,7 @@ func cmdRaceSay(s *Session, args []string) error {
 		return nil
 	}
 
-	msg := strings.Join(args, " ")
+	msg := sanitizeMessage(strings.Join(args, " "))
 	raceName := game.RaceNames[s.player.Race]
 	if raceName == "" {
 		raceName = "tongue"
@@ -42,7 +42,7 @@ func cmdQcomm(s *Session, args []string) error {
 		return nil
 	}
 
-	msg := strings.Join(args, " ")
+	msg := sanitizeMessage(strings.Join(args, " "))
 	formatted := fmt.Sprintf("%s asks '%s'", s.player.Name, msg)
 
 	s.Send(fmt.Sprintf("You ask '%s'", msg))
@@ -72,7 +72,7 @@ func cmdWhisper(s *Session, args []string) error {
 	}
 
 	targetName := args[0]
-	message := strings.Join(args[1:], " ")
+	message := sanitizeMessage(strings.Join(args[1:], " "))
 
 	// Word filter + spam check
 	filtered, block := filterCommMessage(s, message)
@@ -128,7 +128,7 @@ func cmdAsk(s *Session, args []string) error {
 	}
 
 	targetName := args[0]
-	message := strings.Join(args[1:], " ")
+	message := sanitizeMessage(strings.Join(args[1:], " "))
 	roomVNum := s.player.GetRoomVNum()
 
 	var targetSess *Session

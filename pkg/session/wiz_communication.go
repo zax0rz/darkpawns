@@ -22,11 +22,13 @@ func cmdGecho(s *Session, args []string) error {
 		s.Send("Maximum gecho length is 500 characters.")
 		return nil
 	}
+	s.manager.mu.RLock()
 	for _, sess := range s.manager.sessions {
 		if sess.player != nil {
 			sess.Send(msg)
 		}
 	}
+	s.manager.mu.RUnlock()
 	slog.Warn("wizard gecho", "message", msg, "by", s.player.Name)
 	return nil
 }
@@ -116,18 +118,20 @@ func cmdForce(s *Session, args []string) error {
 	}
 
 	if targetName == "all" {
-		// Force-all still respects denylist (checked above) but skips per-target checks
+		// Force-all: collect sessions under RLock, then release and execute
+		// to avoid deadlock when a forced command acquires a write lock.
 		s.Send("OK.")
 		s.manager.mu.RLock()
-		defer s.manager.mu.RUnlock()
+		var targets []*Session
 		for _, sess := range s.manager.sessions {
-			if sess.player == nil {
+			if sess.player == nil || sess.IsForced {
 				continue
 			}
-			// Safety 2: skip already-forced targets (no transitive chains)
-			if sess.IsForced {
-				continue
-			}
+			targets = append(targets, sess)
+		}
+		s.manager.mu.RUnlock()
+
+		for _, sess := range targets {
 			sess.IsForced = true
 			sess.ForcedPrivilegeLevel = sess.player.Level
 			sess.LastForceTime = time.Now()

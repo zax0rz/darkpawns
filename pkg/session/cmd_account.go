@@ -67,12 +67,7 @@ func cmdPassword(s *Session, args []string) error {
 		return nil
 	}
 
-	// Save to DB using a direct UPDATE of the password_hash column,
-	// which is already in the players table (see db/player.go createTables()).
-	_, err = s.manager.db.Exec(
-		`UPDATE players SET password_hash = $1 WHERE id = $2`,
-		string(hashedPwd), rec.ID,
-	)
+	err = s.manager.db.UpdatePassword(rec.ID, string(hashedPwd))
 	if err != nil {
 		slog.Error("password change: db update failed", "player", s.playerName, "error", err)
 		s.Send("Failed to save new password. Please try again later.")
