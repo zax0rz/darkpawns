@@ -388,6 +388,11 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 		s.switchedPlayer = nil
 	}
 
+	// 3c. Cancel any in-progress mail writing
+	if s.player != nil {
+		game.CancelMailWriting(s.player.ID)
+	}
+
 	// 4. Save player to DB
 	if m.hasDB && s.player != nil && s.player.ID > 0 {
 		if rec, err := db.PlayerToRecord(s.player, nil); err == nil {

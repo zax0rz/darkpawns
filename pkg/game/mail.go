@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -75,7 +76,18 @@ var (
 	noMail        bool //nolint:unused // mail system flag
 	worldNameFunc func(id int) string
 	worldIDFunc   func(name string) int
+
+	// Mail writing state — tracks players currently composing mail.
+	// Keyed by player ID. Protected by mailWriteMu.
+	mailWriteMu   sync.Mutex
+	mailWriteEntries = make(map[int]*mailWriteEntry)
 )
+
+// mailWriteEntry holds the buffered text and recipient for a player composing mail.
+type mailWriteEntry struct {
+	recipientID int
+	buffer      string
+}
 
 // InitMailSystem initializes mail from disk.
 func InitMailSystem(nameFunc func(id int) string, idFunc func(name string) int) {
@@ -449,13 +461,15 @@ func (w *World) PostmasterSendMail(ch *Player, mailman *MobInstance, arg string)
 	}
 	ch.mu.Unlock()
 
-	// In C this sets PLR_MAILING flag and starts string_write.
-	// For now, store a stub message.
+	w.roomMessage(ch.GetRoom(), "$n starts to write some mail.")
 	ch.SendMessage(fmt.Sprintf("$n tells you, 'I'll take %d coins for the stamp.'\r\n$n tells you, 'Write your message, use @ on a new line when done.'\r\n", MailStampPrice))
 
-	// STUB: Mail message entry via string writer not yet ported.
-	// For now, log the intent and store a placeholder.
-	log.Printf("Mail: %s writing to %s (ID %d)", ch.GetName(), name, recipient)
+	// Set PLR_WRITING and PLR_MAILING flags, store recipient in writing state.
+	ch.SetPlrFlag(PlrWriting, true)
+	ch.SetPlrFlag(PlrMailing, true)
+	mailWriteMu.Lock()
+	mailWriteEntries[ch.ID] = &mailWriteEntry{recipientID: recipient}
+	mailWriteMu.Unlock()
 }
 
 func (w *World) PostmasterCheckMail(ch *Player, mailman *MobInstance) {
@@ -488,6 +502,55 @@ func (w *World) PostmasterReceiveMail(ch *Player, mailman *MobInstance) {
 }
 
 // CreateMailObject creates a note object containing mail text.
+// HandleMailInput processes a line of input from a player in PLR_WRITING/PLR_MAILING state.
+// Returns true when the mail is complete (line == "@").
+// The caller (session handler) should clear PLR_WRITING on return.
+func HandleMailInput(ch *Player, line string) bool {
+	if line == "@" {
+		mailWriteMu.Lock()
+		state, ok := mailWriteEntries[ch.ID]
+		delete(mailWriteEntries, ch.ID)
+		mailWriteMu.Unlock()
+
+		ch.SetPlrFlag(PlrWriting, false)
+		ch.SetPlrFlag(PlrMailing, false)
+
+		if ok && state.buffer != "" {
+			storeMail(state.recipientID, ch.ID, state.buffer)
+			ch.SendMessage("Mail sent.\r\n")
+		} else {
+			ch.SendMessage("Mail aborted (empty message).\r\n")
+		}
+		return true
+	}
+
+	mailWriteMu.Lock()
+	state, ok := mailWriteEntries[ch.ID]
+	if !ok {
+		mailWriteMu.Unlock()
+		ch.SetPlrFlag(PlrWriting, false)
+		ch.SetPlrFlag(PlrMailing, false)
+		return true
+	}
+	if state.buffer != "" {
+		state.buffer += "\r\n"
+	}
+	state.buffer += line
+	if len(state.buffer) > MailMaxSize {
+		state.buffer = state.buffer[:MailMaxSize]
+	}
+	mailWriteMu.Unlock()
+	return false
+}
+
+// CancelMailWriting cleans up mail writing state for a player (e.g., on disconnect).
+// Call this from session cleanup to avoid orphaned writing state.
+func CancelMailWriting(playerID int) {
+	mailWriteMu.Lock()
+	delete(mailWriteEntries, playerID)
+	mailWriteMu.Unlock()
+}
+
 func (w *World) CreateMailObject(ch *Player, mailText string) *ObjectInstance {
 	// Create a note object with mail text as action_description.
 	// Uses explicit field setting since CreateObject from prototype may not exist.

@@ -2,10 +2,11 @@
 package session
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
-	"encoding/json"
 
 	"golang.org/x/crypto/bcrypt"
 	"github.com/zax0rz/darkpawns/pkg/auth"
@@ -198,6 +199,21 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	var cmd CommandData
 	if err := json.Unmarshal(data, &cmd); err != nil {
 		return err
+	}
+
+	// PLR_WRITING intercept: if the player is composing mail (or any other
+	// string-write mode), buffer the input instead of parsing commands.
+	// C equivalent: nanny() checks PLR_WRITING → calls string_add().
+	if s.player != nil && s.player.GetFlags()&(1<<game.PlrWriting) != 0 {
+		// Reconstruct the full input line from command + args
+		line := cmd.Command
+		if len(cmd.Args) > 0 {
+			line += " " + strings.Join(cmd.Args, " ")
+		}
+		if game.HandleMailInput(s.player, line) {
+			// Mail complete (or cancelled) — PLR_WRITING cleared inside HandleMailInput
+		}
+		return nil
 	}
 
 	// Token bucket rate limit: 10 cmd/sec per session
