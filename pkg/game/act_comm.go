@@ -300,8 +300,8 @@ func halfChop(input string) (string, string) {
 	return oneArgument(input)
 }
 
-// allPlayers returns a snapshot of all connected players.
-func (w *World) allPlayers() []*Player {
+// AllPlayers returns a snapshot of all connected players.
+func (w *World) AllPlayers() []*Player {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	players := make([]*Player, 0, len(w.players))
@@ -313,7 +313,7 @@ func (w *World) allPlayers() []*Player {
 
 // getCharVis finds a player by name anywhere in the world (case-insensitive, prefix).
 func (w *World) getCharVis(ch *Player, name string) *Player { //nolint:unused // used in comm_channel.go, comm_tell.go, graph.go
-	for _, p := range w.allPlayers() {
+	for _, p := range w.AllPlayers() {
 		if !p.IsNPC() && (strings.EqualFold(p.Name, name) ||
 			strings.HasPrefix(strings.ToLower(p.Name), strings.ToLower(name))) {
 			return p

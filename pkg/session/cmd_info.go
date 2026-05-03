@@ -197,4 +197,64 @@ func cmdHelp(s *Session, args []string) error {
 	return nil
 }
 
+// cmdReview shows recent gossip history.
+// Matches C: do_review() in new_cmds.c.
+func cmdReview(s *Session) error {
+	if s.player == nil {
+		return nil
+	}
+	result := game.DoReview(s.player, s.manager.world)
+	if result.MessageToCh != "" {
+		s.sendText(result.MessageToCh)
+	}
+	return nil
+}
+
+// cmdWhois looks up a player by name in the database.
+// Matches C: do_whois() in new_cmds.c — loads player save file.
+func cmdWhois(s *Session, args []string) error {
+	if s.player == nil {
+		return nil
+	}
+	if len(args) == 0 {
+		s.sendText("For whom do you wish to search?\r\n")
+		return nil
+	}
+	targetName := strings.Join(args, " ")
+
+	// Check online players first
+	for _, p := range s.manager.world.AllPlayers() {
+		if strings.EqualFold(p.Name, targetName) {
+			classAbbr := "??"
+			if p.Class >= 0 && p.Class < len(game.ClassAbbrevs) {
+				classAbbr = game.ClassAbbrevs[p.Class]
+			}
+			s.sendText(fmt.Sprintf("[%2d %s] %s\r\n", p.Level, classAbbr, p.Name))
+			return nil
+		}
+	}
+
+	// Check database for offline players
+	if s.manager.hasDB {
+		rec, err := s.manager.db.GetPlayer(targetName)
+		if err != nil {
+			s.sendText("Error looking up player.\r\n")
+			return nil
+		}
+		if rec == nil {
+			s.sendText("There is no such player.\r\n")
+			return nil
+		}
+		classAbbr := "??"
+		if rec.Class >= 0 && rec.Class < len(game.ClassAbbrevs) {
+			classAbbr = game.ClassAbbrevs[rec.Class]
+		}
+		s.sendText(fmt.Sprintf("[%2d %s] %s\r\n", rec.Level, classAbbr, rec.Name))
+		return nil
+	}
+
+	s.sendText("There is no such player.\r\n")
+	return nil
+}
+
 // directions maps abbreviated direction names to full names.

@@ -6,6 +6,16 @@ import (
 	"strings"
 )
 
+// gossipHistory is a circular buffer of the last 25 gossip messages.
+// Matches C: struct review_t review[25] in db.c.
+type gossipEntry struct {
+	Name    string
+	Message string
+	Invis   int // invis level of the speaker
+}
+
+const maxGossipHistory = 25
+
 func (w *World) doSpecComm(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	switch strings.ToLower(cmd) {
 	case "shout":
@@ -40,7 +50,7 @@ func (w *World) doShout(ch *Player, me *MobInstance, arg string) bool {
 	}
 
 	msg := fmt.Sprintf("%s shouts, '%s'\r\n", ch.Name, arg)
-	for _, p := range w.allPlayers() {
+	for _, p := range w.AllPlayers() {
 		if p.IsNPC() || p.Name == ch.Name {
 			continue
 		}
@@ -222,7 +232,7 @@ func (w *World) doGenComm(ch *Player, me *MobInstance, cmd string, arg string) b
 		return true
 	}
 
-	for _, p := range w.allPlayers() {
+	for _, p := range w.AllPlayers() {
 		if p.IsNPC() || p.Name == ch.Name {
 			continue
 		}
@@ -236,6 +246,12 @@ func (w *World) doGenComm(ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	sendToChar(ch, fmt.Sprintf("You %s, '%s'\r\n", channelName, arg))
+
+	// Record gossip for review command (matches C: update_review in act.comm.c)
+	if channelName == "gossip" {
+		w.updateGossipHistory(ch.Name, arg, 0)
+	}
+
 	return true
 }
 
@@ -279,7 +295,7 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	// Clan system not yet implemented -- broadcast to all players as a fallback.
 	msg := fmt.Sprintf("[Clan] %s tells the clan, '%s'\r\n", ch.Name, arg)
-	for _, p := range w.allPlayers() {
+	for _, p := range w.AllPlayers() {
 		if p.Name == ch.Name {
 			continue
 		}
@@ -291,4 +307,42 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	sendToChar(ch, fmt.Sprintf("You tell your clan, '%s'\r\n", arg))
 	return true
+}
+
+// updateGossipHistory adds a gossip entry to the ring buffer.
+// Matches C: update_review() in new_cmds.c — shifts all entries up, inserts at [0].
+func (w *World) updateGossipHistory(name, message string, invisLevel int) {
+	w.gossipMu.Lock()
+	defer w.gossipMu.Unlock()
+
+	// Shift all entries up by one (drop the oldest if at capacity)
+	if len(w.gossipHistory) >= maxGossipHistory {
+		w.gossipHistory = w.gossipHistory[:maxGossipHistory-1]
+	}
+	// Prepend new entry at front
+	w.gossipHistory = append([]gossipEntry{{Name: name, Message: message, Invis: invisLevel}}, w.gossipHistory...)
+}
+
+// ReviewGossip returns the formatted gossip history for the review command.
+// Matches C: do_review() in new_cmds.c.
+func (w *World) ReviewGossip(ch *Player) string {
+	w.gossipMu.RLock()
+	defer w.gossipMu.RUnlock()
+
+	var buf strings.Builder
+	buf.WriteString("Last Gossips:\r\n-------------\r\n")
+
+	for _, entry := range w.gossipHistory {
+		// Hide invisible players below viewer's level
+		if entry.Invis > ch.GetLevel() {
+			buf.WriteString("Someone invisible: ")
+		} else {
+			buf.WriteString(entry.Name)
+			buf.WriteString(": ")
+		}
+		buf.WriteString(entry.Message)
+		buf.WriteString("\r\n")
+	}
+
+	return buf.String()
 }

@@ -97,6 +97,8 @@ func init() {
 	cmdRegistry.Register("score", wrapNoArgs(cmdScore), "Show your character stats.", 0, 0, "sc")
 	cmdRegistry.Register("who", wrapNoArgs(cmdWho), "List all online players.", 0, 0)
 	cmdRegistry.Register("where", wrapNoArgs(cmdWhere), "Show player locations.", 0, 0)
+	cmdRegistry.Register("review", wrapNoArgs(cmdReview), "Show recent gossip history.", 2, 0)
+	cmdRegistry.Register("whois", wrapArgs(cmdWhois), "Look up a player's info.", 2, 0)
 	cmdRegistry.Register("help", wrapArgs(cmdHelp), "Show available commands or help for a topic.", 0, 0)
 
 	// Group

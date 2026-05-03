@@ -179,7 +179,7 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 	}
 
 	// Adjust existing clan members' ranks
-	for _, p := range w.allPlayers() {
+	for _, p := range w.AllPlayers() {
 		if p.ClanID == c.ID {
 			if p.ClanRank < c.Ranks && p.ClanRank > 0 {
 				p.ClanRank = 1

@@ -405,11 +405,11 @@ func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 }
 
 // DoReview implements do_review() — show recent gossip history.
-func DoReview(ch *Player) SkillResult {
-	// Simple placeholder — returns a message that review was requested
+// Matches C: do_review() in new_cmds.c.
+func DoReview(ch *Player, world *World) SkillResult {
 	return SkillResult{
 		Success:     true,
-		MessageToCh: "Review: (Recent gossip history)\r\n(Review system not yet implemented)\r\n",
+		MessageToCh: world.ReviewGossip(ch),
 	}
 }
 

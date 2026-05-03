@@ -87,7 +87,7 @@ func (w *World) doReply(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	// Find the last teller by ID.
 	var tch *Player
-	for _, p := range w.allPlayers() {
+	for _, p := range w.AllPlayers() {
 		if p.ID == lastID {
 			tch = p
 			break

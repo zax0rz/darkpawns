@@ -1661,8 +1661,12 @@ func CmdReview(s SessionInterface, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	ch := s.GetPlayer()
+	world := s.GetWorld()
+	if world == nil {
+		return fmt.Errorf("world not available")
+	}
 
-	result := game.DoReview(ch)
+	result := game.DoReview(ch, world)
 	return sendSkillResult(s, ch, nil, result)
 }
 

@@ -97,6 +97,11 @@ type World struct {
 
 	// lastTellers tracks last tell recipients per character ID.
 	lastTellers *lastTellersData //nolint:unused // used via methods in act_comm.go
+
+	// gossipHistory records the last 25 gossip messages for the review command.
+	// Matches C: struct review_t review[25] in db.c.
+	gossipMu      sync.RWMutex
+	gossipHistory []gossipEntry
 }
 
 // NewWorld creates a new game world from parsed data.
