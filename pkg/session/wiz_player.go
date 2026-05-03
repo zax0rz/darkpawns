@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+	"time"
+
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -138,6 +140,12 @@ func cmdSwitch(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
+
+	// M-16 toggle: if already switched, return to original body
+	if s.isSwitched {
+		return cmdReturn(s, args)
+	}
+
 	if len(args) == 0 {
 		s.Send("Switch into whom?\r\n")
 		return nil
@@ -145,15 +153,24 @@ func cmdSwitch(s *Session, args []string) error {
 	targetName := strings.ToLower(args[0])
 	roomVNum := s.player.GetRoom()
 
+	// Store original wizard state for permission gating and return
+	origLevel := s.player.Level
+	origPlayer := s.player
+
 	// Look for a mob in the room
 	mobs := s.manager.world.GetMobsInRoom(roomVNum)
 	for _, mob := range mobs {
 		if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
-			// Store original player reference for return
-			s.switchedOriginal = s.player
+			s.switchedOriginal = origPlayer
+			s.switchedOriginalLevel = origLevel
 			s.switchedMob = mob
 			s.isSwitched = true
-			slog.Info("(GC) switch", "who", s.player.Name, "into", mob.GetShortDesc())
+			s.switchedStartTime = time.Now()
+			slog.Info("switch: wizard switched into mob",
+				"wizard", origPlayer.Name,
+				"wizard_level", origLevel,
+				"target_mob", mob.GetShortDesc(),
+			)
 			s.Send(fmt.Sprintf("You switch into %s.\r\n", mob.GetShortDesc()))
 			return nil
 		}
@@ -167,10 +184,17 @@ func cmdSwitch(s *Session, args []string) error {
 				s.Send("Fuuuuuuuuu!\r\n")
 				return nil
 			}
-			s.switchedOriginal = s.player
+			s.switchedOriginal = origPlayer
+			s.switchedOriginalLevel = origLevel
 			s.switchedPlayer = p
 			s.isSwitched = true
-			slog.Info("(GC) switch", "who", s.player.Name, "into", p.GetName())
+			s.switchedStartTime = time.Now()
+			slog.Info("switch: wizard switched into player",
+				"wizard", origPlayer.Name,
+				"wizard_level", origLevel,
+				"target_player", p.GetName(),
+				"target_level", p.Level,
+			)
 			s.Send(fmt.Sprintf("You switch into %s.\r\n", p.GetName()))
 			return nil
 		}
@@ -195,16 +219,28 @@ func cmdReturn(s *Session, args []string) error {
 		s.Send("You aren't switched.\r\n")
 		return nil
 	}
+
+	duration := time.Since(s.switchedStartTime)
 	if s.switchedMob != nil {
-		slog.Info("(GC) return", "who", s.player.Name, "from", s.switchedMob.GetShortDesc())
+		slog.Info("return: wizard returned from mob",
+				"wizard", s.switchedOriginal.Name,
+				"from_mob", s.switchedMob.GetShortDesc(),
+				"duration", duration,
+			)
 	} else if s.switchedPlayer != nil {
-		slog.Info("(GC) return", "who", s.player.Name, "from", s.switchedPlayer.GetName())
+		slog.Info("return: wizard returned from player",
+				"wizard", s.switchedOriginal.Name,
+				"from_player", s.switchedPlayer.GetName(),
+				"duration", duration,
+			)
 	}
+
+	s.player = s.switchedOriginal
 	s.isSwitched = false
+	s.switchedOriginal = nil
+	s.switchedOriginalLevel = 0
 	s.switchedMob = nil
 	s.switchedPlayer = nil
-	s.player = s.switchedOriginal
-	s.switchedOriginal = nil
 	s.Send("You return to your own body.\r\n")
 	return nil
 }

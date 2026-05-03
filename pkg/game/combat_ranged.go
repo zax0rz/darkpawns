@@ -185,8 +185,24 @@ func (w *World) doShoot(ch *Player, me *MobInstance, cmd string, arg string) boo
 				target.SendMessage(fmt.Sprintf("Suddenly some kind of %s pierces your arm!\r\n", projectileName))
 				target.TakeDamage(dam)
 				w.updatePosFromHP(target)
-				// TODO: handle death if target is dead after ranged hit
-				target.SendMessage("You decide to go investigate...\r\n")
+				if target.GetHP() <= 0 {
+					// Source: act.offensive.c do_shoot() — die(to) on POS_DEAD
+					// Uses die() not die_with_killer() — 1/3 EXP loss, no CON loss
+					w.HandleNonCombatDeath(target)
+				} else {
+					// Source: act.offensive.c do_shoot() — mob bursts into
+					// shooter's room and attacks: hit(to, ch, TYPE_UNDEFINED)
+					target.SendMessage("You decide to go investigate...\r\n")
+					if target.IsNPC() {
+						// Source: act.offensive.c — mob bursts into shooter's room and attacks
+						w.roomMessage(exit.ToRoom, fmt.Sprintf("%s bursts into the room and scowls at %s!\r\n", target.Name, ch.Name))
+						ch.SendMessage(fmt.Sprintf("%s bursts into the room and scowls at you!\r\n", target.Name))
+						// Move mob to shooter's room (C: char_from_room + char_to_room)
+						target.RoomVNum = ch.RoomVNum
+						// Mob attacks the shooter (C: hit(to, ch, TYPE_UNDEFINED))
+						w.startCombatBetween(target, ch)
+					}
+				}
 			}
 			} else {
 			// Miss

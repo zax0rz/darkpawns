@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func cmdGecho(s *Session, args []string) error {
@@ -83,38 +84,13 @@ func cmdSend(s *Session, args []string) error {
 
 // ---------------------------------------------------------------------------
 // force — force command on another character (LVL_GRGOD)
+//
+// Safety measures implemented:
+//   1. ForcedPrivilegeLevel set to target's level (dispatcher wiring TODO below)
+//   2. IsForced flag prevents transitive force chains
+//   3. Command denylist blocks dangerous commands
+//   4. 3-second cooldown between force commands on the same target
 // ---------------------------------------------------------------------------
-//
-// *** INTENTIONAL STUB — command is logged but NOT executed. ***
-//
-// This is a safety-first stub. Before activating, the following MUST be implemented:
-//
-//  1. Privilege level: The forced command must execute at the TARGET's privilege
-//     level, not the wizard's. A level-50 wizard force on a level-1 player must not
-//     let that player run immortal commands.
-//
-//  TODO: Add a forced-player privilege mask or temporary level override that
-//  scopes only the single forced command execution.
-//
-//  2. No transitive force chains: If player A forces player B, player B must NOT
-//     be able to force player C. This prevents force amplification attacks.
-//
-//  TODO: Add a session flag (e.g. s.isForced) that is checked before any force
-//  command can execute, and cleared after the forced command completes.
-//
-//  3. Dangerous command blocklist: Commands like "force", "shutdown", "purge",
-//     "set", and "advance" should not be forceable even with correct privilege.
-//
-//  TODO: Add a denylist of commands that cannot be forced, similar to the original
-//  C codebase's do_force() restrictions.
-//
-//  4. Audit trail: Every forced command must be logged with full context (wizard,
-//     target, command text, timestamp). The current slog.Info call covers this.
-//
-//  5. Rate limiting: A wizard should not be able to spam force commands on a target.
-//
-//  TODO: Add a per-target cooldown or global force-rate limit.
-//
 func cmdForce(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh?!?")
@@ -128,7 +104,19 @@ func cmdForce(s *Session, args []string) error {
 	forceCmd := args[1]
 	targetName := strings.ToLower(args[0])
 
+	// --- Safety 3: Command denylist ---
+	denyList := []string{"force", "shutdown", "purge", "set", "advance", "switch", "wiznet"}
+	cmdLower := strings.ToLower(forceCmd)
+	for _, denied := range denyList {
+		if cmdLower == denied {
+			s.Send(fmt.Sprintf("You cannot force '%s'.", forceCmd))
+			slog.Warn("force denied: blocked command", "command", forceCmd, "by", s.player.Name)
+			return nil
+		}
+	}
+
 	if targetName == "all" {
+		// Force-all still respects denylist (checked above) but skips per-target checks
 		s.Send("OK.")
 		s.manager.mu.RLock()
 		defer s.manager.mu.RUnlock()
@@ -136,7 +124,21 @@ func cmdForce(s *Session, args []string) error {
 			if sess.player == nil {
 				continue
 			}
+			// Safety 2: skip already-forced targets (no transitive chains)
+			if sess.IsForced {
+				continue
+			}
+			sess.IsForced = true
+			sess.ForcedPrivilegeLevel = sess.player.Level
+			sess.LastForceTime = time.Now()
 			slog.Info("force all", "target", sess.player.Name, "command", forceCmd, "by", s.player.Name)
+			// Execute the forced command
+			forceArgs := strings.Fields(forceCmd)
+			if len(forceArgs) > 0 {
+				_ = ExecuteCommand(sess, forceArgs[0], forceArgs[1:])
+			}
+			sess.IsForced = false
+			sess.ForcedPrivilegeLevel = 0
 		}
 		return nil
 	}
@@ -152,9 +154,38 @@ func cmdForce(s *Session, args []string) error {
 		return nil
 	}
 
+	// --- Safety 2: No transitive force chains ---
+	if target.IsForced {
+		s.Send("That player is already executing a forced command.")
+		slog.Warn("force denied: transitive chain blocked", "target", target.player.Name, "by", s.player.Name)
+		return nil
+	}
+
+	// --- Safety 4: Rate limiting (3-second cooldown per target) ---
+	if !target.LastForceTime.IsZero() && time.Since(target.LastForceTime) < 3*time.Second {
+		s.Send(fmt.Sprintf("You must wait before forcing %s again.", target.player.Name))
+		return nil
+	}
+
+	// --- Safety 1: Set privilege level to target's level ---
+	target.ForcedPrivilegeLevel = target.player.Level
+	target.IsForced = true
+	target.LastForceTime = time.Now()
+
+	// Execute the forced command on the target
+	forceArgs := strings.Fields(forceCmd)
+	var execErr error
+	if len(forceArgs) > 0 {
+		execErr = ExecuteCommand(target, forceArgs[0], forceArgs[1:])
+	}
+
+	// Clear force state
+	target.IsForced = false
+	target.ForcedPrivilegeLevel = 0
+
 	slog.Info("forced", "target", target.player.Name, "command", forceCmd, "by", s.player.Name)
 	s.Send(fmt.Sprintf("Forced %s to '%s'.", target.player.Name, forceCmd))
-	return nil
+	return execErr
 }
 
 // ---------------------------------------------------------------------------

@@ -331,4 +331,37 @@ var thaco = [12][41]int{
 	{100, 20, 20, 20, 19, 19, 19, 18, 18, 18, 17, 17, 17, 16, 16, 16, 15, 15, 15, 14, 14, 14, 13, 13, 13, 12, 12, 12, 11, 11, 11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9},
 }
 
+// CarriedWeight returns the total weight of all items carried (inventory + equipment).
+func (p *Player) CarriedWeight() int {
+	weight := 0
+	if p.Inventory != nil {
+		weight += p.Inventory.GetWeight()
+	}
+	if p.Equipment != nil {
+		for _, item := range p.Equipment.Slots {
+			if item != nil {
+				weight += item.GetTotalWeight()
+			}
+		}
+	}
+	return weight
+}
+
+// MaxCarryWeight returns the maximum weight this player can carry.
+// Source: utils.h CAN_CARRY_W(ch) = str_app[STRENGTH_APPLY_INDEX(ch)].carry_w
+// Table from constants.c str_app[] (4th column is carry_w):
+//   STR 0:0, 1:3, 2:3, 3:10, 4:25, 5:55, 6:80, 7:90, 8:100, 9:100,
+//   STR 10:115, 11:115, 12:140, 13:140, 14:170, 15:170, 16:195, 17:220, 18:255
+func (p *Player) MaxCarryWeight() int {
+	strCarry := [...]int{0, 3, 3, 10, 25, 55, 80, 90, 100, 100, 115, 115, 140, 140, 170, 170, 195, 220, 255}
+	str := p.Strength
+	if str < 0 {
+		return 0
+	}
+	if str >= len(strCarry) {
+		str = len(strCarry) - 1
+	}
+	return strCarry[str]
+}
+
 // UpdateActivity marks the player as active.

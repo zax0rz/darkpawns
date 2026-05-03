@@ -254,7 +254,9 @@ func cmdGet(s *Session, args []string) error {
 			// Add to inventory
 			if err := s.player.Inventory.AddItem(item); err != nil {
 				// Put back in room
-				s.manager.world.AddItemToRoom(item, roomVNum) //nolint:staticcheck // TODO: migrate to MoveObjectToRoom
+				if err := s.manager.world.MoveObjectToRoom(item, roomVNum); err != nil {
+					slog.Error("MoveObjectToRoom rollback failed", "error", err)
+				}
 				s.sendText(fmt.Sprintf("Can't pick that up: %v", err))
 				return nil
 			}
@@ -303,7 +305,9 @@ func cmdDrop(s *Session, args []string) error {
 	// Remove from inventory and place in room
 	s.player.Inventory.RemoveItem(item)
 	item.RoomVNum = roomVNum
-	s.manager.world.AddItemToRoom(item, roomVNum) //nolint:staticcheck // TODO: migrate to MoveObjectToRoom
+	if err := s.manager.world.MoveObjectToRoom(item, roomVNum); err != nil {
+		slog.Error("MoveObjectToRoom failed on drop", "error", err)
+	}
 
 	s.sendText(fmt.Sprintf("You drop %s.", item.GetShortDesc()))
 	s.markDirty(VarInventory, VarRoomItems)

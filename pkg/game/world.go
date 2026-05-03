@@ -900,8 +900,7 @@ func (w *World) ClearAffects(charName string, isMob bool) {
 }
 
 // CanCarryObject returns true if the named player can carry the object.
-// Simplified: checks inventory capacity. Full weight check TODO when
-// carry-weight limits are implemented on Player.
+// Checks inventory capacity and carry-weight limit.
 func (w *World) CanCarryObject(charName string, objVNum int) bool {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -917,8 +916,9 @@ func (w *World) CanCarryObject(charName string, objVNum int) bool {
 	if p.Inventory != nil && p.Inventory.IsFull() {
 		return false
 	}
-	// TODO: full weight check using proto.Weight + carrying weight vs limit
-	_ = proto
+	if p.CarriedWeight()+proto.Weight > p.MaxCarryWeight() {
+		return false
+	}
 	return true
 }
 

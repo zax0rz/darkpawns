@@ -14,12 +14,23 @@ const (
 	LVL_IMPL   = 61
 )
 
-// checkLevel checks if a session's player has at least the required level.
-func checkLevel(s *Session, level int) bool {
+// getEffectiveLevel returns the level that should be used for permission checks.
+// When a wizard is switched into another body, their original wizard level is used
+// so they cannot escalate beyond their own authority. (M-16)
+func getEffectiveLevel(s *Session) int {
 	if s.player == nil {
-		return false
+		return 0
 	}
-	return s.player.Level >= level
+	if s.isSwitched && s.switchedOriginalLevel > 0 {
+		return s.switchedOriginalLevel
+	}
+	return s.player.Level
+}
+
+// checkLevel checks if a session's player has at least the required level.
+// Uses getEffectiveLevel to ensure switched wizards are gated by their original level.
+func checkLevel(s *Session, level int) bool {
+	return getEffectiveLevel(s) >= level
 }
 
 // findSessionByName searches all sessions for a player by name (case-insensitive).
@@ -56,34 +67,12 @@ func clamp(v, min, max int) int {
 // ---------------------------------------------------------------------------
 // switch — switch into another character's body (LVL_GRGOD)
 // ---------------------------------------------------------------------------
-// SECURITY NOTE: This is intentionally cosmetic-only.
+// M-16: Implemented with permission gating by original wizard level,
+// auto-return on disconnect, and audit logging. Toggle: calling switch
+// while already switched returns to original body.
 //
-// The original C MUD's switch command fully swapped the session's player
-// reference, allowing the wizard to run commands as the target character.
-// That design has significant security implications:
+// Security: checkLevel uses getEffectiveLevel() which returns the wizard's
+// original level even when switched — no privilege escalation.
 //
-//   - The wizard could execute any command with the target's permissions,
-//     including commands the target's level shouldn't have access to.
-//   - Inventory manipulation, save data corruption, and privilege escalation
-//     are all possible if the swap isn't handled carefully.
-//   - If the target player reconnects during a switch, ownership of the
-//     session becomes ambiguous.
-//
-// Full body switching would require:
-//   1. Swapping Session.player to the target Player pointer
-//   2. Updating world.RemovePlayer/AddPlayer for both characters
-//   3. Preventing the target from receiving commands during the switch
-//   4. Auditing command execution to ensure permission isolation
-//   5. Coordinating with the session-takeover logic (M-28) for edge cases
-//
-// TODO(M-16): Implement a safe player reference swap with:
-//   - A permission wrapper that gates commands by the *original* wizard level
-//   - Save-state snapshots before and after the switch
-//   - A timeout that auto-returns if the wizard disconnects mid-switch
-//   - Logging all commands executed while switched for audit trail
-//
-// cmdSwitch transfers the wizard's control to a different character.
-// Expected behavior (from original C):
-// - Save the current character state
-// - Load the target character
-// - Attach the wizard's session to the new character
+// TODO(future): Save-state snapshots before/after switch (requires DB
+// transaction support in the persistence layer).

@@ -343,6 +343,23 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 		s.snooping.snoopBy = nil
 	}
 
+	// 3b. M-16: Auto-return from switched body on disconnect
+	if s.isSwitched {
+		if s.switchedOriginal != nil {
+			slog.Warn("auto-return on disconnect",
+				"wizard", s.switchedOriginal.Name,
+				"from_mob", s.switchedMob != nil,
+				"from_player", s.switchedPlayer != nil,
+			)
+			s.player = s.switchedOriginal
+		}
+		s.isSwitched = false
+		s.switchedOriginal = nil
+		s.switchedOriginalLevel = 0
+		s.switchedMob = nil
+		s.switchedPlayer = nil
+	}
+
 	// 4. Save player to DB
 	if m.hasDB && s.player != nil && s.player.ID > 0 {
 		if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
@@ -451,10 +468,12 @@ type Session struct {
 	charStats    game.CharStats
 
 	// Character switch state (wizard commands)
-	isSwitched       bool
-	switchedOriginal *game.Player
-	switchedMob      *game.MobInstance
-	switchedPlayer   *game.Player
+	isSwitched          bool
+	switchedOriginal    *game.Player
+	switchedOriginalLevel int   // M-16: wizard's real level for permission gating
+	switchedStartTime   time.Time // M-16: when switch began
+	switchedMob         *game.MobInstance
+	switchedPlayer      *game.Player
 
 	// Rate limit: capacity=10, refill=10/sec (token bucket via golang.org/x/time/rate)
 	// This protects the server from command floods — it does NOT protect API costs.
@@ -473,6 +492,13 @@ type Session struct {
 	lastTeller string   // Last player who told us (for reply)
 	snooping  *Session  // Session being snooped (for wizard snoop)
 	snoopBy   *Session  // Session that is snooping us
+
+	// Force-command safety state
+	IsForced           bool      // true while executing a forced command (prevents transitive force)
+	ForcedPrivilegeLevel int     // target's privilege level during forced execution (0 = not forced)
+	// TODO: Wire ForcedPrivilegeLevel into the command dispatcher (checkLevel / privilege checks)
+	//       so forced commands execute at the TARGET's level, not the wizard's.
+	LastForceTime time.Time // last time this session was the target of a force command
 
 	// idleTicsSet tracks whether the idle timeout counter has been set
 	// for pre-login sessions. Used by CheckIdlePasswords().
