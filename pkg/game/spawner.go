@@ -581,6 +581,34 @@ func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) {
 	}
 }
 
+// RemoveMobInstance decrements the spawner's instance count for a dead mob,
+// allowing it to respawn on the next zone reset.
+func (s *Spawner) RemoveMobInstance(mobVNum int, mob *MobInstance) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if instances, ok := s.mobInstances[mobVNum]; ok {
+		for i, m := range instances {
+			if m == mob {
+				s.mobInstances[mobVNum] = append(instances[:i], instances[i+1:]...)
+				break
+			}
+		}
+	}
+
+	// Also remove from roomMobs tracking
+	if mob.RoomVNum >= 0 {
+		if roomInstances, ok := s.roomMobs[mob.RoomVNum]; ok {
+			for i, m := range roomInstances {
+				if m == mob {
+					s.roomMobs[mob.RoomVNum] = append(roomInstances[:i], roomInstances[i+1:]...)
+					break
+				}
+			}
+		}
+	}
+}
+
 // StartPeriodicResets starts the periodic zone reset timer.
 func (s *Spawner) StartPeriodicResets(interval time.Duration) {
 	s.done = make(chan struct{})

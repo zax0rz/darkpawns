@@ -71,6 +71,27 @@ func (p *Player) GetMaxHP() int {
 	return p.MaxHealth
 }
 
+// GetMana returns the player's current mana.
+func (p *Player) GetMana() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Mana
+}
+
+// SetMana sets the player's current mana.
+func (p *Player) SetMana(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Mana = v
+}
+
+// GetMaxMana returns the player's maximum mana.
+func (p *Player) GetMaxMana() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.MaxMana
+}
+
 // GetMove returns the player's current movement points.
 func (p *Player) GetMove() int {
 	p.mu.RLock()

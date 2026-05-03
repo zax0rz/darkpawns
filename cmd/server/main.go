@@ -46,6 +46,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -115,6 +116,21 @@ func main() {
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
 	manager.SetParryDodgeFuncs()                      // Enable parry/dodge checks (C-11)
 	game.SetAICombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
+
+	// Start game loop (heartbeat, point_update, mobile activity, combat ticks)
+	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{
+		OnPointUpdate: func() {
+			gameWorld.PointUpdate()
+		},
+		OnPerformViolence: func() {
+			// Combat engine handles its own 2s tick via CombatEngine.Start()
+		},
+		OnMobileActivity: func() {
+			// Future: mob AI wandering, speech triggers
+		},
+	})
+	gameLoop.Start()
+	defer gameLoop.Stop()
 
 	// Setup HTTP routes
 	http.HandleFunc("/ws", manager.HandleWebSocket)

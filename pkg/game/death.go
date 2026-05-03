@@ -200,6 +200,12 @@ func (w *World) handleMobDeath(victim combat.Combatant, attackType int) {
 	w.mu.Lock()
 	delete(w.activeMobs, deadMobID)
 	w.mu.Unlock()
+
+	// Decrement spawner instance count so the mob can respawn on next zone reset.
+	// Without this, CanSpawn() always returns false for killed mob vnums.
+	if w.spawner != nil {
+		w.spawner.RemoveMobInstance(deadMob.VNum, deadMob)
+	}
 }
 
 // handlePlayerDeath implements die()/die_with_killer() + raw_kill() for players.

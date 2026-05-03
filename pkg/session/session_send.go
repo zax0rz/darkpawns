@@ -45,6 +45,21 @@ func (s *Session) sendWelcome(token string) {
 		Token: token,
 	}
 
+	// Send MOTD before the room state
+	motd := game.ShowMOTD(s.manager.world.WorldPath)
+	if motd != "" {
+		motdMsg, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "motd",
+				Text: motd,
+			},
+		})
+		if err == nil {
+			s.send <- motdMsg
+		}
+	}
+
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgState,
 		Data: state,

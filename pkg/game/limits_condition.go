@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"math/rand"
 )
 
@@ -238,6 +239,22 @@ func (w *World) PointUpdate() {
 // clearMemory clears a mob's memory — from handler.c
 func clearMemory(m *MobInstance) {
 	m.Memory = nil
+}
+
+// ShowMOTD reads and returns the MOTD file content.
+// Source: comm.c nanny() CON_MOTD reads lib/text/motd
+func ShowMOTD(worldPath string) string {
+	paths := []string{
+		worldPath + "/text/motd",
+		worldPath + "/motd",
+	}
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err == nil {
+			return string(data)
+		}
+	}
+	return ""
 }
 
 // decayObjectsInRoom decays objects in the given room.
