@@ -57,7 +57,13 @@ func (s *Session) sendWelcome(token string) {
 }
 
 // sendError sends an error message to the player.
+// Safe to call after session takeover — uses recover to handle closed channel.
 func (s *Session) sendError(text string) {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Debug("sendError: channel closed (session takeover)", "player", s.playerName)
+		}
+	}()
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgError,
 		Data: ErrorData{Message: text},
@@ -66,10 +72,7 @@ func (s *Session) sendError(text string) {
 		slog.Error("json.Marshal error", "error", err)
 		return
 	}
-	select {
-	case s.send <- msg:
-	default:
-	}
+	s.send <- msg
 }
 
 func (s *Session) SendMessage(message string) error {

@@ -54,3 +54,4 @@ src/*.o
 src/*.Po
 __pycache__/
 maps/world_data.json
+data/players/

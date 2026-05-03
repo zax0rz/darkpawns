@@ -305,6 +305,15 @@ func (m *Manager) Register(playerName string, s *Session) error {
 			// send buffer full; skip notification rather than block
 		}
 		oldSess.sendOnce.Do(func() { close(oldSess.send) })
+
+		// Remove the old player from the world so AddPlayer succeeds
+		// for the new session. The old session's Unregister (triggered by
+		// send channel close) will be a no-op since we've already replaced
+		// the session map entry.
+		if oldSess.player != nil {
+			m.world.RemovePlayer(playerName)
+		}
+
 		slog.Info("session takeover", "player", playerName)
 	}
 
