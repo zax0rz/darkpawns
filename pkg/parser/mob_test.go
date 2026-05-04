@@ -10,7 +10,7 @@ func TestParseMobFile_SingleBasic(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nkeyword~\nA small test mob~\nA small test mob stands here.\nThis is a detailed description.\n~\n0 0 -100 7\n1 20 0 5d10+20 1d4+2\n100 500\n8 3 0\nE\n"
+	content := "#100\nkeyword~\nA small test mob~\nA small test mob stands here.\nThis is a detailed description.\n~\n0 0 -100 7 E\n1 20 0 5 10 20 1 4 2\n100 500\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -35,8 +35,8 @@ func TestParseMobFile_SingleBasic(t *testing.T) {
 	if m.LongDesc != "A small test mob stands here." {
 		t.Errorf("expected long desc 'A small test mob stands here.', got %q", m.LongDesc)
 	}
-	if m.DetailedDesc != "This is a detailed description." {
-		t.Errorf("expected detailed desc 'This is a detailed description.', got %q", m.DetailedDesc)
+	if m.DetailedDesc != "This is a detailed description.\n" {
+		t.Errorf("expected detailed desc 'This is a detailed description.\\n', got %q", m.DetailedDesc)
 	}
 	if m.Alignment != -100 {
 		t.Errorf("expected alignment -100, got %d", m.Alignment)
@@ -92,7 +92,7 @@ func TestParseMobFile_ShortDescArticleLowercasing(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		content := "#100\nkeyword~\n" + tc.input + "\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
+		content := "#100\nkeyword~\n" + tc.input + "\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 		if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 			t.Fatalf("write test file: %v", err)
 		}
@@ -114,7 +114,7 @@ func TestParseMobFile_Defaults(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "test.mob")
 
 	// Minimal mob with no race specified (only 3 fields in flags line)
-	content := "#100\nkeyword~\nA mob~\nA mob stands here.\n~\n0 0 0\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
+	content := "#100\nkeyword~\nA mob~\nA mob stands here.\n~\n0 0 0 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -156,7 +156,7 @@ func TestParseMobFile_TwoMobsLineBufferUnread(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob1~\nMob One~\nMob one stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n#200\nmob2~\nMob Two~\nMob two stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
+	content := "#100\nmob1~\nMob One~\nMob one stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n#200\nmob2~\nMob Two~\nMob two stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestParseMobFile_ThreeMobs(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob1~\nMob One~\nOne.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n#200\nmob2~\nMob Two~\nTwo.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n#300\nmob3~\nMob Three~\nThree.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
+	content := "#100\nmob1~\nMob One~\nOne.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n#200\nmob2~\nMob Two~\nTwo.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n#300\nmob3~\nMob Three~\nThree.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -205,7 +205,7 @@ func TestParseMobFile_VNumZero(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#0\nmob0~\nMob Zero~\nZero stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
+	content := "#0\nmob0~\nMob Zero~\nZero stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -225,7 +225,7 @@ func TestParseMobFile_VNum99999Sentinel(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob1~\nMob One~\nOne.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n#99999\n"
+	content := "#100\nmob1~\nMob One~\nOne.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n#99999\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -245,7 +245,7 @@ func TestParseMobFile_HighVNum(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#32767\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
+	content := "#32767\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -326,7 +326,7 @@ func TestParseMobFile_EspecBareHandAttack(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\nBareHandAttack: 5\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nBareHandAttack: 5\nE\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -346,7 +346,7 @@ func TestParseMobFile_EspecAllStats(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\nStr: 18\nInt: 16\nWis: 14\nDex: 12\nCon: 17\nCha: 10\nStrAdd: 50\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nStr: 18\nInt: 16\nWis: 14\nDex: 12\nCon: 17\nCha: 10\nStrAdd: 50\nE\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -382,7 +382,7 @@ func TestParseMobFile_EspecRace(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\nRace: 3\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nRace: 3\nE\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -402,7 +402,7 @@ func TestParseMobFile_EspecNoise(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\nNoise: The mob growls.~\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nNoise: The mob growls.~\nE\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -419,7 +419,7 @@ func TestParseMobFile_EspecNoiseInline(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\nNoise: bark bark\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nNoise: bark bark\nE\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -436,7 +436,7 @@ func TestParseMobFile_EspecScript(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\nScript: myscript.lua 5\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nScript: myscript.lua 5\nE\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -456,7 +456,7 @@ func TestParseMobFile_StatClampingLow(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\nStr: 1\nInt: 2\nWis: -5\nDex: 0\nCon: -10\nCha: -99\nStrAdd: -5\nBareHandAttack: -1\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nStr: 1\nInt: 2\nWis: -5\nDex: 0\nCon: -10\nCha: -99\nStrAdd: -5\nBareHandAttack: -1\nE\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -495,7 +495,7 @@ func TestParseMobFile_StatClampingHigh(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\nStr: 30\nInt: 99\nWis: 100\nDex: 250\nCon: 500\nCha: 999\nStrAdd: 150\nBareHandAttack: 200\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nStr: 30\nInt: 99\nWis: 100\nDex: 250\nCon: 500\nCha: 999\nStrAdd: 150\nBareHandAttack: 200\nE\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -534,7 +534,7 @@ func TestParseMobFile_SimpleFlag(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nS\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 S\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -551,7 +551,7 @@ func TestParseMobFile_MultiLineDesc(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\nLine two of desc.\nLine three.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\nLine two of desc.\nLine three.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -559,7 +559,7 @@ func TestParseMobFile_MultiLineDesc(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
 	}
-	expected := "Line two of desc.\nLine three."
+	expected := "Line two of desc.\nLine three.\n"
 	if mobs[0].DetailedDesc != expected {
 		t.Errorf("expected detailed desc %q, got %q", expected, mobs[0].DetailedDesc)
 	}
@@ -569,7 +569,7 @@ func TestParseMobFile_ACMultipliedByTen(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 -5 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
+	content := "#100\nmob~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 -5 1 1 0 1 1 0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -584,8 +584,8 @@ func TestParseMobFile_ACMultipliedByTen(t *testing.T) {
 
 func TestParseAllMobFiles(t *testing.T) {
 	tmpDir := t.TempDir()
-	content1 := "#100\nmob1~\nMob one~\nMob one stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
-	content2 := "#200\nmob2~\nMob two~\nMob two stands here.\n~\n0 0 0 7\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\nE\n"
+	content1 := "#100\nmob1~\nMob one~\nMob one stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
+	content2 := "#200\nmob2~\nMob two~\nMob two stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	_ = os.WriteFile(filepath.Join(tmpDir, "a.mob"), []byte(content1), 0644)
 	_ = os.WriteFile(filepath.Join(tmpDir, "b.mob"), []byte(content2), 0644)
 

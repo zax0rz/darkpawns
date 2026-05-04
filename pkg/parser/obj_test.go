@@ -321,8 +321,8 @@ $
 	if ed.Keywords != "cover title" {
 		t.Errorf("extra desc keywords: expected 'cover title', got %q", ed.Keywords)
 	}
-	if ed.Description != "The title reads \"Ancient Secrets\"." {
-		t.Errorf("extra desc description: expected 'The title reads \"Ancient Secrets\".', got %q", ed.Description)
+	if ed.Description != "The title reads \"Ancient Secrets\".\n" {
+		t.Errorf("extra desc description: expected 'The title reads \"Ancient Secrets\".\n', got %q", ed.Description)
 	}
 }
 
@@ -490,11 +490,14 @@ $
 	if err != nil {
 		t.Fatalf("parse obj file: %v", err)
 	}
-	if len(objs) != 1 {
-		t.Fatalf("expected 1 object (stopped at $), got %d", len(objs))
+	if len(objs) != 2 {
+		t.Fatalf("expected 2 objects ($ is block delimiter, not EOF), got %d", len(objs))
 	}
 	if objs[0].VNum != 600 {
-		t.Errorf("vnum: expected 600, got %d", objs[0].VNum)
+		t.Errorf("first vnum: expected 600, got %d", objs[0].VNum)
+	}
+	if objs[1].VNum != 700 {
+		t.Errorf("second vnum: expected 700, got %d", objs[1].VNum)
 	}
 }
 
