@@ -323,6 +323,14 @@ func (w *World) doDisembowel(ch *Player, me *MobInstance, cmd string, arg string
 				}
 			}
 		}
+		// Check mobs too
+		if vict == nil && len(args) >= 1 {
+			for _, m := range w.GetMobsInRoom(ch.RoomVNum) {
+				if strings.Contains(strings.ToLower(m.GetName()), strings.ToLower(args[0])) {
+					return w.doDisembowelMob(ch, m)
+				}
+			}
+		}
 		if vict == nil {
 			ch.SendMessage("Disembowel who?\r\n")
 			return true
@@ -354,6 +362,39 @@ func (w *World) doDisembowel(ch *Player, me *MobInstance, cmd string, arg string
 		w.doDamage(ch, vict, 0, SkillDisembowel)
 	} else {
 		w.hitSkill(ch, vict, SkillDisembowel)
+	}
+	return true
+}
+
+// doDisembowelMob handles disembowel against a mob target.
+func (w *World) doDisembowelMob(ch *Player, m *MobInstance) bool {
+	wielded := w.GetEquipped(ch, eqWearWield)
+	if wielded == nil {
+		ch.SendMessage("You need to wield a weapon to make it a success.\r\n")
+		return true
+	}
+	if !isPiercingWeapon(wielded) {
+		ch.SendMessage("Only piercing weapons can be used for disemboweling.\r\n")
+		return true
+	}
+	if isMounted(ch) {
+		ch.SendMessage("Dismount first!\r\n")
+		return true
+	}
+
+	percent := randRange(1, 101)
+	prob := ch.GetSkill(SkillDisembowel)
+	if m.GetPosition() >= combat.PosSleeping && percent > prob {
+		ch.SendMessage(fmt.Sprintf("You try to disembowel %s, but miss!\r\n", m.GetName()))
+	} else {
+		dam := (ch.Level * 2) + ch.GetDamroll()
+		m.TakeDamage(dam)
+		ch.SendMessage(fmt.Sprintf("You drive your blade deep into %s's gut!\r\n", m.GetName()))
+		w.roomMessageExcludeTwo(ch.RoomVNum,
+			fmt.Sprintf("%s disembowels %s in a shower of gore!", ch.GetName(), m.GetName()),
+			ch.Name, m.GetName())
+		w.startCombatBetween(ch, nil)
+		ch.SetFighting(m.GetName())
 	}
 	return true
 }

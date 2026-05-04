@@ -153,7 +153,7 @@ const (
 
 const (
 	TYPE_UNDEFINED = 0
-	TYPE_HIT       = 2000
+	TYPE_HIT       = 300
 	TYPE_BLUDGEON  = TYPE_HIT + 5
 	TYPE_POUND     = TYPE_HIT + 7
 	TYPE_PUNCH     = TYPE_HIT + 13
@@ -167,7 +167,7 @@ const (
 	TYPE_STAB      = TYPE_HIT + 14
 	TYPE_WHIP      = TYPE_HIT + 2
 	TYPE_BLAST     = TYPE_HIT + 12
-	TYPE_SUFFERING = 3000
+	TYPE_SUFFERING = 399
 )
 
 const (
@@ -222,8 +222,11 @@ func Appear(ch Combatant) {
 // 2. updatePos()
 // **********************************
 
-func GetPositionFromHP(hp int) int {
+func GetPositionFromHP(hp, currentPos int) int {
 	if hp > 0 {
+		if currentPos > PosStunned {
+			return currentPos
+		}
 		return PosStanding
 	}
 	if hp <= -11 {
@@ -449,7 +452,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 	}
 
-	newPos := GetPositionFromHP(victim.GetHP())
+	newPos := GetPositionFromHP(victim.GetHP(), victim.GetPosition())
 
 	if newPos <= PosStunned {
 		if ch.IsNPC() && !victim.IsNPC() && victim.GetLevel() <= 5 {
@@ -752,7 +755,7 @@ func replaceMessageTokens(msg, chName, victimName, singular, plural string, sex 
 // 6. makeHit()
 // **********************************
 
-func MakeHit(ch, victim Combatant) {
+func MakeHit(ch, victim Combatant, attackType int) {
 	chName := ch.GetName()
 	victimName := victim.GetName()
 
@@ -770,27 +773,17 @@ func MakeHit(ch, victim Combatant) {
 		calcThaco -= strApp[strIdx].ToHit
 	}
 
-	wType := TYPE_HIT
 	wieldDamNum, wieldDamSize := 0, 0
 	isBlessed := false
 
 	if GetWeaponInfo != nil {
-		wType, wieldDamNum, wieldDamSize, isBlessed = GetWeaponInfo(chName)
+		_, wieldDamNum, wieldDamSize, isBlessed = GetWeaponInfo(chName)
 	} else if !ch.IsNPC() {
 		dr := ch.GetDamageRoll()
 		wieldDamNum, wieldDamSize = dr.Num, dr.Sides
 	} else if GetNPCData != nil {
-		npcAttackType, npcDamDice, npcDamSize := GetNPCData(chName)
+		_, npcDamDice, npcDamSize := GetNPCData(chName)
 		wieldDamNum, wieldDamSize = npcDamDice, npcDamSize
-		if npcAttackType != 0 {
-			wType = TYPE_HIT + npcAttackType
-		} else if HasAffectStr != nil && HasAffectStr(chName, AFF_STR_FLESH_ALT) {
-			// flesh_altered_type (new_cmds.c:1783): unarmed NPCs with
-			// AFF_FLESH_ALTER get a damage type override based on level.
-			wType = TYPE_HIT + fleshAlteredType(ch.GetLevel())
-		}
-	} else if HasAffectStr != nil && HasAffectStr(chName, AFF_STR_FLESH_ALT) {
-		wType = TYPE_HIT + fleshAlteredType(ch.GetLevel())
 	}
 
 	if isBlessed {
@@ -874,20 +867,40 @@ func MakeHit(ch, victim Combatant) {
 			dam = 1
 		}
 
-		dam = getMinusDam(dam, victim.GetAC())
+		// Backstab / Circle / Disembowel multipliers — from C fight.c hit()
+		if attackType == SKILL_BACKSTAB {
+			dam = int(float64(dam) * backstabMult(ch.GetLevel()))
+		} else if attackType == SKILL_CIRCLE {
+			dam = int(float64(dam) * backstabMult(ch.GetLevel()) / 3.0)
+		} else if attackType == SKILL_DISEMBOWEL {
+			dam = ch.GetLevel()*2 + ch.GetDamroll()
+		} else {
+			dam = getMinusDam(dam, victim.GetAC())
+		}
 
 		if ch.GetStr() == 0 {
 			dam = 1
 		}
-		TakeDamage(ch, victim, dam, wType)
+		TakeDamage(ch, victim, dam, attackType)
 	} else {
-		TakeDamage(ch, victim, 0, wType)
+		TakeDamage(ch, victim, 0, attackType)
 	}
 
 	if ch.IsNPC() && ch.GetPosition() > PosStunned && HasScriptFlag != nil &&
 		HasScriptFlag(chName, "MS_FIGHTING") && RunFightScript != nil {
 		RunFightScript(chName, victimName, ch.GetRoom())
 	}
+}
+
+// backstabMult mirrors backstab_mult() from C class.c lines 720-729.
+func backstabMult(level int) float64 {
+	if level <= 0 {
+		return 1.0
+	}
+	if level >= LVL_IMMORT {
+		return 20.0
+	}
+	return float64(level)*0.2 + 1.0
 }
 
 // **********************************

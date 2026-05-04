@@ -11,6 +11,39 @@ import (
 	"unicode"
 )
 
+// lineBuffer wraps a bufio.Scanner to allow one-line "unread" for the mob parser.
+// Needed because parseMob reads until it sees the next #VNUM line, then must
+// return that line to the caller rather than consuming it.
+type lineBuffer struct {
+	scanner  *bufio.Scanner
+	buffered string
+	has      bool
+}
+
+func (lb *lineBuffer) Scan() bool {
+	if lb.has {
+		lb.has = false
+		return true
+	}
+	return lb.scanner.Scan()
+}
+
+func (lb *lineBuffer) Text() string {
+	if lb.has {
+		return lb.buffered
+	}
+	return lb.scanner.Text()
+}
+
+func (lb *lineBuffer) Unread(line string) {
+	lb.buffered = line
+	lb.has = true
+}
+
+func (lb *lineBuffer) Err() error {
+	return lb.scanner.Err()
+}
+
 // Mob represents a parsed mobile from a .mob file.
 type Mob struct {
 	VNum           int
@@ -71,10 +104,10 @@ func ParseMobFile(path string) ([]Mob, error) {
 	defer func() { _ = file.Close() }()
 
 	var mobs []Mob
-	scanner := bufio.NewScanner(file)
+	lb := &lineBuffer{scanner: bufio.NewScanner(file)}
 
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	for lb.Scan() {
+		line := strings.TrimSpace(lb.Text())
 
 		if line == "" || strings.HasPrefix(line, "*") {
 			continue
@@ -93,35 +126,40 @@ func ParseMobFile(path string) ([]Mob, error) {
 				return nil, fmt.Errorf("invalid mob vnum: %s", line)
 			}
 
-			mob, err := parseMob(scanner, vnum)
+			mob, nextLine, err := parseMob(lb, vnum)
 			if err != nil {
 				return nil, fmt.Errorf("parse mob %d: %w", vnum, err)
 			}
 			mobs = append(mobs, mob)
+
+			if nextLine != "" {
+				lb.Unread(nextLine)
+			}
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
+	if err := lb.Err(); err != nil {
 		return nil, fmt.Errorf("scan %s: %w", path, err)
 	}
 
 	return mobs, nil
 }
 
-func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
+func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	mob := Mob{VNum: vnum}
+	var nextLine string
 
 	// Keywords (ends with ~)
-	if !scanner.Scan() {
-		return mob, fmt.Errorf("expected mob keywords")
+	if !lb.Scan() {
+		return mob, "", fmt.Errorf("expected mob keywords")
 	}
-	mob.Keywords = strings.TrimSuffix(scanner.Text(), "~")
+	mob.Keywords = strings.TrimSuffix(lb.Text(), "~")
 
 	// Short description (ends with ~)
-	if !scanner.Scan() {
-		return mob, fmt.Errorf("expected mob short desc")
+	if !lb.Scan() {
+		return mob, "", fmt.Errorf("expected mob short desc")
 	}
-	mob.ShortDesc = strings.TrimSuffix(scanner.Text(), "~")
+	mob.ShortDesc = strings.TrimSuffix(lb.Text(), "~")
 
 	// C source (parse_mobile): auto-lowercase articles in short_desc
 	// "A", "An", "The" at start of short desc -> "a", "an", "the"
@@ -155,15 +193,15 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	}
 
 	// Long description (ends with ~)
-	if !scanner.Scan() {
-		return mob, fmt.Errorf("expected mob long desc")
+	if !lb.Scan() {
+		return mob, "", fmt.Errorf("expected mob long desc")
 	}
-	mob.LongDesc = strings.TrimSuffix(scanner.Text(), "~")
+	mob.LongDesc = strings.TrimSuffix(lb.Text(), "~")
 
 	// Detailed description (ends with ~)
 	var descLines []string
-	for scanner.Scan() {
-		line := scanner.Text()
+	for lb.Scan() {
+		line := lb.Text()
 		if strings.HasSuffix(line, "~") {
 			descLines = append(descLines, strings.TrimSuffix(line, "~"))
 			break
@@ -173,18 +211,18 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	mob.DetailedDesc = strings.Join(descLines, "\n")
 
 	// Action flags, affect flags, alignment, race (ends with E or S)
-	if !scanner.Scan() {
-		return mob, fmt.Errorf("expected mob flags line")
+	if !lb.Scan() {
+		return mob, "", fmt.Errorf("expected mob flags line")
 	}
-	flagsLine := scanner.Text()
+	flagsLine := lb.Text()
 
 	// Parse until we hit E or S (Simple flag)
 	for !strings.HasSuffix(flagsLine, " E") && !strings.HasSuffix(flagsLine, "E") &&
 		!strings.HasSuffix(flagsLine, " S") && !strings.HasSuffix(flagsLine, "S") {
-		if !scanner.Scan() {
-			return mob, fmt.Errorf("expected end of flags (E or S)")
+		if !lb.Scan() {
+			return mob, "", fmt.Errorf("expected end of flags (E or S)")
 		}
-		flagsLine = scanner.Text()
+		flagsLine = lb.Text()
 	}
 
 	// Remove trailing E or S and parse
@@ -207,10 +245,10 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	}
 
 	// Stats line: level thac0 ac hpdice damagedice
-	if !scanner.Scan() {
-		return mob, fmt.Errorf("expected mob stats line")
+	if !lb.Scan() {
+		return mob, "", fmt.Errorf("expected mob stats line")
 	}
-	stats := strings.Fields(scanner.Text())
+	stats := strings.Fields(lb.Text())
 	if len(stats) >= 9 {
 		mob.Level, _ = strconv.Atoi(stats[0])
 		mob.THAC0, _ = strconv.Atoi(stats[1])
@@ -258,20 +296,20 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 	}
 
 	// Gold and exp line
-	if !scanner.Scan() {
-		return mob, fmt.Errorf("expected mob gold/exp line")
+	if !lb.Scan() {
+		return mob, "", fmt.Errorf("expected mob gold/exp line")
 	}
-	goldExp := strings.Fields(scanner.Text())
+	goldExp := strings.Fields(lb.Text())
 	if len(goldExp) >= 2 {
 		mob.Gold, _ = strconv.Atoi(goldExp[0])
 		mob.Exp, _ = strconv.Atoi(goldExp[1])
 	}
 
 	// Position, default position, sex line
-	if !scanner.Scan() {
-		return mob, fmt.Errorf("expected mob position line")
+	if !lb.Scan() {
+		return mob, "", fmt.Errorf("expected mob position line")
 	}
-	pos := strings.Fields(scanner.Text())
+	pos := strings.Fields(lb.Text())
 	if len(pos) >= 3 {
 		mob.Position, _ = strconv.Atoi(pos[0])
 		mob.DefaultPos, _ = strconv.Atoi(pos[1])
@@ -284,10 +322,11 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 
 	// Parse optional fields (E-specs: Race, Noise, Script, BareHandAttack, etc.)
 	// C source: interpret_espec() handles these E-spec keywords
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	for lb.Scan() {
+		line := strings.TrimSpace(lb.Text())
 
 		if line == "E" || strings.HasPrefix(line, "$") || strings.HasPrefix(line, "#") {
+			nextLine = line
 			break
 		}
 
@@ -418,8 +457,8 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 			if strings.HasSuffix(noise, "~") {
 				mob.Noise = strings.TrimSuffix(noise, "~")
 			} else if noise == "" {
-				if scanner.Scan() {
-					mob.Noise = strings.TrimSuffix(scanner.Text(), "~")
+				if lb.Scan() {
+					mob.Noise = strings.TrimSuffix(lb.Text(), "~")
 				}
 			} else {
 				mob.Noise = noise
@@ -439,7 +478,7 @@ func parseMob(scanner *bufio.Scanner, vnum int) (Mob, error) {
 		}
 	}
 
-	return mob, nil
+	return mob, nextLine, nil
 }
 
 // ParseAllMobFiles parses all .mob files in a directory.

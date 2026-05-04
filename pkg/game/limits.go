@@ -18,9 +18,9 @@ const (
 
 // Level/immortal constants — from structs.h LVL_*
 const (
-	LVL_IMMORT = 50
-	LVL_IMPL   = 54
-	LVL_GOD    = 50
+	LVL_IMMORT = 31
+	LVL_IMPL   = 40
+	LVL_GOD    = 34
 
 	// Idle time limits — from limits.c
 	IDLE_TO_VOID     = 20 // cycles before being pulled into void

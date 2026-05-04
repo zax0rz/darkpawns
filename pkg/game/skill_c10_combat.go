@@ -30,8 +30,7 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 			MessageToRoom: ActMessage("$n tries to disembowel $N, but fails!", chPronouns, &victPronouns, ""),
 		}
 	}
-	weaponNum, weaponSides := ch.Equipment.GetWeaponDamage()
-	dam := combat.RollDice(weaponNum, weaponSides)
+	dam := ch.Level*2 + ch.GetDamroll()
 	improveSkill(ch, SkillDisembowel)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 2,

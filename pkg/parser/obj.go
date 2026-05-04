@@ -50,38 +50,7 @@ type ExtraDesc struct {
 	Description string
 }
 
-// lineBuffer wraps a bufio.Scanner to allow one-line "unread" for the obj parser.
-// Needed because parseObj reads until it sees the next #VNUM line, then must
-// return that line to the caller rather than consuming it.
-type lineBuffer struct {
-	scanner  *bufio.Scanner
-	buffered string
-	has      bool
-}
-
-func (lb *lineBuffer) Scan() bool {
-	if lb.has {
-		lb.has = false
-		return true
-	}
-	return lb.scanner.Scan()
-}
-
-func (lb *lineBuffer) Text() string {
-	if lb.has {
-		return lb.buffered
-	}
-	return lb.scanner.Text()
-}
-
-func (lb *lineBuffer) Unread(line string) {
-	lb.buffered = line
-	lb.has = true
-}
-
-func (lb *lineBuffer) Err() error {
-	return lb.scanner.Err()
-}
+// lineBuffer is defined in linebuffer.go (shared between obj and mob parsers).
 
 // ParseObjFile parses a single .obj file and returns all objects.
 func ParseObjFile(path string) ([]Obj, error) {
@@ -106,8 +75,12 @@ func ParseObjFile(path string) ([]Obj, error) {
 
 		if strings.HasPrefix(line, "#") {
 			vnum, err := strconv.Atoi(line[1:])
-			if err != nil || vnum == 0 || vnum == 99999 {
-				// #0, #99999, or parse error = end of file sentinel
+			if err != nil {
+				// Non-numeric vnum — skip
+				continue
+			}
+			if vnum == 99999 {
+				// End-of-file sentinel
 				break
 			}
 

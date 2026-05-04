@@ -93,8 +93,8 @@ var movementLoss = []int{
 	7, // MOUNTAIN (5)
 	5, // WATER_SWIM (6)
 	6, // WATER_NOSWIM (7)
-	2, // FLYING — this is index 8 in C, but C has UNDERWATER=8 and FLYING=9
-	6, // UNDERWATER (index 8 in C structs.h)
+	6, // UNDERWATER (sector 8)
+	2, // FLYING (sector 9)
 	8, // DESERT
 	6, // FIRE
 	6, // EARTH

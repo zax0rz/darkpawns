@@ -144,15 +144,12 @@ func (w *World) ValidateCrossReferences() {
 						"zone", z.Number, "cmd_index", i, "command", "G", "obj_vnum", cmd.Arg1)
 				}
 			case "E":
-				// 'E' <obj_vnum> <equip_position> <room_vnum>
+				// 'E' <if_flag> <obj_vnum> <max_in_world> <equip_position>
 				if !objVnums[cmd.Arg1] {
 					slog.Warn("zone command references non-existent object",
 						"zone", z.Number, "cmd_index", i, "command", "E", "obj_vnum", cmd.Arg1)
 				}
-				if cmd.Arg3 > 0 && !roomVnums[cmd.Arg3] {
-					slog.Warn("zone command references non-existent room",
-						"zone", z.Number, "cmd_index", i, "command", "E", "room_vnum", cmd.Arg3)
-				}
+				// Arg3 is equip position (0-17), not a room vnum — no room check
 			case "P":
 				// 'P' <obj_vnum> <max_in_world> <container_vnum>
 				if !objVnums[cmd.Arg1] {
@@ -164,15 +161,12 @@ func (w *World) ValidateCrossReferences() {
 						"zone", z.Number, "cmd_index", i, "command", "P", "container_vnum", cmd.Arg3)
 				}
 			case "D":
-				// 'D' <room_vnum> <door_state> <key_vnum>
+				// 'D' <if_flag> <room_vnum> <direction> <door_state>
 				if !roomVnums[cmd.Arg1] {
 					slog.Warn("zone command references non-existent room",
 						"zone", z.Number, "cmd_index", i, "command", "D", "room_vnum", cmd.Arg1)
 				}
-				if cmd.Arg3 > 0 && !objVnums[cmd.Arg3] {
-					slog.Warn("zone command references non-existent key object",
-						"zone", z.Number, "cmd_index", i, "command", "D", "key_vnum", cmd.Arg3)
-				}
+				// Arg3 is door state (0=open,1=closed,2=locked), not a key vnum — no key check
 			case "L":
 				// 'L' <room_vnum> <door_state> <key_vnum> (like 'D')
 				if !roomVnums[cmd.Arg1] {

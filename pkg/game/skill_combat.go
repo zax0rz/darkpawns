@@ -49,9 +49,12 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// Hit — calculate damage
 	// Source: fight.c + backstab_mult() from class.c
+	// C: dam = str_app[...].todam + GET_DAMROLL(ch) + weapon_dice
+	//     dam *= backstab_mult(GET_LEVEL(ch))
 	weaponDam := combat.RollDice(weaponNum, weaponSides)
+	dam := weaponDam + ch.GetDamroll()
 	mult := backstabMult(ch.Level)
-	dam := int(float64(weaponDam) * mult)
+	dam = int(float64(dam) * mult)
 
 	improveSkill(ch, SkillBackstab)
 

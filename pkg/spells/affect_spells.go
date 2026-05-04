@@ -1276,7 +1276,7 @@ func castWordOfRecall(level int, ch, cvict, world interface{}) {
 	var destRoom int
 	if ht, ok := cvict.(hometowner); ok {
 		switch ht.GetHometown() {
-		case 2:
+		case 1:
 			destRoom = KiroshiStartRoom
 		case 3:
 			destRoom = AlaozarStartRoom

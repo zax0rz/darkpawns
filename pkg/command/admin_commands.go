@@ -690,7 +690,7 @@ func (ac *AdminCommands) cmdSpamConfig(s common.CommandSession, args []string) e
 // ---------------------------------------------------------------------------
 
 // lvlGod mirrors game.LVL_GOD to avoid a circular import.
-const lvlGod = 50
+const lvlGod = 34
 
 // isAdmin checks if a player is an admin.
 // Primary gate: player level >= LVL_GOD (50). Name list is bootstrap-only.

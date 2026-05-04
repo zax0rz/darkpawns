@@ -205,7 +205,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		SELECT id, name, COALESCE(password_hash,''), room_vnum, level, exp,
 		       health, max_health, mana, max_mana, move, max_move, strength,
 		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
-		       hunger, thirst, drunk,
+		       hunger, thirst, drunk, hometown,
 		       inventory, equipment
 		FROM players WHERE name = $1
 	`
@@ -214,7 +214,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		&p.ID, &p.Name, &p.Password, &p.RoomVNum, &p.Level, &p.Exp,
 		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana, &p.Move, &p.MaxMove, &p.Strength,
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
-		&p.Hunger, &p.Thirst, &p.Drunk,
+		&p.Hunger, &p.Thirst, &p.Drunk, &p.Hometown,
 		&p.Inventory, &p.Equipment,
 	)
 	if err == sql.ErrNoRows {
@@ -232,15 +232,15 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		INSERT INTO players
 		  (name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
 		   class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
-		   hunger, thirst, drunk,
+		   hunger, thirst, drunk, hometown,
 		   inventory, equipment)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
 		RETURNING id
 	`
 	return db.conn.QueryRow(query,
 		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
-		p.Hunger, p.Thirst, p.Drunk,
+		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
 		p.Inventory, p.Equipment,
 	).Scan(&p.ID)
 }
@@ -265,16 +265,16 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		  mana=$6, max_mana=$7, move=$8, max_move=$9, strength=$10,
 		  class=$11, race=$12,
 		  stat_str=$13, stat_str_add=$14, stat_int=$15, stat_wis=$16, stat_dex=$17, stat_con=$18, stat_cha=$19,
-		  hunger=$20, thirst=$21, drunk=$22,
-		  inventory=$23, equipment=$24, updated_at=CURRENT_TIMESTAMP
-		WHERE id=$25
+		  hunger=$20, thirst=$21, drunk=$22, hometown=$23,
+		  inventory=$24, equipment=$25, updated_at=CURRENT_TIMESTAMP
+		WHERE id=$26
 	`
 	_, err := db.conn.Exec(query,
 		p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth,
 		p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race,
 		p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
-		p.Hunger, p.Thirst, p.Drunk,
+		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
 		p.Inventory, p.Equipment, p.ID,
 	)
 	return err

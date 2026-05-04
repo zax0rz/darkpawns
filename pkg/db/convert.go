@@ -43,6 +43,7 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 		Hunger:     p.Hunger,
 		Thirst:     p.Thirst,
 		Drunk:      p.Drunk,
+		Hometown:   p.Hometown,
 		Inventory:  invBytes,
 		Equipment:  eqBytes,
 	}, nil
@@ -74,6 +75,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	p.Hunger = r.Hunger
 	p.Thirst = r.Thirst
 	p.Drunk = r.Drunk
+	p.Hometown = r.Hometown
 	p.SetRoom(r.RoomVNum)
 	p.ID = r.ID
 
