@@ -3,8 +3,8 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"math/rand"
+	"os"
 )
 
 func GainCondition(p *Player, condition int, value int) {
@@ -145,7 +145,6 @@ func (w *World) PointUpdate() {
 			maxMove := p.MaxMove
 			poisoned := p.Affects&(1<<AffPoison) != 0
 			cutthroat := p.Affects&(1<<AffCutthroat) != 0
-			curPos := p.Position
 			p.mu.RUnlock()
 
 			// HP regen
@@ -192,19 +191,32 @@ func (w *World) PointUpdate() {
 				p.TakeDamage(13)
 			}
 
+			// Check for death after poison/cutthroat damage.
+			// C source: limits.c does if (GET_HP(ch) <= 0) die(ch)
+			if p.GetHP() <= 0 {
+				w.HandleNonCombatDeath(p)
+				continue
+			}
+
 			// Update position if HP has dropped low — limits.c:507-508
-			if curPos <= PosStunned {
-				p.mu.RLock()
-				hp := p.Health
-				p.mu.RUnlock()
-				updatePosFromHP(p, hp)
+			// Read current HP after damage (not the stale pre-regen value)
+			if p.GetPosition() <= PosStunned {
+				updatePosFromHP(p, p.GetHP())
 			}
 		} else if pos == PosIncap {
 			// Incapacitated: 1 damage per tick — limits.c:511
 			p.TakeDamage(1)
+			if p.GetHP() <= 0 {
+				w.HandleNonCombatDeath(p)
+				continue
+			}
 		} else if pos == PosMortally {
 			// Mortally wounded: 2 damage per tick — limits.c:513
 			p.TakeDamage(2)
+			if p.GetHP() <= 0 {
+				w.HandleNonCombatDeath(p)
+				continue
+			}
 		}
 
 		// Memory clearing for NPCs — limits.c:516-518
@@ -236,16 +248,29 @@ func (w *World) PointUpdate() {
 			if m.Affects&(1<<AffCutthroat) != 0 {
 				m.TakeDamage(13)
 			}
+			// Check for death after poison/cutthroat damage.
+			if m.CurrentHP <= 0 {
+				w.handleMobDeath(m, nil, -1)
+				continue
+			}
 		} else if pos == PosIncap {
 			m.TakeDamage(1)
+			if m.CurrentHP <= 0 {
+				w.handleMobDeath(m, nil, -1)
+				continue
+			}
 		} else if pos == PosMortally {
 			m.TakeDamage(2)
+			if m.CurrentHP <= 0 {
+				w.handleMobDeath(m, nil, -1)
+				continue
+			}
 		}
 
 		// Memory clearing — limits.c:516-518
 		// 1 in 99 chance of clearing mob memory
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if m.Memory != nil && rand.Intn(99) == 0 {
 			clearMemory(m)
 		}
@@ -312,7 +337,7 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 					"The earth opens up and swallows %s.\r\n",
 				}
 				// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+				// #nosec G404
 				msg := fmt.Sprintf(msgs[rand.Intn(len(msgs))], obj.GetShortDesc())
 				w.SendToRoom(roomVNum, msg)
 				w.ExtractObject(obj, roomVNum)
