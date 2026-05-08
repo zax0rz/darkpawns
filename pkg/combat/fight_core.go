@@ -1,4 +1,5 @@
 // Package combat — fight_core.go
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // Port of src/fight.c from the Dark Pawns C codebase.
 package combat
 

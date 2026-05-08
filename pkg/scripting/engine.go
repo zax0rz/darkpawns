@@ -1,4 +1,5 @@
 // Package scripting provides Lua scripting support for Dark Pawns MUD.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // Based on original C code from scripts.c.
 package scripting
 

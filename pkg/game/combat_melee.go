@@ -1,4 +1,4 @@
-//nolint:unused // Game logic port — not yet wired to command registry.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 // combat_melee.go — melee combat actions: bash, rescue, kick, dragon_kick, tiger_punch

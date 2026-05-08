@@ -3,6 +3,7 @@
 //
 // Mobile program triggers: greeting, bribery, sound, rescue, and town-citizen
 // helpers for NPC behavior.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 
 package game
 

@@ -1,4 +1,4 @@
-//nolint:unused // Game logic port — not yet wired to command registry.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 // combat_control.go — combat control: order, flee

@@ -2,6 +2,7 @@
 //
 // Communication commands: say, race-say, group-say, tell, reply, shout,
 // whisper, ask, write, page, gossip, chat, auction, gratz, newbie, think,
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // clan-tell, and language translation functions.
 package game
 

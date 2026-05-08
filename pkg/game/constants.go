@@ -1,6 +1,7 @@
 //nolint:unused // Game logic port — not yet wired to command registry.
 // Ported from src/constants.c
 // Data tables: name arrays, stat tables, string constants
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 
 package game
 

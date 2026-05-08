@@ -1,4 +1,4 @@
-//nolint:unused // Combat system port — helpers not yet wired.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 // combat_advanced.go — advanced combat: retreat, subdue, sleeper, neckbreak, ambush, startCombatBetween

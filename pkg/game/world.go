@@ -1,3 +1,4 @@
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // Package game manages the game world state and player interactions.
 package game
 

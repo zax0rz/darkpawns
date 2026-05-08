@@ -3,6 +3,7 @@
 //
 // MUD mail system: store, read, and delete mail messages for players.
 // Postmaster NPC spec_proc handled elsewhere.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 
 package game
 

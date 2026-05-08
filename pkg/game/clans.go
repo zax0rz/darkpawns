@@ -1,5 +1,5 @@
 // Package game — clan system, ported from src/clan.c
-//nolint:unused // Clan system port — helpers not yet wired.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (

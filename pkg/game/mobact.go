@@ -4,6 +4,7 @@
 // Mobile AI: generates intelligent (?) behavior in mobiles.
 //
 // All rights reserved. See LICENSE for license information.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 
 package game
 

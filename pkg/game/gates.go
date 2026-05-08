@@ -3,6 +3,7 @@
 //
 // Moongate system: blue gates that appear at night based on moon phase,
 // permanent blue gates, red portal spell gate, and moon gate spec_proc.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 
 package game
 

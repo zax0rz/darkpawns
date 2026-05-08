@@ -5,6 +5,7 @@
 //
 // The infobar is a VT100-based stat display drawn at the bottom of the
 // terminal, showing hit points, mana, move, experience, level, and gold.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // It uses VT100 scroll-region margins and cursor save/restore sequences.
 package session
 

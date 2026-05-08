@@ -1,4 +1,4 @@
-//nolint:unused // Combat helpers — not yet wired.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 // combat_helpers.go — helper functions for combat
