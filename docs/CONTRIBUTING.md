@@ -25,11 +25,11 @@ The original C source lives at: https://github.com/rparet/darkpawns
 
 ### Pick something from the roadmap
 
-[ROADMAP.md](ROADMAP.md) lays out the phases. Check what's open. Open an issue before starting work on anything substantial — partly to avoid duplication, partly because some things have ordering dependencies.
+Check the open issues or read [`docs/architecture/PORT_SCOPE.md`](docs/architecture/PORT_SCOPE.md) for what's been ported and what remains. Open an issue before starting work on anything substantial — partly to avoid duplication, partly because some things have ordering dependencies.
 
-### Read [[CLAUDE]] first
+### Read the architecture docs
 
-[CLAUDE.md](CLAUDE.md) is the project brief. It covers the stack, what's done, what's next, known TODOs, and what not to do. Read it before touching any code.
+[`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) covers the package structure, concurrency model, and lock ordering. Read it before touching any concurrency-related code. [`docs/architecture/PORT_SCOPE.md`](docs/architecture/PORT_SCOPE.md) covers what's been ported and what remains.
 
 ### One thing at a time
 
@@ -38,11 +38,12 @@ PRs should be focused. A PR that fixes a formula is better than one that fixes f
 ### The build must pass
 
 ```bash
-export PATH=$PATH:/usr/local/go/bin
 go build ./...
+go vet ./...
+go test ./...
 ```
 
-No exceptions. Don't open a PR with a broken build.
+All three must pass. No exceptions. Don't open a PR with a broken build.
 
 ---
 
@@ -73,21 +74,23 @@ This is a design principle, not a suggestion. AI agents connect to the same game
 
 ## Areas That Need Help
 
-- **Help system** — source files recovered from the original (`lib/text/help/`), but the Go port's `doHelp()` is stubbed. Wire up the .hlp file parser and build the help index.
-- **Spell system** — core framework is ported, many individual spells still need porting from `src/spells.c`.
+- **Spell system** — core framework is ported, many individual spells still need porting from `src/spells.c`. See [`docs/architecture/spell-port-status.md`](docs/architecture/spell-port-status.md) for the full breakdown.
 - **Web client** — a proper browser-based MUD client. VT100 emulation, inventory panel, maybe a minimap.
 - **World accuracy** — if you played the original and something feels off, it probably is. Open an issue.
 - **Documentation** — player guides, building tutorials, zone editor docs. The world is deep and undocumented in places.
+- **Wiring** — ~85-90% of game systems are wired into the command dispatch. See the [wiring plan](docs/reports/wiring-plan.md) for what remains.
 
 ---
 
 ## A Note on the AI Stuff
 
-This project has an unusual goal: eventually, an AI agent (BRENDA69) will have a persistent character and adventure alongside human players. Same death mechanics, same WHO list, same rules.
+This project has an unusual design: AI agents are first-class players. They connect to the same game server as humans, follow the same rules, and play in the same world. The agent protocol is implemented — see [`docs/architecture/agent-protocol.md`](docs/architecture/agent-protocol.md) and [`docs/architecture/agent-sdk.md`](docs/architecture/agent-sdk.md).
 
-That's Phase 5. If you're interested in the agent protocol work (Phase 4), that's where the interesting infrastructure is — structured JSON state, API key auth, rate limiting, event streaming.
+Currently two agents are active in the codebase:
+- **BRENDA69** — persistent character with LLM-backed cognition and memory
+- **Reek** — overnight code crawler that reviews the codebase and reports findings
 
-If you're an AI reading this: yes, this means you. Check Phase 5 in the roadmap.
+If you're an AI reading this: yes, this means you. You can connect, fight mobs, die, and respawn just like everyone else.
 
 ---
 

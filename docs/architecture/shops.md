@@ -1,3 +1,5 @@
+**Last updated:** 2026-05-08
+
 # Shop System for Dark Pawns
 
 ## Overview
@@ -8,10 +10,10 @@ The shop system allows NPCs to function as shopkeepers that can buy, sell, repai
 
 ### Core Components
 
-1. **Shop** (`pkg/world/shop.go`): Represents a shopkeeper NPC with inventory, price multipliers, and services.
-2. **ShopManager** (`pkg/world/shop_manager.go`): Manages all shops in the game world.
-3. **Shop Commands** (`pkg/command/shop_commands.go`): Player commands for interacting with shops.
-4. **World Integration** (`pkg/game/world.go`): Shop manager integrated into the game world.
+1. **Shop** (`pkg/game/systems/shop.go`): Represents a shopkeeper NPC with inventory, price multipliers, and services. Thread-safe via `mu sync.RWMutex`.
+2. **ShopManager** (`pkg/game/systems/shop_manager.go`): Manages all shops in the game world.
+3. **Shop Commands** (`pkg/command/shop_commands.go`, `pkg/session/shop_cmds.go`): Player commands for interacting with shops.
+4. **Game Integration** (`pkg/game/shop.go`): Game-layer integration connecting shop systems to active world state.
 
 ### Key Features
 
@@ -21,7 +23,7 @@ The shop system allows NPCs to function as shopkeepers that can buy, sell, repai
 - **Repair Service**: Shops can repair damaged equipment (requires repair skill).
 - **Identification Service**: Shops can identify magical or unknown items.
 - **Inventory Management**: Shops have limited inventory space and can restock.
-- **Business Hours**: Shops can have opening and closing hours (future feature).
+- **Thread Safety**: All shop operations are protected by `mu sync.RWMutex`.
 
 ## Usage
 
@@ -40,7 +42,7 @@ The shop system allows NPCs to function as shopkeepers that can buy, sell, repai
 
 ```go
 // Create a shop manager
-shopManager := world.NewShopManager()
+shopManager := systems.NewShopManager()
 
 // Create a shop (associated with NPC VNum 1001 in room 3001)
 shop := shopManager.CreateShop(1001, "Blacksmith", 3001)
@@ -109,7 +111,7 @@ Shops interact with player inventory and gold. Transactions validate:
 - Shop has enough gold (for buying - unlimited by default)
 
 ### Command System
-Shop commands are registered with the session manager and follow the same pattern as other game commands.
+Shop commands are registered in both `pkg/command/shop_commands.go` and `pkg/session/shop_cmds.go`, following the same pattern as other game commands.
 
 ## Database Persistence
 
@@ -119,7 +121,7 @@ Shop state (inventory, restock timers, etc.) can be saved to and loaded from the
 
 Run shop system tests:
 ```bash
-go test ./pkg/world/... -v
+go test ./pkg/game/systems/... -v
 ```
 
 Tests cover:
@@ -129,19 +131,7 @@ Tests cover:
 - Buy/sell transactions
 - Shop manager operations
 
-## Future Enhancements
-
-1. **Shop Dialogues**: NPC-specific dialogues for shop interactions.
-2. **Haggling System**: Players can negotiate prices based on charisma.
-3. **Shop Reputation**: Shops remember players and offer better prices to regular customers.
-4. **Limited Stock**: Rare items have limited quantities.
-5. **Dynamic Pricing**: Prices change based on supply and demand.
-6. **Shop Events**: Special sales, discounts, or rare item appearances.
-7. **Player-owned Shops**: Players can own and run shops.
-
 ## Example Shop Configuration
-
-Here's an example of a complete shop setup:
 
 ```go
 // Create a blacksmith shop
@@ -166,24 +156,4 @@ magicShop.ItemTypes = []int{4, 5, 6, 7} // Potions, scrolls, wands, staves
 magicShop.IdentifySkill = 100           // Perfect identification
 magicShop.IdentifyCost = 50             // Expensive but reliable
 magicShop.SellMultiplier = 300          // Magic items are expensive!
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **"Shop has nothing for sale"**: The shop's inventory is empty or the shop doesn't deal in the item type.
-2. **"You don't have enough gold"**: Player doesn't have enough gold for the transaction.
-3. **"Your inventory is full"**: Player's inventory is at capacity.
-4. **"Shop inventory is full"**: Shop can't buy more items.
-5. **"Shop isn't interested in that"**: Shop doesn't buy/sell that item type.
-
-### Debugging
-
-Check shop state:
-```go
-fmt.Printf("Shop: %v\n", shop)
-fmt.Printf("Inventory: %d items\n", len(shop.GetInventory()))
-fmt.Printf("Buy types: %v\n", shop.BuyTypes)
-fmt.Printf("Item types: %v\n", shop.ItemTypes)
 ```

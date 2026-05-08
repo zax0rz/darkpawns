@@ -45,8 +45,8 @@ cd darkpawns
    ```
 
 ### Accessing Services
-- **Game Server**: http://localhost:8080
-- **WebSocket**: ws://localhost:8080/ws
+- **Game Server**: http://localhost:4350
+- **WebSocket**: ws://localhost:4350/ws
 - **PostgreSQL**: localhost:5432 (database: `darkpawns`)
 - **Redis**: localhost:6379
 
@@ -118,7 +118,7 @@ kubectl cluster-info
 │         │                 │                 │               │
 │  ┌──────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐        │
 │  │   Service   │  │   Service   │  │   Service   │        │
-│  │   :5432     │  │   :6379     │  │   :8080     │        │
+│  │   :5432     │  │   :6379     │  │   :4350     │        │
 │  └─────────────┘  └─────────────┘  └──────┬──────┘        │
 │                                            │               │
 │                                    ┌──────▼──────┐        │

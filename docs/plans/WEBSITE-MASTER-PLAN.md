@@ -52,7 +52,7 @@ Merged public site = brief's marketing pages + existing docs-site content. One `
 
 **URL:** `admin.darkpawns.labz0rz.com` (separate subdomain)  
 **Stack:** React 18+ / TypeScript / Vite / TanStack Query / Monaco / React Flow / AG Grid  
-**Port:** 8081 (separate from game port 8080)  
+**Port:** 8081 (separate from game port 4350)  
 **Auth:** Separate JWT flow, IP allowlist, role-based (builder/admin/research)  
 **Deploy:** Separate build pipeline, separate TLS  
 **Reference:** `PLAN-web-admin-architecture.md` (full spec, Opus-reviewed)
@@ -589,7 +589,7 @@ The `/connect` page should recommend accessible clients alongside standard ones:
 | 1 | Production domain? | Deferred — building on `darkpawns.labz0rz.com` |
 | 2 | Archivo Narrow vs National 2 Condensed? | Start with Archivo Narrow (free), evaluate after hi-fi |
 | 3 | Forum vs Discord for v1? | Discord-only confirmed (brief section 5) |
-| 4 | Canonical telnet address/port? | Brief says `darkpawns.io 8080` — update when domain decided |
+| 4 | Canonical telnet address/port? | Brief says `darkpawns.labz0rz.com 4350` |
 | 5 | Featured pull quotes for /about? | Brand voice touchstone table + Friar Drake letter ready |
 | 6 | Player photos from dp-players archive? | `player_pics.mud.md` exists — likely broken image links from 2004 |
 | 7 | Dark mode? | Out of scope v1, consider `prefers-color-scheme` as post-launch add |

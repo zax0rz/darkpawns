@@ -3,6 +3,8 @@ tags: [active]
 ---
 # Phase 2.3: Mob Spawning from Zone Files
 
+**Last updated:** 2026-05-08
+
 ## Overview
 This phase implements mob and object spawning from zone reset commands (.zon files). The system parses zone commands and spawns mobs/objects in the world with proper tracking and limits.
 

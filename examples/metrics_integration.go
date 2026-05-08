@@ -47,7 +47,7 @@ func MetricsIntegration() {
 	metrics.SetPlayersOnline(0)
 
 	fmt.Println("Metrics integration demonstration complete")
-	fmt.Println("Metrics available at: http://localhost:8080/metrics")
+	fmt.Println("Metrics available at: http://localhost:4350/metrics")
 	fmt.Println("Grafana dashboard: http://localhost:3000")
 	fmt.Println("Prometheus: http://localhost:9090")
 }

@@ -60,7 +60,7 @@ func main() {
 	var (
 		worldDir   = flag.String("world", "", "Path to world files (lib directory)")
 		scriptsDir = flag.String("scripts", "", "Path to Lua scripts (defaults to world/lib/scripts)")
-		port       = flag.String("port", "8080", "Server port")
+		port       = flag.String("port", "4350", "Server port")
 		dbURL      = flag.String("db", "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable", "Database URL")
 		webDir     = flag.String("web", "", "Path to web client files (index.html, client.js, style.css)")
 	)

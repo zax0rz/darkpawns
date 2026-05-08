@@ -199,7 +199,7 @@ Fork `maldorne/mud-web-client` → strip proxy dependency → replace golden-lay
 ### 5.2 Connection Flow (No Proxy)
 
 ```
-Browser                     Go Server (:8080)
+Browser                     Go Server (:4350)
   │                              │
   │── WebSocket /ws ────────────>│  (upgrade)
   │<────── JSON login msg ───────│  (existing flow)
@@ -263,7 +263,7 @@ If the Go server sends GMCP data (e.g., `Char.Vitals`), the tab bar can show:
 <!-- Hugo /play page -->
 <div class="play-wrapper">
   <iframe 
-    src="/client/index.html?host=darkpawns.labz0rz.com&port=8080&layout=tiled"
+    src="/client/index.html?host=darkpawns.labz0rz.com&port=4350&layout=tiled"
     class="play-terminal"
     allow="clipboard-write"
   ></iframe>

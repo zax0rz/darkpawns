@@ -42,7 +42,7 @@ func getAllowedOrigins() []string {
 
 	// Default development origins
 	if isDevMode() {
-		return []string{"http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"}
+		return []string{"http://localhost:3000", "http://localhost:4350", "http://127.0.0.1:3000"}
 	}
 
 	// Production defaults — explicit list only, no wildcards

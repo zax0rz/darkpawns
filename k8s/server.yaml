@@ -49,7 +49,7 @@ spec:
               name: darkpawns-secrets
               key: POSTGRES_PASSWORD
         ports:
-        - containerPort: 8080
+        - containerPort: 4350
         resources:
           requests:
             memory: "256Mi"
@@ -60,13 +60,13 @@ spec:
         readinessProbe:
           httpGet:
             path: /health
-            port: 8080
+            port: 4350
           initialDelaySeconds: 10
           periodSeconds: 5
         livenessProbe:
           httpGet:
             path: /health
-            port: 8080
+            port: 4350
           initialDelaySeconds: 30
           periodSeconds: 10
         volumeMounts:
@@ -88,8 +88,8 @@ spec:
   selector:
     app: darkpawns-server
   ports:
-  - port: 8080
-    targetPort: 8080
+  - port: 4350
+    targetPort: 4350
   type: ClusterIP
 ---
 apiVersion: networking.k8s.io/v1
@@ -113,4 +113,4 @@ spec:
           service:
             name: darkpawns-server
             port:
-              number: 8080
+              number: 4350

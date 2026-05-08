@@ -41,9 +41,9 @@ docker-compose -f docker-compose.monitoring.yml ps
 2. **Prometheus**: http://localhost:9090
    - Check targets: http://localhost:9090/targets
 
-3. **Dark Pawns Server**: http://localhost:8080
-   - Health check: http://localhost:8080/health
-   - Metrics: http://localhost:8080/metrics
+3. **Dark Pawns Server**: http://localhost:4350
+   - Health check: http://localhost:4350/health
+   - Metrics: http://localhost:4350/metrics
 
 ## Step 5: Start the Game Server
 
@@ -87,8 +87,8 @@ docker-compose -f docker-compose.monitoring.yml down -v  # Remove volumes
 ## Troubleshooting
 
 ### No Metrics Showing
-1. Verify server is running: `curl http://localhost:8080/health`
-2. Check metrics endpoint: `curl http://localhost:8080/metrics`
+1. Verify server is running: `curl http://localhost:4350/health`
+2. Check metrics endpoint: `curl http://localhost:4350/metrics`
 3. Verify Prometheus is scraping: Check http://localhost:9090/targets
 
 ### Grafana Login Issues

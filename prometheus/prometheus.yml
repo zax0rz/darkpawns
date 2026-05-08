@@ -8,7 +8,7 @@ rule_files:
 scrape_configs:
   - job_name: 'darkpawns'
     static_configs:
-      - targets: ['darkpawns-server:8080']
+      - targets: ['darkpawns-server:4350']
         labels:
           service: 'darkpawns'
           environment: 'production'

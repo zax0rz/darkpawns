@@ -1,286 +1,233 @@
-# Skill System Documentation
+**Last updated:** 2026-05-08
 
-## Overview
+# Skill System
 
-The skill system in Dark Pawns allows characters to learn, practice, and improve various abilities. Skills are categorized into three types: Combat, Magic, and Utility. Each skill has a proficiency level (0-100) that increases through practice and use.
+The world has walls, and some mortals learn to move through them differently. Dark Pawns inherits the CircleMUD skill model: each skill is a proficiency (0–100), gated by class and level, improved through use and practice at a guildmaster. No skill points for basic combat skills. No D&D spell schools. The nine rooms of backstab, bash, kick, sneak, steal — they open or they don't, depending on who you are and how long you've been at it.
 
-## Skill Types
+Two layers exist here and they only partially talk to each other. Know which one you're touching before you touch it.
 
-### 1. Combat Skills
-- **Purpose**: Physical combat abilities
-- **Examples**: Swordsmanship, Archery, Shield Use, Dodging
-- **Primary Stats**: Strength, Dexterity
-- **Requirements**: Character level ≥ skill difficulty, STR/DEX ≥ 10
+---
 
-### 2. Magic Skills
-- **Purpose**: Spellcasting and magical abilities
-- **Examples**: Evocation, Abjuration, Necromancy, Illusion
-- **Primary Stats**: Intelligence, Wisdom
-- **Requirements**: Character level ≥ skill difficulty, INT/WIS ≥ 12
+## The Two Layers
 
-### 3. Utility Skills
-- **Purpose**: Non-combat practical abilities
-- **Examples**: Stealth, Lock Picking, Healing, Crafting
-- **Primary Stats**: Dexterity, Intelligence
-- **Requirements**: Character level ≥ skill difficulty, DEX/INT ≥ 8
+### Layer 1: CircleMUD Skills (`pkg/game/`)
 
-## Skill Structure
+The real skill system. Direct port from `class.c` and `act.offensive.c`. Skills are stored as `map[string]int` on the `Player` struct — name to proficiency (0–100). No struct overhead, no registration required.
 
-Each skill has the following attributes:
+**Getting/setting proficiency:**
+```go
+level := ch.GetSkill(SkillBackstab)   // 0 = doesn't know it
+ch.SetSkill(SkillBackstab, 75)         // 75% proficiency
+```
 
-| Attribute | Description | Range |
-|-----------|-------------|-------|
-| Name | Unique identifier | lowercase, no spaces |
-| DisplayName | Player-facing name | Any string |
-| Type | Skill category | Combat, Magic, Utility |
-| Level | Proficiency level | 0-100 |
-| Practice | Practice points accumulated | 0-100 |
-| Difficulty | Learning difficulty | 1-10 |
-| MaxLevel | Maximum achievable level | Usually 100 |
-| Learned | Whether skill is known | true/false |
-| LastUsed | Timestamp of last use | time.Time |
+**Class/level requirements** are defined in `pkg/game/skills.go` as `SkillClassReq`:
+```go
+var SkillClassReq = map[string]map[int]int{
+    SkillBackstab: {ClassThief: 1, ClassAssassin: 1},
+    SkillBash:     {ClassWarrior: 3, ClassPaladin: 3, ClassRanger: 3},
+    // ...
+}
+```
 
-## Skill Progression
+A class not in the map cannot use that skill. `CanUseSkill(ch, skillName)` enforces this plus position requirements.
 
-### Learning New Skills
-1. **Requirements**: Meet level and stat requirements
-2. **Skill Points**: Spend skill points equal to difficulty
-3. **Available Slots**: Have empty skill slots
-4. **Command**: `learn <skillname>`
+**Skill improvement** happens on use via `improveSkill()` in `pkg/game/combat_helpers.go`:
+```go
+func improveSkill(ch *Player, skill string) {
+    cur := ch.GetSkill(skill)
+    if cur <= 0 || cur >= 100 { return }
+    if rand.Intn(100)+1 > cur {                      // harder to improve as you get better
+        chance := (ch.GetInt() + ch.GetWis()) / 4    // INT+WIS averaged
+        if rand.Intn(100) < chance {
+            ch.SetSkill(skill, cur+1)
+            ch.SendMessage(fmt.Sprintf("You feel a bit more competent in %s.\r\n", skill))
+        }
+    }
+}
+```
 
-### Practicing Skills
-1. **Requirement**: Skill must be learned
-2. **Process**: Accumulate practice points (10-30 per practice)
-3. **Level Up**: When practice reaches 100, chance to increase level
-4. **Success Chance**: Based on stats, difficulty, and level difference
-5. **Command**: `practice <skillname>`
+Higher proficiency = smaller window for improvement. INT and WIS matter. That's it.
 
-### Using Skills
-1. **Skill Checks**: Automatic during combat or specific actions
-2. **Manual Use**: `use <skillname> [target]`
-3. **Improvement Chance**: Small chance to gain practice on successful use
-4. **Success Formula**: `level + stat_bonus + difficulty_modifier`
+**Guild practice** is handled by the `guild` mob special (`pkg/game/spec_procs.go`). When a player types `practice <skill>` near a guildmaster mob, `specGuild()` fires: checks that the skill is learned, calls `ch.SkillManager.PracticeSkill()`, and sends feedback. The guildmaster is the only way to practice — you can't grind it by standing in a room and typing practice repeatedly.
 
-## Skill Levels and Titles
+---
 
-| Level Range | Title | Description |
-|-------------|-------|-------------|
-| 0 | Unlearned | Skill not known |
-| 1-24 | Novice | Basic understanding |
-| 25-49 | Apprentice | Developing competence |
-| 50-74 | Journeyman | Solid proficiency |
-| 75-89 | Expert | Highly skilled |
-| 90-99 | Master | Exceptional ability |
-| 100 | Grandmaster | Peak mastery |
+### Layer 2: SkillManager (`pkg/engine/`)
+
+A newer overlay system sitting on top. Stores skills as a `map[string]*Skill` with full progression metadata. Used by the `skills`, `learn`, `forget`, `practice`, and `use` player commands in `pkg/command/skill_commands.go`. Also registers the Dark Pawns core skills so the command layer knows about them.
+
+**The Skill struct** (`pkg/engine/skill.go`):
+```go
+type Skill struct {
+    Name        string    // unique key (e.g. "backstab")
+    DisplayName string    // player-facing name
+    Type        SkillType // SkillTypeCombat / SkillTypeMagic / SkillTypeUtility
+    Level       int       // proficiency 0-100
+    Practice    int       // practice points accumulated 0-100
+    Difficulty  int       // 1-10 (affects learning requirements)
+    MaxLevel    int       // cap, usually 100
+    Learned     bool      // whether learned
+    LastUsed    time.Time
+}
+```
+
+**SkillManager API** (`pkg/engine/skill_manager.go`):
+
+| Method | What it does |
+|---|---|
+| `NewSkillManager()` | Creates manager with 10 slots, 0 points |
+| `RegisterSkill(skill)` | Adds skill to registry without learning it |
+| `LearnSkill(skill, charLevel, stat)` | Attempts to learn (checks slots, points, requirements) |
+| `PracticeSkill(name, charLevel, stat)` | Accumulates 10–30 practice points; levels up on 100+ |
+| `UseSkill(name, charLevel, stat, targetLevel)` | Rolls for success; small improvement chance |
+| `ForgetSkill(name)` | Marks unlearned; refunds half difficulty in points |
+| `TeachSkill(name, target, ...)` | Player-to-player teaching (level 50+ skill required) |
+| `GetSkill(name)` | Returns `*Skill` or nil |
+| `HasSkill(name)` | Returns true if skill is registered AND Learned |
+| `GetSkillLevel(name)` | Returns level or 0 if not learned |
+| `GetLearnedSkills()` | Sorted by level desc |
+| `GetAllSkills()` | All registered, learned or not |
+| `AddSkillPoints(n)` / `GetSkillPoints()` | Manage the skill point pool |
+| `GetSlots()` / `GetUsedSlots()` / `GetAvailableSlots()` / `IncreaseSlots(n)` | Manage the slot limit |
+| `InitializeDefaultSkills()` | Registers the full skill set |
+
+**Learning requirements** enforced by `LearnSkill`:
+- `charLevel >= skill.Difficulty`
+- Stat threshold: Combat ≥ 10 STR/DEX, Magic ≥ 12 INT/WIS, Utility ≥ 8 DEX/INT
+- Skill points ≥ difficulty
+- Used slots < max slots (default 10)
+
+**Practice progression**: Each call to `PracticeSkill()` adds 10–30 random practice points. When practice hits 100+, a success check fires: `50 + (stat*2) - (difficulty*5) + (charLevel - skillLevel)`, capped 10–90%. Success → level up + reset practice. Failure → lose 30 practice points.
+
+**Proficiency titles** from `GetDisplayLevel()`:
+
+| Level | Title |
+|---|---|
+| 0 | Unlearned |
+| 1–24 | Novice |
+| 25–49 | Apprentice |
+| 50–74 | Journeyman |
+| 75–89 | Expert |
+| 90–99 | Master |
+| 100 | Grandmaster |
+
+---
+
+## Skills That Actually Exist
+
+### Core CircleMUD Skills
+
+Defined in `pkg/game/skills.go` as string constants. These are the ones with class/level gating in `SkillClassReq`. Column headers: Skill | Classes | Min Level.
+
+**Combat (offensive):**
+
+| Skill | Classes | Min Level |
+|---|---|---|
+| `backstab` | Thief, Assassin | 1 |
+| `bash` | Warrior, Paladin, Ranger | 3 |
+| `kick` | All classes except Druid/Ranger at 1 | 1 |
+| `trip` | Thief, Assassin | 9 |
+| `headbutt` | Warrior (5), Paladin (5), Ranger (7) | 5–7 |
+| `rescue` | Warrior (4), Paladin (3), Ranger (5) | 3–5 |
+
+**Stealth / Utility:**
+
+| Skill | Classes | Min Level |
+|---|---|---|
+| `sneak` | Thief, Assassin | 2 |
+| `hide` | Thief, Assassin (5), Ranger (10) | 5–10 |
+| `steal` | Thief, Assassin | 3 |
+| `pick_lock` | Thief, Assassin | 4 |
+
+**Wave 1 / Wave 2 skills** (from `new_cmds.c` and `new_cmds2.c` ports): These are implemented in `skills.go` and `skill_special.go` but most don't have class requirements in `SkillClassReq` yet — they use `CanUseSkill()` which returns false if not in the map:
+
+`carve`, `cutthroat`, `strike`, `compare`, `scan`, `sharpen`, `scrounge`, `peek`, `stealth`, `appraise`, `scout`, `first_aid`, `disarm`, `mindlink`, `detect`, `serpent_kick`, `dig`, `turn`, `mold`, `behead`, `bearhug`, `slug`, `smackheads`, `bite`, `tag`, `point`, `groinrip`, `review`, `whois`, `palm`, `flesh_alter`
+
+**C-10 Advanced Combat** (`pkg/game/skill_c10_combat.go`):
+
+`disembowel`, `dragon_kick`, `tiger_punch`, `shoot`, `subdue`, `sleeper`, `neckbreak`, `ambush`, `parry`, `escape`, `retreat`
+
+### SkillManager Default Registry
+
+`InitializeDefaultSkills()` registers these in the SkillManager for use by the `learn`/`skills`/`practice` command layer:
+
+**Combat:** `swords`, `axes`, `maces`, `daggers`, `polearms`, `archery`, `unarmed`, `shield`, `parry`, `dodge`, plus the core CircleMUD skills: `backstab`, `bash`, `kick`, `trip`, `rescue`
+
+**Magic:** `evocation`, `abjuration`, `conjuration`, `divination`, `enchantment`, `illusion`, `necromancy`, `transmutation`
+
+**Utility:** `stealth`, `lockpick`, `disarm`, `search`, `track`, `heal`, `craft`, `appraise`, `diplomacy`, `intimidate`, `sneak`, `hide`, `steal`, `pick_lock`
+
+The magic skills and several utility entries (evocation, swords, diplomacy, etc.) are registered in the SkillManager but don't yet have `SkillClassReq` entries — they won't gate via `CanUseSkill()`, which is a known gap.
+
+---
 
 ## Commands
 
 ### Player Commands
 
-| Command | Aliases | Description |
-|---------|---------|-------------|
-| `skills` | `sk` | Display all learned skills |
-| `practice <skill>` | | Practice a learned skill |
-| `learn <skill>` | | Learn a new skill |
-| `list` | `listskills` | Show all available skills |
-| `forget <skill>` | | Forget a learned skill |
-| `use <skill> [target]` | | Use a skill manually |
-| `skillinfo <skill>` | `sinfo` | Show detailed skill information |
-
-### Administrative Commands
-
 | Command | Description |
-|---------|-------------|
-| `skillpoints <player> <amount>` | Grant skill points to player |
-| `teach <player> <skill>` | Teach skill to another player |
-| `setskill <player> <skill> <level>` | Set skill level directly |
+|---|---|
+| `skills` | Show all learned skills with level and progress |
+| `practice <skill>` | Practice at a guildmaster (guild mob special) |
+| `learn <skill>` | Learn a skill from the SkillManager registry |
+| `list` | Show all available skills with difficulty and status |
+| `forget <skill>` | Forget a skill (refunds half difficulty in points); requires `confirm forget` |
+| `use <skill> [target]` | Generic skill use (calls SkillManager.UseSkill) |
+| `skillinfo <skill>` | Show detailed info for one skill |
+| `backstab`, `bash`, `kick`, `trip`, `headbutt`, `rescue` | Direct combat skill commands |
+| `sneak`, `hide`, `steal`, `pick` | Direct stealth/utility commands |
+| `disembowel`, `dragon_kick`, `tiger_punch`, `shoot`, `subdue`, `sleeper`, `neckbreak`, `ambush`, `parry` | C-10 advanced combat commands |
 
-## Skill Manager API
+All direct skill commands (`CmdBackstab`, `CmdBash`, etc.) live in `pkg/command/skill_commands.go`. They call `CanUseSkill()` for class/level gate, then the `Do*` function in `pkg/game/`.
 
-### Creating a Skill Manager
+### Player Methods
+
 ```go
-sm := engine.NewSkillManager()
+ch.GetSkill(name string) int         // proficiency 0-100; 0 = doesn't know it
+ch.SetSkill(name string, level int)  // set proficiency directly
+ch.SkillManager                      // access SkillManager overlay
 ```
 
-### Registering Skills
-```go
-// Individual skill
-skill := engine.NewSkill("swords", "Swordsmanship", engine.SkillTypeCombat, 3)
-sm.RegisterSkill(skill)
+---
 
-// Default skills
-sm.InitializeDefaultSkills()
-```
+## How Skills Actually Improve
 
-### Learning Skills
-```go
-success := sm.LearnSkill(skill, playerLevel, playerStat)
-```
+Two paths, same world:
 
-### Practicing Skills
-```go
-leveledUp := sm.PracticeSkill(skillName, playerLevel, playerStat)
-```
+**1. Use-based improvement** (CircleMUD path): Every time you successfully use a skill (backstab, bash, etc.), `improveSkill()` runs. Chance to improve = `(INT + WIS) / 4` percent, but only if `rand(100) > current_level` (i.e., higher level = smaller improvement window). You stop improving at 100.
 
-### Using Skills
-```go
-success, improved := sm.UseSkill(skillName, playerLevel, playerStat, targetLevel)
-```
+**2. Practice at a guildmaster** (SkillManager path): Type `practice <skill>` near a guildmaster mob. `specGuild()` calls `ch.SkillManager.PracticeSkill()`. This accumulates practice points toward a level-up roll. Guildmaster practice is currently the only deliberate grind path that doesn't require combat.
 
-### Skill Information
-```go
-// Get skill by name
-skill := sm.GetSkill(skillName)
+The two improvement paths increment different counters. `improveSkill()` writes to `Player.Skills` (the map). `PracticeSkill()` writes to `Skill.Level` inside the SkillManager. These are bridged when skill commands read via `GetSkill()`, but are not always in sync. This is a known architectural quirk.
 
-// Check if skill is learned
-hasSkill := sm.HasSkill(skillName)
+---
 
-// Get skill level
-level := sm.GetSkillLevel(skillName)
+## Integration with Player
 
-// Get all learned skills
-learnedSkills := sm.GetLearnedSkills()
-
-// Get all available skills
-allSkills := sm.GetAllSkills()
-```
-
-## Integration with Player System
-
-### Player Structure Update
-The `Player` struct now includes a `SkillManager` field:
 ```go
 type Player struct {
-    // ... other fields
-    SkillManager *engine.SkillManager
+    Skills       map[string]int        // CircleMUD proficiency map
+    SkillManager *engine.SkillManager  // overlay with full Skill structs
+    // ...
 }
 ```
 
-### Player Methods
-- `SetSkill(name string, level int)` - Set skill level
-- `GetSkill(name string) int` - Get skill level
+New characters need `InitializeDefaultSkills()` called on their SkillManager at creation. Starting skill points depend on class. The CircleMUD skills (`backstab`, `kick`, etc.) are initialized via pfile load or character creation — they don't go through `LearnSkill()`.
 
-### Character Creation
-New characters automatically get:
-- Initialized SkillManager
-- Default skills registered
-- Starting skill points based on class/race
-
-## Default Skills
-
-### Combat Skills
-- `swords` - Swordsmanship (Difficulty: 3)
-- `axes` - Axe Fighting (4)
-- `maces` - Mace Fighting (3)
-- `daggers` - Dagger Fighting (2)
-- `polearms` - Polearm Fighting (5)
-- `archery` - Archery (4)
-- `unarmed` - Unarmed Combat (1)
-- `shield` - Shield Use (2)
-- `parry` - Parrying (3)
-- `dodge` - Dodging (3)
-
-### Magic Skills
-- `evocation` - Evocation Magic (6)
-- `abjuration` - Abjuration Magic (5)
-- `conjuration` - Conjuration Magic (7)
-- `divination` - Divination Magic (4)
-- `enchantment` - Enchantment Magic (6)
-- `illusion` - Illusion Magic (5)
-- `necromancy` - Necromancy (8)
-- `transmutation` - Transmutation Magic (7)
-
-### Utility Skills
-- `stealth` - Stealth (3)
-- `lockpick` - Lock Picking (4)
-- `disarm` - Trap Disarming (5)
-- `search` - Searching (2)
-- `track` - Tracking (3)
-- `heal` - Healing (4)
-- `craft` - Crafting (3)
-- `appraise` - Appraisal (2)
-- `diplomacy` - Diplomacy (4)
-- `intimidate` - Intimidation (3)
-
-## Skill Points and Slots
-
-### Skill Points
-- **Acquisition**: Level up, quest rewards, training
-- **Usage**: Learning new skills (cost = difficulty)
-- **Refund**: Half points refunded when forgetting skill
-
-### Skill Slots
-- **Default**: 10 slots per character
-- **Increase**: Through abilities, items, or leveling
-- **Management**: `GetUsedSlots()`, `GetAvailableSlots()`, `IncreaseSlots()`
-
-## Teaching System
-
-### Requirements for Teaching
-1. Teacher skill level ≥ 50
-2. Teacher level ≥ student skill level + 20
-3. Student meets skill requirements
-4. Student has available skill points and slots
-
-### Teaching Process
-```go
-success := teacherSM.TeachSkill(skillName, studentSM, teacherLevel, studentLevel, studentStat)
-```
+---
 
 ## Testing
 
-Run skill system tests:
 ```bash
 go test ./pkg/engine -run TestSkill
+go test ./pkg/game -run TestSkill
 ```
 
-## Future Enhancements
+---
 
-### Planned Features
-1. **Skill Synergies**: Bonus for related skills
-2. **Skill Specializations**: Focus within a skill category
-3. **Skill Degradation**: Skills decay without use
-4. **Skill Books**: Learn from items
-5. **Skill Quests**: Special quests for rare skills
+## Known Gaps
 
-### Integration Points
-1. **Combat System**: Skill checks in combat formulas
-2. **Crafting System**: Utility skills for item creation
-3. **Social System**: Diplomacy/intimidation in NPC interactions
-4. **Exploration System**: Search/track for hidden content
-
-## Examples
-
-### Learning a Skill
-```
-> learn swords
-You successfully learn Swordsmanship!
-```
-
-### Practicing a Skill
-```
-> practice swords
-You practice Swordsmanship. Progress: 45% (Level 1)
-```
-
-### Using a Skill
-```
-> use stealth
-You attempt to use Stealth... Success!
-You feel like you've improved your understanding of this skill.
-```
-
-### Viewing Skills
-```
-> skills
-╔══════════════════════════════════════════════════════╗
-║                     Your Skills                      ║
-╠══════════════════════════╦══════╦════════╦═══════════╣
-║ Skill                    ║ Level║ Progress║ Type     ║
-╠══════════════════════════╬══════╬════════╬═══════════╣
-║ Swordsmanship            ║    5 ║  75%   ║ Combat    ║
-║ Stealth                  ║    3 ║  30%   ║ Utility   ║
-╚══════════════════════════╩══════╩════════╩═══════════╝
-
-Skill points: 2 | Slots: 2/10 (8 available)
-```
+- Magic skills and several utility skills exist in `InitializeDefaultSkills()` but have no `SkillClassReq` entries. `CanUseSkill()` returns false for them (not in map). They're available in the SkillManager command layer only.
+- The two improvement paths (`Player.Skills` map vs `SkillManager.Skill.Level`) are parallel and can drift.
+- `CmdPractice` in `skill_commands.go` and `specGuild` in `spec_procs.go` both call `PracticeSkill()` but via different callers. The guildmaster path is the intended one; the command path bypasses mob presence.
+- Teaching system (`TeachSkill`) exists in the code but has no in-game mob or command wired to it yet.

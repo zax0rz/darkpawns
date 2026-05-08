@@ -6,7 +6,7 @@ Verifies the ROADMAP deliverable:
   THAC0 reflects class and STR.
 
 Requires: websockets (pip install websockets)
-Usage: python3 scripts/smoke_test_2b.py [--ws-url ws://localhost:8080/ws]
+Usage: python3 scripts/smoke_test_2b.py [--ws-url ws://localhost:4350/ws]
 """
 import asyncio
 import json
@@ -222,7 +222,7 @@ async def run_test(ws_url):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ws-url", default="ws://localhost:8080/ws")
+    parser.add_argument("--ws-url", default="ws://localhost:4350/ws")
     args = parser.parse_args()
     
     ok = asyncio.run(run_test(args.ws_url))

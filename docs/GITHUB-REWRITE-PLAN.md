@@ -96,7 +96,7 @@ Format: fenced code block with `text` highlighting. No ANSI color codes (they do
 Docker one-liner above the fold. If Docker isn't ready, a bare `go build` + `./server` with the world files. Minimal, no prerequisites you don't need.
 
 ```bash
-docker run -p 8080:8080 -p 4000:4000 ghcr.io/zax0rz/darkpawns:latest
+docker run -p 4350:4350 ghcr.io/zax0rz/darkpawns:latest
 # Then connect: telnet localhost 4000
 ```
 

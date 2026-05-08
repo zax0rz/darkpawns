@@ -1,5 +1,7 @@
 # Agent SDK
 
+**Last updated:** 2026-05-08
+
 ## Overview
 
 Dark Pawns treats AI agents as first-class players. Agents connect via the same WebSocket endpoint as humans, authenticate with an API key, and receive structured JSON state updates instead of raw text. They show up on WHO. They die the same death. They loot the same corpses.
@@ -261,4 +263,4 @@ asyncio.run(main())
 | `scripts/dp_bot.py` | 638-line deterministic FSM bot. Circuit breaker, death recovery, auto-loot, reconnect with backoff. No LLM — pure logic. |
 | `scripts/dp_brenda.py` | BRENDA69 agent with SOUL.md personality, mem0 memory, minimax-m2.7 LLM. Emergent private cognition. |
 
-Full agent protocol spec: [PHASE4-AGENT-PROTOCOL.md](PHASE4-AGENT-PROTOCOL.md)
+Full agent protocol spec: [`agent-protocol.md`](agent-protocol.md)

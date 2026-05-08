@@ -27,7 +27,7 @@ ssh root@192.168.1.125 "cd /opt/stacks/caddy && docker compose restart"
 
 ## Caddy routes
 - `/` → Static Hugo files
-- `/ws` → WebSocket proxy → Go server (localhost:8080)
-- `/api/*` → REST API proxy → Go server (localhost:8080)
-- `/health` → Health check proxy → Go server (localhost:8080)
+- `/ws` → WebSocket proxy → Go server (localhost:4350)
+- `/api/*` → REST API proxy → Go server (localhost:4350)
+- `/health` → Health check proxy → Go server (localhost:4350)
 - `Accept: text/markdown` → serves `.md` files from content negotiation layer

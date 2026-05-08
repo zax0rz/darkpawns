@@ -37,7 +37,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - WORLD_DIR=/app/lib
-      - PORT=8080
+      - PORT=4350
       - DATABASE_URL=postgres://postgres:postgres@postgres/darkpawns?sslmode=disable
       - REDIS_URL=redis://redis:6379/0
       - AI_ENABLED=true
@@ -45,20 +45,20 @@ services:
       - ${WORLD_DIR:-./lib}:/app/lib:ro
       - ./scripts:/app/scripts:ro
     ports:
-      - "8080:8080"
+      - "4350:4350"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: ["./server", "-world", "/app/lib", "-port", "8080", "-db", "postgres://postgres:postgres@postgres/darkpawns?sslmode=disable"]
+    command: ["./server", "-world", "/app/lib", "-port", "4350", "-db", "postgres://postgres:postgres@postgres/darkpawns?sslmode=disable"]
 
   ai-agent:
     build:
       context: .
       dockerfile: Dockerfile.ai-agent
     environment:
-      - SERVER_URL=ws://server:8080/ws
+      - SERVER_URL=ws://server:4350/ws
       - API_KEY=${AI_API_KEY:-default_key}
       - AGENT_NAME=brenda69
       - REDIS_URL=redis://redis:6379/0

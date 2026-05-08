@@ -298,7 +298,7 @@ Dark Pawns includes Prometheus metrics at `/metrics`:
 
 ```bash
 # Query metrics
-curl http://localhost:8080/metrics
+curl http://localhost:4350/metrics
 ```
 
 Key metrics to monitor:

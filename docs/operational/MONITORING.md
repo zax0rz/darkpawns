@@ -1,5 +1,7 @@
 # Dark Pawns Monitoring Stack
 
+**Last updated:** 2026-05-08
+
 This document describes the monitoring infrastructure for Dark Pawns, including Prometheus metrics, Grafana dashboards, and alerting.
 
 ## Overview
@@ -53,7 +55,7 @@ docker-compose -f docker-compose.monitoring.yml up -d
 ```
 
 This will start:
-- Dark Pawns server on port 8080
+- Dark Pawns server on port 4350
 - Prometheus on port 9090
 - Grafana on port 3000
 - Alertmanager on port 9093
@@ -64,7 +66,7 @@ This will start:
 - **Grafana**: http://localhost:3000 (admin/admin)
 - **Prometheus**: http://localhost:9090
 - **Alertmanager**: http://localhost:9093
-- **Dark Pawns**: http://localhost:8080
+- **Dark Pawns**: http://localhost:4350
 
 ### 3. Import Grafana Dashboard
 
@@ -119,8 +121,8 @@ The server includes health endpoints:
 ## Troubleshooting
 
 ### Metrics Not Appearing
-1. Verify server is running: `curl http://localhost:8080/health`
-2. Check metrics endpoint: `curl http://localhost:8080/metrics`
+1. Verify server is running: `curl http://localhost:4350/health`
+2. Check metrics endpoint: `curl http://localhost:4350/metrics`
 3. Verify Prometheus is scraping: Check targets in Prometheus UI
 
 ### Grafana No Data

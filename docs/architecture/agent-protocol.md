@@ -3,8 +3,9 @@ tags: [active]
 ---
 # Agent Protocol
 
-> **Status:** Fully implemented (Phase 4 complete).
-> Agents connect via WebSocket with API key authentication.
+> **Status:** Fully implemented. Agents connect via WebSocket with API key authentication.
+>
+> **Last updated:** 2026-05-08
 
 ---
 

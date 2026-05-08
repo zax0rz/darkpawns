@@ -1,32 +1,35 @@
+**Last updated:** 2026-05-08
+
 # Door System for Dark Pawns
 
 ## Overview
 
-The door system provides functionality for doors between rooms in the Dark Pawns MUD server. Doors can be open, closed, locked, pickproof, bashable, hidden, and more - similar to the original MUD door system.
+The door system provides functionality for doors between rooms in the Dark Pawns MUD server. Doors can be open, closed, locked, pickproof, bashable, hidden, and more — matching the original CircleMUD door semantics.
 
 ## Architecture
 
 ### Core Components
 
-1. **Door Struct** (`pkg/world/door.go`)
+1. **Door Struct** (`pkg/game/systems/door.go`)
    - Represents a single door with state and properties
    - Manages door operations (open, close, lock, unlock, pick, bash)
    - Tracks door health for bashing
+   - Fields: `Closed`, `Locked`, `Pickproof`, `Bashable`, `Hidden`, `KeyVNum`, `Difficulty`, `Hp`, `MaxHp`, `FromRoom`, `ToRoom`, `Direction`
 
-2. **DoorManager** (`pkg/world/door_manager.go`)
+2. **DoorManager** (`pkg/game/systems/door_manager.go`)
    - Manages all doors in the world
    - Provides door lookup by room and direction
    - Handles door operations with proper synchronization
 
-3. **Door Commands** (`pkg/command/door_commands.go`)
+3. **Door Commands** (`pkg/session/door_cmds.go`)
    - Player commands for interacting with doors
    - Commands: open, close, lock, unlock, pick, bash
 
 ### Integration Points
 
 - **Parser Integration**: Doors are created from parsed room exits (`parser.Exit`)
-- **World Integration**: DoorManager should be integrated with the game World
-- **Command Integration**: Door commands need to be registered with the command dispatcher
+- **World Integration**: DoorManager integrated with the game World
+- **Command Integration**: Door commands registered with the command dispatcher via `pkg/session/door_cmds.go`
 
 ## Door States and Properties
 
@@ -36,12 +39,20 @@ The door system provides functionality for doors between rooms in the Dark Pawns
 - **Locked**: Closed and requires key or picking to open
 
 ### Door Properties
-- **Pickproof**: Cannot be picked (requires key)
-- **Bashable**: Can be bashed down (reduces door HP)
-- **Hidden**: Not visible without detect hidden skill
-- **KeyVNum**: VNum of key that unlocks this door (-1 for no key)
-- **Difficulty**: Lock difficulty (0-100, higher = harder to pick)
-- **HP/MaxHP**: Door health for bashing (0 = destroyed)
+| Field | Type | Description |
+|-------|------|-------------|
+| `Closed` | bool | Door is closed |
+| `Locked` | bool | Door is locked |
+| `Pickproof` | bool | Cannot be picked (requires key) |
+| `Bashable` | bool | Can be bashed down (reduces door HP) |
+| `Hidden` | bool | Not visible without detect hidden skill |
+| `KeyVNum` | int | VNum of key that unlocks this door (-1 for no key) |
+| `Difficulty` | int | Lock difficulty 0–100, higher = harder to pick |
+| `Hp` | int | Current door health for bashing |
+| `MaxHp` | int | Maximum door health (0 = indestructible) |
+| `FromRoom` | int | VNum of room the door originates in |
+| `ToRoom` | int | VNum of destination room |
+| `Direction` | int | Direction index (N/E/S/W/U/D) |
 
 ## Commands
 
@@ -58,7 +69,7 @@ bash <direction>      - Attempt to bash a closed door
 
 ### Direction Aliases
 - north, n
-- east, e  
+- east, e
 - south, s
 - west, w
 - up, u
@@ -72,7 +83,7 @@ bash <direction>      - Attempt to bash a closed door
 You open the door.
 Room sees: Player opens the north door.
 
-> close north  
+> close north
 You close the door.
 Room sees: Player closes the north door.
 ```
@@ -110,7 +121,7 @@ Room sees: Player bashes the west door.
 
 ### 1. Initialize DoorManager
 ```go
-doorManager := world.NewDoorManager()
+doorManager := systems.NewDoorManager()
 ```
 
 ### 2. Load Doors from World Data
@@ -120,19 +131,16 @@ doorManager.LoadDoorsFromWorld(parsedWorld)
 ```
 
 ### 3. Integrate with World
-The DoorManager should be added to the World struct:
+The DoorManager is part of the game World struct:
 ```go
 type World struct {
     // ... existing fields ...
-    Doors *world.DoorManager
+    Doors *systems.DoorManager
 }
 ```
 
 ### 4. Register Commands
-```go
-doorCommands := command.NewDoorCommands(doorManager, world)
-// Register with command dispatcher
-```
+Door commands are registered via `pkg/session/door_cmds.go` with the session command dispatcher.
 
 ### 5. Update Movement System
 Modify the movement system to check doors:
@@ -146,27 +154,9 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 }
 ```
 
-## Data Persistence
-
-Door state should be persisted:
-- **Static data**: Door properties (key, difficulty, flags) from world files
-- **Dynamic state**: Door state (open/closed/locked, HP) should be saved/loaded
-
 ## Testing
 
 Run tests with:
 ```bash
-cd /home/zach/.openclaw/workspace/darkpawns_repo
-go test ./pkg/world/... -v
+go test ./pkg/game/systems/... -v
 ```
-
-## Future Enhancements
-
-1. **Door Resets**: Reset doors to default state on zone reset
-2. **Skill Integration**: Integrate with player skills (picking, bashing)
-3. **Magic Doors**: Doors that require spells to open
-4. **Trap Doors**: Doors with traps
-5. **Secret Doors**: Better hidden door detection
-6. **Door Descriptions**: Custom descriptions for different door types
-7. **Two-way Doors**: Ensure door state is synchronized between both sides
-8. **Door Sounds**: Sound effects for door operations

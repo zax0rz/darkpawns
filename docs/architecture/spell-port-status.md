@@ -1,5 +1,7 @@
 # Spell Port Scope — Manual Spells from spells.c
 
+**Last updated:** 2026-05-08
+
 **Generated:** 2026-04-26  
 **C source:** `src/spells.c` lines 87–1219  
 **Go framework:** `pkg/spells/` (8 files, ~1,645 lines)

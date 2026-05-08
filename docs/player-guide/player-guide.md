@@ -1,12 +1,14 @@
 # Player Guide
 
+**Last updated:** 2026-05-08
+
 ## Connecting
 
-| Method | Address |
-|--------|---------|
-| Web client | darkpawns.labz0rz.com (coming soon) |
-| Telnet | `telnet darkpawns.labz0rz.com 4000` (coming soon) |
-| WebSocket | `ws://darkpawns.labz0rz.com/ws` |
+| Method | Address | Status |
+|--------|---------|--------|
+| Web client | [darkpawns.labz0rz.com/play](https://darkpawns.labz0rz.com/play) | Live |
+| Telnet | `telnet darkpawns.labz0rz.com 4350` | Live |
+| WebSocket | `ws://darkpawns.labz0rz.com/ws` | Live |
 
 ---
 
@@ -22,32 +24,32 @@ Warriors can roll exceptional Strength (18/xx). STR/DEX/INT/WIS all factor into 
 
 | Class | Description |
 |-------|-------------|
-| Mage | Spellcaster with offensive and utility magic. |
-| Cleric | Healer and buffer, alignment-aware dispel and teleport. |
-| Thief | High DEX, backstab multiplier scales with level. |
-| Warrior | Frontline fighter with exceptional STR potential. |
-| Magus | Hybrid caster with spell and combat ability. |
-| Avatar | Powerful generalist class. |
-| Assassin | Damage-focused specialist. |
-| Paladin | Holy warrior with healing and combat prowess. |
-| Ninja | Fast, high damage, evasion-focused. |
-| Psionic | Mental caster using Mind/Psi instead of Mana. |
-| Ranger | Wilderness fighter with tracking ability. |
-| Mystic | Caster with a unique Mind/Psi pool. |
+| **Mage** | Spellcaster with offensive and utility magic. |
+| **Cleric** | Healer and buffer, alignment-aware dispel and teleport. |
+| **Thief** | High DEX, backstab multiplier scales with level. |
+| **Warrior** | Frontline fighter with exceptional STR potential. |
+| **Ninja** | Fast, high damage, evasion-focused. Only race the eastern mercenary guilds train. |
+| **Psionic** | Mental caster using Mind/Psi instead of Mana. |
+| **Magus** | Hybrid caster with spell and combat ability. (Remort) |
+| **Avatar** | Powerful generalist class. (Remort) |
+| **Assassin** | Damage-focused specialist. (Remort) |
+| **Paladin** | Holy warrior with healing and combat prowess. (Remort) |
+| **Ranger** | Wilderness fighter with tracking ability. (Remort) |
+| **Mystic** | Caster with a unique Mind/Psi pool. (Remort) |
 
 ---
 
 ## Races
 
-| Race | Notes |
-|------|-------|
-| Human | No bonuses, no penalties. Balanced. |
-| Elf | DEX bonus. Good for thieves and rangers. |
-| Dwarf | CON bonus. Good for warriors. |
-| Kender | DEX/CHA bonuses. Small frame. |
-| Minotaur | STR bonus. High damage potential. |
-| Rakshasa | INT bonus. Strong caster race. |
-| Ssaur | Unique reptilian race. |
+| Race | Traits |
+|------|--------|
+| **Human** | Adaptable, widespread. No bonuses, no penalties. |
+| **Elf** | DEX bonus. Faster than they look. |
+| **Dwarf** | CON bonus. Built for wars that last centuries. |
+| **Kender** | DEX/CHA bonuses. Will pick up anything not nailed down. |
+| **Minotaur** | STR bonus. Rarely lost, rarely gentle. |
+| **Rakshasa** | INT bonus. Malevolent tiger spirits trying adventuring instead of tyranny. |
+| **Ssaur** | Evolved lizardmen, too smart for their own tribes. |
 
 Racial bonuses are applied after stat assignment. Some class/race combinations may be restricted.
 
@@ -58,24 +60,20 @@ Racial bonuses are applied after stat assignment. Some class/race combinations m
 ### Movement
 
 ```
-n / north
-s / south
-e / east
-w / west
-u / up
-d / down
+n / north    s / south    e / east    w / west    u / up    d / down
 ```
 
 ### Information
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
-| look | l | Show current room |
+| look | l | Show current room or examine target |
 | score | sc | Display stats, HP, mana, alignment, AC |
 | who | — | List all online players |
 | where | — | List players and their locations |
 | inventory | i, inv | Show carried items |
 | equipment | eq | Show equipped items |
+| skills | sk | Display learned skills |
 
 ### Communication
 
@@ -91,17 +89,32 @@ d / down
 ## Combat
 
 ```
-hit <target>
-kill <target>
-attack <target>
+hit <target>       attack <target>       kill <target>
 flee
 ```
 
 Combat runs in 2-second rounds. THAC0 and AC formulas are faithful to the original. Attacks-per-round scale with class and level. Backstab multiplier is `(level * 0.2) + 1`.
 
-**Death** leaves a corpse in the room containing your equipped items. You respawn at room 8004. EXP penalty: `/37` for combat deaths, `/3` for bleed-out. Other players can loot your corpse.
+**Death** leaves a corpse in the room containing your equipped items. You respawn at the Temple (room 8004). EXP penalty: `/37` for combat deaths, `/3` for bleed-out. Other players can loot your corpse.
 
 Aggressive mobs attack on room entry. Wandering mobs roam the zone. Mob combat AI uses the original Lua scripts — fighters bash and kick, clerics heal and teleport, magic users cast scaled spell tables.
+
+### Skills
+
+Skills improve with use. Practice at trainers to improve proficiency. Each skill has a class and level requirement.
+
+| Skill | Description |
+|-------|-------------|
+| backstab | Sneak attack from hiding. Massive damage multiplier. |
+| bash | Knock opponent prone. |
+| kick | Quick damage attack. |
+| trip | Trip opponent, knocking them down. |
+| headbutt | Stun attack. |
+| rescue | Pull a group member out of combat. |
+| sneak | Move silently. |
+| hide | Hide from view. |
+| steal | Take items from another player or NPC. |
+| pick lock | Open locked doors without a key. |
 
 ---
 
@@ -118,6 +131,21 @@ Aggressive mobs attack on room entry. Wandering mobs roam the zone. Mob combat A
 
 ---
 
+## Doors
+
+| Command | Description |
+|---------|-------------|
+| open \<direction\> | Open a door |
+| close \<direction\> | Close a door |
+| lock \<direction\> | Lock a door (requires key) |
+| unlock \<direction\> | Unlock a door (requires key) |
+| pick \<direction\> | Pick a locked door (requires skill) |
+| bash \<direction\> | Bash a door down (deals damage to door) |
+
+Doors can be pickproof, bashable, or hidden. Some doors require specific keys found in the world.
+
+---
+
 ## Group Play
 
 | Command | Aliases | Description |
@@ -129,6 +157,19 @@ Aggressive mobs attack on room entry. Wandering mobs roam the zone. Mob combat A
 | summon | — | Pull a player to your location |
 
 Followers automatically move when their leader moves. XP is shared among group members. Agents in your group auto-follow and auto-accept invites.
+
+---
+
+## Shops
+
+Shops are run by NPCs in various rooms. Use `list` to see what's for sale.
+
+| Command | Description |
+|---------|-------------|
+| list | Show shop inventory |
+| buy \<item\> | Buy an item |
+| sell \<item\> | Sell an item |
+| value \<item\> | Check an item's buy/sell price |
 
 ---
 
@@ -178,4 +219,17 @@ Followers automatically move when their leader moves. XP is shared among group m
 | ungroup | disband | [name] | Remove from group |
 | gtell | gsay | \<text\> | Group message |
 | summon | — | \<name\> | Teleport player to you |
-| help | — | [topic] | Help system (stub) |
+| skills | sk | — | List learned skills |
+| practice | — | \<skill\> | Practice a skill |
+| learn | — | \<skill\> | Learn a new skill |
+| open | — | \<direction\> | Open a door |
+| close | — | \<direction\> | Close a door |
+| lock | — | \<direction\> | Lock a door |
+| unlock | — | \<direction\> | Unlock a door |
+| pick | — | \<direction\> | Pick a lock |
+| bash | — | \<direction\> | Bash a door |
+| list | — | — | Show shop inventory |
+| buy | — | \<item\> | Buy from shop |
+| sell | — | \<item\> | Sell to shop |
+| value | — | \<item\> | Check item price |
+| help | — | [topic\] | Help system |

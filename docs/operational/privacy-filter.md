@@ -1,5 +1,7 @@
 # Privacy Filter Integration for Dark Pawns
 
+**Last updated:** 2026-05-08
+
 ## Overview
 
 The Privacy Filter integration uses OpenAI's Privacy Filter to detect and redact Personally Identifiable Information (PII) from game logs before storage or processing. This helps protect player privacy and comply with data protection regulations.
@@ -138,7 +140,7 @@ import (
 client := privacy.NewClient("http://localhost:8001", privacy.DefaultFilterConfig())
 handler := privacy.HTTPMiddleware(yourHandler, client)
 
-http.ListenAndServe(":8080", handler)
+http.ListenAndServe(":4350", handler)
 ```
 
 ### WebSocket Logging

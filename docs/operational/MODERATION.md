@@ -1,5 +1,7 @@
 # Dark Pawns Moderation System
 
+**Last updated:** 2026-05-08
+
 ## Overview
 
 The Dark Pawns moderation system provides tools for managing player behavior, handling abuse reports, and maintaining a positive gaming environment. The system includes both in-game commands and administrative tools.

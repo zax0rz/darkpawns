@@ -28,7 +28,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgres://moderator:moderation_pass@moderation-db:5432/darkpawns_moderation
-      DARKPAWNS_API_URL: http://darkpawns-server:8080
+      DARKPAWNS_API_URL: http://darkpawns-server:4350
     depends_on:
       moderation-db:
         condition: service_healthy
@@ -46,7 +46,7 @@ services:
       - "8081:8081"
     environment:
       DATABASE_URL: postgres://moderator:moderation_pass@moderation-db:5432/darkpawns_moderation
-      DARKPAWNS_WS_URL: ws://darkpawns-server:8080/ws
+      DARKPAWNS_WS_URL: ws://darkpawns-server:4350/ws
       ADMIN_API_KEY: ${ADMIN_API_KEY:-changeme}
     depends_on:
       moderation-db:

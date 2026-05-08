@@ -21,7 +21,7 @@ CORS (Cross-Origin Resource Sharing) is configured via the `CORS_ALLOWED_ORIGINS
 
 ```bash
 # Development (default)
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4350
 
 # Production
 CORS_ALLOWED_ORIGINS=https://darkpawns.example.com,https://game.darkpawns.example.com

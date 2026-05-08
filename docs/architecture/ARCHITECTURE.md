@@ -1,5 +1,7 @@
 # Dark Pawns — Architecture
 
+**Last updated:** 2026-05-08
+
 ## Overview
 
 Dark Pawns is a Go MUD server faithful to ROM 2.4b / Dark Pawns C source. It reads unmodified `.wld`, `.mob`, `.obj`, and `.zon` area files via a custom parser, then serves the game over WebSocket (primary) and telnet (legacy). Concurrency is goroutine-per-connection with a shared `sync.RWMutex` on the world state, a 2-second combat ticker, and serialized Lua scripting via a single `gopher-lua` VM. The design prioritizes behavioral fidelity to the original C codebase — same command set, same combat formulas, same Lua script API — while replacing the single-threaded C event loop with Go's concurrency primitives.
@@ -65,16 +67,16 @@ Dark Pawns is a Go MUD server faithful to ROM 2.4b / Dark Pawns C source. It rea
 Entry point. Parses flags (`-world`, `-port`, `-db`), calls `parser.ParseWorld()`, constructs `game.World`, initializes `scripting.Engine`, connects to Postgres via `pkg/db`, creates `session.Manager`, wires callbacks (combat broadcast, death handler, memory hooks, fight scripts, damage tracking), registers HTTP routes (`/ws`, `/health`, `/metrics`), starts zone resets, and serves HTTP (with optional TLS). **Key types:** none exported. **Depends on:** `game`, `parser`, `scripting`, `session`, `db`, `metrics`, `web`.
 
 ### `pkg/session`
-WebSocket connection lifecycle and command dispatch. `Manager` holds all active sessions in a map keyed by player name, plus references to `game.World`, `combat.CombatEngine`, and `db.DB`. Each WebSocket upgrade spawns two goroutines (`readPump`, `writePump`) with a buffered send channel. Handles login (new player creation, bcrypt password verify, DB load/save), agent auth (API key validation), character creation state machine, and command routing. Agent sessions get variable subscription/dirty-tracking for push-based state sync. **Key types:** `Manager`, `Session`. **Depends on:** `game`, `combat`, `db`, `auth`, `command`, `common`, `events`, `parser`, `validation`, `audit`.
+WebSocket connection lifecycle and command dispatch. `Manager` holds all active sessions in a map keyed by player name, plus references to `game.World`, `combat.CombatEngine`, and `db.DB`. `Manager.mu` (`sync.RWMutex`) protects the sessions map — separate from world lock; sessions register/unregister independently of world state. Each WebSocket upgrade spawns two goroutines (`readPump`, `writePump`) with a buffered send channel. Handles login (new player creation, bcrypt password verify, DB load/save), agent auth (API key validation), character creation state machine, and command routing. Agent sessions get variable subscription/dirty-tracking for push-based state sync. **Key types:** `Manager`, `Session`. **Depends on:** `game`, `combat`, `db`, `auth`, `command`, `common`, `events`, `parser`, `validation`, `audit`.
 
 ### `pkg/game`
-The game world: rooms, mobs (prototypes + instances), objects, zones, players, items on the ground, shops, AI ticker, spawner/zone resets, point update ticker (regen/hunger). Single `sync.RWMutex` protects all world state. Exposes `ScriptableWorld` adapter for Lua interop. `SnapshotManager` provides lock-free room snapshots. `ZoneDispatcher` runs per-zone goroutines for reset processing. **Key types:** `World`, `Player`, `MobInstance`, `ObjectInstance`, `Spawner`, `ShopManager`, `SnapshotManager`, `ZoneDispatcher`, `WorldScriptableAdapter`. **Depends on:** `parser`, `combat`, `events`, `scripting`, `common`.
+The game world: rooms, mobs (prototypes + instances), objects, zones, players, items on the ground, AI ticker, spawner/zone resets, point update ticker (regen/hunger). Single `sync.RWMutex` (`World.mu`) protects top-level world state. `SnapshotManager` provides lock-free room snapshots via atomic pointer swaps. `ZoneDispatcher` runs per-zone goroutines for reset processing. Door and shop types (`Door`, `Shop`, `DoorManager`, `ShopManager`) live in `pkg/game/systems/`. **Key types:** `World`, `Player`, `MobInstance`, `ObjectInstance`, `Spawner`, `SnapshotManager`, `ZoneDispatcher`, `WorldScriptableAdapter`. **Depends on:** `parser`, `combat`, `events`, `scripting`, `common`.
+
+### `pkg/game/systems/`
+Door and shop subsystems. Contains `Door`, `DoorManager`, `Shop`, and `ShopManager`. Separated from core world state to keep pkg/game focused on entity management. **Depends on:** `game` (interfaces), `common`.
 
 ### `pkg/combat`
-Tick-based combat engine. Runs a 2-second ticker goroutine that snapshots all `CombatPair`s under write lock, then processes each pair (hit chance → damage → death check → fight scripts). Death handling delegates to game layer via `DeathFunc` callback. `Combatant` interface abstracts players and mobs. Damage formulas faithful to Dark Pawns C (`fight.c`). **Key types:** `CombatEngine`, `CombatPair`, `Combatant` (interface). **Depends on:** none (core package).
-
-### `pkg/combat` (skills, formulas)
-`GetAttacksPerRound()`, `CalculateHitChance()`, `CalculateDamage()`, position constants (`PosStanding`, `PosFighting`, etc.). Used by both the engine and `pkg/game/skills.go`.
+Tick-based combat engine. Runs a 2-second ticker goroutine that snapshots all `CombatPair`s under write lock (`CombatEngine.mu`), then processes each pair (hit chance → damage → death check → fight scripts) outside the lock. Death handling delegates to game layer via `DeathFunc` callback. `Combatant` interface abstracts players and mobs. Damage formulas faithful to Dark Pawns C (`fight.c`). `GetAttacksPerRound()`, `CalculateHitChance()`, `CalculateDamage()`, position constants (`PosStanding`, `PosFighting`, etc.) used by both the engine and `pkg/game/skills.go`. **Key types:** `CombatEngine`, `CombatPair`, `Combatant` (interface). **Depends on:** none (core package).
 
 ### `pkg/game/skills.go`
 Skill implementations: backstab, bash, kick, trip, headbutt, rescue, sneak, hide, steal, pick lock. Each `Do*()` function returns a `SkillResult` with damage, messages (to char/victim/room), and side effects (stun, knockdown, self-stumble). Class/level/position requirements in `SkillClassReq` and `SkillPosReq` maps. Pronoun substitution (`$n`, `$N`, `$e`, etc.) faithful to ROM `act()`. **Key types:** `SkillResult`, `Pronouns`. **Depends on:** `combat`.
@@ -83,7 +85,7 @@ Skill implementations: backstab, bash, kick, trip, headbutt, rescue, sneak, hide
 Lua scripting engine using `gopher-lua`. Single VM (`lua.LState`) protected by `sync.Mutex` — all script execution is serialized. Registers ~60 Lua API functions matching the original C `cmdlib` array (`act`, `do_damage`, `say`, `spell`, `oload`, `mload`, `objfrom`, `objto`, `create_event`, etc.). Sandboxed: no `io`, `os.execute`, `dofile` (overridden to script-safe version), `debug`, `package`. 10MB memory limit. Scripts loaded from `world/lib/scripts/` matching original C paths (e.g., `mob/144/hisc.lua`). `RunScript()` marshals Go structs to Lua tables, executes the trigger function, reads back mutations (hp, gold), and returns whether the script "handled" the event. **Key types:** `Engine`, `ScriptContext`, `ScriptableWorld`, `ScriptablePlayer`, `ScriptableMob`, `ScriptableObject` (all interfaces). **Depends on:** `combat`.
 
 ### `pkg/events`
-Two subsystems: (1) `EventQueue` — a timer-based priority queue (min-heap) for scheduled game events (Lua `create_event`, mob timers). Pulse-based timing (100ms per pulse, matching original's `OPT_USEC`). Events can re-schedule themselves by returning a positive delay. (2) `InProcessBus` — a typed pub/sub event bus for decoupled subsystem communication (`MobKilledEvent`, `PlayerLeveledEvent`, `RoomEnteredEvent`, etc.). **Key types:** `EventQueue`, `Bus`, `InProcessBus`, `BusEvent`. **Depends on:** none.
+Two subsystems: (1) `EventQueue` — a timer-based priority queue (min-heap) for scheduled game events (Lua `create_event`, mob timers). Pulse-based timing (100ms per pulse, matching original's `OPT_USEC`). Events can re-schedule themselves by returning a positive delay. (2) `InProcessBus` — a typed in-process pub/sub event bus for decoupled subsystem communication (`MobKilledEvent`, `PlayerLeveledEvent`, `RoomEnteredEvent`, etc.). Not Redis-backed; all events are delivered synchronously within the process. **Key types:** `EventQueue`, `Bus`, `InProcessBus`, `BusEvent`. **Depends on:** none.
 
 ### `pkg/parser`
 Reads original ROM/Dark Pawns area files from disk. `ParseWorld(libDir)` scans `wld/`, `mob/`, `obj/`, `zon/` subdirectories and returns a `World` struct containing all parsed rooms, mobs, objects, and zones. Parsed data is immutable after boot — runtime state (mob instances, item instances) lives in `pkg/game`. **Key types:** `World`, `Room`, `Mob`, `Obj`, `Zone`, `Exit`. **Depends on:** none.
@@ -103,6 +105,9 @@ Shared interfaces to break circular dependencies. `CommandSession` abstracts ses
 ### `pkg/db`
 Postgres persistence. Player records (stats, inventory, equipment) serialized to/from JSON columns. Agent API key validation. `New()` connects, `SavePlayer`/`GetPlayer`/`CreatePlayer` for CRUD. Graceful: server runs without DB (no persistence). **Key types:** `DB`, `PlayerRecord`. **Depends on:** `game`.
 
+### `pkg/storage`
+Optional SQLite persistence backend via mattn/go-sqlite3 with WAL mode. Players table (JSON player state with timestamps), world state (zone reset tracking, mob respawn timers), narrative memory (agent long-term memory, future use). **Status:** Backend implemented and tested. Not wired into `cmd/server/main.go` yet — currently in-memory only. Wire-in: `NewSQLiteBackend(path)` → pass through World constructor. **Depends on:** none.
+
 ### Other packages
 - **`pkg/ai`** — AI agent combat integration, AI ticker for NPC behavior
 - **`pkg/agent`** — Agent session variable protocol (subscribe/dirty/flush)
@@ -113,7 +118,6 @@ Postgres persistence. Player records (stats, inventory, equipment) serialized to
 - **`pkg/privacy`** — Privacy/data handling utilities
 - **`pkg/secrets`** — Secret management
 - **`pkg/spells`** — Spell system (in progress)
-- **`pkg/storage`** — Storage abstractions
 - **`pkg/validation`** — Input validation (player names, etc.)
 - **`web/`** — Security headers middleware
 
@@ -127,18 +131,48 @@ Postgres persistence. Player records (stats, inventory, equipment) serialized to
 - **AI ticker:** 1 goroutine (game.World)
 - **Point update ticker:** 1 goroutine (regen every 30s)
 - **Zone dispatcher:** 1 goroutine per zone (resets, AI processing)
-- **Lua transit cleanup:** 1 goroutine (10s ticker, orphans items not placed by `objto` within 30s)
+- **Lua transit cleanup:** 1 goroutine (10s ticker, orphans items not placed by `objto` within 30s) — added 2026-05-08
 - **Zone resets:** 1 goroutine (60s periodic check)
 
 ### Locking
-- **`World.mu` (`sync.RWMutex`):** Protects rooms, mobs, players, activeMobs, roomItems. Commands take read locks for lookups, write locks for mutations (movement, item pickup, mob spawn). Long-held write locks are avoided by snapshotting under lock then processing outside.
-- **`Manager.mu` (`sync.RWMutex`):** Protects the sessions map. Separate from world lock — sessions register/unregister independently of world state.
-- **`CombatEngine.mu` (`sync.RWMutex`):** Protects combatPairs map. Combat round snapshots pairs under write lock, processes outside lock.
-- **`scripting.Engine.mu` (`sync.Mutex`):** Serializes all Lua VM access. Single VM, single thread of execution for scripts. No concurrent script runs.
-- **`Session.send` (buffered channel, cap 256):** Lock-free message passing between session goroutines and game code.
 
-### Deadlock avoidance
-The lock ordering is: `Manager.mu` → `World.mu` → `CombatEngine.mu`. Never acquired in reverse. Lua scripts hold no Go locks (VM mutex is released between script invocations).
+**`pkg/game` lock hierarchy** (from `pkg/game/locks.go`, audited 2026-05-07):
+
+```
+  1. World.mu           — top-level game state (rooms, mobs, objs)
+  2. World.gossipMu     — gossip channel history
+  3. World.weatherMu    — weather state
+  4. World.mailWriteMu  — mail persistence
+  5. Clan.mu            — clan membership, ranks
+  6. Player.mu          — player stats, gold, exp, position
+  7. Equipment.mu       — equipped item slots
+  8. Inventory.mu       — carried item list
+  9. MobInstance.mu     — mob state, HP, position  [added 2026-05-08]
+ 10. Spawner.mu         — zone reset scheduling
+ 11. BoardState.mu      — bulletin board messages
+ 12. Shop.mu            — shop inventory, pricing
+ 13. ZoneDispatcher.mu  — zone command routing
+ 14. logWriterMu        — log file writes (independent)
+```
+
+Acquire locks from top to bottom only. Never hold a lower-numbered lock while acquiring a higher-numbered one.
+
+**Same-level locks** (e.g., multiple `Player.mu` on different players): always acquire in consistent order (by Name/ID) to prevent ABBA deadlocks.
+
+**Outside pkg/game hierarchy:**
+- **`Manager.mu` (`sync.RWMutex`, pkg/session):** Protects sessions map. Separate from world lock — sessions register/unregister independently of world state. Follows outermost-first principle.
+- **`CombatEngine.mu` (`sync.RWMutex`, pkg/combat):** Protects combatPairs map. Combat round snapshots pairs under write lock, processes outside lock. Follows outermost-first principle.
+- **`scripting.Engine.mu` (`sync.Mutex`):** Serializes all Lua VM access. Single VM, single thread of execution for scripts. No concurrent script runs. Lua scripts hold no Go locks (VM mutex released between script invocations).
+
+**Verified safe nested patterns** (from locks.go audit):
+- `World.mu → MobInstance.mu` (save.go — deserialization)
+- `Player.mu → Equipment.mu` (death.go — death cleanup)
+- `Clan.mu → Player.mu` (item_transfer.go — gold transfer)
+- `World.mu.RLock → Player/Mob.mu` (party.go — group handling)
+
+**`Session.send` (buffered channel, cap 256):** Lock-free message passing between session goroutines and game code.
+
+Never upgrade `RLock → Lock` without releasing first. `World.mu` is always outermost — never call World methods that acquire `World.mu` while holding `Player.mu`, `MobInstance.mu`, or `Clan.mu`.
 
 ## Command Dispatch
 
@@ -199,7 +233,7 @@ JWT tokens are 24-hour HMAC-SHA256, issued on login and sent in the welcome mess
 Based on original C `events.c`. Used for Lua `create_event()` — scheduled callbacks that fire after N PULSE_VIOLENCE units (1 unit = 2 seconds = 20 pulses). When an event fires, it dispatches the Lua trigger on the source mob. Events can re-schedule themselves by returning a positive delay from the callback. Events are cancelled when mobs die (`CancelBySource`).
 
 ### InProcessBus (pub/sub)
-Typed event bus for decoupled subsystem communication. Event types:
+Typed in-process event bus for decoupled subsystem communication. Not Redis-backed. Events are processed sequentially per publish call. Event types:
 - `combat.*` — mob killed, player killed, damage dealt
 - `player.*` — connected, disconnected, leveled
 - `economy.*` — item bought/sold, gold earned
@@ -207,7 +241,7 @@ Typed event bus for decoupled subsystem communication. Event types:
 - `game.*` — command executed
 - `admin.*` — wizard commands
 
-Handlers subscribe by event type string. Events are processed sequentially per publish call.
+Handlers subscribe by event type string.
 
 ## Snapshot System (lock-free reads)
 
@@ -215,8 +249,8 @@ Handlers subscribe by event type string. Events are processed sequentially per p
 
 **How it works:**
 - `World` holds a `SnapshotManager` with an `atomic.Pointer[WorldSnapshot]`
-- World writers mutate the live `rooms` map under World's write lock, then call `PublishSnapshot()`
-- `PublishSnapshot` allocates a new `WorldSnapshot`, copies the rooms map, then atomically stores the pointer
+- World writers mutate the live `rooms` map under `World.mu` write lock, then call `PublishSnapshot()`
+- `PublishSnapshot` allocates a new `WorldSnapshot`, copies the rooms map, then atomically stores the pointer (no lock held on swap)
 - Readers call `World.Snapshot()` which does a load-free pointer read — no locks held
 
 **Status:** Initialized and publishing on world boot. Readers (GetRoom, look, movement) still use the mutex path via `World.rooms`. Transition readers to `Snapshot()` for zero-lock lookups in performance-critical paths.
@@ -277,4 +311,4 @@ All Lua execution goes through `Engine.RunScript(ctx, filename, triggerName)`, w
 - **Custom triggers** — scheduled via `create_event()` (e.g., "port", "jail", "bane_one")
 
 ### Object transfer protocol
-`objfrom(item, "room"|"char")` removes an item and holds it in a transit map. `objto(item, "room"|"char", target)` places it. Orphaned items (not placed within 30s) are logged and discarded.
+`objfrom(item, "room"|"char")` removes an item and holds it in a transit map. `objto(item, "room"|"char", target)` places it. Orphaned items (not placed within 30s) are logged and discarded by the Lua transit cleanup goroutine (10s ticker).
