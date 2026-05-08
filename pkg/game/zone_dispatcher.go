@@ -106,8 +106,7 @@ func (zd *ZoneDispatcher) zoneLoop(worker *zoneWorker) {
 				lastReset = time.Now()
 			}
 
-			// Run per-zone mob AI processing
-			zd.runZoneMobAI(worker.zone)
+			// Mob AI is handled globally by AITick() — see runZoneMobAI comment.
 		}
 	}
 }
@@ -122,43 +121,12 @@ func (zd *ZoneDispatcher) runZoneReset(zone *parser.Zone) {
 	}
 }
 
-// runZoneMobAI processes mob AI ticks for all mobs in a zone.
-// Iterates active mobs that reside in rooms belonging to this zone and
-// dispatches basic AI behaviors. Placeholder — expand as AI systems land.
-func (zd *ZoneDispatcher) runZoneMobAI(zone *parser.Zone) {
-	mobs := zd.world.GetAllMobs()
-	zoneNum := zone.Number
-
-	for _, mob := range mobs {
-		roomVNum := mob.GetRoom()
-		if roomVNum < 0 {
-			continue
-		}
-		room := zd.world.GetRoomInWorld(roomVNum)
-		if room == nil || room.Zone != zoneNum {
-			continue
-		}
-
-		// Check respawn triggers — room_reset_vnum list
-		// Respawn logic: scan zone reset commands for the mob's room to
-		// respawn if below expected count and timer elapsed.
-		// See src/db.c:reset_zone() for the original C implementation.
-
-		// Move wandering mobs
-		// Wandering: pick a random exit and move the mob to the adjacent room.
-		// See src/mobact.c:mob_activity() for the original C logic.
-		// (Handled by mob.HasFlag("wander") check when implemented.)
-
-		// Check aggro ranges
-		// Aggro: scan room for players below aggro level threshold
-		// and initiate combat via w.AttackMobOnPlayer(mob, target).
-		// See src/mobact.c:hitprcnt() and do_hunt_victim() for thresholds.
-		// (Handled by mob.HasFlag("aggressive") && !mob.Fighting check when implemented.)
-	}
-
-	// Zone-wide events (evacuation, invasion triggers) are handled by
-	// spec_proc scripts triggered by zone-level time or condition changes.
-}
+// runZoneMobAI is intentionally empty.
+// Mob AI is handled globally by World.AITick() → runMobAI() → MobileActivityForMob().
+// The global tick processes all active mobs every 10 seconds. Zone-scoped AI
+// would double-process mobs and conflict with the global tick. If zone-specific
+// AI timing is needed in the future, wire it here and remove the mob processing
+// from AITick().
 
 // zoneResetInterval returns the reset interval for a zone.
 // Defaults to the dispatcher interval if the zone doesn't specify one.

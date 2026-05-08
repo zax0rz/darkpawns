@@ -581,6 +581,17 @@ func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) {
 	}
 }
 
+// RegisterObjectInstance adds a deserialized object to the spawner's tracking.
+// Called when loading player saves so the spawner respects max-in-world limits.
+func (s *Spawner) RegisterObjectInstance(obj *ObjectInstance) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if obj == nil || obj.Prototype == nil {
+		return
+	}
+	s.objInstances[obj.Prototype.VNum] = append(s.objInstances[obj.Prototype.VNum], obj)
+}
+
 // RemoveMobInstance decrements the spawner's instance count for a dead mob,
 // allowing it to respawn on the next zone reset.
 func (s *Spawner) RemoveMobInstance(mobVNum int, mob *MobInstance) {
