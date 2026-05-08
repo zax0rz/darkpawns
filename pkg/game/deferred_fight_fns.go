@@ -197,6 +197,8 @@ func (m *MobInstance) SetHunting(target string) {
 	if m == nil {
 		return
 	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if m.Hunting == target {
 		return
 	}
@@ -213,7 +215,12 @@ func (m *MobInstance) SetHunting(target string) {
 // --------------------------------------------------------------------------
 
 func (m *MobInstance) Remember(name string) {
-	if m == nil || m.Memory == nil {
+	if m == nil {
+		return
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.Memory == nil {
 		return
 	}
 	for _, n := range m.Memory {
@@ -225,7 +232,12 @@ func (m *MobInstance) Remember(name string) {
 }
 
 func (m *MobInstance) Forget(name string) bool {
-	if m == nil || m.Memory == nil {
+	if m == nil {
+		return false
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.Memory == nil {
 		return false
 	}
 	for i, n := range m.Memory {

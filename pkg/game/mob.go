@@ -88,6 +88,7 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Equipment:      make(map[int]*ObjectInstance),
 		Fighting:       false,
 		FightingTarget: "",
+		Memory:         make([]string, 0),
 		CustomData:     make(map[string]interface{}),
 		Runtime:        MobRuntimeState{},
 	}
