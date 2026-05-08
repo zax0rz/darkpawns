@@ -83,6 +83,10 @@ func (w *World) HandleSpellDeathScriptable(victimName string, spellNum int, room
 	w.mu.RLock()
 	for _, mob := range w.activeMobs {
 		if mob.GetShortDesc() == victimName && mob.GetRoom() == roomVNum {
+			if !mob.IsAlive() {
+				w.mu.RUnlock()
+				return
+			}
 			w.mu.RUnlock()
 			w.handleMobDeath(mob, nil, spellNum)
 			return

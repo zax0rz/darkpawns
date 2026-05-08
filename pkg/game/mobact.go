@@ -73,6 +73,7 @@ func getMobVNumSpec(vnum int) SpecFunc {
 
 // MobileActivity runs the full mobact.c AI tick for every active mob.
 // Faithful port of mobile_activity() in src/mobact.c (lines 24-340).
+// Acquires per-mob locks for each mob in the iteration.
 //
 // C macros translated:
 //
@@ -80,7 +81,7 @@ func getMobVNumSpec(vnum int) SpecFunc {
 //	FIGHTING(mob) → mob.GetFighting() != ""
 //	AWAKE(mob)    → mob.GetPosition() >= combat.PosSitting
 //	MOB_FLAGGED   → hasMobFlag()
-//	hit()         → aiCombatEngine.StartCombat()
+//	hit()         → w.combatEngine.StartCombat()
 //	GET_HIT       → mob.GetHP()
 //	GET_MAX_HIT   → mob.GetMaxHP()
 //	CAN_SEE       → canSeePlayer()
@@ -96,200 +97,216 @@ func (w *World) MobileActivity() {
 	w.mu.RUnlock()
 
 	for _, ch := range mobs {
-		if ch == nil || ch.Prototype == nil {
+		if !ch.IsAlive() {
 			continue
 		}
-		// C: if (!IS_MOB(ch) || FIGHTING(ch) || !AWAKE(ch)) continue;
-		if ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+		ch.mu.Lock()
+		if ch.Prototype == nil {
+			ch.mu.Unlock()
 			continue
 		}
-		// C: if (GET_HIT(ch) < GET_MAX_HIT(ch) && MOB_FLAGGED(ch, MOB_CHARMED)) continue;
-		if ch.GetHP() < ch.GetMaxHP() && hasMobFlag(ch, "charmed") {
-			continue
-		}
+		w.mobileActivityForMob(ch)
+		ch.mu.Unlock()
+	}
+}
 
-		// -- MOB_SPEC: special procedure dispatch --
-		// C: spec proc returns true to skip to next mob.
-		if hasMobFlag(ch, "spec") {
-			specFn := getMobVNumSpec(ch.Prototype.VNum)
-			if specFn != nil && specFn(w, nil, ch, "", "") {
+// MobileActivityForMob runs mobact.c AI for a single mob.
+// Caller MUST hold mob.mu. Called by runMobAI to avoid O(N²) re-iteration.
+func (w *World) MobileActivityForMob(mob *MobInstance) {
+	w.mobileActivityForMob(mob)
+}
+
+// mobileActivityForMob is the internal per-mob AI dispatch.
+// Caller MUST hold mob.mu. Uses direct field access (ch.RoomVNum) instead of
+// getter methods to avoid re-entrant lock deadlock.
+func (w *World) mobileActivityForMob(ch *MobInstance) {
+	// C: if (!IS_MOB(ch) || FIGHTING(ch) || !AWAKE(ch)) continue;
+	if ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+		return
+	}
+	// C: if (GET_HIT(ch) < GET_MAX_HIT(ch) && MOB_FLAGGED(ch, MOB_CHARMED)) continue;
+	if ch.GetHP() < ch.GetMaxHP() && hasMobFlag(ch, "charmed") {
+		return
+	}
+
+	// -- MOB_SPEC: special procedure dispatch --
+	// C: spec proc returns true to skip to next mob.
+	if hasMobFlag(ch, "spec") {
+		specFn := getMobVNumSpec(ch.Prototype.VNum)
+		if specFn != nil && specFn(w, nil, ch, "", "") {
+			return
+		}
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 {
+		return
+	}
+
+	// -- Wake sleeper'd mobs --
+	if ch.GetPosition() < combat.PosSitting {
+		ch.SetStatus("standing")
+	}
+
+	// -- Scavenger (pick up best item, ~1-in-10 chance) --
+	// #nosec G404 — game RNG, not cryptographic
+	if hasMobFlag(ch, "scavenger") && rand.Intn(11) == 0 {
+		items := w.GetItemsInRoom(ch.RoomVNum)
+		if len(items) > 0 {
+			best := items[0]
+			bestCost := best.GetCost()
+			for _, obj := range items[1:] {
+				if c := obj.GetCost(); c > bestCost {
+					bestCost = c
+					best = obj
+				}
+			}
+			w.RemoveItemFromRoom(best, ch.RoomVNum)
+			ch.AddToInventory(best)
+		}
+	}
+
+	// -- Mob Movement (wandering) --
+	if !hasMobFlag(ch, "sentinel") && ch.GetPosition() >= combat.PosStanding {
+		w.wanderMob(ch)
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 {
+		return
+	}
+
+	// -- Aggressive Mobs --
+	aggressive := hasMobFlag(ch, "aggressive")
+	aggrEvil := hasMobFlag(ch, "aggr_evil")
+	aggrGood := hasMobFlag(ch, "aggr_good")
+	aggrNeutral := hasMobFlag(ch, "aggr_neutral")
+	wimpy := hasMobFlag(ch, "wimpy")
+	hasAlignAggr := aggrEvil || aggrGood || aggrNeutral
+
+	if aggressive || hasAlignAggr {
+		for _, vict := range w.GetPlayersInRoom(ch.RoomVNum) {
+			if vict.IsNPC() {
 				continue
 			}
-		}
-		if !mobAlive(ch) || ch.GetRoom() < 0 {
-			continue
-		}
-
-		// -- Wake sleeper'd mobs --
-		if ch.GetPosition() < combat.PosSitting {
-			ch.SetStatus("standing")
-		}
-
-		// -- Scavenger (pick up best item, ~1-in-10 chance) --
-		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-		if hasMobFlag(ch, "scavenger") && rand.Intn(11) == 0 {
-			items := w.GetItemsInRoom(ch.GetRoom())
-			if len(items) > 0 {
-				best := items[0]
-				bestCost := best.GetCost()
-				for _, obj := range items[1:] {
-					if c := obj.GetCost(); c > bestCost {
-						bestCost = c
-						best = obj
+			// C: MOB_WIMPY && AWAKE(vict)
+			if wimpy && vict.GetPosition() > combat.PosSleeping {
+				continue
+			}
+			// C: AFF_PROTECT_EVIL + IS_EVIL(ch) + !number(0,5)
+			// #nosec G404 — game RNG, not cryptographic
+			if vict.IsAffected(12) && mobIsEvil(ch) && rand.Intn(6) != 0 {
+				continue
+			}
+			// C: AFF_PROTECT_GOOD + IS_GOOD(ch) + !number(0,5)
+			// #nosec G404 — game RNG, not cryptographic
+			if vict.IsAffected(13) && mobIsGood(ch) && rand.Intn(6) != 0 {
+				continue
+			}
+			// Alignment matching faithful to mobact.c:
+			// If NONE of the per-alignment flags are set, hit everyone (plain MOB_AGGRESSIVE).
+			// If SOME are set, only hit matching alignments.
+			shouldHit := false
+			if hasAlignAggr {
+				vAlign := vict.GetAlignment()
+				if aggrEvil && vAlign <= -350 {
+					shouldHit = true
+				}
+				if aggrNeutral && vAlign > -350 && vAlign < 350 {
+					shouldHit = true
+				}
+				if aggrGood && vAlign >= 350 {
+					shouldHit = true
+				}
+			}
+			if shouldHit || aggressive {
+				if w.combatEngine != nil {
+					if err := w.combatEngine.StartCombat(ch, vict); err != nil {
+						slog.Warn("StartCombat failed in aggressive mob", "mob", ch.GetName(), "error", err)
 					}
 				}
-				w.RemoveItemFromRoom(best, ch.GetRoom())
-				ch.AddToInventory(best)
+				break
 			}
 		}
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 {
+		return
+	}
 
-		// -- Mob Movement (wandering) --
-		if !hasMobFlag(ch, "sentinel") && ch.GetPosition() >= combat.PosStanding {
-			w.wanderMob(ch)
-		}
-		if !mobAlive(ch) || ch.GetRoom() < 0 {
-			continue
-		}
-
-		// -- Aggressive Mobs --
-		isAggressive := hasMobFlag(ch, "aggressive")
-		isAggrEvil := hasMobFlag(ch, "aggr_evil")
-		isAggrGood := hasMobFlag(ch, "aggr_good")
-		isAggrNeutral := hasMobFlag(ch, "aggr_neutral")
-		isWimpy := hasMobFlag(ch, "wimpy")
-		hasAlignAggr := isAggrEvil || isAggrGood || isAggrNeutral
-
-		if isAggressive || hasAlignAggr {
-			for _, vict := range w.GetPlayersInRoom(ch.GetRoom()) {
-				if vict.IsNPC() {
-					continue
-				}
-				// C: MOB_WIMPY && AWAKE(vict)
-				if isWimpy && vict.GetPosition() > combat.PosSleeping {
-					continue
-				}
-				// C: AFF_PROTECT_EVIL + IS_EVIL(ch) + !number(0,5)
-				// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-				if vict.IsAffected(12) && mobIsEvil(ch) && rand.Intn(6) != 0 {
-					continue
-				}
-				// C: AFF_PROTECT_GOOD + IS_GOOD(ch) + !number(0,5)
-				// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-				if vict.IsAffected(13) && mobIsGood(ch) && rand.Intn(6) != 0 {
-					continue
-				}
-				// Alignment matching faithful to mobact.c:
-				// If NONE of the per-alignment flags are set, hit everyone (plain MOB_AGGRESSIVE).
-				// If SOME are set, only hit matching alignments.
-				shouldHit := false
-				if hasAlignAggr {
-					vAlign := vict.GetAlignment()
-					if isAggrEvil && vAlign <= -350 {
-						shouldHit = true
-					}
-					if isAggrNeutral && vAlign > -350 && vAlign < 350 {
-						shouldHit = true
-					}
-					if isAggrGood && vAlign >= 350 {
-						shouldHit = true
-					}
-				}
-				if shouldHit || isAggressive {
-					if aiCombatEngine != nil {
-						if err := aiCombatEngine.StartCombat(ch, vict); err != nil {
-							slog.Warn("StartCombat failed in aggressive mob", "mob", ch.GetName(), "error", err)
+	// -- Mob Memory --
+	if hasMobFlag(ch, "memory") && len(ch.Memory) > 0 {
+		for _, vict := range w.GetPlayersInRoom(ch.RoomVNum) {
+			if vict.IsNPC() {
+				continue
+			}
+			for _, name := range ch.Memory {
+				if name == vict.GetName() {
+					if w.combatEngine != nil {
+						if err := w.combatEngine.StartCombat(ch, vict); err != nil {
+							slog.Warn("StartCombat failed in memory mob", "mob", ch.GetName(), "error", err)
 						}
 					}
 					break
 				}
 			}
 		}
-		if !mobAlive(ch) || ch.GetRoom() < 0 {
-			continue
-		}
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 {
+		return
+	}
 
-		// -- Mob Memory --
-		if hasMobFlag(ch, "memory") && len(ch.Memory) > 0 {
-			for _, vict := range w.GetPlayersInRoom(ch.GetRoom()) {
-				if vict.IsNPC() {
-					continue
-				}
-				for _, name := range ch.Memory {
-					if name == vict.GetName() {
-						if aiCombatEngine != nil {
-							if err := aiCombatEngine.StartCombat(ch, vict); err != nil {
-								slog.Warn("StartCombat failed in memory mob", "mob", ch.GetName(), "error", err)
-							}
-						}
-						break
-					}
-				}
+	// -- Helper Mobs --
+	if hasMobFlag(ch, "helper") {
+		for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
+			if vict == ch {
+				continue
 			}
-		}
-		if !mobAlive(ch) || ch.GetRoom() < 0 {
-			continue
-		}
-
-		// -- Helper Mobs --
-		if hasMobFlag(ch, "helper") {
-			for _, vict := range w.GetMobsInRoom(ch.GetRoom()) {
-				if vict == ch {
-					continue
-				}
-				target := vict.GetFighting()
-				if target == "" {
-					continue
-				}
-				for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
-					if p.GetName() == target {
-						if aiCombatEngine != nil {
-							if err := aiCombatEngine.StartCombat(ch, p); err != nil {
-								slog.Warn("StartCombat failed in helper mob", "mob", ch.GetName(), "error", err)
-							}
-						}
-						break
-					}
-				}
+			target := vict.GetFighting()
+			if target == "" {
+				continue
 			}
-		}
-		if !mobAlive(ch) || ch.GetRoom() < 0 {
-			continue
-		}
-
-		// -- MOB_AGGR24: attack players level 24+ --
-		if hasMobFlag(ch, "aggr24") {
-			for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
-				if p.GetLevel() >= 24 {
-					if aiCombatEngine != nil {
-						if err := aiCombatEngine.StartCombat(ch, p); err != nil {
-							slog.Warn("StartCombat failed in aggr24 mob", "mob", ch.GetName(), "error", err)
+			for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+				if p.GetName() == target {
+					if w.combatEngine != nil {
+						if err := w.combatEngine.StartCombat(ch, p); err != nil {
+							slog.Warn("StartCombat failed in helper mob", "mob", ch.GetName(), "error", err)
 						}
 					}
 					break
 				}
 			}
 		}
-		if !mobAlive(ch) || ch.GetRoom() < 0 {
-			continue
-		}
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 {
+		return
+	}
 
-		// -- AGGR24 + AGGRESSIVE + Full HP: attack weaker NPCs --
-		if hasMobFlag(ch, "aggr24") && hasMobFlag(ch, "aggressive") && ch.GetHP() >= ch.GetMaxHP() {
-			for _, vict := range w.GetMobsInRoom(ch.GetRoom()) {
-				if vict == ch {
-					continue
-				}
-				if vict.GetLevel()+3 < ch.GetLevel() {
-					if aiCombatEngine != nil {
-						if err := aiCombatEngine.StartCombat(ch, vict); err != nil {
-							slog.Warn("StartCombat failed in aggr24 mob vs mob", "mob", ch.GetName(), "error", err)
-						}
+	// -- MOB_AGGR24: attack players level 24+ --
+	if hasMobFlag(ch, "aggr24") {
+		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+			if p.GetLevel() >= 24 {
+				if w.combatEngine != nil {
+					if err := w.combatEngine.StartCombat(ch, p); err != nil {
+						slog.Warn("StartCombat failed in aggr24 mob", "mob", ch.GetName(), "error", err)
 					}
-					break
 				}
+				break
+			}
+		}
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 {
+		return
+	}
+
+	// -- AGGR24 + AGGRESSIVE + Full HP: attack weaker NPCs --
+	if hasMobFlag(ch, "aggr24") && hasMobFlag(ch, "aggressive") && ch.GetHP() >= ch.GetMaxHP() {
+		for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
+			if vict == ch {
+				continue
+			}
+			if vict.GetLevel()+3 < ch.GetLevel() {
+				if w.combatEngine != nil {
+					if err := w.combatEngine.StartCombat(ch, vict); err != nil {
+						slog.Warn("StartCombat failed in aggr24 mob vs mob", "mob", ch.GetName(), "error", err)
+					}
+				}
+				break
 			}
 		}
 	}
@@ -321,4 +338,3 @@ func (w *World) scanForPlayer(roomVNum int, fn func(p *Player) bool) *Player { /
 func mobAlive(mob *MobInstance) bool {
 	return mob != nil && mob.GetHP() > 0
 }
-

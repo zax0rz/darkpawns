@@ -216,7 +216,7 @@ func main() {
 	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
-	game.SetAICombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
+	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
 
 	// Create HTTP mux
 	mux := http.NewServeMux()

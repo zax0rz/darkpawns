@@ -53,6 +53,9 @@ type World struct {
 	// All live object instances: instance ID -> ObjectInstance
 	objectInstances map[int]*ObjectInstance
 
+	// AI combat engine (CRIT-006: moved from global to World field)
+	combatEngine CombatEngine
+
 	// AI tick management
 	aiticker *time.Ticker
 	done     chan bool
@@ -103,6 +106,12 @@ type World struct {
 	// Matches C: struct review_t review[25] in db.c.
 	gossipMu      sync.RWMutex
 	gossipHistory []gossipEntry
+}
+
+// SetCombatEngine sets the combat engine for AI to use.
+// CRIT-006: replaces global SetAICombatEngine.
+func (w *World) SetCombatEngine(ce CombatEngine) {
+	w.combatEngine = ce
 }
 
 // NewWorld creates a new game world from parsed data.
@@ -460,8 +469,8 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	}
 	w.mu.RUnlock()
 
-	if mob == nil {
-		slog.Debug("executeMobCommand: mob not found", "vnum", mobVNum, "command", cmdStr)
+	if mob == nil || !mob.IsAlive() {
+		slog.Debug("executeMobCommand: mob not found or dead", "vnum", mobVNum, "command", cmdStr)
 		return
 	}
 

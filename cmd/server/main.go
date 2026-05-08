@@ -119,7 +119,7 @@ func main() {
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
 	manager.SetParryDodgeFuncs()                      // Enable parry/dodge checks (C-11)
-	game.SetAICombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
+	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
 
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {

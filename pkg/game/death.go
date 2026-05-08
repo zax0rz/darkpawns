@@ -155,6 +155,12 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 			break
 		}
 	}
+	// MED-011: mark dead and remove from active list immediately.
+	// Prevents two combat rounds from targeting the same mob.
+	if deadMob != nil {
+		deadMob.SetAlive(false)
+		delete(w.activeMobs, deadMobID)
+	}
 	w.mu.Unlock()
 
 	if deadMob == nil {
@@ -219,11 +225,6 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	for _, p := range players {
 		p.SendMessage(fmt.Sprintf("The corpse of %s falls to the ground.\r\n", deadMob.GetShortDesc()))
 	}
-
-	// extract_char: remove mob from active list
-	w.mu.Lock()
-	delete(w.activeMobs, deadMobID)
-	w.mu.Unlock()
 
 	// Decrement spawner instance count so the mob can respawn on next zone reset.
 	// Without this, CanSpawn() always returns false for killed mob vnums.

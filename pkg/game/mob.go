@@ -4,6 +4,7 @@ package game
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -20,7 +21,8 @@ type MobInstance struct {
 	ID        int    // World-assigned instance ID
 
 	// Current state
-	RoomVNum  int // -1 if not in a room (carried, etc.)
+	alive     atomic.Bool // CRIT-004: fast alive check without acquiring mu
+	RoomVNum  int         // -1 if not in a room (carried, etc.)
 	CurrentHP int
 	MaxHP     int
 	Status    string // "standing", "sleeping", "fighting", etc.
@@ -93,10 +95,17 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Runtime:        MobRuntimeState{},
 	}
 
+	mob.alive.Store(true)
+
 	// Create AI brain
 	// mob.Brain = ai.NewBrain(mob) // Temporarily commented out
 
 	return mob
+}
+
+// SetAlive marks the mob as alive or dead.
+func (m *MobInstance) SetAlive(v bool) {
+	m.alive.Store(v)
 }
 
 // GetID returns the world-assigned instance ID.
@@ -210,6 +219,7 @@ func (m *MobInstance) TakeDamage(amount int) {
 	if m.CurrentHP < 0 {
 		m.CurrentHP = 0
 		m.Status = "dead"
+		m.alive.Store(false)
 	}
 }
 
@@ -223,11 +233,9 @@ func (m *MobInstance) Heal(amount int) {
 	}
 }
 
-// IsAlive returns true if the mob is alive.
+// IsAlive returns true if the mob is alive (atomic, no lock needed).
 func (m *MobInstance) IsAlive() bool {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.CurrentHP > 0
+	return m.alive.Load()
 }
 
 // AddToInventory adds an object to the mob's inventory.
@@ -505,6 +513,10 @@ func (m *MobInstance) SetHealth(health int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.CurrentHP = health
+	if health <= 0 {
+		m.Status = "dead"
+		m.alive.Store(false)
+	}
 }
 
 func (m *MobInstance) GetMaxHealth() int {

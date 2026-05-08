@@ -24,15 +24,11 @@ const (
 	AISentinel
 )
 
-// combatEngine is stored for AI to use
-var aiCombatEngine CombatEngine
+// CRIT-006: aiCombatEngine moved to World.combatEngine.
+// SetAICombatEngine is replaced by World.SetCombatEngine.
 
-// SetAICombatEngine sets the combat engine for AI to use
-func SetAICombatEngine(ce CombatEngine) {
-	aiCombatEngine = ce
-}
-
-// AITick runs AI for all active mobs
+// AITick runs AI for all active mobs.
+// CRIT-004: uses atomic IsAlive() check — no lock needed for the pre-filter.
 func (w *World) AITick() {
 	w.mu.RLock()
 	mobs := make([]*MobInstance, 0, len(w.activeMobs))
@@ -42,55 +38,63 @@ func (w *World) AITick() {
 	w.mu.RUnlock()
 
 	for _, mob := range mobs {
+		// CRIT-004: atomic alive check — skip dead mobs without acquiring m.mu
+		if !mob.IsAlive() {
+			continue
+		}
 		w.runMobAI(mob)
 	}
 }
 
 // runMobAI runs AI for a single mob.
-// This is the integration layer that delegates to the faithful
-// mobact.go:MobileActivity() and then handles wandering.
+// CRIT-004: holds mob.mu for the entire AI cycle to prevent races between
+// AI tick, combat state changes, and player interactions.
+//
+// MED-010: wanderMob uses direct field access (mob.RoomVNum) instead of
+// getter methods that would deadlock (they acquire m.mu.RLock/Lock).
 func (w *World) runMobAI(mob *MobInstance) {
+	mob.mu.Lock()
+	defer mob.mu.Unlock()
+
 	if mob.Prototype == nil {
 		return
 	}
 
 	// Don't act if already fighting
-	if aiCombatEngine != nil && aiCombatEngine.IsFighting(mob.GetName()) {
+	if w.combatEngine != nil && w.combatEngine.IsFighting(mob.GetName()) {
 		return
 	}
 
-	// Delegate to the faithful mobact.c port
-	w.MobileActivity()
+	// MED-009: call per-mob activity instead of full MobileActivity()
+	// This fixes the O(N²) bug where runMobAI called MobileActivity()
+	// which re-iterated ALL mobs — making every mob get processed N times
+	// per tick. MobileActivityForMob processes a single mob.
+	// Caller must hold mob.mu — see MobileActivityForMob contract.
+	w.MobileActivityForMob(mob)
 
-	// Post-activity: wandering (handled separately in mobact.c movement section
-	// and ai.go wanderMob). The original C wandering is inside mobile_activity(),
-	// but the existing Dark Pawns Go architecture handles wandering in this
-	// integration layer. We keep wanderMob() here as well since ai.go already
-	// has the infrastructure.
-	//
-	// Parse sentinel flag
+	// Post-activity: wandering
+	// Parse sentinel flag — direct field access, mob.mu is held
 	isSentinel := false
-	if mob.Prototype != nil {
-		for _, flag := range mob.Prototype.ActionFlags {
-			if flag == "sentinel" {
-				isSentinel = true
-				break
-			}
+	for _, flag := range mob.Prototype.ActionFlags {
+		if flag == "sentinel" {
+			isSentinel = true
+			break
 		}
 	}
 
 	// Wandering behavior — MOB_SENTINEL prevents movement only
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
 	if !isSentinel && rand.Intn(100) < 25 {
 		w.wanderMob(mob)
 	}
 }
 
-// wanderMob moves a mob to a random adjacent room
+// wanderMob moves a mob to a random adjacent room.
+// Caller must hold mob.mu. Uses direct field access to avoid deadlock.
+// MED-010: snapshot-based room reads, direct mob field writes.
 func (w *World) wanderMob(mob *MobInstance) {
 	snap := w.snapshots.Snapshot()
-	room, ok := snap.Rooms[mob.RoomVNum]
+	room, ok := snap.Rooms[mob.RoomVNum] // direct field access — under lock
 	if !ok {
 		return
 	}
@@ -102,12 +106,10 @@ func (w *World) wanderMob(mob *MobInstance) {
 
 	// Check if mob has MOB_STAY_ZONE flag
 	hasStayZone := false
-	if mob.Prototype != nil {
-		for _, flag := range mob.Prototype.ActionFlags {
-			if flag == "stay_zone" {
-				hasStayZone = true
-				break
-			}
+	for _, flag := range mob.Prototype.ActionFlags {
+		if flag == "stay_zone" {
+			hasStayZone = true
+			break
 		}
 	}
 
@@ -127,7 +129,6 @@ func (w *World) wanderMob(mob *MobInstance) {
 		}
 
 		// Check ROOM_DEATH and ROOM_NOMOB before mob movement
-		// Source: mobact.c - before moving a mob to a room, checks !ROOM_DEATH and !ROOM_NOMOB
 		hasDeath := false
 		hasNoMob := false
 		for _, flag := range targetRoom.Flags {
@@ -150,14 +151,16 @@ func (w *World) wanderMob(mob *MobInstance) {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
 	direction := validDirections[rand.Intn(len(validDirections))]
 	exit := room.Exits[direction]
 	targetRoom := snap.Rooms[exit.ToRoom]
 
-	// Move mob
+	// Move mob — direct field write, mob.mu is held
 	oldRoom := mob.RoomVNum
-	mob.SetRoom(targetRoom.VNum)
+	mob.RoomVNum = targetRoom.VNum
+
+	// Release mob lock during player notifications (I/O can block)
+	mob.mu.Unlock()
 
 	// Notify players in old room
 	oldPlayers := w.GetPlayersInRoom(oldRoom)
@@ -170,6 +173,9 @@ func (w *World) wanderMob(mob *MobInstance) {
 	for _, p := range newPlayers {
 		p.SendMessage(mob.GetShortDesc() + " has arrived.\n")
 	}
+
+	// Re-acquire lock — defer in runMobAI will fire with this held
+	mob.mu.Lock()
 }
 
 // StartAITicker starts the AI tick loop and event processing loop.
@@ -215,4 +221,3 @@ func (w *World) StartPointUpdateTicker(interval time.Duration) {
 		}
 	}()
 }
-

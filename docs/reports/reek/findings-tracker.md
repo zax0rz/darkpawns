@@ -9,10 +9,10 @@ Maintained by Daeron. Updated per triage cycle.
 | CRIT-001 | Graceless shutdown | cmd/server/main.go, main_web.go | FIXED | upstream (8c574d2) |
 | CRIT-002 | HandleNonCombatDeath stub | pkg/game/limits_condition.go | FIXED | 052945a |
 | CRIT-003 | Spawner.StartZoneResets no-op | pkg/game/spawner.go:57 | DOWNCLOSED | not a bug (dead code, not broken path) |
-| CRIT-004 | Memory slice concurrent read/write — no lock | mobact.go:215, deferred_fight_fns.go:215-233 | OPEN | AI tick reads, combat writes, zero sync |
+| CRIT-004 | Memory slice concurrent read/write — no lock | mobact.go:215, deferred_fight_fns.go:215-233 | FIXED | Per-mob mu locking in runMobAI + MobileActivity |
 | CRIT-005 | Hunting/HuntingID unlocked writes | deferred_fight_fns.go:196-206 | FIXED | Added m.mu.Lock/Unlock to SetHunting, Remember, Forget |
-| CRIT-006 | aiCombatEngine global — no sync | ai.go:28-32 | OPEN | Package-level var, no mutex/atomic |
-| CRIT-007 | executeMobCommand dangling pointer | world.go:458-465 | OPEN | RUnlock then use pointer |
+| CRIT-006 | aiCombatEngine global — no sync | ai.go:28-32 | FIXED | Moved to World.combatEngine field |
+| CRIT-007 | executeMobCommand dangling pointer | world.go:458-465 | FIXED | Added IsAlive() check after RUnlock |
 | CRIT-008 | HasMobFlag() bitmask dead code | mob.go:556, mob_flags_bits.go | REJECTED | Downgraded to LOW — bit path never called |
 
 ## HIGH
@@ -40,9 +40,9 @@ Maintained by Daeron. Updated per triage cycle.
 | MED-006 | SA6005 strings.EqualFold | multiple | OPEN |
 | MED-007 | S1039 unnecessary fmt.Sprintf | multiple | OPEN |
 | MED-008 | SA4006 assigned and not used | multiple | OPEN |
-| MED-009 | MobileActivity() no mob-level locking | mobact.go:90-290 | OPEN | State changes between accessor calls |
-| MED-010 | wanderMob() stale snapshot mutation | ai.go:109-170 | OPEN | Reads snapshot, mutates via world methods |
-| MED-011 | handleMobDeath pointer race | death.go:62-99 | OPEN | Two combat rounds could target same mob |
+| MED-009 | MobileActivity() no mob-level locking | mobact.go:90-290 | FIXED | Per-mob mu in MobileActivity + MobileActivityForMob |
+| MED-010 | wanderMob() stale snapshot mutation | ai.go:109-170 | FIXED | Direct field access under mob.mu, snapshot reads |
+| MED-011 | handleMobDeath pointer race | death.go:62-99 | FIXED | SetAlive(false) + early remove from activeMobs |
 | MED-012 | Deserialized objects not tracked | serialize.go:39-50, 75-90 | OPEN | Player save items bypass spawner tracking |
 | MED-013 | GetExtraFlags() zero-value comparison | object.go:427 | OPEN | Brittle but functionally correct |
 | MED-014 | NewMob() Flags bitmask uninitialized | mob.go:70-95 | OPEN | Same root cause as CRIT-008, dead code path |

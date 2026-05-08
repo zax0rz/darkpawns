@@ -454,8 +454,8 @@ func (w *World) CreateObject(vnum int, roomVNum int) *ObjectInstance {
 // StartRoomCombat initiates combat between a mob and a player.
 // StartRoomCombat initiates combat between attacker and defender.
 func (w *World) StartRoomCombat(attacker, defender combat.Combatant) {
-	if aiCombatEngine != nil {
-		if err := aiCombatEngine.StartCombat(attacker, defender); err != nil {
+	if w.combatEngine != nil {
+		if err := w.combatEngine.StartCombat(attacker, defender); err != nil {
 			slog.Warn("StartCombat failed in StartRoomCombat", "error", err)
 		}
 	}
@@ -463,8 +463,8 @@ func (w *World) StartRoomCombat(attacker, defender combat.Combatant) {
 
 // StartMobCombat initiates combat between two mobs.
 func (w *World) StartMobCombat(attacker, defender *MobInstance) {
-	if aiCombatEngine != nil {
-		if err := aiCombatEngine.StartCombat(attacker, defender); err != nil {
+	if w.combatEngine != nil {
+		if err := w.combatEngine.StartCombat(attacker, defender); err != nil {
 			slog.Warn("StartCombat failed in StartMobCombat", "error", err)
 		}
 	}
