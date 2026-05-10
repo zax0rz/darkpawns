@@ -66,3 +66,13 @@ Reek delivered three reports overnight: spells/world code crawl, combat fidelity
 ### Paper Relevance
 
 This triage demonstrates multi-report synthesis — three separate Reek crawls covering different subsystems, consolidated into a single prioritized view. The dual hit-resolution path finding is especially relevant: it's an architectural issue that no single-file analysis would surface. Requires understanding how the combat engine dispatches across files. The stub function pattern (ported but never wired) is a recurring theme worth tracking for the AIIDE paper — it suggests the porting process had a "skeleton first, flesh later" approach that left gaps.
+
+---
+
+## [DESIGN] 2026-05-10 — CRIT Triage: Dual Hit Path + Combat Messages
+
+**CRIT-009 (Dual hit path):** DEFERRED — Not a bug. Intentional CircleMUD design. Skills bypass parry/dodge as a balance lever (cooldown resource = guaranteed connection). If balance tuning needed later, extract defense checks into a callable method. The Architect agrees.
+
+**CRIT-010 (load_messages):** PRIORITY HIGH — The Architect corrected my initial assessment that this was "polish." Combat messages ARE the experience. A new player getting ROCKED by a wandering mob is a core memory. The tiered system exists in Go (14 tiers, `damMessageTiers` in fight_core.go) but lacks: (1) multiple variants per tier (C had 3-4 random options), (2) data-driven loading from MESS_FILE, (3) skill-specific message tables. Scoped as a content day for Blenda.
+
+**Key insight from The Architect:** Game preservation isn't just about mechanics working — it's about the messages that create memories. "Being rocked by a mob" is the experience. The damage number is irrelevant. The message IS the memory.
