@@ -45,6 +45,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -120,6 +121,7 @@ func main() {
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
 	manager.SetOnRoundEnd()                          // Decrement wait states each combat round
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
+	combat.InitSkillMessages()                            // Wire multi-variant combat messages
 
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {
