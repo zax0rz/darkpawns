@@ -73,6 +73,7 @@ var (
 	HealAllPlayers               func()                     // Heal all connected players to full
 	GetGold                      func(name string) int
 	SetGold                      func(name string, gold int)
+	SendToCharFunc               func(name string, msg string) // Send message to single character
 )
 
 // ---------------------------------------------------------------------------
@@ -675,6 +676,12 @@ var NowUnix = func() int64 { return 0 }
 // ---------------------------------------------------------------------------
 
 // damMessageTier describes one entry of the weapon damage message table.
+// CRIT-010: In the original C code, messages were loaded from data files via
+// load_messages() (db.c). Each tier had MULTIPLE variants that were randomly
+// selected (e.g., 3-4 different "barely grazes" messages). The Go version
+// has a single message per tier — significantly less varied combat flavor.
+// TODO: Restore multi-variant messages, either from data files or hardcoded
+// arrays with random selection per hit.
 type damMessageTier struct {
 	MinDamage int
 	Room      string
@@ -717,14 +724,19 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 
 	sex := ch.GetSex()
 	roomMsg := replaceMessageTokens(tier.Room, ch.GetName(), victim.GetName(), singular, plural, sex)
-	_ = replaceMessageTokens(tier.Char, ch.GetName(), victim.GetName(), singular, plural, sex)
-	_ = replaceMessageTokens(tier.Victim, ch.GetName(), victim.GetName(), singular, plural, sex)
+	charMsg := replaceMessageTokens(tier.Char, ch.GetName(), victim.GetName(), singular, plural, sex)
+	victimMsg := replaceMessageTokens(tier.Victim, ch.GetName(), victim.GetName(), singular, plural, sex)
 
 	if BroadcastMessage != nil {
 		BroadcastMessage(ch.GetRoom(), roomMsg, ch.GetName()+" "+victim.GetName())
 	}
 
-
+	// CRIT-010: Send attacker and victim their own messages.
+	// In C, act() sent to TO_CHAR and TO_VICT separately.
+	if SendToCharFunc != nil {
+		SendToCharFunc(ch.GetName(), charMsg)
+		SendToCharFunc(victim.GetName(), victimMsg)
+	}
 }
 
 // replaceMessageTokens substitutes $n, $N, $e, #w, #W in a message template.
