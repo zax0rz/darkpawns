@@ -258,6 +258,11 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	if w.spawner != nil {
 		w.spawner.RemoveMobInstance(deadMob.VNum, deadMob)
 	}
+
+	// TODO(HIGH-016): Clear MOB_MEMORY grudges for this mob.
+	// deadMob.Memory contains names of players who attacked this mob.
+	// In the original, forget() is called during extract_char or death.
+	// The Memory field exists but is not cleared on death.
 }
 
 // handlePlayerDeath implements die()/die_with_killer() + raw_kill() for players.
@@ -380,6 +385,11 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	player.SetPosition(combat.PosStanding)
 	player.Heal(9999)
 	player.StopFighting()
+
+	// TODO(HIGH-016): Remove AFF_WEREWOLF affect (bit 27) on death.
+	// The original C code strips werewolf form on player death.
+	// Also remove tattoo effects — see deferred_fight_fns.go TattooRemoveBonus.
+	// These are Dark Pawns-specific features not in stock CircleMUD.
 
 	player.SendMessage("\r\nYou feel your soul wrenched from your body...\r\n")
 	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
