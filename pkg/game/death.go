@@ -170,6 +170,16 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	}
 	w.mu.Unlock()
 
+	// HIGH-015: Stop combat for the dead mob so the engine doesn't keep
+	// processing stale pairs until next PerformRound tick.
+	// Note: World.combatEngine is the local CombatEngine interface (ai.go)
+	// which doesn't expose StopCombat. StopFighting on the mob itself is
+	// the best we can do from this layer; the combat engine will detect
+	// the dead mob on next PerformRound tick.
+	if deadMob != nil {
+		deadMob.StopFighting()
+	}
+
 	if deadMob == nil {
 		return
 	}
@@ -194,11 +204,21 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	// Transfer gold into corpse (as money objects)
 	mobGold := deadMob.GetGold()
 
+	// HIGH-013: If the killer is a player with AutoGold, gold was already
+	// awarded via AwardMobKillXP. Don't also put it in the corpse or it
+	// gets duplicated (player gets gold + can loot gold from corpse).
+	corpseGold := mobGold
+	if killer != nil && !killer.IsNPC() {
+		if pk, ok := killer.(*Player); ok && pk.AutoGold {
+			corpseGold = 0
+		}
+	}
+
 	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
 	if attackType == 93 { // SPELL_DISINTEGRATE
-		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, mobGold)
+		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, corpseGold)
 	} else {
-		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, mobGold)
+		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold)
 		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoom failed in mob death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		} else {
