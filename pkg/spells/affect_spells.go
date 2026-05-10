@@ -34,6 +34,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		aff = engine.NewAffect(engine.AffectHitRoll, 6, 2, "bless")
 		applyAffect(victim, aff)
 		aff = engine.NewAffect(engine.AffectType(engine.ApplySavingSpell), 6, -2, "bless")
+		applyAffect(victim, aff)
 	case SpellArmor:
 		aff = engine.NewAffect(engine.AffectArmorClass, 24, -15, "armor")
 	case SpellBlindness, SpellSmokescreen:
