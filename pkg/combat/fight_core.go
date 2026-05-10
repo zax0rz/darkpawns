@@ -1157,6 +1157,13 @@ func CounterProcs(ch Combatant) {
 
 // **********************************
 // 14. attitudeLoot()
+//
+// MED-021: Simplified from original Dark Pawns C code.
+// Original (fight.c:attitude_loot): junked unwanted items from corpse
+// then displayed one of 12 randomized brag messages.
+// Current Go version: "get all corpse" + fixed chat message.
+// TODO: Restore item junking (auto-junk junk-flagged items from corpse)
+// TODO: Restore randomized brag messages (12 variants per C source).
 // **********************************
 
 func AttitudeLoot(ch, victim Combatant) {
