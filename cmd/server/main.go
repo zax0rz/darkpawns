@@ -118,7 +118,7 @@ func main() {
 	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
-	manager.SetParryDodgeFuncs()                      // Enable parry/dodge checks (C-11)
+	manager.SetOnRoundEnd()                          // Decrement wait states each combat round
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
 
 	// Wire moderation: mute, ban, word filter, spam detection
