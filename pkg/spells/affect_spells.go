@@ -381,6 +381,23 @@ func npcRetaliate(victim, ch interface{}) {
 	}
 }
 
+// ReagentItem is the interface a reagent object must satisfy.
+// Extracted from function-local to package scope for testability.
+type ReagentItem interface {
+	GetShortDesc() string
+}
+
+// ReagentInventory is the interface for an inventory that can find and remove reagents.
+type ReagentInventory interface {
+	FindItem(string) (ReagentItem, bool)
+	RemoveItem(ReagentItem) bool
+}
+
+// InventoryHolder is the interface for a caster that has an inventory.
+type InventoryHolder interface {
+	GetInventory() ReagentInventory
+}
+
 func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int {
 	_ = spellNum
 	if len(reagents) == 0 {
@@ -391,20 +408,10 @@ func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int 
 
 	// Look for and consume the reagent from the caster's inventory.
 	// Uses interface assertions to avoid circular imports (spells → game).
-	type reagentItem interface {
-		GetShortDesc() string
-	}
-	type reagentInventory interface {
-		FindItem(string) (reagentItem, bool)
-		RemoveItem(reagentItem) bool
-	}
-	type inventoryHolder interface {
-		GetInventory() reagentInventory
-	}
 	type messageSender interface { SendMessage(string) }
 
 	var found bool
-	if holder, ok := ch.(inventoryHolder); ok {
+	if holder, ok := ch.(InventoryHolder); ok {
 		if item, ok := holder.GetInventory().FindItem(reagentName); ok {
 			holder.GetInventory().RemoveItem(item)
 			found = true
