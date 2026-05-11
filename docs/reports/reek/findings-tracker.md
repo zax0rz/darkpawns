@@ -25,7 +25,7 @@ Maintained by Daeron. Updated per triage cycle.
 | HIGH-002 | DefaultServeMux exposed | cmd/server/main_web.go | FIXED | upstream (8c574d2) |
 | HIGH-003 | Duplicated entry points | main.go vs main_web.go | FIXED | main_web.go already removed; orphaned //go:build !web tag cleaned up (Daeron) |
 | HIGH-004 | Doors don't reset on zone reset | pkg/game/world.go | FIXED | upstream (8c574d2) |
-| HIGH-005 | Non-TLS default | cmd/server/main_web.go | DEFERRED | Configuration decision — needs The Architect |
+| HIGH-005 | Non-TLS default | cmd/server/main.go | FIXED | TLS auto-detects from cert files. Plaintext warning when no certs. (Daeron) |
 | HIGH-006 | handlePlayerDeath lock ordering risk | death.go:295-320 | DEFERRED | Documented safe — monitor under load |
 | HIGH-007 | runZoneMobAI no-op shell | zone_dispatcher.go:141-165 | FIXED | Removed dead code — AI handled globally by AITick() |
 | HIGH-008 | Memory field nil in NewMob() | mob.go:70-95 | FIXED | Initialized Memory: make([]string, 0) in NewMob() |
