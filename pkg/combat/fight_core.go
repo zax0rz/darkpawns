@@ -15,7 +15,7 @@ import (
 
 var (
 	BroadcastMessage            func(roomVNum int, msg string, exclude string)
-	SkillMessageFunc            func(dam int, ch, vict string, attackType int) bool
+	SkillMessageFunc            func(dam int, ch, vict string, attackType int, roomVNum int) bool
 	GainExp                     func(name string, amount int)
 	ExtractChar                 func(name string)
 	MakeCorpseFunc              func(victim string, attackType int)
@@ -26,6 +26,7 @@ var (
 	GetRaceHate                 func(name string, index int) int
 	HasAffect                   func(name string, aff int) bool
 	HasAffectStr                func(name string, aff string) bool
+	GetCharacterSex             func(name string) int
 	RemoveAffect                func(name string, skillNum int)
 	RemoveAllAffects            func(name string)
 	RunDeathScript              func(killer, victim string, roomVNum int)
@@ -144,6 +145,8 @@ const (
 	AFF_PROTECT_EVIL = 6
 	AFF_PROTECT_GOOD = 7
 	AFF_GROUP        = 8
+	AFF_HASTE       = 9
+	AFF_SLOW        = 10
 )
 
 const (
@@ -151,6 +154,8 @@ const (
 	AFF_STR_WEREWOLF  = "AFF_WEREWOLF"
 	AFF_STR_VAMPIRE   = "AFF_VAMPIRE"
 	AFF_STR_FLESH_ALT = "AFF_FLESH_ALTER"
+	AFF_STR_HASTE    = "AFF_HASTE"
+	AFF_STR_SLOW     = "AFF_SLOW"
 )
 
 const (
@@ -476,13 +481,13 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	isWeapon := attackType >= TYPE_HIT && attackType < TYPE_SUFFERING
 	if !isWeapon {
 		if SkillMessageFunc != nil {
-			SkillMessageFunc(dam, chName, victimName, attackType)
+			SkillMessageFunc(dam, chName, victimName, attackType, ch.GetRoom())
 		}
 	} else {
 		if newPos == PosDead || dam == 0 {
 			sent := false
 			if SkillMessageFunc != nil {
-				sent = SkillMessageFunc(dam, chName, victimName, attackType)
+				sent = SkillMessageFunc(dam, chName, victimName, attackType, ch.GetRoom())
 			}
 			if !sent {
 				DamMessage(dam, ch, victim, attackType-TYPE_HIT)
@@ -1412,7 +1417,7 @@ func AttitudeLoot(ch, victim Combatant) {
 func SkillMessage(dam int, ch, victim Combatant, attackType int) {
 	if attackType < TYPE_HIT {
 		if SkillMessageFunc != nil {
-			SkillMessageFunc(dam, ch.GetName(), victim.GetName(), attackType)
+			SkillMessageFunc(dam, ch.GetName(), victim.GetName(), attackType, ch.GetRoom())
 		}
 	}
 }
@@ -1422,16 +1427,17 @@ func SkillMessage(dam int, ch, victim Combatant, attackType int) {
 // **********************************
 
 func NewNamedCombatant(name string, roomVNum int) Combatant {
-	return &namedCombatant{name: name, room: roomVNum}
+	return &namedCombatant{name: name, room: roomVNum, isNPC: false}
 }
 
 type namedCombatant struct {
-	name string
-	room int
+	name  string
+	room  int
+	isNPC bool
 }
 
 func (n *namedCombatant) GetName() string            { return n.name }
-func (n *namedCombatant) IsNPC() bool                 { return true }
+func (n *namedCombatant) IsNPC() bool                 { return n.isNPC }
 func (n *namedCombatant) GetRoom() int                { return n.room }
 func (n *namedCombatant) GetLevel() int               { return 0 }
 func (n *namedCombatant) GetHP() int                  { return 0 }

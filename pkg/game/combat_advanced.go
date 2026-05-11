@@ -486,25 +486,54 @@ func (w *World) doAmbush(ch *Player, me *MobInstance, cmd string, arg string) bo
 
 // startCombatBetween initiates combat between ch and vict.
 // If vict is nil, it just sets ch as fighting (for aggressive mobs attacking players).
+// LOW-008: Also registers with CombatEngine so the engine tick processes this combat.
 func (w *World) startCombatBetween(ch, vict interface{}) {
+	var attackerName, defenderName string
+
 	// Try to handle *Player vs *Player or *Player vs *MobInstance
 	if chPlayer, ok := ch.(*Player); ok {
+		attackerName = chPlayer.Name
 		if victPlayer, ok2 := vict.(*Player); ok2 {
 			chPlayer.SetFighting(victPlayer.Name)
 			victPlayer.SetFighting(chPlayer.Name)
+			defenderName = victPlayer.Name
 			// Broadcast the fight start
 			w.roomMessage(chPlayer.RoomVNum, fmt.Sprintf("%s starts fighting %s!\r\n", chPlayer.Name, victPlayer.Name))
 		} else if victMob, ok2 := vict.(*MobInstance); ok2 {
 			chPlayer.SetFighting(victMob.GetName())
+			defenderName = victMob.GetName()
 			w.roomMessage(chPlayer.RoomVNum, fmt.Sprintf("%s starts fighting %s!\r\n", chPlayer.Name, victMob.GetName()))
 		} else {
 			// Only one party — probably mob attacking player
 			chPlayer.SetFighting("someone")
 		}
 	} else if chMob, ok := ch.(*MobInstance); ok {
+		attackerName = chMob.GetName()
 		if victPlayer, ok2 := vict.(*Player); ok2 {
 			chMob.SetFighting(victPlayer.Name)
 			victPlayer.SetFighting(chMob.GetName())
+			defenderName = victPlayer.Name
+		}
+	}
+
+	// Register with CombatEngine so engine tick processes this combat (LOW-008 fix)
+	if attackerName != "" && defenderName != "" && w.combatEngine != nil {
+		// Find combatant objects for engine registration
+		var attacker, defender combat.Combatant
+		if p, ok := ch.(*Player); ok {
+			attacker = p
+		}
+		if m, ok := ch.(*MobInstance); ok {
+			attacker = m
+		}
+		if p, ok := vict.(*Player); ok {
+			defender = p
+		}
+		if m, ok := vict.(*MobInstance); ok {
+			defender = m
+		}
+		if attacker != nil && defender != nil {
+			_ = w.combatEngine.StartCombat(attacker, defender)
 		}
 	}
 }

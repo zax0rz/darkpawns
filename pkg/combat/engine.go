@@ -244,7 +244,9 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	}
 
 	// Calculate number of attacks for attacker
-	numAttacks := GetAttacksPerRound(attacker, false, false)
+	hasHaste := HasAffect != nil && HasAffect(attacker.GetName(), AFF_HASTE)
+	hasSlow := HasAffect != nil && HasAffect(attacker.GetName(), AFF_SLOW)
+	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
 
 	// Perform attacks
 	for i := 0; i < numAttacks; i++ {

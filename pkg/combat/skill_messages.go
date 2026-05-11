@@ -552,7 +552,7 @@ var skillMessageTable = map[int]skillMessageEntry{
 // are wired). If called before those hooks are set, messages will still work —
 // they just won't be delivered until the hooks are assigned.
 func InitSkillMessages() {
-	SkillMessageFunc = func(dam int, chName, victimName string, attackType int) bool {
+	SkillMessageFunc = func(dam int, chName, victimName string, attackType int, roomVNum int) bool {
 		entry, ok := skillMessageTable[attackType]
 		if !ok {
 			return false // no custom messages for this skill
@@ -579,7 +579,7 @@ func InitSkillMessages() {
 		victimMsg := basicTokenReplace(msg.Victim, chName, victimName)
 
 		if BroadcastMessage != nil {
-			BroadcastMessage(0, roomMsg, chName+" "+victimName) // room broadcast, vnum unknown in this path
+			BroadcastMessage(roomVNum, roomMsg, chName+" "+victimName)
 		}
 		if SendToCharFunc != nil {
 			SendToCharFunc(chName, charMsg)
@@ -589,13 +589,55 @@ func InitSkillMessages() {
 	}
 }
 
-// basicTokenReplace handles $n/$N substitution without sex-aware pronouns.
-// Used by SkillMessageFunc which receives name strings, not full Combatant objects.
+// basicTokenReplace handles $n/$N/$s/$e substitution with sex-aware pronouns.
+// Falls back to male pronouns if GetCharacterSex hook is not wired.
 func basicTokenReplace(msg, chName, victimName string) string {
 	result := msg
 	result = strings.ReplaceAll(result, "$n", chName)
 	result = strings.ReplaceAll(result, "$N", victimName)
-	// $s/$e left as-is since we don't have sex — callers that need pronoun
-	// resolution should use replaceMessageTokens from fight_core.go instead.
+
+	// Pronoun resolution for attacker ($s = possessive, $e = subjective)
+	chSex := 0 // default male
+	if GetCharacterSex != nil {
+		if s := GetCharacterSex(chName); s >= 0 {
+			chSex = s
+		}
+	}
+	victimSex := 0
+	if GetCharacterSex != nil {
+		if s := GetCharacterSex(victimName); s >= 0 {
+			victimSex = s
+		}
+	}
+	_ = victimSex // available for future victim pronoun tokens ($o/$O)
+
+	chPronouns := sexPronouns(chSex)
+
+	// $s/$S = attacker possessive (his/her/its), $E = attacker subjective (he/she/it)
+	result = strings.ReplaceAll(result, "$s", chPronouns.possessive)
+	result = strings.ReplaceAll(result, "$S", chPronouns.possessive)
+	result = strings.ReplaceAll(result, "$e", chPronouns.subjective)
+	result = strings.ReplaceAll(result, "$E", chPronouns.subjective)
+	// $m/$M = attacker objective (him/her/it)
+	result = strings.ReplaceAll(result, "$m", chPronouns.objective)
+	result = strings.ReplaceAll(result, "$M", chPronouns.objective)
+
 	return result
+}
+
+type pronounSet struct {
+	subjective  string // he/she/it
+	objective   string // him/her/it
+	possessive  string // his/her/its
+}
+
+func sexPronouns(sex int) pronounSet {
+	switch sex {
+	case 1: // female
+		return pronounSet{"she", "her", "her"}
+	case 2: // neutral/it
+		return pronounSet{"it", "it", "its"}
+	default: // male
+		return pronounSet{"he", "him", "his"}
+	}
 }

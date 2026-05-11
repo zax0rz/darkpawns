@@ -118,8 +118,7 @@ func (w *World) doHit(ch *Player, me *MobInstance, cmd string, arg string) bool 
 				w.roomMessageExcludeTwo(ch.RoomVNum,
 					fmt.Sprintf("%s hits %s!", ch.GetName(), m.GetName()),
 					ch.GetName(), m.GetName())
-				w.startCombatBetween(ch, nil)
-				ch.SetFighting(m.GetName())
+				w.startCombatBetween(ch, m)
 				return true
 			}
 		}
@@ -281,8 +280,7 @@ func (w *World) doBackstabMob(ch *Player, m *MobInstance) bool {
 		w.roomMessageExcludeTwo(ch.RoomVNum,
 			fmt.Sprintf("%s notices %s lunging at %s!", m.GetName(), ch.Name, himHer(m.GetSex())),
 			ch.Name, m.GetName())
-		w.startCombatBetween(ch, nil)
-		ch.SetFighting(m.GetName())
+		w.startCombatBetween(ch, m)
 		return true
 	}
 
@@ -389,12 +387,13 @@ func (w *World) doDisembowelMob(ch *Player, m *MobInstance) bool {
 	} else {
 		dam := (ch.Level * 2) + ch.GetDamroll()
 		m.TakeDamage(dam)
+		// TODO(LOW-007): This bypasses alignment, sanctuary, wimpy, XP, and loot.
+		// Should route through a mob-aware damage pipeline once doDamage supports mobs.
 		ch.SendMessage(fmt.Sprintf("You drive your blade deep into %s's gut!\r\n", m.GetName()))
 		w.roomMessageExcludeTwo(ch.RoomVNum,
 			fmt.Sprintf("%s disembowels %s in a shower of gore!", ch.GetName(), m.GetName()),
 			ch.Name, m.GetName())
-		w.startCombatBetween(ch, nil)
-		ch.SetFighting(m.GetName())
+		w.startCombatBetween(ch, m)
 	}
 	return true
 }
