@@ -32,8 +32,6 @@
 //
 // Deferred to future refactor. See RESEARCH-LOG.md [DESIGN].
 
-//go:build !web
-
 package main
 
 import (
