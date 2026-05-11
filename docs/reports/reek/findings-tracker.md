@@ -58,7 +58,7 @@ Maintained by Daeron. Updated per triage cycle.
 | MED-013 | GetExtraFlags() zero-value comparison | object.go:427 | REJECTED | Style issue — zero-value sentinel works correctly |
 | MED-014 | NewMob() Flags bitmask uninitialized | mob.go:70-95 | REJECTED | Flags field unused — all lookups use Prototype.ActionFlags |
 | MED-015 | CanSpawn() VNum collision | spawner.go:361-362 | REJECTED | Mob/obj VNums in separate namespaces |
-| MED-016 | Go stdlib vulns GO-2026-4918/4971 | stdlib (go1.26.2) | OPEN | HTTP/2 loop + NUL panic. Go 1.26.3 does not exist yet — blocked on upstream release. |
+| MED-016 | Go stdlib vulns GO-2026-4918/4971 | stdlib (go1.26.3) | FIXED | Upgraded go directive to 1.26.3. Full green. (Daeron) |
 | MED-017 | prometheus/client_golang 4 minor behind | go.mod | FIXED | v1.23.0 landed. promhttp.Handler() deprecated but compat layer holds. (BRENDA) |
 | MED-018 | lib/pq 2 minor behind | go.mod | FIXED | v1.10.9 → v1.12.3 (BRENDA) |
 | MED-019 | protobuf 2 major behind | go.mod | FIXED | Auto-pulled to v1.36.6 via prometheus transitive. No code changes. (BRENDA) |
