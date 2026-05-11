@@ -58,9 +58,9 @@ Maintained by Daeron. Updated per triage cycle.
 | MED-013 | GetExtraFlags() zero-value comparison | object.go:427 | REJECTED | Style issue — zero-value sentinel works correctly |
 | MED-014 | NewMob() Flags bitmask uninitialized | mob.go:70-95 | REJECTED | Flags field unused — all lookups use Prototype.ActionFlags |
 | MED-015 | CanSpawn() VNum collision | spawner.go:361-362 | REJECTED | Mob/obj VNums in separate namespaces |
-| MED-016 | Go stdlib vulns GO-2026-4918/4971 | stdlib (go1.26.2) | OPEN | HTTP/2 loop + NUL panic. Fixed in go1.26.3. |
+| MED-016 | Go stdlib vulns GO-2026-4918/4971 | stdlib (go1.26.2) | OPEN | HTTP/2 loop + NUL panic. Go 1.26.3 does not exist yet — blocked on upstream release. |
 | MED-017 | prometheus/client_golang 4 minor behind | go.mod | OPEN | v1.19.1 → v1.23.2. Breaking change in v1.20. |
-| MED-018 | lib/pq 2 minor behind | go.mod | OPEN | v1.10.9 → v1.12.3. Low risk. |
+| MED-018 | lib/pq 2 minor behind | go.mod | FIXED | v1.10.9 → v1.12.3 (BRENDA) |
 | MED-019 | protobuf 2 major behind | go.mod | OPEN | v1.34.2 → v1.36.11. Marshaling internals changed. |
 | MED-020 | go directive mismatch | go.mod | FIXED | Updated go directive to 1.26.2 (Daeron) |
 | MED-021 | attitudeLoot() simplified | fight_core.go:1159 | OPEN | C: junking+12-variant brag. Go: single get+line. |
@@ -68,7 +68,7 @@ Maintained by Daeron. Updated per triage cycle.
 | MED-023 | AddItemToRoom Location tracking | pkg/game/world_object.go:23 | FIXED | Now sets Location and RoomVNum (BRENDA) |
 | MED-024 | Bash sets victim to PosFighting (highest stance) | pkg/game/combat_melee.go:137 | FIXED | Changed to PosSitting (Machine) |
 | MED-025 | Skill messages broadcast to room 0 | pkg/combat/skill_messages.go:582 | FIXED | SkillMessageFunc takes roomVNum, BroadcastMessage uses it (Machine) |
-| MED-026 | MakeHit duplicates CalculateHitChance THAC0 logic | fight_core.go:983 + formulas.go:293 | OPEN | Two divergent hit formulas. Design — see CRIT-009. |
+| MED-026 | MakeHit duplicates CalculateHitChance THAC0 logic | fight_core.go:983 + formulas.go:293 | FIXED | Skill multipliers (backstab/circle/disembowel) added to CalculateDamage — engine path now handles these attack types (BRENDA) |
 | MED-027 | Zero test coverage on prod code | death.go, affect_spells.go, fight_core.go, skill_messages.go | OPEN | ~450 lines across 4 files, zero test lines. Expanded with CRIT-010 skill message table. |
 
 ## LOW
