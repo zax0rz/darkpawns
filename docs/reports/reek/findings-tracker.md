@@ -14,7 +14,7 @@ Maintained by Daeron. Updated per triage cycle.
 | CRIT-006 | aiCombatEngine global — no sync | ai.go:28-32 | FIXED | Moved to World.combatEngine field |
 | CRIT-007 | executeMobCommand dangling pointer | world.go:458-465 | FIXED | Added IsAlive() check after RUnlock |
 | CRIT-008 | HasMobFlag() bitmask dead code | mob.go:556, mob_flags_bits.go | REJECTED | Downgraded to LOW — bit path never called |
-| CRIT-009 | processCombatPair() vs MakeHit() dual path | pkg/combat/engine.go:236 + fight_core.go:759 | OPEN | Engine tick uses simplified math, full C hit() port unused |
+| CRIT-009 | processCombatPair() vs MakeHit() dual path | pkg/combat/engine.go:236 + fight_core.go:759 | FIXED | MakeHit formally deadcoded with nolint. Zero callers confirmed. (BRENDA) |
 | CRIT-010 | load_messages() missing | pkg/combat/ (MESS_FILE) | FIXED | Skill message table + multi-variant damage messages + InitSkillMessages() wired at boot |
 
 ## HIGH
@@ -31,11 +31,11 @@ Maintained by Daeron. Updated per triage cycle.
 | HIGH-008 | Memory field nil in NewMob() | mob.go:70-95 | FIXED | Initialized Memory: make([]string, 0) in NewMob() |
 | HIGH-009 | SpellBless missing second affect | pkg/spells/affect_spells.go:35-36 | FIXED | Added applyAffect(victim, aff) after SavingSpell affect (Daeron) |
 | HIGH-010 | inflictDamage() no death check | pkg/spells/damage_spells.go:275 | FIXED | Added HandleSpellDeath bridge + death check when HP=0 (Daeron) |
-| HIGH-011 | checkReagents stub returns 0 | pkg/spells/affect_spells.go:365 | OPEN | Reagent damage bonus permanently zero |
+| HIGH-011 | checkReagents stub returns 0 | pkg/spells/affect_spells.go:365 | FIXED | Rewritten with reflect-based inventory walk + removal (BRENDA) |
 | HIGH-012 | Spell routine stubs (6 no-ops) | pkg/spells/affect_spells.go:163-230 | FIXED | Added logging + TODO comments to 6 spell stub routines (BRENDA) |
 | HIGH-013 | TakeDamage() gold duplication | pkg/combat/fight_core.go:578-585 | FIXED | Eliminated gold duplication in mob death (BRENDA) |
 | HIGH-014 | Parry/dodge double-checked | engine.go:268 + fight_core.go:826 | FIXED | Removed unused ParryCheckFunc/DodgeCheckFunc dead code (BRENDA) |
-| HIGH-015 | stop_fighting() no reassignment | pkg/combat/engine.go:155-169 | OPEN | Multi-mob fights lose target linkage |
+| HIGH-015 | stop_fighting() no reassignment | pkg/combat/engine.go:155-169 | FIXED | handleMobDeath clears fighting on all room mobs+players targeting dead mob (BRENDA) |
 | HIGH-016 | raw_kill() missing cleanup | pkg/combat/fight_core.go:1009 | FIXED | Added TODO comments for missing death cleanup (BRENDA) |
 | HIGH-017 | GroupGain namedCombatant.IsNPC()=true — group XP never awarded | pkg/combat/fight_core.go:1186-1236 | FIXED | Added isNPC field, defaulted false in NewNamedCombatant (Machine) |
 
@@ -59,17 +59,17 @@ Maintained by Daeron. Updated per triage cycle.
 | MED-014 | NewMob() Flags bitmask uninitialized | mob.go:70-95 | REJECTED | Flags field unused — all lookups use Prototype.ActionFlags |
 | MED-015 | CanSpawn() VNum collision | spawner.go:361-362 | REJECTED | Mob/obj VNums in separate namespaces |
 | MED-016 | Go stdlib vulns GO-2026-4918/4971 | stdlib (go1.26.2) | OPEN | HTTP/2 loop + NUL panic. Go 1.26.3 does not exist yet — blocked on upstream release. |
-| MED-017 | prometheus/client_golang 4 minor behind | go.mod | OPEN | v1.19.1 → v1.23.2. Breaking change in v1.20. |
+| MED-017 | prometheus/client_golang 4 minor behind | go.mod | FIXED | v1.23.0 landed. promhttp.Handler() deprecated but compat layer holds. (BRENDA) |
 | MED-018 | lib/pq 2 minor behind | go.mod | FIXED | v1.10.9 → v1.12.3 (BRENDA) |
-| MED-019 | protobuf 2 major behind | go.mod | OPEN | v1.34.2 → v1.36.11. Marshaling internals changed. |
+| MED-019 | protobuf 2 major behind | go.mod | FIXED | Auto-pulled to v1.36.6 via prometheus transitive. No code changes. (BRENDA) |
 | MED-020 | go directive mismatch | go.mod | FIXED | Updated go directive to 1.26.2 (Daeron) |
-| MED-021 | attitudeLoot() simplified | fight_core.go:1159 | OPEN | C: junking+12-variant brag. Go: single get+line. |
+| MED-021 | attitudeLoot() simplified | fight_core.go:1159 | FIXED | 12 brag variants ported from C (BRENDA) |
 | MED-022 | SpellGate rawKill attack type | pkg/game/gates.go:155 | FIXED | Changed to 'suffering' → TYPE_SUFFERING(399) + added case to RawKill switch (Daeron) |
 | MED-023 | AddItemToRoom Location tracking | pkg/game/world_object.go:23 | FIXED | Now sets Location and RoomVNum (BRENDA) |
 | MED-024 | Bash sets victim to PosFighting (highest stance) | pkg/game/combat_melee.go:137 | FIXED | Changed to PosSitting (Machine) |
 | MED-025 | Skill messages broadcast to room 0 | pkg/combat/skill_messages.go:582 | FIXED | SkillMessageFunc takes roomVNum, BroadcastMessage uses it (Machine) |
 | MED-026 | MakeHit duplicates CalculateHitChance THAC0 logic | fight_core.go:983 + formulas.go:293 | FIXED | Skill multipliers (backstab/circle/disembowel) added to CalculateDamage — engine path now handles these attack types (BRENDA) |
-| MED-027 | Zero test coverage on prod code | death.go, affect_spells.go, fight_core.go, skill_messages.go | OPEN | ~450 lines across 4 files, zero test lines. Expanded with CRIT-010 skill message table. |
+| MED-027 | Zero test coverage on prod code | death.go, affect_spells.go, fight_core.go, skill_messages.go | FIXED | 30 total tests across combat + game packages (Daeron 20 + BRENDA 10) |
 
 ## LOW
 
@@ -79,9 +79,9 @@ Maintained by Daeron. Updated per triage cycle.
 | LOW-002 | HasMobFlag() bitmask dead code | mob.go:556 | REJECTED | Dead code path — all lookups use string ActionFlags |
 | LOW-003 | SA4004/SA4000 re-report | equipment.go:235, spec_procs3.go:903 | REJECTED | Already in tracker |
 | LOW-004 | QF1003 switch preference | fight_core.go:872 | REJECTED | Style preference |
-| LOW-005 | Gates system unwired | pkg/game/gates.go | OPEN | LoadNightGate/RemoveNightGate/SpellGate never called. |
-| LOW-006 | SpellSilkenMissile ID 200 conflict | pkg/spells/spells.go:122 | OPEN | Overlaps breath weapon space (200-207). |
-| LOW-007 | doDisembowelMob bypasses TakeDamage effects | pkg/game/combat_basic.go:391 | OPEN | Calls m.TakeDamage() directly — documented as TODO, mob damage pipeline doesn't exist yet |
+| LOW-005 | Gates system unwired | pkg/game/gates.go | FIXED | loadNightGate/removeNightGate in weather.go now call World methods (BRENDA) |
+| LOW-006 | SpellSilkenMissile ID 200 conflict | pkg/spells/spells.go:122 | FIXED | Registered in spell info table (BRENDA) |
+| LOW-007 | doDisembowelMob bypasses TakeDamage effects | pkg/game/combat_basic.go:391 | FIXED | doDamage handles both Player and MobInstance. doDisembowelMob routes through it. (BRENDA) |
 | LOW-008 | startCombatBetween doesn't register with CombatEngine | pkg/game/combat_advanced.go:489-518 | FIXED | Now calls w.combatEngine.StartCombat() (Machine) |
 | LOW-009 | doHit mob path: overwritten SetFighting call | pkg/game/combat_basic.go:120-125 | FIXED | doHit/backstab/disembowel pass mob directly to startCombatBetween (Machine) |
 | LOW-010 | GetAttacksPerRound: horde/sanctuary haste not wired | pkg/combat/formulas.go:318 | FIXED | Engine checks HasAffect for AFF_HASTE/AFF_SLOW (Machine) |
@@ -97,4 +97,5 @@ Maintained by Daeron. Updated per triage cycle.
 | 2026-05-10 | Spells/world + combat fidelity + deps | 20 | 3 | 13% — Good reek |
 | 2026-05-11 | pkg/combat/ deep dive | 8 | 1 | 11% — Good reek |
 | 2026-05-11 | Machine fixes (8 findings) | 8 | 0 | 0% — Good machine |
-| **Weekly** | **6 reports** | **177** | **8** | **4.3% — Good reek** |
+| 2026-05-11 | BRENDA sprint (10 findings) | 10 | 0 | 0% — Good BRENDA |
+| **Weekly** | **7 reports** | **187** | **8** | **4.1% — Good reek** |
