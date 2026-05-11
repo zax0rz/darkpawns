@@ -31,7 +31,7 @@ Maintained by Daeron. Updated per triage cycle.
 | HIGH-008 | Memory field nil in NewMob() | mob.go:70-95 | FIXED | Initialized Memory: make([]string, 0) in NewMob() |
 | HIGH-009 | SpellBless missing second affect | pkg/spells/affect_spells.go:35-36 | FIXED | Added applyAffect(victim, aff) after SavingSpell affect (Daeron) |
 | HIGH-010 | inflictDamage() no death check | pkg/spells/damage_spells.go:275 | FIXED | Added HandleSpellDeath bridge + death check when HP=0 (Daeron) |
-| HIGH-011 | checkReagents stub returns 0 | pkg/spells/affect_spells.go:365 | FIXED | Rewritten with reflect-based inventory walk + removal (BRENDA) |
+| HIGH-011 | checkReagents stub returns 0 | pkg/spells/affect_spells.go:365 | FIXED | Rewritten with reflect-based inventory walk. 7 tests added. Interface extraction fixed silent type assertion failure. (BRENDA) |
 | HIGH-012 | Spell routine stubs (6 no-ops) | pkg/spells/affect_spells.go:163-230 | FIXED | Added logging + TODO comments to 6 spell stub routines (BRENDA) |
 | HIGH-013 | TakeDamage() gold duplication | pkg/combat/fight_core.go:578-585 | FIXED | Eliminated gold duplication in mob death (BRENDA) |
 | HIGH-014 | Parry/dodge double-checked | engine.go:268 + fight_core.go:826 | FIXED | Removed unused ParryCheckFunc/DodgeCheckFunc dead code (BRENDA) |
@@ -59,7 +59,7 @@ Maintained by Daeron. Updated per triage cycle.
 | MED-014 | NewMob() Flags bitmask uninitialized | mob.go:70-95 | REJECTED | Flags field unused — all lookups use Prototype.ActionFlags |
 | MED-015 | CanSpawn() VNum collision | spawner.go:361-362 | REJECTED | Mob/obj VNums in separate namespaces |
 | MED-016 | Go stdlib vulns GO-2026-4918/4971 | stdlib (go1.26.3) | FIXED | Upgraded go directive to 1.26.3. Full green. (Daeron) |
-| MED-017 | prometheus/client_golang 4 minor behind | go.mod | FIXED | v1.23.0 landed. promhttp.Handler() deprecated but compat layer holds. (BRENDA) |
+| MED-017 | prometheus/client_golang 4 minor behind | go.mod | FIXED | Migrated to promhttp.HandlerFor(). Compiles clean. (BRENDA) |
 | MED-018 | lib/pq 2 minor behind | go.mod | FIXED | v1.10.9 → v1.12.3 (BRENDA) |
 | MED-019 | protobuf 2 major behind | go.mod | FIXED | Auto-pulled to v1.36.6 via prometheus transitive. No code changes. (BRENDA) |
 | MED-020 | go directive mismatch | go.mod | FIXED | Updated go directive to 1.26.2 (Daeron) |
