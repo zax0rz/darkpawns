@@ -23,7 +23,7 @@ Maintained by Daeron. Updated per triage cycle.
 |---|---|---|---|---|
 | HIGH-001 | Lock ordering undocumented | multiple | FIXED | c741fa4 (BRENDA) |
 | HIGH-002 | DefaultServeMux exposed | cmd/server/main_web.go | FIXED | upstream (8c574d2) |
-| HIGH-003 | Duplicated entry points | main.go vs main_web.go | DEFERRED | Architecture decision — needs The Architect |
+| HIGH-003 | Duplicated entry points | main.go vs main_web.go | FIXED | main_web.go already removed; orphaned //go:build !web tag cleaned up (Daeron) |
 | HIGH-004 | Doors don't reset on zone reset | pkg/game/world.go | FIXED | upstream (8c574d2) |
 | HIGH-005 | Non-TLS default | cmd/server/main_web.go | DEFERRED | Configuration decision — needs The Architect |
 | HIGH-006 | handlePlayerDeath lock ordering risk | death.go:295-320 | DEFERRED | Documented safe — monitor under load |
