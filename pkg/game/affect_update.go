@@ -41,11 +41,14 @@ func (w *World) AffectUpdate() {
 	w.mu.RUnlock()
 
 	for _, p := range players {
-		var remaining []interface{}
+		// Snapshot the player's current affects under p.mu (not w.mu).
+		// ActiveAffects belongs to the Player, not the World.
+		p.mu.RLock()
+		affects := make([]*engine.Affect, len(p.ActiveAffects))
+		copy(affects, p.ActiveAffects)
+		p.mu.RUnlock()
 
-		w.mu.RLock()
-		affects := p.ActiveAffects
-		w.mu.RUnlock()
+		var remaining []*engine.Affect
 
 		for _, af := range affects {
 			if af.Duration == -1 {
@@ -65,11 +68,8 @@ func (w *World) AffectUpdate() {
 			}
 		}
 
-		w.mu.Lock()
-		p.ActiveAffects = make([]*engine.Affect, len(remaining))
-		for i, r := range remaining {
-			p.ActiveAffects[i] = r.(*engine.Affect)
-		}
-		w.mu.Unlock()
+		p.mu.Lock()
+		p.ActiveAffects = remaining
+		p.mu.Unlock()
 	}
 }

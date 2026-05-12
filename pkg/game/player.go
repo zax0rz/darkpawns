@@ -342,6 +342,14 @@ var thaco = [12][41]int{
 	{100, 20, 20, 20, 19, 19, 19, 18, 18, 18, 17, 17, 17, 16, 16, 16, 15, 15, 15, 14, 14, 14, 13, 13, 13, 12, 12, 12, 11, 11, 11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9},
 }
 
+// --------------------------------------------------------------------------
+// RLock/RUnlock — exported RWMutex read-lock for cross-package access
+// (Lock/Unlock are in player_affects.go)
+// --------------------------------------------------------------------------
+
+func (p *Player) RLock()   { p.mu.RLock() }
+func (p *Player) RUnlock() { p.mu.RUnlock() }
+
 // CarriedWeight returns the total weight of all items carried (inventory + equipment).
 func (p *Player) CarriedWeight() int {
 	weight := 0

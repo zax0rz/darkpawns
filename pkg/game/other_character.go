@@ -4,6 +4,8 @@ package game
 import (
 	"fmt"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // ---------------------------------------------------------------------------
@@ -45,7 +47,10 @@ func (w *World) doVisible(ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// Kai zai check (simplified: skill name "kai_zai" or "kz")
 	hasKaiZai := false
-	affects := ch.ActiveAffects
+	ch.mu.RLock()
+	affects := make([]*engine.Affect, len(ch.ActiveAffects))
+	copy(affects, ch.ActiveAffects)
+	ch.mu.RUnlock()
 	for _, a := range affects {
 		if strings.Contains(strings.ToLower(a.Source), "zai") {
 			hasKaiZai = true

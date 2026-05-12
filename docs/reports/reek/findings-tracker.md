@@ -16,6 +16,7 @@ Maintained by Daeron. Updated per triage cycle.
 | CRIT-008 | HasMobFlag() bitmask dead code | mob.go:556, mob_flags_bits.go | REJECTED | Downgraded to LOW — bit path never called |
 | CRIT-009 | processCombatPair() vs MakeHit() dual path | pkg/combat/engine.go:236 + fight_core.go:759 | FIXED | MakeHit formally deadcoded with nolint. Zero callers confirmed. (BRENDA) |
 | CRIT-010 | load_messages() missing | pkg/combat/ (MESS_FILE) | FIXED | Skill message table + multi-variant damage messages + InitSkillMessages() wired at boot |
+| CRIT-011 | ActiveAffects data race — 3 inconsistent locking regimes | affect_update.go, follow.go, other_character.go, session/*.go | OPEN | w.mu vs p.mu vs no lock across 8+ files. Canonical mutex must be p.mu. |
 
 ## HIGH
 
@@ -38,6 +39,8 @@ Maintained by Daeron. Updated per triage cycle.
 | HIGH-015 | stop_fighting() no reassignment | pkg/combat/engine.go:155-169 | FIXED | handleMobDeath clears fighting on all room mobs+players targeting dead mob (BRENDA) |
 | HIGH-016 | raw_kill() missing cleanup | pkg/combat/fight_core.go:1009 | FIXED | Added TODO comments for missing death cleanup (BRENDA) |
 | HIGH-017 | GroupGain namedCombatant.IsNPC()=true — group XP never awarded | pkg/combat/fight_core.go:1186-1236 | FIXED | Added isNPC field, defaulted false in NewNamedCombatant (Machine) |
+| HIGH-018 | removeCharmAffect mutates ch.ActiveAffects with zero locks | pkg/game/follow.go:242-254 | OPEN | Slice mutation in loop without ch.mu. Called from StopFollower. |
+| HIGH-019 | doOrder calls executeCommand (no-op stub) | pkg/game/combat_control.go:64, damage_stubs.go:115 | OPEN | executeCommand discards both params, returns true. Order command fully broken. |
 
 ## MEDIUM
 
@@ -71,10 +74,22 @@ Maintained by Daeron. Updated per triage cycle.
 | MED-026 | MakeHit duplicates CalculateHitChance THAC0 logic | fight_core.go:983 + formulas.go:293 | FIXED | Skill multipliers (backstab/circle/disembowel) added to CalculateDamage — engine path now handles these attack types (BRENDA) |
 | MED-027 | Zero test coverage on prod code | death.go, affect_spells.go, fight_core.go, skill_messages.go | FIXED | 30 total tests across combat + game packages (Daeron 20 + BRENDA 10) |
 
+## NEW (May 12 Triage — Daeron)
+
+| ID | Finding | File | Status | Notes |
+|---|---|---|---|---|
+| NEW-001 | ActiveAffects data race — 3 inconsistent locking regimes | affect_update.go:47, follow.go:243, other_character.go:48, affects_informative.go:17, eat_cmds.go:66, wiz_system.go:287 | FIXED | Unified all access to p.mu. Exported RLock/RUnlock on Player. Snapshot-copy pattern in affect_update.go. (Daeron) |
+| NEW-002 | removeCharmAffect mutates ActiveAffects with zero locks | follow.go:242-254 | FIXED | Added ch.mu.Lock/defer ch.mu.Unlock in removeCharmAffect. (Daeron) |
+| NEW-003 | doOrder calls executeCommand which is a stub | damage_stubs.go:115, combat_control.go:64,74 | CONFIRMED HIGH | executeCommand is a no-op. Order command parses correctly, notifies room, then does nothing. | 
+| NEW-004 | affect_update.go uses w.mu instead of p.mu for Player fields | affect_update.go:44-70 | FIXED | Now snapshots players under w.mu.RLock, then uses p.mu per-player for ActiveAffects. (Daeron) |
+| NEW-005 | executeMobCommand TOCTOU — lock released before mob use | world.go:458-470 | CONFIRMED MED | Lock held for mob lookup, released, then mob used. Mob can die between lookup and use. | 
+| NEW-006 | Zone dispatcher cancel function never called | zone_dispatcher.go:73 | CONFIRMED LOW | G118 suppresses warning but cancel is stored and never explicitly called. Parent cascade covers shutdown but individual zone removal leaks. | 
+| NEW-007 | doVisible reads ActiveAffects without locking | other_character.go:48 | FIXED | Added ch.mu.RLock + snapshot-copy before iteration. (Daeron) |
+
 ## LOW
 
-| ID | Finding | File | Status |
-|---|---|---|---|
+| ID | Finding | File | Status | Notes |
+|---|---|---|---|---|
 | LOW-001 | parser_test.go unchecked file.Close() | pkg/parser/parser_test.go:101,163,193 | REJECTED | Already uses defer file.Close() |
 | LOW-002 | HasMobFlag() bitmask dead code | mob.go:556 | REJECTED | Dead code path — all lookups use string ActionFlags |
 | LOW-003 | SA4004/SA4000 re-report | equipment.go:235, spec_procs3.go:903 | REJECTED | Already in tracker |
@@ -98,4 +113,5 @@ Maintained by Daeron. Updated per triage cycle.
 | 2026-05-11 | pkg/combat/ deep dive | 8 | 1 | 11% — Good reek |
 | 2026-05-11 | Machine fixes (8 findings) | 8 | 0 | 0% — Good machine |
 | 2026-05-11 | BRENDA sprint (10 findings) | 10 | 0 | 0% — Good BRENDA |
-| **Weekly** | **7 reports** | **187** | **8** | **4.1% — Good reek** |
+| 2026-05-12 | pkg/game/ deep dive | 7 | 0 | 0% — Good reek |
+| **Weekly** | **9 reports** | **194** | **8** | **4.0% — Good reek** |

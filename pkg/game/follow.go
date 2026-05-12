@@ -240,6 +240,9 @@ func GetRiderName(mount *MobInstance) string {
 
 // removeCharmAffect removes SPELL_CHARM (type 7) from ch's active affects if present.
 func removeCharmAffect(ch *Player) {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+
 	for i, aff := range ch.ActiveAffects {
 		if aff.Source == "charm person" || aff.Source == "charm" || aff.ID == fmt.Sprintf("spell_%d", 7) {
 			ch.ActiveAffects = append(ch.ActiveAffects[:i], ch.ActiveAffects[i+1:]...)
