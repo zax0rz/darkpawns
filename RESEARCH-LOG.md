@@ -227,3 +227,45 @@ Text files reviewed. The news file was too corporate — rewrote it. The handboo
 Key learning: the C source in src/class.c is the authoritative reference for spell levels. The help files are stale too (reference 'flame arrow' as spell 1 for Mage, but C has 'magic missile'). Help files need a pass.
 
 Research relevance: this is evidence for the C→Go port fidelity paper. Drift in spell tables is exactly the kind of thing that breaks game balance silently. The audit methodology (compare Go against C source, flag discrepancies) is a contribution.
+
+---
+
+## [DRAFT] 2026-05-12 — Silent Drift: When Ports Lie About What They Ported
+
+**File:** `docs/research/drafts/2026-05-12-silent-drift-port-fidelity.md`
+**Topic:** C→Go port drift as a category of bugs that static analysis can't catch
+**Anchor case:** classSpells audit — Go table had 50 Mage spells, C source has 27. Nobody noticed.
+**Length:** ~900 words
+
+**Key arguments:**
+1. Silent drift (data divergence, stub defaults, logic simplification) produces code that compiles and runs but is *wrong* in ways only visible by cross-referencing the original source
+2. Static analysis operates on a single codebase — it has no mechanism for "does this Go function match the C function it replaced?"
+3. Fidelity audit methodology: compare ported subsystem against authoritative source, classify each divergence
+4. From our data: 30% of confirmed findings (51/170) only make sense in the context of a language port — they're not generic bugs
+5. This is a natural task for AI agents with cross-codebase access, and a novel contribution for AIIDE
+
+**Next steps:** Needs a section on the classSpells rebuild process (BRENDA's work), and could use a comparison table showing C vs Go entries side by side.
+
+## 2026-05-12 [SESSION] — Agent CLI + Dreaming Layer
+
+**Built: dp-agent CLI** (cmd/dp-agent/ + pkg/agentcli/) — 773 lines, 6 subcommands, zero deps (gorilla/websocket). WebSocket → structured state → FSM → LLM → command → log. Temperature configurable (default 0.0 for experiments). Latency tracking wired. Exec subcommand functional. Session logging in-memory with JSONL export.
+
+**Built: Dreaming layer** (pkg/dreaming/) — 607 lines. Memory graph with 4 node kinds, 8 edge kinds. Salience decay/reinforce/prune. Reads session JSONL → extracts events → builds graph → consolidates → writes summary for LLM context. Valence toggle support for ablation experiment.
+
+**Key design decisions:**
+- FSM handles combat survival (flee <25% HP, attack if mob fighting). Never delegated to LLM.
+- LLM handles navigation, social, goal selection. Temperature 0.0 for reproducibility.
+- Memory graph is batch-processed (dreaming), not real-time. Summary injected at auth.
+- Per-entity valence blending: recent events shift entity valence, older encounters resist change.
+
+**Paper implications:**
+- The agent CLI IS the experimental apparatus. Every dp-agent session generates JSONL data that feeds the evaluation pipeline.
+- The dreaming layer IS the paper's core contribution. Server-hosted, engine-computed valence, zero-setup.
+- The ablation experiment is ready: valence toggle exists as a config flag.
+- Critical path remaining: content-aware valence heuristics, narrative summary formatting, server-side memory injection wiring.
+
+**Files:**
+- cmd/dp-agent/main.go — CLI entry point
+- pkg/agentcli/ — client, config, FSM, LLM, prompt, session, websocket
+- pkg/dreaming/ — graph, extract, dream
+- docs/research/session-handoff-2026-05-12.md — handoff doc

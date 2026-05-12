@@ -1,0 +1,612 @@
+[
+  {
+    "source_num": 1,
+    "title": "TextArena",
+    "authors": "Guertler, L., et al.",
+    "venue": "arXiv, 2025",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2504.11442",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 2,
+    "title": "TextArena (ResearchGate)",
+    "authors": "Guertler, L., et al.",
+    "venue": "ResearchGate, 2025",
+    "type": "paper",
+    "url": "https://www.researchgate.net/publication/TextArena",
+    "confidence": "low",
+    "error": "request timed out"
+  },
+  {
+    "source_num": 3,
+    "title": "lmgame-Bench: LLM Evaluation in Games",
+    "authors": "Hu, L., et al.",
+    "venue": "EmergentMind, 2025",
+    "type": "paper",
+    "url": "https://www.emergentmind.com/topics/lmgame-bench",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 4,
+    "title": "lmgame-Bench: How Good are LLMs at Playing Games?",
+    "authors": "Hu, L., Huo, M., Zhang, Y., Yu, H., Xing, E.P., Stoica, I., Rosing, T., Jin, H., Zhang, H.",
+    "venue": "arXiv, 2025",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2505.15146",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 5,
+    "title": "CALYPSO: LLMs as Dungeon Masters' Assistants",
+    "authors": "Zhu, A., et al.",
+    "venue": "AIIDE, 2023",
+    "type": "paper",
+    "url": "https://andrewhead.info/assets/pdf/calypso.pdf",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 6,
+    "title": "CALYPSO: LLMs as Dungeon Masters' Assistants (UPenn)",
+    "authors": "Zhu, A., et al.",
+    "venue": "AIIDE, 2023",
+    "type": "paper",
+    "url": "https://www.cis.upenn.edu/~ccb/publications/calypso-llms-for-dms.pdf",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 7,
+    "title": "DiscoveryWorld: A Virtual Environment for Developing and Evaluating Automated Scientific Discovery Agents",
+    "authors": "Jansen, P., et al.",
+    "venue": "NeurIPS, 2024",
+    "type": "paper",
+    "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/13836f251823945316ae067350a5c366-Abstract-Datasets_and_Benchmarks_Track.html",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 8,
+    "title": "DiscoveryWorld (NeurIPS Proceedings PDF)",
+    "authors": "Jansen, P., et al.",
+    "venue": "NeurIPS, 2024",
+    "type": "paper",
+    "url": "https://proceedings.neurips.cc/paper_files/paper/2024/file/13836f251823945316ae067350a5c366-Paper-Datasets_and_Benchmarks_Track.pdf",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 9,
+    "title": "AgentBench: Evaluating LLMs as Agents",
+    "authors": "Liu, Z., et al.",
+    "venue": "ICLR, 2024",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2308.03688",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 10,
+    "title": "AgentBench (ICLR Proceedings PDF)",
+    "authors": "Liu, Z., et al.",
+    "venue": "ICLR, 2024",
+    "type": "paper",
+    "url": "https://proceedings.iclr.cc/paper_files/paper/2024/file/e9df36b21ff4ee211a8b71ee8b7e9f57-Paper-Conference.pdf",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 11,
+    "title": "EllyMUD: Modern Multi-User Dungeon in TypeScript",
+    "authors": "Ellyseum",
+    "venue": "GitHub, 2024/2025",
+    "type": "repo",
+    "url": "https://github.com/ellyseum/ellymud",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 12,
+    "title": "MUD-MCP: MUD MCP Stateful Server",
+    "authors": "Nexlen",
+    "venue": "GitHub, 2025/2026",
+    "type": "repo",
+    "url": "https://github.com/Nexlen/mud-mcp",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 13,
+    "title": "MMLU Benchmark Leaderboard",
+    "authors": "Various",
+    "venue": "AIModels.fyi, 2025",
+    "type": "blog",
+    "url": "https://aimodels.fyi/p/2308.03688",
+    "confidence": "low",
+    "error": "request timed out"
+  },
+  {
+    "source_num": 14,
+    "title": "LLM Benchmark Leaderboard 2026",
+    "authors": "CodeSOTA",
+    "venue": "CodeSOTA, 2026",
+    "type": "blog",
+    "url": "https://www.codesota.com/llm",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 15,
+    "title": "Evaluating Very Long-Term Conversational Memory of LLM Agents (Literature Review)",
+    "authors": "Maharana, A., et al.",
+    "venue": "TheMoonlight.io / ACL, 2024",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2402.17753",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 16,
+    "title": "Your LLM Has Amnesia: A Production Guide to Memory That Actually Works",
+    "authors": "GenMind",
+    "venue": "GenMind.ch, 2025",
+    "type": "blog",
+    "url": "https://genmind.ch/posts/Your-LLM-Has-Amnesia-A-Production-Guide-to-Memory-That-Actually-Works/",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 17,
+    "title": "Long-Term Memory Mechanism (Hugging Face Papers)",
+    "authors": "Various",
+    "venue": "Hugging Face, 2025",
+    "type": "blog",
+    "url": "https://huggingface.co/papers?q=long-term%20memory%20mechanism",
+    "confidence": "low",
+    "error": null
+  },
+  {
+    "source_num": 18,
+    "title": "How xMemory cuts token costs and context bloat in AI agents",
+    "authors": "VentureBeat",
+    "venue": "VentureBeat, 2025",
+    "type": "blog",
+    "url": "https://venturebeat.com/orchestration/how-xmemory-cuts-token-costs-and-context-bloat-in-ai-agents",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 19,
+    "title": "Agent Memory: How to Build Agents that Learn and Remember",
+    "authors": "Letta",
+    "venue": "Letta Blog, 2025",
+    "type": "blog",
+    "url": "https://www.letta.com/blog/agent-memory",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 20,
+    "title": "Mem0 vs Letta (MemGPT): AI Agent Memory Compared",
+    "authors": "Vectorize",
+    "venue": "Vectorize.io, 2026",
+    "type": "blog",
+    "url": "https://vectorize.io/articles/mem0-vs-letta",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 21,
+    "title": "Build persistent memory for agentic AI applications with Mem0, ElastiCache, and Neptune",
+    "authors": "AWS Blog",
+    "venue": "AWS Blog, 2025",
+    "type": "blog",
+    "url": "https://aws.amazon.com/blogs/database/build-persistent-memory-for-agentic-ai-applications-with-mem0-open-source-amazon-elasticache-for-valkey-and-amazon-neptune-analytics/",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 22,
+    "title": "Mem0: The Memory layer for your AI apps",
+    "authors": "Yadav, D., Singh, T. (Mem0)",
+    "venue": "Y Combinator, 2024/2025",
+    "type": "blog",
+    "url": "https://www.ycombinator.com/companies/mem0",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 23,
+    "title": "mem0ai/mem0: Universal memory layer for AI Agents",
+    "authors": "Yadav, D., Singh, T., et al.",
+    "venue": "GitHub, 2024/2025",
+    "type": "repo",
+    "url": "https://github.com/mem0ai/mem0",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 24,
+    "title": "Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory",
+    "authors": "Khant, D., Aryan, S., Singh, T., Yadav, D.",
+    "venue": "arXiv, 2025",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2504.19413",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 25,
+    "title": "A Scalable Agentic Memory Framework for Personalized Conversational AI",
+    "authors": "Sarin, S., et al.",
+    "venue": "AIMLSystems, 2025",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2512.12686",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 26,
+    "title": "Evaluating Very Long-Term Conversational Memory of LLM Agents (LoCoMo)",
+    "authors": "Maharana, A., et al. (Snap Inc.)",
+    "venue": "ACL, 2024",
+    "type": "paper",
+    "url": "https://snap-research.github.io/locomo/",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 27,
+    "title": "TraceMem: Weaving Narrative Memory Schemata from User Conversational Traces",
+    "authors": "Shu, Y., Liu, P., Zhang, T., Gao, R., Ma, J., Sun, C.",
+    "venue": "arXiv, 2026",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2602.09712",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 28,
+    "title": "TraceMem (TL;DR Takara)",
+    "authors": "Shu, Y., et al.",
+    "venue": "arXiv, 2026",
+    "type": "blog",
+    "url": "https://tldr.takara.ai/p/2602.09712",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 29,
+    "title": "From Simulated Empathy to Structural Attunement: REMT",
+    "authors": "Albanese, J.",
+    "venue": "Frontiers in Artificial Intelligence, 2026",
+    "type": "paper",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/41988400/",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 30,
+    "title": "From Simulated Empathy to Structural Attunement: REMT (PMC)",
+    "authors": "Albanese, J.",
+    "venue": "Frontiers in Artificial Intelligence, 2026",
+    "type": "paper",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13077978/",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 31,
+    "title": "Memory Blocks: The Key to Agentic Context Management",
+    "authors": "Letta",
+    "venue": "Letta Blog, 2025",
+    "type": "blog",
+    "url": "https://www.letta.com/blog/memory-blocks",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 32,
+    "title": "TraceMem: Weaving Narrative Memory Schemata (PDF)",
+    "authors": "Shu, Y., Liu, P., Zhang, T., Gao, R., Ma, J., Sun, C.",
+    "venue": "arXiv, 2026",
+    "type": "paper",
+    "url": "https://arxiv.org/pdf/2602.09712",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 33,
+    "title": "PAYADOR ResearchGate paper",
+    "authors": "Góngora, S., et al.",
+    "venue": "ResearchGate / ICCC, 2024",
+    "type": "paper",
+    "url": "https://www.researchgate.net/publication/PAYADOR",
+    "confidence": "low",
+    "error": "request timed out"
+  },
+  {
+    "source_num": 34,
+    "title": "Model Context Protocol",
+    "authors": "Anthropic",
+    "venue": "Wikipedia, 2024",
+    "type": "blog",
+    "url": "https://en.wikipedia.org/wiki/Model_Context_Protocol",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 35,
+    "title": "What is Model Context Protocol (MCP)?",
+    "authors": "Google Cloud",
+    "venue": "Google Cloud, 2025",
+    "type": "blog",
+    "url": "https://cloud.google.com/discover/what-is-model-context-protocol",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 36,
+    "title": "PAYADOR: A Minimalist Approach to Grounding Language Models on Structured Data",
+    "authors": "Góngora, S., Chiruzzo, L., Méndez, G., Gervás, P.",
+    "venue": "ICCC, 2024",
+    "type": "paper",
+    "url": "https://computationalcreativity.net/iccc24/papers/ICCC24_paper_152.pdf",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 37,
+    "title": "PAYADOR GitHub Repository",
+    "authors": "Góngora, S., Chiruzzo, L., Méndez, G., Gervás, P.",
+    "venue": "GitHub, 2024",
+    "type": "repo",
+    "url": "https://github.com/pln-fing-udelar/payador",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 38,
+    "title": "PAYADOR (ResearchGate mirror)",
+    "authors": "Góngora, S., et al.",
+    "venue": "ResearchGate / ICCC, 2024",
+    "type": "paper",
+    "url": "https://www.researchgate.net/publication/PAYADOR",
+    "confidence": "low",
+    "error": "request timed out"
+  },
+  {
+    "source_num": 39,
+    "title": "Semia: Auditing Agent Skills via Constraint-Guided Representation Synthesis",
+    "authors": "Wen, H., Li, Y., Liu, H., Shou, C., Chen, Y., Tian, Y., Feng, Y.",
+    "venue": "arXiv, 2026",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2605.00314",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 40,
+    "title": "Auditing Agent Skills via Constraint-Guided Representation Synthesis (ArXiv page)",
+    "authors": "Wen, H., et al.",
+    "venue": "arXiv, 2026",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2605.00314",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 41,
+    "title": "ReasonPlanner: Enhancing Autonomous Planning with Temporal Knowledge Graphs and LLMs",
+    "authors": "Dinh, T., Syed, M., Yankoski, M., Ford, T.W.",
+    "venue": "arXiv, 2024",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2410.09252",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 42,
+    "title": "ReasonPlanner (ResearchGate)",
+    "authors": "Dinh, et al.",
+    "venue": "ResearchGate / arXiv, 2024",
+    "type": "paper",
+    "url": "https://www.researchgate.net/publication/ReasonPlanner",
+    "confidence": "low",
+    "error": "request timed out"
+  },
+  {
+    "source_num": 43,
+    "title": "Structure Beats Prose: Specs for Coding Agents That Actually Work",
+    "authors": "van Egmond, S.",
+    "venue": "Medium, 2026",
+    "type": "blog",
+    "url": "https://medium.com/@stefanvanegmond/structure-beats-prose-specs-for-coding-agents-that-actually-work-e035929b0f3d",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 44,
+    "title": "The Complete Guide to Prompt Engineering",
+    "authors": "Meta-Intelligence",
+    "venue": "Meta-Intelligence Tech, 2026",
+    "type": "blog",
+    "url": "https://www.meta-intelligence.tech/en/insight-prompt-engineering",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 45,
+    "title": "Introducing the Model Context Protocol",
+    "authors": "Anthropic",
+    "venue": "Anthropic Blog, 2024",
+    "type": "blog",
+    "url": "https://www.anthropic.com/news/model-context-protocol",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 46,
+    "title": "Code execution with MCP: Building more efficient agents",
+    "authors": "Anthropic",
+    "venue": "Anthropic Engineering Blog, 2025",
+    "type": "blog",
+    "url": "https://www.anthropic.com/engineering/code-execution-with-mcp",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 47,
+    "title": "Jericho: Interactive Fiction Games: A Colossal Adventure",
+    "authors": "Hausknecht, M., Ammanabrolu, P., Côté, M.-A., Yuan, X.",
+    "venue": "AAAI, 2020",
+    "type": "paper",
+    "url": "https://www.microsoft.com/en-us/research/blog/jericho-framework/",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 48,
+    "title": "Solving Interactive Fiction Games: A Colossal Adventure (NeurIPS)",
+    "authors": "Hausknecht, M., et al.",
+    "venue": "NeurIPS, 2018",
+    "type": "paper",
+    "url": "https://neurips.cc/virtual/2018/12278",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 49,
+    "title": "TextWorld: A Learning Environment for Text-based Games",
+    "authors": "Côté, M.-A., et al.",
+    "venue": "Workshop on Computer Games / CGW, 2018",
+    "type": "paper",
+    "url": "https://scispace.com/papers/textworld-a-learning-environment-for-text-based-games-1xw0xl2lh5",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 50,
+    "title": "TextWorld (ResearchGate)",
+    "authors": "Côté, M.-A., et al.",
+    "venue": "ResearchGate / CGW, 2018",
+    "type": "paper",
+    "url": "https://www.researchgate.net/publication/TextWorld",
+    "confidence": "low",
+    "error": "request timed out"
+  },
+  {
+    "source_num": 51,
+    "title": "ScienceWorld: Is your Agent Smarter than a 5th Grader?",
+    "authors": "Wang, R., Jansen, P., Côté, M.-A., Ammanabrolu, P.",
+    "venue": "EMNLP, 2022",
+    "type": "paper",
+    "url": "https://sciworld.apps.allenai.org/",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 52,
+    "title": "ScienceWorld (ACL Anthology)",
+    "authors": "Wang, R., et al.",
+    "venue": "EMNLP, 2022",
+    "type": "paper",
+    "url": "https://aclanthology.org/2022.emnlp-main.775.pdf",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 53,
+    "title": "TALES: Text Adventure Learning Environment Suite",
+    "authors": "Cui, C.Z., Yuan, X., Xiao, Z., Ammanabrolu, P., Côté, M.-A.",
+    "venue": "arXiv, 2025/2026",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2504.14128",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 54,
+    "title": "ScienceWorld Benchmark (EmergentMind)",
+    "authors": "Various",
+    "venue": "EmergentMind, 2025",
+    "type": "blog",
+    "url": "https://www.emergentmind.com/topics/scienceworld-benchmark",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 55,
+    "title": "Meet DiscoveryWorld",
+    "authors": "MarkTechPost",
+    "venue": "MarkTechPost, 2024",
+    "type": "blog",
+    "url": "https://www.marktechpost.com/2024/10/10/meet-discoveryworld/",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 56,
+    "title": "Text Games for RL (McGill NILLI Workshop)",
+    "authors": "Various",
+    "venue": "McGill / NILLI Workshop, 2022",
+    "type": "paper",
+    "url": "https://www.cs.mcgill.ca/~pparth2/nilli_workshop_2022/accepted-papers/1.pdf",
+    "confidence": "low",
+    "error": null
+  },
+  {
+    "source_num": 57,
+    "title": "A Survey of Text Games for Reinforcement Learning Informed by Natural Language",
+    "authors": "Various",
+    "venue": "TACL / MIT Press, 2022",
+    "type": "paper",
+    "url": "https://direct.mit.edu/tacl/article/doi/10.1162/tacl_a_00495/112801/",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 58,
+    "title": "ScienceWorld Benchmark (EmergentMind topic page)",
+    "authors": "Various",
+    "venue": "EmergentMind, 2025",
+    "type": "blog",
+    "url": "https://www.emergentmind.com/topics/scienceworld-benchmark",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 59,
+    "title": "Generative Agents: Interactive Simulacra of Human Behavior",
+    "authors": "Park, J.S., O'Brien, J.C., et al.",
+    "venue": "arXiv / Stanford, 2023",
+    "type": "paper",
+    "url": "https://arxiv.org/abs/2304.03442",
+    "confidence": "high",
+    "error": null
+  },
+  {
+    "source_num": 60,
+    "title": "Generative Agents (3DVAR PDF)",
+    "authors": "Park, J.S., et al.",
+    "venue": "Stanford / arXiv, 2023",
+    "type": "paper",
+    "url": "https://3dvar.com/Park2023Generative.pdf",
+    "confidence": "medium",
+    "error": null
+  },
+  {
+    "source_num": 61,
+    "title": "MemGPT is now part of Letta",
+    "authors": "Letta",
+    "venue": "Letta Blog, 2025",
+    "type": "blog",
+    "url": "https://www.letta.com/blog/memgpt-and-letta",
+    "confidence": "medium",
+    "error": null
+  }
+]

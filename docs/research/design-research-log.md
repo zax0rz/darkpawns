@@ -623,3 +623,19 @@ This is also the first time we're using a specific model release as a strategic 
 
 **[DESIGN]** HitModifiers struct pattern for optional combat modifiers — cleaner than bloating the Combatant interface. Zero value = no modifier. Easy to extend with future modifiers (haste, flesh_alter, etc.).
 
+
+---
+
+## 2026-05-12 — dp-agent CLI + Evaluation Methodology + CI Fix
+
+**[DESIGN]** Following Zach's production-concern about Python scripts + JSONL scattered everywhere, redesigned data capture to use the existing Postgres DB. One transaction per decision. Queryable with SQL. No filesystem dependency. This is the right call — if we ever have real users, filesystem logging doesn't scale.
+
+**[DESIGN]** Built `cmd/dp-agent` — Go CLI binary (~9MB, zero new deps). Commands: `play`, `session`, `config`, `keygen`, `whoami`, `exec`. Core agent loop: WebSocket connect + structured state + FSM override + LLM call + command dispatch. LiteLLM proxy with GLM-5-turbo primary, Sonnet fallback. Session logging in-memory with summary on finalize. Config via ~/.dp-agent.json or DP_KEY env var.
+
+**[DESIGN]** After Daeron's intervention re-prioritizing the social experiment: the co-player concern is dead. Zach plays multiple characters (Aidan, Aiko, Misteryuck), each with a different relationship to BRENDA. This is cleaner than a stranger — same player, motivated, knowledgeable, generates genuine data. Blind scoring by Daeron mitigates bias.
+
+**[DESIGN]** Deployed skill.md at `/static/skill.md` — downloadable agent onboarding. "5 minutes to playing." Protocol spec, dp-agent binary, example turn, memory caveat.
+
+**[RESULT]** Brenda's CI/CD failure fixed (Hugo 0.144+ deprecated `kind` frontmatter → replaced with `type`). "Forty-Two Thousand Emails" gallery piece and "Holding Without Fixing" blog post now live at brenda.labz0rz.com.
+
+**[HYPOTHESIS]** dp-agent being a Go binary (not Python) changes the research angle. The paper can claim: "zero-setup server-hosted memory, deliverable as a single static binary with no runtime dependencies." This is a different claim from "here's a Python script that needs pip install." Worth measuring time-to-first-action for each approach.
