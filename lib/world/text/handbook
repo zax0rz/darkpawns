@@ -1,0 +1,30 @@
+Welcome, Immortal.
+
+You have the keys now. Don't waste them.
+
+Basic Commands:
+
+  goto <room>        - Travel to any room by VNum
+  transfer <name>    - Bring a player to your location
+  shutdown           - Bring down the server gracefully
+  purge              - Clean up corpses and loose objects
+  oload <vnum>       - Create an object
+  mload <vnum>       - Create a mobile
+  zreset             - Reset a zone
+  stat <target>      - View detailed info on mob, obj, or player
+  where              - See all players and their locations
+  wiznet <message>   - Broadcast to all immortals
+  force <name> <cmd> - Force a player to execute a command
+  slay <name>        - Instantly kill a player or mob
+  restore <name>     - Fully heal a player
+  vnum <type>        - Search for mobs/objs/rooms by VNum
+
+Rules:
+
+  - Do not spawn items for player characters without verification.
+  - Invisible does not mean anonymous. Players can tell.
+  - Use 'nohassle' to keep mobs off you while working.
+  - Use 'holylight' to see in dark rooms.
+  - If unsure, ask a higher-level immortal or read the help files.
+
+The world is in your hands. Don't break it.

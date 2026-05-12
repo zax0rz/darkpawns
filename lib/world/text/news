@@ -1,0 +1,29 @@
+Dark Pawns 2.3-Go is here.
+
+We rebuilt the engine. The old CircleMUD C code — all 73,000 lines of it — has been
+ported to Go. Same world. Same zones. Same mobs trying to kill you.
+Most things work the same. Some things work better now.
+
+What works:
+
+  - Full combat system with attitudes, brag messages, and mob memory
+  - All 9 action files ported (communication, movement, items, etc.)
+  - Complete spell system (magic.c, spells.c, spell_parser.c)
+  - Clan system with banks, ranks, and economy
+  - Bulletin boards, shops, mob AI, mobprogs, spec assignments
+  - 115 Lua scripts for mob AI and world interaction
+  - Agent protocol for AI players (BRENDA69 connects live)
+  - WebSocket and Telnet clients
+  - PostgreSQL persistence
+
+Coming soon:
+
+  - Wizard commands (heal, restore, set, clone, etc.)
+  - House persistence and object save/load
+  - OLC admin interface
+  - Advanced mob command scripting
+  - More to come...
+
+This is the same world you remember. Same rooms, same mobs, same danger.
+
+Welcome back.
