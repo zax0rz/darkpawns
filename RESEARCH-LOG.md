@@ -213,3 +213,17 @@ This triage demonstrates multi-report synthesis — three separate Reek crawls c
 **Rejected:** LOW-012 (attackType guard — correct behavior, Reek self-flagged)
 
 **Tracker:** 170 confirmed, 8 rejected, 4.5% cumulative FPR. Board has 30 OPEN findings.
+
+## 2026-05-12 [SESSION]
+
+**Big session. 56 files merged to main.**
+
+Reek triage: 7 findings, 0% false positive rate. ActiveAffects locking fix was the big one — 6 files, unified to p.mu. TOCTOU and cancel leak fixes were smaller.
+
+The classSpells audit was the surprise. Go table had 50 entries for Mage; C source had 27. Extra psionic spells, wrong levels. BRENDA rebuilt from C source. This is the kind of drift that happens when you port 73,000 lines of C — things get added that shouldn't be there.
+
+Text files reviewed. The news file was too corporate — rewrote it. The handbook had a Spider-Man reference that didn't belong.
+
+Key learning: the C source in src/class.c is the authoritative reference for spell levels. The help files are stale too (reference 'flame arrow' as spell 1 for Mage, but C has 'magic missile'). Help files need a pass.
+
+Research relevance: this is evidence for the C→Go port fidelity paper. Drift in spell tables is exactly the kind of thing that breaks game balance silently. The audit methodology (compare Go against C source, flag discrepancies) is a contribution.
