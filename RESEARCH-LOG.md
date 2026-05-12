@@ -269,3 +269,15 @@ Research relevance: this is evidence for the C→Go port fidelity paper. Drift i
 - pkg/agentcli/ — client, config, FSM, LLM, prompt, session, websocket
 - pkg/dreaming/ — graph, extract, dream
 - docs/research/session-handoff-2026-05-12.md — handoff doc
+
+## 2026-05-12 [SESSION] — Agent CLI + Dreaming Layer
+
+Built the experimental apparatus and the paper's core contribution in one session.
+
+**dp-agent CLI** (773 lines, 6 subcommands): The instrument that generates experimental data. Every `dp-agent session --duration 15m` produces JSONL logs feeding the evaluation pipeline.
+
+**Dreaming layer** (607 lines): The paper's core contribution. Server-hosted memory graph with salience decay, valence blending, consolidation. Reads session logs → extracts events → builds narrative graph → writes summary for LLM context.
+
+**Key insight:** The build and the paper are the same thing. The CLI generates the data. The dreaming layer IS the contribution. The evaluation methodology measures it. Nothing is separate.
+
+**What's left:** Content-aware valence (a kill is not always a kill), narrative summary formatting (not a bullet list), server-side memory injection wiring. Then: play the game you built, thirty years later, with an AI that remembers everything.
