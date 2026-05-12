@@ -82,8 +82,8 @@ Maintained by Daeron. Updated per triage cycle.
 | NEW-002 | removeCharmAffect mutates ActiveAffects with zero locks | follow.go:242-254 | FIXED | Added ch.mu.Lock/defer ch.mu.Unlock in removeCharmAffect. (Daeron) |
 | NEW-003 | doOrder calls executeCommand which is a stub | damage_stubs.go:115, combat_control.go:64,74 | CONFIRMED HIGH | executeCommand is a no-op. Order command parses correctly, notifies room, then does nothing. | 
 | NEW-004 | affect_update.go uses w.mu instead of p.mu for Player fields | affect_update.go:44-70 | FIXED | Now snapshots players under w.mu.RLock, then uses p.mu per-player for ActiveAffects. (Daeron) |
-| NEW-005 | executeMobCommand TOCTOU — lock released before mob use | world.go:458-470 | CONFIRMED MED | Lock held for mob lookup, released, then mob used. Mob can die between lookup and use. | 
-| NEW-006 | Zone dispatcher cancel function never called | zone_dispatcher.go:73 | CONFIRMED LOW | G118 suppresses warning but cancel is stored and never explicitly called. Parent cascade covers shutdown but individual zone removal leaks. | 
+| NEW-005 | executeMobCommand TOCTOU — lock released before mob use | world.go:458-470 | FIXED | Hold RLock through command dispatch via defer. All cases are fast (I/O or short mutations). (Daeron) |
+| NEW-006 | Zone dispatcher cancel function never called | zone_dispatcher.go:73 | FIXED | Stop() now calls worker.cancel() per-zone before parent cascade. Removed G118 suppression. (Daeron) |
 | NEW-007 | doVisible reads ActiveAffects without locking | other_character.go:48 | FIXED | Added ch.mu.RLock + snapshot-copy before iteration. (Daeron) |
 
 ## LOW

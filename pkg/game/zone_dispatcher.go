@@ -63,8 +63,7 @@ func (zd *ZoneDispatcher) startZoneLocked(zone *parser.Zone) {
 		return // already started
 	}
 
-// #nosec G118
-	ctx, cancel := context.WithCancel(zd.ctx) // #nosec G118 — cancel stored in zoneWorker struct; parent cancel cascades in Stop()
+	ctx, cancel := context.WithCancel(zd.ctx)
 	worker := &zoneWorker{
 		zone:   zone,
 		ctx:    ctx,
@@ -139,8 +138,18 @@ func (zd *ZoneDispatcher) zoneResetInterval(zone *parser.Zone) time.Duration {
 
 // Stop gracefully shuts down all zone goroutines and waits for them to finish.
 func (zd *ZoneDispatcher) Stop() {
+	// Cancel each zone worker's context explicitly before the parent cascade.
+	// This ensures per-zone resources are freed even if the parent cancel
+	// doesn't propagate instantly.
+	zd.mu.Lock()
+	for _, worker := range zd.zones {
+		worker.cancel()
+	}
+	zd.mu.Unlock()
+
 	zd.cancel()
 	zd.wg.Wait()
+
 	zd.mu.Lock()
 	zd.zones = make(map[int]*zoneWorker)
 	zd.mu.Unlock()
