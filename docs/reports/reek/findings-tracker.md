@@ -80,7 +80,7 @@ Maintained by Daeron. Updated per triage cycle.
 |---|---|---|---|---|
 | NEW-001 | ActiveAffects data race — 3 inconsistent locking regimes | affect_update.go:47, follow.go:243, other_character.go:48, affects_informative.go:17, eat_cmds.go:66, wiz_system.go:287 | FIXED | Unified all access to p.mu. Exported RLock/RUnlock on Player. Snapshot-copy pattern in affect_update.go. (Daeron) |
 | NEW-002 | removeCharmAffect mutates ActiveAffects with zero locks | follow.go:242-254 | FIXED | Added ch.mu.Lock/defer ch.mu.Unlock in removeCharmAffect. (Daeron) |
-| NEW-003 | doOrder calls executeCommand which is a stub | damage_stubs.go:115, combat_control.go:64,74 | CONFIRMED HIGH | executeCommand is a no-op. Order command parses correctly, notifies room, then does nothing. | 
+| NEW-003 | doOrder calls executeCommand which is a stub | damage_stubs.go:115, combat_control.go:64,74 | FIXED | Replaced stub with real dispatch via World.CommandExecFunc callback. Session layer wired at boot. Player-charmed followers now execute commands. Mob orders deferred. (BRENDA) |
 | NEW-004 | affect_update.go uses w.mu instead of p.mu for Player fields | affect_update.go:44-70 | FIXED | Now snapshots players under w.mu.RLock, then uses p.mu per-player for ActiveAffects. (Daeron) |
 | NEW-005 | executeMobCommand TOCTOU — lock released before mob use | world.go:458-470 | FIXED | Hold RLock through command dispatch via defer. All cases are fast (I/O or short mutations). (Daeron) |
 | NEW-006 | Zone dispatcher cancel function never called | zone_dispatcher.go:73 | FIXED | Stop() now calls worker.cancel() per-zone before parent cascade. Removed G118 suppression. (Daeron) |
