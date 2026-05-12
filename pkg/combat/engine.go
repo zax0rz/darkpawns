@@ -50,12 +50,6 @@ type CombatEngine struct {
 	// victimName is the name of the character who took damage.
 	DamageFunc func(victimName string)
 
-	// ParryCheckFunc checks if a defender parries an attack. C-11: fight.c:1958-1968.
-	ParryCheckFunc func(defenderName string) bool
-
-	// DodgeCheckFunc checks if an NPC dodges an attack. C-11: fight.c:1970-1975.
-	DodgeCheckFunc func(defenderName string) bool
-
 	// OnRoundEnd is called after each combat round. Used for wait state decrement.
 	OnRoundEnd func()
 }
@@ -250,7 +244,9 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	}
 
 	// Calculate number of attacks for attacker
-	numAttacks := GetAttacksPerRound(attacker, false, false)
+	hasHaste := HasAffect != nil && HasAffect(attacker.GetName(), AFF_HASTE)
+	hasSlow := HasAffect != nil && HasAffect(attacker.GetName(), AFF_SLOW)
+	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
 
 	// Perform attacks
 	for i := 0; i < numAttacks; i++ {

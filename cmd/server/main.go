@@ -32,8 +32,6 @@
 //
 // Deferred to future refactor. See RESEARCH-LOG.md [DESIGN].
 
-//go:build !web
-
 package main
 
 import (
@@ -45,6 +43,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -118,8 +117,9 @@ func main() {
 	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
-	manager.SetParryDodgeFuncs()                      // Enable parry/dodge checks (C-11)
+	manager.SetOnRoundEnd()                          // Decrement wait states each combat round
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
+	combat.InitSkillMessages()                            // Wire multi-variant combat messages
 
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {
@@ -217,26 +217,30 @@ func main() {
 	// Create handler with security middleware
 	handler := web.SecurityHeaders(http.DefaultServeMux)
 
-	// Check if TLS should be used
-	useTLS := os.Getenv("USE_TLS") == "true"
+	// TLS configuration:
+	//   - Cert + key both set → TLS enabled automatically
+	//   - USE_TLS=true but certs missing → fatal (explicit intent, broken config)
+	//   - No certs → plaintext with warning
 	certFile := os.Getenv("TLS_CERT_FILE")
 	keyFile := os.Getenv("TLS_KEY_FILE")
+	useTLS := os.Getenv("USE_TLS") == "true"
+
+	if useTLS && (certFile == "" || keyFile == "") {
+		slog.Error("USE_TLS=true but TLS_CERT_FILE and TLS_KEY_FILE are not set")
+		os.Exit(1)
+	}
+	haveCerts := certFile != "" && keyFile != ""
 
 	go func() {
-		if useTLS {
-			if certFile == "" || keyFile == "" {
-				slog.Error("TLS_CERT_FILE and TLS_KEY_FILE environment variables must be set for TLS")
-				os.Exit(1)
-			}
+		srv := &http.Server{Addr: addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second}
+		if haveCerts {
 			slog.Info("Starting HTTPS server", "address", addr)
-			srv := &http.Server{Addr: addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second}
 			if err := srv.ListenAndServeTLS(certFile, keyFile); err != nil {
 				slog.Error("Server error", "error", err)
 				os.Exit(1)
 			}
 		} else {
-			slog.Warn("Starting HTTP server (not secure for production)", "address", addr)
-			srv := &http.Server{Addr: addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second}
+			slog.Warn("TLS disabled — WebSocket and API traffic is unencrypted. Set TLS_CERT_FILE and TLS_KEY_FILE for production.", "address", addr)
 			if err := srv.ListenAndServe(); err != nil {
 				slog.Error("Server error", "error", err)
 				os.Exit(1)

@@ -134,7 +134,7 @@ func (w *World) doBash(ch *Player, me *MobInstance, cmd string, arg string) bool
 	} else if w.doDamage(ch, vict, (ch.GetLevel()/2)+1, SkillBash) {
 		improveSkill(ch, SkillBash)
 		// Victim is bashed down
-		vict.SetPosition(combat.PosFighting)
+		vict.SetPosition(combat.PosSitting)
 	}
 	return true
 }

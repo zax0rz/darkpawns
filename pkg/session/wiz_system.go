@@ -284,11 +284,14 @@ func cmdWizutil(s *Session, args []string) error {
 		target.Send("You feel thawed.")
 		s.Send("Thawed.")
 	case wizutilUnaffect:
+		target.player.Lock()
 		if target.player.ActiveAffects != nil {
 			target.player.ActiveAffects = nil
+			target.player.Unlock()
 			target.Send("There is a brief flash of light! You feel slightly different.")
 			s.Send("All spells removed.")
 		} else {
+			target.player.Unlock()
 			s.Send("Your victim does not have any affections!")
 		}
 	}

@@ -18,12 +18,14 @@ func (w *World) GetItemsInRoomI(roomVNum int) []interface{} {
 	return result
 }
 
-// Deprecated: AddItemToRoom only appends to roomItems without setting Location or RoomVNum.
-// Use MoveObjectToRoom instead, which properly handles detach/attach and location tracking.
+// AddItemToRoom appends an item to a room's item list.
+// MED-023: Now sets Location and RoomVNum on the object, matching MoveObjectToRoom behavior.
+// Prefer MoveObjectToRoom for new code (it also handles detach from current location).
 func (w *World) AddItemToRoom(item *ObjectInstance, roomVNum int) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
+	item.SetRoomVNum(roomVNum)
 }
 
 // ExtractObject removes an object from the world entirely.

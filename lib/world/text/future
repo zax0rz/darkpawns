@@ -1,0 +1,19 @@
+The road ahead:
+
+  - Full wizard command suite (heal, restore, set, clone, morph, audit,
+    syscheck, cstat, mstat, ostat, and more)
+  - OLC web admin panel for zone editing without restarting
+  - House persistence -- clan castles with object save/load
+  - Enhanced Lua scripting -- more mob AI capabilities
+  - Player market / auction house system
+  - Quest engine for god-run events
+  - Expanded race abilities and racial languages
+  - Moongate system restoration (time/space portals)
+  - Capture the Flag and TAG arena events
+  - Advanced tattoo system expansion
+  - Dream/Nightmare system for the Wyldlands
+
+The core world is complete. These are the features that make Dark Pawns
+more than just a MUD -- they make it a living world.
+
+Stay tuned.

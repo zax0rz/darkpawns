@@ -9,6 +9,9 @@ import (
 // cmdAffects lists the player's active spell affects.
 // Source: act.informative.c ACMD(do_affects)
 func cmdAffects(s *Session, args []string) error {
+	s.player.RLock()
+	defer s.player.RUnlock()
+
 	if len(s.player.ActiveAffects) == 0 {
 		s.Send("You are not affected by any spells.")
 		return nil

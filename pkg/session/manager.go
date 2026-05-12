@@ -284,23 +284,9 @@ func (m *Manager) SetScriptFightFunc() {
 	}
 }
 
-// SetParryDodgeFuncs wires C-11 parry and dodge checks into the combat engine.
-func (m *Manager) SetParryDodgeFuncs() {
-	m.combatEngine.ParryCheckFunc = func(defenderName string) bool {
-		p, ok := m.world.GetPlayer(defenderName)
-		if !ok {
-			return false
-		}
-		return game.CheckParry(p)
-	}
-	m.combatEngine.DodgeCheckFunc = func(defenderName string) bool {
-		mob := m.world.GetMobByName(defenderName)
-		if mob == nil {
-			return false
-		}
-		return game.CheckNPCDodge(mob)
-	}
-	// C-10: decrement all player wait states each combat round
+// OnRoundEnd decrements all player wait states each combat round.
+// Set after combat engine initialization.
+func (m *Manager) SetOnRoundEnd() {
 	m.combatEngine.OnRoundEnd = func() {
 		m.world.ForEachPlayer(func(p *game.Player) {
 			p.DecrementWaitState()

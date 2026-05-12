@@ -254,33 +254,7 @@ func (w *World) KenderSteal(ch *Player, mob *MobInstance) {
 	}
 }
 
-// FindClassBitvector maps a class letter to a bitvector bit for skill/spell filtering.
-func FindClassBitvector(arg byte) int64 {
-	switch arg {
-	case 'm':
-		return 1 << 0 // mage
-	case 'c':
-		return 1 << 1 // cleric
-	case 't':
-		return 1 << 2 // thief
-	case 'w':
-		return 1 << 3 // warrior
-	case 'a':
-		return 1 << 4 // magus
-	case 'v':
-		return 1 << 5 // avatar
-	case 's':
-		return 1 << 6 // assassin
-	case 'p':
-		return 1 << 7 // paladin
-	case 'n':
-		return 1 << 8 // ninja
-	case 'i':
-		return 1 << 9 // psionic
-	default:
-		return 0
-	}
-}
+// FindClassBitvector moved to class_tables.go (with ranger/mystic support).
 
 // randPct returns a simple pseudo-random uint64 for game RNG needs.
 func (w *World) randPct() uint64 {

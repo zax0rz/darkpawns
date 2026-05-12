@@ -34,6 +34,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		aff = engine.NewAffect(engine.AffectHitRoll, 6, 2, "bless")
 		applyAffect(victim, aff)
 		aff = engine.NewAffect(engine.AffectType(engine.ApplySavingSpell), 6, -2, "bless")
+		applyAffect(victim, aff)
 	case SpellArmor:
 		aff = engine.NewAffect(engine.AffectArmorClass, 24, -15, "armor")
 	case SpellBlindness, SpellSmokescreen:
@@ -160,10 +161,13 @@ func MagUnaffects(level int, ch, victim interface{}, spellNum int, world interfa
 }
 
 // MagGroups applies group versions of spells.
+// TODO(HIGH-012): Implement group spell targeting — iterate group members and apply
+// each group-targetable spell effect. Currently a no-op stub.
 func MagGroups(level int, ch interface{}, spellNum, savetype int, world interface{}) {
 	if ch == nil {
 		return
 	}
+	slog.Debug("MagGroups stub called", "spell", spellNum, "level", level)
 	_ = level
 	_ = savetype
 	_ = world
@@ -171,10 +175,13 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 }
 
 // MagMasses applies mass (room-wide) spells.
+// TODO(HIGH-012): Implement mass spell targeting — affects all valid targets in the
+// caster's room. Currently a no-op stub.
 func MagMasses(level int, ch interface{}, spellNum, savetype int, world interface{}) {
 	if ch == nil {
 		return
 	}
+	slog.Debug("MagMasses stub called", "spell", spellNum, "level", level)
 	_ = level
 	_ = savetype
 	_ = world
@@ -182,10 +189,13 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 }
 
 // MagAreas applies area (room-wide offensive) spells.
+// TODO(HIGH-012): Implement area spell targeting — affects all hostile targets
+// in the caster's room. Currently a no-op stub.
 func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface{}) {
 	if ch == nil {
 		return
 	}
+	slog.Debug("MagAreas stub called", "spell", spellNum, "level", level)
 	_ = level
 	_ = savetype
 	_ = world
@@ -193,28 +203,37 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 }
 
 // MagSummons summons NPCs into the world.
+// TODO(HIGH-012): Implement mob summoning — spawn NPCs based on spell type.
+// Currently a no-op stub.
 func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 	_ = level
 	_ = ch
 	_ = spellNum
 	_ = world
+	slog.Debug("MagSummons stub called", "spell", spellNum, "level", level)
 }
 
 // MagCreations creates objects.
+// TODO(HIGH-012): Implement object creation — create items in caster's inventory
+// based on spell type. Currently a no-op stub.
 func MagCreations(level int, ch interface{}, spellNum int, world interface{}) {
 	_ = level
 	_ = ch
 	_ = spellNum
 	_ = world
+	slog.Debug("MagCreations stub called", "spell", spellNum, "level", level)
 }
 
 // MagAlterObjs alters objects.
+// TODO(HIGH-012): Implement object alteration — modify target object attributes
+// based on spell type. Currently a no-op stub.
 func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{}) {
 	_ = level
 	_ = ch
 	_ = obj
 	_ = spellNum
 	_ = world
+	slog.Debug("MagAlterObjs stub called", "spell", spellNum, "level", level)
 }
 
 // ExecuteManualSpell dispatches manual (ASPELL) spell implementations.
@@ -362,11 +381,61 @@ func npcRetaliate(victim, ch interface{}) {
 	}
 }
 
+// ReagentItem is the interface a reagent object must satisfy.
+// Extracted from function-local to package scope for testability.
+type ReagentItem interface {
+	GetShortDesc() string
+}
+
+// ReagentInventory is the interface for an inventory that can find and remove reagents.
+type ReagentInventory interface {
+	FindItem(string) (ReagentItem, bool)
+	RemoveItem(ReagentItem) bool
+}
+
+// InventoryHolder is the interface for a caster that has an inventory.
+type InventoryHolder interface {
+	GetInventory() ReagentInventory
+}
+
 func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int {
 	_ = spellNum
-	_ = level
-	_ = reagents
-	return 0
+	if len(reagents) == 0 {
+		return 0
+	}
+
+	reagentName := reagents[0]
+
+	// Look for and consume the reagent from the caster's inventory.
+	// Uses interface assertions to avoid circular imports (spells → game).
+	type messageSender interface { SendMessage(string) }
+
+	var found bool
+	if holder, ok := ch.(InventoryHolder); ok {
+		if item, ok := holder.GetInventory().FindItem(reagentName); ok {
+			holder.GetInventory().RemoveItem(item)
+			found = true
+		}
+	}
+
+	if !found {
+		return 0
+	}
+
+	// Send caster message (second arg if provided)
+	if len(reagents) > 1 && reagents[1] != "" {
+		if sender, ok := ch.(messageSender); ok {
+			sender.SendMessage(reagents[1] + "\r\n")
+		}
+	}
+
+	// Damage bonus: scales with level, matching C behavior.
+	// Original C: bonus is approximately level/2 (varies by spell).
+	bonus := level / 2
+	if bonus < 1 {
+		bonus = 1
+	}
+	return bonus
 }
 
 func init() {

@@ -120,7 +120,7 @@ func (w *World) SpellGate(caster *Player) bool {
 				"around you, and flashes of white light explode in the back of your mind.\r\n")
 			caster.SendMessage("In your final moments, the only thing you can feel is a\r\n" +
 				"wave of cosmic energy coursing through you, tearing your soul to shreds.\r\n")
-			w.RawKill(caster, "blast")
+			w.RawKill(caster, "suffering")
 			if err := w.MoveObjectToNowhere(obj); err != nil {
 				slog.Warn("MoveObjectToNowhere failed in gate collision", "obj_vnum", obj.GetVNum(), "error", err)
 			}
@@ -174,6 +174,8 @@ func (w *World) RawKill(ch *Player, attackType string) {
 		at = 3
 	case "hit", "pound":
 		at = 4
+	case "suffering":
+		at = 399 // TYPE_SUFFERING
 	}
 	w.rawKill(ch, at)
 }

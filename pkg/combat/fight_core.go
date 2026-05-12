@@ -15,7 +15,7 @@ import (
 
 var (
 	BroadcastMessage            func(roomVNum int, msg string, exclude string)
-	SkillMessageFunc            func(dam int, ch, vict string, attackType int) bool
+	SkillMessageFunc            func(dam int, ch, vict string, attackType int, roomVNum int) bool
 	GainExp                     func(name string, amount int)
 	ExtractChar                 func(name string)
 	MakeCorpseFunc              func(victim string, attackType int)
@@ -26,6 +26,7 @@ var (
 	GetRaceHate                 func(name string, index int) int
 	HasAffect                   func(name string, aff int) bool
 	HasAffectStr                func(name string, aff string) bool
+	GetCharacterSex             func(name string) int
 	RemoveAffect                func(name string, skillNum int)
 	RemoveAllAffects            func(name string)
 	RunDeathScript              func(killer, victim string, roomVNum int)
@@ -73,6 +74,7 @@ var (
 	HealAllPlayers               func()                     // Heal all connected players to full
 	GetGold                      func(name string) int
 	SetGold                      func(name string, gold int)
+	SendToCharFunc               func(name string, msg string) // Send message to single character
 )
 
 // ---------------------------------------------------------------------------
@@ -143,6 +145,8 @@ const (
 	AFF_PROTECT_EVIL = 6
 	AFF_PROTECT_GOOD = 7
 	AFF_GROUP        = 8
+	AFF_HASTE       = 9
+	AFF_SLOW        = 10
 )
 
 const (
@@ -150,6 +154,8 @@ const (
 	AFF_STR_WEREWOLF  = "AFF_WEREWOLF"
 	AFF_STR_VAMPIRE   = "AFF_VAMPIRE"
 	AFF_STR_FLESH_ALT = "AFF_FLESH_ALTER"
+	AFF_STR_HASTE    = "AFF_HASTE"
+	AFF_STR_SLOW     = "AFF_SLOW"
 )
 
 const (
@@ -475,13 +481,13 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	isWeapon := attackType >= TYPE_HIT && attackType < TYPE_SUFFERING
 	if !isWeapon {
 		if SkillMessageFunc != nil {
-			SkillMessageFunc(dam, chName, victimName, attackType)
+			SkillMessageFunc(dam, chName, victimName, attackType, ch.GetRoom())
 		}
 	} else {
 		if newPos == PosDead || dam == 0 {
 			sent := false
 			if SkillMessageFunc != nil {
-				sent = SkillMessageFunc(dam, chName, victimName, attackType)
+				sent = SkillMessageFunc(dam, chName, victimName, attackType, ch.GetRoom())
 			}
 			if !sent {
 				DamMessage(dam, ch, victim, attackType-TYPE_HIT)
@@ -675,28 +681,246 @@ var NowUnix = func() int64 { return 0 }
 // ---------------------------------------------------------------------------
 
 // damMessageTier describes one entry of the weapon damage message table.
+// CRIT-010: In the original C code, messages were loaded from data files via
+// Each tier has multiple variants; one is randomly selected per hit.
+// This restores the C CircleMUD behavior from load_messages() + misc/messages,
+// where 3-4 variants per tier kept combat feeling fresh.
 type damMessageTier struct {
 	MinDamage int
-	Room      string
-	Char      string
-	Victim    string
+	Room      []string
+	Char      []string
+	Victim    []string
+}
+
+// randPick selects a random element from a slice.
+func randPick[T any](s []T) T {
+	if len(s) == 0 {
+		var zero T
+		return zero
+	}
+	return s[rand.Intn(len(s))]
 }
 
 var damMessageTiers = []damMessageTier{
-	{0, "$n tries to #w $N, but misses.", "You try to #w $N, but miss.", "$n tries to #w you, but misses."},
-	{1, "$n scratches $N as $e #W $M.", "You scratch $N as you #w $M.", "$n scratches you as $e #W you."},
-	{3, "$n barely #W $N.", "You barely #w $N.", "$n barely #W you."},
-	{5, "$n #W $N.", "You #w $N.", "$n #W you."},
-	{7, "$n #W $N hard.", "You #w $N hard.", "$n #W you hard."},
-	{11, "$n #W $N very hard.", "You #w $N very hard.", "$n #W you very hard."},
-	{18, "$n #W $N extremely hard.", "You #w $N extremely hard.", "$n #W you extremely hard."},
-	{26, "$n #W $N violently.", "You #w $N violently.", "$n #W you violently."},
-	{36, "$n #W $N savagely.", "You #w $N savagely.", "$n #W you savagely."},
-	{48, "$n MUTILATES $N!", "You MUTILATE $N!", "$n MUTILATES you!"},
-	{60, "$n DISEMBOWELS $N!!", "You DISEMBOWEL $N!!", "$n DISEMBOWELS you!!"},
-	{80, "$n DESTROYS $N!!!", "You DESTROY $N!!!", "$n DESTROYS you!!!"},
-	{101, "$n OBLITERATES $N!!!!", "You OBLITERATE $N!!!!", "$n OBLITERATES you!!!!"},
-	{10000, "$n R O C K S the Hell Out Of $N!!!!!!!!!!!!!!!!!!!!!!!!", "You R O C K the Hell Out Of $N!!!!!!!!!!!!!!!!!!!!!!!!", "$n R O C K S the Hell Out Of You!!!!!!!!!!!!!!!!!!!!!!!!"},
+	// Tier 0: miss
+	{0,
+		[]string{
+			"$n tries to #w $N, but misses.",
+			"$n's swing goes wide, missing $N entirely.",
+			"$n lunges at $N and connects with nothing but air.",
+		},
+		[]string{
+			"You try to #w $N, but miss.",
+			"You swing at $N and hit nothing.",
+			"Your clumsy strike goes wide of $N.",
+		},
+		[]string{
+			"$n tries to #w you, but misses.",
+			"$n's attack sails past you harmlessly.",
+			"$n lunges at you but can't find the range.",
+		},
+	},
+	// Tier 1: scratch (1-2)
+	{1,
+		[]string{
+			"$n scratches $N as $e #W $M.",
+			"$n grazes $N with a glancing blow.",
+		},
+		[]string{
+			"You scratch $N as you #w $M.",
+			"You clip $N — barely worth the effort.",
+		},
+		[]string{
+			"$n scratches you as $e #W you.",
+			"$n's strike just barely catches you.",
+		},
+	},
+	// Tier 2: barely (3-4)
+	{3,
+		[]string{
+			"$n barely #W $N.",
+			"$n's feeble blow barely lands on $N.",
+		},
+		[]string{
+			"You barely #w $N.",
+			"You land a pathetic blow on $N.",
+		},
+		[]string{
+			"$n barely #W you.",
+			"$n's weak strike barely registers.",
+		},
+	},
+	// Tier 3: light (5-6)
+	{5,
+		[]string{
+			"$n #W $N.",
+			"$n lands a light blow on $N.",
+		},
+		[]string{
+			"You #w $N.",
+			"You land a light hit on $N.",
+		},
+		[]string{
+			"$n #W you.",
+			"$n hits you with a light blow.",
+		},
+	},
+	// Tier 4: hard (7-10)
+	{7,
+		[]string{
+			"$n #W $N hard.",
+			"$n's solid blow catches $N flush.",
+			"$n connects firmly with $N.",
+		},
+		[]string{
+			"You #w $N hard.",
+			"Your solid strike catches $N flush.",
+			"You connect firmly with $N.",
+		},
+		[]string{
+			"$n #W you hard.",
+			"$n's solid blow catches you flush.",
+			"$n connects firmly with you.",
+		},
+	},
+	// Tier 5: very hard (11-17)
+	{11,
+		[]string{
+			"$n #W $N very hard.",
+			"$n's heavy strike staggers $N.",
+		},
+		[]string{
+			"You #w $N very hard.",
+			"Your heavy blow staggers $N.",
+		},
+		[]string{
+			"$n #W you very hard.",
+			"$n's heavy strike staggers you.",
+		},
+	},
+	// Tier 6: extremely hard (18-25)
+	{18,
+		[]string{
+			"$n #W $N extremely hard.",
+			"$n wallops $N with bone-rattling force!",
+		},
+		[]string{
+			"You #w $N extremely hard.",
+			"You wallop $N with bone-rattling force!",
+		},
+		[]string{
+			"$n #W you extremely hard.",
+			"$n wallops you with bone-rattling force!",
+		},
+	},
+	// Tier 7: violently (26-35) — C version: "massacres $N to small fragments"
+	{26,
+		[]string{
+			"$n #W $N violently.",
+			"$n massacres $N to small fragments with $s #w!",
+		},
+		[]string{
+			"You #w $N violently.",
+			"You massacre $N to small fragments with your #w!",
+		},
+		[]string{
+			"$n #W you violently.",
+			"$n massacres you to small fragments with $s #w!",
+		},
+	},
+	// Tier 8: savagely (36-47) — C version: "OBLITERATES $N with deadly #w"
+	{36,
+		[]string{
+			"$n #W $N savagely.",
+			"$n OBLITERATES $N with $s deadly #w!!",
+		},
+		[]string{
+			"You #w $N savagely.",
+			"You OBLITERATE $N with your deadly #w!!",
+		},
+		[]string{
+			"$n #W you savagely.",
+			"$n OBLITERATES you with $s deadly #w!!",
+		},
+	},
+	// Tier 9: MUTILATES (48-59) — C version: "EVISCERATES $N with incredible #w"
+	{48,
+		[]string{
+			"$n MUTILATES $N!",
+			"$n EVISCERATES $N with $s incredible #w!!",
+		},
+		[]string{
+			"You MUTILATE $N!",
+			"You EVISCERATE $N with your incredible #w!!",
+		},
+		[]string{
+			"$n MUTILATES you!",
+			"$n EVISCERATES you with $s incredible #w!!",
+		},
+	},
+	// Tier 10: DISEMBOWELS (60-79)
+	{60,
+		[]string{
+			"$n DISEMBOWELS $N!!",
+			"$n opens $N up like a gutted fish!!",
+		},
+		[]string{
+			"You DISEMBOWEL $N!!",
+			"You open $N up like a gutted fish!!",
+		},
+		[]string{
+			"$n DISEMBOWELS you!!",
+			"$n opens you up like a gutted fish!!",
+		},
+	},
+	// Tier 11: DESTROYS (80-100)
+	{80,
+		[]string{
+			"$n DESTROYS $N!!!",
+			"$n annihilates $N with a devastating blow!!!",
+		},
+		[]string{
+			"You DESTROY $N!!!",
+			"You annihilate $N with a devastating blow!!!",
+		},
+		[]string{
+			"$n DESTROYS you!!!",
+			"$n annihilates you with a devastating blow!!!",
+		},
+	},
+	// Tier 12: OBLITERATES (101-9999)
+	{101,
+		[]string{
+			"$n OBLITERATES $N!!!!",
+			"$n reduces $N to a bloody smear on the ground!!!!",
+			"$n delivers a blow of legend against $N!!!!",
+		},
+		[]string{
+			"You OBLITERATE $N!!!!",
+			"You reduce $N to a bloody smear on the ground!!!!",
+			"You deliver a blow of legend against $N!!!!",
+		},
+		[]string{
+			"$n OBLITERATES you!!!!",
+			"$n reduces you to a bloody smear on the ground!!!!",
+			"$n delivers a blow of legend against you!!!!",
+		},
+	},
+	// Tier 13: ROCK (10000+)
+	{10000,
+		[]string{
+			"$n R O C K S the Hell Out Of $N!!!!!!!!!!!!!!!!!!!!!!!!",
+			"$n delivers a blow so catastrophic that reality itself flinches!!!!!!!!!!",
+		},
+		[]string{
+			"You R O C K the Hell Out Of $N!!!!!!!!!!!!!!!!!!!!!!!!",
+			"You deliver a blow so catastrophic that reality itself flinches!!!!!!!!!!",
+		},
+		[]string{
+			"$n R O C K S the Hell Out Of You!!!!!!!!!!!!!!!!!!!!!!!!",
+			"$n delivers a blow so catastrophic that reality itself flinches!!!!!!!!!!",
+		},
+	},
 }
 
 // DamMessage sends the appropriate damage message for weapon attacks.
@@ -716,15 +940,20 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 	plural := AttackHitTexts[attackType].Plural
 
 	sex := ch.GetSex()
-	roomMsg := replaceMessageTokens(tier.Room, ch.GetName(), victim.GetName(), singular, plural, sex)
-	_ = replaceMessageTokens(tier.Char, ch.GetName(), victim.GetName(), singular, plural, sex)
-	_ = replaceMessageTokens(tier.Victim, ch.GetName(), victim.GetName(), singular, plural, sex)
+	roomMsg := replaceMessageTokens(randPick(tier.Room), ch.GetName(), victim.GetName(), singular, plural, sex)
+	charMsg := replaceMessageTokens(randPick(tier.Char), ch.GetName(), victim.GetName(), singular, plural, sex)
+	victimMsg := replaceMessageTokens(randPick(tier.Victim), ch.GetName(), victim.GetName(), singular, plural, sex)
 
 	if BroadcastMessage != nil {
 		BroadcastMessage(ch.GetRoom(), roomMsg, ch.GetName()+" "+victim.GetName())
 	}
 
-
+	// CRIT-010: Send attacker and victim their own messages.
+	// In C, act() sent to TO_CHAR and TO_VICT separately.
+	if SendToCharFunc != nil {
+		SendToCharFunc(ch.GetName(), charMsg)
+		SendToCharFunc(victim.GetName(), victimMsg)
+	}
 }
 
 // replaceMessageTokens substitutes $n, $N, $e, #w, #W in a message template.
@@ -1157,6 +1386,13 @@ func CounterProcs(ch Combatant) {
 
 // **********************************
 // 14. attitudeLoot()
+//
+// MED-021: Simplified from original Dark Pawns C code.
+// Original (fight.c:attitude_loot): junked unwanted items from corpse
+// then displayed one of 12 randomized brag messages.
+// Current Go version: "get all corpse" + fixed chat message.
+// TODO: Restore item junking (auto-junk junk-flagged items from corpse)
+// TODO: Restore randomized brag messages (12 variants per C source).
 // **********************************
 
 func AttitudeLoot(ch, victim Combatant) {
@@ -1181,7 +1417,7 @@ func AttitudeLoot(ch, victim Combatant) {
 func SkillMessage(dam int, ch, victim Combatant, attackType int) {
 	if attackType < TYPE_HIT {
 		if SkillMessageFunc != nil {
-			SkillMessageFunc(dam, ch.GetName(), victim.GetName(), attackType)
+			SkillMessageFunc(dam, ch.GetName(), victim.GetName(), attackType, ch.GetRoom())
 		}
 	}
 }
@@ -1191,16 +1427,17 @@ func SkillMessage(dam int, ch, victim Combatant, attackType int) {
 // **********************************
 
 func NewNamedCombatant(name string, roomVNum int) Combatant {
-	return &namedCombatant{name: name, room: roomVNum}
+	return &namedCombatant{name: name, room: roomVNum, isNPC: false}
 }
 
 type namedCombatant struct {
-	name string
-	room int
+	name  string
+	room  int
+	isNPC bool
 }
 
 func (n *namedCombatant) GetName() string            { return n.name }
-func (n *namedCombatant) IsNPC() bool                 { return true }
+func (n *namedCombatant) IsNPC() bool                 { return n.isNPC }
 func (n *namedCombatant) GetRoom() int                { return n.room }
 func (n *namedCombatant) GetLevel() int               { return 0 }
 func (n *namedCombatant) GetHP() int                  { return 0 }

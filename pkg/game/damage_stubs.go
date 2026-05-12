@@ -1,6 +1,31 @@
 //lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
+// CRIT-009: Dual hit-resolution paths in Dark Pawns combat
+//
+// Path 1 — processCombatPair (pkg/combat/engine.go)
+//   The main combat tick. Runs every round for each fighting pair.
+//   Flow: hit roll → parry check → dodge check → damage → death
+//   Used for: standard melee attacks (auto-attack each combat round)
+//   parry/dodge: CHECKED (via CheckParry/CheckDodge in formulas.go)
+//
+// Path 2 — doDamage / DoSpellDamage (this file, pkg/game/damage_stubs.go)
+//   Called directly by skills, spells, and special attacks.
+//   Flow: hit roll (skill-specific) → damage → death
+//   Used for: bash, kick, backstab, spell damage, etc.
+//   parry/dodge: NOT CHECKED (intentional)
+//
+// Why two paths? This matches CircleMUD design:
+//   - Skill attacks (bash, kick, trip) have their own hit/miss logic and
+//     intentionally bypass parry/dodge — that's the tradeoff for using
+//     a limited-use skill vs auto-attack.
+//   - Backstab from behind explicitly cannot be parried or dodged.
+//   - Spell damage (fireball, etc.) uses saving throws instead of parry/dodge.
+//
+// Future consideration: Some melee skills (e.g., second attack, third attack)
+//   MAY want parry/dodge checks. Currently they go through processCombatPair
+//   and are handled correctly. Only manually-invoked skills use path 2.
+
 import (
 	"fmt"
 	"math/rand"

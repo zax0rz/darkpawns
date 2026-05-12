@@ -275,7 +275,15 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 	}
 	d.SetHP(newHP)
 
-	_ = dam // use for death check later
+	// Death check — if HP reached 0, trigger non-combat death
+	if newHP == 0 {
+		type spellDeathHandler interface {
+			HandleSpellDeath(victim interface{})
+		}
+		if dh, ok := world.(spellDeathHandler); ok {
+			dh.HandleSpellDeath(victim)
+		}
+	}
 }
 
 // --- character trait checks (used in damage formulas) ---
