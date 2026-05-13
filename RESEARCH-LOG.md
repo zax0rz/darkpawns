@@ -320,3 +320,54 @@ Clean boundaries. The client talks WebSocket, not Go imports. The website is sta
 **Net result:** Memory system, agent CLI, dreaming pipeline, human client, three repos, documentation. One session. The research apparatus is complete. The paper has its data source. Now we need to run the experiment.
 
 **Next:** Baseline sessions. First dp-agent play-through with full memory system. First human session via dp-client. The dreaming pipeline eats JSONL from both. The evaluation begins.
+
+---
+
+## [SESSION] 2026-05-13 — Session 30: Fixes + Test Coverage Foundation
+
+**Focus:** Clear the findings board, start building test coverage for core packages.
+
+### Findings Fixed (9 total — board clear)
+
+- **MED-028:** cmdReload sent raw `%s` to all players. Fixed with fmt.Sprintf before SendToAll.
+- **HIGH-018:** removeCharmAffect lock — already present from NEW-002. Tracker was stale.
+- **HIGH-019:** doOrder command dispatch — the real work. Added `CommandExecFunc` callback to World struct, wired through session layer via `SetCommandExecFunc`. doOrder now routes through `ExecuteCommand` instead of silently discarding. Charmed followers actually receive orders now.
+- **LOW-013:** cmdBroadcast NoBroadcast read — added player.RLock.
+- **LOW-014:** cmdFlee XP inversion — clamp loss to 0 when mob HP > max HP.
+- **LOW-016:** graph.go WriteString(Sprintf) → fmt.Fprintf.
+- **LOW-017:** SaveConfig errcheck — error checked + fatal.
+- **LOW-018:** WriteFile errcheck in dreaming — error returned.
+- **LOW-019:** fs.Parse errcheck — all 5 calls now checked.
+
+### Test Coverage Added (38 tests)
+
+**pkg/game (4 new test files, 29 tests):**
+- `command_exec_test.go` — CommandExecFunc delegation (5 tests)
+- `combat_test.go` — backstab, bash, kick, trip initiation (10 tests)
+- `movement_test.go` — valid/invalid exits, doors, tunnel, exhaustion, sneak, followers (8 tests)
+- `message_test.go` — SendMessage, roomMessage, exclusions (6 tests)
+
+**pkg/session (1 new test file, 9 tests):**
+- `session_test.go` — GetSession, SendToAll, BroadcastToRoom, exclusion, CommandExecFunc wiring (9 tests)
+
+### Coverage Results
+- pkg/game: 3.9% → 5.1%
+- pkg/session: 0% → 4.0%
+- Focus: critical player-facing paths, not coverage padding
+
+### Key Discovery: CircleMUD Bare-Handed Backstab
+DoBackstab weapon check uses `GetWeaponDamage()` which returns (1,4) by default for bare hands. So backstab with no weapon still works — uses bare-handed damage. Matches original C behavior. Test adjusted to reflect this.
+
+### Subagent Lesson Reinforced
+First subagent timed out (10 min) trying to fix combat tests — exhausted context reading files instead of implementing. Second attempt: I read all the code myself, pre-digested the fixes, wrote them directly. Faster and cleaner. The pattern from session 28 holds: context quality > model choice, and "read these files" kills subagents.
+
+### Web Search Test
+MiMo web search confirmed working via Perplexity integration. Fetched CircleMUD zone file documentation in 475ms. Useful for research writing, less for day-to-day triage.
+
+### Board Status
+**56 FIXED. 2 DEFERRED. 0 OPEN.** The board is clear.
+
+### Next
+- Continue expanding test coverage (pkg/session command dispatch, pkg/game deeper paths)
+- MiMo web search available on coding plan — use for research writing
+- Session notes saved to docs/session-notes/2026-05-13.md
