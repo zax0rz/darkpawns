@@ -488,3 +488,28 @@ The structural gap between pkg/session/ and pkg/game/ (12K lines of untested int
 - **False positive teaching loop:** Reek's FPR improved from 1.6% (toolchain bulk) through 9.5% (entity analysis) to 13.0% (deeper architectural), then stabilized at 0-12.5% for targeted crawls. Daeron rejects with explanation, which functionally teaches Reek what's noise. The FPR is trending slightly up as Reek tackles harder analysis — expected and healthy. The weekly FPR of 4.3% across 201 findings is well below the 30% "good reek" threshold.
 
 - **The GroupGain bug is the paper's best example.** It's a logic bug that requires understanding game mechanics (group XP distribution), code flow (NewNamedCombatant → PerformGroupGain → IsNPC guard), and port context (stub IsNPC always returning true). No static analysis tool catches this. No unit test catches this without understanding the game. Reek caught it by tracing the code path and asking "does this make sense?" That's the kind of reasoning the paper should highlight.
+
+## 2026-05-13 [SESSION] — Port Completion WP4-WP6
+
+Evening session. Finished the remaining workpackages from the port-completion-workplan.
+
+### Changes
+- WP5b: Lua follow/mount — implemented via ScriptableWorld.SetFollower/MountPlayer/DismountPlayer
+- WP5d: Lua carry-weight — implemented via ScriptableWorld.CanCarryObject
+- WP5e: Clan channel — filters by ClanID instead of broadcasting to all players
+- WP4: use_tattoo — skull summon + spell casting, correct C tattoo constants
+- WP4: do_gen_write — writes reports to misc/bugs|typos|ideas|todo files
+- WP6: Race help text — 8 entries from C constants.c wired into help system
+
+### Key observations
+1. **ScriptableWorld interface was already complete.** The Lua stubs for follow/mount/carry-weight all had corresponding methods on ScriptableWorld that were already implemented by BRENDA's earlier work. The gap was just the Lua→ScriptableWorld bridge — extracting names from Lua tables and calling the interface methods. This is a pattern: interface definition ahead of implementation creates clean wiring points.
+
+2. **Tattoo constants were wrong in Go.** The original Go port used `1 + iota` which gave wrong values and invented tattoo types (Cobra, Wolf, Bear, etc.) that don't exist in C. The C source has TATTOO_DRAGON=1 through TATTOO_OWL=17. This is another example of silent drift — the code compiled and ran, but the tattoo system would have given wrong bonuses. Fidelity audit caught it.
+
+3. **Import cycle avoidance is architectural.** The spells package uses `interface{}` for the world parameter to avoid circular imports (spells→game). The game package can import spells (game→spells is safe). This design decision enables the tattoo use_tattoo to call spells.Cast directly.
+
+4. **File I/O for player reports is trivial but important.** The C code writes bug/typo/idea/todo reports to flat files. The Go stub just printed "Thanks!" without writing anything. Players expected their reports to be saved. This is the kind of "works but doesn't work" bug that erodes player trust.
+
+### Paper-relevant
+- The tattoo constant drift is evidence that port fidelity degrades silently over time. Without periodic cross-reference against the C source, wrong constants accumulate. This argues for automated fidelity checking as part of the CI pipeline.
+- The ScriptableWorld bridge pattern (interface defined → stubs created → implementations wired) is a clean example of incremental system completion that could be documented as a methodology.
