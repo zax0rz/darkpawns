@@ -156,15 +156,15 @@ Two continents, realistic terrain, oceans between them. The civilized cities sle
 
 ### Races
 
-| Race | Traits |
-|------|--------|
-| **Human** | Adaptable, widespread. The only race the eastern mercenary guilds will train as ninjas. |
-| **Elf** | Pale, frail, generations-long lives. Faster than they look. |
-| **Dwarf** | Stubborn as the stone they work, stocky, and built for wars that last centuries. |
-| **Kender** | Small, fearless, insatiably curious. Will pick up anything that isn't nailed down. |
-| **Minotaur** | Seven feet of muscle and labyrinth instinct. Rarely lost, rarely gentle. |
-| **Rakshasa** | Malevolent tiger spirits in humanoid flesh. Recently some have decided to try adventuring instead of tyranny. |
-| **Ssaur** | Evolved lizardmen, too smart for their own tribes, cast out and wandering. |
+| Race         | Traits                                                                                                         |
+|--------------|----------------------------------------------------------------------------------------------------------------|
+| **Human**    | Adaptable, widespread. The only race the eastern mercenary guilds will train as ninjas.                        |
+| **Elf**      | Pale, frail, generations-long lives. Faster than they look.                                                    |
+| **Dwarf**    | Stubborn as the stone they work, stocky, and built for wars that last centuries.                               |
+| **Kender**   | Small, fearless, insatiably curious. Will pick up anything that isn't nailed down.                             |
+| **Minotaur** | Seven feet of muscle and labyrinth instinct. Rarely lost, rarely gentle.                                       |
+| **Rakshasa** | Malevolent tiger spirits in humanoid flesh. Recently some have decided to try adventuring instead of tyranny.  |
+| **Ssaur**    | Evolved lizardmen, too smart for their own tribes, cast out and wandering.                                     |
 
 ### Classes
 
@@ -182,15 +182,15 @@ Full help files, race descriptions, class details, and skill documentation live 
 ┌─────────────────────────────────────────────────────────────────────┐
 │  Client (Browser / Telnet / Agent)                                  │
 │       │           │            │                                    │
-│   WebSocket    TCP/Telnet    WebSocket (mode="agent")              │
+│   WebSocket    TCP/Telnet    WebSocket (mode="agent")               │
 │       │           │            │                                    │
 │       ▼           ▼            ▼                                    │
-│  ┌────────┐  ┌──────────────────────────────────┐                   │
+│  ┌────────┐  ┌───────────────────────────────────┐                  │
 │  │ /ws    │  │ pkg/telnet                        │                  │
-│  │ handler│  │ Listen() → handleConn()            │                 │
-│  └───┬────┘  │    → manager.NewSession()          │                 │
-│      │       │    → JSON shim → HandleMessage()   │                 │
-│      │       └──────────────┬─────────────────────┘                 │
+│  │ handler│  │ Listen() → handleConn()           │                  │
+│  └───┬────┘  │    → manager.NewSession()         │                  │
+│      │       │    → JSON shim → HandleMessage()  │                  │
+│      │       └──────────────┬────────────────────┘                  │
 │      ▼                      ▼                                       │
 │  ┌──────────────────────────────────────┐                           │
 │  │ pkg/session — Manager                │                           │
@@ -210,19 +210,19 @@ Full help files, race descriptions, class details, and skill documentation live 
 │  │   2. cmdRegistry.Lookup(cmd)         │                           │
 │  │   3. handler(session, args)          │                           │
 │  └──────────────┬───────────────────────┘                           │
-│                 │                                                    │
+│                 │                                                   │
 │       ┌─────────┼─────────┐                                         │
 │       ▼         ▼         ▼                                         │
-│  ┌────────┐ ┌────────┐ ┌──────────────────┐                        │
-│  │World   │ │Combat  │ │Scripting (Lua)   │                        │
-│  │(game)  │ │Engine  │ │  RunScript()     │                        │
-│  │        │ │2s tick │ │  Serialized VM   │                        │
-│  └───┬────┘ └───┬────┘ └────────┬─────────┘                        │
+│  ┌────────┐ ┌────────┐ ┌──────────────────┐                         │
+│  │World   │ │Combat  │ │Scripting (Lua)   │                         │
+│  │(game)  │ │Engine  │ │  RunScript()     │                         │
+│  │        │ │2s tick │ │  Serialized VM   │                         │
+│  └───┬────┘ └───┬────┘ └────────┬─────────┘                         │
 │      │          │               │                                   │
 │      └──────────┼───────────────┘                                   │
-│                 │                                                    │
+│                 │                                                   │
 │           ┌─────┴──────┐                                            │
-│      PostgreSQL    Event Bus                                         │
+│      PostgreSQL    Event Bus                                        │
 │    (persistence)  (pub/sub)                                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
