@@ -281,3 +281,19 @@ Built the experimental apparatus and the paper's core contribution in one sessio
 **Key insight:** The build and the paper are the same thing. The CLI generates the data. The dreaming layer IS the contribution. The evaluation methodology measures it. Nothing is separate.
 
 **What's left:** Content-aware valence (a kill is not always a kill), narrative summary formatting (not a bullet list), server-side memory injection wiring. Then: play the game you built, thirty years later, with an AI that remembers everything.
+
+---
+
+## [BUILD] — 2026-05-12 Evening: Memory System Complete
+
+Three components built per The Architect's kick-off brief:
+
+**Content-aware valence** (extract.go): Kill valence now scales from +0 (rat) to +3 (dragon) based on mob level relative to agent. Flee valence ranges from -3 (cowardly, full HP) to 0 (survival, critical HP). Social valence responds to interaction type. Acquisition valence uses item level as quality proxy. Speech sentiment uses simple keyword matching. This is the heuristic layer — imperfect but directional. The evaluation will show whether it matters.
+
+**Narrative summary** (graph.go, BuildSummary): Replaced bullet list with chronologically ordered prose, grouped by sessions (30-min gap = new session). High-salience events get full sentences with valence context. Entity relationship summary appended at the end. The summary reads like a memory fragment, not a database dump. This IS the contribution — narrative memory for game agents.
+
+**Server-side memory injection** (session hooks + agent client): Dreaming writes summary to disk. Server reads at agent auth. Client receives and injects into LLM context. Zero setup — agent connects, gets its memories, acts on them. The pipeline is complete.
+
+**Build status:** Clean. All three pass. Ready for end-to-end testing.
+
+**Remaining:** Run dp-agent sessions against the server. Baseline metrics (no memory). Experimental sessions (with memory). The paper writes itself once the data exists.

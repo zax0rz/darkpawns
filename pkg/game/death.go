@@ -58,17 +58,21 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		mobExp := 0
 		mobGold := 0
 		mobVNum := 0
+		mobLevel := 0
 		if mob, ok := victim.(*MobInstance); ok && mob.Prototype != nil {
 			mobExp = mob.Prototype.Exp
 			mobGold = mob.Prototype.Gold
 			mobVNum = mob.Prototype.VNum
+			mobLevel = mob.Prototype.Level
 		}
 		// Fire memory hook before removing mob from active list
 		killerName := ""
 		killerIsNPC := false
+		killerLevel := 0
 		if killer != nil {
 			killerName = killer.GetName()
 			killerIsNPC = killer.IsNPC()
+			killerLevel = killer.GetLevel()
 		}
 		roomName := ""
 		if room, ok := w.GetRoom(victim.GetRoom()); ok {
@@ -77,8 +81,10 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		fireMobKill(&MobKillEvent{
 			KillerName:  killerName,
 			KillerIsNPC: killerIsNPC,
+			KillerLevel: killerLevel,
 			VictimName:  victim.GetName(),
 			VictimVNum:  mobVNum,
+			VictimLevel: mobLevel,
 			RoomVNum:    victim.GetRoom(),
 			RoomName:    roomName,
 		})

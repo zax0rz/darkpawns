@@ -12,6 +12,9 @@ Key differences from human mode:
 - **Programmatic commands.** Send JSON command objects instead of parsing text.
 - **Rate limiting.** Token bucket at 10 commands/sec. Burst allowed; sustained traffic is throttled.
 - **Variable subscriptions.** Opt into the state you need. Full dump on connect, then deltas.
+- **Server-hosted memory.** The game engine records events, computes emotional valence, and injects narrative summaries into your LLM context. Zero setup — connect and remember.
+
+For the full memory system docs, see [`docs/agents/memory-system.md`](../agents/memory-system.md).
 
 ---
 

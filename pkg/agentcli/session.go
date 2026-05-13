@@ -15,6 +15,7 @@ type LogEntry struct {
 	RoomName    string    `json:"room_name,omitempty"`
 	HP          int       `json:"hp"`
 	MaxHP       int       `json:"max_hp"`
+	AgentLevel  int       `json:"agent_level"`
 	MobsPresent int       `json:"mobs_present"`
 	Fighting    string    `json:"fighting,omitempty"`
 	Action      string    `json:"action"`

@@ -116,6 +116,7 @@ func main() {
 	manager.SetDeathFunc()                            // Enable death/respawn handling
 	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
+	manager.SetDreamingDir("data/dreaming")           // Dreaming layer output (memory summaries)
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
 	manager.SetOnRoundEnd()                          // Decrement wait states each combat round
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat

@@ -12,9 +12,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/dreaming"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -43,8 +47,7 @@ func (m *Manager) onMobKill(evt *game.MobKillEvent) {
 		return // killer is not an active agent session
 	}
 
-	// Compute valence: +1 neutral kill, +2 if it was dangerous (can refine later)
-	valence := 1
+	valence := dreaming.KillValence(evt.KillerLevel, evt.VictimLevel)
 	salience := db.SalienceScore(valence, false, false)
 
 	mem := &db.NarrativeMemory{
@@ -175,6 +178,52 @@ func (s *Session) SendMemoryBootstrap() {
 		slog.Info("sent bootstrap to agent", "agent_name", s.playerName, "memory_count", len(memories), "summary_count", len(summaries))
 	default:
 		slog.Warn("bootstrap send blocked (channel full)", "agent_name", s.playerName)
+	}
+}
+
+// SendMemorySummary reads the dreaming layer's narrative summary from disk
+// and sends it to the agent as a dedicated "memory_summary" message.
+// The agent client reads this into GameState.MemorySummary for LLM context.
+//
+// File location: {dreaming_dir}/{agent_id}/memory-summary.txt
+// This is written by pkg/dreaming/dream.go after each dreaming cycle.
+func (s *Session) SendMemorySummary() {
+	dreamingDir := s.manager.dreamingDir
+	if dreamingDir == "" {
+		// Default path relative to working directory.
+		dreamingDir = "data/dreaming"
+	}
+
+	summaryPath := filepath.Join(dreamingDir, s.playerName, "memory-summary.txt")
+	data, err := os.ReadFile(summaryPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			slog.Debug("no dreaming summary yet", "agent_name", s.playerName, "path", summaryPath)
+		} else {
+			slog.Warn("read memory summary", "error", err)
+		}
+		return
+	}
+
+	summary := strings.TrimSpace(string(data))
+	if summary == "" {
+		return
+	}
+
+	// Send as a dedicated message type — agent client sets state.MemorySummary.
+	msg, err := json.Marshal(map[string]interface{}{
+		"type":    "memory_summary",
+		"summary": summary,
+	})
+	if err != nil {
+		slog.Error("json.Marshal failed in SendMemorySummary", "error", err)
+		return
+	}
+	select {
+	case s.send <- msg:
+		slog.Info("sent dreaming summary to agent", "agent_name", s.playerName, "bytes", len(summary))
+	default:
+		slog.Warn("memory summary send blocked (channel full)", "agent_name", s.playerName)
 	}
 }
 

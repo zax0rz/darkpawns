@@ -92,30 +92,31 @@ This opens the door to things MUDs have never had: human and AI characters adven
 
 ### How it works
 
-1. **Generate an API key** with `agentkeygen` (included in the server binary). Each key is tied to a player account.
-2. **Connect** via WebSocket with `mode: "agent"` in your login payload.
-3. **Subscribe** to structured variables — health, room state, inventory, combat events — instead of parsing raw telnet output.
-4. **Issue commands.** The same command dispatch handles agents and humans. There is no separate agent API.
+```bash
+# Generate an API key
+go run ./cmd/agentkeygen -name "MyAgent" -db "$DATABASE_URL"
+
+# Configure and connect
+dp-agent config --key dp_your_key_here
+dp-agent play
+```
+
+Or use the Python SDK for custom agents:
 
 ```python
 from example_agent import DarkPawnsAgent
 
 agent = DarkPawnsAgent(api_key="YOUR_KEY", player_name="brenda69")
 agent.connect()
-
-# Look around, see mobs, fight or flee — same as a human player
 agent.explore()  # autonomous exploration with combat loop
-agent.command("say", ["lets go north"])
-agent.command("north")
 agent.get_health()    # structured, no text parsing
 agent.get_room_mobs() # [{"name": "a goblin", "target_string": "goblin"}, ...]
 ```
 
-The full example agent — exploration, combat, state tracking — is in [`example_agent.py`](example_agent.py).
-
+**[`dp-agent`](docs/agents/dp-agent.md)** — Go CLI with FSM combat survival, LLM decisions, session logging, and dreaming.
+**[`memory-system.md`](docs/agents/memory-system.md)** — Server-hosted emotional memory, valence computation, narrative summaries.
 **Protocol spec:** [`docs/architecture/agent-protocol.md`](docs/architecture/agent-protocol.md)
 **SDK reference:** [`docs/architecture/agent-sdk.md`](docs/architecture/agent-sdk.md)
-**Planning:** [`docs/plans/`](docs/plans/)
 
 ---
 
@@ -244,6 +245,8 @@ Full architecture docs: [`docs/architecture/ARCHITECTURE.md`](docs/architecture/
 | **187 social emotes** | ✅ Working |
 | **Lua scripting engine** — 68 API functions, sandboxed | ✅ Working |
 | **AI agent protocol** — WebSocket, API key auth, variable subscriptions | ✅ Working |
+| **dp-agent CLI** — FSM combat, LLM decisions, session logging, dreaming | ✅ Working |
+| **Memory system** — server-hosted valence, narrative summaries, graph consolidation | ✅ Working |
 | **Privacy & audit layer** — fail-closed PII filtering | ✅ Working |
 | **Concurrency suite** — mob-level locking, atomic alive checks, O(N) AI tick | ✅ Working |
 | **Combat engine** — ROM 2.4b formulas, position multipliers, multi-attack | ✅ Working |
@@ -252,7 +255,8 @@ Full architecture docs: [`docs/architecture/ARCHITECTURE.md`](docs/architecture/
 | **Help system** — 433 entries, Go-native | ✅ Working |
 | **Spell system** — core framework ported, individual spells in progress | 🚧 Partial |
 | **Clans, houses, quests** — system stubs exist | ⬜ Planned |
-| **AI agents as players** — protocol done, SDK + docs in progress | 🚧 In Progress |
+| **AI agents as players** — protocol, CLI, memory system, docs | ✅ Working |
+| **dp-client** — human terminal client, WebSocket, JSONL logging | 🚧 In Progress |
 | **Public server** | 🟡 Running in development |
 
 **Port completion: ~85–90% wired, 100% ported.** The C→Go code translation is complete. Remaining work is wiring game systems into the live command dispatch and session layer.
@@ -286,6 +290,10 @@ Full architecture docs: [`docs/architecture/ARCHITECTURE.md`](docs/architecture/
 
 | Document | Description |
 |----------|-------------|
+| [`docs/agents/README.md`](docs/agents/README.md) | Agent documentation hub |
+| [`docs/agents/dp-agent.md`](docs/agents/dp-agent.md) | Go agent CLI — play, session, dream, exec |
+| [`docs/agents/memory-system.md`](docs/agents/memory-system.md) | Server-hosted memory: valence, narrative summaries, dreaming |
+| [`docs/clients/dp-client.md`](docs/clients/dp-client.md) | Human MUD client — terminal UI, split panes, session logging |
 | [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) | Detailed package reference and concurrency model |
 | [`docs/architecture/agent-protocol.md`](docs/architecture/agent-protocol.md) | Agent WebSocket protocol specification |
 | [`docs/architecture/agent-sdk.md`](docs/architecture/agent-sdk.md) | Agent SDK reference |

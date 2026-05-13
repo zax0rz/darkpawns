@@ -179,6 +179,17 @@ func (a *AgentClient) handleMessage(ctx context.Context, raw []byte) error {
 		return a.handleVars(ctx, env.Data)
 	case "state":
 		return json.Unmarshal(env.Data, a.state)
+	case "memory_summary":
+		// Dreaming layer output: narrative memory for LLM context.
+		var ms struct {
+			Summary string `json:"summary"`
+		}
+		if err := json.Unmarshal(env.Data, &ms); err != nil {
+			return fmt.Errorf("parse memory_summary: %w", err)
+		}
+		a.state.MemorySummary = ms.Summary
+		slog.Info("memory summary received", "bytes", len(ms.Summary))
+		return nil
 	case "event":
 		slog.Debug("event", "data", string(env.Data))
 		return nil
@@ -244,12 +255,12 @@ func (a *AgentClient) llmDecision(ctx context.Context) error {
 	temp := a.Cfg.Temperature
 	start := time.Now()
 
-	resp, err := CallLLM(a.Cfg.LiteLLM, "sk-lab…-key", a.Cfg.ModelFast, msg, 30*time.Second, temp)
+	resp, err := CallLLM(a.Cfg.LiteLLM, a.Cfg.EffectiveKey(), a.Cfg.ModelFast, msg, 30*time.Second, temp)
 	latencyMs := time.Since(start).Milliseconds()
 	if err != nil {
 		slog.Warn("llm error, trying fallback", "error", err)
 		start = time.Now()
-		resp, err = CallLLM(a.Cfg.LiteLLM, "sk-lab…-key", a.Cfg.ModelFallback, msg, 60*time.Second, temp)
+		resp, err = CallLLM(a.Cfg.LiteLLM, a.Cfg.EffectiveKey(), a.Cfg.ModelFallback, msg, 60*time.Second, temp)
 		latencyMs = time.Since(start).Milliseconds()
 		if err != nil {
 			return fmt.Errorf("llm fallback failed: %w", err)
@@ -271,15 +282,16 @@ func (a *AgentClient) executeAction(ctx context.Context, action *LLMResponse, la
 		return fmt.Errorf("send: %w", err)
 	}
 	a.session.Log(LogEntry{
-		RoomVnum:  a.state.Room.Vnum,
-		RoomName:  a.state.Room.Name,
-		HP:        a.state.Player.Health,
-		MaxHP:     a.state.Player.MaxHealth,
-		Fighting:  a.state.Fighting,
-		Action:    action.ActionType,
-		Args:      action.Args,
-		SayLine:   action.SayLine,
-		LatencyMs: latencyMs,
+		RoomVnum:   a.state.Room.Vnum,
+		RoomName:   a.state.Room.Name,
+		HP:         a.state.Player.Health,
+		MaxHP:      a.state.Player.MaxHealth,
+		AgentLevel: a.state.Player.Level,
+		Fighting:   a.state.Fighting,
+		Action:     action.ActionType,
+		Args:       action.Args,
+		SayLine:    action.SayLine,
+		LatencyMs:  latencyMs,
 	})
 	return nil
 }
@@ -298,14 +310,15 @@ func (a *AgentClient) PushCommand(ctx context.Context, action *LLMResponse) erro
 		return fmt.Errorf("send: %w", err)
 	}
 	a.session.Log(LogEntry{
-		RoomVnum:  a.state.Room.Vnum,
-		RoomName:  a.state.Room.Name,
-		HP:        a.state.Player.Health,
-		MaxHP:     a.state.Player.MaxHealth,
-		Fighting:  a.state.Fighting,
-		Action:    action.ActionType,
-		Args:      action.Args,
-		SayLine:   action.SayLine,
+		RoomVnum:   a.state.Room.Vnum,
+		RoomName:   a.state.Room.Name,
+		HP:         a.state.Player.Health,
+		MaxHP:      a.state.Player.MaxHealth,
+		AgentLevel: a.state.Player.Level,
+		Fighting:   a.state.Fighting,
+		Action:     action.ActionType,
+		Args:       action.Args,
+		SayLine:    action.SayLine,
 	})
 	return nil
 }

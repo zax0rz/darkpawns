@@ -2,6 +2,7 @@ package dreaming
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -175,7 +176,9 @@ func (g *MemoryGraph) Consolidate() int {
 	return pruned
 }
 
-// BuildSummary produces a string suitable for LLM context injection.
+// BuildSummary produces narrative prose suitable for LLM context injection.
+// Events are ordered chronologically and grouped into sessions.
+// High-salience events get full sentences; low-salience ones are summarized.
 // Max tokens parameter controls truncation.
 func (g *MemoryGraph) BuildSummary(maxTokens int) string {
 	g.mu.RLock()
@@ -185,31 +188,169 @@ func (g *MemoryGraph) BuildSummary(maxTokens int) string {
 		return ""
 	}
 
+	// Collect all event nodes and sort by creation time.
+	events := make([]*Node, 0)
+	for _, n := range g.Nodes {
+		if n.Kind == NodeKindEvent {
+			events = append(events, n)
+		}
+	}
+	if len(events) == 0 {
+		return ""
+	}
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].CreatedAt.Before(events[j].CreatedAt)
+	})
+
+	// Group into sessions by time gap (>30 min = new session).
+	sessions := groupBySession(events, 30*time.Minute)
+
 	var b strings.Builder
 	b.WriteString("## Memory\n\n")
 
-	// Sort nodes by salience descending.
-	sorted := sortBySalience(g.Nodes)
+	maxChars := maxTokens * 4 // rough char-to-token estimate
 
-	// Top-K nodes by salience.
-	limit := maxTokens / 20 // rough estimate: ~20 tokens per memory line
-	if limit > len(sorted) {
-		limit = len(sorted)
-	}
-
-	written := 0
-	for _, n := range sorted[:limit] {
-		line := formatNode(n, g.Edges)
-		if b.Len()+len(line) > maxTokens*4 { // rough char-to-token estimate
-			b.WriteString("(additional memories consolidated)\n")
+	for si, session := range sessions {
+		if b.Len() >= maxChars {
+			b.WriteString("\n_(additional memories consolidated)_\n")
 			break
 		}
-		b.WriteString(line)
+
+		// Session header with time range.
+		if len(session) > 0 {
+			date := session[0].CreatedAt.Format("Jan 2")
+			if len(session) > 1 {
+				date += " " + session[0].CreatedAt.Format("3:04 PM") + " – " + session[len(session)-1].CreatedAt.Format("3:04 PM")
+			} else {
+				date += " at " + session[0].CreatedAt.Format("3:04 PM")
+			}
+			b.WriteString(fmt.Sprintf("### Session %d — %s\n\n", si+1, date))
+		}
+
+		// Render each event as narrative prose.
+		for _, n := range session {
+			if b.Len() >= maxChars {
+				break
+			}
+			line := formatNarrativeEvent(n)
+			if line != "" {
+				b.WriteString(line)
+				b.WriteString("\n")
+			}
+		}
 		b.WriteString("\n")
-		written++
+	}
+
+	// Append entity relationship summary.
+	entitySummary := g.buildEntitySummary()
+	if entitySummary != "" && b.Len() < maxChars {
+		b.WriteString("### Relationships\n\n")
+		b.WriteString(entitySummary)
 	}
 
 	return b.String()
+}
+
+// groupBySession splits event nodes into sessions based on time gaps.
+func groupBySession(events []*Node, gap time.Duration) [][]*Node {
+	if len(events) == 0 {
+		return nil
+	}
+	var sessions [][]*Node
+	current := []*Node{events[0]}
+
+	for i := 1; i < len(events); i++ {
+		if events[i].CreatedAt.Sub(events[i-1].CreatedAt) > gap {
+		sessions = append(sessions, current)
+		current = []*Node{events[i]}
+		} else {
+			current = append(current, events[i])
+		}
+	}
+	sessions = append(sessions, current)
+	return sessions
+}
+
+// formatNarrativeEvent renders a single event node as a sentence.
+// High-salience events get more detail; low-salience ones get summarized away.
+func formatNarrativeEvent(n *Node) string {
+	if n.Salience < 0.15 {
+		return "" // too faded to include
+	}
+
+	// The label IS the narrative (set by extract.go).
+	label := n.Label
+	if label == "" {
+		return ""
+	}
+
+	// Add valence context when strongly valenced.
+	switch {
+	case n.Valence >= 3:
+		label += " (a significant moment)"
+	case n.Valence == 2:
+		label += " (noteworthy)"
+	case n.Valence <= -2:
+		label += " (a difficult moment)"
+	case n.Valence == -1:
+		label += " (unpleasant)"
+	}
+
+	return label + "."
+}
+
+// buildEntitySummary lists known entities and their accumulated valence.
+func (g *MemoryGraph) buildEntitySummary() string {
+	var entities []*Node
+	for _, n := range g.Nodes {
+		if n.Kind == NodeKindEntity {
+			entities = append(entities, n)
+		}
+	}
+	if len(entities) == 0 {
+		return ""
+	}
+
+	// Sort by absolute valence (most emotionally charged first).
+	sort.Slice(entities, func(i, j int) bool {
+		return abs(entities[i].Valence) > abs(entities[j].Valence)
+	})
+
+	var b strings.Builder
+	for _, n := range entities {
+		if n.Valence == 0 && n.VisitCount <= 1 {
+			continue // skip neutral one-off encounters
+		}
+		relationship := "met"
+		switch {
+		case n.Valence >= 3:
+			relationship = "trusted ally"
+		case n.Valence >= 2:
+			relationship = "friendly"
+		case n.Valence == 1:
+			relationship = "acquaintance"
+		case n.Valence == -1:
+			relationship = "unfriendly"
+		case n.Valence <= -2:
+			relationship = "dangerous"
+		}
+		fmt.Fprintf(&b, "%s — %s (met %d time%s)\n", n.Label, relationship, n.VisitCount, plural(n.VisitCount))
+	}
+	return b.String()
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }
 
 // --- internal helpers ---
@@ -231,38 +372,11 @@ func blendValence(oldVal, newVal int, visits int) int {
 	return int(clamp(blended, -3, 3))
 }
 
-func sortBySalience(nodes map[string]*Node) []*Node {
-	sorted := make([]*Node, 0, len(nodes))
-	for _, n := range nodes {
-		sorted = append(sorted, n)
-	}
-	// Simple bubble sort (small n — memory graphs stay under 1000 nodes).
-	for i := 0; i < len(sorted); i++ {
-		for j := i + 1; j < len(sorted); j++ {
-			if sorted[j].Salience > sorted[i].Salience {
-				sorted[i], sorted[j] = sorted[j], sorted[i]
-			}
-		}
-	}
-	return sorted
-}
-
 func min(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
-}
-
-func formatNode(n *Node, edges []Edge) string {
-	valence := ""
-	switch {
-	case n.Valence > 0:
-		valence = fmt.Sprintf(" [+%d]", n.Valence)
-	case n.Valence < 0:
-		valence = fmt.Sprintf(" [%d]", n.Valence)
-	}
-	return fmt.Sprintf("- %s%s (salience: %.2f)", n.Label, valence, n.Salience)
 }
 
 // --- summary formatting for different node kinds ---

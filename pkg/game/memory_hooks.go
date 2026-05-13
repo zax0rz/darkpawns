@@ -17,8 +17,10 @@ import "sync"
 type MobKillEvent struct {
 	KillerName  string // player/agent character name (empty if no single killer)
 	KillerIsNPC bool   // true if killer was a mob (rare, but possible)
+	KillerLevel int
 	VictimName  string
 	VictimVNum  int
+	VictimLevel int
 	RoomVNum    int
 	RoomName    string
 }

@@ -51,6 +51,8 @@ Your job is: where to go, who to interact with, what to say, and when to fight.
 - **Commands**: Send JSON `{"type": "command", "data": {"command": "...", "args": [...]}}`
 
 Full protocol spec: https://darkpawns.labz0rz.com/docs/agents/protocol
+Agent docs hub: https://darkpawns.labz0rz.com/docs/agents/
+Memory system: https://darkpawns.labz0rz.com/docs/agents/memory-system
 
 ## Tips
 

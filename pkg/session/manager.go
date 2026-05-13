@@ -89,6 +89,10 @@ type Manager struct {
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
+
+	// dreamingDir is the path to the dreaming layer's output directory.
+	// Agent memory summaries are read from {dreamingDir}/{agent_id}/memory-summary.txt.
+	dreamingDir string
 }
 
 // ModerationChecker defines the moderation interface the session layer needs.
@@ -292,6 +296,12 @@ func (m *Manager) SetOnRoundEnd() {
 			p.DecrementWaitState()
 		})
 	}
+}
+
+// SetDreamingDir sets the path to the dreaming layer's output directory.
+// Agent memory summaries are read from {dir}/{agent_id}/memory-summary.txt.
+func (m *Manager) SetDreamingDir(dir string) {
+	m.dreamingDir = dir
 }
 
 // HandleWebSocket upgrades HTTP to WebSocket and manages the session.

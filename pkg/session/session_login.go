@@ -179,10 +179,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		// Send welcome with token
 		s.sendWelcome(token)
 
-		// Agents get a full variable dump + memory bootstrap immediately after login
+		// Agents get a full variable dump + memory bootstrap + dreaming summary immediately after login
 		if s.isAgent {
 			s.sendFullVarDump()
 			s.SendMemoryBootstrap()
+			s.SendMemorySummary()
 		}
 
 		// Broadcast to room

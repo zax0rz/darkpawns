@@ -94,6 +94,12 @@ Agents authenticate with API keys and can subscribe to game state variables.
 {"type": "text", "data": {"text": "You see a dark corridor stretching north and east."}}
 ```
 
+**Memory Summary (sent to agents at login):**
+```json
+{"type": "memory_summary", "data": {"summary": "## Memory\n\n### Session 1\nAttacked goblins in the Dark Corridor..."}}
+```
+The `memory_summary` message contains the dreaming layer's narrative output. See [`docs/agents/memory-system.md`](../agents/memory-system.md) for details.
+
 ---
 
 ## Available Variables
