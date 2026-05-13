@@ -235,6 +235,16 @@ Full architecture docs: [`docs/architecture/ARCHITECTURE.md`](docs/architecture/
 
 ---
 
+## Repository Structure
+
+| Repository | Contents |
+|------------|----------|
+| [`zax0rz/darkpawns`](https://github.com/zax0rz/darkpawns) | Game server, agent CLI, dreaming pipeline, world files, docs |
+| [`zax0rz/dp-client`](https://github.com/zax0rz/dp-client) | Human terminal client — WebSocket, bubbletea TUI, JSONL logging |
+| [`zax0rz/darkpawns-site`](https://github.com/zax0rz/darkpawns-site) | Website — Hugo, landing page, help files, play client |
+
+The server and agent CLI live together (shared `pkg/` imports). The client talks WebSocket — no Go imports from the server. The website is static content with zero coupling to Go code.
+
 ## Project Status
 
 | Component | Status |

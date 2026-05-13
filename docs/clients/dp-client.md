@@ -1,6 +1,6 @@
 # dp-client — Human MUD Client
 
-A modern terminal MUD client for Dark Pawns, built on [Zif](https://github.com/perlsaiyan/zif) with bubbletea. Connects via WebSocket, renders structured state in split panes, logs sessions to JSONL for the dreaming pipeline.
+A modern terminal MUD client for Dark Pawns, forked from [Zif](https://github.com/perlsaiyan/zif) with bubbletea. Connects via WebSocket, renders structured state in split panes, logs sessions to JSONL for the dreaming pipeline.
 
 ## Installation
 
@@ -17,8 +17,8 @@ Download from [Releases](https://github.com/zax0rz/darkpawns/releases):
 ### Build from Source
 
 ```bash
-git clone https://github.com/zax0rz/darkpawns.git
-cd darkpawns/dp-client
+git clone https://github.com/zax0rz/dp-client.git
+cd dp-client
 go build -o dp-client .
 ```
 
