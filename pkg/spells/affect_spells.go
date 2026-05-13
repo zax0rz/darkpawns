@@ -436,7 +436,7 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 		if mobLevel < 1 {
 			mobLevel = 1
 		}
-		mob, err := w.SpawnMobWithLevelI(109, roomVNum, mobLevel) // MOB_ZOMBIE = 109
+		mob, err := w.SpawnMobWithLevelI(10, roomVNum, mobLevel) // MOB_ZOMBIE = 10
 		if err != nil {
 			sendToCaster(ch, "The corpse refuses to come alive!\r\n")
 			return
@@ -2472,7 +2472,7 @@ func castGate(level int, ch, world interface{}) {
 			type objVnum interface{ GetVNum() int }
 			if ov, ok := obj.(objVnum); ok {
 				// Red portal vnum 10, Blue portal vnum 11 (from gate.c)
-				if ov.GetVNum() == 10 || ov.GetVNum() == 11 {
+				if ov.GetVNum() == 4002 || ov.GetVNum() == 4001 {
 					sendToCaster(ch, "The magick flows through you, then out into the world, changing it....\r\n")
 					sendToRoom("The fabric of time and space warps and stretches around you...\r\n", ch, nil, nil, "", "", world)
 					sendToCaster(ch, "In your final moments, the only thing you can feel is a wave of cosmic energy coursing through you, tearing your soul to shreds.\r\n")
@@ -2497,7 +2497,7 @@ func castGate(level int, ch, world interface{}) {
 	// Create red portal in room
 	type objSpawner interface{ SpawnObject(vnum, roomVNum int) (interface{}, error) }
 	if wo, ok := world.(objSpawner); ok {
-		_, err := wo.SpawnObject(10, roomVNum) // red_portal = 10
+		_, err := wo.SpawnObject(4002, roomVNum) // red_portal = 4002
 		if err != nil {
 			sendToCaster(ch, "The magic flows through you, but nothing else happens.\r\n")
 			return
@@ -2563,7 +2563,7 @@ func castMirrorImage(level int, ch, world interface{}) {
 	}
 	if ms, ok := world.(mobSpawner); ok {
 		// MOB_CLONE vnum — check C source
-		mob, err := ms.SpawnMobWithLevelI(108, roomVNum, level) // MOB_CLONE = 108
+		mob, err := ms.SpawnMobWithLevelI(69, roomVNum, level) // MOB_CLONE = 69
 		if err != nil {
 			sendToCaster(ch, "You fail to divide yourself.\r\n")
 			return
