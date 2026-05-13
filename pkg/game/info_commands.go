@@ -293,7 +293,74 @@ func (w *World) doCommands(ch *Player, me *MobInstance, cmd string, arg string) 
 // ---------------------------------------------------------------------------
 
 func (w *World) doDiagnose(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	ch.SendMessage("Diagnose not yet fully implemented.\r\n")
+	var target *Player
+	var targetMob *MobInstance
+
+	if arg != "" {
+		// Find target in room
+		target, targetMob = w.findCharInRoom(ch, ch.RoomVNum, arg)
+		if target == nil && targetMob == nil {
+			ch.SendMessage("They aren't here.\r\n")
+			return true
+		}
+	} else if ch.Fighting != "" {
+		// Diagnose current fight target
+		target, targetMob = w.findCharInRoom(ch, ch.RoomVNum, ch.Fighting)
+		if target == nil && targetMob == nil {
+			ch.SendMessage("You aren't fighting anyone.\r\n")
+			return true
+		}
+	} else {
+		ch.SendMessage("Diagnose who?\r\n")
+		return true
+	}
+
+	// Get HP percentage
+	var hp, maxHP int
+	if target != nil {
+		hp = target.GetHealth()
+		maxHP = target.GetMaxHealth()
+	} else {
+		hp = targetMob.GetHealth()
+		maxHP = targetMob.GetMaxHealth()
+	}
+
+	var percent int
+	if maxHP > 0 {
+		percent = (100 * hp) / maxHP
+	} else {
+		percent = 0
+	}
+
+	// Build condition message (from C diag_char_to_char)
+	var name string
+	if target != nil {
+		name = target.GetName()
+	} else {
+		name = targetMob.Prototype.ShortDesc
+	}
+
+	var condition string
+	switch {
+	case percent >= 100:
+		condition = "is in excellent condition"
+	case percent >= 90:
+		condition = "has a few scratches"
+	case percent >= 75:
+		condition = "has some small wounds and bruises"
+	case percent >= 50:
+		condition = "has quite a few wounds"
+	case percent >= 30:
+		condition = "has some big nasty wounds and scratches"
+	case percent >= 15:
+		condition = "looks pretty hurt"
+	case percent >= 0:
+		condition = "is in awful condition"
+	default:
+		condition = "is bleeding awfully from big wounds"
+	}
+
+	ch.SendMessage(fmt.Sprintf("%s %s.\r\n", name, condition))
 	return true
 }
 
