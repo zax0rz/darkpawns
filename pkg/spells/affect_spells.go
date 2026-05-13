@@ -240,8 +240,8 @@ func MagUnaffects(level int, ch, victim interface{}, spellNum int, world interfa
 }
 
 // MagGroups applies group versions of spells.
-// TODO(HIGH-012): Implement group spell targeting — iterate group members and apply
-// each group-targetable spell effect. Currently a no-op stub.
+// MagGroups applies group spells to all grouped characters in the room.
+
 func MagGroups(level int, ch interface{}, spellNum, savetype int, world interface{}) {
 	if ch == nil {
 		return
@@ -284,8 +284,8 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 }
 
 // MagMasses applies mass (room-wide) spells.
-// TODO(HIGH-012): Implement mass spell targeting — affects all valid targets in the
-// caster's room. Currently a no-op stub.
+// MagMasses applies mass spells to all non-grouped characters in the room.
+
 func MagMasses(level int, ch interface{}, spellNum, savetype int, world interface{}) {
 	if ch == nil {
 		return
@@ -342,8 +342,8 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 }
 
 // MagAreas applies area (room-wide offensive) spells.
-// TODO(HIGH-012): Implement area spell targeting — affects all hostile targets
-// in the caster's room. Currently a no-op stub.
+// MagAreas applies area damage to all non-grouped characters in the room.
+
 func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface{}) {
 	if ch == nil {
 		return
@@ -404,8 +404,8 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 }
 
 // MagSummons summons NPCs into the world.
-// TODO(HIGH-012): Implement mob summoning — spawn NPCs based on spell type.
-// Currently a no-op stub.
+// MagSummons spawns NPCs based on spell type (e.g. Animate Dead creates zombies).
+
 func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 	if ch == nil {
 		return
@@ -452,9 +452,7 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 	}
 }
 
-// MagCreations creates objects.
-// TODO(HIGH-012): Implement object creation — create items in caster's inventory
-// based on spell type. Currently a no-op stub.
+// MagCreations creates items based on spell type (e.g. Create Food spawns mushrooms).
 func MagCreations(level int, ch interface{}, spellNum int, world interface{}) {
 	if ch == nil {
 		return
@@ -498,8 +496,7 @@ func MagCreations(level int, ch interface{}, spellNum int, world interface{}) {
 }
 
 // MagAlterObjs alters objects.
-// TODO(HIGH-012): Implement object alteration — modify target object attributes
-// based on spell type. Currently a no-op stub.
+// MagAlterObjs modifies target object attributes based on spell type.
 func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{}) {
 	if obj == nil || ch == nil {
 		return
