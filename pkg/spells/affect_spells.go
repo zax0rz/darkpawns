@@ -563,6 +563,12 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 		castConjureElemental(level, ch, world)
 	case SpellMindsight:
 		castMindsight(level, ch, cvict, world)
+	case SpellGate:
+		castGate(level, ch, world)
+	case SpellLocateObject:
+		castLocateObject(level, ch, ovict, world)
+	case SpellMirrorImage:
+		castMirrorImage(level, ch, world)
 	default:
 		sendToCaster(ch, "Spell not yet implemented.\r\n")
 	}
@@ -2440,5 +2446,140 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 		slog.Error("PlayerTransfer failed", "error", err)
 	}
 	sendToCaster(ch, "You have a strange dream about seeing...\r\n")
+}
+
+// castGate creates a red portal in one of the 8 legal rooms.
+// If a portal already exists, the caster dies from cosmic energy.
+// If the room is not legal, nothing happens.
+func castGate(level int, ch, world interface{}) {
+	_ = level
+	if ch == nil {
+		return
+	}
+
+	type roomGetter interface{ GetRoomVNum() int }
+	rg, ok := ch.(roomGetter)
+	if !ok {
+		return
+	}
+	roomVNum := rg.GetRoomVNum()
+
+	// Check if portal already exists in room
+	type roomObjects interface{ GetObjectsInRoom(roomVNum int) []interface{} }
+	if wo, ok := world.(roomObjects); ok {
+		objs := wo.GetObjectsInRoom(roomVNum)
+		for _, obj := range objs {
+			type objVnum interface{ GetVNum() int }
+			if ov, ok := obj.(objVnum); ok {
+				// Red portal vnum 10, Blue portal vnum 11 (from gate.c)
+				if ov.GetVNum() == 10 || ov.GetVNum() == 11 {
+					sendToCaster(ch, "The magick flows through you, then out into the world, changing it....\r\n")
+					sendToRoom("The fabric of time and space warps and stretches around you...\r\n", ch, nil, nil, "", "", world)
+					sendToCaster(ch, "In your final moments, the only thing you can feel is a wave of cosmic energy coursing through you, tearing your soul to shreds.\r\n")
+					// Kill the caster
+					type killer interface{ Die() }
+					if k, ok := ch.(killer); ok {
+						k.Die()
+					}
+					return
+				}
+			}
+		}
+	}
+
+	// Legal rooms for gate creation (from gate.c)
+	legalRooms := map[int]bool{4001: true, 4002: true, 4003: true, 4004: true, 4005: true, 4006: true, 4007: true, 4008: true}
+	if !legalRooms[roomVNum] {
+		sendToCaster(ch, "The magic flows through you, but nothing else happens.\r\n")
+		return
+	}
+
+	// Create red portal in room
+	type objSpawner interface{ SpawnObject(vnum, roomVNum int) (interface{}, error) }
+	if wo, ok := world.(objSpawner); ok {
+		_, err := wo.SpawnObject(10, roomVNum) // red_portal = 10
+		if err != nil {
+			sendToCaster(ch, "The magic flows through you, but nothing else happens.\r\n")
+			return
+		}
+		sendToCaster(ch, "The magick flows through you, then out into the world, changing it....\r\n")
+		sendToRoom("A shimmering red portal fades into existence.\r\n", ch, nil, nil, "", "", world)
+	}
+}
+
+// castLocateObject finds objects matching the arg name in the world.
+func castLocateObject(level int, ch, ovict, world interface{}) {
+	if ch == nil {
+		return
+	}
+
+	// Use ovict (target object) to get the name to search for
+	type objName interface{ GetName() string }
+	if ovict == nil {
+		sendToCaster(ch, "What object are you looking for?\r\n")
+		return
+	}
+	name := ""
+	if on, ok := ovict.(objName); ok {
+		name = on.GetName()
+	}
+	if name == "" {
+		sendToCaster(ch, "What object are you looking for?\r\n")
+		return
+	}
+
+	type worldSearch interface{ FindObjectByName(name string) []interface{} }
+	if ws, ok := world.(worldSearch); ok {
+		objs := ws.FindObjectByName(name)
+		count := level >> 1
+		for _, obj := range objs {
+			if count <= 0 {
+				break
+			}
+			type objDesc interface{ GetShortDesc() string }
+			if od, ok := obj.(objDesc); ok {
+				sendToCaster(ch, od.GetShortDesc()+"\r\n")
+			}
+			count--
+		}
+	}
+}
+
+// castMirrorImage creates a clone of the caster.
+func castMirrorImage(level int, ch, world interface{}) {
+	if ch == nil {
+		return
+	}
+
+	type roomGetter interface{ GetRoomVNum() int }
+	rg, ok := ch.(roomGetter)
+	if !ok {
+		return
+	}
+	roomVNum := rg.GetRoomVNum()
+
+	type mobSpawner interface {
+		SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
+	}
+	if ms, ok := world.(mobSpawner); ok {
+		// MOB_CLONE vnum — check C source
+		mob, err := ms.SpawnMobWithLevelI(108, roomVNum, level) // MOB_CLONE = 108
+		if err != nil {
+			sendToCaster(ch, "You fail to divide yourself.\r\n")
+			return
+		}
+
+		// Name the clone after the caster
+		type named interface{ GetName() string }
+		if n, ok := ch.(named); ok {
+			type nameSetter interface{ SetName(string) }
+			if ns, ok := mob.(nameSetter); ok {
+				ns.SetName(n.GetName())
+			}
+		}
+
+		sendToCaster(ch, "You divide yourself in two!\r\n")
+		sendToRoom("$n divides $mself in two!\r\n", ch, nil, nil, "", "", world)
+	}
 }
 
