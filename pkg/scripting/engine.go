@@ -2131,10 +2131,34 @@ func (e *Engine) luaIsNPC(L *lua.LState) int {
 func (e *Engine) luaFollow(L *lua.LState) int {
 	// follow(ch, charm) - makes mob follow ch, optionally setting AFF_CHARM.
 	// Source: scripts.c lua_follow() lines 542-569.
-	// Engine gap: mob-to-player follow requires AddFollowerQuietMob which
-	// needs World access not available through ScriptableWorld.
-	// For now, the mob's follow state is set via ScriptableMob if available.
-	slog.Debug("follow: not fully implemented — mob follow via scripting requires World access")
+	if e.world == nil {
+		return 0
+	}
+	chTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	charmTbl, ok := L.Get(2).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	// Get follower name (the charm mob)
+	charmNameVal := charmTbl.RawGetString("name")
+	if charmNameVal.Type() != lua.LTString {
+		return 0
+	}
+	followerName := charmNameVal.String()
+	// Get leader name (ch)
+	chNameVal := chTbl.RawGetString("name")
+	if chNameVal.Type() != lua.LTString {
+		return 0
+	}
+	leaderName := chNameVal.String()
+	// Determine if follower is a mob (has vnum field)
+	followerIsMob := charmTbl.RawGetString("vnum").Type() == lua.LTNumber
+	if err := e.world.SetFollower(followerName, leaderName, followerIsMob); err != nil {
+		slog.Debug("follow: SetFollower failed", "err", err)
+	}
 	return 0
 }
 
@@ -2142,10 +2166,41 @@ func (e *Engine) luaMount(L *lua.LState) int {
 	// mount(ch, mount_or_nil, position) - ride, dismount, or unmount.
 	// Source: scripts.c lua_mount() lines 871-906.
 	// position: "ride" = mount, "dismount" = dismount, "unmount" = force unmount.
-	// Engine gap: mounting system requires World.doRide/doDismount which
-	// needs actual Player/MobInstance objects, not available via ScriptableWorld.
-
-	slog.Debug("mount: not fully implemented — requires World access for ride/dismount")
+	if e.world == nil {
+		return 0
+	}
+	chTbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	chNameVal := chTbl.RawGetString("name")
+	if chNameVal.Type() != lua.LTString {
+		return 0
+	}
+	playerName := chNameVal.String()
+	// Get mount name from second arg (may be nil for dismount/unmount)
+	mountArg := L.Get(2)
+	var mountName string
+	if mountTbl, ok := mountArg.(*lua.LTable); ok {
+		mountNameVal := mountTbl.RawGetString("name")
+		if mountNameVal.Type() == lua.LTString {
+			mountName = mountNameVal.String()
+		}
+	}
+	// Get position string ("ride", "dismount", "unmount")
+	position := L.ToString(3)
+	switch position {
+	case "ride":
+		if mountName != "" {
+			if err := e.world.MountPlayer(playerName, mountName); err != nil {
+				slog.Debug("mount: MountPlayer failed", "err", err)
+			}
+		}
+	case "dismount", "unmount":
+		if err := e.world.DismountPlayer(playerName); err != nil {
+			slog.Debug("mount: DismountPlayer failed", "err", err)
+		}
+	}
 	return 0
 }
 
@@ -2310,9 +2365,44 @@ func (e *Engine) luaCanGet(L *lua.LState) int {
 	// canget(obj) - returns true if the mob is permitted to pick up the object.
 	// Source: scripts.c lua_canget() lines 193-219.
 	// Checks CAN_GET_OBJ(ch, obj) — verifies ITEM_WEAR_TAKE flag and weight limits.
-	// Engine gap: carry-weight system not yet implemented.
-	// For now, return true (optimistic) since wear flags aren't fully mapped.
-	L.Push(lua.LNumber(1))
+	if e.world == nil {
+		L.Push(lua.LNumber(1))
+		return 1
+	}
+	tbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		L.Push(lua.LNumber(1))
+		return 1
+	}
+	// Get object vnum
+	vnumVal := tbl.RawGetString("vnum")
+	if vnumVal.Type() != lua.LTNumber {
+		L.Push(lua.LNumber(1))
+		return 1
+	}
+	objVNum := int(vnumVal.(lua.LNumber))
+	// Get character name from the global 'ch' table (set by script context)
+	chTbl := L.GetGlobal("ch")
+	if chTbl == lua.LNil {
+		L.Push(lua.LNumber(1))
+		return 1
+	}
+	chTblT, ok := chTbl.(*lua.LTable)
+	if !ok {
+		L.Push(lua.LNumber(1))
+		return 1
+	}
+	nameVal := chTblT.RawGetString("name")
+	if nameVal.Type() != lua.LTString {
+		L.Push(lua.LNumber(1))
+		return 1
+	}
+	charName := nameVal.String()
+	if e.world.CanCarryObject(charName, objVNum) {
+		L.Push(lua.LNumber(1))
+	} else {
+		L.Push(lua.LNumber(0))
+	}
 	return 1
 }
 

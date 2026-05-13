@@ -11,13 +11,16 @@ package game
 
 // APPLY_* constants — from structs.h
 const (
-	ApplyNone   = 0
-	ApplyStr    = 1
-	ApplyDex    = 2
-	ApplyInt    = 3
-	ApplyWis    = 4
-	ApplyCon    = 5
-	ApplyHitroll  = 18
+	ApplyNone    = 0
+	ApplyStr     = 1
+	ApplyDex     = 2
+	ApplyInt     = 3
+	ApplyWis     = 4
+	ApplyCon     = 5
+	ApplyMana    = 12
+	ApplyHit     = 13
+	ApplyMove    = 14
+	ApplyHitroll = 18
 	ApplyDamroll = 19
 )
 
@@ -257,20 +260,23 @@ func (m *MobInstance) Forget(name string) bool {
 // Tattoo constants — from structs.h / tattoo.c
 const (
 	TattooNone   = 0
-	TattooDragon = 1 + iota
-	TattooTiger
-	TattooCobra
-	TattooWolf
-	TattooBear
-	TattooEagle
-	TattooMantis
-	TattooShark
-	TattooScorpion
-	TattooPhoenix
-	TattooLynx
-	TattooHorse
-	TattooBat
-	TattooSerpent
+	TattooDragon = 1
+	TattooTribal = 2
+	TattooSkull  = 3
+	TattooTiger  = 4
+	TattooWorm   = 5
+	TattooEye    = 6
+	TattooSwords = 7
+	TattooEagle  = 8
+	TattooHeart  = 9
+	TattooStar   = 10
+	TattooShip   = 11
+	TattooSpider = 12
+	TattooJyhadi = 13
+	TattooMom    = 14
+	TattooAngel  = 15
+	TattooFox    = 16
+	TattooOwl    = 17
 )
 
 // TattooBonus represents a single stat modifier from a tattoo.
@@ -288,70 +294,55 @@ func GetTattooBonuses(tattoo int) []TattooBonus {
 			{Location: ApplyDamroll, Modifier: 2},
 			{Location: ApplyStr, Modifier: 2},
 		}
-	case TattooTiger:
-		return []TattooBonus{
-			{Location: ApplyDex, Modifier: 2},
-			{Location: ApplyDamroll, Modifier: 1},
-		}
-	case TattooCobra:
+	case TattooTribal:
 		return []TattooBonus{
 			{Location: ApplyDex, Modifier: 1},
-			{Location: ApplyDamroll, Modifier: 1},
-			{Location: ApplyHitroll, Modifier: 1},
 		}
-	case TattooWolf:
+	case TattooWorm:
 		return []TattooBonus{
-			{Location: ApplyStr, Modifier: 1},
-			{Location: ApplyInt, Modifier: 1},
-			{Location: ApplyDamroll, Modifier: 1},
+			{Location: ApplyDamroll, Modifier: 2},
 		}
-	case TattooBear:
+	case TattooSwords:
 		return []TattooBonus{
-			{Location: ApplyStr, Modifier: 2},
+			{Location: ApplyDamroll, Modifier: 1},
 			{Location: ApplyHitroll, Modifier: 1},
 		}
 	case TattooEagle:
 		return []TattooBonus{
-			{Location: ApplyDamroll, Modifier: 3},
+			{Location: ApplyMove, Modifier: 20},
 		}
-	case TattooMantis:
+	case TattooHeart:
 		return []TattooBonus{
-			{Location: ApplyDex, Modifier: 2},
-			{Location: ApplyHitroll, Modifier: 1},
+			{Location: ApplyHit, Modifier: 20},
 		}
-	case TattooShark:
+	case TattooStar:
 		return []TattooBonus{
-			{Location: ApplyStr, Modifier: 1},
-			{Location: ApplyDex, Modifier: 1},
-			{Location: ApplyDamroll, Modifier: 1},
+			{Location: ApplyMana, Modifier: 20},
 		}
-	case TattooScorpion:
+	case TattooSpider:
 		return []TattooBonus{
 			{Location: ApplyDex, Modifier: 3},
 		}
-	case TattooPhoenix:
+	case TattooJyhadi:
 		return []TattooBonus{
-			{Location: ApplyInt, Modifier: 2},
 			{Location: ApplyDamroll, Modifier: 1},
 		}
-	case TattooLynx:
+	case TattooMom:
+		return []TattooBonus{
+			{Location: ApplyWis, Modifier: 3},
+		}
+	case TattooTiger:
+		return []TattooBonus{
+			{Location: ApplyDex, Modifier: 1},
+			{Location: ApplyMove, Modifier: 10},
+		}
+	case TattooFox:
+		return []TattooBonus{
+			{Location: ApplyInt, Modifier: 1},
+		}
+	case TattooOwl:
 		return []TattooBonus{
 			{Location: ApplyWis, Modifier: 1},
-			{Location: ApplyDamroll, Modifier: 2},
-		}
-	case TattooHorse:
-		return []TattooBonus{
-			{Location: ApplyStr, Modifier: 3},
-		}
-	case TattooBat:
-		return []TattooBonus{
-			{Location: ApplyHitroll, Modifier: 2},
-			{Location: ApplyDamroll, Modifier: 1},
-		}
-	case TattooSerpent:
-		return []TattooBonus{
-			{Location: ApplyInt, Modifier: 2},
-			{Location: ApplyHitroll, Modifier: 1},
 		}
 	default:
 		return nil

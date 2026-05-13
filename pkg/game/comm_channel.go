@@ -293,13 +293,17 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	// Clan system not yet implemented -- broadcast to all players as a fallback.
+	// Broadcast to clan members only.
 	msg := fmt.Sprintf("[Clan] %s tells the clan, '%s'\r\n", ch.Name, arg)
 	for _, p := range w.AllPlayers() {
 		if p.Name == ch.Name {
 			continue
 		}
 		if p.Flags&prfDeaf != 0 || p.Flags&prfNoCtell != 0 {
+			continue
+		}
+		// Filter: only clan members with the same ClanID
+		if ch.ClanID == 0 || p.ClanID != ch.ClanID {
 			continue
 		}
 		p.SendMessage(msg)

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // ---------------------------------------------------------------------------
@@ -110,9 +113,48 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		return true
 	}
 
-	// Handle tattoo use
+	// Handle tattoo use — from src/tattoo.c use_tattoo()
 	if strings.EqualFold(itemArg, "tattoo") {
-		ch.SendMessage("Tattoo functionality not yet implemented.\r\n")
+		if ch.TatTimer > 0 {
+			suffix := "s"
+			if ch.TatTimer == 1 {
+				suffix = ""
+			}
+			ch.SendMessage(fmt.Sprintf("You can't use your tattoo's magick for %d more hour%s.\r\n",
+				ch.TatTimer, suffix))
+			return true
+		}
+		switch ch.Tattoo {
+		case TattooNone:
+			ch.SendMessage("You don't have a tattoo.\r\n")
+		case TattooSkull:
+			// Summon mob vnum 9 (skull), charm it, make it follow
+			mob, err := w.SpawnMob(9, ch.RoomVNum)
+			if err != nil {
+				ch.SendMessage("Your tattoo fizzles...\r\n")
+				break
+			}
+			w.SetFollower(mob.GetName(), ch.GetName(), true)
+			// Apply charm affect (duration 20)
+			mob.AddAffect(&engine.Affect{
+				Type:      engine.AffectType(spells.SpellCharm),
+				Duration:  20,
+				Magnitude: 0,
+				Flags:     1 << 3, // AFF_CHARM
+			})
+			w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s's tattoo glows brightly for a second, and %s appears!", ch.Name, mob.Prototype.ShortDesc))
+			ch.SendMessage(fmt.Sprintf("Your tattoo glows brightly for a second, and %s appears!\r\n", mob.Prototype.ShortDesc))
+		case TattooEye:
+			spells.Cast(ch, ch, spells.SpellGreatPercept, ch.Level, w, nil)
+		case TattooShip:
+			spells.Cast(ch, ch, spells.SpellChangeDensity, ch.Level, w, nil)
+		case TattooAngel:
+			spells.Cast(ch, ch, spells.SpellBless, ch.Level, w, nil)
+		default:
+			ch.SendMessage("Your tattoo can't be 'use'd.\r\n")
+			return true
+		}
+		ch.TatTimer = 24
 		return true
 	}
 

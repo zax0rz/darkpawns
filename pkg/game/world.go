@@ -204,6 +204,8 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	if helpTable, err := LoadHelpFiles("lib/text/help"); err == nil {
 		w.HelpTable = helpTable
 	}
+	// Append hardcoded race help text from C constants.c
+	w.HelpTable = append(w.HelpTable, RaceHelpEntries()...)
 
 	return w, nil
 }

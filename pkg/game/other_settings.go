@@ -3,7 +3,9 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
+	"time"
 )
 
 // ---------------------------------------------------------------------------
@@ -132,17 +134,42 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 		return true
 	}
 
+	// Map command to file — from src/db.h BUG_FILE, TYPO_FILE, IDEA_FILE, TODO_FILE
+	var filename string
 	switch cmd {
 	case "bug":
-		ch.SendMessage("Bug reported. Thanks!")
+		filename = "misc/bugs"
 	case "typo":
-		ch.SendMessage("Typo reported. Thanks!")
+		filename = "misc/typos"
 	case "idea":
-		ch.SendMessage("Idea noted. Thanks!")
+		filename = "misc/ideas"
 	case "todo":
-		ch.SendMessage("Todo noted. Thanks!")
+		filename = "misc/todo"
 	default:
 		ch.SendMessage("Reported. Thanks!")
+		return true
+	}
+
+	// Append report to file
+	if err := os.MkdirAll("misc", 0755); err == nil {
+		f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err == nil {
+			defer f.Close()
+			fmt.Fprintf(f, "%s [%s]: %s\n", ch.Name, time.Now().Format("2006-01-02 15:04"), arg)
+		}
+	}
+
+	switch cmd {
+	case "bug":
+		ch.SendMessage("Bug reported. Thanks!\r\n")
+	case "typo":
+		ch.SendMessage("Typo reported. Thanks!\r\n")
+	case "idea":
+		ch.SendMessage("Idea noted. Thanks!\r\n")
+	case "todo":
+		ch.SendMessage("Todo noted. Thanks!\r\n")
+	default:
+		ch.SendMessage("Reported. Thanks!\r\n")
 	}
 	return true
 }
