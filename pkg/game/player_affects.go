@@ -202,3 +202,25 @@ func (p *Player) SendMessage(msg string) {
 }
 
 // StopFighting clears the fighting target.
+
+// AddAffect adds an engine.Affect to the player's active affects list.
+// Called by the spell system (applyAffect) to apply spell effects.
+func (p *Player) AddAffect(aff *engine.Affect) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.ActiveAffects = append(p.ActiveAffects, aff)
+}
+
+// RemoveAffectBySpell removes all affects matching the given spell number.
+// Called by the spell system (removeAffect / MagUnaffects) to strip spell effects.
+func (p *Player) RemoveAffectBySpell(spellNum int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	filtered := p.ActiveAffects[:0]
+	for _, aff := range p.ActiveAffects {
+		if aff.Type != engine.AffectType(spellNum) {
+			filtered = append(filtered, aff)
+		}
+	}
+	p.ActiveAffects = filtered
+}

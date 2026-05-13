@@ -463,3 +463,58 @@ func (o *ObjectInstance) RemoveExtraFlag(word, bit int) {
 func (o *ObjectInstance) SetAffectsOverride(affects []parser.ObjAffect) {
 	o.AffectsOverride = affects
 }
+
+// GetObjType returns the object type flag (alias for GetTypeFlag).
+// Satisfies the spell system interface for MagAlterObjs.
+func (o *ObjectInstance) GetObjType() int {
+	return o.GetTypeFlag()
+}
+
+// GetObjVal returns an object value by index (0-3).
+// Uses the instance override if set, otherwise the prototype value.
+func (o *ObjectInstance) GetObjVal(idx int) int {
+	if idx < 0 || idx > 3 {
+		return 0
+	}
+	if o.ValuesOverride != nil {
+		return o.ValuesOverride[idx]
+	}
+	if o.Prototype != nil {
+		return o.Prototype.Values[idx]
+	}
+	return 0
+}
+
+// SetObjVal sets an object value by index (0-3).
+// Creates the instance override on first write.
+func (o *ObjectInstance) SetObjVal(idx, val int) {
+	if idx < 0 || idx > 3 {
+		return
+	}
+	if o.ValuesOverride == nil {
+		// Copy-on-write from prototype
+		var override [4]int
+		if o.Prototype != nil {
+			override = o.Prototype.Values
+		}
+		o.ValuesOverride = &override
+	}
+	o.ValuesOverride[idx] = val
+}
+
+// SetExtraFlags sets the object extra flags from a packed int.
+// Note: internally extra flags are [4]int; this packs into word 0.
+// For full compatibility, consider using SetExtraFlag(word, bit) instead.
+func (o *ObjectInstance) SetExtraFlags(flags int) {
+	// Store in word 0 of the override array
+	o.ExtraFlagsOverride[0] = flags
+}
+
+// GetName returns the object's keyword name.
+// Satisfies the spell system interface.
+func (o *ObjectInstance) GetName() string {
+	if o.Prototype != nil {
+		return o.Prototype.Keywords
+	}
+	return ""
+}

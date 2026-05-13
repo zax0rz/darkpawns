@@ -1,5 +1,9 @@
 package game
 
+import (
+	"strings"
+)
+
 func (w *World) GetItemsInRoom(roomVNum int) []*ObjectInstance {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -108,6 +112,25 @@ func (w *World) removeItemFromRoomLocked(item *ObjectInstance, roomVNum int) boo
 		}
 	}
 	return false
+}
+
+// FindObjectByName searches all objects in the world by keyword name.
+// Returns matching objects as []interface{} for spell system compatibility.
+func (w *World) FindObjectByName(name string) []interface{} {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	var results []interface{}
+	name = strings.ToLower(name)
+
+	for _, objs := range w.roomItems {
+		for _, obj := range objs {
+			if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.Keywords), name) {
+				results = append(results, obj)
+			}
+		}
+	}
+	return results
 }
 
 // GetMobPrototype returns a mob prototype by VNum.

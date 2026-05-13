@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
@@ -609,3 +610,41 @@ func (m *MobInstance) ClearHunting() {
 
 // SetHunting — defined in deferred_fight_fns.go (full implementation with nil guard)
 // func (m *MobInstance) SetHunting(targetName string) — kept there
+
+// GetAlignment returns the mob's alignment from its prototype.
+func (m *MobInstance) GetAlignment() int {
+	if m.Prototype != nil {
+		return m.Prototype.Alignment
+	}
+	return 0
+}
+
+// SetName sets the mob instance's short description (name).
+func (m *MobInstance) SetName(name string) {
+	if m.Prototype != nil {
+		m.Prototype.ShortDesc = name
+	}
+}
+
+// AddAffect adds an engine.Affect to the mob's affect flags.
+// For mobs, affects are tracked as bitmask flags on AffectFlags.
+func (m *MobInstance) AddAffect(aff *engine.Affect) {
+	// Mobs use affect flags (bitmask) rather than a list.
+	// Map AffectType to the corresponding AFF_* bit and set it.
+	// For now, store in CustomData for tracking; the affect tick system
+	// will handle duration-based removal.
+	if m.CustomData == nil {
+		m.CustomData = make(map[string]interface{})
+	}
+	key := fmt.Sprintf("affect_%d", aff.Type)
+	m.CustomData[key] = aff
+}
+
+// RemoveAffectBySpell removes affects matching the given spell number from the mob.
+func (m *MobInstance) RemoveAffectBySpell(spellNum int) {
+	if m.CustomData == nil {
+		return
+	}
+	key := fmt.Sprintf("affect_%d", spellNum)
+	delete(m.CustomData, key)
+}
