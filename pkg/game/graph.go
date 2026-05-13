@@ -190,15 +190,14 @@ func (w *World) doTrack(ch *Player, me *MobInstance, argument string) bool {
 // #nosec G404
 		num := rand.IntN(102) // 0-101, 101% is complete failure
 
-		// Weather penalty — not yet implemented.
-		// When the weather system is active, apply a skill penalty for
-		// adverse conditions (rain, snow, wind, darkness) that reduce
-		// tracking effectiveness. Expected logic:
-		//   if weather.IsPrecipitating(room.Zone) || weather.IsDark(room.Zone) {
-		//       num += weather.TrackingPenalty(room.Zone) // 0-20
-		//   }
-		// See src/weather.c:weather_change() and src/graph.c:find_first_step()
-		// for the original C interaction.
+		// Weather penalty — from src/graph.c:find_first_step()
+		// Rain and lightning reduce tracking effectiveness by 0-20.
+		weatherMu.RLock()
+		sky := weatherInfo.Sky
+		weatherMu.RUnlock()
+		if sky == SkyRaining || sky == SkyLightning {
+			num += 15 // rain/snow penalty
+		}
 
 		if num >= skill {
 			// Skill failure — pick a random valid direction
