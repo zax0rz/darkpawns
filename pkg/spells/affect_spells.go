@@ -501,12 +501,114 @@ func MagCreations(level int, ch interface{}, spellNum int, world interface{}) {
 // TODO(HIGH-012): Implement object alteration — modify target object attributes
 // based on spell type. Currently a no-op stub.
 func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{}) {
+	if obj == nil || ch == nil {
+		return
+	}
 	_ = level
-	_ = ch
-	_ = obj
-	_ = spellNum
 	_ = world
-	slog.Debug("MagAlterObjs stub called", "spell", spellNum, "level", level)
+
+	// Object interfaces for flag manipulation
+	type extraFlagGetter interface{ GetExtraFlags() int }
+	type extraFlagSetter interface{ SetExtraFlags(int) }
+	type objTypeGetter interface{ GetObjType() int }
+	type objValGetter interface{ GetObjVal(idx int) int }
+	type objValSetter interface{ SetObjVal(idx, val int) }
+	type objWeightGetter interface{ GetWeight() int }
+
+	getExtraFlags := func(o interface{}) int {
+		if f, ok := o.(extraFlagGetter); ok {
+			return f.GetExtraFlags()
+		}
+		return 0
+	}
+	setExtraFlags := func(o interface{}, flags int) {
+		if f, ok := o.(extraFlagSetter); ok {
+			f.SetExtraFlags(flags)
+		}
+	}
+
+	switch spellNum {
+	case SpellBless:
+		flags := getExtraFlags(obj)
+		// ITEM_BLESS = 1<<0, ITEM_MAGIC = 1<<4
+		if flags&(1<<0) != 0 || flags&(1<<4) != 0 {
+			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
+			return
+		}
+		if wg, ok := obj.(objWeightGetter); ok {
+			cl := 0
+			if clGetter, ok := ch.(interface{ GetLevel() int }); ok {
+				cl = clGetter.GetLevel()
+			}
+			if wg.GetWeight() > 5*cl {
+				sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
+				return
+			}
+		}
+		setExtraFlags(obj, flags|(1<<0)) // ITEM_BLESS
+		sendToCaster(ch, "$p glows briefly with an ethereal light.\r\n")
+
+	case SpellCurse:
+		flags := getExtraFlags(obj)
+		if flags&(1<<1) != 0 { // ITEM_NODROP
+			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
+			return
+		}
+		setExtraFlags(obj, flags|(1<<1)) // ITEM_NODROP
+		if ot, ok := obj.(objTypeGetter); ok && ot.GetObjType() == 3 { // ITEM_WEAPON
+			if vs, ok := obj.(objValSetter); ok {
+				if vg, ok := obj.(objValGetter); ok {
+					vs.SetObjVal(2, vg.GetObjVal(2)-1)
+				}
+			}
+		}
+		sendToCaster(ch, "$p briefly glows red.\r\n")
+
+	case SpellInvisible:
+		flags := getExtraFlags(obj)
+		// ITEM_NOINVIS = 1<<5 — don't make noinvis items invisible
+		if flags&(1<<5) != 0 {
+			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
+			return
+		}
+		setExtraFlags(obj, flags|(1<<2)) // ITEM_INVISIBLE
+		sendToCaster(ch, "$p vanishes.\r\n")
+
+	case SpellPoison:
+		if ot, ok := obj.(objTypeGetter); ok {
+			objType := ot.GetObjType()
+			// ITEM_DRINKCON=17, ITEM_FOUNTAIN=18, ITEM_FOOD=19
+			if objType == 17 || objType == 18 || objType == 19 {
+				if vs, ok := obj.(objValSetter); ok {
+					if vg, ok := obj.(objValGetter); ok {
+						if vg.GetObjVal(3) == 0 {
+							vs.SetObjVal(3, 1) // poison val
+							sendToCaster(ch, "$p steams briefly.\r\n")
+						}
+					}
+				}
+			}
+		}
+
+	case SpellRemoveCurse:
+		flags := getExtraFlags(obj)
+		if flags&(1<<1) == 0 { // not NODROP
+			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
+			return
+		}
+		setExtraFlags(obj, flags &^ (1<<1)) // remove NODROP
+		if ot, ok := obj.(objTypeGetter); ok && ot.GetObjType() == 3 { // ITEM_WEAPON
+			if vs, ok := obj.(objValSetter); ok {
+				if vg, ok := obj.(objValGetter); ok {
+					vs.SetObjVal(2, vg.GetObjVal(2)+1)
+				}
+			}
+		}
+		sendToCaster(ch, "$p briefly glows blue.\r\n")
+
+	default:
+		sendToCaster(ch, " spell not yet implemented.\r\n")
+	}
 }
 
 // ExecuteManualSpell dispatches manual (ASPELL) spell implementations.
