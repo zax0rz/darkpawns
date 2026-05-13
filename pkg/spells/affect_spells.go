@@ -825,6 +825,7 @@ func init() {
 	setupSpellInfo(SpellMindBlast, PosFighting, 40, 70, 2, RoutineDamage, true, TarCharRoom|TarFightVict)
 	setupSpellInfo(SpellMindAttack, PosFighting, 25, 55, 1, RoutineDamage, true, TarCharRoom|TarFightVict)
 	setupSpellInfo(SpellFlameStrike, PosFighting, 100, 105, 1, RoutineDamage, true, TarCharRoom|TarFightVict)
+	setupSpellInfo(SpellGate, PosStanding, 95, 95, 1, RoutineManual, true, TarCharWorld|TarNotSelf)
 }
 
 // --- Wave A manual spell implementations ---
