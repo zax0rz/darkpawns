@@ -59,6 +59,23 @@ func (w *World) GetShopByKeeper(vnum int) (*Shop, bool) {
 	return nil, false
 }
 
+// ShopBuysType returns true if the shopkeeper mob (by VNum) runs a shop
+// that buys items of the given type flag.
+// Source: scripts.c lua_item_check() — iterates SHOP_BUYTYPE().
+func (w *World) ShopBuysType(mobVNum int, itemType int) bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	if sm, ok := w.shopManager.(*ShopManager); ok {
+		shop := sm.GetShopByKeeper(mobVNum)
+		if shop == nil {
+			return false
+		}
+		return shop.WillBuyType(itemType)
+	}
+	return false
+}
+
 // GetAllZones returns all zones.
 func (w *World) GetAllZones() []*parser.Zone {
 	w.mu.RLock()

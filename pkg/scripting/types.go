@@ -176,6 +176,11 @@ type ScriptableWorld interface {
 	// matching the given vnum. Used by the Lua obj_extra() function.
 	SetObjectExtraFlag(vnum int, flag int, set bool) bool
 
+	// ShopBuysType returns true if the shopkeeper mob (by VNum) runs a shop
+	// that buys items of the given type flag.
+	// Source: scripts.c lua_item_check() — iterates SHOP_BUYTYPE().
+	ShopBuysType(mobVNum int, itemType int) bool
+
 	// SetExitDoorState sets the door state for an exit in a room.
 	// Used by the Lua exit_flags() function.
 	SetExitDoorState(roomVNum int, direction string, state int) bool

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	lua "github.com/yuin/gopher-lua"
 )
 
 // TestIsFightingBasic tests the basic isfighting() functionality
@@ -74,6 +75,7 @@ func (m *mockWorldForTest) EquipMob(mobVNum, roomVNum, objVNum int)             
 func (m *mockWorldForTest) GetPlayerByID(id int) ScriptablePlayer                                 { return nil }
 func (m *mockWorldForTest) SetObjectExtraDesc(vnum int, keyword string, description string) bool { return false }
 func (m *mockWorldForTest) SetObjectExtraFlag(vnum int, flag int, set bool) bool                  { return false }
+func (m *mockWorldForTest) ShopBuysType(mobVNum int, itemType int) bool                           { return false }
 func (m *mockWorldForTest) SetExitDoorState(roomVNum int, direction string, state int) bool       { return false }
 
 // TestSpellDamageFormulas tests that spell damage formulas are implemented
@@ -1260,3 +1262,131 @@ func TestBatchEEngineGaps(t *testing.T) {
 	}
 	t.Log("\nCritical: tport (jail destination), create_event (jail delay), extchar (sungod despawn)")
 }
+
+// --- WP5c: item_check shop type validation ---
+
+// shopCheckMockWorld extends mockWorldForTest with configurable ShopBuysType behavior.
+type shopCheckMockWorld struct {
+	mockWorldForTest
+	buyTypes map[int]map[int]bool // mobVNum -> itemType -> result
+}
+
+func (m *shopCheckMockWorld) ShopBuysType(mobVNum int, itemType int) bool {
+	if m.buyTypes == nil {
+		return false
+	}
+	if types, ok := m.buyTypes[mobVNum]; ok {
+		return types[itemType]
+	}
+	return false
+}
+
+// TestItemCheckShopType verifies that the Lua item_check() function calls through
+// to World.ShopBuysType and returns the correct result.
+// Source: WP5c — scripts.c lua_item_check() lines 717-753.
+func TestItemCheckShopType(t *testing.T) {
+	// Shop keeper VNum 100 buys item types 1 (ITEM_WEAPON) and 3 (ITEM_FOOD)
+	mock := &shopCheckMockWorld{
+		buyTypes: map[int]map[int]bool{
+			100: {1: true, 3: true},
+		},
+	}
+
+	engine := NewEngine("../../test_scripts", mock)
+	if engine == nil {
+		t.Fatal("Failed to create engine")
+	}
+
+	// Test 1: weapon (type 1) — shop buys it, script sets test_result = "pass"
+	ctx1 := &ScriptContext{
+		Me:  &testMob{vnum: 100, name: "test shopkeeper"},
+		Obj: &testObj{vnum: 5001, typeFlag: 1, keywords: "sword longsword", shortDesc: "a longsword", cost: 100},
+	}
+	_, err := engine.RunScript(ctx1, "test_item_check_pass.lua", "ongive")
+	if err != nil {
+		t.Fatalf("script error: %v", err)
+	}
+	resultVal := engine.l.GetGlobal("test_result")
+	if resultVal.Type() != lua.LTString || resultVal.String() != "pass" {
+		t.Fatalf("item_check(weapon) = %v, want \"pass\"", resultVal)
+	}
+
+	// Test 2: staff (type 5) — shop does NOT buy it, script sets test_result = "fail"
+	ctx2 := &ScriptContext{
+		Me:  &testMob{vnum: 100, name: "test shopkeeper"},
+		Obj: &testObj{vnum: 5002, typeFlag: 5, keywords: "staff oak", shortDesc: "an oak staff", cost: 200},
+	}
+	_, err = engine.RunScript(ctx2, "test_item_check_fail.lua", "ongive")
+	if err != nil {
+		t.Fatalf("script error: %v", err)
+	}
+	resultVal2 := engine.l.GetGlobal("test_result")
+	if resultVal2.Type() != lua.LTString || resultVal2.String() != "fail" {
+		t.Fatalf("item_check(staff) = %v, want \"fail\"", resultVal2)
+	}
+
+	// Test 3: weapon (type 1) but mob has no shop (VNum 999) — should fail
+	ctx3 := &ScriptContext{
+		Me:  &testMob{vnum: 999, name: "non-shopkeeper"},
+		Obj: &testObj{vnum: 5001, typeFlag: 1, keywords: "sword longsword", shortDesc: "a longsword", cost: 100},
+	}
+	_, err = engine.RunScript(ctx3, "test_item_check_fail.lua", "ongive")
+	if err != nil {
+		t.Fatalf("script error: %v", err)
+	}
+	resultVal3 := engine.l.GetGlobal("test_result")
+	if resultVal3.Type() != lua.LTString || resultVal3.String() != "fail" {
+		t.Fatalf("item_check(no-shop mob) = %v, want \"fail\"", resultVal3)
+	}
+}
+
+// testMob implements ScriptableMob for testing.
+type testMob struct {
+	vnum int
+	name string
+}
+
+func (m *testMob) GetVNum() int                  { return m.vnum }
+func (m *testMob) GetName() string               { return m.name }
+func (m *testMob) GetLevel() int                 { return 30 }
+func (m *testMob) GetHealth() int                { return 100 }
+func (m *testMob) SetHealth(h int)               {}
+func (m *testMob) GetMaxHealth() int             { return 100 }
+func (m *testMob) GetGold() int                  { return 0 }
+func (m *testMob) GetRoomVNum() int              { return 1000 }
+func (m *testMob) GetFighting() string           { return "" }
+func (m *testMob) SetHunting(target string)      {}
+func (m *testMob) IsHunting() bool               { return false }
+func (m *testMob) SetFollowing(leader string)    {}
+func (m *testMob) GetPrototype() ScriptableMobPrototype {
+	return &testMobPrototype{shortDesc: m.name}
+}
+
+// testMobPrototype implements ScriptableMobPrototype for testing.
+type testMobPrototype struct {
+	shortDesc string
+}
+
+func (p *testMobPrototype) GetShortDesc() string  { return p.shortDesc }
+func (p *testMobPrototype) GetGold() int           { return 0 }
+func (p *testMobPrototype) GetLevel() int          { return 30 }
+func (p *testMobPrototype) GetAlignment() int      { return 0 }
+func (p *testMobPrototype) GetScriptName() string  { return "" }
+func (p *testMobPrototype) GetLuaFunctions() int   { return 0 }
+
+// testObj implements ScriptableObject for testing.
+type testObj struct {
+	vnum      int
+	typeFlag  int
+	keywords  string
+	shortDesc string
+	cost      int
+}
+
+func (o *testObj) GetVNum() int          { return o.vnum }
+func (o *testObj) GetKeywords() string   { return o.keywords }
+func (o *testObj) GetShortDesc() string  { return o.shortDesc }
+func (o *testObj) GetCost() int          { return o.cost }
+func (o *testObj) GetTimer() int         { return 0 }
+func (o *testObj) SetTimer(t int)        {}
+func (o *testObj) GetTypeFlag() int      { return o.typeFlag }

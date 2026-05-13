@@ -292,6 +292,10 @@ func (a *WorldScriptableAdapter) SetExitDoorState(roomVNum int, direction string
 	return a.world.SetExitDoorState(roomVNum, direction, state)
 }
 
+func (a *WorldScriptableAdapter) ShopBuysType(mobVNum int, itemType int) bool {
+	return a.world.ShopBuysType(mobVNum, itemType)
+}
+
 // scriptableObjWrapper wraps parser.Obj to implement ScriptableObject
 type scriptableObjWrapper struct {
 	obj *parser.Obj

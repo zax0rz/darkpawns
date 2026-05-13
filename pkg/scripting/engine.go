@@ -2417,11 +2417,51 @@ func (e *Engine) luaObjList(L *lua.LState) int {
 }
 
 func (e *Engine) luaItemCheck(L *lua.LState) int {
-	// item_check(obj) - validates whether object is a production item for the shop.
-	// Source: shop_give.lua — checks if given item is valid shop production.
-	// Engine gap: always returns false — shop production tables not yet implemented.
-	// item_check: shop production validation (shop system not yet wired)
-	L.Push(lua.LBool(false))
+	// item_check(obj) - checks whether the shopkeeper's shop buys items of this type.
+	// Source: scripts.c lua_item_check() lines 717-753.
+	// Gets the shopkeeper mob from the Lua global `me`, the item from arg 1,
+	// then calls World.ShopBuysType(mobVNum, objType).
+
+	if L.GetTop() < 1 || L.Get(1).Type() != lua.LTTable {
+		slog.Warn("[Lua] Invalid argument to item_check", "arg_type", L.Get(1).Type())
+		L.Push(lua.LNil)
+		return 1
+	}
+
+	// Get the item table (arg 1)
+	objTbl := L.Get(1).(*lua.LTable)
+	objTypeVal := objTbl.RawGetString("type")
+	if objTypeVal.Type() == lua.LTNil {
+		L.Push(lua.LNil)
+		return 1
+	}
+	objType := int(objTypeVal.(lua.LNumber))
+
+	// Get the shopkeeper mob from global `me`
+	meVal := L.GetGlobal("me")
+	if meVal.Type() != lua.LTTable {
+		slog.Warn("[Lua] item_check: 'me' global is not a table")
+		L.Push(lua.LNil)
+		return 1
+	}
+	meTbl := meVal.(*lua.LTable)
+	mobVNumVal := meTbl.RawGetString("vnum")
+	if mobVNumVal.Type() == lua.LTNil {
+		L.Push(lua.LNil)
+		return 1
+	}
+	mobVNum := int(mobVNumVal.(lua.LNumber))
+
+	if e.world == nil {
+		L.Push(lua.LNil)
+		return 1
+	}
+
+	if e.world.ShopBuysType(mobVNum, objType) {
+		L.Push(lua.LNumber(1)) // TRUE
+	} else {
+		L.Push(lua.LNil)
+	}
 	return 1
 }
 
