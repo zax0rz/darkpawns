@@ -65,6 +65,7 @@ var spellDB = map[int]*spellData{
 	42:  {42, "recall", 50, 50, 1, [12]int{}},
 	43:  {43, "remove poison", 40, 30, 1, [12]int{}},
 	44:  {44, "sense life", 30, 20, 1, [12]int{}},
+	45:  {45, "animate dead", 120, 100, 10, [12]int{}},
 	46:  {46, "dispel good", 95, 65, 5, [12]int{}},
 	47:  {47, "holy shield", 90, 65, 5, [12]int{}},
 	48:  {48, "group heal", 210, 150, 5, [12]int{}},
@@ -73,6 +74,8 @@ var spellDB = map[int]*spellData{
 	51:  {51, "waterwalk", 80, 55, 1, [12]int{}},
 	52:  {52, "mass heal", 130, 100, 1, [12]int{}},
 	53:  {53, "fly", 100, 80, 5, [12]int{}},
+	54:  {54, "calliope", 100, 50, 10, [12]int{}},
+	55:  {55, "vampirism", 1, 1, 1, [12]int{}},
 	56:  {56, "sobriety", 35, 20, 5, [12]int{}},
 	57:  {57, "group invis", 135, 135, 1, [12]int{}},
 	58:  {58, "hellfire", 200, 150, 10, [12]int{}},
@@ -97,8 +100,22 @@ var spellDB = map[int]*spellData{
 	77:  {77, "cell adjustment", 85, 75, 1, [12]int{}},
 	78:  {78, "zen", 70, 60, 4, [12]int{}},
 	79:  {79, "mirror image", 150, 130, 5, [12]int{}},
+	80:  {80, "mass dominate", 220, 150, 10, [12]int{}},
+	81:  {81, "divine int", 290, 290, 1, [12]int{}},
 	82:  {82, "mind bar", 115, 100, 1, [12]int{}},
-	94:  {94, "soul leech", 60, 55, 1, [12]int{}},
+	83:  {83, "soul leech", 60, 55, 1, [12]int{}},
+	84:  {84, "mindsight", 70, 60, 1, [12]int{}},
+	85:  {85, "transparency", 35, 25, 1, [12]int{}},
+	86:  {86, "know alignment", 20, 20, 1, [12]int{}},
+	87:  {87, "gate", 95, 95, 1, [12]int{}},
+	88:  {88, "intellect", 60, 60, 1, [12]int{}},
+	89:  {89, "lay hands", 90, 90, 1, [12]int{}},
+	90:  {90, "mental lapse", 100, 90, 1, [12]int{}},
+	91:  {91, "smokescreen", 100, 100, 1, [12]int{}},
+	92:  {92, "disrupt", 175, 165, 1, [12]int{}},
+	93:  {93, "disintegrate", 120, 120, 1, [12]int{}},
+	94:  {94, "calliope", 100, 50, 10, [12]int{}},
+	95:  {95, "protect good", 50, 50, 1, [12]int{}},
 	96:  {96, "flamestrike", 105, 100, 1, [12]int{}},
 	97:  {97, "haste", 140, 140, 1, [12]int{}},
 	98:  {98, "slow", 80, 50, 2, [12]int{}},
@@ -107,15 +124,6 @@ var spellDB = map[int]*spellData{
 	101: {101, "call of chaos", 90, 70, 1, [12]int{}},
 	102: {102, "water breathe", 92, 58, 6, [12]int{}},
 	105: {105, "conjure elemental", 165, 145, 1, [12]int{}},
-	// Additional spells from class.c references
-	// mind sight
-	93: {93, "mindsight", 70, 60, 1, [12]int{}},
-	// mass dominate — discovered no. from class.c
-	80: {80, "mass dominate", 220, 150, 10, [12]int{}},
-	// calliope
-	54: {54, "calliope", 100, 50, 10, [12]int{}},
-	// protect good (SPELL_PROT_FROM_GOOD 45 duped with dispel good 46 — use 45)
-	45: {45, "protect good", 50, 50, 1, [12]int{}},
 }
 
 // buildSpellIndex builds a case-insensitive lookup from spell name -> spellData.
