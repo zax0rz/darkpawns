@@ -111,11 +111,13 @@ func getAttackerName(ch interface{}) string {
 
 // randRange returns a random integer in [min, max].
 
-// executeCommand executes a command string  on behalf of a player
+// executeCommand executes a command string on behalf of a player (e.g. from doOrder).
+// Delegates to the session layer via CommandExecFunc if wired.
 func (w *World) executeCommand(ch *Player, command string) bool {
-	_ = ch
-	_ = command
-	return true
+	if w.CommandExecFunc != nil {
+		return w.CommandExecFunc(ch, command)
+	}
+	return false
 }
 
 // doForced is a stub for perform_act / do_forced — received a forced command string

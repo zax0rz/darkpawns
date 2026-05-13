@@ -67,7 +67,7 @@ func cmdReload(s *Session, args []string) error {
 	s.Send("Reloading world data...\r\n")
 
 	// Notify all online players
-	s.manager.SendToAll("\\r\\n*** World data reload initiated by %s. ***\\r\\n")
+	s.manager.SendToAll(fmt.Sprintf("\\r\\n*** World data reload initiated by %s. ***\\r\\n", s.player.Name))
 
 	pw, err := parser.ParseWorld("world/")
 	if err != nil {
@@ -338,7 +338,10 @@ func cmdBroadcast(s *Session, args []string) error {
 			continue
 		}
 		// Check PRF_NOBROAD equivalent: if the session has a "nobroad" preference, skip
-		if sess.player.NoBroadcast {
+		sess.player.RLock()
+		nb := sess.player.NoBroadcast
+		sess.player.RUnlock()
+		if nb {
 			continue
 		}
 		sess.Send(msg)

@@ -101,7 +101,9 @@ func loadConfig() *agentcli.AgentConfig {
 func cmdPlay(args []string) {
 	fs := flag.NewFlagSet("play", flag.ExitOnError)
 	duration := fs.Duration("duration", 0, "max duration (15m, 1h)")
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		os.Exit(1)
+	}
 	cfg := loadConfig()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -124,7 +126,9 @@ func cmdSession(args []string) {
 	temp := fs.Float64("temp", -1, "LLM temperature override (default: config value)")
 	valence := fs.Bool("valence", true, "enable emotional valence in memory")
 	logDir := fs.String("log-dir", "", "log output directory (default: config value)")
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		os.Exit(1)
+	}
 	cfg := loadConfig()
 	if *temp >= 0 {
 		cfg.Temperature = *temp
@@ -153,7 +157,9 @@ func cmdConfig(args []string) {
 	temp := fs.Float64("temp", -1, "set LLM temperature")
 	logDir := fs.String("log-dir", "", "set log output directory")
 	valence := fs.String("valence", "", "enable emotional valence (true/false)")
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		os.Exit(1)
+	}
 
 	cfg, err := agentcli.LoadConfig()
 	if err != nil {
@@ -187,7 +193,10 @@ func cmdConfig(args []string) {
 		changed = true
 	}
 	if changed {
-		agentcli.SaveConfig(cfg)
+		if err := agentcli.SaveConfig(cfg); err != nil {
+			slog.Error("save config", "error", err)
+			os.Exit(1)
+		}
 		fmt.Println("config saved to", agentcli.ConfigPath())
 	}
 
@@ -203,7 +212,9 @@ func cmdConfig(args []string) {
 func cmdKeygen(args []string) {
 	fs := flag.NewFlagSet("keygen", flag.ExitOnError)
 	name := fs.String("name", "", "character name")
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		os.Exit(1)
+	}
 
 	if *name == "" {
 		fmt.Fprintln(os.Stderr, "error: -name is required")
@@ -237,7 +248,9 @@ func cmdDream(args []string) {
 	outputDir := fs.String("output", "data/memory", "output directory for memory graph")
 	agentID := fs.String("agent", "", "agent ID to process (required)")
 	dryRun := fs.Bool("dry-run", false, "print what would happen without writing")
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		os.Exit(1)
+	}
 
 	if *agentID == "" {
 		fmt.Fprintln(os.Stderr, "error: -agent is required")

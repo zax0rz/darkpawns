@@ -39,8 +39,8 @@ Maintained by Daeron. Updated per triage cycle.
 | HIGH-015 | stop_fighting() no reassignment | pkg/combat/engine.go:155-169 | FIXED | handleMobDeath clears fighting on all room mobs+players targeting dead mob (BRENDA) |
 | HIGH-016 | raw_kill() missing cleanup | pkg/combat/fight_core.go:1009 | FIXED | Added TODO comments for missing death cleanup (BRENDA) |
 | HIGH-017 | GroupGain namedCombatant.IsNPC()=true — group XP never awarded | pkg/combat/fight_core.go:1186-1236 | FIXED | Added isNPC field, defaulted false in NewNamedCombatant (Machine) |
-| HIGH-018 | removeCharmAffect mutates ch.ActiveAffects with zero locks | pkg/game/follow.go:242-254 | OPEN | Slice mutation in loop without ch.mu. Called from StopFollower. |
-| HIGH-019 | doOrder calls executeCommand (no-op stub) | pkg/game/combat_control.go:64, damage_stubs.go:115 | OPEN | executeCommand discards both params, returns true. Order command fully broken. |
+| HIGH-018 | removeCharmAffect mutates ch.ActiveAffects with zero locks | pkg/game/follow.go:242-254 | FIXED | Lock already present from NEW-002 fix. Tracker updated. |
+| HIGH-019 | doOrder calls executeCommand (no-op stub) | pkg/game/combat_control.go:64, damage_stubs.go:115 | FIXED | CommandExecFunc callback added to World. Session layer wires dispatch via SetCommandExecFunc. doOrder now routes through ExecuteCommand. (Daeron) |
 
 ## MEDIUM
 
@@ -103,6 +103,24 @@ Maintained by Daeron. Updated per triage cycle.
 | LOW-011 | basicTokenReplace leaves $s/$e unresolved | pkg/combat/skill_messages.go:592-602 | FIXED | GetCharacterSex hook + full pronoun resolution (Machine) |
 | LOW-012 | SkillMessage table: attackType guard | pkg/combat/skill_messages.go:277-278 | REJECTED | Guard clause doing its job — no bug. |
 
+## MEDIUM (May 13 Triage — Daeron)
+
+| ID | Finding | File | Status | Notes |
+|---|---|---|---|---|
+| MED-028 | cmdReload %s in broadcast with no format args | pkg/session/wiz_system.go:70 | FIXED | fmt.Sprintf formats the message before SendToAll. (Daeron) |
+
+## LOW (May 13 Triage — Daeron)
+
+| ID | Finding | File | Status | Notes |
+|---|---|---|---|---|
+| LOW-013 | cmdBroadcast reads player.NoBroadcast without player lock | pkg/session/wiz_system.go:341 | FIXED | Added player.RLock/RUnlock around NoBroadcast read. (Daeron) |
+| LOW-014 | cmdFlee XP loss can invert when mob healed above max HP | pkg/session/combat_cmds.go:150 | FIXED | Added `if loss < 0 { loss = 0 }` clamp. (Daeron) |
+| LOW-015 | dreaming/extract.go:107 switch could be tagged on `low` (QF1002) | pkg/dreaming/extract.go:107 | REJECTED | Style preference only — switch { case low == ... } works correctly |
+| LOW-016 | dreaming/graph.go:227 WriteString(fmt.Sprintf) → fmt.Fprintf (QF1012) | pkg/dreaming/graph.go:227 | FIXED | Switched to fmt.Fprintf(&b, ...). (Daeron) |
+| LOW-017 | unchecked SaveConfig error in cmdConfig | cmd/dp-agent/main.go:190 | FIXED | Added error check with slog.Error + os.Exit(1). (Daeron) |
+| LOW-018 | unchecked os.WriteFile error in dreaming result write | pkg/dreaming/dream.go:144 | FIXED | Wrapped with fmt.Errorf and returned. (Daeron) |
+| LOW-019 | three unchecked fs.Parse errors in dp-agent | cmd/dp-agent/main.go:104,127,156 | FIXED | All 5 fs.Parse calls now check errors. (Daeron) |
+
 ## Cycle History
 
 | Date | Reek Report | Confirmed | Rejected | False Positive Rate |
@@ -114,4 +132,5 @@ Maintained by Daeron. Updated per triage cycle.
 | 2026-05-11 | Machine fixes (8 findings) | 8 | 0 | 0% — Good machine |
 | 2026-05-11 | BRENDA sprint (10 findings) | 10 | 0 | 0% — Good BRENDA |
 | 2026-05-12 | pkg/game/ deep dive | 7 | 0 | 0% — Good reek |
-| **Weekly** | **9 reports** | **194** | **8** | **4.0% — Good reek** |
+| 2026-05-13 | Wednesday deep dive (session/auth/privacy) | 7 | 1 | 12.5% — Good reek |
+| **Weekly** | **10 reports** | **201** | **9** | **4.3% — Good reek** |

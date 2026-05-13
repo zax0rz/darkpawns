@@ -24,6 +24,11 @@ type MessageSinkFunc func(playerName string, msg []byte)
 // (e.g., do_quit). Set by the session manager.
 type CloseConnectionFunc func(playerName string)
 
+// CommandExecFunc is the callback signature for executing a command on behalf of
+// a player (e.g. from doOrder for charmed followers). Set by the session layer.
+// Returns true if the command was dispatched.
+type CommandExecFunc func(ch *Player, command string) bool
+
 // World represents the active game world with runtime state.
 type World struct {
 	mu sync.RWMutex
@@ -106,6 +111,10 @@ type World struct {
 	// Matches C: struct review_t review[25] in db.c.
 	gossipMu      sync.RWMutex
 	gossipHistory []gossipEntry
+
+	// CommandExecFunc dispatches player commands through the session layer.
+	// Set by the session manager. If nil, executeCommand is a no-op.
+	CommandExecFunc CommandExecFunc
 }
 
 // SetCombatEngine sets the combat engine for AI to use.

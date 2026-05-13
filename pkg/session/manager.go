@@ -298,6 +298,22 @@ func (m *Manager) SetOnRoundEnd() {
 	}
 }
 
+// SetCommandExecFunc wires the session layer's command dispatch into the game
+// world so that doOrder can execute commands on charmed followers.
+func (m *Manager) SetCommandExecFunc() {
+	m.world.CommandExecFunc = func(ch *game.Player, command string) bool {
+		 sess, ok := m.GetSession(ch.GetName())
+		if !ok || sess == nil {
+			return false
+		}
+		if err := ExecuteCommand(sess, command, nil); err != nil {
+			slog.Error("order command failed", "player", ch.GetName(), "command", command, "error", err)
+			return false
+		}
+		return true
+	}
+}
+
 // SetDreamingDir sets the path to the dreaming layer's output directory.
 // Agent memory summaries are read from {dir}/{agent_id}/memory-summary.txt.
 func (m *Manager) SetDreamingDir(dir string) {

@@ -141,7 +141,9 @@ func RunDream(cfg DreamConfig) (*DreamResult, error) {
 	// Write the dream result as JSON.
 	resultFile := filepath.Join(cfg.OutputDir, cfg.AgentID, "dream-result.json")
 	resultData, _ := json.MarshalIndent(result, "", "  ")
-	os.WriteFile(resultFile, resultData, 0644)
+	if err := os.WriteFile(resultFile, resultData, 0644); err != nil {
+		return nil, fmt.Errorf("write result: %w", err)
+	}
 
 	return result, nil
 }

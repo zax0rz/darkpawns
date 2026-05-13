@@ -148,6 +148,9 @@ func cmdFlee(s *Session) error {
 	var xpLoss int
 	if opponent, ok := s.manager.combatEngine.GetCombatTarget(s.player.Name); ok {
 		loss := opponent.GetMaxHP() - opponent.GetHP()
+		if loss < 0 {
+			loss = 0
+		}
 		loss *= opponent.GetLevel()
 		xpLoss = loss
 	}

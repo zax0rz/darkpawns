@@ -224,7 +224,7 @@ func (g *MemoryGraph) BuildSummary(maxTokens int) string {
 			} else {
 				date += " at " + session[0].CreatedAt.Format("3:04 PM")
 			}
-			b.WriteString(fmt.Sprintf("### Session %d — %s\n\n", si+1, date))
+			fmt.Fprintf(&b, "### Session %d — %s\n\n", si+1, date)
 		}
 
 		// Render each event as narrative prose.
