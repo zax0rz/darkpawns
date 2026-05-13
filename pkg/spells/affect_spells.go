@@ -100,6 +100,60 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		aff = engine.NewAffect(engine.AffectInfrared, 12+level, 0, "infravision")
 	case SpellWaterBreathe:
 		aff = engine.NewAffect(engine.AffectWaterBreathing, getLevel(ch), 0, "water breathe")
+	case SpellDetectAlign, SpellKnowAlign:
+		aff = engine.NewAffect(engine.AffectDetectAlign, 12+level, 0, "detect align")
+	case SpellDreamTravel:
+		aff = engine.NewAffect(engine.AffectDream, 6, 0, "dream travel")
+	case SpellLevitate:
+		// Levitate uses same AffectType as Fly
+		aff = engine.NewAffect(engine.AffectFlying, getLevel(ch), 0, "levitate")
+	case SpellProtFromEvil:
+		if isEvil(victim) {
+			sendToCaster(ch, "You cannot protect yourself from the Evil inside you!\r\n")
+			return
+		}
+		// Set flag only — no stat modifier
+		_ = engine.NewAffect(engine.AffectProtectionEvil, 24, 0, "prot from evil")
+		applyAffect(victim, engine.NewAffect(engine.AffectProtectionEvil, 24, 0, "prot from evil"))
+		return
+	case SpellProtFromGood:
+		if isGood(victim) {
+			sendToCaster(ch, "The forces of Light destroy you for your betrayal!\r\n")
+			return
+		}
+		applyAffect(victim, engine.NewAffect(engine.AffectProtectionGood, 24, 0, "prot from good"))
+		return
+	case SpellAdrenaline, SpellStrength:
+		mag := 1 + boolToInt(level > 18)
+		if ch == victim && spellNum == SpellAdrenaline {
+			mag++
+		}
+		aff = engine.NewAffect(engine.AffectStrength, (getLevel(ch)>>1)+4, mag, "strength")
+	case SpellSenseLife:
+		aff = engine.NewAffect(engine.AffectSenseLife, getLevel(ch), 0, "sense life")
+	case SpellWaterwalk:
+		aff = engine.NewAffect(engine.AffectWaterwalk, 4+getLevel(ch)/5, 0, "waterwalk")
+	case SpellChangeDensity:
+		aff = engine.NewAffect(engine.AffectWaterwalk, 4+getLevel(ch)/5, 0, "change density")
+	case SpellChameleon:
+		aff = engine.NewAffect(engine.AffectHide, getLevel(ch), 0, "chameleon")
+	case SpellMetalskin:
+		aff = engine.NewAffect(engine.AffectMetalskin, 5, -(15+getLevel(ch)/2), "metalskin")
+	case SpellInvulnerability:
+		applyAffect(victim, engine.NewAffect(engine.AffectInvuln, 7, -100, "invulnerability"))
+		aff = engine.NewAffect(engine.AffectType(engine.ApplySavingSpell), 7, -7, "invulnerability")
+	case SpellPsyshield:
+		aff = engine.NewAffect(engine.AffectArmorClass, getLevel(ch)/2, -15, "psyshield")
+	case SpellGreatPercept:
+		applyAffect(victim, engine.NewAffect(engine.AffectDetectInvisible, level/2+4, 0, "great percept"))
+		aff = engine.NewAffect(engine.AffectSenseLife, level/2+4, 0, "great percept")
+	case SpellLessPercept:
+		applyAffect(victim, engine.NewAffect(engine.AffectDetectAlign, level/2+4, 0, "lesser percept"))
+		aff = engine.NewAffect(engine.AffectInfrared, level/2+4, 0, "lesser percept")
+	case SpellIntellect:
+		aff = engine.NewAffect(engine.AffectIntelligence, 8, 1, "intellect")
+	case SpellMindBar:
+		aff = engine.NewAffect(engine.AffectMindBar, (level/2)-2, -18, "mind bar")
 	default:
 		return
 	}
@@ -131,6 +185,31 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 	case SpellVitality:
 		hit = dice(5, 10)
 		sendToVictim(victim, "You feel vitalized!\r\n")
+	case SpellCellAdjustment:
+		hit = 90 + dice(2, 8)
+		sendToVictim(victim, "You focus your mind on healing your body..\r\n")
+	case SpellMassHeal:
+		hit = 200
+		sendToVictim(victim, "A warm feeling floods your body.\r\n")
+	case SpellInvigorate:
+		sendToVictim(victim, "You feel invigorated!\r\n")
+		// Movement restoration — healHP handles hit, we handle move separately
+		type mover interface{ GetMove() int; GetMaxMove() int; SetMove(int) }
+		if m, ok := victim.(mover); ok {
+			move := dice(10, 10)
+			newMove := m.GetMove() + move
+			if newMove > m.GetMaxMove() {
+				newMove = m.GetMaxMove()
+			}
+			m.SetMove(newMove)
+		}
+	case SpellLayHands:
+		if ch == victim {
+			sendToVictim(victim, "Your wounds mend beneath your hands!\r\n")
+		} else {
+			sendToCaster(ch, "Your wounds start to heal beneath $n's hands!\r\n")
+		}
+		hit = dice(3, getLevel(ch))
 	}
 
 	if hit > 0 {
@@ -167,11 +246,41 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 	if ch == nil {
 		return
 	}
-	slog.Debug("MagGroups stub called", "spell", spellNum, "level", level)
-	_ = level
-	_ = savetype
-	_ = world
-	_ = spellNum
+
+	// Get all characters in the room
+	type roomGetter interface{ GetRoomVNum() int }
+	type worldChars interface{ GetAllCharsInRoom(roomVNum int) []interface{} }
+
+	rg, ok := ch.(roomGetter)
+	if !ok {
+		return
+	}
+	roomVNum := rg.GetRoomVNum()
+
+	w, ok := world.(worldChars)
+	if !ok {
+		return
+	}
+
+	chars := w.GetAllCharsInRoom(roomVNum)
+
+	// Apply spell to each grouped character (including caster)
+	for _, c := range chars {
+		if !areGrouped(ch, c) && c != ch {
+			continue
+		}
+		switch spellNum {
+		case SpellGroupHeal:
+			MagPoints(level, ch, c, SpellHeal, savetype, world)
+		case SpellHolyShield:
+			MagAffects(level, ch, c, SpellArmor, savetype, world)
+		case SpellGroupInvis:
+			MagAffects(level, ch, c, SpellInvisible, savetype, world)
+		case SpellMassDominate:
+			// Mass dominate — charm each grouped NPC
+			ExecuteManualSpell(SpellCharm, level, ch, c, nil, "", world)
+		}
+	}
 }
 
 // MagMasses applies mass (room-wide) spells.
@@ -181,11 +290,55 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 	if ch == nil {
 		return
 	}
-	slog.Debug("MagMasses stub called", "spell", spellNum, "level", level)
-	_ = level
-	_ = savetype
-	_ = world
-	_ = spellNum
+
+	type roomGetter interface{ GetRoomVNum() int }
+	type worldChars interface{ GetAllCharsInRoom(roomVNum int) []interface{} }
+	type npcChecker interface{ IsNPC() bool }
+	type lever interface{ GetLevel() int }
+
+	rg, ok := ch.(roomGetter)
+	if !ok {
+		return
+	}
+	roomVNum := rg.GetRoomVNum()
+
+	w, ok := world.(worldChars)
+	if !ok {
+		return
+	}
+
+	// Send messages
+	switch spellNum {
+	case SpellSmokescreen:
+		sendToCaster(ch, "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.\r\n")
+	}
+
+	// Apply to each non-grouped character in the room
+	chars := w.GetAllCharsInRoom(roomVNum)
+	for _, c := range chars {
+		if c == ch {
+			continue
+		}
+		// Skip immortals
+		if nc, ok := c.(npcChecker); ok && !nc.IsNPC() {
+			if l, ok := c.(lever); ok && l.GetLevel() >= 100 {
+				continue
+			}
+		}
+		// Skip charmed NPCs
+		if nc, ok := c.(npcChecker); ok && nc.IsNPC() {
+			type affectChecker interface{ IsAffected(int) bool }
+			if ac, ok := c.(affectChecker); ok && ac.IsAffected(1 << 2) { // AFF_CHARM
+				continue
+			}
+		}
+		// Skip grouped
+		if areGrouped(ch, c) {
+			continue
+		}
+		// Apply affect
+		MagAffects(level, ch, c, spellNum, savetype, world)
+	}
 }
 
 // MagAreas applies area (room-wide offensive) spells.
@@ -195,33 +348,153 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 	if ch == nil {
 		return
 	}
-	slog.Debug("MagAreas stub called", "spell", spellNum, "level", level)
-	_ = level
-	_ = savetype
-	_ = world
-	_ = spellNum
+
+	type roomGetter interface{ GetRoomVNum() int }
+	type worldChars interface{ GetAllCharsInRoom(roomVNum int) []interface{} }
+	type npcChecker interface{ IsNPC() bool }
+	type lever interface{ GetLevel() int }
+
+	rg, ok := ch.(roomGetter)
+	if !ok {
+		return
+	}
+	roomVNum := rg.GetRoomVNum()
+
+	w, ok := world.(worldChars)
+	if !ok {
+		return
+	}
+
+	// Send area messages
+	switch spellNum {
+	case SpellEarthquake:
+		sendToCaster(ch, "You gesture and the earth begins to shake all around you!\r\n")
+	case SpellAcidBlast:
+		sendToCaster(ch, "A spray of acid flows from your fingertips!\r\n")
+	case SpellFireBreath:
+		// Fire breath is handled by the manual cast function
+		return
+	}
+
+	chars := w.GetAllCharsInRoom(roomVNum)
+	for _, c := range chars {
+		if c == ch {
+			continue
+		}
+		// Skip immortals
+		if nc, ok := c.(npcChecker); ok && !nc.IsNPC() {
+			if l, ok := c.(lever); ok && l.GetLevel() >= 100 {
+				continue
+			}
+		}
+		// Skip charmed NPCs
+		if nc, ok := c.(npcChecker); ok && nc.IsNPC() {
+			type affectChecker interface{ IsAffected(int) bool }
+			if ac, ok := c.(affectChecker); ok && ac.IsAffected(1 << 2) { // AFF_CHARM
+				continue
+			}
+		}
+		// Skip grouped
+		if areGrouped(ch, c) {
+			continue
+		}
+		// Deal damage
+		MagDamage(level, ch, c, spellNum, 1, world)
+	}
 }
 
 // MagSummons summons NPCs into the world.
 // TODO(HIGH-012): Implement mob summoning — spawn NPCs based on spell type.
 // Currently a no-op stub.
 func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
-	_ = level
-	_ = ch
-	_ = spellNum
-	_ = world
-	slog.Debug("MagSummons stub called", "spell", spellNum, "level", level)
+	if ch == nil {
+		return
+	}
+
+	switch spellNum {
+	case SpellAnimateDead:
+		// Animate dead requires a corpse object in the room
+		// This is handled by the manual cast function (ExecuteManualSpell)
+		// For the routine path, we spawn a zombie
+		type roomGetter interface{ GetRoomVNum() int }
+		rg, ok := ch.(roomGetter)
+		if !ok {
+			return
+		}
+		roomVNum := rg.GetRoomVNum()
+
+		type mobSpawner interface {
+			SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
+		}
+		w, ok := world.(mobSpawner)
+		if !ok {
+			return
+		}
+
+		// MOB_ZOMBIE vnum — check C source for the value
+		mobLevel := getLevel(ch) / 2
+		if mobLevel < 1 {
+			mobLevel = 1
+		}
+		mob, err := w.SpawnMobWithLevelI(109, roomVNum, mobLevel) // MOB_ZOMBIE = 109
+		if err != nil {
+			sendToCaster(ch, "The corpse refuses to come alive!\r\n")
+			return
+		}
+
+		// Add as follower
+		type followerAdder interface{ AddFollowerQuiet(ch, leader interface{}) }
+		if fa, ok := world.(followerAdder); ok {
+			fa.AddFollowerQuiet(mob, ch)
+		}
+
+		sendToCaster(ch, "The corpse starts to twitch, then stands with a life of its own!\r\n")
+	}
 }
 
 // MagCreations creates objects.
 // TODO(HIGH-012): Implement object creation — create items in caster's inventory
 // based on spell type. Currently a no-op stub.
 func MagCreations(level int, ch interface{}, spellNum int, world interface{}) {
-	_ = level
-	_ = ch
-	_ = spellNum
-	_ = world
-	slog.Debug("MagCreations stub called", "spell", spellNum, "level", level)
+	if ch == nil {
+		return
+	}
+
+	switch spellNum {
+	case SpellCreateFood:
+		// Create food spawns magic mushrooms (vnum 8062)
+		type roomGetter interface{ GetRoomVNum() int }
+		rg, ok := ch.(roomGetter)
+		if !ok {
+			return
+		}
+		roomVNum := rg.GetRoomVNum()
+
+		type objSpawner interface {
+			SpawnObject(vnum, roomVNum int) (interface{}, error)
+		}
+		w, ok := world.(objSpawner)
+		if !ok {
+			return
+		}
+
+		obj, err := w.SpawnObject(8062, roomVNum) // OBJ_MAGIC_MUSHROOMS = 8062
+		if err != nil {
+			sendToCaster(ch, "I seem to have goofed.\r\n")
+			return
+		}
+
+		// Give to caster
+		type inventoryAdder interface{ AddItemToInventory(interface{}) error }
+		if ia, ok := ch.(inventoryAdder); ok {
+			if err := ia.AddItemToInventory(obj); err != nil {
+				sendToCaster(ch, "You can't carry any more!\r\n")
+				return
+			}
+		}
+
+		sendToCaster(ch, "You create some magic mushrooms.\r\n")
+	}
 }
 
 // MagAlterObjs alters objects.
@@ -327,6 +600,14 @@ func isClassMage(ch interface{}) bool {
 		return c.GetClass() == 0 || c.GetClass() == 8
 	}
 	return false
+}
+
+// boolToInt converts a boolean to 1 (true) or 0 (false).
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 func applyAffect(entity interface{}, aff *engine.Affect) {

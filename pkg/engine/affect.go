@@ -64,6 +64,15 @@ const (
 	AffectRegeneration
 	AffectInfrared
 	AffectUltraviolet
+
+	// Extended affect types for spell system
+	AffectDetectAlign
+	AffectSenseLife
+	AffectDream
+	AffectMindBar
+	AffectWaterwalk
+	AffectMetalskin
+	AffectInvuln
 )
 
 // Affect represents a temporary effect on a character, mob, or object
