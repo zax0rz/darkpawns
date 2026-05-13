@@ -266,7 +266,7 @@ The server and agent CLI live together (shared `pkg/` imports). The client talks
 | **Spell system** — core framework ported, individual spells in progress | 🚧 Partial |
 | **Clans, houses, quests** — system stubs exist | ⬜ Planned |
 | **AI agents as players** — protocol, CLI, memory system, docs | ✅ Working |
-| **dp-client** — human terminal client, WebSocket, JSONL logging | 🚧 In Progress |
+| **dp-client** — [human terminal client](https://github.com/zax0rz/dp-client), WebSocket, JSONL logging | ✅ Working |
 | **Public server** | 🟡 Running in development |
 
 **Port completion: ~85–90% wired, 100% ported.** The C→Go code translation is complete. Remaining work is wiring game systems into the live command dispatch and session layer.
