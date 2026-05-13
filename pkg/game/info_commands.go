@@ -319,7 +319,17 @@ func (w *World) doHelp(ch *Player, me *MobInstance, cmd string, arg string) bool
 		ch.SendMessage("Usage: help <topic>\r\n")
 		return true
 	}
-	ch.SendMessage(fmt.Sprintf("No help on '%s' available.\r\n", arg))
+
+	// Search help table for matching keyword
+	w.mu.RLock()
+	entry := SearchHelp(w.HelpTable, arg)
+	w.mu.RUnlock()
+
+	if entry != nil {
+		ch.SendMessage(entry.Entry)
+	} else {
+		ch.SendMessage(fmt.Sprintf("No help on '%s' available.\r\n", arg))
+	}
 	return true
 }
 

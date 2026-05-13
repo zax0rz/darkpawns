@@ -101,6 +101,10 @@ type World struct {
 	// Set by the session manager on initialization. If nil, messages are silently dropped.
 	MessageSink MessageSinkFunc
 
+	// HelpTable holds all loaded help entries (from lib/text/help/).
+	// Populated by LoadHelpFiles during world boot.
+	HelpTable []HelpEntry
+
 	// CloseConnection routes close requests through the session layer.
 	CloseConn CloseConnectionFunc
 
@@ -195,6 +199,11 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	// Initialize ban manager and WHOD display (ported from ban.c + whod.c)
 	w.Bans = NewBanManager()
 	w.WhodDisplay = NewWhod()
+
+	// Load help files from lib/text/help/
+	if helpTable, err := LoadHelpFiles("lib/text/help"); err == nil {
+		w.HelpTable = helpTable
+	}
 
 	return w, nil
 }
