@@ -137,12 +137,41 @@ const (
 	SpellSmokescreen     = 91
 	SpellWaterBreathe    = 102
 
-	// Extended spell constants (for damage_spells.go, may not exist in C directly)
-	SpellMindPoke        = 185
-	SpellMindAttack      = 186
-	SpellMindBlast       = 187
-	SpellFlameStrike     = 188
-	SpellRayOfDisruption = 189
+	// Additional spell constants from C spello() table
+	SpellClone           = 9
+	SpellCreateFood      = 12
+	SpellDetectAlign     = 18
+	SpellProtFromEvil    = 34
+	SpellStrength        = 39
+	SpellSenseLife       = 44
+	SpellAnimateDead     = 45
+	SpellHolyShield      = 47
+	SpellGroupHeal       = 48
+	SpellGroupRecall     = 49
+	SpellWaterwalk       = 51
+	SpellGroupInvis      = 57
+	SpellChameleon       = 63
+	SpellLevitate        = 64
+	SpellMetalskin       = 65
+	SpellInvigorate      = 68
+	SpellLessPercept     = 69
+	SpellAdrenaline      = 72
+	SpellPsyshield       = 73
+	SpellDominate        = 76
+	SpellCellAdjustment  = 77
+	SpellMassDominate    = 80
+	SpellTransparency    = 85
+	SpellKnowAlign       = 86
+	SpellLayHands        = 89
+	SpellProtFromGood    = 95
+	SpellDreamTravel     = 99
+
+	// Mind spells — C source IDs (SPELL_MINDPOKE=61, SPELL_MINDBLAST=62, SPELL_MINDATTACK=71)
+	SpellMindPoke        = 61
+	SpellMindBlast       = 62
+	SpellMindAttack      = 71
+	// Flamestrike = C SPELL_FLAMESTRIKE (96), NOT 188
+	SpellFlameStrike     = 96
 	// Breath weapon aliases matching C constants
 	SpellDragonBreath    = 207
 

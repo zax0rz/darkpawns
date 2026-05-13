@@ -168,9 +168,6 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 	case SpellSmokescreen:
 		dam = dice(3, 4) + level/2
 
-	case SpellRayOfDisruption:
-		dam = dice(6, 6) + level
-
 	case SpellMentalLapse:
 		dam = dice(5, 5) + level
 
