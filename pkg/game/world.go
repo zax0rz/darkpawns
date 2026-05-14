@@ -1201,9 +1201,11 @@ func (w *World) ClearAffects(charName string, isMob bool) {
 		}
 	} else {
 		if p, ok := w.players[charName]; ok {
+			p.mu.Lock()
 			p.MasterAffects = nil
 			p.ActiveAffects = nil
 			p.Affects = 0
+			p.mu.Unlock()
 			return
 		}
 	}

@@ -28,11 +28,13 @@ func CalculateAC(p *game.Player) int {
 	}
 
 	// Active affects (engine.AffectArmorClass = 8)
+	p.RLock()
 	for _, aff := range p.ActiveAffects {
 		if aff.Type == engine.AffectArmorClass {
 			baseAC += aff.Magnitude
 		}
 	}
+	p.RUnlock()
 
 	return baseAC
 }
