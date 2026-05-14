@@ -41,6 +41,7 @@ Maintained by Daeron. Updated per triage cycle.
 | HIGH-017 | GroupGain namedCombatant.IsNPC()=true — group XP never awarded | pkg/combat/fight_core.go:1186-1236 | FIXED | Added isNPC field, defaulted false in NewNamedCombatant (Machine) |
 | HIGH-018 | removeCharmAffect mutates ch.ActiveAffects with zero locks | pkg/game/follow.go:242-254 | FIXED | Lock already present from NEW-002 fix. Tracker updated. |
 | HIGH-019 | doOrder calls executeCommand (no-op stub) | pkg/game/combat_control.go:64, damage_stubs.go:115 | FIXED | CommandExecFunc callback added to World. Session layer wires dispatch via SetCommandExecFunc. doOrder now routes through ExecuteCommand. (Daeron) |
+| HIGH-020 | TickManager default interval 1s instead of 60s | pkg/engine/affect_tick.go:22 | FIXED | Default changed to 60*time.Second. Affects now tick at correct MUD-hour rate. (Daeron) |
 
 ## MEDIUM
 
@@ -108,6 +109,9 @@ Maintained by Daeron. Updated per triage cycle.
 | ID | Finding | File | Status | Notes |
 |---|---|---|---|---|
 | MED-028 | cmdReload %s in broadcast with no format args | pkg/session/wiz_system.go:70 | FIXED | fmt.Sprintf formats the message before SendToAll. (Daeron) |
+| MED-029 | movement_test.go dead test assertion (SA4017) | pkg/game/movement_test.go:260 | OPEN | Empty if-body — test silently passes. |
+| MED-030 | other_economy.go SetFollower error unchecked | pkg/game/other_economy.go:137 | OPEN | If follower registration fails, mob is charmed but not following. |
+| MED-031 | other_settings.go Fprintf error unchecked | pkg/game/other_settings.go:158 | OPEN | Failed write silently truncates player data. |
 
 ## LOW (May 13 Triage — Daeron)
 
@@ -120,6 +124,12 @@ Maintained by Daeron. Updated per triage cycle.
 | LOW-017 | unchecked SaveConfig error in cmdConfig | cmd/dp-agent/main.go:190 | FIXED | Added error check with slog.Error + os.Exit(1). (Daeron) |
 | LOW-018 | unchecked os.WriteFile error in dreaming result write | pkg/dreaming/dream.go:144 | FIXED | Wrapped with fmt.Errorf and returned. (Daeron) |
 | LOW-019 | three unchecked fs.Parse errors in dp-agent | cmd/dp-agent/main.go:104,127,156 | FIXED | All 5 fs.Parse calls now check errors. (Daeron) |
+| LOW-020 | generateAffectID uses timestamp+random, IDs never referenced | pkg/engine/affect.go:173 | OPEN | Uniqueness guarantee is fake — IDs never used externally. |
+| LOW-021 | GetGlobalTickManager ignores parameter after first call | pkg/engine/affect_tick.go:120 | OPEN | sync.Once means only first caller's AffectManager is used. |
+| LOW-022 | Duplicate #nosec G404 comments (12 instances, 6 pairs) | pkg/engine/skill.go | OPEN | Code smell — each nosec appears twice on consecutive lines. |
+| LOW-023 | comm_infra.go ~300 lines self-described dead code | pkg/engine/comm_infra.go:1-300 | OPEN | DEPRECATED header, zero callers, kept for reference. |
+| LOW-024 | example_integration.go entire file is a comment block | pkg/engine/example_integration.go | OPEN | 75 lines commented-out scaffolding. |
+| LOW-025 | fight_core.go:1101 nested if/else should be switch (QF1003) | pkg/combat/fight_core.go:1101 | OPEN | Same pattern as LOW-004, different location. |
 
 ## Cycle History
 
@@ -133,4 +143,5 @@ Maintained by Daeron. Updated per triage cycle.
 | 2026-05-11 | BRENDA sprint (10 findings) | 10 | 0 | 0% — Good BRENDA |
 | 2026-05-12 | pkg/game/ deep dive | 7 | 0 | 0% — Good reek |
 | 2026-05-13 | Wednesday deep dive (session/auth/privacy) | 7 | 1 | 12.5% — Good reek |
-| **Weekly** | **10 reports** | **201** | **9** | **4.3% — Good reek** |
+| 2026-05-14 | Deep dive (engine/events/parser/command) + errcheck | 14 | 2 | 50% — Bad reek (errcheck noise) |
+| **Weekly** | **11 reports** | **215** | **11** | **4.9% — Good reek (overall) |
