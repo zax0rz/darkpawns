@@ -170,7 +170,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		}
 
 		// Generate JWT token for API access
-		token, err := auth.GenerateJWT(login.PlayerName, s.isAgent, s.agentKeyID)
+		token, err := auth.GenerateJWT(login.PlayerName, s.isAgent, s.agentKeyID, "")
 		if err != nil {
 			slog.Error("failed to generate JWT token", "error", err)
 		}

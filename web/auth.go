@@ -46,6 +46,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		// Store claims on context for downstream handlers
 		ctx := context.WithValue(r.Context(), ContextKeyPlayerName, claims.PlayerName)
 		ctx = context.WithValue(ctx, ContextKeyIsAgent, claims.IsAgent)
+		ctx = auth.SetClaimsOnContext(ctx, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

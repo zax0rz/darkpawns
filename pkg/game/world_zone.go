@@ -76,6 +76,28 @@ func (w *World) ShopBuysType(mobVNum int, itemType int) bool {
 	return false
 }
 
+// GetAllMobPrototypes returns all mob prototypes from the parsed world data.
+func (w *World) GetAllMobPrototypes() []*parser.Mob {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	result := make([]*parser.Mob, 0, len(w.mobs))
+	for _, m := range w.mobs {
+		result = append(result, m)
+	}
+	return result
+}
+
+// GetAllObjPrototypes returns all object prototypes from the parsed world data.
+func (w *World) GetAllObjPrototypes() []*parser.Obj {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	result := make([]*parser.Obj, 0, len(w.objs))
+	for _, o := range w.objs {
+		result = append(result, o)
+	}
+	return result
+}
+
 // GetAllZones returns all zones.
 func (w *World) GetAllZones() []*parser.Zone {
 	w.mu.RLock()

@@ -17,7 +17,7 @@ func (s *Session) maybeRefreshToken() {
 	if remaining > jwtRefreshWindow {
 		return
 	}
-	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID)
+	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID, "")
 	if err != nil {
 		slog.Error("failed to refresh JWT token", "player", s.player.Name, "error", err)
 		return

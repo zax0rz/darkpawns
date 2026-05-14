@@ -43,6 +43,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/admin"
+	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -186,6 +188,28 @@ func main() {
 		}
 	})
 	http.Handle("/api/", web.AuthMiddleware(apiMux))
+
+	// Admin routes — JWT-protected, role-gated
+	auditLogger, err := audit.NewAuditLogger("logs/audit.log")
+	if err != nil {
+		slog.Warn("Failed to create audit logger, admin audit trail disabled", "error", err)
+	}
+
+	// Log buffer for admin operations panel — captures slog output in-memory
+	logBuffer := admin.NewLogBuffer(1000)
+	// Wire slog to also write to the buffer
+	baseHandler := slog.Default().Handler()
+	slog.SetDefault(slog.New(admin.NewSlogHandler(baseHandler, logBuffer)))
+
+	adminRouter := admin.NewRouter(gameWorld, auditLogger, logBuffer, database)
+	// Health endpoint is unauthenticated — registered before the auth-wrapped catch-all
+	http.HandleFunc("/admin/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if _, err := w.Write([]byte(`{"status":"ok"}`)); err != nil {
+			slog.Warn("admin health write failed", "error", err)
+		}
+	})
+	http.Handle("/admin/", web.AuthMiddleware(adminRouter))
 
 	// Start zone resets in background (initial + periodic every 60s)
 	go func() {

@@ -422,6 +422,24 @@ func (w *World) GetRoomCount() int {
 	return len(w.rooms)
 }
 
+// GetPlayerCount returns the number of online players.
+func (w *World) GetPlayerCount() int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return len(w.players)
+}
+
+// GetAllPlayers returns all online players.
+func (w *World) GetAllPlayers() []*Player {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	result := make([]*Player, 0, len(w.players))
+	for _, p := range w.players {
+		result = append(result, p)
+	}
+	return result
+}
+
 func (w *World) Rooms() []parser.Room {
 	w.mu.RLock()
 	defer w.mu.RUnlock()

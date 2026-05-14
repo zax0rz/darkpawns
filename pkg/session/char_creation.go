@@ -246,7 +246,7 @@ func (s *Session) completeCharCreation() error {
 	s.charStats = game.CharStats{}
 
 	// Generate JWT token
-	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID)
+	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID, "")
 	if err != nil {
 		slog.Error("failed to generate JWT token", "error", err)
 	}

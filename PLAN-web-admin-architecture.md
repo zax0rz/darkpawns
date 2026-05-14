@@ -1,9 +1,9 @@
 # Dark Pawns: Web Admin & Client Architecture Plan (Revised)
 
-**Status:** Revised against codebase reality (2026-05-13)  
+**Status:** Revised against codebase reality (2026-05-14)  
 **Original:** BRENDA69, Opus-reviewed (2026-04-24)  
 **Revised by:** Daeron  
-**What changed:** Routing, port model, data structures, phase ordering — all updated to match actual codebase state.
+**What changed:** Routing, port model, data structures, phase ordering, JWT role model, World write API gaps, agent integration architecture — all updated to match actual codebase state.
 
 ---
 
@@ -261,18 +261,22 @@ All routes prefixed `/admin/`. Auth required (admin JWT or API key).
 Reuse existing infrastructure:
 
 - `web.AuthMiddleware` validates JWT Bearer tokens — admin routes use the same middleware
-- Add role claim to JWT: `{ player_name, is_agent, role }` where role is `builder`, `admin`, or `research`
+- Add role claim to JWT: `{ player_name, is_agent, agent_key_id, role }` where role is `player`, `builder`, `admin`, or `research`
 - Admin login endpoint: `POST /admin/login` — validates credentials, returns admin-scoped JWT
 - API key fallback: `X-Admin-Key` header for automation (stored in DB, hashed)
 - Rate limit: reuse `pkg/auth/ratelimit.go` IP rate limiter
 - Audit: wire `pkg/audit/logger.go` to log ALL admin mutations
 
+**⚠️ Codebase correction:** The current `auth.Claims` struct is `{ player_name, is_agent, agent_key_id }`. Phase 0 must add a `Role string` field. Existing tokens will have empty role → defaults to `player`. The `RequireRole()` middleware enforces:
+
 ```go
-// Admin role check middleware
+// Admin routes require role >= "builder". Empty role = player = no admin access.
+var roleHierarchy = map[string]int{"player": 0, "research": 1, "builder": 2, "admin": 3}
+
 func RequireRole(role string, next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         claims, ok := auth.GetClaimsFromContext(r.Context())
-        if !ok || !claims.HasRole(role) {
+        if !ok || roleHierarchy[claims.Role] < roleHierarchy[role] {
             http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
             return
         }
@@ -421,9 +425,26 @@ The existing `web/client.js` (Xterm.js + WebSocket) gets embedded as a tab in th
 7. Server status (uptime, memory, connections)
 
 ### Phase 4: Game Editors
-**Time:** 5-7 days  
+**Time:** 5-7 days (revised — write API is new work)  
 **Depends on:** Phase 3  
 **Delivers:** Write world entities from the browser
+
+**⚠️ Codebase correction:** The World struct has limited write methods. The spec assumed existing write APIs — reality says otherwise. Phase 4 includes building the World write surface:
+
+| Existing Write Methods | Missing (must build) |
+|------------------------|---------------------|
+| `SetObjectExtraDesc()` | `SetRoomName()`, `SetRoomDescription()` |
+| `SetObjectExtraFlag()` | `SetRoomFlags()`, `SetExitDoorState()` (exists) |
+| `SetExitDoorState()` | `SetMobShortDesc()`, `SetMobLongDesc()` |
+| | `SetMobStats()` (HP, level, AC, THAC0) |
+| | `SetMobFlags()`, `SetMobAffectFlags()` |
+| | `SetObjShortDesc()`, `SetObjLongDesc()` |
+| | `SetObjValues()` (type-dependent), `SetObjCost()` |
+| | `SetObjWearFlags()`, `SetObjExtraFlags()` |
+| | `SetZoneLifespan()`, `SetZoneResetMode()` |
+| | `AddZoneCommand()`, `RemoveZoneCommand()` |
+
+All writes must hold `World.mu` (write lock). The admin API handlers call these methods. Consider a `world_write.go` file to keep write methods separate from read logic.
 
 1. Room editor (name, description, exits, flags, extra descr)
 2. Mob editor (keywords, descriptions, dice HP, stats, flags, scripts)
@@ -453,10 +474,12 @@ The existing `web/client.js` (Xterm.js + WebSocket) gets embedded as a tab in th
 
 ### Phase 6: AI & Research Panel
 **Time:** 3-5 days  
-**Depends on:** Phase 3 + running AI agents  
+**Depends on:** Phase 3 + AI agents deployed on domain-expansion  
 **Delivers:** Agent observability + research data export
 
-The AI systems are already built (memory, dreaming, agent CLI, dp-agent). This phase surfaces them in the admin UI.
+**⚠️ Dependency note:** The agent CLI (`dp-agent`) and dreaming layer exist in the repo but are not yet running on domain-expansion. Phase 6 can build the UI with mock data and wire to live agents later. The admin API endpoints for agent status should return graceful empty states when agents aren't reporting in.
+
+The AI systems are already built (memory, dreaming, agent CLI, dp-agent). This phase surfaces them in the admin UI. **See Section 6 (Agent Integration Architecture) for how Daeron and Reek wire into the admin panel.**
 
 1. Agent roster (list active agents, model, status, room)
 2. Agent detail (config, current state, combat log)
@@ -480,7 +503,168 @@ The AI systems are already built (memory, dreaming, agent CLI, dp-agent). This p
 
 ---
 
-## 6. Data Model Constraints (from C Source, Unchanged)
+## 6. Agent Integration Architecture (New)
+
+The admin panel isn't just a web UI — it's the operational surface for Daeron and Reek. The agents are API clients: they write to the admin API (findings, status, triage results) and the SPA reads from it. The SPA can also trigger agent work via webhooks.
+
+### The Model
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  ADMIN PANEL (SPA)                   │
+│  Dashboard │ Findings │ Triage │ Ops │ Agent Status  │
+└────────┬──────────────────────────────┬──────────────┘
+         │ reads                        │ triggers
+         ▼                              ▼
+┌──────────────────────┐    ┌─────────────────────────┐
+│    Admin REST API     │    │   Webhook Endpoints      │
+│  /admin/agents/*      │    │  POST /admin/trigger/*   │
+│  /admin/findings/*    │    │                          │
+│  /admin/triage/*      │    │                          │
+└───────┬──────────────┘    └────────┬────────────────┘
+        │ writes                     │ enqueues
+        ▼                            ▼
+┌──────────────────────────────────────────────────────┐
+│              OpenClaw Gateway (mac-mini)              │
+│  Cron │ Standing Orders │ Hooks │ Task Flow │ Tasks   │
+└──────┬──────────────────────────┬────────────────────┘
+       │ executes                 │ executes
+       ▼                          ▼
+┌──────────────┐          ┌──────────────────┐
+│   DAERON     │          │      REEK        │
+│  (MiMo v2.5) │          │  (DeepSeek V4)   │
+│  Loremaster  │          │  Code Crawler    │
+└──────────────┘          └──────────────────┘
+```
+
+### How Daeron Wires In
+
+Daeron is the admin operator. Standing orders in AGENTS.md already define programs (Morning Triage, Weekly Digest, Dependency Audit, Server Monitoring). The admin API gives programmatic access to the game world for these programs.
+
+| Standing Order | Admin API Usage | Automation Mechanism |
+|----------------|-----------------|----------------------|
+| Morning Triage | Read Linear issues → verify against code → write triage comments | Cron (7:30 AM) + Linear MCP |
+| Weekly Digest | Read Reek reports, findings tracker, git log → write digest | Cron (Sunday 6 PM) |
+| Server Monitoring | `GET /admin/server`, `GET /admin/logs` → check health | Heartbeat cycle |
+| Dependency Audit | Read go.mod, check versions → update + verify | Cron (1st Monday) |
+| Research Writing | Read codebase, write to RESEARCH-LOG.md | Cron (biweekly Tuesday) |
+
+**Daeron writes to the admin API:**
+- `POST /admin/agents/daeron/status` — current operation, last run time
+- `POST /admin/findings` — triaged findings (confirmed/rejected/escalated)
+- `POST /admin/triage/summary` — daily triage summary for dashboard
+
+**Daeron reads from the admin API:**
+- `GET /admin/server` — server health for monitoring checks
+- `GET /admin/rooms/:vnum` — verify room state during triage
+- `GET /admin/mobs/:vnum` — verify mob state during triage
+- `GET /admin/logs` — check for errors during monitoring
+
+### How Reek Wires In
+
+Reek is the code crawler, expanded role. Officially on DeepSeek V4 Flash. Reek's primary job is code review, but with admin API access, he can also do server health checks and log analysis.
+
+| Task | Admin API Usage | Automation Mechanism |
+|------|-----------------|----------------------|
+| Nightly Code Crawl | Read source via workspace files | Cron (3 AM) |
+| Log Analysis | `GET /admin/logs` → scan for patterns | Cron (post-crawl) |
+| Server Health Check | `GET /admin/server`, `GET /admin/players` | Cron (post-crawl) |
+| Findings Report | `POST /admin/findings` → write findings to admin API | Cron (post-crawl) |
+
+**Reek writes to the admin API:**
+- `POST /admin/findings` — code review findings (severity, file:line, description)
+- `POST /admin/agents/reek/status` — last crawl time, findings count
+
+**Reek reads from the admin API:**
+- `GET /admin/logs` — server logs for error pattern detection
+- `GET /admin/server` — uptime, memory, connection stats
+
+### Admin API Endpoints for Agents
+
+These endpoints serve both the SPA (reads) and the agents (writes). They're standard REST with JWT auth.
+
+**Agent Self-Reporting:**
+
+| Method | Route | Purpose | Writer |
+|--------|-------|---------|--------|
+| POST | `/admin/agents/:id/status` | Agent reports current status | Daeron/Reek |
+| GET | `/admin/agents/:id/status` | Read agent status | SPA |
+| GET | `/admin/agents` | List all agents + status | SPA |
+
+**Findings Feed:**
+
+| Method | Route | Purpose | Writer |
+|--------|-------|---------|--------|
+| POST | `/admin/findings` | Submit a finding (from Reek or Daeron triage) | Reek/Daeron |
+| GET | `/admin/findings` | List findings (filterable by severity, status, source) | SPA |
+| GET | `/admin/findings/:id` | Finding detail + triage history | SPA |
+| PUT | `/admin/findings/:id` | Update finding status (confirm/reject/escalate) | Daeron |
+
+**Triage Results:**
+
+| Method | Route | Purpose | Writer |
+|--------|-------|---------|--------|
+| POST | `/admin/triage/summary` | Daily triage summary | Daeron |
+| GET | `/admin/triage/summaries` | List triage summaries | SPA |
+
+### Webhook Triggers (SPA → Agents)
+
+The SPA can trigger agent work on-demand via webhook endpoints. These enqueue cron jobs or wake events in the OpenClaw Gateway.
+
+| Method | Route | Purpose | Effect |
+|--------|-------|---------|--------|
+| POST | `/admin/trigger/reek-crawl` | Request on-demand code crawl | Enqueues Reek cron job |
+| POST | `/admin/trigger/triage` | Request on-demand triage | Enqueues Daeron triage |
+| POST | `/admin/trigger/heartbeat` | Request server health check | Enqueues Daeron heartbeat |
+
+**Implementation:** These endpoints call the OpenClaw Gateway API (or write to a webhook URL) to trigger the appropriate cron job or wake event. The SPA shows a "triggered" confirmation; the actual work happens asynchronously.
+
+### Dashboard Layout (Phase 1-2)
+
+The admin dashboard surfaces agent activity at a glance:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  DARK PAWNS — ADMIN DASHBOARD                                │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐   │
+│  │ DAERON      │ │ REEK        │ │ SERVER              │   │
+│  │ 🟢 active   │ │ 🟢 active   │ │ 🟢 running          │   │
+│  │ Last: 2m ago│ │ Last: 4h ago│ │ Uptime: 3d 14h      │   │
+│  │ Triage: 3   │ │ Findings: 12│ │ Memory: 287MB       │   │
+│  │ confirmed   │ │ 8 confirmed │ │ Players: 0          │   │
+│  └─────────────┘ └─────────────┘ └─────────────────────┘   │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ RECENT FINDINGS                                      │   │
+│  │ 🔴 HIGH   DP-12  nil panic in combat.go:342          │   │
+│  │ 🟡 MEDIUM DP-14  unused variable in parser.go:89     │   │
+│  │ 🟢 LOW    DP-15  style: duplicate nosec tag           │   │
+│  │ ✅ CONFIRMED DP-11  dead code in comm_infra.go       │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ QUICK ACTIONS                                        │   │
+│  │ [Trigger Reek Crawl] [Run Triage] [Zone Reset All]  │   │
+│  └──────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow Summary
+
+1. **Reek crawls** (3 AM cron) → writes findings to `POST /admin/findings`
+2. **Daeron triages** (7:30 AM cron) → reads findings, verifies against code, updates status via `PUT /admin/findings/:id`
+3. **SPA displays** findings feed + triage summaries on dashboard
+4. **Architect uses SPA** to review findings, trigger actions, monitor server
+5. **SPA triggers** on-demand work via `POST /admin/trigger/*` → webhook → OpenClaw → agent
+6. **Agents report status** via `POST /admin/agents/:id/status` → SPA shows live agent state
+
+This creates a closed loop: agents do work → admin API surfaces it → SPA displays it → Architect acts on it → SPA triggers more agent work.
+
+---
+
+## 7. Data Model Constraints (from C Source, Unchanged)
 
 These are real and must be respected by the editors:
 
@@ -494,7 +678,7 @@ These are real and must be respected by the editors:
 
 ---
 
-## 7. Security Constraints (Unchanged from Original)
+## 8. Security Constraints (Unchanged from Original)
 
 1. **No CSRF.** `Authorization: Bearer` header preferred over cookies.
 2. **JWT key rotation.** Support current + previous secret env vars.
@@ -507,7 +691,7 @@ These are real and must be respected by the editors:
 
 ---
 
-## 8. Dependencies (Revised)
+## 9. Dependencies (Revised)
 
 ### Already in go.mod (no new deps for backend)
 
@@ -537,7 +721,7 @@ These are real and must be respected by the editors:
 
 ---
 
-## 9. What Changed vs Original Spec
+## 10. What Changed vs Original Spec
 
 | Original Assumption | Reality | Impact |
 |---------------------|---------|--------|
