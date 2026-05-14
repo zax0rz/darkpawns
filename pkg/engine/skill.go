@@ -87,7 +87,6 @@ func (s *Skill) PracticeSkill(charLevel, stat int) bool {
 
 	// Practice points accumulate
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
 	s.Practice += 10 + rand.Intn(20) // 10-30 practice points
 
 	// Check if we can level up
@@ -104,7 +103,6 @@ func (s *Skill) PracticeSkill(charLevel, stat int) bool {
 
 		// Roll for success
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
 		if rand.Intn(100) < successChance {
 			s.Level++
 			s.Practice = 0
@@ -136,11 +134,9 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 		// Small chance to improve on use
 		improveChance := 5 + (s.Level / 10) // 5-15% chance
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
 		if rand.Intn(100) < improveChance {
 			// Gain practice points on successful use
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
 			s.Practice += 5 + rand.Intn(10)
 			improved = true
 		}
@@ -171,13 +167,11 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
 	success := rand.Intn(100) < successChance
 
 	// If successful and we haven't already improved, check for practice
 	if success && !improved && now.Sub(s.LastUsed) > time.Minute {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
 		s.Practice += 2 + rand.Intn(5)
 	}
 
