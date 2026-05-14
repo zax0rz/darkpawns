@@ -145,13 +145,42 @@ func (o *ObjectInstance) IsArmor() bool {
 }
 
 // AddToContainer adds an object to this container.
+// Returns false if the object is itself an ancestor of this container
+// (cycle prevention) or if this object is not a container.
 func (o *ObjectInstance) AddToContainer(obj *ObjectInstance) bool {
 	if !o.IsContainer() {
 		return false
 	}
 
+	// Cycle prevention: walk obj's container chain. If this container
+	// is found inside obj, adding would create a cycle.
+	if o.isAncestorOf(obj) {
+		return false
+	}
+
 	o.Contains = append(o.Contains, obj)
 	return true
+}
+
+// isAncestorOf returns true if 'ancestor' is contained anywhere in o's
+// containment tree (recursive, max depth 10).
+func (o *ObjectInstance) isAncestorOf(ancestor *ObjectInstance) bool {
+	return o.isAncestorOfDepth(ancestor, 0)
+}
+
+func (o *ObjectInstance) isAncestorOfDepth(ancestor *ObjectInstance, depth int) bool {
+	if depth > 10 {
+		return false
+	}
+	for _, item := range o.Contains {
+		if item == ancestor {
+			return true
+		}
+		if item.isAncestorOfDepth(ancestor, depth+1) {
+			return true
+		}
+	}
+	return false
 }
 
 // RemoveFromContainer removes an object from this container.
