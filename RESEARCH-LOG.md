@@ -555,3 +555,10 @@ Rewrote PLAN-web-admin-architecture.md against codebase reality. Original spec (
 ### Paper-relevant
 - The port completion is a milestone for the AIIDE paper. The full C→Go port (73,000 lines C → 84,500 lines Go) is now done. The methodology chapter can reference the complete port as the substrate for the AI agent experiment.
 - The admin panel spec revision is evidence of "spec drift" — planning documents written against hypotheticals diverge from reality over time. This is a general finding for software engineering with AI assistance: specs need periodic reality-checking against the actual codebase.
+## 2026-05-14 — Session 35
+
+Linear.app adopted as primary issue tracker. 78 issues imported covering Reek findings, admin panel roadmap, modernization, hardening, and research. Workflow shift: Linear is source of truth, markdown tracker retired. First triage will use Linear query → verify → comment → Discord summary with DP issue IDs.
+
+Tick interval bug fixed (HIGH-020): affect durations were ticking 60x too fast. One-liner fix but real gameplay impact — poisons, haste, charm all vanishing instantly.
+
+---
