@@ -15,6 +15,9 @@ import (
 //
 // Note: lower AC is better in DikuMUD/AD&D (negative values = better).
 func CalculateAC(p *game.Player) int {
+	p.RLock()
+	defer p.RUnlock()
+
 	baseAC := p.AC
 
 	// Equipment AC bonus — armor items have AC in Values[0]
