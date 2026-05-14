@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 const (
@@ -663,107 +662,6 @@ func LoadSaveData(name string) (savePlayerData, error) {
 	}
 	return data, nil
 }
-
-// CrashLoad loads a player's saved items and handles rent cost deduction.
-// Ported from C Crash_load() — returns:
-//   0: successful load (rented/cryo), keep in rent room
-//   1: crash load or failure, put in temple
-//   2: rented equipment lost (no gold)
-//
-// getProto is a callback to look up object prototypes by vnum.
-func CrashLoad(p *Player, getProto func(vnum int) (*parser.Obj, bool)) int {
-	if p == nil {
-		return 1
-	}
-
-	data, err := LoadSaveData(p.GetName())
-	if err != nil {
-		slog.Debug("CrashLoad: no save file", "name", p.GetName())
-		p.SendMessage("No saved equipment found.\r\n")
-		return 1
-	}
-
-	origRentCode := data.RentCode
-
-	// Handle rent cost deduction for rented/timedout saves.
-	if data.RentCode == RentRented || data.RentCode == RentTimedOut {
-		numDays := float64(time.Now().Unix()-data.RentTime) / 86400.0
-		cost := int(float64(data.NetCostPerDiem) * numDays)
-		if cost > p.Gold+p.BankGold {
-			slog.Info("Player rented equipment lost (no $)", "name", p.GetName())
-			// Overwrite with crash save (C: Crash_crashsave)
-			if err := SavePlayerWithRent(p, RentCrash, 0); err != nil {
-				slog.Error("SavePlayerWithRent failed in rent cost check", "player", p.GetName(), "error", err)
-			}
-			return 2
-		}
-		// Deduct cost from bank first, then gold.
-		p.BankGold -= max(cost-p.Gold, 0)
-		p.Gold = max(p.Gold-cost, 0)
-		if err := SavePlayer(p); err != nil {
-			slog.Error("SavePlayer failed in rent unrent", "player", p.GetName(), "error", err)
-		}
-	}
-
-	// Log entry.
-	switch origRentCode {
-	case RentRented:
-		slog.Info("Player un-renting", "name", p.GetName())
-	case RentCrash:
-		slog.Info("Player retrieving crash-saved items", "name", p.GetName())
-	case RentCryo:
-		slog.Info("Player un-cryo'ing", "name", p.GetName())
-	case RentForced, RentTimedOut:
-		slog.Info("Player retrieving force-saved items", "name", p.GetName())
-	default:
-		slog.Warn("Player entering with undefined rent code", "name", p.GetName(), "code", origRentCode)
-	}
-
-	// Restore inventory items with AutoEquip.
-	for _, item := range data.Inventory {
-		proto, ok := getProto(item.VNum)
-		if !ok {
-			slog.Warn("CrashLoad: missing inv proto", "vnum", item.VNum)
-			continue
-		}
-		obj := NewObjectInstance(proto, -1)
-		if item.State != nil {
-			for k, v := range item.State {
-				obj.CustomData[k] = v
-			}
-			obj.MigrateCustomData()
-		}
-		AutoEquip(p, obj, item.Locate)
-	}
-
-	// Restore equipment items with AutoEquip.
-	for _, item := range data.Equipment {
-		proto, ok := getProto(item.VNum)
-		if !ok {
-			slog.Warn("CrashLoad: missing eq proto", "vnum", item.VNum)
-			continue
-		}
-		obj := NewObjectInstance(proto, -1)
-		if item.State != nil {
-			for k, v := range item.State {
-				obj.CustomData[k] = v
-			}
-			obj.MigrateCustomData()
-		}
-		AutoEquip(p, obj, item.Locate)
-	}
-
-	// Convert to crash save (rent.rentcode = RENT_CRASH, rewrite control block).
-	if err := SavePlayerWithRent(p, RentCrash, 0); err != nil {
-		slog.Error("SavePlayerWithRent failed in crash save conversion", "player", p.GetName(), "error", err)
-	}
-
-	if origRentCode == RentRented || origRentCode == RentCryo {
-		return 0
-	}
-	return 1
-}
-
 // sanitizeName ensures the player name is safe for use as a filename.
 func sanitizeName(name string) string {
 	safe := make([]byte, 0, len(name))
