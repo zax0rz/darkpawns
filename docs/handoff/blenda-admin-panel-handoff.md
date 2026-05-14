@@ -49,63 +49,114 @@ The Dark Pawns admin panel is a React SPA served from the Go binary on port 4350
 
 ---
 
-## What's NOT Built (Agent Integration Gap)
+## Agent Integration — The Closed Loop (Section 6 of Admin Spec)
 
-The admin API has endpoints for agents to self-report, and the SPA displays agent data. But the agents don't actually call the API yet. The data in the agent store is seeded with static entries and resets on restart.
-
-### The Closed Loop (from spec — not yet closed)
+The admin API is bidirectional. Agents write to it (status, findings, triage), the SPA reads from it, and the SPA can trigger agent work via webhooks. This is the core architecture from Section 6 — the loop isn't fully closed yet.
 
 ```
-Agents do work → POST status/findings to admin API → SPA displays → Architect acts → SPA triggers more agent work
+┌─────────────────────────────────────────────────────┐
+│                  ADMIN PANEL (SPA)                   │
+│  Dashboard │ Findings │ Triage │ Ops │ Agent Status  │
+└────┬──────────────────────────────┬─────────────────┘
+     │ reads                        │ triggers
+     ▼                              ▼
+┌──────────────────┐    ┌─────────────────────────┐
+│  Admin REST API  │    │   Webhook Endpoints      │
+│ /admin/agents/*  │    │  POST /admin/trigger/*   │
+│ /admin/findings/*│    │                          │
+│ /admin/triage/*  │    │                          │
+└──────┬───────────┘    └────────┬────────────────┘
+       │ writes                  │ enqueues
+       ▼                         ▼
+┌──────────────────────────────────────────────────┐
+│          OpenClaw Gateway (mac-mini)              │
+│  Cron │ Standing Orders │ Hooks │ Task Flow       │
+└──────┬─────────────────────────┬─────────────────┘
+       │ executes                │ executes
+       ▼                         ▼
+┌──────────────┐         ┌──────────────────┐
+│   DAERON     │         │      REEK        │
+│  (MiMo v2.5) │         │  (DeepSeek V4)   │
+│  Loremaster  │         │  Code Crawler    │
+└──────────────┘         └──────────────────┘
 ```
 
-### What Exists
+### What's Built (Backend)
 
-**Backend endpoints (all working):**
-- `POST /admin/agents/status` — agent self-reports status
-- `GET /admin/agents` — list all agents
-- `POST /admin/findings` — submit a finding
-- `GET /admin/findings` — list findings (filterable by status/severity/source)
-- `PUT /admin/findings/:id` — update finding status (confirm/reject/fix)
-- `POST /admin/triage/summaries` — submit triage summary
-- `GET /admin/triage/summaries` — list triage summaries
+| Endpoint | Method | Purpose | Status |
+|----------|--------|---------|--------|
+| `/admin/agents` | GET | List all agents + status | ✅ Working |
+| `/admin/agents/status` | POST | Agent self-reports status | ✅ Working |
+| `/admin/findings` | GET | List findings (filterable) | ✅ Working |
+| `/admin/findings` | POST | Submit a finding | ✅ Working |
+| `/admin/findings/:id` | GET | Finding detail | ✅ Working |
+| `/admin/findings/:id` | PUT | Update status (confirm/reject) | ✅ Working |
+| `/admin/triage/summaries` | GET | List triage summaries | ✅ Working |
+| `/admin/triage/summaries` | POST | Submit triage summary | ✅ Working |
 
-**Frontend (all working):**
-- AgentsPage: agent cards with status dots, findings feed with 3 filter dropdowns, triage summary list
-- Dashboard: agent status card (30s refresh), recent findings card, stats pills
+### What's Built (Frontend)
 
-### What's Missing
+- **AgentsPage:** Agent cards with status dots (green/active, yellow/other, red/error), findings feed with 3 filter dropdowns (source, severity, status), triage summary list
+- **Dashboard:** Agent status card (30s auto-refresh), recent findings card with severity badges, stats pills (total/open/confirmed/fixed/critical)
 
-1. **Agents don't self-report.** Daeron and Reek need to call `POST /admin/agents/status` after each run. Currently they write to Linear/Discord but not the admin API.
+### What's NOT Built
 
-2. **Reek doesn't write findings to the API.** His crawl results go to Discord. They should also go to `POST /admin/findings`.
+**1. Agents don't self-report to the admin API.**
+- Daeron writes triage results to Linear comments, not `POST /admin/findings`
+- Reek writes findings to Discord, not `POST /admin/findings`
+- Neither calls `POST /admin/agents/:id/status` after runs
+- The agent store has seeded static entries that reset on restart
 
-3. **Daeron doesn't write triage summaries to the API.** Triage goes to Linear comments. Should also go to `POST /admin/triage/summaries`.
+**2. AgentStore is in-memory only.**
+- All findings, triage summaries, and agent statuses lost on server restart
+- Needs persistence: JSON file, SQLite, or PostgreSQL
 
-4. **AgentStore is in-memory.** All data lost on restart. Needs persistence (JSON file, SQLite, or PostgreSQL).
+**3. Webhook triggers not implemented.**
+- `POST /admin/trigger/reek-crawl` — SPA button to kick off Reek
+- `POST /admin/trigger/triage` — SPA button to kick off Daeron triage
+- `POST /admin/trigger/heartbeat` — SPA button to trigger server health check
+- These need to call the OpenClaw Gateway API to enqueue work
 
-5. **No per-agent detail view.** GET /admin/agents/:id isn't routed. Can't see agent config, memory, or run history.
+**4. No per-agent detail view.**
+- `GET /admin/agents/:id` not routed — can't see agent config, memory, or run history
 
-6. **No trigger endpoints.** POST /admin/trigger/* (reek-crawl, triage, heartbeat) not implemented. These would call OpenClaw Gateway to enqueue agent work.
+### How to Wire the Self-Reporting
 
-7. **No agent config editing.** PUT /admin/agents/:id/config not implemented.
+The agents need to POST to the admin API after each run. Two approaches:
 
-### How to Wire It
+**Option A: Agents call the API directly (simpler)**
+- Add standing order instructions to Daeron's AGENTS.md: after triage, POST findings + status to admin API
+- Add instructions to Reek's cron job: after crawl, POST findings + status to admin API
+- Agents need HTTP access to localhost:4350 (same machine or network)
+- Example: `curl -X POST http://localhost:4350/admin/agents/daeron/status -H 'Authorization: Bearer $TOKEN' -H 'Content-Type: application/json' -d '{"status":"active","model":"mimo-v2.5-base"}'`
 
-**Option A: Agents call the API directly**
-- Modify Daeron's AGENTS.md standing orders to include `curl POST /admin/agents/status` after each run
-- Modify Reek's cron job to POST findings to the admin API after crawling
-- Requires: agents need HTTP access to localhost:4350
+**Option B: OpenClaw Gateway integration (more robust)**
+- Standing orders in AGENTS.md already define the programs — agents just need to also write to the admin API
+- Cron jobs already exist for Reek (3 AM) and Daeron (7:30 AM) — add API calls to their execution flow
+- The Gateway's cron system persists jobs at `~/.openclaw/cron/jobs.json` — agent runs are already tracked as background tasks
 
-**Option B: OpenClaw webhook integration**
-- Create webhook endpoints (POST /admin/trigger/*) that call OpenClaw Gateway API
-- SPA triggers agent work via buttons → webhook → cron/wake → agent runs → agent self-reports back
-- Requires: OpenClaw Gateway API URL + auth token
+### How to Wire the Webhook Triggers
 
-**Option C: Hybrid (recommended)**
-- Agents self-report via Option A (direct POST after each run)
-- SPA triggers via Option B (webhook endpoints for on-demand work)
-- Persistence via JSON file or SQLite (AgentStore writes to disk)
+The SPA needs to trigger agent work on-demand. The OpenClaw Gateway has an API that supports this:
+
+**Implementation path:**
+1. Admin backend needs the OpenClaw Gateway URL + auth token (env var: `OPENCLAW_GATEWAY_URL`, `OPENCLAW_GATEWAY_TOKEN`)
+2. `POST /admin/trigger/reek-crawl` → calls Gateway API to enqueue a one-shot cron job for Reek
+3. `POST /admin/trigger/triage` → calls Gateway API to wake Daeron's session with a triage prompt
+4. `POST /admin/trigger/heartbeat` → calls Gateway API to trigger Daeron heartbeat
+
+**OpenClaw cron API reference:**
+- `openclaw cron add --name "trigger" --at now --session <session> --system-event "<prompt>" --delete-after-run`
+- Or use the Gateway HTTP API directly (see https://docs.openclaw.ai/automation/cron-jobs)
+
+### Recommended Wiring Order
+
+1. **Persistence first** — AgentStore → JSON file or SQLite (data survives restart)
+2. **Self-reporting** — Add curl/HTTP calls to Daeron + Reek standing orders
+3. **Findings pipeline** — Reek writes to `POST /admin/findings` instead of Discord
+4. **Triage pipeline** — Daeron writes to `POST /admin/triage/summaries` after Linear triage
+5. **Webhook triggers** — SPA buttons → admin API → OpenClaw Gateway → agent wakes
+6. **Agent detail view** — `GET /admin/agents/:id` with config, memory, run history
 
 ---
 
