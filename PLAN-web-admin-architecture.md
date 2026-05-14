@@ -1,13 +1,52 @@
 # Dark Pawns: Web Admin & Client Architecture Plan (Revised)
 
-**Status:** Revised against codebase reality (2026-05-14)  
+**Status:** Phases 0-7 COMPLETE (2026-05-14)  
 **Original:** BRENDA69, Opus-reviewed (2026-04-24)  
 **Revised by:** Daeron  
 **What changed:** Routing, port model, data structures, phase ordering, JWT role model, World write API gaps, agent integration architecture — all updated to match actual codebase state.
 
 ---
 
-## 1. What Actually Exists (as of 2026-05-13)
+## 0. Implementation Status (2026-05-14)
+
+All 7 phases are complete. The admin panel is live on port 4350 at `/admin/`.
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 0: Admin API Foundation | ✅ Complete | `pkg/admin/` router, JWT roles, login, CORS, rate limiting, audit |
+| Phase 1: React SPA Scaffold | ✅ Complete | Vite + React + TypeScript + Tailwind v4, auth, routing |
+| Phase 2: Web Terminal Tab | ✅ Complete | Xterm.js embedded, WebSocket, status bar |
+| Phase 3: Read-Only Viewers | ✅ Complete | Zones, mobs, objects, rooms, shops, players, server status |
+| Phase 4: Game Editors | ✅ Complete | 28 world write methods, PUT handlers for rooms/mobs/objects/shops/zones |
+| Phase 5: Operations Panel | ✅ Complete | Player detail, metrics, save-world, reset-all-zones, log viewer |
+| Phase 6: AI & Research Panel | ✅ Complete | Agent cards, findings feed, triage summaries, dashboard integration |
+| Phase 7: Polish | ✅ Complete | Login flow, error states, responsive layout verified |
+
+### Scope Decisions
+
+Some endpoints from the original spec were deferred as not needed for initial launch:
+
+| Endpoint | Status | Rationale |
+|----------|--------|-----------|
+| `POST /admin/restart` | Deferred | Server restart via systemd is sufficient |
+| `POST /admin/bans`, `DELETE /admin/bans/:id` | Deferred | Moderation system exists in-game; web bans future work |
+| `POST /admin/trigger/*` | Deferred | Agent triggering via OpenClaw cron is sufficient |
+| `GET /admin/agents/:id/memory` | Deferred | Agent memory is internal; future narrative viewer |
+| `GET /admin/narrative` | Deferred | Cross-agent event feed — future enhancement |
+| `GET /admin/research/export` | Deferred | Research export via RESEARCH-LOG.md for now |
+| Lua script editor (Monaco) | Deferred | In-game OLC is sufficient for now |
+| AG Grid inline editing | Deferred | Standard edit pages work fine |
+| Zone graph (React Flow) | Deferred | Future visualization enhancement |
+
+### What's Built
+
+**Backend (pkg/admin/):** router.go, handlers.go, login.go, log_buffer.go, agent_store.go  
+**Frontend (admin-ui/):** 17 pages, 8 components, API client with 25+ endpoints  
+**World writes (pkg/game/world_write.go):** 28 methods for rooms, mobs, objects, shops, zones
+
+---
+
+## 1. What Actually Exists (as of 2026-05-14)
 
 ### Server Binary (`cmd/server/main.go`)
 
@@ -688,6 +727,27 @@ These are real and must be respected by the editors:
 6. **IP allowlisting.** Configurable whitelist for admin endpoints.
 7. **CORS locked.** Admin SPA origin only. No wildcards.
 8. **TLS at reverse proxy.** Caddy terminates TLS, Go server runs plaintext internally.
+
+
+### JWT Storage Threat Model (DP-99)
+
+The admin SPA stores JWTs in `localStorage` (see `admin-ui/src/api/client.ts:4` and `admin-ui/src/hooks/useAuth.ts:11`). This is a standard SPA security tradeoff.
+
+**Threat:** If an XSS vulnerability exists in the SPA, an attacker can read `localStorage` and exfiltrate the JWT. The token grants full admin API access until expiry.
+
+**Mitigations in place:**
+- React does not use `dangerouslySetInnerHTML` — XSS surface is minimal
+- CSP headers on server-served content (not the SPA, which is a separate build)
+- CORS locked to admin SPA origin — no cross-origin API requests
+- Rate limiting on auth endpoints
+- Audit logging on all mutations
+- Short-lived tokens (configurable expiry)
+
+**Risk assessment:** LOW. The admin panel is an internal tool on a private network. The XSS surface is small (no innerHTML, no user-rendered HTML). The JWT approach is consistent with industry-standard SPA patterns (used by most admin panels).
+
+**Future consideration:** If the panel is ever exposed publicly, migrate to httpOnly cookie-based sessions. This eliminates XSS exfiltration of tokens but adds CSRF complexity. For an internal tool on a private network, localStorage is the simpler choice.
+
+**Decision:** Accept localStorage JWT storage. Document the tradeoff. Revisit if deployment posture changes.
 
 ---
 
