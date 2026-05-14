@@ -19,7 +19,7 @@ type TickManager struct {
 func NewTickManager(affectManager *AffectManager) *TickManager {
 	return &TickManager{
 		affectManager: affectManager,
-		tickInterval:  time.Second, // Default: 1 tick per second
+		tickInterval:  60 * time.Second, // Default: 1 tick per MUD hour (60s)
 		done:          make(chan struct{}),
 		running:       false,
 	}
