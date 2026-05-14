@@ -513,3 +513,45 @@ Evening session. Finished the remaining workpackages from the port-completion-wo
 ### Paper-relevant
 - The tattoo constant drift is evidence that port fidelity degrades silently over time. Without periodic cross-reference against the C source, wrong constants accumulate. This argues for automated fidelity checking as part of the CI pipeline.
 - The ScriptableWorld bridge pattern (interface defined → stubs created → implementations wired) is a clean example of incremental system completion that could be documented as a methodology.
+
+---
+
+## 2026-05-13 [SESSION] — WP5c Complete + Admin Panel Spec Revision
+
+### WP5c: Lua item_check — Port Complete
+
+Final work package implemented. The `item_check()` Lua function now queries the shop system instead of always returning false.
+
+**Implementation:**
+- `ScriptableWorld.ShopBuysType(mobVNum, itemType)` — new interface method
+- `World.ShopBuysType()` — looks up shop by keeper VNum, calls `WillBuyType()`
+- `luaItemCheck` rewritten from stub to real implementation (scripts.c:717-753)
+- 3 test cases passing: weapon match, staff no-match, no-shop mob
+
+**Port status: COMPLETE.** 84,500+ lines Go, 321 files, 17 test packages green. 113 spells, zero stubs. All WP1-WP6 done.
+
+### Admin Panel Spec Revision
+
+Rewrote PLAN-web-admin-architecture.md against codebase reality. Original spec (BRENDA/Opus, 2026-04-24) was written against hypotheticals that don't match the actual server.
+
+**Key corrections:**
+- Single binary, single port (4350), `/admin/` prefix — not separate 8080/8081
+- `net/http` + `ServeMux` routing — not gorilla/mux or chi
+- `sync.RWMutex` on World — not SnapshotManager/atomic.Pointer
+- Existing middleware wired (auth, CORS, security, audit, rate limiter) — not built from scratch
+- AI systems already built — Phase 6 surfaces existing data, doesn't build infrastructure
+- Zero new Go dependencies for backend
+
+**New phase ordering:**
+0. Admin API Foundation (pkg/admin/ router, role JWT, first endpoint)
+1. React SPA Scaffold
+2. Web Terminal Tab
+3. Read-Only Viewers
+4. Game Editors (biggest phase)
+5. Operations Panel
+6. AI & Research Panel
+7. Polish
+
+### Paper-relevant
+- The port completion is a milestone for the AIIDE paper. The full C→Go port (73,000 lines C → 84,500 lines Go) is now done. The methodology chapter can reference the complete port as the substrate for the AI agent experiment.
+- The admin panel spec revision is evidence of "spec drift" — planning documents written against hypotheticals diverge from reality over time. This is a general finding for software engineering with AI assistance: specs need periodic reality-checking against the actual codebase.
