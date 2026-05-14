@@ -258,9 +258,7 @@ func TestPerformMove_Sneak(t *testing.T) {
 	// (only the player's own movement messages are sent, not room broadcasts)
 	for _, msg := range messages {
 		if len(msg) > 0 && (contains(msg, "leaves") || contains(msg, "arrives")) {
-			// These are room broadcasts — shouldn't happen when sneaking
-			// Note: the player might see their own movement, but room messages
-			// to others should be suppressed
+			t.Errorf("sneaking produced room broadcast: %q", msg)
 		}
 	}
 }

@@ -134,7 +134,9 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 				ch.SendMessage("Your tattoo fizzles...\r\n")
 				break
 			}
-			w.SetFollower(mob.GetName(), ch.GetName(), true)
+			if err := w.SetFollower(mob.GetName(), ch.GetName(), true); err != nil {
+				slog.Error("SetFollower failed for tattoo skull", "mob", mob.GetName(), "leader", ch.GetName(), "error", err)
+			}
 			// Apply charm affect (duration 20)
 			mob.AddAffect(&engine.Affect{
 				Type:      engine.AffectType(spells.SpellCharm),
