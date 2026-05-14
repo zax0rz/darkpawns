@@ -555,6 +555,18 @@ Rewrote PLAN-web-admin-architecture.md against codebase reality. Original spec (
 ### Paper-relevant
 - The port completion is a milestone for the AIIDE paper. The full C→Go port (73,000 lines C → 84,500 lines Go) is now done. The methodology chapter can reference the complete port as the substrate for the AI agent experiment.
 - The admin panel spec revision is evidence of "spec drift" — planning documents written against hypotheticals diverge from reality over time. This is a general finding for software engineering with AI assistance: specs need periodic reality-checking against the actual codebase.
+## 2026-05-14 — Research Writing: Coordination Surface Draft
+
+**Cron-triggered.** Wrote ~950 words on multi-agent coordination methodology. New draft: `docs/research/drafts/2026-05-14-coordination-surface.md`.
+
+**Topic:** Why a markdown file with four fields (ID, status, agent, notes) held together 61 commits from four agents. The findings tracker as coordination surface — minimal, async, stale-tolerant. The subagent tool availability bottleneck as evidence that throughput is bounded by plumbing, not reasoning. Four empirical observations backed by real data.
+
+**Complements:** Silent Drift draft (what agents find) vs. Coordination Surface (how agents coordinate). Two sides of the same contribution.
+
+**Paper relevance:** The multi-agent SWE literature is architectures-heavy, "what actually happened" light. We have the running data. 201 findings, 4.3% FPR, one week of multi-agent operation quantified.
+
+---
+
 ## 2026-05-14 — Session 35
 
 Linear.app adopted as primary issue tracker. 78 issues imported covering Reek findings, admin panel roadmap, modernization, hardening, and research. Workflow shift: Linear is source of truth, markdown tracker retired. First triage will use Linear query → verify → comment → Discord summary with DP issue IDs.
@@ -573,3 +585,15 @@ Subagent tools (sessions_spawn, sessions_yield, subagents) added to Daeron's too
 - **Subagent orchestration pattern:** Daeron attempted to dispatch 3 parallel subagents for the cleanup work but lacked the tools. This is a data point for the agent collaboration methodology section: tool availability directly impacts agent productivity. The difference between "sequential single-agent" and "parallel multi-agent" is the difference between doing 14 issues one-at-a-time vs. dispatching 3 bounded workers.
 - **Board cleanup as methodology:** The pattern of "triage → verify → fix/reject → document" is now well-established. 79 issues processed through this pipeline. The false positive rate (Reek flagged things that were already fixed or never existed) is a measurable metric for the paper.
 - **Spec drift confirmed again:** DP-59 (object ownership interface{}) was already completed by the time we triaged it. The issue existed in Linear but the work was done. This is the second instance of spec drift (after the admin panel architecture). Finding: issue trackers can accumulate stale issues when work happens faster than tracking.
+
+## [SESSION 39] 2026-05-14 evening — DP-1 fixed + Phase 4 complete
+
+### What happened
+- Reek's CRIT-011 (ActiveAffects data race) audited and fixed. Actual bug count: 2 (not 8+ as reported). False positive rate for Reek's severity/cOUNT: high.
+- Admin panel branch merged (was sitting unmerged for days).
+- Phase 4 game editors completed: 28 world write methods, 5 React editor pages, shop API, zone reset/update API.
+
+### Paper-relevant
+- **Reek accuracy audit:** Reek flagged "3 inconsistent locking regimes across 8+ files." Actual: 2 bugs in 2 files. This is a concrete data point for "AI code review false positive rate" — the analysis was directionally correct (real race conditions exist) but overcounted affected files. Useful for the methodology section on triage fidelity.
+- **Subagent parallelism:** Two subagents dispatched in parallel (world write methods + React editors). Both completed successfully in ~2 minutes each. This validates the orchestration pattern: dispatch bounded workers for repetitive, well-specified tasks.
+- **Admin panel as contribution:** The admin panel went from "18 QA bugs fixed" (session 38) to "Phase 4 fully wired" (session 39) in one evening. Total: ~15K lines of admin tooling. This is a concrete artifact for the paper — a web admin panel for a MUD, built entirely by AI agents with human oversight.
