@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
+import { useToast } from '../components/Toast';
+import { PlayerDetailModal } from '../components/PlayerDetailModal';
+import { MetricsCard } from '../components/MetricsCard';
 
 export function OperationsPage() {
   const [logLines, setLogLines] = useState(50);
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   const {
     data: server,
@@ -31,6 +37,39 @@ export function OperationsPage() {
     queryFn: () => api.logs(logLines),
     refetchInterval: 10000,
   });
+
+  const saveWorldMutation = useMutation({
+    mutationFn: () => api.saveWorld(),
+    onSuccess: (data) => {
+      showToast(`World state saved: ${data.status}`, 'success');
+    },
+    onError: (err: Error) => {
+      showToast(`Save failed: ${err.message}`, 'error');
+    },
+  });
+
+  const resetZonesMutation = useMutation({
+    mutationFn: () => api.resetAllZones(),
+    onSuccess: (data) => {
+      showToast(`Zone reset triggered: ${data.count} zones`, 'success');
+      queryClient.invalidateQueries({ queryKey: ['server'] });
+    },
+    onError: (err: Error) => {
+      showToast(`Zone reset failed: ${err.message}`, 'error');
+    },
+  });
+
+  const handleSaveWorld = () => {
+    if (window.confirm('Save the entire world state? This may take a moment.')) {
+      saveWorldMutation.mutate();
+    }
+  };
+
+  const handleResetZones = () => {
+    if (window.confirm('Reset all zones? This will respawn all mobs and objects.')) {
+      resetZonesMutation.mutate();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -79,20 +118,24 @@ export function OperationsPage() {
           ) : (
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {players.map((p) => (
-                <div
+                <button
                   key={p.name}
-                  className="flex justify-between text-sm py-1 border-b border-slate-700/50 last:border-0"
+                  onClick={() => setSelectedPlayer(p.name)}
+                  className="w-full flex justify-between text-sm py-1 border-b border-slate-700/50 last:border-0 hover:bg-slate-700/50 transition-colors rounded px-1 text-left"
                 >
-                  <span className="text-white">{p.name}</span>
+                  <span className="text-amber-400 hover:text-amber-300">{p.name}</span>
                   <span className="text-slate-400">
                     Lv.{p.level} · Room {p.room}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Server Metrics */}
+      <MetricsCard />
 
       {/* Server Log */}
       <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
@@ -141,21 +184,29 @@ export function OperationsPage() {
         <h2 className="text-sm font-medium text-slate-300 mb-3">Quick Actions</h2>
         <div className="flex gap-3">
           <button
-            disabled
-            title="Zone reset trigger is not yet wired"
-            className="bg-slate-700 text-slate-500 text-sm rounded px-4 py-2 border border-slate-600 cursor-not-allowed"
+            onClick={handleResetZones}
+            disabled={resetZonesMutation.isPending}
+            className="bg-amber-700 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm rounded px-4 py-2 border border-amber-600 disabled:border-slate-600 transition-colors"
           >
-            Zone Reset All
+            {resetZonesMutation.isPending ? 'Resetting...' : 'Zone Reset All'}
           </button>
           <button
-            disabled
-            title="Not yet implemented"
-            className="bg-slate-700 text-slate-500 text-sm rounded px-4 py-2 border border-slate-600 cursor-not-allowed"
+            onClick={handleSaveWorld}
+            disabled={saveWorldMutation.isPending}
+            className="bg-blue-700 hover:bg-blue-600 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm rounded px-4 py-2 border border-blue-600 disabled:border-slate-600 transition-colors"
           >
-            Save World State
+            {saveWorldMutation.isPending ? 'Saving...' : 'Save World State'}
           </button>
         </div>
       </div>
+
+      {/* Player Detail Modal */}
+      {selectedPlayer && (
+        <PlayerDetailModal
+          playerName={selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </div>
   );
 }

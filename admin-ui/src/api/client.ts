@@ -128,6 +128,57 @@ export interface PlayerInfo {
   room: number;
 }
 
+export interface PlayerItem {
+  vnum: number;
+  name: string;
+  short_desc: string;
+  type: number;
+  wear_location: string;
+}
+
+export interface PlayerDetail {
+  name: string;
+  level: number;
+  class: number;
+  race: number;
+  sex: number;
+  health: number;
+  max_health: number;
+  mana: number;
+  max_mana: number;
+  move: number;
+  max_move: number;
+  alignment: number;
+  gold: number;
+  bank_gold: number;
+  exp: number;
+  room: number;
+  ac: number;
+  thac0: number;
+  hitroll: number;
+  damroll: number;
+  stats: Record<string, number>;
+  affects: number;
+  connected_at: string;
+  last_active: string;
+  inventory: PlayerItem[];
+  equipment: PlayerItem[];
+}
+
+export interface ServerMetrics {
+  memory_alloc: number;
+  memory_sys: number;
+  memory_heap: number;
+  goroutines: number;
+  gc_cycles: number;
+  last_gc: string;
+  pause_total_ns: number;
+  uptime: string;
+  player_count: number;
+  room_count: number;
+  zone_count: number;
+}
+
 export interface Shop {
   keeper_vnum: number;
   keeper_name?: string;
@@ -185,4 +236,12 @@ export const api = {
   // Zone reset
   resetZone: (zoneNumber: number) =>
     request<void>(`/zones/${zoneNumber}/reset`, { method: 'POST' }),
+
+  // Phase 5 — Operations
+  playerDetail: (name: string) => request<PlayerDetail>(`/players/${encodeURIComponent(name)}`),
+  savePlayer: (name: string) => request<{ status: string }>(`/players/${encodeURIComponent(name)}/save`, { method: 'POST' }),
+  kickPlayer: (name: string) => request<{ status: string }>(`/players/${encodeURIComponent(name)}/kick`, { method: 'POST' }),
+  metrics: () => request<ServerMetrics>('/metrics'),
+  saveWorld: () => request<{ status: string }>('/save-world', { method: 'POST' }),
+  resetAllZones: () => request<{ status: string; count: number }>('/reset-all-zones', { method: 'POST' }),
 };

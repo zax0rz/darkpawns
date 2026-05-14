@@ -45,6 +45,8 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Online players — requires builder role
 	mux.HandleFunc("/admin/players", wrap(corsMiddleware(requireRole("builder", handlePlayers(world)))))
+	// Player detail — requires builder role for GET, admin for POST
+	mux.HandleFunc("/admin/players/", wrap(corsMiddleware(requireRole("builder", handlePlayerDetail(world, auditLogger)))))
 
 	// Mobs — read/write, requires builder role
 	mux.HandleFunc("/admin/mobs", wrap(corsMiddleware(requireRole("builder", handleMobs(world)))))
@@ -60,6 +62,15 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Rooms — read/write, requires builder role
 	mux.HandleFunc("/admin/rooms/", wrap(corsMiddleware(requireRole("builder", handleRoomByVnum(world, auditLogger)))))
+
+	// Server metrics — requires builder role
+	mux.HandleFunc("/admin/metrics", wrap(corsMiddleware(requireRole("builder", handleMetrics(world)))))
+
+	// Save world — requires admin role
+	mux.HandleFunc("/admin/save-world", wrap(corsMiddleware(requireRole("admin", handleSaveWorld(world, auditLogger)))))
+
+	// Reset all zones — requires admin role
+	mux.HandleFunc("/admin/reset-all-zones", wrap(corsMiddleware(requireRole("admin", handleResetAllZones(world, auditLogger)))))
 
 	// Agent status, findings, and triage — requires builder role
 	agentStore := NewAgentStore()

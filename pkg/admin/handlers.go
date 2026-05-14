@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -1130,6 +1131,348 @@ func handlePlayers(world *game.World) http.HandlerFunc {
 		if err := json.NewEncoder(w).Encode(result); err != nil {
 			slog.Warn("admin players encode failed", "error", err)
 		}
+	}
+}
+
+// playerItemResponse is the JSON shape for a single item in a player's inventory or equipment.
+type playerItemResponse struct {
+	VNum      int    `json:"vnum"`
+	Name      string `json:"name"`
+	Count     int    `json:"count"`
+	Slot      string `json:"slot,omitempty"`
+}
+
+// playerDetailResponse is the JSON shape returned by the player detail endpoint.
+type playerDetailResponse struct {
+	Name      string `json:"name"`
+	Level     int    `json:"level"`
+	Class     int    `json:"class"`
+	Race      int    `json:"race"`
+	Sex       int    `json:"sex"`
+	Health    int    `json:"health"`
+	MaxHealth int    `json:"max_health"`
+	Mana      int    `json:"mana"`
+	MaxMana   int    `json:"max_mana"`
+	Move      int    `json:"move"`
+	MaxMove   int    `json:"max_move"`
+	Alignment int    `json:"alignment"`
+	Gold      int    `json:"gold"`
+	BankGold  int    `json:"bank_gold"`
+	Exp       int    `json:"exp"`
+	Room      int    `json:"room"`
+	AC        int    `json:"ac"`
+	THAC0     int    `json:"thac0"`
+	Hitroll   int    `json:"hitroll"`
+	Damroll   int    `json:"damroll"`
+	Stats     map[string]int `json:"stats"`
+	Affects   uint64 `json:"affects"`
+	ConnectedAt string `json:"connected_at"`
+	LastActive  string `json:"last_active"`
+	Inventory   []playerItemResponse `json:"inventory"`
+	Equipment   []playerItemResponse `json:"equipment"`
+}
+
+// metricsResponse is the JSON shape returned by the server metrics endpoint.
+type metricsResponse struct {
+	MemoryAlloc  uint64 `json:"memory_alloc"`
+	MemorySys    uint64 `json:"memory_sys"`
+	MemoryHeap   uint64 `json:"memory_heap"`
+	Goroutines   int    `json:"goroutines"`
+	GCCycles     uint32 `json:"gc_cycles"`
+	LastGC       string `json:"last_gc"`
+	PauseTotalNs uint64 `json:"pause_total_ns"`
+	Uptime       string `json:"uptime"`
+	PlayerCount  int    `json:"player_count"`
+	RoomCount    int    `json:"room_count"`
+	ZoneCount    int    `json:"zone_count"`
+}
+
+// handlePlayerDetail returns full info for a specific player.
+// Supports:
+//   GET /admin/players/{name} — full player detail
+//   POST /admin/players/{name}/save — force save
+//   POST /admin/players/{name}/kick — disconnect (501 not implemented)
+func handlePlayerDetail(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse path: /admin/players/{name} or /admin/players/{name}/save or /admin/players/{name}/kick
+		path := strings.TrimPrefix(r.URL.Path, "/admin/players/")
+		if path == "" {
+			http.Error(w, `{"error":"player name required"}`, http.StatusBadRequest)
+			return
+		}
+
+		// Split into parts: [name] or [name, action]
+		parts := strings.SplitN(path, "/", 2)
+		playerName := parts[0]
+		action := ""
+		if len(parts) > 1 {
+			action = parts[1]
+		}
+
+		if playerName == "" {
+			http.Error(w, `{"error":"player name required"}`, http.StatusBadRequest)
+			return
+		}
+
+		// Look up the player
+		player, ok := world.GetPlayer(playerName)
+		if !ok {
+			http.Error(w, `{"error":"player not found"}`, http.StatusNotFound)
+			return
+		}
+
+		claims, claimsOk := auth.GetClaimsFromContext(r.Context())
+
+		switch {
+		case r.Method == http.MethodGet && action == "":
+			// GET — return full detail
+			resp := playerDetailToResponse(player)
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				slog.Warn("admin player detail encode failed", "error", err)
+			}
+
+		case r.Method == http.MethodPost && action == "save":
+			// POST /save — requires admin role
+			if !claimsOk || !claims.HasRole("admin") {
+				http.Error(w, `{"error":"forbidden","required":"admin"}`, http.StatusForbidden)
+				return
+			}
+
+			if err := game.SavePlayer(player); err != nil {
+				slog.Error("admin player save failed", "name", playerName, "error", err)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("save failed: %v", err)}) //nolint:errcheck
+				return
+			}
+
+			if auditLogger != nil {
+				adminName := ""
+				if claimsOk {
+					adminName = claims.PlayerName
+				}
+				auditLogger.Log(audit.AuditEvent{
+					IPAddress: auth.GetIPFromRequest(r),
+					EventType: "administration",
+					User:      adminName,
+					Action:    "admin_force_save",
+					Details:   fmt.Sprintf("forced save player %s", playerName),
+					Success:   true,
+				})
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{"status": "saved"}) //nolint:errcheck
+
+		case r.Method == http.MethodPost && action == "kick":
+			// POST /kick — requires admin role
+			if !claimsOk || !claims.HasRole("admin") {
+				http.Error(w, `{"error":"forbidden","required":"admin"}`, http.StatusForbidden)
+				return
+			}
+
+			// POST /kick — not yet implemented
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotImplemented)
+			json.NewEncoder(w).Encode(map[string]string{"error": "kick not yet implemented"}) //nolint:errcheck
+
+		default:
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+// playerDetailToResponse converts a game.Player to a playerDetailResponse.
+func playerDetailToResponse(p *game.Player) playerDetailResponse {
+	stats := map[string]int{
+		"str": p.Stats.Str,
+		"int": p.Stats.Int,
+		"wis": p.Stats.Wis,
+		"dex": p.Stats.Dex,
+		"con": p.Stats.Con,
+		"cha": p.Stats.Cha,
+	}
+
+	// Build inventory items
+	invItems := make([]playerItemResponse, 0)
+	if p.Inventory != nil {
+		for _, item := range p.Inventory.Items {
+			name := ""
+			if item.Prototype != nil {
+				name = item.Prototype.ShortDesc
+			}
+			invItems = append(invItems, playerItemResponse{
+				VNum:  item.VNum,
+				Name:  name,
+				Count: 1,
+			})
+		}
+	}
+
+	// Build equipment items
+	equipItems := make([]playerItemResponse, 0)
+	if p.Equipment != nil {
+		for slot, item := range p.Equipment.Slots {
+			name := ""
+			if item.Prototype != nil {
+				name = item.Prototype.ShortDesc
+			}
+			equipItems = append(equipItems, playerItemResponse{
+				VNum:  item.VNum,
+				Name:  name,
+				Count: 1,
+				Slot:  slot.String(),
+			})
+		}
+	}
+
+	return playerDetailResponse{
+		Name:      p.Name,
+		Level:     p.Level,
+		Class:     p.Class,
+		Race:      p.Race,
+		Sex:       p.Sex,
+		Health:    p.Health,
+		MaxHealth: p.MaxHealth,
+		Mana:      p.Mana,
+		MaxMana:   p.MaxMana,
+		Move:      p.Move,
+		MaxMove:   p.MaxMove,
+		Alignment: p.Alignment,
+		Gold:      p.Gold,
+		BankGold:  p.BankGold,
+		Exp:       p.Exp,
+		Room:      p.RoomVNum,
+		AC:        p.AC,
+		THAC0:     p.THAC0,
+		Hitroll:   p.Hitroll,
+		Damroll:   p.Damroll,
+		Stats:     stats,
+		Affects:   p.Affects,
+		ConnectedAt: p.ConnectedAt.Format(time.RFC3339),
+		LastActive:  p.LastActive.Format(time.RFC3339),
+		Inventory:   invItems,
+		Equipment:   equipItems,
+	}
+}
+
+// handleMetrics returns runtime statistics.
+func handleMetrics(world *game.World) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		var memStats runtime.MemStats
+		runtime.ReadMemStats(&memStats)
+
+		resp := metricsResponse{
+			MemoryAlloc:  memStats.Alloc,
+			MemorySys:    memStats.Sys,
+			MemoryHeap:   memStats.HeapInuse,
+			Goroutines:   runtime.NumGoroutine(),
+			GCCycles:     memStats.NumGC,
+			LastGC:       time.Unix(0, int64(memStats.LastGC)).Format(time.RFC3339Nano),
+			PauseTotalNs: memStats.PauseTotalNs,
+			Uptime:       time.Since(processStartTime).Round(time.Second).String(),
+			PlayerCount:  world.GetPlayerCount(),
+			RoomCount:    world.GetRoomCount(),
+			ZoneCount:    len(world.GetAllZones()),
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			slog.Warn("admin metrics encode failed", "error", err)
+		}
+	}
+}
+
+// handleSaveWorld triggers a world state save.
+func handleSaveWorld(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		if err := game.SaveWorld(world); err != nil {
+			slog.Error("admin save world failed", "error", err)
+			resp := map[string]string{"error": fmt.Sprintf("save failed: %v", err)}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(resp) //nolint:errcheck
+			return
+		}
+
+		if auditLogger != nil {
+			claims, ok := auth.GetClaimsFromContext(r.Context())
+			adminName := ""
+			if ok {
+				adminName = claims.PlayerName
+			}
+			auditLogger.Log(audit.AuditEvent{
+				IPAddress: auth.GetIPFromRequest(r),
+				EventType: "administration",
+				User:      adminName,
+				Action:    "admin_save_world",
+				Details:   "saved world state",
+				Success:   true,
+			})
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "saved"}) //nolint:errcheck
+	}
+}
+
+// handleResetAllZones triggers a reset on all zones.
+func handleResetAllZones(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		zones := world.GetAllZones()
+		resetCount := 0
+		errors := make([]string, 0)
+
+		for _, z := range zones {
+			if err := world.ResetZone(z.Number); err != nil {
+				errors = append(errors, fmt.Sprintf("zone %d: %v", z.Number, err))
+				continue
+			}
+			resetCount++
+		}
+
+		if auditLogger != nil {
+			claims, ok := auth.GetClaimsFromContext(r.Context())
+			adminName := ""
+			if ok {
+				adminName = claims.PlayerName
+			}
+			auditLogger.Log(audit.AuditEvent{
+				IPAddress: auth.GetIPFromRequest(r),
+				EventType: "administration",
+				User:      adminName,
+				Action:    "admin_reset_all_zones",
+				Details:   fmt.Sprintf("reset %d zones, %d errors", resetCount, len(errors)),
+				Success:   len(errors) == 0,
+			})
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		resp := map[string]interface{}{
+			"status":     "reset triggered",
+			"zones_reset": resetCount,
+			"zones_total": len(zones),
+		}
+		if len(errors) > 0 {
+			resp["errors"] = errors
+		}
+		json.NewEncoder(w).Encode(resp) //nolint:errcheck
 	}
 }
 
