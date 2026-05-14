@@ -12,6 +12,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // processStartTime captures when the server booted — used for uptime calculation.
@@ -431,30 +432,57 @@ func handleRoomByVnum(world *game.World, auditLogger *audit.AuditLogger) http.Ha
 
 // roomUpdateRequest is the JSON body for room update requests.
 type roomUpdateRequest struct {
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
+	Name        *string              `json:"name"`
+	Description *string              `json:"description"`
+	Flags       *[]string            `json:"flags"`
+	Sector      *int                 `json:"sector"`
+	ExtraDescs  *[]parser.ExtraDesc  `json:"extra_descs"`
 }
 
 // mobUpdateRequest is the JSON body for mob update requests.
 type mobUpdateRequest struct {
-	ShortDesc *string `json:"short_desc"`
-	LongDesc  *string `json:"long_desc"`
-	Level     *int    `json:"level"`
-	AC        *int    `json:"ac"`
-	HPNumDice *int    `json:"hp_num_dice"`
-	HPSizeDice *int   `json:"hp_size_dice"`
-	HPAdd     *int    `json:"hp_add"`
-	Gold      *int    `json:"gold"`
-	Exp       *int    `json:"exp"`
-	Alignment *int    `json:"alignment"`
+	ShortDesc    *string   `json:"short_desc"`
+	LongDesc     *string   `json:"long_desc"`
+	Keywords     *string   `json:"keywords"`
+	Level        *int      `json:"level"`
+	AC           *int      `json:"ac"`
+	HPNumDice    *int      `json:"hp_num_dice"`
+	HPSizeDice   *int      `json:"hp_size_dice"`
+	HPAdd        *int      `json:"hp_add"`
+	Gold         *int      `json:"gold"`
+	Exp          *int      `json:"exp"`
+	Alignment    *int      `json:"alignment"`
+	ActionFlags  *[]string `json:"action_flags"`
+	AffectFlags  *[]string `json:"affect_flags"`
+	Str          *int      `json:"str"`
+	Int          *int      `json:"int"`
+	Wis          *int      `json:"wis"`
+	Dex          *int      `json:"dex"`
+	Con          *int      `json:"con"`
+	Cha          *int      `json:"cha"`
+	THAC0        *int      `json:"thac0"`
+	DamageNumDice *int     `json:"damage_num_dice"`
+	DamageSizeDice *int    `json:"damage_size_dice"`
+	DamageAdd    *int      `json:"damage_add"`
+	Position     *int      `json:"position"`
+	DefaultPos   *int      `json:"default_pos"`
+	Sex          *int      `json:"sex"`
+	Race         *int      `json:"race"`
 }
 
 // objUpdateRequest is the JSON body for object update requests.
 type objUpdateRequest struct {
-	ShortDesc *string `json:"short_desc"`
-	LongDesc  *string `json:"long_desc"`
-	Weight    *int    `json:"weight"`
-	Cost      *int    `json:"cost"`
+	ShortDesc  *string             `json:"short_desc"`
+	LongDesc   *string             `json:"long_desc"`
+	Keywords   *string             `json:"keywords"`
+	TypeFlag   *int                `json:"type_flag"`
+	Weight     *int                `json:"weight"`
+	Cost       *int                `json:"cost"`
+	Values     *[4]int             `json:"values"`
+	WearFlags  *[4]int             `json:"wear_flags"`
+	ExtraFlags *[4]int             `json:"extra_flags"`
+	Affects    *[]parser.ObjAffect `json:"affects"`
+	ExtraDescs *[]parser.ExtraDesc `json:"extra_descs"`
 }
 
 // handleRoomUpdate handles PUT /admin/rooms/{vnum}.
@@ -504,6 +532,27 @@ func handleRoomUpdate(world *game.World, auditLogger *audit.AuditLogger) http.Ha
 		}
 		if req.Description != nil {
 			if !world.SetRoomDescription(vnum, *req.Description) {
+				http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Flags != nil {
+			if !world.SetRoomFlags(vnum, *req.Flags) {
+				http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Sector != nil {
+			if !world.SetRoomSector(vnum, *req.Sector) {
+				http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.ExtraDescs != nil {
+			if !world.SetRoomExtraDescs(vnum, *req.ExtraDescs) {
 				http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)
 				return
 			}
@@ -648,6 +697,111 @@ func handleMobUpdate(world *game.World, auditLogger *audit.AuditLogger) http.Han
 			}
 			updated = true
 		}
+		if req.Keywords != nil {
+			if !world.SetMobKeywords(vnum, *req.Keywords) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.ActionFlags != nil {
+			if !world.SetMobActionFlags(vnum, *req.ActionFlags) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.AffectFlags != nil {
+			if !world.SetMobAffectFlags(vnum, *req.AffectFlags) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Str != nil {
+			if !world.SetMobStr(vnum, *req.Str) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Int != nil {
+			if !world.SetMobInt(vnum, *req.Int) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Wis != nil {
+			if !world.SetMobWis(vnum, *req.Wis) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Dex != nil {
+			if !world.SetMobDex(vnum, *req.Dex) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Con != nil {
+			if !world.SetMobCon(vnum, *req.Con) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Cha != nil {
+			if !world.SetMobCha(vnum, *req.Cha) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.THAC0 != nil {
+			if !world.SetMobTHAC0(vnum, *req.THAC0) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.DamageNumDice != nil && req.DamageSizeDice != nil && req.DamageAdd != nil {
+			if !world.SetMobDamage(vnum, *req.DamageNumDice, *req.DamageSizeDice, *req.DamageAdd) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Position != nil {
+			if !world.SetMobPosition(vnum, *req.Position) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.DefaultPos != nil {
+			if !world.SetMobDefaultPos(vnum, *req.DefaultPos) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Sex != nil {
+			if !world.SetMobSex(vnum, *req.Sex) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Race != nil {
+			if !world.SetMobRace(vnum, *req.Race) {
+				http.Error(w, `{"error":"mob not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
 
 		if !updated {
 			http.Error(w, `{"error":"no fields to update"}`, http.StatusBadRequest)
@@ -771,6 +925,55 @@ func handleObjectUpdate(world *game.World, auditLogger *audit.AuditLogger) http.
 		}
 		if req.Cost != nil {
 			if !world.SetObjCost(vnum, *req.Cost) {
+				http.Error(w, `{"error":"object not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Keywords != nil {
+			if !world.SetObjKeywords(vnum, *req.Keywords) {
+				http.Error(w, `{"error":"object not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.TypeFlag != nil {
+			if !world.SetObjTypeFlag(vnum, *req.TypeFlag) {
+				http.Error(w, `{"error":"object not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Values != nil {
+			if !world.SetObjValues(vnum, *req.Values) {
+				http.Error(w, `{"error":"object not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.WearFlags != nil {
+			if !world.SetObjWearFlags(vnum, *req.WearFlags) {
+				http.Error(w, `{"error":"object not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.ExtraFlags != nil {
+			if !world.SetObjExtraFlags(vnum, *req.ExtraFlags) {
+				http.Error(w, `{"error":"object not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.Affects != nil {
+			if !world.SetObjAffects(vnum, *req.Affects) {
+				http.Error(w, `{"error":"object not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.ExtraDescs != nil {
+			if !world.SetObjExtraDescs(vnum, *req.ExtraDescs) {
 				http.Error(w, `{"error":"object not found"}`, http.StatusNotFound)
 				return
 			}
@@ -1117,6 +1320,165 @@ func handleTriageSummaries(store *AgentStore) http.HandlerFunc {
 			w.WriteHeader(http.StatusCreated)
 			if err := json.NewEncoder(w).Encode(s); err != nil {
 				slog.Warn("admin triage summary create encode failed", "error", err)
+			}
+
+		default:
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+// shopResponse is the JSON shape returned by shop endpoints.
+type shopResponse struct {
+	KeeperVNum int     `json:"keeper_vnum"`
+	BuyTypes   []int   `json:"buy_types"`
+	SellTypes  []int   `json:"sell_types"`
+	ProfitBuy  float64 `json:"profit_buy"`
+	ProfitSell float64 `json:"profit_sell"`
+	KeeperName string  `json:"keeper_name"`
+	RoomVNum   int     `json:"room_vnum"`
+}
+
+// shopUpdateRequest is the JSON body for shop update requests.
+type shopUpdateRequest struct {
+	BuyTypes   *[]int   `json:"buy_types"`
+	SellTypes  *[]int   `json:"sell_types"`
+	ProfitBuy  *float64 `json:"profit_buy"`
+	ProfitSell *float64 `json:"profit_sell"`
+}
+
+// handleShops returns all shops.
+func handleShops(world *game.World) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		shops := world.GetAllShops()
+		resp := make([]shopResponse, 0, len(shops))
+		for _, s := range shops {
+			resp = append(resp, shopResponse{
+				KeeperVNum: s.KeeperVNum,
+				BuyTypes:   s.BuyTypes,
+				SellTypes:  s.SellTypes,
+				ProfitBuy:  s.ProfitBuy,
+				ProfitSell: s.ProfitSell,
+				KeeperName: s.KeeperName,
+				RoomVNum:   s.RoomVNum,
+			})
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			slog.Warn("admin shops encode failed", "error", err)
+		}
+	}
+}
+
+// handleShopByKeeper handles GET/PUT /admin/shops/{keeper_vnum}.
+func handleShopByKeeper(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vnumStr := strings.TrimPrefix(r.URL.Path, "/admin/shops/")
+		if vnumStr == "" {
+			http.Error(w, `{"error":"keeper vnum required"}`, http.StatusBadRequest)
+			return
+		}
+
+		vnum, err := strconv.Atoi(vnumStr)
+		if err != nil {
+			http.Error(w, `{"error":"invalid vnum"}`, http.StatusBadRequest)
+			return
+		}
+
+		switch r.Method {
+		case http.MethodGet:
+			shop, ok := world.GetShopByKeeper(vnum)
+			if !ok {
+				http.Error(w, `{"error":"shop not found"}`, http.StatusNotFound)
+				return
+			}
+			resp := shopResponse{
+				KeeperVNum: shop.KeeperVNum,
+				BuyTypes:   shop.BuyTypes,
+				SellTypes:  shop.SellTypes,
+				ProfitBuy:  shop.ProfitBuy,
+				ProfitSell: shop.ProfitSell,
+				KeeperName: shop.KeeperName,
+				RoomVNum:   shop.RoomVNum,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				slog.Warn("admin shop encode failed", "error", err)
+			}
+
+		case http.MethodPut:
+			var req shopUpdateRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, `{"error":"invalid json"}`, http.StatusBadRequest)
+				return
+			}
+
+			updated := false
+			if req.BuyTypes != nil {
+				if !world.SetShopBuyTypes(vnum, *req.BuyTypes) {
+					http.Error(w, `{"error":"shop not found"}`, http.StatusNotFound)
+					return
+				}
+				updated = true
+			}
+			if req.SellTypes != nil {
+				if !world.SetShopSellTypes(vnum, *req.SellTypes) {
+					http.Error(w, `{"error":"shop not found"}`, http.StatusNotFound)
+					return
+				}
+				updated = true
+			}
+			if req.ProfitBuy != nil && req.ProfitSell != nil {
+				if !world.SetShopProfit(vnum, *req.ProfitBuy, *req.ProfitSell) {
+					http.Error(w, `{"error":"shop not found"}`, http.StatusNotFound)
+					return
+				}
+				updated = true
+			}
+
+			if !updated {
+				http.Error(w, `{"error":"no fields to update"}`, http.StatusBadRequest)
+				return
+			}
+
+			if auditLogger != nil {
+				playerName := ""
+				if claims, ok := auth.GetClaimsFromContext(r.Context()); ok {
+					playerName = claims.PlayerName
+				}
+				auditLogger.Log(audit.AuditEvent{
+					IPAddress: auth.GetIPFromRequest(r),
+					EventType: "administration",
+					User:      playerName,
+					Action:    "admin_shop_update",
+					Details:   fmt.Sprintf("updated shop keeper %d", vnum),
+					Success:   true,
+				})
+			}
+
+			shop, ok := world.GetShopByKeeper(vnum)
+			if !ok {
+				http.Error(w, `{"error":"shop not found after update"}`, http.StatusInternalServerError)
+				return
+			}
+			resp := shopResponse{
+				KeeperVNum: shop.KeeperVNum,
+				BuyTypes:   shop.BuyTypes,
+				SellTypes:  shop.SellTypes,
+				ProfitBuy:  shop.ProfitBuy,
+				ProfitSell: shop.ProfitSell,
+				KeeperName: shop.KeeperName,
+				RoomVNum:   shop.RoomVNum,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				slog.Warn("admin shop update encode failed", "error", err)
 			}
 
 		default:

@@ -54,6 +54,10 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	mux.HandleFunc("/admin/objects", wrap(corsMiddleware(requireRole("builder", handleObjects(world)))))
 	mux.HandleFunc("/admin/objects/", wrap(corsMiddleware(requireRole("builder", handleObjectByVnum(world, auditLogger)))))
 
+	// Shops — read/write, requires builder role
+	mux.HandleFunc("/admin/shops", wrap(corsMiddleware(requireRole("builder", handleShops(world)))))
+	mux.HandleFunc("/admin/shops/", wrap(corsMiddleware(requireRole("builder", handleShopByKeeper(world, auditLogger)))))
+
 	// Rooms — read/write, requires builder role
 	mux.HandleFunc("/admin/rooms/", wrap(corsMiddleware(requireRole("builder", handleRoomByVnum(world, auditLogger)))))
 

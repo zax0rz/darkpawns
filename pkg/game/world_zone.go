@@ -59,6 +59,17 @@ func (w *World) GetShopByKeeper(vnum int) (*Shop, bool) {
 	return nil, false
 }
 
+// GetAllShops returns all registered shops.
+func (w *World) GetAllShops() []*Shop {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	if sm, ok := w.shopManager.(*ShopManager); ok {
+		return sm.GetAllShops()
+	}
+	return nil
+}
+
 // ShopBuysType returns true if the shopkeeper mob (by VNum) runs a shop
 // that buys items of the given type flag.
 // Source: scripts.c lua_item_check() — iterates SHOP_BUYTYPE().
