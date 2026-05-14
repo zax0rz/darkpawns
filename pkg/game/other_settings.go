@@ -155,7 +155,9 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 		f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err == nil {
 			defer f.Close()
-			fmt.Fprintf(f, "%s [%s]: %s\n", ch.Name, time.Now().Format("2006-01-02 15:04"), arg)
+			if _, err := fmt.Fprintf(f, "%s [%s]: %s\n", ch.Name, time.Now().Format("2006-01-02 15:04"), arg); err != nil {
+				slog.Error("failed to write report", "type", cmd, "error", err)
+			}
 		}
 	}
 
