@@ -562,3 +562,14 @@ Linear.app adopted as primary issue tracker. 78 issues imported covering Reek fi
 Tick interval bug fixed (HIGH-020): affect durations were ticking 60x too fast. One-liner fix but real gameplay impact — poisons, haste, charm all vanishing instantly.
 
 ---
+
+## 2026-05-14 — Session 36b (Board Cleanup)
+
+22 Linear issues closed in one session. Codebase pruning: 786 lines of dead code removed (comm_infra.go, example_integration.go, CrashLoad + dead callers). Container cycle prevention added. Mob equipment slot semantics fixed. Type switches cleaned up. All hardening/modernization/low-Reek issues resolved.
+
+Subagent tools (sessions_spawn, sessions_yield, subagents) added to Daeron's tool allow list. First session where Daeron attempted parallel dispatch but had to work sequentially due to missing tools. Next session will be the first with actual subagent parallelism.
+
+### Paper-relevant
+- **Subagent orchestration pattern:** Daeron attempted to dispatch 3 parallel subagents for the cleanup work but lacked the tools. This is a data point for the agent collaboration methodology section: tool availability directly impacts agent productivity. The difference between "sequential single-agent" and "parallel multi-agent" is the difference between doing 14 issues one-at-a-time vs. dispatching 3 bounded workers.
+- **Board cleanup as methodology:** The pattern of "triage → verify → fix/reject → document" is now well-established. 79 issues processed through this pipeline. The false positive rate (Reek flagged things that were already fixed or never existed) is a measurable metric for the paper.
+- **Spec drift confirmed again:** DP-59 (object ownership interface{}) was already completed by the time we triaged it. The issue existed in Linear but the work was done. This is the second instance of spec drift (after the admin panel architecture). Finding: issue trackers can accumulate stale issues when work happens faster than tracking.
