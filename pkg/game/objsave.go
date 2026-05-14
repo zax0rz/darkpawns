@@ -13,7 +13,6 @@ import (
 	"log/slog"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -737,79 +736,6 @@ func DeleteCrashFile(name string) bool {
 // CleanCrashFile — ported from C Crash_clean_file()
 // Checks if a player's save file should be deleted due to timeout.
 // Returns true if the file was cleaned.
-// ==========================================================================
-func CleanCrashFile(name string, _ time.Time, _ int) bool {
-	data, err := LoadSaveData(name)
-	if err != nil {
-		return false // file doesn't exist or can't read
-	}
-
-	now := time.Now()
-	rentCode := data.RentCode
-	savedTime := time.Unix(data.RentTime, 0)
-
-	switch rentCode {
-	case RentCrash, RentForced, RentTimedOut:
-		if now.Sub(savedTime) > time.Duration(CrashFileTimeout)*24*time.Hour {
-			DeleteCrashFile(name)
-			fileType := "crash"
-			switch rentCode {
-			case RentForced:
-				fileType = "forced rent"
-			case RentTimedOut:
-				fileType = "idlesave"
-			}
-			slog.Info("Deleting expired file", "player", name, "type", fileType)
-			return true
-		}
-	case RentRented:
-		if now.Sub(savedTime) > time.Duration(RentFileTimeout)*24*time.Hour {
-			DeleteCrashFile(name)
-			slog.Info("Deleting expired rent file", "player", name)
-			return true
-		}
-	}
-	return false
-}
-
-// ==========================================================================
-// UpdateObjFiles — ported from C update_obj_file()
-// Runs CleanCrashFile on all player save files.
-// ==========================================================================
-func UpdateObjFiles(playerNames []string) {
-	for _, name := range playerNames {
-		CleanCrashFile(name, time.Time{}, 0)
-	}
-}
-
-// ==========================================================================
-// DeleteAliasFile — ported from C Alias_delete_file()
-// In Go port, aliases are not persisted to separate files.
-// ==========================================================================
-func DeleteAliasFile(name string) bool {
-	slog.Debug("DeleteAliasFile", "player", name)
-	return true
-}
-
-// ==========================================================================
-// CrashListrent — ported from C Crash_listrent()
-// Lists all items in a player's rent/crash save. In Go port, formats item
-// data from the save struct.
-// ==========================================================================
-func CrashListrent(invDump []saveItemData, eqDump []saveItemData) string {
-	var b strings.Builder
-	for _, item := range invDump {
-		fmt.Fprintf(&b, "  [%5d] inv %s\r\n", item.VNum, item.State)
-	}
-	for _, item := range eqDump {
-		fmt.Fprintf(&b, "  [%5d] eq  %s\r\n", item.VNum, item.State)
-	}
-	return b.String()
-}
-
-// ==========================================================================
-// GenReceptionist — ported from C gen_receptionist()
-// Handles the receptionist NPC social/rent flow.
 // ==========================================================================
 func GenReceptionist(p *Player, cmd, arg string, mode int) bool {
 	if p == nil || p.IsNPC() {
