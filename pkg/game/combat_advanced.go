@@ -490,47 +490,45 @@ func (w *World) doAmbush(ch *Player, me *MobInstance, cmd string, arg string) bo
 func (w *World) startCombatBetween(ch, vict interface{}) {
 	var attackerName, defenderName string
 
-	// Try to handle *Player vs *Player or *Player vs *MobInstance
-	if chPlayer, ok := ch.(*Player); ok {
-		attackerName = chPlayer.Name
-		if victPlayer, ok2 := vict.(*Player); ok2 {
-			chPlayer.SetFighting(victPlayer.Name)
-			victPlayer.SetFighting(chPlayer.Name)
-			defenderName = victPlayer.Name
-			// Broadcast the fight start
-			w.roomMessage(chPlayer.RoomVNum, fmt.Sprintf("%s starts fighting %s!\r\n", chPlayer.Name, victPlayer.Name))
-		} else if victMob, ok2 := vict.(*MobInstance); ok2 {
-			chPlayer.SetFighting(victMob.GetName())
-			defenderName = victMob.GetName()
-			w.roomMessage(chPlayer.RoomVNum, fmt.Sprintf("%s starts fighting %s!\r\n", chPlayer.Name, victMob.GetName()))
-		} else {
-			// Only one party — probably mob attacking player
-			chPlayer.SetFighting("someone")
+	switch chActor := ch.(type) {
+	case *Player:
+		attackerName = chActor.Name
+		switch victActor := vict.(type) {
+		case *Player:
+			chActor.SetFighting(victActor.Name)
+			victActor.SetFighting(chActor.Name)
+			defenderName = victActor.Name
+			w.roomMessage(chActor.RoomVNum, fmt.Sprintf("%s starts fighting %s!\r\n", chActor.Name, victActor.Name))
+		case *MobInstance:
+			chActor.SetFighting(victActor.GetName())
+			defenderName = victActor.GetName()
+			w.roomMessage(chActor.RoomVNum, fmt.Sprintf("%s starts fighting %s!\r\n", chActor.Name, victActor.GetName()))
+		default:
+			chActor.SetFighting("someone")
 		}
-	} else if chMob, ok := ch.(*MobInstance); ok {
-		attackerName = chMob.GetName()
-		if victPlayer, ok2 := vict.(*Player); ok2 {
-			chMob.SetFighting(victPlayer.Name)
-			victPlayer.SetFighting(chMob.GetName())
+	case *MobInstance:
+		attackerName = chActor.GetName()
+		if victPlayer, ok := vict.(*Player); ok {
+			chActor.SetFighting(victPlayer.Name)
+			victPlayer.SetFighting(chActor.GetName())
 			defenderName = victPlayer.Name
 		}
 	}
 
 	// Register with CombatEngine so engine tick processes this combat (LOW-008 fix)
 	if attackerName != "" && defenderName != "" && w.combatEngine != nil {
-		// Find combatant objects for engine registration
 		var attacker, defender combat.Combatant
-		if p, ok := ch.(*Player); ok {
-			attacker = p
+		switch a := ch.(type) {
+		case *Player:
+			attacker = a
+		case *MobInstance:
+			attacker = a
 		}
-		if m, ok := ch.(*MobInstance); ok {
-			attacker = m
-		}
-		if p, ok := vict.(*Player); ok {
-			defender = p
-		}
-		if m, ok := vict.(*MobInstance); ok {
-			defender = m
+		switch d := vict.(type) {
+		case *Player:
+			defender = d
+		case *MobInstance:
+			defender = d
 		}
 		if attacker != nil && defender != nil {
 			_ = w.combatEngine.StartCombat(attacker, defender)
