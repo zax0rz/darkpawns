@@ -128,10 +128,22 @@ export interface PlayerInfo {
   room: number;
 }
 
+export interface Shop {
+  keeper_vnum: number;
+  keeper_name?: string;
+  room_vnum?: number;
+  buy_types: number[];
+  sell_types: number[];
+  profit_buy: number;
+  profit_sell: number;
+}
+
 export const api = {
   health: () => request<Health>('/health'),
   zones: () => request<Zone[]>('/zones'),
   zone: (id: number) => request<Zone>(`/zones/${id}`),
+  updateZone: (id: number, data: { lifespan?: number; reset_mode?: number }) =>
+    request<Zone>(`/zones/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   server: () => request<ServerInfo>('/server'),
   mobs: () => request<Mob[]>('/mobs'),
   mob: (vnum: number) => request<Mob>(`/mobs/${vnum}`),
@@ -163,4 +175,14 @@ export const api = {
   updateFinding: (id: number, data: { status: string }) =>
     request<Finding>(`/findings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   triageSummaries: () => request<TriageSummary[]>('/triage/summaries'),
+
+  // Shops (Phase 4)
+  shops: () => request<Shop[]>('/shops'),
+  shop: (keeperVnum: number) => request<Shop>(`/shops/${keeperVnum}`),
+  updateShop: (keeperVnum: number, data: Record<string, unknown>) =>
+    request<Shop>(`/shops/${keeperVnum}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Zone reset
+  resetZone: (zoneNumber: number) =>
+    request<void>(`/zones/${zoneNumber}/reset`, { method: 'POST' }),
 };

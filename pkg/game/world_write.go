@@ -3,7 +3,11 @@
 // they do NOT persist changes to disk (persistence is a future phase).
 package game
 
-import "github.com/zax0rz/darkpawns/pkg/parser"
+import (
+	"fmt"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
 
 // SetRoomName updates a room's name. Returns false if the room doesn't exist.
 func (w *World) SetRoomName(vnum int, name string) bool {
@@ -570,4 +574,76 @@ func (w *World) SetShopProfit(keeperVNum int, buyProfit, sellProfit float64) boo
 	shop.ProfitBuy = buyProfit
 	shop.ProfitSell = sellProfit
 	return true
+}
+
+// SetZoneLifespan updates a zone's lifespan (minutes between resets). Returns false if the zone doesn't exist.
+func (w *World) SetZoneLifespan(number int, lifespan int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	zone, ok := w.zones[number]
+	if !ok {
+		return false
+	}
+	if lifespan < 0 {
+		lifespan = 0
+	}
+	zone.Lifespan = lifespan
+	return true
+}
+
+// SetZoneResetMode updates a zone's reset mode. Returns false if the zone doesn't exist.
+// Mode: 0=never, 1=if empty, 2=always
+func (w *World) SetZoneResetMode(number int, mode int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	zone, ok := w.zones[number]
+	if !ok {
+		return false
+	}
+	if mode < 0 || mode > 2 {
+		return false
+	}
+	zone.ResetMode = mode
+	return true
+}
+
+// AddZoneCommand appends a zone reset command. Returns false if the zone doesn't exist.
+func (w *World) AddZoneCommand(number int, cmd parser.ZoneCommand) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	zone, ok := w.zones[number]
+	if !ok {
+		return false
+	}
+	zone.Commands = append(zone.Commands, cmd)
+	return true
+}
+
+// RemoveZoneCommand removes a zone reset command by index. Returns false if the zone or index is invalid.
+func (w *World) RemoveZoneCommand(number int, index int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	zone, ok := w.zones[number]
+	if !ok {
+		return false
+	}
+	if index < 0 || index >= len(zone.Commands) {
+		return false
+	}
+	zone.Commands = append(zone.Commands[:index], zone.Commands[index+1:]...)
+	return true
+}
+
+// ResetZone triggers a manual zone reset. Returns an error if the zone or spawner is unavailable.
+func (w *World) ResetZone(number int) error {
+	w.mu.RLock()
+	zone, ok := w.zones[number]
+	w.mu.RUnlock()
+	if !ok {
+		return fmt.Errorf("zone %d not found", number)
+	}
+	if w.spawner == nil {
+		return fmt.Errorf("spawner not initialized")
+	}
+	return w.spawner.ExecuteZoneReset(zone)
 }

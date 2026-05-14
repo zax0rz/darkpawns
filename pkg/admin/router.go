@@ -32,10 +32,10 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Health is registered OUTSIDE AuthMiddleware in main.go (DP-82 fix)
 
-	// Zones — read only, requires builder role
+	// Zones — read/write, requires builder role
 	mux.HandleFunc("/admin/zones", wrap(corsMiddleware(requireRole("builder", handleZones(world)))))
-	mux.HandleFunc("/admin/zones/", wrap(corsMiddleware(requireRole("builder", handleZoneByID(world)))))
 	mux.HandleFunc("/admin/zones/reset", wrap(corsMiddleware(requireRole("admin", handleZoneReset(world)))))
+	mux.HandleFunc("/admin/zones/", wrap(corsMiddleware(requireRole("builder", handleZoneByIDOrReset(world, auditLogger)))))
 
 	// Server info — requires builder role
 	mux.HandleFunc("/admin/server", wrap(corsMiddleware(requireRole("builder", handleServerInfo(world, auditLogger)))))

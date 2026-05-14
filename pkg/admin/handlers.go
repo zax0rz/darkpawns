@@ -98,24 +98,35 @@ func handleZones(world *game.World) http.HandlerFunc {
 
 // handleZoneByID returns a single zone by its number.
 // Route pattern: /admin/zones/{id}
-func handleZoneByID(world *game.World) http.HandlerFunc {
+// handleZoneByIDOrReset handles GET/PUT /admin/zones/{number} and POST /admin/zones/{number}/reset.
+func handleZoneByIDOrReset(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		// Extract zone number from URL: /admin/zones/123 or /admin/zones/123/reset
+		idStr := strings.TrimPrefix(r.URL.Path, "/admin/zones/")
+		if idStr == "" {
+			http.Redirect(w, r, "/admin/zones", http.StatusMovedPermanently)
 			return
 		}
 
-		// Extract zone number from URL: /admin/zones/123
-		idStr := strings.TrimPrefix(r.URL.Path, "/admin/zones/")
-		if idStr == "" {
-			// /admin/zones/ with no id — redirect to list
-			http.Redirect(w, r, "/admin/zones", http.StatusMovedPermanently)
+		// Handle /admin/zones/{number}/reset
+		if strings.HasSuffix(idStr, "/reset") {
+			handleZoneResetTrigger(world, auditLogger).ServeHTTP(w, r)
 			return
 		}
 
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			http.Error(w, `{"error":"invalid zone number"}`, http.StatusBadRequest)
+			return
+		}
+
+		if r.Method == http.MethodPut {
+			handleZoneUpdate(world, auditLogger).ServeHTTP(w, r)
+			return
+		}
+
+		if r.Method != http.MethodGet {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -1483,6 +1494,144 @@ func handleShopByKeeper(world *game.World, auditLogger *audit.AuditLogger) http.
 
 		default:
 			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+// zoneUpdateRequest is the JSON body for zone update requests.
+type zoneUpdateRequest struct {
+	Lifespan  *int `json:"lifespan"`
+	ResetMode *int `json:"reset_mode"`
+}
+
+// handleZoneUpdate handles PUT /admin/zones/{number}.
+func handleZoneUpdate(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		numStr := strings.TrimPrefix(r.URL.Path, "/admin/zones/")
+		if numStr == "" {
+			http.Error(w, `{"error":"zone number required"}`, http.StatusBadRequest)
+			return
+		}
+
+		num, err := strconv.Atoi(numStr)
+		if err != nil {
+			http.Error(w, `{"error":"invalid zone number"}`, http.StatusBadRequest)
+			return
+		}
+
+		var req zoneUpdateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, `{"error":"invalid json"}`, http.StatusBadRequest)
+			return
+		}
+
+		updated := false
+		if req.Lifespan != nil {
+			if !world.SetZoneLifespan(num, *req.Lifespan) {
+				http.Error(w, `{"error":"zone not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+		if req.ResetMode != nil {
+			if !world.SetZoneResetMode(num, *req.ResetMode) {
+				http.Error(w, `{"error":"zone not found"}`, http.StatusNotFound)
+				return
+			}
+			updated = true
+		}
+
+		if !updated {
+			http.Error(w, `{"error":"no fields to update"}`, http.StatusBadRequest)
+			return
+		}
+
+		if auditLogger != nil {
+			playerName := ""
+			if claims, ok := auth.GetClaimsFromContext(r.Context()); ok {
+				playerName = claims.PlayerName
+			}
+			auditLogger.Log(audit.AuditEvent{
+				IPAddress: auth.GetIPFromRequest(r),
+				EventType: "administration",
+				User:      playerName,
+				Action:    "admin_zone_update",
+				Details:   fmt.Sprintf("updated zone %d", num),
+				Success:   true,
+			})
+		}
+
+		zone, ok := world.GetZone(num)
+		if !ok {
+			http.Error(w, `{"error":"zone not found after update"}`, http.StatusInternalServerError)
+			return
+		}
+
+		resp := zoneResponse{
+			Number:    zone.Number,
+			Name:      zone.Name,
+			TopRoom:   zone.TopRoom,
+			Lifespan:  zone.Lifespan,
+			ResetMode: zone.ResetMode,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			slog.Warn("admin zone update encode failed", "error", err)
+		}
+	}
+}
+
+// handleZoneResetTrigger handles POST /admin/zones/{number}/reset — triggers a manual zone reset.
+func handleZoneResetTrigger(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Extract zone number from path: /admin/zones/{number}/reset
+		path := strings.TrimPrefix(r.URL.Path, "/admin/zones/")
+		path = strings.TrimSuffix(path, "/reset")
+		if path == "" {
+			http.Error(w, `{"error":"zone number required"}`, http.StatusBadRequest)
+			return
+		}
+
+		num, err := strconv.Atoi(path)
+		if err != nil {
+			http.Error(w, `{"error":"invalid zone number"}`, http.StatusBadRequest)
+			return
+		}
+
+		if err := world.ResetZone(num); err != nil {
+			http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+			return
+		}
+
+		if auditLogger != nil {
+			playerName := ""
+			if claims, ok := auth.GetClaimsFromContext(r.Context()); ok {
+				playerName = claims.PlayerName
+			}
+			auditLogger.Log(audit.AuditEvent{
+				IPAddress: auth.GetIPFromRequest(r),
+				EventType: "administration",
+				User:      playerName,
+				Action:    "admin_zone_reset",
+				Details:   fmt.Sprintf("manual reset zone %d", num),
+				Success:   true,
+			})
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string]string{"status": "reset triggered"}); err != nil {
+			slog.Warn("admin zone reset encode failed", "error", err)
 		}
 	}
 }
