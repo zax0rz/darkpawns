@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand/v2"
+
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
@@ -164,6 +166,12 @@ func (a *WorldScriptableAdapter) RemoveItemFromRoom(vnum int, roomVNum int) scri
 
 func (a *WorldScriptableAdapter) RemoveItemFromChar(charName string, vnum int) scripting.ScriptableObject {
 	return a.world.RemoveItemFromCharByVNum(charName, vnum)
+}
+
+// StealRandomItemFromChar removes a random item from the named character's inventory.
+// Used by luaSteal — picks a random item since the Lua interface doesn't pass object references.
+func (a *WorldScriptableAdapter) StealRandomItemFromChar(charName string) scripting.ScriptableObject {
+	return a.world.StealRandomItemFromChar(charName)
 }
 
 func (a *WorldScriptableAdapter) GiveItemToChar(charName string, obj scripting.ScriptableObject) error {
@@ -411,6 +419,22 @@ func (w *World) RemoveItemFromCharByVNum(charName string, vnum int) scripting.Sc
 	if !found {
 		return nil
 	}
+	return &scriptableObjInstanceWrapper{item: item}
+}
+
+// StealRandomItemFromChar removes a random item from the named character's inventory.
+// Used by luaSteal — the C source takes a specific object pointer, but the Lua
+// interface doesn't pass object references, so we steal randomly.
+func (w *World) StealRandomItemFromChar(charName string) scripting.ScriptableObject {
+	w.mu.RLock()
+	p, ok := w.players[charName]
+	w.mu.RUnlock()
+	if !ok || len(p.Inventory.Items) == 0 {
+		return nil
+	}
+	idx := rand.IntN(len(p.Inventory.Items))
+	item := p.Inventory.Items[idx]
+	p.Inventory.Items = append(p.Inventory.Items[:idx], p.Inventory.Items[idx+1:]...)
 	return &scriptableObjInstanceWrapper{item: item}
 }
 

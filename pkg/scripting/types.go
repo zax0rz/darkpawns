@@ -92,10 +92,11 @@ type ScriptableWorld interface {
 	// RemoveItemFromRoom removes the first item with the given vnum from the room and returns it.
 	RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject
 	// RemoveItemFromChar removes the first item with the given vnum from the character's inventory.
-	// WARNING: vnum=0 does NOT mean "any item" — it removes an item with vnum 0.
-	// The C source (lua_steal) takes a specific object pointer, not a sentinel.
-	// For "steal any item" behavior, use the character's inventory directly.
 	RemoveItemFromChar(charName string, vnum int) ScriptableObject
+	// StealRandomItemFromChar removes a random item from the character's inventory and returns it.
+	// Used by luaSteal — the C source (scripts.c) takes a specific object pointer,
+	// but the Lua interface doesn't pass object references, so we steal randomly.
+	StealRandomItemFromChar(charName string) ScriptableObject
 	// GiveItemToChar adds an item to the named character's inventory.
 	GiveItemToChar(charName string, obj ScriptableObject) error
 	// IsRoomDark returns true if the given room VNum is dark.
