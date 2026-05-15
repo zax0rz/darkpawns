@@ -85,10 +85,12 @@ func (h *logBufferHandler) Handle(ctx context.Context, record slog.Record) error
 	sb.WriteByte(' ')
 	sb.WriteString(record.Message)
 	record.Attrs(func(a slog.Attr) bool {
-		sb.WriteString(fmt.Sprintf(" %s=%v", a.Key, a.Value))
+		fmt.Fprintf(&sb, " %s=%v", a.Key, a.Value)
 		return true
 	})
-	h.buf.Write([]byte(sb.String()))
+	if _, err := h.buf.Write([]byte(sb.String())); err != nil {
+		slog.Error("log buffer write failed", "error", err)
+	}
 	return nil
 }
 

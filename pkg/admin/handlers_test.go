@@ -1071,7 +1071,8 @@ func TestHandleShopByKeeper_PUT_NotFound(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandleAgents_GET(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleAgents(store)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/agents", nil)
@@ -1090,7 +1091,8 @@ func TestHandleAgents_GET(t *testing.T) {
 }
 
 func TestHandleAgentStatus_POST_Valid(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleAgentStatus(store)
 
 	body := `{"agent_id": "daeron", "status": "active"}`
@@ -1110,7 +1112,8 @@ func TestHandleAgentStatus_POST_Valid(t *testing.T) {
 }
 
 func TestHandleAgentStatus_POST_NotFound(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleAgentStatus(store)
 
 	body := `{"agent_id": "nonexistent", "status": "active"}`
@@ -1124,7 +1127,8 @@ func TestHandleAgentStatus_POST_NotFound(t *testing.T) {
 }
 
 func TestHandleAgentStatus_POST_MissingFields(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleAgentStatus(store)
 
 	body := `{}`
@@ -1142,7 +1146,8 @@ func TestHandleAgentStatus_POST_MissingFields(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandleFindings_GET_Empty(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleFindings(store)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/findings", nil)
@@ -1161,7 +1166,8 @@ func TestHandleFindings_GET_Empty(t *testing.T) {
 }
 
 func TestHandleFindings_POST_Valid(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleFindings(store)
 
 	body := `{"source": "reek", "severity": "high", "title": "nil panic", "file": "handlers.go", "line": 42}`
@@ -1175,7 +1181,8 @@ func TestHandleFindings_POST_Valid(t *testing.T) {
 }
 
 func TestHandleFindings_POST_MissingFields(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleFindings(store)
 
 	body := `{}`
@@ -1193,7 +1200,8 @@ func TestHandleFindings_POST_MissingFields(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandleFindingByID_PUT_Valid(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	f := store.AddFinding("reek", "high", "test", "f.go", 1, "")
 
 	handler := handleFindingByID(store)
@@ -1208,7 +1216,8 @@ func TestHandleFindingByID_PUT_Valid(t *testing.T) {
 }
 
 func TestHandleFindingByID_PUT_NotFound(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleFindingByID(store)
 
 	body := `{"status": "confirmed"}`
@@ -1222,7 +1231,8 @@ func TestHandleFindingByID_PUT_NotFound(t *testing.T) {
 }
 
 func TestHandleFindingByID_PUT_MissingStatus(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleFindingByID(store)
 
 	body := `{}`
@@ -1240,7 +1250,8 @@ func TestHandleFindingByID_PUT_MissingStatus(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandleTriageSummaries_POST_Valid(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	handler := handleTriageSummaries(store)
 
 	body := `{"date": "2026-05-14", "confirmed": 5, "rejected": 1, "pending": 2, "summary": "Good day"}`
@@ -1254,7 +1265,8 @@ func TestHandleTriageSummaries_POST_Valid(t *testing.T) {
 }
 
 func TestHandleTriageSummaries_GET(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	store.AddTriageSummary("2026-05-14", "test", 1, 0, 0)
 
 	handler := handleTriageSummaries(store)
@@ -1509,9 +1521,10 @@ func TestNewRouter_RateLimit(t *testing.T) {
 	okCount := 0
 	rateLimitedCount := 0
 	for _, s := range statuses {
-		if s == http.StatusOK {
+		switch s {
+		case http.StatusOK:
 			okCount++
-		} else if s == http.StatusTooManyRequests {
+		case http.StatusTooManyRequests:
 			rateLimitedCount++
 		}
 	}

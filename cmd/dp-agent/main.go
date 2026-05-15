@@ -76,7 +76,7 @@ func runAgent(cfg *agentcli.AgentConfig, ctx context.Context) {
 		slog.Error("connect", "error", err)
 		os.Exit(1)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	slog.Info("connected")
 	if err := client.RunDecisionLoop(ctx); err != nil {
 		slog.Warn("done", "error", err)
@@ -300,7 +300,7 @@ func cmdExec(args []string) {
 		slog.Error("connect", "error", err)
 		os.Exit(1)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	action := &agentcli.LLMResponse{
 		ActionType: args[0],

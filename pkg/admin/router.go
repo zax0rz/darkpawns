@@ -73,7 +73,11 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	mux.HandleFunc("/admin/reset-all-zones", wrap(corsMiddleware(requireRole("admin", handleResetAllZones(world, auditLogger)))))
 
 	// Agent status, findings, and triage — requires builder role
-	agentStore := NewAgentStore()
+	storePath := os.Getenv("ADMIN_STORE_PATH")
+	if storePath == "" {
+		storePath = "data/admin_store.json"
+	}
+	agentStore := NewAgentStore(storePath)
 	mux.HandleFunc("/admin/agents", wrap(corsMiddleware(requireRole("builder", handleAgents(agentStore)))))
 	mux.HandleFunc("/admin/agents/status", wrap(corsMiddleware(requireRole("builder", handleAgentStatus(agentStore)))))
 	mux.HandleFunc("/admin/findings", wrap(corsMiddleware(requireRole("builder", handleFindings(agentStore)))))
@@ -111,11 +115,8 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		allowed := false
-		if origin == "http://localhost:5173" || origin == "http://localhost:4350" ||
-			origin == "https://localhost:5173" || origin == "https://localhost:4350" {
-			allowed = true
-		}
+		allowed := origin == "http://localhost:5173" || origin == "http://localhost:4350" ||
+			origin == "https://localhost:5173" || origin == "https://localhost:4350"
 		if envOrigin := os.Getenv("ADMIN_CORS_ORIGIN"); envOrigin != "" && origin == envOrigin {
 			allowed = true
 		}
