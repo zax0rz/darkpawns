@@ -54,7 +54,10 @@ func (m *mockWorldForTest) HasItemByVNum(charName string, vnum int) bool        
 func (m *mockWorldForTest) RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject    { return nil }
 func (m *mockWorldForTest) RemoveItemFromChar(charName string, vnum int) ScriptableObject { return nil }
 func (m *mockWorldForTest) StealRandomItemFromChar(charName string) ScriptableObject       { return nil }
+func (m *mockWorldForTest) RemoveObjByInstanceID(objInstanceID int) ScriptableObject { return nil }
 func (m *mockWorldForTest) GiveItemToChar(charName string, obj ScriptableObject) error    { return nil }
+func (m *mockWorldForTest) GiveItemToMob(mobID int, obj ScriptableObject) error            { return nil }
+func (m *mockWorldForTest) GetObjByInstanceID(id int) ScriptableObject                     { return nil }
 func (m *mockWorldForTest) CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64 { return 0 }
 func (m *mockWorldForTest) FindFirstStep(src, target int) int { return -1 }
 func (m *mockWorldForTest) GetRoomInWorld(vnum int) *parser.Room { return nil }
@@ -1391,3 +1394,4 @@ func (o *testObj) GetCost() int          { return o.cost }
 func (o *testObj) GetTimer() int         { return 0 }
 func (o *testObj) SetTimer(t int)        {}
 func (o *testObj) GetTypeFlag() int      { return o.typeFlag }
+func (o *testObj) GetInstanceID() int   { return 0 }

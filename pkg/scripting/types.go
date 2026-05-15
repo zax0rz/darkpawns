@@ -21,6 +21,9 @@ type ScriptablePlayer interface {
 	// GetFlags returns the raw PLR flags bitmask.
 	// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.
 	GetFlags() uint64
+	// GetInventoryItems returns the player's carried objects for Lua exposure.
+	// Source: scripts.c char_to_table() — ch->carrying loop.
+	GetInventoryItems() []ScriptableObject
 }
 
 // ScriptableMob represents a mob that can be exposed to Lua scripts.
@@ -62,6 +65,10 @@ type ScriptableObject interface {
 	GetTimer() int
 	SetTimer(int)
 	GetTypeFlag() int
+	// GetInstanceID returns the unique runtime instance ID of this object.
+	// Used by Lua steal() to reference a specific object instance.
+	// Source: scripts.c lua_steal() — passes struct obj_data pointer directly.
+	GetInstanceID() int
 }
 
 // ScriptableWorld represents the game world for script context.
@@ -93,12 +100,17 @@ type ScriptableWorld interface {
 	RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject
 	// RemoveItemFromChar removes the first item with the given vnum from the character's inventory.
 	RemoveItemFromChar(charName string, vnum int) ScriptableObject
-	// StealRandomItemFromChar removes a random item from the character's inventory and returns it.
-	// Used by luaSteal — the C source (scripts.c) takes a specific object pointer,
-	// but the Lua interface doesn't pass object references, so we steal randomly.
-	StealRandomItemFromChar(charName string) ScriptableObject
+	// RemoveObjByInstanceID removes an object by its unique instance ID from its
+	// current owner (player or mob). Returns the removed object, or nil if not found.
+	// Source: scripts.c lua_steal() — obj_from_char(obj).
+	RemoveObjByInstanceID(objInstanceID int) ScriptableObject
 	// GiveItemToChar adds an item to the named character's inventory.
 	GiveItemToChar(charName string, obj ScriptableObject) error
+	// GiveItemToMob adds an item to the specified mob's inventory.
+	// Source: scripts.c lua_steal() — obj_to_char(obj, me).
+	GiveItemToMob(mobID int, obj ScriptableObject) error
+	// GetObjByInstanceID returns an object by its unique instance ID, or nil.
+	GetObjByInstanceID(id int) ScriptableObject
 	// IsRoomDark returns true if the given room VNum is dark.
 	// Based on utils.h IS_DARK() macro — checks ROOM_DARK flag.
 	IsRoomDark(roomVNum int) bool

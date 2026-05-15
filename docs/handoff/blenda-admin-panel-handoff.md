@@ -2,7 +2,8 @@
 
 **Date:** 2026-05-14  
 **From:** Daeron + The Architect  
-**Status:** Phases 0-7 complete. Agent integration partially wired.
+**Reviewed by:** Blenda  
+**Status:** Phases 0-7 complete. Agent integration wiring in progress.
 
 ---
 
@@ -107,9 +108,9 @@ The admin API is bidirectional. Agents write to it (status, findings, triage), t
 - Neither calls `POST /admin/agents/:id/status` after runs
 - The agent store has seeded static entries that reset on restart
 
-**2. AgentStore is in-memory only.**
+**2. AgentStore is in-memory only.** ✅ FIXING
 - All findings, triage summaries, and agent statuses lost on server restart
-- Needs persistence: JSON file, SQLite, or PostgreSQL
+- **Decision: JSON file persistence** (see below)
 
 **3. Webhook triggers not implemented.**
 - `POST /admin/trigger/reek-crawl` — SPA button to kick off Reek
@@ -120,20 +121,33 @@ The admin API is bidirectional. Agents write to it (status, findings, triage), t
 **4. No per-agent detail view.**
 - `GET /admin/agents/:id` not routed — can't see agent config, memory, or run history
 
+**5. No retry/failure handling for agent self-reporting.**
+- If the DP server is down when an agent tries to POST, the finding is lost
+- **Decision: agents log fallback to local file, pick up on next run**
+
+**6. Findings ↔ Linear source-of-truth is undefined.** ✅ DECIDED (see below)
+
+
 ### How to Wire the Self-Reporting
 
-The agents need to POST to the admin API after each run. Two approaches:
+**Decision: Option A — agents call the API directly.**
 
-**Option A: Agents call the API directly (simpler)**
-- Add standing order instructions to Daeron's AGENTS.md: after triage, POST findings + status to admin API
-- Add instructions to Reek's cron job: after crawl, POST findings + status to admin API
-- Agents need HTTP access to localhost:4350 (same machine or network)
-- Example: `curl -X POST http://localhost:4350/admin/agents/daeron/status -H 'Authorization: Bearer $TOKEN' -H 'Content-Type: application/json' -d '{"status":"active","model":"mimo-v2.5-base"}'`
+Agents POST to the admin API after each run using a shared service account token (`DP_ADMIN_TOKEN`). Both agents run on the same machine as the DP server (karl-havoc → domain-expansion via network).
 
-**Option B: OpenClaw Gateway integration (more robust)**
-- Standing orders in AGENTS.md already define the programs — agents just need to also write to the admin API
-- Cron jobs already exist for Reek (3 AM) and Daeron (7:30 AM) — add API calls to their execution flow
-- The Gateway's cron system persists jobs at `~/.openclaw/cron/jobs.json` — agent runs are already tracked as background tasks
+**Daeron (after triage run):**
+1. Read `/admin/findings?status=open` to get unconfirmed findings
+2. For each confirmed finding: `PUT /admin/findings/:id` with `status=confirmed` and `linear_issue_id=DP-XXX`
+3. `POST /admin/agents/daeron/status` with `status=idle`
+4. `POST /admin/triage/summaries` with daily summary stats
+
+**Reek (after crawl run):**
+1. For each finding: `POST /admin/findings` with source=reek, severity, title, file, line, description
+2. `POST /admin/agents/reek/status` with `status=idle`
+3. If API is unreachable: append finding to `~/.openclaw/workspace-daeron/failed_findings.jsonl`, replay next run
+
+**Pre-run status update (both agents):**
+1. `POST /admin/agents/:id/status` with `status=active`
+2. This gives the SPA a live view of what agents are doing right now
 
 ### How to Wire the Webhook Triggers
 
@@ -149,14 +163,62 @@ The SPA needs to trigger agent work on-demand. The OpenClaw Gateway has an API t
 - `openclaw cron add --name "trigger" --at now --session <session> --system-event "<prompt>" --delete-after-run`
 - Or use the Gateway HTTP API directly (see https://docs.openclaw.ai/automation/cron-jobs)
 
+**Security:** Gateway token must be scoped. Generate via OpenClaw auth, NOT the main admin token.
+
 ### Recommended Wiring Order
 
-1. **Persistence first** — AgentStore → JSON file or SQLite (data survives restart)
-2. **Self-reporting** — Add curl/HTTP calls to Daeron + Reek standing orders
-3. **Findings pipeline** — Reek writes to `POST /admin/findings` instead of Discord
-4. **Triage pipeline** — Daeron writes to `POST /admin/triage/summaries` after Linear triage
+1. **Persistence** — AgentStore → JSON file (`data/admin_store.json`, atomic write) ✅ IN PROGRESS
+2. **Service account** — Generate builder-scoped JWT, store as `DP_ADMIN_TOKEN` ✅ IN PROGRESS
+3. **Reek self-reporting** — POST findings + status after crawl, with fallback logging
+4. **Daeron self-reporting** — POST triage + finding status + Linear link after triage
 5. **Webhook triggers** — SPA buttons → admin API → OpenClaw Gateway → agent wakes
 6. **Agent detail view** — `GET /admin/agents/:id` with config, memory, run history
+
+---
+
+## Blenda's Architectural Decisions
+
+### Source of Truth: Admin API ≠ Linear
+
+**Admin API is primary for findings (operational telemetry).** Raw findings from Reek crawl, severity, file/line, status. Fast, real-time, queryable.
+
+**Linear is primary for work items (tasks).** Issues with assignees, due dates, status workflows, comments. Daeron already writes there.
+
+**The bridge is one-way:** Daeron triages a finding and decides it needs action → creates Linear issue AND updates finding status to `confirmed` with `linear_issue_id`. Finding → issue. Not a sync.
+
+```
+Reek crawl → POST /admin/findings (raw finding)
+Daeron triage → reads /admin/findings
+Daeron decides "needs fix" →
+  1. Update finding: status=confirmed, linear_issue_id=DP-XXX
+  2. Create/update Linear issue (already does this)
+SPA displays finding with link to Linear issue
+```
+
+**Why not two-way sync:** State diverges, updates conflict, you spend more time debugging sync than building features. One-way link, no conflict resolution.
+
+### Persistence: JSON File
+
+**Chosen over SQLite because:** low volume (append-heavy findings/triage), no concurrent writes from multiple processes (single Go binary), simpler to implement and debug.
+
+Implementation: `AgentStore` writes to `data/admin_store.json` on every mutation (atomic write via temp + rename). Loads on startup. File path configurable via `ADMIN_STORE_PATH` env var.
+
+### Service Account for Agents
+
+Agents need an API token to POST to the admin endpoints. Two options:
+
+1. **Static long-lived token** — generated at deploy time, stored in env var `ADMIN_AGENT_TOKEN`. Admin router accepts this token as alternative auth.
+2. **OpenClaw-mediated** — agents call through OpenClaw Gateway which holds the token.
+
+**Decision: static long-lived token** (simpler, agents run on same machine). Token is a builder-scoped JWT with a long expiry. Generated once, stored in `~/.openclaw/.env` as `DP_ADMIN_TOKEN`. Both Daeron and Reek reference it from their standing orders.
+
+### Webhook Trigger Security
+
+The Go server will hold an OpenClaw Gateway auth token to trigger cron/wake events. This token must be scoped — NOT the main admin token. Generate via OpenClaw's auth system.
+
+### Retry/Failure Handling
+
+Agents will attempt the API call once. If it fails (server down, network error), the finding data is logged to a local JSONL file (`~/.openclaw/workspace-daeron/failed_findings.jsonl`). On the next run, the agent reads the backlog and replays.
 
 ---
 
@@ -211,7 +273,7 @@ go test -race ./pkg/admin/... -v
 |------|-----|
 | `PLAN-web-admin-architecture.md` | Full spec — Section 6 is the agent integration architecture |
 | `pkg/admin/handlers.go` | All API handlers — read this to understand what's wired |
-| `pkg/admin/agent_store.go` | In-memory agent/finding/triage store |
+| `pkg/admin/agent_store.go` | Agent/finding/triage store (in-memory + JSON persistence) |
 | `pkg/admin/router.go` | Route registration with auth roles |
 | `admin-ui/src/api/client.ts` | Frontend API client — all endpoints typed |
 | `admin-ui/src/pages/AgentsPage.tsx` | Agent cards + findings feed + triage summaries |

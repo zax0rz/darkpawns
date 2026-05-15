@@ -450,6 +450,11 @@ func (o *ObjectInstance) SetTimer(timer int) {
 	o.Timer = timer
 }
 
+// GetInstanceID returns the unique runtime instance ID of this object.
+func (o *ObjectInstance) GetInstanceID() int {
+	return o.ID
+}
+
 // GetExtraFlags returns the effective extra flags, preferring instance overrides.
 // Returns all 4 flag words as a slice.
 func (o *ObjectInstance) GetExtraFlags() [4]int {

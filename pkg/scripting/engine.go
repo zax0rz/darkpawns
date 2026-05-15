@@ -648,6 +648,15 @@ func (e *Engine) charToTableLocked(player ScriptablePlayer, globalName string) {
 	skillsTbl := L.NewTable()
 	tbl.RawSetString("skills", skillsTbl)
 
+	// Objs — inventory items. Source: scripts.c char_to_table() lines 1842-1849.
+	if items := player.GetInventoryItems(); len(items) > 0 {
+		objsTbl := L.NewTable()
+		for i, obj := range items {
+			objsTbl.RawSetInt(i+1, e.objToTable(obj))
+		}
+		tbl.RawSetString("objs", objsTbl)
+	}
+
 	// Store pointer to struct for write-back
 	tbl.RawSetString("struct", lua.LNumber(player.GetID()))
 
@@ -695,27 +704,38 @@ func (e *Engine) mobToTableLocked(mob ScriptableMob, globalName string) {
 	L.SetGlobal(globalName, tbl)
 }
 
-// objToTableLocked converts a ScriptableObject to a Lua table. Caller must hold e.mu.
+// objToTable creates a Lua table from a ScriptableObject, suitable for nesting
+// or as a standalone value. Caller must hold e.mu.
 // Based on obj_to_table() in scripts.c lines 1918-2016.
-func (e *Engine) objToTableLocked(obj ScriptableObject, globalName string) {
+func (e *Engine) objToTable(obj ScriptableObject) *lua.LTable {
 	L := e.l
 	tbl := L.NewTable()
 
-	// Basic fields
-	tbl.RawSetString("vnum", lua.LNumber(obj.GetVNum()))
-	tbl.RawSetString("alias", lua.LString(obj.GetKeywords()))
+	// Basic fields — matching C obj_to_table
 	tbl.RawSetString("name", lua.LString(obj.GetShortDesc()))
+	tbl.RawSetString("alias", lua.LString(obj.GetKeywords()))
+	tbl.RawSetString("vnum", lua.LNumber(obj.GetVNum()))
 	tbl.RawSetString("cost", lua.LNumber(obj.GetCost()))
-	tbl.RawSetString("timer", lua.LNumber(obj.GetTimer()))
 	tbl.RawSetString("type", lua.LNumber(obj.GetTypeFlag()))
-
-	// Object prototype fields (stubbed)
+	tbl.RawSetString("timer", lua.LNumber(obj.GetTimer()))
 	tbl.RawSetString("perc_load", lua.LNumber(0)) // Default 0% load chance
 
-	// Store pointer to struct for write-back
+	// obj_id — unique instance ID for runtime reference (steal, etc.)
+	// The C version stores a raw struct pointer via lua_pushuserdata.
+	// We store the integer ID and look up via World.GetObjByInstanceID().
+	tbl.RawSetString("obj_id", lua.LNumber(obj.GetInstanceID()))
+
+	// struct field — for C compatibility, store vnum (legacy scripts may reference it)
 	tbl.RawSetString("struct", lua.LNumber(obj.GetVNum()))
 
-	L.SetGlobal(globalName, tbl)
+	return tbl
+}
+
+// objToTableLocked converts a ScriptableObject to a Lua table and sets it as a global.
+// Caller must hold e.mu.
+func (e *Engine) objToTableLocked(obj ScriptableObject, globalName string) {
+	tbl := e.objToTable(obj)
+	e.l.SetGlobal(globalName, tbl)
 }
 
 // tableToCharLocked reads back changes from the ch table. Caller must hold e.mu.
@@ -2897,34 +2917,73 @@ func (e *Engine) luaIshunt(L *lua.LState) int {
 }
 
 func (e *Engine) luaSteal(L *lua.LState) int {
-	// steal(ch, obj) - steal an item from a character's inventory.
-	// Simplified: transfers the object from the victim to the mob.
+	// steal(victim, obj) — steal a specific item from a character's inventory.
+	// Source: scripts.c lua_steal() lines 1491-1512.
+	// The C version takes two tables: victim table and object table.
+	// It extracts struct pointers from both, calls obj_from_char(obj) then obj_to_char(obj, me).
+	// Our version uses obj_id from the object table to look up the instance.
 	if e.world == nil {
 		return 0
 	}
-	// Arguments: mob_table, victim_name (or victim_table)
 	if L.GetTop() < 2 {
 		return 0
 	}
-	victimName := L.ToString(2)
-	// Get mob room for the stolen item destination
-	mobTbl, ok := L.Get(1).(*lua.LTable)
+
+	// Arg 1: victim table — extract victim name for logging
+	victTbl, ok := L.Get(1).(*lua.LTable)
 	if !ok {
 		return 0
 	}
-	L.GetField(mobTbl, "room")
-	roomVNum := int(L.ToNumber(-1))
-	L.Pop(1)
-
-	// Try to steal a random item from victim and give to mob room
-	if roomVNum > 0 && victimName != "" {
-		obj := e.world.StealRandomItemFromChar(victimName)
-		if obj != nil {
-			if err := e.world.AddItemToRoom(obj, roomVNum); err != nil {
-				slog.Debug("luaStealItem: AddItemToRoom error", "room_vnum", roomVNum, "error", err)
-			}
-		}
+	victimName := ""
+	if nameVal := victTbl.RawGetString("name"); nameVal.Type() == lua.LTString {
+		victimName = string(nameVal.(lua.LString))
 	}
+
+	// Arg 2: object table — extract obj_id (instance ID)
+	objTbl, ok := L.Get(2).(*lua.LTable)
+	if !ok {
+		return 0
+	}
+	objIDVal := objTbl.RawGetString("obj_id")
+	if objIDVal.Type() != lua.LTNumber {
+		slog.Debug("luaSteal: obj table has no obj_id field")
+		return 0
+	}
+	objInstanceID := int(objIDVal.(lua.LNumber))
+	if objInstanceID <= 0 {
+		slog.Debug("luaSteal: invalid obj_id", "obj_id", objInstanceID)
+		return 0
+	}
+
+	// Remove the object from its current owner (player/mob inventory or room)
+	obj := e.world.RemoveObjByInstanceID(objInstanceID)
+	if obj == nil {
+		slog.Debug("luaSteal: object not found by instance ID", "obj_id", objInstanceID)
+		return 0
+	}
+
+	// Get the mob ("me") — the mob running the script
+	meTbl := L.GetGlobal("me")
+	if meTbl.Type() != lua.LTTable {
+		slog.Debug("luaSteal: global 'me' is not a table")
+		return 0
+	}
+
+	// The mob's instance ID is stored in the "struct" field
+	meStructVal := meTbl.(*lua.LTable).RawGetString("struct")
+	if meStructVal.Type() != lua.LTNumber {
+		slog.Debug("luaSteal: 'me' table has no struct field")
+		return 0
+	}
+	mobID := int(meStructVal.(lua.LNumber))
+
+	// Give the stolen item to the mob's inventory (obj_to_char(obj, me))
+	if err := e.world.GiveItemToMob(mobID, obj); err != nil {
+		slog.Debug("luaSteal: GiveItemToMob error", "mob_id", mobID, "error", err)
+		return 0
+	}
+
+	slog.Debug("luaSteal: item stolen", "victim", victimName, "obj_id", objInstanceID, "mob_id", mobID)
 	return 0
 }
 

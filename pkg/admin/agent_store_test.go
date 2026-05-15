@@ -1,11 +1,20 @@
 package admin
 
 import (
+	"path/filepath"
 	"testing"
 )
 
+// tempStorePath returns a temp file path for a test store and a cleanup function.
+func tempStorePath(t *testing.T) (string, func()) {
+	t.Helper()
+	dir := t.TempDir()
+	return filepath.Join(dir, "admin_store.json"), func() {}
+}
+
 func TestAgentStore_New(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	agents := store.GetAgents()
 	if len(agents) != 2 {
 		t.Errorf("expected 2 agents (daeron, reek), got %d", len(agents))
@@ -13,7 +22,8 @@ func TestAgentStore_New(t *testing.T) {
 }
 
 func TestAgentStore_UpdateStatus(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 
 	// Update daeron to "active"
 	agent, ok := store.UpdateAgentStatus("daeron", "active")
@@ -39,7 +49,8 @@ func TestAgentStore_UpdateStatus(t *testing.T) {
 }
 
 func TestAgentStore_UpdateStatusUnknown(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	_, ok := store.UpdateAgentStatus("nonexistent", "active")
 	if ok {
 		t.Error("UpdateAgentStatus should return false for unknown agent")
@@ -47,7 +58,8 @@ func TestAgentStore_UpdateStatusUnknown(t *testing.T) {
 }
 
 func TestAgentStore_AddAndGetFindings(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 
 	// Add findings
 	f1 := store.AddFinding("reek", "high", "nil panic", "handlers.go", 42, "potential nil dereference")
@@ -71,7 +83,8 @@ func TestAgentStore_AddAndGetFindings(t *testing.T) {
 }
 
 func TestAgentStore_FindingsFiltered(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 
 	store.AddFinding("reek", "critical", "CRIT-001", "panic.go", 1, "critical bug")
 	store.AddFinding("reek", "high", "HIGH-001", "server.go", 2, "high bug")
@@ -97,7 +110,8 @@ func TestAgentStore_FindingsFiltered(t *testing.T) {
 }
 
 func TestAgentStore_UpdateFindingStatus(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 
 	f := store.AddFinding("reek", "high", "test", "file.go", 1, "desc")
 	if f.ID != 1 {
@@ -127,7 +141,8 @@ func TestAgentStore_UpdateFindingStatus(t *testing.T) {
 }
 
 func TestAgentStore_TriageSummaries(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 
 	// Add summaries
 	s1 := store.AddTriageSummary("2026-05-01", "Good day", 5, 1, 2)
@@ -150,7 +165,8 @@ func TestAgentStore_TriageSummaries(t *testing.T) {
 }
 
 func TestAgentStore_EmptyFindings(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 	findings := store.GetFindings("", "", "")
 	if len(findings) != 0 {
 		t.Errorf("new store should have 0 findings, got %d", len(findings))
@@ -158,7 +174,8 @@ func TestAgentStore_EmptyFindings(t *testing.T) {
 }
 
 func TestAgentStore_ThreadSafety(t *testing.T) {
-	store := NewAgentStore()
+	path, _ := tempStorePath(t)
+	store := NewAgentStore(path)
 
 	done := make(chan bool)
 	go func() {

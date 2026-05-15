@@ -1,6 +1,9 @@
 package game
 
-import "github.com/zax0rz/darkpawns/pkg/engine"
+import (
+	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/scripting"
+)
 
 func (p *Player) HasSpellAffect(spellID int) bool {
 	p.mu.RLock()
@@ -199,6 +202,18 @@ func (p *Player) SendMessage(msg string) {
 	if sink != nil {
 		sink(p.Name, []byte(msg))
 	}
+}
+
+// GetInventoryItems returns the player's carried objects as ScriptableObject slices.
+// Source: scripts.c char_to_table() — ch->carrying loop populates "objs" field.
+func (p *Player) GetInventoryItems() []scripting.ScriptableObject {
+	p.Inventory.mu.RLock()
+	defer p.Inventory.mu.RUnlock()
+	result := make([]scripting.ScriptableObject, 0, len(p.Inventory.Items))
+	for _, item := range p.Inventory.Items {
+		result = append(result, &scriptableObjInstanceWrapper{item: item})
+	}
+	return result
 }
 
 // StopFighting clears the fighting target.

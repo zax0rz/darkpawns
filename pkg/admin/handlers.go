@@ -1615,19 +1615,26 @@ func handleFindingByID(store *AgentStore) http.HandlerFunc {
 		}
 
 		var req struct {
-			Status string `json:"status"`
+			Status        string `json:"status"`
+			LinearIssueID string `json:"linear_issue_id"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
 			return
 		}
 
-		if req.Status == "" {
-			http.Error(w, `{"error":"status is required"}`, http.StatusBadRequest)
+		if req.Status == "" && req.LinearIssueID == "" {
+			http.Error(w, `{"error":"status or linear_issue_id is required"}`, http.StatusBadRequest)
 			return
 		}
 
-		finding, ok := store.UpdateFindingStatus(id, req.Status)
+		var finding *Finding
+		var ok bool
+		if req.LinearIssueID != "" {
+			finding, ok = store.UpdateFinding(id, req.Status, req.LinearIssueID)
+		} else {
+			finding, ok = store.UpdateFindingStatus(id, req.Status)
+		}
 		if !ok {
 			http.Error(w, `{"error":"finding not found"}`, http.StatusNotFound)
 			return

@@ -597,3 +597,16 @@ Subagent tools (sessions_spawn, sessions_yield, subagents) added to Daeron's too
 - **Reek accuracy audit:** Reek flagged "3 inconsistent locking regimes across 8+ files." Actual: 2 bugs in 2 files. This is a concrete data point for "AI code review false positive rate" — the analysis was directionally correct (real race conditions exist) but overcounted affected files. Useful for the methodology section on triage fidelity.
 - **Subagent parallelism:** Two subagents dispatched in parallel (world write methods + React editors). Both completed successfully in ~2 minutes each. This validates the orchestration pattern: dispatch bounded workers for repetitive, well-specified tasks.
 - **Admin panel as contribution:** The admin panel went from "18 QA bugs fixed" (session 38) to "Phase 4 fully wired" (session 39) in one evening. Total: ~15K lines of admin tooling. This is a concrete artifact for the paper — a web admin panel for a MUD, built entirely by AI agents with human oversight.
+
+## [SESSION 40] 2026-05-14 late — Admin Panel Handoff Complete
+
+### What happened
+- BRENDA completed agent integration wiring: AgentStore JSON persistence, `linear_issue_id` on findings, `admin_api.sh` helper, both agents' AGENTS.md wired for self-reporting.
+- Architectural decision: one-way bridge from findings → Linear (not two-way sync). Admin API = operational telemetry, Linear = work items.
+- Blocked only on JWT token generation (domain-expansion drive swap).
+
+### Paper-relevant
+- **Multi-agent collaboration architecture:** The closed loop is now: Reek crawls → POST findings → Daeron triages → confirms/rejects → Linear issues → admin panel shows bridge. Three agents (Reek, Daeron, BRENDA) with distinct roles: crawler, analyst, infrastructure. Human (The Architect) as approval gate. This is a concrete instance of the "human-AI collaboration" pattern the paper describes.
+- **Tool-mediated coordination:** Agents don't talk to each other directly. They communicate through shared infrastructure: the admin API (writes), Linear (work tracking), Discord (announcements), and the codebase (source of truth). This is a deliberate architectural choice — loose coupling via shared tools rather than tight coupling via direct agent-to-agent messaging.
+- **Persistence as trust boundary:** The AgentStore persistence decision (JSON file, atomic writes) is a trust boundary. Agent state survives restarts, which means the admin panel becomes a reliable operational dashboard rather than a ephemeral view. This matters for the paper's argument about production-readiness of multi-agent systems.
+- **100 issues closed:** Board status as of session 40: 100 issues fixed/closed across 40 sessions. The admin panel is complete through Phase 7. Agent integration is wired. The system is now in a state where the paper's methodology can be demonstrated with real data.

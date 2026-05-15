@@ -174,6 +174,18 @@ func (a *WorldScriptableAdapter) StealRandomItemFromChar(charName string) script
 	return a.world.StealRandomItemFromChar(charName)
 }
 
+func (a *WorldScriptableAdapter) RemoveObjByInstanceID(objInstanceID int) scripting.ScriptableObject {
+	return a.world.RemoveObjByInstanceID(objInstanceID)
+}
+
+func (a *WorldScriptableAdapter) GiveItemToMob(mobID int, obj scripting.ScriptableObject) error {
+	return a.world.GiveItemToMob(mobID, obj)
+}
+
+func (a *WorldScriptableAdapter) GetObjByInstanceID(id int) scripting.ScriptableObject {
+	return a.world.GetObjByInstanceID(id)
+}
+
 func (a *WorldScriptableAdapter) GiveItemToChar(charName string, obj scripting.ScriptableObject) error {
 	return a.world.GiveItemToCharScriptable(charName, obj)
 }
@@ -337,6 +349,10 @@ func (w *scriptableObjWrapper) GetTypeFlag() int {
 	return w.obj.TypeFlag
 }
 
+func (w *scriptableObjWrapper) GetInstanceID() int {
+	return 0 // prototype wrapper has no instance ID
+}
+
 // scriptableObjInstanceWrapper wraps ObjectInstance to implement ScriptableObject.
 // Used by item-transfer Lua functions (objfrom/objto) to carry live instances.
 type scriptableObjInstanceWrapper struct {
@@ -350,6 +366,7 @@ func (w *scriptableObjInstanceWrapper) GetCost() int         { return w.item.Get
 func (w *scriptableObjInstanceWrapper) GetTimer() int        { return w.item.GetTimer() }
 func (w *scriptableObjInstanceWrapper) SetTimer(t int)       { w.item.SetTimer(t) }
 func (w *scriptableObjInstanceWrapper) GetTypeFlag() int     { return w.item.GetTypeFlag() }
+func (w *scriptableObjInstanceWrapper) GetInstanceID() int { return w.item.ID }
 
 // objectInstanceFromScriptable extracts the underlying ObjectInstance from a
 // scriptableObjInstanceWrapper, returning nil for other ScriptableObject types.
@@ -451,6 +468,78 @@ func (w *World) GiveItemToCharScriptable(charName string, obj scripting.Scriptab
 		return fmt.Errorf("GiveItemToChar: object is not an ObjectInstance")
 	}
 	return p.Inventory.addItem(item)
+}
+
+// RemoveObjByInstanceID removes an object by its unique instance ID from its current
+// owner (player inventory, mob inventory, or room). Returns the removed object, or nil.
+// Source: scripts.c lua_steal() — obj_from_char(obj).
+func (w *World) RemoveObjByInstanceID(objInstanceID int) scripting.ScriptableObject {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	// Check player inventories
+	for _, p := range w.players {
+		for i, item := range p.Inventory.Items {
+			if item.ID == objInstanceID {
+				p.Inventory.Items = append(p.Inventory.Items[:i], p.Inventory.Items[i+1:]...)
+				item.Location = LocNowhere()
+				return &scriptableObjInstanceWrapper{item: item}
+			}
+		}
+	}
+
+	// Check mob inventories
+	for _, m := range w.activeMobs {
+		for i, item := range m.Inventory {
+			if item.ID == objInstanceID {
+				m.Inventory = append(m.Inventory[:i], m.Inventory[i+1:]...)
+				item.Location = LocNowhere()
+				return &scriptableObjInstanceWrapper{item: item}
+			}
+		}
+	}
+
+	// Check rooms
+	for roomVNum, items := range w.roomItems {
+		for i, item := range items {
+			if item.ID == objInstanceID {
+				w.roomItems[roomVNum] = append(items[:i], items[i+1:]...)
+				item.RoomVNum = -1
+				item.Location = LocNowhere()
+				return &scriptableObjInstanceWrapper{item: item}
+			}
+		}
+	}
+
+	return nil
+}
+
+// GiveItemToMob adds a ScriptableObject to the specified mob's inventory.
+// Source: scripts.c lua_steal() — obj_to_char(obj, me).
+func (w *World) GiveItemToMob(mobID int, obj scripting.ScriptableObject) error {
+	w.mu.RLock()
+	mob, ok := w.activeMobs[mobID]
+	w.mu.RUnlock()
+	if !ok {
+		return fmt.Errorf("mob instance %d not found", mobID)
+	}
+	item := objectInstanceFromScriptable(obj)
+	if item == nil {
+		return fmt.Errorf("GiveItemToMob: object is not an ObjectInstance")
+	}
+	mob.AddToInventory(item)
+	return nil
+}
+
+// GetObjByInstanceID returns an object by its unique instance ID, or nil.
+func (w *World) GetObjByInstanceID(id int) scripting.ScriptableObject {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+
+	if obj, ok := w.objectInstances[id]; ok {
+		return &scriptableObjInstanceWrapper{item: obj}
+	}
+	return nil
 }
 
 // FireMobFightScript fires the "fight" trigger on a mob after a combat round.
