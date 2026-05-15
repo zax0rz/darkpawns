@@ -54,9 +54,9 @@ func TestCreateMoneyDesc(t *testing.T) {
 		want   string
 	}{
 		{1, "a gold coin"},
-		{2, "a pile of 2 gold coins"},
-		{100, "a pile of 100 gold coins"},
-		{1000, "a pile of 1000 gold coins"},
+		{2, "a tiny pile of gold coins"},
+		{100, "a small pile of gold coins"},
+		{1000, "a pile of gold coins"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.want, func(t *testing.T) {

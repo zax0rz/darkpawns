@@ -16,7 +16,7 @@ Maintained by Daeron. Updated per triage cycle.
 | CRIT-008 | HasMobFlag() bitmask dead code | mob.go:556, mob_flags_bits.go | REJECTED | Downgraded to LOW — bit path never called |
 | CRIT-009 | processCombatPair() vs MakeHit() dual path | pkg/combat/engine.go:236 + fight_core.go:759 | FIXED | MakeHit formally deadcoded with nolint. Zero callers confirmed. (BRENDA) |
 | CRIT-010 | load_messages() missing | pkg/combat/ (MESS_FILE) | FIXED | Skill message table + multi-variant damage messages + InitSkillMessages() wired at boot |
-| CRIT-011 | ActiveAffects data race — 3 inconsistent locking regimes | affect_update.go, follow.go, other_character.go, session/*.go | OPEN | w.mu vs p.mu vs no lock across 8+ files. Canonical mutex must be p.mu. |
+| CRIT-011 | ActiveAffects data race — 3 inconsistent locking regimes | affect_update.go, follow.go, other_character.go, session/*.go | FIXED | Unified all access to p.mu. Exported RLock/RUnlock on Player. Snapshot-copy pattern. (Daeron) |
 
 ## HIGH
 
@@ -109,9 +109,16 @@ Maintained by Daeron. Updated per triage cycle.
 | ID | Finding | File | Status | Notes |
 |---|---|---|---|---|
 | MED-028 | cmdReload %s in broadcast with no format args | pkg/session/wiz_system.go:70 | FIXED | fmt.Sprintf formats the message before SendToAll. (Daeron) |
-| MED-029 | movement_test.go dead test assertion (SA4017) | pkg/game/movement_test.go:260 | OPEN | Empty if-body — test silently passes. |
-| MED-030 | other_economy.go SetFollower error unchecked | pkg/game/other_economy.go:137 | OPEN | If follower registration fails, mob is charmed but not following. |
-| MED-031 | other_settings.go Fprintf error unchecked | pkg/game/other_settings.go:158 | OPEN | Failed write silently truncates player data. |
+| MED-029 | movement_test.go dead test assertion (SA4017) | pkg/game/movement_test.go:260 | FIXED | Test rewritten with proper assertion. |
+| MED-030 | other_economy.go SetFollower error unchecked | pkg/game/other_economy.go:137 | FIXED | Error checked with slog.Error. |
+| MED-031 | other_settings.go Fprintf error unchecked | pkg/game/other_settings.go:158 | FIXED | Error checked with slog.Error. |
+
+## NEW (May 15 Triage — Daeron)
+
+| ID | Finding | File | Status | Notes |
+|---|---|---|---|---|
+| NEW-008 | Redundant nested RLock in CalculateAC | pkg/session/equipment_ac.go:34-40 | FIXED | Removed inner RLock/RUnlock — outer defer covers entire function. |
+| NEW-009 | Stale test expectations for createMoneyDesc | pkg/game/death_test.go:65 | FIXED | Test expectations updated to match descriptive tier names (C-faithful rewrite). |
 
 ## LOW (May 13 Triage — Daeron)
 
@@ -124,12 +131,12 @@ Maintained by Daeron. Updated per triage cycle.
 | LOW-017 | unchecked SaveConfig error in cmdConfig | cmd/dp-agent/main.go:190 | FIXED | Added error check with slog.Error + os.Exit(1). (Daeron) |
 | LOW-018 | unchecked os.WriteFile error in dreaming result write | pkg/dreaming/dream.go:144 | FIXED | Wrapped with fmt.Errorf and returned. (Daeron) |
 | LOW-019 | three unchecked fs.Parse errors in dp-agent | cmd/dp-agent/main.go:104,127,156 | FIXED | All 5 fs.Parse calls now check errors. (Daeron) |
-| LOW-020 | generateAffectID uses timestamp+random, IDs never referenced | pkg/engine/affect.go:173 | OPEN | Uniqueness guarantee is fake — IDs never used externally. |
+| LOW-020 | generateAffectID uses timestamp+random, IDs never referenced | pkg/engine/affect.go:173 | OPEN | Uniqueness guarantee is fake — IDs never used externally. Cosmetic. |
 | LOW-021 | GetGlobalTickManager ignores parameter after first call | pkg/engine/affect_tick.go:120 | OPEN | sync.Once means only first caller's AffectManager is used. |
-| LOW-022 | Duplicate #nosec G404 comments (12 instances, 6 pairs) | pkg/engine/skill.go | OPEN | Code smell — each nosec appears twice on consecutive lines. |
-| LOW-023 | comm_infra.go ~300 lines self-described dead code | pkg/engine/comm_infra.go:1-300 | OPEN | DEPRECATED header, zero callers, kept for reference. |
-| LOW-024 | example_integration.go entire file is a comment block | pkg/engine/example_integration.go | OPEN | 75 lines commented-out scaffolding. |
-| LOW-025 | fight_core.go:1101 nested if/else should be switch (QF1003) | pkg/combat/fight_core.go:1101 | OPEN | Same pattern as LOW-004, different location. |
+| LOW-022 | Duplicate #nosec G404 comments (12 instances, 6 pairs) | pkg/engine/skill.go | FIXED | Duplicates cleaned. |
+| LOW-023 | comm_infra.go ~300 lines self-described dead code | pkg/engine/comm_infra.go:1-300 | FIXED | File deleted. |
+| LOW-024 | example_integration.go entire file is a comment block | pkg/engine/example_integration.go | FIXED | File deleted. |
+| LOW-025 | fight_core.go:1101 nested if/else should be switch (QF1003) | pkg/combat/fight_core.go:1101 | REJECTED | Style preference — nested if/else is clear and correct. |
 
 ## Cycle History
 
@@ -144,4 +151,5 @@ Maintained by Daeron. Updated per triage cycle.
 | 2026-05-12 | pkg/game/ deep dive | 7 | 0 | 0% — Good reek |
 | 2026-05-13 | Wednesday deep dive (session/auth/privacy) | 7 | 1 | 12.5% — Good reek |
 | 2026-05-14 | Deep dive (engine/events/parser/command) + errcheck | 14 | 2 | 50% — Bad reek (errcheck noise) |
-| **Weekly** | **11 reports** | **215** | **11** | **4.9% — Good reek (overall) |
+| 2026-05-15 | Marathon review — all reports audited, tracker reconciled | 3 | 0 | 0% — Clean sweep |
+| **Weekly** | **12 reports** | **218** | **11** | **4.8% — Good reek (overall) |
