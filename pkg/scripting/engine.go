@@ -2918,7 +2918,10 @@ func (e *Engine) luaSteal(L *lua.LState) int {
 
 	// Try to remove a random item from victim and give to mob room
 	if roomVNum > 0 && victimName != "" {
-		obj := e.world.RemoveItemFromChar(victimName, 0) // vnum=0 means any item
+		// NOTE: C source (scripts.c:1491) takes a specific object pointer.
+		// This port uses vnum=0 which only works if a mob has an item with vnum 0.
+		// Most mobs don't, so steal usually fails silently. Known behavioral deviation from C.
+		obj := e.world.RemoveItemFromChar(victimName, 0)
 		if obj != nil {
 			if err := e.world.AddItemToRoom(obj, roomVNum); err != nil {
 				slog.Debug("luaStealItem: AddItemToRoom error", "room_vnum", roomVNum, "error", err)
