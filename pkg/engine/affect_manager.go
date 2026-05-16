@@ -233,10 +233,18 @@ func (am *AffectManager) GetAffects(entity Affectable) []*Affect {
 }
 
 // Tick processes all affects for all entities
+// Lock ordering: collect expired affects under lock, release lock,
+// then process removals and messages outside lock (DP-153).
 func (am *AffectManager) Tick() {
-	am.mu.Lock()
-	defer am.mu.Unlock()
+	// Phase 1: collect expired affects under lock
+	type expiredEntry struct {
+		entityID string
+		entity   Affectable
+		aff      *Affect
+	}
+	var expiredAffects []expiredEntry
 
+	am.mu.Lock()
 	for entityID, affects := range am.affects {
 		entity, exists := am.entityMap[entityID]
 		if !exists {
@@ -247,19 +255,24 @@ func (am *AffectManager) Tick() {
 		for _, aff := range affects {
 			// Apply periodic effects before ticking (so effects apply on the last tick)
 			am.applyPeriodicEffect(entity, aff)
-			
-			expired := aff.Tick()
 
-			if expired {
-				// Affect expired, remove its effects
-				am.removeAffectImmediate(entity, aff)
-				am.sendAffectMessage(entity, aff, false)
+			isExpired := aff.Tick()
+
+			if isExpired {
+				expiredAffects = append(expiredAffects, expiredEntry{entityID: entityID, entity: entity, aff: aff})
 			} else {
 				newAffects = append(newAffects, aff)
 			}
 		}
 
 		am.affects[entityID] = newAffects
+	}
+	am.mu.Unlock()
+
+	// Phase 2: process removals and messages outside lock
+	for _, entry := range expiredAffects {
+		am.removeAffectImmediate(entry.entity, entry.aff)
+		am.sendAffectMessage(entry.entity, entry.aff, false)
 	}
 }
 

@@ -114,10 +114,22 @@ func NewAffect(affectType AffectType, duration int, magnitude int, source string
 	}
 
 	// Set default StackID for certain affect types
+	// Status-flag affects must have StackIDs to prevent duplicates —
+	// without one, multiple instances accumulate and removal clears the
+	// bit even though other instances still need it (DP-152).
 	switch affectType {
 	case AffectPoison, AffectHaste, AffectSlow, AffectRegeneration:
 		affect.StackID = strconv.Itoa(int(affectType))
 		affect.MaxStacks = 1 // Most effects don't stack with themselves
+	case AffectBlind, AffectInvisible, AffectDetectInvisible, AffectDetectMagic,
+		AffectSanctuary, AffectFlying, AffectFloating, AffectPassDoor,
+		AffectSneak, AffectHide, AffectCharm, AffectSleep,
+		AffectStunned, AffectParalyzed, AffectFlaming,
+		AffectProtectionEvil, AffectProtectionGood,
+		AffectFear, AffectCurse, AffectSilence, AffectWaterBreathing,
+		AffectInfrared, AffectUltraviolet:
+		affect.StackID = strconv.Itoa(int(affectType))
+		affect.MaxStacks = 1
 	}
 
 	return affect

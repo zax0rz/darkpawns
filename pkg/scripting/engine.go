@@ -25,7 +25,7 @@ type Engine struct {
 	l            *lua.LState
 	mu           sync.Mutex
 	world        ScriptableWorld
-	transitItems map[int]*transitEntry // in-flight items moved by objfrom/objto
+	transitItems map[int]*transitEntry // in-flight items moved by objfrom/objto (key = instance ID)
 }
 
 // LState returns the underlying Lua state. The caller must NOT hold the engine mutex
@@ -147,10 +147,10 @@ func (e *Engine) cleanTransitItems() {
 	defer ticker.Stop()
 	for range ticker.C {
 		e.mu.Lock()
-		for vnum, entry := range e.transitItems {
+		for id, entry := range e.transitItems {
 			if time.Since(entry.placedAt) > transitItemTTL {
-				slog.Warn("transitItem orphaned, discarding", "vnum", vnum)
-				delete(e.transitItems, vnum)
+				slog.Warn("transitItem orphaned, discarding", "instanceID", id, "vnum", entry.obj.GetVNum())
+				delete(e.transitItems, id)
 			}
 		}
 		e.mu.Unlock()
@@ -1819,7 +1819,7 @@ func (e *Engine) luaObjFrom(L *lua.LState) int {
 	}
 
 	if removed != nil {
-		e.transitItems[vnum] = &transitEntry{obj: removed, placedAt: time.Now()}
+		e.transitItems[removed.GetInstanceID()] = &transitEntry{obj: removed, placedAt: time.Now()}
 	} else {
 		slog.Debug("objfrom: item not found", "vnum", vnum, "location", location)
 	}
@@ -1838,15 +1838,33 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 		return 0
 	}
 
-	vnumVal := L.GetField(itemTbl, "vnum")
-	if vnumVal.Type() != lua.LTNumber {
-		return 0
+	// Try instance ID first (obj_id field), fall back to vnum for legacy tables
+	instanceID := 0
+	objIDVal := L.GetField(itemTbl, "obj_id")
+	if objIDVal.Type() == lua.LTNumber {
+		instanceID = int(objIDVal.(lua.LNumber))
 	}
-	vnum := int(vnumVal.(lua.LNumber))
+	if instanceID <= 0 {
+		// Fall back to vnum — backward compat for manually constructed tables
+		vnumVal := L.GetField(itemTbl, "vnum")
+		if vnumVal.Type() != lua.LTNumber {
+			return 0
+		}
+		vnum := int(vnumVal.(lua.LNumber))
+		// Look up instance ID from the transit map by finding any entry with matching vnum
+		e.mu.Lock()
+		for id, entry := range e.transitItems {
+			if entry.obj.GetVNum() == vnum {
+				instanceID = id
+				break
+			}
+		}
+			e.mu.Unlock()
+	}
 
-	entry, ok := e.transitItems[vnum]
+	entry, ok := e.transitItems[instanceID]
 	if !ok {
-		slog.Debug("objto: no in-transit item", "vnum", vnum)
+		slog.Debug("objto: no in-transit item", "instanceID", instanceID)
 		return 0
 	}
 
@@ -1864,9 +1882,9 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 			return 0
 		}
 		if err := e.world.GiveItemToChar(charName, entry.obj); err != nil {
-			slog.Debug("objto: GiveItemToChar error", "char", charName, "vnum", vnum, "error", err)
+			slog.Debug("objto: GiveItemToChar error", "char", charName, "instanceID", instanceID, "error", err)
 		} else {
-			delete(e.transitItems, vnum)
+			delete(e.transitItems, instanceID)
 		}
 
 	case "room":
@@ -1888,9 +1906,9 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 			return 0
 		}
 		if err := e.world.AddItemToRoom(entry.obj, roomVNum); err != nil {
-			slog.Debug("objto: AddItemToRoom error", "room_vnum", roomVNum, "vnum", vnum, "error", err)
+			slog.Debug("objto: AddItemToRoom error", "room_vnum", roomVNum, "instanceID", instanceID, "error", err)
 		} else {
-			delete(e.transitItems, vnum)
+			delete(e.transitItems, instanceID)
 		}
 	}
 
