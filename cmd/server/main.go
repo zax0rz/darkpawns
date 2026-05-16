@@ -40,6 +40,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -211,8 +212,11 @@ func main() {
 	})
 	http.Handle("/admin/", web.AuthMiddleware(adminRouter))
 
-	// Start zone resets in background (initial + periodic every 60s)
+	// Track zone reset goroutine for graceful shutdown
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		slog.Info("Starting zone resets...")
 		if err := gameWorld.StartZoneResets(); err != nil {
 			slog.Error("Zone reset error", "error", err)
@@ -276,6 +280,10 @@ func main() {
 
 	<-sigChan
 	slog.Info("Shutting down...")
+
+	// Wait for zone resets to finish before saving — prevents concurrent
+	// writes to world state from corrupting the save file.
+	wg.Wait()
 
 	// Save dynamic world state before exit.
 	if err := game.SaveWorld(gameWorld); err != nil {

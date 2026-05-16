@@ -95,8 +95,7 @@ func doMemoryHookWithRetry(httpClient *http.Client, req *http.Request) error {
 
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
-		if attempt > 0 && body != nil {
-			// Re-create body for retry
+		if body != nil {
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
 
