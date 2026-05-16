@@ -301,17 +301,47 @@ func (w *World) lookAtTarget(ch *Player, arg string) {
 // lookAtChar — describes a character to the looker
 // ---------------------------------------------------------------------------
 
+// diagCondition returns a condition description based on HP percentage.
+// Port of C diag_char_to_char() from act.informative.c:354.
+func diagCondition(hp, maxHP int) string {
+	var percent int
+	if maxHP > 0 {
+		percent = (100 * hp) / maxHP
+	} else {
+		percent = -1
+	}
+
+	switch {
+	case percent >= 100:
+		return "is in excellent condition."
+	case percent >= 90:
+		return "has a few scratches."
+	case percent >= 75:
+		return "has some small wounds and bruises."
+	case percent >= 50:
+		return "has quite a few wounds."
+	case percent >= 30:
+		return "has some big nasty wounds and scratches."
+	case percent >= 15:
+		return "looks pretty hurt."
+	case percent >= 0:
+		return "is in awful condition."
+	default:
+		return "is bleeding awfully from big wounds."
+	}
+}
+
 func (w *World) lookAtChar(ch *Player, target interface{}) {
 	var buf string
 	switch v := target.(type) {
 	case *Player:
-		buf = fmt.Sprintf("%s is in excellent condition.\r\n", v.GetName())
+		buf = fmt.Sprintf("%s %s\r\n", v.GetName(), diagCondition(v.GetHP(), v.GetMaxHP()))
 	case *MobInstance:
 		shortDesc := v.GetShortDesc()
 		if shortDesc == "" {
 			shortDesc = v.Prototype.ShortDesc
 		}
-		buf = fmt.Sprintf("%s is in excellent condition.\r\n", shortDesc)
+		buf = fmt.Sprintf("%s %s\r\n", shortDesc, diagCondition(v.GetHP(), v.GetMaxHP()))
 	}
 	ch.SendMessage(buf)
 }

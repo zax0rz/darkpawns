@@ -73,11 +73,11 @@ const (
 	SpellPoison        = 33
 	SpellEarthquake    = 23
 	SpellDivineInt     = 81
-	SpellIntellect     = 81
+	SpellIntellect     = 88
 	SpellMindBar       = 82
 	SpellShockingGrasp = 37
 	SpellChillTouch    = 8
-	SpellEnergyDrain   = 21
+	SpellEnergyDrain   = 25
 	SpellSoulLeech     = 83
 	SpellPsiblast      = 100
 	SpellPetrify       = 104

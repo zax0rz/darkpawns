@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"unsafe"
 )
 
 // canTakeObj checks if a player can take an object
@@ -344,22 +345,30 @@ func (w *World) giveFindVict(ch *Player, arg string) *Player {
 }
 
 // performGiveGold gives gold coins to a player
+// Lock ordering: always lock by pointer address to prevent ABBA deadlock.
 func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 	if amount <= 0 {
 		ch.SendMessage("Heh heh heh ... we are jolly funny today, eh?\r\n")
 		return
 	}
 
-	ch.mu.Lock()
-	if ch != vict {
-		vict.mu.Lock()
+	// Consistent lock ordering by pointer address — prevents deadlock
+	// when two players exchange gold simultaneously.
+	first, second := ch, vict
+	if ch != vict && uintptr(unsafe.Pointer(&ch.mu)) > uintptr(unsafe.Pointer(&vict.mu)) {
+		first, second = vict, ch
+	}
+	first.mu.Lock()
+	if first != second {
+		second.mu.Lock()
 	}
 
+	// Always operate on ch/vict regardless of lock order
 	if ch.Gold < amount && ch.GetLevel() < lvlGod {
-		if ch != vict {
-			vict.mu.Unlock()
+		if first != second {
+			second.mu.Unlock()
 		}
-		ch.mu.Unlock()
+		first.mu.Unlock()
 		ch.SendMessage("You don't have that many coins!\r\n")
 		return
 	}
@@ -373,10 +382,10 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 	}
 	vict.Gold += amount
 
-	if ch != vict {
-		vict.mu.Unlock()
+	if first != second {
+		second.mu.Unlock()
 	}
-	ch.mu.Unlock()
+	first.mu.Unlock()
 }
 
 // doGive handles the give command

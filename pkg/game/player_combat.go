@@ -63,6 +63,8 @@ func (p *Player) GetHitroll() int {
 
 	total := p.Hitroll
 	if p.Equipment != nil {
+		p.Equipment.mu.RLock()
+		defer p.Equipment.mu.RUnlock()
 		for _, item := range p.Equipment.Slots {
 			if item == nil || item.Prototype == nil {
 				continue
@@ -94,6 +96,8 @@ func (p *Player) GetDamroll() int {
 
 	total := p.Damroll
 	if p.Equipment != nil {
+		p.Equipment.mu.RLock()
+		defer p.Equipment.mu.RUnlock()
 		for _, item := range p.Equipment.Slots {
 			if item == nil || item.Prototype == nil {
 				continue

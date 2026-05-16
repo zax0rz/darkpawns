@@ -39,24 +39,6 @@ func LoggingMiddleware() Middleware {
 	}
 }
 
-// RateLimitMiddleware returns a middleware that prevents command spam.
-// minInterval is the minimum time between commands from the same session.
-func RateLimitMiddleware(minInterval time.Duration) Middleware {
-	return func(next Handler) Handler {
-		var lastCommandTime time.Time
-
-		return func(s common.CommandSession, args []string) error {
-			now := time.Now()
-			if !lastCommandTime.IsZero() && now.Sub(lastCommandTime) < minInterval {
-				// Silently drop — rate limited
-				return nil
-			}
-			lastCommandTime = now
-			return next(s, args)
-		}
-	}
-}
-
 // WhitelistMiddleware returns a middleware that only allows specific commands.
 func WhitelistMiddleware(allowed ...string) Middleware {
 	allowedSet := make(map[string]bool)
