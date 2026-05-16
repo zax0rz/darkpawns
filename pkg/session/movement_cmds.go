@@ -308,12 +308,12 @@ func cmdFollowMovement(s *Session, args []string) error {
 
 	// follow self = stop following
 	if strings.EqualFold(targetName, s.player.Name) {
-		if s.player.Following == "" {
+		if s.player.GetFollowing() == "" {
 			s.Send("You are already following yourself.")
 			return nil
 		}
-		oldLeader := s.player.Following
-		s.player.Following = ""
+		oldLeader := s.player.GetFollowing()
+		s.player.SetFollowing("")
 		s.player.InGroup = false
 		s.Send(fmt.Sprintf("You stop following %s.", oldLeader))
 		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
@@ -334,21 +334,21 @@ func cmdFollowMovement(s *Session, args []string) error {
 	}
 
 	// Already following?
-	if s.player.Following == target.Name {
+	if s.player.GetFollowing() == target.Name {
 		s.Send(fmt.Sprintf("You are already following %s.", target.Name))
 		return nil
 	}
 
 	// Stop following previous leader
-	if s.player.Following != "" {
-		oldLeader := s.player.Following
+	if s.player.GetFollowing() != "" {
+		oldLeader := s.player.GetFollowing()
 		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
 			leader.SendMessage(fmt.Sprintf("%s stops following you.\r\n", s.player.Name))
 		}
 	}
 
 	// Set new follow target
-	s.player.Following = target.Name
+	s.player.SetFollowing(target.Name)
 	s.player.InGroup = false
 
 	s.Send(fmt.Sprintf("You now follow %s.", target.Name))

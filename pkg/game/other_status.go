@@ -16,15 +16,15 @@ func (w *World) doAFK(ch *Player, me *MobInstance, cmd string, arg string) bool 
 
 	if ch.GetFlags()&(1<<PrfAFK) != 0 {
 		ch.SetPlrFlag(PrfAFK, false)
-		ch.AFK = false
-		ch.AFKMessage = ""
+		ch.SetAFK(false)
+		ch.SetAFKMessage("")
 		msg := fmt.Sprintf("%s is no longer AFK.\r\n", ch.Name)
 		actToRoom(w, ch.GetRoomVNum(), msg, ch.Name)
 		ch.SendMessage("You are no longer AFK.\r\n")
 	} else {
 		ch.SetPlrFlag(PrfAFK, true)
-		ch.AFK = true
-		ch.AFKMessage = arg
+		ch.SetAFK(true)
+		ch.SetAFKMessage(arg)
 		msg := fmt.Sprintf("%s is now AFK.\r\n", ch.Name)
 		actToRoom(w, ch.GetRoomVNum(), msg, ch.Name)
 		if arg != "" {

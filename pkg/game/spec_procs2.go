@@ -331,7 +331,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			return true
 		}
 		horse.SetAffected(affCharm)
-		horse.Following = ch.Name
+		horse.SetFollowing(ch.Name)
 		horse.Runtime.Horse = &HorseState{CarryWeight: 1000, CarryNumber: 100, Move: 230, MaxMove: 230}
 		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s brings %s up from the stables out back.", mobName(me), mobName(horse)))
 		tellFromMob(me, ch, "That'll be 300 coins, treat'er well")
@@ -362,7 +362,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			return true
 		}
 		horse.RemoveAffected(affCharm)
-		horse.Following = ""
+		horse.SetFollowing("")
 		ch.MountRentTime = time.Now().Unix()
 		ch.MountVNum = horse.VNum
 		ch.MountCostDay = 5
@@ -395,7 +395,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		ch.MountCostDay = 0
 		ch.MountRentTime = 0
 		horse.SetAffected(affCharm)
-		horse.Following = ch.Name
+		horse.SetFollowing(ch.Name)
 		horse.Runtime.Horse = &HorseState{CarryWeight: 1000, CarryNumber: 100, Move: 230, MaxMove: 230}
 		ch.SetGold(ch.GetGold() - cost)
 		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s brings %s up from the stables out back.", mobName(me), mobName(horse)))

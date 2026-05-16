@@ -64,6 +64,13 @@ func (p *Player) GetAC() int {
 	return baseAC
 }
 
+// SetAC sets the player's base armor class (before equipment modifiers).
+func (p *Player) SetAC(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.AC = v
+}
+
 // GetHP returns the player's current health.
 func (p *Player) GetHP() int {
 	p.mu.RLock()

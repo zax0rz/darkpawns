@@ -21,7 +21,7 @@ func (w *World) GetFollowers(leaderName string) []*Player {
 
 	var followers []*Player
 	for _, p := range w.players {
-		if p.Following == leaderName {
+		if p.GetFollowing() == leaderName {
 			followers = append(followers, p)
 		}
 	}
@@ -36,7 +36,7 @@ func (w *World) GetFollowersInRoom(leaderName string, roomVNum int) []*Player {
 
 	var followers []*Player
 	for _, p := range w.players {
-		if p.Following == leaderName && p.GetRoom() == roomVNum {
+		if p.GetFollowing() == leaderName && p.GetRoom() == roomVNum {
 			followers = append(followers, p)
 		}
 	}
@@ -57,8 +57,8 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 
 	// Find the leader (ch->master ?? ch)
 	leaderName := p.Name
-	if p.Following != "" {
-		leaderName = p.Following
+	if p.GetFollowing() != "" {
+		leaderName = p.GetFollowing()
 	}
 	leader, ok := w.players[leaderName]
 	if !ok {
@@ -70,7 +70,7 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 		members = append(members, leader)
 	}
 	for _, follower := range w.players {
-		if follower.Following == leaderName && follower.InGroup {
+		if follower.GetFollowing() == leaderName && follower.InGroup {
 			members = append(members, follower)
 		}
 	}

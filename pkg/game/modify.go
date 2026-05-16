@@ -162,7 +162,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.AC = v
+		target.SetAC(v)
 		ch.SendMessage(fmt.Sprintf("%s's AC set to %d.\r\n", target.GetName(), v))
 	case "hitroll":
 		if value == "" {
@@ -236,7 +236,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be 0-2 (male/female/neutral).\r\n")
 			return true
 		}
-		target.Sex = v
+		target.SetSex(v)
 		ch.SendMessage(fmt.Sprintf("%s's sex set to %d.\r\n", target.GetName(), v))
 	case "room":
 		if value == "" {

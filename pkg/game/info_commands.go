@@ -159,12 +159,12 @@ func (w *World) doToggle(ch *Player, me *MobInstance, cmd string, arg string) bo
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
 		ch.SendMessage("Toggles:\r\n")
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autoexit", onOff(ch.AutoExit)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "holylight", onOff(ch.HolyLight)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "roomflags", onOff(ch.RoomFlags)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autogold", onOff(ch.AutoGold)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autosplit", onOff(ch.AutoSplit)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "nobroadcast", onOff(ch.NoBroadcast)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autoexit", onOff(ch.GetAutoExit())))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "holylight", onOff(ch.GetHolyLight())))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "roomflags", onOff(ch.GetRoomFlags())))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autogold", onOff(ch.GetAutoGold())))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autosplit", onOff(ch.GetAutoSplit())))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "nobroadcast", onOff(ch.GetNoBroadcast())))
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "color", flagOnOff(ch.GetFlags(), PrfColor1)))
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "brief", flagOnOff(ch.GetFlags(), PrfBrief)))
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "compact", flagOnOff(ch.GetFlags(), PrfCompact)))
@@ -172,7 +172,7 @@ func (w *World) doToggle(ch *Player, me *MobInstance, cmd string, arg string) bo
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "deaf", flagOnOff(ch.GetFlags(), PrfDeaf)))
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "nohassle", flagOnOff(ch.GetFlags(), PrfNohassle)))
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "summonable", flagOnOff(ch.GetFlags(), PrfSummonable)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "afk", onOff(ch.AFK)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "afk", onOff(ch.GetAFK())))
 		ch.SendMessage("Type 'toggle <name>' to change a setting.\r\n")
 		return true
 	}

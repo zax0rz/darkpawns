@@ -63,7 +63,7 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 	_ = mountAlreadyRidden
 
 	ch.SetAffect(affMounted, true)
-	ch.Following = mountMob.GetShortDesc()
+	ch.SetFollowing(mountMob.GetShortDesc())
 	ch.SendMessage(fmt.Sprintf("You climb onto %s.\r\n", mountMob.GetShortDesc()))
 	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s climbs onto %s.\r\n", ch.Name, mountMob.GetShortDesc()), ch.Name)
 	return true

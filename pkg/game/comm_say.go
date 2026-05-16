@@ -121,7 +121,7 @@ func (w *World) doSay(ch *Player, me *MobInstance, cmd string, arg string) bool 
 func (w *World) doGSay(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	arg = skipSpaces(arg)
 
-	if !ch.InGroup {
+	if !ch.IsInGroup() {
 		sendToChar(ch, "But you are not a member of any group!\r\n")
 		return true
 	}
@@ -135,8 +135,8 @@ func (w *World) doGSay(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	// Find group leader.
 	var leader *Player
-	if ch.Following != "" {
-		if l, ok := w.GetPlayer(ch.Following); ok {
+	if ch.GetFollowing() != "" {
+		if l, ok := w.GetPlayer(ch.GetFollowing()); ok {
 			leader = l
 		}
 	}
@@ -146,10 +146,10 @@ func (w *World) doGSay(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	// Broadcast to group members in the room.
 	for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
-		if p.Name == ch.Name || !p.InGroup {
+		if p.Name == ch.Name || !p.IsInGroup() {
 			continue
 		}
-		if p.Following == leader.Name || p.Name == leader.Name || ch.Following == p.Name {
+		if p.GetFollowing() == leader.Name || p.Name == leader.Name || ch.GetFollowing() == p.Name {
 			p.SendMessage(fmt.Sprintf("\x1B[1;37m%s\033[0m\r\n", msg))
 		}
 	}

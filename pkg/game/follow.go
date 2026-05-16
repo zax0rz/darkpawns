@@ -6,7 +6,7 @@
 //
 // In the original C code, followers are stored as a linked list on the
 // leader (ch->followers). In this Go port, followers are identified by
-// the string field Following (player.Following / mob.Following), which
+// the string field Following (player.Following / mob.GetFollowing()), which
 // stores the name of the leader. World-level queries scan the player and
 // mob tables to find followers of a given leader.
 //
@@ -37,10 +37,10 @@ func CircleFollow(w *World, ch *Player, victim *Player) bool {
 		if cur == ch {
 			return true
 		}
-		if cur.Following == "" {
+		if cur.GetFollowing() == "" {
 			return false
 		}
-		next, ok := w.GetPlayer(cur.Following)
+		next, ok := w.GetPlayer(cur.GetFollowing())
 		if !ok || next == nil {
 			return false
 		}
@@ -56,21 +56,21 @@ func CircleFollow(w *World, ch *Player, victim *Player) bool {
 // Caller must verify no follow loop exists first (use CircleFollow).
 // C: src/utils.c:463-475
 func AddFollowerQuiet(ch *Player, leader *Player) {
-	ch.Following = leader.Name
+	ch.SetFollowing(leader.Name)
 }
 
 // AddFollowerQuietMob adds a mob as a follower of a player (charmed pet, etc.)
 // without sending messages.
 // C: src/utils.c:463-475
 func AddFollowerQuietMob(mob *MobInstance, leader *Player) {
-	mob.Following = leader.Name
+	mob.SetFollowing(leader.Name)
 }
 
 // AddFollower adds ch as a follower of leader with notifications.
 // Caller must verify no follow loop exists first (use CircleFollow).
 // C: src/utils.c:480-498
 func AddFollower(w *World, ch *Player, leader *Player) {
-	ch.Following = leader.Name
+	ch.SetFollowing(leader.Name)
 
 	Act(w, false, ch, leader, nil, nil,
 		"You now follow $N.", "", ToChar)
@@ -89,12 +89,12 @@ func AddFollower(w *World, ch *Player, leader *Player) {
 // StopFollower removes ch from his master's follower list.
 // C: src/utils.c:397-440
 func StopFollower(w *World, ch *Player) {
-	if ch.Following == "" {
+	if ch.GetFollowing() == "" {
 		return
 	}
 
 	// Look up the leader for act messages that need $N.
-	leaderName := ch.Following
+	leaderName := ch.GetFollowing()
 	var leader Actor
 	if l, ok := w.GetPlayer(leaderName); ok {
 		leader = l
@@ -126,11 +126,11 @@ func StopFollower(w *World, ch *Player) {
 
 	// Clear the following field — this is the Go equivalent of removing ch from
 	// the leader's follower list.
-	ch.Following = ""
+	ch.SetFollowing("")
 
 	ch.SetAffect(affCharm, false)
-	if ch.InGroup {
-		ch.InGroup = false
+	if ch.IsInGroup() {
+		ch.SetInGroup(false)
 	}
 	ch.SetAffect(affGroup, false)
 }
@@ -138,11 +138,11 @@ func StopFollower(w *World, ch *Player) {
 // StopFollowerMob removes a mob from its master's follower list.
 // C: src/utils.c:397-440
 func StopFollowerMob(w *World, mob *MobInstance) {
-	if mob.Following == "" {
+	if mob.GetFollowing() == "" {
 		return
 	}
 
-	mob.Following = ""
+	mob.SetFollowing("")
 	mob.RemoveAffected(affCharm)
 	mob.RemoveAffected(affGroup)
 
@@ -161,20 +161,20 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 //     then for each k in ch->followers, stop_follower(k->follower)
 func (w *World) DieFollower(ch *Player) {
 	// If ch is following someone, stop following.
-	if ch.Following != "" {
+	if ch.GetFollowing() != "" {
 		StopFollower(w, ch)
 	}
 
 	// Find all followers of ch and make them stop following.
 	for _, p := range w.players {
-		if p.Following == ch.Name {
+		if p.GetFollowing() == ch.Name {
 			StopFollower(w, p)
 		}
 	}
 
 	// Also check mob followers (charmed pets following this player).
 	for _, mob := range w.activeMobs {
-		if mob.Following == ch.Name {
+		if mob.GetFollowing() == ch.Name {
 			StopFollowerMob(w, mob)
 		}
 	}
@@ -184,7 +184,7 @@ func (w *World) DieFollower(ch *Player) {
 // C: src/utils.c:447-457
 func (w *World) DieFollowerMob(mob *MobInstance) {
 	// If mob is following someone, stop following.
-	if mob.Following != "" {
+	if mob.GetFollowing() != "" {
 		StopFollowerMob(w, mob)
 	}
 

@@ -184,11 +184,11 @@ func (m *MobInstance) CanSpeak() bool {
 // --------------------------------------------------------------------------
 
 func (p *Player) StopFollower() {
-	if p.Following == "" {
+	if p.GetFollowing() == "" {
 		return
 	}
-	p.Following = ""
-	p.InGroup = false
+	p.SetFollowing("")
+	p.SetInGroup(false)
 }
 
 // --------------------------------------------------------------------------

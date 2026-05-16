@@ -17,12 +17,12 @@ func cmdFollow(s *Session, args []string) error {
 
 	// follow self = stop following (act.movement.c line 912–917)
 	if strings.EqualFold(targetName, s.player.Name) {
-		if s.player.Following == "" {
+		if s.player.GetFollowing() == "" {
 			s.sendText("You are already following yourself.")
 			return nil
 		}
-		oldLeader := s.player.Following
-		s.player.Following = ""
+		oldLeader := s.player.GetFollowing()
+		s.player.SetFollowing("")
 		s.player.InGroup = false // REMOVE_BIT AFF_GROUP — act.movement.c line 926
 		s.sendText(fmt.Sprintf("You stop following %s.", oldLeader))
 		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
@@ -43,21 +43,21 @@ func cmdFollow(s *Session, args []string) error {
 	}
 
 	// Already following? (act.movement.c line 904)
-	if s.player.Following == target.Name {
+	if s.player.GetFollowing() == target.Name {
 		s.sendText(fmt.Sprintf("You are already following %s.", target.Name))
 		return nil
 	}
 
 	// Stop following previous leader (act.movement.c line 924–925 stop_follower)
-	if s.player.Following != "" {
-		oldLeader := s.player.Following
+	if s.player.GetFollowing() != "" {
+		oldLeader := s.player.GetFollowing()
 		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
 			leader.SendMessage(fmt.Sprintf("%s stops following you.\r\n", s.player.Name))
 		}
 	}
 
 	// REMOVE_BIT AFF_GROUP — act.movement.c line 926 (leaving old group when changing leader)
-	s.player.Following = target.Name
+	s.player.SetFollowing(target.Name)
 	s.player.InGroup = false
 
 	// add_follower() — act.movement.c line 948
@@ -75,7 +75,7 @@ func cmdGroup(s *Session, args []string) error {
 	}
 
 	// Must have no master to enroll others — act.other.c line 699
-	if s.player.Following != "" {
+	if s.player.GetFollowing() != "" {
 		s.sendText("You cannot enroll group members without being head of a group.")
 		return nil
 	}
@@ -109,11 +109,11 @@ func cmdGroup(s *Session, args []string) error {
 
 	// Target must be following us — act.other.c line 721: vict->master != ch
 	// Agent exception: agents auto-follow and auto-accept the invite.
-	if target.Following != s.player.Name {
+	if target.GetFollowing() != s.player.Name {
 		targetSess, hasSess := s.manager.GetSession(target.Name)
 		if hasSess && targetSess.isAgent {
 			// Agent auto-follow — mirrors BRENDA accepting an invite
-			target.Following = s.player.Name
+			target.SetFollowing(s.player.Name)
 			target.InGroup = false
 			target.SendMessage(fmt.Sprintf("You start following %s.\r\n", s.player.Name))
 			s.sendText(fmt.Sprintf("%s starts following you.", target.Name))
@@ -150,8 +150,8 @@ func printGroup(s *Session) error {
 	}
 
 	leaderName := s.player.Name
-	if s.player.Following != "" {
-		leaderName = s.player.Following
+	if s.player.GetFollowing() != "" {
+		leaderName = s.player.GetFollowing()
 	}
 
 	leader, ok := s.manager.world.GetPlayer(leaderName)
@@ -182,7 +182,7 @@ func printGroup(s *Session) error {
 func cmdUngroup(s *Session, args []string) error {
 	// No args: disband if leader — act.other.c lines 752–770
 	if len(args) == 0 {
-		if s.player.Following != "" || !s.player.InGroup {
+		if s.player.GetFollowing() != "" || !s.player.InGroup {
 			s.sendText("But you lead no group!")
 			return nil
 		}
@@ -207,7 +207,7 @@ func cmdUngroup(s *Session, args []string) error {
 		s.sendText("There is no such person!")
 		return nil
 	}
-	if target.Following != s.player.Name {
+	if target.GetFollowing() != s.player.Name {
 		s.sendText("That person is not following you!")
 		return nil
 	}
@@ -217,7 +217,7 @@ func cmdUngroup(s *Session, args []string) error {
 	}
 
 	target.InGroup = false
-	target.Following = "" // stop_follower — act.other.c line 793
+	target.SetFollowing("") // stop_follower — act.other.c line 793
 	s.sendText(fmt.Sprintf("%s is no longer a member of your group.", target.Name))
 	target.SendMessage(fmt.Sprintf("You have been kicked out of %s's group!\r\n", s.player.Name))
 	return nil
@@ -249,8 +249,8 @@ func cmdGtell(s *Session, args []string) error {
 
 	// Find leader — act.comm.c do_gsay() line 838–841
 	leaderName := s.player.Name
-	if s.player.Following != "" {
-		leaderName = s.player.Following
+	if s.player.GetFollowing() != "" {
+		leaderName = s.player.GetFollowing()
 	}
 
 	// Send to leader if not self (act.comm.c lines 846–851)

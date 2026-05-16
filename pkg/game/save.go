@@ -182,7 +182,7 @@ func playerToSaveData(p *Player) savePlayerData {
 		Thirst:      p.Thirst,
 		Drunk:       p.Drunk,
 		Flags:       p.GetFlags(),
-		AutoExit:    p.AutoExit,
+		AutoExit:    p.GetAutoExit(),
 		Stats:       p.Stats,
 		SpellMap:    make(map[string]int),
 	}

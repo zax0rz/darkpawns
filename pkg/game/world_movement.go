@@ -165,7 +165,7 @@ func (w *World) CircleFollowByName(followerName, leaderName string) bool {
 			return true
 		}
 		if p, ok := w.players[cur]; ok {
-			cur = p.Following
+			cur = p.GetFollowing()
 			if cur == "" {
 				return false
 			}
@@ -179,7 +179,7 @@ func (w *World) CircleFollowByName(followerName, leaderName string) bool {
 func (w *World) NumFollowers(leaderName string) int {
 	count := 0
 	for _, p := range w.players {
-		if p.Following == leaderName {
+		if p.GetFollowing() == leaderName {
 			count++
 		}
 	}

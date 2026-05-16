@@ -1176,7 +1176,7 @@ func (w *World) SetFollower(followerName, leaderName string, followerIsMob bool)
 		}
 	} else {
 		if p, ok := w.players[followerName]; ok {
-			p.Following = leaderName
+			p.SetFollowing(leaderName)
 			return nil
 		}
 	}

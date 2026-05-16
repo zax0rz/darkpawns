@@ -375,7 +375,7 @@ func (p *Player) AdvanceLevel() {
 		for i := 0; i < 3; i++ {
 			p.SetCondition(i, -1)
 		}
-		p.HolyLight = true
+		p.SetHolyLight(true)
 	}
 
 	// Release lock before I/O — SavePlayer acquires RLock via playerToSaveData.

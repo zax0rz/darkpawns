@@ -92,7 +92,7 @@ func (w *World) lookAtRoom(ch *Player, ignoreBrief bool) {
 
 	// Room name line
 	roomLine := room.Name
-	if ch.RoomFlags {
+	if ch.GetRoomFlags() {
 		roomLine = fmt.Sprintf("[%5d] %s", room.VNum, room.Name)
 	}
 	ch.SendMessage(roomLine + "\r\n\r\n")
@@ -105,7 +105,7 @@ func (w *World) lookAtRoom(ch *Player, ignoreBrief bool) {
 	}
 
 	// Autoexits
-	if ch.AutoExit {
+	if ch.GetAutoExit() {
 		w.doAutoExits(ch)
 	}
 

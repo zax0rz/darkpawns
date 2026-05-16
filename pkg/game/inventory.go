@@ -220,12 +220,12 @@ func (w *World) GetCharNum(rnum int) *MobInstance {
 // Unlike StopFollower (which makes you stop following), this removes a specific
 // person who is following you.
 func (w *World) RemoveFollower(ch *Player) {
-	if ch == nil || ch.Following == "" {
+	if ch == nil || ch.GetFollowing() == "" {
 		return
 	}
-	_, _ = w.GetPlayer(ch.Following) // verify leader exists
+	_, _ = w.GetPlayer(ch.GetFollowing()) // verify leader exists
 	// The follower removes itself from the leader's perspective
-	ch.Following = ""
+	ch.SetFollowing("")
 	ch.RemoveAffectBit(affCharm)
 	ch.RemoveAffectBit(affGroup)
 }

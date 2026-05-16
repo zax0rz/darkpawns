@@ -265,7 +265,7 @@ func (w *World) doUngroup(ch *Player, me *MobInstance, cmd string, arg string) b
 				p.SendMessage(msg)
 				p.SetAffect(affGroup, false)
 				if !p.IsAffected(3) { // AFF_CHARM
-					p.Following = ""
+					p.SetFollowing("")
 				}
 			}
 		}
@@ -295,7 +295,7 @@ func (w *World) doUngroup(ch *Player, me *MobInstance, cmd string, arg string) b
 	victimPl.SendMessage(fmt.Sprintf("You have been kicked out of %s's group!\r\n", ch.Name))
 
 	if !victimPl.IsAffected(3) { // AFF_CHARM
-		victimPl.Following = ""
+		victimPl.SetFollowing("")
 	}
 	return true
 }

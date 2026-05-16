@@ -6,6 +6,13 @@ func (p *Player) GetSex() int {
 	return p.Sex
 }
 
+// SetSex sets the player's sex (0=male, 1=female, 2=neutral).
+func (p *Player) SetSex(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Sex = v
+}
+
 // Scripting interface implementations
 
 func (p *Player) GetID() int {

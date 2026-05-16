@@ -878,8 +878,8 @@ func doFollow(w *World, ch *Player, argument string) {
 	if strings.EqualFold(arg, ch.Name) {
 		if ch.GetFollowing() != "" {
 			prevLeader := ch.GetFollowing()
-			ch.Following = ""
-			ch.InGroup = false
+			ch.SetFollowing("")
+			ch.SetInGroup(false)
 			sendToChar(ch, "You stop following.\r\n")
 			w.roomMessage(ch.GetRoom(), fmt.Sprintf("$n stops following %s.", prevLeader))
 		} else {
@@ -904,7 +904,7 @@ func doFollow(w *World, ch *Player, argument string) {
 		return
 	}
 
-	ch.Following = target.Name
+	ch.SetFollowing(target.Name)
 	sendToChar(ch, fmt.Sprintf("You now follow %s.\r\n", target.Name))
 	sendToChar(target, fmt.Sprintf("%s now follows you.\r\n", ch.Name))
 }
