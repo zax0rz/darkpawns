@@ -90,8 +90,8 @@ func (w *World) roomCleanup(roomVNum int) int {
 
 // mobMeleeTarget returns the mob's current melee opponent as a MobInstance.
 func mobMeleeTarget(me *MobInstance) *MobInstance {
-	if me.Target != nil {
-		return me.Target
+	if me.GetTarget() != nil {
+		return me.GetTarget()
 	}
 	return nil
 }
@@ -195,16 +195,16 @@ func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		return false
 	}
 	var vict *Player
-	for _, memName := range me.Memory {
+	for _, memName := range me.GetMemory() {
 		if p, ok := w.players[memName]; ok {
 			vict = p
 			break
 		}
 	}
 	if vict == nil {
-		for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
+		for _, p := range w.GetPlayersInRoom(me.GetRoom()) {
 			if !p.IsNPC() {
-				for _, memName := range me.Memory {
+				for _, memName := range me.GetMemory() {
 					if memName == p.Name {
 						vict = p
 						break
@@ -219,8 +219,7 @@ func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	if vict != nil && randN(4) == 0 {
 		spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), nil, nil)
 		if me.RoomVNum == vict.GetRoomVNum() {
-			me.Fighting = true
-			me.FightingTarget = vict.Name
+			me.SetFighting(vict.Name)
 		}
 		return true
 	}
@@ -272,7 +271,7 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		}
 	}
 	if vict == nil {
-		if tName := me.FightingTarget; tName != "" {
+		if tName := me.GetFightingTarget(); tName != "" {
 			if p, ok := w.players[tName]; ok {
 				vict = p
 			}
@@ -380,7 +379,7 @@ func specGuildGuard(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		return true
 	}
 	if !isMoveCmd(cmd) {
-		if me.Fighting {
+		if me.IsFighting() {
 			return specFighter(w, ch, me, cmd, arg)
 		}
 		return false
@@ -498,8 +497,8 @@ func specJanitor(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	items := w.GetItemsInRoom(me.RoomVNum)
 	for _, obj := range items {
 		if !strings.Contains(obj.GetKeywords(), "corpse") && randN(2) == 0 {
-			w.roomMessage(me.RoomVNum, me.GetName()+" picks up "+obj.GetShortDesc()+".")
-			w.RemoveItemFromRoom(obj, me.RoomVNum)
+			w.roomMessage(me.GetRoom(), me.GetName()+" picks up "+obj.GetShortDesc()+".")
+			w.RemoveItemFromRoom(obj, me.GetRoom())
 			return true
 		}
 	}
@@ -516,7 +515,7 @@ func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			return true
 		}
 	}
-	if me.Fighting {
+	if me.IsFighting() {
 		return true
 	}
 	return false
@@ -632,7 +631,7 @@ func specBlackUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, ar
 	if cmd != "" || me.GetHP() < 0 {
 		return false
 	}
-	if me.Fighting {
+	if me.IsFighting() {
 		switch randRange(1, 20) {
 		case 1:
 			w.roomMessage(me.RoomVNum, me.GetName()+" screams, 'Protect the kingdom!'")
@@ -653,10 +652,9 @@ func specBlackUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, ar
 	mobs := w.GetMobsInRoom(me.RoomVNum)
 	for _, m := range mobs {
 		if m.VNum == 11471 && m != me && randN(3) == 0 {
-			w.roomMessage(me.RoomVNum, me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
-			me.Fighting = true
-			me.Target = m
-			me.FightingTarget = m.GetName()
+			w.roomMessage(me.GetRoom(), me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
+			me.SetTarget(m)
+			me.SetFighting(m.GetName())
 			return true
 		}
 	}
@@ -668,7 +666,7 @@ func specRedUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	if cmd != "" || me.GetHP() < 0 {
 		return false
 	}
-	if me.Fighting {
+	if me.IsFighting() {
 		switch randRange(1, 20) {
 		case 1:
 			w.roomMessage(me.RoomVNum, me.GetName()+" screams, 'Protect the homeland!'")
@@ -688,10 +686,9 @@ func specRedUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	mobs := w.GetMobsInRoom(me.RoomVNum)
 	for _, m := range mobs {
 		if m.VNum == 11470 && m != me && randN(3) == 0 {
-			w.roomMessage(me.RoomVNum, me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
-			me.Fighting = true
-			me.Target = m
-			me.FightingTarget = m.GetName()
+			w.roomMessage(me.GetRoom(), me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
+			me.SetTarget(m)
+			me.SetFighting(m.GetName())
 			return true
 		}
 	}
@@ -703,7 +700,7 @@ func specMickey(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	if cmd != "" || me.GetHP() < 0 {
 		return false
 	}
-	if me.Fighting {
+	if me.IsFighting() {
 		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
 			w.roomMessage(me.RoomVNum, me.GetName()+" stands up!")
 		} else {
@@ -730,7 +727,7 @@ func specMallory(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	if cmd != "" || me.GetHP() < 0 {
 		return false
 	}
-	if me.Fighting {
+	if me.IsFighting() {
 		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
 			w.roomMessage(me.RoomVNum, me.GetName()+" stands up!")
 		} else {

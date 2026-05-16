@@ -118,10 +118,10 @@ func guardAssist(w *World, me *MobInstance, specVNum int) bool {
 		if mob == me {
 			continue
 		}
-		if mob.GetVNum() == specVNum && mob.Fighting {
+		if mob.GetVNum() == specVNum && mob.IsFighting() {
 			// Find who the mob is fighting
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+				if pl.GetName() == mob.GetFightingTarget() && !pl.IsNPC() {
 					if err := me.Attack(pl, w); err != nil {
 						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 					}
@@ -342,7 +342,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		if ch.IsMounted() {
 			// Find the mount mob and unmount
 			for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
-				if m.MountRider == ch.Name {
+				if m.GetMountRider() == ch.Name {
 					horse = m
 					Unmount(ch, horse)
 					break
@@ -351,7 +351,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		} else {
 			// Find a mountable follower (charmed mob in room following player)
 			for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
-				if m.Following == ch.Name && m.IsAffected(affCharm) {
+				if m.GetFollowing() == ch.Name && m.IsAffected(affCharm) {
 					horse = m
 					break
 				}
@@ -524,8 +524,8 @@ func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		return false
 	}
 	// Check if master is fighting; if so, attack master's opponent
-	if me.Following != "" {
-		if master, ok := w.GetPlayer(me.Following); ok {
+	if me.GetFollowing() != "" {
+		if master, ok := w.GetPlayer(me.GetFollowing()); ok {
 			if target := master.GetFighting(); target != "" {
 				if vict, ok2 := w.GetPlayer(target); ok2 {
 					if err := me.Attack(vict, w); err != nil {
@@ -1158,11 +1158,11 @@ func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg 
 
 	if cmd == "" && me.GetFighting() == "" {
 		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob == me || !mob.Fighting || mob.FightingTarget == "" {
+			if mob == me || !mob.IsFighting() || mob.GetFightingTarget() == "" {
 				continue
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+				if pl.GetName() == mob.GetFightingTarget() && !pl.IsNPC() {
 					if err := me.Attack(pl, w); err != nil {
 						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 					}
@@ -1352,11 +1352,11 @@ func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg 
 
 	if cmd == "" && me.GetFighting() == "" {
 		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob == me || !mob.Fighting || mob.FightingTarget == "" {
+			if mob == me || !mob.IsFighting() || mob.GetFightingTarget() == "" {
 				continue
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+				if pl.GetName() == mob.GetFightingTarget() && !pl.IsNPC() {
 					if err := me.Attack(pl, w); err != nil {
 						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 					}
@@ -1394,11 +1394,11 @@ func specCastleGuardUp(w *World, ch *Player, me *MobInstance, cmd string, arg st
 
 	if cmd == "" && me.GetFighting() == "" {
 		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob == me || !mob.Fighting || mob.FightingTarget == "" {
+			if mob == me || !mob.IsFighting() || mob.GetFightingTarget() == "" {
 				continue
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+				if pl.GetName() == mob.GetFightingTarget() && !pl.IsNPC() {
 					if err := me.Attack(pl, w); err != nil {
 						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 					}
@@ -1434,11 +1434,11 @@ func specCastleGuardNorth(w *World, ch *Player, me *MobInstance, cmd string, arg
 
 	if cmd == "" && me.GetFighting() == "" {
 		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob == me || !mob.Fighting || mob.FightingTarget == "" {
+			if mob == me || !mob.IsFighting() || mob.GetFightingTarget() == "" {
 				continue
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if pl.GetName() == mob.FightingTarget && !pl.IsNPC() {
+				if pl.GetName() == mob.GetFightingTarget() && !pl.IsNPC() {
 					if err := me.Attack(pl, w); err != nil {
 						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 					}

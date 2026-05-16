@@ -457,7 +457,7 @@ func (s *Spawner) moveMobToRoom(mob *MobInstance, newRoomVNum int) {
 		return
 	}
 
-	oldRoom := mob.RoomVNum
+	oldRoom := mob.GetRoom()
 	if oldRoom >= 0 {
 		if mobs, ok := s.roomMobs[oldRoom]; ok {
 			for i, m := range mobs {
@@ -469,7 +469,7 @@ func (s *Spawner) moveMobToRoom(mob *MobInstance, newRoomVNum int) {
 		}
 	}
 
-	mob.RoomVNum = newRoomVNum
+	mob.SetRoom(newRoomVNum)
 	if newRoomVNum >= 0 {
 		s.roomMobs[newRoomVNum] = append(s.roomMobs[newRoomVNum], mob)
 	}
@@ -608,11 +608,11 @@ func (s *Spawner) RemoveMobInstance(mobVNum int, mob *MobInstance) {
 	}
 
 	// Also remove from roomMobs tracking
-	if mob.RoomVNum >= 0 {
-		if roomInstances, ok := s.roomMobs[mob.RoomVNum]; ok {
+	if mob.GetRoom() >= 0 {
+		if roomInstances, ok := s.roomMobs[mob.GetRoom()]; ok {
 			for i, m := range roomInstances {
 				if m == mob {
-					s.roomMobs[mob.RoomVNum] = append(roomInstances[:i], roomInstances[i+1:]...)
+					s.roomMobs[mob.GetRoom()] = append(roomInstances[:i], roomInstances[i+1:]...)
 					break
 				}
 			}

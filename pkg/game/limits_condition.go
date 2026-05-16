@@ -233,35 +233,35 @@ func (w *World) PointUpdate() {
 
 		if pos >= PosStunned {
 			// HP regen — limits.c:498-501
-			if m.CurrentHP < m.MaxHP {
+			if m.GetHP() < m.GetMaxHP() {
 				gain := MobHitGain(m)
-				m.CurrentHP += gain
-				if m.CurrentHP > m.MaxHP {
-					m.CurrentHP = m.MaxHP
+				m.SetHealth(m.GetHP() + gain)
+				if m.GetHP() > m.GetMaxHP() {
+					m.SetHealth(m.GetMaxHP())
 				}
 			}
 			// Poison damage — limits.c:503-504 (applies to ALL chars including NPCs)
-			if m.Affects&(1<<AffPoison) != 0 {
+			if m.HasAffect(AffPoison) {
 				m.TakeDamage(10)
 			}
 			// Cutthroat damage — limits.c:505-506
-			if m.Affects&(1<<AffCutthroat) != 0 {
+			if m.HasAffect(AffCutthroat) {
 				m.TakeDamage(13)
 			}
 			// Check for death after poison/cutthroat damage.
-			if m.CurrentHP <= 0 {
+			if m.GetHP() <= 0 {
 				w.handleMobDeath(m, nil, -1)
 				continue
 			}
 		} else if pos == PosIncap {
 			m.TakeDamage(1)
-			if m.CurrentHP <= 0 {
+			if m.GetHP() <= 0 {
 				w.handleMobDeath(m, nil, -1)
 				continue
 			}
 		} else if pos == PosMortally {
 			m.TakeDamage(2)
-			if m.CurrentHP <= 0 {
+			if m.GetHP() <= 0 {
 				w.handleMobDeath(m, nil, -1)
 				continue
 			}
@@ -271,7 +271,7 @@ func (w *World) PointUpdate() {
 		// 1 in 99 chance of clearing mob memory
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if m.Memory != nil && rand.Intn(99) == 0 {
+		if len(m.GetMemory()) > 0 && rand.Intn(99) == 0 {
 			clearMemory(m)
 		}
 
@@ -283,7 +283,7 @@ func (w *World) PointUpdate() {
 
 // clearMemory clears a mob's memory — from handler.c
 func clearMemory(m *MobInstance) {
-	m.Memory = nil
+	m.ClearMemory()
 }
 
 // ShowMOTD reads and returns the MOTD file content.

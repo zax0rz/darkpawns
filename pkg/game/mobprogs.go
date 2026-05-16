@@ -426,7 +426,7 @@ func (w *World) GetMount(p *Player) *MobInstance {
 		return nil
 	}
 	for _, m := range w.activeMobs {
-		if m.MountRider == p.Name {
+		if m.GetMountRider() == p.Name {
 			return m
 		}
 	}

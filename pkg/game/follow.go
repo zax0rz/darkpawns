@@ -148,7 +148,7 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 
 	// Unmount if this mob is a mount.
 	if mob.IsMountedMob() {
-		mob.MountRider = ""
+		mob.SetMountRider("")
 	}
 }
 
@@ -189,12 +189,12 @@ func (w *World) DieFollowerMob(mob *MobInstance) {
 	}
 
 	// If mob is being ridden, dismount the rider.
-	riderName := mob.MountRider
+	riderName := mob.GetMountRider()
 	if riderName != "" {
 		if rider, ok := w.GetPlayer(riderName); ok {
 			rider.MountName = ""
 		}
-		mob.MountRider = ""
+		mob.SetMountRider("")
 	}
 
 	// Players following this mob (via MountName) need cleanup too.

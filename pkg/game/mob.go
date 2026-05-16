@@ -354,6 +354,13 @@ func (m *MobInstance) GetMaxHP() int {
 	return m.MaxHP
 }
 
+// SetMaxHP sets the mob's maximum health.
+func (m *MobInstance) SetMaxHP(hp int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.MaxHP = hp
+}
+
 // IsNPC returns true for mobs.
 func (m *MobInstance) IsNPC() bool {
 	return true
@@ -616,6 +623,124 @@ func (m *MobInstance) ClearHunting() {
 
 // SetHunting — defined in deferred_fight_fns.go (full implementation with nil guard)
 // func (m *MobInstance) SetHunting(targetName string) — kept there
+
+// GetTarget returns the mob's current combat target.
+func (m *MobInstance) GetTarget() *MobInstance {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Target
+}
+
+// SetTarget sets the mob's current combat target.
+func (m *MobInstance) SetTarget(target *MobInstance) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Target = target
+}
+
+// GetMemory returns a copy of the mob's memory list.
+// Mutations go through Remember() and Forget() in deferred_fight_fns.go.
+func (m *MobInstance) GetMemory() []string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]string, len(m.Memory))
+	copy(out, m.Memory)
+	return out
+}
+
+// ClearMemory clears the mob's entire memory list.
+func (m *MobInstance) ClearMemory() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Memory = nil
+}
+
+// GetMountRider returns the name of the player riding this mount.
+func (m *MobInstance) GetMountRider() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.MountRider
+}
+
+// SetMountRider sets the name of the player riding this mount.
+func (m *MobInstance) SetMountRider(rider string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.MountRider = rider
+}
+
+// GetHuntingID returns the ID of the player being hunted.
+func (m *MobInstance) GetHuntingID() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.HuntingID
+}
+
+// SetHuntingID sets the ID of the player being hunted.
+func (m *MobInstance) SetHuntingID(id string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.HuntingID = id
+}
+
+// GetAffects returns the mob's affect flags bitmask.
+func (m *MobInstance) GetAffects() uint64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Affects
+}
+
+// SetAffectFlags replaces the mob's entire affect flags bitmask.
+func (m *MobInstance) SetAffectFlags(flags uint64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Affects = flags
+}
+
+// HasAffect checks if a specific affect bit is set.
+func (m *MobInstance) HasAffect(bit int) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Affects&(1<<bit) != 0
+}
+
+// ClearAffect clears a specific affect bit.
+func (m *MobInstance) ClearAffect(bit int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Affects &= ^(1 << bit)
+}
+
+// GetMobFlags returns the mob's flags bitmask.
+func (m *MobInstance) GetMobFlags() uint64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Flags
+}
+
+// ClearMobFlag clears a specific mob flag bit.
+func (m *MobInstance) ClearMobFlag(bit int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if bit < 0 || bit >= 64 {
+		return
+	}
+	m.Flags &= ^(1 << uint(bit))
+}
+
+// IsFighting returns whether the mob is currently in combat.
+func (m *MobInstance) IsFighting() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Fighting
+}
+
+// GetFightingTarget returns the name of the target being fought.
+func (m *MobInstance) GetFightingTarget() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.FightingTarget
+}
 
 // GetAlignment returns the mob's alignment from its prototype.
 func (m *MobInstance) GetAlignment() int {

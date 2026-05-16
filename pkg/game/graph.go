@@ -226,12 +226,12 @@ func (w *World) doTrack(ch *Player, me *MobInstance, argument string) bool {
 // huntVictim moves a mob toward its hunting target.
 // Handles door opening, evasion, safe-room checks, and trash-talk messages.
 func (w *World) huntVictim(m *MobInstance) {
-	if m == nil || m.Hunting == "" {
+	if m == nil || m.GetHunting() == "" {
 		return
 	}
 
 	// Find the hunting target among players
-	target := w.findPlayerByName(m.Hunting)
+	target := w.findPlayerByName(m.GetHunting())
 	if target == nil || target.GetRoom() < 2 {
 		if m.CanSpeak() {
 			w.mobSayTo(m, "Damn!  My prey is gone!!")

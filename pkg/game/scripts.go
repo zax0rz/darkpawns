@@ -84,7 +84,7 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 func (m *MobInstance) CreateScriptContext(ch *Player, obj *ObjectInstance, argument string) *ScriptContext {
 	ctx := &ScriptContext{
 		Me:       m,
-		RoomVNum: m.RoomVNum,
+		RoomVNum: m.GetRoom(),
 		Argument: argument,
 		World:    nil, // Would need world reference
 	}

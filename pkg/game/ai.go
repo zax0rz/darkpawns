@@ -94,7 +94,7 @@ func (w *World) runMobAI(mob *MobInstance) {
 // MED-010: snapshot-based room reads, direct mob field writes.
 func (w *World) wanderMob(mob *MobInstance) {
 	snap := w.snapshots.Snapshot()
-	room, ok := snap.Rooms[mob.RoomVNum] // direct field access — under lock
+	room, ok := snap.Rooms[mob.GetRoom()] // getter — mutex-protected
 	if !ok {
 		return
 	}
@@ -156,8 +156,8 @@ func (w *World) wanderMob(mob *MobInstance) {
 	targetRoom := snap.Rooms[exit.ToRoom]
 
 	// Move mob — direct field write, mob.mu is held
-	oldRoom := mob.RoomVNum
-	mob.RoomVNum = targetRoom.VNum
+	oldRoom := mob.GetRoom()
+	mob.SetRoom(targetRoom.VNum)
 
 	// Release mob lock during player notifications (I/O can block)
 	mob.mu.Unlock()

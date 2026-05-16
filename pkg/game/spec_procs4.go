@@ -39,11 +39,11 @@ func init() {
 }
 
 func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" || !me.IsNPC() || me.CurrentHP < 0 {
+	if cmd == "" || !me.IsNPC() || me.GetHP() < 0 {
 		return false
 	}
 
-	if !me.Fighting {
+	if !me.IsFighting() {
 		// C source: spec_procs.c:1618-1630 — conductor wanders east/west when idle.
 		// Must be standing (awake) to move. Cases 1-2: east, 9-10: west.
 		if me.GetPosition() > combat.PosStanding {
@@ -62,7 +62,7 @@ func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		}
 	}
 
-	if me.Fighting {
+	if me.IsFighting() {
 		if me.GetPosition() <= combat.PosSleeping || me.GetPosition() >= combat.PosFighting {
 			r := randRange(1, 10)
 			msg := ""
@@ -79,7 +79,7 @@ func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string
 				msg = "$n asks, 'Why wouldn't you just give me your ticket?'"
 			}
 			if msg != "" {
-				w.roomMessage(me.RoomVNum, msg)
+				w.roomMessage(me.GetRoom(), msg)
 			}
 		}
 		return true
@@ -93,8 +93,8 @@ func specBrassDragon(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		return false
 	}
 
-	if me.RoomVNum == 5065 && cmd == "west" {
-		w.roomMessage(me.RoomVNum, "The brass dragon humiliates $n, and blocks $s way.")
+	if me.GetRoom() == 5065 && cmd == "west" {
+		w.roomMessage(me.GetRoom(), "The brass dragon humiliates $n, and blocks $s way.")
 		sendToChar(ch, "The brass dragon humiliates you, and blocks your way.\r\n")
 		return true
 	}
@@ -107,8 +107,8 @@ func specOutOfJailGuard(w *World, ch *Player, me *MobInstance, cmd string, arg s
 		return false
 	}
 
-	if me.RoomVNum == 8117 && cmd == "south" {
-		w.roomMessage(me.RoomVNum, "The guard grabs $n by the collar and blocks $s way.")
+	if me.GetRoom() == 8117 && cmd == "south" {
+		w.roomMessage(me.GetRoom(), "The guard grabs $n by the collar and blocks $s way.")
 		sendToChar(ch, "The guard stops you from entering with one quick jerk of your collar.\r\n")
 		return true
 	}
@@ -121,8 +121,8 @@ func specJailGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 
-	if me.RoomVNum == 8118 && cmd == "north" {
-		w.roomMessage(me.RoomVNum, "The guard grabs $n with one hand and throws $m back in the room.")
+	if me.GetRoom() == 8118 && cmd == "north" {
+		w.roomMessage(me.GetRoom(), "The guard grabs $n with one hand and throws $m back in the room.")
 		sendToChar(ch, "The guard stops you from leaving with one flabby hand.\r\n")
 		return true
 	}
@@ -135,7 +135,7 @@ func specDracula(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		return false
 	}
 
-	if cmd == "" && me.Fighting {
+	if cmd == "" && me.IsFighting() {
 		return specMagicUser(w, ch, me, cmd, arg)
 	}
 
@@ -146,9 +146,9 @@ func specDracula(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 	sendToChar(ch, "You feel mesmerized... your will weakens.\r\n")
 	sendToChar(ch, fmt.Sprintf("%s sinks his fangs into your neck!\r\n", me.GetName()))
-	w.roomMessage(me.RoomVNum, fmt.Sprintf("$n looks at %s.\r\n", me.GetName()))
-	w.roomMessage(me.RoomVNum, fmt.Sprintf("%s gazes intently at $n.\r\n", me.GetName()))
-	w.roomMessage(me.RoomVNum, fmt.Sprintf("%s sinks his fangs into $n!\r\n", me.GetName()))
+	w.roomMessage(me.GetRoom(), fmt.Sprintf("$n looks at %s.\r\n", me.GetName()))
+	w.roomMessage(me.GetRoom(), fmt.Sprintf("%s gazes intently at $n.\r\n", me.GetName()))
+	w.roomMessage(me.GetRoom(), fmt.Sprintf("%s sinks his fangs into $n!\r\n", me.GetName()))
 
 	sendToChar(ch, "Your blood boils with a stinging fire...\r\n")
 
@@ -160,7 +160,7 @@ func petPrice(pet *MobInstance) int {
 }
 
 func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	petRoom := me.RoomVNum + 1
+	petRoom := me.GetRoom() + 1
 
 	if cmd == "list" {
 		sendToChar(ch, "Available pets are:\r\n")
@@ -203,7 +203,7 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 		ch.SetGold(ch.GetGold() - price)
 
-		newPet, err := w.SpawnMob(pet.VNum, me.RoomVNum)
+		newPet, err := w.SpawnMob(pet.GetVNum(), me.GetRoom())
 		if err != nil {
 			sendToChar(ch, "Something went wrong.\r\n")
 			return true
@@ -213,7 +213,7 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 			_ = newPet // name would be set on prototype
 		}
 
-		w.roomMessage(me.RoomVNum, "$n buys $N as a pet.\r\n")
+		w.roomMessage(me.GetRoom(), "$n buys $N as a pet.\r\n")
 		sendToChar(ch, "May you enjoy your pet.\r\n")
 
 		return true
@@ -241,7 +241,7 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		}
 
 		sendToChar(ch, "You stand in the circle.\r\n")
-		w.roomMessage(me.RoomVNum, "$n enters the circle which suddenly starts glowing brightly, obscuring your view of $m!")
+		w.roomMessage(me.GetRoom(), "$n enters the circle which suddenly starts glowing brightly, obscuring your view of $m!")
 		ch.SetRoom(portalRoom)
 		// do_look Placeholder
 		return true
@@ -279,7 +279,7 @@ func specElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	}
 
 	sendToChar(ch, "The portal begins to rise, lifted by the air elemental summoned by your rune!\r\n\r\n")
-	w.roomMessage(me.RoomVNum, "The portal begins to rise, lifted by the air elemental summoned by $n!\r\n\r\n")
+	w.roomMessage(me.GetRoom(), "The portal begins to rise, lifted by the air elemental summoned by $n!\r\n\r\n")
 
 	mobs := w.GetMobsInRoom(portalRoom)
 	for i, m := range mobs {
@@ -298,12 +298,12 @@ func specElementalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg st
 		return false
 	}
 
-	mobs := w.GetMobsInRoom(me.RoomVNum)
+	mobs := w.GetMobsInRoom(me.GetRoom())
 	for _, m := range mobs {
 		if !m.IsNPC() {
 			continue
 		}
-		room := w.GetRoomInWorld(m.RoomVNum)
+		room := w.GetRoomInWorld(m.GetRoom())
 		sector := 0
 		if room != nil {
 			sector = room.Sector
@@ -325,9 +325,9 @@ func specElementalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg st
 		sendToChar(ch, msg+"\r\n")
 		sendToChar(ch, "\r\nYou are DYING!\r\n")
 
-		m.CurrentHP -= 100
-		if m.CurrentHP <= 0 {
-			w.roomMessage(me.RoomVNum, "The forces of nature slowly rip $N to shreds.")
+		m.SetHealth(m.GetHP() - 100)
+		if m.GetHP() <= 0 {
+			w.roomMessage(me.GetRoom(), "The forces of nature slowly rip $N to shreds.")
 		}
 	}
 
@@ -351,13 +351,13 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str
 		return true
 	}
 
-	w.roomMessage(me.RoomVNum, "$n kneels at the altar and chants a prayer to Odin.")
+	w.roomMessage(me.GetRoom(), "$n kneels at the altar and chants a prayer to Odin.")
 	sendToChar(ch, "You notice a faint light in Odin's eye.\r\n")
 	return true
 }
 
 func specFearface(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" && (!me.IsNPC() || !me.Fighting) {
+	if cmd == "" && (!me.IsNPC() || !me.IsFighting()) {
 		return false
 	}
 	return false
@@ -368,7 +368,7 @@ func specStartRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 
-	mobs := w.GetMobsInRoom(me.RoomVNum)
+	mobs := w.GetMobsInRoom(me.GetRoom())
 	for _, m := range mobs {
 		if !m.IsNPC() {
 			continue
@@ -415,7 +415,7 @@ func specSuckIn(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	sendToChar(ch, "\r\n\r\nYou suddenly feel very dizzy...\r\n\r\n")
-	w.roomMessage(me.RoomVNum, "$n suddenly vanishes!")
+	w.roomMessage(me.GetRoom(), "$n suddenly vanishes!")
 	ch.SetRoom(paintingRoom)
 	return true
 }
@@ -426,7 +426,7 @@ func specOroQuartersRoom(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	}
 
 	if ch.Name != "Orodreth" {
-		w.roomMessage(me.RoomVNum, "A strong force jolts $n in $s attempt to leave south.")
+		w.roomMessage(me.GetRoom(), "A strong force jolts $n in $s attempt to leave south.")
 		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.\r\n")
 		ch.mu.Lock()
 		ch.SetHP(ch.GetHP() / 2)
@@ -443,7 +443,7 @@ func specOroStudyRoom(w *World, ch *Player, me *MobInstance, cmd string, arg str
 	}
 
 	if ch.Name != "Orodreth" {
-		w.roomMessage(me.RoomVNum, "A strong force jolts $n in $s attempt to leave north.")
+		w.roomMessage(me.GetRoom(), "A strong force jolts $n in $s attempt to leave north.")
 		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.\r\n")
 		ch.mu.Lock()
 		ch.SetHP(ch.GetHP() / 2)
@@ -475,7 +475,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		}
 		ch.SetGold(ch.GetGold() - amount)
 		sendToChar(ch, fmt.Sprintf("You deposit %d coins.\r\n", amount))
-		w.roomMessage(me.RoomVNum, "$n makes a bank transaction.")
+		w.roomMessage(me.GetRoom(), "$n makes a bank transaction.")
 		return true
 	}
 
@@ -490,7 +490,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		}
 		ch.SetGold(ch.GetGold() + amount)
 		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.\r\n", amount))
-		w.roomMessage(me.RoomVNum, "$n makes a bank transaction.")
+		w.roomMessage(me.GetRoom(), "$n makes a bank transaction.")
 		return true
 	}
 
@@ -509,7 +509,7 @@ func specHorn(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	sendToChar(ch, "You inhale deeply then blow hard!\r\n")
 	sendToChar(ch, "A blaring note resounds through the air.\r\n")
-	w.roomMessage(me.RoomVNum, "$n blows into $P.")
-	w.roomMessage(me.RoomVNum, "$P lets out a blaring note...")
+	w.roomMessage(me.GetRoom(), "$n blows into $P.")
+	w.roomMessage(me.GetRoom(), "$P lets out a blaring note...")
 	return true
 }

@@ -926,10 +926,10 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 				if err == nil && newRoach != nil {
 					newRoach.SetHealth(10)
 				} else {
-					me.MaxHP = 10
+					me.SetMaxHP(10)
 				}
 			} else {
-				me.MaxHP = newMaxHP
+				me.SetMaxHP(newMaxHP)
 				// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
 				if rand.Intn(2) == 0 {
