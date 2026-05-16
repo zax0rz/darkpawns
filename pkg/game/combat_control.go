@@ -53,20 +53,20 @@ func (w *World) doOrder(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	if vict != nil {
 		vict.SendMessage(fmt.Sprintf("%s orders you to '%s'\r\n", ch.Name, message))
-		w.roomMessageExcludeTwo(ch.RoomVNum,
+		w.roomMessageExcludeTwo(ch.GetRoom(),
 			fmt.Sprintf("%s gives %s an order.", ch.Name, vict.Name),
 			ch.Name, vict.Name)
 
-		if vict.Following != ch.Name && !vict.IsAffected(affCharm) {
-			w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s has an indifferent look.", vict.Name))
+		if vict.GetFollowing() != ch.Name && !vict.IsAffected(affCharm) {
+			w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s has an indifferent look.", vict.Name))
 		} else {
 			ch.SendMessage("Ok.\r\n")
 			w.executeCommand(vict, message)
 		}
 	} else if strings.HasPrefix(strings.ToLower(name), "follower") || name == "followers" {
-		w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s issues the order '%s'.", ch.Name, message))
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s issues the order '%s'.", ch.Name, message))
 
-		followers := w.GetFollowersInRoom(ch.Name, ch.RoomVNum)
+		followers := w.GetFollowersInRoom(ch.Name, ch.GetRoom())
 		found := false
 		for _, follower := range followers {
 			if follower.IsAffected(affCharm) {
@@ -120,7 +120,7 @@ func (w *World) doFlee(ch *Player, me *MobInstance, cmd string, arg string) bool
 		attempt := randRange(0, len(dirs)-1)
 		dirStr := dirs[attempt]
 
-		room := w.GetRoomInWorld(ch.RoomVNum)
+		room := w.GetRoomInWorld(ch.GetRoom())
 		if room == nil {
 			continue
 		}
@@ -137,7 +137,7 @@ func (w *World) doFlee(ch *Player, me *MobInstance, cmd string, arg string) bool
 			continue
 		}
 
-		w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s flees from combat!", ch.Name))
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s flees from combat!", ch.Name))
 		doSimpleMove(w, ch, attempt, true)
 		ch.SendMessage("You flee head over heels!\r\n")
 		ch.StopFighting()
@@ -145,6 +145,6 @@ func (w *World) doFlee(ch *Player, me *MobInstance, cmd string, arg string) bool
 	}
 
 	ch.SendMessage("You are cornered and fail to flee!\r\n")
-	w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s tries to flee but is cornered!", ch.Name))
+	w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s tries to flee but is cornered!", ch.Name))
 	return true
 }

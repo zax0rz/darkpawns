@@ -14,14 +14,14 @@ func (w *World) doClanMoney(ch *Player, arg string, action int) {
 		return
 	}
 
-	if ch.Level < LVL_IMMORT {
+	if ch.GetLevel() < LVL_IMMORT {
 		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
 		if c == nil {
 			ch.SendMessage("You don't belong to any clan!\r\n")
 			return
 		}
 	} else {
-		if ch.Level < LVL_GOD {
+		if ch.GetLevel() < LVL_GOD {
 			ch.SendMessage("You do not have clan privileges.\r\n")
 			return
 		}
@@ -85,14 +85,14 @@ func (w *World) doClanAppLevel(ch *Player, arg string) {
 		return
 	}
 
-	if ch.Level < LVL_IMMORT {
+	if ch.GetLevel() < LVL_IMMORT {
 		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
 		if c == nil {
 			ch.SendMessage("You don't belong to any clan!\r\n")
 			return
 		}
 	} else {
-		if ch.Level < LVL_GOD {
+		if ch.GetLevel() < LVL_GOD {
 			ch.SendMessage("You do not have clan privileges.\r\n")
 			return
 		}

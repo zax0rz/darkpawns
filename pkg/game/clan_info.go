@@ -5,7 +5,7 @@ import (
 )
 
 func (w *World) doClanStatus(ch *Player) {
-	if ch.Level >= LVL_IMMORT {
+	if ch.GetLevel() >= LVL_IMMORT {
 		ch.SendMessage("You are immortal and cannot join any clan!\r\n")
 		return
 	}
@@ -42,7 +42,7 @@ func (w *World) doClanApply(ch *Player, arg string) {
 		w.sendClanFormat(ch)
 		return
 	}
-	if ch.Level >= LVL_IMMORT {
+	if ch.GetLevel() >= LVL_IMMORT {
 		ch.SendMessage("Gods cannot apply for any clan.\r\n")
 		return
 	}
@@ -57,18 +57,18 @@ func (w *World) doClanApply(ch *Player, arg string) {
 		return
 	}
 
-	if ch.Level < c.ApplLevel {
+	if ch.GetLevel() < c.ApplLevel {
 		ch.SendMessage("You are not mighty enough to apply to this clan.\r\n")
 		return
 	}
 	ch.mu.Lock()
-	if ch.Gold < c.AppFee {
+	if ch.GetGold() < c.AppFee {
 		ch.mu.Unlock()
 		ch.SendMessage("You cannot afford the application fee!\r\n")
 		return
 	}
 
-	ch.Gold -= c.AppFee
+	ch.SetGold(ch.GetGold() - c.AppFee)
 	ch.mu.Unlock()
 	c.Treasure += int64(c.AppFee)
 	w.SaveClans()
@@ -95,7 +95,7 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 			if c == nil {
 				continue
 			}
-			if ch.Level >= LVL_IMMORT {
+			if ch.GetLevel() >= LVL_IMMORT {
 				msg += fmt.Sprintf("[%-2d]  %-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.ID, c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			} else if c.Private == 0 {

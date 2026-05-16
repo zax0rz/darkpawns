@@ -148,7 +148,7 @@ func getExit(w *World, ch *Player, dir int) (parser.Exit, bool) {
 	if dir < 0 || dir >= len(dirs) {
 		return parser.Exit{}, false
 	}
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return parser.Exit{}, false
 	}
@@ -158,7 +158,7 @@ func getExit(w *World, ch *Player, dir int) (parser.Exit, bool) {
 
 // getExitByDirStr returns an exit by direction string name.
 func getExitByDirStr(w *World, ch *Player, dirStr string) (parser.Exit, string, bool) {
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return parser.Exit{}, "", false
 	}
@@ -226,8 +226,8 @@ func hasKey(ch *Player, key int) bool {
 // Returns true on success.
 func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	// Charmed check
-	if ch.IsAffected(affCharm) && ch.Following != "" {
-		if leader, ok := w.GetPlayer(ch.Following); ok && ch.RoomVNum == leader.RoomVNum {
+	if ch.IsAffected(affCharm) && ch.GetFollowing() != "" {
+		if leader, ok := w.GetPlayer(ch.GetFollowing()); ok && ch.GetRoom() == leader.GetRoom() {
 			sendToChar(ch, "The thought of leaving your master makes you weep.\r\n")
 			return false
 		}
@@ -245,7 +245,7 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		return false
 	}
 
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return false
 	}
@@ -262,7 +262,7 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	needMovement := (movementLoss[room.Sector] + movementLoss[toRoom.Sector]) >> 1
 
 	if ch.GetMove() < needMovement {
-		if needSpecialsCheck && ch.Following != "" {
+		if needSpecialsCheck && ch.GetFollowing() != "" {
 			sendToChar(ch, "You are too exhausted to follow.\r\n")
 		} else {
 			sendToChar(ch, "You are too exhausted.\r\n")
@@ -279,7 +279,7 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		}
 	}
 
-	wasIn := ch.RoomVNum
+	wasIn := ch.GetRoom()
 
 	// Leave message
 	if !ch.IsAffected(affSneak) {
@@ -380,7 +380,7 @@ func performMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		return false
 	}
 
-	wasIn := ch.RoomVNum
+	wasIn := ch.GetRoom()
 	if !doSimpleMove(w, ch, dir, needSpecialsCheck) {
 		return false
 	}
@@ -438,7 +438,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 		return -1
 	}
 
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return -1
 	}
@@ -456,7 +456,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 
 // doDoorcmd executes a door subcommand (open/close/lock/unlock/pick).
 func doDoorcmd(w *World, ch *Player, _ *ObjectInstance, door int, scmd int) {
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil || door < 0 || door >= len(dirs) {
 		return
 	}
@@ -475,7 +475,7 @@ func doDoorcmd(w *World, ch *Player, _ *ObjectInstance, door int, scmd int) {
 			backDir := revDir[door]
 			if backDir >= 0 && backDir < len(dirs) {
 				backExt, hasBack = otherRoom.Exits[dirs[backDir]]
-				if hasBack && backExt.ToRoom != ch.RoomVNum {
+				if hasBack && backExt.ToRoom != ch.GetRoom() {
 					hasBack = false
 				}
 			}
@@ -561,7 +561,7 @@ func doDoorcmd(w *World, ch *Player, _ *ObjectInstance, door int, scmd int) {
 	}
 
 	// Notify the room
-	w.roomMessage(ch.RoomVNum, fmt.Sprintf("$n %ss the %s.", cmdDoor[scmd], doorName))
+	w.roomMessage(ch.GetRoom(), fmt.Sprintf("$n %ss the %s.", cmdDoor[scmd], doorName))
 
 	// Notify the other room for open/close
 	if (scmd == scmdOpen || scmd == scmdClose) && hasBack {
@@ -686,7 +686,7 @@ func doEnter(w *World, ch *Player, argument string) {
 		return
 	}
 
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return
 	}
@@ -711,7 +711,7 @@ func doEnter(w *World, ch *Player, argument string) {
 
 // doLeave handles the 'leave' command.
 func doLeave(w *World, ch *Player) {
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return
 	}
@@ -743,13 +743,13 @@ func doStand(w *World, ch *Player) {
 	switch ch.GetPosition() {
 	case combat.PosSleeping:
 		sendToChar(ch, "You wake and stand up.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n wakes and stands up.")
+		w.roomMessage(ch.GetRoom(), "$n wakes and stands up.")
 	case combat.PosSitting:
 		sendToChar(ch, "You stand up.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n stands up.")
+		w.roomMessage(ch.GetRoom(), "$n stands up.")
 	case combat.PosResting:
 		sendToChar(ch, "You stop resting and stand up.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n stops resting.")
+		w.roomMessage(ch.GetRoom(), "$n stops resting.")
 	case combat.PosFighting:
 		sendToChar(ch, "You are already fighting!\r\n")
 		return
@@ -766,13 +766,13 @@ func doSit(w *World, ch *Player) {
 	switch ch.GetPosition() {
 	case combat.PosSleeping:
 		sendToChar(ch, "You wake and sit up.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n wakes and sits up.")
+		w.roomMessage(ch.GetRoom(), "$n wakes and sits up.")
 	case combat.PosResting:
 		sendToChar(ch, "You stop resting and sit up.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n sits up.")
+		w.roomMessage(ch.GetRoom(), "$n sits up.")
 	case combat.PosStanding:
 		sendToChar(ch, "You sit down.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n sits down.")
+		w.roomMessage(ch.GetRoom(), "$n sits down.")
 	case combat.PosSitting:
 		sendToChar(ch, "You are already sitting.\r\n")
 		return
@@ -788,13 +788,13 @@ func doRest(w *World, ch *Player) {
 	switch ch.GetPosition() {
 	case combat.PosSleeping:
 		sendToChar(ch, "You wake and start resting.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n wakes and starts resting.")
+		w.roomMessage(ch.GetRoom(), "$n wakes and starts resting.")
 	case combat.PosSitting:
 		sendToChar(ch, "You rest.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n rests.")
+		w.roomMessage(ch.GetRoom(), "$n rests.")
 	case combat.PosStanding:
 		sendToChar(ch, "You sit down and rest.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n sits down and rests.")
+		w.roomMessage(ch.GetRoom(), "$n sits down and rests.")
 	case combat.PosResting:
 		sendToChar(ch, "You are already resting.\r\n")
 		return
@@ -812,15 +812,15 @@ func doSleep(w *World, ch *Player) {
 		sendToChar(ch, "You are already sleeping.\r\n")
 	case combat.PosResting:
 		sendToChar(ch, "You lie down and go to sleep.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n lies down and goes to sleep.")
+		w.roomMessage(ch.GetRoom(), "$n lies down and goes to sleep.")
 		ch.SetPosition(combat.PosSleeping)
 	case combat.PosSitting:
 		sendToChar(ch, "You lie down and go to sleep.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n lies down and goes to sleep.")
+		w.roomMessage(ch.GetRoom(), "$n lies down and goes to sleep.")
 		ch.SetPosition(combat.PosSleeping)
 	case combat.PosStanding:
 		sendToChar(ch, "You lie down and go to sleep.\r\n")
-		w.roomMessage(ch.RoomVNum, "$n lies down and goes to sleep.")
+		w.roomMessage(ch.GetRoom(), "$n lies down and goes to sleep.")
 		ch.SetPosition(combat.PosSleeping)
 	case combat.PosFighting:
 		sendToChar(ch, "Sleep? You are fighting!\r\n")
@@ -833,7 +833,7 @@ func doWake(w *World, ch *Player, argument string) {
 	if arg == "" {
 		if ch.GetPosition() == combat.PosSleeping {
 			sendToChar(ch, "You wake.\r\n")
-			w.roomMessage(ch.RoomVNum, "$n wakes.")
+			w.roomMessage(ch.GetRoom(), "$n wakes.")
 			ch.SetPosition(combat.PosStanding)
 		} else {
 			sendToChar(ch, "You are already awake.\r\n")
@@ -846,11 +846,11 @@ func doWake(w *World, ch *Player, argument string) {
 		return
 	}
 
-	players := w.GetPlayersInRoom(ch.RoomVNum)
+	players := w.GetPlayersInRoom(ch.GetRoom())
 	for _, p := range players {
 		if isName(arg, p.Name) && p.GetPosition() == combat.PosSleeping {
 			sendToChar(p, fmt.Sprintf("You are awakened by %s.\r\n", ch.Name))
-			w.roomMessage(ch.RoomVNum, fmt.Sprintf("$n awakens %s.", p.Name))
+			w.roomMessage(ch.GetRoom(), fmt.Sprintf("$n awakens %s.", p.Name))
 			p.SetPosition(combat.PosStanding)
 			return
 		}
@@ -867,8 +867,8 @@ func doWake(w *World, ch *Player, argument string) {
 func doFollow(w *World, ch *Player, argument string) {
 	arg := strings.TrimSpace(argument)
 	if arg == "" {
-		if ch.Following != "" {
-			sendToChar(ch, fmt.Sprintf("You are currently following %s.\r\n", ch.Following))
+		if ch.GetFollowing() != "" {
+			sendToChar(ch, fmt.Sprintf("You are currently following %s.\r\n", ch.GetFollowing()))
 		} else {
 			sendToChar(ch, "Follow who?\r\n")
 		}
@@ -876,12 +876,12 @@ func doFollow(w *World, ch *Player, argument string) {
 	}
 
 	if strings.EqualFold(arg, ch.Name) {
-		if ch.Following != "" {
-			prevLeader := ch.Following
+		if ch.GetFollowing() != "" {
+			prevLeader := ch.GetFollowing()
 			ch.Following = ""
 			ch.InGroup = false
 			sendToChar(ch, "You stop following.\r\n")
-			w.roomMessage(ch.RoomVNum, fmt.Sprintf("$n stops following %s.", prevLeader))
+			w.roomMessage(ch.GetRoom(), fmt.Sprintf("$n stops following %s.", prevLeader))
 		} else {
 			sendToChar(ch, "You are not following anyone.\r\n")
 		}

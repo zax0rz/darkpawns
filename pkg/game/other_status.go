@@ -14,15 +14,15 @@ func (w *World) doAFK(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		return true
 	}
 
-	if ch.Flags&(1<<PrfAFK) != 0 {
-		ch.Flags &^= 1 << PrfAFK
+	if ch.GetFlags()&(1<<PrfAFK) != 0 {
+		ch.SetPlrFlag(PrfAFK, false)
 		ch.AFK = false
 		ch.AFKMessage = ""
 		msg := fmt.Sprintf("%s is no longer AFK.\r\n", ch.Name)
 		actToRoom(w, ch.GetRoomVNum(), msg, ch.Name)
 		ch.SendMessage("You are no longer AFK.\r\n")
 	} else {
-		ch.Flags |= 1 << PrfAFK
+		ch.SetPlrFlag(PrfAFK, true)
 		ch.AFK = true
 		ch.AFKMessage = arg
 		msg := fmt.Sprintf("%s is now AFK.\r\n", ch.Name)
@@ -49,16 +49,16 @@ func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	if arg == "" {
 		var autos []string
-		if ch.Flags&(1<<PrfAutoexit) != 0 {
+		if ch.GetFlags()&(1<<PrfAutoexit) != 0 {
 			autos = append(autos, "exits")
 		}
-		if ch.Flags&(1<<PrfAutoLoot) != 0 {
+		if ch.GetFlags()&(1<<PrfAutoLoot) != 0 {
 			autos = append(autos, "loot")
 		}
-		if ch.Flags&(1<<PrfAutoGold) != 0 {
+		if ch.GetFlags()&(1<<PrfAutoGold) != 0 {
 			autos = append(autos, "gold")
 		}
-		if ch.Flags&(1<<PrfAutoSplit) != 0 {
+		if ch.GetFlags()&(1<<PrfAutoSplit) != 0 {
 			autos = append(autos, "split")
 		}
 
@@ -72,35 +72,35 @@ func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	switch strings.ToLower(arg) {
 	case "exit", "exits":
-		if ch.Flags&(1<<PrfAutoexit) != 0 {
-			ch.Flags &^= 1 << PrfAutoexit
+		if ch.GetFlags()&(1<<PrfAutoexit) != 0 {
+			ch.SetPlrFlag(PrfAutoexit, false)
 			ch.SendMessage("Auto exits off.\r\n")
 		} else {
-			ch.Flags |= 1 << PrfAutoexit
+			ch.SetPlrFlag(PrfAutoexit, true)
 			ch.SendMessage("Auto exits on.\r\n")
 		}
 	case "loot":
-		if ch.Flags&(1<<PrfAutoLoot) != 0 {
-			ch.Flags &^= 1 << PrfAutoLoot
+		if ch.GetFlags()&(1<<PrfAutoLoot) != 0 {
+			ch.SetPlrFlag(PrfAutoLoot, false)
 			ch.SendMessage("Auto loot off.\r\n")
 		} else {
-			ch.Flags |= 1 << PrfAutoLoot
+			ch.SetPlrFlag(PrfAutoLoot, true)
 			ch.SendMessage("Auto loot on.\r\n")
 		}
 	case "gold":
-		if ch.Flags&(1<<PrfAutoGold) != 0 {
-			ch.Flags &^= 1 << PrfAutoGold
+		if ch.GetFlags()&(1<<PrfAutoGold) != 0 {
+			ch.SetPlrFlag(PrfAutoGold, false)
 			ch.SendMessage("Auto gold off.\r\n")
 		} else {
-			ch.Flags |= 1 << PrfAutoGold
+			ch.SetPlrFlag(PrfAutoGold, true)
 			ch.SendMessage("Auto gold on.\r\n")
 		}
 	case "split":
-		if ch.Flags&(1<<PrfAutoSplit) != 0 {
-			ch.Flags &^= 1 << PrfAutoSplit
+		if ch.GetFlags()&(1<<PrfAutoSplit) != 0 {
+			ch.SetPlrFlag(PrfAutoSplit, false)
 			ch.SendMessage("Auto split off.\r\n")
 		} else {
-			ch.Flags |= 1 << PrfAutoSplit
+			ch.SetPlrFlag(PrfAutoSplit, true)
 			ch.SendMessage("Auto split on.\r\n")
 		}
 	default:
@@ -118,29 +118,29 @@ func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string)
 		return true
 	}
 
-	if ch.Flags&(1<<PlrWerewolf) != 0 {
+	if ch.GetFlags()&(1<<PlrWerewolf) != 0 {
 		// Werewolf: toggle affWerewolf
 		if ch.IsAffected(affWerewolf) {
 			ch.SetAffect(affWerewolf, false)
-			if ch.Health > ch.MaxHealth {
-				ch.Health = ch.MaxHealth
+			if ch.GetHP() > ch.GetMaxHP() {
+				ch.SetHP(ch.GetMaxHP())
 			}
 			ch.SendMessage("You revert back to your human form.\r\n")
 			actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s transforms back into %s human form.\r\n", ch.Name, hisHer(ch.GetSex())), ch.Name)
 		} else {
 			ch.SetAffect(affWerewolf, true)
 			bonus := randRange(2, 6) * 10
-			ch.Health += bonus
-			if ch.Health > 666 {
-				ch.Health = 666
+			ch.SetHP(ch.GetHP() + bonus)
+			if ch.GetHP() > 666 {
+				ch.SetHP(666)
 			}
-			if ch.Health > ch.MaxHealth {
-				ch.MaxHealth = ch.Health
+			if ch.GetHP() > ch.GetMaxHP() {
+				ch.SetMaxHP(ch.GetHP())
 			}
 			ch.SendMessage("You transform into a werewolf!\r\n")
 			actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s transforms into a werewolf!\r\n", ch.Name), ch.Name)
 		}
-	} else if ch.Flags&(1<<PlrVampire) != 0 {
+	} else if ch.GetFlags()&(1<<PlrVampire) != 0 {
 		// Vampire: toggle affVampire
 		if ch.IsAffected(affVampire) {
 			ch.SetAffect(affVampire, false)
@@ -149,7 +149,7 @@ func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string)
 		} else {
 			ch.SetAffect(affVampire, true)
 			bonus := randRange(2, 6) * 10
-			ch.Mana += bonus
+			ch.SetMana(ch.GetMana() + bonus)
 			ch.SendMessage("You transform into a vampire!\r\n")
 			actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s transforms into a vampire!\r\n", ch.Name), ch.Name)
 		}

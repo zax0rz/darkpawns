@@ -111,7 +111,7 @@ func (w *World) doYank(ch *Player, me *MobInstance, cmd string, arg string) bool
 	}
 
 	// Must be a follower
-	if victimPl.Following != ch.Name {
+	if victimPl.GetFollowing() != ch.Name {
 		ch.SendMessage("They aren't following you!\r\n")
 		return true
 	}

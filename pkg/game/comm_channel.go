@@ -40,11 +40,11 @@ func (w *World) doShout(ch *Player, me *MobInstance, arg string) bool {
 		sendToChar(ch, "You must be at least level 5 to shout.\r\n")
 		return true
 	}
-	if ch.Flags&prfNoShout != 0 {
+	if ch.GetFlags()&prfNoShout != 0 {
 		sendToChar(ch, "You can't shout.\r\n")
 		return true
 	}
-	if w.roomHasFlag(ch.RoomVNum, "soundproof") {
+	if w.roomHasFlag(ch.GetRoom(), "soundproof") {
 		sendToChar(ch, "The walls seem to absorb your words.\r\n")
 		return true
 	}
@@ -57,10 +57,10 @@ func (w *World) doShout(ch *Player, me *MobInstance, arg string) bool {
 		if p.Flags&prfDeaf != 0 {
 			continue
 		}
-		if p.Flags&prfNoShout != 0 {
+		if p.GetFlags()&prfNoShout != 0 {
 			continue
 		}
-		if w.roomHasFlag(p.RoomVNum, "soundproof") {
+		if w.roomHasFlag(p.GetRoom(), "soundproof") {
 			continue
 		}
 		p.SendMessage(msg)
@@ -88,7 +88,7 @@ func (w *World) doWhisper(ch *Player, me *MobInstance, arg string) bool {
 	ch.SendMessage(fmt.Sprintf("You whisper to %s, '%s'\r\n", vict.Name, msg))
 
 		// Broadcast to rest of room that whisper occurred.
-	for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 		if p.Name != ch.Name && p.Name != vict.Name {
 			p.SendMessage(fmt.Sprintf("%s whispers something to %s.\r\n", ch.Name, vict.Name))
 		}
@@ -114,7 +114,7 @@ func (w *World) doAsk(ch *Player, me *MobInstance, arg string) bool {
 	vict.SendMessage(fmt.Sprintf("\x1B[1;36m%s asks, '%s'\033[0m\r\n", ch.Name, msg))
 	ch.SendMessage(fmt.Sprintf("You ask %s, '%s'\r\n", vict.Name, msg))
 
-	for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 		if p.Name != ch.Name && p.Name != vict.Name {
 			p.SendMessage(fmt.Sprintf("%s asks %s something.\r\n", ch.Name, vict.Name))
 		}
@@ -264,7 +264,7 @@ func (w *World) doQcomm(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	msg := fmt.Sprintf("%s says, '%s'\r\n", ch.Name, arg)
-	for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 		if p.Name != ch.Name {
 			p.SendMessage(msg)
 		}

@@ -36,7 +36,7 @@ func (w *World) GetFollowersInRoom(leaderName string, roomVNum int) []*Player {
 
 	var followers []*Player
 	for _, p := range w.players {
-		if p.Following == leaderName && p.RoomVNum == roomVNum {
+		if p.Following == leaderName && p.GetRoom() == roomVNum {
 			followers = append(followers, p)
 		}
 	}
@@ -129,9 +129,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 							kp.Name, goldPerMember))
 						kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
 							goldPerMember, m.Name))
-						m.mu.Lock()
-						m.Gold += goldPerMember
-						m.mu.Unlock()
+						m.SetGold(m.GetGold() + goldPerMember)
 						remaining -= goldPerMember
 					} else {
 						kp.SendMessage(fmt.Sprintf("You would share gold with %s, but there was none to split!\r\n",
@@ -144,24 +142,18 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 				// Killer keeps the remainder
 				if remaining > 0 {
 					kp.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", remaining))
-					kp.mu.Lock()
-					kp.Gold += remaining
-					kp.mu.Unlock()
+					kp.SetGold(kp.GetGold() + remaining)
 				} else {
 					kp.SendMessage("When you split no gold, you got none.\r\n")
 				}
 			} else {
 				// Solo kill with autogold+autosplit but no group — just take all
-				kp.mu.Lock()
-				kp.Gold += goldLooted
-				kp.mu.Unlock()
+				kp.SetGold(kp.GetGold() + goldLooted)
 				kp.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", goldLooted))
 			}
 		} else {
 			// AutoGold without AutoSplit — just loot
-			kp.mu.Lock()
-			kp.Gold += goldLooted
-			kp.mu.Unlock()
+			kp.SetGold(kp.GetGold() + goldLooted)
 			kp.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", goldLooted))
 		}
 	}
@@ -179,9 +171,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 		if !ok {
 			return
 		}
-		p.mu.Lock()
-		p.Exp += victimExp
-		p.mu.Unlock()
+		p.AddExp(victimExp)
 		if victimExp > 1 {
 			p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", victimExp))
 		} else {
@@ -216,9 +206,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 
 	// perform_group_gain() for each member — fight.c lines 688–705
 	for _, m := range inRoom {
-		m.mu.Lock()
-		m.Exp += base
-		m.mu.Unlock()
+		m.AddExp(base)
 		if base > 1 {
 			m.SendMessage(fmt.Sprintf("You receive your share of experience -- %d points.\r\n", base))
 		} else {

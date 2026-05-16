@@ -36,13 +36,13 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 	ch.mu.Lock()
-	if amount > ch.Gold {
+	if amount > ch.GetGold() {
 		ch.mu.Unlock()
 		ch.SendMessage("You don't seem to have that much gold to split.\r\n")
 		return true
 	}
 
-	leaderName := ch.Following
+	leaderName := ch.GetFollowing()
 	if leaderName == "" {
 		leaderName = ch.Name
 	}
@@ -54,7 +54,7 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 		if p.IsNPC() {
 			continue
 		}
-		if p.Following != leaderName && p.Name != leaderName {
+		if p.GetFollowing() != leaderName && p.Name != leaderName {
 			continue
 		}
 		if p.IsAffected(affGroup) {
@@ -69,21 +69,21 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	share := amount / num
-	ch.Gold -= share * (num - 1)
+	ch.SetGold(ch.GetGold() - share * (num - 1))
 	ch.mu.Unlock()
 
 	for _, p := range players {
 		if p.IsNPC() {
 			continue
 		}
-		if p.Following != leaderName && p.Name != leaderName {
+		if p.GetFollowing() != leaderName && p.Name != leaderName {
 			continue
 		}
 		if !p.IsAffected(affGroup) || p.Name == ch.Name {
 			continue
 		}
 		p.mu.Lock()
-		p.Gold += share
+		p.SetGold(p.GetGold() + share)
 		p.mu.Unlock()
 		p.SendMessage(fmt.Sprintf("%s splits %d coins; you receive %d.\r\n", ch.Name, amount, share))
 	}
@@ -129,7 +129,7 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("You don't have a tattoo.\r\n")
 		case TattooSkull:
 			// Summon mob vnum 9 (skull), charm it, make it follow
-			mob, err := w.SpawnMob(9, ch.RoomVNum)
+			mob, err := w.SpawnMob(9, ch.GetRoom())
 			if err != nil {
 				ch.SendMessage("Your tattoo fizzles...\r\n")
 				break
@@ -144,14 +144,14 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 				Magnitude: 0,
 				Flags:     1 << 3, // AFF_CHARM
 			})
-			w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s's tattoo glows brightly for a second, and %s appears!", ch.Name, mob.Prototype.ShortDesc))
+			w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s's tattoo glows brightly for a second, and %s appears!", ch.Name, mob.Prototype.ShortDesc))
 			ch.SendMessage(fmt.Sprintf("Your tattoo glows brightly for a second, and %s appears!\r\n", mob.Prototype.ShortDesc))
 		case TattooEye:
-			spells.Cast(ch, ch, spells.SpellGreatPercept, ch.Level, w, nil)
+			spells.Cast(ch, ch, spells.SpellGreatPercept, ch.GetLevel(), w, nil)
 		case TattooShip:
-			spells.Cast(ch, ch, spells.SpellChangeDensity, ch.Level, w, nil)
+			spells.Cast(ch, ch, spells.SpellChangeDensity, ch.GetLevel(), w, nil)
 		case TattooAngel:
-			spells.Cast(ch, ch, spells.SpellBless, ch.Level, w, nil)
+			spells.Cast(ch, ch, spells.SpellBless, ch.GetLevel(), w, nil)
 		default:
 			ch.SendMessage("Your tattoo can't be 'use'd.\r\n")
 			return true

@@ -123,7 +123,7 @@ func (w *World) doSteal(ch *Player, me *MobInstance, cmd string, arg string) boo
 	var victNPC bool
 	if victimPl != nil {
 		// Stealing from player
-		if victimPl.Level >= LVL_IMMORT {
+		if victimPl.GetLevel() >= LVL_IMMORT {
 			ch.SendMessage("You cannot steal from immortals!\r\n")
 			return true
 		}
@@ -132,7 +132,7 @@ func (w *World) doSteal(ch *Player, me *MobInstance, cmd string, arg string) boo
 		victNPC = true
 	}
 
-	if (ch.Flags&(1<<PlrOutlaw)) != 0 && !victNPC {
+	if (ch.GetFlags()&(1<<PlrOutlaw)) != 0 && !victNPC {
 		ch.SendMessage("You are an outlaw!  Wait until your crime is forgotten.\r\n")
 		return true
 	}
@@ -140,13 +140,13 @@ func (w *World) doSteal(ch *Player, me *MobInstance, cmd string, arg string) boo
 	// Check level difference — no stealing from players > 10 levels below
 	victLevel := 1
 	if victimPl != nil {
-		victLevel = victimPl.Level
+		victLevel = victimPl.GetLevel()
 	}
 	if victimMob != nil {
 		victLevel = 1 // mobs are always stealable level-wise
 	}
 
-	if !victNPC && victLevel > ch.Level/2 {
+	if !victNPC && victLevel > ch.GetLevel()/2 {
 		ch.SendMessage("You can't steal from someone so high above you.\r\n")
 		return true
 	}
@@ -161,7 +161,7 @@ func (w *World) doSteal(ch *Player, me *MobInstance, cmd string, arg string) boo
 	// Steal gold
 	var victGold int
 	if victimPl != nil {
-		victGold = victimPl.Gold
+		victGold = victimPl.GetGold()
 	} else {
 		victGold = 0 // mobs might have gold
 	}
@@ -175,9 +175,9 @@ func (w *World) doSteal(ch *Player, me *MobInstance, cmd string, arg string) boo
 			gold = 1782
 		}
 		if gold > 0 {
-			ch.Gold += gold
+			ch.SetGold(ch.GetGold() + gold)
 			if victimPl != nil {
-				victimPl.Gold -= gold
+				victimPl.SetGold(victimPl.GetGold() - gold)
 			}
 
 			if gold > 1 {
@@ -215,7 +215,7 @@ func (w *World) doSteal(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	if ohoh && victimPl != nil {
-		ch.Flags |= 1 << PlrOutlaw
+		ch.SetPlrFlag(PlrOutlaw, true)
 		ch.SendMessage("You are now an outlaw!\r\n")
 	}
 

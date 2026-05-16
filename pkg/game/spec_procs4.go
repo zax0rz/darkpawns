@@ -53,11 +53,11 @@ func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		switch walkRoll {
 		case 1, 2:
 			// C: perform_move(ch, SCMD_EAST-1, 0) → direction index 1 (east)
-			w.moveMobDir(me, 1)
+			w.mobPerformMove(me, 1)
 			return true
 		case 9, 10:
 			// C: perform_move(ch, SCMD_WEST-1, 0) → direction index 3 (west)
-			w.moveMobDir(me, 3)
+			w.mobPerformMove(me, 3)
 			return true
 		}
 	}
@@ -197,11 +197,11 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 
 		price := petPrice(pet)
-		if ch.Gold < price {
+		if ch.GetGold() < price {
 			sendToChar(ch, "You don't have enough gold!\r\n")
 			return true
 		}
-		ch.Gold -= price
+		ch.SetGold(ch.GetGold() - price)
 
 		newPet, err := w.SpawnMob(pet.VNum, me.RoomVNum)
 		if err != nil {
@@ -396,7 +396,7 @@ func specNewbieZoneEntrance(w *World, ch *Player, me *MobInstance, cmd string, a
 		return false
 	}
 
-	if ch.Level >= newbieLevel {
+	if ch.GetLevel() >= newbieLevel {
 		sendToChar(ch, "Nah, you're too much of a badass to go in there!\r\n")
 		return true
 	}
@@ -429,7 +429,7 @@ func specOroQuartersRoom(w *World, ch *Player, me *MobInstance, cmd string, arg 
 		w.roomMessage(me.RoomVNum, "A strong force jolts $n in $s attempt to leave south.")
 		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.\r\n")
 		ch.mu.Lock()
-		ch.Health /= 2
+		ch.SetHP(ch.GetHP() / 2)
 		ch.mu.Unlock()
 		return true
 	}
@@ -446,7 +446,7 @@ func specOroStudyRoom(w *World, ch *Player, me *MobInstance, cmd string, arg str
 		w.roomMessage(me.RoomVNum, "A strong force jolts $n in $s attempt to leave north.")
 		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.\r\n")
 		ch.mu.Lock()
-		ch.Health /= 2
+		ch.SetHP(ch.GetHP() / 2)
 		ch.mu.Unlock()
 		return true
 	}
@@ -456,7 +456,7 @@ func specOroStudyRoom(w *World, ch *Player, me *MobInstance, cmd string, arg str
 
 func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "balance" {
-		sendToChar(ch, fmt.Sprintf("Your current balance is %d coins.\r\n", ch.Gold))
+		sendToChar(ch, fmt.Sprintf("Your current balance is %d coins.\r\n", ch.GetGold()))
 		return true
 	}
 
@@ -469,11 +469,11 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 			sendToChar(ch, "How much do you want to deposit?\r\n")
 			return true
 		}
-		if ch.Gold < amount {
+		if ch.GetGold() < amount {
 			sendToChar(ch, "You don't have that many coins!\r\n")
 			return true
 		}
-		ch.Gold -= amount
+		ch.SetGold(ch.GetGold() - amount)
 		sendToChar(ch, fmt.Sprintf("You deposit %d coins.\r\n", amount))
 		w.roomMessage(me.RoomVNum, "$n makes a bank transaction.")
 		return true
@@ -488,7 +488,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 			sendToChar(ch, "How much do you want to withdraw?\r\n")
 			return true
 		}
-		ch.Gold += amount
+		ch.SetGold(ch.GetGold() + amount)
 		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.\r\n", amount))
 		w.roomMessage(me.RoomVNum, "$n makes a bank transaction.")
 		return true

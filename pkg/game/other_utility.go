@@ -23,7 +23,7 @@ func (w *World) doPeek(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	if ch.Class != ClassThief && ch.Class != ClassAssassin && ch.Level < LVL_IMMORT {
+	if ch.Class != ClassThief && ch.Class != ClassAssassin && ch.GetLevel() < LVL_IMMORT {
 		ch.SendMessage("You have no idea how to peek!\r\n")
 		return true
 	}
@@ -68,7 +68,7 @@ func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-	if ch.Level > 5 {
+	if ch.GetLevel() > 5 {
 		ch.SendMessage("You are too powerful to be teleported to the temple!\r\n")
 		return true
 	}
@@ -93,7 +93,7 @@ func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bo
 	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s closes %s eyes and prays...\r\n", ch.Name, hisHer(ch.GetSex())), ch.Name)
 
 	ch.SendMessage("You are recalled!\r\n")
-	ch.RoomVNum = recallRoom
+	ch.SetRoom(recallRoom)
 	actToRoom(w, recallRoom, fmt.Sprintf("%s appears in the room.\r\n", ch.Name), "")
 
 	return true
@@ -198,11 +198,11 @@ func (w *World) doInactive(ch *Player, me *MobInstance, cmd string, arg string) 
 		return true
 	}
 
-	if ch.Flags&(1<<PrfInactive) != 0 {
-		ch.Flags &^= 1 << PrfInactive
+	if ch.GetFlags()&(1<<PrfInactive) != 0 {
+		ch.SetPlrFlag(PrfInactive, false)
 		ch.SendMessage("You are now active.\r\n")
 	} else {
-		ch.Flags |= 1 << PrfInactive
+		ch.SetPlrFlag(PrfInactive, true)
 		ch.SendMessage("You are now inactive.\r\n")
 	}
 	return true

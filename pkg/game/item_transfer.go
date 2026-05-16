@@ -41,7 +41,7 @@ func (w *World) getCheckMoney(ch *Player, obj *ObjectInstance) {
 		if amount > 1 {
 			ch.SendMessage(fmt.Sprintf("There were %d coins.\r\n", amount))
 		}
-		ch.Gold += amount
+		ch.SetGold(ch.GetGold() + amount)
 	}
 }
 
@@ -110,12 +110,12 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 	if dotmode == findAll {
 		// get all
 		room := w.GetRoomInWorld(ch.GetRoomVNum())
-		if room == nil || len(w.roomItems[ch.RoomVNum]) == 0 {
+		if room == nil || len(w.roomItems[ch.GetRoom()]) == 0 {
 			ch.SendMessage("There doesn't seem to be anything here.\r\n")
 			return true
 		}
-		items := make([]*ObjectInstance, len(w.roomItems[ch.RoomVNum]))
-		copy(items, w.roomItems[ch.RoomVNum])
+		items := make([]*ObjectInstance, len(w.roomItems[ch.GetRoom()]))
+		copy(items, w.roomItems[ch.GetRoom()])
 		for _, obj := range items {
 			w.performGetFromRoom(ch, obj)
 		}
@@ -132,8 +132,8 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 		if room == nil {
 			return true
 		}
-		items := make([]*ObjectInstance, len(w.roomItems[ch.RoomVNum]))
-		copy(items, w.roomItems[ch.RoomVNum])
+		items := make([]*ObjectInstance, len(w.roomItems[ch.GetRoom()]))
+		copy(items, w.roomItems[ch.GetRoom()])
 		found := false
 		for _, obj := range items {
 			if isname(keyword, obj.GetKeywords()) {
@@ -155,7 +155,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 			return true
 		}
 		var obj *ObjectInstance
-		for _, o := range w.roomItems[ch.RoomVNum] {
+		for _, o := range w.roomItems[ch.GetRoom()] {
 			if isname(arg1, o.GetKeywords()) {
 				obj = o
 				break
@@ -183,7 +183,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 	if cont == nil {
 		room := w.GetRoomInWorld(ch.GetRoomVNum())
 		if room != nil {
-			for _, obj := range w.roomItems[ch.RoomVNum] {
+			for _, obj := range w.roomItems[ch.GetRoom()] {
 				if isname(arg2, obj.GetKeywords()) {
 					cont = obj
 					break
@@ -378,9 +378,9 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 	w.actToRoomExclude(ch, vict, "$n gives %s to $N.", nil, vict)
 
 	if ch.GetLevel() < lvlGod {
-		ch.Gold -= amount
+		ch.SetGold(ch.GetGold() - amount)
 	}
-	vict.Gold += amount
+	vict.SetGold(vict.GetGold() + amount)
 
 	if first != second {
 		second.mu.Unlock()

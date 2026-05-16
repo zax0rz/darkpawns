@@ -25,7 +25,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 	}
 
 	// Find target
-	targetPl, targetMob := w.findCharInRoom(ch, ch.RoomVNum, name)
+	targetPl, targetMob := w.findCharInRoom(ch, ch.GetRoom(), name)
 	var target *Player
 	if targetPl != nil {
 		target = targetPl
@@ -38,7 +38,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 	}
 
 	// Level check
-	if target.Level >= ch.Level && target != ch {
+	if target.GetLevel() >= ch.GetLevel() && target != ch {
 		ch.SendMessage("Maybe that's not such a great idea...\r\n")
 		return true
 	}
@@ -46,7 +46,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 	switch strings.ToLower(field) {
 	case "level":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's level: %d\r\n", target.GetName(), target.Level))
+			ch.SendMessage(fmt.Sprintf("%s's level: %d\r\n", target.GetName(), target.GetLevel()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -54,11 +54,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be 0-110.\r\n")
 			return true
 		}
-		target.Level = v
+		target.SetLevel(v)
 		ch.SendMessage(fmt.Sprintf("%s's level set to %d.\r\n", target.GetName(), v))
 	case "gold":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's gold: %d\r\n", target.GetName(), target.Gold))
+			ch.SendMessage(fmt.Sprintf("%s's gold: %d\r\n", target.GetName(), target.GetGold()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -66,11 +66,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.Gold = v
+		target.SetGold(v)
 		ch.SendMessage(fmt.Sprintf("%s's gold set to %d.\r\n", target.GetName(), v))
 	case "hit", "hp", "health":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's hit: %d/%d\r\n", target.GetName(), target.Health, target.MaxHealth))
+			ch.SendMessage(fmt.Sprintf("%s's hit: %d/%d\r\n", target.GetName(), target.GetHP(), target.GetMaxHP()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -78,11 +78,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.Health = v
+		target.SetHP(v)
 		ch.SendMessage(fmt.Sprintf("%s's hit set to %d.\r\n", target.GetName(), v))
 	case "mana":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's mana: %d/%d\r\n", target.GetName(), target.Mana, target.MaxMana))
+			ch.SendMessage(fmt.Sprintf("%s's mana: %d/%d\r\n", target.GetName(), target.GetMana(), target.GetMaxMana()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -90,11 +90,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.Mana = v
+		target.SetMana(v)
 		ch.SendMessage(fmt.Sprintf("%s's mana set to %d.\r\n", target.GetName(), v))
 	case "maxhit":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's maxhit: %d\r\n", target.GetName(), target.MaxHealth))
+			ch.SendMessage(fmt.Sprintf("%s's maxhit: %d\r\n", target.GetName(), target.GetMaxHP()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -102,11 +102,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.MaxHealth = v
+		target.SetMaxHP(v)
 		ch.SendMessage(fmt.Sprintf("%s's maxhit set to %d.\r\n", target.GetName(), v))
 	case "maxmana":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's maxmana: %d\r\n", target.GetName(), target.MaxMana))
+			ch.SendMessage(fmt.Sprintf("%s's maxmana: %d\r\n", target.GetName(), target.GetMaxMana()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -114,11 +114,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.MaxMana = v
+		target.SetMaxMana(v)
 		ch.SendMessage(fmt.Sprintf("%s's maxmana set to %d.\r\n", target.GetName(), v))
 	case "maxmove":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's maxmove: %d\r\n", target.GetName(), target.MaxMove))
+			ch.SendMessage(fmt.Sprintf("%s's maxmove: %d\r\n", target.GetName(), target.GetMaxMove()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -126,11 +126,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.MaxMove = v
+		target.SetMaxMove(v)
 		ch.SendMessage(fmt.Sprintf("%s's maxmove set to %d.\r\n", target.GetName(), v))
 	case "move":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's move: %d/%d\r\n", target.GetName(), target.Move, target.MaxMove))
+			ch.SendMessage(fmt.Sprintf("%s's move: %d/%d\r\n", target.GetName(), target.GetMove(), target.GetMaxMove()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -138,11 +138,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.Move = v
+		target.SetMove(v)
 		ch.SendMessage(fmt.Sprintf("%s's move set to %d.\r\n", target.GetName(), v))
 	case "align", "alignment":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's alignment: %d\r\n", target.GetName(), target.Alignment))
+			ch.SendMessage(fmt.Sprintf("%s's alignment: %d\r\n", target.GetName(), target.GetAlignment()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -150,11 +150,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be -1000 to 1000.\r\n")
 			return true
 		}
-		target.Alignment = v
+		target.SetAlignment(v)
 		ch.SendMessage(fmt.Sprintf("%s's alignment set to %d.\r\n", target.GetName(), v))
 	case "ac":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's AC: %d\r\n", target.GetName(), target.AC))
+			ch.SendMessage(fmt.Sprintf("%s's AC: %d\r\n", target.GetName(), target.GetAC()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -166,7 +166,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.SendMessage(fmt.Sprintf("%s's AC set to %d.\r\n", target.GetName(), v))
 	case "hitroll":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's hitroll: %d\r\n", target.GetName(), target.Hitroll))
+			ch.SendMessage(fmt.Sprintf("%s's hitroll: %d\r\n", target.GetName(), target.GetHitroll()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -174,11 +174,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.Hitroll = v
+		target.SetHitroll(v)
 		ch.SendMessage(fmt.Sprintf("%s's hitroll set to %d.\r\n", target.GetName(), v))
 	case "damroll":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's damroll: %d\r\n", target.GetName(), target.Damroll))
+			ch.SendMessage(fmt.Sprintf("%s's damroll: %d\r\n", target.GetName(), target.GetDamroll()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -186,11 +186,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be numeric.\r\n")
 			return true
 		}
-		target.Damroll = v
+		target.SetDamroll(v)
 		ch.SendMessage(fmt.Sprintf("%s's damroll set to %d.\r\n", target.GetName(), v))
 	case "exp", "experience":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's exp: %d\r\n", target.GetName(), target.Exp))
+			ch.SendMessage(fmt.Sprintf("%s's exp: %d\r\n", target.GetName(), target.GetExp()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -198,11 +198,11 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be >= 0.\r\n")
 			return true
 		}
-		target.Exp = v
+		target.SetExp(v)
 		ch.SendMessage(fmt.Sprintf("%s's exp set to %d.\r\n", target.GetName(), v))
 	case "practices":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's practices: %d\r\n", target.GetName(), target.Practices))
+			ch.SendMessage(fmt.Sprintf("%s's practices: %d\r\n", target.GetName(), target.GetPractices()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -210,7 +210,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be >= 0.\r\n")
 			return true
 		}
-		target.Practices = v
+		target.SetPractices(v)
 		ch.SendMessage(fmt.Sprintf("%s's practices set to %d.\r\n", target.GetName(), v))
 	case "roomflag":
 		target.RoomFlags = !target.RoomFlags
@@ -228,7 +228,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.SendMessage(fmt.Sprintf("Name set to %s.\r\n", value))
 	case "sex":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's sex: %d\r\n", target.GetName(), target.Sex))
+			ch.SendMessage(fmt.Sprintf("%s's sex: %d\r\n", target.GetName(), target.GetSex()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -240,7 +240,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.SendMessage(fmt.Sprintf("%s's sex set to %d.\r\n", target.GetName(), v))
 	case "room":
 		if value == "" {
-			ch.SendMessage(fmt.Sprintf("%s's room: %d\r\n", target.GetName(), target.RoomVNum))
+			ch.SendMessage(fmt.Sprintf("%s's room: %d\r\n", target.GetName(), target.GetRoom()))
 			return true
 		}
 		v, err := strconv.Atoi(value)
@@ -248,7 +248,7 @@ func (w *World) doSet(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			ch.SendMessage("Value must be a room vnum.\r\n")
 			return true
 		}
-		target.RoomVNum = v
+		target.SetRoom(v)
 		ch.SendMessage(fmt.Sprintf("%s's room set to %d.\r\n", target.GetName(), v))
 	default:
 		ch.SendMessage(fmt.Sprintf("Unknown field: %s\r\n", field))
@@ -273,13 +273,13 @@ func (w *World) doStat(ch *Player, me *MobInstance, cmd string, arg string) bool
 	}
 
 	// Try player
-	targetPl, _ := w.findCharInRoom(ch, ch.RoomVNum, arg)
+	targetPl, _ := w.findCharInRoom(ch, ch.GetRoom(), arg)
 	if targetPl != nil {
 		t := targetPl
-		ch.SendMessage(fmt.Sprintf("Name: %s  Level: %d  Class: %d  Race: %d\r\n", t.Name, t.Level, t.Class, t.Race))
-		ch.SendMessage(fmt.Sprintf("Hit: %d/%d  Mana: %d/%d  Move: %d/%d\r\n", t.Health, t.MaxHealth, t.Mana, t.MaxMana, t.Move, t.MaxMove))
-		ch.SendMessage(fmt.Sprintf("AC: %d  Hitroll: %d  Damroll: %d  Align: %d\r\n", t.AC, t.Hitroll, t.Damroll, t.Alignment))
-		ch.SendMessage(fmt.Sprintf("Gold: %d  Exp: %d  Practices: %d  Room: %d\r\n", t.Gold, t.Exp, t.Practices, t.RoomVNum))
+		ch.SendMessage(fmt.Sprintf("Name: %s  Level: %d  Class: %d  Race: %d\r\n", t.Name, t.GetLevel(), t.GetClass(), t.GetRace()))
+		ch.SendMessage(fmt.Sprintf("Hit: %d/%d  Mana: %d/%d  Move: %d/%d\r\n", t.GetHP(), t.GetMaxHP(), t.GetMana(), t.GetMaxMana(), t.GetMove(), t.GetMaxMove()))
+		ch.SendMessage(fmt.Sprintf("AC: %d  Hitroll: %d  Damroll: %d  Align: %d\r\n", t.GetAC(), t.GetHitroll(), t.GetDamroll(), t.GetAlignment()))
+		ch.SendMessage(fmt.Sprintf("Gold: %d  Exp: %d  Practices: %d  Room: %d\r\n", t.GetGold(), t.GetExp(), t.GetPractices(), t.GetRoom()))
 		ch.SendMessage(fmt.Sprintf("Str: %d  Int: %d  Wis: %d  Dex: %d  Con: %d  Cha: %d\r\n",
 			t.Stats.Str, t.Stats.Int, t.Stats.Wis, t.Stats.Dex, t.Stats.Con, t.Stats.Cha))
 		return true
@@ -332,9 +332,9 @@ func (w *World) doSocial(ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	// Simple social format: player does <social> [at <target>]
 	if targetArg != "" {
-		w.SendToRoom(ch.RoomVNum, fmt.Sprintf("%s %s %s.\r\n", ch.GetName(), socialName, targetArg))
+		w.SendToRoom(ch.GetRoom(), fmt.Sprintf("%s %s %s.\r\n", ch.GetName(), socialName, targetArg))
 	} else {
-		w.SendToRoom(ch.RoomVNum, fmt.Sprintf("%s %s.\r\n", ch.GetName(), socialName))
+		w.SendToRoom(ch.GetRoom(), fmt.Sprintf("%s %s.\r\n", ch.GetName(), socialName))
 	}
 	return true
 }
@@ -358,7 +358,7 @@ func (w *World) doSkillset(ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 
 	// Find target in the same room as ch.
-	targetPl, targetMob := w.findCharInRoom(ch, ch.RoomVNum, first)
+	targetPl, targetMob := w.findCharInRoom(ch, ch.GetRoom(), first)
 	if targetPl == nil && targetMob == nil {
 		ch.SendMessage("No one here by that name.\r\n")
 		return true

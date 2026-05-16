@@ -13,25 +13,25 @@ func (w *World) doScore(ch *Player, me *MobInstance, cmd string, arg string) boo
 	raceNames := map[int]string{
 		0: "Human", 1: "Elf", 2: "Dwarf", 3: "Halfling", 4: "Gnome", 5: "Kender",
 	}
-	cn := classNames[ch.Class]
+	cn := classNames[ch.GetClass()]
 	if cn == "" {
 		cn = "Unknown"
 	}
-	rn := raceNames[ch.Race]
+	rn := raceNames[ch.GetRace()]
 	if rn == "" {
 		rn = "Unknown"
 	}
 	ch.SendMessage(fmt.Sprintf("You are %s.\r\n", ch.GetName()))
-	ch.SendMessage(fmt.Sprintf("Level %d %s %s.\r\n", ch.Level, rn, cn))
+	ch.SendMessage(fmt.Sprintf("Level %d %s %s.\r\n", ch.GetLevel(), rn, cn))
 	ch.SendMessage(fmt.Sprintf("HP: %d/%d  Mana: %d/%d  Move: %d/%d\r\n",
-		ch.Health, ch.MaxHealth,
-		ch.Mana, ch.MaxMana,
-		ch.Move, ch.MaxMove))
+		ch.GetHP(), ch.GetMaxHP(),
+		ch.GetMana(), ch.GetMaxMana(),
+		ch.GetMove(), ch.GetMaxMove()))
 	ch.SendMessage(fmt.Sprintf("Str: %d  Int: %d  Wis: %d  Dex: %d  Con: %d  Cha: %d\r\n",
 		ch.Stats.Str, ch.Stats.Int, ch.Stats.Wis,
 		ch.Stats.Dex, ch.Stats.Con, ch.Stats.Cha))
 	ch.SendMessage(fmt.Sprintf("AC: %d  Experience: %d  Gold: %d\r\n",
-		ch.AC, ch.Exp, ch.Gold))
+		ch.GetAC(), ch.GetExp(), ch.GetGold()))
 	return true
 }
 
@@ -42,10 +42,10 @@ func (w *World) doScore(ch *Player, me *MobInstance, cmd string, arg string) boo
 func (w *World) doWho(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	ch.SendMessage("Players currently connected:\r\n")
 	for _, p := range w.players {
-		if p.Flags&PLR_INVISIBLE != 0 && ch.Level < LVL_IMMORT {
+		if p.GetFlags()&PLR_INVISIBLE != 0 && ch.GetLevel() < LVL_IMMORT {
 			continue
 		}
-		if p.Level >= 31 {
+		if p.GetLevel() >= 31 {
 			ch.SendMessage(fmt.Sprintf("[%5s] %-12s %s\r\n", w.getWhoTitle(p), p.GetName(), "God"))
 		} else {
 			ch.SendMessage(fmt.Sprintf("[%5s] %-12s %s\r\n", w.getWhoTitle(p), p.GetName(), "Adventurer"))
@@ -56,7 +56,7 @@ func (w *World) doWho(ch *Player, me *MobInstance, cmd string, arg string) bool 
 }
 
 func (w *World) getWhoTitle(ch *Player) string {
-	return fmt.Sprintf("%2d", ch.Level)
+	return fmt.Sprintf("%2d", ch.GetLevel())
 }
 
 // ---------------------------------------------------------------------------
@@ -105,7 +105,7 @@ func (w *World) doEquipment(ch *Player, me *MobInstance, cmd string, arg string)
 func (w *World) doWhere(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	ch.SendMessage("Players in your area:\r\n")
 	for _, p := range w.players {
-		if p.RoomVNum == ch.RoomVNum {
+		if p.GetRoom() == ch.GetRoom() {
 			ch.SendMessage(fmt.Sprintf("%-20s : here\r\n", p.GetName()))
 		}
 	}
@@ -118,7 +118,7 @@ func (w *World) doWhere(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 func (w *World) doLevels(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	ch.SendMessage("Level progression:\r\n")
-	for lvl := 1; lvl <= ch.Level && lvl <= 50; lvl++ {
+	for lvl := 1; lvl <= ch.GetLevel() && lvl <= 50; lvl++ {
 		ch.SendMessage(fmt.Sprintf("Level %2d: %d exp\r\n", lvl, 1000*lvl*lvl))
 	}
 	return true
@@ -131,7 +131,7 @@ func (w *World) doLevels(ch *Player, me *MobInstance, cmd string, arg string) bo
 func (w *World) doColor(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
-		on := (ch.Flags&(1<<PrfColor1|1<<PrfColor2)) != 0
+		on := (ch.GetFlags()&(1<<PrfColor1|1<<PrfColor2)) != 0
 		if on {
 			ch.SendMessage("Color is ON.\r\n")
 		} else {
@@ -142,10 +142,12 @@ func (w *World) doColor(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	switch strings.ToLower(arg) {
 	case "on":
-		ch.Flags |= (1 << PrfColor1) | (1 << PrfColor2)
+		ch.SetPlrFlag(PrfColor1, true)
+		ch.SetPlrFlag(PrfColor2, true)
 		ch.SendMessage("Color is now ON.\r\n")
 	case "off":
-		ch.Flags &^= (1 << PrfColor1) | (1 << PrfColor2)
+		ch.SetPlrFlag(PrfColor1, false)
+		ch.SetPlrFlag(PrfColor2, false)
 		ch.SendMessage("Color is now OFF.\r\n")
 	default:
 		ch.SendMessage("Usage: color <on|off>\r\n")
@@ -163,13 +165,13 @@ func (w *World) doToggle(ch *Player, me *MobInstance, cmd string, arg string) bo
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autogold", onOff(ch.AutoGold)))
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "autosplit", onOff(ch.AutoSplit)))
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "nobroadcast", onOff(ch.NoBroadcast)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "color", flagOnOff(ch.Flags, PrfColor1)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "brief", flagOnOff(ch.Flags, PrfBrief)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "compact", flagOnOff(ch.Flags, PrfCompact)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "notell", flagOnOff(ch.Flags, PrfNotell)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "deaf", flagOnOff(ch.Flags, PrfDeaf)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "nohassle", flagOnOff(ch.Flags, PrfNohassle)))
-		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "summonable", flagOnOff(ch.Flags, PrfSummonable)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "color", flagOnOff(ch.GetFlags(), PrfColor1)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "brief", flagOnOff(ch.GetFlags(), PrfBrief)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "compact", flagOnOff(ch.GetFlags(), PrfCompact)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "notell", flagOnOff(ch.GetFlags(), PrfNotell)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "deaf", flagOnOff(ch.GetFlags(), PrfDeaf)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "nohassle", flagOnOff(ch.GetFlags(), PrfNohassle)))
+		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "summonable", flagOnOff(ch.GetFlags(), PrfSummonable)))
 		ch.SendMessage(fmt.Sprintf("  %-12s : %s\r\n", "afk", onOff(ch.AFK)))
 		ch.SendMessage("Type 'toggle <name>' to change a setting.\r\n")
 		return true
@@ -257,7 +259,7 @@ func (w *World) doExamine(ch *Player, me *MobInstance, cmd string, arg string) b
 // ---------------------------------------------------------------------------
 
 func (w *World) doCoins(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	ch.SendMessage(fmt.Sprintf("You have %d gold coins.\r\n", ch.Gold))
+	ch.SendMessage(fmt.Sprintf("You have %d gold coins.\r\n", ch.GetGold()))
 	return true
 }
 
@@ -298,14 +300,14 @@ func (w *World) doDiagnose(ch *Player, me *MobInstance, cmd string, arg string) 
 
 	if arg != "" {
 		// Find target in room
-		target, targetMob = w.findCharInRoom(ch, ch.RoomVNum, arg)
+		target, targetMob = w.findCharInRoom(ch, ch.GetRoom(), arg)
 		if target == nil && targetMob == nil {
 			ch.SendMessage("They aren't here.\r\n")
 			return true
 		}
-	} else if ch.Fighting != "" {
+	} else if ch.IsFighting() {
 		// Diagnose current fight target
-		target, targetMob = w.findCharInRoom(ch, ch.RoomVNum, ch.Fighting)
+		target, targetMob = w.findCharInRoom(ch, ch.GetRoom(), ch.GetFighting())
 		if target == nil && targetMob == nil {
 			ch.SendMessage("You aren't fighting anyone.\r\n")
 			return true

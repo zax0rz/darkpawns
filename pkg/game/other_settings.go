@@ -38,9 +38,9 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 	if wimpLevel > 0 {
 		if wimpLevel < 0 {
 			ch.SendMessage("Heh, heh, heh.. we are jolly funny today, eh?\r\n")
-		} else if wimpLevel > ch.MaxHealth {
+		} else if wimpLevel > ch.GetMaxHP() {
 			ch.SendMessage("That doesn't make much sense, now does it?\r\n")
-		} else if wimpLevel > (ch.MaxHealth / 3) {
+		} else if wimpLevel > (ch.GetMaxHP() / 3) {
 			ch.SendMessage("You can't set your wimp level above one third your hit points.\r\n")
 		} else {
 			ch.WimpLevel = wimpLevel
@@ -71,34 +71,34 @@ func (w *World) doDisplay(ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	if strings.EqualFold(arg, "on") || strings.EqualFold(arg, "all") {
-		ch.Flags |= 1 << PrfDisphp
-		ch.Flags |= 1 << PrfDispmmana
-		ch.Flags |= 1 << PrfDispmove
-		ch.Flags |= 1 << PrfDispTank
-		ch.Flags |= 1 << PrfDispTarget
+		ch.SetPlrFlag(PrfDisphp, true)
+		ch.SetPlrFlag(PrfDispmmana, true)
+		ch.SetPlrFlag(PrfDispmove, true)
+		ch.SetPlrFlag(PrfDispTank, true)
+		ch.SetPlrFlag(PrfDispTarget, true)
 		ch.SendMessage("Ok.\r\n")
 		return true
 	}
 
-	ch.Flags &^= 1 << PrfDisphp
-	ch.Flags &^= 1 << PrfDispmmana
-	ch.Flags &^= 1 << PrfDispmove
-	ch.Flags &^= 1 << PrfDispTank
-	ch.Flags &^= 1 << PrfDispTarget
+	ch.SetPlrFlag(PrfDisphp, false)
+	ch.SetPlrFlag(PrfDispmmana, false)
+	ch.SetPlrFlag(PrfDispmove, false)
+	ch.SetPlrFlag(PrfDispTank, false)
+	ch.SetPlrFlag(PrfDispTarget, false)
 
 	if !strings.EqualFold(arg, "off") {
 		for _, c := range strings.ToLower(arg) {
 			switch c {
 			case 'h':
-				ch.Flags |= 1 << PrfDisphp
+				ch.SetPlrFlag(PrfDisphp, true)
 			case 'f':
-				ch.Flags |= 1 << PrfDispTarget
+				ch.SetPlrFlag(PrfDispTarget, true)
 			case 'm':
-				ch.Flags |= 1 << PrfDispmmana
+				ch.SetPlrFlag(PrfDispmmana, true)
 			case 't':
-				ch.Flags |= 1 << PrfDispTank
+				ch.SetPlrFlag(PrfDispTank, true)
 			case 'v':
-				ch.Flags |= 1 << PrfDispmove
+				ch.SetPlrFlag(PrfDispmove, true)
 			}
 		}
 	}
@@ -270,18 +270,18 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 	}
 
 	// Special checks
-	if key == "nowiz" && ch.Level < LVL_IMMORT {
+	if key == "nowiz" && ch.GetLevel() < LVL_IMMORT {
 		ch.SendMessage("You are not holy enough to use that feature.\r\n")
 		return true
 	}
 
 	// "noctell": clan check skipped — clan field not yet implemented
 
-	if ch.Flags&(1<<flag) != 0 {
-		ch.Flags &^= 1 << flag
+	if ch.GetFlags()&(1<<flag) != 0 {
+		ch.SetPlrFlag(flag, false)
 		ch.SendMessage(msgs[1])
 	} else {
-		ch.Flags |= 1 << flag
+		ch.SetPlrFlag(flag, true)
 		ch.SendMessage(msgs[0])
 	}
 

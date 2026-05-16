@@ -45,7 +45,7 @@ func (w *World) doBash(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	if vict == nil && ch.IsFighting() {
 		fightingName := ch.GetFighting()
-		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+		for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 			if p.Name == fightingName {
 				vict = p
 				break
@@ -65,7 +65,7 @@ func (w *World) doBash(ch *Player, me *MobInstance, cmd string, arg string) bool
 		}
 
 		if dirNum >= 0 {
-			room := w.GetRoomInWorld(ch.RoomVNum)
+			room := w.GetRoomInWorld(ch.GetRoom())
 			if room == nil {
 				return true
 			}
@@ -88,12 +88,12 @@ func (w *World) doBash(ch *Player, me *MobInstance, cmd string, arg string) bool
 			if percent > 80 {
 				// Removed door // exit.DoorState == 1 = false
 				ch.SendMessage("Batter up!  You break the door down!\r\n")
-				w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s smashes the %s to pieces!", ch.Name, exit.Description))
+				w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s smashes the %s to pieces!", ch.Name, exit.Description))
 				improveSkill(ch, SkillBash)
 			} else {
 				ch.SendMessage("WHAM!!!\r\n")
 				ch.SendMessage("It doesn't seem to help.\r\n")
-				w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s smashes against the %s!", ch.Name, exit.Description))
+				w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s smashes against the %s!", ch.Name, exit.Description))
 			}
 			return true
 		}
@@ -117,7 +117,7 @@ func (w *World) doBash(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	if w.roomHasFlag(ch.RoomVNum, "peaceful") {
+	if w.roomHasFlag(ch.GetRoom(), "peaceful") {
 		ch.SendMessage("You feel too peaceful to contemplate violence.\r\n")
 		return true
 	}
@@ -189,7 +189,7 @@ func (w *World) doRescue(ch *Player, me *MobInstance, cmd string, arg string) bo
 	// Find who the victim is fighting
 	opponentName := vict.GetFighting()
 	var opponent *Player
-	for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 		if p.Name == opponentName {
 			opponent = p
 			break
@@ -207,7 +207,7 @@ func (w *World) doRescue(ch *Player, me *MobInstance, cmd string, arg string) bo
 	ch.SetFighting(opponent.GetName())
 	opponent.SetFighting(ch.GetName())
 
-	w.roomMessageExcludeTwo(ch.RoomVNum,
+	w.roomMessageExcludeTwo(ch.GetRoom(),
 		fmt.Sprintf("%s rescues %s!", ch.Name, vict.GetName()),
 		ch.Name, vict.GetName())
 
@@ -234,7 +234,7 @@ func (w *World) doKick(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	if vict == nil && ch.IsFighting() {
 		fightingName := ch.GetFighting()
-		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+		for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 			if p.Name == fightingName {
 				vict = p
 				break
@@ -286,7 +286,7 @@ func (w *World) doDragonKick(ch *Player, me *MobInstance, cmd string, arg string
 
 	if vict == nil && ch.IsFighting() {
 		fightingName := ch.GetFighting()
-		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+		for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 			if p.Name == fightingName {
 				vict = p
 				break
@@ -339,7 +339,7 @@ func (w *World) doTigerPunch(ch *Player, me *MobInstance, cmd string, arg string
 
 	if vict == nil && ch.IsFighting() {
 		fightingName := ch.GetFighting()
-		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+		for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 			if p.Name == fightingName {
 				vict = p
 				break

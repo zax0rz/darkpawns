@@ -47,7 +47,7 @@ func (w *World) doLook(ch *Player, me *MobInstance, cmd string, arg string) bool
 // ---------------------------------------------------------------------------
 
 func (w *World) lookAtRoom(ch *Player, ignoreBrief bool) {
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		ch.SendMessage("You are in a void.\r\n")
 		return
@@ -76,7 +76,7 @@ func (w *World) lookAtRoom(ch *Player, ignoreBrief bool) {
 			if p.GetName() == ch.GetName() {
 				continue
 			}
-			if p.Level >= 31 {
+			if p.GetLevel() >= 31 {
 				continue
 			}
 			if p.IsAffected(affSneak) {
@@ -180,7 +180,7 @@ func (w *World) listCharToChar(room *parser.Room, ch *Player) {
 		if p.GetName() == ch.GetName() {
 			continue
 		}
-		if p.Level >= 31 {
+		if p.GetLevel() >= 31 {
 			continue
 		}
 		if p.IsAffected(affHide) {
@@ -219,7 +219,7 @@ func (w *World) lookAtTarget(ch *Player, arg string) {
 	}
 
 	// Search: mobs then players in room, then objects
-	foundPlayer, foundMob := w.findCharInRoom(ch, ch.RoomVNum, arg)
+	foundPlayer, foundMob := w.findCharInRoom(ch, ch.GetRoom(), arg)
 	foundObj := w.findObjNear(ch, arg)
 	var found bool
 
@@ -233,7 +233,7 @@ func (w *World) lookAtTarget(ch *Player, arg string) {
 	}
 
 	// Extra descs on room objects
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room != nil {
 		for _, item := range w.roomItems[room.VNum] {
 			for _, ed := range item.GetExtraDescs() {
@@ -353,7 +353,7 @@ func (w *World) lookAtChar(ch *Player, target interface{}) {
 // ---------------------------------------------------------------------------
 
 func (w *World) lookInDirection(ch *Player, dir int) {
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		ch.SendMessage("You are in a void.\r\n")
 		return
@@ -419,7 +419,7 @@ func (w *World) lookInObj(ch *Player, arg string) {
 // ---------------------------------------------------------------------------
 
 func (w *World) doAutoExits(ch *Player) {
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return
 	}
@@ -431,7 +431,7 @@ func (w *World) doAutoExits(ch *Player) {
 			continue
 		}
 		if exit.DoorState > 0 {
-			if ch.Level >= 31 {
+			if ch.GetLevel() >= 31 {
 				exits = append(exits, fmt.Sprintf("(%s)", dir))
 			}
 			continue
@@ -456,7 +456,7 @@ func (w *World) doExits(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	room := w.GetRoomInWorld(ch.RoomVNum)
+	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		ch.SendMessage("You're in a void.\r\n")
 		return true
@@ -478,7 +478,7 @@ func (w *World) doExits(ch *Player, me *MobInstance, cmd string, arg string) boo
 			ch.SendMessage(fmt.Sprintf("%-5s - somewhere\r\n", dir))
 			continue
 		}
-		if ch.Level >= 31 {
+		if ch.GetLevel() >= 31 {
 			ch.SendMessage(fmt.Sprintf("%-5s - [%5d] %s\r\n", dir, dest.VNum, dest.Name))
 		} else if w.isRoomDark(dest.VNum) && !chCanSeeInDark(ch) {
 			ch.SendMessage(fmt.Sprintf("%-5s - Too dark to tell\r\n", dir))

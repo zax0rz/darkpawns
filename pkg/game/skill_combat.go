@@ -53,7 +53,7 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	//     dam *= backstab_mult(GET_LEVEL(ch))
 	weaponDam := combat.RollDice(weaponNum, weaponSides)
 	dam := weaponDam + ch.GetDamroll()
-	mult := backstabMult(ch.Level)
+	mult := backstabMult(ch.GetLevel())
 	dam = int(float64(dam) * mult)
 
 	improveSkill(ch, SkillBackstab)
@@ -93,10 +93,10 @@ func DoBash(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Check move points
-	if ch.Move < 10 {
+	if ch.GetMove() < 10 {
 		return SkillResult{Success: false, MessageToCh: "You haven't the energy!"}
 	}
-	ch.Move -= 10
+	ch.SetMove(ch.GetMove() - 10)
 
 	// Bash formula: percent = ((5 - (GET_AC(vict)/10)) << 1) + number(1,101)
 	// prob = GET_SKILL(ch, SKILL_BASH)
@@ -121,7 +121,7 @@ func DoBash(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Success — damage = (level/2)+1
-	dam := (ch.Level / 2) + 1
+	dam := (ch.GetLevel() / 2) + 1
 	improveSkill(ch, SkillBash)
 
 	return SkillResult{
@@ -162,7 +162,7 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
-	dam := ch.Level >> 1 // level / 2
+	dam := ch.GetLevel() >> 1 // level / 2
 	improveSkill(ch, SkillKick)
 
 	return SkillResult{
@@ -193,7 +193,7 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
 	percent := rand.Intn(121) + 1
-	percent += max(target.GetLevel()-ch.Level, 0)
+	percent += max(target.GetLevel()-ch.GetLevel(), 0)
 	prob := ch.GetSkill(SkillTrip)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -212,7 +212,7 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Success — damage = (level/2)+1, target falls
-	dam := (ch.Level / 2) + 1
+	dam := (ch.GetLevel() / 2) + 1
 	improveSkill(ch, SkillTrip)
 
 	return SkillResult{
@@ -239,10 +239,10 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Check move points
-	if ch.Move < 15 {
+	if ch.GetMove() < 15 {
 		return SkillResult{Success: false, MessageToCh: "You haven't the energy!"}
 	}
-	ch.Move -= 15
+	ch.SetMove(ch.GetMove() - 15)
 
 	skillLevel := ch.GetSkill(SkillHeadbutt)
 	damage := (skillLevel/2 + 1) + 4 // higher base damage

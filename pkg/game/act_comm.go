@@ -325,7 +325,7 @@ func (w *World) getCharVis(ch *Player, name string) *Player { //nolint:unused //
 
 // getCharRoomVis finds a player by name in the same room as ch.
 func (w *World) getCharRoomVis(ch *Player, name string) *Player {
-	for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 		if p.Name == ch.Name {
 			continue
 		}

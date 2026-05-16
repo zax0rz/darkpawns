@@ -74,7 +74,7 @@ func (w *World) doRetreat(ch *Player, me *MobInstance, cmd string, arg string) b
 	dirs := []string{"north", "east", "south", "west", "up", "down"}
 	for i := 0; i < 6; i++ {
 		attempt := randRange(0, len(dirs)-1)
-		room := w.GetRoomInWorld(ch.RoomVNum)
+		room := w.GetRoomInWorld(ch.GetRoom())
 		if room == nil {
 			continue
 		}
@@ -89,17 +89,17 @@ func (w *World) doRetreat(ch *Player, me *MobInstance, cmd string, arg string) b
 			continue
 		}
 
-		w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s realizes it's a losing cause and gracefully attempts to %s.", ch.Name, lowmsg))
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s realizes it's a losing cause and gracefully attempts to %s.", ch.Name, lowmsg))
 		if doSimpleMove(w, ch, attempt, true) {
 			ch.SendMessage(fmt.Sprintf("You make a hasty %s.\r\n", lowmsg))
 		} else {
-			w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s is cornered and fails to %s!", ch.Name, lowmsg))
+			w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s is cornered and fails to %s!", ch.Name, lowmsg))
 		}
 		return true
 	}
 
 	ch.SendMessage(fmt.Sprintf("You are cornered and fail to %s!\r\n", lowmsg))
-	w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s is cornered and fails to %s!", ch.Name, lowmsg))
+	w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s is cornered and fails to %s!", ch.Name, lowmsg))
 	return true
 }
 
@@ -127,7 +127,7 @@ func (w *World) doSubdue(ch *Player, me *MobInstance, cmd string, arg string) bo
 	vict := w.getCharRoomVis(ch, args[0])
 	if vict == nil {
 		// Check mobs
-		for _, m := range w.GetMobsInRoom(ch.RoomVNum) {
+		for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
 			if strings.Contains(strings.ToLower(m.GetName()), strings.ToLower(args[0])) {
 				ch.SendMessage("They aren't here.\r\n")
 				return true
@@ -142,7 +142,7 @@ func (w *World) doSubdue(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-	if w.roomHasFlag(ch.RoomVNum, "peaceful") {
+	if w.roomHasFlag(ch.GetRoom(), "peaceful") {
 		ch.SendMessage("You can't contemplate violence in such a place!\r\n")
 		return true
 	}
@@ -198,14 +198,14 @@ func (w *World) doSubdue(ch *Player, me *MobInstance, cmd string, arg string) bo
 		if vict.IsNPC() && false {
 			vict.SendMessage(fmt.Sprintf("%s misses a blow to the back of your head.\r\n", ch.Name))
 			ch.SendMessage(fmt.Sprintf("%s avoids your misplaced blow.\r\n", vict.GetName()))
-			w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s avoids %s's misplaced blow.", vict.GetName(), ch.Name))
+			w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s avoids %s's misplaced blow.", vict.GetName(), ch.Name))
 		}
 		w.startCombatBetween(vict, ch)
 	} else {
 		// Success
 		vict.SendMessage("Someone sneaks up behind you and knocks you out!\r\n")
 		ch.SendMessage(fmt.Sprintf("You knock %s out cold.\r\n", himHer(vict.GetSex())))
-		w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s knocks out %s with a well-placed blow to the back of the head.", ch.Name, vict.Name))
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s knocks out %s with a well-placed blow to the back of the head.", ch.Name, vict.Name))
 		vict.SetPosition(combat.PosStunned)
 		improveSkill(ch, SkillSubdue)
 	}
@@ -232,7 +232,7 @@ func (w *World) doSleeper(ch *Player, me *MobInstance, cmd string, arg string) b
 		return true
 	}
 
-	if w.roomHasFlag(ch.RoomVNum, "peaceful") {
+	if w.roomHasFlag(ch.GetRoom(), "peaceful") {
 		ch.SendMessage("This room just has such a peaceful, easy feeling...\r\n")
 		return true
 	}
@@ -302,13 +302,13 @@ func (w *World) doSleeper(ch *Player, me *MobInstance, cmd string, arg string) b
 		// Failed
 		ch.SendMessage(fmt.Sprintf("You try to grab %s in a sleeper hold but fail!", vict.GetName()))
 		vict.SendMessage(fmt.Sprintf("%s tries to put a sleeper hold on you, but you break free!", ch.Name))
-		w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s tries to put %s in a sleeper hold...", ch.Name, vict.Name))
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s tries to put %s in a sleeper hold...", ch.Name, vict.Name))
 		w.startCombatBetween(vict, ch)
 	} else {
 		// Success
 		ch.SendMessage(fmt.Sprintf("You put %s in a sleeper hold.", vict.GetName()))
 		vict.SendMessage("You feel very sleepy... Zzzzz..")
-		w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s puts %s in a sleeper hold.", ch.Name, vict.Name))
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s puts %s in a sleeper hold.", ch.Name, vict.Name))
 		vict.SetPosition(combat.PosSleeping)
 
 		// Add AFF_SLEEP affect
@@ -357,7 +357,7 @@ func (w *World) doNeckbreak(ch *Player, me *MobInstance, cmd string, arg string)
 		return true
 	}
 
-	if w.roomHasFlag(ch.RoomVNum, "peaceful") {
+	if w.roomHasFlag(ch.GetRoom(), "peaceful") {
 		ch.SendMessage("You can't contemplate violence in such a place!\r\n")
 		return true
 	}
@@ -384,7 +384,7 @@ func (w *World) doNeckbreak(ch *Player, me *MobInstance, cmd string, arg string)
 		// Failed
 		ch.SendMessage(fmt.Sprintf("You try to break %s's neck, but %s is too strong!", himHer(vict.GetSex()), vict.GetName()))
 		vict.SendMessage(fmt.Sprintf("%s tries to break your neck, but can't!", ch.Name))
-		w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s tries to break %s's neck, but %s slips free!", ch.Name, vict.Name, vict.Name))
+		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s tries to break %s's neck, but %s slips free!", ch.Name, vict.Name, vict.Name))
 		w.startCombatBetween(vict, ch)
 	} else {
 		// Success - damage based on 18d(level)
@@ -427,7 +427,7 @@ func (w *World) doAmbush(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-	room := w.GetRoomInWorld(ch.RoomVNum); sector := 0; if room != nil { sector = room.Sector }
+	room := w.GetRoomInWorld(ch.GetRoom()); sector := 0; if room != nil { sector = room.Sector }
 	if sector != 3 && sector != 4 &&
 		sector != 5 && sector != 1 {
 		ch.SendMessage("Ambush someone here? Impossible!\r\n")
@@ -498,11 +498,11 @@ func (w *World) startCombatBetween(ch, vict interface{}) {
 			chActor.SetFighting(victActor.Name)
 			victActor.SetFighting(chActor.Name)
 			defenderName = victActor.Name
-			w.roomMessage(chActor.RoomVNum, fmt.Sprintf("%s starts fighting %s!\r\n", chActor.Name, victActor.Name))
+			w.roomMessage(chActor.GetRoom(), fmt.Sprintf("%s starts fighting %s!\r\n", chActor.Name, victActor.Name))
 		case *MobInstance:
 			chActor.SetFighting(victActor.GetName())
 			defenderName = victActor.GetName()
-			w.roomMessage(chActor.RoomVNum, fmt.Sprintf("%s starts fighting %s!\r\n", chActor.Name, victActor.GetName()))
+			w.roomMessage(chActor.GetRoom(), fmt.Sprintf("%s starts fighting %s!\r\n", chActor.Name, victActor.GetName()))
 		default:
 			chActor.SetFighting("someone")
 		}

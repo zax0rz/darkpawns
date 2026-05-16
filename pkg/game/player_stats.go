@@ -36,6 +36,13 @@ func (p *Player) GetLevel() int {
 	return p.Level
 }
 
+// SetLevel sets the player's level.
+func (p *Player) SetLevel(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Level = v
+}
+
 // GetTHAC0 returns the player's THAC0.
 func (p *Player) GetTHAC0() int {
 	p.mu.RLock()
@@ -64,11 +71,25 @@ func (p *Player) GetHP() int {
 	return p.Health
 }
 
+// SetHP sets the player's current health.
+func (p *Player) SetHP(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Health = v
+}
+
 // GetMaxHP returns the player's maximum health.
 func (p *Player) GetMaxHP() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.MaxHealth
+}
+
+// SetMaxHP sets the player's maximum health.
+func (p *Player) SetMaxHP(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.MaxHealth = v
 }
 
 // GetMana returns the player's current mana.
@@ -90,6 +111,13 @@ func (p *Player) GetMaxMana() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.MaxMana
+}
+
+// SetMaxMana sets the player's maximum mana.
+func (p *Player) SetMaxMana(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.MaxMana = v
 }
 
 // GetMove returns the player's current movement points.

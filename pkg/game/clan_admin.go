@@ -48,7 +48,7 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 		w.sendClanFormat(ch)
 		return
 	}
-	if ch.Level < LVL_IMMORT {
+	if ch.GetLevel() < LVL_IMMORT {
 		ch.SendMessage("You are not mighty enough to create new clans!\r\n")
 		return
 	}
@@ -69,7 +69,7 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 		ch.SendMessage("Clan name too long! (32 characters max)\r\n")
 		return
 	}
-	if leader.Level >= LVL_IMMORT {
+	if leader.GetLevel() >= LVL_IMMORT {
 		ch.SendMessage("You cannot set an immortal as the leader of a clan.\r\n")
 		return
 	}
@@ -87,7 +87,7 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 		Name:      cases.Title(language.English).String(strings.ToLower(arg2)),
 		Ranks:     2,
 		Members:   1,
-		Power:     leader.Level,
+		Power:     leader.GetLevel(),
 		ApplLevel: DefaultAppLvl,
 		Private:   ClanPublic,
 	}
@@ -118,7 +118,7 @@ func (w *World) doClanDestroy(ch *Player, arg string) {
 		w.sendClanFormat(ch)
 		return
 	}
-	if ch.Level < LVL_IMMORT {
+	if ch.GetLevel() < LVL_IMMORT {
 		ch.SendMessage("Your not mighty enough to destroy clans!\r\n")
 		return
 	}

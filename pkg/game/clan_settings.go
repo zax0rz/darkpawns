@@ -9,7 +9,7 @@ func (w *World) doClanPrivate(ch *Player, arg string) {
 	var clanNum int
 	var c *Clan
 
-	if ch.Level < LVL_IMMORT {
+	if ch.GetLevel() < LVL_IMMORT {
 		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
 		if c == nil {
 			ch.SendMessage("You don't belong to any clan!\r\n")
@@ -20,7 +20,7 @@ func (w *World) doClanPrivate(ch *Player, arg string) {
 			return
 		}
 	} else {
-		if ch.Level < LVL_GOD {
+		if ch.GetLevel() < LVL_GOD {
 			ch.SendMessage("You do not have clan privileges.\r\n")
 			return
 		}
@@ -65,7 +65,7 @@ func (w *World) doClanPlan(ch *Player, arg string) {
 	var clanNum int
 	var c *Clan
 
-	if ch.Level < LVL_IMMORT {
+	if ch.GetLevel() < LVL_IMMORT {
 		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
 		if c == nil {
 			ch.SendMessage("You don't belong to any clan!\r\n")
@@ -76,7 +76,7 @@ func (w *World) doClanPlan(ch *Player, arg string) {
 			return
 		}
 	} else {
-		if ch.Level < LVL_GOD {
+		if ch.GetLevel() < LVL_GOD {
 			ch.SendMessage("You do not have clan privileges.\r\n")
 			return
 		}
@@ -121,14 +121,14 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 		return
 	}
 
-	if ch.Level < LVL_IMMORT {
+	if ch.GetLevel() < LVL_IMMORT {
 		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
 		if c == nil {
 			ch.SendMessage("You don't belong to any clan!\r\n")
 			return
 		}
 	} else {
-		if ch.Level < LVL_GOD {
+		if ch.GetLevel() < LVL_GOD {
 			ch.SendMessage("You do not have clan privileges.\r\n")
 			return
 		}
@@ -169,13 +169,13 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 		return
 	}
 
-	if ch.Gold < 5000 && !immcom {
+	if ch.GetGold() < 5000 && !immcom {
 		ch.SendMessage("Changing the clan hierarchy requires 5,000 coins!\r\n")
 		return
 	}
 
 	if !immcom {
-		ch.Gold -= 5000
+		ch.SetGold(ch.GetGold() - 5000)
 	}
 
 	// Adjust existing clan members' ranks
@@ -215,7 +215,7 @@ func (w *World) doClanTitles(ch *Player, arg string) {
 		return
 	}
 
-	if ch.Level < LVL_IMMORT {
+	if ch.GetLevel() < LVL_IMMORT {
 		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
 		if c == nil {
 			ch.SendMessage("You don't belong to any clan!\r\n")
@@ -226,7 +226,7 @@ func (w *World) doClanTitles(ch *Player, arg string) {
 			return
 		}
 	} else {
-		if ch.Level < LVL_GOD {
+		if ch.GetLevel() < LVL_GOD {
 			ch.SendMessage("You do not have clan privileges.\r\n")
 			return
 		}
@@ -327,14 +327,14 @@ func (w *World) doClanSP(ch *Player, arg string, priv int) {
 		return
 	}
 
-	if ch.Level < LVL_IMMORT {
+	if ch.GetLevel() < LVL_IMMORT {
 		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
 		if c == nil {
 			ch.SendMessage("You don't belong to any clan!\r\n")
 			return
 		}
 	} else {
-		if ch.Level < LVL_GOD {
+		if ch.GetLevel() < LVL_GOD {
 			ch.SendMessage("You do not have clan privileges.\r\n")
 			return
 		}

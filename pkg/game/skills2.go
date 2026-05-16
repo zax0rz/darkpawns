@@ -25,7 +25,7 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 		}
 	}
 
-	room := world.GetRoomInWorld(ch.RoomVNum)
+	room := world.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return SkillResult{MessageToCh: "You are lost in the void.\r\n"}
 	}
@@ -79,7 +79,7 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 				MessageToRoom: fmt.Sprintf("%s searches and finds something to eat.\r\n", ch.Name),
 			}
 		}
-		obj := NewObjectInstance(proto, ch.RoomVNum)
+		obj := NewObjectInstance(proto, ch.GetRoom())
 		if obj != nil {
 			// placeholder: add item to inventory
 			msg := "You find $p."
@@ -127,7 +127,7 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 	if percent < prob {
 		// Success
 		if p, ok := target.(*Player); ok {
-			p.Health = 1
+			p.SetHP(1)
 		}
 
 		chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -169,7 +169,7 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// Check if the target has a wielded weapon (we can only check via interface)
 	// In C: GET_EQ(vict, WEAR_WIELD) — we'll check if there's a fighting target
-	if ch.Fighting == "" || ch.Fighting != target.GetName() {
+	if ch.GetFighting() == "" || ch.GetFighting() != target.GetName() {
 		return SkillResult{Success: false, MessageToCh: "You can't disarm them if you aren't fighting them!\r\n"}
 	}
 
@@ -229,7 +229,7 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "There's too much going on to establish a mind link.\r\n"}
 	}
 
-	if ch.Health < 100 {
+	if ch.GetHP() < 100 {
 		return SkillResult{Success: false, MessageToCh: "You don't have enough life to spare!\r\n"}
 	}
 
@@ -245,14 +245,14 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		// Success
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		x := 20 + ch.Level + rand.Intn(80) // number(20+level, 100)
-		ch.Health -= x
-		if ch.Health < 0 {
-			ch.Health = 0
+		x := 20 + ch.GetLevel() + rand.Intn(80) // number(20+level, 100)
+		ch.SetHP(ch.GetHP() - x)
+		if ch.GetHP() < 0 {
+			ch.SetHP(0)
 		}
 		// Give mana to target (for NPCs, we try to add mana)
 		if p, ok := target.(*Player); ok {
-			p.Mana += x
+			p.SetMana(p.GetMana() + x)
 		}
 
 		return SkillResult{
@@ -278,11 +278,11 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 // Find secret exits. WAIT_STATE.
 // ---------------------------------------------------------------------------
 func DoDetect(ch *Player, world *World) SkillResult {
-	if ch.GetSkill(SkillDetect) == 0 && ch.Class != RaceElf {
+	if ch.GetSkill(SkillDetect) == 0 && ch.GetClass() != RaceElf {
 		return SkillResult{Success: false, MessageToCh: "Yeah, right.\r\n"}
 	}
 
-	room := world.GetRoomInWorld(ch.RoomVNum)
+	room := world.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return SkillResult{MessageToCh: "You are lost in the void.\r\n"}
 	}
@@ -368,7 +368,7 @@ func DoSerpentKick(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
-	dam := int(float64(ch.Level) * 1.5)
+	dam := int(float64(ch.GetLevel()) * 1.5)
 	return SkillResult{
 		Success:       true,
 		Damage:        dam,
@@ -387,11 +387,11 @@ func DoSerpentKick(ch *Player, target combat.Combatant) SkillResult {
 // Success chance based on SKILL_DIG. Finds random loot.
 // ---------------------------------------------------------------------------
 func DoDig(ch *Player, world *World) SkillResult {
-	if ch.Health < 5 {
+	if ch.GetHP() < 5 {
 		return SkillResult{Success: false, MessageToCh: "You're too exhausted to dig.\r\n"}
 	}
 
-	room := world.GetRoomInWorld(ch.RoomVNum)
+	room := world.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return SkillResult{MessageToCh: "You are lost in the void.\r\n"}
 	}
@@ -477,7 +477,7 @@ func DoTurn(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
-	diff := ch.Level - target.GetLevel()
+	diff := ch.GetLevel() - target.GetLevel()
 
 	if diff <= -5 {
 		return SkillResult{
@@ -501,14 +501,14 @@ func DoTurn(ch *Player, target combat.Combatant) SkillResult {
 	if diff > 3 {
 		return SkillResult{
 			Success:     true,
-			Damage:      ch.Level * 2,
+			Damage:      ch.GetLevel() * 2,
 			MessageToCh: msgToCh + "The undead creature shrieks and flees from your holiness!\r\n",
 			MessageToRoom: fmt.Sprintf("%s shrieks in terror!\r\n", target.GetName()),
 		}
 	}
 
 	// Basic damage
-	dam := ch.Level * 2
+	dam := ch.GetLevel() * 2
 	if dam < 1 {
 		dam = 1
 	}

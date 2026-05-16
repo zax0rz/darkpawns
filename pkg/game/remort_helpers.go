@@ -91,25 +91,27 @@ func findRemortClass(ch *Player) int {
 // doFirstRemortAdjust — ported from C do_first_remort_adjust()
 // Sets the player's experience based on new level.
 func doFirstRemortAdjust(w *World, ch *Player) {
-	ch.Level -= 10
-	if ch.Level < 1 {
-		ch.Level = 1
+	newLevel := ch.GetLevel() - 10
+	if newLevel < 1 {
+		newLevel = 1
 	}
+	ch.SetLevel(newLevel)
 	// Advance level recalculates stats
-	advanceLevel(ch, ch.Level)
+	advanceLevel(ch, ch.GetLevel())
 }
 
 // doSecondRemortAdjust — ported from C do_second_remort_adjust()
 // Handles remort level/skill/exp adjustments on second+ remort.
 func doSecondRemortAdjust(w *World, ch *Player) {
-	ch.Level -= 10
-	if ch.Level < 1 {
-		ch.Level = 1
+	newLevel := ch.GetLevel() - 10
+	if newLevel < 1 {
+		newLevel = 1
 	}
+	ch.SetLevel(newLevel)
 	// In C: amount_needed = 90 * level * level * level / played / 2
 	// We just reset exp to 0 and advance
-	setExp(ch, 0)
-	advanceLevel(ch, ch.Level)
+	ch.SetExp(0)
+	advanceLevel(ch, ch.GetLevel())
 }
 
 // advanceLevel — ported from C advance_level()
@@ -149,25 +151,25 @@ func advanceLevel(ch *Player, level int) {
 	moveGain := 2
 
 	for lvl := 1; lvl <= level; lvl++ {
-		ch.MaxHealth += hpGain
-		ch.MaxMana += manaGain
-		ch.MaxMove += moveGain
+		ch.SetMaxHP(ch.GetMaxHP() + hpGain)
+		ch.SetMaxMana(ch.GetMaxMana() + manaGain)
+		ch.SetMaxMove(ch.GetMaxMove() + moveGain)
 
 		// Bonus HP for remort
-		ch.MaxHealth += 2
+		ch.SetMaxHP(ch.GetMaxHP() + 2)
 
 		// Set current to max
 		if lvl == level {
-			ch.Health = ch.MaxHealth
-			ch.Mana = ch.MaxMana
-			ch.Move = ch.MaxMove
+			ch.SetHP(ch.GetMaxHP())
+			ch.SetMana(ch.GetMaxMana())
+			ch.SetMove(ch.GetMaxMove())
 		}
 	}
 }
 
 // setExp sets the player's experience points.
 func setExp(ch *Player, exp int) {
-	ch.Exp = exp
+	ch.SetExp(exp)
 }
 
 // number is an alias for randRange for C compatibility.

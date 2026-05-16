@@ -304,67 +304,68 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	// die(): GET_EXP(ch)/3 (non-combat death) - fight.c line 628
 	var expLoss int
 	if isCombatDeath {
-		expLoss = player.Exp / 37
+		expLoss = player.GetExp() / 37
 	} else {
-		expLoss = player.Exp / 3
+		expLoss = player.GetExp() / 3
 	}
-	// Consolidate ALL player state mutations under a single lock.
-	// Previously: EXP and gold were locked, but CON/inventory/equipment were not.
-	var (
-		playerGold     int
-		conLossMessage string
-	)
-	var inventoryItems []*ObjectInstance
-	var equipmentItems []*ObjectInstance
+	var conLossMessage string
 
-	player.mu.Lock()
 	// EXP loss
-	player.Exp -= expLoss
-	if player.Exp < 0 {
-		player.Exp = 0
+	newExp := player.GetExp() - expLoss
+	if newExp < 0 {
+		newExp = 0
 	}
+	player.SetExp(newExp)
+
 	// CON loss — fight.c die_with_killer() lines 598-607
 	// Only applies to combat deaths (die_with_killer path)
-	if isCombatDeath && player.Level > ConLossMinLevel-1 {
-		// GET_LEVEL(ch) > 5 means level 6+
-		if number(0, ConLossCheckChance-1) == 0 {
-			player.Stats.Con--
-			if player.Stats.Con < 1 {
-				player.Stats.Con = 1
-			}
-			// GET_LEVEL(ch) > 20 means level 21+
-			if player.Level >= ConLossSecondLevel && number(0, ConLossSecondChance-1) == 0 {
+	if isCombatDeath {
+		playerLevel := player.GetLevel()
+		if playerLevel > ConLossMinLevel-1 {
+			// GET_LEVEL(ch) > 5 means level 6+
+			if number(0, ConLossCheckChance-1) == 0 {
+				player.mu.Lock()
 				player.Stats.Con--
 				if player.Stats.Con < 1 {
 					player.Stats.Con = 1
 				}
+				// GET_LEVEL(ch) > 20 means level 21+
+				if playerLevel >= ConLossSecondLevel && number(0, ConLossSecondChance-1) == 0 {
+					player.Stats.Con--
+					if player.Stats.Con < 1 {
+						player.Stats.Con = 1
+					}
+				}
+				conLossMessage = fmt.Sprintf(
+					"You lose some constitution! Your Constitution is now %d.\r\n",
+					player.Stats.Con)
+				player.mu.Unlock()
 			}
-			conLossMessage = fmt.Sprintf(
-				"You lose some constitution! Your Constitution is now %d.\r\n",
-				player.Stats.Con)
 		}
 	}
-	// Inventory — FindItems acquires its own RLock internally
+
+	// Inventory & Equipment — still needs manual lock (no getters for Inventory/Equipment)
+	var inventoryItems []*ObjectInstance
+	var equipmentItems []*ObjectInstance
+	player.mu.Lock()
 	if player.Inventory != nil {
 		inventoryItems = player.Inventory.FindItems("")
 		player.Inventory.clear()
 	}
-	// Equipment — GetEquippedItems acquires its own RLock internally
 	if player.Equipment != nil {
 		equipped := player.Equipment.GetEquippedItems()
 		for _, item := range equipped {
 			equipmentItems = append(equipmentItems, item)
 		}
-		// Clear equipment slots (Equipment.mu is safe to acquire here;
-		// no ordering hierarchy places it above player.mu)
 		player.Equipment.mu.Lock()
 		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
 		player.Equipment.mu.Unlock()
 	}
-	// Gold
-	playerGold = player.Gold
-	player.Gold = 0
 	player.mu.Unlock()
+
+	// Gold
+	playerGold := player.GetGold()
+	player.SetGold(0)
 
 	if expLoss > 0 {
 		player.SendMessage(fmt.Sprintf("You lose %d experience points.\r\n", expLoss))
@@ -377,7 +378,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
 	} else {
-		corpse := w.makeCorpse(player.Name, player.Sex, inventoryItems, equipmentItems, roomVNum, attackType, playerGold)
+		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold)
 		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoom failed in player death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		}
@@ -387,7 +388,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	players := w.GetPlayersInRoom(roomVNum)
 	for _, p := range players {
 		if p != player {
-			p.SendMessage(fmt.Sprintf("The lifeless body of %s crumples to the ground.\r\n", player.Name))
+			p.SendMessage(fmt.Sprintf("The lifeless body of %s crumples to the ground.\r\n", player.GetName()))
 		}
 	}
 
@@ -605,13 +606,42 @@ func (w *World) createMoneyObject(amount int) *ObjectInstance {
 	return money
 }
 
-// createMoneyDesc wraps the amount for the short description (like handler.c money_desc())
+// createMoneyDesc wraps the amount for the short description.
+// Source: src/handler.c:1397 — money_desc()
 func createMoneyDesc(amount int) string {
+	if amount <= 0 {
+		return "a gold coin" // should never happen, but don't crash
+	}
 	if amount == 1 {
 		return "a gold coin"
+	} else if amount <= 10 {
+		return "a tiny pile of gold coins"
+	} else if amount <= 20 {
+		return "a handful of gold coins"
+	} else if amount <= 75 {
+		return "a little pile of gold coins"
+	} else if amount <= 200 {
+		return "a small pile of gold coins"
+	} else if amount <= 1000 {
+		return "a pile of gold coins"
+	} else if amount <= 5000 {
+		return "a big pile of gold coins"
+	} else if amount <= 10000 {
+		return "a large heap of gold coins"
+	} else if amount <= 20000 {
+		return "a huge mound of gold coins"
+	} else if amount <= 75000 {
+		return "an enormous mound of gold coins"
+	} else if amount <= 150000 {
+		return "a small mountain of gold coins"
+	} else if amount <= 250000 {
+		return "a mountain of gold coins"
+	} else if amount <= 500000 {
+		return "a huge mountain of gold coins"
+	} else if amount <= 1000000 {
+		return "an enormous mountain of gold coins"
 	}
-	// Simplified version of money_desc() — C has specific ranges
-	return fmt.Sprintf("a pile of %d gold coins", amount)
+	return "an absolutely colossal mountain of gold coins"
 }
 
 // capitalize capitalizes the first letter of a string.

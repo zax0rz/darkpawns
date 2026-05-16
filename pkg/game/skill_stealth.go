@@ -101,21 +101,21 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		if p, ok := target.(*Player); ok {
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			gold = (p.Gold * (rand.Intn(10) + 1)) / 100
+			gold = (p.GetGold() * (rand.Intn(10) + 1)) / 100
 			if gold > 1782 {
 				gold = 1782
 			}
-			if gold > p.Gold {
-				gold = p.Gold
+			if gold > p.GetGold() {
+				gold = p.GetGold()
 			}
-			p.Gold -= gold
-			ch.Gold += gold
+			p.SetGold(p.GetGold() - gold)
+			ch.SetGold(ch.GetGold() + gold)
 		} else {
 			// Mob — steal small random amount
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
 			gold = rand.Intn(20) + 1
-			ch.Gold += gold
+			ch.SetGold(ch.GetGold() + gold)
 		}
 
 		if gold > 1 {
@@ -143,8 +143,8 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		percent := rand.Intn(101) + 1
 		// Heavier items are harder to steal
 		// percent += GET_OBJ_WEIGHT(obj) — we don't have weight yet
-		if p.Level > ch.Level {
-			percent += p.Level - ch.Level
+		if p.GetLevel() > ch.GetLevel() {
+			percent += p.GetLevel() - ch.GetLevel()
 		}
 		prob := ch.GetSkill(SkillSteal)
 

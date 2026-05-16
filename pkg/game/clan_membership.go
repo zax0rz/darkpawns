@@ -57,13 +57,13 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 		ch.SendMessage("They're already in your clan.\r\n")
 		return
 	}
-	if victim.Level >= LVL_IMMORT {
+	if victim.GetLevel() >= LVL_IMMORT {
 		ch.SendMessage("You cannot enroll immortals in clans.\r\n")
 		return
 	}
 
 	victim.ClanRank++
-	c.Power += victim.Level
+	c.Power += victim.GetLevel()
 	c.Members++
 
 	victim.SendMessage("You've been enrolled in the clan you chose!\r\n")
@@ -116,7 +116,7 @@ func (w *World) doClanExpel(ch *Player, arg string) {
 	victim.ClanID = 0
 	victim.ClanRank = 0
 	c.Members--
-	c.Power -= victim.Level
+	c.Power -= victim.GetLevel()
 
 	victim.SendMessage("You've been kicked out of your clan!\r\n")
 	ch.SendMessage("Done.\r\n")
@@ -300,7 +300,7 @@ func (w *World) doClanMembers(ch *Player) {
 // ---------------------------------------------------------------------------
 
 func (w *World) doClanQuit(ch *Player) {
-	if ch.Level >= LVL_IMMORT {
+	if ch.GetLevel() >= LVL_IMMORT {
 		ch.SendMessage("You cannot quit any clan!\r\n")
 		return
 	}
@@ -314,7 +314,7 @@ func (w *World) doClanQuit(ch *Player) {
 	ch.ClanID = 0
 	ch.ClanRank = 0
 	c.Members--
-	c.Power -= ch.Level
+	c.Power -= ch.GetLevel()
 
 	if c.Members == 0 {
 		w.Clans.RemoveClan(clanNum)

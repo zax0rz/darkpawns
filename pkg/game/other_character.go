@@ -63,7 +63,7 @@ func (w *World) doVisible(ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	// Immort visibility
-	if ch.Level >= LVL_IMMORT {
+	if ch.GetLevel() >= LVL_IMMORT {
 		ch.SendMessage("You are visible.\r\n")
 		return true
 	}
@@ -99,7 +99,7 @@ func (w *World) doTitle(ch *Player, me *MobInstance, cmd string, arg string) boo
 	// Remove double dollars
 	title = strings.ReplaceAll(title, "$$", "$")
 
-	if ch.Flags&(1<<PlrNODELETE) != 0 {
+	if ch.GetFlags()&(1<<PlrNODELETE) != 0 {
 		ch.SendMessage("You can't title yourself -- you shouldn't have abused it!\r\n")
 		return true
 	}
@@ -138,10 +138,10 @@ func (w *World) doGroup(ch *Player, me *MobInstance, cmd string, arg string) boo
 		ch.SendMessage("Your group consists of:\r\n")
 
 		// Show leader
-		leaderName := ch.Following
+		leaderName := ch.GetFollowing()
 		if leaderName == "" {
 			leaderName = ch.Name // self is leader
-			msg := fmt.Sprintf("     [%3dH %3dM %3dV] $N (Head of group)\r\n", ch.Health, ch.Mana, ch.Move)
+			msg := fmt.Sprintf("     [%3dH %3dM %3dV] $N (Head of group)\r\n", ch.GetHP(), ch.GetMana(), ch.GetMove())
 			ch.SendMessage(msg)
 		} else {
 			leader, _ := w.GetPlayer(leaderName)
@@ -157,7 +157,7 @@ func (w *World) doGroup(ch *Player, me *MobInstance, cmd string, arg string) boo
 			if p.Name == leaderName || p.Name == ch.Name {
 				continue
 			}
-			if p.Following == leaderName || p.Following == ch.Name {
+			if p.GetFollowing() == leaderName || p.GetFollowing() == ch.Name {
 				if p.IsAffected(affGroup) {
 					msg := fmt.Sprintf("     [%3dH %3dM %3dV] %s\r\n", p.Health, p.Mana, p.Move, p.Name)
 					ch.SendMessage(msg)
@@ -174,7 +174,7 @@ func (w *World) doGroup(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	if ch.Following != "" {
+	if ch.GetFollowing() != "" {
 		ch.SendMessage("You can not enroll group members without being head of a group.\r\n")
 		return true
 	}
@@ -189,7 +189,7 @@ func (w *World) doGroup(ch *Player, me *MobInstance, cmd string, arg string) boo
 			if p.Name == ch.Name {
 				continue
 			}
-			if p.Following == ch.Name && !p.IsAffected(affGroup) {
+			if p.GetFollowing() == ch.Name && !p.IsAffected(affGroup) {
 				p.SetAffect(affGroup, true)
 				msg := fmt.Sprintf("%s is now a member of your group.\r\n", p.Name)
 				ch.SendMessage(msg)
@@ -216,7 +216,7 @@ func (w *World) doGroup(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	if victimPl.Following != ch.Name {
+	if victimPl.GetFollowing() != ch.Name {
 		ch.SendMessage(fmt.Sprintf("%s must follow you to enter your group.\r\n", victimPl.Name))
 		return true
 	}
@@ -248,7 +248,7 @@ func (w *World) doUngroup(ch *Player, me *MobInstance, cmd string, arg string) b
 	arg = strings.TrimSpace(arg)
 
 	if arg == "" {
-		if ch.Following != "" || !ch.IsAffected(affGroup) {
+		if ch.GetFollowing() != "" || !ch.IsAffected(affGroup) {
 			ch.SendMessage("But you lead no group!\r\n")
 			return true
 		}
@@ -261,7 +261,7 @@ func (w *World) doUngroup(ch *Player, me *MobInstance, cmd string, arg string) b
 			if p.Name == ch.Name {
 				continue
 			}
-			if p.Following == ch.Name && p.IsAffected(affGroup) {
+			if p.GetFollowing() == ch.Name && p.IsAffected(affGroup) {
 				p.SendMessage(msg)
 				p.SetAffect(affGroup, false)
 				if !p.IsAffected(3) { // AFF_CHARM
@@ -281,7 +281,7 @@ func (w *World) doUngroup(ch *Player, me *MobInstance, cmd string, arg string) b
 		ch.SendMessage("There is no such person!\r\n")
 		return true
 	}
-	if victimPl.Following != ch.Name {
+	if victimPl.GetFollowing() != ch.Name {
 		ch.SendMessage("That person is not following you!\r\n")
 		return true
 	}
@@ -317,9 +317,9 @@ func (w *World) doReport(ch *Player, me *MobInstance, cmd string, arg string) bo
 			continue
 		}
 		msg := fmt.Sprintf("    [%d/%d]H [%d/%d]M [%d/%d]V [%d]Kills [%d]PKs [%d]Deaths\r\n",
-			ch.Health, ch.MaxHealth,
-			ch.Mana, ch.MaxMana,
-			ch.Move, ch.MaxMove,
+			ch.GetHP(), ch.GetMaxHP(),
+			ch.GetMana(), ch.GetMaxMana(),
+			ch.GetMove(), ch.GetMaxMove(),
 			ch.Kills, ch.PKs, ch.Deaths)
 		p.SendMessage(msg)
 	}

@@ -58,7 +58,7 @@ func (w *World) doAssist(ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	// Find the target in the room
 	var target *Player
-	for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 		if p.Name == targetName {
 			target = p
 			break
@@ -78,7 +78,7 @@ func (w *World) doAssist(ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	ch.SendMessage(fmt.Sprintf("You assist %s!\r\n", helpee.GetName()))
 	helpee.SendMessage(fmt.Sprintf("%s assists you!\r\n", ch.GetName()))
-	w.roomMessageExcludeTwo(ch.RoomVNum,
+	w.roomMessageExcludeTwo(ch.GetRoom(),
 		fmt.Sprintf("%s assists %s!", ch.GetName(), helpee.GetName()),
 		ch.GetName(), helpee.GetName())
 
@@ -111,11 +111,11 @@ func (w *World) doHit(ch *Player, me *MobInstance, cmd string, arg string) bool 
 
 	// Check mobs too
 	if vict == nil {
-		for _, m := range w.GetMobsInRoom(ch.RoomVNum) {
+		for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
 			if strings.Contains(strings.ToLower(m.GetName()), strings.ToLower(victName)) {
 				// For mob targets, create combat with the mob directly
 				ch.SendMessage(fmt.Sprintf("You hit %s!\r\n", m.GetName()))
-				w.roomMessageExcludeTwo(ch.RoomVNum,
+				w.roomMessageExcludeTwo(ch.GetRoom(),
 					fmt.Sprintf("%s hits %s!", ch.GetName(), m.GetName()),
 					ch.GetName(), m.GetName())
 				w.startCombatBetween(ch, m)
@@ -136,7 +136,7 @@ func (w *World) doHit(ch *Player, me *MobInstance, cmd string, arg string) bool 
 
 	ch.SendMessage(fmt.Sprintf("You hit %s!\r\n", vict.GetName()))
 	vict.SendMessage(fmt.Sprintf("%s hits you!\r\n", ch.GetName()))
-	w.roomMessageExcludeTwo(ch.RoomVNum,
+	w.roomMessageExcludeTwo(ch.GetRoom(),
 		fmt.Sprintf("%s hits %s!", ch.GetName(), vict.GetName()),
 		ch.GetName(), vict.GetName())
 
@@ -177,7 +177,7 @@ func (w *World) doKill(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	ch.SendMessage(fmt.Sprintf("You chop %s to pieces!  Ah!  The blood!\r\n", himHer(vict.GetSex())))
 	vict.SendMessage(fmt.Sprintf("%s chops you to pieces!\r\n", ch.Name))
-	w.roomMessageExcludeTwo(ch.RoomVNum,
+	w.roomMessageExcludeTwo(ch.GetRoom(),
 		fmt.Sprintf("%s brutally slays %s!", ch.Name, vict.Name),
 		ch.Name, vict.Name)
 
@@ -205,7 +205,7 @@ func (w *World) doBackstab(ch *Player, me *MobInstance, cmd string, arg string) 
 	vict := w.getCharRoomVis(ch, victName)
 	if vict == nil {
 		// Could be a mob
-		for _, m := range w.GetMobsInRoom(ch.RoomVNum) {
+		for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
 			if strings.Contains(strings.ToLower(m.GetName()), strings.ToLower(victName)) {
 				return w.doBackstabMob(ch, m)
 			}
@@ -241,7 +241,7 @@ func (w *World) doBackstab(ch *Player, me *MobInstance, cmd string, arg string) 
 	if vict.IsNPC() && vict.GetPosition() >= posSleeping {
 		vict.SendMessage(fmt.Sprintf("You notice %s lunging at you!\r\n", ch.Name))
 		ch.SendMessage(fmt.Sprintf("%s notices you lunging at %s!\r\n", vict.Name, himHer(vict.GetSex())))
-		w.roomMessageExcludeTwo(ch.RoomVNum,
+		w.roomMessageExcludeTwo(ch.GetRoom(),
 			fmt.Sprintf("%s notices %s lunging at %s!", vict.Name, ch.Name, himHer(vict.GetSex())),
 			ch.Name, vict.Name)
 		w.startCombatBetween(vict, ch)
@@ -277,7 +277,7 @@ func (w *World) doBackstabMob(ch *Player, m *MobInstance) bool {
 	if m.GetPosition() >= combat.PosSleeping {
 		ch.SendMessage(fmt.Sprintf("%s notices you lunging at %s!\r\n", m.GetName(), himHer(m.GetSex())))
 		m.SendMessage(fmt.Sprintf("You notice %s lunging at you!\r\n", ch.Name))
-		w.roomMessageExcludeTwo(ch.RoomVNum,
+		w.roomMessageExcludeTwo(ch.GetRoom(),
 			fmt.Sprintf("%s notices %s lunging at %s!", m.GetName(), ch.Name, himHer(m.GetSex())),
 			ch.Name, m.GetName())
 		w.startCombatBetween(ch, m)
@@ -314,7 +314,7 @@ func (w *World) doDisembowel(ch *Player, me *MobInstance, cmd string, arg string
 	if vict == nil {
 		if ch.IsFighting() {
 			fightingName := ch.GetFighting()
-			for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+			for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 				if p.Name == fightingName {
 					vict = p
 					break
@@ -323,7 +323,7 @@ func (w *World) doDisembowel(ch *Player, me *MobInstance, cmd string, arg string
 		}
 		// Check mobs too
 		if vict == nil && len(args) >= 1 {
-			for _, m := range w.GetMobsInRoom(ch.RoomVNum) {
+			for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
 				if strings.Contains(strings.ToLower(m.GetName()), strings.ToLower(args[0])) {
 					return w.doDisembowelMob(ch, m)
 				}
@@ -385,12 +385,12 @@ func (w *World) doDisembowelMob(ch *Player, m *MobInstance) bool {
 	if m.GetPosition() >= combat.PosSleeping && percent > prob {
 		ch.SendMessage(fmt.Sprintf("You try to disembowel %s, but miss!\r\n", m.GetName()))
 	} else {
-		dam := (ch.Level * 2) + ch.GetDamroll()
+		dam := (ch.GetLevel() * 2) + ch.GetDamroll()
 		m.TakeDamage(dam)
 		// TODO(LOW-007): This bypasses alignment, sanctuary, wimpy, XP, and loot.
 		// Should route through a mob-aware damage pipeline once doDamage supports mobs.
 		ch.SendMessage(fmt.Sprintf("You drive your blade deep into %s's gut!\r\n", m.GetName()))
-		w.roomMessageExcludeTwo(ch.RoomVNum,
+		w.roomMessageExcludeTwo(ch.GetRoom(),
 			fmt.Sprintf("%s disembowels %s in a shower of gore!", ch.GetName(), m.GetName()),
 			ch.Name, m.GetName())
 		w.startCombatBetween(ch, m)

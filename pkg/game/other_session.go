@@ -40,7 +40,7 @@ func (w *World) doQuit(ch *Player, me *MobInstance, cmd string, arg string) bool
 		}
 	}
 
-	if ch.Position == combat.PosFighting {
+	if ch.GetPosition() == combat.PosFighting {
 		ch.SendMessage("No way!  You are fighting!\r\n")
 		return true
 	}

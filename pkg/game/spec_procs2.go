@@ -135,10 +135,10 @@ func guardAssist(w *World, me *MobInstance, specVNum int) bool {
 
 // isOwnerGrouped checks if a player is grouped with the house owner.
 func isOwnerGrouped(w *World, ch *Player, roomVNum int) bool {
-	if ch.Following == "" {
+	if ch.GetFollowing() == "" {
 		return false
 	}
-	leader, ok := w.GetPlayer(ch.Following)
+	leader, ok := w.GetPlayer(ch.GetFollowing())
 	if !ok {
 		return false
 	}
@@ -213,8 +213,8 @@ func specNinelives(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		} else {
 			lives--
 		}
-		ch.MaxMove = lives
-		ch.Health = ch.GetMaxHP()
+		ch.SetMaxMove(lives)
+		ch.SetHP(ch.GetMaxHP())
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s rises from the dead and keeps fighting!", mobName(me)))
 		return true
 	}
@@ -474,8 +474,8 @@ func specPissedalchemist(w *World, ch *Player, me *MobInstance, cmd string, arg 
 		return false
 	}
 	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s throws a potion at the ground, and a large globe of thick black mushroom cloud creeps up toward the heavens!", mobName(me)))
-	ch.Health = ch.GetMaxHP()
-	ch.Move = ch.GetMaxMove()
+	ch.SetHP(ch.GetMaxHP())
+	ch.SetMove(ch.GetMaxMove())
 	return true
 }
 
@@ -553,8 +553,8 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			// Message for other players in room
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing a scarab tattoo...", ch.GetName()))
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing %s scarab tattoo...", ch.GetName(), hisHer(ch.GetSex())))
-			ch.Health = ch.GetMaxHP()
-			ch.Move = ch.GetMaxMove()
+			ch.SetHP(ch.GetMaxHP())
+			ch.SetMove(ch.GetMaxMove())
 			if obj, err := w.SpawnObject(7103, ch.GetRoom()); err == nil {
 				if ch.Inventory != nil {
 					if err := ch.Inventory.addItem(obj); err != nil {
@@ -581,8 +581,8 @@ func specTattoo2(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		} else {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing a tattoo...", ch.GetName()))
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing %s tattoo...", ch.GetName(), hisHer(ch.GetSex())))
-			ch.Health = ch.GetMaxHP()
-			ch.Move = ch.GetMaxMove()
+			ch.SetHP(ch.GetMaxHP())
+			ch.SetMove(ch.GetMaxMove())
 			if obj, err := w.SpawnObject(7104, ch.GetRoom()); err == nil {
 				// Give to another player in the room
 				for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
@@ -644,7 +644,7 @@ func specEviltrade(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			var toRemove []*ObjectInstance
 			for _, item := range ch.Inventory.Items {
 				if item.GetVNum() == 13111 {
-					ch.Exp += (ch.GetLevel() * 200)
+					ch.AddExp(ch.GetLevel() * 200)
 					toRemove = append(toRemove, item)
 				}
 			}
@@ -712,8 +712,8 @@ func specTattoo4(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		} else {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s concentrates and the tattoo disappears...", ch.GetName()))
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's tattoo glows brightly and then fades away...", ch.GetName()))
-			ch.Health = ch.GetMaxHP()
-			ch.Move = ch.GetMaxMove()
+			ch.SetHP(ch.GetMaxHP())
+			ch.SetMove(ch.GetMaxMove())
 		}
 		return true
 	}
@@ -859,7 +859,7 @@ func specJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 			move = 1
 		}
 		ch.SetGold(ch.GetGold() - gold)
-		ch.Move = ch.GetMove() - move
+		ch.SetMove(ch.GetMove() - move)
 		sendToChar(ch, "A guard opens the cell door and lets you out.\r\n")
 		ch.SetRoom(8117) // release room per C source
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s is released from jail.", ch.GetName()))
@@ -944,8 +944,8 @@ func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 	sendToChar(ch, fmt.Sprintf("The eq thief steals %d items!\r\n", count))
 	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gets stripped of equipment by the eq thief!", ch.GetName()))
-	ch.Move = 0
-	ch.Health = 1
+	ch.SetMove(0)
+	ch.SetHP(1)
 	return true
 }
 
@@ -1287,7 +1287,7 @@ func specNeverDie(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	}
 	if ch.GetHP() <= 0 && ch.GetPosition() <= combat.PosMortally {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s refuses to die!", mobName(me)))
-		ch.Health = ch.GetMaxHP()
+		ch.SetHP(ch.GetMaxHP())
 		return true
 	}
 	return false

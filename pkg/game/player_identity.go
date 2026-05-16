@@ -52,6 +52,44 @@ func (p *Player) SetGold(gold int) {
 	p.Gold = gold
 }
 
+// GetExp returns the player's experience points.
+func (p *Player) GetExp() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Exp
+}
+
+// SetExp sets the player's experience points.
+func (p *Player) SetExp(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Exp = v
+}
+
+// AddExp adds delta to the player's experience, flooring at 0.
+func (p *Player) AddExp(delta int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Exp += delta
+	if p.Exp < 0 {
+		p.Exp = 0
+	}
+}
+
+// GetStrength returns the player's strength.
+func (p *Player) GetStrength() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Stats.Str
+}
+
+// SetStrength sets the player's strength.
+func (p *Player) SetStrength(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Stats.Str = v
+}
+
 func (p *Player) GetRace() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()

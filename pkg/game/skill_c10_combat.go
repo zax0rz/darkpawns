@@ -30,7 +30,7 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 			MessageToRoom: ActMessage("$n tries to disembowel $N, but fails!", chPronouns, &victPronouns, ""),
 		}
 	}
-	dam := ch.Level*2 + ch.GetDamroll()
+	dam := ch.GetLevel()*2 + ch.GetDamroll()
 	improveSkill(ch, SkillDisembowel)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 2,
@@ -46,10 +46,10 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillDragonKick) == 0 {
 		return SkillResult{Success: false, MessageToCh: "What's that, idiot-san?"}
 	}
-	if ch.Move < 10 {
+	if ch.GetMove() < 10 {
 		return SkillResult{Success: false, MessageToCh: "You're too exhausted!"}
 	}
-	ch.Move -= 10
+	ch.SetMove(ch.GetMove() - 10)
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
@@ -63,7 +63,7 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 			MessageToRoom: ActMessage("$n attempts a dragon kick on $N but misses!", chPronouns, &victPronouns, ""),
 		}
 	}
-	dam := int(float64(ch.Level) * 1.5)
+	dam := int(float64(ch.GetLevel()) * 1.5)
 	improveSkill(ch, SkillDragonKick)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 1,
@@ -95,7 +95,7 @@ func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 			MessageToRoom: ActMessage("$n tries to tiger punch $N but misses!", chPronouns, &victPronouns, ""),
 		}
 	}
-	dam := int(float64(ch.Level) * 2.5)
+	dam := int(float64(ch.GetLevel()) * 2.5)
 	improveSkill(ch, SkillTigerPunch)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 2,
@@ -152,10 +152,10 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 	// #nosec G404
 	percent := rand.Intn(101+target.GetLevel()) + 1
 	prob := ch.GetSkill(SkillSubdue)
-	if levelDiff := target.GetLevel() - ch.Level; levelDiff > 0 {
+	if levelDiff := target.GetLevel() - ch.GetLevel(); levelDiff > 0 {
 		percent += levelDiff
 	}
-	if !target.IsNPC() && (target.GetLevel() > ch.Level+3 || target.GetLevel() < ch.Level-3) {
+	if !target.IsNPC() && (target.GetLevel() > ch.GetLevel()+3 || target.GetLevel() < ch.GetLevel()-3) {
 		percent = prob + 1
 	}
 	if percent > prob {
@@ -195,10 +195,10 @@ func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
 	// #nosec G404
 	percent := rand.Intn(101+target.GetLevel()) + 1
 	prob := ch.GetSkill(SkillSleeper)
-	if levelDiff := target.GetLevel() - ch.Level; levelDiff > 0 {
+	if levelDiff := target.GetLevel() - ch.GetLevel(); levelDiff > 0 {
 		percent += levelDiff
 	}
-	if !target.IsNPC() && (target.GetLevel() > ch.Level+3 || target.GetLevel() < ch.Level-3) {
+	if !target.IsNPC() && (target.GetLevel() > ch.GetLevel()+3 || target.GetLevel() < ch.GetLevel()-3) {
 		percent = prob + 1
 	}
 	if percent > prob {
@@ -227,10 +227,10 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 	if func() bool { _, ok := ch.Equipment.GetItemInSlot(SlotWield); return ok }() {
 		return SkillResult{Success: false, MessageToCh: "You can't do this and wield a weapon at the same time!"}
 	}
-	if ch.Move < 51 {
+	if ch.GetMove() < 51 {
 		return SkillResult{Success: false, MessageToCh: "You haven't the energy to do this!"}
 	}
-	ch.Move -= 51
+	ch.SetMove(ch.GetMove() - 51)
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
@@ -244,7 +244,7 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 			MessageToRoom: ActMessage("$n tries to break $N's neck, but $N slips free!", chPronouns, &victPronouns, ""),
 		}
 	}
-	dam := combat.RollDice(18, ch.Level)
+	dam := combat.RollDice(18, ch.GetLevel())
 	improveSkill(ch, SkillNeckbreak)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 3,
@@ -281,7 +281,7 @@ func DoAmbush(ch *Player, target combat.Combatant) SkillResult {
 	if weaponNum, weaponSides := ch.Equipment.GetWeaponDamage(); weaponNum > 0 && weaponSides > 0 {
 		dam += combat.RollDice(weaponNum, weaponSides)
 	}
-	dam += int(float64(ch.Level) * 2.6)
+	dam += int(float64(ch.GetLevel()) * 2.6)
 	if ch.IsAffected(affHide) {
 		dam += int(float64(dam) * 0.10)
 	}

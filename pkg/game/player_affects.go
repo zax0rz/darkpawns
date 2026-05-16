@@ -98,6 +98,13 @@ func (p *Player) GetAlignment() int {
 	return p.Alignment
 }
 
+// SetAlignment sets the alignment value (-1000 to +1000).
+func (p *Player) SetAlignment(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Alignment = v
+}
+
 // IsGood returns true if alignment >= 350 (utils.h:454)
 func (p *Player) IsGood() bool { return p.GetAlignment() >= 350 }
 
