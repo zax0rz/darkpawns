@@ -1,6 +1,10 @@
 package spells
 
-import "math/rand"
+import (
+	"math/rand"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+)
 
 // MagDamage inflicts damage from a spell, ported from src/magic.c mag_damage().
 // Handles die-based damage per spellnum, saving throw halving, and special effects
@@ -239,48 +243,56 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 	}
 }
 
-// inflictDamage applies damage to a victim via damage(ch, victim, dam, attackType).
-// Uses the damage system from combat/game — ported from C damage() call.
+// inflictDamage applies damage to a victim via combat.TakeDamage().
+// Routes through the combat engine so spell damage respects sanctuary,
+// protection evil/good, immortality invulnerability, damage caps,
+// peaceful room checks, and wimpy flee triggers.
+// Ported from C damage() call — in the original C, mag_damage() called
+// the same damage() function as weapon attacks.
 func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{}) {
-	type damager interface {
-		GetHP() int
-		GetMaxHP() int
-		GetName() string
-		SetHP(int)
-		SendMessage(string)
-		IsNPC() bool
-	}
-
-	d, ok := victim.(damager)
-	if !ok {
-		return
-	}
-
+	// Send spell flavor text to victim
 	singular, _ := MagAttackModifier(attackType)
-
-	// Notify victim
 	victimMsg := "$n " + singular + " you!"
 	type sender interface{ SendMessage(string) }
 	if s, ok := victim.(sender); ok {
 		s.SendMessage(victimMsg)
 	}
 
-	// Reduce HP
+	// Type-assert to combat.Combatant to route through combat engine
+	chCombat, chOk := ch.(combat.Combatant)
+	victCombat, victOk := victim.(combat.Combatant)
+	if chOk && victOk {
+		// Route through combat.TakeDamage — handles sanctuary, protection,
+		// immortality, damage caps, peaceful rooms, wimpy, death, etc.
+		combat.TakeDamage(chCombat, victCombat, dam, attackType)
+
+		// Fire Lua scripting hook for spell deaths (separate from combat death path)
+		if victCombat.GetHP() <= 0 {
+			type spellDeathHandler interface {
+				HandleSpellDeath(victim interface{})
+			}
+			if dh, ok := world.(spellDeathHandler); ok {
+				dh.HandleSpellDeath(victim)
+			}
+		}
+		return
+	}
+
+	// Fallback: if ch or victim doesn't implement Combatant, apply raw damage
+	// (maintains backward compatibility for non-standard callers)
+	type damager interface {
+		GetHP() int
+		SetHP(int)
+	}
+	d, ok := victim.(damager)
+	if !ok {
+		return
+	}
 	newHP := d.GetHP() - dam
 	if newHP < 0 {
 		newHP = 0
 	}
 	d.SetHP(newHP)
-
-	// Death check — if HP reached 0, trigger non-combat death
-	if newHP == 0 {
-		type spellDeathHandler interface {
-			HandleSpellDeath(victim interface{})
-		}
-		if dh, ok := world.(spellDeathHandler); ok {
-			dh.HandleSpellDeath(victim)
-		}
-	}
 }
 
 // --- character trait checks (used in damage formulas) ---

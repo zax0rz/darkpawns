@@ -2135,7 +2135,6 @@ func (e *Engine) luaCanSee(L *lua.LState) int {
 				// Not tracked in Lua tables yet; for now, dark rooms block sight
 				// unless world says otherwise (handled by higher-level logic)
 				L.Push(lua.LBool(false))
-				L.Pop(1)
 				return 1
 			}
 		}

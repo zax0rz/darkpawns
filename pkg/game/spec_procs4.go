@@ -44,13 +44,20 @@ func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	}
 
 	if !me.Fighting {
+		// C source: spec_procs.c:1618-1630 — conductor wanders east/west when idle.
+		// Must be standing (awake) to move. Cases 1-2: east, 9-10: west.
+		if me.GetPosition() > combat.PosStanding {
+			return false
+		}
 		walkRoll := randRange(1, 10)
 		switch walkRoll {
 		case 1, 2:
-			// perform_move(ch, SCMD_EAST-1, 0) — simplified: move east
-			// No MoveMob in API; skipping for now
+			// C: perform_move(ch, SCMD_EAST-1, 0) → direction index 1 (east)
+			w.moveMobDir(me, 1)
 			return true
 		case 9, 10:
+			// C: perform_move(ch, SCMD_WEST-1, 0) → direction index 3 (west)
+			w.moveMobDir(me, 3)
 			return true
 		}
 	}
@@ -421,7 +428,9 @@ func specOroQuartersRoom(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	if ch.Name != "Orodreth" {
 		w.roomMessage(me.RoomVNum, "A strong force jolts $n in $s attempt to leave south.")
 		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.\r\n")
+		ch.mu.Lock()
 		ch.Health /= 2
+		ch.mu.Unlock()
 		return true
 	}
 
@@ -436,7 +445,9 @@ func specOroStudyRoom(w *World, ch *Player, me *MobInstance, cmd string, arg str
 	if ch.Name != "Orodreth" {
 		w.roomMessage(me.RoomVNum, "A strong force jolts $n in $s attempt to leave north.")
 		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.\r\n")
+		ch.mu.Lock()
 		ch.Health /= 2
+		ch.mu.Unlock()
 		return true
 	}
 

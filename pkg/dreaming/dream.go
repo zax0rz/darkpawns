@@ -33,6 +33,11 @@ type DreamResult struct {
 
 // RunDream executes one dreaming cycle: read sessions, extract events, build graph, consolidate.
 func RunDream(cfg DreamConfig) (*DreamResult, error) {
+	// Validate AgentID to prevent path traversal.
+	if strings.ContainsAny(cfg.AgentID, "/\\..") {
+		return nil, fmt.Errorf("invalid agent ID %q: must not contain path separators or '..'", cfg.AgentID)
+	}
+
 	graph := NewMemoryGraph(cfg.GraphConfig)
 
 	// 1. Load existing graph if available.

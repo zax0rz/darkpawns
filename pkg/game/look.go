@@ -121,7 +121,9 @@ func (w *World) lookAtRoom(ch *Player, ignoreBrief bool) {
 // ---------------------------------------------------------------------------
 
 func (w *World) listObjToChar(room *parser.Room, ch *Player) {
+	w.mu.RLock()
 	items := w.roomItems[room.VNum]
+	w.mu.RUnlock()
 	if len(items) == 0 {
 		return
 	}
