@@ -153,3 +153,56 @@ Maintained by Daeron. Updated per triage cycle.
 | 2026-05-14 | Deep dive (engine/events/parser/command) + errcheck | 14 | 2 | 50% — Bad reek (errcheck noise) |
 | 2026-05-15 | Marathon review — all reports audited, tracker reconciled | 3 | 0 | 0% — Clean sweep |
 | **Weekly** | **12 reports** | **218** | **11** | **4.8% — Good reek (overall) |
+
+## Marathon Audit — 2026-05-15 (All Crawls)
+
+### CRITICAL
+
+| ID | Finding | File | Status | Linear |
+|---|---|---|---|---|
+| CRIT-012 | performGiveGold lock ordering → deadlock | item_transfer.go:347 | OPEN | DP-142 |
+| CRIT-013 | Inventory.Items no lock across 20+ files | item_equipment.go, 9+ files | OPEN | DP-144 |
+| CRIT-014 | Player fields bypass mutex ~30 sites | char_mgmt.go, combat_basic.go, 8+ files | OPEN | DP-143 |
+| C-010 | SpellEnergyDrain/SpellDetectPoison both = 21 | spells.go:80,108 | OPEN | DP-145 |
+| C-011 | SpellDivineInt/SpellIntellect both = 81 | spells.go:75-76 | OPEN | DP-146 |
+
+### HIGH
+
+| ID | Finding | File | Status | Linear |
+|---|---|---|---|---|
+| HIGH-021 | GetHitroll/GetDamroll missing Equipment.mu | player_combat.go:66,97 | OPEN | DP-149 |
+| HIGH-022 | GetAC releases lock before equipment | player_stats.go:78-88 | OPEN | — |
+| HIGH-023 | Weight check uses Capacity*10 not str_app | item_transfer.go:28 | OPEN | — |
+| HIGH-025 | lookAtChar hardcodes "excellent condition" | look.go:289 | OPEN | DP-151 |
+| HIGH-027 | Ambush sector check inverted | combat_advanced.go:431 | OPEN | DP-147 |
+| H-010 | Dual affect systems don't communicate | affect_manager.go + affect_helpers.go | OPEN | DP-155 |
+| H-012 | Spell damage bypasses TakeDamage modifiers | damage_spells.go | OPEN | DP-154 |
+| H-013 | AffectManager.Tick lock ordering | affect_manager.go:236 | OPEN | DP-153 |
+| H-015 | Status flag ref counting missing | affect_manager.go | OPEN | DP-152 |
+| RL-01 | RateLimitMiddleware data race | command/middleware.go:44 | OPEN | DP-148 |
+| RL-02 | TransitItems vnum collision | scripting/engine.go:1822 | OPEN | DP-150 |
+
+### MEDIUM
+
+| ID | Finding | File | Status | Linear |
+|---|---|---|---|---|
+| M-013 | Affect stacking defaults infinite | affect.go | OPEN | DP-156 |
+| M-017 | GetEntityID reuse on respawn | affect_manager.go | OPEN | DP-156 |
+| luaCanSee | Stack imbalance dark room | scripting/engine.go:2458 | OPEN | DP-156 |
+| Path traversal | Dreaming AgentID unsanitized | dreaming/dream.go:39 | OPEN | DP-156 |
+| Admin brute-force | No LoginAttemptTracker | admin/login.go:36 | OPEN | DP-156 |
+| Admin role | Level-based, no explicit field | admin/login.go:60 | OPEN | DP-156 |
+| roomItems race | Map access without lock | look.go:132 | OPEN | DP-156 |
+| heal/2 lock | Bypasses player mu | spec_procs4.go:431 | OPEN | DP-156 |
+| performWear TOCTOU | Remove before equip confirm | item_equipment.go:143 | OPEN | DP-156 |
+| Saving throws | Cleric lvl 2 PARA anomaly | saving_throws.go | OPEN | DP-156 |
+
+### Cycle History
+
+| Date | Report | Confirmed | Rejected | FPR |
+|---|---|---|---|---|
+| 2026-05-15 | Marathon — Game/Session | 14 | 1 | 7% |
+| 2026-05-15 | Marathon — Combat/Spells | 16 | 0 | 0% |
+| 2026-05-15 | Marathon — Scripting/Admin | 9 | 0 | 0% |
+| 2026-05-15 | Marathon — Sentinel/Deps | 0 | 0 | 0% |
+| 2026-05-15 | Marathon — Coverage | 1 | 0 | 0% |
