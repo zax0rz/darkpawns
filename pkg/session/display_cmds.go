@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // Infobar state constants — from structs.h
@@ -217,10 +219,70 @@ type infobarState struct {
 	level             int
 }
 
+// findExp returns the total exp needed to reach the given level,
+// matching the C source class.c:find_exp().
+func findExp(class, level int) int {
+	var modifier float64
+	switch class {
+	case game.ClassMageUser:
+		modifier = 0.3
+	case game.ClassCleric:
+		modifier = 0.4
+	case game.ClassWarrior:
+		modifier = 0.7
+	case game.ClassThief:
+		modifier = 0.1
+	case game.ClassMagus, game.ClassMystic:
+		modifier = 1.5
+	case game.ClassAvatar:
+		modifier = 1.6
+	case game.ClassAssassin:
+		modifier = 1.2
+	case game.ClassPaladin, game.ClassRanger:
+		modifier = 1.9
+	case game.ClassNinja:
+		modifier = 0.6
+	case game.ClassPsionic:
+		modifier = 0.6
+	default:
+		modifier = 1.0
+	}
+	switch {
+	case level <= 0:
+		return 1
+	case level == 1:
+		return 1500
+	case level == 2:
+		return 3000
+	case level == 3:
+		return 6000
+	case level == 4:
+		return 11000
+	case level == 5:
+		return 21000
+	case level == 6:
+		return 42000
+	case level == 7:
+		return 80000
+	case level == 8:
+		return 155000
+	case level == 9:
+		return 300000
+	case level == 10:
+		return 450000
+	case level == 11:
+		return 650000
+	case level == 12:
+		return 870000
+	default:
+		return 900000 + ((level-13)*level*20000) + (level*level*1000) + int(modifier*10000*float64(level))
+	}
+}
+
 func newInfobarState(s *Session) *infobarState {
 	p := s.player
-	// Estimate exp needed — simplified: 1000 * level per level
-	expNeeded := 1000 * p.Level
+	// Use class-specific exp table matching C source (class.c:find_exp)
+	expNeeded := findExp(p.Class, p.Level+1)
 	nextLvl := p.Level + 1
 
 	return &infobarState{

@@ -387,13 +387,15 @@ func (w *World) doDisembowelMob(ch *Player, m *MobInstance) bool {
 	} else {
 		dam := (ch.GetLevel() * 2) + ch.GetDamroll()
 		m.TakeDamage(dam)
-		// TODO(LOW-007): This bypasses alignment, sanctuary, wimpy, XP, and loot.
-		// Should route through a mob-aware damage pipeline once doDamage supports mobs.
 		ch.SendMessage(fmt.Sprintf("You drive your blade deep into %s's gut!\r\n", m.GetName()))
 		w.roomMessageExcludeTwo(ch.GetRoom(),
 			fmt.Sprintf("%s disembowels %s in a shower of gore!", ch.GetName(), m.GetName()),
 			ch.Name, m.GetName())
-		w.startCombatBetween(ch, m)
+		if m.GetHP() <= 0 {
+			w.handleMobDeath(m, ch, 0)
+		} else {
+			w.startCombatBetween(ch, m)
+		}
 	}
 	return true
 }
