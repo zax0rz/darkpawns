@@ -50,16 +50,12 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 	// Determine saving throw type based on cast type
 	var savetype SavingThrowType
 	switch castType {
-	case CastWand:
-		savetype = SaveParalysis
-	case CastStaff:
-		savetype = SaveBreath
-	case CastScroll:
+	case CastWand, CastStaff, CastScroll, CastPotion:
+		savetype = SaveRodStaff // C source: spell_parser.c:454-458 — all items use SAVING_ROD
+	case CastSpell:
 		savetype = SaveSpell
-	case CastPotion:
-		savetype = SaveParalysis
 	default:
-		savetype = SaveSpell
+		savetype = SaveBreath // C source: spell_parser.c:464-467 — breath/default use SAVING_BREATH
 	}
 
 	// Route based on spell routines

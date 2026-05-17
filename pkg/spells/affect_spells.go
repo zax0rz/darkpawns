@@ -170,9 +170,10 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	case SpellChameleon:
 		aff = engine.NewAffectDirect(SpellChameleon, engine.ApplyNone, getLevel(ch), 0, engine.AFFHide, "chameleon")
 	case SpellMetalskin:
-			aff = engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2), engine.AFFMetalskin, "metalskin")
-		applyAffect(victim, aff)
-		aff = engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2), "metalskin")
+		reag := checkReagents(ch, SpellMetalskin, getLevel(ch), "chunk of iron",
+			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
+		applyAffect(victim, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"))
+		applyAffect(victim, engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
 	case SpellInvulnerability:
 		applyAffect(victim, engine.NewAffectDirect(SpellInvulnerability, engine.ApplyNone, 7, -100, engine.AFFInvuln, "invulnerability"))
 		aff = engine.NewAffect(SpellInvulnerability, engine.ApplySavingSpell, 7, -7, "invulnerability")
@@ -851,10 +852,19 @@ func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int 
 
 	// Damage bonus: scales with level, matching C behavior.
 	// Original C: bonus is approximately level/2 (varies by spell).
+	// metalskin reagent adds flat +1 (C: magic.c:1300 reag is boolean 0/1).
 	bonus := level / 2
 	if bonus < 1 {
 		bonus = 1
 	}
+
+	// Check for flat bonus override ("flat:1" in reagent args)
+	for _, r := range reagents {
+		if r == "flat:1" {
+			return 1
+		}
+	}
+
 	return bonus
 }
 
@@ -1970,7 +1980,7 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	dam := level*6 + rand.Intn(level*3+1) - 10
+	dam := level*6 + rand.Intn(level*3+11) - 10
 	if dam < 1 {
 		dam = 1
 	}
@@ -2164,6 +2174,29 @@ func castCharm(level int, ch, cvict, world interface{}) {
 	if fw, ok := world.(followerWorld); ok {
 		fw.StopFollowerByName(victName)
 		fw.AddFollowerQuiet(cvict, ch)
+	}
+
+	// C source: spells.c:448-464 — apply AFF_CHARM affect with duration
+	// Duration = 24 * 18 / GET_INT(victim) (zero-guard: 24 * 18)
+	dur := 24 * 18
+	if vi, ok := cvict.(intGetter); ok && vi.GetInt() > 0 {
+		dur = dur / vi.GetInt()
+	}
+	applyAffect(cvict, engine.NewAffectDirect(SpellCharm, engine.ApplyNone, dur, 0, engine.AFFCharm, "charm"))
+
+	// C source: spells.c:462-464 — remove MOB_AGGRESSIVE and MOB_SPEC from charmed mob
+	// MobFlagAggressive = 5, MobFlagSpec = 0 (from pkg/game/mob_flags_bits.go)
+	type mobFlagOps interface {
+		HasMobFlag(int) bool
+		ClearMobFlag(int)
+	}
+	if mf, ok := cvict.(mobFlagOps); ok {
+		if mf.HasMobFlag(5) { // MOB_AGGRESSIVE
+			mf.ClearMobFlag(5)
+		}
+		if mf.HasMobFlag(0) { // MOB_SPEC
+			mf.ClearMobFlag(0)
+		}
 	}
 
 	sendToCaster(ch, "They are now your loyal servant.\r\n")
