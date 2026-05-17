@@ -91,7 +91,7 @@ func NewAffect(spellID int, location int, duration int, magnitude int, source st
 // DEPRECATED: Use NewAffect(spellID, location, duration, magnitude, source) instead.
 func NewAffectDeprecated(affectType int, duration int, magnitude int, source string) *Affect {
 	// Check if this is a status affect (has flags)
-	if flags, ok := statusAffectFlags[affectType]; ok {
+	if flags, ok := StatusAffectFlags[affectType]; ok {
 		af := NewAffectDirect(0, ApplyNone, duration, magnitude, flags, source)
 		af.Type = affectType // backward compat
 		return af
@@ -141,7 +141,7 @@ func spellStackKey(spellID int) string {
 func (a *Affect) GetType() int {
 	if a.Flags != 0 {
 		// Status affect — return the status constant
-		for affType, flags := range statusAffectFlags {
+		for affType, flags := range StatusAffectFlags {
 			if a.Flags&flags != 0 {
 				return affType
 			}
@@ -154,7 +154,7 @@ func (a *Affect) GetType() int {
 // SetType sets the deprecated AffectType value.
 // DEPRECATED: Set SpellID + Location directly instead.
 func (a *Affect) SetType(v int) {
-	if flags, ok := statusAffectFlags[v]; ok {
+	if flags, ok := StatusAffectFlags[v]; ok {
 		a.Flags = flags
 	} else {
 		a.Location = v
@@ -324,113 +324,50 @@ var spellStatusFlags = map[int]uint64{
 	// For now, affects created via NewAffectDirect can set flags explicitly.
 }
 
-// --- Deprecated AffectType aliases ---
-// These exist temporarily so callers compile during migration.
-// Each maps to the corresponding APPLY_* location constant.
-// Will be removed in Phase 5.
-
-// AffectType is deprecated. Use int (APPLY_* constants) directly.
-type AffectType = int
-
-const (
-	// Stat modifiers
-	AffectStrength    = ApplyStr
-	AffectDexterity   = ApplyDex
-	AffectIntelligence = ApplyInt
-	AffectWisdom      = ApplyWis
-	AffectConstitution = ApplyCon
-	AffectCharisma    = ApplyCha
-	AffectHitRoll     = ApplyHitroll
-	AffectDamageRoll  = ApplyDamroll
-	AffectArmorClass  = ApplyAC
-	AffectTHAC0       = 6  // No direct APPLY_* equivalent; THAC0 is not modified by standard affects
-	AffectHP          = ApplyHit
-	AffectMaxHP       = ApplyHit
-	AffectMana        = ApplyMana
-	AffectMaxMana     = ApplyMana
-	AffectMovement    = ApplyMove
-
-	// Status effects (no APPLY_* — these are pure flag affects)
-	AffectBlind             = 100
-	AffectInvisible         = 101
-	AffectDetectInvisible   = 102
-	AffectDetectMagic       = 103
-	AffectSanctuary         = 104
-	AffectFlying            = 105
-	AffectFloating          = 106
-	AffectPassDoor          = 107
-	AffectSneak             = 108
-	AffectHide              = 109
-	AffectCharm             = 110
-	AffectPoison            = 111
-	AffectSleep             = 112
-	AffectStunned           = 113
-	AffectParalyzed         = 114
-	AffectFlaming           = 115
-	AffectHaste             = 116
-	AffectSlow              = 117
-	AffectProtectionEvil    = 118
-	AffectProtectionGood    = 119
-	AffectFear              = 120
-	AffectCurse             = 121
-	AffectSilence           = 122
-	AffectWaterBreathing    = 123
-	AffectRegeneration      = 124
-	AffectInfrared          = 125
-	AffectUltraviolet       = 126
-	AffectDetectAlign       = 127
-	AffectSenseLife         = 128
-	AffectDream             = 129
-	AffectMindBar           = 130
-	AffectWaterwalk         = 131
-	AffectMetalskin         = 132
-	AffectInvuln            = 133
-)
-
-// statusAffectFlags maps the deprecated AffectType constants to AFF_* flags.
-// Used by NewAffectCompat to set the correct flags for status affects.
-var statusAffectFlags = map[int]uint64{
-	AffectBlind:          AFFBlind,
-	AffectInvisible:      AFFInvisible,
-	AffectDetectInvisible: AFFDetectInvisible,
-	AffectDetectMagic:    AFFDetectMagic,
-	AffectSanctuary:      AFFSanctuary,
-	AffectFlying:         AFFFlying,
-	AffectFloating:       AFFFloating,
-	AffectPassDoor:       AFFPassDoor,
-	AffectSneak:          AFFSneak,
-	AffectHide:           AFFHide,
-	AffectCharm:          AFFCharm,
-	AffectPoison:         AFFPoison,
-	AffectSleep:          AFFSleep,
-	AffectStunned:        AFFStunned,
-	AffectParalyzed:      AFFParalyzed,
-	AffectFlaming:        AFFFlaming,
-	AffectHaste:          AFFHaste,
-	AffectSlow:           AFFSlow,
-	AffectProtectionEvil: AFFProtectionEvil,
-	AffectProtectionGood: AFFProtectionGood,
-	AffectFear:           AFFFear,
-	AffectCurse:          AFFCurse,
-	AffectSilence:        AFFSilence,
-	AffectWaterBreathing: AFFWaterBreathing,
-	AffectRegeneration:   AFFRegeneration,
-	AffectInfrared:       AFFInfrared,
-	AffectUltraviolet:    AFFUltraviolet,
-	AffectDetectAlign:    AFFDetectAlign,
-	AffectSenseLife:      AFFSenseLife,
-	AffectDream:          AFFDream,
-	AffectMindBar:        AFFMindBar,
-	AffectWaterwalk:      AFFWaterwalk,
-	AffectMetalskin:      AFFMetalskin,
-	AffectInvuln:         AFFInvuln,
+// StatusAffectFlags maps legacy AffectType enum values to AFF_* flags.
+// Used by restoreAffects to reconstruct flags from old save files.
+var StatusAffectFlags = map[int]uint64{
+	100: AFFBlind,
+	101: AFFInvisible,
+	102: AFFDetectInvisible,
+	103: AFFDetectMagic,
+	104: AFFSanctuary,
+	105: AFFFlying,
+	106: AFFFloating,
+	107: AFFPassDoor,
+	108: AFFSneak,
+	109: AFFHide,
+	110: AFFCharm,
+	111: AFFPoison,
+	112: AFFSleep,
+	113: AFFStunned,
+	114: AFFParalyzed,
+	115: AFFFlaming,
+	116: AFFHaste,
+	117: AFFSlow,
+	118: AFFProtectionEvil,
+	119: AFFProtectionGood,
+	120: AFFFear,
+	121: AFFCurse,
+	122: AFFSilence,
+	123: AFFWaterBreathing,
+	124: AFFRegeneration,
+	125: AFFInfrared,
+	126: AFFUltraviolet,
+	127: AFFDetectAlign,
+	128: AFFSenseLife,
+	129: AFFDream,
+	130: AFFMindBar,
+	131: AFFWaterwalk,
+	132: AFFMetalskin,
+	133: AFFInvuln,
 }
 
 // NewAffectCompat is backward-compatible with the old NewAffect(affectType, duration, magnitude, source) signature.
 // DEPRECATED: Use NewAffect(spellID, location, duration, magnitude, source) instead.
 func NewAffectCompat(affectType int, duration int, magnitude int, source string) *Affect {
 	// Check if this is a status affect (has flags)
-	if flags, ok := statusAffectFlags[affectType]; ok {
+	if flags, ok := StatusAffectFlags[affectType]; ok {
 		return NewAffectDirect(0, ApplyNone, duration, magnitude, flags, source)
 	}
 	// Otherwise treat as a stat affect — affectType IS the location

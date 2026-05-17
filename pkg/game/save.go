@@ -73,13 +73,17 @@ type saveItemData struct {
 }
 
 type saveAffect struct {
-	Type      engine.AffectType `json:"type"`
-	Duration  int               `json:"duration"`
-	Magnitude int               `json:"magnitude"`
-	Flags     uint64            `json:"flags"`
-	Source    string            `json:"source"`
-	StackID   string            `json:"stack_id"`
-	MaxStacks int               `json:"max_stacks"`
+	SpellID   int    `json:"spell_id"`             // SPELL_* or SKILL_* number (0 = not spell-based)
+	Location  int    `json:"location"`              // APPLY_* constant — which stat to modify
+	Duration  int    `json:"duration"`              // Ticks remaining
+	Magnitude int    `json:"magnitude"`             // Stat modifier
+	Flags     uint64 `json:"flags"`                 // AFF_* bitvector
+	Source    string `json:"source"`                // Human-readable name
+	StackID   string `json:"stack_id"`              // Dedup key
+	MaxStacks int    `json:"max_stacks"`            // Max stacks
+	// Deprecated: Type is kept for backward compatibility with old save files.
+	// New saves write SpellID + Location. Old saves are read via Type fallback.
+	Type int `json:"type,omitempty"` //nolint:govet // deprecated compat field
 }
 
 // SavePlayer serializes a player's state to disk as JSON.
@@ -244,7 +248,8 @@ func playerToSaveData(p *Player) savePlayerData {
 	// Serialize active affects
 	for _, aff := range p.ActiveAffects {
 		data.Affects = append(data.Affects, saveAffect{
-			Type:      aff.Type,
+			SpellID:   aff.SpellID,
+			Location:  aff.Location,
 			Duration:  aff.Duration,
 			Magnitude: aff.Magnitude,
 			Flags:     aff.Flags,
@@ -301,6 +306,7 @@ func saveDataToPlayer(data savePlayerData) *Player {
 }
 
 // restoreAffects converts saved affect data back into engine.Affect objects.
+// Supports both new format (SpellID + Location) and legacy format (Type field).
 // Reconstructs proper Affect structs with computed timestamps.
 func restoreAffects(saved []saveAffect) []*engine.Affect {
 	if len(saved) == 0 {
@@ -310,7 +316,6 @@ func restoreAffects(saved []saveAffect) []*engine.Affect {
 	now := time.Now()
 	for _, sa := range saved {
 		a := &engine.Affect{
-			Type:      sa.Type,
 			Duration:  sa.Duration,
 			Magnitude: sa.Magnitude,
 			Flags:     sa.Flags,
@@ -320,6 +325,23 @@ func restoreAffects(saved []saveAffect) []*engine.Affect {
 			AppliedAt: now,
 			ExpiresAt: now.Add(time.Duration(sa.Duration) * engine.TickDuration),
 		}
+
+		// New format: SpellID + Location are explicitly saved
+		if sa.SpellID != 0 || sa.Location != 0 {
+			a.SpellID = sa.SpellID
+			a.Location = sa.Location
+			a.Type = sa.Location // backward compat
+		} else if sa.Type != 0 {
+			// Legacy format: Type field contains the old AffectType enum value.
+			// Status affects (>=100) map to flags; stat affects map to location.
+			a.Type = sa.Type
+			if flags, ok := engine.StatusAffectFlags[sa.Type]; ok {
+				a.Flags = flags
+			} else {
+				a.Location = sa.Type
+			}
+		}
+
 		affects = append(affects, a)
 	}
 	return affects
