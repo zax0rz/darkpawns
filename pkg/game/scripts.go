@@ -26,28 +26,29 @@ func (m *MobInstance) HasScript(trigger string) bool {
 	}
 
 	// Check bitmask based on trigger type
-	// From structs.h lines 659-690: MS_BRIBE=1, MS_GREET=2, MS_ONGIVE=4, MS_SOUND=8,
-	// MS_DEATH=16, MS_ONPULSE_ALL=32, MS_ONPULSE_PC=64, MS_FIGHTING=128, MS_ONCMD=256
+	// From structs.h lines 659-690: MS_BRIBE=(1<<1)=2, MS_GREET=(1<<2)=4, MS_ONGIVE=(1<<3)=8,
+	// MS_SOUND=(1<<4)=16, MS_DEATH=(1<<5)=32, MS_ONPULSE_ALL=(1<<6)=64,
+	// MS_ONPULSE_PC=(1<<7)=128, MS_FIGHTING=(1<<8)=256, MS_ONCMD=(1<<9)=512
 	var bitmask int
 	switch trigger {
 	case "bribe":
-		bitmask = 1 // MS_BRIBE
+		bitmask = 2 // MS_BRIBE
 	case "greet":
-		bitmask = 2 // MS_GREET
+		bitmask = 4 // MS_GREET
 	case "ongive":
-		bitmask = 4 // MS_ONGIVE
+		bitmask = 8 // MS_ONGIVE
 	case "sound":
-		bitmask = 8 // MS_SOUND
+		bitmask = 16 // MS_SOUND
 	case "death":
-		bitmask = 16 // MS_DEATH
+		bitmask = 32 // MS_DEATH
 	case "onpulse_all":
-		bitmask = 32 // MS_ONPULSE_ALL
+		bitmask = 64 // MS_ONPULSE_ALL
 	case "onpulse_pc":
-		bitmask = 64 // MS_ONPULSE_PC
+		bitmask = 128 // MS_ONPULSE_PC
 	case "fight":
-		bitmask = 128 // MS_FIGHTING
+		bitmask = 256 // MS_FIGHTING
 	case "oncmd":
-		bitmask = 256 // MS_ONCMD
+		bitmask = 512 // MS_ONCMD
 	default:
 		return false
 	}
