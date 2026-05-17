@@ -4,13 +4,13 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
-// spellAffectMap maps non-damage spell IDs to their corresponding affect types.
-var spellAffectMap = map[int]int{
-	SpellBlindness: engine.AffectBlind,
-	SpellCurse:     engine.AffectCurse,
-	SpellPoison:    engine.AffectPoison,
-	SpellSleep:     engine.AffectSleep,
-	SpellSanctuary: engine.AffectSanctuary,
+// spellFlagMap maps non-damage spell IDs to their AFF_* flags.
+var spellFlagMap = map[int]uint64{
+	SpellBlindness: engine.AFFBlind,
+	SpellCurse:     engine.AFFCurse,
+	SpellPoison:    engine.AFFPoison,
+	SpellSleep:     engine.AFFSleep,
+	SpellSanctuary: engine.AFFSanctuary,
 }
 
 // spellNames maps spell IDs to their human-readable source names.
@@ -37,7 +37,7 @@ var spellNames = map[int]string{
 //
 // Returns an error if the spell ID has no mapping (not a non-damage affect spell).
 func ApplySpellAffects(target engine.Affectable, spellID int, casterLevel int, am *engine.AffectManager) error {
-	affectType, ok := spellAffectMap[spellID]
+	flags, ok := spellFlagMap[spellID]
 	if !ok {
 		return nil // spell is not a non-damage affect spell; not an error
 	}
@@ -53,7 +53,7 @@ func ApplySpellAffects(target engine.Affectable, spellID int, casterLevel int, a
 		source = "unknown spell"
 	}
 
-	affect := engine.NewAffectDeprecated(affectType, duration, magnitude, source)
+	affect := engine.NewAffectDirect(spellID, engine.ApplyNone, duration, magnitude, flags, source)
 	am.ApplyAffect(target, affect)
 
 	return nil

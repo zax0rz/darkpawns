@@ -62,7 +62,7 @@ func cmdEat(s *Session, args []string) error {
 		broadcastToRoom(s, fmt.Sprintf("%s coughs and utters some strange sounds.", s.player.Name))
 
 		// Apply poison affect (C: af.type = SPELL_POISON, duration = amount * 2)
-		poisonAffect := engine.NewAffectDeprecated(engine.AffectPoison, amount*2, 0, item.GetShortDesc())
+		poisonAffect := engine.NewAffectDirect(0, engine.ApplyNone, amount*2, 0, engine.AFFPoison, item.GetShortDesc())
 		s.player.Lock()
 		s.player.ActiveAffects = append(s.player.ActiveAffects, poisonAffect)
 		s.player.Unlock()
@@ -179,7 +179,7 @@ func cmdDrink(s *Session, args []string) error {
 		broadcastToRoom(s, fmt.Sprintf("%s chokes and utters some strange sounds.", s.player.Name))
 
 		// Apply poison affect (C: duration = amount * 3)
-		poisonAffect := engine.NewAffectDeprecated(engine.AffectPoison, amount*3, 0, "poisoned drink")
+		poisonAffect := engine.NewAffectDirect(0, engine.ApplyNone, amount*3, 0, engine.AFFPoison, "poisoned drink")
 		s.player.Lock()
 		s.player.ActiveAffects = append(s.player.ActiveAffects, poisonAffect)
 		s.player.Unlock()

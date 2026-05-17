@@ -30,9 +30,9 @@ func CalculateAC(p *game.Player) int {
 		baseAC -= acBonus
 	}
 
-	// Active affects (engine.AffectArmorClass = 8)
+	// Active affects (APPLY_AC)
 	for _, aff := range p.ActiveAffects {
-		if aff.Type == engine.AffectArmorClass {
+		if aff.Location == engine.ApplyAC {
 			baseAC += aff.Magnitude
 		}
 	}
