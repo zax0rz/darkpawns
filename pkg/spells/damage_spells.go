@@ -157,9 +157,6 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		}
 
 	/* --- ADDITIONAL SPELLS --- */
-	case SpellFlameStrike:
-		dam = dice(12, 8) + level*2
-
 	case SpellHellfire:
 		dam = dice(10, 8) + level*3
 

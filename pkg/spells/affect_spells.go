@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -76,6 +77,30 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 			return
 		}
 		aff = engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4, 0, engine.AFFSleep, "sleep")
+	case SpellFlameStrike:
+		// C source: magic.c:1109-1129 — outdoor-only DOT with saving throw
+		if magSavingThrow(victim, savetype) {
+			sendToCaster(ch, "Nothing seems to happen.\r\n")
+			return
+		}
+		// Must be outdoors
+		w, wOk := world.(worldAoe)
+		if wOk {
+			chRG, _ := ch.(roomGetter2)
+			if chRG != nil {
+				roomData := w.GetRoomInWorld(chRG.GetRoomVNum())
+				if roomData != nil && roomData.HasFlag(3) && roomData.Sector == 0 {
+					sendToCaster(ch, "You can only do this outdoors!\r\n")
+					return
+				}
+			}
+		}
+		// Duration: level * 0.17, max ~5 hours for mortals
+		dur := int(float64(level) * 0.17)
+		if dur < 1 {
+			dur = 1
+		}
+		aff = engine.NewAffectDirect(SpellFlameStrike, engine.ApplyNone, dur, 0, engine.AFFFlaming, "flamestrike")
 	case SpellPoison:
 		if magSavingThrow(victim, savetype) {
 			npcRetaliate(victim, ch)
@@ -110,6 +135,10 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	case SpellProtFromEvil:
 		if isEvil(victim) {
 			sendToCaster(ch, "You cannot protect yourself from the Evil inside you!\r\n")
+			// C source: magic.c:1142-1148 — raw_kill(ch, TYPE_BLAST) on alignment violation
+			if c, ok := ch.(combat.Combatant); ok {
+				combat.RawKill(c, combat.TYPE_BLAST)
+			}
 			return
 		}
 		// Set flag only — no stat modifier
@@ -118,6 +147,10 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	case SpellProtFromGood:
 		if isGood(victim) {
 			sendToCaster(ch, "The forces of Light destroy you for your betrayal!\r\n")
+			// C source: magic.c:1162-1168 — raw_kill(ch, TYPE_BLAST) on alignment violation
+			if c, ok := ch.(combat.Combatant); ok {
+				combat.RawKill(c, combat.TYPE_BLAST)
+			}
 			return
 		}
 		applyAffect(victim, engine.NewAffectDirect(SpellProtFromGood, engine.ApplyNone, 24, 0, engine.AFFProtectionGood, "prot from good"))
@@ -930,7 +963,7 @@ func init() {
 	setupSpellInfo(SpellMindPoke, PosFighting, 15, 30, 5, RoutineDamage, true, TarCharRoom|TarFightVict)
 	setupSpellInfo(SpellMindBlast, PosFighting, 40, 70, 2, RoutineDamage, true, TarCharRoom|TarFightVict)
 	setupSpellInfo(SpellMindAttack, PosFighting, 25, 55, 1, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellFlameStrike, PosFighting, 100, 105, 1, RoutineDamage, true, TarCharRoom|TarFightVict)
+	setupSpellInfo(SpellFlameStrike, PosFighting, 100, 105, 1, RoutineAffects, true, TarCharRoom|TarFightVict)
 	setupSpellInfo(SpellGate, PosStanding, 95, 95, 1, RoutineManual, true, TarCharWorld|TarNotSelf)
 }
 
@@ -1708,6 +1741,7 @@ type (
 		GetRoomVNum() int
 		GetLevel() int
 		GetDex() int
+		GetMaxHP() int
 		SetPosition(int)
 		IsInGroup() bool
 		GetFollowing() string
@@ -2022,34 +2056,23 @@ func castHellfire(level int, ch, world interface{}) {
 		if nc, ok := c.(npcChecker2); ok && !nc.IsNPC() && cn.GetLevel() >= 100 {
 			continue
 		}
-		// Skip level <= 4
-		if cn.GetLevel() <= 4 {
-			continue
-		}
 		// Skip grouped
 		if areGrouped(ch, c) {
 			continue
 		}
 
-		// Send damage messages
-		if vn, ok := c.(interface{ SendMessage(string) }); ok {
-			vn.SendMessage("The fires of hell bring blisters on your skin!\r\n")
-		}
-
-		w.DoSpellDamage(ch, c, dam, "hellfire")
-
-		// DEX check: if random(1,20) > caster DEX, knock to sitting
-		chDex := 0
-		if cd, ok := ch.(charInRoom); ok {
-			chDex = cd.GetDex()
-		}
-		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-		if rand.Intn(20)+1 > chDex {
-			cn.SetPosition(2) // POS_SITTING
+		// C source: spells.c:729-756 — level <= 4 takes GET_MAX_HIT*12 (instant kill)
+		if cn.GetLevel() <= 4 {
 			if vn, ok := c.(interface{ SendMessage(string) }); ok {
-				vn.SendMessage("The fires of hell bring you to your knees!\r\n")
+				vn.SendMessage("The fires of hell overcome you!!\r\n")
 			}
+			w.DoSpellDamage(ch, c, cn.GetMaxHP()*12, "hellfire")
+		} else {
+			// Level > 4: normal damage
+			if vn, ok := c.(interface{ SendMessage(string) }); ok {
+				vn.SendMessage("The fires of hell bring blisters on your skin!\r\n")
+			}
+			w.DoSpellDamage(ch, c, dam, "hellfire")
 		}
 	}
 }
