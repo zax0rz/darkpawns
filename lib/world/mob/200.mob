@@ -46,6 +46,7 @@ strikingly handsome, and seems to look at you with almost life-like eyes.
 8 8 1
 BareHandAttack: 3
 Race: 25
+Script: fighter.lua 256
 E
 #20003
 wizard mage archmage statue~
@@ -62,6 +63,7 @@ has been here for quite a while now.
 0 45000
 8 8 1
 Race: 25
+Script: magic_user.lua 256
 E
 #20004
 sneak assassin thief statue~
@@ -93,6 +95,7 @@ expectation and disappointment.
 0 45000
 8 8 1
 Race: 25
+Script: cleric.lua 256
 E
 #20006
 servant man freak~
@@ -126,6 +129,7 @@ opponent.
 888 60000
 8 8 1
 Race: 11
+Script: sorcery.lua 256
 E
 #20008
 demon lord k'chz~
@@ -144,6 +148,7 @@ about to die.
 8 8 1
 BareHandAttack: 8
 Race: 11
+Script: sorcery.lua 256
 E
 #20009
 improved dopsodod~
@@ -162,6 +167,7 @@ is the result: a leaner, meaner Dopsodod.
 0 37500
 8 8 1
 Race: 25
+Script: magic_user.lua 256
 E
 #20010
 improved dopsodod bastard~
@@ -180,6 +186,7 @@ his ancestors.
 45 40000
 8 8 1
 Race: 25
+Script: magic_user.lua 256
 E
 #20011
 improved father dopsodod~
@@ -198,6 +205,7 @@ is the result: a leaner, meaner Dopsodod.
 0 40000
 8 8 1
 Race: 25
+Script: fighter.lua 256
 E
 #20012
 guardian mighty spirit~
@@ -231,6 +239,7 @@ unearthly wail and attacks.
 8 8 2
 Race: 25
 Noise: You hear a steady wailing that echos all around you.
+Script: magic_user.lua 256
 E
 #20014
 raven bird~
@@ -247,6 +256,7 @@ is the case with this bird?
 10 10 0 10d5+110 5d4+5
 0 6000
 6 6 1
+Script: magic_user.lua 256
 E
 #20015
 crow bird~
@@ -312,6 +322,7 @@ also seems to be talking to himself.
 4444 180000
 6 6 1
 Race: 0
+Script: cleric.lua 256
 E
 #20019
 troll guard trollish~
@@ -327,6 +338,7 @@ and incredibly strong.
 50 30000
 8 8 1
 Race: 6
+Script: fighter.lua 256
 E
 #20020
 troll guard trollish~
@@ -342,6 +354,7 @@ incredibly strong.
 0 25000
 8 8 1
 Race: 6
+Script: fighter.lua 256
 E
 #20021
 troll cook chef~
@@ -371,6 +384,7 @@ out in alarm then mumbles curses and insults your family line.
 11 9 -1 11d5+120 7d4+7
 0 7500
 8 8 1
+Script: sorcery.lua 256
 E
 #20023
 wizard prisoner white mage~
@@ -387,6 +401,7 @@ trying to escape from the bondage of the Dark Mage.
 0 90000
 8 8 1
 Race: 0
+Script: sorcery.lua 256
 E
 #20024
 warden wicked troll~
@@ -401,6 +416,7 @@ see you.  He looks as if he would tear you in half if he did...
 900 50000
 8 8 1
 Race: 6
+Script: magic_user.lua 256
 E
 #20025
 apprentice mage elf~
@@ -418,6 +434,7 @@ and confident in his powers.  As he sees you, he smiles and begins to chant...
 BareHandAttack: 12
 Race: 0
 Noise: An eerie chanting fills the room...
+Script: magic_user.lua 256
 E
 #20026
 dark mage~
@@ -435,6 +452,7 @@ to find out...
 8 8 1
 Race: 0
 Noise: An eerie chanting fills the room...
+Script: sorcery.lua 256
 E
 #20027
 strabo dragon~
@@ -496,6 +514,7 @@ This particular Thrall, like most, you assume, smells revolting.
 15 37500
 8 8 1
 Race: 27
+Script: cleric.lua 256
 E
 #20030
 thrall guru~
@@ -517,6 +536,7 @@ This particular Thrall, like most, you assume, smells revolting.
 15 35000
 8 8 1
 Race: 27
+Script: magic_user.lua 256
 E
 #20031
 thrall woman~
@@ -598,6 +618,7 @@ force for the Black Army.
 0 27500
 8 8 1
 Race: 0
+Script: cleric.lua 256
 E
 #20036
 black knight anti paladin antipaladin~
@@ -613,6 +634,7 @@ knuckles.
 0 20000
 8 8 1
 Race: 0
+Script: fighter.lua 256
 E
 #20037
 black rook~
@@ -687,6 +709,7 @@ of the Army.
 0 27500
 8 8 1
 Race: 0
+Script: cleric.lua 256
 E
 #20042
 white knight~
@@ -701,6 +724,7 @@ of his world that serve the forces of good.
 0 20000
 8 8 1
 Race: 0
+Script: fighter.lua 256
 E
 #20043
 white rook~
@@ -729,5 +753,6 @@ White Pawns are a group of swordsmen ever ready to fight for the cause of good.
 0 14000
 8 8 1
 Race: 0
+Script: fighter.lua 256
 E
 $

@@ -75,6 +75,7 @@ Drakaan's desert raiders.
 100 120000
 8 8 0
 Race: 9
+Script: sorcery.lua 256
 E
 #11006
 raider second sabbat~
@@ -90,6 +91,7 @@ to steal. A mangled bloody ribbon tied to her belt reads "Drakaan".
 1500 120000
 8 8 2
 Race: 9
+Script: sorcery.lua 256
 E
 #11007
 raider third daemon~
@@ -106,6 +108,7 @@ Drakaan's desert raiders.
 100 120000
 8 8 0
 Race: 9
+Script: sorcery.lua 256
 E
 #11008
 raider fourth malleus~
@@ -122,6 +125,7 @@ Drakaan's desert raiders.
 800 120000
 8 8 1
 Race: 9
+Script: sorcery.lua 256
 E
 #11009
 bulette landshark shark~
@@ -238,6 +242,7 @@ foolish mortals who stumbled upon him.
 2500 180000
 8 8 1
 Race: 9
+Script: sorcery.lua 256
 E
 #11017
 roper larva~
@@ -337,6 +342,7 @@ he must kill you, or be killed, to appease his god.
 11 25000
 8 8 1
 Race: 5
+Script: cleric.lua 256
 E
 #11024
 rakshasa maharajah~
@@ -353,6 +359,7 @@ next meal.
 52 32500
 8 8 1
 Race: 5
+Script: cleric.lua 256
 E
 #11025
 tiger saber-toothed~
@@ -427,6 +434,7 @@ hook twitches nervously at the end long tail.
 40 30000
 8 8 1
 Race: 14
+Script: magic_user.lua 256
 E
 #11030
 rakshasa wizard~
@@ -442,6 +450,7 @@ of killing you makes him happy.
 50 60000
 8 8 1
 Race: 5
+Script: sorcery.lua 256
 E
 #11031
 rakshasa weaponsmith~
@@ -554,6 +563,7 @@ seem to qualify. Death by his hand will not be pretty.
 666 90000
 8 8 0
 Race: 11
+Script: cleric.lua 256
 E
 #11039
 dracolich skeletal dragon~
@@ -569,6 +579,7 @@ your doom.
 8 8 0
 BareHandAttack: 8
 Race: 9
+Script: cleric.lua 256
 E
 #11040
 bulette landshark baby~

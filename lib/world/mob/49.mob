@@ -233,6 +233,7 @@ six-fingered hand.
 8 8 1
 Race: 11
 Noise: You can hear a deep, throaty chuckling.
+Script: fighter.lua 256
 E
 #4915
 game gamesmaster daemon overseer~
@@ -264,6 +265,7 @@ He looks at you carefully, not underestimating any lesser mortal.
 8 8 1
 BareHandAttack: 8
 Race: 11
+Script: sorcery.lua 256
 E
 #4917
 bat blood~
@@ -310,6 +312,7 @@ You can make out no details of the daemon through his heavy clothing.
 8 8 0
 Race: 11
 Noise: You can hear quiet chanting.
+Script: sorcery.lua 256
 E
 #4920
 daemon fire~

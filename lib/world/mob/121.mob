@@ -175,6 +175,7 @@ She has traveled far and sacked a number of towns and villages.
 BareHandAttack: 13
 Race: 1
 Noise: A scuffle breaks out in the corner of the room.
+Script: fighter.lua 256
 E
 #12112
 ogre~

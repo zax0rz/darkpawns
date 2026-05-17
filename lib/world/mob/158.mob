@@ -60,6 +60,7 @@ practice magic that is forbidden, and you have disrupted that isolation.
 BareHandAttack: 12
 Race: 0
 Noise: A female voice bellows out, "Who dares to enter my domain!"
+Script: sorcery.lua 256
 E
 #15805
 crazed prisoner man crazy~
@@ -104,6 +105,7 @@ here no longer serves a purpose.
 0 25000
 8 8 1
 Race: 25
+Script: magic_user.lua 256
 E
 #15808
 member ship crew pirate smuggler~

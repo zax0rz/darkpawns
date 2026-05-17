@@ -377,6 +377,7 @@ its magical energies in check.
 6 6 0
 BareHandAttack: 12
 Race: 25
+Script: sorcery.lua 256
 E
 #7024
 beggar-king king~

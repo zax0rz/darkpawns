@@ -95,6 +95,7 @@ your intrusion.
 8 8 0
 BareHandAttack: 12
 Race: 25
+Script: cleric.lua 256
 E
 #1306
 geshrak air elemental~
@@ -127,6 +128,7 @@ retains its flames.
 8 8 0
 BareHandAttack: 12
 Race: 25
+Script: sorcery.lua 256
 E
 #1308
 shadrac water elemental~
@@ -254,5 +256,6 @@ and it doesn't look happy.
 8 8 0
 BareHandAttack: 4
 Race: 13
+Script: sorcery.lua 256
 E
 $

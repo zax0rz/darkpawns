@@ -13,6 +13,7 @@ showing beneath his glossy, tight-fitting jacket.
 0 270000
 8 8 1
 BareHandAttack: 12
+Script: sorcery.lua 256
 E
 #2717
 accountant monk~
@@ -52,6 +53,7 @@ A castle servant is hard at work here.
 5 6000
 8 8 1
 Race: 0
+Script: sorcery.lua 256
 E
 #2720
 ghostwheel amber~
@@ -66,6 +68,7 @@ a ghostly wheel spinning in mid-air.
 0 360000
 8 8 0
 Race: 25
+Script: sorcery.lua 256
 E
 #2721
 Luke Rinaldo amber~
@@ -219,6 +222,7 @@ Corwin has black hair and green eyes. He looks like a powerful fighter.
 660 270000
 8 8 1
 Race: 0
+Script: sorcery.lua 256
 E
 #2732
 Fiona princess amber~
@@ -234,6 +238,7 @@ carries herself with great charm.
 0 120000
 8 8 2
 Race: 0
+Script: sorcery.lua 256
 E
 #2733
 Brand ghost prince amber~
@@ -248,6 +253,7 @@ disturb the privacy of his quarters.
 0 180000
 8 8 1
 Race: 9
+Script: sorcery.lua 256
 E
 #2734
 Merlin king amber~
@@ -264,6 +270,7 @@ someone called Frakir.
 60 270000
 8 8 1
 Race: 0
+Script: sorcery.lua 256
 E
 #2735
 elite king guard~

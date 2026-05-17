@@ -29,6 +29,7 @@ brother.
 400 180000
 8 8 1
 Race: 1
+Script: fighter.lua 256
 E
 #7902
 dag barbarian~
@@ -43,6 +44,7 @@ snorts loudly, disgusted by your sophistication.
 200 363000
 8 8 1
 Race: 0
+Script: fighter.lua 256
 E
 #7903
 Dracula figure~
@@ -302,6 +304,7 @@ of exactly what he is doing.
 50 180000
 8 8 1
 Race: 19
+Script: sorcery.lua 256
 E
 #7970
 unicorn~
@@ -317,6 +320,7 @@ religions.  There is rumored to be only a single one in the entire world.
 8 8 2
 BareHandAttack: 9
 Race: 12
+Script: cleric.lua 256
 E
 #7971
 Eric Draven Crow~

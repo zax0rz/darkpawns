@@ -11,6 +11,7 @@ is the essence of beauty.
 361 32500
 8 8 2
 Race: 0
+Script: magic_user.lua 256
 E
 #4102
 sostratos~
@@ -24,6 +25,7 @@ He's a cleric with an attitude.
 290 35000
 8 8 1
 Race: 0
+Script: cleric.lua 256
 E
 #4103
 wintermute~

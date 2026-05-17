@@ -10,6 +10,7 @@ A huge humanoid beast with dark leathery skin and huge ram-like horns.
 0 9000
 8 8 0
 Race: 27
+Script: magic_user.lua 256
 E
 #18602
 creature~
@@ -24,6 +25,7 @@ grey skin and talon-like fingers end any resemblance to a human.
 20 6000
 8 8 0
 Race: 22
+Script: magic_user.lua 256
 E
 #18603
 humanoid~
@@ -37,6 +39,7 @@ It has an angry, evil countenance.
 20 4500
 8 8 0
 Race: 27
+Script: magic_user.lua 256
 E
 #18604
 thing~
@@ -50,5 +53,6 @@ A tall, lean, pale, ugly thing.
 0 7500
 8 8 0
 Race: 27
+Script: magic_user.lua 256
 E
 $

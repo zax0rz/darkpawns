@@ -113,6 +113,7 @@ it does not belong in this place, and it seems to feel the same way about you.
 0 12000
 8 8 0
 Race: 25
+Script: magic_user.lua 256
 E
 #14307
 beetle fire~
@@ -162,6 +163,7 @@ your home city.
 10 7500
 8 8 1
 Race: 27
+Script: cleric.lua 256
 E
 #14310
 lizard man warrior~
@@ -248,5 +250,6 @@ always been there to advise him.
 0 14000
 8 8 1
 Race: 20
+Script: magic_user.lua 256
 E
 $

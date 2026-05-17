@@ -98,6 +98,7 @@ faithfully obeying orders.
 0 270000
 6 6 1
 Race: 0
+Script: sorcery.lua 256
 E
 #14407
 Lady Amber~
@@ -116,6 +117,7 @@ form.
 BareHandAttack: 13
 Race: 0
 Noise: You hear a soft moan from nearby.
+Script: fighter.lua 256
 E
 #14408
 fiothas cook~
@@ -570,6 +572,7 @@ life.
 8 8 1
 BareHandAttack: 12
 Race: 9
+Script: sorcery.lua 256
 E
 #14435
 yuk-shaar~
@@ -590,6 +593,7 @@ locked it up in the second dungeon, never to bother anyone again.
 0 90000
 8 8 1
 Race: 9
+Script: sorcery.lua 256
 E
 #14436
 nightmare beast~
