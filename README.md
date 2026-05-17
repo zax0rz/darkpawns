@@ -16,7 +16,7 @@ A dark fantasy MUD, resurrected.
 
 Dark Pawns ran from 1997 to 2010 — CircleMUD-derived, ROM 2.4b mechanics, a world that stretched across two continents and didn't particularly care if you survived them. 10,057 rooms. 1,319 mobs. 1,661 objects. 95 zones. Thirteen years of development by a team that typed room descriptions in dorm rooms at 3 AM and never stopped.
 
-This is that game, rebuilt in Go. Same world files, same combat formulas, same everything. 73,000 lines of C became 295 Go files. The world didn't change. The walls did.
+This is that game, rebuilt in Go. Same world files, same combat formulas, same everything. 68,800 lines of C became 353 Go files. The world didn't change. The walls did.
 
 [Play now](https://darkpawns.labz0rz.com/play) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
 
@@ -41,7 +41,7 @@ The world files in [`lib/world/`](lib/world/) are the original ROM 2.4b area fil
 
 ### Requirements
 
-- **Go 1.21+**
+- **Go 1.26+**
 - **PostgreSQL** (optional — the server runs without it, player data won't persist)
 
 Without a database, you can connect and walk around. With one, characters save.
@@ -263,13 +263,13 @@ The server and agent CLI live together (shared `pkg/` imports). The client talks
 | **Mob AI** — wander, aggro, memory, scavenging, spec procs | ✅ Working |
 | **BFS pathfinding** — track, hunt, intelligent navigation | ✅ Working |
 | **Help system** — 433 entries, Go-native | ✅ Working |
-| **Spell system** — core framework ported, individual spells in progress | 🚧 Partial |
+| **Spell system** — 103 spells, 113 constants, full affect/damage/call magic dispatch | ✅ Working |
 | **Clans, houses, quests** — system stubs exist | ⬜ Planned |
 | **AI agents as players** — protocol, CLI, memory system, docs | ✅ Working |
 | **dp-client** — [human terminal client](https://github.com/zax0rz/dp-client), WebSocket, JSONL logging | ✅ Working |
 | **Public server** | 🟡 Running in development |
 
-**Port completion: ~85–90% wired, 100% ported.** The C→Go code translation is complete. Remaining work is wiring game systems into the live command dispatch and session layer.
+**Port complete.** All 103 spells, combat formulas, and game systems fully ported from C to Go. World files load unmodified. Remaining work is polish: mapcode rendering, text editor pagination, and a handful of low-priority helpers with zero call sites in Go.
 
 ---
 

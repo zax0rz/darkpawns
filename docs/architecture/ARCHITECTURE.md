@@ -1,6 +1,6 @@
 # Dark Pawns — Architecture
 
-**Last updated:** 2026-05-08
+**Last updated:** 2026-05-16
 
 ## Overview
 
@@ -70,7 +70,7 @@ Entry point. Parses flags (`-world`, `-port`, `-db`), calls `parser.ParseWorld()
 WebSocket connection lifecycle and command dispatch. `Manager` holds all active sessions in a map keyed by player name, plus references to `game.World`, `combat.CombatEngine`, and `db.DB`. `Manager.mu` (`sync.RWMutex`) protects the sessions map — separate from world lock; sessions register/unregister independently of world state. Each WebSocket upgrade spawns two goroutines (`readPump`, `writePump`) with a buffered send channel. Handles login (new player creation, bcrypt password verify, DB load/save), agent auth (API key validation), character creation state machine, and command routing. Agent sessions get variable subscription/dirty-tracking for push-based state sync. **Key types:** `Manager`, `Session`. **Depends on:** `game`, `combat`, `db`, `auth`, `command`, `common`, `events`, `parser`, `validation`, `audit`.
 
 ### `pkg/game`
-The game world: rooms, mobs (prototypes + instances), objects, zones, players, items on the ground, AI ticker, spawner/zone resets, point update ticker (regen/hunger). Single `sync.RWMutex` (`World.mu`) protects top-level world state. `SnapshotManager` provides lock-free room snapshots via atomic pointer swaps. `ZoneDispatcher` runs per-zone goroutines for reset processing. Door and shop types (`Door`, `Shop`, `DoorManager`, `ShopManager`) live in `pkg/game/systems/`. **Key types:** `World`, `Player`, `MobInstance`, `ObjectInstance`, `Spawner`, `SnapshotManager`, `ZoneDispatcher`, `WorldScriptableAdapter`. **Depends on:** `parser`, `combat`, `events`, `scripting`, `common`.
+The game world: rooms, mobs (prototypes + instances), objects, zones, players, items on the ground, AI ticker, spawner/zone resets, point update ticker (regen/hunger). Single `sync.RWMutex` (`World.mu`) protects top-level world state. `SnapshotManager` provides lock-free room snapshots via atomic pointer swaps. `ZoneDispatcher` runs per-zone goroutines for reset processing. `MobInstance` uses mutex-protected getters/setters (18 methods: Get/SetTarget, Get/SetAffectFlags, Get/SetHuntingID, etc.) — direct field access only permitted under existing locks (save.go, deferred_fight_fns.go). Door and shop types (`Door`, `Shop`, `DoorManager`, `ShopManager`) live in `pkg/game/systems/`. **Key types:** `World`, `Player`, `MobInstance`, `ObjectInstance`, `Spawner`, `SnapshotManager`, `ZoneDispatcher`, `WorldScriptableAdapter`. **Depends on:** `parser`, `combat`, `events`, `scripting`, `common`.
 
 ### `pkg/game/systems/`
 Door and shop subsystems. Contains `Door`, `DoorManager`, `Shop`, and `ShopManager`. Separated from core world state to keep pkg/game focused on entity management. **Depends on:** `game` (interfaces), `common`.

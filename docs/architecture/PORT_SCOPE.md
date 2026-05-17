@@ -22,7 +22,7 @@
 - **limits.c** — Full XP table + regen formulas (`ExpNeededForLevel`, `FindExp`, `ManaGain`, `HitGain`, `MoveGain` + NPC variants)
 - **handler.c** — `obj_to_obj` → `AddToContainer`, `obj_from_obj` → `RemoveFromContainer`, `stop_follower` → `StopFollower`, `add_follower` → `AddFollower`, `die_follower` → `DieFollower`, `circle_follow` → `CircleFollow`, `can_speak` → `CanSpeak`, `set_hunting` → `SetHunting`
 - **follow.go** — Complete follow chain management with `GetFollowers`, `GetFollowersInRoom`, `NumFollowers`
-- **affect system** — Full port in `pkg/engine/affect_helpers.go`: `AffectTotal`, `AffectModify`, `AffectToChar`, `AffectToChar2`, `AffectRemove`, `AffectFromChar`, `AffectedBySpell`, `AffectJoin`
+- **affect system** — Unified in DP-155. `Affect` struct with `SpellID` + `Location` + `Flags`. `AffectManager` with flat `[]*Affect` storage, table-driven `applyLocationToStat`, flag reference counting. `NewAffect` / `NewAffectDirect` APIs. Save/load backward-compatible with legacy format. Located in `pkg/game/affect_manager.go` + `pkg/game/affect_helpers.go`
 
 ### Persistence
 - **objsave.c** — JSON-based player save/load in `pkg/game/save.go` + `CrashLoad` at line 392
