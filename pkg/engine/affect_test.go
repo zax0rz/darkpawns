@@ -74,7 +74,7 @@ func (m *MockAffectable) GetHitRoll() int     { return m.hitRoll }
 func (m *MockAffectable) SetHitRoll(v int)    { m.hitRoll = v }
 func (m *MockAffectable) GetDamageRoll() int  { return m.damageRoll }
 func (m *MockAffectable) SetDamageRoll(v int) { m.damageRoll = v }
-func (m *MockAffectable) IsNPC() bool { return false }
+func (m *MockAffectable) IsNPC() bool         { return false }
 
 func (m *MockAffectable) GetArmorClass() int  { return m.armorClass }
 func (m *MockAffectable) SetArmorClass(v int) { m.armorClass = v }
@@ -108,26 +108,25 @@ func (m *MockAffectable) ClearMessages() {
 	m.messages = make([]string, 0)
 }
 
-// TestNewAffect tests creating a new affect
+// TestNewAffect tests creating a new affect with the unified API
 func TestNewAffect(t *testing.T) {
-	affect := NewAffect(AffectStrength, 10, 5, "test spell")
+	affect := NewAffect(0, ApplyStr, 10, 5, "test spell")
 
-	if affect.Type != AffectStrength {
-		t.Errorf("Expected affect type AffectStrength, got %v", affect.Type)
+	if affect.SpellID != 0 {
+		t.Errorf("Expected spell ID 0, got %d", affect.SpellID)
 	}
-
+	if affect.Location != ApplyStr {
+		t.Errorf("Expected location ApplyStr (%d), got %d", ApplyStr, affect.Location)
+	}
 	if affect.Duration != 10 {
 		t.Errorf("Expected duration 10, got %d", affect.Duration)
 	}
-
 	if affect.Magnitude != 5 {
 		t.Errorf("Expected magnitude 5, got %d", affect.Magnitude)
 	}
-
 	if affect.Source != "test spell" {
 		t.Errorf("Expected source 'test spell', got %s", affect.Source)
 	}
-
 	if affect.ID == "" {
 		t.Error("Expected non-empty affect ID")
 	}
@@ -135,9 +134,8 @@ func TestNewAffect(t *testing.T) {
 
 // TestAffectTick tests ticking an affect
 func TestAffectTick(t *testing.T) {
-	affect := NewAffect(AffectStrength, 3, 5, "test")
+	affect := NewAffect(0, ApplyStr, 3, 5, "test")
 
-	// Tick once
 	expired := affect.Tick()
 	if expired {
 		t.Error("Affect should not expire after first tick")
@@ -146,7 +144,6 @@ func TestAffectTick(t *testing.T) {
 		t.Errorf("Expected duration 2 after tick, got %d", affect.Duration)
 	}
 
-	// Tick twice more
 	affect.Tick()
 	expired = affect.Tick()
 	if !expired {
@@ -159,9 +156,8 @@ func TestAffectTick(t *testing.T) {
 
 // TestPermanentAffect tests that permanent affects don't expire
 func TestPermanentAffect(t *testing.T) {
-	affect := NewAffect(AffectStrength, 0, 5, "permanent")
+	affect := NewAffect(0, ApplyStr, 0, 5, "permanent")
 
-	// Permanent affect should not expire
 	for i := 0; i < 10; i++ {
 		expired := affect.Tick()
 		if expired {
@@ -173,55 +169,44 @@ func TestPermanentAffect(t *testing.T) {
 	}
 }
 
-// TestApplyAffect tests applying an affect to an entity
+// TestApplyAffect tests applying a stat affect to an entity
 func TestApplyAffect(t *testing.T) {
 	am := NewAffectManager()
 	mock := NewMockAffectable("test", 1)
 	am.RegisterEntity(mock)
 
-	affect := NewAffect(AffectStrength, 10, 5, "strength potion")
+	affect := NewAffect(0, ApplyStr, 10, 5, "strength potion")
 	success := am.ApplyAffect(mock, affect)
 
 	if !success {
 		t.Error("Failed to apply affect")
 	}
-
-	// Check that strength was modified
 	if mock.GetStrength() != 15 {
 		t.Errorf("Expected strength 15 after affect, got %d", mock.GetStrength())
 	}
-
-	// Check that message was sent
 	messages := mock.GetMessages()
 	if len(messages) == 0 {
 		t.Error("Expected affect application message")
 	}
 }
 
-// TestRemoveAffect tests removing an affect from an entity
+// TestRemoveAffect tests removing a stat affect from an entity
 func TestRemoveAffect(t *testing.T) {
 	am := NewAffectManager()
 	mock := NewMockAffectable("test", 1)
 	am.RegisterEntity(mock)
 
-	affect := NewAffect(AffectStrength, 10, 5, "strength potion")
+	affect := NewAffect(0, ApplyStr, 10, 5, "strength potion")
 	am.ApplyAffect(mock, affect)
-
-	// Clear messages
 	mock.ClearMessages()
 
-	// Remove the affect
 	success := am.RemoveAffect(mock, affect.ID)
 	if !success {
 		t.Error("Failed to remove affect")
 	}
-
-	// Check that strength was restored
 	if mock.GetStrength() != 10 {
 		t.Errorf("Expected strength 10 after affect removal, got %d", mock.GetStrength())
 	}
-
-	// Check that removal message was sent
 	messages := mock.GetMessages()
 	if len(messages) == 0 {
 		t.Error("Expected affect removal message")
@@ -235,57 +220,50 @@ func TestAffectStacking(t *testing.T) {
 	am.RegisterEntity(mock)
 
 	// Create two affects with same StackID (should replace)
-	affect1 := NewAffect(AffectPoison, 10, 5, "poison")
+	affect1 := NewAffectDirect(0, ApplyNone, 10, 5, AFFPoison, "poison")
 	affect1.StackID = "poison"
 	affect1.MaxStacks = 1
 
-	affect2 := NewAffect(AffectPoison, 5, 3, "stronger poison")
+	affect2 := NewAffectDirect(0, ApplyNone, 5, 3, AFFPoison, "stronger poison")
 	affect2.StackID = "poison"
 	affect2.MaxStacks = 1
 
-	// Apply first affect
 	am.ApplyAffect(mock, affect1)
-	if !mock.HasStatusFlag(1 << 11) { // Poison flag
+	if !mock.HasStatusFlag(AFFPoison) {
 		t.Error("First poison affect should set poison flag")
 	}
 
-	// Apply second affect (should replace first)
 	am.ApplyAffect(mock, affect2)
 
-	// Check that only one poison affect exists
 	affects := am.GetAffects(mock)
 	poisonCount := 0
 	for _, aff := range affects {
-		if aff.Type == AffectPoison {
+		if aff.Flags&AFFPoison != 0 {
 			poisonCount++
 		}
 	}
-
 	if poisonCount != 1 {
 		t.Errorf("Expected 1 poison affect after stacking, got %d", poisonCount)
 	}
 }
 
-// TestStatusAffect tests status affect application and removal
+// TestStatusAffect tests status flag affect application and removal
 func TestStatusAffect(t *testing.T) {
 	am := NewAffectManager()
 	mock := NewMockAffectable("test", 1)
 	am.RegisterEntity(mock)
 
-	// Apply invisible affect
-	affect := NewAffect(AffectInvisible, 10, 0, "invisibility spell")
+	// Apply invisible affect via flag
+	affect := NewAffectDirect(0, ApplyNone, 10, 0, AFFInvisible, "invisibility spell")
 	am.ApplyAffect(mock, affect)
 
-	// Check that invisible flag is set
-	if !mock.HasStatusFlag(1 << 1) { // Invisible flag
+	if !mock.HasStatusFlag(AFFInvisible) {
 		t.Error("Invisible affect should set invisible flag")
 	}
 
-	// Remove affect
 	am.RemoveAffect(mock, affect.ID)
 
-	// Check that invisible flag is cleared
-	if mock.HasStatusFlag(1 << 1) {
+	if mock.HasStatusFlag(AFFInvisible) {
 		t.Error("Invisible flag should be cleared after affect removal")
 	}
 }
@@ -296,26 +274,20 @@ func TestPeriodicEffect(t *testing.T) {
 	mock := NewMockAffectable("test", 1)
 	am.RegisterEntity(mock)
 
-	// Apply poison affect
-	affect := NewAffect(AffectPoison, 3, 5, "poison")
+	affect := NewAffectDirect(0, ApplyNone, 3, 5, AFFPoison, "poison")
 	am.ApplyAffect(mock, affect)
 
 	initialHP := mock.GetHP()
 
-	// Process ticks (poison should damage each tick)
-	am.Tick() // Tick 1
-	am.Tick() // Tick 2
-	am.Tick() // Tick 3 (should expire)
+	am.Tick()
+	am.Tick()
+	am.Tick()
 
-	// Poison should have done damage each tick before expiration.
-	// applyPeriodicEffect runs BEFORE Tick(), so a Duration=3 affect
-	// deals damage on all 3 Tick() calls (tick 1, 2, 3, then expires).
-	expectedHP := initialHP - (5 * 3) // 3 ticks of poison damage at magnitude 5
+	expectedHP := initialHP - (5 * 3)
 	if mock.GetHP() != expectedHP {
 		t.Errorf("Expected HP %d after poison, got %d", expectedHP, mock.GetHP())
 	}
 
-	// Check that poison affect was removed after expiration
 	affects := am.GetAffects(mock)
 	if len(affects) != 0 {
 		t.Errorf("Expected no affects after expiration, got %d", len(affects))
@@ -328,22 +300,16 @@ func TestRegenerationAffect(t *testing.T) {
 	mock := NewMockAffectable("test", 1)
 	am.RegisterEntity(mock)
 
-	// Set HP to less than max
 	mock.SetHP(50)
 
-	// Apply regeneration affect
-	affect := NewAffect(AffectRegeneration, 3, 5, "regeneration")
+	affect := NewAffectDirect(0, ApplyNone, 3, 5, AFFRegeneration, "regeneration")
 	am.ApplyAffect(mock, affect)
 
-	// Process ticks (regeneration should heal each tick)
-	am.Tick() // Tick 1
-	am.Tick() // Tick 2
-	am.Tick() // Tick 3 (should expire)
+	am.Tick()
+	am.Tick()
+	am.Tick()
 
-	// Regeneration should have healed each tick before expiration.
-	// applyPeriodicEffect runs BEFORE Tick(), so a Duration=3 affect
-	// heals on all 3 Tick() calls (tick 1, 2, 3, then expires).
-	expectedHP := 50 + (5 * 3) // 3 ticks of regeneration at magnitude 5
+	expectedHP := 50 + (5 * 3)
 	if mock.GetHP() != expectedHP {
 		t.Errorf("Expected HP %d after regeneration, got %d", expectedHP, mock.GetHP())
 	}
@@ -354,24 +320,15 @@ func TestTickManager(t *testing.T) {
 	am := NewAffectManager()
 	tm := NewTickManager(am)
 
-	// Set a very short tick interval for testing
 	tm.SetTickInterval(10 * time.Millisecond)
-
-	// Start the tick manager
 	tm.Start()
-
-	// Give it time to process a few ticks
 	time.Sleep(50 * time.Millisecond)
 
-	// Tick manager should be running
 	if !tm.IsRunning() {
 		t.Error("Tick manager should report running while active")
 	}
 
-	// Stop the tick manager
 	tm.Stop()
-
-	// Manual tick should still work after stop
 	tm.ManualTick()
 
 	if tm.IsRunning() {
@@ -384,32 +341,141 @@ func TestAffectTickSystem(t *testing.T) {
 	ats := NewAffectTickSystem()
 	mock := NewMockAffectable("test", 1)
 
-	// Apply an affect
-	affect := NewAffect(AffectStrength, 5, 3, "test")
+	affect := NewAffect(42, ApplyStr, 5, 3, "test")
 	ats.ApplyAffect(mock, affect)
 
-	// Check that affect was applied
 	if mock.GetStrength() != 13 {
 		t.Errorf("Expected strength 13, got %d", mock.GetStrength())
 	}
 
-	// Get affects
 	affects := ats.GetAffects(mock)
 	if len(affects) != 1 {
 		t.Errorf("Expected 1 affect, got %d", len(affects))
 	}
 
-	// Check has affect
-	if !ats.HasAffect(mock, AffectStrength) {
+	if !ats.HasAffectBySpell(mock, 42) {
 		t.Error("Should have strength affect")
 	}
 
-	// Remove affect
 	ats.RemoveAffect(mock, affect.ID)
 	if mock.GetStrength() != 10 {
 		t.Errorf("Expected strength 10 after removal, got %d", mock.GetStrength())
 	}
 
-	// Manual tick
 	ats.ManualTick()
+}
+
+// TestHasAffectBySpell tests spell-based affect lookup
+func TestHasAffectBySpell(t *testing.T) {
+	am := NewAffectManager()
+	mock := NewMockAffectable("test", 1)
+	am.RegisterEntity(mock)
+
+	affect := NewAffect(42, ApplyStr, 10, 5, "test spell")
+	am.ApplyAffect(mock, affect)
+
+	if !am.HasAffectBySpell(mock, 42) {
+		t.Error("Should have affect from spell 42")
+	}
+	if am.HasAffectBySpell(mock, 99) {
+		t.Error("Should not have affect from spell 99")
+	}
+}
+
+// TestRemoveAffectsBySpell tests removing all affects from one spell
+func TestRemoveAffectsBySpell(t *testing.T) {
+	am := NewAffectManager()
+	mock := NewMockAffectable("test", 1)
+	am.RegisterEntity(mock)
+
+	// Bless creates two affects from spell 42
+	aff1 := NewAffect(42, ApplyStr, 10, 2, "bless str")
+	aff2 := NewAffect(42, ApplyHitroll, 10, 2, "bless hitroll")
+	am.ApplyAffect(mock, aff1)
+	am.ApplyAffect(mock, aff2)
+
+	if mock.GetStrength() != 12 {
+		t.Errorf("Expected strength 12, got %d", mock.GetStrength())
+	}
+	if mock.GetHitRoll() != 2 {
+		t.Errorf("Expected hitroll 2, got %d", mock.GetHitRoll())
+	}
+
+	removed := am.RemoveAffectsBySpell(mock, 42)
+	if removed != 2 {
+		t.Errorf("Expected 2 affects removed, got %d", removed)
+	}
+	if mock.GetStrength() != 10 {
+		t.Errorf("Expected strength 10 after removal, got %d", mock.GetStrength())
+	}
+	if mock.GetHitRoll() != 0 {
+		t.Errorf("Expected hitroll 0 after removal, got %d", mock.GetHitRoll())
+	}
+}
+
+// TestMultiAffectFromOneSpell tests multiple affects from a single spell
+func TestMultiAffectFromOneSpell(t *testing.T) {
+	am := NewAffectManager()
+	mock := NewMockAffectable("test", 1)
+	am.RegisterEntity(mock)
+
+	// Bless: +2 hitroll, +1 STR, + saving throw
+	aff1 := NewAffect(42, ApplyHitroll, 6, 2, "bless")
+	aff2 := NewAffect(42, ApplyStr, 6, 1, "bless")
+	aff3 := NewAffect(42, ApplySavingSpell, 6, -2, "bless")
+	am.ApplyAffect(mock, aff1)
+	am.ApplyAffect(mock, aff2)
+	am.ApplyAffect(mock, aff3)
+
+	if mock.GetHitRoll() != 2 {
+		t.Errorf("Expected hitroll 2, got %d", mock.GetHitRoll())
+	}
+	if mock.GetStrength() != 11 {
+		t.Errorf("Expected strength 11, got %d", mock.GetStrength())
+	}
+
+	// All 3 affects should exist
+	affects := am.GetAffects(mock)
+	if len(affects) != 3 {
+		t.Errorf("Expected 3 affects, got %d", len(affects))
+	}
+
+	// Remove all from spell 42 at once
+	removed := am.RemoveAffectsBySpell(mock, 42)
+	if removed != 3 {
+		t.Errorf("Expected 3 affects removed, got %d", removed)
+	}
+}
+
+// TestFlagReferenceCounting tests that removing one of multiple flag-setting affects
+// preserves the flag for the remaining affect
+func TestFlagReferenceCounting(t *testing.T) {
+	am := NewAffectManager()
+	mock := NewMockAffectable("test", 1)
+	am.RegisterEntity(mock)
+
+	// Two different spells both set AFFDetectInvisible
+	aff1 := NewAffectDirect(10, ApplyNone, 10, 0, AFFDetectInvisible, "detect invis 1")
+	aff1.StackID = "" // No dedup — both can exist
+	aff2 := NewAffectDirect(20, ApplyNone, 5, 0, AFFDetectInvisible, "detect invis 2")
+	aff2.StackID = ""
+
+	am.ApplyAffect(mock, aff1)
+	am.ApplyAffect(mock, aff2)
+
+	if !mock.HasStatusFlag(AFFDetectInvisible) {
+		t.Error("Should have detect invisible flag")
+	}
+
+	// Remove first — flag should remain (second still needs it)
+	am.RemoveAffect(mock, aff1.ID)
+	if !mock.HasStatusFlag(AFFDetectInvisible) {
+		t.Error("Flag should still be set after removing first affect")
+	}
+
+	// Remove second — flag should clear
+	am.RemoveAffect(mock, aff2.ID)
+	if mock.HasStatusFlag(AFFDetectInvisible) {
+		t.Error("Flag should be cleared after removing all affects")
+	}
 }

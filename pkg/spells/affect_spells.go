@@ -29,14 +29,14 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		if magSavingThrow(victim, savetype) {
 			dur = 1
 		}
-		aff = engine.NewAffect(engine.AffectStrength, dur, -1, "chill touch")
+		aff = engine.NewAffectDeprecated(engine.AffectStrength, dur, -1, "chill touch")
 	case SpellBless:
-		aff = engine.NewAffect(engine.AffectHitRoll, 6, 2, "bless")
+		aff = engine.NewAffectDeprecated(engine.AffectHitRoll, 6, 2, "bless")
 		applyAffect(victim, aff)
-		aff = engine.NewAffect(engine.AffectType(engine.ApplySavingSpell), 6, -2, "bless")
+		aff = engine.NewAffectDeprecated(engine.AffectType(engine.ApplySavingSpell), 6, -2, "bless")
 		applyAffect(victim, aff)
 	case SpellArmor:
-		aff = engine.NewAffect(engine.AffectArmorClass, 24, -15, "armor")
+		aff = engine.NewAffectDeprecated(engine.AffectArmorClass, 24, -15, "armor")
 	case SpellBlindness, SpellSmokescreen:
 		reag := 0
 		if isClassMage(ch) {
@@ -52,9 +52,9 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 			npcRetaliate(victim, ch)
 			return
 		}
-		aff = engine.NewAffect(engine.AffectHitRoll, 2, -(4+reag), "blindness")
+		aff = engine.NewAffectDeprecated(engine.AffectHitRoll, 2, -(4+reag), "blindness")
 		applyAffect(victim, aff)
-		aff = engine.NewAffect(engine.AffectBlind, 2+reag, 40, "blindness")
+		aff = engine.NewAffectDeprecated(engine.AffectBlind, 2+reag, 40, "blindness")
 		sendToVictim(victim, "You have been blinded!\r\n")
 	case SpellCurse:
 		if magSavingThrow(victim, savetype) {
@@ -63,19 +63,19 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 			return
 		}
 		curseDur := 1 + (getLevel(ch) >> 1)
-		aff = engine.NewAffect(engine.AffectCurse, curseDur, -(3), "curse")
+		aff = engine.NewAffectDeprecated(engine.AffectCurse, curseDur, -(3), "curse")
 		applyAffect(victim, aff)
-		aff = engine.NewAffect(engine.AffectDamageRoll, curseDur, -(3), "curse")
+		aff = engine.NewAffectDeprecated(engine.AffectDamageRoll, curseDur, -(3), "curse")
 	case SpellInvisible:
-		aff = engine.NewAffect(engine.AffectInvisible, 12+getLevel(ch)/4, 0, "invisibility")
+		aff = engine.NewAffectDeprecated(engine.AffectInvisible, 12+getLevel(ch)/4, 0, "invisibility")
 	case SpellSanctuary:
-		aff = engine.NewAffect(engine.AffectSanctuary, 4, 0, "sanctuary")
+		aff = engine.NewAffectDeprecated(engine.AffectSanctuary, 4, 0, "sanctuary")
 	case SpellSleep:
 		if magSavingThrow(victim, savetype) {
 			sendToVictim(victim, "You resist the spell!\r\n")
 			return
 		}
-		aff = engine.NewAffect(engine.AffectSleep, 4+getLevel(ch)/4, 0, "sleep")
+		aff = engine.NewAffectDeprecated(engine.AffectSleep, 4+getLevel(ch)/4, 0, "sleep")
 	case SpellPoison:
 		if magSavingThrow(victim, savetype) {
 			npcRetaliate(victim, ch)
@@ -85,75 +85,75 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		if dur < 1 {
 			dur = 1
 		}
-		aff = engine.NewAffect(engine.AffectPoison, dur, -2, "poison")
+		aff = engine.NewAffectDeprecated(engine.AffectPoison, dur, -2, "poison")
 	case SpellHaste:
-		aff = engine.NewAffect(engine.AffectHaste, level, 0, "haste")
+		aff = engine.NewAffectDeprecated(engine.AffectHaste, level, 0, "haste")
 	case SpellSlow:
-		aff = engine.NewAffect(engine.AffectSlow, level, 0, "slow")
+		aff = engine.NewAffectDeprecated(engine.AffectSlow, level, 0, "slow")
 	case SpellFly:
-		aff = engine.NewAffect(engine.AffectFlying, getLevel(ch), 0, "fly")
+		aff = engine.NewAffectDeprecated(engine.AffectFlying, getLevel(ch), 0, "fly")
 	case SpellDetectMagic:
-		aff = engine.NewAffect(engine.AffectDetectMagic, 12+level, 0, "detect magic")
+		aff = engine.NewAffectDeprecated(engine.AffectDetectMagic, 12+level, 0, "detect magic")
 	case SpellDetectInvis:
-		aff = engine.NewAffect(engine.AffectDetectInvisible, 12+level, 0, "detect invis")
+		aff = engine.NewAffectDeprecated(engine.AffectDetectInvisible, 12+level, 0, "detect invis")
 	case SpellInfravision:
-		aff = engine.NewAffect(engine.AffectInfrared, 12+level, 0, "infravision")
+		aff = engine.NewAffectDeprecated(engine.AffectInfrared, 12+level, 0, "infravision")
 	case SpellWaterBreathe:
-		aff = engine.NewAffect(engine.AffectWaterBreathing, getLevel(ch), 0, "water breathe")
+		aff = engine.NewAffectDeprecated(engine.AffectWaterBreathing, getLevel(ch), 0, "water breathe")
 	case SpellDetectAlign, SpellKnowAlign:
-		aff = engine.NewAffect(engine.AffectDetectAlign, 12+level, 0, "detect align")
+		aff = engine.NewAffectDeprecated(engine.AffectDetectAlign, 12+level, 0, "detect align")
 	case SpellDreamTravel:
-		aff = engine.NewAffect(engine.AffectDream, 6, 0, "dream travel")
+		aff = engine.NewAffectDeprecated(engine.AffectDream, 6, 0, "dream travel")
 	case SpellLevitate:
 		// Levitate uses same AffectType as Fly
-		aff = engine.NewAffect(engine.AffectFlying, getLevel(ch), 0, "levitate")
+		aff = engine.NewAffectDeprecated(engine.AffectFlying, getLevel(ch), 0, "levitate")
 	case SpellProtFromEvil:
 		if isEvil(victim) {
 			sendToCaster(ch, "You cannot protect yourself from the Evil inside you!\r\n")
 			return
 		}
 		// Set flag only — no stat modifier
-		_ = engine.NewAffect(engine.AffectProtectionEvil, 24, 0, "prot from evil")
-		applyAffect(victim, engine.NewAffect(engine.AffectProtectionEvil, 24, 0, "prot from evil"))
+		_ = engine.NewAffectDeprecated(engine.AffectProtectionEvil, 24, 0, "prot from evil")
+		applyAffect(victim, engine.NewAffectDeprecated(engine.AffectProtectionEvil, 24, 0, "prot from evil"))
 		return
 	case SpellProtFromGood:
 		if isGood(victim) {
 			sendToCaster(ch, "The forces of Light destroy you for your betrayal!\r\n")
 			return
 		}
-		applyAffect(victim, engine.NewAffect(engine.AffectProtectionGood, 24, 0, "prot from good"))
+		applyAffect(victim, engine.NewAffectDeprecated(engine.AffectProtectionGood, 24, 0, "prot from good"))
 		return
 	case SpellAdrenaline, SpellStrength:
 		mag := 1 + boolToInt(level > 18)
 		if ch == victim && spellNum == SpellAdrenaline {
 			mag++
 		}
-		aff = engine.NewAffect(engine.AffectStrength, (getLevel(ch)>>1)+4, mag, "strength")
+		aff = engine.NewAffectDeprecated(engine.AffectStrength, (getLevel(ch)>>1)+4, mag, "strength")
 	case SpellSenseLife:
-		aff = engine.NewAffect(engine.AffectSenseLife, getLevel(ch), 0, "sense life")
+		aff = engine.NewAffectDeprecated(engine.AffectSenseLife, getLevel(ch), 0, "sense life")
 	case SpellWaterwalk:
-		aff = engine.NewAffect(engine.AffectWaterwalk, 4+getLevel(ch)/5, 0, "waterwalk")
+		aff = engine.NewAffectDeprecated(engine.AffectWaterwalk, 4+getLevel(ch)/5, 0, "waterwalk")
 	case SpellChangeDensity:
-		aff = engine.NewAffect(engine.AffectWaterwalk, 4+getLevel(ch)/5, 0, "change density")
+		aff = engine.NewAffectDeprecated(engine.AffectWaterwalk, 4+getLevel(ch)/5, 0, "change density")
 	case SpellChameleon:
-		aff = engine.NewAffect(engine.AffectHide, getLevel(ch), 0, "chameleon")
+		aff = engine.NewAffectDeprecated(engine.AffectHide, getLevel(ch), 0, "chameleon")
 	case SpellMetalskin:
-		aff = engine.NewAffect(engine.AffectMetalskin, 5, -(15+getLevel(ch)/2), "metalskin")
+		aff = engine.NewAffectDeprecated(engine.AffectMetalskin, 5, -(15+getLevel(ch)/2), "metalskin")
 	case SpellInvulnerability:
-		applyAffect(victim, engine.NewAffect(engine.AffectInvuln, 7, -100, "invulnerability"))
-		aff = engine.NewAffect(engine.AffectType(engine.ApplySavingSpell), 7, -7, "invulnerability")
+		applyAffect(victim, engine.NewAffectDeprecated(engine.AffectInvuln, 7, -100, "invulnerability"))
+		aff = engine.NewAffectDeprecated(engine.AffectType(engine.ApplySavingSpell), 7, -7, "invulnerability")
 	case SpellPsyshield:
-		aff = engine.NewAffect(engine.AffectArmorClass, getLevel(ch)/2, -15, "psyshield")
+		aff = engine.NewAffectDeprecated(engine.AffectArmorClass, getLevel(ch)/2, -15, "psyshield")
 	case SpellGreatPercept:
-		applyAffect(victim, engine.NewAffect(engine.AffectDetectInvisible, level/2+4, 0, "great percept"))
-		aff = engine.NewAffect(engine.AffectSenseLife, level/2+4, 0, "great percept")
+		applyAffect(victim, engine.NewAffectDeprecated(engine.AffectDetectInvisible, level/2+4, 0, "great percept"))
+		aff = engine.NewAffectDeprecated(engine.AffectSenseLife, level/2+4, 0, "great percept")
 	case SpellLessPercept:
-		applyAffect(victim, engine.NewAffect(engine.AffectDetectAlign, level/2+4, 0, "lesser percept"))
-		aff = engine.NewAffect(engine.AffectInfrared, level/2+4, 0, "lesser percept")
+		applyAffect(victim, engine.NewAffectDeprecated(engine.AffectDetectAlign, level/2+4, 0, "lesser percept"))
+		aff = engine.NewAffectDeprecated(engine.AffectInfrared, level/2+4, 0, "lesser percept")
 	case SpellIntellect:
-		aff = engine.NewAffect(engine.AffectIntelligence, 8, 1, "intellect")
+		aff = engine.NewAffectDeprecated(engine.AffectIntelligence, 8, 1, "intellect")
 	case SpellMindBar:
-		aff = engine.NewAffect(engine.AffectMindBar, (level/2)-2, -18, "mind bar")
+		aff = engine.NewAffectDeprecated(engine.AffectMindBar, (level/2)-2, -18, "mind bar")
 	default:
 		return
 	}

@@ -767,7 +767,7 @@ func (m *MobInstance) AddAffect(aff *engine.Affect) {
 	if m.CustomData == nil {
 		m.CustomData = make(map[string]interface{})
 	}
-	key := fmt.Sprintf("affect_%d", aff.Type)
+	key := fmt.Sprintf("affect_%d", aff.SpellID)
 	m.CustomData[key] = aff
 }
 

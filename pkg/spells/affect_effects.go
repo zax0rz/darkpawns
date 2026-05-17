@@ -5,7 +5,7 @@ import (
 )
 
 // spellAffectMap maps non-damage spell IDs to their corresponding affect types.
-var spellAffectMap = map[int]engine.AffectType{
+var spellAffectMap = map[int]int{
 	SpellBlindness: engine.AffectBlind,
 	SpellCurse:     engine.AffectCurse,
 	SpellPoison:    engine.AffectPoison,
@@ -53,7 +53,7 @@ func ApplySpellAffects(target engine.Affectable, spellID int, casterLevel int, a
 		source = "unknown spell"
 	}
 
-	affect := engine.NewAffect(affectType, duration, magnitude, source)
+	affect := engine.NewAffectDeprecated(affectType, duration, magnitude, source)
 	am.ApplyAffect(target, affect)
 
 	return nil

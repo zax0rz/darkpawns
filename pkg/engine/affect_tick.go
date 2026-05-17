@@ -179,9 +179,14 @@ func (ats *AffectTickSystem) GetAffects(entity Affectable) []*Affect {
 	return ats.AffectManager.GetAffects(entity)
 }
 
-// HasAffect is a convenience method to check for an affect type
-func (ats *AffectTickSystem) HasAffect(entity Affectable, affectType AffectType) bool {
-	return ats.AffectManager.HasAffect(entity, affectType)
+// HasAffectBySpell checks for an affect from a specific spell
+func (ats *AffectTickSystem) HasAffectBySpell(entity Affectable, spellID int) bool {
+	return ats.AffectManager.HasAffectBySpell(entity, spellID)
+}
+
+// HasAffectByFlag checks for an affect with a specific status flag
+func (ats *AffectTickSystem) HasAffectByFlag(entity Affectable, flag uint64) bool {
+	return ats.AffectManager.HasAffectByFlag(entity, flag)
 }
 
 // RemoveAllAffects is a convenience method to remove all affects

@@ -240,7 +240,7 @@ func (p *Player) RemoveAffectBySpell(spellNum int) {
 	defer p.mu.Unlock()
 	filtered := p.ActiveAffects[:0]
 	for _, aff := range p.ActiveAffects {
-		if aff.Type != engine.AffectType(spellNum) {
+		if aff.SpellID != spellNum {
 			filtered = append(filtered, aff)
 		}
 	}

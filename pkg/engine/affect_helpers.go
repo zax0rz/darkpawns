@@ -1,34 +1,11 @@
 package engine
 
-// Apply constants matching CircleMUD APPLY_* from structs.h
-const (
-	ApplyNone         = 0  // APPLY_NONE
-	ApplyStr          = 1  // APPLY_STR
-	ApplyDex          = 2  // APPLY_DEX
-	ApplyInt          = 3  // APPLY_INT
-	ApplyWis          = 4  // APPLY_WIS
-	ApplyCon          = 5  // APPLY_CON
-	ApplyCha          = 7  // APPLY_CHA
-	ApplyLevel        = 8  // APPLY_LEVEL
-	ApplyAge          = 9  // APPLY_AGE
-	ApplyMana         = 10 // APPLY_MANA
-	ApplyHit          = 11 // APPLY_HIT
-	ApplyMove         = 12 // APPLY_MOVE
-	ApplyAC           = 17 // APPLY_AC
-	ApplyHitroll      = 18 // APPLY_HITROLL
-	ApplyDamroll      = 19 // APPLY_DAMROLL
-	ApplySavingPara   = 20 // APPLY_SAVING_PARA
-	ApplySavingRod    = 21 // APPLY_SAVING_ROD
-	ApplySavingPetri  = 22 // APPLY_SAVING_PETRI
-	ApplySavingBreath = 23 // APPLY_SAVING_BREATH
-	ApplySavingSpell  = 24 // APPLY_SAVING_SPELL
-	ApplySpell        = 26 // APPLY_SPELL
-
-	AFArrayMax = 2 // 64 bits = 2 x 32 bit words
-)
+// --- Old helper functions ---
+// These are retained temporarily for backward compatibility during migration.
+// They will be removed or rewritten in Phase 2.
 
 // MasterAffect represents a master_affected_type from CircleMUD (handler.c).
-// It holds a spell/effect affect with full metadata for iteration and removal.
+// DEPRECATED: Use Affect directly. Retained for migration compatibility.
 type MasterAffect struct {
 	Type      int    // Spell/skill type (SPELL_XXX or SKILL_XXX)
 	Duration  int    // Duration in ticks
@@ -46,6 +23,7 @@ const (
 )
 
 // StatModifiable is the interface characters must implement for affect support.
+// DEPRECATED: Use Affectable instead. Retained for migration compatibility.
 type StatModifiable interface {
 	GetStat(name string) int
 	SetStat(name string, val int)
@@ -87,75 +65,52 @@ type EquipAffectProvider interface {
 type ApplyFunction func(ch interface{}, loc int, mod int, msg string)
 
 // DefaultApplyModify implements aff_apply_modify from handler.c (lines 136-276).
+// DEPRECATED: Use applyLocationToStat table in affect.go instead.
 func DefaultApplyModify(ch interface{}, loc int, mod int, msg string) {
-	switch loc {
-	case ApplyNone:
-		return
-	case ApplyStr:
-		setStat(ch, "STR", mod)
-	case ApplyDex:
-		setStat(ch, "DEX", mod)
-	case ApplyInt:
-		setStat(ch, "INT", mod)
-	case ApplyWis:
-		setStat(ch, "WIS", mod)
-	case ApplyCon:
-		setStat(ch, "CON", mod)
-	case ApplyCha:
-		setStat(ch, "CHA", mod)
-	case ApplyMana:
-		addMaxStat(ch, "Mana", mod)
-	case ApplyHit:
-		addMaxStat(ch, "HP", mod)
-	case ApplyMove:
-		addMaxStat(ch, "Move", mod)
-	case ApplyAC:
-		addStat(ch, "AC", -mod)
-	case ApplyHitroll:
-		addStat(ch, "Hitroll", mod)
-	case ApplyDamroll:
-		addStat(ch, "Damroll", mod)
-	case ApplySavingPara:
-		addSavingThrow(ch, 0, mod)
-	case ApplySavingRod:
-		addSavingThrow(ch, 1, mod)
-	case ApplySavingPetri:
-		addSavingThrow(ch, 2, mod)
-	case ApplySavingBreath:
-		addSavingThrow(ch, 3, mod)
-	case ApplySavingSpell:
-		addSavingThrow(ch, 4, mod)
-	}
-}
-
-func setStat(ch interface{}, name string, mod int) {
 	if sm, ok := ch.(StatModifiable); ok {
-		cur := sm.GetStat(name)
-		sm.SetStat(name, cur+mod)
-	}
-}
-
-func addMaxStat(ch interface{}, name string, mod int) {
-	if sm, ok := ch.(StatModifiable); ok {
-		cur := sm.GetMaxStat(name)
-		sm.SetMaxStat(name, cur+mod)
-	}
-}
-
-func addStat(ch interface{}, name string, mod int) {
-	if sm, ok := ch.(StatModifiable); ok {
-		sm.AddStat(name, mod)
-	}
-}
-
-func addSavingThrow(ch interface{}, idx int, mod int) {
-	if sm, ok := ch.(StatModifiable); ok {
-		cur := sm.GetSavingThrow(idx)
-		sm.SetSavingThrow(idx, cur+mod)
+		switch loc {
+		case ApplyNone:
+			return
+		case ApplyStr:
+			sm.SetStat("STR", sm.GetStat("STR")+mod)
+		case ApplyDex:
+			sm.SetStat("DEX", sm.GetStat("DEX")+mod)
+		case ApplyInt:
+			sm.SetStat("INT", sm.GetStat("INT")+mod)
+		case ApplyWis:
+			sm.SetStat("WIS", sm.GetStat("WIS")+mod)
+		case ApplyCon:
+			sm.SetStat("CON", sm.GetStat("CON")+mod)
+		case ApplyCha:
+			sm.SetStat("CHA", sm.GetStat("CHA")+mod)
+		case ApplyMana:
+			sm.SetMaxStat("Mana", sm.GetMaxStat("Mana")+mod)
+		case ApplyHit:
+			sm.SetMaxStat("HP", sm.GetMaxStat("HP")+mod)
+		case ApplyMove:
+			sm.SetMaxStat("Move", sm.GetMaxStat("Move")+mod)
+		case ApplyAC:
+			sm.SetStat("AC", sm.GetStat("AC")-mod)
+		case ApplyHitroll:
+			sm.SetStat("Hitroll", sm.GetStat("Hitroll")+mod)
+		case ApplyDamroll:
+			sm.SetStat("Damroll", sm.GetStat("Damroll")+mod)
+		case ApplySavingPara:
+			sm.SetSavingThrow(0, sm.GetSavingThrow(0)+mod)
+		case ApplySavingRod:
+			sm.SetSavingThrow(1, sm.GetSavingThrow(1)+mod)
+		case ApplySavingPetri:
+			sm.SetSavingThrow(2, sm.GetSavingThrow(2)+mod)
+		case ApplySavingBreath:
+			sm.SetSavingThrow(3, sm.GetSavingThrow(3)+mod)
+		case ApplySavingSpell:
+			sm.SetSavingThrow(4, sm.GetSavingThrow(4)+mod)
+		}
 	}
 }
 
 // AffModify implements affect_modify from handler.c line 280.
+// DEPRECATED: Use AffectManager.applyAffectImmediate instead.
 func AffModify(ch interface{}, loc int, mod int, bitv uint64, add bool, applyFn ApplyFunction) {
 	if applyFn == nil {
 		applyFn = DefaultApplyModify
@@ -174,8 +129,7 @@ func AffModify(ch interface{}, loc int, mod int, bitv uint64, add bool, applyFn 
 }
 
 // AffectModifyAR implements affect_modify_ar from handler.c line 294.
-// For item affects with array-based bitvectors. Since Go has uint64, we treat
-// bitv as the raw bitvector value.
+// DEPRECATED: Use AffectManager.applyAffectImmediate instead.
 func AffectModifyAR(ch interface{}, loc int, mod int, bitv uint64, add bool, applyFn ApplyFunction) {
 	if applyFn == nil {
 		applyFn = DefaultApplyModify
@@ -194,7 +148,7 @@ func AffectModifyAR(ch interface{}, loc int, mod int, bitv uint64, add bool, app
 }
 
 // AffectTotal implements affect_total from handler.c lines 314-373.
-// Recalculates all affects for a character by removing and re-applying.
+// DEPRECATED: Use AffectManager.RecalculateStats instead.
 func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 	if applyFn == nil {
 		applyFn = DefaultApplyModify
@@ -204,27 +158,13 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 		return
 	}
 
-	// Phase 1: Remove all affect modifiers from equipment
-	// Phase 2: Remove all affect modifiers from master affects
-	// Phase 3: Remove tattoo effects
-	// Phase 4: Reset abils to base real_abils
-	// Phase 5: Re-apply all in reverse order
-	// Phase 6: Clamp values
-
-	// For now, the simplified model is: iterate all affects, strip, reapply.
-	// The Player struct will need to implement these methods.
-
-	// Actually modify the ch's actual fields by calling DefaultApplyModify
-	// in the right order (remove eq, remove affects, reapply eq, reapply affects)
 	masterAffects := sm.GetMasterAffects()
 
-	// Check for equipment affects
 	var equipAffects []EquipAffectData
 	if ep, ok := ch.(EquipAffectProvider); ok {
 		equipAffects = ep.GetEquipAffects()
 	}
 
-	// Remove pass — equipment first, then master affects
 	for _, ea := range equipAffects {
 		AffectModifyAR(ch, ea.Location, ea.Modifier, ea.Bitvector, false, applyFn)
 	}
@@ -232,7 +172,6 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 		AffModify(ch, af.Location, af.Modifier, af.Bitvector, false, applyFn)
 	}
 
-	// Re-apply pass — equipment first, then master affects
 	for _, ea := range equipAffects {
 		AffectModifyAR(ch, ea.Location, ea.Modifier, ea.Bitvector, true, applyFn)
 	}
@@ -240,7 +179,6 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 		AffModify(ch, af.Location, af.Modifier, af.Bitvector, true, applyFn)
 	}
 
-	// Clamping pass — ensure all values are within valid ranges
 	isNPC := false
 	if npc, ok := ch.(interface{ IsNPC() bool }); ok {
 		isNPC = npc.IsNPC()
@@ -250,7 +188,6 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 		maxStat = 25
 	}
 
-	// DEX, INT, WIS, CON: clamp 0..maxStat
 	for _, s := range []string{"DEX", "INT", "WIS", "CON"} {
 		v := sm.GetStat(s)
 		if v < 0 {
@@ -260,7 +197,6 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 		}
 	}
 
-	// STR: minimum 0; convert excess over 18 to StrAdd for PCs
 	str := sm.GetStat("STR")
 	if str < 0 {
 		sm.SetStat("STR", 0)
@@ -276,7 +212,6 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 		sm.SetStat("STR", maxStat)
 	}
 
-	// Alignment: clamp -1000..1000
 	align := sm.GetStat("Alignment")
 	if align < -1000 {
 		sm.SetStat("Alignment", -1000)
@@ -286,7 +221,7 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 }
 
 // MasterAffectToChar implements master_affect_to_char from handler.c lines 377-396.
-// Creates a new MasterAffect from an Affect and appends it to the character's list.
+// DEPRECATED: Use AffectManager.ApplyAffect directly.
 func MasterAffectToChar(ch interface{}, af *Affect, byType int, objNum int) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -294,9 +229,9 @@ func MasterAffectToChar(ch interface{}, af *Affect, byType int, objNum int) {
 	}
 
 	masterAf := &MasterAffect{
-		Type:      int(af.Type),
+		Type:      int(af.SpellID),
 		Duration:  af.Duration,
-		Location:  applyLocFromAffectType(af.Type),
+		Location:  af.Location,
 		Modifier:  af.Magnitude,
 		Bitvector: af.Flags,
 		ByType:    byType,
@@ -309,13 +244,13 @@ func MasterAffectToChar(ch interface{}, af *Affect, byType int, objNum int) {
 }
 
 // AffectToChar implements affect_to_char from handler.c line 400.
-// Wrapper — passes BY_SPELL, obj_num=0.
+// DEPRECATED: Use AffectManager.ApplyAffect directly.
 func AffectToChar(ch interface{}, af *Affect) {
 	MasterAffectToChar(ch, af, BySpell, 0)
 }
 
 // AffectToChar2 implements affect_to_char2 from handler.c lines 405-427.
-// Copies a MasterAffect to the character's list with BY_SPELL origin.
+// DEPRECATED: Use AffectManager.ApplyAffect directly.
 func AffectToChar2(ch interface{}, af *MasterAffect) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -337,6 +272,7 @@ func AffectToChar2(ch interface{}, af *MasterAffect) {
 }
 
 // AffectRemove implements affect_remove from handler.c lines 428-438.
+// DEPRECATED: Use AffectManager.RemoveAffect directly.
 func AffectRemove(ch interface{}, af *MasterAffect) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -348,7 +284,7 @@ func AffectRemove(ch interface{}, af *MasterAffect) {
 }
 
 // AffectFromChar implements affect_from_char from handler.c lines 443-452.
-// Removes all affects of the given type from the character.
+// DEPRECATED: Use AffectManager.RemoveAffectsBySpell directly.
 func AffectFromChar(ch interface{}, spellType int) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -363,6 +299,7 @@ func AffectFromChar(ch interface{}, spellType int) {
 }
 
 // AffectedBySpell implements affected_by_spell from handler.c lines 460-469.
+// DEPRECATED: Use AffectManager.HasAffectBySpell directly.
 func AffectedBySpell(ch interface{}, spellType int) bool {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -377,6 +314,7 @@ func AffectedBySpell(ch interface{}, spellType int) bool {
 }
 
 // AffectJoin implements affect_join from handler.c lines 473-499.
+// DEPRECATED: Use AffectManager directly.
 func AffectJoin(ch interface{}, af *MasterAffect, addDur, avgDur, addMod, avgMod bool) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -388,7 +326,7 @@ func AffectJoin(ch interface{}, af *MasterAffect, addDur, avgDur, addMod, avgMod
 				af.Duration += existing.Duration
 			}
 			if avgDur {
-				af.Duration >>= 1 // divide by 2
+				af.Duration >>= 1
 			}
 			if addMod {
 				af.Modifier += existing.Modifier
@@ -401,53 +339,5 @@ func AffectJoin(ch interface{}, af *MasterAffect, addDur, avgDur, addMod, avgMod
 			return
 		}
 	}
-	// No existing affect found — just add
 	AffectToChar2(ch, af)
-}
-
-// applyLocFromAffectType maps engine.AffectType to APPLY_* constants.
-func applyLocFromAffectType(affType AffectType) int {
-	switch affType {
-	case AffectStrength:
-		return ApplyStr
-	case AffectDexterity:
-		return ApplyDex
-	case AffectIntelligence:
-		return ApplyInt
-	case AffectWisdom:
-		return ApplyWis
-	case AffectConstitution:
-		return ApplyCon
-	case AffectCharisma:
-		return ApplyCha
-	case AffectHitRoll:
-		return ApplyHitroll
-	case AffectDamageRoll:
-		return ApplyDamroll
-	case AffectArmorClass:
-		return ApplyAC
-	case AffectHP, AffectMaxHP:
-		return ApplyHit
-	case AffectMana, AffectMaxMana:
-		return ApplyMana
-	case AffectMovement:
-		return ApplyMove
-	default:
-		return ApplyNone
-	}
-}
-
-// SetBitVector sets a bit in a bitmask (for uint64 wraparound).
-func SetBitVector(bv *uint64, bit uint) {
-	*bv |= 1 << bit
-}
-
-// RemoveBitVector clears a bit in a bitmask.
-func RemoveBitVector(bv *uint64, bit uint) {
-	*bv &^= 1 << bit
-}
-
-// IsSetBitVector checks if a bit is set in a bitmask.
-func IsSetBitVector(bv uint64, bit uint) bool {
-	return bv&(1<<bit) != 0
 }

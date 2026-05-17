@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // --------------------------------------------------------------------------
@@ -250,9 +251,9 @@ func removeCharmAffect(ch *Player) {
 		}
 	}
 
-	// Also try by Type if it maps to charm.
+	// Also try by flag if it's a charm affect.
 	for i, aff := range ch.ActiveAffects {
-		if int(aff.Type) == 7 {
+		if aff.Flags&engine.AFFCharm != 0 {
 			ch.ActiveAffects = append(ch.ActiveAffects[:i], ch.ActiveAffects[i+1:]...)
 			return
 		}

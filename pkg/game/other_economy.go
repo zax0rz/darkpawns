@@ -139,7 +139,8 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			}
 			// Apply charm affect (duration 20)
 			mob.AddAffect(&engine.Affect{
-				Type:      engine.AffectType(spells.SpellCharm),
+				SpellID:   spells.SpellCharm,
+				Type:      spells.SpellCharm, // backward compat
 				Duration:  20,
 				Magnitude: 0,
 				Flags:     1 << 3, // AFF_CHARM

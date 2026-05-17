@@ -61,10 +61,10 @@ func (w *World) AffectUpdate() {
 				remaining = append(remaining, af)
 			} else {
 				// Duration expired — remove and print wear-off
-				if msg := SpellWearOffMsg(int(af.Type)); msg != "" {
+				if msg := SpellWearOffMsg(af.SpellID); msg != "" {
 					p.SendMessage(msg + "\r\n")
 				}
-				engine.AffectFromChar(p, int(af.Type))
+				engine.AffectFromChar(p, af.SpellID)
 			}
 		}
 
