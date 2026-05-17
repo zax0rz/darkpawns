@@ -45,6 +45,11 @@ type CombatEngine struct {
 	// Source: mobact.c — mobs use scripts during combat
 	ScriptFightFunc func(mobName string, targetName string, roomVNum int)
 
+	// ScriptDeathFunc fires the "death" trigger on a mob when it dies.
+	// Set by the game layer. Called with (victimName, killerName, roomVNum).
+	// Source: fight.c — raw_kill() calls Lua death trigger.
+	ScriptDeathFunc func(victimName string, killerName string, roomVNum int)
+
 	// DamageFunc is called after damage is applied to a combatant each round.
 	// Set by the session manager to propagate health changes to agent sessions.
 	// victimName is the name of the character who took damage.
@@ -382,6 +387,11 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 		ce.BroadcastFunc(roomVNum,
 			fmt.Sprintf("%s has been killed by %s!", victimName, killerName),
 			"")
+	}
+
+	// Fire death script trigger on victim mob (before DeathFunc removes it)
+	if ce.ScriptDeathFunc != nil && victim.IsNPC() {
+		ce.ScriptDeathFunc(victimName, killerName, roomVNum)
 	}
 
 	// Delegate to game layer for corpse creation + respawn

@@ -587,6 +587,51 @@ func (w *World) FireMobFightScript(mobName string, targetName string, roomVNum i
 	}
 }
 
+// FireMobDeathScript fires the "death" trigger on a mob when it dies.
+// Called by the combat engine's ScriptDeathFunc after death.
+// Source: fight.c — raw_kill() calls Lua death trigger.
+func (w *World) FireMobDeathScript(victimName string, killerName string, roomVNum int) {
+	if ScriptEngine == nil {
+		return
+	}
+
+	// Find the dying mob by name in the room
+	w.mu.RLock()
+	var mob *MobInstance
+	for _, m := range w.activeMobs {
+		if m.GetRoom() == roomVNum && m.GetName() == victimName && m.HasScript("death") {
+			mob = m
+			break
+		}
+	}
+	// Find the killer player
+	var killer scripting.ScriptablePlayer
+	for _, p := range w.players {
+		if p.GetName() == killerName {
+			killer = p
+			break
+		}
+	}
+	w.mu.RUnlock()
+
+	if mob == nil {
+		return
+	}
+
+	ctx := mob.CreateScriptContext(nil, nil, "")
+	if killer != nil {
+		if p, ok := killer.(*Player); ok {
+			ctx.Ch = p
+		}
+	}
+	ctx.World = NewWorldScriptableAdapter(w)
+	ctx.RoomVNum = roomVNum
+
+	if _, err := mob.RunScript("death", ctx); err != nil {
+		slog.Warn("death script error", "mob_vnum", mob.GetVNum(), "mob_name", mob.GetName(), "error", err)
+	}
+}
+
 // dispatchScriptEvent dispatches a Lua trigger when a scheduled event fires.
 // This is the callback registered with EventQueue.Create() for script events.
 // Based on the original lua_create_event() in scripts.c lines 247-316.

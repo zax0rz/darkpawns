@@ -121,6 +121,7 @@ func main() {
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
 	manager.SetDreamingDir("data/dreaming")           // Dreaming layer output (memory summaries)
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
+	manager.SetScriptDeathFunc()                     // Enable mob death scripts on kill
 	manager.SetOnRoundEnd()                          // Decrement wait states each combat round
 	manager.SetCommandExecFunc()                     // Wire doOrder command dispatch for charmed followers
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat

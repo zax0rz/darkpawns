@@ -288,6 +288,14 @@ func (m *Manager) SetScriptFightFunc() {
 	}
 }
 
+// SetScriptDeathFunc wires the death trigger into the combat engine.
+// When a mob dies, if it has a death script, it fires.
+func (m *Manager) SetScriptDeathFunc() {
+	m.combatEngine.ScriptDeathFunc = func(victimName string, killerName string, roomVNum int) {
+		m.world.FireMobDeathScript(victimName, killerName, roomVNum)
+	}
+}
+
 // OnRoundEnd decrements all player wait states each combat round.
 // Set after combat engine initialization.
 func (m *Manager) SetOnRoundEnd() {
