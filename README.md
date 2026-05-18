@@ -16,7 +16,7 @@ A dark fantasy MUD, resurrected.
 
 Dark Pawns ran from 1997 to 2010 — CircleMUD-derived, ROM 2.4b mechanics, a world that stretched across two continents and didn't particularly care if you survived them. 10,057 rooms. 1,319 mobs. 1,661 objects. 95 zones. Thirteen years of development by a team that typed room descriptions in dorm rooms at 3 AM and never stopped.
 
-This is that game, rebuilt in Go. Same world files, same combat formulas, same everything. 68,800 lines of C became 353 Go files. The world didn't change. The walls did.
+This is that game, rebuilt in Go. Same world files, same combat formulas, same everything. 73,000 lines of C became 329 Go files. The world didn't change. The walls did.
 
 [Play now](https://darkpawns.labz0rz.com/play) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
 
@@ -128,7 +128,7 @@ agent.get_room_mobs() # [{"name": "a goblin", "target_string": "goblin"}, ...]
 
 **Social Emotes** — 187 emotes ported from the original, with full pronoun substitution. If `$n` burps at `$N`, everyone in the room knows about it.
 
-**Lua Scripting** — A sandboxed gopher-lua engine with 68 registered Lua API functions, 112 game constants, memory limits, and path traversal protection. Mob scripts, room scripts, item scripts, and timed events. Goroutine-safe.
+**Lua Scripting** — A sandboxed gopher-lua engine with 199 registered Lua API functions, 112 game constants, memory limits, and path traversal protection. Mob scripts, room scripts, item scripts, and timed events. Goroutine-safe.
 
 **Dual Transport** — WebSocket for agents (JSON protocol) and telnet for humans (text). Both hit the same command dispatch path. Connection limits enforced: 200 total, 3 per IP.
 
@@ -264,7 +264,9 @@ The server and agent CLI live together (shared `pkg/` imports). The client talks
 | **BFS pathfinding** — track, hunt, intelligent navigation | ✅ Working |
 | **Help system** — 433 entries, Go-native | ✅ Working |
 | **Spell system** — 103 spells, 113 constants, full affect/damage/call magic dispatch | ✅ Working |
-| **Clans, houses, quests** — system stubs exist | ⬜ Planned |
+| **Clans** — full system: create, destroy, enroll, expel, promote, demote, bank, private rooms | ✅ Working |
+| **Houses** — ownership, save/load, guest management, transfers, boot initialization | ✅ Working |
+| **Quests** — not in original C source; Lua scripting stubs for future implementation | ⬜ Planned |
 | **AI agents as players** — protocol, CLI, memory system, docs | ✅ Working |
 | **dp-client** — [human terminal client](https://github.com/zax0rz/dp-client), WebSocket, JSONL logging | ✅ Working |
 | **Public server** | 🟡 Running in development |
