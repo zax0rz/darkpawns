@@ -1,0 +1,731 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_3f9f6b1800",
+  "title": "Go package game",
+  "summary": "Go package pkg/game with 134 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/game/act.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/game/act.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/act_comm.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/act_comm_bridge.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/act_display.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/act_informative.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/act_item_stubs.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/act_movement.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/act_other_bridge.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/act_social.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/affect_update.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/ai.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/aliases.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/bans.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/boards.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/char_mgmt.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/character.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/clan_admin.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/clan_bank.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/clan_command.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/clan_economy.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/clan_info.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/clan_membership.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/clan_settings.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/clans.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/class_tables.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/combat_advanced.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/combat_basic.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/combat_control.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/combat_helpers.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/combat_melee.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/combat_ranged.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/comm_channel.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/comm_say.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/comm_tell.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/constants.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/damage_stubs.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/death.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/deferred_fight_fns.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/dreams.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/equipment.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/errors.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/follow.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/gates.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/graph.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/help.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/house_boot.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/house_control.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/house_player.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/house_rent.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/house_save.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/houses.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/info_commands.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/inventory.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/item_consumable.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/item_container.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/item_door.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/item_equipment.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/item_helpers.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/item_transfer.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/level.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/limits.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/limits_condition.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/limits_exp.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/limits_gain.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/limits_misc.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/liquids.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/location.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/locks.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/logging.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/look.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/mail.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/mapcode.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/memory_hooks.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/merge_bridge.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/mob.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/mob_flags.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/mob_flags_bits.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/mobact.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/mobprogs.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/modify.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/movement.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/object.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/objsave.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/other_character.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/other_economy.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/other_helpers.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/other_mount.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/other_session.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/other_settings.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/other_status.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/other_stealth.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/other_utility.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/party.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/player.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/player_affects.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/player_combat.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/player_flags.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/player_identity.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/player_social.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/player_stats.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/remort_helpers.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/room_flags.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/runtime_state.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/save.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/scripts.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/serialize.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/shop.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/show.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/skill_advanced.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/skill_c10_combat.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/skill_combat.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/skill_special.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/skill_stealth.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/skills.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/skills2.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/snapshot.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/socials.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/spawner.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/spec_assign.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/spec_procs.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/spec_procs2.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/spec_procs3.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/spec_procs4.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/time_utils.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/weather.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/whod.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/world.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/world_movement.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/world_object.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/world_player.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/world_scriptable.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/world_write.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/world_zone.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/game/zone_dispatcher.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/game/combat_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/game/command_exec_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/game/death_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/game/message_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/game/movement_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/game/object_movement_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/game/save_world_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/game/tattoo_constants_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/combat/combatant.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/combat/engine.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/combat/fight_core.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/combat/formulas.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/combat/skill_messages.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/parser/mob.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    },
+    {
+      "path": "pkg/parser/obj.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    },
+    {
+      "path": "pkg/parser/parser.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    },
+    {
+      "path": "pkg/parser/wld.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    },
+    {
+      "path": "pkg/parser/zon.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    },
+    {
+      "path": "pkg/engine/affect.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/engine"
+    },
+    {
+      "path": "pkg/engine/affect_helpers.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/engine"
+    },
+    {
+      "path": "pkg/engine/affect_manager.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/engine"
+    },
+    {
+      "path": "pkg/engine/affect_tick.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/engine"
+    },
+    {
+      "path": "pkg/engine/gameloop.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/engine"
+    },
+    {
+      "path": "pkg/engine/logging.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/engine"
+    },
+    {
+      "path": "pkg/engine/skill.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/engine"
+    },
+    {
+      "path": "pkg/engine/skill_manager.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/engine"
+    },
+    {
+      "path": "pkg/events/bus.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/events"
+    },
+    {
+      "path": "pkg/events/queue.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/events"
+    },
+    {
+      "path": "pkg/events/types.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/events"
+    },
+    {
+      "path": "pkg/scripting/engine.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/scripting"
+    },
+    {
+      "path": "pkg/scripting/types.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/scripting"
+    },
+    {
+      "path": "pkg/spells/affect_effects.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/spells"
+    }
+  ],
+  "tests": [
+    {
+      "path": "pkg/game/combat_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/game/command_exec_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/game/death_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/game/message_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/game/movement_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/game/object_movement_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/game/save_world_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/game/tattoo_constants_test.go",
+      "command": "go test ./..."
+    }
+  ],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

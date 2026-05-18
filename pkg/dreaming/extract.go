@@ -104,18 +104,18 @@ func fleeValence(hpPct int) int {
 // A betrayal is deeply negative. Cooperation is mildly positive.
 func socialValence(socialType, sayLine string) int {
 	low := strings.ToLower(socialType)
-	switch {
-	case low == "betrayal" || low == "backstab" || low == "attack_ally":
+	switch low {
+	case "betrayal", "backstab", "attack_ally":
 		return -3
-	case low == "gift" || low == "give":
+	case "gift", "give":
 		return 2
-	case low == "cooperation" || low == "assist" || low == "heal_ally":
+	case "cooperation", "assist", "heal_ally":
 		return 1
-	case low == "insult" || low == "threaten":
+	case "insult", "threaten":
 		return -2
-	case low == "greet" || low == "introduce":
+	case "greet", "introduce":
 		return 1
-	case low == "trade" || low == "exchange":
+	case "trade", "exchange":
 		return 1
 	default:
 		// Heuristic: positive words in speech → mild positive

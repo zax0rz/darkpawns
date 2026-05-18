@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_service_97f60e84e1",
+  "title": "Go package db",
+  "summary": "Go package pkg/db with 3 source file(s).",
+  "kind": "service",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/db/convert.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/db/convert.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/db/narrative_memory.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/db/player.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/game/act.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_comm.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_comm_bridge.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_display.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_informative.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_item_stubs.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_movement.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_other_bridge.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_social.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/affect_update.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/ai.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/aliases.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/bans.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/boards.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/char_mgmt.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/character.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_admin.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_bank.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_command.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_economy.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_info.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_membership.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_settings.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clans.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    }
+  ],
+  "tests": [],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [
+    "filesystem",
+    "database"
+  ],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_947e43f691",
+  "title": "Go package optimization",
+  "summary": "Go package pkg/optimization with 9 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/optimization/advanced_pool.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/optimization/advanced_pool.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/optimization/cache.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/optimization/database.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/optimization/errors.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/optimization/object_pool.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/optimization/pool.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/optimization/python_ai.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/optimization/room_cache.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/optimization/websocket.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [],
+  "tests": [],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

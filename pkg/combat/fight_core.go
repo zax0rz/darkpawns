@@ -1098,13 +1098,14 @@ func MakeHit(ch, victim Combatant, attackType int) {
 		}
 
 		// Backstab / Circle / Disembowel multipliers — from C fight.c hit()
-		if attackType == SKILL_BACKSTAB {
+		switch attackType {
+		case SKILL_BACKSTAB:
 			dam = int(float64(dam) * backstabMult(ch.GetLevel()))
-		} else if attackType == SKILL_CIRCLE {
+		case SKILL_CIRCLE:
 			dam = int(float64(dam) * backstabMult(ch.GetLevel()) / 3.0)
-		} else if attackType == SKILL_DISEMBOWEL {
+		case SKILL_DISEMBOWEL:
 			dam = ch.GetLevel()*2 + ch.GetDamroll()
-		} else {
+		default:
 			dam = getMinusDam(dam, victim.GetAC())
 		}
 

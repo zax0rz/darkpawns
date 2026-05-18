@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_eca2ab4884",
+  "title": "Go package agent",
+  "summary": "Go package pkg/agent with 1 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/agent/memory_hooks.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/agent/memory_hooks.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/db/convert.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/db"
+    },
+    {
+      "path": "pkg/db/narrative_memory.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/db"
+    },
+    {
+      "path": "pkg/db/player.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/db"
+    },
+    {
+      "path": "pkg/game/act.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_comm.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_comm_bridge.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_display.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_informative.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_item_stubs.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_movement.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_other_bridge.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_social.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/affect_update.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/ai.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/aliases.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/bans.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/boards.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/char_mgmt.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/character.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_admin.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_bank.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_command.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_economy.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_info.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    }
+  ],
+  "tests": [],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

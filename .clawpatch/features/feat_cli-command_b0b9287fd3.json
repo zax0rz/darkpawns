@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_cli-command_b0b9287fd3",
+  "title": "Go command dp-agent",
+  "summary": "Go command package cmd/dp-agent with 1 source file(s).",
+  "kind": "cli-command",
+  "source": "go-cmd",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "cmd/dp-agent/main.go",
+      "symbol": "main",
+      "route": null,
+      "command": "dp-agent"
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "cmd/dp-agent/main.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/agentcli/client.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/agentcli"
+    },
+    {
+      "path": "pkg/agentcli/config.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/agentcli"
+    },
+    {
+      "path": "pkg/agentcli/fsm.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/agentcli"
+    },
+    {
+      "path": "pkg/agentcli/llm.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/agentcli"
+    },
+    {
+      "path": "pkg/agentcli/prompt.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/agentcli"
+    },
+    {
+      "path": "pkg/agentcli/session.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/agentcli"
+    },
+    {
+      "path": "pkg/agentcli/ws.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/agentcli"
+    },
+    {
+      "path": "pkg/dreaming/dream.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/dreaming"
+    },
+    {
+      "path": "pkg/dreaming/extract.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/dreaming"
+    },
+    {
+      "path": "pkg/dreaming/graph.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/dreaming"
+    }
+  ],
+  "tests": [],
+  "tags": [
+    "go",
+    "cli"
+  ],
+  "trustBoundaries": [
+    "user-input",
+    "filesystem",
+    "process-exec",
+    "network"
+  ],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

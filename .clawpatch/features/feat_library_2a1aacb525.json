@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_2a1aacb525",
+  "title": "Go package common",
+  "summary": "Go package pkg/common with 3 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/common/command_interfaces.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/common/command_interfaces.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/common/common.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/common/shop.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [],
+  "tests": [],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

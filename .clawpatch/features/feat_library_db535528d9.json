@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_db535528d9",
+  "title": "Go package secrets",
+  "summary": "Go package pkg/secrets with 1 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/secrets/manager.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/secrets/manager.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [],
+  "tests": [],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

@@ -762,13 +762,22 @@ func (m *MobInstance) SetName(name string) {
 func (m *MobInstance) AddAffect(aff *engine.Affect) {
 	// Mobs use affect flags (bitmask) rather than a list.
 	// Map AffectType to the corresponding AFF_* bit and set it.
-	// For now, store in CustomData for tracking; the affect tick system
+	// Store in CustomData for tracking; the affect tick system
 	// will handle duration-based removal.
 	if m.CustomData == nil {
 		m.CustomData = make(map[string]interface{})
 	}
 	key := fmt.Sprintf("affect_%d", aff.SpellID)
 	m.CustomData[key] = aff
+
+	// Set AFF_* bitmask bits from the affect's Flags field.
+	if aff.Flags != 0 {
+		for bit := 0; bit < 64; bit++ {
+			if aff.Flags&(1<<uint(bit)) != 0 {
+				m.SetAffected(bit)
+			}
+		}
+	}
 }
 
 // RemoveAffectBySpell removes affects matching the given spell number from the mob.
@@ -777,5 +786,12 @@ func (m *MobInstance) RemoveAffectBySpell(spellNum int) {
 		return
 	}
 	key := fmt.Sprintf("affect_%d", spellNum)
+	if aff, ok := m.CustomData[key].(*engine.Affect); ok && aff.Flags != 0 {
+		for bit := 0; bit < 64; bit++ {
+			if aff.Flags&(1<<uint(bit)) != 0 {
+				m.RemoveAffected(bit)
+			}
+		}
+	}
 	delete(m.CustomData, key)
 }

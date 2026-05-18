@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_838a722058",
+  "title": "Go package admin",
+  "summary": "Go package pkg/admin with 5 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/admin/agent_store.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/admin/agent_store.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/admin/handlers.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/admin/log_buffer.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/admin/login.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/admin/router.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/admin/agent_store_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/admin/handlers_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/admin/log_buffer_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/admin/world_write_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/audit/logger.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/audit"
+    },
+    {
+      "path": "pkg/auth/jwt.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/auth"
+    },
+    {
+      "path": "pkg/auth/ratelimit.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/auth"
+    },
+    {
+      "path": "pkg/game/act.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_comm.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_comm_bridge.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_display.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_informative.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_item_stubs.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_movement.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_other_bridge.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_social.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/affect_update.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/ai.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/aliases.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/bans.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/boards.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/char_mgmt.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/character.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_admin.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_bank.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_command.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_economy.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_info.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    }
+  ],
+  "tests": [
+    {
+      "path": "pkg/admin/agent_store_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/admin/handlers_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/admin/log_buffer_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/admin/world_write_test.go",
+      "command": "go test ./..."
+    }
+  ],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

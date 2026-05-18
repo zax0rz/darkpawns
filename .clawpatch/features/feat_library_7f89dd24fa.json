@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_7f89dd24fa",
+  "title": "Go package privacy",
+  "summary": "Go package pkg/privacy with 6 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/privacy/client.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/privacy/client.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/privacy/config.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/privacy/integration_example.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/privacy/logger.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/privacy/middleware.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/privacy/slog_handler.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/privacy/client_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/privacy/client.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/privacy"
+    },
+    {
+      "path": "pkg/privacy/config.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/privacy"
+    },
+    {
+      "path": "pkg/privacy/integration_example.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/privacy"
+    },
+    {
+      "path": "pkg/privacy/logger.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/privacy"
+    },
+    {
+      "path": "pkg/privacy/middleware.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/privacy"
+    },
+    {
+      "path": "pkg/privacy/slog_handler.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/privacy"
+    },
+    {
+      "path": "pkg/session/act_comm.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/act_informative.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/act_offensive.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/act_social.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/affects_informative.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/agent.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/agent_vars.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/autoloot.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cast_cmds.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/char_creation.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_account.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_combat_basic.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_combat_special.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_group.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_info.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_inventory.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_look.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_misc.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    }
+  ],
+  "tests": [
+    {
+      "path": "pkg/privacy/client_test.go",
+      "command": "go test ./..."
+    }
+  ],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

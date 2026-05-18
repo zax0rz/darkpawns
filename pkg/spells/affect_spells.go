@@ -2023,6 +2023,7 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 
 // castHellfire ports src/spells.c spell_hellfire (lines 701-767).
 // AoE fire damage. DEX check can knock targets to sitting.
+// Uses fixed dice (12d5) matching C source, not level-scaled dice.
 // C bug: iterates character_list instead of room people (inefficient but functionally same).
 func castHellfire(level int, ch, world interface{}) {
 	w, ok := world.(worldAoe)
@@ -2044,7 +2045,7 @@ func castHellfire(level int, ch, world interface{}) {
 		return
 	}
 
-	dam := dice(level/5+1, 12) + (2*level) - 10
+	dam := dice(12, 5) + (2*level) - 10
 	if dam < 1 {
 		dam = 1
 	}

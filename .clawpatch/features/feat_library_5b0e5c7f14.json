@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_5b0e5c7f14",
+  "title": "Go package examples",
+  "summary": "Go package examples with 2 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "examples/metrics_integration.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "examples/metrics_integration.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "examples/optimization_integration.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/metrics/metrics.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/metrics"
+    },
+    {
+      "path": "pkg/optimization/advanced_pool.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/optimization"
+    },
+    {
+      "path": "pkg/optimization/cache.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/optimization"
+    },
+    {
+      "path": "pkg/optimization/database.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/optimization"
+    },
+    {
+      "path": "pkg/optimization/errors.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/optimization"
+    },
+    {
+      "path": "pkg/optimization/object_pool.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/optimization"
+    },
+    {
+      "path": "pkg/optimization/pool.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/optimization"
+    },
+    {
+      "path": "pkg/optimization/python_ai.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/optimization"
+    },
+    {
+      "path": "pkg/optimization/room_cache.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/optimization"
+    },
+    {
+      "path": "pkg/optimization/websocket.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/optimization"
+    }
+  ],
+  "tests": [],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

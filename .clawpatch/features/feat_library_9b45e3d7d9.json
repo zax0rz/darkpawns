@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_9b45e3d7d9",
+  "title": "Go package telnet",
+  "summary": "Go package pkg/telnet with 1 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/telnet/listener.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/telnet/listener.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/session/act_comm.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/act_informative.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/act_offensive.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/act_social.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/affects_informative.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/agent.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/agent_vars.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/autoloot.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cast_cmds.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/char_creation.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_account.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_combat_basic.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_combat_special.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_group.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_info.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_inventory.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_look.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_misc.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_movement.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/cmd_social.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/combat_cmds.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/comm_cmds.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/commands.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    },
+    {
+      "path": "pkg/session/consider.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/session"
+    }
+  ],
+  "tests": [],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

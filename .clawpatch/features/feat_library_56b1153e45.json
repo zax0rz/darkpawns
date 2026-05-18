@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_56b1153e45",
+  "title": "Go package events",
+  "summary": "Go package pkg/events with 3 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/events/bus.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/events/bus.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/events/queue.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/events/types.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/events/lua_integration_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/events/queue_test.go",
+      "reason": "go package test"
+    }
+  ],
+  "tests": [
+    {
+      "path": "pkg/events/lua_integration_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/events/queue_test.go",
+      "command": "go test ./..."
+    }
+  ],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

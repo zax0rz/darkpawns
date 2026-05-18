@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_config_3d18bcf3a8",
+  "title": "Project config go.mod",
+  "summary": "Build, release, or quality configuration in go.mod.",
+  "kind": "config",
+  "source": "shared-infra-heuristic",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "go.mod",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "go.mod",
+      "reason": "entrypoint"
+    }
+  ],
+  "contextFiles": [],
+  "tests": [],
+  "tags": [
+    "config"
+  ],
+  "trustBoundaries": [
+    "process-exec",
+    "filesystem"
+  ],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

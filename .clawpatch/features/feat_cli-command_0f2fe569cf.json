@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_cli-command_0f2fe569cf",
+  "title": "Go command test-race",
+  "summary": "Go command package cmd/test-race with 1 source file(s).",
+  "kind": "cli-command",
+  "source": "go-cmd",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "cmd/test-race/main.go",
+      "symbol": "main",
+      "route": null,
+      "command": "test-race"
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "cmd/test-race/main.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/game/act.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_comm.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_comm_bridge.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_display.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_informative.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_item_stubs.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_movement.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_other_bridge.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/act_social.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/affect_update.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/ai.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/aliases.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/bans.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/boards.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/char_mgmt.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/character.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_admin.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_bank.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_command.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_economy.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_info.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_membership.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clan_settings.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    },
+    {
+      "path": "pkg/game/clans.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/game"
+    }
+  ],
+  "tests": [],
+  "tags": [
+    "go",
+    "cli"
+  ],
+  "trustBoundaries": [
+    "user-input",
+    "filesystem",
+    "process-exec",
+    "network"
+  ],
+  "status": "reviewed",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [
+    {
+      "runId": "20260518T025427-127b51",
+      "kind": "review",
+      "summary": "0 finding(s)",
+      "provider": "mock",
+      "model": null,
+      "createdAt": "2026-05-18T02:54:27.629Z"
+    }
+  ],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:54:27.629Z"
+}

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_cli-command_335060a9b0",
+  "title": "Go package agentcli",
+  "summary": "Go package pkg/agentcli with 7 source file(s).",
+  "kind": "cli-command",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/agentcli/client.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/agentcli/client.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/agentcli/config.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/agentcli/fsm.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/agentcli/llm.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/agentcli/prompt.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/agentcli/session.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/agentcli/ws.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [],
+  "tests": [],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [
+    "user-input",
+    "process-exec"
+  ],
+  "status": "reviewed",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [
+    {
+      "runId": "20260518T025427-127b51",
+      "kind": "review",
+      "summary": "0 finding(s)",
+      "provider": "mock",
+      "model": null,
+      "createdAt": "2026-05-18T02:54:27.625Z"
+    }
+  ],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:54:27.626Z"
+}

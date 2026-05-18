@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_test-suite_cad32450a6",
+  "title": "Python test suite web",
+  "summary": "Python pytest files in web.",
+  "kind": "test-suite",
+  "source": "python-test-suite",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "web",
+      "symbol": "web",
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "web/test_onboarding.py",
+      "reason": "pytest file"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "web/test_onboarding.py",
+      "reason": "nearby test"
+    }
+  ],
+  "tests": [
+    {
+      "path": "web/test_onboarding.py",
+      "command": "pytest"
+    }
+  ],
+  "tags": [
+    "python",
+    "test"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

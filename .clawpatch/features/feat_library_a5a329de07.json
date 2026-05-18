@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_a5a329de07",
+  "title": "Go package combat",
+  "summary": "Go package pkg/combat with 5 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/combat/combatant.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/combat/combatant.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/combat/engine.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/combat/fight_core.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/combat/formulas.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/combat/skill_messages.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/combat/fight_core_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/combat/formulas_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/combat/skill_messages_test.go",
+      "reason": "go package test"
+    }
+  ],
+  "tests": [
+    {
+      "path": "pkg/combat/fight_core_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/combat/formulas_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/combat/skill_messages_test.go",
+      "command": "go test ./..."
+    }
+  ],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}

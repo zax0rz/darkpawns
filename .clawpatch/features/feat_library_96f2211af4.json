@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "featureId": "feat_library_96f2211af4",
+  "title": "Go package scripting",
+  "summary": "Go package pkg/scripting with 2 source file(s).",
+  "kind": "library",
+  "source": "go-package",
+  "confidence": "medium",
+  "entrypoints": [
+    {
+      "path": "pkg/scripting/engine.go",
+      "symbol": null,
+      "route": null,
+      "command": null
+    }
+  ],
+  "ownedFiles": [
+    {
+      "path": "pkg/scripting/engine.go",
+      "reason": "go package source"
+    },
+    {
+      "path": "pkg/scripting/types.go",
+      "reason": "go package source"
+    }
+  ],
+  "contextFiles": [
+    {
+      "path": "pkg/scripting/integration_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/scripting/integration_test_batchd_test.go",
+      "reason": "go package test"
+    },
+    {
+      "path": "pkg/combat/combatant.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/combat/engine.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/combat/fight_core.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/combat/formulas.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/combat/skill_messages.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/combat"
+    },
+    {
+      "path": "pkg/parser/mob.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    },
+    {
+      "path": "pkg/parser/obj.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    },
+    {
+      "path": "pkg/parser/parser.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    },
+    {
+      "path": "pkg/parser/wld.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    },
+    {
+      "path": "pkg/parser/zon.go",
+      "reason": "imported package github.com/zax0rz/darkpawns/pkg/parser"
+    }
+  ],
+  "tests": [
+    {
+      "path": "pkg/scripting/integration_test.go",
+      "command": "go test ./..."
+    },
+    {
+      "path": "pkg/scripting/integration_test_batchd_test.go",
+      "command": "go test ./..."
+    }
+  ],
+  "tags": [
+    "go",
+    "package"
+  ],
+  "trustBoundaries": [],
+  "status": "pending",
+  "lock": null,
+  "findingIds": [],
+  "patchAttemptIds": [],
+  "analysisHistory": [],
+  "createdAt": "2026-05-18T02:53:46.923Z",
+  "updatedAt": "2026-05-18T02:53:46.923Z"
+}
