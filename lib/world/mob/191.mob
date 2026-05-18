@@ -245,6 +245,7 @@ very unnerving.
 8 8 0
 BareHandAttack: 6
 Race: 9
+Script: cabinguard.lua
 E
 #19115
 first dread mate~
@@ -310,6 +311,7 @@ can only be described as humanoid in apperance.
 50 10500
 8 8 0
 Race: 9
+Script: cabinguard.lua
 E
 #19119
 bitter, wind~

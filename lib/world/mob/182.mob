@@ -127,6 +127,7 @@ this town.
 34 -14 -24 34d5+2746 22d4+22
 10000 270000
 8 8 2
+Script: clerk.lua
 E
 #18211
 attack guard~
@@ -383,5 +384,6 @@ He obviously works for the home office.
 0 270000
 8 8 1
 Race: 0
+Script: clerk.lua
 E
 $

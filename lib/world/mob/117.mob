@@ -10,6 +10,7 @@ Almost transparent, the golem stomps around mindlessly.
 2 350
 8 8 0
 Race: 25
+Script: golem_miner.lua
 E
 #11701
 flame crystal~
@@ -23,6 +24,7 @@ It looks to be a burning soul encased in crystal.
 5 600
 8 8 0
 Race: 25
+Script: crystal_forger.lua
 E
 #11702
 keeper flame man~
@@ -38,6 +40,7 @@ You gather that his job is the upkeep of the eternal flames.
 25 900
 8 8 1
 Race: 0
+Script: golem_miner.lua
 E
 #11703
 bat black~

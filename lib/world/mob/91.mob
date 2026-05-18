@@ -155,6 +155,7 @@ Looking at this bear, you wonder where he got his fish.
 1 1500
 8 8 1
 Race: 22
+Script: bearcub.lua
 E
 #9112
 bear grizzly female carve_meat~
@@ -653,6 +654,7 @@ is pinkish. The creature's eyes are a glistening black.
 8 8 0
 BareHandAttack: 4
 Race: 21
+Script: anhkheg.lua
 E
 #9147
 golden gorger aurumvorax animal~
@@ -672,6 +674,7 @@ teeth.
 8 8 0
 BareHandAttack: 8
 Race: 22
+Script: aurumvorax.lua
 E
 #9148
 centaur leader~

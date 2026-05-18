@@ -296,6 +296,7 @@ and kills it's victims with its poison, and then eats them.
 0 4500
 8 8 0
 BareHandAttack: 4
+Script: strike.lua
 E
 #15119
 jhereg~

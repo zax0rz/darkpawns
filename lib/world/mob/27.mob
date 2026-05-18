@@ -431,6 +431,7 @@ looks quite young.
 0 3500
 8 8 0
 Race: 22
+Script: griffin.lua
 E
 #2747
 cityguard guard~
@@ -445,6 +446,7 @@ he takes his job very seriously.
 33 30000
 8 8 1
 Race: 0
+Script: cityguard.lua
 E
 #2748
 Cecil sheriff high~
@@ -474,6 +476,7 @@ apparently having a wonderful time.
 63 9000
 8 8 1
 Race: 0
+Script: citizen.lua
 E
 #2750
 citizen female~
@@ -487,6 +490,7 @@ A citizen of Amber is strolling along here.
 68 9000
 8 8 2
 Race: 0
+Script: citizen.lua
 E
 #2751
 child~
@@ -719,6 +723,7 @@ She has dark-brown, curly hair and a cheerful disposition.
 100 55000
 8 8 2
 Race: 0
+Script: clerk.lua
 E
 #2768
 Megan armorer shopkeeper~

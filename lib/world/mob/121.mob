@@ -399,6 +399,7 @@ doorway.
 5 25000
 8 8 1
 Race: 6
+Script: troll.lua
 E
 #12127
 cutpurse shady character~
@@ -458,6 +459,7 @@ doing anything wrong... this guy could hurt you.
 100 50000
 8 8 1
 Race: 6
+Script: troll.lua
 E
 #12131
 drunk drunken floosy girl~

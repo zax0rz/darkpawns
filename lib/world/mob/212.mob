@@ -11,6 +11,7 @@ wears the navy and grey uniform of a sergeant. He looks brave and trustworthy.
 45 16000
 8 8 1
 Race: 0
+Script: cityguard.lua
 E
 #21201
 cityguard guard~
@@ -25,6 +26,7 @@ sergeant. She has short, dark hair. She looks brave and trustworthy.
 45 16000
 8 8 2
 Race: 0
+Script: cityguard.lua
 E
 #21202
 guard captain kharzed~
@@ -669,6 +671,7 @@ with blonde, seeming to glitter in the meager light.
 25 -5 -15 25d5+299 16d4+16
 0 0
 8 8 2
+Script: pet_store.lua
 E
 #21246
 shadow mage shadowmage~

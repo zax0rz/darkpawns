@@ -210,6 +210,7 @@ and you notice that she is surrounded by a blue shimmering aura.
 108 180000
 8 8 2
 Race: 0
+Script: baker_flour.lua
 E
 #8016
 sorcerer guildguard~
@@ -411,6 +412,7 @@ has for him and his position.
 90 90000
 8 8 1
 Race: 0
+Script: aversin.lua
 E
 #8060
 cityguard guard guard_ns~
@@ -454,6 +456,7 @@ guards.
 10 100
 8 8 1
 Race: 0
+Script: citizen.lua
 E
 #8063
 warg hybrid fido dog carve_meat~
@@ -469,6 +472,7 @@ has a foul smell and pieces of rotten meat hanging around his teeth.
 8 8 1
 BareHandAttack: 4
 Race: 22
+Script: warg.lua
 E
 #8066
 petitioner~
@@ -497,6 +501,7 @@ he's in town to help with the building of new shops and such.
 6 100
 8 8 1
 Race: 0
+Script: carpenter.lua
 E
 #8068
 town crier~
@@ -526,6 +531,7 @@ from the book of the Cross.
 10 100
 8 8 1
 Race: 0
+Script: zealot.lua
 E
 #8070
 street urchin~
@@ -554,6 +560,7 @@ a twinge of pity. Almost.
 3 100
 8 8 1
 Race: 0
+Script: beggar.lua
 E
 #8072
 drunk~
@@ -711,6 +718,7 @@ He's fat, ugly, and willing to take a bribe.
 20 55000
 6 6 1
 Race: 0
+Script: take_jail.lua
 E
 #8089
 guard~
@@ -758,6 +766,7 @@ break up -- or finish -- a bar fight.
 8 8 1
 Race: 0
 Noise: You hear the clinking of bottles from the pub to the east.
+Script: tyr.lua
 E
 #8095
 mortician undertaker~

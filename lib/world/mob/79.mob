@@ -59,6 +59,7 @@ feel mesmerized.
 50 120000
 8 8 1
 Race: 8
+Script: dracula.lua
 E
 #7904
 War man~
@@ -289,6 +290,7 @@ destroying you in this world.
 8 8 0
 BareHandAttack: 10
 Race: 11
+Script: head_shrinker.lua
 E
 #7969
 black cloaked wanderer mysterious man~
