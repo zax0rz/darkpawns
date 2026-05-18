@@ -776,3 +776,35 @@ Deferred items (need Architect decision): HIGH-006 (handlePlayerDeath lock order
 **[TRIAGE] 2026-05-18 — Morning Triage**
 
 Reek deep dive: `pkg/combat/`. 2 LOW findings, both confirmed. Style-only (QF1003, QF1002). No behavioral issues. Commit diff sentinel clean — 2 commits reviewed, no regressions. Quiet night. Cumulative: 218 confirmed, 15 rejected, 4.8% FPR.
+
+---
+
+## [SESSION] 2026-05-18 — Board Sweep + Lua Deployment
+
+**Context:** The Architect said "wanna REALLY clear the board?" and bumped Daeron from MiMo Lite to Standard (2.4B token budget).
+
+### Board Clearing
+Swept all 10 remaining Reek Findings from Backlog:
+- 4 code fixes: DP-185 (mob affect bitmask), DP-186 (hellfire dice), DP-187/188 (code style)
+- 4 cleanups: DP-168 (dead pkg/ai), DP-171 (unused clamps), DP-179 (spellStackKey unicode), DP-180 (debug prints)
+- 1 false positive: DP-169 (cache goroutine — Close() already existed)
+- 4 dependency advisories acknowledged
+- **Result: 0 bugs in Todo, In Progress, or Backlog. First time in project history.**
+
+### Lua Script Deployment (DP-165)
+- 115 scripts archived in `test_scripts/mob/archive/` — ported from C but never deployed
+- Engine complete (199 API functions), but only 10 generic scripts deployed, 28 mobs wired
+- Deployed 28 scripts to zone-specific directories, wired 41 mobs across 20 zones
+- Key deployments: aurumvorax (eats gold), bear cub (follows mama), beholder (anti-magic), baker chain, dracula, medusa, griffin, golem behaviors
+- Remaining: ~30 generic templates, ~10 scripts with no vnum refs
+
+### README Corrected
+- Clans and Houses: fully implemented (1,400 lines Go), not stubs
+- Quests: not in original C source, Lua stubs for future
+- Updated all stale numbers (C lines, Go files, Lua API count)
+
+### Paper-Relevant Notes
+- The "clearing the board" arc is a good narrative for the AIIDE paper: agents finding, triaging, and resolving issues across a 30-year codebase
+- Lua deployment shows the pipeline: archive → analysis → matching → deployment → verification
+- The 2.4B token budget enables sustained multi-session work without context fragmentation
+- Model upgrade (Lite → Standard) improved code analysis quality for the script matching task
