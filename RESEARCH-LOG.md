@@ -808,3 +808,30 @@ Swept all 10 remaining Reek Findings from Backlog:
 - Lua deployment shows the pipeline: archive → analysis → matching → deployment → verification
 - The 2.4B token budget enables sustained multi-session work without context fragmentation
 - Model upgrade (Lite → Standard) improved code analysis quality for the script matching task
+
+## 2026-05-18 [RESEARCH] — Lua Script Review + Port Fidelity Audit
+
+### Lua Script Review
+
+**Method:** Opus subagent with pre-digested archive context (179 scripts, 36 with mob attachments).
+
+**Key findings:**
+- "Active" vs "archived" is file location, not status. 82 of 165 "archived" scripts are actively wired.
+- 4 fidelity bugs: mobs running wrong scripts (paladin→rescuer, enchanter→minion, sorcery→golem_from_crate, enchanter→guardian)
+- All 4 fixed. 2 unwired "active" scripts deployed (gatekeeper, dog).
+- Final: 148 scripts deployed, 315 mobs wired (23%)
+
+**Paper-relevant:** Script fidelity drift is a real problem in MUD preservation. Automated verification (DP-189) would catch this. The archive comments saying "Attached to mob X" are the ground truth — cross-referencing against .mob Script: lines is the verification method.
+
+### Port Fidelity Audit
+
+**Method:** SVN text-base vs current file comparison.
+
+**Results:** 100% fidelity on mobs, objects, shops. 97.9% zones, 99.2% rooms. Missing content is from unfinished zones in the original C codebase, not port drift.
+
+**Paper-relevant:** This is strong evidence for Go as a preservation language — the port preserved 100% of completed content. The 76 missing rooms were abandoned mid-creation in the original, not lost in translation.
+
+### Infrastructure
+
+domain-expansion (.125) decommissioned. frankendell (.15) is the new bare Debian server. Migration issues created (LAB-39 through LAB-44). Blocked on SSH access.
+

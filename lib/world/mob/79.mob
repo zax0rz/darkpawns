@@ -148,6 +148,7 @@ you've ever seen.
 120 60000
 8 8 1
 Race: 1
+Script: rescuer.lua
 E
 #7910
 killer hunter nightbreed~
@@ -241,6 +242,8 @@ of him.
 100 120000
 8 8 1
 Race: 0
+Script: rescuer.lua
+Script: paladin.lua
 E
 #7916
 barnstad dwarf old ancient~
@@ -274,6 +277,7 @@ his gaze out towards the horizon.
 8 8 1
 BareHandAttack: 10
 Race: 0
+Script: dragon_forger.lua
 E
 #7920
 pyros daemon lord~
@@ -352,6 +356,7 @@ much experience.
 0 16000
 8 8 1
 Race: 3
+Script: thief.lua
 E
 #7980
 xena princess warrior~

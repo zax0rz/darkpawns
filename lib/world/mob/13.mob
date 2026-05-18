@@ -223,6 +223,7 @@ even willing to sacrifice his own life.
 30 22500
 8 8 1
 Race: 27
+Script: minion.lua
 E
 #1314
 guardian spirit~
@@ -240,7 +241,7 @@ it may return to its etherial slumber.
 BareHandAttack: 12
 Race: 25
 Noise: A soothing chant floats softly through the chamber.
-Script: enchanter.lua
+Script: guardian.lua
 E
 #1315
 galeru master elements rainbow snake~

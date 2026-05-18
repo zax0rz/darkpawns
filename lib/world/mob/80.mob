@@ -92,6 +92,7 @@ rather attractive in a hairy kinda way.
 45955 270000
 8 8 2
 Race: 0
+Script: banker.lua
 E
 #8008
 Telf baker~
@@ -108,6 +109,7 @@ has had to put his hands.
 100000 270000
 8 8 1
 Race: 0
+Script: baker_dough.lua
 E
 #8009
 Emmet~
@@ -181,6 +183,7 @@ the appearance of a beggar.
 1001 180000
 8 8 2
 Race: 0
+Script: thief.lua
 E
 #8014
 Le Tal cleric guildmaster master~
@@ -195,6 +198,7 @@ a peaceful, loving look.  You notice that he is surrounded by a white aura.
 117 180000
 8 8 1
 Race: 0
+Script: cleric.lua
 E
 #8015
 Eldrich guildmaster mage master~
@@ -226,6 +230,7 @@ well as defensive spells make him a deadly opponent.
 147 0
 8 8 1
 Race: 0
+Script: magic_user.lua
 E
 #8017
 knight templar guild guard~
@@ -260,6 +265,7 @@ studying you closely, even though he appears not to be at all.
 181 0
 8 8 1
 Race: 0
+Script: merchant_inn.lua
 E
 #8019
 warrior guildguard~
@@ -307,6 +313,7 @@ long-distance travel.
 8 8 0
 BareHandAttack: 9
 Race: 12
+Script: mount.lua
 E
 #8022
 stable stablehand~
@@ -322,6 +329,7 @@ stench about him that definitely reflects his commitment to the job.
 1 180000
 8 8 1
 Race: 0
+Script: stable.lua
 E
 #8023
 hooker whore prostitute elf~
@@ -338,6 +346,7 @@ circus performer.
 2 100
 8 8 2
 Race: 1
+Script: elven_prostitute.lua
 E
 #8024
 psionist guildmaster muntara~
@@ -395,6 +404,7 @@ or gate duty.
 0 16000
 8 8 1
 Race: 0
+Script: cityguard.lua
 E
 #8059
 Aversin captain guard~
@@ -441,6 +451,7 @@ than spend a day in the stockades.
 3 100
 8 8 1
 Race: 3
+Script: janitor.lua
 E
 #8062
 citizen~
@@ -487,6 +498,7 @@ nose, babbling on about signing this form to outlaw weapons in the city.
 4 100
 8 8 1
 Race: 0
+Script: petitioner.lua
 E
 #8067
 carpenter~
@@ -516,6 +528,7 @@ for him.
 10 100
 8 8 1
 Race: 0
+Script: towncrier.lua
 E
 #8069
 zealot~
@@ -574,6 +587,7 @@ He looks like he had a few too many bottles of ale for breakfast this morning.
 5 100
 8 8 1
 Race: 0
+Script: singingdrunk.lua
 E
 #8074
 wandering minstrel~
@@ -588,6 +602,7 @@ perfect ballad.
 10 100
 8 8 1
 Race: 1
+Script: minstrel.lua
 E
 #8076
 harga~
@@ -632,6 +647,7 @@ God have mercy on us all, please kill it!
 8 8 1
 BareHandAttack: 13
 Race: 0
+Script: mime.lua
 E
 #8080
 acolyte priestess~
@@ -691,6 +707,7 @@ it, it returns to normal.
 5000 0
 6 6 1
 Race: 0
+Script: tattoo.lua
 E
 #8087
 identifier Ferrenx~
@@ -705,6 +722,7 @@ and bushy eyebrows.
 1 0
 8 8 1
 Race: 0
+Script: identifier.lua
 E
 #8088
 guard jail jailguard~

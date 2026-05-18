@@ -311,6 +311,7 @@ Satyr's have the torso, head, and arms of a man, and the hind legs of a goat.
 1 6000
 8 8 1
 Race: 28
+Script: tyr.lua
 E
 #9123
 skunk giant~
@@ -542,6 +543,7 @@ An ancient druid. He is the most beautiful man you've ever seen.
 1 25000
 8 8 1
 Race: 0
+Script: caerroil.lua
 E
 #9139
 brownie~
@@ -570,6 +572,7 @@ and head of a human being, and the lower body of a large, powerful horse.
 1 4500
 8 8 1
 Race: 4
+Script: mount.lua
 E
 #9141
 spider large~

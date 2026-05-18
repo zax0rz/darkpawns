@@ -29,6 +29,7 @@ The snake is about one foot in length, and looks pretty harmless.
 8 8 0
 BareHandAttack: 4
 Race: 13
+Script: snake.lua
 E
 #14003
 mob unfinished~
@@ -57,6 +58,7 @@ The snake looks like its been in combat before...and won.
 8 8 0
 BareHandAttack: 1
 Race: 13
+Script: snake.lua
 E
 #14005
 female hill giant tall dumb~
@@ -99,6 +101,7 @@ The troll has green scaly skin and is about seven feet tall.
 8 8 0
 BareHandAttack: 8
 Race: 6
+Script: troll.lua
 E
 #14008
 mountain lion~

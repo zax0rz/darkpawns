@@ -199,6 +199,7 @@ the treaties will last.
 6 6 1
 BareHandAttack: 8
 Race: 6
+Script: troll.lua
 E
 #14312
 troll warrior~
@@ -215,6 +216,7 @@ bring upon him.
 0 6000
 8 8 1
 Race: 6
+Script: troll.lua
 E
 #14313
 giant rat~

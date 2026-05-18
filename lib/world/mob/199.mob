@@ -10,6 +10,7 @@ Covered in mottled green flesh, it smells your blood and begins to drool.
 15 3500
 8 8 1
 Race: 6
+Script: troll.lua
 E
 #19901
 king troll~
@@ -24,6 +25,7 @@ authority.. and animality.
 80 9000
 8 8 1
 Race: 6
+Script: troll.lua
 E
 #19902
 wight rock minor~

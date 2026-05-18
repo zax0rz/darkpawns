@@ -49,6 +49,7 @@ of you!
 8 8 0
 BareHandAttack: 4
 Race: 9
+Script: snake.lua
 E
 #19103
 Lookout~
@@ -130,6 +131,7 @@ failed...
 4 20000
 8 5 0
 BareHandAttack: 7
+Script: prisoner.lua
 E
 #19108
 prisoner~
@@ -146,6 +148,7 @@ person did to get thrown in the brig?
 8 5 0
 BareHandAttack: 8
 Race: 9
+Script: prisoner.lua
 E
 #19109
 prisoner~
@@ -162,6 +165,7 @@ Hollow eyesockets look up at you pleadingly...
 8 5 0
 BareHandAttack: 8
 Race: 9
+Script: prisoner.lua
 E
 #19110
 prisoner~
@@ -179,6 +183,7 @@ entice your feelings of fright.
 8 5 0
 BareHandAttack: 8
 Race: 9
+Script: prisoner.lua
 E
 #19111
 undead chef~
@@ -212,6 +217,7 @@ figure gives you an eerie fright.
 21 22500
 8 8 0
 BareHandAttack: 7
+Script: souleater.lua
 E
 #19113
 navigator~
@@ -228,6 +234,7 @@ decayed eyes are looking off to...
 8 8 0
 BareHandAttack: 10
 Race: 9
+Script: never_die.lua
 E
 #19114
 guard~

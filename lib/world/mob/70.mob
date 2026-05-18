@@ -13,6 +13,7 @@ sunken eyes if you look close enough.
 5 900
 8 8 1
 Race: 0
+Script: beggar.lua
 E
 #7002
 woman~
@@ -29,6 +30,7 @@ be coming in?  She looks hopelessly resigned to a life of misery.
 2 350
 8 8 2
 Race: 0
+Script: beggar.lua
 E
 #7003
 lotus purveyor seller~
@@ -62,6 +64,7 @@ but proves spineless when the going gets tough.
 8 8 1
 Race: 0
 Noise: A bully says, "Whatcha lookin' at, punk?"
+Script: citizen.lua
 E
 #7005
 thug~
@@ -78,6 +81,7 @@ can count on the fact that when the goin gets bad, the bad will get going.
 8 8 1
 Race: 0
 Noise: A thug eyes your belongings intently.
+Script: citizen.lua
 E
 #7006
 assassin man young~
@@ -127,6 +131,7 @@ playing. He eyes you warily as you approach.
 8 8 1
 Race: 0
 Noise: A dirty boy runs around in the street.
+Script: citizen.lua
 E
 #7009
 girl dirty young~
@@ -142,6 +147,7 @@ wary and won't even come near you.
 0 100
 8 8 2
 Race: 0
+Script: citizen.lua
 E
 #7010
 rat~
@@ -173,6 +179,7 @@ a manifestation of wargs who control the universal door to ... ???
 5 2500
 8 8 1
 Race: 0
+Script: citizen.lua
 E
 #7012
 boy effete~
@@ -191,6 +198,7 @@ king.
 0 3500
 8 8 1
 Race: 0
+Script: citizen.lua
 E
 #7013
 boy butler~
@@ -207,6 +215,7 @@ bruise upon his left cheek and his eye is still swollen shut some.
 0 1500
 8 8 1
 Race: 0
+Script: citizen.lua
 E
 #7014
 homeless man~
@@ -223,6 +232,7 @@ be begging for any help. Perhaps he is to proud to do that?
 0 600
 6 6 1
 Race: 0
+Script: beggar.lua
 E
 #7015
 homeless woman~
@@ -239,6 +249,7 @@ condition, she does not appear to be begging. Most strange.
 0 350
 6 6 2
 Race: 0
+Script: beggar.lua
 E
 #7016
 dog carve_meat~
@@ -344,6 +355,7 @@ an enjoyable time.
 8 8 0
 BareHandAttack: 13
 Race: 0
+Script: citizen.lua
 E
 #7022
 richard nogin lout~
@@ -399,6 +411,7 @@ domain.
 8 8 1
 BareHandAttack: 7
 Race: 0
+Script: beggar.lua
 E
 #7025
 courtesan woman girl~
@@ -499,6 +512,7 @@ this purpose as well.
 0 3500
 8 8 1
 Race: 0
+Script: citizen.lua
 E
 #7032
 boy guard~
@@ -517,6 +531,7 @@ with all the others, he is light-haired and slender.
 8 8 1
 BareHandAttack: 11
 Race: 0
+Script: citizen.lua
 E
 #7033
 gambler~
@@ -534,6 +549,7 @@ from time to time, in the long run it's the house that wins.
 BareHandAttack: 13
 Race: 0
 Noise: You hear the sound of a noisy dice game from a back room.
+Script: citizen.lua
 E
 #7034
 sticks~
@@ -586,6 +602,7 @@ eyes, he seems quite afraid of something.
 0 3500
 8 8 1
 Race: 0
+Script: citizen.lua
 E
 #7037
 cook woman gourmet~
@@ -603,6 +620,7 @@ you stand there oogling, her brows knit together into a scowl.
 8 8 2
 BareHandAttack: 10
 Race: 0
+Script: citizen.lua
 E
 #7038
 hooded figure Ruar bishop~
@@ -745,6 +763,7 @@ with a ranking member of the Theocracy!
 8 8 0
 BareHandAttack: 13
 Race: 0
+Script: shopkeeper.lua
 E
 #7046
 hooded figure Avrie trader~
@@ -815,5 +834,6 @@ emerald colored robes, you doubt Jasper could hide if he wanted to.
 30 6000
 8 8 1
 Race: 1
+Script: citizen.lua
 E
 $

@@ -13,6 +13,7 @@ eyes are a dull black.
 8 8 1
 BareHandAttack: 8
 Race: 6
+Script: troll.lua
 E
 #14101
 Medusa Echidna~
@@ -40,6 +41,7 @@ His petrifying gaze can even kill gods... Don't look at him!
 8 8 1
 BareHandAttack: 9
 Race: 27
+Script: medusa.lua
 E
 #14103
 snake large giant~
@@ -56,6 +58,7 @@ out of it's mouth, silently tasting the air.. and your scent with it.
 8 8 0
 BareHandAttack: 4
 Race: 13
+Script: snake.lua
 E
 #14105
 Ghost image~
@@ -70,6 +73,7 @@ You can barely see it.
 8 8 0
 BareHandAttack: 9
 Race: 9
+Script: magic_user.lua
 E
 #14106
 spectre image woman~
@@ -85,6 +89,7 @@ beautiful woman.
 8 8 2
 BareHandAttack: 8
 Race: 9
+Script: magic_user.lua
 E
 #14107
 skeleton~
@@ -157,6 +162,7 @@ with a fierce red light, and as it looks at you a chill runs up your spine.
 8 8 0
 BareHandAttack: 4
 Race: 13
+Script: snake.lua
 E
 #14198
 one energy~

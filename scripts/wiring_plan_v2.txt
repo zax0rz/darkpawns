@@ -1,0 +1,191 @@
+# Wiring plan v2 — strong keyword matches
+# vnum|script_name
+
+# beholder
+11011|beholder.lua
+
+# blacksmith
+18714|blacksmith.lua
+
+# cityguard
+13100|cityguard.lua
+8027|cityguard.lua
+
+# cleric
+8014|cleric.lua
+8501|cleric.lua
+
+# elven_prostitute
+8023|elven_prostitute.lua
+
+# farmer_wheat
+16301|farmer_wheat.lua
+
+# fighter
+8551|fighter.lua
+
+# guard_captain (strong: captain/lieutenant in keywords)
+12106|guard_captain.lua
+12125|guard_captain.lua
+15811|guard_captain.lua
+16208|guard_captain.lua
+21202|guard_captain.lua
+
+# hermit
+19406|hermit.lua
+
+# janitor
+21229|janitor.lua
+8061|janitor.lua
+
+# magic_user
+14105|magic_user.lua
+14106|magic_user.lua
+19714|magic_user.lua
+21206|magic_user.lua
+21246|magic_user.lua
+2730|magic_user.lua
+5801|magic_user.lua
+8016|magic_user.lua
+8503|magic_user.lua
+8504|magic_user.lua
+
+# medusa
+14102|medusa.lua
+
+# merchant_inn
+12110|merchant_inn.lua
+3115|merchant_inn.lua
+8018|merchant_inn.lua
+
+# mindflayer
+14414|mindflayer.lua
+
+# mount
+16106|mount.lua
+2738|mount.lua
+2739|mount.lua
+4319|mount.lua
+8021|mount.lua
+9140|mount.lua
+
+# mymic
+5700|mymic.lua
+
+# paladin
+7915|paladin.lua
+
+# phoenix
+16103|phoenix.lua
+
+# prisoner
+15805|prisoner.lua
+19107|prisoner.lua
+19108|prisoner.lua
+19109|prisoner.lua
+19110|prisoner.lua
+2504|prisoner.lua
+2515|prisoner.lua
+2523|prisoner.lua
+2765|prisoner.lua
+
+# shopkeeper
+21205|shopkeeper.lua
+7045|shopkeeper.lua
+12100|shopkeeper.lua
+12102|shopkeeper.lua
+12104|shopkeeper.lua
+12107|shopkeeper.lua
+12122|shopkeeper.lua
+13102|shopkeeper.lua
+21205|shopkeeper.lua
+2760|shopkeeper.lua
+2768|shopkeeper.lua
+2769|shopkeeper.lua
+2770|shopkeeper.lua
+4205|shopkeeper.lua
+4206|shopkeeper.lua
+4211|shopkeeper.lua
+4212|shopkeeper.lua
+4836|shopkeeper.lua
+4911|shopkeeper.lua
+4912|shopkeeper.lua
+4913|shopkeeper.lua
+5888|shopkeeper.lua
+
+# singingdrunk
+12108|singingdrunk.lua
+12131|singingdrunk.lua
+4301|singingdrunk.lua
+4331|singingdrunk.lua
+
+# snake
+13351|snake.lua
+14002|snake.lua
+14004|snake.lua
+14103|snake.lua
+14127|snake.lua
+16104|snake.lua
+19102|snake.lua
+21219|snake.lua
+21309|snake.lua
+2509|snake.lua
+2513|snake.lua
+2516|snake.lua
+3507|snake.lua
+5002|snake.lua
+8557|snake.lua
+
+# souleater
+33|souleater.lua
+19112|souleater.lua
+9921|souleater.lua
+
+# stable
+# (4814 constable is a warrior, not a stable master — skip)
+
+# strike
+16499|strike.lua
+
+# tattoo
+2766|tattoo.lua
+8086|tattoo.lua
+
+# teacher
+16304|teacher.lua
+18040|teacher.lua
+
+# thief
+21217|thief.lua
+3022|thief.lua
+7979|thief.lua
+8013|thief.lua
+8508|thief.lua
+
+# triflower
+30108|triflower.lua
+30109|triflower.lua
+30110|triflower.lua
+
+# troll
+10029|troll.lua
+14007|troll.lua
+14100|troll.lua
+14311|troll.lua
+14312|troll.lua
+15817|troll.lua
+19900|troll.lua
+19901|troll.lua
+20021|troll.lua
+2510|troll.lua
+
+# tyr (satyr)
+9122|tyr.lua
+
+# weatherworker
+4617|weatherworker.lua
+
+# quanlo
+19405|quanlo.lua
+14401|144/gatekeeper.lua
+21220|dog.lua

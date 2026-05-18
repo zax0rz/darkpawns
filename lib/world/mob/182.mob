@@ -169,6 +169,7 @@ him from head to toe.
 50 55000
 8 8 1
 Race: 0
+Script: tattoo.lua
 E
 #18214
 man cloaked lao tse lao-tse~
@@ -256,6 +257,7 @@ another reality completely.  He has found the inner peace.
 0 60000
 8 8 1
 Race: 0
+Script: zen_master.lua
 E
 #18220
 shaolin monk~
@@ -287,6 +289,7 @@ the tong in some way.  Better hope he's not looking for you.
 8 8 1
 BareHandAttack: 13
 Race: 0
+Script: backstabber.lua
 E
 #18222
 sailor~

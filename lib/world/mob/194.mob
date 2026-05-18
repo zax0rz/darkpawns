@@ -27,6 +27,7 @@ He looks like he could cut you to pieces without breaking a sweat.
 1400 35000
 8 8 1
 Race: 0
+Script: backstabber.lua
 E
 #19402
 monk shaolin~
@@ -92,6 +93,7 @@ beard hangs low from his chin.
 6 6 1
 BareHandAttack: 13
 Race: 0
+Script: quanlo.lua
 E
 #19406
 man hermit~
@@ -109,6 +111,7 @@ of who-knows-what lie stuck within it.
 BareHandAttack: 13
 Race: 0
 Noise: You hear a soft humming coming from the cave to the west.
+Script: hermit.lua
 E
 #19407
 fire falcon bird~

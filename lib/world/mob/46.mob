@@ -243,5 +243,6 @@ This storm seems almost sentient...
 8 8 0
 Race: 25
 Noise: The wind seems to get stronger here.
+Script: weatherworker.lua
 E
 $

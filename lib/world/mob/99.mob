@@ -313,6 +313,7 @@ step it takes, the earth shakes.
 BareHandAttack: 10
 Race: 11
 Noise: The ground shakes so violently you nearly lose your footing.
+Script: souleater.lua
 E
 #9922
 incubus demon~

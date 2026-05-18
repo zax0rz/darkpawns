@@ -75,6 +75,7 @@ almost feel sorry for him - almost.
 8 8 1
 Race: 0
 Noise: You hear the harsh voice of a fishmonger hawking his wares.
+Script: shopkeeper.lua
 E
 #4206
 vendor bhyroga~
@@ -89,6 +90,7 @@ genuine vendor. Heck, he might actually have something you want!
 2000 270000
 8 8 1
 Race: 0
+Script: shopkeeper.lua
 E
 #4207
 warrior bhyroga~
@@ -166,6 +168,7 @@ sorry for him.... almost.
 2000 270000
 8 8 1
 Race: 0
+Script: shopkeeper.lua
 E
 #4212
 vendor bhyroga~
@@ -180,6 +183,7 @@ genuine vendor. Heck, he might actually have something you want!
 2000 270000
 8 8 1
 Race: 0
+Script: shopkeeper.lua
 E
 #4213
 giant ice~

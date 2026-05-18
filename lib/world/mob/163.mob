@@ -11,6 +11,7 @@ scar running down his left cheek.
 0 0
 8 8 1
 Race: 0
+Script: recruiter.lua
 E
 #16301
 dirty farmer man~
@@ -24,6 +25,7 @@ in the dirt, what ever the reason he's come to try his luck at city service.
 1 19 9 1d5+20 1d4+0
 1 100
 8 8 1
+Script: farmer_wheat.lua
 E
 #16302
 recruit new man~
@@ -69,6 +71,7 @@ serious look on his face.
 13 725
 8 8 1
 Race: 0
+Script: teacher.lua
 E
 #16305
 guard trainee white~

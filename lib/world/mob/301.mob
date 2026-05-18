@@ -93,6 +93,7 @@ A bizzare looking flower with blue and green petals stands here.
 8 8 0
 BareHandAttack: 4
 Race: 11
+Script: triflower.lua
 E
 #30109
 red yellow flower~
@@ -107,6 +108,7 @@ A bizzare looking flower with red and yellow petals stands here.
 8 8 0
 BareHandAttack: 4
 Race: 11
+Script: triflower.lua
 E
 #30110
 purple flower~
@@ -121,6 +123,7 @@ A very bizzare flower stands here staring at you.
 8 8 0
 BareHandAttack: 4
 Race: 11
+Script: triflower.lua
 E
 #30111
 putrid bird~

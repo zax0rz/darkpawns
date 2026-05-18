@@ -79,6 +79,7 @@ she had reputedly knifed many powerful people when she disappeared.
 0 45000
 8 8 2
 Race: 25
+Script: backstabber.lua
 E
 #20005
 holy man old priest cleric statue~
@@ -370,6 +371,7 @@ find her very attractive.
 100 60000
 8 8 2
 Race: 6
+Script: troll.lua
 E
 #20022
 prisoner man captive~

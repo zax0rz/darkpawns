@@ -12,6 +12,7 @@ you, obviously happy to see a customer in the otherwise deserted store.
 8 8 1
 Race: 0
 Noise: A merchant calls out, "Spices...spices for sale"
+Script: shopkeeper.lua
 E
 #12101
 Largo fisherman~
@@ -42,6 +43,7 @@ unaware adventurer.
 60 35000
 8 8 1
 Race: 0
+Script: shopkeeper.lua
 E
 #12103
 beast guardian~
@@ -71,6 +73,7 @@ He looks deep in thought and doesn't pay any attention to you.
 8 8 1
 BareHandAttack: 13
 Race: 0
+Script: shopkeeper.lua
 E
 #12105
 flustered man repair public works officer talis~
@@ -102,6 +105,7 @@ years spent at sea and despite his age is quite capable of defending himself.
 8 8 1
 BareHandAttack: 13
 Race: 0
+Script: guard_captain.lua
 E
 #12107
 merchant store keeper~
@@ -117,6 +121,7 @@ bigger than many of the males in the town.
 8 8 2
 BareHandAttack: 13
 Race: 0
+Script: shopkeeper.lua
 E
 #12108
 drunk sleeping sailor~
@@ -131,6 +136,7 @@ in such a deep sleep. Do you really want to wake him up?
 20 25000
 4 4 1
 Race: 0
+Script: singingdrunk.lua
 E
 #12109
 man sailor~
@@ -160,6 +166,7 @@ works tirelessly for what must be days on end.
 8 8 1
 Race: 0
 Noise: Many sets of eyes move with you as you wander around.
+Script: merchant_inn.lua
 E
 #12111
 elf elven pirate~
@@ -338,6 +345,7 @@ Haven. Her yellow eyes stare right into your soul.
 6 6 2
 BareHandAttack: 8
 Race: 5
+Script: shopkeeper.lua
 E
 #12123
 worker dock rowdy~
@@ -383,6 +391,7 @@ he has sacked cities and you are simply in his way...
 150 40000
 8 8 1
 Race: 0
+Script: guard_captain.lua
 E
 #12126
 troll bouncer~
@@ -415,6 +424,7 @@ but you do know that it has its eye on your coin purse.
 8 8 0
 Race: 0
 Noise: A shout for help can be heard in the distance.
+Script: backstabber.lua
 E
 #12128
 lars harbor master~
@@ -475,6 +485,7 @@ bursting out in a fit of giggles.
 1 14000
 8 8 2
 Race: 0
+Script: singingdrunk.lua
 E
 #12132
 depressed man~
