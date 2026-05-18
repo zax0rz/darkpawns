@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"time"
 
 	"math/rand/v2"
@@ -131,7 +132,7 @@ func NewAffectDirect(spellID int, location int, duration int, magnitude int, fla
 
 // spellStackKey generates a stack dedup key for a spell.
 func spellStackKey(spellID int) string {
-	return "spell_" + string(rune(spellID))
+	return fmt.Sprintf("spell_%d", spellID)
 }
 
 // Type returns the deprecated AffectType value.

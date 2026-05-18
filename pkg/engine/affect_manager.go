@@ -575,68 +575,7 @@ func addStat(entity Affectable, name string, delta int) {
 	setStatDirect(entity, name, val+delta)
 }
 
-// statClampPC clamps an attribute value to the PC-appropriate range [3, 18].
-func statClampPC(v int) int {
-	if v < 3 {
-		return 3
-	}
-	if v > 18 {
-		return 18
-	}
-	return v
-}
 
-// statClampNPC clamps an attribute value to the NPC-appropriate range [3, 25].
-func statClampNPC(v int) int {
-	if v < 3 {
-		return 3
-	}
-	if v > 25 {
-		return 25
-	}
-	return v
-}
-
-// statClamp clamps an attribute based on whether the entity is an NPC.
-func statClamp(entity Affectable, v int) int {
-	if entity.IsNPC() {
-		return statClampNPC(v)
-	}
-	return statClampPC(v)
-}
-
-// hitrollClamp clamps a hitroll bonus to [-100, 100].
-func hitrollClamp(v int) int {
-	if v < -100 {
-		return -100
-	}
-	if v > 100 {
-		return 100
-	}
-	return v
-}
-
-// damrollClamp clamps a damage roll bonus to [-100, 100].
-func damrollClamp(v int) int {
-	if v < -100 {
-		return -100
-	}
-	if v > 100 {
-		return 100
-	}
-	return v
-}
-
-// armorClassClamp clamps an AC value to [-100, 100].
-func armorClassClamp(v int) int {
-	if v < -100 {
-		return -100
-	}
-	if v > 100 {
-		return 100
-	}
-	return v
-}
 
 func (am *AffectManager) getEntityID(entity Affectable) string {
 	return entity.GetName() + "_" + strconv.Itoa(entity.GetID())

@@ -1,14 +1,8 @@
--- Test script based on original hisc.lua
+-- hisc.lua — mob script (DP-180: debug prints removed)
 oncmd = function()
-    if argument then
-        print("oncmd called with argument: " .. argument)
-    else
-        print("oncmd called with no argument")
-    end
     return 1  -- TRUE
 end
 
 sound = function()
-    -- Example sound function
-    print("sound called")
+    -- placeholder
 end
