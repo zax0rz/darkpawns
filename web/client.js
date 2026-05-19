@@ -141,7 +141,8 @@
     ws.onopen = function () {
       setStatus('connected');
       term.writeln('\x1b[32mConnected.\x1b[0m');
-      term.writeln('Enter your character name:');
+      term.writeln('\x1b[33mEnter your character name:\x1b[0m');
+      loginPhase = 'name';
     };
 
     ws.onmessage = function (evt) {
@@ -152,7 +153,7 @@
         // Route structured messages
         if (msg.type === 'state') {
           handleStateMsg(msg.data);
-          // Don't write raw state JSON to terminal; room desc comes via events
+          charCreating = false;
           return;
         }
         if (msg.type === 'vars') {
@@ -160,14 +161,29 @@
           return; // vars are for status bar only
         }
         if (msg.type === 'char_create') {
-          // Show the prompt text for character creation
+          charCreating = true;
           if (msg.data && msg.data.prompt) {
             term.writeln(msg.data.prompt);
+          }
+          // Show numbered options if present
+          if (msg.data && msg.data.options && typeof msg.data.options === 'object') {
+            const opts = msg.data.options;
+            const keys = Object.keys(opts);
+            if (keys.length > 0 && typeof opts[keys[0]] === 'string') {
+              keys.forEach(function (k) {
+                term.writeln('  \x1b[33m' + k + '\x1b[0m) ' + opts[k]);
+              });
+            }
           }
           return;
         }
         if (msg.type === 'error') {
           text = '\x1b[31m' + (msg.data && msg.data.message || evt.data) + '\x1b[0m';
+          // Password required — re-prompt
+          if (text.indexOf('Password required') >= 0) {
+            loginPhase = 'password';
+            term.writeln('\x1b[2mEnter password:\x1b[0m');
+          }
         } else if (msg.type === 'event') {
           text = (msg.data && msg.data.text) || '';
         } else if (msg.type === 'text') {
@@ -184,6 +200,10 @@
     ws.onclose = function () {
       setStatus('disconnected');
       term.writeln('\x1b[31m--- Connection lost ---\x1b[0m');
+      loggedIn = false;
+      charCreating = false;
+      awaitingPassword = false;
+      loginPhase = 'name';
     };
 
     ws.onerror = function () {
@@ -192,18 +212,44 @@
   }
 
   let loggedIn = false;
+  let charCreating = false;
+  let awaitingPassword = false;
+  let lastPlayerName = '';
+  let loginPhase = 'name'; // 'name' | 'password' | 'done'
 
   term.onData(function (data) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     if (data === '\r' || data === '\n') {
       term.writeln('');
-      if (!loggedIn) {
+      if (loginPhase === 'name') {
         const name = inputBuffer.trim();
         if (name) {
-          ws.send(JSON.stringify({ type: 'login', data: { player_name: name } }));
-          loggedIn = true;
+          lastPlayerName = name;
+          loginPhase = 'password';
+          term.writeln('\x1b[2mEnter password:\x1b[0m');
         }
+        inputBuffer = '';
+        return;
+      }
+      if (loginPhase === 'password') {
+        const pw = inputBuffer.trim();
+        ws.send(JSON.stringify({ type: 'login', data: { player_name: lastPlayerName, password: pw, mode: 'player' } }));
+        loginPhase = 'done';
+        inputBuffer = '';
+        term.writeln('\x1b[2m' + '*'.repeat(pw.length) + '\x1b[0m');
+        return;
+      }
+      if (awaitingPassword) {
+        const pw = inputBuffer.trim();
+        ws.send(JSON.stringify({ type: 'login', data: { player_name: lastPlayerName, password: pw, mode: 'player' } }));
+        awaitingPassword = false;
+        inputBuffer = '';
+        term.writeln('\x1b[2m' + '*'.repeat(pw.length) + '\x1b[0m');
+        return;
+      }
+      if (charCreating) {
+        ws.send(JSON.stringify({ type: 'char_input', data: { choice: inputBuffer.trim() } }));
         inputBuffer = '';
         return;
       }
@@ -224,6 +270,9 @@
 
   reconnectBtn.addEventListener('click', function () {
     loggedIn = false;
+    charCreating = false;
+    awaitingPassword = false;
+    loginPhase = 'name';
     inputBuffer = '';
     connect();
   });

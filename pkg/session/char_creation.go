@@ -148,7 +148,8 @@ func (s *Session) startCharCreation(playerName string) {
 	s.charCreating = true
 	s.charName = playerName
 
-	// Start with color selection
+	// Start with color selection — must set charStage so handleCharInput knows where we are
+	s.charStage = "color"
 	s.sendCharCreatePrompt("color", "Do you want ANSI color? (Y/N):", map[string]string{
 		"Y": "Yes",
 		"N": "No",
