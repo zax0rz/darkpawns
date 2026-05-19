@@ -434,21 +434,26 @@ func StartPProfServer(addr string) {
 		return
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/debug/pprof/", func(w http.ResponseWriter, r *http.Request) {
-		if username, password, ok := r.BasicAuth(); !ok ||
-			subtle.ConstantTimeCompare([]byte(username), []byte(user)) != 1 ||
-			subtle.ConstantTimeCompare([]byte(password), []byte(pass)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="pprof"`)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
+	// Wrap all pprof handlers with BasicAuth
+	authRequired := func(handler http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			if username, password, ok := r.BasicAuth(); !ok ||
+				subtle.ConstantTimeCompare([]byte(username), []byte(user)) != 1 ||
+				subtle.ConstantTimeCompare([]byte(password), []byte(pass)) != 1 {
+				w.Header().Set("WWW-Authenticate", `Basic realm="pprof"`)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			handler(w, r)
 		}
-		nethttppprof.Index(w, r)
-	})
-	mux.HandleFunc("/debug/pprof/cmdline", nethttppprof.Cmdline)
-	mux.HandleFunc("/debug/pprof/profile", nethttppprof.Profile)
-	mux.HandleFunc("/debug/pprof/symbol", nethttppprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", nethttppprof.Trace)
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/debug/pprof/", authRequired(nethttppprof.Index))
+	mux.HandleFunc("/debug/pprof/cmdline", authRequired(nethttppprof.Cmdline))
+	mux.HandleFunc("/debug/pprof/profile", authRequired(nethttppprof.Profile))
+	mux.HandleFunc("/debug/pprof/symbol", authRequired(nethttppprof.Symbol))
+	mux.HandleFunc("/debug/pprof/trace", authRequired(nethttppprof.Trace))
 
 	server := &http.Server{
 		Addr:              addr,
