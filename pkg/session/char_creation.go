@@ -214,9 +214,11 @@ func (s *Session) completeCharCreation() error {
 				slog.Error("DB create error during char creation", "error", err)
 			} else {
 				s.player.ID = r.ID
-				slog.Info("charDB: created", "id", r.ID)
+				slog.Info("charDB: calling GiveStartingItems")
 				s.manager.world.GiveStartingItems(s.player)
+				slog.Info("charDB: calling GiveStartingSkills")
 				game.GiveStartingSkills(s.player)
+				slog.Info("charDB: skills done")
 			}
 		} else {
 			slog.Error("PlayerToRecord failed", "error", err)
