@@ -233,6 +233,7 @@ func (s *Session) completeCharCreation() error {
 		s.manager.Unregister(s.charName)
 		return err
 	}
+	slog.Info("completeCharCreation: player added to world", "player", s.player.Name)
 
 	// Clear char creation state
 	s.charCreating = false
@@ -245,17 +246,18 @@ func (s *Session) completeCharCreation() error {
 	s.charClass = 0
 	s.charHometown = 0
 	s.charStats = game.CharStats{}
+	slog.Info("completeCharCreation: state cleared")
 
 	// Generate JWT token
 	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID, "")
 	if err != nil {
 		slog.Error("failed to generate JWT token", "error", err)
 	}
+	slog.Info("completeCharCreation: JWT generated", "player", s.player.Name)
 
 	// Send welcome with token
-	slog.Info("completeCharCreation: sending welcome", "player", s.charName)
 	s.sendWelcome(token)
-	slog.Info("completeCharCreation: welcome sent", "player", s.charName)
+	slog.Info("completeCharCreation: welcome sent", "player", s.player.Name)
 
 	// Broadcast arrival
 	enterMsg, err := json.Marshal(ServerMessage{
