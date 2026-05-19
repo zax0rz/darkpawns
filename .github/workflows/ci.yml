@@ -55,8 +55,8 @@ jobs:
     - name: Install Go dependencies
       run: go mod download
 
-    - name: Run Go tests
-      run: go test $(go list ./... | grep -v /tests/unit) -v
+    - name: Run Go tests with race detector
+      run: go test -race $(go list ./... | grep -v /tests/unit) -v -timeout 120s
     
     - name: Verify all packages build
       run: go build ./...

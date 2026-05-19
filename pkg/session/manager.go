@@ -378,6 +378,17 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 // with the new session. This prevents players from being locked out when
 // their previous connection drops uncleanly and the 60s read-deadline hasn't
 // fired yet.
+// Register associates a player name with a session. It is safe to call
+// concurrently — m.mu serialises session-map mutations.
+//
+// LOCK ORDERING: Register must NEVER call methods that acquire w.mu while
+// holding m.mu. This caused a deadlock (LRN-20260519-001): RemovePlayer
+// acquires w.mu, so it must be called AFTER releasing m.mu. Rule:
+//
+//   m.mu  →  w.mu  = FORBIDDEN (causes deadlock)
+//   w.mu  →  m.mu  = OK (never happens in practice)
+//
+// If you need both locks, always acquire w.mu first.
 func (m *Manager) Register(playerName string, s *Session) error {
 	// RemovePlayer (called below for takeover) acquires w.mu. To avoid the
 	// m.mu → w.mu lock ordering that caused a deadlock during char creation,
