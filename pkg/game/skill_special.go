@@ -90,8 +90,10 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 		weapon := ch.Equipment.Slots[0] // WEAR_WIELD = slot 0
 		if weapon != nil {
 			wielded = true
-			// Check if weapon type is slash (value[3] == 3)
-			slashWeapon = true // simplified — assume equipped weapons are slash-able
+			// Check if weapon type is slash (value[3] == 3, TYPE_SLASH - TYPE_HIT)
+			if weapon.Prototype != nil {
+				slashWeapon = weapon.Prototype.Values[3] == 3
+			}
 		}
 	}
 

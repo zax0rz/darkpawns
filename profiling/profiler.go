@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/subtle"
 	"fmt"
 	"log/slog"
@@ -16,13 +17,10 @@ import (
 
 // Profiler manages performance profiling
 type Profiler struct {
-	mu           sync.Mutex
-	cpuProfile   *os.File
-	memProfile   *os.File
-	blockProfile *os.File
-	mutexProfile *os.File
-	profileDir   string
-	enabled      bool
+	mu         sync.Mutex
+	cpuProfile *os.File
+	profileDir string
+	enabled    bool
 }
 
 // NewProfiler creates a new profiler
@@ -116,8 +114,6 @@ func (p *Profiler) WriteHeapProfile() error {
 		return fmt.Errorf("write heap profile: %w", err)
 	}
 
-	p.memProfile = f
-// #nosec G706
 	slog.Info("Heap profile written", "file", heapFile)
 	return nil
 }
@@ -155,8 +151,6 @@ func (p *Profiler) StopBlockProfile() error {
 		return fmt.Errorf("write block profile: %w", err)
 	}
 
-	p.blockProfile = f
-// #nosec G706
 	slog.Info("Block profile written", "file", blockFile)
 
 	// Reset block profile rate
@@ -197,8 +191,6 @@ func (p *Profiler) StopMutexProfile() error {
 		return fmt.Errorf("write mutex profile: %w", err)
 	}
 
-	p.mutexProfile = f
-// #nosec G706
 	slog.Info("Mutex profile written", "file", mutexFile)
 
 	// Reset mutex profile fraction
@@ -389,7 +381,10 @@ func (pm *PerformanceMonitor) AnalyzeMetrics() map[string]interface{} {
 	minGoroutines := int64(^uint64(0) >> 1)
 
 	for _, metric := range metrics {
-		alloc := metric.Memory["alloc"].(uint64)
+		alloc, ok := metric.Memory["alloc"].(uint64)
+		if !ok {
+			continue
+		}
 		goroutines := int64(metric.Goroutines)
 
 // #nosec G115
@@ -427,12 +422,12 @@ func (pm *PerformanceMonitor) AnalyzeMetrics() map[string]interface{} {
 }
 
 // StartPProfServer starts the pprof HTTP server with basic auth
-func StartPProfServer(addr string) {
+func StartPProfServer(addr string) *http.Server {
 	user := os.Getenv("PPROF_USER")
 	pass := os.Getenv("PPROF_PASS")
 	if user == "" || pass == "" {
 		slog.Info("PPROF_USER/PPROF_PASS not set, pprof server not started")
-		return
+		return nil
 	}
 
 	// Wrap all pprof handlers with BasicAuth
@@ -469,6 +464,8 @@ func StartPProfServer(addr string) {
 			slog.Error("pprof server error", "error", err)
 		}
 	}()
+
+	return server
 }
 
 // RunProfilingSession runs a complete profiling session
@@ -572,12 +569,19 @@ func main() {
 			addr = os.Args[2]
 		}
 
-		StartPProfServer(addr)
+		server := StartPProfServer(addr)
 
 		// Wait for interrupt
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt)
 		<-sigChan
+
+		// Graceful shutdown
+		if server != nil {
+			if err := server.Shutdown(context.Background()); err != nil {
+				slog.Error("pprof server shutdown error", "error", err)
+			}
+		}
 
 	case "stats":
 		profiler := NewProfiler("/tmp")
