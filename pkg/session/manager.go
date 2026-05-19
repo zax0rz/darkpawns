@@ -488,17 +488,6 @@ func (m *Manager) Unregister(playerName string) {
 	m.mu.Unlock()
 
 	if ok {
-		// Decrement per-IP connection count (C5)
-		if s.request != nil {
-			ip := auth.GetIPFromRequest(s.request)
-			m.ipConnMu.Lock()
-			m.ipConnCount[ip]--
-			if m.ipConnCount[ip] <= 0 {
-				delete(m.ipConnCount, ip)
-			}
-			m.ipConnMu.Unlock()
-		}
-
 		m.cleanupSession(s, playerName)
 	}
 }
@@ -543,6 +532,7 @@ type Session struct {
 	player        *game.Player
 	playerName    string
 	authenticated bool
+	connCountDecremented bool // C5: prevents double-decrement of IP connection count
 
 	// Agent auth — set on login when mode="agent"
 	isAgent     bool

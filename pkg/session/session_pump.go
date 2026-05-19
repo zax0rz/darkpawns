@@ -5,11 +5,26 @@ import (
 	"log/slog"
 	"time"
 	"encoding/json"
+
+	"github.com/gorilla/websocket"
+	"github.com/zax0rz/darkpawns/pkg/auth"
 )
-import "github.com/gorilla/websocket"
 
 func (s *Session) readPump() {
 	defer func() {
+		// Always decrement IP connection count (C5 leak fix)
+		if !s.connCountDecremented && s.request != nil {
+			s.connCountDecremented = true
+			ip := auth.GetIPFromRequest(s.request)
+			if ip != "" {
+				s.manager.ipConnMu.Lock()
+				s.manager.ipConnCount[ip]--
+				if s.manager.ipConnCount[ip] <= 0 {
+					delete(s.manager.ipConnCount, ip)
+				}
+				s.manager.ipConnMu.Unlock()
+			}
+		}
 		s.manager.Unregister(s.playerName)
 		_ = s.conn.Close()
 	}()

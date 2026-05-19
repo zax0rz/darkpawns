@@ -63,7 +63,8 @@ func (m *Manager) UnregisterAndClose(playerName string) {
 	s.FlushQueues()
 
 	// Decrement per-IP connection count (C5)
-	if s.request != nil {
+	if !s.connCountDecremented && s.request != nil {
+		s.connCountDecremented = true
 		ip := auth.GetIPFromRequest(s.request)
 		m.ipConnMu.Lock()
 		m.ipConnCount[ip]--
