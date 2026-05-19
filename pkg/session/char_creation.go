@@ -233,7 +233,14 @@ func (s *Session) completeCharCreation() error {
 		s.manager.Unregister(s.charName)
 		return err
 	}
-	slog.Info("completeCharCreation: player added to world", "player", s.player.Name)
+	slog.Info("completeCharCreation: player added to world", "player", s.player.Name, "room", s.player.GetRoom())
+
+	// Safety: catch any panic in the rest of char creation
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("PANIC in completeCharCreation", "recover", r, "player", s.player.Name)
+		}
+	}()
 
 	// Clear char creation state
 	s.charCreating = false
