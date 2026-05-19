@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -71,12 +72,13 @@ func (c *LoadTestClient) Connect() error {
 	}
 	c.Conn = conn
 
-	// Send login message
+	// Send login message as player (not agent) so char creation is exercised
 	loginMsg := map[string]interface{}{
 		"type": "login",
 		"data": map[string]interface{}{
 			"player_name": fmt.Sprintf("loadtest-%d", c.ID),
-			"mode":        "agent",
+			"password":    "loadtest",
+			"mode":        "player",
 		},
 	}
 
@@ -85,7 +87,8 @@ func (c *LoadTestClient) Connect() error {
 		return fmt.Errorf("client %d login: %w", c.ID, err)
 	}
 
-	// Wait for login response
+	// Wait for login response — may be "state" (existing player) or "char_create" (new player)
+	_ = conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 	_, message, err := conn.ReadMessage()
 	if err != nil {
 		_ = conn.Close()
@@ -98,12 +101,43 @@ func (c *LoadTestClient) Connect() error {
 		return fmt.Errorf("client %d parse response: %w", c.ID, err)
 	}
 
-	if response["type"] != "state" {
+	switch response["type"] {
+	case "state":
+		// Existing player — already in world, nothing more to do
+		_ = conn.SetReadDeadline(time.Time{})
+		return nil
+	case "char_create":
+		// New player — walk through the creation wizard
+		// Choices: color=Y, sex=M, race=0, class=3, hometown=O, stats_roll=Y
+		choices := []string{"Y", "M", "0", "3", "O", "Y"}
+		for _, choice := range choices {
+			charInput := map[string]interface{}{
+				"type": "char_input",
+				"data": map[string]interface{}{"choice": choice},
+			}
+			if err := conn.WriteJSON(charInput); err != nil {
+				_ = conn.Close()
+				return fmt.Errorf("client %d char_input: %w", c.ID, err)
+			}
+			// Read the next prompt/state message
+			_ = conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+			_, _, err := conn.ReadMessage()
+			if err != nil {
+				_ = conn.Close()
+				return fmt.Errorf("client %d char_create read: %w", c.ID, err)
+			}
+		}
+		// Small delay to let the player fully enter the world before sending commands
+		time.Sleep(200 * time.Millisecond)
+		_ = conn.SetReadDeadline(time.Time{})
+		return nil
+	case "error":
 		_ = conn.Close()
-		return fmt.Errorf("client %d unexpected response: %v", c.ID, response)
+		return fmt.Errorf("client %d login error: %v", c.ID, response["data"])
+	default:
+		_ = conn.Close()
+		return fmt.Errorf("client %d unexpected response type: %v", c.ID, response["type"])
 	}
-
-	return nil
 }
 
 // Start starts the client's message loop
@@ -166,10 +200,18 @@ func (c *LoadTestClient) readLoop(done chan struct{}) {
 			return
 		default:
 			_ = c.Conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-			_, _, err := c.Conn.ReadMessage()
+			_, raw, err := c.Conn.ReadMessage()
 			if err != nil {
 				atomic.AddInt64(&c.Errors, 1)
 				continue
+			}
+			// Consume char_create messages silently — they arrive if the server
+			// sends creation prompts out-of-band during an active session.
+			var msg map[string]interface{}
+			if jsonErr := json.Unmarshal(raw, &msg); jsonErr == nil {
+				if msg["type"] == "char_create" {
+					continue
+				}
 			}
 			atomic.AddInt64(&c.MessagesRecv, 1)
 		}
@@ -358,14 +400,48 @@ func SimpleLoadTest(serverURL string, numClients int, duration time.Duration) {
 	runner.PrintResults()
 }
 
+// runCharCreationStressTest spawns n clients that each go through char creation
+// concurrently, then reports success/failure counts. This specifically exercises
+// the concurrent char creation path (deadlock scenario).
+func runCharCreationStressTest(serverURL string, n int) {
+	fmt.Printf("\n=== Char Creation Stress Test (%d clients) ===\n", n)
+
+	var succeeded, failed int64
+	var wg sync.WaitGroup
+
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			config := &LoadTestConfig{ServerURL: serverURL}
+			client := NewLoadTestClient(id, config, &sync.WaitGroup{})
+			if err := client.Connect(); err != nil {
+				log.Printf("char-creation client %d failed: %v", id, err)
+				atomic.AddInt64(&failed, 1)
+				return
+			}
+			_ = client.Conn.Close()
+			atomic.AddInt64(&succeeded, 1)
+		}(i)
+	}
+
+	wg.Wait()
+	fmt.Printf("Char creation results: %d succeeded, %d failed\n", succeeded, failed)
+}
+
 func main() {
-	// Parse command line arguments
-	// For now, run a simple test
+	charCreation := flag.Bool("char-creation", false, "stress-test concurrent character creation")
+	serverURL := flag.String("server", "ws://localhost:8080/ws", "WebSocket server URL")
+	numClients := flag.Int("clients", 50, "number of clients (used with --char-creation)")
+	flag.Parse()
+
 	fmt.Println("Dark Pawns Load Test")
 	fmt.Println("====================")
 
-	// Check if server is running
-	resp, err := http.Get("http://localhost:8080/health")
+	// Derive HTTP health URL from WebSocket URL
+	healthURL := "http://localhost:8080/health"
+
+	resp, err := http.Get(healthURL)
 	if err != nil {
 		log.Fatalf("Server not running: %v", err)
 	}
@@ -373,8 +449,11 @@ func main() {
 
 	fmt.Println("Server is running. Starting load test...")
 
-	// Run simple load test
-	SimpleLoadTest("ws://localhost:8080/ws", 50, 10*time.Second)
+	if *charCreation {
+		runCharCreationStressTest(*serverURL, *numClients)
+	} else {
+		SimpleLoadTest(*serverURL, *numClients, 10*time.Second)
+	}
 
 	fmt.Println("\nLoad test completed!")
 }

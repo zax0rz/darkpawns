@@ -835,3 +835,16 @@ Swept all 10 remaining Reek Findings from Backlog:
 
 domain-expansion (.125) decommissioned. frankendell (.15) is the new bare Debian server. Migration issues created (LAB-39 through LAB-44). Blocked on SSH access.
 
+
+### Morning Triage — 2026-05-19
+
+**Reek crawl:** 16 findings, 12 issues created (DP-200 through DP-211). 11 confirmed, 1 rejected, 1 needs context.
+
+**Critical findings:**
+- DP-203: Wield weight hardcoded at 50, ignoring str_app table. Every character in the game affected. str=18 should wield up to 255, gets 50. Game-breaking.
+- DP-202: mobHasFlag() stub returns false. Sentinel mobs (should be untrackable) are all trackable. Bridge function unimplemented.
+- DP-200: pprof auth bypass. 4 HTTP endpoints registered without auth wrapper. Anyone with server access gets profiling data.
+
+**Reek accuracy:** 84%. False positive: DP-209 (stale file refs — fields don't exist in PerformanceMetric struct). Good crawl overall — fidelity findings were particularly sharp.
+
+**Paper-relevant:** The str_app hardcoding (DP-203) is a perfect example of "simplified" port drift — a comment says "simplified str_app check" and the simplification was "broken." This validates the "Simplified is a dirty word" principle from the port fidelity framework. Automated verification against C source would catch these.
