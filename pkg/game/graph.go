@@ -155,25 +155,49 @@ func (w *World) doTrack(ch *Player, me *MobInstance, argument string) bool {
 
 	vict := w.getCharVis(ch, argument)
 	if vict == nil {
+		// Also search mobs in the room — C's get_char_vis returns both
+		for _, mob := range w.GetMobsInRoom(ch.GetRoom()) {
+			if strings.EqualFold(mob.GetName(), argument) ||
+				strings.HasPrefix(strings.ToLower(mob.GetName()), strings.ToLower(argument)) {
+				// Check sentinel flag on mobs
+				if mob.Prototype != nil {
+					for _, f := range mob.Prototype.ActionFlags {
+						if f == "sentinel" {
+							ch.SendMessage("You sense no trail.\r\n")
+							return true
+						}
+					}
+				}
+				// Track the mob — find path to its room
+				dir := w.findFirstStep(ch.GetRoom(), mob.GetRoom())
+				switch dir {
+				case BFS_ERROR:
+					ch.SendMessage("Hmm.. something seems to be wrong.\r\n")
+				case BFS_ALREADY_THERE:
+					ch.SendMessage("You're already in the same room!!\r\n")
+				case BFS_NO_PATH:
+					ch.SendMessage("You can't sense a trail to them from here.\r\n")
+				default:
+					// #nosec G404 — game RNG, not cryptographic
+					if rand.IntN(101) <= ch.GetSkill("track") {
+						ch.SendMessage(fmt.Sprintf("You sense a trail %s from here!\r\n", dirs[dir]))
+					} else {
+						ch.SendMessage("You lose the trail...\r\n")
+					}
+				}
+				return true
+			}
+		}
 		ch.SendMessage("You can't sense a trail to them from here.\r\n")
 		return true
 	}
 
-	// Check sentinel mob flag on NPC victims
-	if vict.IsNPC() && w.mobHasFlag(vict, MobSentinel) {
+	// Evasion check for player victims
+	evasion := vict.GetSkill("evasion")
+	// #nosec G404 — game RNG, not cryptographic
+	if evasion > 0 && rand.IntN(151)+1 <= evasion {
 		ch.SendMessage("You sense no trail.\r\n")
 		return true
-	}
-
-	// Evasion check for player victims
-	if !vict.IsNPC() {
-		evasion := vict.GetSkill("evasion")
-		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-		if evasion > 0 && rand.IntN(151)+1 <= evasion {
-			ch.SendMessage("You sense no trail.\r\n")
-			return true
-		}
 	}
 
 	dir := w.findFirstStep(ch.GetRoom(), vict.GetRoom())
@@ -344,12 +368,6 @@ func (w *World) findPlayerByName(name string) *Player {
 		}
 	}
 	return nil
-}
-
-// mobHasFlag checks if a player-backed mob has a given mob flag.
-func (w *World) mobHasFlag(p *Player, flag string) bool {
-	// Mob flags are checked via the mob prototype when the Player represents a mob
-	return false // stub until mob flag access is implemented
 }
 
 // mobSayTo makes a mob say something to their room.
