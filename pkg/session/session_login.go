@@ -110,6 +110,44 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			}
 			s.player = p
 			s.authenticated = true
+		} else if s.isAgent {
+			// Agent authenticated but no player record — auto-create with defaults
+			rec := &db.PlayerRecord{
+				Name:      login.PlayerName,
+				RoomVNum:  8004,
+				Level:     1,
+				Exp:       1,
+				Health:    10,
+				MaxHealth: 10,
+				Mana:      100,
+				MaxMana:   100,
+				Move:      100,
+				MaxMove:   100,
+				Strength:  10,
+				StatStr:   10,
+				StatInt:   10,
+				StatWis:   10,
+				StatDex:   10,
+				StatCon:   10,
+				StatCha:   10,
+				Hunger:    24,
+				Thirst:    24,
+			}
+			if err := s.manager.db.CreatePlayer(rec); err != nil {
+				slog.Error("agent auto-create player failed", "player", login.PlayerName, "error", err)
+				s.sendError("Failed to create agent player.")
+				_ = s.conn.Close()
+				return nil
+			}
+			p, err := db.RecordToPlayer(rec, s.manager.world)
+			if err != nil {
+				slog.Error("agent RecordToPlayer failed", "player", login.PlayerName, "error", err)
+				s.sendError("Failed to load agent player.")
+				_ = s.conn.Close()
+				return nil
+			}
+			s.player = p
+			s.authenticated = true
 		} else {
 			// New character — require password, then enter creation flow
 			if login.Password == "" {
