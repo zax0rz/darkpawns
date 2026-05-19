@@ -38,24 +38,18 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 	//   29 = roots/tubers (field/hills), 30 = small desert creature,
 	//   31 = mountain herbs
 	var foodVNum int
-	var isFind bool
 
 	switch sector {
 	case 3: // SECT_FOREST
 		foodVNum = 28
-		isFind = false // capture/kill
 	case 4, 5: // SECT_FIELD, SECT_HILLS
 		foodVNum = 29
-		isFind = false
 	case 7: // SECT_DESERT
 		foodVNum = 30
-		isFind = false
 	case 10: // SECT_MOUNTAIN
 		foodVNum = 31
-		isFind = true
 	case 14, 15, 16: // SECT_WATER_SWIM, SECT_WATER_NOSWIM, SECT_UNDERWATER
 		foodVNum = 27
-		isFind = false
 	default:
 		return SkillResult{
 			Success:     false,
@@ -81,15 +75,15 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 		}
 		obj := NewObjectInstance(proto, ch.GetRoom())
 		if obj != nil {
-			// placeholder: add item to inventory
-			msg := "You find $p."
-			if !isFind {
-				msg = "You capture and kill $p."
+			if err := ch.Inventory.AddItem(obj); err != nil {
+				return SkillResult{
+					Success:     false,
+					MessageToCh: "You can't carry any more items.\r\n",
+				}
 			}
-			_ = msg // Would use ActMessage with item name
 			return SkillResult{
-				Success:     true,
-				MessageToCh: fmt.Sprintf("You find %s.\r\n", proto.ShortDesc),
+				Success:      true,
+				MessageToCh:  fmt.Sprintf("You find %s.\r\n", proto.ShortDesc),
 				MessageToRoom: fmt.Sprintf("%s finds %s.\r\n", ch.Name, proto.ShortDesc),
 			}
 		}
