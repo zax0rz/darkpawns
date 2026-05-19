@@ -2,9 +2,10 @@
 package session
 
 import (
-	"log/slog"
-	"time"
 	"encoding/json"
+	"log/slog"
+	"runtime/debug"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/zax0rz/darkpawns/pkg/auth"
@@ -12,6 +13,9 @@ import (
 
 func (s *Session) readPump() {
 	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("PANIC in readPump", "recover", r, "player", s.playerName, "stack", debug.Stack())
+		}
 		// Always decrement IP connection count (C5 leak fix)
 		if !s.connCountDecremented && s.request != nil {
 			s.connCountDecremented = true
