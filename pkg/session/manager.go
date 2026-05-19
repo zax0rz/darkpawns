@@ -379,9 +379,13 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 // their previous connection drops uncleanly and the 60s read-deadline hasn't
 // fired yet.
 func (m *Manager) Register(playerName string, s *Session) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	// RemovePlayer (called below for takeover) acquires w.mu. To avoid the
+	// m.mu → w.mu lock ordering that caused a deadlock during char creation,
+	// we record whether removal is needed under m.mu, release m.mu, then call
+	// RemovePlayer separately so the two locks are never held simultaneously.
+	var needsWorldRemove bool
 
+	m.mu.Lock()
 	if oldSess, exists := m.sessions[playerName]; exists {
 		// Notify the old session that it's being taken over, then close it.
 		// sendOnce ensures the send channel is closed exactly once, which
@@ -395,19 +399,23 @@ func (m *Manager) Register(playerName string, s *Session) error {
 		}
 		oldSess.sendOnce.Do(func() { close(oldSess.send) })
 
-		// Remove the old player from the world so AddPlayer succeeds
-		// for the new session. The old session's Unregister (triggered by
-		// send channel close) will be a no-op since we've already replaced
-		// the session map entry.
-		if oldSess.player != nil {
-			m.world.RemovePlayer(playerName)
-		}
-
+		needsWorldRemove = oldSess.player != nil
 		slog.Info("session takeover", "player", playerName)
 	}
 
 	m.sessions[playerName] = s
 	s.playerName = playerName
+	m.mu.Unlock()
+
+	// Remove the old player from the world AFTER releasing m.mu.
+	// This call acquires w.mu independently; no nested locking with m.mu.
+	// The caller (completeCharCreation / handleLogin) will call AddPlayer
+	// after Register returns, so the window where the player is absent from
+	// the world is intentional and bounded.
+	if needsWorldRemove {
+		m.world.RemovePlayer(playerName)
+	}
+
 	return nil
 }
 
