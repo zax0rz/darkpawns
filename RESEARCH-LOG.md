@@ -848,3 +848,75 @@ domain-expansion (.125) decommissioned. frankendell (.15) is the new bare Debian
 **Reek accuracy:** 84%. False positive: DP-209 (stale file refs — fields don't exist in PerformanceMetric struct). Good crawl overall — fidelity findings were particularly sharp.
 
 **Paper-relevant:** The str_app hardcoding (DP-203) is a perfect example of "simplified" port drift — a comment says "simplified str_app check" and the simplification was "broken." This validates the "Simplified is a dirty word" principle from the port fidelity framework. Automated verification against C source would catch these.
+
+---
+
+## [SESSION] 2026-05-19 — Deadlock Fix + Test Coverage Push
+
+**Context:** Pre-playtest preparation. Goal: get the game stable and tested before The Architect and Brenda do human playtesting.
+
+### Critical Bug Found & Fixed
+
+**Root cause:** Lock ordering violation between `Manager.mu` and `World.mu` in `Manager.Register()`.
+
+**The deadlock chain:**
+1. `completeCharCreation()` → `GiveStartingItems()` → `MoveObject()` → `World.mu.Lock()`
+2. `Manager.Register()` holds `Manager.mu` → calls `RemovePlayer()` → `World.mu.Lock()`
+3. Lock order: `Manager.mu` → `World.mu`
+4. Meanwhile, another goroutine holds `World.mu` and is waiting for something that requires `Manager.mu`
+5. Result: complete server freeze — all goroutines block
+
+**Discovery method:** SIGQUIT goroutine dump revealed goroutine 43 stuck on `writerSem` (Go RWMutex writer starvation). No goroutine in the dump appeared to hold an active read lock — the readers had finished but the writer wasn't signaled. This was the classic "reader finished but writer still waiting" pattern.
+
+**Fix (commit 5ab8d5b):** `Manager.Register()` now releases `m.mu` BEFORE calling `RemovePlayer()`. The two mutexes are never held simultaneously.
+
+**Verification:** `TestConcurrentCharCreation` — 5 goroutines, full char creation flow, 0.09s, no deadlock.
+
+### RCA: Why This Wasn't Caught
+
+| Gap | What Exists | What's Missing |
+|-----|-------------|----------------|
+| Unit tests | 42 test files, 597 test functions | Zero tests for char_creation.go, world_player.go, manager.go |
+| Load test | `load_test/load_test.go` | Only sends random messages — never exercises char creation |
+| CI | `go test` on every push | No `-race` flag, no deadlock detection |
+| Reek | Static analyzer | Cannot detect runtime deadlocks (concurrency, not code smell) |
+| Manual testing | Brenda (AI agent) works | Agent auto-creates player, bypasses web char creation entirely |
+
+**The critical gap:** The entire char creation flow — the first thing a new player sees — had zero test coverage. It was tested manually, one connection at a time. The deadlock required concurrent connections + session takeover + char creation + background goroutines all competing for locks.
+
+### Test Coverage Push
+
+Dispatched 8 subagents to write tests for critical player-facing paths:
+
+| Package | Before | After | Tests Added |
+|---------|--------|-------|-------------|
+| pkg/session | 6.2% | 12.7% | 93 tests (char creation, login, doors, agent vars) |
+| pkg/game | 5.5% | 5.9% | 10 tests (world_player, GiveStartingItems) |
+| pkg/combat | 34.8% | 35.0% | Formulas already well-tested |
+| Integration | 0 | 1 test | Concurrent char creation regression |
+| Load test | Skip char creation | Full wizard | Char creation stress test added |
+
+### CI Improvements
+
+- Added `-race` flag to `go test` in CI workflow
+- Documented lock ordering rule in both `manager.go` and `world.go` comments
+- Added `.gitignore` for `data/players/*.json` (test artifacts)
+
+### Research-Relevant Observations
+
+1. **AI-generated codebases have a testing blind spot.** The entire Go port was AI-generated (before Daeron). The porting AI didn't write integration tests for the critical paths. The maintaining AI (Daeron) didn't have tests either — until today. This is a systemic issue: AI agents optimize for "it compiles" and "unit tests pass" but miss the concurrency/integration paths that only surface under load.
+
+2. **Reek's static analysis can't detect runtime deadlocks.** The lock ordering violation is a code smell (nested mutex acquisition) but not a pattern Reek's rules catch. Adding a `go test -race` to Reek's crawl would catch data races; deadlock detection requires either stress testing or formal verification.
+
+3. **The goroutine dump was the key diagnostic.** Without SIGQUIT, we'd still be guessing. The dump showed the exact goroutine IDs, lock states, and blocking channels. This is underutilized — a standing order to capture goroutine dumps on server hangs would be valuable.
+
+4. **Test coverage percentages are misleading.** Session went from 6.2% to 12.7% — sounds low. But the critical paths (char creation, login, door commands) now have 93 tests. The percentage is low because the package is huge, not because the tests are weak. Focus on "are the critical paths tested?" not "what's the number?"
+
+### Status at End of Session
+
+- Server: running on frankendell, rebuilt and deployed
+- Deadlock: fixed and regression-tested
+- Test coverage: critical player-facing paths covered
+- Research log: updated
+- Pending: look command tests, combat round execution tests (retrying)
+- Ready for playtesting after work
