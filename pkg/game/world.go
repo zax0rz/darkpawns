@@ -34,7 +34,7 @@ type CommandExecFunc func(ch *Player, command string) bool
 // LOCK ORDERING: w.mu must be acquired BEFORE m.mu (Manager) if both are
 // needed. Never call Manager methods while holding w.mu unless you are
 // certain they don't acquire m.mu. See Manager.Register() comment for
-details.
+// details.
 type World struct {
 	mu sync.RWMutex
 
