@@ -295,6 +295,7 @@ type PerformanceMonitor struct {
 	profiler *Profiler
 	interval time.Duration
 	stopChan chan struct{}
+	once     sync.Once
 	metrics  []PerformanceMetric
 }
 
@@ -358,7 +359,7 @@ func (pm *PerformanceMonitor) collectMetrics() {
 
 // Stop stops the performance monitor
 func (pm *PerformanceMonitor) Stop() {
-	close(pm.stopChan)
+	pm.once.Do(func() { close(pm.stopChan) })
 }
 
 // GetMetrics returns collected metrics
