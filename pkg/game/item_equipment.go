@@ -122,7 +122,7 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 			ch.SendMessage("You can't wield that.\r\n")
 			return
 		}
-		if obj.GetWeight() > 50 { // simplified str_app check
+		if obj.GetWeight() > ch.MaxWieldWeight() {
 			ch.SendMessage("It is too heavy for you to use.\r\n")
 			return
 		}

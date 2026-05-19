@@ -383,7 +383,25 @@ func (p *Player) MaxCarryWeight() int {
 	return strCarry[str]
 }
 
-// UpdateActivity marks the player as active.
+// MaxWieldWeight returns the maximum weight this player can wield.
+// Source: act.item.c:1492 — str_app[STRENGTH_APPLY_INDEX(ch)].wield_w
+// Table from constants.c str_app[] (4th column is wield_w):
+//   STR 0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10,
+//   11:11, 12:12, 13:13, 14:14, 15:15, 16:16, 17:18, 18:20,
+//   19:40, 20:40, 21:40, 22:40, 23:40, 24:40, 25:40,
+//   18/01-50:22, 18/51-75:24, 18/76-90:26, 18/91-99:28, 18/100:30
+func (p *Player) MaxWieldWeight() int {
+	// Index 0-25 = STR 0-25, 26-30 = 18/01-50 through 18/100
+	strWield := [...]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 40, 40, 40, 40, 40, 40, 40, 22, 24, 26, 28, 30}
+	str := p.Strength
+	if str < 0 {
+		return 0
+	}
+	if str >= len(strWield) {
+		str = len(strWield) - 1
+	}
+	return strWield[str]
+}
 
 // HasBoat returns true if the player has a boat item in inventory or equipment.
 // C source: act.movement.c has_boat() — checks ITEM_BOAT wear flag.
