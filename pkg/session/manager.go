@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"sync"
@@ -48,7 +49,12 @@ var upgrader = websocket.Upgrader{
 
 		origin := r.Header.Get("Origin")
 		if origin == "" {
-			// H-13: No Origin header in production — reject direct WS connections
+			// Allow Docker-internal connections (private IPs) without Origin header.
+			// Agent containers connect from 172.x/10.x/192.168.x ranges inside Docker.
+			host, _, _ := net.SplitHostPort(r.RemoteAddr)
+			if ip := net.ParseIP(host); ip != nil && ip.IsPrivate() {
+				return true
+			}
 			slog.Warn("rejected WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
 			return false
 		}
