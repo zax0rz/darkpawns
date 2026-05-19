@@ -178,6 +178,7 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options map[string]
 
 // completeCharCreation finalizes character creation and enters the world.
 func (s *Session) completeCharCreation() error {
+	slog.Info("completeCharCreation: ENTERED", "player", s.charName)
 	// Create the player with collected attributes
 	s.player = game.NewCharacter(0, s.charName, s.charClass, s.charRace)
 	s.player.Stats = s.charStats
@@ -262,6 +263,7 @@ func (s *Session) completeCharCreation() error {
 	}
 
 	// Send welcome with token
+	slog.Info("completeCharCreation: calling sendWelcome", "player", s.player.Name)
 	s.sendWelcome(token)
 
 	// Broadcast arrival
