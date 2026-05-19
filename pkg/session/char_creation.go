@@ -253,11 +253,9 @@ func (s *Session) completeCharCreation() error {
 	if err != nil {
 		slog.Error("failed to generate JWT token", "error", err)
 	}
-	slog.Info("completeCharCreation: JWT generated", "player", s.player.Name)
 
 	// Send welcome with token
 	s.sendWelcome(token)
-	slog.Info("completeCharCreation: welcome sent", "player", s.player.Name)
 
 	// Broadcast arrival
 	enterMsg, err := json.Marshal(ServerMessage{

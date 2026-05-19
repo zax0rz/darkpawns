@@ -9,7 +9,6 @@ import (
 import "github.com/zax0rz/darkpawns/pkg/game"
 
 func (s *Session) sendWelcome(token string) {
-	slog.Info("sendWelcome: start", "player", s.player.Name, "room", s.player.GetRoom())
 	roomVNum := s.player.GetRoom()
 	room, ok := s.manager.world.GetRoom(roomVNum)
 	if !ok || room == nil {
