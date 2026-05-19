@@ -253,7 +253,9 @@ func (s *Session) completeCharCreation() error {
 	}
 
 	// Send welcome with token
+	slog.Info("completeCharCreation: sending welcome", "player", s.charName)
 	s.sendWelcome(token)
+	slog.Info("completeCharCreation: welcome sent", "player", s.charName)
 
 	// Broadcast arrival
 	enterMsg, err := json.Marshal(ServerMessage{
