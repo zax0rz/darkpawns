@@ -42,9 +42,9 @@ var upgrader = websocket.Upgrader{
 
 		// Production: validate against allowed origins
 		allowedOrigins := []string{
+			"https://darkpawns.labz0rz.com",
 			"https://darkpawns.example.com",
 			"https://game.darkpawns.example.com",
-			// Add your production domains here
 		}
 
 		origin := r.Header.Get("Origin")
