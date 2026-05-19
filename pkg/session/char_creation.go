@@ -182,6 +182,7 @@ func (s *Session) completeCharCreation() error {
 	// Create the player with collected attributes
 	s.player = game.NewCharacter(0, s.charName, s.charClass, s.charRace)
 	s.player.Stats = s.charStats
+	slog.Info("completeCharCreation: player created", "player", s.charName, "class", s.charClass, "race", s.charRace)
 
 	// Set sex
 	s.player.Sex = s.charSex
