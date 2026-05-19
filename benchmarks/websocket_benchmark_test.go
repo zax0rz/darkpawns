@@ -1,4 +1,4 @@
-package main
+package benchmarks
 
 import (
 	"encoding/json"
@@ -108,13 +108,12 @@ func BenchmarkWebSocketBroadcast(b *testing.B) {
 	server = httptest.NewServer(handler)
 	defer server.Close()
 
-	// Connect clients
+	// Connect clients (handler registers them in the clients slice)
 	for i := 0; i < numClients; i++ {
-		conn, _, err := websocket.DefaultDialer.Dial("ws"+server.URL[4:]+"/ws", nil)
+		_, _, err := websocket.DefaultDialer.Dial("ws"+server.URL[4:]+"/ws", nil)
 		if err != nil {
 			b.Fatal(err)
 		}
-		clients = append(clients, conn)
 	}
 
 	// Start broadcast goroutine
