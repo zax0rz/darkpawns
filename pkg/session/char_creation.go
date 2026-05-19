@@ -178,11 +178,9 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options map[string]
 
 // completeCharCreation finalizes character creation and enters the world.
 func (s *Session) completeCharCreation() error {
-	slog.Info("completeCharCreation: ENTERED", "player", s.charName)
 	// Create the player with collected attributes
 	s.player = game.NewCharacter(0, s.charName, s.charClass, s.charRace)
 	s.player.Stats = s.charStats
-	slog.Info("completeCharCreation: player created", "player", s.charName, "class", s.charClass, "race", s.charRace)
 
 	// Set sex
 	s.player.Sex = s.charSex
@@ -204,41 +202,32 @@ func (s *Session) completeCharCreation() error {
 	}
 
 	// Save to DB if available
-	slog.Info("charDB: pre-save", "player", s.charName, "hasDB", s.manager.hasDB)
 	if s.manager.hasDB {
-		slog.Info("charDB: PlayerToRecord")
 		if r, err := db.PlayerToRecord(s.player, nil); err == nil {
+			// Apply the hashed password collected during login
 			r.Password = s.charPassword
-			slog.Info("charDB: CreatePlayer")
 			if err := s.manager.db.CreatePlayer(r); err != nil {
 				slog.Error("DB create error during char creation", "error", err)
 			} else {
 				s.player.ID = r.ID
-				slog.Info("charDB: calling GiveStartingItems")
+				// Give starting items
 				s.manager.world.GiveStartingItems(s.player)
-				slog.Info("charDB: calling GiveStartingSkills")
 				game.GiveStartingSkills(s.player)
-				slog.Info("charDB: skills done")
 			}
-		} else {
-			slog.Error("PlayerToRecord failed", "error", err)
 		}
 	} else {
+		// Give starting items
 		s.manager.world.GiveStartingItems(s.player)
 		game.GiveStartingSkills(s.player)
 	}
-	slog.Info("charDB: post-save")
 
 	// Register and add to world
 	s.authenticated = true
 	s.playerName = s.charName
 
-	slog.Info("charDB: pre-Register")
 	if err := s.manager.Register(s.charName, s); err != nil {
-		slog.Error("Register failed", "error", err)
 		return err
 	}
-	slog.Info("charDB: registered")
 
 	if err := s.manager.world.AddPlayer(s.player); err != nil {
 		s.manager.Unregister(s.charName)
@@ -272,7 +261,6 @@ func (s *Session) completeCharCreation() error {
 		slog.Error("failed to generate JWT token", "error", err)
 	}
 
-	slog.Info("charDB: pre-sendWelcome")
 	// Send welcome with token
 	s.sendWelcome(token)
 
