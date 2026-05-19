@@ -199,15 +199,13 @@ func main() {
 
 	// Log buffer for admin operations panel — captures slog output in-memory
 	logBuffer := admin.NewLogBuffer(1000)
-	// Wire slog to also write to the buffer
-	// NOTE: slog.SetDefault with a wrapping handler deadlocks in Go 1.26+
-	// because the default logger's internal mutex creates a lock ordering issue.
-	// Instead, create a separate logger for the buffer.
-	baseHandler := slog.Default().Handler()
-	bufferLogger := slog.New(admin.NewSlogHandler(baseHandler, logBuffer))
-	// Assign to a package-level var that admin routes can use for buffer capture
-	// without replacing the global default logger.
-	_ = bufferLogger // used by admin panel log streaming
+	// Wire slog to also write to the buffer.
+	// We use a fresh TextHandler writing to os.Stderr as the base, NOT
+	// slog.Default().Handler(), because SetDefault with a wrapping handler
+	// that references the old default creates a recursive lock in Go 1.26+.
+	baseHandler := slog.NewTextHandler(os.Stderr, nil)
+	logHandler := admin.NewSlogHandler(baseHandler, logBuffer)
+	slog.SetDefault(slog.New(logHandler))
 
 	adminRouter := admin.NewRouter(gameWorld, auditLogger, logBuffer, database)
 	// Health endpoint is unauthenticated — registered before the auth-wrapped catch-all
