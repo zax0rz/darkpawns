@@ -237,7 +237,14 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return nil
 	}
 
+	// Capture pre-state for decision log
+	preState := s.capturePlayerState()
+	startTime := time.Now()
+
 	err := ExecuteCommand(s, cmd.Command, cmd.Args)
+
+	// Log decision to database (DP-213)
+	s.captureAndLog(cmd.Command, cmd.Args, preState, startTime, err)
 
 	// H-25: Proactive JWT refresh — if token is within refresh window,
 	// generate a new one and push it to the client.

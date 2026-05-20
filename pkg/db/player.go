@@ -148,7 +148,16 @@ func (db *DB) createTables() error {
 	`
 
 	_, err := db.conn.Exec(query)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Decision capture tables (DP-213)
+	if err := db.createDecisionLogTables(); err != nil {
+		return fmt.Errorf("create decision log tables: %w", err)
+	}
+
+	return nil
 }
 
 // CreateAgentKey generates a new agent API key for the given character.

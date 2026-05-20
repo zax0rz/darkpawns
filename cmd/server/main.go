@@ -120,6 +120,16 @@ func main() {
 	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
 	manager.SetDreamingDir("data/dreaming")           // Dreaming layer output (memory summaries)
+
+	// Decision capture (DP-213) — enabled when database is available
+	if database != nil {
+		if err := database.EnsureDecisionLogPartitions(); err != nil {
+			slog.Warn("failed to create decision log partitions", "error", err)
+		}
+		dlw := database.NewDecisionLogWriter()
+		manager.SetDecisionLog(dlw)
+		slog.Info("decision capture enabled")
+	}
 	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
 	manager.SetScriptDeathFunc()                     // Enable mob death scripts on kill
 	manager.SetOnRoundEnd()                          // Decrement wait states each combat round

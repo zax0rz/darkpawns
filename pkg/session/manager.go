@@ -100,6 +100,10 @@ type Manager struct {
 	// dreamingDir is the path to the dreaming layer's output directory.
 	// Agent memory summaries are read from {dreamingDir}/{agent_id}/memory-summary.txt.
 	dreamingDir string
+
+	// decisionLog is the write buffer for decision capture (DP-213).
+	// nil when decision capture is disabled.
+	decisionLog *db.DecisionLogWriter
 }
 
 // ModerationChecker defines the moderation interface the session layer needs.
@@ -333,6 +337,11 @@ func (m *Manager) SetCommandExecFunc() {
 // Agent memory summaries are read from {dir}/{agent_id}/memory-summary.txt.
 func (m *Manager) SetDreamingDir(dir string) {
 	m.dreamingDir = dir
+}
+
+// SetDecisionLog enables decision capture with the given writer.
+func (m *Manager) SetDecisionLog(dlw *db.DecisionLogWriter) {
+	m.decisionLog = dlw
 }
 
 // HandleWebSocket upgrades HTTP to WebSocket and manages the session.
@@ -599,6 +608,9 @@ type Session struct {
 	// Agents must implement their own circuit breakers for LLM-level loop detection.
 	// See scripts/dp_bot.py for reference implementation.
 	limiter *rate.Limiter
+
+	// Decision capture: incremented per command for turn_number in decision log
+	commandCount int
 
 	// Temporary data storage for command handlers
 	tempData map[string]interface{}
