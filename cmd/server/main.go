@@ -225,7 +225,7 @@ func main() {
 			slog.Warn("admin health write failed", "error", err)
 		}
 	})
-	http.Handle("/admin/", web.AuthMiddleware(adminRouter))
+	http.Handle("/admin/", adminRouter)
 
 	// Track zone reset goroutine for graceful shutdown
 	var wg sync.WaitGroup
