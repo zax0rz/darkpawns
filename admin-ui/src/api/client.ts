@@ -90,6 +90,16 @@ export interface Room {
   flags: string[];
 }
 
+export interface LiveAgentSession {
+  player_name: string;
+  harness: string;
+  model: string;
+  version: string;
+  connected_at: string;
+  room_vnum: number;
+  level: number;
+}
+
 export interface AgentStatus {
   agent_id: string;
   name: string;
@@ -215,6 +225,7 @@ export const api = {
   logs: (lines?: number) => request<string[]>(`/logs?lines=${lines || 50}`),
   players: () => request<PlayerInfo[]>('/players'),
   agents: () => request<AgentStatus[]>('/agents'),
+  liveAgentSessions: () => request<LiveAgentSession[]>('/sessions/agents'),
   updateAgentStatus: (data: { agent_id: string; status: string }) =>
     request<AgentStatus>('/agents/status', { method: 'POST', body: JSON.stringify(data) }),
   findings: (params?: { status?: string; severity?: string; source?: string }) => {

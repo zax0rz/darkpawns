@@ -207,7 +207,7 @@ func main() {
 	logHandler := admin.NewSlogHandler(baseHandler, logBuffer)
 	slog.SetDefault(slog.New(logHandler))
 
-	adminRouter := admin.NewRouter(gameWorld, auditLogger, logBuffer, database)
+	adminRouter := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager)
 	// Health endpoint is unauthenticated — registered before the auth-wrapped catch-all
 	http.HandleFunc("/admin/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

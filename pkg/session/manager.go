@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -622,6 +623,34 @@ type Session struct {
 
 	// sendOnce ensures s.send is closed exactly once across all disconnect paths.
 	sendOnce sync.Once
+}
+
+// LiveAgentSession is already defined in admin package.
+// GetLiveAgentSessions returns info about all active agent sessions.
+// Implements admin.LiveSessionProvider interface.
+// Safe to call concurrently.
+func (m *Manager) GetLiveAgentSessions() []admin.LiveAgentSession {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	sessions := make([]admin.LiveAgentSession, 0)
+	for _, s := range m.sessions {
+		if s.isAgent {
+			info := admin.LiveAgentSession{
+				PlayerName:  s.playerName,
+				Harness:     s.agentHarness,
+				Model:       s.agentModel,
+				Version:     s.agentVersion,
+				ConnectedAt: s.connectedAt.Format(time.RFC3339),
+			}
+			if s.player != nil {
+				info.RoomVNum = s.player.GetRoom()
+				info.Level = s.player.GetLevel()
+			}
+			sessions = append(sessions, info)
+		}
+	}
+	return sessions
 }
 
 // readPump reads messages from the WebSocket.

@@ -11,7 +11,8 @@ import (
 )
 
 // NewRouter creates an admin HTTP handler with role-protected endpoints.
-func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB) http.Handler {
+// liveSessions is the session manager (or nil to disable live session endpoints).
+func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions LiveSessionProvider) http.Handler {
 	mux := http.NewServeMux()
 
 	// Rate limiter for admin endpoints
@@ -83,6 +84,11 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	mux.HandleFunc("/admin/findings", wrap(corsMiddleware(requireRole("builder", handleFindings(agentStore)))))
 	mux.HandleFunc("/admin/findings/", wrap(corsMiddleware(requireRole("builder", handleFindingByID(agentStore)))))
 	mux.HandleFunc("/admin/triage/summaries", wrap(corsMiddleware(requireRole("builder", handleTriageSummaries(agentStore)))))
+
+	// Live agent sessions — requires builder role, shows connected game agents
+	if liveSessions != nil {
+		mux.HandleFunc("/admin/sessions/agents", wrap(corsMiddleware(requireRole("builder", handleLiveAgentSessions(liveSessions)))))
+	}
 
 	return mux
 }

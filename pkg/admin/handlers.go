@@ -1495,6 +1495,38 @@ func handleZoneReset(world *game.World) http.HandlerFunc {
 	}
 }
 
+// LiveAgentSession is the JSON shape returned by the live agent sessions endpoint.
+type LiveAgentSession struct {
+	PlayerName  string `json:"player_name"`
+	Harness     string `json:"harness"`
+	Model       string `json:"model"`
+	Version     string `json:"version"`
+	ConnectedAt string `json:"connected_at"`
+	RoomVNum    int    `json:"room_vnum"`
+	Level       int    `json:"level"`
+}
+
+// LiveSessionProvider is the interface admin needs from the session manager
+// to show live agent sessions.
+type LiveSessionProvider interface {
+	GetLiveAgentSessions() []LiveAgentSession
+}
+
+// handleLiveAgentSessions returns all active agent sessions in the game server.
+func handleLiveAgentSessions(provider LiveSessionProvider) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		sessions := provider.GetLiveAgentSessions()
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(sessions)
+	}
+}
+
 // handleAgents returns all agent statuses.
 func handleAgents(store *AgentStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

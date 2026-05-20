@@ -1310,7 +1310,7 @@ func TestNewRouter_CORS_Headers(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	handler := NewRouter(w, nil, lb, nil)
+	handler := NewRouter(w, nil, lb, nil, nil)
 
 	// OPTIONS preflight
 	req := httptest.NewRequest(http.MethodOptions, "/admin/zones", nil)
@@ -1337,7 +1337,7 @@ func TestNewRouter_Unauthenticated_Returns401(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	handler := NewRouter(w, nil, lb, nil)
+	handler := NewRouter(w, nil, lb, nil, nil)
 	// No auth middleware wrapper — requireRole checks context directly
 
 	// Endpoints that require auth should return 401 without claims on context.
@@ -1379,7 +1379,7 @@ func TestNewRouter_Forbidden_BuilderAccess(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil)
+	router := NewRouter(w, nil, lb, nil, nil)
 	handler := authMiddlewareForTest(router)
 
 	// Generate a "player" role token
@@ -1414,7 +1414,7 @@ func TestNewRouter_AuthenticatedBuilder_Success(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil)
+	router := NewRouter(w, nil, lb, nil, nil)
 	handler := authMiddlewareForTest(router)
 	token := generateTestToken(t, "builder")
 
@@ -1433,7 +1433,7 @@ func TestNewRouter_AuthenticatedAdmin_SuccessOnAdminEndpoints(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil)
+	router := NewRouter(w, nil, lb, nil, nil)
 	handler := authMiddlewareForTest(router)
 	token := generateTestToken(t, "admin")
 
@@ -1455,7 +1455,7 @@ func TestNewRouter_CORS_NoOrigin(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil)
+	router := NewRouter(w, nil, lb, nil, nil)
 	handler := authMiddlewareForTest(router)
 
 	// Request without Origin (e.g. server-side curl) — no CORS headers
@@ -1479,7 +1479,7 @@ func TestNewRouter_InvalidToken(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil)
+	router := NewRouter(w, nil, lb, nil, nil)
 	handler := authMiddlewareForTest(router)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
@@ -1501,7 +1501,7 @@ func TestNewRouter_RateLimit(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil)
+	router := NewRouter(w, nil, lb, nil, nil)
 	handler := authMiddlewareForTest(router)
 	token := generateTestToken(t, "builder")
 

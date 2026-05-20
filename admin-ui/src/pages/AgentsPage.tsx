@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, type AgentStatus, type Finding } from '../api/client';
+import { api, type AgentStatus, type Finding, type LiveAgentSession } from '../api/client';
 
 function timeAgo(dateStr: string): string {
   const now = new Date();
@@ -87,6 +87,25 @@ function FindingRow({ finding }: { finding: Finding }) {
   );
 }
 
+function LiveAgentRow({ session }: { session: LiveAgentSession }) {
+  const connectedAgo = timeAgo(session.connected_at);
+  return (
+    <tr className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
+      <td className="px-4 py-3 text-white font-mono text-sm">{session.player_name}</td>
+      <td className="px-4 py-3">
+        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-900 text-green-300 border border-green-700">
+          connected
+        </span>
+      </td>
+      <td className="px-4 py-3 text-slate-300 font-mono text-xs">{session.harness}</td>
+      <td className="px-4 py-3 text-slate-300 font-mono text-xs">{session.model}</td>
+      <td className="px-4 py-3 text-slate-400 text-xs">{session.level > 0 ? `Lvl ${session.level}` : '—'}</td>
+      <td className="px-4 py-3 text-slate-400 text-xs">Room {session.room_vnum}</td>
+      <td className="px-4 py-3 text-slate-400 text-xs">{connectedAgo}</td>
+    </tr>
+  );
+}
+
 export function AgentsPage() {
   const [filterSource, setFilterSource] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -96,6 +115,12 @@ export function AgentsPage() {
     queryKey: ['agents'],
     queryFn: api.agents,
     refetchInterval: 30000,
+  });
+
+  const { data: liveSessions, isLoading: liveLoading } = useQuery({
+    queryKey: ['liveAgentSessions'],
+    queryFn: api.liveAgentSessions,
+    refetchInterval: 5000,
   });
 
   const { data: findings, isLoading: findingsLoading, error: findingsError } = useQuery({
@@ -112,6 +137,39 @@ export function AgentsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-white">AI Agents</h1>
+
+      {/* Live Game Agent Sessions */}
+      <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-700">
+          <h2 className="text-sm font-medium text-slate-300">Live Game Sessions</h2>
+        </div>
+        {liveLoading ? (
+          <div className="p-6 text-center text-slate-500 animate-pulse">Loading live sessions...</div>
+        ) : liveSessions && liveSessions.length > 0 ? (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-700 text-xs text-slate-400 uppercase tracking-wider">
+                <th className="text-left px-4 py-3">Player</th>
+                <th className="text-left px-4 py-3">Status</th>
+                <th className="text-left px-4 py-3">Harness</th>
+                <th className="text-left px-4 py-3">Model</th>
+                <th className="text-left px-4 py-3">Level</th>
+                <th className="text-left px-4 py-3">Room</th>
+                <th className="text-left px-4 py-3">Connected</th>
+              </tr>
+            </thead>
+            <tbody>
+              {liveSessions.map((session) => (
+                <LiveAgentRow key={session.player_name} session={session} />
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="p-6 text-center text-slate-500 text-sm">
+            No agents currently connected to the game server.
+          </div>
+        )}
+      </div>
 
       {/* Agent Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
