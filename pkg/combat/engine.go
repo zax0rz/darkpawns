@@ -57,6 +57,11 @@ type CombatEngine struct {
 
 	// OnRoundEnd is called after each combat round. Used for wait state decrement.
 	OnRoundEnd func()
+
+	// OnCombatAction is called after each attack in a combat round.
+	// Captures: attacker, defender, attack_type, damage, outcome, target state.
+	// Used by decision capture (DP-213) for the combat_log table.
+	OnCombatAction func(attacker Combatant, defender Combatant, attackType string, damage int, outcome string, targetCount int)
 }
 
 // NewCombatEngine creates a new combat engine
@@ -275,6 +280,9 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 				ce.BroadcastFunc(attacker.GetRoom(),
 					fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's blow!", defender.GetName(), attacker.GetName()), "")
 			}
+			if ce.OnCombatAction != nil {
+				ce.OnCombatAction(attacker, defender, "parry", 0, "parry", 0)
+			}
 			continue
 		}
 
@@ -286,6 +294,9 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 			if ce.BroadcastFunc != nil {
 				ce.BroadcastFunc(attacker.GetRoom(),
 					fmt.Sprintf("%s dodges %s's attack!", defender.GetName(), attacker.GetName()), "")
+			}
+			if ce.OnCombatAction != nil {
+				ce.OnCombatAction(attacker, defender, "dodge", 0, "dodge", 0)
 			}
 			continue
 		}
@@ -303,9 +314,17 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		// Send combat messages
 		ce.sendHitMessage(attacker, defender, damage)
 
+		// Log combat action
+		if ce.OnCombatAction != nil {
+			ce.OnCombatAction(attacker, defender, "hit", damage, "hit", 0)
+		}
+
 		// Check for death
 		if defender.GetHP() <= 0 {
 			ce.handleDeath(defender, attacker)
+			if ce.OnCombatAction != nil {
+				ce.OnCombatAction(attacker, defender, "hit", damage, "killed", 0)
+			}
 			ce.StopCombat(attacker.GetName())
 			break
 		}
