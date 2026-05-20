@@ -42,6 +42,9 @@ COPY --from=builder /app/server .
 # Copy web client files
 COPY web/ ./web/
 
+# Copy admin UI dist (pre-built React SPA)
+COPY admin-ui/dist/ ./admin-ui-dist/
+
 # Copy Python scripts and install dependencies
 COPY --from=python-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=python-builder /app/scripts ./scripts

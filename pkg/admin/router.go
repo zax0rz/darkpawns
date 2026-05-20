@@ -95,6 +95,17 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		mux.HandleFunc("/admin/decisions", wrap(corsMiddleware(requireRole("builder", handleDecisionLog(database)))))
 	}
 
+	// Serve admin UI static files (SPA fallback)
+	// This must be registered LAST so API routes take priority.
+	adminUIDir := os.Getenv("ADMIN_UI_DIR")
+	if adminUIDir == "" {
+		adminUIDir = "admin-ui-dist"
+	}
+	if _, err := os.Stat(adminUIDir); err == nil {
+		mux.HandleFunc("/admin", serveAdminUI(adminUIDir))
+		mux.HandleFunc("/admin/", serveAdminUI(adminUIDir))
+	}
+
 	return mux
 }
 
@@ -143,5 +154,31 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		next(w, r)
+	}
+}
+
+// serveAdminUI serves the React SPA from the admin-ui-dist directory.
+// For any path that doesn't match an API route or a static file, it serves
+// index.html (SPA fallback for client-side routing).
+func serveAdminUI(distDir string) http.HandlerFunc {
+	fs := http.FileServer(http.Dir(distDir))
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		// If the request path matches a static file, serve it
+		path := r.URL.Path
+		if path == "/admin" {
+			path = "/admin/"
+		}
+
+		// Check if the file exists
+		filePath := distDir + path
+		if info, err := os.Stat(filePath); err == nil && !info.IsDir() {
+			fs.ServeHTTP(w, r)
+			return
+		}
+
+		// SPA fallback — serve index.html for client-side routing
+		r.URL.Path = "/"
+		fs.ServeHTTP(w, r)
 	}
 }

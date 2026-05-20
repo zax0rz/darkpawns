@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, type PlayerDetail } from '../api/client';
+import { api } from '../api/client';
 import { useToast } from './Toast';
 
 const classNames: Record<number, string> = {
