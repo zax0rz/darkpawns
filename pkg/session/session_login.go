@@ -40,23 +40,18 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return nil
 	}
 
-	// Agent auth path — mode="agent" with api_key
-	if login.Mode == "agent" && login.APIKey != "" {
-		if !s.manager.hasDB {
-			s.sendError("agent auth requires database")
-			_ = s.conn.Close()
-			return nil
-		}
-		charName, keyID, valid := s.manager.db.ValidateAgentKey(login.APIKey)
-		if !valid {
-			s.sendError("invalid agent key")
-			_ = s.conn.Close()
-			return nil
-		}
-		// Use character name from the key — ignore login.PlayerName for security
-		login.PlayerName = charName
+	// Agent identity declaration — agents play by the same rules as humans.
+	// Server tags the session for observation, but gameplay is identical.
+	if login.IsAgent {
 		s.isAgent = true
-		s.agentKeyID = keyID
+		s.agentHarness = login.Harness
+		s.agentModel = login.Model
+		s.agentVersion = login.Version
+		slog.Info("agent identity declared",
+			"harness", login.Harness,
+			"model", login.Model,
+			"player", login.PlayerName,
+		)
 	}
 
 	if login.PlayerName == "" {
@@ -110,46 +105,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			}
 			s.player = p
 			s.authenticated = true
-		} else if s.isAgent {
-			// Agent authenticated but no player record — auto-create with defaults
-			rec := &db.PlayerRecord{
-				Name:      login.PlayerName,
-				RoomVNum:  8004,
-				Level:     1,
-				Exp:       1,
-				Health:    10,
-				MaxHealth: 10,
-				Mana:      100,
-				MaxMana:   100,
-				Move:      100,
-				MaxMove:   100,
-				Strength:  10,
-				StatStr:   10,
-				StatInt:   10,
-				StatWis:   10,
-				StatDex:   10,
-				StatCon:   10,
-				StatCha:   10,
-				Hunger:    24,
-				Thirst:    24,
-			}
-			if err := s.manager.db.CreatePlayer(rec); err != nil {
-				slog.Error("agent auto-create player failed", "player", login.PlayerName, "error", err)
-				s.sendError("Failed to create agent player.")
-				_ = s.conn.Close()
-				return nil
-			}
-			p, err := db.RecordToPlayer(rec, s.manager.world)
-			if err != nil {
-				slog.Error("agent RecordToPlayer failed", "player", login.PlayerName, "error", err)
-				s.sendError("Failed to load agent player.")
-				_ = s.conn.Close()
-				return nil
-			}
-			s.player = p
-			s.authenticated = true
-		} else {
+		} else if login.NewChar {
 			// New character — require password, then enter creation flow
+			// This applies to BOTH humans and agents. Same rules.
 			if login.Password == "" {
 				s.sendError("Password required for new characters.")
 				_ = s.conn.Close()
@@ -163,6 +121,10 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				return nil
 			}
 			s.charPassword = string(hashedPwd)
+			s.startCharCreation(login.PlayerName)
+			return nil
+		} else {
+			// Player doesn't exist and new_char not set — start creation
 			s.startCharCreation(login.PlayerName)
 			return nil
 		}

@@ -83,11 +83,12 @@ func (a *AgentClient) Connect(ctx context.Context) error {
 	login := map[string]any{
 		"type": "login",
 		"data": map[string]any{
-			"player_name":    "",
-			"api_key":        a.Cfg.EffectiveKey(),
-			"mode":           "agent",
-			"context_budget": a.Cfg.Tier,
-			"valence":        a.Cfg.Valence,
+			"player_name": a.Cfg.PlayerName,
+			"password":    a.Cfg.EffectiveKey(), // API key used as password for agent auth
+			"new_char":    false,                 // agent characters pre-created
+			"is_agent":    true,
+			"harness":     "dp-agent",
+			"model":       a.Cfg.ModelFast,
 		},
 	}
 	if err := conn.WriteJSON(login); err != nil {

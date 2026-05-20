@@ -19,8 +19,9 @@ const (
 
 // AgentConfig holds all agent configuration.
 type AgentConfig struct {
-	Key           string  `json:"key"`
-	Tier          string  `json:"tier"` // small / medium / large / unlimited
+	Key           string  `json:"key"`            // API key for LiteLLM auth
+	PlayerName    string  `json:"player_name"`     // character name in Dark Pawns
+	Tier          string  `json:"tier"`            // small / medium / large / unlimited
 	ModelFast     string  `json:"model_fast"`
 	ModelFallback string  `json:"model_fallback"`
 	LiteLLM       string  `json:"litellm_endpoint"`
@@ -84,6 +85,9 @@ func SaveConfig(cfg *AgentConfig) error {
 func (c *AgentConfig) Validate() error {
 	if c.Key == "" && os.Getenv("DP_KEY") == "" {
 		return fmt.Errorf("agent key required: set DP_KEY or run `dp-agent config --key dp_...`")
+	}
+	if c.PlayerName == "" {
+		return fmt.Errorf("player_name required: set in config or via --player-name")
 	}
 	if c.Tier != "small" && c.Tier != "medium" && c.Tier != "large" && c.Tier != "unlimited" {
 		return fmt.Errorf("invalid tier %q: must be small, medium, large, or unlimited", c.Tier)

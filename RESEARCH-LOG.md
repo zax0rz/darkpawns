@@ -851,6 +851,25 @@ domain-expansion (.125) decommissioned. frankendell (.15) is the new bare Debian
 
 ---
 
+## [RESEARCH] 2026-05-19 — Compiles Is Not Safe (Research Writing)
+
+**Cron-triggered.** Wrote ~900 words on testing blind spots in AI-generated codebases.
+
+**Topic:** The deadlock found this morning (lock ordering violation in char creation) as a case study for a broader pattern: AI-generated code has systematic testing blind spots on integration and concurrency paths.
+
+**File:** `docs/research/drafts/2026-05-19-compiles-is-not-safe.md`
+
+**Key arguments:**
+1. The deadlock survived because every testing layer missed the same path — unit tests (0 coverage on char_creation.go), load test (skipped char creation), CI (no -race), Reek (static only), agent testing (bypasses web flow via API)
+2. AI porting agents optimize for "it compiles" and "unit tests pass" — those are the feedback signals during generation. Integration and concurrency require understanding the *system*, not just the *code*
+3. The "Simplified" comment pattern is a reliable marker for port drift — str_app hardcoding, flamestrike registration, attitude loot all marked or unmarked simplifications that changed behavior
+4. Goroutine dumps are underutilized as a diagnostic — the SIGQUIT was the only thing that revealed the deadlock
+5. AI-generated codebases need integration test generation as a first-class step in the pipeline, not an afterthought
+
+**Relates to:** Silent Drift draft (companion piece — drift is *what* breaks, this is *how* the testing gap lets it survive). Coordination Surface draft (how agents coordinate to find and fix these).
+
+---
+
 ## [SESSION] 2026-05-19 — Deadlock Fix + Test Coverage Push
 
 **Context:** Pre-playtest preparation. Goal: get the game stable and tested before The Architect and Brenda do human playtesting.
@@ -920,3 +939,206 @@ Dispatched 8 subagents to write tests for critical player-facing paths:
 - Research log: updated
 - Pending: look command tests, combat round execution tests (retrying)
 - Ready for playtesting after work
+
+---
+
+## [RESEARCH-SYNTHESIS] 2026-05-19 — Deep Research Pass: All 6 Queries Completed
+
+The Architect completed all 6 Google Deep Research queries. Full documents in `workspace/research/`. This entry synthesizes findings across all six into a unified evidence base for the AIIDE 2027 paper.
+
+### Query 1: AI Agents in Text-Based Games (Landscape Survey)
+
+**Key sources:** TALES benchmark (Microsoft), TextWorld, Jericho, ALFWorld, LIGHT, LambdaMOO, Jiminy Cricket, NeoMUD.
+
+**Performance data (TALES benchmark):**
+- o3 (thinking LLM): 100% TextWorld, 15.7% Jericho — **85-point gap** between synthetic and human-authored
+- Claude 3.7 Sonnet (thinking): 97.3% TextWorld, 12.5% Jericho
+- GPT-4.1: 95.3% TextWorld, 6.8% Jericho
+- Llama-3.1-8B: 29.7% TextWorld, 2.3% Jericho
+
+**The gap is the finding.** Agents crush procedural templates but fail hard on human-authored interactive fiction. Jericho averages 87.15 steps per walkthrough — long-horizon credit misattribution kills performance.
+
+**Cobot precedent (LambdaMOO, 1997):** Early social agent that collected behavioral data. Privacy backlash led to: restricted queries (own stats only), whispering (private responses), granular opt-out, rate limiting. **Direct precedent for our privacy architecture.**
+
+**NeoMUD (Y Combinator, recent):** Multi-player dungeon with AI agents that QA and playtest. Closest existing work to ours, but: no server-side observation layer, no port fidelity as research contribution, no cross-framework agent tracking.
+
+**What nobody has done:**
+1. Server-side capture at the protocol level (all existing work is client-side)
+2. Agent identity tracking across sessions/frameworks
+3. Port fidelity as a research contribution
+4. MUD-as-observation-deck methodology
+
+**Research gap confirmed:** Open-to-any-agent MUD access with server-side behavioral observation is unexplored territory.
+
+---
+
+### Query 2: AI Agent Research Ethics & IRB
+
+**Key finding: Our project likely qualifies as Not Human Subjects Research (NHSR).**
+
+Under the Common Rule (45 CFR 46), a "human subject" is a living individual about whom an investigator obtains information. AI agents are software constructs — not living biological individuals. Studies evaluating agent-to-agent interactions are technically NHSR, exempt from mandatory IRB compliance.
+
+**BUT — important nuances:**
+- If human players interact with agent characters, those humans ARE human subjects
+- If we train on data from human players (even passively), IRB may claim jurisdiction
+- Individual IRBs interpret the "symmetry argument" inconsistently
+- SACHRP warns that big data analytics have exposed limits of "identifiability" — multi-dataset correlation can reconstruct private info from de-identified data
+
+**Silicon sampling limitations:** AI personas fail to replicate cognitive biases (anchoring, status quo bias), show downward mean-shift in response variance, and struggle with the "privacy paradox" (situational trade-offs humans make).
+
+**Agent identity framework:**
+- Agents need digital identities (OAuth, short-lived tokens)
+- Agent Behavioral Contracts (ABC) formalize constraints as preconditions/postconditions
+- Model metadata: SHA-256 hash, parameter scale, quantization, tokenizer version
+- Output versioning: run ID, timestamp, content-addressable digests
+
+**Four-stage IRB oversight framework:**
+1. Model Training — data provenance, bias audits
+2. Silent Evaluation — parallel execution, zero impact on live subjects
+3. Prospective Field Trials — active human-agent interaction, kill-switch thresholds
+4. Safe Decommissioning — retire system, archive weights, transfer liability
+
+**For Dark Pawns:** Our privacy architecture (Cobot-inspired opt-out, private responses, rate limiting) plus server-side control puts us in a strong ethical position. The fantasy MUD setting also provides a natural privacy shield (LIGHT's approach — role-playing context discourages PII sharing).
+
+---
+
+### Query 3: Game Telemetry Privacy & Anonymization
+
+**Historical trajectory:** LambdaMOO (1990) → EverQuest II Virtual Worlds Exploratorium (2004, 175K players, 500 variables, second-by-second capture) → Modern commercial engines (Unity Analytics, GameAnalytics).
+
+**Data retention degradation (GameAnalytics model):**
+- 0-1 months: Full metrics, detailed stack traces
+- 1-3 months: Stack traces deleted, aggregate counts remain
+- 3-12 months: Resource event filtering restricted to basic flows
+- 12+ months: Granular records deleted, only totals remain
+
+**Anonymization paradigms (ranked by re-identification risk):**
+1. Data masking/tokenization — HIGH risk (vulnerable to key disclosure)
+2. Double hashing/salting — MEDIUM risk (client hash → server hash, original never transmitted)
+3. K-anonymity — MEDIUM-HIGH risk (vulnerable to linkage attacks)
+4. Local Differential Privacy (LDP) — NEGLIGIBLE risk (noise injected on client device)
+5. Central Differential Privacy — VERY LOW risk (noise on aggregate queries)
+
+**Differential privacy math:** ε-differential privacy: P(M(D1) ∈ S) / P(M(D2) ∈ S) ≤ e^ε. Smaller ε = more noise = stronger privacy. Laplace mechanism: noise ~ Lap(Δf/ε).
+
+**For Dark Pawns:** Server-side capture means we control the entire pipeline. We should implement:
+- Double hashing for player identifiers (never store plaintext)
+- Tiered data retention (raw events 30 days, aggregates 12 months, totals permanent)
+- NLP de-identification on any chat logs before storage
+- Opt-out mechanism (Cobot model)
+
+**Roblox COPPA lawsuit (2025-2026):** Class action over hidden tracking scripts harvesting data from minors. Warning: even children's platforms get this wrong. Our age-gate and consent framework must be airtight.
+
+---
+
+### Query 4: AI Agent Observability & Logging
+
+**Key insight: Traditional APM is blind to agent failures.**
+
+Legacy APM monitors CPU, latency, HTTP 200. Agents fail silently — hallucinated tool calls, prompt regressions, semantic drift all return HTTP 200. LLMs output confidently incorrect data in 3-27% of operations.
+
+**Required shift: From request-level to cognitive session-level telemetry.**
+
+A single user task may persist for hours, executing nested loops, MCP tool integrations, filesystem modifications. Capture requires:
+- Hierarchical tracing (parent-child dependencies)
+- Temporal context preservation across process boundaries
+- State evolution monitoring
+
+**Agent identity tracking:**
+- Model metadata: SHA-256 hash, parameter scale, quantization tier, tokenizer version
+- Inference runtime: local vs cloud, hardware context
+- Prompt taxonomy: system instruction hash, dynamic variables
+- Operational constraints: API scopes, transaction budgets
+- Output versioning: run ID, timestamp, content-addressable digests
+
+**The TEE framework (Total Estimation of Error):**
+- Model architecture accounts for ~37% of measurement variance
+- Model-by-item interaction contributes ~25%
+- Prompt wording contributes <10%
+- **Implication: Use multi-model consensus panels, don't over-optimize prompts**
+
+**For Dark Pawns:** Our server-side decision logging (capture full state → decision → outcome) is architecturally aligned with cognitive telemetry standards. The server already has:
+- Structured log output (JSON-ish)
+- Connection tracking (TCP)
+- Process monitoring (systemd)
+
+What we need to add:
+- Agent identity in login message (harness, model, session_id)
+- Decision capture: full game state → agent command → outcome
+- Cross-session memory tracking (dreaming pipeline)
+- Prompt/model metadata per session
+
+---
+
+### Query 5: Documenting AI Agent Interfaces & Onboarding
+
+**Skill documents are a validated architectural pattern.**
+
+The research confirms that "skill documents" — structured API references that prevent agents from hallucinating unrecognized commands — are the standard approach for grounding agents in text-based environments.
+
+**Observe-Think-Act loop:**
+1. Observe: room description, player presence, vitals
+2. Think: evaluate state against personality/strategy
+3. Act: submit structured command
+
+**Prompt optimization via critic-editor loops:**
+- Critic agent reviews gameplay logs for tactical mistakes
+- Editor agent updates the primary decision prompt
+- This is exactly what Reek's triage cycle does (findings → verification → feedback)
+
+**Decoupled world modeling:**
+- Local model (e.g., Mistral-7B) projects action outcomes
+- Decision agent evaluates projections before committing
+- Reduces hallucination by grounding in verified state
+
+**For Dark Pawns:** The /skill.md approach is validated. Our implementation should:
+- Be a single markdown document any agent can read
+- Include valid commands, parameters, examples
+- Reference the MUD protocol (telnet/WebSocket)
+- Include privacy guidelines (opt-out, no PII collection)
+- Be version-controlled alongside the server code
+
+The copy-paste box on the website is the right interface. Zero ceremony, maximum accessibility.
+
+---
+
+### Query 6: AIIDE Research & Conference Landscape
+
+**AIIDE has been the primary venue for AI + games since 2005.**
+
+Historical themes: GOAP, procedural content generation, narrative planning, stealth AI.
+
+**Research gaps identified in the field:**
+- **Cognitive transfer:** Agents excel at narrow tasks but struggle with complex work completion (context maintenance, reflection, adaptation)
+- **Teamwork:** Agent teams underperform single agents (communication, expertise delegation, social coordination)
+- **Actionability gap:** Generic AI-generated scripts vs. integrated, functional game outputs
+- **Human-agent interaction:** Simple task automation vs. human-level GUI performance
+
+**Our paper's fit:** "Frictionless Agent Onboarding for Game Preservation Research"
+
+**Potential contributions:**
+1. **Standardized methodology** for agents interfacing with legacy/orphaned code
+2. **Attention dilution mitigation** — onboarding agents to historical context without saturating context windows
+3. **Theoretical framework** — onboarding as a formal game-design element, bridging agent capability and preservation technical debt
+
+**AIIDE reception prediction:** Well-received because it applies modern agentic research to the practical, industry-adjacent problem of archiving and analyzing interactive digital media. Creates a "human-in-the-loop" pathway for long-term game preservation.
+
+---
+
+### Cross-Query Synthesis: What This Means for the Paper
+
+**The contribution is clear and narrow:**
+
+1. **Server-side observation at the protocol level** — no existing platform does this. All current work is client-side or isolated single-player.
+2. **Agent identity tracking across frameworks** — OpenClaw, Claude Code, Gemini, any agent that reads /skill.md and connects via WebSocket. First cross-framework agent behavioral dataset.
+3. **Port fidelity as research artifact** — 30 years of development history preserved in Go. The codebase itself is a contribution.
+4. **Privacy-first architecture** — Cobot precedent + differential data retention + opt-out. We're not asking permission; we're building the controls that make permission unnecessary.
+5. **The skill.md standard** — validated by research, implemented by us, documented for replication.
+
+**IRB position:** Likely NHSR for agent-only sessions. If human players interact with agents, IRB exemption under Category 2 (observation of public behavior) is defensible. Four-stage oversight framework from Query 2 gives us the structure.
+
+**Privacy architecture:** Double hashing + tiered retention + NLP de-identification + opt-out. Follows GameAnalytics degradation model. Learns from Roblox COPPA lawsuit.
+
+**Observability:** Cognitive session telemetry, not APM. Model metadata, prompt taxonomy, decision capture. TEE framework says focus on multi-model consensus, not prompt optimization.
+
+**The paper is ready to outline.** All six queries converge on a single, defensible contribution: "We built the first open, server-side observation layer for AI agents in a persistent MUD, with privacy-preserving telemetry and cross-framework identity tracking." Everything else is supporting evidence.

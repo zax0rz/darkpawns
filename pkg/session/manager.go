@@ -553,10 +553,14 @@ type Session struct {
 	authenticated bool
 	connCountDecremented bool // C5: prevents double-decrement of IP connection count
 
-	// Agent auth — set on login when mode="agent"
-	isAgent     bool
-	agentKeyID  int64
-	connectedAt time.Time // set on session creation, used for sessionID()
+	// Agent identity — set on login when is_agent=true.
+	// Harness+Model is the agent identity. Same combo = same agent across sessions.
+	isAgent      bool
+	agentHarness string    // e.g. "openclaw", "claude-code"
+	agentModel   string    // e.g. "mimo-v2.5-base"
+	agentVersion string    // harness version
+	agentKeyID   int64     // legacy: kept for backward compat, deprecated
+	connectedAt  time.Time // set on session creation, used for sessionID()
 
 	// H-25: JWT token rotation state
 	tokenIssuedAt time.Time // when the current JWT was issued
