@@ -120,6 +120,14 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		mux.HandleFunc("/admin/decisions", wrap(corsMiddleware(requireRole("builder", handleDecisionLog(database)))))
 	}
 
+	// SPA fallback — this MUST be registered last, after all API routes.
+	// Catches any /admin/* path that didn't match an API route above.
+	if _, err := os.Stat(adminUIDir); err == nil {
+		mux.HandleFunc("/admin/", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, adminUIDir+"/index.html")
+		})
+	}
+
 	return mux
 }
 
