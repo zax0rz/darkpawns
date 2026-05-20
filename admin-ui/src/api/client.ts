@@ -100,6 +100,41 @@ export interface LiveAgentSession {
   level: number;
 }
 
+export interface DecisionRow {
+  id: number;
+  ts: string;
+  session_id: string;
+  player_name: string;
+  is_agent: boolean;
+  agent_harness: string | null;
+  agent_model: string | null;
+  turn_number: number | null;
+  session_elapsed: number | null;
+  command: string;
+  command_class: string | null;
+  raw_input: string | null;
+  pre_room: number | null;
+  pre_health: number | null;
+  pre_max_health: number | null;
+  pre_mana: number | null;
+  pre_move: number | null;
+  pre_level: number | null;
+  pre_fighting: boolean | null;
+  pre_inv_count: number | null;
+  post_room: number | null;
+  post_health: number | null;
+  post_max_health: number | null;
+  post_mana: number | null;
+  post_move: number | null;
+  post_level: number | null;
+  post_fighting: boolean | null;
+  post_inv_count: number | null;
+  outcome_category: string;
+  outcome_value: number | null;
+  outcome_text: string | null;
+  duration_ms: number | null;
+}
+
 export interface AgentStatus {
   agent_id: string;
   name: string;
@@ -226,6 +261,17 @@ export const api = {
   players: () => request<PlayerInfo[]>('/players'),
   agents: () => request<AgentStatus[]>('/agents'),
   liveAgentSessions: () => request<LiveAgentSession[]>('/sessions/agents'),
+
+  // Decision log
+  decisions: (params?: { session_id?: string; player_name?: string; is_agent?: string; command?: string; command_class?: string; outcome?: string; harness?: string; room?: string; limit?: number; offset?: number; start?: string; end?: string }) => {
+    const qs = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== '') qs.set(k, String(v));
+      });
+    }
+    return request<{ total: number; limit: number; offset: number; data: DecisionRow[] }>(`/decisions${qs.toString() ? '?' + qs.toString() : ''}`);
+  },
   updateAgentStatus: (data: { agent_id: string; status: string }) =>
     request<AgentStatus>('/agents/status', { method: 'POST', body: JSON.stringify(data) }),
   findings: (params?: { status?: string; severity?: string; source?: string }) => {

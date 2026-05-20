@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
   { to: '/admin/game/mobs', label: 'Mobs', icon: '🐉', role: 'player' },
   { to: '/admin/game/objects', label: 'Objects', icon: '💎', role: 'player' },
   { to: '/admin/agents', label: 'Agents', icon: '🤖', role: 'builder' },
+  { to: '/admin/decisions', label: 'Decisions', icon: '📊', role: 'builder' },
   { to: '/admin/operations', label: 'Operations', icon: '⚙️', role: 'builder' },
   { to: '/admin/webclient', label: 'Terminal', icon: '🖥️', role: 'player' },
 ];

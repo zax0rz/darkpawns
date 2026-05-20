@@ -90,6 +90,11 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		mux.HandleFunc("/admin/sessions/agents", wrap(corsMiddleware(requireRole("builder", handleLiveAgentSessions(liveSessions)))))
 	}
 
+	// Decision log — requires builder role
+	if database != nil {
+		mux.HandleFunc("/admin/decisions", wrap(corsMiddleware(requireRole("builder", handleDecisionLog(database)))))
+	}
+
 	return mux
 }
 

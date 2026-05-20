@@ -12,6 +12,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -1524,6 +1525,188 @@ func handleLiveAgentSessions(provider LiveSessionProvider) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(sessions)
+	}
+}
+
+// handleDecisionLog queries the decision_log table with filters.
+func handleDecisionLog(database *db.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		q := r.URL.Query()
+		sessionID := q.Get("session_id")
+		playerName := q.Get("player_name")
+		isAgent := q.Get("is_agent")
+		command := q.Get("command")
+		commandClass := q.Get("command_class")
+		outcome := q.Get("outcome")
+		harness := q.Get("harness")
+		roomStr := q.Get("room")
+		limitStr := q.Get("limit")
+		offsetStr := q.Get("offset")
+		startTime := q.Get("start")
+		endTime := q.Get("end")
+
+		limit := 100
+		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 && v <= 1000 {
+			limit = v
+		}
+		offset := 0
+		if v, err := strconv.Atoi(offsetStr); err == nil && v >= 0 {
+			offset = v
+		}
+
+		where := []string{"1=1"}
+		args := make([]interface{}, 0)
+		argIdx := 1
+
+		if sessionID != "" {
+			where = append(where, fmt.Sprintf("session_id = $%d", argIdx))
+			args = append(args, sessionID)
+			argIdx++
+		}
+		if playerName != "" {
+			where = append(where, fmt.Sprintf("player_name = $%d", argIdx))
+			args = append(args, playerName)
+			argIdx++
+		}
+		if isAgent != "" {
+			where = append(where, fmt.Sprintf("is_agent = $%d", argIdx))
+			args = append(args, isAgent == "true")
+			argIdx++
+		}
+		if command != "" {
+			where = append(where, fmt.Sprintf("command = $%d", argIdx))
+			args = append(args, command)
+			argIdx++
+		}
+		if commandClass != "" {
+			where = append(where, fmt.Sprintf("command_class = $%d", argIdx))
+			args = append(args, commandClass)
+			argIdx++
+		}
+		if outcome != "" {
+			where = append(where, fmt.Sprintf("outcome_category = $%d", argIdx))
+			args = append(args, outcome)
+			argIdx++
+		}
+		if harness != "" {
+			where = append(where, fmt.Sprintf("agent_harness = $%d", argIdx))
+			args = append(args, harness)
+			argIdx++
+		}
+		if roomStr != "" {
+			if v, err := strconv.Atoi(roomStr); err == nil {
+				where = append(where, fmt.Sprintf("(pre_room = $%d OR post_room = $%d)", argIdx, argIdx+1))
+				args = append(args, v, v)
+				argIdx += 2
+			}
+		}
+		if startTime != "" {
+			where = append(where, fmt.Sprintf("ts >= $%d", argIdx))
+			args = append(args, startTime)
+			argIdx++
+		}
+		if endTime != "" {
+			where = append(where, fmt.Sprintf("ts <= $%d", argIdx))
+			args = append(args, endTime)
+			argIdx++
+		}
+
+		whereClause := strings.Join(where, " AND ")
+
+		// Count query
+		countQuery := fmt.Sprintf("SELECT COUNT(*) FROM decision_log WHERE %s", whereClause)
+		var total int
+		if err := database.SQLDB().QueryRow(countQuery, args...).Scan(&total); err != nil {
+			http.Error(w, `{"error":"count query failed"}`, http.StatusInternalServerError)
+			return
+		}
+
+		// Data query
+		dataQuery := fmt.Sprintf(`
+			SELECT id, ts, session_id, player_name, is_agent, agent_harness, agent_model,
+			       turn_number, session_elapsed,
+			       command, command_class, raw_input,
+			       pre_room, pre_health, pre_max_health, pre_mana, pre_move, pre_level, pre_fighting, pre_inv_count,
+			       post_room, post_health, post_max_health, post_mana, post_move, post_level, post_fighting, post_inv_count,
+			       outcome_category, outcome_value, outcome_text, duration_ms
+			FROM decision_log
+			WHERE %s
+			ORDER BY ts DESC
+			LIMIT $%d OFFSET $%d`, whereClause, argIdx, argIdx+1)
+		args = append(args, limit, offset)
+
+		rows, err := database.SQLDB().Query(dataQuery, args...)
+		if err != nil {
+			http.Error(w, `{"error":"query failed"}`, http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		type DecisionRow struct {
+			ID           int64    `json:"id"`
+			Ts           string   `json:"ts"`
+			SessionID    string   `json:"session_id"`
+			PlayerName   string   `json:"player_name"`
+			IsAgent      bool     `json:"is_agent"`
+			Harness      *string  `json:"agent_harness"`
+			Model        *string  `json:"agent_model"`
+			TurnNumber   *int     `json:"turn_number"`
+			Elapsed      *float64 `json:"session_elapsed"`
+			Command      string   `json:"command"`
+			CommandClass *string  `json:"command_class"`
+			RawInput     *string  `json:"raw_input"`
+			PreRoom      *int     `json:"pre_room"`
+			PreHealth    *int     `json:"pre_health"`
+			PreMaxHP     *int     `json:"pre_max_health"`
+			PreMana      *int     `json:"pre_mana"`
+			PreMove      *int     `json:"pre_move"`
+			PreLevel     *int     `json:"pre_level"`
+			PreFighting  *bool    `json:"pre_fighting"`
+			PreInv       *int     `json:"pre_inv_count"`
+			PostRoom     *int     `json:"post_room"`
+			PostHealth   *int     `json:"post_health"`
+			PostMaxHP    *int     `json:"post_max_health"`
+			PostMana     *int     `json:"post_mana"`
+			PostMove     *int     `json:"post_move"`
+			PostLevel    *int     `json:"post_level"`
+			PostFighting *bool    `json:"post_fighting"`
+			PostInv      *int     `json:"post_inv_count"`
+			Outcome      string   `json:"outcome_category"`
+			OutcomeVal   *int     `json:"outcome_value"`
+			OutcomeText  *string  `json:"outcome_text"`
+			DurationMs   *float64 `json:"duration_ms"`
+		}
+
+		results := make([]DecisionRow, 0)
+		for rows.Next() {
+			var row DecisionRow
+			err := rows.Scan(
+				&row.ID, &row.Ts, &row.SessionID, &row.PlayerName, &row.IsAgent,
+				&row.Harness, &row.Model, &row.TurnNumber, &row.Elapsed,
+				&row.Command, &row.CommandClass, &row.RawInput,
+				&row.PreRoom, &row.PreHealth, &row.PreMaxHP, &row.PreMana, &row.PreMove, &row.PreLevel, &row.PreFighting, &row.PreInv,
+				&row.PostRoom, &row.PostHealth, &row.PostMaxHP, &row.PostMana, &row.PostMove, &row.PostLevel, &row.PostFighting, &row.PostInv,
+				&row.Outcome, &row.OutcomeVal, &row.OutcomeText, &row.DurationMs,
+			)
+			if err != nil {
+				http.Error(w, `{"error":"scan failed"}`, http.StatusInternalServerError)
+				return
+			}
+			results = append(results, row)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"total":  total,
+			"limit":  limit,
+			"offset": offset,
+			"data":   results,
+		})
 	}
 }
 

@@ -17,6 +17,7 @@ import { MobEditPage } from './pages/MobEditPage';
 import { ObjectEditPage } from './pages/ObjectEditPage';
 import { ShopEditPage } from './pages/ShopEditPage';
 import { AgentsPage } from './pages/AgentsPage';
+import { DecisionsPage } from './pages/DecisionsPage';
 import { TerminalPage } from './pages/TerminalPage';
 import { OperationsPage } from './pages/OperationsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="/admin/game/objects/:vnum/edit" element={<ErrorBoundary><ObjectEditPage /></ErrorBoundary>} />
             <Route path="/admin/game/shops/:keeperVnum" element={<ErrorBoundary><ShopEditPage /></ErrorBoundary>} />
             <Route path="/admin/agents" element={<ErrorBoundary><AgentsPage /></ErrorBoundary>} />
+            <Route path="/admin/decisions" element={<ErrorBoundary><DecisionsPage /></ErrorBoundary>} />
             <Route path="/admin/operations" element={<ErrorBoundary><OperationsPage /></ErrorBoundary>} />
             <Route path="/admin/webclient" element={<ErrorBoundary><TerminalPage /></ErrorBoundary>} />
           </Route>
