@@ -1142,3 +1142,96 @@ Historical themes: GOAP, procedural content generation, narrative planning, stea
 **Observability:** Cognitive session telemetry, not APM. Model metadata, prompt taxonomy, decision capture. TEE framework says focus on multi-model consensus, not prompt optimization.
 
 **The paper is ready to outline.** All six queries converge on a single, defensible contribution: "We built the first open, server-side observation layer for AI agents in a persistent MUD, with privacy-preserving telemetry and cross-framework identity tracking." Everything else is supporting evidence.
+
+---
+
+## [SESSION] 2026-05-20 — Agent Layer Implementation Sprint
+
+**Session:** 52 | **Duration:** ~3 hours | **Commits:** 9
+
+### What Was Built
+
+Full agent observation pipeline implemented and deployed to production:
+
+1. **DP-231: Agent Identity Declaration** (`412518e`)
+   - Agents declare `is_agent`, `harness`, `model` in login message
+   - Server extracts identity from connection (human vs agent)
+   - Same auth flow as humans — no special treatment
+   - 497 lines added, 69 removed
+
+2. **DP-214: Agent Metadata in Session** (`a903122`)
+   - Agent metadata (harness, model) stored in Session struct
+   - `/admin/sessions/agents` API endpoint for live agent sessions
+   - Admin dashboard shows connected agents with identity metadata
+   - 147 lines added, 11 removed
+
+3. **DP-213: Decision Capture** (`663ddf0`, `158a0dd`, `abb8444`)
+   - PostgreSQL schema: `decision_log` (partitioned by month) + `combat_log`
+   - `DecisionLogWriter` with batched writes (100 records or 5s flush)
+   - Captures every command with pre/post state: room, health, mana, inventory
+   - Combat round capture: attacker, defender, damage, outcome, target state
+   - Query API with 8 filter dimensions + pagination
+   - Admin dashboard with color-coded decision viewer
+   - 6 indexes covering all query patterns
+   - Privacy-preserving: human names hashed, agent names plaintext
+   - ~1,350 lines across 3 commits
+
+4. **DP-212: skill.md** (`abb8444`)
+   - 181-line agent play guide for Dark Pawns
+   - WebSocket connection, auth, character creation
+   - Command reference, rules, privacy guidelines
+   - Live at `https://darkpawns.labz0rz.com/skill.md`
+
+5. **DP-218: Structured Logging** — completed via decision_log (same data)
+6. **DP-219: Double Hashing** — implemented in `HashPlayerName()`
+
+### Admin Panel Deployment
+
+- Built React admin UI for production (748KB JS, 48KB CSS)
+- Fixed auth flow: login + static files public, API routes require JWT
+- Deployed to frankendell via Docker Compose
+- Live at `https://darkpawns.labz0rz.com/admin/`
+
+### Deployment
+
+- All code pushed to `origin/main` (9 commits)
+- Docker image rebuilt and deployed on frankendell (.15)
+- PostgreSQL tables created (decision_log + combat_log with partitions)
+- Server running, zone resets complete, health check passing
+
+### Linear Status
+
+| Issue | Status |
+|---|---|
+| DP-231 | Done |
+| DP-214 | Done |
+| DP-213 | Done |
+| DP-212 | Done |
+| DP-218 | Done |
+| DP-219 | Done |
+| DP-224 | In Progress (ready for Brenda playtest) |
+
+### What's Left for DP-224
+
+Brenda playtest: connect via WebSocket, play for 30+ minutes, verify:
+- Identity tracked (harness, model, session_id)
+- Decision logs capture pre/post state for every command
+- Combat rounds logged with target state
+- Admin panel shows active session
+- No plaintext human player names in logs
+
+### Key Architectural Decisions
+
+1. **Same capture for agents and humans.** Agent sessions are tagged, but the mechanism is universal. Keeps code simple and data comparable.
+2. **Decision log IS the structured log.** No separate pipeline needed — PostgreSQL with indexes gives us everything.
+3. **Batched writes for performance.** 100 records or 5s flush, whichever comes first. In-memory buffer with goroutine.
+4. **Monthly partitions.** decision_log and combat_log auto-create partitions 2 months ahead.
+5. **Admin router handles auth internally.** Login and static files public, API routes require JWT. No outer auth middleware.
+
+### Paper-Relevant Notes
+
+- The decision capture schema is the core research artifact — every agent command with full game state
+- Combat log captures the "stumbling" data: how agents fail to inhabit a world built for humans
+- Cross-framework identity tracking (harness + model) enables comparative analysis
+- Privacy architecture (hashing, retention, opt-out) is defensible for IRB
+- skill.md is the standardized onboarding document — validated by research, implemented in production
