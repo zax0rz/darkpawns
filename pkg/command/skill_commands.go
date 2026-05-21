@@ -1287,7 +1287,7 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 		}
 	}
 
-	result := game.DoSerpentKick(ch, target)
+	result := game.DoSerpentKick(ch, target, world)
 	return sendSkillResult(s, ch, target, result)
 }
 

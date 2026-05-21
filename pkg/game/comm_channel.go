@@ -147,6 +147,8 @@ func (w *World) doWrite(ch *Player, me *MobInstance, cmd string, arg string) boo
 }
 
 // doPage -- port of do_page().
+// Extended: supports multiple targets as "page target1 target2 ... msg".
+// Source: act.comm.c lines 1107-1136 do_page() — extended for multi-target.
 func (w *World) doPage(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	arg = skipSpaces(arg)
 	if arg == "" {
@@ -154,27 +156,54 @@ func (w *World) doPage(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	// Format: target msg or multiple targets "target1 target2 msg"
-	// Simplified: single target
-	target, msg := halfChop(arg)
-	if target == "" {
+	// Parse targets: repeatedly halfChop to extract target names,
+	// last remaining word(s) is the message.
+	// Extended: C do_page() used half_chop for single target only;
+	// this Go version iterates for multi-target support.
+	targets := make([]string, 0)
+	remaining := arg
+	for {
+		tname, rest := halfChop(remaining)
+		if tname == "" {
+			break
+		}
+		// Check if there's more after this word
+		nextWord, _ := halfChop(rest)
+		if nextWord == "" {
+			// This is the last word — it's the message, not a target
+			break
+		}
+		targets = append(targets, tname)
+		remaining = rest
+	}
+
+	if len(targets) == 0 {
 		sendToChar(ch, "Page whom?\r\n")
 		return true
 	}
 
-	tch := w.getCharVis(ch, target)
-	if tch == nil {
-		sendToChar(ch, "No one by that name is playing.\r\n")
-		return true
-	}
-
+	msg := remaining
 	if msg == "" {
-		msg = fmt.Sprintf("%s pages you!\r\n", ch.Name)
-	} else {
-		tch.SendMessage(fmt.Sprintf("\r\n%s pages: '%s'\r\n", ch.Name, msg))
+		msg = fmt.Sprintf("%s pages you!", ch.Name)
 	}
 
-	sendToChar(ch, fmt.Sprintf("You page %s with '%s'\r\n", tch.Name, msg))
+	matched := make([]string, 0)
+	for _, tname := range targets {
+		tch := w.getCharVis(ch, tname)
+		if tch == nil {
+			sendToChar(ch, fmt.Sprintf("No one by that name is playing.\r\n"))
+			continue
+		}
+
+		tch.SendMessage(fmt.Sprintf("\r\n%s pages: '%s'\r\n", ch.Name, msg))
+		matched = append(matched, tch.Name)
+	}
+
+	if len(matched) > 0 {
+		sendToChar(ch, fmt.Sprintf("You page %s with '%s'\r\n",
+			strings.Join(matched, ", "), msg))
+	}
+
 	return true
 }
 

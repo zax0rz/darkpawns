@@ -367,8 +367,9 @@ func cmdWrite(s *Session, args []string) error {
 // Page
 // ---------------------------------------------------------------------------
 
-// cmdPage sends an urgent message to a remote player.
+// cmdPage sends an urgent message to one or more remote players.
 // Source: act.comm.c do_page() lines 1056-1084
+// Extended: supports multiple targets as "page target1 target2 ... msg"
 // Can reach any player, anywhere. Uses bell chars for urgency.
 func cmdPage(s *Session, args []string) error {
 	if len(args) < 2 {
@@ -376,25 +377,38 @@ func cmdPage(s *Session, args []string) error {
 		return nil
 	}
 
-	targetName := args[0]
-	message := strings.Join(args[1:], " ")
-
-	// Find target — get_char_vis (act.comm.c line 1070)
-	target, ok := s.manager.GetSession(targetName)
-	if !ok || target.player == nil {
-		s.Send("There is no such person in the game!")
-		return nil
-	}
+	// Multi-target: all args except the last are treated as target names.
+	// The last arg is the message (single word).
+	// Source extension: do_page() originally used half_chop for single target;
+	// this Go version iterates through multiple target names.
+	targetNames := args[:len(args)-1]
+	message := args[len(args)-1]
 
 	// Page message with bell chars for urgency — act.comm.c line 1068
 	// \007 is the bell character
 	pageText := fmt.Sprintf("\x07\x07*%s* %s", s.player.Name, message)
 
-	// Deliver to target
-	target.Send(pageText)
+	var matched []string
 
-	// Confirm to sender
-	s.Send(pageText)
+	for _, targetName := range targetNames {
+		// Find target — get_char_vis (act.comm.c line 1070)
+		target, ok := s.manager.GetSession(targetName)
+		if !ok || target.player == nil {
+			s.Send(fmt.Sprintf("No one by that name is playing.\r\n"))
+			continue
+		}
+
+		// Deliver to target
+		target.Send(pageText)
+		matched = append(matched, target.player.Name)
+	}
+
+	if len(matched) > 0 {
+		// Confirm to sender listing who was paged
+		s.Send(fmt.Sprintf("You page %s with '%s'\r\n",
+			strings.Join(matched, ", "), message))
+	}
+
 	return nil
 }
 

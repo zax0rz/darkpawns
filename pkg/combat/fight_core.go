@@ -69,6 +69,9 @@ var (
 	ApplyToGroupMembers         func(leaderName string, roomVNum int, fn func(name string))
 	PerformCommand              func(chName, cmd string)
 	BroadChatFunc               func(chName string, msg string)
+	// JunkInventoryItems is called by AttitudeLoot to discard cheap items ($GOLD_OBJ_COST <= 150)
+	// from the mob's inventory. The game layer provides this because it has direct object access.
+	JunkInventoryItems          func(chName string)
 	IsInRoom                    func(name string, roomVNum int) bool
 	IncreaseMaxStat              func(name string, stat string) // "hp", "mana", or "move"
 	HealAllPlayers               func()                     // Heal all connected players to full
@@ -1388,21 +1391,145 @@ func CounterProcs(ch Combatant) {
 // **********************************
 // 14. attitudeLoot()
 //
-// MED-021: Simplified from original Dark Pawns C code.
-// Original (fight.c:attitude_loot): junked unwanted items from corpse
-// then displayed one of 12 randomized brag messages.
-// Current Go version: "get all corpse" + fixed chat message.
-// TODO: Restore item junking (auto-junk junk-flagged items from corpse)
-// TODO: Restore randomized brag messages (12 variants per C source).
+// Port of fight.c:attitude_loot.
+// Loots corpse, junks cheap items in two passes (get → junk → wear → get → junk → wear),
+// and broadcasts one of 12 randomized brag messages for MOB_AGGR24/MOB_LOOTS attackers.
 // **********************************
 
 func AttitudeLoot(ch, victim Combatant) {
 	chName := ch.GetName()
+
+	// Phase 1: loot corpse
 	if PerformCommand != nil {
 		PerformCommand(chName, fmt.Sprintf("get all corpse of %s", victim.GetName()))
 	}
+
+	// C source (fight.c:1128): first junk pass — discard items with cost <= 150
+	if JunkInventoryItems != nil {
+		JunkInventoryItems(chName)
+	}
+
+	// C source (fight.c:1138): auto-wear anything wearable
+	if PerformCommand != nil {
+		PerformCommand(chName, "wear all")
+	}
+
+	// C source (fight.c:1139): second get — picks up items from worn containers
+	if PerformCommand != nil {
+		PerformCommand(chName, fmt.Sprintf("get all corpse of %s", victim.GetName()))
+	}
+
+	// C source (fight.c:1141): second junk pass
+	if JunkInventoryItems != nil {
+		JunkInventoryItems(chName)
+	}
+
+	// C source (fight.c:1156): auto-wear anything newly acquired
+	if PerformCommand != nil {
+		PerformCommand(chName, "wear all")
+	}
+
+	// C source (fight.c:1173-1248): brag messages — only for MOB_AGGR24 mobs (already filtered at call site)
+	// Additional early outs from C source: ch == victim (already handled at call site — chName != victimName)
+	// and !can_speak(ch) — we skip that here; if the mob can't speak, BroadChatFunc does nothing.
+	BragMessage(ch, victim)
+}
+
+// BragMessage sends one of 12 randomized brag messages matching the C source (fight.c:1173-1248).
+// The killer brags via BroadChatFunc if the victim is a player, or randomly (1-in-21) for mobs.
+func BragMessage(ch, victim Combatant) {
+	chName := ch.GetName()
+	victimName := victim.GetName()
+	victimIsNPC := victim.IsNPC()
+
+	// C source: if !IS_MOB(victim) || !number(0,20) — always brag on player kills,
+	// 1-in-21 chance on mob kills.
+	if victimIsNPC && rand.Intn(21) != 0 {
+		return
+	}
+
+	msg := pickBragMessage(chName, victimName, victimIsNPC, victim.GetSex())
+	if msg == "" {
+		return
+	}
+
 	if BroadChatFunc != nil {
-		BroadChatFunc(chName, "Grins wickedly as he picks your corpse.")
+		BroadChatFunc(chName, msg)
+	}
+}
+
+// pickBragMessage returns one of 12 brag messages matching the C source (fight.c:1173-1248).
+// Returns empty string if the killer shouldn't speak (certain messages skip mob kills).
+func pickBragMessage(chName, victimName string, victimIsNPC bool, victimSex int) string {
+	// Get alignment for case 5
+	alignment := 0
+	if GetAlignment != nil {
+		alignment = GetAlignment(chName)
+	}
+	isEvil := alignment <= -350
+
+	// Get kill count for case 6
+	kills := int64(0)
+	if GetKills != nil {
+		kills = GetKills(chName)
+	}
+
+	// Possessive pronoun matching C HSHR(victim) — sex of the victim
+	// C: 0=male, 1=female, 2=neutral (from SEX_* constants, matching player.go line 67)
+	var possessive string
+	switch victimSex {
+	case 0: // SEX_MALE
+		possessive = "his"
+	case 1: // SEX_FEMALE
+		possessive = "her"
+	default:
+		possessive = "its"
+	}
+
+	// Uniform random pick [1,12] matching C switch(number(1,12))
+	switch rand.Intn(12) + 1 {
+	case 1:
+		return fmt.Sprintf("I killed %s and looted %s stinkin' corpse!", victimName, possessive)
+	case 2:
+		return fmt.Sprintf("%s was tough, but had good eq...", victimName)
+	case 3:
+		return fmt.Sprintf("%s was easy xp.", victimName)
+	case 4:
+		return fmt.Sprintf("Muhahahaha... %s is dead!", victimName)
+	case 5:
+		if isEvil {
+			return "Now you will see that evil will always triumph, because good is dumb."
+		}
+		return fmt.Sprintf("%s is dead! R.I.P.", victimName)
+	case 6:
+		return fmt.Sprintf("Kill number %d: %s.", kills, victimName)
+	case 7:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("Oh, did that hurt, %s? *innocent stare*", victimName)
+	case 8:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("What the hell was %s doing out of newbie training?", victimName)
+	case 9:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("I think I finally found a use for that punk %s: fertilizer!", victimName)
+	case 10:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("Hrmm.. Is this your head, %s? *cackle*", victimName)
+	case 11:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("Hey %s, was that suicide or did you try to fight back?", victimName)
+	default:
+		return ""
 	}
 }
 

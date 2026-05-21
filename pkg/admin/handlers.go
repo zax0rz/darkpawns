@@ -1524,7 +1524,10 @@ func handleLiveAgentSessions(provider LiveSessionProvider) http.HandlerFunc {
 		sessions := provider.GetLiveAgentSessions()
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(sessions)
+		if err := json.NewEncoder(w).Encode(sessions); err != nil {
+		http.Error(w, "encoding error", http.StatusInternalServerError)
+		return
+	}
 	}
 }
 
@@ -1645,7 +1648,7 @@ func handleDecisionLog(database *db.DB) http.HandlerFunc {
 			http.Error(w, `{"error":"query failed"}`, http.StatusInternalServerError)
 			return
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 
 		type DecisionRow struct {
 			ID           int64    `json:"id"`
@@ -1701,12 +1704,15 @@ func handleDecisionLog(database *db.DB) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"total":  total,
 			"limit":  limit,
 			"offset": offset,
 			"data":   results,
-		})
+		}); err != nil {
+			http.Error(w, "encoding error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 

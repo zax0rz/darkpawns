@@ -324,16 +324,25 @@ func DoDetect(ch *Player, world *World) SkillResult {
 }
 
 // ---------------------------------------------------------------------------
-// DoSerpentKick — do_serpent_kick() simplified from new_cmds2.c
+// DoSerpentKick — do_serpent_kick() from new_cmds2.c lines 693-728
 // Special spinning kick. SKILL_SERPENT_KICK check.
 // Damage = level * 1.5. WAIT_STATE.
-// Simplified: single target version (no surrounding check).
+// Ported from C with all features: WAIT_STATE, IS_MOUNTED check,
+// improve_skill, training mob spawn (1/81 at level 19+).
+// C source: new_cmds2.c lines 693-728
 // ---------------------------------------------------------------------------
-func DoSerpentKick(ch *Player, target combat.Combatant) SkillResult {
+func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if ch.GetSkill(SkillSerpentKick) == 0 {
 		return SkillResult{
 			Success:     false,
 			MessageToCh: "You'd better leave all the martial arts to others.\r\n",
+		}
+	}
+
+	if isMounted(ch) {
+		return SkillResult{
+			Success:     false,
+			MessageToCh: "Dismount first!\r\n",
 		}
 	}
 
@@ -359,16 +368,30 @@ func DoSerpentKick(ch *Player, target combat.Combatant) SkillResult {
 			MessageToCh:   ActMessage("You try to kick $N with a serpent kick, but miss!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to serpent kick you, but misses!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to serpent kick $N, but misses!", chPronouns, &victPronouns, ""),
+			WaitCh:        2, // PULSE_VIOLENCE * 2 — C source: WAIT_STATE(ch, PULSE_VIOLENCE * 2)
 		}
 	}
 
 	dam := int(float64(ch.GetLevel()) * 1.5)
+
+	// Training mob spawn (C source: create_mobile(ch, 18221, GET_LEVEL(ch)+3, TRUE))
+	if ch.GetLevel() >= 19 {
+		// #nosec G404 — game RNG, not cryptographic
+// #nosec G404
+		if rand.Intn(81) == 0 {
+			_, _ = world.SpawnMobWithLevelI(18221, ch.GetRoom(), ch.GetLevel()+3)
+		}
+	}
+
+	improveSkill(ch, SkillSerpentKick)
+
 	return SkillResult{
 		Success:       true,
 		Damage:        dam,
 		MessageToCh:   ActMessage("Your serpent kick connects solidly with $N!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n hits you with a devastating serpent kick!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n hits $N with a powerful serpent kick!", chPronouns, &victPronouns, ""),
+		WaitCh:        2, // PULSE_VIOLENCE * 2 — C source: WAIT_STATE(ch, PULSE_VIOLENCE * 2)
 	}
 }
 

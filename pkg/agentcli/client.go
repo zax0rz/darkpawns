@@ -92,7 +92,7 @@ func (a *AgentClient) Connect(ctx context.Context) error {
 		},
 	}
 	if err := conn.WriteJSON(login); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("login send: %w", err)
 	}
 
@@ -101,11 +101,11 @@ func (a *AgentClient) Connect(ctx context.Context) error {
 		Data json.RawMessage `json:"data"`
 	}
 	if err := conn.ReadJSON(&resp); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("login read: %w", err)
 	}
 	if resp.Type == "error" {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("login rejected: %s", string(resp.Data))
 	}
 
@@ -349,7 +349,7 @@ func (a *AgentClient) finalizeSession() error {
 		)
 	}
 	if a.conn != nil {
-		a.conn.Close()
+		_ = a.conn.Close()
 	}
 	return nil
 }
