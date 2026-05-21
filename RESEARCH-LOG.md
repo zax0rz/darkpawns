@@ -1406,3 +1406,42 @@ Full CAN_SEE_OBJ visibility system ported from C:
 - DP-240: errcheck batch — DONE
 - DP-235: doWrite stub — OPEN
 - DP-237: DoDig naming — OPEN
+
+---
+
+## [DIGEST] 2026-05-21 — SEEP, Reek accuracy, quick wins
+
+### SEEP (State-Echo Error Protocol) — DP-233
+
+**Finding:** AI agents fail WebSocket protocols designed for stateful (human) clients because the protocol returns bare errors with no recovery information. When BRENDA/Machine sent wrong message types during character creation, the server returned `ErrNotAuthenticated` without telling them what state they were in or what to send next.
+
+**Root cause:** state-mismatch, not timing. Three distinct failure modes identified:
+- Mode A: Wrong message type during creation (no timing fix helps)
+- Mode B: Reconnect after `completeCharCreation` succeeded but before `state` arrived
+- Mode C: Self-kicking reconnect loop amplified by single-session policy
+
+**Fix (~80 lines Go, No new message types):**
+When the server sends an error, re-send the current expected prompt alongside it:
+- `charCreating` → re-send current char creation prompt for `s.charStage`
+- `!authenticated && !charCreating` → send login hint
+- `authenticated` → re-send current room state
+
+**Paper angle:** "We didn't change the protocol for agents — we made the protocol more honest about its state for all clients, and agents stopped getting lost." Legacy protocols designed for stateful clients need state-echo redundancy for stateless LLM partners. Model capability inversely correlates with required protocol robustness.
+
+### Reek Accuracy
+
+23 findings, 18 confirmed, 5 rejected. 22% false positive rate — best yet. Accuracy continuing to improve over ~10 weeks of triage cycles.
+
+### Port Fidelity Wins
+
+- doWrite (DP-242): Full port from C — level gating, editor flow, content size limits
+- DoDig (DP-243): C function name vs Go skill name collision resolved
+- Light system (DP-236): Complete CAN_SEE_OBJ chain — was completely inert
+
+### C-Fidelity Pattern
+
+Every fix cites C source file:line. Tracked as DP issues. The subagent pattern (parallel DeepSeek V4 Flash with citation-defined tasks) is the most reliable pipeline for fidelity fixes.
+
+### Board Status
+
+**0 open bugs.** All Reek findings through DP-243 resolved or cancelled. SEEP deployed to production.
