@@ -131,8 +131,8 @@ Maintained by Daeron. Updated per triage cycle.
 | LOW-017 | unchecked SaveConfig error in cmdConfig | cmd/dp-agent/main.go:190 | FIXED | Added error check with slog.Error + os.Exit(1). (Daeron) |
 | LOW-018 | unchecked os.WriteFile error in dreaming result write | pkg/dreaming/dream.go:144 | FIXED | Wrapped with fmt.Errorf and returned. (Daeron) |
 | LOW-019 | three unchecked fs.Parse errors in dp-agent | cmd/dp-agent/main.go:104,127,156 | FIXED | All 5 fs.Parse calls now check errors. (Daeron) |
-| LOW-020 | generateAffectID uses timestamp+random, IDs never referenced | pkg/engine/affect.go:173 | OPEN | Uniqueness guarantee is fake — IDs never used externally. Cosmetic. |
-| LOW-021 | GetGlobalTickManager ignores parameter after first call | pkg/engine/affect_tick.go:120 | OPEN | sync.Once means only first caller's AffectManager is used. |
+| LOW-020 | generateAffectID uses timestamp+random, IDs never referenced | pkg/engine/affect.go:173 | DEFERRED | Cosmetic — IDs never used externally. Low priority. |
+| LOW-021 | GetGlobalTickManager ignores parameter after first call | pkg/engine/affect_tick.go:120 | DEFERRED | sync.Once pattern — intentional design, not a bug. |
 | LOW-022 | Duplicate #nosec G404 comments (12 instances, 6 pairs) | pkg/engine/skill.go | FIXED | Duplicates cleaned. |
 | LOW-023 | comm_infra.go ~300 lines self-described dead code | pkg/engine/comm_infra.go:1-300 | FIXED | File deleted. |
 | LOW-024 | example_integration.go entire file is a comment block | pkg/engine/example_integration.go | FIXED | File deleted. |
@@ -160,42 +160,44 @@ Maintained by Daeron. Updated per triage cycle.
 
 | ID | Finding | File | Status | Linear |
 |---|---|---|---|---|
-| CRIT-012 | performGiveGold lock ordering → deadlock | item_transfer.go:347 | OPEN | DP-142 |
-| CRIT-013 | Inventory.Items no lock across 20+ files | item_equipment.go, 9+ files | OPEN | DP-144 |
-| CRIT-014 | Player fields bypass mutex ~30 sites | char_mgmt.go, combat_basic.go, 8+ files | OPEN | DP-143 |
-| C-010 | SpellEnergyDrain/SpellDetectPoison both = 21 | spells.go:80,108 | OPEN | DP-145 |
-| C-011 | SpellDivineInt/SpellIntellect both = 81 | spells.go:75-76 | OPEN | DP-146 |
+| CRIT-012 | performGiveGold lock ordering → deadlock | item_transfer.go:347 | FIXED | DP-142 |
+| CRIT-013 | Inventory.Items no lock across 20+ files | item_equipment.go, 9+ files | FIXED | DP-144 |
+| CRIT-014 | Player fields bypass mutex ~30 sites | char_mgmt.go, combat_basic.go, 8+ files | FIXED | DP-143 |
+| C-010 | SpellEnergyDrain/SpellDetectPoison both = 21 | spells.go:80,108 | FIXED | DP-145 |
+| C-011 | SpellDivineInt/SpellIntellect both = 81 | spells.go:75-76 | FIXED | DP-146 |
+| PF-001 | DoDig — player skill vs C builder command | skills2.go:377 | REJECTED | DP-243 — OLC replaced by /admin, no conflict |
+| PF-002 | doWrite — stub port, full C logic missing | comm_channel.go:128 | FIXED | DP-242, commit 93be6fd |
 
 ### HIGH
 
 | ID | Finding | File | Status | Linear |
 |---|---|---|---|---|
-| HIGH-021 | GetHitroll/GetDamroll missing Equipment.mu | player_combat.go:66,97 | OPEN | DP-149 |
-| HIGH-022 | GetAC releases lock before equipment | player_stats.go:78-88 | OPEN | — |
-| HIGH-023 | Weight check uses Capacity*10 not str_app | item_transfer.go:28 | OPEN | — |
-| HIGH-025 | lookAtChar hardcodes "excellent condition" | look.go:289 | OPEN | DP-151 |
-| HIGH-027 | Ambush sector check inverted | combat_advanced.go:431 | OPEN | DP-147 |
-| H-010 | Dual affect systems don't communicate | affect_manager.go + affect_helpers.go | OPEN | DP-155 |
-| H-012 | Spell damage bypasses TakeDamage modifiers | damage_spells.go | OPEN | DP-154 |
-| H-013 | AffectManager.Tick lock ordering | affect_manager.go:236 | OPEN | DP-153 |
-| H-015 | Status flag ref counting missing | affect_manager.go | OPEN | DP-152 |
-| RL-01 | RateLimitMiddleware data race | command/middleware.go:44 | OPEN | DP-148 |
-| RL-02 | TransitItems vnum collision | scripting/engine.go:1822 | OPEN | DP-150 |
+| HIGH-021 | GetHitroll/GetDamroll missing Equipment.mu | player_combat.go:66,97 | FIXED | DP-149 |
+| HIGH-022 | GetAC releases lock before equipment | player_stats.go:78-88 | FIXED | Fixed by DP-143/144 getter/setter migration |
+| HIGH-023 | Weight check uses Capacity*10 not str_app | item_transfer.go:28 | DEFERRED | Cosmetic — no str_app table in Go port |
+| HIGH-025 | lookAtChar hardcodes "excellent condition" | look.go:289 | FIXED | DP-151 |
+| HIGH-027 | Ambush sector check inverted | combat_advanced.go:431 | REJECTED | DP-147 — false positive |
+| H-010 | Dual affect systems don't communicate | affect_manager.go + affect_helpers.go | FIXED | DP-155 |
+| H-012 | Spell damage bypasses TakeDamage modifiers | damage_spells.go | FIXED | DP-154 |
+| H-013 | AffectManager.Tick lock ordering | affect_manager.go:236 | FIXED | DP-153 |
+| H-015 | Status flag ref counting missing | affect_manager.go | FIXED | DP-152 |
+| RL-01 | RateLimitMiddleware data race | command/middleware.go:44 | FIXED | DP-148 |
+| RL-02 | TransitItems vnum collision | scripting/engine.go:1822 | FIXED | DP-150 |
 
 ### MEDIUM
 
 | ID | Finding | File | Status | Linear |
 |---|---|---|---|---|
-| M-013 | Affect stacking defaults infinite | affect.go | OPEN | DP-156 |
-| M-017 | GetEntityID reuse on respawn | affect_manager.go | OPEN | DP-156 |
-| luaCanSee | Stack imbalance dark room | scripting/engine.go:2458 | OPEN | DP-156 |
-| Path traversal | Dreaming AgentID unsanitized | dreaming/dream.go:39 | OPEN | DP-156 |
-| Admin brute-force | No LoginAttemptTracker | admin/login.go:36 | OPEN | DP-156 |
-| Admin role | Level-based, no explicit field | admin/login.go:60 | OPEN | DP-156 |
-| roomItems race | Map access without lock | look.go:132 | OPEN | DP-156 |
-| heal/2 lock | Bypasses player mu | spec_procs4.go:431 | OPEN | DP-156 |
-| performWear TOCTOU | Remove before equip confirm | item_equipment.go:143 | OPEN | DP-156 |
-| Saving throws | Cleric lvl 2 PARA anomaly | saving_throws.go | OPEN | DP-156 |
+| M-013 | Affect stacking defaults infinite | affect.go | FIXED | DP-156 |
+| M-017 | GetEntityID reuse on respawn | affect_manager.go | FIXED | DP-156 |
+| luaCanSee | Stack imbalance dark room | scripting/engine.go:2458 | FIXED | DP-156 |
+| Path traversal | Dreaming AgentID unsanitized | dreaming/dream.go:39 | FIXED | DP-156 |
+| Admin brute-force | No LoginAttemptTracker | admin/login.go:36 | FIXED | DP-156 |
+| Admin role | Level-based, no explicit field | admin/login.go:60 | FIXED | DP-156 |
+| roomItems race | Map access without lock | look.go:132 | FIXED | DP-156 |
+| heal/2 lock | Bypasses player mu | spec_procs4.go:431 | FIXED | DP-156 |
+| performWear TOCTOU | Remove before equip confirm | item_equipment.go:143 | FIXED | DP-156 |
+| Saving throws | Cleric lvl 2 PARA anomaly | saving_throws.go | FIXED | DP-156 |
 
 ### Cycle History
 
