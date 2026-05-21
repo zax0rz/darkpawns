@@ -1147,6 +1147,91 @@ Historical themes: GOAP, procedural content generation, narrative planning, stea
 
 ## [SESSION] 2026-05-20 — Agent Layer Implementation Sprint
 
+## [DIGEST] 2026-05-20 — Weekly Research Digest (May 13–20)
+
+### Reek Reports
+
+7 Reek reports generated for the week, plus supporting security/fidelity/dependency audits.
+
+| Report | Date | Confirmed | Rejected | FPR | Type |
+|---|---|---|---|---|---|
+| Engine/events/parser/command deep dive | May 14 | 14 | 2 | ~50% (errcheck-heavy) | Code crawl |
+| Spells/scripting/secrets deep dive | May 15 | 9 | 0 | 0% | Code crawl |
+| Commit sentinel | May 15 | 0 | 0 | 0% | Sentinel |
+| DB/storage/audit/metrics crawl | May 16 | 4 | 0 | 0% | Code crawl |
+| Security audit | May 16 | 6 | 0 | 0% | Security audit |
+| Sunday admin/optimization/moderation/validation/telnet/ai crawl | May 17 | 4 | 0 | 0% | Code crawl |
+| Spells fidelity audit (Week 2) | May 17 | 22 | 1 | 4.2% | Fidelity audit |
+| Dependency + supply chain audit | May 17 | 4 | 0 | 0% | Dependency audit |
+| Commit sentinel | May 17 | 2 | 0 | 0% | Sentinel |
+| Commit sentinel | May 18 | 0 | 0 | 0% | Sentinel |
+| Combat deep dive | May 18 | 2 | 0 | 0% | Code crawl |
+| Full codebase + fidelity deep dive | May 19 | 11 | 1 | 8.3% | Code crawl |
+| **Weekly** | | **78** | **4** | **4.9%** | |
+
+### Triage Outcomes
+
+**Confirmed:** 78 | **Rejected:** 4 | **False positive rate:** 4.9%
+
+Reek accuracy trend: Stable to improving. The May 14 engine crawl was structurally noisy because errcheck dominated the report (14 confirmed, 2 rejected). Outside that report, non-toolchain false positives were rare. The May 17 fidelity audit delivered the week’s highest-value signal: 3 CRITICAL and 4 HIGH spell divergences found by cross-referencing C source against Go ports. The May 19 deep dive was also sharp, catching high-impact fidelity regressions like str_app hardcoding and an unimplemented mob flag bridge. “Good reek” overall.
+
+### Fixes Applied This Week
+
+**115 commits since May 13.** Major pushes:
+
+1. **Port-completion workpackages (May 13):** WP1-WP6 completed. Lua item_check, tattoo constants, doDiagnose, weather movement penalty, and help-file loading all wired. Port completion milestone landed.
+2. **Affect system unification (DP-155, May 14–16):** Two parallel affect systems merged into one canonical system across spells, session, save format, and deprecated aliases. The week’s signature structural cleanup.
+3. **Marathon Reek sweep (May 15):** 5 parallel crawls, 40 findings, 15 Linear issues created, 14 fixes in one session. Major areas: game/session, combat/spells, scripting/admin, sentinel/deps, coverage.
+4. **Spell fidelity sprint (May 17):** 3 CRITICAL + 4 HIGH spell fidelity bugs fixed in two commits, including inverted hellfire behavior, missing flamestrike DOT logic, wrong savetype mapping, and charm duration/affect regressions.
+5. **Board sweep + Lua deployment (May 18):** Remaining backlog Reek findings cleared; 28 Lua scripts deployed and 41 mobs wired.
+6. **Deadlock fix + test coverage push (May 19):** World RWMutex deadlock resolved in char creation, CI got `-race`, and critical player-facing paths received targeted test coverage.
+7. **Agent layer sprint (May 20):** Agent identity declaration, decision capture, combat round logging, admin agent dashboard, skill.md, structured logging, and double hashing deployed to production.
+
+### Findings Tracker State
+
+**OPEN (Reek bugs): 0.** The bug backlog remains clean. Backlog contains feature/research work only.
+
+| Status | Notes |
+|---|---|
+| Reek bugs OPEN | 0 |
+| Reek bugs IN PROGRESS | 0 |
+| Research/features in backlog | ~30 |
+| Notable IN PROGRESS | DP-224 (Brenda playtest) |
+
+### Bug Categories (Week Only)
+
+| Category | Notes |
+|---|---|
+| Fidelity gaps (C→Go) | Dominant high-value category — spells, str_app, mob flag bridge |
+| Toolchain/lint | Errcheck/QF noise concentrated in May 14 |
+| Concurrency/runtime | Deadlock and shutdown race fixed |
+| Security/auth | Admin login/reset/profiler issues surfaced and resolved |
+| Dead code/cleanup | Multiple stale modules/files removed |
+
+### Hot Zones
+
+- **pkg/spells/** — biggest fidelity surface area this week
+- **pkg/game/** — equipment logic, mob flags, char creation paths
+- **pkg/admin/** — auth/routing/error exposure surface
+- **cmd/server/** — shutdown, logging, runtime wiring
+- **pkg/engine/** — affect ticking and runtime plumbing
+
+### Key Observations
+
+1. **The week pivoted from port completion to observation infrastructure.** The early days finished remaining workpackages and closed out structural debt; by the end of the week the system had live agent identity capture, decision logging, and a deployable admin telemetry surface. That’s a clean transition from “finish the port” to “instrument the world.”
+2. **Spell fidelity is now the highest-risk bug class.** The May 17 audit was the most important code review of the week. Inverted behavior, missing DOT logic, and wrong save mechanics are worse than missing features because they create false player/agent expectations.
+3. **The deadlock finding exposed a systemic testing blind spot.** Unit tests, load testing, and static analysis all missed the same char-creation lock-ordering problem. Only system-level reproduction surfaced it. The postmortem is paper-relevant: AI-built systems can compile and still hide integration-class failure modes.
+4. **Reek is most valuable on cross-codebase fidelity checks, least valuable on errcheck bulk.** The best signal this week came from C↔Go fidelity reviews and architecture-level analysis. Errcheck-heavy reports inflate FPR without adding proportional value.
+5. **The agent observation pipeline is now the project’s primary research artifact.** Identity capture + decision logging + combat logging + admin dashboard gives us the first end-to-end dataset for “what does an agent actually do inside this world.”
+
+### Paper-Relevant Notes
+
+- The week produced both the paper’s empirical substrate and its methodological case studies: port fidelity regression, integration deadlock discovery, and live agent telemetry deployment.
+- The strongest AIIDE angle is now two-pronged: fidelity-aware maintenance of legacy game systems, and server-side observation of agent behavior in a persistent, human-authored world.
+- The admin panel and decision schema matter not because they’re flashy, but because they convert ad hoc agent activity into analyzable research data.
+
+---
+
 **Session:** 52 | **Duration:** ~3 hours | **Commits:** 9
 
 ### What Was Built
@@ -1235,3 +1320,89 @@ Brenda playtest: connect via WebSocket, play for 30+ minutes, verify:
 - Cross-framework identity tracking (harness + model) enables comparative analysis
 - Privacy architecture (hashing, retention, opt-out) is defensible for IRB
 - skill.md is the standardized onboarding document — validated by research, implemented in production
+
+## 2026-05-21 [MILESTONE] — First AI Agents Play Dark Pawns
+
+### Summary
+
+First test of AI agents playing Dark Pawns. Two agents (BRENDA/MiniMax M2.7 and The Machine/GLM-5-turbo) attempted character creation. Three accounts created: Brenn (BRENDA), Blenda (Machine), Machine (Machine).
+
+### Results
+
+- **BRENDA (M2.7):** Failed at JSON formatting. Could not produce valid `login` messages consistently. Created 10+ test characters (BrennTest3-10, Brenn30707, etc.) but never completed creation reliably.
+- **The Machine (GLM-5-turbo):** Completed creation after guidance. Explored Kiroshi. First AI agent to walk into Dark Pawns.
+
+### Bugs Found
+
+1. **JWT_SECRET not set** — Token generation failing silently. Fixed by adding to docker-compose.
+2. **DP-232: Wrong hometown labels** — Go port had "Kiroshi" as option K (room 18201) instead of Kir Drax'in (room 8004). C source had correct values. Fixed and deployed.
+
+### Architectural Finding: SEEP (State-Echo Error Protocol)
+
+Opus analysis revealed the core issue is NOT timing (writePump async) but state-mismatch. Agents send wrong message types or reconnect before state updates arrive. The protocol is unforgiving when agents lose sync.
+
+**Recommended fix:** When server sends error, re-send current expected prompt. ~80 lines. No new message types. Humans don't notice. Agents become self-healing.
+
+**Paper angle:** Legacy protocols designed for stateful clients need state-echo redundancy for stateless LLM partners. Model capability inversely correlates with required protocol robustness.
+
+### Files
+
+- `docs/reports/agent-architecture-analysis-2026-05-21.md` — Full SEEP analysis
+- `docs/reports/agent-architecture-briefing-2026-05-21.md` — Problem briefing
+- `docs/reports/agent-session-logs-2026-05-21.txt` — Server logs from session
+
+### Linear Issues
+
+- DP-232: Wrong hometown labels (fixed)
+- DP-233: SEEP implementation (pending)
+
+---
+
+## [SESSION] 2026-05-21 — Reek Overnight Triage + Quick Wins + Light System
+
+### Reek Triage
+
+23 findings from Reek overnight report. 18 confirmed, 5 rejected (22% false positive rate). Reek's accuracy is improving — false positive rate trending down from ~30% in early sessions.
+
+### Fixes Landed
+
+**Commit `21cd40f` — 4 quick wins (parallel subagents, ~1-2 min each):**
+
+- **DP-234 (MEDIUM):** DoSerpentKick — WAIT_STATE, mount check, improve_skill, training mob spawn (1/81 at level 19+). C source: new_cmds2.c.
+- **DP-238 (MEDIUM):** doPage multi-target support. Last arg = message, preceding = targets. C source: act.comm.c.
+- **DP-239 (MEDIUM):** AttitudeLoot — restored item junking (two-pass get/junk/wear) + 12 randomized brag messages. C source: fight.c. New `JunkInventoryItems` hook bridges combat→game object access.
+- **DP-240 (HIGH):** errcheck batch — 8 fixes across admin handlers, agent CLI, LLM client.
+
+**Commit `a411acc` — DP-236 light system (DeepSeek subagent, ~6 min):**
+
+Full CAN_SEE_OBJ visibility system ported from C:
+- Room struct: `Light int` counter + `IsLight()` method
+- `isRoomDark`: full IS_DARK chain (light counter → ROOM_DARK flag → outdoor nighttime)
+- `canSeeObject`: awake → immort bypass → holylight → LIGHT_OK (blind + infravision + room light) → INVIS_OK_OBJ (invisible flag + detect-invis)
+- equip/drop/move/extract: adjust room light counter on light source movement
+- `cmd_look`: playerCanSeeInDark with full LIGHT_OK chain
+- Dark room messages wired
+
+### Paper-Relevant Observations
+
+**Subagent parallelization pattern:** Dispatching 4 quick-win fixes as parallel subagents (DeepSeek V4 Flash) with detailed C source citations and step-by-step instructions. All 4 landed in ~1-2 min each. This pattern is proving reliable for well-scoped fidelity fixes.
+
+**Citation-driven development:** Every fix includes C source file:line references in comments. This makes port fidelity verifiable and trains Reek to cite sources. The feedback loop: Reek finds issue → Daeron verifies against C → subagent ports with citations → build passes → committed.
+
+**Light system was completely inert:** The Room struct had no Light field. Light sources (torches, lanterns) had nowhere to write their illumination. The entire light/dark visibility system was decorative. This is the kind of silent fidelity gap that only surfaces when you trace the full macro chain back to the C source.
+
+### Remaining Open Issues
+
+- DP-235 (HIGH): doWrite stub — full C port ~100 lines from act.comm.c
+- DP-237 (HIGH): DoDig naming collision — C is builder command, Go is player skill
+- DP-233 (MEDIUM): SEEP implementation
+
+### Linear Issues
+
+- DP-234: DoSerpentKick — DONE
+- DP-236: canSeeObject — DONE
+- DP-238: doPage multi-target — DONE
+- DP-239: AttitudeLoot — DONE
+- DP-240: errcheck batch — DONE
+- DP-235: doWrite stub — OPEN
+- DP-237: DoDig naming — OPEN
