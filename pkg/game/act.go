@@ -172,13 +172,78 @@ func objShortDesc(obj *ObjectInstance, to Actor) string {
 	return obj.GetShortDesc()
 }
 
+// affDetectInvisible — AFF_DETECT_INVISIBLE bit position (structs.h bit 2)
+// affBlind (bit 0) and affInfravision (bit 10) are defined in act_informative.go
+const affDetectInvisible = 2
+
+// visibilitySubject is an interface for entities that can see or be seen.
+// Both Player and MobInstance implement this.
+type visibilitySubject interface {
+	GetPosition() int
+	GetLevel() int
+	GetRoom() int
+	IsAffected(bit int) bool
+	IsNPC() bool
+}
+
+var _ visibilitySubject = (*Player)(nil)
+var _ visibilitySubject = (*MobInstance)(nil)
+
+// GetHolyLight returns true if the entity has holy light enabled.
+// Player implements this; MobInstance does not.
+type holyLightSubject interface {
+	GetHolyLight() bool
+}
+
 // canSeeObject returns true if 'to' can see 'obj'.
-// Simplified CAN_SEE_OBJ — uses awake check.
+// Ported from C: CAN_SEE_OBJ(sub, obj)
+//   = MORT_CAN_SEE_OBJ(sub, obj) || PRF_FLAGGED(sub, PRF_HOLYLIGHT)
+//   = (LIGHT_OK(sub) && INVIS_OK_OBJ(sub, obj)) || PRF_HOLYLIGHT
+//   LIGHT_OK(sub) = !IS_AFFECTED(sub, AFF_BLIND) && (IS_LIGHT(sub->in_room) || IS_AFFECTED(sub, AFF_INFRAVISION))
+//   INVIS_OK_OBJ(sub, obj) = !IS_OBJ_STAT(obj, ITEM_INVISIBLE) || IS_AFFECTED(sub, AFF_DETECT_INVIS)
 func canSeeObject(to Actor, obj *ObjectInstance) bool {
 	if to == nil {
 		return true
 	}
-	return to.GetPosition() > combat.PosSleeping
+
+	// Observer must be awake
+	if to.GetPosition() <= combat.PosSleeping {
+		return false
+	}
+
+	// Check if observer is a Player or MobInstance (both implement visibilitySubject)
+	sub, ok := to.(visibilitySubject)
+	if !ok {
+		// Fallback: can't check affects, assume visible
+		return true
+	}
+
+	// IMMORT levels always see everything (source: C LVL_IMMORT level check)
+	if sub.GetLevel() >= LVL_IMMORT {
+		return true
+	}
+
+	// Check PRF_HOLYLIGHT — players with holy light see everything
+	if hl, ok := sub.(holyLightSubject); ok && hl.GetHolyLight() {
+		return true
+	}
+
+	// MORT_CAN_SEE_OBJ = LIGHT_OK && INVIS_OK_OBJ
+	// LIGHT_OK = !AFF_BLIND && (room is light || observer has infravision)
+	// Since we don't have a World reference here for the room light check,
+	// this version checks blind and infravision. The room light check is
+	// done by World-aware callers (look commands, session layer).
+	if sub.IsAffected(affBlind) {
+		return false
+	}
+
+	// INVIS_OK_OBJ = !ITEM_INVISIBLE || observer has detect invis
+	if obj != nil && obj.GetExtraFlags()[0]&1 != 0 { // ITEM_INVISIBLE is bit 0 in extra flags
+		// Object is invisible — need detect invis
+		return sub.IsAffected(affDetectInvisible)
+	}
+
+	return true
 }
 
 // cap capitalizes the first rune of s.

@@ -410,3 +410,12 @@ func ModifyWeatherChange(delta int) {
 	weatherMu.Unlock()
 }
 
+// GetSunlight returns the current sunlight state.
+// Ported from weather.c — used by IS_DARK() macro to determine if outdoor
+// rooms are dark at night.
+func GetSunlight() int {
+	weatherMu.RLock()
+	defer weatherMu.RUnlock()
+	return weatherInfo.Sunlight
+}
+

@@ -82,16 +82,9 @@ func chCanSeeInDark(ch *Player) bool {
 }
 
 func (w *World) isRoomDark(vnum int) bool {
-	room := w.GetRoomInWorld(vnum)
-	if room == nil {
-		return false
-	}
-	for _, f := range room.Flags {
-		if f == "dark" {
-			return true
-		}
-	}
-	return false
+	// Delegate to the full IS_DARK implementation which checks
+	// room light counter, ROOM_DARK flag, and nighttime.
+	return w.IsRoomDark(vnum)
 }
 
 func (w *World) roomIsDeath(room *parser.Room) bool {

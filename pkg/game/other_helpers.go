@@ -119,7 +119,21 @@ func hasRoomFlag(room *parser.Room, flag string) bool {
 }
 
 // isDark returns true if the room is dark (no light source, not outdoors with sun).
+// Ported from C: IS_DARK(room)
+//   = !world[room].light && (ROOM_FLAGGED(room, ROOM_DARK) || (outside && nighttime))
+// NOTE: The nighttime check (sunlight state) requires World context and is
+// handled by World.IsRoomDark. This standalone version only checks the flags
+// and light counter.
 func isDark(room *parser.Room) bool {
+	// Room has active light sources — not dark
+	if room.IsLight() {
+		return false
+	}
+	// Check ROOM_DARK flag (bit 0) via HasFlag or string flag
+	// First try HasFlag (bit-based), fall back to string check
+	if room.HasFlag(0) {
+		return true
+	}
 	return hasRoomFlag(room, "dark")
 }
 

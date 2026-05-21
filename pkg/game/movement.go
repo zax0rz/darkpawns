@@ -23,6 +23,10 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 
 	case ObjInRoom:
 		w.removeItemFromRoomLocked(obj, old.RoomVNum)
+		// If a light source leaves the room floor, decrement room light
+		if isLitLightSource(obj) {
+			w.adjustRoomLight(old.RoomVNum, -1)
+		}
 		obj.RoomVNum = -1
 
 	case ObjInInventory:
@@ -41,6 +45,10 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 		switch old.OwnerKind {
 		case OwnerPlayer:
 			if p, ok := w.players[old.PlayerName]; ok && p.Equipment != nil {
+				// If a light source is unequipped, decrement room light
+				if isLitLightSource(obj) {
+					w.adjustRoomLight(p.RoomVNum, -1)
+				}
 				if err := p.Equipment.unequip(old.Slot, p.Inventory); err != nil {
 					slog.Warn("unequip failed in detachObject", "player", p.Name, "slot", old.Slot, "error", err)
 				}
@@ -75,6 +83,10 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 
 	case ObjInRoom:
 		w.roomItems[dst.RoomVNum] = append(w.roomItems[dst.RoomVNum], obj)
+		// If a light source enters the room floor, increment room light
+		if isLitLightSource(obj) {
+			w.adjustRoomLight(dst.RoomVNum, 1)
+		}
 		obj.RoomVNum = dst.RoomVNum
 
 	case ObjInInventory:
@@ -95,6 +107,10 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 		switch dst.OwnerKind {
 		case OwnerPlayer:
 			if p, ok := w.players[dst.PlayerName]; ok && p.Equipment != nil {
+				// If a light source is equipped, increment room light
+				if isLitLightSource(obj) {
+					w.adjustRoomLight(p.RoomVNum, 1)
+				}
 				// Remove from inventory first if it's there
 				p.Inventory.removeItem(obj)
 				if err := p.Equipment.equip(obj, p.Inventory); err != nil {

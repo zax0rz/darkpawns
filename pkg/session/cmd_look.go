@@ -235,11 +235,34 @@ func cmdLookAt(s *Session, room *parser.Room, targetName string) error {
 }
 
 // playerCanSeeInDark checks if the player can see in darkness.
+// Ported from C: LIGHT_OK(sub)
+//   = !IS_AFFECTED(sub, AFF_BLIND) && (IS_LIGHT(sub->in_room) || IS_AFFECTED(sub, AFF_INFRAVISION))
 func (s *Session) playerCanSeeInDark() bool {
-	if s.player.GetLevel() > 30 {
+	// IMMORT levels always see
+	if s.player.GetLevel() >= game.LVL_IMMORT {
 		return true
 	}
-	// TODO: Check AFF_INFRAVISION affect, light-producing items
+	// PRF_HOLYLIGHT — holy light preference
+	if s.player.GetHolyLight() {
+		return true
+	}
+	// Blind characters can't see
+	if s.player.IsAffected(0) { // AFF_BLIND = bit 0
+		return false
+	}
+	// Check infravision (AFF_INFRAVISION = bit 10)
+	if s.player.IsAffected(10) {
+		return true
+	}
+	// Check for equipped light source
+	if s.player.HasLight() {
+		return true
+	}
+	// Check room light (dropped light sources in the room)
+	room := s.manager.world.GetRoomInWorld(s.player.GetRoomVNum())
+	if room != nil && room.IsLight() {
+		return true
+	}
 	return false
 }
 

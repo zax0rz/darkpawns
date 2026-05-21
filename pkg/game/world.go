@@ -418,6 +418,26 @@ func (w *World) GetRoomInWorld(vnum int) *parser.Room {
 	return w.rooms[vnum]
 }
 
+// isLitLightSource returns true if the object is a working light source.
+// Source: src/handler.c has_light() — TypeFlag==ITEM_LIGHT and Values[1] > 0.
+func isLitLightSource(obj *ObjectInstance) bool {
+	if obj == nil || obj.Prototype == nil {
+		return false
+	}
+	return obj.Prototype.TypeFlag == itemLightTypeFlag && obj.Prototype.Values[1] > 0
+}
+
+// adjustRoomLight increments or decrements the light counter for a room.
+// Called when light sources enter or leave a room.
+func (w *World) adjustRoomLight(vnum int, delta int) {
+	if room, ok := w.rooms[vnum]; ok {
+		room.Light += delta
+		if room.Light < 0 {
+			room.Light = 0
+		}
+	}
+}
+
 // Rooms returns all rooms in the world.
 // GetRoomCount returns the total number of rooms in the world.
 // Equivalent to top_of_world in C.
@@ -742,14 +762,30 @@ func (w *World) actToRoomMob(mob *MobInstance, msg string, target *Player) {
 }
 
 // IsRoomDark returns true if the given room VNum is dark.
-// Based on utils.h IS_DARK() macro — checks ROOM_DARK flag.
+// Based on utils.h IS_DARK() macro:
+//   IS_DARK(room) = !world[room].light && (ROOM_FLAGGED(room, ROOM_DARK) || (outside && nighttime))
 func (w *World) IsRoomDark(roomVNum int) bool {
 	room := w.GetRoomInWorld(roomVNum)
 	if room == nil {
 		return false
 	}
+	// If room has active light sources, it's never dark
+	if room.IsLight() {
+		return false
+	}
 	// Check ROOM_DARK flag (bit 0)
-	return room.HasFlag(0)
+	if room.HasFlag(0) {
+		return true
+	}
+	// Outdoor rooms are dark at night (SunDark or SunSet)
+	// SECT_INSIDE = 0 means indoors; anything else means outdoors
+	if room.Sector != 0 { // SECT_INSIDE
+		sunlight := GetSunlight()
+		if sunlight == SunDark || sunlight == SunSet {
+			return true
+		}
+	}
+	return false
 }
 
 // GetRoomZone returns the zone number for a given room VNum.
@@ -834,6 +870,14 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 	p.SetMove(p.GetMove() - moveCost)
 
 	p.RoomVNum = newRoom.VNum
+
+	// Adjust room light for equipped light sources
+	// If player has a lit light source, old room loses light, new room gains it
+	if p.HasLight() {
+		w.adjustRoomLight(currentRoom.VNum, -1)
+		w.adjustRoomLight(newRoom.VNum, 1)
+	}
+
 	return newRoom, nil
 }
 

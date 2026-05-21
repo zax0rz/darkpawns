@@ -103,10 +103,14 @@ func (w *World) ExtractPendingChars() {
 		if p.Flags&extractMask != 0 {
 			slog.Debug("extracting player", "name", name)
 
-			// Unequip light
+			// Unequip light — adjust room light for extraction
 			if p.Equipment != nil {
 				item, ok := p.Equipment.GetItemInSlot(SlotLight)
 				if ok && item != nil {
+					// Decrement room light before unequipping
+					if isLitLightSource(item) {
+						w.adjustRoomLight(p.RoomVNum, -1)
+					}
 if err := p.Equipment.Unequip(SlotLight, p.Inventory); err != nil {
 						slog.Warn("light unequip failed during extraction", "player", p.Name, "error", err)
 					}

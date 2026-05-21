@@ -21,6 +21,12 @@ type Room struct {
 	ExtraDescs      []ExtraDesc
 	ScriptName      string
 	ScriptFunctions int
+
+	// Light is the room light counter — incremented when light sources
+	// (ITEM_LIGHT with Values[1] > 0) are equipped/dropped into the room,
+	// decremented when removed. Matches C: world[room].light.
+	// Ported from src/utils.h IS_LIGHT(room) = world[room].light > 0.
+	Light int
 }
 
 // HasFlag checks if a room flag bit is set.
@@ -37,6 +43,12 @@ func (r *Room) HasFlag(bit int) bool {
 		return false
 	}
 	return val&(1<<uint(bitPos)) != 0
+}
+
+// IsLight returns true if the room has any active light source.
+// Source: src/utils.h IS_LIGHT(room) = world[room].light > 0.
+func (r *Room) IsLight() bool {
+	return r.Light > 0
 }
 
 // Exit represents a room exit.
