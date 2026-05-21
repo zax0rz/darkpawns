@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
+
+	"github.com/lib/pq"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -208,7 +211,14 @@ func (s *Session) completeCharCreation() error {
 			// Apply the hashed password collected during login
 			r.Password = s.charPassword
 			if err := s.manager.db.CreatePlayer(r); err != nil {
+				// Check for constraint violation (player already exists)
+				if isUniqueConstraintError(err) {
+					slog.Warn("duplicate character name, rejecting creation",
+						"player", s.charName)
+					return fmt.Errorf("a character named '%s' already exists", s.charName)
+				}
 				slog.Error("DB create error during char creation", "error", err)
+				return fmt.Errorf("failed to save character: %w", err)
 			} else {
 				s.player.ID = r.ID
 				// Give starting items
@@ -317,4 +327,14 @@ func (s *Session) getClassOptions(race int) map[string]string {
 		opts["8"] = "Ninja"
 	}
 	return opts
+}
+
+// isUniqueConstraintError checks if a DB error is a PostgreSQL unique constraint violation.
+// C source: — pure Go helper, no C equivalent
+func isUniqueConstraintError(err error) bool {
+	if pqErr, ok := err.(*pq.Error); ok {
+		return pqErr.Code == "23505"
+	}
+	return strings.Contains(err.Error(), "unique constraint") ||
+		strings.Contains(err.Error(), "duplicate key")
 }
