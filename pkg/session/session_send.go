@@ -45,7 +45,19 @@ func (s *Session) sendWelcome(token string) {
 		Token: token,
 	}
 
-	// Send MOTD before the room state
+	// Send state FIRST so agents get the "you're in the world" signal
+	// before the flavor text, closing the timeout window that causes reconnection.
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgState,
+		Data: state,
+	})
+	if err != nil {
+		slog.Error("json.Marshal error", "error", err)
+		return
+	}
+	s.send <- msg
+
+	// Send MOTD after state
 	motd := game.ShowMOTD(s.manager.world.WorldPath)
 	if motd != "" {
 		motdMsg, err := json.Marshal(ServerMessage{
@@ -59,16 +71,6 @@ func (s *Session) sendWelcome(token string) {
 			s.send <- motdMsg
 		}
 	}
-
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgState,
-		Data: state,
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return
-	}
-	s.send <- msg
 }
 
 // sendError sends an error message to the player.
@@ -82,6 +84,101 @@ func (s *Session) sendError(text string) {
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgError,
 		Data: ErrorData{Message: text},
+	})
+	if err != nil {
+		slog.Error("json.Marshal error", "error", err)
+		return
+	}
+	s.send <- msg
+}
+
+// sendErrorWithState sends an error message, then re-sends the current expected prompt.
+// This is the SEEP (State-Echo Error Protocol) implementation.
+// Agents receive deterministic state recovery after every error.
+// Humans see the same error + prompt they already see — no behavioral change.
+func (s *Session) sendErrorWithState(err error) {
+	s.sendError(err.Error())
+
+	// Re-broadcast the current expected input, derived from server state.
+	switch {
+	case s.charCreating:
+		s.resendCurrentCharPrompt()
+	case !s.authenticated:
+		// Not in char creation, not authenticated — prompt for login
+		s.sendCharCreatePrompt("login", "Send a login message to begin.",
+			map[string]string{"login": "{type:'login', data:{player_name, password, new_char}}"})
+	case s.authenticated && s.player != nil:
+		// Already in the world — re-send room state
+		s.sendCurrentRoomState()
+	}
+}
+
+// resendCurrentCharPrompt dispatches the correct char creation prompt based on s.charStage.
+// Pure lookup — no DB access, no side effects.
+func (s *Session) resendCurrentCharPrompt() {
+	switch s.charStage {
+	case "color":
+		s.sendCharCreatePrompt("color", "Do you want ANSI color? (Y/N):",
+			map[string]string{"Y": "Yes", "N": "No"})
+	case "sex":
+		s.sendCharCreatePrompt("sex", "Select your sex (M/F):",
+			map[string]string{"M": "Male", "F": "Female"})
+	case "race":
+		s.sendCharCreatePrompt("race", "Select your race:", s.getRaceOptions())
+	case "class":
+		s.sendCharCreatePrompt("class", "Select your class:", s.getClassOptions(s.charRace))
+	case "hometown":
+		s.sendCharCreatePrompt("hometown", "Choose your hometown:", map[string]string{
+			"K": "Kir Drax'in", "O": "Kir-Oshi", "A": "Alaozar",
+		})
+	case "stats_roll":
+		s.sendStatsRollPrompt()
+	default:
+		// Unknown stage — fall back to login prompt
+		s.sendCharCreatePrompt("login", "Send a login message to begin.",
+			map[string]string{"login": "{type:'login', data:{player_name, password, new_char}}"})
+	}
+}
+
+// sendCurrentRoomState re-sends the player's current room state.
+// Used by SEEP when an authenticated player sends an unrecognizable message.
+func (s *Session) sendCurrentRoomState() {
+	if s.player == nil {
+		return
+	}
+	roomVNum := s.player.GetRoom()
+	room, ok := s.manager.world.GetRoom(roomVNum)
+	if !ok || room == nil {
+		return
+	}
+
+	state := StateData{
+		Player: PlayerState{
+			Name:      s.player.Name,
+			Health:    s.player.Health,
+			MaxHealth: s.player.MaxHealth,
+			Level:     s.player.Level,
+			Class:     game.ClassNames[s.player.Class],
+			Race:      game.RaceNames[s.player.Race],
+			Str:       s.player.Stats.Str,
+			Int:       s.player.Stats.Int,
+			Wis:       s.player.Stats.Wis,
+			Dex:       s.player.Stats.Dex,
+			Con:       s.player.Stats.Con,
+			Cha:       s.player.Stats.Cha,
+		},
+		Room: RoomState{
+			VNum:        room.VNum,
+			Name:        room.Name,
+			Description: room.Description,
+			Exits:       getExitNames(room.Exits),
+			Doors:       getDoorInfo(s.manager.doorManager, room.VNum, room.Exits),
+		},
+	}
+
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgState,
+		Data: state,
 	})
 	if err != nil {
 		slog.Error("json.Marshal error", "error", err)

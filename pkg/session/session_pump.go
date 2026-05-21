@@ -51,7 +51,7 @@ func (s *Session) readPump() {
 
 		if err := s.handleMessage(message); err != nil {
 			slog.Error("handle message error", "error", err)
-			s.sendError(err.Error())
+			s.sendErrorWithState(err)
 		}
 	}
 }

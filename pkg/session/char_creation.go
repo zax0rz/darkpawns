@@ -64,9 +64,9 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			// Roll initial stats for display
 			s.charStats = game.RollRealAbils(s.charClass, s.charRace)
 			s.advanceCharStage("hometown", "Choose your hometown:", map[string]string{
-				"K": "Kiroshi — The Port City",
-				"O": "Old City — The Main City",
-				"A": "Alaozar — The Holy City",
+				"K": "Kir Drax'in — The Main City. New players should choose this.",
+				"O": "Kir-Oshi — The Port City.",
+				"A": "Alaozar — The Holy City.",
 			})
 		} else {
 			s.sendCharCreatePrompt("class", "Invalid class. Select your class:", s.getClassOptions(s.charRace))
@@ -85,9 +85,9 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			s.sendStatsRollPrompt()
 		default:
 			s.sendCharCreatePrompt("hometown", "Invalid choice. Choose your hometown:", map[string]string{
-				"K": "Kiroshi — The Port City",
-				"O": "Old City — The Main City",
-				"A": "Alaozar — The Holy City",
+				"K": "Kir Drax'in — The Main City. New players should choose this.",
+				"O": "Kir-Oshi — The Port City.",
+				"A": "Alaozar — The Holy City.",
 			})
 		}
 
@@ -189,15 +189,16 @@ func (s *Session) completeCharCreation() error {
 	s.player.Hometown = s.charHometown
 
 	// Set hometown starting room
-	// K=Kiroshi/18201, O=Old City/8004, A=Alaozar/21258
+	// K=Kir Draxin/8004, O=Kir-Oshi/18201, A=Alaozar/21258
+	// C source: config.c — mortal_start_room=8004, kiroshi_start_room=18201, alaozar_start_room=21258
 	switch s.charHometown {
-	case 1: // Kiroshi
-		s.player.RoomVNum = 18201
-	case 2: // Old City
+	case 1: // Kir Drax'in (main city, new players)
 		s.player.RoomVNum = 8004
-	case 3: // Alaozar
+	case 2: // Kir-Oshi (port city)
+		s.player.RoomVNum = 18201
+	case 3: // Alaozar (holy city)
 		s.player.RoomVNum = 21258
-	default: // Mortal
+	default: // Mortal start
 		s.player.RoomVNum = 8004
 	}
 
