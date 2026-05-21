@@ -211,8 +211,8 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return err
 	}
 
-	// PLR_WRITING intercept: if the player is composing mail (or any other
-	// string-write mode), buffer the input instead of parsing commands.
+	// PLR_WRITING intercept: if the player is composing mail or a note,
+	// buffer the input instead of parsing commands.
 	// C equivalent: nanny() checks PLR_WRITING → calls string_add().
 	if s.player != nil && s.player.GetFlags()&(1<<game.PlrWriting) != 0 {
 		// Reconstruct the full input line from command + args
@@ -220,7 +220,12 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		if len(cmd.Args) > 0 {
 			line += " " + strings.Join(cmd.Args, " ")
 		}
-		game.HandleMailInput(s.player, line) // returns true when mail complete; PLR_WRITING cleared inside
+		// PLR_MAILING set → mail compose; unset → note write (do_write).
+		if s.player.GetFlags()&(1<<game.PlrMailing) != 0 {
+			game.HandleMailInput(s.player, line) // returns true when mail complete; PLR_WRITING cleared inside
+		} else {
+			game.HandleNoteInput(s.player, line) // returns true when note complete; PLR_WRITING cleared inside
+		}
 		return nil
 	}
 

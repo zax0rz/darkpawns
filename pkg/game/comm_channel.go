@@ -124,25 +124,123 @@ func (w *World) doAsk(ch *Player, me *MobInstance, arg string) bool {
 }
 
 // doWrite — port of do_write().
+// Source: act.comm.c:1024 do_write() — full logic ported from C.
+//
+// C logic summary:
+//   two_arguments(argument, papername, penname)
+//   - No args: print usage error
+//   - PLR_NOSHOUT: block writing
+//   - Two args: look up both paper and pen in inventory
+//   - One arg: find it in inventory; if it's a pen swap pen/paper, else it must
+//     be ITEM_NOTE. Check held slot for the other object.
+//   - Validate pen is ITEM_PEN and paper is ITEM_NOTE
+//   - If paper already has text: reject ("already written on")
+//   - Otherwise: set PLR_WRITING, put player into string-editor mode
 func (w *World) doWrite(ch *Player, me *MobInstance, cmd string, arg string) bool {
+	// Source: act.comm.c:1024
 	arg = skipSpaces(arg)
 
-	if arg == "" {
-		sendToChar(ch, "Write on what?\r\n")
+	// NPCs can't write — no descriptor
+	if ch.IsNPC() {
 		return true
 	}
 
-	// Find a writing surface (tablet, paper, etc.) in inventory or room.
-	// Simplified: NPCs check obj list, players check inventory.
-	// For now, just say they start writing.
-	args := strings.Fields(arg)
-	if len(args) == 0 {
-		sendToChar(ch, "Write what?\r\n")
+	if arg == "" {
+		sendToChar(ch, "Write?  With what?  ON what?  What are you trying to do?!?\r\n")
 		return true
 	}
-	objName := args[0]
-	_ = objName
-	sendToChar(ch, "You start writing.\r\n")
+
+	// C: PLR_FLAGGED(ch, PLR_NOSHOUT)
+	if ch.GetFlags()&(1<<PlrNoshout) != 0 {
+		sendToChar(ch, "You cannot write anything!\r\n")
+		return true
+	}
+
+	// Already composing something
+	if ch.GetFlags()&(1<<PlrWriting) != 0 {
+		sendToChar(ch, "You are already writing something.\r\n")
+		return true
+	}
+
+	// Parse up to two arguments: papername and (optional) penname
+	// C: two_arguments(argument, papername, penname)
+	papername, rest := halfChop(arg)
+	penname, _ := halfChop(rest)
+
+	var paper, pen *ObjectInstance
+
+	if penname != "" {
+		// Two arguments: look up paper then pen explicitly
+		var found bool
+		paper, found = ch.Inventory.FindItem(papername)
+		if !found {
+			sendToChar(ch, fmt.Sprintf("You have no %s.\r\n", papername))
+			return true
+		}
+		pen, found = ch.Inventory.FindItem(penname)
+		if !found {
+			sendToChar(ch, fmt.Sprintf("You have no %s.\r\n", penname))
+			return true
+		}
+	} else {
+		// One argument — figure out what we found and check held slot for the other
+		var found bool
+		paper, found = ch.Inventory.FindItem(papername)
+		if !found {
+			sendToChar(ch, fmt.Sprintf("There is no %s in your inventory.\r\n", papername))
+			return true
+		}
+
+		if paper.GetObjType() == ITEM_PEN {
+			// Oops — they named the pen first; swap
+			pen = paper
+			paper = nil
+		} else if paper.GetObjType() != ITEM_NOTE {
+			sendToChar(ch, "That thing has nothing to do with writing.\r\n")
+			return true
+		}
+
+		// One object found; look for the other in the hold slot
+		held := w.GetEquipped(ch, eqWearHold)
+		if held == nil {
+			sendToChar(ch, fmt.Sprintf("You can't write with %s %s alone.\r\n", an(papername), papername))
+			return true
+		}
+
+		if pen != nil {
+			// We have pen, held must be the paper
+			paper = held
+		} else {
+			// We have paper, held must be the pen
+			pen = held
+		}
+	}
+
+	// Validate types — C: GET_OBJ_TYPE checks
+	if pen.GetObjType() != ITEM_PEN {
+		sendToChar(ch, fmt.Sprintf("%s is no good for writing with.\r\n", pen.GetShortDesc()))
+		return true
+	}
+	if paper.GetObjType() != ITEM_NOTE {
+		sendToChar(ch, fmt.Sprintf("You can't write on %s.\r\n", paper.GetShortDesc()))
+		return true
+	}
+
+	// C: if (paper->action_description) — already has text
+	if paper.Runtime.NoteText != "" {
+		sendToChar(ch, "There's something written on it already.\r\n")
+		return true
+	}
+
+	// All checks pass — enter string-editor mode
+	// C: send_to_char("Write your note.  End with '@' on a new line.\r\n", ch)
+	// C: act("$n begins to jot down a note.", TRUE, ch, 0, 0, TO_ROOM)
+	sendToChar(ch, "Write your note.  End with '@' on a new line.\r\n")
+	w.roomMessageExcludeTwo(ch.GetRoom(),
+		fmt.Sprintf("%s begins to jot down a note.", ch.Name), ch.Name, "")
+
+	// Engage note-write mode — PLR_WRITING set, input routed to HandleNoteInput
+	StartNoteWriting(ch, paper)
 	return true
 }
 

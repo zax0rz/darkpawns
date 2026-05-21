@@ -23,6 +23,10 @@ type ObjectRuntimeState struct {
 	// Mail
 	MailText string `json:"mail_text,omitempty"`
 
+	// Note — written content from do_write (action_description equivalent).
+	// Set when a player writes on an ITEM_NOTE object.
+	NoteText string `json:"note_text,omitempty"`
+
 	// Horse mount
 	Horse *HorseState `json:"horse,omitempty"`
 
