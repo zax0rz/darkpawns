@@ -2,7 +2,9 @@
 package session
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"runtime/debug"
 	"time"
@@ -72,6 +74,37 @@ func (s *Session) writePump() {
 				_ = s.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
+
+			// Stamp sequence number on outbound message
+			// DP-GOAT P0-1: daemon uses seq for event tracking + reconnection replay
+			// Safe to do here: all messages are valid JSON with "type" as first key
+			s.msgSeq++
+			seqJSON := fmt.Sprintf(`,"seq":%d`, s.msgSeq)
+			// Inject seq after the first `}` which closes the "type" value, e.g.
+			// {"type":"state"...} → {"type":"state","seq":1...}
+			// Find the first closing quote of the type value, then count to the } or ,
+			// and insert after it.
+			// Actually: find the first `"` after `"type":"` and insert seq after that value.
+			// Simpler: find `{` then find `"` after it, find the matching closing `"`,
+			// then find the next `"` or `:`, and inject after that position.
+			// Even simpler: the type value is always a simple string, so find `"type":"`,
+			// skip to the closing `"`, move one char past it, insert seq there.
+			idx := bytes.Index(message, []byte(`"type":"`))
+			if idx >= 0 {
+				// Find the closing " of the type value
+				closeQuote := idx + 8 // len(`"type":"`)
+				end := bytes.IndexByte(message[closeQuote:], '"')
+				if end >= 0 {
+					insertAt := closeQuote + end + 1
+					// Insert the seq field after the type value
+					newMsg := make([]byte, 0, len(message)+len(seqJSON))
+					newMsg = append(newMsg, message[:insertAt]...)
+					newMsg = append(newMsg, seqJSON...)
+					newMsg = append(newMsg, message[insertAt:]...)
+					message = newMsg
+				}
+			}
+
 			_ = s.conn.WriteMessage(websocket.TextMessage, message)
 
 		case <-ticker.C:

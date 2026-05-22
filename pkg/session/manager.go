@@ -635,6 +635,11 @@ type Session struct {
 
 	// sendOnce ensures s.send is closed exactly once across all disconnect paths.
 	sendOnce sync.Once
+
+	// msgSeq is a monotonically incrementing sequence number stamped on every
+	// outbound message. Used by the dp-goat daemon for event tracking and
+	// reconnection replay. Zero is never sent (first message gets seq=1).
+	msgSeq uint64
 }
 
 // LiveAgentSession is already defined in admin package.

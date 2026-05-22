@@ -34,6 +34,7 @@ type ClientMessage struct {
 // ServerMessage is a message from server to client.
 type ServerMessage struct {
 	Type string      `json:"type"`
+	Seq  uint64      `json:"seq,omitempty"`
 	Data interface{} `json:"data"`
 }
 
