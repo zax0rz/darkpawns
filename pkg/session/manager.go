@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -414,7 +415,7 @@ func (m *Manager) Register(playerName string, s *Session) error {
 		// can clear takeOverPending by handling an incoming message.
 		if s.isAgent && oldSess.isAgent {
 			// Agent-to-agent: wait for old session to respond or timeout
-			oldSess.takeOverPending = true
+			oldSess.takeOverPending.Store(true)
 			oldSess.takeOverAt = time.Now().Add(5 * time.Second)
 			select {
 			case oldSess.send <- []byte("\r\n*** New connection detected. Send any command within 5 seconds to keep this session. ***\r\n"):
@@ -428,14 +429,14 @@ func (m *Manager) Register(playerName string, s *Session) error {
 				m.mu.Lock()
 				// Re-acquire oldSess reference (it may have been removed)
 				oldSess, exists = m.sessions[playerName]
-				if !exists || !oldSess.takeOverPending {
+				if !exists || !oldSess.takeOverPending.Load() {
 					// Session responded or disconnected — cancel new login
 					m.mu.Unlock()
 					return fmt.Errorf("player %s is already online and active", playerName)
 				}
 			}
 			// Timeout — proceed with takeover
-			oldSess.takeOverPending = false
+			oldSess.takeOverPending.Store(false)
 		}
 
 		// Notify the old session that it's being taken over, then close it.
@@ -659,7 +660,9 @@ type Session struct {
 	// takeOverPending is set to true and takeOverAt marks the deadline. The old
 	// session's readPump clears takeOverPending on any incoming message to prove
 	// it's still alive. If it doesn't respond in time, the new login takes over.
-	takeOverPending bool
+	//
+	// Atomic to avoid data race between Register (m.mu) and readPump (no lock).
+	takeOverPending atomic.Bool
 	takeOverAt      time.Time
 
 	// Force-command safety state

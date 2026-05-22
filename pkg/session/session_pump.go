@@ -2,11 +2,10 @@
 package session
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -53,8 +52,8 @@ func (s *Session) readPump() {
 
 		// DP-GOAT P0-3: Clear takeover probe — any incoming message proves
 		// this session is alive and should not be replaced.
-		if s.takeOverPending {
-			s.takeOverPending = false
+		if s.takeOverPending.Load() {
+			s.takeOverPending.Store(false)
 			slog.Info("takeover probe cleared: session is alive", "player", s.playerName)
 		}
 
@@ -82,30 +81,24 @@ func (s *Session) writePump() {
 				return
 			}
 
-			// DP-GOAT P0-1: Stamp sequence number on every outbound message
-			s.msgSeq++
-			seqJSON := fmt.Sprintf(`,"seq":%d`, s.msgSeq)
-			// Inject after the type value: find `"type":"`, skip to closing `"`, insert
-			idx := bytes.Index(message, []byte(`"type":"`))
-			if idx >= 0 {
-				closeQuote := idx + 8
-				end := bytes.IndexByte(message[closeQuote:], '"')
-				if end >= 0 {
-					insertAt := closeQuote + end + 1
-					newMsg := make([]byte, 0, len(message)+len(seqJSON))
-					newMsg = append(newMsg, message[:insertAt]...)
-					newMsg = append(newMsg, seqJSON...)
-					newMsg = append(newMsg, message[insertAt:]...)
-					message = newMsg
-				}
-			}
+			// DP-GOAT P0-1 + P0-2: Stamp sequence number + strip ANSI for agents.
+			// Unmarshal into generic map, transform, re-marshal. This avoids the
+			// fragility of raw JSON string injection (old P0-1) and the broken
+			// raw-byte ANSI strip (old P0-2 which couldn't match \u001b escapes).
+			var raw map[string]interface{}
+			if err := json.Unmarshal(message, &raw); err == nil {
+				// P0-1: stamp sequence number on every outbound message
+				s.msgSeq++
+				raw["seq"] = s.msgSeq
 
-			// DP-GOAT P0-2: Strip ANSI escape codes for agent sessions
-			// Agents receive plain text; no need to parse escape sequences
-			// They're applied in fmt strings across pkg/game and pkg/session —
-			// this single strip catches everything.
-			if s.isAgent {
-				message = stripANSI(message)
+				// P0-2: strip ANSI from all string values for agent sessions
+				if s.isAgent {
+					stripANSIRecursive(raw)
+				}
+
+				if marshaled, err := json.Marshal(raw); err == nil {
+					message = marshaled
+				}
 			}
 
 			_ = s.conn.WriteMessage(websocket.TextMessage, message)
@@ -149,27 +142,66 @@ func (s *Session) handleMessage(data []byte) error {
 	}
 }
 
-// stripANSI removes ANSI escape sequences from raw JSON message bytes.
-// Operates on the JSON itself, not decoded values — catches all ANSI
-// regardless of where it was added (pkg/game, pkg/session, etc.).
+// stripANSIRecursive walks a decoded JSON structure and strips ANSI escape
+// sequences from every string value. Operates on decoded Go strings (not raw
+// JSON bytes) so it correctly handles ESC bytes that json.Marshal encodes as
+// \u001b — the previous raw-byte stripANSI could never match those.
+//
+// There is a nearly identical function in pkg/game/act_comm.go
+// (deleteAnsiControls). That one operates on game-layer strings; this one
+// handles arbitrary JSON-decoded structures for the agent protocol layer.
+//
 // DP-GOAT P0-2: agent sessions receive clean text.
-func stripANSI(msg []byte) []byte {
-	result := make([]byte, 0, len(msg))
-	for i := 0; i < len(msg); i++ {
-		if msg[i] == '\x1b' && i+1 < len(msg) && msg[i+1] == '[' {
-			// Skip past the escape sequence terminator (letter)
-			for j := i + 2; j < len(msg); j++ {
-				c := msg[j]
+func stripANSIRecursive(v interface{}) {
+	switch val := v.(type) {
+	case map[string]interface{}:
+		for k, child := range val {
+			if s, ok := child.(string); ok {
+				val[k] = stripANSIString(s)
+			} else {
+				stripANSIRecursive(child)
+			}
+		}
+	case []interface{}:
+		for i, child := range val {
+			if s, ok := child.(string); ok {
+				val[i] = stripANSIString(s)
+			} else {
+				stripANSIRecursive(child)
+			}
+		}
+	}
+}
+
+// stripANSIString removes ANSI escape sequences from a Go string.
+// Matches ESC[...{letter} sequences.
+func stripANSIString(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	i := 0
+	for i < len(s) {
+		if s[i] == '\x1b' && i+1 < len(s) && s[i+1] == '[' {
+			// Skip past the escape sequence terminator (letter A-Z or a-z)
+			j := i + 2
+			for j < len(s) {
+				c := s[j]
 				if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') {
-					i = j
+					i = j + 1
 					break
 				}
+				j++
+			}
+			if j >= len(s) {
+				// Unterminated escape — skip the ESC
+				b.WriteByte(s[i])
+				i++
 			}
 			continue
 		}
-		result = append(result, msg[i])
+		b.WriteByte(s[i])
+		i++
 	}
-	return result
+	return b.String()
 }
 
 // handleLogin authenticates a player.
