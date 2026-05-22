@@ -1409,6 +1409,20 @@ Full CAN_SEE_OBJ visibility system ported from C:
 
 ---
 
+## [RESEARCH] 2026-05-21 — Stateless Agents, Stateful Protocols
+
+**Cron-triggered.** Wrote ~1,100 words on protocol robustness for LLM agents.
+
+**Topic:** SEEP (State-Echo Error Protocol) as a general pattern for making legacy stateful protocols compatible with stateless LLM clients. Three failure modes documented from the first agent playtest (wrong message type, reconnect-before-state, self-kicking loop). Key insight: model capability inversely correlates with required protocol robustness.
+
+**File:** `docs/research/drafts/2026-05-21-stateless-agents-stateful-protocols.md`
+
+**Relates to:** Compiles Is Not Safe (testing blind spots), Silent Drift (port fidelity), Coordination Surface (agent collaboration). Fourth leg of the paper's methodology stool.
+
+**Paper contribution:** Transport-layer protocol robustness is almost unaddressed in the LLM agent literature. SEEP is a concrete, 80-line, backwards-compatible pattern. The "we didn't change the protocol" framing is strong for AIIDE.
+
+---
+
 ## [DIGEST] 2026-05-21 — SEEP, Reek accuracy, quick wins
 
 ### SEEP (State-Echo Error Protocol) — DP-233
@@ -1445,3 +1459,25 @@ Every fix cites C source file:line. Tracked as DP issues. The subagent pattern (
 ### Board Status
 
 **0 open bugs.** All Reek findings through DP-243 resolved or cancelled. SEEP deployed to production.
+
+## [DIGEST] 2026-05-21 — DP-Goat Architecture, SEEP Deployed, 4 P0 Items Shipped
+
+**Session 57 — evening continuation**
+
+The evening session started as BRENDA play testing but evolved into a full architectural layer: **dp-goat**, an agent-body daemon + CLI system for persistent agent embodiment in Dark Pawns.
+
+**Key architectural decision:** LLM agents are stateless; MUDs are persistent. The bridge is a "mind-body" separation — a daemon (body) holds the WebSocket 24/7, maintains state, buffers events, and generates context packets. The LLM (mind) connects episodically and issues commands through the daemon.
+
+**SEEP** (State-Echo Error Protocol) landed and deployed. BRENDA completed character creation under SEEP — a dwarven psionic named Brenda69 at the Temple Altar. The reconnection loop post-creation is a harness issue, not a server bug.
+
+**Server-side shipped tonight:**
+- Sequence numbers on every outbound message (DP-245)
+- ANSI suppression for agent sessions (DP-246)
+- Session handoff grace period — 5s probe before takeover (DP-247)
+- Expanded state variable subscriptions: MOVE, MAX_MOVE, GOLD, POSITION (DP-248)
+- Duplicate char name fix — no more ghost registrations
+- CI fix — stops 54 failed run email spam
+
+**Paper angle:** The daemon architecture is the most significant development. "Giving Stateless Minds Persistent Bodies" — the three-layer subsumption model (reactive/tactical/deliberative) with on-demand LLM escalation is directly implementable and testable in DP. The context packet protocol (state + compacted events + narrative summary) is a novel contribution to LLM-context engineering for persistent worlds.
+
+**Spec:** `/Users/zach/.openclaw/workspace/darkpawns/SPEC-DP-GOAT.md` by Blenda. 4 phases, 18 issues. P0 (protocol) done, P1 (daemon) next.
