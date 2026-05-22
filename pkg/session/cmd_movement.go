@@ -113,13 +113,13 @@ func cmdMove(s *Session, direction string) error {
 				if err := cmdLook(fSess, nil); err != nil {
 					slog.Error("cmdLook failed for follower", "follower", follower.Name, "error", err)
 				}
-				fSess.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
+				fSess.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
 			}
 		}
 	}
 
 	// Mark room vars dirty for agents after movement
-	s.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
+	s.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
 
 	// Send new room state to player
 	return cmdLook(s, nil)

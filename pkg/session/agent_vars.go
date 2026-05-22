@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // Variable name constants for the agent subscription system.
@@ -14,6 +16,10 @@ const (
 	VarMaxHealth = "MAX_HEALTH"
 	VarMana      = "MANA"
 	VarMaxMana   = "MAX_MANA"
+	VarMove      = "MOVE"
+	VarMaxMove   = "MAX_MOVE"
+	VarGold      = "GOLD"
+	VarPosition  = "POSITION"
 	VarLevel     = "LEVEL"
 	VarExp       = "EXP"
 	VarRoomVnum  = "ROOM_VNUM"
@@ -29,7 +35,8 @@ const (
 
 // AllVariables lists every subscribable variable name.
 var AllVariables = []string{
-	VarHealth, VarMaxHealth, VarMana, VarMaxMana, VarLevel, VarExp,
+	VarHealth, VarMaxHealth, VarMana, VarMaxMana, VarMove, VarMaxMove,
+	VarGold, VarPosition, VarLevel, VarExp,
 	VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems,
 	VarFighting, VarInventory, VarEquipment, VarEvents,
 }
@@ -154,6 +161,18 @@ func (s *Session) buildVarValue(varName string) interface{} {
 		return s.player.Mana
 	case VarMaxMana:
 		return s.player.MaxMana
+	case VarMove:
+		return s.player.Move
+	case VarMaxMove:
+		return s.player.MaxMove
+	case VarGold:
+		return s.player.Gold
+	case VarPosition:
+		pos := s.player.Position
+		if pos >= 0 && pos < len(game.PositionNames) {
+			return game.PositionNames[pos]
+		}
+		return fmt.Sprintf("unknown (%d)", pos)
 	case VarLevel:
 		return s.player.Level
 	case VarExp:

@@ -281,7 +281,7 @@ func cmdFleeMovement(s *Session) error {
 		s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
 
 		s.Send("You flee head over heels.")
-		s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
+		s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
 
 		// Send new room state
 		return cmdLook(s, nil)
