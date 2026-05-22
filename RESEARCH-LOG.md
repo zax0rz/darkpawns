@@ -4,6 +4,80 @@ Living document. Updated per session by Daeron.
 
 ---
 
+## [SESSION] 2026-05-22 — Agent Integration Breakthrough (Session 60-61)
+
+**Duration:** ~6 hours (14:00–20:10 EDT)
+**Participants:** Daeron, The Architect (Zach), Claude Code (Sonnet 4.6), BRENDA69
+**Commits:** 75786a3 (fix), 249a3df (e2e test), 9f6eb4c (skill.md)
+
+### What We Built
+
+1. **P1 Daemon Core** (2,231 lines) — behavior tree, context compaction, character creation, wake triggers
+2. **P2 CLI Commands** (643 lines) — init, context, watch, explore + dp-goatd daemon binary
+3. **WebSocket E2E Test** (188 lines) — proves full agent lifecycle works over real WebSocket
+4. **Skill.md Update** — dp-goat sections added to agent play guide
+5. **Docker Deploy Overhaul** — binary mount eliminates image rebuilds (10s deploy)
+
+### The WebSocket Bug — What We Found
+
+**Symptom:** New characters received state message but zero command responses after char creation.
+
+**Root cause (found by Claude Code Sonnet 4.6):** `completeCharCreation()` was missing the agent initialization handshake that `handleLogin()` sends for returning players. The agent harness protocol requires receiving `type:vars` → `type:memory_bootstrap` → `type:memory_summary` before transitioning to active state. Without these, the harness discards all subsequent command responses.
+
+**Fix:** 3 lines in `char_creation.go`:
+```go
+if s.isAgent {
+    s.sendFullVarDump()
+    s.SendMemoryBootstrap()
+    s.SendMemorySummary()
+}
+```
+
+**Secondary findings:**
+- `sendText` already logs on silent drop (not the culprit)
+- `flushDirtyVars` and `sendFullVarDump` had truly silent drops — now logged
+- The 256-buffer channel was never full — my theory was wrong
+
+### The Test Client Mystery — What We Learned
+
+**Why my test clients received zero messages:** The test was discarding `char_create` messages looking for `state` that would never arrive. Without completing char creation, the server never sent `sendWelcome()`, and the 60-second read timeout killed the connection.
+
+**Lesson:** Agent protocol tests must walk the full char creation flow. You can't skip stages and expect the server to infer what you want.
+
+**Claude Code's approach:** Created a proper e2e test with:
+- `httptest.NewServer` with real `HandleWebSocket` handler
+- `ENVIRONMENT=development` to bypass loopback origin check (loopback is RFC 5735, not RFC 1918 — `net.IP.IsPrivate()` returns false for 127.0.0.1)
+- Full char creation walkthrough (6 stages)
+- State + look command verification
+
+### Docker Deploy — What We Changed
+
+**Before:** `docker build --no-cache` (3+ minutes, caching issues, layer invalidation failures)
+**After:** Binary mount from host (10 seconds: build → scp → restart)
+
+The Docker image is now `alpine:3.20` — a static base that never changes. The server binary lives on the host, mounted into the container. Deploy is just copying a file.
+
+**Why this matters:** Eliminates the entire Docker build pipeline for server changes. No more `COPY . .` caching, no more layer invalidation, no more rebuilding images for a 3-line fix.
+
+### Research Notes for AIIDE 2027 Paper
+
+**The Printing Press Model:** We generated a full CLI (24 commands, 10K+ lines) from an OpenAPI spec using an AI tool. Then manually patched the transport layer to route through a Unix socket daemon. This is a novel integration pattern: AI-generated protocol code + manual transport adaptation.
+
+**Agent Protocol Design:** The `type:vars` → `type:memory_bootstrap` → `type:memory_summary` initialization handshake is an implicit requirement that wasn't documented anywhere in the server code. The server's `completeCharCreation` function was missing it for new characters, but had it for returning players. This is exactly the kind of silent behavioral difference that Reek should find but didn't (it's a semantic bug, not a code quality issue).
+
+**Multi-Agent Debugging:** Claude Code (Sonnet 4.6) found the root cause in ~10 minutes after I spent 30+ minutes spinning. The key was providing a tight brief (file paths, symptom, hypothesis, wishlist) and letting the model work undisturbed. The Architect's intervention ("put $20 on Anthropic and we call in Opus with a tight scope") was the turning point.
+
+**The Silent Drop Problem:** Agent sessions are fundamentally different from human sessions. A human can retry a command. An LLM agent hangs forever if it doesn't get a response. The `sendText` non-blocking drop (`select { case s.send <- msg: default: }`) is acceptable for humans but catastrophic for agents. Agent sessions need guaranteed delivery with timeout + error.
+
+### Open Items
+
+- [ ] BRENDA69 needs character creation (death loop at hp=0/1)
+- [ ] ollama lib missing from ai-agent Docker image (mem0 falls back to no-memory mode)
+- [ ] W1-W6 wishlist items from the brief — implement now or defer?
+- [ ] Skill.md tested against live server (test client issue blocks verification)
+
+---
+
 ## [CRAWL] 2026-05-22 — Reek Nightly Crawl (Daemon + Fidelity)
 
 **Source:** Consolidated nightly crawl (Program 1) — clawpatch, toolchain, fidelity, commit review
