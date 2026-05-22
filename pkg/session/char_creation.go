@@ -275,6 +275,16 @@ func (s *Session) completeCharCreation() error {
 	// Send welcome with token
 	s.sendWelcome(token)
 
+	// Mirror the agent initialization that handleLogin sends for returning players.
+	// Without this, the agent harness never receives type:vars / memory_bootstrap /
+	// memory_summary and stays in its initialization wait loop until it times out,
+	// discarding all subsequent command responses.
+	if s.isAgent {
+		s.sendFullVarDump()
+		s.SendMemoryBootstrap()
+		s.SendMemorySummary()
+	}
+
 	// Broadcast arrival
 	enterMsg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,

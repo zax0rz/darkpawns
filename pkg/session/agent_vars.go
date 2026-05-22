@@ -129,6 +129,7 @@ func (s *Session) flushDirtyVars() {
 	select {
 	case s.send <- msg:
 	default:
+		slog.Warn("flushDirtyVars channel full — dropping vars", "player", s.playerName, "dirty_count", len(dirty))
 	}
 }
 
@@ -147,6 +148,7 @@ func (s *Session) sendFullVarDump() {
 	select {
 	case s.send <- msg:
 	default:
+		slog.Warn("sendFullVarDump channel full — dropping vars", "player", s.playerName)
 	}
 }
 
