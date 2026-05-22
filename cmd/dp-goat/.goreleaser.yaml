@@ -1,0 +1,51 @@
+version: 2
+project_name: dp-goat-pp-cli
+changelog:
+  disable: true
+builds:
+  - id: dp-goat-pp-cli
+    main: ./cmd/dp-goat-pp-cli
+    binary: dp-goat-pp-cli
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X dp-goat-pp-cli/internal/cli.version={{ .Version }}
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - windows_arm64
+  - id: dp-goat-pp-mcp
+    main: ./cmd/dp-goat-pp-mcp
+    binary: dp-goat-pp-mcp
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - windows_arm64
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+checksum:
+  name_template: checksums.txt
+brews:
+  - name: dp-goat-pp-cli
+    repository:
+      owner: user
+      name: homebrew-tap
+    homepage: "https://github.com/user/dp-goat-pp-cli"
+    description: "Dark Pawns is a MUD (Multi-User Dungeon) with 10,057 rooms, 1,313 mobs, and 854 objects. Commands are sent as JSON..."
+    install: |
+      bin.install "dp-goat-pp-cli"
+      bin.install "dp-goat-pp-mcp"

@@ -1,0 +1,431 @@
+openapi: 3.0.3
+info:
+  title: Dark Pawns MUD Protocol
+  version: 1.0.0
+  description: |
+    Dark Pawns is a MUD (Multi-User Dungeon) with 10,057 rooms, 1,313 mobs,
+    and 854 objects. Commands are sent as JSON over a WebSocket connection.
+    This spec describes each game command as an endpoint for CLI generation.
+    The actual transport is WebSocket, not HTTP — the generated CLI will need
+    transport patches.
+
+servers:
+  - url: ws://192.168.1.15:4350/ws
+    description: Dark Pawns WebSocket server
+
+paths:
+  /look:
+    post:
+      operationId: look
+      summary: Look at your surroundings or a target
+      description: |
+        Study your surroundings. Without arguments, shows the room.
+        With a target, examines that target specifically.
+      tags: [exploration]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target:
+                  type: string
+                  description: "Thing to look at (e.g. 'the angel', 'south', 'in the bag')"
+              example:
+                target: "the angel"
+      responses:
+        '200':
+          description: Room description or target description
+
+  /kill:
+    post:
+      operationId: kill
+      summary: Attack a target in combat
+      description: |
+        Initiate combat with a target. Requires a weapon or bare hands.
+        Use 'consider' first to assess difficulty.
+      tags: [combat]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target]
+              properties:
+                target:
+                  type: string
+                  description: "Target to attack (e.g. 'a blind monk')"
+              example:
+                target: "a blind monk"
+      responses:
+        '200':
+          description: Combat initiation result
+
+  /flee:
+    post:
+      operationId: flee
+      summary: Flee from combat
+      description: |
+        Attempt to flee from combat. Costs some experience points.
+        May fail if the mob is much faster than you.
+      tags: [combat]
+      responses:
+        '200':
+          description: Flee attempt result
+
+  /say:
+    post:
+      operationId: say
+      summary: Speak in the current room
+      description: |
+        Say something to everyone in the room. All players and mobs
+        in the room will see your message.
+      tags: [social]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  description: "Message to say"
+              example:
+                message: "Hello, world!"
+      responses:
+        '200':
+          description: Say result
+
+  /tell:
+    post:
+      operationId: tell
+      summary: Send a private message to a player
+      description: |
+        Send a private message to another player. Only the target
+        player will see the message, regardless of location.
+      tags: [social]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target, message]
+              properties:
+                target:
+                  type: string
+                  description: "Player name"
+                message:
+                  type: string
+                  description: "Message to send"
+              example:
+                target: "Daeron"
+                message: "Hey, how's it going?"
+      responses:
+        '200':
+          description: Tell result
+
+  /north:
+    post:
+      operationId: north
+      summary: Move north
+      tags: [movement]
+      responses:
+        '200':
+          description: Movement result
+
+  /south:
+    post:
+      operationId: south
+      summary: Move south
+      tags: [movement]
+      responses:
+        '200':
+          description: Movement result
+
+  /east:
+    post:
+      operationId: east
+      summary: Move east
+      tags: [movement]
+      responses:
+        '200':
+          description: Movement result
+
+  /west:
+    post:
+      operationId: west
+      summary: Move west
+      tags: [movement]
+      responses:
+        '200':
+          description: Movement result
+
+  /up:
+    post:
+      operationId: up
+      summary: Move up
+      tags: [movement]
+      responses:
+        '200':
+          description: Movement result
+
+  /down:
+    post:
+      operationId: down
+      summary: Move down
+      tags: [movement]
+      responses:
+        '200':
+          description: Movement result
+
+  /get:
+    post:
+      operationId: get
+      summary: Pick up an item
+      description: |
+        Pick up an item from the room or from a container.
+        Use 'get all' to pick up everything.
+      tags: [items]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item]
+              properties:
+                item:
+                  type: string
+                  description: "Item to pick up"
+                container:
+                  type: string
+                  description: "Container to get from (optional)"
+              example:
+                item: "a rusty sword"
+      responses:
+        '200':
+          description: Get result
+
+  /drop:
+    post:
+      operationId: drop
+      summary: Drop an item
+      tags: [items]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item]
+              properties:
+                item:
+                  type: string
+                  description: "Item to drop"
+              example:
+                item: "a rusty sword"
+      responses:
+        '200':
+          description: Drop result
+
+  /inventory:
+    post:
+      operationId: inventory
+      summary: List carried items
+      tags: [info]
+      responses:
+        '200':
+          description: Inventory listing
+
+  /score:
+    post:
+      operationId: score
+      summary: Show character stats
+      tags: [info]
+      responses:
+        '200':
+          description: Character stats
+
+  /consider:
+    post:
+      operationId: consider
+      summary: Assess combat difficulty of a target
+      tags: [combat]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target]
+              properties:
+                target:
+                  type: string
+                  description: "Target to consider"
+              example:
+                target: "a blind monk"
+      responses:
+        '200':
+          description: Difficulty assessment
+
+  /who:
+    post:
+      operationId: who
+      summary: Show who is online
+      tags: [info]
+      responses:
+        '200':
+          description: Online players list
+
+  /wear:
+    post:
+      operationId: wear
+      summary: Equip armor or clothing
+      tags: [items]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item]
+              properties:
+                item:
+                  type: string
+                  description: "Item to wear"
+              example:
+                item: "a leather vest"
+      responses:
+        '200':
+          description: Wear result
+
+  /wield:
+    post:
+      operationId: wield
+      summary: Equip a weapon
+      tags: [items]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item]
+              properties:
+                item:
+                  type: string
+                  description: "Weapon to wield"
+              example:
+                item: "a rusty sword"
+      responses:
+        '200':
+          description: Wield result
+
+  /yell:
+    post:
+      operationId: yell
+      summary: Shout to the entire zone
+      tags: [social]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  description: "Message to yell"
+              example:
+                message: "Help!"
+      responses:
+        '200':
+          description: Yell result
+
+  /cast:
+    post:
+      operationId: cast
+      summary: Cast a spell
+      tags: [magic]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [spell]
+              properties:
+                spell:
+                  type: string
+                  description: "Spell name"
+                target:
+                  type: string
+                  description: "Spell target (optional)"
+              example:
+                spell: "cure light"
+                target: "self"
+      responses:
+        '200':
+          description: Cast result
+
+  /eat:
+    post:
+      operationId: eat
+      summary: Eat food
+      tags: [items]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item]
+              properties:
+                item:
+                  type: string
+                  description: "Food to eat"
+              example:
+                item: "some bread"
+      responses:
+        '200':
+          description: Eat result
+
+  /drink:
+    post:
+      operationId: drink
+      summary: Drink from a container
+      tags: [items]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [container]
+              properties:
+                container:
+                  type: string
+                  description: "Container to drink from"
+              example:
+                container: "a flask"
+      responses:
+        '200':
+          description: Drink result
+
+  /give:
+    post:
+      operationId: give
+      summary: Give an item to someone
+      tags: [social]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item, target]
+              properties:
+                item:
+                  type: string
+                  description: "Item to give"
+                target:
+                  type: string
+                  description: "Recipient (player or mob)"
+              example:
+                item: "a gold coin"
+                target: "a beggar"
+      responses:
+        '200':
+          description: Give result
