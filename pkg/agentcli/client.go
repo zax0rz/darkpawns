@@ -32,6 +32,7 @@ type GameState struct {
 		Mana     int    `json:"mana"`
 		Level    int    `json:"level"`
 		Exp      int    `json:"exp"`
+		Gold     int    `json:"gold"`
 	} `json:"player"`
 	Room struct {
 		Vnum        int      `json:"vnum"`

@@ -252,13 +252,15 @@ func (d *Daemon) handleVars(data json.RawMessage) error {
 	state.Player.Mana = vars.MANA
 	state.Player.Level = vars.LEVEL
 	state.Player.Exp = vars.EXP
+	state.Player.Gold = vars.GOLD
 	state.Room.Vnum = vars.ROOM_VNUM
 	state.Room.Name = vars.ROOM_NAME
 	state.Room.Exits = vars.ROOM_EXITS
 	state.Room.Mobs = vars.ROOM_MOBS
 	state.Room.Items = vars.ROOM_ITEMS
 	state.Fighting = vars.FIGHTING
-	state.Inventory = vars.ROOM_ITEMS // approximation
+	// Note: room items used as inventory approximation — no separate INVENTORY var subscription exists yet
+	state.Inventory = vars.ROOM_ITEMS
 
 	// Persist state
 	if err := d.state.Save(state); err != nil {
@@ -327,7 +329,11 @@ func (d *Daemon) acceptLoop(ctx context.Context) {
 
 // handleCLI processes a single CLI request over the Unix socket.
 func (d *Daemon) handleCLI(conn net.Conn) {
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			slog.Warn("close conn", "error", err)
+		}
+	}()
 
 	scanner := bufio.NewScanner(conn)
 	// Increase buffer for large inventory/room descriptions
@@ -398,7 +404,7 @@ func (d *Daemon) cmdStatus() DaemonResponse {
 		"player": state.Player,
 		"room":   state.Room,
 		"fighting": state.Fighting,
-		"gold":   state.Player.Exp, // placeholder
+		"gold":   state.Player.Gold,
 	})
 	return DaemonResponse{OK: true, Data: data}
 }
@@ -484,7 +490,9 @@ func (d *Daemon) cmdScore() DaemonResponse {
 func (d *Daemon) cmdEvents(args []string) DaemonResponse {
 	var since uint64
 	if len(args) > 0 {
-		fmt.Sscanf(args[0], "%d", &since)
+		if _, err := fmt.Sscanf(args[0], "%d", &since); err != nil {
+			return DaemonResponse{OK: false, Error: fmt.Sprintf("invalid event seq: %s", args[0])}
+		}
 	}
 	events := d.events.Since(since)
 	data, _ := json.Marshal(events)

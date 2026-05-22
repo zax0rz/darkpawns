@@ -128,21 +128,6 @@ func makeObjInstance(vnum int, shortDesc, keywords string) *game.ObjectInstance 
 	return game.NewObjectInstance(proto, -1)
 }
 
-// makeMobInstance creates a MobInstance from raw fields for tests that
-// don't need a full world registration.
-func makeMobInstance(vnum int, shortDesc, keywords string, fighting bool) *game.MobInstance {
-	proto := &parser.Mob{
-		VNum:      vnum,
-		Keywords:  keywords,
-		ShortDesc: shortDesc,
-		LongDesc:  shortDesc + "\n",
-	}
-	mob := game.NewMobInstance(proto, -1)
-	mob.VNum = vnum
-	mob.Fighting = fighting
-	return mob
-}
-
 // ---------------------------------------------------------------------------
 // Helper: parse a JSON message from a session's send channel
 // ---------------------------------------------------------------------------

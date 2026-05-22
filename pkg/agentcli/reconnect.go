@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math"
 	"math/rand"
 	"time"
 )
@@ -120,15 +119,4 @@ func (a *AgentClient) RunConnected(ctx context.Context, rcfg ReconnectConfig) er
 		case <-time.After(time.Second):
 		}
 	}
-}
-
-// backoffDuration computes exponential backoff with jitter.
-// Exported for testing.
-func backoffDuration(attempt int, cfg ReconnectConfig) time.Duration {
-	backoff := cfg.InitialBackoff * time.Duration(math.Pow(cfg.Multiplier, float64(attempt)))
-	if backoff > cfg.MaxBackoff {
-		backoff = cfg.MaxBackoff
-	}
-	jitter := time.Duration(float64(backoff) * cfg.Jitter * (rand.Float64()*2 - 1))
-	return backoff + jitter
 }
