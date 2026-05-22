@@ -1481,3 +1481,30 @@ The evening session started as BRENDA play testing but evolved into a full archi
 **Paper angle:** The daemon architecture is the most significant development. "Giving Stateless Minds Persistent Bodies" — the three-layer subsumption model (reactive/tactical/deliberative) with on-demand LLM escalation is directly implementable and testable in DP. The context packet protocol (state + compacted events + narrative summary) is a novel contribution to LLM-context engineering for persistent worlds.
 
 **Spec:** `/Users/zach/.openclaw/workspace/darkpawns/SPEC-DP-GOAT.md` by Blenda. 4 phases, 18 issues. P0 (protocol) done, P1 (daemon) next.
+
+## [SESSION] 2026-05-21 — Session 58: DP-Goat P0 Fixes + Daemon + CLI
+
+### What happened
+
+1. **DeepSeek review:** The Architect discovered I'd been running on DeepSeek for P0-1 through P0-4. Asked me to review. Found three bugs: fragile seq injection (DP-245), broken ANSI stripping (DP-246), data race on session handoff (DP-247). All fixed in commit f3b2086.
+
+2. **Daemon foundation:** Built the persistent body layer — reconnection with backoff, state persistence, event buffering, Unix socket daemon. 1,034 lines across 4 new files (commit f9bea89).
+
+3. **Printing Press CLI:** Used Printing Press (`/Users/zach/go/bin/printing-press`) to generate a 24-command Go CLI from an OpenAPI spec. The `--docs` approach failed (help pages aren't REST endpoints), but `--spec` worked perfectly. Transport patch swapped HTTP client for Unix socket client. 78 files, 10,411 insertions (commit 9ecfb87).
+
+4. **End-to-end pipeline:** `dp-goat --name Machine look` → CLI → Unix socket → daemon → WebSocket → MUD server → response. The agent layer is functional.
+
+### Paper relevance
+
+- **Transport patch pattern:** Printing Press generates CLI structure from API specs. For non-REST protocols (WebSocket, MUD), a transport patch swaps the HTTP client for the actual transport. The CLI structure (commands, flags, help text) survives; only the transport layer changes. This is a reusable pattern for agent tooling.
+
+- **Printing Press + MUD:** Generated 24 commands from an OpenAPI spec in minutes. The full help has 433 commands — scraping them into an OpenAPI spec and regenerating would give comprehensive coverage. The "secret identity" pattern from Printing Press applies: Dark Pawns isn't just a game, it's a command-rich environment that can be CLI-ified.
+
+- **Agent-body architecture realized:** The daemon (body) holds the connection, the CLI (hands) talks to the daemon, the LLM (mind) calls the CLI. Three layers, clean separation. The skill.md bridges the LLM to the CLI.
+
+### State at session end
+
+- All P0 fixes on main (f3b2086, f9bea89, 9ecfb87)
+- Server: running on frankendell (.15)
+- Agent layer: P0 (protocol) + P1 (daemon + CLI) complete
+- Model: back on MiMo v2.5 Base
