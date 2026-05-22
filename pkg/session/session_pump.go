@@ -75,34 +75,30 @@ func (s *Session) writePump() {
 				return
 			}
 
-			// Stamp sequence number on outbound message
-			// DP-GOAT P0-1: daemon uses seq for event tracking + reconnection replay
-			// Safe to do here: all messages are valid JSON with "type" as first key
+			// DP-GOAT P0-1: Stamp sequence number on every outbound message
 			s.msgSeq++
 			seqJSON := fmt.Sprintf(`,"seq":%d`, s.msgSeq)
-			// Inject seq after the first `}` which closes the "type" value, e.g.
-			// {"type":"state"...} → {"type":"state","seq":1...}
-			// Find the first closing quote of the type value, then count to the } or ,
-			// and insert after it.
-			// Actually: find the first `"` after `"type":"` and insert seq after that value.
-			// Simpler: find `{` then find `"` after it, find the matching closing `"`,
-			// then find the next `"` or `:`, and inject after that position.
-			// Even simpler: the type value is always a simple string, so find `"type":"`,
-			// skip to the closing `"`, move one char past it, insert seq there.
+			// Inject after the type value: find `"type":"`, skip to closing `"`, insert
 			idx := bytes.Index(message, []byte(`"type":"`))
 			if idx >= 0 {
-				// Find the closing " of the type value
-				closeQuote := idx + 8 // len(`"type":"`)
+				closeQuote := idx + 8
 				end := bytes.IndexByte(message[closeQuote:], '"')
 				if end >= 0 {
 					insertAt := closeQuote + end + 1
-					// Insert the seq field after the type value
 					newMsg := make([]byte, 0, len(message)+len(seqJSON))
 					newMsg = append(newMsg, message[:insertAt]...)
 					newMsg = append(newMsg, seqJSON...)
 					newMsg = append(newMsg, message[insertAt:]...)
 					message = newMsg
 				}
+			}
+
+			// DP-GOAT P0-2: Strip ANSI escape codes for agent sessions
+			// Agents receive plain text; no need to parse escape sequences
+			// They're applied in fmt strings across pkg/game and pkg/session —
+			// this single strip catches everything.
+			if s.isAgent {
+				message = stripANSI(message)
 			}
 
 			_ = s.conn.WriteMessage(websocket.TextMessage, message)
@@ -144,6 +140,29 @@ func (s *Session) handleMessage(data []byte) error {
 	default:
 		return ErrUnknownMessageType
 	}
+}
+
+// stripANSI removes ANSI escape sequences from raw JSON message bytes.
+// Operates on the JSON itself, not decoded values — catches all ANSI
+// regardless of where it was added (pkg/game, pkg/session, etc.).
+// DP-GOAT P0-2: agent sessions receive clean text.
+func stripANSI(msg []byte) []byte {
+	result := make([]byte, 0, len(msg))
+	for i := 0; i < len(msg); i++ {
+		if msg[i] == '\x1b' && i+1 < len(msg) && msg[i+1] == '[' {
+			// Skip past the escape sequence terminator (letter)
+			for j := i + 2; j < len(msg); j++ {
+				c := msg[j]
+				if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') {
+					i = j
+					break
+				}
+			}
+			continue
+		}
+		result = append(result, msg[i])
+	}
+	return result
 }
 
 // handleLogin authenticates a player.
