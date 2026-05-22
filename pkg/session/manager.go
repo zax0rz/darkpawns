@@ -408,6 +408,36 @@ func (m *Manager) Register(playerName string, s *Session) error {
 
 	m.mu.Lock()
 	if oldSess, exists := m.sessions[playerName]; exists {
+		// DP-GOAT P0-3: Session handoff grace period
+		// Give the old session a brief window to prove it's alive before
+		// forcible takeover. During this window the old session's readPump
+		// can clear takeOverPending by handling an incoming message.
+		if s.isAgent && oldSess.isAgent {
+			// Agent-to-agent: wait for old session to respond or timeout
+			oldSess.takeOverPending = true
+			oldSess.takeOverAt = time.Now().Add(5 * time.Second)
+			select {
+			case oldSess.send <- []byte("\r\n*** New connection detected. Send any command within 5 seconds to keep this session. ***\r\n"):
+			default:
+			}
+
+			// Poll for old session to clear takeOverPending or timeout
+			for time.Now().Before(oldSess.takeOverAt) {
+				m.mu.Unlock()
+				time.Sleep(200 * time.Millisecond)
+				m.mu.Lock()
+				// Re-acquire oldSess reference (it may have been removed)
+				oldSess, exists = m.sessions[playerName]
+				if !exists || !oldSess.takeOverPending {
+					// Session responded or disconnected — cancel new login
+					m.mu.Unlock()
+					return fmt.Errorf("player %s is already online and active", playerName)
+				}
+			}
+			// Timeout — proceed with takeover
+			oldSess.takeOverPending = false
+		}
+
 		// Notify the old session that it's being taken over, then close it.
 		// sendOnce ensures the send channel is closed exactly once, which
 		// causes writePump to exit. Closing the conn causes readPump to exit,
@@ -623,6 +653,14 @@ type Session struct {
 	lastTeller string   // Last player who told us (for reply)
 	snooping   *Session // Session being snooped (for wizard snoop)
 	snoopBy    *Session // Session that is snooping us
+
+	// DP-GOAT P0-3: Session handoff grace period
+	// When a new agent login arrives for a character that already has a session,
+	// takeOverPending is set to true and takeOverAt marks the deadline. The old
+	// session's readPump clears takeOverPending on any incoming message to prove
+	// it's still alive. If it doesn't respond in time, the new login takes over.
+	takeOverPending bool
+	takeOverAt      time.Time
 
 	// Force-command safety state
 	IsForced             bool      // true while executing a forced command (prevents transitive force)

@@ -51,6 +51,13 @@ func (s *Session) readPump() {
 			break
 		}
 
+		// DP-GOAT P0-3: Clear takeover probe — any incoming message proves
+		// this session is alive and should not be replaced.
+		if s.takeOverPending {
+			s.takeOverPending = false
+			slog.Info("takeover probe cleared: session is alive", "player", s.playerName)
+		}
+
 		if err := s.handleMessage(message); err != nil {
 			slog.Error("handle message error", "error", err)
 			s.sendErrorWithState(err)
