@@ -50,6 +50,7 @@ func NewEventBuffer(name string) (*EventBuffer, error) {
 		path:     filepath.Join(dir, name+".jsonl"),
 		events:   make([]AgentEvent, 0, 256),
 		maxCache: 1000,
+		nextSeq:  1, // start at 1 so Since(0) returns all events
 	}
 
 	// Load existing events to recover sequence number
