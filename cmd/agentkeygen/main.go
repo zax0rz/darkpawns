@@ -41,7 +41,12 @@ func main() {
 		slog.Error("connect to database", "error", err)
 		os.Exit(1)
 	}
-	defer func() { _ = database.Close() }()
+
+	// Verify character exists before generating key
+	if _, err := database.GetPlayer(*name); err != nil {
+		slog.Error("character not found", "name", *name)
+		os.Exit(1)
+	}
 
 	rawKey, id, err := database.CreateAgentKey(*name)
 	if err != nil {

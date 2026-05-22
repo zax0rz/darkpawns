@@ -30,6 +30,9 @@ func main() {
 		{"Warrior", game.ClassWarrior},
 	}
 
+	// Build reverse lookup from game.ClassNames for test cases
+	allClassNames := game.ClassNames
+
 	fmt.Println("Testing race bonuses for each class:")
 	fmt.Println("=====================================")
 
@@ -99,12 +102,10 @@ func main() {
 			}
 		}
 
-		// Get class name
-		for _, c := range classes {
-			if c.id == tc.class {
-				className = c.name
-				break
-			}
+		// Get class name from game.ClassNames (covers all classes)
+		className = allClassNames[tc.class]
+		if className == "" {
+			className = "Unknown"
 		}
 
 		status := "✓"
