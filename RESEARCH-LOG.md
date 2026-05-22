@@ -4,6 +4,35 @@ Living document. Updated per session by Daeron.
 
 ---
 
+## [CRAWL] 2026-05-22 — Reek Nightly Crawl (Daemon + Fidelity)
+
+**Source:** Consolidated nightly crawl (Program 1) — clawpatch, toolchain, fidelity, commit review
+
+**Clawpatch:** Not bootstrapped yet — `.clawpatch/reports/` and `.clawpatch/findings/` don't exist. First run.
+
+**Toolchain:** `go vet` clean. `staticcheck` 9 hits — all pre-existing, no regressions from these 11 commits.
+
+**Fidelity Analysis (C→Go):** 99 C source files in `src/`. Three Go-native features confirmed no C equivalent:
+- Sequence numbers (`msgSeq` on `ServerMessage`): C has zero seq infrastructure — grepped `src/` for MSG_SEQ, nothing.
+- ANSI stripping for agents: C sends raw ANSI. Go `stripANSIRecursive()` properly handles `\x1b` in decoded JSON.
+- Session handoff grace period: 5s `takeOverPending` atomic — C has no session handoff at all.
+
+**Fidelity gaps found:**
+- `daemon.go:505` — `cmdStatus()` returns XP under `"gold"` key. Commented `// placeholder`. Gold var exists in subscription struct but never assigned to state.
+- `daemon.go:195` — `state.Inventory = vars.ROOM_ITEMS // approximation` — room items ≠ player inventory.
+
+**Go-natural safety improvements over C:**
+- Duplicate char name now caught by PostgreSQL 23505 constraint in `completeCharCreation()` — C's `create_char()` only checks file-on-disk existence.
+- Daemon architecture (body/mind separation) is pure Go innovation — no C precedent.
+
+**Linear issues created:** DP-287 (gold misattribution), DP-285 (inventory conflation), DP-286 (dead exported funcs)
+
+### Paper Relevance
+
+The daemon's body/mind architecture is the first implementation of the "stateless agents, stateful protocol" thesis from the 2026-05-21 draft. The fidelity gaps found (gold, inventory) demonstrate the silent simplification risk identified in the 2026-05-12 draft — port developers approximate, agents make decisions on wrong data, and the error is invisible because the code compiles and the system runs.
+
+---
+
 ## [TRIAGE] 2026-05-09 — Morning Triage
 
 **Source:** Reek overnight reports — Security Audit (Program 5) + Concurrency Code Review
@@ -1508,3 +1537,24 @@ The evening session started as BRENDA play testing but evolved into a full archi
 - Server: running on frankendell (.15)
 - Agent layer: P0 (protocol) + P1 (daemon + CLI) complete
 - Model: back on MiMo v2.5 Base
+
+## [TRIAGE] 2026-05-22 Afternoon — Reek Triage Sprint (10 fixes, 2 commits)
+
+**Source:** Three batches of Reek findings triaged and fixed in one session.
+
+**Findings:** 18 total across 3 batches. 10 confirmed, 9 rejected (40% FP rate on second batch).
+
+**Key observations:**
+- **Reek's 40% false positive rate** came from flagging things that were already handled — pprof auth (wrapper was right there), sync.Once on Stop() (already guarding double-close), json.Unmarshal error check (3 lines below the flag). Pattern: Reek isn't reading enough context before flagging. Prompt engineering fix needed, not model selection.
+- **DeepSeek V4 Pro vs Flash** for Reek: Flash is better. Cheaper, more focused, same 1M context. The FP rate is a prompt problem, not a model problem.
+- **Agent-keygen security gap (DP-292):** `CreateAgentKey` didn't validate character existence. Pure Go code, no C precedent — the gap was never filled, not a porting regression. Added `GetPlayer` check before key generation.
+- **Character creation tests (DP-290):** `RollRealAbils` and `ValidUserClassChoice` had zero automated tests. A 118-line manual CLI binary existed instead. Wrote proper unit tests. The manual binary was gitignored — the developer knew it was a stopgap.
+
+**Fidelity note:** All 4 findings in the third batch were pure Go with no C equivalent. The agent key system and test binary were never part of the port. These are unfilled gaps, not regressions from the C source.
+
+### State at session end
+
+- Board: 0 open Reek bugs (all 10 fixed and committed)
+- dp-goat P0: DP-245 through DP-248 marked Done. DP-249 through DP-252 need audit.
+- Reek cron: switching from isolated session to subagent (timeout fix)
+- Model recommendation: Flash for Reek, MiMo for triage/writing
