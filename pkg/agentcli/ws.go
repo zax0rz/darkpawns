@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -11,7 +12,9 @@ import (
 
 // WSConn wraps gorilla/websocket.Conn for the agent CLI.
 type WSConn struct {
-	conn *websocket.Conn
+	conn   *websocket.Conn
+	seqMu  sync.Mutex
+	lastSeq uint64
 }
 
 // Dial connects to a WebSocket endpoint.
