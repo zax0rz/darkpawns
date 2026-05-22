@@ -65,6 +65,7 @@ func main() {
 		port       = flag.String("port", "4350", "Server port")
 		dbURL      = flag.String("db", "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable", "Database URL")
 		webDir     = flag.String("web", "", "Path to web client files (index.html, client.js, style.css)")
+		hugoDir    = flag.String("hugo", "", "Path to Hugo static site (served as root)")
 	)
 	flag.Parse()
 
@@ -171,8 +172,13 @@ func main() {
 		}
 	})
 	http.HandleFunc("/metrics", metrics.Handler().ServeHTTP)
-	// Serve web client if -web flag provided, otherwise plain text index
-	if *webDir != "" {
+	// Serve Hugo static site if -hugo flag provided
+	// Falls back to -web flag for legacy web client, then plain text index
+	if *hugoDir != "" {
+		fs := http.FileServer(http.Dir(*hugoDir))
+		http.Handle("/", fs)
+		slog.Info("Serving Hugo site", "path", *hugoDir)
+	} else if *webDir != "" {
 		fs := http.FileServer(http.Dir(*webDir))
 		http.Handle("/", fs)
 		slog.Info("Serving web client", "path", *webDir)
@@ -226,6 +232,9 @@ func main() {
 		}
 	})
 	http.Handle("/admin/", adminRouter)
+
+	// Serve admin UI static assets (compiled React app)
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("admin-ui-dist/assets"))))
 
 	// Track zone reset goroutine for graceful shutdown
 	var wg sync.WaitGroup

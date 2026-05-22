@@ -9,11 +9,11 @@ import (
 
 // DefaultConfig values.
 const (
-	DefaultHost        = "192.168.1.106"
+	DefaultHost        = "192.168.1.15"
 	DefaultPort        = 4350
 	DefaultLiteLLM     = "http://192.168.1.106:4000"
 	DefaultModelFast   = "zai/glm-5-turbo"
-	DefaultModelFall   = "anthropic/claude-sonnet-4-6"
+	DefaultModelFall   = "deepseek-v4-flash"
 	DefaultTier        = "medium"
 )
 

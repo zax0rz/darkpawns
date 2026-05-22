@@ -359,6 +359,11 @@ func (a *AgentClient) Close() error {
 	return a.finalizeSession()
 }
 
+// ReadJSON reads a JSON message from the server.
+func (a *AgentClient) ReadJSON(v any) error {
+	return a.conn.ReadJSON(v)
+}
+
 // writeJSON is a helper to marshal v to path as indented JSON.
 func writeJSON(path string, v any) {
 	data, err := json.MarshalIndent(v, "", "  ")

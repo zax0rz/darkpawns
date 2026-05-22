@@ -1632,3 +1632,34 @@ The evening session started as BRENDA play testing but evolved into a full archi
 - dp-goat P0: DP-245 through DP-248 marked Done. DP-249 through DP-252 need audit.
 - Reek cron: switching from isolated session to subagent (timeout fix)
 - Model recommendation: Flash for Reek, MiMo for triage/writing
+
+## [SESSION] 2026-05-22 Evening — BRENDA Agent Fixes
+
+### Issues Resolved
+
+**1. mem0 v2.0 API break (dp_brenda.py)**
+- `BaseLlmConfig.__init__()` no longer accepts `api_base` — removed in mem0ai 2.0
+- LiteLLM provider uses `litellm.completion()` which reads `OPENAI_API_BASE` env var
+- Embedder: switched from `ollama` provider to `openai` provider pointing at Ollama's `/v1/embeddings`
+- Key fix: `embedding_model_dims: 768` in vector_store config (mem0 defaults to 1536 for OpenAI provider)
+- Ollama configured to listen on all interfaces (`OLLAMA_HOST=0.0.0.0`) via systemd override
+
+**2. Death loop (dp_brenda.py)**
+- Root cause: agent sent `new_char: True` on every connection → server tries to create character → "duplicate name" error → no response sent → client hangs at 0/1 HP
+- Fix: changed to `new_char: False` so returning player path is used (password = API key)
+- Server bug: `completeCharCreation` failure doesn't send error message to client
+
+**3. Char creation helper**
+- Added `_char_creation_choice()` method for auto-completing char creation stages
+- Color: Y, Sex: F, Race: 1 (Human), Class: 2 (Thief — Assassin not available), Hometown: K, Stats: Y
+- Handles `char_create` messages in both auth drain and play loop
+
+### Server Bug Discovered
+- `completeCharCreation` in char_creation.go returns error on duplicate name but never sends error message to client
+- Client hangs forever waiting for a response
+- Should send `sendError()` before returning
+
+### Infrastructure
+- Ollama systemd override: `/etc/systemd/system/ollama.service.d/override.conf` → `OLLAMA_HOST=0.0.0.0`
+- Docker gateway IP: 172.21.0.1 (from inside containers)
+- Qdrant collection: dp_brenda_memory (768d, nomic-embed-text)

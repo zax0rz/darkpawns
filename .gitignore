@@ -61,3 +61,5 @@ data/players/
 test-race
 dp-agent
 .clawpatch/
+dp-goatd
+server-linux

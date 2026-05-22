@@ -15,6 +15,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -152,6 +153,7 @@ func cmdSession(args []string) {
 func cmdConfig(args []string) {
 	fs := flag.NewFlagSet("config", flag.ExitOnError)
 	key := fs.String("key", "", "set API key")
+	playerName := fs.String("player-name", "", "set character name")
 	model := fs.String("model", "", "set model")
 	tier := fs.String("tier", "", "set tier (small/medium/large/unlimited)")
 	temp := fs.Float64("temp", -1, "set LLM temperature")
@@ -170,6 +172,10 @@ func cmdConfig(args []string) {
 	changed := false
 	if *key != "" {
 		cfg.Key = *key
+		changed = true
+	}
+	if *playerName != "" {
+		cfg.PlayerName = *playerName
 		changed = true
 	}
 	if *model != "" {
@@ -201,10 +207,11 @@ func cmdConfig(args []string) {
 	}
 
 	fmt.Printf("Config: %s\n", agentcli.ConfigPath())
-	fmt.Printf("  Key:   %s\n", maskKey(cfg.Key))
-	fmt.Printf("  Model: %s\n", cfg.ModelFast)
-	fmt.Printf("  Tier:  %s\n", cfg.Tier)
-	fmt.Printf("  Game:  %s:%d\n", cfg.GameHost, cfg.GamePort)
+	fmt.Printf("  Key:     %s\n", maskKey(cfg.Key))
+	fmt.Printf("  Player:  %s\n", cfg.PlayerName)
+	fmt.Printf("  Model:   %s\n", cfg.ModelFast)
+	fmt.Printf("  Tier:    %s\n", cfg.Tier)
+	fmt.Printf("  Game:    %s:%d\n", cfg.GameHost, cfg.GamePort)
 }
 
 // ─── keygen ───────────────────────────────────────────────────────────────────
@@ -311,7 +318,38 @@ func cmdExec(args []string) {
 		slog.Error("exec", "error", err)
 		os.Exit(1)
 	}
-	fmt.Printf("exec: %s %v\n", action.ActionType, action.Args)
+
+	// Read and print the server response
+	for {
+		var msg struct {
+			Type string          `json:"type"`
+			Data json.RawMessage `json:"data"`
+		}
+		if err := client.ReadJSON(&msg); err != nil {
+			break
+		}
+		slog.Debug("exec recv", "type", msg.Type)
+		if msg.Type == "state" {
+			var state struct {
+				Room struct {
+					Name string `json:"name"`
+				} `json:"room"`
+				Player struct {
+					Health int `json:"health"`
+					MaxHealth int `json:"max_health"`
+				} `json:"player"`
+				Events []string `json:"events"`
+			}
+			json.Unmarshal(msg.Data, &state)
+			if state.Room.Name != "" {
+				fmt.Printf("%s (HP: %d/%d)\n", state.Room.Name, state.Player.Health, state.Player.MaxHealth)
+			}
+			for _, e := range state.Events {
+				fmt.Println(e)
+			}
+			return // got our response, exit
+		}
+	}
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
