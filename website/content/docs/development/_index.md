@@ -124,6 +124,16 @@ World.mu.RLock → Player/Mob.mu     (party.go — group handling)
 | `pkg/audit` | Security and admin event logging |
 | `pkg/metrics` | Prometheus exposition endpoint |
 | `pkg/moderation` | Mute, ban, word filter, spam detection |
+| `pkg/admin` | Admin API router and control panels |
+| `pkg/common` | Shared types and constants across packages |
+| `pkg/dreaming` | Memory graph, narrative consolidation, valence computation |
+| `pkg/engine` | Game loop orchestrator (heartbeat, ticks, pulses) |
+| `pkg/optimization` | Performance profiling and optimization utilities |
+| `pkg/privacy` | PII hashing and fail-closed filter |
+| `pkg/secrets` | Secret management and encryption |
+| `pkg/spells` | Spell system and casting logic |
+| `pkg/storage` | Storage abstraction layer |
+| `pkg/validation` | Input validation and sanitization |
 
 See **[Architecture Reference](/docs/development/architecture/)** for the full data-flow diagram and concurrency model.
 

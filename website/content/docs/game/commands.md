@@ -235,12 +235,17 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 | `save` | — | Save your character to the database |
 | `quit` | — | Quit the game |
 | `roll` | — | Roll a random number |
+| `summon` | — | Summon a player to your room |
+| `review` | — | Show recent gossip history |
+| `todo` | — | Submit a todo suggestion |
+| `description` | `desc` | Set your character description (alias for `describe`) |
 | `display` | — | Set display preferences |
 | `transform` | — | Transform your appearance |
 | `ride` | — | Ride a mount |
 | `dismount` | — | Dismount from a mount |
 | `yank` | — | Yank someone from a mount or chair |
 | `stealth` | — | Enter stealth mode |
+| `hcontrol` | — | Admin house control |
 | `bug` | — | Report a bug |
 | `typo` | — | Report a typo |
 | `idea` | — | Submit a suggestion |
@@ -284,6 +289,24 @@ These commands require `LVL_IMMORT` (31) or higher and are not available to norm
 | `wiznet` | Wizard network channel | IMMORT |
 | `ban` / `unban` | Ban or unban a site | GOD |
 | `dc` | Disconnect a player | GOD |
+| `switch` | Enter another character's body | IMMORT |
+| `return` | Return from switched body | IMMORT |
+| `reload` | Reload world data | GOD |
+| `send` | Send a message to another character | GOD |
+| `wizlock` | Toggle wizard-only login | IMPL |
+| `idlist` | Dump object ID list to file | IMPL |
+| `checkload` | Check zone load info for a mob/obj | IMMORT |
+| `poofset` | Set poof in/out messages | IMMORT |
+| `zlist` | List zones matching a filter | IMMORT |
+| `rlist` | List rooms matching a keyword | IMMORT |
+| `olist` | List objects matching a keyword | IMMORT |
+| `mlist` | List mobiles matching a keyword | IMMORT |
+| `sysfile` | Show system file path | IMMORT |
+| `sethunt` | Set hunt target for a character | IMMORT |
+| `tick` | Show current tick info | IMMORT |
+| `users` | Show connected players | IMMORT |
+| `whod` | Toggle WHOD display mode | IMMORT |
 | `dark` | Stop combat in a room | IMMORT |
 | `syslog` | Toggle system logging level | IMMORT |
 | `newbie` | Give newbie gear to a player | IMMORT |
+| `order` | Order a pet or follower | IMMORT |

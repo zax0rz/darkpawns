@@ -76,15 +76,16 @@ Select one of the 7 playable races:
 ```
 Select your class:
 ```
-Select one of the 6 core classes:
-*   `0`: **Mage** (Spellcaster)
+Select one of the base classes:
+*   `0`: **Magic-user** (Spellcaster)
 *   `1`: **Cleric** (Healer and buffer)
 *   `2`: **Thief** (Stealth and high backstabs)
 *   `3`: **Warrior** (Exceptional Strength frontline)
-*   `4`: **Ninja** (Agility and evasion)
-*   `5`: **Psionic** (Mental spellcaster using Mind/Psi pool)
+*   `9`: **Psionic** (Mental spellcaster using Mind/Psi pool)
 
-*(Note: Remort-only classes like Assassin, Avatar, Magus, Paladin, Ranger, and Mystic are locked until you achieve Hero status on your first character life).*
+*   `8`: **Ninja** (Agility and evasion) — **Human-only**
+
+*(Note: Remort-only classes — Magus(4), Avatar(5), Assassin(6), Paladin(7), Ninja(8, also base for humans), Ranger(10), Mystic(11) — are locked until you achieve Hero status on your first character life).*
 
 ### Step 6: Hometown Selection
 ```

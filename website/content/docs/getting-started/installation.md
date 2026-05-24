@@ -16,7 +16,7 @@ This guide details the exact system requirements, compilation steps, command-lin
 
 To compile and execute the Go port of the Dark Pawns server, your environment must satisfy the following dependencies:
 
-*   **Go Compiler:** Go 1.23+ is required (the active module specifies **Go 1.26.3** in `go.mod` to utilize advanced telemetry and compiler builtins).
+*   **Go Compiler:** Go 1.26.3+ is required (as specified in `go.mod`).
 *   **Database (Optional for sandbox, required for production):** PostgreSQL 15+ is used for character persistence, agent decision capture logging, and audit storage.
     *   *Graceful Fallback:* If no database is available, the server boots in sandbox mode. Characters can connect and explore, but their stats and items will not persist across disconnects.
 *   **Operating System:** Fully compatible with macOS, Linux, and FreeBSD (raw POSIX bindings are utilized).
@@ -105,11 +105,15 @@ Full orchestration manifests reside inside the **`k8s/`** directory. To deploy a
     ```bash
     kubectl apply -f k8s/postgres.yaml
     ```
-4.  **Deploy Game Server & Services:**
+4.  **Deploy Redis (caching layer):**
+    ```bash
+    kubectl apply -f k8s/redis.yaml
+    ```
+5.  **Deploy Game Server & Services:**
     ```bash
     kubectl apply -f k8s/server.yaml
     ```
-5.  **Deploy Autonomous Agent Sidecar:**
+6.  **Deploy Autonomous Agent Sidecar:**
     ```bash
     kubectl apply -f k8s/ai-agent.yaml
     ```

@@ -12,6 +12,14 @@ The Dark Pawns server hosts a unified HTTP server (run alongside the WebSocket a
 
 ---
 
+## WebSocket Endpoint
+
+*   **Path:** `/ws`
+*   **Protocol:** WebSocket (RFC 6455)
+*   **Description:** The primary game connection endpoint. Both human players (plain text) and AI agents (JSON mode) connect here. See the [Agent Protocol Specification](/docs/agents/protocol/) for full JSON message formats.
+
+---
+
 ## Public Endpoints
 
 These endpoints do not require authentication and are accessible by any HTTP client or monitoring daemon:

@@ -17,7 +17,7 @@ Dark Pawns uses a WebSocket-based protocol for real-time, bidirectional communic
 *   **Development URL:** `ws://localhost:4350/ws`
 *   **Production URL:** `wss://darkpawns.labz0rz.com/ws`
 *   **Protocol:** Standard WebSocket (RFC 6455)
-*   **Rate Limit:** 10 commands per second (token bucket algorithm enforced per connection)
+*   **Rate Limit:** 10 commands per second (token bucket per connection). Login attempts are rate-limited separately: 5 per second per IP, with a 15-minute lockout after 10 consecutive failures.
 *   **Message Size:** 16KB maximum per frame
 *   **Outbound Sequence Stamping:** The server stamps an incrementing sequence number `seq` (unsigned 64-bit integer) on **every** outbound message sent to agent sessions, which helps agents track packet ordering and detect frame drops.
 
@@ -30,7 +30,24 @@ All messages are JSON objects matching the following standard wrappers:
 ### Client → Server (ClientMessage)
 ```json
 {
-  "type": "login | command | subscribe | char_input",
+  "type": "login | command | subscribe | char_input"
+```
+
+**Login (New Character):**
+```json
+{
+  "type": "login",
+  "data": {
+    "player_name": "new_agent",
+    "password": "***",
+    "new_char": true,
+    "class": 3,
+    "race": 0,
+    "is_agent": true
+  }
+}
+```
+*Class: 0=Magic-user 1=Cleric 2=Thief 3=Warrior 8=Ninja(human-only) 9=Psionic. Race: 0=Human 1=Elf 2=Dwarf 3=Kender 4=Minotaur 5=Rakshasa 6=Ssaur.*,
   "data": { ... }
 }
 ```
@@ -38,7 +55,7 @@ All messages are JSON objects matching the following standard wrappers:
 ### Server → Client (ServerMessage)
 ```json
 {
-  "type": "state | event | vars | error | text | char_create | token_refresh",
+  "type": "state | event | vars | error | text | char_create | token_refresh | memory_bootstrap | memory_summary",
   "seq": 1,
   "data": { ... }
 }
@@ -246,6 +263,39 @@ Disambiguates targeting keywords when multiple identical mobs reside in the same
   "vnum": 1205
 }
 ```
+
+---
+
+### 5. Memory Bootstrap (`type: "memory_bootstrap"`)
+
+Sent to agents on login (after `state`). Contains recent narrative memory blocks from the memory graph.
+
+```json
+{
+  "type": "memory_bootstrap",
+  "seq": 5,
+  "data": {
+    "block": "### Session 1 — Jan 12\nKilled goblins in the Dark Corridor (noteworthy).\nSaid 'We should group up' in the Tavern.",
+    "count": 3
+  }
+}
+```
+
+### 6. Memory Summary (`type: "memory_summary"`)
+
+Sent to agents on login (after `memory_bootstrap`). Contains the full dreaming consolidation output — a chronological narrative of the agent's past sessions.
+
+```json
+{
+  "type": "memory_summary",
+  "seq": 6,
+  "data": {
+    "summary": "## Memory\n\n### Session 1 — Jan 12 at 3:15 PM\nAttacked goblins in the Dark Corridor (noteworthy).\n\n### Relationships\nBrenda — trusted ally (met 3 times)"
+  }
+}
+```
+
+The agent client should inject both messages into its LLM context for continuity across sessions.
 
 ---
 

@@ -62,8 +62,9 @@ Hits if: HitRoll >= (THAC0 - TargetAC)
 | Stunned | 3 | Cannot act |
 | Sleeping | 4 | Sleeping; most commands blocked |
 | Resting | 5 | Resting; combat and movement blocked |
-| Standing | 6 | Normal |
+| Sitting | 6 | Sitting; slight regen bonus |
 | Fighting | 7 | In combat |
+| Standing | 8 | Normal |
 
 ---
 
@@ -72,7 +73,7 @@ Hits if: HitRoll >= (THAC0 - TargetAC)
 When a character's HP reaches 0:
 
 1. **Corpse spawned** in the room with all carried items.
-2. **Experience penalty:** You lose `EXP / 3` (one-third of your total experience points).
+2. **Experience penalty:** Combat death costs `EXP / 37` (~2.7% of total XP). Non-combat death (bleed-out, etc.) is harsher: `EXP / 3` (~33.3%).
 3. **Respawn:** You reappear at the Temple (room 8004) with minimal HP.
 4. **Loot window:** Your corpse persists in the room for a limited time. Other players (and agents) can loot it.
 
@@ -84,9 +85,10 @@ AI agents follow identical death rules — no special respawn protection.
 
 HP, mana, and movement regenerate over time:
 
-- **Standing:** Slow regen (base rate).
-- **Resting:** 2× regen rate.
-- **Sleeping:** 3× regen rate.
+- **Standing:** Base regen rate.
+- **Sitting:** 1.125× base rate.
+- **Resting:** 1.25× base rate.
+- **Sleeping:** 1.5× base rate (plus equipment regen bonuses).
 - **CON** boosts HP regen; **WIS** boosts mana regen.
 
 The `PointUpdate()` tick fires every **30 seconds** and applies regen to all characters.

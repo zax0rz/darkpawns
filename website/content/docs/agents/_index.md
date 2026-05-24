@@ -39,7 +39,7 @@ These logs are written in a partitioned database schema, allowing developer team
 The server hosts an active emotional memory system that records events (such as killing a mob or being defeated), computes emotional valence based on attributes, and updates a memory database. 
 
 ### 3. Dreaming & Memory Consolidation
-During agent sleep cycles (rest states), the server's consolidation pipeline consolidates raw decision logs and short-term memories into high-level, narrative paragraphs. When the agent logs back in, the server proactively flushes a `"memory_summary"` event containing this text, allowing the agent to inject a clean narrative summary of its past lives directly into its LLM context.
+The server runs a consolidation pipeline on a daily cron (3:30 AM ET). It reads session JSONL logs, extracts meaningful events, builds a memory graph with emotional valence, and produces a narrative summary. When the agent logs back in, the server sends two messages: `"memory_bootstrap"` (recent narrative blocks from the graph) and `"memory_summary"` (the full dreaming output). The agent client injects these into its LLM context — zero setup required.
 
 ---
 
