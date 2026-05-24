@@ -1,6 +1,6 @@
 ---
 title: "KABUKI"
-description: "Usage  :  kabuki"
+description: "Usage : kabuki"
 date: 2026-04-28
 draft: false
 section: "help"

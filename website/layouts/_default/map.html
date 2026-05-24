@@ -1,0 +1,451 @@
+{{ define "main" }}
+<style>
+/* ── Map page layout ─────────────────────────────────── */
+#map-page {
+  display: flex;
+  height: calc(100vh - var(--nav-height));
+  overflow: hidden;
+  background: #1a202c;
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+}
+
+/* ── Sidebar ─────────────────────────────────────────── */
+#map-sidebar {
+  width: 240px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: #141921;
+  border-right: 1px solid #2d3748;
+  overflow: hidden;
+}
+
+#map-sidebar-top {
+  padding: 0.75rem;
+  border-bottom: 1px solid #2d3748;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#zone-search, #room-search {
+  width: 100%;
+  background: #1a202c;
+  border: 1px solid #2d3748;
+  border-radius: 4px;
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 0.4rem 0.6rem;
+  outline: none;
+}
+#zone-search:focus, #room-search:focus {
+  border-color: #4299e1;
+}
+#zone-search::placeholder, #room-search::placeholder {
+  color: #718096;
+}
+
+#room-search-section {
+  border-top: 1px solid #2d3748;
+  padding: 0.75rem;
+}
+
+#room-search-results {
+  margin-top: 0.5rem;
+  display: none;
+  overflow-y: auto;
+  max-height: 180px;
+}
+
+.room-result {
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  color: #a0aec0;
+  line-height: 1.3;
+}
+.room-result:hover { background: #2d3748; color: #e2e8f0; }
+.room-result-zone { color: #4299e1; font-size: 0.6rem; }
+
+#zone-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.25rem 0;
+}
+
+#zone-list::-webkit-scrollbar { width: 4px; }
+#zone-list::-webkit-scrollbar-track { background: transparent; }
+#zone-list::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 2px; }
+
+.zone-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: #a0aec0;
+  transition: background 0.1s, color 0.1s;
+  line-height: 1.3;
+}
+.zone-item:hover { background: #1a202c; color: #e2e8f0; }
+.zone-item.active { background: #2d3748; color: #63b3ed; }
+.zone-count {
+  font-size: 0.6rem;
+  color: #4a5568;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+.zone-item.active .zone-count { color: #4299e1; }
+
+/* ── Main canvas ─────────────────────────────────────── */
+#map-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+#map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  height: 40px;
+  background: #141921;
+  border-bottom: 1px solid #2d3748;
+  flex-shrink: 0;
+}
+
+#zone-title {
+  font-size: 0.75rem;
+  color: #63b3ed;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+#map-controls {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.map-btn {
+  background: #2d3748;
+  border: 1px solid #4a5568;
+  border-radius: 3px;
+  color: #a0aec0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  transition: background 0.1s, color 0.1s;
+}
+.map-btn:hover { background: #3d4d60; color: #e2e8f0; }
+.map-btn.active { background: #4299e1; border-color: #4299e1; color: #fff; }
+
+#map-svg-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#map-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+}
+#map-svg:active { cursor: grabbing; }
+
+#map-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #4a5568;
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+#map-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #4a5568;
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+/* ── Tooltip ─────────────────────────────────────────── */
+#map-tooltip {
+  position: fixed;
+  background: #1a202c;
+  border: 1px solid #4299e1;
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.65rem;
+  color: #e2e8f0;
+  pointer-events: none;
+  z-index: 100;
+  max-width: 220px;
+  line-height: 1.4;
+  display: none;
+}
+#map-tooltip strong { color: #63b3ed; display: block; margin-bottom: 0.2rem; }
+
+/* ── Detail panel ────────────────────────────────────── */
+#map-detail {
+  width: 280px;
+  min-width: 280px;
+  background: #141921;
+  border-left: 1px solid #2d3748;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: margin-right 0.2s;
+}
+#map-detail.hidden {
+  display: none;
+}
+
+#detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-bottom: 1px solid #2d3748;
+  gap: 0.5rem;
+}
+
+#detail-room-name {
+  font-size: 0.8rem;
+  color: #63b3ed;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0;
+}
+
+#detail-vnum {
+  font-size: 0.6rem;
+  color: #4a5568;
+  margin-top: 0.2rem;
+}
+
+#detail-close {
+  background: none;
+  border: none;
+  color: #4a5568;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+}
+#detail-close:hover { color: #e2e8f0; }
+
+#detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+#detail-body::-webkit-scrollbar { width: 4px; }
+#detail-body::-webkit-scrollbar-track { background: transparent; }
+#detail-body::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 2px; }
+
+#detail-desc {
+  font-size: 0.7rem;
+  color: #a0aec0;
+  line-height: 1.6;
+  font-family: var(--font-body);
+}
+
+#detail-exits h4, #detail-path-section h4 {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4a5568;
+  margin: 0 0 0.4rem;
+}
+
+.exit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.7rem;
+  color: #a0aec0;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.exit-item:hover { color: #63b3ed; }
+.exit-dir {
+  width: 1rem;
+  text-align: center;
+  font-size: 0.6rem;
+  color: #4a5568;
+  text-transform: uppercase;
+}
+.exit-dest { color: #718096; font-size: 0.6rem; }
+
+#detail-path-section { border-top: 1px solid #2d3748; padding-top: 0.75rem; }
+
+#path-status {
+  font-size: 0.65rem;
+  color: #718096;
+  margin-bottom: 0.5rem;
+}
+
+.path-btn {
+  background: #2d3748;
+  border: 1px solid #4a5568;
+  border-radius: 3px;
+  color: #a0aec0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.3rem 0.6rem;
+  width: 100%;
+}
+.path-btn:hover { background: #3d4d60; color: #e2e8f0; }
+.path-btn.start { border-color: #ed8936; color: #ed8936; }
+.path-btn.clear { border-color: #fc8181; color: #fc8181; }
+
+/* ── SVG element styles ──────────────────────────────── */
+.exit-line {
+  stroke: rgba(226,232,240,0.12);
+  stroke-width: 1;
+  fill: none;
+  pointer-events: none;
+}
+.exit-line.highlighted { stroke: rgba(237,137,54,0.9); stroke-width: 2.5; }
+.exit-line.in-path { stroke: rgba(237,137,54,0.8); stroke-width: 2; }
+
+.room-node {
+  cursor: pointer;
+  transition: r 0.1s;
+}
+.room-node:hover { r: 8; }
+.room-node.selected { stroke: #f6e05e !important; stroke-width: 2.5 !important; }
+.room-node.path-node { stroke: #ed8936 !important; stroke-width: 2.5 !important; }
+.room-node.path-start { fill: #ed8936 !important; stroke: #fbd38d !important; stroke-width: 2 !important; }
+
+/* ── Legend ──────────────────────────────────────────── */
+#map-legend {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  background: rgba(20,25,33,0.85);
+  border: 1px solid #2d3748;
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.6rem;
+  color: #718096;
+  pointer-events: none;
+  display: none;
+}
+#map-legend.visible { display: block; }
+.legend-item { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  #map-sidebar { width: 0; min-width: 0; overflow: hidden; }
+  #map-sidebar.open { width: 240px; min-width: 240px; position: absolute; z-index: 20; height: 100%; }
+  #map-detail { width: 0; min-width: 0; overflow: hidden; }
+  #map-detail.open:not(.hidden) { width: 260px; min-width: 260px; position: absolute; right: 0; z-index: 20; height: 100%; }
+  #btn-sidebar { display: block !important; }
+}
+#btn-sidebar { display: none; }
+</style>
+
+<div id="map-page">
+
+  <!-- Sidebar: zone list + room search -->
+  <aside id="map-sidebar">
+    <div id="map-sidebar-top">
+      <input id="zone-search" type="text" placeholder="Search zones…" autocomplete="off">
+    </div>
+    <div id="zone-list"></div>
+    <div id="room-search-section">
+      <input id="room-search" type="text" placeholder="Search rooms…" autocomplete="off">
+      <div id="room-search-results"></div>
+    </div>
+  </aside>
+
+  <!-- Main map canvas -->
+  <div id="map-main">
+    <div id="map-header">
+      <span id="zone-title">Select a zone →</span>
+      <div id="map-controls">
+        <button class="map-btn" id="btn-sidebar" title="Toggle sidebar">☰</button>
+        <button class="map-btn" id="btn-zoom-in" title="Zoom in">+</button>
+        <button class="map-btn" id="btn-zoom-out" title="Zoom out">−</button>
+        <button class="map-btn" id="btn-reset" title="Reset view">⌂</button>
+        <button class="map-btn" id="btn-path" title="Find path between two rooms">Path</button>
+      </div>
+    </div>
+    <div id="map-svg-wrap">
+      <svg id="map-svg"></svg>
+      <div id="map-loading">
+        <div>Loading world data…</div>
+      </div>
+      <div id="map-empty" style="display:none">
+        <div>← Select a zone from the list</div>
+      </div>
+      <div id="map-tooltip"></div>
+      <div id="map-legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#718096"></span>inside</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#4299e1"></span>city</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#48bb78"></span>field</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#276749"></span>forest</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#9f7aea"></span>hills</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#a0aec0"></span>mountain</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#63b3ed"></span>water</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f6ad55"></span>desert</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail panel -->
+  <aside id="map-detail" class="hidden">
+    <div id="detail-header">
+      <div>
+        <h3 id="detail-room-name"></h3>
+        <div id="detail-vnum"></div>
+      </div>
+      <button id="detail-close" title="Close">✕</button>
+    </div>
+    <div id="detail-body">
+      <div id="detail-desc"></div>
+      <div id="detail-exits"></div>
+      <div id="detail-path-section">
+        <h4>Pathfinding</h4>
+        <div id="path-status">Click "Set Start" to begin path mode</div>
+        <button class="path-btn" id="btn-set-start">Set as path start</button>
+        <button class="path-btn clear" id="btn-clear-path" style="display:none;margin-top:0.3rem">Clear path</button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="/js/map.js"></script>
+{{ end }}

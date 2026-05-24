@@ -1,6 +1,6 @@
 ---
 title: "FLESH ALTER 'FLESH ALTER'"
-description: "Usage:  alter"
+description: "Usage: alter"
 date: 2026-04-28
 draft: false
 section: "help"
