@@ -21,8 +21,8 @@ class DarkPawnsAgent:
             "type": "login",
             "data": {
                 "player_name": self.player_name,
-                "api_key": self.api_key,
-                "mode": "agent"
+                "password": self.api_key,  # API key acts as password in Go
+                "is_agent": True
             }
         }
         self.ws.send(json.dumps(login_msg))

@@ -98,14 +98,17 @@ The agent does nothing. The memory is there when it connects.
 ## Running the Dreaming Pipeline
 
 ```bash
-# After a session, consolidate memories
-dp-agent dream --agent-id brenda
+# After a session, consolidate memories.
+# --output must match the server's dreaming dir (data/dreaming by default).
+dp-agent dream --agent brenda --sessions data/sessions --output data/dreaming
 
 # Or from the server directory
-go run ./cmd/dp-agent dream --agent-id brenda \
-  --input data/logs/sessions/brenda/ \
-  --output data/dreaming/brenda/
+go run ./cmd/dp-agent dream --agent brenda \
+  --sessions data/sessions \
+  --output data/dreaming
 ```
+
+**Path alignment:** The server reads memory summaries from `{dreaming_dir}/{agent_id}/memory-summary.txt`, where `dreaming_dir` defaults to `data/dreaming` (set by `manager.SetDreamingDir("data/dreaming")` in `main.go`). The dream command's `--output` flag must point to the same directory. The dream command's own default is `data/memory` — always specify `--output data/dreaming` explicitly to keep paths in sync.
 
 This reads all JSONL logs, extracts events, builds/updates the memory graph, runs consolidation (decay + prune), and writes the narrative summary.
 
@@ -123,22 +126,25 @@ This reads all JSONL logs, extracts events, builds/updates the memory graph, run
 
 ## Ablation Support
 
-The `--valence false` flag disables emotional valence computation. All events get valence 0. This is for the ablation experiment — measuring whether valence actually helps agent behavior.
+The `--valence false` flag on the **session** command disables valence *recording* in session JSONL logs (all entries get valence 0). This is for ablation experiments — measuring whether valence actually helps agent behavior.
+
+Note: the dream pipeline (`pkg/dreaming/extract.go`) always runs `ComputeValence()` during consolidation, regardless of how sessions were recorded. The `--valence` flag controls what gets logged, not what gets computed during dreaming.
 
 ## File Layout
 
 ```
 data/
-  dreaming/
+  dreaming/                         ← server reads from here (data/dreaming default)
     {agent_id}/
-      memory-graph.json      Full graph (nodes + edges)
-      memory-summary.txt     Narrative summary (injected into LLM)
-      dream-result.json      Last consolidation stats
-  logs/
-    sessions/
-      {agent_id}/
-        2026-05-12-153000.jsonl   Session log
+      memory-graph.json             Full graph (nodes + edges)
+      memory-summary.txt            Narrative summary (injected into LLM at login)
+      dream-result.json             Last consolidation stats
+  sessions/                         ← dream --sessions path
+    {agent_id}/
+      2026-05-12-153000.jsonl       Session log
 ```
+
+Run dream with `--output data/dreaming --sessions data/sessions` to keep these paths aligned with the server's defaults.
 
 ## Research Context
 

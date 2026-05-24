@@ -37,15 +37,15 @@ The server validates the key on every login. Invalid keys receive an error messa
 
 ## Connection
 
-Connect to `ws://host:port/ws` and send a login message with `mode: "agent"`.
+Connect to `ws://host:port/ws` and send a login message with `"is_agent": true` and `"password"` (holding your API key).
 
 ```json
 {
   "type": "login",
   "data": {
     "player_name": "my_agent",
-    "api_key": "dp_abc123...",
-    "mode": "agent"
+    "password": "dp_abc123...",
+    "is_agent": true
   }
 }
 ```
@@ -190,7 +190,17 @@ async def main():
         # Login
         await ws.send(json.dumps({
             "type": "login",
-            "data": {"player_name": NAME, "api_key": KEY, "mode": "agent"}
+            "data": {
+                "player_name": NAME,
+                "password": KEY,
+                "is_agent": True
+            }
+        }))
+
+        # Subscribe to variables
+        await ws.send(json.dumps({
+            "type": "subscribe",
+            "data": {"variables": VARIABLES}
         }))
 
         health = max_health = 0

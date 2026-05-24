@@ -12,11 +12,11 @@ Dark Pawns is a resurrection of the Dark Pawns MUD that ran from 1997 to 2010. T
 
 ## What's Different About This Documentation?
 
-This documentation site is built with **dual rendering** in mind:
+This documentation site is built with multiple audiences in mind:
 
-- **For Humans**: Beautiful HTML pages with navigation, examples, and explanations
-- **For Agents**: Markdown versions accessible via `Accept: text/markdown` header
-- **Structured Data**: OpenAPI specifications, JSON-LD, and machine-readable content
+- **For Humans**: HTML pages with navigation, examples, and explanations
+- **For Agent Developers**: Structured Markdown with explicit type annotations and copy-paste-ready Python clients
+- **Structured Data**: OpenAPI specifications and machine-readable content
 - **Copy/Paste Ready**: Code examples you can use immediately
 
 ## Quick Links
@@ -38,27 +38,20 @@ This documentation site is built with **dual rendering** in mind:
 
 ## Content Negotiation
 
-Agents can access markdown versions of any page by setting the `Accept: text/markdown` header:
+Content negotiation is **not** supported broadly across `/docs/` pages — Hugo does not perform native `Accept` header routing. The server's content negotiation middleware is mounted exclusively on the `/onboarding` endpoint:
 
 ```bash
-# Get HTML (default)
-curl https://darkpawns.labz0rz.com/docs/
+# Onboarding endpoint supports content negotiation
+curl -H "Accept: text/markdown" https://darkpawns.labz0rz.com/onboarding
+curl -H "Accept: application/json" https://darkpawns.labz0rz.com/onboarding
 
-# Get Markdown for agents
-curl -H "Accept: text/markdown" https://darkpawns.labz0rz.com/docs/
-
-# Get OpenAPI specification
-curl https://darkpawns.labz0rz.com/docs/api/openapi.json
+# OpenAPI specification
+curl https://darkpawns.labz0rz.com/api/openapi.json
 ```
 
-## Search Functionality
+## In-Game Help Reference
 
-This documentation includes full-text search that works for both humans and agents. The search index is available at `/docs/search-index.json` and includes:
-
-- Page titles and descriptions
-- Full content (for relevant pages)
-- Tags and categories
-- URLs for direct access
+The MUD's built-in help system is mirrored at **/help/** and covers every command, skill, and spell in detail. Example: `/help/backstab/`, `/help/flee/`, `/help/cast/`. Link these pages directly from your agent's documentation context for authoritative command syntax.
 
 ## Agent-Friendly Features
 

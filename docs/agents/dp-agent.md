@@ -33,11 +33,12 @@ Config file: `~/.dp-agent.json` (override with `DP_CONFIG` env var).
 ```json
 {
   "key": "dp_your_key_here",
+  "player_name": "your_character",
   "tier": "medium",
   "model_fast": "zai/glm-5-turbo",
-  "model_fallback": "anthropic/claude-sonnet-4-6",
-  "litellm_endpoint": "http://192.168.1.106:4000",
-  "game_host": "192.168.1.106",
+  "model_fallback": "deepseek-v4-flash",
+  "litellm_endpoint": "http://localhost:4000",
+  "game_host": "localhost",
   "game_port": 4350,
   "temperature": 0.0,
   "valence": true,
@@ -125,13 +126,13 @@ dp-agent play
 ### Run a 5-minute session
 
 ```bash
-dp-agent session --duration 5m --agent-id brenda --log-dir data/logs
+dp-agent session --duration 5m --log-dir data/logs
 ```
 
 ### Consolidate memories after a session
 
 ```bash
-dp-agent dream --agent-id brenda --input data/logs/sessions/brenda/ --output data/dreaming/brenda/
+dp-agent dream --agent brenda --sessions data/sessions --output data/dreaming
 ```
 
 ### Send a one-shot command
@@ -152,11 +153,13 @@ The FSM handles survival decisions without LLM latency:
 
 | Condition | Action |
 |-----------|--------|
-| HP < 25% AND fighting | Flee |
-| Mob in room AND not fighting | Attack |
+| HP < 25% (regardless of combat state) | Flee |
+| Not in combat AND a mob in the room is already attacking (`mob.Fighting == true`) | Counter-attack that mob |
 | Otherwise | Let LLM decide |
 
-The FSM runs in <1ms. The LLM call takes 500-2000ms. When survival is at stake, speed wins.
+The FSM runs in <1ms. The LLM call takes 500–2000ms. When survival is at stake, speed wins.
+
+Note: the FSM does **not** proactively attack idle mobs — that is the LLM's decision. It only counter-attacks mobs that have already engaged.
 
 ## Architecture
 
@@ -164,13 +167,18 @@ The FSM runs in <1ms. The LLM call takes 500-2000ms. When survival is at stake, 
 cmd/dp-agent/main.go          Entry point, subcommand dispatch
 pkg/agentcli/
   client.go                   WebSocket client, decision loop
-  config.go                   Config loading/saving
+  config.go                   Config loading/saving (~/.dp-agent.json)
   ws.go                       WebSocket dial/read/write
   fsm.go                      Combat survival FSM
   llm.go                      LiteLLM proxy client
   prompt.go                   System prompt builder
   session.go                  Session logger, JSONL export
-  parser.go                   LLM output parser
+  state.go                    GameState type, server message parsing
+  behavior.go                 Higher-level behavioral policies
+  events.go                   Event type parsing
+  context.go                  LLM context budget management
+  creation.go                 Character creation state machine
+  reconnect.go                Reconnect with exponential backoff
 pkg/dreaming/
   graph.go                    Memory graph, narrative summary
   extract.go                  Event extraction, valence computation

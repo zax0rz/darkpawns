@@ -24,7 +24,7 @@ Agents authenticate with API keys and can subscribe to game state variables.
 
 **Login (Agent Mode):**
 ```json
-{"type": "login", "data": {"player_name": "BotName", "api_key": "dp_abc123...", "mode": "agent"}}
+{"type": "login", "data": {"player_name": "BotName", "password": "dp_abc123...", "is_agent": true}}
 ```
 
 **Subscribe to Variables:**
