@@ -19,20 +19,20 @@
 
   // ── Sector colors ────────────────────────────────────────────────────
   const SECTOR_COLOR = {
-    0: '#718096',  // inside
-    1: '#4299e1',  // city
-    2: '#48bb78',  // field
-    3: '#276749',  // forest
-    4: '#9f7aea',  // hills
-    5: '#a0aec0',  // mountain
-    6: '#63b3ed',  // water_swim
-    7: '#2b6cb0',  // water_noswim
-    8: '#2c5282',  // underwater
-    9: '#90cdf4',  // flying
-    10: '#f6ad55', // desert
-    11: '#38a169', // swamp
+    0: '#4a4540',  // inside (dark charcoal)
+    1: '#a8201a',  // city (retro oxblood red)
+    2: '#8c905c',  // field (sage green)
+    3: '#3e5c38',  // forest (forest green)
+    4: '#b08b5c',  // hills (ochre/hills brown)
+    5: '#6b5e50',  // mountain (stone gray)
+    6: '#4a7a96',  // water_swim (dusty slate blue)
+    7: '#2c5282',  // water_noswim (deep blue)
+    8: '#1a365d',  // underwater (navy blue)
+    9: '#63b3ed',  // flying (sky blue)
+    10: '#d0a868', // desert (sand yellow)
+    11: '#5d705c', // swamp (muddy green)
   };
-  function getSectorColor(s) { return SECTOR_COLOR[s] || '#4299e1'; }
+  function getSectorColor(s) { return SECTOR_COLOR[s] || '#a8201a'; }
 
   const DIR_FULL = { n: 'north', e: 'east', s: 'south', w: 'west', u: 'up', d: 'down' };
 
@@ -101,8 +101,9 @@
         world = data;
         buildIndex();
         $loading.style.display = 'none';
-        $empty.style.display = 'flex';
+        $empty.style.display = 'none';
         renderZoneList('');
+        selectWorldOverview();
       })
       .catch(err => {
         $loading.textContent = `Failed to load world data: ${err.message}`;
@@ -126,19 +127,58 @@
     );
 
     if (!zones.length) {
-      $zoneList.innerHTML = '<div style="padding:0.5rem 0.75rem;font-size:0.65rem;color:#4a5568">No zones match</div>';
+      $zoneList.innerHTML = '<div style="padding:0.5rem 0.75rem;font-size:0.65rem;color:var(--ink-muted)">No zones match</div>';
       return;
     }
 
-    $zoneList.innerHTML = zones.map(z => `
+    let html = '';
+    if (!q) {
+      const totalRooms = world.zones.reduce((sum, z) => sum + z.rooms.length, 0);
+      html += `
+        <div class="zone-item${currentZoneId === null ? ' active' : ''}" id="item-world-map">
+          <span class="zone-name">🌍 WORLD OVERVIEW</span>
+          <span class="zone-count">${totalRooms}</span>
+        </div>
+      `;
+    }
+
+    html += zones.map(z => `
       <div class="zone-item${z.id === currentZoneId ? ' active' : ''}" data-zone="${z.id}">
         <span class="zone-name">${escHtml(z.name)}</span>
         <span class="zone-count">${z.rooms.length}</span>
       </div>`).join('');
 
-    $zoneList.querySelectorAll('.zone-item').forEach(el => {
+    $zoneList.innerHTML = html;
+
+    const btnWorldMap = document.getElementById('item-world-map');
+    if (btnWorldMap) {
+      btnWorldMap.addEventListener('click', () => selectWorldOverview());
+    }
+
+    $zoneList.querySelectorAll('.zone-item[data-zone]').forEach(el => {
       el.addEventListener('click', () => selectZone(+el.dataset.zone));
     });
+  }
+
+  function selectWorldOverview() {
+    currentZoneId = null;
+    $zoneTitle.textContent = "WORLD OVERVIEW";
+    $empty.style.display = 'none';
+    $legend.classList.add('visible');
+
+    // Highlight active zone in list
+    $zoneList.querySelectorAll('.zone-item').forEach(el => {
+      el.classList.toggle('active', el.id === 'item-world-map');
+    });
+
+    deselectRoom();
+    resetPath();
+    renderWorldOverview();
+
+    // On mobile: close sidebar after selection
+    if (window.innerWidth <= 768) {
+      $sidebar.classList.remove('open');
+    }
   }
 
   function selectZone(zoneId) {
@@ -215,8 +255,8 @@
       .attr('class', 'room-node')
       .attr('r', 6)
       .attr('fill', d => getSectorColor(d.room.sector))
-      .attr('stroke', '#1a202c')
-      .attr('stroke-width', 1.5)
+      .attr('stroke', 'var(--ink)')
+      .attr('stroke-width', 1.2)
       .on('mouseover', onNodeHover)
       .on('mousemove', onNodeMove)
       .on('mouseout', onNodeOut)
@@ -253,11 +293,167 @@
     setTimeout(() => fitToView(), 100);
   }
 
+  function renderWorldOverview() {
+    if (simulation) { simulation.stop(); simulation = null; }
+
+    gLinks.selectAll('*').remove();
+    gNodes.selectAll('*').remove();
+
+    const { w, h } = svgDims();
+
+    // 1. Gather all rooms across all zones
+    const rooms = [];
+    world.zones.forEach(zone => {
+      zone.rooms.forEach(room => {
+        rooms.push({ room, zoneId: zone.id });
+      });
+    });
+
+    // 2. Pre-position zone centers in a beautiful golden spiral
+    const zoneCenters = {};
+    const numZones = world.zones.length;
+    world.zones.forEach((zone, i) => {
+      const theta = i * 2.39996; // Golden angle in radians
+      const r = Math.sqrt(i) * (Math.min(w, h) * 0.4 / Math.sqrt(numZones));
+      zoneCenters[zone.id] = {
+        x: w / 2 + Math.cos(theta) * r,
+        y: h / 2 + Math.sin(theta) * r
+      };
+    });
+
+    // 3. Initialize node coordinates near their zone's center
+    currentNodes = rooms.map(entry => {
+      const zCenter = zoneCenters[entry.zoneId] || { x: w / 2, y: h / 2 };
+      const angle = Math.random() * 2 * Math.PI;
+      const radius = 8 + Math.random() * 20;
+      return {
+        id: entry.room.id,
+        room: entry.room,
+        zoneId: entry.zoneId,
+        x: zCenter.x + Math.cos(angle) * radius,
+        y: zCenter.y + Math.sin(angle) * radius
+      };
+    });
+
+    // 4. Build links (all valid exits in the world)
+    const linkSet = new Set();
+    currentLinks = [];
+    rooms.forEach(entry => {
+      const room = entry.room;
+      room.exits.forEach(exit => {
+        if (roomIndex[exit.t]) {
+          const key = Math.min(room.id, exit.t) + '-' + Math.max(room.id, exit.t);
+          if (!linkSet.has(key)) {
+            linkSet.add(key);
+            currentLinks.push({ source: room.id, target: exit.t });
+          }
+        }
+      });
+    });
+
+    // 5. SVG selections
+    const linkSel = gLinks.selectAll('line')
+      .data(currentLinks)
+      .join('line')
+      .attr('class', 'exit-line')
+      .attr('stroke-width', 0.8)
+      .style('opacity', 0.85);
+
+    const nodeSel = gNodes.selectAll('circle')
+      .data(currentNodes, d => d.id)
+      .join('circle')
+      .attr('class', 'room-node')
+      .attr('r', 3) // smaller dots for clean global constellation view
+      .attr('fill', d => getSectorColor(d.room.sector))
+      .attr('stroke', 'var(--ink)')
+      .attr('stroke-width', 0.8)
+      .on('mouseover', onNodeHover)
+      .on('mousemove', onNodeMove)
+      .on('mouseout', onNodeOut)
+      .on('click', onNodeClick)
+      .call(d3.drag()
+        .on('start', dragStart)
+        .on('drag', dragging)
+        .on('end', dragEnd)
+      );
+
+    // 6. Optimized simulation (warm-start statically in background)
+    simulation = d3.forceSimulation(currentNodes)
+      .force('link', d3.forceLink(currentLinks).id(d => d.id).distance(12).strength(0.8))
+      .force('charge', d3.forceManyBody().strength(-12))
+      .force('collision', d3.forceCollide(4.5))
+      .alphaDecay(0.08);
+
+    // Pre-calculate ticks to avoid dynamic frame lag
+    $loading.style.display = 'flex';
+    $loading.querySelector('div').textContent = "Warm-starting entire world overview...";
+
+    setTimeout(() => {
+      const ticks = 60;
+      for (let i = 0; i < ticks; i++) {
+        simulation.tick();
+      }
+
+      linkSel
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+      nodeSel
+        .attr('cx', d => d.x)
+        .attr('cy', d => d.y);
+
+      $loading.style.display = 'none';
+
+      // Connect simulation tick listener for buttery-smooth drag mechanics
+      simulation.on('tick', () => {
+        linkSel
+          .attr('x1', d => d.source.x)
+          .attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x)
+          .attr('y2', d => d.target.y);
+        nodeSel
+          .attr('cx', d => d.x)
+          .attr('cy', d => d.y);
+      });
+
+      fitToViewOverview();
+    }, 50);
+  }
+
   function fitToView() {
     const { w, h } = svgDims();
     svg.transition().duration(300).call(
       zoom.transform,
       d3.zoomIdentity.translate(w / 2, h / 2).scale(1).translate(-w / 2, -h / 2)
+    );
+  }
+
+  function fitToViewOverview() {
+    if (!currentNodes.length) return;
+    const { w, h } = svgDims();
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    currentNodes.forEach(n => {
+      if (n.x < minX) minX = n.x;
+      if (n.x > maxX) maxX = n.x;
+      if (n.y < minY) minY = n.y;
+      if (n.y > maxY) maxY = n.y;
+    });
+
+    const graphW = maxX - minX;
+    const graphH = maxY - minY;
+    const centerX = minX + graphW / 2;
+    const centerY = minY + graphH / 2;
+
+    const scale = Math.max(0.04, Math.min(1.2, 0.85 / Math.max(graphW / w, graphH / h)));
+
+    svg.transition().duration(400).call(
+      zoom.transform,
+      d3.zoomIdentity
+        .translate(w / 2, h / 2)
+        .scale(scale)
+        .translate(-centerX, -centerY)
     );
   }
 
@@ -381,15 +577,22 @@
   function jumpToRoom(roomId) {
     const entry = roomIndex[roomId];
     if (!entry) return;
-    if (entry.zoneId !== currentZoneId) {
-      selectZone(entry.zoneId);
-      // Wait for render then highlight
-      setTimeout(() => selectRoom(roomId), 800);
-    } else {
+
+    if (currentZoneId === null) {
+      // In World Overview: node is already loaded, select and pan directly!
       selectRoom(roomId);
-      // Pan to room node
       const node = currentNodes.find(n => n.id === roomId);
       if (node) panToNode(node);
+    } else {
+      // In single zone view: if room is in another zone, transition to it
+      if (entry.zoneId !== currentZoneId) {
+        selectZone(entry.zoneId);
+        setTimeout(() => selectRoom(roomId), 800);
+      } else {
+        selectRoom(roomId);
+        const node = currentNodes.find(n => n.id === roomId);
+        if (node) panToNode(node);
+      }
     }
   }
 
@@ -532,11 +735,11 @@
       svg.transition().duration(200).call(zoom.scaleBy, 1 / 1.5);
     });
     document.getElementById('btn-reset').addEventListener('click', () => {
-      const { w, h } = svgDims();
-      svg.transition().duration(300).call(
-        zoom.transform,
-        d3.zoomIdentity.translate(0, 0).scale(1)
-      );
+      if (currentZoneId === null) {
+        fitToViewOverview();
+      } else {
+        fitToView();
+      }
     });
 
     // Path mode
