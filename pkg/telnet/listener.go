@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/session"
 	"github.com/zax0rz/darkpawns/pkg/validation"
 )
@@ -127,17 +128,17 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	remoteAddr := rawConn.RemoteAddr().String()
 	slog.Info("Telnet connect", "remote_addr", remoteAddr)
 
-	// Send initial negotiation
-	tc.write([]byte{IAC, WILL, OPT_ECHO})
+	// Send initial negotiation: WONT echo (so client local echo is ON by default)
+	tc.write([]byte{IAC, WONT, OPT_ECHO})
 	tc.write([]byte{IAC, WILL, OPT_SGA})
 
 	s := manager.NewSession()
 
 	// Welcome + prompt
-	tc.writeLine("\r\n  Dark Pawns\r\n\r\nEnter your name: ")
+	tc.writeLine("\r\n  Dark Pawns\r\n\r\nBy what name do you wish to be known? ")
 
 	// Read name with timeout
-//nolint:errcheck // best-effort cleanup
+	//nolint:errcheck // best-effort cleanup
 	rawConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	name := tc.readLine()
 	name = strings.TrimSpace(name)
@@ -152,8 +153,81 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 		return
 	}
 
-	// Send login
-	if err := sendLogin(s, name); err != nil {
+	var password string
+	var newChar bool
+
+	// Stateful Authentication Check
+	if manager.HasDatabase() {
+		database := manager.GetDatabase()
+		var rec *db.PlayerRecord
+		var err error
+		rec, err = database.GetPlayer(name)
+		if err != nil {
+			slog.Error("Telnet DB lookup error", "player", name, "error", err)
+		}
+
+		if rec != nil {
+			// Returning player - prompt for password statefully (ECHO OFF)
+			tc.write([]byte{IAC, WILL, OPT_ECHO})
+			tc.writeLine("Password: ")
+			password = tc.readLine()
+			tc.write([]byte{IAC, WONT, OPT_ECHO})
+			tc.writeLine("\r\n")
+			newChar = false
+		} else {
+			// New character - ask to confirm creation
+			tc.writeLine("Character does not exist. Do you want to create a new character? (Y/N): ")
+			choice := tc.readLine()
+			choice = strings.TrimSpace(strings.ToLower(choice))
+			if choice != "y" && choice != "yes" {
+				tc.writeLine("\r\nGoodbye.\r\n")
+				return
+			}
+
+			// Prompt to create and confirm a password (ECHO OFF)
+			tc.write([]byte{IAC, WILL, OPT_ECHO})
+			tc.writeLine("Choose a password: ")
+			p1 := tc.readLine()
+			tc.writeLine("\r\nConfirm password: ")
+			p2 := tc.readLine()
+			tc.write([]byte{IAC, WONT, OPT_ECHO})
+			tc.writeLine("\r\n")
+
+			if p1 != p2 {
+				tc.writeLine("Passwords do not match. Disconnecting.\r\n")
+				return
+			}
+			password = p1
+			newChar = true
+		}
+	} else {
+		// No DB - ask to confirm creation and create password
+		tc.writeLine("No database connection. Create new character? (Y/N): ")
+		choice := tc.readLine()
+		choice = strings.TrimSpace(strings.ToLower(choice))
+		if choice != "y" && choice != "yes" {
+			tc.writeLine("\r\nGoodbye.\r\n")
+			return
+		}
+
+		tc.write([]byte{IAC, WILL, OPT_ECHO})
+		tc.writeLine("Choose a password: ")
+		p1 := tc.readLine()
+		tc.writeLine("\r\nConfirm password: ")
+		p2 := tc.readLine()
+		tc.write([]byte{IAC, WONT, OPT_ECHO})
+		tc.writeLine("\r\n")
+
+		if p1 != p2 {
+			tc.writeLine("Passwords do not match. Disconnecting.\r\n")
+			return
+		}
+		password = p1
+		newChar = true
+	}
+
+	// Send login with password
+	if err := sendLoginWithPassword(s, name, password, newChar); err != nil {
 		tc.writeLine(fmt.Sprintf("\r\nLogin failed: %v\r\n", err))
 		return
 	}
@@ -176,17 +250,26 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 		}
 		line = strings.TrimSpace(line)
 		if line == "" {
-			tc.writeLine("> ")
+			if !s.IsCharCreating() {
+				tc.writeLine("> ")
+			}
 			continue
 		}
 
 		_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
-		parts := strings.Fields(line)
-		if err := sendCommand(s, parts[0], parts[1:]); err != nil {
-			tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
+		if s.IsCharCreating() {
+			// Route selection choice as char_input
+			if err := sendCharInput(s, line); err != nil {
+				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
+			}
+		} else {
+			parts := strings.Fields(line)
+			if err := sendCommand(s, parts[0], parts[1:]); err != nil {
+				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
+			}
+			tc.writeLine("> ")
 		}
-		tc.writeLine("> ")
 	}
 
 	// Cleanup
@@ -228,8 +311,14 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		case "char_create":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
 				if prompt, ok := ed["prompt"].(string); ok {
-					tc.writeLine(fmt.Sprintf("%s> ", prompt))
+					tc.writeLine(fmt.Sprintf("\r\n%s\r\n", prompt))
 				}
+				if options, ok := ed["options"].(map[string]interface{}); ok {
+					for k, v := range options {
+						tc.writeLine(fmt.Sprintf("  [%s] %s\r\n", k, v))
+					}
+				}
+				tc.writeLine("> ")
 			}
 		case "vars":
 			// Agent vars — skip for telnet
@@ -379,9 +468,11 @@ func (tc *telnetConn) writeLine(s string) {
 	tc.write([]byte(s))
 }
 
-func sendLogin(s *session.Session, name string) error {
+func sendLoginWithPassword(s *session.Session, name string, password string, newChar bool) error {
 	loginData, err := json.Marshal(map[string]interface{}{
 		"player_name": name,
+		"password":    password,
+		"new_char":    newChar,
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
@@ -394,6 +485,23 @@ func sendLogin(s *session.Session, name string) error {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
 	return s.HandleMessage(loginMsg)
+}
+
+func sendCharInput(s *session.Session, choice string) error {
+	choiceData, err := json.Marshal(map[string]interface{}{
+		"choice": choice,
+	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
+	choiceMsg, err := json.Marshal(map[string]string{
+		"type": "char_input",
+		"data": string(choiceData),
+	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
+	return s.HandleMessage(choiceMsg)
 }
 
 func sendCommand(s *session.Session, cmd string, args []string) error {

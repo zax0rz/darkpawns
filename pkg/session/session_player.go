@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"golang.org/x/time/rate"
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -119,4 +120,18 @@ func (s *Session) Close() {
 	}
 }
 
-// SetTempData stores temporary data in the session
+// IsCharCreating returns whether the session is currently in character creation.
+func (s *Session) IsCharCreating() bool {
+	return s.charCreating
+}
+
+// HasDatabase returns whether the session manager has a database connection.
+func (m *Manager) HasDatabase() bool {
+	return m.hasDB
+}
+
+// GetDatabase returns the database instance.
+func (m *Manager) GetDatabase() *db.DB {
+	return &m.db
+}
+
