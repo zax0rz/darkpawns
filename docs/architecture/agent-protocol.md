@@ -5,7 +5,7 @@ tags: [active]
 
 > **Status:** Fully implemented. Agents connect via WebSocket with API key authentication.
 >
-> **Last updated:** 2026-05-08
+> **Last updated:** 2026-05-24
 
 ---
 
@@ -26,6 +26,22 @@ Agents authenticate with API keys and can subscribe to game state variables.
 ```json
 {"type": "login", "data": {"player_name": "BotName", "password": "dp_abc123...", "is_agent": true}}
 ```
+
+**Login (New Character):**
+```json
+{
+  "type": "login",
+  "data": {
+    "player_name": "new_agent",
+    "password": "dp_abc123...",
+    "new_char": true,
+    "class": 3,
+    "race": 0,
+    "is_agent": true
+  }
+}
+```
+*Class: 0=Magic-user 1=Cleric 2=Thief 3=Warrior 8=Ninja(human-only) 9=Psionic. Race: 0=Human 1=Elf 2=Dwarf 3=Kender 4=Minotaur 5=Rakshasa 6=Ssaur.*
 
 **Subscribe to Variables:**
 ```json
@@ -94,6 +110,11 @@ Agents authenticate with API keys and can subscribe to game state variables.
 {"type": "text", "data": {"text": "You see a dark corridor stretching north and east."}}
 ```
 
+**Memory Bootstrap (sent to agents at login):**
+```json
+{"type": "memory_bootstrap", "data": {"block": "### Session 1\nKilled goblins...", "count": 3}}
+```
+
 **Memory Summary (sent to agents at login):**
 ```json
 {"type": "memory_summary", "data": {"summary": "## Memory\n\n### Session 1\nAttacked goblins in the Dark Corridor..."}}
@@ -107,6 +128,9 @@ The `memory_summary` message contains the dreaming layer's narrative output. See
 Agents can subscribe to these variables:
 - `HEALTH`, `MAX_HEALTH` - Current and maximum health
 - `MANA`, `MAX_MANA` - Current and maximum mana
+- `MOVE`, `MAX_MOVE` - Current and maximum movement points
+- `GOLD` - Gold coins
+- `POSITION` - Character position (e.g. "standing", "fighting")
 - `LEVEL` - Player level
 - `EXP` - Current experience points
 - `ROOM_VNUM` - Room virtual number
@@ -114,10 +138,17 @@ Agents can subscribe to these variables:
 - `ROOM_EXITS` - Available exits (array)
 - `ROOM_MOBS` - Mobs in room (array with `name`, `instance_id`, `target_string`, `vnum`, `fighting`)
 - `ROOM_ITEMS` - Items in room (array with `name`, `instance_id`, `target_string`, `vnum`)
-- `FIGHTING` - Current combat target (null if not fighting)
-- `INVENTORY` - Player inventory (array)
-- `EQUIPMENT` - Equipped items (object by slot)
+- `FIGHTING` - Whether you are in combat (boolean)
+- `INVENTORY` - Player inventory (array with `name`, `vnum`, `instance_id`)
+- `EQUIPMENT` - Equipped items (object keyed by slot name)
 - `EVENTS` - Recent game events (array)
+
+---
+
+## Rate Limiting
+
+- **Commands:** 10 per second (token bucket per connection)
+- **Login attempts:** 5 per second per IP, with 15-minute lockout after 10 consecutive failures
 
 ---
 
@@ -125,6 +156,6 @@ Agents can subscribe to these variables:
 
 Agents follow the same rules as humans. No exceptions.
 - Same combat tick rate (2 second rounds)
-- Same death penalties (EXP/3 loss, corpse left in room)
-- Same rate limits (10 commands/second)
+- Same death penalties (combat: EXP/37, non-combat: EXP/3)
+- Same rate limits
 - Agents appear on WHO list

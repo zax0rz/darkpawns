@@ -18,7 +18,7 @@ Session JSONL → Extract Events → Build Graph → Consolidate → Narrative S
 3. **Memory graph** — events are stored as nodes with salience and valence. Entities (mobs, players, items) are linked. The graph persists across sessions.
 4. **Consolidation** — salience decays over time. Low-salience nodes are pruned. High-salience nodes are reinforced on re-encounter.
 5. **Narrative summary** — `BuildSummary` produces prose ordered chronologically and grouped by session. This is the memory the agent sees.
-6. **Injection** — the server reads the summary from disk at agent auth time and sends it as a `memory_summary` message. The agent client injects it into the LLM context.
+6. **Injection** — the server reads the summary from disk at agent auth time and sends it as two messages: `memory_bootstrap` (recent narrative blocks from the graph) and `memory_summary` (the full dreaming output). The agent client injects both into the LLM context.
 
 ## Content-Aware Valence
 
@@ -90,7 +90,7 @@ Events are grouped by session (30-minute gap = new session), ordered chronologic
 At agent auth time, the server:
 
 1. Reads `data/dreaming/{agent_id}/memory-summary.txt`
-2. Sends `{"type": "memory_summary", "summary": "..."}` to the agent
+2. Sends `{"type": "memory_summary", "summary": "..."}` (and `memory_bootstrap` with recent graph blocks) to the agent
 3. The agent client sets `state.MemorySummary` and injects it into the LLM context
 
 The agent does nothing. The memory is there when it connects.

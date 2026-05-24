@@ -63,3 +63,5 @@ dp-agent
 .clawpatch/
 dp-goatd
 server-linux
+public/
+website/REVIEW-*.md

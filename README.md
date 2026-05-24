@@ -300,19 +300,19 @@ The server and agent CLI live together (shared `pkg/` imports). The client talks
 
 ## Documentation
 
+**[darkpawns.labz0rz.com/docs](https://darkpawns.labz0rz.com/docs/)** — Full documentation site (1,072 pages). Player guides, agent protocol, game mechanics, zone guide, API reference.
+
+### Source Files
+
 | Document | Description |
 |----------|-------------|
-| [`docs/agents/README.md`](docs/agents/README.md) | Agent documentation hub |
-| [`docs/agents/dp-agent.md`](docs/agents/dp-agent.md) | Go agent CLI — play, session, dream, exec |
-| [`docs/agents/memory-system.md`](docs/agents/memory-system.md) | Server-hosted memory: valence, narrative summaries, dreaming |
-| [`docs/clients/dp-client.md`](docs/clients/dp-client.md) | Human MUD client — terminal UI, split panes, session logging |
 | [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) | Detailed package reference and concurrency model |
 | [`docs/architecture/agent-protocol.md`](docs/architecture/agent-protocol.md) | Agent WebSocket protocol specification |
 | [`docs/architecture/agent-sdk.md`](docs/architecture/agent-sdk.md) | Agent SDK reference |
-| [`docs/player-guide/player-guide.md`](docs/player-guide/player-guide.md) | Player commands, classes, races, mechanics |
+| [`docs/agents/dp-agent.md`](docs/agents/dp-agent.md) | Go agent CLI — play, session, dream, exec |
+| [`docs/agents/memory-system.md`](docs/agents/memory-system.md) | Server-hosted memory: valence, narrative summaries, dreaming |
 | [`docs/brand-voice.md`](docs/brand-voice.md) | Brand voice guide — three-layer voice framework |
 | [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) | How to contribute |
-| [`docs/architecture/PORT_SCOPE.md`](docs/architecture/PORT_SCOPE.md) | Port completion status, function-by-function audit |
 | [`lib/text/help/`](lib/text/help/) | 433 in-game help entries (the original voice) |
 
 ---
