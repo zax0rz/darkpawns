@@ -21,3 +21,5 @@ Examples:
   > list sword       (list all swords for sale)
  
 See also: [BUY](/help/commands/buy/), [SELL](/help/commands/sell/), [SHOPS](/help/info/shops/), [VALUE](/help/commands/value/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

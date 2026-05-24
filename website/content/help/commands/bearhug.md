@@ -13,3 +13,5 @@ By using this skill, the combatant can grab their adversary in a rib-breaking sq
 slowing them down during combat.  Note that this also slows you down as well.
 
 See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

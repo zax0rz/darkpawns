@@ -14,3 +14,5 @@ is basically a form of backstab that can be used in battle but does less
 damage.  You can only attempt to circle when you are not being hit.
 
 See also: [BACKSTAB](/help/commands/backstab/), [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

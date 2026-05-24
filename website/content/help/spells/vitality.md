@@ -11,3 +11,6 @@ Usage: cast 'vitality' <target>
 
 This spell restores the vital functions of the target, leaving them healthier 
 and refreshed.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

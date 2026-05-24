@@ -16,3 +16,5 @@ Berserking can only be attempted successfully once every two game hours
 (ticks).
 
 See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

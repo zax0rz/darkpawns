@@ -13,3 +13,5 @@ This skill works only on bladed weapons of a certain quality.
 Magickal blades can not be sharpened. Sharpened blades do more damage.
 
 See also: [RANGER](/help/info/ranger-rangers/), [PALADIN](/help/info/paladin/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

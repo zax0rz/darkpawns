@@ -14,3 +14,6 @@ Usage:  point
 
 Used for... pointing things out.
 Remember what your mother said however... its not nice to point.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

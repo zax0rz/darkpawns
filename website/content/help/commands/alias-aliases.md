@@ -54,3 +54,5 @@ The special variable $* represents the entire input line after an alias:
   You tell Rasmussen, 'hi there, how are you today?'
 
 See also: [!](/help/commands/!/) [^](/help/commands/!/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

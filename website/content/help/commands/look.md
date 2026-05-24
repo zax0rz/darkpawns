@@ -29,3 +29,5 @@ lies in that direction, or the actual room itself.  Players may turn off
 full room listings while using look [direction] by playing in [BRIEF](/help/commands/brief/) mode.
 
 See also: [EXAMINE](/help/commands/examine/), GET, [READ](/help/commands/read/), [TAKE](/help/commands/get-take/), [RACE](/help/info/race-races/), [BRIEF](/help/commands/brief/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -13,3 +13,5 @@ If you feel claustrophobic, typing 'leave' will make you use the nearest
 obvious exit to the outside.
 
 See also: [ENTER](/help/commands/enter/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

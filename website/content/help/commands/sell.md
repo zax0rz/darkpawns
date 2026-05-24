@@ -20,3 +20,5 @@ Examples:
   > sell 3 sword     (sell the first three swords in your inventory)
  
 See also: [BUY](/help/commands/buy/), [LIST](/help/commands/list/), [SHOPS](/help/info/shops/), [VALUE](/help/commands/value/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -16,3 +16,5 @@ command will tell you what your current screen is set at.  This number
 is only used in the infobar and [OLC](/help/wizhelp/olc/) for immorts.
 
 See also: [INFOBAR](/help/commands/infobar/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

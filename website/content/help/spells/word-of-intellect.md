@@ -13,3 +13,6 @@ Duration    : about a quarter of a day
 
 This short prayer, if answered, causes the victim to become smarter for a 
 brief while.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

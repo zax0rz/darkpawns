@@ -20,3 +20,6 @@ If you have to type [REALLYQUIT](/help/commands/reallyquit/) to leave the game, 
 and were dropped on the ground in the room you quit out in.
 
 See Also: [HOMETOWN](/help/info/hometown-hometowns/), [RECALL](/help/commands/recall/), [WORD](/help/spells/word-of-recall/) OF [RECALL](/help/commands/recall/), [RENT](/help/commands/offer-rent/), [REALLYQUIT](/help/commands/reallyquit/)
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

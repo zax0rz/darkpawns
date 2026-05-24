@@ -29,3 +29,5 @@ Examples:
   > wear 2.boots 
 
 See also: [EQUIPMENT](/help/commands/equipment/), [REMOVE](/help/commands/remove/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

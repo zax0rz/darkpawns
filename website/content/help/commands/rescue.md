@@ -19,3 +19,5 @@ Example:
 > rescue Yankee
 
 See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -27,3 +27,6 @@ Examples:
   > receive
 
 Stamps cost 25 coins.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

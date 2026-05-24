@@ -30,3 +30,6 @@ multi characters. Ask a high level player about them or search them out on
 the web. Three popular ones are Tintin, Tinyfugue(both for UNIX shell accounts) 
 and Zmud (Windows based). Please do not bother the Imms and Gods about mud
 clients!
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

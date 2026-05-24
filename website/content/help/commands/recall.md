@@ -13,3 +13,5 @@ For new players, this command will send you to the Temple of the Unholy in the
 main town of Kir Drax'in.
 
 See also: "[WORD](/help/spells/word-of-recall/) OF [RECALL](/help/commands/recall/)", [QUIT](/help/commands/quit/), [HOMETOWN](/help/info/hometown-hometowns/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

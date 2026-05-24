@@ -19,6 +19,8 @@ Example:
 
 See also: help on each individual mind-skill:
 
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)
+
 Examples:
 
   > help mind pok

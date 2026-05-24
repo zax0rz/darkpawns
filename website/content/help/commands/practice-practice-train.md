@@ -25,3 +25,5 @@ Practice sessions are gained when you level, and based on your wisdom. The
 amount you learn in each session is based on your intelligence.
 
 See also: [CLASSES](/help/info/class-classes/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

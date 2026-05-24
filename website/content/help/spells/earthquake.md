@@ -14,3 +14,6 @@ Save        : -
 
 The spell causes an earthquake to occur in a small radius surrounding the
 caster. The earthquake will damage everyone in the room, save the caster and his or her friends.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

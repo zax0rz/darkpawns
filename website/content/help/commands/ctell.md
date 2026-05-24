@@ -17,3 +17,5 @@ ranked <number> and over.
 > ctell #5 Shh, here is a secret message for you guys.
 
 See also: [CLAN](/help/commands/clan-clans/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

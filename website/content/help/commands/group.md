@@ -44,3 +44,5 @@ Later when Dragon get upset at Quifael (because he is sleeping all the time)
 he types : "Group Quifael" to kick Quifael out of the group.
 
 See also: [EXPERIENCE](/help/info/experience-xp/), [UNGROUP](/help/commands/ungroup/), [XP](/help/info/experience-xp/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

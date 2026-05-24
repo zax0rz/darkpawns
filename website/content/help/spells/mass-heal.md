@@ -11,3 +11,6 @@ Usage: cast 'mass heal' <target>
 
 Twice as strong as the heal spell, this powerful healing can only be
 cast by the most powerful of clerics and avatars.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

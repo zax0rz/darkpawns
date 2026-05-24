@@ -15,3 +15,5 @@ This will allow a status bar to develop on your screen.  It assumes a
 of in your prompt.  It can be resized with the "lines" command.
 
 See also: [LINES](/help/commands/lines/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

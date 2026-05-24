@@ -13,3 +13,5 @@ With a word of command, the caster shoots forth a ball of fire from his palm,
 incinerating the victim and dealing massive damage.
 
 See also: "[COLOR](/help/commands/ansi-color/) [SPRAY](/help/spells/colorspray-color-spray/)"
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

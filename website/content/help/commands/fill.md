@@ -17,3 +17,5 @@ Example:
   > fill canteen fountain
 
 See also: [POUR](/help/commands/pour/), [DRINK](/help/commands/eat-drink-sip-taste/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

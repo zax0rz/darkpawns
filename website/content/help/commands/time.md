@@ -20,3 +20,5 @@ and hit points, respectively.) During the nights of a full moon, they are
 forced to [TRANSFORM](/help/commands/transform/). Moon phase also affects MOONGATES.
 
 See also: [WEREWOLF](/help/info/lycanthropy-werewolf-werewolves-lycanthrope/), [VAMPIRE](/help/info/vampirism-vampire-vampires/), [TRANSFORM](/help/commands/transform/), [MOONGATE](/help/info/moongate-moon/), [GATE](/help/spells/gate/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

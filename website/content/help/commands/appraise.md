@@ -13,3 +13,6 @@ Example	: appraise sword
 
 A successful appraisal gives an item value within 20 or so coins.
 Unsuccessful appraisals can be much, much worse.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

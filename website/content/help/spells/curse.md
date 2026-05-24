@@ -18,3 +18,6 @@ a curse might cause the victim to have an unfortunate accident of the
 lethal type.
 
 When cast upon an object, the object will become undropable.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

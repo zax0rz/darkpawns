@@ -12,3 +12,5 @@ Usage: qsay <message>
 To tell something to everyone on the current Quest.
 
 See also: [QUEST](/help/commands/quest/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

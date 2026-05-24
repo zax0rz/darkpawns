@@ -16,3 +16,5 @@ Maximum 100 points can be healed.  A victim who is blinded will also
 be cured by the heal spell.
 
 See also: "[CURE](/help/spells/cure-light/) [BLINDNESS](/help/spells/blindness/)"
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

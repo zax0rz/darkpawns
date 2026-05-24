@@ -16,3 +16,6 @@ of those pesky do-gooders who always wish you harm.
 
 Note: casting this spell upon yourself while you are good can have
       disasterous side effects.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

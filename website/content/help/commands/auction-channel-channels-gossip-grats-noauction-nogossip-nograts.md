@@ -31,3 +31,5 @@ Examples:
   > newbie Help me please, any high levelers listening?
 
 See also: [EMOTE](/help/commands/emote/), [GSAY](/help/commands/gsay-gtell/), [HOLLER](/help/commands/say-tell-ask-whisper-shout-holler/), [NOREPEAT](/help/commands/norepeat/), [SAY](/help/commands/say-tell-ask-whisper-shout-holler/), [SHOUT](/help/commands/say-tell-ask-whisper-shout-holler/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

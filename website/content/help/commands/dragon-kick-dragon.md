@@ -12,3 +12,6 @@ Usage: dragon <victim>
 The secret attack of the Hidden Dragon school of ninjitsu, this powerful
 upper body kick slams into the victim with devastating force, knocking 
 backwards and leaving them dazed.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

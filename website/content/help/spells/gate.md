@@ -22,3 +22,5 @@ far-reaching side-affects. Few have returned to tell what those side-affects
 actually are.
 
 See also: [MOONGATE](/help/info/moongate-moon/)
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

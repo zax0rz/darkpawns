@@ -19,3 +19,6 @@ idea to read them every once in a while.
    future   - what new things are coming down the line
 
  See Also: [INFOBAR](/help/commands/infobar/)
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

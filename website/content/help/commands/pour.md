@@ -19,3 +19,5 @@ Examples:
   > pour cup out
 
 See also: [FILL](/help/commands/fill/), [DRINK](/help/commands/eat-drink-sip-taste/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

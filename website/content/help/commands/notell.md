@@ -14,3 +14,5 @@ communicate with you.  (notell) will appear after your name in the WHO
 list if you have notell on.
 
 See also: [FLAGS](/help/info/flags/), [TELL](/help/commands/say-tell-ask-whisper-shout-holler/), [TOGGLE](/help/commands/toggle/), WHO
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

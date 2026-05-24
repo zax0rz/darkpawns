@@ -13,3 +13,6 @@ Duration    : varies per level of caster
 
 This spell creates a blinding cloud of acrid smoke that affects everyone
 In the room except the caster and those in his or her group.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

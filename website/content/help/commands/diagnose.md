@@ -20,3 +20,5 @@ Examples:
   > diagnose rasmussen
 
 See also: [CONSIDER](/help/commands/consider/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

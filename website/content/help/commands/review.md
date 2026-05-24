@@ -12,3 +12,5 @@ Usage: review
 Lets you review the last 25 gossips.
 
 See also: [GOSSIP](/help/commands/auction-channel-channels-gossip-grats-noauction-nogossip-nograts/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

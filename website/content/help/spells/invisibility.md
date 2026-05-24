@@ -16,3 +16,5 @@ the "detect invisibility" spell.
 
 
 See also: "[DETECT](/help/commands/search-secret-doors-door-detect/) [INVISIBILITY](/help/spells/invisibility/)"
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

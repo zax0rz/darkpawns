@@ -11,3 +11,6 @@ Usage       : cast 'invigorate' <victim>
 
 This spell alleviates the pains of traveling, leaving the victim refreshed
 and ready to continue their journey.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

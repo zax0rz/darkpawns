@@ -13,3 +13,5 @@ May give you some valuable information about an item or monster.
 A little more detailed than [LOOK](/help/commands/look/).
 
 See also: [LOOK](/help/commands/look/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

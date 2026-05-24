@@ -20,3 +20,5 @@ Example:
   > read note
 
 See also: [BOARDS](/help/info/boards/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

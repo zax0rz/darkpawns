@@ -17,3 +17,5 @@ if they are interested in the Quest.  It also allows you to listen in on
 the quest channel and receive information specific to the quest.
 
 See also: [QSAY](/help/commands/qsay/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

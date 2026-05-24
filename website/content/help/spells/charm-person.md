@@ -20,3 +20,5 @@ like being charmed, and a failed attempt will usually result in your
 being attacked.
 
 See also: [FOLLOW](/help/commands/follow/), [ORDER](/help/commands/order/)
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

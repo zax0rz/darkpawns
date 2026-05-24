@@ -23,3 +23,5 @@ Looking into other rooms by typing [LOOK](/help/commands/look/) [direction] will
 "brief mode" if brief is on.
 
 See also: [COMPACT](/help/commands/compact/), [LOOK](/help/commands/look/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

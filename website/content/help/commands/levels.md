@@ -13,3 +13,5 @@ Lists the levels of your class and the experience required to attain each
 level.
 
 See also: [CLASSES](/help/info/class-classes/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

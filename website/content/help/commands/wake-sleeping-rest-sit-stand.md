@@ -16,3 +16,6 @@ asleep. You can awaken yourself (and others) with the [WAKE](/help/commands/wake
 
 Also, certain rooms such as holy rooms and places of ancient power allow
 you to heal and regenerate faster.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

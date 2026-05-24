@@ -15,3 +15,5 @@ Blindness will blind a victim failing its saving throw.
 A blinded person will have -4 penalty to both hitroll and [AC](/help/info/ac-armor/).
 
 See also: [AC](/help/info/ac-armor/)
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

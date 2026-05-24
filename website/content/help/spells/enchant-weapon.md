@@ -26,3 +26,6 @@ The enchantment will modify the weapon as:
 
 Enchanted weapons become not useable by people of the caster's opposite
 alignment.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

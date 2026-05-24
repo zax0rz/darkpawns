@@ -19,3 +19,6 @@ Usage: offer
  be deleted.  In the event of a crash save or idle save, the timeout period
  is 10 days.  If for some reason the mud goes down for more than 10 days,
  these restrictions may be lifted.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

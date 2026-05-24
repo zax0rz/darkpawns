@@ -12,3 +12,5 @@ Usage: yank <victim>
 For those slow-to-move group members, you can yank them onto their feet.
 
 See also: [GROUP](/help/commands/group/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

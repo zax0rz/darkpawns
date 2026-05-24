@@ -14,3 +14,5 @@ The success of a kick depends upon how well you are learned.  The higher
 level you reach the harder you kick. 
 
 See also: [BASH](/help/commands/bash/), [RESCUE](/help/commands/rescue/), [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

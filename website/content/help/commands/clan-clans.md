@@ -62,3 +62,5 @@ new clan.
 [CLAN](/help/commands/clan-clans/) [SET](/help/wizhelp/set/) [TITLE](/help/commands/title/) Set the title for each rank in your clan
 
 See also: [CTELL](/help/commands/ctell/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

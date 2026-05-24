@@ -13,3 +13,5 @@ When nosummon is on, players and monsters can not summon you easily. T
 his does NOT mean you are totally protected against summoning, however.
 
 See also: [SUMMON](/help/spells/summon/), [TOGGLE](/help/commands/toggle/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -15,4 +15,6 @@ All of these toggles remain the same until you change them; i.e. they are
 saved when you quit or rent.
 
 See also: [BRIEF](/help/commands/brief/), [COMPACT](/help/commands/compact/), [DISPLAY](/help/commands/display-prompt/), [NOSHOUT](/help/commands/noshout/), [NOSUMMON](/help/commands/nosummon/), [NOTELL](/help/commands/notell/), [QUEST](/help/commands/quest/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)
           [NOREPEAT](/help/commands/norepeat/), WIMP

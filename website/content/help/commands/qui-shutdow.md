@@ -11,3 +11,5 @@ Just to prevent accidental quittings and/or shutdowns.
 This command doesn't DO anything, it simply is.
 
 See also: [QUIT](/help/commands/quit/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

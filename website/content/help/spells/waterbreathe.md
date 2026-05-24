@@ -11,3 +11,6 @@ Usage: cast 'waterbreathe' <target>
 
 The target gains the ability to breathe underwater like a fish. 
 This magick does not affect the targets ability to move underwater, however.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

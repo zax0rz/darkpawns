@@ -13,3 +13,5 @@ If you're uncertain whether the sun is shining or the rain is
 pouring down. You'll have to be outside in order to tell however.
 
 See also: "[CONTROL](/help/spells/control-weather/) [WEATHER](/help/commands/weather/)"
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

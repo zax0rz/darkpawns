@@ -22,3 +22,5 @@ Examples:
     (If it's wielded, only possible if he is sleeping)
 
 See also: [FLAGS](/help/info/flags/), [PSTEAL](/help/info/psteal-player-stealing-pstealing/), [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

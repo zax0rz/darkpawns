@@ -18,3 +18,6 @@ for enchantment is to fully identify it.
 The enchantment is based on the caster's level.
 Enchanted armor become not useable by people of the caster's opposite
 alignment.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

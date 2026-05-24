@@ -22,3 +22,5 @@ a 25% chance the item will be junked.
   > donate 500 coins
 
 See also: [JUNK](/help/commands/junk/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

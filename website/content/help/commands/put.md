@@ -20,3 +20,5 @@ Examples:
   > put all chest
 
 See also: GET
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

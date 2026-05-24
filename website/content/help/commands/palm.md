@@ -17,3 +17,5 @@ Only items in the room can be palmed, not objects in containers. The
 Smaller the object, the easier it is to palm.
 
 See also: [STEAL](/help/commands/steal/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

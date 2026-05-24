@@ -26,3 +26,5 @@ On a failed summon attempt, <victim> is sometimes aware of the attempt,
 and on massive failures, the caster is summoned TO the victim's location.
 
 See also: [NOSUMMON](/help/commands/nosummon/)
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

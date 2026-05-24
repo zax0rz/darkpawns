@@ -14,3 +14,6 @@ losing the experience points that incurs from fleeing.  If your [WIMPY](/help/co
 triggered during battle, you may be able to retreat instead of fleeing.
 
 See Also: [FLEE](/help/commands/flee/), [WIMPY](/help/commands/wimpy/)
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

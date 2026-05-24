@@ -14,3 +14,6 @@ Victim first feels a mental invasion, which causes pressure that slowly
 increases to the point of extreme, incredible pain. The victim's brain, 
 revolting against the attack, sometime succumbs to the pressure, exploding 
 through the skull of the unfortunate victim.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -14,3 +14,6 @@ Save        : Versus spell for half damage.
 
 This spell sucks the life force from the victim, causing a
 tremendous amount damage.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

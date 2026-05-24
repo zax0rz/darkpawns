@@ -18,3 +18,5 @@ Parry is sometimes automatic once you have learned the skill.  It occurs
 reflexively in combat, with greater skill providing more frequent parries.
 
 See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

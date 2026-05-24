@@ -12,3 +12,5 @@ energies towards seeing the unseen.  This lesser version is great for
 seeing in the dark, as well as seeing other people's true nature.
 
 See also: "[GREATER](/help/spells/greater-perception/) [PERCEPTION](/help/spells/greater-perception/)"
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

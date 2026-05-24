@@ -14,3 +14,5 @@ not of your race see a gibberish-type message. Careful.. this message
 IS decipherable.
 
 See also: [RACE](/help/info/race-races/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

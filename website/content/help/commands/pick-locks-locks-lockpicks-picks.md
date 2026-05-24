@@ -21,3 +21,5 @@ Examples:
   > pick safe
 
 See also: [OPEN](/help/commands/open-close-lock-unlock/), [CLOSE](/help/commands/open-close-lock-unlock/), [LOCK](/help/commands/open-close-lock-unlock/), [UNLOCK](/help/commands/open-close-lock-unlock/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -18,3 +18,5 @@ the pen", whereupon you'll be asked to type in your note at the keyboard.
 for more information.
 
 See also: [BOARDS](/help/info/boards/), [MAIL](/help/commands/check-mail-receive/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

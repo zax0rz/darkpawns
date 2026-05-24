@@ -23,3 +23,5 @@ crash.  If you are leaving the game normally, [SAVE](/help/commands/save/) will 
 equipment - You must quit out at a temple.
 
 See also: [HOMETOWN](/help/info/hometown-hometowns/), [QUIT](/help/commands/quit/), [DEATH](/help/info/die-death-condie/), [REALLYQUIT](/help/commands/reallyquit/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

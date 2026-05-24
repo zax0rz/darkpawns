@@ -11,3 +11,6 @@ Usage: cast "lay hands" <self>
 
 This prayer-spell brings a flow of healing through the Paladin's hands, 
 restoring health to himself.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

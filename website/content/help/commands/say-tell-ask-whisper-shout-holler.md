@@ -27,3 +27,5 @@ broadcasts to everyone in the game but costs 20 movement points.  You must
 be level 2 before you can use shout or holler.
 
 See also: [AUCTION](/help/commands/auction-channel-channels-gossip-grats-noauction-nogossip-nograts/), [GOSSIP](/help/commands/auction-channel-channels-gossip-grats-noauction-nogossip-nograts/), [GSAY](/help/commands/gsay-gtell/), [NOREPEAT](/help/commands/norepeat/), [QSAY](/help/commands/qsay/), [REPLY](/help/commands/reply/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -15,3 +15,5 @@ Allows the caster to detect the heat given off by objects giving them
 the ability to have much better vision in dark conditions.
 
 See also: "[DETECT](/help/commands/search-secret-doors-door-detect/) [INVISIBILITY](/help/spells/invisibility/)"
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -12,3 +12,6 @@ Usage	:	cast 'disintegration' <victim>
 This powerful spell calls forth a beam of raw energy that can be directed
 by the caster.  Bewhere though, this energy is very unstable and can have
 devastating results if not used carefully!
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

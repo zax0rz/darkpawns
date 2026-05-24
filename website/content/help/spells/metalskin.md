@@ -13,3 +13,6 @@ Duration: Varies
 Save: -
 
 Causes the target's skin to turn metallic, protecting them from damage.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

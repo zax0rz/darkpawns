@@ -31,3 +31,5 @@ Usage:  rin
 	  etc....
 
 See also: [NINJA](/help/info/ninja-ninjas/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

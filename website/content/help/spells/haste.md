@@ -13,3 +13,6 @@ Duration	: Instantaneous
 
 By use of this power, the Mystic can speed up his actions in movement as
 well as in combat.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

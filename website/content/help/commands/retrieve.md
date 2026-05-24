@@ -15,3 +15,5 @@ Also, certain practitioners of the Black Arts are known to be able to
 retrieve corpses, but their motives are probably less than respectable.
 
 See also: [DEATH](/help/info/die-death-condie/), CORPSE
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

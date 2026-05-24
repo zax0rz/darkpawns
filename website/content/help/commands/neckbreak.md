@@ -12,3 +12,6 @@ Usage: neckbreak <victim>
 The trained master of ninjitsu can execute a one-time attempt to break his
 victims neck quickly.  Success deals nearly lethal damage to the victim, 
 failures are usually quite messy.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

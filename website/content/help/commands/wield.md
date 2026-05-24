@@ -18,3 +18,5 @@ Example:
   > wield 3.sword    (Wield the third sword in your inventory)
 
 See also: [EQUIPMENT](/help/commands/equipment/), [REMOVE](/help/commands/remove/), [WEAR](/help/commands/wear/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

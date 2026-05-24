@@ -26,3 +26,5 @@ Examples:
   > buy 10 #2        (buy 10 of the second item on the list)
  
 See also: [LIST](/help/commands/list/), [SELL](/help/commands/sell/), [SHOPS](/help/info/shops/), [VALUE](/help/commands/value/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

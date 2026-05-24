@@ -16,3 +16,6 @@ This incredibly powerful psionic attack is capable of devastating an opponent.
 The psionic must be careful, however, for this power is difficult to control.
 There is a chance that a psiblast might backfire on the psionic, causing
 permanent brain damage to him or her.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

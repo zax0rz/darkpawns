@@ -18,3 +18,6 @@ If you're hungry or thirsty, these commands are for you!
   > taste bread
   > drink from cup
 > sip fountain
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -15,3 +15,6 @@ by the "sense life" spell.  Even if sensed your identity will remain
 hidden. This is a rather taxing mental feat, and can only be attempted
 once per day.  You may be able to perform actions and still remain hidden,
 but the chances of this are slight.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

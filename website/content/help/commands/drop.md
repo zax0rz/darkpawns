@@ -22,3 +22,5 @@ littering the ground.  To get rid of items, use [JUNK](/help/commands/junk/) or 
   > drop 1000 coins
 
 See also: [DONATE](/help/commands/donate/), GET, [JUNK](/help/commands/junk/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

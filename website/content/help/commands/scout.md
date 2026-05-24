@@ -15,3 +15,5 @@ difficult to track persons, as well as assessing the size of an enemy force
 and avoiding certain natural pitfalls.
 
 See also: [RANGER](/help/info/ranger-rangers/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

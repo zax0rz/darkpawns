@@ -15,3 +15,6 @@ Save: -
 Projecting a mental voice across virtually endless distance, the psionic
 Can stop <victim> from hunting the psionic. At the highest mastery level,
 The psionic can stop <victim> from hunting anyone.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

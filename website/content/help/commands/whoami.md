@@ -13,3 +13,5 @@ Displays your character's name, if you want to be sure you are who
 you think you are. Useful if you get confused between all your MULTIs.
 
 See also: [MULTIPLAY](/help/commands/multi-multiplay-multi-play/), WHO, [FINGER](/help/commands/finger-whois/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

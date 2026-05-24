@@ -25,3 +25,5 @@ will display:
 Helt is feeling very sad today.
 
 See also: [SOCIALS](/help/socials/socials/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

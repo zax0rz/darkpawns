@@ -16,3 +16,5 @@ other 4 group members 20 coins each.  (100 coins is split 5 ways; you keep
 your share and give everyone else their share).
 
 See also: [FOLLOW](/help/commands/follow/), [GROUP](/help/commands/group/), [GOLD](/help/commands/gold/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

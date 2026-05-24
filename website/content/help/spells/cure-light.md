@@ -12,3 +12,6 @@ Accumulative: -
 Duration    : Instantaneous
 
 Cures minor wounds and scratches.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

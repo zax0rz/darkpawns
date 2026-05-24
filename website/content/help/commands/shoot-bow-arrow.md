@@ -16,3 +16,6 @@ You must be wielding a missile weapon, such as a bow, and carrying the
 projectile. You can't shoot while fighting. If the <target name> is not
 found in the room to the <direction>, your projectile will fly toward 
 the first creature in the room.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

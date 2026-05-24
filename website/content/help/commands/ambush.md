@@ -15,3 +15,5 @@ enough cover to hide, of course.  If you can successfully ambush someone
 while staying hidden, you increase the damage dealt to them.
 
 See also: [RANGER](/help/info/ranger-rangers/), [HIDE](/help/commands/hide/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

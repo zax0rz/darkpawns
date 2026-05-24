@@ -17,3 +17,5 @@ smacking two heads together is... well, there's not much more satisfying
 in battle, at least.
 
 See also: [COMBAT](/help/info/combat/), [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

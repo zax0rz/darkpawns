@@ -19,3 +19,6 @@ weigh no more than five pounds per level of caster.
 
 A blessed weapon gains a hitroll modifier. Other blessed objects are not yet
 defined.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

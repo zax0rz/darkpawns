@@ -19,3 +19,5 @@ Examples:
   > close gate
 
 See also: [ENTER](/help/commands/enter/), [LEAVE](/help/commands/leave/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

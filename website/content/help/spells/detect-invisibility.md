@@ -12,3 +12,6 @@ Accumulative: Yes (Duration)
 Duration    : 12 hours + level
 
 This spell enables you to see invisible items and players.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -14,3 +14,5 @@ is a good chance that you will be discovered.  It is possible to do things
 and remain hidden, however.
 
 See also: [SNEAK](/help/commands/sneak/), [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/), [RANGER](/help/info/ranger-rangers/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

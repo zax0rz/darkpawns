@@ -24,7 +24,7 @@ For extended help on any command, use `help <topic>` in-game or browse `/help/<s
 | `west` | `w` | Move west | Standing |
 | `up` | `u` | Move up | Standing |
 | `down` | `d` | Move down | Standing |
-| `recall` | — | Recall to your home city | — |
+| [`recall`](/help/commands/recall/) | — | Recall to your home city | — |
 
 ---
 
@@ -32,13 +32,13 @@ For extended help on any command, use `help <topic>` in-game or browse `/help/<s
 
 | Command | Aliases | Description | Min Position |
 |---|---|---|---|
-| `look` | `l` | Look around the room | — |
-| `examine` | `exa` | Examine something in detail | — |
-| `consider` | `con` | Compare yourself to a target | — |
+| [`look`](/help/commands/look/) | `l` | Look around the room | — |
+| [`examine`](/help/commands/examine/) | `exa` | Examine something in detail | — |
+| [`consider`](/help/commands/consider/) | `con` | Compare yourself to a target | — |
 | `scan` | — | Scan adjacent rooms | — |
-| `scout` | — | Scout ahead for danger | — |
-| `diagnose` | `diag` | Diagnose health status of a target | — |
-| `peek` | — | Peek at another player's inventory | — |
+| [`scout`](/help/commands/scout/) | — | Scout ahead for danger | — |
+| [`diagnose`](/help/commands/diagnose/) | `diag` | Diagnose health status of a target | — |
+| [`peek`](/help/commands/peek/) | — | Peek at another player's inventory | — |
 
 ---
 
@@ -46,20 +46,20 @@ For extended help on any command, use `help <topic>` in-game or browse `/help/<s
 
 | Command | Aliases | Description | Min Position |
 |---|---|---|---|
-| `score` | `sc` | Show your character stats | — |
-| `who` | — | List all online players | — |
+| [`score`](/help/commands/score/) | `sc` | Show your character stats | — |
+| [`who`](/help/commands/who/) | — | List all online players | — |
 | `where` | — | Show player locations | — |
 | `whois` | — | Look up a player's info | — |
-| `time` | — | Show the current in-game time | — |
-| `weather` | — | Show the current weather | — |
+| [`time`](/help/commands/time/) | — | Show the current in-game time | — |
+| [`weather`](/help/commands/weather/) | — | Show the current weather | — |
 | `affects` | — | Show active spells and affects | — |
-| `inventory` | `i`, `inv` | Show your inventory | — |
-| `equipment` | `eq` | Show your equipped items | — |
+| [`inventory`](/help/commands/inventory/) | `i`, `inv` | Show your inventory | — |
+| [`equipment`](/help/commands/equipment/) | `eq` | Show your equipped items | — |
 | `skills` | `sk` | Show your learned skills | — |
 | `spells` | — | List known spells | — |
-| `report` | — | Show a report of your surroundings | — |
-| `commands` | `cmds` | List available commands | — |
-| `help` | — | Show help for a command or topic | — |
+| [`report`](/help/commands/report/) | — | Show a report of your surroundings | — |
+| [`commands`](/help/commands/commands/) | `cmds` | List available commands | — |
+| [`help`](/help/commands/help/) | — | Show help for a command or topic | — |
 
 ---
 
@@ -69,8 +69,8 @@ For extended help on any command, use `help <topic>` in-game or browse `/help/<s
 |---|---|---|
 | `say` | — | Say something to the room |
 | `tell` | — | Send a private message to a player |
-| `reply` | `r` | Reply to the last tell you received |
-| `emote` | `me` | Perform a roleplay action |
+| [`reply`](/help/commands/reply/) | `r` | Reply to the last tell you received |
+| [`emote`](/help/commands/emote/) | `me` | Perform a roleplay action |
 | `shout` | — | Shout to everyone in your zone |
 | `gossip` | — | Gossip on the public channel |
 | `gtell` | `gsay` | Send a message to your group |
@@ -88,9 +88,9 @@ For extended help on any command, use `help <topic>` in-game or browse `/help/<s
 | Command | Aliases | Description | Min Position |
 |---|---|---|---|
 | `hit` | `attack`, `kill` | Attack a target | Standing |
-| `flee` | — | Attempt to flee from combat | Fighting |
-| `assist` | — | Assist a target in combat | Fighting |
-| `rescue` | — | Rescue someone from combat | Standing |
+| [`flee`](/help/commands/flee/) | — | Attempt to flee from combat | Fighting |
+| [`assist`](/help/commands/assist/) | — | Assist a target in combat | Fighting |
+| [`rescue`](/help/commands/rescue/) | — | Rescue someone from combat | Standing |
 
 ---
 
@@ -100,23 +100,23 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 
 | Command | Aliases | Description | Min Position |
 |---|---|---|---|
-| `backstab` | `bs` | Backstab with a piercing weapon (surprise attack) | Standing |
-| `bash` | — | Bash a target, potentially stunning them | Fighting |
-| `kick` | — | Kick a target for bonus damage | Fighting |
-| `trip` | — | Trip a target, knocking them down | Fighting |
-| `headbutt` | — | High-damage headbutt | Fighting |
-| `disembowel` | `gut` | Disembowel with a piercing weapon | Fighting |
+| [`backstab`](/help/commands/backstab/) | `bs` | Backstab with a piercing weapon (surprise attack) | Standing |
+| [`bash`](/help/commands/bash/) | — | Bash a target, potentially stunning them | Fighting |
+| [`kick`](/help/commands/kick/) | — | Kick a target for bonus damage | Fighting |
+| [`trip`](/help/commands/trip/) | — | Trip a target, knocking them down | Fighting |
+| [`headbutt`](/help/commands/headbutt/) | — | High-damage headbutt | Fighting |
+| [`disembowel`](/help/commands/disembowel/) | `gut` | Disembowel with a piercing weapon | Fighting |
 | `dragonkick` | `dkick` | Dragon-style kick | Fighting |
 | `tigerpunch` | `tpunch` | Tiger-style punch (bare hands) | Fighting |
 | `shoot` | — | Shoot with a ranged weapon | Standing |
-| `ambush` | — | Ambush from hiding | Standing |
-| `subdue` | — | Subdue non-lethally | Standing |
-| `sleeper` | — | Apply a sleeper hold | Standing |
-| `neckbreak` | — | Break neck (bare hands) | Standing |
-| `parry` | — | Toggle parry stance to deflect attacks | Standing |
-| `sneak` | — | Move silently | Standing |
-| `hide` | — | Hide in shadows | Resting |
-| `steal` | — | Steal from a target | Standing |
+| [`ambush`](/help/commands/ambush/) | — | Ambush from hiding | Standing |
+| [`subdue`](/help/commands/subdue/) | — | Subdue non-lethally | Standing |
+| [`sleeper`](/help/commands/sleeper/) | — | Apply a sleeper hold | Standing |
+| [`neckbreak`](/help/commands/neckbreak/) | — | Break neck (bare hands) | Standing |
+| [`parry`](/help/commands/parry/) | — | Toggle parry stance to deflect attacks | Standing |
+| [`sneak`](/help/commands/sneak/) | — | Move silently | Standing |
+| [`hide`](/help/commands/hide/) | — | Hide in shadows | Resting |
+| [`steal`](/help/commands/steal/) | — | Steal from a target | Standing |
 | `pick` | `pick lock` | Pick a door lock | Standing |
 
 ---
@@ -128,7 +128,7 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 | `stand` | — | Stand up |
 | `sit` | — | Sit down |
 | `rest` | — | Rest |
-| `sleep` | — | Go to sleep |
+| [`sleep`](/help/commands/sleep/) | — | Go to sleep |
 | `wake` | — | Wake up or wake someone else |
 
 ---
@@ -138,17 +138,17 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 | Command | Aliases | Description |
 |---|---|---|
 | `get` | `take` | Pick up an item from the room, container, or corpse |
-| `drop` | — | Drop an item from your inventory |
-| `put` | — | Put an item into a container |
-| `give` | — | Give an item or gold to another character |
-| `wear` | — | Wear an item from your inventory |
-| `wield` | — | Wield a weapon |
+| [`drop`](/help/commands/drop/) | — | Drop an item from your inventory |
+| [`put`](/help/commands/put/) | — | Put an item into a container |
+| [`give`](/help/commands/give/) | — | Give an item or gold to another character |
+| [`wear`](/help/commands/wear/) | — | Wear an item from your inventory |
+| [`wield`](/help/commands/wield/) | — | Wield a weapon |
 | `hold` | — | Hold an item |
-| `remove` | — | Remove an equipped item |
+| [`remove`](/help/commands/remove/) | — | Remove an equipped item |
 | `eat` | — | Eat some food |
 | `drink` | — | Drink from a container |
 | `quaff` | `q` | Quaff a potion |
-| `appraise` | — | Appraise an item's value |
+| [`appraise`](/help/commands/appraise/) | — | Appraise an item's value |
 
 ---
 
@@ -156,9 +156,9 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 
 | Command | Aliases | Description |
 |---|---|---|
-| `list` | — | List items for sale at a shop |
-| `buy` | — | Buy an item from a shop |
-| `sell` | — | Sell an item to a shop |
+| [`list`](/help/commands/list/) | — | List items for sale at a shop |
+| [`buy`](/help/commands/buy/) | — | Buy an item from a shop |
+| [`sell`](/help/commands/sell/) | — | Sell an item to a shop |
 
 ---
 
@@ -179,10 +179,10 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 
 | Command | Aliases | Description |
 |---|---|---|
-| `follow` | — | Follow another player |
-| `group` | `party` | Manage your group |
-| `ungroup` | `disband` | Disband or leave a group |
-| `split` | — | Split gold with your group |
+| [`follow`](/help/commands/follow/) | — | Follow another player |
+| [`group`](/help/commands/group/) | `party` | Manage your group |
+| [`ungroup`](/help/commands/ungroup/) | `disband` | Disband or leave a group |
+| [`split`](/help/commands/split/) | — | Split gold with your group |
 
 ---
 
@@ -204,7 +204,7 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 | Command | Aliases | Description |
 |---|---|---|
 | `clan` | `clans` | Clan management (join, leave, ranks, bank) |
-| `house` | — | House management |
+| [`house`](/help/commands/house/) | — | House management |
 
 ---
 
@@ -213,17 +213,17 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 | Command | Aliases | Description |
 |---|---|---|
 | `color` | — | Toggle ANSI color on/off |
-| `toggle` | — | Toggle a player preference |
-| `title` | — | Set your character title |
+| [`toggle`](/help/commands/toggle/) | — | Toggle a player preference |
+| [`title`](/help/commands/title/) | — | Set your character title |
 | `describe` / `description` | `desc` | Set your character description |
 | `prompt` | — | Set your command prompt |
-| `wimpy` | — | Set your wimpy (auto-flee) HP threshold |
+| [`wimpy`](/help/commands/wimpy/) | — | Set your wimpy (auto-flee) HP threshold |
 | `auto` | — | Toggle auto-attack mode |
 | `autoexit` | — | Toggle auto-exit display |
 | `alias` | — | Manage command aliases |
 | `afk` | — | Toggle away-from-keyboard status |
-| `inactive` | — | Toggle inactive status |
-| `visible` | — | Make yourself visible |
+| [`inactive`](/help/commands/inactive/) | — | Toggle inactive status |
+| [`visible`](/help/commands/visible/) | — | Make yourself visible |
 | `password` | — | Change your password |
 
 ---
@@ -232,25 +232,25 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 
 | Command | Aliases | Description |
 |---|---|---|
-| `save` | — | Save your character to the database |
-| `quit` | — | Quit the game |
+| [`save`](/help/commands/save/) | — | Save your character to the database |
+| [`quit`](/help/commands/quit/) | — | Quit the game |
 | `roll` | — | Roll a random number |
 | `summon` | — | Summon a player to your room |
-| `review` | — | Show recent gossip history |
+| [`review`](/help/commands/review/) | — | Show recent gossip history |
 | `todo` | — | Submit a todo suggestion |
 | `description` | `desc` | Set your character description (alias for `describe`) |
 | `display` | — | Set display preferences |
-| `transform` | — | Transform your appearance |
+| [`transform`](/help/commands/transform/) | — | Transform your appearance |
 | `ride` | — | Ride a mount |
-| `dismount` | — | Dismount from a mount |
-| `yank` | — | Yank someone from a mount or chair |
-| `stealth` | — | Enter stealth mode |
+| [`dismount`](/help/commands/dismount/) | — | Dismount from a mount |
+| [`yank`](/help/commands/yank/) | — | Yank someone from a mount or chair |
+| [`stealth`](/help/commands/stealth/) | — | Enter stealth mode |
 | `hcontrol` | — | Admin house control |
 | `bug` | — | Report a bug |
 | `typo` | — | Report a typo |
 | `idea` | — | Submit a suggestion |
 | `ignore` | — | Ignore or un-ignore a player |
-| `write` | — | Write on an object |
+| [`write`](/help/commands/write/) | — | Write on an object |
 | `gentog` | `gentoggle` | Toggle an option |
 
 ---
@@ -308,5 +308,5 @@ These commands require `LVL_IMMORT` (31) or higher and are not available to norm
 | `whod` | Toggle WHOD display mode | IMMORT |
 | `dark` | Stop combat in a room | IMMORT |
 | `syslog` | Toggle system logging level | IMMORT |
-| `newbie` | Give newbie gear to a player | IMMORT |
-| `order` | Order a pet or follower | IMMORT |
+| [`newbie`](/help/commands/newbie/) | Give newbie gear to a player | IMMORT |
+| [`order`](/help/commands/order/) | Order a pet or follower | IMMORT |

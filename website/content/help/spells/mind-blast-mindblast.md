@@ -11,3 +11,6 @@ Usage: will 'mind blast' <victim>
 
 A mental blast of pure psionic energy erupts from the attacker, surging
 Toward the victim and hitting their mind like a physical blow.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

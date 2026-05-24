@@ -16,3 +16,6 @@ evil opponents, and wards off some aggressive mobs.
 
 Note: casting this spell upon yourself when you are evil can have
       disasterous side effects.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

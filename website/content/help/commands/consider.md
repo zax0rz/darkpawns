@@ -19,3 +19,5 @@ Example:
   > consider fido
 
 See also: [HIT](/help/commands/kill-hit/), [KILL](/help/commands/kill-hit/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

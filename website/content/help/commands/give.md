@@ -16,3 +16,6 @@ If you feel benevolent, you may give some stuff to someone in need.
   > give bread doctor
   > give all.bronze mirlen
   > give 40000 coins nia
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

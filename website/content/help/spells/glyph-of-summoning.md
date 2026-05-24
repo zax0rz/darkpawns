@@ -17,3 +17,5 @@ Can be used to [SUMMON](/help/spells/summon/) beings.  It is very sensitive to m
 Only be drawn in a place where the caster can be left undisturbed.
 
 See also: [SUMMON](/help/spells/summon/)
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

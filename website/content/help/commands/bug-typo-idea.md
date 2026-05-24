@@ -22,3 +22,6 @@ Examples:
 There's no need to tell where the bug/typo is; We can tell what room you're in.
 
  > typo there is no exit to the west here, but the descript says there is
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

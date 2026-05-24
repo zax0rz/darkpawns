@@ -16,3 +16,6 @@ penetrate their mind. It is also noted that certain races and peoples have
 natural shields against this type of psionic mind probing.
 Psionics in the victim's room (or the victim himself, if a Psionic) will be
 able to sense the sighting.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

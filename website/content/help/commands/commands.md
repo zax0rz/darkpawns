@@ -14,3 +14,5 @@ The [COMMANDS](/help/commands/commands/) command gives a canonical list of all t
 Each command listed should have help available by typing "[HELP](/help/commands/help/) <command>".
 
 See also: SOCIAL, [SOCIALS](/help/socials/socials/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

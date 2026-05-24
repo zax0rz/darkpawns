@@ -16,3 +16,6 @@ sense if it is poisoned.
 
 Cast on a person you will be able to see if that person is
 poisoned.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

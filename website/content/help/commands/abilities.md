@@ -21,3 +21,6 @@ format:
     Charisma:      (bad)
 
 There are not any numeric representations of ability scores on Dark Pawns.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

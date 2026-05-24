@@ -27,3 +27,5 @@ Examples:
     will give you this help file
 
 See also: [COMMANDS](/help/commands/commands/), [SOCIALS](/help/socials/socials/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

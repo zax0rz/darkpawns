@@ -11,3 +11,6 @@ Usage: quaff <potion>
 
 Quaff is used to "drink" a (magical) potion.  The magic will take effect
 immediately, for better or for worse...
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

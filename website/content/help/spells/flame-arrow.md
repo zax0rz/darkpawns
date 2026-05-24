@@ -14,3 +14,6 @@ Save        : Versus spell for half damage.
 
 Causes a bolt of magical flame to be thrown from the casters hands at the
 victim.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

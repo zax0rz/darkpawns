@@ -18,3 +18,5 @@ A person who is poisoned will suffer damage every hour, lose strength, and
 regenerate less points than usual.
 
 See also: "[REMOVE](/help/commands/remove/) [POISON](/help/spells/detect-poison/)", "[DETECT](/help/commands/search-secret-doors-door-detect/) [POISON](/help/spells/detect-poison/)"
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

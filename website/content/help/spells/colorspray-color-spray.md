@@ -17,4 +17,6 @@ This spell is more powerful than the lightning bolt spell.
 
 See also: "[LIGHTNING](/help/spells/call-lightning/) [BOLT](/help/spells/lightning-bolt/)"
 
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)
+
 For help on actual color, see: [ANSI](/help/commands/ansi-color/)

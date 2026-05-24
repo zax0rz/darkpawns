@@ -12,3 +12,6 @@ Accumulative: No
 Duration    : Instantaneous
 
 Will remove a curse on carried objects or any persons in the room.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

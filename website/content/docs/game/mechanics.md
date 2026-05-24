@@ -40,7 +40,7 @@ The number of attacks a character gets per 2-second round scales with class and 
 | Thief, Assassin | 1 | +1 at level 15+ (30% + level% chance) |
 | Mage, Cleric, Psionic | 1 | No extra attack from class |
 
-`Haste` spell doubles attacks; `Slow` halves them.
+[`haste`](/help/spells/haste/) spell doubles attacks; [`slow`](/help/spells/slow/) halves them.
 
 ### Damage Calculation
 
@@ -53,7 +53,7 @@ FinalDamage = BaseDamage × PositionMultiplier × ParryReduction
 
 - **DamageRoll**: Derived from STR for melee; also modified by level for combat skills.
 - **Position multiplier**: Sleeping targets take 2× damage. Resting targets take 1.5×. Standing targets take 1×.
-- **Parry reduction**: Reduces incoming damage by 20–29% (scaling with parry skill level), when the `parry` stance is active.
+- **Parry reduction**: Reduces incoming damage by 20–29% (scaling with parry skill level), when the [`parry`](/help/commands/parry/) stance is active.
 
 ### Backstab Multiplier
 
@@ -164,7 +164,7 @@ Experience is gained from killing mobs and (in PK) from killing players. Each cl
 ExpLoss = TotalExp / 3
 ```
 
-This is a significant penalty at high levels. Always `flee` if your health drops below your wimpy threshold.
+This is a significant penalty at high levels. Always [`flee`](/help/commands/flee/) if your health drops below your wimpy threshold.
 
 To level up, visit your class **guildmaster** in your starting city after accumulating enough EXP. The guildmaster will grant you a new level and allow you to `practice` new skills.
 

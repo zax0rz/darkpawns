@@ -12,3 +12,5 @@ Usage: think <message>
 Lets others see what you're thinking!
 
 See also: [SOCIALS](/help/socials/socials/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

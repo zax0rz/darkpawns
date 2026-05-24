@@ -19,3 +19,5 @@ Modify your prompt to show your hit points, mana, and/or movement points.
   > prompt off         Return to normal prompt
 
 See also: [TOGGLE](/help/commands/toggle/) [COLOR](/help/commands/ansi-color/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

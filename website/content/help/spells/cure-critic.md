@@ -12,3 +12,6 @@ Accumulative: -
 Duration    : Instantaneous
 
 This spell cures many hitpoints of damage.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

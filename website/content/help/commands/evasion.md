@@ -11,3 +11,5 @@ This skill will allow you to evade anyone who is tracking you, there is no
 Command to type; just practice the skill.
 
 See also: [NINJA](/help/info/ninja-ninjas/), [ASSASSIN](/help/info/assassin-assassins/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

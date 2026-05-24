@@ -12,3 +12,6 @@ Usage	: cast 'zen' <self>
 Instantly puts the caster into a meditative trance, used for focusing inner
 strengths on healing. While meditating, the caster's wound heal somewhat, but
 the caster is unable to move for a short time.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -17,3 +17,5 @@ person you're assisting is fighting.
   > assist Quifael
 
 See also: [FLEE](/help/commands/flee/), [KILL](/help/commands/kill-hit/), [RESCUE](/help/commands/rescue/), [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

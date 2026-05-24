@@ -11,3 +11,6 @@ Usage	: cast 'fly' <victim>
 
 Look ma, I'm flying! Useful for getting around in places you can't walk, like
 over water, deep chasms, sky castles, etc.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -13,3 +13,6 @@ Duration    : 12 hours + level
 
 This spell will let you see the magical aura surrounding magical
 objects.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

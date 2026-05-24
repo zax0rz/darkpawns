@@ -12,3 +12,6 @@ Usage: will 'mass dominate'
 An improved version of the dominate power that will assert your control
 over everyone in the room that is not in your party.  Useful for redominating
 part of your army that has strayed.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

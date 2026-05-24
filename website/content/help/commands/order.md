@@ -20,3 +20,5 @@ Examples:
   > order followers kill Link
 
 See also: [CHARM](/help/spells/charm-person/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

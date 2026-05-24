@@ -11,3 +11,6 @@ Usage: report
 
 This command sends a report of your current health, as well as other
 general statistics, to everyone in the room that you are currently in.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

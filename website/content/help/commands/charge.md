@@ -14,3 +14,5 @@ the victim. A successful charge deals a great deal of damage, the
 only drawback being the recover-time from a charge is quite lengthy.
 
 See also: [PALADIN](/help/info/paladin/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

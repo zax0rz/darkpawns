@@ -18,3 +18,5 @@ Examples:
   > grab stone
 
 See also: [EQUIPMENT](/help/commands/equipment/), [REMOVE](/help/commands/remove/), [WEAR](/help/commands/wear/), [WIELD](/help/commands/wield/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

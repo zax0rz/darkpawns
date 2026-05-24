@@ -22,3 +22,5 @@ grab or hold commands).  You must still supply the name of the staff or
 wand to avoid confusion.
 
 See also: [RECITE](/help/commands/recite-scroll-scrolls/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

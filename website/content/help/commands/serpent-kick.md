@@ -14,3 +14,5 @@ knowledge of it is forbidden outside the Liu'she Ch'uan tong. Learning it
 earns a sentence of death from any tong member. Beware.
 
 See also: [NINJA](/help/info/ninja-ninjas/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

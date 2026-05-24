@@ -32,3 +32,5 @@ Guests of your house will be able to enter your house until you remove them
 from the guest list.
 
 See also: [CASTLES](/help/info/castle-castles/), [QUEST](/help/commands/quest/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

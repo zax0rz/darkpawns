@@ -17,3 +17,5 @@ Examples:
   > follow self
 
 See also: [GROUP](/help/commands/group/), [SNEAK](/help/commands/sneak/), [SHADOW](/help/commands/shadow/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

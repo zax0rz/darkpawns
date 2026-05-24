@@ -12,3 +12,5 @@ Usage: glance <victim>
 Use [GLANCE](/help/commands/glance/) to get a rough estimate of how wounded your opponent is.
 
 See also: [DIAGNOSE](/help/commands/diagnose/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

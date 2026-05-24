@@ -29,3 +29,5 @@ Once you get on your way, you'll probably want to check out information on
 MULTIplaying, which the mud is designed for.
 
 See also: [FAQ](/help/faq/), [NEWS](/help/commands/info-news-policy-version-future/), [POLICY](/help/commands/info-news-policy-version-future/), [MULTI](/help/commands/multi-multiplay-multi-play/), [MAP](/help/info/map/), [CLASSES](/help/info/class-classes/), [RACES](/help/info/race-races/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -12,3 +12,6 @@ Usage 	: cast 'acid blast'
 With this spell, the caster shoots forth a spray of deadly, flesh-dissolving
 acid from the fingertips of both hands. The spray is directed toward all non-
 group-member occupants in the room.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

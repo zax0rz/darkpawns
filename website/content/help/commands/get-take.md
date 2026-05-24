@@ -25,3 +25,5 @@ Examples:
   > get all.bread all.bag
 
 See also: [DROP](/help/commands/drop/), PUT
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

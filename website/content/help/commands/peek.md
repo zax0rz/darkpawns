@@ -15,3 +15,5 @@ up your victim without being noticed. A failed peek is just like a normal
 course, they start pounding on you.)
 
 See also: [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -18,6 +18,8 @@ Example:
 
 See also: help on each individual spell:
 
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)
+
 Examples:
 
   > help cure ligh

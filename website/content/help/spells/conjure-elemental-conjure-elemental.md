@@ -17,3 +17,6 @@ In order to summon an elemental, a magus first needs to have the correct
 reagents for the elemental type that he or she wishes to summon.  Information
 on elemental reagents can be found in books on arcane spellcraft, or consult
 your local sage.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

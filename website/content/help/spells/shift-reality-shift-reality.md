@@ -16,3 +16,6 @@ By use of this mental power, the psionic or mystic can shift their location
 in the material world to somewhere else.  Like all forms of psychic transfer,
 the mentalist has no control over where he or she ends up, making this power
 somewhat hazardous.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

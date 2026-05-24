@@ -21,3 +21,5 @@ Examples:
   > junk 500 coins
 
 See also: [DONATE](/help/commands/donate/), [DROP](/help/commands/drop/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

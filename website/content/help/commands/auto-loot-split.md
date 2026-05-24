@@ -22,3 +22,5 @@ The options available are:
 Note: To use [AUTO](/help/commands/auto-loot-split/) [SPLIT](/help/commands/split/), [AUTO](/help/commands/auto-loot-split/) [GOLD](/help/commands/gold/) must be set.
 
 See also: [TOGGLE](/help/commands/toggle/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

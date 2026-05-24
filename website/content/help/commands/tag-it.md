@@ -13,3 +13,5 @@ They're IT!
 Used to start a game of tag or tag another player after you have been tagged IT.
 
 See also: ANNOYING GAMES
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

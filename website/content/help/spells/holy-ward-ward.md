@@ -13,3 +13,6 @@ Duration    : Varies
 
 The holy ward grants magickal protection to the target against things that
 would normally damage him or her.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

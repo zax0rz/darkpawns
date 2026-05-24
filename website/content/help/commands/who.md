@@ -30,3 +30,6 @@ Examples:
 
   > who 15-25 -o 
   List all outlaws between levels 15 and 25.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

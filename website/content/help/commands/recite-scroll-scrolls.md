@@ -17,3 +17,5 @@ IMPORTANT NOTE: Recall scrolls *cannot* be used during combat. You *must* be
 out of battle to use a recall scroll.
  
 See also: [SPELLS](/help/info/spell-spells/), [MAGICK](/help/info/magick-magic/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

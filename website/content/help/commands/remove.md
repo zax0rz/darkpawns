@@ -21,3 +21,5 @@ Examples:
   > remove all.bronze
 
 See also: [GRAB](/help/commands/grab-hold/), [HOLD](/help/commands/grab-hold/), [WEAR](/help/commands/wear/), [WIELD](/help/commands/wield/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

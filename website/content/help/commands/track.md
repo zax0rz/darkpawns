@@ -21,3 +21,5 @@ Example:
   You sense a trail south from here!
 
 See also: [EVASION](/help/commands/evasion/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

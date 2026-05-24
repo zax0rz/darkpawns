@@ -13,3 +13,6 @@ Duration    : Instantaneous
 
 This spell will cure a person blinded by the "blindness" spell, it
 can not remove blindness caused by for example cursed items.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

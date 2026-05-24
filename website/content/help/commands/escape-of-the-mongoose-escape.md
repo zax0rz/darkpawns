@@ -15,3 +15,6 @@ is triggered while fighting, there is a chance that you may automatically [ESCAP
 instead of fleeing.
 
 See Also: [FLEE](/help/commands/flee/), [NINJA](/help/info/ninja-ninjas/), [WIMPY](/help/commands/wimpy/)
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

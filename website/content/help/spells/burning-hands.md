@@ -15,3 +15,5 @@ Save        : Versus spell for half damage.
 This spell is more powerful than the chill touch spell.
 
 See also: "[CHILL](/help/spells/chill-touch/) [TOUCH](/help/spells/chill-touch/)"
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

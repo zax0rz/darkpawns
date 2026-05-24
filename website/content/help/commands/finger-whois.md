@@ -11,3 +11,6 @@ Usage	: finger <player name>
 	  whois  <player name>
 
 Lists the level, class, name and title of <player name>, if they exist.
+
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

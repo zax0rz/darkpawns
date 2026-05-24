@@ -18,3 +18,5 @@ practiced backstab at your guild. Also, backstabbing a person will lag you
 for about two rounds of combat.
 
 See also: [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

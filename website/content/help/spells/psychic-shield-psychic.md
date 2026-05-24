@@ -15,3 +15,6 @@ Save: -
 By means of this power, the psionic can shield himself from damage done by others
 to him.  The psychic shield shields the psionic from normal, as well as magical and psychic
 attacks.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

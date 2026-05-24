@@ -25,3 +25,5 @@ If failing saving throw versus spell, the person will fall asleep.
 A person who is affected by sleep can only be awakened if attacked.
 
 See also: [WAKE](/help/commands/wake-sleeping-rest-sit-stand/), [MAGE](/help/info/magic-user-wizard-mage-mages-wizards/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

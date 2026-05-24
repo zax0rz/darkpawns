@@ -27,3 +27,5 @@ Someone tells you, 'I am your secret admirer.'
 You tell someone, 'Who are you?'
 
 See also: [TELL](/help/commands/say-tell-ask-whisper-shout-holler/), [NOTELL](/help/commands/notell/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)
