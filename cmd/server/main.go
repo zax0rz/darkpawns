@@ -55,6 +55,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/session"
+	"github.com/zax0rz/darkpawns/pkg/telnet"
 	"github.com/zax0rz/darkpawns/web"
 )
 
@@ -66,6 +67,7 @@ func main() {
 		dbURL      = flag.String("db", "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable", "Database URL")
 		webDir     = flag.String("web", "", "Path to web client files (index.html, client.js, style.css)")
 		hugoDir    = flag.String("hugo", "", "Path to Hugo static site (served as root)")
+		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
 	)
 	flag.Parse()
 
@@ -263,6 +265,15 @@ func main() {
 	addr := ":" + *port
 	slog.Info("Server listening", "address", addr)
 	slog.Info("WebSocket endpoint", "url", "ws://localhost"+addr+"/ws")
+
+	// Start telnet listener
+	if *telnetPort > 0 {
+		if err := telnet.Listen(*telnetPort, manager); err != nil {
+			slog.Error("Telnet listener failed", "error", err)
+		} else {
+			slog.Info("Telnet listening", "port", *telnetPort)
+		}
+	}
 
 	// Handle shutdown gracefully
 	sigChan := make(chan os.Signal, 1)
