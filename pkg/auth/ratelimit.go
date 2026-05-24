@@ -62,6 +62,9 @@ func isTrustedProxy(ip net.IP) bool {
 // the direct connection comes from a configured trusted proxy (via
 // SetTrustedProxies).
 func GetIPFromRequest(r *http.Request) string {
+	if r == nil {
+		return ""
+	}
 	// Parse RemoteAddr to a net.IP for proxy check.
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

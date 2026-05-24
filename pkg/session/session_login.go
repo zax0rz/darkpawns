@@ -23,7 +23,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	}
 
 	// Apply IP-based rate limiting for login attempts
-	ip := auth.GetIPFromRequest(s.request)
+	ip := s.RemoteIP()
 	if !s.manager.loginLimiter.GetLimiter(ip).Allow() {
 		s.sendError("Too many login attempts. Please try again later.")
 		_ = s.conn.Close()

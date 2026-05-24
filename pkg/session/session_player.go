@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"golang.org/x/time/rate"
+	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -133,5 +134,21 @@ func (m *Manager) HasDatabase() bool {
 // GetDatabase returns the database instance.
 func (m *Manager) GetDatabase() *db.DB {
 	return &m.db
+}
+
+// RemoteIP extracts the client IP address from request (WS) or directly (Telnet).
+func (s *Session) RemoteIP() string {
+	if s.request != nil {
+		return auth.GetIPFromRequest(s.request)
+	}
+	if s.remoteIP != "" {
+		return s.remoteIP
+	}
+	return "127.0.0.1" // fallback
+}
+
+// SetRemoteIP explicitly sets the IP address for non-HTTP sessions (e.g. Telnet).
+func (s *Session) SetRemoteIP(ip string) {
+	s.remoteIP = ip
 }
 

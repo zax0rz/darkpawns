@@ -133,6 +133,8 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	tc.write([]byte{IAC, WILL, OPT_SGA})
 
 	s := manager.NewSession()
+	remoteIP := ipFromAddr(remoteAddr)
+	s.SetRemoteIP(remoteIP)
 
 	// Welcome + prompt
 	tc.writeLine("\r\n  Dark Pawns\r\n\r\nBy what name do you wish to be known? ")

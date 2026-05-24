@@ -592,6 +592,7 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 type Session struct {
 	conn          *websocket.Conn
 	request       *http.Request // Store the original HTTP request for IP extraction
+	remoteIP      string        // Store IP directly for non-HTTP (Telnet) sessions
 	manager       *Manager
 	send          chan []byte
 	player        *game.Player

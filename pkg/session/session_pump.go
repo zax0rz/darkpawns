@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/zax0rz/darkpawns/pkg/auth"
 )
 
 func (s *Session) readPump() {
@@ -18,9 +17,9 @@ func (s *Session) readPump() {
 			slog.Error("PANIC in readPump", "recover", r, "player", s.playerName, "stack", debug.Stack())
 		}
 		// Always decrement IP connection count (C5 leak fix)
-		if !s.connCountDecremented && s.request != nil {
+		if !s.connCountDecremented && (s.request != nil || s.remoteIP != "") {
 			s.connCountDecremented = true
-			ip := auth.GetIPFromRequest(s.request)
+			ip := s.RemoteIP()
 			if ip != "" {
 				s.manager.ipConnMu.Lock()
 				s.manager.ipConnCount[ip]--
