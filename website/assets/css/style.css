@@ -1593,30 +1593,84 @@ pre code {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2.25rem 0;
+  padding: 2.5rem 0 2rem;
 }
 
-.header-wordmark {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(3rem, 7vw, 4.5rem);
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  line-height: 1;
-  color: var(--ink);
+.header-wordmark-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  padding: 0 var(--space-md);
+}
+
+.header-wordmark-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-decoration: none;
-  border-bottom: none;
-  padding-left: 0.18em; /* Offset for letter-spacing centering */
-  transition: color 0.15s;
+  border-bottom: none !important;
+  transition: opacity 0.15s;
+  width: 100%;
 }
 
-.header-wordmark:hover {
-  border-bottom: none;
-  color: var(--accent);
+.header-wordmark-wrapper:hover {
+  border-bottom: none !important;
+  opacity: 0.85;
 }
 
-.header-wordmark .accent-red {
+.header-wordmark-top,
+.header-wordmark-bottom {
+  font-family: 'DM Serif Display', 'Source Serif 4', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(3.5rem, 8vw, 5.5rem);
+  line-height: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  text-align: center;
+  display: block;
+}
+
+.header-wordmark-top {
+  color: var(--ink);
+}
+
+.header-wordmark-bottom {
   color: var(--accent);
+  margin-top: -0.05em; /* Pull it slightly closer */
+}
+
+.header-wordmark-hairline {
+  height: 1.5px;
+  background: var(--ink);
+  width: 100%;
+  max-width: 440px;
+  margin-top: 14px;
+}
+
+.header-wordmark-dossier {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem; /* 11px */
+  letter-spacing: 0.18em;
+  color: var(--ink-muted);
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  text-transform: uppercase;
+}
+
+.header-wordmark-dossier .dossier-dots {
+  color: var(--paper-deep);
+  flex-grow: 1;
+  text-align: center;
+  letter-spacing: 0.3em;
+  padding: 0 var(--space-xs);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .nav-ledger {
@@ -1624,6 +1678,9 @@ pre code {
   border-bottom: 2px solid var(--rule);
   padding: 0;
   background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .nav-ledger .nav-links {
@@ -1888,8 +1945,18 @@ pre code {
     width: auto;
   }
 
-  .header-wordmark {
-    font-size: 3rem;
+  .header-wordmark-top,
+  .header-wordmark-bottom {
+    font-size: clamp(2.5rem, 8vw, 3.5rem);
+  }
+
+  .header-wordmark-block {
+    max-width: 320px;
+  }
+
+  .header-wordmark-hairline,
+  .header-wordmark-dossier {
+    max-width: 320px;
   }
 
   .broadsheet-grid {
