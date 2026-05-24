@@ -30,7 +30,11 @@
     8: '#1a365d',  // underwater (navy blue)
     9: '#63b3ed',  // flying (sky blue)
     10: '#d0a868', // desert (sand yellow)
-    11: '#5d705c', // swamp (muddy green)
+    11: '#e05a47', // fire (warm orange-red)
+    12: '#8d7a5b', // earth (dusty clay brown)
+    13: '#cbd5e0', // wind/cloud (misty sky white)
+    14: '#2c5282', // water (water blue)
+    15: '#5d705c', // swamp (muddy green)
   };
   function getSectorColor(s) { return SECTOR_COLOR[s] || '#a8201a'; }
 

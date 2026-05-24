@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 
 WORLD_DIR = Path.home() / "darkpawns/lib/world"
+if not WORLD_DIR.exists():
+    WORLD_DIR = Path(__file__).parent.parent.parent / "lib/world"
 OUTPUT = Path(__file__).parent.parent / "static/map/world.json"
 
 DIRECTIONS = {0: "n", 1: "e", 2: "s", 3: "w", 4: "u", 5: "d"}
@@ -87,12 +89,12 @@ def parse_rooms():
                 name, i = read_string(lines, i)
                 # Description
                 desc, i = read_string(lines, i)
-                # Flags: zone_num room_flags sector_type [extras…]
+                # Flags: zone_num room_flags[4] sector_type [extras…]
                 flags_line = lines[i] if i < len(lines) else ""
                 i += 1
                 parts = flags_line.split()
                 zone_num = int(parts[0]) if len(parts) > 0 else -1
-                sector = int(parts[2]) if len(parts) > 2 else 0
+                sector = int(parts[5]) if len(parts) > 5 else 0
 
                 exits = []
                 while i < len(lines):
