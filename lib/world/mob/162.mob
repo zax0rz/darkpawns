@@ -142,7 +142,7 @@ it's all this dim-witted creature does.
 BareHandAttack: 13
 Race: 13
 Noise: You hear a loud grunt nearby.
-Script: guard_captain.lua
+Script: guard_captain.lua 128
 E
 #16209
 witchdoctor goblin~

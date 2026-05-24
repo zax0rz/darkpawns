@@ -1,6 +1,6 @@
 ---
 title: "SHARPEN"
-description: "Usage:	sharpen <bladed weapon>"
+description: "Usage:  sharpen <bladed weapon>"
 date: 2026-04-28
 draft: false
 section: "help"

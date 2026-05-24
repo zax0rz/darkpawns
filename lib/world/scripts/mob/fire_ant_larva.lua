@@ -1,3 +1,4 @@
+-- DEAD-LETTER: Mob 1702 does not exist in ported world
 -- fire_ant_larva.lua - Life cycle: larva forms cocoon then becomes mature stage
 -- After a period of time, the mob will form a cocoon (obj 1701) before developing
 -- into its mature stage. Attached to mob 1702.

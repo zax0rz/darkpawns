@@ -27,7 +27,7 @@ Dolkvin emits a putrescent cloud of filth and stench.
 BareHandAttack: 13
 Race: 0
 Noise: You hear a drunkard farting in the wind.
-Script: singingdrunk.lua
+Script: singingdrunk.lua 16
 E
 #4302
 serf girl~
@@ -312,7 +312,7 @@ you a lesson if you want to get past him.
 8 8 1
 BareHandAttack: 7
 Race: 0
-Script: mount.lua
+Script: mount.lua 64
 E
 #4320
 Friar Dominic~
@@ -511,7 +511,7 @@ and cuts the head off a massive pig with a singular chop.
 BareHandAttack: 14
 Race: 20
 Noise: You hear loud cursing, and the gurgling screams of dying cattle.
-Script: singingdrunk.lua
+Script: singingdrunk.lua 16
 E
 #4332
 giant woman big mama mcgarnicle~

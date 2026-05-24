@@ -11,7 +11,7 @@ He's big, mean, and about to lob your head off.
 8 8 0
 BareHandAttack: 3
 Race: 0
-Script: cityguard.lua
+Script: cityguard.lua 128
 E
 #13101
 King E'douird~
@@ -41,7 +41,7 @@ It looks, err, unfinished.
 0 180000
 8 8 0
 BareHandAttack: 9
-Script: shopkeeper.lua
+Script: shopkeeper.lua 4
 E
 #13103
 patrolman guard angry~

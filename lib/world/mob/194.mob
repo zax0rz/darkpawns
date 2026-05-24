@@ -93,7 +93,7 @@ beard hangs low from his chin.
 6 6 1
 BareHandAttack: 13
 Race: 0
-Script: quanlo.lua
+Script: quanlo.lua 512
 E
 #19406
 man hermit~
@@ -111,7 +111,7 @@ of who-knows-what lie stuck within it.
 BareHandAttack: 13
 Race: 0
 Noise: You hear a soft humming coming from the cave to the west.
-Script: hermit.lua
+Script: hermit.lua 4
 E
 #19407
 fire falcon bird~

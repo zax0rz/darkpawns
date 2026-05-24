@@ -10,7 +10,7 @@ Almost transparent, the golem stomps around mindlessly.
 2 350
 8 8 0
 Race: 25
-Script: golem_miner.lua
+Script: golem_to_crate.lua 64
 E
 #11701
 flame crystal~
@@ -40,7 +40,7 @@ You gather that his job is the upkeep of the eternal flames.
 25 900
 8 8 1
 Race: 0
-Script: golem_miner.lua
+Script: golem_miner.lua 64
 E
 #11703
 bat black~
@@ -94,6 +94,6 @@ upon remaining.
 2000 270000
 8 8 2
 Race: 11
-Script: golem_from_crate.lua
+Script: golem_from_crate.lua 64
 E
 $

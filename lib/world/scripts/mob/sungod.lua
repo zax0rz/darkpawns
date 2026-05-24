@@ -1,3 +1,4 @@
+-- DEAD-LETTER: Mob 10205 does not exist in ported world
 -- Source: scripts_full_dump.txt ./mob/archive/sungod.lua
 -- Attached to mob 10205. Clears worn items and disappears every pulse if not fighting.
 

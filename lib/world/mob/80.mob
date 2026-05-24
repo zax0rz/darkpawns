@@ -10,6 +10,7 @@ Hans looks a tad constipated.
 20 30000
 8 8 1
 Race: 0
+Script: take_jail.lua 384
 E
 #8002
 Franz guard gateguard~
@@ -23,6 +24,7 @@ Looking as strong and stupid as ever!
 20 30000
 8 8 1
 Race: 0
+Script: take_jail.lua 384
 E
 #8003
 Darek weaponsmith~
@@ -183,7 +185,7 @@ the appearance of a beggar.
 1001 180000
 8 8 2
 Race: 0
-Script: thief.lua
+Script: thief.lua 128
 E
 #8014
 Le Tal cleric guildmaster master~
@@ -198,7 +200,7 @@ a peaceful, loving look.  You notice that he is surrounded by a white aura.
 117 180000
 8 8 1
 Race: 0
-Script: cleric.lua
+Script: cleric.lua 256
 E
 #8015
 Eldrich guildmaster mage master~
@@ -230,7 +232,7 @@ well as defensive spells make him a deadly opponent.
 147 0
 8 8 1
 Race: 0
-Script: magic_user.lua
+Script: magic_user.lua 256
 E
 #8017
 knight templar guild guard~
@@ -265,7 +267,7 @@ studying you closely, even though he appears not to be at all.
 181 0
 8 8 1
 Race: 0
-Script: merchant_inn.lua
+Script: merchant_inn.lua 672
 E
 #8019
 warrior guildguard~
@@ -298,6 +300,7 @@ glance.
 10 25000
 8 8 1
 Race: 0
+Script: take_jail.lua 384
 E
 #8021
 horse carve_meat~
@@ -313,7 +316,7 @@ long-distance travel.
 8 8 0
 BareHandAttack: 9
 Race: 12
-Script: mount.lua
+Script: mount.lua 64
 E
 #8022
 stable stablehand~
@@ -346,7 +349,7 @@ circus performer.
 2 100
 8 8 2
 Race: 1
-Script: elven_prostitute.lua
+Script: elven_prostitute.lua 18
 E
 #8024
 psionist guildmaster muntara~
@@ -404,7 +407,7 @@ or gate duty.
 0 16000
 8 8 1
 Race: 0
-Script: cityguard.lua
+Script: cityguard.lua 128
 E
 #8059
 Aversin captain guard~
@@ -451,7 +454,7 @@ than spend a day in the stockades.
 3 100
 8 8 1
 Race: 3
-Script: janitor.lua
+Script: janitor.lua 74
 E
 #8062
 citizen~
@@ -707,7 +710,7 @@ it, it returns to normal.
 5000 0
 6 6 1
 Race: 0
-Script: tattoo.lua
+Script: tattoo.lua 516
 E
 #8087
 identifier Ferrenx~
@@ -736,7 +739,7 @@ He's fat, ugly, and willing to take a bribe.
 20 55000
 6 6 1
 Race: 0
-Script: take_jail.lua
+Script: jailguard.lua 146
 E
 #8089
 guard~

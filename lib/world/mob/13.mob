@@ -241,7 +241,7 @@ it may return to its etherial slumber.
 BareHandAttack: 12
 Race: 25
 Noise: A soothing chant floats softly through the chamber.
-Script: guardian.lua
+Script: guardian.lua 128
 E
 #1315
 galeru master elements rainbow snake~

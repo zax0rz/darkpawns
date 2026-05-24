@@ -242,7 +242,7 @@ of him.
 100 120000
 8 8 1
 Race: 0
-Script: rescuer.lua
+Script: paladin.lua 256
 Script: paladin.lua
 E
 #7916
@@ -277,7 +277,7 @@ his gaze out towards the horizon.
 8 8 1
 BareHandAttack: 10
 Race: 0
-Script: dragon_forger.lua
+Script: dragon_forger.lua 512
 E
 #7920
 pyros daemon lord~
@@ -294,7 +294,7 @@ destroying you in this world.
 8 8 0
 BareHandAttack: 10
 Race: 11
-Script: head_shrinker.lua
+Script: head_shrinker.lua 512
 E
 #7969
 black cloaked wanderer mysterious man~
@@ -356,7 +356,7 @@ much experience.
 0 16000
 8 8 1
 Race: 3
-Script: thief.lua
+Script: thief.lua 128
 E
 #7980
 xena princess warrior~

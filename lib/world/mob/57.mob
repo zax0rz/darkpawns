@@ -11,7 +11,7 @@ doesn't seem quite right though, the number of pillows seem disproportionate.
 300 2500
 8 8 0
 BareHandAttack: 5
-Script: mymic.lua
+Script: mymic.lua 128
 E
 #5701
 cat guardian familiar~

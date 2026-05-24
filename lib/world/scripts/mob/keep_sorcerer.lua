@@ -1,3 +1,4 @@
+-- DEAD-LETTER: Mob 1404 does not exist in ported world
 -- Source: scripts_full_dump.txt ./mob/archive/keep_sorcerer.lua
 -- keep_sorcerer.lua — oncmd that blocks movement west by creating a magical barrier
 -- (object vnum 1421) when a player tries to go west. Attached to mob 1404.

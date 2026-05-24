@@ -14,7 +14,7 @@ him and he smiles, showing off a set of sharp, yellowed teeth.
 8 8 1
 BareHandAttack: 8
 Race: 11
-Script: 144/gatekeeper.lua
+Script: 144/gatekeeper.lua 24
 E
 #14402
 demon butler~
@@ -239,7 +239,7 @@ three fingers and a thumb on each hand.
 0 120000
 8 8 1
 Race: 9
-Script: mindflayer.lua
+Script: mindflayer.lua 256
 E
 #14415
 shadow asp~

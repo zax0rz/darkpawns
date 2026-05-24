@@ -200,6 +200,7 @@ well.
 2 18000
 8 8 1
 Race: 0
+Script: take_jail.lua 384
 E
 #18216
 lou ching~
@@ -317,6 +318,7 @@ He's nothing but a hired thug.
 0 14000
 8 8 1
 Race: 0
+Script: take_jail.lua 384
 E
 #18224
 harbor master~
@@ -331,6 +333,7 @@ He looks pretty burly though, better not mess with him.
 100 25000
 8 8 1
 Race: 0
+Script: take_jail.lua 384
 E
 #18225
 wu chien wu'chien~

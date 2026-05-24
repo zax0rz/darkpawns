@@ -1,3 +1,4 @@
+-- DEAD-LETTER: Mob 1407 does not exist in ported world
 -- valoran.lua — Valoran (mob 1407) conversation state machine + sorcery combat
 -- Source: lib/scripts/mob/archive/valoran.lua
 --

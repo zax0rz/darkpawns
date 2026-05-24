@@ -79,7 +79,7 @@ the crazed look in his eye is enough to convince you this guy is truly insane.
 8 8 1
 BareHandAttack: 13
 Race: 0
-Script: prisoner.lua
+Script: prisoner.lua 152
 E
 #2505
 awkmute strange humanoid creature~
@@ -161,7 +161,7 @@ for prey to come within range before striking.
 8 8 0
 BareHandAttack: 4
 Race: 13
-Script: snake.lua
+Script: snake.lua 256
 E
 #2510
 mean troll~
@@ -179,7 +179,7 @@ increasing hunger, you look like a tempting target.
 BareHandAttack: 7
 Race: 6
 Noise: Something is making a terrible noise close by.
-Script: troll.lua
+Script: troll.lua 320
 E
 #2511
 jungle cat~
@@ -227,7 +227,7 @@ a distinct taste for flesh. Your odor has driven it into a frenzy!
 8 8 0
 BareHandAttack: 4
 Race: 13
-Script: snake.lua
+Script: snake.lua 256
 E
 #2514
 lizard man calacorm~
@@ -257,7 +257,7 @@ for the ship that will never arrive. He looks at you and licks his lips...
 18 2 -8 18d5+190 12d4+12
 0 20000
 8 8 1
-Script: prisoner.lua
+Script: prisoner.lua 152
 E
 #2516
 tropical serpent~
@@ -274,7 +274,7 @@ given it's silent approach, you're lucky to see it before it strikes!
 8 8 0
 BareHandAttack: 4
 Race: 13
-Script: snake.lua
+Script: snake.lua 256
 E
 #2517
 nandi bear~
@@ -382,6 +382,6 @@ to rival prisoners.
 0 30000
 8 8 1
 Race: 0
-Script: prisoner.lua
+Script: prisoner.lua 152
 E
 $

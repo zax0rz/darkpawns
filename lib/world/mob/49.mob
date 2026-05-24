@@ -187,7 +187,7 @@ languages from across the planes.
 BareHandAttack: 10
 Race: 11
 Noise: You hear arguing.
-Script: shopkeeper.lua
+Script: shopkeeper.lua 4
 E
 #4912
 smoke elemental merchant~
@@ -203,7 +203,7 @@ price for a vial of extradimensional mist.
 8 8 0
 Race: 25
 Noise: You hear the rushing of air.
-Script: shopkeeper.lua
+Script: shopkeeper.lua 4
 E
 #4913
 merchant lich~
@@ -218,7 +218,7 @@ He's a lich of the lowest form, barely animated enough to have sentience.
 8 8 0
 BareHandAttack: 12
 Race: 9
-Script: shopkeeper.lua
+Script: shopkeeper.lua 4
 E
 #4914
 lord drath overlord mischra daemon~

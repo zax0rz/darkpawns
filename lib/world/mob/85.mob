@@ -10,7 +10,7 @@ Young, but wise enough to teach the youngest of adventurers.
 100 375000
 8 8 1
 Race: 0
-Script: cleric.lua
+Script: cleric.lua 256
 E
 #8502
 templar guildguard~
@@ -39,7 +39,7 @@ intruders.
 15 375000
 8 8 1
 Race: 0
-Script: magic_user.lua
+Script: magic_user.lua 256
 E
 #8504
 Lana mage magic user guildmistress~
@@ -53,7 +53,7 @@ A young lady but wise enough to teach the youngest of adventurers
 100 375000
 8 8 2
 Race: 0
-Script: magic_user.lua
+Script: magic_user.lua 256
 E
 #8505
 warrior guildguard~
@@ -108,7 +108,7 @@ Young, but wise enough to teach the youngest of adventurers.
 100 375000
 8 8 2
 Race: 0
-Script: thief.lua
+Script: thief.lua 128
 E
 #8509
 psionist guildmaster muntara~
@@ -217,7 +217,7 @@ sweat drop off his brow as he looks around for his next victim.
 6 55
 8 8 1
 Race: 1
-Script: fighter.lua
+Script: fighter.lua 256
 E
 #8552
 giant woodland~
@@ -308,7 +308,7 @@ It's a giant snake, with long fangs glistening in the meager light.
 8 8 0
 BareHandAttack: 4
 Race: 13
-Script: snake.lua
+Script: snake.lua 256
 E
 #8558
 rat sewer~

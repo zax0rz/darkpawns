@@ -1,3 +1,4 @@
+-- DEAD-LETTER: Mob 1408 does not exist in ported world
 -- bane.lua — Bane (mob 1408) conversation state machine + sorcery combat
 -- Source: lib/scripts/mob/archive/bane.lua
 --

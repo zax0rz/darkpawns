@@ -1,3 +1,4 @@
+-- DEAD-LETTER: Mob 12915 does not exist in ported world
 -- aki_kuroda.lua
 -- Source: scripts_full_dump.txt ./mob/archive/aki_kuroda.lua
 -- Attached to mob 12915. If a player tries to "open" the painting (obj 12915),

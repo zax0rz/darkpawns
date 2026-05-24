@@ -209,7 +209,7 @@ just can't quite make it.
 0 120000
 8 8 2
 Race: 0
-Script: magic_user.lua
+Script: magic_user.lua 256
 E
 #2731
 Corwin prince amber~
@@ -327,7 +327,7 @@ from his hooves!
 0 120000
 8 8 0
 Race: 12
-Script: mount.lua
+Script: mount.lua 64
 E
 #2739
 horse carve_meat~
@@ -341,7 +341,7 @@ A horse is here, grazing.
 0 900
 8 8 0
 Race: 12
-Script: mount.lua
+Script: mount.lua 64
 E
 #2740
 monk humble~
@@ -632,7 +632,7 @@ you don't want to mess with.
 10000 270000
 8 8 1
 Race: 0
-Script: shopkeeper.lua
+Script: shopkeeper.lua 4
 E
 #2761
 demon chaos amber~
@@ -701,7 +701,7 @@ He looks like a prisoner of war or something.
 1000 25000
 8 8 1
 Race: 0
-Script: prisoner.lua
+Script: prisoner.lua 152
 E
 #2766
 artist tattoo man tattooist~
@@ -715,7 +715,7 @@ There is a man here leering at you.
 66 90000
 8 8 1
 Race: 0
-Script: tattoo.lua
+Script: tattoo.lua 516
 E
 #2767
 Cathy clerk hotel~
@@ -744,7 +744,7 @@ winning smile.
 10000 270000
 8 8 2
 Race: 0
-Script: shopkeeper.lua
+Script: shopkeeper.lua 4
 E
 #2769
 Stven weaponer shopkeeper~
@@ -759,7 +759,7 @@ expressive face.
 10000 270000
 8 8 1
 Race: 0
-Script: shopkeeper.lua
+Script: shopkeeper.lua 4
 E
 #2770
 Killis smith shopkeeper~
@@ -775,7 +775,7 @@ out of his pocket. He looks like he could ROCK THE HOUSE!!!
 10000 270000
 8 8 1
 Race: 0
-Script: shopkeeper.lua
+Script: shopkeeper.lua 4
 E
 #2771
 spark pattern~
@@ -866,7 +866,7 @@ feminine form beneath the tight clothes she wears.
 25 -5 -15 25d5+299 16d4+16
 0 37500
 8 8 2
-Script: thief.lua
+Script: thief.lua 128
 E
 #3063
 mercenary merc~

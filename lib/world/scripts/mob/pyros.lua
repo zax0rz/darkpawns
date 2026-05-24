@@ -1,3 +1,4 @@
+-- DEAD-LETTER: Mob 1410 does not exist in ported world
 -- pyros.lua — Pyros combat + death handler (mob 1410)
 -- Source: lib/scripts/mob/archive/pyros.lua
 -- Bug fix: fight() was calling call(fight, room.char, "x") — room.char is the entire

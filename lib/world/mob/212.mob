@@ -43,7 +43,7 @@ very young to be an officer. He must have a bright future indeed.
 45 90000
 8 8 1
 Race: 0
-Script: guard_captain.lua
+Script: guard_captain.lua 128
 E
 #21203
 guard gate~
@@ -87,7 +87,7 @@ glasses on his face and his clothes are neat and dapper.
 10000 270000
 8 8 1
 Race: 0
-Script: shopkeeper.lua
+Script: shopkeeper.lua 4
 E
 #21206
 mage abernathanorial~
@@ -104,7 +104,7 @@ cloak and a funny looking hat.
 10000 270000
 8 8 1
 Race: 0
-Script: magic_user.lua
+Script: magic_user.lua 256
 E
 #21207
 al bartender~
@@ -285,7 +285,7 @@ ways to the next generations.
 15 60000
 8 8 2
 Race: 0
-Script: thief.lua
+Script: thief.lua 128
 E
 #21218
 rackhir shoe maker cobbler~
@@ -317,7 +317,7 @@ by the High Priest to guard the bank from would-be theives.
 8 8 2
 BareHandAttack: 10
 Race: 13
-Script: snake.lua
+Script: snake.lua 256
 E
 #21220
 tailor~
@@ -331,7 +331,7 @@ you in a crowd.
 34 -14 -24 34d5+2746 22d4+22
 15 270000
 8 8 1
-Script: dog.lua
+Script: dog.lua 30
 E
 #21221
 priest high alaozar~
@@ -433,6 +433,7 @@ Just seeing the large, silver sphere triples your sense of security.
 8 8 0
 BareHandAttack: 3
 Race: 0
+Script: take_jail.lua 384
 E
 #21228
 watchman guard man~
@@ -460,7 +461,7 @@ He looks like a Phil.
 10 350
 8 8 1
 Race: 0
-Script: janitor.lua
+Script: janitor.lua 74
 E
 #21230
 stray dog~
@@ -696,6 +697,6 @@ magical spell was hiding his true appearance from you.
 8 8 1
 BareHandAttack: 12
 Race: 0
-Script: magic_user.lua
+Script: magic_user.lua 256
 E
 $

@@ -1,6 +1,6 @@
 ---
 title: "'STRIKE OF REVENGE'"
-description: "Usage	: strike <victim>"
+description: "Usage  : strike <victim>"
 date: 2026-04-28
 draft: false
 section: "help"

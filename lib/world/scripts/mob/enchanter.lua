@@ -1,3 +1,4 @@
+-- DEAD-LETTER: Mob 1400 does not exist in ported world
 -- enchanter.lua
 -- Source: scripts_full_dump.txt ./mob/archive/enchanter.lua
 -- Enchanter (mob 1400) in the tower. Accepts armor/weapons and enchants them using

@@ -1,3 +1,4 @@
+-- DEAD-LETTER: Mob 1700 does not exist in ported world
 -- fire_ant.lua - Combat AI for fire ant mobs
 -- The mob has a 10% chance of causing a poisonous bite to their attacker. Attached
 -- to mob 1700.

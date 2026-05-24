@@ -4,6 +4,32 @@ Living document. Updated per session by Daeron.
 
 ---
 
+## [SESSION] 2026-05-24 — Morning Triage: Fidelity Deep Dive + Supply Chain
+
+**Duration:** ~15 min (07:30–07:45 ET)
+**Participants:** Daeron, Reek (automated crawl)
+**Linear issues:** DP-295, DP-296, DP-297, DP-298
+
+### What Happened
+
+Reek's overnight crawl focused on fidelity analysis of `pkg/admin/`, `pkg/moderation/`, `pkg/optimization/`, `pkg/telnet/` vs C source (`comm.c`, `ban.c`, `interpreter.c`). Also ran a full supply chain audit.
+
+### Key Findings
+
+1. **CRITICAL: Telnet ban bypass** (DP-296) — The telnet listener never calls `BanManager.IsBanned()`. The ban system is faithfully ported in `pkg/game/bans.go` but dead code on the telnet path. Any banned player can connect via port 7777.
+2. **Supply chain clean** — 0 reachable vulnerabilities. `golang.org/x/crypto v0.51.0` is one minor behind (v0.52.0). All 9 direct deps verified.
+3. **New infrastructure correctly identified** — Moderation, admin API, optimization packages have no C lineage. Reek correctly flagged these as fidelity gaps but they're new functionality, not bugs.
+4. **Code smells in optimization/** — `ConnectionPool.Get()` holds lock during `createFunc()`, `min()` shadow in `python_ai.go`, unreferenced goroutine in `BatchProcessor`.
+
+### Triaged
+- 1 CRITICAL confirmed → DP-296 (Urgent)
+- 3 LOW confirmed → DP-295, DP-297, DP-298
+- 4 findings downgraded (new infra, not fidelity gaps)
+- Supply chain: clean, one optional bump noted
+
+### Grade
+Good reek. Thorough fidelity analysis. The ban bypass is a real finding.
+
 ## [SESSION] 2026-05-22 — Agent Integration Breakthrough (Session 60-61)
 
 **Duration:** ~6 hours (14:00–20:10 EDT)
@@ -1663,3 +1689,27 @@ The evening session started as BRENDA play testing but evolved into a full archi
 - Ollama systemd override: `/etc/systemd/system/ollama.service.d/override.conf` → `OLLAMA_HOST=0.0.0.0`
 - Docker gateway IP: 172.21.0.1 (from inside containers)
 - Qdrant collection: dp_brenda_memory (768d, nomic-embed-text)
+
+## [SESSION] 2026-05-24 Morning — Reek Triage Sprint (DP-295 through DP-298)
+
+### Fixes Applied (commit eebe890)
+
+| Issue | Severity | Fix |
+|-------|----------|-----|
+| DP-296 | CRITICAL | Telnet listener now checks `BanManager.IsBanned()` before login. Added `GetBanManager()` to session.Manager. |
+| DP-295 | LOW | `BatchProcessor.flushLocked()` goroutine tracked with `sync.WaitGroup`. `Close()` drains in-flight flushes. |
+| DP-297 | LOW | `ConnectionPool.Get()` releases lock during `createFunc()`, re-acquires after. Manual unlock on all paths. |
+| DP-298 | LOW | Deleted shadowed `min()` in python_ai.go. Builtin since Go 1.21. |
+
+### Key Observations
+
+- **DP-296 was real and critical.** The telnet listener accepted connections without checking bans. The ban system was faithfully ported from C (`ban.c`) and works — just never invoked from telnet. Fixed by adding `GetBanManager()` to session.Manager and calling `IsBanned()` after accept.
+- **DP-297 locking pattern.** ConnectionPool.Get() held the lock during slow `createFunc()` calls. Fixed by releasing lock before creation and re-acquiring after. Error path rolls back stats. All return paths use manual unlock (no defer) to avoid double-unlock.
+- **DP-295 goroutine leak.** Edge case: `Close()` during flush could leave a dangling goroutine. WaitGroup tracks it now.
+- **DP-298 shadow.** Go 1.21+ has builtin `min()`. Local function was harmless but unnecessary.
+
+### State at session end
+
+- Board: 0 open Reek bugs
+- All 4 issues marked Done in Linear
+- Commit: eebe890

@@ -197,7 +197,7 @@ He has probably survived so long by eating rats!
 14 6 -4 14d5+150 9d4+9
 13 12000
 8 8 1
-Script: magic_user.lua
+Script: magic_user.lua 256
 E
 #19715
 undead guard~

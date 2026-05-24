@@ -75,7 +75,7 @@ no longer has control over himself.
 0 9000
 8 8 1
 Race: 0
-Script: prisoner.lua
+Script: prisoner.lua 152
 E
 #15806
 undead creature alchemist~
@@ -165,7 +165,7 @@ is well experienced in combat.
 100 40000
 8 8 1
 Race: 0
-Script: guard_captain.lua
+Script: guard_captain.lua 128
 E
 #15812
 well armed pirate guard~
@@ -251,7 +251,7 @@ is loyal only to his master.
 30 20000
 8 8 1
 Race: 6
-Script: troll.lua
+Script: troll.lua 320
 E
 #15818
 Charbroil smuggler cook grotty man~

@@ -191,6 +191,6 @@ the wrong room, you better get the hell out of here!
 BareHandAttack: 13
 Race: 19
 Noise: You hear an evil cackle.
-Script: strike.lua
+Script: strike.lua 128
 E
 $

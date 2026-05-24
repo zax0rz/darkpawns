@@ -60,6 +60,6 @@ forked tongue. It hisses at you with pure content.
 BareHandAttack: 4
 Race: 19
 Noise: A faint hissing noise comes from somewhere nearby.
-Script: snake.lua
+Script: snake.lua 256
 E
 $
