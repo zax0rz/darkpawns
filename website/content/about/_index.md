@@ -1,38 +1,60 @@
 ---
-title: "About"
-description: "The history of Dark Pawns — a dark fantasy MUD that ran from 1997 to 2010, resurrected in 2025."
+title: "About Dark Pawns"
+description: "The architectural journey of Dark Pawns—from a 1997 vintage CircleMUD to a concurrent Go engine and persistent AI agent laboratory."
 date: 2026-04-28
 draft: false
 ---
 
-## 1997 — The First Age
+## 1997 — The First Age: Dark Fantasy Archival Preservation
 
-In 1994, a CircleMUD 1.7 derivative appeared on a server called knight.ufp.org, built by Serapis and Tracer. By 1997, after three codebase overhauls and a migration through half the free hosting providers on the early internet, Dark Pawns landed at darkrune.guru.org and started to become what people would remember.
+Originally emerging in 1994 on a server named `knight.ufp.org` and formally establishing its identity in 1997 at `darkrune.guru.org`, **Dark Pawns** stands as a landmark of late-90s text-based multiplayer game design. Derived from the classic **DikuMUD / Merc 2.2** lineage, it combined a dark, highly literary fantasy atmosphere with deep mechanical complexity.
 
-The world was enormous — two continents, oceans, terrain that flowed instead of snapping between disconnected zones. Six base classes fed into a remort system with six more on top of that. Vampirism, lycanthropy, magical tattoos, talking weaponry. A custom mobile AI that let mobs hold conversations, run quests, and fight back with something approaching malice. Player killing was allowed but not required; the world was dangerous enough on its own.
+The world featured a massive, unified geography stretching across two detailed continents and oceans, eschewing the disconnected "zone snapping" common to MUDs of the era. Its gameplay featured:
+- A sophisticated **30-level remort class system** transitioning six base archetypes into six specialized high-level classes.
+- Deep, thematic systems such as vampirism, lycanthropy, and magical custom tattoos.
+- A highly advanced, reactive **Mobile AI engine** that allowed game characters (mobs) to hold natural conversations, run multi-stage quests, and adapt their tactics dynamically during combat.
 
-The class system alone was the stuff of 3 AM arguments. Assassins were extremely efficient, extremely deadly. Magi shaped reality at whim. And somewhere in the Wyldlands, where magick ran strong and wild, the dreams you had while sleeping could actually hurt you.
-
-The clans formed. Bannor built. Selene ruled. People who had never met face to face spent years inside this world together — and for a lot of them, those years mattered more than they'd ever admit.
-
-> Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.
+For over a decade, Dark Pawns was a vibrant, player-driven universe where clans rose and fell, and friendships were forged across terminal screens.
 
 ## 2010 — The Long Silence
 
-Then it stopped.
+In 2010, the server quietly went dark, and the player community scattered. For fifteen years, this rich world existed only on a cold backup drive and in fragmentary scrapes on the Internet Archive—until the resurrection project began.
 
-The server went dark. Players scattered to other games, other lives, other things that wouldn't fit on a terminal screen. The inside jokes went quiet. The clans dissolved into forum signatures and half-remembered mudmails. Thirteen years of world, compressed into whatever survived on a hard drive nobody was checking.
+---
 
-It wasn't dramatic. Nobody burned anything down. The world just... wasn't there anymore.
+## 2025 — Re-Engineering the Core: The C-to-Go Port
 
-## 2025 — The Resurrection
+Resurrecting a classic MUD in 2025 is not merely about finding a hosting provider; it is an exercise in software archaeology and engine modernization. The original C codebase, consisting of over **73,000 lines of legacy code**, suffered from three decades of technical debt, outdated standard libraries, and architectural assumptions that made compilation on modern operating systems a constant battle.
 
-A text game. In 2025. Why?
+To ensure the long-term preservation and scalability of Dark Pawns, the entire engine was meticulously ported to **Go**. 
 
-Because the game was genuinely good. Not good for its era — good on its own terms. The mobile AI was doing things that modern games still struggle with. The class system had depth that most MMOs never attempted. The worldbuilding was literary, specific, and completely its own thing. And all of it was locked inside a codebase that had been sitting untouched for over a decade.
+### Engine Parity & Concurrency
+The new Go engine replicates the exact combat formulas, spell behaviors, and world-parsing mechanics of the authoritative 1997 server, while introducing state-of-the-art software patterns:
+- **WebSocket Native Protocol**: Enabling seamless, responsive, in-browser gameplay alongside traditional telnet sessions.
+- **Go Concurrency Model**: Safe, high-performance multitasking utilizing per-mob mutex rules and unified lock sequences, replacing risky raw C pointers.
+- **Fidelity-Aware Development**: Regular automated security audits and comparative codebase checks that eliminate "silent port drift" to maintain historical balance.
 
-So someone ported it to Go. The entire CircleMUD-derived engine, rewritten from scratch, running on modern infrastructure. The world is back. The AI is back, and it's getting smarter. The code is on GitHub now — open source, for anyone who wants to poke at the guts of a late-90s MUD and see how the thing actually worked.
+---
 
-The server is live. The door is open.
+## A Living Laboratory for AI Agent Research
 
-If you've never played a MUD, this is where you start. If you played Dark Pawns the first time around — well. Some things are worth coming back to.
+Dark Pawns is no longer just a nostalgic recreation; it is a **cutting-edge experimental environment for persistent AI research**. 
+
+By bridging our modern Go engine with advanced Large Language Model (LLM) frameworks, we have turned the game world into a persistent, real-time testing ground for autonomous agents.
+
+- **Stateless Agents, Stateful Protocols**: Utilizing a WebSocket-native connection layer, agents (like the resident **BRENDA** framework) maintain state, interpret complex environments, and act autonomously alongside human players.
+- **Narrative Memory & Dreaming**: The server tracks agent actions at a transaction level, consolidating events into structured SQLite narrative graphs. During periodic "dreaming" phases, asynchronous LLM loops digest these logs into long-term memories and cohesive self-reflections.
+- **Human-Agent Coexistence**: Human players and autonomous agents interact in real-time, offering researchers unprecedented data on sequential decision-making, planning, and emergent social coordination in a persistent world.
+
+---
+
+## The Paperback Design Philosophy
+
+Every visual detail of the Dark Pawns website is inspired by the typography and aesthetic layout of a **vintage Stephen King paperback** found on a dusty library shelf:
+- **Paper & Ink**: Harmonious cream and ivory paper tones (`#EFE7D6` and `#E5DAC1`) contrasted against dense ink-charcoal text (`#1A1614`).
+- **Oxblood Highlights**: Vibrant, rich accents (`#A8201A`) guiding the reader through headers, status indicators, and critical links.
+- **Premium Modern Layouts**: Archivo Narrow headings, Source Serif 4 body prose, and JetBrains Mono code listings combine historical print flavor with top-tier accessibility standards.
+
+Whether you are a researcher examining multi-agent behavior, a developer looking at Go networking structures, or a returning player stepping back into the Temple, the door is open. 
+
+*Welcome back to the game.*

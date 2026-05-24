@@ -5,13 +5,20 @@
     {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
   </header>
   {{ if .Pages }}
-    {{ range .Pages.ByDate.Reverse }}
-    <article class="news-entry">
-      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
-      <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
-      {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
-    </article>
-    {{ end }}
+    <div class="news-feed">
+      {{ range .Pages.ByDate.Reverse }}
+      <article class="news-entry blog-post">
+        <header class="news-post-header">
+          <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
+          <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+        </header>
+        <div class="prose news-post-content">
+          {{ .Content }}
+        </div>
+        <hr class="news-divider">
+      </article>
+      {{ end }}
+    </div>
   {{ else }}
     <p class="lead">No posts yet.</p>
   {{ end }}
