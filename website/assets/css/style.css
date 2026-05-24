@@ -1572,23 +1572,6 @@ pre code {
   position: relative;
 }
 
-.header-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.12em;
-  color: var(--ink-muted);
-  border-bottom: 1px solid var(--rule);
-  padding: 8px var(--space-md);
-  text-transform: uppercase;
-}
-
-.header-meta span {
-  display: inline-block;
-}
-
 .header-wordmark-container {
   display: flex;
   justify-content: center;
@@ -1932,19 +1915,6 @@ pre code {
 
 /* 4. Mobile & Tablet Overrides */
 @media (max-width: 991px) {
-  .header-meta {
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: center;
-    text-align: center;
-    padding: 6px var(--space-md);
-  }
-  
-  .header-meta span {
-    display: inline-block;
-    width: auto;
-  }
-
   .header-wordmark-top,
   .header-wordmark-bottom {
     font-size: clamp(2.5rem, 8vw, 3.5rem);
