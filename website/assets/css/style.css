@@ -829,10 +829,6 @@ pre code {
   line-height: 1.6;
 }
 
-/* ============================================
-   Play Page — Web Client
-   ============================================ */
-
 /* Override: hide footer on play page */
 .page-play .footer {
   display: none;
@@ -848,45 +844,57 @@ pre code {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #0a0908;
-  border-right: 1px solid #2a2218;
+  background: var(--paper-deep);
+  border-right: 1px solid var(--rule);
+  padding: var(--space-md);
 }
 
 .terminal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
-  background: #141210;
-  border-bottom: 1px solid #2a2218;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-bottom: none;
   font-family: var(--font-display);
   font-size: 0.75rem;
   letter-spacing: 0.1em;
-  color: #5a5245;
+  color: var(--ink);
   text-transform: uppercase;
   flex-shrink: 0;
 }
 
 .terminal-title {
   color: var(--accent);
+  font-weight: 700;
 }
 
 .conn-status {
   display: flex;
   align-items: center;
   gap: 0.4em;
+  color: var(--ink-muted);
 }
 
 .conn-status .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #5a3a3a;
+  background: var(--ink-muted);
   transition: background 0.3s;
 }
 
+.conn-status.connected {
+  color: var(--ink);
+}
+
 .conn-status.connected .dot {
-  background: #4a8a4a;
+  background: #3a8a3a;
+}
+
+.conn-status.disconnected {
+  color: var(--accent);
 }
 
 .conn-status.disconnected .dot {
@@ -899,16 +907,18 @@ pre code {
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #c4b89a;
-  background: transparent;
-  border: 1px solid #3a3228;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
   padding: 0.3em 1em;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
 #reconnect-btn:hover {
-  border-color: var(--accent);
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 
 #reconnect-btn.visible {
@@ -919,6 +929,8 @@ pre code {
   flex: 1;
   padding: 0.5rem;
   overflow: hidden;
+  background: #0a0908;
+  border: 2px solid var(--rule);
 }
 
 /* Sidebar — connection info */
@@ -989,4 +1001,99 @@ pre code {
   .terminal-frame {
     border-right: none;
   }
+}
+
+/* ============================================
+   Map Page — Interactive Cartography
+   ============================================ */
+
+.map-interface-container {
+  width: 100%;
+  height: 600px;
+  border: 1px solid var(--rule);
+  background: var(--paper-deep);
+  position: relative;
+  margin: var(--space-md) 0;
+  border-radius: 2px;
+}
+
+.map-interface-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--ink-muted);
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+#map-canvas {
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.map-interface-controls {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.map-interface-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.map-interface-spacer {
+  flex-grow: 1;
+}
+
+.map-interface-input {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 0.35rem 0.75rem;
+  border-radius: 2px;
+  width: 200px;
+  transition: outline 0.1s;
+}
+
+.map-interface-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.btn-small {
+  min-height: 32px !important;
+  line-height: 30px !important;
+  font-size: 0.8125rem !important;
+  padding: 0 0.875rem !important;
+}
+
+.map-interface-results {
+  margin-top: var(--space-md);
+  display: none;
+}
+
+.map-interface-results .card h4 {
+  margin-top: 0;
+  margin-bottom: var(--space-sm);
+}
+
+.map-interface-details {
+  margin-top: var(--space-md);
+  display: none;
+}
+
+.map-interface-details h3 {
+  margin-top: 0;
+  margin-bottom: var(--space-sm);
 }

@@ -24,32 +24,32 @@ Explore the world of Dark Pawns with this interactive map. The map shows all are
 
 ## Map Interface
 
-<div id="map-container" style="width: 100%; height: 600px; border: 1px solid #333; background: #1a1a1a; position: relative;">
-  <div id="map-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ccc; font-size: 18px;">
+<div id="map-container" class="map-interface-container">
+  <div id="map-loading" class="map-interface-loading">
     Loading interactive map...
   </div>
-  <canvas id="map-canvas" style="display: none;"></canvas>
+  <canvas id="map-canvas"></canvas>
 </div>
 
-<div id="map-controls" style="margin-top: 20px; padding: 15px; background: #2a2a2a; border-radius: 5px;">
-  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-    <button id="zoom-in" class="button is-small is-primary">Zoom In</button>
-    <button id="zoom-out" class="button is-small is-primary">Zoom Out</button>
-    <button id="reset-view" class="button is-small is-info">Reset View</button>
-    <div style="flex-grow: 1;"></div>
-    <input id="room-search" type="text" class="input is-small" placeholder="Search rooms..." style="width: 200px;">
-    <button id="search-btn" class="button is-small is-success">Search</button>
+<div id="map-controls" class="map-interface-controls">
+  <div class="map-interface-row">
+    <button id="zoom-in" class="btn btn-secondary btn-small">Zoom In</button>
+    <button id="zoom-out" class="btn btn-secondary btn-small">Zoom Out</button>
+    <button id="reset-view" class="btn btn-secondary btn-small">Reset View</button>
+    <div class="map-interface-spacer"></div>
+    <input id="room-search" type="text" class="map-interface-input" placeholder="Search rooms...">
+    <button id="search-btn" class="btn btn-primary btn-small">Search</button>
   </div>
   
-  <div id="search-results" style="margin-top: 10px; display: none;">
-    <div class="box" style="background: #333; color: #ccc;">
-      <h4 style="margin-bottom: 10px;">Search Results</h4>
+  <div id="search-results" class="map-interface-results">
+    <div class="card">
+      <h4>Search Results</h4>
       <div id="results-list"></div>
     </div>
   </div>
 </div>
 
-<div id="room-details" class="box" style="margin-top: 20px; background: #2a2a2a; color: #ccc; display: none;">
+<div id="room-details" class="card map-interface-details">
   <h3 id="room-title">Room Details</h3>
   <div id="room-content">
     <p>Select a room on the map to see details.</p>
