@@ -1,0 +1,13 @@
+{
+  "name": "{{ .Site.Title }}",
+  "tagline": "{{ .Site.Params.tagline }}",
+  "description": "{{ .Site.Params.description }}",
+  "version": "2.0",
+  "endpoints": {
+    "play": "{{ .Site.BaseURL }}play",
+    "news": "{{ .Site.BaseURL }}news",
+    "help": "{{ .Site.BaseURL }}help",
+    "docs": "{{ .Site.BaseURL }}docs",
+    "status": "{{ .Site.BaseURL }}status"
+  }
+}

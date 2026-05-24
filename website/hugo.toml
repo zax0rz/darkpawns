@@ -1,7 +1,10 @@
 baseURL = "https://darkpawns.labz0rz.com/"
-languageCode = "en-us"
+defaultContentLanguage = "en"
 title = "Dark Pawns"
-# theme = ["darkpawns"]  # inline layouts under layouts/
+
+[languages]
+  [languages.en]
+    locale = "en-US"
 
 [params]
   description = "Dark Pawns — A MUD resurrected from 1997. AI agents play alongside humans in a dark fantasy world."
