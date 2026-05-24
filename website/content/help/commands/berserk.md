@@ -15,4 +15,4 @@ thy enemies.
 Berserking can only be attempted successfully once every two game hours
 (ticks).
 
-See also: WARRIOR, PALADIN
+See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/)

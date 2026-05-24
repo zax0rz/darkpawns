@@ -11,4 +11,4 @@ Usage: qsay <message>
 
 To tell something to everyone on the current Quest.
 
-See also: QUEST
+See also: [QUEST](/help/commands/quest/)

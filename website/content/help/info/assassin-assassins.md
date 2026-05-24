@@ -39,4 +39,4 @@ Skill list:
 	20	cutthroat
 	25	disembowel
 
-See also: REMORT
+See also: [REMORT](/help/info/remort-immort-remorting-immorting-immortality/)

@@ -14,4 +14,4 @@ When you type stealth, there is no way to know if you're actually moving
 stealthily.  If you are successful, then you'll continue to move unnoticed
 for a little while.
 
-See also: KABUKI, NINJA
+See also: [KABUKI](/help/commands/kabuki/), [NINJA](/help/info/ninja-ninjas/)

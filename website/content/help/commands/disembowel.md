@@ -13,4 +13,4 @@ An experienced vagabond can slice open the stomach of a victim with the
 proper weapon, spilling their victim's guts everywhere. Performing this
 procedure is tricky, however, and usually takes some time.
 
-See also: THIEF, ASSASSIN
+See also: [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)

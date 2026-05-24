@@ -9,6 +9,6 @@ aliases: ['/help/age']
 
 Age is the game mechanic that measures how old your character is in
 game terms.  Most characters start in their teens and gradually grow
-older from there. You can see how old your character is in SCORE.
+older from there. You can see how old your character is in [SCORE](/help/commands/score/).
 
-See also: SCORE
+See also: [SCORE](/help/commands/score/)

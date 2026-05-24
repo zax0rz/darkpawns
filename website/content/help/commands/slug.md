@@ -12,4 +12,4 @@ Usage: slug <victim>
 This is a devastating blow, used to by the bare-handed warrior to rattle
 a little sense into the victim.
 
-See also: WARRIOR, PALADIN, RANGER
+See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)

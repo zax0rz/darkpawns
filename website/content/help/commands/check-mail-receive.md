@@ -11,8 +11,8 @@ Usage: check
        mail <person>
        receive
        
-The commands used by the Dark Pawns Mail System (DPMS) are MAIL, CHECK, and
-RECEIVE.  These commands can only be used while in an Official DPMS Post
+The commands used by the Dark Pawns Mail System (DPMS) are [MAIL](/help/commands/check-mail-receive/), [CHECK](/help/commands/check-mail-receive/), and
+[RECEIVE](/help/commands/check-mail-receive/).  These commands can only be used while in an Official DPMS Post
 Office.  You must be at least second level in order to use the DPMS.
 
 Examples:

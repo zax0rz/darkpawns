@@ -18,4 +18,4 @@ Modify your prompt to show your hit points, mana, and/or movement points.
                        and person you are fighting.
   > prompt off         Return to normal prompt
 
-See also: TOGGLE COLOR
+See also: [TOGGLE](/help/commands/toggle/) [COLOR](/help/commands/ansi-color/)

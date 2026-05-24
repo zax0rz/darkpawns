@@ -21,5 +21,5 @@ Examples:
 
 This code was provided by Gnort.
 
-See also: NOWIZ CHOSEN
+See also: [NOWIZ](/help/wizhelp/nowiz/) [CHOSEN](/help/wizhelp/chosen/)
 wizonly

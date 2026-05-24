@@ -9,10 +9,10 @@ aliases: ['/help/toggle']
 
 Usage: toggle
 
-TOGGLE shows you the current values of various toggles available on the MUD.
+[TOGGLE](/help/commands/toggle/) shows you the current values of various toggles available on the MUD.
 This command CAN NOT be used to change these values (see related commands.)
 All of these toggles remain the same until you change them; i.e. they are
 saved when you quit or rent.
 
-See also: BRIEF, COMPACT, DISPLAY, NOSHOUT, NOSUMMON, NOTELL, QUEST
-          NOREPEAT, WIMP
+See also: [BRIEF](/help/commands/brief/), [COMPACT](/help/commands/compact/), [DISPLAY](/help/commands/display-prompt/), [NOSHOUT](/help/commands/noshout/), [NOSUMMON](/help/commands/nosummon/), [NOTELL](/help/commands/notell/), [QUEST](/help/commands/quest/)
+          [NOREPEAT](/help/commands/norepeat/), WIMP

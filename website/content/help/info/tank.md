@@ -10,4 +10,4 @@ aliases: ['/help/tank']
 The tank is defined as "the person being hit by the person you are 
 fighting."
 
-See also: COMBAT
+See also: [COMBAT](/help/info/combat/)

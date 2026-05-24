@@ -11,4 +11,4 @@ Usage: think <message>
 
 Lets others see what you're thinking!
 
-See also: SOCIALS
+See also: [SOCIALS](/help/socials/socials/)

@@ -13,4 +13,4 @@ Displays the message of the day.  Contains important information
 regarding the status of the MUD.  You should be sure to read it
 when you login.  If you miss it at login, just use this command!
 
-See also: INFO, NEWS
+See also: [INFO](/help/commands/info-news-policy-version-future/), [NEWS](/help/commands/info-news-policy-version-future/)

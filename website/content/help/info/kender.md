@@ -18,4 +18,4 @@ drastically different from that of a typical human. Kender are utterly
 fearless, insatiably curious, unstoppably mobile and independent, and 
 will pick up anything that is not nailed down.
 
-See also: RACE
+See also: [RACE](/help/info/race-races/)

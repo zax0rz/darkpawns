@@ -13,7 +13,7 @@ Duration	: Instantaneous
 Save		: -
 
 This spell allows the caster to draw a magical gylph on the ground that
-Can be used to SUMMON beings.  It is very sensitive to movement and should
+Can be used to [SUMMON](/help/spells/summon/) beings.  It is very sensitive to movement and should
 Only be drawn in a place where the caster can be left undisturbed.
 
-See also: SUMMON
+See also: [SUMMON](/help/spells/summon/)

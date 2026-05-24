@@ -15,7 +15,7 @@ death          errors         godrooms       houses
 player         rent           shops          stats
 zones          tattoos	      aggr
 
-The SHOW command displays information.  Some modes of show require additional
+The [SHOW](/help/wizhelp/show/) command displays information.  Some modes of show require additional
 information, such as a player name.
 
    death: Shows all death traps in the game.
@@ -31,5 +31,5 @@ godrooms: Shows the rooms in the 'god zone'.
  tattoos: Shows a list of available tattoo index numbers
     aggr: Shows a list of attitude mobs
 
-See also: STAT, ZRESET
+See also: [STAT](/help/wizhelp/stat/), [ZRESET](/help/wizhelp/zreset/)
 wizonly

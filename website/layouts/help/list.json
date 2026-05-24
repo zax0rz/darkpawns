@@ -1,0 +1,13 @@
+[
+  {{- $pages := .Pages -}}
+  {{- $len := len $pages -}}
+  {{- range $i, $p := $pages -}}
+  {
+    "title": {{ $p.Title | jsonify }},
+    "description": {{ $p.Params.description | jsonify }},
+    "category": {{ $p.Parent.Title | jsonify }},
+    "permalink": {{ $p.Permalink | jsonify }},
+    "aliases": {{ $p.Params.aliases | jsonify }}
+  }{{- if lt (add $i 1) $len -}},{{- end -}}
+  {{- end -}}
+]

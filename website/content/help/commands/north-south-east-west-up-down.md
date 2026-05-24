@@ -15,6 +15,6 @@ Usage: north
        down
 
 To travel in a given direction. To see directions available for travel, 
-use EXITS or better yet AUTO EXIT.
+use [EXITS](/help/commands/exits/) or better yet [AUTO](/help/commands/auto-loot-split/) EXIT.
 
-See also: EXIT, AUTO
+See also: EXIT, [AUTO](/help/commands/auto-loot-split/)

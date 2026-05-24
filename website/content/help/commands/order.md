@@ -19,4 +19,4 @@ Examples:
   > order cityguard sleep
   > order followers kill Link
 
-See also: CHARM
+See also: [CHARM](/help/spells/charm-person/)

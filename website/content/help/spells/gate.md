@@ -21,4 +21,4 @@ Casting this spell in a room where a gate already exists can have strange,
 far-reaching side-affects. Few have returned to tell what those side-affects 
 actually are.
 
-See also: MOONGATE
+See also: [MOONGATE](/help/info/moongate-moon/)

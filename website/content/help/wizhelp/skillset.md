@@ -11,5 +11,5 @@ Usage: skillset <name> '<skill>' <value>
 
 Sets the specified skill to the specified value.
 
-See also: SET
+See also: [SET](/help/wizhelp/set/)
 wizonly

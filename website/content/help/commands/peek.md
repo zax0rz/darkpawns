@@ -14,4 +14,4 @@ up your victim without being noticed. A failed peek is just like a normal
 "look <victim>"; however it's hard to tell if you're noticed. (Unless of 
 course, they start pounding on you.)
 
-See also: THIEF, ASSASSIN
+See also: [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)

@@ -18,8 +18,8 @@ You CANNOT load a saved version if you die -- your persona still exists,
 but you will lose experience, and all your objects stay in the game, with
 your corpse.
 
-Note that the SAVE command only saves your equipment in the event of a
-crash.  If you are leaving the game normally, SAVE will NOT save your
+Note that the [SAVE](/help/commands/save/) command only saves your equipment in the event of a
+crash.  If you are leaving the game normally, [SAVE](/help/commands/save/) will NOT save your
 equipment - You must quit out at a temple.
 
-See also: HOMETOWN, QUIT, DEATH, REALLYQUIT
+See also: [HOMETOWN](/help/info/hometown-hometowns/), [QUIT](/help/commands/quit/), [DEATH](/help/info/die-death-condie/), [REALLYQUIT](/help/commands/reallyquit/)

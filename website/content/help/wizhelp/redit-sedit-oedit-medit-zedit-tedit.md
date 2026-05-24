@@ -36,14 +36,14 @@ set <player name> olc <zone>    - IMPLs only - allow player to edit
 olc                             - List all the things that have been edited
                                    	but not yet saved.
 
-WARNING:  This OLC will let you set values to values that
+WARNING:  This [OLC](/help/wizhelp/olc/) will let you set values to values that
 shouldn't be set.  For example, it'll let you set a mobile with a
-GROUP flag.  This is good in the sense that it allows you to test
+[GROUP](/help/commands/group/) flag.  This is good in the sense that it allows you to test
 anything you please, but bad in the sense that builders can crash
 the mud with ease. (Hey, that rhymes!). 
 /****************************************************************
 In short: If you don't know what it does, ask before using it!!!!
 ****************************************************************/
 
-See also: SET OLC RLIST
+See also: [SET](/help/wizhelp/set/) [OLC](/help/wizhelp/olc/) [RLIST](/help/wizhelp/rlist-mlist-olist-zlist/)
 wizonly

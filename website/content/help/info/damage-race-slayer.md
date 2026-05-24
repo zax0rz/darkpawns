@@ -13,4 +13,4 @@ These items, known as race slayers, are both coveted and hated. Although
 the damage bonus they give is powerful, the user of such weapons becomes
 hated and marked for death by all members of the target race.
 
-See also: RACE
+See also: [RACE](/help/info/race-races/)

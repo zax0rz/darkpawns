@@ -14,4 +14,4 @@ Duration    : 12 hours + level
 Allows the caster to detect the alignment of those around them.
 Evil will show as a red aura, good in a blue aura.
 
-See also: "DETECT INVISIBILITY"
+See also: "[DETECT](/help/commands/search-secret-doors-door-detect/) [INVISIBILITY](/help/spells/invisibility/)"

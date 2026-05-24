@@ -38,4 +38,4 @@ Skills list:
 	29	smokescreen
 	30	soul leech
 
-See also: CLASSES
+See also: [CLASSES](/help/info/class-classes/)

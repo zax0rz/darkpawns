@@ -9,4 +9,4 @@ aliases: ['/help/titan']
 
 These beings have moved beyond mere immortality, and into godhood...
 
-See also: WIZLIST, IMMLIST, GODS
+See also: [WIZLIST](/help/commands/wizlist-immlist/), [IMMLIST](/help/commands/wizlist-immlist/), [GODS](/help/info/god-gods/)

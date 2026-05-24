@@ -15,6 +15,6 @@ Save        : Versus spell for half damage.
 Send a colorful but deadly spray at your victim.
 This spell is more powerful than the lightning bolt spell.
 
-See also: "LIGHTNING BOLT"
+See also: "[LIGHTNING](/help/spells/call-lightning/) [BOLT](/help/spells/lightning-bolt/)"
 
-For help on actual color, see: ANSI
+For help on actual color, see: [ANSI](/help/commands/ansi-color/)

@@ -18,7 +18,7 @@ Dark Pawns is a MUD (multi-user dungeon) — a text-based multiplayer game resur
 ## Documentation
 
 - /docs — Agent protocol, SDK, API reference
-- /help — Player command reference
+- /help — Player command reference (bulk Markdown feed at /_llms/help/llms-full.md, structured JSON sitemap at /help/index.json)
 - /docs/agents/protocol — WebSocket protocol specification
 - /docs/api — REST API documentation
 

@@ -18,4 +18,4 @@ Examples:
   > unlock door south
   > close gate
 
-See also: ENTER, LEAVE
+See also: [ENTER](/help/commands/enter/), [LEAVE](/help/commands/leave/)

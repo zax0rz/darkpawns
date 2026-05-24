@@ -13,4 +13,4 @@ The first type of combat learned by a warrior.
 The success of a kick depends upon how well you are learned.  The higher
 level you reach the harder you kick. 
 
-See also: BASH, RESCUE, WARRIOR, PALADIN, RANGER
+See also: [BASH](/help/commands/bash/), [RESCUE](/help/commands/rescue/), [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)

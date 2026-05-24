@@ -20,4 +20,4 @@ Examples:
   > list             (list all items for sale)
   > list sword       (list all swords for sale)
  
-See also: BUY, SELL, SHOPS, VALUE
+See also: [BUY](/help/commands/buy/), [SELL](/help/commands/sell/), [SHOPS](/help/info/shops/), [VALUE](/help/commands/value/)

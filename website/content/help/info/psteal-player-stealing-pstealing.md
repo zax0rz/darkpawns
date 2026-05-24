@@ -9,7 +9,7 @@ aliases: ['/help/psteal-player-stealing-pstealing']
 
 Stealing from other players is allowed on Dark Pawns.
 
-To steal from other players, you must be flagged as an OUTLAW.
+To steal from other players, you must be flagged as an [OUTLAW](/help/info/outlaw-outlaws/).
 All the gorey details of this flag are listed in its help file.
 
 You may NEVER junk equipment that you have stolen from other characters.
@@ -17,9 +17,9 @@ Junking of stolen equipment represents an irreplacable loss to the
 character whose item it was.  If you junk equipment you steal,
 you will be removed from the game.
 
-If you decide to move stolen items from your OUTLAW character to
+If you decide to move stolen items from your [OUTLAW](/help/info/outlaw-outlaws/) character to
 one of your non-outlaw multis, expect your multi to be flagged
-OUTLAW.  Repeated abuses of this will likely result in your deletion.
+[OUTLAW](/help/info/outlaw-outlaws/).  Repeated abuses of this will likely result in your deletion.
 
 You can only steal from other players who are +/- 3 levels from you.
 
@@ -28,4 +28,4 @@ swipe someone's gear and they kill you and take it back, you've got no room
 to complain.
 
 
-See also: PK, OUTLAW
+See also: [PK](/help/info/pk-player-killing-pkill-pkilling-pkiller/), [OUTLAW](/help/info/outlaw-outlaws/)

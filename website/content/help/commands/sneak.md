@@ -13,4 +13,4 @@ Used for sneaking (moving in and out of rooms without anyone taking notice).
 When you type sneak, there is no way to know if you're actually sneaking.
 If you successfully sneak, then you'll continue to sneak for a little while.
 
-See also: HIDE, STEALTH, THIEF, ASSASSIN
+See also: [HIDE](/help/commands/hide/), [STEALTH](/help/commands/stealth/), [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)

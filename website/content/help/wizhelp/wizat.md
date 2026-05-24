@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/wizat']
 ---
 
-Usage: at <room VNUM | item | mob | player name> <command> <arguments>
+Usage: at <room [VNUM](/help/wizhelp/vnum/) | item | mob | player name> <command> <arguments>
 
 AT can be used to perform an action in a location other than where you are
 standing.  The first argument can be a virtual room number or the name of a
@@ -21,5 +21,5 @@ Examples:
   > at 3.corpse get all corpse
   > at catje wave catje
 
-See also: GOTO
+See also: [GOTO](/help/wizhelp/goto-trans-wizteleport/)
 wizonly

@@ -11,4 +11,4 @@ Usage    : cast 'group heal'
 
 This powerful prayer heals the caster's entire group.
 
-See also: HEAL
+See also: [HEAL](/help/spells/group-heal/)

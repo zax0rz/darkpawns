@@ -16,4 +16,4 @@ Example:
  
   > value bread
  
-See also: BUY, LIST, SELL, SHOPS
+See also: [BUY](/help/commands/buy/), [LIST](/help/commands/list/), [SELL](/help/commands/sell/), [SHOPS](/help/info/shops/)

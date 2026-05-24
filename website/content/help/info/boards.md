@@ -13,10 +13,10 @@ a standard mortal board, a board for immortals, a board for fun "social"
 messages, etc.  Naturally, not all players may be allowed to read all
 types of boards.
 
-Type "LOOK BOARD" to see the messages already posted on a board.  Type
-"WRITE <subject>" to post a message to a board; terminate a message with
-a '@' as the first character on a line.  Type "READ <number>" to read a
-post.  Type "REMOVE <number>" to remove your own messages.
+Type "[LOOK](/help/commands/look/) BOARD" to see the messages already posted on a board.  Type
+"[WRITE](/help/commands/write/) <subject>" to post a message to a board; terminate a message with
+a '@' as the first character on a line.  Type "[READ](/help/commands/read/) <number>" to read a
+post.  Type "[REMOVE](/help/commands/remove/) <number>" to remove your own messages.
 
 Example:
 
@@ -27,4 +27,4 @@ Example:
   > read 6
   > remove 6
 
-See also: MAIL, READ, WRITE
+See also: [MAIL](/help/commands/check-mail-receive/), [READ](/help/commands/read/), [WRITE](/help/commands/write/)

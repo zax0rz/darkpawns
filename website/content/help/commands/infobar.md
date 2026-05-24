@@ -11,7 +11,7 @@ Usage: infobar
        infobar <on | off>
 
 This will allow a status bar to develop on your screen.  It assumes a
-24 lines by default screen.  Helpful information will be there instead
+[24](/help/info/attitude-attitudes-24-atti/) lines by default screen.  Helpful information will be there instead
 of in your prompt.  It can be resized with the "lines" command.
 
-See also: LINES
+See also: [LINES](/help/commands/lines/)

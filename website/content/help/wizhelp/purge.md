@@ -17,7 +17,7 @@ equipment lying on the ground.
 
 If the argument is the name of a player, the player's inventory and equipment
 will drop on the ground and the player will lose his/her connection.  For this
-reason, PURGE should only be used on players in disciplinary situations.
+reason, [PURGE](/help/wizhelp/purge/) should only be used on players in disciplinary situations.
 
 Examples:
 
@@ -26,5 +26,5 @@ Examples:
   > purge sword
   > purge dragon
 
-See also: DC
+See also: [DC](/help/wizhelp/dc/)
 wizonly

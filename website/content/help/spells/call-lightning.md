@@ -16,4 +16,4 @@ This spell will use the "force of nature" to make a lightning
 strike the victim.  It is therefore only possible to call lightning
 outside, and it has to be raining (or worse).
 
-See also: "CONTROL WEATHER", WEATHER
+See also: "[CONTROL](/help/spells/control-weather/) [WEATHER](/help/commands/weather/)", [WEATHER](/help/commands/weather/)

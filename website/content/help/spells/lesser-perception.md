@@ -11,4 +11,4 @@ Conquering the realm of the unseen, the psionic can focus his mental
 energies towards seeing the unseen.  This lesser version is great for 
 seeing in the dark, as well as seeing other people's true nature.
 
-See also: "GREATER PERCEPTION"
+See also: "[GREATER](/help/spells/greater-perception/) [PERCEPTION](/help/spells/greater-perception/)"

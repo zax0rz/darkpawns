@@ -16,4 +16,4 @@ of adventurers. Also, humans are the only race that can become ninjas,
 the dangerous oriental mercenaries. They adapt easily to most climates, 
 allowing them to build cities in almost any location.
 
-See also: RACES
+See also: [RACES](/help/info/race-races/)

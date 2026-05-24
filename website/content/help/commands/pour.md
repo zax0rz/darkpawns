@@ -18,4 +18,4 @@ Examples:
   > pour canteen cup
   > pour cup out
 
-See also: FILL, DRINK
+See also: [FILL](/help/commands/fill/), [DRINK](/help/commands/eat-drink-sip-taste/)

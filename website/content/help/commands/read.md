@@ -12,11 +12,11 @@ Usage: read <object>
 
 When you want to read something.
 
-READ is also used to read messages on bulletin boards; type HELP BOARDS
+[READ](/help/commands/read/) is also used to read messages on bulletin boards; type [HELP](/help/commands/help/) [BOARDS](/help/info/boards/)
 for more information.
 
 Example:
 
   > read note
 
-See also: BOARDS
+See also: [BOARDS](/help/info/boards/)

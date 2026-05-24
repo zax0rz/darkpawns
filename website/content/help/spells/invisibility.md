@@ -15,4 +15,4 @@ Makes the target of the spell invisible to everyone except those who have
 the "detect invisibility" spell.
 
 
-See also: "DETECT INVISIBILITY"
+See also: "[DETECT](/help/commands/search-secret-doors-door-detect/) [INVISIBILITY](/help/spells/invisibility/)"

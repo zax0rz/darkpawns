@@ -12,4 +12,4 @@ Usage: scrounge
 The skilled Ranger can scrounge up a meal anywhere, just by feeding off of the
 land.
 
-See also: RANGER
+See also: [RANGER](/help/info/ranger-rangers/)

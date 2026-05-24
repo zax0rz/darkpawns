@@ -24,4 +24,4 @@ Examples:
   > get all all.bag
   > get all.bread all.bag
 
-See also: DROP, PUT
+See also: [DROP](/help/commands/drop/), PUT

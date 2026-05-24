@@ -34,10 +34,10 @@ Powers:
 	19	dominate
 	21	cell adjustment
         22      mirror image
-	24	mental lapse
+	[24](/help/info/attitude-attitudes-24-atti/)	mental lapse
 	25	psiblast
 	26	mind bar
 	28	mass dominate
 	30	haste
 
-See also: REMORT, CLASSES, PSIONIC
+See also: [REMORT](/help/info/remort-immort-remorting-immorting-immortality/), [CLASSES](/help/info/class-classes/), [PSIONIC](/help/info/psionicist-psionics-psionist-psionic-psionics/)

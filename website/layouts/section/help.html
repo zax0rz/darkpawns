@@ -1,17 +1,166 @@
 {{ define "main" }}
-<div class="container">
+<div class="container help-container">
   <header class="section-header">
     <h1>{{ .Title }}</h1>
     {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
   </header>
-  <p class="lead">Use your browser's find (Ctrl+F) or browse by category.</p>
-  <div class="help-grid">
+
+  <!-- Interactive Help Filters & Search -->
+  <div class="help-controls">
+    <div class="help-search-wrapper">
+      <input type="text" id="help-search" class="help-search-input" placeholder="Search MUD help files (e.g. backstab, bless, warrior)..." aria-label="Search help files">
+      <button id="help-search-clear" class="help-search-clear" aria-label="Clear search" style="display: none;">&times;</button>
+    </div>
+
+    <div class="help-categories" id="help-categories" role="tablist" aria-label="Category filters">
+      <button class="help-filter-pill active" data-category="all" role="tab" aria-selected="true">All Topics</button>
+      <button class="help-filter-pill" data-category="commands" role="tab" aria-selected="false">Commands</button>
+      <button class="help-filter-pill" data-category="spells" role="tab" aria-selected="false">Spells & Wills</button>
+      <button class="help-filter-pill" data-category="info" role="tab" aria-selected="false">Systems & Info</button>
+      <button class="help-filter-pill" data-category="socials" role="tab" aria-selected="false">Socials</button>
+      <button class="help-filter-pill" data-category="wizhelp" role="tab" aria-selected="false">Immortal</button>
+    </div>
+
+    <div class="help-results-meta">
+      Showing <span id="help-results-count">430</span> of <span id="help-total-count">430</span> topics
+    </div>
+  </div>
+
+  <!-- Help Cards Grid -->
+  <div class="help-grid" id="help-grid">
     {{ range .Pages }}
-    <a href="{{ .RelPermalink }}" class="card" style="border-bottom:none">
-      <h2>{{ .Title }}</h2>
-      {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
-    </a>
+      {{ $dirParts := split (trim .File.Dir "/") "/" }}
+      {{ $subsection := index $dirParts (sub (len $dirParts) 1) }}
+      
+      {{ $label := $subsection }}
+      {{ if eq $subsection "commands" }}{{ $label = "Command" }}
+      {{ else if eq $subsection "spells" }}{{ $label = "Spell" }}
+      {{ else if eq $subsection "info" }}{{ $label = "Info" }}
+      {{ else if eq $subsection "socials" }}{{ $label = "Social" }}
+      {{ else if eq $subsection "wizhelp" }}{{ $label = "Immortal" }}
+      {{ else if eq $subsection "help" }}{{ $label = "FAQ" }}
+      {{ end }}
+
+      {{ $aliasesStr := "" }}
+      {{ with .Params.aliases }}
+        {{ $aliasesStr = delimit . " " }}
+      {{ end }}
+
+      <a href="{{ .RelPermalink }}" class="card help-card" style="border-bottom:none" 
+         data-title="{{ lower .Title }}" 
+         data-category="{{ $subsection }}" 
+         data-keywords="{{ lower .Title }} {{ .File.BaseFileName }} {{ lower $aliasesStr }} {{ lower .Params.description }}">
+        <div class="help-card-header">
+          <h2>{{ .Title }}</h2>
+          <span class="help-badge badge-{{ $subsection }}">{{ $label }}</span>
+        </div>
+        {{ with .Params.description }}
+          <p class="help-card-desc">{{ . }}</p>
+        {{ end }}
+      </a>
     {{ end }}
   </div>
+
+  <!-- No Results Placeholder -->
+  <div id="no-results-msg" class="help-no-results" style="display: none;">
+    <div class="retro-terminal-alert">
+      <h3>=== ERROR: SEARCH RETURNED ZERO RESULTS ===</h3>
+      <p>No MUD help topic matching your query was found in the database.</p>
+      <p class="suggestion">Tip: Check spelling or switch filter category to "All Topics".</p>
+    </div>
+  </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const searchInput = document.getElementById("help-search");
+  const clearBtn = document.getElementById("help-search-clear");
+  const categoryPills = document.querySelectorAll(".help-filter-pill");
+  const cards = document.querySelectorAll(".help-card");
+  const grid = document.getElementById("help-grid");
+  const noResults = document.getElementById("no-results-msg");
+  const resultsCount = document.getElementById("help-results-count");
+  const totalCount = document.getElementById("help-total-count");
+
+  // Set total count
+  totalCount.textContent = cards.length;
+  resultsCount.textContent = cards.length;
+
+  let activeCategory = "all";
+  let searchQuery = "";
+
+  function filterCards() {
+    let visibleCount = 0;
+    
+    cards.forEach(card => {
+      const cardCategory = card.getAttribute("data-category");
+      const cardTitle = card.getAttribute("data-title");
+      const cardKeywords = card.getAttribute("data-keywords");
+      
+      const matchesCategory = (activeCategory === "all" || cardCategory === activeCategory);
+      
+      let matchesSearch = true;
+      if (searchQuery) {
+        // Match query terms in title or keywords
+        const terms = searchQuery.split(/\s+/).filter(t => t);
+        matchesSearch = terms.every(term => 
+          cardTitle.includes(term) || cardKeywords.includes(term)
+        );
+      }
+      
+      if (matchesCategory && matchesSearch) {
+        card.style.display = "";
+        visibleCount++;
+      } else {
+        card.style.display = "none";
+      }
+    });
+
+    resultsCount.textContent = visibleCount;
+    
+    if (visibleCount === 0) {
+      grid.style.display = "none";
+      noResults.style.display = "block";
+    } else {
+      grid.style.display = "";
+      noResults.style.display = "none";
+    }
+  }
+
+  // Search input event
+  searchInput.addEventListener("input", function(e) {
+    searchQuery = e.target.value.toLowerCase().trim();
+    if (searchQuery.length > 0) {
+      clearBtn.style.display = "block";
+    } else {
+      clearBtn.style.display = "none";
+    }
+    filterCards();
+  });
+
+  // Clear button click
+  clearBtn.addEventListener("click", function() {
+    searchInput.value = "";
+    searchQuery = "";
+    clearBtn.style.display = "none";
+    searchInput.focus();
+    filterCards();
+  });
+
+  // Category filter pills click
+  categoryPills.forEach(pill => {
+    pill.addEventListener("click", function() {
+      categoryPills.forEach(p => {
+        p.classList.remove("active");
+        p.setAttribute("aria-selected", "false");
+      });
+      this.classList.add("active");
+      this.setAttribute("aria-selected", "true");
+      
+      activeCategory = this.getAttribute("data-category");
+      filterCards();
+    });
+  });
+});
+</script>
 {{ end }}

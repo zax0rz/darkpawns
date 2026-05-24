@@ -39,4 +39,4 @@ Skill list:
 	26	shoot
 	30	disarm
 
-See also: REMORT, CLASSES
+See also: [REMORT](/help/info/remort-immort-remorting-immorting-immortality/), [CLASSES](/help/info/class-classes/)

@@ -20,4 +20,4 @@ Examples:
   > remove all
   > remove all.bronze
 
-See also: GRAB, HOLD, WEAR, WIELD
+See also: [GRAB](/help/commands/grab-hold/), [HOLD](/help/commands/grab-hold/), [WEAR](/help/commands/wear/), [WIELD](/help/commands/wield/)

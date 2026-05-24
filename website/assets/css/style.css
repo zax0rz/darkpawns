@@ -1097,3 +1097,312 @@ pre code {
   margin-top: 0;
   margin-bottom: var(--space-sm);
 }
+
+/* ============================================
+   Help System Overhaul
+   ============================================ */
+
+.help-container {
+  margin-bottom: var(--space-xl);
+}
+
+.help-controls {
+  margin-bottom: var(--space-xl);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--space-lg);
+}
+
+.help-search-wrapper {
+  position: relative;
+  max-width: var(--content-width);
+  margin-bottom: var(--space-md);
+}
+
+.help-search-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border-radius: 2px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.15s ease-in-out;
+}
+
+.help-search-input:focus {
+  outline: 2px solid var(--accent);
+  background: var(--paper);
+  box-shadow: 0 0 8px rgba(168, 32, 26, 0.15);
+}
+
+.help-search-clear {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--ink-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.help-search-clear:hover {
+  color: var(--accent);
+}
+
+.help-categories {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+}
+
+.help-filter-pill {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.35rem 0.85rem;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: 20px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.help-filter-pill:hover {
+  background: var(--paper);
+  border-color: var(--accent);
+}
+
+.help-filter-pill.active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.help-results-meta {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+  margin-top: var(--space-sm);
+}
+
+/* Help Cards Grid */
+.help-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-decoration: none !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--rule) !important;
+  background: var(--paper-deep);
+  border-radius: 2px;
+  padding: 1.25rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.help-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent) !important;
+  background: var(--paper);
+  box-shadow: 0 4px 12px rgba(26, 22, 20, 0.08);
+}
+
+.help-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.help-card h2 {
+  font-size: 1.125rem;
+  margin: 0;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.help-card-desc {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+  margin: var(--space-xs) 0 0 0;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Badges */
+.help-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.badge-large {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+}
+
+/* Badge Categories colors matching retro gothic tones */
+.badge-commands {
+  background: #E5DAC1;
+  color: var(--ink);
+}
+
+.badge-spells {
+  background: rgba(168, 32, 26, 0.1);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.badge-info {
+  background: #EFE7D6;
+  color: var(--ink-muted);
+}
+
+.badge-socials {
+  background: rgba(86, 80, 74, 0.1);
+  color: var(--ink-muted);
+}
+
+.badge-wizhelp {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+/* No Results retro block */
+.help-no-results {
+  max-width: var(--content-width);
+  margin: var(--space-xl) auto;
+}
+
+.retro-terminal-alert {
+  background: var(--ink);
+  color: #E22B22;
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  padding: var(--space-lg);
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.retro-terminal-alert h3 {
+  color: #E22B22;
+  font-family: var(--font-mono);
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  font-size: 1.125rem;
+  border-bottom: 1px solid var(--accent);
+  padding-bottom: var(--space-xs);
+}
+
+.retro-terminal-alert p {
+  margin-bottom: var(--space-sm);
+  line-height: 1.5;
+}
+
+.retro-terminal-alert .suggestion {
+  color: #C1B49D;
+  margin-top: var(--space-md);
+  font-size: 0.875rem;
+}
+
+/* ---- Help Single Page ---- */
+.help-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+  margin-bottom: var(--space-lg);
+}
+
+.help-breadcrumbs a {
+  color: var(--ink-muted);
+  border-bottom: 1px solid transparent;
+}
+
+.help-breadcrumbs a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.help-breadcrumbs-separator {
+  color: var(--paper-deep);
+  font-weight: bold;
+}
+
+.help-breadcrumbs-current {
+  color: var(--ink);
+}
+
+.help-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.help-page-title {
+  margin: 0;
+}
+
+.help-lead {
+  font-family: var(--font-mono) !important;
+  font-size: 0.9375rem !important;
+  color: var(--ink-muted);
+  margin-top: var(--space-xs);
+}
+
+/* monolithic terminal pre blocks for single helps */
+.help-prose pre {
+  background: #0B0A09 !important;
+  color: #D4CBB6 !important;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+  padding: 1.25rem !important;
+  line-height: 1.5;
+}
+
+.help-prose pre code {
+  color: #D4CBB6 !important;
+}
+
+.help-article-footer {
+  margin-top: var(--space-xl);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-lg);
+}
+
+.back-to-help {
+  border-bottom: none !important;
+}
+

@@ -12,4 +12,4 @@ Usage: wizlist | immlist
 Lists the most powerful beings on the MUD.  These are the people
 responsible for the background operation of Dark Pawns.
 
-See also: IMPLEMENTOR
+See also: [IMPLEMENTOR](/help/info/implementor/)

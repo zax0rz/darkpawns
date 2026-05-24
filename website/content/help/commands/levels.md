@@ -12,4 +12,4 @@ Usage: levels
 Lists the levels of your class and the experience required to attain each
 level.
 
-See also: CLASSES
+See also: [CLASSES](/help/info/class-classes/)

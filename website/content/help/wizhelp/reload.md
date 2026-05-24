@@ -9,7 +9,7 @@ aliases: ['/help/reload']
 
 Usage: reload < '*' | all | file >
 
-Reload is used to reload text files such as the MOTD from disk into memory.
+Reload is used to reload text files such as the [MOTD](/help/commands/motd/) from disk into memory.
 reload * reloads all the text files below.
 
 Valid files are:

@@ -21,4 +21,4 @@ a 25% chance the item will be junked.
   > donate all.bread
   > donate 500 coins
 
-See also: JUNK
+See also: [JUNK](/help/commands/junk/)

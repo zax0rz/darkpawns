@@ -9,4 +9,4 @@ aliases: ['/help/twink']
 
 Twink is a state of mind.
 
-See also: PAW
+See also: [PAW](/help/socials/paw/)

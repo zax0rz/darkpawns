@@ -18,4 +18,4 @@ By murdering the keeper may appear tempting - but beware: The shopkeepers
 are often rugged, capable men; roughened by years of trading and, indeed,
 surviving in a world where the only safe prospect is death in the end.
 
-See also: BUY, SELL, LIST, VALUE
+See also: [BUY](/help/commands/buy/), [SELL](/help/commands/sell/), [LIST](/help/commands/list/), [VALUE](/help/commands/value/)

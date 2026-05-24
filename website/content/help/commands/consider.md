@@ -18,4 +18,4 @@ Example:
 
   > consider fido
 
-See also: HIT, KILL
+See also: [HIT](/help/commands/kill-hit/), [KILL](/help/commands/kill-hit/)

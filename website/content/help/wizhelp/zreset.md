@@ -12,5 +12,5 @@ Usage: zreset < zone | '*' | '.' >
 Used to force a zone to reset.  '*' forces all zones to reset.  '.' forces
 the zone you are in to reset.
 
-See also: SHOW->ZONES
+See also: [SHOW](/help/wizhelp/show/)->ZONES
 wizonly

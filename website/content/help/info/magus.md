@@ -42,7 +42,7 @@ Spell list:
 	22	fly
 	23	group invisibility
 	23	flame strike
-	24	enchant armor
+	[24](/help/info/attitude-attitudes-24-atti/)	enchant armor
 	25	disintegrate
 	26	enchant weapon
 	27	ray of disruption
@@ -51,4 +51,4 @@ Spell list:
         30      meteor swarm
 
 
-See also: REMORT
+See also: [REMORT](/help/info/remort-immort-remorting-immorting-immortality/)

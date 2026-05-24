@@ -9,7 +9,7 @@ aliases: ['/help/return']
 
 Usage: return
 
-RETURN returns you to your regular body if you are switched into a mob.
+[RETURN](/help/wizhelp/return/) returns you to your regular body if you are switched into a mob.
 
-See also: SWITCH
+See also: [SWITCH](/help/wizhelp/switch/)
 wizonly

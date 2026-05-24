@@ -9,7 +9,7 @@ aliases: ['/help/protection-from-evil']
 
 Usage       : cast 'protection from evil' <self>
 Accumulative: No
-Duration    : 24 hours
+Duration    : [24](/help/info/attitude-attitudes-24-atti/) hours
 
 Gives minor protection from the attacks of
 evil opponents, and wards off some aggressive mobs. 

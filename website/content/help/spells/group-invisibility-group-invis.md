@@ -14,4 +14,4 @@ Duration	: Varies
 This powerful magick allows the magus to conceal his entire party behind a
 veil of invisibility.
 
-See also: INVISIBILITY, VISIBLE
+See also: [INVISIBILITY](/help/spells/invisibility/), [VISIBLE](/help/commands/visible/)

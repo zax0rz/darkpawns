@@ -10,8 +10,8 @@ aliases: ['/help/junk']
 Usage: junk <object>
        junk <number> coins
 
-Use JUNK instead of DROP if you want to keep the world a little cleaner.  If
-you JUNK something, it will disappear and you'll get a few coins or experience
+Use [JUNK](/help/commands/junk/) instead of [DROP](/help/commands/drop/) if you want to keep the world a little cleaner.  If
+you [JUNK](/help/commands/junk/) something, it will disappear and you'll get a few coins or experience
 points, just as if you had dropped it in the dump.
 
 Examples:
@@ -20,4 +20,4 @@ Examples:
   > junk all.bronze
   > junk 500 coins
 
-See also: DONATE, DROP
+See also: [DONATE](/help/commands/donate/), [DROP](/help/commands/drop/)

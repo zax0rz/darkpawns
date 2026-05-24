@@ -13,4 +13,4 @@ Rsay (race-say) lets you speak in your own native tongue. Those
 not of your race see a gibberish-type message. Careful.. this message
 IS decipherable.
 
-See also: RACE
+See also: [RACE](/help/info/race-races/)

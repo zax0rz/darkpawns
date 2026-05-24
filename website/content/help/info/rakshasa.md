@@ -16,4 +16,4 @@ many have decided to stop their tyrannical living and become adventurers,
 although they still retain their fondness towards the great sandy wastes 
 of their homeland.
 
-See also: RACES
+See also: [RACES](/help/info/race-races/)

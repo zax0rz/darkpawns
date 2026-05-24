@@ -11,4 +11,4 @@ The Gods of Dark Pawns are a mysterious lot, preferring to remain
 obfuscated and mysterious to the mortal population.  It is known that 
 they do speak to some mortals, however.
 
-See also: WIZLIST, IMMLIST
+See also: [WIZLIST](/help/commands/wizlist-immlist/), [IMMLIST](/help/commands/wizlist-immlist/)

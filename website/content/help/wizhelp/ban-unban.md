@@ -25,5 +25,5 @@ Examples:
   > ban all whitehouse.gov
   > unban ai.mit.edu
 
-See also: WIZLOCK
+See also: [WIZLOCK](/help/wizhelp/wizlock/)
 wizonly

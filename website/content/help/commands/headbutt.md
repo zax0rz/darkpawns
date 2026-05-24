@@ -13,4 +13,4 @@ Put the hurtin' on 'em! (But wear protection!)
 A successful headbutt can leave the victim reeling, as well as doing
 a nice amount of damage.
 
-See also: WARRIOR, PALADIN, RANGER
+See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)

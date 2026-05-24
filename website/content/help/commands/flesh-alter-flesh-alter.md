@@ -24,10 +24,10 @@ Level  		Weapon
 13-15		flail
 16-18		axe (battle)
 19-21		axe (double-headed battle)
-22-24		morning-star
+22-[24](/help/info/attitude-attitudes-24-atti/)		morning-star
 25-27		sword (broad)
 28-29		sword (long)
 30		scythe
 
 
-See also: PSIONIC, MYSTIC
+See also: [PSIONIC](/help/info/psionicist-psionics-psionist-psionic-psionics/), [MYSTIC](/help/info/mystic-mystics/)

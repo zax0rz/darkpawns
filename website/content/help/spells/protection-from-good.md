@@ -9,7 +9,7 @@ aliases: ['/help/protection-from-good']
 
 Usage	    : cast 'protection from good' <self>
 Accumulative: No
-Duration    : About 24 hours
+Duration    : About [24](/help/info/attitude-attitudes-24-atti/) hours
 
 Gives minor protection from the attacks of good opponents, and wards
 of those pesky do-gooders who always wish you harm.

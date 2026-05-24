@@ -12,4 +12,4 @@ Usage: leave
 If you feel claustrophobic, typing 'leave' will make you use the nearest
 obvious exit to the outside.
 
-See also: ENTER
+See also: [ENTER](/help/commands/enter/)

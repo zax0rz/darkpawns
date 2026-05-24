@@ -12,10 +12,10 @@ Usage: echo <message>
        send <victim> <message>
        qecho <message>
 
-ECHO displays a string to everyone in your room.
-GECHO displays the string to everyone in the game.
-QECHO displays the string to everyone with the QUEST flag.
-SEND displays the string to a particular person.
+[ECHO](/help/wizhelp/echo-gecho-qecho-send/) displays a string to everyone in your room.
+[GECHO](/help/wizhelp/echo-gecho-qecho-send/) displays the string to everyone in the game.
+[QECHO](/help/wizhelp/echo-gecho-qecho-send/) displays the string to everyone with the [QUEST](/help/commands/quest/) flag.
+[SEND](/help/wizhelp/echo-gecho-qecho-send/) displays the string to a particular person.
 
 Examples:
 

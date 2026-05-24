@@ -12,7 +12,7 @@ Usage: reply <message>
        . <message>
 
 This command will send a reply to the last person to send you a message
-using TELL.  It works just as if you had typed 'tell <player> <message>'
+using [TELL](/help/commands/say-tell-ask-whisper-shout-holler/).  It works just as if you had typed 'tell <player> <message>'
 but makes it a bit easier.  It can also be very useful in case someone
 invisible sends you a message.
 
@@ -26,4 +26,4 @@ Someone tells you, 'I am your secret admirer.'
 > . Who are you?
 You tell someone, 'Who are you?'
 
-See also: TELL, NOTELL
+See also: [TELL](/help/commands/say-tell-ask-whisper-shout-holler/), [NOTELL](/help/commands/notell/)

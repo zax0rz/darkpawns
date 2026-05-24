@@ -11,7 +11,7 @@ Hitroll, Damroll and Saving Throws are some of the raw mechanics
 of Dark Pawns.  A few brief definitions:
 
 Hitroll: Your chance to hit someone during combat, as applied to
-         their AC.  Plus hitroll is good, minus hitroll is bad.
+         their [AC](/help/info/ac-armor/).  Plus hitroll is good, minus hitroll is bad.
 
 Damroll: The amount of damage you do in addition to the average
          per round damage of your weapon. Again, plus is more 

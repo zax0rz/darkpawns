@@ -30,4 +30,4 @@ Usage:  rin
 	  toh
 	  etc....
 
-See also: NINJA
+See also: [NINJA](/help/info/ninja-ninjas/)

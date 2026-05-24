@@ -26,8 +26,8 @@ Examples:
   > auction short sword -- minimum bid 100k
   > gossip Hey, is that a short sword on your belt or are you happy to see me?
   > grats LEVEL!!!!!!!!
-  > grats GRATS CATJE!!!!!!!!
+  > grats [GRATS](/help/commands/auction-channel-channels-gossip-grats-noauction-nogossip-nograts/) CATJE!!!!!!!!
   > newbie Damn, where's the donation room?
   > newbie Help me please, any high levelers listening?
 
-See also: EMOTE, GSAY, HOLLER, NOREPEAT, SAY, SHOUT
+See also: [EMOTE](/help/commands/emote/), [GSAY](/help/commands/gsay-gtell/), [HOLLER](/help/commands/say-tell-ask-whisper-shout-holler/), [NOREPEAT](/help/commands/norepeat/), [SAY](/help/commands/say-tell-ask-whisper-shout-holler/), [SHOUT](/help/commands/say-tell-ask-whisper-shout-holler/)

@@ -16,5 +16,5 @@ Examples:
   > where sword
   > where wizard
 
-See also: CHECKLOAD
+See also: [CHECKLOAD](/help/wizhelp/checkload/)
 wizonly

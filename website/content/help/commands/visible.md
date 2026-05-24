@@ -12,4 +12,4 @@ Usage: visible
 Use this command to break your spell of invisibility before it expires, or
 to stop sneaking.
 
-See also: INVISIBILITY, SNEAK, STEALTH
+See also: [INVISIBILITY](/help/spells/invisibility/), [SNEAK](/help/commands/sneak/), [STEALTH](/help/commands/stealth/)

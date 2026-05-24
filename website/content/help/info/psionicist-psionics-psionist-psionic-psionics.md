@@ -34,4 +34,4 @@ List of Powers:
 	28	mind bar
 
 
-See also: WILL, CLASSES
+See also: WILL, [CLASSES](/help/info/class-classes/)

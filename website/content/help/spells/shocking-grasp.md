@@ -14,4 +14,4 @@ Save        : Versus spell for half damage.
 
 This spell is more powerful than the burning hands spell.
 
-See also: "BURNING HANDS"
+See also: "[BURNING](/help/spells/burning-hands/) [HANDS](/help/spells/burning-hands/)"

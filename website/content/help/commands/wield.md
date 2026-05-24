@@ -17,4 +17,4 @@ Example:
   > wield sword
   > wield 3.sword    (Wield the third sword in your inventory)
 
-See also: EQUIPMENT, REMOVE, WEAR
+See also: [EQUIPMENT](/help/commands/equipment/), [REMOVE](/help/commands/remove/), [WEAR](/help/commands/wear/)

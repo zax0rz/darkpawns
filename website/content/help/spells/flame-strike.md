@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/flame-strike']
 ---
 
-FLAME STRIKE
+[FLAME](/help/spells/flame-arrow/) [STRIKE](/help/commands/strike-of-revenge/)
 
 Usage	    : cast 'flame strike' <victim>
 Accumulative: -

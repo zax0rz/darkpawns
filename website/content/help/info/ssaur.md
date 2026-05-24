@@ -16,4 +16,4 @@ lizardman, although less evil-looking. Ssaurs spend most of their lives
 in swamps and marshes, but some have been known to adventure far away 
 from their homes.
 
-See also: RACES
+See also: [RACES](/help/info/race-races/)

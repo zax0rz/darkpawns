@@ -17,4 +17,4 @@ The chance of successfully backstabbing a person depends on how well you have
 practiced backstab at your guild. Also, backstabbing a person will lag you
 for about two rounds of combat.
 
-See also: THIEF, ASSASSIN
+See also: [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)

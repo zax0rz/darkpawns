@@ -9,7 +9,7 @@ aliases: ['/help/advance']
 
 Usage: advance <victim> <level>
 
-ADVANCE moves a player to a new level.  If used to promote a player to an
+[ADVANCE](/help/wizhelp/advance/) moves a player to a new level.  If used to promote a player to an
 immortal level, and if you have the autowiz program installed, the wizlist and
 immlist will automatically be recreated.
 
@@ -17,5 +17,5 @@ Example:
 
   > advance rasmussen 34
 
-See also: SET
+See also: [SET](/help/wizhelp/set/)
 wizonly

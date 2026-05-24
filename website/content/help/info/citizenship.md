@@ -15,4 +15,4 @@ city at a time.
 The "safe rooms" in the cities are generally the Temples or common 
 Meeting places of the city.
 
-See also: HOMETOWNS, QUIT, REALLYQUIT
+See also: [HOMETOWNS](/help/info/hometown-hometowns/), [QUIT](/help/commands/quit/), [REALLYQUIT](/help/commands/reallyquit/)

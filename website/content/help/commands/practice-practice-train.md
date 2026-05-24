@@ -24,4 +24,4 @@ Everyday use of certain skills also improves them.
 Practice sessions are gained when you level, and based on your wisdom. The
 amount you learn in each session is based on your intelligence.
 
-See also: CLASSES
+See also: [CLASSES](/help/info/class-classes/)

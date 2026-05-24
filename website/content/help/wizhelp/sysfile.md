@@ -12,7 +12,7 @@ Valid Files:
 
 bugs		todo		ideas		typos
 
-The SYSFILE command displays information submitted by the players as well
+The [SYSFILE](/help/wizhelp/sysfile/) command displays information submitted by the players as well
 as the time and location.
 
  bugs: Displays reported bugs.

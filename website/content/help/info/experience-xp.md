@@ -18,4 +18,4 @@ Things you should know about experience points:
     experience points.  If killing a monster of lower level you'll gain
     less experience points
 
-See also: GROUP, SCORE
+See also: [GROUP](/help/commands/group/), [SCORE](/help/commands/score/)

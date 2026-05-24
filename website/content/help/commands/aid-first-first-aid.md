@@ -12,4 +12,4 @@ Usage: aid <victim>
 Use this skill to help incapacitated friends. This only works on characters
 who are almost dead, however.
 
-See also: RANGER
+See also: [RANGER](/help/info/ranger-rangers/)

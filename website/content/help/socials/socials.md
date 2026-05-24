@@ -21,8 +21,8 @@ Example:
   > applaud marge
   > stare
 
-The SOCIALS command generates a canonical listing of all available socials.
+The [SOCIALS](/help/socials/socials/) command generates a canonical listing of all available socials.
 
   > socials
 
-See also: EMOTE
+See also: [EMOTE](/help/commands/emote/)

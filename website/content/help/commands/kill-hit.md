@@ -12,4 +12,4 @@ Usage: kill <victim>
 
 A good way to start a fight.  Not a good idea to hit other players.
 
-See also: FLEE, WIMPY, PK, POLICY
+See also: [FLEE](/help/commands/flee/), [WIMPY](/help/commands/wimpy/), [PK](/help/info/pk-player-killing-pkill-pkilling-pkiller/), [POLICY](/help/commands/info-news-policy-version-future/)

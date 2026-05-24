@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/flame-arrow']
 ---
 
-Usage       : cast 'FLAME ARROW' <victim>
+Usage       : cast '[FLAME](/help/spells/flame-arrow/) [ARROW](/help/commands/shoot-bow-arrow/)' <victim>
 Accumulative: -
 Duration    : Instantaneous
 Save        : Versus spell for half damage.

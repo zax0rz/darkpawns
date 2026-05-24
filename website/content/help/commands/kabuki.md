@@ -16,4 +16,4 @@ If you perform any actions while using kabuki, you will be discovered.  However,
 there is a small chance that you will be able to perform certain actions and 
 still remain hidden.
 
-See also: NINJA
+See also: [NINJA](/help/info/ninja-ninjas/)

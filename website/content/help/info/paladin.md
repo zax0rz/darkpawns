@@ -40,4 +40,4 @@ Skills and Spells:
 	25	protection from good
 	30	disarm	
 
-See also: REMORT
+See also: [REMORT](/help/info/remort-immort-remorting-immorting-immortality/)

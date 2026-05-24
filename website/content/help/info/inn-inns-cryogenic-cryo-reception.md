@@ -11,4 +11,4 @@ There is no Rent on Dark Pawns, so just quit in the Temple in your home
 town, and your equipment will be saved.
 
 
-See also: RENT, HOMETOWN, QUIT, REALLYQUIT
+See also: [RENT](/help/commands/offer-rent/), [HOMETOWN](/help/info/hometown-hometowns/), [QUIT](/help/commands/quit/), [REALLYQUIT](/help/commands/reallyquit/)

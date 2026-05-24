@@ -16,7 +16,7 @@ Someone of three or more levels above yourself.  If you attempt to
 summon a monster, it will get a saving throw, and won't appreciate the
 summon if it succeeds.
 
-The summon spell requires that a GLYPH OF SUMMONING be present in the
+The summon spell requires that a [GLYPH](/help/spells/glyph-of-summoning/) OF [SUMMONING](/help/spells/glyph-of-summoning/) be present in the
 Room for it to succeed.
 
 You can't summon a monster to a peaceful room, and you can't summon 
@@ -25,4 +25,4 @@ You can't summon a monster to a peaceful room, and you can't summon
 On a failed summon attempt, <victim> is sometimes aware of the attempt, 
 and on massive failures, the caster is summoned TO the victim's location.
 
-See also: NOSUMMON
+See also: [NOSUMMON](/help/commands/nosummon/)

@@ -50,4 +50,4 @@ by Jeremy Elson.  Without Jeremy and the fine example his code was to build on,
 Dark Pawns would never have existed. Thank you very much, Jeremy.
 
 
-See also: CODE, WIZLIST, IMMLIST
+See also: [CODE](/help/info/code-coding/), [WIZLIST](/help/commands/wizlist-immlist/), [IMMLIST](/help/commands/wizlist-immlist/)

@@ -13,4 +13,4 @@ Use this command to unobtrusively follow your victim. When used in conjunction
 with the sneak and hide skills, a successful shadower can be virtually 
 undetectable.
 
-See also: FOLLOW, THIEF, ASSASSIN
+See also: [FOLLOW](/help/commands/follow/), [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)

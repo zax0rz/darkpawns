@@ -31,4 +31,4 @@ Skill list:
 	23	charge
 
 
-See also: PRACTICE, ATTACKS, CLASSES
+See also: [PRACTICE](/help/commands/practice-practice-train/), [ATTACKS](/help/info/number-attacks/), [CLASSES](/help/info/class-classes/)

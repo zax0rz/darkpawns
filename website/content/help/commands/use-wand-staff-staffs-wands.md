@@ -21,4 +21,4 @@ Both staffs and wands must be HELD in the hand prior to use!  (Use the
 grab or hold commands).  You must still supply the name of the staff or
 wand to avoid confusion.
 
-See also: RECITE
+See also: [RECITE](/help/commands/recite-scroll-scrolls/)

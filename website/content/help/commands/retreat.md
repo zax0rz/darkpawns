@@ -10,7 +10,7 @@ aliases: ['/help/retreat']
 Usage: retreat
 
 A successful retreat while fighting results in your leaving battle without
-losing the experience points that incurs from fleeing.  If your WIMPY is 
+losing the experience points that incurs from fleeing.  If your [WIMPY](/help/commands/wimpy/) is 
 triggered during battle, you may be able to retreat instead of fleeing.
 
-See Also: FLEE, WIMPY
+See Also: [FLEE](/help/commands/flee/), [WIMPY](/help/commands/wimpy/)

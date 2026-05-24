@@ -16,4 +16,4 @@ scrolls may contain more than one spell.
 IMPORTANT NOTE: Recall scrolls *cannot* be used during combat. You *must* be
 out of battle to use a recall scroll.
  
-See also: SPELLS, MAGICK
+See also: [SPELLS](/help/info/spell-spells/), [MAGICK](/help/info/magick-magic/)

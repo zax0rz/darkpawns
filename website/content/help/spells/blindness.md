@@ -12,6 +12,6 @@ Accumulative: No
 Duration    : 2 hours.
 
 Blindness will blind a victim failing its saving throw.
-A blinded person will have -4 penalty to both hitroll and AC.
+A blinded person will have -4 penalty to both hitroll and [AC](/help/info/ac-armor/).
 
-See also: AC
+See also: [AC](/help/info/ac-armor/)

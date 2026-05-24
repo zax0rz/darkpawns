@@ -9,8 +9,8 @@ aliases: ['/help/mute']
 
 Usage: mute <victim>
 
-MUTE is used to shut a player up.  When muted, a player will not be able to
+[MUTE](/help/wizhelp/mute/) is used to shut a player up.  When muted, a player will not be able to
 use most communication channels until he/she is unmuted.
 
-See also: FLAGS
+See also: [FLAGS](/help/info/flags/)
 wizonly

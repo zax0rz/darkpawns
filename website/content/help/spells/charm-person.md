@@ -19,4 +19,4 @@ can order the charmed person using the order command. Monsters don't
 like being charmed, and a failed attempt will usually result in your
 being attacked.
 
-See also: FOLLOW, ORDER
+See also: [FOLLOW](/help/commands/follow/), [ORDER](/help/commands/order/)

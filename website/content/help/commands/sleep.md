@@ -7,13 +7,13 @@ section: "help"
 aliases: ['/help/sleep']
 ---
 
-SLEEP is both a command and the name of a spell.
+[SLEEP](/help/commands/sleep/) is both a command and the name of a spell.
 
-The SLEEP command puts you to sleep, allowing you to regain your health more
+The [SLEEP](/help/commands/sleep/) command puts you to sleep, allowing you to regain your health more
 quickly.  You will be largely unaware of your surroundings while asleep.
-You can awaken yourself with the WAKE command.
+You can awaken yourself with the [WAKE](/help/commands/wake-sleeping-rest-sit-stand/) command.
 
-The SLEEP spell forces the victim into a magical sleep such that they 
+The [SLEEP](/help/commands/sleep/) spell forces the victim into a magical sleep such that they 
 Cannot be awakened until the spell wears off.
 
 Usage       : cast 'sleep' <victim>
@@ -24,4 +24,4 @@ Level       : Mage level 8.
 If failing saving throw versus spell, the person will fall asleep.
 A person who is affected by sleep can only be awakened if attacked.
 
-See also: WAKE, MAGE
+See also: [WAKE](/help/commands/wake-sleeping-rest-sit-stand/), [MAGE](/help/info/magic-user-wizard-mage-mages-wizards/)

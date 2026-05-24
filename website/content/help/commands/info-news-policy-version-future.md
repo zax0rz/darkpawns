@@ -18,4 +18,4 @@ idea to read them every once in a while.
    version  - displays the current Dark Pawns release number
    future   - what new things are coming down the line
 
- See Also: INFOBAR
+ See Also: [INFOBAR](/help/commands/infobar/)

@@ -10,4 +10,4 @@ aliases: ['/help/qui-shutdow']
 Just to prevent accidental quittings and/or shutdowns.
 This command doesn't DO anything, it simply is.
 
-See also: QUIT
+See also: [QUIT](/help/commands/quit/)

@@ -13,5 +13,5 @@ Prevent players from being able to set their own titles; i.e., if the
 player consistently has an offensive title.  The definition of offensive
 is left as an exercise for the reader.
 
-See also: TITLE
+See also: [TITLE](/help/commands/title/)
 wizonly

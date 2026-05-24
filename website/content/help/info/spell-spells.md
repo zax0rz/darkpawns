@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/spell-spells']
 ---
 
-Spells are cast with the command CAST, in the form:
- 	CAST '<spell name>' <target name>
+Spells are cast with the command [CAST](/help/spells/cast/), in the form:
+ 	[CAST](/help/spells/cast/) '<spell name>' <target name>
 Examples:
  	cast 'armor' me
  	cast 'fireball' troll
@@ -18,4 +18,4 @@ caster's level, to victim's saving throw. See help on the individual
 spell names for more information.
 
 
-See also: CAST MAGICK
+See also: [CAST](/help/spells/cast/) [MAGICK](/help/info/magick-magic/)

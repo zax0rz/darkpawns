@@ -16,4 +16,4 @@ This spell will only affect good creatures.  A good person of level
 equal or less than caster will suffer much damage. While a good person
 of higher level will suffer slightly less damage.
 
-See also: DISPEL EVIL
+See also: [DISPEL](/help/spells/dispel-good/) [EVIL](/help/spells/protection-from-evil/)

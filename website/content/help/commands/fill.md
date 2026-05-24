@@ -16,4 +16,4 @@ Example:
 
   > fill canteen fountain
 
-See also: POUR, DRINK
+See also: [POUR](/help/commands/pour/), [DRINK](/help/commands/eat-drink-sip-taste/)

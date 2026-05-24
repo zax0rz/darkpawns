@@ -12,4 +12,4 @@ Usage:  carve corpse
 Lets you carve up some dinner off of certain dead mobiles.
 Typically, any type of animal should be able to be carved up for a nice tasty diner.
 
-See also: EAT, FOOD
+See also: [EAT](/help/commands/eat-drink-sip-taste/), [FOOD](/help/spells/create-food/)

@@ -14,4 +14,4 @@ Allows the caster to sense the presence of a player or monster in the
 room which is hiding.  The true identity will remain hidden however.
 Invisible persons are also considered hidden.
 
-See also: HIDE
+See also: [HIDE](/help/commands/hide/)

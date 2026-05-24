@@ -32,4 +32,4 @@ Skill list:
 	20	cutthroat
 	27	disembowel
 
-See also: CLASSES
+See also: [CLASSES](/help/info/class-classes/)

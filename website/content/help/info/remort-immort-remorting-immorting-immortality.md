@@ -38,4 +38,4 @@ least once.  Should immortality be offered to you, the details and
 conditions of godhood will be explained at that time. If you wish to 
 immort, let a god know. Only a certain number of positions are available.
 
-See also: GODS, WIZLIST, IMMLIST
+See also: [GODS](/help/info/god-gods/), [WIZLIST](/help/commands/wizlist-immlist/), [IMMLIST](/help/commands/wizlist-immlist/)

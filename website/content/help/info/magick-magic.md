@@ -15,4 +15,4 @@ do.  The civilized world fears sorcery and sorcerers for their destructive power
 but they have no problem with religious magicks.  Thus, clerics and other religious
 powers dominate modern civilization's societal government.
 
-See also: WIZARD, CLERIC
+See also: [WIZARD](/help/info/magic-user-wizard-mage-mages-wizards/), [CLERIC](/help/info/cleric-clerics/)

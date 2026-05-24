@@ -15,7 +15,7 @@ ID number.
 Example: 
 
   > last ras
-  [  24] [14 Cl] Ras          : somesite.edu : Tue May 16 22:07:09 1995
+  [  [24](/help/info/attitude-attitudes-24-atti/)] [14 Cl] Ras          : somesite.edu : Tue May 16 22:07:09 1995
 
-See also: STAT
+See also: [STAT](/help/wizhelp/stat/)
 wizonly

@@ -7,12 +7,12 @@ section: "help"
 aliases: ['/help/flags']
 ---
 
-Players sometimes have FLAGS after their names in the WHO list.  These
+Players sometimes have [FLAGS](/help/info/flags/) after their names in the WHO list.  These
 flags are always in parentheses, not brackets or braces.
 
   FLAG        MEANING
   ----------- ---------------------------------------------------------
-  (CHOSEN)    Player is the Chosen of the Gods.
+  ([CHOSEN](/help/wizhelp/chosen/))    Player is the Chosen of the Gods.
   (invis)     Player is invisible; you can see him/her because you are
               sensitive to the presence of invisible things.
   (writing)   Player is writing on the board; do not disturb.
@@ -21,8 +21,8 @@ flags are always in parentheses, not brackets or braces.
   (notell)    Player has chosen not to accept tells.
   (quest)     Player is participating in a quest currently being run by
               the gods.
-  (AFK)       Player may be Away From the Keyboard and may not hear 
+  ([AFK](/help/info/afk/))       Player may be Away From the Keyboard and may not hear 
               anything.
-  (OUTLAW)    Player is an OUTLAW.
+  ([OUTLAW](/help/info/outlaw-outlaws/))    Player is an [OUTLAW](/help/info/outlaw-outlaws/).
 
-See also: NOSHOUT, NOTELL, QUEST, STEAL, VISIBLE, OUTLAW
+See also: [NOSHOUT](/help/commands/noshout/), [NOTELL](/help/commands/notell/), [QUEST](/help/commands/quest/), [STEAL](/help/commands/steal/), [VISIBLE](/help/commands/visible/), [OUTLAW](/help/info/outlaw-outlaws/)

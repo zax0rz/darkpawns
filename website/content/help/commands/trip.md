@@ -11,4 +11,4 @@ Usage: trip <victim>
 
 Causes the victim to fall, leaving them open for more damage.
 
-See also: COMBAT
+See also: [COMBAT](/help/info/combat/)

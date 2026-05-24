@@ -15,4 +15,4 @@ Strike to the victim's throat.
 Developed by the Mist Viper school of Ninjitsu, "Saito Yuriko's Strike of
 Revenge" is a brutal, devastating blow.
 
-See also: NINJA, COMBAT
+See also: [NINJA](/help/info/ninja-ninjas/), [COMBAT](/help/info/combat/)

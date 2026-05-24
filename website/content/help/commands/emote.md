@@ -24,4 +24,4 @@ will display:
 
 Helt is feeling very sad today.
 
-See also: SOCIALS
+See also: [SOCIALS](/help/socials/socials/)

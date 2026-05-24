@@ -17,4 +17,4 @@ depending on the level of the caster.
 
 Double amount of water will be created if it is raining (or worse).
 
-See also: "CREATE FOOD"
+See also: "[CREATE](/help/spells/create-water/) [FOOD](/help/spells/create-food/)"

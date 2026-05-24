@@ -19,6 +19,6 @@ The options available are:
 	gold		Strip the gold off a fresh kill
 	split		Split the loot with your group
 
-Note: To use AUTO SPLIT, AUTO GOLD must be set.
+Note: To use [AUTO](/help/commands/auto-loot-split/) [SPLIT](/help/commands/split/), [AUTO](/help/commands/auto-loot-split/) [GOLD](/help/commands/gold/) must be set.
 
-See also: TOGGLE
+See also: [TOGGLE](/help/commands/toggle/)

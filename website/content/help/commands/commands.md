@@ -9,8 +9,8 @@ aliases: ['/help/commands']
 
 Usage: commands
 
-The COMMANDS command gives a canonical list of all the known verbs.
+The [COMMANDS](/help/commands/commands/) command gives a canonical list of all the known verbs.
 
-Each command listed should have help available by typing "HELP <command>".
+Each command listed should have help available by typing "[HELP](/help/commands/help/) <command>".
 
-See also: SOCIAL, SOCIALS
+See also: SOCIAL, [SOCIALS](/help/socials/socials/)

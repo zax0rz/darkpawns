@@ -12,6 +12,6 @@ Accumulative: -
 Duration    : Instantaneous
 
 This spell instantly creates a fresh mushroom.  The mushroom will be
-filling for the next (5+level) hours, up to a maximum of 24 hours.
+filling for the next (5+level) hours, up to a maximum of [24](/help/info/attitude-attitudes-24-atti/) hours.
 
-See also: "CREATE WATER"
+See also: "[CREATE](/help/spells/create-water/) [WATER](/help/spells/create-water/)"

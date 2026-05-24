@@ -14,7 +14,7 @@ In order to write a note, you need a piece of blank paper (or similar), and
 a pen of some sort.  You can then type something like "write on the paper with
 the pen", whereupon you'll be asked to type in your note at the keyboard.
 
-WRITE is also used to post messages to bulletin boards.  Type HELP BOARDS
+[WRITE](/help/commands/write/) is also used to post messages to bulletin boards.  Type [HELP](/help/commands/help/) [BOARDS](/help/info/boards/)
 for more information.
 
-See also: BOARDS, MAIL
+See also: [BOARDS](/help/info/boards/), [MAIL](/help/commands/check-mail-receive/)

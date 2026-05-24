@@ -12,4 +12,4 @@ Usage    : cast 'group recall'
 This spell will recall the caster's entire group to their respective
 home towns, given they are not fighting and in the same room as the caster.
 
-See also: "WORD OF RECALL"
+See also: "[WORD](/help/spells/word-of-recall/) OF [RECALL](/help/commands/recall/)"

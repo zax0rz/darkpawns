@@ -14,4 +14,4 @@ Note: sleeper works best on humanoid-types and some people may be too big
 or too strong to knock unconscious using this method. Also, you must be 
 bare-handed to sleeper someone.
 
-See also: WARRIOR, PALADIN, RANGER
+See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)

@@ -14,4 +14,4 @@ Surveying every inch of the room for a secret door or hidden entrance.
 Classes that excel in this ability are Thieves, Assassins, and Rangers.
 Elves also have an uncanny knack of being able to spot secret entrances.
 
-See also: THIEF, ASSASSIN, RANGER
+See also: [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/), [RANGER](/help/info/ranger-rangers/)

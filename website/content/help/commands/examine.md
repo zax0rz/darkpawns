@@ -10,6 +10,6 @@ aliases: ['/help/examine']
 Usage: examine <thing to examine>
 
 May give you some valuable information about an item or monster.
-A little more detailed than LOOK.
+A little more detailed than [LOOK](/help/commands/look/).
 
-See also: LOOK
+See also: [LOOK](/help/commands/look/)

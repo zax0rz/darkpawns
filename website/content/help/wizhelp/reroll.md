@@ -9,7 +9,7 @@ aliases: ['/help/reroll']
 
 Usage: reroll <player>
 
-REROLL gives a player new stats (i.e., Str, Int, Wis, Dex, Con, and Cha)
+[REROLL](/help/wizhelp/reroll/) gives a player new stats (i.e., Str, Int, Wis, Dex, Con, and Cha)
 
-See also: STAT
+See also: [STAT](/help/wizhelp/stat/)
 wizonly

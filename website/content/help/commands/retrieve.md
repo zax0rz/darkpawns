@@ -14,4 +14,4 @@ realms.  These Morticians are known to be few and far between however.
 Also, certain practitioners of the Black Arts are known to be able to
 retrieve corpses, but their motives are probably less than respectable.
 
-See also: DEATH, CORPSE
+See also: [DEATH](/help/info/die-death-condie/), CORPSE

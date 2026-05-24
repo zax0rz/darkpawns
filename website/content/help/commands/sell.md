@@ -19,4 +19,4 @@ Examples:
   > sell sword       (sell the first sword in your inventory)
   > sell 3 sword     (sell the first three swords in your inventory)
  
-See also: BUY, LIST, SHOPS, VALUE
+See also: [BUY](/help/commands/buy/), [LIST](/help/commands/list/), [SHOPS](/help/info/shops/), [VALUE](/help/commands/value/)

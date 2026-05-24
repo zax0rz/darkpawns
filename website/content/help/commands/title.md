@@ -15,4 +15,4 @@ are reserved for flags.
 
 Do not abuse this command; if you do, it will be taken from you.
 
-See also: FLAGS, WHO
+See also: [FLAGS](/help/info/flags/), WHO

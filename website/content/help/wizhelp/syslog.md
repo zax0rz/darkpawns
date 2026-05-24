@@ -9,7 +9,7 @@ aliases: ['/help/syslog']
 
 Usage: syslog [off | brief | normal | complete]
 
-The SYSLOG command controls how detailed of an on-line system log you see.
+The [SYSLOG](/help/wizhelp/syslog/) command controls how detailed of an on-line system log you see.
 Messages surrounded by '[' and ']' are syslog messages and are in green
 if you have color on.
 
@@ -20,5 +20,5 @@ Examples:
   > syslog complete
   > syslog off
 
-See also: COLOR
+See also: [COLOR](/help/commands/ansi-color/)
 wizonly

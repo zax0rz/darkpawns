@@ -12,4 +12,4 @@ Usage: disarm
 Calling upon your skills, you attempt to disarm your opponent. Failed
 attempts are usually pretty messy.
 
-See also: RANGER, PALADIN
+See also: [RANGER](/help/info/ranger-rangers/), [PALADIN](/help/info/paladin/)

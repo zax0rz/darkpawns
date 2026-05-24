@@ -11,5 +11,5 @@ Usage: unaffect <victim>
 
 Removes all affections (i.e., spell effects) from a player.
 
-See also: STAT
+See also: [STAT](/help/wizhelp/stat/)
 wizonly

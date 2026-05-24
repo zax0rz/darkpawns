@@ -16,5 +16,5 @@ Examples:
   > vstat obj 3000
   > vstat mob 3001
 
-See also: LOAD, STAT, VNUM
+See also: [LOAD](/help/wizhelp/load/), [STAT](/help/wizhelp/stat/), [VNUM](/help/wizhelp/vnum/)
 wizonly

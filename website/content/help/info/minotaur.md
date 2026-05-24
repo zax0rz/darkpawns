@@ -18,4 +18,4 @@ from brown to black, while their body coloring varies, as would a normal
 humans. Although they usually dwell in mazes beneath the earth, it is 
 noted that they also see very well in forests.
 
-See also: RACES
+See also: [RACES](/help/info/race-races/)

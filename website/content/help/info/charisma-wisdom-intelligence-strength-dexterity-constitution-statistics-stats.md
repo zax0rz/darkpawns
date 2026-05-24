@@ -27,6 +27,6 @@ Charisma: How likeable you are. Affects how some monsters treat you
          (like shopkeepers), and how many pets you can have.
 
 Don't let your statistics get below because bad things can happen.
-You can see your current statistics with the ABILITIES command.
+You can see your current statistics with the [ABILITIES](/help/commands/abilities/) command.
 
-See also: ABILITIES
+See also: [ABILITIES](/help/commands/abilities/)

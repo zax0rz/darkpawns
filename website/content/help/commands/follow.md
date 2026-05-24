@@ -9,11 +9,11 @@ aliases: ['/help/follow']
 
 Usage: follow <leader>
 
-Use FOLLOW to automatically follow someone else.
+Use [FOLLOW](/help/commands/follow/) to automatically follow someone else.
 
 Examples:
 
   > follow ras
   > follow self
 
-See also: GROUP, SNEAK, SHADOW
+See also: [GROUP](/help/commands/group/), [SNEAK](/help/commands/sneak/), [SHADOW](/help/commands/shadow/)

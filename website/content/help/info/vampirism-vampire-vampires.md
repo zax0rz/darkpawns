@@ -20,16 +20,16 @@ don't take kindly to failed attempts at staking them.  A successful
 stake removes all vestiges of vampirism from the player when 
 they re-enter the game.
 
-Vampires can TRANSFORM at night to assume their vampiric form... gaining
+Vampires can [TRANSFORM](/help/commands/transform/) at night to assume their vampiric form... gaining
 a substantial amount (up to 2 times normal!) of mana points, based on the
 phase of the moon. (New moon being the weakest gain, full moon being the largest.)
 At dawn, the vampire can transform back to their normal shape.
 
-While in vampire form, vampires can BITE a victim to drink their blood, 
+While in vampire form, vampires can [BITE](/help/commands/bite/) a victim to drink their blood, 
 or pass on their vampirism. Biting while fighting does damage, otherwise
 it only causes damage if you fail to bite successfully. A vampire's 
 hunger and thirst at night can only be sated by blood.
 
 Cityguards take a disliking to vampires in their cities. 
 
-See Also: STAKE TRANSFORM BITE TIME
+See Also: [STAKE](/help/commands/spike-stake/) [TRANSFORM](/help/commands/transform/) [BITE](/help/commands/bite/) [TIME](/help/commands/time/)

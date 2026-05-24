@@ -10,7 +10,7 @@ aliases: ['/help/load']
 Usage: load <mob | obj> <virtual number>
        load <mob | obj> <name>
 
-LOAD is used to create mobiles and objects.  The first argument specifies if
+[LOAD](/help/wizhelp/load/) is used to create mobiles and objects.  The first argument specifies if
 you are trying to load a mobile or an object; the second is the virtual
 number or name.
 
@@ -30,5 +30,5 @@ Example:
 	to load lowest-vnumbered object with that name, and Tracer's ring
 	is above your load limit.)
 
-See also: VNUM
+See also: [VNUM](/help/wizhelp/vnum/)
 wizonly

@@ -37,10 +37,10 @@ Spell list:
 	20 	hellfire
 	21	metalskin
 	22	waterbreathe
-	24	enchant armor
+	[24](/help/info/attitude-attitudes-24-atti/)	enchant armor
 	25 	disintegrate
 	26	enchant weapon	
 	28	globe of invulnerability
 
 
-See also: PRACTICE, SPELLS, CLASSES, MAGICK
+See also: [PRACTICE](/help/commands/practice-practice-train/), [SPELLS](/help/info/spell-spells/), [CLASSES](/help/info/class-classes/), [MAGICK](/help/info/magick-magic/)

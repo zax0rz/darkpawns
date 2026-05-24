@@ -11,5 +11,5 @@ Usage: nowiz
 
 Allows you to hear or ignore messages coming over the wiznet.
 
-See also: WIZNET
+See also: [WIZNET](/help/wizhelp/wiznet/)
 wizonly

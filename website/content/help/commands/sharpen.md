@@ -12,4 +12,4 @@ Usage:	sharpen <bladed weapon>
 This skill works only on bladed weapons of a certain quality. 
 Magickal blades can not be sharpened. Sharpened blades do more damage.
 
-See also: RANGER, PALADIN
+See also: [RANGER](/help/info/ranger-rangers/), [PALADIN](/help/info/paladin/)

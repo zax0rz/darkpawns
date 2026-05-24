@@ -11,4 +11,4 @@ Usage: dismount
 
 Used to get off of your favorite mode of transport.
 
-See also: MOUNT
+See also: [MOUNT](/help/commands/ride-mount-mounts/)

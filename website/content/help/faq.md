@@ -6,7 +6,7 @@ section: "help"
 description: "Common questions and answers for new Dark Pawns players"
 ---
 
-# FAQ
+# [FAQ](/help/faq/)
 
 > Source: darkpawns.com/faq.html  
 > Author: R.E. Paret (Frontline)  
@@ -24,7 +24,7 @@ It is nearly impossible to survive without the assistance of a cleric in your pa
 
 Q: Booo... I died. What do I do now?
 
-When you die, you come back into the game in the temple. All equipment and gold remains in your corpse at the place you died. Every time you die, there is a chance you will lose 1 point of CONSTITUTION. If your constitution drops below 1, you will be dead forever.
+When you die, you come back into the game in the temple. All equipment and gold remains in your corpse at the place you died. Every time you die, there is a chance you will lose 1 point of [CONSTITUTION](/help/info/charisma-wisdom-intelligence-strength-dexterity-constitution-statistics-stats/). If your constitution drops below 1, you will be dead forever.
 
 Remember that when you die, all spell affects are stripped.
 
@@ -48,6 +48,6 @@ Oh my god forums! Please please please register with your correct account name!
 
 [A player was mudding during a lecture, got paged 20 times because their speakers were on.] Moral of the story: Turn your speakers down if you are going to mud during lecture. :)
 
-### OUTLAW System
+### [OUTLAW](/help/info/outlaw-outlaws/) System
 
-[Post by Frontline introducing the OUTLAW system for player killing.]
+[Post by Frontline introducing the [OUTLAW](/help/info/outlaw-outlaws/) system for player killing.]

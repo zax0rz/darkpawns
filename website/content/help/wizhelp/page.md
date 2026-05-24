@@ -9,13 +9,13 @@ aliases: ['/help/page']
 
 Usage: page <player | all> <message>
 
-PAGE is used to send a message, along with a beep, to another player.  Use
-PAGE ALL to send a message and a beep to everyone in the game.
+[PAGE](/help/wizhelp/page/) is used to send a message, along with a beep, to another player.  Use
+[PAGE](/help/wizhelp/page/) ALL to send a message and a beep to everyone in the game.
 
 Examples:
 
   > page rasmussen Hey, are you still at the keyboard?
-  > page all GAME WILL BE SHUTTING DOWN IN 10 MINUTES
+  > page all GAME WILL BE SHUTTING [DOWN](/help/commands/north-south-east-west-up-down/) IN 10 MINUTES
 
 Do not abuse this command.
 wizonly

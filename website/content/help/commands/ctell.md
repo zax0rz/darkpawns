@@ -16,4 +16,4 @@ ranked <number> and over.
 > ctell How is everyone today?
 > ctell #5 Shh, here is a secret message for you guys.
 
-See also: CLAN
+See also: [CLAN](/help/commands/clan-clans/)

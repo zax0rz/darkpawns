@@ -16,5 +16,5 @@ House control, controls the addition, removal, and payments of houses.
 Hcontrol show will show all the houses currently defined in the game
 along with their last 'rent' payment date.
 
-See also: HOUSE, HOUSES
+See also: [HOUSE](/help/commands/house/), HOUSES
 wizonly

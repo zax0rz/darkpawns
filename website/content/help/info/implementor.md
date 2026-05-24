@@ -9,4 +9,4 @@ aliases: ['/help/implementor']
 
 The most powerful being in existence.
 
-See also: IMMLIST, WIZLIST
+See also: [IMMLIST](/help/commands/wizlist-immlist/), [WIZLIST](/help/commands/wizlist-immlist/)

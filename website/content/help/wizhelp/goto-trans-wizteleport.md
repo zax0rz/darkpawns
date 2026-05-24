@@ -12,11 +12,11 @@ Usage: goto <location>
        teleport <victim> <location>
 
 These commands are used to transports yourself and others to different rooms.
-GOTO allows you to go to other rooms; TRANS transports a person from wherever
+[GOTO](/help/wizhelp/goto-trans-wizteleport/) allows you to go to other rooms; [TRANS](/help/wizhelp/goto-trans-wizteleport/) transports a person from wherever
 they are to the room YOU are in; TELEPORT transports your victim to some other
 location.
 
-For both GOTO and TELEPORT, the location specifier can be either a virtual
+For both [GOTO](/help/wizhelp/goto-trans-wizteleport/) and TELEPORT, the location specifier can be either a virtual
 room number, or the name of a character or object.
 
 Examples:
@@ -27,5 +27,5 @@ Examples:
   > teleport fido 3001
   > teleport fido 2.fido
 
-See also: POOFIN, POOFOUT, SET -> ROOM, WIZAT
+See also: [POOFIN](/help/wizhelp/poofin-poofout/), [POOFOUT](/help/wizhelp/poofin-poofout/), [SET](/help/wizhelp/set/) -> [ROOM](/help/wizhelp/flow-room-flow-room-flow-north-flowing/), [WIZAT](/help/wizhelp/wizat/)
 wizonly

@@ -10,20 +10,20 @@ aliases: ['/help/alias-aliases']
 Usage: alias [alias name] [command]
 
 An alias is a single command used to represent one or more other commands.
-The ALIAS command can be used to manipulate your character's aliases.  Type
-ALIAS alone to see a list of your currently defined aliases.
+The [ALIAS](/help/commands/alias-aliases/) command can be used to manipulate your character's aliases.  Type
+[ALIAS](/help/commands/alias-aliases/) alone to see a list of your currently defined aliases.
 
   > alias
 
-Type ALIAS <alias name> <command> to create a new alias.  The alias name must
+Type [ALIAS](/help/commands/alias-aliases/) <alias name> <command> to create a new alias.  The alias name must
 be one word.  The command can be any string.  Aliases may not be nested or
 used recursively.  Any command may be overridden by an alias (other than the
-ALIAS command itself, of course).
+[ALIAS](/help/commands/alias-aliases/) command itself, of course).
 
   > alias gbb get bread bag
   > alias gac get all corpse
 
-Type ALIAS <alias-name> to delete an alias that has already been defined.
+Type [ALIAS](/help/commands/alias-aliases/) <alias-name> to delete an alias that has already been defined.
 
   > alias gbb
 
@@ -53,4 +53,4 @@ The special variable $* represents the entire input line after an alias:
   > tr hi there, how are you today?
   You tell Rasmussen, 'hi there, how are you today?'
 
-See also: ! ^
+See also: [!](/help/commands/!/) [^](/help/commands/!/)

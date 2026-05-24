@@ -9,4 +9,4 @@ aliases: ['/help/derek-rich-steve-tarrant-hendrik-frontline-fl-orodreth-oro-aral
 
 Shit, he's beyond help.
 
-See also: TERRY, KATE
+See also: [TERRY](/help/socials/terry-kate/), [KATE](/help/socials/terry-kate/)

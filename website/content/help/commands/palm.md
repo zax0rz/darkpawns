@@ -16,4 +16,4 @@ failed palm is just like a normal "get <object>".
 Only items in the room can be palmed, not objects in containers. The 
 Smaller the object, the easier it is to palm.
 
-See also: STEAL
+See also: [STEAL](/help/commands/steal/)

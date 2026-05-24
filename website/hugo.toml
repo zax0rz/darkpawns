@@ -13,7 +13,7 @@ title = "Dark Pawns"
 
 [outputs]
   home = ["HTML", "RSS", "JSON", "Markdown", "LlmsFull"]
-  section = ["HTML", "RSS", "Markdown", "LlmsFull"]
+  section = ["HTML", "RSS", "JSON", "Markdown", "LlmsFull"]
   page = ["HTML", "Markdown"]
   taxonomy = ["HTML", "Markdown"]
   term = ["HTML", "Markdown"]

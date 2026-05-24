@@ -12,7 +12,7 @@ and perils of a cruel world.  Each guild is heavily guarded, so that only
 members may enter the building.  Guilds are also the places where people 
 come to learn and practice the skills of their trade.
 
-&cGuild locations in Kir Drax'in: (see help MAP for more info)&n
+&cGuild locations in Kir Drax'in: (see help [MAP](/help/info/map/) for more info)&n
 
 &cThieves Guild&n  - On the southern wall road.
 
@@ -26,4 +26,4 @@ come to learn and practice the skills of their trade.
 
 &cNinja Guild&n    - On the Avenue of the Gods
 
-See also: PRACTICE
+See also: [PRACTICE](/help/commands/practice-practice-train/)

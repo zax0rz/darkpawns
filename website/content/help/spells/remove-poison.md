@@ -13,4 +13,4 @@ Duration    : Instantaneous
 
 Will remove the affects of poison from a victim or an object.
 
-See also: POISON
+See also: [POISON](/help/spells/detect-poison/)

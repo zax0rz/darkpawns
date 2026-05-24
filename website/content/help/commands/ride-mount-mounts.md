@@ -12,4 +12,4 @@ Example: Ride horse
 
 Used to mount your favorite mode of transport.
 
-See also: DISMOUNT
+See also: [DISMOUNT](/help/commands/dismount/)

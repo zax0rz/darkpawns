@@ -44,4 +44,4 @@ You can improve your spells by using the practice command.
 	27	vitality
 	29	group recall
 
-See also: PRACTICE, SPELLS, CLASSES
+See also: [PRACTICE](/help/commands/practice-practice-train/), [SPELLS](/help/info/spell-spells/), [CLASSES](/help/info/class-classes/)

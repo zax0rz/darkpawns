@@ -17,9 +17,9 @@ small but vital hints in the descriptions of the rooms: An extra peek at your
 surroundings could mean the difference between life and death!
 
 If you explicitly type 'look', you will always see the full room description,
-even in BRIEF mode.
+even in [BRIEF](/help/commands/brief/) mode.
 
-Looking into other rooms by typing LOOK [direction] will appear in 
+Looking into other rooms by typing [LOOK](/help/commands/look/) [direction] will appear in 
 "brief mode" if brief is on.
 
-See also: COMPACT, LOOK
+See also: [COMPACT](/help/commands/compact/), [LOOK](/help/commands/look/)

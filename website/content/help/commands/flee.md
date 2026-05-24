@@ -17,4 +17,4 @@ bring you from the ashes to the fire... but then, who wants to live forever?
 Fleeing from battle will also cost you some experience points, but hey, thats
 what you get for wimping out.
 
-See also: WIMPY
+See also: [WIMPY](/help/commands/wimpy/)

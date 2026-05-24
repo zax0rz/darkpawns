@@ -11,4 +11,4 @@ Usage: equipment
 
 Gives you a list of all the equipment you're wearing, holding, and wielding.
 
-See also: INVENTORY, REMOVE, WEAR
+See also: [INVENTORY](/help/commands/inventory/), [REMOVE](/help/commands/remove/), [WEAR](/help/commands/wear/)

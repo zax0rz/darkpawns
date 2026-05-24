@@ -12,7 +12,7 @@ Accumulative: Yes
 Duration	: varies per level of caster
 
 Sends the forces of time against the victim, causing him to slow down
-In relation to other PC's and NPC's in the game. Primarily, this affects
+In relation to other PC's and [NPC](/help/info/mob-mobile-npc-mobs/)'s in the game. Primarily, this affects
 Combat and skill use.
 
-See also: HASTE
+See also: [HASTE](/help/spells/haste/)

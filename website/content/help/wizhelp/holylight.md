@@ -14,7 +14,7 @@ A toggle which allows you to see:
    Hidden people, even if you don't have 'sense life'
    Dark rooms, even if you don't have a light
 
-It is expected most immortals will keep HOLYLIGHT on most of the time;
+It is expected most immortals will keep [HOLYLIGHT](/help/wizhelp/holylight/) on most of the time;
 it exists so that you have the ability to see what mortals see for
 debugging purposes.
 wizonly

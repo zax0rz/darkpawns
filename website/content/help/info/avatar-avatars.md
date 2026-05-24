@@ -48,4 +48,4 @@ Skills and Spells:
 	29 	group recall
 	30	divine intervention
 
-See also: REMORT
+See also: [REMORT](/help/info/remort-immort-remorting-immorting-immortality/)

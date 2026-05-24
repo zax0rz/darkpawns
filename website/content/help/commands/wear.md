@@ -28,4 +28,4 @@ Examples:
  If you have more than one pair in your inventory
   > wear 2.boots 
 
-See also: EQUIPMENT, REMOVE
+See also: [EQUIPMENT](/help/commands/equipment/), [REMOVE](/help/commands/remove/)

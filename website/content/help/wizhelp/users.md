@@ -9,8 +9,8 @@ aliases: ['/help/users']
 
 Usage: users [switches]
 
-USERS gives a list of all sockets (i.e., connections) currently active on the
-MUD.  The multi-column display shows the socket number (used by DC), class,
+[USERS](/help/wizhelp/users/) gives a list of all sockets (i.e., connections) currently active on the
+MUD.  The multi-column display shows the socket number (used by [DC](/help/wizhelp/dc/)), class,
 level, and name of the player connected, connection state, idle time, and
 hostname.
 
@@ -24,5 +24,5 @@ The following switches are available:
 -h <host>  Show all sockets from <host>.
 -c list    Show only sockets whose characters' classes are in list.
 
-See also: DC, SLOWNS
+See also: [DC](/help/wizhelp/dc/), [SLOWNS](/help/wizhelp/slowns/)
 wizonly

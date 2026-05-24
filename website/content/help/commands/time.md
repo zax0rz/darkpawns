@@ -15,8 +15,8 @@ have to, at any rate, since certain things in the game depend on this
 particular notion of time; the opening hours of the shops, for example.
 
 Also listed is the phase of the moon; this is important to VAMPIREs and
-WEREWOLVES, as the fullness of the moon decides the bonuses they get (mana
+[WEREWOLVES](/help/info/lycanthropy-werewolf-werewolves-lycanthrope/), as the fullness of the moon decides the bonuses they get (mana
 and hit points, respectively.) During the nights of a full moon, they are 
-forced to TRANSFORM. Moon phase also affects MOONGATES.
+forced to [TRANSFORM](/help/commands/transform/). Moon phase also affects MOONGATES.
 
-See also: WEREWOLF, VAMPIRE, TRANSFORM, MOONGATE, GATE
+See also: [WEREWOLF](/help/info/lycanthropy-werewolf-werewolves-lycanthrope/), [VAMPIRE](/help/info/vampirism-vampire-vampires/), [TRANSFORM](/help/commands/transform/), [MOONGATE](/help/info/moongate-moon/), [GATE](/help/spells/gate/)

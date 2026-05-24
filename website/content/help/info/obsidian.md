@@ -7,6 +7,6 @@ section: "help"
 aliases: ['/help/obsidian']
 ---
 
-Obsidian is a spell REAGENT, used in the flame arrow spell.
+Obsidian is a spell [REAGENT](/help/info/reagent-reagents-components-component/), used in the flame arrow spell.
 
-See Also: REAGENT
+See Also: [REAGENT](/help/info/reagent-reagents-components-component/)

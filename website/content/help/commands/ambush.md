@@ -14,4 +14,4 @@ sneaky ambush for his enemies. You can only ambush someone where there is
 enough cover to hide, of course.  If you can successfully ambush someone
 while staying hidden, you increase the damage dealt to them.
 
-See also: RANGER, HIDE
+See also: [RANGER](/help/info/ranger-rangers/), [HIDE](/help/commands/hide/)

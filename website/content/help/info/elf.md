@@ -16,4 +16,4 @@ tall. Though they are not as sturdy as humans, elves are much more agile.
 Elves have learned that it is very important to understand the creatures,
 Both good and evil, that share their forest homes.
 
-See also: RACES
+See also: [RACES](/help/info/race-races/)

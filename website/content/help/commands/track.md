@@ -20,4 +20,4 @@ Example:
   > track warg
   You sense a trail south from here!
 
-See also: EVASION
+See also: [EVASION](/help/commands/evasion/)

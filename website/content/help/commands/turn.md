@@ -13,7 +13,7 @@ level clerics may not be able to turn away certain powerful (ie: demonic)
 undead forces.  On the upside, very powerful clerics and avatars are able
 to completely destroy lesser undead.
 
-Please note that this is a SKILL, not a SPELL, although it does consume
-MANA.  The amount of mana consumed is proportional to the clerics level.
+Please note that this is a SKILL, not a [SPELL](/help/spells/spell-strength/), although it does consume
+[MANA](/help/info/mana/).  The amount of mana consumed is proportional to the clerics level.
 
-See also: COMBAT, CLERIC, AVATAR
+See also: [COMBAT](/help/info/combat/), [CLERIC](/help/info/cleric-clerics/), [AVATAR](/help/info/avatar-avatars/)

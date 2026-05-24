@@ -13,4 +13,4 @@ Displays how much gold you have.
 Gold is the primary currency in Dark Pawns and can be used to buy
 services, goods, and bribes to city officials and religious institutions.
 
-See also: BALANCE, DEPOSIT, WITHDRAW
+See also: [BALANCE](/help/commands/bank-withdraw-deposit-balance/), [DEPOSIT](/help/commands/bank-withdraw-deposit-balance/), [WITHDRAW](/help/commands/bank-withdraw-deposit-balance/)

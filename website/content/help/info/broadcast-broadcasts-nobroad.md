@@ -8,4 +8,4 @@ aliases: ['/help/broadcast-broadcasts-nobroad']
 ---
 
 The Broadcast channel displays arena fights live as they happen
-to the whole world.  To turn on/off Broadcast, type NOBROAD.
+to the whole world.  To turn on/off Broadcast, type [NOBROAD](/help/info/broadcast-broadcasts-nobroad/).

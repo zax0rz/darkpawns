@@ -17,4 +17,4 @@ Examples:
   > hold torch
   > grab stone
 
-See also: EQUIPMENT, REMOVE, WEAR, WIELD
+See also: [EQUIPMENT](/help/commands/equipment/), [REMOVE](/help/commands/remove/), [WEAR](/help/commands/wear/), [WIELD](/help/commands/wield/)

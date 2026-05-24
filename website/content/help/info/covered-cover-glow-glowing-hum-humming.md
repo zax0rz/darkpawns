@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/covered-cover-glow-glowing-hum-humming']
 ---
 
-If you see something in your EQUIPMENT list that has "covered" by it, it
+If you see something in your [EQUIPMENT](/help/commands/equipment/) list that has "covered" by it, it
 means just that: you have another piece of equipment covering it. I.e., 
 gloves cover rings on your fingers. People looking at you can't see items 
 that are covered.

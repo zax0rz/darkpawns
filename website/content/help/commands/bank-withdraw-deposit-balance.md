@@ -16,4 +16,4 @@ Examples:
   > withdraw 1000
   > balance
 
-See also: GOLD, SCORE
+See also: [GOLD](/help/commands/gold/), [SCORE](/help/commands/score/)

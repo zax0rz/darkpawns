@@ -14,4 +14,4 @@ Duration    : Varies
 An improved version of the holy ward spell that allows you to ward your 
 entire party at one time.
 
-See also: HOLY WARD
+See also: [HOLY](/help/spells/holy-shield/) [WARD](/help/spells/holy-ward-ward/)

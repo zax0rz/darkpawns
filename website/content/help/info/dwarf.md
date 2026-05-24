@@ -18,4 +18,4 @@ is typically deep tan or light brown. Their hair is usually black, gray,
 or brown, and worn long, though not long enough to impair vision in any 
 way. They favor long beards and mustaches as well.
 
-See also: RACES
+See also: [RACES](/help/info/race-races/)

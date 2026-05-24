@@ -12,7 +12,7 @@ Mercenaries can be hired, the current market rate is about 100 coins.
 Guards can be bribed; the price varies from guard to guard, but they 
 don't come cheap.
 
-To bribe or hire someone, just GIVE <amount> coins <person>
+To bribe or hire someone, just [GIVE](/help/commands/give/) <amount> coins <person>
 
 Examples:
 > give 101 coins mercenary

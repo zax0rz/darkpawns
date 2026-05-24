@@ -13,4 +13,4 @@ Usage: gsay <message>
 Tell something to all the members of your group, even if they're not in the
 room.
 
-See also: GROUP, TELL, SAY
+See also: [GROUP](/help/commands/group/), [TELL](/help/commands/say-tell-ask-whisper-shout-holler/), [SAY](/help/commands/say-tell-ask-whisper-shout-holler/)
