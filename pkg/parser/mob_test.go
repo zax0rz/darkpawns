@@ -597,3 +597,154 @@ func TestParseAllMobFiles(t *testing.T) {
 		t.Errorf("expected 2 mobs total, got %d", len(mobs))
 	}
 }
+
+func TestParseMobFile_ActionFlagsBitmask(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	// Action flags bitmask: bit 0 (SPEC) + bit 1 (SENTINEL) + bit 5 (AGGRESSIVE) = 1 + 2 + 32 = 35
+	// Affect flags bitmask: bit 0 (BLIND) + bit 8 (FLYING) = 1 + 256 = 257
+	// alignment: -500, race: 1
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n35 257 -500 1 E\n1 20 0 5 10 20 1 4 2\n100 500\n8 3 0\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	if len(mobs) != 1 {
+		t.Fatalf("expected 1 mob, got %d", len(mobs))
+	}
+
+	m := mobs[0]
+
+	// Action flags: SPEC, SENTINEL, AGGRESSIVE
+	if len(m.ActionFlags) != 3 {
+		t.Fatalf("expected 3 action flags, got %d: %v", len(m.ActionFlags), m.ActionFlags)
+	}
+	expectedActions := []string{"SPEC", "SENTINEL", "AGGRESSIVE"}
+	for i, want := range expectedActions {
+		if m.ActionFlags[i] != want {
+			t.Errorf("action flag[%d]: expected %q, got %q", i, want, m.ActionFlags[i])
+		}
+	}
+
+	// Affect flags: BLIND, FLYING
+	if len(m.AffectFlags) != 2 {
+		t.Fatalf("expected 2 affect flags, got %d: %v", len(m.AffectFlags), m.AffectFlags)
+	}
+	expectedAffects := []string{"BLIND", "FLYING"}
+	for i, want := range expectedAffects {
+		if m.AffectFlags[i] != want {
+			t.Errorf("affect flag[%d]: expected %q, got %q", i, want, m.AffectFlags[i])
+		}
+	}
+
+	if m.Alignment != -500 {
+		t.Errorf("expected alignment -500, got %d", m.Alignment)
+	}
+	if m.Race != 1 {
+		t.Errorf("expected race 1, got %d", m.Race)
+	}
+}
+
+func TestParseMobFile_ZeroFlags(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	// Both action and affect flags are 0 — should produce empty slices
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	m := mobs[0]
+
+	if len(m.ActionFlags) != 0 {
+		t.Errorf("expected 0 action flags, got %d: %v", len(m.ActionFlags), m.ActionFlags)
+	}
+	if len(m.AffectFlags) != 0 {
+		t.Errorf("expected 0 affect flags, got %d: %v", len(m.AffectFlags), m.AffectFlags)
+	}
+}
+
+func TestParseMobFile_HighBitmask(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	// Action flags bitmask: bit 18 (INVISIBLE, last entry) = 262144
+	// Affect flags bitmask: bit 34 (DETECT_INV, last entry) = 17179869184
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n262144 17179869184 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	m := mobs[0]
+
+	if len(m.ActionFlags) != 1 || m.ActionFlags[0] != "INVISIBLE" {
+		t.Errorf("expected [INVISIBLE], got %v", m.ActionFlags)
+	}
+	if len(m.AffectFlags) != 1 || m.AffectFlags[0] != "DETECT_INV" {
+		t.Errorf("expected [DETECT_INV], got %v", m.AffectFlags)
+	}
+}
+
+func TestParseMobFile_BitBeyondArrayLength(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	// Bit 30 (beyond both arrays which have 19 and 35 entries) — should be silently skipped, not panic
+	// 1 << 30 = 1073741824
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n1073741824 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	m := mobs[0]
+
+	if len(m.ActionFlags) != 0 {
+		t.Errorf("expected 0 action flags (bit beyond array), got %d: %v", len(m.ActionFlags), m.ActionFlags)
+	}
+}
+
+func TestParseMobFile_AllActionFlags(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	// All 19 action bits set: 2^19 - 1 = 524287
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n524287 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
+	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	m := mobs[0]
+
+	if len(m.ActionFlags) != 19 {
+		t.Fatalf("expected 19 action flags, got %d", len(m.ActionFlags))
+	}
+	// Spot check a few
+	expected := []string{"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "NICE", "AGGRESSIVE", "GREEDY", "STAY_ZONE", "WIMPY", "FOLLOW", "PURSUE", "DEADLY", "POLYSELF", "META_AGG", "GUARD", "AUCTION", "CHARITABLE", "MOUNT", "INVISIBLE"}
+	for i, want := range expected {
+		if m.ActionFlags[i] != want {
+			t.Errorf("action flag[%d]: expected %q, got %q", i, want, m.ActionFlags[i])
+		}
+	}
+}

@@ -244,6 +244,18 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 		mob.Race = 7
 	}
 
+	// Convert action flags bitmask to string array.
+	// We duplicate the mapping here instead of importing game to avoid circular
+	// dependency (game imports parser). Bit positions match game.ActionBitNames.
+	if len(fields) >= 1 {
+		actionMask, _ := strconv.ParseInt(fields[0], 10, 64)
+		mob.ActionFlags = bitmaskToFlagNames(actionMask, actionBitNames)
+	}
+	if len(fields) >= 2 {
+		affectMask, _ := strconv.ParseInt(fields[1], 10, 64)
+		mob.AffectFlags = bitmaskToFlagNames(affectMask, affectBitNames)
+	}
+
 	// Stats line: level thac0 ac hpdice damagedice
 	if !lb.Scan() {
 		return mob, "", fmt.Errorf("expected mob stats line")
@@ -504,6 +516,81 @@ func ParseAllMobFiles(dir string) ([]Mob, error) {
 	}
 
 	return allMobs, nil
+}
+
+// bitmaskToFlagNames converts an integer bitmask to a slice of flag name strings.
+// Each set bit at position i maps to names[i]. Bits beyond the array length are skipped.
+func bitmaskToFlagNames(mask int64, names []string) []string {
+	var flags []string
+	for i := 0; i < len(names) && i < 64; i++ {
+		if mask&(1<<uint(i)) != 0 {
+			flags = append(flags, names[i])
+		}
+	}
+	return flags
+}
+
+// actionBitNames mirrors game.ActionBitNames to avoid circular dependency.
+// Bit positions: 0=SPEC, 1=SENTINEL, 2=SCAVENGER, ...
+var actionBitNames = []string{
+	"SPEC",
+	"SENTINEL",
+	"SCAVENGER",
+	"ISNPC",
+	"NICE",
+	"AGGRESSIVE",
+	"GREEDY",
+	"STAY_ZONE",
+	"WIMPY",
+	"FOLLOW",
+	"PURSUE",
+	"DEADLY",
+	"POLYSELF",
+	"META_AGG",
+	"GUARD",
+	"AUCTION",
+	"CHARITABLE",
+	"MOUNT",
+	"INVISIBLE",
+}
+
+// affectBitNames mirrors game.AffectedBitNames to avoid circular dependency.
+var affectBitNames = []string{
+	"BLIND",
+	"CHARM",
+	"CURSE",
+	"POISON",
+	"PROTECT_EVIL",
+	"PROTECT_GOOD",
+	"SLEEP",
+	"NO_FLIGHT",
+	"FLYING",
+	"TRUE_SIGHT",
+	"INFRARED",
+	"WATERWALK",
+	"SANCTUARY",
+	"GROUP",
+	"HASTE",
+	"SLOW",
+	"PLAGUE",
+	"WEAKEN",
+	"INVISIBLE",
+	"DETECT_ALIGN",
+	"DETECT_INVIS",
+	"DETECT_MAGIC",
+	"SENSE_LIFE",
+	"SENSE_PSY",
+	"SHIELD",
+	"WEB",
+	"BERSERK",
+	"BLADE",
+	"BLUR",
+	"FIRESHIELD",
+	"ICESHIELD",
+	"SHOCKSHIELD",
+	"BARKSKIN",
+	"LEVITATE",
+	"DETECT_INV",
 }
 
 // Scripting interface implementations for parser.Mob
