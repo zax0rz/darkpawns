@@ -66,10 +66,32 @@
   const gLinks = gRoot.append('g').attr('class', 'links-layer');
   const gNodes = gRoot.append('g').attr('class', 'nodes-layer');
 
+  let lastK = 1.0;
   const zoom = d3.zoom()
     .scaleExtent([0.05, 8])
     .on('zoom', (event) => {
-      gRoot.attr('transform', event.transform);
+      const transform = event.transform;
+      gRoot.attr('transform', transform);
+
+      // Level of Detail (LOD) optimization for World Overview mode:
+      if (currentZoneId === null) {
+        const k = transform.k;
+        const threshold = 0.22;
+        // Only trigger DOM updates when crossing the threshold to prevent style thrashing
+        if ((k < threshold && lastK >= threshold) || (k >= threshold && lastK < threshold)) {
+          gLinks.style('display', k < threshold ? 'none' : 'block');
+          gNodes.selectAll('circle')
+            .attr('r', k < threshold ? 2.5 : 3.5)
+            .attr('stroke-width', k < threshold ? 0.6 : 0.8);
+        }
+        lastK = k;
+      } else {
+        // Single zone view: always show links and draw standard sizing
+        gLinks.style('display', 'block');
+        gNodes.selectAll('circle')
+          .attr('r', 6)
+          .attr('stroke-width', 1.2);
+      }
     });
   svg.call(zoom);
 
