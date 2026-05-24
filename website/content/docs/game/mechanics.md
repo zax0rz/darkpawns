@@ -57,7 +57,7 @@ FinalDamage = BaseDamage × PositionMultiplier × ParryReduction
 
 ### Backstab Multiplier
 
-The backstab skill (Thieves and Assassins) and disembowel use this multiplier from `class.c`:
+The [`backstab`](/help/commands/backstab/) skill (Thieves and Assassins) and [`disembowel`](/help/commands/disembowel/) use this multiplier from `class.c`:
 
 ```
 BackstabMult(level) = level × 0.2 + 1.0
@@ -116,7 +116,7 @@ SellPrice = ItemValue × ProfitSell   # what the shop pays you
 
 A typical shop has `ProfitBuy = 1.2` (you pay 120% of item value) and `ProfitSell = 0.8` (the shop pays you 80%). High-end or rare shops may have wider spreads.
 
-Use `appraise <item>` to see an estimate of what a shopkeeper will pay before selling.
+Use [`appraise <item>`](/help/commands/appraise/) to see an estimate of what a shopkeeper will pay before selling.
 
 ### Gold & Banking
 
@@ -166,7 +166,7 @@ ExpLoss = TotalExp / 3
 
 This is a significant penalty at high levels. Always [`flee`](/help/commands/flee/) if your health drops below your wimpy threshold.
 
-To level up, visit your class **guildmaster** in your starting city after accumulating enough EXP. The guildmaster will grant you a new level and allow you to `practice` new skills.
+To level up, visit your class **guildmaster** in your starting city after accumulating enough EXP. The guildmaster will grant you a new level and allow you to [`practice`](/help/commands/practice-practice-train/) new skills.
 
 ---
 
