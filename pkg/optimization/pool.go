@@ -111,8 +111,6 @@ func (p *ConnectionPool) Get() (interface{}, error) {
 	start := time.Now()
 
 	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	p.stats.WaitCount++
 
 	// Try to get an idle connection
@@ -122,23 +120,33 @@ func (p *ConnectionPool) Get() (interface{}, error) {
 		p.stats.ActiveConnections++
 		p.stats.IdleConnections = len(p.connections)
 		p.stats.WaitDuration += time.Since(start)
+		p.mu.Unlock()
 		return conn, nil
 	}
 
 	// Create new connection if under max size
+	// Release lock during creation to avoid blocking other Get/Put calls
 	if p.stats.TotalConnections < p.maxSize {
-		conn, err := p.createFunc()
-		if err != nil {
-			p.stats.WaitDuration += time.Since(start)
-			return nil, err
-		}
 		p.stats.TotalConnections++
 		p.stats.ActiveConnections++
+		p.mu.Unlock()
+		conn, err := p.createFunc()
+		if err != nil {
+			p.mu.Lock()
+			p.stats.TotalConnections--
+			p.stats.ActiveConnections--
+			p.stats.WaitDuration += time.Since(start)
+			p.mu.Unlock()
+			return nil, err
+		}
+		p.mu.Lock()
 		p.stats.WaitDuration += time.Since(start)
+		p.mu.Unlock()
 		return conn, nil
 	}
 
 	p.stats.WaitDuration += time.Since(start)
+	p.mu.Unlock()
 	return nil, ErrPoolExhausted
 }
 

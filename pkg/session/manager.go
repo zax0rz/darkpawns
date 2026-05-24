@@ -246,6 +246,11 @@ func (m *Manager) GetCombatEngine() *combat.CombatEngine {
 	return m.combatEngine
 }
 
+// GetBanManager returns the ban manager for checking host bans.
+func (m *Manager) GetBanManager() *game.BanManager {
+	return m.world.Bans
+}
+
 // SetDeathFunc wires the game-layer death handler into the combat engine.
 func (m *Manager) SetDeathFunc() {
 	m.combatEngine.DeathFunc = func(victim, killer combat.Combatant, attackType int) {

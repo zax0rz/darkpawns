@@ -73,6 +73,20 @@ func Listen(port int, manager *session.Manager) error {
 			connPerIP[remoteIP]++
 			connMu.Unlock()
 
+			// Check site bans before allowing login (DP-296)
+			if banLevel := manager.GetBanManager().IsBanned(remoteIP); banLevel > 0 {
+				_ = conn.Close() //nolint:errcheck // best-effort cleanup
+				slog.Warn("Telnet: banned connection rejected", "remote_addr", conn.RemoteAddr(), "ban_level", banLevel)
+				connMu.Lock()
+				connCount--
+				connPerIP[remoteIP]--
+				if connPerIP[remoteIP] <= 0 {
+					delete(connPerIP, remoteIP)
+				}
+				connMu.Unlock()
+				continue
+			}
+
 			go func(ip string) {
 				handleConn(conn, manager)
 				connMu.Lock()

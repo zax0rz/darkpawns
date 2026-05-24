@@ -176,6 +176,7 @@ type IndexRecommendation struct {
 // BatchProcessor handles batch database operations.
 type BatchProcessor struct {
 	mu            sync.Mutex
+	wg            sync.WaitGroup
 	batchSize     int
 	flushInterval time.Duration
 	operations    []BatchOperation
@@ -240,7 +241,9 @@ func (bp *BatchProcessor) flushLocked() error {
 	bp.operations = make([]BatchOperation, 0, bp.batchSize)
 
 	// Process batch asynchronously with retry
+	bp.wg.Add(1)
 	go func() {
+		defer bp.wg.Done()
 		const maxRetries = 3
 		var lastErr error
 		for attempt := 0; attempt < maxRetries; attempt++ {
@@ -283,10 +286,22 @@ func (bp *BatchProcessor) flushTimer() {
 // Close gracefully shuts down the batch processor.
 func (bp *BatchProcessor) Close() error {
 	bp.mu.Lock()
-	defer bp.mu.Unlock()
-
 	bp.timer.Stop()
-	return bp.flushLocked()
+	// Flush any remaining operations synchronously
+	var flushErr error
+	if len(bp.operations) > 0 {
+		operations := bp.operations
+		bp.operations = make([]BatchOperation, 0, bp.batchSize)
+		bp.mu.Unlock()
+		flushErr = bp.flushFunc(operations)
+	} else {
+		bp.mu.Unlock()
+	}
+
+	// Wait for any in-flight flush goroutines to complete
+	bp.wg.Wait()
+
+	return flushErr
 }
 
 // ConnectionMonitor monitors database connection health.
