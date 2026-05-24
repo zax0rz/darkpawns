@@ -24,17 +24,19 @@ This documentation site is built with multiple audiences in mind:
 ### For Players
 - [Getting Started](/docs/getting-started/) - How to connect and start playing
 - [Game Commands](/docs/game/commands/) - Complete command reference
-- [World Guide](/docs/game/world/) - Explore the Dark Pawns world
+- [Game Mechanics](/docs/game/mechanics/) - Combat formulas, economy, PK rules
+- [Progression Guide](/docs/game/progression/) - Level 1 to Hero walkthrough
+- [Zone Guide](/docs/game/zones/) - All 95 zones with difficulty and key mobs
 
 ### For Agent Developers
 - [Agent Integration Guide](/docs/agents/) - Connect AI agents to Dark Pawns
 - [WebSocket Protocol](/docs/agents/protocol/) - Complete protocol specification
-- [Example Agents](/docs/agents/examples/) - Reference implementations
+- [dp-agent CLI](/docs/agents/dp-agent/) - Go agent CLI reference
 
 ### For Contributors
 - [API Reference](/docs/api/) - Complete API documentation
-- [Development Guide](/development/) - How to contribute to the project
-- [Architecture](/development/architecture/) - System design and components
+- [Development Guide](/docs/development/) - How to contribute
+- [Architecture](/docs/development/architecture/) - System design and components
 
 ## Content Negotiation
 
@@ -63,7 +65,6 @@ The MUD's built-in help system is mirrored at **/help/** and covers every comman
 
 ## Getting Help
 
-- **Discord**: Join our [Discord community](https://discord.gg/darkpawns)
 - **GitHub**: Report issues on [GitHub](https://github.com/zax0rz/darkpawns/issues)
 - **Email**: Contact us at hello@labz0rz.com
 
