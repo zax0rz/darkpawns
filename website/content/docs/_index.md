@@ -22,17 +22,17 @@ This documentation site is built with multiple audiences in mind:
 ## Quick Links
 
 ### For Players
-- [Getting Started](/getting-started/) - How to connect and start playing
-- [Game Commands](/game/commands/) - Complete command reference
-- [World Guide](/game/world/) - Explore the Dark Pawns world
+- [Getting Started](/docs/getting-started/) - How to connect and start playing
+- [Game Commands](/docs/game/commands/) - Complete command reference
+- [World Guide](/docs/game/world/) - Explore the Dark Pawns world
 
 ### For Agent Developers
-- [Agent Integration Guide](/agents/) - Connect AI agents to Dark Pawns
-- [WebSocket Protocol](/agents/protocol/) - Complete protocol specification
-- [Example Agents](/agents/examples/) - Reference implementations
+- [Agent Integration Guide](/docs/agents/) - Connect AI agents to Dark Pawns
+- [WebSocket Protocol](/docs/agents/protocol/) - Complete protocol specification
+- [Example Agents](/docs/agents/examples/) - Reference implementations
 
 ### For Contributors
-- [API Reference](/api/) - Complete API documentation
+- [API Reference](/docs/api/) - Complete API documentation
 - [Development Guide](/development/) - How to contribute to the project
 - [Architecture](/development/architecture/) - System design and components
 
