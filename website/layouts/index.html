@@ -1,19 +1,147 @@
 {{ define "main" }}
-<section class="splash">
-  <div class="container">
-    <h1 class="wordmark">DARK<br>PAWNS</h1>
-    <p class="tagline">{{ .Site.Params.tagline }}</p>
-    <p class="splash-desc">{{ .Site.Params.description }}</p>
-    <div class="splash-actions">
-      <a href="/play" class="btn btn-primary">Play Now</a>
-      <a href="/about" class="btn btn-secondary">Learn More</a>
+<div class="container broadsheet-grid">
+  <!-- LEFT COLUMN: The Dispatch (News Feed) -->
+  <section class="broadsheet-main">
+    <h2 class="broadsheet-section-title">THE DAILY DISPATCH</h2>
+    
+    <!-- Fetch all news pages and render them as a chronological feed -->
+    {{ $newsSection := site.GetPage "section" "news" }}
+    {{ if $newsSection }}
+      <div class="news-feed">
+        {{ range $newsSection.Pages.ByDate.Reverse }}
+        <article class="news-entry blog-post">
+          <header class="news-post-header">
+            <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
+            <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+          </header>
+          <div class="prose news-post-content">
+            {{ .Content }}
+          </div>
+          <hr class="news-divider">
+        </article>
+        {{ end }}
+      </div>
+    {{ else }}
+      <p class="lead">No dispatches filed yet.</p>
+    {{ end }}
+  </section>
+
+  <!-- RIGHT COLUMN: The Archive Ledger (Sidebar Navigation) -->
+  <aside class="broadsheet-sidebar">
+    <h2 class="broadsheet-section-title">ARCHIVE LEDGER</h2>
+    
+    <!-- Agent Onboarding Prompt Widget (moltbook.com model) -->
+    <div class="agent-prompt-deck">
+      <div class="agent-deck-header">// CO-OP AGENT INITIATION</div>
+      <p class="agent-deck-description">
+        Want to play this MUD with an AI agent? Copy this custom system prompt and paste it into ChatGPT, Claude, or your LLM coding assistant:
+      </p>
+      <div class="agent-clipboard-box">
+        <textarea id="agent-prompt-text" readonly class="agent-textarea">Let's play Dark Pawns together! Check out https://darkpawns.labz0rz.com/skill.md and let me know what you think.</textarea>
+        <button id="btn-copy-prompt" class="btn btn-copy" onclick="copyAgentPrompt()">
+          <span id="copy-status-text">COPY PROMPT</span>
+        </button>
+      </div>
     </div>
-    <hr class="splash-divider">
-    <div class="splash-links">
-      <a href="/news/" class="splash-link">News</a>
-      <a href="/help/" class="splash-link">Help</a>
-      <a href="/docs/" class="splash-link">Docs</a>
+
+    <!-- Telnet Connection Card -->
+    <div class="terminal-card">
+      <div class="terminal-label">// CONNECT VIA TELNET</div>
+      <div class="terminal-command">telnet darkpawns.labz0rz.com 8080</div>
     </div>
-  </div>
-</section>
+
+    <!-- Web Client Play Button -->
+    <a href="/play" class="btn btn-primary btn-play">Launch Web Client →</a>
+
+    <!-- High-Fidelity Catalog Index Cards -->
+    <div class="ledger-cards-container">
+      <a href="/about" class="ledger-card">
+        <div class="ledger-card-header">
+          <span class="ledger-card-no">№ 01</span>
+          <span class="ledger-card-label">READ THE HISTORY</span>
+          <span class="ledger-card-arrow">→</span>
+        </div>
+        <div class="ledger-card-hint">
+          1994 → 2010 → 2026. The unabridged chronicle of the project's evolution.
+        </div>
+      </a>
+
+      <a href="/map" class="ledger-card">
+        <div class="ledger-card-header">
+          <span class="ledger-card-no">№ 02</span>
+          <span class="ledger-card-label">WORLD MAP</span>
+          <span class="ledger-card-arrow">→</span>
+        </div>
+        <div class="ledger-card-hint">
+          Browse active zones, explore grid rooms, and search coordinate indices.
+        </div>
+      </a>
+
+      <a href="/help" class="ledger-card">
+        <div class="ledger-card-header">
+          <span class="ledger-card-no">№ 03</span>
+          <span class="ledger-card-label">HELP FILES</span>
+          <span class="ledger-card-arrow">→</span>
+        </div>
+        <div class="ledger-card-hint">
+          Index of 475 in-game reference files, spells, classes, and combat mechanics.
+        </div>
+      </a>
+
+      <a href="/lore" class="ledger-card">
+        <div class="ledger-card-header">
+          <span class="ledger-card-no">№ 04</span>
+          <span class="ledger-card-label">LORE ARCHIVE</span>
+          <span class="ledger-card-arrow">→</span>
+        </div>
+        <div class="ledger-card-hint">
+          Letters, world-building myths, and design journals from original creators.
+        </div>
+      </a>
+    </div>
+
+    <!-- Catalog Bibliography details -->
+    <div class="sidebar-bibliography">
+      <div>FILED UNDER: muds, archives, ports, Go.</div>
+      <div>SEE ALSO: ROM 2.4b · Diku · MERC.</div>
+    </div>
+  </aside>
+</div>
+
+<!-- Inline Copy-to-Clipboard Handler -->
+<script>
+function copyAgentPrompt() {
+  var textarea = document.getElementById("agent-prompt-text");
+  var copyButton = document.getElementById("btn-copy-prompt");
+  var statusText = document.getElementById("copy-status-text");
+
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); /* For mobile devices */
+
+  try {
+    navigator.clipboard.writeText(textarea.value).then(function() {
+      showSuccess();
+    }, function() {
+      // Fallback
+      document.execCommand("copy");
+      showSuccess();
+    });
+  } catch (err) {
+    document.execCommand("copy");
+    showSuccess();
+  }
+
+  function showSuccess() {
+    statusText.innerText = "COPIED ✓";
+    copyButton.style.background = "#2E7D32"; /* Muted green accent */
+    copyButton.style.color = "#EFE7D6";
+    setTimeout(function() {
+      statusText.innerText = "COPY PROMPT";
+      copyButton.style.background = "";
+      copyButton.style.color = "";
+    }, 2000);
+  }
+}
+</script>
 {{ end }}
+

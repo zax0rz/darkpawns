@@ -1,7 +1,20 @@
 <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true">
-<nav class="nav" aria-label="Main navigation">
-  <div class="container nav-inner">
-    <a href="/" class="nav-wordmark">DARK PAWNS</a>
+<header class="archival-header">
+  <!-- Monospace Top Metadata Bar -->
+  <div class="header-meta container">
+    <span class="meta-left">№ 001 · PORTAL</span>
+    <span class="meta-center-left">EST. 1994</span>
+    <span class="meta-center-right">v2.0.0-rc1</span>
+    <span class="meta-right">SEPT 1994 — PRESENT</span>
+  </div>
+
+  <!-- Centered Monolith Wordmark -->
+  <div class="header-wordmark-container container">
+    <a href="/" class="header-wordmark">DARK <span class="accent-red">PAWNS</span></a>
+  </div>
+
+  <!-- Double Rule Menu Navigation -->
+  <nav class="nav-ledger container" aria-label="Ledger navigation">
     <label for="nav-toggle" class="nav-hamburger" aria-label="Menu" role="button" tabindex="0">
       <span></span>
     </label>
@@ -9,10 +22,10 @@
       <li><a href="/news"{{ if eq .RelPermalink "/news/" }} class="active"{{ end }}>News</a></li>
       <li><a href="/play"{{ if eq .RelPermalink "/play/" }} class="active"{{ end }}>Play</a></li>
       <li><a href="/help"{{ if eq .RelPermalink "/help/" }} class="active"{{ end }}>Help</a></li>
+      <li><a href="/map"{{ if eq .RelPermalink "/map/" }} class="active"{{ end }}>Map</a></li>
+      <li><a href="/lore"{{ if eq .RelPermalink "/lore/" }} class="active"{{ end }}>Lore</a></li>
       <li><a href="/docs"{{ if eq .RelPermalink "/docs/" }} class="active"{{ end }}>Docs</a></li>
-      <li><a href="/research"{{ if eq .RelPermalink "/research/" }} class="active"{{ end }}>Research</a></li>
       <li><a href="/about"{{ if eq .RelPermalink "/about/" }} class="active"{{ end }}>About</a></li>
-      <li><a href="/connect"{{ if eq .RelPermalink "/connect/" }} class="active"{{ end }}>Connect</a></li>
     </ul>
-  </div>
-</nav>
+  </nav>
+</header>
