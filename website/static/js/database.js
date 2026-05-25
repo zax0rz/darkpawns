@@ -41,10 +41,16 @@
       const response = await fetch('/data/database.json');
       if (!response.ok) throw new Error('Network response was not ok');
       dbData = await response.json();
-      
+
+      // Populate entry counts
+      const mobCount = document.getElementById('mob-count');
+      const itemCount = document.getElementById('item-count');
+      if (mobCount) mobCount.textContent = dbData.mobs ? dbData.mobs.length.toLocaleString() : '';
+      if (itemCount) itemCount.textContent = dbData.items ? dbData.items.length.toLocaleString() : '';
+
       // Hide loading
       if (loadingEl) loadingEl.style.display = 'none';
-      
+
       // Initial render & check Hash
       initRouting();
       renderList();

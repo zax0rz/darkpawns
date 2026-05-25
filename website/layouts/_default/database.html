@@ -46,8 +46,7 @@
   color: var(--ink-muted);
   cursor: pointer;
   font-family: var(--font-display);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.5rem;
@@ -186,8 +185,7 @@ input[type="range"] {
 
 .result-name {
   font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: var(--ink);
@@ -261,12 +259,9 @@ input[type="range"] {
 .detail-short {
   font-family: var(--font-display);
   font-size: 1.8rem;
-  font-weight: 800;
-  text-transform: uppercase;
   color: var(--accent);
   margin: 0 0 0.5rem 0;
   line-height: 1.1;
-  letter-spacing: -0.02em;
 }
 
 .detail-long {
@@ -479,14 +474,21 @@ input[type="range"] {
 }
 </style>
 
+<!-- Editorial masthead -->
+<div style="padding: 2rem 2rem 0; max-width: 800px; margin: 0 auto;">
+  <div style="font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-muted); margin-bottom: 0.25rem;">№ 003 · Knowledge Codex</div>
+  <h1 style="font-family: var(--font-display); font-size: 2.4rem; color: var(--accent); margin: 0 0 0.5rem 0; line-height: 1.1;">The codex.</h1>
+  <div style="font-family: var(--font-body); font-size: 0.95rem; color: var(--ink-muted); margin-bottom: 1rem; font-style: italic;">Every mob, every object — cross-referenced, searchable, indexed.</div>
+</div>
+
 <div id="db-page">
 
   <!-- Sidebar: tab selector + search + filters + list results -->
   <aside id="db-sidebar">
     <div id="db-sidebar-top">
       <div class="db-tabs">
-        <button class="db-tab-btn active" id="tab-mobs" data-tab="mobs">Mob Database</button>
-        <button class="db-tab-btn" id="tab-items" data-tab="items">Item Database</button>
+        <button class="db-tab-btn active" id="tab-mobs" data-tab="mobs">Mobs <span id="mob-count" style="opacity:0.7;"></span></button>
+        <button class="db-tab-btn" id="tab-items" data-tab="items">Items <span id="item-count" style="opacity:0.7;"></span></button>
       </div>
       <div class="search-wrap">
         <input id="db-search" type="text" placeholder="Search mobs by name or VNUM…" autocomplete="off" aria-label="Search database">
