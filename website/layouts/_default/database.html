@@ -8,17 +8,219 @@
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-mono);
+  border-top: 1px solid var(--ink);
+}
+
+/* ── Skyline Overview Strip ───────────────────────────── */
+.db-skyline-container {
+  max-width: 1200px;
+  margin: 1.5rem auto 1.5rem;
+  padding: 0 2rem;
+  font-family: var(--font-mono);
+}
+
+.skyline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.skyline-panel {
+  background: var(--paper-deep);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 125px;
+  transition: box-shadow 0.2s ease;
+}
+
+.skyline-panel:hover {
+  box-shadow: 2px 2px 0px var(--ink);
+}
+
+.skyline-panel h4 {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin: 0;
+  border-bottom: 1px solid rgba(26,22,20,0.15);
+  padding-bottom: 0.25rem;
+}
+
+.skyline-chart {
+  display: flex;
+  align-items: flex-end;
+  height: 55px;
+  gap: 4px;
+  padding-top: 0.5rem;
+}
+
+.skyline-bar-wrap {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: pointer;
+  position: relative;
+}
+
+.skyline-bar-wrap:hover .skyline-tooltip {
+  display: block;
+}
+
+.skyline-bar {
+  background: var(--ink-muted);
+  width: 100%;
+  border-radius: 1px 1px 0 0;
+  transition: background 0.15s, height 0.3s;
+}
+
+.skyline-bar-wrap:hover .skyline-bar {
+  background: var(--accent);
+}
+
+.skyline-bar-wrap.active .skyline-bar {
+  background: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}
+
+.skyline-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.55rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 2px;
+  white-space: nowrap;
+  z-index: 10;
+  margin-bottom: 4px;
+  border: 1px solid var(--paper-deep);
+}
+
+.skyline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow-y: auto;
+  max-height: 70px;
+}
+
+.skyline-list::-webkit-scrollbar { width: 3px; }
+.skyline-list::-webkit-scrollbar-thumb { background: var(--ink-muted); }
+
+.skyline-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 0.15rem 0.25rem;
+  border-radius: 1px;
+  transition: all 0.15s;
+}
+
+.skyline-row:hover {
+  background: rgba(168, 32, 26, 0.08);
+  color: var(--accent);
+}
+
+.skyline-row.active {
+  background: var(--accent);
+  color: var(--paper);
+}
+
+.skyline-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-top: 0.25rem;
+}
+
+.skyline-chip {
+  font-size: 0.6rem;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--paper);
+  text-transform: uppercase;
+}
+
+.skyline-chip:hover, .skyline-chip.active {
+  background: var(--accent);
+  color: var(--paper);
+  border-color: var(--accent);
+}
+
+/* Skeleton Loading Skyline */
+.skyline-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+.skeleton-panel {
+  background: var(--paper-deep);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 1rem;
+  min-height: 125px;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-line {
+  height: 8px;
+  background: var(--ink-muted);
+  opacity: 0.15;
+  border-radius: 2px;
+  margin-bottom: 0.5rem;
+}
+.skeleton-line.short { width: 40%; }
+.skeleton-line.mid { width: 70%; }
+.skeleton-bars {
+  display: flex;
+  align-items: flex-end;
+  height: 45px;
+  gap: 6px;
+  margin-top: 0.5rem;
+  opacity: 0.2;
+}
+.skeleton-bar {
+  flex: 1;
+  background: var(--ink-muted);
+  border-radius: 1px;
+}
+.skeleton-glow {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.2) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: loading-pulse 1.5s infinite;
+  position: absolute;
+  inset: 0;
+}
+@keyframes loading-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* ── Left Sidebar: Search & Filters ───────────────────── */
 #db-sidebar {
-  width: 320px;
-  min-width: 320px;
+  width: 330px;
+  min-width: 330px;
   display: flex;
   flex-direction: column;
   background: var(--paper-deep);
   border-right: 1px solid var(--ink);
   overflow: hidden;
+  position: relative;
 }
 
 #db-sidebar-top {
@@ -46,12 +248,13 @@
   color: var(--ink-muted);
   cursor: pointer;
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 0.5rem;
+  padding: 0.7rem 0.5rem;
   transition: all 0.1s ease;
   outline: none;
+  min-height: 44px; /* Premium Touch Target */
 }
 
 .db-tab-btn:hover {
@@ -64,7 +267,7 @@
   color: var(--paper);
 }
 
-/* Search input */
+/* Search wrap */
 .search-wrap {
   position: relative;
 }
@@ -76,8 +279,8 @@
   border-radius: 2px;
   color: var(--ink);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
-  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  padding: 0.6rem 0.75rem;
   outline: none;
 }
 
@@ -86,24 +289,102 @@
   box-shadow: 0 0 0 1px var(--accent);
 }
 
-/* Filters */
+/* Controls row (Sort & Filter Trigger) */
+.controls-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-filters-trigger {
+  flex: 1;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: none; /* Mobile only */
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-weight: 700;
+  min-height: 36px;
+}
+
+.btn-filters-trigger:hover {
+  background: var(--paper-deep);
+}
+
+.filter-select {
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.5rem;
+  outline: none;
+  min-height: 36px;
+}
+
+.filter-select:focus {
+  border-color: var(--accent);
+}
+
+/* Active Filters Indicator Chips list */
+.active-chips-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  background: rgba(26,22,20,0.03);
+  border-bottom: 1px solid rgba(26,22,20,0.1);
+  display: none; /* Populated by JS */
+}
+
+.filter-chip {
+  font-size: 0.6rem;
+  background: var(--accent);
+  color: var(--paper);
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.filter-chip span.close-x {
+  font-weight: bold;
+  opacity: 0.8;
+}
+
+.filter-chip:hover {
+  background: var(--accent-deep);
+}
+
+/* Filters Panel Drawer (inline on desktop, full overlay on mobile) */
 #db-filters {
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 #db-filters::-webkit-scrollbar { width: 4px; }
-#db-filters::-webkit-scrollbar-track { background: transparent; }
 #db-filters::-webkit-scrollbar-thumb { background: var(--ink-muted); border-radius: 2px; }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .filter-group label {
@@ -115,20 +396,97 @@
   font-weight: 700;
 }
 
-.filter-select, .filter-input {
-  width: 100%;
-  background: var(--paper);
+/* Multi-select filter container */
+.filter-multi-select {
+  max-height: 110px;
+  overflow-y: auto;
   border: 1px solid var(--ink);
   border-radius: 2px;
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+  background: var(--paper);
   padding: 0.35rem 0.5rem;
-  outline: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.filter-select:focus, .filter-input:focus {
+.filter-multi-select::-webkit-scrollbar { width: 3px; }
+.filter-multi-select::-webkit-scrollbar-thumb { background: var(--ink-muted); }
+
+.filter-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.filter-checkbox-row input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* Boolean flag switches */
+.filter-flags-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.flag-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+  background: var(--paper);
+  border: 1px solid rgba(26,22,20,0.15);
+  padding: 0.35rem 0.5rem;
+  border-radius: 2px;
+  transition: all 0.1s;
+}
+
+.flag-switch:hover {
   border-color: var(--accent);
+}
+
+.flag-switch.active {
+  background: rgba(168, 32, 26, 0.05);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.flag-switch input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* Mobile Filter Sheet Header (Hidden on Desktop) */
+.filter-sheet-header {
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-sheet-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-family: var(--font-display);
+}
+
+.filter-sheet-close {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 0.4rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  border-radius: 2px;
 }
 
 /* Range input */
@@ -150,31 +508,102 @@ input[type="range"] {
   cursor: pointer;
 }
 
-/* List Results */
+/* List Results Container */
 #db-results-container {
   flex: 1;
   border-top: 1px solid var(--ink);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 #db-results-container::-webkit-scrollbar { width: 4px; }
-#db-results-container::-webkit-scrollbar-track { background: transparent; }
 #db-results-container::-webkit-scrollbar-thumb { background: var(--ink-muted); border-radius: 2px; }
 
+/* Scroll shadows indicator overlay */
+.scroll-shadow-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(to bottom, rgba(26,22,20,0.06), transparent);
+  pointer-events: none;
+  z-index: 5;
+  display: none;
+}
+
+.scroll-shadow-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(to top, rgba(26,22,20,0.06), transparent);
+  pointer-events: none;
+  z-index: 5;
+  display: none;
+}
+
+/* Zone category header */
+.zone-header {
+  background: rgba(26, 22, 20, 0.05);
+  border-bottom: 1px solid rgba(26, 22, 20, 0.1);
+  padding: 0.4rem 1rem;
+  font-size: 0.65rem;
+  color: var(--ink-muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+}
+
+/* Level tier divider line */
+.tier-divider {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem 0.2rem;
+  gap: 0.5rem;
+  color: var(--accent);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.tier-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--accent), var(--accent) 2px, transparent 2px, transparent 6px);
+}
+
+/* Result item */
 .result-item {
+  display: flex;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(26, 22, 20, 0.06);
+  cursor: pointer;
+  transition: background 0.1s ease;
+  position: relative;
+  min-height: 48px;
+}
+
+.result-item-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid rgba(26, 22, 20, 0.1);
-  cursor: pointer;
-  transition: all 0.1s;
 }
 
-.result-item:hover {
-  background: var(--paper);
+@media (hover: hover) {
+  .result-item:hover {
+    background: rgba(26, 22, 20, 0.03);
+  }
 }
 
 .result-item.active {
@@ -183,13 +612,25 @@ input[type="range"] {
   padding-left: calc(1rem - 4px);
 }
 
+/* Flag gutters on lists */
+.gutter-flag {
+  width: 18px;
+  min-width: 18px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
 .result-name {
   font-family: var(--font-display);
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  font-size: 0.95rem; /* Upgraded size */
+  letter-spacing: 0.01em;
   color: var(--ink);
+  line-height: 1.2;
 }
+
 .result-item:hover .result-name, .result-item.active .result-name {
   color: var(--accent);
 }
@@ -197,7 +638,7 @@ input[type="range"] {
 .result-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   color: var(--ink-muted);
 }
 
@@ -215,6 +656,41 @@ input[type="range"] {
   position: relative;
 }
 
+/* Handle bar for bottom-sheet on Mobile */
+.bottom-sheet-handle {
+  display: none;
+  width: 40px;
+  height: 5px;
+  background: var(--ink-muted);
+  opacity: 0.3;
+  border-radius: 3px;
+  margin: 0.5rem auto 0;
+  flex-shrink: 0;
+}
+
+.bottom-sheet-close-btn {
+  display: none;
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  background: var(--paper-deep);
+  border: 1px solid var(--ink);
+  padding: 0.35rem 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 2px;
+}
+
+.bottom-sheet-close-btn:hover {
+  background: var(--accent);
+  color: var(--paper);
+  border-color: var(--accent);
+}
+
 #db-content {
   flex: 1;
   overflow-y: auto;
@@ -222,7 +698,6 @@ input[type="range"] {
 }
 
 #db-content::-webkit-scrollbar { width: 6px; }
-#db-content::-webkit-scrollbar-track { background: transparent; }
 #db-content::-webkit-scrollbar-thumb { background: var(--ink-muted); border-radius: 3px; }
 
 /* Empty state */
@@ -248,36 +723,48 @@ input[type="range"] {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
 .detail-header {
   border-bottom: 2px solid var(--ink);
   padding-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-stamp {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  letter-spacing: 0.05em;
 }
 
 .detail-short {
   font-family: var(--font-display);
-  font-size: 1.8rem;
+  font-size: 2.2rem; /* Premium Display Scale */
   color: var(--accent);
-  margin: 0 0 0.5rem 0;
+  margin: 0;
   line-height: 1.1;
+  text-transform: none; /* Premium Serif Display styling */
 }
 
 .detail-long {
   font-family: var(--font-body);
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-style: italic;
   color: var(--ink);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 /* Grid Layout */
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.75rem;
 }
 
 .detail-section {
@@ -293,7 +780,7 @@ input[type="range"] {
   letter-spacing: 0.08em;
   color: var(--ink-muted);
   border-bottom: 1px solid var(--ink);
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.35rem;
   margin: 0;
 }
 
@@ -311,7 +798,7 @@ input[type="range"] {
 }
 
 .stats-table td {
-  padding: 0.4rem 0;
+  padding: 0.45rem 0;
   font-size: 0.75rem;
 }
 
@@ -333,18 +820,19 @@ input[type="range"] {
   background: var(--paper-deep);
   border: 1px solid var(--ink);
   border-radius: 2px;
-  padding: 1rem;
+  padding: 1.25rem;
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   line-height: 1.6;
   white-space: pre-wrap;
+  box-shadow: 2px 2px 0px var(--ink);
 }
 
-/* Relations links lists */
+/* Relations lists */
 .rel-list {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.4rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -355,9 +843,9 @@ input[type="range"] {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.6rem;
   background: var(--paper-deep);
-  border: 1px solid rgba(26, 22, 20, 0.08);
+  border: 1px solid rgba(26, 22, 20, 0.1);
   border-radius: 2px;
 }
 
@@ -374,25 +862,51 @@ input[type="range"] {
   font-size: 0.65rem;
   color: var(--ink-muted);
   font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
-/* ── Stat SVG Vis ─────────────────────────────────────── */
+/* Micro Oxblood Affect Chips in Relations Lists */
+.aff-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-top: 0.15rem;
+}
+
+.aff-micro-chip {
+  background: rgba(168, 32, 26, 0.08);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-size: 0.55rem;
+  padding: 0.05rem 0.25rem;
+  border-radius: 2px;
+  font-weight: bold;
+  font-family: var(--font-mono);
+}
+
+/* Stat visualizer details */
 .stat-vis-wrap {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.5rem;
+  padding: 1rem;
   background: var(--paper-deep);
   border: 1px solid var(--ink);
   border-radius: 2px;
-  height: 200px;
+  height: 215px;
+  box-shadow: 2px 2px 0px var(--ink);
 }
 
 .vis-bar-row {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  margin-bottom: 0.5rem;
+  gap: 0.25rem;
+  margin-bottom: 0.6rem;
+}
+.vis-bar-row:last-child {
+  margin-bottom: 0;
 }
 .vis-bar-label {
   font-family: var(--font-display);
@@ -414,10 +928,10 @@ input[type="range"] {
   height: 100%;
   background: var(--accent);
   width: 0%;
-  transition: width 0.3s ease-out;
+  transition: width 0.4s ease-out;
 }
 
-/* Loading */
+/* ── Dynamic Loading Panel ──────────────────────────────── */
 #db-loading {
   position: absolute;
   inset: 0;
@@ -456,29 +970,145 @@ input[type="range"] {
   100% { transform: translateX(400%) scaleX(0.4); }
 }
 
-/* Responsive */
+@media (prefers-reduced-motion: reduce) {
+  #db-progress-bar {
+    animation: none;
+    width: 100%;
+  }
+}
+
+/* ── Responsive Mobile Styles ─────────────────────────── */
 @media (max-width: 900px) {
+  .db-skyline-container {
+    padding: 0 1rem;
+    margin: 1rem auto;
+  }
+  
+  .skyline-skeleton, .skyline-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .skyline-panel {
+    min-height: 100px;
+  }
+  
   #db-page {
     flex-direction: column;
+    height: calc(100vh - var(--nav-height));
+    position: relative;
   }
+  
   #db-sidebar {
     width: 100%;
     min-width: 100%;
-    height: 40%;
+    height: 100%;
     border-right: none;
-    border-bottom: 1px solid var(--ink);
   }
+  
+  .btn-filters-trigger {
+    display: flex;
+  }
+  
+  /* Filters sheet as full overlay overlay */
+  #db-filters {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--paper-deep);
+    z-index: 150;
+    display: none; /* Controlled by .open */
+    flex-direction: column;
+    padding: 1.5rem 1.5rem 2rem;
+    box-shadow: none;
+  }
+  
+  #db-filters.open {
+    display: flex;
+  }
+  
+  .filter-sheet-header {
+    display: flex;
+  }
+  
+  /* Details main panel as slide-up Bottom-Sheet */
   #db-main {
-    height: 60%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 85vh;
+    background: var(--paper);
+    border-top: 2px solid var(--ink);
+    box-shadow: 0 -8px 24px rgba(26, 22, 20, 0.15);
+    z-index: 120;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  #db-main.open {
+    transform: translateY(0);
+  }
+  
+  .bottom-sheet-handle {
+    display: block;
+  }
+  
+  .bottom-sheet-close-btn {
+    display: block;
+  }
+  
+  #db-content {
+    padding: 1.5rem;
+    padding-top: 1rem;
+  }
+  
+  /* Empty state hides on mobile detail cards */
+  #db-empty {
+    display: none !important;
   }
 }
 </style>
 
 <!-- Editorial masthead -->
-<div style="padding: 2rem 2rem 0; max-width: 800px; margin: 0 auto;">
+<div style="padding: 2rem 2rem 0; max-width: 1200px; margin: 0 auto;">
   <div style="font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-muted); margin-bottom: 0.25rem;">№ 003 · Knowledge Codex</div>
   <h1 style="font-family: var(--font-display); font-size: 2.4rem; color: var(--accent); margin: 0 0 0.5rem 0; line-height: 1.1;">The codex.</h1>
   <div style="font-family: var(--font-body); font-size: 0.95rem; color: var(--ink-muted); margin-bottom: 1rem; font-style: italic;">Every mob, every object — cross-referenced, searchable, indexed.</div>
+</div>
+
+<!-- Skyline overview strip -->
+<div id="db-skyline" class="db-skyline-container">
+  <div class="skyline-skeleton">
+    <div class="skeleton-panel">
+      <div class="skeleton-glow"></div>
+      <div class="skeleton-line short"></div>
+      <div class="skeleton-bars">
+        <div class="skeleton-bar" style="height:30%"></div>
+        <div class="skeleton-bar" style="height:60%"></div>
+        <div class="skeleton-bar" style="height:45%"></div>
+        <div class="skeleton-bar" style="height:80%"></div>
+        <div class="skeleton-bar" style="height:55%"></div>
+      </div>
+    </div>
+    <div class="skeleton-panel">
+      <div class="skeleton-glow"></div>
+      <div class="skeleton-line short"></div>
+      <div class="skeleton-line mid" style="margin-top:1rem;"></div>
+      <div class="skeleton-line mid"></div>
+    </div>
+    <div class="skeleton-panel">
+      <div class="skeleton-glow"></div>
+      <div class="skeleton-line short"></div>
+      <div class="skeleton-line mid" style="margin-top:1rem;"></div>
+      <div class="skeleton-line mid"></div>
+    </div>
+  </div>
+  <div class="skyline-content" style="display: none;">
+    <!-- Populated by javascript -->
+  </div>
 </div>
 
 <div id="db-page">
@@ -493,10 +1123,30 @@ input[type="range"] {
       <div class="search-wrap">
         <input id="db-search" type="text" placeholder="Search mobs by name or VNUM…" autocomplete="off" aria-label="Search database">
       </div>
+      <div class="controls-row">
+        <button id="mobile-filters-trigger" class="btn-filters-trigger">
+          Filters <span id="active-filters-count" style="font-size:0.6rem;background:var(--accent);color:var(--paper);padding:0.15rem 0.35rem;border-radius:10px;display:none;">0</span>
+        </button>
+        <select id="db-sort" class="filter-select" style="flex: 1;" aria-label="Sort order">
+          <option value="zone">Sort by Zone</option>
+          <option value="name">Sort by Name</option>
+          <option value="level">Sort by Level</option>
+          <option value="vnum">Sort by VNUM</option>
+        </select>
+      </div>
     </div>
+    
+    <!-- Active Filter Chips bar (Surfaces current active filter states) -->
+    <div id="active-chips-bar" class="active-chips-bar"></div>
     
     <!-- Collapsible filters based on Active Tab -->
     <div id="db-filters">
+      <!-- Mobile Close Panel -->
+      <div class="filter-sheet-header">
+        <h3>Adjust Filters</h3>
+        <button id="filter-sheet-close-btn" class="filter-sheet-close">Apply</button>
+      </div>
+
       <!-- Mob Filters -->
       <div id="filter-mobs-section" class="filter-tab-section">
         <div class="filter-group">
@@ -506,7 +1156,8 @@ input[type="range"] {
             <span class="range-val" id="filter-mob-level-val">0</span>
           </div>
         </div>
-        <div class="filter-group" style="margin-top: 0.5rem;">
+        
+        <div class="filter-group" style="margin-top: 1rem;">
           <label for="filter-mob-align">Alignment</label>
           <select id="filter-mob-align" class="filter-select">
             <option value="all">All Alignments</option>
@@ -514,6 +1165,31 @@ input[type="range"] {
             <option value="neutral">Neutral (Around 0)</option>
             <option value="evil">Evil (Negative)</option>
           </select>
+        </div>
+
+        <div class="filter-group" style="margin-top: 1rem;">
+          <label>Spawns In Zone</label>
+          <div id="filter-mob-zone" class="filter-multi-select">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div class="filter-group" style="margin-top: 1rem;">
+          <label>Temperament & Type</label>
+          <div class="filter-flags-grid">
+            <label class="flag-switch" id="switch-mob-shop">
+              <input type="checkbox" id="chk-mob-shop" style="display:none;">
+              § Shopkeeper
+            </label>
+            <label class="flag-switch" id="switch-mob-agg">
+              <input type="checkbox" id="chk-mob-agg" style="display:none;">
+              ‼ Aggressive
+            </label>
+            <label class="flag-switch" id="switch-mob-uniq">
+              <input type="checkbox" id="chk-mob-uniq" style="display:none;">
+              ◆ Unique Mob
+            </label>
+          </div>
         </div>
       </div>
       
@@ -523,42 +1199,92 @@ input[type="range"] {
           <label for="filter-item-type">Item Type</label>
           <select id="filter-item-type" class="filter-select">
             <option value="all">All Types</option>
+            <option value="LIGHT">Lights</option>
+            <option value="SCROLL">Scrolls</option>
+            <option value="WAND">Wands</option>
+            <option value="STAFF">Staves</option>
             <option value="WEAPON">Weapons</option>
             <option value="ARMOR">Armor</option>
+            <option value="POTION">Potions</option>
             <option value="CONTAINER">Containers</option>
-            <option value="LIGHT">Lights</option>
             <option value="KEY">Keys</option>
             <option value="BOAT">Boats</option>
-            <option value="POTION">Potions</option>
-            <option value="SCROLL">Scrolls</option>
             <option value="OTHER">Other</option>
           </select>
         </div>
-        <div class="filter-group" style="margin-top: 0.5rem;">
+        
+        <div class="filter-group" style="margin-top: 1rem;">
           <label for="filter-item-wear">Wear Position</label>
           <select id="filter-item-wear" class="filter-select">
             <option value="all">Any Position</option>
-            <option value="WIELD">Wielded (Weapon)</option>
-            <option value="BODY">Body (Armor)</option>
-            <option value="HEAD">Head</option>
-            <option value="SHIELD">Shield</option>
-            <option value="FINGER">Finger</option>
-            <option value="NECK">Neck</option>
-            <option value="HANDS">Hands</option>
+            <option value="TAKE">Inventory (Take)</option>
+            <option value="WIELD">Wielded (Weapons)</option>
+            <option value="BODY">Worn on Body</option>
+            <option value="HEAD">Worn on Head</option>
+            <option value="NECK">Worn around Neck</option>
+            <option value="SHIELD">Worn as Shield</option>
+            <option value="FINGER">Worn on Finger</option>
+            <option value="HANDS">Worn on Hands</option>
             <option value="HOLD">Held</option>
           </select>
+        </div>
+
+        <div class="filter-group" style="margin-top: 1rem;">
+          <label for="filter-item-affect">Magical Affect</label>
+          <select id="filter-item-affect" class="filter-select">
+            <option value="all">Any Affect</option>
+            <option value="HITROLL">+Hitroll</option>
+            <option value="DAMROLL">+Damroll</option>
+            <option value="STR">+Strength</option>
+            <option value="DEX">+Dexterity</option>
+            <option value="INT">+Intelligence</option>
+            <option value="WIS">+Wisdom</option>
+            <option value="CON">+Constitution</option>
+            <option value="CHA">+Charisma</option>
+            <option value="MANA">+Mana</option>
+            <option value="HIT">+HP</option>
+            <option value="AC">-AC (Armor)</option>
+          </select>
+        </div>
+
+        <div class="filter-group" style="margin-top: 1rem;">
+          <label>Spawns In Zone</label>
+          <div id="filter-item-zone" class="filter-multi-select">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div class="filter-group" style="margin-top: 1rem;">
+          <label>Item Qualities</label>
+          <div class="filter-flags-grid">
+            <label class="flag-switch" id="switch-itm-mag">
+              <input type="checkbox" id="chk-itm-mag" style="display:none;">
+              🪄 Magic Affects
+            </label>
+            <label class="flag-switch" id="switch-itm-scr">
+              <input type="checkbox" id="chk-itm-scr" style="display:none;">
+              📜 Special Script
+            </label>
+          </div>
         </div>
       </div>
     </div>
     
     <!-- Search / Filtered List Results -->
     <div id="db-results-container" role="listbox" aria-label="Database records">
-      <!-- Filled dynamically -->
+      <div class="scroll-shadow-top" id="shadow-top"></div>
+      <div id="db-results-inner" style="display: flex; flex-direction: column;">
+        <!-- Filled dynamically -->
+      </div>
+      <div class="scroll-shadow-bottom" id="shadow-bottom"></div>
     </div>
   </aside>
 
-  <!-- Main main canvas details -->
+  <!-- Main canvas details -->
   <main id="db-main">
+    <div class="bottom-sheet-handle"></div>
+    <button class="bottom-sheet-close-btn" id="db-mobile-close">✕ Close</button>
+    
     <div id="db-content">
       <div id="db-empty">
         <div>← Select a database record to inspect</div>
@@ -579,5 +1305,5 @@ input[type="range"] {
 
 </div>
 
-<script src="/js/database.js?v=1"></script>
+<script src="/js/database.js?v=2"></script>
 {{ end }}
