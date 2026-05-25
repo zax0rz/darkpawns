@@ -3,7 +3,10 @@ title: "Game Mechanics"
 description: "Combat formulas, economy, PK rules, and the remort system for Dark Pawns"
 date: 2026-04-22
 draft: false
-section: "docs"
+section: "world"
+aliases:
+  - /docs/game/mechanics/
+  - /docs/game/mechanics
 ---
 
 # Game Mechanics Deep-Dive

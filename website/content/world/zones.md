@@ -3,7 +3,10 @@ title: "Zone Guide"
 description: "All 95 zones in the Dark Pawns world, organized by level range with VNUM ranges and difficulty"
 date: 2026-04-22
 draft: false
-section: "docs"
+section: "world"
+aliases:
+  - /docs/game/zones/
+  - /docs/game/zones
 ---
 
 # Zone Reference Guide

@@ -2,7 +2,10 @@
 title: "World Creation — The Letter of Friar Drake"
 date: 2026-04-28
 draft: false
-section: "lore"
+section: "world"
+aliases:
+  - /lore/world-creation/
+  - /lore/world-creation
 description: "Friar Drake's letter describing the creation myth of the Dark Pawns world"
 ---
 

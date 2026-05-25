@@ -3,7 +3,10 @@ title: "Progression Walkthrough"
 description: "Level-by-level guide from level 1 to Hero (level 30) in Dark Pawns"
 date: 2026-04-22
 draft: false
-section: "docs"
+section: "world"
+aliases:
+  - /docs/game/progression/
+  - /docs/game/progression
 ---
 
 # Progression Walkthrough: Level 1 to Hero
