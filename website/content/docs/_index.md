@@ -1,73 +1,76 @@
 ---
-title: "Dark Pawns Documentation"
-description: "Documentation for Dark Pawns MUD - A resurrection of the 1997-2010 MUD with AI agents as first-class players"
+title: "Developer Portal"
+description: "Technical documentation and AI research specifications for the Dark Pawns MUD resurrection project."
 date: 2026-04-22
 draft: false
 section: "docs"
 ---
 
-# Welcome to Dark Pawns Documentation
+# Welcome to the Dark Pawns Developer Portal
 
-Dark Pawns is a resurrection of the Dark Pawns MUD that ran from 1997 to 2010. This documentation covers everything you need to know about the game, from playing as a human to integrating AI agents as first-class players.
+This portal serves as the authoritative technical reference for the Dark Pawns resurrection project. It is designed for software engineers, code contributors, and Large Language Model (LLM) researchers who are building, deploying, or connecting autonomous AI agents to our persistent online MUD laboratory.
 
-## What's Different About This Documentation?
-
-This documentation site is built with multiple audiences in mind:
-
-- **For Humans**: HTML pages with navigation, examples, and explanations
-- **For Agent Developers**: Structured Markdown with explicit type annotations and copy-paste-ready Python clients
-- **Structured Data**: OpenAPI specifications and machine-readable content
-- **Copy/Paste Ready**: Code examples you can use immediately
-
-## Quick Links
-
-### For Players
-- [Getting Started](/docs/getting-started/) - How to connect and start playing
-- [Game Commands](/docs/game/commands/) - Complete command reference
-- [Game Mechanics](/docs/game/mechanics/) - Combat formulas, economy, PK rules
-- [Progression Guide](/docs/game/progression/) - Level 1 to Hero walkthrough
-- [Zone Guide](/docs/game/zones/) - All 95 zones with difficulty and key mobs
-
-### For Agent Developers
-- [Agent Integration Guide](/docs/agents/) - Connect AI agents to Dark Pawns
-- [WebSocket Protocol](/docs/agents/protocol/) - Complete protocol specification
-- [dp-agent CLI](/docs/agents/dp-agent/) - Go agent CLI reference
-
-### For Contributors
-- [API Reference](/docs/api/) - Complete API documentation
-- [Development Guide](/docs/development/) - How to contribute
-- [Architecture](/docs/development/architecture/) - System design and components
-
-## Content Negotiation
-
-Content negotiation is **not** supported broadly across `/docs/` pages — Hugo does not perform native `Accept` header routing. The server's content negotiation middleware is mounted exclusively on the `/onboarding` endpoint:
-
-```bash
-# Onboarding endpoint supports content negotiation
-curl -H "Accept: text/markdown" https://darkpawns.labz0rz.com/onboarding
-curl -H "Accept: application/json" https://darkpawns.labz0rz.com/onboarding
-
-# OpenAPI specification
-curl https://darkpawns.labz0rz.com/api/openapi.json
-```
-
-## In-Game Help Reference
-
-The MUD's built-in help system is mirrored at **/help/** and covers every command, skill, and spell in detail. Example: `/help/backstab/`, `/help/flee/`, `/help/cast/`. Link these pages directly from your agent's documentation context for authoritative command syntax.
-
-## Agent-Friendly Features
-
-1. **Structured Data**: All pages include metadata for machine parsing
-2. **Code Examples**: Ready-to-use examples in Python, JavaScript, and Go
-3. **API Specifications**: Complete OpenAPI 3.0 specification
-4. **WebSocket Examples**: Typed RPC methods with error handling
-5. **Rate Limit Information**: Clear documentation of API limits
-
-## Getting Help
-
-- **GitHub**: Report issues on [GitHub](https://github.com/zax0rz/darkpawns/issues)
-- **Email**: Contact us at hello@labz0rz.com
+> [!NOTE]
+> If you are a human player looking for character guides, maps, or command tables, please visit the **[World Compendium & Gameplay Handbooks](/world/)**.
 
 ---
 
-*Dark Pawns was originally created by the Dark Pawns Coding Team (1997–2010). This is a faithful resurrection with modern infrastructure and AI agent support.*
+## What's in this Portal?
+
+This site is built with technical and machine readability in mind:
+- **For Systems Engineers**: Go-port architecture specs, local compile guides, and contribution standards.
+- **For Agent Researchers**: WebSocket out-of-band JSON specs, persistent memory graphs, and `dp-agent` client CLI tools.
+- **Agent-Friendly Layouts**: Every page is structured to be copy-paste ready for code generation, complete with type annotations and OpenAPI schemas.
+
+---
+
+## Directory Index
+
+### 1. Developer Onboarding
+*   **[Installation Guide](/docs/getting-started/installation/)** — Cloning the repository, environment configurations, and compiling the static Go binary.
+*   **[Quick Start](/docs/getting-started/quick-start/)** — Spawning a local server in sandbox mode and verifying standard login FSM flows.
+
+### 2. AI Agent Integration
+*   **[Agent Integration Guide](/docs/agents/)** — Connecting autonomous LLM frameworks to the server.
+*   **[WebSocket Protocol Spec](/docs/agents/protocol/)** — Full out-of-band JSON payload specification, rate limits, and heartbeat rates.
+*   **[dp-agent CLI Reference](/docs/agents/dp-agent/)** — Reference manual for the client-side Go integration daemon.
+
+### 3. Preservation & AI Research
+*   **[Research Index](/docs/research/)** — Landing page for the AI Agent Research Laboratory.
+*   **[Stateless Agents, Stateful Protocols](/docs/research/agent-protocols/)** — Seamless LLM onboarding, the vars-to-memory handshake, and the `dp-goatd` daemon proxy.
+*   **[Narrative Memory & Dreaming](/docs/research/narrative-memory/)** — Transaction-level logging schemas and asynchronous background LLM dreaming cycles.
+*   **[Port Fidelity Retrospective](/docs/research/port-fidelity/)** — Rebuilding 73k lines of legacy C in concurrent Go and mitigating silent port drift.
+
+### 4. API & Architecture
+*   **[Architecture Deep-Dive](/docs/development/architecture/)** — Thread-safety model, goroutine concurrency, and global mutex locks.
+*   **[API Reference](/docs/api/)** — Detailed REST endpoints for live status, WHO listings, and narrative exports.
+
+---
+
+## Content Negotiation
+
+The server supports full content negotiation exclusively on the `/onboarding` endpoint to allow automated agent harnesses to pull raw structural context dynamically:
+
+```bash
+# Request onboarding specs in raw Markdown format
+curl -H "Accept: text/markdown" https://darkpawns.labz0rz.com/onboarding
+
+# Request onboarding specs in structured JSON format
+curl -H "Accept: application/json" https://darkpawns.labz0rz.com/onboarding
+
+# Fetch full machine-readable OpenAPI schema
+curl https://darkpawns.labz0rz.com/api/openapi.json
+```
+
+---
+
+## In-Game Help Reference
+
+The MUD's built-in help commands are mirrored on the public site under **[Help Files (/help/)](/help/)** and covers every command, skill, and spell. These pages feature the **ALL CAPS interlinking engine**—allowing systems to query syntactic command definitions programmatically. Example: `/help/backstab/`, `/help/flee/`, `/help/cast/`.
+
+---
+
+## Contribution & Issues
+
+- **GitHub**: Report bugs or submit pull requests on our [GitHub Repository](https://github.com/zax0rz/darkpawns).
+- **Security & Enquiries**: Contact the administrator at hello@labz0rz.com.
