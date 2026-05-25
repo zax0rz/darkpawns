@@ -2,6 +2,7 @@
 import os
 import re
 import yaml
+import json
 from pathlib import Path
 
 HELP_DIR = Path("/Users/zach/.openclaw/workspace/darkpawns_repo/website/content/help")
@@ -77,9 +78,43 @@ def get_keywords(file_path, fm):
             filtered.add(kw)
     return filtered
 
+DB_FILE = Path(__file__).parent.parent / "static/data/database.json"
+
 def main():
     keyword_to_url = {}
     url_to_keywords = {}
+
+    # Load MUD Mobs and Items database to map mob and item keywords to database hashes
+    if DB_FILE.exists():
+        try:
+            db = json.loads(DB_FILE.read_text(encoding='utf-8', errors='ignore'))
+            print(f"Loaded {len(db.get('mobs', {}))} mobs and {len(db.get('items', {}))} items from database.json for interlinking.")
+
+            # 1. Map Mob keywords
+            for mid, m in db.get("mobs", {}).items():
+                vnum = m["v"]
+                # Link short desc
+                s_clean = clean_word(m["s"])
+                if s_clean and len(s_clean) >= 3 and s_clean.upper() not in STOP_WORDS:
+                    keyword_to_url[s_clean] = f"/database#mob-{vnum}"
+                # Link aliases
+                for kw in m["k"].split():
+                    kw_clean = clean_word(kw)
+                    if kw_clean and len(kw_clean) >= 3 and kw_clean.upper() not in STOP_WORDS:
+                        keyword_to_url[kw_clean] = f"/database#mob-{vnum}"
+
+            # 2. Map Item keywords
+            for iid, o in db.get("items", {}).items():
+                vnum = o["v"]
+                s_clean = clean_word(o["s"])
+                if s_clean and len(s_clean) >= 3 and s_clean.upper() not in STOP_WORDS:
+                    keyword_to_url[s_clean] = f"/database#item-{vnum}"
+                for kw in o["k"].split():
+                    kw_clean = clean_word(kw)
+                    if kw_clean and len(kw_clean) >= 3 and kw_clean.upper() not in STOP_WORDS:
+                        keyword_to_url[kw_clean] = f"/database#item-{vnum}"
+        except Exception as e:
+            print(f"Warning: Failed to load database.json for help interlinking: {e}", file=sys.stderr)
     
     # 1. First Pass: Scan all help files to map keywords to permalinks
     files_to_process = []

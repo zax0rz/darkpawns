@@ -2,6 +2,10 @@
 public/
 resources/_gen/
 
+# Dynamically generated database content (ignored to keep repo clean)
+content/mobs/
+content/items/
+
 # OS/editor
 .DS_Store
 *.swp
@@ -9,3 +13,4 @@ resources/_gen/
 *~
 .idea/
 .vscode/
+
