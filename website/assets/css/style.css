@@ -1565,6 +1565,265 @@ pre code {
    Dark Pawns — Broadsheet Landing & Archival Header Redesign
    ============================================ */
 
+/* ---- Homepage: Broadsheet Grid ---- */
+.broadsheet-grid {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: var(--space-xl);
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  align-items: start;
+}
+
+.broadsheet-section-title {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--space-xs);
+  margin: 0 0 var(--space-lg);
+}
+
+/* ---- Sidebar Nav ---- */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  border-left: 1.5px solid var(--rule);
+  padding-left: 1.5rem;
+}
+
+/* Agent Onboarding */
+.agent-onboard {
+  padding: 0.875rem;
+  border: 1px solid var(--ink);
+  background: var(--paper-deep);
+}
+
+.agent-onboard-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.agent-onboard-copy {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--ink);
+  margin: 0 0 0.875rem;
+  line-height: 1.4;
+}
+
+.agent-install-block {
+  margin-bottom: 0.75rem;
+}
+
+.agent-install-block:last-of-type {
+  margin-bottom: 0.875rem;
+}
+
+.agent-install-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+
+.install-platform {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.install-copy-btn {
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: none;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  padding: 0.15rem 0.45rem;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  min-height: auto;
+  line-height: normal;
+}
+
+.install-copy-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.install-copy-btn.copied {
+  background: #2E6B31;
+  border-color: #2E6B31;
+  color: var(--paper);
+}
+
+.install-cmd {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  line-height: 1.5;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.35rem 0.5rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.agent-docs-link {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  text-decoration: none;
+  border-bottom: none !important;
+  transition: color 0.1s;
+}
+
+.agent-docs-link:hover {
+  color: var(--accent);
+  border-bottom: none !important;
+}
+
+/* Telnet connect strip */
+.sidebar-connect {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.5rem 0.7rem;
+  font-family: var(--font-mono);
+}
+
+.connect-label {
+  font-size: 0.5625rem;
+  letter-spacing: 0.12em;
+  color: #C44A3F;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.sidebar-connect code {
+  font-size: 0.6875rem;
+  word-break: break-all;
+  color: var(--paper);
+}
+
+/* Quick nav list */
+.sidebar-quicknav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-quicknav li {
+  border-bottom: 1px solid rgba(26, 22, 20, 0.1);
+}
+
+.sidebar-quicknav li:first-child {
+  border-top: 1px solid rgba(26, 22, 20, 0.1);
+}
+
+.sidebar-quicknav a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  text-decoration: none;
+  border-bottom: none !important;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: color 0.1s;
+}
+
+.sidebar-quicknav a:hover {
+  color: var(--accent);
+  border-bottom: none !important;
+}
+
+.qnav-num {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--ink-muted);
+  min-width: 1.75rem;
+  flex-shrink: 0;
+}
+
+.sidebar-colophon {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.07em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  line-height: 1.7;
+}
+
+/* ---- Homepage Mobile ---- */
+@media (max-width: 768px) {
+  .broadsheet-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    margin-top: var(--space-lg);
+  }
+
+  .sidebar-nav {
+    order: -1;
+    border-left: none;
+    border-bottom: 1.5px solid var(--rule);
+    padding-left: 0;
+    padding-bottom: var(--space-lg);
+    gap: 1rem;
+  }
+
+  /* On mobile, collapse the quick nav into a 2-col grid */
+  .sidebar-quicknav ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid rgba(26, 22, 20, 0.1);
+  }
+
+  .sidebar-quicknav li {
+    border-top: none;
+    border-right: 1px solid rgba(26, 22, 20, 0.1);
+  }
+
+  .sidebar-quicknav li:nth-child(even) {
+    border-right: none;
+  }
+
+  .sidebar-quicknav a {
+    font-size: 0.75rem;
+    padding: 0.6rem 0;
+  }
+
+  .agent-onboard {
+    padding: 0.75rem;
+  }
+
+  .install-cmd {
+    font-size: 0.5625rem;
+  }
+}
+
 /* 1. Global Archival Header */
 /* 1. Global Archival Header Bar (Redesigned with restored branding) */
 .archival-header {

@@ -3,8 +3,7 @@
   <!-- LEFT COLUMN: The Dispatch (News Feed) -->
   <section class="broadsheet-main">
     <h2 class="broadsheet-section-title">THE DAILY DISPATCH</h2>
-    
-    <!-- Fetch all news pages and render them as a chronological feed -->
+
     {{ $newsSection := site.GetPage "section" "news" }}
     {{ if $newsSection }}
       <div class="news-feed">
@@ -26,122 +25,86 @@
     {{ end }}
   </section>
 
-  <!-- RIGHT COLUMN: The Archive Ledger (Sidebar Navigation) -->
-  <aside class="broadsheet-sidebar">
-    <h2 class="broadsheet-section-title">ARCHIVE LEDGER</h2>
-    
-    <!-- Agent Onboarding Prompt Widget (moltbook.com model) -->
-    <div class="agent-prompt-deck">
-      <div class="agent-deck-header">// CO-OP AGENT INITIATION</div>
-      <p class="agent-deck-description">
-        Want to play this MUD with an AI agent? Copy this custom system prompt and paste it into ChatGPT, Claude, or your LLM coding assistant:
-      </p>
-      <div class="agent-clipboard-box">
-        <textarea id="agent-prompt-text" readonly class="agent-textarea">Let's play Dark Pawns together! Check out https://darkpawns.labz0rz.com/skill.md and let me know what you think.</textarea>
-        <button id="btn-copy-prompt" class="btn btn-copy" onclick="copyAgentPrompt()">
-          <span id="copy-status-text">COPY PROMPT</span>
-        </button>
+  <!-- RIGHT COLUMN: Sidebar Navigation -->
+  <aside class="sidebar-nav">
+
+    <!-- Agent Onboarding — Primary CTA -->
+    <section class="agent-onboard">
+      <div class="agent-onboard-label">// AGENT ONBOARDING</div>
+      <p class="agent-onboard-copy">Connect your AI agent to Dark Pawns:</p>
+
+      <div class="agent-install-block">
+        <div class="agent-install-row">
+          <span class="install-platform">openclaw</span>
+          <button class="install-copy-btn" data-cmd="Install the pp-dp-goat skill from https://github.com/mvanhorn/printing-press-library/tree/main/cli-skills/pp-dp-goat. The skill defines how its required CLI can be installed." onclick="copyInstall(this)">COPY</button>
+        </div>
+        <code class="install-cmd">openclaw: tell your agent to install pp-dp-goat</code>
       </div>
+
+      <div class="agent-install-block">
+        <div class="agent-install-row">
+          <span class="install-platform">hermes</span>
+          <button class="install-copy-btn" data-cmd="hermes skills install mvanhorn/printing-press-library/cli-skills/pp-dp-goat --force" onclick="copyInstall(this)">COPY</button>
+        </div>
+        <code class="install-cmd">hermes skills install pp-dp-goat --force</code>
+      </div>
+
+      <a href="/docs/agents/" class="agent-docs-link">Full agent protocol docs →</a>
+    </section>
+
+    <!-- Connect via telnet -->
+    <div class="sidebar-connect">
+      <span class="connect-label">TELNET</span>
+      <code>darkpawns.labz0rz.com 8080</code>
     </div>
 
-    <!-- Telnet Connection Card -->
-    <div class="terminal-card">
-      <div class="terminal-label">// CONNECT VIA TELNET</div>
-      <div class="terminal-command">telnet darkpawns.labz0rz.com 8080</div>
-    </div>
+    <!-- Quick Nav Links -->
+    <nav class="sidebar-quicknav" aria-label="Site navigation">
+      <ul>
+        <li><a href="/play"><span class="qnav-num">01.</span>Launch Web Client</a></li>
+        <li><a href="/map"><span class="qnav-num">02.</span>World Map</a></li>
+        <li><a href="/database"><span class="qnav-num">03.</span>Database Codex</a></li>
+        <li><a href="/help"><span class="qnav-num">04.</span>Help Files</a></li>
+        <li><a href="/world"><span class="qnav-num">05.</span>Historical Lore</a></li>
+        <li><a href="/about"><span class="qnav-num">06.</span>Colophon & History</a></li>
+      </ul>
+    </nav>
 
-    <!-- Web Client Play Button -->
-    <a href="/play" class="btn btn-primary btn-play">Launch Web Client →</a>
-
-    <!-- High-Fidelity Catalog Index Cards -->
-    <div class="ledger-cards-container">
-      <a href="/about" class="ledger-card">
-        <div class="ledger-card-header">
-          <span class="ledger-card-no">№ 01</span>
-          <span class="ledger-card-label">READ THE HISTORY</span>
-          <span class="ledger-card-arrow">→</span>
-        </div>
-        <div class="ledger-card-hint">
-          1994 → 2010 → 2026. The unabridged chronicle of the project's evolution.
-        </div>
-      </a>
-
-      <a href="/map" class="ledger-card">
-        <div class="ledger-card-header">
-          <span class="ledger-card-no">№ 02</span>
-          <span class="ledger-card-label">WORLD MAP</span>
-          <span class="ledger-card-arrow">→</span>
-        </div>
-        <div class="ledger-card-hint">
-          Browse active zones, explore grid rooms, and search coordinate indices.
-        </div>
-      </a>
-
-      <a href="/help" class="ledger-card">
-        <div class="ledger-card-header">
-          <span class="ledger-card-no">№ 03</span>
-          <span class="ledger-card-label">HELP FILES</span>
-          <span class="ledger-card-arrow">→</span>
-        </div>
-        <div class="ledger-card-hint">
-          Index of 475 in-game reference files, spells, classes, and combat mechanics.
-        </div>
-      </a>
-
-      <a href="/lore" class="ledger-card">
-        <div class="ledger-card-header">
-          <span class="ledger-card-no">№ 04</span>
-          <span class="ledger-card-label">LORE ARCHIVE</span>
-          <span class="ledger-card-arrow">→</span>
-        </div>
-        <div class="ledger-card-hint">
-          Letters, world-building myths, and design journals from original creators.
-        </div>
-      </a>
-    </div>
-
-    <!-- Catalog Bibliography details -->
-    <div class="sidebar-bibliography">
-      <div>FILED UNDER: muds, archives, ports, Go.</div>
-      <div>SEE ALSO: ROM 2.4b · Diku · MERC.</div>
-    </div>
+    <div class="sidebar-colophon">FILED UNDER: muds · archives · Go · ROM 2.4b · SEE ALSO: DikuMUD · MERC · CircleMUD</div>
   </aside>
 </div>
 
-<!-- Inline Copy-to-Clipboard Handler -->
 <script>
-function copyAgentPrompt() {
-  var textarea = document.getElementById("agent-prompt-text");
-  var copyButton = document.getElementById("btn-copy-prompt");
-  var statusText = document.getElementById("copy-status-text");
-
-  textarea.select();
-  textarea.setSelectionRange(0, 99999); /* For mobile devices */
-
-  try {
-    navigator.clipboard.writeText(textarea.value).then(function() {
-      showSuccess();
-    }, function() {
-      // Fallback
-      document.execCommand("copy");
-      showSuccess();
-    });
-  } catch (err) {
-    document.execCommand("copy");
-    showSuccess();
-  }
-
-  function showSuccess() {
-    statusText.innerText = "COPIED ✓";
-    copyButton.style.background = "#2E7D32"; /* Muted green accent */
-    copyButton.style.color = "#EFE7D6";
+function copyInstall(btn) {
+  var text = btn.getAttribute('data-cmd');
+  var orig = btn.textContent;
+  function flash() {
+    btn.textContent = 'COPIED ✓';
+    btn.classList.add('copied');
     setTimeout(function() {
-      statusText.innerText = "COPY PROMPT";
-      copyButton.style.background = "";
-      copyButton.style.color = "";
+      btn.textContent = orig;
+      btn.classList.remove('copied');
     }, 2000);
   }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(flash, function() {
+      fallbackCopy(text);
+      flash();
+    });
+  } else {
+    fallbackCopy(text);
+    flash();
+  }
+}
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
 }
 </script>
 {{ end }}
-
