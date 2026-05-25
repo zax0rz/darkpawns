@@ -9,7 +9,7 @@ aliases: ['/help/toggle']
 
 Usage: toggle
 
-[TOGGLE](/help/commands/toggle/) shows you the current values of various toggles available on the MUD.
+[TOGGLE](/help/commands/toggle/) shows you the current values of various toggles available on the [MUD](/database#item-5810).
 This command CAN NOT be used to change these values (see related commands.)
 All of these toggles remain the same until you change them; i.e. they are
 saved when you quit or rent.

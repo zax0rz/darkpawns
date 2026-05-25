@@ -15,7 +15,7 @@ argument is optional.
 [STAT](/help/wizhelp/stat/) [PLAYER](/help/info/pk-player-killing-pkill-pkilling-pkiller/) will search only for players; useful for statting people with
 names such as Red or Cityguard.
 
-[STAT](/help/wizhelp/stat/) OBJECT will search only for objects.
+[STAT](/help/wizhelp/stat/) [OBJECT](/database#item-4330) will search only for objects.
 
 [STAT](/help/wizhelp/stat/) [MOBILE](/help/info/mob-mobile-npc-mobs/) will search only for monsters.
 

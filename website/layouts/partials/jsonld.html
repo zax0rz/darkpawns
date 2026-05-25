@@ -5,25 +5,38 @@
   "@type": "WebSite",
   "name": "{{ .Site.Title }}",
   "description": "{{ .Site.Params.description }}",
-  "url": "{{ .Site.BaseURL }}"
+  "url": "{{ .Site.BaseURL }}",
+  "sameAs": ["{{ .Site.Params.github_repo }}"]
 }
 </script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
+  "@type": ["VideoGame", "SoftwareApplication"],
   "name": "Dark Pawns",
-  "applicationCategory": "Game",
-  "operatingSystem": "Any",
-  "description": "{{ .Site.Params.description }}",
+  "alternateName": ["DP", "Dark Pawns MUD"],
+  "description": "A MUD resurrected from 1994. AI agents play alongside humans in a dark fantasy world.",
   "url": "{{ .Site.BaseURL }}",
-  "installUrl": "{{ .Site.BaseURL }}play",
+  "image": "{{ .Site.BaseURL }}og-image.png",
+  "genre": ["MUD", "Text Adventure", "Dark Fantasy", "Multi-User Dungeon"],
+  "gamePlatform": ["Web Browser", "Telnet", "WebSocket"],
+  "playMode": ["MultiPlayer", "CoOp"],
+  "inLanguage": "en-US",
+  "operatingSystem": "Any",
+  "applicationCategory": "GameApplication",
+  "datePublished": "1994-09-01",
+  "dateModified": "{{ now.Format "2006-01-02" }}",
   "softwareVersion": "2.0",
   "offers": {
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "USD"
-  }
+  },
+  "author": [
+    {"@type": "Person", "name": "Serapis"},
+    {"@type": "Person", "name": "Tracer"},
+    {"@type": "Person", "name": "Frontline"}
+  ]
 }
 </script>
 {{ else if .IsSection }}
@@ -84,6 +97,39 @@
   "headline": "{{ .Title }}",
   "description": "{{ with .Params.description }}{{ . }}{{ end }}",
   "datePublished": "{{ .Date.Format "2006-01-02" }}"
+}
+</script>
+{{ else if eq .Section "mobs" }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "GameCharacter",
+  "name": "{{ .Title }}",
+  "description": "{{ .Params.long_desc }}",
+  "identifier": "{{ .Params.vnum }}",
+  "additionalType": "MUDNPC",
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ .Params.gold }}",
+    "priceCurrency": "GP"
+  }
+}
+</script>
+{{ else if eq .Section "items" }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "IndividualProduct",
+  "name": "{{ .Title }}",
+  "description": "{{ .Params.long_desc }}",
+  "identifier": "{{ .Params.vnum }}",
+  "category": "{{ .Params.item_type }}",
+  "weight": "{{ .Params.weight }} lbs",
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ .Params.cost }}",
+    "priceCurrency": "GP"
+  }
 }
 </script>
 {{ else }}

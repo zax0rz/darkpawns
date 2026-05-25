@@ -23,7 +23,7 @@ With this idea in mind you can create non-noise 'noises'.  Using the
 noise option and the 'hidden' mob, you can create enviromental effects.
 Ex. 'You feel a cool breeze', 'You stumble on the slick floor.'  
 These effects will continue to occur at the same interval as regular 
-noises, but because the mob is unreachable and unkillable (!SUMM,SENTINEL),
+noises, but because the mob is unreachable and unkillable (!SUMM,[SENTINEL](/database#mob-19510)),
 The noise will never end.  Application: Sea shore -breeze-
                                       : Garbage heap -trip-
                                       : Wet cavern -slip-

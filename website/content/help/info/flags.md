@@ -10,7 +10,7 @@ aliases: ['/help/flags']
 Players sometimes have [FLAGS](/help/info/flags/) after their names in the WHO list.  These
 flags are always in parentheses, not brackets or braces.
 
-  FLAG        MEANING
+  [FLAG](/database#item-77)        MEANING
   ----------- ---------------------------------------------------------
   ([CHOSEN](/help/wizhelp/chosen/))    Player is the Chosen of the Gods.
   (invis)     Player is invisible; you can see him/her because you are

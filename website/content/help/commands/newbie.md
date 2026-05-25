@@ -8,7 +8,7 @@ aliases: ['/help/newbie']
 ---
 
 Newbie is a term used to describe people who are new to MUDding, and sometimes
-just one particular MUD. As a newbie you start out with a few choice pieces
+just one particular [MUD](/database#item-5810). As a newbie you start out with a few choice pieces
 of equipment and enough food to last until you gather enough money to buy
 more. The [INFO](/help/commands/info-news-policy-version-future/) and [POLICY](/help/commands/info-news-policy-version-future/) commands will tell you the rules and basics of
 Dark Pawns, and the [NEWS](/help/commands/info-news-policy-version-future/) file will keep you updated on various added features.

@@ -15,5 +15,5 @@ or
 
 Someone says, 'Hey there!'.
 
-This means that the person that is speaking is INVISIBLE to you, you 
+This means that the person that is speaking is [INVISIBLE](/database#mob-20000) to you, you 
 cannot see them for whatever reason.

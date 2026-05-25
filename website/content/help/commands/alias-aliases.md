@@ -32,7 +32,7 @@ a single alias.
 
   > alias eat get bread bag; eat bread
 
-Note that the 'eat' contained within the eat alias is interpreted as the MUD's
+Note that the 'eat' contained within the eat alias is interpreted as the [MUD](/database#item-5810)'s
 internal eat command; aliases may not be nested or used recursively.  The
 variables $1, $2, ... $9 may be used to represent arguments given with
 an alias.
