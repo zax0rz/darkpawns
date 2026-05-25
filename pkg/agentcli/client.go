@@ -216,6 +216,7 @@ func (a *AgentClient) handleVars(ctx context.Context, data json.RawMessage) erro
 		ROOM_MOBS  []Mob    `json:"ROOM_MOBS"`
 		ROOM_ITEMS []Item   `json:"ROOM_ITEMS,omitempty"`
 		FIGHTING   string   `json:"FIGHTING"`
+		INVENTORY  []Item   `json:"INVENTORY,omitempty"`
 	}
 	if err := json.Unmarshal(data, &vars); err != nil {
 		return fmt.Errorf("parse vars: %w", err)
@@ -232,6 +233,7 @@ func (a *AgentClient) handleVars(ctx context.Context, data json.RawMessage) erro
 	a.state.Room.Mobs = vars.ROOM_MOBS
 	a.state.Room.Items = vars.ROOM_ITEMS
 	a.state.Fighting = vars.FIGHTING
+	a.state.Inventory = vars.INVENTORY
 
 	if action := FSMDecision(a.state); action != nil {
 		return a.executeAction(ctx, action, 0)

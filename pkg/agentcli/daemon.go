@@ -241,6 +241,7 @@ func (d *Daemon) handleVars(data json.RawMessage) error {
 		FIGHTING   string   `json:"FIGHTING"`
 		GOLD       int      `json:"GOLD"`
 		POSITION   string   `json:"POSITION"`
+		INVENTORY  []Item   `json:"INVENTORY,omitempty"`
 	}
 	if err := json.Unmarshal(data, &vars); err != nil {
 		return fmt.Errorf("parse vars: %w", err)
@@ -259,8 +260,7 @@ func (d *Daemon) handleVars(data json.RawMessage) error {
 	state.Room.Mobs = vars.ROOM_MOBS
 	state.Room.Items = vars.ROOM_ITEMS
 	state.Fighting = vars.FIGHTING
-	// Note: room items used as inventory approximation — no separate INVENTORY var subscription exists yet
-	state.Inventory = vars.ROOM_ITEMS
+	state.Inventory = vars.INVENTORY
 
 	// Persist state
 	if err := d.state.Save(state); err != nil {
