@@ -111,8 +111,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if rec != nil {
 				// Name already exists — reject before wasting the player's time
 				// through the full creation flow only to fail at DB save.
+				// Don't close the connection: let writePump flush the error and
+				// allow the client to reset and prompt for a different name.
 				s.sendError(fmt.Sprintf("A character named '%s' already exists. Please choose a different name.", login.PlayerName))
-				_ = s.conn.Close()
 				return nil
 			}
 			if login.Password == "" {
