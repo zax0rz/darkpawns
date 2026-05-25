@@ -32,7 +32,9 @@ OUT_DIR    = REPO_ROOT / "website/static/map"
 CELL = 38          # pixels per grid cell in zone view
 OV_W = 9000        # world-overview canvas coordinate space
 OV_H = 7000
-SPRING_ITERS = 600 # force spring iterations for world overview
+SPRING_ITERS = 800 # force spring iterations for world overview
+GRAVITY      = 0.09 # center-pull per iteration (creates globe shape)
+WEIGHT_CAP   = 4.0  # max edge-weight multiplier (prevents dominant corridors collapsing)
 
 DIR_DELTA = {"n": (0, -1), "s": (0, 1), "e": (1, 0), "w": (-1, 0)}
 # U/D intentionally skipped — 2D map; connected rooms appear as separate nodes
@@ -121,11 +123,16 @@ def bfs_layout(rooms: list, cell: int = CELL) -> dict:
 
 # ── Fruchterman–Reingold spring layout (91 nodes, fast) ─────────────────────
 
-def spring_layout(node_ids: set, links: list, width: int = OV_W, height: int = OV_H,
-                  iterations: int = SPRING_ITERS, seed: int = 42) -> dict:
+def spring_layout(node_ids: set, links: list, weights: dict = None,
+                  width: int = OV_W, height: int = OV_H,
+                  iterations: int = SPRING_ITERS, seed: int = 42,
+                  gravity: float = GRAVITY) -> dict:
     """
     Fruchterman–Reingold spring layout for the world-overview (91 zone nodes).
     Runs at build time — no browser physics needed.
+
+    weights: {(min_id, max_id): count} — heavier edges pull zones tighter together.
+    gravity: constant pull toward canvas center each iteration (produces globe shape).
 
     Returns: {node_id: {"x": float, "y": float}}
     """
@@ -146,6 +153,7 @@ def spring_layout(node_ids: set, links: list, width: int = OV_W, height: int = O
     k      = math.sqrt(width * height / n) * 0.75
     temp   = width * 0.08
     cool   = temp / (iterations + 1)
+    cx, cy = width / 2.0, height / 2.0
 
     node_list = list(node_ids)
 
@@ -163,7 +171,7 @@ def spring_layout(node_ids: set, links: list, width: int = OV_W, height: int = O
                 disp_x[u] += dx / d * f;  disp_x[v] -= dx / d * f
                 disp_y[u] += dy / d * f;  disp_y[v] -= dy / d * f
 
-        # Attraction along edges
+        # Attraction along edges (weighted: more exits = stronger pull)
         for u in node_ids:
             for v in adj[u]:
                 if v < u:
@@ -171,9 +179,17 @@ def spring_layout(node_ids: set, links: list, width: int = OV_W, height: int = O
                 dx = xs[u] - xs[v]
                 dy = ys[u] - ys[v]
                 d  = math.hypot(dx, dy) + 0.01
-                f  = d * d / k
+                key = (min(u, v), max(u, v))
+                w   = min((weights[key] / 3.0), WEIGHT_CAP) if (weights and key in weights) else 1.0
+                f   = d * d / k * w
                 disp_x[u] -= dx / d * f;  disp_x[v] += dx / d * f
                 disp_y[u] -= dy / d * f;  disp_y[v] += dy / d * f
+
+        # Center gravity — pulls all nodes toward canvas center, producing globe shape.
+        # Isolated components orbit the periphery rather than flying off to corners.
+        for nid in node_ids:
+            disp_x[nid] += (cx - xs[nid]) * gravity
+            disp_y[nid] += (cy - ys[nid]) * gravity
 
         # Apply displacements with temperature cooling
         for nid in node_ids:
@@ -266,19 +282,19 @@ def main():
     # ── 2. World overview: spring layout on 91 zone-centroid nodes ───────────
     print("\nComputing world-overview spring layout …")
 
-    # Inter-zone links: zones that share at least one room exit
-    inter_set = set()
+    # Inter-zone links with exit counts — heavier corridors pull zones tighter
+    inter_counts = {}
     for zone in zones:
         for room in zone["rooms"]:
             for ex in room.get("exits", []):
                 t_zone = zone_of_room.get(ex.get("t"))
                 if t_zone and t_zone != zone["id"]:
                     a, b = min(zone["id"], t_zone), max(zone["id"], t_zone)
-                    inter_set.add((a, b))
+                    inter_counts[(a, b)] = inter_counts.get((a, b), 0) + 1
 
-    inter_links = list(inter_set)
+    inter_links = list(inter_counts.keys())
     node_ids    = {z["id"] for z in zones}
-    ov_positions = spring_layout(node_ids, inter_links)
+    ov_positions = spring_layout(node_ids, inter_links, weights=inter_counts)
 
     overview_nodes = [
         {
