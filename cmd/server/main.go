@@ -93,7 +93,7 @@ func main() {
 		slog.Error("Failed to create game world", "error", err)
 		os.Exit(1)
 	}
-	gameWorld.WorldPath = *worldDir + "/world"
+	gameWorld.WorldPath = *worldDir
 
 	// Initialize scripting engine
 	if *scriptsDir == "" {
