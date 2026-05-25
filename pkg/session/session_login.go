@@ -108,6 +108,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		} else if login.NewChar {
 			// New character — require password, then enter creation flow
 			// This applies to BOTH humans and agents. Same rules.
+			if rec != nil {
+				// Name already exists — reject before wasting the player's time
+				// through the full creation flow only to fail at DB save.
+				s.sendError(fmt.Sprintf("A character named '%s' already exists. Please choose a different name.", login.PlayerName))
+				_ = s.conn.Close()
+				return nil
+			}
 			if login.Password == "" {
 				s.sendError("Password required for new characters.")
 				_ = s.conn.Close()
@@ -167,6 +174,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		if err := s.manager.world.AddPlayer(s.player); err != nil {
 			s.manager.Unregister(login.PlayerName)
 			return err
+		}
+
+		// Look around so they see the room on entry!
+		if err := ExecuteCommand(s, "look", nil); err != nil {
+			slog.Error("look command failed on entry", "player", s.player.Name, "error", err)
 		}
 
 		// Generate JWT token for API access

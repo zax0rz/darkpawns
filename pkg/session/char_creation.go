@@ -99,6 +99,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		case "Y", "y":
 			if err := s.completeCharCreation(); err != nil {
 				slog.Error("char creation failed", "error", err)
+				return err
 			}
 		case "N", "n":
 			// Reroll stats and stay at stats_roll stage
@@ -283,6 +284,13 @@ func (s *Session) completeCharCreation() error {
 		s.manager.Unregister(s.charName)
 		return err
 	}
+
+	// New characters begin in the newbie intro room (A Burning Hut).
+	// C source: interpreter.c line 2241 — char_to_room(d->character, real_room(8099))
+	// The DB save above used the hometown room so that future logins recall there.
+	// We override in-memory only for this session's intro.
+	s.player.RoomVNum = game.NewbieStartRoom
+
 	slog.Info("completeCharCreation: player added to world", "player", s.player.Name, "room", s.player.GetRoom())
 
 	// Safety: catch any panic in the rest of char creation

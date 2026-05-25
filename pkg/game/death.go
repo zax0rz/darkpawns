@@ -47,6 +47,10 @@ const (
 // MortalStartRoom is the vnum of the mortal start room (config.c: mortal_start_room = 8004)
 const MortalStartRoom = 8004
 
+// NewbieStartRoom is the vnum of the newbie intro room for brand-new characters.
+// interpreter.c line 2241: char_to_room(d->character, real_room(8099))
+const NewbieStartRoom = 8099
+
 // HandleDeath is the DeathFunc set on the combat engine.
 // It handles both player and mob death faithfully to the original.
 // This is called for combat deaths (die_with_killer).
