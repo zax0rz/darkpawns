@@ -120,6 +120,11 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		mux.HandleFunc("/admin/decisions", wrap(corsMiddleware(requireRole("builder", handleDecisionLog(database)))))
 	}
 
+	// Narrative feed — requires builder role
+	if database != nil {
+		mux.HandleFunc("/admin/narrative", wrap(corsMiddleware(requireRole("builder", handleNarrativeFeed(database)))))
+	}
+
 	// SPA fallback — this MUST be registered last, after all API routes.
 	// Catches any /admin/* path that didn't match an API route above.
 	if _, err := os.Stat(adminUIDir); err == nil {

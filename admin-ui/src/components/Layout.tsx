@@ -20,6 +20,7 @@ const navItems: NavItem[] = [
   { to: '/admin/game/objects', label: 'Objects', icon: '💎', role: 'player' },
   { to: '/admin/agents', label: 'Agents', icon: '🤖', role: 'builder' },
   { to: '/admin/decisions', label: 'Decisions', icon: '📊', role: 'builder' },
+  { to: '/admin/narrative', label: 'Mind Reader', icon: '🧠', role: 'builder' },
   { to: '/admin/operations', label: 'Operations', icon: '⚙️', role: 'builder' },
   { to: '/admin/webclient', label: 'Terminal', icon: '🖥️', role: 'player' },
 ];
@@ -79,9 +80,9 @@ export function Layout() {
   const visibleNavItems = navItems.filter((item) => hasRole(item.role));
 
   const connectionIndicator = {
-    connected: { color: 'bg-green-500', label: 'Connected' },
-    disconnected: { color: 'bg-red-500', label: 'Disconnected' },
-    reconnecting: { color: 'bg-yellow-500', label: 'Reconnecting...' },
+    connected: { color: 'bg-accent', label: 'ONLINE' },
+    disconnected: { color: 'bg-ink-muted animate-pulse', label: 'OFFLINE' },
+    reconnecting: { color: 'bg-accent animate-bounce', label: 'RECONNECTING' },
   }[connectionStatus];
 
   const isMobile = breakpoint === 'mobile';
@@ -89,10 +90,10 @@ export function Layout() {
   const showSidebar = breakpoint === 'desktop' || sidebarOpen;
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+    <div className="flex h-screen bg-paper text-ink font-serif transition-colors duration-200">
       {/* Desktop sidebar */}
       {breakpoint === 'desktop' && (
-        <aside className="w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-700 flex flex-col shrink-0">
+        <aside className="w-64 bg-paper border-r border-rule flex flex-col shrink-0">
           <SidebarContent
             navItems={visibleNavItems}
             playerName={playerName}
@@ -107,11 +108,11 @@ export function Layout() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 bg-black/60 z-40 transition-opacity"
             onClick={closeSidebar}
           />
           {/* Sidebar */}
-          <aside className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-700 flex flex-col z-50 animate-[slideInLeft_0.2s_ease-out]">
+          <aside className="fixed inset-y-0 left-0 w-64 bg-paper border-r border-rule flex flex-col z-50 animate-[slideInLeft_0.2s_ease-out]">
             <SidebarContent
               navItems={visibleNavItems}
               playerName={playerName}
@@ -126,35 +127,38 @@ export function Layout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
-        <header className="h-12 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 md:px-6 bg-white/80 dark:bg-slate-900/50 backdrop-blur shrink-0">
+        <header className="h-12 border-b border-rule flex items-center px-4 md:px-6 bg-paper-deep/40 backdrop-blur shrink-0">
           {/* Hamburger (mobile/tablet) */}
           {(isMobile || isTablet) && (
             <button
               onClick={toggleSidebar}
-              className="mr-3 p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+              className="mr-3 p-1.5 rounded-none border border-rule hover:bg-paper-deep transition-colors"
               aria-label="Toggle menu"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
           )}
 
-          <h2 className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">Dark Pawns Admin</h2>
+          <h2 className="text-xs uppercase tracking-widest text-ink-muted font-sans hidden sm:block">
+            Dark Pawns Administrative Ledger
+          </h2>
 
           <div className="ml-auto flex items-center gap-3">
             {/* Command palette trigger */}
             <button
               onClick={openPalette}
-              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 transition-colors"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-sans text-ink bg-paper hover:bg-paper-deep px-2.5 py-1 rounded-none border border-rule transition-colors"
             >
-              <span>⌘K</span>
+              <span className="opacity-70">SEARCH</span>
+              <kbd className="bg-paper-deep px-1 border border-rule/50 rounded-none text-[10px]">⌘K</kbd>
             </button>
 
             {/* Connection status */}
-            <span className="flex items-center gap-1.5 text-xs" title={connectionIndicator.label}>
-              <span className={`w-2 h-2 rounded-full ${connectionIndicator.color}`} />
-              <span className="hidden md:inline text-slate-500 dark:text-slate-400">
+            <span className="flex items-center gap-1.5 text-xs font-sans font-bold" title={connectionIndicator.label}>
+              <span className={`w-2.5 h-2.5 rounded-none border border-rule ${connectionIndicator.color}`} />
+              <span className="hidden md:inline text-ink-muted tracking-wider">
                 {connectionIndicator.label}
               </span>
             </span>
@@ -162,36 +166,36 @@ export function Layout() {
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-sm"
+              className="p-1.5 rounded-none border border-rule hover:bg-paper-deep transition-colors text-xs"
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
-              {theme === 'dark' ? '☀️' : '🌙'}
+              {theme === 'dark' ? '🌕 PARCHMENT' : '🌑 INK'}
             </button>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-paper">
           <Outlet />
         </main>
 
         {/* Mobile bottom tab bar */}
         {isMobile && (
-          <nav className="flex border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shrink-0">
+          <nav className="flex border-t border-rule bg-paper-deep shrink-0 z-30">
             {mobileTabItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.to === '/admin/'}
                 className={({ isActive }) =>
-                  `flex-1 flex flex-col items-center py-2 text-[10px] transition-colors ${
+                  `flex-1 flex flex-col items-center py-2 text-[10px] font-sans uppercase tracking-wider transition-colors ${
                     isActive
-                      ? 'text-amber-600 dark:text-amber-400'
-                      : 'text-slate-400'
+                      ? 'text-accent font-bold bg-paper/50'
+                      : 'text-ink-muted'
                   }`
                 }
               >
-                <span className="text-lg">{item.icon}</span>
+                <span className="text-base mb-0.5">{item.icon}</span>
                 <span>{item.label}</span>
               </NavLink>
             ))}
@@ -221,15 +225,17 @@ function SidebarContent({
   return (
     <>
       {/* Logo / Title */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-        <h1 className="text-lg font-bold text-amber-600 dark:text-amber-400 tracking-wide">
-          ⚔️ Dark Pawns
+      <div className="p-4 border-b border-rule bg-paper-deep/20">
+        <h1 className="text-xl font-extrabold text-accent tracking-widest font-sans flex items-center gap-1.5">
+          DARK PAWNS
         </h1>
-        <p className="text-xs text-slate-400 mt-1">Admin Panel</p>
+        <p className="text-[10px] uppercase tracking-widest text-ink-muted mt-1 font-sans">
+          Mythic Admin Console
+        </p>
         {onClose && (
           <button
             onClick={onClose}
-            className="mt-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 sm:hidden"
+            className="mt-2 text-xs font-sans uppercase text-ink-muted hover:text-accent sm:hidden border border-rule px-2 py-0.5"
           >
             ✕ Close
           </button>
@@ -237,43 +243,43 @@ function SidebarContent({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto bg-paper">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === '/admin/'}
             className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors ${
+              `flex items-center gap-2.5 px-3.5 py-2.5 rounded-none text-xs uppercase tracking-wider font-sans border transition-all ${
                 isActive
-                  ? 'bg-amber-50 dark:bg-slate-700 text-amber-700 dark:text-amber-400'
-                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-paper-deep text-accent border-rule font-extrabold shadow-[2px_2px_0px_0px_rgba(26,22,20,0.1)]'
+                  : 'text-ink border-transparent hover:bg-paper-deep hover:text-accent hover:border-rule/30'
               }`
             }
           >
-            <span>{item.icon}</span>
+            <span className="text-sm opacity-80">{item.icon}</span>
             <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>
 
       {/* User info */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm font-medium text-slate-900 dark:text-white">
-              {playerName || 'Unknown'}
+      <div className="p-3 border-t border-rule bg-paper-deep/30">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="text-xs font-extrabold text-ink font-sans truncate uppercase tracking-wider">
+              {playerName || 'Unknown Operator'}
             </div>
-            <div className="text-xs text-slate-400">
+            <div className="text-[10px] mt-1">
               <span
-                className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                className={`inline-block px-2 py-0.5 rounded-none text-[9px] font-bold uppercase tracking-wider border ${
                   role === 'admin'
-                    ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                    ? 'bg-accent text-paper border-accent-deep'
                     : role === 'builder'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      ? 'bg-paper-deep text-ink border-rule'
                       : role === 'research'
-                        ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
-                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        ? 'bg-paper text-accent border-accent'
+                        : 'bg-paper text-ink-muted border-rule/50'
                 }`}
               >
                 {role || 'player'}
@@ -282,7 +288,7 @@ function SidebarContent({
           </div>
           <button
             onClick={onLogout}
-            className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="text-[10px] uppercase font-sans tracking-wider text-ink hover:text-accent border border-rule hover:bg-paper-deep px-2 py-1 transition-all shrink-0"
           >
             Logout
           </button>

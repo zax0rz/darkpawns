@@ -167,6 +167,21 @@ export interface TriageSummary {
   created_at: string;
 }
 
+export interface NarrativeRow {
+  id: number;
+  agent_name: string;
+  event_type: string;
+  summary: string;
+  room_vnum: number;
+  room_name: string;
+  related_entity: string | null;
+  related_vnum: number | null;
+  valence: number;
+  salience: number;
+  session_id: string;
+  created_at: string;
+}
+
 export interface PlayerInfo {
   name: string;
   level: number;
@@ -271,6 +286,15 @@ export const api = {
       });
     }
     return request<{ total: number; limit: number; offset: number; data: DecisionRow[] }>(`/decisions${qs.toString() ? '?' + qs.toString() : ''}`);
+  },
+  narrative: (params?: { agent_name?: string; limit?: number; offset?: number }) => {
+    const qs = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== '') qs.set(k, String(v));
+      });
+    }
+    return request<{ total: number; limit: number; offset: number; data: NarrativeRow[] }>(`/narrative${qs.toString() ? '?' + qs.toString() : ''}`);
   },
   updateAgentStatus: (data: { agent_id: string; status: string }) =>
     request<AgentStatus>('/agents/status', { method: 'POST', body: JSON.stringify(data) }),

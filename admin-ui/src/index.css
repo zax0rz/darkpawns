@@ -1,8 +1,44 @@
 @import "tailwindcss";
 
 @theme {
+  --color-paper: var(--color-paper);
+  --color-paper-deep: var(--color-paper-deep);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-rule: var(--color-rule);
+  --color-accent: var(--color-accent);
+  --color-accent-deep: var(--color-accent-deep);
+  --color-registration: var(--color-registration);
+
+  --font-sans: 'Archivo Narrow', 'Arial Narrow', sans-serif;
+  --font-serif: 'Source Serif 4', 'Georgia', serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
   --animate-slideInLeft: slideInLeft 0.2s ease-out;
   --animate-slideIn: slideIn 0.2s ease-out;
+}
+
+:root {
+  --color-paper: #EFE7D6;       /* Ivory Parchment */
+  --color-paper-deep: #E5DAC1;  /* Deeper Parchment */
+  --color-ink: #1A1614;         /* Charcoal Ink */
+  --color-ink-muted: #56504A;   /* Muted Ink */
+  --color-rule: #1A1614;        /* Ink lines */
+  --color-accent: #A8201A;      /* Oxblood Red */
+  --color-accent-deep: #7A1812; /* Deep Blood Red */
+  --color-registration: #0F0F0F;/* Pure Registration Black */
+}
+
+/* Dark mode mapping: Charcoal & Blood Red */
+.dark {
+  --color-paper: #161311;       /* Charcoal Pulp Background */
+  --color-paper-deep: #0C0A09;  /* Heavy Registration Black */
+  --color-ink: #EFE7D6;         /* Ivory Ink */
+  --color-ink-muted: #A29A8A;   /* Muted Cream */
+  --color-rule: #36302C;        /* Charcoal borders */
+  --color-accent: #E2362E;      /* Vivid Blood Red for contrast */
+  --color-accent-deep: #A8201A; /* Oxblood Red */
+  --color-registration: #EFE7D6;
 }
 
 @keyframes slideInLeft {
@@ -23,4 +59,178 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Base element stylings for the Retro Horror Paperback Aesthetic */
+html, body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: 'Source Serif 4', Georgia, serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Aged parchment paper scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-paper);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-paper-deep);
+  border: 2px solid var(--color-paper);
+  border-radius: 0px; /* Sharp corners */
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* Custom layout typography defaults */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Archivo Narrow', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ==========================================================================
+   GLOBAL UTILITY OVERRIDES (Reskinning Tailwind Slate classes to retro theme)
+   ========================================================================== */
+
+/* Cards & containers background + border overrides */
+.bg-slate-800, 
+.bg-slate-800\/80, 
+.bg-slate-800\/50, 
+.dark .bg-slate-800, 
+.dark .bg-slate-950,
+.bg-white,
+.dark .bg-white {
+  background-color: var(--color-paper-deep) !important;
+  border-color: var(--color-rule) !important;
+  border-radius: 0px !important;
+}
+
+.border-slate-700, 
+.border-slate-700\/50, 
+.border-slate-700\/80,
+.dark .border-slate-700, 
+.border-slate-200,
+.dark .border-slate-200,
+.border-slate-600,
+.dark .border-slate-600 {
+  border-color: var(--color-rule) !important;
+  border-radius: 0px !important;
+}
+
+/* Inputs & Filter selectors overrides */
+.bg-slate-900, 
+.dark .bg-slate-900, 
+.bg-slate-700, 
+.dark .bg-slate-700,
+.bg-slate-100,
+.dark .bg-slate-100 {
+  background-color: var(--color-paper) !important;
+  color: var(--color-ink) !important;
+  border-color: var(--color-rule) !important;
+  border-radius: 0px !important;
+}
+
+/* Ensure placeholder text matches the aesthetic */
+input::placeholder, select::placeholder {
+  color: var(--color-ink-muted) !important;
+  opacity: 0.6;
+}
+
+/* Reset rounded corners everywhere for vintage look */
+.rounded-lg, 
+.rounded-md, 
+.rounded-sm, 
+.rounded {
+  border-radius: 0px !important;
+}
+
+/* Table styling overrides */
+table {
+  border-collapse: collapse !important;
+  width: 100%;
+}
+
+table th {
+  background-color: var(--color-paper-deep) !important;
+  color: var(--color-ink) !important;
+  font-family: 'Archivo Narrow', sans-serif !important;
+  text-transform: uppercase !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 2px solid var(--color-rule) !important;
+  padding: 10px 14px !important;
+}
+
+table td {
+  border-bottom: 1px solid var(--color-rule) !important;
+  padding: 10px 14px !important;
+  font-family: 'Source Serif 4', Georgia, serif;
+}
+
+table tr {
+  border-color: var(--color-rule) !important;
+}
+
+/* Faint blood-red tint on row hovers */
+table tr:hover {
+  background-color: rgba(168, 32, 26, 0.05) !important;
+  transition: background-color 0.15s ease;
+}
+
+/* Text colors overrides */
+.text-slate-100, .dark .text-slate-100,
+.text-slate-200, .dark .text-slate-200,
+.text-slate-300, .dark .text-slate-300,
+.text-slate-400, .dark .text-slate-400,
+.text-white, .dark .text-white {
+  color: var(--color-ink) !important;
+}
+
+.text-slate-500, .dark .text-slate-500,
+.text-slate-600, .dark .text-slate-600 {
+  color: var(--color-ink-muted) !important;
+}
+
+/* Status pills and category label overrides */
+.bg-blue-900, .bg-blue-800,
+.bg-orange-900, .bg-orange-800,
+.bg-purple-900, .bg-purple-800,
+.bg-violet-900, .bg-violet-800,
+.bg-cyan-900, .bg-cyan-800,
+.bg-green-900, .bg-green-800 {
+  background-color: var(--color-paper) !important;
+  color: var(--color-ink) !important;
+  border: 1px solid var(--color-rule) !important;
+}
+
+/* Amber/Orange elements mapped to Oxblood accent red */
+.bg-amber-600, .bg-amber-500,
+.hover\:bg-amber-500:hover,
+.hover\:bg-amber-600:hover {
+  background-color: var(--color-accent) !important;
+  color: var(--color-paper) !important;
+  border-color: var(--color-accent-deep) !important;
+}
+
+.text-amber-600, .dark .text-amber-400,
+.text-amber-500, .dark .text-amber-500 {
+  color: var(--color-accent) !important;
+}
+
+/* Error/Dread messages style */
+.bg-red-900\/20, .bg-red-900\/30,
+.bg-red-950, .bg-red-900 {
+  background-color: var(--color-accent) !important;
+  color: var(--color-paper) !important;
+  border: 2px solid var(--color-accent-deep) !important;
+}
+
+.text-red-400, .text-red-300 {
+  color: var(--color-accent) !important;
 }

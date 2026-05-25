@@ -2206,3 +2206,106 @@ func handleZoneResetTrigger(world *game.World, auditLogger *audit.AuditLogger) h
 		}
 	}
 }
+
+// handleNarrativeFeed returns recent narrative memories for agents.
+func handleNarrativeFeed(database *db.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		q := r.URL.Query()
+		agentName := q.Get("agent_name")
+		limitStr := q.Get("limit")
+		offsetStr := q.Get("offset")
+
+		limit := 50
+		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 && v <= 500 {
+			limit = v
+		}
+		offset := 0
+		if v, err := strconv.Atoi(offsetStr); err == nil && v >= 0 {
+			offset = v
+		}
+
+		where := "1=1"
+		args := make([]interface{}, 0)
+		argIdx := 1
+
+		if agentName != "" {
+			where = "agent_name = $1"
+			args = append(args, agentName)
+			argIdx++
+		}
+
+		// Count query
+		countQuery := fmt.Sprintf("SELECT COUNT(*) FROM agent_narrative_memory WHERE %s", where)
+		var total int
+		if err := database.SQLDB().QueryRow(countQuery, args...).Scan(&total); err != nil {
+			slog.Error("admin narrative count query failed", "error", err)
+			http.Error(w, `{"error":"count query failed"}`, http.StatusInternalServerError)
+			return
+		}
+
+		// Data query
+		dataQuery := fmt.Sprintf(`
+			SELECT id, agent_name, event_type, summary, room_vnum, room_name,
+			       related_entity, related_vnum, valence, salience, session_id, created_at
+			FROM agent_narrative_memory
+			WHERE %s
+			ORDER BY created_at DESC
+			LIMIT $%d OFFSET $%d`, where, argIdx, argIdx+1)
+		args = append(args, limit, offset)
+
+		rows, err := database.SQLDB().Query(dataQuery, args...)
+		if err != nil {
+			slog.Error("admin narrative data query failed", "error", err)
+			http.Error(w, `{"error":"query failed"}`, http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = rows.Close() }()
+
+		type NarrativeRow struct {
+			ID            int64     `json:"id"`
+			AgentName     string    `json:"agent_name"`
+			EventType     string    `json:"event_type"`
+			Summary       string    `json:"summary"`
+			RoomVNum      int       `json:"room_vnum"`
+			RoomName      string    `json:"room_name"`
+			RelatedEntity *string   `json:"related_entity"`
+			RelatedVNum   *int      `json:"related_vnum"`
+			Valence       int       `json:"valence"`
+			Salience      float64   `json:"salience"`
+			SessionID     string    `json:"session_id"`
+			CreatedAt     time.Time `json:"created_at"`
+		}
+
+		results := make([]NarrativeRow, 0)
+		for rows.Next() {
+			var row NarrativeRow
+			err := rows.Scan(
+				&row.ID, &row.AgentName, &row.EventType, &row.Summary,
+				&row.RoomVNum, &row.RoomName, &row.RelatedEntity, &row.RelatedVNum,
+				&row.Valence, &row.Salience, &row.SessionID, &row.CreatedAt,
+			)
+			if err != nil {
+				slog.Error("admin narrative scan failed", "error", err)
+				http.Error(w, `{"error":"scan failed"}`, http.StatusInternalServerError)
+				return
+			}
+			results = append(results, row)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
+			"total":  total,
+			"limit":  limit,
+			"offset": offset,
+			"data":   results,
+		}); err != nil {
+			slog.Warn("admin narrative encode failed", "error", err)
+		}
+	}
+}
+
