@@ -28,13 +28,38 @@ const (
 
 	OPT_ECHO byte = 1
 	OPT_SGA  byte = 3
+	OPT_MSSP byte = 70
+	OPT_GMCP byte = 201
+
+	MSSP_VAR byte = 1
+	MSSP_VAL byte = 2
 
 	maxConnsPerIP = 3
 	maxTotalConns = 200
 )
 
+var startTime = time.Now()
+
+const greetingsLogo = "\r\n\r\n" +
+	"         (_____)           (_)    (_____)\r\n" +
+	"   _     /  __ \\           | |    |  __ \\                            _\r\n" +
+	"  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;\r\n" +
+	"   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\r\n" +
+	" .***.  /| |__| | (_| | |  |   <  | |  | (_| |\\ V  V /| | | \\__ \\  .***.\r\n" +
+	" ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\r\n" +
+	"                                  |||\r\n" +
+	"                                  |||\r\n" +
+	"                                  `.'\r\n\r\n" +
+	"             Based on CircleMUD 3.0 created by J. Elson and\r\n" +
+	"            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,\r\n" +
+	"                H. Staerfeldt, M. Seifert, and S. Hammer\r\n\r\n"
+
 var (
-	connMu    sync.Mutex
+	connMu   sync.Mutex
+	listener net.Listener
+)
+
+var (
 	connCount int
 	connPerIP = map[string]int{}
 )
@@ -47,6 +72,10 @@ func Listen(port int, manager *session.Manager) error {
 		return fmt.Errorf("telnet listen: %w", err)
 	}
 	slog.Info("Telnet listening", "address", addr)
+
+	connMu.Lock()
+	listener = ln
+	connMu.Unlock()
 
 	go func() {
 		for {
@@ -113,15 +142,20 @@ func ipFromAddr(addr string) string {
 
 type telnetConn struct {
 	net.Conn
-	br    *bufio.Reader
-	wmu   chan struct{} // buffered(1) acts as a write mutex
+	br      *bufio.Reader
+	wmu     chan struct{} // buffered(1) acts as a write mutex
+	manager *session.Manager
+	hasGMCP bool
+	sess    *session.Session
 }
 
 func handleConn(rawConn net.Conn, manager *session.Manager) {
 	tc := &telnetConn{
-		Conn: rawConn,
-		br:   bufio.NewReader(rawConn),
-		wmu:  make(chan struct{}, 1),
+		Conn:    rawConn,
+		br:      bufio.NewReader(rawConn),
+		wmu:     make(chan struct{}, 1),
+		manager: manager,
+		hasGMCP: false,
 	}
 	defer func() { _ = rawConn.Close() }()
 
@@ -131,13 +165,17 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	// Send initial negotiation: WONT echo (so client local echo is ON by default)
 	tc.write([]byte{IAC, WONT, OPT_ECHO})
 	tc.write([]byte{IAC, WILL, OPT_SGA})
+	tc.write([]byte{IAC, WILL, OPT_MSSP})
+	tc.write([]byte{IAC, WILL, OPT_GMCP})
 
 	s := manager.NewSession()
+	tc.sess = s
 	remoteIP := ipFromAddr(remoteAddr)
 	s.SetRemoteIP(remoteIP)
 
 	// Welcome + prompt
-	tc.writeLine("\r\n  Dark Pawns\r\n\r\nBy what name do you wish to be known? ")
+	tc.writeLine(greetingsLogo)
+	tc.writeLine("By what name do you wish to be known? ")
 
 	// Read name with timeout
 	//nolint:errcheck // best-effort cleanup
@@ -158,8 +196,10 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	var password string
 	var newChar bool
 
-	// Stateful Authentication Check
-	if manager.HasDatabase() {
+	if strings.HasPrefix(strings.ToLower(name), "guest") {
+		// Ephemeral guest bypasses password prompting!
+		newChar = false
+	} else if manager.HasDatabase() {
 		database := manager.GetDatabase()
 		var rec *db.PlayerRecord
 		var err error
@@ -323,7 +363,47 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 				tc.writeLine("> ")
 			}
 		case "vars":
-			// Agent vars — skip for telnet
+			if tc.hasGMCP {
+				if ed, ok := sm.Data.(map[string]interface{}); ok {
+					// Group Char.Vitals
+					vitals := make(map[string]interface{})
+					if hp, ok := ed["HEALTH"]; ok { vitals["hp"] = hp }
+					if maxhp, ok := ed["MAX_HEALTH"]; ok { vitals["maxhp"] = maxhp }
+					if mp, ok := ed["MANA"]; ok { vitals["mp"] = mp }
+					if maxmp, ok := ed["MAX_MANA"]; ok { vitals["maxmp"] = maxmp }
+					if mv, ok := ed["MOVE"]; ok { vitals["mv"] = mv }
+					if maxmv, ok := ed["MAX_MOVE"]; ok { vitals["maxmv"] = maxmv }
+					if len(vitals) > 0 {
+						tc.sendGMCP("Char.Vitals", vitals)
+					}
+
+					// Group Char.Status
+					status := make(map[string]interface{})
+					if lvl, ok := ed["LEVEL"]; ok { status["level"] = lvl }
+					if gold, ok := ed["GOLD"]; ok { status["gold"] = gold }
+					if exp, ok := ed["EXP"]; ok { status["exp"] = exp }
+					if len(status) > 0 {
+						tc.sendGMCP("Char.Status", status)
+					}
+
+					// Group Room.Info
+					room := make(map[string]interface{})
+					if num, ok := ed["ROOM_VNUM"]; ok { room["num"] = num }
+					if name, ok := ed["ROOM_NAME"]; ok { room["name"] = name }
+					if exits, ok := ed["ROOM_EXITS"]; ok { room["exits"] = exits }
+					if len(room) > 0 {
+						tc.sendGMCP("Room.Info", room)
+					}
+
+					// Group Char.Items
+					if inv, ok := ed["INVENTORY"]; ok {
+						tc.sendGMCP("Char.Items", map[string]interface{}{"location": "inventory", "items": inv})
+					}
+					if equip, ok := ed["EQUIPMENT"]; ok {
+						tc.sendGMCP("Char.Items", map[string]interface{}{"location": "equipped", "items": equip})
+					}
+				}
+			}
 		default:
 			tc.writeLine(fmt.Sprintf("[%s]\r\n", string(msg)))
 		}
@@ -395,9 +475,15 @@ func (tc *telnetConn) readLine() string {
 				if err != nil {
 					return ""
 				}
-				// Respond: DO for ECHO/SGA, DONT for everything else
+				// Respond: DO for ECHO/SGA/GMCP, DONT for everything else
 				if opt == OPT_ECHO || opt == OPT_SGA {
 					tc.write([]byte{IAC, DO, opt})
+				} else if opt == OPT_GMCP {
+					tc.write([]byte{IAC, DO, OPT_GMCP})
+					tc.hasGMCP = true
+					if tc.sess != nil {
+						tc.sess.SetWantsStructuredData(true)
+					}
 				} else {
 					tc.write([]byte{IAC, DONT, opt})
 				}
@@ -411,6 +497,15 @@ func (tc *telnetConn) readLine() string {
 				}
 				if opt == OPT_ECHO || opt == OPT_SGA {
 					tc.write([]byte{IAC, WILL, opt})
+				} else if opt == OPT_MSSP {
+					tc.write([]byte{IAC, WILL, OPT_MSSP})
+					tc.sendMSSP()
+				} else if opt == OPT_GMCP {
+					tc.write([]byte{IAC, WILL, OPT_GMCP})
+					tc.hasGMCP = true
+					if tc.sess != nil {
+						tc.sess.SetWantsStructuredData(true)
+					}
 				} else {
 					tc.write([]byte{IAC, WONT, opt})
 				}
@@ -418,22 +513,68 @@ func (tc *telnetConn) readLine() string {
 				opt, _ := tc.br.ReadByte()
 				tc.write([]byte{IAC, WONT, opt})
 			case SB:
-				// Skip subnegotiation until SE
-				for {
-					b2, err := tc.br.ReadByte()
-					if err != nil {
-						return ""
-					}
-					if b2 == IAC {
-						b3, err := tc.br.ReadByte()
+				opt, err := tc.br.ReadByte()
+				if err != nil {
+					return ""
+				}
+				const maxSubnegLen = 4096
+				if opt == OPT_GMCP {
+					var subPayload []byte
+					for {
+						b2, err := tc.br.ReadByte()
 						if err != nil {
 							return ""
 						}
-						if b3 == SE {
-							break
+						if b2 == IAC {
+							b3, err := tc.br.ReadByte()
+							if err != nil {
+								return ""
+							}
+							if b3 == SE {
+								break
+							}
+							if b3 == IAC {
+								if len(subPayload) >= maxSubnegLen {
+									slog.Warn("telnet: GMCP subnegotiation payload exceeded limit, closing connection")
+									return ""
+								}
+								subPayload = append(subPayload, IAC)
+								continue
+							}
+						}
+						if len(subPayload) >= maxSubnegLen {
+							slog.Warn("telnet: GMCP subnegotiation payload exceeded limit, closing connection")
+							return ""
+						}
+						subPayload = append(subPayload, b2)
+					}
+
+					tc.handleIncomingGMCP(subPayload)
+				} else {
+					// Skip subnegotiation until SE with length cap to prevent DoS
+					skipCount := 0
+					for {
+						b2, err := tc.br.ReadByte()
+						if err != nil {
+							return ""
+						}
+						skipCount++
+						if skipCount > maxSubnegLen {
+							slog.Warn("telnet: subnegotiation skip exceeded limit, closing connection")
+							return ""
+						}
+						if b2 == IAC {
+							b3, err := tc.br.ReadByte()
+							if err != nil {
+								return ""
+							}
+							if b3 == SE {
+								break
+							}
 						}
 					}
 				}
+
 			}
 			continue
 		}
@@ -468,6 +609,89 @@ func (tc *telnetConn) write(data []byte) {
 
 func (tc *telnetConn) writeLine(s string) {
 	tc.write([]byte(s))
+}
+
+func (tc *telnetConn) sendMSSP() {
+	tc.wmu <- struct{}{}
+	defer func() { <-tc.wmu }()
+
+	var payload []byte
+	payload = append(payload, IAC, SB, OPT_MSSP)
+
+	writeField := func(name, value string) {
+		payload = append(payload, MSSP_VAR)
+		payload = append(payload, []byte(name)...)
+		payload = append(payload, MSSP_VAL)
+		payload = append(payload, []byte(value)...)
+	}
+
+	writeField("NAME", "Dark Pawns")
+	writeField("PLAYERS", fmt.Sprintf("%d", tc.manager.SessionCount()))
+	writeField("UPTIME", fmt.Sprintf("%d", startTime.Unix()))
+	writeField("CODEBASE", "CircleMUD 3.0 (Go port)")
+	writeField("FAMILY", "DikuMUD")
+	writeField("CREATED", "1997")
+	writeField("WEBSITE", "darkpawns.labz0rz.com")
+	writeField("PORT", "7777")
+	writeField("LANGUAGE", "English")
+	writeField("LOCATION", "US")
+
+	payload = append(payload, IAC, SE)
+
+	_, _ = tc.Write(payload)
+}
+
+func (tc *telnetConn) sendGMCP(pkg string, data interface{}) {
+	tc.wmu <- struct{}{}
+	defer func() { <-tc.wmu }()
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		slog.Error("sendGMCP json marshal failed", "pkg", pkg, "error", err)
+		return
+	}
+
+	var payload []byte
+	payload = append(payload, IAC, SB, OPT_GMCP)
+	payload = append(payload, []byte(pkg)...)
+	if len(jsonData) > 0 {
+		payload = append(payload, ' ')
+		payload = append(payload, jsonData...)
+	}
+	payload = append(payload, IAC, SE)
+
+	_, _ = tc.Write(payload)
+}
+
+func (tc *telnetConn) handleIncomingGMCP(payload []byte) {
+	if len(payload) == 0 {
+		return
+	}
+	s := string(payload)
+	parts := strings.SplitN(s, " ", 2)
+	msgName := parts[0]
+	var jsonStr string
+	if len(parts) > 1 {
+		jsonStr = parts[1]
+	}
+
+	slog.Debug("telnet: received GMCP", "message", msgName, "payload", jsonStr)
+
+	// Support basic hello handshake from client (like Mudlet)
+	if msgName == "Core.Hello" {
+		var hello struct {
+			Client  string `json:"client"`
+			Version string `json:"version"`
+		}
+		if err := json.Unmarshal([]byte(jsonStr), &hello); err == nil {
+			slog.Info("telnet: GMCP client identified", "client", hello.Client, "version", hello.Version)
+			if tc.sess != nil {
+				if strings.Contains(strings.ToLower(hello.Client), "brenda") || strings.Contains(strings.ToLower(hello.Client), "goat") || strings.Contains(strings.ToLower(hello.Client), "mudlet") {
+					tc.sess.SetWantsStructuredData(true)
+				}
+			}
+		}
+	}
 }
 
 func sendLoginWithPassword(s *session.Session, name string, password string, newChar bool) error {
@@ -522,4 +746,14 @@ func sendCommand(s *session.Session, cmd string, args []string) error {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
 	return s.HandleMessage(cmdMsg)
+}
+
+// Stop closes the TCP telnet listener.
+func Stop() {
+	connMu.Lock()
+	defer connMu.Unlock()
+	if listener != nil {
+		_ = listener.Close()
+		listener = nil
+	}
 }

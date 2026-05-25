@@ -124,6 +124,9 @@ type World struct {
 	// CommandExecFunc dispatches player commands through the session layer.
 	// Set by the session manager. If nil, executeCommand is a no-op.
 	CommandExecFunc CommandExecFunc
+
+	// OnGossip is a callback triggered when a human player gossips.
+	OnGossip func(senderName string, message string)
 }
 
 // SetCombatEngine sets the combat engine for AI to use.

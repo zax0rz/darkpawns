@@ -377,6 +377,9 @@ func (w *World) doGenComm(ch *Player, me *MobInstance, cmd string, arg string) b
 	// Record gossip for review command (matches C: update_review in act.comm.c)
 	if channelName == "gossip" {
 		w.updateGossipHistory(ch.Name, arg, 0)
+		if w.OnGossip != nil {
+			w.OnGossip(ch.Name, arg)
+		}
 	}
 
 	return true

@@ -3,6 +3,7 @@
 package session
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -18,6 +19,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/game/systems"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
@@ -214,6 +216,20 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		slog.Warn("Failed to load invalid name list", "error", err)
 	}
 
+	// Subscribe to PlayerLeveledEvent to trigger Discord level-up notifications
+	world.Events.Subscribe(events.PlayerLeveledEvent{}.Type(), func(ctx context.Context, ev events.BusEvent) error {
+		if ple, ok := ev.(events.PlayerLeveledEvent); ok {
+			isGuest := false
+			if s, ok := m.GetSession(ple.PlayerID); ok {
+				isGuest = s.isGuest
+			}
+			if !isGuest {
+				sendDiscordNotification(fmt.Sprintf("_**%s has attained circle %d!**_", ple.PlayerID, ple.NewLevel))
+			}
+		}
+		return nil
+	})
+
 	return m
 }
 
@@ -258,9 +274,18 @@ func (m *Manager) SetDeathFunc() {
 
 		// If victim was a player, send updated room state after respawn
 		if !victim.IsNPC() {
+			isGuest := false
 			if s, ok := m.GetSession(victim.GetName()); ok {
+				isGuest = s.isGuest
 				if err := cmdLook(s, nil); err != nil {
 					slog.Error("cmdLook failed after death", "player", victim.GetName(), "error", err)
+				}
+			}
+			if !isGuest {
+				if killer != nil && killer.GetName() != "" {
+					sendDiscordNotification(fmt.Sprintf("_**%s was slain by %s!**_", victim.GetName(), killer.GetName()))
+				} else {
+					sendDiscordNotification(fmt.Sprintf("_**%s has met their demise!**_", victim.GetName()))
 				}
 			}
 			return
@@ -293,6 +318,24 @@ func (m *Manager) SetDamageFunc() {
 	m.combatEngine.DamageFunc = func(victimName string) {
 		if s, ok := m.GetSession(victimName); ok {
 			s.markDirty(VarHealth, VarMaxHealth)
+			s.flushDirtyVars()
+		}
+
+		// Proactively find any player session fighting this victim to update their target display in real-time
+		m.mu.RLock()
+		sessions := make([]*Session, 0, len(m.sessions))
+		for _, s := range m.sessions {
+			if s.wantsStructuredData || s.isAgent {
+				sessions = append(sessions, s)
+			}
+		}
+		m.mu.RUnlock()
+
+		for _, s := range sessions {
+			if target, fighting := m.combatEngine.GetCombatTarget(s.playerName); fighting && target.GetName() == victimName {
+				s.markDirty(VarFighting)
+				s.flushDirtyVars()
+			}
 		}
 	}
 }
@@ -372,15 +415,16 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	m.ipConnMu.Unlock()
 
 	session := &Session{
-		conn:           conn,
-		request:        r, // Store the HTTP request for IP extraction
-		manager:        m,
-		send:           make(chan []byte, 256),
-		limiter:        rate.NewLimiter(rate.Limit(10), 10),
-		subscribedVars: make(map[string]bool),
-		dirtyVars:      make(map[string]bool),
-		pendingEvents:  nil,
-		connectedAt:    time.Now(),
+		conn:                conn,
+		request:             r, // Store the HTTP request for IP extraction
+		manager:             m,
+		send:                make(chan []byte, 256),
+		limiter:             rate.NewLimiter(rate.Limit(10), 10),
+		subscribedVars:      make(map[string]bool),
+		dirtyVars:           make(map[string]bool),
+		pendingEvents:       nil,
+		connectedAt:         time.Now(),
+		wantsStructuredData: true,
 	}
 
 	// Start goroutines for reading and writing
@@ -473,6 +517,10 @@ func (m *Manager) Register(playerName string, s *Session) error {
 		m.world.RemovePlayer(playerName)
 	}
 
+	if s.authenticated && !s.isGuest {
+		sendDiscordNotification(fmt.Sprintf("_**%s has stepped into the shadows of the world.**_", playerName))
+	}
+
 	return nil
 }
 
@@ -496,6 +544,10 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 		if err == nil {
 			m.BroadcastToRoom(s.player.GetRoom(), leaveMsg, s.player.Name)
 		}
+	}
+
+	if s.authenticated && !s.isGuest {
+		sendDiscordNotification(fmt.Sprintf("_**%s has retreated back into the mist.**_", playerName))
 	}
 
 	// 3. Clean snoop references
@@ -529,7 +581,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	}
 
 	// 4. Save player to DB
-	if m.hasDB && s.player != nil && s.player.ID > 0 {
+	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest {
 		if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
 				slog.Error("DB save error", "player", playerName, "error", err)
@@ -565,6 +617,14 @@ func (m *Manager) GetSession(playerName string) (*Session, bool) {
 	return s, ok
 }
 
+// SessionCount returns the number of active player sessions.
+func (m *Manager) SessionCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.sessions)
+}
+
+
 // BroadcastToRoom sends a message to all players in a room.
 func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer string) {
 	m.mu.RLock()
@@ -598,6 +658,7 @@ type Session struct {
 	player        *game.Player
 	playerName    string
 	authenticated bool
+	isGuest       bool
 	connCountDecremented bool // C5: prevents double-decrement of IP connection count
 
 	// Agent identity — set on login when is_agent=true.
@@ -615,10 +676,11 @@ type Session struct {
 	// agentMu protects all agent-related state from concurrent access.
 	// readPump goroutine and combat ticker goroutine (via DamageFunc) both
 	// call markDirty/flushDirtyVars which touch the maps below.
-	agentMu        sync.Mutex
-	subscribedVars map[string]bool // vars this session subscribed to
-	dirtyVars      map[string]bool // vars changed since last flush
-	pendingEvents  []interface{}   // queued EVENTS since last flush
+	agentMu             sync.Mutex
+	subscribedVars      map[string]bool // vars this session subscribed to
+	dirtyVars           map[string]bool // vars changed since last flush
+	pendingEvents       []interface{}   // queued EVENTS since last flush
+	wantsStructuredData bool
 
 	// Character creation state
 	charCreating bool
@@ -716,6 +778,65 @@ func (m *Manager) GetLiveAgentSessions() []admin.LiveAgentSession {
 	}
 	return sessions
 }
+
+// SetWantsStructuredData sets whether this session receives structured updates.
+func (s *Session) SetWantsStructuredData(val bool) {
+	s.agentMu.Lock()
+	alreadySet := s.wantsStructuredData
+	s.wantsStructuredData = val
+	if val && !alreadySet {
+		// Automatically subscribe to all standard variables for structured clients
+		for _, v := range AllVariables {
+			if v != VarEvents {
+				s.subscribedVars[v] = true
+			}
+		}
+	}
+	s.agentMu.Unlock()
+
+	// Send initial dump if newly enabled and the session is authenticated
+	if val && !alreadySet && s.IsAuthenticated() {
+		s.sendFullVarDump()
+	}
+}
+
+// WantsStructuredData returns whether this session receives structured updates.
+func (s *Session) WantsStructuredData() bool {
+	s.agentMu.Lock()
+	defer s.agentMu.Unlock()
+	return s.wantsStructuredData
+}
+
+// ShutdownGracefully drains and shuts down all active sessions gracefully.
+func (m *Manager) ShutdownGracefully(timeout time.Duration) {
+	m.mu.Lock()
+	sessions := make(map[string]*Session)
+	for name, s := range m.sessions {
+		sessions[name] = s
+		delete(m.sessions, name)
+	}
+	m.mu.Unlock()
+
+	if len(sessions) == 0 {
+		return
+	}
+
+	slog.Info("session manager: shutting down active sessions", "count", len(sessions))
+
+	// 1. Notify players of the shutdown
+	for _, s := range sessions {
+		s.sendText("\r\n\x1b[1;31m!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\x1b[0m\r\n")
+	}
+
+	// 2. Wait a brief moment for messages to flush
+	time.Sleep(1 * time.Second)
+
+	// 3. Unregister and cleanup each session
+	for name, s := range sessions {
+		m.cleanupSession(s, name)
+	}
+}
+
 
 // readPump reads messages from the WebSocket.
 var (
