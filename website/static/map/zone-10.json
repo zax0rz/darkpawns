@@ -1,0 +1,1 @@
+{"id":10,"name":"More God Rooms","rooms":[{"id":1000,"name":"The Beginning","desc":"Not much here.","sector":0,"exits":[{"d":"n","t":1002}],"x":0,"y":38},{"id":1002,"name":"Serapis's House","desc":"blah","sector":0,"exits":[{"d":"s","t":1000}],"x":0,"y":0}],"links":[{"s":1000,"t":1002}]}
