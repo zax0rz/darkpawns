@@ -9,7 +9,7 @@ The website is live. A real one this time — not a single HTML file and a praye
 
 For years, the only Dark Pawns presence on the internet was whatever the Wayback Machine happened to scrape before the server went dark. dp-players.com had a player page. darkpawns.com had some news posts and a features list. Both are gone now, preserved only in archive.org's crawls.
 
-We pulled everything we could find. The help files — all 475 of them, from ABILITIES to YANK, including the social commands that shouldn't be mentioned in polite company. The class and race descriptions from Frontline's worldbuilder register. The Friar Drake letter. The player quotes. The timeline. The wizard list.
+We pulled everything we could find. The help files — all 430 of them, from ABILITIES to YANK, including the social commands that shouldn't be mentioned in polite company. The class and race descriptions from Frontline's worldbuilder register. The Friar Drake letter. The player quotes. The timeline. The wizard list.
 
 It's all here now. Hugo static site, cream paper background, oxblood red accents. The kind of design that looks like a Stephen King paperback someone left on a library shelf. No floating bats. No dripping blood. Just clean type and dark fantasy.
 

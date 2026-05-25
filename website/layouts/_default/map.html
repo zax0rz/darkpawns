@@ -189,6 +189,30 @@
   background: rgba(239, 231, 214, 0.75);
 }
 
+#map-progress-wrap {
+  width: 200px;
+  height: 3px;
+  background: rgba(26, 22, 20, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+#map-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.15s ease-out;
+}
+@keyframes progress-sweep {
+  0%   { transform: translateX(-150%) scaleX(0.4); }
+  50%  { transform: translateX(100%) scaleX(0.8); }
+  100% { transform: translateX(400%) scaleX(0.4); }
+}
+#map-progress-bar.indeterminate {
+  width: 40%;
+  animation: progress-sweep 1.6s ease-in-out infinite;
+}
+
 #map-empty {
   position: absolute;
   inset: 0;
@@ -430,7 +454,10 @@
     <div id="map-svg-wrap">
       <svg id="map-svg"></svg>
       <div id="map-loading">
-        <div>Loading world data…</div>
+        <div id="map-loading-msg">Loading world data…</div>
+        <div id="map-progress-wrap">
+          <div id="map-progress-bar"></div>
+        </div>
       </div>
       <div id="map-empty" style="display:none">
         <div>← Select a zone from the list</div>

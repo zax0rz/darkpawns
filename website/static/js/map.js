@@ -16,6 +16,19 @@
   let simulation = null;
   let currentNodes = [];
   let currentLinks = [];
+  let renderGen = 0;
+
+  function setLoadingPhase(msg, pct) {
+    if ($loadingMsg) $loadingMsg.textContent = msg;
+    if (!$progressBar) return;
+    if (pct === null) {
+      $progressBar.classList.add('indeterminate');
+      $progressBar.style.width = '';
+    } else {
+      $progressBar.classList.remove('indeterminate');
+      $progressBar.style.width = Math.round(pct * 100) + '%';
+    }
+  }
 
   // ── Sector colors ────────────────────────────────────────────────────
   const SECTOR_COLOR = {
@@ -47,6 +60,8 @@
   const $roomResults  = document.getElementById('room-search-results');
   const $zoneTitle    = document.getElementById('zone-title');
   const $loading      = document.getElementById('map-loading');
+  const $loadingMsg   = document.getElementById('map-loading-msg');
+  const $progressBar  = document.getElementById('map-progress-bar');
   const $empty        = document.getElementById('map-empty');
   const $legend       = document.getElementById('map-legend');
   const $tooltip      = document.getElementById('map-tooltip');
@@ -118,21 +133,24 @@
 
   // ── Load world data ──────────────────────────────────────────────────
   function loadWorld() {
+    $loading.style.display = 'flex';
+    setLoadingPhase('Fetching world data…', null);
     fetch('/map/world.json')
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        setLoadingPhase('Parsing world data…', 0.15);
         return r.json();
       })
       .then(data => {
+        setLoadingPhase('Building indices…', 0.3);
         world = data;
         buildIndex();
-        $loading.style.display = 'none';
         $empty.style.display = 'none';
         renderZoneList('');
-        selectWorldOverview();
+        selectWorldOverview(); // renderWorldOverview will own $loading from here
       })
       .catch(err => {
-        $loading.textContent = `Failed to load world data: ${err.message}`;
+        if ($loadingMsg) $loadingMsg.textContent = `Failed to load world data: ${err.message}`;
       });
   }
 
@@ -232,6 +250,7 @@
 
   // ── Zone rendering ───────────────────────────────────────────────────
   function renderZone(zone) {
+    renderGen++;
     if (simulation) { simulation.stop(); simulation = null; }
 
     gLinks.selectAll('*').remove();
@@ -403,48 +422,48 @@
         .on('end', dragEnd)
       );
 
-    // 6. Optimized simulation (warm-start statically in background)
+    // 6. Optimized simulation (warm-start via chunked rAF — keeps UI responsive)
     simulation = d3.forceSimulation(currentNodes)
       .force('link', d3.forceLink(currentLinks).id(d => d.id).distance(12).strength(0.8))
       .force('charge', d3.forceManyBody().strength(-12))
       .force('collision', d3.forceCollide(4.5))
       .alphaDecay(0.08);
 
-    // Pre-calculate ticks to avoid dynamic frame lag
     $loading.style.display = 'flex';
-    $loading.querySelector('div').textContent = "Warm-starting entire world overview...";
+    const myGen = ++renderGen;
+    const TOTAL_TICKS = 60;
+    const CHUNK = 3;
+    let ticksDone = 0;
 
-    setTimeout(() => {
-      const ticks = 60;
-      for (let i = 0; i < ticks; i++) {
-        simulation.tick();
-      }
-
+    function updateSVG() {
       linkSel
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
       nodeSel
-        .attr('cx', d => d.x)
-        .attr('cy', d => d.y);
+        .attr('cx', d => d.x).attr('cy', d => d.y);
+    }
 
-      $loading.style.display = 'none';
+    function tickChunk() {
+      if (renderGen !== myGen) return;
+      const end = Math.min(ticksDone + CHUNK, TOTAL_TICKS);
+      for (let i = ticksDone; i < end; i++) simulation.tick();
+      ticksDone = end;
+      updateSVG();
+      setLoadingPhase('Laying out world… ' + Math.round(ticksDone / TOTAL_TICKS * 100) + '%',
+        ticksDone / TOTAL_TICKS);
+      if (ticksDone < TOTAL_TICKS) {
+        requestAnimationFrame(tickChunk);
+      } else {
+        $loading.style.display = 'none';
+        simulation.on('tick', updateSVG);
+        fitToViewOverview();
+      }
+    }
 
-      // Connect simulation tick listener for buttery-smooth drag mechanics
-      simulation.on('tick', () => {
-        linkSel
-          .attr('x1', d => d.source.x)
-          .attr('y1', d => d.source.y)
-          .attr('x2', d => d.target.x)
-          .attr('y2', d => d.target.y);
-        nodeSel
-          .attr('cx', d => d.x)
-          .attr('cy', d => d.y);
-      });
-
-      fitToViewOverview();
-    }, 50);
+    // Show initial positions before first tick so something appears immediately
+    updateSVG();
+    setLoadingPhase('Laying out world… 0%', 0);
+    requestAnimationFrame(tickChunk);
   }
 
   function fitToView() {

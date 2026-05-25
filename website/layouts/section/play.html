@@ -1,5 +1,5 @@
 {{ define "main" }}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" integrity="sha384-LJcOxlx9IMbNXDqJ2axpfEQKkAYbFjJfhXexLfiRJhjDU81mzgkiQq8rkV0j6dVh" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" integrity="sha384-XGqKrV8Jrukp1NITJbOEHwg01tNkuXr6uB6YEj69ebpYU3v7FvoGgEg23C1Gcehk" crossorigin="anonymous">
 <div class="play-wrapper">
   <div class="terminal-frame">
     <div class="terminal-header">
@@ -11,6 +11,12 @@
       <button id="reconnect-btn">Reconnect</button>
     </div>
     <div id="terminal"></div>
+    <noscript>
+      <div class="container content-narrow" style="padding: 2rem; text-align: center;">
+        <p>JavaScript is required for the web client.</p>
+        <p><a href="/connect">Connect via Telnet or desktop client instead.</a></p>
+      </div>
+    </noscript>
   </div>
   <div class="play-sidebar">
     <h3>Connecting</h3>
@@ -23,16 +29,16 @@
         <li><strong>TinTin++</strong> — terminal power user</li>
         <li><strong>TinyFugue</strong> — UNIX classic</li>
       </ul>
+      <p><a href="/connect">Full connection guide →</a></p>
     </div>
     <div class="play-info">
       <h4>Telnet</h4>
-      <p><code>darkpawns.labz0rz.com:7777</code></p>
+      <p><code>darkpawns.labz0rz.com:4000</code></p>
     </div>
   </div>
 </div>
 {{/* xterm.js from CDN — loaded at end of body for performance */}}
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js" integrity="sha384-xjfWUeCWdMtvpAb/SmM6lMzS6pQGcQa0loOl1d97j6Odw0vjK9nW3+dTb/bn/mwH" crossorigin="anonymous" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js" integrity="sha384-XGqKrV8Jrukp1NITJbOEHwg01tNkuXr6uB6YEj69ebpYU3v7FvoGgEg23C1Gcehk" crossorigin="anonymous" defer></script>
-{{- $js := resources.Get "js/client.js" | fingerprint -}}
-<script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js" integrity="sha384-LJcOxlx9IMbNXDqJ2axpfEQKkAYbFjJfhXexLfiRJhjDU81mzgkiQq8rkV0j6dVh" crossorigin="anonymous" defer></script>
+<script src="/js/client.js" defer></script>
 {{ end }}

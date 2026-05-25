@@ -1,46 +1,53 @@
+{
+	auto_https off
+}
+
 :80 {
-    root * /srv/darkpawns
-    encode gzip
-    file_server
-    
-    @fingerprinted path *.css /css/* /js/*
-    header @fingerprinted Cache-Control "public, max-age=31536000, immutable"
-    
-    @htmlfile path *.html /
-    header @htmlfile Cache-Control "public, max-age=300"
-    
-    @wants_markdown {
-        header Accept *text/markdown*
-    }
-    
-    handle @wants_markdown {
-        root * /srv/darkpawns
-        try_files {path}/index.md {path}.md 404
-        header Content-Type "text/markdown; charset=utf-8"
-        header Access-Control-Allow-Origin "*"
-        file_server
-    }
-    
-    handle {
-        root * /srv/darkpawns
-        try_files {path} {path}/index.html {path}.html /404.html
-        header Link "{uri}index.md; rel=alternate; type=text/markdown"
-        file_server
-    }
-    
-    handle /ws {
-        reverse_proxy localhost:4350
-    }
-    
-    handle /api/* {
-        reverse_proxy localhost:4350
-    }
-    
-    handle /health {
-        reverse_proxy localhost:4350
-    }
-    
-    handle /metrics {
-        reverse_proxy localhost:4350
-    }
+	# Route soviet to The Soviet
+	@soviet {
+		host soviet.labz0rz.com
+	}
+	handle @soviet {
+		reverse_proxy localhost:4000
+	}
+
+	# Dark Pawns game (served by Go server)
+	handle /game {
+		redir /game/ permanent
+	}
+	handle /game/* {
+		uri strip_prefix /game
+		reverse_proxy localhost:4350
+	}
+
+	# Go game server routes
+	handle /ws {
+		reverse_proxy localhost:4350
+	}
+	handle /api/* {
+		reverse_proxy localhost:4350
+	}
+	handle /admin/* {
+		reverse_proxy localhost:4350
+	}
+	handle /health {
+		reverse_proxy localhost:4350
+	}
+	handle /metrics {
+		reverse_proxy localhost:4350
+	}
+
+	# Hugo static files (catch-all)
+	handle {
+		root * /srv/hugo/
+		try_files {path} {path}/index.html
+		file_server
+	}
+
+	# Serve 404.html for unmatched routes
+	handle_errors {
+		root * /srv/hugo/
+		rewrite /404.html
+		file_server
+	}
 }
