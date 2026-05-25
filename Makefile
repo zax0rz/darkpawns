@@ -90,4 +90,17 @@ lint: fmt vet
 test-parse:
 	go test -v ./pkg/parser -world $(WORLD_DIR)
 
+# Website commands
+.PHONY: parse-world-json build-site deploy-site
+
+parse-world-json:
+	python3 website/scripts/parse_world.py
+
+build-site: parse-world-json
+	cd website && hugo --minify
+
+deploy-site: build-site
+	rsync -avz --delete website/public/ root@192.168.1.15:/opt/darkpawns/hugo-site/
+
 .DEFAULT_GOAL := build
+

@@ -62,3 +62,28 @@ Use conventional commits: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore
 
 Tests live alongside source files as `*_test.go`. Run `go test ./...` after any change.
 The game package has object movement tests that validate the ObjectLocation system — keep those green.
+
+## Website Development & Deployment
+
+The Dark Pawns website is a static site built using **Hugo** and served via Caddy. 
+
+### Core Codebase Location
+* The website source files live exclusively inside the **`website/`** subdirectory of the main `darkpawns` repository.
+* **NEVER** edit files or run builds on the server inside `/opt/darkpawns/darkpawns-site/` or `/opt/darkpawns/darkpawns-site.deprecated/` — these are deprecated, outdated standalone clones and will completely wipe out new features (like `/map` and xterm client integrations) if compiled.
+
+### Design Aesthetics & Philosophy
+* **Stephen King Paperback Style**: Clean ivory/cream backgrounds, charcoal ink text, and dark oxblood highlights.
+* **Asset Pipeline**: Static JavaScript (like `/js/client.js`) MUST be managed through the Hugo assets pipeline (`resources.Get` + `fingerprint` in Hugo templates) for cache-busting and SRI integrity checks. **Do not** link raw `/js/client.js` in templates.
+
+### Automated Deployment Pipeline
+To prevent compiling from the wrong directory or syncing outdated files, **always use the Makefile target** in the root of the repository:
+
+```bash
+make deploy-site
+```
+
+This target automatically executes the complete, secure deployment sequence:
+1. **`python3 website/scripts/parse_world.py`** — Parses the authoritative MUD room files (`lib/world/`) and compiles a fresh `world.json` for the interactive D3 map page.
+2. **`cd website && hugo --minify`** — Runs the Hugo compilation in the correct subdirectory context.
+3. **`rsync -avz --delete website/public/ root@192.168.1.15:/opt/darkpawns/hugo-site/`** — Syncs the newly compiled static assets directly to the live server web root.
+
