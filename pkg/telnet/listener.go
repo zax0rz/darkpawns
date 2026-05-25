@@ -365,7 +365,9 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		case "vars":
 			if tc.hasGMCP {
 				if ed, ok := sm.Data.(map[string]interface{}); ok {
-					// Group Char.Vitals
+					// Build all GMCP frames and send in a single write to minimize syscalls.
+					var buf []byte
+
 					vitals := make(map[string]interface{})
 					if hp, ok := ed["HEALTH"]; ok { vitals["hp"] = hp }
 					if maxhp, ok := ed["MAX_HEALTH"]; ok { vitals["maxhp"] = maxhp }
@@ -374,33 +376,34 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 					if mv, ok := ed["MOVE"]; ok { vitals["mv"] = mv }
 					if maxmv, ok := ed["MAX_MOVE"]; ok { vitals["maxmv"] = maxmv }
 					if len(vitals) > 0 {
-						tc.sendGMCP("Char.Vitals", vitals)
+						buf = append(buf, buildGMCPFrame("Char.Vitals", vitals)...)
 					}
 
-					// Group Char.Status
 					status := make(map[string]interface{})
 					if lvl, ok := ed["LEVEL"]; ok { status["level"] = lvl }
 					if gold, ok := ed["GOLD"]; ok { status["gold"] = gold }
 					if exp, ok := ed["EXP"]; ok { status["exp"] = exp }
 					if len(status) > 0 {
-						tc.sendGMCP("Char.Status", status)
+						buf = append(buf, buildGMCPFrame("Char.Status", status)...)
 					}
 
-					// Group Room.Info
 					room := make(map[string]interface{})
 					if num, ok := ed["ROOM_VNUM"]; ok { room["num"] = num }
 					if name, ok := ed["ROOM_NAME"]; ok { room["name"] = name }
 					if exits, ok := ed["ROOM_EXITS"]; ok { room["exits"] = exits }
 					if len(room) > 0 {
-						tc.sendGMCP("Room.Info", room)
+						buf = append(buf, buildGMCPFrame("Room.Info", room)...)
 					}
 
-					// Group Char.Items
 					if inv, ok := ed["INVENTORY"]; ok {
-						tc.sendGMCP("Char.Items", map[string]interface{}{"location": "inventory", "items": inv})
+						buf = append(buf, buildGMCPFrame("Char.Items", map[string]interface{}{"location": "inventory", "items": inv})...)
 					}
 					if equip, ok := ed["EQUIPMENT"]; ok {
-						tc.sendGMCP("Char.Items", map[string]interface{}{"location": "equipped", "items": equip})
+						buf = append(buf, buildGMCPFrame("Char.Items", map[string]interface{}{"location": "equipped", "items": equip})...)
+					}
+
+					if len(buf) > 0 {
+						tc.write(buf)
 					}
 				}
 			}
@@ -642,25 +645,29 @@ func (tc *telnetConn) sendMSSP() {
 }
 
 func (tc *telnetConn) sendGMCP(pkg string, data interface{}) {
-	tc.wmu <- struct{}{}
-	defer func() { <-tc.wmu }()
+	frame := buildGMCPFrame(pkg, data)
+	if frame != nil {
+		tc.write(frame)
+	}
+}
 
+// buildGMCPFrame builds the raw bytes for a single GMCP package without sending.
+// Returns nil on marshal error.
+func buildGMCPFrame(pkg string, data interface{}) []byte {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		slog.Error("sendGMCP json marshal failed", "pkg", pkg, "error", err)
-		return
+		slog.Error("buildGMCPFrame json marshal failed", "pkg", pkg, "error", err)
+		return nil
 	}
-
-	var payload []byte
-	payload = append(payload, IAC, SB, OPT_GMCP)
-	payload = append(payload, []byte(pkg)...)
+	frame := make([]byte, 0, 4+len(pkg)+1+len(jsonData)+2)
+	frame = append(frame, IAC, SB, OPT_GMCP)
+	frame = append(frame, []byte(pkg)...)
 	if len(jsonData) > 0 {
-		payload = append(payload, ' ')
-		payload = append(payload, jsonData...)
+		frame = append(frame, ' ')
+		frame = append(frame, jsonData...)
 	}
-	payload = append(payload, IAC, SE)
-
-	_, _ = tc.Write(payload)
+	frame = append(frame, IAC, SE)
+	return frame
 }
 
 func (tc *telnetConn) handleIncomingGMCP(payload []byte) {

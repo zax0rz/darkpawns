@@ -106,18 +106,11 @@ All data already exists server-side in `agent_vars.go` (`buildInventory`, `build
 
 ---
 
-## DP-311: Send Channel Buffer Validation
+## DP-311: Send Channel Buffer Validation ✅ Done
 
-**Priority:** Low
-**Effort:** S
-**Files:** `pkg/session/manager.go`
-**Depends on:** DP-303
-**What:** The send channel is a fixed 256-buffer with drop-on-full semantics (manager.go:378). GMCP increases message volume (vitals deltas every combat tick). Under HN/"Resurrection Day" load spikes, dropped GMCP frames mean stale UI bars.
+**Finding:** Non-issue. `flushDirtyVars()` already batches ALL dirty vars into a single `{"type":"vars",...}` message per flush — not one message per variable. During a combat tick where only HEALTH/MAX_HEALTH are dirty, exactly one message enters the send channel. At 1 msg/tick the 256-slot buffer handles any realistic player count.
 
-**Implementation:**
-- Profile actual message volume under combat load
-- Consider coalescing vitals updates (batch dirty vars into one GMCP flush per tick instead of per-var)
-- May need to increase buffer size or implement priority queuing (combat messages > ambient text)
+**What was implemented (2026-05-25):** `pkg/telnet/listener.go` — extracted `buildGMCPFrame()` helper and refactored the "vars" branch of `writeLoop` to collect all GMCP package frames into a single byte slice and call `tc.write()` once, instead of 3–5 separate locked writes. This reduces syscall overhead when multiple packages are dirty simultaneously (e.g., room change on `look`). No buffer resize, no priority queuing needed.
 
 ---
 
