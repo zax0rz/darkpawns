@@ -29,18 +29,18 @@
     }
     
     handle /ws {
-        reverse_proxy localhost:8080
+        reverse_proxy localhost:4350
     }
     
     handle /api/* {
-        reverse_proxy localhost:8080
+        reverse_proxy localhost:4350
     }
     
     handle /health {
-        reverse_proxy localhost:8080
+        reverse_proxy localhost:4350
     }
     
     handle /metrics {
-        reverse_proxy localhost:8080
+        reverse_proxy localhost:4350
     }
 }

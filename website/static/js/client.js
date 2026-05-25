@@ -37,7 +37,7 @@
   function setStatus(state) {
     statusEl.className = 'conn-status ' + state;
     const label = state === 'connected' ? 'Connected' : 'Disconnected';
-    statusEl.querySelector('span').textContent = label;
+    statusEl.querySelector('span:last-child').textContent = label;
     reconnectBtn.classList.toggle('visible', state === 'disconnected');
   }
 
@@ -83,12 +83,14 @@
             username = '';
             password = '';
           }
-        } else if (msg.type === 'welcome') {
-          loggedIn = true;
-          inCharCreation = false;
-          term.writeln('\r\n\x1b[32m--- Entered Dark Pawns ---\x1b[0m\r\n');
         } else if (msg.type === 'state') {
-          // Structured agent metrics — ignore for human display
+          // Server sends a 'state' message as the login-success signal.
+          // When it carries player data, the user has entered the world.
+          if (!loggedIn && msg.data && msg.data.player && msg.data.player.name) {
+            loggedIn = true;
+            inCharCreation = false;
+            term.writeln('\r\n\x1b[32m--- Entered Dark Pawns ---\x1b[0m\r\n');
+          }
         } else {
           term.write(evt.data);
         }
