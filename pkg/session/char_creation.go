@@ -261,14 +261,10 @@ func (s *Session) completeCharCreation() error {
 				return fmt.Errorf("failed to save character: %w", err)
 			} else {
 				s.player.ID = r.ID
-				// Give starting items
-				s.manager.world.GiveStartingItems(s.player)
 				game.GiveStartingSkills(s.player)
 			}
 		}
 	} else {
-		// Give starting items
-		s.manager.world.GiveStartingItems(s.player)
 		game.GiveStartingSkills(s.player)
 	}
 
@@ -285,11 +281,15 @@ func (s *Session) completeCharCreation() error {
 		return err
 	}
 
-	// New characters begin in the newbie intro room (A Burning Hut).
-	// C source: interpreter.c line 2241 — char_to_room(d->character, real_room(8099))
-	// The DB save above used the hometown room so that future logins recall there.
-	// We override in-memory only for this session's intro.
-	s.player.RoomVNum = game.NewbieStartRoom
+	// Give starting items AFTER AddPlayer so the player is in w.players
+	// and attachObjectLocked can find them; items silently drop otherwise.
+	s.manager.world.GiveStartingItems(s.player)
+
+	// Room 8099 (A Burning Hut) is the C source intro room (interpreter.c:2241)
+	// but it has no exits and no mob spawns in the current world data.
+	// Players are stuck there until the intro orc-combat sequence is implemented.
+	// For now, start at the normal mortal start room (8004) so they can play.
+	s.player.RoomVNum = game.MortalStartRoom
 
 	slog.Info("completeCharCreation: player added to world", "player", s.player.Name, "room", s.player.GetRoom())
 

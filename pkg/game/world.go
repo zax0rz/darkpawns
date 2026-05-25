@@ -813,72 +813,89 @@ func (w *World) GetPlayersInRoom(roomVNum int) []*Player {
 
 // MovePlayer moves a player to a new room if the exit exists and doors permit.
 func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
+	// H-11: Split into two phases — collect results under lock, send messages after.
+	// p.SendMessage() blocks when the send channel is full; holding w.mu.Lock()
+	// while blocked starves every other world reader and writer indefinitely.
+	var errMsg string
+	var result *parser.Room
+	var moveErr error
+
 	w.mu.Lock()
-	defer w.mu.Unlock()
 
 	currentRoom, ok := w.rooms[p.RoomVNum]
 	if !ok {
+		w.mu.Unlock()
 		return nil, fmt.Errorf("player in invalid room %d", p.RoomVNum)
 	}
 
 	exit, ok := currentRoom.Exits[direction]
 	if !ok {
+		w.mu.Unlock()
 		return nil, fmt.Errorf("no exit %s", direction)
 	}
 
 	// Door check — exit must be open to pass
 	if exit.DoorState > 0 {
-		p.SendMessage("The door is closed.\r\n")
-		return nil, fmt.Errorf("door closed")
-	}
-
-	newRoom, ok := w.rooms[exit.ToRoom]
-	if !ok {
-		return nil, fmt.Errorf("exit leads to invalid room %d", exit.ToRoom)
-	}
-
-	// Boat requirement for WATER_NOSWIM
-	// C source: act.movement.c:126-129 — needs boat for source or dest WATER_NOSWIM
-	if (currentRoom.Sector == 7 || newRoom.Sector == 7) { // SECT_WATER_NOSWIM
-		if !p.HasBoat() {
-			p.SendMessage("You need a boat to go there.\r\n")
-			return nil, fmt.Errorf("no boat")
+		errMsg = "The door is closed.\r\n"
+		moveErr = fmt.Errorf("door closed")
+	} else {
+		newRoom, ok := w.rooms[exit.ToRoom]
+		if !ok {
+			w.mu.Unlock()
+			return nil, fmt.Errorf("exit leads to invalid room %d", exit.ToRoom)
 		}
-	}
 
-	// Room tunnel limit — only 1 PC allowed
-	// C source: act.movement.c:189-191 — ROOM_TUNNEL = bit 8
-	if roomHasFlagBit(newRoom.Flags, 8) {
-		pcCount := 0
-		for _, other := range w.players {
-			if other.RoomVNum == newRoom.VNum {
-				pcCount++
+		// Boat requirement for WATER_NOSWIM
+		// C source: act.movement.c:126-129 — needs boat for source or dest WATER_NOSWIM
+		if currentRoom.Sector == 7 || newRoom.Sector == 7 { // SECT_WATER_NOSWIM
+			if !p.HasBoat() {
+				errMsg = "You need a boat to go there.\r\n"
+				moveErr = fmt.Errorf("no boat")
 			}
 		}
-		if pcCount >= 1 {
-			p.SendMessage("There isn’t enough room there!\r\n")
-			return nil, fmt.Errorf("room tunnel full")
+
+		// Room tunnel limit — only 1 PC allowed
+		// C source: act.movement.c:189-191 — ROOM_TUNNEL = bit 8
+		if moveErr == nil && roomHasFlagBit(newRoom.Flags, 8) {
+			pcCount := 0
+			for _, other := range w.players {
+				if other.RoomVNum == newRoom.VNum {
+					pcCount++
+				}
+			}
+			if pcCount >= 1 {
+				errMsg = "There isn’t enough room there!\r\n"
+				moveErr = fmt.Errorf("room tunnel full")
+			}
+		}
+
+		if moveErr == nil {
+			// Movement point cost
+			moveCost := (sectorMoveCost(currentRoom.Sector) + sectorMoveCost(newRoom.Sector)) / 2
+			if p.GetMove() < moveCost {
+				errMsg = "You are too exhausted.\r\n"
+				moveErr = fmt.Errorf("too exhausted")
+			} else {
+				p.SetMove(p.GetMove() - moveCost)
+				p.RoomVNum = newRoom.VNum
+
+				// Adjust room light for equipped light sources
+				// If player has a lit light source, old room loses light, new room gains it
+				if p.HasLight() {
+					w.adjustRoomLight(currentRoom.VNum, -1)
+					w.adjustRoomLight(newRoom.VNum, 1)
+				}
+				result = newRoom
+			}
 		}
 	}
 
-	// Movement point cost
-	moveCost := (sectorMoveCost(currentRoom.Sector) + sectorMoveCost(newRoom.Sector)) / 2
-	if p.GetMove() < moveCost {
-		p.SendMessage("You are too exhausted.\r\n")
-		return nil, fmt.Errorf("too exhausted")
+	w.mu.Unlock()
+
+	if errMsg != "" {
+		p.SendMessage(errMsg)
 	}
-	p.SetMove(p.GetMove() - moveCost)
-
-	p.RoomVNum = newRoom.VNum
-
-	// Adjust room light for equipped light sources
-	// If player has a lit light source, old room loses light, new room gains it
-	if p.HasLight() {
-		w.adjustRoomLight(currentRoom.VNum, -1)
-		w.adjustRoomLight(newRoom.VNum, 1)
-	}
-
-	return newRoom, nil
+	return result, moveErr
 }
 
 // sectorMoveCost returns movement point cost for a sector type.
@@ -1077,11 +1094,20 @@ func (w *World) GetMobByName(name string) *MobInstance {
 
 // GetMobsInRoom returns all mobs in a given room.
 func (w *World) GetMobsInRoom(roomVNum int) []*MobInstance {
+	// Snapshot the mob list under the world lock, then query each mob's room
+	// OUTSIDE the world lock. mob.GetRoom() acquires m.mu.RLock(); holding
+	// w.mu.RLock() concurrently creates a nested-lock scenario: if a pending
+	// writer queues on w.mu between the outer RLock and mob.GetRoom()'s inner
+	// RLock, mob.GetRoom() blocks while the outer RLock is held — deadlock.
 	w.mu.RLock()
-	defer w.mu.RUnlock()
+	allMobs := make([]*MobInstance, 0, len(w.activeMobs))
+	for _, mob := range w.activeMobs {
+		allMobs = append(allMobs, mob)
+	}
+	w.mu.RUnlock()
 
 	var mobs []*MobInstance
-	for _, mob := range w.activeMobs {
+	for _, mob := range allMobs {
 		if mob.GetRoom() == roomVNum {
 			mobs = append(mobs, mob)
 		}
