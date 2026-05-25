@@ -76,6 +76,11 @@ func cmdLook(s *Session, args []string) error {
 			Name:      s.player.Name,
 			Health:    s.player.Health,
 			MaxHealth: s.player.MaxHealth,
+			Mana:      s.player.Mana,
+			MaxMana:   s.player.MaxMana,
+			Move:      s.player.Move,
+			MaxMove:   s.player.MaxMove,
+			Gold:      s.player.Gold,
 			Level:     s.player.Level,
 		},
 		Room: RoomState{

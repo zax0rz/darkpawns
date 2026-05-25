@@ -58,6 +58,80 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return ErrInvalidPlayerName
 	}
 
+	if strings.HasPrefix(strings.ToLower(login.PlayerName), "guest") {
+		// Bypasses DB password authentication & character creation completely!
+		guestName := login.PlayerName
+		if strings.EqualFold(guestName, "guest") {
+			// Generate dynamic unique name Guest_XXXX
+			guestName = fmt.Sprintf("Guest_%d", time.Now().UnixNano()%10000)
+		}
+		// Avoid duplicate names for active sessions
+		for {
+			if _, ok := s.manager.GetSession(guestName); ok {
+				guestName = fmt.Sprintf("Guest_%d", time.Now().UnixNano()%10000)
+			} else {
+				break
+			}
+		}
+
+		s.player = game.NewCharacter(0, guestName, game.ClassWarrior, game.RaceHuman)
+		s.player.Stats = game.RollRealAbils(game.ClassWarrior, game.RaceHuman)
+		s.player.Sex = 0 // Male
+		s.player.Hometown = 1
+		s.player.RoomVNum = game.MortalStartRoom // 8004
+		s.player.MaxHealth = 100
+		s.player.Health = 100
+		s.player.MaxMana = 20
+		s.player.Mana = 20
+		s.player.MaxMove = 100
+		s.player.Move = 100
+		game.GiveStartingSkills(s.player)
+
+		s.authenticated = true
+		s.isGuest = true
+		s.playerName = guestName
+
+		s.manager.loginAttempts.RecordSuccess(ip)
+		if err := s.manager.Register(guestName, s); err != nil {
+			return err
+		}
+
+		if err := s.manager.world.AddPlayer(s.player); err != nil {
+			s.manager.Unregister(guestName)
+			return err
+		}
+
+		s.manager.world.GiveStartingItems(s.player)
+
+		// Look around so they see the room on entry!
+		if err := ExecuteCommand(s, "look", nil); err != nil {
+			slog.Error("look command failed on entry for guest", "player", s.player.Name, "error", err)
+		}
+
+		// Generate a dummy JWT token for WebSocket client auth checks
+		token, err := auth.GenerateJWT(guestName, s.isAgent, s.agentKeyID, "")
+		if err != nil {
+			slog.Error("failed to generate JWT token for guest", "error", err)
+		}
+		s.tokenIssuedAt = time.Now()
+
+		s.sendWelcome(token)
+
+		// Broadcast to room
+		enterMsg, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "enter",
+				Text: s.player.Name + " has arrived.",
+			},
+		})
+		if err == nil {
+			s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
+		}
+
+		return nil
+	}
+
 	// Validate player name
 	if !validation.IsValidPlayerName(login.PlayerName) {
 		s.sendError("Invalid player name. Names must be 2-32 characters and contain only letters, numbers, spaces, dots, dashes, and underscores.")
@@ -192,11 +266,14 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		// Send welcome with token
 		s.sendWelcome(token)
 
-		// Agents get a full variable dump + memory bootstrap + dreaming summary immediately after login
-		if s.isAgent {
+		// Agents get a full variable dump + memory bootstrap + dreaming summary immediately after login.
+		// Human structured sessions also get a full variable dump to populate their status bars/UI immediately.
+		if s.isAgent || s.wantsStructuredData {
 			s.sendFullVarDump()
-			s.SendMemoryBootstrap()
-			s.SendMemorySummary()
+			if s.isAgent {
+				s.SendMemoryBootstrap()
+				s.SendMemorySummary()
+			}
 		}
 
 		// Broadcast to room
@@ -268,8 +345,8 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	// generate a new one and push it to the client.
 	s.maybeRefreshToken()
 
-	// Flush dirty vars for agents after every command dispatch
-	if s.isAgent {
+	// Flush dirty vars for agents and human structured sessions after every command dispatch
+	if s.isAgent || s.wantsStructuredData {
 		s.flushDirtyVars()
 	}
 	return err

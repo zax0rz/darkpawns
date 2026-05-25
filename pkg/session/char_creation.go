@@ -326,10 +326,13 @@ func (s *Session) completeCharCreation() error {
 	// Without this, the agent harness never receives type:vars / memory_bootstrap /
 	// memory_summary and stays in its initialization wait loop until it times out,
 	// discarding all subsequent command responses.
-	if s.isAgent {
+	// Human structured sessions also get a full variable dump to populate their status bars/UI immediately.
+	if s.isAgent || s.wantsStructuredData {
 		s.sendFullVarDump()
-		s.SendMemoryBootstrap()
-		s.SendMemorySummary()
+		if s.isAgent {
+			s.SendMemoryBootstrap()
+			s.SendMemorySummary()
+		}
 	}
 
 	// Broadcast arrival

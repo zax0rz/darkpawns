@@ -334,6 +334,39 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	}
 	cmd := strings.ToLower(cmdStr)
 
+	if s.isGuest {
+		var guestAllowedCmds = map[string]bool{
+			"north": true, "n": true,
+			"east": true, "e": true,
+			"south": true, "s": true,
+			"west": true, "w": true,
+			"up": true, "u": true,
+			"down": true, "d": true,
+			"look": true, "l": true,
+			"examine": true, "exa": true,
+			"score": true, "sc": true,
+			"who": true, "where": true,
+			"affects": true,
+			"help": true,
+			"say": true,
+			"gossip": true,
+			"tell": true,
+			"reply": true, "r": true,
+			"newbie": true,
+			"shout": true,
+			"gtell": true, "gsay": true,
+			"emote": true, "me": true,
+			"stand": true, "sit": true,
+			"rest": true, "sleep": true,
+			"wake": true,
+			"quit": true,
+		}
+		if !guestAllowedCmds[cmd] {
+			s.sendText("Guest accounts are restricted from using this command.")
+			return nil
+		}
+	}
+
 	// Check for mob scripts with oncmd trigger before processing
 	// Based on the original MUD's script handling
 	if s.player != nil && s.player.GetRoomVNum() > 0 {

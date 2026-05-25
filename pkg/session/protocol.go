@@ -78,6 +78,11 @@ type PlayerState struct {
 	Name      string `json:"name"`
 	Health    int    `json:"health"`
 	MaxHealth int    `json:"max_health"`
+	Mana      int    `json:"mana"`
+	MaxMana   int    `json:"max_mana"`
+	Move      int    `json:"move"`
+	MaxMove   int    `json:"max_move"`
+	Gold      int    `json:"gold"`
 	Level     int    `json:"level"`
 	Class     string `json:"class,omitempty"`
 	Race      string `json:"race,omitempty"`

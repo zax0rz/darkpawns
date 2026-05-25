@@ -64,10 +64,10 @@ type RoomItemVar struct {
 // {"type":"subscribe","data":{"variables":["HEALTH","ROOM_VNUM",...]}}
 func (s *Session) handleSubscribe(data json.RawMessage) error {
 	s.agentMu.Lock()
-	isAgent := s.isAgent
+	allowed := s.isAgent || s.wantsStructuredData
 	s.agentMu.Unlock()
-	if !isAgent {
-		s.sendError("subscribe is only available to agents")
+	if !allowed {
+		s.sendError("subscribe is only available to agents or structured clients")
 		return nil
 	}
 	var sub struct {
@@ -90,7 +90,7 @@ func (s *Session) handleSubscribe(data json.RawMessage) error {
 func (s *Session) markDirty(vars ...string) {
 	s.agentMu.Lock()
 	defer s.agentMu.Unlock()
-	if !s.isAgent {
+	if !s.isAgent && !s.wantsStructuredData {
 		return
 	}
 	for _, v := range vars {
@@ -104,7 +104,7 @@ func (s *Session) markDirty(vars ...string) {
 // {"type":"vars","data":{...}} message to the agent, then clears the set.
 func (s *Session) flushDirtyVars() {
 	s.agentMu.Lock()
-	if !s.isAgent || len(s.dirtyVars) == 0 {
+	if (!s.isAgent && !s.wantsStructuredData) || len(s.dirtyVars) == 0 {
 		s.agentMu.Unlock()
 		return
 	}
@@ -198,17 +198,33 @@ func (s *Session) buildVarValue(varName string) interface{} {
 	case VarRoomItems:
 		return s.buildRoomItems()
 	case VarFighting:
-		return s.manager.combatEngine.IsFighting(s.player.Name)
+		target, fighting := s.manager.combatEngine.GetCombatTarget(s.player.Name)
+		if !fighting {
+			return false
+		}
+		s.agentMu.Lock()
+		isAgent := s.isAgent
+		s.agentMu.Unlock()
+		if isAgent {
+			return true
+		}
+		return map[string]interface{}{
+			"fighting": true,
+			"target":   target.GetName(),
+			"hp":       target.GetHP(),
+			"max_hp":   target.GetMaxHP(),
+		}
 	case VarInventory:
 		return s.buildInventory()
 	case VarEquipment:
 		return s.buildEquipment()
 	case VarEvents:
 		s.agentMu.Lock()
+		isAgent := s.isAgent
 		events := s.pendingEvents
 		s.pendingEvents = nil
 		s.agentMu.Unlock()
-		if events == nil {
+		if !isAgent || events == nil {
 			return []interface{}{}
 		}
 		return events

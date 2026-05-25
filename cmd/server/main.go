@@ -35,6 +35,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log/slog"
 	"net/http"
@@ -50,6 +51,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/grapevine"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -124,6 +126,11 @@ func main() {
 	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
 	manager.SetDreamingDir("data/dreaming")           // Dreaming layer output (memory summaries)
+
+	// Initialize and start Grapevine WebSocket Client in background
+	gvClient := grapevine.NewClient(gameWorld)
+	gvClient.Start()
+	defer gvClient.Stop()
 
 	// Decision capture (DP-213) — enabled when database is available
 	if database != nil {
@@ -297,17 +304,24 @@ func main() {
 	}
 	haveCerts := certFile != "" && keyFile != ""
 
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+	}
+
 	go func() {
-		srv := &http.Server{Addr: addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second}
 		if haveCerts {
 			slog.Info("Starting HTTPS server", "address", addr)
-			if err := srv.ListenAndServeTLS(certFile, keyFile); err != nil {
+			if err := srv.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
 				slog.Error("Server error", "error", err)
 				os.Exit(1)
 			}
 		} else {
 			slog.Warn("TLS disabled — WebSocket and API traffic is unencrypted. Set TLS_CERT_FILE and TLS_KEY_FILE for production.", "address", addr)
-			if err := srv.ListenAndServe(); err != nil {
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				slog.Error("Server error", "error", err)
 				os.Exit(1)
 			}
@@ -315,7 +329,20 @@ func main() {
 	}()
 
 	<-sigChan
-	slog.Info("Shutting down...")
+	slog.Info("Shutting down gracefully...")
+
+	// 1. Stop telnet listener (accepting new TCP connections)
+	telnet.Stop()
+
+	// 2. Stop HTTP/WebSocket server (accepting new WebSocket connections)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		slog.Error("HTTP server shutdown error", "error", err)
+	}
+
+	// 3. Drain active player sessions (stops combat, broadcasts leave, saves profiles, closes connections)
+	manager.ShutdownGracefully(5 * time.Second)
 
 	// Wait for zone resets to finish before saving — prevents concurrent
 	// writes to world state from corrupting the save file.
@@ -325,4 +352,5 @@ func main() {
 	if err := game.SaveWorld(gameWorld); err != nil {
 		slog.Error("Failed to save world state", "error", err)
 	}
+	slog.Info("Shutdown complete. Farewell.")
 }

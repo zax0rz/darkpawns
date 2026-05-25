@@ -1,8 +1,11 @@
 package game
 
 import (
+	"context"
 	"log/slog"
 	"math/rand"
+
+	"github.com/zax0rz/darkpawns/pkg/events"
 )
 
 // conAppType represents the con_app[] table from constants.c:1124-1150
@@ -389,5 +392,14 @@ func (p *Player) AdvanceLevel() {
 	}
 
 	slog.Info("advanced to level", "name", name, "level", level)
+
+	// Publish level-up event to the event bus
+	if p.worldRef != nil {
+		_ = p.worldRef.Events.Publish(context.Background(), events.PlayerLeveledEvent{
+			PlayerID: name,
+			NewLevel: level,
+			RoomVNum: p.RoomVNum,
+		})
+	}
 }
 
