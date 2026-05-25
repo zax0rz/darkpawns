@@ -1,12 +1,14 @@
 /* Dark Pawns — World Map  (v3 — static positions, no force sim)
  *
  * Architecture:
- *   1. Fetch /map/index.json on load   → instant zone list (<5KB)
- *   2. World overview click            → fetch /map/world-overview.json (~9KB)
- *                                         render 91 zone-centroid nodes on Canvas
- *   3. Zone click                      → fetch /map/zone-{id}.json (lazy, cached)
- *                                         render rooms on SVG with pre-baked x,y
- *   4. Room click                      → show detail panel (no extra fetch)
+ *   1. Fetch /map/map-index.json on load  → instant zone list + room→zone lookup
+ *   2. World map view                     → fetch /map/world-map.json (9590 rooms)
+ *                                            Canvas render, pan/pinch/zoom via D3
+ *                                            Centroids, zone links, BFS, zone hulls
+ *                                            all computed once at load time
+ *   3. Zone click (from world map or list) → fetch /map/zone-{id}.json (lazy, cached)
+ *                                            SVG render with pre-baked BFS x,y
+ *   4. Room click                          → show detail panel (no extra fetch)
  *
  * Touch/mobile: D3 zoom handles pointer events (mouse + touch + trackpad pinch)
  * on both canvas and SVG elements. No force simulation anywhere.
@@ -19,6 +21,10 @@
   let   indexData   = null;    // {zones: [{id, name, rooms}]}
   let   worldMapData = null;   // {rooms: [{id, x, y, sector, zone_id}], links: [{s, t}]}
   let   wmRoomPosMap = {};     // room_id → room object (for O(1) hit-testing)
+  let   zoneCentroids = {};    // zone_id → {x, y, name, count}
+  let   worldZoneLinks = [];   // [{z1, z2, count}]
+  let   reachableRooms = {};   // room_id → true
+  let   zoneHulls = {};        // zone_id → {hull, ds, bx0, by0, bx1, by1}
 
   let currentZoneId  = null;   // null = world map
   let selectedRoomId = null;
@@ -347,6 +353,86 @@
         worldMapData = data;
         wmRoomPosMap = {};
         for (const room of data.rooms) wmRoomPosMap[room.id] = room;
+
+        // 1. Compute Zone Centroids (DP-312 / DP-316)
+        const sums = {};
+        for (const room of data.rooms) {
+          if (room.zone_id !== undefined) {
+            const z = sums[room.zone_id] ??= { sumX: 0, sumY: 0, count: 0 };
+            z.sumX += room.x;
+            z.sumY += room.y;
+            z.count++;
+          }
+        }
+        zoneCentroids = {};
+        for (const [zoneId, z] of Object.entries(sums)) {
+          const indexZone = indexData?.zones.find(iz => iz.id === +zoneId);
+          zoneCentroids[zoneId] = {
+            x: z.sumX / z.count,
+            y: z.sumY / z.count,
+            name: indexZone ? indexZone.name : `Zone ${zoneId}`,
+            count: z.count,
+          };
+        }
+
+        // 2. Compute Inter-Zone Link Counts (DP-315)
+        const zoneLinksMap = {};
+        for (const lk of data.links) {
+          const s = wmRoomPosMap[lk.s];
+          const t = wmRoomPosMap[lk.t];
+          if (s && t && s.zone_id !== undefined && t.zone_id !== undefined && s.zone_id !== t.zone_id) {
+            const key = s.zone_id < t.zone_id ? `${s.zone_id}-${t.zone_id}` : `${t.zone_id}-${s.zone_id}`;
+            zoneLinksMap[key] = (zoneLinksMap[key] || 0) + 1;
+          }
+        }
+        worldZoneLinks = [];
+        for (const [key, count] of Object.entries(zoneLinksMap)) {
+          const [z1, z2] = key.split('-').map(Number);
+          worldZoneLinks.push({ z1, z2, count });
+        }
+
+        // 3. Run BFS from room 0 to find Reachable Rooms (DP-313)
+        reachableRooms = { 0: true };
+        const adj = {};
+        for (const room of data.rooms) adj[room.id] = [];
+        for (const lk of data.links) {
+          adj[lk.s]?.push(lk.t);
+          adj[lk.t]?.push(lk.s);
+        }
+        const queue = [0];
+        let head = 0;
+        while (head < queue.length) {
+          const u = queue[head++];
+          const neighbors = adj[u] || [];
+          for (const v of neighbors) {
+            if (!reachableRooms[v]) {
+              reachableRooms[v] = true;
+              queue.push(v);
+            }
+          }
+        }
+
+        // 4. Per-Zone Convex Hulls for territory shading (DP-314 rework)
+        const roomsByZone = {};
+        for (const room of data.rooms) (roomsByZone[room.zone_id] ??= []).push(room);
+        zoneHulls = {};
+        for (const [zoneId, rooms] of Object.entries(roomsByZone)) {
+          const sectorCount = {};
+          for (const r of rooms) sectorCount[r.sector] = (sectorCount[r.sector] || 0) + 1;
+          let ds = 0, dsMax = 0;
+          for (const [s, n] of Object.entries(sectorCount)) {
+            if (n > dsMax) { dsMax = n; ds = +s; }
+          }
+          const hull = convexHull(rooms);
+          if (hull.length < 3) continue;
+          let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+          for (const p of hull) {
+            if (p.x < bx0) bx0 = p.x; if (p.x > bx1) bx1 = p.x;
+            if (p.y < by0) by0 = p.y; if (p.y > by1) by1 = p.y;
+          }
+          zoneHulls[+zoneId] = { hull, ds, bx0, by0, bx1, by1 };
+        }
+
         hideLoading();
         resizeCanvas();
         d3.select(canvasEl).call(canvasZoom);
@@ -386,6 +472,31 @@
     return 5.0 / k;
   }
 
+  // Monotone Chain algorithm for Convex Hull (O(N log N)) (DP-314)
+  function convexHull(points) {
+    if (points.length <= 1) return points;
+    const sorted = points.slice().sort((a, b) => a.x !== b.x ? a.x - b.x : a.y - b.y);
+    const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    const lower = [];
+    for (const p of sorted) {
+      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) {
+        lower.pop();
+      }
+      lower.push(p);
+    }
+    const upper = [];
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const p = sorted[i];
+      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) {
+        upper.pop();
+      }
+      upper.push(p);
+    }
+    upper.pop();
+    lower.pop();
+    return lower.concat(upper);
+  }
+
   function drawWorldMap() {
     if (!ctx || !worldMapData) return;
     const dpr = window.devicePixelRatio || 1;
@@ -403,7 +514,45 @@
     const vx0 = -tx / k - pad,  vx1 = (W - tx) / k + pad;
     const vy0 = -ty / k - pad,  vy1 = (H - ty) / k + pad;
 
-    // ── Links ──────────────────────────────────────────────────────────────────
+    // ── 1. Per-Zone Territory Shading (DP-314) ─────────────────────────────────
+    // Hull per zone (pre-computed at load), colored by that zone's dominant sector.
+    // Avoids global-sector hulls which span 97%+ of the world for common sectors.
+    if (k > 0.08 && Object.keys(zoneHulls).length > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.06;
+      for (const entry of Object.values(zoneHulls)) {
+        if (entry.bx1 < vx0 || entry.bx0 > vx1 || entry.by1 < vy0 || entry.by0 > vy1) continue;
+        ctx.fillStyle = SECTOR_COLOR[entry.ds] ?? '#a8201a';
+        ctx.beginPath();
+        ctx.moveTo(entry.hull[0].x, entry.hull[0].y);
+        for (let i = 1; i < entry.hull.length; i++) ctx.lineTo(entry.hull[i].x, entry.hull[i].y);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // ── 2. Inter-Zone Links (DP-315) ──────────────────────────────────────────
+    if (k > 0.12 && worldZoneLinks) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(139, 0, 0, 0.06)'; // elegant thin oxblood lines
+      for (const zl of worldZoneLinks) {
+        const c1 = zoneCentroids[zl.z1];
+        const c2 = zoneCentroids[zl.z2];
+        if (!c1 || !c2) continue;
+        if ((c1.x < vx0 && c2.x < vx0) || (c1.x > vx1 && c2.x > vx1)) continue;
+        if ((c1.y < vy0 && c2.y < vy0) || (c1.y > vy1 && c2.y > vy1)) continue;
+        
+        ctx.lineWidth = Math.min(zl.count * 0.4, 3.5) / k;
+        ctx.beginPath();
+        ctx.moveTo(c1.x, c1.y);
+        ctx.lineTo(c2.x, c2.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── 3. Intra-Zone Links ────────────────────────────────────────────────────
     if (k > 0.1) {
       const alpha = Math.min(0.2, Math.max(0.04, k * 0.25));
       ctx.strokeStyle = `rgba(26,22,20,${alpha.toFixed(2)})`;
@@ -413,7 +562,6 @@
         const s = wmRoomPosMap[lk.s];
         const t = wmRoomPosMap[lk.t];
         if (!s || !t) continue;
-        // Cull: skip if both endpoints are outside viewport on same axis
         if ((s.x < vx0 && t.x < vx0) || (s.x > vx1 && t.x > vx1)) continue;
         if ((s.y < vy0 && t.y < vy0) || (s.y > vy1 && t.y > vy1)) continue;
         ctx.moveTo(s.x, s.y);
@@ -422,11 +570,10 @@
       ctx.stroke();
     }
 
-    // ── Rooms: group by sector for batch rendering ─────────────────────────────
+    // ── 4. Rooms with Unreachable Dimming (DP-313) ─────────────────────────────
     const dr = dotRadius(k);
     const TAU = Math.PI * 2;
 
-    // Collect visible rooms grouped by sector
     const bySector = {};
     for (const room of worldMapData.rooms) {
       if (room.x < vx0 || room.x > vx1 || room.y < vy0 || room.y > vy1) continue;
@@ -434,18 +581,31 @@
       (bySector[s] ??= []).push(room);
     }
 
-    // Draw each sector as one batched path
     for (const [sector, rooms] of Object.entries(bySector)) {
+      // 4a. Draw Reachable rooms in sector colors
       ctx.fillStyle = SECTOR_COLOR[+sector] ?? '#a8201a';
       ctx.beginPath();
       for (const r of rooms) {
-        ctx.moveTo(r.x + dr, r.y);
-        ctx.arc(r.x, r.y, dr, 0, TAU);
+        if (reachableRooms[r.id]) {
+          ctx.moveTo(r.x + dr, r.y);
+          ctx.arc(r.x, r.y, dr, 0, TAU);
+        }
+      }
+      ctx.fill();
+
+      // 4b. Draw Unreachable rooms dimmed (ghostly parchment overlay)
+      ctx.fillStyle = 'rgba(74, 69, 64, 0.18)'; 
+      ctx.beginPath();
+      for (const r of rooms) {
+        if (!reachableRooms[r.id]) {
+          ctx.moveTo(r.x + dr, r.y);
+          ctx.arc(r.x, r.y, dr, 0, TAU);
+        }
       }
       ctx.fill();
     }
 
-    // ── Selected room highlight ────────────────────────────────────────────────
+    // ── 5. Selected Room Highlight ─────────────────────────────────────────────
     const selRoom = selectedRoomId !== null ? wmRoomPosMap[selectedRoomId] : null;
     if (selRoom) {
       ctx.beginPath();
@@ -453,6 +613,29 @@
       ctx.strokeStyle = '#a8201a';
       ctx.lineWidth   = 2 / k;
       ctx.stroke();
+    }
+
+    // ── 6. Zone Name Labels (DP-312) ───────────────────────────────────────────
+    if (k >= 0.2 && zoneCentroids) {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      const fontSize = k >= 1.0 ? 12 : 10;
+      ctx.font = k >= 1.0 
+        ? `bold ${fontSize/k}px "IM Fell English", Georgia, serif` 
+        : `${fontSize/k}px "IM Fell English", Georgia, serif`;
+      
+      ctx.fillStyle = k >= 1.0 
+        ? 'rgba(139, 0, 0, 0.85)' // full opacity oxblood at close zoom
+        : 'rgba(74, 69, 64, 0.55)'; // muted charcoal at medium zoom
+        
+      for (const [zoneId, z] of Object.entries(zoneCentroids)) {
+        if (z.x < vx0 || z.x > vx1 || z.y < vy0 || z.y > vy1) continue;
+        // Float label slightly above the calculated centroid
+        ctx.fillText(z.name.toUpperCase(), z.x, z.y - 12 / k);
+      }
+      ctx.restore();
     }
 
     ctx.restore();
