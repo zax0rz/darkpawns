@@ -4,17 +4,5 @@
     <h1>{{ .Title }}</h1>
     {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
   </header>
-  {{ range .Sections }}
-  {{ if .Pages }}
-  <section>
-    <h2>{{ .Title }}</h2>
-    <ul class="page-list">
-      {{ range .Pages }}
-      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
-      {{ end }}
-    </ul>
-  </section>
-  {{ end }}
-  {{ end }}
 </div>
 {{ end }}

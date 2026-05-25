@@ -9,11 +9,6 @@
   <main id="main">
     {{ block "main" . }}{{ end }}
   </main>
-  {{ if eq .Kind "page" }}
-  <div class="container content-narrow">
-    <a href="#main" class="back-to-top">↑ Back to top</a>
-  </div>
-  {{ end }}
   {{ partial "footer.html" . }}
 </body>
 </html>
