@@ -20,7 +20,7 @@ on a player who IS logged on, your change will be lost.  If you wish to set
 a player who is in the game but is linkless, use set twice -- once with the
 FILE argument, and once without -- to make sure that the change takes.
 
-For toggled fields (BINARY), the value must be ON, OFF, YES, or NO.
+For toggled fields (BINARY), the value must be ON, [OFF](/database#mob-7912), YES, or NO.
 
 The following are valid fields:
 

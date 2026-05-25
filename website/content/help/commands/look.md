@@ -20,7 +20,7 @@ Examples:
   > look IN the bag
   > look south (May give some information as to what is south)
 
-Note that if you [LOOK](/help/commands/look/) AT CORPSE you will not see its inventory.
+Note that if you [LOOK](/help/commands/look/) AT [CORPSE](/database#item-2756) you will not see its inventory.
 To see what's inside a container (i.e. a corpse) use [LOOK](/help/commands/look/) IN <object>.
 
 Looking in directions will show you either a description of the door

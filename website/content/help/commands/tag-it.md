@@ -12,6 +12,6 @@ Usage: tag <player>
 They're IT!
 Used to start a game of tag or tag another player after you have been tagged IT.
 
-See also: ANNOYING GAMES
+See also: ANNOYING [GAMES](/database#mob-12130)
 
 Full documentation: [Docs Game Commands](/docs/game/commands/)

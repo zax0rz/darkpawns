@@ -67,8 +67,8 @@ See [HELP](/help/commands/help/) [NOISE](/help/wizhelp/noise/)
 aggressive to PCs level [24](/help/info/attitude-attitudes-24-atti/) and above. AGGR24 mobs speak before attacking, and 
 sometimes gossip when they have killed. A mob flagged AGGR24 and AGGR(flag 6) 
 will attack other mobs that are 3+ levels below him, but only when fully 
-healed.  HUNTER(flag 19) mobs will hunt through !mob rooms, and a hunting mob 
-ignores their own SENTINEL(flag 2) assignment.
+healed.  [HUNTER](/database#mob-7910)(flag 19) mobs will hunt through !mob rooms, and a hunting mob 
+ignores their own [SENTINEL](/database#mob-19510)(flag 2) assignment.
   
   If you add "carve_meat", "carve_rabbit", "carve_fish", or "carve_bird" to a
 mob's namelist, they will become carveable.

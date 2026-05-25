@@ -17,5 +17,5 @@ by the player, including [QUIT](/help/commands/quit/), until the player is unfro
 Obviously, this command should only be used in extreme disciplinary
 circumstances.
 
-See also: [SET](/help/wizhelp/set/) -> FROZEN
+See also: [SET](/help/wizhelp/set/) -> [FROZEN](/database#item-8097)
 wizonly

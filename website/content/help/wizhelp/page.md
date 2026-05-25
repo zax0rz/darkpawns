@@ -15,7 +15,7 @@ Usage: page <player | all> <message>
 Examples:
 
   > page rasmussen Hey, are you still at the keyboard?
-  > page all GAME WILL BE SHUTTING [DOWN](/help/commands/north-south-east-west-up-down/) IN 10 MINUTES
+  > page all [GAME](/database#item-28) WILL BE SHUTTING [DOWN](/help/commands/north-south-east-west-up-down/) IN 10 MINUTES
 
 Do not abuse this command.
 wizonly

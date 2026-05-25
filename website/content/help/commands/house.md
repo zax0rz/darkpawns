@@ -25,7 +25,7 @@ will add that player to your guest list if the player is not on the list,
 or will remove the player from the guest list if the player is already on 
 the list.
 
-The player specified must be in the player database for the MUD, although
+The player specified must be in the player database for the [MUD](/database#item-5810), although
 he or she does not necessarily have to be logged on at the time.
 
 Guests of your house will be able to enter your house until you remove them

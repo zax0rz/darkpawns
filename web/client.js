@@ -226,8 +226,14 @@
         const name = inputBuffer.trim();
         if (name) {
           lastPlayerName = name;
-          loginPhase = 'password';
-          term.writeln('\x1b[2mEnter password:\x1b[0m');
+          if (name.toLowerCase().startsWith('guest')) {
+            ws.send(JSON.stringify({ type: 'login', data: { player_name: name, password: '', mode: 'player' } }));
+            loginPhase = 'done';
+            term.writeln('\x1b[2mConnecting as Guest...\x1b[0m');
+          } else {
+            loginPhase = 'password';
+            term.writeln('\x1b[2mEnter password:\x1b[0m');
+          }
         }
         inputBuffer = '';
         return;
