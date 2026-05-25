@@ -1,11 +1,12 @@
-<input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true">
 <header class="archival-header">
-  <!-- Centered Monolith Wordmark -->
-  <div class="header-wordmark-container container">
+  <div class="header-bar container">
+    <!-- Play client button pinned to the left -->
+    <a href="/play" class="nav-play-btn" aria-label="Play Game client">[ PLAY CLIENT ]</a>
+    
+    <!-- Centered Monolith Wordmark (Original brand style restored!) -->
     <div class="header-wordmark-block">
       <a href="/" class="header-wordmark-wrapper">
-        <span class="header-wordmark-top">DARK</span>
-        <span class="header-wordmark-bottom">PAWNS</span>
+        <span class="header-wordmark-main">DARK<br><span class="accent-red">PAWNS</span></span>
       </a>
       <div class="header-wordmark-hairline"></div>
       <div class="header-wordmark-dossier">
@@ -14,21 +15,118 @@
         <span>EST. 1997</span>
       </div>
     </div>
+    
+    <!-- Index menu toggle button pinned to the right -->
+    <button popovertarget="codex-index" class="nav-trigger-btn" aria-label="Open Table of Contents Menu">[ THE INDEX ]</button>
   </div>
-
-  <!-- Double Rule Menu Navigation -->
-  <nav class="nav-ledger container" aria-label="Ledger navigation">
-    <label for="nav-toggle" class="nav-hamburger" aria-label="Menu" role="button" tabindex="0">
-      <span></span>
-    </label>
-    <ul class="nav-links">
-      <li><a href="/news"{{ if eq .RelPermalink "/news/" }} class="active"{{ end }}>News</a></li>
-      <li><a href="/play"{{ if eq .RelPermalink "/play/" }} class="active"{{ end }}>Play</a></li>
-      <li><a href="/world"{{ if eq .RelPermalink "/world/" }} class="active"{{ end }}>World</a></li>
-      <li><a href="/help"{{ if eq .RelPermalink "/help/" }} class="active"{{ end }}>Help</a></li>
-      <li><a href="/map"{{ if eq .RelPermalink "/map/" }} class="active"{{ end }}>Map</a></li>
-      <li><a href="/docs"{{ if eq .RelPermalink "/docs/" }} class="active"{{ end }}>Docs</a></li>
-      <li><a href="/about"{{ if eq .RelPermalink "/about/" }} class="active"{{ end }}>About</a></li>
-    </ul>
-  </nav>
 </header>
+
+<!-- Popover Table-of-Contents Overlay -->
+<div id="codex-index" popover class="codex-popover" role="dialog" aria-label="Table of Contents Menu">
+  <div class="popover-close-wrap container">
+    <button popovertarget="codex-index" popovertargetaction="hide" class="popover-close-btn" aria-label="Close Table of Contents Menu">[ ✕ CLOSE INDEX ]</button>
+  </div>
+  
+  <div class="popover-content container">
+    <h2 class="popover-title">TABLE OF CONTENTS</h2>
+    <div class="popover-hr"></div>
+    
+    <div class="popover-grid">
+      <!-- Volume 1 -->
+      <nav class="popover-volume" aria-labelledby="vol1-title">
+        <h3 id="vol1-title">VOLUME I: ENTER THE WORLD</h3>
+        <ul class="popover-links">
+          <li>
+            <a href="/play">
+              <span class="vol-num">01.</span>
+              <span class="link-label">Play Client</span>
+              <span class="dot-leader" aria-hidden="true"></span>
+              <span class="desc">Live web terminal client</span>
+            </a>
+          </li>
+          <li>
+            <a href="/map">
+              <span class="vol-num">02.</span>
+              <span class="link-label">World Map</span>
+              <span class="dot-leader" aria-hidden="true"></span>
+              <span class="desc">Interactive room grids</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <!-- Volume 2 -->
+      <nav class="popover-volume" aria-labelledby="vol2-title">
+        <h3 id="vol2-title">VOLUME II: KNOWLEDGE CODEX</h3>
+        <ul class="popover-links">
+          <li>
+            <a href="/database">
+              <span class="vol-num">03.</span>
+              <span class="link-label">Database Codex</span>
+              <span class="dot-leader" aria-hidden="true"></span>
+              <span class="desc">1,319 mobs & 1,672 items</span>
+            </a>
+          </li>
+          <li>
+            <a href="/help">
+              <span class="vol-num">04.</span>
+              <span class="link-label">Help Reference</span>
+              <span class="dot-leader" aria-hidden="true"></span>
+              <span class="desc">475 manual files & spells</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <!-- Volume 3 -->
+      <nav class="popover-volume" aria-labelledby="vol3-title">
+        <h3 id="vol3-title">VOLUME III: STORIES & CHRONICLES</h3>
+        <ul class="popover-links">
+          <li>
+            <a href="/news">
+              <span class="vol-num">05.</span>
+              <span class="link-label">Daily Dispatch</span>
+              <span class="dot-leader" aria-hidden="true"></span>
+              <span class="desc">Announcements & news</span>
+            </a>
+          </li>
+          <li>
+            <a href="/world">
+              <span class="vol-num">06.</span>
+              <span class="link-label">Historical Lore</span>
+              <span class="dot-leader" aria-hidden="true"></span>
+              <span class="desc">Original mythologies & maps</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <!-- Volume 4 -->
+      <nav class="popover-volume" aria-labelledby="vol4-title">
+        <h3 id="vol4-title">VOLUME IV: ARCHIVE COLOPHON</h3>
+        <ul class="popover-links">
+          <li>
+            <a href="/docs">
+              <span class="vol-num">07.</span>
+              <span class="link-label">Developer Docs</span>
+              <span class="dot-leader" aria-hidden="true"></span>
+              <span class="desc">Engineering logs & AI API</span>
+            </a>
+          </li>
+          <li>
+            <a href="/about">
+              <span class="vol-num">08.</span>
+              <span class="link-label">Colophon & Specs</span>
+              <span class="dot-leader" aria-hidden="true"></span>
+              <span class="desc">Credits & bibliographies</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    
+    <div class="popover-colophon">
+      DARK PAWNS ARCHIVAL PROJECT · FILED UNDER: MULTI-USER DUNGEONS
+    </div>
+  </div>
+</div>

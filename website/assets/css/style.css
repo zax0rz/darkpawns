@@ -399,12 +399,12 @@ pre code {
 }
 
 .splash .wordmark {
-  font-family: var(--font-display);
-  font-weight: 700;
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
   font-size: clamp(3.5rem, 8vw + 1rem, 5rem);
   text-transform: uppercase;
-  letter-spacing: 0.2em;
-  line-height: 1.1;
+  letter-spacing: 0.005em;
+  line-height: 0.9;
   color: var(--ink);
   margin: 0 0 var(--space-md);
 }
@@ -1566,17 +1566,22 @@ pre code {
    ============================================ */
 
 /* 1. Global Archival Header */
+/* 1. Global Archival Header Bar (Redesigned with restored branding) */
 .archival-header {
-  border-bottom: 1px solid var(--rule);
-  background: var(--paper);
-  position: relative;
+  border-bottom: 2px solid var(--ink);
+  background: var(--paper-deep);
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
-.header-wordmark-container {
+.header-bar {
+  position: relative;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2.5rem 0 2rem;
+  padding: 1.5rem 0;
 }
 
 .header-wordmark-block {
@@ -1603,25 +1608,21 @@ pre code {
   opacity: 0.85;
 }
 
-.header-wordmark-top,
-.header-wordmark-bottom {
-  font-family: 'DM Serif Display', 'Source Serif 4', Georgia, serif;
+.header-wordmark-main {
+  font-family: 'DM Serif Display', serif;
   font-weight: 400;
-  font-size: clamp(3.5rem, 8vw, 5.5rem);
-  line-height: 0.85;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  line-height: 0.9;
   text-transform: uppercase;
   letter-spacing: 0.005em;
   text-align: center;
   display: block;
-}
-
-.header-wordmark-top {
   color: var(--ink);
+  transition: color 0.15s;
 }
 
-.header-wordmark-bottom {
+.header-wordmark-main .accent-red {
   color: var(--accent);
-  margin-top: -0.05em; /* Pull it slightly closer */
 }
 
 .header-wordmark-hairline {
@@ -1634,7 +1635,7 @@ pre code {
 
 .header-wordmark-dossier {
   font-family: var(--font-mono);
-  font-size: 0.6875rem; /* 11px */
+  font-size: 0.6875rem;
   letter-spacing: 0.18em;
   color: var(--ink-muted);
   width: 100%;
@@ -1647,7 +1648,7 @@ pre code {
 }
 
 .header-wordmark-dossier .dossier-dots {
-  color: var(--paper-deep);
+  color: var(--ink-muted);
   flex-grow: 1;
   text-align: center;
   letter-spacing: 0.3em;
@@ -1656,350 +1657,352 @@ pre code {
   white-space: nowrap;
 }
 
-.nav-ledger {
-  border-top: 1px solid var(--rule);
-  border-bottom: 2px solid var(--rule);
-  padding: 0;
-  background: var(--paper);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-.nav-ledger .nav-links {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-lg);
-  margin: 0;
-  padding: 10px 0;
-  list-style: none;
-}
-
-.nav-ledger .nav-links a {
-  font-family: var(--font-display);
-  font-size: 0.9375rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-muted);
-  border-bottom: none;
-  padding: var(--space-xs) var(--space-sm);
-  transition: color 0.15s;
-}
-
-.nav-ledger .nav-links a:hover,
-.nav-ledger .nav-links a.active {
-  color: var(--accent);
-  border-bottom: none;
-}
-
-/* Hide original navigation styles to avoid duplication */
-.nav {
-  display: none !important;
-}
-
-/* 2. Broadsheet Landing Layout */
-.broadsheet-grid {
-  display: grid;
-  grid-template-columns: 1.8fr 1fr;
-  gap: var(--space-xl);
-  margin-top: var(--space-xl);
-  margin-bottom: var(--space-xl);
-}
-
-.broadsheet-main {
-  border-right: 1px solid var(--rule);
-  padding-right: var(--space-xl);
-}
-
-.broadsheet-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
-
-.broadsheet-section-title {
-  font-family: var(--font-display);
-  font-size: 0.8125rem !important;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: var(--space-xs);
-  margin-top: 0;
-  margin-bottom: var(--space-lg);
-}
-
-/* 3. Sidebar Components */
-
-/* Agent Prompt Deck */
-.agent-prompt-deck {
-  background: var(--paper-deep);
-  border: 2px solid var(--rule);
-  padding: 1.25rem;
-  border-radius: 2px;
-  position: relative;
-}
-
-.agent-deck-header {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.1em;
-  margin-bottom: var(--space-xs);
-}
-
-.agent-deck-description {
-  font-family: var(--font-body);
-  font-size: 0.875rem;
-  line-height: 1.4;
-  color: var(--ink);
-  margin-top: 0;
-  margin-bottom: var(--space-md);
-}
-
-.agent-clipboard-box {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.agent-textarea {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  background: var(--ink);
-  color: var(--paper);
-  border: 1px solid var(--rule);
-  padding: 10px;
-  resize: none;
-  height: 60px;
-  border-radius: 2px;
-  outline: none;
-}
-
-.btn-copy {
-  font-family: var(--font-display);
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  background: var(--ink);
-  color: var(--paper);
+/* Absolute positioned header elements */
+.nav-play-btn, .nav-trigger-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
   border: 1px solid var(--ink);
-  padding: 8px;
-  text-align: center;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  min-height: auto;
-  line-height: normal;
   border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  line-height: normal;
+  min-height: auto;
+  z-index: 60;
 }
 
-.btn-copy:hover {
+.nav-play-btn {
+  left: 2rem;
+}
+
+.nav-trigger-btn {
+  right: 2rem;
+}
+
+.nav-play-btn:hover, .nav-trigger-btn:hover {
+  background: var(--accent);
+  color: var(--paper);
+  border-color: var(--accent);
+  border-bottom: 1px solid var(--accent) !important;
+  text-decoration: none;
+}
+
+/* 2. Codex Index Popover Drawer */
+.codex-popover {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--paper);
+  border: none;
+  outline: none;
+  margin: 0;
+  padding: 0;
+  display: none; /* Let the browser hide it by default when popover is closed */
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 10000;
+  color: var(--ink);
+  opacity: 0;
+  pointer-events: none; /* Belt-and-suspenders: do not capture clicks when closed */
+  transition: opacity 0.3s ease, overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+}
+
+.codex-popover:popover-open {
+  opacity: 1;
+  display: flex;
+  pointer-events: auto; /* Enable pointer events when open */
+}
+
+/* Backdrop sepia filter */
+.codex-popover::backdrop {
+  background: rgba(26, 22, 20, 0.45);
+  backdrop-filter: blur(8px) sepia(15%);
+  opacity: 0;
+  transition: opacity 0.3s ease, overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+}
+
+.codex-popover:popover-open::backdrop {
+  opacity: 1;
+}
+
+/* 2026 CSS @starting-style standard for smooth transition */
+@starting-style {
+  .codex-popover:popover-open {
+    opacity: 0;
+  }
+  .codex-popover:popover-open::backdrop {
+    opacity: 0;
+  }
+}
+
+.popover-close-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1.5rem 1rem 0;
+  flex-shrink: 0;
+}
+
+.popover-close-btn {
+  background: none;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.popover-close-btn:hover {
   background: var(--accent);
   color: var(--paper);
   border-color: var(--accent);
 }
 
-/* Telnet connection card */
-.terminal-card {
-  background: var(--ink);
-  color: var(--paper);
-  padding: 1rem 1.25rem;
-  border-radius: 2px;
-  font-family: var(--font-mono);
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
-  border: 1px solid var(--rule);
-}
-
-.terminal-label {
-  font-size: 0.6875rem;
-  letter-spacing: 0.12em;
-  color: #C44A3F;
-  margin-bottom: var(--space-xs);
-  font-weight: bold;
-}
-
-.terminal-command {
-  font-size: 0.8125rem;
-  word-break: break-all;
-}
-
-.btn-play {
-  width: 100%;
-  display: block;
-  text-decoration: none;
-  border-bottom: none;
-}
-
-.btn-play:hover {
-  text-decoration: none;
-  border-bottom: none;
-}
-
-/* Catalog Ledger Cards */
-.ledger-cards-container {
+.popover-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem 2rem 3rem;
 }
 
-.ledger-card {
-  display: block;
-  text-decoration: none;
-  color: var(--ink);
-  background: var(--paper);
-  border: 1.5px solid var(--rule);
-  padding: 16px 20px;
-  transition: transform 0.12s, background 0.12s;
-  border-radius: 2px;
-}
-
-.ledger-card:hover {
-  background: var(--paper-deep);
-  transform: translateY(-2px);
-  border-bottom-color: var(--rule);
-  text-decoration: none;
-}
-
-.ledger-card-header {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 12px;
-  align-items: baseline;
-}
-
-.ledger-card-no {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  color: var(--ink-muted);
-  letter-spacing: 0.05em;
-}
-
-.ledger-card-label {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.125rem;
+.popover-title {
+  font-family: 'DM Serif Display', 'Source Serif 4', Georgia, serif;
+  font-size: 2.2rem;
+  font-weight: 400;
   text-transform: uppercase;
+  text-align: center;
   letter-spacing: 0.05em;
-}
-
-.ledger-card-arrow {
   color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 1.125rem;
-  font-weight: bold;
+  margin: 0 0 1rem;
 }
 
-.ledger-card-hint {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 0.8125rem;
-  color: var(--ink-muted);
-  margin-top: 6px;
-  padding-left: 28px;
-  line-height: 1.4;
+.popover-hr {
+  height: 2px;
+  background: var(--ink);
+  width: 100%;
+  margin-bottom: 2rem;
 }
 
-.sidebar-bibliography {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
+.popover-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem 3.5rem;
+}
+
+.popover-volume {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.popover-volume h3 {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ink-muted);
-  line-height: 1.6;
-  border-top: 1px solid var(--rule);
-  padding-top: var(--space-md);
-  margin-top: var(--space-xs);
+  border-bottom: 1px solid rgba(26, 22, 20, 0.15);
+  padding-bottom: 0.35rem;
+  margin: 0;
 }
 
-/* 4. Mobile & Tablet Overrides */
-@media (max-width: 991px) {
-  .header-wordmark-top,
-  .header-wordmark-bottom {
-    font-size: clamp(2.5rem, 8vw, 3.5rem);
-  }
-
-  .header-wordmark-block {
-    max-width: 320px;
-  }
-
-  .header-wordmark-hairline,
-  .header-wordmark-dossier {
-    max-width: 320px;
-  }
-
-  .broadsheet-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-xl);
-  }
-
-  .broadsheet-main {
-    border-right: none;
-    padding-right: 0;
-  }
+.popover-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-@media (max-width: 639px) {
-  .nav-hamburger {
-    display: flex !important;
-    position: absolute;
-    right: 15px;
-    top: 5px;
+.popover-links li a {
+  display: flex;
+  align-items: baseline;
+  text-decoration: none !important;
+  color: var(--ink) !important;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 0.35rem 0;
+  border-bottom: none !important;
+  transition: color 0.1s;
+}
+
+.popover-links li a:hover {
+  color: var(--accent) !important;
+}
+
+.vol-num {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  margin-right: 0.5rem;
+}
+
+.dot-leader {
+  flex: 1;
+  border-bottom: 1.5px dotted rgba(26, 22, 20, 0.25);
+  margin: 0 0.5rem;
+  position: relative;
+  top: -4px;
+}
+
+.popover-links li a:hover .dot-leader {
+  border-bottom-color: var(--accent);
+}
+
+.desc {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--ink-muted);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.popover-colophon {
+  margin-top: 3.5rem;
+  border-top: 1px solid rgba(26, 22, 20, 0.1);
+  padding-top: 1rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+/* Hide legacy nav checklist checkboxes */
+.nav {
+  display: none !important;
+}
+.nav-toggle {
+  display: none !important;
+}
+
+/* 3. App-Quality Mobile sheet transition overrides */
+@media (max-width: 768px) {
+  .archival-header {
+    height: auto;
+  }
+  .header-wordmark-main {
+    font-size: clamp(1.4rem, 8vw, 1.8rem);
+  }
+  .nav-play-btn, .nav-trigger-btn {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
   }
 
-  .nav-ledger {
-    min-height: 44px;
-    position: relative;
+  .codex-popover {
+    inset: auto 0 0 0;
+    width: 100vw;
+    height: 80vh;
+    max-height: 80vh;
+    border-top: 2.5px solid var(--ink);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+    transform: translateY(100%);
+    opacity: 1; /* Keep solid backdrop overlay on mobile */
+    transition: transform 0.35s cubic-bezier(0.32, 0.94, 0.6, 1), overlay 0.35s allow-discrete, display 0.35s allow-discrete;
   }
 
-  .nav-ledger .nav-links {
-    display: none;
-    flex-direction: column;
-    position: absolute;
-    top: 44px;
-    left: 0;
-    right: 0;
+  .codex-popover:popover-open {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  @starting-style {
+    .codex-popover:popover-open {
+      transform: translateY(100%);
+    }
+  }
+
+  .popover-close-wrap {
+    padding: 1.25rem 1.25rem 0.5rem;
+    border-bottom: 1px solid rgba(26, 22, 20, 0.08);
     background: var(--paper);
-    border-bottom: 2px solid var(--rule);
-    padding: var(--space-md);
-    gap: 0;
-    z-index: 55;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
 
-  .nav-ledger .nav-links li {
-    border-bottom: 1px solid var(--rule);
-    width: 100%;
+  .popover-content {
+    padding: 1rem 1.25rem 2rem;
+    display: block; /* scrollable block flow on mobile */
+    overflow-y: auto;
   }
 
-  .nav-ledger .nav-links li:last-child {
-    border-bottom: none;
+  .popover-title {
+    font-size: 1.6rem;
+    text-align: left;
+    margin: 0.5rem 0 0.25rem;
   }
 
-  .nav-ledger .nav-links a {
+  .popover-hr {
+    margin-bottom: 1.25rem;
+    height: 1px;
+  }
+
+  .popover-grid {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .popover-volume {
+    gap: 0.5rem;
+  }
+
+  /* Expand Tap Targets to 48px app targets */
+  .popover-links li a {
+    padding: 0.85rem 0; /* Huge comfortable vertical tap height */
+    flex-wrap: wrap; /* Wraps description below labels beautifully */
+    gap: 0.15rem;
+    min-height: 48px;
+  }
+
+  .popover-links li a:active {
+    background: rgba(168, 32, 26, 0.05); /* Quick touch feedback */
+  }
+
+  .dot-leader {
+    display: none; /* Hide leaders on mobile for a clean vertical stacked sheet flow */
+  }
+
+  .desc {
+    width: 100%; /* Collapse desc to its own full width block below link name */
+    font-size: 0.75rem;
+    padding-left: 1.25rem;
     display: block;
-    padding: var(--space-sm) 0;
-    text-align: center;
+    margin-top: 0.1rem;
   }
 
-  .nav-toggle:checked ~ .archival-header .nav-ledger .nav-hamburger span {
-    background: transparent;
-  }
-
-  .nav-toggle:checked ~ .archival-header .nav-ledger .nav-hamburger span::before {
-    top: 0;
-    transform: rotate(45deg);
-  }
-
-  .nav-toggle:checked ~ .archival-header .nav-ledger .nav-hamburger span::after {
-    top: 0;
-    transform: rotate(-45deg);
-  }
-
-  .nav-toggle:checked ~ .archival-header .nav-ledger .nav-links {
-    display: flex;
+  .popover-colophon {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
   }
 }
+
 
 /* ============================================
    About Page — Data Visualizations & Pill Buttons
