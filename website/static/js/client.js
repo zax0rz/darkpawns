@@ -34,6 +34,36 @@
   let username = '';
   let password = '';
 
+  const greetingsLogo =
+    "\r\n\r\n" +
+    "         (_____)           (_)    (_____)\r\n" +
+    "   _     /  __ \\           | |    |  __ \\                            _\r\n" +
+    "  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;\r\n" +
+    "   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\r\n" +
+    " .***.  /| |__| | (_| | |  |   <  | |  | (_| |\\ V  V /| | | \\__ \\  .***.\r\n" +
+    " ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\r\n" +
+    "                                  |||\r\n" +
+    "                                  |||\r\n" +
+    "                                  `.'\r\n\r\n" +
+    "             Based on CircleMUD 3.0 created by J. Elson and\r\n" +
+    "            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,\r\n" +
+    "                H. Staerfeldt, M. Seifert, and S. Hammer\r\n\r\n";
+
+  function renderRoom(data) {
+    const r = data.room;
+    if (!r) return;
+    term.writeln('\r\n\x1b[1;36m' + (r.name || '') + '\x1b[0m');
+    if (r.description) {
+      term.write(r.description.replace(/\r?\n/g, '\r\n'));
+      if (!/\n$/.test(r.description)) term.writeln('');
+    }
+    const exits = (r.exits && r.exits.length) ? r.exits.join(' ') : 'none';
+    term.writeln('\x1b[32m[ Exits: ' + exits + ' ]\x1b[0m');
+    if (r.mobs) r.mobs.forEach(function(m) { term.writeln('\x1b[33m' + m + '\x1b[0m'); });
+    if (r.players) r.players.forEach(function(p) { term.writeln(p + ' is here.'); });
+    if (r.items) r.items.forEach(function(i) { term.writeln(i); });
+  }
+
   function setStatus(state) {
     statusEl.className = 'conn-status ' + state;
     const label = state === 'connected' ? 'Connected' : 'Disconnected';
@@ -54,7 +84,7 @@
     ws.onopen = function () {
       setStatus('connected');
       term.writeln('\x1b[32mConnected.\x1b[0m\r\n');
-      term.writeln('Welcome to Dark Pawns!');
+      term.write(greetingsLogo);
       term.write('By what name do you wish to be known? ');
     };
 
@@ -84,12 +114,12 @@
             password = '';
           }
         } else if (msg.type === 'state') {
-          // Server sends a 'state' message as the login-success signal.
-          // When it carries player data, the user has entered the world.
           if (!loggedIn && msg.data && msg.data.player && msg.data.player.name) {
             loggedIn = true;
             inCharCreation = false;
-            term.writeln('\r\n\x1b[32m--- Entered Dark Pawns ---\x1b[0m\r\n');
+          }
+          if (loggedIn && msg.data) {
+            renderRoom(msg.data);
           }
         } else {
           term.write(evt.data);

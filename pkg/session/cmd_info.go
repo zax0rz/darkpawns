@@ -13,7 +13,9 @@ func cmdScore(s *Session) error {
 	}
 	s.Send(fmt.Sprintf("Name: %s  Level: %d  XP: %d/%d", p.Name, p.Level, p.Exp, 1000))
 	s.Send(fmt.Sprintf("HP: %d/%d  Mana: %d/%d  Move: %d/%d", p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove))
-	s.Send(fmt.Sprintf("STR:%d  INT:%d  WIS:%d  DEX:%d  CON:%d  CHA:%d", p.Stats.Str, p.Stats.Int, p.Stats.Wis, p.Stats.Dex, p.Stats.Con, p.Stats.Cha))
+	s.Send(fmt.Sprintf("Str: %-14s  Int: %-14s  Wis: %-14s\r\nDex: %-14s  Con: %-14s  Cha: %-14s",
+		getAbilName(p.Stats.Str), getAbilName(p.Stats.Int), getAbilName(p.Stats.Wis),
+		getAbilName(p.Stats.Dex), getAbilName(p.Stats.Con), getAbilName(p.Stats.Cha)))
 	s.Send(fmt.Sprintf("AC:%d  Hitroll:%d  Damroll:%d  Align:%d  Gold:%d", p.AC, p.Hitroll, p.Damroll, p.Alignment, p.Gold))
 	return nil
 }

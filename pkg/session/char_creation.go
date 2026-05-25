@@ -114,6 +114,44 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	return nil
 }
 
+func getAbilName(score int) string {
+	abilNames := []string{
+		"terrible",      // 0
+		"terrible",      // 1
+		"awful",         // 2
+		"awful",         // 3
+		"bad",           // 4
+		"bad",           // 5
+		"poor",          // 6
+		"poor",          // 7
+		"below average", // 8
+		"average",       // 9
+		"average",       // 10
+		"decent",        // 11
+		"decent",        // 12
+		"good",          // 13
+		"good",          // 14
+		"very good",     // 15
+		"very good",     // 16
+		"excellent",     // 17
+		"excellent",     // 18
+		"superior",      // 19
+		"godlike",       // 20
+		"godlike",       // 21
+		"godlike",       // 22
+		"godlike",       // 23
+		"godlike",       // 24
+		"godlike",       // 25
+	}
+	if score < 0 {
+		return "terrible"
+	}
+	if score >= len(abilNames) {
+		return "godlike"
+	}
+	return abilNames[score]
+}
+
 // sendStatsRollPrompt displays the current rolled stats and asks to keep or reroll.
 func (s *Session) sendStatsRollPrompt() {
 	stats := &CharStatsDisplay{
@@ -125,8 +163,9 @@ func (s *Session) sendStatsRollPrompt() {
 		Cha: s.charStats.Cha,
 	}
 	prompt := fmt.Sprintf(
-		"Your ability scores:\r\n  Str: %-3d  Dex: %-3d  Int: %-3d\r\n  Wis: %-3d  Con: %-3d  Cha: %-3d\r\n\r\nPress Y to keep these stats, or N to reroll:",
-		stats.Str, stats.Dex, stats.Int, stats.Wis, stats.Con, stats.Cha,
+		"Your ability scores:\r\n  Str: (%s)  Dex: (%s)  Int: (%s)\r\n  Wis: (%s)  Con: (%s)  Cha: (%s)\r\n\r\nPress Y to keep these stats, or N to reroll:",
+		getAbilName(stats.Str), getAbilName(stats.Dex), getAbilName(stats.Int),
+		getAbilName(stats.Wis), getAbilName(stats.Con), getAbilName(stats.Cha),
 	)
 	data := CharCreateData{
 		Stage:   "stats_roll",

@@ -45,19 +45,8 @@ func (s *Session) sendWelcome(token string) {
 		Token: token,
 	}
 
-	// Send state FIRST so agents get the "you're in the world" signal
-	// before the flavor text, closing the timeout window that causes reconnection.
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgState,
-		Data: state,
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return
-	}
-	s.send <- msg
-
-	// Send MOTD after state
+	// Send MOTD first (splash screen before room — matches original CircleMUD order).
+	// Agents still receive the state signal immediately after.
 	motd := game.ShowMOTD(s.manager.world.WorldPath)
 	if motd != "" {
 		motdMsg, err := json.Marshal(ServerMessage{
@@ -71,6 +60,17 @@ func (s *Session) sendWelcome(token string) {
 			s.send <- motdMsg
 		}
 	}
+
+	// Send state — this is the "you're in the world" signal for both agents and humans.
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgState,
+		Data: state,
+	})
+	if err != nil {
+		slog.Error("json.Marshal error", "error", err)
+		return
+	}
+	s.send <- msg
 }
 
 // sendError sends an error message to the player.
