@@ -253,6 +253,14 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		return
 	}
 
+	// Shopkeeper protection — C: fight.c:1360
+	// Any attempt to damage a shopkeeper halts combat immediately.
+	if IsShopkeeper != nil && IsShopkeeper(defender.GetName()) {
+		attacker.StopFighting()
+		defender.StopFighting()
+		return
+	}
+
 	// Calculate number of attacks for attacker
 	hasHaste := HasAffect != nil && HasAffect(attacker.GetName(), AFF_HASTE)
 	hasSlow := HasAffect != nil && HasAffect(attacker.GetName(), AFF_SLOW)
