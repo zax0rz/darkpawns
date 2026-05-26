@@ -11,7 +11,7 @@ func (w *World) performTell(ch *Player, vict *Player, arg string) {
 	// AFK notice.
 	if vict.Flags&prfAfk != 0 {
 		ch.SendMessage(fmt.Sprintf("%s is AFK right now, %s may not hear you.\r\n",
-			vict.Name, hisHer(vict.Sex)))
+			vict.Name, heSheIt(vict.Sex)))
 	}
 
 	// Echo to sender.
