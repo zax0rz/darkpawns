@@ -72,11 +72,31 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	case SpellSanctuary:
 		aff = engine.NewAffectDirect(SpellSanctuary, engine.ApplyNone, 4, 0, engine.AFFSanctuary, "sanctuary")
 	case SpellSleep:
+		// MOB_NOSLEEP check — C source: magic.c sleep case MOB_FLAGGED(victim, MOB_NOSLEEP)
+		// MobFlagNosleep = 15 (pkg/game/mob_flags_bits.go)
+		type npcSleepChecker interface {
+			IsNPC() bool
+			HasMobFlag(flag uint64) bool
+		}
+		if ns, ok := victim.(npcSleepChecker); ok && ns.IsNPC() && ns.HasMobFlag(1<<15) {
+			sendToCaster(ch, "Your victim is immune to sleep!\r\n")
+			return
+		}
 		if magSavingThrow(victim, savetype) {
 			sendToVictim(victim, "You resist the spell!\r\n")
+			npcRetaliate(victim, ch)
 			return
 		}
 		aff = engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4, 0, engine.AFFSleep, "sleep")
+		// Apply affect first, then set position to sleeping — C source: magic.c after affect_to_char()
+		applyAffect(victim, aff)
+		// Set victim position to POS_SLEEPING (4) — combat.PosSleeping
+		type poserSleep interface{ SetPosition(int) }
+		if p, ok := victim.(poserSleep); ok {
+			p.SetPosition(int(PosSleeping)) // PosSleeping = 4
+		}
+		sendToVictim(victim, "You feel very sleepy... zzzzzz\r\n")
+		return
 	case SpellFlameStrike:
 		// C source: magic.c:1109-1129 — outdoor-only DOT with saving throw
 		if magSavingThrow(victim, savetype) {
