@@ -489,6 +489,7 @@ func SerializeWorld(w *World) (string, error) {
 
 // DeserializeWorld restores dynamic world state from JSON.
 // Must be called AFTER zone resets have spawned mobs (so we can reposition them).
+// Lock ordering: w.mu → mob.mu (acquired per mob while w.mu is held). (DP-372)
 func DeserializeWorld(data string, w *World) error {
 	var sd saveWorldData
 	if err := json.Unmarshal([]byte(data), &sd); err != nil {
