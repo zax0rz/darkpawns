@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Communication command handlers.
@@ -31,6 +34,12 @@ func cmdTell(s *Session, args []string) error {
 		s.Send("Who do you wish to tell what??")
 		return nil
 	}
+
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
+		s.Send("You cannot tell anyone anything!")
+		return nil
+	}
+
 	targetName := args[0]
 	message := sanitizeMessage(strings.Join(args[1:], " "))
 
@@ -87,6 +96,11 @@ func cmdReply(s *Session, args []string) error {
 	}
 	if len(args) == 0 {
 		s.Send("What is your reply?")
+		return nil
+	}
+
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
+		s.Send("You cannot tell anyone anything!")
 		return nil
 	}
 
@@ -354,10 +368,43 @@ func cmdWrite(s *Session, args []string) error {
 		return nil
 	}
 
-	// Check if item is writable (ITEM_NOTE type = 23 from structs.h)
-	// For now, allow writing on any item as a simplification
-	// In full implementation, check item.GetTypeFlag() == 23
-	_ = message
+	// Check if item is writable (ITEM_NOTE type = 16)
+	if item.GetTypeFlag() != game.ITEM_NOTE {
+		s.Send("You can't write on that!")
+		return nil
+	}
+
+	// Check if player has a pen in inventory
+	hasPen := false
+	if s.player.Inventory != nil {
+		for _, invItem := range s.player.Inventory.FindItems("") {
+			if invItem != nil && invItem.GetTypeFlag() == game.ITEM_PEN {
+				hasPen = true
+				break
+			}
+		}
+	}
+	if !hasPen {
+		s.Send("You need a pen to write on something!")
+		return nil
+	}
+
+	// Store message in extra descriptions
+	if item.CustomData == nil {
+		item.CustomData = make(map[string]interface{})
+	}
+	var extraDescs []parser.ExtraDesc
+	if raw, ok := item.CustomData["extra_descs"]; ok {
+		if currentDescs, ok := raw.([]parser.ExtraDesc); ok {
+			extraDescs = currentDescs
+		}
+	}
+	// Append new description for looking at the note
+	extraDescs = append(extraDescs, parser.ExtraDesc{
+		Keywords:    item.GetKeywords(),
+		Description: message + "\r\n",
+	})
+	item.CustomData["extra_descs"] = extraDescs
 
 	s.Send(fmt.Sprintf("You write '%s' on %s.", message, item.GetShortDesc()))
 	return nil
@@ -409,6 +456,83 @@ func cmdPage(s *Session, args []string) error {
 			strings.Join(matched, ", "), message))
 	}
 
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Auction / Gratz / Newbie Channel / Clan Tell
+// ---------------------------------------------------------------------------
+
+// cmdAuction sends a message on the auction channel.
+// Source: act.comm.c do_gen_comm() SCMD_AUCTION
+func cmdAuction(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.Send("Auction what?")
+		return nil
+	}
+	message := sanitizeMessage(strings.Join(args, " "))
+	filtered, block := filterCommMessage(s, message)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	message = filtered
+	s.manager.world.ExecGenComm(s.player, "auction", message)
+	return nil
+}
+
+// cmdGratz sends a message on the gratz channel.
+// Source: act.comm.c do_gen_comm() SCMD_GRATZ
+func cmdGratz(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.Send("Gratz whom?")
+		return nil
+	}
+	message := sanitizeMessage(strings.Join(args, " "))
+	filtered, block := filterCommMessage(s, message)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	message = filtered
+	s.manager.world.ExecGenComm(s.player, "gratz", message)
+	return nil
+}
+
+// cmdNewbieChannel sends a message on the newbie channel.
+// Source: act.comm.c do_gen_comm() SCMD_NEWBIE
+// Named cmdNewbieChannel to avoid conflict with cmdNewbie (wizard command).
+func cmdNewbieChannel(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.Send("Newbie what?")
+		return nil
+	}
+	message := sanitizeMessage(strings.Join(args, " "))
+	filtered, block := filterCommMessage(s, message)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	message = filtered
+	s.manager.world.ExecGenComm(s.player, "newbie", message)
+	return nil
+}
+
+// cmdCTell sends a message on the clan tell channel.
+// Source: act.comm.c do_ctell()
+func cmdCTell(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.Send("What do you want to tell your clan?")
+		return nil
+	}
+	message := sanitizeMessage(strings.Join(args, " "))
+	filtered, block := filterCommMessage(s, message)
+	if block {
+		s.sendText("Your message was blocked.")
+		return nil
+	}
+	message = filtered
+	s.manager.world.ExecCTell(s.player, message)
 	return nil
 }
 
