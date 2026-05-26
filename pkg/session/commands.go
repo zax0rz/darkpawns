@@ -226,6 +226,8 @@ func init() {
 	cmdRegistry.Register("description", wrapArgs(cmdDescription), "Set your character description.", 0, 0)
 	cmdRegistry.Register("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", 0, 0, "diag")
 	cmdRegistry.Register("toggle", wrapArgs(cmdToggle), "Toggle a player preference.", 0, 0)
+	cmdRegistry.Register("lines", wrapArgs(cmdLines), "Set your screen line count (7-50).", 0, 0)
+	cmdRegistry.Register("infobar", wrapArgs(cmdInfoBar), "Toggle the bottom status infobar.", 0, 0)
 	cmdRegistry.Register("users", wrapArgs(cmdUsersSafe), "Show connected players.", LVL_IMMORT, 0)
 
 	// Other commands (act_other.go)
