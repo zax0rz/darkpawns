@@ -118,7 +118,7 @@ func init() {
 	cmdRegistry.Register("sell", wrapArgs(cmdSell), "Sell an item to a shop.", 0, 0)
 	cmdRegistry.Register("forget", wrapSkill(command.CmdForget), "Forget a skill.", 0, 0)
 	cmdRegistry.Register("confirm", wrapSkill(command.CmdConfirmForget), "Confirm forgetting a skill.", 0, 0, "confirm forget")
-	cmdRegistry.Register("use", wrapSkill(command.CmdUseSkill), "Use a skill.", 0, 0)
+	cmdRegistry.Register("use", wrapArgs(cmdUse), "Use a wand/staff or a skill.", 0, 0)
 	cmdRegistry.Register("skillinfo", wrapSkill(command.CmdSkillInfo), "Show info about a skill.", 0, 0, "sinfo")
 
 	// Combat skills (delegated to pkg/command)
@@ -191,7 +191,7 @@ func init() {
 	cmdRegistry.Register("sysfile", wrapArgs(cmdSysfile), "Show system file path.", LVL_IMMORT, 0)
 	cmdRegistry.Register("sethunt", wrapArgs(cmdSethunt), "Set hunt target for a character.", LVL_IMMORT, 0)
 	cmdRegistry.Register("tick", wrapArgs(cmdTick), "Show current tick info.", LVL_IMMORT, 0)
-	cmdRegistry.Register("newbie", wrapArgs(cmdNewbie), "Give newbie equipment to a player.", LVL_IMMORT, 0)
+	cmdRegistry.Register("newbiegive", wrapArgs(cmdNewbie), "Give newbie equipment to a player.", LVL_IMMORT, 0)
 
 	// Informative
 	cmdRegistry.Register("consider", wrapArgs(cmdConsider), "Compare yourself to a target.", 0, 0, "con")
@@ -268,6 +268,10 @@ func init() {
 	cmdRegistry.Register("house", wrapArgs(cmdHouse), "House management commands.", 0, 0)
 	cmdRegistry.Register("hcontrol", wrapArgs(cmdHcontrol), "Admin house control.", 0, 0)
 	cmdRegistry.Register("gossip", wrapArgs(cmdGossip), "Gossip on the channel.", 0, 0)
+	cmdRegistry.Register("auction", wrapArgs(cmdAuction), "Auction an item to the channel.", 0, 0)
+	cmdRegistry.Register("gratz", wrapArgs(cmdGratz), "Congratulate someone on the channel.", 0, 0)
+	cmdRegistry.Register("newbie", wrapArgs(cmdNewbieChannel), "Ask a question on the newbie channel.", 0, 0)
+	cmdRegistry.Register("ctell", wrapArgs(cmdCTell), "Send a message to your clan.", 0, 0)
 	cmdRegistry.Register("password", wrapArgs(cmdPassword), "Change your password.", 0, 0)
 	cmdRegistry.Register("prompt", wrapArgs(cmdPrompt), "Set your prompt.", 0, 0)
 	cmdRegistry.Register("reply", wrapArgs(cmdReply), "Reply to the last tell.", 0, 0, "r")
@@ -396,6 +400,72 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		}
 	}
 
+	// Spec procedure command interception
+	if s.player != nil && s.player.GetRoomVNum() > 0 {
+		roomVNum := s.player.GetRoomVNum()
+		argStr := strings.Join(args, " ")
+
+		// 1. Mob spec procedures
+		mobs := s.manager.world.GetMobsInRoom(roomVNum)
+		for _, mob := range mobs {
+			if mob != nil {
+				if mobSpec := game.GetMobSpec(mob.VNum); mobSpec != nil {
+					if mobSpec(s.manager.world, s.player, mob, cmd, argStr) {
+						return nil
+					}
+				}
+			}
+		}
+
+		// 2. Room spec procedure
+		if roomSpec := game.GetRoomSpec(roomVNum); roomSpec != nil {
+			if roomSpec(s.manager.world, s.player, nil, cmd, argStr) {
+				return nil
+			}
+		}
+
+		// 2. Object spec procedures
+		// 2a. Equipped items
+		if s.player.Equipment != nil {
+			equipped := s.player.Equipment.GetEquippedItems()
+			for _, item := range equipped {
+				if item != nil {
+					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+							return nil
+						}
+					}
+				}
+			}
+		}
+
+		// 2b. Inventory items
+		if s.player.Inventory != nil {
+			invItems := s.player.Inventory.FindItems("")
+			for _, item := range invItems {
+				if item != nil {
+					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+							return nil
+						}
+					}
+				}
+			}
+		}
+
+		// 2c. Room items
+		roomItems := s.manager.world.GetItemsInRoom(roomVNum)
+		for _, item := range roomItems {
+			if item != nil {
+				if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
+					if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+						return nil
+					}
+				}
+			}
+		}
+	}
+
 	entry, ok := cmdRegistry.Lookup(cmd)
 	if !ok {
 		// Check social emotes before giving up
@@ -486,6 +556,43 @@ func getDoorManager(s *Session) *systems.DoorManager {
 		return nil
 	}
 	return s.manager.doorManager
+}
+
+// cmdUse handles using an item (wand/staff/potion/scroll) or falls back to using a skill.
+func cmdUse(s *Session, args []string) error {
+	if s.player == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		s.sendText("Use what? Usage: use <item> [target] OR use <skill> [target]\r\n")
+		return nil
+	}
+
+	itemArg := args[0]
+	var item *game.ObjectInstance
+	if s.player.Inventory != nil {
+		item, _ = s.player.Inventory.FindItem(itemArg)
+	}
+	if item == nil && s.player.Equipment != nil {
+		equipped := s.player.Equipment.GetEquippedItems()
+		for _, eqItem := range equipped {
+			if eqItem != nil && (strings.Contains(strings.ToLower(eqItem.GetKeywords()), strings.ToLower(itemArg)) || strings.Contains(strings.ToLower(eqItem.GetShortDesc()), strings.ToLower(itemArg))) {
+				item = eqItem
+				break
+			}
+		}
+	}
+
+	if item != nil {
+		itemType := item.GetTypeFlag()
+		if itemType == game.ITEM_WAND || itemType == game.ITEM_STAFF || itemType == game.ITEM_POTION || itemType == game.ITEM_SCROLL {
+			argStr := strings.Join(args, " ")
+			s.manager.world.DoUse(s.player, argStr)
+			return nil
+		}
+	}
+
+	return command.CmdUseSkill(s, args)
 }
 
 // cmdSave saves the player's character.
