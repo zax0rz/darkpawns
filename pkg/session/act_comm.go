@@ -27,8 +27,15 @@ func cmdRaceSay(s *Session, args []string) error {
 	return nil
 }
 
-// cmdQcomm handles question communication (question asked to all).
+// cmdQcomm handles question communication (question asked to all questing players).
+// Source: act.comm.c do_qcomm() — requires PRF_QUEST flag to participate.
 func cmdQcomm(s *Session, args []string) error {
+	// Quest flag check — act.comm.c do_qcomm() PRF_FLAGGED(ch, PRF_QUEST)
+	if s.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
+		s.Send("You aren't even part of the quest!")
+		return nil
+	}
+
 	if len(args) == 0 {
 		s.Send("What is your question?")
 		return nil
