@@ -82,7 +82,7 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 // If victimGold > 0 and the killer has AutoGold enabled, gold is looted/split
 // according to the autosplit preference.
 // Source: fight.c group_gain() lines 708–745, called at die_with_killer() line 1638
-func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGold int) {
+func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGold int, victimLevel int) {
 	if victimExp <= 0 && victimGold <= 0 {
 		return
 	}
@@ -171,9 +171,22 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 		if !ok {
 			return
 		}
-		p.AddExp(victimExp)
-		if victimExp > 1 {
-			p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", victimExp))
+		// Level-difference XP penalty — fight.c perform_group_gain()
+		xp := victimExp
+		if victimLevel > 0 {
+			killerLevel := killer.GetLevel()
+			if killerLevel > victimLevel {
+				xp = xp * victimLevel / killerLevel
+			} else if killerLevel < victimLevel {
+				xp = xp * (2*victimLevel - killerLevel) / victimLevel
+			}
+			if xp < 1 {
+				xp = 1
+			}
+		}
+		p.AddExp(xp)
+		if xp > 1 {
+			p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", xp))
 		} else {
 			p.SendMessage("You receive one measly little experience point!\r\n")
 		}
@@ -205,10 +218,29 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 	}
 
 	// perform_group_gain() for each member — fight.c lines 688–705
+	// Apply level-difference XP penalty per member — fight.c perform_group_gain() lines 688–705
 	for _, m := range inRoom {
-		m.AddExp(base)
-		if base > 1 {
-			m.SendMessage(fmt.Sprintf("You receive your share of experience -- %d points.\r\n", base))
+		xp := base
+		// Level-difference penalty — fight.c:
+		//   if (GET_LEVEL(ch) > GET_LEVEL(victim))
+		//       gain = gain * GET_LEVEL(victim) / GET_LEVEL(ch);
+		//   else if (GET_LEVEL(ch) < GET_LEVEL(victim))
+		//       gain = gain * (2 * GET_LEVEL(victim) - GET_LEVEL(ch)) / GET_LEVEL(victim);
+		//   if (gain < 1) gain = 1;
+		if victimLevel > 0 {
+			memberLevel := m.GetLevel()
+			if memberLevel > victimLevel {
+				xp = xp * victimLevel / memberLevel
+			} else if memberLevel < victimLevel {
+				xp = xp * (2*victimLevel - memberLevel) / victimLevel
+			}
+			if xp < 1 {
+				xp = 1
+			}
+		}
+		m.AddExp(xp)
+		if xp > 1 {
+			m.SendMessage(fmt.Sprintf("You receive your share of experience -- %d points.\r\n", xp))
 		} else {
 			m.SendMessage("You receive your share of experience -- one measly little point!\r\n")
 		}

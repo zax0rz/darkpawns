@@ -104,7 +104,7 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			}
 		}
 		// Award XP and gold to killer and party members — fight.c group_gain() lines 708-830
-		w.AwardMobKillXP(killer, mobExp, mobGold)
+		w.AwardMobKillXP(killer, mobExp, mobGold, mobLevel)
 	} else {
 		// Fire player death hook
 		killerName := ""
