@@ -11,8 +11,11 @@ import (
 // Communication commands (ported from act.comm.c)
 // ---------------------------------------------------------------------------
 
-// cmdRaceSay speaks in the player's racial tongue.
-// Format: "You say in $race '$msg'"
+// cmdRaceSay speaks in the player's racial tongue with syllable substitution.
+// Delegates to game.World.doRaceSay (via ExecRaceSay) so that same-race
+// players and immortals hear the original text while others hear the
+// phonetically-translated version.
+// Source: act.comm.c do_race_say() — wired to ExecRaceSay bridge in comm_say.go
 func cmdRaceSay(s *Session, args []string) error {
 	if len(args) == 0 {
 		s.Send("What do you want to say?")
@@ -20,18 +23,7 @@ func cmdRaceSay(s *Session, args []string) error {
 	}
 
 	msg := sanitizeMessage(strings.Join(args, " "))
-	raceName := game.RaceNames[s.player.Race]
-	if raceName == "" {
-		raceName = "tongue"
-	}
-
-	s.Send(fmt.Sprintf("You say in %s '%s'", raceName, msg))
-
-	// Broadcast to others in room
-	roomVNum := s.player.GetRoomVNum()
-	broadcastToRoomText(s, roomVNum,
-		fmt.Sprintf("%s says in %s '%s'", s.player.Name, raceName, msg))
-
+	s.manager.world.ExecRaceSay(s.player, msg)
 	return nil
 }
 
