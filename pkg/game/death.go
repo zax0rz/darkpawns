@@ -38,11 +38,23 @@ import (
 //   level 6-20:  !number(0,3) = 25% chance lose 1 con
 //   level 21+:   same 25% + additional !number(0,5) = 16.7% chance for 2nd con
 const (
-	ConLossCheckChance = 4  // !number(0,3) = 3/4 chance skip, 1/4 chance lose 1 con
-	ConLossSecondChance = 6 // !number(0,5) = 5/6 chance skip, 1/6 chance lose 2nd con
+	ConLossCheckChance  = 4  // !number(0,3) = 3/4 chance skip, 1/4 chance lose 1 con
+	ConLossSecondChance = 6  // !number(0,5) = 5/6 chance skip, 1/6 chance lose 2nd con
 	ConLossMinLevel     = 6  // Level > 5 → minimum level 6 for any CON loss
 	ConLossSecondLevel  = 21 // Level > 20 → minimum level 21 for second CON loss
 )
+
+// counter_procs milestones — fight.c:1252-1310
+// Milestone kills that grant stat boosts (MAX_HIT/MAX_MANA/MAX_MOVE++)
+var counterProcsBoostMilestones = map[int]bool{
+	1000: true, 2000: true, 10000: true, 20000: true,
+	30000: true, 40000: true, 50000: true,
+}
+
+// Milestone kills that just heal to full
+var counterProcsHealMilestones = map[int]bool{
+	5000: true, 15000: true, 25000: true, 35000: true, 45000: true,
+}
 
 // MortalStartRoom is the vnum of the mortal start room (config.c: mortal_start_room = 8004)
 const MortalStartRoom = 8004
@@ -105,6 +117,13 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		}
 		// Award XP and gold to killer and party members — fight.c group_gain() lines 708-830
 		w.AwardMobKillXP(killer, mobExp, mobGold, mobLevel)
+
+		// Increment kill counter and check milestone blessings
+		// Source: fight.c:1689-1690 — GET_KILLS(ch)++; counter_procs(ch);
+		if kp, ok := w.GetPlayer(killerName); ok {
+			kp.Kills++
+			w.counter_procs(kp)
+		}
 	} else {
 		// Fire player death hook
 		killerName := ""
@@ -790,4 +809,40 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 			p.SendMessage(fmt.Sprintf("%s is disintegrated! Equipment lies scattered on the ground.\r\n", victimName))
 		}
 	}
+}
+
+// counter_procs checks kill milestone rewards after every player kill.
+// Source: fight.c:1252-1310 — counter_procs()
+// At certain kill counts, players receive stat boosts or full heals.
+// Note: The C switch has intentional fall-through on cases 1/2/3 — all three
+// stats are boosted, not a random one. This is preserved faithfully.
+func (w *World) counter_procs(ch *Player) {
+	kills := ch.Kills
+
+	if counterProcsBoostMilestones[kills] {
+		ch.SendMessage("The gods reward your many victories!\r\n")
+		// C fall-through: all three stat boosts apply (no break between cases 1/2/3)
+		ch.MaxHealth++
+		ch.MaxMana++
+		ch.MaxMove++
+		ch.Health = ch.MaxHealth // heal to full
+	} else if counterProcsHealMilestones[kills] {
+		ch.SendMessage("The gods reward your glory in battle!\r\n")
+		ch.Health = ch.MaxHealth // heal to full
+	} else {
+		return // not a milestone
+	}
+
+	// Blessing message + full heal to ALL other connected players
+	// Source: fight.c:1304-1310 — heals everyone in the game
+	for _, p := range w.AllPlayers() {
+		if p != ch {
+			p.SendMessage("The gods of war and death bestow a blessing upon you.\r\n")
+			p.Health = p.MaxHealth // heal everyone
+		}
+	}
+
+	// Log milestone to mudlog
+	// Source: fight.c:1308
+	slog.Info("kill milestone", "player", ch.Name, "kills", kills)
 }
