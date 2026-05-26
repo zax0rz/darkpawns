@@ -2120,6 +2120,17 @@ func castHellfire(level int, ch, world interface{}) {
 				vn.SendMessage("The fires of hell bring blisters on your skin!\r\n")
 			}
 			w.DoSpellDamage(ch, c, dam, "hellfire")
+
+			// DEX-based knockdown to POS_SITTING — C source: spells.c:748-754
+			// if (number(0, 25) > GET_DEX(victim)) SET_POS(victim, POS_SITTING)
+			// POS_SITTING = 5 in combat/formulas.go
+			// #nosec G404 — game RNG, not cryptographic
+			if rand.Intn(26) > cn.GetDex() {
+				cn.SetPosition(5) // POS_SITTING
+				if vn, ok := c.(interface{ SendMessage(string) }); ok {
+					vn.SendMessage("The force of the blast knocks you off your feet!\r\n")
+				}
+			}
 		}
 	}
 }
