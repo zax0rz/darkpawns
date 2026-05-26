@@ -382,6 +382,29 @@ func (m *Manager) SetCommandExecFunc() {
 	}
 }
 
+// SetFleeHooks wires wimpy auto-flee into the combat engine (DP-389).
+// Must be called after NewManager(), before the server starts accepting connections.
+func (m *Manager) SetFleeHooks() {
+	combat.DoFlee = func(name string) {
+		s, ok := m.GetSession(name)
+		if !ok || s == nil {
+			return
+		}
+		if err := cmdFlee(s); err != nil {
+			slog.Error("DoFlee failed", "player", name, "error", err)
+		}
+	}
+	combat.DoRetreat = func(name string) {
+		s, ok := m.GetSession(name)
+		if !ok || s == nil {
+			return
+		}
+		if err := cmdFlee(s); err != nil {
+			slog.Error("DoRetreat failed", "player", name, "error", err)
+		}
+	}
+}
+
 // SetDreamingDir sets the path to the dreaming layer's output directory.
 // Agent memory summaries are read from {dir}/{agent_id}/memory-summary.txt.
 func (m *Manager) SetDreamingDir(dir string) {
@@ -403,6 +426,18 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	ip := auth.GetIPFromRequest(r)
 
+	// Ban check: BanAll → reject before creating a session (DP-418)
+	ipBanLevel := 0
+	if bm := m.GetBanManager(); bm != nil {
+		ipBanLevel = bm.IsBanned(ip)
+	}
+	if ipBanLevel == game.BanAll {
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "your site has been banned"))
+		_ = conn.Close()
+		slog.Warn("WebSocket: BanAll connection rejected", "ip", ip)
+		return
+	}
+
 	// Per-IP connection limit (C5)
 	m.ipConnMu.Lock()
 	if m.ipConnCount[ip] >= 5 {
@@ -415,6 +450,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	m.ipConnMu.Unlock()
 
 	session := &Session{
+		banLevel: ipBanLevel, // BanNew/BanSelect enforced at login (DP-418)
 		conn:                conn,
 		request:             r, // Store the HTTP request for IP extraction
 		manager:             m,
@@ -660,6 +696,7 @@ type Session struct {
 	authenticated bool
 	isGuest       bool
 	connCountDecremented bool // C5: prevents double-decrement of IP connection count
+	banLevel             int  // ban level from IsBanned (BanNew or BanSelect); 0 = no ban
 
 	// Agent identity — set on login when is_agent=true.
 	// Harness+Model is the agent identity. Same combo = same agent across sessions.

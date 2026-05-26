@@ -46,8 +46,8 @@ func cmdLook(s *Session, args []string) error {
 	players := s.manager.world.GetPlayersInRoom(room.VNum)
 	var playerNames []string
 	for _, p := range players {
-		if p.Name != s.player.Name {
-			playerNames = append(playerNames, p.Name)
+		if p.GetName() != s.player.GetName() {
+			playerNames = append(playerNames, p.GetName())
 		}
 	}
 
@@ -174,15 +174,16 @@ func cmdLookAt(s *Session, room *parser.Room, targetName string) error {
 	// Check players
 	players := s.manager.world.GetPlayersInRoom(room.VNum)
 	for _, p := range players {
-		if strings.EqualFold(p.Name, targetName) || strings.Contains(strings.ToLower(p.Name), strings.ToLower(targetName)) {
-			desc := p.Name
-			if p.Title != "" {
-				desc = p.Name + " " + p.Title
+		pName := p.GetName()
+		if strings.EqualFold(pName, targetName) || strings.Contains(strings.ToLower(pName), strings.ToLower(targetName)) {
+			desc := pName
+			if title := p.GetTitle(); title != "" {
+				desc = pName + " " + title
 			}
-			if p.Description != "" {
-				desc += "\n" + p.Description
+			if description := p.GetDescription(); description != "" {
+				desc += "\n" + description
 			}
-			desc += "\n" + p.Name + " has:"
+			desc += "\n" + pName + " has:"
 			for _, item := range p.Equipment.GetEquippedItems() {
 				desc += "\n  " + item.GetShortDesc()
 			}

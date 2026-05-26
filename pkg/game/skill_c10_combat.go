@@ -211,7 +211,7 @@ func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
 	}
 	improveSkill(ch, SkillSleeper)
 	return SkillResult{
-		Success: true, Damage: 0, StunTarget: true, WaitCh: 2,
+		Success: true, Damage: 0, SleepTarget: true, WaitCh: 2,
 		MessageToCh: ActMessage("You put $N in a sleeper hold.", chPronouns, &victPronouns, ""),
 		MessageToVict: "You feel very sleepy... Zzzzz..",
 		MessageToRoom: ActMessage("$n puts $N in a sleeper hold. $N goes to sleep.", chPronouns, &victPronouns, ""),

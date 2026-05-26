@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // cmdColor — toggle ANSI color on or off.
@@ -155,16 +157,34 @@ func diagnoseLabel(pct int) string {
 }
 
 // cmdToggle — toggle a player preference flag.
+// Source: act.informative.c do_toggle()
 func cmdToggle(s *Session, args []string) error {
 	if s.player == nil {
 		return nil
 	}
 
 	if len(args) == 0 {
-		// Show current toggles
+		// Show current toggles in 3-column grid matching C format
+		p := s.player
+		g := p.Flags
 		var buf strings.Builder
 		buf.WriteString("Toggles:\r\n")
-		fmt.Fprintf(&buf, "  %-12s : %s\r\n", "autoexit", boolStr(s.player.AutoExit))
+		// Row 1
+		toggleRow(&buf, "hitpoint", prfOnOff(g, game.PrfDisphp), "brief", prfOnOff(g, game.PrfBrief), "summonable", prfOnOff(g, game.PrfSummonable))
+		// Row 2
+		toggleRow(&buf, "move", prfOnOff(g, game.PrfDispmove), "compact", prfOnOff(g, game.PrfCompact), "quest", prfOnOff(g, game.PrfQuest))
+		// Row 3
+		toggleRow(&buf, "mana", prfOnOff(g, game.PrfDispmmana), "notell", prfOnOff(g, game.PrfNotell), "norepeat", prfOnOff(g, game.PrfNoRepeat))
+		// Row 4
+		toggleRow(&buf, "autoexit", prfOnOffStr(p.AutoExit), "autoloot", prfOnOff(g, game.PrfAutoLoot), "autogold", prfOnOff(g, game.PrfAutoGold))
+		// Row 5
+		toggleRow(&buf, "autosplit", prfOnOff(g, game.PrfAutoSplit), "deaf", prfOnOff(g, game.PrfDeaf), "wimpy", wimpyStr(p.WimpLevel))
+		// Row 6
+		toggleRow(&buf, "nogossip", prfOnOff(g, game.PrfNoGossip), "noauction", prfOnOff(g, game.PrfNoAuctions), "nogratz", prfOnOff(g, game.PrfNoGratz))
+		// Row 7
+		toggleRow(&buf, "disptank", prfOnOff(g, game.PrfDispTank), "disptarget", prfOnOff(g, game.PrfDispTarget), "color", colorLevelStr(g))
+		// Row 8
+		toggleRow(&buf, "newbie", prfOnOff(g, game.PrfNoNewbie), "noctell", prfOnOff(g, game.PrfNoCTell), "nobroad", prfOnOff(g, game.PrfNoBroad))
 		s.Send(buf.String())
 		return nil
 	}
@@ -172,18 +192,56 @@ func cmdToggle(s *Session, args []string) error {
 	switch strings.ToLower(args[0]) {
 	case "autoexit":
 		s.player.AutoExit = !s.player.AutoExit
-		s.Send(fmt.Sprintf("Auto-exit %s.", boolStr(s.player.AutoExit)))
+		s.Send(fmt.Sprintf("Auto-exit %s.", prfOnOffStr(s.player.AutoExit)))
 	default:
 		s.Send(fmt.Sprintf("Unknown toggle '%s'. Try: autoexit", args[0]))
 	}
 	return nil
 }
 
-// boolStr returns "ON" or "OFF".
-func boolStr(b bool) string {
+// toggleRow writes one row of 3 toggles with fixed-width formatting.
+func toggleRow(buf *strings.Builder, name1, val1, name2, val2, name3, val3 string) {
+	fmt.Fprintf(buf, "  %-12s : %-6s   %-12s : %-6s   %-12s : %s\r\n", name1, val1, name2, val2, name3, val3)
+}
+
+// prfOnOff returns "ON" or "OFF" based on a PRF flag bit in the flags bitmask.
+func prfOnOff(flags uint64, bit int) string {
+	if flags&(1<<bit) != 0 {
+		return "ON"
+	}
+	return "OFF"
+}
+
+// prfOnOffStr returns "ON" or "OFF" for a bool.
+func prfOnOffStr(b bool) string {
 	if b {
 		return "ON"
 	}
 	return "OFF"
+}
+
+// wimpyStr returns the wimpy level as a string, or "OFF" if 0.
+func wimpyStr(level int) string {
+	if level == 0 {
+		return "OFF"
+	}
+	return fmt.Sprintf("%d", level)
+}
+
+// colorLevelStr returns the color level string based on PRF_COLOR flags.
+// 0=off, 1=sparse, 2=normal, 3=complete
+func colorLevelStr(flags uint64) string {
+	on1 := flags&(1<<game.PrfColor1) != 0
+	on2 := flags&(1<<game.PrfColor2) != 0
+	if on1 && on2 {
+		return "complete"
+	}
+	if on2 {
+		return "normal"
+	}
+	if on1 {
+		return "sparse"
+	}
+	return "off"
 }
 

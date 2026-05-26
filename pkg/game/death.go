@@ -44,6 +44,13 @@ const (
 	ConLossSecondLevel  = 21 // Level > 20 → minimum level 21 for second CON loss
 )
 
+// Corpse decay timers — src/config.c:85-86
+// max_npc_corpse_time = 5, max_pc_corpse_time = 10 (in ticks)
+const (
+	MaxNPCCorpseTime = 5
+	MaxPCCorpseTime  = 10
+)
+
 // counter_procs milestones — fight.c:1252-1310
 // Milestone kills that grant stat boosts (MAX_HIT/MAX_MANA/MAX_MOVE++)
 var counterProcsBoostMilestones = map[int]bool{
@@ -247,7 +254,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, corpseGold)
 	} else {
-		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold)
+		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold, true)
 		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoom failed in mob death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		} else {
@@ -401,7 +408,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
 	} else {
-		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold)
+		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false)
 		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoom failed in player death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		}
@@ -694,21 +701,36 @@ func genderPronoun(sex int) string {
 	}
 }
 
-func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int) *ObjectInstance {
+func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int, isNPC bool) *ObjectInstance {
+	// src/fight.c make_corpse(): GET_OBJ_TYPE(corpse) = ITEM_CONTAINER
+	containerType := ITEM_CONTAINER
+	// src/utils.h IS_CORPSE(): GET_OBJ_TYPE == ITEM_CONTAINER && GET_OBJ_VAL(obj,3) == 1
+	corpseValues := [4]int{0, 0, 0, 1}
+
 	corpse := &ObjectInstance{
-		Prototype: nil, // synthetic object, no prototype vnum
-		VNum:      -1,
-		RoomVNum:  roomVNum,
-		Contains:  make([]*ObjectInstance, 0),
+		Prototype:       nil, // synthetic object, no prototype vnum
+		VNum:            -1,
+		RoomVNum:        roomVNum,
+		Contains:        make([]*ObjectInstance, 0),
+		IsCorpse:        true,
+		TypeFlagOverride: &containerType,
+		ValuesOverride:   &corpseValues,
 		CustomData: map[string]interface{}{
 			"is_corpse":   true,
 			"corpse_name": name,
-			// OBJ_VAL(3) = 1 in original (corpse identifier)
-			"corpse_id": 1,
 		},
 	}
 
+	// src/fight.c: if (IS_NPC(ch)) timer = max_npc_corpse_time else max_pc_corpse_time
+	if isNPC {
+		corpse.Timer = MaxNPCCorpseTime
+	} else {
+		corpse.Timer = MaxPCCorpseTime
+	}
+
 	// Name and descriptions — from make_corpse() in fight.c
+	// Keywords: "corpse <name>" matches how players target corpses and mortician searches
+	corpse.Runtime.Keywords = strings.ToLower(fmt.Sprintf("corpse %s", name))
 	corpse.Runtime.Name = fmt.Sprintf("%s corpse", name)
 	corpse.Runtime.ShortDesc = fmt.Sprintf("the corpse of %s", name)
 	// Convert attack type to corpse description

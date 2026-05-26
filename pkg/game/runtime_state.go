@@ -15,6 +15,9 @@ type ObjectRuntimeState struct {
 	ShortDesc           string `json:"short_desc,omitempty"`
 	LongDesc            string `json:"long_desc,omitempty"`
 	ShortDescOverride   string `json:"short_desc_override,omitempty"`
+	// Keywords for synthetic objects (corpses, money) that have no Prototype.
+	// Checked by GetKeywords() before falling back to Prototype.Keywords.
+	Keywords           string `json:"keywords,omitempty"`
 
 	// Molded objects
 	MoldName string `json:"mold_name,omitempty"`

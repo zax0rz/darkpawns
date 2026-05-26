@@ -28,7 +28,7 @@ func cmdEat(s *Session, args []string) error {
 	}
 
 	// Check it's actually food
-	if item.GetTypeFlag() != 19 { // ITEM_FOOD
+	if item.GetTypeFlag() != game.ITEM_FOOD {
 		s.Send("You can't eat THAT!")
 		return nil
 	}

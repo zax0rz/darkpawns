@@ -307,7 +307,9 @@ func ShowMOTD(worldPath string) string {
 func (w *World) decayObjectsInRoom(roomVNum int) {
 	items := w.GetItemsInRoom(roomVNum)
 	for _, obj := range items {
-		if obj.Prototype == nil {
+		// Allow corpses (IsCorpse=true) through even with nil Prototype so the
+		// corpse decay block below can fire. All other nil-prototype objects skip.
+		if obj.Prototype == nil && !obj.IsCorpse {
 			continue
 		}
 		objVNum := obj.GetVNum()

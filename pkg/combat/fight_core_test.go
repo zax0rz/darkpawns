@@ -26,7 +26,8 @@ func TestNewNamedCombatant(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// backstabMult — formula: float64(level)*0.2 + 1.0
+// BackstabMult — formula: float64(level)*0.2 + 1.0
+// Source: src/class.c — backstab_mult()
 // ---------------------------------------------------------------------------
 
 func TestBackstabMult(t *testing.T) {
@@ -45,9 +46,9 @@ func TestBackstabMult(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("level_%d", tt.level), func(t *testing.T) {
-			got := backstabMult(tt.level)
+			got := BackstabMult(tt.level)
 			if got != tt.want {
-				t.Errorf("backstabMult(%d) = %f, want %f", tt.level, got, tt.want)
+				t.Errorf("BackstabMult(%d) = %f, want %f", tt.level, got, tt.want)
 			}
 		})
 	}

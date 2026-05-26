@@ -5,12 +5,8 @@ import (
 	"strings"
 )
 
-// cmdOrder — order a pet or follower to perform a command (LVL_IMMORT).
+// cmdOrder — order a charmed pet or follower to perform a command.
 func cmdOrder(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) < 2 {
 		s.Send("Order whom to do what?")
 		return nil
@@ -25,13 +21,19 @@ func cmdOrder(s *Session, args []string) error {
 	}
 
 	for _, mob := range s.manager.world.GetMobsInRoom(room.VNum) {
-		if strings.Contains(strings.ToLower(mob.GetName()), targetName) ||
-			strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
-			s.Send(fmt.Sprintf("%s obeys your order: %s", mob.GetShortDesc(), orderCmd))
-			broadcastCombatMsg(s, room.VNum, "order",
-				fmt.Sprintf("%s orders %s to '%s'.", s.player.Name, mob.GetShortDesc(), orderCmd))
+		if !strings.HasPrefix(strings.ToLower(mob.GetName()), targetName) &&
+			!strings.HasPrefix(strings.ToLower(mob.GetShortDesc()), targetName) {
+			continue
+		}
+		if mob.GetFollowing() != s.player.Name {
+			s.Send(fmt.Sprintf("%s isn't following you.", mob.GetShortDesc()))
 			return nil
 		}
+		s.Send(fmt.Sprintf("%s obeys your order.", mob.GetShortDesc()))
+		broadcastCombatMsg(s, room.VNum, "order",
+			fmt.Sprintf("%s orders %s to '%s'.", s.player.Name, mob.GetShortDesc(), orderCmd))
+		s.manager.world.ExecMobCommand(mob.GetVNum(), orderCmd)
+		return nil
 	}
 
 	s.Send("No follower by that name here.")

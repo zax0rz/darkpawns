@@ -172,6 +172,12 @@ func (w *World) listCharToChar(room *parser.Room, ch *Player) {
 		if !chCanSee(ch, m) {
 			continue
 		}
+		if m.IsAffected(affInvisible) && !ch.IsAffected(affDetectInvisible) {
+			continue
+		}
+		if m.IsAffected(affSneak) && ch.GetLevel() < m.GetLevel()+10 {
+			continue
+		}
 		w.listOneChar(ch, m)
 	}
 
@@ -181,6 +187,12 @@ func (w *World) listCharToChar(room *parser.Room, ch *Player) {
 			continue
 		}
 		if p.GetLevel() >= 31 {
+			continue
+		}
+		if p.IsAffected(affSneak) && ch.GetLevel() < p.GetLevel()+10 {
+			continue
+		}
+		if p.IsAffected(affInvisible) && !ch.IsAffected(affDetectInvisible) {
 			continue
 		}
 		if p.IsAffected(affHide) {

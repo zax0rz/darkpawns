@@ -2,7 +2,10 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
+	"strings"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -129,51 +132,79 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		return SkillResult{Success: true, MessageToCh: "You couldn't get any gold..."}
 	}
 
-	// Steal item — simplified, only from player inventory for now
+	// Steal item
+	var item *ObjectInstance
+	var found bool
+
 	if p, ok := target.(*Player); ok {
-		// Find item in target's inventory
-		item, found := p.Inventory.FindItem(itemName)
+		item, found = p.Inventory.FindItem(itemName)
 		if !found {
 			return SkillResult{Success: false, MessageToCh: ActMessage("$E hasn't got that item.", chPronouns, &victPronouns, "")}
 		}
-
-		// Roll with weight penalty
-		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-		percent := rand.Intn(101) + 1
-		// Heavier items are harder to steal
-		// percent += GET_OBJ_WEIGHT(obj) — we don't have weight yet
-		if p.GetLevel() > ch.GetLevel() {
-			percent += p.GetLevel() - ch.GetLevel()
-		}
-		prob := ch.GetSkill(SkillSteal)
-
-		if percent > prob {
-			return SkillResult{
-				Success:       false,
-				MessageToCh:   ActMessage("$N catches you trying to steal something...", chPronouns, &victPronouns, ""),
-				MessageToVict: ActMessage("$n tried to steal something from you!", chPronouns, &victPronouns, ""),
-				MessageToRoom: ActMessage("$n tries to steal something from $N.", chPronouns, &victPronouns, ""),
+	} else if m, ok := target.(*MobInstance); ok {
+		lowerName := strings.ToLower(itemName)
+		for _, mobItem := range m.Inventory {
+			if mobItem != nil {
+				if strings.Contains(strings.ToLower(mobItem.GetKeywords()), lowerName) || strings.Contains(strings.ToLower(mobItem.GetShortDesc()), lowerName) {
+					item = mobItem
+					found = true
+					break
+				}
 			}
 		}
-
-		// Steal the item
-		p.Inventory.removeItem(item)
-		if err := ch.Inventory.addItem(item); err != nil {
-			return SkillResult{
-				Success:     false,
-				MessageToCh: ActMessage("You can't carry that much!\r\n", chPronouns, nil, ""),
-			}
+		if !found {
+			return SkillResult{Success: false, MessageToCh: ActMessage("$E hasn't got that item.", chPronouns, &victPronouns, "")}
 		}
+	} else {
+		return SkillResult{Success: false, MessageToCh: "You can't steal that."}
+	}
+
+	// Roll with weight penalty
+	// #nosec G404 — game RNG, not cryptographic
+	percent := rand.Intn(101) + 1
+	percent += item.GetWeight()
+	if target.GetLevel() > ch.GetLevel() {
+		percent += target.GetLevel() - ch.GetLevel()
+	}
+	prob := ch.GetSkill(SkillSteal)
+
+	if percent > prob {
 		return SkillResult{
-			Success:       true,
-			MessageToCh:   ActMessage("You deftly steal $p from $N's pocket!", chPronouns, &victPronouns, item.GetShortDesc()),
-			MessageToVict: "",
-			MessageToRoom: "",
+			Success:       false,
+			MessageToCh:   ActMessage("$N catches you trying to steal something...", chPronouns, &victPronouns, ""),
+			MessageToVict: ActMessage("$n tried to steal something from you!", chPronouns, &victPronouns, ""),
+			MessageToRoom: ActMessage("$n tries to steal something from $N.", chPronouns, &victPronouns, ""),
 		}
 	}
 
-	return SkillResult{Success: false, MessageToCh: "You can't steal that."}
+	// Steal the item
+	if p, ok := target.(*Player); ok {
+		p.Inventory.removeItem(item)
+	} else if m, ok := target.(*MobInstance); ok {
+		m.RemoveFromInventory(item)
+	}
+
+	if err := ch.Inventory.addItem(item); err != nil {
+		// Put back
+		if p, ok := target.(*Player); ok {
+			if err := p.Inventory.addItem(item); err != nil {
+				slog.Error("DoSteal rollback failed", "player", p.Name, "item", item.GetShortDesc(), "error", err)
+			}
+		} else if m, ok := target.(*MobInstance); ok {
+			m.AddToInventory(item)
+		}
+		return SkillResult{
+			Success:     false,
+			MessageToCh: ActMessage("You can't carry that much!\r\n", chPronouns, nil, ""),
+		}
+	}
+
+	return SkillResult{
+		Success:       true,
+		MessageToCh:   ActMessage("You deftly steal $p from $N's pocket!", chPronouns, &victPronouns, item.GetShortDesc()),
+		MessageToVict: "",
+		MessageToRoom: "",
+	}
 }
 
 // DoPickLock implements do_pick() via doGenDoor() with SCMD_PICK.

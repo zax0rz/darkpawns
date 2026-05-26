@@ -50,13 +50,19 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 		return true
 	}
 
+	// C: PLR_FLAGGED(ch, PLR_NOSHOUT) — mute check blocks socials
+	if ch.GetFlags()&(1<<PlrNoshout) != 0 {
+		ch.SendMessage("You cannot perform emotes!\r\n")
+		return true
+	}
+
 	// Extract target name from argument
 	targetName := extractArg(argument)
 
 	// No argument supplied — use no_arg messages
 	if targetName == "" {
 		Act(nil, false, ch, nil, nil, nil, social.Messages[socCharNoArg], "", ToChar)
-		Act(w, false, ch, nil, nil, nil, social.Messages[socOthersNoArg], "", ToRoom)
+		Act(w, true, ch, nil, nil, nil, social.Messages[socOthersNoArg], "", ToRoom)
 		return true
 	}
 
@@ -78,8 +84,14 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 			Act(nil, false, ch, nil, nil, nil, social.Messages[socCharAuto], "", ToChar)
 		}
 		if socOthersAuto < len(social.Messages) {
-			Act(w, false, ch, nil, nil, nil, social.Messages[socOthersAuto], "", ToRoom)
+			Act(w, true, ch, nil, nil, nil, social.Messages[socOthersAuto], "", ToRoom)
 		}
+		return true
+	}
+
+	// Check minimum victim position (DP-411)
+	if social.MinVictimPosition > 0 && targetActor.GetPosition() < social.MinVictimPosition {
+		ch.SendMessage("$N is not in a proper position for that.\r\n")
 		return true
 	}
 
@@ -90,7 +102,7 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 	}
 
 	if socOthersFound < len(social.Messages) {
-		Act(w, false, ch, targetActor, nil, nil, social.Messages[socOthersFound], "", ToNotVict)
+		Act(w, true, ch, targetActor, nil, nil, social.Messages[socOthersFound], "", ToNotVict)
 	}
 
 	if socVictFound < len(social.Messages) {

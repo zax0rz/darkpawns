@@ -50,8 +50,12 @@ func (w *World) doSneak(ch *Player, me *MobInstance, cmd string, arg string) boo
 }
 
 // ---------------------------------------------------------------------------
-// do_hide — from act.other.c
+// do_hide — src/act.other.c — ACMD(do_hide)
 // ---------------------------------------------------------------------------
+//
+// In the C source, hide is blocked by sector type ONLY during daytime.
+// At night (sunlight == SunDark), you can hide in any sector.
+// If already hidden (AFF_HIDE), toggle it off and return early.
 
 func (w *World) doHide(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if isPlayerNPC(ch, me) {
@@ -59,18 +63,37 @@ func (w *World) doHide(ch *Player, me *MobInstance, cmd string, arg string) bool
 	}
 
 	if ch.IsAffected(affMounted) {
-		ch.SendMessage("You can't hide while mounted!\r\n")
+		ch.SendMessage("Dismount first!\r\n")
 		return true
 	}
 
 	room := w.GetRoomInWorld(ch.GetRoomVNum())
-	if room != nil && !isOutdoors(room) {
-		ch.SendMessage("You can't hide indoors!\r\n")
-		return true
+
+	// C source: daytime sector checks (sunlight != SUN_DARK)
+	if GetSunlight() != SunDark && room != nil {
+		switch room.Sector {
+		case SECT_FIELD:
+			ch.SendMessage("Hide out here during the day?  Yeah right.\r\n")
+			return true
+		case SECT_DESERT:
+			ch.SendMessage("You can't hide very well with all the sun and sand out here!\r\n")
+			return true
+		case SECT_WATER_SWIM, SECT_WATER_NOSWIM, SECT_UNDERWATER, SECT_WATER:
+			ch.SendMessage("Hide in the water?  Don't think so.\r\n")
+			return true
+		case SECT_FLYING, SECT_FIRE, SECT_EARTH, SECT_WIND:
+			ch.SendMessage("You are completely exposed here, nowhere to hide!\r\n")
+			return true
+		}
 	}
 
-	if room != nil && room.Sector == SECT_CITY {
-		ch.SendMessage("There's nowhere to hide here!\r\n")
+	// C source: "You attempt to hide yourself."
+	ch.SendMessage("You attempt to hide yourself.\r\n")
+
+	// C source: if already hidden, toggle OFF and return
+	if ch.IsAffected(affHide) {
+		ch.SetAffect(affHide, false)
+		ch.SendMessage("You stop hiding.\r\n")
 		return true
 	}
 
@@ -107,10 +130,14 @@ func (w *World) doSteal(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	victimName := parts[0]
-	objName := ""
+	objName := parts[0]
+	victimName := ""
 	if len(parts) > 1 {
-		objName = parts[1]
+		victimName = parts[1]
+	}
+	if victimName == "" {
+		ch.SendMessage("Steal from whom?\r\n")
+		return true
 	}
 
 	victimPl, victimMob := w.findCharInRoom(ch, ch.GetRoomVNum(), victimName)

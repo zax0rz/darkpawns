@@ -50,18 +50,12 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	// For now, check if mount already has a rider by checking affMounted
-	// We can check via a simple loop
-	mobs := w.GetMobsInRoom(ch.GetRoomVNum())
-	mountAlreadyRidden := false
-	for _, m := range mobs {
-		if m.HasFlag("mount") && m.HasFlag("mounted") {
-			mountAlreadyRidden = true
-			break
-		}
+	if mountMob.MountRider != "" {
+		ch.SendMessage("That mount already has a rider.\r\n")
+		return true
 	}
-	_ = mountAlreadyRidden
 
+	mountMob.MountRider = ch.Name
 	ch.SetAffect(affMounted, true)
 	ch.SetFollowing(mountMob.GetShortDesc())
 	ch.SendMessage(fmt.Sprintf("You climb onto %s.\r\n", mountMob.GetShortDesc()))
@@ -83,7 +77,14 @@ func (w *World) doDismount(ch *Player, me *MobInstance, cmd string, arg string) 
 		return true
 	}
 
+	for _, m := range w.GetMobsInRoom(ch.GetRoomVNum()) {
+		if m.MountRider == ch.Name {
+			m.MountRider = ""
+			break
+		}
+	}
 	ch.SetAffect(affMounted, false)
+	ch.SetFollowing("")
 	ch.SendMessage("You dismount.\r\n")
 	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s dismounts.\r\n", ch.Name), ch.Name)
 	return true

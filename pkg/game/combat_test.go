@@ -3,6 +3,7 @@ package game
 import (
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -242,6 +243,7 @@ func TestDoTrip_NotThief(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // TestBackstabMult — verify multiplier calculation
+// Source: src/class.c — backstab_mult()
 // ---------------------------------------------------------------------------
 
 func TestBackstabMult(t *testing.T) {
@@ -260,9 +262,9 @@ func TestBackstabMult(t *testing.T) {
 		{100, 20.0},
 	}
 	for _, tt := range tests {
-		got := backstabMult(tt.level)
+		got := combat.BackstabMult(tt.level)
 		if got != tt.want {
-			t.Errorf("backstabMult(%d) = %f, want %f", tt.level, got, tt.want)
+			t.Errorf("combat.BackstabMult(%d) = %f, want %f", tt.level, got, tt.want)
 		}
 	}
 }

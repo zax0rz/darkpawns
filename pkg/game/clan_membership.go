@@ -2,6 +2,8 @@ package game
 
 import (
 	"fmt"
+	"os"
+	"strings"
 )
 
 func (w *World) doClanEnroll(ch *Player, arg string) {
@@ -28,6 +30,24 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 		for _, p := range w.players {
 			if p.ClanID == c.ID && p.ClanRank == 0 {
 				ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
+			}
+		}
+		// Scan saved player files for offline applicants
+		files, _ := os.ReadDir(saveDir)
+		for _, f := range files {
+			if strings.HasSuffix(f.Name(), ".json") {
+				playerName := strings.TrimSuffix(f.Name(), ".json")
+				// Skip if already listed (online)
+				if _, ok := w.players[playerName]; ok {
+					continue
+				}
+				p, err := LoadPlayer(playerName)
+				if err != nil {
+					continue
+				}
+				if p.ClanID == c.ID && p.ClanRank == 0 {
+					ch.SendMessage(fmt.Sprintf("%s (offline)\r\n", p.Name))
+				}
 			}
 		}
 		return
@@ -280,8 +300,7 @@ func (w *World) doClanMembers(ch *Player) {
 		return
 	}
 
-	// For now, only list online members (can't read all saved players without the pfile system)
-	ch.SendMessage("\r\nList of your clan members (online)\r\n" +
+	ch.SendMessage("\r\nList of your clan members\r\n" +
 		"-------------------------\r\n")
 
 	for _, p := range w.players {
@@ -291,6 +310,28 @@ func (w *World) doClanMembers(ch *Player) {
 				rankName = c.RankName[p.ClanRank-1]
 			}
 			ch.SendMessage(fmt.Sprintf("%s %s\r\n", rankName, p.Name))
+		}
+	}
+	// Scan saved player files for offline members
+	files, _ := os.ReadDir(saveDir)
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), ".json") {
+			playerName := strings.TrimSuffix(f.Name(), ".json")
+			// Skip if already listed (online)
+			if _, ok := w.players[playerName]; ok {
+				continue
+			}
+			p, err := LoadPlayer(playerName)
+			if err != nil {
+				continue
+			}
+			if p.ClanID == ch.ClanID && p.ClanRank != 0 {
+				rankName := ""
+				if p.ClanRank-1 >= 0 && p.ClanRank-1 < len(c.RankName) {
+					rankName = c.RankName[p.ClanRank-1]
+				}
+				ch.SendMessage(fmt.Sprintf("%s %s (offline)\r\n", rankName, p.Name))
+			}
 		}
 	}
 }

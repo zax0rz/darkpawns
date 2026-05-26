@@ -177,11 +177,22 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				s.startCharCreation(login.PlayerName)
 				return nil
 			}
+			if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
+				p.Aliases = aliases
+			}
 			s.player = p
 			s.authenticated = true
 		} else if login.NewChar {
 			// New character — require password, then enter creation flow
 			// This applies to BOTH humans and agents. Same rules.
+
+			// Block new char creation from BanNew/BanSelect sites (DP-418)
+			if s.banLevel == game.BanNew || s.banLevel == game.BanSelect {
+				s.sendError("New character creation is not allowed from your site.")
+				_ = s.conn.Close()
+				return nil
+			}
+
 			if rec != nil {
 				// Name already exists — reject before wasting the player's time
 				// through the full creation flow only to fail at DB save.
@@ -315,6 +326,25 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 			game.HandleMailInput(s.player, line) // returns true when mail complete; PLR_WRITING cleared inside
 		} else {
 			game.HandleNoteInput(s.player, line) // returns true when note complete; PLR_WRITING cleared inside
+		}
+		return nil
+	}
+
+	// WriteMagic intercept: player is composing a board message (DP-423)
+	// C equivalent: nanny() / write_message() editor input accumulation.
+	if s.player != nil && s.player.WriteMagic != 0 && s.manager.world.Boards != nil {
+		line := cmd.Command
+		if len(cmd.Args) > 0 {
+			line += " " + strings.Join(cmd.Args, " ")
+		}
+		switch line {
+		case "~":
+			s.manager.world.Boards.FinalizeBoardWrite(s.player.WriteMagic, s.player)
+		case "@":
+			s.player.WriteMagic = 0
+			s.player.SendMessage("Message aborted.\r\n")
+		default:
+			s.manager.world.Boards.AppendBoardLine(s.player.WriteMagic, line)
 		}
 		return nil
 	}

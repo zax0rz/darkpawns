@@ -3,6 +3,7 @@ package game
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
 	"sync/atomic"
 
@@ -26,6 +27,8 @@ type MobInstance struct {
 	RoomVNum  int         // -1 if not in a room (carried, etc.)
 	CurrentHP int
 	MaxHP     int
+	CurrentMana int
+	MaxMana     int
 	Status    string // "standing", "sleeping", "fighting", etc.
 	Level     int    // Level override (0 = use prototype level)
 
@@ -58,6 +61,18 @@ type MobInstance struct {
 	// Runtime state — typed replacement for CustomData (e.g., damroll_bonus)
 	Runtime MobRuntimeState
 
+	// Ability scores — instance-level values initialized from prototype + level boosts
+	// db.c:1053-1062 applies random bonuses for mobs above level 15
+	Str   int
+	Intel int
+	Wis   int
+	Dex   int
+	Con   int
+	Cha   int
+
+	// Gold — instance-level with +/-20% variance from prototype (db.c:1766-1775)
+	Gold int
+
 	// Affect flags bitmask — same bit positions as AFF_* constants used by Player
 	Affects uint64
 
@@ -80,12 +95,55 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		hp = 100 // Default
 	}
 
+	// Initialize ability scores from prototype — db.c:1053-1062
+	str := proto.Str
+	intel := proto.Int
+	wis := proto.Wis
+	dex := proto.Dex
+	con := proto.Con
+	cha := proto.Cha
+
+	// Random stat boosts for mobs above level 15 — db.c:1053-1062
+	if proto.Level > 15 {
+		statmod := proto.Level - 15
+		// #nosec G404 — game RNG, not cryptographic
+		str += min(rand.Intn(statmod+1), 7)
+		// #nosec G404
+		intel += min(rand.Intn(statmod+1), 7)
+		// #nosec G404
+		wis += min(rand.Intn(statmod+1), 7)
+		// #nosec G404
+		dex += min(rand.Intn(statmod+1), 7)
+		// #nosec G404
+		con += min(rand.Intn(statmod+1), 7)
+		// #nosec G404
+		cha += min(rand.Intn(statmod+1), 7)
+	}
+
+	// Gold variance +/-(1-20%) — db.c:1766-1775
+	gold := proto.Gold
+	if gold > 0 {
+		// #nosec G404
+		pct := rand.Intn(20) + 1
+		// #nosec G404
+		if rand.Intn(2) == 0 {
+			gold += pct * gold / 100
+		} else {
+			gold -= pct * gold / 100
+		}
+		if gold < 0 {
+			gold = 0
+		}
+	}
+
 	mob := &MobInstance{
 		Prototype:      proto,
 		VNum:           proto.VNum,
 		RoomVNum:       roomVNum,
 		CurrentHP:      hp,
 		MaxHP:          hp,
+		CurrentMana:    100,
+		MaxMana:        100,
 		Status:         "standing",
 		Inventory:      make([]*ObjectInstance, 0),
 		Equipment:      make(map[int]*ObjectInstance),
@@ -94,6 +152,13 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Memory:         make([]string, 0),
 		CustomData:     make(map[string]interface{}),
 		Runtime:        MobRuntimeState{},
+		Str:            str,
+		Intel:          intel,
+		Wis:            wis,
+		Dex:            dex,
+		Con:            con,
+		Cha:            cha,
+		Gold:           gold,
 	}
 
 	mob.alive.Store(true)
@@ -237,6 +302,34 @@ func (m *MobInstance) Heal(amount int) {
 // IsAlive returns true if the mob is alive (atomic, no lock needed).
 func (m *MobInstance) IsAlive() bool {
 	return m.alive.Load()
+}
+
+// GetMana returns the mob's current mana.
+func (m *MobInstance) GetMana() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.CurrentMana
+}
+
+// SetMana sets the mob's current mana.
+func (m *MobInstance) SetMana(v int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.CurrentMana = v
+}
+
+// GetMaxMana returns the mob's maximum mana.
+func (m *MobInstance) GetMaxMana() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.MaxMana
+}
+
+// SetMaxMana sets the mob's maximum mana.
+func (m *MobInstance) SetMaxMana(v int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.MaxMana = v
 }
 
 // AddToInventory adds an object to the mob's inventory.
@@ -403,6 +496,26 @@ func (m *MobInstance) GetPosition() int {
 	}
 }
 
+// SetPosition sets the mob's position using the same int constants as Player.
+func (m *MobInstance) SetPosition(pos int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	switch pos {
+	case combat.PosDead:
+		m.Status = "dead"
+	case combat.PosSleeping:
+		m.Status = "sleeping"
+	case combat.PosResting:
+		m.Status = "resting"
+	case combat.PosSitting:
+		m.Status = "sitting"
+	case combat.PosFighting:
+		m.Status = "fighting"
+	default:
+		m.Status = "standing"
+	}
+}
+
 // GetName returns the mob's short description as its name.
 func (m *MobInstance) GetName() string {
 	return m.GetShortDesc()
@@ -446,24 +559,46 @@ func (m *MobInstance) GetClass() int {
 	return 0 // CLASS_MAGE
 }
 
-// GetStr returns the mob's strength
+// GetStr returns the mob's strength (instance-level, includes level boosts).
 func (m *MobInstance) GetStr() int {
-	return 10
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Str
 }
 
-// GetDex returns the mob's dexterity
+// GetDex returns the mob's dexterity (instance-level, includes level boosts).
 func (m *MobInstance) GetDex() int {
-	return 10
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Dex
 }
 
-// GetInt returns the mob's intelligence
+// GetInt returns the mob's intelligence (instance-level, includes level boosts).
 func (m *MobInstance) GetInt() int {
-	return 10
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Intel
 }
 
-// GetWis returns the mob's wisdom
+// GetWis returns the mob's wisdom (instance-level, includes level boosts).
 func (m *MobInstance) GetWis() int {
-	return 10
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Wis
+}
+
+// GetCon returns the mob's constitution (instance-level, includes level boosts).
+func (m *MobInstance) GetCon() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Con
+}
+
+// GetCha returns the mob's charisma (instance-level, includes level boosts).
+func (m *MobInstance) GetCha() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Cha
 }
 
 // GetHitroll returns the mob's hitroll bonus from equipment
@@ -542,10 +677,7 @@ func (m *MobInstance) GetMaxHealth() int {
 func (m *MobInstance) GetGold() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	if m.Prototype != nil {
-		return m.Prototype.Gold
-	}
-	return 0
+	return m.Gold
 }
 
 // IsAffected returns true if the given AFF bit is set on the mob.

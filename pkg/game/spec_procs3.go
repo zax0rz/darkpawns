@@ -1003,7 +1003,7 @@ func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		for _, room := range w.Rooms() {
 			items := w.GetItemsInRoom(room.VNum)
 			for _, obj := range items {
-				if obj.IsCorpse && strings.Contains(strings.ToLower(obj.Prototype.Keywords), strings.ToLower(ch.GetName())) && obj.GetValue(3) > 0 {
+				if obj.IsCorpse && strings.Contains(strings.ToLower(obj.GetKeywords()), strings.ToLower(ch.GetName())) && obj.GetValue(3) > 0 {
 					// Move corpse from its current room to the mortician's room
 					if err := w.MoveObjectToRoom(obj, me.GetRoomVNum()); err != nil {
 						slog.Warn("MoveObjectToRoom failed in mortician", "corpse", obj.GetVNum(), "room", me.GetRoomVNum(), "error", err)

@@ -39,6 +39,7 @@ func (m *mockCombatant) GetAC() int                         { return m.ac }
 func (m *mockCombatant) GetTHAC0() int                      { return m.thac0 }
 func (m *mockCombatant) GetDamageRoll() combat.DiceRoll     { return m.damRoll }
 func (m *mockCombatant) GetPosition() int                   { return m.pos }
+func (m *mockCombatant) SetPosition(pos int)                { m.pos = pos }
 func (m *mockCombatant) GetClass() int                      { return m.class }
 func (m *mockCombatant) GetStr() int                        { return m.str }
 func (m *mockCombatant) GetStrAdd() int                     { return m.strAdd }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/session"
 	"github.com/zax0rz/darkpawns/pkg/validation"
 )
@@ -103,10 +104,12 @@ func Listen(port int, manager *session.Manager) error {
 			connPerIP[remoteIP]++
 			connMu.Unlock()
 
-			// Check site bans before allowing login (DP-296)
-			if banLevel := manager.GetBanManager().IsBanned(remoteIP); banLevel > 0 {
+			// Check site bans (DP-419): BanAll disconnects immediately;
+			// BanNew/BanSelect allow connection but restrict at login.
+			banLevel := manager.GetBanManager().IsBanned(remoteIP)
+			if banLevel == game.BanAll {
 				_ = conn.Close() //nolint:errcheck // best-effort cleanup
-				slog.Warn("Telnet: banned connection rejected", "remote_addr", conn.RemoteAddr(), "ban_level", banLevel)
+				slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
 				connMu.Lock()
 				connCount--
 				connPerIP[remoteIP]--
@@ -117,8 +120,8 @@ func Listen(port int, manager *session.Manager) error {
 				continue
 			}
 
-			go func(ip string) {
-				handleConn(conn, manager)
+			go func(ip string, bl int) {
+				handleConn(conn, manager, bl)
 				connMu.Lock()
 				connCount--
 				connPerIP[ip]--
@@ -126,7 +129,7 @@ func Listen(port int, manager *session.Manager) error {
 					delete(connPerIP, ip)
 				}
 				connMu.Unlock()
-			}(remoteIP)
+			}(remoteIP, banLevel)
 		}
 	}()
 	return nil
@@ -149,7 +152,7 @@ type telnetConn struct {
 	sess    *session.Session
 }
 
-func handleConn(rawConn net.Conn, manager *session.Manager) {
+func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	tc := &telnetConn{
 		Conn:    rawConn,
 		br:      bufio.NewReader(rawConn),
@@ -172,6 +175,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager) {
 	tc.sess = s
 	remoteIP := ipFromAddr(remoteAddr)
 	s.SetRemoteIP(remoteIP)
+	if banLevel != game.BanNot {
+		s.SetBanLevel(banLevel)
+	}
 
 	// Welcome + prompt
 	tc.writeLine(greetingsLogo)

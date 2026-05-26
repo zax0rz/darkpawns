@@ -169,10 +169,141 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		return true
 	}
 
-	// Simplified: just use the item (item-type routing TBD)
-	_ = item.Prototype.TypeFlag
+	itemType := item.GetTypeFlag()
+	if itemType != ITEM_WAND && itemType != ITEM_STAFF && itemType != ITEM_POTION && itemType != ITEM_SCROLL {
+		ch.SendMessage("You can't use that item.\r\n")
+		return true
+	}
 
-	// Call mag_objectmagic (simplified)
-	ch.SendMessage(fmt.Sprintf("You use %s.\r\n", itemArg))
+	spellLvl := item.GetValue(0)
+	spellType := item.GetValue(3)
+
+	switch itemType {
+	case ITEM_WAND:
+		currCharges := item.GetValue(2)
+		if currCharges <= 0 {
+			ch.SendMessage("The wand is out of charges!\r\n")
+			return true
+		}
+		item.SetValue(2, currCharges-1)
+
+		targetName := ""
+		if len(parts) > 1 {
+			targetName = strings.TrimSpace(parts[1])
+		}
+
+		var target interface{}
+		if targetName != "" {
+			if p := w.FindPlayerInRoom(ch.GetRoomVNum(), targetName); p != nil {
+				target = p
+			} else if m := w.FindMobInRoom(ch.GetRoomVNum(), targetName); m != nil {
+				target = m
+			}
+		}
+		if target == nil {
+			if ch.Fighting != "" {
+				if p, ok := w.GetPlayer(ch.Fighting); ok {
+					target = p
+				} else {
+					for _, mob := range w.GetMobsInRoom(ch.GetRoomVNum()) {
+						if mob.GetName() == ch.Fighting {
+							target = mob
+							break
+						}
+					}
+				}
+			}
+		}
+		if target == nil {
+			target = ch
+		}
+
+		var targetNameDisp string
+		if p, ok := target.(*Player); ok {
+			targetNameDisp = p.Name
+		} else if m, ok := target.(*MobInstance); ok {
+			targetNameDisp = m.Prototype.ShortDesc
+		} else {
+			targetNameDisp = "someone"
+		}
+
+		ch.SendMessage(fmt.Sprintf("You point %s at %s.\r\n", item.GetShortDesc(), targetNameDisp))
+		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s points %s at %s.", ch.Name, item.GetShortDesc(), targetNameDisp))
+
+		spells.Cast(ch, target, spellType, spellLvl, w, nil)
+
+	case ITEM_STAFF:
+		currCharges := item.GetValue(2)
+		if currCharges <= 0 {
+			ch.SendMessage("The staff is out of charges!\r\n")
+			return true
+		}
+		item.SetValue(2, currCharges-1)
+
+		ch.SendMessage(fmt.Sprintf("You tap %s on the ground.\r\n", item.GetShortDesc()))
+		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s taps %s on the ground.", ch.Name, item.GetShortDesc()))
+
+		// Cast spell on everyone in the room
+		players := w.GetPlayersInRoom(ch.GetRoomVNum())
+		for _, p := range players {
+			if p != nil {
+				spells.Cast(ch, p, spellType, spellLvl, w, nil)
+			}
+		}
+		mobs := w.GetMobsInRoom(ch.GetRoomVNum())
+		for _, mob := range mobs {
+			if mob != nil {
+				spells.Cast(ch, mob, spellType, spellLvl, w, nil)
+			}
+		}
+
+	case ITEM_POTION:
+		ch.SendMessage(fmt.Sprintf("You quaff %s.", item.GetShortDesc()))
+		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s quaffs %s.", ch.Name, item.GetShortDesc()))
+
+		spells.Cast(ch, ch, spellType, spellLvl, w, nil)
+
+		ch.Inventory.RemoveItem(item)
+
+	case ITEM_SCROLL:
+		targetName := ""
+		if len(parts) > 1 {
+			targetName = strings.TrimSpace(parts[1])
+		}
+
+		var target interface{}
+		if targetName != "" {
+			if p := w.FindPlayerInRoom(ch.GetRoomVNum(), targetName); p != nil {
+				target = p
+			} else if m := w.FindMobInRoom(ch.GetRoomVNum(), targetName); m != nil {
+				target = m
+			}
+		}
+		if target == nil {
+			target = ch
+		}
+
+		var targetNameDisp string
+		if p, ok := target.(*Player); ok {
+			targetNameDisp = p.Name
+		} else if m, ok := target.(*MobInstance); ok {
+			targetNameDisp = m.Prototype.ShortDesc
+		} else {
+			targetNameDisp = "someone"
+		}
+
+		ch.SendMessage(fmt.Sprintf("You recite %s targeting %s.", item.GetShortDesc(), targetNameDisp))
+		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s recites %s targeting %s.", ch.Name, item.GetShortDesc(), targetNameDisp))
+
+		spells.Cast(ch, target, spellType, spellLvl, w, nil)
+
+		ch.Inventory.RemoveItem(item)
+	}
+
 	return true
+}
+
+// DoUse is the exported session-level entrypoint for item usage.
+func (w *World) DoUse(ch *Player, arg string) bool {
+	return w.doUse(ch, nil, "use", arg)
 }

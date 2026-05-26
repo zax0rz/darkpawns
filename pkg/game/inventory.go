@@ -119,6 +119,13 @@ func (inv *Inventory) IsFull() bool {
 	return len(inv.Items) >= inv.Capacity
 }
 
+// GetCapacity returns the inventory capacity.
+func (inv *Inventory) GetCapacity() int {
+	inv.mu.RLock()
+	defer inv.mu.RUnlock()
+	return inv.Capacity
+}
+
 // GetWeight returns the total weight of items in inventory.
 func (inv *Inventory) GetWeight() int {
 	inv.mu.RLock()

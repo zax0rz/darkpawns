@@ -97,6 +97,7 @@ parse-world-json:
 	python3 website/scripts/parse_world.py
 	python3 website/scripts/parse_db.py
 	python3 website/scripts/interlink_help.py
+	python3 website/scripts/precompute_sphere.py
 
 build-site: parse-world-json
 	cd website && hugo --minify

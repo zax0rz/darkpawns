@@ -43,8 +43,8 @@ func newStartingItemsWorld(t *testing.T) (*World, *Player) {
 			{VNum: 8019, Keywords: "tunic", ShortDesc: "a tunic", LongDesc: "A plain tunic."},
 			{VNum: 8036, Keywords: "dagger", ShortDesc: "a dagger", LongDesc: "A small dagger."},
 			{VNum: 8037, Keywords: "sword", ShortDesc: "a small sword", LongDesc: "A small sword."},
-			// pack (container)
-			{VNum: 8038, Keywords: "pack", ShortDesc: "a pack", LongDesc: "A leather pack.", TypeFlag: 1},
+			// pack (container) — TypeFlag 15 = ITEM_CONTAINER (src/structs.h:100)
+			{VNum: 8038, Keywords: "pack", ShortDesc: "a pack", LongDesc: "A leather pack.", TypeFlag: 15},
 			{VNum: 8010, Keywords: "bread", ShortDesc: "some bread", LongDesc: "A piece of bread."},
 			{VNum: 8063, Keywords: "waterskin", ShortDesc: "a waterskin", LongDesc: "A full waterskin."},
 			{VNum: 8027, Keywords: "lockpick", ShortDesc: "a set of lockpicks", LongDesc: "Lockpicks."},

@@ -244,9 +244,11 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		if ch.GetHP() < 0 {
 			ch.SetHP(0)
 		}
-		// Give mana to target (for NPCs, we try to add mana)
+		// Give mana to target
 		if p, ok := target.(*Player); ok {
 			p.SetMana(p.GetMana() + x)
+		} else if m, ok := target.(*MobInstance); ok {
+			m.SetMana(m.GetMana() + x)
 		}
 
 		return SkillResult{
@@ -433,16 +435,28 @@ func DoDig(ch *Player, world *World) SkillResult {
 	}
 
 	if percent <= prob {
-		// Found something — random loot based on level
-		lootTypes := []string{"some coins", "a shiny rock", "an old bone", "a rusted coin", "a small gem"}
-		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-		loot := lootTypes[rand.Intn(len(lootTypes))]
-
-		return SkillResult{
-			Success:     true,
-			MessageToCh: fmt.Sprintf("You dig in the earth and find %s!\r\n", loot),
-			MessageToRoom: fmt.Sprintf("%s digs in the earth and finds something!\r\n", ch.Name),
+		// Found something — random loot
+		lootRoll := rand.Intn(5)
+		if lootRoll == 0 {
+			goldAmt := rand.Intn(41) + 10 // 10-50 gold
+			ch.mu.Lock()
+			ch.Gold += goldAmt
+			ch.mu.Unlock()
+			return SkillResult{
+				Success:       true,
+				MessageToCh:   fmt.Sprintf("You dig in the earth and find %d gold coins!\r\n", goldAmt),
+				MessageToRoom: fmt.Sprintf("%s digs in the earth and finds some gold coins!\r\n", ch.Name),
+			}
+		} else {
+			obj, err := world.SpawnObject(3001, ch.GetRoomVNum())
+			if err == nil && obj != nil {
+				world.GiveObjectToChar(obj, ch)
+				return SkillResult{
+					Success:       true,
+					MessageToCh:   fmt.Sprintf("You dig in the earth and find %s!\r\n", obj.GetShortDesc()),
+					MessageToRoom: fmt.Sprintf("%s digs in the earth and finds something!\r\n", ch.Name),
+				}
+			}
 		}
 	}
 

@@ -91,9 +91,9 @@ func (w *World) doDrink(ch *Player, me *MobInstance, cmd, arg string) bool {
 	_ = weightLoss // weight tracking simplified
 
 	// Update condition
-	_ = drunkAff
-	_ = fullAff
-	_ = thirstAff
+	GainCondition(ch, CondDrunk, drunkAff)
+	GainCondition(ch, CondFull, fullAff)
+	GainCondition(ch, CondThirst, thirstAff)
 
 	// Empty the container
 	temp.Prototype.Values[1] -= amount
@@ -141,7 +141,8 @@ func (w *World) doEat(ch *Player, me *MobInstance, cmd, arg string) bool {
 	w.actToChar(ch, "You eat $p.", food, nil)
 	w.actToRoom(ch, "$n eats $p.", food, nil)
 
-	_ = foodVal
+	// Update condition
+	GainCondition(ch, CondFull, foodVal)
 
 	// Consume the food
 	if err := w.MoveObjectToNowhere(food); err != nil {

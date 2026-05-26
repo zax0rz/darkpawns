@@ -4,14 +4,13 @@ import (
 	"strings"
 )
 
-// Wizard level constants — matching Dark Pawns C source scale mapped to Go codebase.
-// Original C: LVL_IMMORT=31, LVL_GOD=34, LVL_GRGOD=38, LVL_IMPL=40
-// Go codebase uses higher scale: 50/60/61.
+// Wizard level constants — from src/config.c
+// These duplicate pkg/game/limits.go to avoid import cycle.
 const (
-	LVL_IMMORT = 50
-	LVL_GOD    = 60
-	LVL_GRGOD  = 61
-	LVL_IMPL   = 61
+	LVL_IMMORT = 31
+	LVL_GOD    = 34
+	LVL_GRGOD  = 38
+	LVL_IMPL   = 40
 )
 
 // getEffectiveLevel returns the level that should be used for permission checks.

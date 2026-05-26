@@ -19,8 +19,8 @@ const (
 // Level/immortal constants — from structs.h LVL_*
 const (
 	LVL_IMMORT = 31
-	LVL_IMPL   = 40
 	LVL_GOD    = 34
+	LVL_IMPL   = 40
 
 	// Idle time limits — from limits.c
 	IDLE_TO_VOID     = 20 // cycles before being pulled into void
@@ -32,7 +32,7 @@ const (
 // Source: limits.c extern int max_exp_gain, max_exp_loss
 var (
 	maxExpGain = 100000
-	maxExpLoss = 50000
+	maxExpLoss = 500000 // C: max_exp_loss = 500000 (src/config.c:82)
 )
 
 // Titles is the class title string array.

@@ -8,7 +8,7 @@
 //   - Titles                         → limits.go
 //   - thaco                          → combat/formulas.go
 //   - FindExp                        → limits_exp.go
-//   - backstabMult                   → combat/fight_core.go, skill_combat.go
+//   - BackstabMult                  → combat/fight_core.go (shared, src/class.c — backstab_mult())
 //   - RollRealAbils, DoStart         → character.go
 //   - AdvanceLevel                   → level.go
 //   - classSpells (init_spell_levels)→ session/spell_level.go

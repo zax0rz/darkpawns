@@ -109,4 +109,18 @@ func (p *Player) GetRoomVNum() int {
 	return p.RoomVNum
 }
 
+// GetTitle returns the player's title.
+func (p *Player) GetTitle() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Title
+}
+
+// GetDescription returns the player's description.
+func (p *Player) GetDescription() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Description
+}
+
 // GetHometown returns the player's hometown index.

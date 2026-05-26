@@ -41,6 +41,11 @@ type ObjectInstance struct {
 	ExtraFlagsOverride [4]int
 	AffectsOverride    []parser.ObjAffect
 	ValuesOverride     *[4]int // copy-on-write override of prototype Values
+
+	// TypeFlagOverride allows synthetic objects (corpses, money) with nil Prototype
+	// to carry a type flag. When non-nil, overrides Prototype.TypeFlag.
+	// Source: src/fight.c make_corpse() — GET_OBJ_TYPE(corpse) = ITEM_CONTAINER
+	TypeFlagOverride *int
 }
 
 // NewObjectInstance creates a new object instance from a prototype.
@@ -77,8 +82,12 @@ func (o *ObjectInstance) GetLongDesc() string {
 	return "A generic object lies here."
 }
 
-// GetKeywords returns the object's keywords.
+// GetKeywords returns the object's keywords for targeting.
+// Checks Runtime.Keywords first so synthetic objects (corpses) work without a prototype.
 func (o *ObjectInstance) GetKeywords() string {
+	if o.Runtime.Keywords != "" {
+		return o.Runtime.Keywords
+	}
 	if o.Prototype != nil {
 		return o.Prototype.Keywords
 	}
@@ -102,7 +111,12 @@ func (o *ObjectInstance) GetCost() int {
 }
 
 // GetTypeFlag returns the object's type flag.
+// Checks TypeFlagOverride first so synthetic objects (corpses) work without a prototype.
+// Source: src/structs.h GET_OBJ_TYPE(obj)
 func (o *ObjectInstance) GetTypeFlag() int {
+	if o.TypeFlagOverride != nil {
+		return *o.TypeFlagOverride
+	}
 	if o.Prototype != nil {
 		return o.Prototype.TypeFlag
 	}
@@ -110,10 +124,9 @@ func (o *ObjectInstance) GetTypeFlag() int {
 }
 
 // IsContainer returns true if the object can contain other objects.
+// ITEM_CONTAINER = 15 per src/structs.h:100
 func (o *ObjectInstance) IsContainer() bool {
-	// Check type flag for container types
-	// Type 1 is container in CircleMUD
-	return o.GetTypeFlag() == 1
+	return o.GetTypeFlag() == ITEM_CONTAINER
 }
 
 // IsWearable returns true if the object can be worn.

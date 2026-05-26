@@ -132,6 +132,10 @@ type Player struct {
 	// Mount state — from src/utils.c
 	MountName string // Name of mount mob being ridden
 
+	// WolfBaseMaxHP stores the player's MaxHealth before werewolf transformation.
+	// Restored when the player reverts to human form to prevent the HP exploit.
+	WolfBaseMaxHP int
+
 	// Stabled mount state — from src/spec_procs2.c stableboy
 	MountRentTime int64 // Unix timestamp when mount was stabled
 	MountVNum     int   // VNum of stabled mount (0 = none)

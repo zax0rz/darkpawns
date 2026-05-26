@@ -185,21 +185,19 @@ func (bs *BoardSystem) loadBoard(boardType int) {
 }
 
 // saveBoard writes one board's data to its save file.
+// Caller must hold bs.mu (read or write lock).
 func (bs *BoardSystem) saveBoard(boardType int) {
 	if boardType < 0 || boardType >= NumBoards {
 		return
 	}
-	bs.mu.RLock()
 	num := bs.numOfMsgs[boardType]
 	if num == 0 {
-		bs.mu.RUnlock()
 		path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
 		if err := os.Remove(filepath.Clean(path)); err != nil && !os.IsNotExist(err) {
 			slog.Warn("board remove failed", "path", path, "error", err)
 		}
 		return
 	}
-	bs.mu.RUnlock()
 
 	path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
 	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
@@ -212,9 +210,6 @@ func (bs *BoardSystem) saveBoard(boardType int) {
 		return
 	}
 	defer func() { _ = f.Close() }()
-
-	bs.mu.RLock()
-	defer bs.mu.RUnlock()
 
 	if err := binary.Write(f, binary.LittleEndian, safeInt32(num)); err != nil {
 		return
@@ -515,14 +510,12 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch *Player, arg string) bool {
 	// Room echo when a message is removed
 	if bs.world != nil {
 		actToRoom(bs.world, ch.GetRoomVNum(),
-			fmt.Sprintf("%s removed a message from the board.\r\n", ch.Name),
-			ch.Name)
+			fmt.Sprintf("%s removed a message from the board.\r\n", ch.GetName()),
+			ch.GetName())
 	}
 
-	// Save after removal (release lock first)
-	bs.mu.Unlock()
+	// Save while still holding the write lock
 	bs.saveBoard(boardType)
-	bs.mu.Lock()
 
 	return true
 }
@@ -578,6 +571,40 @@ func genBoard(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	return false
+}
+
+// AppendBoardLine adds a line of text to the in-progress board message.
+// magic is boardType + BoardMagic, as returned by WriteMessage.
+func (bs *BoardSystem) AppendBoardLine(magic int, line string) {
+	boardType := magic - BoardMagic
+	if boardType < 0 || boardType >= NumBoards {
+		return
+	}
+	bs.mu.Lock()
+	defer bs.mu.Unlock()
+	if bs.numOfMsgs[boardType] == 0 {
+		return
+	}
+	slot := bs.msgIndex[boardType][bs.numOfMsgs[boardType]-1].SlotNum
+	if bs.msgStorage[slot] == "" {
+		bs.msgStorage[slot] = line
+	} else {
+		bs.msgStorage[slot] += "\r\n" + line
+	}
+}
+
+// FinalizeBoardWrite saves the in-progress board message and clears WriteMagic.
+func (bs *BoardSystem) FinalizeBoardWrite(magic int, ch *Player) {
+	boardType := magic - BoardMagic
+	if boardType < 0 || boardType >= NumBoards {
+		ch.WriteMagic = 0
+		return
+	}
+	bs.mu.Lock()
+	defer bs.mu.Unlock()
+	bs.saveBoard(boardType)
+	ch.WriteMagic = 0
+	ch.SendMessage("Message written.\r\n")
 }
 
 // GetOrInitBoards ensures the board system is initialized.

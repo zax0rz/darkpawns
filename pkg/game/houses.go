@@ -25,7 +25,7 @@ const (
 	RoomFlagPriv   = "private"     // ROOM_PRIVATE — set on house interior
 
 	// Admin level for house commands
-	LVL_GRGOD = 51 // Greater God level — full house access
+	LVL_GRGOD = 38 // C: LVL_GRGOD=38 (src/config.c) — full house access
 )
 
 // HouseControl mirrors the C struct house_control_rec.

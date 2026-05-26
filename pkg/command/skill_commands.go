@@ -813,10 +813,71 @@ func CmdShoot(s SessionInterface, args []string) error {
 	ch := s.GetPlayer()
 	if canUse, msg := game.CanUseSkill(ch, game.SkillShoot); !canUse { return s.SendMessage(msg + "\r\n") }
 	if len(args) == 0 { return s.SendMessage("Shoot whom?\r\n") }
+
 	world := s.GetWorld()
-	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
-	if !found { return s.SendMessage("They aren't here.\r\n") }
-	return sendSkillResult(s, ch, target, game.DoShoot(ch, target))
+	argStr := strings.Join(args, " ")
+
+	// Parse direction from args (C: act.offensive.c do_shoot)
+	directions := []string{"north", "south", "east", "west", "up", "down", "n", "s", "e", "w", "u", "d"}
+	dirMap := map[string]string{
+		"n": "north", "s": "south", "e": "east", "w": "west", "u": "up", "d": "down",
+	}
+	var direction, targetName string
+	for _, part := range args {
+		lowerPart := strings.ToLower(part)
+		for _, dir := range directions {
+			if lowerPart == dir {
+				direction = dir
+				if fullDir, ok := dirMap[dir]; ok {
+					direction = fullDir
+				}
+				targetName = strings.TrimSpace(strings.Replace(argStr, part, "", 1))
+				break
+			}
+		}
+		if direction != "" {
+			break
+		}
+	}
+
+	// Same-room shoot (no direction specified)
+	if direction == "" {
+		target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), argStr, ch)
+		if !found { return s.SendMessage("They aren't here.\r\n") }
+		return sendSkillResult(s, ch, target, game.DoShoot(ch, target))
+	}
+
+	// Ranged shoot into adjacent room
+	room := world.GetRoomInWorld(ch.GetRoom())
+	if room == nil {
+		return s.SendMessage("You are nowhere.\r\n")
+	}
+	exit, ok := room.Exits[direction]
+	if !ok {
+		return s.SendMessage("There is no exit in that direction.\r\n")
+	}
+
+	// Find target in adjacent room
+	target, _, found := game.FindTargetInRoom(world, exit.ToRoom, targetName, ch)
+	if !found {
+		return s.SendMessage(fmt.Sprintf("You don't see anyone to shoot %s!\r\n", direction))
+	}
+
+	// Perform ranged shot
+	result := game.DoShoot(ch, target)
+	err := sendSkillResult(s, ch, target, result)
+	if err != nil {
+		return err
+	}
+
+	// On hit, drag target into shooter's room (C: char_from_room + char_to_room)
+	if result.Success && target != nil {
+		if mover, ok := target.(interface{ SetRoom(int) }); ok {
+			world.MovePlayerToRoom(mover, ch.GetRoom())
+		}
+	}
+
+	return nil
 }
 
 // CmdSubdue handles the subdue command (C-10).
@@ -1374,10 +1435,13 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		_ = s.SendMessage("You fall to the ground!\r\n")
 	}
 	if result.TargetFalls && target != nil {
+		target.SetPosition(combat.PosSitting)
+	}
+	if result.SleepTarget && target != nil {
+		target.SetPosition(combat.PosSleeping)
 		if p, ok := target.(*game.Player); ok {
-			p.SetPosition(combat.PosSitting)
+			p.SetAffect(game.AffSleep, true)
 		}
-		// Mobs don't have SetPosition in current interface — would need Combatant extension
 	}
 
 	// Send to victim

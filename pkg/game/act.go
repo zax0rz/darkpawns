@@ -117,13 +117,58 @@ func persName(ch, observer Actor) string {
 	return ch.GetName()
 }
 
-// canSee is a simplified CAN_SEE using the AWAKE check.
-// Full CAN_SEE checks AFF_BLIND, AFF_INVISIBLE, AFF_HIDE, etc.
+// canSee returns true if observer can see subject.
+// Faithful port of CAN_SEE macro.
 func canSee(observer, subject Actor) bool {
-	if observer == nil {
+	if observer == nil || subject == nil {
 		return true
 	}
-	return observer.GetPosition() > combat.PosSleeping
+
+	// Observer must be awake
+	if observer.GetPosition() <= combat.PosSleeping {
+		return false
+	}
+
+	// Check if observer is a Player or MobInstance (both implement visibilitySubject)
+	obsSub, ok := observer.(visibilitySubject)
+	if !ok {
+		return true
+	}
+	sbjSub, ok := subject.(visibilitySubject)
+	if !ok {
+		return true
+	}
+
+	// IMMORT levels always see everything
+	if obsSub.GetLevel() >= LVL_IMMORT {
+		return true
+	}
+
+	// Check PRF_HOLYLIGHT
+	if hl, ok := obsSub.(holyLightSubject); ok && hl.GetHolyLight() {
+		return true
+	}
+
+	// 1. Blindness check
+	if obsSub.IsAffected(affBlind) {
+		return false
+	}
+
+	// 2. Invisibility check
+	if sbjSub.IsAffected(affInvisible) {
+		if !obsSub.IsAffected(affDetectInvisible) {
+			return false
+		}
+	}
+
+	// 3. Hiding check
+	if sbjSub.IsAffected(affHide) {
+		if !obsSub.IsAffected(affSenseLife) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // sendOk checks whether 'to' can receive a message.

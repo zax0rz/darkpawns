@@ -11,6 +11,13 @@ func cmdSocial(s *Session, social *game.Social, args []string) error {
 		return nil
 	}
 
+	// C: PLR_FLAGGED(ch, PLR_NOSHOUT) — mute check
+	// src/act.social.c — do_action()
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
+		s.Send("You cannot perform emotes!\r\n")
+		return nil
+	}
+
 	// Extract target name from args
 	targetName := strings.TrimSpace(strings.Join(args, " "))
 
@@ -33,18 +40,21 @@ func cmdSocial(s *Session, social *game.Social, args []string) error {
 			msg = strings.ReplaceAll(msg, "$s", "his")
 			msg = strings.ReplaceAll(msg, "$S", "his")
 			msg = strings.ReplaceAll(msg, "$e", "he")
+			msg = strings.ReplaceAll(msg, "$E", "He")
 		case 1:
 			msg = strings.ReplaceAll(msg, "$m", "her")
 			msg = strings.ReplaceAll(msg, "$M", "her")
 			msg = strings.ReplaceAll(msg, "$s", "her")
 			msg = strings.ReplaceAll(msg, "$S", "her")
 			msg = strings.ReplaceAll(msg, "$e", "she")
+			msg = strings.ReplaceAll(msg, "$E", "She")
 		default:
 			msg = strings.ReplaceAll(msg, "$m", "it")
 			msg = strings.ReplaceAll(msg, "$M", "it")
 			msg = strings.ReplaceAll(msg, "$s", "its")
 			msg = strings.ReplaceAll(msg, "$S", "its")
 			msg = strings.ReplaceAll(msg, "$e", "it")
+			msg = strings.ReplaceAll(msg, "$E", "It")
 		}
 		return msg
 	}
@@ -93,7 +103,7 @@ func cmdSocial(s *Session, social *game.Social, args []string) error {
 	victimSex := 2
 	players := s.manager.world.GetPlayersInRoom(s.player.GetRoom())
 	for _, p := range players {
-		if (strings.EqualFold(p.Name, targetName) || strings.Contains(strings.ToLower(p.Name), strings.ToLower(targetName))) && p.Name != s.player.Name {
+		if (strings.EqualFold(p.Name, targetName) || strings.HasPrefix(strings.ToLower(p.Name), strings.ToLower(targetName))) && p.Name != s.player.Name {
 			victimName = p.Name
 			victimSex = p.Sex
 			break

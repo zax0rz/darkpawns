@@ -122,12 +122,29 @@ func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string)
 		// Werewolf: toggle affWerewolf
 		if ch.IsAffected(affWerewolf) {
 			ch.SetAffect(affWerewolf, false)
+			// Restore pre-transform MaxHP to prevent the HP exploit
+			if ch.WolfBaseMaxHP > 0 {
+				ch.SetMaxHP(ch.WolfBaseMaxHP)
+				ch.WolfBaseMaxHP = 0
+			}
 			if ch.GetHP() > ch.GetMaxHP() {
 				ch.SetHP(ch.GetMaxHP())
 			}
 			ch.SendMessage("You revert back to your human form.\r\n")
 			actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s transforms back into %s human form.\r\n", ch.Name, hisHer(ch.GetSex())), ch.Name)
 		} else {
+			// Must be night and near full moon to transform
+			sun := GetSunlight()
+			if sun == SunLight || sun == SunRise {
+				ch.SendMessage("You cannot transform in the light of day!\r\n")
+				return true
+			}
+			moon := GetMoon()
+			if moon != MoonFull && moon != MoonThreeFull {
+				ch.SendMessage("The moon is not full enough for you to transform!\r\n")
+				return true
+			}
+			ch.WolfBaseMaxHP = ch.GetMaxHP()
 			ch.SetAffect(affWerewolf, true)
 			bonus := randRange(2, 6) * 10
 			ch.SetHP(ch.GetHP() + bonus)

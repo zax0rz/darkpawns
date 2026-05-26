@@ -44,7 +44,7 @@ func newTestWorld(t *testing.T) (*World, *Player) {
 			},
 			{
 				VNum: 3003, Keywords: "test container", ShortDesc: "a test container",
-				LongDesc: "A test container lies here.", TypeFlag: 1,
+				LongDesc: "A test container lies here.", TypeFlag: 15, // ITEM_CONTAINER = 15 (src/structs.h:100)
 				WearFlags: [4]int{0, 0, 0, 0},
 				Values:    [4]int{0, 0, 0, 0},
 			},

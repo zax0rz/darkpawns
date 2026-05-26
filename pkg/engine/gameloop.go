@@ -10,7 +10,7 @@
 //	PULSE_MOBILE    = 40   → every 4 seconds
 //	PULSE_VIOLENCE  = 20   → every 2 seconds
 //	PULSE_TICK      = 300  → every 30 seconds
-//	SECS_PER_MUD_HOUR = 60 → real seconds per Mud hour
+//	SECS_PER_MUD_HOUR = 75 → real seconds per Mud hour (C default)
 
 package engine
 
@@ -27,7 +27,7 @@ const (
 	PULSE_MOBILE    = 4 * PASSES_PER_SEC   // 40  → 4s
 	PULSE_VIOLENCE  = 2 * PASSES_PER_SEC   // 20  → 2s
 	PULSE_TICK      = 30 * PASSES_PER_SEC  // 300 → 30s
-	SECS_PER_MUD_HOUR = 60                 // 60 real seconds per Mud hour
+	SECS_PER_MUD_HOUR = 75                 // 75 real seconds per Mud hour (C default)
 )
 
 // DefaultCrashSaveInterval is the number of minutes between automatic crash saves.
@@ -50,7 +50,7 @@ type GameLoopCallbacks struct {
 	// OnZoneUpdate — called every PULSE_ZONE (60s). Ported from zone_update().
 	OnZoneUpdate func()
 
-	// OnCheckIdlePasswords — called every 15 * PASSES_PER_SEC (1.5s).
+	// OnCheckIdlePasswords — called every 15 * PASSES_PER_SEC (15s).
 	// Ported from check_idle_passwords() in comm.c.
 	OnCheckIdlePasswords func()
 
@@ -64,7 +64,7 @@ type GameLoopCallbacks struct {
 	// OnPerformViolence — called every PULSE_VIOLENCE (2s). Ported from perform_violence().
 	OnPerformViolence func()
 
-	// OnWeatherAndTime — called every SECS_PER_MUD_HOUR * PASSES_PER_SEC (60s).
+	// OnWeatherAndTime — called every SECS_PER_MUD_HOUR * PASSES_PER_SEC (75s).
 	// Ported from weather_and_time(1).
 	OnWeatherAndTime func()
 	// OnAffectUpdate — called every Mud hour. Ported from affect_update().
@@ -204,7 +204,7 @@ func (gl *GameLoop) heartbeat(pulse int64) {
 		cb.OnZoneUpdate()
 	}
 
-	// 15 * PASSES_PER_SEC → every 1.5 seconds
+	// 15 * PASSES_PER_SEC → every 15 seconds
 	if pulse%(15*PASSES_PER_SEC) == 0 && cb.OnCheckIdlePasswords != nil {
 		cb.OnCheckIdlePasswords()
 	}
@@ -227,7 +227,7 @@ func (gl *GameLoop) heartbeat(pulse int64) {
 		cb.OnPerformViolence()
 	}
 
-	// SECS_PER_MUD_HOUR * PASSES_PER_SEC → every 60 real seconds
+	// SECS_PER_MUD_HOUR * PASSES_PER_SEC → every 75 real seconds
 	if pulse%(SECS_PER_MUD_HOUR*PASSES_PER_SEC) == 0 {
 		if cb.OnWeatherAndTime != nil {
 			cb.OnWeatherAndTime()

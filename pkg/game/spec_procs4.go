@@ -243,7 +243,7 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		sendToChar(ch, "You stand in the circle.\r\n")
 		w.roomMessage(me.GetRoom(), "$n enters the circle which suddenly starts glowing brightly, obscuring your view of $m!")
 		ch.SetRoom(portalRoom)
-		// do_look Placeholder
+		w.doLook(ch, nil, "look", "")
 		return true
 	}
 
@@ -281,13 +281,20 @@ func specElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	sendToChar(ch, "The portal begins to rise, lifted by the air elemental summoned by your rune!\r\n\r\n")
 	w.roomMessage(me.GetRoom(), "The portal begins to rise, lifted by the air elemental summoned by $n!\r\n\r\n")
 
+	players := w.GetPlayersInRoom(portalRoom)
+	for _, p := range players {
+		if p != nil {
+			p.SetRoom(elevatorDest)
+			w.doLook(p, nil, "look", "")
+		}
+	}
+
 	mobs := w.GetMobsInRoom(portalRoom)
 	for i, m := range mobs {
 		if i >= 2 {
 			break
 		}
 		m.SetRoom(elevatorDest)
-		// do_look placeholder
 	}
 
 	return true

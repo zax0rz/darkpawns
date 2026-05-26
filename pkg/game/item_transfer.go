@@ -14,7 +14,7 @@ func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
 		w.actToChar(ch, "$p: you can't carry that many items.", obj, nil)
 		return false
 	}
-	if ch.Inventory.GetWeight()+obj.GetWeight() > ch.Inventory.Capacity * 10 {
+	if ch.CarriedWeight()+obj.GetWeight() > ch.MaxCarryWeight() {
 		w.actToChar(ch, "$p: you can't carry that much weight.", obj, nil)
 		return false
 	}
@@ -305,11 +305,11 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "You can't let go of $p!!  Yeech!", obj, nil)
 		return
 	}
-	if len(vict.Inventory.Items) >= vict.Inventory.Capacity {
+	if vict.Inventory.IsFull() {
 		w.actToChar(ch, "$N seems to have $S hands full.", vict, obj)
 		return
 	}
-	if obj.GetWeight()+vict.Inventory.GetWeight() > vict.Inventory.Capacity * 10 {
+	if obj.GetWeight()+vict.Inventory.GetWeight() > vict.Inventory.GetCapacity()*10 {
 		w.actToChar(ch, "$E can't carry that much weight.", vict, nil)
 		return
 	}

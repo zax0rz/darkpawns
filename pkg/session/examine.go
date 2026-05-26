@@ -62,7 +62,7 @@ func cmdExamine(s *Session, args []string) error {
 	// 3. Check players in the room
 	players := s.manager.world.GetPlayersInRoom(roomVNum)
 	for _, p := range players {
-		if strings.ToLower(p.Name) != targetName {
+		if strings.ToLower(p.GetName()) != targetName {
 			continue
 		}
 		examinePlayer(s, p)
@@ -172,19 +172,20 @@ func examineMob(s *Session, mob *game.MobInstance) {
 
 // examinePlayer shows details about a player in the room.
 func examinePlayer(s *Session, p *game.Player) {
-	desc := p.Description
+	name := p.GetName()
+	desc := p.GetDescription()
 	if desc == "" {
-		desc = fmt.Sprintf("You see %s.", p.Name)
+		desc = fmt.Sprintf("You see %s.", name)
 	}
 	s.Send(desc)
 
-	className := game.ClassNames[p.Class]
-	s.Send(fmt.Sprintf("This is %s, level %d %s.", p.Name, p.Level, className))
+	className := game.ClassNames[p.GetClass()]
+	s.Send(fmt.Sprintf("This is %s, level %d %s.", name, p.GetLevel(), className))
 
 	// Show equipment
 	equipped := p.Equipment.GetEquippedItems()
 	if len(equipped) > 0 {
-		s.Send(fmt.Sprintf("%s is wearing:", p.Name))
+		s.Send(fmt.Sprintf("%s is wearing:", name))
 		for slot, item := range equipped {
 			s.Send(fmt.Sprintf("  <%s> %s", slot.String(), item.GetShortDesc()))
 		}
@@ -251,88 +252,83 @@ func getWearLocationString(item *game.ObjectInstance) string {
 }
 
 // itemTypeString returns a display name for an item type flag.
+// Values match the ITEM_* constants in pkg/game/item_helpers.go (= src/structs.h).
 func itemTypeString(typeFlag int) string {
 	switch typeFlag {
 	case 0:
 		return "undefined"
 	case 1:
-		return "container"
-	case 2:
-		return "drink container"
-	case 3:
 		return "light"
+	case 2:
+		return "scroll"
+	case 3:
+		return "wand"
 	case 4:
-		return "key"
+		return "staff"
 	case 5:
 		return "weapon"
 	case 6:
-		return "money"
+		return "fireweapon"
 	case 7:
-		return "treasure"
+		return "missile"
 	case 8:
-		return "potion"
+		return "treasure"
 	case 9:
 		return "armor"
 	case 10:
-		return "food"
+		return "potion"
 	case 11:
-		return "pill"
+		return "worn"
 	case 12:
-		return "scroll"
+		return "other"
 	case 13:
-		return "wand"
-	case 14:
-		return "staff"
-	case 15:
-		return "boat"
-	case 16:
-		return "furniture"
-	case 17:
 		return "trash"
-	case 18:
-		return "gem"
-	case 19:
-		return "jewelry"
-	case 20:
-		return "drum"
-	case 21:
-		return "missile"
-	case 22:
-		return "map"
-	case 23:
-		return "clock"
-	case 24:
-		return "lever"
-	case 25:
-		return "book"
-	case 26:
-		return "spellbook"
-	case 27:
-		return "amulet"
-	case 28:
-		return "ring"
-	case 29:
-		return "bottle"
-	case 30:
-		return "instrument"
-	case 31:
-		return "quiver"
-	case 32:
-		return "note"
-	case 33:
-		return "lockpick"
-	case 34:
-		return "portal"
-	case 35:
-		return "corpse"
-	case 36:
-		return "runestone"
-	case 37:
-		return "enchantment"
-	case 38:
-		return "component"
-	case 39:
+	case 14:
 		return "trap"
+	case 15:
+		return "container"
+	case 16:
+		return "note"
+	case 17:
+		return "drink container"
+	case 18:
+		return "key"
+	case 19:
+		return "food"
+	case 20:
+		return "money"
+	case 21:
+		return "pen"
+	case 22:
+		return "boat"
+	case 23:
+		return "fountain"
+	case 24:
+		return "vehicle"
+	case 25:
+		return "onion"
+	case 26:
+		return "armor piece"
+	case 27:
+		return "tattoo"
+	case 28:
+		return "rawmat"
+	case 29:
+		return "weapon part"
+	case 30:
+		return "tool"
+	case 31:
+		return "gem"
+	case 32:
+		return "jewelry"
+	case 33:
+		return "furniture"
+	case 35:
+		return "bag"
+	case 36:
+		return "backpack"
+	case 37:
+		return "corpse"
 	default:
 		return fmt.Sprintf("type %d", typeFlag)
 	}

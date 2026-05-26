@@ -112,7 +112,7 @@ var AttackHitTexts = []AttackHitText{
 // ---------------------------------------------------------------------------
 
 const (
-	LVL_IMMORT  = 31
+	LVL_IMMORT  = 31 // C: LVL_IMMORT=31 — duplicated here to avoid import cycle with pkg/game
 	NUM_OF_DIRS = 6
 	maxExpGain  = 1000000
 )
@@ -1103,9 +1103,9 @@ func MakeHit(ch, victim Combatant, attackType int) {
 		// Backstab / Circle / Disembowel multipliers — from C fight.c hit()
 		switch attackType {
 		case SKILL_BACKSTAB:
-			dam = int(float64(dam) * backstabMult(ch.GetLevel()))
+			dam = int(float64(dam) * BackstabMult(ch.GetLevel()))
 		case SKILL_CIRCLE:
-			dam = int(float64(dam) * backstabMult(ch.GetLevel()) / 3.0)
+			dam = int(float64(dam) * BackstabMult(ch.GetLevel()) / 3.0)
 		case SKILL_DISEMBOWEL:
 			dam = ch.GetLevel()*2 + ch.GetDamroll()
 		default:
@@ -1126,8 +1126,9 @@ func MakeHit(ch, victim Combatant, attackType int) {
 	}
 }
 
-// backstabMult mirrors backstab_mult() from C class.c lines 720-729.
-func backstabMult(level int) float64 {
+// BackstabMult mirrors backstab_mult() from src/class.c lines 720-729.
+// Shared by combat/fight_core.go (circle/disembowel) and game/skill_combat.go (DoBackstab).
+func BackstabMult(level int) float64 {
 	if level <= 0 {
 		return 1.0
 	}
@@ -1574,6 +1575,7 @@ func (n *namedCombatant) GetAC() int                  { return 0 }
 func (n *namedCombatant) GetTHAC0() int               { return 0 }
 func (n *namedCombatant) GetDamageRoll() DiceRoll     { return DiceRoll{} }
 func (n *namedCombatant) GetPosition() int            { return PosStanding }
+func (n *namedCombatant) SetPosition(pos int)         {}
 func (n *namedCombatant) GetClass() int               { return 0 }
 func (n *namedCombatant) GetStr() int                 { return 0 }
 func (n *namedCombatant) GetStrAdd() int              { return 0 }

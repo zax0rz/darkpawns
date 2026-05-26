@@ -9,7 +9,17 @@ import (
 )
 
 func cmdQuit(s *Session) error {
+	if s.player.IsFighting() {
+		s.sendText("No way!  You are fighting!")
+		return nil
+	}
+
 	room := s.player.GetRoom()
+	if s.manager.world.RoomHasFlag(room, "death") {
+		s.sendText("You cannot quit from this room!")
+		return nil
+	}
+
 
 	// Notify room
 	msg, err := json.Marshal(ServerMessage{

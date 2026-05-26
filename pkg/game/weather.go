@@ -419,3 +419,10 @@ func GetSunlight() int {
 	return weatherInfo.Sunlight
 }
 
+// GetMoon returns the current moon phase (MoonNew … MoonThreeEmpty).
+func GetMoon() int {
+	weatherMu.RLock()
+	defer weatherMu.RUnlock()
+	return timeInfo.Moon
+}
+

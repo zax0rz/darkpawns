@@ -4,6 +4,19 @@ import (
 	"fmt"
 )
 
+// mobHasLight returns true if the mob has a lit light source equipped.
+func mobHasLight(m *MobInstance) bool {
+	if m == nil {
+		return false
+	}
+	for _, item := range m.Equipment {
+		if isLitLightSource(item) {
+			return true
+		}
+	}
+	return false
+}
+
 func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -23,7 +36,7 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 		}
 	} else {
 		if p, ok := w.players[charName]; ok {
-				fromRoomVNum = p.RoomVNum
+			fromRoomVNum = p.RoomVNum
 		}
 	}
 
@@ -52,7 +65,7 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 		for _, p := range w.players {
 			if p.RoomVNum == fromRoomVNum && p.IsFighting() && p.GetFighting() == charName {
 				p.StopFighting()
-		}
+			}
 		}
 		for _, m := range w.activeMobs {
 			if m.GetRoom() == fromRoomVNum && m.GetFighting() == charName {
@@ -61,17 +74,31 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 		}
 	}
 
-	// Move the character
+	// Move the character, adjusting room light counters — handler.c:520-521,541-543 (DP-368)
 	if isMob {
 		for _, m := range w.activeMobs {
 			if m.GetName() == charName {
+				hasLight := mobHasLight(m)
+				if hasLight && fromRoomVNum >= 0 {
+					w.adjustRoomLight(fromRoomVNum, -1)
+				}
 				m.SetRoom(toRoomVNum)
+				if hasLight {
+					w.adjustRoomLight(toRoomVNum, 1)
+				}
 				break
 			}
 		}
 	} else {
 		if p, ok := w.players[charName]; ok {
+			hasLight := p.HasLight()
+			if hasLight && fromRoomVNum >= 0 {
+				w.adjustRoomLight(fromRoomVNum, -1)
+			}
 			p.SetRoom(toRoomVNum)
+			if hasLight {
+				w.adjustRoomLight(toRoomVNum, 1)
+			}
 
 			// Move mount with rider (recall/teleport take mounts)
 			// Source: act.wizard.c do_recall moves get_mount(ch) with the player

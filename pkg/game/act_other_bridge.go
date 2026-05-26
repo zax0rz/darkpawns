@@ -70,6 +70,21 @@ func (w *World) ExecGenWrite(ch *Player, cmd, arg string) { w.doGenWrite(ch, nil
 // ExecGenTog toggles a player option (brief, compact, notell, etc.).
 func (w *World) ExecGenTog(ch *Player, arg string) { w.doGenTog(ch, nil, "gentog", arg) }
 
+// RoomHasFlag reports whether the room at vnum has the named flag (e.g. "death", "no_recall").
+func (w *World) RoomHasFlag(vnum int, flag string) bool {
+	room := w.GetRoomInWorld(vnum)
+	if room == nil {
+		return false
+	}
+	return hasRoomFlag(room, flag)
+}
+
+// ExecPour pours liquid between containers.
+func (w *World) ExecPour(ch *Player, arg string) { w.doPour(ch, nil, "pour", arg) }
+
+// ExecMobCommand makes a mob (identified by VNum) execute a game command string.
+func (w *World) ExecMobCommand(mobVNum int, cmdStr string) { w.executeMobCommand(mobVNum, cmdStr) }
+
 // ExecBan handles the "ban" admin command (ported from ban.c do_ban).
 // Returns the message to send to the player.
 func (w *World) ExecBan(ch *Player, arg string) string {

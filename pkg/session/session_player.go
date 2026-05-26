@@ -152,3 +152,9 @@ func (s *Session) SetRemoteIP(ip string) {
 	s.remoteIP = ip
 }
 
+// SetBanLevel stores the site ban level for this session (game.BanNew or game.BanSelect).
+// Called after connection is accepted to enforce restrictions at login/char-creation time.
+func (s *Session) SetBanLevel(level int) {
+	s.banLevel = level
+}
+

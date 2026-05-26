@@ -35,8 +35,15 @@
 
   // canvas transform state (world map)
   let cvTransform = d3.zoomIdentity;
-  let viewMode = 'grid';       // 'grid' | 'constellation'
+  let viewMode = 'grid';       // 'grid' | 'globe'
   let roomDegrees = {};        // room_id → degree (exit count)
+
+  // 3D Globe View State
+  let globeData = null;        // loaded from world-sphere.json
+  let globeRotation = [0.3, -0.4]; // [theta, phi] tracking angles
+  let isDraggingGlobe = false;
+  let lastMousePos = { x: 0, y: 0 };
+  let dragMoveDistance = 0;
 
   // ── Sector colors ──────────────────────────────────────────────────────────
   const SECTOR_COLOR = {
@@ -99,6 +106,13 @@
   // ── Canvas zoom (world map) ────────────────────────────────────────────────
   const canvasZoom = d3.zoom()
     .scaleExtent([0.04, 12])
+    .filter(event => {
+      if (viewMode === 'globe') {
+        // Allow wheel zoom in globe mode, but ignore mousedown dragging so custom trackball drag can run
+        return event.type === 'wheel';
+      }
+      return !event.button;
+    })
     .on('zoom', ev => {
       cvTransform = ev.transform;
       drawWorldMap();
@@ -154,6 +168,17 @@
     });
     $btnPath?.addEventListener('click', togglePathMode);
     $btnView?.addEventListener('click', toggleViewMode);
+    document.getElementById('btn-expand-zone')?.addEventListener('click', () => {
+      if (selectedRoomId !== null) {
+        const room = globeData?.rooms.find(r => r.id === selectedRoomId);
+        if (room) {
+          selectZone(room.zone).then(() => {
+            const zRoom = currentRooms.find(r => r.id === room.id);
+            if (zRoom) { selectRoom(zRoom); jumpToRoom(room.id); }
+          });
+        }
+      }
+    });
     $btnSetStart?.addEventListener('click', () => setPathStart(selectedRoomId));
     $btnClrPath?.addEventListener('click', resetPath);
     document.getElementById('detail-close')?.addEventListener('click', deselectRoom);
@@ -184,9 +209,12 @@
         renderZoneList('');
 
         // Deep-link routing
-        if (window.location.hash === '#constellation') {
-          viewMode = 'constellation';
+        if (window.location.hash === '#globe' || window.location.hash === '#constellation') {
+          viewMode = 'globe';
           $btnView?.classList.add('active');
+          if (window.location.hash === '#constellation') {
+            window.location.hash = 'globe';
+          }
         } else {
           viewMode = 'grid';
           $btnView?.classList.remove('active');
@@ -252,9 +280,12 @@
     const zoneArg = p.get('zone');
     const roomArg = p.get('room');
 
-    if (window.location.hash === '#constellation') {
-      viewMode = 'constellation';
+    if (window.location.hash === '#globe' || window.location.hash === '#constellation') {
+      viewMode = 'globe';
       $btnView?.classList.add('active');
+      if (window.location.hash === '#constellation') {
+        window.location.hash = 'globe';
+      }
     } else {
       viewMode = 'grid';
       $btnView?.classList.remove('active');
@@ -347,6 +378,24 @@
       .then(data => { zoneCache[zoneId] = data; return data; });
   }
 
+  function loadGlobeAndDraw() {
+    if (globeData) {
+      drawWorldMap();
+      return;
+    }
+    showLoading('Loading sphere coordinates…');
+    fetch('/map/world-sphere.json')
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        globeData = data;
+        hideLoading();
+        drawWorldMap();
+      })
+      .catch(err => {
+        if ($loadingMsg) $loadingMsg.textContent = `Failed to load sphere: ${err.message}`;
+      });
+  }
+
   // ── World overview — Canvas ────────────────────────────────────────────────
   function selectWorldOverview({ pushHistory = true } = {}) {
     currentZoneId = null;
@@ -363,7 +412,11 @@
 
     if (worldMapData) {
       resizeCanvas();
-      drawWorldMap();
+      if (viewMode === 'globe') {
+        loadGlobeAndDraw();
+      } else {
+        drawWorldMap();
+      }
       return;
     }
 
@@ -375,7 +428,7 @@
         wmRoomPosMap = {};
         for (const room of data.rooms) wmRoomPosMap[room.id] = room;
 
-        // Compute room degrees for Constellation View
+        // Compute room degrees for Constellation View / Globe
         roomDegrees = {};
         for (const lk of data.links) {
           roomDegrees[lk.s] = (roomDegrees[lk.s] || 0) + 1;
@@ -465,8 +518,13 @@
         resizeCanvas();
         d3.select(canvasEl).call(canvasZoom);
         fitCanvasToWorldMap();
-        drawWorldMap();
         attachCanvasEvents();
+
+        if (viewMode === 'globe') {
+          loadGlobeAndDraw();
+        } else {
+          drawWorldMap();
+        }
       })
       .catch(err => {
         if ($loadingMsg) $loadingMsg.textContent = `Failed: ${err.message}`;
@@ -525,12 +583,12 @@
     return lower.concat(upper);
   }
   function toggleViewMode() {
-    viewMode = viewMode === 'grid' ? 'constellation' : 'grid';
-    $btnView?.classList.toggle('active', viewMode === 'constellation');
+    viewMode = viewMode === 'grid' ? 'globe' : 'grid';
+    $btnView?.classList.toggle('active', viewMode === 'globe');
 
     // Sync hash
-    if (viewMode === 'constellation') {
-      window.location.hash = 'constellation';
+    if (viewMode === 'globe') {
+      window.location.hash = 'globe';
     } else {
       history.replaceState(null, document.title, window.location.pathname + window.location.search);
     }
@@ -538,8 +596,211 @@
     if (currentZoneId !== null) {
       selectWorldOverview();
     } else if (worldMapData) {
-      drawWorldMap();
+      if (viewMode === 'globe') {
+        loadGlobeAndDraw();
+      } else {
+        drawWorldMap();
+      }
     }
+  }
+
+  // ── 3D Rotation Math ────────────────────────────────────────────────────────
+  function rotate3D(p, theta, phi) {
+    const cosT = Math.cos(theta), sinT = Math.sin(theta);
+    const x1 = p.x * cosT - p.z * sinT;
+    const z1 = p.x * sinT + p.z * cosT;
+
+    const cosP = Math.cos(phi), sinP = Math.sin(phi);
+    const y2 = p.y * cosP - z1 * sinP;
+    const z2 = p.y * sinP + z1 * cosP;
+
+    return { x: x1, y: y2, z: z2 };
+  }
+
+  // ── Globe View Renderer ─────────────────────────────────────────────────────
+  function drawGlobe() {
+    if (!ctx || !globeData || !worldMapData) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W   = canvasEl.width  / dpr;
+    const H   = canvasEl.height / dpr;
+
+    // Clear transparent so the vintage cream paper CSS background displays
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.save();
+    const cx = W / 2;
+    const cy = H / 2;
+    // visual radius: 38% of min dimension scaled by zoom scale
+    const R = Math.min(W, H) * 0.38 * cvTransform.k;
+
+    // 1. Subtle 3D Spherical Gridlines (Latitude & Longitude)
+    ctx.lineWidth = 0.45;
+    // Longitude lines
+    ctx.strokeStyle = 'rgba(168, 32, 26, 0.04)';
+    for (let i = 0; i < 6; i++) {
+      const lon = (i / 6) * Math.PI * 2;
+      ctx.beginPath();
+      for (let j = 0; j <= 60; j++) {
+        const lat = -Math.PI / 2 + (j / 60) * Math.PI;
+        const p = {
+          x: Math.cos(lat) * Math.cos(lon),
+          y: Math.sin(lat),
+          z: Math.cos(lat) * Math.sin(lon)
+        };
+        const rot = rotate3D(p, globeRotation[0], globeRotation[1]);
+        if (rot.z >= -0.1) {
+          const sx = cx + R * rot.x;
+          const sy = cy + R * rot.y;
+          if (j === 0) ctx.moveTo(sx, sy);
+          else ctx.lineTo(sx, sy);
+        }
+      }
+      ctx.stroke();
+    }
+    // Latitude lines
+    for (let i = 1; i < 5; i++) {
+      const lat = -Math.PI / 2 + (i / 5) * Math.PI;
+      ctx.beginPath();
+      for (let j = 0; j <= 60; j++) {
+        const lon = (j / 60) * Math.PI * 2;
+        const p = {
+          x: Math.cos(lat) * Math.cos(lon),
+          y: Math.cos(lat) * Math.sin(lon),
+          z: Math.sin(lat)
+        };
+        const rot = rotate3D(p, globeRotation[0], globeRotation[1]);
+        if (rot.z >= -0.1) {
+          const sx = cx + R * rot.x;
+          const sy = cy + R * rot.y;
+          if (j === 0) ctx.moveTo(sx, sy);
+          else ctx.lineTo(sx, sy);
+        }
+      }
+      ctx.stroke();
+    }
+
+    // 2. Rotate & Project Rooms
+    const roomProj = {};
+    const visibleRooms = [];
+    for (const r of globeData.rooms) {
+      const rot = rotate3D(r, globeRotation[0], globeRotation[1]);
+      const sx = cx + R * rot.x;
+      const sy = cy + R * rot.y;
+
+      const proj = {
+        id: r.id,
+        sector: r.sector,
+        zone: r.zone,
+        x_rot: rot.x,
+        y_rot: rot.y,
+        z_rot: rot.z,
+        sx: sx,
+        sy: sy,
+        degree: roomDegrees[r.id] || 0
+      };
+      roomProj[r.id] = proj;
+
+      // Front-face occlusion culling (z_rot < 0 is behind sphere)
+      if (rot.z >= 0) {
+        visibleRooms.push(proj);
+      }
+    }
+
+    // 3. Connective Edges (Delicate Oxblood Web, Outward Curved)
+    ctx.lineWidth = 0.35;
+    ctx.strokeStyle = 'rgba(168, 32, 26, 0.08)'; // Fine oxblood ink threads
+    ctx.beginPath();
+    for (const lk of worldMapData.links) {
+      const s = roomProj[lk.s];
+      const t = roomProj[lk.t];
+      if (!s || !t) continue;
+      if (s.z_rot < 0 || t.z_rot < 0) continue; // culled back face
+
+      // Outward quadratic bend to prevent links from slicing the sphere core
+      const mx = (s.sx + t.sx) / 2;
+      const my = (s.sy + t.sy) / 2;
+      const vx = mx - cx, vy = my - cy;
+      const len = Math.hypot(vx, vy);
+      if (len > 0.01) {
+        const dist = Math.hypot(t.sx - s.sx, t.sy - s.sy);
+        const bend = dist * 0.15;
+        const ctrlX = mx + (vx / len) * bend;
+        const ctrlY = my + (vy / len) * bend;
+        ctx.moveTo(s.sx, s.sy);
+        ctx.quadraticCurveTo(ctrlX, ctrlY, t.sx, t.sy);
+      } else {
+        ctx.moveTo(s.sx, s.sy);
+        ctx.lineTo(t.sx, t.sy);
+      }
+    }
+    ctx.stroke();
+
+    // 4. Double-Circle "Ink-Bleed" Nodes (Sorted by depth z_rot so front layers render on top)
+    visibleRooms.sort((a, b) => a.z_rot - b.z_rot);
+
+    // Pass 1: Diluted oxblood bleeding halos
+    ctx.fillStyle = 'rgba(168, 32, 26, 0.08)';
+    ctx.beginPath();
+    for (const r of visibleRooms) {
+      const rVal = r.degree <= 1 ? 1.6 : (r.degree <= 4 ? 2.8 : 4.0);
+      const dr = rVal * (0.7 + 0.3 * r.z_rot);
+      ctx.moveTo(r.sx + dr * 2.8, r.sy);
+      ctx.arc(r.sx, r.sy, dr * 2.8, 0, Math.PI * 2);
+    }
+    ctx.fill();
+
+    // Pass 2: Saturated sector cores
+    for (const r of visibleRooms) {
+      ctx.fillStyle = sectorColor(r.sector);
+      ctx.beginPath();
+      const rVal = r.degree <= 1 ? 1.6 : (r.degree <= 4 ? 2.8 : 4.0);
+      const dr = rVal * (0.7 + 0.3 * r.z_rot);
+      ctx.arc(r.sx, r.sy, dr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 5. Selected Room Highlight
+    if (selectedRoomId !== null) {
+      const sel = roomProj[selectedRoomId];
+      if (sel && sel.z_rot >= 0) {
+        const rVal = sel.degree <= 1 ? 1.6 : (sel.degree <= 4 ? 2.8 : 4.0);
+        const dr = rVal * (0.7 + 0.3 * sel.z_rot);
+        ctx.beginPath();
+        ctx.arc(sel.sx, sel.sy, dr * 2.8, 0, Math.PI * 2);
+        ctx.strokeStyle = '#a8201a';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      }
+    }
+
+    // 6. Floating Zone Typographic Labels (DM Serif Display, Oxblood)
+    if (cvTransform.k >= 0.12 && globeData.zones) {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      const fontSize = cvTransform.k >= 1.0 ? 12 : 10;
+      ctx.font = cvTransform.k >= 1.0 
+        ? `bold ${fontSize}px 'DM Serif Display', Georgia, serif` 
+        : `${fontSize}px 'DM Serif Display', Georgia, serif`;
+      
+      ctx.fillStyle = cvTransform.k >= 1.0 
+        ? 'rgba(168, 32, 26, 0.85)' // full oxblood at close zoom
+        : 'rgba(168, 32, 26, 0.55)';  // muted oxblood at medium zoom
+
+      for (const z of globeData.zones) {
+        const rot = rotate3D(z, globeRotation[0], globeRotation[1]);
+        if (rot.z < 0) continue; // culled back face
+
+        const sx = cx + R * rot.x;
+        const sy = cy + R * rot.y;
+        
+        ctx.fillText(z.name.toUpperCase(), sx, sy - 12);
+      }
+      ctx.restore();
+    }
+
+    ctx.restore();
   }
 
   function drawConstellation() {
@@ -717,6 +978,10 @@
   }
   function drawWorldMap() {
     if (!ctx || !worldMapData) return;
+    if (viewMode === 'globe') {
+      drawGlobe();
+      return;
+    }
     if (viewMode === 'constellation') {
       drawConstellation();
       return;
@@ -884,7 +1149,6 @@
     d3.select(canvasEl).call(canvasZoom.transform,
       d3.zoomIdentity.translate(tx, ty).scale(k));
   }
-
   // Canvas hit-test: find nearest room under pointer (world map)
   function worldMapHitTest(clientX, clientY) {
     if (!worldMapData || !canvasEl) return null;
@@ -902,11 +1166,82 @@
     return nearest;
   }
 
+  // Globe hit-test: find nearest room under pointer (3D globe)
+  function globeHitTest(clientX, clientY) {
+    if (!globeData || !canvasEl) return null;
+    const rect = canvasEl.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+    const cx = W / 2;
+    const cy = H / 2;
+    const R = Math.min(W, H) * 0.38 * cvTransform.k;
+
+    const mx = clientX - rect.left;
+    const my = clientY - rect.top;
+
+    let nearest = null;
+    let minDist = 14; // screen space pixels threshold
+
+    for (const r of globeData.rooms) {
+      const rot = rotate3D(r, globeRotation[0], globeRotation[1]);
+      if (rot.z < 0) continue; // culled back face
+
+      const sx = cx + R * rot.x;
+      const sy = cy + R * rot.y;
+
+      const dist = Math.hypot(sx - mx, sy - my);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = r;
+      }
+    }
+    return nearest;
+  }
+
+  function selectGlobeRoom(room) {
+    selectedRoomId = room.id;
+    // Reflect room in URL hash
+    replaceState({ room: room.id });
+    
+    showLoading('Loading details…');
+    fetchZone(room.zone)
+      .then(zoneData => {
+        hideLoading();
+        currentRooms = zoneData.rooms;
+        currentLinks = zoneData.links;
+        const zRoom = currentRooms.find(r => r.id === room.id);
+        if (zRoom) {
+          showDetail(zRoom);
+          if (window.innerWidth <= 768) {
+            $detail.classList.add('open');
+            $detail.classList.remove('hidden');
+          } else {
+            $detail.classList.remove('hidden');
+          }
+        }
+      })
+      .catch(err => {
+        hideLoading();
+        console.error("Failed to load room zone details:", err);
+      });
+  }
+
   function attachCanvasEvents() {
     if (!canvasEl) return;
 
-    // Click / tap: find room → load its zone → enter zone view → select room
+    // Click / tap handler
     canvasEl.addEventListener('click', e => {
+      if (viewMode === 'globe') {
+        if (dragMoveDistance > 5) return; // ignore click if dragged
+        const room = globeHitTest(e.clientX, e.clientY);
+        if (room) {
+          selectGlobeRoom(room);
+        } else {
+          deselectRoom();
+        }
+        return;
+      }
+      
       const room = worldMapHitTest(e.clientX, e.clientY);
       if (!room) return;
       selectZone(room.zone_id).then(() => {
@@ -915,8 +1250,42 @@
       });
     });
 
-    // Hover tooltip (desktop): show zone name + sector
-    canvasEl.addEventListener('mousemove', e => {
+    // Custom trackball mouse dragging events
+    canvasEl.addEventListener('mousedown', e => {
+      if (viewMode !== 'globe') return;
+      isDraggingGlobe = true;
+      dragMoveDistance = 0;
+      lastMousePos = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (viewMode === 'globe') {
+        if (isDraggingGlobe) {
+          const dx = e.clientX - lastMousePos.x;
+          const dy = e.clientY - lastMousePos.y;
+          dragMoveDistance += Math.hypot(dx, dy);
+          globeRotation[0] += dx * 0.005;
+          globeRotation[1] += dy * 0.005;
+          lastMousePos = { x: e.clientX, y: e.clientY };
+          drawWorldMap();
+        } else {
+          // Hover tooltips in globe mode
+          const room = globeHitTest(e.clientX, e.clientY);
+          if (room) {
+            canvasEl.style.cursor = 'pointer';
+            const zoneName = indexData?.zones.find(z => z.id === room.zone)?.name
+                             ?? `Zone ${room.zone}`;
+            showTooltip(e.clientX, e.clientY,
+              `<strong>${escHtml(zoneName)}</strong>${escHtml(SECTOR_NAME[room.sector] ?? 'unknown')}`);
+          } else {
+            canvasEl.style.cursor = '';
+            hideTooltip();
+          }
+        }
+        return;
+      }
+
+      // Hover tooltip for grid mode
       const room = worldMapHitTest(e.clientX, e.clientY);
       if (room) {
         canvasEl.style.cursor = 'pointer';
@@ -929,9 +1298,36 @@
         hideTooltip();
       }
     });
+
+    window.addEventListener('mouseup', () => {
+      isDraggingGlobe = false;
+    });
+
+    // Mobile touch dragging events
+    canvasEl.addEventListener('touchstart', e => {
+      if (viewMode !== 'globe' || e.touches.length !== 1) return;
+      isDraggingGlobe = true;
+      dragMoveDistance = 0;
+      lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    });
+
+    canvasEl.addEventListener('touchmove', e => {
+      if (!isDraggingGlobe || viewMode !== 'globe' || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - lastMousePos.x;
+      const dy = e.touches[0].clientY - lastMousePos.y;
+      dragMoveDistance += Math.hypot(dx, dy);
+      globeRotation[0] += dx * 0.005;
+      globeRotation[1] += dy * 0.005;
+      lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      drawWorldMap();
+    });
+
+    canvasEl.addEventListener('touchend', () => {
+      isDraggingGlobe = false;
+    });
+
     canvasEl.addEventListener('mouseleave', hideTooltip);
   }
-
   // ── Zone view — SVG with pre-baked positions ───────────────────────────────
   // Returns a Promise that resolves after the zone is rendered.
   function selectZone(zoneId, { pushHistory = true } = {}) {

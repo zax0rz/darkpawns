@@ -45,6 +45,7 @@ type Combatant interface {
 	GetTHAC0() int
 	GetDamageRoll() DiceRoll
 	GetPosition() int
+	SetPosition(pos int)
 
 	// Class and ability scores (Phase 2c additions)
 	GetClass() int

@@ -32,14 +32,19 @@ func (w *World) AddItemToRoom(item *ObjectInstance, roomVNum int) {
 	item.SetRoomVNum(roomVNum)
 }
 
-// ExtractObject removes an object from the world entirely.
-// Removes from room, carrier, container, and the global instance map.
-func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
+// extractObjectLocked removes an object (and its contained children) from the world.
+// Caller MUST hold w.mu. — handler.c:1006-1025
+func (w *World) extractObjectLocked(obj *ObjectInstance) {
+	// Recursively extract contents first — handler.c:1020-1024
+	for _, child := range obj.Contains {
+		w.extractObjectLocked(child)
+	}
+	obj.Contains = obj.Contains[:0]
 
-	// Remove from room (inline to avoid lock reentrancy — RemoveItemFromRoom also locks)
-	w.removeItemFromRoomLocked(obj, roomVNum)
+	// Remove from room if applicable
+	if obj.Location.Kind == ObjInRoom {
+		w.removeItemFromRoomLocked(obj, obj.Location.RoomVNum)
+	}
 
 	// Remove from carrier (inventory) based on Location
 	switch obj.Location.Kind {
@@ -55,14 +60,12 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 			}
 		}
 	case ObjEquipped:
-		// Actually unequip the item before extraction
 		if obj.Location.OwnerKind == OwnerPlayer {
 			if p, ok := w.players[obj.Location.PlayerName]; ok && p.Equipment != nil {
 				p.Equipment.UnequipItem(obj, p.Inventory)
 			}
 		} else if obj.Location.OwnerKind == OwnerMob {
 			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
-				// Mobs use int-keyed equipment map
 				for pos, eqItem := range m.Equipment {
 					if eqItem == obj {
 						delete(m.Equipment, pos)
@@ -82,9 +85,15 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 	}
 
 	obj.Location = LocNowhere()
-
-	// Remove from global instance map
 	delete(w.objectInstances, obj.ID)
+}
+
+// ExtractObject removes an object from the world entirely.
+// Recursively extracts container contents before removing the object itself.
+func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.extractObjectLocked(obj)
 }
 
 // RemoveItemFromRoom removes an item from a room.

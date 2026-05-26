@@ -16,12 +16,20 @@ import (
 var banManager *BanManager
 
 // banFilePath is the path to the ban file.
-// Mirrors C's BAN_FILE constant.
-var banFilePath = filepath.Join("data", "banned")
+// Mirrors C's BAN_FILE constant: lib/etc/banned
+var banFilePath = filepath.Join("lib", "etc", "banned")
 
 // invalidFilePath is the path to the invalid name list file.
-// Mirrors C's INVALID_FILE constant.
-var invalidFilePath = filepath.Join("data", "invalid")
+// Mirrors C's INVALID_FILE (xnames): lib/text/xnames
+var invalidFilePath = filepath.Join("lib", "text", "xnames")
+
+// SetBanFilePaths updates the ban and invalid-name file paths to match the
+// deployed world directory layout (e.g. /opt/darkpawns/lib).
+// Must be called before LoadBanned/ReadInvalidList.
+func SetBanFilePaths(worldDir string) {
+	banFilePath = filepath.Join(worldDir, "etc", "banned")
+	invalidFilePath = filepath.Join(worldDir, "text", "xnames")
+}
 
 // HasActiveCharacter is a callback set by the session package to check
 // if a character name is currently logged in. Used by ValidName.
@@ -103,6 +111,9 @@ func ProcessDream(ch DreamContext, lastDeath int64) *DreamResult {
 func ValidName(name string) bool {
 	if len(name) < 2 || len(name) > 20 {
 		slog.Warn("Invalid name length", "name", name)
+		return false
+	}
+	if banManager != nil && !banManager.ValidName(name) {
 		return false
 	}
 	return true

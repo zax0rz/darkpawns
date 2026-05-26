@@ -176,6 +176,46 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 	return eq.equip(item, inv)
 }
 
+// EquipForPlayer equips an item with anti-alignment and anti-class validation.
+// Returns (zapped bool, err error). If zapped is true the item stays in inventory.
+// Source: handler.c equip_char() lines 701-720 (DP-369)
+func (eq *Equipment) EquipForPlayer(item *ObjectInstance, inv *Inventory, alignment int, class int) (bool, error) {
+	if item != nil && item.Prototype != nil {
+		xf := item.Prototype.ExtraFlags[0]
+		isEvil := alignment <= -350
+		isGood := alignment >= 350
+		isNeutral := !isEvil && !isGood
+		if (xf&FlagAntiEvil != 0 && isEvil) ||
+			(xf&FlagAntiGood != 0 && isGood) ||
+			(xf&FlagAntiNeutral != 0 && isNeutral) {
+			return true, nil
+		}
+		// Detect weapon type and shield status
+		// Source: src/act.item.c:1600 — wear() function
+		isSlash := false
+		isShieldItem := false
+
+		if item.Prototype != nil {
+			if item.Prototype.TypeFlag == int(ItemWeaponType) {
+				isSlash = item.Prototype.Values[3] == 3 // TYPE_SLASH - TYPE_HIT
+			}
+			for _, flag := range item.Prototype.WearFlags {
+				if flag == 9 { // ITEM_WEAR_SHIELD = bit 9
+					isShieldItem = true
+					break
+				}
+			}
+		}
+
+		if InvalidClass(class, uint32(xf), isSlash, isShieldItem) {
+			return true, nil
+		}
+	}
+	eq.mu.Lock()
+	defer eq.mu.Unlock()
+	return false, eq.equip(item, inv)
+}
+
 // equip is the internal implementation without locking.
 func (eq *Equipment) equip(item *ObjectInstance, inv *Inventory) error {
 	// Check if item can be equipped

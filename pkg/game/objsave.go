@@ -28,9 +28,9 @@ const (
 
 var (
 	RentFileTimeout  = 30  // days before rent files expire
-	CrashFileTimeout = 365 // days before crash files expire
-	MaxObjSave       = 60  // max objects a player can rent — from config.c max_obj_save
-	MinRentCost      = 10  // base rent cost — from config.c min_rent_cost
+	CrashFileTimeout = 10  // C: crash_file_timeout = 10 (src/config.c)
+	MaxObjSave       = 30  // C: max_obj_save = 30 (src/config.c)
+	MinRentCost      = 100 // C: min_rent_cost = 100 (src/config.c)
 )
 
 // Rent vs Cryo pricing factors.

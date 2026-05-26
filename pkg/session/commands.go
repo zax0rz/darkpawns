@@ -68,7 +68,8 @@ func init() {
 	cmdRegistry.Register("gtell", wrapArgs(cmdGtell), "Send a message to your group.", 0, 0, "gsay")
 
 	// Combat
-	cmdRegistry.Register("hit", wrapArgs(cmdHit), "Attack a target.", 0, combat.PosStanding, "attack", "kill")
+	cmdRegistry.Register("hit", wrapArgs(cmdHit), "Attack a target.", 0, combat.PosStanding, "attack")
+	cmdRegistry.Register("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).", 0, combat.PosStanding)
 	cmdRegistry.Register("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.", 0, combat.PosFighting)
 
 	// Position / Movement
@@ -91,12 +92,16 @@ func init() {
 	cmdRegistry.Register("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.", 0, 0)
 	cmdRegistry.Register("eat", wrapArgs(cmdEat), "Eat some food.", 0, 0)
 	cmdRegistry.Register("drink", wrapArgs(cmdDrink), "Drink from a container.", 0, 0)
+	cmdRegistry.Register("pour", wrapArgs(cmdPour), "Pour liquid from one container to another.", 0, 0)
 	cmdRegistry.Register("quaff", wrapArgs(cmdQuaff), "Quaff a potion.", 0, 0, "q")
 
 	// Info
 	cmdRegistry.Register("score", wrapNoArgs(cmdScore), "Show your character stats.", 0, 0, "sc")
 	cmdRegistry.Register("who", wrapNoArgs(cmdWho), "List all online players.", 0, 0)
 	cmdRegistry.Register("where", wrapNoArgs(cmdWhere), "Show player locations.", 0, 0)
+	cmdRegistry.Register("coins", wrapNoArgs(cmdCoins), "Display your gold and bank balance.", 0, 0)
+	cmdRegistry.Register("abils", wrapNoArgs(cmdAbils), "Show your ability scores.", 0, 0)
+	cmdRegistry.Register("levels", wrapNoArgs(cmdLevels), "Show XP table for your class.", 0, 0)
 	cmdRegistry.Register("review", wrapNoArgs(cmdReview), "Show recent gossip history.", 2, 0)
 	cmdRegistry.Register("whois", wrapArgs(cmdWhois), "Look up a player's info.", 2, 0)
 	cmdRegistry.Register("help", wrapArgs(cmdHelp), "Show available commands or help for a topic.", 0, 0)
@@ -208,7 +213,7 @@ func init() {
 	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0)
 
 	// Offensive commands — delegated to pkg/command (C-10: real damage formulas)
-	cmdRegistry.Register("assist", wrapArgs(cmdAssist), "Assist a target in combat.", LVL_IMMORT, combat.PosFighting)
+	cmdRegistry.Register("assist", wrapArgs(cmdAssist), "Assist a target in combat.", 0, combat.PosFighting)
 	cmdRegistry.Register("disembowel", wrapSkill(command.CmdDisembowel), "Disembowel a target with a piercing weapon.", 0, combat.PosFighting, "gut")
 	cmdRegistry.Register("dragonkick", wrapSkill(command.CmdDragonKick), "Dragon-style kick attack.", 0, combat.PosFighting, "dkick")
 	cmdRegistry.Register("tigerpunch", wrapSkill(command.CmdTigerPunch), "Tiger-style punch attack (bare hands).", 0, combat.PosFighting, "tpunch")
@@ -218,7 +223,7 @@ func init() {
 	cmdRegistry.Register("neckbreak", wrapSkill(command.CmdNeckbreak), "Break a target's neck (bare hands).", 0, combat.PosStanding)
 	cmdRegistry.Register("ambush", wrapSkill(command.CmdAmbush), "Ambush a target from hiding.", 0, combat.PosStanding)
 	cmdRegistry.Register("parry", wrapSkill(command.CmdParry), "Toggle parry stance to deflect attacks.", 0, combat.PosStanding)
-	cmdRegistry.Register("order", wrapArgs(cmdOrder), "Order a pet or follower.", LVL_IMMORT, 0)
+	cmdRegistry.Register("order", wrapArgs(cmdOrder), "Order a pet or follower.", 0, 0)
 
 	// Informative commands (act_informative.go)
 	cmdRegistry.Register("color", wrapArgs(cmdColor), "Toggle ANSI color.", 0, 0)
@@ -339,6 +344,26 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		}
 	}
 	cmd := strings.ToLower(cmdStr)
+
+	// Expand player aliases before command dispatch (DP-415)
+	if s.player != nil && len(s.player.Aliases) > 0 {
+		fullInput := cmd
+		if len(args) > 0 {
+			fullInput = cmd + " " + strings.Join(args, " ")
+		}
+		if expanded, ok := game.PerformAlias(s.player.Aliases, fullInput); ok {
+			expanded = strings.TrimSpace(expanded)
+			if idx := strings.IndexByte(expanded, ' '); idx >= 0 {
+				cmd = strings.ToLower(expanded[:idx])
+				cmdStr = expanded[:idx]
+				args = strings.Fields(expanded[idx+1:])
+			} else {
+				cmd = strings.ToLower(expanded)
+				cmdStr = expanded
+				args = nil
+			}
+		}
+	}
 
 	if s.isGuest {
 		var guestAllowedCmds = map[string]bool{
@@ -471,8 +496,9 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	entry, ok := cmdRegistry.Lookup(cmd)
 	if !ok {
 		// Check social emotes before giving up
-		if social, found := game.Socials[cmd]; found {
-			return cmdSocial(s, social, args)
+		if _, found := game.Socials[cmd]; found {
+			game.DoAction(s.manager.world, s.player, cmd, strings.Join(args, " "))
+			return nil
 		}
 		s.sendText(fmt.Sprintf("Unknown command: %s", cmdStr))
 		return nil

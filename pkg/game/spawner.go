@@ -33,6 +33,9 @@ const numWears = 22
 // maxZone79Vnum is the max mob vnum (exclusive) for zone79 random placement.
 const maxZone79Vnum = 7999
 
+// FlagItemRare is ITEM_RARE — structs.h:492, bit 24 of ExtraFlags[0].
+const FlagItemRare = 1 << 24
+
 // Spawner manages spawning of mobs and objects from zone reset commands.
 type Spawner struct {
 	mu sync.RWMutex
@@ -516,11 +519,50 @@ func (s *Spawner) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 		return nil, err
 	}
 
+	// Apply ITEM_RARE affect variance — db.c:1899-1925 init_rare() (DP-376)
+	if obj.Prototype != nil && obj.Prototype.ExtraFlags[0]&FlagItemRare != 0 {
+		initRare(obj)
+	}
+
 	s.objInstances[objVNum] = append(s.objInstances[objVNum], obj)
 	if roomVNum >= 0 {
 		s.roomObjects[roomVNum] = append(s.roomObjects[roomVNum], obj)
 	}
 	return obj, nil
+}
+
+// initRare applies random stat variance to a rare item's applies.
+// Ports db.c init_rare() — each apply has 20% chance of +/-1 (damroll/hitroll) or +/-5 (AC).
+func initRare(obj *ObjectInstance) {
+	if obj.Prototype == nil || len(obj.Prototype.Affects) == 0 {
+		return
+	}
+	affects := make([]parser.ObjAffect, len(obj.Prototype.Affects))
+	copy(affects, obj.Prototype.Affects)
+	for i, a := range affects {
+		if a.Location == 0 {
+			continue
+		}
+		// #nosec G404 — game RNG, not cryptographic
+		if rand.Intn(100) >= 20 {
+			continue
+		}
+		var mod int
+		switch a.Location {
+		case 19, 18: // APPLY_DAMROLL, APPLY_HITROLL
+			mod = 1
+		case 17: // APPLY_AC
+			mod = 5
+		default:
+			continue
+		}
+		// #nosec G404
+		if rand.Intn(2) == 1 {
+			mod = -mod
+		}
+		affects[i].Modifier += mod
+	}
+	obj.SetAffectsOverride(affects)
 }
 
 // GetMobsInRoom returns all mob instances in a room.
@@ -555,6 +597,8 @@ func (s *Spawner) removeObjectFromRoom(roomVNum, objVNum int) {
 						}
 					}
 				}
+				// Clean up global state — db.c zone reset 'R' (DP-373)
+				s.world.ExtractObject(obj, roomVNum)
 				break
 			}
 		}
@@ -575,6 +619,8 @@ func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) {
 						}
 					}
 				}
+				// Clean up global state — db.c zone reset 'R' (DP-373)
+				s.world.ExtractMob(mob)
 				break
 			}
 		}

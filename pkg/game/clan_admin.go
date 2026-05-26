@@ -1,6 +1,7 @@
 package game
 
 import (
+	"os"
 	"strconv"
 	"strings"
 
@@ -134,6 +135,27 @@ func (w *World) doClanDestroy(ch *Player, arg string) {
 		if p.ClanID == c.ID {
 			p.ClanID = 0
 			p.ClanRank = 0
+		}
+	}
+
+	// Clear clan from offline members
+	files, _ := os.ReadDir(saveDir)
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), ".json") {
+			name := strings.TrimSuffix(f.Name(), ".json")
+			// Skip if currently online
+			if _, ok := w.players[name]; ok {
+				continue
+			}
+			p, err := LoadPlayer(name)
+			if err != nil {
+				continue
+			}
+			if p.ClanID == c.ID {
+				p.ClanID = 0
+				p.ClanRank = 0
+				_ = SavePlayer(p)
+			}
 		}
 	}
 

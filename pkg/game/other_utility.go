@@ -42,7 +42,28 @@ func (w *World) doPeek(ch *Player, me *MobInstance, cmd string, arg string) bool
 	}
 
 	ch.SendMessage(fmt.Sprintf("You peek at %s's belongings:\r\n", victimPl.Name))
-	ch.SendMessage("[Equipment and inventory]\r\n")
+
+	// List equipment
+	ch.SendMessage("[Equipment]\r\n")
+	for slotID := 0; slotID < int(SlotMax); slotID++ {
+		slot := EquipmentSlot(slotID)
+		item, ok := victimPl.Equipment.GetItemInSlot(slot)
+		if ok && item != nil && item.Prototype != nil {
+			ch.SendMessage(fmt.Sprintf("  %s\r\n", item.Prototype.ShortDesc))
+		}
+	}
+
+	// List inventory
+	ch.SendMessage("[Inventory]\r\n")
+	for _, item := range victimPl.Inventory.Items {
+		if item != nil {
+			name := "a generic object"
+			if item.Prototype != nil {
+				name = item.Prototype.ShortDesc
+			}
+			ch.SendMessage(fmt.Sprintf("  %s\r\n", name))
+		}
+	}
 	// Improve skill
 	skillVal := ch.GetSkill("peek")
 	if skillVal > 0 && skillVal < 97 && randRange(1, 200) <= ch.Stats.Wis+ch.Stats.Int {
@@ -95,6 +116,7 @@ func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bo
 	ch.SendMessage("You are recalled!\r\n")
 	ch.SetRoom(recallRoom)
 	actToRoom(w, recallRoom, fmt.Sprintf("%s appears in the room.\r\n", ch.Name), "")
+	w.doLook(ch, nil, "look", "")
 
 	return true
 }

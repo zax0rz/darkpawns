@@ -40,6 +40,8 @@
   "spell_map": {},
   "skills": {},
   "bank_gold": 0,
+  "clan_id": 0,
+  "clan_rank": 0,
   "inventory": null,
   "equipment": null,
   "affects": null,

@@ -285,6 +285,7 @@ type SkillResult struct {
 	MessageToVict string
 	MessageToRoom string
 	StunTarget  bool   // target loses a round
+	SleepTarget bool   // target is put to sleep (PosSleeping + AFF_SLEEP)
 	SelfStumble bool   // user falls (bash fail)
 	TargetFalls bool   // target position changes to sitting
 	WaitCh      int    // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)

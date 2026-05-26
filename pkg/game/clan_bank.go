@@ -5,11 +5,14 @@ import (
 )
 
 func (w *World) doClanBank(ch *Player, arg string, action int) {
-	var clanNum int
-	var c *Clan
-
 	if arg == "" {
 		w.sendClanFormat(ch)
+		return
+	}
+
+	clanNum, c := w.Clans.FindClanByID(ch.ClanID)
+	if c == nil {
+		ch.SendMessage("You don't belong to any clan!\r\n")
 		return
 	}
 

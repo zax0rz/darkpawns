@@ -53,7 +53,7 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	//     dam *= backstab_mult(GET_LEVEL(ch))
 	weaponDam := combat.RollDice(weaponNum, weaponSides)
 	dam := weaponDam + ch.GetDamroll()
-	mult := backstabMult(ch.GetLevel())
+	mult := combat.BackstabMult(ch.GetLevel())
 	dam = int(float64(dam) * mult)
 
 	improveSkill(ch, SkillBackstab)
@@ -68,16 +68,7 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 }
 
-// backstabMult mirrors backstab_mult() from class.c lines 720-729.
-func backstabMult(level int) float64 {
-	if level <= 0 {
-		return 1.0
-	}
-	if level >= 31 {
-		return 20.0
-	}
-	return float64(level)*0.2 + 1.0
-}
+
 
 // DoBash implements do_bash() from act.offensive.c lines 423-478.
 // Strength-based check. On success: damage + target sits + stunned.

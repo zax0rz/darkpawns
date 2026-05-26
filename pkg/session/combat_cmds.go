@@ -11,6 +11,48 @@ import (
 // cmdHit initiates combat with a target.
 // Combat is self-rate-limited by the 2s engine tick.
 // StartCombat enrolls the player; PerformRound fires autonomously.
+func cmdKill(s *Session, args []string) error {
+	if len(args) == 0 {
+		s.Send("Kill who?")
+		return nil
+	}
+
+	// Immortal instakill (C: src/act.offensive.c do_kill())
+	if s.player.GetLevel() >= LVL_IMMORT {
+		targetName := strings.ToLower(args[0])
+		room, ok := s.manager.world.GetRoom(s.player.GetRoom())
+		if !ok {
+			return fmt.Errorf("invalid room")
+		}
+
+		// Check mobs
+		mobs := s.manager.world.GetMobsInRoom(room.VNum)
+		for _, mob := range mobs {
+			if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
+				s.manager.world.HandleDeath(mob, s.player, 0)
+				s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", mob.GetShortDesc()))
+				return nil
+			}
+		}
+
+		// Check players
+		players := s.manager.world.GetPlayersInRoom(room.VNum)
+		for _, p := range players {
+			if p.Name != s.player.Name && strings.Contains(strings.ToLower(p.Name), targetName) {
+				s.manager.world.HandleDeath(p, s.player, 0)
+				s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", p.Name))
+				return nil
+			}
+		}
+
+		s.Send("They aren't here.")
+		return nil
+	}
+
+	// Mortals delegate to hit
+	return cmdHit(s, args)
+}
+
 func cmdHit(s *Session, args []string) error {
 	if len(args) == 0 {
 		s.Send("Hit whom?")
@@ -18,6 +60,11 @@ func cmdHit(s *Session, args []string) error {
 	}
 
 	targetName := strings.ToLower(args[0])
+
+	// Auto-dismount before attacking (C: do_hit calls do_dismount if mounted).
+	if s.player.IsMounted() {
+		s.manager.world.ExecDismount(s.player, "")
+	}
 
 	// Check if already fighting
 	if s.manager.combatEngine.IsFighting(s.player.Name) {
@@ -109,82 +156,76 @@ func cmdHit(s *Session, args []string) error {
 }
 
 // cmdFlee attempts to flee from combat.
-// Implements do_flee() from act.offensive.c lines 360-420
+// Port of do_flee() from src/fight.c: loops up to 6 random directions,
+// checks each exit is open and the destination isn't a DEATH room.
 func cmdFlee(s *Session) error {
-	// Check if in combat
 	if !s.manager.combatEngine.IsFighting(s.player.Name) {
 		s.Send("You're not fighting anyone!")
 		return nil
 	}
 
-	// Get current room
 	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
 	if !ok {
 		return fmt.Errorf("invalid room")
 	}
 
-	// Get available exits
-	if len(room.Exits) == 0 {
-		s.Send("There's nowhere to flee!")
-		return nil
-	}
-
-	// Pick random exit
-	var directions []string
-	for dir := range room.Exits {
-		directions = append(directions, dir)
-	}
-
-	// 50% chance to flee successfully
-	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-	if rand.Intn(100) > 50 {
-		s.Send("You attempt to flee but fail!")
-		return nil
-	}
-
-	// Calculate XP loss before stopping combat
-	// Source: act.offensive.c do_flee() lines 367-371
+	// Capture opponent info for XP penalty before any move changes state.
 	var xpLoss int
 	if opponent, ok := s.manager.combatEngine.GetCombatTarget(s.player.Name); ok {
 		loss := opponent.GetMaxHP() - opponent.GetHP()
 		if loss < 0 {
 			loss = 0
 		}
-		loss *= opponent.GetLevel()
-		xpLoss = loss
+		xpLoss = loss * opponent.GetLevel()
 	}
-
-	// Apply XP loss for players level > 10
-	// Source: act.offensive.c do_flee() lines 398-401
 	level := s.player.GetLevel()
 	if level > 10 {
-		// 500 * (level / 2.6) — original uses float division, cast to int
-		// Source: act.offensive.c do_flee() line 400
 		xpLoss += int(500 * (float64(level) / 2.6))
-		s.player.LoseExp(xpLoss)
-		if xpLoss > 0 {
-			s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", xpLoss))
-		}
 	}
 
-	// Flee successfully
-	s.manager.combatEngine.StopCombat(s.player.Name)
-
-	// Pick random direction
+	// Try up to 6 shuffled directions (C: do_flee loops up to 6 random dirs).
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-	direction := directions[rand.Intn(len(directions))]
+	allDirs := []string{"north", "east", "south", "west", "up", "down"}
+	for i := len(allDirs) - 1; i > 0; i-- {
+		j := rand.Intn(i + 1)
+		allDirs[i], allDirs[j] = allDirs[j], allDirs[i]
+	}
 
-	// Move player
 	oldRoom := s.player.GetRoom()
-	newRoom, err := s.manager.world.MovePlayer(s.player, direction)
-	if err != nil {
-		s.Send("You panic and can't find an exit!")
+	newRoomVNum := -1
+	for _, dir := range allDirs {
+		exit, hasExit := room.Exits[dir]
+		if !hasExit || exit.ToRoom == -1 {
+			continue
+		}
+		if exit.DoorState != 0 { // closed or locked
+			continue
+		}
+		// Skip DEATH rooms (ROOM_DEATH = bit 1 in CircleMUD room flags).
+		if dest, ok := s.manager.world.GetRoom(exit.ToRoom); ok && dest.HasFlag(1) {
+			continue
+		}
+		nr, err := s.manager.world.MovePlayer(s.player, dir)
+		if err != nil {
+			continue
+		}
+		newRoomVNum = nr.VNum
+		break
+	}
+
+	if newRoomVNum == -1 {
+		s.Send("You panic but can't find a way out!")
 		return nil
 	}
 
-	// Notify old room
+	s.manager.combatEngine.StopCombat(s.player.Name)
+
+	// Apply XP loss to all levels; level > 10 already included extra above.
+	s.player.LoseExp(xpLoss)
+	if xpLoss > 0 {
+		s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", xpLoss))
+	}
+
 	leaveMsg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
@@ -199,7 +240,6 @@ func cmdFlee(s *Session) error {
 	}
 	s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
 
-	// Notify new room
 	enterMsg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
@@ -212,12 +252,11 @@ func cmdFlee(s *Session) error {
 		slog.Error("json.Marshal error", "error", err)
 		return nil
 	}
-	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
+	s.manager.BroadcastToRoom(newRoomVNum, enterMsg, s.player.Name)
 
 	s.Send("You flee head over heels.")
 	s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
 
-	// Send new room state
 	return cmdLook(s, nil)
 }
 

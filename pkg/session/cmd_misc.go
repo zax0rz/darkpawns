@@ -87,6 +87,12 @@ func cmdScout(s *Session, args []string) error {
 	return nil
 }
 
+// cmdPour pours liquid between containers.
+func cmdPour(s *Session, args []string) error {
+	s.manager.world.ExecPour(s.player, strings.Join(args, " "))
+	return nil
+}
+
 // cmdRoll rolls a random number.
 func cmdRoll(s *Session, args []string) error {
 	s.manager.world.ExecRoll(s.player, strings.Join(args, " "))

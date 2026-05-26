@@ -117,12 +117,16 @@ func main() {
 		slog.Info("Database connected.")
 	}
 
+	// Set ban/xnames file paths relative to world directory (DP-421)
+	game.SetBanFilePaths(*worldDir)
+
 	// Create session manager
 	manager := session.NewManager(gameWorld, database)
 	gameWorld.SetShopManager(manager.GetShopManager()) // Wire shop system to world
 	game.SetWeatherWorld(gameWorld)                     // Wire world for weather broadcasts
 	manager.SetCombatBroadcastFunc()                  // Enable combat messages to rooms
 	manager.SetDeathFunc()                            // Enable death/respawn handling
+	manager.SetFleeHooks()                            // Wire wimpy auto-flee (DP-389)
 	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death
 	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
 	manager.SetDreamingDir("data/dreaming")           // Dreaming layer output (memory summaries)
@@ -158,6 +162,13 @@ func main() {
 		slog.Warn("No database — moderation disabled (mute/ban/spam filters unavailable)")
 	}
 
+	// Initialize board system (DP-422)
+	gameWorld.GetOrInitBoards(*worldDir)
+	gameWorld.Boards.SetWorld(gameWorld)
+
+	// Start AI ticker: mob AI loop + event queue (DP-427)
+	gameWorld.StartAITicker()
+
 	// Start game loop (heartbeat, point_update, mobile activity, combat ticks)
 	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{
 		OnPointUpdate: func() {
@@ -167,7 +178,16 @@ func main() {
 			// Combat engine handles its own 2s tick via CombatEngine.Start()
 		},
 		OnMobileActivity: func() {
-			// Future: mob AI wandering, speech triggers
+			gameWorld.MobileActivity()
+		},
+		OnWeatherAndTime: func() {
+			game.WeatherAndTime(true, manager.SendToOutdoor)
+		},
+		OnAffectUpdate: func() {
+			gameWorld.AffectUpdate()
+		},
+		OnCheckIdlePasswords: func() {
+			manager.CheckIdlePasswords()
 		},
 	})
 	gameLoop.Start()

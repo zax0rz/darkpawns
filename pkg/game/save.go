@@ -53,6 +53,8 @@ type savePlayerData struct {
 	SpellMap    map[string]int      `json:"spell_map"`
 	Skills      map[string]int      `json:"skills"`
 	BankGold    int                 `json:"bank_gold"`
+	ClanID      int                 `json:"clan_id"`
+	ClanRank    int                 `json:"clan_rank"`
 	Inventory   []saveItemData      `json:"inventory"`
 	Equipment   []saveItemData      `json:"equipment"`
 	Affects     []saveAffect        `json:"affects"`
@@ -171,6 +173,8 @@ func playerToSaveData(p *Player) savePlayerData {
 		MaxMove:     p.GetMaxMove(),
 		Gold:        p.GetGold(),
 		BankGold:    p.BankGold,
+		ClanID:      p.ClanID,
+		ClanRank:    p.ClanRank,
 		Exp:         p.GetExp(),
 		Alignment:   p.GetAlignment(),
 		RoomVNum:    p.GetRoom(),
@@ -279,6 +283,8 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		MaxMove:      data.MaxMove,
 		Gold:         data.Gold,
 		BankGold:     data.BankGold,
+		ClanID:       data.ClanID,
+		ClanRank:     data.ClanRank,
 		Exp:          data.Exp,
 		Alignment:    data.Alignment,
 		RoomVNum:     data.RoomVNum,
