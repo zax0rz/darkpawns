@@ -266,6 +266,11 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	hasSlow := HasAffect != nil && HasAffect(attacker.GetName(), AFF_SLOW)
 	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
 
+	// roundPenalty tracks whether a parry or dodge succeeded earlier in this
+	// round. If true, subsequent attacks suffer a THAC0 penalty.
+	// Source: fight.c:1251 — round-wide accuracy penalty after parry/dodge.
+	roundPenalty := 0
+
 	// Perform attacks
 	for i := 0; i < numAttacks; i++ {
 		// Check if defender is still alive
@@ -273,8 +278,8 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 			break
 		}
 
-		// Check hit
-		if !CalculateHitChance(attacker, defender, HitModifiers{}) {
+		// Check hit — apply round penalty if a prior parry/dodge succeeded
+		if !CalculateHitChance(attacker, defender, HitModifiers{RoundPenalty: roundPenalty}) {
 			ce.sendMissMessage(attacker, defender)
 			continue
 		}
@@ -282,6 +287,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		// Parry check — checked before damage
 		parryResult := CheckParry(defender, attacker)
 		if parryResult == ParrySuccess {
+			roundPenalty = 4 // THAC0 penalty for rest of round — fight.c:1251
 			attacker.SendMessage(fmt.Sprintf("With a dazzling show of swordplay, %s parries your attack!\r\n", defender.GetName()))
 			defender.SendMessage("With a dazzling show of swordplay, you parry the attack!\r\n")
 			if ce.BroadcastFunc != nil {
@@ -297,6 +303,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		// Dodge check — checked after parry
 		dodgeResult := CheckDodge(defender, attacker)
 		if dodgeResult == DodgeSuccess {
+			roundPenalty = 4 // THAC0 penalty for rest of round — fight.c:1251
 			attacker.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", defender.GetName()))
 			defender.SendMessage("You dodge the attack!\r\n")
 			if ce.BroadcastFunc != nil {

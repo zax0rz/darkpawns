@@ -273,6 +273,11 @@ func getTHAC0(c Combatant) int {
 type HitModifiers struct {
 	WeaponBlessed bool // ITEM_BLESS on wielded weapon: -1 to calc_thaco
 	DrunkLevel    int  // GET_COND(ch, DRUNK): +2 to calc_thaco if > 1
+	// RoundPenalty is the THAC0 penalty applied to subsequent attacks in the
+	// same round when a prior parry or dodge succeeded.
+	// Source: fight.c:1251 — attacker suffers an accuracy penalty for the rest
+	// of the round after the defender successfully parries or dodges.
+	RoundPenalty int
 }
 
 // CalculateHitChance implements the original hit() logic from fight.c lines 1783–1830.
@@ -303,6 +308,13 @@ func CalculateHitChance(attacker, defender Combatant, mods HitModifiers) bool {
 	// Drunk THAC0 penalty - fight.c line 1806
 	if mods.DrunkLevel > 1 {
 		calcThaco += 2
+	}
+
+	// Round-wide parry/dodge penalty — fight.c:1251
+	// If the defender parried or dodged a prior attack this round, subsequent
+	// attacks from the same attacker suffer a THAC0 penalty.
+	if mods.RoundPenalty > 0 {
+		calcThaco += mods.RoundPenalty
 	}
 
 	// INT and WIS THAC0 reduction - fight.c lines 1813-1814
