@@ -137,7 +137,16 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		if dur < 1 {
 			dur = 1
 		}
+		// AFF_POISON flag affect
 		aff = engine.NewAffectDirect(SpellPoison, engine.ApplyNone, dur, -2, engine.AFFPoison, "poison")
+		applyAffect(victim, aff)
+		// C source: magic.c poison — APPLY_STR -2 and APPLY_HITROLL -2
+		aff = engine.NewAffect(SpellPoison, engine.ApplyStr, dur, -2, "poison")
+		applyAffect(victim, aff)
+		aff = engine.NewAffect(SpellPoison, engine.ApplyHitroll, dur, -2, "poison")
+		sendToVictim(victim, "You feel very sick.\r\n")
+		sendToCaster(ch, "$n turns green as your poison takes hold.\r\n")
+		return
 	case SpellHaste:
 		aff = engine.NewAffectDirect(SpellHaste, engine.ApplyNone, level, 0, engine.AFFHaste, "haste")
 	case SpellSlow:
