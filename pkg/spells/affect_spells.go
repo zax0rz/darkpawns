@@ -64,9 +64,16 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 			return
 		}
 		curseDur := 1 + (getLevel(ch) >> 1)
+		// AFF_CURSE flag affect
 		aff = engine.NewAffectDirect(SpellCurse, engine.ApplyNone, curseDur, -3, engine.AFFCurse, "curse")
 		applyAffect(victim, aff)
+		// Damroll penalty — C source: magic.c curse APPLY_DAMROLL affect (was constructed but never applied)
 		aff = engine.NewAffect(SpellCurse, engine.ApplyDamroll, curseDur, -3, "curse")
+		applyAffect(victim, aff)
+		// Hitroll penalty — C source: magic.c curse also applies APPLY_HITROLL
+		aff = engine.NewAffect(SpellCurse, engine.ApplyHitroll, curseDur, -3, "curse")
+		sendToVictim(victim, "You feel very unlucky.\r\n")
+		sendToCaster(ch, "They are now cursed!\r\n")
 	case SpellInvisible:
 		aff = engine.NewAffectDirect(SpellInvisible, engine.ApplyNone, 12+getLevel(ch)/4, 0, engine.AFFInvisible, "invisibility")
 	case SpellSanctuary:
