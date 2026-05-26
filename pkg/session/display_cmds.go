@@ -458,20 +458,34 @@ func cmdInfoBarUpdate(s *Session, update int) {
 		return
 	}
 
+	// Acquire player lock early to read all fields atomically (DP-362).
+	p.RLock()
+	health := p.Health
+	maxHealth := p.MaxHealth
+	mana := p.Mana
+	maxMana := p.MaxMana
+	move := p.Move
+	maxMove := p.MaxMove
+	exp := p.Exp
+	gold := p.Gold
+	level := p.Level
+	class := p.Class
+	p.RUnlock()
+
 	is := &infobarState{
 		screenSize:  s.screenSize,
-		lastHit:     p.Health,
-		lastMaxHit:  p.MaxHealth,
-		lastMana:    p.Mana,
-		lastMaxMana: p.MaxMana,
-		lastMove:    p.Move,
-		lastMaxMove: p.MaxMove,
-		lastExp:     p.Exp,
-		lastGold:    p.Gold,
-		level:       p.Level,
+		lastHit:     health,
+		lastMaxHit:  maxHealth,
+		lastMana:    mana,
+		lastMaxMana: maxMana,
+		lastMove:    move,
+		lastMaxMove: maxMove,
+		lastExp:     exp,
+		lastGold:    gold,
+		level:       level,
 	}
 	is.nextLevel = is.level + 1
-	is.expNeededForLevel = 1000 * is.level
+	is.expNeededForLevel = findExp(class, is.level+1)
 
 	output := ""
 
