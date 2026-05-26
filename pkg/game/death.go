@@ -661,15 +661,17 @@ func capitalize(s string) string {
 }
 
 // genderPronoun returns the possessive pronoun for the given sex value.
-// Source: structs.h SEX_MALE=1, SEX_FEMALE=2, SEX_NEUTRAL=0
+// Source: structs.h — Dark Pawns uses SEX_MALE=0, SEX_FEMALE=1, SEX_NEUTRAL=2
+// (differs from stock CircleMUD which uses SEX_NEUTRAL=0, SEX_MALE=1, SEX_FEMALE=2).
+// The default (including unknown values) maps to male ("his").
 func genderPronoun(sex int) string {
 	switch sex {
 	case 1:
-		return "his" // SEX_MALE
-	case 2:
 		return "her" // SEX_FEMALE
+	case 2:
+		return "its" // SEX_NEUTRAL
 	default:
-		return "its" // SEX_NEUTRAL / unknown
+		return "his" // SEX_MALE (0) or unknown
 	}
 }
 
