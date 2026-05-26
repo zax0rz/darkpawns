@@ -71,6 +71,11 @@ func cmdWhisper(s *Session, args []string) error {
 		return nil
 	}
 
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
+		s.Send("You cannot communicate at all!")
+		return nil
+	}
+
 	targetName := args[0]
 	message := sanitizeMessage(strings.Join(args[1:], " "))
 
@@ -124,6 +129,11 @@ func cmdWhisper(s *Session, args []string) error {
 func cmdAsk(s *Session, args []string) error {
 	if len(args) < 2 {
 		s.Send("Ask whom what?")
+		return nil
+	}
+
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
+		s.Send("You cannot communicate at all!")
 		return nil
 	}
 
