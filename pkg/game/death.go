@@ -661,14 +661,15 @@ func capitalize(s string) string {
 }
 
 // genderPronoun returns the possessive pronoun for the given sex value.
+// Source: structs.h SEX_MALE=1, SEX_FEMALE=2, SEX_NEUTRAL=0
 func genderPronoun(sex int) string {
 	switch sex {
 	case 1:
-		return "her"
+		return "his" // SEX_MALE
 	case 2:
-		return "its"
+		return "her" // SEX_FEMALE
 	default:
-		return "his"
+		return "its" // SEX_NEUTRAL / unknown
 	}
 }
 
