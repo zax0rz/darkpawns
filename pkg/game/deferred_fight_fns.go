@@ -351,6 +351,8 @@ func GetTattooBonuses(tattoo int) []TattooBonus {
 
 // TattooAf applies or removes tattoo stat effects on a player.
 // Source: src/tattoo.c:104 (tattoo_af struct char_data *ch, bool add).
+// In C, tattoo_af calls affect_join() to add/remove struct affected_type entries.
+// In Go we directly modify the player's stat fields under mu.Lock.
 func TattooAf(p *Player, add bool) {
 	if p == nil || p.Tattoo == 0 {
 		return
@@ -360,11 +362,38 @@ func TattooAf(p *Player, add bool) {
 		return
 	}
 
-	// In C, tattoo_af adds/removes affect_type structs via affect_join.
-	// In Go, apply tattoo bonuses as player stat modifiers.
-	// The actual stat application is handled by the caller or Lua scripts.
-	_ = bonuses
-	_ = add
+	sign := 1
+	if !add {
+		sign = -1
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, b := range bonuses {
+		delta := b.Modifier * sign
+		switch b.Location {
+		case ApplyStr:
+			p.Stats.Str += delta
+		case ApplyDex:
+			p.Stats.Dex += delta
+		case ApplyInt:
+			p.Stats.Int += delta
+		case ApplyWis:
+			p.Stats.Wis += delta
+		case ApplyCon:
+			p.Stats.Con += delta
+		case ApplyMana:
+			p.MaxMana += delta
+		case ApplyHit:
+			p.MaxHealth += delta
+		case ApplyMove:
+			p.MaxMove += delta
+		case ApplyHitroll:
+			p.Hitroll += delta
+		case ApplyDamroll:
+			p.Damroll += delta
+		}
+	}
 }
 
 // --------------------------------------------------------------------------
