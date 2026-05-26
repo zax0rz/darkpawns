@@ -89,8 +89,14 @@ func cmdWear(s *Session, args []string) error {
 		return nil
 	}
 
-	// Try to equip the item
-	if err := s.player.Equipment.Equip(item, s.player.Inventory); err != nil {
+	// Try to equip the item, with anti-alignment and anti-class checks (DP-369)
+	zapped, err := s.player.Equipment.EquipForPlayer(item, s.player.Inventory, s.player.Alignment, s.player.Class)
+	if zapped {
+		s.sendText(fmt.Sprintf("You are zapped by %s and instantly let go of it.", item.GetShortDesc()))
+		broadcastEquipmentChange(s, "zap", item)
+		return nil
+	}
+	if err != nil {
 		s.sendText(fmt.Sprintf("You can't wear that: %v", err))
 		return nil
 	}
@@ -174,8 +180,14 @@ func cmdWield(s *Session, args []string) error {
 		}
 	}
 
-	// Equip new weapon
-	if err := s.player.Equipment.Equip(item, s.player.Inventory); err != nil {
+	// Equip new weapon, with anti-alignment and anti-class checks (DP-369)
+	zapped, err := s.player.Equipment.EquipForPlayer(item, s.player.Inventory, s.player.Alignment, s.player.Class)
+	if zapped {
+		s.sendText(fmt.Sprintf("You are zapped by %s and instantly let go of it.", item.GetShortDesc()))
+		broadcastEquipmentChange(s, "zap", item)
+		return nil
+	}
+	if err != nil {
 		s.sendText(fmt.Sprintf("You can't wield that: %v", err))
 		return nil
 	}
@@ -212,8 +224,14 @@ func cmdHold(s *Session, args []string) error {
 		}
 	}
 
-	// Try to equip in hold slot
-	if err := s.player.Equipment.Equip(item, s.player.Inventory); err != nil {
+	// Try to equip in hold slot, with anti-alignment and anti-class checks (DP-369)
+	zapped, err := s.player.Equipment.EquipForPlayer(item, s.player.Inventory, s.player.Alignment, s.player.Class)
+	if zapped {
+		s.sendText(fmt.Sprintf("You are zapped by %s and instantly let go of it.", item.GetShortDesc()))
+		broadcastEquipmentChange(s, "zap", item)
+		return nil
+	}
+	if err != nil {
 		s.sendText(fmt.Sprintf("You can't hold that: %v", err))
 		return nil
 	}
