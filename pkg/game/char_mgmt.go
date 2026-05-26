@@ -103,18 +103,47 @@ func (w *World) ExtractPendingChars() {
 		if p.Flags&extractMask != 0 {
 			slog.Debug("extracting player", "name", name)
 
-			// Unequip light — adjust room light for extraction
+			roomVNum := p.RoomVNum
+
+			// Unequip ALL equipment, dropping each item to the room floor.
+			// Source: handler.c extract_pending_chars — obj_to_room for every item.
 			if p.Equipment != nil {
-				item, ok := p.Equipment.GetItemInSlot(SlotLight)
-				if ok && item != nil {
-					// Decrement room light before unequipping
+				p.Equipment.mu.Lock()
+				for slot, item := range p.Equipment.Slots {
 					if isLitLightSource(item) {
-						w.adjustRoomLight(p.RoomVNum, -1)
+						w.adjustRoomLight(roomVNum, -1)
 					}
-if err := p.Equipment.Unequip(SlotLight, p.Inventory); err != nil {
-						slog.Warn("light unequip failed during extraction", "player", p.Name, "error", err)
+					delete(p.Equipment.Slots, slot)
+					if roomVNum >= 0 {
+						w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
+						item.Location = LocRoom(roomVNum)
+						item.RoomVNum = roomVNum
+						if isLitLightSource(item) {
+							w.adjustRoomLight(roomVNum, 1)
+						}
+					} else {
+						item.Location = LocNowhere()
+						item.RoomVNum = -1
 					}
 				}
+				p.Equipment.mu.Unlock()
+			}
+
+			// Drop all carried inventory items to the room floor.
+			if p.Inventory != nil {
+				p.Inventory.mu.Lock()
+				for _, item := range p.Inventory.Items {
+					if roomVNum >= 0 {
+						w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
+						item.Location = LocRoom(roomVNum)
+						item.RoomVNum = roomVNum
+					} else {
+						item.Location = LocNowhere()
+						item.RoomVNum = -1
+					}
+				}
+				p.Inventory.Items = p.Inventory.Items[:0]
+				p.Inventory.mu.Unlock()
 			}
 
 			// Stop fighting
@@ -134,6 +163,53 @@ if err := p.Equipment.Unequip(SlotLight, p.Inventory); err != nil {
 
 			slog.Debug("player extracted", "name", name)
 		}
+	}
+
+	// Extract mobs flagged for deferred removal (MOB_EXTRACT / bit 25).
+	// Source: handler.c extract_pending_chars mob loop.
+	for id, m := range w.activeMobs {
+		m.mu.Lock()
+		if m.Flags&(1<<uint(MobFlagExtract)) == 0 {
+			m.mu.Unlock()
+			continue
+		}
+		mobRoom := m.RoomVNum
+
+		// Drop equipment to room floor.
+		for slot, item := range m.Equipment {
+			if isLitLightSource(item) && mobRoom >= 0 {
+				w.adjustRoomLight(mobRoom, -1)
+			}
+			delete(m.Equipment, slot)
+			if mobRoom >= 0 {
+				w.roomItems[mobRoom] = append(w.roomItems[mobRoom], item)
+				item.Location = LocRoom(mobRoom)
+				item.RoomVNum = mobRoom
+				if isLitLightSource(item) {
+					w.adjustRoomLight(mobRoom, 1)
+				}
+			} else {
+				item.Location = LocNowhere()
+				item.RoomVNum = -1
+			}
+		}
+
+		// Drop inventory to room floor.
+		for _, item := range m.Inventory {
+			if mobRoom >= 0 {
+				w.roomItems[mobRoom] = append(w.roomItems[mobRoom], item)
+				item.Location = LocRoom(mobRoom)
+				item.RoomVNum = mobRoom
+			} else {
+				item.Location = LocNowhere()
+				item.RoomVNum = -1
+			}
+		}
+		m.Inventory = m.Inventory[:0]
+		m.mu.Unlock()
+
+		slog.Debug("mob extracted", "id", id)
+		delete(w.activeMobs, id)
 	}
 }
 
