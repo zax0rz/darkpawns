@@ -129,7 +129,10 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 							kp.Name, goldPerMember))
 						kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
 							goldPerMember, m.Name))
-						m.SetGold(m.GetGold() + goldPerMember)
+						// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
+						m.mu.Lock()
+						m.Gold += goldPerMember
+						m.mu.Unlock()
 						remaining -= goldPerMember
 					} else {
 						kp.SendMessage(fmt.Sprintf("You would share gold with %s, but there was none to split!\r\n",
@@ -142,18 +145,27 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 				// Killer keeps the remainder
 				if remaining > 0 {
 					kp.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", remaining))
-					kp.SetGold(kp.GetGold() + remaining)
+					// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
+					kp.mu.Lock()
+					kp.Gold += remaining
+					kp.mu.Unlock()
 				} else {
 					kp.SendMessage("When you split no gold, you got none.\r\n")
 				}
 			} else {
 				// Solo kill with autogold+autosplit but no group — just take all
-				kp.SetGold(kp.GetGold() + goldLooted)
+				// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
+				kp.mu.Lock()
+				kp.Gold += goldLooted
+				kp.mu.Unlock()
 				kp.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", goldLooted))
 			}
 		} else {
 			// AutoGold without AutoSplit — just loot
-			kp.SetGold(kp.GetGold() + goldLooted)
+			// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
+			kp.mu.Lock()
+			kp.Gold += goldLooted
+			kp.mu.Unlock()
 			kp.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", goldLooted))
 		}
 	}
