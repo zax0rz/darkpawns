@@ -27,6 +27,16 @@ func filterCommMessage(s *Session, message string) (string, bool) {
 	return message, false
 }
 
+// roomIsSoundproof returns true if the player's current room has the
+// ROOM_SOUNDPROOF flag (bit 5 — from structs.h ROOM_SOUNDPROOF).
+func roomIsSoundproof(s *Session) bool {
+	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
+	if !ok {
+		return false
+	}
+	return room.HasFlag(5) // ROOM_SOUNDPROOF = bit 5
+}
+
 // cmdTell sends a private message to another player.
 // Source: act.comm.c do_tell() lines 901-931, perform_tell()
 func cmdTell(s *Session, args []string) error {
@@ -37,6 +47,12 @@ func cmdTell(s *Session, args []string) error {
 
 	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
 		s.Send("You cannot tell anyone anything!")
+		return nil
+	}
+
+	// ROOM_SOUNDPROOF check — act.comm.c do_tell() line 905
+	if roomIsSoundproof(s) {
+		s.Send("The walls seem to absorb your words.\r\n")
 		return nil
 	}
 
@@ -104,6 +120,12 @@ func cmdReply(s *Session, args []string) error {
 		return nil
 	}
 
+	// ROOM_SOUNDPROOF check — act.comm.c do_reply() line 937
+	if roomIsSoundproof(s) {
+		s.Send("The walls seem to absorb your words.\r\n")
+		return nil
+	}
+
 	message := strings.Join(args, " ")
 
 	// Find the last teller
@@ -154,6 +176,12 @@ func cmdShout(s *Session, args []string) error {
 		return nil
 	}
 	message = filtered
+
+	// ROOM_SOUNDPROOF check — act.comm.c do_gen_comm() line 1289
+	if roomIsSoundproof(s) {
+		s.Send("The walls seem to absorb your words.\r\n")
+		return nil
+	}
 
 	// Get the shouter's zone
 	senderRoom, ok := s.manager.world.GetRoom(s.player.GetRoom())

@@ -68,6 +68,12 @@ func cmdWhisper(s *Session, args []string) error {
 		return nil
 	}
 
+	// ROOM_SOUNDPROOF check — act.comm.c do_spec_comm() (whisper) soundproof gate
+	if roomIsSoundproof(s) {
+		s.Send("The walls seem to absorb your words.\r\n")
+		return nil
+	}
+
 	targetName := args[0]
 	message := sanitizeMessage(strings.Join(args[1:], " "))
 
