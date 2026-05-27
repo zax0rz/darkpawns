@@ -105,6 +105,49 @@
     updateStatusBar();
   }
 
+  function renderStateToTerminal(data) {
+    if (!data || !data.room) return;
+    const room = data.room;
+
+    // Print a blank line first to separate from any previous output
+    term.writeln('');
+
+    // Room Name (bold cyan/teal)
+    term.writeln('\x1b[1;36m' + room.name + '\x1b[0m');
+
+    // Room Description (light gray)
+    if (room.description) {
+      term.writeln('\x1b[37m' + room.description + '\x1b[0m');
+    }
+
+    // Exits (bold green)
+    const exitsList = room.exits || [];
+    if (exitsList.length === 0) {
+      term.writeln('\x1b[1;32m[Exits: None!]\x1b[0m');
+    } else {
+      term.writeln('\x1b[1;32m[Exits: ' + exitsList.join(' ') + ']\x1b[0m');
+    }
+
+    // Items (green)
+    const itemsList = room.items || [];
+    itemsList.forEach(item => {
+      term.writeln('\x1b[32m' + item + '\x1b[0m');
+    });
+
+    // Mobs (yellow)
+    const mobsList = room.mobs || [];
+    mobsList.forEach(mob => {
+      term.writeln('\x1b[33m' + mob + '\x1b[0m');
+    });
+
+    // Players (bold yellow/gold)
+    const playersList = room.players || [];
+    playersList.forEach(player => {
+      term.writeln('\x1b[1;33m' + player + ' is here.\x1b[0m');
+    });
+  }
+
+
   function handleVarsMsg(data) {
     if (!data) return;
     if (data.HEALTH !== undefined) playerState.health = data.HEALTH;
@@ -153,6 +196,7 @@
         // Route structured messages
         if (msg.type === 'state') {
           handleStateMsg(msg.data);
+          renderStateToTerminal(msg.data);
           charCreating = false;
           return;
         }

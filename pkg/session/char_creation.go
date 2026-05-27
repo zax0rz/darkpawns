@@ -4,109 +4,346 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 
 	"github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
+// C source race help constants from src/constants.c
+const RaceMenuText = `
+Choose a race:
+  [H]uman        [E]lven       [D]warven      [K]enderkin
+  [M]inotaur     [R]akshasan   [S]sauran
+  [?]Help on races in general
+  [?<race abbreviation>] Help on a specific race (i.e ?D for help on dwarves)`
+
+const RaceHelpText = `
+Your race is pretty much class independant; it affects innate abilities such
+as:
+The type of terrain you see best in: 
+       RAKSHASA: desert              SSAUR: swamplands
+       MINOTAUR & ELF: forest        DWARF: mountains
+       KENDER & HUMAN: fairly good everywhere.
+Magick resistance.: Elves and dwarves are a bit more hearty in this area.
+Attitudes: Humans abound, so they are often suspicious of other races and
+       give preferential treatment to their own kind.
+Kender tend to 'acquire' other's objects unknowingly, and make excellent
+       thieves. Only humans can belong to the ninja class.
+Each race has its own language.`
+
+const HelpHuman = `
+Humans are the most common race on this world, and come in all sorts of shapes
+and sizes. The appearance of humans are not the only thing that varies about
+them, though, some are evil as sin, while others are good as good can be, but
+most you shall find on your adventures are neutral, and will just mind their
+own business and pay no attention to the affairs of adventurers. Also, humans
+are the only race that can become ninjas, the dangerous oriental mercenaries.
+They adapt easily to most climes, allowing them to build cities in almost any
+location.`
+
+const HelpDwarf = `
+Dwarves are a noble race of demihumans who dwell under the earth, forging
+great cities and waging massive wars against the forces of chaos and evil.
+Dwarves also have much in common with the rocks and gems they love to work,
+for they are both hard and unyielding. It's often been said that it's easier
+to make a stone weep than it is to change a dwarf's mind. Standing an average
+of four-and-a-half feet tall, dwarves tend to be stocky and muscular. They
+have ruddy cheeks and bright eyes. Their skin is typically deep tan or light
+brown. Their hair is usually black, grey, or brown, and worn long, though not
+long enough to impair vision in any way. They favor long beards and moustaches
+as well.`
+
+const HelpElf = `
+Though their lives span several human generations, elves appear at first
+glance to be frail when compared to man, due to their delicate and finely
+chiseled features. Elves have very pale complextions, which is odd because
+they spend a great deal of time outdoors. They tend to be slim, almost 
+fragile. Though they are not as sturdy as humans, elves are much more agile.
+Elves have learned that it is very important to understand the creatures, both
+good and evil, that share their forest homes.`
+
+const HelpKender = `
+Kender are small, kind, but somewhat annoying, elf-like beings that have
+recently spread across the globe. They do not seem to have any sort of kingdom
+and most are found just wandering throughout the lands, exploring. Although
+some are trained thieves, the whole of the kender race seems to have a knack
+for stealing, and occasionally, without even noticing it sometimes, they have
+been known to steal from friends and enemies alike. They act much like humans,
+but four things make a kender's personality drastically different from that of
+a typical human. Kender are utterly fearless, insatiably curious, unstoppably
+mobile and independant, and will pick up anything that is not nailed down.`
+
+const HelpMinotaur = `
+Minotaurs are either cursed humans or the offspring of minotaurs and humans.
+They are usually found dwelling in underground labyrinths, for they seem to
+have an innate ability to manuver in these places, and do not often lose their
+sense of direction. Minotaurs are huge, well over seven feet tall, and their
+broad bodies ripple with muscles. They have the head of a bull but the body of
+a human male, there have been accounts of female minotaurs, but they are rare.
+The color of their fur ranges from brown to black, while their body coloring
+varies, as would a normal human's. Although they usually dwell in mazes
+beneath the earth, it is noted that they also see very well in forests.`
+
+const HelpRakshasa = `
+Rakshasas are a race of malevolent spirits encased in flesh that hunt and
+torment humanity. No one knows where these creatures originate, some say they
+are the embodiment of nightmares. The only way to describe their form is that
+they are humanoid tigers, with hands whose palms curve backward, away from the
+body. Most of the worlds rakshasa are evil, but recently many have decided to
+stop their tyrannical living and become adventurers, although they still
+retain their fondness towards the great sandy wastes of their homeland.`
+
+const HelpSsaur = `
+Ssaurs are a relatively new race in the world. They are a more evolved type of
+lizardman, and most are more intelligent than their aggressive ancestors, and
+for that are shunned from the lizardman tribes, and the few that are born into
+those tribes are cast out almost as soon as they are hatched. Other than the 
+intelligence, they appear to be the same as lizardman, although less evil-
+looking. Ssaurs spend most of their lives in swamps and marshes, but some have
+been known to adventure far away from their homes.`
+
+const ClassMenuText = `
+Select a class:
+  [C]leric     - Healers and warriors of the gods
+  [T]hief      - Stealthy, quick-fingered, lock-picking back-stabbers
+  [W]arrior    - Fierce, battle-trained fighters
+  [M]agic-user - Spell-casters trained in the art of magick
+  Ps[i]onic    - Fighters endowed with the powers of the mind`
+
+const HumanClassMenuText = `
+Select a class:
+  [C]leric     - Healers and warriors of the gods
+  [T]hief      - Stealthy, quick-fingered, lock-picking back-stabbers
+  [W]arrior    - Fierce, battle-trained fighters
+  [M]agic-user - Spell-casters trained in the art of magick
+  [N]inja      - Stealthy, magick-endowed warriors from the orient
+  Ps[i]onic    - Fighters endowed with the powers of the mind`
+
+const HometownMenuText = `
+Choose your home town:
+  [K]ir Drax'in  - The Main City. New players should choose this.
+  Kir-[O]shi     - The Port City.
+  [A]laozar      - The Holy City.`
+
 // handleCharInput processes character creation input from the client.
 // Implements the nanny() flow from interpreter.c.
-// Stages: color → sex → race → class → hometown → stats_roll
+// Stages: confirm_name → create_password → confirm_password → color → sex → race → class → hometown → stats_roll → motd
 func (s *Session) handleCharInput(data json.RawMessage) error {
 	var input CharInputData
 	if err := json.Unmarshal(data, &input); err != nil {
 		return err
 	}
 
+	choice := strings.TrimSpace(input.Choice)
+
 	switch s.charStage {
-	case "color":
-		switch input.Choice {
-		case "Y", "y":
-			s.charColor = true
-			s.advanceCharStage("sex", "Select your sex (M/F):", map[string]string{"M": "Male", "F": "Female"})
-		case "N", "n":
-			s.charColor = false
-			s.advanceCharStage("sex", "Select your sex (M/F):", map[string]string{"M": "Male", "F": "Female"})
+	case "confirm_name":
+		switch strings.ToUpper(choice) {
+		case "Y":
+			s.charStage = "create_password"
+			s.sendCharCreatePrompt("create_password", fmt.Sprintf("New character.\r\nGive me a password for %s: ", s.charName), nil)
+		case "N":
+			s.sendText("Okay, what IS it, then? ")
+			_ = s.conn.Close()
 		default:
-			s.sendCharCreatePrompt("color", "Invalid choice. Do you want ANSI color? (Y/N):", map[string]string{"Y": "Yes", "N": "No"})
+			s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Please type Yes or No: \r\nDid I get that right, %s (Y/N)? ", s.charName), map[string]string{
+				"Y": "Yes",
+				"N": "No",
+			})
+		}
+
+	case "create_password":
+		if len(choice) < 3 {
+			s.sendCharCreatePrompt("create_password", "\r\nIllegal password. Password must be at least 3 characters.\r\nPassword: ", nil)
+			return nil
+		}
+		s.charPassword = choice
+		s.charStage = "confirm_password"
+		s.sendCharCreatePrompt("confirm_password", "Please retype password: ", nil)
+
+	case "confirm_password":
+		if choice != s.charPassword {
+			s.sendCharCreatePrompt("create_password", "\r\nPasswords don't match... start over.\r\nPassword: ", nil)
+			s.charStage = "create_password"
+			return nil
+		}
+		hashedPwd, err := bcrypt.GenerateFromPassword([]byte(s.charPassword), bcrypt.DefaultCost)
+		if err != nil {
+			slog.Error("bcrypt hash error", "error", err)
+			return err
+		}
+		s.charPassword = string(hashedPwd)
+		s.charStage = "color"
+		s.sendCharCreatePrompt("color", "Do you want ANSI color (Y/N)? ", map[string]string{
+			"Y": "Yes",
+			"N": "No",
+		})
+
+	case "color":
+		switch strings.ToUpper(choice) {
+		case "Y":
+			s.charColor = true
+			s.advanceCharStage("sex", "What is your sex (M/F)? ", map[string]string{"M": "Male", "F": "Female"})
+		case "N":
+			s.charColor = false
+			s.advanceCharStage("sex", "What is your sex (M/F)? ", map[string]string{"M": "Male", "F": "Female"})
+		default:
+			s.sendCharCreatePrompt("color", "Please answer Y or N.\r\nDo you want ANSI color (Y/N)? ", map[string]string{"Y": "Yes", "N": "No"})
 		}
 
 	case "sex":
-		switch input.Choice {
-		case "M", "m":
+		switch strings.ToUpper(choice) {
+		case "M":
 			s.charSex = 0
-			s.advanceCharStage("race", "Select your race:", s.getRaceOptions())
-		case "F", "f":
+			s.advanceCharStage("race", RaceMenuText+"\r\nRace: ", s.getRaceOptions())
+		case "F":
 			s.charSex = 1
-			s.advanceCharStage("race", "Select your race:", s.getRaceOptions())
+			s.advanceCharStage("race", RaceMenuText+"\r\nRace: ", s.getRaceOptions())
 		default:
-			s.sendCharCreatePrompt("sex", "Invalid choice. Select your sex (M/F):", map[string]string{"M": "Male", "F": "Female"})
+			s.sendCharCreatePrompt("sex", "That is not a sex..\r\nWhat IS your sex? ", map[string]string{"M": "Male", "F": "Female"})
 		}
 
 	case "race":
-		if raceStr, ok := s.getRaceOptions()[input.Choice]; ok {
-			if race, err := strconv.Atoi(input.Choice); err == nil {
-				s.charRace = race
+		upperChoice := strings.ToUpper(choice)
+		if strings.HasPrefix(upperChoice, "?") {
+			var help string
+			if len(upperChoice) > 1 {
+				switch upperChoice[1:2] {
+				case "H":
+					help = HelpHuman
+				case "E":
+					help = HelpElf
+				case "D":
+					help = HelpDwarf
+				case "K":
+					help = HelpKender
+				case "M":
+					help = HelpMinotaur
+				case "R":
+					help = HelpRakshasa
+				case "S":
+					help = HelpSsaur
+				default:
+					help = "\r\nThat is not a race..\r\n"
+				}
+			} else {
+				help = RaceHelpText
 			}
-			_ = raceStr
-			s.advanceCharStage("class", "Select your class:", s.getClassOptions(s.charRace))
-		} else {
-			s.sendCharCreatePrompt("race", "Invalid race. Select your race:", s.getRaceOptions())
+			s.sendText(help)
+			s.sendCharCreatePrompt("race", RaceMenuText+"\r\nRace: ", s.getRaceOptions())
+			return nil
 		}
+
+		var race int
+		switch upperChoice {
+		case "H":
+			race = game.RaceHuman
+		case "E":
+			race = game.RaceElf
+		case "D":
+			race = game.RaceDwarf
+		case "K":
+			race = game.RaceKender
+		case "M":
+			race = game.RaceMinotaur
+		case "R":
+			race = game.RaceRakshasa
+		case "S":
+			race = game.RaceSsaur
+		default:
+			s.sendCharCreatePrompt("race", "That is not a race..\r\nWhat IS your race? \r\n"+RaceMenuText+"\r\nRace: ", s.getRaceOptions())
+			return nil
+		}
+
+		s.charRace = race
+		var classMenu string
+		if s.charRace == game.RaceHuman {
+			classMenu = HumanClassMenuText
+		} else {
+			classMenu = ClassMenuText
+		}
+		s.advanceCharStage("class", classMenu+"\r\nClass: ", s.getClassOptions(s.charRace))
 
 	case "class":
-		if _, ok := s.getClassOptions(s.charRace)[input.Choice]; ok {
-			if classID, err := strconv.Atoi(input.Choice); err == nil {
-				s.charClass = classID
+		upperChoice := strings.ToUpper(choice)
+		var classID int
+		switch upperChoice {
+		case "M":
+			classID = game.ClassMageUser
+		case "C":
+			classID = game.ClassCleric
+		case "T":
+			classID = game.ClassThief
+		case "W":
+			classID = game.ClassWarrior
+		case "I":
+			classID = game.ClassPsionic
+		case "N":
+			if s.charRace == game.RaceHuman {
+				classID = game.ClassNinja
+			} else {
+				s.sendCharCreatePrompt("class", "\r\nThat's not a class.\r\nClass: ", s.getClassOptions(s.charRace))
+				return nil
 			}
-			// Roll initial stats for display
-			s.charStats = game.RollRealAbils(s.charClass, s.charRace)
-			s.advanceCharStage("hometown", "Choose your hometown:", map[string]string{
-				"K": "Kir Drax'in — The Main City. New players should choose this.",
-				"O": "Kir-Oshi — The Port City.",
-				"A": "Alaozar — The Holy City.",
-			})
-		} else {
-			s.sendCharCreatePrompt("class", "Invalid class. Select your class:", s.getClassOptions(s.charRace))
+		default:
+			s.sendCharCreatePrompt("class", "\r\nThat's not a class.\r\nClass: ", s.getClassOptions(s.charRace))
+			return nil
 		}
+
+		s.charClass = classID
+		s.charStats = game.RollRealAbils(s.charClass, s.charRace)
+		s.advanceCharStage("hometown", HometownMenuText+"\r\nSelect: ", map[string]string{
+			"K": "Kir Drax'in",
+			"O": "Kir-Oshi",
+			"A": "Alaozar",
+		})
 
 	case "hometown":
-		switch input.Choice {
-		case "K", "k":
-			s.charHometown = 1
-			s.sendStatsRollPrompt()
-		case "O", "o":
-			s.charHometown = 2
-			s.sendStatsRollPrompt()
-		case "A", "a":
-			s.charHometown = 3
-			s.sendStatsRollPrompt()
+		upperChoice := strings.ToUpper(choice)
+		var hometown int
+		switch upperChoice {
+		case "K":
+			hometown = 1
+		case "O":
+			hometown = 2
+		case "A":
+			hometown = 3
 		default:
-			s.sendCharCreatePrompt("hometown", "Invalid choice. Choose your hometown:", map[string]string{
-				"K": "Kir Drax'in — The Main City. New players should choose this.",
-				"O": "Kir-Oshi — The Port City.",
-				"A": "Alaozar — The Holy City.",
+			s.sendCharCreatePrompt("hometown", "Invalid choice!\r\nSelect: ", map[string]string{
+				"K": "Kir Drax'in",
+				"O": "Kir-Oshi",
+				"A": "Alaozar",
 			})
+			return nil
 		}
 
+		s.charHometown = hometown
+		s.sendStatsRollPrompt()
+
 	case "stats_roll":
-		switch input.Choice {
-		case "Y", "y":
-			if err := s.completeCharCreation(); err != nil {
-				slog.Error("char creation failed", "error", err)
-				return err
-			}
-		case "N", "n":
-			// Reroll stats and stay at stats_roll stage
+		switch strings.ToUpper(choice) {
+		case "Y":
+			// Show MOTD and transition to PRESS RETURN state
+			motd := game.ShowMOTD(s.manager.world.WorldPath)
+			s.charStage = "motd"
+			s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
+		case "N":
 			s.charStats = game.RollRealAbils(s.charClass, s.charRace)
 			s.sendStatsRollPrompt()
 		default:
 			s.sendStatsRollPrompt()
+		}
+
+	case "motd":
+		// When they press return, finalize character creation!
+		if err := s.completeCharCreation(); err != nil {
+			slog.Error("char creation failed", "error", err)
+			return err
 		}
 
 	default:
@@ -164,7 +401,7 @@ func (s *Session) sendStatsRollPrompt() {
 		Cha: s.charStats.Cha,
 	}
 	prompt := fmt.Sprintf(
-		"Your ability scores:\r\n  Str: (%s)  Dex: (%s)  Int: (%s)\r\n  Wis: (%s)  Con: (%s)  Cha: (%s)\r\n\r\nPress Y to keep these stats, or N to reroll:",
+		"Your ability scores:\r\n  Str: %-13s Dex: %-13s Int: %-13s\r\n  Wis: %-13s Con: %-13s Cha: %-13s\r\n\r\nPress 'Y' to keep these stats, and 'N' to reroll:",
 		getAbilName(stats.Str), getAbilName(stats.Dex), getAbilName(stats.Int),
 		getAbilName(stats.Wis), getAbilName(stats.Con), getAbilName(stats.Cha),
 	)
@@ -187,13 +424,19 @@ func (s *Session) sendStatsRollPrompt() {
 }
 
 // startCharCreation begins the character creation flow for a new player.
+//
+// Deprecated: prefer startNewCharFlow to match stateful C nanny flow.
 func (s *Session) startCharCreation(playerName string) {
+	s.startNewCharFlow(playerName, "")
+}
+
+// startNewCharFlow begins stateful character creation starting at name confirmation.
+func (s *Session) startNewCharFlow(playerName, password string) {
 	s.charCreating = true
 	s.charName = playerName
-
-	// Start with color selection — must set charStage so handleCharInput knows where we are
-	s.charStage = "color"
-	s.sendCharCreatePrompt("color", "Do you want ANSI color? (Y/N):", map[string]string{
+	s.charPassword = password
+	s.charStage = "confirm_name"
+	s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Did I get that right, %s (Y/N)? ", playerName), map[string]string{
 		"Y": "Yes",
 		"N": "No",
 	})
@@ -233,7 +476,6 @@ func (s *Session) completeCharCreation() error {
 
 	// Set hometown starting room
 	// K=Kir Draxin/8004, O=Kir-Oshi/18201, A=Alaozar/21258
-	// C source: config.c — mortal_start_room=8004, kiroshi_start_room=18201, alaozar_start_room=21258
 	switch s.charHometown {
 	case 1: // Kir Drax'in (main city, new players)
 		s.player.RoomVNum = 8004
@@ -287,7 +529,6 @@ func (s *Session) completeCharCreation() error {
 
 	// Room 8099 (A Burning Hut) is the C source intro room (interpreter.c:2241)
 	// but it has no exits and no mob spawns in the current world data.
-	// Players are stuck there until the intro orc-combat sequence is implemented.
 	// For now, use LoginStartRoom which accounts for immortal/frozen status.
 	s.player.RoomVNum = game.LoginStartRoom(s.player)
 
@@ -323,10 +564,6 @@ func (s *Session) completeCharCreation() error {
 	s.sendWelcome(token)
 
 	// Mirror the agent initialization that handleLogin sends for returning players.
-	// Without this, the agent harness never receives type:vars / memory_bootstrap /
-	// memory_summary and stays in its initialization wait loop until it times out,
-	// discarding all subsequent command responses.
-	// Human structured sessions also get a full variable dump to populate their status bars/UI immediately.
 	if s.isAgent || s.wantsStructuredData {
 		s.sendFullVarDump()
 		if s.isAgent {
@@ -349,6 +586,11 @@ func (s *Session) completeCharCreation() error {
 	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 
+	// Look around on entry
+	if err := ExecuteCommand(s, "look", nil); err != nil {
+		slog.Error("look command failed on entry for new character", "player", s.player.Name, "error", err)
+	}
+
 	return nil
 }
 
@@ -361,36 +603,33 @@ func (s *Session) advanceCharStage(stage, prompt string, options map[string]stri
 // getRaceOptions returns available races for character creation.
 func (s *Session) getRaceOptions() map[string]string {
 	return map[string]string{
-		"0": "Human",
-		"1": "Elf",
-		"2": "Dwarf",
-		"3": "Halfling",
-		"4": "Minotaur",
-		"5": "Rakshasa",
-		"6": "Ssaur",
+		"H": "Human",
+		"E": "Elven",
+		"D": "Dwarven",
+		"K": "Kenderkin",
+		"M": "Minotauran",
+		"R": "Rakshasan",
+		"S": "Ssauran",
 	}
 }
 
 // getClassOptions returns available classes for character creation, filtered by race.
 // Matches valid_user_class_choice() from interpreter.c.
 func (s *Session) getClassOptions(race int) map[string]string {
-	// Base classes available to all races
 	opts := map[string]string{
-		"0": "Magic-user",
-		"1": "Cleric",
-		"2": "Thief",
-		"3": "Warrior",
-		"9": "Psionic",
+		"C": "Cleric",
+		"T": "Thief",
+		"W": "Warrior",
+		"M": "Magic-user",
+		"I": "Psionic",
 	}
-	// Ninja is human-only
 	if race == game.RaceHuman {
-		opts["8"] = "Ninja"
+		opts["N"] = "Ninja"
 	}
 	return opts
 }
 
 // isUniqueConstraintError checks if a DB error is a PostgreSQL unique constraint violation.
-// C source: — pure Go helper, no C equivalent
 func isUniqueConstraintError(err error) bool {
 	if pqErr, ok := err.(*pq.Error); ok {
 		return pqErr.Code == "23505"

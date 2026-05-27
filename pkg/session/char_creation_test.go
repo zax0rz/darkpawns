@@ -72,8 +72,8 @@ func TestStartCharCreation(t *testing.T) {
 	if !s.charCreating {
 		t.Error("charCreating should be true after startCharCreation")
 	}
-	if s.charStage != "color" {
-		t.Errorf("charStage = %q, want %q", s.charStage, "color")
+	if s.charStage != "confirm_name" {
+		t.Errorf("charStage = %q, want %q", s.charStage, "confirm_name")
 	}
 	if s.charName != "Gandalf" {
 		t.Errorf("charName = %q, want Gandalf", s.charName)
@@ -83,8 +83,8 @@ func TestStartCharCreation(t *testing.T) {
 	if srv.Type != MsgCharCreate {
 		t.Errorf("message type = %q, want %q", srv.Type, MsgCharCreate)
 	}
-	if cd.Stage != "color" {
-		t.Errorf("CharCreateData.Stage = %q, want color", cd.Stage)
+	if cd.Stage != "confirm_name" {
+		t.Errorf("CharCreateData.Stage = %q, want confirm_name", cd.Stage)
 	}
 }
 
@@ -156,8 +156,8 @@ func TestHandleCharInput_AllStages(t *testing.T) {
 		t.Errorf("charSex = %d, want 1 (female)", s.charSex)
 	}
 
-	// race → class (human = 0)
-	sendCharInput(t, s, "0")
+	// race → class (human = H)
+	sendCharInput(t, s, "H")
 	_, cd = unmarshalCharCreate(t, drainMsg(t, s))
 	if cd.Stage != "class" {
 		t.Errorf("after race: stage = %q, want class", cd.Stage)
@@ -166,8 +166,8 @@ func TestHandleCharInput_AllStages(t *testing.T) {
 		t.Errorf("charRace = %d, want 0 (human)", s.charRace)
 	}
 
-	// class → hometown (warrior = 3)
-	sendCharInput(t, s, "3")
+	// class → hometown (warrior = W)
+	sendCharInput(t, s, "W")
 	_, cd = unmarshalCharCreate(t, drainMsg(t, s))
 	if cd.Stage != "hometown" {
 		t.Errorf("after class: stage = %q, want hometown", cd.Stage)
@@ -221,13 +221,13 @@ func TestGetRaceOptions(t *testing.T) {
 
 	opts := s.getRaceOptions()
 	expected := map[string]string{
-		"0": "Human",
-		"1": "Elf",
-		"2": "Dwarf",
-		"3": "Halfling",
-		"4": "Minotaur",
-		"5": "Rakshasa",
-		"6": "Ssaur",
+		"H": "Human",
+		"E": "Elven",
+		"D": "Dwarven",
+		"K": "Kenderkin",
+		"M": "Minotauran",
+		"R": "Rakshasan",
+		"S": "Ssauran",
 	}
 	if len(opts) != len(expected) {
 		t.Errorf("getRaceOptions len = %d, want %d", len(opts), len(expected))
@@ -248,16 +248,16 @@ func TestGetClassOptions(t *testing.T) {
 	s := makeCharSession(t, m)
 
 	humanOpts := s.getClassOptions(game.RaceHuman)
-	if _, ok := humanOpts["8"]; !ok {
-		t.Error("human should have Ninja (8) available")
+	if _, ok := humanOpts["N"]; !ok {
+		t.Error("human should have Ninja (N) available")
 	}
 
 	elfOpts := s.getClassOptions(1) // elf
-	if _, ok := elfOpts["8"]; ok {
-		t.Error("elf should not have Ninja (8) available")
+	if _, ok := elfOpts["N"]; ok {
+		t.Error("elf should not have Ninja (N) available")
 	}
 
-	baseClasses := []string{"0", "1", "2", "3", "9"}
+	baseClasses := []string{"C", "T", "W", "M", "I"}
 	for _, opts := range []map[string]string{humanOpts, elfOpts} {
 		for _, k := range baseClasses {
 			if _, ok := opts[k]; !ok {

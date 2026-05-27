@@ -124,11 +124,14 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	// Each choice must be preceded by receiving the matching char_create prompt
 	// so readPump is in conn.ReadMessage() and ready for the char_input.
 	charStages := []string{
-		"N", // color  → no ANSI
-		"M", // sex    → male
-		"0", // race   → human
-		"3", // class  → warrior
-		"K", // hometown → Kir Drax'in (room 8004 = game.MortalStartRoom)
+		"Y",       // confirm_name   → Yes
+		"hunter2", // create_password → hunter2
+		"hunter2", // confirm_password → hunter2
+		"N",       // color          → no ANSI
+		"M",       // sex            → male
+		"H",       // race           → human
+		"W",       // class          → warrior
+		"K",       // hometown       → Kir Drax'in (room 8004 = game.MortalStartRoom)
 	}
 	for _, choice := range charStages {
 		wsReadUntilType(t, c, MsgCharCreate)
@@ -137,6 +140,10 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	// stats_roll prompt → accept
 	wsReadUntilType(t, c, MsgCharCreate)
 	wsWrite(t, c, MsgCharInput, map[string]interface{}{"choice": "Y"})
+
+	// motd prompt → press return
+	wsReadUntilType(t, c, MsgCharCreate)
+	wsWrite(t, c, MsgCharInput, map[string]interface{}{"choice": ""})
 
 	// ── 3. Receive welcome state ──────────────────────────────────────────────
 	// completeCharCreation calls sendWelcome which does s.send <- state_msg

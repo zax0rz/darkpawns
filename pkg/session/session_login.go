@@ -148,6 +148,12 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return nil
 	}
 
+	if login.Password == "" {
+		s.sendError("Password required.")
+		_ = s.conn.Close()
+		return nil
+	}
+
 	// Load from DB if available
 	if s.manager.hasDB {
 		rec, err := s.manager.db.GetPlayer(login.PlayerName)
@@ -175,7 +181,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if err != nil {
 				slog.Error("RecordToPlayer error", "error", err)
 				// Fall back to character creation
-				s.startCharCreation(login.PlayerName)
+				s.startNewCharFlow(login.PlayerName, login.Password)
 				return nil
 			}
 			if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
@@ -183,9 +189,8 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			}
 			s.player = p
 			s.authenticated = true
-		} else if login.NewChar {
-			// New character — require password, then enter creation flow
-			// This applies to BOTH humans and agents. Same rules.
+		} else {
+			// New character or player doesn't exist — start stateful creation flow
 
 			// Block new char creation from BanNew/BanSelect sites (DP-418)
 			if s.banLevel == game.BanNew || s.banLevel == game.BanSelect {
@@ -194,50 +199,17 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				return nil
 			}
 
-			if rec != nil {
-				// Name already exists — reject before wasting the player's time
-				// through the full creation flow only to fail at DB save.
-				// Don't close the connection: let writePump flush the error and
-				// allow the client to reset and prompt for a different name.
+			if rec != nil && login.NewChar {
+				// Name already exists — reject
 				s.sendError(fmt.Sprintf("A character named '%s' already exists. Please choose a different name.", login.PlayerName))
 				return nil
 			}
-			if login.Password == "" {
-				s.sendError("Password required for new characters.")
-				_ = s.conn.Close()
-				return nil
-			}
-			hashedPwd, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
-			if err != nil {
-				slog.Error("bcrypt hash error", "error", err)
-				s.sendError("Internal error during character creation.")
-				_ = s.conn.Close()
-				return nil
-			}
-			s.charPassword = string(hashedPwd)
-			s.startCharCreation(login.PlayerName)
-			return nil
-		} else {
-			// Player doesn't exist and new_char not set — start creation
-			s.startCharCreation(login.PlayerName)
+			s.startNewCharFlow(login.PlayerName, login.Password)
 			return nil
 		}
 	} else {
-		// No DB - still require password and go through creation flow
-		if login.Password == "" {
-			s.sendError("Password required for new characters.")
-			_ = s.conn.Close()
-			return nil
-		}
-		hashedPwd, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
-		if err != nil {
-			slog.Error("bcrypt hash error", "error", err)
-			s.sendError("Internal error during character creation.")
-			_ = s.conn.Close()
-			return nil
-		}
-		s.charPassword = string(hashedPwd)
-		s.startCharCreation(login.PlayerName)
+		// No DB - start creation flow statefully
+		s.startNewCharFlow(login.PlayerName, login.Password)
 		return nil
 	}
 
