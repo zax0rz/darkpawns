@@ -1106,7 +1106,13 @@ func MakeHit(ch, victim Combatant, attackType int) {
 
 		defPos := victim.GetPosition()
 		if defPos < PosFighting {
-			dam *= 1 + (PosFighting-defPos)/3
+			// FIX: C source had integer truncation bug. Developer comments say:
+			//   sitting=1.33x, resting=1.66x, sleeping=2.0x, stunned=2.33x
+			// But C integer math `dam *= 1 + (7-pos)/3` truncated the division,
+			// producing: sitting=1x (bug), resting=1x (bug), sleeping=2x, stunned=2x.
+			// Go port uses float math to restore developer intent.
+			// See: DP-515, src/fight.c:1855-1860
+			dam = int(float64(dam) * (1.0 + float64(PosFighting-defPos)/3.0))
 		}
 		if dam < 1 {
 			dam = 1
