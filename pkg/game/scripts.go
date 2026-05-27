@@ -3,7 +3,7 @@ package game
 
 import (
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
@@ -70,11 +70,9 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 	// Run the script
 	handled, err := ScriptEngine.RunScript(ctx, m.Prototype.ScriptName, trigger)
 
-	// Handle assembler.lua silent return issue
-	// If ongive returns false/nil, send default message
+	// If ongive returns false/nil, send default message (matches C: "You can't give that here.")
 	if trigger == "ongive" && !handled && err == nil && ctx.Ch != nil {
-		// Send default "You can't give that here." message
-		// In real implementation: ctx.Ch.SendMessage("You can't give that here.\r\n")
+		ctx.Ch.SendMessage("You can't give that here.\r\n")
 		slog.Debug("ongive returned false", "mob_vnum", m.GetVNum(), "player", ctx.Ch.GetName())
 	}
 
@@ -145,7 +143,7 @@ func CounterProcsRewards(p *Player) bool {
 		p.SendMessage("The gods reward your many victories!\r\n")
 
 		// #nosec G404 — game RNG, not cryptographic
-		roll := rand.Intn(3) + 1 // number(1,3) returns 1-3
+		roll := rand.IntN(3) + 1 // number(1,3) returns 1-3
 
 		switch roll {
 		case 1:

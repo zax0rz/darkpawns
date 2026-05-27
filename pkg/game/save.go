@@ -55,9 +55,13 @@ type savePlayerData struct {
 	BankGold    int                 `json:"bank_gold"`
 	ClanID      int                 `json:"clan_id"`
 	ClanRank    int                 `json:"clan_rank"`
-	Inventory   []saveItemData      `json:"inventory"`
-	Equipment   []saveItemData      `json:"equipment"`
+	Inventory   []SaveItemData      `json:"inventory"`
+	Equipment   []SaveItemData      `json:"equipment"`
 	Affects     []saveAffect        `json:"affects"`
+
+	// Poof messages — immortals only
+	PoofIn  string `json:"poof_in,omitempty"`
+	PoofOut string `json:"poof_out,omitempty"`
 
 	// Rent metadata — tracks why/how items were saved.
 	RentCode      int   `json:"rent_code"`       // RentCrash, RentRented, RentCryo, RentTimedOut, RentForced
@@ -67,11 +71,13 @@ type savePlayerData struct {
 	SavedBankGold  int  `json:"saved_bank_gold"`   // bank gold at time of save
 }
 
-type saveItemData struct {
-	VNum   int                    `json:"vnum"`
-	Count  int                    `json:"count"`
-	Locate int                    `json:"locate"` // 0=inventory, 1+=wear slot (C WEAR_*+1)
-	State  map[string]interface{} `json:"state,omitempty"`
+type SaveItemData struct {
+	VNum           int                    `json:"vnum"`
+	Count          int                    `json:"count"`
+	Locate         int                    `json:"locate"` // 0=inventory, 1+=wear slot (C WEAR_*+1)
+	State          map[string]interface{} `json:"state,omitempty"`
+	ContainerVNum  int                    `json:"container_vnum,omitempty"`  // parent container VNum (0 = root)
+	ContainerIndex int                    `json:"container_index,omitempty"` // index of container in the save list
 }
 
 type saveAffect struct {
@@ -161,6 +167,8 @@ func playerToSaveData(p *Player) savePlayerData {
 	data := savePlayerData{
 		ID:          p.ID,
 		Name:        p.Name,
+		PoofIn:      p.PoofIn,
+		PoofOut:     p.PoofOut,
 		Sex:         p.GetSex(),
 		Level:       p.GetLevel(),
 		Class:       p.GetClass(),
@@ -219,7 +227,7 @@ func playerToSaveData(p *Player) savePlayerData {
 		if item.Prototype != nil {
 			vnum = item.Prototype.VNum
 		}
-		data.Inventory = append(data.Inventory, saveItemData{
+		data.Inventory = append(data.Inventory, SaveItemData{
 			VNum:   vnum,
 			Count:  1,
 			Locate: 0,
@@ -236,12 +244,12 @@ func playerToSaveData(p *Player) savePlayerData {
 		if item.Prototype != nil {
 			vnum = item.Prototype.VNum
 		}
-		cPos, ok := goSlotToCWearPos(slot)
+		cPos, ok := SlotToCWearPos(slot)
 		locate := 0
 		if ok {
 			locate = cPos + 1 // C: locate = j+1 for equipped items
 		}
-		data.Equipment = append(data.Equipment, saveItemData{
+		data.Equipment = append(data.Equipment, SaveItemData{
 			VNum:   vnum,
 			Count:  1,
 			Locate: locate,
@@ -271,6 +279,8 @@ func saveDataToPlayer(data savePlayerData) *Player {
 	return &Player{
 		ID:           data.ID,
 		Name:         data.Name,
+		PoofIn:       data.PoofIn,
+		PoofOut:      data.PoofOut,
 		Sex:          data.Sex,
 		Level:        data.Level,
 		Class:        data.Class,
@@ -672,6 +682,26 @@ func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
 	}
 
 	slog.Debug("Player saved with rent", "name", p.Name, "rent_code", rentCode, "cost", netCostPerDiem)
+	return nil
+}
+
+// writeSaveData writes a savePlayerData struct directly to disk.
+// Used by DeleteCrashFile to clear item fields without destroying the character.
+func writeSaveData(name string, data savePlayerData) error {
+	if err := os.MkdirAll(saveDir, 0750); err != nil {
+		return fmt.Errorf("create save dir: %w", err)
+	}
+	path := filepath.Join(saveDir, sanitizeName(name)+".json")
+	f, err := os.Create(filepath.Clean(path))
+	if err != nil {
+		return fmt.Errorf("create save file: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		return fmt.Errorf("encode save data: %w", err)
+	}
 	return nil
 }
 

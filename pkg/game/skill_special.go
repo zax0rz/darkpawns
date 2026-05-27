@@ -3,7 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -121,14 +121,24 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 
 	// Create head (vnum 16) and headless corpse (vnum 17) objects
 	headObj, err := world.SpawnObject(16, ch.GetRoomVNum())
+	// Parse victim name from corpse keywords (first word after "corpse")
+	corpseKeywords := strings.Fields(corpse.GetKeywords())
+	victimName := "someone"
+	for i, kw := range corpseKeywords {
+		if kw == "corpse" && i+1 < len(corpseKeywords) {
+			victimName = strings.Join(corpseKeywords[i+1:], " ")
+			break
+		}
+	}
+
 	if err == nil && headObj != nil {
-		headObj.Runtime.ShortDesc = fmt.Sprintf("the severed head of %s", ch.Name)
-		headObj.Runtime.Name = fmt.Sprintf("head %s", ch.Name)
+		headObj.Runtime.ShortDesc = fmt.Sprintf("the severed head of %s", victimName)
+		headObj.Runtime.Name = fmt.Sprintf("head %s", victimName)
 	}
 	headlessCorpseObj, err := world.SpawnObject(17, ch.GetRoomVNum())
 	if err == nil && headlessCorpseObj != nil {
-		headlessCorpseObj.Runtime.ShortDesc = fmt.Sprintf("the headless corpse of %s", ch.Name)
-		headlessCorpseObj.Runtime.Name = fmt.Sprintf("corpse headless %s", ch.Name)
+		headlessCorpseObj.Runtime.ShortDesc = fmt.Sprintf("the headless corpse of %s", victimName)
+		headlessCorpseObj.Runtime.Name = fmt.Sprintf("corpse headless %s", victimName)
 	}
 
 	return SkillResult{
@@ -154,9 +164,9 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(150) + 1 // 1-150; 101+ is complete failure
+	percent := rand.IntN(150) + 1 // 1-150; 101+ is complete failure
 
-	// Immortals always succeed, sleeping targets always hit
+	// Immortals always fail bearhug (intentional)
 	if ch.GetLevel() > 60 {
 		percent = 101
 	}
@@ -196,7 +206,7 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillSlug)
 
 	if percent > prob {
@@ -211,7 +221,7 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	dam := (ch.GetLevel() * (rand.Intn(4) + 1)) / 2
+	dam := (ch.GetLevel() * (rand.IntN(4) + 1)) / 2
 	return SkillResult{
 		Success:      true,
 		Damage:       dam,
@@ -248,7 +258,7 @@ func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) Ski
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillSmackheads)
 
 	if percent > prob {
@@ -375,7 +385,7 @@ func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(121) + 1 // 0-120; 101+ is complete failure
+	percent := rand.IntN(121) + 1 // 0-120; 101+ is complete failure
 
 	// Immortals always succeed
 	if ch.GetLevel() > 60 {
@@ -456,7 +466,7 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillPalm)
 
 	if prob > percent {
@@ -490,7 +500,7 @@ func DoFleshAlter(ch *Player) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillFleshAlter)
 
 	if percent > prob {

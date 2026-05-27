@@ -3,7 +3,7 @@ package game
 
 import (
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strconv"
 	"sync"
 	"time"
@@ -160,7 +160,7 @@ func (s *Spawner) pickRandomRoom() *parser.Room {
 	for attempt := 0; attempt < 5; attempt++ {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		idx := rand.Intn(len(rooms))
+		idx := rand.IntN(len(rooms))
 		if isRoomValidForSpawn(&rooms[idx]) {
 			return &rooms[idx]
 		}
@@ -186,7 +186,7 @@ func (s *Spawner) pickRandomZoneRoom(zone int) *parser.Room {
 	for attempt := 0; attempt < 5; attempt++ {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		idx := rand.Intn(len(rooms))
+		idx := rand.IntN(len(rooms))
 		if isRoomValidForRandZon(&rooms[idx], zone) {
 			return &rooms[idx]
 		}
@@ -544,7 +544,7 @@ func initRare(obj *ObjectInstance) {
 			continue
 		}
 		// #nosec G404 — game RNG, not cryptographic
-		if rand.Intn(100) >= 20 {
+		if rand.IntN(100) >= 20 {
 			continue
 		}
 		var mod int
@@ -557,7 +557,7 @@ func initRare(obj *ObjectInstance) {
 			continue
 		}
 		// #nosec G404
-		if rand.Intn(2) == 1 {
+		if rand.IntN(2) == 1 {
 			mod = -mod
 		}
 		affects[i].Modifier += mod

@@ -22,7 +22,7 @@
 package game
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 )
 
@@ -320,7 +320,7 @@ func dice(num, size int) int {
 	for i := 0; i < num; i++ {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		total += rand.Intn(size) + 1
+		total += rand.IntN(size) + 1
 	}
 	return total
 }

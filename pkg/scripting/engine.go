@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -1126,7 +1126,7 @@ func (e *Engine) luaNumber(L *lua.LState) int {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	result := low + rand.Intn(high-low+1)
+	result := low + rand.IntN(high-low+1)
 	L.Push(lua.LNumber(result))
 	return 1
 }
@@ -1284,7 +1284,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		for i := 0; i < num; i++ {
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			total += rand.Intn(sides) + 1
+			total += rand.IntN(sides) + 1
 		}
 		return total
 	}
@@ -1475,7 +1475,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			maxDamage := casterLevel * 3
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			damage = casterLevel*2 + rand.Intn(maxDamage-minDamage+1) + minDamage
+			damage = casterLevel*2 + rand.IntN(maxDamage-minDamage+1) + minDamage
 		}
 
 		// Get current HP

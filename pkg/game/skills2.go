@@ -3,7 +3,7 @@ package game
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -59,7 +59,7 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(100) + 1
+	percent := rand.IntN(100) + 1
 	prob := ch.GetSkill(SkillScrounge)
 
 	if percent < prob {
@@ -115,13 +115,15 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1 + target.GetLevel()
+	percent := rand.IntN(101) + 1 + target.GetLevel()
 	prob := ch.GetSkill(SkillFirstAid)
 
 	if percent < prob {
 		// Success
 		if p, ok := target.(*Player); ok {
 			p.SetHP(1)
+		} else if mob, ok := target.(*MobInstance); ok {
+			mob.SetHealth(1)
 		}
 
 		chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -169,13 +171,21 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1 + target.GetLevel()
+	percent := rand.IntN(101) + 1 + target.GetLevel()
 	prob := ch.GetSkill(SkillDisarm)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent < prob {
+		// Unequip the target's wielded weapon (C: obj_to_char(unequip_char(vict, WEAR_WIELD), vict))
+		if targetMob, ok := target.(*MobInstance); ok {
+			weapon := targetMob.UnequipItem(16) // eqWearWield = 16 (C: WEAR_WIELD+1 = 2, but UnequipItem uses 0-indexed)
+			if weapon != nil {
+				targetMob.Inventory = append(targetMob.Inventory, weapon)
+			}
+		}
+
 		return SkillResult{
 			Success:       true,
 			Damage:        0, // disarm doesn't directly damage
@@ -229,7 +239,7 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(100) + 1
+	percent := rand.IntN(100) + 1
 	prob := ch.GetSkill(SkillMindlink)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -239,7 +249,7 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		// Success
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		x := 20 + ch.GetLevel() + rand.Intn(80) // number(20+level, 100)
+		x := 20 + ch.GetLevel() + rand.IntN(80) // number(20+level, 100)
 		ch.SetHP(ch.GetHP() - x)
 		if ch.GetHP() < 0 {
 			ch.SetHP(0)
@@ -286,7 +296,7 @@ func DoDetect(ch *Player, world *World) SkillResult {
 	prob := ch.GetSkill(SkillDetect)
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	if prob <= rand.Intn(100)+1 {
+	if prob <= rand.IntN(100)+1 {
 		return SkillResult{Success: false, MessageToCh: "You can't seem to find anything.\r\n"}
 	}
 
@@ -354,7 +364,7 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := ((7 - (target.GetAC() / 10)) * 2) + rand.Intn(101) + 1
+	percent := ((7 - (target.GetAC() / 10)) * 2) + rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillSerpentKick)
 
 	if target.GetPosition() <= combat.PosSleeping {
@@ -380,7 +390,7 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 	if ch.GetLevel() >= 19 {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(81) == 0 {
+		if rand.IntN(81) == 0 {
 			_, _ = world.SpawnMobWithLevelI(18221, ch.GetRoom(), ch.GetLevel()+3)
 		}
 	}
@@ -428,7 +438,7 @@ func DoDig(ch *Player, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(100) + 1
+	percent := rand.IntN(100) + 1
 	prob := ch.GetSkill(SkillDig)
 	if prob == 0 {
 		prob = 10
@@ -436,9 +446,9 @@ func DoDig(ch *Player, world *World) SkillResult {
 
 	if percent <= prob {
 		// Found something — random loot
-		lootRoll := rand.Intn(5)
+		lootRoll := rand.IntN(5)
 		if lootRoll == 0 {
-			goldAmt := rand.Intn(41) + 10 // 10-50 gold
+			goldAmt := rand.IntN(41) + 10 // 10-50 gold
 			ch.mu.Lock()
 			ch.Gold += goldAmt
 			ch.mu.Unlock()

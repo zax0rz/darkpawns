@@ -101,15 +101,15 @@ func TestShopPriceCalculations(t *testing.T) {
 
 	item := game.NewObjectInstance(proto, -1)
 
-	// Test buy price (50% of cost)
-	buyPrice := shop.CalculateBuyPrice(item)
+	// Test buy price (50% of cost, no CHA modifier)
+	buyPrice := shop.CalculateBuyPrice(item, 0)
 	expectedBuyPrice := 50 // 100 * 50 / 100
 	if buyPrice != expectedBuyPrice {
 		t.Errorf("Expected buy price %d, got %d", expectedBuyPrice, buyPrice)
 	}
 
-	// Test sell price (150% of cost)
-	sellPrice := shop.CalculateSellPrice(item)
+	// Test sell price (150% of cost, no CHA modifier)
+	sellPrice := shop.CalculateSellPrice(item, 0)
 	expectedSellPrice := 150 // 100 * 150 / 100
 	if sellPrice != expectedSellPrice {
 		t.Errorf("Expected sell price %d, got %d", expectedSellPrice, sellPrice)

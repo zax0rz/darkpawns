@@ -156,13 +156,18 @@ func (sm *ShopManager) ProcessTransaction(shop *Shop, player *game.Player, item 
 
 // processBuy handles a player buying an item from a shop.
 func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.ObjectInstance) (bool, string) {
+	// Trade restriction check — src/shop.c:74-101 is_ok_char()
+	if ok, msg := shop.CanTradeWith(player.GetAlignment(), player.GetClass()); !ok {
+		return false, msg
+	}
+
 	// Check if item is in shop inventory
 	if !shop.RemoveItem(item) {
 		return false, "That item is not for sale."
 	}
 
-	// Calculate price
-	price := shop.CalculateSellPrice(item)
+	// Calculate price (player's CHA affects buy discount)
+	price := shop.CalculateSellPrice(item, player.Stats.Cha)
 
 	// Check if player has enough gold
 	player.Lock()
@@ -181,23 +186,25 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 		return false, "Your inventory is full."
 	}
 
-	// Transfer gold
+	// Transfer gold: player pays keeper, keeper gold grows
 	player.Gold -= price
+	shop.AddGold(price)
 
 	// Transfer item to player
-	if g, ok := item.(*game.ObjectInstance); ok { g.Location = game.LocNowhere() }
-	// Type assert to *game.ObjectInstance for Inventory methods
+	if g, ok := item.(*game.ObjectInstance); ok {
+		g.Location = game.LocNowhere()
+	}
 	gameItem, ok := item.(*game.ObjectInstance)
 	if !ok {
-		// This shouldn't happen, but handle it gracefully
 		player.Gold += price
+		shop.DeductGold(price)
 		player.Unlock()
 		shop.AddItem(item)
 		return false, "Internal error: item type mismatch"
 	}
 	if err := player.Inventory.AddItem(gameItem); err != nil {
-		// Failed to add to inventory, refund and return item
 		player.Gold += price
+		shop.DeductGold(price)
 		player.Unlock()
 		shop.AddItem(item)
 		return false, fmt.Sprintf("Failed to add item to inventory: %v", err)
@@ -209,6 +216,11 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 
 // processSell handles a player selling an item to a shop.
 func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.ObjectInstance) (bool, string) {
+	// Trade restriction check — src/shop.c:74-101 is_ok_char()
+	if ok, msg := shop.CanTradeWith(player.GetAlignment(), player.GetClass()); !ok {
+		return false, msg
+	}
+
 	// Check if shop buys this type of item
 	if !shop.CanBuyType(item.GetTypeFlag()) {
 		return false, "The shopkeeper isn't interested in that type of item."
@@ -224,30 +236,38 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 		return false, "You don't have that item."
 	}
 
-	// Calculate price
-	price := shop.CalculateBuyPrice(item)
+	// Calculate price (player's CHA affects sell bonus)
+	price := shop.CalculateBuyPrice(item, player.Stats.Cha)
 
-	// Check if shop has enough gold (shops have unlimited gold for now)
-	// In a real implementation, shops would have limited funds
+	// Check keeper gold — src/shop.h:63 bankAccount, src/shop.c missing_cash1
+	if !shop.CanAffordToBuy(price) {
+		if err := player.Inventory.AddItem(gameItem); err != nil {
+			slog.Error("shop sell rollback: restore item failed", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
+		}
+		return false, "Sorry, I don't have enough cash to buy that."
+	}
 
 	// Check if shop has inventory space
 	if len(shop.GetInventory()) >= shop.MaxItems {
-		// Return item to player
 		if err := player.Inventory.AddItem(gameItem); err != nil {
 			slog.Error("shop sell rollback: inventory full, failed to restore item", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
 		}
 		return false, "The shop's inventory is full."
 	}
 
-	// Transfer gold
+	// Transfer gold: keeper pays player, keeper gold decremented (src/shop.c:808)
+	shop.DeductGold(price)
 	player.Lock()
 	player.Gold += price
 	player.Unlock()
 
 	// Transfer item to shop
-	if g, ok := item.(*game.ObjectInstance); ok { g.Location = game.LocNowhere() }
+	if g, ok := item.(*game.ObjectInstance); ok {
+		g.Location = game.LocNowhere()
+	}
 	if !shop.AddItem(item) {
-		// Failed to add to shop, refund and return item
+		// Rollback
+		shop.AddGold(price)
 		player.Lock()
 		player.Gold -= price
 		player.Unlock()

@@ -9,11 +9,11 @@ import (
 
 // PlayerToRecord converts a *game.Player to a *PlayerRecord for saving.
 func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*PlayerRecord, error) {
-	invBytes, err := json.Marshal(inventoryVnums(p.Inventory))
+	invBytes, err := json.Marshal(inventorySaveData(p.Inventory))
 	if err != nil {
 		return nil, fmt.Errorf("serialize inventory: %w", err)
 	}
-	eqBytes, err := json.Marshal(equipmentVnums(p.Equipment))
+	eqBytes, err := json.Marshal(equipmentSaveData(p.Equipment))
 	if err != nil {
 		return nil, fmt.Errorf("serialize equipment: %w", err)
 	}
@@ -79,32 +79,72 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	p.SetRoom(r.RoomVNum)
 	p.ID = r.ID
 
-	// Restore inventory from vnums
-	var invVnums []int
+	// Restore inventory — try new SaveItemData format first, fall back to legacy []int.
 	if len(r.Inventory) > 0 {
-		if err := json.Unmarshal(r.Inventory, &invVnums); err == nil {
-			for _, vnum := range invVnums {
-				if proto, ok := world.GetObjPrototype(vnum); ok {
+		var invItems []game.SaveItemData
+		if err := json.Unmarshal(r.Inventory, &invItems); err == nil {
+			for _, item := range invItems {
+				if proto, ok := world.GetObjPrototype(item.VNum); ok {
 					obj := game.NewObjectInstance(proto, -1)
+					if item.State != nil {
+						for k, v := range item.State {
+							obj.CustomData[k] = v
+						}
+						obj.MigrateCustomData()
+					}
 					_ = p.Inventory.AddItem(obj)
+				}
+			}
+		} else {
+			// Legacy format: plain []int of vnums
+			var invVnums []int
+			if err := json.Unmarshal(r.Inventory, &invVnums); err == nil {
+				for _, vnum := range invVnums {
+					if proto, ok := world.GetObjPrototype(vnum); ok {
+						obj := game.NewObjectInstance(proto, -1)
+						_ = p.Inventory.AddItem(obj)
+					}
 				}
 			}
 		}
 	}
 
-	// Restore equipment from slot->vnum map
-	var eqMap map[string]int
+	// Restore equipment — try new SaveItemData format first, fall back to legacy map[string]int.
 	if len(r.Equipment) > 0 {
-		if err := json.Unmarshal(r.Equipment, &eqMap); err == nil {
-			for slotName, vnum := range eqMap {
-				slot, ok := game.ParseEquipmentSlot(slotName)
-				if !ok {
-					continue
-				}
-				if proto, ok := world.GetObjPrototype(vnum); ok {
+		var eqItems []game.SaveItemData
+		if err := json.Unmarshal(r.Equipment, &eqItems); err == nil {
+			for _, item := range eqItems {
+				if proto, ok := world.GetObjPrototype(item.VNum); ok {
 					obj := game.NewObjectInstance(proto, -1)
+					if item.State != nil {
+						for k, v := range item.State {
+							obj.CustomData[k] = v
+						}
+						obj.MigrateCustomData()
+					}
+					slot, ok := game.CWearPosToSlot(item.Locate - 1)
+					if !ok {
+						_ = p.Inventory.AddItem(obj)
+						continue
+					}
 					obj.Location = game.LocEquippedPlayer(p.Name, slot)
 					p.Equipment.Slots[slot] = obj
+				}
+			}
+		} else {
+			// Legacy format: map[string]int of slot name -> vnum
+			var eqMap map[string]int
+			if err := json.Unmarshal(r.Equipment, &eqMap); err == nil {
+				for slotName, vnum := range eqMap {
+					slot, ok := game.ParseEquipmentSlot(slotName)
+					if !ok {
+						continue
+					}
+					if proto, ok := world.GetObjPrototype(vnum); ok {
+						obj := game.NewObjectInstance(proto, -1)
+						obj.Location = game.LocEquippedPlayer(p.Name, slot)
+						p.Equipment.Slots[slot] = obj
+					}
 				}
 			}
 		}
@@ -113,27 +153,43 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	return p, nil
 }
 
-// inventoryVnums returns a slice of vnums for inventory serialization.
-func inventoryVnums(inv *game.Inventory) []int {
+// inventorySaveData returns SaveItemData for each inventory item, preserving state.
+func inventorySaveData(inv *game.Inventory) []game.SaveItemData {
 	if inv == nil {
-		return []int{}
+		return []game.SaveItemData{}
 	}
 	items := inv.FindItems("")
-	vnums := make([]int, 0, len(items))
+	result := make([]game.SaveItemData, 0, len(items))
 	for _, item := range items {
-		vnums = append(vnums, item.VNum)
+		vnum := item.GetVNum()
+		result = append(result, game.SaveItemData{
+			VNum:   vnum,
+			Count:  1,
+			Locate: 0,
+			State:  item.GetSaveState(),
+		})
 	}
-	return vnums
+	return result
 }
 
-// equipmentVnums returns a slot->vnum map for equipment serialization.
-func equipmentVnums(eq *game.Equipment) map[string]int {
-	result := make(map[string]int)
+// equipmentSaveData returns SaveItemData for each equipped item, preserving slot and state.
+func equipmentSaveData(eq *game.Equipment) []game.SaveItemData {
 	if eq == nil {
-		return result
+		return []game.SaveItemData{}
 	}
+	result := make([]game.SaveItemData, 0)
 	for slot, item := range eq.GetEquippedItems() {
-		result[slot.String()] = item.VNum
+		cPos, ok := game.SlotToCWearPos(slot)
+		locate := 0
+		if ok {
+			locate = cPos + 1
+		}
+		result = append(result, game.SaveItemData{
+			VNum:   item.GetVNum(),
+			Count:  1,
+			Locate: locate,
+			State:  item.GetSaveState(),
+		})
 	}
 	return result
 }

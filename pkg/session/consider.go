@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -259,7 +259,7 @@ func rollDice(num, sides int) int {
 	}
 	total := 0
 	for i := 0; i < num; i++ {
-		total += (1 + rand.Intn(sides))
+		total += (1 + rand.IntN(sides))
 	}
 	return total
 }

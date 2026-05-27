@@ -18,7 +18,7 @@ package game
 // PCClassTypes is the full display name for each PC class.
 // Source: class.c pc_class_types[]
 var PCClassTypes = []string{
-	"Magic User", // ClassMageUser = 0
+	"Mage", // ClassMageUser = 0
 	"Cleric",     // ClassCleric   = 1
 	"Thief",      // ClassThief    = 2
 	"Warrior",    // ClassWarrior  = 3

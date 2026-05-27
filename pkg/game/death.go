@@ -70,6 +70,34 @@ const MortalStartRoom = 8004
 // interpreter.c line 2241: char_to_room(d->character, real_room(8099))
 const NewbieStartRoom = 8099
 
+// ImmortStartRoom is where immortals (level >= LVL_IMMORT) start (config.c: immort_start_room = 1204)
+const ImmortStartRoom = 1204
+
+// FrozenStartRoom is where frozen/punished players are held (config.c: frozen_start_room = 1202)
+const FrozenStartRoom = 1202
+
+// DonationRoom1 and DonationRoom2 are the community donation areas (config.c: donation_room_*)
+const DonationRoom1 = 8053
+const DonationRoom2 = 18204
+
+// IsDonationRoom returns true if the given room VNUM is a donation room.
+func IsDonationRoom(vnum int) bool {
+	return vnum == DonationRoom1 || vnum == DonationRoom2
+}
+
+// LoginStartRoom returns the appropriate start room for a player logging in or respawning.
+// Priority: frozen → FrozenStartRoom, immortal → ImmortStartRoom, else MortalStartRoom.
+// Matches config.c start room selection logic.
+func LoginStartRoom(p *Player) int {
+	if (p.GetFlags() & (1 << uint(PlrFrozen))) != 0 {
+		return FrozenStartRoom
+	}
+	if p.GetLevel() >= LVL_IMMORT {
+		return ImmortStartRoom
+	}
+	return MortalStartRoom
+}
+
 // HandleDeath is the DeathFunc set on the combat engine.
 // It handles both player and mob death faithfully to the original.
 // This is called for combat deaths (die_with_killer).
@@ -422,10 +450,8 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		}
 	}
 
-	// Respawn: move to MortalStartRoom, heal to full
-	// In the original C code, players could reconnect or get resurrected. This is a
-	// modern convenience. Replace with proper resurrection flow later.
-	player.SetRoom(MortalStartRoom)
+	// Respawn to appropriate start room: frozen → FrozenStartRoom, immort → ImmortStartRoom, else mortal.
+	player.SetRoom(LoginStartRoom(player))
 	player.SetPosition(combat.PosStanding)
 	player.Heal(9999)
 	player.StopFighting()

@@ -10,6 +10,10 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+// ZoneDispatcher: NOT YET ACTIVE. See cmd/server/main.go for the StartZoneDispatcher() call site.
+// This code is complete but untested at scale. Do not remove.
+// Wire in StartZoneDispatcher() when ready to replace StartPeriodicResets().
+
 // ZoneDispatcher manages per-zone goroutines for resets, mob AI, and state.
 // Each zone gets its own goroutine for isolated processing.
 // This replaces the single-threaded serial zone reset loop in StartZoneResets.

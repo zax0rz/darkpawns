@@ -7,7 +7,8 @@ package game
 
 import (
 	"fmt"
-	"math/rand"
+	"log/slog"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -338,6 +339,22 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		}
 	}
 
+	// MobProg greet: C-style trigger for specific mobs
+	w.MpGreet(ch, ext.ToRoom)
+	// Lua greet triggers for all mobs in the new room with the script
+	if ScriptEngine != nil {
+		for _, mob := range w.GetMobsInRoom(ext.ToRoom) {
+			if mob.HasScript("greet") {
+				ctx := mob.CreateScriptContext(ch, nil, "")
+				ctx.World = NewWorldScriptableAdapter(w)
+				ctx.RoomVNum = ext.ToRoom
+				if _, err := mob.RunScript("greet", ctx); err != nil {
+					slog.Warn("greet script error", "mob_vnum", mob.GetVNum(), "error", err)
+				}
+			}
+		}
+	}
+
 	// Death trap check
 	if roomHasFlagStatic(toRoom, roomFlagDeath) && ch.GetLevel() < lvlImmort {
 		ch.TakeDamage(ch.GetHP() + 1)
@@ -596,7 +613,7 @@ func okPick(_ *World, ch *Player, keynum int, _ bool, _ int) bool {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	if percent > skill {
 		sendToChar(ch, "You failed to pick the lock.\r\n")
 		return false

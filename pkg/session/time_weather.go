@@ -3,7 +3,7 @@ package session
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"time"
 )
@@ -202,7 +202,7 @@ func getWeather(hour, month int) string {
 	}
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	roll := rand.Intn(totalWeight)
+	roll := rand.IntN(totalWeight)
 	cumulative := 0
 	selected := options[0]
 	for i, w := range weights {
@@ -337,7 +337,7 @@ func dice(nDice, nSides int) int {
 	for i := 0; i < nDice; i++ {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		total += rand.Intn(nSides) + 1
+		total += rand.IntN(nSides) + 1
 	}
 	return total
 }

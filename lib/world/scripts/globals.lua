@@ -150,8 +150,16 @@ LT_MOB  = "mob"
 LT_OBJ  = "obj"
 LT_ROOM = "room"
 
+-- Lua 4.x compatibility shim (gopher-lua is Lua 5.1)
+function foreachi(tbl, fn)
+  for i, v in ipairs(tbl) do
+    local res = fn(i, v)
+    if res then return res end
+  end
+end
+
 -- Load shared utility scripts
-dofile("scripts/mob/no_move.lua")
+dofile("mob/no_move.lua")
 
 -- default() kept empty for C codebase compatibility
 function default()

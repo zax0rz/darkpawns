@@ -1,16 +1,14 @@
-//nolint:unused // Game logic port — not yet wired to command registry.
 // mobprogs.go — Ported from src/mobprog.c
 //
 // Mobile program triggers: greeting, bribery, sound, rescue, and town-citizen
 // helpers for NPC behavior.
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 
 package game
 
 import (
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -94,7 +92,7 @@ func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
 	vnum := mob.GetVNum()
 
 	switch {
-	case vnum == 8014:
+	case vnum == 8088:
 		w.roomMessage(mob.GetRoom(), "$n says, 'Now get outta here!'")
 		ch.SendMessage("$N throws you out of the cell!\r\n")
 		ch.Gold -= amount
@@ -109,7 +107,7 @@ func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
 	case w.isCityguard(mob):
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(3) != 0 || amount < 200 {
+		if rand.IntN(3) != 0 || amount < 200 {
 			w.roomMessage(mob.GetRoom(), "$n says, 'Are you trying to bribe me?  That's against the law you know...'")
 			w.StartRoomCombat(mob, ch)
 		} else {
@@ -239,7 +237,7 @@ func (w *World) getBadGuy(ch *MobInstance) *MobInstance { //nolint:unused // mob
 	}
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	iVictim := rand.Intn(len(badGuys) + 1)
+	iVictim := rand.IntN(len(badGuys) + 1)
 	if iVictim == 0 {
 		return nil
 	}
@@ -302,7 +300,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8066:
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(2) == 0 {
+		if rand.IntN(2) == 0 {
 			sound = "Sign this, please! There's too much violence!"
 		} else {
 			sound = "You look like a kind person.. sign this petition?"
@@ -311,7 +309,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8067:
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(2) == 0 {
+		if rand.IntN(2) == 0 {
 			sound = "adjusts his tool belt."
 		} else {
 			sound = "wipes the sweat of labor from his brow."
@@ -320,7 +318,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8068:
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(2) == 0 {
+		if rand.IntN(2) == 0 {
 			sound = "Arch Bishop Dinive to arrive on the Day of Winter Dawning!"
 		} else {
 			sound = "By mandate of the church, no violence in town! The penalty is jail time!"
@@ -332,7 +330,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8071:
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(2) == 0 {
+		if rand.IntN(2) == 0 {
 			sound = "Spare a coin, buddy?"
 			useSay = true
 		} else {
@@ -345,7 +343,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8074:
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(2) == 0 {
+		if rand.IntN(2) == 0 {
 			sound = "plays a lilting tune about your mother's beauty."
 		} else {
 			sound = "sings a melody about your conquests in battle."
@@ -367,7 +365,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 16300:
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(2) == 0 {
+		if rand.IntN(2) == 0 {
 			sound = "smiles at you."
 		} else {
 			sound = "shuffles some papers around on his desk."
@@ -385,14 +383,14 @@ func (w *World) MpSound(mob *MobInstance) {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	if isDemon(mob) && rand.Intn(3) != 0 {
+	if isDemon(mob) && rand.IntN(3) != 0 {
 		w.roomMessage(mob.GetRoom(), "$n says, 'I seek the dull blackened stones in which the souls of mortals have been trapped!'")
 		w.roomMessage(mob.GetRoom(), "$n says, 'I shall open a portal to the Grey Fortress in exchange for a soul stone.'")
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	if isDog(mob) && rand.Intn(26) == 0 {
+	if isDog(mob) && rand.IntN(26) == 0 {
 		w.roomMessage(mob.GetRoom(), "$n relieves itself, nearly hitting your foot.")
 		puddle := w.CreateObject(20, mob.GetRoom())
 		if puddle != nil {

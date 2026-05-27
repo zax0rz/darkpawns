@@ -1,110 +1,111 @@
-# Audit Report: db.c vs pkg/game/ & pkg/parser/
+# Port Fidelity Audit: Module 22 (`db.c`)
 
-**C file:** `src/db.c` (3,220 lines)
-**Go file(s):** `pkg/game/world.go` (1,376 lines), `pkg/game/world_zone.go` (172 lines), `pkg/game/spawner.go` (674 lines), `pkg/game/serialize.go` (108 lines), `pkg/game/save.go` (697 lines), `pkg/game/mob.go` (830 lines)
-**Mapping type:** 1:N
-**Functions audited:** ~30
+This audit examines the port fidelity between the legacy C source file `src/db.c` (database bootstrapping, world loading, and zone resets) and its Go implementations in `pkg/game/`, `pkg/session/`, and `pkg/parser/`.
 
 ---
 
-## Logic Drift & Missing Side Effects
+## 1. Architectural Mapping & Discrepancies
 
-### [FINDING-001]: Total Omission of `ITEM_RARE` Affect Mutations (High Severity)
-- **Location:** `pkg/game/spawner.go` in `SpawnObject()` / `src/db.c:1899-1925` / `init_rare()`.
-- **C behavior:** When spawning an object from a prototype, if the object is flagged as rare (`IS_OBJ_STAT(obj, ITEM_RARE)`), C's `read_object()` invokes `init_rare(obj)`. This function loops through all active item affects and, with a 20% probability, applies mechanical modifications:
-  - `APPLY_DAMROLL` / `APPLY_HITROLL`: increased/decreased by `1`.
-  - `APPLY_AC`: increased/decreased by `5`.
-- **Go behavior:** Go's object spawning completely ignores the `ITEM_RARE` flag (bit 24) and never invokes any equivalent of `init_rare`.
-- **Discrepancy:** Rare items spawned in the Go MUD have 100% identical stats to common items. They completely lack the mechanical and attribute variance designed in legacy specifications, degrading the MUD's loot and reward economy.
-- **Severity:** HIGH
-- **Type:** STUB
+### C Source File
+- **File**: `src/db.c` (3,220 lines)
+- **Core Functions**:
+  - `boot_db`, `boot_world`, `boot_world_files`, `index_boot` (drives zone, room, mob, obj, shop parsing)
+  - `reset_zone`, `is_empty` (zone reset core logic)
+  - `build_player_index`, `load_char`, `save_char` (player profile indexing & loading)
+  - `file_to_string`, `file_to_string_alloc` (text file loaders)
+  - `load_banned`, `Read_Invalid_List` (blacklist loading)
 
-### [FINDING-002]: Omission of Mob Level-Scaled Attribute Boosts
-- **Location:** `pkg/game/mob.go:75` in `NewMob()` / `src/db.c:1053-1062` / `parse_simple_mob()`.
-- **C behavior:** When loading a simple mobile template, if the mob's level is greater than 15, its base attributes (Str, Int, Wis, Dex, Con, Cha) are dynamically incremented using level-scaled random offsets:
-  ```c
-  if (GET_LEVEL(mob_proto + i)>15) {
-     int statmod = GET_LEVEL(mob_proto + i)-15;
-     mob_proto[i].real_abils.str += MIN(number(0,statmod), 7);
-     mob_proto[i].real_abils.intel += MIN(number(0,statmod), 7);
-     ...
-  }
-  ```
-- **Go behavior:** Go's `NewMob()` sets a mob's attributes strictly based on prototype/defaults, completely omitting the level-scaled boosts for high-level monsters.
-- **Discrepancy:** High-level mobs (level > 15) in the Go port are significantly weaker than designed in legacy specifications, completely disrupting combat balance and encounter difficulty.
-- **Severity:** HIGH
-- **Type:** DRIFT
+### Go Port Files
+- `pkg/parser/` (Parses zones `.zon`, rooms `.wld`, mobs `.mob`, and objects `.obj` in native Diku format)
+- `pkg/game/world.go` (Central memory holder of world entities: rooms, mobs, objects, players, and events queue)
+- `pkg/game/world_zone.go` (Handles zone listings, and manual zone reset delegates)
+- `pkg/game/spawner.go` (Executes zone reset commands, handles mob limits, rare items, and periodic timers)
+- `pkg/game/zone_dispatcher.go` (Concurrent per-zone worker stubs; disabled on live server)
+- `pkg/validation/validation.go` (Hardcodes name blocklists, replacing disk-based banned names files)
+- `cmd/server/main.go` (Background routine coordinator that parses world and triggers initial zone load)
 
-### [FINDING-003]: Spawner 'R' Command Resource Leak & Orphaned Instances
-- **Location:** `pkg/game/spawner.go:440` in `ExecuteZoneReset()` case "R".
-- **C behavior:** In legacy MUD resets, the 'R' command removes a specified object or mobile from a room AND completely extracts it from the world (freeing it and recursively extracting its carried/equipped gear).
-- **Go behavior:** The Go spawner case "R" only invokes:
+---
+
+## 2. Critical Logic Gaps & Severe Bugs
+
+### 1. Go Struct Value-Copy Bug (Doors Never Reset)
+- **Source Context**: `pkg/game/spawner.go#L424-L441` (`ExecuteZoneReset` case `"D"`)
+- **Fidelity Bug**: In Go, a map of structs returns a value copy when indexed. The spawner attempts to reset exit door states (open/closed/locked) by doing:
   ```go
-  s.removeObjectFromRoom(cmd.Arg1, cmd.Arg2)
-  // or
-  s.removeMobFromRoom(cmd.Arg1, cmd.Arg2)
+  ext, ok := room.Exits[roomDirNames[cmd.Arg2]]
+  ...
+  ext.DoorState = cmd.Arg3 // Modifies a LOCAL copy of parser.Exit struct
+  lastCmd = 1
   ```
-  These methods only delete the items/mobs from the spawner's local tracking slices (`s.roomObjects`, `s.objInstances`, etc.). They **never** call `ExtractObject` or `ExtractMob` on them!
-- **Discrepancy:** The deleted mobs and items are left orphaned in the global `w.objectInstances` and `w.activeMobs` maps, alongside their inventories and equipment. This creates a permanent, severe resource and memory leak on every zone reset.
-- **Severity:** HIGH
-- **Type:** BUG
+  Because `room.Exits` is a `map[string]parser.Exit` (holding value types), modifying `ext.DoorState` only updates the temporary local variable. The code **fails to write the modified exit back to the map** (`room.Exits[dir] = ext`), so the change is silently discarded.
+- **Impact**: Doors never close or lock during zone resets! Once players open or unlock a door, it stays open permanently until a full server restart, completely breaking locked doors, secret passages, and dungeon boundaries.
 
-### [FINDING-004]: Predictable Mob Gold Spawns (No Random Gold Variance)
-- **Location:** `pkg/game/mob.go:75` in `NewMob()` / `src/db.c:1766-1775`.
-- **C behavior:** Mobs spawned with gold have their carrying amount randomized by +/- 20%:
-  ```c
-  if (GET_GOLD(mob)) {
-     if (!number(0,1))
-      GET_GOLD(mob)+=(number(1,20)*GET_GOLD(mob))/100;
-     else
-      GET_GOLD(mob)-=(number(1,20)*GET_GOLD(mob))/100;
+### 2. Global First-Spawn Container Bug (P-Command Container Collision)
+- **Source Context**: `pkg/game/spawner.go#L393-L403` (`ExecuteZoneReset` case `"P"`), `pkg/game/spawner.go#L578-L584` (`findObjectInstance`)
+- **Fidelity Bug**: The zone `"P"` command places an object inside a specified container. In C, the item is placed inside the *last loaded object* by the spawner.
+  In Go, the spawner resolves the container by querying:
+  ```go
+  container := s.findObjectInstance(cmd.Arg3)
+  ```
+  `findObjectInstance` searches the global spawned tracker and simply returns the **first ever spawned instance** of that container VNum:
+  ```go
+  func (s *Spawner) findObjectInstance(objVNum int) *ObjectInstance {
+      if instances, ok := s.objInstances[objVNum]; ok && len(instances) > 0 {
+          return instances[0]
+      }
+      return nil
   }
   ```
-- **Go behavior:** Go's `NewMob` sets gold exactly to the prototype value.
-- **Discrepancy:** Mob gold drops are completely predictable, removing the organic variance of the MUD economy.
-- **Severity:** MEDIUM
-- **Type:** DRIFT
+- **Impact**: If a zone spawns 10 separate chest instances of VNum 500 across different rooms, the spawner will **put all 10 spawned treasures inside the first chest spawned in the MUD**, leaving the other 9 chests completely empty.
+
+### 3. Dysfunctional Reset Timers (Hyper-Aggressive Zone Resets)
+- **Source Context**: `pkg/game/spawner.go#L693-L709` (`resetEmptyZones`), `pkg/game/world_zone.go#L157-L163` (`StartPeriodicResets`)
+- **Fidelity Bug**: In legacy C, `zone_point_update` increments each zone's `age` (in minutes). A zone is only reset when `age >= lifespan` (and dependent on its `reset_mode`).
+  In Go, `StartPeriodicResets` fires `resetEmptyZones()` every **60 seconds**, which loops through all zones and triggers resets:
+  ```go
+  for _, zone := range zones {
+      if s.zoneHasPlayers(zone.Number) {
+          continue
+      }
+      if err := s.ExecuteZoneReset(zone); err != nil { ... }
+  }
+  ```
+  This loop **never checks `zone.Lifespan` or `zone.ResetMode`**! 
+- **Impact**: Every zone that has no active players inside will reset **every 60 seconds**! If a player exits a zone for one minute and returns, all mobs and items are instantly respawned, allowing infinite grinding. Additionally, zones configured with `ResetMode = 0` (never reset) will reset anyway. Conversely, zones in `ResetMode = 2` (always reset even with players) will **never reset** if players are present.
+
+### 4. Bypassed Zone Dispatcher (Inactive Concurrent Engine)
+- **Source Context**: `pkg/game/zone_dispatcher.go`
+- **Fidelity Bug**: The Go codebase features a sophisticated, concurrent `ZoneDispatcher` designed to run isolated goroutines per zone to handle resets and tick times safely. However, **`StartZoneDispatcher()` is never called anywhere during server startup** (`cmd/server/main.go` only starts the serial `StartPeriodicResets`).
+- **Impact**: The concurrent zone reset system is dead, inactive code. The MUD runs entirely on the single-threaded serial spawner.
+
+### 5. Standard Informative Text Commands Missing
+- **Fidelity Bug**: Legacy C loaded multiple informative text files on boot (`credits`, `news`, `info`, `wizlist`, `immlist`, `policies`, `handbook`, `background`, `future`) and served them via respective commands. In Go, these commands and file loaders are **completely missing** from the session and game layers.
+- **Name Blacklist Ignored**: C's name validation loaded a custom blocklist from `lib/text/names`. The Go port ignores this file and checks a hardcoded 12-item list in `validation.go`.
 
 ---
 
-## Type & Boundary Vulnerabilities
+## 3. Go Improvements Over C
 
-### [FINDING-005]: Unprotected Zone Command Boundary Checks
-- **Location:** `pkg/common/` / `pkg/parser/` and `pkg/game/spawner.go:374` inside loop cases.
-- **C behavior:** Zone command loader in `renum_zone_table()` validates room/mob/object VNums immediately at boot, replacing invalid command target indices with `'*'` to disable them and prevent run-time segmentation faults.
-- **Go behavior:** The Go spawner relies on interface checks and prototype mapping lookups (`s.world.GetObjPrototype(cmd.Arg1)`) during runtime zone resets.
-- **Risk:** If a zone command points to a deleted or corrupt VNum, it logs warnings but continues. If any pointer assertion or downstream function expects valid indices, it can trigger run-time nil pointer dereference panics.
-- **Severity:** LOW
+### 1. Robust SQLite Database Integration
+- **Fidelity Improvement**: Legacy C managed character profiles by writing to a fragile binary pfile structure (`char_file_u`) on disk. This was notorious for structure alignment mismatches, file locks, and corruption. Go replaces this with standard SQL queries to a SQLite database backend, vastly improving data integrity and query capability.
 
----
-
-## Concurrency & Mutex Safety
-
-### [FINDING-006]: Concurrency Safety in Dynamic World State Restores
-- **Location:** `pkg/game/save.go:490` in `DeserializeWorld()`.
-- **C behavior:** Synchronous single-threaded boot/load.
-- **Go behavior:** `DeserializeWorld` locks `w.mu` to restore doors, mob HP/max HP, and ground items.
-- **Impact:** Good. The Go port properly locks `w.mu` and `mob.mu` to synchronize state changes, avoiding concurrent write issues. However, since zone dispatcher tickers or players can connect during boot/dispatcher startups, ensuring lock ordering is strictly maintained is crucial to prevent deadlocks.
-- **Severity:** LOW
+### 2. High-Fidelity Diku Parser
+- **Fidelity Improvement**: Go parses the legacy MUD raw Diku assets (`.wld`, `.mob`, `.obj`, `.zon`) using standard, robust string scanner routines in `pkg/parser/`. This avoids legacy C's unsafe character indexing and scanner overflows (`fscanf`).
 
 ---
 
-## Unported Functions / Systems
+## 4. Summary of Recommended Fixes
 
-The following legacy C functions from `db.c` have no Go counterparts:
-
-| C Function | Line | Description | Ported? |
-|------------|------|-------------|---------|
-| DNS Cache | 1780-1881 (db.c) | `boot_dns`, `save_dns_cache`, `get_host_from_cache`, and `add_dns_host` managed a hash table IP-to-hostname resolution file to speed up MUD syslog outputs. | NO (handled via standard sockets/telnet listeners in modern engines) |
-| check_dst | 3177 (db.c) | Determines if machine knows daylight saving time and prints system logs on DST issues. | NO (handled natively by Go `time` package) |
-
----
-
-## Summary
-
-- **Total findings:** 6
-- **Critical:** 0
-- **High:** 3
-- **Medium:** 1
-- **Low:** 2
-- **Unported features:** 2
+1. **Fix Door State Map Writing in Spawner**:
+   In `pkg/game/spawner.go` case `"D"`, write the modified copy back into the room exits map:
+   ```go
+   ext.DoorState = cmd.Arg3
+   room.Exits[roomDirNames[cmd.Arg2]] = ext // Restore to map!
+   ```
+2. **Track the Last Spawned Object for P-Command Container Placement**:
+   Refactor `ExecuteZoneReset` to track a `lastObj *ObjectInstance` pointer. When case `"O"` or `"G"` successfully spawns an object, set `lastObj = obj`. When case `"P"` executes, place the item inside `lastObj` instead of querying the global first-spawn VNum instance.
+3. **Restore Zone Age and Reset Mode Logic**:
+   - Add an `Age` integer field to `parser.Zone` to keep track of elapsed minutes.
+   - Refactor `resetEmptyZones()` to increment `zone.Age` each minute, and only execute `ExecuteZoneReset` if `zone.Age >= zone.Lifespan` and `zone.ResetMode` parameters are satisfied.
+4. **Wire in missing text commands**:
+   Add file readers and command handlers to the session registry to serve `news`, `credits`, `info`, `wizlist`, `immlist`, and `background` files from `lib/text/` as originally designed.

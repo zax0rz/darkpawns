@@ -3,7 +3,7 @@ package game
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"sync/atomic"
 
@@ -107,26 +107,26 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	if proto.Level > 15 {
 		statmod := proto.Level - 15
 		// #nosec G404 — game RNG, not cryptographic
-		str += min(rand.Intn(statmod+1), 7)
+		str += min(rand.IntN(statmod+1), 7)
 		// #nosec G404
-		intel += min(rand.Intn(statmod+1), 7)
+		intel += min(rand.IntN(statmod+1), 7)
 		// #nosec G404
-		wis += min(rand.Intn(statmod+1), 7)
+		wis += min(rand.IntN(statmod+1), 7)
 		// #nosec G404
-		dex += min(rand.Intn(statmod+1), 7)
+		dex += min(rand.IntN(statmod+1), 7)
 		// #nosec G404
-		con += min(rand.Intn(statmod+1), 7)
+		con += min(rand.IntN(statmod+1), 7)
 		// #nosec G404
-		cha += min(rand.Intn(statmod+1), 7)
+		cha += min(rand.IntN(statmod+1), 7)
 	}
 
 	// Gold variance +/-(1-20%) — db.c:1766-1775
 	gold := proto.Gold
 	if gold > 0 {
 		// #nosec G404
-		pct := rand.Intn(20) + 1
+		pct := rand.IntN(20) + 1
 		// #nosec G404
-		if rand.Intn(2) == 0 {
+		if rand.IntN(2) == 0 {
 			gold += pct * gold / 100
 		} else {
 			gold -= pct * gold / 100

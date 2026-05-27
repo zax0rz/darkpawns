@@ -3,7 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -51,7 +51,7 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 	}
 }
 
-// DoCutthroat implements do_cutthroat() — attempt instant kill from behind.
+// DoCutthroat implements do_cutthroat() — attempt throat slit from behind.
 func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillCutthroat) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You don't know how!"}
@@ -64,7 +64,7 @@ func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
 	// Skill check: D100 vs skill
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	roll := rand.Intn(100) + 1
+	roll := rand.IntN(100) + 1
 	if roll > ch.GetSkill(SkillCutthroat) {
 		return SkillResult{
 			Success:     false,
@@ -72,8 +72,8 @@ func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
-	// Instant kill: set target to -1 HP
-	damage := target.GetHP() + 1
+	// C: GET_LEVEL(ch)/2 damage + silence affect
+	damage := ch.GetLevel() / 2
 	target.TakeDamage(damage)
 
 	return SkillResult{
@@ -94,7 +94,7 @@ func DoStrike(ch *Player, target combat.Combatant) SkillResult {
 	// Simple damage based on level
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	damage := rand.Intn(ch.GetLevel()) + 1
+	damage := rand.IntN(ch.GetLevel()) + 1
 
 	return SkillResult{
 		Success:     true,
@@ -188,7 +188,7 @@ func DoSharpen(ch *Player, objName string) SkillResult {
 	// Simple sharpen: success based on skill level
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	roll := rand.Intn(100) + 1
+	roll := rand.IntN(100) + 1
 	if roll <= ch.GetSkill(SkillSharpen) {
 		return SkillResult{
 			Success:     true,

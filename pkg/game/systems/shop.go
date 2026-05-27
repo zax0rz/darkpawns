@@ -44,6 +44,14 @@ type Shop struct {
 	LastRestock     int // Last restock tick
 	RestockPercent  int // Percentage chance to restock each item
 
+	// Keeper gold — matches src/shop.h:63 int bankAccount
+	// Gold available for purchases; replenished from BankAccount on restock.
+	Gold        int
+	BankAccount int
+
+	// Trade restrictions — src/shop.h:59 int with_who (NOTRADE_* bitflags)
+	WithWho int
+
 	// Business hours (optional - for future use)
 	OpenHour  int // 0-23
 	CloseHour int // 0-23
@@ -66,11 +74,72 @@ func NewShop(id, vnum int, name string, roomVNum int) *Shop {
 		IdentifyCost:    5,   // Default: 5 gold per identification
 		Inventory:       make([]common.ObjectInstance, 0),
 		MaxItems:        50,  // Default: max 50 items in stock
-		RestockInterval: 100, // Default: restock every 100 game ticks
-		RestockPercent:  30,  // Default: 30% chance to restock each item
-		OpenHour:        0,   // Always open by default
+		RestockInterval: 100,   // Default: restock every 100 game ticks
+		RestockPercent:  30,    // Default: 30% chance to restock each item
+		Gold:            10000, // Default keeper gold supply (src/shop.c:808)
+		BankAccount:     10000, // Default bank reserve replenished on restock
+		WithWho:         0,     // No trade restrictions by default
+		OpenHour:        0,     // Always open by default
 		CloseHour:       23,
 	}
+}
+
+// WithWho bitflags — matches src/shop.h:149-155 NOTRADE_* defines.
+const (
+	NotradeGood      = 1 << 0 // Won't trade with good-aligned characters
+	NotradeEvil      = 1 << 1 // Won't trade with evil-aligned characters
+	NotradeNeutral   = 1 << 2 // Won't trade with neutral-aligned characters
+	NottradeMageUser = 1 << 3 // Won't trade with mage/magic-user class
+	NotradeCleric    = 1 << 4 // Won't trade with cleric class
+	NotradeThief     = 1 << 5 // Won't trade with thief class
+	NotradeWarrior   = 1 << 6 // Won't trade with warrior class
+)
+
+// CanTradeWith returns true if the shop will trade with a character.
+// alignment >= 350 = good, <= -350 = evil, else neutral.
+// class matches ClassMageUser(0), ClassCleric(1), ClassThief(2), ClassWarrior(3) from pkg/game/character.go.
+// Matches src/shop.c:74-101 is_ok_char() with MSG_NO_SELL_ALIGN / MSG_NO_SELL_CLASS.
+func (s *Shop) CanTradeWith(alignment, class int) (bool, string) {
+	s.mu.RLock()
+	w := s.WithWho
+	s.mu.RUnlock()
+
+	if w == 0 {
+		return true, ""
+	}
+
+	// Alignment check
+	if alignment >= 350 && w&NotradeGood != 0 {
+		return false, "I don't trade with your kind!"
+	}
+	if alignment <= -350 && w&NotradeEvil != 0 {
+		return false, "I don't trade with your kind!"
+	}
+	if alignment > -350 && alignment < 350 && w&NotradeNeutral != 0 {
+		return false, "I don't trade with your kind!"
+	}
+
+	// Class check (matches C class indices from structs.h)
+	switch class {
+	case 0: // ClassMageUser
+		if w&NottradeMageUser != 0 {
+			return false, "I don't trade with magic users!"
+		}
+	case 1: // ClassCleric
+		if w&NotradeCleric != 0 {
+			return false, "I don't trade with clerics!"
+		}
+	case 2: // ClassThief
+		if w&NotradeThief != 0 {
+			return false, "I don't trade with thieves!"
+		}
+	case 3: // ClassWarrior
+		if w&NotradeWarrior != 0 {
+			return false, "I don't trade with warriors!"
+		}
+	}
+
+	return true, ""
 }
 
 // CanBuyType checks if the shop buys items of the given type.
@@ -106,37 +175,43 @@ func (s *Shop) CanSellType(itemType int) bool {
 }
 
 // CalculateBuyPrice calculates how much the shop will pay for an item.
-func (s *Shop) CalculateBuyPrice(item common.ObjectInstance) int {
+// cha is the player's Charisma stat (0 = no modifier). Matches src/shop.c sell_price().
+func (s *Shop) CalculateBuyPrice(item common.ObjectInstance, cha int) int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	baseCost := item.GetCost()
-	// Apply buy multiplier (percentage)
-	price := (baseCost * s.BuyMultiplier) / 100
+	price := float64(baseCost*s.BuyMultiplier) / 100.0
 
-	// Minimum price of 1 gold
+	// Charisma bonus: player gets more when selling (matches C: price += price*(CHA*0.005))
+	if cha > 0 {
+		price += price * (float64(cha) * 0.005)
+	}
+
 	if price < 1 {
 		price = 1
 	}
-
-	return price
+	return int(price)
 }
 
 // CalculateSellPrice calculates how much the shop charges for an item.
-func (s *Shop) CalculateSellPrice(item common.ObjectInstance) int {
+// cha is the player's Charisma stat (0 = no modifier). Matches src/shop.c buy_price().
+func (s *Shop) CalculateSellPrice(item common.ObjectInstance, cha int) int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	baseCost := item.GetCost()
-	// Apply sell multiplier (percentage)
-	price := (baseCost * s.SellMultiplier) / 100
+	price := float64(baseCost*s.SellMultiplier) / 100.0
 
-	// Minimum price of 1 gold
+	// Charisma discount: player pays less when buying (matches C: price -= price*(CHA*0.005))
+	if cha > 0 {
+		price -= price * (float64(cha) * 0.005)
+	}
+
 	if price < 1 {
 		price = 1
 	}
-
-	return price
+	return int(price)
 }
 
 // CalculateRepairCost calculates the cost to repair an item.
@@ -276,7 +351,33 @@ func (s *Shop) IsOpen(currentHour int) bool {
 	return currentHour >= s.OpenHour || currentHour < s.CloseHour
 }
 
+// CanAffordToBuy returns true if the keeper has enough gold to buy an item.
+// Matches src/shop.c: keeper refuses if gold == 0 (missing_cash1 message).
+func (s *Shop) CanAffordToBuy(price int) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.Gold >= price
+}
+
+// DeductGold removes gold from the keeper after buying an item from a player.
+func (s *Shop) DeductGold(amount int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Gold -= amount
+	if s.Gold < 0 {
+		s.Gold = 0
+	}
+}
+
+// AddGold adds gold to the keeper (when player buys from shop).
+func (s *Shop) AddGold(amount int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Gold += amount
+}
+
 // Restock attempts to restock the shop's inventory.
+// On restock, keeper gold is replenished from bank. Matches src/shop.c:800-815.
 func (s *Shop) Restock(prototypes []*parser.Obj, currentTick int) int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -287,18 +388,19 @@ func (s *Shop) Restock(prototypes []*parser.Obj, currentTick int) int {
 	}
 
 	s.LastRestock = currentTick
+
+	// Replenish keeper gold from bank on restock (src/shop.c:808)
+	if s.Gold < s.BankAccount {
+		s.Gold = s.BankAccount
+	}
+
 	restocked := 0
 
 	// Try to add new items
 	for _, proto := range prototypes {
-		// Check if this item type is sold by this shop
 		if !s.CanSellType(proto.TypeFlag) {
 			continue
 		}
-
-		// Check restock chance
-		// In a real implementation, we'd use random number
-		// For now, we'll just add if we have space
 		if len(s.Inventory) < s.MaxItems {
 			item := game.NewObjectInstance(proto, -1)
 			item.Location = game.LocShop(s.VNum)

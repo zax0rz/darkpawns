@@ -3,7 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -25,7 +25,7 @@ func DoSneak(ch *Player) SkillResult {
 	// We don't have dex_app_skill table yet, use raw skill
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillSneak)
 
 	if percent > prob {
@@ -51,7 +51,7 @@ func DoHide(ch *Player) SkillResult {
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillHide)
 
 	if percent > prob {
@@ -86,7 +86,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 	if itemName == "coins" || itemName == "gold" {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		percent := rand.Intn(101) + 1
+		percent := rand.IntN(101) + 1
 		prob := ch.GetSkill(SkillSteal)
 
 		if percent > prob {
@@ -104,7 +104,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		if p, ok := target.(*Player); ok {
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			gold = (p.GetGold() * (rand.Intn(10) + 1)) / 100
+			gold = (p.GetGold() * (rand.IntN(10) + 1)) / 100
 			if gold > 1782 {
 				gold = 1782
 			}
@@ -117,7 +117,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 			// Mob — steal small random amount
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			gold = rand.Intn(20) + 1
+			gold = rand.IntN(20) + 1
 			ch.SetGold(ch.GetGold() + gold)
 		}
 
@@ -161,7 +161,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 
 	// Roll with weight penalty
 	// #nosec G404 — game RNG, not cryptographic
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	percent += item.GetWeight()
 	if target.GetLevel() > ch.GetLevel() {
 		percent += target.GetLevel() - ch.GetLevel()

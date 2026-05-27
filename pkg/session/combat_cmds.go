@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 )
 
@@ -187,7 +187,7 @@ func cmdFlee(s *Session) error {
 	// #nosec G404 — game RNG, not cryptographic
 	allDirs := []string{"north", "east", "south", "west", "up", "down"}
 	for i := len(allDirs) - 1; i > 0; i-- {
-		j := rand.Intn(i + 1)
+		j := rand.IntN(i + 1)
 		allDirs[i], allDirs[j] = allDirs[j], allDirs[i]
 	}
 

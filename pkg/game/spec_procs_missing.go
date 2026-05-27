@@ -90,7 +90,7 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return true
 	}
 
-	cost := 1000 * spellLvl * maxCharges
+	cost := spellLvl * 100
 	if cost < 100 {
 		cost = 100
 	}
@@ -115,6 +115,11 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 // specBeholder casts spells randomly in combat.
 func specBeholder(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	// Block spellcasting in beholder's presence (C: intercepts cast and recite)
+	if cmd == "cast" || cmd == "recite" {
+		ch.SendMessage("You feel your magic dissipate in the beholder's presence!\r\n")
+		return true
+	}
 	if cmd != "" {
 		return false
 	}
@@ -158,7 +163,8 @@ func specZenMaster(w *World, ch *Player, me *MobInstance, cmd string, arg string
 }
 
 // specMoonGate teleports players entering night portals.
-// Intercepts ENTER.
+// Intercepts ENTER. Destination is Exit1 from the gatePhases table for the
+// player's current room; falls back to MortalStartRoom if not found.
 func specMoonGate(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "enter" {
 		return false
@@ -171,7 +177,16 @@ func specMoonGate(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	sendToChar(ch, "You step into the shimmering, iridescent moon gate...")
 	w.roomMessage(ch.GetRoomVNum(), "$n steps into the shimmering moon gate and vanishes!")
 
-	ch.SetRoom(MortalStartRoom)
+	dest := MortalStartRoom
+	currentRoom := ch.GetRoomVNum()
+	for _, ge := range gatePhases {
+		if ge.Room == currentRoom && ge.Exit1 != 0 {
+			dest = ge.Exit1
+			break
+		}
+	}
+
+	ch.SetRoom(dest)
 	w.actToRoom(ch, "$n arrives through a shimmering moon gate!", nil, nil)
 	return true
 }

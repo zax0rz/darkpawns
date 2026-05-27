@@ -286,6 +286,8 @@ func main() {
 			slog.Info("World state restored")
 		}
 
+		// ZoneDispatcher is implemented but not yet wired in. See pkg/game/zone_dispatcher.go.
+		// Using serial periodic resets for now. Wire in StartZoneDispatcher() when ready.
 		gameWorld.StartPeriodicResets(60 * time.Second)
 	}()
 

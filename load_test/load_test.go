@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -172,7 +172,7 @@ func (c *LoadTestClient) sendMessage() {
 
 	// Generate random command
 	commands := []string{"look", "north", "south", "east", "west", "say hello", "stats"}
-	command := commands[rand.Intn(len(commands))]
+	command := commands[rand.IntN(len(commands))]
 
 	msg := map[string]interface{}{
 		"type": "command",

@@ -28,7 +28,7 @@ package game
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 )
 
 // ---------------------------------------------------------------------------
@@ -138,10 +138,10 @@ func diceRoll(n, d int) int {
 	for i := 0; i < n; i++ {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		rand.Intn(d)
+		rand.IntN(d)
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		total += rand.Intn(d) + 1
+		total += rand.IntN(d) + 1
 	}
 	return total
 }

@@ -1,7 +1,7 @@
 // Package session manages WebSocket connections and player sessions.
 package session
 
-import "math/rand"
+import "math/rand/v2"
 
 func (s *Session) SetTempData(key string, value interface{}) {
 	if s.tempData == nil {
@@ -70,7 +70,7 @@ func (s *Session) RandomInt(n int) int {
 	// Note: In production, you might want to use a cryptographically secure random source
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	return rand.Intn(n)
+	return rand.IntN(n)
 }
 
 // maybeRefreshToken checks if the session's JWT is within the refresh

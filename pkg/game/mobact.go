@@ -10,7 +10,7 @@ package game
 
 import (
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -148,7 +148,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 
 	// -- Scavenger (pick up best item, ~1-in-10 chance) --
 	// #nosec G404 — game RNG, not cryptographic
-	if hasMobFlag(ch, "scavenger") && rand.Intn(11) == 0 {
+	if hasMobFlag(ch, "scavenger") && rand.IntN(11) == 0 {
 		items := w.GetItemsInRoom(ch.RoomVNum)
 		if len(items) > 0 {
 			best := items[0]
@@ -162,6 +162,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			w.RemoveItemFromRoom(best, ch.RoomVNum)
 			ch.AddToInventory(best)
 		}
+	}
+
+	// Hunter mobs chase their targets (C: mobact.c)
+	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFighting() == "" {
+		w.huntVictim(ch)
 	}
 
 	// -- Mob Movement (wandering) --
@@ -191,12 +196,12 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			}
 			// C: AFF_PROTECT_EVIL + IS_EVIL(ch) + !number(0,5)
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(12) && mobIsEvil(ch) && rand.Intn(6) != 0 {
+			if vict.IsAffected(12) && mobIsEvil(ch) && rand.IntN(6) != 0 {
 				continue
 			}
 			// C: AFF_PROTECT_GOOD + IS_GOOD(ch) + !number(0,5)
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(13) && mobIsGood(ch) && rand.Intn(6) != 0 {
+			if vict.IsAffected(13) && mobIsGood(ch) && rand.IntN(6) != 0 {
 				continue
 			}
 			// Alignment matching faithful to mobact.c:
@@ -272,6 +277,12 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				}
 			}
 		}
+		// Rescue any player being attacked by a mob
+		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+			if w.NpcRescue(ch, p) {
+				break
+			}
+		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
 		return
@@ -307,6 +318,35 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 					}
 				}
 				break
+			}
+		}
+	}
+
+	// Sound trigger (C: 1-in-16 chance for mp_sound + lua sound)
+	// #nosec G404 — game RNG, not cryptographic
+	if rand.IntN(16) == 0 {
+		w.MpSound(ch)
+	}
+
+	// Lua onpulse triggers — fired every tick for mobs with the script
+	if ScriptEngine != nil {
+		if ch.HasScript("onpulse_all") {
+			ctx := ch.CreateScriptContext(nil, nil, "")
+			ctx.World = NewWorldScriptableAdapter(w)
+			ctx.RoomVNum = ch.RoomVNum
+			if _, err := ch.RunScript("onpulse_all", ctx); err != nil {
+				slog.Warn("onpulse_all script error", "mob_vnum", ch.GetVNum(), "error", err)
+			}
+		}
+		if ch.HasScript("onpulse_pc") {
+			players := w.GetPlayersInRoom(ch.RoomVNum)
+			if len(players) > 0 {
+				ctx := ch.CreateScriptContext(players[0], nil, "")
+				ctx.World = NewWorldScriptableAdapter(w)
+				ctx.RoomVNum = ch.RoomVNum
+				if _, err := ch.RunScript("onpulse_pc", ctx); err != nil {
+					slog.Warn("onpulse_pc script error", "mob_vnum", ch.GetVNum(), "error", err)
+				}
 			}
 		}
 	}

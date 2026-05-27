@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"time"
 )
 
@@ -87,7 +87,7 @@ func (s *Skill) PracticeSkill(charLevel, stat int) bool {
 
 	// Practice points accumulate
 	// #nosec G404 — game RNG, not cryptographic
-	s.Practice += 10 + rand.Intn(20) // 10-30 practice points
+	s.Practice += 10 + rand.IntN(20) // 10-30 practice points
 
 	// Check if we can level up
 	if s.Practice >= 100 {
@@ -103,7 +103,7 @@ func (s *Skill) PracticeSkill(charLevel, stat int) bool {
 
 		// Roll for success
 		// #nosec G404 — game RNG, not cryptographic
-		if rand.Intn(100) < successChance {
+		if rand.IntN(100) < successChance {
 			s.Level++
 			s.Practice = 0
 			return true
@@ -134,10 +134,10 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 		// Small chance to improve on use
 		improveChance := 5 + (s.Level / 10) // 5-15% chance
 		// #nosec G404 — game RNG, not cryptographic
-		if rand.Intn(100) < improveChance {
+		if rand.IntN(100) < improveChance {
 			// Gain practice points on successful use
 			// #nosec G404 — game RNG, not cryptographic
-			s.Practice += 5 + rand.Intn(10)
+			s.Practice += 5 + rand.IntN(10)
 			improved = true
 		}
 		s.LastUsed = now
@@ -167,12 +167,12 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
-	success := rand.Intn(100) < successChance
+	success := rand.IntN(100) < successChance
 
 	// If successful and we haven't already improved, check for practice
 	if success && !improved && now.Sub(s.LastUsed) > time.Minute {
 		// #nosec G404 — game RNG, not cryptographic
-		s.Practice += 2 + rand.Intn(5)
+		s.Practice += 2 + rand.IntN(5)
 	}
 
 	return success, improved

@@ -4,7 +4,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 	"time"
 
@@ -236,7 +236,7 @@ func specWhirlpool(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			for i := 0; i < 100; i++ {
 				// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-				candidate := 4600 + rand.Intn(100)
+				candidate := 4600 + rand.IntN(100)
 				r := w.GetRoomInWorld(candidate)
 				if r == nil {
 					continue
@@ -962,7 +962,7 @@ func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			if len(rooms) > 0 {
 				// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-				target := rooms[rand.Intn(len(rooms))]
+				target := rooms[rand.IntN(len(rooms))]
 				ch.SetRoom(target.VNum)
 			}
 			sendToChar(ch, "You tumble out into a strange place...\r\n")
@@ -1229,7 +1229,7 @@ func specTeleporter(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		for i := 0; i < 200; i++ {
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			candidate := rooms[rand.Intn(len(rooms))]
+			candidate := rooms[rand.IntN(len(rooms))]
 			if w.roomHasFlag(candidate.VNum, "private") || w.roomHasFlag(candidate.VNum, "godroom") ||
 				w.roomHasFlag(candidate.VNum, "death") || w.roomHasFlag(candidate.VNum, "nomob") {
 				continue

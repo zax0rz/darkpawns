@@ -78,9 +78,14 @@ var (
 	worldNameFunc func(id int) string
 	worldIDFunc   func(name string) int
 
+	// mailGlobalMu serializes all file I/O (storeMail + readDelete).
+	// storeMail and readDelete both seek+read+write the mail file;
+	// without a global lock concurrent calls corrupt the block chain.
+	mailGlobalMu sync.Mutex
+
 	// Mail writing state — tracks players currently composing mail.
 	// Keyed by player ID. Protected by mailWriteMu.
-	mailWriteMu   sync.Mutex
+	mailWriteMu      sync.Mutex
 	mailWriteEntries = make(map[int]*mailWriteEntry)
 )
 
@@ -265,6 +270,8 @@ func storeMail(to, from int, message string) { //nolint:unused // mail helper
 	if from < 0 || to < 0 || message == "" {
 		return
 	}
+	mailGlobalMu.Lock()
+	defer mailGlobalMu.Unlock()
 
 	msgBytes := []byte(message)
 	totalLength := len(msgBytes)
@@ -334,6 +341,9 @@ func storeMail(to, from int, message string) { //nolint:unused // mail helper
 }
 
 func readDelete(recipient int) string {
+	mailGlobalMu.Lock()
+	defer mailGlobalMu.Unlock()
+
 	if recipient < 0 {
 		log.Printf("SYSERR: Mail system -- non-fatal error #6. (recipient: %d)", recipient)
 		return ""
@@ -626,5 +636,5 @@ func readInt32(buf []byte, off int) int32 {
 }
 
 func readInt64(buf []byte, off int) int64 {
-	return int64(readInt32(buf, off)) | int64(readInt32(buf, off+4))<<32
+	return int64(uint32(readInt32(buf, off))) | int64(uint32(readInt32(buf, off+4)))<<32
 }

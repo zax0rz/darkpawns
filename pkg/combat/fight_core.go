@@ -5,7 +5,7 @@ package combat
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 )
 
@@ -502,7 +502,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	if !victim.IsNPC() && IsMounted != nil && IsMounted(victimName) && dam > 0 && rand.Intn(100) < 10 {
+	if !victim.IsNPC() && IsMounted != nil && IsMounted(victimName) && dam > 0 && rand.IntN(100) < 10 {
 		if Dismount != nil {
 			Dismount(victimName)
 		}
@@ -701,7 +701,7 @@ func randPick[T any](s []T) T {
 		var zero T
 		return zero
 	}
-	return s[rand.Intn(len(s))]
+	return s[rand.IntN(len(s))]
 }
 
 var damMessageTiers = []damMessageTier{
@@ -1029,7 +1029,7 @@ func MakeHit(ch, victim Combatant, attackType int) {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	diceroll := rand.Intn(20) + 1
+	diceroll := rand.IntN(20) + 1
 
 	victimAC := 0
 	if GetMobAC != nil && victim.IsNPC() {
@@ -1089,7 +1089,7 @@ func MakeHit(ch, victim Combatant, attackType int) {
 		} else {
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			dam += rand.Intn(ch.GetLevel()/3 + 1)
+			dam += rand.IntN(ch.GetLevel()/3 + 1)
 		}
 
 		defPos := victim.GetPosition()
@@ -1284,9 +1284,9 @@ func DieWithKiller(ch, killer Combatant, attackType int) {
 
 	if !ch.IsNPC() && GetConstitution != nil && SetConstitution != nil {
 		level := ch.GetLevel()
-		if level > 5 && rand.Intn(4) == 0 { // 25% chance (C: !number(0,3))
+		if level > 5 && rand.IntN(4) == 0 { // 25% chance (C: !number(0,3))
 			conVal := GetConstitution(chName) - 1
-			if level > 20 && rand.Intn(6) == 0 { // ~17% chance (C: !number(0,5))
+			if level > 20 && rand.IntN(6) == 0 { // ~17% chance (C: !number(0,5))
 				conVal--
 			}
 			if conVal < 0 {
@@ -1445,7 +1445,7 @@ func BragMessage(ch, victim Combatant) {
 
 	// C source: if !IS_MOB(victim) || !number(0,20) — always brag on player kills,
 	// 1-in-21 chance on mob kills.
-	if victimIsNPC && rand.Intn(21) != 0 {
+	if victimIsNPC && rand.IntN(21) != 0 {
 		return
 	}
 
@@ -1488,7 +1488,7 @@ func pickBragMessage(chName, victimName string, victimIsNPC bool, victimSex int)
 	}
 
 	// Uniform random pick [1,12] matching C switch(number(1,12))
-	switch rand.Intn(12) + 1 {
+	switch rand.IntN(12) + 1 {
 	case 1:
 		return fmt.Sprintf("I killed %s and looted %s stinkin' corpse!", victimName, possessive)
 	case 2:

@@ -96,6 +96,14 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 	w.extractObjectLocked(obj)
 }
 
+// RemoveItemFromRoomI removes an item (passed as interface{}) from a room.
+// Used by the spells layer to avoid importing game.ObjectInstance.
+func (w *World) RemoveItemFromRoomI(item interface{}, roomVNum int) {
+	if obj, ok := item.(*ObjectInstance); ok {
+		w.RemoveItemFromRoom(obj, roomVNum)
+	}
+}
+
 // RemoveItemFromRoom removes an item from a room.
 func (w *World) RemoveItemFromRoom(item *ObjectInstance, roomVNum int) bool {
 	w.mu.Lock()

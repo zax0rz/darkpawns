@@ -77,7 +77,7 @@ func (sc *ShopCommands) CmdListShop(s common.CommandSession, args []string) erro
 	output.WriteString("----------------------------------------\r\n")
 
 	for i, item := range inventory {
-		price := shop.CalculateSellPrice(item)
+		price := shop.CalculateSellPrice(item, player.Stats.Cha)
 		fmt.Fprintf(&output, "%2d) %-30s %5d gold\r\n",
 			i+1, item.GetShortDesc(), price)
 	}
@@ -328,9 +328,9 @@ func (sc *ShopCommands) CmdValue(s common.CommandSession, args []string) error {
 		return nil
 	}
 
-	// Calculate prices
-	buyPrice := shop.CalculateBuyPrice(item)
-	sellPrice := shop.CalculateSellPrice(item)
+	// Calculate prices (CHA affects both buy discount and sell bonus)
+	buyPrice := shop.CalculateBuyPrice(item, player.Stats.Cha)
+	sellPrice := shop.CalculateSellPrice(item, player.Stats.Cha)
 
 	s.Send(fmt.Sprintf("%s:\r\n", item.GetShortDesc()))
 	s.Send(fmt.Sprintf("  Shop will buy for:  %5d gold\r\n", buyPrice))

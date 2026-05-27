@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -226,7 +226,7 @@ func cmdFleeMovement(s *Session) error {
 	for i := 0; i < 6 && len(directions) > 0; i++ {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		idx := rand.Intn(len(directions))
+		idx := rand.IntN(len(directions))
 		direction := directions[idx]
 
 		// Check if door blocks

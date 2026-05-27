@@ -3,7 +3,7 @@ package spells
 import (
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -484,15 +484,39 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 
 	switch spellNum {
 	case SpellAnimateDead:
-		// Animate dead requires a corpse object in the room
-		// This is handled by the manual cast function (ExecuteManualSpell)
-		// For the routine path, we spawn a zombie
 		type roomGetter interface{ GetRoomVNum() int }
 		rg, ok := ch.(roomGetter)
 		if !ok {
 			return
 		}
 		roomVNum := rg.GetRoomVNum()
+
+		// Require a corpse in the room
+		type itemsLister interface{ GetItemsInRoomI(roomVNum int) []interface{} }
+		type keywordsGetter interface{ GetKeywords() string }
+		type itemRemover interface{ RemoveItemFromRoomI(item interface{}, roomVNum int) }
+
+		var corpse interface{}
+		if lister, ok2 := world.(itemsLister); ok2 {
+			for _, item := range lister.GetItemsInRoomI(roomVNum) {
+				if item == nil {
+					continue
+				}
+				if kg, ok3 := item.(keywordsGetter); ok3 {
+					if strings.Contains(strings.ToLower(kg.GetKeywords()), "corpse") {
+						corpse = item
+						break
+					}
+				}
+			}
+		}
+		if corpse == nil {
+			sendToCaster(ch, "You don't see a corpse here to animate.\r\n")
+			return
+		}
+		if remover, ok2 := world.(itemRemover); ok2 {
+			remover.RemoveItemFromRoomI(corpse, roomVNum)
+		}
 
 		type mobSpawner interface {
 			SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
@@ -502,7 +526,6 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 			return
 		}
 
-		// MOB_ZOMBIE vnum — check C source for the value
 		mobLevel := getLevel(ch) / 2
 		if mobLevel < 1 {
 			mobLevel = 1
@@ -513,7 +536,6 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 			return
 		}
 
-		// Add as follower
 		type followerAdder interface{ AddFollowerQuiet(ch, leader interface{}) }
 		if fa, ok := world.(followerAdder); ok {
 			fa.AddFollowerQuiet(mob, ch)
@@ -1128,7 +1150,7 @@ func castCalliope(level int, ch, cvict interface{}) {
 	if hi > lo {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		missiles += rand.Intn(hi-lo+1)
+		missiles += rand.IntN(hi-lo+1)
 	}
 	if missiles < 4 {
 		missiles = 4
@@ -1271,7 +1293,7 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	if ts, ok := obj.(timerSetter); ok {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		timer := level/2 + rand.Intn(4) - 2 // rand(-2, 1)
+		timer := level/2 + rand.IntN(4) - 2 // rand(-2, 1)
 		if timer < 1 {
 			timer = 1
 		}
@@ -1963,7 +1985,7 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 	for attempts := 0; attempts < 100; attempts++ {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		toRoom := rand.Intn(roomCount)
+		toRoom := rand.IntN(roomCount)
 		roomData := w.GetRoomInWorld(toRoom)
 		if roomData != nil && !roomData.HasFlag(RoomPrivate) {
 			sendToCaster(ch, "The world around you turns black and you suddenly find yourself..\r\n")
@@ -2016,7 +2038,7 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	dam := level*6 + rand.Intn(level*3+11) - 10
+	dam := level*6 + rand.IntN(level*3+11) - 10
 	if dam < 1 {
 		dam = 1
 	}
@@ -2125,7 +2147,7 @@ func castHellfire(level int, ch, world interface{}) {
 			// if (number(0, 25) > GET_DEX(victim)) SET_POS(victim, POS_SITTING)
 			// POS_SITTING = 5 in combat/formulas.go
 			// #nosec G404 — game RNG, not cryptographic
-			if rand.Intn(26) > cn.GetDex() {
+			if rand.IntN(26) > cn.GetDex() {
 				cn.SetPosition(5) // POS_SITTING
 				if vn, ok := c.(interface{ SendMessage(string) }); ok {
 					vn.SendMessage("The force of the blast knocks you off your feet!\r\n")
@@ -2354,7 +2376,7 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		// 10% backfire chance for PC casters
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if !chIsNPC && rand.Intn(10) == 0 {
+		if !chIsNPC && rand.IntN(10) == 0 {
 			sendToCaster(ch, "Your spell backfires!\r\n")
 			// Transfer caster to victim's room instead
 			type transferWorld interface{ PlayerTransfer(ch interface{}, toRoomVNum int) error; MobTransfer(ch interface{}, toRoomVNum int) error }
@@ -2617,7 +2639,7 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	if (victLevel > casterLevel+4 && rand.Intn(5) == 0) ||
+	if (victLevel > casterLevel+4 && rand.IntN(5) == 0) ||
 		(!victIsNPC && victLevel >= 100 && casterLevel <= victLevel) {
 		sendToCaster(ch, "With a searing pain, your psionic energy recoils!\r\n")
 		return
@@ -2700,11 +2722,15 @@ func castGate(level int, ch, world interface{}) {
 
 	// Create red portal in room
 	type objSpawner interface{ SpawnObject(vnum, roomVNum int) (interface{}, error) }
+	type timerSetter interface{ SetTimer(int) }
 	if wo, ok := world.(objSpawner); ok {
-		_, err := wo.SpawnObject(4002, roomVNum) // red_portal = 4002
+		obj, err := wo.SpawnObject(4002, roomVNum) // red_portal = 4002
 		if err != nil {
 			sendToCaster(ch, "The magic flows through you, but nothing else happens.\r\n")
 			return
+		}
+		if ts, ok := obj.(timerSetter); ok {
+			ts.SetTimer(2)
 		}
 		sendToCaster(ch, "The magick flows through you, then out into the world, changing it....\r\n")
 		sendToRoom("A shimmering red portal fades into existence.\r\n", ch, nil, nil, "", "", world)

@@ -3,7 +3,7 @@ package game
 // character.go — class/race definitions and stat rolling
 // Source: class.c, structs.h
 
-import "math/rand"
+import "math/rand/v2"
 
 // Class constants — from structs.h / class.c
 const (
@@ -130,7 +130,7 @@ func RollRealAbils(class, race int) CharStats {
 		if s.Str == 18 {
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			s.StrAdd = rand.Intn(101) // 0-100
+			s.StrAdd = rand.IntN(101) // 0-100
 		}
 	default:
 		s.Str = table[0]
@@ -162,14 +162,14 @@ func RollRealAbils(class, race int) CharStats {
 		if s.Str == 18 && class == ClassWarrior {
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			s.StrAdd = rand.Intn(101)
+			s.StrAdd = rand.IntN(101)
 		}
 	case RaceRakshasa:
 		s.Str = min18(s.Str + 1)
 		if s.Str == 18 && class == ClassWarrior {
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			s.StrAdd = rand.Intn(101)
+			s.StrAdd = rand.IntN(101)
 		}
 	case RaceSsaur:
 		s.Con = min18(s.Con + 1)
@@ -190,16 +190,16 @@ func rollStatTable() [6]int {
 		rolls := [4]int{
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			rand.Intn(6) + 1,
+			rand.IntN(6) + 1,
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			rand.Intn(6) + 1,
+			rand.IntN(6) + 1,
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			rand.Intn(6) + 1,
+			rand.IntN(6) + 1,
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			rand.Intn(6) + 1,
+			rand.IntN(6) + 1,
 		}
 		// Sum of best 3 (drop lowest)
 		min := rolls[0]

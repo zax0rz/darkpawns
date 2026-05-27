@@ -157,11 +157,6 @@ func (w *World) houseCrashsave(vnum int) {
 		return
 	}
 
-	// Restore container weights that were adjusted during save (C: House_restore_weight)
-	for _, obj := range objects {
-		w.HouseRestoreWeight(obj)
-	}
-
 	// Clear the crash flag
 	removeRoomFlag(realHouse, RoomFlagCrash)
 }
@@ -179,36 +174,6 @@ func (w *World) collectHouseItems(obj *ObjectInstance, items *[]houseSaveItem) {
 	// Add this object
 	if item := ObjToStore(obj); item != nil {
 		*items = append(*items, *item)
-		// Decrement container weight for the saved child
-		if obj.Location.Kind == ObjInContainer {
-			if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok && obj.Prototype != nil {
-				container.Prototype.Weight -= obj.Prototype.Weight
-				if container.Prototype.Weight < 1 {
-					container.Prototype.Weight = 1
-				}
-			}
-		}
-	}
-}
-
-// HouseRestoreWeight recursively restores container weights after a save
-// operation adjusted them (C: House_restore_weight). Called once per room
-// object after houseCrashsave finishes writing.
-func (w *World) HouseRestoreWeight(obj *ObjectInstance) {
-	if obj == nil {
-		return
-	}
-
-	// Recurse into contents first
-	for _, contained := range obj.Contains {
-		w.HouseRestoreWeight(contained)
-	}
-
-	// Restore the weight adjustment
-	if obj.Location.Kind == ObjInContainer {
-		if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok && obj.Prototype != nil {
-			container.Prototype.Weight += obj.Prototype.Weight
-		}
 	}
 }
 

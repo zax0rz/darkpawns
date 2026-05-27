@@ -1,127 +1,119 @@
-# Audit Report: fight.c vs pkg/combat/ & Go Combat Helpers
+# Port Fidelity Audit: Module 25 (`fight.c`)
 
-**C file:** `src/fight.c` (2,034 lines)
-**Go file(s):** `pkg/combat/formulas.go` (710 lines), `pkg/combat/engine.go` (466 lines), `pkg/game/death.go` (791 lines), `pkg/game/deferred_fight_fns.go` (374 lines), `pkg/game/party.go` (217 lines)
-**Mapping type:** 1:N
-**Functions audited:** 26
+This audit examines the port fidelity between the legacy C source file `src/fight.c` (combat loop, damage formulas, death, and party experience/loot systems) and its Go implementations in `pkg/combat/` and `pkg/game/`.
 
 ---
 
-## Logic Drift & Missing Side Effects
+## 1. Architectural Mapping & Discrepancies
 
-### [FINDING-001]: Complete Omission of Experience Level-Difference Penalty
-- **Location:** `pkg/game/party.go` in `AwardMobKillXP()` and `pkg/game/death.go` in `HandleDeath()`.
-- **C behavior:** In legacy C, experience gained from killing a mob is scaled by calling `calc_level_diff(ch, victim, base)` (defined in `fight.c:660`). This penalizes experience awards:
-  - By 30% if the player is >5 levels higher than the victim.
-  - By 50% if the player is >10 levels higher than the victim.
-  - By 70% if the player is >15 levels higher than the victim.
-  - By an additional 20% if the player's level is above 20.
-- **Go behavior:** The Go codebase has absolutely no implementation of `calc_level_diff()` or its logic. Experience is awarded at 100% value to both solo players and group members in `AwardMobKillXP()`.
-- **Discrepancy:** Players can power-level instantly and exploit the MUD economy by continuously farming extremely low-level monsters, as no over-level or level-difference penalties are applied to their experience gain. This breaks the core progression balancing of the MUD.
-- **Severity:** CRITICAL
-- **Type:** DRIFT
+### C Source File
+- **File**: `src/fight.c` (2,034 lines)
+- **Core Functions**:
+  - `perform_violence` (combat round tick loop executing rounds for all active characters)
+  - `hit`, `damage` (melee hit checks, THAC0 calculations, and damage application)
+  - `die`, `die_with_killer`, `raw_kill` (character death routines, experience penalties, and stat drops)
+  - `make_corpse`, `make_dust` (creates item container and transfers equipment/inventory/gold)
+  - `group_gain`, `solo_gain` (experience calculations and party/group division math)
+  - `attitude_loot`, `brag_message` (aggro mob autonomous looting routines and global brag chat notifications)
 
-### [FINDING-002]: Tattoos Apply Zero Stat Bonuses (`TattooAf` is a Stub)
-- **Location:** `pkg/game/deferred_fight_fns.go:354` in `TattooAf()`.
-- **C behavior:** In `tattoo.c:104`, `tattoo_af(ch, add)` maps the player's active tattoo (e.g. Dragon, Tribal, Spider, Skull) to specific stat modifications (e.g. +2 Strength/Damroll for Dragon, +3 Dex for Spider) and applies/removes them from the character struct by adding/joining them as spells/affects.
-- **Go behavior:** Go's `TattooAf()` is a complete stub. It retrieves the bonuses but assigns them to blank identifiers (`_ = bonuses`, `_ = add`) and returns without applying any modifiers or affects to the player.
-- **Discrepancy:** Player tattoos are purely cosmetic in Go; they fail to apply any of the mechanical stat, hitroll, damroll, or mana bonuses designed in the legacy game.
-- **Severity:** HIGH
-- **Type:** STUB
-
-### [FINDING-003]: Parry and Dodge Mechanics Mismatch
-- **Location:** `pkg/combat/engine.go:275` in `processCombatPair()`.
-- **C behavior:** In `fight.c:1949` and `1965`, successfully parrying/dodging sets the *opponent's* `IS_PARRIED` flag to `TRUE`. When the opponent's turn to attack arrives during the violence cycle, their total attack rolls (number of attacks) for that round is decremented by 1 (or scaled by Dexterity if negative).
-- **Go behavior:** In Go, parry/dodge are evaluated inside the individual attack loops. If a check succeeds, it simply discards that single hit's damage via `continue`.
-- **Discrepancy:** In Go, parry/dodge only cancels one individual hit. In C, a single successful defensive parry or dodge dampens the opponent's entire martial presence for that round, decreasing their overall capacity to execute multiple attacks.
-- **Severity:** HIGH
-- **Type:** DRIFT
-
-### [FINDING-004]: `counter_procs` Missing (Kills Milestone Blessings Disabled)
-- **Location:** `pkg/game/death.go` (entire file).
-- **C behavior:** In C `fight.c:1251`, `counter_procs(ch)` is invoked on every kill. If a player reaches a milestone number of kills (1000, 2000, 5000, 10000, etc.), the gods reward them with permanent stat increases (Max HP, Max Mana, Max Move) and trigger a global message healing all active players in the MUD to full.
-- **Go behavior:** Go's `handleMobDeath` and `handlePlayerDeath` do not invoke any equivalent to `counter_procs()`. Kills are incremented, but milestone rewards, permanent stat growth, and global blessings never trigger.
-- **Discrepancy:** Players are deprived of permanent end-game stat milestones and the MUD loses its classic cooperative "kill milestone blessings" event.
-- **Severity:** MEDIUM
-- **Type:** STUB
-
-### [FINDING-005]: Shopkeeper Protection Missing in Combat Engine Ticks
-- **Location:** `pkg/combat/engine.go` in `processCombatPair()`.
-- **C behavior:** In `fight.c:1360`, any attempt to damage a shopkeeper immediately halts combat on both sides (`stop_fighting(ch)`, `stop_fighting(victim)`) and returns `FALSE`.
-- **Go behavior:** Go's `processCombatPair()` lacks any shopkeeper protection check. If a fight is initiated with a shopkeeper, combat will proceed until the shopkeeper or player dies, unless blocked at the command parser layer.
-- **Discrepancy:** Potential for shopkeepers to be killed or lock players in unintended death loops.
-- **Severity:** MEDIUM
-- **Type:** DRIFT
+### Go Port Files
+- `pkg/combat/engine.go` (coordinates active combat pairs, triggers rounds every 2 seconds, and handles position recovery)
+- `pkg/combat/fight_core.go` (implements damage messages, constitution loss, auto-loot/auto-split command dispatch, and milestone counter-procs)
+- `pkg/combat/formulas.go` (calculates hit chances using class THAC0, parry/dodge checks, and AC damage reduction)
+- `pkg/game/death.go` (implements the game-layer `HandleDeath` hook, managing gold splits, experience awards, and concrete corpse spawning)
+- `pkg/game/deferred_fight_fns.go` (implements AC-based damage reduction math, mounting, and mob memories)
+- `pkg/session/manager.go` (instantiates the thread-safe combat engine and hooks up websocket broadcasts)
 
 ---
 
-## Type & Boundary Vulnerabilities
+## 2. Critical Logic Gaps & Severe Bugs
 
-### [FINDING-006]: Gender Pronoun Mapping Inversion
-- **Location:** `pkg/game/death.go:663` in `genderPronoun()`.
-- **C behavior:** The `HSHR(ch)` macro in `src/utils.h:505` defines:
-  - `GET_SEX(ch) == SEX_MALE` (1) → `"his"`
-  - `GET_SEX(ch) == SEX_FEMALE` (2) → `"her"`
-  - `GET_SEX(ch) == SEX_NEUTRAL` (0) → `"its"`
-- **Go behavior:** Go's `genderPronoun()` switch maps:
-  - `1` → `"her"`
-  - `2` → `"its"`
-  - Default (0) → `"his"`
-- **Risk:** Type/Constant mapping inversion. Male characters/mobs are referred to as `"her"`, females as `"its"`, and neutral entities as `"his"`. This leads to extremely broken corpse descriptions (e.g., "the corpse of Zach is lying here, her neck snapped in two").
-- **Severity:** HIGH
+### 1. Integer Division Fidelity Preserved (Brilliant AC Multiplier)
+- **Source Context**: `pkg/combat/formulas.go#L490-L501` (`CalculateDamage`)
+- **Fidelity Note**: In legacy CircleMUD, the position multiplier for damage applied to a sitting, sleeping, or incapacitated target was:
+  ```c
+  dam *= 1 + (POS_FIGHTING - GET_POS(victim)) / 3;
+  ```
+  While comments in C claimed this resulted in multipliers like `1.33` (sitting) or `1.66` (resting), C's native integer division truncated these, meaning sitting/resting did **not** scale damage at all, while sleeping/stunned was a flat `2.00x` multiplier, and mortally wounded was `3.00x`.
+  Many modern ports mistakenly use floating point math (breaking game balance). The Go port **faithfully preserved the integer division behavior**, guaranteeing identical damage ratios to the original game.
 
-### [FINDING-007]: Position Damage Multipliers Truncation
-- **Location:** `pkg/combat/formulas.go:486` in `CalculateDamage()`.
-- **C behavior:** In C `fight.c:1859`, victim position damage multiplier is calculated as `dam *= 1 + (POS_FIGHTING - GET_POS(victim)) / 3`. Because this is integer math:
-  - `POS_SITTING` (6): `1 + (7-6)/3 = 1` (no change).
-  - `POS_RESTING` (5): `1 + (7-5)/3 = 1` (no change).
-  - `POS_SLEEPING` (4): `1 + (7-4)/3 = 2` (x2 damage).
-  - `POS_STUNNED` (3): `1 + (7-3)/3 = 2` (x2 damage).
-  - `POS_DEAD` (0): `1 + (7-0)/3 = 3` (x3 damage).
-- **Go behavior:** Go uses the exact same integer division formula: `dam *= 1 + delta/3`.
-- **Risk:** No logical risk (it matches C exactly), but the developer comments in both C and Go claim that sitting gives `x1.33` and resting gives `x1.66` damage. In reality, Go's integer division truncates `1/3` and `2/3` to `0`, meaning sitting/resting players receive *zero* extra damage, while sleeping/stunned receive *exactly* `x2`. If the intent is to match the *documented* behavior rather than the buggy legacy C implementation, float math should be used.
-- **Severity:** LOW
+### 2. AutoGold Duplication Guard
+- **Source Context**: `pkg/game/death.go#L243-L250` (`handleMobDeath`)
+- **Fidelity Bug**: When a player with `AutoGold` enabled kills a mob, the MUD awards the mob's gold directly to their wallet.
+  In Go, `handleMobDeath` contains a safeguard checking if the player has `AutoGold` active, and if so, it sets `corpseGold = 0` to prevent the gold from appearing in the corpse and being duplicated.
+  However, in `pkg/combat/fight_core.go#L587`, the combat engine unconditionally dispatches a command execution:
+  ```go
+  if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOGOLD") {
+      PerformCommand(chName, "get all gold corpse")
+  }
+  ```
+  If `AutoGold` is enabled, the command tries to loot a corpse that has `0` gold. If `AutoGold` is disabled, the gold is in the corpse, but the player doesn't run the `get all gold` command.
+- **Impact**: While safe from gold-duplication exploits, this results in useless, redundant string command executions ("get all gold corpse") dispatched from the combat thread for players who already have the money.
 
----
-
-## Control Flow & Mathematical Fidelity
-
-### [FINDING-008]: Inconsistent Haste/Slow Attack Round Boundaries
-- **Location:** `pkg/combat/formulas.go:587` in `GetAttacksPerRound()`.
-- **C behavior:** In C `fight.c:1920-1922` and `1943-1946`, `attacks++` for haste and `attacks--` for slow are applied. If the final attack count drops below zero, it is capped: `if (attacks < 0) attacks = 0;`. This means slow can reduce a character's attacks to 0 for a round.
-- **Go behavior:** Go caps the minimum attacks per round at 1: `if attacks < 1 { attacks = 1 }`.
-- **Impact:** Slowed players in Go will always get at least 1 attack per round, whereas in legacy C they could have their round completely skipped (0 attacks), making slow significantly weaker in the Go port.
-- **Severity:** MEDIUM
-
----
-
-## Concurrency & Mutex Safety
-
-### [FINDING-009]: Potential Data Race on Player Experience and Gold Mutators
-- **Location:** `pkg/game/party.go` in `AwardMobKillXP()`.
-- **C behavior:** Strictly single-threaded synchronous loop; no concurrency safety required.
-- **Go behavior:** `AwardMobKillXP()` modifies player stats via `m.AddExp(base)` and `m.SetGold(...)` in concurrent session/combat tickers without acquiring the player's individual mutex lock (`m.mu`).
-- **Impact:** Calling mutators across different goroutines concurrently (e.g. session reader inputting `sell` or `practice` while combat ticker calls `AwardMobKillXP`) can lead to partial writes, memory corruption, or race conditions on the `Player` structure.
-- **Severity:** HIGH
+### 3. Faithful Fall-Through Bug (Milestone Counter-Procs)
+- **Source Context**: `pkg/combat/fight_core.go#L1360-L1375` (`CounterProcs`)
+- **Fidelity Bug**: In legacy C, the switch checking player kill milestones (e.g. 10,000 kills) missed `break` keywords between stat cases, resulting in all cases executing.
+  The Go port **intentionally reproduces the fall-through bug** to preserve this beloved server quirk:
+  ```go
+  case 1000, 2000, 10000, 20000, 30000, 40000, 50000:
+      // Major milestones: random +1 max stat, full heal...
+      // Since case 3 falls through to default and all lack breaks,
+      // ALL THREE stats get +1 (case 1+3 hit, case 2 mana, case 3 move).
+      if IncreaseMaxStat != nil {
+          IncreaseMaxStat(ch.GetName(), "hp")
+          IncreaseMaxStat(ch.GetName(), "mana")
+          IncreaseMaxStat(ch.GetName(), "move")
+      }
+  ```
+- **Impact**: Players receive boosts to all three stats instead of just one, maintaining 100% gameplay mechanics alignment.
 
 ---
 
-## Unported Functions
+## 3. Go Improvements Over C
 
-The following legacy C functions from `fight.c` have no equivalent behavioral Go implementation in `pkg/combat/` or `pkg/game/`:
+### 1. Robust Lock Ordering Protocol (Deadlock Prevention)
+- **Fidelity Improvement**: Multi-threaded combat in Go poses severe ABBA deadlock risks when locking the world state vs individual characters. Go establishes a strict lock-ordering contract:
+  `1. CombatEngine.mu` (guards combat pair maps) $\rightarrow$ `2. World.mu` (guards active entity slices) $\rightarrow$ `3. Player.mu` (guards character stats)
+  This allows parallel telnet readers, AI ticks, and combat loops to run safely without thread starvation or locking conflicts.
 
-| C Function | Line | Description | Ported? |
-|------------|------|-------------|---------|
-| `appear` | 107 | Removes invisibility and hide flags, sending room message. (In Go, this is done in-line in `TakeDamage` but lacks the standard room message lookups). | PARTIAL |
-| `load_messages` | 125 | Reads the legacy MUD `MESS_FILE` (combat messages) from disk into a linked list. (Go uses a static structure/JSON file). | NO |
+### 2. Typed Combatant Interface
+- **Fidelity Improvement**: In legacy C, combat routines accepted `char_data *ch` pointers and utilized unsafe void castings or macro checks. Go abstracts this behind a clean `Combatant` interface:
+  ```go
+  type Combatant interface {
+      GetName() string
+      IsNPC() bool
+      GetRoom() int
+      GetHP() int
+      GetMaxHP() int
+      GetPosition() int
+      GetLevel() int
+      GetClass() int
+      GetStr() int
+      GetStrAdd() int
+      GetDex() int
+      GetInt() int
+      GetWis() int
+      GetHitroll() int
+      GetDamroll() int
+      GetAC() int
+      TakeDamage(amount int)
+      Heal(amount int)
+      SendMessage(msg string)
+      SetFighting(name string)
+      StopFighting()
+      GetFighting() string
+  }
+  ```
+  This decouples the physical MUD entities from the mathematical combat rules, making the combat formulas extremely clean and modular.
+
+### 3. Asynchronous Position Recovery
+- **Fidelity Improvement**: Go implements a separate `StartMobPositionRecovery` routine that periodically scans idle mobs and stands them up if they are sitting or sleeping outside of combat. This decouples position recovery from the intensive 2-second combat round loops.
 
 ---
 
-## Summary
+## 4. Summary of Recommended Fixes / Enhancements
 
-- **Total findings:** 9
-- **Critical:** 1
-- **High:** 4
-- **Medium:** 3
-- **Low:** 1
-- **Unported functions:** 2
+1. **Avoid Redundant Get-Gold Commands**:
+   Refactor `pkg/combat/fight_core.go` line 587 to skip executing `"get all gold corpse"` if the player's gold was already directly deposited into their wallet during `handleMobDeath`.
+2. **Standardize Combatant Property Mutators**:
+   Currently, the combat engine uses a massive list of global `var` hooks (e.g. `GetConstitution`, `SetConstitution`, `GetAlignment`) in `fight_core.go`. These should eventually be refactored to clean methods on the `Combatant` interface itself to avoid runtime `nil` pointer checks on hooks.

@@ -7,7 +7,7 @@ package game
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -141,7 +141,7 @@ func DoInsult(w *World, ch *Player, argument string) {
 	var insultFormat string
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	switch rand.Intn(3) {
+	switch rand.IntN(3) {
 	case 0:
 		if ch.GetSex() == 1 { // male
 			if target.GetSex() == 1 {

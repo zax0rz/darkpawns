@@ -2,7 +2,7 @@ package game
 
 import (
 	"context"
-	"math/rand"
+	"math/rand/v2"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -84,7 +84,7 @@ func (w *World) runMobAI(mob *MobInstance) {
 
 	// Wandering behavior — MOB_SENTINEL prevents movement only
 	// #nosec G404 — game RNG, not cryptographic
-	if !isSentinel && rand.Intn(100) < 25 {
+	if !isSentinel && rand.IntN(100) < 25 {
 		w.wanderMob(mob)
 	}
 }
@@ -96,6 +96,10 @@ func (w *World) wanderMob(mob *MobInstance) {
 	snap := w.snapshots.Snapshot()
 	room, ok := snap.Rooms[mob.GetRoom()] // getter — mutex-protected
 	if !ok {
+		return
+	}
+
+	if rand.IntN(19) >= 6 {
 		return
 	}
 
@@ -128,6 +132,15 @@ func (w *World) wanderMob(mob *MobInstance) {
 			continue
 		}
 
+		// Sector constraints (C: mobact.c:130-138)
+		// Skip water rooms for mobs that can't swim (no CAN_SWIM check in Go — skip water for all non-water mobs)
+		if targetRoom.Sector == SECT_WATER_SWIM || targetRoom.Sector == SECT_WATER_NOSWIM {
+			continue // Conservative: skip water rooms for all wandering mobs
+		}
+		if targetRoom.Sector == SECT_FLYING {
+			continue // Skip flying rooms — mobs can't fly unless flagged
+		}
+
 		// Check ROOM_DEATH and ROOM_NOMOB before mob movement
 		hasDeath := false
 		hasNoMob := false
@@ -151,7 +164,7 @@ func (w *World) wanderMob(mob *MobInstance) {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-	direction := validDirections[rand.Intn(len(validDirections))]
+	direction := validDirections[rand.IntN(len(validDirections))]
 	exit := room.Exits[direction]
 	targetRoom := snap.Rooms[exit.ToRoom]
 
@@ -173,6 +186,9 @@ func (w *World) wanderMob(mob *MobInstance) {
 	for _, p := range newPlayers {
 		p.SendMessage(mob.GetShortDesc() + " has arrived.\n")
 	}
+
+	// MobProg entry trigger — fires when mob enters a room
+	w.EntryProg(mob, targetRoom.VNum)
 
 	// Re-acquire lock — defer in runMobAI will fire with this held
 	mob.mu.Lock()

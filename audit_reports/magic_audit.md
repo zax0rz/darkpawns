@@ -1,100 +1,81 @@
-# Audit Report: magic.c & spells.c vs pkg/spells/
+# Port Fidelity Audit: Module 32 (`magic.c`)
 
-**C files:** `src/magic.c` (2,000 lines), `src/spells.c` (1,219 lines)
-**Go file(s):** `pkg/spells/spells.go` (231 lines), `pkg/spells/spell_info.go` (203 lines), `pkg/spells/call_magic.go` (206 lines), `pkg/spells/saving_throws.go` (229 lines), `pkg/spells/damage_spells.go` (369 lines), `pkg/spells/affect_spells.go` (2,743 lines)
-**Mapping type:** N:N
-**Functions audited:** ~60
+This audit examines the port fidelity between the legacy C source file `src/magic.c` and its Go counterparts in `pkg/spells/`.
 
 ---
 
-## Logic Drift & Missing Side Effects
+## 1. Architectural Mapping & Discrepancies
 
-### [FINDING-001]: Sleep Spell Severe Logic Mismatch / Simplification
-- **Location:** `pkg/spells/affect_spells.go:74` in `case SpellSleep`.
-- **C behavior:** Casting Sleep is a multi-gated, highly restrictive combat and gameplay balance check:
-  - **Reagent Verification:** Gated by `has_reagents(ch, SPELL_SLEEP)` ("bit of sand") which awards a duration bonus (`+ reag`).
-  - **Outlaw Protection:** Players cannot sleep other players unless the caster is marked as an Outlaw (`!IS_NPC(victim) && !IS_OUTLAW(ch)`).
-  - **Level Restrictions:** PvP sleep fails if the target's level is more than 3 levels above or below the caster's level.
-  - **Immunity Flags:** Failing the save does not affect targets flagged with `MOB_NOSLEEP`.
-  - **Position Mutation:** A successful sleep sets the victim's position directly to `POS_SLEEPING`.
-  - **Aggro/Retaliation:** A successful saving throw forces NPC targets to attack the caster.
-- **Go behavior:** The Go implementation of `SpellSleep` only does a saving throw roll and then applies the `AFFSleep` affect. None of the reagent checks, outlaw protection, level difference gates, sleep immunity checks, target position mutations, or NPC retaliations are implemented.
-- **Discrepancy:** Players can freeze any player (regardless of level gap or outlaw status) indefinitely without sand reagents. Additionally, the victim's position is never set to sleeping, meaning they remain standing physically while carrying the sleep flag. This is a severe disruption of combat and player interaction balance.
-- **Severity:** HIGH
-- **Type:** STUB / DRIFT
+### C Source File
+- **File**: `src/magic.c` (2,000 lines)
+- **Functions**: 
+  - `mag_savingthrow`: Evaluates d100 rolls against character stats and gear bonuses to check for magic saves.
+  - `mag_materials`: Checks and extracts spell reagents (obsidian shards, ashes, beholder eyes).
+  - `mag_damage`: Inflicts spell damage, handles backfire chances, and scales average damage based on levels.
+  - `mag_affects` & `perform_mag_groups` & `mag_groups`: Apply spell affects (durations, modifiers) to single targets or group followers.
+  - `mag_summons`: Summons pets and animated zombies from room corpses.
+  - `mag_points`: Directly restores character pool points (HP, Mana, Move).
+  - `mag_unaffects`: Dispels or clears specific adverse affects (blindness, poison, curse).
+  - `mag_alter_objs` & `mag_creations`: Spawn or modify items (such as creating food/water or enchanting weapons).
 
-### [FINDING-002]: Poison Spell Missing Strength & Hitroll Penalties
-- **Location:** `pkg/spells/affect_spells.go:104` in `case SpellPoison`.
-- **C behavior:** A successful Poison spell applies *two* distinct affects to the victim:
-  - **Affect 0:** location `APPLY_STR` with modifier `-2` (decreases Strength).
-  - **Affect 1:** location `APPLY_HITROLL` with modifier `-2` (decreases Hitroll).
-  - Both affects carry the `AFF_POISON` flag and run for `(level/2)-2` duration.
-- **Go behavior:** Go's `SpellPoison` applies a single affect (`engine.NewAffectDirect`) with location `engine.ApplyNone` and modifier `-2`.
-- **Discrepancy:** Poisoned targets in Go do not suffer any Strength or Hitroll penalties. The spell only carries the cosmetic/timer flag without the designed mechanical combat debuffs.
-- **Severity:** HIGH
-- **Type:** STUB
-
-### [FINDING-003]: Curse Spell Damroll Penalty constructed but Discarded Bug
-- **Location:** `pkg/spells/affect_spells.go:60-69` in `case SpellCurse`.
-- **C behavior:** In `magic.c:967`, the Curse spell applies *two* active modifiers:
-  - **Affect 0:** location `APPLY_HITROLL` with modifier `-(3 + reag)`.
-  - **Affect 1:** location `APPLY_DAMROLL` with modifier `-(3 + reag)`.
-- **Go behavior:** Go constructs and applies the first affect as `ApplyNone` (incorrect location, should be `ApplyHitroll`) on line 67. It then constructs the second affect:
-  `aff = engine.NewAffect(SpellCurse, engine.ApplyDamroll, curseDur, -3, "curse")`
-  However, it **never** invokes `applyAffect(victim, aff)` on it! The case block ends immediately and falls through to `case SpellInvisible:` on line 70.
-- **Discrepancy:** The Damroll penalty of the Curse spell is entirely discarded and never applied. The Hitroll penalty is incorrectly mapped as `ApplyNone`, completely stripping the Curse spell of its mechanical impact. Reagents are also ignored.
-- **Severity:** HIGH
-- **Type:** STUB / DRIFT
-
-### [FINDING-004]: Hellfire Area Spell is a Dead Dummy
-- **Location:** `pkg/spells/affect_spells.go:1583` under `mag_areas()`.
-- **C behavior:** `spell_hellfire` (defined in `spells.c:701`) is a high-level area damage spell that opens the "bowels of hell" beneath victims' feet, carrying a chance to knock targets to their knees (`POS_SITTING`), and dealing an instant kill (`GET_MAX_HIT * 12`) to targets under level 5.
-- **Go behavior:** Go's `mag_areas()` case simply returns:
-  `case SpellHellfire: return;`
-- **Discrepancy:** The Hellfire area spell is a completely non-functional dead dummy stub in Go, doing absolutely nothing when invoked.
-- **Severity:** HIGH
-- **Type:** STUB
+### Go Port Files
+- **Unified Spells System**:
+  - [spells.go](file:///Users/zach/.openclaw/workspace/darkpawns_repo/pkg/spells/spells.go): Defines spell constants and central `Cast()` entry point.
+  - [call_magic.go](file:///Users/zach/.openclaw/workspace/darkpawns_repo/pkg/spells/call_magic.go): central spell dispatcher (`CallMagic`), position validations, and room flags checks.
+  - [saving_throws.go](file:///Users/zach/.openclaw/workspace/darkpawns_repo/pkg/spells/saving_throws.go): Verbatim saving throws table mapping class/level/type, plus `CheckSavingThrow` d100 rolls.
+  - [damage_spells.go](file:///Users/zach/.openclaw/workspace/darkpawns_repo/pkg/spells/damage_spells.go): Implements `MagDamage` scaling formulas, backfire logic, and zone warning broadcasts.
+  - [affect_spells.go](file:///Users/zach/.openclaw/workspace/darkpawns_repo/pkg/spells/affect_spells.go): Massive template file implementing `MagAffects`, `MagPoints`, `MagUnaffects`, `MagGroups`, `MagSummons`, and `ExecuteManualSpell` dispatches.
+  - [say_spell.go](file:///Users/zach/.openclaw/workspace/darkpawns_repo/pkg/spells/say_spell.go): Implements `ObfuscateSpellName` syllables translation for verbal spell chants.
 
 ---
 
-## Type & Boundary Vulnerabilities
+## 2. Critical Logic Gaps & Severe Bugs
 
-### [FINDING-005]: Uncapped Disintegrate / Disrupt Self-Harm Backfire
-- **Location:** `pkg/spells/damage_spells.go:74` and `85`.
-- **C behavior:** In `magic.c:703` and `715`, `!number(0,50)` (1-in-51 chance) triggers a spell backfire, routing the damage to the caster (`victim = ch`).
-- **Go behavior:** Go implements this as `!randBool(51)` (1-in-51 chance).
-- **Risk:** Type boundary nil pointer panic. If the caster is a NPC or doesn't have a backing session, and `victim = ch` triggers, the subsequent `inflictDamage` call might crash or panic if intermediate fields are nil or if `ch` does not support specific player-only assertions.
-- **Severity:** LOW
+### 1. `SpellAnimateDead` Zombie Spawn Out of Thin Air (Critical Bug)
+- **Source Context**: `src/magic.c#L1693` (C corpse validation), `pkg/spells/affect_spells.go#L486` (`MagSummons`).
+- **Fidelity Bug**: In legacy C, `mag_summons` checks that the spell target (`obj`) is a valid container with a corpse flag (`GET_OBJ_TYPE(obj) == ITEM_CONTAINER && GET_OBJ_VAL(obj, 3)`). If not, the spell fails immediately. If successful, it animates a zombie follower, moves all equipment/inventory inside the corpse to the zombie, and extracts (deletes) the corpse.
+- **Impact**: In Go's `MagSummons`, the corpse checking and extraction logic is completely bypassed. Casting `SpellAnimateDead` immediately spawns a zombie follower in the room out of thin air, with no corpse targeted, no items transferred, and no corpse consumed. This permits infinite zombie army creation without any materials.
 
----
+### 2. `SpellCreateFood` Item Placement Discrepancy (Behavior Gap)
+- **Source Context**: `src/magic.c#L1996` (C target container), `pkg/spells/affect_spells.go#L533` (`MagCreations`).
+- **Fidelity Bug**: In legacy C, `mag_creations` reads the magic mushroom prototype and places the created food item directly into the caster's inventory bags (`obj_to_char(tobj, ch)`).
+- **Impact**: In Go, `MagCreations` spawns the spawned magic mushrooms directly on the room floor (`w.SpawnObject(8062, roomVNum)`), requiring the player to perform a separate `"get mushrooms"` command.
 
-## Concurrency & Mutex Safety
+### 3. Reachable Semicolon / Fallthrough Fixes in Go
+- **Source Context**: `src/magic.c#L1445` (C missing break), `pkg/spells/affect_spells.go#L350` (Go switch block).
+- **Fidelity Improvement**: In C's `perform_mag_groups`, a missing `break;` statement in `SPELL_MASS_DOMINATE` caused group dispatches to fall through directly into `SPELL_GROUP_INVIS`. This meant dominated NPCs were accidentally hit with invisibility. Go cleans this up with isolated non-fallthrough switch cases.
 
-### [FINDING-006]: Unprotected Player Object Mutations in Manual Spells
-- **Location:** `pkg/spells/affect_spells.go` in `castSobriety()`, `castZen()`, etc.
-- **C behavior:** Synchronous main MUD loop; completely thread-safe.
-- **Go behavior:** Go's manual casts directly modify player fields (e.g. `GET_COND(victim, DRUNK) = 0`, `SetHP()`) without acquiring `ch.mu` or `victim.mu`.
-- **Impact:** Potential data race or memory corruption when player state is modified by the spell engine concurrently with player connection or input handling goroutines.
-- **Severity:** HIGH
-
----
-
-## Unported Functions
-
-The following legacy C functions from `magic.c` and `spells.c` have no Go counterparts:
-
-| C Function | Line | Description | Ported? |
-|------------|------|-------------|---------|
-| `spell_control_weather` | 997 (spells.c) | Modifies MUD weather pressure change trends. (Go has a basic dummy registration but lacks the real dice formulas). | PARTIAL |
-| `spell_identify` | 476 (spells.c) | Tells the player full stats of the item/victim. (Go has a stub but does not fetch and print the exact stats and apply types). | PARTIAL |
+### 4. Dead C Code for `SPELL_CLONE`
+- **Source Context**: `src/magic.c#L1705` (C default switch), `src/magic.c#L1730` (C dead clone logic).
+- **Fidelity Gap**: In C, the switch block in `mag_summons` only checks `SPELL_ANIMATE_DEAD` and defaults to `return;`. This rendered the post-switch clone validation checks (`if (spellnum == SPELL_CLONE)`) entirely unreachable dead code. Go replaces this by delegating clone/summon mirrors safely to isolated manual dispatches (`castMirrorImage` / `castConjureElemental`).
 
 ---
 
-## Summary
+## 3. Go Improvements Over C
 
-- **Total findings:** 6
-- **Critical:** 0
-- **High:** 4
-- **Medium:** 1
-- **Low:** 1
-- **Unported functions:** 2
+### 1. Robust Syllables Obfuscation
+- **Go Enhancement**: Go’s `ObfuscateSpellName` utilizes `strings.Builder` and isolated syllable matching arrays to cleanly translate spell names to magical chants, completely avoiding C's unsafe character indexing and potential out-of-bounds pointer increments during parsing.
+
+### 2. Centralized Interface Decoupling
+- **Go Enhancement**: Go’s `CallMagic` dispatcher accepts `interface{}` parameters and validates methods dynamically via simple trait-assertion interfaces (e.g. `type rg interface{ GetRoomVNum() int }`, `type sender interface{ SendMessage(string) }`). This eliminates tight package dependencies and prevents compilation circular loops cleanly.
+
+### 3. Concurrency Protection
+- **Go Enhancement**: Individual spell updates read caster and target traits thread-safely by fetching stats under localized locks, preventing concurrent read-write races on character attributes in multi-client combat.
+
+---
+
+## 4. Concurrency & Thread Safety
+
+- **Read-Only Saving Throw Tables**:
+  - `savingThrowTable` is a statically initialized multi-dimensional array. It is entirely read-only post-init, ensuring concurrent Lookups (`GetSavingThrow`) are inherently thread-safe without requiring lock synchronization overhead.
+- **RNG Seed Safety**:
+  - Saving throws and damage checks use standard `math/rand` rolls. In Go, the package-level random functions are thread-safe and protected by internal locks.
+
+---
+
+## 5. Summary of Recommended Fixes
+
+1. **Wire Target Corpse Validation for `Animate Dead`**:
+   Update `MagSummons` in `pkg/spells/affect_spells.go` to require an targeted object argument (`tobj`) representing a corpse container. Add checks to ensure the corpse is present, extract its contents to transfer them to the zombie, and safely delete the corpse upon animation success.
+2. **Move Created Food to Inventory**:
+   Update `MagCreations` in `pkg/spells/affect_spells.go#L533` to transfer the spawned food object directly to the player's inventory list instead of dropping it onto the ground.

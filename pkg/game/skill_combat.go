@@ -1,7 +1,7 @@
 package game
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -25,13 +25,13 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1 // 1-101
+	percent := rand.IntN(101) + 1 // 1-101
 	skillLevel := ch.GetSkill(SkillBackstab)
 	prob := skillLevel
 	if prob == 0 {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		prob = rand.Intn(51) + 50 // 50-100 fallback
+		prob = rand.IntN(51) + 50 // 50-100 fallback
 	}
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex()) // default male for now
@@ -93,7 +93,7 @@ func DoBash(ch *Player, target combat.Combatant) SkillResult {
 	// prob = GET_SKILL(ch, SKILL_BASH)
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.Intn(101) + 1)
+	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillBash)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -138,7 +138,7 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	// Formula: percent = ((7 - (GET_AC(vict)/10)) << 1) + number(1,101)
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.Intn(101) + 1)
+	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillKick)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -183,7 +183,7 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 	// Formula: percent = number(1,121) + MAX(GET_LEVEL(vict)-GET_LEVEL(ch),0)
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(121) + 1
+	percent := rand.IntN(121) + 1
 	percent += max(target.GetLevel()-ch.GetLevel(), 0)
 	prob := ch.GetSkill(SkillTrip)
 
@@ -240,7 +240,7 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
@@ -257,7 +257,7 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 		// 25% self-stun on failure
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(4) == 0 {
+		if rand.IntN(4) == 0 {
 			selfDam := damage / 2
 			if selfDam < 1 {
 				selfDam = 1
@@ -329,7 +329,7 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillRescue)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())

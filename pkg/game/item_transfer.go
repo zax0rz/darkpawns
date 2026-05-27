@@ -412,6 +412,25 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 			if len(parts) > 2 {
 				victName = parts[2]
 			}
+			// Check mob before player — bribe path
+			mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
+			if mob != nil {
+				if ch.Gold < amount {
+					ch.SendMessage("You don't have that many coins!\r\n")
+					return true
+				}
+				ch.SetGold(ch.GetGold() - amount)
+				w.MpGive(mob, ch, amount)
+				if ScriptEngine != nil && mob.HasScript("bribe") {
+					ctx := mob.CreateScriptContext(ch, nil, fmt.Sprintf("%d", amount))
+					ctx.World = NewWorldScriptableAdapter(w)
+					ctx.RoomVNum = mob.GetRoom()
+					if _, err := mob.RunScript("bribe", ctx); err != nil {
+						slog.Warn("bribe script error", "mob_vnum", mob.GetVNum(), "error", err)
+					}
+				}
+				return true
+			}
 			vict := w.giveFindVict(ch, victName)
 			if vict != nil {
 				w.performGiveGold(ch, vict, amount)
@@ -428,6 +447,34 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	if len(parts) > 1 {
 		victName = parts[1]
 	}
+
+	// Check mob before player — ongive/item path
+	mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
+	if mob != nil {
+		var obj *ObjectInstance
+		for _, o := range ch.Inventory.Items {
+			if isname(arg1, o.GetKeywords()) {
+				obj = o
+				break
+			}
+		}
+		if obj == nil {
+			ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
+			return true
+		}
+		if ScriptEngine != nil && mob.HasScript("ongive") {
+			ctx := mob.CreateScriptContext(ch, obj, "")
+			ctx.World = NewWorldScriptableAdapter(w)
+			ctx.RoomVNum = mob.GetRoom()
+			if _, err := mob.RunScript("ongive", ctx); err != nil {
+				slog.Warn("ongive script error", "mob_vnum", mob.GetVNum(), "error", err)
+			}
+		} else {
+			ch.SendMessage("You can't give that to them.\r\n")
+		}
+		return true
+	}
+
 	vict := w.giveFindVict(ch, victName)
 	if vict == nil {
 		return true

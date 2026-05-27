@@ -1,7 +1,7 @@
 package spells
 
 import (
-	"math/rand"
+	"math/rand/v2"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -198,7 +198,7 @@ func dice(num, sides int) int {
 	for i := 0; i < num; i++ {
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		total += rand.Intn(sides) + 1
+		total += rand.IntN(sides) + 1
 	}
 	return total
 }

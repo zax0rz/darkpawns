@@ -513,8 +513,24 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		}
 	}
 
-	// C-10: WAIT_STATE enforcement — combat skills set cooldowns
-	if s.player != nil && s.player.GetWaitState() > 0 {
+	// C-10: WAIT_STATE enforcement — combat skills set cooldowns.
+	// Non-combat informational commands bypass the wait so players can still
+	// look, check inventory, and communicate while their attack is pending.
+	waitBypass := map[string]bool{
+		"look": true, "l": true,
+		"inventory": true, "inv": true, "i": true,
+		"equipment": true, "eq": true,
+		"score": true, "sc": true,
+		"say": true, "'": true,
+		"tell": true,
+		"who": true,
+		"time": true,
+		"weather": true,
+		"help": true,
+		"exits": true,
+		"quit": true,
+	}
+	if s.player != nil && s.player.GetWaitState() > 0 && !waitBypass[cmd] {
 		s.sendText("You're too busy!\r\n")
 		return nil
 	}

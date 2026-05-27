@@ -259,21 +259,29 @@ func cmdPoofset(s *Session, args []string) error {
 	if len(args) >= 2 {
 		msg = strings.Join(args[1:], " ")
 	}
+
+	// Save poof to player record for persistence across logins
+	player := s.GetPlayer()
+	if player == nil {
+		s.Send("You don't seem to exist.")
+		return nil
+	}
+
 	if direction == "in" {
-		if msg == "" {
-			s.SetTempData("poofin", nil)
-			s.Send("Poofin cleared.")
+		if strings.TrimSpace(msg) == "" {
+			player.PoofIn = ""
+			s.Send("Poof-in message cleared.")
 		} else {
-			s.SetTempData("poofin", msg)
-			s.Send("Ok.")
+			player.PoofIn = msg
+			s.Send(fmt.Sprintf("Poof-in message set to: %s", msg))
 		}
 	} else {
-		if msg == "" {
-			s.SetTempData("poofout", nil)
-			s.Send("Poofout cleared.")
+		if strings.TrimSpace(msg) == "" {
+			player.PoofOut = ""
+			s.Send("Poof-out message cleared.")
 		} else {
-			s.SetTempData("poofout", msg)
-			s.Send("Ok.")
+			player.PoofOut = msg
+			s.Send(fmt.Sprintf("Poof-out message set to: %s", msg))
 		}
 	}
 	return nil

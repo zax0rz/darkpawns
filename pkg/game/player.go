@@ -157,7 +157,11 @@ type Player struct {
 
 	// Character title and description
 	Title       string // Character title (shown in who list)
-	Description string // Character description (shown on examine)
+	Description string
+
+	// Poof messages — immortals only, persistent across logins
+	PoofIn  string
+	PoofOut string // Character description (shown on examine)
 
 	// Prompt settings
 	PromptOn  bool   // Whether to show a prompt

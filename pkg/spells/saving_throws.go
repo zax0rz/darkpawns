@@ -1,7 +1,7 @@
 package spells
 
 import (
-	"math/rand"
+	"math/rand/v2"
 )
 
 // numClasses matches NUM_CLASSES from src/structs.h (12 classes, indices 0-11).
@@ -210,7 +210,7 @@ func CheckSavingThrow(ch interface{}, saveType SavingThrowType) bool {
 		save = 1
 	}
 	// #nosec G404 — game RNG, not cryptographic
-	roll := rand.Intn(100) // number(0, 99) in C
+	roll := rand.IntN(100) // number(0, 99) in C
 	return save < roll      // TRUE = successful save
 }
 
@@ -222,7 +222,7 @@ func Dice(num, sides int) int {
 	total := 0
 	for i := 0; i < num; i++ {
 		// #nosec G404 — game RNG, not cryptographic
-		total += rand.Intn(sides) + 1
+		total += rand.IntN(sides) + 1
 	}
 	return total
 }

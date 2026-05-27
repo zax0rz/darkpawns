@@ -21,7 +21,7 @@ package game
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 )
 
 // lvlImpl — implementor level for kill command (LVL_IMPL in structs.h)
@@ -96,12 +96,12 @@ func improveSkill(ch *Player, skill string) {
 	// Higher skill = harder to improve (like CircleMUD)
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	if rand.Intn(100)+1 > cur {
+	if rand.IntN(100)+1 > cur {
 		// Stat-based check: INT/WIS average gives improvement chance
 		chance := (ch.GetInt() + ch.GetWis()) / 4
 		// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-		if rand.Intn(100) < chance {
+		if rand.IntN(100) < chance {
 			ch.SetSkill(skill, cur+1)
 			ch.SendMessage(fmt.Sprintf("You feel a bit more competent in %s.\r\n", skill))
 		}

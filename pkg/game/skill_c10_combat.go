@@ -2,7 +2,7 @@ package game
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -20,7 +20,7 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404 — game RNG
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillDisembowel)
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
 		return SkillResult{
@@ -53,7 +53,7 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := ((5 - (target.GetAC()/10))*2) + (rand.Intn(101) + 1)
+	percent := ((5 - (target.GetAC()/10))*2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillDragonKick)
 	if percent > prob {
 		return SkillResult{
@@ -85,7 +85,7 @@ func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := ((7 - (target.GetAC()/10))*2) + (rand.Intn(101) + 1)
+	percent := ((7 - (target.GetAC()/10))*2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillTigerPunch)
 	if percent > prob {
 		return SkillResult{
@@ -115,7 +115,7 @@ func DoShoot(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "But you are already engaged in close-range combat!"}
 	}
 	// #nosec G404
-	percent := rand.Intn(101) + 1
+	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillShoot)
 	if percent >= prob {
 		return SkillResult{
@@ -125,7 +125,7 @@ func DoShoot(ch *Player, target combat.Combatant) SkillResult {
 			MessageToRoom: "A projectile narrowly misses its target!",
 		}
 	}
-	dam := ch.GetDamroll() + rand.Intn(6) + 1 + rand.Intn(4) + 1
+	dam := ch.GetDamroll() + rand.IntN(6) + 1 + rand.IntN(4) + 1
 	improveSkill(ch, SkillShoot)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 1,
@@ -150,7 +150,7 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := rand.Intn(101+target.GetLevel()) + 1
+	percent := rand.IntN(101+target.GetLevel()) + 1
 	prob := ch.GetSkill(SkillSubdue)
 	if levelDiff := target.GetLevel() - ch.GetLevel(); levelDiff > 0 {
 		percent += levelDiff
@@ -193,7 +193,7 @@ func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := rand.Intn(101+target.GetLevel()) + 1
+	percent := rand.IntN(101+target.GetLevel()) + 1
 	prob := ch.GetSkill(SkillSleeper)
 	if levelDiff := target.GetLevel() - ch.GetLevel(); levelDiff > 0 {
 		percent += levelDiff
@@ -234,7 +234,7 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := ((7 - (target.GetAC()/10))*2) + (rand.Intn(101) + 1)
+	percent := ((7 - (target.GetAC()/10))*2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillNeckbreak)
 	if percent > prob {
 		return SkillResult{
@@ -267,7 +267,7 @@ func DoAmbush(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := rand.Intn(131) + 1
+	percent := rand.IntN(131) + 1
 	prob := ch.GetSkill(SkillAmbush)
 	if percent > prob {
 		return SkillResult{
@@ -322,7 +322,7 @@ func CheckParry(defender *Player) bool {
 		return false
 	}
 	// #nosec G404 — game RNG; skill 0-100 scaled to 0-10000
-	return rand.Intn(10001) <= skill*100
+	return rand.IntN(10001) <= skill*100
 }
 
 // CheckNPCDodge checks if an NPC mob dodges an attack.
@@ -332,5 +332,5 @@ func CheckNPCDodge(mob interface{ GetLevel() int; IsAffected(int) bool; GetFight
 		return false
 	}
 	// #nosec G404
-	return rand.Intn(100) < mob.GetLevel()
+	return rand.IntN(100) < mob.GetLevel()
 }

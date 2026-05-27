@@ -4,7 +4,7 @@ package parser
 import (
 	"bufio"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"strconv"
 	"strings"
@@ -293,7 +293,7 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 		add := func() int {
 			// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-			v := rand.Intn(statmod + 1) // number(0, statmod) = rand.Intn(statmod+1)
+			v := rand.IntN(statmod + 1) // number(0, statmod) = rand.IntN(statmod+1)
 			if v > 7 {
 				return 7
 			}

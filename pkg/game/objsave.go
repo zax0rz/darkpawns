@@ -11,7 +11,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -44,7 +43,7 @@ const (
 // char_data.equipment[] (structs.h WEAR_* constants 0–20).
 // --------------------------------------------------------------------------
 
-func cWearPosToGoSlot(cPos int) (EquipmentSlot, bool) {
+func CWearPosToSlot(cPos int) (EquipmentSlot, bool) {
 	m := map[int]EquipmentSlot{
 		0:  SlotLight,
 		1:  SlotFingerR,
@@ -72,7 +71,7 @@ func cWearPosToGoSlot(cPos int) (EquipmentSlot, bool) {
 	return s, ok
 }
 
-func goSlotToCWearPos(s EquipmentSlot) (int, bool) {
+func SlotToCWearPos(s EquipmentSlot) (int, bool) {
 	m := map[EquipmentSlot]int{
 		SlotLight:   0,
 		SlotFingerR: 1,
@@ -343,7 +342,7 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 		return
 	}
 	cPos := locate - 1
-	_, ok := cWearPosToGoSlot(cPos)
+	_, ok := CWearPosToSlot(cPos)
 	if !ok {
 		obj.Location = LocInventoryPlayer(p.Name)
 		if err := p.Inventory.addItem(obj); err != nil {
@@ -697,10 +696,10 @@ func RentDeadline(ch *Player, recep *MobInstance, cost int) {
 	// In Go port, this is a social message — handled by the caller session/command layer.
 	days := (ch.Gold) / cost // C version uses GET_GOLD(ch) + GET_BANK_GOLD(ch)
 	if days > 1 {
-		_ = fmt.Sprintf("You can rent for %d days with the gold you have.", days)
+		ch.SendMessage(fmt.Sprintf("You can rent for %d days with the gold you have.\n", days))
 	} else if days == 1 {
 		// "You can rent for 1 day..."
-		_ = days
+		ch.SendMessage("You can rent for 1 day with the gold you have.\n")
 	}
 }
 
@@ -723,9 +722,18 @@ func SaveAllPlayers(players []*Player) {
 // JSON save file.
 // ==========================================================================
 func DeleteCrashFile(name string) bool {
-	err := DeletePlayer(name)
-	if err != nil && !os.IsNotExist(err) {
-		slog.Error("DeleteCrashFile: failed to delete", "name", name, "error", err)
+	record, err := LoadSaveData(name)
+	if err != nil {
+		slog.Error("DeleteCrashFile: failed to load", "name", name, "error", err)
+		return false
+	}
+	record.Inventory = nil
+	record.Equipment = nil
+	record.RentCode = 0
+	record.RentTime = 0
+	record.NetCostPerDiem = 0
+	if err := writeSaveData(name, record); err != nil {
+		slog.Error("DeleteCrashFile: failed to save cleared record", "name", name, "error", err)
 		return false
 	}
 	slog.Debug("DeleteCrashFile", "player", name)
@@ -744,7 +752,7 @@ func GenReceptionist(p *Player, cmd, arg string, mode int) bool {
 	switch strings.ToLower(cmd) {
 	case "offer":
 		cost := OfferRent(p, true, mode)
-		if cost > 0 && cost <= p.Gold {
+		if cost > 0 && cost <= p.Gold+p.BankGold {
 			p.SendMessage(fmt.Sprintf("You can rent for %d.\r\n", cost))
 		} else {
 			p.SendMessage("You can't afford to rent.\r\n")
@@ -752,7 +760,7 @@ func GenReceptionist(p *Player, cmd, arg string, mode int) bool {
 		return true
 	case "rent":
 		cost := OfferRent(p, false, mode)
-		if cost <= 0 || cost > p.Gold {
+		if cost <= 0 || cost > p.Gold+p.BankGold {
 			p.SendMessage("You can't afford to rent.\r\n")
 			return true
 		}
@@ -773,7 +781,7 @@ func GenReceptionist(p *Player, cmd, arg string, mode int) bool {
 // saveDataToPlayer (which creates bare Inventory/Equipment) and the actual
 // item restoration needed after load.
 // ==========================================================================
-func RestoreItemsFromSave(inv []saveItemData, eq []saveItemData, getProto func(vnum int) (*parser.Obj, bool)) ([]*ObjectInstance, map[int]*ObjectInstance) {
+func RestoreItemsFromSave(inv []SaveItemData, eq []SaveItemData, getProto func(vnum int) (*parser.Obj, bool)) ([]*ObjectInstance, map[int]*ObjectInstance) {
 	invItems := make([]*ObjectInstance, 0, len(inv))
 	for _, s := range inv {
 		proto, ok := getProto(s.VNum)

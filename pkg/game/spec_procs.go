@@ -15,8 +15,9 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
+	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/spells"
@@ -32,7 +33,7 @@ func randRange(min, max int) int {
 	}
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	return rand.Intn(max-min+1) + min
+	return rand.IntN(max-min+1) + min
 }
 
 func randN(n int) int {
@@ -41,7 +42,7 @@ func randN(n int) int {
 	}
 	// #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-	return rand.Intn(n)
+	return rand.IntN(n)
 }
 
 func (w *World) roomMessage(roomVNum int, msg string) {
@@ -480,8 +481,13 @@ func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	for _, obj := range items {
 		if strings.Contains(obj.GetKeywords(), "corpse") {
 			w.roomMessage(me.RoomVNum, me.GetName()+" savagely devours "+obj.GetShortDesc()+".")
+			// Spill corpse contents to room floor before destroying corpse.
+			// Matches C src/spec_procs.c:735-741: obj_from_obj + obj_to_room for each child.
+			for _, content := range obj.GetContents() {
+				w.AddItemToRoom(content, me.RoomVNum)
+			}
 			if err := w.MoveObjectToNowhere(obj); err != nil {
-				slog.Warn("MoveObjectToNowhere failed in scavenger spec", "obj_vnum", obj.GetVNum(), "error", err)
+				slog.Warn("MoveObjectToNowhere failed in fido spec", "obj_vnum", obj.GetVNum(), "error", err)
 			}
 			return true
 		}
@@ -498,46 +504,210 @@ func specJanitor(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	for _, obj := range items {
 		if !strings.Contains(obj.GetKeywords(), "corpse") && randN(2) == 0 {
 			w.roomMessage(me.GetRoom(), me.GetName()+" picks up "+obj.GetShortDesc()+".")
+			// Move to janitor's inventory (matches C obj_to_char) — players can kill
+			// janitor to retrieve items, unlike RemoveItemFromRoom which destroys them.
 			w.RemoveItemFromRoom(obj, me.GetRoom())
+			me.AddToInventory(obj)
 			return true
 		}
 	}
 	return false
 }
 
-// cityguard — mob spec: guards arrest outlaws
+// cityguard — mob spec: guards patrol, arrest outlaws, and protect citizens.
+// Ported from src/spec_procs.c:771-821. Handles four behaviors:
+// 1. If fighting, delegate to fighter skill routine.
+// 2. Scan room for outlaws and attack them.
+// 3. Scan for evil combatants attacking good-aligned targets and intervene.
 func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if isMoveCmd(cmd) && ch.GetRoomVNum() == me.RoomVNum {
-		flags := ch.GetFlags()
-		if flags&1 != 0 { // PLR_OUTLAW
-			sendToChar(ch, me.GetName()+" says, 'HALT!  You are under arrest!'")
-			w.roomMessage(me.RoomVNum, me.GetName()+" bars "+ch.GetName()+"'s way!")
-			return true
-		}
-	}
-	if me.IsFighting() {
-		return true
-	}
-	return false
-}
-
-// mayor — mob spec: walks around greeting people
-func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || randN(4) != 0 {
+	if cmd != "" || me.GetPosition() <= 0 {
 		return false
 	}
-	mayorSayings := []string{
-		"Hello, mate!",
-		"Nice to see you!",
-		"How d'you do?",
-		"Another fine day!",
-		"Welcome to New Thalos!",
-		"Good day!",
-		"Lovely to meet you!",
+
+	// If already fighting, use fighter combat skills (bash/parry/headbutt)
+	if me.IsFighting() {
+		return specFighter(w, ch, me, cmd, arg)
 	}
-	saying := mayorSayings[randN(len(mayorSayings))]
-	w.roomMessage(me.RoomVNum, me.GetName()+" says, '"+saying+"'")
+
+	players := w.GetPlayersInRoom(me.RoomVNum)
+
+	// Scan for outlaws — attack on sight (src/spec_procs.c:785-796)
+	for _, tch := range players {
+		if tch.IsNPC() {
+			continue
+		}
+		if (tch.GetFlags() & (1 << uint(PlrOutlaw))) != 0 {
+			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'We don't like OUTLAWS like you in this city!'")
+			if err := me.Attack(tch, w); err != nil {
+				slog.Warn("cityguard outlaw attack failed", "guard", me.GetName(), "target", tch.GetName(), "error", err)
+			}
+			return specFighter(w, ch, me, cmd, arg)
+		}
+	}
+
+	// Find the most evil combatant attacking a good-aligned target (src/spec_procs.c:799-821)
+	var evil *Player
+	maxEvil := 1000
+	for _, tch := range players {
+		if !tch.IsFighting() {
+			continue
+		}
+		align := tch.GetAlignment()
+		if align < maxEvil {
+			// Check their target is good-aligned (a player being attacked by an evil)
+			targetName := tch.GetFighting()
+			if tp, ok := w.GetPlayer(targetName); ok && tp.GetAlignment() >= 0 {
+				maxEvil = align
+				evil = tch
+			}
+		}
+	}
+	if evil != nil && evil.GetAlignment() < 0 {
+		targetName := evil.GetFighting()
+		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'PROTECT THE INNOCENT!  Surrender, "+evil.GetName()+"!'")
+		if err := me.Attack(evil, w); err != nil {
+			slog.Warn("cityguard protect attack failed", "guard", me.GetName(), "target", evil.GetName(), "error", err)
+		}
+		_ = targetName
+		return specFighter(w, ch, me, cmd, arg)
+	}
+
+	return false
+}
+
+// mayorState holds per-mob state for the mayor path-walking system.
+// Keyed by mob instance ID. Goroutine-safe via mayorMu.
+type mayorState struct {
+	path string
+	pos  int // current index into path
+}
+
+var (
+	mayorMu    sync.Mutex
+	mayorStates = map[int]*mayorState{}
+)
+
+// mayorOpenPath and mayorClosePath are the mayor's daily walk routes.
+// Ported from src/spec_procs.c:823-924.
+// Characters: 0-3=direction(N/E/S/W), W=wake, S=sleep, a-e/E=emote/say, O=open gate, C=close gate, .=done.
+const (
+	mayorOpenPath  = "W3a3003b33000c111d0d111Oe333333Oe22c222112212111a1S."
+	mayorClosePath = "W3a3003b33000c111d0d111CE333333CE22c222112212111a1S."
+)
+
+// specMayor — mob spec: daily walk schedule (New Thalos mayor opens/closes bazaar).
+// Ported from src/spec_procs.c:823-924.
+func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if cmd != "" {
+		return false
+	}
+
+	mayorMu.Lock()
+	st, exists := mayorStates[me.GetID()]
+	if !exists {
+		st = &mayorState{}
+		mayorStates[me.GetID()] = st
+	}
+	mayorMu.Unlock()
+
+	// Check if we should start a new path based on game hour
+	if st.path == "" || st.pos >= len(st.path) {
+		hour := timeInfo.Hours
+		switch hour {
+		case 6:
+			mayorMu.Lock()
+			st.path = mayorOpenPath
+			st.pos = 0
+			mayorMu.Unlock()
+		case 20:
+			mayorMu.Lock()
+			st.path = mayorClosePath
+			st.pos = 0
+			mayorMu.Unlock()
+		default:
+			return false
+		}
+	}
+
+	mayorMu.Lock()
+	if st.pos >= len(st.path) {
+		mayorMu.Unlock()
+		return false
+	}
+	action := st.path[st.pos]
+	st.pos++
+	mayorMu.Unlock()
+
+	switch action {
+	case '0':
+		w.mobPerformMove(me, 0) // NORTH
+	case '1':
+		w.mobPerformMove(me, 1) // EAST
+	case '2':
+		w.mobPerformMove(me, 2) // SOUTH
+	case '3':
+		w.mobPerformMove(me, 3) // WEST
+	case 'W':
+		me.SetPosition(8) // PosStanding
+		w.roomMessage(me.RoomVNum, me.GetName()+" awakens and groans loudly.")
+	case 'S':
+		me.SetPosition(4) // PosSleeping
+		w.roomMessage(me.RoomVNum, me.GetName()+" lies down and instantly falls asleep.")
+	case 'a':
+		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Hello Honey!'")
+		w.roomMessage(me.RoomVNum, me.GetName()+" smirks.")
+	case 'b':
+		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'What a view!  I must get something done about that dump!'")
+	case 'c':
+		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Vandals!  Youngsters nowadays have no respect for anything!'")
+	case 'd':
+		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Good day, citizens!'")
+	case 'e':
+		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'I hereby declare the bazaar open!'")
+	case 'E':
+		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'I hereby declare Bourbon closed!'")
+	case 'O':
+		w.mobOpenDoor(me, 0, "gate") // unlock + open gate to the NORTH
+	case 'C':
+		mayorMobCloseDoor(w, me, 0, "gate") // close + lock gate to the NORTH
+	case '.':
+		mayorMu.Lock()
+		st.path = ""
+		st.pos = 0
+		mayorMu.Unlock()
+	}
+
 	return true
+}
+
+// mayorMobCloseDoor closes and locks a door for the mayor, matching C do_gen_door(CLOSE+LOCK).
+func mayorMobCloseDoor(w *World, me *MobInstance, dir int, keyword string) {
+	dirName := dirKeys[dir]
+	room := w.GetRoomInWorld(me.GetRoom())
+	if room == nil {
+		return
+	}
+	ext, hasExit := room.Exits[dirName]
+	if !hasExit {
+		return
+	}
+
+	w.mu.Lock()
+	ext.DoorState = doorLocked
+	room.Exits[dirName] = ext
+
+	otherRoom := w.GetRoomInWorld(ext.ToRoom)
+	if otherRoom != nil {
+		backDir := revDir[dir]
+		backExt, hasBack := otherRoom.Exits[dirs[backDir]]
+		if hasBack && backExt.ToRoom == me.GetRoom() {
+			backExt.DoorState = doorLocked
+			otherRoom.Exits[dirs[backDir]] = backExt
+		}
+	}
+	w.mu.Unlock()
+
+	w.roomMessage(me.GetRoom(), me.GetName()+" closes and locks the gate.")
 }
 
 // dragon_breath — mob spec: breath weapon in combat
@@ -584,8 +754,27 @@ func specCitizen(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	return true
 }
 
-// cuchi — mob spec: random speech
+// cuchi — mob spec: Easter egg + random speech.
+// Matches src/spec_procs.c:1034-1071.
 func specCuchi(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	// "pat" command: Orodreth gets promoted; everyone else gets 10 gold (Easter egg)
+	if cmd == "pat" {
+		w.roomMessage(me.RoomVNum, ch.GetName()+" pats "+me.GetName()+" on the head and rubs around her ears.")
+		sendToChar(ch, "You pat "+me.GetName()+" on the head and rub around her ears.\r\n")
+		if ch.GetName() == "Orodreth" {
+			ch.SetLevel(LVL_IMPL)
+			sendToChar(ch, "Cuchi purrs at you contently.\r\n")
+			w.roomMessage(me.RoomVNum, me.GetName()+" purrs contently at "+ch.GetName()+".")
+		} else {
+			ch.mu.Lock()
+			ch.Gold += 10
+			ch.mu.Unlock()
+			sendToChar(ch, "Cuchi purrs at you and bestows a gift from the gods.\r\n")
+			w.roomMessage(me.RoomVNum, me.GetName()+" purrs at "+ch.GetName()+" and bestows a gift from the gods.")
+		}
+		return true
+	}
+
 	if cmd != "" || randN(4) != 0 {
 		return false
 	}
