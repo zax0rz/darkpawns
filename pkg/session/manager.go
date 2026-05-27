@@ -82,7 +82,7 @@ type Manager struct {
 	world        *game.World
 	combatEngine *combat.CombatEngine
 	shopManager  *systems.ShopManager
-	db           db.DB
+	db           db.Database
 	hasDB        bool
 	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
 	doorManager  *systems.DoorManager
@@ -138,7 +138,7 @@ func (m *Manager) GetModerationChecker() ModerationChecker {
 }
 
 // NewManager creates a new session manager.
-func NewManager(world *game.World, database *db.DB) *Manager {
+func NewManager(world *game.World, database db.Database) *Manager {
 	ce := combat.NewCombatEngine()
 	ce.Start()
 
@@ -161,13 +161,17 @@ func NewManager(world *game.World, database *db.DB) *Manager {
 		ipConnCount: make(map[string]int),
 	}
 	if database != nil {
-		m.db = *database
+		m.db = database
 		m.hasDB = true
 	}
 
 	// Wire moderation checker (in-memory when no DB, DB-backed when available).
 	if database != nil {
-		m.modChecker = NewModerationAdapter(moderation.NewManager(database.SQLDB()))
+		if concreteDB, ok := database.(*db.DB); ok {
+			m.modChecker = NewModerationAdapter(moderation.NewManager(concreteDB.SQLDB()))
+		} else {
+			m.modChecker = NewModerationAdapter(moderation.NewManager(nil))
+		}
 	} else {
 		m.modChecker = NewModerationAdapter(moderation.NewManager(nil))
 	}
@@ -450,6 +454,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	m.ipConnCount[ip]++
 	m.ipConnMu.Unlock()
 
+	ctx, cancel := context.WithCancel(context.Background())
 	session := &Session{
 		banLevel:            ipBanLevel, // BanNew/BanSelect enforced at login (DP-418)
 		conn:                conn,
@@ -462,6 +467,8 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		pendingEvents:       nil,
 		connectedAt:         time.Now(),
 		wantsStructuredData: true,
+		sessionCtx:          ctx,
+		cancelFunc:          cancel,
 	}
 
 	// Start goroutines for reading and writing
@@ -632,6 +639,11 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 
 	// 6. Close send channel (sync.Once makes this idempotent)
 	s.sendOnce.Do(func() { close(s.send) })
+
+	// 7. Cancel session context if defined
+	if s.cancelFunc != nil {
+		s.cancelFunc()
+	}
 }
 
 func (m *Manager) Unregister(playerName string) {
@@ -788,6 +800,11 @@ type Session struct {
 	// outbound message. Used by the dp-goat daemon for event tracking and
 	// reconnection replay. Zero is never sent (first message gets seq=1).
 	msgSeq uint64
+
+	// sessionCtx is the long-running connection context.
+	sessionCtx context.Context
+	// cancelFunc triggers cancellation of the entire session context on disconnect.
+	cancelFunc context.CancelFunc
 }
 
 // LiveAgentSession is already defined in admin package.
@@ -870,9 +887,31 @@ func (m *Manager) ShutdownGracefully(timeout time.Duration) {
 	// 2. Wait a brief moment for messages to flush
 	time.Sleep(1 * time.Second)
 
-	// 3. Unregister and cleanup each session
+	// 3. Unregister and cleanup each session sequentially with safety timeouts
 	for name, s := range sessions {
-		m.cleanupSession(s, name)
+		done := make(chan struct{})
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("CRITICAL PANIC in session shutdown cleanup",
+						"player", name,
+						"recover", r,
+					)
+				}
+				close(done)
+			}()
+			m.cleanupSession(s, name)
+		}()
+
+		select {
+		case <-done:
+			// Cleanup completed successfully
+		case <-time.After(1 * time.Second):
+			slog.Error("session cleanup timed out during graceful shutdown", "player", name)
+			if s.cancelFunc != nil {
+				s.cancelFunc()
+			}
+		}
 	}
 }
 

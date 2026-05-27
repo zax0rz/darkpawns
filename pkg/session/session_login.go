@@ -2,6 +2,7 @@
 package session
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -47,11 +48,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		s.agentHarness = login.Harness
 		s.agentModel = login.Model
 		s.agentVersion = login.Version
-		slog.Info(
+		slog.InfoContext(
+			s.sessionCtx,
 			"agent identity declared",
-			"harness", login.Harness,
-			"model", login.Model,
-			"player", login.PlayerName,
+			s.logAttrs(
+				slog.String("harness", login.Harness),
+				slog.String("model", login.Model),
+			)...,
 		)
 	}
 
@@ -106,13 +109,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 		// Look around so they see the room on entry!
 		if err := ExecuteCommand(s, "look", nil); err != nil {
-			slog.Error("look command failed on entry for guest", "player", s.player.Name, "error", err)
+			slog.ErrorContext(s.sessionCtx, "look command failed on entry for guest", s.logAttrs(slog.Any("error", err))...)
 		}
 
 		// Generate a dummy JWT token for WebSocket client auth checks
 		token, err := auth.GenerateJWT(guestName, s.isAgent, s.agentKeyID, "")
 		if err != nil {
-			slog.Error("failed to generate JWT token for guest", "error", err)
+			slog.ErrorContext(s.sessionCtx, "failed to generate JWT token for guest", s.logAttrs(slog.Any("error", err))...)
 		}
 		s.tokenIssuedAt = time.Now()
 
@@ -158,7 +161,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if s.manager.hasDB {
 		rec, err := s.manager.db.GetPlayer(login.PlayerName)
 		if err != nil {
-			slog.Error("DB load error", "player", login.PlayerName, "error", err)
+			slog.ErrorContext(s.sessionCtx, "DB load error", s.logAttrs(slog.Any("error", err))...)
 		}
 
 		if rec != nil && !login.NewChar {
@@ -179,7 +182,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			}
 			p, err := db.RecordToPlayer(rec, s.manager.world)
 			if err != nil {
-				slog.Error("RecordToPlayer error", "error", err)
+				slog.ErrorContext(s.sessionCtx, "RecordToPlayer error", s.logAttrs(slog.Any("error", err))...)
 				// Fall back to character creation
 				s.startNewCharFlow(login.PlayerName, login.Password)
 				return nil
@@ -218,7 +221,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		if errMsg, banned := s.manager.modChecker.CheckPreCommand(s.player.Name, ""); banned {
 			s.sendError(errMsg)
 			_ = s.conn.Close()
-			slog.Warn("banned player denied entry", "player", s.player.Name, "ip", ip)
+			slog.WarnContext(s.sessionCtx, "banned player denied entry", s.logAttrs(slog.String("ip", ip))...)
 			return nil
 		}
 	}
@@ -237,13 +240,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 		// Look around so they see the room on entry!
 		if err := ExecuteCommand(s, "look", nil); err != nil {
-			slog.Error("look command failed on entry", "player", s.player.Name, "error", err)
+			slog.ErrorContext(s.sessionCtx, "look command failed on entry", s.logAttrs(slog.Any("error", err))...)
 		}
 
 		// Generate JWT token for API access
 		token, err := auth.GenerateJWT(login.PlayerName, s.isAgent, s.agentKeyID, "")
 		if err != nil {
-			slog.Error("failed to generate JWT token", "error", err)
+			slog.ErrorContext(s.sessionCtx, "failed to generate JWT token", s.logAttrs(slog.Any("error", err))...)
 		}
 		s.tokenIssuedAt = time.Now()
 
@@ -269,13 +272,24 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			},
 		})
 		if err != nil {
-			slog.Error("json.Marshal error", "error", err)
+			slog.ErrorContext(s.sessionCtx, "json.Marshal error", s.logAttrs(slog.Any("error", err))...)
 			return nil
 		}
 		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 	}
 
 	return nil
+}
+
+// isHeavyCommand checks if the command is categorized as a heavy operation.
+func isHeavyCommand(cmd string) bool {
+	cmd = strings.ToLower(strings.TrimSpace(cmd))
+	switch cmd {
+	case "cast", "buy", "sell", "group", "split", "rent", "quit", "save":
+		return true
+	default:
+		return false
+	}
 }
 
 // handleCommand processes game commands.
@@ -335,11 +349,34 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return nil
 	}
 
+	// Determine timeout based on command scope (dynamic command contexts)
+	timeout := 5 * time.Second
+	if isHeavyCommand(cmd.Command) {
+		timeout = 15 * time.Second
+	}
+
+	parentCtx := s.sessionCtx
+	if parentCtx == nil {
+		parentCtx = context.Background()
+	}
+	cmdCtx, cancel := context.WithTimeout(parentCtx, timeout)
+	defer cancel()
+
 	// Capture pre-state for decision log
 	preState := s.capturePlayerState()
 	startTime := time.Now()
 
 	err := ExecuteCommand(s, cmd.Command, cmd.Args)
+
+	// Emit dynamic execution telemetry warning for slow commands (>500ms)
+	elapsed := time.Since(startTime)
+	if elapsed > 500*time.Millisecond {
+		slog.WarnContext(cmdCtx, "slow command execution warning",
+			"player", s.playerName,
+			"command", cmd.Command,
+			"elapsed_ms", elapsed.Milliseconds(),
+		)
+	}
 
 	// Log decision to database (DP-213)
 	s.captureAndLog(cmd.Command, cmd.Args, preState, startTime, err)

@@ -14,7 +14,13 @@ import (
 func (s *Session) readPump() {
 	defer func() {
 		if r := recover(); r != nil {
-			slog.Error("PANIC in readPump", "recover", r, "player", s.playerName, "stack", debug.Stack())
+			slog.Error("CRITICAL PANIC RECOVERED in readPump",
+				"player", s.playerName,
+				"recover", r,
+				"stack", string(debug.Stack()),
+			)
+			s.sendError("An internal server error occurred. Your connection has been reset.")
+			s.manager.Unregister(s.playerName)
 		}
 		// Always decrement IP connection count (C5 leak fix)
 		if !s.connCountDecremented && (s.request != nil || s.remoteIP != "") {
@@ -67,6 +73,13 @@ func (s *Session) readPump() {
 func (s *Session) writePump() {
 	ticker := time.NewTicker(54 * time.Second)
 	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("CRITICAL PANIC RECOVERED in writePump",
+				"player", s.playerName,
+				"recover", r,
+				"stack", string(debug.Stack()),
+			)
+		}
 		ticker.Stop()
 		_ = s.conn.Close()
 	}()

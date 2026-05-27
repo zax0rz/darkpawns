@@ -174,7 +174,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		}
 		hashedPwd, err := bcrypt.GenerateFromPassword([]byte(s.charPassword), bcrypt.DefaultCost)
 		if err != nil {
-			slog.Error("bcrypt hash error", "error", err)
+			slog.ErrorContext(s.sessionCtx, "bcrypt hash error", s.logAttrs(slog.Any("error", err))...)
 			return err
 		}
 		s.charPassword = string(hashedPwd)
@@ -342,7 +342,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	case "motd":
 		// When they press return, finalize character creation!
 		if err := s.completeCharCreation(); err != nil {
-			slog.Error("char creation failed", "error", err)
+			slog.ErrorContext(s.sessionCtx, "char creation failed", s.logAttrs(slog.Any("error", err))...)
 			return err
 		}
 
@@ -417,7 +417,7 @@ func (s *Session) sendStatsRollPrompt() {
 		Data: data,
 	})
 	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
+		slog.ErrorContext(s.sessionCtx, "json.Marshal error", s.logAttrs(slog.Any("error", err))...)
 		return
 	}
 	s.send <- msg
@@ -455,7 +455,7 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options map[string]
 		Data: data,
 	})
 	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
+		slog.ErrorContext(s.sessionCtx, "json.Marshal error", s.logAttrs(slog.Any("error", err))...)
 		return
 	}
 
@@ -495,11 +495,10 @@ func (s *Session) completeCharCreation() error {
 			if err := s.manager.db.CreatePlayer(r); err != nil {
 				// Check for constraint violation (player already exists)
 				if isUniqueConstraintError(err) {
-					slog.Warn("duplicate character name, rejecting creation",
-						"player", s.charName)
+					slog.WarnContext(s.sessionCtx, "duplicate character name, rejecting creation", s.logAttrs()...)
 					return fmt.Errorf("a character named '%s' already exists", s.charName)
 				}
-				slog.Error("DB create error during char creation", "error", err)
+				slog.ErrorContext(s.sessionCtx, "DB create error during char creation", s.logAttrs(slog.Any("error", err))...)
 				return fmt.Errorf("failed to save character: %w", err)
 			} else {
 				s.player.ID = r.ID
@@ -532,12 +531,12 @@ func (s *Session) completeCharCreation() error {
 	// For now, use LoginStartRoom which accounts for immortal/frozen status.
 	s.player.RoomVNum = game.LoginStartRoom(s.player)
 
-	slog.Info("completeCharCreation: player added to world", "player", s.player.Name, "room", s.player.GetRoom())
+	slog.InfoContext(s.sessionCtx, "completeCharCreation: player added to world", s.logAttrs()...)
 
 	// Safety: catch any panic in the rest of char creation
 	defer func() {
 		if r := recover(); r != nil {
-			slog.Error("PANIC in completeCharCreation", "recover", r, "player", s.player.Name)
+			slog.ErrorContext(s.sessionCtx, "PANIC in completeCharCreation", s.logAttrs(slog.Any("recover", r))...)
 		}
 	}()
 
@@ -552,12 +551,12 @@ func (s *Session) completeCharCreation() error {
 	s.charClass = 0
 	s.charHometown = 0
 	s.charStats = game.CharStats{}
-	slog.Info("completeCharCreation: state cleared")
+	slog.InfoContext(s.sessionCtx, "completeCharCreation: state cleared", s.logAttrs()...)
 
 	// Generate JWT token
 	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID, "")
 	if err != nil {
-		slog.Error("failed to generate JWT token", "error", err)
+		slog.ErrorContext(s.sessionCtx, "failed to generate JWT token", s.logAttrs(slog.Any("error", err))...)
 	}
 
 	// Send welcome with token
@@ -581,14 +580,14 @@ func (s *Session) completeCharCreation() error {
 		},
 	})
 	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
+		slog.ErrorContext(s.sessionCtx, "json.Marshal error", s.logAttrs(slog.Any("error", err))...)
 		return nil
 	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 
 	// Look around on entry
 	if err := ExecuteCommand(s, "look", nil); err != nil {
-		slog.Error("look command failed on entry for new character", "player", s.player.Name, "error", err)
+		slog.ErrorContext(s.sessionCtx, "look command failed on entry for new character", s.logAttrs(slog.Any("error", err))...)
 	}
 
 	return nil

@@ -2,6 +2,7 @@
 package session
 
 import (
+	"context"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
@@ -76,6 +77,7 @@ func (s *Session) GetPlayerLevel() int {
 
 // NewSession creates a bare session not associated with any WebSocket (for telnet/embed use).
 func (m *Manager) NewSession() *Session {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &Session{
 		manager:        m,
 		send:           make(chan []byte, 256),
@@ -83,6 +85,8 @@ func (m *Manager) NewSession() *Session {
 		subscribedVars: make(map[string]bool),
 		dirtyVars:      make(map[string]bool),
 		connectedAt:    time.Now(),
+		sessionCtx:     ctx,
+		cancelFunc:     cancel,
 	}
 }
 
@@ -132,8 +136,8 @@ func (m *Manager) HasDatabase() bool {
 }
 
 // GetDatabase returns the database instance.
-func (m *Manager) GetDatabase() *db.DB {
-	return &m.db
+func (m *Manager) GetDatabase() db.Database {
+	return m.db
 }
 
 // RemoteIP extracts the client IP address from request (WS) or directly (Telnet).
