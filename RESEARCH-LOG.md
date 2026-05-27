@@ -4,6 +4,37 @@ Living document. Updated per session by Daeron.
 
 ---
 
+## [SESSION] 2026-05-27 — Fidelity Audit Complete (Sessions 73-74)
+
+**Duration:** ~30 min (00:15–00:45 ET)
+**Participants:** Daeron, The Architect (Zach), Claude Code
+
+### What Happened
+
+Session 73's last four audit reports (spells, tattoo/tedit, utils/weather, whod/zedit) were read — all clean, no new issues.
+
+The Architect scoped 15 remaining fidelity issues into 4 briefs for Claude Code. Claude executed all briefs in a single session:
+
+- **Brief 6 (Shop System):** DP-504,505,506,507,508,509 fixed. DP-503 cancelled (file is used).
+- **Brief 7 (Spec Procs Critical):** DP-510,511,513 fixed. DP-513 was CRITICAL (fido deleting player gear).
+- **Brief 8 (Spec Procs Low):** DP-512,514 fixed. Mayor path-walking and Cuchi Easter egg restored.
+- **Brief 9 (Standalone Fidelity):** DP-443,453 fixed. Donation/immortal/frozen start rooms added.
+
+### Results
+
+- 13 of 14 issues fixed, 1 cancelled
+- Commit: ac3254a (111 files, 5319+/1088-)
+- Build clean, all tests passing, pushed to main
+- All Linear issues updated and marked Done
+
+### What's Next
+- Deploy to production
+- QA pass across all fixed systems
+- Test coverage (next Gemini project)
+- Remaining open issues: DP-417 (deferred), DP-328 (mobile UI), DP-213/224/231 (agent layer)
+
+---
+
 ## [SESSION] 2026-05-26 — Port Fidelity Audit + Gemini Expanded Audit
 
 **Duration:** ~1 hour (07:30–08:30 ET)
@@ -2147,3 +2178,30 @@ The fidelity audit prompt at `docs/briefs/full-fidelity-audit-prompt.md` is reus
 - Security gaps: WebSocket bypasses bans, profanity filter dead, muted players can spam socials
 
 **Running total (sessions 69-70):** 103 issues created
+
+---
+
+### Session 71 Summary (2026-05-27)
+
+**Duration:** Morning session
+**Model:** MiMo v2.5 Base
+**Focus:** Linting & formatting baseline + code quality infrastructure
+
+**What was done:**
+- Scoped golangci-lint (62 findings) and gofumpt (240 files) in main session
+- Wrote execution brief for Claude Code
+- Claude Code executed in ~40 minutes: commit `fb86252`
+- 254 files changed: .golangci.yml created, gofumpt formatting applied, dead code removed
+- All five verification checks passing: go build, go vet, go test, golangci-lint (0 issues), gofumpt
+- Makefile updated with `check-fmt` and `lint-fix` targets
+- CI workflow updated with lint job (golangci-lint + gofumpt gate)
+
+**Linter config (.golangci.yml):** Conservative set — errcheck, govet, ineffassign, staticcheck, unused, gosimple, gocritic. Style linters excluded. Test files and node_modules excluded from errcheck.
+
+**Key decisions:**
+- gofumpt replaces `go fmt` (superset, one tool)
+- Test files excluded from errcheck (different error handling patterns)
+- `a.Type` deprecation in save.go marked nolint (backward-compatible deserialization)
+- Dead code removed: `cmdSocial` (confirmed not registered by string), `packWeightLabel`, `infobarClear*`, `cmdInfoBarUpdate`, `sendGMCP`
+
+**What this enables:** Quality gates prevent regressions. Every future commit must pass linting. Boy Scout rule: touch a file, clean it up.

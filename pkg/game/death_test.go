@@ -1,7 +1,10 @@
 package game
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // ---------------------------------------------------------------------------
@@ -145,8 +148,124 @@ func TestCorpseAttackLongDesc(t *testing.T) {
 			if len(got) == 0 {
 				t.Error("corpseAttackLongDesc returned empty string")
 			}
-			// Just verify it returns a non-empty string — the actual text
-			// is flavor and may change
 		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// HandleDeath Tests
+// ---------------------------------------------------------------------------
+
+func TestHandleDeath_Mob(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+		},
+		Mobs: []parser.Mob{
+			{
+				VNum:      1,
+				ShortDesc: "a scary dragon",
+				LongDesc:  "A scary dragon is here.",
+				Keywords:  "dragon scary",
+				Level:     5,
+				Exp:       1000,
+				Gold:      500,
+			},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	// Spawn mob
+	mob, err := w.SpawnMob(1, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+
+	// Create killer player
+	killer := NewPlayer(99, "Hero", 1001)
+	if err := w.AddPlayer(killer); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	// Handle death
+	w.HandleDeath(mob, killer, 5) // Fireball
+
+	// Verify mob is dead
+	if mob.IsAlive() {
+		t.Error("mob should not be alive after HandleDeath")
+	}
+
+	// Verify XP and Kills were updated on player
+	if killer.Kills != 1 {
+		t.Errorf("killer Kills = %d, want 1", killer.Kills)
+	}
+
+	// Check if corpse was created in the room
+	items := w.roomItems[1001]
+	if len(items) != 1 {
+		t.Errorf("room items count = %d, want 1 (corpse)", len(items))
+	} else {
+		corpse := items[0]
+		if !corpse.IsCorpse {
+			t.Error("spawned item should be a corpse")
+		}
+		if !strings.Contains(corpse.Runtime.Keywords, "corpse") {
+			t.Errorf("corpse keywords = %q, want it to contain 'corpse'", corpse.Runtime.Keywords)
+		}
+	}
+}
+
+func TestHandleDeath_Player(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 8},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	// Create victim player
+	victim := NewPlayer(1, "Victim", 1001)
+	victim.SetLevel(10)
+	victim.SetExp(10000)
+	victim.Stats.Con = 15
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	// Killer player
+	killer := NewPlayer(2, "Killer", 1001)
+	if err := w.AddPlayer(killer); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	// Handle death
+	w.HandleDeath(victim, killer, 303) // Slash
+
+	// Verify victim was moved to respawn room (MortalStartRoom)
+	if victim.GetRoom() != MortalStartRoom {
+		t.Errorf("victim room = %d, want %d", victim.GetRoom(), MortalStartRoom)
+	}
+
+	// Verify XP penalty (combat death = exp/37)
+	expectedExp := 10000 - (10000 / 37)
+	if victim.GetExp() != expectedExp {
+		t.Errorf("victim Exp = %d, want %d", victim.GetExp(), expectedExp)
+	}
+
+	// Check corpse created in room 1001
+	items := w.roomItems[1001]
+	if len(items) != 1 {
+		t.Errorf("room items count = %d, want 1 (corpse)", len(items))
 	}
 }
