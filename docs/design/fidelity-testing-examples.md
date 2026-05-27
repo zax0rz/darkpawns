@@ -4,6 +4,30 @@ This document shows what C fidelity testing looks like in practice using `Assert
 
 ---
 
+## Level 0: Intent vs. Implementation (The DP-515 Rule)
+
+Before writing any fidelity test, determine: **is the C source correct?**
+
+Not all C source behavior is intentional. The integer truncation bug in `fight.c:1855` proves this — developer comments clearly stated intended multipliers (1.33x, 1.66x, 2.0x, 2.33x) but integer math produced different results. Players never experienced the intended behavior.
+
+**Decision framework:**
+
+1. **Does the C source have comments documenting intent?** If yes, the comments are ground truth, not the implementation.
+2. **Did players ever experience this behavior?** If yes, it's tradition — preserve it. If no, it's a broken promise — fix it.
+3. **Is the Go port preserving a bug or restoring intent?** Fidelity tests should verify intent, not bugs.
+
+**Example:** The position damage multiplier fidelity test should assert:
+- Sitting: 1.33x (not 1x as C produced)
+- Resting: 1.66x (not 1x as C produced)
+- Sleeping: 2.0x (matches both C intent and implementation)
+- Stunned: 2.33x (not 2x as C produced)
+
+The test validates developer intent, not C integer math.
+
+**Policy:** "Warts and all" applies to intentional design decisions that became tradition. It does NOT apply to implementation bugs that never worked as intended. See DP-515 for the decision record.
+
+---
+
 ## Level 1: Simple Value Mapping (Attack Hit Text)
 
 The simplest case — C has a lookup table, Go should match it exactly.
@@ -242,14 +266,16 @@ func TestRaceMenuText_Fidelity(t *testing.T) {
 
 | Priority | Test Target | Why |
 |----------|-------------|-----|
+| 0 | Intent vs. implementation check | Before any test, verify C source is correct (DP-515 rule) |
 | 1 | Race/class/hometown menu text | Already ported, verify exact match |
 | 2 | Attack hit text table | 15 entries, simple comparison |
 | 3 | Position update state machine | 8 branches, critical for combat |
-| 4 | Damage formula (min/max) | Core combat loop |
-| 5 | Saving throw formula | Affects every spell |
-| 6 | Movement sector costs | 12 sector types, simple mapping |
-| 7 | Spell damage dice | 40+ spells to verify |
-| 8 | Skill check formulas | Backstab, sneak, hide |
+| 4 | Position damage multiplier | Verify INTENT (1.33x/1.66x/2x/2.33x), not C integer math |
+| 5 | Damage formula (min/max) | Core combat loop |
+| 6 | Saving throw formula | Affects every spell |
+| 7 | Movement sector costs | 12 sector types, simple mapping |
+| 8 | Spell damage dice | 40+ spells to verify |
+| 9 | Skill check formulas | Backstab, sneak, hide |
 
 ---
 
