@@ -78,10 +78,10 @@ func TestParseFlag_InvalidChars(t *testing.T) {
 // NOTE: lineBuffer.Text() after consuming a buffered line (via Unread+Scan)
 // returns stale text from the underlying scanner's last Scan() call.
 // This means the correct usage pattern is:
-//   1. Scan() from scanner → Text() is valid
-//   2. Unread(line) → sets buffered
-//   3. Scan() → consumes buffered line (returns true, but Text() is stale)
-//   4. Scan() → reads next from scanner → Text() is valid
+//  1. Scan() from scanner → Text() is valid
+//  2. Unread(line) → sets buffered
+//  3. Scan() → consumes buffered line (returns true, but Text() is stale)
+//  4. Scan() → reads next from scanner → Text() is valid
 //
 // The production code (ParseMobFile) works correctly because it does NOT
 // call Text() between steps 3 and 4 — it calls Scan() twice to skip the
@@ -90,7 +90,7 @@ func TestLineBuffer_ScanAndUnread(t *testing.T) {
 	content := "line1\nline2\nline3\n"
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "test.txt")
-	if err := os.WriteFile(tmpFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(tmpFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -152,7 +152,7 @@ func TestLineBuffer_ScanAndUnread(t *testing.T) {
 func TestLineBuffer_DoubleUnread(t *testing.T) {
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "test.txt")
-	if err := os.WriteFile(tmpFile, []byte("line1\n"), 0644); err != nil {
+	if err := os.WriteFile(tmpFile, []byte("line1\n"), 0o644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -182,7 +182,7 @@ func TestLineBuffer_DoubleUnread(t *testing.T) {
 func TestLineBuffer_BufferedThenScanner(t *testing.T) {
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "test.txt")
-	if err := os.WriteFile(tmpFile, []byte("real1\nreal2\n"), 0644); err != nil {
+	if err := os.WriteFile(tmpFile, []byte("real1\nreal2\n"), 0o644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -229,7 +229,7 @@ func TestLineBuffer_BufferedThenScanner(t *testing.T) {
 func TestLineBuffer_Err(t *testing.T) {
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "test.txt")
-	if err := os.WriteFile(tmpFile, []byte("hello\n"), 0644); err != nil {
+	if err := os.WriteFile(tmpFile, []byte("hello\n"), 0o644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -252,8 +252,6 @@ func TestLineBuffer_Err(t *testing.T) {
 	}
 }
 
-
-
 // ParseAllZonFiles with invalid file in directory returns error (fails fast)
 func TestParseAllZonFiles_InvalidFile(t *testing.T) {
 	tmpDir := t.TempDir()
@@ -268,9 +266,9 @@ func TestParseAllZonFiles_InvalidFile(t *testing.T) {
 // ParseAllMobFiles with invalid file in directory
 func TestParseAllMobFiles_InvalidFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	_ = os.WriteFile(filepath.Join(tmpDir, "bad.mob"), []byte(""), 0644)
+	_ = os.WriteFile(filepath.Join(tmpDir, "bad.mob"), []byte(""), 0o644)
 	content := "#100\nkeyword~\nA mob~\nA mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
-	_ = os.WriteFile(filepath.Join(tmpDir, "good.mob"), []byte(content), 0644)
+	_ = os.WriteFile(filepath.Join(tmpDir, "good.mob"), []byte(content), 0o644)
 
 	mobs, err := ParseAllMobFiles(tmpDir)
 	if err != nil {
@@ -284,7 +282,7 @@ func TestParseAllMobFiles_InvalidFile(t *testing.T) {
 // ParseAllObjFiles with invalid file in directory
 func TestParseAllObjFiles_InvalidFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	_ = os.WriteFile(filepath.Join(tmpDir, "bad.obj"), []byte("garbage"), 0644)
+	_ = os.WriteFile(filepath.Join(tmpDir, "bad.obj"), []byte("garbage"), 0o644)
 	content := `#100
 obj~
 An obj~
@@ -295,7 +293,7 @@ An obj lies here.
 1 1 100.0
 $
 `
-	_ = os.WriteFile(filepath.Join(tmpDir, "good.obj"), []byte(content), 0644)
+	_ = os.WriteFile(filepath.Join(tmpDir, "good.obj"), []byte(content), 0o644)
 
 	objs, err := ParseAllObjFiles(tmpDir)
 	if err != nil {

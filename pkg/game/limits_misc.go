@@ -35,7 +35,7 @@ func (w *World) CheckIdling(p *Player) {
 			p.mu.Lock()
 			p.WasInRoom = roomVNum
 			if fighting != "" {
-					p.Fighting = ""
+				p.Fighting = ""
 			}
 			p.mu.Unlock()
 
@@ -93,6 +93,3 @@ func isFighting(p *Player) bool {
 	defer p.mu.RUnlock()
 	return p.Fighting != ""
 }
-
-
-

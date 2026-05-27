@@ -25,9 +25,9 @@ type Player struct {
 	MaxMove   int // Max movement points
 	Practices int // Practice sessions for skill training
 
-	Level int
-	Exp   int
-	Gold  int // Currency, used by Lua scripts
+	Level    int
+	Exp      int
+	Gold     int // Currency, used by Lua scripts
 	BankGold int // Bank account — from structs.h GET_BANK_GOLD
 
 	// Clan system (ported from clan.c)
@@ -174,18 +174,18 @@ type Player struct {
 	Deaths    int `json:"deaths"`
 
 	// Auto-exit display toggle
-	AutoExit   bool // Show exits automatically in room descriptions
-	HolyLight  bool // Can see in the dark (PRF_HOLYLIGHT)
+	AutoExit  bool // Show exits automatically in room descriptions
+	HolyLight bool // Can see in the dark (PRF_HOLYLIGHT)
 
 	// C-10: WAIT_STATE cooldown in PULSE_VIOLENCE ticks (1 tick = 2 seconds).
 	WaitState int
 	// C-11: parry stance toggle
-	Parrying bool
-	RoomFlags  bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
+	Parrying  bool
+	RoomFlags bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
 
 	// AutoGold indicates the player auto-loots gold from killed victims (PRF_AUTOGOLD = 24).
 	// Source: structs.h:#define PRF_AUTOGOLD 24
-	AutoGold  bool
+	AutoGold bool
 
 	// AutoSplit indicates the player splits gold among group members (PRF_AUTOSPLIT = 25).
 	// Source: structs.h:#define PRF_AUTOSPLIT 25
@@ -198,8 +198,8 @@ type Player struct {
 	SpellMap map[string]int
 
 	// Tattoo — from tattoo.c
-	Tattoo   int // tattoo type constant (TATTOO_*)
-	TatTimer int // hours remaining before tattoo can be used again
+	Tattoo    int // tattoo type constant (TATTOO_*)
+	TatTimer  int // hours remaining before tattoo can be used again
 	IdleTimer int // ticks of inactivity — limits.c check_idling()
 	WasInRoom int // previous room before void pull — limits.c GET_WAS_IN()
 
@@ -242,18 +242,18 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		Position:     8,                                          // POS_STANDING
 		ConnectedAt:  now,
 		LastActive:   now,
-		Birth:       now.Unix(), // character creation timestamp
-		Fighting:     "", // Not fighting anyone
+		Birth:        now.Unix(), // character creation timestamp
+		Fighting:     "",         // Not fighting anyone
 		AFK:          false,
 		AFKMessage:   "",
 		AutoGold:     false, // Autogold off by default
 		AutoSplit:    false, // Autosplit off by default
-		Alignment:    0, // Neutral by default
+		Alignment:    0,     // Neutral by default
 		SkillManager: engine.NewSkillManager(),
 		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
 		WaitState:    0,
 		JailTimer:    0,
-		Parrying:    false,
+		Parrying:     false,
 
 		SpellMap: make(map[string]int),
 	}
@@ -377,8 +377,9 @@ func (p *Player) CarriedWeight() int {
 // MaxCarryWeight returns the maximum weight this player can carry.
 // Source: utils.h CAN_CARRY_W(ch) = str_app[STRENGTH_APPLY_INDEX(ch)].carry_w
 // Table from constants.c str_app[] (4th column is carry_w):
-//   STR 0:0, 1:3, 2:3, 3:10, 4:25, 5:55, 6:80, 7:90, 8:100, 9:100,
-//   STR 10:115, 11:115, 12:140, 13:140, 14:170, 15:170, 16:195, 17:220, 18:255
+//
+//	STR 0:0, 1:3, 2:3, 3:10, 4:25, 5:55, 6:80, 7:90, 8:100, 9:100,
+//	STR 10:115, 11:115, 12:140, 13:140, 14:170, 15:170, 16:195, 17:220, 18:255
 func (p *Player) MaxCarryWeight() int {
 	strCarry := [...]int{0, 3, 3, 10, 25, 55, 80, 90, 100, 100, 115, 115, 140, 140, 170, 170, 195, 220, 255}
 	str := p.Strength
@@ -394,10 +395,11 @@ func (p *Player) MaxCarryWeight() int {
 // MaxWieldWeight returns the maximum weight this player can wield.
 // Source: act.item.c:1492 — str_app[STRENGTH_APPLY_INDEX(ch)].wield_w
 // Table from constants.c str_app[] (4th column is wield_w):
-//   STR 0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10,
-//   11:11, 12:12, 13:13, 14:14, 15:15, 16:16, 17:18, 18:20,
-//   19:40, 20:40, 21:40, 22:40, 23:40, 24:40, 25:40,
-//   18/01-50:22, 18/51-75:24, 18/76-90:26, 18/91-99:28, 18/100:30
+//
+//	STR 0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10,
+//	11:11, 12:12, 13:13, 14:14, 15:15, 16:16, 17:18, 18:20,
+//	19:40, 20:40, 21:40, 22:40, 23:40, 24:40, 25:40,
+//	18/01-50:22, 18/51-75:24, 18/76-90:26, 18/91-99:28, 18/100:30
 func (p *Player) MaxWieldWeight() int {
 	// Index 0-25 = STR 0-25, 26-30 = 18/01-50 through 18/100
 	strWield := [...]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 40, 40, 40, 40, 40, 40, 40, 22, 24, 26, 28, 30}

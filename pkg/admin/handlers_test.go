@@ -362,7 +362,7 @@ func TestHandleServerInfo_WrongMethod(t *testing.T) {
 func TestHandleLogs_GET(t *testing.T) {
 	lb := NewLogBuffer(100)
 	for i := 0; i < 5; i++ {
-		lb.Write([]byte(fmt.Sprintf("log entry %d", i+1)))
+		fmt.Fprintf(lb, "log entry %d", i+1)
 	}
 	handler := handleLogs(lb)
 
@@ -384,7 +384,7 @@ func TestHandleLogs_GET(t *testing.T) {
 func TestHandleLogs_GET_WithLinesParam(t *testing.T) {
 	lb := NewLogBuffer(100)
 	for i := 0; i < 10; i++ {
-		lb.Write([]byte(fmt.Sprintf("entry %d", i+1)))
+		fmt.Fprintf(lb, "entry %d", i+1)
 	}
 	handler := handleLogs(lb)
 

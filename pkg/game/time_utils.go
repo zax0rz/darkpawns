@@ -20,13 +20,13 @@ import (
 
 const (
 	// MUD time constants (Dark Pawns specific: 63 real sec per Mud hour)
-	SECS_PER_MUD_HOUR   = 63
-	SECS_PER_MUD_DAY    = 24 * SECS_PER_MUD_HOUR   // 1512
-	SECS_PER_MUD_MONTH  = 35 * SECS_PER_MUD_DAY    // 52920
-	SECS_PER_MUD_YEAR   = 17 * SECS_PER_MUD_MONTH  // 899640
+	SECS_PER_MUD_HOUR  = 63
+	SECS_PER_MUD_DAY   = 24 * SECS_PER_MUD_HOUR  // 1512
+	SECS_PER_MUD_MONTH = 35 * SECS_PER_MUD_DAY   // 52920
+	SECS_PER_MUD_YEAR  = 17 * SECS_PER_MUD_MONTH // 899640
 
 	// Real time constants
-	SECS_PER_REAL_HOUR = 3600 // 60 * 60
+	SECS_PER_REAL_HOUR = 3600  // 60 * 60
 	SECS_PER_REAL_DAY  = 86400 // 24 * 3600
 )
 
@@ -89,7 +89,8 @@ func MudTimePassed(t2, t1 time.Time) TimeInfoData {
 // Ported from age() in src/utils.c.
 //
 // In C: player_age = mud_time_passed(time(0), ch->player.time.birth);
-//       player_age.year += 17;
+//
+//	player_age.year += 17;
 func Age(birthUnix int64) TimeInfoData {
 	birth := time.Unix(birthUnix, 0)
 	now := time.Now()
@@ -110,8 +111,9 @@ func Age(birthUnix int64) TimeInfoData {
 // Ported from playing_time() in src/utils.c.
 //
 // In C: time_t secs = (time(0) - ch->player.time.logon) + ch->player.time.played;
-//       pt.day = secs / SECS_PER_REAL_DAY;
-//       pt.hours = (secs % SECS_PER_REAL_DAY) / SECS_PER_REAL_HOUR;
+//
+//	pt.day = secs / SECS_PER_REAL_DAY;
+//	pt.hours = (secs % SECS_PER_REAL_DAY) / SECS_PER_REAL_HOUR;
 func PlayingTime(connectedAt time.Time, playedDuration int64) TimeInfoData {
 	currentSession := int64(time.Since(connectedAt).Seconds())
 	totalSecs := currentSession + playedDuration
@@ -147,10 +149,11 @@ func PlayingTimeString(connectedAt time.Time, playedDuration int64) string {
 // Ported from parse_race() in src/utils.c.
 //
 // C switch cases (single char):
-//   'h' → RACE_HUMAN    'e' → RACE_ELF
-//   'd' → RACE_DWARF    'k' → RACE_KENDER
-//   'r' → RACE_RAKSHASA 'm' → RACE_MINOTAUR
-//   's' → RACE_SSAUR
+//
+//	'h' → RACE_HUMAN    'e' → RACE_ELF
+//	'd' → RACE_DWARF    'k' → RACE_KENDER
+//	'r' → RACE_RAKSHASA 'm' → RACE_MINOTAUR
+//	's' → RACE_SSAUR
 func ParseRace(ch byte) int {
 	switch ch {
 	case 'h':

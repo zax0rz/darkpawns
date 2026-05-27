@@ -40,7 +40,6 @@ func newDrinkPromotedCmd(flags *rootFlags) *cobra.Command {
 				body["container"] = bodyContainer
 			}
 			data, _, err := c.PostWithParams(path, params, body)
-
 			if err != nil {
 				return classifyAPIError(err, flags)
 			}

@@ -151,8 +151,8 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 
 	// Append report to file
-	if err := os.MkdirAll("misc", 0755); err == nil {
-		f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err := os.MkdirAll("misc", 0o755); err == nil {
+		f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err == nil {
 			defer f.Close()
 			if _, err := fmt.Fprintf(f, "%s [%s]: %s\n", ch.Name, time.Now().Format("2006-01-02 15:04"), arg); err != nil {

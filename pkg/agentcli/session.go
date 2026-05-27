@@ -27,15 +27,15 @@ type LogEntry struct {
 
 // SessionSummary holds aggregate stats for a completed session.
 type SessionSummary struct {
-	AgentID     string        `json:"agent_id"`
-	Turns       int           `json:"turns"`
-	Duration    time.Duration `json:"duration"`
-	AvgLatencyMs float64      `json:"avg_latency_ms"`
+	AgentID      string        `json:"agent_id"`
+	Turns        int           `json:"turns"`
+	Duration     time.Duration `json:"duration"`
+	AvgLatencyMs float64       `json:"avg_latency_ms"`
 
 	// Per-session derived stats (computed on finalize).
-	RoomsVisited   int `json:"rooms_visited"`
+	RoomsVisited     int `json:"rooms_visited"`
 	CombatEncounters int `json:"combat_encounters"`
-	GoalsCompleted int   `json:"goals_completed"`
+	GoalsCompleted   int `json:"goals_completed"`
 }
 
 // SessionLogger records per-decision log entries and computes summaries.
@@ -70,7 +70,7 @@ func (s *SessionLogger) Log(entry LogEntry) {
 // Creates parent directories if needed. Returns the number of bytes written.
 func (s *SessionLogger) WriteJSONL(path string) (int64, error) {
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return 0, fmt.Errorf("mkdir: %w", err)
 	}
 
@@ -83,8 +83,8 @@ func (s *SessionLogger) WriteJSONL(path string) (int64, error) {
 	enc := json.NewEncoder(f)
 	enc.SetEscapeHTML(false)
 	var total int64
-	for _, entry := range s.entries {
-		if err := enc.Encode(entry); err != nil {
+	for i := range s.entries {
+		if err := enc.Encode(s.entries[i]); err != nil {
 			return total, fmt.Errorf("encode entry %d: %w", total, err)
 		}
 		total++
@@ -97,18 +97,18 @@ func (s *SessionLogger) Finalize(logDir string) *SessionSummary {
 	s.duration = time.Since(s.started)
 
 	summary := &SessionSummary{
-		Turns:     len(s.entries),
-		Duration:  s.duration,
+		Turns:    len(s.entries),
+		Duration: s.duration,
 	}
 
 	if len(s.entries) > 0 {
 		var totalLatency int64
 		rooms := make(map[int]bool)
 		combat := 0
-		for _, e := range s.entries {
-			totalLatency += e.LatencyMs
-			rooms[e.RoomVnum] = true
-			if e.Action == "hit" || e.Action == "kill" || e.Action == "flee" {
+		for i := range s.entries {
+			totalLatency += s.entries[i].LatencyMs
+			rooms[s.entries[i].RoomVnum] = true
+			if s.entries[i].Action == "hit" || s.entries[i].Action == "kill" || s.entries[i].Action == "flee" {
 				combat++
 			}
 		}

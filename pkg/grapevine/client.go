@@ -293,7 +293,7 @@ func (c *Client) readLoop() {
 			if bc.Channel == "gossip" {
 				// Format message with premium deep-purple ANSI styling
 				formatted := fmt.Sprintf("\x1B[1;35m[Grapevine] %s@%s gossips, '%s'\033[0m\r\n", bc.Name, bc.Game, bc.Message)
-				
+
 				// Broadcast to all active MUD players who can hear gossip
 				players := c.world.AllPlayers()
 				for _, p := range players {

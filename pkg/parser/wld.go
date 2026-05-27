@@ -53,15 +53,13 @@ func (r *Room) IsLight() bool {
 
 // Exit represents a room exit.
 type Exit struct {
-	Direction    string
-	ToRoom       int
-	DoorState    int // 0=open, 1=EX_ISDOOR, 2=EX_ISDOOR|EX_PICKPROOF
-	Key          int // vnum of key, or -1
-	Keywords     string
-	Description  string
+	Direction   string
+	ToRoom      int
+	DoorState   int // 0=open, 1=EX_ISDOOR, 2=EX_ISDOOR|EX_PICKPROOF
+	Key         int // vnum of key, or -1
+	Keywords    string
+	Description string
 }
-
-
 
 // ParseWldFile parses a single .wld file and returns all rooms.
 func ParseWldFile(path string) ([]Room, error) {

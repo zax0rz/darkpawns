@@ -223,16 +223,8 @@ func (t *LoginAttemptTracker) purgeExpired() {
 	defer t.mu.Unlock()
 	now := time.Now()
 	for ip, a := range t.attempts {
-		if a.failures >= t.threshold {
-			// Keep locked-out entries until lockout expires
-			if now.Sub(a.lastFailAt) > t.lockout {
-				delete(t.attempts, ip)
-			}
-		} else {
-			// Non-locked entries: expire after lockout duration of inactivity
-			if now.Sub(a.lastFailAt) > t.lockout {
-				delete(t.attempts, ip)
-			}
+		if now.Sub(a.lastFailAt) > t.lockout {
+			delete(t.attempts, ip)
 		}
 	}
 }

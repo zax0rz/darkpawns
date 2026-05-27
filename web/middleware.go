@@ -40,7 +40,7 @@ func ContentNegotiationMiddleware(next http.Handler) http.Handler {
 			// Default API response
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
-// #nosec G104
+			// #nosec G104
 			_, _ = w.Write([]byte(`{"error": "API endpoint not found", "docs": "/api/openapi.json"}`))
 			return
 		}

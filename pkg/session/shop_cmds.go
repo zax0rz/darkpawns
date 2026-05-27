@@ -64,10 +64,11 @@ func cmdList(s *Session, args []string) error {
 		return nil
 	}
 
-	var lines []string
-	lines = append(lines, fmt.Sprintf("%s has the following items for sale:", keeperName))
-	lines = append(lines, "----------------------------------------")
-	lines = append(lines, fmt.Sprintf(" %-4s %-48s %6s", "##", "Item", "Cost"))
+	lines := []string{
+		fmt.Sprintf("%s has the following items for sale:", keeperName),
+		"----------------------------------------",
+		fmt.Sprintf(" %-4s %-48s %6s", "##", "Item", "Cost"),
+	}
 
 	found := false
 	index := 0

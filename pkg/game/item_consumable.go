@@ -68,17 +68,9 @@ func (w *World) doDrink(ch *Player, me *MobInstance, cmd, arg string) bool {
 	thirstAff := drinkAff[liqType][2]
 
 	// Calculate amount to drink
-	var amount int
-	if drunkAff > 0 {
-		amount = 3 + len(drinks)/2 // approximate: number(3,8) or condition-based
-		if amount > temp.Prototype.Values[1] {
-			amount = temp.Prototype.Values[1]
-		}
-	} else {
-		amount = 3 + len(drinks)/2
-		if amount > temp.Prototype.Values[1] {
-			amount = temp.Prototype.Values[1]
-		}
+	amount := 3 + len(drinks)/2 // approximate: number(3,8) or condition-based
+	if amount > temp.Prototype.Values[1] {
+		amount = temp.Prototype.Values[1]
 	}
 
 	w.actToRoom(ch, "$n drinks $p.", temp, nil)

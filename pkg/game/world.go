@@ -1,5 +1,6 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // Package game manages the game world state and player interactions.
+//
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -49,7 +50,7 @@ type World struct {
 	parsedData *parser.World // original parsed data, nil after boot
 
 	// World path for reload support
-	WorldPath  string
+	WorldPath string
 
 	// Runtime state
 	players    map[string]*Player   // keyed by player name
@@ -85,7 +86,6 @@ type World struct {
 
 	// Zone dispatcher for per-zone goroutine processing
 	zoneDispatcher *ZoneDispatcher
-
 
 	// House control records — loaded by HouseBoot() during initialization
 	HouseControl []HouseControl
@@ -138,20 +138,20 @@ func (w *World) SetCombatEngine(ce CombatEngine) {
 // NewWorld creates a new game world from parsed data.
 func NewWorld(parsed *parser.World) (*World, error) {
 	w := &World{
-		rooms:       make(map[int]*parser.Room),
-		mobs:        make(map[int]*parser.Mob),
-		objs:        make(map[int]*parser.Obj),
-		zones:       make(map[int]*parser.Zone),
-		players:     make(map[string]*Player),
-		activeMobs:  make(map[int]*MobInstance),
-		nextMobID:   1,
-		roomItems:        make(map[int][]*ObjectInstance),
-		nextObjID:         1,
-		objectInstances:  make(map[int]*ObjectInstance),
-		done:        make(chan bool),
-		shopManager: nil,    // Will be set via SetShopManager
-		parsedData:  parsed, // Keep reference for door loading etc.
-		WorldPath:   "", // Set externally for reload support
+		rooms:           make(map[int]*parser.Room),
+		mobs:            make(map[int]*parser.Mob),
+		objs:            make(map[int]*parser.Obj),
+		zones:           make(map[int]*parser.Zone),
+		players:         make(map[string]*Player),
+		activeMobs:      make(map[int]*MobInstance),
+		nextMobID:       1,
+		roomItems:       make(map[int][]*ObjectInstance),
+		nextObjID:       1,
+		objectInstances: make(map[int]*ObjectInstance),
+		done:            make(chan bool),
+		shopManager:     nil,    // Will be set via SetShopManager
+		parsedData:      parsed, // Keep reference for door loading etc.
+		WorldPath:       "",     // Set externally for reload support
 	}
 
 	// Index rooms by VNum
@@ -414,6 +414,7 @@ func (w *World) ForEachMobInRoomInterface(roomVNum int, fn func(m interface{})) 
 }
 
 // GetRoomInWorld returns a room by VNum, or nil if not found.
+//
 // Deprecated: use GetRoom (snapshot version) instead.
 func (w *World) GetRoomInWorld(vnum int) *parser.Room {
 	w.mu.RLock()
@@ -594,8 +595,10 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	case "open":
 		openParts := strings.Fields(args)
 		if len(openParts) > 0 {
-			dirMap := map[string]int{"north": 0, "east": 1, "south": 2, "west": 3, "up": 4, "down": 5,
-				"n": 0, "e": 1, "s": 2, "w": 3, "u": 4, "d": 5}
+			dirMap := map[string]int{
+				"north": 0, "east": 1, "south": 2, "west": 3, "up": 4, "down": 5,
+				"n": 0, "e": 1, "s": 2, "w": 3, "u": 4, "d": 5,
+			}
 			if dir, ok := dirMap[strings.ToLower(openParts[0])]; ok {
 				keyword := ""
 				if len(openParts) > 1 {
@@ -717,8 +720,8 @@ func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
 
 	if target != nil {
 		// Social with target
-		w.actToRoomMob(mob, social.Messages[2], target)    // char to vict
-		w.actToRoomMob(mob, social.Messages[3], target)    // room to vict (exclude mob & vict)
+		w.actToRoomMob(mob, social.Messages[2], target) // char to vict
+		w.actToRoomMob(mob, social.Messages[3], target) // room to vict (exclude mob & vict)
 		if len(social.Messages) > 4 {
 			w.actToRoomMob(mob, social.Messages[4], target) // vict to char
 		}
@@ -727,8 +730,8 @@ func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
 		mob.SendMessage(social.Messages[5])
 	} else {
 		// Social without target
-		mob.SendMessage(social.Messages[0])                // char_auto (to mob itself)
-		w.actToRoomMob(mob, social.Messages[1], nil)       // room (exclude mob)
+		mob.SendMessage(social.Messages[0])          // char_auto (to mob itself)
+		w.actToRoomMob(mob, social.Messages[1], nil) // room (exclude mob)
 	}
 }
 
@@ -766,7 +769,8 @@ func (w *World) actToRoomMob(mob *MobInstance, msg string, target *Player) {
 
 // IsRoomDark returns true if the given room VNum is dark.
 // Based on utils.h IS_DARK() macro:
-//   IS_DARK(room) = !world[room].light && (ROOM_FLAGGED(room, ROOM_DARK) || (outside && nighttime))
+//
+//	IS_DARK(room) = !world[room].light && (ROOM_FLAGGED(room, ROOM_DARK) || (outside && nighttime))
 func (w *World) IsRoomDark(roomVNum int) bool {
 	room := w.GetRoomInWorld(roomVNum)
 	if room == nil {
@@ -1165,8 +1169,8 @@ func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
 			if m.GetName() == charName {
 				for _, obj := range m.Inventory {
 					if obj.VNum == objVNum {
-					// Equipment slot determination requires object WearFlags mapping —
-					// deferred until equipment system fully wires obj prototype slots.
+						// Equipment slot determination requires object WearFlags mapping —
+						// deferred until equipment system fully wires obj prototype slots.
 						// (parser.Obj.WearFlags exists; equipment system not yet wired)
 						return false
 					}

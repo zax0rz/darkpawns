@@ -159,7 +159,7 @@ func (s *Spawner) pickRandomRoom() *parser.Room {
 	// Try random picks first
 	for attempt := 0; attempt < 5; attempt++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		idx := rand.IntN(len(rooms))
 		if isRoomValidForSpawn(&rooms[idx]) {
 			return &rooms[idx]
@@ -167,9 +167,9 @@ func (s *Spawner) pickRandomRoom() *parser.Room {
 	}
 
 	// Fallback: linear scan
-	for _, room := range rooms {
-		if isRoomValidForSpawn(&room) {
-			return &room
+	for i := range rooms {
+		if isRoomValidForSpawn(&rooms[i]) {
+			return &rooms[i]
 		}
 	}
 	return nil
@@ -185,7 +185,7 @@ func (s *Spawner) pickRandomZoneRoom(zone int) *parser.Room {
 	// Try random picks first
 	for attempt := 0; attempt < 5; attempt++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		idx := rand.IntN(len(rooms))
 		if isRoomValidForRandZon(&rooms[idx], zone) {
 			return &rooms[idx]
@@ -193,9 +193,9 @@ func (s *Spawner) pickRandomZoneRoom(zone int) *parser.Room {
 	}
 
 	// Fallback: linear scan
-	for _, room := range rooms {
-		if isRoomValidForRandZon(&room, zone) {
-			return &room
+	for i := range rooms {
+		if isRoomValidForRandZon(&rooms[i], zone) {
+			return &rooms[i]
 		}
 	}
 	return nil
@@ -208,7 +208,7 @@ func percentLoad(obj *parser.Obj) bool {
 		return true
 	}
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	return obj.LoadPercent > (rand.Float64() * 100.0)
 }
 
@@ -716,4 +716,3 @@ func (s *Spawner) zoneHasPlayers(zoneNum int) bool {
 	})
 	return hasPlayer
 }
-

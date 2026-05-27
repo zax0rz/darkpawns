@@ -372,7 +372,8 @@ func (wf *WordFilterEntry) censor(message string) string {
 // AddReport stores an abuse report (DB if available, always logs).
 func (m *Manager) AddReport(r AbuseReport) {
 	if m.hasDB {
-		_, err := m.db.Exec(`
+		_, err := m.db.Exec(
+			`
 			INSERT INTO abuse_reports (reporter, target, report_type, description, room_vnum, timestamp, status)
 			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 			r.Reporter, r.Target, string(r.ReportType), r.Description, r.RoomVNum, r.Timestamp, string(r.Status),
@@ -396,7 +397,8 @@ func (m *Manager) AddPenalty(p PlayerPenalty) {
 		if p.ExpiresAt != nil {
 			expiresAt = p.ExpiresAt
 		}
-		_, err := m.db.Exec(`
+		_, err := m.db.Exec(
+			`
 			INSERT INTO player_penalties (player_name, penalty_type, issued_at, expires_at, reason, issued_by)
 			VALUES ($1, $2, $3, $4, $5, $6)`,
 			playerName, p.PenaltyType, p.IssuedAt, expiresAt, p.Reason, p.IssuedBy,
@@ -485,7 +487,8 @@ func (m *Manager) AddWordFilter(pattern string, isRegex bool, actionStr, created
 	m.mu.Unlock()
 
 	if m.hasDB {
-		_, err := m.db.Exec(`
+		_, err := m.db.Exec(
+			`
 			INSERT INTO word_filters (pattern, is_regex, action, created_by)
 			VALUES ($1, $2, $3, $4)`,
 			pattern, isRegex, action, createdBy,

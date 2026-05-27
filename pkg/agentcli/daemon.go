@@ -76,7 +76,7 @@ func (d *Daemon) Start(ctx context.Context) error {
 
 	// Ensure socket directory exists
 	sockPath := socketPath(d.cfg.PlayerName)
-	if err := os.MkdirAll(filepath.Dir(sockPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(sockPath), 0o755); err != nil {
 		return fmt.Errorf("mkdir socket dir: %w", err)
 	}
 	// Remove stale socket
@@ -268,7 +268,7 @@ func (d *Daemon) handleVars(data json.RawMessage) error {
 	}
 
 	// Buffer event
-	d.events.Append("vars", vars)
+	_, _ = d.events.Append("vars", vars)
 
 	return nil
 }
@@ -284,7 +284,7 @@ func (d *Daemon) handleState(data json.RawMessage) error {
 		slog.Warn("save state", "error", err)
 	}
 
-	d.events.Append("state", state)
+	_, _ = d.events.Append("state", state)
 	return nil
 }
 
@@ -299,7 +299,7 @@ func (d *Daemon) handleEvent(data json.RawMessage) error {
 		return nil // not all events have structured data
 	}
 
-	d.events.Append(evt.Type, data)
+	_, _ = d.events.Append(evt.Type, data)
 	return nil
 }
 
@@ -401,10 +401,10 @@ func (d *Daemon) executeCommand(req DaemonRequest) DaemonResponse {
 func (d *Daemon) cmdStatus() DaemonResponse {
 	state := d.state.Get()
 	data, _ := json.Marshal(map[string]interface{}{
-		"player": state.Player,
-		"room":   state.Room,
+		"player":   state.Player,
+		"room":     state.Room,
 		"fighting": state.Fighting,
-		"gold":   state.Player.Gold,
+		"gold":     state.Player.Gold,
 	})
 	return DaemonResponse{OK: true, Data: data}
 }

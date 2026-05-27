@@ -39,7 +39,7 @@ S
 $
 `
 
-	if err := os.WriteFile(testFile, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
 
@@ -99,8 +99,8 @@ S
 $
 `
 
-	_ = os.WriteFile(filepath.Join(tmpDir, "1.wld"), []byte(content1), 0644)
-	_ = os.WriteFile(filepath.Join(tmpDir, "2.wld"), []byte(content2), 0644)
+	_ = os.WriteFile(filepath.Join(tmpDir, "1.wld"), []byte(content1), 0o644)
+	_ = os.WriteFile(filepath.Join(tmpDir, "2.wld"), []byte(content2), 0o644)
 
 	rooms, err := ParseAllWldFiles(tmpDir)
 	if err != nil {

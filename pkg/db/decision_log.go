@@ -175,9 +175,9 @@ type DecisionRecord struct {
 	Args         []string
 	RawInput     string
 
-	DecisionSource    string
-	PromptTokens      int
-	CompletionTokens  int
+	DecisionSource   string
+	PromptTokens     int
+	CompletionTokens int
 
 	PreRoom      int
 	PreZone      int
@@ -224,11 +224,11 @@ type CombatRecord struct {
 	Damage       int
 	Outcome      string
 
-	TargetHealth     int
-	TargetMaxHealth  int
-	TargetLevel      int
-	TargetPosition   int
-	TargetCount      int
+	TargetHealth    int
+	TargetMaxHealth int
+	TargetLevel     int
+	TargetPosition  int
+	TargetCount     int
 }
 
 // ---------------------------------------------------------------------------
@@ -243,12 +243,12 @@ const (
 // DecisionLogWriter buffers decision and combat records and flushes them to
 // PostgreSQL in batches. Safe for concurrent use.
 type DecisionLogWriter struct {
-	db         *DB
-	mu         sync.Mutex
-	decisions  []*DecisionRecord
-	combat     []*CombatRecord
-	flushTicker   *time.Ticker
-	stopCh     chan struct{}
+	db          *DB
+	mu          sync.Mutex
+	decisions   []*DecisionRecord
+	combat      []*CombatRecord
+	flushTicker *time.Ticker
+	stopCh      chan struct{}
 }
 
 // NewDecisionLogWriter creates a writer and starts the background flush loop.
@@ -369,19 +369,23 @@ func (dlw *DecisionLogWriter) flushDecisions(ctx context.Context, records []*Dec
 		if i > 0 {
 			sb.WriteString(",\n")
 		}
-		args = append(args, r.SessionID, r.PlayerName, r.IsAgent, r.AgentHarness, r.AgentModel)
-		args = append(args, r.TurnNumber, r.SessionElapsed)
-		args = append(args, r.Command, r.CommandClass, r.Args, r.RawInput)
-		args = append(args, r.DecisionSource, r.PromptTokens, r.CompletionTokens)
-		args = append(args, r.PreRoom, r.PreZone, r.PreHealth, r.PreMaxHealth)
-		args = append(args, r.PreMana, r.PreMaxMana, r.PreMove, r.PreMaxMove)
-		args = append(args, r.PreLevel, r.PreFighting, r.PrePosition, r.PreInvCount)
-		args = append(args, r.PostRoom, r.PostZone, r.PostHealth, r.PostMaxHealth)
-		args = append(args, r.PostMana, r.PostMaxMana, r.PostMove, r.PostMaxMove)
-		args = append(args, r.PostLevel, r.PostFighting, r.PostPosition, r.PostInvCount)
-		args = append(args, r.OutcomeCategory, r.OutcomeValue, r.OutcomeText, r.DurationMs)
+		args = append(
+			args,
+			r.SessionID, r.PlayerName, r.IsAgent, r.AgentHarness, r.AgentModel,
+			r.TurnNumber, r.SessionElapsed,
+			r.Command, r.CommandClass, r.Args, r.RawInput,
+			r.DecisionSource, r.PromptTokens, r.CompletionTokens,
+			r.PreRoom, r.PreZone, r.PreHealth, r.PreMaxHealth,
+			r.PreMana, r.PreMaxMana, r.PreMove, r.PreMaxMove,
+			r.PreLevel, r.PreFighting, r.PrePosition, r.PreInvCount,
+			r.PostRoom, r.PostZone, r.PostHealth, r.PostMaxHealth,
+			r.PostMana, r.PostMaxMana, r.PostMove, r.PostMaxMove,
+			r.PostLevel, r.PostFighting, r.PostPosition, r.PostInvCount,
+			r.OutcomeCategory, r.OutcomeValue, r.OutcomeText, r.DurationMs,
+		)
 
-		sb.WriteString(fmt.Sprintf(
+		fmt.Fprintf(
+			&sb,
 			"($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
 			argIdx, argIdx+1, argIdx+2, argIdx+3, argIdx+4,
 			argIdx+5, argIdx+6,
@@ -394,7 +398,7 @@ func (dlw *DecisionLogWriter) flushDecisions(ctx context.Context, records []*Dec
 			argIdx+30, argIdx+31, argIdx+32, argIdx+33,
 			argIdx+34, argIdx+35, argIdx+36, argIdx+37,
 			argIdx+38, argIdx+39, argIdx+40, argIdx+41,
-		))
+		)
 		argIdx += 42
 	}
 
@@ -423,17 +427,21 @@ func (dlw *DecisionLogWriter) flushCombat(ctx context.Context, records []*Combat
 		if i > 0 {
 			sb.WriteString(",\n")
 		}
-		args = append(args, r.DecisionID, r.SessionID, r.RoundNumber)
-		args = append(args, r.AttackerName, r.AttackerVnum, r.DefenderName, r.DefenderVnum)
-		args = append(args, r.AttackType, r.Damage, r.Outcome)
-		args = append(args, r.TargetHealth, r.TargetMaxHealth, r.TargetLevel, r.TargetPosition, r.TargetCount)
+		args = append(
+			args,
+			r.DecisionID, r.SessionID, r.RoundNumber,
+			r.AttackerName, r.AttackerVnum, r.DefenderName, r.DefenderVnum,
+			r.AttackType, r.Damage, r.Outcome,
+			r.TargetHealth, r.TargetMaxHealth, r.TargetLevel, r.TargetPosition, r.TargetCount,
+		)
 
-		sb.WriteString(fmt.Sprintf(
+		fmt.Fprintf(
+			&sb,
 			"($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
 			argIdx, argIdx+1, argIdx+2, argIdx+3, argIdx+4,
 			argIdx+5, argIdx+6, argIdx+7, argIdx+8, argIdx+9,
 			argIdx+10, argIdx+11, argIdx+12, argIdx+13, argIdx+14,
-		))
+		)
 		argIdx += 15
 	}
 

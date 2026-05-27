@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math/rand/v2"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -25,7 +26,7 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
 		return SkillResult{
 			Success: false, WaitCh: 2,
-			MessageToCh: ActMessage("You try to disembowel $N, but $E dodges!", chPronouns, &victPronouns, ""),
+			MessageToCh:   ActMessage("You try to disembowel $N, but $E dodges!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to disembowel you, but misses!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to disembowel $N, but fails!", chPronouns, &victPronouns, ""),
 		}
@@ -34,7 +35,7 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 	improveSkill(ch, SkillDisembowel)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 2,
-		MessageToCh: ActMessage("You drive your blade deep into $N's gut!", chPronouns, &victPronouns, ""),
+		MessageToCh:   ActMessage("You drive your blade deep into $N's gut!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n drives $s blade deep into your gut!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n disembowels $N in a shower of gore!", chPronouns, &victPronouns, ""),
 	}
@@ -53,12 +54,12 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := ((5 - (target.GetAC()/10))*2) + (rand.IntN(101) + 1)
+	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillDragonKick)
 	if percent > prob {
 		return SkillResult{
 			Success: false, WaitCh: 1,
-			MessageToCh: ActMessage("You attempt a dragon kick on $N but miss!", chPronouns, &victPronouns, ""),
+			MessageToCh:   ActMessage("You attempt a dragon kick on $N but miss!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n attempts a dragon kick on you but misses!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n attempts a dragon kick on $N but misses!", chPronouns, &victPronouns, ""),
 		}
@@ -67,7 +68,7 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	improveSkill(ch, SkillDragonKick)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 1,
-		MessageToCh: ActMessage("You unleash a devastating dragon kick against $N!", chPronouns, &victPronouns, ""),
+		MessageToCh:   ActMessage("You unleash a devastating dragon kick against $N!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n unleashes a devastating dragon kick against you!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n dragon kicks $N!", chPronouns, &victPronouns, ""),
 	}
@@ -85,12 +86,12 @@ func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := ((7 - (target.GetAC()/10))*2) + (rand.IntN(101) + 1)
+	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillTigerPunch)
 	if percent > prob {
 		return SkillResult{
 			Success: false, WaitCh: 2,
-			MessageToCh: ActMessage("You snap a tiger punch at $N but miss!", chPronouns, &victPronouns, ""),
+			MessageToCh:   ActMessage("You snap a tiger punch at $N but miss!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n snaps a tiger punch at you but misses!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to tiger punch $N but misses!", chPronouns, &victPronouns, ""),
 		}
@@ -99,7 +100,7 @@ func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 	improveSkill(ch, SkillTigerPunch)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 2,
-		MessageToCh: ActMessage("You snap a lightning-fast tiger punch into $N!", chPronouns, &victPronouns, ""),
+		MessageToCh:   ActMessage("You snap a lightning-fast tiger punch into $N!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n snaps a lightning-fast tiger punch into you!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n tiger punches $N!", chPronouns, &victPronouns, ""),
 	}
@@ -120,7 +121,7 @@ func DoShoot(ch *Player, target combat.Combatant) SkillResult {
 	if percent >= prob {
 		return SkillResult{
 			Success: false, WaitCh: 1,
-			MessageToCh: "Twang... you miss!",
+			MessageToCh:   "Twang... you miss!",
 			MessageToVict: "Something streaks toward you but narrowly misses!",
 			MessageToRoom: "A projectile narrowly misses its target!",
 		}
@@ -129,7 +130,7 @@ func DoShoot(ch *Player, target combat.Combatant) SkillResult {
 	improveSkill(ch, SkillShoot)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 1,
-		MessageToCh: "You hear a roar of pain! Your shot hits!",
+		MessageToCh:   "You hear a roar of pain! Your shot hits!",
 		MessageToVict: "A projectile pierces you!",
 		MessageToRoom: fmt.Sprintf("%s fires a projectile that strikes %s!", ch.Name, target.GetName()),
 	}
@@ -161,7 +162,7 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 	if percent > prob {
 		return SkillResult{
 			Success: false, WaitCh: 3,
-			MessageToCh: ActMessage("$N avoids your misplaced blow to the back of $S head.", chPronouns, &victPronouns, ""),
+			MessageToCh:   ActMessage("$N avoids your misplaced blow to the back of $S head.", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n misses a blow to the back of your head.", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$N avoids $n's misplaced blow to the back of $S head.", chPronouns, &victPronouns, ""),
 		}
@@ -169,7 +170,7 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 	improveSkill(ch, SkillSubdue)
 	return SkillResult{
 		Success: true, Damage: 0, StunTarget: true, WaitCh: 1, WaitTarget: 3,
-		MessageToCh: ActMessage("You knock $M out cold.", chPronouns, &victPronouns, ""),
+		MessageToCh:   ActMessage("You knock $M out cold.", chPronouns, &victPronouns, ""),
 		MessageToVict: "Someone sneaks up behind you and knocks you out!",
 		MessageToRoom: ActMessage("$n knocks out $N with a well-placed blow to the back of the head.", chPronouns, &victPronouns, ""),
 	}
@@ -204,7 +205,7 @@ func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
 	if percent > prob {
 		return SkillResult{
 			Success: false, WaitCh: 2,
-			MessageToCh: ActMessage("You try to grab $N in a sleeper hold but fail!", chPronouns, &victPronouns, ""),
+			MessageToCh:   ActMessage("You try to grab $N in a sleeper hold but fail!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to put a sleeper hold on you, but you break free!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to put $N in a sleeper hold...", chPronouns, &victPronouns, ""),
 		}
@@ -212,7 +213,7 @@ func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
 	improveSkill(ch, SkillSleeper)
 	return SkillResult{
 		Success: true, Damage: 0, SleepTarget: true, WaitCh: 2,
-		MessageToCh: ActMessage("You put $N in a sleeper hold.", chPronouns, &victPronouns, ""),
+		MessageToCh:   ActMessage("You put $N in a sleeper hold.", chPronouns, &victPronouns, ""),
 		MessageToVict: "You feel very sleepy... Zzzzz..",
 		MessageToRoom: ActMessage("$n puts $N in a sleeper hold. $N goes to sleep.", chPronouns, &victPronouns, ""),
 	}
@@ -234,12 +235,12 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := ((7 - (target.GetAC()/10))*2) + (rand.IntN(101) + 1)
+	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillNeckbreak)
 	if percent > prob {
 		return SkillResult{
 			Success: false, WaitCh: 3,
-			MessageToCh: ActMessage("You try to break $S neck, but $E is too strong!", chPronouns, &victPronouns, ""),
+			MessageToCh:   ActMessage("You try to break $S neck, but $E is too strong!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to break your neck, but can't!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to break $N's neck, but $N slips free!", chPronouns, &victPronouns, ""),
 		}
@@ -248,7 +249,7 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 	improveSkill(ch, SkillNeckbreak)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 3,
-		MessageToCh: ActMessage("You snap $N's neck with a sickening crack!", chPronouns, &victPronouns, ""),
+		MessageToCh:   ActMessage("You snap $N's neck with a sickening crack!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n snaps your neck with a sickening crack!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n breaks $N's neck!", chPronouns, &victPronouns, ""),
 	}
@@ -272,7 +273,7 @@ func DoAmbush(ch *Player, target combat.Combatant) SkillResult {
 	if percent > prob {
 		return SkillResult{
 			Success: false, WaitCh: 1,
-			MessageToCh: ActMessage("You spring from the shadows but $N avoids your ambush!", chPronouns, &victPronouns, ""),
+			MessageToCh:   ActMessage("You spring from the shadows but $N avoids your ambush!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n springs from the shadows but you dodge the ambush!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n springs from the shadows but fails to ambush $N!", chPronouns, &victPronouns, ""),
 		}
@@ -288,7 +289,7 @@ func DoAmbush(ch *Player, target combat.Combatant) SkillResult {
 	improveSkill(ch, SkillAmbush)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 1, WaitTarget: 1,
-		MessageToCh: ActMessage("You spring from the shadows and ambush $N!", chPronouns, &victPronouns, ""),
+		MessageToCh:   ActMessage("You spring from the shadows and ambush $N!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n leaps from the shadows and ambushes you!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n leaps from the shadows to ambush $N!", chPronouns, &victPronouns, ""),
 	}
@@ -327,7 +328,12 @@ func CheckParry(defender *Player) bool {
 
 // CheckNPCDodge checks if an NPC mob dodges an attack.
 // Source: fight.c:1970-1975 — number(0,100) < GET_LEVEL(ch)
-func CheckNPCDodge(mob interface{ GetLevel() int; IsAffected(int) bool; GetFighting() string }) bool {
+func CheckNPCDodge(mob interface {
+	GetLevel() int
+	IsAffected(int) bool
+	GetFighting() string
+},
+) bool {
 	if mob.GetFighting() == "" || !mob.IsAffected(affDodge) {
 		return false
 	}

@@ -43,7 +43,7 @@ func NewEventBuffer(name string) (*EventBuffer, error) {
 		return nil, fmt.Errorf("home dir: %w", err)
 	}
 	dir := filepath.Join(home, ".dp-goat", "events")
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("mkdir events: %w", err)
 	}
 	eb := &EventBuffer{
@@ -123,7 +123,7 @@ func (eb *EventBuffer) Append(eventType string, data interface{}) (uint64, error
 	}
 	line = append(line, '\n')
 
-	f, err := os.OpenFile(eb.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(eb.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return ev.Seq, fmt.Errorf("open events: %w", err)
 	}

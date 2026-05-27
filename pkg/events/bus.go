@@ -29,9 +29,9 @@ type subscriber struct {
 
 // InProcessBus is a simple in-memory event bus implementation.
 type InProcessBus struct {
-	mu        sync.RWMutex
-	handlers  map[string][]subscriber
-	nextID    atomic.Uint64
+	mu       sync.RWMutex
+	handlers map[string][]subscriber
+	nextID   atomic.Uint64
 }
 
 // NewInProcessBus creates a new in-memory event bus.

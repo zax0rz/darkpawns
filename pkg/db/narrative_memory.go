@@ -107,7 +107,8 @@ func (db *DB) InitNarrativeMemory() error {
 // from Manager callback hooks — does not block game loop.
 func (db *DB) WriteNarrativeMemory(m *NarrativeMemory) (int64, error) {
 	var id int64
-	err := db.conn.QueryRow(`
+	err := db.conn.QueryRow(
+		`
 		INSERT INTO agent_narrative_memory
 			(agent_name, event_type, summary, room_vnum, room_name,
 			 related_entity, related_vnum, valence, salience,
@@ -134,7 +135,8 @@ func (db *DB) WriteNarrativeMemory(m *NarrativeMemory) (int64, error) {
 //	large:    30 memories  (~1200 tokens)
 //	unlimited: no limit    (not recommended in production)
 func (db *DB) BootstrapMemories(agentName string, limit int) ([]*NarrativeMemory, error) {
-	rows, err := db.conn.Query(`
+	rows, err := db.conn.Query(
+		`
 		SELECT id, agent_name, event_type, summary, room_vnum, room_name,
 		       related_entity, related_vnum, valence, salience,
 		       social_event_id, session_id, created_at, updated_at
@@ -155,7 +157,8 @@ func (db *DB) BootstrapMemories(agentName string, limit int) ([]*NarrativeMemory
 // RecentMemories returns memories from a specific session — used for session
 // consolidation cron (scripts/dp_session_consolidate.py).
 func (db *DB) RecentMemories(agentName, sessionID string) ([]*NarrativeMemory, error) {
-	rows, err := db.conn.Query(`
+	rows, err := db.conn.Query(
+		`
 		SELECT id, agent_name, event_type, summary, room_vnum, room_name,
 		       related_entity, related_vnum, valence, salience,
 		       social_event_id, session_id, created_at, updated_at
@@ -177,7 +180,8 @@ func (db *DB) SocialEventMemories(socialEventID string) ([]*NarrativeMemory, err
 	if socialEventID == "" {
 		return nil, fmt.Errorf("social_event_id cannot be empty")
 	}
-	rows, err := db.conn.Query(`
+	rows, err := db.conn.Query(
+		`
 		SELECT id, agent_name, event_type, summary, room_vnum, room_name,
 		       related_entity, related_vnum, valence, salience,
 		       social_event_id, session_id, created_at, updated_at
@@ -195,7 +199,8 @@ func (db *DB) SocialEventMemories(socialEventID string) ([]*NarrativeMemory, err
 
 // WriteSessionSummary stores a post-session LLM consolidation.
 func (db *DB) WriteSessionSummary(agentName, sessionID, summary string, eventCount int, start, end time.Time) error {
-	_, err := db.conn.Exec(`
+	_, err := db.conn.Exec(
+		`
 		INSERT INTO agent_session_summaries
 			(agent_name, session_id, summary, event_count, session_start, session_end)
 		VALUES ($1,$2,$3,$4,$5,$6)
@@ -214,7 +219,8 @@ func (db *DB) WriteSessionSummary(agentName, sessionID, summary string, eventCou
 // GetSessionSummaries returns the N most recent session summaries for an agent.
 // Included in LLM bootstrap after raw memories (higher-level context).
 func (db *DB) GetSessionSummaries(agentName string, limit int) ([]string, error) {
-	rows, err := db.conn.Query(`
+	rows, err := db.conn.Query(
+		`
 		SELECT summary FROM agent_session_summaries
 		WHERE agent_name = $1
 		ORDER BY session_end DESC NULLS LAST, created_at DESC
@@ -250,7 +256,8 @@ func (db *DB) DecayStaleMemories(cutoffDays int) (decayed, pruned int, err error
 
 	// Decay: multiply salience by 0.5 for neutral, 0.75 for high-valence
 	// (high-valence = |valence| >= 2, per PHASE4-AGENT-PROTOCOL.md spec)
-	result, err := db.conn.Exec(`
+	result, err := db.conn.Exec(
+		`
 		UPDATE agent_narrative_memory
 		SET salience = CASE
 			WHEN ABS(valence) >= 2 THEN salience * 0.75
@@ -267,7 +274,8 @@ func (db *DB) DecayStaleMemories(cutoffDays int) (decayed, pruned int, err error
 	decayed = int(n)
 
 	// Prune below floor
-	result, err = db.conn.Exec(`
+	result, err = db.conn.Exec(
+		`
 		DELETE FROM agent_narrative_memory WHERE salience <= 0.05`,
 	)
 	if err != nil {

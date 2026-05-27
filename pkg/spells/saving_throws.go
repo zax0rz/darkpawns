@@ -211,7 +211,7 @@ func CheckSavingThrow(ch interface{}, saveType SavingThrowType) bool {
 	}
 	// #nosec G404 — game RNG, not cryptographic
 	roll := rand.IntN(100) // number(0, 99) in C
-	return save < roll      // TRUE = successful save
+	return save < roll     // TRUE = successful save
 }
 
 // Dice rolls N dice of S sides and returns the total (e.g. dice(2,6) = 2d6).

@@ -2,6 +2,7 @@ package game
 
 import (
 	"math/rand/v2"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -24,13 +25,13 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(101) + 1 // 1-101
 	skillLevel := ch.GetSkill(SkillBackstab)
 	prob := skillLevel
 	if prob == 0 {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		prob = rand.IntN(51) + 50 // 50-100 fallback
 	}
 
@@ -68,8 +69,6 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 }
 
-
-
 // DoBash implements do_bash() from act.offensive.c lines 423-478.
 // Strength-based check. On success: damage + target sits + stunned.
 // On failure: user sits.
@@ -92,7 +91,7 @@ func DoBash(ch *Player, target combat.Combatant) SkillResult {
 	// Bash formula: percent = ((5 - (GET_AC(vict)/10)) << 1) + number(1,101)
 	// prob = GET_SKILL(ch, SKILL_BASH)
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillBash)
 
@@ -137,7 +136,7 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 
 	// Formula: percent = ((7 - (GET_AC(vict)/10)) << 1) + number(1,101)
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillKick)
 
@@ -182,7 +181,7 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 
 	// Formula: percent = number(1,121) + MAX(GET_LEVEL(vict)-GET_LEVEL(ch),0)
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(121) + 1
 	percent += max(target.GetLevel()-ch.GetLevel(), 0)
 	prob := ch.GetSkill(SkillTrip)
@@ -239,7 +238,7 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 	damage := (skillLevel/2 + 1) + 4 // higher base damage
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(101) + 1
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -256,7 +255,7 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 		}
 		// 25% self-stun on failure
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(4) == 0 {
 			selfDam := damage / 2
 			if selfDam < 1 {
@@ -273,19 +272,23 @@ func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
 	improveSkill(ch, SkillHeadbutt)
 
 	return SkillResult{
-		Success:     true,
-		Damage:      damage,
-		MessageToCh: ActMessage("You slam your forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
+		Success:       true,
+		Damage:        damage,
+		MessageToCh:   ActMessage("You slam your forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n slams $s forehead into you with a sickening crack!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n slams $s forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
-		StunTarget:   true,
-		WaitCh:       2,
+		StunTarget:    true,
+		WaitCh:        2,
 	}
 }
 
 // DoRescue implements do_rescue() from act.offensive.c lines 480-539.
 // Interposes between attacker and target.
-func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine interface{ StartCombat(combat.Combatant, combat.Combatant) error; StopCombat(string) }) SkillResult {
+func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine interface {
+	StartCombat(combat.Combatant, combat.Combatant) error
+	StopCombat(string)
+},
+) SkillResult {
 	if ch.GetSkill(SkillRescue) == 0 {
 		return SkillResult{Success: false, MessageToCh: "But only true warriors can do this!"}
 	}
@@ -328,7 +331,7 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillRescue)
 

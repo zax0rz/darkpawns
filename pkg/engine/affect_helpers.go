@@ -5,7 +5,8 @@ package engine
 // They will be removed or rewritten in Phase 2.
 
 // MasterAffect represents a master_affected_type from CircleMUD (handler.c).
-// DEPRECATED: Use Affect directly. Retained for migration compatibility.
+//
+// Deprecated: Use Affect directly. Retained for migration compatibility.
 type MasterAffect struct {
 	Type      int    // Spell/skill type (SPELL_XXX or SKILL_XXX)
 	Duration  int    // Duration in ticks
@@ -23,7 +24,8 @@ const (
 )
 
 // StatModifiable is the interface characters must implement for affect support.
-// DEPRECATED: Use Affectable instead. Retained for migration compatibility.
+//
+// Deprecated: Use Affectable instead. Retained for migration compatibility.
 type StatModifiable interface {
 	GetStat(name string) int
 	SetStat(name string, val int)
@@ -41,7 +43,10 @@ type StatModifiable interface {
 	RemoveMasterAffect(af *MasterAffect)
 	GetEquipment() interface {
 		GetItems() []interface {
-			GetAffects() []interface{ GetLocation() int; GetModifier() int }
+			GetAffects() []interface {
+				GetLocation() int
+				GetModifier() int
+			}
 			GetBitvector() uint64
 		}
 	}
@@ -65,7 +70,8 @@ type EquipAffectProvider interface {
 type ApplyFunction func(ch interface{}, loc int, mod int, msg string)
 
 // DefaultApplyModify implements aff_apply_modify from handler.c (lines 136-276).
-// DEPRECATED: Use applyLocationToStat table in affect.go instead.
+//
+// Deprecated: Use applyLocationToStat table in affect.go instead.
 func DefaultApplyModify(ch interface{}, loc int, mod int, msg string) {
 	if sm, ok := ch.(StatModifiable); ok {
 		switch loc {
@@ -110,7 +116,8 @@ func DefaultApplyModify(ch interface{}, loc int, mod int, msg string) {
 }
 
 // AffModify implements affect_modify from handler.c line 280.
-// DEPRECATED: Use AffectManager.applyAffectImmediate instead.
+//
+// Deprecated: Use AffectManager.applyAffectImmediate instead.
 func AffModify(ch interface{}, loc int, mod int, bitv uint64, add bool, applyFn ApplyFunction) {
 	if applyFn == nil {
 		applyFn = DefaultApplyModify
@@ -129,7 +136,8 @@ func AffModify(ch interface{}, loc int, mod int, bitv uint64, add bool, applyFn 
 }
 
 // AffectModifyAR implements affect_modify_ar from handler.c line 294.
-// DEPRECATED: Use AffectManager.applyAffectImmediate instead.
+//
+// Deprecated: Use AffectManager.applyAffectImmediate instead.
 func AffectModifyAR(ch interface{}, loc int, mod int, bitv uint64, add bool, applyFn ApplyFunction) {
 	if applyFn == nil {
 		applyFn = DefaultApplyModify
@@ -148,7 +156,8 @@ func AffectModifyAR(ch interface{}, loc int, mod int, bitv uint64, add bool, app
 }
 
 // AffectTotal implements affect_total from handler.c lines 314-373.
-// DEPRECATED: Use AffectManager.RecalculateStats instead.
+//
+// Deprecated: Use AffectManager.RecalculateStats instead.
 func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 	if applyFn == nil {
 		applyFn = DefaultApplyModify
@@ -221,7 +230,8 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 }
 
 // MasterAffectToChar implements master_affect_to_char from handler.c lines 377-396.
-// DEPRECATED: Use AffectManager.ApplyAffect directly.
+//
+// Deprecated: Use AffectManager.ApplyAffect directly.
 func MasterAffectToChar(ch interface{}, af *Affect, byType int, objNum int) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -244,13 +254,15 @@ func MasterAffectToChar(ch interface{}, af *Affect, byType int, objNum int) {
 }
 
 // AffectToChar implements affect_to_char from handler.c line 400.
-// DEPRECATED: Use AffectManager.ApplyAffect directly.
+//
+// Deprecated: Use AffectManager.ApplyAffect directly.
 func AffectToChar(ch interface{}, af *Affect) {
 	MasterAffectToChar(ch, af, BySpell, 0)
 }
 
 // AffectToChar2 implements affect_to_char2 from handler.c lines 405-427.
-// DEPRECATED: Use AffectManager.ApplyAffect directly.
+//
+// Deprecated: Use AffectManager.ApplyAffect directly.
 func AffectToChar2(ch interface{}, af *MasterAffect) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -272,7 +284,8 @@ func AffectToChar2(ch interface{}, af *MasterAffect) {
 }
 
 // AffectRemove implements affect_remove from handler.c lines 428-438.
-// DEPRECATED: Use AffectManager.RemoveAffect directly.
+//
+// Deprecated: Use AffectManager.RemoveAffect directly.
 func AffectRemove(ch interface{}, af *MasterAffect) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -284,7 +297,8 @@ func AffectRemove(ch interface{}, af *MasterAffect) {
 }
 
 // AffectFromChar implements affect_from_char from handler.c lines 443-452.
-// DEPRECATED: Use AffectManager.RemoveAffectsBySpell directly.
+//
+// Deprecated: Use AffectManager.RemoveAffectsBySpell directly.
 func AffectFromChar(ch interface{}, spellType int) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -299,7 +313,8 @@ func AffectFromChar(ch interface{}, spellType int) {
 }
 
 // AffectedBySpell implements affected_by_spell from handler.c lines 460-469.
-// DEPRECATED: Use AffectManager.HasAffectBySpell directly.
+//
+// Deprecated: Use AffectManager.HasAffectBySpell directly.
 func AffectedBySpell(ch interface{}, spellType int) bool {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
@@ -314,7 +329,8 @@ func AffectedBySpell(ch interface{}, spellType int) bool {
 }
 
 // AffectJoin implements affect_join from handler.c lines 473-499.
-// DEPRECATED: Use AffectManager directly.
+//
+// Deprecated: Use AffectManager directly.
 func AffectJoin(ch interface{}, af *MasterAffect, addDur, avgDur, addMod, avgMod bool) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {

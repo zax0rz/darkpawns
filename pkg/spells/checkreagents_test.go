@@ -118,9 +118,9 @@ func TestCheckReagents_BonusScalesWithLevel(t *testing.T) {
 		wantMin int
 		want    int
 	}{
-		{level: 1, wantMin: 1, want: 1},   // level/2 = 0, clamped to 1
-		{level: 2, wantMin: 1, want: 1},   // level/2 = 1
-		{level: 10, wantMin: 5, want: 5},  // level/2 = 5
+		{level: 1, wantMin: 1, want: 1},    // level/2 = 0, clamped to 1
+		{level: 2, wantMin: 1, want: 1},    // level/2 = 1
+		{level: 10, wantMin: 5, want: 5},   // level/2 = 5
 		{level: 30, wantMin: 15, want: 15}, // level/2 = 15
 	}
 

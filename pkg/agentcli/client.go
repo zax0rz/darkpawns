@@ -26,13 +26,13 @@ func NewAgentClient(cfg *AgentConfig) *AgentClient {
 // GameState holds the latest structured state from the server.
 type GameState struct {
 	Player struct {
-		Name     string `json:"name"`
-		Health   int    `json:"health"`
-		MaxHealth int   `json:"max_health"`
-		Mana     int    `json:"mana"`
-		Level    int    `json:"level"`
-		Exp      int    `json:"exp"`
-		Gold     int    `json:"gold"`
+		Name      string `json:"name"`
+		Health    int    `json:"health"`
+		MaxHealth int    `json:"max_health"`
+		Mana      int    `json:"mana"`
+		Level     int    `json:"level"`
+		Exp       int    `json:"exp"`
+		Gold      int    `json:"gold"`
 	} `json:"player"`
 	Room struct {
 		Vnum        int      `json:"vnum"`
@@ -42,11 +42,11 @@ type GameState struct {
 		Mobs        []Mob    `json:"mobs"`
 		Items       []Item   `json:"items"`
 	} `json:"room"`
-	Fighting      string           `json:"fighting,omitempty"`
-	Inventory     []Item           `json:"inventory,omitempty"`
-	Equipment     map[string]Item  `json:"equipment,omitempty"`
-	Events        []Event          `json:"events,omitempty"`
-	MemorySummary string           `json:"memory_summary,omitempty"`
+	Fighting      string          `json:"fighting,omitempty"`
+	Inventory     []Item          `json:"inventory,omitempty"`
+	Equipment     map[string]Item `json:"equipment,omitempty"`
+	Events        []Event         `json:"events,omitempty"`
+	MemorySummary string          `json:"memory_summary,omitempty"`
 }
 
 type Mob struct {
@@ -86,7 +86,7 @@ func (a *AgentClient) Connect(ctx context.Context) error {
 		"data": map[string]any{
 			"player_name": a.Cfg.PlayerName,
 			"password":    a.Cfg.EffectiveKey(), // API key used as password for agent auth
-			"new_char":    false,                 // agent characters pre-created
+			"new_char":    false,                // agent characters pre-created
 			"is_agent":    true,
 			"harness":     "dp-agent",
 			"model":       a.Cfg.ModelFast,
@@ -121,7 +121,7 @@ func (a *AgentClient) Connect(ctx context.Context) error {
 		},
 	}
 	if err := conn.WriteJSON(sub); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("subscribe: %w", err)
 	}
 
@@ -345,7 +345,8 @@ func (a *AgentClient) finalizeSession() error {
 			}
 		}
 
-		slog.Info("session done",
+		slog.Info(
+			"session done",
 			"turns", summary.Turns,
 			"duration", summary.Duration.Round(time.Second),
 			"avg_latency_ms", summary.AvgLatencyMs,
@@ -374,11 +375,11 @@ func writeJSON(path string, v any) {
 		return
 	}
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		slog.Warn("mkdir", "error", err)
 		return
 	}
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(path, data, 0o644); err != nil {
 		slog.Warn("write", "error", err)
 	}
 }

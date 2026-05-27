@@ -182,17 +182,17 @@ type mobResponse struct {
 
 // objResponse is the JSON shape returned by object endpoints.
 type objResponse struct {
-	VNum       int     `json:"vnum"`
-	Keywords   string  `json:"keywords"`
-	ShortDesc  string  `json:"short_desc"`
-	LongDesc   string  `json:"long_desc"`
-	TypeFlag   int     `json:"type_flag"`
-	Weight     int     `json:"weight"`
-	Cost       int     `json:"cost"`
-	ExtraFlags [4]int  `json:"extra_flags"`
-	WearFlags  [4]int  `json:"wear_flags"`
-	Values     [4]int  `json:"values"`
-	ScriptName string  `json:"script_name"`
+	VNum       int    `json:"vnum"`
+	Keywords   string `json:"keywords"`
+	ShortDesc  string `json:"short_desc"`
+	LongDesc   string `json:"long_desc"`
+	TypeFlag   int    `json:"type_flag"`
+	Weight     int    `json:"weight"`
+	Cost       int    `json:"cost"`
+	ExtraFlags [4]int `json:"extra_flags"`
+	WearFlags  [4]int `json:"wear_flags"`
+	Values     [4]int `json:"values"`
+	ScriptName string `json:"script_name"`
 }
 
 // roomResponse is the JSON shape returned by room endpoints.
@@ -445,42 +445,42 @@ func handleRoomByVnum(world *game.World, auditLogger *audit.AuditLogger) http.Ha
 
 // roomUpdateRequest is the JSON body for room update requests.
 type roomUpdateRequest struct {
-	Name        *string              `json:"name"`
-	Description *string              `json:"description"`
-	Flags       *[]string            `json:"flags"`
-	Sector      *int                 `json:"sector"`
-	ExtraDescs  *[]parser.ExtraDesc  `json:"extra_descs"`
+	Name        *string             `json:"name"`
+	Description *string             `json:"description"`
+	Flags       *[]string           `json:"flags"`
+	Sector      *int                `json:"sector"`
+	ExtraDescs  *[]parser.ExtraDesc `json:"extra_descs"`
 }
 
 // mobUpdateRequest is the JSON body for mob update requests.
 type mobUpdateRequest struct {
-	ShortDesc    *string   `json:"short_desc"`
-	LongDesc     *string   `json:"long_desc"`
-	Keywords     *string   `json:"keywords"`
-	Level        *int      `json:"level"`
-	AC           *int      `json:"ac"`
-	HPNumDice    *int      `json:"hp_num_dice"`
-	HPSizeDice   *int      `json:"hp_size_dice"`
-	HPAdd        *int      `json:"hp_add"`
-	Gold         *int      `json:"gold"`
-	Exp          *int      `json:"exp"`
-	Alignment    *int      `json:"alignment"`
-	ActionFlags  *[]string `json:"action_flags"`
-	AffectFlags  *[]string `json:"affect_flags"`
-	Str          *int      `json:"str"`
-	Int          *int      `json:"int"`
-	Wis          *int      `json:"wis"`
-	Dex          *int      `json:"dex"`
-	Con          *int      `json:"con"`
-	Cha          *int      `json:"cha"`
-	THAC0        *int      `json:"thac0"`
-	DamageNumDice *int     `json:"damage_num_dice"`
-	DamageSizeDice *int    `json:"damage_size_dice"`
-	DamageAdd    *int      `json:"damage_add"`
-	Position     *int      `json:"position"`
-	DefaultPos   *int      `json:"default_pos"`
-	Sex          *int      `json:"sex"`
-	Race         *int      `json:"race"`
+	ShortDesc      *string   `json:"short_desc"`
+	LongDesc       *string   `json:"long_desc"`
+	Keywords       *string   `json:"keywords"`
+	Level          *int      `json:"level"`
+	AC             *int      `json:"ac"`
+	HPNumDice      *int      `json:"hp_num_dice"`
+	HPSizeDice     *int      `json:"hp_size_dice"`
+	HPAdd          *int      `json:"hp_add"`
+	Gold           *int      `json:"gold"`
+	Exp            *int      `json:"exp"`
+	Alignment      *int      `json:"alignment"`
+	ActionFlags    *[]string `json:"action_flags"`
+	AffectFlags    *[]string `json:"affect_flags"`
+	Str            *int      `json:"str"`
+	Int            *int      `json:"int"`
+	Wis            *int      `json:"wis"`
+	Dex            *int      `json:"dex"`
+	Con            *int      `json:"con"`
+	Cha            *int      `json:"cha"`
+	THAC0          *int      `json:"thac0"`
+	DamageNumDice  *int      `json:"damage_num_dice"`
+	DamageSizeDice *int      `json:"damage_size_dice"`
+	DamageAdd      *int      `json:"damage_add"`
+	Position       *int      `json:"position"`
+	DefaultPos     *int      `json:"default_pos"`
+	Sex            *int      `json:"sex"`
+	Race           *int      `json:"race"`
 }
 
 // objUpdateRequest is the JSON body for object update requests.
@@ -1137,38 +1137,38 @@ func handlePlayers(world *game.World) http.HandlerFunc {
 
 // playerItemResponse is the JSON shape for a single item in a player's inventory or equipment.
 type playerItemResponse struct {
-	VNum      int    `json:"vnum"`
-	Name      string `json:"name"`
-	Count     int    `json:"count"`
-	Slot      string `json:"slot,omitempty"`
+	VNum  int    `json:"vnum"`
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+	Slot  string `json:"slot,omitempty"`
 }
 
 // playerDetailResponse is the JSON shape returned by the player detail endpoint.
 type playerDetailResponse struct {
-	Name      string `json:"name"`
-	Level     int    `json:"level"`
-	Class     int    `json:"class"`
-	Race      int    `json:"race"`
-	Sex       int    `json:"sex"`
-	Health    int    `json:"health"`
-	MaxHealth int    `json:"max_health"`
-	Mana      int    `json:"mana"`
-	MaxMana   int    `json:"max_mana"`
-	Move      int    `json:"move"`
-	MaxMove   int    `json:"max_move"`
-	Alignment int    `json:"alignment"`
-	Gold      int    `json:"gold"`
-	BankGold  int    `json:"bank_gold"`
-	Exp       int    `json:"exp"`
-	Room      int    `json:"room"`
-	AC        int    `json:"ac"`
-	THAC0     int    `json:"thac0"`
-	Hitroll   int    `json:"hitroll"`
-	Damroll   int    `json:"damroll"`
-	Stats     map[string]int `json:"stats"`
-	Affects   uint64 `json:"affects"`
-	ConnectedAt string `json:"connected_at"`
-	LastActive  string `json:"last_active"`
+	Name        string               `json:"name"`
+	Level       int                  `json:"level"`
+	Class       int                  `json:"class"`
+	Race        int                  `json:"race"`
+	Sex         int                  `json:"sex"`
+	Health      int                  `json:"health"`
+	MaxHealth   int                  `json:"max_health"`
+	Mana        int                  `json:"mana"`
+	MaxMana     int                  `json:"max_mana"`
+	Move        int                  `json:"move"`
+	MaxMove     int                  `json:"max_move"`
+	Alignment   int                  `json:"alignment"`
+	Gold        int                  `json:"gold"`
+	BankGold    int                  `json:"bank_gold"`
+	Exp         int                  `json:"exp"`
+	Room        int                  `json:"room"`
+	AC          int                  `json:"ac"`
+	THAC0       int                  `json:"thac0"`
+	Hitroll     int                  `json:"hitroll"`
+	Damroll     int                  `json:"damroll"`
+	Stats       map[string]int       `json:"stats"`
+	Affects     uint64               `json:"affects"`
+	ConnectedAt string               `json:"connected_at"`
+	LastActive  string               `json:"last_active"`
 	Inventory   []playerItemResponse `json:"inventory"`
 	Equipment   []playerItemResponse `json:"equipment"`
 }
@@ -1190,9 +1190,10 @@ type metricsResponse struct {
 
 // handlePlayerDetail returns full info for a specific player.
 // Supports:
-//   GET /admin/players/{name} — full player detail
-//   POST /admin/players/{name}/save — force save
-//   POST /admin/players/{name}/kick — disconnect (501 not implemented)
+//
+//	GET /admin/players/{name} — full player detail
+//	POST /admin/players/{name}/save — force save
+//	POST /admin/players/{name}/kick — disconnect (501 not implemented)
 func handlePlayerDetail(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse path: /admin/players/{name} or /admin/players/{name}/save or /admin/players/{name}/kick
@@ -1329,28 +1330,28 @@ func playerDetailToResponse(p *game.Player) playerDetailResponse {
 	}
 
 	return playerDetailResponse{
-		Name:      p.Name,
-		Level:     p.Level,
-		Class:     p.Class,
-		Race:      p.Race,
-		Sex:       p.Sex,
-		Health:    p.Health,
-		MaxHealth: p.MaxHealth,
-		Mana:      p.Mana,
-		MaxMana:   p.MaxMana,
-		Move:      p.Move,
-		MaxMove:   p.MaxMove,
-		Alignment: p.Alignment,
-		Gold:      p.Gold,
-		BankGold:  p.BankGold,
-		Exp:       p.Exp,
-		Room:      p.RoomVNum,
-		AC:        p.AC,
-		THAC0:     p.THAC0,
-		Hitroll:   p.Hitroll,
-		Damroll:   p.Damroll,
-		Stats:     stats,
-		Affects:   p.Affects,
+		Name:        p.Name,
+		Level:       p.Level,
+		Class:       p.Class,
+		Race:        p.Race,
+		Sex:         p.Sex,
+		Health:      p.Health,
+		MaxHealth:   p.MaxHealth,
+		Mana:        p.Mana,
+		MaxMana:     p.MaxMana,
+		Move:        p.Move,
+		MaxMove:     p.MaxMove,
+		Alignment:   p.Alignment,
+		Gold:        p.Gold,
+		BankGold:    p.BankGold,
+		Exp:         p.Exp,
+		Room:        p.RoomVNum,
+		AC:          p.AC,
+		THAC0:       p.THAC0,
+		Hitroll:     p.Hitroll,
+		Damroll:     p.Damroll,
+		Stats:       stats,
+		Affects:     p.Affects,
 		ConnectedAt: p.ConnectedAt.Format(time.RFC3339),
 		LastActive:  p.LastActive.Format(time.RFC3339),
 		Inventory:   invItems,
@@ -1466,7 +1467,7 @@ func handleResetAllZones(world *game.World, auditLogger *audit.AuditLogger) http
 
 		w.Header().Set("Content-Type", "application/json")
 		resp := map[string]interface{}{
-			"status":     "reset triggered",
+			"status":      "reset triggered",
 			"zones_reset": resetCount,
 			"zones_total": len(zones),
 		}
@@ -1525,9 +1526,9 @@ func handleLiveAgentSessions(provider LiveSessionProvider) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(sessions); err != nil {
-		http.Error(w, "encoding error", http.StatusInternalServerError)
-		return
-	}
+			http.Error(w, "encoding error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -2308,4 +2309,3 @@ func handleNarrativeFeed(database *db.DB) http.HandlerFunc {
 		}
 	}
 }
-

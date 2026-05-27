@@ -24,7 +24,7 @@ func DoSneak(ch *Player) SkillResult {
 	// prob = GET_SKILL(ch, SKILL_SNEAK) + dex_app_skill[GET_DEX(ch)].sneak
 	// We don't have dex_app_skill table yet, use raw skill
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillSneak)
 
@@ -50,7 +50,7 @@ func DoHide(ch *Player) SkillResult {
 
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillHide)
 
@@ -85,7 +85,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 	// Steal gold
 	if itemName == "coins" || itemName == "gold" {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		percent := rand.IntN(101) + 1
 		prob := ch.GetSkill(SkillSteal)
 
@@ -103,7 +103,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		var gold int
 		if p, ok := target.(*Player); ok {
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			gold = (p.GetGold() * (rand.IntN(10) + 1)) / 100
 			if gold > 1782 {
 				gold = 1782
@@ -116,7 +116,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 		} else {
 			// Mob — steal small random amount
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			gold = rand.IntN(20) + 1
 			ch.SetGold(ch.GetGold() + gold)
 		}

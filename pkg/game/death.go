@@ -26,17 +26,22 @@ import (
 
 // Con loss probability thresholds — from fight.c die_with_killer()
 // These exactly mirror the C logic:
-//   level 1-4:  always lose 1 con (no random check)
-//   level 5-9:  lose 1 con on !number(0,1) = 50% (ConLossLevel5Chance = 2 means 1-in-2)
-//   level 10+:  lose 1 con on !number(0,2) = 33% (ConLossLevel10Chance = 3 means 1-in-3)
-//   level 5+:   also get the first check (GET_LEVEL(ch) > 5 && !number(0,3) in C)
+//
+//	level 1-4:  always lose 1 con (no random check)
+//	level 5-9:  lose 1 con on !number(0,1) = 50% (ConLossLevel5Chance = 2 means 1-in-2)
+//	level 10+:  lose 1 con on !number(0,2) = 33% (ConLossLevel10Chance = 3 means 1-in-3)
+//	level 5+:   also get the first check (GET_LEVEL(ch) > 5 && !number(0,3) in C)
+//
 // The C code actually does:
-//   if (GET_LEVEL(ch) > 5 && !number(0,3)) // 1/4 chance, 3/4 no loss
-//   if (GET_LEVEL(ch) > 20 && !number(0,5)) // 1/6 additional chance for second con
+//
+//	if (GET_LEVEL(ch) > 5 && !number(0,3)) // 1/4 chance, 3/4 no loss
+//	if (GET_LEVEL(ch) > 20 && !number(0,5)) // 1/6 additional chance for second con
+//
 // This means:
-//   level 1-5:   no CON loss from die_with_killer (the >5 check fails)
-//   level 6-20:  !number(0,3) = 25% chance lose 1 con
-//   level 21+:   same 25% + additional !number(0,5) = 16.7% chance for 2nd con
+//
+//	level 1-5:   no CON loss from die_with_killer (the >5 check fails)
+//	level 6-20:  !number(0,3) = 25% chance lose 1 con
+//	level 21+:   same 25% + additional !number(0,5) = 16.7% chance for 2nd con
 const (
 	ConLossCheckChance  = 4  // !number(0,3) = 3/4 chance skip, 1/4 chance lose 1 con
 	ConLossSecondChance = 6  // !number(0,5) = 5/6 chance skip, 1/6 chance lose 2nd con
@@ -77,8 +82,10 @@ const ImmortStartRoom = 1204
 const FrozenStartRoom = 1202
 
 // DonationRoom1 and DonationRoom2 are the community donation areas (config.c: donation_room_*)
-const DonationRoom1 = 8053
-const DonationRoom2 = 18204
+const (
+	DonationRoom1 = 8053
+	DonationRoom2 = 18204
+)
 
 // IsDonationRoom returns true if the given room VNUM is a donation room.
 func IsDonationRoom(vnum int) bool {
@@ -344,8 +351,9 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 //	raw_kill(): stop_fighting, make_corpse, extract_char
 //
 // CON loss (die_with_killer only, fight.c lines 598-607):
-//   if GET_LEVEL(ch) > 5 && !number(0,3):  lose 1 con (1/4 chance)
-//   if GET_LEVEL(ch) > 20 && !number(0,5): lose 1 more con (1/6 additional chance)
+//
+//	if GET_LEVEL(ch) > 5 && !number(0,3):  lose 1 con (1/4 chance)
+//	if GET_LEVEL(ch) > 20 && !number(0,5): lose 1 more con (1/6 additional chance)
 //
 // Modern addition: respawn at MortalStartRoom, heal to full.
 func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int, killerName string) {
@@ -396,7 +404,8 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 				}
 				conLossMessage = fmt.Sprintf(
 					"You lose some constitution! Your Constitution is now %d.\r\n",
-					player.Stats.Con)
+					player.Stats.Con,
+				)
 				player.mu.Unlock()
 			}
 		}
@@ -471,21 +480,21 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 // Weapon types: TYPE_HIT(300) through TYPE_SUFFERING(399)
 const (
 	TypeUndefined = -1
-	TypeHit      = 300
-	TypeSting    = 301
-	TypeWhip     = 302
-	TypeSlash    = 303
-	TypeBite     = 304
-	TypeBludgeon = 305
-	TypeCrush    = 306
-	TypePound    = 307
-	TypeClaw     = 308
-	TypeMaul     = 309
-	TypeThrash   = 310
-	TypePierce   = 311
-	TypeBlast    = 312
-	TypePunch    = 313
-	TypeStab     = 314
+	TypeHit       = 300
+	TypeSting     = 301
+	TypeWhip      = 302
+	TypeSlash     = 303
+	TypeBite      = 304
+	TypeBludgeon  = 305
+	TypeCrush     = 306
+	TypePound     = 307
+	TypeClaw      = 308
+	TypeMaul      = 309
+	TypeThrash    = 310
+	TypePierce    = 311
+	TypeBlast     = 312
+	TypePunch     = 313
+	TypeStab      = 314
 	TypeSuffering = 399
 )
 
@@ -493,19 +502,19 @@ const (
 // Note: skills.go uses string identifiers; these numeric values match C source.
 // Only defined here because attackTypeToCorpseAttack receives int (C-style numeric type).
 const (
-	SkillBackstabNum   = 131
-	SkillBashNum       = 132
-	SkillKickNum       = 134
-	SkillPunchNum      = 136
-	SkillBiteNum       = 150
-	SkillHeadbuttNum   = 141
-	SkillSmackheadsNum = 145
-	SkillSlugNum       = 146
+	SkillBackstabNum    = 131
+	SkillBashNum        = 132
+	SkillKickNum        = 134
+	SkillPunchNum       = 136
+	SkillBiteNum        = 150
+	SkillHeadbuttNum    = 141
+	SkillSmackheadsNum  = 145
+	SkillSlugNum        = 146
 	SkillSerpentKickNum = 156
-	SkillCircleNum     = 173
-	SkillDisembowelNum = 184
-	SkillSleeperNum    = 187
-	SkillNeckbreakNum  = 190
+	SkillCircleNum      = 173
+	SkillDisembowelNum  = 184
+	SkillSleeperNum     = 187
+	SkillNeckbreakNum   = 190
 	SkillDragonKickNum  = 222
 	SkillTigerPunchNum  = 223
 )
@@ -645,7 +654,7 @@ func (w *World) createMoneyObject(amount int) *ObjectInstance {
 		RoomVNum:  -1,
 		Contains:  make([]*ObjectInstance, 0),
 		CustomData: map[string]interface{}{
-			"is_money":    true,
+			"is_money":     true,
 			"money_amount": amount,
 		},
 	}
@@ -734,11 +743,11 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	corpseValues := [4]int{0, 0, 0, 1}
 
 	corpse := &ObjectInstance{
-		Prototype:       nil, // synthetic object, no prototype vnum
-		VNum:            -1,
-		RoomVNum:        roomVNum,
-		Contains:        make([]*ObjectInstance, 0),
-		IsCorpse:        true,
+		Prototype:        nil, // synthetic object, no prototype vnum
+		VNum:             -1,
+		RoomVNum:         roomVNum,
+		Contains:         make([]*ObjectInstance, 0),
+		IsCorpse:         true,
 		TypeFlagOverride: &containerType,
 		ValuesOverride:   &corpseValues,
 		CustomData: map[string]interface{}{

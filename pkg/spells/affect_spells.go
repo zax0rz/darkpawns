@@ -53,7 +53,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 			npcRetaliate(victim, ch)
 			return
 		}
-		aff = engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4+reag), "blindness")
+		aff = engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4 + reag), "blindness")
 		applyAffect(victim, aff)
 		aff = engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness")
 		sendToVictim(victim, "You have been blinded!\r\n")
@@ -144,6 +144,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		aff = engine.NewAffect(SpellPoison, engine.ApplyStr, dur, -2, "poison")
 		applyAffect(victim, aff)
 		aff = engine.NewAffect(SpellPoison, engine.ApplyHitroll, dur, -2, "poison")
+		applyAffect(victim, aff)
 		sendToVictim(victim, "You feel very sick.\r\n")
 		sendToCaster(ch, "$n turns green as your poison takes hold.\r\n")
 		return
@@ -265,7 +266,11 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 	case SpellInvigorate:
 		sendToVictim(victim, "You feel invigorated!\r\n")
 		// Movement restoration — healHP handles hit, we handle move separately
-		type mover interface{ GetMove() int; GetMaxMove() int; SetMove(int) }
+		type mover interface {
+			GetMove() int
+			GetMaxMove() int
+			SetMove(int)
+		}
 		if m, ok := victim.(mover); ok {
 			move := dice(10, 10)
 			newMove := m.GetMove() + move
@@ -320,7 +325,9 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 
 	// Get all characters in the room
 	type roomGetter interface{ GetRoomVNum() int }
-	type worldChars interface{ GetAllCharsInRoom(roomVNum int) []interface{} }
+	type worldChars interface {
+		GetAllCharsInRoom(roomVNum int) []interface{}
+	}
 
 	rg, ok := ch.(roomGetter)
 	if !ok {
@@ -363,7 +370,9 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 	}
 
 	type roomGetter interface{ GetRoomVNum() int }
-	type worldChars interface{ GetAllCharsInRoom(roomVNum int) []interface{} }
+	type worldChars interface {
+		GetAllCharsInRoom(roomVNum int) []interface{}
+	}
 	type npcChecker interface{ IsNPC() bool }
 	type lever interface{ GetLevel() int }
 
@@ -399,7 +408,7 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 		// Skip charmed NPCs
 		if nc, ok := c.(npcChecker); ok && nc.IsNPC() {
 			type affectChecker interface{ IsAffected(int) bool }
-			if ac, ok := c.(affectChecker); ok && ac.IsAffected(1 << 2) { // AFF_CHARM
+			if ac, ok := c.(affectChecker); ok && ac.IsAffected(1<<2) { // AFF_CHARM
 				continue
 			}
 		}
@@ -421,7 +430,9 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 	}
 
 	type roomGetter interface{ GetRoomVNum() int }
-	type worldChars interface{ GetAllCharsInRoom(roomVNum int) []interface{} }
+	type worldChars interface {
+		GetAllCharsInRoom(roomVNum int) []interface{}
+	}
 	type npcChecker interface{ IsNPC() bool }
 	type lever interface{ GetLevel() int }
 
@@ -461,7 +472,7 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		// Skip charmed NPCs
 		if nc, ok := c.(npcChecker); ok && nc.IsNPC() {
 			type affectChecker interface{ IsAffected(int) bool }
-			if ac, ok := c.(affectChecker); ok && ac.IsAffected(1 << 2) { // AFF_CHARM
+			if ac, ok := c.(affectChecker); ok && ac.IsAffected(1<<2) { // AFF_CHARM
 				continue
 			}
 		}
@@ -492,9 +503,13 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 		roomVNum := rg.GetRoomVNum()
 
 		// Require a corpse in the room
-		type itemsLister interface{ GetItemsInRoomI(roomVNum int) []interface{} }
+		type itemsLister interface {
+			GetItemsInRoomI(roomVNum int) []interface{}
+		}
 		type keywordsGetter interface{ GetKeywords() string }
-		type itemRemover interface{ RemoveItemFromRoomI(item interface{}, roomVNum int) }
+		type itemRemover interface {
+			RemoveItemFromRoomI(item interface{}, roomVNum int)
+		}
 
 		var corpse interface{}
 		if lister, ok2 := world.(itemsLister); ok2 {
@@ -644,7 +659,7 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
 			return
 		}
-		setExtraFlags(obj, flags|(1<<1)) // ITEM_NODROP
+		setExtraFlags(obj, flags|(1<<1))                               // ITEM_NODROP
 		if ot, ok := obj.(objTypeGetter); ok && ot.GetObjType() == 3 { // ITEM_WEAPON
 			if vs, ok := obj.(objValSetter); ok {
 				if vg, ok := obj.(objValGetter); ok {
@@ -686,7 +701,7 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
 			return
 		}
-		setExtraFlags(obj, flags &^ (1<<1)) // remove NODROP
+		setExtraFlags(obj, flags&^(1<<1))                              // remove NODROP
 		if ot, ok := obj.(objTypeGetter); ok && ot.GetObjType() == 3 { // ITEM_WEAPON
 			if vs, ok := obj.(objValSetter); ok {
 				if vg, ok := obj.(objValGetter); ok {
@@ -887,7 +902,7 @@ func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int 
 
 	// Look for and consume the reagent from the caster's inventory.
 	// Uses interface assertions to avoid circular imports (spells → game).
-	type messageSender interface { SendMessage(string) }
+	type messageSender interface{ SendMessage(string) }
 
 	var found bool
 	if holder, ok := ch.(InventoryHolder); ok {
@@ -1149,8 +1164,8 @@ func castCalliope(level int, ch, cvict interface{}) {
 	missiles := lo
 	if hi > lo {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
-		missiles += rand.IntN(hi-lo+1)
+		// #nosec G404
+		missiles += rand.IntN(hi - lo + 1)
 	}
 	if missiles < 4 {
 		missiles = 4
@@ -1292,7 +1307,7 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	type timerSetter interface{ SetTimer(int) }
 	if ts, ok := obj.(timerSetter); ok {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		timer := level/2 + rand.IntN(4) - 2 // rand(-2, 1)
 		if timer < 1 {
 			timer = 1
@@ -1479,8 +1494,8 @@ func castEnchantWeapon(level int, ch, ovict interface{}) {
 	}
 
 	newAffects := make([]parser.ObjAffect, 2)
-	newAffects[0] = parser.ObjAffect{Location: 18, Modifier: hitroll}  // APPLY_HITROLL
-	newAffects[1] = parser.ObjAffect{Location: 19, Modifier: damroll}  // APPLY_DAMROLL
+	newAffects[0] = parser.ObjAffect{Location: 18, Modifier: hitroll} // APPLY_HITROLL
+	newAffects[1] = parser.ObjAffect{Location: 19, Modifier: damroll} // APPLY_DAMROLL
 	obj.SetAffectsOverride(newAffects)
 
 	// Alignment glow
@@ -1713,8 +1728,16 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 	_ = level
 	type namer interface{ GetName() string }
 	type lever interface{ GetLevel() int }
-	type stater interface{ GetHP() int; GetMaxHP() int; GetMana() int }
-	type hper interface{ GetHitroll() int; GetDamroll() int; GetAC() int }
+	type stater interface {
+		GetHP() int
+		GetMaxHP() int
+		GetMana() int
+	}
+	type hper interface {
+		GetHitroll() int
+		GetDamroll() int
+		GetAC() int
+	}
 	type npcChecker interface{ IsNPC() bool }
 
 	// C: identify on NPCs fails and aggros
@@ -1747,7 +1770,10 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 	}
 
 	// Full stat line
-	type strGetter interface{ GetStr() int; GetStrAdd() int }
+	type strGetter interface {
+		GetStr() int
+		GetStrAdd() int
+	}
 	type intGetter interface{ GetInt() int }
 	type wisGetter interface{ GetWis() int }
 	type dexGetter interface{ GetDex() int }
@@ -1789,18 +1815,22 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 // Interfaces for room transfer spells.
 type (
 	roomGetter2 interface{ GetRoomVNum() int }
-	fighter2   interface{ IsFighting() bool }
-	hometowner interface{ GetHometown() int }
+	fighter2    interface{ IsFighting() bool }
+	hometowner  interface{ GetHometown() int }
 
 	worldTransfer interface {
 		PlayerTransfer(ch interface{}, toRoomVNum int) error
 		MobTransfer(m interface{}, toRoomVNum int) error
-		GetRoomInWorld(vnum int) interface { HasFlag(bit int) bool }
+		GetRoomInWorld(vnum int) interface{ HasFlag(bit int) bool }
 		GetRoomCount() int
 	}
 
 	// grouper for are_grouped checks
-	grouper interface{ IsInGroup() bool; GetFollowing() string; GetName() string }
+	grouper interface {
+		IsInGroup() bool
+		GetFollowing() string
+		GetName() string
+	}
 
 	// Room AoE interface for meteor_swarm / hellfire
 	// charInRoom for AoE iteration — all methods needed by meteor_swarm/hellfire
@@ -1984,7 +2014,7 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 	roomCount := w.GetRoomCount()
 	for attempts := 0; attempts < 100; attempts++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		toRoom := rand.IntN(roomCount)
 		roomData := w.GetRoomInWorld(toRoom)
 		if roomData != nil && !roomData.HasFlag(RoomPrivate) {
@@ -2037,7 +2067,7 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	dam := level*6 + rand.IntN(level*3+11) - 10
 	if dam < 1 {
 		dam = 1
@@ -2103,7 +2133,7 @@ func castHellfire(level int, ch, world interface{}) {
 		return
 	}
 
-	dam := dice(12, 5) + (2*level) - 10
+	dam := dice(12, 5) + (2 * level) - 10
 	if dam < 1 {
 		dam = 1
 	}
@@ -2156,8 +2186,6 @@ func castHellfire(level int, ch, world interface{}) {
 		}
 	}
 }
-
-
 
 // castCharm ports src/spells.c spell_charm (lines 407-476).
 // Charms a mob to follow the caster. Checks: MOB_NOCHARM, level, circle follow,
@@ -2375,11 +2403,14 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	if victIsNPC && magSavingThrow(cvict, int(SaveSpell)) {
 		// 10% backfire chance for PC casters
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if !chIsNPC && rand.IntN(10) == 0 {
 			sendToCaster(ch, "Your spell backfires!\r\n")
 			// Transfer caster to victim's room instead
-			type transferWorld interface{ PlayerTransfer(ch interface{}, toRoomVNum int) error; MobTransfer(ch interface{}, toRoomVNum int) error }
+			type transferWorld interface {
+				PlayerTransfer(ch interface{}, toRoomVNum int) error
+				MobTransfer(ch interface{}, toRoomVNum int) error
+			}
 			if tw, ok := world.(transferWorld); ok {
 				if chIsNPC {
 					if err := tw.MobTransfer(ch, victRoom); err != nil {
@@ -2401,7 +2432,10 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	}
 
 	// Success — transfer victim to caster's room
-	type transferWorld interface{ PlayerTransfer(ch interface{}, toRoomVNum int) error; MobTransfer(ch interface{}, toRoomVNum int) error }
+	type transferWorld interface {
+		PlayerTransfer(ch interface{}, toRoomVNum int) error
+		MobTransfer(ch interface{}, toRoomVNum int) error
+	}
 	if tw, ok := world.(transferWorld); ok {
 		if victIsNPC {
 			if err := tw.MobTransfer(cvict, chRoom); err != nil {
@@ -2532,8 +2566,13 @@ func castConjureElemental(level int, ch, world interface{}) {
 	}
 
 	// Find a component in the room
-	type itemChecker interface{ GetVNum() int; GetName() string }
-	type roomItems interface{ GetItemsInRoomI(roomVNum int) []interface{} }
+	type itemChecker interface {
+		GetVNum() int
+		GetName() string
+	}
+	type roomItems interface {
+		GetItemsInRoomI(roomVNum int) []interface{}
+	}
 
 	ri, ok := world.(roomItems)
 	if !ok {
@@ -2605,7 +2644,6 @@ func castConjureElemental(level int, ch, world interface{}) {
 	_ = componentVNum
 }
 
-
 // castMindsight ports src/spells.c spell_mindsight (lines 912-955).
 func castMindsight(level int, ch, cvict, world interface{}) {
 	_ = level
@@ -2638,7 +2676,7 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	if (victLevel > casterLevel+4 && rand.IntN(5) == 0) ||
 		(!victIsNPC && victLevel >= 100 && casterLevel <= victLevel) {
 		sendToCaster(ch, "With a searing pain, your psionic energy recoils!\r\n")
@@ -2691,7 +2729,9 @@ func castGate(level int, ch, world interface{}) {
 	roomVNum := rg.GetRoomVNum()
 
 	// Check if portal already exists in room
-	type roomObjects interface{ GetObjectsInRoom(roomVNum int) []interface{} }
+	type roomObjects interface {
+		GetObjectsInRoom(roomVNum int) []interface{}
+	}
 	if wo, ok := world.(roomObjects); ok {
 		objs := wo.GetObjectsInRoom(roomVNum)
 		for _, obj := range objs {
@@ -2721,7 +2761,9 @@ func castGate(level int, ch, world interface{}) {
 	}
 
 	// Create red portal in room
-	type objSpawner interface{ SpawnObject(vnum, roomVNum int) (interface{}, error) }
+	type objSpawner interface {
+		SpawnObject(vnum, roomVNum int) (interface{}, error)
+	}
 	type timerSetter interface{ SetTimer(int) }
 	if wo, ok := world.(objSpawner); ok {
 		obj, err := wo.SpawnObject(4002, roomVNum) // red_portal = 4002
@@ -2758,7 +2800,9 @@ func castLocateObject(level int, ch, ovict, world interface{}) {
 		return
 	}
 
-	type worldSearch interface{ FindObjectByName(name string) []interface{} }
+	type worldSearch interface {
+		FindObjectByName(name string) []interface{}
+	}
 	if ws, ok := world.(worldSearch); ok {
 		objs := ws.FindObjectByName(name)
 		count := level >> 1
@@ -2812,4 +2856,3 @@ func castMirrorImage(level int, ch, world interface{}) {
 		sendToRoom("$n divides $mself in two!\r\n", ch, nil, nil, "", "", world)
 	}
 }
-

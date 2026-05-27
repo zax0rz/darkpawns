@@ -74,10 +74,10 @@ func (dm *DoorManager) LoadDoorsFromWorld(world *parser.World) {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
 
-	for _, room := range world.Rooms {
-		for direction, exit := range room.Exits {
-			door := NewDoor(room.VNum, exit.ToRoom, direction, exit.DoorState, exit.Key)
-			dm.doors[dm.key(room.VNum, direction)] = door
+	for i := range world.Rooms {
+		for direction, exit := range world.Rooms[i].Exits {
+			door := NewDoor(world.Rooms[i].VNum, exit.ToRoom, direction, exit.DoorState, exit.Key)
+			dm.doors[dm.key(world.Rooms[i].VNum, direction)] = door
 		}
 	}
 }

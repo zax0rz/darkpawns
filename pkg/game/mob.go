@@ -20,17 +20,17 @@ type MobInstance struct {
 	// Link to prototype
 	Prototype *parser.Mob
 	VNum      int
-	ID        int    // World-assigned instance ID
+	ID        int // World-assigned instance ID
 
 	// Current state
-	alive     atomic.Bool // CRIT-004: fast alive check without acquiring mu
-	RoomVNum  int         // -1 if not in a room (carried, etc.)
-	CurrentHP int
-	MaxHP     int
+	alive       atomic.Bool // CRIT-004: fast alive check without acquiring mu
+	RoomVNum    int         // -1 if not in a room (carried, etc.)
+	CurrentHP   int
+	MaxHP       int
 	CurrentMana int
 	MaxMana     int
-	Status    string // "standing", "sleeping", "fighting", etc.
-	Level     int    // Level override (0 = use prototype level)
+	Status      string // "standing", "sleeping", "fighting", etc.
+	Level       int    // Level override (0 = use prototype level)
 
 	// AI
 	// Brain *ai.Brain // Temporarily commented out to fix circular import

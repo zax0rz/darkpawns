@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
-	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/audit"
+	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/validation"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (s *Session) handleLogin(data json.RawMessage) error {
@@ -47,7 +47,8 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		s.agentHarness = login.Harness
 		s.agentModel = login.Model
 		s.agentVersion = login.Version
-		slog.Info("agent identity declared",
+		slog.Info(
+			"agent identity declared",
 			"harness", login.Harness,
 			"model", login.Model,
 			"player", login.PlayerName,

@@ -52,8 +52,8 @@ func BenchmarkWebSocketConnection(b *testing.B) {
 				b.Fatal(err)
 			}
 			_ = conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"ping"}`)) //nolint:errcheck
-			_, _, _ = conn.ReadMessage() // #nosec G104 — benchmark test, websocket ReadMessage
-			_ = conn.Close() //nolint:errcheck
+			_, _, _ = conn.ReadMessage()                                            // #nosec G104 — benchmark test, websocket ReadMessage
+			_ = conn.Close()                                                        //nolint:errcheck
 		}
 	})
 }
@@ -186,7 +186,7 @@ func BenchmarkConnectionPool(b *testing.B) {
 				b.Fatal(err)
 			}
 			time.Sleep(100 * time.Microsecond) // Simulate work
-			_ = pool.Put(conn) //nolint:errcheck
+			_ = pool.Put(conn)                 //nolint:errcheck
 		}
 	})
 }
@@ -325,12 +325,4 @@ func BenchmarkSessionManager(b *testing.B) {
 	for _, ch := range sessions {
 		close(ch)
 	}
-}
-
-func main() {
-	// Run benchmarks
-	fmt.Println("Running WebSocket benchmarks...")
-
-	// Note: In real usage, run with: go test -bench=. -benchtime=10s ./benchmarks
-	fmt.Println("Benchmarks defined. Run with: go test -bench=. ./benchmarks")
 }

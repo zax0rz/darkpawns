@@ -14,7 +14,7 @@ import (
 
 func main() {
 	name := flag.String("name", "", "character name (required)")
-	configPath := flag.String("config", "", "config file path (default ~/.dp-agent.json)")
+	_ = flag.String("config", "", "config file path (default ~/.dp-agent.json)")
 	logLevel := flag.String("log-level", "info", "log level: debug, info, warn, error")
 	flag.Parse()
 
@@ -39,12 +39,7 @@ func main() {
 	// Load config
 	var cfg *agentcli.AgentConfig
 	var err error
-	if *configPath != "" {
-		// TODO: load from specific path
-		cfg, err = agentcli.LoadConfig()
-	} else {
-		cfg, err = agentcli.LoadConfig()
-	}
+	cfg, err = agentcli.LoadConfig()
 	if err != nil {
 		slog.Error("load config", "error", err)
 		os.Exit(1)
@@ -81,6 +76,7 @@ func main() {
 	slog.Info("starting daemon", "player", cfg.PlayerName)
 	if err := daemon.Start(ctx); err != nil {
 		slog.Error("daemon error", "error", err)
-		os.Exit(1)
+		cancel()
+		os.Exit(1) //nolint:gocritic // exitAfterDefer: cancel() called explicitly above
 	}
 }

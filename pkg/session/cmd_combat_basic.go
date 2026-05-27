@@ -3,6 +3,7 @@ package session
 import (
 	"fmt"
 	"strings"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 

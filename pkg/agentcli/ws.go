@@ -12,8 +12,8 @@ import (
 
 // WSConn wraps gorilla/websocket.Conn for the agent CLI.
 type WSConn struct {
-	conn   *websocket.Conn
-	seqMu  sync.Mutex
+	conn    *websocket.Conn
+	seqMu   sync.Mutex
 	lastSeq uint64
 }
 
@@ -33,13 +33,13 @@ func (w *WSConn) WriteJSON(v any) error {
 
 // ReadJSON reads a JSON message.
 func (w *WSConn) ReadJSON(v any) error {
-	w.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	_ = w.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	return w.conn.ReadJSON(v)
 }
 
 // ReadMessage reads a raw message.
 func (w *WSConn) ReadMessage() (int, []byte, error) {
-	w.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	_ = w.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	return w.conn.ReadMessage()
 }
 

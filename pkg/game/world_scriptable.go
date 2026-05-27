@@ -366,7 +366,7 @@ func (w *scriptableObjInstanceWrapper) GetCost() int         { return w.item.Get
 func (w *scriptableObjInstanceWrapper) GetTimer() int        { return w.item.GetTimer() }
 func (w *scriptableObjInstanceWrapper) SetTimer(t int)       { w.item.SetTimer(t) }
 func (w *scriptableObjInstanceWrapper) GetTypeFlag() int     { return w.item.GetTypeFlag() }
-func (w *scriptableObjInstanceWrapper) GetInstanceID() int { return w.item.ID }
+func (w *scriptableObjInstanceWrapper) GetInstanceID() int   { return w.item.ID }
 
 // objectInstanceFromScriptable extracts the underlying ObjectInstance from a
 // scriptableObjInstanceWrapper, returning nil for other ScriptableObject types.

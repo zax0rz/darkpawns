@@ -9,28 +9,28 @@ import (
 
 // DefaultConfig values.
 const (
-	DefaultHost        = "192.168.1.15"
-	DefaultPort        = 4350
-	DefaultLiteLLM     = "http://192.168.1.106:4000"
-	DefaultModelFast   = "zai/glm-5-turbo"
-	DefaultModelFall   = "deepseek-v4-flash"
-	DefaultTier        = "medium"
+	DefaultHost      = "192.168.1.15"
+	DefaultPort      = 4350
+	DefaultLiteLLM   = "http://192.168.1.106:4000"
+	DefaultModelFast = "zai/glm-5-turbo"
+	DefaultModelFall = "deepseek-v4-flash"
+	DefaultTier      = "medium"
 )
 
 // AgentConfig holds all agent configuration.
 type AgentConfig struct {
-	Key           string  `json:"key"`            // API key for LiteLLM auth
-	PlayerName    string  `json:"player_name"`     // character name in Dark Pawns
-	Tier          string  `json:"tier"`            // small / medium / large / unlimited
+	Key           string  `json:"key"`         // API key for LiteLLM auth
+	PlayerName    string  `json:"player_name"` // character name in Dark Pawns
+	Tier          string  `json:"tier"`        // small / medium / large / unlimited
 	ModelFast     string  `json:"model_fast"`
 	ModelFallback string  `json:"model_fallback"`
 	LiteLLM       string  `json:"litellm_endpoint"`
 	GameHost      string  `json:"game_host"`
 	GamePort      int     `json:"game_port"`
-	Temperature   float64 `json:"temperature"`          // LLM temperature (0 = deterministic, default)
-	Valence       bool    `json:"valence"`              // enable emotional valence in memory (default: true)
-	LogDir        string  `json:"log_dir,omitempty"`   // local log directory (optional)
-	LogLevel      string  `json:"log_level"`            // debug / info / warn / error
+	Temperature   float64 `json:"temperature"`       // LLM temperature (0 = deterministic, default)
+	Valence       bool    `json:"valence"`           // enable emotional valence in memory (default: true)
+	LogDir        string  `json:"log_dir,omitempty"` // local log directory (optional)
+	LogLevel      string  `json:"log_level"`         // debug / info / warn / error
 }
 
 // ConfigPath returns the default config file path.
@@ -75,7 +75,7 @@ func SaveConfig(cfg *AgentConfig) error {
 	if err != nil {
 		return fmt.Errorf("marshal config: %w", err)
 	}
-	if err := os.WriteFile(ConfigPath(), data, 0600); err != nil {
+	if err := os.WriteFile(ConfigPath(), data, 0o600); err != nil {
 		return fmt.Errorf("write config: %w", err)
 	}
 	return nil

@@ -51,7 +51,7 @@ func TestConcurrentCharCreation(t *testing.T) {
 			// Walk through char creation stages: color→sex→race→class→hometown→stats_roll.
 			// Each choice triggers a prompt sent to s.send (except the final accept).
 			stages := []struct {
-				choice   string
+				choice    string
 				expectMsg bool // whether this stage sends a response we must consume
 			}{
 				{"Y", true},  // color: yes ANSI → sex prompt

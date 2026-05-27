@@ -519,4 +519,3 @@ func (w *World) getExitForDirection(room *parser.Room, dir int) (parser.Exit, bo
 // ---------------------------------------------------------------------------
 // showObjToChar — displays object info to character (mode 0-6)
 // ---------------------------------------------------------------------------
-

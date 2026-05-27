@@ -1,10 +1,10 @@
 package game
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
-	"encoding/json"
 )
 
 func (w *World) HouseListrent(ch *Player, vnum int) {
@@ -63,6 +63,7 @@ func (w *World) HouseListrent(ch *Player, vnum int) {
 		sendToChar(ch, fmt.Sprintf("  [%5d] %s\r\n", item.VNum, name))
 	}
 }
+
 // House_can_enter — check if a player may enter a house
 // ---------------------------------------------------------------------------
 

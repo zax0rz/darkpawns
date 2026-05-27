@@ -67,13 +67,13 @@ func (h *eventHeap) Pop() interface{} {
 // EventQueue manages scheduled events.
 // Based on the global event_q in src/events.c.
 type EventQueue struct {
-	mu        sync.Mutex
-	events    eventHeap
-	nextID    uint64
-	stopCh    chan struct{}
-	pulse     int64 // current game pulse, incremented by Process()
-	pulseDur  time.Duration
-	started   bool
+	mu       sync.Mutex
+	events   eventHeap
+	nextID   uint64
+	stopCh   chan struct{}
+	pulse    int64 // current game pulse, incremented by Process()
+	pulseDur time.Duration
+	started  bool
 }
 
 // NewEventQueue creates a new event queue.
@@ -163,7 +163,8 @@ func (eq *EventQueue) CancelBySource(source int) int {
 // This should be called once per game tick (e.g., from the game loop or
 // heartbeat). In the original C code, heartbeat() increments pulse then
 // calls event_process():
-//   heartbeat(++pulse) { event_process(); ... }
+//
+//	heartbeat(++pulse) { event_process(); ... }
 //
 // Returns the number of events processed.
 func (eq *EventQueue) Process(ctx context.Context) int {

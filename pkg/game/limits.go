@@ -46,15 +46,15 @@ var Titles = []string{
 // Position constants re-exported from combat package for use within game package.
 // Source: structs.h POS_* constants (structs.h:130-138), ported to pkg/combat/formulas.go
 const (
-	PosDead      = combat.PosDead
-	PosMortally  = combat.PosMortally
-	PosIncap     = combat.PosIncap
-	PosStunned   = combat.PosStunned
-	PosSleeping  = combat.PosSleeping
-	PosResting   = combat.PosResting
-	PosSitting   = combat.PosSitting
-	PosFighting  = combat.PosFighting
-	PosStanding  = combat.PosStanding
+	PosDead     = combat.PosDead
+	PosMortally = combat.PosMortally
+	PosIncap    = combat.PosIncap
+	PosStunned  = combat.PosStunned
+	PosSleeping = combat.PosSleeping
+	PosResting  = combat.PosResting
+	PosSitting  = combat.PosSitting
+	PosFighting = combat.PosFighting
+	PosStanding = combat.PosStanding
 )
 
 // FieldObject represents a field object entry.

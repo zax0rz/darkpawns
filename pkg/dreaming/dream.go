@@ -13,22 +13,22 @@ import (
 
 // DreamConfig controls the dreaming cycle.
 type DreamConfig struct {
-	SessionDir   string // path to data/sessions/{agent_id}/
-	OutputDir    string // path to write consolidated memory
-	AgentID      string // agent to dream for
-	GraphConfig  GraphConfig
-	DryRun       bool // if true, print what would happen without writing
+	SessionDir  string // path to data/sessions/{agent_id}/
+	OutputDir   string // path to write consolidated memory
+	AgentID     string // agent to dream for
+	GraphConfig GraphConfig
+	DryRun      bool // if true, print what would happen without writing
 }
 
 // DreamResult summarizes a dreaming run.
 type DreamResult struct {
-	AgentID        string `json:"agent_id"`
-	SessionFiles   int    `json:"session_files_processed"`
-	EventsExtracted int   `json:"events_extracted"`
-	NodesBefore    int    `json:"nodes_before_consolidation"`
-	NodesAfter     int    `json:"nodes_after_consolidation"`
-	Pruned         int    `json:"nodes_pruned"`
-	SummaryTokens  int    `json:"summary_tokens_estimated"`
+	AgentID         string `json:"agent_id"`
+	SessionFiles    int    `json:"session_files_processed"`
+	EventsExtracted int    `json:"events_extracted"`
+	NodesBefore     int    `json:"nodes_before_consolidation"`
+	NodesAfter      int    `json:"nodes_after_consolidation"`
+	Pruned          int    `json:"nodes_pruned"`
+	SummaryTokens   int    `json:"summary_tokens_estimated"`
 }
 
 // RunDream executes one dreaming cycle: read sessions, extract events, build graph, consolidate.
@@ -94,7 +94,8 @@ func RunDream(cfg DreamConfig) (*DreamResult, error) {
 	// 3. Inject events into graph.
 	result.NodesBefore = len(graph.Nodes)
 
-	for _, ev := range allEvents {
+	for i := range allEvents {
+		ev := &allEvents[i]
 		eventID := fmt.Sprintf("%s-%s-%d", cfg.AgentID, ev.Kind, ev.Timestamp.UnixNano())
 		graph.AddOrReinforceNode(eventID, NodeKindEvent, ev.Narrative, ev.Valence)
 
@@ -127,26 +128,26 @@ func RunDream(cfg DreamConfig) (*DreamResult, error) {
 	result.SummaryTokens = estimateTokens(summary)
 
 	// 6. Write output.
-	if err := os.MkdirAll(filepath.Dir(graphFile), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(graphFile), 0o755); err != nil {
 		return nil, fmt.Errorf("mkdir: %w", err)
 	}
 
 	// Write the full graph.
 	graphData, _ := json.MarshalIndent(graph, "", "  ")
-	if err := os.WriteFile(graphFile, graphData, 0644); err != nil {
+	if err := os.WriteFile(graphFile, graphData, 0o644); err != nil {
 		return nil, fmt.Errorf("write graph: %w", err)
 	}
 
 	// Write the summary separately for quick inspection.
 	summaryFile := filepath.Join(cfg.OutputDir, cfg.AgentID, "memory-summary.txt")
-	if err := os.WriteFile(summaryFile, []byte(summary), 0644); err != nil {
+	if err := os.WriteFile(summaryFile, []byte(summary), 0o644); err != nil {
 		return nil, fmt.Errorf("write summary: %w", err)
 	}
 
 	// Write the dream result as JSON.
 	resultFile := filepath.Join(cfg.OutputDir, cfg.AgentID, "dream-result.json")
 	resultData, _ := json.MarshalIndent(result, "", "  ")
-	if err := os.WriteFile(resultFile, resultData, 0644); err != nil {
+	if err := os.WriteFile(resultFile, resultData, 0o644); err != nil {
 		return nil, fmt.Errorf("write result: %w", err)
 	}
 

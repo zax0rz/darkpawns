@@ -1,6 +1,7 @@
+// Package session provides command handlers and WebSocket-based player sessions.
+//
 //nolint:unused // Game logic port — not yet wired to command registry.
 //lint:file-ignore U1000 Game logic port — not yet wired to command registry.
-// Package session provides command handlers and WebSocket-based player sessions.
 package session
 
 import (
@@ -115,8 +116,8 @@ func tattooAf(ch *Session, add bool) {
 	// Build the affect table matching the C code's MAX_TAT_AFFECTS array.
 	// Each entry: (location, modifier) pair.
 	type affEntry struct {
-		loc  int
-		mod  int
+		loc int
+		mod int
 	}
 
 	// Initialize all entries to skip state (APPLY_NONE equivalent)
@@ -135,7 +136,7 @@ func tattooAf(ch *Session, add bool) {
 		afs[1] = affEntry{loc: 0, mod: 2}  // APPLY_STR
 
 	case TatTiger:
-		afs[0] = affEntry{loc: 2, mod: 1}  // APPLY_DEX
+		afs[0] = affEntry{loc: 2, mod: 1}   // APPLY_DEX
 		afs[1] = affEntry{loc: 13, mod: 10} // APPLY_MOVE
 
 	case TatTribal:

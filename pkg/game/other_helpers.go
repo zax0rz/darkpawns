@@ -12,11 +12,11 @@ import (
 // ---------------------------------------------------------------------------
 
 const (
-	PlrOutlaw    = 0
-	PlrNODELETE  = 13
-	PlrCRYO      = 15
-	PlrWerewolf  = 16
-	PlrVampire   = 17
+	PlrOutlaw   = 0
+	PlrNODELETE = 13
+	PlrCRYO     = 15
+	PlrWerewolf = 16
+	PlrVampire  = 17
 )
 
 // ---------------------------------------------------------------------------
@@ -120,7 +120,9 @@ func hasRoomFlag(room *parser.Room, flag string) bool {
 
 // isDark returns true if the room is dark (no light source, not outdoors with sun).
 // Ported from C: IS_DARK(room)
-//   = !world[room].light && (ROOM_FLAGGED(room, ROOM_DARK) || (outside && nighttime))
+//
+//	= !world[room].light && (ROOM_FLAGGED(room, ROOM_DARK) || (outside && nighttime))
+//
 // NOTE: The nighttime check (sunlight state) requires World context and is
 // handled by World.IsRoomDark. This standalone version only checks the flags
 // and light counter.

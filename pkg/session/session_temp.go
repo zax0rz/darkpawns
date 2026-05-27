@@ -69,7 +69,7 @@ func (s *Session) RandomInt(n int) int {
 	// Use math/rand for randomness
 	// Note: In production, you might want to use a cryptographically secure random source
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	return rand.IntN(n)
 }
 

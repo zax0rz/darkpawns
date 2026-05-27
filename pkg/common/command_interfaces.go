@@ -31,7 +31,8 @@
 package common
 
 // CommandSession defines the interface for a session that can execute commands.
-// DEPRECATED: prefer command.SessionInterface. See architectural note above.
+//
+// Deprecated: prefer command.SessionInterface. See architectural note above.
 type CommandSession interface {
 	// Send sends a message to the session
 	Send(string)

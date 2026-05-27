@@ -33,9 +33,9 @@ const (
 
 // charCreateMessage represents the data payload of a char_create message.
 type charCreateMessage struct {
-	Prompt string            `json:"prompt"`
-	Options []string         `json:"options"`
-	Stats  map[string]int    `json:"stats,omitempty"`
+	Prompt  string         `json:"prompt"`
+	Options []string       `json:"options"`
+	Stats   map[string]int `json:"stats,omitempty"`
 }
 
 // CharacterCreator drives the server's character creation wizard.

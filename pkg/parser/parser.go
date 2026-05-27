@@ -79,26 +79,27 @@ func ParseWorld(libDir string) (*World, error) {
 func (w *World) ValidateCrossReferences() {
 	// Build set of all valid room vnums
 	roomVnums := make(map[int]bool)
-	for _, r := range w.Rooms {
-		roomVnums[r.VNum] = true
+	for i := range w.Rooms {
+		roomVnums[w.Rooms[i].VNum] = true
 	}
 
 	// Build set of all valid mob vnums
 	mobVnums := make(map[int]bool)
-	for _, m := range w.Mobs {
-		mobVnums[m.VNum] = true
+	for i := range w.Mobs {
+		mobVnums[w.Mobs[i].VNum] = true
 	}
 
 	// Build set of all valid object vnums
 	objVnums := make(map[int]bool)
-	for _, o := range w.Objs {
-		objVnums[o.VNum] = true
+	for i := range w.Objs {
+		objVnums[w.Objs[i].VNum] = true
 	}
 
 	nowhere := -1
 
 	// Check room exits
-	for _, r := range w.Rooms {
+	for i := range w.Rooms {
+		r := &w.Rooms[i]
 		for dir, exit := range r.Exits {
 			if exit.ToRoom <= nowhere {
 				continue // NOWHERE is valid

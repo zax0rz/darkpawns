@@ -458,7 +458,7 @@ func (sm *ShopManager) SaveShops() error {
 		data.Shops = append(data.Shops, sd)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(shopsFile), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(shopsFile), 0o750); err != nil {
 		return fmt.Errorf("create shops dir: %w", err)
 	}
 
@@ -503,7 +503,8 @@ func (sm *ShopManager) LoadShops() error {
 		sm.nextID = 1
 	}
 
-	for _, sd := range data.Shops {
+	for i := range data.Shops {
+		sd := &data.Shops[i]
 		shop := NewShop(sd.ID, sd.VNum, sd.Name, sd.RoomVNum)
 		shop.ItemTypes = append([]int(nil), sd.ItemTypes...)
 		shop.BuyTypes = append([]int(nil), sd.BuyTypes...)

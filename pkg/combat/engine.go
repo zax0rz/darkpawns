@@ -31,7 +31,7 @@ type CombatEngine struct {
 	// Combat ticker
 	ticker   *time.Ticker
 	stopChan chan struct{}
-	stopped atomic.Bool
+	stopped  atomic.Bool
 
 	// Message broadcaster function (set by game)
 	BroadcastFunc func(roomVNum int, message string, exclude string)
@@ -391,9 +391,9 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant) {
 // handleDeath processes character death.
 //
 // Lock ordering contract (MUST be maintained to prevent deadlocks):
-//   1. CombatEngine.mu (ce.mu) — guards combat pair map
-//   2. World.mu — guards player/mob maps (AddPlayer, RemovePlayer)
-//   3. Player.mu — guards individual player fields
+//  1. CombatEngine.mu (ce.mu) — guards combat pair map
+//  2. World.mu — guards player/mob maps (AddPlayer, RemovePlayer)
+//  3. Player.mu — guards individual player fields
 //
 // Acquisition order in this function:
 //   - ce.mu.RLock (to read LastAttackType from combat pair)

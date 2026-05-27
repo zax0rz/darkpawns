@@ -469,7 +469,7 @@ func cmdPage(s *Session, args []string) error {
 		// Find target — get_char_vis (act.comm.c line 1070)
 		target, ok := s.manager.GetSession(targetName)
 		if !ok || target.player == nil {
-			s.Send(fmt.Sprintf("No one by that name is playing.\r\n"))
+			s.Send("No one by that name is playing.\r\n")
 			continue
 		}
 

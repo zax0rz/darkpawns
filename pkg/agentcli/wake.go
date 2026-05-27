@@ -47,10 +47,10 @@ func (t TriggerType) TriggerName() string {
 // WakeTrigger defines which events should cause the mind to wake.
 type WakeTrigger struct {
 	CombatStart   bool          `json:"combat_start"`
-	LowHP         int           `json:"low_hp_threshold"`    // percentage (e.g. 30 = 30%)
+	LowHP         int           `json:"low_hp_threshold"` // percentage (e.g. 30 = 30%)
 	TellReceived  bool          `json:"tell_received"`
-	BufferSize    int           `json:"event_buffer_size"`   // wake when buffer exceeds this
-	Interval      time.Duration `json:"interval"`            // periodic wake interval
+	BufferSize    int           `json:"event_buffer_size"` // wake when buffer exceeds this
+	Interval      time.Duration `json:"interval"`          // periodic wake interval
 	PlayerEntered bool          `json:"player_entered"`
 	Death         bool          `json:"death"`
 }

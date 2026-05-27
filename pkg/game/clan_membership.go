@@ -141,7 +141,6 @@ func (w *World) doClanExpel(ch *Player, arg string) {
 	victim.SendMessage("You've been kicked out of your clan!\r\n")
 	ch.SendMessage("Done.\r\n")
 	w.SaveClans()
-
 }
 
 // ---------------------------------------------------------------------------
@@ -198,7 +197,6 @@ func (w *World) doClanPromote(ch *Player, arg string) {
 	victim.SendMessage("You've been promoted within your clan!\r\n")
 	ch.SendMessage("Done.\r\n")
 	w.SaveClans()
-
 }
 
 // ---------------------------------------------------------------------------
@@ -251,7 +249,6 @@ func (w *World) doClanDemote(ch *Player, arg string) {
 	victim.SendMessage("You've been demoted within your clan!\r\n")
 	ch.SendMessage("Done.\r\n")
 	w.SaveClans()
-
 }
 
 // ---------------------------------------------------------------------------
@@ -370,4 +367,3 @@ func (w *World) doClanQuit(ch *Player) {
 // ---------------------------------------------------------------------------
 // Sub-command: do_clan_status
 // ---------------------------------------------------------------------------
-

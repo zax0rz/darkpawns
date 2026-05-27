@@ -61,8 +61,8 @@ type Affectable interface {
 // Single source of truth for all affects — spells, equipment, items.
 type AffectManager struct {
 	mu        sync.RWMutex
-	affects   map[string][]*Affect  // entityID -> flat list of affects
-	entityMap map[string]Affectable // entityID -> entity
+	affects   map[string][]*Affect      // entityID -> flat list of affects
+	entityMap map[string]Affectable     // entityID -> entity
 	flagRefs  map[string]map[uint64]int // entityID -> flag -> reference count
 }
 
@@ -575,8 +575,6 @@ func addStat(entity Affectable, name string, delta int) {
 	setStatDirect(entity, name, val+delta)
 }
 
-
-
 func (am *AffectManager) getEntityID(entity Affectable) string {
 	return entity.GetName() + "_" + strconv.Itoa(entity.GetID())
 }
@@ -611,7 +609,7 @@ func (am *AffectManager) countStacks(entityID, stackID string) int {
 
 func (am *AffectManager) removeOldestStack(entityID, stackID string) {
 	affects := am.affects[entityID]
-	var oldestIndex = -1
+	oldestIndex := -1
 	var oldestTime time.Time
 
 	for i, aff := range affects {

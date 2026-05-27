@@ -113,7 +113,7 @@ func roomHasNoMagic(ch interface{}, world interface{}) bool {
 	if !ok {
 		return false
 	}
-	type wI interface { GetRoomInWorld(vnum int) *parser.Room }
+	type wI interface{ GetRoomInWorld(vnum int) *parser.Room }
 	w, ok := world.(wI)
 	if !ok {
 		return false
@@ -159,7 +159,7 @@ func roomIsPeaceful(ch interface{}, world interface{}) bool {
 	if !ok {
 		return false
 	}
-	type wI interface { GetRoomInWorld(vnum int) *parser.Room }
+	type wI interface{ GetRoomInWorld(vnum int) *parser.Room }
 	w, ok := world.(wI)
 	if !ok {
 		return false
@@ -197,9 +197,8 @@ func dice(num, sides int) int {
 	total := 0
 	for i := 0; i < num; i++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		total += rand.IntN(sides) + 1
 	}
 	return total
 }
-

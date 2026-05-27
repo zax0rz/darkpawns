@@ -53,12 +53,12 @@ const WhodMinLevel = LVLImmort // 31
 
 // WhodEntry represents one player's entry in the who display.
 type WhodEntry struct {
-	Name       string
-	Class      int
-	Level      int
-	Title      string
-	AFK        bool
-	Host       string
+	Name        string
+	Class       int
+	Level       int
+	Title       string
+	AFK         bool
+	Host        string
 	IsInvisible bool // AFF_INVISIBLE or wizinvis
 }
 

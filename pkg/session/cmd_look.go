@@ -242,7 +242,8 @@ func cmdLookAt(s *Session, room *parser.Room, targetName string) error {
 
 // playerCanSeeInDark checks if the player can see in darkness.
 // Ported from C: LIGHT_OK(sub)
-//   = !IS_AFFECTED(sub, AFF_BLIND) && (IS_LIGHT(sub->in_room) || IS_AFFECTED(sub, AFF_INFRAVISION))
+//
+//	= !IS_AFFECTED(sub, AFF_BLIND) && (IS_LIGHT(sub->in_room) || IS_AFFECTED(sub, AFF_INFRAVISION))
 func (s *Session) playerCanSeeInDark() bool {
 	// IMMORT levels always see
 	if s.player.GetLevel() >= game.LVL_IMMORT {

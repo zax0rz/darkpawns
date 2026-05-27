@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -19,7 +20,6 @@ func cmdQuit(s *Session) error {
 		s.sendText("You cannot quit from this room!")
 		return nil
 	}
-
 
 	// Notify room
 	msg, err := json.Marshal(ServerMessage{
@@ -255,7 +255,8 @@ func cmdHold(s *Session, args []string) error {
 
 // cmdGet picks up an item from the room, container, or corpse.
 // Delegates to game-layer doGet which handles:
-//   get <item>, get all, get all.<item>, get <item> <container>
+//
+//	get <item>, get all, get all.<item>, get <item> <container>
 func cmdGet(s *Session, args []string) error {
 	arg := strings.Join(args, " ")
 	if arg == "" {
@@ -269,7 +270,8 @@ func cmdGet(s *Session, args []string) error {
 
 // cmdGive gives an item or gold to another character.
 // Delegates to game-layer doGive which handles:
-//   give <item> <player>, give <N> coins <player>, give <N> <player>
+//
+//	give <item> <player>, give <N> coins <player>, give <N> <player>
 func cmdGive(s *Session, args []string) error {
 	arg := strings.Join(args, " ")
 	if arg == "" {
@@ -283,7 +285,8 @@ func cmdGive(s *Session, args []string) error {
 
 // cmdPut puts an item into a container.
 // Delegates to game-layer doPut which handles:
-//   put <item> <container>, put all <container>, put all.<item> <container>
+//
+//	put <item> <container>, put all <container>, put all.<item> <container>
 func cmdPut(s *Session, args []string) error {
 	arg := strings.Join(args, " ")
 	if arg == "" {

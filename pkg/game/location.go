@@ -33,7 +33,7 @@ import "fmt"
 type ObjectOwnerKind uint8
 
 const (
-	OwnerNone   ObjectOwnerKind = iota
+	OwnerNone ObjectOwnerKind = iota
 	OwnerPlayer
 	OwnerMob
 )
@@ -53,14 +53,14 @@ const (
 // ObjectLocation is a tagged union describing an object's position.
 // Exactly one of the key fields should be meaningful depending on Kind.
 type ObjectLocation struct {
-	Kind          ObjectLocationKind
-	OwnerKind     ObjectOwnerKind
-	RoomVNum      int    // ObjInRoom: which room
-	PlayerName    string // ObjInInventory, ObjEquipped: which player
-	MobID         int    // ObjInInventory, ObjEquipped: which mob (World-assigned ID)
-	ContainerObjID int   // ObjInContainer: which object contains this
-	ShopVNum      int    // ObjInShop: which shop (shopkeeper mob VNum)
-	Slot          EquipmentSlot // ObjEquipped: which equipment slot
+	Kind           ObjectLocationKind
+	OwnerKind      ObjectOwnerKind
+	RoomVNum       int           // ObjInRoom: which room
+	PlayerName     string        // ObjInInventory, ObjEquipped: which player
+	MobID          int           // ObjInInventory, ObjEquipped: which mob (World-assigned ID)
+	ContainerObjID int           // ObjInContainer: which object contains this
+	ShopVNum       int           // ObjInShop: which shop (shopkeeper mob VNum)
+	Slot           EquipmentSlot // ObjEquipped: which equipment slot
 }
 
 // Convenience constructors.
@@ -101,10 +101,10 @@ func LocShop(shopVNum int) ObjectLocation {
 
 func (l ObjectLocation) IsNowhere() bool     { return l.Kind == ObjNowhere }
 func (l ObjectLocation) IsInRoom() bool      { return l.Kind == ObjInRoom }
-func (l ObjectLocation) IsInInventory() bool  { return l.Kind == ObjInInventory }
-func (l ObjectLocation) IsEquipped() bool     { return l.Kind == ObjEquipped }
-func (l ObjectLocation) IsInContainer() bool  { return l.Kind == ObjInContainer }
-func (l ObjectLocation) IsInShop() bool       { return l.Kind == ObjInShop }
+func (l ObjectLocation) IsInInventory() bool { return l.Kind == ObjInInventory }
+func (l ObjectLocation) IsEquipped() bool    { return l.Kind == ObjEquipped }
+func (l ObjectLocation) IsInContainer() bool { return l.Kind == ObjInContainer }
+func (l ObjectLocation) IsInShop() bool      { return l.Kind == ObjInShop }
 
 func (l ObjectLocation) InRoomOf(vnum int) bool {
 	return l.Kind == ObjInRoom && l.RoomVNum == vnum

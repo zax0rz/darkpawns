@@ -137,10 +137,10 @@ func diceRoll(n, d int) int {
 	total := 0
 	for i := 0; i < n; i++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		rand.IntN(d)
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		total += rand.IntN(d) + 1
 	}
 	return total
@@ -151,4 +151,3 @@ func diceRoll(n, d int) int {
 func (w *World) updatePosFromHP(victim *Player) {
 	updatePosFromHP(victim, victim.GetHP())
 }
-

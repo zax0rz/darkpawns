@@ -209,4 +209,3 @@ func (s *Skill) CanTeach(teacherLevel int) bool {
 	// Teacher must be at least 20 levels higher than the skill level
 	return teacherLevel >= s.Level+20 && s.Level >= 50
 }
-

@@ -126,10 +126,11 @@ type SendFunc func(msg string)
 // Ported from mudlog() in src/utils.c.
 //
 // Parameters:
-//   str    — the log message
-//   typ    — log type: 0 (normal), 1 (log1), 2 (log2); used as minimum type
-//   level  — minimum immortal level; if < 0, no immortal broadcast
-//   toFile — if true, also write to the stderr-style log
+//
+//	str    — the log message
+//	typ    — log type: 0 (normal), 1 (log1), 2 (log2); used as minimum type
+//	level  — minimum immortal level; if < 0, no immortal broadcast
+//	toFile — if true, also write to the stderr-style log
 //
 // C semantics: toFile → fprintf(stderr, ...). Then if level >= 0, iterate
 // descriptors and send colored "[ message ]\r\n" to immortals whose level
@@ -387,7 +388,8 @@ func CoreDump(who string, line int) {
 	BasicMudLog(msg)
 
 	// Also log via slog for structured logging
-	slog.Error("assertion failed",
+	slog.Error(
+		"assertion failed",
 		"who", who,
 		"line", line,
 		"stack", stack,

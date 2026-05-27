@@ -1,6 +1,7 @@
 // Package scripting provides Lua scripting support for Dark Pawns MUD.
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // Based on original C code from scripts.c.
+//
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package scripting
 
 import (
@@ -14,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	lua "github.com/yuin/gopher-lua"
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // Engine manages the Lua VM.
@@ -58,14 +59,14 @@ func (e *Engine) newSafeLState() *lua.LState {
 	if osTable := L.GetGlobal("os"); osTable.Type() == lua.LTTable {
 		tb := osTable.(*lua.LTable)
 		tb.RawSetString("clock", lua.LNil)   // DoS: timing-detection busy loop
-		tb.RawSetString("execute", lua.LNil)  // arbitrary command execution
-		tb.RawSetString("exit", lua.LNil)     // crash the server
-		tb.RawSetString("getenv", lua.LNil)   // information disclosure
-		tb.RawSetString("remove", lua.LNil)   // file deletion
-		tb.RawSetString("rename", lua.LNil)   // file manipulation
-		tb.RawSetString("setenv", lua.LNil)   // affect other processes
+		tb.RawSetString("execute", lua.LNil) // arbitrary command execution
+		tb.RawSetString("exit", lua.LNil)    // crash the server
+		tb.RawSetString("getenv", lua.LNil)  // information disclosure
+		tb.RawSetString("remove", lua.LNil)  // file deletion
+		tb.RawSetString("rename", lua.LNil)  // file manipulation
+		tb.RawSetString("setenv", lua.LNil)  // affect other processes
 		tb.RawSetString("setlocale", lua.LNil)
-		tb.RawSetString("tmpname", lua.LNil)  // temp file creation
+		tb.RawSetString("tmpname", lua.LNil) // temp file creation
 	}
 
 	// Remove string.dump — produces bytecode that can exploit VM bugs
@@ -103,6 +104,7 @@ func (e *Engine) newSafeLState() *lua.LState {
 
 // matchKeyword checks if a search string matches any keyword in a space-separated keyword list.
 // Mirrors C's isname_with_abbrevs() behavior: case-insensitive prefix match.
+//
 //nolint:unused // Reserved for inworld() mob search when implemented
 func matchKeyword(keywords, search string) bool {
 	search = strings.ToLower(strings.TrimSpace(search))
@@ -137,8 +139,8 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 const transitItemTTL = 30 * time.Second
 
 type transitEntry struct {
-	obj       ScriptableObject
-	placedAt  time.Time
+	obj      ScriptableObject
+	placedAt time.Time
 }
 
 // cleanTransitItems periodically removes orphaned items from the transit map.
@@ -207,7 +209,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		roomTbl := e.l.NewTable()
 		roomTbl.RawSetString("vnum", lua.LNumber(ctx.RoomVNum))
 
-			charTbl := L.NewTable()
+		charTbl := L.NewTable()
 		idx := 1
 		if e.world != nil {
 			for _, p := range e.world.GetPlayersInRoom(ctx.RoomVNum) {
@@ -915,7 +917,7 @@ func (e *Engine) luaSay(L *lua.LState) int {
 
 	// Format message: "mob says 'message'"
 	L.GetGlobal("me")
-	var mobName = "someone"
+	mobName := "someone"
 	if L.Get(-1).Type() == lua.LTTable {
 		L.GetField(L.Get(-1), "name")
 		if L.Get(-1).Type() == lua.LTString {
@@ -975,7 +977,7 @@ func (e *Engine) luaEmote(L *lua.LState) int {
 
 	// Format message: "mob message"
 	L.GetGlobal("me")
-	var mobName = "someone"
+	mobName := "someone"
 	if L.Get(-1).Type() == lua.LTTable {
 		L.GetField(L.Get(-1), "name")
 		if L.Get(-1).Type() == lua.LTString {
@@ -1125,7 +1127,7 @@ func (e *Engine) luaNumber(L *lua.LState) int {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	result := low + rand.IntN(high-low+1)
 	L.Push(lua.LNumber(result))
 	return 1
@@ -1283,7 +1285,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 		total := 0
 		for i := 0; i < num; i++ {
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			total += rand.IntN(sides) + 1
 		}
 		return total
@@ -1474,7 +1476,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			minDamage := casterLevel
 			maxDamage := casterLevel * 3
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			damage = casterLevel*2 + rand.IntN(maxDamage-minDamage+1) + minDamage
 		}
 
@@ -1590,7 +1592,8 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			spellName = "SHOCKING_GRASP"
 		}
 
-		slog.Debug("spell cast",
+		slog.Debug(
+			"spell cast",
 			"caster", casterName,
 			"spell", spellName,
 			"target", targetName,
@@ -1859,7 +1862,7 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 				break
 			}
 		}
-			e.mu.Unlock()
+		e.mu.Unlock()
 	}
 
 	entry, ok := e.transitItems[instanceID]
@@ -2065,11 +2068,12 @@ func (e *Engine) luaPlrFlagged(L *lua.LState) int {
 // luaCanSee checks whether the mob (me) can see character ch.
 // cansee(ch) → bool
 // Based on utils.h CAN_SEE() macro:
-//   CAN_SEE(sub, obj) = SELF || ((GET_REAL_LEVEL(sub) >= GET_INVIS_LEV(obj)) && IMM_CAN_SEE(sub, obj))
-//   IMM_CAN_SEE = MORT_CAN_SEE || PRF_HOLYLIGHT
-//   MORT_CAN_SEE = LIGHT_OK && INVIS_OK
-//   LIGHT_OK = !AFF_BLIND && (IS_LIGHT(room) || AFF_INFRAVISION)
-//   INVIS_OK = !AFF_INVISIBLE(obj) || AFF_DETECT_INVIS(sub)
+//
+//	CAN_SEE(sub, obj) = SELF || ((GET_REAL_LEVEL(sub) >= GET_INVIS_LEV(obj)) && IMM_CAN_SEE(sub, obj))
+//	IMM_CAN_SEE = MORT_CAN_SEE || PRF_HOLYLIGHT
+//	MORT_CAN_SEE = LIGHT_OK && INVIS_OK
+//	LIGHT_OK = !AFF_BLIND && (IS_LIGHT(room) || AFF_INFRAVISION)
+//	INVIS_OK = !AFF_INVISIBLE(obj) || AFF_DETECT_INVIS(sub)
 func (e *Engine) luaCanSee(L *lua.LState) int {
 	chTbl, ok := L.Get(1).(*lua.LTable)
 	if !ok {
@@ -2078,7 +2082,7 @@ func (e *Engine) luaCanSee(L *lua.LState) int {
 	}
 
 	// Get the observer's level from the 'me' table (the mob casting the spell / running the script)
-	var observerLevel = 0
+	observerLevel := 0
 	L.GetGlobal("me")
 	if meTbl, meOk := L.Get(-1).(*lua.LTable); meOk {
 		lvlL := meTbl.RawGetString("level")
@@ -3050,4 +3054,3 @@ func (e *Engine) luaEcho(L *lua.LState) int {
 		return 0
 	}
 }
-

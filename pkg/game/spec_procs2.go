@@ -235,7 +235,7 @@ func specWhirlpool(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			var toRoom int
 			for i := 0; i < 100; i++ {
 				// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+				// #nosec G404
 				candidate := 4600 + rand.IntN(100)
 				r := w.GetRoomInWorld(candidate)
 				if r == nil {
@@ -961,7 +961,7 @@ func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			rooms := w.Rooms()
 			if len(rooms) > 0 {
 				// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+				// #nosec G404
 				target := rooms[rand.IntN(len(rooms))]
 				ch.SetRoom(target.VNum)
 			}
@@ -1098,6 +1098,7 @@ func specNoMoveEast(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	}
 	return false
 }
+
 // ================================================================
 // specKeySeller — Sells an old rusty key for 50 gold
 // ================================================================
@@ -1228,7 +1229,7 @@ func specTeleporter(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		var toRoom int
 		for i := 0; i < 200; i++ {
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			candidate := rooms[rand.IntN(len(rooms))]
 			if w.roomHasFlag(candidate.VNum, "private") || w.roomHasFlag(candidate.VNum, "godroom") ||
 				w.roomHasFlag(candidate.VNum, "death") || w.roomHasFlag(candidate.VNum, "nomob") {
@@ -1521,4 +1522,3 @@ func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	wallGuardTalk = true
 	return false
 }
-

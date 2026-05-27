@@ -81,7 +81,7 @@ func GenerateJWT(playerName string, isAgent bool, agentKeyID int64, role string)
 
 	// Set token expiration
 	expirationTime := time.Now().Add(24 * time.Hour) // 24-hour tokens
-	
+
 	claims := &Claims{
 		PlayerName: playerName,
 		IsAgent:    isAgent,
@@ -95,7 +95,7 @@ func GenerateJWT(playerName string, isAgent bool, agentKeyID int64, role string)
 			Subject:   playerName,
 		},
 	}
-	
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))
 }
@@ -109,7 +109,7 @@ func ValidateJWT(tokenString string) (*Claims, error) {
 	if len(secret) < 32 {
 		return nil, errors.New("JWT_SECRET must be at least 32 characters")
 	}
-	
+
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -117,14 +117,13 @@ func ValidateJWT(tokenString string) (*Claims, error) {
 		}
 		return []byte(secret), nil
 	})
-	
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
 	}
-	
+
 	return nil, ErrInvalidToken
 }

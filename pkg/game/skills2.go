@@ -58,7 +58,7 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(100) + 1
 	prob := ch.GetSkill(SkillScrounge)
 
@@ -68,8 +68,8 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 		if !ok {
 			// Fallback: just give generic food
 			return SkillResult{
-				Success:     true,
-				MessageToCh: "You find some edible scraps.\r\n",
+				Success:       true,
+				MessageToCh:   "You find some edible scraps.\r\n",
 				MessageToRoom: fmt.Sprintf("%s searches and finds something to eat.\r\n", ch.Name),
 			}
 		}
@@ -82,8 +82,8 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 				}
 			}
 			return SkillResult{
-				Success:      true,
-				MessageToCh:  fmt.Sprintf("You find %s.\r\n", proto.ShortDesc),
+				Success:       true,
+				MessageToCh:   fmt.Sprintf("You find %s.\r\n", proto.ShortDesc),
 				MessageToRoom: fmt.Sprintf("%s finds %s.\r\n", ch.Name, proto.ShortDesc),
 			}
 		}
@@ -114,7 +114,7 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(101) + 1 + target.GetLevel()
 	prob := ch.GetSkill(SkillFirstAid)
 
@@ -170,7 +170,7 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(101) + 1 + target.GetLevel()
 	prob := ch.GetSkill(SkillDisarm)
 
@@ -238,7 +238,7 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(100) + 1
 	prob := ch.GetSkill(SkillMindlink)
 
@@ -248,7 +248,7 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 	if percent < prob {
 		// Success
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		x := 20 + ch.GetLevel() + rand.IntN(80) // number(20+level, 100)
 		ch.SetHP(ch.GetHP() - x)
 		if ch.GetHP() < 0 {
@@ -295,7 +295,7 @@ func DoDetect(ch *Player, world *World) SkillResult {
 
 	prob := ch.GetSkill(SkillDetect)
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	if prob <= rand.IntN(100)+1 {
 		return SkillResult{Success: false, MessageToCh: "You can't seem to find anything.\r\n"}
 	}
@@ -363,7 +363,7 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := ((7 - (target.GetAC() / 10)) * 2) + rand.IntN(101) + 1
 	prob := ch.GetSkill(SkillSerpentKick)
 
@@ -389,7 +389,7 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 	// Training mob spawn (C source: create_mobile(ch, 18221, GET_LEVEL(ch)+3, TRUE))
 	if ch.GetLevel() >= 19 {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(81) == 0 {
 			_, _ = world.SpawnMobWithLevelI(18221, ch.GetRoom(), ch.GetLevel()+3)
 		}
@@ -412,7 +412,9 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 // Simplified version: dig in current room based on sector type.
 // WAIT_STATE, move cost.
 // Sector types:
-//   SECT_DIRT (2), SECT_FOREST (3), SECT_FIELD (4), SECT_HILLS (5)
+//
+//	SECT_DIRT (2), SECT_FOREST (3), SECT_FIELD (4), SECT_HILLS (5)
+//
 // Success chance based on SKILL_DIG. Finds random loot.
 // ---------------------------------------------------------------------------
 func DoDig(ch *Player, world *World) SkillResult {
@@ -437,7 +439,7 @@ func DoDig(ch *Player, world *World) SkillResult {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	percent := rand.IntN(100) + 1
 	prob := ch.GetSkill(SkillDig)
 	if prob == 0 {
@@ -471,8 +473,8 @@ func DoDig(ch *Player, world *World) SkillResult {
 	}
 
 	return SkillResult{
-		Success:     false,
-		MessageToCh: "You dig but find nothing.\r\n",
+		Success:       false,
+		MessageToCh:   "You dig but find nothing.\r\n",
 		MessageToRoom: fmt.Sprintf("%s digs around but finds nothing.\r\n", ch.Name),
 	}
 }
@@ -541,9 +543,9 @@ func DoTurn(ch *Player, target combat.Combatant) SkillResult {
 
 	if diff > 3 {
 		return SkillResult{
-			Success:     true,
-			Damage:      ch.GetLevel() * 2,
-			MessageToCh: msgToCh + "The undead creature shrieks and flees from your holiness!\r\n",
+			Success:       true,
+			Damage:        ch.GetLevel() * 2,
+			MessageToCh:   msgToCh + "The undead creature shrieks and flees from your holiness!\r\n",
 			MessageToRoom: fmt.Sprintf("%s shrieks in terror!\r\n", target.GetName()),
 		}
 	}
@@ -561,4 +563,3 @@ func DoTurn(ch *Player, target combat.Combatant) SkillResult {
 		MessageToRoom: fmt.Sprintf("%s is bathed in holy light!\r\n", ch.Name),
 	}
 }
-

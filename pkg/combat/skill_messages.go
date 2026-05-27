@@ -626,9 +626,9 @@ func basicTokenReplace(msg, chName, victimName string) string {
 }
 
 type pronounSet struct {
-	subjective  string // he/she/it
-	objective   string // him/her/it
-	possessive  string // his/her/its
+	subjective string // he/she/it
+	objective  string // him/her/it
+	possessive string // his/her/its
 }
 
 func sexPronouns(sex int) pronounSet {

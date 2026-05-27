@@ -87,7 +87,7 @@ func (w *World) doWhisper(ch *Player, me *MobInstance, arg string) bool {
 	vict.SendMessage(fmt.Sprintf("\x1B[1;33m%s whispers, '%s'\033[0m\r\n", ch.Name, msg))
 	ch.SendMessage(fmt.Sprintf("You whisper to %s, '%s'\r\n", vict.Name, msg))
 
-		// Broadcast to rest of room that whisper occurred.
+	// Broadcast to rest of room that whisper occurred.
 	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
 		if p.Name != ch.Name && p.Name != vict.Name {
 			p.SendMessage(fmt.Sprintf("%s whispers something to %s.\r\n", ch.Name, vict.Name))
@@ -127,15 +127,16 @@ func (w *World) doAsk(ch *Player, me *MobInstance, arg string) bool {
 // Source: act.comm.c:1024 do_write() — full logic ported from C.
 //
 // C logic summary:
-//   two_arguments(argument, papername, penname)
-//   - No args: print usage error
-//   - PLR_NOSHOUT: block writing
-//   - Two args: look up both paper and pen in inventory
-//   - One arg: find it in inventory; if it's a pen swap pen/paper, else it must
-//     be ITEM_NOTE. Check held slot for the other object.
-//   - Validate pen is ITEM_PEN and paper is ITEM_NOTE
-//   - If paper already has text: reject ("already written on")
-//   - Otherwise: set PLR_WRITING, put player into string-editor mode
+//
+//	two_arguments(argument, papername, penname)
+//	- No args: print usage error
+//	- PLR_NOSHOUT: block writing
+//	- Two args: look up both paper and pen in inventory
+//	- One arg: find it in inventory; if it's a pen swap pen/paper, else it must
+//	  be ITEM_NOTE. Check held slot for the other object.
+//	- Validate pen is ITEM_PEN and paper is ITEM_NOTE
+//	- If paper already has text: reject ("already written on")
+//	- Otherwise: set PLR_WRITING, put player into string-editor mode
 func (w *World) doWrite(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	// Source: act.comm.c:1024
 	arg = skipSpaces(arg)
@@ -289,7 +290,7 @@ func (w *World) doPage(ch *Player, me *MobInstance, cmd string, arg string) bool
 	for _, tname := range targets {
 		tch := w.getCharVis(ch, tname)
 		if tch == nil {
-			sendToChar(ch, fmt.Sprintf("No one by that name is playing.\r\n"))
+			sendToChar(ch, "No one by that name is playing.\r\n")
 			continue
 		}
 

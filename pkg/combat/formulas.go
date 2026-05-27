@@ -8,9 +8,9 @@ import (
 type ParryResult int
 
 const (
-	ParryFail       ParryResult = iota // parry not available or check failed
-	ParrySuccess                         // defender parried the attack
-	ParryUnarmed                         // defender has parry skill but no weapon
+	ParryFail    ParryResult = iota // parry not available or check failed
+	ParrySuccess                    // defender parried the attack
+	ParryUnarmed                    // defender has parry skill but no weapon
 )
 
 // DodgeResult describes the outcome of a dodge check.
@@ -18,8 +18,8 @@ type DodgeResult int
 
 const (
 	DodgeFail      DodgeResult = iota // dodge not available or check failed
-	DodgeSuccess                       // defender dodged the attack
-	DodgeIncapable                     // defender sleeping/stunned
+	DodgeSuccess                      // defender dodged the attack
+	DodgeIncapable                    // defender sleeping/stunned
 )
 
 // AttackType represents different types of attacks
@@ -65,65 +65,89 @@ const (
 // Index 0 is unused (level 0), levels 1–40 are valid.
 var thaco = [12][41]int{
 	// MAGE
-	{100, 20, 20, 20, 19, 19, 19, 18, 18, 18,
+	{
+		100, 20, 20, 20, 19, 19, 19, 18, 18, 18,
 		17, 17, 17, 16, 16, 16, 15, 15, 15, 14,
 		14, 14, 13, 13, 13, 12, 12, 12, 11, 11,
-		11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9},
+		11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9,
+	},
 	// CLERIC
-	{100, 20, 20, 20, 18, 18, 18, 16, 16, 16,
+	{
+		100, 20, 20, 20, 18, 18, 18, 16, 16, 16,
 		14, 14, 14, 12, 12, 12, 10, 10, 10, 8,
 		8, 8, 6, 6, 6, 4, 4, 4, 2, 2,
-		2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	},
 	// THIEF
-	{100, 20, 20, 19, 19, 18, 18, 17, 17, 16,
+	{
+		100, 20, 20, 19, 19, 18, 18, 17, 17, 16,
 		16, 15, 15, 14, 13, 13, 12, 12, 11, 11,
 		10, 10, 9, 9, 8, 8, 7, 7, 6, 6,
-		5, 5, 4, 4, 3, 3, 3, 3, 3, 3, 3},
+		5, 5, 4, 4, 3, 3, 3, 3, 3, 3, 3,
+	},
 	// WARRIOR
-	{100, 20, 19, 18, 17, 16, 15, 14, 13, 12,
+	{
+		100, 20, 19, 18, 17, 16, 15, 14, 13, 12,
 		11, 10, 9, 8, 7, 6, 5, 4, 3, 2,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	},
 	// MAGUS
-	{100, 20, 20, 20, 19, 19, 19, 18, 18, 18,
+	{
+		100, 20, 20, 20, 19, 19, 19, 18, 18, 18,
 		17, 17, 17, 16, 16, 16, 15, 15, 15, 14,
 		14, 14, 13, 13, 13, 12, 12, 12, 11, 11,
-		11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9},
+		11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9,
+	},
 	// AVATAR
-	{100, 20, 20, 20, 18, 18, 18, 16, 16, 16,
+	{
+		100, 20, 20, 20, 18, 18, 18, 16, 16, 16,
 		14, 14, 14, 12, 12, 12, 10, 10, 10, 8,
 		8, 8, 6, 6, 6, 4, 4, 4, 2, 2,
-		2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	},
 	// ASSASSIN
-	{100, 20, 20, 19, 19, 18, 18, 17, 17, 16,
+	{
+		100, 20, 20, 19, 19, 18, 18, 17, 17, 16,
 		16, 15, 15, 14, 13, 13, 12, 12, 11, 11,
 		10, 10, 9, 9, 8, 8, 7, 7, 6, 6,
-		5, 5, 4, 4, 3, 3, 3, 3, 3, 3, 3},
+		5, 5, 4, 4, 3, 3, 3, 3, 3, 3, 3,
+	},
 	// PALADIN
-	{100, 20, 19, 18, 17, 16, 15, 14, 13, 12,
+	{
+		100, 20, 19, 18, 17, 16, 15, 14, 13, 12,
 		11, 10, 9, 8, 7, 6, 5, 4, 3, 2,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	},
 	// NINJA
-	{100, 20, 20, 19, 19, 18, 18, 17, 17, 16,
+	{
+		100, 20, 20, 19, 19, 18, 18, 17, 17, 16,
 		16, 15, 15, 14, 13, 13, 12, 12, 11, 11,
 		10, 10, 9, 9, 8, 8, 7, 7, 6, 6,
-		5, 5, 4, 4, 3, 3, 3, 3, 3, 3, 3},
+		5, 5, 4, 4, 3, 3, 3, 3, 3, 3, 3,
+	},
 	// PSIONIC
-	{100, 20, 20, 19, 18, 18, 17, 16, 16, 16,
+	{
+		100, 20, 20, 19, 18, 18, 17, 16, 16, 16,
 		15, 15, 14, 14, 14, 13, 12, 12, 10, 10,
 		9, 9, 8, 8, 7, 7, 6, 5, 5, 4,
-		4, 3, 3, 3, 2, 2, 1, 1, 1, 1, 1},
+		4, 3, 3, 3, 2, 2, 1, 1, 1, 1, 1,
+	},
 	// RANGER
-	{100, 20, 19, 18, 17, 16, 15, 14, 13, 12,
+	{
+		100, 20, 19, 18, 17, 16, 15, 14, 13, 12,
 		11, 10, 9, 8, 7, 6, 5, 4, 3, 2,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	},
 	// MYSTIC
-	{100, 20, 20, 20, 19, 19, 19, 18, 18, 18,
+	{
+		100, 20, 20, 20, 19, 19, 19, 18, 18, 18,
 		17, 17, 17, 16, 16, 16, 15, 15, 15, 14,
 		14, 14, 13, 13, 13, 12, 12, 12, 11, 11,
-		11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9},
+		11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9,
+	},
 }
 
 // strApp mirrors str_app[] from constants.c
@@ -324,7 +348,7 @@ func CalculateHitChance(attacker, defender Combatant, mods HitModifiers) bool {
 	calcThaco -= wisBonus
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	diceroll := rand.IntN(20) + 1
 
 	victimAC := defender.GetAC() / 10
@@ -483,7 +507,7 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 	} else {
 		// Bare hands: number(0, level/3)
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		dam += rand.IntN(attacker.GetLevel()/3 + 1)
 	}
 
@@ -540,7 +564,7 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 
 		// Random bonus: number(0, 900) < level
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(901) < level {
 			attacks++
 		}
@@ -554,7 +578,7 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		// C: number(1,100) returns 1-100; rand.IntN(100) returns 0-99 → add 1 for fidelity
 		if (class == ClassWarrior || class == ClassPaladin || class == ClassRanger) &&
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			level > 10 && (rand.IntN(100)+1) < (60+level) {
 			attacks++
 		}
@@ -562,7 +586,7 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		// Ninjas/Avatars: +1 at level 12+ (60% + level% chance)
 		if (class == ClassNinja || class == ClassAvatar) &&
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			level > 12 && (rand.IntN(100)+1) < (60+level) {
 			attacks++
 		}
@@ -570,21 +594,21 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		// Thieves/Assassins: +1 at level 15+ (30% + level% chance)
 		if (class == ClassThief || class == ClassAssassin) &&
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			level > 15 && (rand.IntN(100)+1) < (30+level) {
 			attacks++
 		}
 
 		// All players: +1 at level 25+ (75% chance)
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if level > 25 && (rand.IntN(100)+1) < 75 {
 			attacks++
 		}
 
 		// All players: +1 at level 30+ OR !number(0,500)
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if level > 30 || rand.IntN(501) == 0 {
 			attacks++
 		}
@@ -713,9 +737,8 @@ func RollDice(num, sides int) int {
 	total := 0
 	for i := 0; i < num; i++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		total += rand.IntN(sides) + 1
 	}
 	return total
 }
-

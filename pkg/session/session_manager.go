@@ -2,8 +2,8 @@
 package session
 
 import (
-	"log/slog"
 	"encoding/json"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )

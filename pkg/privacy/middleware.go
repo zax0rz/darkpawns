@@ -92,7 +92,8 @@ func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 			respBodyStr = respBodyStr[:1000] + "... [truncated]"
 		}
 
-		logger.Printf("HTTP %s %s %s %d %v\nRequest: %s\nResponse: %s",
+		logger.Printf(
+			"HTTP %s %s %s %d %v\nRequest: %s\nResponse: %s",
 			r.Method,
 			r.URL.Path,
 			remoteAddr,

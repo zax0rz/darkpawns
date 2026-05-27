@@ -1,6 +1,8 @@
 // Package game — site ban system (ported from ban.c)
 // Source: src/ban.c — load_banned(), _write_one_node(), write_ban_list(),
-//         do_ban(), do_unban(), Read_Invalid_List(), Valid_Name()
+//
+//	do_ban(), do_unban(), Read_Invalid_List(), Valid_Name()
+//
 // Port: Wave 13, 2026-04-25
 package game
 
@@ -28,17 +30,19 @@ const (
 var banTypeNames = []string{"no", "new", "select", "all", "ERROR"}
 
 // BanEntry represents a single site ban record.
-// Source: structs.h struct ban_list_element {
-//   char site[BANNED_SITE_LENGTH+1]; char name[MAX_NAME_LENGTH+1];
-//   long date; int type; struct ban_list_element *next;
-// }
+//
+//	Source: structs.h struct ban_list_element {
+//	  char site[BANNED_SITE_LENGTH+1]; char name[MAX_NAME_LENGTH+1];
+//	  long date; int type; struct ban_list_element *next;
+//	}
+//
 // BANNED_SITE_LENGTH = 50 (db.h line 209)
 // MAX_NAME_LENGTH = 20 (structs.h)
 type BanEntry struct {
-	Site    string    // Hostname pattern to match (up to 50 chars)
-	BanType int       // BanNot..BanAll
-	Date    time.Time // When the ban was placed
-	BannedBy string   // Name of the admin who placed the ban
+	Site     string    // Hostname pattern to match (up to 50 chars)
+	BanType  int       // BanNot..BanAll
+	Date     time.Time // When the ban was placed
+	BannedBy string    // Name of the admin who placed the ban
 }
 
 // BanManager holds the active ban list and the invalid name list.
@@ -77,7 +81,8 @@ func banTypeName(t int) string {
 // Source: ban.c load_banned() lines 52–83
 //
 // File format (one entry per line):
-//   <ban_type> <site_name> <unix_timestamp> <banned_by_name>
+//
+//	<ban_type> <site_name> <unix_timestamp> <banned_by_name>
 func (bm *BanManager) LoadBanned(path string) {
 	bm.bans = nil
 
@@ -130,7 +135,8 @@ func (bm *BanManager) WriteBanList(path string) error {
 	// Source: ban.c _write_one_node() — recurses to end then writes on unwind.
 	for i := len(bm.bans) - 1; i >= 0; i-- {
 		entry := bm.bans[i]
-		_, _ = fmt.Fprintf(w, "%s %s %d %s\n",
+		_, _ = fmt.Fprintf(
+			w, "%s %s %d %s\n",
 			banTypeName(entry.BanType),
 			entry.Site,
 			entry.Date.Unix(),

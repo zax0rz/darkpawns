@@ -49,33 +49,33 @@ func (op *ObjectPool) Get() interface{} {
 	start := time.Now()
 	op.mu.Lock()
 	defer op.mu.Unlock()
-	
+
 	op.stats.TotalBorrowed++
 	op.borrowed++
-	
+
 	// Return from pool if available
 	if len(op.pool) > 0 {
 		obj := op.pool[len(op.pool)-1]
 		op.pool = op.pool[:len(op.pool)-1]
-		
+
 		// Validate object if validation function provided
 		if op.validate != nil && !op.validate(obj) {
 			// Object invalid, discard and create new one
 			op.stats.TotalDiscarded++
 			return op.createNewLocked()
 		}
-		
+
 		// Reset object if reset function provided
 		if op.reset != nil {
 			op.reset(obj)
 		}
-		
+
 		borrowTime := time.Since(start)
 		op.updateBorrowTime(borrowTime)
-		
+
 		return obj
 	}
-	
+
 	// Create new object if under max size
 	if op.created < op.maxSize {
 		obj := op.createNewLocked()
@@ -83,12 +83,12 @@ func (op *ObjectPool) Get() interface{} {
 		op.updateBorrowTime(borrowTime)
 		return obj
 	}
-	
+
 	// Pool exhausted, create temporary object
 	obj := op.create()
 	borrowTime := time.Since(start)
 	op.updateBorrowTime(borrowTime)
-	
+
 	return obj
 }
 
@@ -97,11 +97,11 @@ func (op *ObjectPool) createNewLocked() interface{} {
 	obj := op.create()
 	op.created++
 	op.stats.TotalCreated++
-	
+
 	if op.created > op.stats.PeakSize {
 		op.stats.PeakSize = op.created
 	}
-	
+
 	return obj
 }
 
@@ -110,7 +110,7 @@ func (op *ObjectPool) updateBorrowTime(borrowTime time.Duration) {
 	if borrowTime > op.stats.MaxBorrowTime {
 		op.stats.MaxBorrowTime = borrowTime
 	}
-	
+
 	// Update average borrow time
 	totalBorrows := op.stats.TotalBorrowed
 	if totalBorrows > 0 {
@@ -122,21 +122,21 @@ func (op *ObjectPool) updateBorrowTime(borrowTime time.Duration) {
 func (op *ObjectPool) Put(obj interface{}) {
 	op.mu.Lock()
 	defer op.mu.Unlock()
-	
+
 	op.stats.TotalReturned++
 	op.borrowed--
-	
+
 	// Validate object if validation function provided
 	if op.validate != nil && !op.validate(obj) {
 		op.stats.TotalDiscarded++
 		return
 	}
-	
+
 	// Reset object if reset function provided
 	if op.reset != nil {
 		op.reset(obj)
 	}
-	
+
 	// Add to pool if not full
 	if len(op.pool) < op.maxSize {
 		op.pool = append(op.pool, obj)
@@ -150,11 +150,11 @@ func (op *ObjectPool) Put(obj interface{}) {
 func (op *ObjectPool) TryGet() (interface{}, bool) {
 	op.mu.Lock()
 	defer op.mu.Unlock()
-	
+
 	if len(op.pool) == 0 && op.created >= op.maxSize {
 		return nil, false
 	}
-	
+
 	return op.Get(), true
 }
 
@@ -162,7 +162,7 @@ func (op *ObjectPool) TryGet() (interface{}, bool) {
 func (op *ObjectPool) Clear() {
 	op.mu.Lock()
 	defer op.mu.Unlock()
-	
+
 	op.pool = make([]interface{}, 0, op.maxSize)
 	op.created = 0
 	op.borrowed = 0
@@ -173,7 +173,7 @@ func (op *ObjectPool) Clear() {
 func (op *ObjectPool) Stats() map[string]interface{} {
 	op.mu.Lock()
 	defer op.mu.Unlock()
-	
+
 	stats := make(map[string]interface{})
 	stats["pool_size"] = len(op.pool)
 	stats["created"] = op.created
@@ -181,12 +181,12 @@ func (op *ObjectPool) Stats() map[string]interface{} {
 	stats["max_size"] = op.maxSize
 	stats["available"] = len(op.pool)
 	stats["in_use"] = op.borrowed
-	
+
 	if op.created > 0 {
 		stats["utilization"] = float64(op.borrowed) / float64(op.created)
 		stats["efficiency"] = float64(op.stats.TotalReturned) / float64(op.stats.TotalBorrowed)
 	}
-	
+
 	// Copy detailed stats
 	stats["total_created"] = op.stats.TotalCreated
 	stats["total_borrowed"] = op.stats.TotalBorrowed
@@ -196,7 +196,7 @@ func (op *ObjectPool) Stats() map[string]interface{} {
 	stats["avg_borrow_time_ms"] = op.stats.AvgBorrowTime.Milliseconds()
 	stats["max_borrow_time_ms"] = op.stats.MaxBorrowTime.Milliseconds()
 	stats["last_reset"] = op.stats.LastReset.Format(time.RFC3339)
-	
+
 	return stats
 }
 
@@ -204,14 +204,14 @@ func (op *ObjectPool) Stats() map[string]interface{} {
 func (op *ObjectPool) Prefill(count int) {
 	op.mu.Lock()
 	defer op.mu.Unlock()
-	
+
 	for i := 0; i < count && len(op.pool) < op.maxSize; i++ {
 		obj := op.create()
 		op.created++
 		op.stats.TotalCreated++
 		op.pool = append(op.pool, obj)
 	}
-	
+
 	if op.created > op.stats.PeakSize {
 		op.stats.PeakSize = op.created
 	}
@@ -235,19 +235,19 @@ func (sp *StringPool) Get(s string) string {
 	sp.mu.RLock()
 	pooled, exists := sp.pool[s]
 	sp.mu.RUnlock()
-	
+
 	if exists {
 		return pooled
 	}
-	
+
 	sp.mu.Lock()
 	defer sp.mu.Unlock()
-	
+
 	// Double-check after acquiring write lock
 	if pooled, exists := sp.pool[s]; exists {
 		return pooled
 	}
-	
+
 	// Add to pool
 	sp.pool[s] = s
 	return s

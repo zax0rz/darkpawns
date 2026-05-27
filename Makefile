@@ -1,4 +1,4 @@
-.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs privacy-up privacy-down privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report
+.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs privacy-up privacy-down privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report fmt check-fmt vet lint lint-fix
 
 # Default world directory (relative to darkpawns original)
 WORLD_DIR ?= ../darkpawns/lib
@@ -78,13 +78,19 @@ up-with-privacy: privacy-up
 
 # Development helpers
 fmt:
-	go fmt ./...
+	gofumpt -w .
+
+check-fmt:
+	@test -z "$$(gofumpt -l .)" || (echo "Files need gofumpt. Run: gofumpt -w ." && gofumpt -l . && exit 1)
 
 vet:
 	go vet ./...
 
-lint: fmt vet
-	golangci-lint run
+lint: check-fmt vet
+	golangci-lint run ./...
+
+lint-fix:
+	golangci-lint run --fix ./...
 
 # Testing with actual world files
 test-parse:

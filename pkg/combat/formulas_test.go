@@ -7,54 +7,54 @@ import (
 
 // mockCombatant implements Combatant with settable fields for testing.
 type mockCombatant struct {
-	name        string
-	npc         bool
-	room        int
-	level       int
-	hp          int
-	maxHP       int
-	ac          int
-	thac0       int
-	damageRoll  DiceRoll
-	position    int
-	class       int
-	str         int
-	strAdd      int
-	dex         int
-	intVal      int
-	wis         int
-	hitroll     int
-	damroll     int
-	sex         int
-	fighting    string
+	name       string
+	npc        bool
+	room       int
+	level      int
+	hp         int
+	maxHP      int
+	ac         int
+	thac0      int
+	damageRoll DiceRoll
+	position   int
+	class      int
+	str        int
+	strAdd     int
+	dex        int
+	intVal     int
+	wis        int
+	hitroll    int
+	damroll    int
+	sex        int
+	fighting   string
 }
 
-func (m *mockCombatant) GetName() string            { return m.name }
-func (m *mockCombatant) IsNPC() bool                 { return m.npc }
-func (m *mockCombatant) GetRoom() int                { return m.room }
-func (m *mockCombatant) GetLevel() int               { return m.level }
-func (m *mockCombatant) GetHP() int                  { return m.hp }
-func (m *mockCombatant) GetMaxHP() int               { return m.maxHP }
-func (m *mockCombatant) GetAC() int                  { return m.ac }
-func (m *mockCombatant) GetTHAC0() int               { return m.thac0 }
-func (m *mockCombatant) GetDamageRoll() DiceRoll     { return m.damageRoll }
-func (m *mockCombatant) GetPosition() int            { return m.position }
-func (m *mockCombatant) SetPosition(pos int)         { m.position = pos }
-func (m *mockCombatant) GetClass() int               { return m.class }
-func (m *mockCombatant) GetStr() int                 { return m.str }
-func (m *mockCombatant) GetStrAdd() int              { return m.strAdd }
-func (m *mockCombatant) GetDex() int                 { return m.dex }
-func (m *mockCombatant) GetInt() int                 { return m.intVal }
-func (m *mockCombatant) GetWis() int                 { return m.wis }
-func (m *mockCombatant) GetHitroll() int             { return m.hitroll }
-func (m *mockCombatant) GetDamroll() int             { return m.damroll }
-func (m *mockCombatant) GetSex() int                 { return m.sex }
-func (m *mockCombatant) TakeDamage(amount int)       { m.hp -= amount }
-func (m *mockCombatant) Heal(amount int)             { m.hp += amount }
-func (m *mockCombatant) SetFighting(target string)   { m.fighting = target }
-func (m *mockCombatant) StopFighting()               { m.fighting = "" }
-func (m *mockCombatant) GetFighting() string         { return m.fighting }
-func (m *mockCombatant) SendMessage(msg string)      {}
+func (m *mockCombatant) GetName() string           { return m.name }
+func (m *mockCombatant) IsNPC() bool               { return m.npc }
+func (m *mockCombatant) GetRoom() int              { return m.room }
+func (m *mockCombatant) GetLevel() int             { return m.level }
+func (m *mockCombatant) GetHP() int                { return m.hp }
+func (m *mockCombatant) GetMaxHP() int             { return m.maxHP }
+func (m *mockCombatant) GetAC() int                { return m.ac }
+func (m *mockCombatant) GetTHAC0() int             { return m.thac0 }
+func (m *mockCombatant) GetDamageRoll() DiceRoll   { return m.damageRoll }
+func (m *mockCombatant) GetPosition() int          { return m.position }
+func (m *mockCombatant) SetPosition(pos int)       { m.position = pos }
+func (m *mockCombatant) GetClass() int             { return m.class }
+func (m *mockCombatant) GetStr() int               { return m.str }
+func (m *mockCombatant) GetStrAdd() int            { return m.strAdd }
+func (m *mockCombatant) GetDex() int               { return m.dex }
+func (m *mockCombatant) GetInt() int               { return m.intVal }
+func (m *mockCombatant) GetWis() int               { return m.wis }
+func (m *mockCombatant) GetHitroll() int           { return m.hitroll }
+func (m *mockCombatant) GetDamroll() int           { return m.damroll }
+func (m *mockCombatant) GetSex() int               { return m.sex }
+func (m *mockCombatant) TakeDamage(amount int)     { m.hp -= amount }
+func (m *mockCombatant) Heal(amount int)           { m.hp += amount }
+func (m *mockCombatant) SetFighting(target string) { m.fighting = target }
+func (m *mockCombatant) StopFighting()             { m.fighting = "" }
+func (m *mockCombatant) GetFighting() string       { return m.fighting }
+func (m *mockCombatant) SendMessage(msg string)    {}
 
 // ---------------------------------------------------------------------------
 // TestMain — sets global function pointers for tests that need them
@@ -277,26 +277,26 @@ func TestGetMinusDam_ACThresholds(t *testing.T) {
 		ac       int
 		expected int
 	}{
-		{"ac=85 (80-90)", 85, 98},   // 100 - int(100 * 0.01 * 2.0) = 100 - 2
-		{"ac=75 (70-80)", 75, 96},   // 100 - int(100 * 0.02 * 2.0) = 100 - 4
-		{"ac=65 (60-70)", 65, 94},   // 100 - int(100 * 0.03 * 2.0) = 100 - 6
-		{"ac=55 (50-60)", 55, 92},   // 100 - int(100 * 0.04 * 2.0) = 100 - 8
-		{"ac=45 (40-50)", 45, 90},   // 100 - int(100 * 0.05 * 2.0) = 100 - 10
-		{"ac=35 (30-40)", 35, 88},   // 100 - int(100 * 0.06 * 2.0) = 100 - 12
-		{"ac=25 (20-30)", 25, 86},   // 100 - int(100 * 0.07 * 2.0) = 100 - 14
-		{"ac=15 (10-20)", 15, 84},   // 100 - int(100 * 0.08 * 2.0) = 100 - 16
-		{"ac=5 (0-10)", 5, 80},      // 100 - int(100 * 0.10 * 2.0) = 100 - 20
-		{"ac=-5 (-10 to 0)", -5, 78},  // 100 - int(100 * 0.11 * 2.0) = 100 - 22
-		{"ac=-15 (-20 to -10)", -15, 76}, // 100 - int(100 * 0.12 * 2.0) = 100 - 24
-		{"ac=-25 (-30 to -20)", -25, 74}, // 100 - int(100 * 0.13 * 2.0) = 100 - 26
-		{"ac=-35 (-40 to -30)", -35, 72}, // 100 - int(100 * 0.14 * 2.0) = 100 - 28
-		{"ac=-45 (-50 to -40)", -45, 70}, // 100 - int(100 * 0.15 * 2.0) = 100 - 30
-		{"ac=-55 (-60 to -50)", -55, 68}, // 100 - int(100 * 0.16 * 2.0) = 100 - 32
-		{"ac=-65 (-70 to -60)", -65, 66}, // 100 - int(100 * 0.17 * 2.0) = 100 - 34
-		{"ac=-75 (-80 to -70)", -75, 64}, // 100 - int(100 * 0.18 * 2.0) = 100 - 36
-		{"ac=-85 (-90 to -80)", -85, 62}, // 100 - int(100 * 0.19 * 2.0) = 100 - 38
-		{"ac=-92 (-95 to -90)", -92, 60}, // 100 - int(100 * 0.20 * 2.0) = 100 - 40
-		{"ac=-100 (-110 to -95)", -100, 58}, // 100 - int(100 * 0.21 * 2.0) = 100 - 42
+		{"ac=85 (80-90)", 85, 98},            // 100 - int(100 * 0.01 * 2.0) = 100 - 2
+		{"ac=75 (70-80)", 75, 96},            // 100 - int(100 * 0.02 * 2.0) = 100 - 4
+		{"ac=65 (60-70)", 65, 94},            // 100 - int(100 * 0.03 * 2.0) = 100 - 6
+		{"ac=55 (50-60)", 55, 92},            // 100 - int(100 * 0.04 * 2.0) = 100 - 8
+		{"ac=45 (40-50)", 45, 90},            // 100 - int(100 * 0.05 * 2.0) = 100 - 10
+		{"ac=35 (30-40)", 35, 88},            // 100 - int(100 * 0.06 * 2.0) = 100 - 12
+		{"ac=25 (20-30)", 25, 86},            // 100 - int(100 * 0.07 * 2.0) = 100 - 14
+		{"ac=15 (10-20)", 15, 84},            // 100 - int(100 * 0.08 * 2.0) = 100 - 16
+		{"ac=5 (0-10)", 5, 80},               // 100 - int(100 * 0.10 * 2.0) = 100 - 20
+		{"ac=-5 (-10 to 0)", -5, 78},         // 100 - int(100 * 0.11 * 2.0) = 100 - 22
+		{"ac=-15 (-20 to -10)", -15, 76},     // 100 - int(100 * 0.12 * 2.0) = 100 - 24
+		{"ac=-25 (-30 to -20)", -25, 74},     // 100 - int(100 * 0.13 * 2.0) = 100 - 26
+		{"ac=-35 (-40 to -30)", -35, 72},     // 100 - int(100 * 0.14 * 2.0) = 100 - 28
+		{"ac=-45 (-50 to -40)", -45, 70},     // 100 - int(100 * 0.15 * 2.0) = 100 - 30
+		{"ac=-55 (-60 to -50)", -55, 68},     // 100 - int(100 * 0.16 * 2.0) = 100 - 32
+		{"ac=-65 (-70 to -60)", -65, 66},     // 100 - int(100 * 0.17 * 2.0) = 100 - 34
+		{"ac=-75 (-80 to -70)", -75, 64},     // 100 - int(100 * 0.18 * 2.0) = 100 - 36
+		{"ac=-85 (-90 to -80)", -85, 62},     // 100 - int(100 * 0.19 * 2.0) = 100 - 38
+		{"ac=-92 (-95 to -90)", -92, 60},     // 100 - int(100 * 0.20 * 2.0) = 100 - 40
+		{"ac=-100 (-110 to -95)", -100, 58},  // 100 - int(100 * 0.21 * 2.0) = 100 - 42
 		{"ac=-120 (-130 to -110)", -120, 56}, // 100 - int(100 * 0.22 * 2.0) = 100 - 44
 		{"ac=-140 (-150 to -130)", -140, 54}, // 100 - int(100 * 0.23 * 2.0) = 100 - 46
 		{"ac=-160 (-170 to -150)", -160, 52}, // 100 - int(100 * 0.24 * 2.0) = 100 - 48
@@ -307,7 +307,7 @@ func TestGetMinusDam_ACThresholds(t *testing.T) {
 		{"ac=-260 (-270 to -250)", -260, 43}, // 100 - int(100 * 0.29 * 2.0) = 100 - 57.999... = 43
 		{"ac=-280 (-290 to -270)", -280, 40}, // 100 - int(100 * 0.30 * 2.0) = 100 - 60
 		{"ac=-300 (-310 to -290)", -300, 38}, // 100 - int(100 * 0.31 * 2.0) = 100 - 62
-		{"ac=-350 (<= -310)", -350, 36},  // 100 - int(100 * 0.32 * 2.0) = 100 - 64
+		{"ac=-350 (<= -310)", -350, 36},      // 100 - int(100 * 0.32 * 2.0) = 100 - 64
 	}
 
 	for _, tc := range tests {
@@ -334,17 +334,17 @@ func TestGetMinusDam_BoundaryValues(t *testing.T) {
 		expected int
 		dam      int
 	}{
-		{91, 100, 100},    // > 90
-		{90, 98, 100},     // > 80: 100 - int(100*0.01*2) = 98
-		{81, 98, 100},     // > 80
-		{80, 96, 100},     // > 70: 100 - int(100*0.02*2) = 96
-		{71, 96, 100},     // > 70
-		{70, 94, 100},     // > 60: 100 - int(100*0.03*2) = 94
-		{1, 80, 100},      // > 0: 100 - int(100*0.10*2) = 80
-		{0, 78, 100},      // > -10: 100 - int(100*0.11*2) = 78
-		{-1, 78, 100},     // > -10
-		{-9, 78, 100},     // > -10
-		{-10, 76, 100},    // > -20: 100 - int(100*0.12*2) = 76
+		{91, 100, 100}, // > 90
+		{90, 98, 100},  // > 80: 100 - int(100*0.01*2) = 98
+		{81, 98, 100},  // > 80
+		{80, 96, 100},  // > 70: 100 - int(100*0.02*2) = 96
+		{71, 96, 100},  // > 70
+		{70, 94, 100},  // > 60: 100 - int(100*0.03*2) = 94
+		{1, 80, 100},   // > 0: 100 - int(100*0.10*2) = 80
+		{0, 78, 100},   // > -10: 100 - int(100*0.11*2) = 78
+		{-1, 78, 100},  // > -10
+		{-9, 78, 100},  // > -10
+		{-10, 76, 100}, // > -20: 100 - int(100*0.12*2) = 76
 	}
 
 	for _, tc := range tests {
@@ -535,16 +535,16 @@ func TestGetAttacksPerRound_NPC(t *testing.T) {
 		min   int
 		max   int
 	}{
-		{1, 1, 3},   // level <= 10 → 1, +1 random
-		{10, 1, 3},  // level <= 10 → 1
-		{11, 2, 4},  // level <= 20 → 2
-		{20, 2, 4},  // level <= 20 → 2
-		{21, 3, 5},  // level <= 27 → 3
-		{27, 3, 5},  // level <= 27 → 3
-		{28, 4, 6},  // level <= 30 → 4
-		{30, 4, 6},  // level <= 30 → 4
-		{31, 5, 7},  // level >= 31 → 5
-		{50, 5, 7},  // level >= 31 → 5
+		{1, 1, 3},  // level <= 10 → 1, +1 random
+		{10, 1, 3}, // level <= 10 → 1
+		{11, 2, 4}, // level <= 20 → 2
+		{20, 2, 4}, // level <= 20 → 2
+		{21, 3, 5}, // level <= 27 → 3
+		{27, 3, 5}, // level <= 27 → 3
+		{28, 4, 6}, // level <= 30 → 4
+		{30, 4, 6}, // level <= 30 → 4
+		{31, 5, 7}, // level >= 31 → 5
+		{50, 5, 7}, // level >= 31 → 5
 	}
 
 	for _, tc := range tests {

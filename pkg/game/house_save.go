@@ -1,11 +1,11 @@
 package game
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"encoding/json"
 )
 import "github.com/zax0rz/darkpawns/pkg/parser"
 
@@ -18,12 +18,12 @@ func (w *World) saveHouseControl() {
 
 	// Ensure directory exists
 	dir := filepath.Dir(houseControlFilename)
-	if err := os.MkdirAll(dir, 0750); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		BasicMudLog(fmt.Sprintf("Error creating house directory: %v", err))
 		return
 	}
 
-	if err := os.WriteFile(houseControlFilename, data, 0600); err != nil {
+	if err := os.WriteFile(houseControlFilename, data, 0o600); err != nil {
 		BasicMudLog(fmt.Sprintf("Error writing house control file: %v", err))
 	}
 }
@@ -99,7 +99,7 @@ func (w *World) houseLoad(vnum int) bool {
 			// Find container by iterating — container was saved first (recursive)
 			for _, candidate := range objMap {
 				if candidate.ID == item.ContainerID {
-				candidate.Contains = append(candidate.Contains, obj)
+					candidate.Contains = append(candidate.Contains, obj)
 					break
 				}
 			}
@@ -130,7 +130,7 @@ func (w *World) houseCrashsave(vnum int) {
 
 	// Ensure directory exists
 	dir := filepath.Dir(fname)
-	if err := os.MkdirAll(dir, 0750); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		BasicMudLog(fmt.Sprintf("Error creating house directory: %v", err))
 		return
 	}
@@ -203,13 +203,13 @@ func (w *World) HouseSaveAll() {
 	control := w.HouseControl
 	w.mu.RUnlock()
 
-	for _, h := range control {
-		realHouse := w.GetRoomInWorld(h.VNum)
+	for i := range control {
+		realHouse := w.GetRoomInWorld(control[i].VNum)
 		if realHouse == nil {
 			continue
 		}
 		if roomHasFlagLocal(realHouse, RoomFlagCrash) {
-			w.houseCrashsave(h.VNum)
+			w.houseCrashsave(control[i].VNum)
 		}
 	}
 }

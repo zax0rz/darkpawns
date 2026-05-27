@@ -43,7 +43,7 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		mux.HandleFunc("/admin/favicon.svg", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, adminUIDir+"/favicon.svg")
 		})
-		mux.HandleFunc("/admin/icons.svg", func(w http.ResponseWriter, r * http.Request) {
+		mux.HandleFunc("/admin/icons.svg", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, adminUIDir+"/icons.svg")
 		})
 		mux.HandleFunc("/admin/assets/", func(w http.ResponseWriter, r *http.Request) {

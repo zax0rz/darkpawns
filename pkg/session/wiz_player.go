@@ -174,7 +174,8 @@ func cmdSwitch(s *Session, args []string) error {
 			s.switchedMob = mob
 			s.isSwitched = true
 			s.switchedStartTime = time.Now()
-			slog.Info("switch: wizard switched into mob",
+			slog.Info(
+				"switch: wizard switched into mob",
 				"wizard", origPlayer.Name,
 				"wizard_level", origLevel,
 				"target_mob", mob.GetShortDesc(),
@@ -205,7 +206,8 @@ func cmdSwitch(s *Session, args []string) error {
 			s.switchedPlayer = p
 			s.isSwitched = true
 			s.switchedStartTime = time.Now()
-			slog.Info("switch: wizard switched into player",
+			slog.Info(
+				"switch: wizard switched into player",
 				"wizard", origPlayer.Name,
 				"wizard_level", origLevel,
 				"target_player", p.GetName(),
@@ -238,17 +240,19 @@ func cmdReturn(s *Session, args []string) error {
 
 	duration := time.Since(s.switchedStartTime)
 	if s.switchedMob != nil {
-		slog.Info("return: wizard returned from mob",
-				"wizard", s.switchedOriginal.Name,
-				"from_mob", s.switchedMob.GetShortDesc(),
-				"duration", duration,
-			)
+		slog.Info(
+			"return: wizard returned from mob",
+			"wizard", s.switchedOriginal.Name,
+			"from_mob", s.switchedMob.GetShortDesc(),
+			"duration", duration,
+		)
 	} else if s.switchedPlayer != nil {
-		slog.Info("return: wizard returned from player",
-				"wizard", s.switchedOriginal.Name,
-				"from_player", s.switchedPlayer.GetName(),
-				"duration", duration,
-			)
+		slog.Info(
+			"return: wizard returned from player",
+			"wizard", s.switchedOriginal.Name,
+			"from_player", s.switchedPlayer.GetName(),
+			"duration", duration,
+		)
 	}
 
 	// Save target character state to persist any changes made while switched

@@ -18,29 +18,29 @@ const (
 
 // gatePhase entry: [room, phase, exit1, exit2]
 type gateEntry struct {
-	Room     int
-	Phase    int
-	Exit1    int
-	Exit2    int
+	Room  int
+	Phase int
+	Exit1 int
+	Exit2 int
 }
 
 var gatePhases = []gateEntry{
-	{4001, MoonNew,          4004, 4006},
+	{4001, MoonNew, 4004, 4006},
 	{4002, MoonQuarterFull, 4005, 4007},
-	{4003, MoonHalfFull,    4006, 4008},
-	{4004, MoonThreeFull,   4001, 4007},
-	{4005, MoonFull,        4002, 4008},
-	{4006, MoonQuarterEmpty,4001, 4003},
-	{4007, MoonHalfEmpty,   4002, 4004},
-	{4008, MoonThreeEmpty,  4003, 4005},
-	{4011, -1,               4001, 0},
-	{4012, -1,               4002, 0},
-	{4013, -1,               4003, 0},
-	{4014, -1,               4004, 0},
-	{4015, -1,               4005, 0},
-	{4016, -1,               4006, 0},
-	{4017, -1,               4007, 0},
-	{4018, -1,               4008, 0},
+	{4003, MoonHalfFull, 4006, 4008},
+	{4004, MoonThreeFull, 4001, 4007},
+	{4005, MoonFull, 4002, 4008},
+	{4006, MoonQuarterEmpty, 4001, 4003},
+	{4007, MoonHalfEmpty, 4002, 4004},
+	{4008, MoonThreeEmpty, 4003, 4005},
+	{4011, -1, 4001, 0},
+	{4012, -1, 4002, 0},
+	{4013, -1, 4003, 0},
+	{4014, -1, 4004, 0},
+	{4015, -1, 4005, 0},
+	{4016, -1, 4006, 0},
+	{4017, -1, 4007, 0},
+	{4018, -1, 4008, 0},
 }
 
 const numGates = 16 //nolint:unused // gate count constant
@@ -179,5 +179,3 @@ func (w *World) RawKill(ch *Player, attackType string) {
 	}
 	w.rawKill(ch, at)
 }
-
-

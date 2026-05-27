@@ -305,7 +305,8 @@ func cmdExec(args []string) {
 	client := agentcli.NewAgentClient(cfg)
 	if err := client.Connect(ctx); err != nil {
 		slog.Error("connect", "error", err)
-		os.Exit(1)
+		cancel()
+		os.Exit(1) //nolint:gocritic // exitAfterDefer: cancel() called explicitly above
 	}
 	defer func() { _ = client.Close() }()
 
@@ -316,7 +317,8 @@ func cmdExec(args []string) {
 
 	if err := client.PushCommand(ctx, action); err != nil {
 		slog.Error("exec", "error", err)
-		os.Exit(1)
+		cancel()
+		os.Exit(1) //nolint:gocritic // exitAfterDefer: cancel() called explicitly above
 	}
 
 	// Read and print the server response
@@ -335,12 +337,15 @@ func cmdExec(args []string) {
 					Name string `json:"name"`
 				} `json:"room"`
 				Player struct {
-					Health int `json:"health"`
+					Health    int `json:"health"`
 					MaxHealth int `json:"max_health"`
 				} `json:"player"`
 				Events []string `json:"events"`
 			}
-			json.Unmarshal(msg.Data, &state)
+			if err := json.Unmarshal(msg.Data, &state); err != nil {
+				slog.Debug("exec parse state", "error", err)
+				continue
+			}
 			if state.Room.Name != "" {
 				fmt.Printf("%s (HP: %d/%d)\n", state.Room.Name, state.Player.Health, state.Player.MaxHealth)
 			}

@@ -10,9 +10,9 @@ import (
 
 // mockCombatEngine is a stub CombatEngine for use in OnPlayerEnterRoom tests.
 type mockCombatEngine struct {
-	fighting  map[string]bool
-	started   []string // mob names that had StartCombat called
-	startErr  error
+	fighting map[string]bool
+	started  []string // mob names that had StartCombat called
+	startErr error
 }
 
 func newMockCE() *mockCombatEngine {

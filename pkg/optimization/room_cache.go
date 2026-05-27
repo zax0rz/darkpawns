@@ -36,8 +36,8 @@ type ExitData struct {
 
 // MobData represents mob information in room
 type MobData struct {
-	ID   int
-	Name string
+	ID    int
+	Name  string
 	Level int
 }
 
@@ -55,10 +55,10 @@ func NewRoomCache(ttl time.Duration) *RoomCache {
 		ttl:   ttl,
 		stop:  make(chan struct{}),
 	}
-	
+
 	// Start cleanup goroutine
 	go rc.cleanup()
-	
+
 	return rc
 }
 
@@ -68,20 +68,20 @@ func (rc *RoomCache) GetRoom(vnum int, fetchFunc func(int) (*CachedRoom, error))
 	rc.mu.RLock()
 	cached, exists := rc.rooms[vnum]
 	rc.mu.RUnlock()
-	
+
 	if exists && time.Since(cached.CachedAt) < rc.ttl {
 		rc.mu.Lock()
 		cached.AccessCount++
 		rc.mu.Unlock()
 		return cached, nil
 	}
-	
+
 	// Fetch from source
 	room, err := fetchFunc(vnum)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Update cache
 	rc.mu.Lock()
 	room.CachedAt = time.Now()
@@ -89,7 +89,7 @@ func (rc *RoomCache) GetRoom(vnum int, fetchFunc func(int) (*CachedRoom, error))
 	room.LastUpdated = time.Now()
 	rc.rooms[vnum] = room
 	rc.mu.Unlock()
-	
+
 	return room, nil
 }
 
@@ -97,7 +97,7 @@ func (rc *RoomCache) GetRoom(vnum int, fetchFunc func(int) (*CachedRoom, error))
 func (rc *RoomCache) UpdateRoom(room *CachedRoom) {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
-	
+
 	room.LastUpdated = time.Now()
 	room.CachedAt = time.Now()
 	rc.rooms[room.VNum] = room
@@ -107,12 +107,12 @@ func (rc *RoomCache) UpdateRoom(room *CachedRoom) {
 func (rc *RoomCache) UpdateRoomPartial(vnum int, updates map[string]interface{}) bool {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
-	
+
 	room, exists := rc.rooms[vnum]
 	if !exists {
 		return false
 	}
-	
+
 	// Apply updates
 	for key, value := range updates {
 		switch key {
@@ -138,7 +138,7 @@ func (rc *RoomCache) UpdateRoomPartial(vnum int, updates map[string]interface{})
 			}
 		}
 	}
-	
+
 	room.LastUpdated = time.Now()
 	return true
 }
@@ -161,34 +161,34 @@ func (rc *RoomCache) InvalidateAll() {
 func (rc *RoomCache) GetStats() map[string]interface{} {
 	rc.mu.RLock()
 	defer rc.mu.RUnlock()
-	
+
 	stats := make(map[string]interface{})
 	stats["total_rooms"] = len(rc.rooms)
-	
+
 	var totalAccess int
 	now := time.Now()
 	expiredCount := 0
 	staleCount := 0
-	
+
 	for _, room := range rc.rooms {
 		totalAccess += room.AccessCount
-		
+
 		if now.Sub(room.CachedAt) > rc.ttl {
 			expiredCount++
 		}
-		
+
 		// Consider room stale if not updated in 2x TTL
 		if now.Sub(room.LastUpdated) > rc.ttl*2 {
 			staleCount++
 		}
 	}
-	
+
 	if len(rc.rooms) > 0 {
 		stats["avg_access_per_room"] = totalAccess / len(rc.rooms)
 		stats["expired_count"] = expiredCount
 		stats["stale_count"] = staleCount
 		stats["hit_ratio"] = float64(totalAccess) / float64(len(rc.rooms)+totalAccess)
-		
+
 		// Find most accessed room
 		var maxAccess int
 		var maxAccessVNum int
@@ -201,7 +201,7 @@ func (rc *RoomCache) GetStats() map[string]interface{} {
 		stats["most_accessed_room"] = maxAccessVNum
 		stats["most_accessed_count"] = maxAccess
 	}
-	
+
 	return stats
 }
 
@@ -209,14 +209,14 @@ func (rc *RoomCache) GetStats() map[string]interface{} {
 func (rc *RoomCache) GetHotRooms(threshold int) []int {
 	rc.mu.RLock()
 	defer rc.mu.RUnlock()
-	
+
 	var hotRooms []int
 	for vnum, room := range rc.rooms {
 		if room.AccessCount >= threshold {
 			hotRooms = append(hotRooms, vnum)
 		}
 	}
-	
+
 	return hotRooms
 }
 
@@ -224,7 +224,7 @@ func (rc *RoomCache) GetHotRooms(threshold int) []int {
 func (rc *RoomCache) cleanup() {
 	ticker := time.NewTicker(rc.ttl / 2)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ticker.C:

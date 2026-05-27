@@ -15,11 +15,12 @@ type HelpEntry struct {
 
 // LoadHelpFiles loads all .hlp files from the given directory into a help table.
 // Format (from C db.c load_help):
-//   keyword1 [keyword2 ...]
-//   entry text lines
-//   #
-//   ...
-//   $
+//
+//	keyword1 [keyword2 ...]
+//	entry text lines
+//	#
+//	...
+//	$
 //
 // Each keyword line creates a separate HelpEntry with the same text.
 // The '$' line terminates the file.

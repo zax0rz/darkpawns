@@ -200,7 +200,7 @@ func (bs *BoardSystem) saveBoard(boardType int) {
 	}
 
 	path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
-	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		slog.Warn("board mkdir failed", "path", filepath.Dir(path), "error", err)
 	}
 

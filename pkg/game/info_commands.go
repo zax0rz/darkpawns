@@ -131,7 +131,7 @@ func (w *World) doLevels(ch *Player, me *MobInstance, cmd string, arg string) bo
 func (w *World) doColor(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
-		on := (ch.GetFlags()&(1<<PrfColor1|1<<PrfColor2)) != 0
+		on := (ch.GetFlags() & (1<<PrfColor1 | 1<<PrfColor2)) != 0
 		if on {
 			ch.SendMessage("Color is ON.\r\n")
 		} else {
@@ -203,8 +203,10 @@ func flagOnOff(flags uint64, bit int) string {
 func (w *World) doAbils(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	ch.SendMessage("Abilities:\r\n")
 	abilNames := []string{"Str", "Int", "Wis", "Dex", "Con", "Cha"}
-	abilVals := []int{ch.Stats.Str, ch.Stats.Int, ch.Stats.Wis,
-		ch.Stats.Dex, ch.Stats.Con, ch.Stats.Cha}
+	abilVals := []int{
+		ch.Stats.Str, ch.Stats.Int, ch.Stats.Wis,
+		ch.Stats.Dex, ch.Stats.Con, ch.Stats.Cha,
+	}
 	for i := range abilNames {
 		ch.SendMessage(fmt.Sprintf("%s: %d\r\n", abilNames[i], abilVals[i]))
 	}
@@ -405,4 +407,3 @@ func (w *World) doHelp(ch *Player, me *MobInstance, cmd string, arg string) bool
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
-

@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	// Test all race bonuses
 	races := []struct {
 		name string
@@ -92,7 +91,6 @@ func main() {
 	for _, tc := range testCases {
 		valid := game.ValidUserClassChoice(tc.race, tc.class)
 		raceName := "Unknown"
-		className := "Unknown"
 
 		// Get race name
 		for _, r := range races {
@@ -103,7 +101,7 @@ func main() {
 		}
 
 		// Get class name from game.ClassNames (covers all classes)
-		className = allClassNames[tc.class]
+		className := allClassNames[tc.class]
 		if className == "" {
 			className = "Unknown"
 		}

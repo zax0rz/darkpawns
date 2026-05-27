@@ -4,8 +4,8 @@ package session
 import (
 	"log/slog"
 
-	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/command"
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 func (m *Manager) RegisterCommand(name string, handler func(common.CommandSession, []string) error) {

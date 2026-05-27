@@ -2,8 +2,8 @@
 package session
 
 import (
-	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/game/systems"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 func getExitNames(exits map[string]parser.Exit) []string {

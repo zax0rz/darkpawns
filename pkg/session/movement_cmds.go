@@ -14,7 +14,6 @@ import (
 
 // Ensure slog is used
 
-
 // cmdStand handles the 'stand' command.
 // Source: act.movement.c do_stand() lines 691–730
 func cmdStand(s *Session) error {
@@ -225,7 +224,7 @@ func cmdFleeMovement(s *Session) error {
 	fled := false
 	for i := 0; i < 6 && len(directions) > 0; i++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		idx := rand.IntN(len(directions))
 		direction := directions[idx]
 
@@ -428,4 +427,3 @@ func genderHisHer(p interface{}) string {
 	}
 	return "his"
 }
-

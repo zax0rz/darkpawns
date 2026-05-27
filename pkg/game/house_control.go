@@ -54,7 +54,8 @@ func (w *World) HcontrolListHouses(ch *Player) {
 	b.WriteString("Address  Atrium  Build Date  Guests  Owner        Last Paymt Key\r\n")
 	b.WriteString("-------  ------  ----------  ------  ------------ ---------- ---\r\n")
 
-	for _, h := range control {
+	for i := range control {
+		h := &control[i]
 		// Skip houses whose owner no longer exists
 		ownerName := ""
 		if getPlayerNameByID != nil {

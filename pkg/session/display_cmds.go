@@ -32,17 +32,17 @@ const (
 
 // VT100 escape sequences — from vt100.h
 const (
-	vtHomeClr  = "\033[H\033[J"                 // VT_HOMECLR
-	vtMarSet   = "\033[%d;%dr"                  // VT_MARGSET
-	vtCurSp    = "\033[%d;%dH"                  // VT_CURSPOS
-	vtCurSave  = "\033[s"                       // VT_CURSAVE
-	vtCurRest  = "\033[u"                       // VT_CURREST
-	vtNorm     = "\033[0m"                      // CCNRM — reset
-	vtGreen    = "\033[32m"                     // CCGRN
-	vtYellow   = "\033[33m"                     // CCYEL
-	vtRed      = "\033[31m"                     // CCRED
-	vtBlue     = "\033[34m"                     // CCBLU
-	vtMagenta  = "\033[35m"                     // CCMAG
+	vtHomeClr = "\033[H\033[J" // VT_HOMECLR
+	vtMarSet  = "\033[%d;%dr"  // VT_MARGSET
+	vtCurSp   = "\033[%d;%dH"  // VT_CURSPOS
+	vtCurSave = "\033[s"       // VT_CURSAVE
+	vtCurRest = "\033[u"       // VT_CURREST
+	vtNorm    = "\033[0m"      // CCNRM — reset
+	vtGreen   = "\033[32m"     // CCGRN
+	vtYellow  = "\033[33m"     // CCYEL
+	vtRed     = "\033[31m"     // CCRED
+	vtBlue    = "\033[34m"     // CCBLU
+	vtMagenta = "\033[35m"     // CCMAG
 )
 
 // infobarSeparator draws the separator line in the infobar.
@@ -167,38 +167,6 @@ func infobarGold(ch *infobarState) string {
 }
 
 // ---------------------------------------------------------------------------
-// Infobar helper: clear functions (write spaces to clear the region)
-// ---------------------------------------------------------------------------
-
-func infobarClearHit(ch *infobarState) string {
-	return fmt.Sprintf(vtCurSp+"          ", ch.screenSize-3, 10)
-}
-
-func infobarClearMana(ch *infobarState) string {
-	return fmt.Sprintf(vtCurSp+"          ", ch.screenSize-3, 36)
-}
-
-func infobarClearMove(ch *infobarState) string {
-	return fmt.Sprintf(vtCurSp+"          ", ch.screenSize-3, 60)
-}
-
-func infobarClearExpPoints(ch *infobarState) string {
-	return fmt.Sprintf(vtCurSp+"        ", ch.screenSize-2, 6)
-}
-
-func infobarClearNeededExpPoints(ch *infobarState) string {
-	return fmt.Sprintf(vtCurSp+"        ", ch.screenSize-2, 47)
-}
-
-func infobarClearLevel(ch *infobarState) string {
-	return fmt.Sprintf(vtCurSp+"  ", ch.screenSize-2, 43)
-}
-
-func infobarClearGold(ch *infobarState) string {
-	return fmt.Sprintf(vtCurSp+"           ", ch.screenSize-1, 7)
-}
-
-// ---------------------------------------------------------------------------
 // infobarState — VT100 state for building infobar output
 // ---------------------------------------------------------------------------
 
@@ -273,7 +241,7 @@ func findExp(class, level int) int {
 	case level == 12:
 		return 870000
 	default:
-		return 900000 + ((level-13)*level*20000) + (level*level*1000) + int(modifier*10000*float64(level))
+		return 900000 + ((level - 13) * level * 20000) + (level * level * 1000) + int(modifier*10000*float64(level))
 	}
 }
 
@@ -444,93 +412,4 @@ func cmdInfoBarOff(s *Session) {
 	output += vtHomeClr
 
 	s.Send(output)
-}
-
-// cmdInfoBarUpdate — InfoBarUpdate from act.display.c
-// update is a bitmask of InfoMana | InfoMove | InfoHit | InfoExp | InfoGold
-func cmdInfoBarUpdate(s *Session, update int) {
-	p := s.player
-	if p == nil {
-		return
-	}
-
-	if s.screenSize <= 0 {
-		return
-	}
-
-	// Acquire player lock early to read all fields atomically (DP-362).
-	p.RLock()
-	health := p.Health
-	maxHealth := p.MaxHealth
-	mana := p.Mana
-	maxMana := p.MaxMana
-	move := p.Move
-	maxMove := p.MaxMove
-	exp := p.Exp
-	gold := p.Gold
-	level := p.Level
-	class := p.Class
-	p.RUnlock()
-
-	is := &infobarState{
-		screenSize:  s.screenSize,
-		lastHit:     health,
-		lastMaxHit:  maxHealth,
-		lastMana:    mana,
-		lastMaxMana: maxMana,
-		lastMove:    move,
-		lastMaxMove: maxMove,
-		lastExp:     exp,
-		lastGold:    gold,
-		level:       level,
-	}
-	is.nextLevel = is.level + 1
-	is.expNeededForLevel = findExp(class, is.level+1)
-
-	output := ""
-
-	if update&InfoMana != 0 {
-		output += vtCurSave
-		output += infobarClearMana(is)
-		output += infobarManaPoints(is)
-		output += vtCurRest
-	}
-
-	if update&InfoMove != 0 {
-		output += vtCurSave
-		output += infobarClearMove(is)
-		output += infobarMovePoints(is)
-		output += vtCurRest
-	}
-
-	if update&InfoHit != 0 {
-		output += vtCurSave
-		output += infobarClearHit(is)
-		output += infobarHitPoints(is)
-		output += vtCurRest
-	}
-
-	if update&InfoExp != 0 {
-		output += vtCurSave
-		output += infobarClearExpPoints(is)
-		output += infobarExpPoints(is)
-		if is.level < 50 { // LVL_IMMORT
-			output += infobarClearLevel(is)
-			output += infobarLevel(is)
-			output += infobarClearNeededExpPoints(is)
-			output += infobarNeededExpPoints(is)
-		}
-		output += vtCurRest
-	}
-
-	if update&InfoGold != 0 {
-		output += vtCurSave
-		output += infobarClearGold(is)
-		output += infobarGold(is)
-		output += vtCurRest
-	}
-
-	if output != "" {
-		s.Send(output)
-	}
 }

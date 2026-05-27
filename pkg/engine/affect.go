@@ -2,9 +2,8 @@ package engine
 
 import (
 	"fmt"
-	"time"
-
 	"math/rand/v2"
+	"time"
 )
 
 // TickDuration is the real-world duration of one affect tick.
@@ -89,7 +88,8 @@ func NewAffect(spellID int, location int, duration int, magnitude int, source st
 }
 
 // NewAffectDeprecated is backward-compatible with the old NewAffect(affectType, duration, magnitude, source) signature.
-// DEPRECATED: Use NewAffect(spellID, location, duration, magnitude, source) instead.
+//
+// Deprecated: Use NewAffect(spellID, location, duration, magnitude, source) instead.
 func NewAffectDeprecated(affectType int, duration int, magnitude int, source string) *Affect {
 	// Check if this is a status affect (has flags)
 	if flags, ok := StatusAffectFlags[affectType]; ok {
@@ -138,7 +138,8 @@ func spellStackKey(spellID int) string {
 // Type returns the deprecated AffectType value.
 // For status affects, returns the status constant (AffectBlind, etc.).
 // For stat affects, returns the Location (APPLY_*) constant.
-// DEPRECATED: Use SpellID + Location directly.
+//
+// Deprecated: Use SpellID + Location directly.
 func (a *Affect) GetType() int {
 	if a.Flags != 0 {
 		// Status affect — return the status constant
@@ -153,7 +154,8 @@ func (a *Affect) GetType() int {
 }
 
 // SetType sets the deprecated AffectType value.
-// DEPRECATED: Set SpellID + Location directly instead.
+//
+// Deprecated: Set SpellID + Location directly instead.
 func (a *Affect) SetType(v int) {
 	if flags, ok := StatusAffectFlags[v]; ok {
 		a.Flags = flags
@@ -255,41 +257,41 @@ const (
 // --- AFF_* status flag bit positions (from CircleMUD structs.h) ---
 
 const (
-	AFFNone              uint64 = 0
-	AFFBlind             uint64 = 1 << 0  // AFF_BLIND
-	AFFInvisible         uint64 = 1 << 1  // AFF_INVISIBLE
-	AFFDetectInvisible   uint64 = 1 << 2  // AFF_DETECT_INVIS
-	AFFDetectMagic       uint64 = 1 << 3  // AFF_DETECT_MAGIC
-	AFFSanctuary         uint64 = 1 << 4  // AFF_SANCTUARY
-	AFFFlying            uint64 = 1 << 5  // AFF_FLYING
-	AFFFloating          uint64 = 1 << 6  // AFF_FLOATING
-	AFFPassDoor          uint64 = 1 << 7  // AFF_PASSDOOR
-	AFFSneak             uint64 = 1 << 8  // AFF_SNEAK
-	AFFHide              uint64 = 1 << 9  // AFF_HIDE
-	AFFCharm             uint64 = 1 << 10 // AFF_CHARM
-	AFFPoison            uint64 = 1 << 11 // AFF_POISON
-	AFFSleep             uint64 = 1 << 12 // AFF_SLEEP
-	AFFStunned           uint64 = 1 << 13 // AFF_STUNNED
-	AFFParalyzed         uint64 = 1 << 14 // AFF_PARALYZED
-	AFFFlaming           uint64 = 1 << 15 // AFF_FLAMING
-	AFFHaste             uint64 = 1 << 16 // AFF_HASTE
-	AFFSlow              uint64 = 1 << 17 // AFF_SLOW
-	AFFProtectionEvil    uint64 = 1 << 18 // AFF_PROTECT_EVIL
-	AFFProtectionGood    uint64 = 1 << 19 // AFF_PROTECT_GOOD
-	AFFFear              uint64 = 1 << 20 // AFF_FEAR
-	AFFCurse             uint64 = 1 << 21 // AFF_CURSE
-	AFFSilence           uint64 = 1 << 22 // AFF_SILENCE
-	AFFWaterBreathing    uint64 = 1 << 23 // AFF_WATER_BREATH
-	AFFRegeneration      uint64 = 1 << 24 // AFF_REGENERATION
-	AFFInfrared          uint64 = 1 << 25 // AFF_INFRARED
-	AFFUltraviolet       uint64 = 1 << 26 // AFF_ULTRAVIOLET
-	AFFDetectAlign       uint64 = 1 << 27 // AFF_DETECT_ALIGN
-	AFFSenseLife         uint64 = 1 << 28 // AFF_SENSE_LIFE
-	AFFDream             uint64 = 1 << 29 // AFF_DREAM
-	AFFMindBar           uint64 = 1 << 30 // AFF_MIND_BAR
-	AFFWaterwalk         uint64 = 1 << 31 // AFF_WATERWALK
-	AFFMetalskin         uint64 = 1 << 32 // AFF_METALSKIN
-	AFFInvuln            uint64 = 1 << 33 // AFF_INVULN
+	AFFNone            uint64 = 0
+	AFFBlind           uint64 = 1 << 0  // AFF_BLIND
+	AFFInvisible       uint64 = 1 << 1  // AFF_INVISIBLE
+	AFFDetectInvisible uint64 = 1 << 2  // AFF_DETECT_INVIS
+	AFFDetectMagic     uint64 = 1 << 3  // AFF_DETECT_MAGIC
+	AFFSanctuary       uint64 = 1 << 4  // AFF_SANCTUARY
+	AFFFlying          uint64 = 1 << 5  // AFF_FLYING
+	AFFFloating        uint64 = 1 << 6  // AFF_FLOATING
+	AFFPassDoor        uint64 = 1 << 7  // AFF_PASSDOOR
+	AFFSneak           uint64 = 1 << 8  // AFF_SNEAK
+	AFFHide            uint64 = 1 << 9  // AFF_HIDE
+	AFFCharm           uint64 = 1 << 10 // AFF_CHARM
+	AFFPoison          uint64 = 1 << 11 // AFF_POISON
+	AFFSleep           uint64 = 1 << 12 // AFF_SLEEP
+	AFFStunned         uint64 = 1 << 13 // AFF_STUNNED
+	AFFParalyzed       uint64 = 1 << 14 // AFF_PARALYZED
+	AFFFlaming         uint64 = 1 << 15 // AFF_FLAMING
+	AFFHaste           uint64 = 1 << 16 // AFF_HASTE
+	AFFSlow            uint64 = 1 << 17 // AFF_SLOW
+	AFFProtectionEvil  uint64 = 1 << 18 // AFF_PROTECT_EVIL
+	AFFProtectionGood  uint64 = 1 << 19 // AFF_PROTECT_GOOD
+	AFFFear            uint64 = 1 << 20 // AFF_FEAR
+	AFFCurse           uint64 = 1 << 21 // AFF_CURSE
+	AFFSilence         uint64 = 1 << 22 // AFF_SILENCE
+	AFFWaterBreathing  uint64 = 1 << 23 // AFF_WATER_BREATH
+	AFFRegeneration    uint64 = 1 << 24 // AFF_REGENERATION
+	AFFInfrared        uint64 = 1 << 25 // AFF_INFRARED
+	AFFUltraviolet     uint64 = 1 << 26 // AFF_ULTRAVIOLET
+	AFFDetectAlign     uint64 = 1 << 27 // AFF_DETECT_ALIGN
+	AFFSenseLife       uint64 = 1 << 28 // AFF_SENSE_LIFE
+	AFFDream           uint64 = 1 << 29 // AFF_DREAM
+	AFFMindBar         uint64 = 1 << 30 // AFF_MIND_BAR
+	AFFWaterwalk       uint64 = 1 << 31 // AFF_WATERWALK
+	AFFMetalskin       uint64 = 1 << 32 // AFF_METALSKIN
+	AFFInvuln          uint64 = 1 << 33 // AFF_INVULN
 )
 
 // --- Location → stat name table ---
@@ -365,7 +367,8 @@ var StatusAffectFlags = map[int]uint64{
 }
 
 // NewAffectCompat is backward-compatible with the old NewAffect(affectType, duration, magnitude, source) signature.
-// DEPRECATED: Use NewAffect(spellID, location, duration, magnitude, source) instead.
+//
+// Deprecated: Use NewAffect(spellID, location, duration, magnitude, source) instead.
 func NewAffectCompat(affectType int, duration int, magnitude int, source string) *Affect {
 	// Check if this is a status affect (has flags)
 	if flags, ok := StatusAffectFlags[affectType]; ok {

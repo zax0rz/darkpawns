@@ -16,8 +16,8 @@ import (
 
 // Affect bit positions (from structs.h AFF_*)
 const (
-	affBlind      = 0  // AFF_BLIND
-	affSenseLife  = 5  // AFF_SENSE_LIFE  Char can sense hidden life
+	affBlind       = 0  // AFF_BLIND
+	affSenseLife   = 5  // AFF_SENSE_LIFE  Char can sense hidden life
 	affInfravision = 10 // AFF_INFRAVISION Char can see in dark
 )
 

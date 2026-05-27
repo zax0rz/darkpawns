@@ -385,7 +385,10 @@ func (p *Player) GetEquipAffects() []engine.EquipAffectData {
 
 func (p *Player) GetEquipment() interface {
 	GetItems() []interface {
-		GetAffects() []interface{ GetLocation() int; GetModifier() int }
+		GetAffects() []interface {
+			GetLocation() int
+			GetModifier() int
+		}
 		GetBitvector() uint64
 	}
 } {

@@ -22,26 +22,26 @@ const (
 type EdgeKind string
 
 const (
-	EdgeKindOccurredIn     EdgeKind = "occurred_in"      // event → room
-	EdgeKindInvolved       EdgeKind = "involved"          // event → entity
-	EdgeKindTransitionedTo EdgeKind = "transitioned_to"   // room → room (sequential movement)
-	EdgeKindKilled         EdgeKind = "killed"            // entity → entity
-	EdgeKindTookFrom       EdgeKind = "took_from"         // entity → item
-	EdgeKindFought         EdgeKind = "fought"            // entity ↔ entity (mutual combat)
-	EdgeKindSocial         EdgeKind = "social"            // entity → entity (speech, cooperation)
-	EdgeKindSimilarTo      EdgeKind = "similar_to"        // event → event (consolidation)
+	EdgeKindOccurredIn     EdgeKind = "occurred_in"     // event → room
+	EdgeKindInvolved       EdgeKind = "involved"        // event → entity
+	EdgeKindTransitionedTo EdgeKind = "transitioned_to" // room → room (sequential movement)
+	EdgeKindKilled         EdgeKind = "killed"          // entity → entity
+	EdgeKindTookFrom       EdgeKind = "took_from"       // entity → item
+	EdgeKindFought         EdgeKind = "fought"          // entity ↔ entity (mutual combat)
+	EdgeKindSocial         EdgeKind = "social"          // entity → entity (speech, cooperation)
+	EdgeKindSimilarTo      EdgeKind = "similar_to"      // event → event (consolidation)
 )
 
 // Node in the memory graph.
 type Node struct {
-	ID        string    `json:"id"`
-	Kind      NodeKind  `json:"kind"`
-	Label     string    `json:"label"`
-	Salience  float64   `json:"salience"`   // 0.0–1.0, decays over time
-	Valence   int       `json:"valence"`    // -3 to +3
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	VisitCount int      `json:"visit_count"`
+	ID         string    `json:"id"`
+	Kind       NodeKind  `json:"kind"`
+	Label      string    `json:"label"`
+	Salience   float64   `json:"salience"` // 0.0–1.0, decays over time
+	Valence    int       `json:"valence"`  // -3 to +3
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	VisitCount int       `json:"visit_count"`
 }
 
 // Edge in the memory graph.
@@ -49,7 +49,7 @@ type Edge struct {
 	From      string    `json:"from"`
 	To        string    `json:"to"`
 	Kind      EdgeKind  `json:"kind"`
-	Weight    float64   `json:"weight"`     // reinforcement weight
+	Weight    float64   `json:"weight"` // reinforcement weight
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -103,13 +103,13 @@ func (g *MemoryGraph) AddOrReinforceNode(id string, kind NodeKind, label string,
 	}
 
 	n := &Node{
-		ID:        id,
-		Kind:      kind,
-		Label:     label,
-		Salience:  1.0,
-		Valence:   valence,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:         id,
+		Kind:       kind,
+		Label:      label,
+		Salience:   1.0,
+		Valence:    valence,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 		VisitCount: 1,
 	}
 	g.Nodes[id] = n
@@ -261,8 +261,8 @@ func groupBySession(events []*Node, gap time.Duration) [][]*Node {
 
 	for i := 1; i < len(events); i++ {
 		if events[i].CreatedAt.Sub(events[i-1].CreatedAt) > gap {
-		sessions = append(sessions, current)
-		current = []*Node{events[i]}
+			sessions = append(sessions, current)
+			current = []*Node{events[i]}
 		} else {
 			current = append(current, events[i])
 		}

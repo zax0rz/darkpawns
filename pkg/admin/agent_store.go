@@ -21,9 +21,9 @@ type AgentStatus struct {
 // Finding represents a code review finding from Reek or Daeron.
 type Finding struct {
 	ID            int       `json:"id"`
-	Source        string    `json:"source"`                 // "reek" or "daeron"
-	Severity      string    `json:"severity"`               // "critical", "high", "medium", "low"
-	Status        string    `json:"status"`                 // "open", "confirmed", "rejected", "fixed"
+	Source        string    `json:"source"`   // "reek" or "daeron"
+	Severity      string    `json:"severity"` // "critical", "high", "medium", "low"
+	Status        string    `json:"status"`   // "open", "confirmed", "rejected", "fixed"
 	Title         string    `json:"title"`
 	File          string    `json:"file"`
 	Line          int       `json:"line"`
@@ -47,22 +47,22 @@ type TriageSummary struct {
 // storeJSON is the on-disk persistence format.
 type storeJSON struct {
 	Agents        map[string]*AgentStatus `json:"agents"`
-	Findings      []Finding              `json:"findings"`
-	Triages       []TriageSummary        `json:"triages"`
-	NextFindingID int                    `json:"next_finding_id"`
-	NextTriageID  int                    `json:"next_triage_id"`
+	Findings      []Finding               `json:"findings"`
+	Triages       []TriageSummary         `json:"triages"`
+	NextFindingID int                     `json:"next_finding_id"`
+	NextTriageID  int                     `json:"next_triage_id"`
 }
 
 // AgentStore is a store for agent statuses, findings, and triage summaries.
 // Data is persisted to a JSON file on every mutation.
 type AgentStore struct {
-	mu             sync.RWMutex
-	filePath       string
-	agents         map[string]*AgentStatus
-	findings        []Finding
-	triages         []TriageSummary
-	nextFindingID  int
-	nextTriageID   int
+	mu            sync.RWMutex
+	filePath      string
+	agents        map[string]*AgentStatus
+	findings      []Finding
+	triages       []TriageSummary
+	nextFindingID int
+	nextTriageID  int
 }
 
 // defaultAgents returns the seeded agent defaults.
@@ -93,7 +93,7 @@ func NewAgentStore(filePath string) *AgentStore {
 	// Ensure parent directory exists
 	dir := filepath.Dir(filePath)
 	if dir != "" && dir != "." {
-		_ = os.MkdirAll(dir, 0755)
+		_ = os.MkdirAll(dir, 0o755)
 	}
 
 	s := &AgentStore{
@@ -139,7 +139,7 @@ func (s *AgentStore) Save() error {
 	}
 
 	tmp := s.filePath + ".tmp"
-	if err := os.WriteFile(tmp, data, 0644); err != nil {
+	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		return err
 	}
 	return os.Rename(tmp, s.filePath)
@@ -178,7 +178,8 @@ func (s *AgentStore) GetFindings(status, severity, source string) []Finding {
 	defer s.mu.RUnlock()
 
 	result := make([]Finding, 0, len(s.findings))
-	for _, f := range s.findings {
+	for i := range s.findings {
+		f := &s.findings[i]
 		if status != "" && f.Status != status {
 			continue
 		}
@@ -188,7 +189,7 @@ func (s *AgentStore) GetFindings(status, severity, source string) []Finding {
 		if source != "" && f.Source != source {
 			continue
 		}
-		result = append(result, f)
+		result = append(result, *f)
 	}
 	return result
 }
@@ -300,7 +301,7 @@ func (s *AgentStore) save() error {
 	}
 
 	tmp := s.filePath + ".tmp"
-	if err := os.WriteFile(tmp, data, 0644); err != nil {
+	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		return err
 	}
 	return os.Rename(tmp, s.filePath)

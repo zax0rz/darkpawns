@@ -6,8 +6,6 @@ package client
 import (
 	"bytes"
 	"crypto/sha256"
-	"dp-goat-pp-cli/internal/cliutil"
-	"dp-goat-pp-cli/internal/config"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -20,6 +18,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"dp-goat-pp-cli/internal/cliutil"
+	"dp-goat-pp-cli/internal/config"
 )
 
 const BinaryResponseHeader = "X-Printing-Press-Binary-Response"

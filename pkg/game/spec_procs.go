@@ -32,7 +32,7 @@ func randRange(min, max int) int {
 		return min
 	}
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	return rand.IntN(max-min+1) + min
 }
 
@@ -41,7 +41,7 @@ func randN(n int) int {
 		return 0
 	}
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	return rand.IntN(n)
 }
 
@@ -583,7 +583,7 @@ type mayorState struct {
 }
 
 var (
-	mayorMu    sync.Mutex
+	mayorMu     sync.Mutex
 	mayorStates = map[int]*mayorState{}
 )
 
@@ -967,4 +967,3 @@ func init() {
 	RegisterSpec("mickey", specMickey)
 	RegisterSpec("mallory", specMallory)
 }
-

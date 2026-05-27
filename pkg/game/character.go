@@ -129,7 +129,7 @@ func RollRealAbils(class, race int) CharStats {
 		s.Cha = table[5]
 		if s.Str == 18 {
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			s.StrAdd = rand.IntN(101) // 0-100
 		}
 	default:
@@ -161,14 +161,14 @@ func RollRealAbils(class, race int) CharStats {
 		s.Str = min18(s.Str + 1)
 		if s.Str == 18 && class == ClassWarrior {
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			s.StrAdd = rand.IntN(101)
 		}
 	case RaceRakshasa:
 		s.Str = min18(s.Str + 1)
 		if s.Str == 18 && class == ClassWarrior {
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			s.StrAdd = rand.IntN(101)
 		}
 	case RaceSsaur:
@@ -189,16 +189,16 @@ func rollStatTable() [6]int {
 	for i := 0; i < 6; i++ {
 		rolls := [4]int{
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			rand.IntN(6) + 1,
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			rand.IntN(6) + 1,
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			rand.IntN(6) + 1,
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			rand.IntN(6) + 1,
 		}
 		// Sum of best 3 (drop lowest)
@@ -276,8 +276,7 @@ func DoStart(class int) (StartItems, CharStats) {
 		items.Carried = append(items.Carried, 8036) // dagger
 		items.InPack = append(items.InPack, 8027)   // lockpicks in pack
 	case ClassMageUser, ClassMagus:
-		items.Carried = append(items.Carried, 8036)       // dagger
-		items.Carried = append(items.Carried, 1239, 1239) // 2x obsidian
+		items.Carried = append(items.Carried, 8036, 1239, 1239) // dagger + 2x obsidian
 	case ClassNinja:
 		items.Carried = append(items.Carried, 8036) // dagger
 	case ClassWarrior, ClassPsionic:
@@ -315,4 +314,3 @@ func GiveStartingSkills(p *Player) {
 		p.SetSkill("headbutt", 25)
 	}
 }
-

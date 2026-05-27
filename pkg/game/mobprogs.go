@@ -18,10 +18,10 @@ import (
 // IS_* checks from mobprog.h
 // ---------------------------------------------------------------------------
 
-func isDog(mob *MobInstance) bool        { v := mob.GetVNum(); return v == 8063 || v == 8065 }
-func isJanitor(mob *MobInstance) bool    { return mob.GetVNum() == 8061 } //nolint:unused // mobprog helper
-func isDemon(mob *MobInstance) bool      { return mob.GetVNum() == 14401 }
-func isMercenary(mob *MobInstance) bool  { return mob.GetVNum() == 3063 } //nolint:unused // mobprog helper
+func isDog(mob *MobInstance) bool       { v := mob.GetVNum(); return v == 8063 || v == 8065 }
+func isJanitor(mob *MobInstance) bool   { return mob.GetVNum() == 8061 } //nolint:unused // mobprog helper
+func isDemon(mob *MobInstance) bool     { return mob.GetVNum() == 14401 }
+func isMercenary(mob *MobInstance) bool { return mob.GetVNum() == 3063 } //nolint:unused // mobprog helper
 
 func isWhore(mob *MobInstance) bool {
 	specName, ok := MobSpecAssign[mob.GetVNum()]
@@ -106,7 +106,7 @@ func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
 
 	case w.isCityguard(mob):
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(3) != 0 || amount < 200 {
 			w.roomMessage(mob.GetRoom(), "$n says, 'Are you trying to bribe me?  That's against the law you know...'")
 			w.StartRoomCombat(mob, ch)
@@ -236,7 +236,7 @@ func (w *World) getBadGuy(ch *MobInstance) *MobInstance { //nolint:unused // mob
 		return nil
 	}
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	iVictim := rand.IntN(len(badGuys) + 1)
 	if iVictim == 0 {
 		return nil
@@ -299,7 +299,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	switch mob.GetVNum() {
 	case 8066:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(2) == 0 {
 			sound = "Sign this, please! There's too much violence!"
 		} else {
@@ -308,7 +308,7 @@ func (w *World) MpSound(mob *MobInstance) {
 		useSay = true
 	case 8067:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(2) == 0 {
 			sound = "adjusts his tool belt."
 		} else {
@@ -317,7 +317,7 @@ func (w *World) MpSound(mob *MobInstance) {
 		useSay = false
 	case 8068:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(2) == 0 {
 			sound = "Arch Bishop Dinive to arrive on the Day of Winter Dawning!"
 		} else {
@@ -329,7 +329,7 @@ func (w *World) MpSound(mob *MobInstance) {
 		useSay = true
 	case 8071:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(2) == 0 {
 			sound = "Spare a coin, buddy?"
 			useSay = true
@@ -342,7 +342,7 @@ func (w *World) MpSound(mob *MobInstance) {
 		useSay = false
 	case 8074:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(2) == 0 {
 			sound = "plays a lilting tune about your mother's beauty."
 		} else {
@@ -364,7 +364,7 @@ func (w *World) MpSound(mob *MobInstance) {
 		useSay = false
 	case 16300:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(2) == 0 {
 			sound = "smiles at you."
 		} else {
@@ -382,14 +382,14 @@ func (w *World) MpSound(mob *MobInstance) {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	if isDemon(mob) && rand.IntN(3) != 0 {
 		w.roomMessage(mob.GetRoom(), "$n says, 'I seek the dull blackened stones in which the souls of mortals have been trapped!'")
 		w.roomMessage(mob.GetRoom(), "$n says, 'I shall open a portal to the Grey Fortress in exchange for a soul stone.'")
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	if isDog(mob) && rand.IntN(26) == 0 {
 		w.roomMessage(mob.GetRoom(), "$n relieves itself, nearly hitting your foot.")
 		puddle := w.CreateObject(20, mob.GetRoom())
@@ -520,4 +520,3 @@ func (o *ObjectInstance) IsDrinkContainer() bool {
 	}
 	return o.Prototype.TypeFlag == 9 // ITEM_DRINKCON = 9
 }
-

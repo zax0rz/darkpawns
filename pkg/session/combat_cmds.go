@@ -259,4 +259,3 @@ func cmdFlee(s *Session) error {
 
 	return cmdLook(s, nil)
 }
-

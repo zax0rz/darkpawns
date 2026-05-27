@@ -15,12 +15,15 @@ type mockMinimalWorld struct{}
 func (w *mockMinimalWorld) GetPlayersInRoom(roomVNum int) []scripting.ScriptablePlayer {
 	return nil
 }
+
 func (w *mockMinimalWorld) GetObjPrototype(vnum int) scripting.ScriptableObject {
 	return nil
 }
+
 func (w *mockMinimalWorld) AddItemToRoom(obj scripting.ScriptableObject, roomVNum int) error {
 	return nil
 }
+
 func (w *mockMinimalWorld) HandleNonCombatDeath(player scripting.ScriptablePlayer) {
 }
 

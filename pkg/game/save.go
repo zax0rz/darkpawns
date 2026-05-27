@@ -20,55 +20,55 @@ const (
 // savePlayerData is a JSON-serializable snapshot of a Player for save/load.
 // It excludes runtime-only fields (mu, Send, Fighting, ConnectedAt, LastActive, etc.).
 type savePlayerData struct {
-	ID          int                 `json:"id"`
-	Name        string              `json:"name"`
-	Sex         int                 `json:"sex"`
-	Level       int                 `json:"level"`
-	Class       int                 `json:"class"`
-	Race        int                 `json:"race"`
-	Health      int                 `json:"health"`
-	MaxHealth   int                 `json:"max_health"`
-	Mana        int                 `json:"mana"`
-	MaxMana     int                 `json:"max_mana"`
-	Move        int                 `json:"move"`
-	MaxMove     int                 `json:"max_move"`
-	Gold        int                 `json:"gold"`
-	Exp         int                 `json:"exp"`
-	Alignment   int                 `json:"alignment"`
-	RoomVNum    int                 `json:"room_vnum"`
-	Position    int                 `json:"position"`
-	Title       string              `json:"title"`
-	Description string              `json:"description"`
-	AC          int                 `json:"ac"`
-	Hitroll     int                 `json:"hitroll"`
-	Damroll     int                 `json:"damroll"`
-	Strength    int                 `json:"strength"`
-	THAC0       int                 `json:"thac0"`
-	Hunger      int                 `json:"hunger"`
-	Thirst      int                 `json:"thirst"`
-	Drunk       int                 `json:"drunk"`
-	Flags       uint64              `json:"flags"`
-	AutoExit    bool                `json:"auto_exit"`
-	Stats       CharStats           `json:"stats"`
-	SpellMap    map[string]int      `json:"spell_map"`
-	Skills      map[string]int      `json:"skills"`
-	BankGold    int                 `json:"bank_gold"`
-	ClanID      int                 `json:"clan_id"`
-	ClanRank    int                 `json:"clan_rank"`
-	Inventory   []SaveItemData      `json:"inventory"`
-	Equipment   []SaveItemData      `json:"equipment"`
-	Affects     []saveAffect        `json:"affects"`
+	ID          int            `json:"id"`
+	Name        string         `json:"name"`
+	Sex         int            `json:"sex"`
+	Level       int            `json:"level"`
+	Class       int            `json:"class"`
+	Race        int            `json:"race"`
+	Health      int            `json:"health"`
+	MaxHealth   int            `json:"max_health"`
+	Mana        int            `json:"mana"`
+	MaxMana     int            `json:"max_mana"`
+	Move        int            `json:"move"`
+	MaxMove     int            `json:"max_move"`
+	Gold        int            `json:"gold"`
+	Exp         int            `json:"exp"`
+	Alignment   int            `json:"alignment"`
+	RoomVNum    int            `json:"room_vnum"`
+	Position    int            `json:"position"`
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	AC          int            `json:"ac"`
+	Hitroll     int            `json:"hitroll"`
+	Damroll     int            `json:"damroll"`
+	Strength    int            `json:"strength"`
+	THAC0       int            `json:"thac0"`
+	Hunger      int            `json:"hunger"`
+	Thirst      int            `json:"thirst"`
+	Drunk       int            `json:"drunk"`
+	Flags       uint64         `json:"flags"`
+	AutoExit    bool           `json:"auto_exit"`
+	Stats       CharStats      `json:"stats"`
+	SpellMap    map[string]int `json:"spell_map"`
+	Skills      map[string]int `json:"skills"`
+	BankGold    int            `json:"bank_gold"`
+	ClanID      int            `json:"clan_id"`
+	ClanRank    int            `json:"clan_rank"`
+	Inventory   []SaveItemData `json:"inventory"`
+	Equipment   []SaveItemData `json:"equipment"`
+	Affects     []saveAffect   `json:"affects"`
 
 	// Poof messages — immortals only
 	PoofIn  string `json:"poof_in,omitempty"`
 	PoofOut string `json:"poof_out,omitempty"`
 
 	// Rent metadata — tracks why/how items were saved.
-	RentCode      int   `json:"rent_code"`       // RentCrash, RentRented, RentCryo, RentTimedOut, RentForced
-	RentTime      int64 `json:"rent_time"`       // Unix timestamp when saved
-	NetCostPerDiem int  `json:"net_cost_per_diem"` // daily rent cost
-	SavedGold      int  `json:"saved_gold"`       // gold at time of save
-	SavedBankGold  int  `json:"saved_bank_gold"`   // bank gold at time of save
+	RentCode       int   `json:"rent_code"`         // RentCrash, RentRented, RentCryo, RentTimedOut, RentForced
+	RentTime       int64 `json:"rent_time"`         // Unix timestamp when saved
+	NetCostPerDiem int   `json:"net_cost_per_diem"` // daily rent cost
+	SavedGold      int   `json:"saved_gold"`        // gold at time of save
+	SavedBankGold  int   `json:"saved_bank_gold"`   // bank gold at time of save
 }
 
 type SaveItemData struct {
@@ -81,14 +81,14 @@ type SaveItemData struct {
 }
 
 type saveAffect struct {
-	SpellID   int    `json:"spell_id"`             // SPELL_* or SKILL_* number (0 = not spell-based)
-	Location  int    `json:"location"`              // APPLY_* constant — which stat to modify
-	Duration  int    `json:"duration"`              // Ticks remaining
-	Magnitude int    `json:"magnitude"`             // Stat modifier
-	Flags     uint64 `json:"flags"`                 // AFF_* bitvector
-	Source    string `json:"source"`                // Human-readable name
-	StackID   string `json:"stack_id"`              // Dedup key
-	MaxStacks int    `json:"max_stacks"`            // Max stacks
+	SpellID   int    `json:"spell_id"`   // SPELL_* or SKILL_* number (0 = not spell-based)
+	Location  int    `json:"location"`   // APPLY_* constant — which stat to modify
+	Duration  int    `json:"duration"`   // Ticks remaining
+	Magnitude int    `json:"magnitude"`  // Stat modifier
+	Flags     uint64 `json:"flags"`      // AFF_* bitvector
+	Source    string `json:"source"`     // Human-readable name
+	StackID   string `json:"stack_id"`   // Dedup key
+	MaxStacks int    `json:"max_stacks"` // Max stacks
 	// Deprecated: Type is kept for backward compatibility with old save files.
 	// New saves write SpellID + Location. Old saves are read via Type fallback.
 	Type int `json:"type,omitempty"` //nolint:govet // deprecated compat field
@@ -101,7 +101,7 @@ func SavePlayer(player *Player) error {
 		return fmt.Errorf("cannot save nil player")
 	}
 
-	if err := os.MkdirAll(saveDir, 0750); err != nil {
+	if err := os.MkdirAll(saveDir, 0o750); err != nil {
 		return fmt.Errorf("create save dir: %w", err)
 	}
 
@@ -277,47 +277,47 @@ func playerToSaveData(p *Player) savePlayerData {
 // saveDataToPlayer converts savePlayerData back to a Player with runtime fields.
 func saveDataToPlayer(data savePlayerData) *Player {
 	return &Player{
-		ID:           data.ID,
-		Name:         data.Name,
-		PoofIn:       data.PoofIn,
-		PoofOut:      data.PoofOut,
-		Sex:          data.Sex,
-		Level:        data.Level,
-		Class:        data.Class,
-		Race:         data.Race,
-		Health:       data.Health,
-		MaxHealth:    data.MaxHealth,
-		Mana:         data.Mana,
-		MaxMana:      data.MaxMana,
-		Move:         data.Move,
-		MaxMove:      data.MaxMove,
-		Gold:         data.Gold,
-		BankGold:     data.BankGold,
-		ClanID:       data.ClanID,
-		ClanRank:     data.ClanRank,
-		Exp:          data.Exp,
-		Alignment:    data.Alignment,
-		RoomVNum:     data.RoomVNum,
-		Position:     data.Position,
-		Title:        data.Title,
-		Description:  data.Description,
-		AC:           data.AC,
-		Hitroll:      data.Hitroll,
-		Damroll:      data.Damroll,
-		Strength:     data.Strength,
-		THAC0:        data.THAC0,
-		Hunger:       data.Hunger,
-		Thirst:       data.Thirst,
-		Drunk:        data.Drunk,
-		Flags:        data.Flags,
-		AutoExit:     data.AutoExit,
-		Stats:        data.Stats,
+		ID:            data.ID,
+		Name:          data.Name,
+		PoofIn:        data.PoofIn,
+		PoofOut:       data.PoofOut,
+		Sex:           data.Sex,
+		Level:         data.Level,
+		Class:         data.Class,
+		Race:          data.Race,
+		Health:        data.Health,
+		MaxHealth:     data.MaxHealth,
+		Mana:          data.Mana,
+		MaxMana:       data.MaxMana,
+		Move:          data.Move,
+		MaxMove:       data.MaxMove,
+		Gold:          data.Gold,
+		BankGold:      data.BankGold,
+		ClanID:        data.ClanID,
+		ClanRank:      data.ClanRank,
+		Exp:           data.Exp,
+		Alignment:     data.Alignment,
+		RoomVNum:      data.RoomVNum,
+		Position:      data.Position,
+		Title:         data.Title,
+		Description:   data.Description,
+		AC:            data.AC,
+		Hitroll:       data.Hitroll,
+		Damroll:       data.Damroll,
+		Strength:      data.Strength,
+		THAC0:         data.THAC0,
+		Hunger:        data.Hunger,
+		Thirst:        data.Thirst,
+		Drunk:         data.Drunk,
+		Flags:         data.Flags,
+		AutoExit:      data.AutoExit,
+		Stats:         data.Stats,
 		ActiveAffects: restoreAffects(data.Affects),
-		SpellMap:     data.SpellMap,
-		ConnectedAt:  time.Now(),
-		LastActive:   time.Now(),
-		Inventory:    NewInventory(),
-		Equipment:    NewEquipment(),
+		SpellMap:      data.SpellMap,
+		ConnectedAt:   time.Now(),
+		LastActive:    time.Now(),
+		Inventory:     NewInventory(),
+		Equipment:     NewEquipment(),
 	}
 }
 
@@ -346,11 +346,11 @@ func restoreAffects(saved []saveAffect) []*engine.Affect {
 		if sa.SpellID != 0 || sa.Location != 0 {
 			a.SpellID = sa.SpellID
 			a.Location = sa.Location
-			a.Type = sa.Location // backward compat
+			a.Type = sa.Location //nolint:staticcheck // SA1019: backward-compatible deserialization of existing save files
 		} else if sa.Type != 0 {
 			// Legacy format: Type field contains the old AffectType enum value.
 			// Status affects (>=100) map to flags; stat affects map to location.
-			a.Type = sa.Type
+			a.Type = sa.Type //nolint:staticcheck // SA1019: backward-compatible deserialization of existing save files
 			if flags, ok := engine.StatusAffectFlags[sa.Type]; ok {
 				a.Flags = flags
 			} else {
@@ -381,7 +381,6 @@ func DeserializePlayer(data string) (*Player, error) {
 	}
 	return saveDataToPlayer(sd), nil
 }
-
 
 // ---------------------------------------------------------------------------
 // World serialization — persists dynamic world state across server restarts.
@@ -606,7 +605,7 @@ func SaveWorld(w *World) error {
 		return fmt.Errorf("serialize world: %w", err)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(worldStateFile), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(worldStateFile), 0o750); err != nil {
 		return fmt.Errorf("create data dir: %w", err)
 	}
 
@@ -652,12 +651,13 @@ func LoadWorld(w *World) error {
 	slog.Info("World state loaded", "path", worldStateFile)
 	return nil
 }
+
 // Used by CrashSave, RentSave, CryoSave, Idlesave.
 func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
 	if p == nil {
 		return fmt.Errorf("cannot save nil player")
 	}
-	if err := os.MkdirAll(saveDir, 0750); err != nil {
+	if err := os.MkdirAll(saveDir, 0o750); err != nil {
 		return fmt.Errorf("create save dir: %w", err)
 	}
 
@@ -688,7 +688,7 @@ func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
 // writeSaveData writes a savePlayerData struct directly to disk.
 // Used by DeleteCrashFile to clear item fields without destroying the character.
 func writeSaveData(name string, data savePlayerData) error {
-	if err := os.MkdirAll(saveDir, 0750); err != nil {
+	if err := os.MkdirAll(saveDir, 0o750); err != nil {
 		return fmt.Errorf("create save dir: %w", err)
 	}
 	path := filepath.Join(saveDir, sanitizeName(name)+".json")
@@ -721,6 +721,7 @@ func LoadSaveData(name string) (savePlayerData, error) {
 	}
 	return data, nil
 }
+
 // sanitizeName ensures the player name is safe for use as a filename.
 func sanitizeName(name string) string {
 	safe := make([]byte, 0, len(name))

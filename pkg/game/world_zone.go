@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"time"
+
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )

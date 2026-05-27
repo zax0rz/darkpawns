@@ -31,35 +31,35 @@ const (
 	SkillSharpen   = "sharpen"
 
 	// Wave 2 skills (new_cmds2.c)
-	SkillScrounge     = "scrounge"
+	SkillScrounge = "scrounge"
 
 	// act.other.c skills
-	SkillPeek     = "peek"
-	SkillStealth  = "stealth"
-	SkillAppraise = "appraise"
-	SkillScout    = "scout"
-	SkillFirstAid     = "first_aid"
-	SkillDisarm       = "disarm"
-	SkillMindlink     = "mindlink"
-	SkillDetect       = "detect"
-	SkillSerpentKick  = "serpent_kick"
-	SkillDig          = "dig"
-	SkillTurn         = "turn"
+	SkillPeek        = "peek"
+	SkillStealth     = "stealth"
+	SkillAppraise    = "appraise"
+	SkillScout       = "scout"
+	SkillFirstAid    = "first_aid"
+	SkillDisarm      = "disarm"
+	SkillMindlink    = "mindlink"
+	SkillDetect      = "detect"
+	SkillSerpentKick = "serpent_kick"
+	SkillDig         = "dig"
+	SkillTurn        = "turn"
 
 	// Wave 1 cleanup skills (new_cmds.c)
-	SkillMold        = "mold"
-	SkillBehead      = "behead"
-	SkillBearhug     = "bearhug"
-	SkillSlug        = "slug"
-	SkillSmackheads  = "smackheads"
-	SkillBite        = "bite"
-	SkillTag         = "tag"
-	SkillPoint       = "point"
-	SkillGroinrip    = "groinrip"
-	SkillReview      = "review"
-	SkillWhois       = "whois"
-	SkillPalm        = "palm"
-	SkillFleshAlter  = "flesh_alter"
+	SkillMold       = "mold"
+	SkillBehead     = "behead"
+	SkillBearhug    = "bearhug"
+	SkillSlug       = "slug"
+	SkillSmackheads = "smackheads"
+	SkillBite       = "bite"
+	SkillTag        = "tag"
+	SkillPoint      = "point"
+	SkillGroinrip   = "groinrip"
+	SkillReview     = "review"
+	SkillWhois      = "whois"
+	SkillPalm       = "palm"
+	SkillFleshAlter = "flesh_alter"
 
 	// C-10: Combat skill constants (from combat_helpers.go)
 	SkillDisembowel = "disembowel"
@@ -279,17 +279,17 @@ func ActMessage(msg string, chPronouns Pronouns, victPronouns *Pronouns, itemNam
 
 // SkillResult holds the outcome of a skill use.
 type SkillResult struct {
-	Success     bool
-	Damage      int
-	MessageToCh string
+	Success       bool
+	Damage        int
+	MessageToCh   string
 	MessageToVict string
 	MessageToRoom string
-	StunTarget  bool   // target loses a round
-	SleepTarget bool   // target is put to sleep (PosSleeping + AFF_SLEEP)
-	SelfStumble bool   // user falls (bash fail)
-	TargetFalls bool   // target position changes to sitting
-	WaitCh      int    // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)
-	WaitTarget  int    // WAIT_STATE for target (PULSE_VIOLENCE ticks)
+	StunTarget    bool // target loses a round
+	SleepTarget   bool // target is put to sleep (PosSleeping + AFF_SLEEP)
+	SelfStumble   bool // user falls (bash fail)
+	TargetFalls   bool // target position changes to sitting
+	WaitCh        int  // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)
+	WaitTarget    int  // WAIT_STATE for target (PULSE_VIOLENCE ticks)
 }
 
 // DoBackstab implements do_backstab() from act.offensive.c lines 172-220.
@@ -375,7 +375,6 @@ func heSheIt(sex int) string {
 		return "it"
 	}
 }
-
 
 // ---------------------------------------------------------------------------
 // C-10: Missing combat skill Do* functions — ported from act.offensive.c

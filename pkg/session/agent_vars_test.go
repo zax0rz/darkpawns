@@ -104,15 +104,15 @@ func findObjProto(t *testing.T, w *game.World, vnum int) *parser.Obj {
 	// For objects we use AddItemToRoom which needs an instance, not a proto.
 	// We'll create instances directly.
 	return &parser.Obj{
-		VNum:         vnum,
-		Keywords:     fmt.Sprintf("obj%d", vnum),
-		ShortDesc:    fmt.Sprintf("Object %d", vnum),
-		LongDesc:     fmt.Sprintf("An object with vnum %d lies here.\n", vnum),
-		TypeFlag:     0,
-		WearFlags:    [4]int{},
-		Values:       [4]int{},
-		Weight:       1,
-		Cost:         0,
+		VNum:      vnum,
+		Keywords:  fmt.Sprintf("obj%d", vnum),
+		ShortDesc: fmt.Sprintf("Object %d", vnum),
+		LongDesc:  fmt.Sprintf("An object with vnum %d lies here.\n", vnum),
+		TypeFlag:  0,
+		WearFlags: [4]int{},
+		Values:    [4]int{},
+		Weight:    1,
+		Cost:      0,
 	}
 }
 
@@ -609,7 +609,7 @@ func TestBuildRoomMobs(t *testing.T) {
 
 	// Spawn a couple mobs in room 1001
 	goblin := registerMob(t, m, 2001, 1001) // "goblin guard", "A goblin guard"
-	_ = registerMob(t, m, 2004, 1001) // "rat", "A rat"
+	_ = registerMob(t, m, 2004, 1001)       // "rat", "A rat"
 
 	goblin.Fighting = true
 
@@ -673,7 +673,7 @@ func TestBuildRoomMobs_KeywordDisambiguation(t *testing.T) {
 
 	// Spawn two mobs with the same keyword ("goblin")
 	goblin1 := registerMob(t, m, 2001, 1001) // "goblin guard"
-	_ = registerMob(t, m, 2002, 1001) // "goblin guard" (same keywords!)
+	_ = registerMob(t, m, 2002, 1001)        // "goblin guard" (same keywords!)
 
 	// Make them distinguishable
 	goblin1.Fighting = true
@@ -686,11 +686,12 @@ func TestBuildRoomMobs_KeywordDisambiguation(t *testing.T) {
 	// Both should have target_string containing "goblin"
 	var foundFirst, foundSecond bool
 	for _, m := range mobs {
-		if m.TargetString == "goblin" {
+		switch m.TargetString {
+		case "goblin":
 			foundFirst = true
-		} else if m.TargetString == "2.goblin" {
+		case "2.goblin":
 			foundSecond = true
-		} else {
+		default:
 			t.Errorf("unexpected target_string: %q", m.TargetString)
 		}
 	}

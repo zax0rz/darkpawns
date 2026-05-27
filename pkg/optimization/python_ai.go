@@ -259,7 +259,7 @@ func (ac *AICache) Set(key string, resp AIResponse) {
 func (ac *AICache) evictOne() {
 	var oldestKey string
 	var oldestTime time.Time
-	var minHits = int(^uint(0) >> 1) // Max int
+	minHits := int(^uint(0) >> 1) // Max int
 
 	// Simple eviction: find entry with fewest hits
 	for key, entry := range ac.cache {
@@ -397,5 +397,3 @@ func (ap *AsyncProcessor) Close() error {
 
 	return nil
 }
-
-

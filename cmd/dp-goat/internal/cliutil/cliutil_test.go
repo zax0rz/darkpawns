@@ -86,7 +86,8 @@ func TestParseStoredTime(t *testing.T) {
 
 func TestFanoutRunAllSucceed(t *testing.T) {
 	sources := []string{"a", "b", "c"}
-	results, errs := FanoutRun(context.Background(), sources,
+	results, errs := FanoutRun(
+		context.Background(), sources,
 		func(s string) string { return s },
 		func(_ context.Context, s string) (string, error) {
 			return s + "!", nil
@@ -111,7 +112,8 @@ func TestFanoutRunAllSucceed(t *testing.T) {
 
 func TestFanoutRunMixed(t *testing.T) {
 	sources := []string{"good", "bad", "good2"}
-	results, errs := FanoutRun(context.Background(), sources,
+	results, errs := FanoutRun(
+		context.Background(), sources,
 		func(s string) string { return s },
 		func(_ context.Context, s string) (string, error) {
 			if s == "bad" {
@@ -137,7 +139,8 @@ func TestFanoutRunCancelledBeforeStart(t *testing.T) {
 	cancel() // cancelled up front
 
 	sources := []string{"a", "b", "c"}
-	results, errs := FanoutRun(ctx, sources,
+	results, errs := FanoutRun(
+		ctx, sources,
 		func(s string) string { return s },
 		func(_ context.Context, s string) (string, error) {
 			return s, nil
@@ -183,7 +186,8 @@ func TestFanoutRunBoundedConcurrency(t *testing.T) {
 	// observations.
 	var gated int64
 
-	_, errs := FanoutRun(context.Background(), sources,
+	_, errs := FanoutRun(
+		context.Background(), sources,
 		func(i int) string { return fmt.Sprintf("src-%d", i) },
 		func(_ context.Context, _ int) (struct{}, error) {
 			cur := atomic.AddInt64(&inflight, 1)
@@ -216,7 +220,8 @@ func TestFanoutRunBoundedConcurrency(t *testing.T) {
 }
 
 func TestFanoutRunEmptySources(t *testing.T) {
-	results, errs := FanoutRun(context.Background(), []string{},
+	results, errs := FanoutRun(
+		context.Background(), []string{},
 		func(s string) string { return s },
 		func(_ context.Context, s string) (string, error) { return s, nil },
 	)
@@ -230,7 +235,8 @@ func TestFanoutRunEmptySources(t *testing.T) {
 
 func TestFanoutRunAllFail(t *testing.T) {
 	sources := []string{"a", "b", "c"}
-	results, errs := FanoutRun(context.Background(), sources,
+	results, errs := FanoutRun(
+		context.Background(), sources,
 		func(s string) string { return s },
 		func(_ context.Context, _ string) (string, error) {
 			return "", errors.New("boom")
@@ -254,7 +260,8 @@ func TestFanoutRunWithConcurrencyClampsZero(t *testing.T) {
 	// WithConcurrency(0) and WithConcurrency(-1) must clamp to 1, not deadlock.
 	for _, n := range []int{0, -1, -100} {
 		sources := []string{"a", "b"}
-		results, errs := FanoutRun(context.Background(), sources,
+		results, errs := FanoutRun(
+			context.Background(), sources,
 			func(s string) string { return s },
 			func(_ context.Context, s string) (string, error) { return s, nil },
 			WithConcurrency(n),
@@ -272,7 +279,8 @@ func TestFanoutRunRecoversPanic(t *testing.T) {
 	// An fn that panics must not crash the process. The panicking source
 	// gets a FanoutError; other sources complete normally.
 	sources := []string{"good1", "panic", "good2"}
-	results, errs := FanoutRun(context.Background(), sources,
+	results, errs := FanoutRun(
+		context.Background(), sources,
 		func(s string) string { return s },
 		func(_ context.Context, s string) (string, error) {
 			if s == "panic" {
@@ -309,7 +317,8 @@ func TestFanoutRunCancelMidFlight(t *testing.T) {
 	}
 	// Fire cancel after a few fn calls start.
 	var started int64
-	results, errs := FanoutRun(ctx, sources,
+	results, errs := FanoutRun(
+		ctx, sources,
 		func(i int) string { return fmt.Sprintf("src-%d", i) },
 		func(c context.Context, _ int) (struct{}, error) {
 			if atomic.AddInt64(&started, 1) == 3 {
@@ -360,7 +369,8 @@ func TestFanoutRunSerialWithConcurrency1(t *testing.T) {
 	var completionOrder []string
 	var mu sync.Mutex
 
-	results, _ := FanoutRun(context.Background(), sources,
+	results, _ := FanoutRun(
+		context.Background(), sources,
 		func(s string) string { return s },
 		func(_ context.Context, s string) (string, error) {
 			mu.Lock()

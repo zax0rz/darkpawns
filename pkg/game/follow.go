@@ -159,7 +159,8 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 
 // DieFollower cleans up follower relations when ch dies.
 // C: src/utils.c:447-457 — if ch->master, stop_follower(ch);
-//     then for each k in ch->followers, stop_follower(k->follower)
+//
+//	then for each k in ch->followers, stop_follower(k->follower)
 func (w *World) DieFollower(ch *Player) {
 	// If ch is following someone, stop following.
 	if ch.GetFollowing() != "" {
@@ -209,7 +210,8 @@ func (w *World) DieFollowerMob(mob *MobInstance) {
 
 // GetRider returns the character riding mount, or nil.
 // C: src/utils.c:387-394 — if (mount && IS_NPC(mount) && IS_MOUNTED(mount))
-//     return mount->master;
+//
+//	return mount->master;
 func (w *World) GetRider(mount *MobInstance) *Player {
 	if mount == nil || !mount.IsNPC() || !mount.IsMountedMob() {
 		return nil

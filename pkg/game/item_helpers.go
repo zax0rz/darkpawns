@@ -11,42 +11,42 @@ type ItemType int
 
 // Item type constants matching src/structs.h
 const (
-	ItemLight       ItemType = 1
-	ItemScroll      ItemType = 2
-	ItemWand        ItemType = 3
-	ItemStaff       ItemType = 4
-	ItemWeaponType  ItemType = 5
-	ItemFireWeapon  ItemType = 6
-	ItemMissile     ItemType = 7
-	ItemTreasure    ItemType = 8
-	ItemArmor       ItemType = 9
-	ItemPotion      ItemType = 10
-	ItemWorn        ItemType = 11
-	ItemOther       ItemType = 12
-	ItemTrash       ItemType = 13
-	ItemTrap        ItemType = 14
-	ItemContainer   ItemType = 15
-	ItemNote        ItemType = 16
-	ItemDrinkcon    ItemType = 17
-	ItemKey         ItemType = 18
-	ItemFood        ItemType = 19
-	ItemMoney       ItemType = 20
-	ItemPen         ItemType = 21
-	ItemBoat        ItemType = 22
-	ItemFountain    ItemType = 23
-	ItemVehicle     ItemType = 24
-	ItemOnion       ItemType = 25
-	ItemArmorPiece  ItemType = 26
-	ItemTattoo      ItemType = 27
-	ItemRawmat      ItemType = 28
-	ItemWeaponPart  ItemType = 29
-	ItemTool        ItemType = 30
-	ItemGem         ItemType = 31
-	ItemJewelry     ItemType = 32
-	ItemFurniture   ItemType = 33
-	ItemBag         ItemType = 35
-	ItemBackpack    ItemType = 36
-	ItemCorpse      ItemType = 37
+	ItemLight      ItemType = 1
+	ItemScroll     ItemType = 2
+	ItemWand       ItemType = 3
+	ItemStaff      ItemType = 4
+	ItemWeaponType ItemType = 5
+	ItemFireWeapon ItemType = 6
+	ItemMissile    ItemType = 7
+	ItemTreasure   ItemType = 8
+	ItemArmor      ItemType = 9
+	ItemPotion     ItemType = 10
+	ItemWorn       ItemType = 11
+	ItemOther      ItemType = 12
+	ItemTrash      ItemType = 13
+	ItemTrap       ItemType = 14
+	ItemContainer  ItemType = 15
+	ItemNote       ItemType = 16
+	ItemDrinkcon   ItemType = 17
+	ItemKey        ItemType = 18
+	ItemFood       ItemType = 19
+	ItemMoney      ItemType = 20
+	ItemPen        ItemType = 21
+	ItemBoat       ItemType = 22
+	ItemFountain   ItemType = 23
+	ItemVehicle    ItemType = 24
+	ItemOnion      ItemType = 25
+	ItemArmorPiece ItemType = 26
+	ItemTattoo     ItemType = 27
+	ItemRawmat     ItemType = 28
+	ItemWeaponPart ItemType = 29
+	ItemTool       ItemType = 30
+	ItemGem        ItemType = 31
+	ItemJewelry    ItemType = 32
+	ItemFurniture  ItemType = 33
+	ItemBag        ItemType = 35
+	ItemBackpack   ItemType = 36
+	ItemCorpse     ItemType = 37
 )
 
 // Legacy aliases for backward compatibility (typed as int so they work with
@@ -92,10 +92,14 @@ const (
 
 // ItemType helper methods
 func (t ItemType) IsContainer() bool { return t == ItemContainer }
-func (t ItemType) IsWeapon() bool    { return t == ItemWeaponType || t == ItemFireWeapon || t == ItemMissile }
-func (t ItemType) IsArmor() bool     { return t == ItemArmor || t == ItemArmorPiece || t == ItemWorn }
-func (t ItemType) IsFood() bool      { return t == ItemFood || t == ItemDrinkcon }
-func (t ItemType) IsReadable() bool  { return t == ItemScroll || t == ItemNote || t == ItemPen }
+
+func (t ItemType) IsWeapon() bool {
+	return t == ItemWeaponType || t == ItemFireWeapon || t == ItemMissile
+}
+
+func (t ItemType) IsArmor() bool    { return t == ItemArmor || t == ItemArmorPiece || t == ItemWorn }
+func (t ItemType) IsFood() bool     { return t == ItemFood || t == ItemDrinkcon }
+func (t ItemType) IsReadable() bool { return t == ItemScroll || t == ItemNote || t == ItemPen }
 
 // Container value indices
 const (
@@ -333,6 +337,7 @@ var drinkAff = [][]int{
 func contIsCloseable(obj *ObjectInstance) bool {
 	return obj.Prototype.Values[contFlags]&contCloseable != 0
 }
+
 func contIsClosed(obj *ObjectInstance) bool {
 	return obj.Prototype.Values[contFlags]&contClosed != 0
 }
@@ -345,6 +350,7 @@ func IsContainerClosed(obj *ObjectInstance) bool {
 func contIsLocked(obj *ObjectInstance) bool {
 	return obj.Prototype.Values[contFlags]&contLocked != 0
 }
+
 func contSetClosed(obj *ObjectInstance, val bool) {
 	if val {
 		obj.Prototype.Values[contFlags] |= contClosed
@@ -352,6 +358,7 @@ func contSetClosed(obj *ObjectInstance, val bool) {
 		obj.Prototype.Values[contFlags] &^= contClosed
 	}
 }
+
 func contSetLocked(obj *ObjectInstance, val bool) {
 	if val {
 		obj.Prototype.Values[contFlags] |= contLocked

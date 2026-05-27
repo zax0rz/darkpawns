@@ -67,10 +67,10 @@ type TimeInfoData struct {
 // WeatherData holds the current weather state.
 // Ported from structs.h:struct weather_data.
 type WeatherData struct {
-	Pressure  int
-	Change    int
-	Sky       int
-	Sunlight  int
+	Pressure int
+	Change   int
+	Sky      int
+	Sunlight int
 }
 
 var (
@@ -82,10 +82,10 @@ var (
 		Moon:  MoonNew,
 	}
 	weatherInfo = WeatherData{
-		Pressure:  1013,
-		Change:    0,
-		Sky:       SkyCloudless,
-		Sunlight:  SunLight,
+		Pressure: 1013,
+		Change:   0,
+		Sky:      SkyCloudless,
+		Sunlight: SunLight,
 	}
 	weatherMu    sync.RWMutex
 	weatherWorld *World // set via SetWeatherWorld; used by event functions
@@ -319,7 +319,7 @@ func dice(num, size int) int {
 	total := 0
 	for i := 0; i < num; i++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		total += rand.IntN(size) + 1
 	}
 	return total
@@ -400,7 +400,7 @@ func ghostShipDisappear() {
 		return
 	}
 	w.SendToAll("[ GHOST SHIP ] The fog lifts... the ghost ship vanishes into the mists.\r\n")
-} 
+}
 
 // ModifyWeatherChange adjusts the weather change variable.
 // Used by spell_control_weather.
@@ -425,4 +425,3 @@ func GetMoon() int {
 	defer weatherMu.RUnlock()
 	return timeInfo.Moon
 }
-

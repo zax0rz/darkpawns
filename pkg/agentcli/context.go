@@ -9,11 +9,11 @@ import (
 
 // ContextPacket is the full context delivered to the LLM mind when it wakes.
 type ContextPacket struct {
-	State     *GameState `json:"state"`
-	Summary   string     `json:"summary"`              // narrative compaction
-	Events    []AgentEvent `json:"events"`              // recent events (raw)
-	GeneratedAt time.Time `json:"generated_at"`
-	SeqFloor  uint64     `json:"seq_floor"`            // events newer than this are "new"
+	State       *GameState   `json:"state"`
+	Summary     string       `json:"summary"` // narrative compaction
+	Events      []AgentEvent `json:"events"`  // recent events (raw)
+	GeneratedAt time.Time    `json:"generated_at"`
+	SeqFloor    uint64       `json:"seq_floor"` // events newer than this are "new"
 }
 
 // ContextBuilder generates context packets from state + event buffer.
@@ -35,11 +35,11 @@ func (cb *ContextBuilder) Build(state *GameState, events *EventBuffer, seqFloor 
 	summary := cb.CompactNarrative(events, seqFloor, state)
 
 	return &ContextPacket{
-		State:     state,
-		Summary:   summary,
-		Events:    recent,
+		State:       state,
+		Summary:     summary,
+		Events:      recent,
 		GeneratedAt: time.Now().UTC(),
-		SeqFloor:  seqFloor,
+		SeqFloor:    seqFloor,
 	}
 }
 
@@ -244,7 +244,7 @@ func FormatContext(pkt *ContextPacket) string {
 	// State summary
 	if pkt.State != nil {
 		s := pkt.State
-		b.WriteString(fmt.Sprintf("Room: %s (vnum %d)\n", s.Room.Name, s.Room.Vnum))
+		fmt.Fprintf(&b, "Room: %s (vnum %d)\n", s.Room.Name, s.Room.Vnum)
 
 		if len(s.Room.Mobs) > 0 {
 			b.WriteString("Mobs:\n")
@@ -253,16 +253,16 @@ func FormatContext(pkt *ContextPacket) string {
 				if m.Fighting {
 					status = " [fighting]"
 				}
-				b.WriteString(fmt.Sprintf("  %s (hp:%d%%)%s\n", m.Name, m.HealthPct, status))
+				fmt.Fprintf(&b, "  %s (hp:%d%%)%s\n", m.Name, m.HealthPct, status)
 			}
 		}
 
-		b.WriteString(fmt.Sprintf("Exits: %v\n", s.Room.Exits))
-		b.WriteString(fmt.Sprintf("HP: %d/%d  Mana: %d\n", s.Player.Health, s.Player.MaxHealth, s.Player.Mana))
-		b.WriteString(fmt.Sprintf("Level: %d  Exp: %d  Gold: %d\n", s.Player.Level, s.Player.Exp, s.Player.Gold))
+		fmt.Fprintf(&b, "Exits: %v\n", s.Room.Exits)
+		fmt.Fprintf(&b, "HP: %d/%d  Mana: %d\n", s.Player.Health, s.Player.MaxHealth, s.Player.Mana)
+		fmt.Fprintf(&b, "Level: %d  Exp: %d  Gold: %d\n", s.Player.Level, s.Player.Exp, s.Player.Gold)
 
 		if s.Fighting != "" {
-			b.WriteString(fmt.Sprintf("Fighting: %s\n", s.Fighting))
+			fmt.Fprintf(&b, "Fighting: %s\n", s.Fighting)
 		}
 	}
 

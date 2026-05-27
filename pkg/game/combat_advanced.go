@@ -284,7 +284,7 @@ func (w *World) doSleeper(ch *Player, me *MobInstance, cmd string, arg string) b
 	percent := randRange(1, 101+vict.GetLevel())
 	prob := ch.GetSkill(SkillSleeper)
 
-	if vict.IsNPC() && (false) {
+	if vict.IsNPC() && false {
 		prob = 0
 	}
 	if !vict.IsNPC() && ch.GetLevel() < lvlImmort {
@@ -427,7 +427,11 @@ func (w *World) doAmbush(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-	room := w.GetRoomInWorld(ch.GetRoom()); sector := 0; if room != nil { sector = room.Sector }
+	room := w.GetRoomInWorld(ch.GetRoom())
+	sector := 0
+	if room != nil {
+		sector = room.Sector
+	}
 	if sector != 3 && sector != 4 &&
 		sector != 5 && sector != 1 {
 		ch.SendMessage("Ambush someone here? Impossible!\r\n")

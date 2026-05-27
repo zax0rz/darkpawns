@@ -366,7 +366,7 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	}
 
 	if s.isGuest {
-		var guestAllowedCmds = map[string]bool{
+		guestAllowedCmds := map[string]bool{
 			"north": true, "n": true,
 			"east": true, "e": true,
 			"south": true, "s": true,
@@ -378,14 +378,14 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 			"score": true, "sc": true,
 			"who": true, "where": true,
 			"affects": true,
-			"help": true,
-			"say": true,
-			"gossip": true,
-			"tell": true,
-			"reply": true, "r": true,
+			"help":    true,
+			"say":     true,
+			"gossip":  true,
+			"tell":    true,
+			"reply":   true, "r": true,
 			"newbie": true,
-			"shout": true,
-			"gtell": true, "gsay": true,
+			"shout":  true,
+			"gtell":  true, "gsay": true,
 			"emote": true, "me": true,
 			"stand": true, "sit": true,
 			"rest": true, "sleep": true,
@@ -522,13 +522,13 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		"equipment": true, "eq": true,
 		"score": true, "sc": true,
 		"say": true, "'": true,
-		"tell": true,
-		"who": true,
-		"time": true,
+		"tell":    true,
+		"who":     true,
+		"time":    true,
 		"weather": true,
-		"help": true,
-		"exits": true,
-		"quit": true,
+		"help":    true,
+		"exits":   true,
+		"quit":    true,
 	}
 	if s.player != nil && s.player.GetWaitState() > 0 && !waitBypass[cmd] {
 		s.sendText("You're too busy!\r\n")

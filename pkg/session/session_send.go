@@ -2,9 +2,9 @@
 package session
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
-	"encoding/json"
 )
 import "github.com/zax0rz/darkpawns/pkg/game"
 

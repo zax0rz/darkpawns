@@ -7,14 +7,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"io"
 	"os"
 	"sort"
 	"strings"
 	"text/tabwriter"
 	"unicode"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var As = errors.As
@@ -287,7 +288,8 @@ func newTabWriter(w io.Writer) *tabwriter.Writer {
 // endpoint has no per-endpoint header overrides.
 func paginatedGet(c interface {
 	GetWithHeaders(path string, params map[string]string, headers map[string]string) (json.RawMessage, error)
-}, path string, params map[string]string, headers map[string]string, fetchAll bool, cursorParam, nextCursorPath, hasMoreField string) (json.RawMessage, error) {
+}, path string, params map[string]string, headers map[string]string, fetchAll bool, cursorParam, nextCursorPath, hasMoreField string,
+) (json.RawMessage, error) {
 	// Cursor params are exempt from the "0"/"false" strip: offset-paginated
 	// APIs send offset=0 on the first page.
 	clean := map[string]string{}

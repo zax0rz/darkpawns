@@ -113,57 +113,6 @@ func acText(ac int) string {
 	}
 }
 
-// packWeightLabel returns a text label for the carried weight ratio.
-func packWeightLabel(carriedWeight, maxCarryWeight int) string {
-	if maxCarryWeight <= 0 {
-		return ""
-	}
-	ratio := maxCarryWeight / carriedWeight
-	if carriedWeight == 0 {
-		ratio = -1
-	}
-	if ratio > -1 {
-		ratio = -1
-	}
-	if ratio < 0 {
-		ratio = 0
-	}
-	ratio = max(-1, ratio)
-
-	// Actually let's just use the simpler logic from C
-	// weight = CAN_CARRY_W / IS_CARRYING_W, then MAX(-1, weight)
-	var weight int
-	if carriedWeight > 0 {
-		weight = maxCarryWeight / carriedWeight
-	}
-	if carriedWeight == 0 {
-		weight = -1
-	}
-	if weight < -1 {
-		weight = -1
-	}
-	if weight > 4 {
-		weight = 4
-	}
-
-	switch {
-	case weight >= 4:
-		return "Your pack is light."
-	case weight == 3:
-		return "Your pack is fairly light."
-	case weight == 2:
-		return "Your pack is fairly heavy."
-	case weight == 1:
-		return "Your pack is heavy."
-	case weight == 0:
-		return "Your pack is almost too heavy to lift."
-	case weight == -1:
-		return "Your pack is empty."
-	default:
-		return ""
-	}
-}
-
 // positionText returns a text description for a position value.
 func positionText(pos int) string {
 	switch pos {
@@ -201,7 +150,7 @@ func cmdScore(s *Session) error {
 	// 1. Name + Age (from C line 1185)
 	// GET_AGE(ch) calculation
 	age := game.Age(p.Birth)
-	buf.WriteString(fmt.Sprintf("%s                           Age: %d years", p.Name, age.Year))
+	fmt.Fprintf(&buf, "%s                           Age: %d years", p.Name, age.Year)
 	if age.Month == 0 && age.Day == 0 {
 		buf.WriteString(" (It's your birthday today.)")
 	}
@@ -209,25 +158,25 @@ func cmdScore(s *Session) error {
 
 	// 2. HP/Mana/Move (from C line 1196)
 	manaLabel := "Mana"
-	buf.WriteString(fmt.Sprintf("Hit points: %d(%d)  %s: %d(%d)  Movement points: %d(%d)\r\n",
-		p.Health, p.MaxHealth, manaLabel, p.Mana, p.MaxMana, p.Move, p.MaxMove))
+	fmt.Fprintf(&buf, "Hit points: %d(%d)  %s: %d(%d)  Movement points: %d(%d)\r\n",
+		p.Health, p.MaxHealth, manaLabel, p.Mana, p.MaxMana, p.Move, p.MaxMove)
 
 	// 3. Alignment text (from C lines 1213-1238)
 	buf.WriteString(alignmentText(p.Alignment))
 	buf.WriteString("\r\n")
 
 	// 4. AC text (from C lines 1240-1265)
-	buf.WriteString(fmt.Sprintf("You %s\r\n", acText(p.AC)))
+	fmt.Fprintf(&buf, "You %s\r\n", acText(p.AC))
 
 	// 5. Experience (from C line 1267)
-	buf.WriteString(fmt.Sprintf("Experience:    %d points\r\n", p.Exp))
+	fmt.Fprintf(&buf, "Experience:    %d points\r\n", p.Exp)
 
 	// 6. Gold (from C lines 1268-1269)
-	buf.WriteString(fmt.Sprintf("Coins carried: %d gold coins    ", p.Gold))
-	buf.WriteString(fmt.Sprintf("Coins in bank: %d gold coins\r\n", p.BankGold))
+	fmt.Fprintf(&buf, "Coins carried: %d gold coins    ", p.Gold)
+	fmt.Fprintf(&buf, "Coins in bank: %d gold coins\r\n", p.BankGold)
 
 	// 7. Kills/PKs/Deaths (from C line 1270)
-	buf.WriteString(fmt.Sprintf("Kills: %d  Pks: %d  Deaths: %d\r\n", p.Kills, p.PKs, p.Deaths))
+	fmt.Fprintf(&buf, "Kills: %d  Pks: %d  Deaths: %d\r\n", p.Kills, p.PKs, p.Deaths)
 
 	// 8. XP to next level (from C line 1275)
 	if p.Level < game.LVL_IMMORT-1 {
@@ -235,12 +184,12 @@ func cmdScore(s *Session) error {
 		if needed < 0 {
 			needed = 0
 		}
-		buf.WriteString(fmt.Sprintf("You need %d exp to reach your next level.\r\n", needed))
+		fmt.Fprintf(&buf, "You need %d exp to reach your next level.\r\n", needed)
 	}
 
 	// 9. Play time (from C line 1279)
 	pt := game.PlayingTime(p.ConnectedAt, p.PlayedDuration)
-	buf.WriteString(fmt.Sprintf("You have been playing for %d days and %d hours.\r\n", pt.Day, pt.Hours))
+	fmt.Fprintf(&buf, "You have been playing for %d days and %d hours.\r\n", pt.Day, pt.Hours)
 
 	// 10. Veteran status (from C line 1281)
 	if pt.Day >= 30 && p.Kills >= 10000 {
@@ -252,23 +201,23 @@ func cmdScore(s *Session) error {
 	if p.Hometown >= 0 && p.Hometown < len(game.Hometowns) {
 		hometown = game.Hometowns[p.Hometown]
 	}
-	buf.WriteString(fmt.Sprintf("You are a citizen of %s.\r\n", hometown))
+	fmt.Fprintf(&buf, "You are a citizen of %s.\r\n", hometown)
 
 	// 12. Clan info (from C lines 1284-1292)
 	if p.ClanID != 0 && p.ClanRank != 0 {
 		_, clan := s.manager.world.Clans.FindClanByID(p.ClanID)
 		if clan != nil && p.ClanRank > 0 && p.ClanRank <= len(clan.RankName) && clan.RankName[p.ClanRank-1] != "" {
-			buf.WriteString(fmt.Sprintf("You are a %s of %s.\r\n", clan.RankName[p.ClanRank-1], clan.Name))
+			fmt.Fprintf(&buf, "You are a %s of %s.\r\n", clan.RankName[p.ClanRank-1], clan.Name)
 		}
 	}
 
 	// 13. Title line (from C lines 1293-1294)
 	className := game.ClassNames[p.Class]
-	buf.WriteString(fmt.Sprintf("This ranks you as %s %s (level %d).\r\n", p.Name, p.Title, p.Level))
+	fmt.Fprintf(&buf, "This ranks you as %s %s (level %d).\r\n", p.Name, p.Title, p.Level)
 
 	// 14. Race + Class (from C lines 1295-1298)
 	raceName := game.RaceNames[p.Race]
-	buf.WriteString(fmt.Sprintf("You are %s %s %s.\r\n", articleFor(raceName), raceName, className))
+	fmt.Fprintf(&buf, "You are %s %s %s.\r\n", articleFor(raceName), raceName, className)
 
 	// 15. Pack weight (from C lines 1304-1315)
 	carriedW := p.CarriedWeight()
@@ -353,11 +302,11 @@ func cmdScore(s *Session) error {
 	// AFF_SNEAK = 18, AFF_DODGE = 17, AFF_BERSERK = 20, AFF_ROBBED = 38
 	// AFF_KUJI_KIRI = 24
 	const (
-		affSneakBit     uint64 = 1 << 18
-		affDodgeBit     uint64 = 1 << 17
-		affBerserkBit   uint64 = 1 << 20
-		affRobbedBit    uint64 = 1 << 38
-		affKujiKiriBit  uint64 = 1 << 24
+		affSneakBit    uint64 = 1 << 18
+		affDodgeBit    uint64 = 1 << 17
+		affBerserkBit  uint64 = 1 << 20
+		affRobbedBit   uint64 = 1 << 38
+		affKujiKiriBit uint64 = 1 << 24
 	)
 
 	if len(p.MasterAffects) > 0 || len(p.ActiveAffects) > 0 {

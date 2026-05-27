@@ -4,11 +4,11 @@
 // They serve as regression safety for the refactored location tracking system.
 //
 // SURPRISING BEHAVIOR DOCUMENTED HERE:
-// 1. SpawnObject() does NOT call AddItemToRoom() — callers must do it separately.
-// 2. Inventory.AddItem() sets item.Carrier = *Inventory, not *Player or *MobInstance.
-//    ExtractObject() type-asserts Carrier as *Player or *MobInstance, so items in
-//    player inventory (carried as *Inventory) will NOT be cleaned up by ExtractObject's
-//    carrier-removal branch.  The global-instance deletion still fires.
+//  1. SpawnObject() does NOT call AddItemToRoom() — callers must do it separately.
+//  2. Inventory.AddItem() sets item.Carrier = *Inventory, not *Player or *MobInstance.
+//     ExtractObject() type-asserts Carrier as *Player or *MobInstance, so items in
+//     player inventory (carried as *Inventory) will NOT be cleaned up by ExtractObject's
+//     carrier-removal branch.  The global-instance deletion still fires.
 package game
 
 import (

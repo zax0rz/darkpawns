@@ -114,7 +114,7 @@ func FindExp(class int, level int) int {
 	case level == 12:
 		return 870000
 	default:
-		return 900000 + ((level-13)*level*20000) + (level*level*1000) + int(modifier*10000*float64(level))
+		return 900000 + ((level - 13) * level * 20000) + (level * level * 1000) + int(modifier*10000*float64(level))
 	}
 }
 
@@ -177,8 +177,8 @@ func (w *World) GainExp(p *Player, gain int) {
 			if hasFleshAlter {
 				// flesh_alter_from: temporarily remove flesh alter bonuses
 				p.mu.Lock()
-				p.Hitroll -= (p.Level/3) + 1
-				p.Damroll -= (p.Level/2) + 1
+				p.Hitroll -= (p.Level / 3) + 1
+				p.Damroll -= (p.Level / 2) + 1
 				p.mu.Unlock()
 			}
 			p.Level++
@@ -186,8 +186,8 @@ func (w *World) GainExp(p *Player, gain int) {
 			if hasFleshAlter {
 				// flesh_alter_to: restore flesh alter bonuses at new level
 				p.mu.Lock()
-				p.Hitroll += (p.Level/3) + 1
-				p.Damroll += (p.Level/2) + 1
+				p.Hitroll += (p.Level / 3) + 1
+				p.Damroll += (p.Level / 2) + 1
 				p.mu.Unlock()
 			}
 			sendToChar(p, fmt.Sprintf("You advance to level %d!\r\n", p.Level))
@@ -226,8 +226,8 @@ func (w *World) GainExpRegardless(p *Player, gain int) {
 		hasFleshAlter := p.Affects&(1<<affFleshAlterBit) != 0
 		if hasFleshAlter {
 			p.mu.Lock()
-			p.Hitroll -= (p.Level/3) + 1
-			p.Damroll -= (p.Level/2) + 1
+			p.Hitroll -= (p.Level / 3) + 1
+			p.Damroll -= (p.Level / 2) + 1
 			p.mu.Unlock()
 		}
 		p.Level++
@@ -235,8 +235,8 @@ func (w *World) GainExpRegardless(p *Player, gain int) {
 		p.AdvanceLevel()
 		if hasFleshAlter {
 			p.mu.Lock()
-			p.Hitroll += (p.Level/3) + 1
-			p.Damroll += (p.Level/2) + 1
+			p.Hitroll += (p.Level / 3) + 1
+			p.Damroll += (p.Level / 2) + 1
 			p.mu.Unlock()
 		}
 	}

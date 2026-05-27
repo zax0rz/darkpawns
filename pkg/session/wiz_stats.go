@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )

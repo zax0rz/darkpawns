@@ -15,8 +15,8 @@ const (
 	MsgEvent        = "event"
 	MsgError        = "error"
 	MsgText         = "text"
-	MsgCharCreate   = "char_create" // server → client: prompts during char creation
-	MsgVars         = "vars"        // server → agent: variable state update
+	MsgCharCreate   = "char_create"   // server → client: prompts during char creation
+	MsgVars         = "vars"          // server → agent: variable state update
 	MsgTokenRefresh = "token_refresh" // server → client: proactively rotated JWT
 )
 
@@ -54,10 +54,10 @@ type LoginData struct {
 
 	// Agent identity fields — informational only, do not affect gameplay.
 	// Agents declare themselves; server tags the session for observation.
-	IsAgent  bool   `json:"is_agent,omitempty"`  // true = this is an AI agent
-	Harness  string `json:"harness,omitempty"`   // e.g. "openclaw", "claude-code", "gemini-cli"
-	Model    string `json:"model,omitempty"`     // e.g. "mimo-v2.5-base", "claude-sonnet-4-6"
-	Version  string `json:"version,omitempty"`   // harness version (optional)
+	IsAgent bool   `json:"is_agent,omitempty"` // true = this is an AI agent
+	Harness string `json:"harness,omitempty"`  // e.g. "openclaw", "claude-code", "gemini-cli"
+	Model   string `json:"model,omitempty"`    // e.g. "mimo-v2.5-base", "claude-sonnet-4-6"
+	Version string `json:"version,omitempty"`  // harness version (optional)
 }
 
 // CommandData is a player command.

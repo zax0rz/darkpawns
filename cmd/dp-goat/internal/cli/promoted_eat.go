@@ -40,7 +40,6 @@ func newEatPromotedCmd(flags *rootFlags) *cobra.Command {
 				body["item"] = bodyItem
 			}
 			data, _, err := c.PostWithParams(path, params, body)
-
 			if err != nil {
 				return classifyAPIError(err, flags)
 			}

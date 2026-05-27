@@ -44,15 +44,15 @@ const AFF_DREAM_BIT = 35
 // This keeps dream logic free of direct World coupling for easy testing.
 type DreamContext interface {
 	GetLevel() int
-	GetLastDeath() int64             // Unix timestamp of last death, 0 if never
-	SetLastDeath(t int64)            // Clear last death by setting to 0
-	HasAffect(bitNum int) bool       // Check if character has an affect flag set
-	RemoveAffect(bitNum int)         // Remove an affect flag
-	SendToChar(msg string)           // Send a message to the character
-	SendToRoom(msg string)           // Send a message to everyone in the same room
-	WakeUp()                         // Force character to wake (like do_wake)
-	MoveToRoom(roomVNum int)         // Teleport character to a room (char_from_room + char_to_room)
-	CurrentTime() int64              // Returns current Unix timestamp
+	GetLastDeath() int64       // Unix timestamp of last death, 0 if never
+	SetLastDeath(t int64)      // Clear last death by setting to 0
+	HasAffect(bitNum int) bool // Check if character has an affect flag set
+	RemoveAffect(bitNum int)   // Remove an affect flag
+	SendToChar(msg string)     // Send a message to the character
+	SendToRoom(msg string)     // Send a message to everyone in the same room
+	WakeUp()                   // Force character to wake (like do_wake)
+	MoveToRoom(roomVNum int)   // Teleport character to a room (char_from_room + char_to_room)
+	CurrentTime() int64        // Returns current Unix timestamp
 }
 
 // DreamResult describes what the dream function decided to do.
@@ -94,7 +94,7 @@ func Dream(ch DreamContext) DreamResult {
 		if diff < day { // less than 1 real day ago
 			// Source: dream.c lines 63–73 (1/6 chance)
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			if rand.IntN(6) == 0 {
 				ch.SendToChar("You see the visions of your own death and wake up screaming!\r\n")
 				ch.SendToRoom("$n wakes up screaming, with a look of death in $s eyes.")
@@ -105,7 +105,7 @@ func Dream(ch DreamContext) DreamResult {
 		} else if diff < 2*day { // 1–2 real days ago
 			// Source: dream.c lines 74–80 (1/6 chance)
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			if rand.IntN(6) == 0 {
 				ch.SendToChar("In your dreams you keep seeing a dark figure hunched over your corpse.\r\n")
 				ch.SendToRoom("$n shivers in $s sleep.")
@@ -114,7 +114,7 @@ func Dream(ch DreamContext) DreamResult {
 		} else if diff < 3*day { // 2–3 real days ago
 			// Source: dream.c lines 81–88 (1/6 chance)
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			if rand.IntN(6) == 0 {
 				ch.SendToChar("You toss and turn as a dark cloud hovers over your dreams.\r\n")
 				ch.SendToRoom("$n tosses and turns in $s sleep, must be a bad dream.")
@@ -123,7 +123,7 @@ func Dream(ch DreamContext) DreamResult {
 		} else if diff < 5*day { // 3–5 real days ago
 			// Source: dream.c lines 89–96 (1/6 chance)
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			if rand.IntN(6) == 0 {
 				ch.SendToChar("You sleep uneasily, as if something looms over your past\r\n")
 				ch.SendToRoom("$n grunts in $s sleep.")
@@ -150,42 +150,42 @@ func Dream(ch DreamContext) DreamResult {
 	switch {
 	case lvl >= 0 && lvl <= 5:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(16) == 0 {
 			ch.SendToChar("You have dreams of showing this world what you are really made of.\r\n")
 			ch.SendToRoom("$n smiles in $s sleep.")
 		}
 	case lvl >= 6 && lvl <= 10:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(16) == 0 {
 			ch.SendToChar("You have a pleasant dream of safe travels to far places and a hero's welcome when you return.\r\n")
 			ch.SendToRoom("$n begins to hum a happy ditty in $s sleep.")
 		}
 	case lvl >= 11 && lvl <= 20:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(16) == 0 {
 			ch.SendToChar("You dream of your conquest of the world.\r\n")
 			ch.SendToRoom("$n begins to grin in $s sleep.")
 		}
 	case lvl >= 21 && lvl <= 28:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(16) == 0 {
 			ch.SendToChar("You dream of slaying the dark creatures of the night.\r\n")
 			ch.SendToRoom("$n smirks in $s sleep.")
 		}
 	case lvl >= 29 && lvl <= 30:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(16) == 0 {
 			ch.SendToChar("You have a fantastic dream of one day attaining immortality.\r\n")
 			ch.SendToRoom("$n looks like $e is having big dreams.")
 		}
 	case lvl == LVLImmort:
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(16) == 0 {
 			ch.SendToChar("You have big, grand dreams of the power of the Gods.\r\n")
 			ch.SendToRoom("$n glows in $s sleep.")
@@ -193,7 +193,7 @@ func Dream(ch DreamContext) DreamResult {
 	default:
 		// Above immortal level
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(16) == 0 {
 			ch.SendToChar("You toss and turn under the constant fear of the wrath of Orodreth :-)\r\n")
 			ch.SendToChar("You find yourself wide awake!\r\n")
@@ -219,7 +219,7 @@ func DreamTravelFn(ch DreamContext, subcmd int) {
 		dt := DreamTravelTable[i]
 		// Source: dream.c lines 195–206 (normal) and 208–219 (bad)
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if subcmd == 0 && dt.Subcmd == 0 && rand.IntN(16) == 0 {
 			ch.SendToChar(fmt.Sprintf("You have a dream %s \r\n", dt.Descrip))
 			ch.SendToRoom("The sleeping body of $n fades from existence.")
@@ -229,7 +229,7 @@ func DreamTravelFn(ch DreamContext, subcmd int) {
 			return
 		}
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if subcmd == 1 && rand.IntN(16) == 0 {
 			ch.SendToChar(fmt.Sprintf("You have a dream %s \r\n", dt.Descrip))
 			ch.SendToRoom("The sleeping body of $n fades from existence.")
@@ -248,31 +248,36 @@ const LVLImmort = 31
 
 // Go Improvements Over C
 // ======================
-// 1. INTERFACE DECOUPLING: C accessed char_data fields directly. Go uses DreamContext
-//    interface, making the dream logic testable without a full World or Player instance.
 //
-// 2. NO IMPLICIT GLOBALS: C's dream() read/wrote global time_info and called
-//    char_from_room()/char_to_room() which accessed global world state. Go passes
-//    everything through DreamContext.
+//  1. INTERFACE DECOUPLING: C accessed char_data fields directly. Go uses DreamContext
+//     interface, making the dream logic testable without a full World or Player instance.
+//
+//  2. NO IMPLICIT GLOBALS: C's dream() read/wrote global time_info and called
+//     char_from_room()/char_to_room() which accessed global world state. Go passes
+//     everything through DreamContext.
 //
 // 3. RANDOM: C used number(0,5) which returns 0–5 (6 outcomes). The code checked
 // #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-//    !number(0,5) meaning 1-in-6 chance. Go's rand.IntN(6) == 0 is equivalent.
+//
+//	!number(0,5) meaning 1-in-6 chance. Go's rand.IntN(6) == 0 is equivalent.
+//
 // #nosec G404 — game RNG, not cryptographic
 // #nosec G404
-//    Same for the 1/16 chance: number(0,15) → rand.IntN(16) == 0.
 //
-// 4. TIME: C stored lastdeath as a raw long Unix timestamp. Go uses int64 (same
-//    semantics) to avoid the 2038 problem that C's 32-bit time_t would hit.
+//		Same for the 1/16 chance: number(0,15) → rand.IntN(16) == 0.
+//
+//	 4. TIME: C stored lastdeath as a raw long Unix timestamp. Go uses int64 (same
+//	    semantics) to avoid the 2038 problem that C's 32-bit time_t would hit.
 //
 // 5. POTENTIAL MODERNIZATION (do not implement now):
-//    - Track last death time in PostgreSQL alongside player data rather than
-//      in a transient field.
-//    - Make DreamTravelTable configurable from a JSON/Lua data file.
-//    - The dream_travel loop bug: C iterates i <= NUM_DREAMS (9 entries, index 0–8)
-//      but DreamTravelTable has exactly 9 entries (indices 0–8). The loop condition
-//      should be i < NumDreams to be safe; we preserve the <= for faithfulness.
+//   - Track last death time in PostgreSQL alongside player data rather than
+//     in a transient field.
+//   - Make DreamTravelTable configurable from a JSON/Lua data file.
+//   - The dream_travel loop bug: C iterates i <= NUM_DREAMS (9 entries, index 0–8)
+//     but DreamTravelTable has exactly 9 entries (indices 0–8). The loop condition
+//     should be i < NumDreams to be safe; we preserve the <= for faithfulness.
+//
 // PlayerDreamAdapter wraps a Player and World to implement DreamContext.
 // Used by PointUpdate to call Dream() for sleeping players.
 type PlayerDreamAdapter struct {
@@ -280,27 +285,29 @@ type PlayerDreamAdapter struct {
 	w *World
 }
 
-func (a *PlayerDreamAdapter) GetLevel() int                              { return a.p.Level }
-func (a *PlayerDreamAdapter) GetLastDeath() int64                       { return a.p.GetLastDeath() }
-func (a *PlayerDreamAdapter) SetLastDeath(t int64)                       { a.p.SetLastDeath(t) }
+func (a *PlayerDreamAdapter) GetLevel() int        { return a.p.Level }
+func (a *PlayerDreamAdapter) GetLastDeath() int64  { return a.p.GetLastDeath() }
+func (a *PlayerDreamAdapter) SetLastDeath(t int64) { a.p.SetLastDeath(t) }
 func (a *PlayerDreamAdapter) HasAffect(bitNum int) bool {
 	if bitNum < 0 || bitNum >= 64 {
 		return false
 	}
 	return a.p.Affects&(1<<uint(bitNum)) != 0
 }
-func (a *PlayerDreamAdapter) RemoveAffect(bitNum int)                    { a.p.RemoveAffectBit(bitNum) }
-func (a *PlayerDreamAdapter) SendToChar(msg string)                      { a.p.SendMessage(msg) }
-func (a *PlayerDreamAdapter) SendToRoom(msg string)                      { a.w.roomMessage(a.p.RoomVNum, msg) }
+
+func (a *PlayerDreamAdapter) RemoveAffect(bitNum int) { a.p.RemoveAffectBit(bitNum) }
+func (a *PlayerDreamAdapter) SendToChar(msg string)   { a.p.SendMessage(msg) }
+func (a *PlayerDreamAdapter) SendToRoom(msg string)   { a.w.roomMessage(a.p.RoomVNum, msg) }
+
 func (a *PlayerDreamAdapter) WakeUp() {
 	if a.p.GetPosition() == PosSleeping {
 		a.p.SetPosition(PosStanding)
 	}
 }
+
 func (a *PlayerDreamAdapter) MoveToRoom(roomVNum int) {
 	if err := a.w.PlayerTransfer(a.p, roomVNum); err != nil {
 		slog.Warn("PlayerTransfer failed in dream", "player", a.p.Name, "room", roomVNum, "error", err)
 	}
 }
-func (a *PlayerDreamAdapter) CurrentTime() int64                        { return time.Now().Unix() }
-
+func (a *PlayerDreamAdapter) CurrentTime() int64 { return time.Now().Unix() }

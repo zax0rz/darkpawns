@@ -8,16 +8,16 @@ import (
 // ObjectInstance represents a spawned object in the world.
 type ObjectInstance struct {
 	// Instance identity
-	ID    int // unique instance ID, assigned by World
-	VNum  int // prototype VNum
+	ID   int // unique instance ID, assigned by World
+	VNum int // prototype VNum
 
 	// Link to prototype
 	Prototype *parser.Obj
 
 	// Location
-	RoomVNum  int             // -1 if not in a room
+	RoomVNum int // -1 if not in a room
 
-	Location      ObjectLocation
+	Location ObjectLocation
 
 	// Contents (for containers)
 	Contains []*ObjectInstance
@@ -51,12 +51,12 @@ type ObjectInstance struct {
 // NewObjectInstance creates a new object instance from a prototype.
 func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 	obj := &ObjectInstance{
-		Prototype:     proto,
-		VNum:          proto.VNum,
-		RoomVNum:      roomVNum,
-		Contains:      make([]*ObjectInstance, 0),
-		CustomData:    make(map[string]interface{}),
-		Runtime:       ObjectRuntimeState{},
+		Prototype:  proto,
+		VNum:       proto.VNum,
+		RoomVNum:   roomVNum,
+		Contains:   make([]*ObjectInstance, 0),
+		CustomData: make(map[string]interface{}),
+		Runtime:    ObjectRuntimeState{},
 	}
 	if roomVNum > 0 {
 		obj.Location = LocRoom(roomVNum)

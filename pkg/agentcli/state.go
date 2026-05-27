@@ -28,7 +28,7 @@ func NewStateFile(name string) (*StateFile, error) {
 		return nil, fmt.Errorf("home dir: %w", err)
 	}
 	dir := filepath.Join(home, ".dp-goat", "state")
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("mkdir state: %w", err)
 	}
 	return &StateFile{
@@ -71,7 +71,7 @@ func (sf *StateFile) Save(state *GameState) error {
 
 	// Atomic write: temp file + rename
 	tmp := sf.path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0644); err != nil {
+	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		return fmt.Errorf("write state tmp: %w", err)
 	}
 	if err := os.Rename(tmp, sf.path); err != nil {

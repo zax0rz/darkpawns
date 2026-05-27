@@ -15,7 +15,7 @@ const (
 
 	// Item type constants matching structs.h (used for container weight validation)
 	ITEM_DRINKCON = 17
-	ITEM_FOUNTAIN  = 23
+	ITEM_FOUNTAIN = 23
 )
 
 // Obj represents a parsed object from a .obj file.

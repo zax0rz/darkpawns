@@ -100,7 +100,8 @@ type UsageCounter interface {
 // Ported from comm.c:record_usage().
 func RecordUsage(counter UsageCounter) {
 	connected, playing := counter.CountSessions()
-	slog.Info("usage record",
+	slog.Info(
+		"usage record",
 		"connected", connected,
 		"playing", playing,
 	)

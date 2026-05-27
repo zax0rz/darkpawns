@@ -3,7 +3,8 @@ package game
 
 import (
 	"fmt"
-		"github.com/zax0rz/darkpawns/pkg/combat"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // findRemortClass — ported from C find_remort_class()

@@ -36,8 +36,10 @@ type Actor interface {
 }
 
 // Ensure compliance at compile time.
-var _ Actor = (*Player)(nil)
-var _ Actor = (*MobInstance)(nil)
+var (
+	_ Actor = (*Player)(nil)
+	_ Actor = (*MobInstance)(nil)
+)
 
 // --------------------------------------------------------------------------
 // Pronoun helpers — faithful to C utils.h macros.
@@ -231,8 +233,10 @@ type visibilitySubject interface {
 	IsNPC() bool
 }
 
-var _ visibilitySubject = (*Player)(nil)
-var _ visibilitySubject = (*MobInstance)(nil)
+var (
+	_ visibilitySubject = (*Player)(nil)
+	_ visibilitySubject = (*MobInstance)(nil)
+)
 
 // GetHolyLight returns true if the entity has holy light enabled.
 // Player implements this; MobInstance does not.
@@ -242,10 +246,11 @@ type holyLightSubject interface {
 
 // canSeeObject returns true if 'to' can see 'obj'.
 // Ported from C: CAN_SEE_OBJ(sub, obj)
-//   = MORT_CAN_SEE_OBJ(sub, obj) || PRF_FLAGGED(sub, PRF_HOLYLIGHT)
-//   = (LIGHT_OK(sub) && INVIS_OK_OBJ(sub, obj)) || PRF_HOLYLIGHT
-//   LIGHT_OK(sub) = !IS_AFFECTED(sub, AFF_BLIND) && (IS_LIGHT(sub->in_room) || IS_AFFECTED(sub, AFF_INFRAVISION))
-//   INVIS_OK_OBJ(sub, obj) = !IS_OBJ_STAT(obj, ITEM_INVISIBLE) || IS_AFFECTED(sub, AFF_DETECT_INVIS)
+//
+//	= MORT_CAN_SEE_OBJ(sub, obj) || PRF_FLAGGED(sub, PRF_HOLYLIGHT)
+//	= (LIGHT_OK(sub) && INVIS_OK_OBJ(sub, obj)) || PRF_HOLYLIGHT
+//	LIGHT_OK(sub) = !IS_AFFECTED(sub, AFF_BLIND) && (IS_LIGHT(sub->in_room) || IS_AFFECTED(sub, AFF_INFRAVISION))
+//	INVIS_OK_OBJ(sub, obj) = !IS_OBJ_STAT(obj, ITEM_INVISIBLE) || IS_AFFECTED(sub, AFF_DETECT_INVIS)
 func canSeeObject(to Actor, obj *ObjectInstance) bool {
 	if to == nil {
 		return true

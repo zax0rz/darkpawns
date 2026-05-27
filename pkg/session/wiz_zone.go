@@ -136,10 +136,10 @@ func cmdRlist(s *Session, args []string) error {
 	keyword := strings.ToLower(args[0])
 	var result strings.Builder
 	count := 0
-	for _, r := range pw.Rooms {
-		if strings.Contains(strings.ToLower(r.Name), keyword) {
+	for i := range pw.Rooms {
+		if strings.Contains(strings.ToLower(pw.Rooms[i].Name), keyword) {
 			count++
-			fmt.Fprintf(&result, "  [%5d] %s\r\n", r.VNum, r.Name)
+			fmt.Fprintf(&result, "  [%5d] %s\r\n", pw.Rooms[i].VNum, pw.Rooms[i].Name)
 			if count >= 50 {
 				result.WriteString("... (truncated at 50)")
 				break
@@ -172,11 +172,11 @@ func cmdOlist(s *Session, args []string) error {
 	keyword := strings.ToLower(args[0])
 	var result strings.Builder
 	count := 0
-	for _, o := range pw.Objs {
-		if strings.Contains(strings.ToLower(o.ShortDesc), keyword) ||
-			strings.Contains(strings.ToLower(o.Keywords), keyword) {
+	for i := range pw.Objs {
+		if strings.Contains(strings.ToLower(pw.Objs[i].ShortDesc), keyword) ||
+			strings.Contains(strings.ToLower(pw.Objs[i].Keywords), keyword) {
 			count++
-			fmt.Fprintf(&result, "  [%5d] %s\r\n", o.VNum, o.ShortDesc)
+			fmt.Fprintf(&result, "  [%5d] %s\r\n", pw.Objs[i].VNum, pw.Objs[i].ShortDesc)
 			if count >= 50 {
 				result.WriteString("... (truncated at 50)")
 				break
@@ -209,11 +209,11 @@ func cmdMlist(s *Session, args []string) error {
 	keyword := strings.ToLower(args[0])
 	var result strings.Builder
 	count := 0
-	for _, m := range pw.Mobs {
-		if strings.Contains(strings.ToLower(m.ShortDesc), keyword) ||
-			strings.Contains(strings.ToLower(m.Keywords), keyword) {
+	for i := range pw.Mobs {
+		if strings.Contains(strings.ToLower(pw.Mobs[i].ShortDesc), keyword) ||
+			strings.Contains(strings.ToLower(pw.Mobs[i].Keywords), keyword) {
 			count++
-			fmt.Fprintf(&result, "  [%5d] %s\r\n", m.VNum, m.ShortDesc)
+			fmt.Fprintf(&result, "  [%5d] %s\r\n", pw.Mobs[i].VNum, pw.Mobs[i].ShortDesc)
 			if count >= 50 {
 				result.WriteString("... (truncated at 50)")
 				break

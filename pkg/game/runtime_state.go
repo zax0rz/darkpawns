@@ -11,13 +11,13 @@ type HorseState struct {
 // ObjectRuntimeState replaces CustomData for known object state keys.
 type ObjectRuntimeState struct {
 	// Corpse/head descriptions
-	Name               string `json:"name,omitempty"`
-	ShortDesc           string `json:"short_desc,omitempty"`
-	LongDesc            string `json:"long_desc,omitempty"`
-	ShortDescOverride   string `json:"short_desc_override,omitempty"`
+	Name              string `json:"name,omitempty"`
+	ShortDesc         string `json:"short_desc,omitempty"`
+	LongDesc          string `json:"long_desc,omitempty"`
+	ShortDescOverride string `json:"short_desc_override,omitempty"`
 	// Keywords for synthetic objects (corpses, money) that have no Prototype.
 	// Checked by GetKeywords() before falling back to Prototype.Keywords.
-	Keywords           string `json:"keywords,omitempty"`
+	Keywords string `json:"keywords,omitempty"`
 
 	// Molded objects
 	MoldName string `json:"mold_name,omitempty"`
@@ -41,6 +41,6 @@ type ObjectRuntimeState struct {
 // MobRuntimeState replaces CustomData for known mob state keys.
 type MobRuntimeState struct {
 	DamrollBonus int            `json:"damroll_bonus,omitempty"`
-	Horse        *HorseState   `json:"horse,omitempty"`
+	Horse        *HorseState    `json:"horse,omitempty"`
 	Script       map[string]any `json:"script,omitempty"`
 }

@@ -61,7 +61,9 @@ var shopSpecNames = map[string]bool{
 // For mob checks, use IsMobShopkeeper(mobVNum) directly.
 //
 // In the C code this was: IS_SHOPKEEPER(ch) =
-//   (ch)->player_specials->saved.command_interpreter == shop_keeper
+//
+//	(ch)->player_specials->saved.command_interpreter == shop_keeper
+//
 // Our Go equivalent uses the MobSpecAssign lookup table instead.
 func isShopkeeper(w *World, victim *Player) bool {
 	_ = w
@@ -95,12 +97,12 @@ func improveSkill(ch *Player, skill string) {
 	}
 	// Higher skill = harder to improve (like CircleMUD)
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	if rand.IntN(100)+1 > cur {
 		// Stat-based check: INT/WIS average gives improvement chance
 		chance := (ch.GetInt() + ch.GetWis()) / 4
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(100) < chance {
 			ch.SetSkill(skill, cur+1)
 			ch.SendMessage(fmt.Sprintf("You feel a bit more competent in %s.\r\n", skill))
@@ -120,4 +122,3 @@ func (w *World) rawKill(victim *Player, attackType int) {
 	// Trigger death processing
 	w.HandleDeath(victim, nil, attackType)
 }
-

@@ -22,18 +22,18 @@ import (
 // ---------------------------------------------------------------------------
 
 const (
-	MailBlockSize      = 512
-	MailFile           = "data/mail"
-	MailMinLevel       = 5
-	MailStampPrice     = 50
-	MailMaxSize        = 4096
+	MailBlockSize  = 512
+	MailFile       = "data/mail"
+	MailMinLevel   = 5
+	MailStampPrice = 50
+	MailMaxSize    = 4096
 
-	MailBlockHeader   = 1
-	MailBlockDeleted  = 2
-	MailBlockLast     = -2
+	MailBlockHeader  = 1
+	MailBlockDeleted = 2
+	MailBlockLast    = -2
 
 	MailHeaderDataSize = MailBlockSize - 8 - 8 - 4 - 4 // to, from, time, next, block_type
-	MailDataBlockSize  = MailBlockSize - 4              // block_type + text
+	MailDataBlockSize  = MailBlockSize - 4             // block_type + text
 )
 
 // ---------------------------------------------------------------------------
@@ -152,7 +152,7 @@ func writeToFile(buf []byte, size int, filepos int) {
 		noMail = true
 		return
 	}
-	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0600)
+	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFile)
 		noMail = true
@@ -182,7 +182,7 @@ func readFromFile(buf []byte, size int, filepos int) {
 		noMail = true
 		return
 	}
-	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0600)
+	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFile)
 		noMail = true
@@ -219,7 +219,7 @@ func scanFile() bool {
 	f, err := os.Open(MailFile)
 	if err != nil {
 		log.Print("   Mail file non-existant... creating new file.")
-		if err := os.WriteFile(MailFile, []byte{}, 0600); err != nil {
+		if err := os.WriteFile(MailFile, []byte{}, 0o600); err != nil {
 			slog.Warn("mail file creation failed", "file", MailFile, "error", err)
 		}
 		return true
@@ -566,7 +566,7 @@ func (w *World) CreateMailObject(ch *Player, mailText string) *ObjectInstance {
 	// Create a note object with mail text as action_description.
 	// Uses explicit field setting since CreateObject from prototype may not exist.
 	obj := &ObjectInstance{
-		VNum:     -1, // no prototype
+		VNum:      -1, // no prototype
 		CanPickUp: true,
 	}
 	obj.Runtime.MailText = mailText

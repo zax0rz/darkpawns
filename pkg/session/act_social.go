@@ -11,7 +11,6 @@ import (
 // Social commands (ported from act.other.c / act.social.c)
 // ---------------------------------------------------------------------------
 
-
 // cmdAlias manages a player's command aliases.
 func cmdAlias(s *Session, args []string) error {
 	player := s.player
@@ -31,10 +30,9 @@ func cmdAlias(s *Session, args []string) error {
 	if len(args) == 1 {
 		// Delete alias
 		aliasName := strings.ToLower(args[0])
-		aliases := player.Aliases
-		for i, a := range aliases {
+		for i, a := range player.Aliases {
 			if strings.EqualFold(a.Alias, aliasName) {
-				player.Aliases = append(aliases[:i], aliases[i+1:]...)
+				player.Aliases = append(player.Aliases[:i], player.Aliases[i+1:]...)
 				if err := game.WriteAliases(player.Name, player.Aliases); err != nil {
 					s.Send("Error saving aliases.")
 					return nil
@@ -77,4 +75,3 @@ func cmdAlias(s *Session, args []string) error {
 	s.Send("Alias added.")
 	return nil
 }
-

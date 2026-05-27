@@ -3,8 +3,8 @@ package scripting
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/parser"
 	lua "github.com/yuin/gopher-lua"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // TestIsFightingBasic tests the basic isfighting() functionality
@@ -48,39 +48,66 @@ func (m *mockWorldForTest) HandleNonCombatDeath(player ScriptablePlayer) {}
 
 func (m *mockWorldForTest) HandleSpellDeath(victimName string, spellNum int, roomVNum int) {}
 
-func (m *mockWorldForTest) SendTell(targetName, message string)                           {}
-func (m *mockWorldForTest) GetItemsInRoom(roomVNum int) []ScriptableObject                { return nil }
-func (m *mockWorldForTest) HasItemByVNum(charName string, vnum int) bool                  { return false }
-func (m *mockWorldForTest) RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject    { return nil }
+func (m *mockWorldForTest) SendTell(targetName, message string)            {}
+func (m *mockWorldForTest) GetItemsInRoom(roomVNum int) []ScriptableObject { return nil }
+
+func (m *mockWorldForTest) HasItemByVNum(charName string, vnum int) bool { return false }
+
+func (m *mockWorldForTest) RemoveItemFromRoom(vnum int, roomVNum int) ScriptableObject { return nil }
+
 func (m *mockWorldForTest) RemoveItemFromChar(charName string, vnum int) ScriptableObject { return nil }
-func (m *mockWorldForTest) StealRandomItemFromChar(charName string) ScriptableObject       { return nil }
+
+func (m *mockWorldForTest) StealRandomItemFromChar(charName string) ScriptableObject { return nil }
+
 func (m *mockWorldForTest) RemoveObjByInstanceID(objInstanceID int) ScriptableObject { return nil }
-func (m *mockWorldForTest) GiveItemToChar(charName string, obj ScriptableObject) error    { return nil }
-func (m *mockWorldForTest) GiveItemToMob(mobID int, obj ScriptableObject) error            { return nil }
-func (m *mockWorldForTest) GetObjByInstanceID(id int) ScriptableObject                     { return nil }
-func (m *mockWorldForTest) CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64 { return 0 }
-func (m *mockWorldForTest) FindFirstStep(src, target int) int { return -1 }
-func (m *mockWorldForTest) GetRoomInWorld(vnum int) *parser.Room { return nil }
-func (m *mockWorldForTest) ExecuteMobCommand(mobVNum int, cmdStr string)                       {}
-func (m *mockWorldForTest) SendToAll(msg string)                                                {}
-func (m *mockWorldForTest) SendToZone(roomVNum int, msg string)                                {}
-func (m *mockWorldForTest) IsRoomDark(roomVNum int) bool                                       { return false }
-func (m *mockWorldForTest) GetRoomZone(roomVNum int) int                                       { return 0 }
-func (m *mockWorldForTest) CanCarryObject(charName string, objVNum int) bool                   { return true }
-func (m *mockWorldForTest) EquipChar(charName string, isMob bool, objVNum int) bool              { return false }
-func (m *mockWorldForTest) SetFollower(followerName, leaderName string, followerIsMob bool) error { return nil }
-func (m *mockWorldForTest) MountPlayer(playerName, mountName string) error                       { return nil }
-func (m *mockWorldForTest) DismountPlayer(playerName string) error                                { return nil }
-func (m *mockWorldForTest) ClearAffects(charName string, isMob bool)                              {}
-func (m *mockWorldForTest) IsCorpseObj(objVNum int) bool                                         { return false }
-func (m *mockWorldForTest) SetHunting(hunterName, preyName string, hunterIsMob bool)              {}
-func (m *mockWorldForTest) IsHunting(charName string, isMob bool) bool                           { return false }
-func (m *mockWorldForTest) EquipMob(mobVNum, roomVNum, objVNum int)                              {}
-func (m *mockWorldForTest) GetPlayerByID(id int) ScriptablePlayer                                 { return nil }
-func (m *mockWorldForTest) SetObjectExtraDesc(vnum int, keyword string, description string) bool { return false }
-func (m *mockWorldForTest) SetObjectExtraFlag(vnum int, flag int, set bool) bool                  { return false }
-func (m *mockWorldForTest) ShopBuysType(mobVNum int, itemType int) bool                           { return false }
-func (m *mockWorldForTest) SetExitDoorState(roomVNum int, direction string, state int) bool       { return false }
+
+func (m *mockWorldForTest) GiveItemToChar(charName string, obj ScriptableObject) error { return nil }
+
+func (m *mockWorldForTest) GiveItemToMob(mobID int, obj ScriptableObject) error { return nil }
+
+func (m *mockWorldForTest) GetObjByInstanceID(id int) ScriptableObject { return nil }
+
+func (m *mockWorldForTest) CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64 {
+	return 0
+}
+func (m *mockWorldForTest) FindFirstStep(src, target int) int            { return -1 }
+func (m *mockWorldForTest) GetRoomInWorld(vnum int) *parser.Room         { return nil }
+func (m *mockWorldForTest) ExecuteMobCommand(mobVNum int, cmdStr string) {}
+func (m *mockWorldForTest) SendToAll(msg string)                         {}
+func (m *mockWorldForTest) SendToZone(roomVNum int, msg string)          {}
+func (m *mockWorldForTest) IsRoomDark(roomVNum int) bool                 { return false }
+
+func (m *mockWorldForTest) GetRoomZone(roomVNum int) int { return 0 }
+
+func (m *mockWorldForTest) CanCarryObject(charName string, objVNum int) bool { return true }
+
+func (m *mockWorldForTest) EquipChar(charName string, isMob bool, objVNum int) bool { return false }
+
+func (m *mockWorldForTest) SetFollower(followerName, leaderName string, followerIsMob bool) error {
+	return nil
+}
+
+func (m *mockWorldForTest) MountPlayer(playerName, mountName string) error { return nil }
+
+func (m *mockWorldForTest) DismountPlayer(playerName string) error                   { return nil }
+func (m *mockWorldForTest) ClearAffects(charName string, isMob bool)                 {}
+func (m *mockWorldForTest) IsCorpseObj(objVNum int) bool                             { return false }
+func (m *mockWorldForTest) SetHunting(hunterName, preyName string, hunterIsMob bool) {}
+func (m *mockWorldForTest) IsHunting(charName string, isMob bool) bool               { return false }
+func (m *mockWorldForTest) EquipMob(mobVNum, roomVNum, objVNum int)                  {}
+func (m *mockWorldForTest) GetPlayerByID(id int) ScriptablePlayer                    { return nil }
+
+func (m *mockWorldForTest) SetObjectExtraDesc(vnum int, keyword string, description string) bool {
+	return false
+}
+
+func (m *mockWorldForTest) SetObjectExtraFlag(vnum int, flag int, set bool) bool { return false }
+
+func (m *mockWorldForTest) ShopBuysType(mobVNum int, itemType int) bool { return false }
+
+func (m *mockWorldForTest) SetExitDoorState(roomVNum int, direction string, state int) bool {
+	return false
+}
 
 // TestSpellDamageFormulas tests that spell damage formulas are implemented
 func TestSpellDamageFormulas(t *testing.T) {
@@ -1350,18 +1377,18 @@ type testMob struct {
 	name string
 }
 
-func (m *testMob) GetVNum() int                  { return m.vnum }
-func (m *testMob) GetName() string               { return m.name }
-func (m *testMob) GetLevel() int                 { return 30 }
-func (m *testMob) GetHealth() int                { return 100 }
-func (m *testMob) SetHealth(h int)               {}
-func (m *testMob) GetMaxHealth() int             { return 100 }
-func (m *testMob) GetGold() int                  { return 0 }
-func (m *testMob) GetRoomVNum() int              { return 1000 }
-func (m *testMob) GetFighting() string           { return "" }
-func (m *testMob) SetHunting(target string)      {}
-func (m *testMob) IsHunting() bool               { return false }
-func (m *testMob) SetFollowing(leader string)    {}
+func (m *testMob) GetVNum() int               { return m.vnum }
+func (m *testMob) GetName() string            { return m.name }
+func (m *testMob) GetLevel() int              { return 30 }
+func (m *testMob) GetHealth() int             { return 100 }
+func (m *testMob) SetHealth(h int)            {}
+func (m *testMob) GetMaxHealth() int          { return 100 }
+func (m *testMob) GetGold() int               { return 0 }
+func (m *testMob) GetRoomVNum() int           { return 1000 }
+func (m *testMob) GetFighting() string        { return "" }
+func (m *testMob) SetHunting(target string)   {}
+func (m *testMob) IsHunting() bool            { return false }
+func (m *testMob) SetFollowing(leader string) {}
 func (m *testMob) GetPrototype() ScriptableMobPrototype {
 	return &testMobPrototype{shortDesc: m.name}
 }
@@ -1372,11 +1399,11 @@ type testMobPrototype struct {
 }
 
 func (p *testMobPrototype) GetShortDesc() string  { return p.shortDesc }
-func (p *testMobPrototype) GetGold() int           { return 0 }
-func (p *testMobPrototype) GetLevel() int          { return 30 }
-func (p *testMobPrototype) GetAlignment() int      { return 0 }
-func (p *testMobPrototype) GetScriptName() string  { return "" }
-func (p *testMobPrototype) GetLuaFunctions() int   { return 0 }
+func (p *testMobPrototype) GetGold() int          { return 0 }
+func (p *testMobPrototype) GetLevel() int         { return 30 }
+func (p *testMobPrototype) GetAlignment() int     { return 0 }
+func (p *testMobPrototype) GetScriptName() string { return "" }
+func (p *testMobPrototype) GetLuaFunctions() int  { return 0 }
 
 // testObj implements ScriptableObject for testing.
 type testObj struct {
@@ -1387,11 +1414,11 @@ type testObj struct {
 	cost      int
 }
 
-func (o *testObj) GetVNum() int          { return o.vnum }
-func (o *testObj) GetKeywords() string   { return o.keywords }
-func (o *testObj) GetShortDesc() string  { return o.shortDesc }
-func (o *testObj) GetCost() int          { return o.cost }
-func (o *testObj) GetTimer() int         { return 0 }
-func (o *testObj) SetTimer(t int)        {}
-func (o *testObj) GetTypeFlag() int      { return o.typeFlag }
+func (o *testObj) GetVNum() int         { return o.vnum }
+func (o *testObj) GetKeywords() string  { return o.keywords }
+func (o *testObj) GetShortDesc() string { return o.shortDesc }
+func (o *testObj) GetCost() int         { return o.cost }
+func (o *testObj) GetTimer() int        { return 0 }
+func (o *testObj) SetTimer(t int)       {}
+func (o *testObj) GetTypeFlag() int     { return o.typeFlag }
 func (o *testObj) GetInstanceID() int   { return 0 }

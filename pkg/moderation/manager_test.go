@@ -70,7 +70,8 @@ func TestSpamDetection(t *testing.T) {
 	}
 
 	// Add 4th message - should be spam
-	m.messageHistory[player] = append(m.messageHistory[player],
+	m.messageHistory[player] = append(
+		m.messageHistory[player],
 		now.Add(-10*time.Second),
 		now.Add(-5*time.Second),
 	)

@@ -12,7 +12,6 @@ import (
 )
 
 func newUpPromotedCmd(flags *rootFlags) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:         "up",
 		Short:       "Move up",
@@ -33,7 +32,6 @@ func newUpPromotedCmd(flags *rootFlags) *cobra.Command {
 			// second store-backed POST-search consumer ships.
 			body := map[string]any{}
 			data, _, err := c.PostWithParams(path, params, body)
-
 			if err != nil {
 				return classifyAPIError(err, flags)
 			}

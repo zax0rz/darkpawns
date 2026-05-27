@@ -229,8 +229,8 @@ func toLower(s string) string {
 // findHouse returns the index of the house control record for vnum, or -1.
 // In C: find_house()
 func findHouse(control []HouseControl, vnum int) int {
-	for i, h := range control {
-		if h.VNum == vnum {
+	for i := range control {
+		if control[i].VNum == vnum {
 			return i
 		}
 	}
@@ -250,5 +250,5 @@ var HcontrolFormat = "Usage: hcontrol build <house vnum> <exit direction> <playe
 	"       hcontrol show\r\n" +
 	"       hcontrol key <house vnum> <key vnum>\r\n"
 
-// HcontrolListHouses lists all defined houses.
-// In C: hcontrol_list_houses()
+	// HcontrolListHouses lists all defined houses.
+	// In C: hcontrol_list_houses()

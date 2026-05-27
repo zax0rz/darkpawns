@@ -22,7 +22,7 @@ type SQLiteBackend struct {
 func NewSQLiteBackend(dbPath string) (*SQLiteBackend, error) {
 	// Ensure directory exists
 	dir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(dir, 0750); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return nil, fmt.Errorf("create db dir: %w", err)
 	}
 
@@ -32,7 +32,7 @@ func NewSQLiteBackend(dbPath string) (*SQLiteBackend, error) {
 	}
 
 	// Configure connection pool
-	db.SetMaxOpenConns(1)   // SQLite WAL still prefers single writer
+	db.SetMaxOpenConns(1) // SQLite WAL still prefers single writer
 	db.SetMaxIdleConns(1)
 	db.SetConnMaxLifetime(5 * time.Minute)
 
@@ -181,5 +181,7 @@ func (b *SQLiteBackend) Close() error {
 }
 
 // compile-time interface checks
-var _ PlayerStore = (*SQLiteBackend)(nil)
-var _ WorldStore = (*SQLiteBackend)(nil)
+var (
+	_ PlayerStore = (*SQLiteBackend)(nil)
+	_ WorldStore  = (*SQLiteBackend)(nil)
+)

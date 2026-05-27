@@ -24,7 +24,8 @@ import (
 // RegisterTools registers all API operations as MCP tools.
 func RegisterTools(s *server.MCPServer) {
 	s.AddTool(
-		mcplib.NewTool("cast_cast",
+		mcplib.NewTool(
+			"cast_cast",
 			mcplib.WithDescription("Cast a spell. Required: spell. Optional: target."),
 			mcplib.WithString("spell", mcplib.Required(), mcplib.Description("Spell name")),
 			mcplib.WithString("target", mcplib.Description("Spell target (optional)")),
@@ -34,7 +35,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/cast", false, []mcpParamBinding{{PublicName: "spell", WireName: "spell", Location: "body"}, {PublicName: "target", WireName: "target", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("consider_consider",
+		mcplib.NewTool(
+			"consider_consider",
 			mcplib.WithDescription("Assess combat difficulty of a target. Required: target."),
 			mcplib.WithString("target", mcplib.Required(), mcplib.Description("Target to consider")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -43,7 +45,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/consider", false, []mcpParamBinding{{PublicName: "target", WireName: "target", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("down_down",
+		mcplib.NewTool(
+			"down_down",
 			mcplib.WithDescription("Move down."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -51,7 +54,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/down", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("drink_drink",
+		mcplib.NewTool(
+			"drink_drink",
 			mcplib.WithDescription("Drink from a container. Required: container."),
 			mcplib.WithString("container", mcplib.Required(), mcplib.Description("Container to drink from")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -60,7 +64,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/drink", false, []mcpParamBinding{{PublicName: "container", WireName: "container", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("drop_drop",
+		mcplib.NewTool(
+			"drop_drop",
 			mcplib.WithDescription("Drop an item. Required: item."),
 			mcplib.WithString("item", mcplib.Required(), mcplib.Description("Item to drop")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -69,7 +74,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/drop", false, []mcpParamBinding{{PublicName: "item", WireName: "item", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("east_east",
+		mcplib.NewTool(
+			"east_east",
 			mcplib.WithDescription("Move east."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -77,7 +83,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/east", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("eat_eat",
+		mcplib.NewTool(
+			"eat_eat",
 			mcplib.WithDescription("Eat food. Required: item."),
 			mcplib.WithString("item", mcplib.Required(), mcplib.Description("Food to eat")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -86,7 +93,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/eat", false, []mcpParamBinding{{PublicName: "item", WireName: "item", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("flee_flee",
+		mcplib.NewTool(
+			"flee_flee",
 			mcplib.WithDescription("Attempt to flee from combat. Costs some experience points. May fail if the mob is much faster than you."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -94,7 +102,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/flee", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("get_get",
+		mcplib.NewTool(
+			"get_get",
 			mcplib.WithDescription("Pick up an item from the room or from a container. Use 'get all' to pick up everything. Required: item. Optional: container."),
 			mcplib.WithString("container", mcplib.Description("Container to get from (optional)")),
 			mcplib.WithString("item", mcplib.Required(), mcplib.Description("Item to pick up")),
@@ -104,7 +113,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/get", false, []mcpParamBinding{{PublicName: "container", WireName: "container", Location: "body"}, {PublicName: "item", WireName: "item", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("give_give",
+		mcplib.NewTool(
+			"give_give",
 			mcplib.WithDescription("Give an item to someone. Required: item, target."),
 			mcplib.WithString("item", mcplib.Required(), mcplib.Description("Item to give")),
 			mcplib.WithString("target", mcplib.Required(), mcplib.Description("Recipient (player or mob)")),
@@ -114,7 +124,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/give", false, []mcpParamBinding{{PublicName: "item", WireName: "item", Location: "body"}, {PublicName: "target", WireName: "target", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("inventory_inventory",
+		mcplib.NewTool(
+			"inventory_inventory",
 			mcplib.WithDescription("List carried items."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -122,7 +133,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/inventory", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("kill_kill",
+		mcplib.NewTool(
+			"kill_kill",
 			mcplib.WithDescription("Initiate combat with a target. Requires a weapon or bare hands. Use 'consider' first to assess difficulty. Required: target."),
 			mcplib.WithString("target", mcplib.Required(), mcplib.Description("Target to attack (e.g. 'a blind monk')")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -131,7 +143,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/kill", false, []mcpParamBinding{{PublicName: "target", WireName: "target", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("look_look",
+		mcplib.NewTool(
+			"look_look",
 			mcplib.WithDescription("Study your surroundings. Without arguments, shows the room. With a target, examines that target specifically. Optional: target."),
 			mcplib.WithString("target", mcplib.Description("Thing to look at (e.g. 'the angel', 'south', 'in the bag')")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -140,7 +153,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/look", false, []mcpParamBinding{{PublicName: "target", WireName: "target", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("north_north",
+		mcplib.NewTool(
+			"north_north",
 			mcplib.WithDescription("Move north."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -148,7 +162,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/north", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("say_say",
+		mcplib.NewTool(
+			"say_say",
 			mcplib.WithDescription("Say something to everyone in the room. All players and mobs in the room will see your message. Required: message."),
 			mcplib.WithString("message", mcplib.Required(), mcplib.Description("Message to say")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -157,7 +172,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/say", false, []mcpParamBinding{{PublicName: "message", WireName: "message", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("score_score",
+		mcplib.NewTool(
+			"score_score",
 			mcplib.WithDescription("Show character stats."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -165,7 +181,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/score", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("south_south",
+		mcplib.NewTool(
+			"south_south",
 			mcplib.WithDescription("Move south."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -173,7 +190,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/south", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("tell_tell",
+		mcplib.NewTool(
+			"tell_tell",
 			mcplib.WithDescription("Send a private message to another player. Only the target player will see the message, regardless of location. Required: message, target."),
 			mcplib.WithString("message", mcplib.Required(), mcplib.Description("Message to send")),
 			mcplib.WithString("target", mcplib.Required(), mcplib.Description("Player name")),
@@ -183,7 +201,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/tell", false, []mcpParamBinding{{PublicName: "message", WireName: "message", Location: "body"}, {PublicName: "target", WireName: "target", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("up_up",
+		mcplib.NewTool(
+			"up_up",
 			mcplib.WithDescription("Move up."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -191,7 +210,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/up", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("wear_wear",
+		mcplib.NewTool(
+			"wear_wear",
 			mcplib.WithDescription("Equip armor or clothing. Required: item."),
 			mcplib.WithString("item", mcplib.Required(), mcplib.Description("Item to wear")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -200,7 +220,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/wear", false, []mcpParamBinding{{PublicName: "item", WireName: "item", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("west_west",
+		mcplib.NewTool(
+			"west_west",
 			mcplib.WithDescription("Move west."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -208,7 +229,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/west", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("who_who",
+		mcplib.NewTool(
+			"who_who",
 			mcplib.WithDescription("Show who is online."),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -216,7 +238,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/who", false, []mcpParamBinding{}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("wield_wield",
+		mcplib.NewTool(
+			"wield_wield",
 			mcplib.WithDescription("Equip a weapon. Required: item."),
 			mcplib.WithString("item", mcplib.Required(), mcplib.Description("Weapon to wield")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -225,7 +248,8 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("POST", "/wield", false, []mcpParamBinding{{PublicName: "item", WireName: "item", Location: "body"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("yell_yell",
+		mcplib.NewTool(
+			"yell_yell",
 			mcplib.WithDescription("Shout to the entire zone. Required: message."),
 			mcplib.WithString("message", mcplib.Required(), mcplib.Description("Message to yell")),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -237,7 +261,8 @@ func RegisterTools(s *server.MCPServer) {
 	// Context tool — front-loaded domain knowledge for agents.
 	// Call this first to understand the API taxonomy, query patterns, and capabilities.
 	s.AddTool(
-		mcplib.NewTool("context",
+		mcplib.NewTool(
+			"context",
 			mcplib.WithDescription("Get API domain context: resource taxonomy, auth requirements, query tips, and unique capabilities. Call this first."),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),

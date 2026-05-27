@@ -292,7 +292,7 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 		statmod := mob.Level - 15
 		add := func() int {
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			v := rand.IntN(statmod + 1) // number(0, statmod) = rand.IntN(statmod+1)
 			if v > 7 {
 				return 7
@@ -618,4 +618,3 @@ func (m *Mob) GetLuaFunctions() int {
 func (m *Mob) GetAlignment() int {
 	return m.Alignment
 }
-

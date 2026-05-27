@@ -2,9 +2,9 @@
 package session
 
 import (
+	"encoding/json"
 	"log/slog"
 	"time"
-	"encoding/json"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
 )
@@ -122,4 +122,3 @@ func (m *Manager) SetWizlock(locked bool) {
 func (m *Manager) HasDB() bool {
 	return m.hasDB
 }
-

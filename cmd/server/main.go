@@ -123,13 +123,13 @@ func main() {
 	// Create session manager
 	manager := session.NewManager(gameWorld, database)
 	gameWorld.SetShopManager(manager.GetShopManager()) // Wire shop system to world
-	game.SetWeatherWorld(gameWorld)                     // Wire world for weather broadcasts
-	manager.SetCombatBroadcastFunc()                  // Enable combat messages to rooms
-	manager.SetDeathFunc()                            // Enable death/respawn handling
-	manager.SetFleeHooks()                            // Wire wimpy auto-flee (DP-389)
-	manager.RegisterMemoryHooks()                     // Enable narrative memory writes on kill/death
-	manager.SetDamageFunc()                           // Enable HEALTH dirty-tracking for agents
-	manager.SetDreamingDir("data/dreaming")           // Dreaming layer output (memory summaries)
+	game.SetWeatherWorld(gameWorld)                    // Wire world for weather broadcasts
+	manager.SetCombatBroadcastFunc()                   // Enable combat messages to rooms
+	manager.SetDeathFunc()                             // Enable death/respawn handling
+	manager.SetFleeHooks()                             // Wire wimpy auto-flee (DP-389)
+	manager.RegisterMemoryHooks()                      // Enable narrative memory writes on kill/death
+	manager.SetDamageFunc()                            // Enable HEALTH dirty-tracking for agents
+	manager.SetDreamingDir("data/dreaming")            // Dreaming layer output (memory summaries)
 
 	// Initialize and start Grapevine WebSocket Client in background
 	gvClient := grapevine.NewClient(gameWorld)
@@ -145,12 +145,12 @@ func main() {
 		manager.SetDecisionLog(dlw)
 		slog.Info("decision capture enabled")
 	}
-	manager.SetScriptFightFunc()                      // Enable mob fight scripts after each combat round
-	manager.SetScriptDeathFunc()                     // Enable mob death scripts on kill
-	manager.SetOnRoundEnd()                          // Decrement wait states each combat round
-	manager.SetCommandExecFunc()                     // Wire doOrder command dispatch for charmed followers
+	manager.SetScriptFightFunc()                         // Enable mob fight scripts after each combat round
+	manager.SetScriptDeathFunc()                         // Enable mob death scripts on kill
+	manager.SetOnRoundEnd()                              // Decrement wait states each combat round
+	manager.SetCommandExecFunc()                         // Wire doOrder command dispatch for charmed followers
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
-	combat.InitSkillMessages()                            // Wire multi-variant combat messages
+	combat.InitSkillMessages()                           // Wire multi-variant combat messages
 
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {
@@ -322,7 +322,8 @@ func main() {
 
 	if useTLS && (certFile == "" || keyFile == "") {
 		slog.Error("USE_TLS=true but TLS_CERT_FILE and TLS_KEY_FILE are not set")
-		os.Exit(1)
+		gameLoop.Stop()
+		os.Exit(1) //nolint:gocritic // exitAfterDefer: gameLoop.Stop() called explicitly above
 	}
 	haveCerts := certFile != "" && keyFile != ""
 

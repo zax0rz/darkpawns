@@ -101,10 +101,10 @@ func TestGenderPronoun(t *testing.T) {
 		sex  int
 		want string
 	}{
-		{0, "his"},   // male
-		{1, "her"},   // female
-		{2, "its"},   // neuter
-		{99, "his"},  // unknown defaults male
+		{0, "his"},  // male
+		{1, "her"},  // female
+		{2, "its"},  // neuter
+		{99, "his"}, // unknown defaults male
 	}
 	for _, tt := range tests {
 		t.Run(tt.want, func(t *testing.T) {

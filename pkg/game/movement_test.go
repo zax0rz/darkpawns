@@ -101,7 +101,7 @@ func TestDoSimpleMove_ClosedDoor(t *testing.T) {
 				},
 			},
 			{
-				VNum:  1002, Name: "Room B", Zone: 1,
+				VNum: 1002, Name: "Room B", Zone: 1,
 				Exits: map[string]parser.Exit{},
 			},
 		},
@@ -146,7 +146,7 @@ func TestDoSimpleMove_LockedDoor(t *testing.T) {
 				},
 			},
 			{
-				VNum:  1002, Name: "Room B", Zone: 1,
+				VNum: 1002, Name: "Room B", Zone: 1,
 				Exits: map[string]parser.Exit{},
 			},
 		},
@@ -291,7 +291,7 @@ func TestPerformMove_TunnelFull(t *testing.T) {
 				},
 			},
 			{
-				VNum:        1002, Name: "Tunnel", Zone: 1,
+				VNum: 1002, Name: "Tunnel", Zone: 1,
 				Description: "A narrow tunnel.",
 				Flags:       []string{"tunnel"},
 				Exits: map[string]parser.Exit{

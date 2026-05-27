@@ -79,4 +79,3 @@ func (w *World) getObjectExtraFlags(obj *ObjectInstance) string {
 // ---------------------------------------------------------------------------
 // doScore — shows player stats (ACMD(do_score) in C)
 // ---------------------------------------------------------------------------
-

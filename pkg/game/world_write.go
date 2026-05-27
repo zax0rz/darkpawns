@@ -103,7 +103,9 @@ func (w *World) SetMobGold(vnum int, gold int) bool {
 	if !ok {
 		return false
 	}
-	if gold < 0 { gold = 0 }
+	if gold < 0 {
+		gold = 0
+	}
 	mob.Gold = gold
 	return true
 }
@@ -116,7 +118,9 @@ func (w *World) SetMobExp(vnum int, exp int) bool {
 	if !ok {
 		return false
 	}
-	if exp < 0 { exp = 0 }
+	if exp < 0 {
+		exp = 0
+	}
 	mob.Exp = exp
 	return true
 }
@@ -129,7 +133,11 @@ func (w *World) SetMobAlignment(vnum int, alignment int) bool {
 	if !ok {
 		return false
 	}
-	if alignment < -1000 { alignment = -1000 } else if alignment > 1000 { alignment = 1000 }
+	if alignment < -1000 {
+		alignment = -1000
+	} else if alignment > 1000 {
+		alignment = 1000
+	}
 	mob.Alignment = alignment
 	return true
 }
@@ -166,7 +174,9 @@ func (w *World) SetObjWeight(vnum int, weight int) bool {
 	if !ok {
 		return false
 	}
-	if weight < 0 { weight = 0 }
+	if weight < 0 {
+		weight = 0
+	}
 	obj.Weight = weight
 	return true
 }
@@ -179,7 +189,9 @@ func (w *World) SetObjCost(vnum int, cost int) bool {
 	if !ok {
 		return false
 	}
-	if cost < 0 { cost = 0 }
+	if cost < 0 {
+		cost = 0
+	}
 	obj.Cost = cost
 	return true
 }

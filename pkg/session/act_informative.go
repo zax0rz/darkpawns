@@ -244,4 +244,3 @@ func colorLevelStr(flags uint64) string {
 	}
 	return "off"
 }
-

@@ -12,7 +12,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
-
 // AFF bit constants — from structs.h (AFF_BLIND=0, AFF_SANCTUARY=7, AFF_CURSE=9, AFF_POISON=11)
 const (
 	affCurse     = 9  // AFF_CURSE
@@ -147,7 +146,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// lspell = number(0, GET_LEVEL(ch)) + GET_LEVEL(ch)/5, capped at GET_LEVEL, min 1
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	lspell := rand.IntN(me.GetLevel() + 1)
 	lspell += me.GetLevel() / 5
 	if lspell > me.GetLevel() {
@@ -187,7 +186,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		vict := findTargetInRoom(w, me.GetRoomVNum(), victName)
 		if vict != nil {
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			if rand.IntN(3) != 0 {
 				spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), nil, nil)
 			} else {
@@ -210,23 +209,23 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// Roll: hit foe (<3) vs heal self (>=3), out of (healPerc+2)
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	if rand.IntN(healPerc+2) >= 2 {
 		// Heal self — check curses, poisons, blindness
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if mobHasAffect(me, "blind") && lspell >= 4 && rand.IntN(4) == 0 {
 			spells.Cast(me, me, spells.SpellCureBlind, me.GetLevel(), nil, nil)
 			return true
 		}
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if mobHasAffect(me, "curse") && lspell >= 6 && rand.IntN(7) == 0 {
 			spells.Cast(me, me, spells.SpellRemoveCurse, me.GetLevel(), nil, nil)
 			return true
 		}
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if mobHasAffect(me, "poison") && lspell >= 5 && rand.IntN(7) == 0 {
 			spells.Cast(me, me, spells.SpellRemovePoison, me.GetLevel(), nil, nil)
 			return true
@@ -234,7 +233,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 		// Heal self by level (1 in 4 chance)
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(4) == 0 {
 			switch {
 			case lspell <= 5:
@@ -263,7 +262,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// Call lightning if outside, lspell >= 15 (1-in-6)
 	room := w.GetRoomInWorld(me.GetRoomVNum())
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	if room != nil && room.Sector != SECT_INSIDE && lspell >= 15 && rand.IntN(6) == 0 {
 		spells.Cast(me, vict, spells.SpellCallLightning, me.GetLevel(), nil, nil)
 		return true
@@ -427,7 +426,7 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		}
 
 		// Sort into case/cabinet/chest by item type
-		container := chest // default for misc items
+		container := chest                            // default for misc items
 		if obj.IsArmor() || obj.GetTypeFlag() == 11 { // ITEM_ARMOR(9) or ITEM_WORN(11)
 			container = cas
 		} else if obj.IsWeapon() || obj.GetTypeFlag() == 12 { // ITEM_WEAPON(5) or ITEM_FIREWEAPON(12)
@@ -593,14 +592,14 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	}
 	if ch.GetFighting() == "" && ch.GetHP() != ch.GetMaxHP() {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(21) == 0 {
 			npcRegen(ch)
 			w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s's wounds glow brightly for a moment, then disappear!", ch.GetName()))
 		}
 	} else if ch.GetFighting() != "" {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(11) == 0 {
 			npcRegen(ch)
 			w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s's wounds glow brightly for a moment, then disappear!", ch.GetName()))
@@ -657,14 +656,14 @@ func specWerewolf(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	}
 	// Howl (10% chance)
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	if rand.IntN(10) == 0 {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s looks up and lets out a long, fierce howl.", mobName(me)))
 		w.SendToZone(me.GetRoomVNum(), "You hear a loud howling in the distance.")
 	}
 	// Bite attack (25% chance)
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	if rand.IntN(4) == 0 {
 		victName := me.GetFighting()
 		vict, ok := w.GetPlayer(victName)
@@ -897,9 +896,9 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	}
 	roomVNum := me.GetRoomVNum()
 
-	// Starvation death (extremely rare)
+	// Starvation death (extremely rare: 1/10001 * 1/10001 probability)
 	// #nosec G404 — game RNG, not cryptographic
-	//nolint:staticcheck // Intentional: two independent RNG rolls for extremely rare event
+	//nolint:gocritic,staticcheck // badCond/SA4000: two independent RNG rolls are intentional, not a copy-paste error
 	if rand.IntN(10001) == 0 && rand.IntN(10001) == 0 && me.GetMaxHealth() < 11 {
 		w.roomMessage(roomVNum, fmt.Sprintf("%s seems to starve to death and simply fades out of existence.", mobName(me)))
 		// C: extract_char(ch) — set HP to 0 to trigger mob death handling
@@ -915,7 +914,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		}
 		w.roomMessage(roomVNum, fmt.Sprintf("%s feeds on %s.", mobName(me), obj.GetShortDesc()))
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		if rand.IntN(3) == 0 {
 			newMaxHP := me.GetMaxHealth() + obj.GetCost()/2
 			if newMaxHP > 400 {
@@ -931,7 +930,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 			} else {
 				me.SetMaxHP(newMaxHP)
 				// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+				// #nosec G404
 				if rand.IntN(2) == 0 {
 					w.roomMessage(roomVNum, "You hear some stretching noises.")
 				} else {
@@ -949,7 +948,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	// Random idle behaviors
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	switch rand.IntN(11) {
 	case 0:
 		w.roomMessage(roomVNum, fmt.Sprintf("%s chirps gleefully.", mobName(me)))
@@ -964,7 +963,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		rooms := w.Rooms()
 		if len(rooms) > 0 {
 			// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+			// #nosec G404
 			randRoom := rooms[rand.IntN(len(rooms))].VNum
 			// Check for unwanted room flags (private/godroom/nomagic/death)
 			if w.roomHasFlag(randRoom, "private") || w.roomHasFlag(randRoom, "godroom") ||
@@ -1000,8 +999,9 @@ func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		}
 		// Search all rooms for a corpse matching this player
 		found := false
-		for _, room := range w.Rooms() {
-			items := w.GetItemsInRoom(room.VNum)
+		allRooms := w.Rooms()
+		for i := range allRooms {
+			items := w.GetItemsInRoom(allRooms[i].VNum)
 			for _, obj := range items {
 				if obj.IsCorpse && strings.Contains(strings.ToLower(obj.GetKeywords()), strings.ToLower(ch.GetName())) && obj.GetValue(3) > 0 {
 					// Move corpse from its current room to the mortician's room
@@ -1132,10 +1132,10 @@ func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string
 
 	// Map room vnum to expected talisman vnum and cylinder vnum
 	type loadEntry struct {
-		roomVNum   int
-		talVNum    int
-		cylVNum    int
-		color      string
+		roomVNum int
+		talVNum  int
+		cylVNum  int
+		color    string
 	}
 	entries := map[int]loadEntry{
 		1360: {1360, 1300, 1304, "green"},
@@ -1327,8 +1327,9 @@ func elementsRemoveCylinders(w *World) {
 	// Check rooms that can have cylinders for missing talismans
 	for cylVNum, talVNum := range cylinderToTalisman {
 		// Find all rooms containing this cylinder
-		for _, room := range w.Rooms() {
-			items := w.GetItemsInRoom(room.VNum)
+		cylRooms := w.Rooms()
+		for ri := range cylRooms {
+			items := w.GetItemsInRoom(cylRooms[ri].VNum)
 			hasCylinder := false
 			hasTalisman := false
 			for _, item := range items {
@@ -1340,9 +1341,8 @@ func elementsRemoveCylinders(w *World) {
 				}
 			}
 			if hasCylinder && !hasTalisman {
-				w.RemoveItemFromRoomByVNum(cylVNum, room.VNum)
+				w.RemoveItemFromRoomByVNum(cylVNum, cylRooms[ri].VNum)
 			}
 		}
 	}
 }
-

@@ -750,10 +750,10 @@ func TestDoDoorBash_AlreadyOpen(t *testing.T) {
 
 	dm := getDoorManager(s)
 	door := &systems.Door{
-		FromRoom: 1001,
-		ToRoom:   1002,
+		FromRoom:  1001,
+		ToRoom:    1002,
 		Direction: "north",
-		Closed:   false,
+		Closed:    false,
 	}
 	dm.AddDoor(door)
 
@@ -775,13 +775,13 @@ func TestDoDoorBash_AlreadyDestroyed(t *testing.T) {
 
 	dm := getDoorManager(s)
 	door := &systems.Door{
-		FromRoom: 1001,
-		ToRoom:   1002,
+		FromRoom:  1001,
+		ToRoom:    1002,
 		Direction: "north",
-		Closed:   true,
-		Bashable: true,
-		Hp:       0,
-		MaxHp:    100,
+		Closed:    true,
+		Bashable:  true,
+		Hp:        0,
+		MaxHp:     100,
 	}
 	dm.AddDoor(door)
 

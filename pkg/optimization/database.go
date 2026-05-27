@@ -373,7 +373,6 @@ func (cm *ConnectionMonitor) checkHealth() {
 			(SELECT sum(blks_read) FROM pg_stat_database) as blks_read,
 			(SELECT sum(blks_hit) FROM pg_stat_database) as blks_hit
 	`).Scan(&stats.NumBackends, &stats.XactCommit, &stats.XactRollback, &stats.BlksRead, &stats.BlksHit)
-
 	if err != nil {
 		cm.stats.Healthy = false
 		return

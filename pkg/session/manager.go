@@ -1,5 +1,6 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // Package session manages WebSocket connections and player sessions.
+//
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package session
 
 import (
@@ -370,7 +371,7 @@ func (m *Manager) SetOnRoundEnd() {
 // world so that doOrder can execute commands on charmed followers.
 func (m *Manager) SetCommandExecFunc() {
 	m.world.CommandExecFunc = func(ch *game.Player, command string) bool {
-		 sess, ok := m.GetSession(ch.GetName())
+		sess, ok := m.GetSession(ch.GetName())
 		if !ok || sess == nil {
 			return false
 		}
@@ -450,7 +451,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	m.ipConnMu.Unlock()
 
 	session := &Session{
-		banLevel: ipBanLevel, // BanNew/BanSelect enforced at login (DP-418)
+		banLevel:            ipBanLevel, // BanNew/BanSelect enforced at login (DP-418)
 		conn:                conn,
 		request:             r, // Store the HTTP request for IP extraction
 		manager:             m,
@@ -481,8 +482,8 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 // holding m.mu. This caused a deadlock (LRN-20260519-001): RemovePlayer
 // acquires w.mu, so it must be called AFTER releasing m.mu. Rule:
 //
-//   m.mu  →  w.mu  = FORBIDDEN (causes deadlock)
-//   w.mu  →  m.mu  = OK (never happens in practice)
+//	m.mu  →  w.mu  = FORBIDDEN (causes deadlock)
+//	w.mu  →  m.mu  = OK (never happens in practice)
 //
 // If you need both locks, always acquire w.mu first.
 func (m *Manager) Register(playerName string, s *Session) error {
@@ -597,7 +598,8 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	// 3b. M-16: Auto-return from switched body on disconnect
 	if s.isSwitched {
 		if s.switchedOriginal != nil {
-			slog.Warn("auto-return on disconnect",
+			slog.Warn(
+				"auto-return on disconnect",
 				"wizard", s.switchedOriginal.Name,
 				"from_mob", s.switchedMob != nil,
 				"from_player", s.switchedPlayer != nil,
@@ -660,7 +662,6 @@ func (m *Manager) SessionCount() int {
 	return len(m.sessions)
 }
 
-
 // BroadcastToRoom sends a message to all players in a room.
 func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer string) {
 	m.mu.RLock()
@@ -675,7 +676,8 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 			case s.send <- message:
 			default:
 				// Channel full, drop message
-				slog.Warn("dropping broadcast: channel full",
+				slog.Warn(
+					"dropping broadcast: channel full",
 					"player", name,
 					"room", roomVNum,
 				)
@@ -686,15 +688,15 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 
 // Session represents a single WebSocket connection.
 type Session struct {
-	conn          *websocket.Conn
-	request       *http.Request // Store the original HTTP request for IP extraction
-	remoteIP      string        // Store IP directly for non-HTTP (Telnet) sessions
-	manager       *Manager
-	send          chan []byte
-	player        *game.Player
-	playerName    string
-	authenticated bool
-	isGuest       bool
+	conn                 *websocket.Conn
+	request              *http.Request // Store the original HTTP request for IP extraction
+	remoteIP             string        // Store IP directly for non-HTTP (Telnet) sessions
+	manager              *Manager
+	send                 chan []byte
+	player               *game.Player
+	playerName           string
+	authenticated        bool
+	isGuest              bool
 	connCountDecremented bool // C5: prevents double-decrement of IP connection count
 	banLevel             int  // ban level from IsBanned (BanNew or BanSelect); 0 = no ban
 
@@ -873,7 +875,6 @@ func (m *Manager) ShutdownGracefully(timeout time.Duration) {
 		m.cleanupSession(s, name)
 	}
 }
-
 
 // readPump reads messages from the WebSocket.
 var (

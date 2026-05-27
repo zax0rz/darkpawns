@@ -246,7 +246,8 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
 		RETURNING id
 	`
-	return db.conn.QueryRow(query,
+	return db.conn.QueryRow(
+		query,
 		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
@@ -278,7 +279,8 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		  inventory=$24, equipment=$25, updated_at=CURRENT_TIMESTAMP
 		WHERE id=$26
 	`
-	_, err := db.conn.Exec(query,
+	_, err := db.conn.Exec(
+		query,
 		p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth,
 		p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race,

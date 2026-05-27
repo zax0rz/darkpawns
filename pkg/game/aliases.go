@@ -48,11 +48,12 @@ func aliasFilePath(playerName string) string {
 // Source: alias.c write_aliases() lines 41–71
 //
 // File format (per alias entry):
-//   <len of alias>\n
-//   <alias string>\n
-//   <len of replacement (trimmed)>\n
-//   <replacement string (trimmed)>\n
-//   <type>\n
+//
+//	<len of alias>\n
+//	<alias string>\n
+//	<len of replacement (trimmed)>\n
+//	<replacement string (trimmed)>\n
+//	<type>\n
 //
 // The C original strips the leading space from replacement before writing the
 // length, then writes the trimmed string. On read, it prepends a space back.
@@ -81,7 +82,8 @@ func WriteAliases(playerName string, aliases []Alias) error {
 		// matching the C str_dup(temp->replacement) / while(*++buf == ' ') idiom.
 		// Source: alias.c lines 62–65
 		trimmed := strings.TrimLeft(a.Replacement, " ")
-		_, _ = fmt.Fprintf(w, "%d\n%s\n%d\n%s\n%d\n",
+		_, _ = fmt.Fprintf(
+			w, "%d\n%s\n%d\n%s\n%d\n",
 			len(a.Alias), a.Alias,
 			len(trimmed), trimmed,
 			a.Type,
@@ -96,7 +98,8 @@ func WriteAliases(playerName string, aliases []Alias) error {
 //
 // File format: see WriteAliases for the on-disk layout.
 // The C original prepends a space to the replacement on read:
-//   strcpy(temp_buf," "); strcat(temp_buf,buf); — alias.c line 97–98
+//
+//	strcpy(temp_buf," "); strcat(temp_buf,buf); — alias.c line 97–98
 func ReadAliases(playerName string) ([]Alias, error) {
 	path := aliasFilePath(playerName)
 	f, err := os.Open(filepath.Clean(path))

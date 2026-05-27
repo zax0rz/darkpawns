@@ -22,12 +22,12 @@ import (
 
 // Pulse constants — matching comm.c PASSES_PER_SEC = 10.
 const (
-	PASSES_PER_SEC  = 10                 // 100ms ticker intervals per second
-	PULSE_ZONE      = 60 * PASSES_PER_SEC  // 600 → 60s
-	PULSE_MOBILE    = 4 * PASSES_PER_SEC   // 40  → 4s
-	PULSE_VIOLENCE  = 2 * PASSES_PER_SEC   // 20  → 2s
-	PULSE_TICK      = 30 * PASSES_PER_SEC  // 300 → 30s
-	SECS_PER_MUD_HOUR = 75                 // 75 real seconds per Mud hour (C default)
+	PASSES_PER_SEC    = 10                  // 100ms ticker intervals per second
+	PULSE_ZONE        = 60 * PASSES_PER_SEC // 600 → 60s
+	PULSE_MOBILE      = 4 * PASSES_PER_SEC  // 40  → 4s
+	PULSE_VIOLENCE    = 2 * PASSES_PER_SEC  // 20  → 2s
+	PULSE_TICK        = 30 * PASSES_PER_SEC // 300 → 30s
+	SECS_PER_MUD_HOUR = 75                  // 75 real seconds per Mud hour (C default)
 )
 
 // DefaultCrashSaveInterval is the number of minutes between automatic crash saves.
@@ -35,7 +35,7 @@ const DefaultCrashSaveInterval = 15
 
 // UptimeSnapshot records a server uptime reading.
 type UptimeSnapshot struct {
-	StartedAt   time.Time
+	StartedAt    time.Time
 	CurrentPulse int64
 	Elapsed      time.Duration
 }
@@ -142,7 +142,8 @@ func NewGameLoop(callbacks GameLoopCallbacks) *GameLoop {
 // dispatches heartbeat callbacks.
 func (gl *GameLoop) Start() {
 	gl.startedAt = time.Now()
-	slog.Info("game loop starting",
+	slog.Info(
+		"game loop starting",
 		"tickerInterval", gl.tickerInterval,
 		"pulsesPerSec", PASSES_PER_SEC,
 	)

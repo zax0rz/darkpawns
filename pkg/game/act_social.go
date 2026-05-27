@@ -140,7 +140,7 @@ func DoInsult(w *World, ch *Player, argument string) {
 	// Pick a random insult — send to target via Act()
 	var insultFormat string
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	switch rand.IntN(3) {
 	case 0:
 		if ch.GetSex() == 1 { // male
@@ -224,4 +224,3 @@ func (w *World) roomMessageExcludeTwo(vnum int, msg string, exclude1, exclude2 s
 		}
 	}
 }
-

@@ -23,13 +23,15 @@ func LoggingMiddleware() Middleware {
 			}
 
 			if err != nil {
-				slog.Debug("command failed",
+				slog.Debug(
+					"command failed",
 					"cmd", cmdStr,
 					"duration", duration,
 					"error", err,
 				)
 			} else {
-				slog.Debug("command executed",
+				slog.Debug(
+					"command executed",
 					"cmd", cmdStr,
 					"duration", duration,
 				)

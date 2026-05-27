@@ -69,7 +69,7 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	share := amount / num
-	ch.SetGold(ch.GetGold() - share * (num - 1))
+	ch.SetGold(ch.GetGold() - share*(num-1))
 	ch.mu.Unlock()
 
 	for _, p := range players {
@@ -103,7 +103,7 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 
 	parts := strings.SplitN(arg, " ", 2)
 	itemArg := strings.TrimSpace(parts[0])
-	_ = itemArg  // suppress unused
+	_ = itemArg // suppress unused
 	if len(parts) > 1 {
 		_ = strings.TrimSpace(parts[1]) // subArg placeholder
 	}

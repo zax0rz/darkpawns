@@ -124,8 +124,8 @@ func TestDeserializeWorldDoorStates(t *testing.T) {
 
 	// Simulate saved state with north door locked
 	saved := saveWorldData{
-		NextMobID:  1,
-		NextObjID:  1,
+		NextMobID: 1,
+		NextObjID: 1,
 		DoorStates: map[int]map[string]int{
 			100: {"north": 2},
 		},

@@ -14,8 +14,8 @@ type ExtractedEvent struct {
 	AgentID   string    `json:"agent_id"`
 
 	// Entity references
-	TargetEntity  string `json:"target_entity,omitempty"`
-	TargetRoom    int    `json:"target_room,omitempty"`
+	TargetEntity   string `json:"target_entity,omitempty"`
+	TargetRoom     int    `json:"target_room,omitempty"`
 	TargetRoomName string `json:"target_room_name,omitempty"`
 	ItemName       string `json:"item_name,omitempty"`
 

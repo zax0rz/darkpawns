@@ -260,7 +260,7 @@ func TestLook_DarkRoom(t *testing.T) {
 func TestLook_DarkRoomWithLight(t *testing.T) {
 	m := makeLookTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1002, true) // dark room
-	s.player.SetLevel(31) // immortal → can see in dark
+	s.player.SetLevel(31)                           // immortal → can see in dark
 
 	if err := cmdLook(s, nil); err != nil {
 		t.Fatalf("cmdLook returned error: %v", err)

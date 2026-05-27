@@ -155,6 +155,7 @@ const MaxBagRow = 5
 //   - ITEM_NORENT flag set
 //   - load < 0 (virtual/negative vnum)
 //   - type == ITEM_KEY
+//
 // ==========================================================================
 func IsUnrentable(obj *ObjectInstance) bool {
 	if obj == nil || obj.Prototype == nil {
@@ -694,7 +695,7 @@ func RentDeadline(ch *Player, recep *MobInstance, cost int) {
 		return
 	}
 	// In Go port, this is a social message — handled by the caller session/command layer.
-	days := (ch.Gold) / cost // C version uses GET_GOLD(ch) + GET_BANK_GOLD(ch)
+	days := ch.Gold / cost // C version uses GET_GOLD(ch) + GET_BANK_GOLD(ch)
 	if days > 1 {
 		ch.SendMessage(fmt.Sprintf("You can rent for %d days with the gold you have.\n", days))
 	} else if days == 1 {

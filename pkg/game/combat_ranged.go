@@ -204,7 +204,7 @@ func (w *World) doShoot(ch *Player, me *MobInstance, cmd string, arg string) boo
 					}
 				}
 			}
-			} else {
+		} else {
 			// Miss
 			target.SendMessage(fmt.Sprintf("Some kind of %s streaks in from %s and just misses you!\r\n", projectileName, from))
 			w.roomMessage(exit.ToRoom, fmt.Sprintf("Some kind of %s streaks in from %s and narrowly misses %s!", projectileName, from, target.GetName()))

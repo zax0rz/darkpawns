@@ -5,12 +5,13 @@ package cli
 
 import (
 	"bufio"
-	"dp-goat-pp-cli/internal/client"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+
+	"dp-goat-pp-cli/internal/client"
 
 	"github.com/spf13/cobra"
 )

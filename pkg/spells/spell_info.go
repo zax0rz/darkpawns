@@ -9,7 +9,7 @@ const (
 	SavePetrify   SavingThrowType = 2
 	SaveBreath    SavingThrowType = 3
 	SaveSpell     SavingThrowType = 4
-	SaveCount                    = 5
+	SaveCount                     = 5
 )
 
 // MagRoutine constants — bitmask values matching C MAG_* defines
@@ -34,17 +34,17 @@ const (
 type TargetFlags int
 
 const (
-	TarIgnore     TargetFlags = 1 << 0
-	TarCharRoom   TargetFlags = 1 << 1
-	TarCharWorld  TargetFlags = 1 << 2
-	TarFightSelf  TargetFlags = 1 << 3
-	TarFightVict  TargetFlags = 1 << 4
-	TarSelfOnly   TargetFlags = 1 << 5
-	TarNotSelf    TargetFlags = 1 << 6
-	TarObjInv     TargetFlags = 1 << 7
-	TarObjRoom    TargetFlags = 1 << 8
-	TarObjWorld   TargetFlags = 1 << 9
-	TarObjEquip   TargetFlags = 1 << 10
+	TarIgnore    TargetFlags = 1 << 0
+	TarCharRoom  TargetFlags = 1 << 1
+	TarCharWorld TargetFlags = 1 << 2
+	TarFightSelf TargetFlags = 1 << 3
+	TarFightVict TargetFlags = 1 << 4
+	TarSelfOnly  TargetFlags = 1 << 5
+	TarNotSelf   TargetFlags = 1 << 6
+	TarObjInv    TargetFlags = 1 << 7
+	TarObjRoom   TargetFlags = 1 << 8
+	TarObjWorld  TargetFlags = 1 << 9
+	TarObjEquip  TargetFlags = 1 << 10
 )
 
 // CastType constants

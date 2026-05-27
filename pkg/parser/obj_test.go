@@ -9,7 +9,7 @@ import (
 func writeObjFile(t *testing.T, dir, name, content string) string {
 	t.Helper()
 	p := filepath.Join(dir, name)
-	if err := os.WriteFile(p, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
 	return p
@@ -620,7 +620,7 @@ $
 `
 	_ = writeObjFile(t, tmpDir, "a.obj", c1)
 	_ = writeObjFile(t, tmpDir, "readme.txt", "not an obj file")
-	_ = os.Mkdir(filepath.Join(tmpDir, "subdir"), 0755)
+	_ = os.Mkdir(filepath.Join(tmpDir, "subdir"), 0o755)
 
 	objs, err := ParseAllObjFiles(tmpDir)
 	if err != nil {

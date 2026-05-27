@@ -1,8 +1,9 @@
-//nolint:unused // Complete C port — command handlers not yet wired to registry.
 // Package game: act_movement.go — movement commands, door handling, sleep/rest/stand/sit/wake, follow.
 //
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // Ported from src/act.movement.c (CircleMUD / Dark Pawns MUD).
+//
+//nolint:unused // Complete C port — command handlers not yet wired to registry.
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -983,4 +984,3 @@ func verbIs(s string) string {
 	}
 	return "is"
 }
-

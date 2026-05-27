@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -204,7 +205,7 @@ func cmdLast(s *Session, args []string) error {
 type wizutilSubcmd int
 
 const (
-	wizutilReroll  wizutilSubcmd = iota
+	wizutilReroll wizutilSubcmd = iota
 	wizutilPardon
 	wizutilNotitle
 	wizutilSquelch

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"strings"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -29,7 +30,7 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 
 	// Create food item
 	food := &ObjectInstance{
-		VNum:    corpse.VNum,
+		VNum:     corpse.VNum,
 		RoomVNum: ch.GetRoomVNum(),
 	}
 	food.Runtime.ShortDescOverride = "some carved meat from " + corpse.GetShortDesc()
@@ -63,7 +64,7 @@ func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
 
 	// Skill check: D100 vs skill
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	roll := rand.IntN(100) + 1
 	if roll > ch.GetSkill(SkillCutthroat) {
 		return SkillResult{
@@ -77,9 +78,9 @@ func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
 	target.TakeDamage(damage)
 
 	return SkillResult{
-		Success:     true,
-		Damage:      damage,
-		MessageToCh: "You slash their throat!",
+		Success:       true,
+		Damage:        damage,
+		MessageToCh:   "You slash their throat!",
 		MessageToVict: "Your throat is slashed!",
 		MessageToRoom: fmt.Sprintf("%s slashes %s's throat!", ch.Name, target.GetName()),
 	}
@@ -93,13 +94,13 @@ func DoStrike(ch *Player, target combat.Combatant) SkillResult {
 
 	// Simple damage based on level
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	damage := rand.IntN(ch.GetLevel()) + 1
 
 	return SkillResult{
-		Success:     true,
-		Damage:      damage,
-		MessageToCh: fmt.Sprintf("You strike %s!", target.GetName()),
+		Success:       true,
+		Damage:        damage,
+		MessageToCh:   fmt.Sprintf("You strike %s!", target.GetName()),
 		MessageToVict: fmt.Sprintf("%s strikes you!", ch.Name),
 		MessageToRoom: fmt.Sprintf("%s strikes %s!", ch.Name, target.GetName()),
 	}
@@ -187,7 +188,7 @@ func DoSharpen(ch *Player, objName string) SkillResult {
 
 	// Simple sharpen: success based on skill level
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	roll := rand.IntN(100) + 1
 	if roll <= ch.GetSkill(SkillSharpen) {
 		return SkillResult{

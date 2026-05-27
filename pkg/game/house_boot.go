@@ -1,9 +1,9 @@
 package game
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-	"encoding/json"
 )
 
 func (w *World) HouseBoot() {
@@ -32,7 +32,8 @@ func (w *World) HouseBoot() {
 
 	// Validate and filter records
 	var valid []HouseControl
-	for _, h := range houseControl {
+	for i := range houseControl {
+		h := &houseControl[i]
 		// Owner must exist
 		if getPlayerNameByID != nil && getPlayerNameByID(h.Owner) == "" {
 			continue
@@ -65,7 +66,7 @@ func (w *World) HouseBoot() {
 			continue
 		}
 
-		valid = append(valid, h)
+		valid = append(valid, *h)
 
 		// Set room flags
 		setRoomFlag(realHouse, RoomFlagHouse)

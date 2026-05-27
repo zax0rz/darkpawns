@@ -13,9 +13,9 @@ import (
 
 func newInitCmd(flags *rootFlags) *cobra.Command {
 	var (
-		newChar   bool
-		password  string
-		logLevel  string
+		newChar  bool
+		password string
+		logLevel string
 	)
 
 	cmd := &cobra.Command{

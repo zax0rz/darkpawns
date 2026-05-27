@@ -2,11 +2,11 @@ package game
 
 // Social represents an emote/social command
 type Social struct {
-	Name               string
-	MinLevel           int
-	HideFlag           int
-	MinVictimPosition  int // minimum position target must be in; 0 = no check
-	Messages           []string
+	Name              string
+	MinLevel          int
+	HideFlag          int
+	MinVictimPosition int // minimum position target must be in; 0 = no check
+	Messages          []string
 }
 
 // Socials contains all the social emotes from the original Dark Pawns

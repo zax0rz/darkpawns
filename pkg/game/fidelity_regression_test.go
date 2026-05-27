@@ -178,7 +178,7 @@ func TestFidelityDigCosmeticStub(t *testing.T) {
 	}
 
 	// Dig
-	
+
 	// Keep trying until we spawn the item (since dig has a 20% chance of coins instead)
 	successCount := 0
 	for i := 0; i < 20; i++ {

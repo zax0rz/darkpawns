@@ -18,18 +18,18 @@ package game
 // PCClassTypes is the full display name for each PC class.
 // Source: class.c pc_class_types[]
 var PCClassTypes = []string{
-	"Mage", // ClassMageUser = 0
-	"Cleric",     // ClassCleric   = 1
-	"Thief",      // ClassThief    = 2
-	"Warrior",    // ClassWarrior  = 3
-	"Magus",      // ClassMagus    = 4
-	"Avatar",     // ClassAvatar   = 5
-	"Assassin",   // ClassAssassin = 6
-	"Paladin",    // ClassPaladin  = 7
-	"Ninja",      // ClassNinja    = 8
-	"Psionic",    // ClassPsionic  = 9
-	"Ranger",     // ClassRanger   = 10
-	"Mystic",     // ClassMystic   = 11
+	"Mage",     // ClassMageUser = 0
+	"Cleric",   // ClassCleric   = 1
+	"Thief",    // ClassThief    = 2
+	"Warrior",  // ClassWarrior  = 3
+	"Magus",    // ClassMagus    = 4
+	"Avatar",   // ClassAvatar   = 5
+	"Assassin", // ClassAssassin = 6
+	"Paladin",  // ClassPaladin  = 7
+	"Ninja",    // ClassNinja    = 8
+	"Psionic",  // ClassPsionic  = 9
+	"Ranger",   // ClassRanger   = 10
+	"Mystic",   // ClassMystic   = 11
 }
 
 // ClassMenu is the default class selection menu shown during character creation.
@@ -76,9 +76,9 @@ const (
 // Source: class.c prac_params[4][NUM_CLASSES]
 var PracParams = [4][12]int{
 	// MAG CLE  THE  WAR  MAGU AVA  ASS  PAL  NIN  PSI  RAN  MYS
-	{95, 95, 85, 80, 95, 95, 85, 80, 85, 95, 80, 95},  // learned level
+	{95, 95, 85, 80, 95, 95, 85, 80, 85, 95, 80, 95},       // learned level
 	{100, 100, 25, 25, 100, 100, 25, 25, 25, 100, 25, 100}, // max per prac
-	{25, 25, 0, 0, 25, 25, 0, 0, 0, 25, 0, 25},       // min per prac
+	{25, 25, 0, 0, 25, 25, 0, 0, 0, 25, 0, 25},             // min per prac
 	{PracTypeSpell, PracTypeSpell, PracTypeSkill, PracTypeSkill, PracTypeSpell, PracTypeBoth, PracTypeSkill, PracTypeBoth, PracTypeBoth, PracTypeBoth, PracTypeSkill, PracTypeBoth}, // prac type
 }
 

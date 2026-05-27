@@ -35,14 +35,14 @@ func TestBackstabMult(t *testing.T) {
 		level int
 		want  float64
 	}{
-		{0, 1.0},    // level 0: guard → 1.0
-		{1, 1.2},    // 1*0.2+1.0
-		{5, 2.0},    // 5*0.2+1.0
-		{10, 3.0},   // 10*0.2+1.0
-		{25, 6.0},   // 25*0.2+1.0
-		{30, 7.0},   // 30*0.2+1.0
-		{31, 20.0},  // LVL_IMMORT=31 → cap at 20.0
-		{50, 20.0},  // above immort → 20.0
+		{0, 1.0},   // level 0: guard → 1.0
+		{1, 1.2},   // 1*0.2+1.0
+		{5, 2.0},   // 5*0.2+1.0
+		{10, 3.0},  // 10*0.2+1.0
+		{25, 6.0},  // 25*0.2+1.0
+		{30, 7.0},  // 30*0.2+1.0
+		{31, 20.0}, // LVL_IMMORT=31 → cap at 20.0
+		{50, 20.0}, // above immort → 20.0
 	}
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("level_%d", tt.level), func(t *testing.T) {

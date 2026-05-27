@@ -33,7 +33,7 @@ func NewAuditLogger(filename string) (*AuditLogger, error) {
 	if strings.Contains(clean, "..") {
 		return nil, fmt.Errorf("invalid audit log path: %s", filename)
 	}
-	file, err := os.OpenFile(clean, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	file, err := os.OpenFile(clean, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,8 @@ func (a *AuditLogger) Log(event AuditEvent) {
 
 	// Also log to console for important events
 	if !event.Success || event.EventType == "security" {
-		slog.Warn("audit event",
+		slog.Warn(
+			"audit event",
 			"event_type", event.EventType,
 			"action", event.Action,
 			"user", event.User,

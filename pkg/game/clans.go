@@ -1,4 +1,5 @@
 // Package game — clan system, ported from src/clan.c
+//
 //lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
@@ -148,15 +149,15 @@ func (m *ClanManager) SaveClans(filePath string) error {
 		}
 	}
 	dir := filepath.Dir(filePath)
-// #nosec G301
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	// #nosec G301
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(m.Clans, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filePath, data, 0644)
+	return os.WriteFile(filePath, data, 0o644)
 }
 
 func InitClans(filePath string) *ClanManager {
@@ -423,4 +424,3 @@ func (w *World) resolveClanForImmortal(ch *Player, argument string) (int, *Clan,
 // ---------------------------------------------------------------------------
 // Sub-command: do_clan_rename
 // ---------------------------------------------------------------------------
-

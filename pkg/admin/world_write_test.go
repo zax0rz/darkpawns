@@ -24,7 +24,7 @@ func newTestWorldForWrite(t *testing.T) *game.World {
 				VNum: 1002, Name: "Second Room", Zone: 1,
 				Flags:  []string{"0", "0", "0", "0"},
 				Sector: 1,
-				Exits:  map[string]parser.Exit{
+				Exits: map[string]parser.Exit{
 					"north": {Direction: "north", ToRoom: 1001},
 				},
 			},
@@ -38,8 +38,8 @@ func newTestWorldForWrite(t *testing.T) *game.World {
 				VNum: 3001, Keywords: "sword", ShortDesc: "a steel sword",
 				LongDesc: "A steel sword lies here.", TypeFlag: 5,
 				Weight: 5, Cost: 100,
-				WearFlags: [4]int{1 << 13, 0, 0, 0},
-				Values:    [4]int{0, 3, 5, 0},
+				WearFlags:  [4]int{1 << 13, 0, 0, 0},
+				Values:     [4]int{0, 3, 5, 0},
 				ExtraFlags: [4]int{0, 0, 0, 0},
 			},
 			{

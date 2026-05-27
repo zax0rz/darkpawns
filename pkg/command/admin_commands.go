@@ -703,7 +703,7 @@ func (ac *AdminCommands) isAdmin(s common.CommandSession) bool {
 	}
 	// Bootstrap: allow known admin names that haven't levelled up yet.
 	admins := map[string]bool{
-		"admin": true,
+		"admin":  true,
 		"zax0rz": true,
 	}
 	return admins[strings.ToLower(s.GetPlayerName())]
@@ -734,7 +734,8 @@ func (ac *AdminCommands) notifyPlayer(playerName, message string) {
 
 // logAdminAction logs an admin action via slog.
 func (ac *AdminCommands) logAdminAction(admin string, action moderation.AdminAction, target, reason string, duration *time.Duration) {
-	slog.Info("admin action",
+	slog.Info(
+		"admin action",
 		"admin", admin,
 		"action", action,
 		"target", target,

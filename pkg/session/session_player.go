@@ -4,10 +4,10 @@ package session
 import (
 	"time"
 
-	"golang.org/x/time/rate"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"golang.org/x/time/rate"
 )
 
 func (s *Session) GetPlayer() *game.Player {
@@ -157,4 +157,3 @@ func (s *Session) SetRemoteIP(ip string) {
 func (s *Session) SetBanLevel(level int) {
 	s.banLevel = level
 }
-

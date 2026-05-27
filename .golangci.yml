@@ -1,0 +1,68 @@
+version: "2"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gocritic
+
+  settings:
+    errcheck:
+      check-type-assertions: false
+      check-blank: false
+      exclude-functions:
+        - (*os.File).Close
+        - (io.Closer).Close
+        - (net.Conn).Close
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+      disabled-tags:
+        - style
+        - experimental
+        - opinionated
+      disabled-checks:
+        - hugeParam
+
+  exclusions:
+    rules:
+      # Test files get more lenient error handling
+      - path: _test\.go
+        linters:
+          - errcheck
+      # Third-party / generated directories
+      - path: admin-ui/
+        linters:
+          - errcheck
+          - govet
+          - unused
+      - path: node_modules/
+        linters:
+          - errcheck
+          - govet
+          - unused
+      # Existing callers of deprecated types/functions: migration is a separate refactor task
+      - text: "GetRoomInWorld is deprecated"
+        linters:
+          - staticcheck
+      - text: "CommandSession is deprecated"
+        linters:
+          - staticcheck
+      - text: "MasterAffect is deprecated"
+        linters:
+          - staticcheck
+      - text: "AffectFromChar is deprecated"
+        linters:
+          - staticcheck
+    paths:
+      - admin-ui
+      - node_modules
+      - website
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

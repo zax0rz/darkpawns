@@ -9,7 +9,7 @@ import (
 func writeZonFile(t *testing.T, dir, name, content string) string {
 	t.Helper()
 	p := filepath.Join(dir, name)
-	if err := os.WriteFile(p, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
 	return p
@@ -406,7 +406,7 @@ Ignore Zone~
 S
 $`)
 	_ = writeZonFile(t, tmpDir, "readme.txt", "not a zone file")
-	_ = os.Mkdir(filepath.Join(tmpDir, "subdir"), 0755)
+	_ = os.Mkdir(filepath.Join(tmpDir, "subdir"), 0o755)
 
 	zones, err := ParseAllZonFiles(tmpDir)
 	if err != nil {

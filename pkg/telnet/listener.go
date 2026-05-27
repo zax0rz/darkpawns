@@ -375,28 +375,52 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 					var buf []byte
 
 					vitals := make(map[string]interface{})
-					if hp, ok := ed["HEALTH"]; ok { vitals["hp"] = hp }
-					if maxhp, ok := ed["MAX_HEALTH"]; ok { vitals["maxhp"] = maxhp }
-					if mp, ok := ed["MANA"]; ok { vitals["mp"] = mp }
-					if maxmp, ok := ed["MAX_MANA"]; ok { vitals["maxmp"] = maxmp }
-					if mv, ok := ed["MOVE"]; ok { vitals["mv"] = mv }
-					if maxmv, ok := ed["MAX_MOVE"]; ok { vitals["maxmv"] = maxmv }
+					if hp, ok := ed["HEALTH"]; ok {
+						vitals["hp"] = hp
+					}
+					if maxhp, ok := ed["MAX_HEALTH"]; ok {
+						vitals["maxhp"] = maxhp
+					}
+					if mp, ok := ed["MANA"]; ok {
+						vitals["mp"] = mp
+					}
+					if maxmp, ok := ed["MAX_MANA"]; ok {
+						vitals["maxmp"] = maxmp
+					}
+					if mv, ok := ed["MOVE"]; ok {
+						vitals["mv"] = mv
+					}
+					if maxmv, ok := ed["MAX_MOVE"]; ok {
+						vitals["maxmv"] = maxmv
+					}
 					if len(vitals) > 0 {
 						buf = append(buf, buildGMCPFrame("Char.Vitals", vitals)...)
 					}
 
 					status := make(map[string]interface{})
-					if lvl, ok := ed["LEVEL"]; ok { status["level"] = lvl }
-					if gold, ok := ed["GOLD"]; ok { status["gold"] = gold }
-					if exp, ok := ed["EXP"]; ok { status["exp"] = exp }
+					if lvl, ok := ed["LEVEL"]; ok {
+						status["level"] = lvl
+					}
+					if gold, ok := ed["GOLD"]; ok {
+						status["gold"] = gold
+					}
+					if exp, ok := ed["EXP"]; ok {
+						status["exp"] = exp
+					}
 					if len(status) > 0 {
 						buf = append(buf, buildGMCPFrame("Char.Status", status)...)
 					}
 
 					room := make(map[string]interface{})
-					if num, ok := ed["ROOM_VNUM"]; ok { room["num"] = num }
-					if name, ok := ed["ROOM_NAME"]; ok { room["name"] = name }
-					if exits, ok := ed["ROOM_EXITS"]; ok { room["exits"] = exits }
+					if num, ok := ed["ROOM_VNUM"]; ok {
+						room["num"] = num
+					}
+					if name, ok := ed["ROOM_NAME"]; ok {
+						room["name"] = name
+					}
+					if exits, ok := ed["ROOM_EXITS"]; ok {
+						room["exits"] = exits
+					}
 					if len(room) > 0 {
 						buf = append(buf, buildGMCPFrame("Room.Info", room)...)
 					}
@@ -485,15 +509,16 @@ func (tc *telnetConn) readLine() string {
 					return ""
 				}
 				// Respond: DO for ECHO/SGA/GMCP, DONT for everything else
-				if opt == OPT_ECHO || opt == OPT_SGA {
+				switch opt {
+				case OPT_ECHO, OPT_SGA:
 					tc.write([]byte{IAC, DO, opt})
-				} else if opt == OPT_GMCP {
+				case OPT_GMCP:
 					tc.write([]byte{IAC, DO, OPT_GMCP})
 					tc.hasGMCP = true
 					if tc.sess != nil {
 						tc.sess.SetWantsStructuredData(true)
 					}
-				} else {
+				default:
 					tc.write([]byte{IAC, DONT, opt})
 				}
 			case WONT:
@@ -504,18 +529,19 @@ func (tc *telnetConn) readLine() string {
 				if err != nil {
 					return ""
 				}
-				if opt == OPT_ECHO || opt == OPT_SGA {
+				switch opt {
+				case OPT_ECHO, OPT_SGA:
 					tc.write([]byte{IAC, WILL, opt})
-				} else if opt == OPT_MSSP {
+				case OPT_MSSP:
 					tc.write([]byte{IAC, WILL, OPT_MSSP})
 					tc.sendMSSP()
-				} else if opt == OPT_GMCP {
+				case OPT_GMCP:
 					tc.write([]byte{IAC, WILL, OPT_GMCP})
 					tc.hasGMCP = true
 					if tc.sess != nil {
 						tc.sess.SetWantsStructuredData(true)
 					}
-				} else {
+				default:
 					tc.write([]byte{IAC, WONT, opt})
 				}
 			case DONT:
@@ -648,13 +674,6 @@ func (tc *telnetConn) sendMSSP() {
 	payload = append(payload, IAC, SE)
 
 	_, _ = tc.Write(payload)
-}
-
-func (tc *telnetConn) sendGMCP(pkg string, data interface{}) {
-	frame := buildGMCPFrame(pkg, data)
-	if frame != nil {
-		tc.write(frame)
-	}
 }
 
 // buildGMCPFrame builds the raw bytes for a single GMCP package without sending.

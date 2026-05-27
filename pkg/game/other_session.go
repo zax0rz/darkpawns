@@ -3,7 +3,6 @@ package game
 
 import (
 	"fmt"
-
 	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"

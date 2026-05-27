@@ -2,8 +2,9 @@
 //
 // Communication commands: say, race-say, group-say, tell, reply, shout,
 // whisper, ask, write, page, gossip, chat, auction, gratz, newbie, think,
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 // clan-tell, and language translation functions.
+//
+//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -56,7 +57,7 @@ const (
 // These go into p.Flags (uint64).
 // ---------------------------------------------------------------------------
 const (
-	plrNoShout   uint64 = 1 << 0
+	plrNoShout    uint64 = 1 << 0
 	PLR_INVISIBLE uint64 = 1 << 1
 	_                    = 1 << 2
 	_                    = 1 << 3
@@ -92,11 +93,11 @@ const (
 // Misc constants
 // ---------------------------------------------------------------------------
 const (
-	noBody           = -1
-	levelCanShout    = 2 // C: level_can_shout = 2 (src/config.c)
-	levelCanGossip   = 5
-	hollerMoveCost   = 10
-	maxNoteLength    = 1000
+	noBody         = -1
+	levelCanShout  = 2 // C: level_can_shout = 2 (src/config.c)
+	levelCanGossip = 5
+	hollerMoveCost = 10
+	maxNoteLength  = 1000
 )
 
 // ---------------------------------------------------------------------------
@@ -156,103 +157,256 @@ func applySyllableSubstitution(input string, syls []syllable) string {
 // ---------------------------------------------------------------------------
 
 var rakSyllables = []syllable{
-	{" ", " "}, {"are", "nec"}, {"and", "arrl"}, {"be", "fess"},
-	{"how", "ciss"}, {"what", "rriit"}, {"is", "garr"}, {"ou", "owwl"},
-	{"where", "kaal"}, {"me", "phis"}, {"dwarf", "dwarf"},
-	{"elf", "elf"}, {"fucking", "fucking"},
-	{"serapis", "Serapis"}, {"Serapis", "Serapis"},
-	{"kill", "llirr"}, {"kender", "kenderkin"}, {"centaur", "centaur"},
-	{"rakshasa", "rakshasa"}, {"Rakshasa", "Rakshasa"},
-	{"human", "human"}, {"elven", "elven"}, {"dwarven", "dwarven"},
-	{"god", "kashka"}, {"God", "Kashka"}, {"who", "rukkaturl"},
-	{"ck", "k"}, {"cks", "th"}, {"the ", "(growl) "},
+	{" ", " "},
+	{"are", "nec"},
+	{"and", "arrl"},
+	{"be", "fess"},
+	{"how", "ciss"},
+	{"what", "rriit"},
+	{"is", "garr"},
+	{"ou", "owwl"},
+	{"where", "kaal"},
+	{"me", "phis"},
+	{"dwarf", "dwarf"},
+	{"elf", "elf"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "llirr"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elven"},
+	{"dwarven", "dwarven"},
+	{"god", "kashka"},
+	{"God", "Kashka"},
+	{"who", "rukkaturl"},
+	{"ck", "k"},
+	{"cks", "th"},
+	{"the ", "(growl) "},
 }
 
 var dwarfSyllables = []syllable{
-	{" ", " "}, {"are", "icht"}, {"and", "ent"}, {"be", "ki"},
-	{"how", "var"}, {"what", "war"}, {"is", "ict"}, {"ou", "agen"},
-	{"where", "hung"}, {"me", "mein"}, {"dwarf", "dwarf"}, {"Dwarf", "Dwarf"},
-	{"elf", "eli"}, {"Elf", "Eli"}, {"fucking", "fucking"},
-	{"serapis", "Serapis"}, {"Serapis", "Serapis"},
-	{"kill", "k'ne"}, {"kender", "kenderkin"}, {"centaur", "centaur"},
-	{"rakshasa", "rakshasa"}, {"Rakshasa", "Rakshasa"},
-	{"human", "human"}, {"elven", "eli"}, {"Elven", "Eli"},
-	{"dwarven", "dwarven"}, {"god", "g'du"}, {"God", "G'du"},
-	{"who", "b'ir"}, {"ck", "k"}, {"cks", "ks"},
+	{" ", " "},
+	{"are", "icht"},
+	{"and", "ent"},
+	{"be", "ki"},
+	{"how", "var"},
+	{"what", "war"},
+	{"is", "ict"},
+	{"ou", "agen"},
+	{"where", "hung"},
+	{"me", "mein"},
+	{"dwarf", "dwarf"},
+	{"Dwarf", "Dwarf"},
+	{"elf", "eli"},
+	{"Elf", "Eli"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "k'ne"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "eli"},
+	{"Elven", "Eli"},
+	{"dwarven", "dwarven"},
+	{"god", "g'du"},
+	{"God", "G'du"},
+	{"who", "b'ir"},
+	{"ck", "k"},
+	{"cks", "ks"},
 	{"the ", "t'el "},
 }
 
 var elfSyllables = []syllable{
-	{" ", " "}, {"are", "est"}, {"and", "et"}, {"be", "deleste"},
-	{"how", "quad"}, {"what", "quod"}, {"is", "est"}, {"ou", "estra"},
-	{"where", "este"}, {"me", "ego"}, {"dwarf", "dwarf"},
-	{"elf", "elvinisti"}, {"Elf", "Elvinisti"}, {"fucking", "fucking"},
-	{"serapis", "Serapis"}, {"Serapis", "Serapis"},
-	{"kill", "beligant"}, {"kender", "kenderkin"}, {"centaur", "centaur"},
-	{"rakshasa", "rakshasa"}, {"Rakshasa", "Rakshasa"},
-	{"human", "human"}, {"elven", "elvenesti"}, {"Elven", "Elvenesti"},
-	{"dwarven", "dwarven"}, {"god", "deus"}, {"God", "Deorum"},
-	{"who", "quelsteno"}, {"ck", "llin"}, {"cks", "llins"},
+	{" ", " "},
+	{"are", "est"},
+	{"and", "et"},
+	{"be", "deleste"},
+	{"how", "quad"},
+	{"what", "quod"},
+	{"is", "est"},
+	{"ou", "estra"},
+	{"where", "este"},
+	{"me", "ego"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "beligant"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "deus"},
+	{"God", "Deorum"},
+	{"who", "quelsteno"},
+	{"ck", "llin"},
+	{"cks", "llins"},
 	{"the ", "a "},
 }
 
 var gnollSyllables = []syllable{
-	{" ", " "}, {"are", "is"}, {"and", "n"}, {"be", "be"},
-	{"how", "ow"}, {"what", "wot"}, {"is", "be"}, {"ou", "a"},
-	{"where", "wherr"}, {"me", "me"}, {"dwarf", "dwarf"},
-	{"elf", "elf"}, {"fucking", "fucking"},
-	{"serapis", "Serapis"}, {"Serapis", "Serapis"},
-	{"kill", "k'll"}, {"kender", "kender"}, {"centaur", "centaur"},
-	{"rakshasa", "rakshasa"}, {"Rakshasa", "Rakshasa"},
-	{"human", "human"}, {"elven", "elven"}, {"dwarven", "dwarven"},
-	{"god", "gud"}, {"God", "Gud"}, {"who", "oo"},
-	{"ck", "k"}, {"cks", "ks"}, {"the ", "da "},
-	{"a", "a"}, {"an", "an"}, {"you", "yous"}, {"they", "dem"},
-	{"them", "dem"}, {"i", "me"}, {"my", "me"}, {"your", "yer"},
-	{"have", "as"}, {"for", "fer"}, {"of", "o"}, {"to", "ta"},
-	{"will", "wo"}, {"can", "ken"}, {"orc", "orc"}, {"good", "gud"},
+	{" ", " "},
+	{"are", "is"},
+	{"and", "n"},
+	{"be", "be"},
+	{"how", "ow"},
+	{"what", "wot"},
+	{"is", "be"},
+	{"ou", "a"},
+	{"where", "wherr"},
+	{"me", "me"},
+	{"dwarf", "dwarf"},
+	{"elf", "elf"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "k'll"},
+	{"kender", "kender"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elven"},
+	{"dwarven", "dwarven"},
+	{"god", "gud"},
+	{"God", "Gud"},
+	{"who", "oo"},
+	{"ck", "k"},
+	{"cks", "ks"},
+	{"the ", "da "},
+	{"a", "a"},
+	{"an", "an"},
+	{"you", "yous"},
+	{"they", "dem"},
+	{"them", "dem"},
+	{"i", "me"},
+	{"my", "me"},
+	{"your", "yer"},
+	{"have", "as"},
+	{"for", "fer"},
+	{"of", "o"},
+	{"to", "ta"},
+	{"will", "wo"},
+	{"can", "ken"},
+	{"orc", "orc"},
+	{"good", "gud"},
 }
 
 var draconianSyllables = []syllable{
-	{" ", " "}, {"are", "or"}, {"and", "sz"}, {"be", "be"},
-	{"how", "ha"}, {"what", "wat"}, {"is", "xith"}, {"ou", "x"},
-	{"where", "wher"}, {"me", "xi"}, {"dwarf", "zex"},
-	{"elf", "zel"}, {"fucking", "fucking"},
-	{"serapis", "Xith'xis"}, {"Serapis", "Xith'xis"},
-	{"kill", "k'xith"}, {"kender", "kix'zel"}, {"centaur", "zen'tor"},
-	{"rakshasa", "xak'sa"}, {"Rakshasa", "Xak'sa"},
-	{"human", "xuman"}, {"elven", "zelven"}, {"dwarven", "zexen"},
-	{"god", "zexon"}, {"God", "Zexon"}, {"who", "xi"},
-	{"ck", "x"}, {"cks", "xis"}, {"the ", "zo "},
-	{"a", "ha"}, {"th", "zz"}, {"you", "xiu"}, {"e", "zek"},
-	{"to", "kix"}, {"or", "vyz"}, {"dragon", "vur"}, {"orc", "rex"},
+	{" ", " "},
+	{"are", "or"},
+	{"and", "sz"},
+	{"be", "be"},
+	{"how", "ha"},
+	{"what", "wat"},
+	{"is", "xith"},
+	{"ou", "x"},
+	{"where", "wher"},
+	{"me", "xi"},
+	{"dwarf", "zex"},
+	{"elf", "zel"},
+	{"fucking", "fucking"},
+	{"serapis", "Xith'xis"},
+	{"Serapis", "Xith'xis"},
+	{"kill", "k'xith"},
+	{"kender", "kix'zel"},
+	{"centaur", "zen'tor"},
+	{"rakshasa", "xak'sa"},
+	{"Rakshasa", "Xak'sa"},
+	{"human", "xuman"},
+	{"elven", "zelven"},
+	{"dwarven", "zexen"},
+	{"god", "zexon"},
+	{"God", "Zexon"},
+	{"who", "xi"},
+	{"ck", "x"},
+	{"cks", "xis"},
+	{"the ", "zo "},
+	{"a", "ha"},
+	{"th", "zz"},
+	{"you", "xiu"},
+	{"e", "zek"},
+	{"to", "kix"},
+	{"or", "vyz"},
+	{"dragon", "vur"},
+	{"orc", "rex"},
 	{"gnoll", "zev"},
 }
 
 var giantishSyllables = []syllable{
-	{" ", " "}, {"are", "arr"}, {"and", "n"}, {"be", "be"},
-	{"how", "hoo"}, {"what", "wot"}, {"is", "iz"}, {"ou", "oo"},
-	{"where", "wur"}, {"me", "me"}, {"dwarf", "dwar"},
-	{"elf", "elf"}, {"fucking", "fookin"},
-	{"serapis", "Serap"}, {"Serapis", "Serap"},
-	{"kill", "k'rush"}, {"kender", "kender"}, {"centaur", "sentaur"},
-	{"rakshasa", "raksha"}, {"Rakshasa", "Raksha"},
-	{"human", "human"}, {"elven", "elven"}, {"dwarven", "dwarven"},
-	{"god", "gor"}, {"God", "Gor"}, {"who", "oo"},
-	{"ck", "k"}, {"cks", "ks"}, {"the ", "da "},
-	{"a", "a"}, {"to", "tuh"}, {"you", "yoo"}, {"with", "wiv"},
-	{"giant", "gigant"}, {"your", "yer"},
+	{" ", " "},
+	{"are", "arr"},
+	{"and", "n"},
+	{"be", "be"},
+	{"how", "hoo"},
+	{"what", "wot"},
+	{"is", "iz"},
+	{"ou", "oo"},
+	{"where", "wur"},
+	{"me", "me"},
+	{"dwarf", "dwar"},
+	{"elf", "elf"},
+	{"fucking", "fookin"},
+	{"serapis", "Serap"},
+	{"Serapis", "Serap"},
+	{"kill", "k'rush"},
+	{"kender", "kender"},
+	{"centaur", "sentaur"},
+	{"rakshasa", "raksha"},
+	{"Rakshasa", "Raksha"},
+	{"human", "human"},
+	{"elven", "elven"},
+	{"dwarven", "dwarven"},
+	{"god", "gor"},
+	{"God", "Gor"},
+	{"who", "oo"},
+	{"ck", "k"},
+	{"cks", "ks"},
+	{"the ", "da "},
+	{"a", "a"},
+	{"to", "tuh"},
+	{"you", "yoo"},
+	{"with", "wiv"},
+	{"giant", "gigant"},
+	{"your", "yer"},
 }
 
 var deadspeakSyllables = []syllable{
-	{" ", " "}, {"a", "au"}, {"e", "eu"}, {"i", "ei"}, {"o", "ou"},
-	{"u", "uu"}, {"the ", "theu "}, {"is", "eis"}, {"of", "eof"},
+	{" ", " "},
+	{"a", "au"},
+	{"e", "eu"},
+	{"i", "ei"},
+	{"o", "ou"},
+	{"u", "uu"},
+	{"the ", "theu "},
+	{"is", "eis"},
+	{"of", "eof"},
 }
 
 var drunkSyllables = []syllable{ //nolint:unused // used by speakDrunk in comm_say.go
-	{" ", " "}, {"are", "arsh"}, {"and", "andsh"}, {"how", "howsh"},
-	{"what", "wha'"}, {"is", "ish"}, {"where", "whersh"},
-	{"kill", "murderize"}, {"ck", "shkin"}, {"the ", "th' "},
+	{" ", " "},
+	{"are", "arsh"},
+	{"and", "andsh"},
+	{"how", "howsh"},
+	{"what", "wha'"},
+	{"is", "ish"},
+	{"where", "whersh"},
+	{"kill", "murderize"},
+	{"ck", "shkin"},
+	{"the ", "th' "},
 }
 
 // ---------------------------------------------------------------------------
@@ -264,7 +418,9 @@ func speakDwarven(said string) string   { return applySyllableSubstitution(said,
 func speakElven(said string) string     { return applySyllableSubstitution(said, elfSyllables) }
 func speakGnoll(said string) string     { return applySyllableSubstitution(said, gnollSyllables) }
 func speakDraconian(said string) string { return applySyllableSubstitution(said, draconianSyllables) }
-func speakGiantish(said string) string  { return applySyllableSubstitution(said, giantishSyllables) }
+
+func speakGiantish(said string) string { return applySyllableSubstitution(said, giantishSyllables) }
+
 func speakDeadspeak(said string) string { return applySyllableSubstitution(said, deadspeakSyllables) }
 func speakDrunk(said string) string     { return applySyllableSubstitution(said, drunkSyllables) } //nolint:unused // used in comm_say.go
 
@@ -404,6 +560,7 @@ func (w *World) initLastTellers() { //nolint:unused // used in setLastTeller/get
 		w.lastTellers = &lastTellersData{store: make(map[int]int)}
 	}
 }
+
 func (w *World) setLastTeller(chID, victID int) { //nolint:unused // used in comm_tell.go
 	w.initLastTellers()
 	w.lastTellers.store[chID] = victID

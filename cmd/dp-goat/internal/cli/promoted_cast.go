@@ -44,7 +44,6 @@ func newCastPromotedCmd(flags *rootFlags) *cobra.Command {
 				body["target"] = bodyTarget
 			}
 			data, _, err := c.PostWithParams(path, params, body)
-
 			if err != nil {
 				return classifyAPIError(err, flags)
 			}

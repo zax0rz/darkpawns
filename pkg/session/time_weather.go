@@ -201,7 +201,7 @@ func getWeather(hour, month int) string {
 		totalWeight += w
 	}
 	// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+	// #nosec G404
 	roll := rand.IntN(totalWeight)
 	cumulative := 0
 	selected := options[0]
@@ -317,7 +317,8 @@ type OutdoorBroadcastFunc func(msg string)
 // These correspond to the extern function calls in another_hour() that are
 // implemented elsewhere in the C codebase.
 // Phase 3 — wire ghost_ship_appear/disappear, load_night_gate, remove_night_gate,
-//   full_moon(), lunar_hunter() when spec_procs are fully ported.
+//
+//	full_moon(), lunar_hunter() when spec_procs are fully ported.
 type AnotherHourCallbacks struct {
 	GhostShipAppear    func()
 	GhostShipDisappear func()
@@ -336,7 +337,7 @@ func dice(nDice, nSides int) int {
 	total := 0
 	for i := 0; i < nDice; i++ {
 		// #nosec G404 — game RNG, not cryptographic
-// #nosec G404
+		// #nosec G404
 		total += rand.IntN(nSides) + 1
 	}
 	return total
@@ -583,4 +584,3 @@ func WeatherAndTime(state *WorldWeatherState, mode int, broadcast OutdoorBroadca
 //    - The existing getWeather() above uses a different, simplified algorithm.
 //      When WorldWeatherState is wired into the main game loop, getWeather() and
 //      weatherMessage() should delegate to WorldWeatherState.Sky for consistency.
-

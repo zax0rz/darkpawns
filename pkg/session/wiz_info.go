@@ -137,7 +137,7 @@ func cmdIdlist(s *Session, args []string) error {
 
 	// Force output into data/ directory
 	const safeDir = "data"
-	if err := os.MkdirAll(safeDir, 0755); err != nil {
+	if err := os.MkdirAll(safeDir, 0o755); err != nil {
 		s.Send(fmt.Sprintf("Could not create %s directory: %v\r\n", safeDir, err))
 		return nil
 	}
@@ -149,10 +149,10 @@ func cmdIdlist(s *Session, args []string) error {
 		return nil
 	}
 	defer func() { _ = f.Close() }()
-	for _, obj := range pw.Objs {
-		_, _ = fmt.Fprintf(f, "[%d] %s\n", obj.VNum, obj.ShortDesc)
-		_, _ = fmt.Fprintf(f, "  Keywords: %s  Type: %d  Cost: %d\n", obj.Keywords, obj.TypeFlag, obj.Cost)
-		_, _ = fmt.Fprintf(f, "  Values: [%d] [%d] [%d] [%d]\n", obj.Values[0], obj.Values[1], obj.Values[2], obj.Values[3])
+	for i := range pw.Objs {
+		_, _ = fmt.Fprintf(f, "[%d] %s\n", pw.Objs[i].VNum, pw.Objs[i].ShortDesc)
+		_, _ = fmt.Fprintf(f, "  Keywords: %s  Type: %d  Cost: %d\n", pw.Objs[i].Keywords, pw.Objs[i].TypeFlag, pw.Objs[i].Cost)
+		_, _ = fmt.Fprintf(f, "  Values: [%d] [%d] [%d] [%d]\n", pw.Objs[i].Values[0], pw.Objs[i].Values[1], pw.Objs[i].Values[2], pw.Objs[i].Values[3])
 	}
 	s.Send(fmt.Sprintf("Wrote %d objects to %s\r\n", len(pw.Objs), safePath))
 	slog.Info("(GC) idlist", "who", s.player.Name, "file", safePath, "count", len(pw.Objs))

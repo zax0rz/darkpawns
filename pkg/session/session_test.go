@@ -133,7 +133,7 @@ func TestManager_BroadcastToRoom(t *testing.T) {
 
 	s1 := makeTestSession(t, m, "Alice", 1001, true) // room 1001
 	s2 := makeTestSession(t, m, "Bob", 1001, true)   // room 1001
-	s3 := makeTestSession(t, m, "Carol", 1002, true)  // room 1002
+	s3 := makeTestSession(t, m, "Carol", 1002, true) // room 1002
 
 	m.mu.Lock()
 	m.sessions["alice"] = s1

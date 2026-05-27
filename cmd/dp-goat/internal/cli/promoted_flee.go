@@ -12,7 +12,6 @@ import (
 )
 
 func newFleePromotedCmd(flags *rootFlags) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:         "flee",
 		Short:       "Attempt to flee from combat. Costs some experience points. May fail if the mob is much faster than you.",
@@ -33,7 +32,6 @@ func newFleePromotedCmd(flags *rootFlags) *cobra.Command {
 			// second store-backed POST-search consumer ships.
 			body := map[string]any{}
 			data, _, err := c.PostWithParams(path, params, body)
-
 			if err != nil {
 				return classifyAPIError(err, flags)
 			}

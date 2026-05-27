@@ -73,7 +73,7 @@ func NewShop(id, vnum int, name string, roomVNum int) *Shop {
 		RepairCost:      10,  // Default: 10 gold per repair point
 		IdentifyCost:    5,   // Default: 5 gold per identification
 		Inventory:       make([]common.ObjectInstance, 0),
-		MaxItems:        50,  // Default: max 50 items in stock
+		MaxItems:        50,    // Default: max 50 items in stock
 		RestockInterval: 100,   // Default: restock every 100 game ticks
 		RestockPercent:  30,    // Default: 30% chance to restock each item
 		Gold:            10000, // Default keeper gold supply (src/shop.c:808)
