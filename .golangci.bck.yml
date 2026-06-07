@@ -1,0 +1,53 @@
+run:
+  timeout: 5m
+  skip-dirs:
+    - admin-ui
+    - node_modules
+    - website
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosimple
+    - gocritic
+
+linters-settings:
+  errcheck:
+    check-type-assertions: false
+    check-blank: false
+    exclude-functions:
+      - (*os.File).Close
+      - (io.Closer).Close
+      - (net.Conn).Close
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - performance
+    disabled-tags:
+      - style
+      - experimental
+      - opinionated
+
+issues:
+  exclude-rules:
+    # Test files get more lenient error handling
+    - path: _test\.go
+      linters:
+        - errcheck
+    # Third-party code
+    - path: admin-ui/
+      linters:
+        - errcheck
+        - govet
+        - unused
+    - path: node_modules/
+      linters:
+        - errcheck
+        - govet
+        - unused
+  max-issues-per-linter: 0
+  max-same-issues: 0

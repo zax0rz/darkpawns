@@ -4,6 +4,7 @@ package session
 import (
 	"context"
 	"log/slog"
+
 	"github.com/zax0rz/darkpawns/pkg/game/systems"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )

@@ -86,21 +86,21 @@ func main() {
 		class int
 		valid bool
 	}{
-		{game.RaceHuman, game.ClassNinja, true},        // Ninja: Human only
-		{game.RaceElf, game.ClassNinja, false},         // Ninja: non-Human rejected
-		{game.RaceDwarf, game.ClassNinja, false},       // Ninja: Dwarf rejected
-		{game.RaceHuman, game.ClassMageUser, true},     // Mage: all races
-		{game.RaceMinotaur, game.ClassMageUser, true},  // Mage: Minotaur allowed
-		{game.RaceRakshasa, game.ClassWarrior, true},   // Warrior: all races
-		{game.RaceSsaur, game.ClassCleric, true},       // Cleric: all races
-		{game.RaceHuman, game.ClassThief, true},        // Thief: all races
-		{game.RaceHuman, game.ClassPsionic, true},      // Psionic: all races
-		{game.RaceHuman, game.ClassMagus, false},       // Magus: remort-only
-		{game.RaceHuman, game.ClassAvatar, false},      // Avatar: remort-only
-		{game.RaceHuman, game.ClassAssassin, false},    // Assassin: remort-only
-		{game.RaceHuman, game.ClassPaladin, false},     // Paladin: remort-only
-		{game.RaceHuman, game.ClassRanger, false},      // Ranger: remort-only
-		{game.RaceHuman, game.ClassMystic, false},      // Mystic: remort-only
+		{game.RaceHuman, game.ClassNinja, true},       // Ninja: Human only
+		{game.RaceElf, game.ClassNinja, false},        // Ninja: non-Human rejected
+		{game.RaceDwarf, game.ClassNinja, false},      // Ninja: Dwarf rejected
+		{game.RaceHuman, game.ClassMageUser, true},    // Mage: all races
+		{game.RaceMinotaur, game.ClassMageUser, true}, // Mage: Minotaur allowed
+		{game.RaceRakshasa, game.ClassWarrior, true},  // Warrior: all races
+		{game.RaceSsaur, game.ClassCleric, true},      // Cleric: all races
+		{game.RaceHuman, game.ClassThief, true},       // Thief: all races
+		{game.RaceHuman, game.ClassPsionic, true},     // Psionic: all races
+		{game.RaceHuman, game.ClassMagus, false},      // Magus: remort-only
+		{game.RaceHuman, game.ClassAvatar, false},     // Avatar: remort-only
+		{game.RaceHuman, game.ClassAssassin, false},   // Assassin: remort-only
+		{game.RaceHuman, game.ClassPaladin, false},    // Paladin: remort-only
+		{game.RaceHuman, game.ClassRanger, false},     // Ranger: remort-only
+		{game.RaceHuman, game.ClassMystic, false},     // Mystic: remort-only
 	}
 
 	for _, tc := range testCases {

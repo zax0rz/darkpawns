@@ -891,7 +891,8 @@ func (m *Manager) ShutdownGracefully(timeout time.Duration) {
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					slog.Error("CRITICAL PANIC in session shutdown cleanup",
+					slog.Error(
+						"CRITICAL PANIC in session shutdown cleanup",
 						"player", name,
 						"recover", r,
 					)

@@ -371,7 +371,8 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	// Emit dynamic execution telemetry warning for slow commands (>500ms)
 	elapsed := time.Since(startTime)
 	if elapsed > 500*time.Millisecond {
-		slog.WarnContext(cmdCtx, "slow command execution warning",
+		slog.WarnContext(
+			cmdCtx, "slow command execution warning",
 			"player", s.playerName,
 			"command", cmd.Command,
 			"elapsed_ms", elapsed.Milliseconds(),

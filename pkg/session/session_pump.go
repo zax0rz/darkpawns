@@ -14,7 +14,8 @@ import (
 func (s *Session) readPump() {
 	defer func() {
 		if r := recover(); r != nil {
-			slog.Error("CRITICAL PANIC RECOVERED in readPump",
+			slog.Error(
+				"CRITICAL PANIC RECOVERED in readPump",
 				"player", s.playerName,
 				"recover", r,
 				"stack", string(debug.Stack()),
@@ -74,7 +75,8 @@ func (s *Session) writePump() {
 	ticker := time.NewTicker(54 * time.Second)
 	defer func() {
 		if r := recover(); r != nil {
-			slog.Error("CRITICAL PANIC RECOVERED in writePump",
+			slog.Error(
+				"CRITICAL PANIC RECOVERED in writePump",
 				"player", s.playerName,
 				"recover", r,
 				"stack", string(debug.Stack()),

@@ -27,23 +27,26 @@ type mockSpellsChar struct {
 	inventory     *mockInventory
 }
 
-func (m *mockSpellsChar) GetName() string                { return m.name }
-func (m *mockSpellsChar) IsNPC() bool                    { return m.npc }
-func (m *mockSpellsChar) GetLevel() int                  { return m.level }
-func (m *mockSpellsChar) GetClass() int                  { return m.class }
-func (m *mockSpellsChar) GetSex() int                    { return m.sex }
-func (m *mockSpellsChar) GetRoomVNum() int               { return m.roomVNum }
-func (m *mockSpellsChar) GetPosition() int               { return m.position }
-func (m *mockSpellsChar) SetPosition(pos int)            { m.position = pos }
-func (m *mockSpellsChar) GetHP() int                     { return m.hp }
-func (m *mockSpellsChar) GetMaxHP() int                  { return m.maxHP }
-func (m *mockSpellsChar) SetHP(hp int)                   { m.hp = hp }
-func (m *mockSpellsChar) SetHealth(hp int)               { m.hp = hp }
-func (m *mockSpellsChar) GetMove() int                   { return m.move }
-func (m *mockSpellsChar) GetMaxMove() int                { return m.maxMove }
-func (m *mockSpellsChar) SetMove(mv int)                 { m.move = mv }
-func (m *mockSpellsChar) SendMessage(msg string)         { m.messages = append(m.messages, msg) }
-func (m *mockSpellsChar) AddAffect(aff *engine.Affect)   { m.activeAffects = append(m.activeAffects, aff) }
+func (m *mockSpellsChar) GetName() string        { return m.name }
+func (m *mockSpellsChar) IsNPC() bool            { return m.npc }
+func (m *mockSpellsChar) GetLevel() int          { return m.level }
+func (m *mockSpellsChar) GetClass() int          { return m.class }
+func (m *mockSpellsChar) GetSex() int            { return m.sex }
+func (m *mockSpellsChar) GetRoomVNum() int       { return m.roomVNum }
+func (m *mockSpellsChar) GetPosition() int       { return m.position }
+func (m *mockSpellsChar) SetPosition(pos int)    { m.position = pos }
+func (m *mockSpellsChar) GetHP() int             { return m.hp }
+func (m *mockSpellsChar) GetMaxHP() int          { return m.maxHP }
+func (m *mockSpellsChar) SetHP(hp int)           { m.hp = hp }
+func (m *mockSpellsChar) SetHealth(hp int)       { m.hp = hp }
+func (m *mockSpellsChar) GetMove() int           { return m.move }
+func (m *mockSpellsChar) GetMaxMove() int        { return m.maxMove }
+func (m *mockSpellsChar) SetMove(mv int)         { m.move = mv }
+func (m *mockSpellsChar) SendMessage(msg string) { m.messages = append(m.messages, msg) }
+func (m *mockSpellsChar) AddAffect(aff *engine.Affect) {
+	m.activeAffects = append(m.activeAffects, aff)
+}
+
 func (m *mockSpellsChar) RemoveAffectBySpell(spellNum int) {
 	filtered := m.activeAffects[:0]
 	for _, aff := range m.activeAffects {
@@ -53,8 +56,8 @@ func (m *mockSpellsChar) RemoveAffectBySpell(spellNum int) {
 	}
 	m.activeAffects = filtered
 }
-func (m *mockSpellsChar) IsAffected(bit int) bool      { return m.aff&(1<<bit) != 0 }
-func (m *mockSpellsChar) HasMobFlag(bit uint64) bool   { return m.flags&bit != 0 }
+func (m *mockSpellsChar) IsAffected(bit int) bool    { return m.aff&(1<<bit) != 0 }
+func (m *mockSpellsChar) HasMobFlag(bit uint64) bool { return m.flags&bit != 0 }
 func (m *mockSpellsChar) GetInventory() ReagentInventory {
 	if m.inventory == nil {
 		return nil
