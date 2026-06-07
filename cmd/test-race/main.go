@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -21,13 +22,19 @@ func main() {
 		{"Ssaur", game.RaceSsaur},
 	}
 
-	classes := []struct {
+	classes := make([]struct {
 		name string
 		id   int
-	}{
-		{"Mage", game.ClassMageUser},
-		{"Warrior", game.ClassWarrior},
+	}, 0, len(game.ClassNames))
+	for id, name := range game.ClassNames {
+		classes = append(classes, struct {
+			name string
+			id   int
+		}{name, id})
 	}
+	sort.Slice(classes, func(i, j int) bool {
+		return classes[i].id < classes[j].id
+	})
 
 	// Build reverse lookup from game.ClassNames for test cases
 	allClassNames := game.ClassNames
@@ -79,13 +86,21 @@ func main() {
 		class int
 		valid bool
 	}{
-		{game.RaceHuman, game.ClassNinja, true},
-		{game.RaceElf, game.ClassNinja, false},
-		{game.RaceHuman, game.ClassMageUser, true},
-		{game.RaceRakshasa, game.ClassWarrior, true},
-		{game.RaceSsaur, game.ClassCleric, true},
-		{game.RaceHuman, game.ClassMagus, false},  // remort-only
-		{game.RaceHuman, game.ClassAvatar, false}, // remort-only
+		{game.RaceHuman, game.ClassNinja, true},        // Ninja: Human only
+		{game.RaceElf, game.ClassNinja, false},         // Ninja: non-Human rejected
+		{game.RaceDwarf, game.ClassNinja, false},       // Ninja: Dwarf rejected
+		{game.RaceHuman, game.ClassMageUser, true},     // Mage: all races
+		{game.RaceMinotaur, game.ClassMageUser, true},  // Mage: Minotaur allowed
+		{game.RaceRakshasa, game.ClassWarrior, true},   // Warrior: all races
+		{game.RaceSsaur, game.ClassCleric, true},       // Cleric: all races
+		{game.RaceHuman, game.ClassThief, true},        // Thief: all races
+		{game.RaceHuman, game.ClassPsionic, true},      // Psionic: all races
+		{game.RaceHuman, game.ClassMagus, false},       // Magus: remort-only
+		{game.RaceHuman, game.ClassAvatar, false},      // Avatar: remort-only
+		{game.RaceHuman, game.ClassAssassin, false},    // Assassin: remort-only
+		{game.RaceHuman, game.ClassPaladin, false},     // Paladin: remort-only
+		{game.RaceHuman, game.ClassRanger, false},      // Ranger: remort-only
+		{game.RaceHuman, game.ClassMystic, false},      // Mystic: remort-only
 	}
 
 	for _, tc := range testCases {
