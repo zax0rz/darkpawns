@@ -2,6 +2,41 @@
 
 Living document. Updated per session by Daeron.
 
+## [SESSION] 2026-06-07 — Board Sweep, Security Hardening, Clawpatch Upgrade
+
+### Clawpatch 0.5.0 Upgrade
+
+Upgraded from 0.2.0 to 0.5.0. Key changes in the findings schema:
+- New required fields: `title`, `reasoning`, `recommendation`, `suggestedRegressionTest`, `minimumFixScope`
+- `evidence` is now an array of objects with `path`, `startLine`, `endLine`, `symbol`
+- `severity` replaces `confidence` as the primary severity indicator (though both exist)
+- `category` enum expanded: bug, security, performance, concurrency, api-contract, data-loss, test-gap, docs-gap, build-release, maintainability
+
+**Provider behavior:** DeepSeek V4 Pro via opencode produces valid JSON for ~60% of features on first try. The other 40% get `malformed-output` retries. The retries handle it gracefully — no data loss, just slower execution. Each feature takes 50-170 seconds with retries.
+
+**Recommendation:** The pipeline works but is slow. Consider:
+1. Using a model with better schema compliance (MiMo, Sonnet) for higher first-pass success rate
+2. Running clawpatch overnight as a cron job rather than interactively
+3. Batch-triaging findings in the morning rather than waiting for each feature
+
+### Security Hardening Patterns
+
+Several issues followed the same pattern:
+- **Placeholder domains in production code** (DP-548, DP-551) — `darkpawns.example.com` and `localhost` hardcoded in CORS/WebSocket config. Fixed by replacing with real domain and adding env var config.
+- **Missing security headers** (DP-552) — Admin UI served without Cache-Control. Fixed by adding `no-cache, no-store, must-revalidate` to static file handlers.
+- **Brute-force lockout not applied to all endpoints** (DP-547) — Telnet had lockout but admin login didn't. Fixed by adding independent LoginAttemptTracker to admin login.
+
+**Pattern:** Security hardening is systematic — each finding reveals a class of similar issues. Worth doing a dedicated security audit pass rather than fixing one at a time.
+
+### Board Grooming Observations
+
+- 11 issues closed in one session (7 Done, 4 Canceled)
+- Rejected Reek findings: 5 of 12 from the latest batch were false positives (42% false positive rate)
+- Most false positives were "intentional design" — Reek flagged patterns that look wrong but are correct
+- **Good Reek:** The confirmed findings (DP-547, DP-553, DP-557, DP-558, DP-559, DP-561, DP-562, DP-566) were all real and high-value
+- **Bad Reek:** The rejected findings (DP-541, DP-543, DP-545, DP-546, DP-555) were all false positives
+- Reek's accuracy: ~58% true positive rate on this batch. Better than previous batches.
+
 ## [TRIAGE] 2026-06-06 — Batch Fix Session (14 issues resolved)
 
 **Telephone method workflow.** Daeron wrote briefs, Architect handed them to coding models (Claude, DeepSeek Flash, Kimi). Each model reviewed the brief before implementing. Briefs improved with each review cycle.
