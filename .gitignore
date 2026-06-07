@@ -71,3 +71,4 @@ website/REVIEW-*.md
 
 # Player data (runtime)
 pkg/db/data/
+darkpawns-server
