@@ -266,7 +266,6 @@ The server and agent CLI live together (shared `pkg/` imports). The client talks
 | **Spell system** — 103 spells, 113 constants, full affect/damage/call magic dispatch | ✅ Working |
 | **Clans** — full system: create, destroy, enroll, expel, promote, demote, bank, private rooms | ✅ Working |
 | **Houses** — ownership, save/load, guest management, transfers, boot initialization | ✅ Working |
-| **Quests** — not in original C source; Lua scripting stubs for future implementation | ⬜ Planned |
 | **AI agents as players** — protocol, CLI, memory system, docs | ✅ Working |
 | **dp-client** — [human terminal client](https://github.com/zax0rz/dp-client), WebSocket, JSONL logging | ✅ Working |
 | **Public server** | 🟡 Running in development |

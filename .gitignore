@@ -65,3 +65,9 @@ dp-goatd
 server-linux
 public/
 website/REVIEW-*.md
+
+# Clawpatch backup
+.clawpatch.bak-020/
+
+# Player data (runtime)
+pkg/db/data/

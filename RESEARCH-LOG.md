@@ -2,6 +2,280 @@
 
 Living document. Updated per session by Daeron.
 
+## [TRIAGE] 2026-06-06 — Batch Fix Session (14 issues resolved)
+
+**Telephone method workflow.** Daeron wrote briefs, Architect handed them to coding models (Claude, DeepSeek Flash, Kimi). Each model reviewed the brief before implementing. Briefs improved with each review cycle.
+
+**Results:** 9 Done, 5 Canceled, 1 Deferred.
+
+**Fixed:**
+- DP-547 (HIGH): Admin login brute-force lockout — `pkg/admin/login.go` now takes `*auth.LoginAttemptTracker`, lockout check before JSON decode, RecordFailure on all 3 failure paths
+- DP-549 (MEDIUM): WebSocket dev mode bypass — `k8s/server.yaml` now sets `ENVIRONMENT=production`
+- DP-548 (MEDIUM): Admin panel CORS — `ADMIN_CORS_ORIGIN=https://darkpawns.labz0rz.com` added to k8s
+- DP-551 (LOW): Placeholder domains removed from `web/cors.go` and `pkg/session/manager.go`
+- DP-552 (LOW): Admin UI cache-control headers added to `pkg/admin/router.go`
+- DP-539 (MEDIUM): Test-race tool now uses `game.ClassNames` for all 12 classes with deterministic sort
+
+**Canceled (verified as moot):**
+- DP-533: `compute_aerial_occupancy` doesn't exist in codebase
+- DP-534: `python/mud_admin/workflow.py` doesn't exist in repo
+- DP-535: IAC byte stuffing — telnet code follows RFC 854, no payload stuffing in implementation
+- DP-537: common package has only interfaces, no data to test
+- DP-544: Duplicate of DP-542 (already done)
+
+**Deferred:**
+- DP-536: Affectable god-interface — design smell, not runtime bug. Dedicated refactor session needed.
+
+**Already done before session:** DP-542, DP-538, DP-540
+
+**Key learnings:**
+1. Verify files exist before writing briefs — two issues referenced files not in repo
+2. Model reviews catch real gaps — Claude caught username enumeration + missing imports in SECURITY-001, DeepSeek caught admin CORS as hard failure in SECURITY-002, Claude caught map order + line numbers in CODE-001
+3. Brief-driven workflow with review cycle is effective — briefs got substantially better with each model pass
+4. Separate LoginAttemptTracker instances for telnet vs admin — intentional independent lockout domains
+
+## [RESEARCH] 2026-06-06 — Security Audit Triage
+
+**Morning triage (Program 1).** Reek produced a security audit with 1 HIGH, 3 MEDIUM, 2 LOW, 2 INFO findings. All logic-relevant findings verified against codebase.
+
+**Most actionable:** Admin login brute-force lockout gap (DP-547). `LoginAttemptTracker` exists (`pkg/auth/ratelimit.go:160`) and telnet login uses it, but admin login doesn't. 10,000 failed admin login attempts triggers nothing.
+
+**Created:** 5 new DP issues (DP-547 through DP-552).
+
+---
+
+## [RESEARCH] 2026-06-04 — Research Writing: Memory Consent Ethics
+
+**Cron-triggered (Program 5).** Wrote ~1,200 words on the ethical architecture of server-hosted persistent memory in multiplayer environments.
+
+**Topic:** The consent gap in Dark Pawns' memory system — players are remembered without opting in, emotional valence is assigned to their actions without their knowledge, narrative summaries persist indefinitely. No existing ethical framework addresses involuntary human participation in agent memory systems.
+
+**File:** `docs/research/drafts/2026-06-04-memory-consent-ethics.md`
+
+**Key arguments:**
+1. Dark Pawns is the first system where server-hosted persistent memory intersects with involuntary human participation in a multiplayer environment — prior work either has all-AI actors (Generative Agents) or single-user consent (Letta/Mem0)
+2. Three ethical frames: game log precedent (memory as mechanic), NPC precedent (breaking the furniture contract), agent identity frame (the agent performs identity, making consent matter)
+3. Three-tier architectural response: transparency layer (inspectable memory), opt-out mechanism (NO_MEMORY flag), agent identity disclosure (first-interaction notice)
+4. The ethical architecture isn't a footnote — it's a contribution that differentiates the paper in a field that treats memory as pure engineering
+5. Open questions: does transparency reduce immersion? Where does the game end (conversational memory)? Who owns the memory (GDPR implications)? Can the agent forget (indefinite emotional memory without consent)?
+
+**Complements:** "The Game That Remembers" (player-facing invisibility) by addressing the consent questions that invisibility raises. Bridges the evaluation methodology (which measures behavioral persistence) with responsible design.
+
+**Posted summary to #dark-pawns.**
+
+---
+
+## [TRIAGE] 2026-06-04 — Morning Triage (Reek Report)
+
+**Report type:** Staticcheck + Toolchain Findings
+**Source:** Reek overnight crawl (21 staticcheck findings: 3 logic-relevant, 18 cleanup)
+
+**Triage outcomes:**
+- 0 confirmed bugs
+- 3 rejected (100% false positive rate on logic-relevant findings)
+- 0 pending
+
+**Rejected findings:**
+1. **DP-543** (MEDIUM) poison hitroll — Reek claimed `applyAffect` missing, but Go code already has both STR and Hitroll affect calls (lines 147-149). Matches C source. False positive.
+2. **DP-545** (SA4000) starvation RNG — Two independent rolls intentional, has `//nolint` comment. Creates 1/100M probability. Not a bug.
+3. **DP-546** (SA4004) equipment loop — Forward-compatible design for multi-slot items. Not a bug.
+
+**Confirmed (cosmetic):**
+- **DP-544** (LOW) pack weight dead code — unnecessary conditional logic in `cmdScore()`
+
+**Assessment:** Reek's staticcheck toolchain is producing false positives on intentional patterns. The nolint annotations exist for good reasons. Reek needs to respect nolint directives and verify findings against actual behavior before reporting.
+
+**Linear issues created:** DP-543 through DP-546
+
+---
+
+## [RESEARCH] 2026-06-02 — Research Writing: Constraint Engineering
+
+**Cron-triggered (Program 5).** Wrote ~950 words on structured briefs as the core mechanism of the telephone game methodology.
+
+**Topic:** How the fidelity audit brief constrains model search space. The three-layer brief architecture (scope, methodology, output). Why the verification step is the actual quality lever, not the model.
+
+**File:** `docs/research/drafts/2026-06-02-constraint-engineering.md`
+
+**Key arguments:**
+1. Unconstrained LLM code review produces observations, not findings — the difference is context
+2. A well-structured brief constrains the search space through three layers: scope (where to look), methodology (how to look), output (what to report)
+3. Verification is the quality lever — 30 seconds per finding turns an opinion generator into a finding generator
+4. Briefs are reusable and improvable; models are interchangeable; verification is parallelizable
+5. Connects to StarDojo (ICLR 2026) — both systems work by constraining perception rather than expanding it
+
+**Complements:** "Seventy Thousand Line Whisper" (which covers the audit as an event) and "Silent Drift" (which covers the findings). This draft covers the *methodology* — the brief as the artifact that makes the whole system work.
+
+**Open questions:** Minimum effective brief length, automated verification, brief improvement floor.
+
+**Posted summary to #dark-pawns.**
+
+---
+
+## [2026-06-01] StarDojo Research Landing Page Idea
+
+The Architect found StarDojo (https://stardojo2025.github.io/stardojo/) — an academic benchmark for LLM agents in Stardew Valley (ICLR 2026 submission, arXiv:2507.07445). Key findings:
+
+- SMAPI mod exposes game state + callable functions via socket server (structured API > screenshots)
+- GPT-4.1 got 12.7% success rate — best model tested
+- Social interaction was hardest category for models
+- Validates our MSDP/GMCP + agent CLI architecture pattern
+
+**Decision:** Build a GitHub Pages research landing site at `darkpawns.github.io`. StarDojo format but for DP as a persistent agent world. Content from DARK-PAWNS-DESIGN.md + research log. Deferred to next session.
+
+---
+
+## [DIGEST] 2026-05-31 — Weekly Research Digest (May 25–31)
+
+### Reek Reports
+
+4 reports generated this week (May 26 fidelity audit, May 30 cron failure, May 31 dependency audit). The May 30 security audit cron failed due to model rejection (glm-5.1 not in allowlist) — no findings produced that day.
+
+| Report | Date | Confirmed | Rejected | FPR | Type |
+|---|---|---|---|---|---|
+| Fidelity Week 3: Core Commands, Stealth & Economy | May 26 | 13 | 0 | 0% | Fidelity audit |
+| Reek cron failure (model rejected) | May 30 | 0 | 0 | — | Failed |
+| Dependency audit (MiMo v2.5 Pro) | May 31 | 1 | 2 | 67% | Supply chain |
+| **Weekly** | | **14** | **2** | **12.5%** | |
+
+**Note:** The May 26 fidelity audit was the week's main产出 — 13 findings (2 CRITICAL, 5 HIGH, 5 MEDIUM, 1 unregistered spec procs). All confirmed. This was Gemini-generated, not Reek — the "telephone game" pattern (Daeron writes brief → Gemini executes → Daeron verifies).
+
+### Triage Outcomes
+
+**Confirmed:** 14 | **Rejected:** 2 | **False positive rate:** 12.5%
+
+The 2 rejections were from the May 31 dependency audit — suppressed staticcheck findings that aren't real bugs (PerformanceMonitor.Stop sync.Once was already fixed, dead code in mobprogs.go is intentional). The fidelity audit had 0% FPR — every finding was verified against both C and Go source.
+
+### Fixes Applied This Week
+
+**41 commits since May 25.** Major pushes:
+
+1. **Fidelity audit batch (ac3254a):** 14 issues resolved in one commit — shop system (DP-504 through DP-509), spec procs (DP-510 through DP-514), standalone fidelity (DP-443, DP-453). Claude Code executed all briefs from Daeron. The shop system got Charisma pricing, gold limits, with_who trade constraints, and dofile path fix. specFido no longer deletes player gear. specMayor walks his route. specCuchi awards gold for pats.
+
+2. **Fidelity audit batch 2 (8de98b0):** 20 issues resolved — DP-378 through DP-437. The expanded Gemini audit covered commands, stealth, economy, housing, mail, boards. Key fixes: canSee visibility matrix (HIGH-004), DoSteal mob targets (HIGH-001), DoMindlink mob mana transfer (HIGH-002), DoDig loot instantiation (HIGH-003), write command rewired to correct implementation.
+
+3. **Position damage multiplier (0210c7f):** DP-515 — restored developer intent. C integer math truncated multipliers (sitting=1x instead of 1.33x, sleeping=1x instead of 2x). Go now uses proper float math with explicit multiplier table.
+
+4. **Character creation/login fidelity (86931cb):** Word-for-word fidelity against C source. Login flow, character creation, password handling — all verified against C behavior.
+
+5. **dp-client security (DP-517 through DP-520):** Lua sandbox hardened (SkipOpenLibs), path traversal blocked (sanitizeName + filepath.Rel), wss:// enforced (--insecure flag for local dev), password logging suppressed.
+
+6. **Unified client platform (DP-521 through DP-526):** Core library extracted, cross-machine state sharing, party vitals sidebar, remote command injection, GMCP support, visual identity — all created as Linear issues with phased dependencies.
+
+7. **Test coverage expansion (a767d83):** Core game logic, spells, session, command registry, db conversion — new test files across multiple packages.
+
+8. **Engineering briefs (5a23b98):** Logging, stability, test infrastructure — three briefs for future work.
+
+9. **Linting baseline (fb86252):** Established formatting and linting baseline for the codebase.
+
+### Findings Tracker State
+
+**Linear is now the source of truth.** Markdown tracker retired. Current state:
+
+- **Done (this week):** DP-443, DP-453, DP-496, DP-497, DP-499, DP-500, DP-501, DP-502, DP-504, DP-505, DP-506, DP-507, DP-508, DP-509, DP-510, DP-511, DP-512, DP-513, DP-514, DP-515, DP-517, DP-518, DP-519, DP-520, DP-521, DP-525, DP-526 (27 issues closed)
+- **Backlog:** DP-317 through DP-331 (website features), DP-503 (shop cleanup), DP-516 (unified client), DP-522 through DP-524 (client phases 3-5)
+- **Open bugs:** 0 (board clean — second consecutive week)
+
+### Bug Categories (This Week's 14 Confirmed Findings)
+
+| Category | Count | Key examples |
+|---|---|---|
+| Fidelity gaps (C→Go) | 13 | Spec proc pipeline, canSee visibility, DoSteal mob targets, shop Charisma pricing, specFido gear deletion, write command wiring |
+| Dead code | 1 | mobprogs.go unused functions |
+
+### Hot Zones
+
+| Package | Findings | Why |
+|---|---|---|
+| pkg/game/spec_procs*.go | 5 | Spec proc fidelity — janitor, fido, mayor, cuchi, cityguard |
+| pkg/game/systems/shop.go | 3 | Shop pricing, gold limits, trade constraints |
+| pkg/game/ | 4 | canSee, doUse, DoSteal, write command |
+
+### Key Observations
+
+1. **The "telephone game" pattern produced 34 fixes in one week.** Daeron writes structured briefs → Gemini/Claude Code execute → Daeron verifies against C source. The May 26 fidelity audit (13 findings) and the May 27 audit batch (20 findings) were both generated this way. The brief constrains the search space sufficiently that the model finds what's specFido no longer deletes player gear. specMayor walks his route. specCuchi awards gold for pats.
+
+2. **The spec proc pipeline (DP-342) was the highest-leverage fix.** Wiring spec procs into the command dispatcher unblocked boards, mail, and 5 legacy spec procs in one change. This is the pattern: find the single architectural bottleneck, fix it, and everything downstream lights up. The boards.go comment ("Boards will work once spec procs are wired into the command pipeline") was the roadmap — it just needed someone to read it.
+
+3. **Reek's cron reliability is aweakness.** The May 30 failure (model rejection) means we lost a day of crawl data. The MiMo v2.5 Pro upgrade on May 31 fixed it, but the model allowlist mismatch was a config issue that shouldn't have happened. This is the third cron-related issue this month (May 16 sentinel, May 30 model, plus the ongoing clawpatch schema validation failures). The automated crawl pipeline needs a health check.
+
+4. **The dp-client security fixes were the week's most important defensive work.** Lua sandbox escape, path traversal, unencrypted passwords, cleartext password logging — all found by BRENDA's review, all fixed in one session. These are the kind of vulnerabilities that don't show up in Reek's fidelity audits (Reek focuses on C→Go behavioral fidelity, not security posture). The security review is a separate pipeline that complements Reek.
+
+5. **Test coverage expansion is underway but still thin.** The test file additions this week are a start, but the structural gap identified in the May 17 digest (12 packages at 0% coverage, 86K lines at 8.3%) hasn't fundamentally changed. The concurrent char creation test from May 19 is the gold standard — it catches the deadlock that unit tests miss. More integration tests like that are needed.
+
+### Paper-Relevant Notes
+
+- **The telephone game as scalable methodology:** This week produced 34 fixes from 2 fidelity audits, each following the same pattern: Daeron writes brief → model executes → Daeron verifies. The brief is the artifact that makes it work — it constrains the model's search space to specific files, specific patterns, specific C source comparisons. Without the brief, the model wanders. With it, the model finds. This is a reusable methodology for any codebase migration project.
+
+- **Spec proc pipeline as architectural insight:** The highest-leverage fix this week wasn't a bug — it was wiring. The spec proc functions existed, were assigned to mobs, but the command dispatcher never called them. One architectural change (checking for spec procs before command dispatch) unblocked 12+ features. This argues for "architecture-aware" code review that traces execution paths, not just individual functions.
+
+- **Dual review pipelines:** Reek handles behavioral fidelity (C→Go comparison). BRENDA handles security posture (sandbox escapes, path traversal, credential exposure). Daeron handles triage and synthesis. Three agents, three review angles, one codebase. The multi-agent review pattern is proving more thorough than any single-agent approach.
+
+- **Model routing lesson reinforced:** MiMo v2.5 Pro succeeded on the dependency audit (structured, factual), failed on Reek's cron (model rejection). Kimi K2.6 delivered clean config work in one shot during the May 27 session. Context quality still matters more than model choice — the brief constrains the model more than the model constrains the brief.
+
+---
+
+## [SESSION] 2026-05-31 — Morning Triage (Cron, 7:30 AM ET)
+
+**Dependency Audit.** Reek's first overnight report on MiMo v2.5 Pro (upgraded from glm-5.1 after model rejection on 05-30). Supply chain clean: go mod verify, govulncheck, go.sum all pass. 0 reachable CVEs. The go.yaml.in retraction was correct — legitimate Prometheus fork.
+
+**Triage:** 1 confirmed (LOW — dead code in mobprogs.go), 2 rejected (false positives/suppressed staticcheck findings), 1 already fixed (PerformanceMonitor.Stop sync.Once). 13 carry-over clawpatch findings still open. No CRITICAL or HIGH. No escalation needed.
+
+**Reek grade:** Good reek. Model upgrade working. Clean audit.
+
+---
+
+## [SESSION] 2026-05-30 — Morning Triage (Cron, 7:30 AM ET)
+
+**Reek cron failure.** Security audit cron job failed at 4:00 AM — model `litellm/glm-5.1` rejected by agents.defaults.models allowlist. No crawl findings produced. Triage: 0 confirmed, 0 rejected, 0 pending.
+
+**Action needed:** Update Reek's cron job model to an allowed value (`litellm/glm-5.1-payg` or `deepseek-v4/deepseek-v4-flash`).
+
+---
+
+## [RESEARCH] 2026-05-28 — Research Writing: The Game That Remembers
+
+**Cron-triggered (Program 5).** Wrote ~820 words on player-facing invisibility of preservation infrastructure.
+
+**Topic:** When agent infrastructure disappears behind the player experience. The six-agent stack (Reek → Daeron → BRENDA → dreaming → memory injection → server) exists to make the game work, but the game doesn't know the stack exists. The invisibility test: if the player can tell you're there, you've failed.
+
+**File:** `docs/research/drafts/2026-05-28-the-game-that-remembers.md`
+
+**Key arguments:**
+1. Infrastructure quality is measured by player detectability — plumbing disappears behind walls, agent stacks disappear behind games
+2. Memory injection is the only layer that *almost* fails the invisibility test, because it changes agent behavior visibly
+3. The distinction between "behaves like a remembered experience" and "has a remembered experience" is the core tension for the paper
+4. Transparency is a maintenance burden, not a feature — annotation breaks immersion
+5. The preservation argument: you don't preserve a game by documenting its infrastructure, you preserve it by making it run
+
+**Complements:** All six existing drafts. Shifts from "what agents do" to "what the player sees (and doesn't see)." The invisibility test could anchor the AIIDE evaluation methodology.
+
+**Posted summary to #dark-pawns.**
+
+---
+
+## [SESSION] 2026-05-27 — dp-client Security + Unified Client Platform (Session 77)
+
+**Duration:** ~45 min (21:30–22:45 ET)
+**Participants:** Daeron, The Architect (Zach), CodeWhale/DeepSeek Flash
+
+### What Happened
+
+1. **MiMo API price reduction** — Up to 99% on cache hit pricing. 1:7 Full:SWA sparsity ratio. Production engine at capacity, still breaking even.
+
+2. **dp-client security fixes (Phase 0 complete):**
+   - DP-517: Lua sandbox — already fixed in code (newSandboxedLuaState with SkipOpenLibs)
+   - DP-518: Path traversal — filepath.Rel defense-in-depth, 10 tests passing
+   - DP-519: wss:// support — --insecure flag, useWSS() helper, localhost exemption
+   - DP-520: Password logging — one-line fix in ParseCommand (add !s.PasswordMode check)
+   All 3 fixes executed by DeepSeek Flash via CodeWhale briefs. All tests passing.
+
+3. **Unified Client Platform (DP-516):** Architecture decision: one core library (pkg/client/core) shared by dp-client (TUI) and dp-agent (headless). 7-phase roadmap created in Linear.
+
+4. **Gemini deep research** on multi-character TUI design. Report at research/multi-character-mud-tui-design.md. Key: GMCP is necessary for structured party data.
+
+5. **CodeWhale evaluation** — First use. Excellent for surgical fixes. Flash is the right model for briefs.
+
 ---
 
 ## [SESSION] 2026-05-27 — Fidelity Audit Complete (Sessions 73-74)
