@@ -2,9 +2,11 @@ package admin
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 
+	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"golang.org/x/crypto/bcrypt"
@@ -25,10 +27,20 @@ type loginResponse struct {
 
 // handleLogin creates a new login handler bound to the given database.
 // POST /admin/login — authenticates a player and returns a JWT.
-func handleLogin(database *db.DB) http.HandlerFunc {
+func handleLogin(database *db.DB, loginAttempts *auth.LoginAttemptTracker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+			return
+		}
+
+		ip := auth.GetIPFromRequest(r)
+
+		// Check lockout BEFORE parsing body — don't burn JSON decode on locked IPs
+		if locked, remaining := loginAttempts.IsLocked(ip); locked {
+			mins := int(remaining.Minutes()) + 1
+			http.Error(w, fmt.Sprintf(`{"error":"too many failed attempts, try again in %d minutes"}`, mins), http.StatusTooManyRequests)
+			audit.LogSecurityEvent("login_locked_out", "Admin login locked out", "", ip)
 			return
 		}
 
@@ -52,19 +64,24 @@ func handleLogin(database *db.DB) http.HandlerFunc {
 		// Look up the player
 		rec, err := database.GetPlayer(req.PlayerName)
 		if err != nil {
+			loginAttempts.RecordFailure(ip)
 			http.Error(w, `{"error":"player not found"}`, http.StatusUnauthorized)
 			return
 		}
 
 		// Verify password
 		if rec.Password == "" {
+			loginAttempts.RecordFailure(ip)
 			http.Error(w, `{"error":"no password set for this player"}`, http.StatusUnauthorized)
 			return
 		}
 		if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(req.Password)); err != nil {
+			loginAttempts.RecordFailure(ip)
 			http.Error(w, `{"error":"invalid password"}`, http.StatusUnauthorized)
 			return
 		}
+
+		loginAttempts.RecordSuccess(ip)
 
 		// Determine role from level
 		role := "player"

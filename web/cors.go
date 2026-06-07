@@ -47,16 +47,13 @@ func getAllowedOrigins() []string {
 
 	// Production defaults — explicit list only, no wildcards
 	return []string{
-		"https://darkpawns.example.com",
-		"https://game.darkpawns.example.com",
+		"https://darkpawns.labz0rz.com",
 	}
 }
 
 // allowedSubdomains lists the specific subdomains permitted for CORS.
 // M-12: No wildcard matching — only explicitly listed subdomains are allowed.
-var allowedSubdomains = map[string][]string{
-	"darkpawns.example.com": {"game", "www", "api"},
-}
+var allowedSubdomains = map[string][]string{}
 
 func isDevMode() bool {
 	return os.Getenv("ENVIRONMENT") == "development"

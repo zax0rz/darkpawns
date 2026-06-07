@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -1535,5 +1536,35 @@ func TestNewRouter_RateLimit(t *testing.T) {
 	}
 	if rateLimitedCount == 0 {
 		t.Log("Note: rate limiter didn't trigger (may be too fast for test) — not a failure")
+	}
+}
+
+func TestHandleLogin_LockoutReturns429(t *testing.T) {
+	tracker := auth.NewLoginAttemptTracker(auth.LoginAttemptConfig{
+		Threshold: 3,
+		Lockout:   15 * time.Minute,
+	})
+	t.Cleanup(tracker.Stop)
+
+	// httptest.NewRequest defaults RemoteAddr to "192.0.2.1:1234"
+	testIP := "192.0.2.1"
+	for i := 0; i < 3; i++ {
+		tracker.RecordFailure(testIP)
+	}
+
+	// nil database: if lockout fires correctly, handler returns 429 before hitting DB
+	handler := handleLogin(nil, tracker)
+
+	body := strings.NewReader(`{"player_name":"anyone","password":"anything"}`)
+	req := httptest.NewRequest(http.MethodPost, "/admin/login", body)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected 429, got %d (body: %s)", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "too many failed attempts") {
+		t.Errorf("expected lockout message in body, got: %s", rec.Body.String())
 	}
 }

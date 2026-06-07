@@ -48,6 +48,10 @@ spec:
             secretKeyRef:
               name: darkpawns-secrets
               key: POSTGRES_PASSWORD
+        - name: ENVIRONMENT
+          value: "production"
+        - name: ADMIN_CORS_ORIGIN
+          value: "https://darkpawns.labz0rz.com"
         ports:
         - containerPort: 4350
         resources:

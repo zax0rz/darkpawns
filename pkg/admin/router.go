@@ -3,6 +3,7 @@ package admin
 import (
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
@@ -28,8 +29,15 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		}
 	}
 
+	// Separate lockout tracker for admin login — independent from the session (telnet) tracker.
+	// An IP locked out on telnet can still attempt admin login and vice versa.
+	loginAttempts := auth.NewLoginAttemptTracker(auth.LoginAttemptConfig{
+		Threshold: 10,
+		Lockout:   15 * time.Minute,
+	})
+
 	// Public routes (no auth required)
-	mux.HandleFunc("/admin/login", wrap(handleLogin(database)))
+	mux.HandleFunc("/admin/login", wrap(handleLogin(database, loginAttempts)))
 
 	// Static admin UI files (no auth required — SPA needs to load before login)
 	adminUIDir := os.Getenv("ADMIN_UI_DIR")
@@ -41,16 +49,28 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 			http.Redirect(w, r, "/admin/", http.StatusMovedPermanently)
 		})
 		mux.HandleFunc("/admin/favicon.svg", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
 			http.ServeFile(w, r, adminUIDir+"/favicon.svg")
 		})
 		mux.HandleFunc("/admin/icons.svg", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
 			http.ServeFile(w, r, adminUIDir+"/icons.svg")
 		})
 		mux.HandleFunc("/admin/assets/", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
 			http.StripPrefix("/admin/", http.FileServer(http.Dir(adminUIDir))).ServeHTTP(w, r)
 		})
 		// SPA fallback — serve index.html for any /admin/* that doesn't match an API route
 		mux.HandleFunc("/admin/index.html", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
 			http.ServeFile(w, r, adminUIDir+"/index.html")
 		})
 	}
