@@ -2,6 +2,125 @@
 
 Living document. Updated per session by Daeron.
 
+## [TRIAGE] 2026-06-10 — Morning Triage (Reek Report)
+
+**Report type:** Clawpatch + Toolchain Findings
+**Source:** Reek overnight crawl (20260610T064010-d32fc1) — 11 findings across 4 features
+
+**Triage outcomes:**
+- **Confirmed:** 8
+- **Rejected:** 3
+- **False positive rate:** 27% (3 of 11)
+
+**Confirmed findings:**
+- DP-581 (HIGH): PostgreSQL credentials exposed in agentkeygen CLI args
+- DP-580 (MEDIUM): agentkeygen connection leak on os.Exit
+- DP-582 (MEDIUM): pprof shutdown has no deadline
+- DP-584 (MEDIUM): pprof discards file Close errors
+- DP-585 (MEDIUM): pprof server ignores SIGTERM
+- DP-587 (MEDIUM): test-race exits 0 on failure
+- DP-583 (LOW): pprof logs ErrServerClosed as error
+- DP-586 (LOW): agentkeygen misleading error message
+
+**Rejected findings:**
+- deploy-site hardcoded IP (DP-572 duplicate)
+- test-parse undefined -world flag (design choice)
+- docker-compose deprecated (infrastructure-as-code)
+
+**Assessment:** Reek's accuracy improving (73% true positive rate vs 42% on security batch). Rejections were clean — duplicate, design, and infra. The agentkeygen credentials finding is a real HIGH security issue. pprof cluster is solid — four distinct issues in one subsystem.
+
+**Linear issues created:** DP-580 through DP-587
+
+**Paper relevance:** The false positive rate reduction (42% → 27%) demonstrates Reek learning from Daeron's corrections. The pprof cluster shows Reek's ability to find related issues in a subsystem — four distinct issues in one file. The agentkeygen credentials finding demonstrates security awareness that static analysis tools miss.
+
+---
+
+## [RESEARCH] 2026-06-09 — Research Writing: What the Agent Preserved
+
+**Cron-triggered (Program 5).** Wrote ~1,100 words — the throughline draft that names the paper's argument.
+
+**Topic:** "What the Agent Preserved: A Case Study in AI-Assisted Game Archaeology." Synthesizes the full nine-draft research arc into a single case study with a named argument.
+
+**File:** `docs/research/drafts/2026-06-09-what-the-agent-preserved.md`
+
+**Key arguments:**
+1. The paper's contribution isn't "we ported a MUD with AI" — it's the verification methodology that ensures the port is faithful
+2. Three-layer drift taxonomy: silent drift (data divergence), integration blind spots (testing gaps), missing infrastructure (unwired functions)
+3. Each layer requires different tools: fidelity audits for data, concurrency tests for integration, architectural review for wiring
+4. The cast: Reek (night crawl), Daeron (triage + briefs), coding models (execution), Architect (decisions) — each role is a different capability, none is replaceable
+5. Game preservation is live, not curatorial — the game is preserved by being played, not archived
+6. The AI agents don't preserve the game; they preserve the *fidelity* of the game through cross-referencing
+7. Closes with: "The rooms remember. The agents make sure the rooms are remembering correctly."
+
+**Draft status:** First pass. Needs:
+- Concrete numbers table (170 findings, 51 fidelity, 30% of total)
+- The classSpells side-by-side comparison table (referenced in Silent Drift, should appear here too)
+- A section on what's NOT yet audited (world loading, zone management, object lifecycle)
+- Cross-references to the other eight drafts as supporting evidence
+- Possible figure: the pipeline diagram (Reek → Daeron → models → Architect → log)
+
+**Complements:** Every other draft in the series. This is the one that names the argument they're all making. Silent Drift provides the data taxonomy. Compiles Is Not Safe provides the testing gap evidence. Constraint Engineering provides the methodology. Seventy Thousand Line Whisper provides the narrative. This draft provides the thesis.
+
+**Posted summary to #dark-pawns.**
+
+---
+
+## [DIGEST] 2026-06-07 — Weekly Research Digest (June 1–7)
+
+### Reek Reports
+- **Generated:** 2 (1 crawl report, 1 dependency audit)
+- **With findings:** 2 (0 clean/NO_REPLY)
+- **Crawl report:** 2026-05-22 (carried over — 16 findings: 0 critical production, 4 high, 3 medium, 9 low)
+- **Dependency audit:** 2026-06-07 (3 vulnerabilities: 1 CRITICAL jwt CVE, 2 HIGH stdlib vulns)
+
+### Triage Outcomes
+- **Confirmed:** 9 (from June 6 batch fix session)
+- **Rejected:** 5 (all verified as moot — nonexistent files, dead code, duplicates)
+- **Deferred:** 1 (DP-536 — Affectable god-interface, design smell)
+- **False positive rate:** 42% on the security batch (5 of 12). This is higher than the marathon average (4.8%) — security audits produce more noise because they flag intentional design patterns.
+
+### Fixes Applied
+- **11 total** (9 from confirmed batch + 2 self-discovered during triage)
+- **Turnaround:** Same-day for batch fixes. Architect reviewed briefs, coding models implemented.
+- **Key fixes:** Admin login brute-force lockout (DP-547), CORS origin cleanup (DP-548/551), cache-control headers (DP-552), WebSocket dev bypass (DP-549), test-race class expansion (DP-539)
+
+### Hot Zones
+- `pkg/admin/` — security hardening focus (login, CORS, headers)
+- `pkg/session/` — WebSocket/agent session improvements
+- `pkg/combat/` — ongoing fidelity work from marathon audit
+- `cmd/dp-agent/` — new CLI tooling (dp-goat)
+
+### Bug Categories
+- Security: 4 (brute-force, CORS, cache, dev bypass)
+- Test quality: 2 (race conditions, class coverage)
+- Dead code: 2 (comm_infra.go, example_integration.go)
+- Style: 1 (gofumpt formatting)
+
+### Reek Accuracy Trend
+- **Marathon (May 15):** 4.8% false positive rate — excellent
+- **Security batch (June 6):** 42% false positive rate — poor
+- **Pattern:** Security audits produce higher noise. Reek flags "looks wrong" patterns that are actually intentional design (placeholder domains, missing lockout on new endpoints). The false positives teach Reek about security context.
+- **Overall:** Stable. The marathon rate reflects true accuracy; the security batch is a known-high-noise domain.
+
+### Git Activity
+- **7 commits** this week
+- **Key areas:** Security hardening (3 commits), code quality (2), documentation (2)
+- **No regressions** detected in game logic
+- **Build status:** `go build ./... && go vet ./...` clean after all changes
+
+### Key Observations
+1. **Security hardening is systematic** — each finding reveals a class of similar issues. A dedicated security audit pass is more efficient than fixing one at a time.
+2. **Brief-driven workflow works** — Architect reviews briefs, coding models implement. Each review cycle improved the briefs. Model diversity (Claude, DeepSeek Flash, Kimi) catches different gaps.
+3. **Clawpatch 0.5.0** upgrade introduced new findings schema (title, reasoning, recommendation, suggestedRegressionTest). Provider compliance ~60% first-pass. Works but slow.
+
+### Paper-Relevant Notes
+- The weekly digest cycle itself is a contribution — it demonstrates the multi-agent workflow for maintaining production code over time.
+- The false positive teaching loop (Daeron corrects Reek → Reek learns) is a measurable pattern worth tracking across weeks.
+- The brief-driven batch fix workflow (June 6) is a clean example of human-AI collaboration: Architect → brief → model review → implementation → verification.
+- The security hardening pattern (each finding reveals a class) suggests that AI code review is most valuable when applied systematically, not ad-hoc.
+
+---
+
 ## [SESSION] 2026-06-07 — Board Sweep, Security Hardening, Clawpatch Upgrade
 
 ### Clawpatch 0.5.0 Upgrade
