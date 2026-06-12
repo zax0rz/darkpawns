@@ -139,6 +139,9 @@ func CombatRound() {
 }
 
 func DamageDealt(sourceType string, amount int) {
+	if amount < 0 {
+		return
+	}
 	damageDealt.WithLabelValues(sourceType).Add(float64(amount))
 }
 

@@ -3,6 +3,7 @@ package metrics
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -76,4 +77,32 @@ func TestMetrics(t *testing.T) {
 
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || contains(s[1:], substr)))
+}
+
+func TestDamageDealt_Negative(t *testing.T) {
+	// Add positive damage
+	DamageDealt("player_test", 10)
+
+	// Verify it increased
+	req2 := httptest.NewRequest("GET", "/metrics", nil)
+	rr2 := httptest.NewRecorder()
+	Handler().ServeHTTP(rr2, req2)
+	body2 := rr2.Body.String()
+
+	if !strings.Contains(body2, `darkpawns_damage_dealt_total{source_type="player_test"} 10`) {
+		t.Errorf("expected metric value to be 10, got body: %s", body2)
+	}
+
+	// Try to add negative damage
+	DamageDealt("player_test", -5)
+
+	// Verify it did NOT change (still 10)
+	req3 := httptest.NewRequest("GET", "/metrics", nil)
+	rr3 := httptest.NewRecorder()
+	Handler().ServeHTTP(rr3, req3)
+	body3 := rr3.Body.String()
+
+	if !strings.Contains(body3, `darkpawns_damage_dealt_total{source_type="player_test"} 10`) {
+		t.Errorf("expected metric value to remain 10, got body: %s", body3)
+	}
 }
