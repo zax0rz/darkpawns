@@ -2,7 +2,7 @@
 //
 // Usage:
 //
-//	go run ./cmd/agentkeygen -name "brenda69" -db "postgres://..."
+//	DATABASE_URL="postgres://..." go run ./cmd/agentkeygen -name "brenda69"
 //
 // Output:
 //
@@ -22,7 +22,6 @@ import (
 
 func main() {
 	name := flag.String("name", "", "character name to associate the key with")
-	dsn := flag.String("db", "", "postgres connection string")
 	flag.Parse()
 
 	if *name == "" {
@@ -30,31 +29,42 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	if *dsn == "" {
-		fmt.Fprintln(os.Stderr, "error: -db is required")
-		flag.Usage()
+
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		fmt.Fprintln(os.Stderr, "error: DATABASE_URL environment variable is required")
+		fmt.Fprintln(os.Stderr, "example: export DATABASE_URL='postgres://user:pass@localhost/darkpawns'")
 		os.Exit(1)
 	}
 
-	database, err := db.New(*dsn)
+	if err := run(*name, dsn); err != nil {
+		slog.Error("agentkeygen failed", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run(name, dsn string) error {
+	database, err := db.New(dsn)
 	if err != nil {
-		slog.Error("connect to database", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("connect to database: %w", err)
+	}
+	defer func() { _ = database.Close() }()
+
+	return runWithDB(name, database)
+}
+
+func runWithDB(name string, database db.Database) error {
+	if _, err := database.GetPlayer(name); err != nil {
+		return fmt.Errorf("get player %q: %w", name, err)
 	}
 
-	// Verify character exists before generating key
-	if _, err := database.GetPlayer(*name); err != nil {
-		slog.Error("character not found", "name", *name)
-		os.Exit(1)
-	}
-
-	rawKey, id, err := database.CreateAgentKey(*name)
+	rawKey, id, err := database.CreateAgentKey(name)
 	if err != nil {
-		slog.Error("create agent key", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("create agent key: %w", err)
 	}
 
-	fmt.Printf("Character: %s\n", *name)
+	fmt.Printf("Character: %s\n", name)
 	fmt.Printf("Key (id=%d): %s\n", id, rawKey)
 	fmt.Println("(shown once — store in Vaultwarden)")
+	return nil
 }
