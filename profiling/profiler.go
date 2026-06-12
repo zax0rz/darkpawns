@@ -12,6 +12,7 @@ import (
 	"runtime"
 	runtimepprof "runtime/pprof"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -58,7 +59,9 @@ func (p *Profiler) StartCPUProfile() error {
 	}
 
 	if err := runtimepprof.StartCPUProfile(f); err != nil {
-		_ = f.Close()
+		if cerr := f.Close(); cerr != nil {
+			return fmt.Errorf("start cpu profile: %w (failed to close file: %v)", err, cerr)
+		}
 		return fmt.Errorf("start cpu profile: %w", err)
 	}
 
@@ -80,15 +83,18 @@ func (p *Profiler) StopCPUProfile() error {
 	}
 
 	runtimepprof.StopCPUProfile()
-	_ = p.cpuProfile.Close()
+	err := p.cpuProfile.Close()
 	p.cpuProfile = nil
+	if err != nil {
+		return fmt.Errorf("close cpu profile: %w", err)
+	}
 
 	slog.Info("CPU profiling stopped")
 	return nil
 }
 
 // WriteHeapProfile writes heap profile
-func (p *Profiler) WriteHeapProfile() error {
+func (p *Profiler) WriteHeapProfile() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -108,7 +114,11 @@ func (p *Profiler) WriteHeapProfile() error {
 	if err != nil {
 		return fmt.Errorf("create heap profile: %w", err)
 	}
-	defer func() { _ = f.Close() }()
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("close profile: %w", cerr)
+		}
+	}()
 
 	if err := runtimepprof.WriteHeapProfile(f); err != nil {
 		return fmt.Errorf("write heap profile: %w", err)
@@ -125,7 +135,7 @@ func (p *Profiler) StartBlockProfile(rate int) {
 }
 
 // StopBlockProfile stops block profiling and writes profile
-func (p *Profiler) StopBlockProfile() error {
+func (p *Profiler) StopBlockProfile() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -145,7 +155,11 @@ func (p *Profiler) StopBlockProfile() error {
 	if err != nil {
 		return fmt.Errorf("create block profile: %w", err)
 	}
-	defer func() { _ = f.Close() }()
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("close profile: %w", cerr)
+		}
+	}()
 
 	if err := runtimepprof.Lookup("block").WriteTo(f, 0); err != nil {
 		return fmt.Errorf("write block profile: %w", err)
@@ -165,7 +179,7 @@ func (p *Profiler) StartMutexProfile(rate int) {
 }
 
 // StopMutexProfile stops mutex profiling and writes profile
-func (p *Profiler) StopMutexProfile() error {
+func (p *Profiler) StopMutexProfile() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -185,7 +199,11 @@ func (p *Profiler) StopMutexProfile() error {
 	if err != nil {
 		return fmt.Errorf("create mutex profile: %w", err)
 	}
-	defer func() { _ = f.Close() }()
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("close profile: %w", cerr)
+		}
+	}()
 
 	if err := runtimepprof.Lookup("mutex").WriteTo(f, 0); err != nil {
 		return fmt.Errorf("write mutex profile: %w", err)
@@ -199,7 +217,7 @@ func (p *Profiler) StopMutexProfile() error {
 }
 
 // GoroutineDump dumps current goroutines
-func (p *Profiler) GoroutineDump() error {
+func (p *Profiler) GoroutineDump() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -219,7 +237,11 @@ func (p *Profiler) GoroutineDump() error {
 	if err != nil {
 		return fmt.Errorf("create goroutine dump: %w", err)
 	}
-	defer func() { _ = f.Close() }()
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("close profile: %w", cerr)
+		}
+	}()
 
 	if err := runtimepprof.Lookup("goroutine").WriteTo(f, 2); err != nil {
 		return fmt.Errorf("write goroutine dump: %w", err)
@@ -460,7 +482,7 @@ func StartPProfServer(addr string) *http.Server {
 	go func() {
 		// #nosec G706
 		slog.Info("Starting pprof server", "address", addr)
-		if err := server.ListenAndServe(); err != nil {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("pprof server error", "error", err)
 		}
 	}()
@@ -571,16 +593,18 @@ func main() {
 
 		server := StartPProfServer(addr)
 
-		// Wait for interrupt
+		// Wait for interrupt or SIGTERM
 		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		<-sigChan
 
 		// Graceful shutdown
 		if server != nil {
-			if err := server.Shutdown(context.Background()); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			if err := server.Shutdown(ctx); err != nil {
 				slog.Error("pprof server shutdown error", "error", err)
 			}
+			cancel()
 		}
 
 	case "stats":
