@@ -335,23 +335,28 @@ func main() {
 		WriteTimeout:      30 * time.Second,
 	}
 
+	errChan := make(chan error, 1)
+
 	go func() {
 		if haveCerts {
 			slog.Info("Starting HTTPS server", "address", addr)
 			if err := srv.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
-				slog.Error("Server error", "error", err)
-				os.Exit(1)
+				errChan <- err
 			}
 		} else {
 			slog.Warn("TLS disabled — WebSocket and API traffic is unencrypted. Set TLS_CERT_FILE and TLS_KEY_FILE for production.", "address", addr)
 			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				slog.Error("Server error", "error", err)
-				os.Exit(1)
+				errChan <- err
 			}
 		}
 	}()
 
-	<-sigChan
+	select {
+	case <-sigChan:
+		slog.Info("Received shutdown signal")
+	case err := <-errChan:
+		slog.Error("Server error, shutting down gracefully", "error", err)
+	}
 	slog.Info("Shutting down gracefully...")
 
 	// 1. Stop telnet listener (accepting new TCP connections)

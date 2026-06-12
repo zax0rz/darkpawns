@@ -136,7 +136,11 @@ func (dm *DoorManager) CanPass(fromRoom int, direction string) (bool, string) {
 
 // OpenDoor attempts to open a door.
 func (dm *DoorManager) OpenDoor(fromRoom int, direction string) (bool, string) {
-	door, ok := dm.GetDoor(fromRoom, direction)
+	dm.mu.Lock()
+	defer dm.mu.Unlock()
+
+	key := dm.key(fromRoom, direction)
+	door, ok := dm.doors[key]
 	if !ok {
 		return false, "There is no door there."
 	}
@@ -150,7 +154,11 @@ func (dm *DoorManager) OpenDoor(fromRoom int, direction string) (bool, string) {
 
 // CloseDoor attempts to close a door.
 func (dm *DoorManager) CloseDoor(fromRoom int, direction string) (bool, string) {
-	door, ok := dm.GetDoor(fromRoom, direction)
+	dm.mu.Lock()
+	defer dm.mu.Unlock()
+
+	key := dm.key(fromRoom, direction)
+	door, ok := dm.doors[key]
 	if !ok {
 		return false, "There is no door there."
 	}
@@ -164,7 +172,11 @@ func (dm *DoorManager) CloseDoor(fromRoom int, direction string) (bool, string) 
 
 // LockDoor attempts to lock a door.
 func (dm *DoorManager) LockDoor(fromRoom int, direction string, keyVNum int) (bool, string) {
-	door, ok := dm.GetDoor(fromRoom, direction)
+	dm.mu.Lock()
+	defer dm.mu.Unlock()
+
+	key := dm.key(fromRoom, direction)
+	door, ok := dm.doors[key]
 	if !ok {
 		return false, "There is no door there."
 	}
@@ -178,7 +190,11 @@ func (dm *DoorManager) LockDoor(fromRoom int, direction string, keyVNum int) (bo
 
 // UnlockDoor attempts to unlock a door.
 func (dm *DoorManager) UnlockDoor(fromRoom int, direction string, keyVNum int) (bool, string) {
-	door, ok := dm.GetDoor(fromRoom, direction)
+	dm.mu.Lock()
+	defer dm.mu.Unlock()
+
+	key := dm.key(fromRoom, direction)
+	door, ok := dm.doors[key]
 	if !ok {
 		return false, "There is no door there."
 	}
@@ -192,7 +208,11 @@ func (dm *DoorManager) UnlockDoor(fromRoom int, direction string, keyVNum int) (
 
 // PickDoor attempts to pick a door lock.
 func (dm *DoorManager) PickDoor(fromRoom int, direction string, skill int) (bool, string) {
-	door, ok := dm.GetDoor(fromRoom, direction)
+	dm.mu.Lock()
+	defer dm.mu.Unlock()
+
+	key := dm.key(fromRoom, direction)
+	door, ok := dm.doors[key]
 	if !ok {
 		return false, "There is no door there."
 	}
@@ -206,7 +226,11 @@ func (dm *DoorManager) PickDoor(fromRoom int, direction string, skill int) (bool
 
 // BashDoor attempts to bash a door.
 func (dm *DoorManager) BashDoor(fromRoom int, direction string, strength int) (bool, string) {
-	door, ok := dm.GetDoor(fromRoom, direction)
+	dm.mu.Lock()
+	defer dm.mu.Unlock()
+
+	key := dm.key(fromRoom, direction)
+	door, ok := dm.doors[key]
 	if !ok {
 		return false, "There is no door there."
 	}
