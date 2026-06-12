@@ -371,18 +371,32 @@ func (am *AffectManager) Tick() {
 	am.mu.Unlock()
 
 	// Phase 2: process removals and messages outside lock
-	// Group by entity+spellID so we remove all affects from one spell together
-	type spellRemovalKey struct {
-		entityID string
-		spellID  int
-	}
-	seen := make(map[spellRemovalKey]bool)
 	for _, entry := range expiredAffects {
-		key := spellRemovalKey{entry.entityID, entry.spellID}
-		if !seen[key] {
-			seen[key] = true
-			am.RemoveAffectsBySpell(entry.entity, entry.spellID)
+		entityID := am.getEntityID(entry.entity)
+
+		// Reverse stat changes
+		am.removeAffectImmediate(entry.entity, entry.aff)
+
+		// Decrement flag refs and clear if zero
+		if entry.aff.Flags != 0 {
+			shouldClear := false
+			am.mu.Lock()
+			if refs, ok := am.flagRefs[entityID]; ok {
+				refs[entry.aff.Flags]--
+				if refs[entry.aff.Flags] <= 0 {
+					shouldClear = true
+					delete(refs, entry.aff.Flags)
+				}
+			}
+			am.mu.Unlock()
+
+			if shouldClear {
+				entry.entity.ClearStatusFlag(entry.aff.Flags)
+			}
 		}
+
+		// Send wear-off message
+		am.sendAffectMessage(entry.entity, entry.aff, false)
 	}
 }
 

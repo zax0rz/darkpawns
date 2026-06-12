@@ -398,7 +398,14 @@ func (s *Shop) Restock(prototypes []*parser.Obj, currentTick int) int {
 
 	// Try to add new items
 	for _, proto := range prototypes {
-		if !s.CanSellType(proto.TypeFlag) {
+		sellsThisType := false
+		for _, t := range s.ItemTypes {
+			if t == proto.TypeFlag {
+				sellsThisType = true
+				break
+			}
+		}
+		if !sellsThisType {
 			continue
 		}
 		if len(s.Inventory) < s.MaxItems {

@@ -1,6 +1,6 @@
 module github.com/zax0rz/darkpawns
 
-go 1.26.3
+go 1.26.4
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -9,8 +9,8 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.44
 	github.com/prometheus/client_golang v1.23.2
 	github.com/yuin/gopher-lua v1.1.2
-	golang.org/x/crypto v0.51.0
-	golang.org/x/text v0.37.0
+	golang.org/x/crypto v0.53.0
+	golang.org/x/text v0.38.0
 	golang.org/x/time v0.15.0
 )
 
@@ -23,6 +23,6 @@ require (
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
