@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -159,10 +160,21 @@ func (bm *BanManager) IsBanned(hostname string) int {
 	lower := strings.ToLower(hostname)
 	maxLevel := BanNot
 	for _, entry := range bm.bans {
-		if strings.Contains(lower, entry.Site) {
-			if entry.BanType > maxLevel {
-				maxLevel = entry.BanType
+		matched := false
+		if strings.Contains(entry.Site, "*") {
+			// Wildcard matching — matches C's match() function
+			// Use path.Match (not filepath.Match) for OS-independent behavior
+			var err error
+			matched, err = path.Match(entry.Site, lower)
+			if err != nil {
+				slog.Warn("malformed ban wildcard pattern", "pattern", entry.Site, "error", err)
 			}
+		} else {
+			// Substring matching — existing behavior
+			matched = strings.Contains(lower, entry.Site)
+		}
+		if matched && entry.BanType > maxLevel {
+			maxLevel = entry.BanType
 		}
 	}
 	return maxLevel

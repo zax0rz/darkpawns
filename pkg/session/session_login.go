@@ -144,13 +144,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return nil
 	}
 
-	// Check against invalid name list (profanity filter) — from game/ban.c
-	if !game.ValidName(login.PlayerName) {
-		s.sendError("Invalid player name. Please choose another.")
-		_ = s.conn.Close()
-		return nil
-	}
-
 	if login.Password == "" {
 		s.sendError("Password required.")
 		_ = s.conn.Close()
@@ -183,7 +176,12 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			p, err := db.RecordToPlayer(rec, s.manager.world)
 			if err != nil {
 				slog.ErrorContext(s.sessionCtx, "RecordToPlayer error", s.logAttrs(slog.Any("error", err))...)
-				// Fall back to character creation
+				// Fall back to character creation (only check profanity list/length without active check)
+				if !game.ValidNameNoActive(login.PlayerName) {
+					s.sendError("Invalid player name. Please choose another.")
+					_ = s.conn.Close()
+					return nil
+				}
 				s.startNewCharFlow(login.PlayerName, login.Password)
 				return nil
 			}
@@ -207,11 +205,25 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				s.sendError(fmt.Sprintf("A character named '%s' already exists. Please choose a different name.", login.PlayerName))
 				return nil
 			}
+
+			// Validate player name for character creation (checks format, profanity, and online duplicates)
+			if !game.ValidName(login.PlayerName) {
+				s.sendError("Invalid player name. Please choose another.")
+				_ = s.conn.Close()
+				return nil
+			}
+
 			s.startNewCharFlow(login.PlayerName, login.Password)
 			return nil
 		}
 	} else {
 		// No DB - start creation flow statefully
+		// Validate player name for character creation without active check (to allow no-DB test takeover)
+		if !game.ValidNameNoActive(login.PlayerName) {
+			s.sendError("Invalid player name. Please choose another.")
+			_ = s.conn.Close()
+			return nil
+		}
 		s.startNewCharFlow(login.PlayerName, login.Password)
 		return nil
 	}

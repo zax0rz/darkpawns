@@ -298,3 +298,33 @@ func TestManager_BroadcastToRoom_EmptyRoom(t *testing.T) {
 	m.BroadcastToRoom(9999, msg, "") // room with no one
 	// Should not panic
 }
+
+func TestHasActiveCharacter_CaseInsensitive(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Aidan", 1001, true)
+
+	m.mu.Lock()
+	m.sessions["aidan"] = s
+	m.mu.Unlock()
+
+	// Verify that game.HasActiveCharacter is case-insensitive
+	if game.HasActiveCharacter == nil {
+		t.Fatal("game.HasActiveCharacter callback is not registered")
+	}
+
+	if !game.HasActiveCharacter("Aidan") {
+		t.Error("Expected game.HasActiveCharacter(Aidan) to be true")
+	}
+
+	if !game.HasActiveCharacter("aidan") {
+		t.Error("Expected game.HasActiveCharacter(aidan) to be true")
+	}
+
+	if !game.HasActiveCharacter("AIDAN") {
+		t.Error("Expected game.HasActiveCharacter(AIDAN) to be true")
+	}
+
+	if game.HasActiveCharacter("Other") {
+		t.Error("Expected game.HasActiveCharacter(Other) to be false")
+	}
+}

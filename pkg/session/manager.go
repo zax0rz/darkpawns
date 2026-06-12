@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -207,8 +208,14 @@ func NewManager(world *game.World, database db.Database) *Manager {
 	// Wire game-level callbacks
 	// HasActiveCharacter allows game.ValidName to check against active sessions.
 	game.HasActiveCharacter = func(name string) bool {
-		_, ok := m.GetSession(name)
-		return ok
+		m.mu.RLock()
+		defer m.mu.RUnlock()
+		for sessName := range m.sessions {
+			if strings.EqualFold(sessName, name) {
+				return true
+			}
+		}
+		return false
 	}
 
 	// Load ban list and invalid name list at startup

@@ -5,7 +5,6 @@
 package game
 
 import (
-	"log/slog"
 	"path/filepath"
 )
 
@@ -110,7 +109,22 @@ func ProcessDream(ch DreamContext, lastDeath int64) *DreamResult {
 // Uses BanManager and the HasActiveCharacter callback.
 func ValidName(name string) bool {
 	if len(name) < 2 || len(name) > 20 {
-		slog.Warn("Invalid name length", "name", name)
+		return false
+	}
+	if banManager != nil && !banManager.ValidName(name) {
+		return false
+	}
+	// Check if character is already online (DP-554)
+	if HasActiveCharacter != nil && HasActiveCharacter(name) {
+		return false
+	}
+	return true
+}
+
+// ValidNameNoActive checks if a name is valid for character creation without
+// checking if the character is currently online.
+func ValidNameNoActive(name string) bool {
+	if len(name) < 2 || len(name) > 20 {
 		return false
 	}
 	if banManager != nil && !banManager.ValidName(name) {
@@ -118,3 +132,4 @@ func ValidName(name string) bool {
 	}
 	return true
 }
+
