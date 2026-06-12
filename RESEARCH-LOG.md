@@ -2,6 +2,31 @@
 
 Living document. Updated per session by Daeron.
 
+## [RESEARCH] 2026-06-11 — Research Writing: Thesis Draft Enhancement
+
+**Cron-triggered (Program 5).** Enhanced "What the Agent Preserved" (June 9 draft) with concrete data.
+
+**What was missing:** The draft's arguments were strong but lacked specific numbers. The research log flagged five gaps: concrete findings table, classSpells comparison, unaudited subsystems, cross-references, pipeline diagram.
+
+**What I added:**
+1. **By the Numbers table** — 220 confirmed findings, 22 rejected, 10% FPR overall. 66 fidelity gaps (30% of total). Breakdown by category.
+2. **classSpells detail** — Mage had 50 entries in Go vs 27 in C. Extra psionic spells, wrong levels. Noted this is documented in the "Silent Drift" draft.
+3. **Unaudited subsystems list** — World loading, zone management, object lifecycle, economy, socials, help system. Six specific subsystems with known gap patterns.
+4. **Cross-references** — All nine companion drafts now referenced in context: Silent Drift (taxonomy), Compiles Is Not Safe (testing gaps), Seventy-Thousand-Line Whisper (narrative), The Game That Remembers (invisibility), Constraint Engineering (methodology), Memory Consent Ethics (consent), Coordination Surface (infrastructure), Ecosystem Self-Repair (infrastructure), Stateless Agents (daemon).
+5. **Closing paragraph** — Links all ten drafts as a unified argument.
+
+**File:** `docs/research/drafts/2026-06-09-what-the-agent-preserved.md`
+
+**Status:** Draft now ~2,800 words. Core argument established with data backing. Ready for Architect review before submission.
+
+**Next steps:**
+- Pipeline diagram (Reek → Daeron → models → Architect → log) as a figure
+- Full classSpells comparison table (side-by-side C vs Go entries)
+- Section on the brief-driven workflow as reproducible methodology
+- Possible expansion of the "What Survived" section with specific before/after examples
+
+---
+
 ## [TRIAGE] 2026-06-10 — Morning Triage (Reek Report)
 
 **Report type:** Clawpatch + Toolchain Findings
@@ -2633,3 +2658,96 @@ The fidelity audit prompt at `docs/briefs/full-fidelity-audit-prompt.md` is reus
 - Dead code removed: `cmdSocial` (confirmed not registered by string), `packWeightLabel`, `infobarClear*`, `cmdInfoBarUpdate`, `sendGMCP`
 
 **What this enables:** Quality gates prevent regressions. Every future commit must pass linting. Boy Scout rule: touch a file, clean it up.
+
+---
+
+## [DIGEST] 2026-06-10 — Weekly Research Digest (Jun 3–10)
+
+**Reek reports:** 3 generated (2 crawl runs, 1 dependency audit)
+**Triage outcomes:** 12 confirmed, 8 rejected, 4 pending (33% false positive rate)
+**Fixes applied:** 14 (11 from telephone-method batch, 3 from clawpatch)
+**Research output:** 3 new drafts (Constraint Engineering, Memory Consent Ethics, Throughline thesis)
+**Git commits:** 8 (4 fixes, 3 docs, 1 chore)
+
+---
+
+### Week Summary
+
+This was the week the pipeline matured. The telephone method — Daeron writes briefs, Architect delivers to models, models review before implementing — proved itself across 14 issues in a single session (June 7). Three independent models caught gaps Daeron missed during brief review. The workflow is no longer experimental.
+
+**Severity distribution across all findings:**
+- CRITICAL: 2 (wildcard ban broken, Go stdlib vulns)
+- HIGH: 5 (PostgreSQL creds exposed, DNS bans dead, ValidName gap, JWT CVE, os.Exit bypass)
+- MEDIUM: 9 (pprof lifecycle x3, agentkeygen leak, test-race exit, etc.)
+- LOW: 3 (pprof ErrServerClosed, agentkeygen error, empty init)
+
+**Hot zones:** `pkg/admin/` (security hardening), `cmd/agentkeygen/` (3 findings — credentials, leaks, errors), `profiling/` (4 findings — shutdown lifecycle), `pkg/telnet/` (2 CRITICAL — ban system broken)
+
+**Bug categories:**
+- Security: 5 (credential exposure, ban bypass, lockout bypass, CORS, cache-control)
+- Concurrency: 3 (door race, shop deadlock, PerformanceMonitor double-close)
+- Lifecycle: 4 (os.Exit bypass, connection leaks, shutdown deadlines, signal handling)
+- Logic: 2 (test exit code, misleading error messages)
+
+---
+
+### Key Patterns
+
+**1. The ban system is comprehensively broken.**
+DP-553 (CRITICAL): wildcard ban matching never fires — Go passes raw IP while C resolved to hostname + constructed wildcard variants. DP-557 (HIGH): no DNS hostname resolution at all. DP-547 (HIGH, fixed): admin login bypasses brute-force lockout. Three independent failures in the same subsystem. This is a systemic gap, not isolated bugs.
+
+**2. The telephone method works — and models improve the briefs.**
+June 7 batch: Daeron wrote 4 briefs covering 14 issues. Claude Code and DeepSeek Flash each reviewed their briefs before implementing. Claude caught username enumeration, lockout-before-JSON-decode, and missing imports. DeepSeek caught admin CORS hard-failure, allowedSubdomains surviving cleanup, and fix ordering. Three reviews across two models surfaced 8 issues Daeron's static analysis missed. The model review step is where briefs get better.
+
+**3. Reek's accuracy is improving — but infrastructure noise persists.**
+June 10 report: 8/11 confirmed (73%). Three rejected: deploy-site hardcoded IP (already tracked), test-parse undefined flag (intentional design), docker-compose deprecated (infra, not code). Reek continues to flag Makefile/infra issues that don't belong in code review scope. Prompt engineering to teach Reek to skip infra-as-code is overdue.
+
+**4. Security hardening is the week's dominant theme.**
+Five of 12 confirmed findings were security-related. The June 7 batch shipped admin login lockout (DP-547), CORS origin cleanup (DP-551), cache-control headers (DP-552), WebSocket origin validation (DP-549), and k8s environment hardening (DP-548). The credential exposure findings (DP-574, DP-581) are still open — PostgreSQL DSN visible in `ps aux`.
+
+**5. The dependency audit found real vulnerabilities.**
+Reek's June 7 dependency audit flagged CVE-2025-30204 (JWT DoS), 3 Go stdlib vulns (fixed in 1.26.4), and 14 SSH vulns in golang.org/x/crypto. The crypto upgrade landed (v0.31.0 → v0.51.0, 14 SSH vulns fixed including critical GO-2026-5023). JWT and Go stdlib upgrades still pending Architect approval.
+
+---
+
+### Research Output
+
+Three new drafts this week:
+
+1. **Constraint Engineering** (June 2) — How structured briefs make LLM code review work. Three-layer brief architecture (scope, methodology, output). Connects to StarDojo (ICLR 2026) — both constrain perception rather than expanding it.
+
+2. **Memory Consent Ethics** (June 4) — The consent gap in server-hosted persistent memory. Players remembered without opting in. Emotional valence assigned without knowledge. Positions the paper as ethically aware, not just technically novel.
+
+3. **What the Agent Preserved** (June 9) — The throughline thesis. Paper's contribution isn't "we ported a MUD with AI" — it's the verification methodology that ensures fidelity. The AI agents don't preserve the game; they preserve the *fidelity* of the game through cross-referencing.
+
+**Research series state:** 10 drafts total. The arc is maturing — most gaps filled. Remaining: dreaming layer as contribution, evaluation methodology novelty (BPS/SCS as new metrics).
+
+---
+
+### Board State (June 10)
+
+**Open CRITICAL/HIGH:**
+- DP-558: Go stdlib vulns — upgrade to 1.26.4 (Urgent)
+- DP-553: Wildcard ban matching broken (Urgent)
+- DP-581: PostgreSQL credentials in agentkeygen CLI (High)
+- DP-557: DNS hostname resolution dead (High)
+- DP-554: ValidName missing online duplicate check (High)
+- DP-559: JWT CVE-2025-30204 (High)
+- DP-566: os.Exit in server goroutine bypasses shutdown (High)
+- DP-562: Door race condition (High)
+- DP-561: Shop.Restock deadlocks (High)
+
+**Open MEDIUM:** 9 issues (pprof lifecycle, agentkeygen leak, test-race, validation package, etc.)
+
+**Done this week:** 14 issues closed (DP-547, DP-548, DP-549, DP-551, DP-552, DP-565, DP-515, DP-539, DP-542, + 5 more)
+
+**Canceled this week:** 5 issues (DP-541, DP-543, DP-544, DP-545, DP-546 — all false positives)
+
+---
+
+### Paper-Relevant Notes
+
+- **Telephone method + model review** is the strongest methodology finding this week. Three models catching 8 issues across 4 briefs is a publishable result. "LLM-as-reviewer-of-LLM-briefs" is a novel coordination pattern.
+- **The ban system failure** is a compelling case study for the paper: three independent code paths all failed because the Go port didn't preserve the C system's DNS resolution behavior. This is exactly the kind of silent drift that fidelity audits catch.
+- **10 research drafts** now form a coherent arc. The throughline thesis ("What the Agent Preserved") ties them together. Next step: concrete numbers table and the classSpells side-by-side comparison.
+- **Reek accuracy trend:** 73% this week (down from 100% on fidelity audits). The drop is expected — Reek's crawl reports produce more noise than Daeron's manual fidelity audits. The 42% FP rate on the security batch (June 6) is a known high-noise pattern. Overall trend: stable at ~70-80% for crawl reports, 100% for fidelity audits.

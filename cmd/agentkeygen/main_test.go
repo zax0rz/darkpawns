@@ -23,42 +23,50 @@ func (m *mockDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 	}
 	return &db.PlayerRecord{Name: name}, nil
 }
-func (m *mockDatabase) CreatePlayer(p *db.PlayerRecord) error { return nil }
-func (m *mockDatabase) SavePlayer(p *db.PlayerRecord) error   { return nil }
+func (m *mockDatabase) CreatePlayer(p *db.PlayerRecord) error          { return nil }
+func (m *mockDatabase) SavePlayer(p *db.PlayerRecord) error            { return nil }
 func (m *mockDatabase) UpdatePassword(playerID int, hash string) error { return nil }
 func (m *mockDatabase) Exec(query string, args ...interface{}) (interface{}, error) {
 	return nil, nil
 }
+
 func (m *mockDatabase) CreateAgentKey(characterName string) (string, int64, error) {
 	if m.createAgentKeyFunc != nil {
 		return m.createAgentKeyFunc(characterName)
 	}
 	return "dp_testkey123", 42, nil
 }
+
 func (m *mockDatabase) ValidateAgentKey(rawKey string) (string, int64, bool) {
 	return "", 0, false
 }
-func (m *mockDatabase) EnsureDecisionLogPartitions() error { return nil }
+func (m *mockDatabase) EnsureDecisionLogPartitions() error          { return nil }
 func (m *mockDatabase) NewDecisionLogWriter() *db.DecisionLogWriter { return nil }
 func (m *mockDatabase) InitNarrativeMemory() error                  { return nil }
 func (m *mockDatabase) WriteNarrativeMemory(mem *db.NarrativeMemory) (int64, error) {
 	return 0, nil
 }
+
 func (m *mockDatabase) BootstrapMemories(agentName string, limit int) ([]*db.NarrativeMemory, error) {
 	return nil, nil
 }
+
 func (m *mockDatabase) RecentMemories(agentName, sessionID string) ([]*db.NarrativeMemory, error) {
 	return nil, nil
 }
+
 func (m *mockDatabase) SocialEventMemories(socialEventID string) ([]*db.NarrativeMemory, error) {
 	return nil, nil
 }
+
 func (m *mockDatabase) WriteSessionSummary(agentName, sessionID, summary string, eventCount int, start, end time.Time) error {
 	return nil
 }
+
 func (m *mockDatabase) GetSessionSummaries(agentName string, limit int) ([]string, error) {
 	return nil, nil
 }
+
 func (m *mockDatabase) DecayStaleMemories(cutoffDays int) (int, int, error) {
 	return 0, 0, nil
 }

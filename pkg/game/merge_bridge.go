@@ -132,4 +132,3 @@ func ValidNameNoActive(name string) bool {
 	}
 	return true
 }
-
