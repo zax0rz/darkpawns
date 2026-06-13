@@ -46,26 +46,26 @@ install:
 
 # Monitoring stack commands
 monitoring-up:
-	docker-compose -f docker-compose.monitoring.yml up -d
+	docker compose -f docker-compose.monitoring.yml up -d
 
 monitoring-down:
-	docker-compose -f docker-compose.monitoring.yml down
+	docker compose -f docker-compose.monitoring.yml down
 
 monitoring-logs:
-	docker-compose -f docker-compose.monitoring.yml logs -f
+	docker compose -f docker-compose.monitoring.yml logs -f
 
 monitoring-restart:
-	docker-compose -f docker-compose.monitoring.yml restart
+	docker compose -f docker-compose.monitoring.yml restart
 
 # Privacy filter commands
 privacy-up:
-	docker-compose -f docker-compose.yml -f docker-compose.privacy.yml up -d
+	docker compose -f docker-compose.yml -f docker-compose.privacy.yml up -d
 
 privacy-down:
-	docker-compose -f docker-compose.yml -f docker-compose.privacy.yml down
+	docker compose -f docker-compose.yml -f docker-compose.privacy.yml down
 
 privacy-logs:
-	docker-compose -f docker-compose.yml -f docker-compose.privacy.yml logs -f
+	docker compose -f docker-compose.yml -f docker-compose.privacy.yml logs -f
 
 privacy-build:
 	docker build -f Dockerfile.privacy-filter -t darkpawns-privacy-filter .
@@ -96,6 +96,9 @@ lint-fix:
 test-parse:
 	go test -v ./pkg/parser -world $(WORLD_DIR)
 
+DEPLOY_USER ?= root
+DEPLOY_HOST ?= 192.168.1.15
+
 # Website commands
 .PHONY: parse-world-json build-site deploy-site
 
@@ -109,7 +112,13 @@ build-site: parse-world-json
 	cd website && hugo --minify
 
 deploy-site: build-site
-	rsync -avz --delete website/public/ root@192.168.1.15:/opt/darkpawns/hugo-site/
+ifndef DEPLOY_USER
+	$(error DEPLOY_USER is not set)
+endif
+ifndef DEPLOY_HOST
+	$(error DEPLOY_HOST is not set)
+endif
+	rsync -avz --delete website/public/ $(DEPLOY_USER)@$(DEPLOY_HOST):/opt/darkpawns/hugo-site/
 
 .DEFAULT_GOAL := build
 
