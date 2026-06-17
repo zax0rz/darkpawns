@@ -1,13 +1,52 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package session
 
-import "github.com/zax0rz/darkpawns/pkg/game"
+import (
+	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
+)
 
 // spellLearnEntry maps a spell/skill number to the level at which it is learned.
 // Spell and skill numbers match src/spells.h exactly.
 type spellLearnEntry struct {
 	Num   int
 	Level int
+}
+
+// grantClassSpells populates the player's SpellMap with every castable spell
+// their class qualifies for at their current level. Without this, SpellMap is
+// never filled and `cast` rejects every spell with "You don't know ..." — no
+// player could ever cast anything (the data in classSpells existed but was
+// never wired in).
+//
+// It is additive and idempotent: safe to call on character creation, on login,
+// and after leveling up. Entries whose number is not a castable spell (i.e. the
+// class's combat/utility skills, which have no spellDB entry) are skipped here —
+// those are gated separately by CanUseSkill / the SkillManager.
+func grantClassSpells(p *game.Player) {
+	if p == nil {
+		return
+	}
+	class := p.Class
+	if class < 0 || class >= len(classSpells) {
+		return
+	}
+	if p.SpellMap == nil {
+		p.SpellMap = make(map[string]int)
+	}
+	for _, entry := range classSpells[class] {
+		if entry.Level > p.Level {
+			continue
+		}
+		sd, ok := spellDB[entry.Num]
+		if !ok {
+			continue // a skill, not a castable spell
+		}
+		name := strings.ToLower(sd.Name)
+		if _, known := p.SpellMap[name]; !known {
+			p.SpellMap[name] = entry.Level
+		}
+	}
 }
 
 // classSpells maps each class to the set of spells/skills they can learn and at what level.

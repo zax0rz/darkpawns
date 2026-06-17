@@ -161,6 +161,105 @@ func TestTelnetSmoke_Combat(t *testing.T) {
 	mustWrite(t, conn, "quit\r\n")
 }
 
+// TestTelnetSmoke_SkillKick creates a Warrior, walks to the busy Temple Square,
+// and uses the `kick` skill on an NPC. Warriors are granted kick at level 1 in
+// NewCharacter, and the skill pipeline — CanUseSkill (class/level/position gate)
+// → DoKick → sendSkillResult — must produce a hit-or-miss message over the wire.
+// Note kick needs no active fight: PosStanding (8) already satisfies the
+// PosFighting (7) minimum, so a standing player may kick a present target. Mobs
+// wander, so it looks, targets whatever NPC is present, and retries.
+func TestTelnetSmoke_SkillKick(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e: builds and launches the server binary; skipped in -short")
+	}
+
+	conn, r := launchAndDial(t)
+	defer conn.Close()
+
+	name := fmt.Sprintf("Kick%d", time.Now().UnixNano()%100000)
+	createWarrior(t, conn, r, name, "kickpw")
+	walkToTempleSquare(t, conn, r)
+
+	// Look, target a present NPC, kick it; retry if it wandered off. Both
+	// outcomes name the skill: "You kick <x> square in the chest!" (hit) or
+	// "You try to kick <x>, but miss!" (miss) — match the lowercase "kick" that
+	// only the skill emits ("Kick who?" for a missing target is capitalized).
+	kicked := false
+	for i := 0; i < 8 && !kicked; i++ {
+		mustWrite(t, conn, "look\r\n")
+		look := readUntil(t, conn, r, "Exits:", 4*time.Second)
+		kw := firstMobKeyword(look)
+		if kw == "" {
+			continue // no NPC visible this tick; look again
+		}
+		mustWrite(t, conn, "kick "+kw+"\r\n")
+		if readUntil(t, conn, r, "kick", 3*time.Second) != "" {
+			kicked = true
+		}
+	}
+	if !kicked {
+		t.Fatal("could not land a `kick` on any NPC in Temple Square — skill pipeline broken?")
+	}
+
+	mustWrite(t, conn, "quit\r\n")
+}
+
+// TestTelnetSmoke_SpellCasting creates a level-1 Mage and exercises the spell
+// pipeline that was 100% broken until grantClassSpells populated SpellMap (the
+// data existed but was never wired in, so `cast` rejected every spell). It
+// asserts three things end to end: a known low-level spell casts, a too-high
+// spell stays unknown (SpellMap is scoped by level, not blanket-granted), and an
+// offensive spell can be thrown at an NPC.
+func TestTelnetSmoke_SpellCasting(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e: builds and launches the server binary; skipped in -short")
+	}
+
+	conn, r := launchAndDial(t)
+	defer conn.Close()
+
+	name := fmt.Sprintf("Mage%d", time.Now().UnixNano()%100000)
+	createChar(t, conn, r, name, "magepw", "M")
+
+	// A level-1 Mage knows infravision; the self-cast must succeed. This is the
+	// core regression guard: before grantClassSpells, SpellMap was empty and
+	// every cast came back "You don't know ...".
+	mustWrite(t, conn, "cast infravision\r\n")
+	if readUntil(t, conn, r, "You cast 'infravision'", 5*time.Second) == "" {
+		t.Fatal("level-1 Mage could not cast infravision — SpellMap not populated (grantClassSpells regression?)")
+	}
+
+	// fireball is a level-15 Mage spell; a level-1 Mage must NOT know it yet.
+	// This guards that spells are granted by level rather than all at once.
+	mustWrite(t, conn, "cast fireball\r\n")
+	if readUntil(t, conn, r, "You don't know", 5*time.Second) == "" {
+		t.Error("level-1 Mage was allowed to cast the level-15 fireball — spell levels not enforced")
+	}
+
+	// Offensive cast at an NPC: walk to Temple Square and throw magic missile.
+	// Mobs wander, so look, target a present NPC, and retry. A failed target is
+	// refunded, so only a real cast spends mana — the Mage's 100 mana is ample.
+	walkToTempleSquare(t, conn, r)
+	cast := false
+	for i := 0; i < 8 && !cast; i++ {
+		mustWrite(t, conn, "look\r\n")
+		look := readUntil(t, conn, r, "Exits:", 4*time.Second)
+		kw := firstMobKeyword(look)
+		if kw == "" {
+			continue
+		}
+		mustWrite(t, conn, "cast 'magic missile' "+kw+"\r\n")
+		if readUntil(t, conn, r, "You cast 'magic missile'", 3*time.Second) != "" {
+			cast = true
+		}
+	}
+	if !cast {
+		t.Fatal("could not cast magic missile at any NPC in Temple Square")
+	}
+
+	mustWrite(t, conn, "quit\r\n")
+}
+
 // TestTelnetSmoke_PersistenceRoundTrip exercises the database-backed paths that
 // have no equivalent without persistence: a new character is saved to the DB,
 // then on a fresh connection the returning-player login loads it back. It also
@@ -315,11 +414,19 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 	return conn, bufio.NewReader(conn)
 }
 
-// createWarrior drives the new-character creation flow to completion and
-// returns the room text shown on entry. The name must be <=20 chars to satisfy
-// game.ValidName. Works against both the DB and no-DB paths (the confirm prompt
-// differs slightly, so it keys on the shared substring "new character?").
+// createWarrior drives new-character creation for a Warrior. See createChar.
 func createWarrior(t *testing.T, conn net.Conn, r *bufio.Reader, name, password string) string {
+	t.Helper()
+	return createChar(t, conn, r, name, password, "W")
+}
+
+// createChar drives the new-character creation flow to completion as a Human of
+// the given class (the letter shown on the class menu: "W" Warrior, "M" Mage,
+// …) and returns the room text shown on entry. The name must be <=20 chars to
+// satisfy game.ValidName. Human is used because every class is available to it.
+// Works against both the DB and no-DB paths (the confirm prompt differs
+// slightly, so it keys on the shared substring "new character?").
+func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, class string) string {
 	t.Helper()
 	if got := readUntil(t, conn, r, "By what name", 10*time.Second); got == "" {
 		t.Fatal("never received the name prompt")
@@ -335,7 +442,7 @@ func createWarrior(t *testing.T, conn net.Conn, r *bufio.Reader, name, password 
 		{"ANSI color", "N\r\n"},
 		{"sex", "M\r\n"},
 		{"Race:", "H\r\n"},                   // Human
-		{"Class:", "W\r\n"},                  // Warrior
+		{"Class:", class + "\r\n"},
 		{"home town", "K\r\n"},               // Kir Drax'in
 		{"keep these stats", "Y\r\n"},
 		{"PRESS RETURN", "\r\n"},             // blank line finalizes (DP-589)
@@ -350,6 +457,21 @@ func createWarrior(t *testing.T, conn net.Conn, r *bufio.Reader, name, password 
 		t.Fatal("new character never entered the world")
 	}
 	return entered
+}
+
+// walkToTempleSquare moves a freshly-created character from the Temple Altar
+// [8004] down to the busy Temple Square [8021] (8004 →south→ 8008 →south→
+// 8021), which always has NPCs passing through to target.
+func walkToTempleSquare(t *testing.T, conn net.Conn, r *bufio.Reader) {
+	t.Helper()
+	mustWrite(t, conn, "south\r\n")
+	if readUntil(t, conn, r, "[8008]", 10*time.Second) == "" {
+		t.Fatal("did not reach Temple of the Cross [8008]")
+	}
+	mustWrite(t, conn, "south\r\n")
+	if readUntil(t, conn, r, "[8021]", 10*time.Second) == "" {
+		t.Fatal("did not reach Temple Square [8021]")
+	}
 }
 
 // firstMobKeyword extracts a hittable keyword from look output by taking the

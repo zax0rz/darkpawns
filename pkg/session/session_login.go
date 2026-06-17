@@ -90,6 +90,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		s.player.MaxMove = 100
 		s.player.Move = 100
 		game.GiveStartingSkills(s.player)
+		grantClassSpells(s.player)
 
 		s.authenticated = true
 		s.isGuest = true
@@ -240,6 +241,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 	// If we created a player directly (not through char creation), proceed with registration
 	if s.authenticated && s.player != nil {
+		// Returning players: reconcile known spells with class/level. Saved
+		// characters predate spell-granting (or leveled up while offline), so
+		// fill in any spells they now qualify for.
+		grantClassSpells(s.player)
+
 		s.manager.loginAttempts.RecordSuccess(ip)
 		if err := s.manager.Register(login.PlayerName, s); err != nil {
 			return err
