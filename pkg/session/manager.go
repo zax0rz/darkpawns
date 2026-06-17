@@ -159,18 +159,21 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		doorManager: dm,
 		ipConnCount: make(map[string]int),
 	}
+	// Guard against the typed-nil interface trap: a nil *db.DB stored in a
+	// db.Database interface is itself non-nil. Normalize it to a real nil so
+	// the no-database path below is taken instead of dereferencing nil. (DP-589)
+	if concreteDB, ok := database.(*db.DB); ok && concreteDB == nil {
+		database = nil
+	}
+
 	if database != nil {
 		m.db = database
 		m.hasDB = true
 	}
 
 	// Wire moderation checker (in-memory when no DB, DB-backed when available).
-	if database != nil {
-		if concreteDB, ok := database.(*db.DB); ok {
-			m.modChecker = NewModerationAdapter(moderation.NewManager(concreteDB.SQLDB()))
-		} else {
-			m.modChecker = NewModerationAdapter(moderation.NewManager(nil))
-		}
+	if concreteDB, ok := database.(*db.DB); ok {
+		m.modChecker = NewModerationAdapter(moderation.NewManager(concreteDB.SQLDB()))
 	} else {
 		m.modChecker = NewModerationAdapter(moderation.NewManager(nil))
 	}
