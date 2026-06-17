@@ -186,7 +186,10 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	// Read name with timeout
 	//nolint:errcheck // best-effort cleanup
 	rawConn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	name := tc.readLine()
+	name, ok := tc.readLine()
+	if !ok {
+		return
+	}
 	name = strings.TrimSpace(name)
 	if name == "" {
 		tc.writeLine("\r\nGoodbye.\r\n")
@@ -218,14 +221,14 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// Returning player - prompt for password statefully (ECHO OFF)
 			tc.write([]byte{IAC, WILL, OPT_ECHO})
 			tc.writeLine("Password: ")
-			password = tc.readLine()
+			password, _ = tc.readLine()
 			tc.write([]byte{IAC, WONT, OPT_ECHO})
 			tc.writeLine("\r\n")
 			newChar = false
 		} else {
 			// New character - ask to confirm creation
 			tc.writeLine("Character does not exist. Do you want to create a new character? (Y/N): ")
-			choice := tc.readLine()
+			choice, _ := tc.readLine()
 			choice = strings.TrimSpace(strings.ToLower(choice))
 			if choice != "y" && choice != "yes" {
 				tc.writeLine("\r\nGoodbye.\r\n")
@@ -235,9 +238,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// Prompt to create and confirm a password (ECHO OFF)
 			tc.write([]byte{IAC, WILL, OPT_ECHO})
 			tc.writeLine("Choose a password: ")
-			p1 := tc.readLine()
+			p1, _ := tc.readLine()
 			tc.writeLine("\r\nConfirm password: ")
-			p2 := tc.readLine()
+			p2, _ := tc.readLine()
 			tc.write([]byte{IAC, WONT, OPT_ECHO})
 			tc.writeLine("\r\n")
 
@@ -251,7 +254,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	} else {
 		// No DB - ask to confirm creation and create password
 		tc.writeLine("No database connection. Create new character? (Y/N): ")
-		choice := tc.readLine()
+		choice, _ := tc.readLine()
 		choice = strings.TrimSpace(strings.ToLower(choice))
 		if choice != "y" && choice != "yes" {
 			tc.writeLine("\r\nGoodbye.\r\n")
@@ -260,9 +263,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 
 		tc.write([]byte{IAC, WILL, OPT_ECHO})
 		tc.writeLine("Choose a password: ")
-		p1 := tc.readLine()
+		p1, _ := tc.readLine()
 		tc.writeLine("\r\nConfirm password: ")
-		p2 := tc.readLine()
+		p2, _ := tc.readLine()
 		tc.write([]byte{IAC, WONT, OPT_ECHO})
 		tc.writeLine("\r\n")
 
@@ -274,43 +277,57 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		newChar = true
 	}
 
-	// Send login with password
-	if err := sendLoginWithPassword(s, name, password, newChar); err != nil {
-		tc.writeLine(fmt.Sprintf("\r\nLogin failed: %v\r\n", err))
-		return
-	}
-
-	_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
-
-	// Start output writer goroutine
+	// Start the output writer before login so everything login produces —
+	// prompts, rejection messages, and the success welcome/look — reaches the
+	// client as it is generated. (DP-591)
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		writeLoop(tc, s)
 	}()
 
+	// Send login with password
+	if err := sendLoginWithPassword(s, name, password, newChar); err != nil {
+		tc.writeLine(fmt.Sprintf("\r\nLogin failed: %v\r\n", err))
+		s.CloseSend()
+		<-done
+		return
+	}
+
+	// handleLogin rejects bad credentials (wrong password, invalid name)
+	// without returning an error — it has already queued the reason on the
+	// session output channel and closed s.conn, which is nil for telnet. Close
+	// the send channel so writeLoop flushes that message and exits, then
+	// disconnect instead of leaving the client stuck and unauthenticated. (DP-591)
+	if !s.IsAuthenticated() && !s.IsCharCreating() {
+		s.CloseSend()
+		<-done
+		return
+	}
+
+	_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+
 	// Input loop
 	for {
-		line := tc.readLine()
-		if line == "" {
-			// EOF or error
+		line, ok := tc.readLine()
+		if !ok {
+			// EOF or connection error — the client hung up.
 			break
 		}
 		line = strings.TrimSpace(line)
-		if line == "" {
-			if !s.IsCharCreating() {
-				tc.writeLine("> ")
-			}
-			continue
-		}
 
 		_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
 		if s.IsCharCreating() {
-			// Route selection choice as char_input
+			// A blank line is meaningful during character creation (e.g. the
+			// "PRESS RETURN" step), so forward it as char_input rather than
+			// swallowing it. Forwarding "" disconnected new players otherwise.
 			if err := sendCharInput(s, line); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
+		} else if line == "" {
+			// Pressing Enter with no command just refreshes the prompt.
+			tc.writeLine("> ")
 		} else {
 			parts := strings.Fields(line)
 			if err := sendCommand(s, parts[0], parts[1:]); err != nil {
@@ -469,6 +486,18 @@ func formatState(sm session.ServerMessage) string {
 		if desc, ok := room["description"].(string); ok {
 			fmt.Fprintf(&b, "  %s\r\n", desc)
 		}
+		// Items on the ground, NPCs, and other players present. Without these
+		// a telnet player is blind to everything they can interact with —
+		// loot, the mob they want to fight, who else is in the room. (DP-592)
+		for _, line := range jsonStrings(room["items"]) {
+			fmt.Fprintf(&b, "  %s\r\n", line)
+		}
+		for _, line := range jsonStrings(room["mobs"]) {
+			fmt.Fprintf(&b, "  %s\r\n", line)
+		}
+		for _, name := range jsonStrings(room["players"]) {
+			fmt.Fprintf(&b, "  %s is here.\r\n", name)
+		}
 		if exits, ok := room["exits"].([]interface{}); ok && len(exits) > 0 {
 			names := make([]string, len(exits))
 			for i, e := range exits {
@@ -482,23 +511,43 @@ func formatState(sm session.ServerMessage) string {
 	return b.String()
 }
 
+// jsonStrings coerces a JSON-decoded array (interface{}) into a []string,
+// skipping any non-string elements.
+func jsonStrings(v interface{}) []string {
+	arr, ok := v.([]interface{})
+	if !ok {
+		return nil
+	}
+	out := make([]string, 0, len(arr))
+	for _, e := range arr {
+		if s, ok := e.(string); ok {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
 // readLine reads a line, handling IAC negotiation and responding appropriately.
-// Returns empty string on EOF/error.
+// The bool return is false on EOF/error and true otherwise. A blank line
+// (the user simply pressing Return) returns ("", true) — distinct from EOF,
+// which returns ("", false). Callers must use the bool to decide whether to
+// disconnect; treating "" alone as EOF drops players who press Enter and
+// breaks the "PRESS RETURN" step of character creation.
 // Input exceeding maxInputLen bytes is truncated and logged.
 const maxInputLen = 1024
 
-func (tc *telnetConn) readLine() string {
+func (tc *telnetConn) readLine() (string, bool) {
 	var line []byte
 	for {
 		b, err := tc.br.ReadByte()
 		if err != nil {
-			return ""
+			return "", false
 		}
 
 		if b == IAC {
 			cmd, err := tc.br.ReadByte()
 			if err != nil {
-				return ""
+				return "", false
 			}
 			switch cmd {
 			case IAC:
@@ -506,7 +555,7 @@ func (tc *telnetConn) readLine() string {
 			case WILL:
 				opt, err := tc.br.ReadByte()
 				if err != nil {
-					return ""
+					return "", false
 				}
 				// Respond: DO for ECHO/SGA/GMCP, DONT for everything else
 				switch opt {
@@ -527,7 +576,7 @@ func (tc *telnetConn) readLine() string {
 			case DO:
 				opt, err := tc.br.ReadByte()
 				if err != nil {
-					return ""
+					return "", false
 				}
 				switch opt {
 				case OPT_ECHO, OPT_SGA:
@@ -550,7 +599,7 @@ func (tc *telnetConn) readLine() string {
 			case SB:
 				opt, err := tc.br.ReadByte()
 				if err != nil {
-					return ""
+					return "", false
 				}
 				const maxSubnegLen = 4096
 				if opt == OPT_GMCP {
@@ -558,12 +607,12 @@ func (tc *telnetConn) readLine() string {
 					for {
 						b2, err := tc.br.ReadByte()
 						if err != nil {
-							return ""
+							return "", false
 						}
 						if b2 == IAC {
 							b3, err := tc.br.ReadByte()
 							if err != nil {
-								return ""
+								return "", false
 							}
 							if b3 == SE {
 								break
@@ -571,7 +620,7 @@ func (tc *telnetConn) readLine() string {
 							if b3 == IAC {
 								if len(subPayload) >= maxSubnegLen {
 									slog.Warn("telnet: GMCP subnegotiation payload exceeded limit, closing connection")
-									return ""
+									return "", false
 								}
 								subPayload = append(subPayload, IAC)
 								continue
@@ -579,7 +628,7 @@ func (tc *telnetConn) readLine() string {
 						}
 						if len(subPayload) >= maxSubnegLen {
 							slog.Warn("telnet: GMCP subnegotiation payload exceeded limit, closing connection")
-							return ""
+							return "", false
 						}
 						subPayload = append(subPayload, b2)
 					}
@@ -591,17 +640,17 @@ func (tc *telnetConn) readLine() string {
 					for {
 						b2, err := tc.br.ReadByte()
 						if err != nil {
-							return ""
+							return "", false
 						}
 						skipCount++
 						if skipCount > maxSubnegLen {
 							slog.Warn("telnet: subnegotiation skip exceeded limit, closing connection")
-							return ""
+							return "", false
 						}
 						if b2 == IAC {
 							b3, err := tc.br.ReadByte()
 							if err != nil {
-								return ""
+								return "", false
 							}
 							if b3 == SE {
 								break
@@ -622,14 +671,14 @@ func (tc *telnetConn) readLine() string {
 				slog.Warn("telnet: input truncated", "length", len(line), "max", maxInputLen)
 				line = line[:maxInputLen]
 			}
-			return string(line)
+			return string(line), true
 		}
 		if b == '\n' {
 			if len(line) > maxInputLen {
 				slog.Warn("telnet: input truncated", "length", len(line), "max", maxInputLen)
 				line = line[:maxInputLen]
 			}
-			return string(line)
+			return string(line), true
 		}
 		line = append(line, b)
 	}
@@ -735,9 +784,9 @@ func sendLoginWithPassword(s *session.Session, name string, password string, new
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
-	loginMsg, err := json.Marshal(map[string]string{
-		"type": "login",
-		"data": string(loginData),
+	loginMsg, err := json.Marshal(session.ClientMessage{
+		Type: "login",
+		Data: loginData,
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
@@ -752,9 +801,9 @@ func sendCharInput(s *session.Session, choice string) error {
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
-	choiceMsg, err := json.Marshal(map[string]string{
-		"type": "char_input",
-		"data": string(choiceData),
+	choiceMsg, err := json.Marshal(session.ClientMessage{
+		Type: "char_input",
+		Data: choiceData,
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
@@ -770,9 +819,9 @@ func sendCommand(s *session.Session, cmd string, args []string) error {
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
-	cmdMsg, err := json.Marshal(map[string]string{
-		"type": "command",
-		"data": string(cmdData),
+	cmdMsg, err := json.Marshal(session.ClientMessage{
+		Type: "command",
+		Data: cmdData,
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
