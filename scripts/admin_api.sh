@@ -8,11 +8,11 @@
 #   ./scripts/admin_api.sh triage <date> <confirmed> <rejected> <pending> <summary>
 #
 # Requires DP_ADMIN_TOKEN env var (builder-scoped JWT)
-# Requires DP_ADMIN_URL env var (default: http://192.168.1.125:4350)
+# Requires DP_ADMIN_URL env var (default: http://192.168.1.121:4350)
 
 set -euo pipefail
 
-DP_ADMIN_URL="${DP_ADMIN_URL:-http://192.168.1.15:4350}"
+DP_ADMIN_URL="${DP_ADMIN_URL:-http://192.168.1.121:4350}"
 
 if [[ -z "${DP_ADMIN_TOKEN:-}" ]]; then
   echo "ERROR: DP_ADMIN_TOKEN not set" >&2

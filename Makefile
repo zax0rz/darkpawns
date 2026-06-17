@@ -97,7 +97,7 @@ test-parse:
 	go test -v ./pkg/parser -world $(WORLD_DIR)
 
 DEPLOY_USER ?= root
-DEPLOY_HOST ?= 192.168.1.15
+DEPLOY_HOST ?= 192.168.1.121
 
 # Website commands
 .PHONY: parse-world-json build-site deploy-site
