@@ -308,30 +308,6 @@ const (
 	AFFRobbed          uint64 = 1 << 47
 )
 
-// --- Location → stat name table ---
-
-// applyLocationToStat maps APPLY_* constants to entity stat names.
-// Used by AffectManager for table-driven stat modification.
-var applyLocationToStat = map[int]string{
-	ApplyStr:          "STR",
-	ApplyDex:          "DEX",
-	ApplyInt:          "INT",
-	ApplyWis:          "WIS",
-	ApplyCon:          "CON",
-	ApplyCha:          "CHA",
-	ApplyMana:         "Mana",
-	ApplyHit:          "HP",
-	ApplyMove:         "Move",
-	ApplyAC:           "AC",
-	ApplyHitroll:      "Hitroll",
-	ApplyDamroll:      "Damroll",
-	ApplySavingPara:   "SavingPara",
-	ApplySavingRod:    "SavingRod",
-	ApplySavingPetri:  "SavingPetri",
-	ApplySavingBreath: "SavingBreath",
-	ApplySavingSpell:  "SavingSpell",
-}
-
 // --- Spell → default status flags table ---
 
 // spellStatusFlags maps SPELL_* constants to their default AFF_* flags.

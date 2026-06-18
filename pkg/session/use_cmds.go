@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -109,12 +108,11 @@ func cmdRecite(s *Session, args []string) error {
 	s.markDirty(VarInventory)
 
 	// Cast each spell on the scroll
-	am := engine.NewAffectManager()
 	for _, spellNum := range spellNumbers {
 		if spellNum <= 0 {
 			continue
 		}
-		spells.Cast(s.player, target, spellNum, spellLevel, s.manager.world, am)
+		spells.Cast(s.player, target, spellNum, spellLevel, s.manager.world)
 	}
 
 	return nil
@@ -223,8 +221,7 @@ func cmdZap(s *Session, args []string) error {
 	s.Send(fmt.Sprintf("You blast %s with %s.", targetName, item.GetShortDesc()))
 
 	// Cast the spell
-	am := engine.NewAffectManager()
-	spells.Cast(s.player, target, spellNum, spellLevel, s.manager.world, am)
+	spells.Cast(s.player, target, spellNum, spellLevel, s.manager.world)
 
 	s.markDirty(VarInventory)
 

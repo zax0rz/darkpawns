@@ -3,10 +3,9 @@
 //
 // Implementation status:
 //
-//	Implemented (in Cast() switch → ApplySpellAffects):
-//	  SPELL_BLINDNESS, SPELL_CURSE, SPELL_POISON, SPELL_SLEEP, SPELL_SANCTUARY
-//
-//	Routed through CallMagic for damage, healing, points, summons, etc.:
+//	Routed through CallMagic for damage, healing, points, summons, affects, etc.
+//	(includes SPELL_BLINDNESS, SPELL_CURSE, SPELL_POISON, SPELL_SLEEP,
+//	SPELL_SANCTUARY, handled by MagAffects):
 //	  SPELL_MAGIC_MISSILE, SPELL_BURNING_HANDS, SPELL_LIGHTNING_BOLT, SPELL_FIREBALL,
 //	  SPELL_HELLFIRE, SPELL_COLOR_SPRAY, SPELL_DISRUPT, SPELL_DISINTEGRATE,
 //	  SPELL_FLAMESTRIKE, SPELL_ACID_BLAST, SPELL_TELEPORT, SPELL_DISPEL_EVIL,
@@ -42,10 +41,6 @@
 //	  SKILL_HEADBUTT, SKILL_PARRY, SKILL_BASH, SKILL_BERSERK,
 //	  SKILL_KICK, SKILL_TRIP
 package spells
-
-import (
-	"github.com/zax0rz/darkpawns/pkg/engine"
-)
 
 // Spell constants from spells.h and globals.lua
 const (
@@ -207,7 +202,6 @@ const (
 // spellNum is one of the Spell* constants above.
 // casterLevel scales duration and magnitude of affects.
 // world is the game world reference (interface{} to avoid circular imports); may be nil.
-// am is the affect manager (no longer used, kept for signature compatibility).
-func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int, world interface{}, am *engine.AffectManager) {
+func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int, world interface{}) {
 	CallMagic(caster, target, nil, spellNum, casterLevel, CastSpell, world)
 }

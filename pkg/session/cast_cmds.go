@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -264,8 +263,7 @@ func cmdCast(s *Session, args []string) error {
 	}
 
 	// Execute the spell
-	am := engine.NewAffectManager()
-	spells.Cast(s.player, target, sd.SpellNum, casterLevel, s.manager.world, am)
+	spells.Cast(s.player, target, sd.SpellNum, casterLevel, s.manager.world)
 
 	// Send confirmation
 	if target == s.player {
