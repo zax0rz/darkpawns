@@ -3,8 +3,8 @@ package telnet
 
 import (
 	"bufio"
-	"errors"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"

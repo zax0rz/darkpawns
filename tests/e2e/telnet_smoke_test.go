@@ -386,7 +386,8 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 	telnetPort := freePort(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	cmd := exec.CommandContext(ctx, bin,
+	cmd := exec.CommandContext(
+		ctx, bin,
 		"-world", filepath.Join(root, "lib", "world"),
 		"-port", fmt.Sprintf("%d", httpPort),
 		"-telnet-port", fmt.Sprintf("%d", telnetPort),
@@ -433,19 +434,19 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 	}
 	mustWrite(t, conn, name+"\r\n")
 	for _, st := range []struct{ awaitPrompt, send string }{
-		{"new character?", "y\r\n"},          // create-new confirmation
+		{"new character?", "y\r\n"}, // create-new confirmation
 		{"Choose a password", password + "\r\n"},
 		{"Confirm password", password + "\r\n"},
-		{"Did I get that right", "Y\r\n"},    // confirm_name
+		{"Did I get that right", "Y\r\n"}, // confirm_name
 		{"Give me a password", password + "\r\n"},
 		{"retype password", password + "\r\n"},
 		{"ANSI color", "N\r\n"},
 		{"sex", "M\r\n"},
-		{"Race:", "H\r\n"},                   // Human
+		{"Race:", "H\r\n"}, // Human
 		{"Class:", class + "\r\n"},
-		{"home town", "K\r\n"},               // Kir Drax'in
+		{"home town", "K\r\n"}, // Kir Drax'in
 		{"keep these stats", "Y\r\n"},
-		{"PRESS RETURN", "\r\n"},             // blank line finalizes (DP-589)
+		{"PRESS RETURN", "\r\n"}, // blank line finalizes (DP-589)
 	} {
 		if got := readUntil(t, conn, r, st.awaitPrompt, 10*time.Second); got == "" {
 			t.Fatalf("character creation stalled at prompt %q", st.awaitPrompt)

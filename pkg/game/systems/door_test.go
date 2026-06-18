@@ -576,7 +576,7 @@ func TestDoorManager_Count(t *testing.T) {
 
 func TestDoorReset(t *testing.T) {
 	door := NewDoor(100, 101, "north", 2, 500) // starts closed and locked (state 2)
-	door.Hp = 50 // bash it a bit
+	door.Hp = 50                               // bash it a bit
 
 	// Change state
 	door.Closed = false
@@ -598,7 +598,7 @@ func TestDoorReset(t *testing.T) {
 func TestDoorManager_ResetDoors(t *testing.T) {
 	dm := NewDoorManager()
 	door1 := NewDoor(100, 101, "north", 1, -1) // starts closed (state 1)
-	door2 := NewDoor(100, 102, "east", 2, 500)  // starts closed and locked (state 2)
+	door2 := NewDoor(100, 102, "east", 2, 500) // starts closed and locked (state 2)
 
 	dm.AddDoor(door1)
 	dm.AddDoor(door2)
@@ -707,7 +707,7 @@ func TestDoorManager_Operations(t *testing.T) {
 
 func TestDoorManager_LoadDoorsFromWorld(t *testing.T) {
 	dm := NewDoorManager()
-	
+
 	// Create mock world data
 	world := &parser.World{
 		Rooms: []parser.Room{

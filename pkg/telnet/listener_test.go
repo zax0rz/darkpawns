@@ -79,6 +79,7 @@ func (p pipeConn) SetWriteDeadline(t time.Time) error { return nil }
 func (p pipeConn) RemoteAddr() net.Addr {
 	return &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 12345}
 }
+
 func (p pipeConn) LocalAddr() net.Addr {
 	return &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 7777}
 }
