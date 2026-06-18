@@ -462,8 +462,16 @@ func specOroStudyRoom(w *World, ch *Player, me *MobInstance, cmd string, arg str
 }
 
 func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	// Banking moves coins between carried gold and the bank account. Ported from
+	// src/spec_procs.c SPECIAL(bank). The previous Go port ignored BankGold:
+	// balance showed carried gold, deposit destroyed coins, and withdraw minted
+	// coins from nothing with no balance check (an economy exploit).
 	if cmd == "balance" {
-		sendToChar(ch, fmt.Sprintf("Your current balance is %d coins.\r\n", ch.GetGold()))
+		if ch.GetBankGold() > 0 {
+			sendToChar(ch, fmt.Sprintf("Your current balance is %d coins.\r\n", ch.GetBankGold()))
+		} else {
+			sendToChar(ch, "You currently have no money deposited.\r\n")
+		}
 		return true
 	}
 
@@ -481,6 +489,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 			return true
 		}
 		ch.SetGold(ch.GetGold() - amount)
+		ch.SetBankGold(ch.GetBankGold() + amount)
 		sendToChar(ch, fmt.Sprintf("You deposit %d coins.\r\n", amount))
 		w.roomMessage(me.GetRoom(), "$n makes a bank transaction.")
 		return true
@@ -495,7 +504,12 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 			sendToChar(ch, "How much do you want to withdraw?\r\n")
 			return true
 		}
+		if ch.GetBankGold() < amount {
+			sendToChar(ch, "You don't have that many coins deposited!\r\n")
+			return true
+		}
 		ch.SetGold(ch.GetGold() + amount)
+		ch.SetBankGold(ch.GetBankGold() - amount)
 		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.\r\n", amount))
 		w.roomMessage(me.GetRoom(), "$n makes a bank transaction.")
 		return true

@@ -129,16 +129,28 @@ skills (they make the combat system feel complete); verify each against `src/`.
 
 ---
 
-## Bucket C — Spec-proc handled (likely already reachable; verify in context)
+## Bucket C — Spec-proc handled — VERIFIED (2026-06-18)
 
-These showed implementations in `spec_procs*.go`, meaning they work when the
-player is at the right mob/room (e.g., a banker, a postmaster). Verify by
-playing, not by registry presence:
+These work when the player is at the right mob/room (banker, postmaster, board).
+Wiring confirmed: specs registered (`spec_assign.go`) and assigned — banker mob
+8034, postmaster mobs 3010/21225, board objects 8064-8099 — and `ExecuteCommand`
+intercepts mob/obj/room specs before registry lookup.
 
-- **Banking (banker spec proc):** `balance` `deposit` `withdraw` `gold` `coins`
-- **Postmaster:** `mail` `check` `receive`
-- **Other spec procs:** `collect` `donate` `stable` `retrieve` `will` `offer`
-  `rent` `recharge`
+- **Banking (`balance`/`deposit`/`withdraw`) — FIXED.** Verification found the
+  port ignored the bank account entirely: `balance` showed carried gold,
+  `deposit` destroyed coins, and `withdraw` minted coins from nothing with no
+  balance check (an **economy exploit**). Re-ported `specBank` from
+  `src/spec_procs.c` to move coins between Gold and BankGold; added
+  `Player.GetBankGold`/`SetBankGold` and `TestSpecBank`.
+- **Postmaster (`mail`/`check`/`receive`) — verified functional.** Dispatch
+  correct; `mail.go` implements level gate, stamp cost, recipient lookup,
+  writing flags, check/receive. Minor polish: `$n` is not substituted with the
+  mailman's name in tells (a broader act()-substitution gap, not a break).
+- **Boards (`write`/`look`/`read`/`remove` via `gen_board`) — verified
+  functional.** `genBoard` dispatches to `BoardSystem`. Follow-up to confirm by
+  play: that a plain `look` near a board isn't over-intercepted.
+- **Not yet verified (other spec procs):** `collect` `donate` `stable`
+  `retrieve` `will` `offer` `rent` `recharge` — same pattern, check next.
 - **Boards:** `read`
 
 ---
