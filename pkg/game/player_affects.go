@@ -32,6 +32,27 @@ func (p *Player) sumAffectModsLocked(location int) int {
 	return total
 }
 
+func (p *Player) sumEquipAffectModsLocked(location int) int {
+	if p.Equipment == nil {
+		return 0
+	}
+	p.Equipment.mu.RLock()
+	defer p.Equipment.mu.RUnlock()
+
+	total := 0
+	for _, item := range p.Equipment.Slots {
+		if item == nil {
+			continue
+		}
+		for _, affect := range item.GetAffects() {
+			if affect.Location == location {
+				total += affect.Modifier
+			}
+		}
+	}
+	return total
+}
+
 // GetPosition returns the player's current position.
 func (p *Player) GetPosition() int {
 	p.mu.RLock()

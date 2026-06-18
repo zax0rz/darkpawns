@@ -100,7 +100,7 @@ func (w *World) HitGain(p *Player) int {
 	}
 
 	// KK_JIN skill bonus — limits.c:144-146, +25% regen when not fighting
-	if !isFighting(p) && p.HasSpellAffect(162) { // SKILL_KK_JIN
+	if !isFighting(p) && p.HasSpellAffect(skillNumKkJin) {
 		gain += gain >> 2
 	}
 
@@ -178,7 +178,7 @@ func (w *World) MoveGain(p *Player) int {
 	}
 
 	// KK_ZHEN skill bonus — limits.c:212-214, +25% regen when not fighting
-	if !isFighting(p) && p.HasSpellAffect(165) { // SKILL_KK_ZHEN
+	if !isFighting(p) && p.HasSpellAffect(skillNumKkZhen) {
 		gain += gain >> 2
 	}
 

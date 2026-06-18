@@ -136,6 +136,16 @@ func init() {
 	cmdRegistry.Register("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.", 0, combat.PosStanding)
 	cmdRegistry.Register("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.", 0, combat.PosResting)
 	cmdRegistry.Register("steal", wrapSkill(command.CmdSteal), "Steal from a target.", 0, combat.PosStanding)
+	cmdRegistry.Register("berserk", wrapSkill(command.CmdBerserk), "Summon your battle rage for a hitroll/damroll boost.", 0, combat.PosFighting)
+	cmdRegistry.Register("rin", wrapSkill(command.CmdKujiKiri(game.SkillKkRin)), "Kuji-kiri seal: harden body for an AC bonus and metalskin.", 0, combat.PosStanding)
+	cmdRegistry.Register("kyo", wrapSkill(command.CmdKujiKiri(game.SkillKkKyo)), "Kuji-kiri seal: focus battle rage for a hitroll bonus.", 0, combat.PosStanding)
+	cmdRegistry.Register("toh", wrapSkill(command.CmdKujiKiri(game.SkillKkToh)), "Kuji-kiri seal: focus inner strength for a damroll/AC bonus.", 0, combat.PosStanding)
+	cmdRegistry.Register("kai", wrapSkill(command.CmdKujiKiri(game.SkillKkKai)), "Kuji-kiri seal: fortify your body, lowering damroll/AC.", 0, combat.PosStanding)
+	cmdRegistry.Register("jin", wrapSkill(command.CmdKujiKiri(game.SkillKkJin)), "Kuji-kiri seal: focus on recuperation for faster HP regen.", 0, combat.PosStanding)
+	cmdRegistry.Register("retsu", wrapSkill(command.CmdKujiKiri(game.SkillKkRetsu)), "Kuji-kiri seal: attempt to teleport away.", 0, combat.PosStanding)
+	cmdRegistry.Register("zai", wrapSkill(command.CmdKujiKiri(game.SkillKkZai)), "Kuji-kiri seal: fade from view.", 0, combat.PosStanding)
+	cmdRegistry.Register("zhen", wrapSkill(command.CmdKujiKiri(game.SkillKkZhen)), "Kuji-kiri seal: focus on endurance for faster movement regen.", 0, combat.PosStanding)
+	cmdRegistry.Register("sha", wrapSkill(command.CmdKujiKiri(game.SkillKkSha)), "Kuji-kiri seal: heal your wounds.", 0, combat.PosStanding)
 	cmdRegistry.Register("pick", wrapArgs(cmdPick), "Pick a lock on a door.", 0, combat.PosStanding, "pick lock")
 
 	// Admin / debug

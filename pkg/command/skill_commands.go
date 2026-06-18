@@ -1031,6 +1031,28 @@ func CmdParry(s SessionInterface, args []string) error {
 	return s.SendMessage(result.MessageToCh)
 }
 
+// CmdBerserk handles the berserk command (C-10/C-12).
+func CmdBerserk(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	ch := s.GetPlayer()
+	return sendSkillResult(s, ch, nil, game.DoBerserk(ch))
+}
+
+// CmdKujiKiri returns a command handler bound to the given kuji-kiri seal
+// (one of the game.SkillKk* constants), used for the nine seal commands
+// (rin, kyo, toh, kai, jin, retsu, zai, zhen, sha).
+func CmdKujiKiri(seal string) func(SessionInterface, []string) error {
+	return func(s SessionInterface, args []string) error {
+		if s.GetPlayer() == nil {
+			return fmt.Errorf("not logged in")
+		}
+		ch := s.GetPlayer()
+		return sendSkillResult(s, ch, nil, game.DoKujiKiri(ch, seal, s.GetWorld()))
+	}
+}
+
 // CmdSneak handles the sneak command.
 func CmdSneak(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {

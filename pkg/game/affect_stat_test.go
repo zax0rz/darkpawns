@@ -66,6 +66,52 @@ func TestActiveAffectsStackAndExpire(t *testing.T) {
 	}
 }
 
+// TestActiveAffectsModifyCoreStats extends TestActiveAffectsModifyStats to the
+// six core stat getters (Str/Dex/Int/Wis/Con/Cha) plus max-pool and
+// saving-throw getters, which fold ActiveAffects via the same
+// sumAffectModsLocked pattern but live in different files
+// (player_combat.go, player_social.go, player_stats.go).
+func TestActiveAffectsModifyCoreStats(t *testing.T) {
+	p := NewPlayer(1, "Caster", 3001)
+	p.Stats.Str, p.Stats.Dex, p.Stats.Int, p.Stats.Wis, p.Stats.Con, p.Stats.Cha = 10, 10, 10, 10, 10, 10
+	p.MaxHealth, p.MaxMana, p.MaxMove = 50, 50, 50
+	p.SavingThrows = [5]int{0, 0, 0, 0, 0}
+
+	p.AddAffect(engine.NewAffectDirect(0, ApplyStr, 6, 2, 0, "strength"))
+	p.AddAffect(engine.NewAffectDirect(0, ApplyDex, 6, -1, 0, "clumsy"))
+	p.AddAffect(engine.NewAffectDirect(0, ApplyInt, 6, 1, 0, "intellect"))
+	p.AddAffect(engine.NewAffectDirect(0, ApplyWis, 6, 1, 0, "wisdom"))
+	p.AddAffect(engine.NewAffectDirect(0, ApplyCon, 6, 3, 0, "con"))
+	p.AddAffect(engine.NewAffectDirect(0, ApplyCha, 6, -2, 0, "ugly"))
+	p.AddAffect(engine.NewAffectDirect(0, ApplyHit, 6, 20, 0, "vigor"))
+	p.AddAffect(engine.NewAffectDirect(0, ApplyMana, 6, 15, 0, "clarity"))
+	p.AddAffect(engine.NewAffectDirect(0, ApplyMove, 6, 10, 0, "haste"))
+	p.AddAffect(engine.NewAffectDirect(0, ApplySavingPara, 6, 5, 0, "iron will"))
+
+	cases := []struct {
+		name string
+		got  int
+		want int
+	}{
+		{"GetStr", p.GetStr(), 12},
+		{"GetDex", p.GetDex(), 9},
+		{"GetInt", p.GetInt(), 11},
+		{"GetWis", p.GetWis(), 11},
+		{"GetCon", p.GetCon(), 13},
+		{"GetCha", p.GetCha(), 8},
+		{"GetMaxHP", p.GetMaxHP(), 70},
+		{"GetMaxMana", p.GetMaxMana(), 65},
+		{"GetMaxMove", p.GetMaxMove(), 60},
+		{"GetSavingThrow(0)", p.GetSavingThrow(0), 5},
+		{"GetSavingThrow(1)", p.GetSavingThrow(1), 0},
+	}
+	for _, c := range cases {
+		if c.got != c.want {
+			t.Errorf("%s = %d, want %d (active affect not folded in)", c.name, c.got, c.want)
+		}
+	}
+}
+
 // TestAffectBitMapping verifies that every C bit position maps correctly to engine.AFF* flags and back,
 // and that IsAffected(0) (blindness in C) returns true for blind only, not for sneak (C bit 18) or hide (C bit 19).
 func TestAffectBitMapping(t *testing.T) {

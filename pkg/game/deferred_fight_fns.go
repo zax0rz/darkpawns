@@ -11,18 +11,25 @@ package game
 
 // APPLY_* constants — from structs.h
 const (
-	ApplyNone    = 0
-	ApplyStr     = 1
-	ApplyDex     = 2
-	ApplyInt     = 3
-	ApplyWis     = 4
-	ApplyCon     = 5
-	ApplyMana    = 12
-	ApplyHit     = 13
-	ApplyMove    = 14
-	ApplyAC      = 17
-	ApplyHitroll = 18
-	ApplyDamroll = 19
+	ApplyNone         = 0
+	ApplyStr          = 1
+	ApplyDex          = 2
+	ApplyInt          = 3
+	ApplyWis          = 4
+	ApplyCon          = 5
+	ApplyCha          = 6
+	ApplyMana         = 12
+	ApplyHit          = 13
+	ApplyMove         = 14
+	ApplyAC           = 17
+	ApplyHitroll      = 18
+	ApplyDamroll      = 19
+	ApplySavingPara   = 20
+	ApplySavingRod    = 21
+	ApplySavingPetri  = 22
+	ApplySavingBreath = 23
+	ApplySavingSpell  = 24
+	ApplySpell        = 29
 )
 
 // --------------------------------------------------------------------------

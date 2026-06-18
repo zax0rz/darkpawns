@@ -93,7 +93,7 @@ func (p *Player) SetHP(v int) {
 func (p *Player) GetMaxHP() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.MaxHealth
+	return p.MaxHealth + p.sumAffectModsLocked(ApplyHit) + p.sumEquipAffectModsLocked(ApplyHit)
 }
 
 // SetMaxHP sets the player's maximum health.
@@ -121,7 +121,7 @@ func (p *Player) SetMana(v int) {
 func (p *Player) GetMaxMana() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.MaxMana
+	return p.MaxMana + p.sumAffectModsLocked(ApplyMana) + p.sumEquipAffectModsLocked(ApplyMana)
 }
 
 // SetMaxMana sets the player's maximum mana.
@@ -149,7 +149,7 @@ func (p *Player) SetMove(v int) {
 func (p *Player) GetMaxMove() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.MaxMove
+	return p.MaxMove + p.sumAffectModsLocked(ApplyMove) + p.sumEquipAffectModsLocked(ApplyMove)
 }
 
 // SetMaxMove sets the player's maximum movement points.
@@ -265,14 +265,17 @@ func (p *Player) AddStat(name string, delta int) {
 	}
 }
 
-// GetSavingThrow returns the saving throw value at the given index (0-4).
+// GetSavingThrow returns the saving throw value at the given index (0-4:
+// para/rod/petri/breath/spell), folding in active affects and equipment
+// affects at the corresponding APPLY_SAVING_* location.
 func (p *Player) GetSavingThrow(idx int) int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	if idx < 0 || idx >= 5 {
 		return 0
 	}
-	return p.SavingThrows[idx]
+	location := ApplySavingPara + idx
+	return p.SavingThrows[idx] + p.sumAffectModsLocked(location) + p.sumEquipAffectModsLocked(location)
 }
 
 // SetSavingThrow sets the saving throw value at the given index (0-4).
