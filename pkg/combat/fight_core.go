@@ -260,6 +260,9 @@ func ChangeAlignment(killer, victim Combatant) {
 	if killer.IsNPC() {
 		return
 	}
+	if GetAlignment == nil {
+		return
+	}
 	victimAlign := GetAlignment(victim.GetName())
 	killerAlign := GetAlignment(killer.GetName())
 	if victimAlign > -350 && victimAlign < 350 {
@@ -422,7 +425,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 	}
 
-	if GetRaceHate != nil {
+	if GetRaceHate != nil && GetRace != nil {
 		victimRace := GetRace(victimName)
 		for i := 0; i < 5; i++ {
 			if GetRaceHate(chName, i) == victimRace {
@@ -434,10 +437,10 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	if HasAffect != nil && HasAffect(victimName, AFF_SANCTUARY) {
 		dam /= 2
 	}
-	if HasAffect != nil && HasAffect(victimName, AFF_PROTECT_EVIL) && GetAlignment(chName) <= -350 {
+	if HasAffect != nil && HasAffect(victimName, AFF_PROTECT_EVIL) && GetAlignment != nil && GetAlignment(chName) <= -350 {
 		dam -= victim.GetLevel() / 4
 	}
-	if HasAffect != nil && HasAffect(victimName, AFF_PROTECT_GOOD) && GetAlignment(chName) >= 350 {
+	if HasAffect != nil && HasAffect(victimName, AFF_PROTECT_GOOD) && GetAlignment != nil && GetAlignment(chName) >= 350 {
 		dam -= victim.GetLevel() / 4
 	}
 

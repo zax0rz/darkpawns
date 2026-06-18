@@ -340,5 +340,13 @@ func BenchmarkGetIPFromRequest_NoTrustedProxy(b *testing.B) {
 	}
 }
 
+func TestLoginAttemptTracker_StopTwice(t *testing.T) {
+	tracker := NewLoginAttemptTracker(LoginAttemptConfig{})
+
+	// Calling Stop() multiple times should not panic
+	tracker.Stop()
+	tracker.Stop()
+}
+
 // Note: resetTrustedProxies requires sync import
 var _ sync.Once

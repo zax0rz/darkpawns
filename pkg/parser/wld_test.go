@@ -111,3 +111,20 @@ $
 		t.Errorf("expected 2 rooms total, got %d", len(rooms))
 	}
 }
+
+func TestRoom_HasFlagOutOfBounds(t *testing.T) {
+	room := &Room{
+		Flags: []string{"0", "0", "0", "0"},
+	}
+
+	// Should return false and not panic
+	if room.HasFlag(64) {
+		t.Error("Expected HasFlag(64) to be false")
+	}
+	if room.HasFlag(100) {
+		t.Error("Expected HasFlag(100) to be false")
+	}
+	if room.HasFlag(-1) {
+		t.Error("Expected HasFlag(-1) to be false")
+	}
+}
