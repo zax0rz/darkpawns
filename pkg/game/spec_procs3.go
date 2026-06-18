@@ -12,7 +12,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
-
 // findMobInRoom finds a MobInstance by name in a room's mob list.
 func findMobInRoom(w *World, roomVNum int, name string) *MobInstance {
 	for _, m := range w.GetMobsInRoom(roomVNum) {

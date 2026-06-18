@@ -54,7 +54,6 @@ const (
 	doorLocked = 2
 )
 
-
 // Direction name array (matching dirs[] from constants.c).
 var dirs = []string{
 	"north",
