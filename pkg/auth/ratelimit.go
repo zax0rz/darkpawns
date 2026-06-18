@@ -165,6 +165,7 @@ type LoginAttemptTracker struct {
 	threshold int           // failures before lockout
 	lockout   time.Duration // how long the lockout lasts
 	stop      chan struct{}
+	once      sync.Once
 }
 
 // loginAttempts holds the failure count and the time the last failure was
@@ -202,7 +203,7 @@ func NewLoginAttemptTracker(cfg LoginAttemptConfig) *LoginAttemptTracker {
 
 // Stop terminates the background cleanup goroutine.
 func (t *LoginAttemptTracker) Stop() {
-	close(t.stop)
+	t.once.Do(func() { close(t.stop) })
 }
 
 func (t *LoginAttemptTracker) cleanupLoop() {

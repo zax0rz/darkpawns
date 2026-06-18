@@ -18,6 +18,7 @@ import json
 import argparse
 import time
 import sys
+import os
 import requests
 from datetime import datetime
 
@@ -116,7 +117,7 @@ Output:
     try:
         resp = requests.post(
             f"{litellm_url}/v1/chat/completions",
-            headers={"Authorization": "Bearer sk-labz0rz-master-key", "Content-Type": "application/json"},
+            headers={"Authorization": f"Bearer {os.environ.get('LITELLM_KEY', '')}", "Content-Type": "application/json"},
             json={
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],

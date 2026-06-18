@@ -7,6 +7,9 @@ import (
 
 // broadcastCombatMsg encodes and broadcasts a combat event message to a room.
 func broadcastCombatMsg(s *Session, roomVNum int, eventType, text string) {
+	if s.player == nil {
+		return
+	}
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{

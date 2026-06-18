@@ -134,3 +134,47 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 		t.Errorf("restored equipped VNum = %d, want 20", eqItem.GetVNum())
 	}
 }
+
+// TestRecordToPlayer_OverCapacityInventoryNotDropped guards against silent item
+// loss on load: a saved inventory larger than the current capacity must be fully
+// restored, not truncated. Before the fix, RecordToPlayer discarded the
+// ErrInventoryFull from AddItem and dropped the overflow.
+func TestRecordToPlayer_OverCapacityInventoryNotDropped(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Spawn Room", Zone: 1}},
+		Objs:  []parser.Obj{{VNum: 10, ShortDesc: "a gold coin", Keywords: "coin gold"}},
+	}
+	world, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { world.StopAITicker() })
+
+	proto, ok := world.GetObjPrototype(10)
+	if !ok {
+		t.Fatal("expected prototype 10")
+	}
+
+	p := game.NewPlayer(321, "PackRat", 1001)
+	const itemCount = 30 // exceeds the default capacity of 20
+	p.Inventory.Capacity = 5
+	for i := 0; i < itemCount; i++ {
+		p.Inventory.RestoreItem(game.NewObjectInstance(proto, -1))
+	}
+	if got := len(p.Inventory.FindItems("")); got != itemCount {
+		t.Fatalf("setup: inventory has %d items, want %d", got, itemCount)
+	}
+
+	rec, err := PlayerToRecord(p, nil)
+	if err != nil {
+		t.Fatalf("PlayerToRecord failed: %v", err)
+	}
+	restored, err := RecordToPlayer(rec, world)
+	if err != nil {
+		t.Fatalf("RecordToPlayer failed: %v", err)
+	}
+
+	if got := len(restored.Inventory.FindItems("")); got != itemCount {
+		t.Errorf("restored inventory has %d items, want %d (items dropped on load)", got, itemCount)
+	}
+}

@@ -37,7 +37,7 @@ func (s *Session) readPump() {
 			}
 		}
 		s.manager.Unregister(s.playerName)
-		_ = s.conn.Close()
+		s.Close()
 	}()
 
 	s.conn.SetReadLimit(16384) // 16KB max message size (C4)
@@ -83,7 +83,7 @@ func (s *Session) writePump() {
 			)
 		}
 		ticker.Stop()
-		_ = s.conn.Close()
+		s.Close()
 	}()
 
 	for {

@@ -2,6 +2,101 @@
 
 Living document. Updated per session by Daeron.
 
+## [TRIAGE] 2026-06-18 — Morning Triage: Clean Crawl
+
+**Source:** Reek overnight crawl (Tests + Race + Vuln)
+**Result:** All green. go test pass (26 packages), `-race` clean, govulncheck clean. Zero findings.
+**Context:** Clawpatch review from previous session already triaged (DP-612–615). No new discoveries overnight.
+**Significance:** Codebase stability after the deadlock fix and quick-win batch. The 16 fixes committed last night didn't introduce regressions.
+
+## [RESEARCH] 2026-06-17 — Claude Code Session: The Deadlock That Killed the Game
+
+**Source:** The Architect working with Claude Code, reported to #dark-pawns 2026-06-17.
+
+**Finding:** A self-deadlock in the mob AI heartbeat was the root cause of "the game doesn't work." Every command froze on the first awake mob. The game was dead on arrival — nobody could get past login to discover it.
+
+**Bug mechanics:** `MobileActivity` / `runMobAI` / `wanderMob` took a write lock on `mob.mu`, then called `GetFighting()` / `GetRoom()` — accessor methods that take a read lock on the same mutex. A goroutine cannot read-lock a mutex it already write-locked. Result: permanent self-deadlock on the first awake mob, holding that mob's lock forever. Any player command that scanned that mob's room hung.
+
+**Why it survived the port:** Comments throughout `pkg/game/` say "uses direct field access, caller holds mob.mu" — describing the *intended* design. But the code actually uses locking getters. The comments documented a design that was never implemented. The C source presumably accessed mob fields directly while holding the lock; the Go port wrapped them in mutex-protected getters but didn't remove the outer lock. Nobody caught it because nobody could log in long enough to hit it.
+
+**Full fix tally (4 bugs):**
+1. Boot panic (nil DB interface)
+2. Telnet login double-encoded — nobody could log in
+3. Blank line = EOF — pressing Enter disconnected; "PRESS RETURN" broke char creation
+4. Mob-AI deadlock — every command hangs
+
+**Test coverage added:** `tests/e2e/telnet_smoke_test.go` (348 lines). Builds the real binary once (`TestMain`), runs it with no database, plays two full flows: guest enters world + moves rooms, and full character creation. Skipped under `-short`. Verifies the deadlock is gone with a real movement assertion (the old smoke test matched leftover login buffer — a false positive).
+
+**Status:** 5 source files changed (~90 lines), staged in working tree for review. Not yet committed. Tests pass, `-race` clean, `vet` clean.
+
+**Research significance:**
+1. **Comments-as-lie detector** — The deadlock survived because comments described behavior the code didn't implement. This is a new category for the paper: *documentation drift as a concurrency hazard*. Not just "code drifted from C" — "code drifted from its own documentation."
+2. **The login barrier** — The bug was invisible because a *different* bug (telnet double-encoding) prevented anyone from logging in to trigger it. Layered bugs create blind spots: you fix layer 1 and discover layer 2 was hiding layer 3.
+3. **E2E tests as proof of life** — The 348-line smoke test doesn't just check functionality. It proves the game boots, accepts logins, creates characters, and lets you walk around. That's the minimum viable proof that the game works.
+4. **Deadlock pattern for the paper** — Write-lock-calling-read-lock is textbook Go, but the *cause* (comments describing a design that was never implemented) is novel. Worth a case study paragraph.
+
+**Open:** Needs commit, Linear issues for the four bugs, and Architect review of the e2e test.
+
+**Deploy note (flagged by The Architect):** The server reads the DB connection string *only* from the `-db` CLI flag, not from `DATABASE_URL` env var. The systemd unit hardcodes the full connection string. Anyone deploying must pass `-db` explicitly — env vars won't work. This is functional but a footgun for future deployments.
+
+---
+
+## [RESEARCH] 2026-06-17 — Clawpatch Resurrection: 95 Findings After 6-Day Gap
+
+**Context:** clawpatch (Reek's nightly crawler) was broken since 6/11. Fixed today via provider swap to DeepSeek V4 Flash. First successful crawl produced 95 findings.
+
+**Findings distribution:**
+- Critical: 4 (4.2%)
+- High: 26 (27.4%)
+- Medium: 44 (46.3%)
+- Low: 22 (23.2%)
+
+**Handoff artifacts:**
+1. `clawpatch-findings-2026-06-17.md` — 2617 lines, all 95 findings consolidated with file:line evidence, recommendations, regression tests
+2. `raw-findings-json/` — structured JSON (one file per finding) for programmatic consumption
+3. `BRIEF-pkg-game-deadlock-audit.md` — scoped brief for dedicated agent, covers the 4 confirmed deadlock instances with C source citations
+
+**Key observations:**
+1. **DeepSeek-direct validation** — 89 findings produced end-to-end without litellm intermediary. Provider swap works.
+2. **Severity distribution stable** — 4.2% critical rate is consistent with historical Reek output. 6-day gap didn't inflate noise.
+3. **pkg/game blind spot confirmed** — clawpatch can't audit the largest package. Dedicated agent with C-source brief is the solution.
+4. **Frozen snapshot pattern** — handoff folder is stable; live source regenerates nightly. Good for cross-session continuity.
+
+**Research significance:**
+- Provider swap as infrastructure resilience (DeepSeek replacing litellm)
+- pkg/game as a case study for "packages too big for automated crawling"
+- The 95-finding batch as a dataset for false-positive rate analysis
+
+**Next:** Architect taking brief to Gemini for prioritization. Daeron will triage confirmed findings into Linear when ready.
+
+---
+
+## [RESEARCH] 2026-06-16 — Research Writing: The Brief-Driven Workflow
+
+**Cron-triggered (Program 5).** Wrote ~1,200 words on the brief-driven workflow as a case study in multi-model code review.
+
+**Topic:** How the fidelity audit brief constrains model search space, with the June 6 batch fix session as a concrete case study. Documents the three-layer brief architecture (scope, methodology, output), the review cycle where models improve briefs before implementing, and the multi-model advantage (Claude for security, DeepSeek for configuration, Kimi for testing).
+
+**Key arguments:**
+1. The brief is not a prompt — a prompt asks a model to generate, a brief asks a model to find. The difference is the search space.
+2. The review cycle (model reads brief → flags gaps → Daeron incorporates → model implements) improves brief quality before implementation.
+3. Multi-model review distributes blind spots across models — each model's strength compensates for another's weakness.
+4. The verification step (30 seconds per finding) turns opinions into facts and catches false positives, severity misclassification, and missing context.
+5. The brief is the artifact, not the model. Briefs accumulate and improve. Models are interchangeable.
+
+**Case study:** June 6 batch fix session — 14 issues resolved in 3 hours using brief-driven workflow with Claude Code, DeepSeek Flash, and Kimi K2.6. Each model caught different gaps during review (Claude: username enumeration, DeepSeek: env var fallback, Kimi: map ordering).
+
+**Open questions:**
+- Minimum effective brief length (200-400 words works, floor unknown)
+- Automated verification (scales for small codebases, unclear for large ones)
+- Brief improvement floor (do briefs plateau after N review cycles?)
+
+**File:** `docs/research/drafts/2026-06-16-brief-driven-workflow.md`
+
+**Status:** Draft ~1,200 words. Complements "Constraint Engineering" (theory) with concrete case study.
+
+---
+
 ## [RESEARCH] 2026-06-11 — Research Writing: Thesis Draft Enhancement
 
 **Cron-triggered (Program 5).** Enhanced "What the Agent Preserved" (June 9 draft) with concrete data.
@@ -2751,3 +2846,174 @@ Three new drafts this week:
 - **The ban system failure** is a compelling case study for the paper: three independent code paths all failed because the Go port didn't preserve the C system's DNS resolution behavior. This is exactly the kind of silent drift that fidelity audits catch.
 - **10 research drafts** now form a coherent arc. The throughline thesis ("What the Agent Preserved") ties them together. Next step: concrete numbers table and the classSpells side-by-side comparison.
 - **Reek accuracy trend:** 73% this week (down from 100% on fidelity audits). The drop is expected — Reek's crawl reports produce more noise than Daeron's manual fidelity audits. The 42% FP rate on the security batch (June 6) is a known high-noise pattern. Overall trend: stable at ~70-80% for crawl reports, 100% for fidelity audits.
+
+## [DIGEST] 2026-06-14 — Weekly Research Digest (Jun 8–14)
+
+**Reek reports:** 2 generated (1 dependency audit, 1 security audit)
+**Triage outcomes:** 7 confirmed, 0 rejected, 0 needs context
+**Fixes applied:** 11 commits this week (security, safety, CI, and cleanup)
+**Server status:** stopped (manual intervention window); no crash signatures in log tail
+**Dependency status:** clean. `govulncheck`, `go mod verify`, and `go mod tidy` all pass. One minor SQLite update remains available.
+
+---
+
+### Week Summary
+
+This was a cleanup-and-hardening week. Reek’s reports were unusually clean: a perfect security audit on June 13 and a tidy dependency audit on June 14. Meanwhile, the repo resolved a backlog of operational fixes that had accumulated from earlier batches.
+
+**Severity distribution across confirmed findings:**
+- HIGH: 2 (hardcoded Postgres creds, WebSocket dev bypass)
+- MEDIUM: 3 (pprof exposure, CORS hardcoded origins, IP-only rate limiting)
+- LOW: 2 (agent store file permissions, WebSocket private IP trust)
+
+**Hot zones:** server safety (`pkg/game/world.go`, graceful shutdown), ban system (`pkg/game/bans.go`, wildcard matching), security/ops (`cmd/server/main_web.go`, `cmd/agentkeygen/`, `profiling/`), CI toolchain (`Makefile`, lint/node compat)
+
+**Bug categories:**
+- Security: 3 (credential handling, CORS, exposure surface)
+- Concurrency/safety: 2 (door race, shutdown hygiene)
+- Lifecycle/ops: 2 (pprof lifecycle, signal handling)
+- Build/CI: 4 (compose v2, lint/node compat, go-version alignment)
+
+---
+
+### Key Patterns
+
+**1. Security posture is improving.**
+Reek’s security audits are getting cleaner. June 13’s report hit 100% accuracy, and the two HIGH findings were real, not noise. The confirmed issues are the usual class: hardcoded credentials, developer-mode origin handling, and exposure surfaces that shouldn’t be left in production paths.
+
+**2. The ban system finally got a proper fix pass.**
+Earlier reports flagged the ban subsystem as comprehensively broken. This week it received a meaningful commit for wildcard matching and duplicate checking. Not a full redesign, but an important functional correction.
+
+**3. Server hardening continues.**
+Door race conditions, shutdown behavior, and pprof lifecycle cleanup all got attention. These aren’t dramatic bugs, but they’re the sort of defects that make an operator trust the server less at 3 AM.
+
+**4. The dependency surface is healthy.**
+No known vulnerabilities. All modules verified. The supply chain isn’t perfect, but right now it’s quiet.
+
+---
+
+### Research Output
+
+One research update this week:
+
+1. **Research Writing: Thesis Draft Enhancement** (June 11) — expanded “What the Agent Preserved” with concrete numbers, unaudited-subsystem framing, and stronger cross-references.
+
+**Research series state:** 10 drafts total. The throughline thesis is now materially stronger than last week.
+
+---
+
+### Board State (June 14)
+
+**Open CRITICAL/HIGH:**
+- DP-553: Wildcard ban matching broken (Urgent)
+- DP-581: PostgreSQL credentials in agentkeygen CLI (High)
+- DP-557: DNS hostname resolution dead (High)
+- DP-554: ValidName missing online duplicate check (High)
+- DP-559: JWT CVE-2025-30204 (High)
+
+**Done this week:** multiple operational fixes closed (pprof cleanup, server safety, agentkeygen hardening, DamageDealt guard, ban matching, CI/toolchain fixes)
+
+**Canceled this week:** none from this digest window
+
+---
+
+### Paper-Relevant Notes
+
+- **Clean reports are data too.** A 100%-accuracy security audit and a clean dependency pass are worth recording because they establish baseline confidence and show where the system is now stable.
+- **Operational hardening is part of the methodology story.** The AIIDE case benefits from showing not only what the agents found, but how the system stabilized over time after the finding-and-fix cycle.
+- **The ban-system arc is still one of the strongest narrative threads.** Even with this week’s fix, the earlier multi-failure pattern remains a clean example of silent drift and code-path divergence.
+
+## 2026-06-13 — Morning Triage
+
+**Reek Security Audit — 2026-06-13**
+- 7 findings, all confirmed, 0 rejected, 0 needs context
+- 100% accuracy on this report (cleanest security audit to date)
+- 2 HIGH: hardcoded Postgres creds, WebSocket dev bypass
+- 3 MEDIUM: pprof exposure, CORS hardcoded origins, IP-only rate limiting
+- 2 LOW: agent store file permissions, WebSocket private IP trust
+- All findings are real security issues, not false positives
+- Previous security audit (June 6) had 42% FP rate — this one is much cleaner
+- Reek accuracy on security audits: improving. June 6 = 58%, June 13 = 100%
+
+## 2026-06-14 — CT Migration + Symlink Fix
+
+Migration from frankendell Docker to CT 120 (Proxmox) completed. Independent verification:
+- All services healthy, all external endpoints 200
+- Fixed: UFW port 80 missing (blocking Cloudflare tunnel)
+- Fixed: lib/ symlinks replaced with real directories — server now loads 9,981 rooms (was 0)
+- Created DP-600 through DP-604 (globals.lua crash, DB ownership, missing files, AI keys)
+- DP-601 (DB persistence) is high priority — server running without persistence
+## [DIGEST] 2026-06-17 — Weekly Research Digest (June 10–17)
+
+### Reek Reports
+- **Generated:** 2 (coverage audit on June 17, dependency audit on June 14)
+- **With findings:** 1 (coverage audit identified deep test gaps; dependency audit was clean)
+- **Clean / no_REPLY:** 1 (dependency audit passed with no known vulnerabilities)
+
+### Triage Outcomes
+- **Confirmed:** 0 new Reek-reported issues triaged this cycle
+- **Rejected:** 0
+- **Pending:** 0
+- **False positive rate:** N/A (no Reek code findings to classify this week)
+
+### Fixes Applied
+- **14 commits merged (June 10–17)**
+- **Key fixes:**
+  - QA boot/telnet/combat batch (DP-589, DP-590 + telnet login/input/render fixes)
+  - Agentkeygen DSN moved to env var + leak/error cleanup (DP-574, DP-580, DP-586)
+  - Pprof lifecycle cleanup (DP-582, DP-583, DP-584, DP-585)
+  - Ban system wildcard matching + online duplicate check (DP-553, DP-554)
+  - Door race + graceful shutdown hardening (DP-562, DP-566)
+  - DamageDealt negative-value guard (DP-577)
+  - Makefile / CI fixes (compose v2, lint/Node 24 compat, go-version alignment)
+- **Additional notable outcome:** QA branch records a previously-uncommitted spell-casting fix (`grantClassSpells` / SpellMap wiring) that was verified live but remains staged/uncommitted in the working tree.
+
+### Hot Zones
+- Boot / server lifecycle: `cmd/server/main.go`
+- Telnet path: `pkg/telnet/listener.go`
+- Session / login: `pkg/session/session_login.go`, `manager.go`
+- Mob AI: `pkg/game/ai.go`, `pkg/mobact.go`
+- Ops / CI: `Makefile`, `profiling/profiler.go`
+- Tests: `tests/e2e/telnet_smoke_test.go`
+
+### Bug Categories
+- Boot / runtime safety: 2 (DB nil interface boot crash, mob-AI self-deadlock)
+- Telnet protocol / UX: 3 (double-encoded login, EOF misread, blind room state)
+- Ops / lifecycle: 4 (pprof shutdown, signal handling, shutdown deadlines)
+- Security / secrets: 1 (agentkeygen DSN handling)
+- Ban logic: 1 (wildcard + duplicate check)
+- Build / CI / toolchain: 3 (compose v2, lint job compat, go-version)
+
+### Server / Dependency Status
+- **Dependency status:** clean. `govulncheck`, `go mod verify`, and `go mod tidy` all pass. One minor SQLite update remains available.
+- **Repo status:** `qa/boot-telnet-combat-fixes` branch shows staged working-tree changes (not merged to `main` yet).
+- **Unit test status:** `go test ./... -short` passes (this digest window).
+
+### Coverage Snapshot
+- **Overall coverage:** 17.5%
+- **Worst packages:** `pkg/command` (3.2%), `pkg/game` (9.5%), `pkg/dreaming` (11.8%), `pkg/spells` (14.1%)
+- **Packages with no tests at all:** `cmd/server`, `cmd/dp-agent`, `cmd/dp-goatd`, `pkg/optimization`, `pkg/telnet`, `web`, `profiling` (among others)
+- **Notable gap:** The report emphasizes that high commit activity this week was accompanied by minimal coverage breadth in core gameplay/telecom subsystems.
+
+### Key Patterns
+1. **Stabilization focused on runtime safety.** The dominant fixes were boot-path, signal/shutdown, and protocol-path correctness — the class of bugs that make “it works locally” stop meaning “it works in prod.”
+2. **Unit tests passed; the product still broke.** This week’s strongest lesson is that passing tests can coexist with assembly-level defects across boot/login/session/render paths.
+3. **Smoke/E2E testing is now a first-class signal.** The new telnet smoke suite is materially important because it covers assembled-server behavior that unit coverage missed.
+4. **Coverage is now a documented constraint.** The coverage audit landed the same week as major runtime fixes; that juxtaposition is useful for the paper’s argument about verification scope.
+
+### Research Output
+- **[RESEARCH] 2026-06-17 — Claude Code Session: The Deadlock That Killed the Game**
+- **[RESEARCH] 2026-06-16 — Research Writing: The Brief-Driven Workflow**
+
+**Research series state:** 10 drafts total. This week added a strong “deadlock case study” plus another methodology case study.
+
+### Board State (June 17)
+- **Open / pending work:** QA branch is ready for review/merge; spell-casting fix and deployment notes are still uncommitted in working tree.
+- **Done this week:** boot, telnet, AI deadlock, pprof cleanup, agentkeygen hardening, ban hardening, door/shutdown hardening, CI/toolchain fixes
+- **Canceled this week:** none identified from this digest window
+
+### Paper-Relevant Notes
+- **Assembly-level blind spots are publishable.** “Unit tests green + product unusable” is a clean finding for AIIDE-style framing.
+- **Documentation drift / design-documentation mismatch continues to matter.** The mob-AI deadlock is another strong case where comments described an intended contract the code did not follow.
+- **Coverage reporting is becoming part of the evidence base.** This week makes a clean write-up: hardening activity + test gap map + new smoke coverage.
+

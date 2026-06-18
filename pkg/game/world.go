@@ -552,10 +552,7 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	cmd := strings.ToLower(parts[0])
 	args := strings.Join(parts[1:], " ")
 
-	// Hold RLock through the command dispatch to prevent TOCTOU races.
-	// All switch cases are fast (message sends, state reads, or short mutations).
-	// The mob could die or be removed between lookup and use if we release early.
-	defer w.mu.RUnlock()
+	w.mu.RUnlock()
 
 	switch cmd {
 	case "say":

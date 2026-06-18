@@ -53,7 +53,8 @@ def build_import_block(needed):
 
 def fix_imports():
     while True:
-        result = subprocess.run(["go", "build", "./..."], capture_output=True, text=True, cwd="/home/zach/darkpawns")
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        result = subprocess.run(["go", "build", "./..."], capture_output=True, text=True, cwd=project_root)
         if result.returncode == 0:
             break
         stderr = result.stderr

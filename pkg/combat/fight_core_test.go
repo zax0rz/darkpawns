@@ -334,3 +334,45 @@ func TestChangeAlignment(t *testing.T) {
 	ChangeAlignment(paladin, evil)
 	// Just verify it doesn't panic — actual value depends on implementation
 }
+
+func TestChangeAlignment_NilGetAlignment(t *testing.T) {
+	orig := GetAlignment
+	defer func() { GetAlignment = orig }()
+
+	GetAlignment = nil
+	paladin := &mockCombatant{name: "paladin", npc: false}
+	evil := &mockCombatant{name: "demon", npc: true}
+
+	// Should not panic when GetAlignment is nil
+	ChangeAlignment(paladin, evil)
+}
+
+func TestTakeDamage_NilGetRace(t *testing.T) {
+	origGetRace := GetRace
+	origGetRaceHate := GetRaceHate
+	origHasAffect := HasAffect
+	origIsShopkeeper := IsShopkeeper
+	origHasPlrFlag := HasPlrFlag
+	origHasRoomFlag := HasRoomFlag
+	defer func() {
+		GetRace = origGetRace
+		GetRaceHate = origGetRaceHate
+		HasAffect = origHasAffect
+		IsShopkeeper = origIsShopkeeper
+		HasPlrFlag = origHasPlrFlag
+		HasRoomFlag = origHasRoomFlag
+	}()
+
+	GetRace = nil
+	GetRaceHate = func(name string, index int) int { return 1 }
+	HasAffect = func(name string, aff int) bool { return false }
+	IsShopkeeper = func(name string) bool { return false }
+	HasPlrFlag = func(name string, flag string) bool { return false }
+	HasRoomFlag = func(room int, flag string) bool { return false }
+
+	ch := &mockCombatant{name: "ch", npc: false, level: 10, room: 100}
+	victim := &mockCombatant{name: "vic", npc: false, level: 10, room: 100}
+
+	// Should not panic when GetRace is nil even though GetRaceHate is non-nil
+	TakeDamage(ch, victim, 10, TYPE_HIT)
+}

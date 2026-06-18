@@ -33,7 +33,7 @@ class LLMEmotionClassifier:
         self.model = model
         self.use_fallback = use_fallback
         self.litellm_base = os.getenv("LITELLM_BASE", "http://192.168.1.106:4000")
-        self.api_key = os.getenv("LITELLM_KEY", "sk-labz0rz-master-key")
+        self.api_key = os.getenv("LITELLM_KEY", "")
         
         # Model-specific configurations
         self.model_configs = {

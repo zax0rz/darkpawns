@@ -149,7 +149,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			s.sendCharCreatePrompt("create_password", fmt.Sprintf("New character.\r\nGive me a password for %s: ", s.charName), nil)
 		case "N":
 			s.sendText("Okay, what IS it, then? ")
-			_ = s.conn.Close()
+			s.Close()
 		default:
 			s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Please type Yes or No: \r\nDid I get that right, %s (Y/N)? ", s.charName), map[string]string{
 				"Y": "Yes",
@@ -508,6 +508,9 @@ func (s *Session) completeCharCreation() error {
 	} else {
 		game.GiveStartingSkills(s.player)
 	}
+
+	// Grant the spells this class knows at level 1 so casters can actually cast.
+	grantClassSpells(s.player)
 
 	// Register and add to world
 	s.authenticated = true

@@ -163,6 +163,20 @@ func (inv *Inventory) AddItem(item *ObjectInstance) error {
 	return inv.addItem(item)
 }
 
+// RestoreItem adds an item to the inventory ignoring the capacity limit. It is
+// for loading a player's saved inventory, where the items were already
+// legitimately owned and must not be silently dropped if the current capacity
+// (which depends on strength and may have changed) is smaller than the save.
+// Returns true if the add pushed the inventory over capacity, so the caller can
+// surface it; the item is added either way.
+func (inv *Inventory) RestoreItem(item *ObjectInstance) (overCapacity bool) {
+	inv.mu.Lock()
+	defer inv.mu.Unlock()
+	over := len(inv.Items) >= inv.Capacity
+	inv.Items = append(inv.Items, item)
+	return over
+}
+
 func (inv *Inventory) RemoveItem(item *ObjectInstance) bool {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()

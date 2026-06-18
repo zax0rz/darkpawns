@@ -50,6 +50,16 @@ func (op *ObjectPool) Get() interface{} {
 	op.mu.Lock()
 	defer op.mu.Unlock()
 
+	obj := op.getLocked()
+
+	borrowTime := time.Since(start)
+	op.updateBorrowTime(borrowTime)
+
+	return obj
+}
+
+// getLocked borrows an object from the pool (caller must hold op.mu)
+func (op *ObjectPool) getLocked() interface{} {
 	op.stats.TotalBorrowed++
 	op.borrowed++
 
@@ -70,26 +80,16 @@ func (op *ObjectPool) Get() interface{} {
 			op.reset(obj)
 		}
 
-		borrowTime := time.Since(start)
-		op.updateBorrowTime(borrowTime)
-
 		return obj
 	}
 
 	// Create new object if under max size
 	if op.created < op.maxSize {
-		obj := op.createNewLocked()
-		borrowTime := time.Since(start)
-		op.updateBorrowTime(borrowTime)
-		return obj
+		return op.createNewLocked()
 	}
 
 	// Pool exhausted, create temporary object
-	obj := op.create()
-	borrowTime := time.Since(start)
-	op.updateBorrowTime(borrowTime)
-
-	return obj
+	return op.create()
 }
 
 // createNewLocked creates a new object (caller must hold lock)
@@ -148,6 +148,7 @@ func (op *ObjectPool) Put(obj interface{}) {
 
 // TryGet attempts to get an object without waiting
 func (op *ObjectPool) TryGet() (interface{}, bool) {
+	start := time.Now()
 	op.mu.Lock()
 	defer op.mu.Unlock()
 
@@ -155,7 +156,12 @@ func (op *ObjectPool) TryGet() (interface{}, bool) {
 		return nil, false
 	}
 
-	return op.Get(), true
+	obj := op.getLocked()
+
+	borrowTime := time.Since(start)
+	op.updateBorrowTime(borrowTime)
+
+	return obj, true
 }
 
 // Clear removes all objects from the pool

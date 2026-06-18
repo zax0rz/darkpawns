@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"os"
+	"sync"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -301,5 +303,130 @@ func TestShopTransaction(t *testing.T) {
 	// Shop should have the item again
 	if len(shop.GetInventory()) != 1 {
 		t.Errorf("Expected 1 item in shop inventory after buying back, got %d", len(shop.GetInventory()))
+	}
+}
+
+// TestShopTransactionConcurrentDeadlock simulates concurrent buy and sell transactions
+// to verify that no deadlocks occur under race conditions.
+func TestShopTransactionConcurrentDeadlock(t *testing.T) {
+	manager := NewShopManager()
+
+	// Create a shop
+	shop := manager.CreateShopConcrete(1001, "Test Shop", 3001)
+	shop.ItemTypes = []int{1}
+
+	// Create a player
+	player := &game.Player{
+		Name: "Test Player",
+		Gold: 10000,
+	}
+	player.Inventory = game.NewInventory()
+
+	// Create item prototype
+	proto := &parser.Obj{
+		VNum:      1001,
+		Keywords:  "test item",
+		ShortDesc: "a test item",
+		Cost:      100,
+		TypeFlag:  1,
+	}
+
+	// Add some items to shop inventory
+	for i := 0; i < 10; i++ {
+		item := game.NewObjectInstance(proto, -1)
+		shop.AddItem(item)
+	}
+
+	// Run concurrent buys and sells
+	var wg sync.WaitGroup
+	numGoroutines := 10
+
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			if id%2 == 0 {
+				// Buy
+				items := shop.GetInventory()
+				if len(items) > 0 {
+					_, _ = manager.ProcessTransaction(shop, player, items[0], true)
+				}
+			} else {
+				// Sell
+				player.Lock()
+				items := player.Inventory.FindItems("")
+				player.Unlock()
+				if len(items) > 0 {
+					_, _ = manager.ProcessTransaction(shop, player, items[0], false)
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait()
+}
+
+// TestShopPersistence tests saving and loading shop state.
+func TestShopPersistence(t *testing.T) {
+	// Clean up shops file if it exists
+	_ = os.Remove(shopsFile)
+	defer func() { _ = os.Remove(shopsFile) }()
+
+	manager := NewShopManager()
+	shop := manager.CreateShopConcrete(1001, "Test Shop", 3001)
+	shop.ItemTypes = []int{1}
+	shop.Gold = 5000
+	shop.BankAccount = 12000
+	shop.WithWho = NotradeGood | NotradeEvil
+
+	proto := &parser.Obj{
+		VNum:      1001,
+		Keywords:  "test item",
+		ShortDesc: "a test item",
+		Cost:      100,
+		TypeFlag:  1,
+	}
+	item := game.NewObjectInstance(proto, -1)
+	shop.AddItem(item)
+
+	// Save shops
+	err := manager.SaveShops()
+	if err != nil {
+		t.Fatalf("Failed to save shops: %v", err)
+	}
+
+	// Create a new manager and load
+	manager2 := NewShopManager()
+	mockGetProto := func(vnum int) (*parser.Obj, bool) {
+		if vnum == 1001 {
+			return proto, true
+		}
+		return nil, false
+	}
+
+	err = manager2.LoadShops(mockGetProto)
+	if err != nil {
+		t.Fatalf("Failed to load shops: %v", err)
+	}
+
+	loadedShop, ok := manager2.GetShopConcrete(shop.ID)
+	if !ok {
+		t.Fatal("Failed to get loaded shop")
+	}
+
+	if loadedShop.Name != "Test Shop" {
+		t.Errorf("Expected shop name 'Test Shop', got '%s'", loadedShop.Name)
+	}
+	if loadedShop.Gold != 5000 {
+		t.Errorf("Expected shop gold 5000, got %d", loadedShop.Gold)
+	}
+	if loadedShop.BankAccount != 12000 {
+		t.Errorf("Expected shop BankAccount 12000, got %d", loadedShop.BankAccount)
+	}
+	if loadedShop.WithWho != NotradeGood|NotradeEvil {
+		t.Errorf("Expected WithWho %d, got %d", NotradeGood|NotradeEvil, loadedShop.WithWho)
+	}
+	if len(loadedShop.GetInventory()) != 1 {
+		t.Errorf("Expected 1 item in loaded shop inventory, got %d", len(loadedShop.GetInventory()))
 	}
 }

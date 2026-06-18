@@ -369,8 +369,10 @@ func (wf *WordFilterEntry) censor(message string) string {
 	return strings.ReplaceAll(message, wf.Pattern, strings.Repeat("*", len(wf.Pattern)))
 }
 
-// AddReport stores an abuse report (DB if available, always logs).
-func (m *Manager) AddReport(r AbuseReport) {
+// AddReport stores an abuse report (DB if available, always logs). Returns a
+// non-nil error if the DB write failed, so callers can warn the admin that the
+// report is memory-only and will not survive a restart.
+func (m *Manager) AddReport(r AbuseReport) error {
 	if m.hasDB {
 		_, err := m.db.Exec(
 			`
@@ -380,12 +382,16 @@ func (m *Manager) AddReport(r AbuseReport) {
 		)
 		if err != nil {
 			slog.Error("failed to persist abuse report", "error", err)
+			return fmt.Errorf("persist abuse report: %w", err)
 		}
 	}
+	return nil
 }
 
-// AddPenalty stores a penalty (in-memory + DB if available).
-func (m *Manager) AddPenalty(p PlayerPenalty) {
+// AddPenalty stores a penalty (in-memory + DB if available). Returns a non-nil
+// error if the DB write failed; the penalty is still applied in memory, but
+// callers should warn the admin that it will not survive a restart.
+func (m *Manager) AddPenalty(p PlayerPenalty) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -405,8 +411,10 @@ func (m *Manager) AddPenalty(p PlayerPenalty) {
 		)
 		if err != nil {
 			slog.Error("failed to persist penalty", "error", err)
+			return fmt.Errorf("persist penalty: %w", err)
 		}
 	}
+	return nil
 }
 
 // GetPlayerPenalties returns all penalties for a player.
@@ -457,8 +465,10 @@ func (m *Manager) GetWordFilters() []WordFilterEntry {
 	return result
 }
 
-// AddWordFilter adds a new word filter entry.
-func (m *Manager) AddWordFilter(pattern string, isRegex bool, actionStr, createdBy string) {
+// AddWordFilter adds a new word filter entry. Returns a non-nil error if the DB
+// write failed; the filter is still active in memory, but callers should warn
+// the admin that it will not survive a restart.
+func (m *Manager) AddWordFilter(pattern string, isRegex bool, actionStr, createdBy string) error {
 	action := FilterActionCensor
 	switch strings.ToLower(actionStr) {
 	case "censor":
@@ -495,8 +505,10 @@ func (m *Manager) AddWordFilter(pattern string, isRegex bool, actionStr, created
 		)
 		if err != nil {
 			slog.Error("failed to persist word filter", "error", err)
+			return fmt.Errorf("persist word filter: %w", err)
 		}
 	}
+	return nil
 }
 
 // RemoveWordFilter removes a word filter by ID.

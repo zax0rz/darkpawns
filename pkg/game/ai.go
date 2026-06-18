@@ -47,16 +47,17 @@ func (w *World) AITick() {
 }
 
 // runMobAI runs AI for a single mob.
-// CRIT-004: holds mob.mu for the entire AI cycle to prevent races between
-// AI tick, combat state changes, and player interactions.
 //
-// MED-010: wanderMob uses direct field access (mob.RoomVNum) instead of
-// getter methods that would deadlock (they acquire m.mu.RLock/Lock).
+// DP-590: this used to hold mob.mu for the whole AI cycle (CRIT-004), but the
+// dispatch below runs entirely through self-locking accessors (GetName,
+// GetFighting, SetStatus, wanderMob → GetRoom/SetRoom, …). Holding the write
+// lock made the first accessor self-deadlock, so the mob AI never ran. The
+// accessors provide their own synchronization; we no longer hold mob.mu here.
 func (w *World) runMobAI(mob *MobInstance) {
-	mob.mu.Lock()
-	defer mob.mu.Unlock()
-
-	if mob.Prototype == nil {
+	mob.mu.RLock()
+	ready := mob.Prototype != nil
+	mob.mu.RUnlock()
+	if !ready {
 		return
 	}
 
@@ -69,11 +70,10 @@ func (w *World) runMobAI(mob *MobInstance) {
 	// This fixes the O(N²) bug where runMobAI called MobileActivity()
 	// which re-iterated ALL mobs — making every mob get processed N times
 	// per tick. MobileActivityForMob processes a single mob.
-	// Caller must hold mob.mu — see MobileActivityForMob contract.
 	w.MobileActivityForMob(mob)
 
-	// Post-activity: wandering
-	// Parse sentinel flag — direct field access, mob.mu is held
+	// Post-activity: wandering. Prototype is immutable after creation, so it is
+	// safe to read its flags without holding mob.mu.
 	isSentinel := false
 	for _, flag := range mob.Prototype.ActionFlags {
 		if flag == "sentinel" {
@@ -168,12 +168,10 @@ func (w *World) wanderMob(mob *MobInstance) {
 	exit := room.Exits[direction]
 	targetRoom := snap.Rooms[exit.ToRoom]
 
-	// Move mob — direct field write, mob.mu is held
+	// Move mob. GetRoom/SetRoom lock individually; the caller no longer holds
+	// mob.mu (DP-590), so there is no lock to release or re-acquire here.
 	oldRoom := mob.GetRoom()
 	mob.SetRoom(targetRoom.VNum)
-
-	// Release mob lock during player notifications (I/O can block)
-	mob.mu.Unlock()
 
 	// Notify players in old room
 	oldPlayers := w.GetPlayersInRoom(oldRoom)
@@ -189,9 +187,6 @@ func (w *World) wanderMob(mob *MobInstance) {
 
 	// MobProg entry trigger — fires when mob enters a room
 	w.EntryProg(mob, targetRoom.VNum)
-
-	// Re-acquire lock — defer in runMobAI will fire with this held
-	mob.mu.Lock()
 }
 
 // StartAITicker starts the AI tick loop and event processing loop.

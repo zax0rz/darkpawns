@@ -421,26 +421,29 @@ func (w *World) mobShout(m *MobInstance, msg string) {
 
 // mobOpenDoor has a mob open a door in a given direction.
 func (w *World) mobOpenDoor(m *MobInstance, dir int, keyword string) {
-	room := w.GetRoomInWorld(m.GetRoom())
+	w.mu.Lock()
+	room := w.rooms[m.GetRoom()]
 	if room == nil {
+		w.mu.Unlock()
 		return
 	}
 	dirName := dirKeys[dir]
 	ext, hasExit := room.Exits[dirName]
 	if !hasExit {
+		w.mu.Unlock()
 		return
 	}
 	if ext.DoorState != doorClosed && ext.DoorState != doorLocked {
+		w.mu.Unlock()
 		return
 	}
 
-	w.mu.Lock()
 	ext.DoorState = doorOpen
 	room.Exits[dirName] = ext
 
 	// Handle reverse exit
 	otherRoomVNum := ext.ToRoom
-	otherRoom := w.GetRoomInWorld(otherRoomVNum)
+	otherRoom := w.rooms[otherRoomVNum]
 	if otherRoom != nil {
 		backDir := revDir[dir]
 		backExt, hasBack := otherRoom.Exits[dirs[backDir]]

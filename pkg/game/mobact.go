@@ -100,13 +100,19 @@ func (w *World) MobileActivity() {
 		if !ch.IsAlive() {
 			continue
 		}
-		ch.mu.Lock()
-		if ch.Prototype == nil {
-			ch.mu.Unlock()
+		// Do NOT hold ch.mu across mobileActivityForMob. That dispatch runs
+		// entirely through self-locking accessors (GetFighting, GetPosition,
+		// SetStatus, wanderMob → GetRoom, …); holding the write lock here made
+		// the very first accessor self-deadlock, wedging the heartbeat on the
+		// first awake mob and hanging every player command that scanned its
+		// room. The accessors provide their own synchronization. (DP-590)
+		ch.mu.RLock()
+		ready := ch.Prototype != nil
+		ch.mu.RUnlock()
+		if !ready {
 			continue
 		}
 		w.mobileActivityForMob(ch)
-		ch.mu.Unlock()
 	}
 }
 

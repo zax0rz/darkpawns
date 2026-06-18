@@ -120,8 +120,15 @@ func main() {
 	// Set ban/xnames file paths relative to world directory (DP-421)
 	game.SetBanFilePaths(*worldDir)
 
-	// Create session manager
-	manager := session.NewManager(gameWorld, database)
+	// Create session manager.
+	// Pass a true-nil db.Database interface when there is no database: a nil
+	// *db.DB stored in an interface is itself non-nil, which would defeat the
+	// nil checks downstream and panic. (DP-589)
+	var dbIface db.Database
+	if database != nil {
+		dbIface = database
+	}
+	manager := session.NewManager(gameWorld, dbIface)
 	gameWorld.SetShopManager(manager.GetShopManager()) // Wire shop system to world
 	game.SetWeatherWorld(gameWorld)                    // Wire world for weather broadcasts
 	manager.SetCombatBroadcastFunc()                   // Enable combat messages to rooms

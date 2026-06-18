@@ -25,6 +25,10 @@ type Door struct {
 	FromRoom  int    // Source room VNum
 	ToRoom    int    // Destination room VNum
 	Direction string // Direction (north, south, east, west, up, down)
+
+	// Initial state for resets
+	initialClosed bool
+	initialLocked bool
 }
 
 // NewDoor creates a new door from an exit definition.
@@ -55,6 +59,9 @@ func NewDoor(fromRoom, toRoom int, direction string, doorState, keyVNum int) *Do
 		d.Closed = false
 		d.Locked = false
 	}
+
+	d.initialClosed = d.Closed
+	d.initialLocked = d.Locked
 
 	return d
 }
@@ -220,9 +227,7 @@ func (d *Door) GetDescription() string {
 
 // Reset resets the door to its default state.
 func (d *Door) Reset() {
-	// Reset to closed/locked based on original state
-	// For now, just reset HP
-	if d.Hp <= 0 {
-		d.Hp = d.MaxHp
-	}
+	d.Hp = d.MaxHp
+	d.Closed = d.initialClosed
+	d.Locked = d.initialLocked
 }

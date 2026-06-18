@@ -40,7 +40,7 @@ func (w *World) HouseBoot() {
 		}
 
 		// House room must exist
-		realHouse := w.GetRoomInWorld(h.VNum)
+		realHouse := w.rooms[h.VNum]
 		if realHouse == nil {
 			continue
 		}
@@ -51,7 +51,7 @@ func (w *World) HouseBoot() {
 		}
 
 		// Atrium must exist
-		realAtrium := w.GetRoomInWorld(h.Atrium)
+		realAtrium := w.rooms[h.Atrium]
 		if realAtrium == nil {
 			continue
 		}

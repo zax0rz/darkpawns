@@ -3,6 +3,7 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -92,7 +93,10 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 						}
 						obj.MigrateCustomData()
 					}
-					_ = p.Inventory.AddItem(obj)
+					if p.Inventory.RestoreItem(obj) {
+						slog.Warn("restored item over inventory capacity",
+							"player", p.Name, "vnum", obj.VNum)
+					}
 				}
 			}
 		} else {
@@ -102,7 +106,10 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 				for _, vnum := range invVnums {
 					if proto, ok := world.GetObjPrototype(vnum); ok {
 						obj := game.NewObjectInstance(proto, -1)
-						_ = p.Inventory.AddItem(obj)
+						if p.Inventory.RestoreItem(obj) {
+							slog.Warn("restored item over inventory capacity",
+								"player", p.Name, "vnum", obj.VNum)
+						}
 					}
 				}
 			}
@@ -124,7 +131,10 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 					}
 					slot, ok := game.CWearPosToSlot(item.Locate - 1)
 					if !ok {
-						_ = p.Inventory.AddItem(obj)
+						if p.Inventory.RestoreItem(obj) {
+							slog.Warn("restored item over inventory capacity",
+								"player", p.Name, "vnum", obj.VNum)
+						}
 						continue
 					}
 					obj.Location = game.LocEquippedPlayer(p.Name, slot)

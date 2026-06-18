@@ -37,6 +37,9 @@ func (r *Room) HasFlag(bit int) bool {
 		return false
 	}
 	word := bit / 16
+	if word < 0 || word >= len(r.Flags) {
+		return false
+	}
 	bitPos := bit % 16
 	val, _ := strconv.ParseUint(r.Flags[word], 16, 32)
 	if bitPos < 0 || bitPos > 63 {

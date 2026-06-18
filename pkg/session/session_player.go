@@ -102,9 +102,17 @@ func (s *Session) PlayerName() string {
 
 // CloseSend closes the session's outgoing message channel.
 func (s *Session) CloseSend() {
-	if s.send != nil {
-		s.sendOnce.Do(func() { close(s.send) })
+	if s.send == nil {
+		return
 	}
+	// Hold the exclusive lock so no SendMessage is mid-send when we close, and
+	// flip sendClosed so subsequent sends become no-ops instead of panicking.
+	s.sendMu.Lock()
+	defer s.sendMu.Unlock()
+	s.sendOnce.Do(func() {
+		s.sendClosed = true
+		close(s.send)
+	})
 }
 
 // SendChannel returns the session's outgoing message channel (for telnet/embed).

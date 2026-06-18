@@ -52,6 +52,9 @@ func cmdQcomm(s *Session, args []string) error {
 		if sess.player == nil || sess == s {
 			continue
 		}
+		if sess.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
+			continue
+		}
 		sess.Send(formatted)
 	}
 	s.manager.mu.RUnlock()
