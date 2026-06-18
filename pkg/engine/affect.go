@@ -292,6 +292,20 @@ const (
 	AFFWaterwalk       uint64 = 1 << 31 // AFF_WATERWALK
 	AFFMetalskin       uint64 = 1 << 32 // AFF_METALSKIN
 	AFFInvuln          uint64 = 1 << 33 // AFF_INVULN
+	AFFGroup           uint64 = 1 << 34
+	AFFNoTrack         uint64 = 1 << 35
+	AFFFleshAlter      uint64 = 1 << 36
+	AFFDodge           uint64 = 1 << 37
+	AFFBerserk         uint64 = 1 << 38
+	AFFFollow          uint64 = 1 << 39
+	AFFWimpy           uint64 = 1 << 40
+	AFFKujiKiri        uint64 = 1 << 41
+	AFFCutthroat       uint64 = 1 << 42
+	AFFWerewolf        uint64 = 1 << 43
+	AFFVampire         uint64 = 1 << 44
+	AFFMount           uint64 = 1 << 45
+	AFFNothing         uint64 = 1 << 46
+	AFFRobbed          uint64 = 1 << 47
 )
 
 // --- Location → stat name table ---
@@ -364,6 +378,20 @@ var StatusAffectFlags = map[int]uint64{
 	131: AFFWaterwalk,
 	132: AFFMetalskin,
 	133: AFFInvuln,
+	134: AFFGroup,
+	135: AFFNoTrack,
+	136: AFFFleshAlter,
+	137: AFFDodge,
+	138: AFFBerserk,
+	139: AFFFollow,
+	140: AFFWimpy,
+	141: AFFKujiKiri,
+	142: AFFCutthroat,
+	143: AFFWerewolf,
+	144: AFFVampire,
+	145: AFFMount,
+	146: AFFNothing,
+	147: AFFRobbed,
 }
 
 // NewAffectCompat is backward-compatible with the old NewAffect(affectType, duration, magnitude, source) signature.

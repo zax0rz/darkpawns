@@ -12,13 +12,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
-// AFF bit constants — from structs.h (AFF_BLIND=0, AFF_SANCTUARY=7, AFF_CURSE=9, AFF_POISON=11)
-const (
-	affCurse     = 9  // AFF_CURSE
-	affPoison    = 11 // AFF_POISON
-	affSanctuary = 7  // AFF_SANCTUARY
-)
-
 // findMobInRoom finds a MobInstance by name in a room's mob list.
 func findMobInRoom(w *World, roomVNum int, name string) *MobInstance {
 	for _, m := range w.GetMobsInRoom(roomVNum) {
