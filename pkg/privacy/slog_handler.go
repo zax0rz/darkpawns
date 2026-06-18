@@ -62,10 +62,17 @@ func (h *PIIHandler) filterAttr(a slog.Attr) slog.Attr {
 	}
 }
 
-// WithAttrs delegates to the inner handler and wraps the result.
+// WithAttrs filters the attrs through the privacy filter before handing them to
+// the inner handler. Handler-level attrs are prepended by the inner handler at
+// Handle time, after PIIHandler.Handle has already run, so they would otherwise
+// bypass filtering entirely (Record.Attrs only iterates per-call attrs).
 func (h *PIIHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	filtered := make([]slog.Attr, len(attrs))
+	for i, a := range attrs {
+		filtered[i] = h.filterAttr(a)
+	}
 	return &PIIHandler{
-		next:   h.next.WithAttrs(attrs),
+		next:   h.next.WithAttrs(filtered),
 		client: h.client,
 	}
 }
