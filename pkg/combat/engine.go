@@ -166,9 +166,16 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 		}
 	}
 
-	// Set fighting state
+	// Set fighting state. The attacker always turns to face this defender.
+	// The defender, however, keeps its existing target if it is already in
+	// combat: in DikuMUD a character FIGHTs one opponent at a time and only
+	// retargets when that opponent dies or flees. Overwriting it here would
+	// leave the defender's FIGHTING pointing at the new attacker while its
+	// original combat pair still exists — an inconsistent state.
 	attacker.SetFighting(defenderName)
-	defender.SetFighting(attackerName)
+	if defender.GetFighting() == "" {
+		defender.SetFighting(attackerName)
+	}
 
 	// Start combat
 	ce.combatPairs[key] = &CombatPair{

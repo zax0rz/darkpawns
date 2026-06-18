@@ -829,6 +829,40 @@ func TestStartCombat_Duplicate(t *testing.T) {
 	}
 }
 
+// TestStartCombat_DefenderKeepsExistingTarget verifies that attacking a
+// defender already in combat does not retarget the defender. In DikuMUD a
+// character FIGHTs one opponent at a time; a second attacker is added but the
+// defender keeps fighting its original target until that target is gone.
+func TestStartCombat_DefenderKeepsExistingTarget(t *testing.T) {
+	engine := NewCombatEngine()
+	defer engine.Stop()
+
+	hero := &mockCombatant{name: "Hero", room: 100}
+	orc := &mockCombatant{name: "Orc", npc: true, room: 100}
+	goblin := &mockCombatant{name: "Goblin", npc: true, room: 100}
+
+	// Orc is already fighting Hero.
+	if err := engine.StartCombat(orc, hero); err != nil {
+		t.Fatalf("StartCombat(orc, hero) failed: %v", err)
+	}
+	// Goblin now jumps Hero, who is already fighting Orc.
+	if err := engine.StartCombat(goblin, hero); err != nil {
+		t.Fatalf("StartCombat(goblin, hero) failed: %v", err)
+	}
+
+	// Hero must still be fighting its original target, not retargeted to Goblin.
+	if hero.fighting != "Orc" {
+		t.Errorf("expected Hero to keep fighting Orc, got %q", hero.fighting)
+	}
+	// Goblin is engaged with Hero either way.
+	if goblin.fighting != "Hero" {
+		t.Errorf("expected Goblin fighting Hero, got %q", goblin.fighting)
+	}
+	if !engine.IsFighting("Goblin") {
+		t.Error("expected Goblin to be registered as fighting")
+	}
+}
+
 // TestStopCombat removes a combat pair and clears fighting states.
 func TestStopCombat(t *testing.T) {
 	engine := NewCombatEngine()
