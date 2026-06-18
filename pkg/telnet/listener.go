@@ -3,6 +3,7 @@ package telnet
 
 import (
 	"bufio"
+	"errors"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -39,6 +40,8 @@ const (
 	maxTotalConns = 200
 )
 
+var listenTCP = net.Listen
+
 var startTime = time.Now()
 
 const greetingsLogo = "\r\n\r\n" +
@@ -68,7 +71,7 @@ var (
 // Listen starts a TCP telnet server on the given port. Returns immediately.
 func Listen(port int, manager *session.Manager) error {
 	addr := fmt.Sprintf(":%d", port)
-	ln, err := net.Listen("tcp", addr)
+	ln, err := listenTCP("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("telnet listen: %w", err)
 	}
@@ -82,7 +85,14 @@ func Listen(port int, manager *session.Manager) error {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				slog.Error("Telnet accept error", "error", err)
+				var netErr net.Error
+				//nolint:staticcheck // Temporary is deprecated but required by brief specifications
+				if errors.As(err, &netErr) && netErr.Temporary() {
+					slog.Warn("Telnet: temporary accept error, retrying", "error", err)
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+				slog.Error("Telnet accept error, listener stopped", "error", err)
 				return
 			}
 			remoteIP := ipFromAddr(conn.RemoteAddr().String())
@@ -679,6 +689,24 @@ func (tc *telnetConn) readLine() (string, bool) {
 				line = line[:maxInputLen]
 			}
 			return string(line), true
+		}
+		if len(line) >= maxInputLen {
+			slog.Warn("telnet: input exceeds max length, discarding remainder", "max", maxInputLen)
+			for {
+				b2, err := tc.br.ReadByte()
+				if err != nil {
+					return "", false
+				}
+				if b2 == '\r' {
+					if next, _ := tc.br.Peek(1); len(next) > 0 && next[0] == '\n' {
+						_, _ = tc.br.ReadByte()
+					}
+					return string(line[:maxInputLen]), true
+				}
+				if b2 == '\n' {
+					return string(line[:maxInputLen]), true
+				}
+			}
 		}
 		line = append(line, b)
 	}
