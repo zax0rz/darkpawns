@@ -128,11 +128,24 @@ GetCha`, `GetMaxHP/GetMaxMana/GetMaxMove`, and `GetSavingThrow` — full buff-sp
 fidelity for strength, bless's saving-throw component, etc. Guarded by
 `TestActiveAffectsModifyCoreStats`.
 
-**Still open:**
-- **Dual affect-path routing:** `cast` routes curse/poison/sleep/blindness/
-  sanctuary to `AffectManager.ApplyAffect` with `engine.ApplyNone` (flags only),
-  so curse's -hitroll/-damroll and poison's -str never apply, and those affects
-  live in the manager's list, not `ActiveAffects`. Decide on ONE affect system.
+**Resolved (2026-06-18):** the "dual affect-path routing" note below was wrong
+— re-verified directly against the code rather than trusting this doc.
+`spells.Cast`'s `am *engine.AffectManager` param was already dead (its own
+comment said so) and `ApplySpellAffects` (the function that would have used
+it) had zero callers anywhere. Curse/poison/sleep/blindness/sanctuary always
+routed through the live path (`MagAffects → applyAffect → AddAffect →
+ActiveAffects`), same as every other spell — there was no second live system,
+just dead code sitting next to it. Deleted `engine.AffectManager`,
+`AffectTickSystem`, `TickManager`, and `spells.ApplySpellAffects`; dropped the
+unused `am` param from `spells.Cast`.
+
+**Separate, still-unaddressed dead system (out of scope for that cleanup):**
+`engine.AffectFromChar`/`MasterAffect`/`StatModifiable` in
+`pkg/engine/affect_helpers.go` — a third, more literal `handler.c` port. The
+one live call site (`pkg/game/affect_update.go`'s expiry path) is a no-op
+because nothing live ever populates `Player.MasterAffects`. Riskier to remove
+(touches the `Player` struct and possibly save-file serialization) — flagged
+for a future PR, not done here.
 
 ### Missing skills/commands
 

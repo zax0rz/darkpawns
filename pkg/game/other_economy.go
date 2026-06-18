@@ -148,11 +148,11 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s's tattoo glows brightly for a second, and %s appears!", ch.Name, mob.Prototype.ShortDesc))
 			ch.SendMessage(fmt.Sprintf("Your tattoo glows brightly for a second, and %s appears!\r\n", mob.Prototype.ShortDesc))
 		case TattooEye:
-			spells.Cast(ch, ch, spells.SpellGreatPercept, ch.GetLevel(), w, nil)
+			spells.Cast(ch, ch, spells.SpellGreatPercept, ch.GetLevel(), w)
 		case TattooShip:
-			spells.Cast(ch, ch, spells.SpellChangeDensity, ch.GetLevel(), w, nil)
+			spells.Cast(ch, ch, spells.SpellChangeDensity, ch.GetLevel(), w)
 		case TattooAngel:
-			spells.Cast(ch, ch, spells.SpellBless, ch.GetLevel(), w, nil)
+			spells.Cast(ch, ch, spells.SpellBless, ch.GetLevel(), w)
 		default:
 			ch.SendMessage("Your tattoo can't be 'use'd.\r\n")
 			return true
@@ -230,7 +230,7 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.SendMessage(fmt.Sprintf("You point %s at %s.\r\n", item.GetShortDesc(), targetNameDisp))
 		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s points %s at %s.", ch.Name, item.GetShortDesc(), targetNameDisp))
 
-		spells.Cast(ch, target, spellType, spellLvl, w, nil)
+		spells.Cast(ch, target, spellType, spellLvl, w)
 
 	case ITEM_STAFF:
 		currCharges := item.GetValue(2)
@@ -247,13 +247,13 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		players := w.GetPlayersInRoom(ch.GetRoomVNum())
 		for _, p := range players {
 			if p != nil {
-				spells.Cast(ch, p, spellType, spellLvl, w, nil)
+				spells.Cast(ch, p, spellType, spellLvl, w)
 			}
 		}
 		mobs := w.GetMobsInRoom(ch.GetRoomVNum())
 		for _, mob := range mobs {
 			if mob != nil {
-				spells.Cast(ch, mob, spellType, spellLvl, w, nil)
+				spells.Cast(ch, mob, spellType, spellLvl, w)
 			}
 		}
 
@@ -261,7 +261,7 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.SendMessage(fmt.Sprintf("You quaff %s.", item.GetShortDesc()))
 		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s quaffs %s.", ch.Name, item.GetShortDesc()))
 
-		spells.Cast(ch, ch, spellType, spellLvl, w, nil)
+		spells.Cast(ch, ch, spellType, spellLvl, w)
 
 		ch.Inventory.RemoveItem(item)
 
@@ -295,7 +295,7 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.SendMessage(fmt.Sprintf("You recite %s targeting %s.", item.GetShortDesc(), targetNameDisp))
 		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s recites %s targeting %s.", ch.Name, item.GetShortDesc(), targetNameDisp))
 
-		spells.Cast(ch, target, spellType, spellLvl, w, nil)
+		spells.Cast(ch, target, spellType, spellLvl, w)
 
 		ch.Inventory.RemoveItem(item)
 	}

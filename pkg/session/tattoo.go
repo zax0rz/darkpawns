@@ -81,15 +81,15 @@ func useTattoo(ch *Session) bool {
 
 	case TatEye:
 		// call_magic(ch, ch, NULL, SPELL_GREATPERCEPT, DEFAULT_WAND_LVL, CAST_WAND)
-		spells.Cast(ch.player, ch.player, spells.SpellGreatPercept, DefaultWandLvl, ch.manager.world, nil)
+		spells.Cast(ch.player, ch.player, spells.SpellGreatPercept, DefaultWandLvl, ch.manager.world)
 
 	case TatShip:
 		// call_magic(ch, ch, NULL, SPELL_CHANGE_DENSITY, DEFAULT_WAND_LVL, CAST_WAND)
-		spells.Cast(ch.player, ch.player, spells.SpellChangeDensity, DefaultWandLvl, ch.manager.world, nil)
+		spells.Cast(ch.player, ch.player, spells.SpellChangeDensity, DefaultWandLvl, ch.manager.world)
 
 	case TatAngel:
 		// call_magic(ch, ch, NULL, SPELL_BLESS, DEFAULT_WAND_LVL, CAST_WAND)
-		spells.Cast(ch.player, ch.player, spells.SpellBless, DefaultWandLvl, ch.manager.world, nil)
+		spells.Cast(ch.player, ch.player, spells.SpellBless, DefaultWandLvl, ch.manager.world)
 
 	default:
 		ch.Send("Your tattoo can't be 'use'd.\r\n")
@@ -229,9 +229,9 @@ IMPROVEMENTS
 
 1. Tattoo affects should integrate with the full affect system (duration-based, visible in score)
    - tattooAf currently uses direct stat modification rather than engine.Affect.
-   - The Player struct needs to implement the full engine.Affectable interface
-     (GetStrength/SetStrength, GetDexterity/SetDexterity, etc.) before the
-     AffectManager can be used here.
+   - Use engine.NewAffect + Player.AddAffect (see pkg/game/player_affects.go),
+     the same path spell-cast affects already use, instead of mutating stats
+     directly here.
 
 2. Skull tattoo needs mob spawn + follower system wired up
    - useTattoo case TatSkull currently only sends act messages as placeholders.

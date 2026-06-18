@@ -234,7 +234,7 @@ func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 	case SkillKkRetsu:
 		toRoom = ""
 		if success {
-			spells.Cast(ch, ch, spells.SpellTeleport, ch.GetLevel(), world, nil)
+			spells.Cast(ch, ch, spells.SpellTeleport, ch.GetLevel(), world)
 		} else {
 			toVict = "Your concentration is broken!"
 		}

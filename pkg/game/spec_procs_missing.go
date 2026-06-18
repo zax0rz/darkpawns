@@ -134,16 +134,16 @@ func specBeholder(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	switch randN(5) {
 	case 0:
 		w.roomMessage(me.RoomVNum, me.GetName()+"'s central eye glows with disintegrating power!")
-		spells.Cast(me, melee, spells.SpellDisintegrate, me.GetLevel(), nil, nil)
+		spells.Cast(me, melee, spells.SpellDisintegrate, me.GetLevel(), nil)
 	case 1:
 		w.roomMessage(me.RoomVNum, me.GetName()+" casts a sleep ray at "+melee.GetName()+"!")
-		spells.Cast(me, melee, spells.SpellSleep, me.GetLevel(), nil, nil)
+		spells.Cast(me, melee, spells.SpellSleep, me.GetLevel(), nil)
 	case 2:
 		w.roomMessage(me.RoomVNum, me.GetName()+" casts a fear spell on "+melee.GetName()+"!")
-		spells.Cast(me, melee, spells.SpellCurse, me.GetLevel(), nil, nil)
+		spells.Cast(me, melee, spells.SpellCurse, me.GetLevel(), nil)
 	case 3:
 		w.roomMessage(me.RoomVNum, me.GetName()+" disrupts "+melee.GetName()+"'s magic!")
-		spells.Cast(me, melee, spells.SpellDisrupt, me.GetLevel(), nil, nil)
+		spells.Cast(me, melee, spells.SpellDisrupt, me.GetLevel(), nil)
 	}
 	return true
 }
@@ -158,7 +158,7 @@ func specZenMaster(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 	w.roomMessage(me.RoomVNum, me.GetName()+" touches "+melee.GetName()+" lightly on the forehead!")
-	spells.Cast(me, melee, spells.SpellTeleport, me.GetLevel(), nil, nil)
+	spells.Cast(me, melee, spells.SpellTeleport, me.GetLevel(), nil)
 	return true
 }
 
