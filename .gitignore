@@ -24,6 +24,9 @@ coverage.txt
 .DS_Store
 Thumbs.db
 
+# Subversion metadata (leftover from the svn→git migration; not used)
+.svn/
+
 # Test artifacts
 pkg/session/data/players/*.json
 
