@@ -59,6 +59,20 @@ func (p *Player) SetGold(gold int) {
 	p.Gold = gold
 }
 
+// GetBankGold returns the player's banked gold (GET_BANK_GOLD in the C source).
+func (p *Player) GetBankGold() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.BankGold
+}
+
+// SetBankGold sets the player's banked gold.
+func (p *Player) SetBankGold(gold int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.BankGold = gold
+}
+
 // GetExp returns the player's experience points.
 func (p *Player) GetExp() int {
 	p.mu.RLock()
