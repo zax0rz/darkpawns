@@ -66,16 +66,28 @@ func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 	return obj
 }
 
-// GetShortDesc returns the object's short description.
+// GetShortDesc returns the object's short description. Checks
+// Runtime.ShortDescOverride and Runtime.ShortDesc first so synthetic objects
+// (corpses, money) and runtime-renamed objects work without a prototype.
 func (o *ObjectInstance) GetShortDesc() string {
+	if o.Runtime.ShortDescOverride != "" {
+		return o.Runtime.ShortDescOverride
+	}
+	if o.Runtime.ShortDesc != "" {
+		return o.Runtime.ShortDesc
+	}
 	if o.Prototype != nil {
 		return o.Prototype.ShortDesc
 	}
 	return "a generic object"
 }
 
-// GetLongDesc returns the object's long description.
+// GetLongDesc returns the object's long description. Checks Runtime.LongDesc
+// first so synthetic objects (corpses, money) work without a prototype.
 func (o *ObjectInstance) GetLongDesc() string {
+	if o.Runtime.LongDesc != "" {
+		return o.Runtime.LongDesc
+	}
 	if o.Prototype != nil {
 		return o.Prototype.LongDesc
 	}

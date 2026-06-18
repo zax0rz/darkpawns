@@ -6,12 +6,6 @@ import (
 	"strings"
 )
 
-// Extra-flag bit positions used by junk/donate — src/structs.h:467-475.
-const (
-	extraFlagNoDonate = 3 // ITEM_NODONATE
-	extraFlagNoDrop   = 7 // ITEM_NODROP
-)
-
 // performDispose implements perform_drop() for the junk/donate paths —
 // src/act.item.c:480-525. mode is scmdJunk or scmdDonate; donationRoom is
 // the dice-selected destination room for a donate (unused for junk).
@@ -69,9 +63,7 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 		w.actToRoom(ch, "$n throws some gold into the air where it disappears in a puff of smoke!", nil, nil)
 		moneyObj := w.createMoneyObject(amount)
 		_ = w.MoveObjectToRoom(moneyObj, donationRoom)
-		// GetShortDesc() doesn't consult Runtime (a pre-existing gap affecting
-		// all synthetic objects, not just this one) — read it directly here.
-		w.roomMessage(donationRoom, strings.ReplaceAll("$p suddenly appears in a puff of orange smoke!", "$p", moneyObj.Runtime.ShortDesc))
+		w.roomMessage(donationRoom, strings.ReplaceAll("$p suddenly appears in a puff of orange smoke!", "$p", moneyObj.GetShortDesc()))
 	}
 
 	ch.SetGold(ch.GetGold() - amount)

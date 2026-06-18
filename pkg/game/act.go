@@ -90,10 +90,10 @@ func hssh(a Actor) string {
 // sana returns "an" or "a" based on the first letter of the object's keywords.
 // C: SANA(obj) — strchr("aeiouyAEIOUY", *(obj)->name) ? "an" : "a"
 func sana(obj *ObjectInstance) string {
-	if obj == nil || obj.Prototype == nil {
+	if obj == nil {
 		return "a"
 	}
-	name := obj.Prototype.Keywords
+	name := obj.GetKeywords()
 	if name == "" {
 		return "a"
 	}
@@ -201,10 +201,7 @@ func objName(obj *ObjectInstance, to Actor) string {
 	if !canSeeObject(to, obj) {
 		return "something"
 	}
-	if obj.Prototype != nil {
-		return fname(obj.Prototype.Keywords)
-	}
-	return "something"
+	return fname(obj.GetKeywords())
 }
 
 // objShortDesc returns the object's short description or "something".
@@ -284,7 +281,7 @@ func canSeeObject(to Actor, obj *ObjectInstance) bool {
 	}
 
 	// INVIS_OK_OBJ = !ITEM_INVISIBLE || observer has detect invis
-	if obj != nil && obj.GetExtraFlags()[0]&1 != 0 { // ITEM_INVISIBLE is bit 0 in extra flags
+	if obj != nil && obj.HasExtraFlag(0, extraFlagInvisible) {
 		// Object is invisible — need detect invis
 		return sub.IsAffected(affDetectInvisible)
 	}

@@ -224,8 +224,8 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 
 // performDrop drops an item to the room floor
 func (w *World) performDrop(ch *Player, obj *ObjectInstance) {
-	if objHasFlag(obj, 1<<0) && ch.GetLevel() < lvlImmort {
-		w.actToChar(ch, "You can't let go of $p!!  Yeech!", obj, nil)
+	if obj.HasExtraFlag(0, extraFlagNoDrop) && ch.GetLevel() < lvlImmort {
+		w.actToChar(ch, "You can't drop $p, it must be CURSED!", obj, nil)
 		return
 	}
 	if err := w.MoveObjectToRoom(obj, ch.GetRoomVNum()); err != nil {
@@ -301,7 +301,7 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 
 // performGive gives an object to a player
 func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
-	if objHasFlag(obj, 1<<0) && ch.GetLevel() < lvlImmort {
+	if obj.HasExtraFlag(0, extraFlagNoDrop) && ch.GetLevel() < lvlImmort {
 		w.actToChar(ch, "You can't let go of $p!!  Yeech!", obj, nil)
 		return
 	}
@@ -503,7 +503,9 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 		items := make([]*ObjectInstance, len(ch.Inventory.Items))
 		copy(items, ch.Inventory.Items)
 		for _, obj := range items {
-			if objHasFlag(obj, 1<<4) {
+			// CAN_SEE_OBJ(ch, obj) — act.item.c:824. The C give-all loop skips
+			// items the giver can't see; it has no extra-flags bit check.
+			if !canSeeObject(ch, obj) {
 				continue
 			}
 			if dotmode == findAll || isname(arg1, obj.GetKeywords()) {

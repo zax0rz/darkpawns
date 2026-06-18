@@ -138,6 +138,16 @@ const (
 	scmdDonate
 )
 
+// Extra-flag (ITEM_*) bit positions — src/structs.h:468-496. These are bit
+// positions within word 0 of ExtraFlags, not pre-shifted masks; use with
+// ObjectInstance.HasExtraFlag/SetExtraFlag.
+const (
+	extraFlagNoDonate  = 3  // ITEM_NODONATE
+	extraFlagInvisible = 5  // ITEM_INVISIBLE
+	extraFlagNoDrop    = 7  // ITEM_NODROP
+	extraFlagTwoHanded = 28 // ITEM_TWO_HANDED
+)
+
 // SCMD for drink/eat
 const (
 	scmdDrink = iota
@@ -433,13 +443,6 @@ func canWearObject(obj *ObjectInstance, where int) bool {
 		wearMask |= wf
 	}
 	return wearMask&bit != 0
-}
-
-func objHasFlag(obj *ObjectInstance, bit int) bool {
-	if obj == nil || obj.Prototype == nil {
-		return false
-	}
-	return (obj.Prototype.ExtraFlags[0] & bit) != 0
 }
 
 // isname checks if str matches keywords in a space-separated namelist
