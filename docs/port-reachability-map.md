@@ -190,9 +190,40 @@ intercepts mob/obj/room specs before registry lookup.
 - **Boards (`write`/`look`/`read`/`remove` via `gen_board`) — verified
   functional.** `genBoard` dispatches to `BoardSystem`. Follow-up to confirm by
   play: that a plain `look` near a board isn't over-intercepted.
-- **Not yet verified (other spec procs):** `collect` `donate` `stable`
-  `retrieve` `will` `offer` `rent` `recharge` — same pattern, check next.
-- **Boards:** `read`
+- **Recharge (`recharge`) — FIXED.** Verification found `specRecharger`
+  collapsed a wand/staff's max and current charges to the same value on
+  recharge, instead of incrementing current and decrementing max
+  independently as `src/new_cmds2.c` `SPECIAL(recharger)` does. The bug
+  discarded the player's existing charges rather than adding one, and an
+  extra (non-canonical) "worn out" guard at `maxCharges<=1` blocked legitimate
+  C recharges. Fixed to match C exactly, including the quirky case where
+  current charges can end up exceeding max (the recharger's own flavor text
+  describes this). See `TestSpecRecharger`.
+- **Stable/collect (`stable`/`collect`/`buy`/`list` via `specStableboy`) —
+  verified functional.** Matches `src/spec_procs2.c` `SPECIAL(stableboy)`:
+  300 gold to buy a horse, day-rate stabling, cost-on-collect. See
+  `TestSpecStableboy`. Known minor gap: doesn't enforce C's follower-cap check
+  (`num_followers(ch) >= GET_CHA(ch)/2`) before allowing a horse purchase —
+  low-impact, not fixed yet.
+- **Retrieve (`retrieve` via `specMortician`) — verified functional.**
+  Matches `src/spec_procs3.c` `SPECIAL(mortician)`: corpse search by name,
+  level-scaled cost, gold deduction.
+- **`will`, `offer`, `rent` — dead in the original C game too, not a port
+  gap.** `will`/`offer` only ever fire flavor-text tells (`recruiter` spec);
+  `rent`'s real implementation (`gen_receptionist`,
+  `src/objsave.c`) is never assigned to any mob in `src/spec_assign.c` — both
+  are unreachable in the original codebase. No action item.
+- **`donate`/`junk` — genuine missing-command gap, not yet ported.** C's
+  `do_drop` `SCMD_DONATE`/`SCMD_JUNK` path (`src/act.item.c`) has a 25% chance
+  to destroy the item and otherwise teleports it to a fixed donation room
+  (`donation_room_1=8053`/`donation_room_2=18204`, `src/config.c`), regardless
+  of the player's current room. Neither `donate` nor `junk` are registered as
+  commands anywhere in the Go port, and no spec proc can provide this
+  (unlike `dump`, which only reacts to a plain `drop` in a dump-flagged room).
+  Note: the dump-spec rooms (8085/21223) don't match the donation-room VNums
+  — looks like a pre-existing inconsistency in the original C game, not a
+  port bug; if/when `donate` is implemented, preserve this quirk rather than
+  "fixing" it.
 
 ---
 

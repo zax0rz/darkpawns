@@ -81,10 +81,6 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	currCharges := item.GetValue(2)
 	spellLvl := item.GetValue(0)
 
-	if maxCharges <= 1 {
-		ch.SendMessage("That item is worn out and can no longer be recharged.\r\n")
-		return true
-	}
 	if currCharges >= maxCharges {
 		ch.SendMessage("That item is already fully charged.\r\n")
 		return true
@@ -104,12 +100,17 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	ch.Gold -= cost
 	ch.mu.Unlock()
 
+	// Source: src/new_cmds2.c SPECIAL(recharger) — current charges and max
+	// charges move independently (current+1, max-1), not to a shared value.
+	// This lets current exceed max after enough recharges, a quirk the spec's
+	// own "list" flavor text calls out explicitly.
+	newCurr := currCharges + 1
 	newMax := maxCharges - 1
+	item.SetValue(2, newCurr)
 	item.SetValue(1, newMax)
-	item.SetValue(2, newMax)
 
 	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s recharges %s.", me.Prototype.ShortDesc, item.GetShortDesc()))
-	ch.SendMessage(fmt.Sprintf("The recharger works their magic on %s! It costs %d gold. The maximum charges decrease to %d.\r\n", item.GetShortDesc(), cost, newMax))
+	ch.SendMessage(fmt.Sprintf("The recharger works their magic on %s! It costs %d gold. The item now has %d charges remaining.\r\n", item.GetShortDesc(), cost, newCurr))
 	return true
 }
 
