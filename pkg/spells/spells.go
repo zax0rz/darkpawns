@@ -44,8 +44,6 @@
 package spells
 
 import (
-	"log/slog"
-
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
@@ -203,29 +201,13 @@ const (
 	AlaozarStartRoom = 21258
 )
 
-// Cast executes a spell. For non-damage affect spells (blindness, curse, poison,
-// sleep, sanctuary), it routes through ApplySpellAffects to create and apply an
-// engine.Affect to the target. For all other spells (damage, points, summons, etc.),
-// it routes through CallMagic for full dispatch.
+// Cast executes a spell. It routes through CallMagic for full dispatch.
 //
-// caster and target are the involved entities (must implement engine.Affectable).
+// caster and target are the involved entities.
 // spellNum is one of the Spell* constants above.
 // casterLevel scales duration and magnitude of affects.
 // world is the game world reference (interface{} to avoid circular imports); may be nil.
-// am is the affect manager for buff spells; may be nil.
+// am is the affect manager (no longer used, kept for signature compatibility).
 func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int, world interface{}, am *engine.AffectManager) {
-	// Route non-damage affect spells through ApplySpellAffects
-	switch spellNum {
-	case SpellBlindness, SpellCurse, SpellPoison, SpellSleep, SpellSanctuary:
-		targetAffectable, ok := target.(engine.Affectable)
-		if !ok {
-			return
-		}
-		if err := ApplySpellAffects(targetAffectable, spellNum, casterLevel, am); err != nil {
-			slog.Error("ApplySpellAffects failed", "spell", spellNum, "error", err)
-		}
-	default:
-		// Route through CallMagic for damage, healing, points, summons, etc.
-		CallMagic(caster, target, nil, spellNum, casterLevel, CastSpell, world)
-	}
+	CallMagic(caster, target, nil, spellNum, casterLevel, CastSpell, world)
 }

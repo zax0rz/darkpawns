@@ -123,11 +123,11 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	if me.GetFighting() == "" && me.GetHP() < me.GetMaxHP()-10 {
 		switch {
 		case me.GetLevel() >= 20:
-			spells.Cast(me, me, spells.SpellHeal, me.GetLevel(), nil, nil)
+			spells.Cast(me, me, spells.SpellHeal, me.GetLevel(), w, nil)
 		case me.GetLevel() > 12:
-			spells.Cast(me, me, spells.SpellCureCritic, me.GetLevel(), nil, nil)
+			spells.Cast(me, me, spells.SpellCureCritic, me.GetLevel(), w, nil)
 		default:
-			spells.Cast(me, me, spells.SpellCureLight, me.GetLevel(), nil, nil)
+			spells.Cast(me, me, spells.SpellCureLight, me.GetLevel(), w, nil)
 		}
 	}
 
@@ -181,9 +181,9 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
 			if rand.IntN(3) != 0 {
-				spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), nil, nil)
+				spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), w, nil)
 			} else {
-				spells.Cast(me, me, spells.SpellTeleport, me.GetLevel(), nil, nil)
+				spells.Cast(me, me, spells.SpellTeleport, me.GetLevel(), w, nil)
 			}
 		}
 		return false
@@ -208,19 +208,19 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
 		if mobHasAffect(me, "blind") && lspell >= 4 && rand.IntN(4) == 0 {
-			spells.Cast(me, me, spells.SpellCureBlind, me.GetLevel(), nil, nil)
+			spells.Cast(me, me, spells.SpellCureBlind, me.GetLevel(), w, nil)
 			return true
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
 		if mobHasAffect(me, "curse") && lspell >= 6 && rand.IntN(7) == 0 {
-			spells.Cast(me, me, spells.SpellRemoveCurse, me.GetLevel(), nil, nil)
+			spells.Cast(me, me, spells.SpellRemoveCurse, me.GetLevel(), w, nil)
 			return true
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
 		if mobHasAffect(me, "poison") && lspell >= 5 && rand.IntN(7) == 0 {
-			spells.Cast(me, me, spells.SpellRemovePoison, me.GetLevel(), nil, nil)
+			spells.Cast(me, me, spells.SpellRemovePoison, me.GetLevel(), w, nil)
 			return true
 		}
 
@@ -230,16 +230,16 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		if rand.IntN(4) == 0 {
 			switch {
 			case lspell <= 5:
-				spells.Cast(me, me, spells.SpellCureLight, me.GetLevel(), nil, nil)
+				spells.Cast(me, me, spells.SpellCureLight, me.GetLevel(), w, nil)
 			case lspell <= 17:
 				// Intentionally do nothing (matches C: cases 6-17 break)
 			case lspell == 18:
-				spells.Cast(me, me, spells.SpellCureCritic, me.GetLevel(), nil, nil)
+				spells.Cast(me, me, spells.SpellCureCritic, me.GetLevel(), w, nil)
 			default:
 				if !mobHasAffect(me, "sanctuary") {
-					spells.Cast(me, me, spells.SpellSanctuary, me.GetLevel(), nil, nil)
+					spells.Cast(me, me, spells.SpellSanctuary, me.GetLevel(), w, nil)
 				} else {
-					spells.Cast(me, me, spells.SpellHeal, me.GetLevel(), nil, nil)
+					spells.Cast(me, me, spells.SpellHeal, me.GetLevel(), w, nil)
 				}
 			}
 		}
@@ -257,7 +257,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
 	if room != nil && room.Sector != SECT_INSIDE && lspell >= 15 && rand.IntN(6) == 0 {
-		spells.Cast(me, vict, spells.SpellCallLightning, me.GetLevel(), nil, nil)
+		spells.Cast(me, vict, spells.SpellCallLightning, me.GetLevel(), w, nil)
 		return true
 	}
 
@@ -265,22 +265,22 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	switch {
 	case lspell <= 3:
 		if me.Prototype.Alignment <= -350 {
-			spells.Cast(me, vict, spells.SpellDispelGood, me.GetLevel(), nil, nil)
+			spells.Cast(me, vict, spells.SpellDispelGood, me.GetLevel(), w, nil)
 		} else {
-			spells.Cast(me, vict, spells.SpellDispelEvil, me.GetLevel(), nil, nil)
+			spells.Cast(me, vict, spells.SpellDispelEvil, me.GetLevel(), w, nil)
 		}
 	case lspell <= 6:
-		spells.Cast(me, vict, spells.SpellBlindness, me.GetLevel(), nil, nil)
+		spells.Cast(me, vict, spells.SpellBlindness, me.GetLevel(), w, nil)
 	case lspell == 7:
-		spells.Cast(me, vict, spells.SpellCurse, me.GetLevel(), nil, nil)
+		spells.Cast(me, vict, spells.SpellCurse, me.GetLevel(), w, nil)
 	case lspell <= 16:
-		spells.Cast(me, vict, spells.SpellPoison, me.GetLevel(), nil, nil)
+		spells.Cast(me, vict, spells.SpellPoison, me.GetLevel(), w, nil)
 	case lspell <= 19:
-		spells.Cast(me, vict, spells.SpellEarthquake, me.GetLevel(), nil, nil)
+		spells.Cast(me, vict, spells.SpellEarthquake, me.GetLevel(), w, nil)
 	case lspell <= 24:
 		// Intentionally do nothing (matches C: cases 20-24 break)
 	default:
-		spells.Cast(me, vict, spells.SpellHarm, me.GetLevel(), nil, nil)
+		spells.Cast(me, vict, spells.SpellHarm, me.GetLevel(), w, nil)
 	}
 
 	return true
@@ -486,7 +486,7 @@ func specTeleportVictim(w *World, ch *Player, me *MobInstance, cmd string, arg s
 	if fightingName != "" {
 		fighting, _ := w.GetPlayer(fightingName)
 		if fighting != nil {
-			spells.Cast(ch, fighting, spells.SpellTeleport, ch.GetLevel(), nil, nil)
+			spells.Cast(ch, fighting, spells.SpellTeleport, ch.GetLevel(), w, nil)
 		}
 	}
 	return true
@@ -727,7 +727,7 @@ func specFieldObject(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		}
 		if def.FoType == "affect" {
 			// Cast poison on room occupants (affect=spell, level=cast level)
-			spells.Cast(vict, vict, spells.SpellPoison, me.GetLevel(), nil, nil)
+			spells.Cast(vict, vict, spells.SpellPoison, me.GetLevel(), w, nil)
 			damaged = true
 		}
 	}
