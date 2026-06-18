@@ -172,8 +172,8 @@ func (w *World) GainExp(p *Player, gain int) {
 			// AFF_FLESH_ALTER handling — adjust hit/damroll before/after level-up
 			// C: flesh_alter_from() removes bonuses, advance_level(), flesh_alter_to() restores
 			// Source: src/new_cmds.c:1751-1769, src/limits.c:305-311
-			const affFleshAlterBit = 16 // AFF_FLESH_ALTER from structs.h:326
-			hasFleshAlter := p.Affects&(1<<affFleshAlterBit) != 0
+			// use canonical affFleshAlter from affects_constants.go
+			hasFleshAlter := p.Affects&(1<<affFleshAlter) != 0
 			if hasFleshAlter {
 				// flesh_alter_from: temporarily remove flesh alter bonuses
 				p.mu.Lock()
@@ -221,9 +221,9 @@ func (w *World) GainExpRegardless(p *Player, gain int) {
 	}
 
 	numLevels := 0
-	const affFleshAlterBit = 16 // AFF_FLESH_ALTER from structs.h:326
+	// use canonical affFleshAlter from affects_constants.go
 	for p.Level < LVL_IMPL && p.Exp >= ExpNeededForLevel(p) {
-		hasFleshAlter := p.Affects&(1<<affFleshAlterBit) != 0
+		hasFleshAlter := p.Affects&(1<<affFleshAlter) != 0
 		if hasFleshAlter {
 			p.mu.Lock()
 			p.Hitroll -= (p.Level / 3) + 1

@@ -219,7 +219,6 @@ func objShortDesc(obj *ObjectInstance, to Actor) string {
 	return obj.GetShortDesc()
 }
 
-
 // visibilitySubject is an interface for entities that can see or be seen.
 // Both Player and MobInstance implement this.
 type visibilitySubject interface {

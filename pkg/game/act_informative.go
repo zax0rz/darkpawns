@@ -14,7 +14,6 @@ import (
 // Player-level commands of an informative nature: look, exa, who, score, etc.
 // ---------------------------------------------------------------------------
 
-
 // dirList is the canonical direction order.
 var dirList = []string{"north", "east", "south", "west", "up", "down"}
 
