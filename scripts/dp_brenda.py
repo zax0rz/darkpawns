@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import argparse
 import random
 import re
@@ -33,7 +34,7 @@ DEFAULT_PORT = 4350
 DEFAULT_LITELLM = "http://192.168.1.106:4000"
 DEFAULT_MODEL_FAST = "zai/glm-5-turbo"
 DEFAULT_MODEL_FALLBACK = "anthropic/claude-sonnet-4-6"
-LITELLM_KEY = "sk-labz0rz-master-key"
+LITELLM_KEY = os.environ.get("LITELLM_KEY", "")
 
 QDRANT_HOST = "192.168.1.15"
 QDRANT_PORT = 6333

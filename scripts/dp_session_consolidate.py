@@ -30,7 +30,7 @@ DB_URL = os.environ.get(
     "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable",
 )
 LITELLM_URL = os.environ.get("LITELLM_URL", "http://192.168.1.106:4000")
-LITELLM_KEY = os.environ.get("LITELLM_KEY", "sk-labz0rz-master-key")
+LITELLM_KEY = os.environ.get("LITELLM_KEY", "")
 CONSOLIDATION_MODEL = os.environ.get("CONSOLIDATION_MODEL", "deepseek-chat")
 
 # Agent to consolidate (BRENDA's character ID in the DB)
