@@ -904,9 +904,9 @@ func (m *MobInstance) AddAffect(aff *engine.Affect) {
 
 	// Set AFF_* bitmask bits from the affect's Flags field.
 	if aff.Flags != 0 {
-		for bit := 0; bit < 64; bit++ {
-			if aff.Flags&(1<<uint(bit)) != 0 {
-				m.SetAffected(bit)
+		for engFlag, cBit := range EngineFlagToAffBit {
+			if aff.Flags&engFlag != 0 {
+				m.SetAffected(cBit)
 			}
 		}
 	}
@@ -919,9 +919,9 @@ func (m *MobInstance) RemoveAffectBySpell(spellNum int) {
 	}
 	key := fmt.Sprintf("affect_%d", spellNum)
 	if aff, ok := m.CustomData[key].(*engine.Affect); ok && aff.Flags != 0 {
-		for bit := 0; bit < 64; bit++ {
-			if aff.Flags&(1<<uint(bit)) != 0 {
-				m.RemoveAffected(bit)
+		for engFlag, cBit := range EngineFlagToAffBit {
+			if aff.Flags&engFlag != 0 {
+				m.RemoveAffected(cBit)
 			}
 		}
 	}

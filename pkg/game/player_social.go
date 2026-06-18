@@ -228,7 +228,17 @@ func (p *Player) IsAffected(affBit int) bool {
 	if affBit < 0 || affBit >= 64 {
 		return false
 	}
-	return p.Affects&(1<<uint(affBit)) != 0
+	if p.Affects&(1<<uint(affBit)) != 0 {
+		return true
+	}
+	if engFlag, ok := AffBitToEngineFlag[affBit]; ok {
+		for _, af := range p.ActiveAffects {
+			if af != nil && af.Flags&engFlag != 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // SetAffect sets or clears AFF flag bit n.

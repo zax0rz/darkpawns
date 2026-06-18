@@ -219,9 +219,6 @@ func objShortDesc(obj *ObjectInstance, to Actor) string {
 	return obj.GetShortDesc()
 }
 
-// affDetectInvisible — AFF_DETECT_INVISIBLE bit position (structs.h bit 2)
-// affBlind (bit 0) and affInfravision (bit 10) are defined in act_informative.go
-const affDetectInvisible = 2
 
 // visibilitySubject is an interface for entities that can see or be seen.
 // Both Player and MobInstance implement this.

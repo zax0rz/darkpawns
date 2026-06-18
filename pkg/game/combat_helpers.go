@@ -31,15 +31,9 @@ const lvlImpl = 40
 // Internal helpers (ported from C macros)
 // ---------------------------------------------------------------------------
 
-// affMounted — AFF_MOUNT bit position from structs.h
-const affMounted = 29
-
-// AffSleep is the exported AFF_SLEEP bit position (2) for use outside this package.
-const AffSleep = 2
-
 // IS_MOUNTED — from act.offensive.c: checks if a player is mounted.
 func isMounted(ch *Player) bool {
-	return ch.IsAffected(affMounted)
+	return ch.IsAffected(affMount)
 }
 
 // IS_OUTLAW — from act.offensive.c (used in subdue and sleeper)

@@ -65,3 +65,64 @@ func TestActiveAffectsStackAndExpire(t *testing.T) {
 		t.Errorf("after all expiry GetHitroll = %d, want base 5", got)
 	}
 }
+
+// TestAffectBitMapping verifies that every C bit position maps correctly to engine.AFF* flags and back,
+// and that IsAffected(0) (blindness in C) returns true for blind only, not for sneak (C bit 18) or hide (C bit 19).
+func TestAffectBitMapping(t *testing.T) {
+	// 1. Verify bidirectionality of mapping tables
+	for cBit, engFlag := range AffBitToEngineFlag {
+		mappedCBit, ok := EngineFlagToAffBit[engFlag]
+		if !ok {
+			t.Errorf("Engine flag %d has no mapping back to C bit", engFlag)
+		}
+		if mappedCBit != cBit {
+			t.Errorf("Mapping mismatch: C bit %d -> engine flag %d -> C bit %d", cBit, engFlag, mappedCBit)
+		}
+	}
+
+	for engFlag, cBit := range EngineFlagToAffBit {
+		mappedEngFlag, ok := AffBitToEngineFlag[cBit]
+		if !ok {
+			t.Errorf("C bit %d has no mapping to engine flag", cBit)
+		}
+		if mappedEngFlag != engFlag {
+			t.Errorf("Mapping mismatch: engine flag %d -> C bit %d -> engine flag %d", engFlag, cBit, mappedEngFlag)
+		}
+	}
+
+	// 2. Verify player IsAffected and SetAffect (specifically checking the bit 0 vs bit 18 collision fix)
+	p := NewPlayer(1, "TestSubject", 3001)
+
+	// Set raw blind (C bit 0)
+	p.SetAffect(affBlind, true)
+	if !p.IsAffected(affBlind) {
+		t.Error("Player should be affected by blind")
+	}
+	if p.IsAffected(affSneak) {
+		t.Error("Player should NOT be affected by sneak when only blind is set")
+	}
+	if p.IsAffected(affHide) {
+		t.Error("Player should NOT be affected by hide when only blind is set")
+	}
+
+	// Clear blind, set sneak (C bit 18)
+	p.SetAffect(affBlind, false)
+	p.SetAffect(affSneak, true)
+	if p.IsAffected(affBlind) {
+		t.Error("Player should NOT be affected by blind when only sneak is set")
+	}
+	if !p.IsAffected(affSneak) {
+		t.Error("Player should be affected by sneak")
+	}
+
+	// 3. Verify that IsAffected checks ActiveAffects as well
+	p.SetAffect(affSneak, false)
+	// Apply invisibility spell (which sets engine.AFFInvisible -> C bit 1)
+	p.AddAffect(engine.NewAffectDirect(100, engine.ApplyNone, 5, 0, engine.AFFInvisible, "invis spell"))
+	if !p.IsAffected(affInvisible) {
+		t.Error("Player should be affected by invisible via ActiveAffects")
+	}
+	if p.IsAffected(affBlind) {
+		t.Error("Player should NOT be affected by blind via ActiveAffects of invisibility")
+	}
+}

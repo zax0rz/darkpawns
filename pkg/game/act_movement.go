@@ -54,17 +54,6 @@ const (
 	doorLocked = 2
 )
 
-// Affect flag bit positions — from structs.h AFF_* constants.
-const (
-	affSneak     = 0 // AFF_SNEAK
-	affHide      = 1 // AFF_HIDE
-	affSleep     = 2 // AFF_SLEEP
-	affCharm     = 3 // AFF_CHARM
-	affFly       = 4 // AFF_FLY
-	affWaterWalk = 5 // AFF_WATERWALK
-	affGroup     = 6 // AFF_GROUP
-	affDodge     = 7 // AFF_DODGE — fight.c:1970
-)
 
 // Direction name array (matching dirs[] from constants.c).
 var dirs = []string{
