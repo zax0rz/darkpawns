@@ -318,6 +318,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 
 		// Calculate damage
 		weaponDamage := attacker.GetDamageRoll()
+		pair.LastAttackType = int(AttackNormal)
 		damage := CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
 
 		// Apply damage
@@ -359,10 +360,10 @@ func (ce *CombatEngine) sendHitMessage(attacker, defender Combatant, damage int)
 	roomVNum := attacker.GetRoom()
 
 	// Message to attacker
-	attacker.SendMessage(fmt.Sprintf("You hit %s for %d damage!", defenderName, damage))
+	attacker.SendMessage(fmt.Sprintf("You hit %s for %d damage!\r\n", defenderName, damage))
 
 	// Message to defender
-	defender.SendMessage(fmt.Sprintf("%s hits you for %d damage!", attackerName, damage))
+	defender.SendMessage(fmt.Sprintf("%s hits you for %d damage!\r\n", attackerName, damage))
 
 	// Message to room
 	if ce.BroadcastFunc != nil {
@@ -378,8 +379,8 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant) {
 	defenderName := defender.GetName()
 	roomVNum := attacker.GetRoom()
 
-	attacker.SendMessage(fmt.Sprintf("You miss %s!", defenderName))
-	defender.SendMessage(fmt.Sprintf("%s misses you!", attackerName))
+	attacker.SendMessage(fmt.Sprintf("You miss %s!\r\n", defenderName))
+	defender.SendMessage(fmt.Sprintf("%s misses you!\r\n", attackerName))
 
 	if ce.BroadcastFunc != nil {
 		ce.BroadcastFunc(roomVNum,

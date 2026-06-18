@@ -195,32 +195,32 @@ func TestCheckSavingThrow_UnsupportedTypeReturnsFalse(t *testing.T) {
 
 func TestCheckSavingThrow_HighLevelSavesOften(t *testing.T) {
 	// A level 40 warrior has PARA=2, so save<roll means 2<roll, saving ~97% of the time.
-	// Run 100 iterations — expect at least 90 saves.
+	// Run 1000 iterations — expect at least 800 saves.
 	c := mockChar{class: 3, level: 40}
 	saves := 0
-	iterations := 100
+	iterations := 1000
 	for i := 0; i < iterations; i++ {
 		if CheckSavingThrow(c, SaveParalysis) {
 			saves++
 		}
 	}
-	if saves < 80 {
-		t.Errorf("Warrior(3) level=40 PARA saved %d/%d times, expected >= 80", saves, iterations)
+	if saves < 800 {
+		t.Errorf("Warrior(3) level=40 PARA saved %d/%d times, expected >= 800", saves, iterations)
 	}
 }
 
 func TestCheckSavingThrow_Level0SavesRarely(t *testing.T) {
 	// A level 0 warrior has PARA=90, so save<roll means 90<roll, saving ~9% of the time.
-	// Run 100 iterations — expect fewer than 30 saves.
+	// Run 1000 iterations — expect fewer than 300 saves.
 	c := mockChar{class: 3, level: 0}
 	saves := 0
-	iterations := 100
+	iterations := 1000
 	for i := 0; i < iterations; i++ {
 		if CheckSavingThrow(c, SaveParalysis) {
 			saves++
 		}
 	}
-	if saves > 30 {
-		t.Errorf("Warrior(3) level=0 PARA saved %d/%d times, expected <= 30", saves, iterations)
+	if saves > 300 {
+		t.Errorf("Warrior(3) level=0 PARA saved %d/%d times, expected <= 300", saves, iterations)
 	}
 }
