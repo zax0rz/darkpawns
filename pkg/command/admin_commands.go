@@ -130,9 +130,11 @@ func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error
 	})
 	reportsMu.Unlock()
 
-	// Also persist via DB moderation manager if available
+	// Also persist via DB moderation manager if available. The report is already
+	// in the in-memory store above, so a DB failure does not lose it for this
+	// session — but warn admins it will not survive a restart.
 	if ac.mod != nil {
-		ac.mod.AddReport(moderation.AbuseReport{
+		if err := ac.mod.AddReport(moderation.AbuseReport{
 			Reporter:    s.GetPlayerName(),
 			Target:      target,
 			ReportType:  moderation.ReportType(rt),
@@ -140,7 +142,12 @@ func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error
 			RoomVNum:    s.GetPlayerRoomVNum(),
 			Timestamp:   time.Now(),
 			Status:      moderation.ReportStatusPending,
-		})
+		}); err != nil {
+			ac.notifyAdmins(fmt.Sprintf(
+				"Warning: report #%d was not saved to the database and will be lost on restart.",
+				reportSeq,
+			))
+		}
 	}
 
 	// Notify admins
@@ -234,7 +241,9 @@ func (ac *AdminCommands) cmdMute(s common.CommandSession, args []string) error {
 			Reason:      reason,
 			IssuedBy:    s.GetPlayerName(),
 		}
-		ac.mod.AddPenalty(penalty)
+		if err := ac.mod.AddPenalty(penalty); err != nil {
+			s.Send("Warning: penalty applied in memory but not saved to the database — it will be lost on restart.")
+		}
 	}
 
 	ac.notifyPlayer(target, fmt.Sprintf(
@@ -343,7 +352,9 @@ func (ac *AdminCommands) cmdBan(s common.CommandSession, args []string) error {
 			Reason:      reason,
 			IssuedBy:    s.GetPlayerName(),
 		}
-		ac.mod.AddPenalty(penalty)
+		if err := ac.mod.AddPenalty(penalty); err != nil {
+			s.Send("Warning: penalty applied in memory but not saved to the database — it will be lost on restart.")
+		}
 	}
 
 	// Find and disconnect if online
@@ -603,7 +614,9 @@ func (ac *AdminCommands) cmdWordFilter(s common.CommandSession, args []string) e
 		}
 
 		if ac.mod != nil {
-			ac.mod.AddWordFilter(pattern, isRegex, actionStr, s.GetPlayerName())
+			if err := ac.mod.AddWordFilter(pattern, isRegex, actionStr, s.GetPlayerName()); err != nil {
+				s.Send("Warning: filter active in memory but not saved to the database — it will be lost on restart.")
+			}
 		}
 
 		s.Send(fmt.Sprintf("Added filter: %s (regex: %v) -> %s", pattern, isRegex, actionStr))
