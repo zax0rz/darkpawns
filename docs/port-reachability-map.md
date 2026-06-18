@@ -42,7 +42,20 @@ separate signal from noise.
 
 ---
 
-## Bucket A — Coded-but-unwired skills (QUICK WINS) ⭐
+## Bucket A — Coded-but-unwired skills (QUICK WINS) ⭐ — DONE (2026-06-18)
+
+**Status:** 22 skills wired + `dragon`/`tiger`/`flesh` aliases added in
+`pkg/session/commands.go`, guarded by `TestBucketASkillsRegistered`. Positions/
+levels mirror `src/interpreter.c`. Excluded from this batch:
+- `dig` (LVL_BUILDER) and `mold` (LVL_IMMORT) — builder/immortal tools, covered
+  by the web admin (see Bucket D); wire only if an in-game builder path is wanted.
+- `pick` — already reachable via `cmdPick`/`door_cmds.go`; `CmdPickLock` is a
+  dead alternate.
+- `detect` — deferred; verify it doesn't shadow spell-based detection first.
+
+Original list below for reference.
+
+
 
 **~25 combat/class skill handlers are fully implemented in `pkg/command` but
 never registered.** They are dead to players. Wiring each is a one-line
@@ -130,16 +143,28 @@ playing, not by registry presence:
 
 ---
 
-## Bucket D — Immortal / OLC tooling (DEFER — secondary)
+## Bucket D — Immortal / OLC tooling — RESOLVED by the web admin
 
-Builder and god commands. Not needed for a playable game; defer per project
-priority. Listed for completeness:
+**Do not port the OLC commands.** The building toolchain was rebuilt as the web
+admin and is already mounted in the server:
+- `pkg/admin` (router + handlers): full CRUD on zones/rooms/mobs/objects/shops
+  (GET + PUT), `/admin/save-world` persistence, role-gated `builder`/`admin`,
+  audit-logged. `admin-ui/` is the built React front-end, served from `main.go`
+  (`http.Handle("/admin/", adminRouter)`).
+- So `olc` `medit` `oedit` `redit` `sedit` `tedit` `zedit` `luaedit` `string`
+  are **superseded** — drop them from the port.
 
-- **OLC:** `olc` `medit` `oedit` `redit` `sedit` `tedit` `zedit` `luaedit` `string`
-- **Wiz:** `admobs` `advance` `freeze` `thaw` `transfer` `poofin` `poofout`
-  `qecho` `qsay` `rsay` `wizlist` `wizhelp` `immlist` `imotd` `motd` `news`
-  `nobroadcast` `pardon` `skillset` `slowns` `dns` `roomflags` `holler`
-  `holylight` `nohassle` `hire` `toh` `wnewbie` `nonewbie` `nosummon` `nograts`
+**Open follow-up (verify, not port):** confirm `darkpawns.labz0rz.com/admin`
+actually serves `admin-ui-dist` and the role auth works end-to-end. A `/verify`
+or ops task.
+
+**Wiz actions (separate from OLC):** `freeze` `thaw` `transfer` `poofin`
+`poofout` `qecho` `wizlist` etc. Most moderation (kick/ban/penalties) already
+exists in-game and in the admin players panel. Remaining wiz *actions* are
+deferred; decide case-by-case whether each is worth an in-game command vs. admin
+panel. (`admobs` `advance` `skillset` `slowns` `dns` `roomflags` `holler`
+`holylight` `nohassle` `hire` `toh` `wnewbie` `nonewbie` `nosummon` `nograts`
+`pardon` `wizhelp` `immlist` `imotd` `motd` `news` `nobroadcast`.)
 
 ---
 
