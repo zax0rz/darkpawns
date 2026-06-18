@@ -341,6 +341,28 @@ func cmdDrop(s *Session, args []string) error {
 	return nil
 }
 
+// cmdJunk destroys carried item(s) or gold for a small experience reward.
+// Delegates to game-layer DoJunk which handles:
+//
+//	junk <item>, junk all.<item>, junk <N> coins
+func cmdJunk(s *Session, args []string) error {
+	arg := strings.Join(args, " ")
+	s.manager.world.DoJunk(s.player, arg)
+	s.markDirty(VarInventory, VarRoomItems)
+	return nil
+}
+
+// cmdDonate donates carried item(s) or gold to the donation room.
+// Delegates to game-layer DoDonate which handles:
+//
+//	donate <item>, donate all.<item>, donate <N> coins
+func cmdDonate(s *Session, args []string) error {
+	arg := strings.Join(args, " ")
+	s.manager.world.DoDonate(s.player, arg)
+	s.markDirty(VarInventory, VarRoomItems)
+	return nil
+}
+
 // broadcastEquipmentChange broadcasts equipment changes to the room.
 func broadcastEquipmentChange(s *Session, action string, item *game.ObjectInstance) {
 	event := EventData{

@@ -90,6 +90,8 @@ func init() {
 	cmdRegistry.Register("give", wrapArgs(cmdGive), "Give an item or gold to another character.", 0, 0)
 	cmdRegistry.Register("put", wrapArgs(cmdPut), "Put an item into a container.", 0, 0)
 	cmdRegistry.Register("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.", 0, 0)
+	cmdRegistry.Register("junk", wrapArgs(cmdJunk), "Destroy an item for a small experience reward.", 0, 0)
+	cmdRegistry.Register("donate", wrapArgs(cmdDonate), "Donate an item to the donation room.", 0, 0)
 	cmdRegistry.Register("eat", wrapArgs(cmdEat), "Eat some food.", 0, 0)
 	cmdRegistry.Register("drink", wrapArgs(cmdDrink), "Drink from a container.", 0, 0)
 	cmdRegistry.Register("pour", wrapArgs(cmdPour), "Pour liquid from one container to another.", 0, 0)

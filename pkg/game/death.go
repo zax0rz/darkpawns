@@ -755,6 +755,8 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 			"corpse_name": name,
 		},
 	}
+	// src/fight.c:388 — SET_BIT_AR(GET_OBJ_EXTRA(corpse), ITEM_NODONATE)
+	corpse.SetExtraFlag(0, extraFlagNoDonate)
 
 	// src/fight.c: if (IS_NPC(ch)) timer = max_npc_corpse_time else max_pc_corpse_time
 	if isNPC {
