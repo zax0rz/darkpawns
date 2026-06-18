@@ -61,7 +61,7 @@ func (p *Player) GetHitroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	total := p.Hitroll
+	total := p.Hitroll + p.sumAffectModsLocked(ApplyHitroll)
 	if p.Equipment != nil {
 		p.Equipment.mu.RLock()
 		defer p.Equipment.mu.RUnlock()
@@ -94,7 +94,7 @@ func (p *Player) GetDamroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	total := p.Damroll
+	total := p.Damroll + p.sumAffectModsLocked(ApplyDamroll)
 	if p.Equipment != nil {
 		p.Equipment.mu.RLock()
 		defer p.Equipment.mu.RUnlock()

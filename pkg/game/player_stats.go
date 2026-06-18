@@ -53,7 +53,11 @@ func (p *Player) GetTHAC0() int {
 // GetAC returns the player's Armor Class including equipment bonuses.
 func (p *Player) GetAC() int {
 	p.mu.RLock()
-	baseAC := p.AC
+	// Spell/skill affects (armor, metalskin, berserk, kuji-kiri, …) store their
+	// AC delta as the affect Magnitude. Lower AC is better, and the stored
+	// magnitudes already carry the correct sign (armor = -15 improves AC; berserk
+	// = +25 worsens it), so they fold in by addition.
+	baseAC := p.AC + p.sumAffectModsLocked(ApplyAC)
 	p.mu.RUnlock()
 
 	// Add equipment AC bonus

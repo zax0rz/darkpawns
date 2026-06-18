@@ -109,6 +109,31 @@ step), `CmdUseSkill` (generic dispatcher).
 
 ## Bucket B — Genuinely missing playable commands
 
+### Foundational blocker — timed affect → stat pipeline (PARTIALLY FIXED 2026-06-18)
+
+Before implementing buff skills, note: most Bucket B class skills (berserk,
+kuji-kiri seals rin/kyo/toh/kai/zai) buff **hitroll/damroll/AC** via timed
+affects. The live path `cast → CallMagic → MagAffects → AddAffect` stores the
+affect in `ActiveAffects` with the correct Location/Magnitude, **but base stats
+are never modified and the stat getters ignored `ActiveAffects`** — so every such
+buff (and the buff *spells* bless/armor/metalskin/psyshield) was silently inert.
+
+**Fixed:** `GetHitroll`/`GetDamroll`/`GetAC` now fold in `ActiveAffects` via
+`Player.sumAffectModsLocked(location)` (read-side summation, matching how
+equipment affects already work; expiry via `RemoveAffectBySpell` auto-reverts).
+Guarded by `TestActiveAffectsModifyStats` / `TestActiveAffectsStackAndExpire`.
+
+**Still open (same pattern / related):**
+- Extend summation to `ApplyStr`/saving throws/`ApplyHit`(maxHP)/etc. for full
+  buff-spell fidelity (strength, bless's saving-throw component). One line each
+  in the respective getters using the same helper.
+- **Dual affect-path routing:** `cast` routes curse/poison/sleep/blindness/
+  sanctuary to `AffectManager.ApplyAffect` with `engine.ApplyNone` (flags only),
+  so curse's -hitroll/-damroll and poison's -str never apply, and those affects
+  live in the manager's list, not `ActiveAffects`. Decide on ONE affect system.
+
+### Missing skills/commands
+
 No handler found in `pkg/`. These need implementation. Prioritize the class
 skills (they make the combat system feel complete); verify each against `src/`.
 
