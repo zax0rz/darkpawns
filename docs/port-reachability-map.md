@@ -109,7 +109,7 @@ step), `CmdUseSkill` (generic dispatcher).
 
 ## Bucket B — Genuinely missing playable commands
 
-### Foundational blocker — timed affect → stat pipeline (PARTIALLY FIXED 2026-06-18)
+### Foundational blocker — timed affect → stat pipeline (FIXED 2026-06-18, PR #27)
 
 Before implementing buff skills, note: most Bucket B class skills (berserk,
 kuji-kiri seals rin/kyo/toh/kai/zai) buff **hitroll/damroll/AC** via timed
@@ -118,15 +118,17 @@ affect in `ActiveAffects` with the correct Location/Magnitude, **but base stats
 are never modified and the stat getters ignored `ActiveAffects`** — so every such
 buff (and the buff *spells* bless/armor/metalskin/psyshield) was silently inert.
 
-**Fixed:** `GetHitroll`/`GetDamroll`/`GetAC` now fold in `ActiveAffects` via
-`Player.sumAffectModsLocked(location)` (read-side summation, matching how
+**Fixed (PR #22):** `GetHitroll`/`GetDamroll`/`GetAC` now fold in `ActiveAffects`
+via `Player.sumAffectModsLocked(location)` (read-side summation, matching how
 equipment affects already work; expiry via `RemoveAffectBySpell` auto-reverts).
 Guarded by `TestActiveAffectsModifyStats` / `TestActiveAffectsStackAndExpire`.
 
-**Still open (same pattern / related):**
-- Extend summation to `ApplyStr`/saving throws/`ApplyHit`(maxHP)/etc. for full
-  buff-spell fidelity (strength, bless's saving-throw component). One line each
-  in the respective getters using the same helper.
+**Fixed (PR #27):** summation extended to `GetStr/GetDex/GetInt/GetWis/GetCon/
+GetCha`, `GetMaxHP/GetMaxMana/GetMaxMove`, and `GetSavingThrow` — full buff-spell
+fidelity for strength, bless's saving-throw component, etc. Guarded by
+`TestActiveAffectsModifyCoreStats`.
+
+**Still open:**
 - **Dual affect-path routing:** `cast` routes curse/poison/sleep/blindness/
   sanctuary to `AffectManager.ApplyAffect` with `engine.ApplyNone` (flags only),
   so curse's -hitroll/-damroll and poison's -str never apply, and those affects
@@ -137,10 +139,11 @@ Guarded by `TestActiveAffectsModifyStats` / `TestActiveAffectsStackAndExpire`.
 No handler found in `pkg/`. These need implementation. Prioritize the class
 skills (they make the combat system feel complete); verify each against `src/`.
 
-- **Martial-arts forms (no handler):** `jin` `kai` `kyo` `retsu` `rin` `sha`
-  `zai` `zhen` `shadow` `spike` `stake` `kabuki` — Dark-Pawns class skills.
-  Cross-reference `src/` for which class/level and the skill formula.
-- **Combat/movement skills:** `berserk` `charge` `mount` `track` — track has
+- **Martial-arts forms — DONE (PR #27):** `jin` `kai` `kyo` `retsu` `rin` `sha`
+  `zai` `zhen` (kuji-kiri seals) wired via `game.DoKujiKiri` + `CmdKujiKiri`.
+  `shadow` `spike` `stake` `kabuki` still missing.
+- **Combat/movement skills:** `berserk` — DONE (PR #27), `game.DoBerserk` +
+  `CmdBerserk`. `charge` `mount` `track` still missing — track has
   pathfinding scaffolding in `pkg/game/graph.go`; mount has ride logic in
   scripting. Verify before classing as full rewrites.
 - **Player actions:** `fill` `grab` `junk` `leave` `search` `sip` `taste`
