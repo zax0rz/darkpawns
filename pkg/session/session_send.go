@@ -208,6 +208,14 @@ func (s *Session) SendMessage(message string) error {
 	if err != nil {
 		return fmt.Errorf("marshal error: %w", err)
 	}
+	// RLock lets concurrent sends proceed but blocks the exclusive close, so we
+	// never send on a closed channel (which panics even inside a select). If the
+	// channel is already closed, drop silently — the client is gone.
+	s.sendMu.RLock()
+	defer s.sendMu.RUnlock()
+	if s.sendClosed {
+		return nil
+	}
 	select {
 	case s.send <- msg:
 	default:

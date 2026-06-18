@@ -545,12 +545,16 @@ func (m *Manager) Register(playerName string, s *Session) error {
 		// causes writePump to exit. Closing the conn causes readPump to exit,
 		// which calls Unregister — but we've already replaced the session map
 		// entry, so the stale Unregister is harmless.
-		select {
-		case oldSess.send <- []byte("\r\nYour connection has been taken over by a new login.\r\n"):
-		default:
-			// send buffer full; skip notification rather than block
+		oldSess.sendMu.RLock()
+		if !oldSess.sendClosed {
+			select {
+			case oldSess.send <- []byte("\r\nYour connection has been taken over by a new login.\r\n"):
+			default:
+				// send buffer full; skip notification rather than block
+			}
 		}
-		oldSess.sendOnce.Do(func() { close(oldSess.send) })
+		oldSess.sendMu.RUnlock()
+		oldSess.CloseSend()
 
 		needsWorldRemove = oldSess.player != nil
 		slog.Info("session takeover", "player", playerName)
@@ -645,8 +649,8 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	// 5. Remove from world
 	m.world.RemovePlayer(playerName)
 
-	// 6. Close send channel (sync.Once makes this idempotent)
-	s.sendOnce.Do(func() { close(s.send) })
+	// 6. Close send channel (guarded + sync.Once makes this idempotent)
+	s.CloseSend()
 
 	// 7. Cancel session context if defined
 	if s.cancelFunc != nil {
@@ -803,6 +807,15 @@ type Session struct {
 
 	// sendOnce ensures s.send is closed exactly once across all disconnect paths.
 	sendOnce sync.Once
+
+	// sendMu makes sends on s.send mutually exclusive with closing it. A send on
+	// a closed channel panics even inside a select, so SendMessage takes RLock
+	// (concurrent sends are safe) and the close path takes the exclusive Lock and
+	// flips sendClosed. This prevents a use-after-close panic when a caller holds
+	// a session reference across a concurrent disconnect (e.g. admin kick).
+	// sendMu is a leaf lock: never acquire another lock while holding it.
+	sendMu     sync.RWMutex
+	sendClosed bool
 
 	// msgSeq is a monotonically incrementing sequence number stamped on every
 	// outbound message. Used by the dp-goat daemon for event tracking and

@@ -79,7 +79,7 @@ func (m *Manager) CheckIdlePasswords() {
 	for _, name := range toDelete {
 		// Close channel and remove
 		if s, ok := m.sessions[name]; ok {
-			s.sendOnce.Do(func() { close(s.send) })
+			s.CloseSend()
 			delete(m.sessions, name)
 		}
 	}
