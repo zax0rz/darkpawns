@@ -26,7 +26,7 @@ func (p *Player) GetClass() int {
 func (p *Player) GetStr() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Str
+	return p.Stats.Str + p.sumAffectModsLocked(ApplyStr) + p.sumEquipAffectModsLocked(ApplyStr)
 }
 
 // GetDex returns the player's dexterity (Phase 2c addition)
@@ -34,7 +34,7 @@ func (p *Player) GetStr() int {
 func (p *Player) GetDex() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Dex
+	return p.Stats.Dex + p.sumAffectModsLocked(ApplyDex) + p.sumEquipAffectModsLocked(ApplyDex)
 }
 
 // GetInt returns the player's intelligence (Phase 2c addition)
@@ -42,7 +42,7 @@ func (p *Player) GetDex() int {
 func (p *Player) GetInt() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Int
+	return p.Stats.Int + p.sumAffectModsLocked(ApplyInt) + p.sumEquipAffectModsLocked(ApplyInt)
 }
 
 // GetWis returns the player's wisdom (Phase 2c addition)
@@ -50,33 +50,17 @@ func (p *Player) GetInt() int {
 func (p *Player) GetWis() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Wis
+	return p.Stats.Wis + p.sumAffectModsLocked(ApplyWis) + p.sumEquipAffectModsLocked(ApplyWis)
 }
 
 // GetHitroll returns the player's hitroll bonus (Phase 2c addition)
 // Source: fight.c uses GET_HITROLL(ch) macro
-// Sums APPLY_HITROLL (location 18) from all equipped items PLUS affect-modified hitroll.
+// Sums APPLY_HITROLL from all equipped items PLUS affect-modified hitroll.
 // In the original C code, GET_HITROLL is a field that aggregates both equipment and spell-based modifiers.
 func (p *Player) GetHitroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-
-	total := p.Hitroll + p.sumAffectModsLocked(ApplyHitroll)
-	if p.Equipment != nil {
-		p.Equipment.mu.RLock()
-		defer p.Equipment.mu.RUnlock()
-		for _, item := range p.Equipment.Slots {
-			if item == nil || item.Prototype == nil {
-				continue
-			}
-			for _, aff := range item.Prototype.Affects {
-				if aff.Location == 18 { // APPLY_HITROLL
-					total += aff.Modifier
-				}
-			}
-		}
-	}
-	return total
+	return p.Hitroll + p.sumAffectModsLocked(ApplyHitroll) + p.sumEquipAffectModsLocked(ApplyHitroll)
 }
 
 // SetHitroll sets the player's affect-modified hitroll bonus.
@@ -88,28 +72,12 @@ func (p *Player) SetHitroll(v int) {
 
 // GetDamroll returns the player's damroll bonus (Phase 2c addition)
 // Source: fight.c uses GET_DAMROLL(ch) macro
-// Sums APPLY_DAMROLL (location 19) from all equipped items PLUS affect-modified damroll.
+// Sums APPLY_DAMROLL from all equipped items PLUS affect-modified damroll.
 // In the original C code, GET_DAMROLL is a field that aggregates both equipment and spell-based modifiers.
 func (p *Player) GetDamroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-
-	total := p.Damroll + p.sumAffectModsLocked(ApplyDamroll)
-	if p.Equipment != nil {
-		p.Equipment.mu.RLock()
-		defer p.Equipment.mu.RUnlock()
-		for _, item := range p.Equipment.Slots {
-			if item == nil || item.Prototype == nil {
-				continue
-			}
-			for _, aff := range item.Prototype.Affects {
-				if aff.Location == 19 { // APPLY_DAMROLL
-					total += aff.Modifier
-				}
-			}
-		}
-	}
-	return total
+	return p.Damroll + p.sumAffectModsLocked(ApplyDamroll) + p.sumEquipAffectModsLocked(ApplyDamroll)
 }
 
 // SetDamroll sets the player's affect-modified damroll bonus.

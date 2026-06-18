@@ -19,7 +19,7 @@ func (p *Player) GetMountName() string {
 func (p *Player) GetCon() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Con
+	return p.Stats.Con + p.sumAffectModsLocked(ApplyCon) + p.sumEquipAffectModsLocked(ApplyCon)
 }
 
 // IsInGroup returns whether the player is in a group.
@@ -166,7 +166,7 @@ func (p *Player) SetFollowing(name string) {
 func (p *Player) GetCha() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Cha
+	return p.Stats.Cha + p.sumAffectModsLocked(ApplyCha) + p.sumEquipAffectModsLocked(ApplyCha)
 }
 
 // GetCondition returns the value of condition cond (CondDrunk=0, CondFull=1, CondThirst=2).
