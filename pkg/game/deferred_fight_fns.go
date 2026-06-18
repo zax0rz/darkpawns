@@ -20,6 +20,7 @@ const (
 	ApplyMana    = 12
 	ApplyHit     = 13
 	ApplyMove    = 14
+	ApplyAC      = 17
 	ApplyHitroll = 18
 	ApplyDamroll = 19
 )

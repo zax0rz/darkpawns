@@ -16,6 +16,22 @@ func (p *Player) HasSpellAffect(spellID int) bool {
 	return false
 }
 
+// sumAffectModsLocked sums the magnitudes of active spell/skill affects for the
+// given APPLY_* location. This is how timed buffs/debuffs (bless, armor, curse,
+// berserk, kuji-kiri, …) reach the stat getters: MagAffects stores them in
+// ActiveAffects with a Location and Magnitude but does not touch base stats, so
+// the getters must fold them in at read time — exactly as equipment affects are
+// already summed. Caller must hold p.mu (read or write lock).
+func (p *Player) sumAffectModsLocked(location int) int {
+	total := 0
+	for _, af := range p.ActiveAffects {
+		if af != nil && af.Location == location {
+			total += af.Magnitude
+		}
+	}
+	return total
+}
+
 // GetPosition returns the player's current position.
 func (p *Player) GetPosition() int {
 	p.mu.RLock()
