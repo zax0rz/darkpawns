@@ -122,7 +122,7 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 		sendToChar(ch, "Invalid house vnum.\r\n")
 		return
 	}
-	realHouse := w.GetRoomInWorld(virtHouse)
+	realHouse := w.rooms[virtHouse]
 	if realHouse == nil {
 		sendToChar(ch, "No such room exists.\r\n")
 		return
@@ -152,7 +152,7 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 		return
 	}
 
-	destRoom := w.GetRoomInWorld(destVNum)
+	destRoom := w.rooms[destVNum]
 	if destRoom == nil {
 		sendToChar(ch, "Destination room does not exist.\r\n")
 		return
@@ -225,13 +225,13 @@ func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 	h := w.HouseControl[i]
 
 	// Clear atrium flag
-	realAtrium := w.GetRoomInWorld(h.Atrium)
+	realAtrium := w.rooms[h.Atrium]
 	if realAtrium != nil {
 		removeRoomFlag(realAtrium, RoomFlagAtrium)
 	}
 
 	// Clear house flags
-	realHouse := w.GetRoomInWorld(h.VNum)
+	realHouse := w.rooms[h.VNum]
 	if realHouse != nil {
 		removeRoomFlag(realHouse, RoomFlagHouse)
 		removeRoomFlag(realHouse, RoomFlagCrash)
@@ -248,7 +248,7 @@ func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 
 	// Re-set atrium flags on remaining houses that may share this atrium
 	for j := range w.HouseControl {
-		ra := w.GetRoomInWorld(w.HouseControl[j].Atrium)
+		ra := w.rooms[w.HouseControl[j].Atrium]
 		if ra != nil {
 			setRoomFlag(ra, RoomFlagAtrium)
 		}
@@ -318,7 +318,7 @@ func (w *World) HcontrolSetKey(ch *Player, arg string) {
 	}
 
 	// Validate key object exists
-	if _, ok := w.GetObjPrototype(keyVNum); !ok {
+	if _, ok := w.objs[keyVNum]; !ok {
 		sendToChar(ch, "That object doesn't exist!\r\n")
 		return
 	}

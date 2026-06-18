@@ -156,8 +156,11 @@ func (sm *ShopManager) ProcessTransaction(shop *Shop, player *game.Player, item 
 
 // processBuy handles a player buying an item from a shop.
 func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.ObjectInstance) (bool, string) {
+	player.Lock()
+	defer player.Unlock()
+
 	// Trade restriction check — src/shop.c:74-101 is_ok_char()
-	if ok, msg := shop.CanTradeWith(player.GetAlignment(), player.GetClass()); !ok {
+	if ok, msg := shop.CanTradeWith(player.Alignment, player.Class); !ok {
 		return false, msg
 	}
 
@@ -170,9 +173,7 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 	price := shop.CalculateSellPrice(item, player.Stats.Cha)
 
 	// Check if player has enough gold
-	player.Lock()
 	if player.Gold < price {
-		player.Unlock()
 		// Put item back in shop
 		shop.AddItem(item)
 		return false, fmt.Sprintf("You need %d gold to buy that.", price)
@@ -180,7 +181,6 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 
 	// Check if player has inventory space
 	if player.Inventory.IsFull() {
-		player.Unlock()
 		// Put item back in shop
 		shop.AddItem(item)
 		return false, "Your inventory is full."
@@ -198,26 +198,26 @@ func (sm *ShopManager) processBuy(shop *Shop, player *game.Player, item common.O
 	if !ok {
 		player.Gold += price
 		shop.DeductGold(price)
-		player.Unlock()
 		shop.AddItem(item)
 		return false, "Internal error: item type mismatch"
 	}
 	if err := player.Inventory.AddItem(gameItem); err != nil {
 		player.Gold += price
 		shop.DeductGold(price)
-		player.Unlock()
 		shop.AddItem(item)
 		return false, fmt.Sprintf("Failed to add item to inventory: %v", err)
 	}
-	player.Unlock()
 
 	return true, fmt.Sprintf("You buy %s for %d gold.", item.GetShortDesc(), price)
 }
 
 // processSell handles a player selling an item to a shop.
 func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.ObjectInstance) (bool, string) {
+	player.Lock()
+	defer player.Unlock()
+
 	// Trade restriction check — src/shop.c:74-101 is_ok_char()
-	if ok, msg := shop.CanTradeWith(player.GetAlignment(), player.GetClass()); !ok {
+	if ok, msg := shop.CanTradeWith(player.Alignment, player.Class); !ok {
 		return false, msg
 	}
 
@@ -257,9 +257,7 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 
 	// Transfer gold: keeper pays player, keeper gold decremented (src/shop.c:808)
 	shop.DeductGold(price)
-	player.Lock()
 	player.Gold += price
-	player.Unlock()
 
 	// Transfer item to shop
 	if g, ok := item.(*game.ObjectInstance); ok {
@@ -268,9 +266,7 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 	if !shop.AddItem(item) {
 		// Rollback
 		shop.AddGold(price)
-		player.Lock()
 		player.Gold -= price
-		player.Unlock()
 		if err := player.Inventory.AddItem(gameItem); err != nil {
 			slog.Error("shop sell rollback: failed shop add, failed to restore item", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
 		}
@@ -415,6 +411,13 @@ type saveShopData struct {
 	RestockPercent  int    `json:"restock_percent"`
 	OpenHour        int    `json:"open_hour"`
 	CloseHour       int    `json:"close_hour"`
+
+	// Persisted dynamic state to prevent loss on reboot
+	Gold        int   `json:"gold"`
+	BankAccount int   `json:"bank_account"`
+	WithWho     int   `json:"with_who"`
+	LastRestock int   `json:"last_restock"`
+	Inventory   []int `json:"inventory"` // List of item VNums
 }
 
 // saveShopsData is the top-level JSON structure for shop persistence.
@@ -435,6 +438,11 @@ func (sm *ShopManager) SaveShops() error {
 
 	for _, shop := range sm.shops {
 		shop.mu.RLock()
+		// Get inventory VNums
+		invVNums := make([]int, 0, len(shop.Inventory))
+		for _, item := range shop.Inventory {
+			invVNums = append(invVNums, item.GetVNum())
+		}
 		sd := saveShopData{
 			ID:              shop.ID,
 			VNum:            shop.VNum,
@@ -453,6 +461,11 @@ func (sm *ShopManager) SaveShops() error {
 			RestockPercent:  shop.RestockPercent,
 			OpenHour:        shop.OpenHour,
 			CloseHour:       shop.CloseHour,
+			Gold:            shop.Gold,
+			BankAccount:     shop.BankAccount,
+			WithWho:         shop.WithWho,
+			LastRestock:     shop.LastRestock,
+			Inventory:       invVNums,
 		}
 		shop.mu.RUnlock()
 		data.Shops = append(data.Shops, sd)
@@ -480,7 +493,7 @@ func (sm *ShopManager) SaveShops() error {
 
 // LoadShops restores shops from ./data/shops.json.
 // If the file does not exist, returns nil (first boot).
-func (sm *ShopManager) LoadShops() error {
+func (sm *ShopManager) LoadShops(getProto func(int) (*parser.Obj, bool)) error {
 	f, err := os.Open(filepath.Clean(shopsFile))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -519,6 +532,21 @@ func (sm *ShopManager) LoadShops() error {
 		shop.RestockPercent = sd.RestockPercent
 		shop.OpenHour = sd.OpenHour
 		shop.CloseHour = sd.CloseHour
+		shop.Gold = sd.Gold
+		shop.BankAccount = sd.BankAccount
+		shop.WithWho = sd.WithWho
+		shop.LastRestock = sd.LastRestock
+
+		// Restore inventory if prototype lookup function is provided
+		if getProto != nil {
+			for _, vnum := range sd.Inventory {
+				if proto, ok := getProto(vnum); ok {
+					item := game.NewObjectInstance(proto, -1)
+					item.Location = game.LocShop(shop.VNum)
+					shop.Inventory = append(shop.Inventory, item)
+				}
+			}
+		}
 
 		sm.shops[shop.ID] = shop
 		sm.npcToShop[shop.VNum] = shop.ID

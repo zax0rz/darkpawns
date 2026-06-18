@@ -154,3 +154,70 @@ func TestExecuteCommand_DifferentPlayers(t *testing.T) {
 		t.Errorf("second callback got player %q, want %q", receivedNames[1], "OtherPlayer")
 	}
 }
+
+// TestExecuteMobCommand_NoDeadlock verifies that executing a command on a mob (like "open")
+// does not deadlock because of nested World locks.
+func TestExecuteMobCommand_NoDeadlock(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Test Room", Zone: 1},
+		},
+		Mobs: []parser.Mob{
+			{VNum: 5001, Keywords: "test mob", ShortDesc: "a test mob"},
+		},
+		Objs: []parser.Obj{},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	defer w.StopAITicker()
+
+	// Load the mob into room 1001
+	mobProto, ok := w.GetMobPrototype(5001)
+	if !ok {
+		t.Fatal("mob prototype not found")
+	}
+	mobInst := NewMobInstance(mobProto, 1001)
+
+	// Register active mob
+	w.mu.Lock()
+	mobInst.ID = w.nextMobID
+	w.nextMobID++
+	w.activeMobs[mobInst.ID] = mobInst
+	w.mu.Unlock()
+
+	// Capture messages to verify it doesn't hang
+	w.MessageSink = func(playerName string, msg []byte) {}
+
+	// Setup a closed door exit in room 1001 to a dummy north room
+	w.mu.Lock()
+	room := w.rooms[1001]
+	room.Exits = map[string]parser.Exit{
+		"north": {
+			ToRoom:    1002,
+			DoorState: 1, // doorClosed
+			Keywords:  "door",
+		},
+	}
+	w.rooms[1002] = &parser.Room{VNum: 1002, Name: "North Room", Exits: map[string]parser.Exit{
+		"south": {
+			ToRoom:    1001,
+			DoorState: 1, // doorClosed
+		},
+	}}
+	w.mu.Unlock()
+
+	// This calls executeMobCommand -> open north -> mobOpenDoor -> locks w.mu
+	// If executeMobCommand held the read lock, this would deadlock.
+	w.executeMobCommand(5001, "open north")
+
+	// Verify the door opened
+	w.mu.RLock()
+	doorState := w.rooms[1001].Exits["north"].DoorState
+	w.mu.RUnlock()
+	if doorState != 0 { // doorOpen = 0
+		t.Errorf("expected door to be open (0), got %d", doorState)
+	}
+}

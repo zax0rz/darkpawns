@@ -71,7 +71,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		} else {
 			dam = dice(18, 8) + level
 		}
-		if !randBool(51) && !isNPC(ch) {
+		if randBool(51) && !isNPC(ch) {
 			sendToCaster(ch, "Your magick backfires!\r\n")
 			victim = ch
 		}
@@ -82,7 +82,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		} else {
 			dam = dice(20, 7) + level
 		}
-		if !randBool(51) && !isNPC(ch) {
+		if randBool(51) && !isNPC(ch) {
 			sendToCaster(ch, "Your magick backfires!\r\n")
 			victim = ch
 		}
@@ -151,7 +151,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 
 	case SpellPsiblast:
 		dam = dice(15, 13) + 3*level
-		if !randBool(31) && !isNPC(ch) {
+		if randBool(31) && !isNPC(ch) {
 			sendToCaster(ch, "Suddenly, your psionic power recoils!\r\n")
 			victim = ch
 		}
@@ -230,11 +230,11 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 			}
 		}
 	case SpellFireball:
-		if !randBool(11) {
+		if randBool(11) {
 			sendToZone("A blast of hot air washes over you.", ch, world)
 		}
 	case SpellCallLightning, SpellLightningBolt:
-		if !randBool(11) {
+		if randBool(11) {
 			sendToZone("Thunder rumbles through the air.", ch, world)
 		}
 	}

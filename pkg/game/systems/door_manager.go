@@ -88,12 +88,11 @@ func (dm *DoorManager) GetDoorsInRoom(roomVNum int) []*Door {
 	defer dm.mu.RUnlock()
 
 	var doors []*Door
-	for key, door := range dm.doors {
+	for _, door := range dm.doors {
 		// Check if key starts with roomVNum:
 		if door.FromRoom == roomVNum {
 			doors = append(doors, door)
 		}
-		_ = key // Avoid unused variable warning
 	}
 
 	return doors

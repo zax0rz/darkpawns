@@ -2,6 +2,8 @@ package systems
 
 import (
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 func TestNewDoor(t *testing.T) {
@@ -569,5 +571,172 @@ func TestDoorManager_Count(t *testing.T) {
 
 	if dm.Count() != 3 {
 		t.Errorf("Count() = %d, want 3", dm.Count())
+	}
+}
+
+func TestDoorReset(t *testing.T) {
+	door := NewDoor(100, 101, "north", 2, 500) // starts closed and locked (state 2)
+	door.Hp = 50 // bash it a bit
+
+	// Change state
+	door.Closed = false
+	door.Locked = false
+
+	door.Reset()
+
+	if !door.Closed {
+		t.Error("Expected door to be closed after reset")
+	}
+	if !door.Locked {
+		t.Error("Expected door to be locked after reset")
+	}
+	if door.Hp != 100 {
+		t.Errorf("Expected door HP 100 after reset, got %d", door.Hp)
+	}
+}
+
+func TestDoorManager_ResetDoors(t *testing.T) {
+	dm := NewDoorManager()
+	door1 := NewDoor(100, 101, "north", 1, -1) // starts closed (state 1)
+	door2 := NewDoor(100, 102, "east", 2, 500)  // starts closed and locked (state 2)
+
+	dm.AddDoor(door1)
+	dm.AddDoor(door2)
+
+	// Change state
+	door1.Closed = false // open it
+	door2.Closed = false // open and unlock it
+	door2.Locked = false
+
+	dm.ResetDoors()
+
+	if !door1.Closed {
+		t.Error("Expected door1 to be closed after ResetDoors")
+	}
+	if !door2.Closed {
+		t.Error("Expected door2 to be closed after ResetDoors")
+	}
+	if !door2.Locked {
+		t.Error("Expected door2 to be locked after ResetDoors")
+	}
+}
+
+func TestDoorManager_Operations(t *testing.T) {
+	dm := NewDoorManager()
+	door := NewDoor(100, 101, "north", 1, 500) // closed, key VNum 500
+	door.Bashable = true
+	dm.AddDoor(door)
+
+	// Test GetDoorStatus
+	status, ok := dm.GetDoorStatus(100, "north")
+	if !ok || status != "closed" {
+		t.Errorf("Expected status closed, got %s (ok=%v)", status, ok)
+	}
+
+	// Test LockDoor
+	ok, msg := dm.LockDoor(100, "north", 500)
+	if !ok {
+		t.Errorf("LockDoor failed: %s", msg)
+	}
+	if !door.Locked {
+		t.Error("Expected door to be locked")
+	}
+
+	// Test GetVisibleDoorsInRoom
+	visible := dm.GetVisibleDoorsInRoom(100)
+	if len(visible) != 1 || visible[0] != door {
+		t.Errorf("Expected 1 visible door, got %d", len(visible))
+	}
+
+	// Make door hidden
+	door.Hidden = true
+	visible = dm.GetVisibleDoorsInRoom(100)
+	if len(visible) != 0 {
+		t.Errorf("Expected 0 visible doors for hidden door, got %d", len(visible))
+	}
+	door.Hidden = false
+
+	// Test UnlockDoor
+	ok, msg = dm.UnlockDoor(100, "north", 500)
+	if !ok {
+		t.Errorf("UnlockDoor failed: %s", msg)
+	}
+	if door.Locked {
+		t.Error("Expected door to be unlocked")
+	}
+
+	// Lock it again for picking test
+	_, _ = dm.LockDoor(100, "north", 500)
+
+	// Test PickDoor
+	ok, msg = dm.PickDoor(100, "north", 60) // difficulty is 50, so skill 60 succeeds
+	if !ok {
+		t.Errorf("PickDoor failed: %s", msg)
+	}
+	if door.Locked {
+		t.Error("Expected door to be unlocked after picking")
+	}
+
+	// Test OpenDoor
+	ok, msg = dm.OpenDoor(100, "north")
+	if !ok {
+		t.Errorf("OpenDoor failed: %s", msg)
+	}
+	if door.Closed {
+		t.Error("Expected door to be open")
+	}
+
+	// Test CloseDoor
+	ok, msg = dm.CloseDoor(100, "north")
+	if !ok {
+		t.Errorf("CloseDoor failed: %s", msg)
+	}
+	if !door.Closed {
+		t.Error("Expected door to be closed")
+	}
+
+	// Test BashDoor
+	ok, msg = dm.BashDoor(100, "north", 1000) // strength 1000 -> 100 damage -> destroys door
+	if !ok {
+		t.Errorf("BashDoor failed: %s", msg)
+	}
+	if door.Closed || door.Locked {
+		t.Error("Expected door to be open and unlocked after bashed down")
+	}
+}
+
+func TestDoorManager_LoadDoorsFromWorld(t *testing.T) {
+	dm := NewDoorManager()
+	
+	// Create mock world data
+	world := &parser.World{
+		Rooms: []parser.Room{
+			{
+				VNum: 3001,
+				Exits: map[string]parser.Exit{
+					"north": {
+						ToRoom:    3002,
+						DoorState: 1, // closed
+						Key:       500,
+					},
+				},
+			},
+		},
+	}
+
+	dm.LoadDoorsFromWorld(world)
+
+	door, ok := dm.GetDoor(3001, "north")
+	if !ok {
+		t.Fatal("Expected door to be loaded from world")
+	}
+	if door.ToRoom != 3002 {
+		t.Errorf("Expected ToRoom 3002, got %d", door.ToRoom)
+	}
+	if !door.Closed {
+		t.Error("Expected door to be closed")
+	}
+	if door.KeyVNum != 500 {
+		t.Errorf("Expected KeyVNum 500, got %d", door.KeyVNum)
 	}
 }
