@@ -8,21 +8,36 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-// cmdColor — toggle ANSI color on or off.
-// The client is responsible for rendering; this flag is advisory.
+// cmdColor — set the player's ANSI color level (off/sparse/normal/complete).
+// Source: act.informative.c do_color(). The client renders; PrfColor1/2 are
+// advisory state mirrored back via the "toggle" listing.
 func cmdColor(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Usage: color <on|off>")
+	if s.player == nil {
 		return nil
 	}
-	switch strings.ToLower(args[0]) {
-	case "on":
-		s.Send("Color enabled.")
-	case "off":
-		s.Send("Color disabled.")
-	default:
-		s.Send("Usage: color <on|off>")
+	levels := []string{"off", "sparse", "normal", "complete"}
+	if len(args) == 0 {
+		s.Send(fmt.Sprintf("Your current color level is %s.", colorLevelStr(s.player.Flags)))
+		return nil
 	}
+	arg := strings.ToLower(args[0])
+	if arg == "on" {
+		arg = "complete"
+	}
+	tp := -1
+	for i, lvl := range levels {
+		if lvl == arg {
+			tp = i
+			break
+		}
+	}
+	if tp == -1 {
+		s.Send("Usage: color { Off | Sparse | Normal | Complete }")
+		return nil
+	}
+	s.player.SetPlrFlag(game.PrfColor1, tp&1 != 0)
+	s.player.SetPlrFlag(game.PrfColor2, tp&2 != 0)
+	s.Send(fmt.Sprintf("Your color is now %s.", levels[tp]))
 	return nil
 }
 
@@ -156,46 +171,39 @@ func diagnoseLabel(pct int) string {
 	}
 }
 
-// cmdToggle — toggle a player preference flag.
-// Source: act.informative.c do_toggle()
+// cmdToggle — show the player's preference-flag grid.
+// Source: act.informative.c do_toggle(), which is purely informational —
+// it ignores its argument and always prints the full grid. Individual
+// settings are changed via their own commands (brief, compact, notell, …,
+// see commands.go's "Preference toggles" block), matching src/interpreter.c
+// where each toggle is its own top-level command, not a "toggle <name>"
+// dispatcher.
 func cmdToggle(s *Session, args []string) error {
 	if s.player == nil {
 		return nil
 	}
 
-	if len(args) == 0 {
-		// Show current toggles in 3-column grid matching C format
-		p := s.player
-		g := p.Flags
-		var buf strings.Builder
-		buf.WriteString("Toggles:\r\n")
-		// Row 1
-		toggleRow(&buf, "hitpoint", prfOnOff(g, game.PrfDisphp), "brief", prfOnOff(g, game.PrfBrief), "summonable", prfOnOff(g, game.PrfSummonable))
-		// Row 2
-		toggleRow(&buf, "move", prfOnOff(g, game.PrfDispmove), "compact", prfOnOff(g, game.PrfCompact), "quest", prfOnOff(g, game.PrfQuest))
-		// Row 3
-		toggleRow(&buf, "mana", prfOnOff(g, game.PrfDispmmana), "notell", prfOnOff(g, game.PrfNotell), "norepeat", prfOnOff(g, game.PrfNoRepeat))
-		// Row 4
-		toggleRow(&buf, "autoexit", prfOnOffStr(p.AutoExit), "autoloot", prfOnOff(g, game.PrfAutoLoot), "autogold", prfOnOff(g, game.PrfAutoGold))
-		// Row 5
-		toggleRow(&buf, "autosplit", prfOnOff(g, game.PrfAutoSplit), "deaf", prfOnOff(g, game.PrfDeaf), "wimpy", wimpyStr(p.WimpLevel))
-		// Row 6
-		toggleRow(&buf, "nogossip", prfOnOff(g, game.PrfNoGossip), "noauction", prfOnOff(g, game.PrfNoAuctions), "nogratz", prfOnOff(g, game.PrfNoGratz))
-		// Row 7
-		toggleRow(&buf, "disptank", prfOnOff(g, game.PrfDispTank), "disptarget", prfOnOff(g, game.PrfDispTarget), "color", colorLevelStr(g))
-		// Row 8
-		toggleRow(&buf, "newbie", prfOnOff(g, game.PrfNoNewbie), "noctell", prfOnOff(g, game.PrfNoCTell), "nobroad", prfOnOff(g, game.PrfNoBroad))
-		s.Send(buf.String())
-		return nil
-	}
-
-	switch strings.ToLower(args[0]) {
-	case "autoexit":
-		s.player.AutoExit = !s.player.AutoExit
-		s.Send(fmt.Sprintf("Auto-exit %s.", prfOnOffStr(s.player.AutoExit)))
-	default:
-		s.Send(fmt.Sprintf("Unknown toggle '%s'. Try: autoexit", args[0]))
-	}
+	p := s.player
+	g := p.Flags
+	var buf strings.Builder
+	buf.WriteString("Toggles:\r\n")
+	// Row 1
+	toggleRow(&buf, "hitpoint", prfOnOff(g, game.PrfDisphp), "brief", prfOnOff(g, game.PrfBrief), "summonable", prfOnOff(g, game.PrfSummonable))
+	// Row 2
+	toggleRow(&buf, "move", prfOnOff(g, game.PrfDispmove), "compact", prfOnOff(g, game.PrfCompact), "quest", prfOnOff(g, game.PrfQuest))
+	// Row 3
+	toggleRow(&buf, "mana", prfOnOff(g, game.PrfDispmmana), "notell", prfOnOff(g, game.PrfNotell), "norepeat", prfOnOff(g, game.PrfNoRepeat))
+	// Row 4
+	toggleRow(&buf, "autoexit", prfOnOffStr(p.AutoExit), "autoloot", prfOnOff(g, game.PrfAutoLoot), "autogold", prfOnOff(g, game.PrfAutoGold))
+	// Row 5
+	toggleRow(&buf, "autosplit", prfOnOff(g, game.PrfAutoSplit), "deaf", prfOnOff(g, game.PrfDeaf), "wimpy", wimpyStr(p.WimpLevel))
+	// Row 6
+	toggleRow(&buf, "nogossip", prfOnOff(g, game.PrfNoGossip), "noauction", prfOnOff(g, game.PrfNoAuctions), "nogratz", prfOnOff(g, game.PrfNoGratz))
+	// Row 7
+	toggleRow(&buf, "disptank", prfOnOff(g, game.PrfDispTank), "disptarget", prfOnOff(g, game.PrfDispTarget), "color", colorLevelStr(g))
+	// Row 8
+	toggleRow(&buf, "newbie", prfOnOff(g, game.PrfNoNewbie), "noctell", prfOnOff(g, game.PrfNoCTell), "nobroad", prfOnOff(g, game.PrfNoBroad))
+	s.Send(buf.String())
 	return nil
 }
 

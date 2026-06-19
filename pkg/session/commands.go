@@ -293,7 +293,26 @@ func init() {
 	cmdRegistry.Register("visible", wrapArgs(cmdVisible), "Make yourself visible again.", 0, 0)
 	cmdRegistry.Register("inactive", wrapArgs(cmdInactive), "Toggle inactive status.", 0, 0)
 	cmdRegistry.Register("auto", wrapArgs(cmdAuto), "Toggle auto-attack mode.", 0, 0)
-	cmdRegistry.Register("gentog", wrapArgs(cmdGenTog), "Toggle an option.", 0, 0, "gentoggle")
+	// Preference toggles (act.other.c do_gen_tog) — each is its own top-level
+	// command in the original C, not a unified dispatcher; src/interpreter.c
+	// lines 366-666.
+	cmdRegistry.Register("nosummon", wrapToggle("nosummon"), "Toggle summon protection.", 0, 0)
+	cmdRegistry.Register("nohassle", wrapToggle("nohassle"), "Toggle nohassle mode.", LVL_IMMORT, 0)
+	cmdRegistry.Register("brief", wrapToggle("brief"), "Toggle brief room descriptions.", 0, 0)
+	cmdRegistry.Register("compact", wrapToggle("compact"), "Toggle compact display mode.", 0, 0)
+	cmdRegistry.Register("notell", wrapToggle("notell"), "Toggle deafness to tells.", 0, 0)
+	cmdRegistry.Register("noauction", wrapToggle("noauction"), "Toggle deafness to auctions.", 0, 0)
+	cmdRegistry.Register("noshout", wrapToggle("noshout"), "Toggle deafness to shouts.", 0, combat.PosSleeping)
+	cmdRegistry.Register("nogossip", wrapToggle("nogossip"), "Toggle deafness to gossip.", 0, 0)
+	cmdRegistry.Register("nograts", wrapToggle("nograts"), "Toggle congratulation messages.", 0, 0)
+	cmdRegistry.Register("nowiz", wrapToggle("nowiz"), "Toggle deafness to the wiz channel.", LVL_IMMORT, 0)
+	cmdRegistry.Register("quest", wrapToggle("quest"), "Toggle quest announcements.", 0, 0)
+	cmdRegistry.Register("roomflags", wrapToggle("roomflags"), "Toggle room flag display.", LVL_IMMORT, 0)
+	cmdRegistry.Register("norepeat", wrapToggle("norepeat"), "Toggle communication echo.", 0, 0)
+	cmdRegistry.Register("holylight", wrapToggle("holylight"), "Toggle holylight mode.", LVL_IMMORT, 0)
+	cmdRegistry.Register("nonewbie", wrapToggle("nonewbie"), "Toggle newbie channel.", 0, 0)
+	cmdRegistry.Register("noctell", wrapToggle("noctell"), "Toggle deafness to clan tells.", 0, 0)
+	cmdRegistry.Register("nobroadcast", wrapToggle("nobroadcast"), "Toggle deafness to broadcasts.", 0, 0)
 	cmdRegistry.Register("bug", wrapArgs(cmdBug), "Report a bug.", 0, 0)
 	cmdRegistry.Register("typo", wrapArgs(cmdTypo), "Report a typo.", 0, 0)
 	cmdRegistry.Register("idea", wrapArgs(cmdIdea), "Submit an idea.", 0, 0)
@@ -355,6 +374,17 @@ func wrapNoArgs(fn func(*Session) error) command.Handler {
 func wrapMove(direction string) command.Handler {
 	return func(s common.CommandSession, args []string) error {
 		return cmdMove(s.(*commandSession).Session, direction)
+	}
+}
+
+// wrapToggle adapts a named player-preference toggle (brief, compact, notell,
+// etc. — src/interpreter.c each registers do_gen_tog under its own command
+// name, not a unified "toggle <name>" dispatcher) to command.Handler.
+func wrapToggle(key string) command.Handler {
+	return func(s common.CommandSession, args []string) error {
+		sess := s.(*commandSession).Session
+		sess.manager.world.ExecGenTog(sess.player, key)
+		return nil
 	}
 }
 

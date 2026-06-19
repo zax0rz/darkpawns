@@ -67,8 +67,9 @@ func (w *World) ExecAuto(ch *Player, arg string) { w.doAuto(ch, nil, "auto", arg
 // cmd should be "bug", "typo", "idea", or "todo".
 func (w *World) ExecGenWrite(ch *Player, cmd, arg string) { w.doGenWrite(ch, nil, cmd, arg) }
 
-// ExecGenTog toggles a player option (brief, compact, notell, etc.).
-func (w *World) ExecGenTog(ch *Player, arg string) { w.doGenTog(ch, nil, "gentog", arg) }
+// ExecGenTog toggles a named player preference (brief, compact, notell,
+// etc.) — key is the real command name the player typed.
+func (w *World) ExecGenTog(ch *Player, key string) { w.doGenTog(ch, nil, key, "") }
 
 // RoomHasFlag reports whether the room at vnum has the named flag (e.g. "death", "no_recall").
 func (w *World) RoomHasFlag(vnum int, flag string) bool {

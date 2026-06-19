@@ -213,17 +213,15 @@ intercepts mob/obj/room specs before registry lookup.
   `rent`'s real implementation (`gen_receptionist`,
   `src/objsave.c`) is never assigned to any mob in `src/spec_assign.c` — both
   are unreachable in the original codebase. No action item.
-- **`donate`/`junk` — genuine missing-command gap, not yet ported.** C's
-  `do_drop` `SCMD_DONATE`/`SCMD_JUNK` path (`src/act.item.c`) has a 25% chance
-  to destroy the item and otherwise teleports it to a fixed donation room
-  (`donation_room_1=8053`/`donation_room_2=18204`, `src/config.c`), regardless
-  of the player's current room. Neither `donate` nor `junk` are registered as
-  commands anywhere in the Go port, and no spec proc can provide this
-  (unlike `dump`, which only reacts to a plain `drop` in a dump-flagged room).
-  Note: the dump-spec rooms (8085/21223) don't match the donation-room VNums
-  — looks like a pre-existing inconsistency in the original C game, not a
-  port bug; if/when `donate` is implemented, preserve this quirk rather than
-  "fixing" it.
+- **`donate`/`junk` — DONE (PR #30, bugfixed in PR #31).** Implemented per
+  `src/act.item.c`'s `do_drop` `SCMD_DONATE`/`SCMD_JUNK` path (25% destroy
+  chance, otherwise teleport to `donation_room_1=8053`/`donation_room_2=18204`
+  regardless of current room — the dump-spec/donation-room VNum mismatch is
+  preserved as a pre-existing C inconsistency, not "fixed"). PR #31 found and
+  fixed 4 bugs uncovered after merge: NODROP/two-handed checks reading the
+  wrong `ExtraFlags` bit, give/wear/put `all`-loops using a bogus flag check
+  instead of `CAN_SEE_OBJ`, and `GetShortDesc`/`GetLongDesc` not consulting
+  `Runtime.ShortDesc`/`Runtime.LongDesc` (broke corpse/money-pile display).
 
 ---
 
@@ -252,26 +250,71 @@ panel. (`admobs` `advance` `skillset` `slowns` `dns` `roomflags` `holler`
 
 ---
 
-## Bucket E — Preference toggles (verify dispatch)
+## Bucket E — Preference toggles — DONE (2026-06-18)
 
-The `no*` family (`noauction` `nogossip` `notell` `noshout` `notitle` `nowiz`
-`noctell` `norepeat` etc.) all probe to `other_settings.go`. Determine whether
-they're reached via a unified `toggle`/`set` command or need individual
-registration. `brief` `compact` `quest` `afk` are in the same family.
+Verified against `src/interpreter.c`: each toggle (`brief` `compact` `notell`
+`noauction` `noshout` `nogossip` `nograts` `nowiz` `quest` `roomflags`
+`norepeat` `holylight` `nohassle` `nonewbie` `noctell` `nobroadcast`
+`nosummon`) is its own top-level command routed through `do_gen_tog` — there
+is no unified `toggle <name>` dispatcher in the original.
+
+This was a bigger gap than "likely a small unification": the correct,
+already-ported `game.doGenTog` (`other_settings.go`) was reachable only
+through the literal, never-typed command name `gentog`. None of the 16 real
+toggle names above were registered at all. Separately, the two commands that
+*were* registered and live — `color` and `autoexit` — never persisted
+anything; `toggle <name>` only special-cased `autoexit`, rejecting every
+other name.
+
+**Fixed:**
+- Registered all 16 toggle names as standalone commands → `doGenTog`, via a
+  new `wrapToggle(key)` (`pkg/session/commands.go`); removed the dead
+  `gentog`/`gentoggle` registration.
+- Fixed `doGenTog`'s `cmdMap` to key by the *real* C command name — `nosummon`
+  (was `summon`), `noshout` (was `deaf`), `nograts` (was `nogratz`),
+  `nobroadcast` (was `nobroad`) — and dropped two invented entries
+  (`autocxits`, `npcident`) that didn't correspond to any reachable C command.
+- `cmdColor` (`pkg/session/act_informative.go`) was a placebo — `color on`
+  printed "Color enabled." but never touched `PrfColor1`/`PrfColor2`. Ported
+  the real 4-level `do_color` (off/sparse/normal/complete, `on` = shorthand
+  for complete) — the display grid already expected this model
+  (`colorLevelStr`), it just had nothing wired to it.
+- `cmdAutoExit` was a no-op stub (`"Auto-exit toggled."` regardless of state).
+  Now actually flips `Player.AutoExit`. Note: `autoexit` has no command-table
+  entry in `src/interpreter.c` at all (dead in the original too) — this is a
+  Go-only convenience command, just no longer a broken one.
+- `cmdToggle` (`toggle`) had an invented `switch args[0]` that only handled
+  `autoexit`; the real `do_toggle` ignores its argument entirely and always
+  prints the grid. Removed the fake dispatch so `toggle <anything>` matches
+  the original (display-only; real per-toggle commands now work directly).
+
+See `TestBucketEToggleCommandsRegistered`, `TestDoGenTogRealCommandNames`,
+`TestDoGenTogImmortalGated`, `TestCmdColorPersistsLevel`,
+`TestCmdAutoExitTogglesPersistently`, `TestCmdToggleIgnoresArguments`.
+
+Not done (low value, deferred): `ident`/`slowns` are global, non-player-flag
+debug toggles (`SCMD_IDENT`/`SCMD_SLOWNS`, `LVL_IMPL-1`) for remote-username
+lookups and slow-nameserver mode — no Go equivalent state exists, same spirit
+as Bucket D's deferred wiz actions.
 
 ---
 
 ## Recommended order of attack
 
-1. **Bucket A** — wire the ~25 implemented skills (one-liners). Biggest player-
-   facing win per unit effort; restores whole class skill sets. Each needs a
-   smoke check that the handler runs.
-2. **Bucket C verification** — boot + play to confirm banking/postmaster/boards
-   actually work in context; cheap, may close ~15 items with zero code.
-3. **Bucket E** — confirm toggle dispatch; likely a small unification.
-4. **Bucket B** — implement genuinely-missing class skills, guided by `src/`.
-   This is the real remaining port *work*; good candidate for the
-   clawpatch→Daeron→coding-tool loop one skill at a time.
+1. **Bucket A** — DONE. Wired the ~25 implemented skills.
+2. **Bucket C verification** — DONE. Banking and recharge bugs fixed;
+   postmaster/boards/stable/retrieve verified functional; `donate`/`junk`
+   implemented (PR #30) and bugfixed (PR #31).
+3. **Bucket E** — DONE. Toggle dispatch wired (16 commands); `color`/
+   `autoexit`/`toggle` placebo bugs fixed along the way.
+4. **Bucket B** — the real remaining port *work*: missing class skills
+   (`charge` `mount` `track`, `shadow` `spike` `stake` `kabuki`), missing
+   player actions (`fill` `grab` `leave` `search` `sip` `taste` `think`
+   `dream` `glance` `insult` `orgasm` `reroll` `reallyquit` `enter`), and
+   missing info commands (`abilities` `credits` `version` `news` `policy`
+   `handbook` `ident` `whoami` `future` `socials` `unaffect`). Guided by
+   `src/`; good candidate for the clawpatch→Daeron→coding-tool loop one skill
+   at a time.
 5. **Bucket D** — defer.
 
 These buckets are derived from static analysis; (1) and (2) should be confirmed
