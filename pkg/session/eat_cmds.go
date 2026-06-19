@@ -13,6 +13,18 @@ import (
 // cmdEat implements the eat command.
 // Source: src/act.item.c ACMD(do_eat)
 func cmdEat(s *Session, args []string) error {
+	return eatOrTaste(s, args, false)
+}
+
+// cmdTaste implements the taste command — src/act.item.c ACMD(do_eat) SCMD_TASTE.
+// Like eat, but only nibbles: no FULL gain, no poison-affect application (C
+// computes amount=0 for taste, so the poison duration is a no-op), and the
+// food is only consumed once its bite counter (Values[0]) reaches zero.
+func cmdTaste(s *Session, args []string) error {
+	return eatOrTaste(s, args, true)
+}
+
+func eatOrTaste(s *Session, args []string, taste bool) error {
 	if len(args) == 0 {
 		s.Send("Eat what?")
 		return nil
@@ -39,38 +51,63 @@ func cmdEat(s *Session, args []string) error {
 		return nil
 	}
 
-	// Eat message
-	s.Send(fmt.Sprintf("You eat %s.", item.GetShortDesc()))
-	broadcastToRoom(s, fmt.Sprintf("%s eats %s.", s.player.Name, item.GetShortDesc()))
-
-	// Apply food effect via game.EatFood (which calls GainCondition for CondFull)
-	amount, err := game.EatFood(s.player, item)
-	if err != nil {
-		return fmt.Errorf("game.EatFood: %w", err)
+	if taste {
+		s.Send(fmt.Sprintf("You nibble a little bit of %s.", item.GetShortDesc()))
+		broadcastToRoom(s, fmt.Sprintf("%s tastes a little bit of %s.", s.player.Name, item.GetShortDesc()))
+	} else {
+		s.Send(fmt.Sprintf("You eat %s.", item.GetShortDesc()))
+		broadcastToRoom(s, fmt.Sprintf("%s eats %s.", s.player.Name, item.GetShortDesc()))
 	}
 
-	// Full message after eating
-	if s.player.Hunger > 20 {
-		s.Send("You are full.")
+	var amount int
+	if !taste {
+		// Apply food effect via game.EatFood (which calls GainCondition for CondFull)
+		var err error
+		amount, err = game.EatFood(s.player, item)
+		if err != nil {
+			return fmt.Errorf("game.EatFood: %w", err)
+		}
+
+		// Full message after eating
+		if s.player.Hunger > 20 {
+			s.Send("You are full.")
+		}
 	}
 
-	// Check for poison — Values[3] is poison flag (C: GET_OBJ_VAL(food, 3))
+	// Check for poison — Values[3] is poison flag (C: GET_OBJ_VAL(food, 3)).
+	// C applies this regardless of subcmd, but taste's amount is always 0, so
+	// the resulting poison duration (amount*2) is a no-op — skip applying it.
 	isPoisoned := item.Prototype != nil && item.Prototype.Values[3] != 0
 
 	if isPoisoned {
 		s.Send("Oops, that tasted rather strange!")
 		broadcastToRoom(s, fmt.Sprintf("%s coughs and utters some strange sounds.", s.player.Name))
 
-		// Apply poison affect (C: af.type = SPELL_POISON, duration = amount * 2)
-		poisonAffect := engine.NewAffectDirect(0, engine.ApplyNone, amount*2, 0, engine.AFFPoison, item.GetShortDesc())
-		s.player.Lock()
-		s.player.ActiveAffects = append(s.player.ActiveAffects, poisonAffect)
-		s.player.Unlock()
+		if !taste {
+			// Apply poison affect (C: af.type = SPELL_POISON, duration = amount * 2)
+			poisonAffect := engine.NewAffectDirect(0, engine.ApplyNone, amount*2, 0, engine.AFFPoison, item.GetShortDesc())
+			s.player.Lock()
+			s.player.ActiveAffects = append(s.player.ActiveAffects, poisonAffect)
+			s.player.Unlock()
+		}
 	}
 
-	// Remove food from inventory
-	s.player.Inventory.RemoveItem(item)
-	s.markDirty(VarInventory)
+	if taste {
+		// C: if (!(--GET_OBJ_VAL(food, 0))) extract_obj(food); — taste decrements
+		// the bite counter and only consumes the item once it runs out.
+		if item.Prototype != nil {
+			item.Prototype.Values[0]--
+			if item.Prototype.Values[0] <= 0 {
+				s.Send("There's nothing left now.")
+				s.player.Inventory.RemoveItem(item)
+				s.markDirty(VarInventory)
+			}
+		}
+	} else {
+		// Remove food from inventory
+		s.player.Inventory.RemoveItem(item)
+		s.markDirty(VarInventory)
+	}
 
 	return nil
 }
@@ -78,6 +115,18 @@ func cmdEat(s *Session, args []string) error {
 // cmdDrink implements the drink command.
 // Source: src/act.item.c ACMD(do_drink)
 func cmdDrink(s *Session, args []string) error {
+	return drinkOrSip(s, args, false)
+}
+
+// cmdSip implements the sip command — src/act.item.c ACMD(do_drink) SCMD_SIP.
+// Like drink, but only tastes the liquid: the container isn't depleted, no
+// condition (drunk/thirst/full) changes happen, and C's resulting amount=0
+// makes any poison-affect duration a no-op (skipped here, same as taste).
+func cmdSip(s *Session, args []string) error {
+	return drinkOrSip(s, args, true)
+}
+
+func drinkOrSip(s *Session, args []string, sip bool) error {
 	if len(args) == 0 {
 		s.Send("Drink from what?")
 		return nil
@@ -149,44 +198,55 @@ func cmdDrink(s *Session, args []string) error {
 
 	// Get liquid type
 	liqIndex := item.Prototype.Values[2] // Values[2] = liquid type
-
-	// Drink message
 	liq := game.DrinkName(liqIndex)
-	s.Send(fmt.Sprintf("You drink the %s.", liq))
-	broadcastToRoom(s, fmt.Sprintf("%s drinks from %s.", s.player.Name, item.GetShortDesc()))
 
-	// Call game.DrinkLiquid which handles condition updates
-	amount, _, err := game.DrinkLiquid(s.player, item)
-	if err != nil {
-		slog.Error("drink failed", "error", err)
-		return nil
+	var amount int
+	if sip {
+		broadcastToRoom(s, fmt.Sprintf("%s sips from %s.", s.player.Name, item.GetShortDesc()))
+		s.Send(fmt.Sprintf("It tastes like %s.", liq))
+	} else {
+		s.Send(fmt.Sprintf("You drink the %s.", liq))
+		broadcastToRoom(s, fmt.Sprintf("%s drinks from %s.", s.player.Name, item.GetShortDesc()))
+
+		// Call game.DrinkLiquid which handles condition updates
+		var err error
+		amount, _, err = game.DrinkLiquid(s.player, item)
+		if err != nil {
+			slog.Error("drink failed", "error", err)
+			return nil
+		}
+
+		// Condition messages (C: checks after drinking)
+		if s.player.Drunk > 10 {
+			s.Send("You feel drunk.")
+		}
+		if s.player.Thirst > 20 {
+			s.Send("You don't feel thirsty any more.")
+		}
+		if s.player.Hunger > 20 {
+			s.Send("You are full.")
+		}
 	}
 
-	// Condition messages (C: checks after drinking)
-	if s.player.Drunk > 10 {
-		s.Send("You feel drunk.")
-	}
-	if s.player.Thirst > 20 {
-		s.Send("You don't feel thirsty any more.")
-	}
-	if s.player.Hunger > 20 {
-		s.Send("You are full.")
-	}
-
-	// Check for poison — Values[3] = poison flag
+	// Check for poison — Values[3] = poison flag. C applies this regardless of
+	// subcmd, but sip's amount is always 0, so the resulting poison duration
+	// (amount*3) is a no-op — skip applying it.
 	if item.Prototype.Values[3] != 0 {
 		s.Send("Oops, it tasted rather strange!")
 		broadcastToRoom(s, fmt.Sprintf("%s chokes and utters some strange sounds.", s.player.Name))
 
-		// Apply poison affect (C: duration = amount * 3)
-		poisonAffect := engine.NewAffectDirect(0, engine.ApplyNone, amount*3, 0, engine.AFFPoison, "poisoned drink")
-		s.player.Lock()
-		s.player.ActiveAffects = append(s.player.ActiveAffects, poisonAffect)
-		s.player.Unlock()
+		if !sip {
+			// Apply poison affect (C: duration = amount * 3)
+			poisonAffect := engine.NewAffectDirect(0, engine.ApplyNone, amount*3, 0, engine.AFFPoison, "poisoned drink")
+			s.player.Lock()
+			s.player.ActiveAffects = append(s.player.ActiveAffects, poisonAffect)
+			s.player.Unlock()
+		}
 	}
 
-	// Update container liquid amount (DrinkLiquid doesn't modify prototype values)
-	if objType == 17 { // ITEM_DRINKCON — reduce liquid, fountains are infinite
+	// Update container liquid amount (DrinkLiquid doesn't modify prototype values).
+	// Sipping doesn't deplete the container — C: amount=0 for SCMD_SIP.
+	if !sip && objType == 17 { // ITEM_DRINKCON — reduce liquid, fountains are infinite
 		item.Prototype.Values[1] -= amount
 		if item.Prototype.Values[1] <= 0 {
 			item.Prototype.Values[1] = 0

@@ -66,6 +66,9 @@ func init() {
 	cmdRegistry.Register("emote", wrapArgs(cmdEmote), "Perform a roleplay action.", 0, 0, "me")
 	cmdRegistry.Register("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.", 0, 0)
 	cmdRegistry.Register("gtell", wrapArgs(cmdGtell), "Send a message to your group.", 0, 0, "gsay")
+	cmdRegistry.Register("think", wrapArgs(cmdThink), "Think a thought, optionally aloud.", 0, combat.PosResting)
+	cmdRegistry.Register("insult", wrapArgs(cmdInsult), "Insult a target in the room.", 0, combat.PosResting)
+	cmdRegistry.Register("dream", wrapArgs(cmdDream), "Dream — only does anything while asleep.", 0, combat.PosSleeping)
 
 	// Combat
 	cmdRegistry.Register("hit", wrapArgs(cmdHit), "Attack a target.", 0, combat.PosStanding, "attack")
@@ -93,7 +96,9 @@ func init() {
 	cmdRegistry.Register("junk", wrapArgs(cmdJunk), "Destroy an item for a small experience reward.", 0, 0)
 	cmdRegistry.Register("donate", wrapArgs(cmdDonate), "Donate an item to the donation room.", 0, 0)
 	cmdRegistry.Register("eat", wrapArgs(cmdEat), "Eat some food.", 0, 0)
+	cmdRegistry.Register("taste", wrapArgs(cmdTaste), "Nibble a little bit of some food.", 0, 0)
 	cmdRegistry.Register("drink", wrapArgs(cmdDrink), "Drink from a container.", 0, 0)
+	cmdRegistry.Register("sip", wrapArgs(cmdSip), "Sip from a container without drinking it.", 0, 0)
 	cmdRegistry.Register("pour", wrapArgs(cmdPour), "Pour liquid from one container to another.", 0, 0)
 	cmdRegistry.Register("quaff", wrapArgs(cmdQuaff), "Quaff a potion.", 0, 0, "q")
 
@@ -102,11 +107,19 @@ func init() {
 	cmdRegistry.Register("who", wrapNoArgs(cmdWho), "List all online players.", 0, 0)
 	cmdRegistry.Register("where", wrapNoArgs(cmdWhere), "Show player locations.", 0, 0)
 	cmdRegistry.Register("coins", wrapNoArgs(cmdCoins), "Display your gold and bank balance.", 0, 0)
-	cmdRegistry.Register("abils", wrapNoArgs(cmdAbils), "Show your ability scores.", 0, 0)
+	// real C command name is "abilities" (src/interpreter.c); "abils" kept as alias.
+	cmdRegistry.Register("abilities", wrapNoArgs(cmdAbils), "Show your ability scores.", 0, 0, "abils")
 	cmdRegistry.Register("levels", wrapNoArgs(cmdLevels), "Show XP table for your class.", 0, 0)
 	cmdRegistry.Register("review", wrapNoArgs(cmdReview), "Show recent gossip history.", 2, 0)
 	cmdRegistry.Register("whois", wrapArgs(cmdWhois), "Look up a player's info.", 2, 0)
 	cmdRegistry.Register("help", wrapArgs(cmdHelp), "Show available commands or help for a topic.", 0, 0)
+	cmdRegistry.Register("credits", wrapArgs(cmdCredits), "Show who built this game.", 0, combat.PosDead)
+	cmdRegistry.Register("news", wrapArgs(cmdNews), "Show current game news.", 0, combat.PosSleeping)
+	cmdRegistry.Register("policy", wrapArgs(cmdPolicy), "Show the game's policies.", 0, combat.PosDead)
+	cmdRegistry.Register("handbook", wrapArgs(cmdHandbook), "Show the immortal handbook.", LVL_IMMORT, combat.PosDead)
+	cmdRegistry.Register("future", wrapArgs(cmdFuture), "Show planned future content.", 0, combat.PosDead)
+	cmdRegistry.Register("whoami", wrapArgs(cmdWhoami), "Show your own name.", 0, combat.PosDead)
+	cmdRegistry.Register("version", wrapArgs(cmdVersion), "Show the game version.", 0, combat.PosDead)
 
 	// Group
 	cmdRegistry.Register("follow", wrapArgs(cmdFollow), "Follow another player.", 0, 0)
@@ -193,6 +206,9 @@ func init() {
 	cmdRegistry.Register("date", wrapArgs(cmdDate), "Show current system time or uptime.", LVL_IMMORT, 0)
 	cmdRegistry.Register("last", wrapArgs(cmdLast), "Show last login info for a player.", LVL_IMMORT, 0)
 	cmdRegistry.Register("wizutil", wrapArgs(cmdWizutil), "Player utility commands (reroll/pardon/notitle/squelch/freeze/thaw/unaffect).", LVL_IMMORT, 0)
+	// real C top-level names for two of wizutil's sub-actions (src/interpreter.c), stricter-gated than the wizutil meta-command itself.
+	cmdRegistry.Register("reroll", wrapArgs(cmdReroll), "Reroll a player's ability scores.", LVL_GRGOD, 0)
+	cmdRegistry.Register("unaffect", wrapArgs(cmdUnaffect), "Remove all spell affects from a player.", LVL_GOD, 0)
 	cmdRegistry.Register("show", wrapArgs(cmdShow), "Show system info (players/uptime/stats/reset).", LVL_IMMORT, 0)
 	cmdRegistry.Register("dark", wrapArgs(cmdDark), "Stop combat in the current room.", LVL_IMMORT, 0)
 	cmdRegistry.Register("syslog", wrapArgs(cmdSyslog), "Toggle system logging level.", LVL_IMMORT, 0)
@@ -222,7 +238,12 @@ func init() {
 	cmdRegistry.Register("spells", wrapArgs(cmdSpells), "List known spells.", 0, 0)
 
 	// Quit
-	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0)
+	// "reallyquit" is src/interpreter.c's SCMD_REALLY_QUIT variant of do_quit — in the
+	// original, plain "quit" only works from recall/temple rooms and "reallyquit" is
+	// required elsewhere (and costs your equipment). This port's cmdQuit doesn't yet
+	// implement that temple-gating/equipment-loss split, so for now both names behave
+	// identically; aliasing at least makes the command reachable.
+	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0, "reallyquit")
 
 	// Offensive commands — delegated to pkg/command (C-10: real damage formulas)
 	cmdRegistry.Register("assist", wrapArgs(cmdAssist), "Assist a target in combat.", 0, combat.PosFighting)
@@ -268,7 +289,8 @@ func init() {
 	cmdRegistry.Register("color", wrapArgs(cmdColor), "Toggle ANSI color.", 0, 0)
 	cmdRegistry.Register("commands", wrapArgs(cmdCommands), "List available commands.", 0, 0, "cmds")
 	cmdRegistry.Register("description", wrapArgs(cmdDescription), "Set your character description.", 0, 0)
-	cmdRegistry.Register("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", 0, 0, "diag")
+	// "glance" is src/interpreter.c's other top-level name for do_diagnose — identical handler.
+	cmdRegistry.Register("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", 0, 0, "diag", "glance")
 	cmdRegistry.Register("toggle", wrapArgs(cmdToggle), "Toggle a player preference.", 0, 0)
 	cmdRegistry.Register("lines", wrapArgs(cmdLines), "Set your screen line count (7-50).", 0, 0)
 	cmdRegistry.Register("infobar", wrapArgs(cmdInfoBar), "Toggle the bottom status infobar.", 0, 0)
@@ -281,7 +303,8 @@ func init() {
 	cmdRegistry.Register("wimpy", wrapArgs(cmdWimpy), "Set your wimpy threshold.", 0, 0)
 	cmdRegistry.Register("display", wrapArgs(cmdDisplay), "Set display preferences.", 0, 0)
 	cmdRegistry.Register("transform", wrapArgs(cmdTransform), "Transform your appearance.", 0, 0)
-	cmdRegistry.Register("ride", wrapArgs(cmdRide), "Ride a mount.", 0, 0)
+	// "mount" is src/interpreter.c's other top-level name for do_ride — identical handler, same subcmd.
+	cmdRegistry.Register("ride", wrapArgs(cmdRide), "Ride a mount.", 0, 0, "mount")
 	cmdRegistry.Register("dismount", wrapArgs(cmdDismount), "Dismount from your mount.", 0, 0)
 	cmdRegistry.Register("yank", wrapArgs(cmdYank), "Yank someone from a mount or chair.", 0, 0)
 	cmdRegistry.Register("peek", wrapArgs(cmdPeek), "Peek at another player's inventory.", 0, 0)
