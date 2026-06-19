@@ -59,10 +59,12 @@ func mobCanSee(m *MobInstance) bool {
 }
 
 func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
-	ef := obj.Prototype.ExtraFlags
-	if len(ef) > 0 && ef[0]&1 != 0 {
+	if obj == nil {
+		return false
+	}
+	if obj.HasExtraFlag(0, extraFlagInvisible) {
 		// ITEM_INVISIBLE - immortals can see invisible items
-		if ch.Level >= 31 {
+		if ch.Level >= lvlImmort {
 			return true
 		}
 		return false

@@ -62,6 +62,56 @@ func TestFidelityCanSeeBlindnessAndInvis(t *testing.T) {
 	}
 }
 
+// TestFidelityCanSeeObjectInvisibility verifies canSeeObject's ITEM_INVISIBLE
+// check uses bit 5 (src/structs.h:468-496), not bit 0 (ITEM_GLOW).
+func TestFidelityCanSeeObjectInvisibility(t *testing.T) {
+	observer := NewPlayer(1, "Observer", 1001)
+
+	glowing := newDonatableItem(6000, "a glowing lantern", "lantern", 50)
+	glowing.SetExtraFlag(0, 0) // ITEM_GLOW — must not be treated as invisible
+	if !canSeeObject(observer, glowing) {
+		t.Error("a merely glowing item should be visible")
+	}
+
+	invisible := newDonatableItem(6001, "an invisible coin", "coin", 50)
+	invisible.SetExtraFlag(0, extraFlagInvisible)
+	if canSeeObject(observer, invisible) {
+		t.Error("Observer without detect invisible should NOT see an invisible object")
+	}
+
+	observer.SetAffect(affDetectInvisible, true)
+	if !canSeeObject(observer, invisible) {
+		t.Error("Observer with detect invisible should see an invisible object")
+	}
+}
+
+// TestFidelityChCanSeeObjInvisibility verifies chCanSeeObj's ITEM_INVISIBLE
+// check and nil-safety (act_informative.go) — the simpler, Player-specific
+// sibling of canSeeObject.
+func TestFidelityChCanSeeObjInvisibility(t *testing.T) {
+	mortal := NewPlayer(1, "Mortal", 1001)
+	immort := NewPlayer(2, "Immort", 1001)
+	immort.SetLevel(lvlImmort)
+
+	if chCanSeeObj(mortal, nil) {
+		t.Error("nil object should never be visible")
+	}
+
+	visible := newDonatableItem(6002, "a steel blade", "blade", 50)
+	if !chCanSeeObj(mortal, visible) {
+		t.Error("a plain visible object should be visible")
+	}
+
+	invisible := newDonatableItem(6003, "an invisible blade", "blade", 50)
+	invisible.SetExtraFlag(0, extraFlagInvisible)
+	if chCanSeeObj(mortal, invisible) {
+		t.Error("a mortal should not see an invisible object via chCanSeeObj")
+	}
+	if !chCanSeeObj(immort, invisible) {
+		t.Error("an immortal should see an invisible object via chCanSeeObj")
+	}
+}
+
 // TestFidelityStealMobRestrictions verifies that DoSteal works on mob targets
 // and respects weight penalties.
 func TestFidelityStealMobRestrictions(t *testing.T) {

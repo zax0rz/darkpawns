@@ -127,7 +127,7 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 			return
 		}
 		// Check for two-handed
-		if objHasFlag(obj, 1<<3) && (w.IsEquipped(ch, eqWearHold) || w.IsEquipped(ch, eqWearShield)) {
+		if obj.HasExtraFlag(0, extraFlagTwoHanded) && (w.IsEquipped(ch, eqWearHold) || w.IsEquipped(ch, eqWearShield)) {
 			ch.SendMessage("Both hands must be free to wield that.\r\n")
 			return
 		}
@@ -135,7 +135,7 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 		if w.IsEquipped(ch, eqWearWield) {
 			// Check if wielded weapon is two-handed
 			wpn := w.GetEquipped(ch, eqWearWield)
-			if wpn != nil && objHasFlag(wpn, 1<<3) {
+			if wpn != nil && wpn.HasExtraFlag(0, extraFlagTwoHanded) {
 				ch.SendMessage("Both your hands are occupied with your weapon at the moment.\r\n")
 				return
 			}
@@ -224,7 +224,9 @@ func (w *World) doWear(ch *Player, me *MobInstance, cmd, arg string) bool {
 			return true
 		}
 		for _, obj := range items {
-			if objHasFlag(obj, 1<<4) {
+			// CAN_SEE_OBJ(ch, obj) — act.item.c:1611. The C wear-all loop skips
+			// items the wearer can't see; it has no extra-flags bit check.
+			if !canSeeObject(ch, obj) {
 				continue
 			}
 			if where := findEqPos(obj, ""); where >= 0 {
@@ -289,7 +291,7 @@ func (w *World) performRemove(ch *Player, pos int) {
 	if !found {
 		return
 	}
-	if objHasFlag(obj, 1<<0) {
+	if obj.HasExtraFlag(0, extraFlagNoDrop) {
 		w.actToChar(ch, "You can't remove $p, it must be CURSED!", obj, nil)
 		return
 	}

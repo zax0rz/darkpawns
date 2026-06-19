@@ -112,7 +112,9 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 			if obj == cont {
 				continue
 			}
-			if objHasFlag(obj, 1<<4) {
+			// CAN_SEE_OBJ(ch, obj) — act.item.c:132. The C put-all loop skips
+			// items the player can't see; it has no extra-flags bit check.
+			if !canSeeObject(ch, obj) {
 				continue
 			}
 			if objDotmode == findAll || isname(arg1, obj.GetKeywords()) {

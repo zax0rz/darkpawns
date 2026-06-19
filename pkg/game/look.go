@@ -138,9 +138,9 @@ func (w *World) listObjToChar(room *parser.Room, ch *Player) {
 		if !chCanSeeObj(ch, item) {
 			continue
 		}
-		sd := item.Prototype.ShortDesc
+		sd := item.GetShortDesc()
 		if sd == "" {
-			sd = item.Prototype.LongDesc
+			sd = item.GetLongDesc()
 		}
 		if g, ok := groups[sd]; ok {
 			g.count++
