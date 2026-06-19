@@ -178,6 +178,10 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 
 // ---------------------------------------------------------------------------
 // do_gen_tog — from act.other.c subcmd toggle commands
+//
+// cmd is the literal command name the player typed (e.g. "brief", "nosummon",
+// "noshout") — matching src/interpreter.c's command table, where each toggle
+// is its own top-level command rather than a "toggle <name>" dispatcher.
 // ---------------------------------------------------------------------------
 
 func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bool {
@@ -200,8 +204,6 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		"roomflags": {"Room flags on.\r\n", "Room flags off.\r\n"},
 		"norepeat":  {"No repeat mode on.\r\n", "No repeat mode off.\r\n"},
 		"holylight": {"Holy light mode on.\r\n", "Holy light mode off.\r\n"},
-		"autocxits": {"Auto exits on.\r\n", "Auto exits off.\r\n"},
-		"npcident":  {"NPC identify mode on.\r\n", "NPC identify mode off.\r\n"},
 		"nonewbie":  {"You will now see newbie chat.\r\n", "You will no longer see newbie chat.\r\n"},
 		"noctell":   {"You are now deaf to clan tells.\r\n", "You can now hear clan tells again.\r\n"},
 		"nobroad":   {"You are now deaf to broadcasts.\r\n", "You can now hear broadcasts again.\r\n"},
@@ -222,34 +224,31 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		"roomflags": PrfRoomFlags,
 		"norepeat":  PrfNoRepeat,
 		"holylight": PrfHolyLight,
-		"autocxits": PrfAutoexit,
-		"npcident":  PrfAutoexit, // reuse autoexit flag for ident
 		"nonewbie":  PrfNoNewbie,
 		"noctell":   PrfNoCTell,
 		"nobroad":   PrfNoBroad,
 	}
 
-	// Map user-facing cmd to internal toggle key
+	// Map the real C command name (src/interpreter.c) to the internal toggle
+	// key above, for the handful where they differ.
 	cmdMap := map[string]string{
-		"summon":    "summon",
-		"nohassle":  "nohassle",
-		"brief":     "brief",
-		"compact":   "compact",
-		"notell":    "notell",
-		"noauction": "noauction",
-		"deaf":      "deaf",
-		"nogossip":  "nogossip",
-		"nogratz":   "nogratz",
-		"nowiz":     "nowiz",
-		"quest":     "quest",
-		"roomflags": "roomflags",
-		"norepeat":  "norepeat",
-		"holylight": "holylight",
-		"autocxits": "autocxits",
-		"npcident":  "npcident",
-		"nonewbie":  "nonewbie",
-		"noctell":   "noctell",
-		"nobroad":   "nobroad",
+		"nosummon":    "summon",
+		"nohassle":    "nohassle",
+		"brief":       "brief",
+		"compact":     "compact",
+		"notell":      "notell",
+		"noauction":   "noauction",
+		"noshout":     "deaf",
+		"nogossip":    "nogossip",
+		"nograts":     "nogratz",
+		"nowiz":       "nowiz",
+		"quest":       "quest",
+		"roomflags":   "roomflags",
+		"norepeat":    "norepeat",
+		"holylight":   "holylight",
+		"nonewbie":    "nonewbie",
+		"noctell":     "noctell",
+		"nobroadcast": "nobroad",
 	}
 
 	key, ok := cmdMap[cmd]

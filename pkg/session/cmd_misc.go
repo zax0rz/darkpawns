@@ -117,12 +117,6 @@ func cmdAuto(s *Session, args []string) error {
 	return nil
 }
 
-// cmdGenTog toggles a general option.
-func cmdGenTog(s *Session, args []string) error {
-	s.manager.world.ExecGenTog(s.player, strings.Join(args, " "))
-	return nil
-}
-
 // cmdBug reports a bug.
 func cmdBug(s *Session, args []string) error {
 	s.manager.world.ExecGenWrite(s.player, "bug", strings.Join(args, " "))
