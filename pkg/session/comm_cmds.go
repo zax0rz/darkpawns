@@ -373,6 +373,36 @@ func cmdSay(s *Session, args []string) error {
 }
 
 // ---------------------------------------------------------------------------
+// Think
+// ---------------------------------------------------------------------------
+
+// cmdThink shows a flavor "thinking" message, optionally with a private
+// thought broadcast to the room as "$n thinks . o O ( msg )".
+// Source: act.comm.c ACMD(do_think) lines 1356-1386
+func cmdThink(s *Session, args []string) error {
+	if len(args) == 0 {
+		broadcastToRoom(s, fmt.Sprintf("%s thinks about life, the universe, and everything.", s.player.Name))
+		s.Send("You think about life, the universe, and everything.")
+		return nil
+	}
+
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.Stats.Int == 0 {
+		s.Send("You try to think aloud, but cannot!")
+		return nil
+	}
+
+	message := strings.Join(args, " ")
+	broadcastToRoom(s, fmt.Sprintf("%s thinks . o O ( %s )", s.player.Name, message))
+
+	if s.player.Flags&(1<<game.PrfNoRepeat) == 0 {
+		s.Send(fmt.Sprintf("You think . o O ( %s )", message))
+	} else {
+		s.Send("Ok.")
+	}
+	return nil
+}
+
+// ---------------------------------------------------------------------------
 // Write
 // ---------------------------------------------------------------------------
 

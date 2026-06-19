@@ -251,6 +251,13 @@ func cmdWizutil(s *Session, args []string) error {
 		return nil
 	}
 
+	return wizutilDispatch(s, subcmd, targetName)
+}
+
+// wizutilDispatch performs one wizutil sub-action against a named target.
+// Shared by cmdWizutil (the meta-command) and the standalone top-level
+// commands that alias individual sub-actions (reroll, unaffect).
+func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error {
 	target := findSessionByName(s.manager, targetName)
 	if target == nil || target.player == nil {
 		s.Send("There is no such player.")
@@ -297,6 +304,34 @@ func cmdWizutil(s *Session, args []string) error {
 		}
 	}
 	return nil
+}
+
+// cmdReroll — standalone "reroll <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_REROLL, gated at LVL_GRGOD.
+func cmdReroll(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GRGOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: reroll <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilReroll, args[0])
+}
+
+// cmdUnaffect — standalone "unaffect <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_UNAFFECT, gated at LVL_GOD.
+func cmdUnaffect(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: unaffect <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilUnaffect, args[0])
 }
 
 // cmdShow — show system info (LVL_IMMORT)

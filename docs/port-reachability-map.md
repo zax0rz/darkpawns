@@ -149,24 +149,81 @@ for a future PR, not done here.
 
 ### Missing skills/commands
 
-No handler found in `pkg/`. These need implementation. Prioritize the class
-skills (they make the combat system feel complete); verify each against `src/`.
-
 - **Martial-arts forms — DONE (PR #27):** `jin` `kai` `kyo` `retsu` `rin` `sha`
   `zai` `zhen` (kuji-kiri seals) wired via `game.DoKujiKiri` + `CmdKujiKiri`.
-  `shadow` `spike` `stake` `kabuki` still missing.
+  `shadow` `spike` `stake` `kabuki` still missing — see Part 2 below.
 - **Combat/movement skills:** `berserk` — DONE (PR #27), `game.DoBerserk` +
-  `CmdBerserk`. `charge` `mount` `track` still missing — track has
-  pathfinding scaffolding in `pkg/game/graph.go`; mount has ride logic in
-  scripting. Verify before classing as full rewrites.
-- **Player actions:** `fill` `grab` `junk` `leave` `search` `sip` `taste`
-  `think` `dream` `glance` `insult` `orgasm` `reroll` `reallyquit` `enter`
-  (enter has a spec_procs_missing.go stub).
-- **Info commands:** `abilities` `credits` `version` `news` `policy` `handbook`
-  `ident` `whoami` `future` `socials` (list socials) `unaffect`.
+  `CmdBerserk`. `mount` — DONE (Part 1 below, trivial alias of `ride`).
+  `charge` `track` still missing — track has pathfinding scaffolding in
+  `pkg/game/graph.go`. See Part 2 below.
 
-⚠ This list is from a name/handler probe; confirm each against `src/` and a
-`grep` for alternate names before deciding rewrite vs. wire-up.
+### Bucket B Part 1 — shared-handler aliases, simple flavor/info commands — DONE (2026-06-18)
+
+Cross-referenced the "missing" list above against `src/interpreter.c`'s real
+top-level command names. Most of these turned out to be either (a) aliases of
+an already-correct, already-wired handler registered only under the wrong
+name, (b) game logic that was fully implemented but never called from any
+command path, or (c) simple static-text/flavor commands with no missing game
+logic. None of this needed new game logic:
+
+- **Shared-handler aliases** (same Go handler, real C name was missing):
+  `abilities` (was wired as `abils` only — `cmdAbils` in `cmd_info.go`),
+  `glance` (alias of `diagnose` — `do_diagnose`), `mount` (alias of `ride` —
+  `do_ride`), `reallyquit` (alias of `quit`; this port's `cmdQuit` doesn't
+  implement C's temple/equipment-loss gating, so the two names just behave
+  identically here rather than C's distinct behavior).
+- **Real behavioral variants of an existing handler** (parameterized via a
+  bool flag): `sip` (drink without depleting the container or applying
+  condition/poison effects — `do_drink` SCMD_SIP) and `taste` (eat without
+  FULL gain, decrements the food's bite counter instead of consuming it
+  outright — `do_eat` SCMD_TASTE).
+- **Implemented but never called:** `game.DoInsult`/`game.DoDream` in
+  `pkg/game/act_social.go` had zero callers — wired via new
+  `World.ExecInsult`/`ExecDream` bridges plus `cmdInsult`/`cmdDream` in
+  `pkg/session/act_social.go`.
+- **New simple flavor command:** `think` (`cmdThink` in `comm_cmds.go`,
+  ported from `do_think` incl. `PLR_NOSHOUT`/zero-INT gating and
+  `PRF_NOREPEAT` echo suppression).
+- **New static info-text commands** (`pkg/session/gen_ps_cmds.go`, ported
+  from `do_gen_ps`): `credits` `news` `policy` `handbook` (LVL_IMMORT)
+  `future` `whoami`. `version` shows the Go runtime version to immortals in
+  place of C's SVN revision/compile timestamp — this port has no build-time
+  tracking infrastructure, so that's an honest substitute, not a faithful
+  port of that one detail.
+- **Registry/level-gate fix, not new logic:** `reroll` (LVL_GRGOD) and
+  `unaffect` (LVL_GOD) are real top-level C command names for two of
+  `wizutil`'s sub-actions, gated stricter than the blanket LVL_IMMORT the
+  `wizutil` meta-command applies. Extracted `wizutilDispatch` in
+  `wiz_system.go` so the meta-command and the two standalone names share one
+  implementation.
+
+Guarded by `pkg/session/bucket_b_test.go` (registry wiring, sip/taste vs.
+drink/eat behavior, think/insult/dream message+gating, reroll/unaffect
+level-gate enforcement, gen_ps static-text output incl. the file-not-found
+fallback).
+
+### Bucket B Part 2 — deferred (needs new game logic or schema changes)
+
+- `shadow` (quiet `follow`) and `kabuki` (quiet `hide`) are **not** trivial
+  quiet-flag variants — both gate a real mechanic (`SKILL_SHADOW`-conferred
+  dodge bonus for shadow; an intro flavor line for kabuki) behind a skill
+  constant that doesn't exist yet in `pkg/game`/`pkg/command`.
+- `spike` `stake` `charge` `track` `grab` `leave` `search` `enter` need new
+  standalone game logic (`enter` has a `spec_procs_missing.go` stub; `track`
+  has pathfinding scaffolding in `pkg/game/graph.go` but no `do_track` port).
+- `fill` needs nontrivial two-argument fountain-fill parsing
+  (`do_pour`/SCMD_FILL in `src/act.item.c`).
+- `socials` (list known socials) needs a registry schema change — there's no
+  `IsSocial`-style flag on `command.Registry.Entry` to filter by.
+- `ident` — explicitly skipped, same low-value judgment call as Bucket E's
+  joke/no-op toggles.
+- `orgasm` (`do_otouch` in `src/new_cmds.c`) — explicitly skipped: an
+  immortal-only NSFW joke command, not worth porting.
+- `junk` was already done via Bucket C's `donate`/`junk` work (PR #30/#31) —
+  removed from this list, it was a stale leftover.
+
+⚠ Part 2's list is from a name/handler probe; confirm each against `src/` and
+a `grep` for alternate names before deciding rewrite vs. wire-up.
 
 ---
 
@@ -307,14 +364,16 @@ as Bucket D's deferred wiz actions.
    implemented (PR #30) and bugfixed (PR #31).
 3. **Bucket E** — DONE. Toggle dispatch wired (16 commands); `color`/
    `autoexit`/`toggle` placebo bugs fixed along the way.
-4. **Bucket B** — the real remaining port *work*: missing class skills
-   (`charge` `mount` `track`, `shadow` `spike` `stake` `kabuki`), missing
-   player actions (`fill` `grab` `leave` `search` `sip` `taste` `think`
-   `dream` `glance` `insult` `orgasm` `reroll` `reallyquit` `enter`), and
-   missing info commands (`abilities` `credits` `version` `news` `policy`
-   `handbook` `ident` `whoami` `future` `socials` `unaffect`). Guided by
-   `src/`; good candidate for the clawpatch→Daeron→coding-tool loop one skill
-   at a time.
+4. **Bucket B Part 1** — DONE (2026-06-18). Shared-handler aliases (`abilities`
+   `glance` `mount` `reallyquit`), real drink/eat variants (`sip` `taste`),
+   wired-but-uncalled logic (`insult` `dream`), new flavor/info commands
+   (`think` `credits` `news` `policy` `handbook` `future` `whoami` `version`),
+   and stricter-gated wizutil aliases (`reroll` `unaffect`).
+   **Bucket B Part 2** — deferred: missing class skills (`charge` `track`,
+   `shadow` `spike` `stake` `kabuki`), missing player actions (`fill` `grab`
+   `leave` `search` `enter` `orgasm`), and `socials`/`ident`. Needs new game
+   logic or a registry schema change — guided by `src/`; good candidate for
+   the clawpatch→Daeron→coding-tool loop one skill at a time.
 5. **Bucket D** — defer.
 
 These buckets are derived from static analysis; (1) and (2) should be confirmed

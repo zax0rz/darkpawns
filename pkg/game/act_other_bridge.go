@@ -83,6 +83,12 @@ func (w *World) RoomHasFlag(vnum int, flag string) bool {
 // ExecPour pours liquid between containers.
 func (w *World) ExecPour(ch *Player, arg string) { w.doPour(ch, nil, "pour", arg) }
 
+// ExecInsult delivers a randomized insult to a named target in the room.
+func (w *World) ExecInsult(ch *Player, arg string) { DoInsult(w, ch, arg) }
+
+// ExecDream prints the do_dream flavor message (only meaningful while sleeping).
+func (w *World) ExecDream(ch *Player) { DoDream(w, ch) }
+
 // ExecMobCommand makes a mob (identified by VNum) execute a game command string.
 func (w *World) ExecMobCommand(mobVNum int, cmdStr string) { w.executeMobCommand(mobVNum, cmdStr) }
 
