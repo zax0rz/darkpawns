@@ -2,6 +2,103 @@
 
 Living document. Updated per session by Daeron.
 
+## [RESEARCH] 2026-06-23 — Research Writing: The Taxonomy of Simplification
+
+**Cron-triggered (Program 5).** Wrote ~1,000 words decomposing the largest fidelity drift category into five patterns.
+
+**Topic:** The word "simplified" appears throughout the Go port as a dishonest framing — it transforms regressions into design choices. This draft decomposes the 66 fidelity findings (30% of total) into five specific simplification patterns, each detectable, each correctable, each invisible without explicit comparison.
+
+**The five simplifications:**
+1. **Argument truncation** — C function takes 8 args, Go takes 5. Missing params control edge cases. Common case works; edge case breaks.
+2. **Logic flattening** — C has 4 branches, Go has 1. Uncommon cases silently fall through to defaults C never used.
+3. **Stub displacement** — Function exists with right signature, body returns nil. Invisible to static analysis. 22 found.
+4. **Algorithmic substitution** — Different formula that matches at common inputs but diverges at extremes. Looks like improvement.
+5. **Behavioral omission** — C does X, Y, Z. Go does X, Y. Z is just missing. Ban system fully implemented, never wired.
+
+**Key argument:** "Simplified" performs a rhetorical move — it transforms a regression into a design choice. The fidelity audit's job is to define what drift looks like so verification is systematic. Five mechanical checks: argument count, branch count, return defaults, comment hedging, missing functions.
+
+**File:** `docs/research/drafts/2026-06-23-the-taxonomy-of-simplification.md`
+
+**Status:** Draft ~1,000 words. Extends the Port Fidelity Paradox by decomposing its largest category. Supports Constraint Engineering (what briefs need to detect) and What the Agent Preserved (what agents lose).
+
+**Posted summary to #dark-pawns.**
+
+---
+
+## 2026-06-23 — Morning Triage
+
+Reek's Clawpatch + Fidelity Review: 95 findings triaged. 2 confirmed (session use-after-close race, LiteLLM endpoint inconsistency), 7 rejected (ObjectPool deadlock false positive was the standout — getLocked vs Get naming trap), 2 needs context. Automated test suite clean: go test ✅, e2e ✅, race ✅, govulncheck ✅.
+
+## [DIGEST] 2026-06-21 — Weekly Research Digest (Jun 15–21)
+
+**Reports:** 2 generated (security audit + dependency audit). 1 coverage analysis carried from last week.
+**Triage outcomes:** 0 confirmed / 0 rejected / 24 new Linear issues created (security + peripheral). No Reek crawl this week — clawpatch was provider-swapped and ran a big batch on 6/17; this week's automated reports were manual audits.
+**Commits:** 51 commits this week. 10 PRs merged (#24–#33) on 6/18 alone. Largest batch since the project started.
+**Fixes applied:** 5 clawpatch fixes committed (PII leak, use-after-close, inventory loss, retarget, moderation DB). 2 criticals killed in the port sprint (affect collision, extra-flag bugs). Total: ~7 high-value fixes.
+
+**Hot zones:**
+- `pkg/game/` — 1,000+ functions, 9.5% test coverage. Core game logic, nearly naked.
+- `pkg/optimization/` — 3 data races found (RoomCache, BatchedSender, AIBatchProcessor). Unwired package, only examples/benchmarks.
+- `pkg/command/` — 3.2% coverage, 88+ functions, only registry + middleware tested.
+- `pkg/admin/` — CORS hardcodes dev origins, DB pool unconfigured.
+- `pkg/telnet/` — Unbounded line buffer (DP-622, Urgent).
+- `pkg/auth/` — LoginAttemptTracker double-close panic (DP-623).
+
+**Bug categories:**
+- Concurrency/races: 8 (RoomCache, StateFile, Daemon, BatchedSender, AIBatchProcessor, use-after-close, TOCTOU, LoginAttemptTracker)
+- Security: 4 (unbounded buffer, PII leak, hardcoded API key, Bearer case-sensitivity)
+- Configuration: 3 (DB pool, CORS, CSP nonce)
+- Dead code: 2 (ValidateInput, deprecated protobuf)
+- Peripheral (agentcli/optimization): 5 (fire-and-forget goroutines, discarded context, wrong API path)
+
+**Severity distribution:** Urgent: 3, High: 10, Medium: 1, Low: 3. Remaining: peripheral/deferred.
+
+**Reek accuracy:** N/A this week — no traditional Reek crawl. Reports were manual security/dependency audits.
+**FPR:** N/A.
+
+**Key observations:**
+1. **The concurrency class is dominant.** 8 of 24 findings are data races, TOCTOU, or channel-close panics. The optimization package alone accounts for 3. This pattern reinforces the paper's argument: Go's concurrency model creates a class of bugs that static analysis catches but CI doesn't test for.
+2. **Security fundamentals are solid.** Parameterized queries, bcrypt, JWT validation, CSP with nonces, HSTS, X-Frame-Options — all present and correct. The 3 Urgent findings (unbounded buffer, PII leak, hardcoded key) are real but not structural. The codebase's security posture is strong for a MUD.
+3. **Dependency health is excellent.** All 9 direct dependencies are current or within 1-2 patches. No vulnerabilities. Supply chain is clean — no replace directives, no retracts, no sum mismatches. One deprecated transitive dep (golang/protobuf via Prometheus) is not actionable.
+4. **Test coverage is the real gap.** 17.5% overall. `pkg/game/` at 9.5% with 1,000+ functions is the critical blind spot. `pkg/command/` at 3.2% is nearly untested. The codebase works because the code is correct, not because the tests prove it.
+5. **Deploy debt is growing.** 10+ PRs merged to main, binary still from June 14. The gap between code and deployment is now a week. Every finding fixed in source but not deployed is a finding that doesn't exist for players.
+
+**Paper-relevant notes:**
+- The security audit as a case study: automated crawlers (Reek/clawpatch) find code quality issues; manual audits find architectural issues (DB pool config, CORS consistency). The two layers are complementary, not redundant.
+- The dependency audit is clean — a data point that the port's supply chain risk is low despite the codebase's age and complexity.
+- Test coverage data (17.5%) is now a third data point alongside the 220-finding crawl data and the 30% fidelity drift. Three independent measures all saying: the code works, but we can't prove it.
+
+---
+
+## [SESSION] 2026-06-18 — Evening: Port Sprint Lands, 10 PRs
+
+10 PRs merged (#24–#33). Two criticals killed: affect bit collision (sneak=blind), extra-flag bugs (invisible visible, cursed droppable). 18 preference toggles ported, donate/junk/taste/sip/info commands landed, 1362 lines dead code removed. Opus driving fixes in context. Not yet deployed — binary still June 14. Zach grooming Linear with Blenda; Daeron's commit-matching attempt failed (reasoning loop). Lesson: incremental action over complete mental models.
+
+---
+
+## [RESEARCH] 2026-06-18 — Research Writing: The Port Fidelity Paradox
+
+**Cron-triggered (Program 5).** Wrote ~1,050 words naming the port fidelity paradox — the core tension that connects all the other drafts.
+
+**Topic:** Compilation proves syntactic correctness, not semantic fidelity. For a port, semantic fidelity is the thing that matters, and it's the thing that standard tools don't measure. Five weeks of data (220 findings, 30% fidelity drift) as evidence.
+
+**Key arguments:**
+1. The paradox: every CI metric says the port works. The port has self-deadlocks, wrong spell tables, unwired subsystems, and dual damage paths. Both statements are true.
+2. Silent semantic drift — code that's locally correct but globally wrong — is invisible to `go build`, `go vet`, `go test`, static analysis, and linters.
+3. The wiring problem is the hardest class: bugs that live in the space between files, not in any single file. The spec proc pipeline bypass unblocked 12 features.
+4. Documentation drift as a concurrency hazard: comments describing a design that was never implemented, while code implements a different design.
+5. The resolution: add a verification layer that standard CI doesn't provide — fidelity audits with structured briefs and human verification.
+
+**File:** `docs/research/drafts/2026-06-18-port-fidelity-paradox.md`
+
+**Status:** Draft ~1,050 words. Names the paradox that connects Silent Drift (data), Compiles Is Not Safe (testing), and Constraint Engineering (methodology). This is the throughline argument for the paper's methodology contribution.
+
+**Complements:** Silent Drift (data taxonomy), Compiles Is Not Safe (testing gaps), Constraint Engineering (brief methodology), What the Agent Preserved (thesis). Where those examine specific aspects, this draft names the paradox that connects them.
+
+**Posted summary to #dark-pawns.**
+
+---
+
 ## [TRIAGE] 2026-06-18 — Morning Triage: Clean Crawl
 
 **Source:** Reek overnight crawl (Tests + Race + Vuln)
@@ -3007,13 +3104,28 @@ Migration from frankendell Docker to CT 120 (Proxmox) completed. Independent ver
 
 **Research series state:** 10 drafts total. This week added a strong “deadlock case study” plus another methodology case study.
 
-### Board State (June 17)
-- **Open / pending work:** QA branch is ready for review/merge; spell-casting fix and deployment notes are still uncommitted in working tree.
-- **Done this week:** boot, telnet, AI deadlock, pprof cleanup, agentkeygen hardening, ban hardening, door/shutdown hardening, CI/toolchain fixes
-- **Canceled this week:** none identified from this digest window
+### Board State (June 23)
+
+- **Open / pending work:**
+  - **DP-644 (PR #34):** Injectable RNG seam (Tier 2) — PR open, reviewed by Daeron, APPROVED. 18 combat `rand.*` calls routed through `Roller` interface. THAC0 golden test pins to C source. All builds/tests green. Ready to merge.
+  - **DP-642 (HIGH):** AffectedBitNames reorder — confirmed as cosmetic divergence (Go reads explicit `AFF_` constants, not the display array). Overstated impact in initial triage; Daeron's grader caught it.
+  - **DP-643 (MED):** Tier 1 ARRAY_MAP verification — 19 flagged divergences need manual review before flipping the Tier 1 gate.
+  - **Tier 3:** Behavioral/differential prototype — not started.
+- **Done this week:**
+  - Lobster pipeline architecture designed and wired (Producer/Grader split)
+  - fidelity_grade.lobster + fidelity_scorecard.py live
+  - Note persistence wired (Linear + feedback-log.md + scorecard)
+  - Reek's first scorecard: lifetime FP 33% over 9 findings
+  - Tier 2 RNG seam PR (#34) opened and reviewed
+- **This session:**
+  - Discussed Lobster architecture with The Architect — durability over crons, approval gates between phases
+  - Reviewed PR #34 (RNG seam) — approved, ready to merge
+  - The Architect + Claude building fidelity harness pipeline (Lobster workflows)
 
 ### Paper-Relevant Notes
-- **Assembly-level blind spots are publishable.** “Unit tests green + product unusable” is a clean finding for AIIDE-style framing.
-- **Documentation drift / design-documentation mismatch continues to matter.** The mob-AI deadlock is another strong case where comments described an intended contract the code did not follow.
-- **Coverage reporting is becoming part of the evidence base.** This week makes a clean write-up: hardening activity + test gap map + new smoke coverage.
+
+- **Lobster as infrastructure pattern.** The Producer/Grader split (Reek produces findings, Daeron grades them) is a reusable architecture: deterministic data collection → LLM narration → LLM grading → durable scorecard. This is publishable as a "structured workflow for code review agents" pattern.
+- **Scorecard as autonomy gate.** Reek's running FP rate (33% first run) is the empirical basis for a future "auto-file below X% FP" threshold. The data exists; the policy doesn't yet.
+- **Day-one validation of the grader.** DP-642: deterministic checker flagged real divergence → producer overstated impact → grader caught it. The producer/grader split proved its value on the very first run.
+- **Assembly-level blind spots remain publishable.** "Unit tests green + product unusable" is still a clean AIIDE finding.
 
