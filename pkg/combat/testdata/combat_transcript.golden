@@ -1,0 +1,11 @@
+# Deterministic combat transcript (seed 1337/7331) — Hero(Warrior L10) vs Orc(L5)
+round  1: MISS
+round  2: HIT    6 dmg  (Orc hp -> 54)
+round  3: HIT    6 dmg  (Orc hp -> 48)
+round  4: HIT    8 dmg  (Orc hp -> 40)
+round  5: HIT   10 dmg  (Orc hp -> 30)
+round  6: HIT    8 dmg  (Orc hp -> 22)
+round  7: HIT   10 dmg  (Orc hp -> 12)
+round  8: HIT    6 dmg  (Orc hp -> 6)
+round  9: HIT    9 dmg  (Orc hp -> -3)
+result: Orc slain.
