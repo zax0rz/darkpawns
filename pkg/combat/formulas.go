@@ -1,8 +1,6 @@
 package combat
 
-import (
-	"math/rand/v2"
-)
+
 
 // ParryResult describes the outcome of a parry check.
 type ParryResult int
@@ -347,9 +345,7 @@ func CalculateHitChance(attacker, defender Combatant, mods HitModifiers) bool {
 	calcThaco -= intBonus
 	calcThaco -= wisBonus
 
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	diceroll := rand.IntN(20) + 1
+	diceroll := GetRoller().Number(1, 20)
 
 	victimAC := defender.GetAC() / 10
 	// Assume defender is awake (position >= PosSleeping)
@@ -506,9 +502,7 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 		dam += RollDice(weaponDamage.Num, weaponDamage.Sides) + weaponDamage.Plus
 	} else {
 		// Bare hands: number(0, level/3)
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		dam += rand.IntN(attacker.GetLevel()/3 + 1)
+		dam += GetRoller().Number(0, attacker.GetLevel()/3)
 	}
 
 	// Position multiplier — from fight.c comment:
@@ -562,9 +556,7 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		}
 
 		// Random bonus: number(0, 900) < level
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		if rand.IntN(901) < level {
+		if GetRoller().Number(0, 900) < level {
 			attacks++
 		}
 	} else {
@@ -576,39 +568,29 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		// Warriors/Paladins/Rangers: +1 at level 10+ (60% + level% chance)
 		// C: number(1,100) returns 1-100; rand.IntN(100) returns 0-99 → add 1 for fidelity
 		if (class == ClassWarrior || class == ClassPaladin || class == ClassRanger) &&
-			// #nosec G404 — game RNG, not cryptographic
-			// #nosec G404
-			level > 10 && (rand.IntN(100)+1) < (60+level) {
+			level > 10 && GetRoller().Number(1, 100) < (60+level) {
 			attacks++
 		}
 
 		// Ninjas/Avatars: +1 at level 12+ (60% + level% chance)
 		if (class == ClassNinja || class == ClassAvatar) &&
-			// #nosec G404 — game RNG, not cryptographic
-			// #nosec G404
-			level > 12 && (rand.IntN(100)+1) < (60+level) {
+			level > 12 && GetRoller().Number(1, 100) < (60+level) {
 			attacks++
 		}
 
 		// Thieves/Assassins: +1 at level 15+ (30% + level% chance)
 		if (class == ClassThief || class == ClassAssassin) &&
-			// #nosec G404 — game RNG, not cryptographic
-			// #nosec G404
-			level > 15 && (rand.IntN(100)+1) < (30+level) {
+			level > 15 && GetRoller().Number(1, 100) < (30+level) {
 			attacks++
 		}
 
 		// All players: +1 at level 25+ (75% chance)
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		if level > 25 && (rand.IntN(100)+1) < 75 {
+		if level > 25 && GetRoller().Number(1, 100) < 75 {
 			attacks++
 		}
 
 		// All players: +1 at level 30+ OR !number(0,500)
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		if level > 30 || rand.IntN(501) == 0 {
+		if level > 30 || GetRoller().Number(0, 500) == 0 {
 			attacks++
 		}
 
@@ -680,8 +662,7 @@ func CheckParry(defender, attacker Combatant) ParryResult {
 
 	// C: percent = number(1, 101); prob = GET_SKILL(ch, SKILL_PARRY)
 	// If percent > prob, parry fails.
-	//nolint:g404 // game RNG, not cryptographic
-	percent := rand.IntN(101) + 1
+	percent := GetRoller().Number(1, 101)
 	if percent > skill {
 		return ParryFail
 	}
@@ -719,8 +700,7 @@ func CheckDodge(defender, attacker Combatant) DodgeResult {
 
 	// C: percent = number(1, 101); prob = skill level
 	// If percent > prob, dodge fails.
-	//nolint:g404 // game RNG, not cryptographic
-	percent := rand.IntN(101) + 1
+	percent := GetRoller().Number(1, 101)
 	if percent > skill {
 		return DodgeFail
 	}
@@ -730,14 +710,5 @@ func CheckDodge(defender, attacker Combatant) DodgeResult {
 
 // RollDice rolls num d-sides dice and returns the sum.
 func RollDice(num, sides int) int {
-	if num <= 0 || sides <= 0 {
-		return 0
-	}
-	total := 0
-	for i := 0; i < num; i++ {
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		total += rand.IntN(sides) + 1
-	}
-	return total
+	return GetRoller().Dice(num, sides)
 }

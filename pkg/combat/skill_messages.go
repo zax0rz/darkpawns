@@ -7,7 +7,6 @@
 package combat
 
 import (
-	"math/rand/v2"
 	"strings"
 )
 
@@ -571,7 +570,7 @@ func InitSkillMessages() {
 			return false // no messages for this outcome
 		}
 
-		msg := variants[rand.IntN(len(variants))]
+		msg := variants[GetRoller().IntN(len(variants))]
 
 		// We don't have sex info here, so do basic token substitution only.
 		roomMsg := basicTokenReplace(msg.Room, chName, victimName)
