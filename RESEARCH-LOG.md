@@ -3101,6 +3101,7 @@ Migration from frankendell Docker to CT 120 (Proxmox) completed. Independent ver
 ### Research Output
 - **[RESEARCH] 2026-06-17 — Claude Code Session: The Deadlock That Killed the Game**
 - **[RESEARCH] 2026-06-16 — Research Writing: The Brief-Driven Workflow**
+- **[RESEARCH] 2026-06-23 — Session: Lobster Pipeline + RNG Seam Merge**
 
 **Research series state:** 10 drafts total. This week added a strong “deadlock case study” plus another methodology case study.
 
