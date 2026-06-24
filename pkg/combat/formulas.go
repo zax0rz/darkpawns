@@ -1,7 +1,5 @@
 package combat
 
-
-
 // ParryResult describes the outcome of a parry check.
 type ParryResult int
 

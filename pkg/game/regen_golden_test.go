@@ -70,11 +70,11 @@ func TestHitGain_PositionMultipliers(t *testing.T) {
 		pos  int
 		want int
 	}{
-		{PosStanding, base},                      // no multiplier
-		{PosFighting, base},                       // no multiplier (same as standing)
-		{PosSitting, base + (base >> 3)},          // 20 + 2 = 22
-		{PosResting, base + (base >> 2)},          // 20 + 5 = 25
-		{PosSleeping, base + (base >> 1)},         // 20 + 10 = 30
+		{PosStanding, base},               // no multiplier
+		{PosFighting, base},               // no multiplier (same as standing)
+		{PosSitting, base + (base >> 3)},  // 20 + 2 = 22
+		{PosResting, base + (base >> 2)},  // 20 + 5 = 25
+		{PosSleeping, base + (base >> 1)}, // 20 + 10 = 30
 	}
 	for _, tt := range tests {
 		p := &Player{
@@ -185,10 +185,10 @@ func TestManaGain_PositionMultipliers(t *testing.T) {
 		pos  int
 		want int
 	}{
-		{PosStanding, base},                  // no multiplier
-		{PosSitting, base + (base >> 2)},     // 14 + 3 = 17
-		{PosResting, base + (base >> 1)},     // 14 + 7 = 21
-		{PosSleeping, base << 1},             // 28
+		{PosStanding, base},              // no multiplier
+		{PosSitting, base + (base >> 2)}, // 14 + 3 = 17
+		{PosResting, base + (base >> 1)}, // 14 + 7 = 21
+		{PosSleeping, base << 1},         // 28
 	}
 	for _, tt := range tests {
 		p := &Player{
@@ -322,10 +322,10 @@ func TestMoveGain_PositionMultipliers(t *testing.T) {
 		pos  int
 		want int
 	}{
-		{PosStanding, base},                      // no multiplier
-		{PosSitting, base + (base >> 3)},          // 20 + 2 = 22
-		{PosResting, base + (base >> 2)},          // 20 + 5 = 25
-		{PosSleeping, base + (base >> 1)},         // 20 + 10 = 30
+		{PosStanding, base},               // no multiplier
+		{PosSitting, base + (base >> 3)},  // 20 + 2 = 22
+		{PosResting, base + (base >> 2)},  // 20 + 5 = 25
+		{PosSleeping, base + (base >> 1)}, // 20 + 10 = 30
 	}
 	for _, tt := range tests {
 		p := &Player{

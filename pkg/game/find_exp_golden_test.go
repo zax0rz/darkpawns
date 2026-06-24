@@ -32,18 +32,18 @@ var findExpFixed = [13]int{
 
 // classModifiers maps class constants to their XP multipliers from src/class.c find_exp().
 var classModifiers = map[int]float64{
-	ClassMageUser:  0.3,
-	ClassCleric:    0.4,
-	ClassWarrior:   0.7,
-	ClassThief:     0.1,
-	ClassMagus:     1.5,
-	ClassMystic:    1.5,
-	ClassAvatar:    1.6,
-	ClassAssassin:  1.2,
-	ClassPaladin:   1.9,
-	ClassRanger:    1.9,
-	ClassNinja:     0.6,
-	ClassPsionic:   0.6,
+	ClassMageUser: 0.3,
+	ClassCleric:   0.4,
+	ClassWarrior:  0.7,
+	ClassThief:    0.1,
+	ClassMagus:    1.5,
+	ClassMystic:   1.5,
+	ClassAvatar:   1.6,
+	ClassAssassin: 1.2,
+	ClassPaladin:  1.9,
+	ClassRanger:   1.9,
+	ClassNinja:    0.6,
+	ClassPsionic:  0.6,
 }
 
 // classNamesGame maps class constants to names for test output.
@@ -84,7 +84,7 @@ func TestFindExp_GoldenFormulaLevel13Plus(t *testing.T) {
 		name := classNamesGame[class]
 		for level := 13; level <= 40; level++ {
 			// C formula: 900000 + ((level-13) * level * 20000) + (level*level*1000) + (modifier*10000*level)
-			want := 900000 + ((level-13)*level*20000) + (level*level*1000) + int(modifier*10000*float64(level))
+			want := 900000 + ((level - 13) * level * 20000) + (level * level * 1000) + int(modifier*10000*float64(level))
 			got := FindExp(class, level)
 			if got != want {
 				t.Errorf("FindExp(%s, %d) = %d, want %d (per src/class.c formula, modifier=%.1f)",
@@ -100,7 +100,7 @@ func TestFindExp_GoldenFormulaLevel13Plus(t *testing.T) {
 func TestFindExp_GoldenClassModifiers(t *testing.T) {
 	// Level 20 is in the formula range. Expected base: 900000 + (7*20*20000) + (400*1000) = 900000 + 2800000 + 400000 = 4100000
 	// Then add modifier*10000*20 = modifier*200000
-	baseAt20 := 900000 + (7*20*20000) + (20*20*1000) // = 4100000
+	baseAt20 := 900000 + (7 * 20 * 20000) + (20 * 20 * 1000) // = 4100000
 
 	for class, modifier := range classModifiers {
 		name := classNamesGame[class]
