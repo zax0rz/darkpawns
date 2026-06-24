@@ -55,10 +55,10 @@ func TestDeterministicHitChance(t *testing.T) {
 	//   If diceroll == 1: returns false (always misses if defender is awake)
 	//   Otherwise: returns false (miss) if awake and (calcThaco - diceroll > victimAC)
 	//   Else: returns true (hit)
-	
+
 	attacker := &mockCombatant{npc: false, class: ClassWarrior, level: 20} // getTHAC0 = 1
-	defender := &mockCombatant{position: PosStanding, ac: 100}            // victimAC = 10
-	
+	defender := &mockCombatant{position: PosStanding, ac: 100}             // victimAC = 10
+
 	// Set up a scripted roller returning 1 (natural 1 = always miss)
 	rMiss := NewScriptedRoller([]int{1})
 	WithRoller(rMiss, func() {
@@ -87,7 +87,7 @@ func TestDeterministicDamage(t *testing.T) {
 	//   dam = strApp[18].ToDam(2) + attacker.GetDamroll()(5) + RollDice(3, 6)
 	// We roll 3d6. Let's script the dice outcomes to be: 2, 4, 6 (sum = 12)
 	rScript := NewScriptedRoller([]int{2, 4, 6})
-	
+
 	WithRoller(rScript, func() {
 		dam := CalculateDamage(attacker, defender, weapon, AttackNormal)
 		expectedDam := 2 + 5 + 12 // 19
