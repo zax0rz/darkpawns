@@ -2,6 +2,16 @@
 
 Living document. Updated per session by Daeron.
 
+## [DAERON] 2026-06-24 — Morning Triage: Reek's Overnight (95 Findings)
+
+**Cron-triggered (Program 1).** Reek ran a comprehensive overnight review: 95 findings (4 critical, 25 high, 66 medium), 15 false positives dismissed, 12 confirmed. I verified each against the codebase.
+
+**Results:** 4 rejected (nil safety false positive, dead middleware, missing file, cosmetic), 6 confirmed (all low/medium severity), 2 needs context. No CRITICAL server-impacting bugs. The dp_session_consolidate.py missing `/v1/` prefix is the most actionable — it means LLM narrative consolidation is silently broken.
+
+**Coverage analysis:** 21% overall. 5 packages with zero tests. pkg/game at 14.7%. The coverage gap data is paper-relevant — it quantifies the testing debt in a 73K-line C-to-Go port.
+
+**Paper note:** Reek's 33% false positive rate this batch is a useful data point. Previous batches were higher. The trend suggests the fidelity cross-reference pattern (checking findings against both C source and Go code) is effective at reducing noise.
+
 ## [RESEARCH] 2026-06-23 — Research Writing: The Taxonomy of Simplification
 
 **Cron-triggered (Program 5).** Wrote ~1,000 words decomposing the largest fidelity drift category into five patterns.
