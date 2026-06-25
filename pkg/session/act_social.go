@@ -33,6 +33,9 @@ func cmdDream(s *Session, args []string) error {
 
 // cmdAlias manages a player's command aliases.
 func cmdAlias(s *Session, args []string) error {
+	if s.player == nil {
+		return nil
+	}
 	player := s.player
 
 	if len(args) == 0 {
