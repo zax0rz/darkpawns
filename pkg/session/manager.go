@@ -305,8 +305,8 @@ func (m *Manager) SetDeathFunc() {
 		}
 
 		// Auto-loot: if killer has autoloot enabled, loot the corpse
-		if killer != nil && !killer.IsNPC() && IsAutoLootEnabled(killer.GetName()) {
-			if player, ok := m.world.GetPlayer(killer.GetName()); ok {
+		if killer != nil && !killer.IsNPC() {
+			if player, ok := m.world.GetPlayer(killer.GetName()); ok && IsAutoLootEnabled(player) {
 				// Use doGet to transfer items from corpse to player inventory
 				items := m.world.GetItemsInRoom(victim.GetRoom())
 				for _, item := range items {

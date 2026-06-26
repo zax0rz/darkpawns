@@ -1,24 +1,27 @@
 package session
 
 import (
-	"strings"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-// autoLootState tracks which players have auto-loot enabled.
-// Key is the lowercased player name.
-var autoLootState = make(map[string]bool)
-
 // IsAutoLootEnabled returns whether the given player has auto-loot toggled on.
-func IsAutoLootEnabled(name string) bool {
-	return autoLootState[strings.ToLower(name)]
+// Auto-loot is stored as the PrfAutoLoot player preference flag so it is
+// persisted, race-safe, and kept in sync with the toggle display.
+func IsAutoLootEnabled(player *game.Player) bool {
+	if player == nil {
+		return false
+	}
+	return player.GetFlags()&(1<<game.PrfAutoLoot) != 0
 }
 
 // cmdAutoLoot toggles automatic looting after kills.
 func cmdAutoLoot(s *Session, args []string) error {
-	name := strings.ToLower(s.player.Name)
-	current := autoLootState[name]
-	autoLootState[name] = !current
-	if !current {
+	if s.player == nil {
+		return nil
+	}
+	enabled := IsAutoLootEnabled(s.player)
+	s.player.SetPlrFlag(game.PrfAutoLoot, !enabled)
+	if !enabled {
 		s.Send("Auto-loot enabled.")
 	} else {
 		s.Send("Auto-loot disabled.")
