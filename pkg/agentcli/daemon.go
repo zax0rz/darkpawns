@@ -66,14 +66,6 @@ func socketPath(name string) string {
 
 // Start connects to the MUD and starts listening on the Unix socket.
 func (d *Daemon) Start(ctx context.Context) error {
-	d.mu.Lock()
-	if d.running {
-		d.mu.Unlock()
-		return fmt.Errorf("daemon already running")
-	}
-	d.running = true
-	d.mu.Unlock()
-
 	// Ensure socket directory exists
 	sockPath := socketPath(d.cfg.PlayerName)
 	if err := os.MkdirAll(filepath.Dir(sockPath), 0o755); err != nil {
@@ -82,12 +74,18 @@ func (d *Daemon) Start(ctx context.Context) error {
 	// Remove stale socket
 	_ = os.Remove(sockPath)
 
+	d.mu.Lock()
+	if d.running {
+		d.mu.Unlock()
+		return fmt.Errorf("daemon already running")
+	}
+	d.mu.Unlock()
+
 	// Connect to MUD server
 	client := NewAgentClient(d.cfg)
 	if err := client.Connect(ctx); err != nil {
 		return fmt.Errorf("connect to MUD: %w", err)
 	}
-	d.client = client
 
 	slog.Info("daemon connected to MUD", "player", d.cfg.PlayerName)
 
@@ -96,18 +94,30 @@ func (d *Daemon) Start(ctx context.Context) error {
 		slog.Warn("failed to load previous state", "error", err)
 	}
 
-	// Start message handler in background
-	go d.readLoop(ctx)
-
 	// Start Unix socket listener
 	ln, err := net.Listen("unix", sockPath)
 	if err != nil {
+		_ = client.Close()
 		return fmt.Errorf("listen socket: %w", err)
 	}
+
+	d.mu.Lock()
+	if d.running {
+		d.mu.Unlock()
+		_ = client.Close()
+		_ = ln.Close()
+		_ = os.Remove(sockPath)
+		return fmt.Errorf("daemon already running")
+	}
+	d.client = client
 	d.sock = ln
+	d.running = true
+	d.mu.Unlock()
+
 	slog.Info("daemon listening", "socket", sockPath)
 
-	// Accept loop
+	// Start background loops
+	go d.readLoop(ctx)
 	go d.acceptLoop(ctx)
 
 	// Wait for context cancellation
