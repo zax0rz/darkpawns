@@ -268,3 +268,29 @@ func TestIsMuted_CaseInsensitiveLookup(t *testing.T) {
 		}
 	}
 }
+
+func TestPenaltyHelpersConcurrentAccess(t *testing.T) {
+	m := NewManager(nil)
+	player := "ConcurrentPlayer"
+	now := time.Now()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 100; i++ {
+			_ = m.AddPenalty(PlayerPenalty{
+				PlayerName:  player,
+				PenaltyType: ActionMute,
+				IssuedAt:    now.Add(-time.Hour),
+				IssuedBy:    "admin",
+			})
+		}
+	}()
+
+	for i := 0; i < 100; i++ {
+		_ = m.IsMuted(player)
+		_ = m.IsBanned(player)
+	}
+
+	<-done
+}

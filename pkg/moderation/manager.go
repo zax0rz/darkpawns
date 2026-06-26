@@ -257,7 +257,7 @@ func (m *Manager) CheckMessage(playerName, message string) (string, FilterAction
 	defer m.mu.RUnlock()
 
 	// Check for active mute penalty
-	if m.hasPenalty(playerName, ActionMute) {
+	if m.hasPenaltyLocked(playerName, ActionMute) {
 		return "", FilterActionBlock, true
 	}
 
@@ -305,7 +305,16 @@ func (m *Manager) RecordMessage(playerName string) {
 }
 
 // hasPenalty checks if a player has an active penalty of a given type.
+// It acquires the read lock and is safe for public callers.
 func (m *Manager) hasPenalty(playerName string, penaltyType AdminAction) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.hasPenaltyLocked(playerName, penaltyType)
+}
+
+// hasPenaltyLocked checks if a player has an active penalty of a given type.
+// The caller must hold at least a read lock on m.mu.
+func (m *Manager) hasPenaltyLocked(playerName string, penaltyType AdminAction) bool {
 	// AddPenalty stores penalties under a lowercase key, so lookup must be
 	// normalized to match regardless of the casing the caller supplies.
 	penalties, exists := m.activePenalties[strings.ToLower(playerName)]
