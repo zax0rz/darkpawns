@@ -205,3 +205,41 @@ func TestHasPenalty(t *testing.T) {
 			tt.player, tt.penalty, false, tt.want)
 	}
 }
+
+func TestAddWordFilter_MemoryIDsDoNotCollide(t *testing.T) {
+	m := NewManager(nil)
+	// Simulate DB load ordering by created_at DESC: ids 2 then 1.
+	m.wordFilters = []WordFilterEntry{
+		{ID: 2, Pattern: "second", Action: FilterActionCensor},
+		{ID: 1, Pattern: "first", Action: FilterActionCensor},
+	}
+
+	if err := m.AddWordFilter("third", false, "censor", "admin"); err != nil {
+		t.Fatalf("AddWordFilter failed: %v", err)
+	}
+
+	filters := m.GetWordFilters()
+	if len(filters) != 3 {
+		t.Fatalf("expected 3 filters, got %d", len(filters))
+	}
+	if filters[2].ID != 3 {
+		t.Errorf("new filter ID = %d, want 3 (max existing + 1)", filters[2].ID)
+	}
+}
+
+func TestIsMuted_CaseInsensitiveLookup(t *testing.T) {
+	m := NewManager(nil)
+	_ = m.AddPenalty(PlayerPenalty{
+		PlayerName:  "MixedCasePlayer",
+		PenaltyType: ActionMute,
+		IssuedAt:    time.Now().Add(-time.Hour),
+		IssuedBy:    "admin",
+	})
+
+	variants := []string{"MixedCasePlayer", "mixedcaseplayer", "MIXEDCASEPLAYER", "MiXeDcAsEpLaYeR"}
+	for _, name := range variants {
+		if !m.IsMuted(name) {
+			t.Errorf("IsMuted(%q) = false, want true", name)
+		}
+	}
+}

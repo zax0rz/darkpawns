@@ -305,7 +305,9 @@ func (m *Manager) RecordMessage(playerName string) {
 
 // hasPenalty checks if a player has an active penalty of a given type.
 func (m *Manager) hasPenalty(playerName string, penaltyType AdminAction) bool {
-	penalties, exists := m.activePenalties[playerName]
+	// AddPenalty stores penalties under a lowercase key, so lookup must be
+	// normalized to match regardless of the casing the caller supplies.
+	penalties, exists := m.activePenalties[strings.ToLower(playerName)]
 	if !exists {
 		return false
 	}
@@ -481,32 +483,47 @@ func (m *Manager) AddWordFilter(pattern string, isRegex bool, actionStr, created
 		action = FilterActionLog
 	}
 
-	m.mu.Lock()
-	nextID := len(m.wordFilters) + 1
-	if len(m.wordFilters) > 0 {
-		nextID = m.wordFilters[len(m.wordFilters)-1].ID + 1
-	}
-	m.wordFilters = append(m.wordFilters, WordFilterEntry{
-		ID:        nextID,
+	entry := WordFilterEntry{
 		Pattern:   pattern,
 		IsRegex:   isRegex,
 		Action:    action,
 		CreatedBy: createdBy,
 		CreatedAt: time.Now(),
-	})
+	}
+
+	// Compute a local ID. In DB mode this is temporary until RETURNING gives the
+	// real serial id; in memory-only mode it is the permanent id.
+	m.mu.Lock()
+	entry.ID = 1
+	for _, f := range m.wordFilters {
+		if f.ID >= entry.ID {
+			entry.ID = f.ID + 1
+		}
+	}
+	m.wordFilters = append(m.wordFilters, entry)
 	m.mu.Unlock()
 
 	if m.hasDB {
-		_, err := m.db.Exec(
-			`
-			INSERT INTO word_filters (pattern, is_regex, action, created_by)
-			VALUES ($1, $2, $3, $4)`,
+		// Use RETURNING so the in-memory ID matches the DB row and removals hit
+		// the correct row regardless of how loadWordFilters ordered the slice.
+		row := m.db.QueryRow(
+			`INSERT INTO word_filters (pattern, is_regex, action, created_by)
+			 VALUES ($1, $2, $3, $4) RETURNING id`,
 			pattern, isRegex, action, createdBy,
 		)
-		if err != nil {
+		if err := row.Scan(&entry.ID); err != nil {
 			slog.Error("failed to persist word filter", "error", err)
 			return fmt.Errorf("persist word filter: %w", err)
 		}
+		// Update the in-memory entry with the real DB id.
+		m.mu.Lock()
+		for i := range m.wordFilters {
+			if m.wordFilters[i].Pattern == pattern && m.wordFilters[i].CreatedAt.Equal(entry.CreatedAt) {
+				m.wordFilters[i].ID = entry.ID
+				break
+			}
+		}
+		m.mu.Unlock()
 	}
 	return nil
 }
