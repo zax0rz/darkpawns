@@ -7,10 +7,11 @@ import (
 
 // RoomCache caches room data for frequent access
 type RoomCache struct {
-	mu    sync.RWMutex
-	rooms map[int]*CachedRoom
-	ttl   time.Duration
-	stop  chan struct{}
+	mu       sync.RWMutex
+	rooms    map[int]*CachedRoom
+	ttl      time.Duration
+	stop     chan struct{}
+	stopOnce sync.Once
 }
 
 // CachedRoom represents cached room data
@@ -242,7 +243,7 @@ func (rc *RoomCache) cleanup() {
 	}
 }
 
-// Close stops the cleanup goroutine
+// Close stops the cleanup goroutine. It is safe to call more than once.
 func (rc *RoomCache) Close() {
-	close(rc.stop)
+	rc.stopOnce.Do(func() { close(rc.stop) })
 }

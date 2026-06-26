@@ -7,10 +7,11 @@ import (
 
 // Cache provides thread-safe caching with TTL
 type Cache struct {
-	mu    sync.RWMutex
-	items map[string]*cacheItem
-	ttl   time.Duration
-	stop  chan struct{}
+	mu       sync.RWMutex
+	items    map[string]*cacheItem
+	ttl      time.Duration
+	stop     chan struct{}
+	stopOnce sync.Once
 }
 
 type cacheItem struct {
@@ -142,7 +143,7 @@ func (c *Cache) cleanup() {
 	}
 }
 
-// Close stops the cleanup goroutine
+// Close stops the cleanup goroutine. It is safe to call more than once.
 func (c *Cache) Close() {
-	close(c.stop)
+	c.stopOnce.Do(func() { close(c.stop) })
 }
