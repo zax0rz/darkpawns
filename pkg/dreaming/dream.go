@@ -97,7 +97,7 @@ func RunDream(cfg DreamConfig) (*DreamResult, error) {
 	for i := range allEvents {
 		ev := &allEvents[i]
 		eventID := fmt.Sprintf("%s-%s-%d", cfg.AgentID, ev.Kind, ev.Timestamp.UnixNano())
-		graph.AddOrReinforceNode(eventID, NodeKindEvent, ev.Narrative, ev.Valence)
+		graph.AddOrReinforceNode(eventID, NodeKindEvent, ev.Narrative, ev.Valence, ev.Timestamp)
 
 		// Link event → room.
 		roomID := fmt.Sprintf("room-%d", ev.TargetRoom)

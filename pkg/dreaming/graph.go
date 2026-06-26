@@ -41,6 +41,10 @@ type Node struct {
 	Valence    int       `json:"valence"`  // -3 to +3
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+	// OccurredAt is the original event timestamp for event nodes.
+	// For non-event nodes this is unused. When set, summaries use this
+	// instead of graph insertion time for chronological ordering.
+	OccurredAt time.Time `json:"occurred_at,omitempty"`
 	VisitCount int       `json:"visit_count"`
 }
 
@@ -89,14 +93,25 @@ func NewMemoryGraph(cfg GraphConfig) *MemoryGraph {
 }
 
 // AddOrReinforceNode finds or creates a node, reinforcing it if it exists.
-func (g *MemoryGraph) AddOrReinforceNode(id string, kind NodeKind, label string, valence int) *Node {
+// For event nodes, pass the original occurrence time as occurredAt so the
+// graph preserves when the event happened rather than when it was inserted.
+func (g *MemoryGraph) AddOrReinforceNode(id string, kind NodeKind, label string, valence int, occurredAt ...time.Time) *Node {
 	g.mu.Lock()
 	defer g.mu.Unlock()
+
+	var eventTime time.Time
+	if len(occurredAt) > 0 {
+		eventTime = occurredAt[0]
+	}
 
 	if existing, ok := g.Nodes[id]; ok {
 		existing.VisitCount++
 		existing.Salience = clamp(existing.Salience+g.config.ReinforceBonus, 0, 1)
 		existing.UpdatedAt = time.Now()
+		// Preserve the original event time if we didn't have one.
+		if existing.Kind == NodeKindEvent && existing.OccurredAt.IsZero() && !eventTime.IsZero() {
+			existing.OccurredAt = eventTime
+		}
 		// Valence blends toward most recent.
 		existing.Valence = blendValence(existing.Valence, valence, existing.VisitCount)
 		return existing
@@ -111,6 +126,9 @@ func (g *MemoryGraph) AddOrReinforceNode(id string, kind NodeKind, label string,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 		VisitCount: 1,
+	}
+	if kind == NodeKindEvent && !eventTime.IsZero() {
+		n.OccurredAt = eventTime
 	}
 	g.Nodes[id] = n
 	return n
@@ -176,6 +194,16 @@ func (g *MemoryGraph) Consolidate() int {
 	return pruned
 }
 
+// eventTime returns the timestamp that should be used for chronological
+// ordering of an event node: the original occurrence time if recorded,
+// otherwise the graph insertion time.
+func eventTime(n *Node) time.Time {
+	if n.Kind == NodeKindEvent && !n.OccurredAt.IsZero() {
+		return n.OccurredAt
+	}
+	return n.CreatedAt
+}
+
 // BuildSummary produces narrative prose suitable for LLM context injection.
 // Events are ordered chronologically and grouped into sessions.
 // High-salience events get full sentences; low-salience ones are summarized.
@@ -188,7 +216,7 @@ func (g *MemoryGraph) BuildSummary(maxTokens int) string {
 		return ""
 	}
 
-	// Collect all event nodes and sort by creation time.
+	// Collect all event nodes and sort by occurrence time.
 	events := make([]*Node, 0)
 	for _, n := range g.Nodes {
 		if n.Kind == NodeKindEvent {
@@ -199,7 +227,7 @@ func (g *MemoryGraph) BuildSummary(maxTokens int) string {
 		return ""
 	}
 	sort.Slice(events, func(i, j int) bool {
-		return events[i].CreatedAt.Before(events[j].CreatedAt)
+		return eventTime(events[i]).Before(eventTime(events[j]))
 	})
 
 	// Group into sessions by time gap (>30 min = new session).
@@ -218,11 +246,13 @@ func (g *MemoryGraph) BuildSummary(maxTokens int) string {
 
 		// Session header with time range.
 		if len(session) > 0 {
-			date := session[0].CreatedAt.Format("Jan 2")
+			startT := eventTime(session[0])
+			date := startT.Format("Jan 2")
 			if len(session) > 1 {
-				date += " " + session[0].CreatedAt.Format("3:04 PM") + " – " + session[len(session)-1].CreatedAt.Format("3:04 PM")
+				endT := eventTime(session[len(session)-1])
+				date += " " + startT.Format("3:04 PM") + " – " + endT.Format("3:04 PM")
 			} else {
-				date += " at " + session[0].CreatedAt.Format("3:04 PM")
+				date += " at " + startT.Format("3:04 PM")
 			}
 			fmt.Fprintf(&b, "### Session %d — %s\n\n", si+1, date)
 		}
@@ -260,7 +290,7 @@ func groupBySession(events []*Node, gap time.Duration) [][]*Node {
 	current := []*Node{events[0]}
 
 	for i := 1; i < len(events); i++ {
-		if events[i].CreatedAt.Sub(events[i-1].CreatedAt) > gap {
+		if eventTime(events[i]).Sub(eventTime(events[i-1])) > gap {
 			sessions = append(sessions, current)
 			current = []*Node{events[i]}
 		} else {
