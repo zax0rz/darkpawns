@@ -10,6 +10,11 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
+type rescueCombatEngine interface {
+	StartCombat(combat.Combatant, combat.Combatant) error
+	StopCombat(string)
+}
+
 // cmdSkills displays all learned skills
 func CmdSkills(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
@@ -747,11 +752,13 @@ func CmdRescue(s SessionInterface, args []string) error {
 		return s.SendMessage("What about fleeing instead?\r\n")
 	}
 
+	combatEngine, ok := s.GetCombatEngine().(rescueCombatEngine)
+	if !ok || combatEngine == nil {
+		return s.SendMessage("Combat is unavailable right now.\r\n")
+	}
+
 	// Execute the rescue
-	result := game.DoRescue(ch, target, world, s.GetCombatEngine().(interface {
-		StartCombat(combat.Combatant, combat.Combatant) error
-		StopCombat(string)
-	}))
+	result := game.DoRescue(ch, target, world, combatEngine)
 	return sendSkillResult(s, ch, target, result)
 }
 
