@@ -496,3 +496,65 @@ func TestShopPersistence(t *testing.T) {
 		t.Errorf("Expected 1 item in loaded shop inventory, got %d", len(loadedShop.GetInventory()))
 	}
 }
+
+// TestLoadShops_ClearsExistingState ensures a reload replaces stale manager
+// state rather than merging with it.
+func TestLoadShops_ClearsExistingState(t *testing.T) {
+	_ = os.Remove(shopsFile)
+	defer func() { _ = os.Remove(shopsFile) }()
+
+	proto := &parser.Obj{
+		VNum:      1001,
+		Keywords:  "test item",
+		ShortDesc: "a test item",
+		Cost:      100,
+		TypeFlag:  1,
+	}
+	mockGetProto := func(vnum int) (*parser.Obj, bool) {
+		if vnum == 1001 {
+			return proto, true
+		}
+		return nil, false
+	}
+
+	// First manager: save one shop.
+	manager1 := NewShopManager()
+	shop1 := manager1.CreateShopConcrete(1001, "Saved Shop", 3001)
+	shop1.ItemTypes = []int{1}
+	if err := manager1.SaveShops(); err != nil {
+		t.Fatalf("save shops: %v", err)
+	}
+
+	// Second manager: pre-populate with a different shop, then load saved data.
+	manager2 := NewShopManager()
+	stale := manager2.CreateShopConcrete(9999, "Stale Shop", 3999)
+	stale.ItemTypes = []int{1}
+
+	if err := manager2.LoadShops(mockGetProto); err != nil {
+		t.Fatalf("load shops: %v", err)
+	}
+
+	// Stale shop must be gone.
+	if _, ok := manager2.GetShopByNPCConcrete(9999); ok {
+		t.Error("stale NPC mapping should have been removed")
+	}
+	foundStaleRoom := false
+	for _, s := range manager2.GetShopsInRoomConcrete(3999) {
+		if s.VNum == 9999 {
+			foundStaleRoom = true
+			break
+		}
+	}
+	if foundStaleRoom {
+		t.Error("stale room mapping should have been removed")
+	}
+
+	// Saved shop must be present.
+	loaded, ok := manager2.GetShopByNPCConcrete(1001)
+	if !ok {
+		t.Fatal("saved shop should be present after load")
+	}
+	if loaded.Name != "Saved Shop" {
+		t.Errorf("loaded shop name = %q, want Saved Shop", loaded.Name)
+	}
+}

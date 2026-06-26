@@ -519,6 +519,12 @@ func (sm *ShopManager) LoadShops(getProto func(int) (*parser.Obj, bool)) error {
 		sm.nextID = 1
 	}
 
+	// C boot_the_shops loads into fresh state; a reload must faithfully restore
+	// persisted state, so clear any existing manager mappings before inserting.
+	sm.shops = make(map[int]*Shop)
+	sm.npcToShop = make(map[int]int)
+	sm.roomToShop = make(map[int][]int)
+
 	for i := range data.Shops {
 		sd := &data.Shops[i]
 		shop := NewShop(sd.ID, sd.VNum, sd.Name, sd.RoomVNum)
