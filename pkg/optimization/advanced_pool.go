@@ -12,6 +12,7 @@ type AdvancedWorkerPool struct {
 	taskQueue     chan func()
 	priorityQueue chan priorityTask
 	wg            sync.WaitGroup
+	producerWG    sync.WaitGroup
 	mu            sync.RWMutex
 	closed        bool
 	metrics       PoolMetrics
@@ -53,6 +54,7 @@ func NewAdvancedWorkerPool(workers, queueSize int) *AdvancedWorkerPool {
 	}
 
 	// Start priority dispatcher
+	pool.producerWG.Add(1)
 	go pool.priorityDispatcher()
 
 	return pool
@@ -60,9 +62,14 @@ func NewAdvancedWorkerPool(workers, queueSize int) *AdvancedWorkerPool {
 
 // priorityDispatcher handles priority task scheduling
 func (p *AdvancedWorkerPool) priorityDispatcher() {
+	defer p.producerWG.Done()
+
 	for {
 		select {
-		case pt := <-p.priorityQueue:
+		case pt, ok := <-p.priorityQueue:
+			if !ok {
+				return
+			}
 			atomic.AddInt64(&p.metrics.PriorityLength, -1)
 
 			// Try to send immediately
@@ -72,8 +79,21 @@ func (p *AdvancedWorkerPool) priorityDispatcher() {
 				p.updateWaitTime(waitTime)
 			default:
 				// Queue full, try again with backoff
+				p.producerWG.Add(1)
 				go func(pt priorityTask) {
-					time.Sleep(time.Millisecond * time.Duration(pt.priority*10))
+					defer p.producerWG.Done()
+
+					timer := time.NewTimer(time.Millisecond * time.Duration(pt.priority*10))
+					defer timer.Stop()
+
+					select {
+					case <-timer.C:
+					case <-p.stop:
+						// Pool closed, drop task
+						atomic.AddInt64(&p.metrics.TasksFailed, 1)
+						return
+					}
+
 					select {
 					case p.taskQueue <- pt.task:
 						waitTime := time.Since(pt.submitted)
@@ -259,14 +279,16 @@ func (p *AdvancedWorkerPool) Resize(newWorkers int) error {
 // Close gracefully shuts down the pool
 func (p *AdvancedWorkerPool) Close() {
 	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	if p.closed {
+		p.mu.Unlock()
 		return
 	}
 
 	p.closed = true
 	close(p.stop)
+	p.mu.Unlock()
+
+	p.producerWG.Wait()
 	close(p.taskQueue)
 	close(p.priorityQueue)
 	p.wg.Wait()
