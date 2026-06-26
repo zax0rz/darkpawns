@@ -173,6 +173,44 @@ func TestSkillUse(t *testing.T) {
 	}
 }
 
+func TestUseSkill_FallbackPracticeWhenEligible(t *testing.T) {
+	oldRand := skillRand
+	defer func() { skillRand = oldRand }()
+
+	call := 0
+	skillRand = func(n int) int {
+		call++
+		switch call {
+		case 1: // improve chance (level 50 => 10%): no improvement
+			return 20
+		case 2: // success chance (level 50, stat 15 => 55%): success
+			return 20
+		case 3: // fallback practice points: 2 + 0
+			return 0
+		default:
+			return 0
+		}
+	}
+
+	skill := NewSkill("test", "Test Skill", SkillTypeCombat, 3)
+	skill.Learn()
+	skill.Level = 50
+	skill.LastUsed = time.Now().Add(-2 * time.Minute)
+	skill.Practice = 0
+
+	success, improved := skill.UseSkill(10, 15, 10)
+
+	if !success {
+		t.Error("expected successful skill use")
+	}
+	if improved {
+		t.Error("expected no improvement")
+	}
+	if skill.Practice != 2 {
+		t.Errorf("expected Practice 2 from fallback practice, got %d", skill.Practice)
+	}
+}
+
 func TestSkillGetDisplayLevel(t *testing.T) {
 	tests := []struct {
 		level    int

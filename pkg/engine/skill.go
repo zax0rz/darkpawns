@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+// skillRand is the random source used by skill progression. It can be
+// overridden in tests to make skill outcomes deterministic.
+var skillRand = rand.IntN
+
 // SkillType represents the category of a skill
 type SkillType int
 
@@ -129,15 +133,19 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 	now := time.Now()
 	improved := false
 
+	// Capture time eligibility BEFORE mutating LastUsed so the fallback
+	// practice branch below is reachable on a successful use.
+	eligible := now.Sub(s.LastUsed) > time.Minute
+
 	// Check if we can attempt improvement (once per minute minimum)
-	if now.Sub(s.LastUsed) > time.Minute {
+	if eligible {
 		// Small chance to improve on use
 		improveChance := 5 + (s.Level / 10) // 5-15% chance
 		// #nosec G404 — game RNG, not cryptographic
-		if rand.IntN(100) < improveChance {
+		if skillRand(100) < improveChance {
 			// Gain practice points on successful use
 			// #nosec G404 — game RNG, not cryptographic
-			s.Practice += 5 + rand.IntN(10)
+			s.Practice += 5 + skillRand(10)
 			improved = true
 		}
 		s.LastUsed = now
@@ -167,12 +175,12 @@ func (s *Skill) UseSkill(charLevel, stat int, targetLevel int) (bool, bool) {
 
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
-	success := rand.IntN(100) < successChance
+	success := skillRand(100) < successChance
 
 	// If successful and we haven't already improved, check for practice
-	if success && !improved && now.Sub(s.LastUsed) > time.Minute {
+	if success && !improved && eligible {
 		// #nosec G404 — game RNG, not cryptographic
-		s.Practice += 2 + rand.IntN(5)
+		s.Practice += 2 + skillRand(5)
 	}
 
 	return success, improved
