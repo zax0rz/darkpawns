@@ -93,10 +93,11 @@ func (s *SessionLogger) WriteJSONL(path string) (int64, error) {
 }
 
 // Finalize computes summary, exports JSONL to logDir if configured, and returns summary.
-func (s *SessionLogger) Finalize(logDir string) *SessionSummary {
+func (s *SessionLogger) Finalize(agentID, logDir string) *SessionSummary {
 	s.duration = time.Since(s.started)
 
 	summary := &SessionSummary{
+		AgentID:  agentID,
 		Turns:    len(s.entries),
 		Duration: s.duration,
 	}

@@ -329,7 +329,7 @@ func (a *AgentClient) PushCommand(ctx context.Context, action *LLMResponse) erro
 
 func (a *AgentClient) finalizeSession() error {
 	if a.session != nil {
-		summary := a.session.Finalize(a.Cfg.LogDir)
+		summary := a.session.Finalize(a.Cfg.PlayerName, a.Cfg.LogDir)
 
 		// Export JSONL if log directory is configured.
 		if a.Cfg.LogDir != "" {
