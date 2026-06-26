@@ -73,9 +73,9 @@ func cmdAlias(s *Session, args []string) error {
 	replacement := " " + strings.Join(args[1:], " ") // skip initial space
 
 	// Check for duplicate
-	for _, a := range player.Aliases {
-		if strings.EqualFold(a.Alias, aliasName) {
-			a.Replacement = replacement
+	for i := range player.Aliases {
+		if strings.EqualFold(player.Aliases[i].Alias, aliasName) {
+			player.Aliases[i].Replacement = replacement
 			if err := game.WriteAliases(player.Name, player.Aliases); err != nil {
 				s.Send("Error saving aliases.")
 				return nil

@@ -2,6 +2,8 @@ package session
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -327,6 +329,50 @@ func TestHasActiveCharacter_CaseInsensitive(t *testing.T) {
 
 	if game.HasActiveCharacter("Other") {
 		t.Error("Expected game.HasActiveCharacter(Other) to be false")
+	}
+}
+
+func TestCmdAlias_UpdateMutatesSlice(t *testing.T) {
+	// Run in a temp directory so disk writes do not touch the repo.
+	tmp := t.TempDir()
+	t.Chdir(tmp)
+	if err := os.MkdirAll(filepath.Join("data", "aliases"), 0o750); err != nil {
+		t.Fatalf("mkdir aliases: %v", err)
+	}
+
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "AliasTester", 1001, true)
+
+	// Add a new alias.
+	if err := cmdAlias(s, []string{"g", "get all"}); err != nil {
+		t.Fatalf("add alias: %v", err)
+	}
+
+	// Update the existing alias.
+	if err := cmdAlias(s, []string{"g", "get all corpse"}); err != nil {
+		t.Fatalf("update alias: %v", err)
+	}
+
+	// In-memory slice must reflect the new replacement.
+	if len(s.player.Aliases) != 1 {
+		t.Fatalf("expected 1 alias, got %d", len(s.player.Aliases))
+	}
+	got := s.player.Aliases[0].Replacement
+	want := " get all corpse"
+	if got != want {
+		t.Errorf("replacement = %q, want %q", got, want)
+	}
+
+	// Persisted file must also contain the updated replacement.
+	persisted, err := game.ReadAliases(s.player.Name)
+	if err != nil {
+		t.Fatalf("ReadAliases: %v", err)
+	}
+	if len(persisted) != 1 {
+		t.Fatalf("expected 1 persisted alias, got %d", len(persisted))
+	}
+	if persisted[0].Replacement != want {
+		t.Errorf("persisted replacement = %q, want %q", persisted[0].Replacement, want)
 	}
 }
 
