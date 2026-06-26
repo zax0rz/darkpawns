@@ -230,42 +230,52 @@ class WorldParser:
                 flags.append(name)
         return flags
     
+    def _read_tilde_string(self, lines: List[str], i: int) -> tuple[str, int]:
+        """Read a tilde-terminated string starting at line i.
+
+        Matches DikuMUD fread_string semantics: accumulate lines until the
+        first '~' and return the joined text (with newlines preserved).
+        """
+        parts = []
+        while i < len(lines):
+            line = lines[i]
+            if '~' in line:
+                tilde_idx = line.find('~')
+                parts.append(line[:tilde_idx].rstrip('\n'))
+                i += 1
+                break
+            parts.append(line.rstrip('\n'))
+            i += 1
+        return '\n'.join(parts).strip(), i
+
     def _parse_exit(self, lines: List[str], start_idx: int, direction: str) -> tuple[Optional[Dict], int]:
         """Parse an exit section."""
         i = start_idx + 1
-        
-        # Exit description (ends with ~)
-        if i >= len(lines):
-            return None, i
-        
-        exit_desc = lines[i].rstrip('~\n').strip()
-        i += 1
-        
-        # Keywords (ends with ~)
-        if i >= len(lines):
-            return None, i
-        
-        keywords = lines[i].rstrip('~\n').strip()
-        i += 1
-        
+
+        # Exit description (ends with ~, may span multiple lines)
+        exit_desc, i = self._read_tilde_string(lines, i)
+
+        # Keywords (ends with ~, may span multiple lines)
+        keywords, i = self._read_tilde_string(lines, i)
+
         # Numeric line: door_state key to_room
         if i >= len(lines):
             return None, i
-        
+
         nums_line = lines[i].strip()
         nums = nums_line.split()
         if len(nums) < 3:
             return None, i
-        
+
         try:
             door_state = int(nums[0])
             key = int(nums[1])
             to_room = int(nums[2])
         except ValueError:
             return None, i
-        
+
         i += 1
-        
+
         exit_data = {
             "direction": direction,
             "to_room": to_room,
@@ -274,7 +284,7 @@ class WorldParser:
             "keywords": keywords,
             "description": exit_desc
         }
-        
+
         return exit_data, i
     
     def build_room_graph(self) -> Dict[str, Any]:
