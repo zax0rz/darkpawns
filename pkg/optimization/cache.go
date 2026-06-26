@@ -126,7 +126,11 @@ func (c *Cache) Stats() map[string]interface{} {
 
 // cleanup periodically removes expired items
 func (c *Cache) cleanup() {
-	ticker := time.NewTicker(c.ttl / 2)
+	interval := c.ttl / 2
+	if interval <= 0 {
+		interval = time.Nanosecond
+	}
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {

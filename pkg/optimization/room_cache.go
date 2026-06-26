@@ -226,7 +226,11 @@ func (rc *RoomCache) GetHotRooms(threshold int) []int {
 
 // cleanup periodically removes expired rooms
 func (rc *RoomCache) cleanup() {
-	ticker := time.NewTicker(rc.ttl / 2)
+	interval := rc.ttl / 2
+	if interval <= 0 {
+		interval = time.Nanosecond
+	}
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {

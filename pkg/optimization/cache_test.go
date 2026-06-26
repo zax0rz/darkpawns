@@ -44,6 +44,28 @@ func TestCacheZeroTTLDoesNotPanic(t *testing.T) {
 	cache.Close()
 }
 
+func TestCacheSmallTTLDoesNotPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("NewCache(1ns) panicked: %v", r)
+		}
+	}()
+
+	cache := NewCache(time.Nanosecond)
+	cache.Close()
+}
+
+func TestRoomCacheSmallTTLDoesNotPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("NewRoomCache(1ns) panicked: %v", r)
+		}
+	}()
+
+	cache := NewRoomCache(time.Nanosecond)
+	cache.Close()
+}
+
 func TestRoomCacheZeroTTLDoesNotPanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
