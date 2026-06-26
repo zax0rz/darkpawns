@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -45,6 +46,36 @@ func TestRunProfilingSessionReturnsErrorWhenWritesFail(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("RunProfilingSession did not return")
 	}
+}
+
+func TestStartPProfServerMissingAuthReturnsError(t *testing.T) {
+	t.Setenv("PPROF_USER", "")
+	t.Setenv("PPROF_PASS", "")
+
+	server, err := StartPProfServer(":0")
+	if err == nil {
+		t.Fatal("expected error when auth env vars are missing")
+	}
+	if server != nil {
+		t.Fatal("expected nil server when auth env vars are missing")
+	}
+}
+
+func TestStartPProfServerStartsWithAuth(t *testing.T) {
+	t.Setenv("PPROF_USER", "user")
+	t.Setenv("PPROF_PASS", "pass")
+
+	server, err := StartPProfServer("127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if server == nil {
+		t.Fatal("expected non-nil server")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_ = server.Shutdown(ctx)
 }
 
 func TestProfilerWriteHeapProfileReturnsErrorOnReadOnlyDir(t *testing.T) {

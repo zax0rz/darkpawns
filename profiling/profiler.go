@@ -444,13 +444,14 @@ func (pm *PerformanceMonitor) AnalyzeMetrics() map[string]interface{} {
 	return analysis
 }
 
-// StartPProfServer starts the pprof HTTP server with basic auth
-func StartPProfServer(addr string) *http.Server {
+// StartPProfServer starts the pprof HTTP server with basic auth.
+// It returns an error when the required PPROF_USER/PPROF_PASS credentials
+// are not configured.
+func StartPProfServer(addr string) (*http.Server, error) {
 	user := os.Getenv("PPROF_USER")
 	pass := os.Getenv("PPROF_PASS")
 	if user == "" || pass == "" {
-		slog.Info("PPROF_USER/PPROF_PASS not set, pprof server not started")
-		return nil
+		return nil, fmt.Errorf("PPROF_USER/PPROF_PASS not set")
 	}
 
 	// Wrap all pprof handlers with BasicAuth
@@ -488,7 +489,7 @@ func StartPProfServer(addr string) *http.Server {
 		}
 	}()
 
-	return server
+	return server, nil
 }
 
 // RunProfilingSession runs a complete profiling session
@@ -597,7 +598,11 @@ func main() {
 			addr = os.Args[2]
 		}
 
-		server := StartPProfServer(addr)
+		server, err := StartPProfServer(addr)
+		if err != nil {
+			slog.Error("failed to start pprof server", "error", err)
+			os.Exit(1)
+		}
 
 		// Wait for interrupt or SIGTERM
 		sigChan := make(chan os.Signal, 1)
@@ -605,13 +610,11 @@ func main() {
 		<-sigChan
 
 		// Graceful shutdown
-		if server != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			if err := server.Shutdown(ctx); err != nil {
-				slog.Error("pprof server shutdown error", "error", err)
-			}
-			cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if err := server.Shutdown(ctx); err != nil {
+			slog.Error("pprof server shutdown error", "error", err)
 		}
+		cancel()
 
 	case "stats":
 		profiler := NewProfiler("/tmp")
