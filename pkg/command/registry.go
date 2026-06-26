@@ -17,8 +17,8 @@ import (
 )
 
 // Handler is the function signature for command handlers.
-// It matches the common.CommandSession handler pattern.
-type Handler func(common.CommandSession, []string) error
+// It receives the session, the resolved command name, and the command arguments.
+type Handler func(common.CommandSession, string, []string) error
 
 // Entry holds metadata for a registered command.
 type Entry struct {
@@ -118,5 +118,5 @@ func (r *Registry) Execute(s common.CommandSession, cmdStr string, args []string
 	if !ok {
 		return fmt.Errorf("unknown command: %s", cmdStr)
 	}
-	return entry.Handler(s, args)
+	return entry.Handler(s, cmdStr, args)
 }

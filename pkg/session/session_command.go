@@ -9,8 +9,11 @@ import (
 )
 
 func (m *Manager) RegisterCommand(name string, handler func(common.CommandSession, []string) error) {
-	// Bridge common.CommandSession handler into cmdRegistry.
-	cmdRegistry.Register(name, command.Handler(handler), name+" (registered via RegisterCommand)", 0, 0)
+	// Bridge common.CommandSession handler into cmdRegistry; command name is unused by the legacy signature.
+	wrapped := func(s common.CommandSession, _cmd string, args []string) error {
+		return handler(s, args)
+	}
+	cmdRegistry.Register(name, command.Handler(wrapped), name+" (registered via RegisterCommand)", 0, 0)
 	slog.Debug("RegisterCommand: registered", "name", name)
 }
 

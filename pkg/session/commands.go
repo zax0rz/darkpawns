@@ -381,21 +381,21 @@ func init() {
 
 // wrapArgs adapts a func(*Session, []string) error to command.Handler.
 func wrapArgs(fn func(*Session, []string) error) command.Handler {
-	return func(s common.CommandSession, args []string) error {
+	return func(s common.CommandSession, _cmd string, args []string) error {
 		return fn(s.(*commandSession).Session, args)
 	}
 }
 
 // wrapNoArgs adapts a func(*Session) error to command.Handler.
 func wrapNoArgs(fn func(*Session) error) command.Handler {
-	return func(s common.CommandSession, args []string) error {
+	return func(s common.CommandSession, _cmd string, args []string) error {
 		return fn(s.(*commandSession).Session)
 	}
 }
 
 // wrapMove adapts cmdMove to the registry handler signature.
 func wrapMove(direction string) command.Handler {
-	return func(s common.CommandSession, args []string) error {
+	return func(s common.CommandSession, _cmd string, args []string) error {
 		return cmdMove(s.(*commandSession).Session, direction)
 	}
 }
@@ -404,7 +404,7 @@ func wrapMove(direction string) command.Handler {
 // etc. — src/interpreter.c each registers do_gen_tog under its own command
 // name, not a unified "toggle <name>" dispatcher) to command.Handler.
 func wrapToggle(key string) command.Handler {
-	return func(s common.CommandSession, args []string) error {
+	return func(s common.CommandSession, _cmd string, args []string) error {
 		sess := s.(*commandSession).Session
 		sess.manager.world.ExecGenTog(sess.player, key)
 		return nil
@@ -413,7 +413,7 @@ func wrapToggle(key string) command.Handler {
 
 // wrapSkill adapts a skill command (which uses command.SessionInterface) to command.Handler.
 func wrapSkill(fn func(command.SessionInterface, []string) error) command.Handler {
-	return func(s common.CommandSession, args []string) error {
+	return func(s common.CommandSession, _cmd string, args []string) error {
 		return fn(s.(*commandSession).Session, args)
 	}
 }
@@ -627,7 +627,7 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		return nil
 	}
 
-	return entry.Handler(&commandSession{Session: s}, args)
+	return entry.Handler(&commandSession{Session: s}, cmd, args)
 }
 
 // cmdSocial performs a social emote.

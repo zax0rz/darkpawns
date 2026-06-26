@@ -12,15 +12,10 @@ import (
 // LoggingMiddleware returns a middleware that logs every command execution.
 func LoggingMiddleware() Middleware {
 	return func(next Handler) Handler {
-		return func(s common.CommandSession, args []string) error {
+		return func(s common.CommandSession, cmdStr string, args []string) error {
 			start := time.Now()
-			err := next(s, args)
+			err := next(s, cmdStr, args)
 			duration := time.Since(start)
-
-			cmdStr := ""
-			if len(args) > 0 {
-				cmdStr = args[0]
-			}
 
 			if err != nil {
 				slog.Debug(
@@ -49,11 +44,11 @@ func WhitelistMiddleware(allowed ...string) Middleware {
 	}
 
 	return func(next Handler) Handler {
-		return func(s common.CommandSession, args []string) error {
-			if len(args) > 0 && !allowedSet[strings.ToLower(args[0])] {
-				return fmt.Errorf("unknown command: %s", args[0])
+		return func(s common.CommandSession, cmdStr string, args []string) error {
+			if !allowedSet[strings.ToLower(cmdStr)] {
+				return fmt.Errorf("unknown command: %s", cmdStr)
 			}
-			return next(s, args)
+			return next(s, cmdStr, args)
 		}
 	}
 }
