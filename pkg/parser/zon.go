@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -184,6 +185,10 @@ func parseZoneCommand(line string) (ZoneCommand, error) {
 
 // ParseAllZonFiles parses all .zon files in a directory.
 func ParseAllZonFiles(dir string) ([]Zone, error) {
+	if err := validateWorldPath(dir); err != nil {
+		return nil, err
+	}
+
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("read dir %s: %w", dir, err)
@@ -195,7 +200,7 @@ func ParseAllZonFiles(dir string) ([]Zone, error) {
 			continue
 		}
 
-		path := dir + "/" + entry.Name()
+		path := filepath.Join(dir, entry.Name())
 		zone, err := ParseZonFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("parse %s: %w", entry.Name(), err)

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -350,4 +351,49 @@ func TestParseAllMobFiles_NoDir(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for non-existent directory, got nil")
 	}
+}
+
+// traversalToExistingDir creates a real directory and returns a path string
+// that reaches it using a literal ".." segment. The ParseAll* functions must
+// reject the traversal spelling before reading any directory contents.
+func traversalToExistingDir(t *testing.T) string {
+	t.Helper()
+	tmpDir := t.TempDir()
+	// Create a directory reachable through traversal.
+	nested := filepath.Join(tmpDir, "a", "b")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	// Build a path with a literal ".." without filepath.Clean removing it.
+	return tmpDir + string(filepath.Separator) + "a" + string(filepath.Separator) + "c" + string(filepath.Separator) + ".." + string(filepath.Separator) + "b"
+}
+
+func assertTraversalRejected(t *testing.T, err error) {
+	t.Helper()
+	if err == nil {
+		t.Fatal("expected error for path traversal in directory, got nil")
+	}
+	if !strings.Contains(err.Error(), "..") {
+		t.Fatalf("expected validateWorldPath error containing '..', got: %v", err)
+	}
+}
+
+func TestParseAllWldFiles_PathTraversalExistingDir(t *testing.T) {
+	_, err := ParseAllWldFiles(traversalToExistingDir(t))
+	assertTraversalRejected(t, err)
+}
+
+func TestParseAllMobFiles_PathTraversalExistingDir(t *testing.T) {
+	_, err := ParseAllMobFiles(traversalToExistingDir(t))
+	assertTraversalRejected(t, err)
+}
+
+func TestParseAllObjFiles_PathTraversalExistingDir(t *testing.T) {
+	_, err := ParseAllObjFiles(traversalToExistingDir(t))
+	assertTraversalRejected(t, err)
+}
+
+func TestParseAllZonFiles_PathTraversalExistingDir(t *testing.T) {
+	_, err := ParseAllZonFiles(traversalToExistingDir(t))
+	assertTraversalRejected(t, err)
 }

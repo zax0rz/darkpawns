@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -254,6 +255,10 @@ func parseExit(scanner *bufio.Scanner, direction string) (Exit, error) {
 
 // ParseAllWldFiles parses all .wld files in a directory.
 func ParseAllWldFiles(dir string) ([]Room, error) {
+	if err := validateWorldPath(dir); err != nil {
+		return nil, err
+	}
+
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("read dir %s: %w", dir, err)
@@ -265,7 +270,7 @@ func ParseAllWldFiles(dir string) ([]Room, error) {
 			continue
 		}
 
-		path := dir + "/" + entry.Name()
+		path := filepath.Join(dir, entry.Name())
 		rooms, err := ParseWldFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("parse %s: %w", entry.Name(), err)

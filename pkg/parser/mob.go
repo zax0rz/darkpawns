@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
@@ -495,6 +496,10 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 
 // ParseAllMobFiles parses all .mob files in a directory.
 func ParseAllMobFiles(dir string) ([]Mob, error) {
+	if err := validateWorldPath(dir); err != nil {
+		return nil, err
+	}
+
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("read dir %s: %w", dir, err)
@@ -506,7 +511,7 @@ func ParseAllMobFiles(dir string) ([]Mob, error) {
 			continue
 		}
 
-		path := dir + "/" + entry.Name()
+		path := filepath.Join(dir, entry.Name())
 		mobs, err := ParseMobFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("parse %s: %w", entry.Name(), err)

@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -288,6 +289,10 @@ func toUpper(r rune) rune {
 
 // ParseAllObjFiles parses all .obj files in a directory.
 func ParseAllObjFiles(dir string) ([]Obj, error) {
+	if err := validateWorldPath(dir); err != nil {
+		return nil, err
+	}
+
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("read dir %s: %w", dir, err)
@@ -299,7 +304,7 @@ func ParseAllObjFiles(dir string) ([]Obj, error) {
 			continue
 		}
 
-		path := dir + "/" + entry.Name()
+		path := filepath.Join(dir, entry.Name())
 		objs, err := ParseObjFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("parse %s: %w", entry.Name(), err)
