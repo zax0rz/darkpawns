@@ -15,6 +15,7 @@ type WSConn struct {
 	conn    *websocket.Conn
 	seqMu   sync.Mutex
 	lastSeq uint64
+	writeMu sync.Mutex
 }
 
 // Dial connects to a WebSocket endpoint.
@@ -28,6 +29,8 @@ func Dial(ctx context.Context, addr string) (*WSConn, error) {
 
 // WriteJSON sends a JSON message.
 func (w *WSConn) WriteJSON(v any) error {
+	w.writeMu.Lock()
+	defer w.writeMu.Unlock()
 	return w.conn.WriteJSON(v)
 }
 
@@ -45,6 +48,8 @@ func (w *WSConn) ReadMessage() (int, []byte, error) {
 
 // Close closes the connection.
 func (w *WSConn) Close() error {
+	w.writeMu.Lock()
+	defer w.writeMu.Unlock()
 	return w.conn.WriteMessage(websocket.CloseMessage,
 		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
