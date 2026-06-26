@@ -386,17 +386,22 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 	type msgNamed interface{ GetName() string }
 	type msgClassed interface{ GetClass() int }
 
+	casterName := "someone"
+	if cn, ok := ch.(msgNamed); ok {
+		casterName = cn.GetName()
+	}
+
 	w.ForEachPlayerInRoomInterface(roomVNum, func(p interface{}) {
 		rp, ok := p.(msgSender)
 		if !ok {
 			return
 		}
-		name := realName
+		spellName := realName
 		if rc, ok := p.(msgClassed); ok && rc.GetClass() != casterClass {
-			name = obfuscated
+			spellName = obfuscated
 		}
-		msg := strings.Replace(format, "%s", name, 1)
-		msg = strings.ReplaceAll(msg, "$n", name)
+		msg := strings.Replace(format, "%s", spellName, 1)
+		msg = strings.ReplaceAll(msg, "$n", casterName)
 		if tch != nil {
 			if vn, ok := tch.(msgNamed); ok {
 				msg = strings.ReplaceAll(msg, "$N", vn.GetName())
@@ -417,9 +422,15 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 }
 
 // sendAct is a minimal act() replacement.
+// When victim is non-nil the message is delivered to the victim; otherwise it
+// falls back to ch.
 func sendAct(format string, ch, obj, victim interface{}, world interface{}) {
 	type sender interface{ SendMessage(string) }
-	if s, ok := ch.(sender); ok {
+	recipient := ch
+	if victim != nil {
+		recipient = victim
+	}
+	if s, ok := recipient.(sender); ok {
 		s.SendMessage(format)
 	}
 }
