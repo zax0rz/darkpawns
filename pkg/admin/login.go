@@ -25,9 +25,14 @@ type loginResponse struct {
 	Role       string `json:"role"`
 }
 
+// loginPlayerDB is the narrow database surface used by the login handler.
+type loginPlayerDB interface {
+	GetPlayer(name string) (*db.PlayerRecord, error)
+}
+
 // handleLogin creates a new login handler bound to the given database.
 // POST /admin/login — authenticates a player and returns a JWT.
-func handleLogin(database *db.DB, loginAttempts *auth.LoginAttemptTracker) http.HandlerFunc {
+func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
@@ -63,9 +68,9 @@ func handleLogin(database *db.DB, loginAttempts *auth.LoginAttemptTracker) http.
 
 		// Look up the player
 		rec, err := database.GetPlayer(req.PlayerName)
-		if err != nil {
+		if err != nil || rec == nil {
 			loginAttempts.RecordFailure(ip)
-			http.Error(w, `{"error":"player not found"}`, http.StatusUnauthorized)
+			http.Error(w, `{"error":"invalid credentials"}`, http.StatusUnauthorized)
 			return
 		}
 
