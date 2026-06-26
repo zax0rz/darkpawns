@@ -143,14 +143,18 @@ func main() {
 	gvClient.Start()
 	defer gvClient.Stop()
 
-	// Decision capture (DP-213) — enabled when database is available
+	// Decision capture (DP-213) — enabled when database is available and
+	// partitions can be ensured. If partition creation fails, leave the writer
+	// unset so the manager falls back to its no-op behavior and records are not
+	// silently dropped during flush.
 	if database != nil {
 		if err := database.EnsureDecisionLogPartitions(); err != nil {
-			slog.Warn("failed to create decision log partitions", "error", err)
+			slog.Warn("failed to create decision log partitions; decision capture disabled", "error", err)
+		} else {
+			dlw := database.NewDecisionLogWriter()
+			manager.SetDecisionLog(dlw)
+			slog.Info("decision capture enabled")
 		}
-		dlw := database.NewDecisionLogWriter()
-		manager.SetDecisionLog(dlw)
-		slog.Info("decision capture enabled")
 	}
 	manager.SetScriptFightFunc()                         // Enable mob fight scripts after each combat round
 	manager.SetScriptDeathFunc()                         // Enable mob death scripts on kill

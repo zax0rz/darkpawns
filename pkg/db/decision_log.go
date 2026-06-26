@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -119,6 +120,7 @@ func (db *DB) createDecisionLogTables() error {
 // combat_log for the current and next month. Safe to call on every boot.
 func (db *DB) EnsureDecisionLogPartitions() error {
 	now := time.Now()
+	var errs []error
 	for i := 0; i < 2; i++ {
 		month := now.AddDate(0, i, 0)
 		start := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, time.UTC)
@@ -128,15 +130,17 @@ func (db *DB) EnsureDecisionLogPartitions() error {
 		dlName := fmt.Sprintf("decision_log_%s", start.Format("2006_01"))
 		if err := db.ensurePartition("decision_log", dlName, start, end); err != nil {
 			slog.Warn("failed to create decision_log partition", "table", dlName, "error", err)
+			errs = append(errs, fmt.Errorf("decision_log partition %s: %w", dlName, err))
 		}
 
 		// Combat log partition
 		clName := fmt.Sprintf("combat_log_%s", start.Format("2006_01"))
 		if err := db.ensurePartition("combat_log", clName, start, end); err != nil {
 			slog.Warn("failed to create combat_log partition", "table", clName, "error", err)
+			errs = append(errs, fmt.Errorf("combat_log partition %s: %w", clName, err))
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 func (db *DB) ensurePartition(parent, name string, start, end time.Time) error {
