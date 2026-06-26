@@ -21,7 +21,9 @@ type cacheItem struct {
 	accessCount int
 }
 
-// NewCache creates a new cache with TTL
+// NewCache creates a new cache with TTL. A non-positive TTL disables
+// background cleanup (items expire lazily on access) and avoids a panic from
+// an invalid ticker interval.
 func NewCache(ttl time.Duration) *Cache {
 	c := &Cache{
 		items: make(map[string]*cacheItem),
@@ -29,8 +31,9 @@ func NewCache(ttl time.Duration) *Cache {
 		stop:  make(chan struct{}),
 	}
 
-	// Start cleanup goroutine
-	go c.cleanup()
+	if ttl > 0 {
+		go c.cleanup()
+	}
 
 	return c
 }

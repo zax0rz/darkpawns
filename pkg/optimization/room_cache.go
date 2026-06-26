@@ -49,7 +49,9 @@ type ItemData struct {
 	Type string
 }
 
-// NewRoomCache creates a new room cache
+// NewRoomCache creates a new room cache. A non-positive TTL disables
+// background cleanup (rooms expire lazily on access) and avoids a panic from
+// an invalid ticker interval.
 func NewRoomCache(ttl time.Duration) *RoomCache {
 	rc := &RoomCache{
 		rooms: make(map[int]*CachedRoom),
@@ -57,8 +59,9 @@ func NewRoomCache(ttl time.Duration) *RoomCache {
 		stop:  make(chan struct{}),
 	}
 
-	// Start cleanup goroutine
-	go rc.cleanup()
+	if ttl > 0 {
+		go rc.cleanup()
+	}
 
 	return rc
 }
