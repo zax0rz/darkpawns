@@ -235,6 +235,17 @@ func strIndex(c Combatant) int {
 	strAdd := c.GetStrAdd()
 
 	if strAdd == 0 || str != 18 {
+		// Clamp to the normal strength range. str_app[] (constants.c) has 31
+		// entries: indices 0–25 are normal strength, 26–30 are 18/01–18/100
+		// exceptional strength (handled below). Clamping here prevents an
+		// out-of-range index from panicking the combat goroutine when a
+		// Combatant reports GetStr() < 0 or > 25.
+		if str < 0 {
+			return 0
+		}
+		if str > 25 {
+			return 25
+		}
 		return str
 	}
 
