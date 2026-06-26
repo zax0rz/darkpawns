@@ -136,17 +136,24 @@ func (a *AgentClient) RunDecisionLoop(ctx context.Context) error {
 		return fmt.Errorf("not connected")
 	}
 
-	msgCh := make(chan []byte, 64)
+	type result struct {
+		msg []byte
+		err error
+	}
+	resCh := make(chan result, 64)
 	go func() {
-		defer close(msgCh)
+		defer close(resCh)
 		for {
 			_, msg, err := a.conn.ReadMessage()
 			if err != nil {
-				slog.Warn("read error", "error", err)
+				select {
+				case resCh <- result{err: fmt.Errorf("websocket read: %w", err)}:
+				case <-ctx.Done():
+				}
 				return
 			}
 			select {
-			case msgCh <- msg:
+			case resCh <- result{msg: msg}:
 			case <-ctx.Done():
 				return
 			}
@@ -157,11 +164,14 @@ func (a *AgentClient) RunDecisionLoop(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return a.finalizeSession()
-		case msg, ok := <-msgCh:
+		case res, ok := <-resCh:
 			if !ok {
 				return a.finalizeSession()
 			}
-			if err := a.handleMessage(ctx, msg); err != nil {
+			if res.err != nil {
+				return res.err
+			}
+			if err := a.handleMessage(ctx, res.msg); err != nil {
 				slog.Error("handle message", "error", err)
 			}
 		}
