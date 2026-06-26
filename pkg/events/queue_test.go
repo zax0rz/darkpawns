@@ -341,3 +341,28 @@ func TestPulseIncrement(t *testing.T) {
 		}
 	}
 }
+
+// TestCreateRaceWithBackgroundProcess exercises concurrent Create calls while
+// the background processor is ticking.
+func TestCreateRaceWithBackgroundProcess(t *testing.T) {
+	eq := NewEventQueue(10 * time.Millisecond)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 { return 0 }
+	eq.Start(ctx)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				eq.Create(1, i, 0, 0, 0, "race", 1, fn)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	time.Sleep(200 * time.Millisecond)
+}

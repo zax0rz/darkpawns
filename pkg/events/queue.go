@@ -105,6 +105,10 @@ func (eq *EventQueue) Create(delay int64, source, target, obj, argument int, tri
 	}
 
 	id := atomic.AddUint64(&eq.nextID, 1)
+
+	eq.mu.Lock()
+	defer eq.mu.Unlock()
+
 	evt := &Event{
 		ID:        id,
 		Source:    source,
@@ -117,10 +121,7 @@ func (eq *EventQueue) Create(delay int64, source, target, obj, argument int, tri
 		Func:      fn,
 	}
 
-	eq.mu.Lock()
 	heap.Push(&eq.events, evt)
-	eq.mu.Unlock()
-
 	return id
 }
 
