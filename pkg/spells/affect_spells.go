@@ -529,15 +529,13 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 			sendToCaster(ch, "You don't see a corpse here to animate.\r\n")
 			return
 		}
-		if remover, ok2 := world.(itemRemover); ok2 {
-			remover.RemoveItemFromRoomI(corpse, roomVNum)
-		}
 
 		type mobSpawner interface {
 			SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
 		}
 		w, ok := world.(mobSpawner)
 		if !ok {
+			sendToCaster(ch, "The corpse refuses to come alive!\r\n")
 			return
 		}
 
@@ -549,6 +547,11 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 		if err != nil {
 			sendToCaster(ch, "The corpse refuses to come alive!\r\n")
 			return
+		}
+
+		// C magic.c: extract_obj(corpse) runs only after create_mobile succeeds.
+		if remover, ok2 := world.(itemRemover); ok2 {
+			remover.RemoveItemFromRoomI(corpse, roomVNum)
 		}
 
 		type followerAdder interface{ AddFollowerQuiet(ch, leader interface{}) }

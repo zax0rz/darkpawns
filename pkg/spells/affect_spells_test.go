@@ -1,6 +1,7 @@
 package spells
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -297,5 +298,50 @@ func TestMagUnaffects(t *testing.T) {
 		if aff.SpellID == SpellCurse {
 			t.Error("SpellCurse was not removed")
 		}
+	}
+}
+
+// mockCorpse satisfies the interfaces MagSummons uses to find a corpse.
+type mockCorpse struct{ keywords string }
+
+func (m *mockCorpse) GetKeywords() string { return m.keywords }
+
+// mockAnimateWorld is a minimal world for testing Animate Dead.
+type mockAnimateWorld struct {
+	items       []interface{}
+	removed     bool
+	spawnErr    error
+	spawnedVNum int
+	spawnedRoom int
+}
+
+func (w *mockAnimateWorld) GetItemsInRoomI(roomVNum int) []interface{} { return w.items }
+func (w *mockAnimateWorld) RemoveItemFromRoomI(item interface{}, roomVNum int) {
+	w.removed = true
+}
+func (w *mockAnimateWorld) SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error) {
+	w.spawnedVNum = vnum
+	w.spawnedRoom = roomVNum
+	if w.spawnErr != nil {
+		return nil, w.spawnErr
+	}
+	return &mockSpellsChar{name: "zombie"}, nil
+}
+
+func TestMagSummons_AnimateDead_KeepsCorpseOnSpawnFailure(t *testing.T) {
+	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
+	corpse := &mockCorpse{keywords: "corpse"}
+	world := &mockAnimateWorld{
+		items:    []interface{}{corpse},
+		spawnErr: fmt.Errorf("spawn failed"),
+	}
+
+	MagSummons(10, caster, SpellAnimateDead, world)
+
+	if world.removed {
+		t.Error("corpse was removed even though spawn failed")
+	}
+	if world.spawnedVNum != 10 {
+		t.Errorf("expected zombie vnum 10, got %d", world.spawnedVNum)
 	}
 }
