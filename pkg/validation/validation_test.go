@@ -121,6 +121,37 @@ func TestIsValidPlayerName_CaseInsensitiveReserved(t *testing.T) {
 	}
 }
 
+func TestValidateInput_XSSCaseVariants(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"uppercase script tag", "<SCRIPT>alert(1)</SCRIPT>"},
+		{"mixed case script tag", "<ScRiPt>alert(1)</ScRiPt>"},
+		{"uppercase javascript protocol", "JaVaScRiPt:alert(1)"},
+		{"uppercase event handler", "<img ONERROR=alert(1)>"},
+		{"mixed case event handler", "<body OnLoad=alert(1)>"},
+		{"multiline script tag", "<script>\nalert(1)\n</script>"},
+		{"data uri", "data:text/html,<script>alert(1)</script>"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if valid, _ := ValidateInput(tt.input); valid {
+				t.Errorf("ValidateInput(%q) = true, want false", tt.input)
+			}
+		})
+	}
+}
+
+func TestValidateCommand_XSSCaseVariants(t *testing.T) {
+	if valid, _ := ValidateCommand("say", []string{"<SCRIPT>alert(1)</SCRIPT>"}); valid {
+		t.Error("ValidateCommand should reject mixed-case script argument")
+	}
+	if valid, _ := ValidateCommand("JaVaScRiPt:alert(1)", nil); valid {
+		t.Error("ValidateCommand should reject mixed-case javascript: command")
+	}
+}
+
 func TestIsValidPlayerName_Boundary(t *testing.T) {
 	// Exactly 2 chars (min valid)
 	if got := IsValidPlayerName("ab"); !got {

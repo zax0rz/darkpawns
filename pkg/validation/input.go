@@ -20,12 +20,12 @@ var (
 		regexp.MustCompile(`;`),  // Statement separator
 	}
 
-	// XSS patterns
+	// XSS patterns (case-insensitive; script tag match spans newlines).
 	xssPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`<script.*?>.*?</script>`),
-		regexp.MustCompile(`javascript:`),
-		regexp.MustCompile(`on\w+\s*=`),
-		regexp.MustCompile(`data:`),
+		regexp.MustCompile(`(?is)<script.*?>.*?</script>`),
+		regexp.MustCompile(`(?i)javascript:`),
+		regexp.MustCompile(`(?i)on\w+\s*=`),
+		regexp.MustCompile(`(?i)data:`),
 	}
 
 	// Path traversal patterns
