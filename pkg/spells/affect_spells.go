@@ -408,7 +408,7 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 		// Skip charmed NPCs
 		if nc, ok := c.(npcChecker); ok && nc.IsNPC() {
 			type affectChecker interface{ IsAffected(int) bool }
-			if ac, ok := c.(affectChecker); ok && ac.IsAffected(1<<2) { // AFF_CHARM
+			if ac, ok := c.(affectChecker); ok && ac.IsAffected(int(engine.AFFCharm)) { // AFF_CHARM (1<<10)
 				continue
 			}
 		}
@@ -472,7 +472,7 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		// Skip charmed NPCs
 		if nc, ok := c.(npcChecker); ok && nc.IsNPC() {
 			type affectChecker interface{ IsAffected(int) bool }
-			if ac, ok := c.(affectChecker); ok && ac.IsAffected(1<<2) { // AFF_CHARM
+			if ac, ok := c.(affectChecker); ok && ac.IsAffected(int(engine.AFFCharm)) { // AFF_CHARM (1<<10)
 				continue
 			}
 		}
