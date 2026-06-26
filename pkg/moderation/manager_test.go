@@ -21,6 +21,31 @@ func TestWordFilterCensor(t *testing.T) {
 	}
 }
 
+func TestWordFilterCensor_CaseVariants(t *testing.T) {
+	wf := WordFilterEntry{
+		Pattern: "badword",
+		IsRegex: false,
+		Action:  FilterActionCensor,
+	}
+
+	tests := []struct {
+		message  string
+		expected string
+	}{
+		{"This is a BADWORD test", "This is a ******* test"},
+		{"This is a BadWord test", "This is a ******* test"},
+		{"BADWORD and badword", "******* and *******"},
+		{"No match here", "No match here"},
+	}
+
+	for _, tt := range tests {
+		result := wf.censor(tt.message)
+		if result != tt.expected {
+			t.Errorf("censor(%q) = %q, want %q", tt.message, result, tt.expected)
+		}
+	}
+}
+
 func TestWordFilterRegex(t *testing.T) {
 	wf := WordFilterEntry{
 		Pattern: `(?i)hate.*speech`,

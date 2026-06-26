@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	_ "github.com/lib/pq"
 )
@@ -350,7 +351,7 @@ func (wf *WordFilterEntry) matches(message string) bool {
 			slog.Error("Invalid regex pattern", "pattern", wf.Pattern, "error", err)
 			return false
 		}
-		return re.MatchString(strings.ToLower(message))
+		return re.MatchString(message)
 	}
 
 	return strings.Contains(strings.ToLower(message), strings.ToLower(wf.Pattern))
@@ -358,17 +359,19 @@ func (wf *WordFilterEntry) matches(message string) bool {
 
 // censor replaces matched patterns with asterisks.
 func (wf *WordFilterEntry) censor(message string) string {
+	var re *regexp.Regexp
+	var err error
 	if wf.IsRegex {
-		re, err := regexp.Compile(wf.Pattern)
-		if err != nil {
-			return message
-		}
-		return re.ReplaceAllStringFunc(message, func(match string) string {
-			return strings.Repeat("*", len(match))
-		})
+		re, err = regexp.Compile(wf.Pattern)
+	} else {
+		re, err = regexp.Compile(`(?i)` + regexp.QuoteMeta(wf.Pattern))
 	}
-
-	return strings.ReplaceAll(message, wf.Pattern, strings.Repeat("*", len(wf.Pattern)))
+	if err != nil {
+		return message
+	}
+	return re.ReplaceAllStringFunc(message, func(match string) string {
+		return strings.Repeat("*", utf8.RuneCountInString(match))
+	})
 }
 
 // AddReport stores an abuse report (DB if available, always logs). Returns a
