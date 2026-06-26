@@ -290,6 +290,41 @@ func TestTimeUntilNextIgnoresCancelledEvents(t *testing.T) {
 	}
 }
 
+// TestEventCallbackCanCreateEvents verifies that event callbacks can safely
+// call back into the queue without deadlocking.
+func TestEventCallbackCanCreateEvents(t *testing.T) {
+	eq := NewEventQueue(10 * time.Millisecond)
+	ctx := context.Background()
+
+	var fired int64
+	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
+		atomic.AddInt64(&fired, 1)
+		// Scheduling another event from inside a callback must not deadlock.
+		eq.Create(2, 200, 0, 0, 0, "child", 1, func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
+			atomic.AddInt64(&fired, 1)
+			return 0
+		})
+		return 0
+	}
+
+	eq.Create(1, 100, 0, 0, 0, "parent", 1, fn)
+	eq.Process(ctx)
+
+	if got := atomic.LoadInt64(&fired); got != 1 {
+		t.Fatalf("expected parent callback to fire once, got %d", got)
+	}
+	if eq.Pending() != 1 {
+		t.Fatalf("expected child event to be pending, got %d", eq.Pending())
+	}
+
+	// Process the child event.
+	eq.Process(ctx)
+	eq.Process(ctx)
+	if got := atomic.LoadInt64(&fired); got != 2 {
+		t.Fatalf("expected child callback to fire once, got %d", got)
+	}
+}
+
 // TestPulseIncrement verifies pulse counter increments each Process call.
 func TestPulseIncrement(t *testing.T) {
 	eq := NewEventQueue(10 * time.Millisecond)

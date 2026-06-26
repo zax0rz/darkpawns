@@ -166,35 +166,45 @@ func (eq *EventQueue) CancelBySource(source int) int {
 //
 //	heartbeat(++pulse) { event_process(); ... }
 //
+// Event callbacks are invoked without holding the queue mutex so callbacks
+// can safely call back into the queue (Create, Cancel, etc.).
+//
 // Returns the number of events processed.
 func (eq *EventQueue) Process(ctx context.Context) int {
 	eq.mu.Lock()
-	defer eq.mu.Unlock()
-
 	eq.pulse++
 
-	processed := 0
+	var due []*Event
 	for eq.events.Len() > 0 {
 		evt := eq.events[0]
 		if evt.When > eq.pulse {
 			break
 		}
-
-		// Remove from heap
 		heap.Pop(&eq.events)
+		due = append(due, evt)
+	}
+	eq.mu.Unlock()
 
+	processed := 0
+	for _, evt := range due {
+		// Cancellation may have been requested after the event was popped.
 		if evt.Cancelled {
 			continue
 		}
 
 		// Call event function. If return > 0, re-enqueue.
 		// Source: events.c event_process() lines 93-99 (3/6/98 ejg change)
-		if evt.Func != nil {
-			newDelay := evt.Func(ctx, evt.Source, evt.Target, evt.Obj, evt.Argument, evt.Trigger, evt.EventType)
-			if newDelay > 0 {
-				evt.When = eq.pulse + newDelay
-				heap.Push(&eq.events, evt)
-			}
+		if evt.Func == nil {
+			processed++
+			continue
+		}
+
+		newDelay := evt.Func(ctx, evt.Source, evt.Target, evt.Obj, evt.Argument, evt.Trigger, evt.EventType)
+		if newDelay > 0 {
+			eq.mu.Lock()
+			evt.When = eq.pulse + newDelay
+			heap.Push(&eq.events, evt)
+			eq.mu.Unlock()
 		}
 		processed++
 	}
