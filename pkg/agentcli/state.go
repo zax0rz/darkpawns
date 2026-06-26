@@ -10,6 +10,24 @@ import (
 	"time"
 )
 
+// cloneGameState returns a deep copy of s using JSON serialization.
+func cloneGameState(s *GameState) *GameState {
+	if s == nil {
+		return nil
+	}
+	data, err := json.Marshal(s)
+	if err != nil {
+		// GameState is JSON-serializable by design; return nil only on
+		// programmer error.
+		return nil
+	}
+	var c GameState
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil
+	}
+	return &c
+}
+
 // StateFile manages persistent state for a character on disk.
 // State is written on every significant update so the daemon can
 // recover its state after a restart without re-querying the server.
@@ -46,14 +64,14 @@ func (sf *StateFile) Load() (*GameState, error) {
 	data, err := os.ReadFile(sf.path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return sf.state, nil
+			return cloneGameState(sf.state), nil
 		}
 		return nil, fmt.Errorf("read state: %w", err)
 	}
 	if err := json.Unmarshal(data, sf.state); err != nil {
 		return nil, fmt.Errorf("parse state: %w", err)
 	}
-	return sf.state, nil
+	return cloneGameState(sf.state), nil
 }
 
 // Save writes the current state to disk atomically (write to temp, rename).
@@ -61,10 +79,14 @@ func (sf *StateFile) Save(state *GameState) error {
 	sf.mu.Lock()
 	defer sf.mu.Unlock()
 
-	sf.state = state
+	copy := cloneGameState(state)
+	if copy == nil {
+		return fmt.Errorf("clone state: failed")
+	}
+	sf.state = copy
 	sf.lastSave = time.Now()
 
-	data, err := json.MarshalIndent(state, "", "  ")
+	data, err := json.MarshalIndent(sf.state, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal state: %w", err)
 	}
@@ -82,19 +104,20 @@ func (sf *StateFile) Save(state *GameState) error {
 	return nil
 }
 
-// Get returns the current in-memory state (no disk read).
+// Get returns a deep copy of the current in-memory state (no disk read).
 func (sf *StateFile) Get() *GameState {
 	sf.mu.Lock()
 	defer sf.mu.Unlock()
-	return sf.state
+	return cloneGameState(sf.state)
 }
 
 // Update modifies the state via a callback and saves to disk.
 func (sf *StateFile) Update(fn func(*GameState)) error {
 	sf.mu.Lock()
 	fn(sf.state)
+	copy := cloneGameState(sf.state)
 	sf.mu.Unlock()
-	return sf.Save(sf.state)
+	return sf.Save(copy)
 }
 
 // Path returns the state file path.
