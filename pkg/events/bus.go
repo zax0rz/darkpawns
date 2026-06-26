@@ -44,7 +44,8 @@ func NewInProcessBus() *InProcessBus {
 // Publish sends an event to all subscribed handlers. Handlers run sequentially.
 func (b *InProcessBus) Publish(ctx context.Context, event BusEvent) error {
 	b.mu.RLock()
-	subs := b.handlers[event.Type()]
+	subs := make([]subscriber, len(b.handlers[event.Type()]))
+	copy(subs, b.handlers[event.Type()])
 	b.mu.RUnlock()
 
 	for _, sub := range subs {
@@ -71,8 +72,11 @@ func (b *InProcessBus) Subscribe(eventType string, handler Handler) (string, fun
 		subs := b.handlers[eventType]
 		for i, s := range subs {
 			if s.id == id {
-				b.handlers[eventType] = append(subs[:i], subs[i+1:]...)
-				break
+				newSubs := make([]subscriber, 0, len(subs)-1)
+				newSubs = append(newSubs, subs[:i]...)
+				newSubs = append(newSubs, subs[i+1:]...)
+				b.handlers[eventType] = newSubs
+				return
 			}
 		}
 	}
