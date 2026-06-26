@@ -154,6 +154,38 @@ func (d *Door) Pick(skill int) (bool, string) {
 	return true, "You pick the lock."
 }
 
+// reverseDirection returns the opposite compass direction.
+func reverseDirection(dir string) string {
+	switch dir {
+	case "north":
+		return "south"
+	case "south":
+		return "north"
+	case "east":
+		return "west"
+	case "west":
+		return "east"
+	case "up":
+		return "down"
+	case "down":
+		return "up"
+	case "northeast":
+		return "southwest"
+	case "southwest":
+		return "northeast"
+	case "northwest":
+		return "southeast"
+	case "southeast":
+		return "northwest"
+	case "in":
+		return "out"
+	case "out":
+		return "in"
+	default:
+		return ""
+	}
+}
+
 // Bash attempts to bash the door down.
 // strength is the player's strength or bash skill.
 func (d *Door) Bash(strength int) (bool, string) {

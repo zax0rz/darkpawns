@@ -740,3 +740,37 @@ func TestDoorManager_LoadDoorsFromWorld(t *testing.T) {
 		t.Errorf("Expected KeyVNum 500, got %d", door.KeyVNum)
 	}
 }
+
+// TestDoorManager_TwoWayDoorMirrorsState ensures that operating on one side of
+// a reciprocal exit updates the reverse side as well.
+func TestDoorManager_TwoWayDoorMirrorsState(t *testing.T) {
+	dm := NewDoorManager()
+	dm.AddDoor(NewDoor(100, 101, "north", 2, 500)) // locked
+	dm.AddDoor(NewDoor(101, 100, "south", 2, 500)) // locked
+
+	// Unlock from the north side.
+	ok, msg := dm.UnlockDoor(100, "north", 500)
+	if !ok {
+		t.Fatalf("UnlockDoor from north failed: %s", msg)
+	}
+	rev, ok := dm.GetDoor(101, "south")
+	if !ok {
+		t.Fatal("reverse door not found")
+	}
+	if rev.Locked {
+		t.Error("reverse door should be unlocked after unlocking from north")
+	}
+
+	// Open from the south side and confirm the north side opens too.
+	ok, msg = dm.OpenDoor(101, "south")
+	if !ok {
+		t.Fatalf("OpenDoor from south failed: %s", msg)
+	}
+	fwd, ok := dm.GetDoor(100, "north")
+	if !ok {
+		t.Fatal("forward door not found")
+	}
+	if fwd.Closed {
+		t.Error("forward door should be open after opening from south")
+	}
+}

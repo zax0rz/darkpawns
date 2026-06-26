@@ -26,6 +26,23 @@ func (dm *DoorManager) key(fromRoom int, direction string) string {
 	return fmt.Sprintf("%d:%s", fromRoom, direction)
 }
 
+// mirrorToReverseDoor updates the reciprocal exit to match door's state.
+// Caller must hold dm.mu.
+func (dm *DoorManager) mirrorToReverseDoor(door *Door) {
+	revDir := reverseDirection(door.Direction)
+	if revDir == "" {
+		return
+	}
+	revKey := dm.key(door.ToRoom, revDir)
+	revDoor, ok := dm.doors[revKey]
+	if !ok || revDoor.ToRoom != door.FromRoom {
+		return
+	}
+	revDoor.Closed = door.Closed
+	revDoor.Locked = door.Locked
+	revDoor.Hp = door.Hp
+}
+
 // AddDoor adds a door to the manager.
 func (dm *DoorManager) AddDoor(door *Door) {
 	dm.mu.Lock()
@@ -148,7 +165,11 @@ func (dm *DoorManager) OpenDoor(fromRoom int, direction string) (bool, string) {
 		return false, "There is no door there."
 	}
 
-	return door.Open()
+	ok, msg := door.Open()
+	if ok {
+		dm.mirrorToReverseDoor(door)
+	}
+	return ok, msg
 }
 
 // CloseDoor attempts to close a door.
@@ -166,7 +187,11 @@ func (dm *DoorManager) CloseDoor(fromRoom int, direction string) (bool, string) 
 		return false, "There is no door there."
 	}
 
-	return door.Close()
+	ok, msg := door.Close()
+	if ok {
+		dm.mirrorToReverseDoor(door)
+	}
+	return ok, msg
 }
 
 // LockDoor attempts to lock a door.
@@ -184,7 +209,11 @@ func (dm *DoorManager) LockDoor(fromRoom int, direction string, keyVNum int) (bo
 		return false, "There is no door there."
 	}
 
-	return door.Lock(keyVNum)
+	ok, msg := door.Lock(keyVNum)
+	if ok {
+		dm.mirrorToReverseDoor(door)
+	}
+	return ok, msg
 }
 
 // UnlockDoor attempts to unlock a door.
@@ -202,7 +231,11 @@ func (dm *DoorManager) UnlockDoor(fromRoom int, direction string, keyVNum int) (
 		return false, "There is no door there."
 	}
 
-	return door.Unlock(keyVNum)
+	ok, msg := door.Unlock(keyVNum)
+	if ok {
+		dm.mirrorToReverseDoor(door)
+	}
+	return ok, msg
 }
 
 // PickDoor attempts to pick a door lock.
@@ -220,7 +253,11 @@ func (dm *DoorManager) PickDoor(fromRoom int, direction string, skill int) (bool
 		return false, "There is no door there."
 	}
 
-	return door.Pick(skill)
+	ok, msg := door.Pick(skill)
+	if ok {
+		dm.mirrorToReverseDoor(door)
+	}
+	return ok, msg
 }
 
 // BashDoor attempts to bash a door.
@@ -238,7 +275,11 @@ func (dm *DoorManager) BashDoor(fromRoom int, direction string, strength int) (b
 		return false, "There is no door there."
 	}
 
-	return door.Bash(strength)
+	ok, msg := door.Bash(strength)
+	if ok {
+		dm.mirrorToReverseDoor(door)
+	}
+	return ok, msg
 }
 
 // ResetDoors resets all doors to their default state.
