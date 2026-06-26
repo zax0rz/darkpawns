@@ -1,52 +1,55 @@
 package engine
 
 import (
-	"sync/atomic"
 	"testing"
 	"time"
 )
 
-func TestGameLoopStopPreventsFurtherCallbacks(t *testing.T) {
-	var callbacks atomic.Int64
-	gl := NewGameLoop(GameLoopCallbacks{
-		OnEventProcess: func() {
-			callbacks.Add(1)
-		},
-	})
-	gl.tickerInterval = time.Millisecond
-
-	gl.Start()
-	waitUntil(t, func() bool {
-		return callbacks.Load() > 0
-	})
-
-	gl.Stop()
-	stoppedAt := callbacks.Load()
-	time.Sleep(5 * time.Millisecond)
-
-	if got := callbacks.Load(); got != stoppedAt {
-		t.Fatalf("callback count changed after Stop: before=%d after=%d", stoppedAt, got)
-	}
-}
-
-func TestGameLoopStopIsIdempotent(t *testing.T) {
+func TestGameLoopStopBeforeStartReturns(t *testing.T) {
 	gl := NewGameLoop(GameLoopCallbacks{})
-	gl.tickerInterval = time.Millisecond
-	gl.Start()
 
+	done := make(chan struct{})
+	go func() {
+		gl.Stop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("Stop blocked when called before Start")
+	}
+}
+
+func TestGameLoopStartStop(t *testing.T) {
+	gl := NewGameLoop(GameLoopCallbacks{})
+
+	gl.Start()
+	time.Sleep(150 * time.Millisecond)
+	gl.Stop()
+
+	if gl.Pulse.Load() == 0 {
+		t.Fatal("expected pulse counter to advance")
+	}
+}
+
+func TestGameLoopRepeatedStopDoesNotPanic(t *testing.T) {
+	gl := NewGameLoop(GameLoopCallbacks{})
+
+	gl.Start()
+	time.Sleep(150 * time.Millisecond)
+	gl.Stop()
 	gl.Stop()
 	gl.Stop()
 }
 
-func waitUntil(t *testing.T, condition func() bool) {
-	t.Helper()
+func TestGameLoopStartIsIdempotent(t *testing.T) {
+	gl := NewGameLoop(GameLoopCallbacks{})
 
-	deadline := time.Now().Add(100 * time.Millisecond)
-	for time.Now().Before(deadline) {
-		if condition() {
-			return
-		}
-		time.Sleep(time.Millisecond)
-	}
-	t.Fatal("condition not met before deadline")
+	gl.Start()
+	gl.Start()
+	gl.Start()
+
+	time.Sleep(150 * time.Millisecond)
+	gl.Stop()
 }

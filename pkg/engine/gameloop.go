@@ -125,8 +125,14 @@ type GameLoop struct {
 	// stopCh signals the goroutine to exit.
 	stopCh chan struct{}
 	// doneCh is closed when the goroutine exits.
-	doneCh   chan struct{}
-	stopOnce sync.Once
+	doneCh chan struct{}
+
+	// started is set when Start has launched the goroutine.
+	started atomic.Bool
+
+	// lifecycle guards Start/Stop transitions.
+	startOnce sync.Once
+	stopOnce  sync.Once
 }
 
 // NewGameLoop creates a new GameLoop with the given callbacks.
@@ -141,19 +147,28 @@ func NewGameLoop(callbacks GameLoopCallbacks) *GameLoop {
 
 // Start begins the game loop in a new goroutine. Returns immediately.
 // The ticker runs every 100ms. Each tick increments the pulse counter and
-// dispatches heartbeat callbacks.
+// dispatches heartbeat callbacks. Start is idempotent: repeated calls are
+// ignored after the loop has been started once.
 func (gl *GameLoop) Start() {
-	gl.startedAt = time.Now()
-	slog.Info(
-		"game loop starting",
-		"tickerInterval", gl.tickerInterval,
-		"pulsesPerSec", PASSES_PER_SEC,
-	)
-	go gl.run()
+	gl.startOnce.Do(func() {
+		gl.startedAt = time.Now()
+		gl.started.Store(true)
+		slog.Info(
+			"game loop starting",
+			"tickerInterval", gl.tickerInterval,
+			"pulsesPerSec", PASSES_PER_SEC,
+		)
+		go gl.run()
+	})
 }
 
 // Stop signals the loop goroutine to stop and waits for it to finish.
+// Stop is idempotent and safe to call before Start; it returns immediately
+// if the loop was never started.
 func (gl *GameLoop) Stop() {
+	if !gl.started.Load() {
+		return
+	}
 	gl.stopOnce.Do(func() {
 		close(gl.stopCh)
 		<-gl.doneCh
