@@ -101,15 +101,18 @@ func doMemoryHookWithRetry(httpClient *http.Client, req *http.Request) error {
 
 		// #nosec G704
 		resp, err := httpClient.Do(req)
-		if err == nil && resp.StatusCode < 500 {
-			_ = resp.Body.Close()
-			return nil
-		}
-		if resp != nil {
-			_ = resp.Body.Close()
-		}
 		if err != nil {
 			lastErr = err
+		} else {
+			_ = resp.Body.Close()
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				return nil
+			}
+			lastErr = fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+			// 4xx errors (except 429 Too Many Requests) are permanent; do not retry.
+			if resp.StatusCode >= 400 && resp.StatusCode < 500 && resp.StatusCode != http.StatusTooManyRequests {
+				return lastErr
+			}
 		}
 		if attempt < 2 {
 			time.Sleep(time.Duration(100*(attempt+1)) * time.Millisecond)
