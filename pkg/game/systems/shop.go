@@ -369,6 +369,20 @@ func (s *Shop) DeductGold(amount int) {
 	}
 }
 
+// TryDeductGold atomically checks whether the keeper can afford amount and,
+// if so, deducts it. It returns false without modifying Gold when the balance
+// would go negative, avoiding the overdraw race between CanAffordToBuy and
+// DeductGold.
+func (s *Shop) TryDeductGold(amount int) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.Gold < amount {
+		return false
+	}
+	s.Gold -= amount
+	return true
+}
+
 // AddGold adds gold to the keeper (when player buys from shop).
 func (s *Shop) AddGold(amount int) {
 	s.mu.Lock()

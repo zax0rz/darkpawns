@@ -366,6 +366,72 @@ func TestShopTransactionConcurrentDeadlock(t *testing.T) {
 	wg.Wait()
 }
 
+// TestShopConcurrentSell_NoOverdraw ensures two simultaneous sells cannot
+// drain more gold than the shop has. With Gold equal to one item's buy price,
+// exactly one sale succeeds and total player gold grows by exactly that price.
+func TestShopConcurrentSell_NoOverdraw(t *testing.T) {
+	manager := NewShopManager()
+	shop := manager.CreateShopConcrete(1001, "Test Shop", 3001)
+	shop.ItemTypes = []int{1}
+
+	proto := &parser.Obj{
+		VNum:      1001,
+		Keywords:  "test item",
+		ShortDesc: "a test item",
+		Cost:      100,
+		TypeFlag:  1,
+	}
+
+	// Buy price is 50% of cost = 50. Give the shop exactly enough for one item.
+	shop.Gold = 50
+
+	playerA := &game.Player{Name: "A", Gold: 0}
+	playerA.Inventory = game.NewInventory()
+	itemA := game.NewObjectInstance(proto, -1)
+	_ = playerA.Inventory.AddItem(itemA)
+
+	playerB := &game.Player{Name: "B", Gold: 0}
+	playerB.Inventory = game.NewInventory()
+	itemB := game.NewObjectInstance(proto, -1)
+	_ = playerB.Inventory.AddItem(itemB)
+
+	var wg sync.WaitGroup
+	var okA, okB bool
+	var mu sync.Mutex
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		success, _ := manager.ProcessTransaction(shop, playerA, itemA, false)
+		mu.Lock()
+		okA = success
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		success, _ := manager.ProcessTransaction(shop, playerB, itemB, false)
+		mu.Lock()
+		okB = success
+		mu.Unlock()
+	}()
+	wg.Wait()
+
+	if okA && okB {
+		t.Error("both sells succeeded, but shop only had gold for one")
+	}
+	if !okA && !okB {
+		t.Error("neither sell succeeded, expected exactly one")
+	}
+
+	totalPlayerGold := playerA.Gold + playerB.Gold
+	if totalPlayerGold != 50 {
+		t.Errorf("total player gold = %d, want 50", totalPlayerGold)
+	}
+	if shop.Gold != 0 {
+		t.Errorf("shop.Gold = %d, want 0 after one successful purchase", shop.Gold)
+	}
+}
+
 // TestShopPersistence tests saving and loading shop state.
 func TestShopPersistence(t *testing.T) {
 	// Clean up shops file if it exists

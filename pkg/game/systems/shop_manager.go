@@ -239,8 +239,10 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 	// Calculate price (player's CHA affects sell bonus)
 	price := shop.CalculateBuyPrice(item, player.Stats.Cha)
 
-	// Check keeper gold — src/shop.h:63 bankAccount, src/shop.c missing_cash1
-	if !shop.CanAffordToBuy(price) {
+	// Check keeper gold atomically — src/shop.h:63 bankAccount, src/shop.c missing_cash1.
+	// TryDeductGold returns false without modifying Gold if the shop cannot pay,
+	// preventing concurrent sells from overdrawing the keeper.
+	if !shop.TryDeductGold(price) {
 		if err := player.Inventory.AddItem(gameItem); err != nil {
 			slog.Error("shop sell rollback: restore item failed", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
 		}
@@ -249,14 +251,15 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 
 	// Check if shop has inventory space
 	if len(shop.GetInventory()) >= shop.MaxItems {
+		// Refund the gold we already deducted.
+		shop.AddGold(price)
 		if err := player.Inventory.AddItem(gameItem); err != nil {
 			slog.Error("shop sell rollback: inventory full, failed to restore item", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
 		}
 		return false, "The shop's inventory is full."
 	}
 
-	// Transfer gold: keeper pays player, keeper gold decremented (src/shop.c:808)
-	shop.DeductGold(price)
+	// Transfer gold: keeper pays player.
 	player.Gold += price
 
 	// Transfer item to shop
