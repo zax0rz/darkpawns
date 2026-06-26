@@ -374,11 +374,14 @@ class WorldParser:
         report_lines.append(f"Total zones: {len(self.zones)}")
         
         # Room statistics
+        total_rooms = len(self.rooms)
         rooms_with_exits = sum(1 for room in self.rooms.values() if room.exits)
         total_exits = sum(len(room.exits) for room in self.rooms.values())
-        report_lines.append(f"Rooms with exits: {rooms_with_exits} ({rooms_with_exits/len(self.rooms)*100:.1f}%)")
+        rooms_with_exits_pct = rooms_with_exits / total_rooms * 100 if total_rooms else 0.0
+        average_exits = total_exits / total_rooms if total_rooms else 0.0
+        report_lines.append(f"Rooms with exits: {rooms_with_exits} ({rooms_with_exits_pct:.1f}%)")
         report_lines.append(f"Total exits: {total_exits}")
-        report_lines.append(f"Average exits per room: {total_exits/len(self.rooms):.2f}")
+        report_lines.append(f"Average exits per room: {average_exits:.2f}")
         
         # Zone statistics
         report_lines.append("\nZone Statistics:")
