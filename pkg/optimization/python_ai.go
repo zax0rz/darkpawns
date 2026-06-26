@@ -91,6 +91,7 @@ func (bp *AIBatchProcessor) Submit(req AIRequest) (AIResponse, error) {
 
 		// Process batch
 		if err := bp.processFunc(batch); err != nil {
+			bp.sendBatchError(batch, err)
 			return AIResponse{}, err
 		}
 
@@ -116,6 +117,16 @@ func (bp *AIBatchProcessor) Submit(req AIRequest) (AIResponse, error) {
 	}
 }
 
+// sendBatchError fans an error out to every item in a batch.
+func (bp *AIBatchProcessor) sendBatchError(batch []AIBatchItem, err error) {
+	for _, item := range batch {
+		select {
+		case item.Error <- err:
+		default:
+		}
+	}
+}
+
 // processBatch processes the current batch.
 func (bp *AIBatchProcessor) processBatch() {
 	bp.mu.Lock()
@@ -131,13 +142,7 @@ func (bp *AIBatchProcessor) processBatch() {
 
 	// Process batch
 	if err := bp.processFunc(batch); err != nil {
-		// Send errors to all items in batch
-		for _, item := range batch {
-			select {
-			case item.Error <- err:
-			default:
-			}
-		}
+		bp.sendBatchError(batch, err)
 	}
 }
 
@@ -156,12 +161,7 @@ func (bp *AIBatchProcessor) Close() error {
 
 		go func() {
 			if err := bp.processFunc(batch); err != nil {
-				for _, item := range batch {
-					select {
-					case item.Error <- err:
-					default:
-					}
-				}
+				bp.sendBatchError(batch, err)
 			}
 		}()
 	}
