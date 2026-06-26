@@ -300,9 +300,12 @@ var spellNamesTable = []string{
 	"conjure elemental",
 }
 
-// isClassPsionicOrMystic returns true for psionic (5) or mystic (7) classes.
+// isClassPsionicOrMystic returns true for psionic (9) or mystic (11) classes.
+// Class IDs per C structs.h: CLASS_PSIONIC=9, CLASS_MYSTIC=11 (5 and 7 are
+// CLASS_AVATAR and CLASS_PALADIN). The prior 5/7 gave avatar/paladin casters
+// psionic focus messaging while real psionic/mystic casters used spoken incantations.
 func isClassPsionicOrMystic(class int) bool {
-	return class == 5 || class == 7
+	return class == 9 || class == 11
 }
 
 // getClass extracts the class from an interface{} that implements GetClass() int.
