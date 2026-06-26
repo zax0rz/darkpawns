@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/subtle"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -515,12 +516,13 @@ func RunProfilingSession(profileDir string, duration time.Duration) error {
 	// Wait for duration
 	time.Sleep(duration)
 
-	// Stop profiling
-	_ = profiler.StopCPUProfile()
-	_ = profiler.StopBlockProfile()
-	_ = profiler.StopMutexProfile()
-	_ = profiler.WriteHeapProfile()
-	_ = profiler.GoroutineDump()
+	// Stop profiling and collect any cleanup/write errors.
+	var stopErrs []error
+	stopErrs = append(stopErrs, profiler.StopCPUProfile())
+	stopErrs = append(stopErrs, profiler.StopBlockProfile())
+	stopErrs = append(stopErrs, profiler.StopMutexProfile())
+	stopErrs = append(stopErrs, profiler.WriteHeapProfile())
+	stopErrs = append(stopErrs, profiler.GoroutineDump())
 
 	monitor.Stop()
 
@@ -547,6 +549,10 @@ func RunProfilingSession(profileDir string, duration time.Duration) error {
 	}
 
 	profiler.PrintMemoryStats()
+
+	if err := errors.Join(stopErrs...); err != nil {
+		return fmt.Errorf("profiling session cleanup failed: %w", err)
+	}
 
 	// #nosec G706
 	slog.Info("Profiling session completed", "dir", profileDir)
