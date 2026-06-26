@@ -54,8 +54,12 @@ func run(name, dsn string) error {
 }
 
 func runWithDB(name string, database db.Database) error {
-	if _, err := database.GetPlayer(name); err != nil {
+	player, err := database.GetPlayer(name)
+	if err != nil {
 		return fmt.Errorf("get player %q: %w", name, err)
+	}
+	if player == nil {
+		return fmt.Errorf("player %q not found", name)
 	}
 
 	rawKey, id, err := database.CreateAgentKey(name)

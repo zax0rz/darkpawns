@@ -94,6 +94,29 @@ func TestRunWithDBGetPlayerError(t *testing.T) {
 	}
 }
 
+func TestRunWithDBGetPlayerNotFound(t *testing.T) {
+	called := false
+	mock := &mockDatabase{
+		getPlayerFunc: func(name string) (*db.PlayerRecord, error) {
+			return nil, nil
+		},
+		createAgentKeyFunc: func(characterName string) (string, int64, error) {
+			called = true
+			return "", 0, errors.New("should not be called")
+		},
+	}
+	err := runWithDB("Nobody", mock)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "player \"Nobody\" not found") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+	if called {
+		t.Fatal("CreateAgentKey should not be called when player is not found")
+	}
+}
+
 func TestRunWithDBCreateKeyError(t *testing.T) {
 	mock := &mockDatabase{
 		createAgentKeyFunc: func(name string) (string, int64, error) {
