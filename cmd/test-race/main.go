@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -103,6 +104,7 @@ func main() {
 		{game.RaceHuman, game.ClassMystic, false},     // Mystic: remort-only
 	}
 
+	failed := false
 	for _, tc := range testCases {
 		valid := game.ValidUserClassChoice(tc.race, tc.class)
 		raceName := "Unknown"
@@ -124,9 +126,15 @@ func main() {
 		status := "✓"
 		if valid != tc.valid {
 			status = "✗"
+			failed = true
 		}
 
 		fmt.Printf("%s %-8s %-8s: expected %v, got %v\n",
 			status, raceName, className, tc.valid, valid)
+	}
+
+	if failed {
+		fmt.Println("\nFAILED: one or more class/race expectations did not match")
+		os.Exit(1)
 	}
 }
