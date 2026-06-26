@@ -263,8 +263,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	// Shopkeeper protection — C: fight.c:1360
 	// Any attempt to damage a shopkeeper halts combat immediately.
 	if IsShopkeeper != nil && IsShopkeeper(defender.GetName()) {
-		attacker.StopFighting()
-		defender.StopFighting()
+		ce.StopCombat(attacker.GetName())
 		return
 	}
 
