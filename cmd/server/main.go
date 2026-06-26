@@ -366,17 +366,20 @@ func main() {
 	}
 	slog.Info("Shutting down gracefully...")
 
-	// 1. Stop telnet listener (accepting new TCP connections)
+	// 1. Stop heartbeat callbacks before draining sessions or saving world state.
+	gameLoop.Stop()
+
+	// 2. Stop telnet listener (accepting new TCP connections)
 	telnet.Stop()
 
-	// 2. Stop HTTP/WebSocket server (accepting new WebSocket connections)
+	// 3. Stop HTTP/WebSocket server (accepting new WebSocket connections)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		slog.Error("HTTP server shutdown error", "error", err)
 	}
 
-	// 3. Drain active player sessions (stops combat, broadcasts leave, saves profiles, closes connections)
+	// 4. Drain active player sessions (stops combat, broadcasts leave, saves profiles, closes connections)
 	manager.ShutdownGracefully(5 * time.Second)
 
 	// Wait for zone resets to finish before saving — prevents concurrent

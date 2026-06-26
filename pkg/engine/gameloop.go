@@ -16,6 +16,7 @@ package engine
 
 import (
 	"log/slog"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -124,7 +125,8 @@ type GameLoop struct {
 	// stopCh signals the goroutine to exit.
 	stopCh chan struct{}
 	// doneCh is closed when the goroutine exits.
-	doneCh chan struct{}
+	doneCh   chan struct{}
+	stopOnce sync.Once
 }
 
 // NewGameLoop creates a new GameLoop with the given callbacks.
@@ -152,9 +154,11 @@ func (gl *GameLoop) Start() {
 
 // Stop signals the loop goroutine to stop and waits for it to finish.
 func (gl *GameLoop) Stop() {
-	close(gl.stopCh)
-	<-gl.doneCh
-	slog.Info("game loop stopped")
+	gl.stopOnce.Do(func() {
+		close(gl.stopCh)
+		<-gl.doneCh
+		slog.Info("game loop stopped")
+	})
 }
 
 // Uptime returns a snapshot of the server uptime.
