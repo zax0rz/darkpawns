@@ -37,6 +37,7 @@ func NewSQLiteBackend(dbPath string) (*SQLiteBackend, error) {
 	db.SetConnMaxLifetime(5 * time.Minute)
 
 	if err := db.Ping(); err != nil {
+		_ = db.Close()
 		return nil, fmt.Errorf("ping sqlite: %w", err)
 	}
 

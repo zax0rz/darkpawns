@@ -37,7 +37,15 @@ func CORSMiddleware(next http.Handler) http.Handler {
 func getAllowedOrigins() []string {
 	// Read from environment variable
 	if envOrigins := os.Getenv("CORS_ALLOWED_ORIGINS"); envOrigins != "" {
-		return strings.Split(envOrigins, ",")
+		parts := strings.Split(envOrigins, ",")
+		origins := make([]string, 0, len(parts))
+		for _, o := range parts {
+			o = strings.TrimSpace(o)
+			if o != "" {
+				origins = append(origins, o)
+			}
+		}
+		return origins
 	}
 
 	// Default development origins

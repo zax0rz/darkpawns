@@ -47,7 +47,7 @@ def fetch_recent_memories(conn, agent_name: str, hours: int = 24):
             FROM agent_narrative_memory m
             JOIN players p ON p.id = m.agent_character_id
             WHERE p.name ILIKE %s
-              AND m.created_at > NOW() - INTERVAL '%s hours'
+              AND m.created_at > NOW() - (%s * INTERVAL '1 hour')
             ORDER BY m.created_at ASC
             """,
             (agent_name, hours),

@@ -8,7 +8,7 @@ Uses MiniMax M2.7 or GLM-5.1 for advanced emotion classification.
 import os
 import json
 import re
-from typing import Dict, Optional, Any
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 try:
