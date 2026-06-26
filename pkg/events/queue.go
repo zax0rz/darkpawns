@@ -263,12 +263,20 @@ func (eq *EventQueue) TimeUntilNext() time.Duration {
 	eq.mu.Lock()
 	defer eq.mu.Unlock()
 
-	if eq.events.Len() == 0 {
+	var nextWhen int64 = -1
+	for _, evt := range eq.events {
+		if evt.Cancelled {
+			continue
+		}
+		if nextWhen == -1 || evt.When < nextWhen {
+			nextWhen = evt.When
+		}
+	}
+	if nextWhen == -1 {
 		return 0
 	}
 
-	evt := eq.events[0]
-	pulsesRemaining := evt.When - eq.pulse
+	pulsesRemaining := nextWhen - eq.pulse
 	if pulsesRemaining < 0 {
 		pulsesRemaining = 0
 	}

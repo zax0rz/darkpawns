@@ -269,6 +269,27 @@ func TestTimeUntilNext(t *testing.T) {
 	}
 }
 
+// TestTimeUntilNextIgnoresCancelledEvents verifies that cancelled events are
+// not treated as the next pending event.
+func TestTimeUntilNextIgnoresCancelledEvents(t *testing.T) {
+	eq := NewEventQueue(100 * time.Millisecond)
+	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 { return 0 }
+
+	early := eq.Create(2, 100, 0, 0, 0, "early", 1, fn)
+	late := eq.Create(7, 100, 0, 0, 0, "late", 1, fn)
+
+	eq.Cancel(early)
+	expected := 7 * 100 * time.Millisecond
+	if got := eq.TimeUntilNext(); got != expected {
+		t.Fatalf("expected %v after cancelling early event, got %v", expected, got)
+	}
+
+	eq.Cancel(late)
+	if eq.TimeUntilNext() != 0 {
+		t.Fatalf("expected 0 when all events are cancelled, got %v", eq.TimeUntilNext())
+	}
+}
+
 // TestPulseIncrement verifies pulse counter increments each Process call.
 func TestPulseIncrement(t *testing.T) {
 	eq := NewEventQueue(10 * time.Millisecond)
