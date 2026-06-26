@@ -395,10 +395,6 @@ func (bs *BoardSystem) DisplayMsg(boardType int, ch *Player, arg string) bool {
 
 	// Check if arg is just "board" / "bulletin" — redirect to ShowBoard
 	if isAbbrev(arg, "board") || isAbbrev(arg, "bulletin") || strings.EqualFold(arg, "board") || strings.EqualFold(arg, "bulletin") {
-		bs.mu.RUnlock()
-		defer bs.mu.RLock()
-		bs.mu.RLock()
-		// This is awkward with read locks. Let me just handle it differently.
 		// Return false so caller catches "read board" as "show board"
 		return false
 	}
