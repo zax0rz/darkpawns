@@ -49,6 +49,50 @@ type ItemData struct {
 	Type string
 }
 
+// Clone returns a deep copy of the cached room, including all slice fields.
+func (r *CachedRoom) Clone() *CachedRoom {
+	if r == nil {
+		return nil
+	}
+
+	clone := &CachedRoom{
+		VNum:        r.VNum,
+		Name:        r.Name,
+		Description: r.Description,
+		CachedAt:    r.CachedAt,
+		AccessCount: r.AccessCount,
+		LastUpdated: r.LastUpdated,
+	}
+
+	if len(r.Exits) > 0 {
+		clone.Exits = make([]ExitData, len(r.Exits))
+		copy(clone.Exits, r.Exits)
+		for i := range clone.Exits {
+			if len(r.Exits[i].Flags) > 0 {
+				clone.Exits[i].Flags = make([]string, len(r.Exits[i].Flags))
+				copy(clone.Exits[i].Flags, r.Exits[i].Flags)
+			}
+		}
+	}
+
+	if len(r.Players) > 0 {
+		clone.Players = make([]string, len(r.Players))
+		copy(clone.Players, r.Players)
+	}
+
+	if len(r.Mobs) > 0 {
+		clone.Mobs = make([]MobData, len(r.Mobs))
+		copy(clone.Mobs, r.Mobs)
+	}
+
+	if len(r.Items) > 0 {
+		clone.Items = make([]ItemData, len(r.Items))
+		copy(clone.Items, r.Items)
+	}
+
+	return clone
+}
+
 // NewRoomCache creates a new room cache. A non-positive TTL disables
 // background cleanup (rooms expire lazily on access) and avoids a panic from
 // an invalid ticker interval.
@@ -66,7 +110,9 @@ func NewRoomCache(ttl time.Duration) *RoomCache {
 	return rc
 }
 
-// GetRoom retrieves room from cache or fetches if not present
+// GetRoom retrieves room from cache or fetches if not present. The returned
+// CachedRoom is a deep copy owned by the caller; mutating it will not affect
+// the cache's internal state.
 func (rc *RoomCache) GetRoom(vnum int, fetchFunc func(int) (*CachedRoom, error)) (*CachedRoom, error) {
 	// Try cache first
 	rc.mu.RLock()
@@ -77,7 +123,7 @@ func (rc *RoomCache) GetRoom(vnum int, fetchFunc func(int) (*CachedRoom, error))
 		rc.mu.Lock()
 		cached.AccessCount++
 		rc.mu.Unlock()
-		return cached, nil
+		return cached.Clone(), nil
 	}
 
 	// Fetch from source
@@ -86,25 +132,28 @@ func (rc *RoomCache) GetRoom(vnum int, fetchFunc func(int) (*CachedRoom, error))
 		return nil, err
 	}
 
-	// Update cache
+	// Update cache with a clone so the caller cannot mutate our internal copy.
 	rc.mu.Lock()
-	room.CachedAt = time.Now()
-	room.AccessCount = 1
-	room.LastUpdated = time.Now()
-	rc.rooms[vnum] = room
+	stored := room.Clone()
+	stored.CachedAt = time.Now()
+	stored.AccessCount = 1
+	stored.LastUpdated = time.Now()
+	rc.rooms[vnum] = stored
 	rc.mu.Unlock()
 
-	return room, nil
+	return stored.Clone(), nil
 }
 
-// UpdateRoom updates room in cache
+// UpdateRoom updates room in cache. The cache stores a deep copy of the
+// supplied room so caller mutations do not affect cached state.
 func (rc *RoomCache) UpdateRoom(room *CachedRoom) {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
 
-	room.LastUpdated = time.Now()
-	room.CachedAt = time.Now()
-	rc.rooms[room.VNum] = room
+	stored := room.Clone()
+	stored.LastUpdated = time.Now()
+	stored.CachedAt = time.Now()
+	rc.rooms[room.VNum] = stored
 }
 
 // UpdateRoomPartial updates specific fields of a room
