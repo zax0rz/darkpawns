@@ -560,13 +560,25 @@ func RunProfilingSession(profileDir string, duration time.Duration) error {
 	return nil
 }
 
+// pprofBindAddr returns the address the pprof server should bind to.
+// Precedence: explicit CLI argument > PPROF_BIND_ADDR env var > localhost default.
+func pprofBindAddr(args []string, getenv func(string) string) string {
+	if len(args) > 2 {
+		return args[2]
+	}
+	if env := getenv("PPROF_BIND_ADDR"); env != "" {
+		return env
+	}
+	return "127.0.0.1:6060"
+}
+
 func main() {
 	// Parse command line arguments
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: profiler <command>")
 		fmt.Println("Commands:")
 		fmt.Println("  monitor <dir> <duration> - Run profiling session")
-		fmt.Println("  pprof <addr> - Start pprof server")
+		fmt.Println("  pprof <addr> - Start pprof server (default 127.0.0.1:6060, override with PPROF_BIND_ADDR)")
 		fmt.Println("  stats - Print current memory stats")
 		os.Exit(1)
 	}
@@ -593,10 +605,7 @@ func main() {
 		}
 
 	case "pprof":
-		addr := ":6060"
-		if len(os.Args) > 2 {
-			addr = os.Args[2]
-		}
+		addr := pprofBindAddr(os.Args, os.Getenv)
 
 		server, err := StartPProfServer(addr)
 		if err != nil {

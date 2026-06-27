@@ -78,6 +78,45 @@ func TestStartPProfServerStartsWithAuth(t *testing.T) {
 	_ = server.Shutdown(ctx)
 }
 
+func TestPProfBindAddr(t *testing.T) {
+	tests := []struct {
+		name   string
+		args   []string
+		env    map[string]string
+		want   string
+	}{
+		{
+			name: "default localhost",
+			args: []string{"profiler", "pprof"},
+			env:  map[string]string{},
+			want: "127.0.0.1:6060",
+		},
+		{
+			name: "env override",
+			args: []string{"profiler", "pprof"},
+			env:  map[string]string{"PPROF_BIND_ADDR": "0.0.0.0:6060"},
+			want: "0.0.0.0:6060",
+		},
+		{
+			name: "cli arg beats env",
+			args: []string{"profiler", "pprof", ":7070"},
+			env:  map[string]string{"PPROF_BIND_ADDR": "0.0.0.0:6060"},
+			want: ":7070",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			getenv := func(key string) string {
+				return tt.env[key]
+			}
+			if got := pprofBindAddr(tt.args, getenv); got != tt.want {
+				t.Fatalf("pprofBindAddr() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestProfilerWriteHeapProfileReturnsErrorOnReadOnlyDir(t *testing.T) {
 	profileDir := t.TempDir()
 	if err := os.Chmod(profileDir, 0o000); err != nil {
