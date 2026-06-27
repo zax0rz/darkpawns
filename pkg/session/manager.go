@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -41,12 +40,9 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		// Development: allow all origins
-		if os.Getenv("ENVIRONMENT") == "development" {
-			return true
-		}
-
-		// Production: validate against allowed origins
+		// Validate against explicit origin allowlist. There is no
+		// blanket development bypass; relaxed origins must be configured
+		// explicitly rather than inferred from ENVIRONMENT.
 		allowedOrigins := []string{
 			"https://darkpawns.labz0rz.com",
 		}

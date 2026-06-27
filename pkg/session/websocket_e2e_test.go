@@ -93,21 +93,17 @@ func wsWrite(t *testing.T, c *websocket.Conn, msgType string, data interface{}) 
 // Secondary issue for in-process tests:
 //
 //	net.IP.IsPrivate() returns false for 127.0.0.1 (loopback is not RFC-1918).
-//	The upgrader.CheckOrigin (manager.go:57) rejects loopback connections that
-//	carry no Origin header unless ENVIRONMENT=development is set.  Without this,
-//	upgrader.Upgrade returns 403 and websocket.DefaultDialer returns a nil *Conn.
+//	The upgrader.CheckOrigin rejects loopback connections that carry no Origin
+//	header, so the dialer must supply an allowed origin.
 func TestWebSocket_NewCharThenLook(t *testing.T) {
-	// Allow WebSocket connections from 127.0.0.1: loopback is not RFC-1918
-	// "private", so net.IP.IsPrivate() returns false and CheckOrigin rejects
-	// it without this flag.
-	t.Setenv("ENVIRONMENT", "development")
-
 	m := makeManagerWithStartRoom(t)
 	srv := httptest.NewServer(http.HandlerFunc(m.HandleWebSocket))
 	t.Cleanup(srv.Close)
 
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
-	c, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	headers := http.Header{}
+	headers.Set("Origin", "https://darkpawns.labz0rz.com")
+	c, _, err := websocket.DefaultDialer.Dial(wsURL, headers)
 	if err != nil {
 		t.Fatalf("WebSocket dial: %v", err)
 	}
