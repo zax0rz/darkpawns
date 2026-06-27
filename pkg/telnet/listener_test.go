@@ -87,3 +87,60 @@ func TestHandleConnRejectsEmptyPassword(t *testing.T) {
 		t.Fatal("handleConn did not return after empty password")
 	}
 }
+
+func TestEffectiveBanLevel_IPAndHostname(t *testing.T) {
+	bm := game.NewBanManager()
+	bm.AddBan("192.0.2.10", game.BanNew, "test")
+	bm.AddBan("evil.example.com", game.BanAll, "test")
+
+	origLookup := lookupAddr
+	defer func() { lookupAddr = origLookup }()
+	lookupAddr = func(addr string) ([]string, error) {
+		if addr == "192.0.2.10" {
+			return []string{"evil.example.com."}, nil
+		}
+		return nil, nil
+	}
+
+	// IP-only check would return BanNew; hostname check elevates to BanAll.
+	if got := effectiveBanLevel("192.0.2.10", bm); got != game.BanAll {
+		t.Fatalf("effectiveBanLevel = %d, want BanAll (%d)", got, game.BanAll)
+	}
+}
+
+func TestEffectiveBanLevel_TimeoutFallsBackToIP(t *testing.T) {
+	bm := game.NewBanManager()
+	bm.AddBan("198.51.100.5", game.BanAll, "test")
+
+	origLookup := lookupAddr
+	origTimeout := dnsLookupTimeout
+	defer func() {
+		lookupAddr = origLookup
+		dnsLookupTimeout = origTimeout
+	}()
+
+	lookupAddr = func(addr string) ([]string, error) {
+		time.Sleep(100 * time.Millisecond)
+		return []string{"slow.example.com."}, nil
+	}
+	dnsLookupTimeout = 10 * time.Millisecond
+
+	// Even though DNS times out, the raw IP is still banned.
+	if got := effectiveBanLevel("198.51.100.5", bm); got != game.BanAll {
+		t.Fatalf("effectiveBanLevel = %d, want BanAll (%d)", got, game.BanAll)
+	}
+}
+
+func TestEffectiveBanLevel_NoMatch(t *testing.T) {
+	bm := game.NewBanManager()
+
+	origLookup := lookupAddr
+	defer func() { lookupAddr = origLookup }()
+	lookupAddr = func(addr string) ([]string, error) {
+		return []string{"clean.example.com."}, nil
+	}
+
+	if got := effectiveBanLevel("203.0.113.7", bm); got != game.BanNot {
+		t.Fatalf("effectiveBanLevel = %d, want BanNot (%d)", got, game.BanNot)
+	}
+}

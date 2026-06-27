@@ -40,6 +40,14 @@ const (
 	maxTotalConns = 200
 )
 
+// dnsLookupTimeout caps reverse-DNS resolution during ban checks. It is a
+// variable (not a const) so tests can shorten it for deterministic timeouts.
+var dnsLookupTimeout = 3 * time.Second
+
+// lookupAddr is a package-level shim around net.LookupAddr so tests can
+// inject deterministic reverse-DNS results without touching the network.
+var lookupAddr = net.LookupAddr
+
 var listenTCP = net.Listen
 
 var startTime = time.Now()
@@ -114,9 +122,11 @@ func Listen(port int, manager *session.Manager) error {
 			connPerIP[remoteIP]++
 			connMu.Unlock()
 
-			// Check site bans (DP-419): BanAll disconnects immediately;
+			// Check site bans (DP-419 / DP-557): BanAll disconnects immediately;
 			// BanNew/BanSelect allow connection but restrict at login.
-			banLevel := manager.GetBanManager().IsBanned(remoteIP)
+			// Hostnames resolved from the IP are also checked, with a timeout to
+			// avoid blocking the accept loop on slow DNS.
+			banLevel := effectiveBanLevel(remoteIP, manager.GetBanManager())
 			if banLevel == game.BanAll {
 				_ = conn.Close() //nolint:errcheck // best-effort cleanup
 				slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
@@ -151,6 +161,48 @@ func ipFromAddr(addr string) string {
 		return addr
 	}
 	return host
+}
+
+// effectiveBanLevel returns the most restrictive ban level for remoteIP,
+// checking both the raw IP and any hostnames returned by reverse-DNS lookup.
+//
+// C's gethostbyaddr() was synchronous and unbounded; this version caps DNS
+// resolution at dnsLookupTimeout so a slow or unresponsive resolver cannot
+// block the connection accept loop.
+func effectiveBanLevel(remoteIP string, banManager *game.BanManager) int {
+	level := banManager.IsBanned(remoteIP)
+
+	type result struct {
+		hostnames []string
+		err       error
+	}
+	done := make(chan result, 1)
+	go func() {
+		names, err := lookupAddr(remoteIP)
+		done <- result{hostnames: names, err: err}
+	}()
+
+	var hostnames []string
+	select {
+	case res := <-done:
+		if res.err != nil {
+			slog.Debug("DNS lookup failed for ban check", "remote_ip", remoteIP, "error", res.err)
+		} else {
+			hostnames = res.hostnames
+		}
+	case <-time.After(dnsLookupTimeout):
+		slog.Warn("DNS lookup timed out for ban check", "remote_ip", remoteIP)
+	}
+
+	for _, hostname := range hostnames {
+		// PTR records commonly end with a trailing dot.
+		hostname = strings.TrimSuffix(hostname, ".")
+		hostLevel := banManager.IsBanned(hostname)
+		if hostLevel > level {
+			level = hostLevel
+		}
+	}
+	return level
 }
 
 type telnetConn struct {
