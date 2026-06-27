@@ -93,7 +93,6 @@ Shops can be configured to only deal in specific item types. Common type flags:
 #### Inventory
 - `MaxItems`: Maximum items shop can stock (default: 50)
 - `RestockInterval`: How often to restock (game ticks)
-- `RestockPercent`: Chance to restock each item
 
 ## Integration with Existing Systems
 

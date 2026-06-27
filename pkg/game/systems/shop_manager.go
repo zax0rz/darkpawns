@@ -411,7 +411,6 @@ type saveShopData struct {
 	IdentifyCost    int    `json:"identify_cost"`
 	MaxItems        int    `json:"max_items"`
 	RestockInterval int    `json:"restock_interval"`
-	RestockPercent  int    `json:"restock_percent"`
 	OpenHour        int    `json:"open_hour"`
 	CloseHour       int    `json:"close_hour"`
 
@@ -461,7 +460,6 @@ func (sm *ShopManager) SaveShops() error {
 			IdentifyCost:    shop.IdentifyCost,
 			MaxItems:        shop.MaxItems,
 			RestockInterval: shop.RestockInterval,
-			RestockPercent:  shop.RestockPercent,
 			OpenHour:        shop.OpenHour,
 			CloseHour:       shop.CloseHour,
 			Gold:            shop.Gold,
@@ -538,7 +536,6 @@ func (sm *ShopManager) LoadShops(getProto func(int) (*parser.Obj, bool)) error {
 		shop.IdentifyCost = sd.IdentifyCost
 		shop.MaxItems = sd.MaxItems
 		shop.RestockInterval = sd.RestockInterval
-		shop.RestockPercent = sd.RestockPercent
 		shop.OpenHour = sd.OpenHour
 		shop.CloseHour = sd.CloseHour
 		shop.Gold = sd.Gold

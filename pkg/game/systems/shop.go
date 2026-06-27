@@ -42,7 +42,6 @@ type Shop struct {
 	// Restocking
 	RestockInterval int // How often to restock (in game ticks)
 	LastRestock     int // Last restock tick
-	RestockPercent  int // Percentage chance to restock each item
 
 	// Keeper gold — matches src/shop.h:63 int bankAccount
 	// Gold available for purchases; replenished from BankAccount on restock.
@@ -75,7 +74,6 @@ func NewShop(id, vnum int, name string, roomVNum int) *Shop {
 		Inventory:       make([]common.ObjectInstance, 0),
 		MaxItems:        50,    // Default: max 50 items in stock
 		RestockInterval: 100,   // Default: restock every 100 game ticks
-		RestockPercent:  30,    // Default: 30% chance to restock each item
 		Gold:            10000, // Default keeper gold supply (src/shop.c:808)
 		BankAccount:     10000, // Default bank reserve replenished on restock
 		WithWho:         0,     // No trade restrictions by default
