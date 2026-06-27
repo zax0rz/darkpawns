@@ -168,3 +168,93 @@ func TestIsValidPlayerName_Boundary(t *testing.T) {
 		t.Errorf("IsValidPlayerName(%q) = %v, want false", tooLong, got)
 	}
 }
+
+func TestSanitizePlayerName(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{"valid name unchanged", "Hero", "Hero"},
+		{"strips invalid chars", "He@ro!", "Hero"},
+		{"strips leading invalid chars", "!Hero", "Hero"},
+		{"strips trailing invalid chars", "Hero!", "Hero"},
+		{"strips all invalid chars - returns empty", "!", ""},
+		{"strips all invalid chars - returns empty", "!@#", ""},
+		{"DP-570: single char becomes empty", "a!", ""},
+		{"DP-570: single valid char returns empty (below min)", "!b", ""},
+		{"DP-570: all invalid", "!", ""},
+		{"DP-570: valid two chars stay", "ab", "ab"},
+		{"truncates at max length", strings.Repeat("a", 33), strings.Repeat("a", 32)},
+		{"empty input stays empty", "", ""},
+		{"underscores preserved", "a_b", "a_b"},
+		{"digits preserved", "123", "123"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SanitizePlayerName(tt.input)
+			if got != tt.expected {
+				t.Errorf("SanitizePlayerName(%q) = %q, want %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSanitizeInput(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{"normal text passes through", "hello world", "hello world"},
+		{"HTML entities escaped", "a & b", "a &amp; b"},
+		{"tags escaped", "<b>bold</b>", "&lt;b&gt;bold&lt;/b&gt;"},
+		{"quotes escaped", `he said "hi"`, "he said &quot;hi&quot;"},
+		{"apostrophe escaped", "it's", "it&#39;s"},
+		{"control chars removed", "a\x00b", "ab"},
+		{"tab preserved", "a\tb", "a\tb"},
+		{"newline preserved", "a\nb", "a\nb"},
+		{"CR preserved", "a\rb", "a\rb"},
+		{"empty input", "", ""},
+		{"DP-569: ampersands don't inflate length", strings.Repeat("&", 999), strings.Repeat("&amp;", 999)},
+		{"truncation at 1000", strings.Repeat("a", 1001), strings.Repeat("a", 1000)},
+		{"mixed entities within limit", "hello & <world>", "hello &amp; &lt;world&gt;"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SanitizeInput(tt.input)
+			if got != tt.expected {
+				t.Errorf("SanitizeInput(%q) = %q, want %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestValidateCommand(t *testing.T) {
+	tests := []struct {
+		name    string
+		command string
+		args    []string
+		want    bool
+	}{
+		{"valid command", "look", []string{}, true},
+		{"valid command with args", "say", []string{"hello"}, true},
+		{"XSS in command", "<script>alert(1)</script>", []string{}, false},
+		{"XSS in args", "say", []string{"<script>alert(1)</script>"}, false},
+		{"SQL injection in command", "'; DROP TABLE users; --", []string{}, false},
+		{"empty command", "", []string{}, true},
+		{"multiple valid args", "give", []string{"sword", "fighter"}, true},
+		{"multiple args one invalid", "give", []string{"sword", "<script>xss</script>"}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, _ := ValidateCommand(tt.command, tt.args)
+			if got != tt.want {
+				t.Errorf("ValidateCommand(%q, %v) = %v, want %v", tt.command, tt.args, got, tt.want)
+			}
+		})
+	}
+}

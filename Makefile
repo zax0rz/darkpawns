@@ -1,4 +1,4 @@
-.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs privacy-up privacy-down privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report fmt check-fmt vet lint lint-fix
+.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report fmt check-fmt vet lint lint-fix test-parse
 
 # Default world directory (relative to darkpawns original)
 WORLD_DIR ?= ../darkpawns/lib

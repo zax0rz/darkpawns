@@ -38,8 +38,6 @@ var (
 )
 
 // ValidateInput checks for common injection attacks
-//
-// Deprecated: unused — remove in future cleanup
 func ValidateInput(input string) (bool, string) {
 	// Check length
 	if utf8.RuneCountInString(input) > 1000 {
@@ -80,17 +78,17 @@ func SanitizeInput(input string) string {
 		return r
 	}, input)
 
+	// Truncate BEFORE escaping (DP-569)
+	if utf8.RuneCountInString(input) > 1000 {
+		input = string([]rune(input)[:1000])
+	}
+
 	// Escape HTML
 	input = strings.ReplaceAll(input, "&", "&amp;")
 	input = strings.ReplaceAll(input, "<", "&lt;")
 	input = strings.ReplaceAll(input, ">", "&gt;")
 	input = strings.ReplaceAll(input, "\"", "&quot;")
 	input = strings.ReplaceAll(input, "'", "&#39;")
-
-	// Limit length
-	if utf8.RuneCountInString(input) > 1000 {
-		input = string([]rune(input)[:1000])
-	}
 
 	return input
 }

@@ -157,7 +157,7 @@ func (m *ClanManager) SaveClans(filePath string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filePath, data, 0o644)
+	return os.WriteFile(filePath, data, 0o600)
 }
 
 func InitClans(filePath string) *ClanManager {

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"encoding/json"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sync"
@@ -93,7 +94,9 @@ func NewAgentStore(filePath string) *AgentStore {
 	// Ensure parent directory exists
 	dir := filepath.Dir(filePath)
 	if dir != "" && dir != "." {
-		_ = os.MkdirAll(dir, 0o755)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+		slog.Error("failed to create agent store directory", "dir", dir, "error", err)
+	}
 	}
 
 	s := &AgentStore{
@@ -139,7 +142,7 @@ func (s *AgentStore) Save() error {
 	}
 
 	tmp := s.filePath + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return err
 	}
 	return os.Rename(tmp, s.filePath)
@@ -300,7 +303,7 @@ func (s *AgentStore) save() error {
 	}
 
 	tmp := s.filePath + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return err
 	}
 	return os.Rename(tmp, s.filePath)

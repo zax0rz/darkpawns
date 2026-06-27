@@ -56,5 +56,10 @@ func SanitizePlayerName(name string) string {
 		sanitized = string([]rune(sanitized)[:maxPlayerNameLength])
 	}
 
+	// Ensure minimum length after stripping invalid chars (DP-570)
+	if utf8.RuneCountInString(sanitized) < minPlayerNameLength {
+		return ""
+	}
+
 	return strings.TrimSpace(sanitized)
 }

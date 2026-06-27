@@ -134,20 +134,20 @@ func RunDream(cfg DreamConfig) (*DreamResult, error) {
 
 	// Write the full graph.
 	graphData, _ := json.MarshalIndent(graph, "", "  ")
-	if err := os.WriteFile(graphFile, graphData, 0o644); err != nil {
+	if err := os.WriteFile(graphFile, graphData, 0o600); err != nil {
 		return nil, fmt.Errorf("write graph: %w", err)
 	}
 
 	// Write the summary separately for quick inspection.
 	summaryFile := filepath.Join(cfg.OutputDir, cfg.AgentID, "memory-summary.txt")
-	if err := os.WriteFile(summaryFile, []byte(summary), 0o644); err != nil {
+	if err := os.WriteFile(summaryFile, []byte(summary), 0o600); err != nil {
 		return nil, fmt.Errorf("write summary: %w", err)
 	}
 
 	// Write the dream result as JSON.
 	resultFile := filepath.Join(cfg.OutputDir, cfg.AgentID, "dream-result.json")
 	resultData, _ := json.MarshalIndent(result, "", "  ")
-	if err := os.WriteFile(resultFile, resultData, 0o644); err != nil {
+	if err := os.WriteFile(resultFile, resultData, 0o600); err != nil {
 		return nil, fmt.Errorf("write result: %w", err)
 	}
 

@@ -93,7 +93,7 @@ func (sf *StateFile) Save(state *GameState) error {
 
 	// Atomic write: temp file + rename
 	tmp := sf.path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return fmt.Errorf("write state tmp: %w", err)
 	}
 	if err := os.Rename(tmp, sf.path); err != nil {

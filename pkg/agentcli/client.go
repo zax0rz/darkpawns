@@ -389,7 +389,7 @@ func writeJSON(path string, v any) {
 		slog.Warn("mkdir", "error", err)
 		return
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o600); err != nil {
 		slog.Warn("write", "error", err)
 	}
 }
