@@ -52,6 +52,20 @@ spec:
           value: "production"
         - name: ADMIN_CORS_ORIGIN
           value: "https://darkpawns.labz0rz.com"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: dp-secrets
+              key: JWT_SECRET
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dp-secrets
+              key: ENCRYPTION_KEY
+        # Generate dp-secrets with:
+        #   kubectl create secret generic dp-secrets \
+        #     --from-literal=JWT_SECRET=$(openssl rand -hex 32) \
+        #     --from-literal=ENCRYPTION_KEY=$(openssl rand -hex 32)
         ports:
         - containerPort: 4350
         resources:
