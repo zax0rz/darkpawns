@@ -185,6 +185,16 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 
 	L := e.l
 
+	// Clear any per-run globals left over from a previous script execution so
+	// stale context and trigger functions cannot leak into this run.
+	clearGlobals := []string{"ch", "me", "obj", "argument", "room"}
+	if triggerName != "" {
+		clearGlobals = append(clearGlobals, triggerName)
+	}
+	for _, name := range clearGlobals {
+		L.SetGlobal(name, lua.LNil)
+	}
+
 	// Set globals based on context
 	// Based on run_script() lines 1732-1761
 	if ctx.Ch != nil {
