@@ -67,8 +67,8 @@ func getDoorInfo(dm *systems.DoorManager, roomVNum int, exits map[string]parser.
 		}
 		doors = append(doors, DoorInfo{
 			Direction: dir,
-			Closed:    door.Closed,
-			Locked:    door.Locked,
+			Closed:    door.IsClosed(),
+			Locked:    door.IsLocked(),
 		})
 	}
 	if len(doors) == 0 {

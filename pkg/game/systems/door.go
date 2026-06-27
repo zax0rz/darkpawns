@@ -3,11 +3,18 @@ package systems
 
 import (
 	"strings"
+	"sync"
 )
 
 // Door represents a door between rooms with various states and properties.
 // Based on original MUD door flags: closed, locked, pickproof, bashable, hidden, etc.
+// Door has its own mutex; callers that obtain a *Door from DoorManager may read
+// state through the exported accessor methods, while mutating methods lock
+// internally. Direct field access is retained for tests and package helpers that
+// already hold the enclosing DoorManager lock or operate on a single goroutine.
 type Door struct {
+	mu sync.RWMutex
+
 	// Basic state
 	Closed    bool // Door is closed (can't pass through)
 	Locked    bool // Door is locked (requires key or picking)
@@ -66,19 +73,88 @@ func NewDoor(fromRoom, toRoom int, direction string, doorState, keyVNum int) *Do
 	return d
 }
 
+// IsClosed reports whether the door is closed.
+func (d *Door) IsClosed() bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.Closed
+}
+
+// IsLocked reports whether the door is locked.
+func (d *Door) IsLocked() bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.Locked
+}
+
+// IsHidden reports whether the door is hidden.
+func (d *Door) IsHidden() bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.Hidden
+}
+
+// IsPickproof reports whether the door is pickproof.
+func (d *Door) IsPickproof() bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.Pickproof
+}
+
+// IsBashable reports whether the door can be bashed.
+func (d *Door) IsBashable() bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.Bashable
+}
+
+// GetHp returns the door's current hit points.
+func (d *Door) GetHp() int {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.Hp
+}
+
+// GetKeyVNum returns the VNum of the key that unlocks this door.
+func (d *Door) GetKeyVNum() int {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.KeyVNum
+}
+
+// GetToRoom returns the destination room VNum.
+func (d *Door) GetToRoom() int {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.ToRoom
+}
+
+// GetDirection returns the door's direction string.
+func (d *Door) GetDirection() string {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.Direction
+}
+
 // IsPassable returns true if a player can pass through this door.
 func (d *Door) IsPassable() bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	return !d.Closed
 }
 
 // CanSee returns true if the door is visible (not hidden).
 func (d *Door) CanSee() bool {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	return !d.Hidden
 }
 
 // Open attempts to open the door.
 // Returns true if successful, false otherwise with a reason.
 func (d *Door) Open() (bool, string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if !d.Closed {
 		return false, "It's already open."
 	}
@@ -93,6 +169,8 @@ func (d *Door) Open() (bool, string) {
 
 // Close attempts to close the door.
 func (d *Door) Close() (bool, string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if d.Closed {
 		return false, "It's already closed."
 	}
@@ -104,6 +182,8 @@ func (d *Door) Close() (bool, string) {
 // Lock attempts to lock the door with a key.
 // keyVNum is the VNum of the key being used.
 func (d *Door) Lock(keyVNum int) (bool, string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if d.Locked {
 		return false, "It's already locked."
 	}
@@ -122,6 +202,8 @@ func (d *Door) Lock(keyVNum int) (bool, string) {
 
 // Unlock attempts to unlock the door with a key.
 func (d *Door) Unlock(keyVNum int) (bool, string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if !d.Locked {
 		return false, "It's already unlocked."
 	}
@@ -137,6 +219,8 @@ func (d *Door) Unlock(keyVNum int) (bool, string) {
 // Pick attempts to pick the door lock.
 // skill is the player's picking skill (0-100).
 func (d *Door) Pick(skill int) (bool, string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if !d.Locked {
 		return false, "It's not locked."
 	}
@@ -189,6 +273,8 @@ func reverseDirection(dir string) string {
 // Bash attempts to bash the door down.
 // strength is the player's strength or bash skill.
 func (d *Door) Bash(strength int) (bool, string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if !d.Closed {
 		return false, "It's already open."
 	}
@@ -218,7 +304,9 @@ func (d *Door) Bash(strength int) (bool, string) {
 
 // GetStatus returns a string describing the door's state.
 func (d *Door) GetStatus() string {
-	if !d.CanSee() {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	if d.Hidden {
 		return "hidden"
 	}
 
@@ -233,6 +321,8 @@ func (d *Door) GetStatus() string {
 
 // GetDescription returns a descriptive string for the door.
 func (d *Door) GetDescription() string {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	parts := []string{}
 
 	if d.Hidden {
@@ -259,6 +349,8 @@ func (d *Door) GetDescription() string {
 
 // Reset resets the door to its default state.
 func (d *Door) Reset() {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	d.Hp = d.MaxHp
 	d.Closed = d.initialClosed
 	d.Locked = d.initialLocked

@@ -49,6 +49,47 @@ func TestConcurrentOpenClose(t *testing.T) {
 	}
 }
 
+// TestConcurrentCanPassAndToggle runs CanPass/GetDoorStatus readers concurrently
+// with OpenDoor/CloseDoor mutators to catch data races on Door state.
+func TestConcurrentCanPassAndToggle(t *testing.T) {
+	dm := NewDoorManager()
+
+	door := &Door{
+		FromRoom:  100,
+		ToRoom:    101,
+		Direction: "north",
+		Closed:    true,
+		Locked:    false,
+		Hp:        100,
+		MaxHp:     100,
+	}
+	dm.AddDoor(door)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 100; j++ {
+				_, _ = dm.CanPass(100, "north")
+				_, _ = dm.GetDoorStatus(100, "north")
+				_ = dm.GetVisibleDoorsInRoom(100)
+			}
+		}()
+	}
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				_, _ = dm.OpenDoor(100, "north")
+				_, _ = dm.CloseDoor(100, "north")
+			}
+		}()
+	}
+	wg.Wait()
+}
+
 func TestConcurrentBashAndLock(t *testing.T) {
 	dm := NewDoorManager()
 

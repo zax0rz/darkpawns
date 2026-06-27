@@ -98,11 +98,11 @@ func cmdDoorName(subcmd int) string {
 }
 
 func (s *Session) doDoorOpen(door *systems.Door, roomVNum int, dir string) {
-	if !door.Closed {
+	if !door.IsClosed() {
 		s.Send("It's already open.")
 		return
 	}
-	if door.Locked {
+	if door.IsLocked() {
 		s.Send("It's locked.")
 		return
 	}
@@ -119,7 +119,7 @@ func (s *Session) doDoorOpen(door *systems.Door, roomVNum int, dir string) {
 }
 
 func (s *Session) doDoorClose(door *systems.Door, roomVNum int, dir string) {
-	if door.Closed {
+	if door.IsClosed() {
 		s.Send("It's already closed.")
 		return
 	}
@@ -136,11 +136,11 @@ func (s *Session) doDoorClose(door *systems.Door, roomVNum int, dir string) {
 }
 
 func (s *Session) doDoorUnlock(door *systems.Door, roomVNum int, dir string) {
-	if !door.Locked {
+	if !door.IsLocked() {
 		s.Send("It's already unlocked.")
 		return
 	}
-	if !door.Closed {
+	if !door.IsClosed() {
 		s.Send("You must close it first.")
 		return
 	}
@@ -162,11 +162,11 @@ func (s *Session) doDoorUnlock(door *systems.Door, roomVNum int, dir string) {
 }
 
 func (s *Session) doDoorLock(door *systems.Door, roomVNum int, dir string) {
-	if door.Locked {
+	if door.IsLocked() {
 		s.Send("It's already locked.")
 		return
 	}
-	if !door.Closed {
+	if !door.IsClosed() {
 		s.Send("You must close it first.")
 		return
 	}
@@ -188,15 +188,15 @@ func (s *Session) doDoorLock(door *systems.Door, roomVNum int, dir string) {
 }
 
 func (s *Session) doDoorPick(door *systems.Door, roomVNum int, dir string) {
-	if !door.Locked {
+	if !door.IsLocked() {
 		s.Send("It's not locked.")
 		return
 	}
-	if !door.Closed {
+	if !door.IsClosed() {
 		s.Send("You must close it first.")
 		return
 	}
-	if door.Pickproof {
+	if door.IsPickproof() {
 		s.Send("This lock is too complex to pick.")
 		return
 	}
@@ -223,15 +223,15 @@ func (s *Session) doDoorPick(door *systems.Door, roomVNum int, dir string) {
 }
 
 func (s *Session) doDoorBash(door *systems.Door, roomVNum int, dir string) {
-	if !door.Closed {
+	if !door.IsClosed() {
 		s.Send("It's already open.")
 		return
 	}
-	if !door.Bashable {
+	if !door.IsBashable() {
 		s.Send("This door cannot be bashed.")
 		return
 	}
-	if door.Hp <= 0 {
+	if door.GetHp() <= 0 {
 		s.Send("The door has already been destroyed.")
 		return
 	}
@@ -249,9 +249,10 @@ func (s *Session) doDoorBash(door *systems.Door, roomVNum int, dir string) {
 }
 
 func (s *Session) findKeyForDoor(door *systems.Door) int {
-	if door.KeyVNum >= 0 {
-		if playerHasKey(s, door.KeyVNum) {
-			return door.KeyVNum
+	keyVNum := door.GetKeyVNum()
+	if keyVNum >= 0 {
+		if playerHasKey(s, keyVNum) {
+			return keyVNum
 		}
 		return -1
 	}
@@ -274,27 +275,29 @@ func (s *Session) findItemByVNum(vnum int) bool {
 }
 
 func (s *Session) mirrorDoorState(door *systems.Door, closed bool) {
-	if door.ToRoom <= 0 {
+	toRoom := door.GetToRoom()
+	if toRoom <= 0 {
 		return
 	}
 
 	dm := getDoorManager(s)
-	odir := getOppositeDirection(door.Direction)
-	mirrorDoor, ok := dm.GetDoor(door.ToRoom, odir)
-	if !ok {
-		return
-	}
+	odir := getOppositeDirection(door.GetDirection())
 
-	mirrorDoor.Closed = closed
-	if !closed && mirrorDoor.Locked {
-		mirrorDoor.Locked = false
-	}
-
+	var ok bool
 	var msgText string
 	if closed {
-		msgText = fmt.Sprintf("The door %s closes.", odir)
+		ok, msgText = dm.CloseDoor(toRoom, odir)
+		if ok {
+			msgText = fmt.Sprintf("The door %s closes.", odir)
+		}
 	} else {
-		msgText = fmt.Sprintf("The door %s opens.", odir)
+		ok, msgText = dm.OpenDoor(toRoom, odir)
+		if ok {
+			msgText = fmt.Sprintf("The door %s opens.", odir)
+		}
+	}
+	if !ok {
+		return
 	}
 
 	msg, err := json.Marshal(ServerMessage{
@@ -308,7 +311,7 @@ func (s *Session) mirrorDoorState(door *systems.Door, closed bool) {
 		slog.Error("json.Marshal error", "error", err)
 		return
 	}
-	s.manager.BroadcastToRoom(door.ToRoom, msg, "")
+	s.manager.BroadcastToRoom(toRoom, msg, "")
 }
 
 func getOppositeDirection(dir string) string {

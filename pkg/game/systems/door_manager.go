@@ -38,6 +38,8 @@ func (dm *DoorManager) mirrorToReverseDoor(door *Door) {
 	if !ok || revDoor.ToRoom != door.FromRoom {
 		return
 	}
+	revDoor.mu.Lock()
+	defer revDoor.mu.Unlock()
 	revDoor.Closed = door.Closed
 	revDoor.Locked = door.Locked
 	revDoor.Hp = door.Hp
