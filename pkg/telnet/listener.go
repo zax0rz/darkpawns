@@ -231,14 +231,26 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// Returning player - prompt for password statefully (ECHO OFF)
 			tc.write([]byte{IAC, WILL, OPT_ECHO})
 			tc.writeLine("Password: ")
-			password, _ = tc.readLine()
+			var ok bool
+			password, ok = tc.readLine()
 			tc.write([]byte{IAC, WONT, OPT_ECHO})
 			tc.writeLine("\r\n")
+			if !ok {
+				return
+			}
+			if strings.TrimSpace(password) == "" {
+				tc.writeLine("Password cannot be empty. Disconnecting.\r\n")
+				return
+			}
 			newChar = false
 		} else {
 			// New character - ask to confirm creation
 			tc.writeLine("Character does not exist. Do you want to create a new character? (Y/N): ")
-			choice, _ := tc.readLine()
+			choice, ok := tc.readLine()
+			if !ok {
+				tc.writeLine("\r\nGoodbye.\r\n")
+				return
+			}
 			choice = strings.TrimSpace(strings.ToLower(choice))
 			if choice != "y" && choice != "yes" {
 				tc.writeLine("\r\nGoodbye.\r\n")
@@ -248,12 +260,26 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// Prompt to create and confirm a password (ECHO OFF)
 			tc.write([]byte{IAC, WILL, OPT_ECHO})
 			tc.writeLine("Choose a password: ")
-			p1, _ := tc.readLine()
+			p1, ok := tc.readLine()
+			if !ok {
+				tc.write([]byte{IAC, WONT, OPT_ECHO})
+				tc.writeLine("\r\n")
+				return
+			}
 			tc.writeLine("\r\nConfirm password: ")
-			p2, _ := tc.readLine()
+			p2, ok := tc.readLine()
+			if !ok {
+				tc.write([]byte{IAC, WONT, OPT_ECHO})
+				tc.writeLine("\r\n")
+				return
+			}
 			tc.write([]byte{IAC, WONT, OPT_ECHO})
 			tc.writeLine("\r\n")
 
+			if strings.TrimSpace(p1) == "" || strings.TrimSpace(p2) == "" {
+				tc.writeLine("Password cannot be empty. Disconnecting.\r\n")
+				return
+			}
 			if p1 != p2 {
 				tc.writeLine("Passwords do not match. Disconnecting.\r\n")
 				return
@@ -264,7 +290,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	} else {
 		// No DB - ask to confirm creation and create password
 		tc.writeLine("No database connection. Create new character? (Y/N): ")
-		choice, _ := tc.readLine()
+		choice, ok := tc.readLine()
+		if !ok {
+			tc.writeLine("\r\nGoodbye.\r\n")
+			return
+		}
 		choice = strings.TrimSpace(strings.ToLower(choice))
 		if choice != "y" && choice != "yes" {
 			tc.writeLine("\r\nGoodbye.\r\n")
@@ -273,12 +303,26 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 
 		tc.write([]byte{IAC, WILL, OPT_ECHO})
 		tc.writeLine("Choose a password: ")
-		p1, _ := tc.readLine()
+		p1, ok := tc.readLine()
+		if !ok {
+			tc.write([]byte{IAC, WONT, OPT_ECHO})
+			tc.writeLine("\r\n")
+			return
+		}
 		tc.writeLine("\r\nConfirm password: ")
-		p2, _ := tc.readLine()
+		p2, ok := tc.readLine()
+		if !ok {
+			tc.write([]byte{IAC, WONT, OPT_ECHO})
+			tc.writeLine("\r\n")
+			return
+		}
 		tc.write([]byte{IAC, WONT, OPT_ECHO})
 		tc.writeLine("\r\n")
 
+		if strings.TrimSpace(p1) == "" || strings.TrimSpace(p2) == "" {
+			tc.writeLine("Password cannot be empty. Disconnecting.\r\n")
+			return
+		}
 		if p1 != p2 {
 			tc.writeLine("Passwords do not match. Disconnecting.\r\n")
 			return

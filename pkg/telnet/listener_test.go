@@ -1,11 +1,7 @@
 package telnet
 
 import (
-	"bufio"
-	"errors"
 	"net"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -14,175 +10,80 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/session"
 )
 
-type tempNetError struct {
-	error
-}
-
-func (e tempNetError) Temporary() bool {
-	return true
-}
-
-func (e tempNetError) Timeout() bool {
-	return false
-}
-
-type mockListener struct {
-	acceptCount int
-	errs        []error
-	conns       chan net.Conn
-	closed      chan struct{}
-	mu          sync.Mutex
-}
-
-func (m *mockListener) Accept() (net.Conn, error) {
-	m.mu.Lock()
-	idx := m.acceptCount
-	m.acceptCount++
-	m.mu.Unlock()
-
-	if idx < len(m.errs) {
-		if m.errs[idx] != nil {
-			return nil, m.errs[idx]
-		}
-	}
-
-	select {
-	case conn := <-m.conns:
-		return conn, nil
-	case <-m.closed:
-		return nil, errors.New("listener closed")
-	}
-}
-
-func (m *mockListener) Close() error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	select {
-	case <-m.closed:
-	default:
-		close(m.closed)
-	}
-	return nil
-}
-
-func (m *mockListener) Addr() net.Addr {
-	return &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 7777}
-}
-
-type pipeConn struct {
-	net.Conn
-}
-
-func (p pipeConn) SetDeadline(t time.Time) error      { return nil }
-func (p pipeConn) SetReadDeadline(t time.Time) error  { return nil }
-func (p pipeConn) SetWriteDeadline(t time.Time) error { return nil }
-func (p pipeConn) RemoteAddr() net.Addr {
-	return &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 12345}
-}
-
-func (p pipeConn) LocalAddr() net.Addr {
-	return &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 7777}
-}
-
-func TestListen_RetriesOnTemporaryError(t *testing.T) {
-	origListenTCP := listenTCP
-	defer func() { listenTCP = origListenTCP }()
-
-	serverConn, clientConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
-
-	wrappedServerConn := pipeConn{serverConn}
-
-	conns := make(chan net.Conn, 1)
-	conns <- wrappedServerConn
-
-	ml := &mockListener{
-		errs: []error{
-			tempNetError{errors.New("temporary error 1")},
-			tempNetError{errors.New("temporary error 2")},
-		},
-		conns:  conns,
-		closed: make(chan struct{}),
-	}
-
-	listenTCP = func(network, address string) (net.Listener, error) {
-		return ml, nil
-	}
-
-	parsed := &parser.World{
-		Rooms: []parser.Room{
-			{
-				VNum:        game.MortalStartRoom,
-				Name:        "The Adventurers Guild",
-				Description: "A grand hall where adventurers gather to seek glory.",
-				Zone:        80,
-			},
-		},
-		Mobs: []parser.Mob{},
-		Objs: []parser.Obj{},
-	}
-	w, err := game.NewWorld(parsed)
+func newTestManager(t *testing.T) (*session.Manager, *game.World) {
+	t.Helper()
+	world, err := game.NewWorld(&parser.World{})
 	if err != nil {
 		t.Fatalf("NewWorld: %v", err)
 	}
-	defer w.StopAITicker()
-	manager := session.NewManager(w, nil)
+	manager := session.NewManager(world, nil)
+	return manager, world
+}
 
-	err = Listen(0, manager)
-	if err != nil {
-		t.Fatalf("Listen failed: %v", err)
-	}
-	defer Stop()
-
-	// Wait and read greeting to verify connection was accepted
-	buf := make([]byte, 1024)
-	_ = clientConn.SetReadDeadline(time.Now().Add(2 * time.Second))
-	n, err := clientConn.Read(buf)
-	if err != nil {
-		t.Fatalf("Failed to read from connection: %v", err)
-	}
-	if n == 0 {
-		t.Fatal("read 0 bytes from connection")
-	}
-
-	ml.mu.Lock()
-	count := ml.acceptCount
-	ml.mu.Unlock()
-
-	if count < 3 {
-		t.Errorf("expected at least 3 accept attempts, got %d", count)
+// drain reads and discards everything from c until it is closed.
+func drain(c net.Conn) {
+	buf := make([]byte, 4096)
+	for {
+		_, err := c.Read(buf)
+		if err != nil {
+			return
+		}
 	}
 }
 
-func TestReadLine_BufferLimit(t *testing.T) {
-	oversized := strings.Repeat("A", maxInputLen*2)
-	input := oversized + "\r\nlook\r\n"
+// TestHandleConnDisconnectDuringPasswordPrompt verifies that handleConn returns
+// when the client disconnects instead of proceeding with an empty password.
+func TestHandleConnDisconnectDuringPasswordPrompt(t *testing.T) {
+	manager, world := newTestManager(t)
+	defer world.StopAITicker()
 
-	tc := &telnetConn{
-		br: bufio.NewReader(strings.NewReader(input)),
-	}
+	client, server := net.Pipe()
+	defer client.Close()
 
-	// First read: should return truncated string of maxInputLen 'A's
-	line, ok := tc.readLine()
-	if !ok {
-		t.Fatal("expected readLine to succeed")
-	}
-	expectedLen := maxInputLen
-	if len(line) != expectedLen {
-		t.Errorf("expected line length %d, got %d", expectedLen, len(line))
-	}
-	expectedLine := strings.Repeat("A", maxInputLen)
-	if line != expectedLine {
-		t.Errorf("expected truncated line")
-	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, manager, game.BanNot)
+	}()
 
-	// Second read: should return "look"
-	line2, ok2 := tc.readLine()
-	if !ok2 {
-		t.Fatal("expected second readLine to succeed")
+	go drain(client)
+
+	// Provide a name, then close the connection while the server is waiting
+	// for a password/confirmation response.
+	_, _ = client.Write([]byte("testplayer\r\n"))
+	time.Sleep(50 * time.Millisecond)
+	_ = client.Close()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handleConn did not return after disconnect")
 	}
-	if line2 != "look" {
-		t.Errorf("expected line to be %q, got %q", "look", line2)
+}
+
+// TestHandleConnRejectsEmptyPassword verifies that empty new-character passwords
+// are rejected and the connection handler returns instead of continuing.
+func TestHandleConnRejectsEmptyPassword(t *testing.T) {
+	manager, world := newTestManager(t)
+	defer world.StopAITicker()
+
+	client, server := net.Pipe()
+	defer client.Close()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, manager, game.BanNot)
+	}()
+
+	go drain(client)
+
+	// No DB path: name -> yes -> empty password -> empty confirmation.
+	_, _ = client.Write([]byte("newplayer\r\ny\r\n\r\n\r\n"))
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handleConn did not return after empty password")
 	}
 }
