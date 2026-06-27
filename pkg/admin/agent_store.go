@@ -95,8 +95,8 @@ func NewAgentStore(filePath string) *AgentStore {
 	dir := filepath.Dir(filePath)
 	if dir != "" && dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
-		slog.Error("failed to create agent store directory", "dir", dir, "error", err)
-	}
+			slog.Error("failed to create agent store directory", "dir", dir, "error", err)
+		}
 	}
 
 	s := &AgentStore{
