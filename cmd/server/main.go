@@ -66,7 +66,7 @@ func main() {
 		worldDir   = flag.String("world", "", "Path to world files (lib directory)")
 		scriptsDir = flag.String("scripts", "", "Path to Lua scripts (defaults to world/lib/scripts)")
 		port       = flag.String("port", "4350", "Server port")
-		dbURL      = flag.String("db", "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable", "Database URL")
+		dbURL      = flag.String("db", "", "Database URL (falls back to DATABASE_URL env var)")
 		webDir     = flag.String("web", "", "Path to web client files (index.html, client.js, style.css)")
 		hugoDir    = flag.String("hugo", "", "Path to Hugo static site (served as root)")
 		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
@@ -75,6 +75,13 @@ func main() {
 
 	if *worldDir == "" {
 		slog.Error("Usage: server -world <path-to-lib>")
+		os.Exit(1)
+	}
+	if *dbURL == "" {
+		*dbURL = os.Getenv("DATABASE_URL")
+	}
+	if *dbURL == "" {
+		slog.Error("Database URL is required; pass -db or set DATABASE_URL")
 		os.Exit(1)
 	}
 
