@@ -1755,7 +1755,12 @@ func handleAgentStatus(store *AgentStore) http.HandlerFunc {
 			return
 		}
 
-		agent, ok := store.UpdateAgentStatus(req.AgentID, req.Status)
+		agent, ok, err := store.UpdateAgentStatus(req.AgentID, req.Status)
+		if err != nil {
+			slog.Error("admin agent status save failed", "error", err)
+			http.Error(w, `{"error":"failed to persist agent status"}`, http.StatusInternalServerError)
+			return
+		}
 		if !ok {
 			http.Error(w, `{"error":"agent not found"}`, http.StatusNotFound)
 			return
@@ -1802,7 +1807,12 @@ func handleFindings(store *AgentStore) http.HandlerFunc {
 				return
 			}
 
-			f := store.AddFinding(req.Source, req.Severity, req.Title, req.File, req.Line, req.Description)
+			f, err := store.AddFinding(req.Source, req.Severity, req.Title, req.File, req.Line, req.Description)
+			if err != nil {
+				slog.Error("admin finding save failed", "error", err)
+				http.Error(w, `{"error":"failed to persist finding"}`, http.StatusInternalServerError)
+				return
+			}
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
@@ -1852,10 +1862,16 @@ func handleFindingByID(store *AgentStore) http.HandlerFunc {
 
 		var finding *Finding
 		var ok bool
+		var saveErr error
 		if req.LinearIssueID != "" {
-			finding, ok = store.UpdateFinding(id, req.Status, req.LinearIssueID)
+			finding, ok, saveErr = store.UpdateFinding(id, req.Status, req.LinearIssueID)
 		} else {
-			finding, ok = store.UpdateFindingStatus(id, req.Status)
+			finding, ok, saveErr = store.UpdateFindingStatus(id, req.Status)
+		}
+		if saveErr != nil {
+			slog.Error("admin finding update save failed", "error", saveErr)
+			http.Error(w, `{"error":"failed to persist finding update"}`, http.StatusInternalServerError)
+			return
 		}
 		if !ok {
 			http.Error(w, `{"error":"finding not found"}`, http.StatusNotFound)
@@ -1898,7 +1914,12 @@ func handleTriageSummaries(store *AgentStore) http.HandlerFunc {
 				return
 			}
 
-			s := store.AddTriageSummary(req.Date, req.Summary, req.Confirmed, req.Rejected, req.Pending)
+			s, err := store.AddTriageSummary(req.Date, req.Summary, req.Confirmed, req.Rejected, req.Pending)
+			if err != nil {
+				slog.Error("admin triage summary save failed", "error", err)
+				http.Error(w, `{"error":"failed to persist triage summary"}`, http.StatusInternalServerError)
+				return
+			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			if err := json.NewEncoder(w).Encode(s); err != nil {

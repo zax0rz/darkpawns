@@ -1203,7 +1203,10 @@ func TestHandleFindings_POST_MissingFields(t *testing.T) {
 func TestHandleFindingByID_PUT_Valid(t *testing.T) {
 	path, _ := tempStorePath(t)
 	store := NewAgentStore(path)
-	f := store.AddFinding("reek", "high", "test", "f.go", 1, "")
+	f, err := store.AddFinding("reek", "high", "test", "f.go", 1, "")
+	if err != nil {
+		t.Fatalf("AddFinding returned error: %v", err)
+	}
 
 	handler := handleFindingByID(store)
 	body := `{"status": "confirmed"}`
@@ -1268,7 +1271,9 @@ func TestHandleTriageSummaries_POST_Valid(t *testing.T) {
 func TestHandleTriageSummaries_GET(t *testing.T) {
 	path, _ := tempStorePath(t)
 	store := NewAgentStore(path)
-	store.AddTriageSummary("2026-05-14", "test", 1, 0, 0)
+	if _, err := store.AddTriageSummary("2026-05-14", "test", 1, 0, 0); err != nil {
+		t.Fatalf("AddTriageSummary returned error: %v", err)
+	}
 
 	handler := handleTriageSummaries(store)
 	req := httptest.NewRequest(http.MethodGet, "/admin/triage/summaries", nil)

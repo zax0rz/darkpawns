@@ -157,19 +157,20 @@ func (s *AgentStore) GetAgents() []*AgentStatus {
 	return result
 }
 
-// UpdateAgentStatus updates the status for a given agent.
-func (s *AgentStore) UpdateAgentStatus(agentID, status string) (*AgentStatus, bool) {
+// UpdateAgentStatus updates the status for a given agent and persists the store.
+// The boolean indicates whether the agent was found. An error indicates the
+// in-memory update succeeded but persistence failed.
+func (s *AgentStore) UpdateAgentStatus(agentID, status string) (*AgentStatus, bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	agent, ok := s.agents[agentID]
 	if !ok {
-		return nil, false
+		return nil, false, nil
 	}
 	agent.Status = status
 	agent.LastRun = time.Now()
-	_ = s.save()
-	return agent, true
+	return agent, true, s.save()
 }
 
 // GetFindings returns findings, optionally filtered.
@@ -195,7 +196,8 @@ func (s *AgentStore) GetFindings(status, severity, source string) []Finding {
 }
 
 // AddFinding adds a new finding and returns it with its assigned ID.
-func (s *AgentStore) AddFinding(source, severity, title, file string, line int, description string) Finding {
+// An error indicates the finding was recorded in memory but persistence failed.
+func (s *AgentStore) AddFinding(source, severity, title, file string, line int, description string) (Finding, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -214,12 +216,11 @@ func (s *AgentStore) AddFinding(source, severity, title, file string, line int, 
 	}
 	s.findings = append(s.findings, f)
 	s.nextFindingID++
-	_ = s.save()
-	return f
+	return f, s.save()
 }
 
-// UpdateFindingStatus updates the status of a finding by ID.
-func (s *AgentStore) UpdateFindingStatus(id int, status string) (*Finding, bool) {
+// UpdateFindingStatus updates the status of a finding by ID and persists the store.
+func (s *AgentStore) UpdateFindingStatus(id int, status string) (*Finding, bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -227,15 +228,14 @@ func (s *AgentStore) UpdateFindingStatus(id int, status string) (*Finding, bool)
 		if s.findings[i].ID == id {
 			s.findings[i].Status = status
 			s.findings[i].UpdatedAt = time.Now()
-			_ = s.save()
-			return &s.findings[i], true
+			return &s.findings[i], true, s.save()
 		}
 	}
-	return nil, false
+	return nil, false, nil
 }
 
 // UpdateFinding updates both the status and linear_issue_id of a finding by ID.
-func (s *AgentStore) UpdateFinding(id int, status, linearIssueID string) (*Finding, bool) {
+func (s *AgentStore) UpdateFinding(id int, status, linearIssueID string) (*Finding, bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -248,11 +248,10 @@ func (s *AgentStore) UpdateFinding(id int, status, linearIssueID string) (*Findi
 				s.findings[i].LinearIssueID = linearIssueID
 			}
 			s.findings[i].UpdatedAt = time.Now()
-			_ = s.save()
-			return &s.findings[i], true
+			return &s.findings[i], true, s.save()
 		}
 	}
-	return nil, false
+	return nil, false, nil
 }
 
 // GetTriageSummaries returns all triage summaries.
@@ -266,7 +265,8 @@ func (s *AgentStore) GetTriageSummaries() []TriageSummary {
 }
 
 // AddTriageSummary adds a new triage summary.
-func (s *AgentStore) AddTriageSummary(date, summary string, confirmed, rejected, pending int) TriageSummary {
+// An error indicates the summary was recorded in memory but persistence failed.
+func (s *AgentStore) AddTriageSummary(date, summary string, confirmed, rejected, pending int) (TriageSummary, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -281,8 +281,7 @@ func (s *AgentStore) AddTriageSummary(date, summary string, confirmed, rejected,
 	}
 	s.triages = append(s.triages, t)
 	s.nextTriageID++
-	_ = s.save()
-	return t
+	return t, s.save()
 }
 
 // save writes the store to disk. Caller must hold s.mu (at least a write lock).

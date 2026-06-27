@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -26,7 +27,10 @@ func TestAgentStore_UpdateStatus(t *testing.T) {
 	store := NewAgentStore(path)
 
 	// Update daeron to "active"
-	agent, ok := store.UpdateAgentStatus("daeron", "active")
+	agent, ok, err := store.UpdateAgentStatus("daeron", "active")
+	if err != nil {
+		t.Fatalf("UpdateAgentStatus returned error: %v", err)
+	}
 	if !ok {
 		t.Fatal("UpdateAgentStatus returned false for daeron")
 	}
@@ -51,7 +55,10 @@ func TestAgentStore_UpdateStatus(t *testing.T) {
 func TestAgentStore_UpdateStatusUnknown(t *testing.T) {
 	path, _ := tempStorePath(t)
 	store := NewAgentStore(path)
-	_, ok := store.UpdateAgentStatus("nonexistent", "active")
+	_, ok, err := store.UpdateAgentStatus("nonexistent", "active")
+	if err != nil {
+		t.Fatalf("UpdateAgentStatus returned error: %v", err)
+	}
 	if ok {
 		t.Error("UpdateAgentStatus should return false for unknown agent")
 	}
@@ -62,7 +69,10 @@ func TestAgentStore_AddAndGetFindings(t *testing.T) {
 	store := NewAgentStore(path)
 
 	// Add findings
-	f1 := store.AddFinding("reek", "high", "nil panic", "handlers.go", 42, "potential nil dereference")
+	f1, err := store.AddFinding("reek", "high", "nil panic", "handlers.go", 42, "potential nil dereference")
+	if err != nil {
+		t.Fatalf("AddFinding returned error: %v", err)
+	}
 	if f1.ID != 1 {
 		t.Errorf("first finding ID = %d, want 1", f1.ID)
 	}
@@ -70,7 +80,10 @@ func TestAgentStore_AddAndGetFindings(t *testing.T) {
 		t.Errorf("default status = %q, want %q", f1.Status, "open")
 	}
 
-	f2 := store.AddFinding("daeron", "medium", "unused variable", "server.go", 10, "unused param")
+	f2, err := store.AddFinding("daeron", "medium", "unused variable", "server.go", 10, "unused param")
+	if err != nil {
+		t.Fatalf("AddFinding returned error: %v", err)
+	}
 	if f2.ID != 2 {
 		t.Errorf("second finding ID = %d, want 2", f2.ID)
 	}
@@ -86,9 +99,15 @@ func TestAgentStore_FindingsFiltered(t *testing.T) {
 	path, _ := tempStorePath(t)
 	store := NewAgentStore(path)
 
-	store.AddFinding("reek", "critical", "CRIT-001", "panic.go", 1, "critical bug")
-	store.AddFinding("reek", "high", "HIGH-001", "server.go", 2, "high bug")
-	store.AddFinding("daeron", "low", "LOW-001", "config.go", 3, "low bug")
+	if _, err := store.AddFinding("reek", "critical", "CRIT-001", "panic.go", 1, "critical bug"); err != nil {
+		t.Fatalf("AddFinding returned error: %v", err)
+	}
+	if _, err := store.AddFinding("reek", "high", "HIGH-001", "server.go", 2, "high bug"); err != nil {
+		t.Fatalf("AddFinding returned error: %v", err)
+	}
+	if _, err := store.AddFinding("daeron", "low", "LOW-001", "config.go", 3, "low bug"); err != nil {
+		t.Fatalf("AddFinding returned error: %v", err)
+	}
 
 	// Filter by severity
 	highFindings := store.GetFindings("", "high", "")
@@ -113,13 +132,19 @@ func TestAgentStore_UpdateFindingStatus(t *testing.T) {
 	path, _ := tempStorePath(t)
 	store := NewAgentStore(path)
 
-	f := store.AddFinding("reek", "high", "test", "file.go", 1, "desc")
+	f, err := store.AddFinding("reek", "high", "test", "file.go", 1, "desc")
+	if err != nil {
+		t.Fatalf("AddFinding returned error: %v", err)
+	}
 	if f.ID != 1 {
 		t.Fatalf("expected ID 1, got %d", f.ID)
 	}
 
 	// Update status to confirmed
-	updated, ok := store.UpdateFindingStatus(1, "confirmed")
+	updated, ok, err := store.UpdateFindingStatus(1, "confirmed")
+	if err != nil {
+		t.Fatalf("UpdateFindingStatus returned error: %v", err)
+	}
 	if !ok {
 		t.Fatal("UpdateFindingStatus returned false")
 	}
@@ -134,7 +159,10 @@ func TestAgentStore_UpdateFindingStatus(t *testing.T) {
 	}
 
 	// Update unknown ID
-	_, ok = store.UpdateFindingStatus(999, "fixed")
+	_, ok, err = store.UpdateFindingStatus(999, "fixed")
+	if err != nil {
+		t.Fatalf("UpdateFindingStatus returned error: %v", err)
+	}
 	if ok {
 		t.Error("UpdateFindingStatus for unknown ID should return false")
 	}
@@ -145,12 +173,18 @@ func TestAgentStore_TriageSummaries(t *testing.T) {
 	store := NewAgentStore(path)
 
 	// Add summaries
-	s1 := store.AddTriageSummary("2026-05-01", "Good day", 5, 1, 2)
+	s1, err := store.AddTriageSummary("2026-05-01", "Good day", 5, 1, 2)
+	if err != nil {
+		t.Fatalf("AddTriageSummary returned error: %v", err)
+	}
 	if s1.ID != 1 {
 		t.Errorf("first triage ID = %d, want 1", s1.ID)
 	}
 
-	s2 := store.AddTriageSummary("2026-05-02", "Bad day", 2, 4, 0)
+	s2, err := store.AddTriageSummary("2026-05-02", "Bad day", 2, 4, 0)
+	if err != nil {
+		t.Fatalf("AddTriageSummary returned error: %v", err)
+	}
 	if s2.ID != 2 {
 		t.Errorf("second triage ID = %d, want 2", s2.ID)
 	}
@@ -161,6 +195,31 @@ func TestAgentStore_TriageSummaries(t *testing.T) {
 	}
 	if summaries[0].Date != "2026-05-01" {
 		t.Errorf("first summary date = %q, want %q", summaries[0].Date, "2026-05-01")
+	}
+}
+
+func TestAgentStore_PersistenceFailureReturnsError(t *testing.T) {
+	// Create a read-only directory so the atomic save cannot complete.
+	dir := t.TempDir()
+	if err := os.Chmod(dir, 0o555); err != nil {
+		t.Fatalf("chmod failed: %v", err)
+	}
+	defer os.Chmod(dir, 0o755) // best-effort cleanup
+
+	path := filepath.Join(dir, "admin_store.json")
+	store := NewAgentStore(path)
+
+	if _, _, err := store.UpdateAgentStatus("daeron", "active"); err == nil {
+		t.Error("UpdateAgentStatus expected persistence error, got nil")
+	}
+	if _, err := store.AddFinding("reek", "high", "test", "f.go", 1, "desc"); err == nil {
+		t.Error("AddFinding expected persistence error, got nil")
+	}
+	if _, _, err := store.UpdateFindingStatus(1, "confirmed"); err == nil {
+		t.Error("UpdateFindingStatus expected persistence error, got nil")
+	}
+	if _, err := store.AddTriageSummary("2026-05-14", "test", 1, 0, 0); err == nil {
+		t.Error("AddTriageSummary expected persistence error, got nil")
 	}
 }
 
@@ -180,8 +239,12 @@ func TestAgentStore_ThreadSafety(t *testing.T) {
 	done := make(chan bool)
 	go func() {
 		for i := 0; i < 50; i++ {
-			store.AddFinding("reek", "high", "test", "f.go", i, "desc")
-			store.UpdateFindingStatus(i+1, "confirmed")
+			if _, err := store.AddFinding("reek", "high", "test", "f.go", i, "desc"); err != nil {
+				t.Errorf("AddFinding error: %v", err)
+			}
+			if _, _, err := store.UpdateFindingStatus(i+1, "confirmed"); err != nil {
+				t.Errorf("UpdateFindingStatus error: %v", err)
+			}
 		}
 		done <- true
 	}()
@@ -190,7 +253,9 @@ func TestAgentStore_ThreadSafety(t *testing.T) {
 		for i := 0; i < 50; i++ {
 			store.GetFindings("", "", "")
 			store.GetAgents()
-			store.UpdateAgentStatus("daeron", "active")
+			if _, _, err := store.UpdateAgentStatus("daeron", "active"); err != nil {
+				t.Errorf("UpdateAgentStatus error: %v", err)
+			}
 		}
 		done <- true
 	}()
