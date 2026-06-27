@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"time"
@@ -68,10 +69,14 @@ func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 		// Calculate duration
 		duration := time.Since(start)
 
-		// Filter sensitive data from logs
-		logger := GetGlobalLogger()
+		// Filter sensitive data from logs. Use a request-local logger tied to
+		// the supplied client so concurrent handlers cannot influence each
+		// other's privacy filter configuration.
+		var logger *PrivacyLogger
 		if client != nil {
-			logger.SetClient(client)
+			logger = NewPrivacyLogger(client, "", log.LstdFlags)
+		} else {
+			logger = GetGlobalLogger()
 		}
 
 		// Log request (filtered)
@@ -109,43 +114,36 @@ func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 type WebSocketLogger struct {
 	client *Client
 	prefix string
+	logger *PrivacyLogger
 }
 
 // NewWebSocketLogger creates a new WebSocket logger
 func NewWebSocketLogger(client *Client, prefix string) *WebSocketLogger {
+	var logger *PrivacyLogger
+	if client != nil {
+		logger = NewPrivacyLogger(client, prefix, log.LstdFlags)
+	} else {
+		logger = GetGlobalLogger()
+	}
 	return &WebSocketLogger{
 		client: client,
 		prefix: prefix,
+		logger: logger,
 	}
 }
 
 // LogIncoming logs an incoming WebSocket message with PII filtering
 func (wsl *WebSocketLogger) LogIncoming(sessionID, message string) {
-	logger := GetGlobalLogger()
-	if wsl.client != nil {
-		logger.SetClient(wsl.client)
-	}
-
-	logger.Printf("%s [WS IN] [%s] %s", wsl.prefix, sessionID, message)
+	wsl.logger.Printf("%s [WS IN] [%s] %s", wsl.prefix, sessionID, message)
 }
 
 // LogOutgoing logs an outgoing WebSocket message with PII filtering
 func (wsl *WebSocketLogger) LogOutgoing(sessionID, message string) {
-	logger := GetGlobalLogger()
-	if wsl.client != nil {
-		logger.SetClient(wsl.client)
-	}
-
-	logger.Printf("%s [WS OUT] [%s] %s", wsl.prefix, sessionID, message)
+	wsl.logger.Printf("%s [WS OUT] [%s] %s", wsl.prefix, sessionID, message)
 }
 
 // LogEvent logs a WebSocket event with PII filtering
 func (wsl *WebSocketLogger) LogEvent(sessionID, eventType, details string) {
-	logger := GetGlobalLogger()
-	if wsl.client != nil {
-		logger.SetClient(wsl.client)
-	}
-
 	fullDetails := fmt.Sprintf("Event: %s, Details: %s", eventType, details)
-	logger.Printf("%s [WS EVENT] [%s] %s", wsl.prefix, sessionID, fullDetails)
+	wsl.logger.Printf("%s [WS EVENT] [%s] %s", wsl.prefix, sessionID, fullDetails)
 }
