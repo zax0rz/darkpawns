@@ -84,14 +84,17 @@ func (qo *QueryOptimizer) RecordQuery(query string, duration time.Duration, inde
 }
 
 // GetSlowQueries returns queries that exceed the slow threshold.
+// The returned QueryStat pointers are deep-copied snapshots so callers cannot
+// mutate the optimizer's internal state or observe data races with RecordQuery.
 func (qo *QueryOptimizer) GetSlowQueries() []*QueryStat {
 	qo.mu.RLock()
 	defer qo.mu.RUnlock()
 
-	var slowQueries []*QueryStat
+	slowQueries := make([]*QueryStat, 0, len(qo.queryStats))
 	for _, stat := range qo.queryStats {
 		if stat.AvgDuration > qo.slowQueryThreshold {
-			slowQueries = append(slowQueries, stat)
+			copy := *stat
+			slowQueries = append(slowQueries, &copy)
 		}
 	}
 
@@ -99,13 +102,16 @@ func (qo *QueryOptimizer) GetSlowQueries() []*QueryStat {
 }
 
 // GetStats returns all query statistics.
+// The returned QueryStat pointers are deep-copied snapshots so callers cannot
+// mutate the optimizer's internal state or observe data races with RecordQuery.
 func (qo *QueryOptimizer) GetStats() map[string]*QueryStat {
 	qo.mu.RLock()
 	defer qo.mu.RUnlock()
 
-	stats := make(map[string]*QueryStat)
+	stats := make(map[string]*QueryStat, len(qo.queryStats))
 	for query, stat := range qo.queryStats {
-		stats[query] = stat
+		copy := *stat
+		stats[query] = &copy
 	}
 
 	return stats
