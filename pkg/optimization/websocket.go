@@ -193,7 +193,9 @@ func (bs *BatchedSender) Flush() error {
 	return bs.flushLocked()
 }
 
-// flushLocked sends the current batch (caller must hold the lock).
+// flushLocked sends the current batch synchronously (caller must hold the lock).
+// Errors are returned to the caller instead of being logged from a background
+// goroutine.
 func (bs *BatchedSender) flushLocked() error {
 	if bs.batch == nil || len(bs.batch.Messages) == 0 {
 		return nil
@@ -202,15 +204,12 @@ func (bs *BatchedSender) flushLocked() error {
 	batch := bs.batch
 	bs.batch = nil
 
-	// Send batch asynchronously
-	go func() {
-		if err := bs.sendFunc(batch.Messages); err != nil {
-			slog.Warn("batched send failed",
-				"batch_size", len(batch.Messages),
-				"error", err)
-		}
-	}()
-
+	if err := bs.sendFunc(batch.Messages); err != nil {
+		slog.Warn("batched send failed",
+			"batch_size", len(batch.Messages),
+			"error", err)
+		return err
+	}
 	return nil
 }
 

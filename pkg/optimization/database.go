@@ -176,7 +176,6 @@ type IndexRecommendation struct {
 // BatchProcessor handles batch database operations.
 type BatchProcessor struct {
 	mu            sync.Mutex
-	wg            sync.WaitGroup
 	batchSize     int
 	flushInterval time.Duration
 	operations    []BatchOperation
@@ -231,7 +230,9 @@ func (bp *BatchProcessor) Flush() error {
 	return bp.flushLocked()
 }
 
-// flushLocked processes the current batch (caller must hold the lock).
+// flushLocked processes the current batch synchronously (caller must hold the
+// lock). Errors are returned to the caller instead of being swallowed by a
+// background goroutine.
 func (bp *BatchProcessor) flushLocked() error {
 	if len(bp.operations) == 0 {
 		return nil
@@ -240,37 +241,29 @@ func (bp *BatchProcessor) flushLocked() error {
 	operations := bp.operations
 	bp.operations = make([]BatchOperation, 0, bp.batchSize)
 
-	// Process batch asynchronously with retry
-	bp.wg.Add(1)
-	go func() {
-		defer bp.wg.Done()
-		const maxRetries = 3
-		var lastErr error
-		for attempt := 0; attempt < maxRetries; attempt++ {
-			if attempt > 0 {
-				// Exponential backoff: 100ms, 400ms, 900ms
-				time.Sleep(time.Duration(attempt*attempt*100) * time.Millisecond)
-			}
-			if err := bp.flushFunc(operations); err != nil {
-				lastErr = err
-				slog.Warn("batch flush failed, retrying",
-					"attempt", attempt+1,
-					"batch_size", len(operations),
-					"error", err)
-				continue
-			}
-			lastErr = nil
-			break
+	const maxRetries = 3
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			// Exponential backoff: 100ms, 400ms, 900ms
+			time.Sleep(time.Duration(attempt*attempt*100) * time.Millisecond)
 		}
-		if lastErr != nil {
-			slog.Error("batch flush failed after retries",
-				"max_retries", maxRetries,
+		if err := bp.flushFunc(operations); err != nil {
+			lastErr = err
+			slog.Warn("batch flush failed, retrying",
+				"attempt", attempt+1,
 				"batch_size", len(operations),
-				"error", lastErr)
+				"error", err)
+			continue
 		}
-	}()
+		return nil
+	}
 
-	return nil
+	slog.Error("batch flush failed after retries",
+		"max_retries", maxRetries,
+		"batch_size", len(operations),
+		"error", lastErr)
+	return lastErr
 }
 
 // flushTimer handles timer-based flushing.
@@ -286,22 +279,11 @@ func (bp *BatchProcessor) flushTimer() {
 // Close gracefully shuts down the batch processor.
 func (bp *BatchProcessor) Close() error {
 	bp.mu.Lock()
+	defer bp.mu.Unlock()
+
 	bp.timer.Stop()
-	// Flush any remaining operations synchronously
-	var flushErr error
-	if len(bp.operations) > 0 {
-		operations := bp.operations
-		bp.operations = make([]BatchOperation, 0, bp.batchSize)
-		bp.mu.Unlock()
-		flushErr = bp.flushFunc(operations)
-	} else {
-		bp.mu.Unlock()
-	}
-
-	// Wait for any in-flight flush goroutines to complete
-	bp.wg.Wait()
-
-	return flushErr
+	// Flush any remaining operations synchronously.
+	return bp.flushLocked()
 }
 
 // ConnectionMonitor monitors database connection health.
