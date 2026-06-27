@@ -249,6 +249,7 @@ const (
 type DecisionLogWriter struct {
 	db          *DB
 	mu          sync.Mutex
+	flushMu     sync.Mutex
 	decisions   []*DecisionRecord
 	combat      []*CombatRecord
 	flushTicker *time.Ticker
@@ -302,8 +303,13 @@ func (dlw *DecisionLogWriter) HashPlayerName(name string, isAgent bool) string {
 	return fmt.Sprintf("player_%s", h[:8])
 }
 
-// Flush writes all buffered records to the database.
+// Flush writes all buffered records to the database. Failed batches are
+// requeued at the front of their buffers so transient errors do not silently
+// drop telemetry. Flushes are serialized with flushMu.
 func (dlw *DecisionLogWriter) Flush() {
+	dlw.flushMu.Lock()
+	defer dlw.flushMu.Unlock()
+
 	dlw.mu.Lock()
 	if len(dlw.decisions) == 0 && len(dlw.combat) == 0 {
 		dlw.mu.Unlock()
@@ -322,12 +328,18 @@ func (dlw *DecisionLogWriter) Flush() {
 	if len(decisions) > 0 {
 		if err := dlw.flushDecisions(ctx, decisions); err != nil {
 			slog.Error("decision_log flush failed", "count", len(decisions), "error", err)
+			dlw.mu.Lock()
+			dlw.decisions = append(decisions, dlw.decisions...)
+			dlw.mu.Unlock()
 		}
 	}
 
 	if len(combat) > 0 {
 		if err := dlw.flushCombat(ctx, combat); err != nil {
 			slog.Error("combat_log flush failed", "count", len(combat), "error", err)
+			dlw.mu.Lock()
+			dlw.combat = append(combat, dlw.combat...)
+			dlw.mu.Unlock()
 		}
 	}
 }
