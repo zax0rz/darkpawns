@@ -89,6 +89,9 @@ type Manager struct {
 	// Login attempt lockout tracker (H-15)
 	loginAttempts *auth.LoginAttemptTracker
 
+	// Account-level login lockout tracker (DP-592)
+	accountLockouts *auth.AccountLockoutTracker
+
 	// Moderation manager for mute/filter/spam checks
 	modChecker ModerationChecker
 
@@ -160,6 +163,13 @@ func NewManager(world *game.World, database db.Database) *Manager {
 	// the no-database path below is taken instead of dereferencing nil. (DP-589)
 	if concreteDB, ok := database.(*db.DB); ok && concreteDB == nil {
 		database = nil
+	}
+
+	if database != nil {
+		m.accountLockouts = auth.NewAccountLockoutTracker(database, auth.AccountLockoutConfig{
+			Threshold: 10,
+			Lockout:   15 * time.Minute,
+		})
 	}
 
 	if database != nil {

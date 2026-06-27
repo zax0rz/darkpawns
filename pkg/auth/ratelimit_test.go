@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -346,6 +347,144 @@ func TestLoginAttemptTracker_StopTwice(t *testing.T) {
 	// Calling Stop() multiple times should not panic
 	tracker.Stop()
 	tracker.Stop()
+}
+
+// ---------------------------------------------------------------------------
+// AccountLockoutTracker (DP-592)
+// ---------------------------------------------------------------------------
+
+type mockAccountLockoutStore struct {
+	mu       sync.Mutex
+	attempts map[string]int
+	locked   map[string]time.Time
+}
+
+func newMockAccountLockoutStore() *mockAccountLockoutStore {
+	return &mockAccountLockoutStore{
+		attempts: make(map[string]int),
+		locked:   make(map[string]time.Time),
+	}
+}
+
+func (m *mockAccountLockoutStore) GetAccountLockout(name string) (int, *time.Time, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	until, ok := m.locked[name]
+	if !ok {
+		return m.attempts[name], nil, nil
+	}
+	return m.attempts[name], &until, nil
+}
+
+func (m *mockAccountLockoutStore) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.attempts[name]++
+	if m.attempts[name] >= threshold {
+		until := time.Now().Add(lockoutDuration)
+		m.locked[name] = until
+		return true, nil
+	}
+	return false, nil
+}
+
+func (m *mockAccountLockoutStore) RecordLoginSuccess(name string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.attempts, name)
+	delete(m.locked, name)
+	return nil
+}
+
+func TestAccountLockoutTracker_NotLockedInitially(t *testing.T) {
+	store := newMockAccountLockoutStore()
+	tracker := NewAccountLockoutTracker(store, AccountLockoutConfig{
+		Threshold: 3,
+		Lockout:   1 * time.Minute,
+	})
+
+	locked, _ := tracker.IsLocked("alice")
+	if locked {
+		t.Fatal("account should not be locked initially")
+	}
+}
+
+func TestAccountLockoutTracker_LocksAtThreshold(t *testing.T) {
+	store := newMockAccountLockoutStore()
+	tracker := NewAccountLockoutTracker(store, AccountLockoutConfig{
+		Threshold: 3,
+		Lockout:   1 * time.Minute,
+	})
+
+	tracker.RecordFailure("alice")
+	tracker.RecordFailure("alice")
+	if locked, _ := tracker.IsLocked("alice"); locked {
+		t.Fatal("account should not be locked below threshold")
+	}
+
+	newlyLocked := tracker.RecordFailure("alice")
+	if !newlyLocked {
+		t.Fatal("expected account to become locked at threshold")
+	}
+
+	locked, remaining := tracker.IsLocked("alice")
+	if !locked {
+		t.Fatal("account should be locked after threshold")
+	}
+	if remaining <= 0 || remaining > 1*time.Minute {
+		t.Fatalf("unexpected remaining lockout: %v", remaining)
+	}
+}
+
+func TestAccountLockoutTracker_SuccessResets(t *testing.T) {
+	store := newMockAccountLockoutStore()
+	tracker := NewAccountLockoutTracker(store, AccountLockoutConfig{
+		Threshold: 3,
+		Lockout:   1 * time.Minute,
+	})
+
+	tracker.RecordFailure("alice")
+	tracker.RecordFailure("alice")
+	tracker.RecordSuccess("alice")
+
+	if locked, _ := tracker.IsLocked("alice"); locked {
+		t.Fatal("account should not be locked after success")
+	}
+}
+
+func TestAccountLockoutTracker_DefaultConfig(t *testing.T) {
+	tracker := NewAccountLockoutTracker(newMockAccountLockoutStore(), AccountLockoutConfig{})
+	if tracker.threshold != 10 {
+		t.Errorf("default threshold should be 10, got %d", tracker.threshold)
+	}
+	if tracker.lockout != 15*time.Minute {
+		t.Errorf("default lockout should be 15m, got %v", tracker.lockout)
+	}
+}
+
+func TestAccountLockoutTracker_StoreErrorFailsSecure(t *testing.T) {
+	store := &failingAccountLockoutStore{}
+	tracker := NewAccountLockoutTracker(store, AccountLockoutConfig{
+		Threshold: 3,
+		Lockout:   1 * time.Minute,
+	})
+
+	locked, _ := tracker.IsLocked("alice")
+	if !locked {
+		t.Fatal("expected fail-secure behavior on store error")
+	}
+}
+
+type failingAccountLockoutStore struct{}
+
+func (f *failingAccountLockoutStore) GetAccountLockout(string) (int, *time.Time, error) {
+	return 0, nil, errors.New("store unavailable")
+}
+func (f *failingAccountLockoutStore) RecordLoginFailure(string, int, time.Duration) (bool, error) {
+	return false, errors.New("store unavailable")
+}
+func (f *failingAccountLockoutStore) RecordLoginSuccess(string) error {
+	return errors.New("store unavailable")
 }
 
 // Note: resetTrustedProxies requires sync import

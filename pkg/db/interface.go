@@ -16,6 +16,9 @@ type Database interface {
 	CreatePlayer(p *PlayerRecord) error
 	SavePlayer(p *PlayerRecord) error
 	UpdatePassword(playerID int, hash string) error
+	GetAccountLockout(name string) (failedAttempts int, lockedUntil *time.Time, err error)
+	RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error)
+	RecordLoginSuccess(name string) error
 	Exec(query string, args ...interface{}) (interface{}, error)
 
 	// Agent Authorization & Keys

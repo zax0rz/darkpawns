@@ -149,6 +149,17 @@ func (m *MockDatabase) SavePlayer(p *db.PlayerRecord) error {
 	return nil
 }
 
+// GetAccountLockout satisfies db.Database.
+func (m *MockDatabase) GetAccountLockout(name string) (int, *time.Time, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	p, ok := m.players[name]
+	if !ok {
+		return 0, nil, nil
+	}
+	return p.FailedLoginAttempts, p.LockedUntil, nil
+}
+
 // UpdatePassword satisfies db.Database.
 func (m *MockDatabase) UpdatePassword(playerID int, hash string) error {
 	m.mu.Lock()
@@ -160,6 +171,34 @@ func (m *MockDatabase) UpdatePassword(playerID int, hash string) error {
 		}
 	}
 	return fmt.Errorf("player not found")
+}
+
+// RecordLoginFailure satisfies db.Database.
+func (m *MockDatabase) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	p, ok := m.players[name]
+	if !ok {
+		return false, nil
+	}
+	p.FailedLoginAttempts++
+	if p.FailedLoginAttempts >= threshold {
+		until := time.Now().Add(lockoutDuration)
+		p.LockedUntil = &until
+		return true, nil
+	}
+	return false, nil
+}
+
+// RecordLoginSuccess satisfies db.Database.
+func (m *MockDatabase) RecordLoginSuccess(name string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if p, ok := m.players[name]; ok {
+		p.FailedLoginAttempts = 0
+		p.LockedUntil = nil
+	}
+	return nil
 }
 
 // Exec satisfies db.Database.

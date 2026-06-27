@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
@@ -270,4 +271,125 @@ func (t *LoginAttemptTracker) RecordSuccess(ip string) {
 	defer t.mu.Unlock()
 
 	delete(t.attempts, ip)
+}
+
+// ---------------------------------------------------------------------------
+// Account-level lockout (DP-592)
+// ---------------------------------------------------------------------------
+
+// AccountLockoutStore is the persistence interface required by
+// AccountLockoutTracker. It is satisfied by db.Database.
+type AccountLockoutStore interface {
+	GetAccountLockout(name string) (failedAttempts int, lockedUntil *time.Time, err error)
+	RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error)
+	RecordLoginSuccess(name string) error
+}
+
+// AccountLockoutTracker tracks failed login attempts per account and locks
+// accounts that exceed a configurable threshold. State is persisted via the
+// supplied store so lockouts survive process restarts.
+type AccountLockoutTracker struct {
+	mu        sync.Mutex
+	store     AccountLockoutStore
+	threshold int
+	lockout   time.Duration
+	cache     map[string]*accountLockoutEntry
+}
+
+// accountLockoutEntry holds cached lockout state for a single account.
+type accountLockoutEntry struct {
+	failedAttempts int
+	lockedUntil    time.Time
+}
+
+// AccountLockoutConfig holds configuration for the tracker.
+type AccountLockoutConfig struct {
+	Threshold int
+	Lockout   time.Duration
+}
+
+// NewAccountLockoutTracker creates a tracker backed by store.
+func NewAccountLockoutTracker(store AccountLockoutStore, cfg AccountLockoutConfig) *AccountLockoutTracker {
+	if cfg.Threshold <= 0 {
+		cfg.Threshold = 10
+	}
+	if cfg.Lockout <= 0 {
+		cfg.Lockout = 15 * time.Minute
+	}
+	return &AccountLockoutTracker{
+		store:     store,
+		threshold: cfg.Threshold,
+		lockout:   cfg.Lockout,
+		cache:     make(map[string]*accountLockoutEntry),
+	}
+}
+
+// IsLocked reports whether the account is currently locked out. If locked, it
+// returns the remaining lockout duration.
+func (t *AccountLockoutTracker) IsLocked(name string) (bool, time.Duration) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	entry, ok := t.cache[name]
+	if !ok {
+		// Cache miss: load from persistent store.
+		attempts, lockedUntil, err := t.store.GetAccountLockout(name)
+		if err != nil {
+			// On store error, fail secure: treat as locked for the configured
+			// duration so a broken DB does not open the door to brute force.
+			slog.Error("account lockout store error", "name", name, "error", err)
+			return true, t.lockout
+		}
+		if lockedUntil == nil {
+			return false, 0
+		}
+		entry = &accountLockoutEntry{
+			failedAttempts: attempts,
+			lockedUntil:    *lockedUntil,
+		}
+		t.cache[name] = entry
+	}
+
+	remaining := time.Until(entry.lockedUntil)
+	if remaining <= 0 {
+		delete(t.cache, name)
+		return false, 0
+	}
+	return true, remaining
+}
+
+// RecordFailure records a failed login attempt for the account. It returns
+// true when the account becomes locked as a result.
+func (t *AccountLockoutTracker) RecordFailure(name string) bool {
+	locked, err := t.store.RecordLoginFailure(name, t.threshold, t.lockout)
+	if err != nil {
+		slog.Error("failed to record login failure", "name", name, "error", err)
+		return false
+	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	// Refresh cache from store on next IsLocked; avoid duplicating threshold
+	// logic here by invalidating the cached entry.
+	delete(t.cache, name)
+
+	return locked
+}
+
+// Lockout returns the configured lockout duration.
+func (t *AccountLockoutTracker) Lockout() time.Duration {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.lockout
+}
+
+// RecordSuccess clears the lockout state for the account.
+func (t *AccountLockoutTracker) RecordSuccess(name string) {
+	if err := t.store.RecordLoginSuccess(name); err != nil {
+		slog.Error("failed to record login success", "name", name, "error", err)
+	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	delete(t.cache, name)
 }

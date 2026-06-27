@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -24,34 +25,36 @@ func (db *DB) SQLDB() *sql.DB {
 
 // PlayerRecord represents a player in the database.
 type PlayerRecord struct {
-	ID         int
-	Name       string
-	Password   string // hashed
-	RoomVNum   int
-	Level      int
-	Exp        int
-	Health     int
-	MaxHealth  int
-	Mana       int
-	MaxMana    int
-	Strength   int
-	Class      int
-	Race       int
-	StatStr    int
-	StatStrAdd int // 18/xx for warriors
-	StatInt    int
-	StatWis    int
-	StatDex    int
-	StatCon    int
-	StatCha    int
-	Hunger     int
-	Thirst     int
-	Drunk      int
-	Move       int
-	MaxMove    int
-	Hometown   int
-	Inventory  []byte // JSONB encoded inventory
-	Equipment  []byte // JSONB encoded equipment
+	ID                  int
+	Name                string
+	Password            string // hashed
+	RoomVNum            int
+	Level               int
+	Exp                 int
+	Health              int
+	MaxHealth           int
+	Mana                int
+	MaxMana             int
+	Strength            int
+	Class               int
+	Race                int
+	StatStr             int
+	StatStrAdd          int // 18/xx for warriors
+	StatInt             int
+	StatWis             int
+	StatDex             int
+	StatCon             int
+	StatCha             int
+	Hunger              int
+	Thirst              int
+	Drunk               int
+	Move                int
+	MaxMove             int
+	Hometown            int
+	Inventory           []byte // JSONB encoded inventory
+	Equipment           []byte // JSONB encoded equipment
+	FailedLoginAttempts int
+	LockedUntil         *time.Time
 }
 
 // New creates a new database connection.
@@ -135,8 +138,11 @@ func (db *DB) createTables() error {
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS drunk INTEGER DEFAULT 0;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS hometown INTEGER DEFAULT 0;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP;
 
 	CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
+	CREATE INDEX IF NOT EXISTS idx_players_locked_until ON players(locked_until);
 
 	CREATE TABLE IF NOT EXISTS agent_keys (
 		id             SERIAL PRIMARY KEY,
@@ -215,17 +221,23 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		       health, max_health, mana, max_mana, move, max_move, strength,
 		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		       hunger, thirst, drunk, hometown,
-		       inventory, equipment
+		       inventory, equipment,
+		       COALESCE(failed_login_attempts, 0), locked_until
 		FROM players WHERE name = $1
 	`
 	var p PlayerRecord
+	var lockedUntil sql.NullTime
 	err := db.conn.QueryRow(query, name).Scan(
 		&p.ID, &p.Name, &p.Password, &p.RoomVNum, &p.Level, &p.Exp,
 		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana, &p.Move, &p.MaxMove, &p.Strength,
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
 		&p.Hunger, &p.Thirst, &p.Drunk, &p.Hometown,
 		&p.Inventory, &p.Equipment,
+		&p.FailedLoginAttempts, &lockedUntil,
 	)
+	if lockedUntil.Valid {
+		p.LockedUntil = &lockedUntil.Time
+	}
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -258,6 +270,60 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 // UpdatePassword updates a player's password hash.
 func (db *DB) UpdatePassword(playerID int, hash string) error {
 	_, err := db.conn.Exec(`UPDATE players SET password_hash = $1 WHERE id = $2`, hash, playerID)
+	return err
+}
+
+// GetAccountLockout returns the current failed-login attempt count and any
+// active lockout deadline for the named account.
+func (db *DB) GetAccountLockout(name string) (int, *time.Time, error) {
+	query := `SELECT COALESCE(failed_login_attempts, 0), locked_until FROM players WHERE name = $1`
+	var attempts int
+	var lockedUntil sql.NullTime
+	err := db.conn.QueryRow(query, name).Scan(&attempts, &lockedUntil)
+	if err == sql.ErrNoRows {
+		return 0, nil, nil
+	}
+	if err != nil {
+		return 0, nil, err
+	}
+	if lockedUntil.Valid {
+		return attempts, &lockedUntil.Time, nil
+	}
+	return attempts, nil, nil
+}
+
+// RecordLoginFailure increments the failed-login counter for a player and,
+// if the threshold is reached, sets locked_until to lockoutDuration from now.
+// It returns true when this failure caused the account to become locked.
+func (db *DB) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
+	query := `
+		UPDATE players
+		SET failed_login_attempts = failed_login_attempts + 1,
+		    locked_until = CASE
+		        WHEN failed_login_attempts + 1 >= $2 THEN NOW() + $3::interval
+		        ELSE locked_until
+		    END
+		WHERE name = $1
+		RETURNING failed_login_attempts, locked_until
+	`
+	var attempts int
+	var lockedUntil sql.NullTime
+	err := db.conn.QueryRow(query, name, threshold, lockoutDuration.Minutes()).Scan(&attempts, &lockedUntil)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return lockedUntil.Valid && attempts >= threshold, nil
+}
+
+// RecordLoginSuccess clears failed-login state for a player.
+func (db *DB) RecordLoginSuccess(name string) error {
+	_, err := db.conn.Exec(
+		`UPDATE players SET failed_login_attempts = 0, locked_until = NULL WHERE name = $1`,
+		name,
+	)
 	return err
 }
 

@@ -159,6 +159,17 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		}
 
 		if rec != nil && !login.NewChar {
+			// DP-592: Account-level lockout check for returning players.
+			if s.manager.accountLockouts != nil {
+				if locked, remaining := s.manager.accountLockouts.IsLocked(login.PlayerName); locked {
+					mins := int(remaining.Minutes()) + 1
+					s.sendError(fmt.Sprintf("Account locked due to too many failed login attempts. Try again in %d minutes.", mins))
+					s.Close()
+					audit.LogSecurityEvent("account_locked", "Account locked due to repeated failures", login.PlayerName, ip)
+					return nil
+				}
+			}
+
 			// Returning player — verify password
 			if rec.Password != "" {
 				if login.Password == "" {
@@ -168,6 +179,15 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				}
 				if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)); err != nil {
 					s.manager.loginAttempts.RecordFailure(ip)
+					if s.manager.accountLockouts != nil {
+						if newlyLocked := s.manager.accountLockouts.RecordFailure(login.PlayerName); newlyLocked {
+							mins := int(s.manager.accountLockouts.Lockout().Minutes())
+							s.sendError(fmt.Sprintf("Account locked due to too many failed login attempts. Try again in %d minutes.", mins))
+							s.Close()
+							audit.LogSecurityEvent("account_locked", "Account locked after threshold failures", login.PlayerName, ip)
+							return nil
+						}
+					}
 					s.sendError("Invalid password.")
 					s.Close()
 					audit.LogSecurityEvent("login_failed", "Invalid password", login.PlayerName, ip)
@@ -247,6 +267,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		grantClassSpells(s.player)
 
 		s.manager.loginAttempts.RecordSuccess(ip)
+		if s.manager.accountLockouts != nil {
+			s.manager.accountLockouts.RecordSuccess(login.PlayerName)
+		}
 		if err := s.manager.Register(login.PlayerName, s); err != nil {
 			return err
 		}
