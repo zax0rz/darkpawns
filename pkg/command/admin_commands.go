@@ -116,11 +116,13 @@ func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error
 		return nil
 	}
 
-	// Store report in-memory
+	// Store report in-memory. Capture reportID while holding the lock so the
+	// value used in post-unlock messages cannot race with another report.
 	reportsMu.Lock()
 	reportSeq++
+	reportID := reportSeq
 	reports = append(reports, Report{
-		ID:          reportSeq,
+		ID:          reportID,
 		Reporter:    s.GetPlayerName(),
 		Target:      target,
 		ReportType:  rt,
@@ -145,7 +147,7 @@ func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error
 		}); err != nil {
 			ac.notifyAdmins(fmt.Sprintf(
 				"Warning: report #%d was not saved to the database and will be lost on restart.",
-				reportSeq,
+				reportID,
 			))
 		}
 	}
@@ -153,10 +155,10 @@ func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error
 	// Notify admins
 	ac.notifyAdmins(fmt.Sprintf(
 		"REPORT [#%d]: %s reported %s for %s: %s",
-		reportSeq, s.GetPlayerName(), target, rt, description,
+		reportID, s.GetPlayerName(), target, rt, description,
 	))
 
-	s.Send(fmt.Sprintf("Thank you for reporting %s. Report #%d has been logged.", target, reportSeq))
+	s.Send(fmt.Sprintf("Thank you for reporting %s. Report #%d has been logged.", target, reportID))
 	return nil
 }
 
