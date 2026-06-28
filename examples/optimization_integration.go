@@ -1,6 +1,7 @@
 package examples
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -125,7 +126,7 @@ func AiBatchProcessingExample() {
 				Model:  "test-model",
 			}
 
-			resp, err := processor.Submit(req)
+			resp, err := processor.Submit(context.Background(), req)
 			if err != nil {
 				log.Printf("  Error processing request %d: %v", id, err)
 				return

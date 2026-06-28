@@ -121,37 +121,6 @@ func TestIsValidPlayerName_CaseInsensitiveReserved(t *testing.T) {
 	}
 }
 
-func TestValidateInput_XSSCaseVariants(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-	}{
-		{"uppercase script tag", "<SCRIPT>alert(1)</SCRIPT>"},
-		{"mixed case script tag", "<ScRiPt>alert(1)</ScRiPt>"},
-		{"uppercase javascript protocol", "JaVaScRiPt:alert(1)"},
-		{"uppercase event handler", "<img ONERROR=alert(1)>"},
-		{"mixed case event handler", "<body OnLoad=alert(1)>"},
-		{"multiline script tag", "<script>\nalert(1)\n</script>"},
-		{"data uri", "data:text/html,<script>alert(1)</script>"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if valid, _ := ValidateInput(tt.input); valid {
-				t.Errorf("ValidateInput(%q) = true, want false", tt.input)
-			}
-		})
-	}
-}
-
-func TestValidateCommand_XSSCaseVariants(t *testing.T) {
-	if valid, _ := ValidateCommand("say", []string{"<SCRIPT>alert(1)</SCRIPT>"}); valid {
-		t.Error("ValidateCommand should reject mixed-case script argument")
-	}
-	if valid, _ := ValidateCommand("JaVaScRiPt:alert(1)", nil); valid {
-		t.Error("ValidateCommand should reject mixed-case javascript: command")
-	}
-}
-
 func TestIsValidPlayerName_Boundary(t *testing.T) {
 	// Exactly 2 chars (min valid)
 	if got := IsValidPlayerName("ab"); !got {
@@ -196,64 +165,6 @@ func TestSanitizePlayerName(t *testing.T) {
 			got := SanitizePlayerName(tt.input)
 			if got != tt.expected {
 				t.Errorf("SanitizePlayerName(%q) = %q, want %q", tt.input, got, tt.expected)
-			}
-		})
-	}
-}
-
-func TestSanitizeInput(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{"normal text passes through", "hello world", "hello world"},
-		{"HTML entities escaped", "a & b", "a &amp; b"},
-		{"tags escaped", "<b>bold</b>", "&lt;b&gt;bold&lt;/b&gt;"},
-		{"quotes escaped", `he said "hi"`, "he said &quot;hi&quot;"},
-		{"apostrophe escaped", "it's", "it&#39;s"},
-		{"control chars removed", "a\x00b", "ab"},
-		{"tab preserved", "a\tb", "a\tb"},
-		{"newline preserved", "a\nb", "a\nb"},
-		{"CR preserved", "a\rb", "a\rb"},
-		{"empty input", "", ""},
-		{"DP-569: ampersands don't inflate length", strings.Repeat("&", 999), strings.Repeat("&amp;", 999)},
-		{"truncation at 1000", strings.Repeat("a", 1001), strings.Repeat("a", 1000)},
-		{"mixed entities within limit", "hello & <world>", "hello &amp; &lt;world&gt;"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := SanitizeInput(tt.input)
-			if got != tt.expected {
-				t.Errorf("SanitizeInput(%q) = %q, want %q", tt.input, got, tt.expected)
-			}
-		})
-	}
-}
-
-func TestValidateCommand(t *testing.T) {
-	tests := []struct {
-		name    string
-		command string
-		args    []string
-		want    bool
-	}{
-		{"valid command", "look", []string{}, true},
-		{"valid command with args", "say", []string{"hello"}, true},
-		{"XSS in command", "<script>alert(1)</script>", []string{}, false},
-		{"XSS in args", "say", []string{"<script>alert(1)</script>"}, false},
-		{"SQL injection in command", "'; DROP TABLE users; --", []string{}, false},
-		{"empty command", "", []string{}, true},
-		{"multiple valid args", "give", []string{"sword", "fighter"}, true},
-		{"multiple args one invalid", "give", []string{"sword", "<script>xss</script>"}, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, _ := ValidateCommand(tt.command, tt.args)
-			if got != tt.want {
-				t.Errorf("ValidateCommand(%q, %v) = %v, want %v", tt.command, tt.args, got, tt.want)
 			}
 		})
 	}

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // TestActiveAffectsModifyStats is the foundational guard for the timed-affect →
@@ -170,5 +171,35 @@ func TestAffectBitMapping(t *testing.T) {
 	}
 	if p.IsAffected(affBlind) {
 		t.Error("Player should NOT be affected by blind via ActiveAffects of invisibility")
+	}
+}
+
+// TestAffectUpdateDurationZeroSurvives verifies that an affect with duration 0
+// is treated as permanent and survives AffectUpdate, matching the engine
+// contract (DP-663).
+func TestAffectUpdateDurationZeroSurvives(t *testing.T) {
+	world, err := NewWorld(&parser.World{})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	defer world.StopAITicker()
+
+	p := NewPlayer(1, "Tester", 3001)
+	world.AddPlayer(p)
+
+	af := engine.NewAffect(0, engine.ApplyHitroll, 0, 5, "permanent buff")
+	p.AddAffect(af)
+
+	if len(p.ActiveAffects) != 1 {
+		t.Fatalf("expected 1 affect before update, got %d", len(p.ActiveAffects))
+	}
+
+	world.AffectUpdate()
+
+	if len(p.ActiveAffects) != 1 {
+		t.Errorf("expected duration-0 affect to survive AffectUpdate, got %d affects", len(p.ActiveAffects))
+	}
+	if got := p.ActiveAffects[0].Duration; got != 0 {
+		t.Errorf("expected duration to remain 0, got %d", got)
 	}
 }

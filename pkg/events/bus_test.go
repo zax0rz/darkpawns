@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-type testBusEvent struct{ name string }
+type testBusEvent struct{}
 
 func (e testBusEvent) Type() string { return "test.event" }
 

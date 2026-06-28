@@ -306,6 +306,49 @@ func TestShopTransaction(t *testing.T) {
 	}
 }
 
+// TestShopTransactionRaceOnCha verifies that reading player.Stats.Cha during a
+// shop transaction is synchronized with concurrent stat updates (DP-563).
+func TestShopTransactionRaceOnCha(t *testing.T) {
+	manager := NewShopManager()
+	shop := manager.CreateShopConcrete(1001, "Test Shop", 3001)
+	shop.ItemTypes = []int{1}
+
+	player := &game.Player{Name: "Test Player", Gold: 10000}
+	player.Inventory = game.NewInventory()
+
+	proto := &parser.Obj{
+		VNum:      1001,
+		Keywords:  "test item",
+		ShortDesc: "a test item",
+		Cost:      100,
+		TypeFlag:  1,
+	}
+	for i := 0; i < 10; i++ {
+		shop.AddItem(game.NewObjectInstance(proto, -1))
+	}
+	_ = player.Inventory.AddItem(game.NewObjectInstance(proto, -1))
+
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			items := shop.GetInventory()
+			if len(items) > 0 {
+				_, _ = manager.ProcessTransaction(shop, player, items[0], true)
+			}
+		}(i)
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			player.Lock()
+			player.Stats.Cha = id%25 + 1
+			player.Unlock()
+		}(i)
+	}
+	wg.Wait()
+}
+
 // TestShopTransactionConcurrentDeadlock simulates concurrent buy and sell transactions
 // to verify that no deadlocks occur under race conditions.
 func TestShopTransactionConcurrentDeadlock(t *testing.T) {

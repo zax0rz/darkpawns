@@ -190,7 +190,12 @@ func (d *Daemon) reconnect(ctx context.Context) {
 	rcfg := DefaultReconnectConfig()
 	rcfg.InitialBackoff = 2 * time.Second
 
-	if err := d.client.Reconnect(ctx, rcfg); err != nil {
+	// Hold d.mu while reconnecting so that sendCommand cannot observe a
+	// stale or nil connection between its nil-check and WriteJSON (DP-668).
+	d.mu.Lock()
+	err := d.client.Reconnect(ctx, rcfg)
+	d.mu.Unlock()
+	if err != nil {
 		slog.Error("reconnect failed", "error", err)
 		return
 	}
@@ -534,13 +539,14 @@ func (d *Daemon) cmdRaw(args []string) DaemonResponse {
 // sendCommand sends a command to the MUD server and waits briefly for a response.
 func (d *Daemon) sendCommand(cmd string, args []string) DaemonResponse {
 	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	if d.client == nil || d.client.conn == nil {
-		d.mu.Unlock()
 		return DaemonResponse{OK: false, Error: "not connected"}
 	}
-	d.mu.Unlock()
 
-	// Send command
+	// Send command while still holding d.mu so the connection cannot be
+	// swapped out by reconnect() between the nil check and the write.
 	command := map[string]any{
 		"type": "command",
 		"data": map[string]any{

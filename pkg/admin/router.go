@@ -175,7 +175,8 @@ func requireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 
 // corsMiddleware adds CORS headers for allowed origins.
 // Production: set ADMIN_CORS_ORIGIN env var to the SPA origin.
-// Development: localhost:5173 and localhost:4350 are allowed.
+// Development: localhost:5173 and localhost:4350 are allowed only when
+// ENVIRONMENT=development, matching the web CORS behavior.
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
@@ -184,10 +185,13 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		allowed := origin == "http://localhost:5173" || origin == "http://localhost:4350" ||
-			origin == "https://localhost:5173" || origin == "https://localhost:4350"
+		allowed := false
 		if envOrigin := os.Getenv("ADMIN_CORS_ORIGIN"); envOrigin != "" && origin == envOrigin {
 			allowed = true
+		}
+		if !allowed && os.Getenv("ENVIRONMENT") == "development" {
+			allowed = origin == "http://localhost:5173" || origin == "http://localhost:4350" ||
+				origin == "https://localhost:5173" || origin == "https://localhost:4350"
 		}
 
 		if allowed {

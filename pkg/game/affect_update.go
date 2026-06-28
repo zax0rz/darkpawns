@@ -51,13 +51,14 @@ func (w *World) AffectUpdate() {
 		var remaining []*engine.Affect
 
 		for _, af := range affects {
-			if af.Duration == -1 {
-				// -1 = permanent (implementor-level spells, circle 1 items)
+			if af.Duration <= 0 {
+				// Permanent affect: 0 is the engine.NewAffect contract,
+				// -1 is a legacy implementor-level sentinel (CircleMUD items).
 				remaining = append(remaining, af)
 				continue
 			}
-			if af.Duration >= 1 {
-				af.Duration--
+			af.Duration--
+			if af.Duration > 0 {
 				remaining = append(remaining, af)
 			} else {
 				// Duration expired — remove and print wear-off

@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -215,4 +216,111 @@ func TestStartRecoversAfterFailure(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("Start did not return after context cancellation")
 	}
+}
+
+// TestSendCommandConcurrentReconnect verifies that sendCommand does not race
+// with reconnect: the nil-check and WriteJSON must be atomic under d.mu
+// (DP-668).
+func TestSendCommandConcurrentReconnect(t *testing.T) {
+	shortHome(t)
+
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
+
+	// Server that accepts repeated reconnects and consumes agent messages.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+
+		var login map[string]any
+		_ = c.ReadJSON(&login)
+		_ = c.WriteJSON(map[string]any{
+			"type": "state",
+			"data": map[string]any{},
+		})
+		var sub map[string]any
+		_ = c.ReadJSON(&sub)
+
+		// Read messages until the client disconnects.
+		for {
+			_, _, err := c.ReadMessage()
+			if err != nil {
+				return
+			}
+		}
+	}))
+	defer srv.Close()
+
+	u, err := url.Parse(srv.URL)
+	if err != nil {
+		t.Fatalf("parse server url: %v", err)
+	}
+	host := u.Hostname()
+	port, err := strconv.Atoi(u.Port())
+	if err != nil {
+		t.Fatalf("parse server port: %v", err)
+	}
+
+	cfg := &AgentConfig{
+		Key:        "test-key",
+		PlayerName: "RaceBot",
+		GameHost:   host,
+		GamePort:   port,
+	}
+
+	d, err := NewDaemon(cfg)
+	if err != nil {
+		t.Fatalf("new daemon: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	client := NewAgentClient(cfg)
+	if err := client.Connect(ctx); err != nil {
+		t.Fatalf("connect: %v", err)
+	}
+	d.client = client
+
+	var wg sync.WaitGroup
+
+	// Writer goroutine: repeatedly send commands.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			resp := d.sendCommand("look", nil)
+			if !resp.OK && resp.Error != "not connected" && !strings.Contains(resp.Error, "close sent") {
+				t.Errorf("sendCommand error: %s", resp.Error)
+			}
+		}
+	}()
+
+	// Reconnector goroutine: close and reconnect the same AgentClient.
+	// Hold d.mu around the close+reconnect so that sendCommand cannot read
+	// d.client.conn while it is being replaced (DP-668).
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		rcfg := ReconnectConfig{
+			InitialBackoff: 10 * time.Millisecond,
+			MaxBackoff:     50 * time.Millisecond,
+			Multiplier:     2.0,
+			Jitter:         0.0,
+			MaxAttempts:    1,
+		}
+		for i := 0; i < 30; i++ {
+			d.mu.Lock()
+			_ = client.Close()
+			_ = client.Reconnect(ctx, rcfg)
+			d.mu.Unlock()
+		}
+	}()
+
+	wg.Wait()
+	cancel()
 }

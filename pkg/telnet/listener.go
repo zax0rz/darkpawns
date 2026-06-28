@@ -177,8 +177,9 @@ func effectiveBanLevel(remoteIP string, banManager *game.BanManager) int {
 		err       error
 	}
 	done := make(chan result, 1)
+	lookup := lookupAddr // capture for goroutine so tests can restore package var safely
 	go func() {
-		names, err := lookupAddr(remoteIP)
+		names, err := lookup(remoteIP)
 		done <- result{hostnames: names, err: err}
 	}()
 
@@ -657,6 +658,24 @@ func (tc *telnetConn) readLine() (string, bool) {
 			}
 			switch cmd {
 			case IAC:
+				if len(line) >= maxInputLen {
+					slog.Warn("telnet: input exceeds max length, discarding remainder", "max", maxInputLen)
+					for {
+						b2, err := tc.br.ReadByte()
+						if err != nil {
+							return "", false
+						}
+						if b2 == '\r' {
+							if next, _ := tc.br.Peek(1); len(next) > 0 && next[0] == '\n' {
+								_, _ = tc.br.ReadByte()
+							}
+							return string(line[:maxInputLen]), true
+						}
+						if b2 == '\n' {
+							return string(line[:maxInputLen]), true
+						}
+					}
+				}
 				line = append(line, 0xFF)
 			case WILL:
 				opt, err := tc.br.ReadByte()

@@ -3,7 +3,6 @@ package optimization
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -62,7 +61,8 @@ func NewAIBatchProcessor(batchSize int, maxWaitTime time.Duration, processFunc f
 }
 
 // Submit submits an AI request for batch processing.
-func (bp *AIBatchProcessor) Submit(req AIRequest) (AIResponse, error) {
+// The context governs how long the caller is willing to wait for a response.
+func (bp *AIBatchProcessor) Submit(ctx context.Context, req AIRequest) (AIResponse, error) {
 	bp.mu.Lock()
 	if bp.closed {
 		bp.mu.Unlock()
@@ -101,8 +101,8 @@ func (bp *AIBatchProcessor) Submit(req AIRequest) (AIResponse, error) {
 			return resp, nil
 		case err := <-item.Error:
 			return AIResponse{}, err
-		case <-time.After(30 * time.Second):
-			return AIResponse{}, fmt.Errorf("timeout waiting for AI response")
+		case <-ctx.Done():
+			return AIResponse{}, ctx.Err()
 		}
 	}
 
@@ -112,8 +112,8 @@ func (bp *AIBatchProcessor) Submit(req AIRequest) (AIResponse, error) {
 		return resp, nil
 	case err := <-item.Error:
 		return AIResponse{}, err
-	case <-time.After(bp.maxWaitTime + 5*time.Second):
-		return AIResponse{}, fmt.Errorf("timeout waiting for batch processing")
+	case <-ctx.Done():
+		return AIResponse{}, ctx.Err()
 	}
 }
 
@@ -348,11 +348,11 @@ func (ap *AsyncProcessor) Process(req AIRequest, callback func(AIResponse, error
 
 	// Submit to worker pool for async processing
 	return ap.workerPool.Submit(func() {
-		_, cancel := context.WithTimeout(context.Background(), ap.timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), ap.timeout)
 		defer cancel()
 
 		// Process through batch processor
-		resp, err := ap.batchProcessor.Submit(req)
+		resp, err := ap.batchProcessor.Submit(ctx, req)
 		if err != nil {
 			callback(AIResponse{}, err)
 			return

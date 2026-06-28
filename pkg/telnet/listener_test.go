@@ -1,6 +1,7 @@
 package telnet
 
 import (
+	"bufio"
 	"net"
 	"testing"
 	"time"
@@ -142,5 +143,72 @@ func TestEffectiveBanLevel_NoMatch(t *testing.T) {
 
 	if got := effectiveBanLevel("203.0.113.7", bm); got != game.BanNot {
 		t.Fatalf("effectiveBanLevel = %d, want BanNot (%d)", got, game.BanNot)
+	}
+}
+
+// TestReadLineCapsBufferWithoutNewline verifies that a client sending more
+// than maxInputLen bytes without a newline cannot grow the input buffer
+// unboundedly (DP-622).
+func TestReadLineCapsBufferWithoutNewline(t *testing.T) {
+	client, server := net.Pipe()
+	defer client.Close()
+	defer server.Close()
+
+	tc := &telnetConn{
+		Conn: server,
+		br:   bufio.NewReader(server),
+		wmu:  make(chan struct{}, 1),
+	}
+
+	data := make([]byte, maxInputLen+10)
+	for i := range data {
+		data[i] = 'a'
+	}
+	data = append(data, '\n')
+	go func() {
+		_, _ = client.Write(data)
+		go drain(client)
+	}()
+
+	line, ok := tc.readLine()
+	if !ok {
+		t.Fatal("readLine returned false, want true")
+	}
+	if len(line) != maxInputLen {
+		t.Errorf("readLine length = %d, want %d", len(line), maxInputLen)
+	}
+}
+
+// TestReadLineCapsIACEscapedBytes verifies that a stream of IAC IAC escape
+// sequences (each appending a literal 0xFF byte) is also capped at
+// maxInputLen (DP-622).
+func TestReadLineCapsIACEscapedBytes(t *testing.T) {
+	client, server := net.Pipe()
+	defer client.Close()
+	defer server.Close()
+
+	tc := &telnetConn{
+		Conn: server,
+		br:   bufio.NewReader(server),
+		wmu:  make(chan struct{}, 1),
+	}
+
+	data := make([]byte, 0, (maxInputLen+10)*2+1)
+	for i := 0; i < maxInputLen+10; i++ {
+		data = append(data, IAC, IAC)
+	}
+	data = append(data, '\n')
+
+	go func() {
+		_, _ = client.Write(data)
+		go drain(client)
+	}()
+
+	line, ok := tc.readLine()
+	if !ok {
+		t.Fatal("readLine returned false, want true")
+	}
+	if len(line) != maxInputLen {
+		t.Errorf("readLine length = %d, want %d", len(line), maxInputLen)
 	}
 }

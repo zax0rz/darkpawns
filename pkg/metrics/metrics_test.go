@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
 func TestMetrics(t *testing.T) {
@@ -38,6 +40,50 @@ func TestMetrics(t *testing.T) {
 	// Test memory metrics
 	MemoryWrite()
 	MemoryRead()
+
+	// Verify metric values, not just names (DP-578).
+	if got := testutil.ToFloat64(connectionsActive); got != 0 {
+		t.Errorf("connections_active = %v, want 0", got)
+	}
+	if got := testutil.ToFloat64(connectionsTotal); got != 1 {
+		t.Errorf("connections_total = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(connectionsErrors); got != 1 {
+		t.Errorf("connection_errors_total = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(commandsProcessed.WithLabelValues("look")); got != 1 {
+		t.Errorf("commands_processed_total{look} = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(playersOnline); got != 5 {
+		t.Errorf("players_online = %v, want 5", got)
+	}
+	if got := testutil.ToFloat64(roomsActive); got != 10 {
+		t.Errorf("rooms_active = %v, want 10", got)
+	}
+	if got := testutil.ToFloat64(mobsActive); got != 3 {
+		t.Errorf("mobs_active = %v, want 3", got)
+	}
+	if got := testutil.ToFloat64(combatRounds); got != 1 {
+		t.Errorf("combat_rounds_total = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(damageDealt.WithLabelValues("player")); got != 25 {
+		t.Errorf("damage_dealt_total{player} = %v, want 25", got)
+	}
+	if got := testutil.ToFloat64(deathsTotal); got != 1 {
+		t.Errorf("deaths_total = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(errorsTotal.WithLabelValues("database")); got != 1 {
+		t.Errorf("errors_total{database} = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(dbQueriesTotal); got != 1 {
+		t.Errorf("db_queries_total = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(memoryWrites); got != 1 {
+		t.Errorf("memory_writes_total = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(memoryReads); got != 1 {
+		t.Errorf("memory_reads_total = %v, want 1", got)
+	}
 
 	// Test HTTP handler
 	req := httptest.NewRequest("GET", "/metrics", nil)

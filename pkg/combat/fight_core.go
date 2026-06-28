@@ -1270,8 +1270,13 @@ func RawKill(ch Combatant, attackType int) {
 	}
 	DeathCry(ch)
 
-	victimRace := GetRace(chName)
-	if victimRace == RACE_UNDEAD || victimRace == RACE_VAMPIRE {
+	// Default to corpse unless GetRace tells us the victim is undead/vampire.
+	makeDust := false
+	if GetRace != nil {
+		victimRace := GetRace(chName)
+		makeDust = victimRace == RACE_UNDEAD || victimRace == RACE_VAMPIRE
+	}
+	if makeDust {
 		if MakeDustFunc != nil {
 			MakeDustFunc(chName, attackType)
 		}

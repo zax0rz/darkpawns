@@ -376,3 +376,29 @@ func TestTakeDamage_NilGetRace(t *testing.T) {
 	// Should not panic when GetRace is nil even though GetRaceHate is non-nil
 	TakeDamage(ch, victim, 10, TYPE_HIT)
 }
+
+// TestRawKill_NilGetRace verifies that RawKill does not panic when the GetRace
+// function pointer is nil and still produces a corpse (DP-620).
+func TestRawKill_NilGetRace(t *testing.T) {
+	origGetRace := GetRace
+	origMakeCorpse := MakeCorpseFunc
+	defer func() {
+		GetRace = origGetRace
+		MakeCorpseFunc = origMakeCorpse
+	}()
+
+	GetRace = nil
+	madeCorpse := false
+	MakeCorpseFunc = func(victim string, attackType int) {
+		if victim == "Victim" {
+			madeCorpse = true
+		}
+	}
+
+	ch := &mockCombatant{name: "Victim", room: 100}
+	RawKill(ch, TYPE_UNDEFINED)
+
+	if !madeCorpse {
+		t.Error("expected MakeCorpseFunc to be called when GetRace is nil")
+	}
+}

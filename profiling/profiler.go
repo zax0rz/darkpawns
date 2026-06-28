@@ -518,12 +518,13 @@ func RunProfilingSession(profileDir string, duration time.Duration) error {
 	time.Sleep(duration)
 
 	// Stop profiling and collect any cleanup/write errors.
-	var stopErrs []error
-	stopErrs = append(stopErrs, profiler.StopCPUProfile())
-	stopErrs = append(stopErrs, profiler.StopBlockProfile())
-	stopErrs = append(stopErrs, profiler.StopMutexProfile())
-	stopErrs = append(stopErrs, profiler.WriteHeapProfile())
-	stopErrs = append(stopErrs, profiler.GoroutineDump())
+	stopErrs := []error{
+		profiler.StopCPUProfile(),
+		profiler.StopBlockProfile(),
+		profiler.StopMutexProfile(),
+		profiler.WriteHeapProfile(),
+		profiler.GoroutineDump(),
+	}
 
 	monitor.Stop()
 

@@ -7,6 +7,8 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,6 +70,12 @@ func New(connString string) (*DB, error) {
 		return nil, fmt.Errorf("ping database: %w", err)
 	}
 
+	// Configure connection pool to avoid exhausting pg max_connections under load.
+	// Values mirror deployment guidance; override via env vars if needed.
+	conn.SetMaxOpenConns(getEnvInt("DB_MAX_OPEN_CONNS", 25))
+	conn.SetMaxIdleConns(getEnvInt("DB_MAX_IDLE_CONNS", 5))
+	conn.SetConnMaxLifetime(time.Duration(getEnvInt("DB_CONN_MAX_LIFETIME_SECONDS", 300)) * time.Second)
+
 	db := &DB{conn: conn}
 	if err := db.createTables(); err != nil {
 		return nil, fmt.Errorf("create tables: %w", err)
@@ -82,6 +90,19 @@ func New(connString string) (*DB, error) {
 // Close closes the database connection.
 func (db *DB) Close() error {
 	return db.conn.Close()
+}
+
+// getEnvInt reads an integer environment variable, falling back to defaultValue.
+func getEnvInt(name string, defaultValue int) int {
+	v := os.Getenv(name)
+	if v == "" {
+		return defaultValue
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return defaultValue
+	}
+	return n
 }
 
 // createTables creates the necessary tables if they don't exist.

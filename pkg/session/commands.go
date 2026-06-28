@@ -88,7 +88,7 @@ func init() {
 	cmdRegistry.Register("wear", wrapArgs(cmdWear), "Wear an item from your inventory.", 0, 0)
 	cmdRegistry.Register("remove", wrapArgs(cmdRemove), "Remove an equipped item.", 0, 0)
 	cmdRegistry.Register("wield", wrapArgs(cmdWield), "Wield a weapon.", 0, 0)
-	cmdRegistry.Register("hold", wrapArgs(cmdHold), "Hold an item.", 0, 0)
+	cmdRegistry.Register("hold", wrapArgs(cmdHold), "Hold an item.", 0, 0, "grab")
 	cmdRegistry.Register("get", wrapArgs(cmdGet), "Pick up an item from the room, container, or corpse.", 0, 0, "take")
 	cmdRegistry.Register("give", wrapArgs(cmdGive), "Give an item or gold to another character.", 0, 0)
 	cmdRegistry.Register("put", wrapArgs(cmdPut), "Put an item into a container.", 0, 0)

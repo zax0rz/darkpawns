@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -225,7 +226,7 @@ func BenchmarkAIBatchProcessor(b *testing.B) {
 				MaxTokens: 100,
 			}
 
-			_, err := processor.Submit(req)
+			_, err := processor.Submit(context.Background(), req)
 			if err != nil {
 				b.Fatal(err)
 			}

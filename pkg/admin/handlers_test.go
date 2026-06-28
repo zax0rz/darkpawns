@@ -1312,6 +1312,10 @@ func authMiddlewareForTest(next http.Handler) http.Handler {
 // ---------------------------------------------------------------------------
 
 func TestNewRouter_CORS_Headers(t *testing.T) {
+	origEnv := os.Getenv("ENVIRONMENT")
+	defer func() { _ = os.Setenv("ENVIRONMENT", origEnv) }()
+	_ = os.Setenv("ENVIRONMENT", "development")
+
 	setJWTSecret(t)
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
@@ -1571,5 +1575,86 @@ func TestHandleLogin_LockoutReturns429(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "too many failed attempts") {
 		t.Errorf("expected lockout message in body, got: %s", rec.Body.String())
+	}
+}
+
+// TestCorsMiddleware_LocalhostBlockedInProduction verifies that localhost
+// origins are rejected unless ENVIRONMENT=development (DP-632).
+func TestCorsMiddleware_LocalhostBlockedInProduction(t *testing.T) {
+	origEnv := os.Getenv("ENVIRONMENT")
+	origCORS := os.Getenv("ADMIN_CORS_ORIGIN")
+	defer func() {
+		_ = os.Setenv("ENVIRONMENT", origEnv)
+		_ = os.Setenv("ADMIN_CORS_ORIGIN", origCORS)
+	}()
+
+	_ = os.Unsetenv("ENVIRONMENT")
+	_ = os.Unsetenv("ADMIN_CORS_ORIGIN")
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
+	req.Header.Set("Origin", "http://localhost:5173")
+	rec := httptest.NewRecorder()
+	corsMiddleware(next).ServeHTTP(rec, req)
+
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Errorf("production localhost origin should not be allowed, got %q", got)
+	}
+}
+
+// TestCorsMiddleware_LocalhostAllowedInDevelopment verifies that localhost
+// origins are allowed when ENVIRONMENT=development.
+func TestCorsMiddleware_LocalhostAllowedInDevelopment(t *testing.T) {
+	origEnv := os.Getenv("ENVIRONMENT")
+	origCORS := os.Getenv("ADMIN_CORS_ORIGIN")
+	defer func() {
+		_ = os.Setenv("ENVIRONMENT", origEnv)
+		_ = os.Setenv("ADMIN_CORS_ORIGIN", origCORS)
+	}()
+
+	_ = os.Setenv("ENVIRONMENT", "development")
+	_ = os.Unsetenv("ADMIN_CORS_ORIGIN")
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
+	req.Header.Set("Origin", "http://localhost:5173")
+	rec := httptest.NewRecorder()
+	corsMiddleware(next).ServeHTTP(rec, req)
+
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "http://localhost:5173" {
+		t.Errorf("development localhost origin should be allowed, got %q", got)
+	}
+}
+
+// TestCorsMiddleware_EnvOriginAlwaysAllowed verifies that ADMIN_CORS_ORIGIN is
+// honored regardless of ENVIRONMENT.
+func TestCorsMiddleware_EnvOriginAlwaysAllowed(t *testing.T) {
+	origEnv := os.Getenv("ENVIRONMENT")
+	origCORS := os.Getenv("ADMIN_CORS_ORIGIN")
+	defer func() {
+		_ = os.Setenv("ENVIRONMENT", origEnv)
+		_ = os.Setenv("ADMIN_CORS_ORIGIN", origCORS)
+	}()
+
+	_ = os.Unsetenv("ENVIRONMENT")
+	_ = os.Setenv("ADMIN_CORS_ORIGIN", "https://admin.example.com")
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
+	req.Header.Set("Origin", "https://admin.example.com")
+	rec := httptest.NewRecorder()
+	corsMiddleware(next).ServeHTTP(rec, req)
+
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "https://admin.example.com" {
+		t.Errorf("ADMIN_CORS_ORIGIN should be allowed, got %q", got)
 	}
 }

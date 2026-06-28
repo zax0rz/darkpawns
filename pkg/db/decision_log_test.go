@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"os"
 	"sync"
 	"testing"
+	"time"
 )
 
 var (
@@ -85,6 +87,43 @@ func TestFlushRetainsRecordsOnDBError(t *testing.T) {
 	}
 	if len(dlw.combat) != 1 {
 		t.Errorf("expected combat record to be retained after flush failure, got %d", len(dlw.combat))
+	}
+}
+
+// TestGetEnvInt verifies the environment-variable helper used for connection
+// pool configuration (DP-633).
+func TestGetEnvInt(t *testing.T) {
+	orig := os.Getenv("DP_TEST_INT")
+	defer func() { _ = os.Setenv("DP_TEST_INT", orig) }()
+
+	_ = os.Unsetenv("DP_TEST_INT")
+	if got := getEnvInt("DP_TEST_INT", 42); got != 42 {
+		t.Errorf("unset env: got %d, want 42", got)
+	}
+
+	_ = os.Setenv("DP_TEST_INT", "123")
+	if got := getEnvInt("DP_TEST_INT", 42); got != 123 {
+		t.Errorf("valid env: got %d, want 123", got)
+	}
+
+	_ = os.Setenv("DP_TEST_INT", "not-an-int")
+	if got := getEnvInt("DP_TEST_INT", 42); got != 42 {
+		t.Errorf("invalid env: got %d, want fallback 42", got)
+	}
+}
+
+// TestConnectionPoolDefaults verifies the default pool limits are documented
+// and consistent (DP-633).
+func TestConnectionPoolDefaults(t *testing.T) {
+	// Defaults mirror the values set in New().
+	if got := getEnvInt("DB_MAX_OPEN_CONNS", 25); got != 25 {
+		t.Errorf("DB_MAX_OPEN_CONNS default = %d, want 25", got)
+	}
+	if got := getEnvInt("DB_MAX_IDLE_CONNS", 5); got != 5 {
+		t.Errorf("DB_MAX_IDLE_CONNS default = %d, want 5", got)
+	}
+	if got := time.Duration(getEnvInt("DB_CONN_MAX_LIFETIME_SECONDS", 300)) * time.Second; got != 5*time.Minute {
+		t.Errorf("DB_CONN_MAX_LIFETIME default = %v, want 5m", got)
 	}
 }
 
