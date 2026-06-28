@@ -2,6 +2,68 @@
 
 Living document. Updated per session by Daeron.
 
+## [SESSION] 2026-06-26 — Kimi Batch Deploy + Database Permissions + Linear Grooming
+
+**Kimi K2.7-code completed the full 62-finding clawpatch batch.** Merged to main, deployed to CT 120. 108 files changed, 4,229 lines added. Build, vet, tests all green. Cross-compiled linux/amd64 binary deployed at 21:10 EDT.
+
+**Database permission drift discovered and fixed.** All 16 PostgreSQL tables were owned by `postgres` but the server connects as `darkpawns`. Server was silently running without persistence — no character saves, no moderation, no player data. Fixed with ALTER TABLE OWNER + ALTER DEFAULT PRIVILEGES. This is the kind of bug that doesn't show up in code review because it's not in the code.
+
+**Linear grooming: 26 issues closed.** 20 from KIMI-BRIEF finding IDs, 6 from commit log verification. 3 left open (DP-622, DP-648, DP-649). Reek did the mechanical work from a brief.
+
+**Security hardening brief written for next Kimi batch.** 6 findings (3 high, 3 medium) — hardcoded Postgres creds, WebSocket dev bypass, DNS hostname resolution for bans, pprof exposure, login rate limiting, k8s secrets. Kimi started but hit rate limits with 4 of 6 done.
+
+**Paper-relevant observations:**
+- The database permission drift is a new failure mode worth documenting: infrastructure-level regressions that are invisible to code analysis. Reek found 70 code bugs but never caught this because it's not in the source.
+- The multi-agent pipeline (Claude → Kimi → Reek → Daeron) worked. Each agent did what it was good at. Claude wrote the brief with C-source verification. Kimi did the mechanical fixes. Reek did the linear grooming. Daeron did the deployment and triage. No single agent could have done all of this.
+- Token cost for the full operation: Claude brief (~100k tokens) + Kimi fixes (~300k tokens) + Reek grooming (~50k tokens) + Daeron deployment/triage (~20k tokens). Rough estimate: ~470k tokens for 26 issues closed, 62 code fixes, 1 deployment, 1 database permission fix.
+
+## [RESEARCH] 2026-06-25 — Research Writing: The Taxonomy of Simplification (Part 2)
+
+**Cron-triggered (Program 5).** The Jun 23 draft was logged in RESEARCH-LOG.md but never written to disk. Wrote the full draft today — ~1,100 words decomposing the largest fidelity drift category into five specific mechanisms.
+
+**Topic:** The word "simplified" appears 15 times in the Go codebase. Each occurrence is a claim — a claim that the behavioral gap is acceptable. This draft defines five patterns of simplification, each mechanically detectable, each with a concrete codebase example.
+
+**The five simplifications (with examples):**
+1. **Argument truncation** — DoMindlink type assertion fails on mob targets. Go takes fewer args than C; missing params control edge cases.
+2. **Logic flattening** — persName/CAN_SEE reduced to awake-only check (since fixed). C has 4+ branches, Go has 1.
+3. **Stub displacement** — checkReagents() returns 0 permanently. 22 stub functions found across the port. Function exists, compiles, does nothing.
+4. **Algorithmic substitution** — exp_needed_for_level estimated as 1000*level (C uses quadratic). Matches at low levels, diverges 30x at level 30.
+5. **Behavioral omission** — Ban system ported but never wired to telnet listener. Spec procs assigned but command dispatcher never checks them.
+
+**Key argument:** "Simplified" is a rhetorical move that transforms a regression into a design choice. AI porting agents are comment-followers — they treat "simplified" as license to skip verification. The fidelity audit strips this license.
+
+**Detection methods:** Five mechanical checks — argument count, branch count, return defaults, formula comparison, call tracing. Automatable. Don't require understanding the game.
+
+**File:** `docs/research/drafts/2026-06-23-the-taxonomy-of-simplification.md`
+
+**Status:** Draft ~1,100 words. Extends Silent Drift by decomposing its third category (logic simplification) into five specific mechanisms. Supports Constraint Engineering (what briefs detect) and What the Agent Preserved (what agents lose).
+
+---
+
+## [DAERON] 2026-06-25 — Morning Triage: Reek's Overnight Crawl + Fidelity Review
+
+**Cron-triggered (Program 1).** Reek ran overnight crawl (6 findings) + fidelity review (9 findings). I verified each against the codebase.
+
+**Results:** 8 rejected, 5 confirmed (1 critical, 2 high, 2 low), 1 self-dismissed. New failure mode: fabricated file references (formatting.go, channel backpressure in main.go). Reek is pattern-matching against expected structures rather than reading actual code.
+
+**Confirmed findings:**
+- CRITICAL: cmd/dp-agent zero tests (367 lines, not 1700 as Reek claimed)
+- HIGH: pkg/session race OOM (654MB, 3344 goroutines)
+- HIGH: 3 packages skipped by race detector (spells, telnet, validation)
+- LOW: LiteLLM empty key fallback in 3 scripts
+- LOW: dp_session_consolidate.py missing /v1/ prefix (still unfixed from Jun 24)
+
+**Rejected findings (notable):**
+- HH-209 lock ordering deadlock: both processBuy and processSell lock player→shop consistently
+- HH-210 ObjectPool.TryGet deadlock: TryGet calls getLocked(), not Get()
+- HH-211 Door.Reset(): code correctly restores initialClosed/initialLocked
+- HH-215 GetAlignment nil: nil check exists at fight_core.go:262
+- 3 fabricated references (channel, formatting.go, library os.Exit)
+
+**Paper note:** Reek's 57% false positive rate on fidelity findings is concerning. The fabricated file paths suggest the crawler is hallucinating code structures — a novel failure mode worth documenting. Previous batches had ~33% FPR. The trend is worsening, not improving.
+
+---
+
 ## [DAERON] 2026-06-24 — Morning Triage: Reek's Overnight (95 Findings)
 
 **Cron-triggered (Program 1).** Reek ran a comprehensive overnight review: 95 findings (4 critical, 25 high, 66 medium), 15 false positives dismissed, 12 confirmed. I verified each against the codebase.
@@ -3140,3 +3202,134 @@ Migration from frankendell Docker to CT 120 (Proxmox) completed. Independent ver
 - **Day-one validation of the grader.** DP-642: deterministic checker flagged real divergence → producer overstated impact → grader caught it. The producer/grader split proved its value on the very first run.
 - **Assembly-level blind spots remain publishable.** "Unit tests green + product unusable" is still a clean AIIDE finding.
 
+
+## [DIGEST] 2026-06-24 — Weekly Research Digest (June 17–24)
+
+### Reek Reports
+- **Generated:** 1 (coverage gap analysis, June 24)
+- **With findings:** 1 (comprehensive coverage audit — 95 findings across code quality, security, and coverage)
+- **Clean / no_REPLY:** 0 (no dependency or crawl reports this cycle)
+
+### Triage Outcomes
+- **Confirmed:** 6 (cmdKick stale session race, StateFile.Get TOCTOU, sendCommand conn TOCTOU, AIBatchProcessor.Close fire-and-forget, dp_session_consolidate.py missing `/v1/` prefix, BatchFilter drops partial results)
+- **Rejected:** 4 (cmdAlias nil panic, ContentNegotiationMiddleware dead code, CSP nonce missing file, Bearer case sensitivity)
+- **Needs context:** 2 (CSP nonce `security.go` doesn't exist in codebase)
+- **False positive rate:** ~33% on this batch — consistent with Lobster scorecard lifetime average
+
+### Fixes Applied
+- **55 commits merged (June 17–24)** — highest weekly commit volume in project history
+- **16 merge PRs** across feature work, bug fixes, infrastructure
+
+#### Key fixes:
+- **PR #36 — Tier 2 golden tests:** dex_app, str_app ToHit/ToDam, saving throws, XP curve, regen golden tests. Pins 5 core combat/formula systems to C source values. (DP-644)
+- **PR #33 — Bucket B Part 1:** 519-line test file + ported playable commands (social, eat, drink, wiz system, gen_ps_cmds)
+- **PR #32 — Bucket E toggle:** preference-toggle commands, color/autoexit/toggle stubs fixed
+- **PR #31 — Extra-flag bit checks:** corrected bit checks + Runtime-aware object descriptions
+- **PR #30 — Donate/junk commands:** ported from C
+- **PR #28 — Dead AffectManager cleanup:** removed dead AffectManager/AffectTickSystem code
+- **PR #27 — Stat recalc + berserk/kuji-kiri:** folded active affects into core stat getters
+- **PR #26 — Spell routing consolidation:** consolidated spell routing, passed world reference to spells.Cast
+- **PR #25 — Affects unification:** unified affect constant bit positions matching structs.h, fixed sneak/blind collision
+- **PR #22 — Affect stat pipeline:** applied timed affect stat modifiers to hitroll/damroll/AC
+- **PR #20 — Bucket A skill commands:** wired up implemented-but-unreachable skill commands
+- **PR #19 — Boot/telnet/combat fixes:** DB persistence failures surfaced to admins, combat retarget fix, inventory over-capacity guard, send channel concurrent close fix, PII handler fix, telnet hardening, 6 quick wins (bounds checks, nil guards, double-close), deadlock audit + spell parity + door state cleanup
+- **RNG seam (DP-644):** Injectable Roller interface into pkg/combat. 18 direct `rand.*` calls routed through interface. THAC0 golden test pins to C source (12 classes × 40 levels). PR #34, reviewed and approved by Daeron, merged.
+
+### Hot Zones (most commits touching)
+- `pkg/game/` — affects, spells, items, combat, settings (20+ files changed)
+- `pkg/combat/` — RNG seam, golden tests, formulas (8 files)
+- `pkg/session/` — Bucket A/B commands, toggle, social (15+ files)
+- `pkg/spells/` — routing consolidation, saving throws golden test
+- `docs/` — handoff docs, port reachability map, research log (10+ files)
+
+### Bug Categories
+- **Fidelity / affect pipeline:** 6 (affect bit positions, stat modifiers, spell routing, berserk/kuji-kiri, extra-flag bits)
+- **Port completeness:** 5 (donate/junk, Bucket A skills, Bucket B commands, toggle commands, specRecharger)
+- **Runtime safety:** 4 (send channel close, inventory over-capacity, combat retarget, nil guards)
+- **Security:** 2 (PII handler, DB persistence failure surfacing)
+- **Infrastructure:** 3 (SVN metadata cleanup, CI formatting, dead code removal)
+- **Fidelity harness:** 1 (RNG seam — injectable dependency for deterministic testing)
+
+### Coverage Analysis (Reek, June 24)
+- **Overall:** 21.0% (up from 17.5% on June 17 — +3.5pp)
+- **Total functions:** 3,222
+- **At 0% coverage:** 2,324 (72.1%)
+- **Zero-coverage packages:** pkg/storage, pkg/secrets, pkg/agent, pkg/audit, pkg/common (5 packages with 0 tests)
+- **Worst by function count:** pkg/game (1,661 funcs, 14.7%), pkg/session (463 funcs, 22.1%), pkg/spells (86 funcs, 14.1%)
+- **Well-covered:** pkg/metrics (93.8%), pkg/parser (76.3%), pkg/combat (65.6%), pkg/game/systems (68.5%)
+
+### Research Output
+- **[RESEARCH] 2026-06-23 — Session: Lobster Pipeline + RNG Seam Merge** — Lobster architecture (Producer/Grader split) discussed with The Architect. RNG seam PR reviewed and approved.
+- **[RESEARCH] 2026-06-23 — Research Writing: The Taxonomy of Simplification** — 5 drift patterns decomposed from 66 fidelity findings (30% of total). Argument truncation, logic flattening, stub displacement, algorithmic substitution, behavioral omission.
+- **[DAERON] 2026-06-24 — Morning Triage: Reek's Overnight (95 Findings)** — Full triage of 95 findings. 12 confirmed, 4 rejected, 2 needs context.
+
+**Research series state:** 12 drafts total. This week added the Lobster case study, taxonomy paper draft, and triage report.
+
+### Key Patterns
+
+1. **The fidelity harness went from concept to infrastructure this week.** RNG seam (injectable dependency) + golden tests (C-pinned regression baselines) + Lobster pipeline (Producer/Grader split) — three pieces that together make fidelity verification repeatable and gradeable. This is the paper's core contribution taking physical shape.
+
+2. **Affects unify, the codebase exhales.** Five PRs in one week converging on a single goal: make affects (buffs/debuffs) flow through the system correctly. Affect bit positions, stat modifiers, spell routing, berserk/kuji-kiri — all touched the same pipeline. The AffectManager/AffectTickSystem dead code removal is the tombstone.
+
+3. **Volume is accelerating.** 55 commits, 16 PRs merged in one week. The coding agent (BRENDA69) is producing at a pace Daeron and Reek can barely keep up with. The coverage audit landed the same week as the highest commit volume — the gap between code and tests is widening, not closing.
+
+4. **The 72.1% zero-coverage number is the paper's strongest empirical finding.** Two out of three functions in a 3,222-function codebase have never been executed by a test. This is what "ported but unverified" looks like at scale. The 21% overall coverage masks a deeper problem: 5 entire packages with zero tests, including the storage layer, secrets manager, and agent memory hooks.
+
+5. **Reek's FP rate is stabilizing.** 33% this batch, consistent with lifetime average. The Lobster scorecard now has a durable record. The trend line suggests Reek is reliable for structural/coverage findings (low noise) but noisy on code quality/style findings (high noise). This is a publishable calibration curve.
+
+### Board State (June 24)
+
+- **DP-644:** MERGED — RNG seam (PR #34, PR #36 golden tests)
+- **DP-642:** Graded — cosmetic divergence, overstated impact
+- **DP-643:** Tier 1 ARRAY_MAP verification — 19 flagged divergences need manual review
+- **Tier 3:** Behavioral/differential prototype — not started
+- **Coverage:** 21% → target is establishing a baseline for the paper
+- **dp_session_consolidate.py:** Missing `/v1/` prefix — LLM narrative consolidation silently broken
+
+### Paper-Relevant Notes
+
+- **Week of the fidelity harness.** Three infrastructure pieces (RNG seam, golden tests, Lobster pipeline) converged in one week. The paper now has a concrete "how we built it" section.
+- **The coverage debt is measurable.** 72.1% zero-coverage across 3,222 functions. This is the number that goes in the abstract. "We ported 73,000 lines of C to Go. We tested 21% of it."
+- **Taxonomy of simplification is draft-ready.** Five patterns with mechanical detection criteria. This is a contribution to the port verification literature — nobody has systematically catalogued what "simplified" actually means in a large C-to-Go port.
+- **Lobster as publishable pattern.** Producer/Grader split (Reek produces, Daeron grades) with durable scorecard is a reusable architecture for AI-assisted code review. First run validated on day one (DP-642).
+
+## 2026-06-27 — Security Hardening Batch Verified
+
+**Pipeline:** Reek (2026-06-13 audit) → Daeron (triage) → Kimi (implementation) → Daeron (verification) → Architect (merge)
+
+Six security findings from Reek's June 13 security audit implemented and verified:
+- 3 HIGH: hardcoded DB credentials (DP-591), WebSocket origin bypass (DP-596), dead hostname bans (DP-557)
+- 3 MEDIUM: pprof exposure (DP-595), no account lockout (DP-592), k8s secrets missing (DP-550)
+
+Branch: `fix/security-hardening-20260627` — 16 files, ~669 insertions, ~53 deletions.
+All Linear issues updated with verification comments and closed.
+
+**Research note:** This is a clean example of the multi-agent triage pipeline for the AIIDE paper. Reek identifies, Daeron verifies, Kimi implements, Daeron re-verifies, Architect approves. Full audit trail in Linear.
+
+## 2026-06-27 — Validation Cleanup + File Permissions Batch Verified
+
+**Pipeline:** Daeron (brief) → Reek (implementation) → Daeron (verification) → Architect (merge)
+
+Second batch of the morning. Four Reek/Clawpatch findings + expanded file permissions sweep:
+- DP-570 (MEDIUM): SanitizePlayerName min length contract fix
+- DP-569 (MEDIUM): SanitizeInput truncate-before-escape reorder
+- DP-597 (LOW): Agent store 0o644 → 0o600
+- DP-573 (LOW): Validation package cleanup (deprecation comment, tests, Makefile)
+- File permissions sweep: 7 more 0o644 → 0o600 across agentcli, game/clans, dreaming
+
+Branch: `main` (ac5ed39b + 3a85c5c5). 11 files, ~307 insertions, ~18 deletions.
+All Linear issues updated and closed.
+
+**Research note:** The file permissions sweep is a good example of "find one, find the class" — DP-597 (agent_store) led Daeron to audit all 0o644 write sites across the codebase, discovering 7 more sensitive files with world-readable output. This pattern (single finding → class audit) is worth documenting for the AIIDE paper.
+
+## 2026-06-27 — Morning Session Summary
+
+**Active:** 07:27–08:34 EDT
+**Model:** MiMo v2.5 Base
+**Findings resolved:** 10 (6 security + 4 validation/permissions)
+**Lines changed:** ~976+ across 27 files
+**Deployments:** 2 (both to CT 120, both live)
+
+**Pipeline performance:** Reek identified → Daeron triaged/briefed → Kimi/Reek implemented → Daeron verified → Architect approved → deployed. Full cycle from brief to production in under 1 hour per batch.
+
+**Paper-relevant:** The "find one, find the class" audit pattern (DP-597 → 7 more 0o644 sites) demonstrates how a single confirmed finding can trigger a broader codebase audit. This is a measurable outcome of the human-in-the-loop triage model — the agent didn't just fix the reported issue, it asked "what else is in this class?" and found more.
