@@ -143,7 +143,11 @@ func init() {
 
 	// Combat skills (delegated to pkg/command)
 	cmdRegistry.Register("backstab", wrapSkill(command.CmdBackstab), "Backstab a target with a piercing weapon.", 0, combat.PosStanding, "bs")
+	cmdRegistry.Register("spike", wrapSkill(command.CmdSpike), "Spike a werewolf with a spiked weapon.", 0, combat.PosStanding)
+	cmdRegistry.Register("stake", wrapSkill(command.CmdStake), "Stake a vampire with a wooden stake.", 0, combat.PosStanding)
 	cmdRegistry.Register("bash", wrapSkill(command.CmdBash), "Bash a target, potentially stunning them.", 0, combat.PosFighting)
+	cmdRegistry.Register("circle", wrapSkill(command.CmdCircle), "Circle behind a target for a piercing attack.", 0, combat.PosFighting)
+	cmdRegistry.Register("charge", wrapSkill(command.CmdCharge), "Charge a target with a sword or lance.", 0, combat.PosFighting)
 	cmdRegistry.Register("kick", wrapSkill(command.CmdKick), "Kick a target for damage.", 0, combat.PosFighting)
 	cmdRegistry.Register("trip", wrapSkill(command.CmdTrip), "Trip a target, knocking them down.", 0, combat.PosFighting)
 	cmdRegistry.Register("headbutt", wrapSkill(command.CmdHeadbutt), "Headbutt a target for high damage.", 0, combat.PosFighting)

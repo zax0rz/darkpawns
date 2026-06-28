@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -20,7 +21,12 @@ type WSConn struct {
 
 // Dial connects to a WebSocket endpoint.
 func Dial(ctx context.Context, addr string) (*WSConn, error) {
-	c, _, err := websocket.DefaultDialer.DialContext(ctx, addr, nil)
+	return DialWithHeaders(ctx, addr, nil)
+}
+
+// DialWithHeaders connects to a WebSocket endpoint with custom headers.
+func DialWithHeaders(ctx context.Context, addr string, headers http.Header) (*WSConn, error) {
+	c, _, err := websocket.DefaultDialer.DialContext(ctx, addr, headers)
 	if err != nil {
 		return nil, fmt.Errorf("websocket dial: %w", err)
 	}

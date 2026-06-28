@@ -1905,6 +1905,135 @@ func CmdFleshAlter(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, nil, result)
 }
 
+// CmdSpike handles the spike command (werewolf destruction).
+func CmdSpike(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Spike whom?\r\n")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillSpike)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	targetName := strings.Join(args, " ")
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	if !found {
+		return s.SendMessage("They don't seem to be here.\r\n")
+	}
+
+	result := game.DoSpike(ch, target, 0, world)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdStake handles the stake command (vampire destruction).
+func CmdStake(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Stake whom?\r\n")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillStake)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	targetName := strings.Join(args, " ")
+	world := s.GetWorld()
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	if !found {
+		return s.SendMessage("They don't seem to be here.\r\n")
+	}
+
+	result := game.DoSpike(ch, target, 1, world)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdCircle handles the circle command.
+func CmdCircle(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillCircle)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	world := s.GetWorld()
+	var target combat.Combatant
+	var found bool
+	if len(args) > 0 {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Circle who?\r\n")
+		}
+	} else if ch.GetFighting() != "" {
+		// Default to current fighting target.
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		if !found {
+			return s.SendMessage("Circle who?\r\n")
+		}
+	} else {
+		return s.SendMessage("Circle who?\r\n")
+	}
+
+	if target.GetName() == ch.Name {
+		return s.SendMessage("How can you stab yourself in the back?\r\n")
+	}
+
+	result := game.DoCircle(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdCharge handles the charge command.
+func CmdCharge(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(ch, game.SkillCharge)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
+
+	world := s.GetWorld()
+	var target combat.Combatant
+	var found bool
+	if len(args) > 0 {
+		targetName := strings.Join(args, " ")
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
+		}
+	} else if ch.GetFighting() != "" {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		if !found {
+			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
+		}
+	} else {
+		return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
+	}
+
+	if target.GetName() == ch.Name {
+		return s.SendMessage("You charge headlong into the ground, impressing everyone..\r\n")
+	}
+
+	result := game.DoCharge(ch, target)
+	return sendSkillResult(s, ch, target, result)
+}
+
 // RegisterSkillCommands registers all skill-related commands.
 //
 // NOTE (M-04): This is currently a no-op placeholder. Skill commands are

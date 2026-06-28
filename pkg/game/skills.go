@@ -73,6 +73,12 @@ const (
 	SkillParry      = "parry"
 	SkillEscape     = "escape"
 	SkillRetreat    = "retreat"
+
+	// Fidelity port gaps (new_cmds.c)
+	SkillSpike  = "spike"
+	SkillStake  = "stake"
+	SkillCircle = "circle"
+	SkillCharge = "charge"
 )
 
 // ---------------------------------------------------------------------------
@@ -137,6 +143,15 @@ var SkillClassReq = map[string]map[int]int{
 		ClassThief:    4,
 		ClassAssassin: 4,
 	},
+	SkillCircle: {
+		ClassThief:    15,
+		ClassAssassin: 8,
+	},
+	SkillCharge: {
+		ClassWarrior: 23,
+		ClassPaladin: 23,
+		ClassRanger:  22,
+	},
 }
 
 // ---------------------------------------------------------------------------
@@ -157,6 +172,8 @@ var SkillPosReq = map[string]int{
 	SkillHide:     combat.PosResting,
 	SkillSteal:    combat.PosStanding,
 	SkillPickLock: combat.PosStanding,
+	SkillCircle:   combat.PosFighting,
+	SkillCharge:   combat.PosFighting,
 }
 
 // ---------------------------------------------------------------------------

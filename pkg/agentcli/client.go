@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -76,7 +77,11 @@ func (a *AgentClient) Connect(ctx context.Context) error {
 	addr := fmt.Sprintf("ws://%s:%d/ws", a.Cfg.GameHost, a.Cfg.GamePort)
 	slog.Debug("connecting", "addr", addr)
 
-	conn, err := Dial(ctx, addr)
+	headers := http.Header{}
+	if key := a.Cfg.EffectiveKey(); key != "" {
+		headers.Set("X-Agent-Key", key)
+	}
+	conn, err := DialWithHeaders(ctx, addr, headers)
 	if err != nil {
 		return fmt.Errorf("dial: %w", err)
 	}

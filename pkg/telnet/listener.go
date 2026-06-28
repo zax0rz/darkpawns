@@ -3,11 +3,14 @@ package telnet
 
 import (
 	"bufio"
+	"compress/zlib"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -28,17 +31,39 @@ const (
 	SB   byte = 250
 	SE   byte = 240
 
-	OPT_ECHO byte = 1
-	OPT_SGA  byte = 3
-	OPT_MSSP byte = 70
-	OPT_GMCP byte = 201
+	OPT_ECHO      byte = 1
+	OPT_SGA       byte = 3
+	OPT_MSSP      byte = 70
+	OPT_GMCP      byte = 201
+	OPT_COMPRESS2 byte = 86
 
 	MSSP_VAR byte = 1
 	MSSP_VAL byte = 2
+)
 
+var (
 	maxConnsPerIP = 3
 	maxTotalConns = 200
 )
+
+func init() {
+	if v := os.Getenv("TELNET_MAX_CONNS"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			slog.Warn("TELNET_MAX_CONNS invalid, using default", "value", v, "default", maxTotalConns)
+		} else {
+			maxTotalConns = n
+		}
+	}
+	if v := os.Getenv("TELNET_MAX_CONNS_PER_IP"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			slog.Warn("TELNET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", maxConnsPerIP)
+		} else {
+			maxConnsPerIP = n
+		}
+	}
+}
 
 // dnsLookupTimeout caps reverse-DNS resolution during ban checks. It is a
 // variable (not a const) so tests can shorten it for deterministic timeouts.
@@ -208,11 +233,12 @@ func effectiveBanLevel(remoteIP string, banManager *game.BanManager) int {
 
 type telnetConn struct {
 	net.Conn
-	br      *bufio.Reader
-	wmu     chan struct{} // buffered(1) acts as a write mutex
-	manager *session.Manager
-	hasGMCP bool
-	sess    *session.Session
+	br             *bufio.Reader
+	wmu            chan struct{} // buffered(1) acts as a write mutex
+	manager        *session.Manager
+	hasGMCP        bool
+	sess           *session.Session
+	compressWriter *zlib.Writer
 }
 
 func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
@@ -223,7 +249,12 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		manager: manager,
 		hasGMCP: false,
 	}
-	defer func() { _ = rawConn.Close() }()
+	defer func() {
+		if tc.compressWriter != nil {
+			_ = tc.compressWriter.Close()
+		}
+		_ = rawConn.Close()
+	}()
 
 	remoteAddr := rawConn.RemoteAddr().String()
 	slog.Info("Telnet connect", "remote_addr", remoteAddr)
@@ -233,6 +264,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	tc.write([]byte{IAC, WILL, OPT_SGA})
 	tc.write([]byte{IAC, WILL, OPT_MSSP})
 	tc.write([]byte{IAC, WILL, OPT_GMCP})
+	tc.write([]byte{IAC, WILL, OPT_COMPRESS2})
 
 	s := manager.NewSession()
 	tc.sess = s
@@ -715,11 +747,16 @@ func (tc *telnetConn) readLine() (string, bool) {
 					if tc.sess != nil {
 						tc.sess.SetWantsStructuredData(true)
 					}
+				case OPT_COMPRESS2:
+					tc.enableCompression()
 				default:
 					tc.write([]byte{IAC, WONT, opt})
 				}
 			case DONT:
 				opt, _ := tc.br.ReadByte()
+				if opt == OPT_COMPRESS2 {
+					break
+				}
 				tc.write([]byte{IAC, WONT, opt})
 			case SB:
 				opt, err := tc.br.ReadByte()
@@ -830,12 +867,45 @@ func (tc *telnetConn) readLine() (string, bool) {
 // write sends bytes with a simple mutex to avoid interleaving.
 func (tc *telnetConn) write(data []byte) {
 	tc.wmu <- struct{}{}
-	_, _ = tc.Write(data)
+	tc.writeLocked(data)
 	<-tc.wmu
+}
+
+// writeLocked writes data assuming the caller already holds tc.wmu.
+func (tc *telnetConn) writeLocked(data []byte) {
+	if tc.compressWriter != nil {
+		_, _ = tc.compressWriter.Write(data)
+		_ = tc.compressWriter.Flush()
+	} else {
+		_, _ = tc.Write(data)
+	}
 }
 
 func (tc *telnetConn) writeLine(s string) {
 	tc.write([]byte(s))
+}
+
+// enableCompression starts MCCP2 compression. It sends the COMPRESS_START
+// sequence uncompressed and then wraps subsequent writes in a zlib deflater.
+func (tc *telnetConn) enableCompression() {
+	tc.wmu <- struct{}{}
+	defer func() { <-tc.wmu }()
+
+	if tc.compressWriter != nil {
+		return
+	}
+
+	// C's COMPRESS_START: IAC SB COMPRESS2 IAC SE tells the client to start
+	// decompressing everything after this subnegotiation. This sentinel must be
+	// sent uncompressed, so write it before installing the compressor.
+	_, _ = tc.Write([]byte{IAC, SB, OPT_COMPRESS2, IAC, SE})
+
+	zw, err := zlib.NewWriterLevel(tc, zlib.DefaultCompression)
+	if err != nil {
+		slog.Error("telnet: failed to create MCCP2 compressor", "error", err)
+		return
+	}
+	tc.compressWriter = zw
 }
 
 func (tc *telnetConn) sendMSSP() {
@@ -865,7 +935,7 @@ func (tc *telnetConn) sendMSSP() {
 
 	payload = append(payload, IAC, SE)
 
-	_, _ = tc.Write(payload)
+	tc.writeLocked(payload)
 }
 
 // buildGMCPFrame builds the raw bytes for a single GMCP package without sending.

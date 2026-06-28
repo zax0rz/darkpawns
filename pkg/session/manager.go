@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,38 +37,27 @@ const (
 	jwtRefreshWindow     = 15 * time.Minute
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		// Validate against explicit origin allowlist. There is no
-		// blanket development bypass; relaxed origins must be configured
-		// explicitly rather than inferred from ENVIRONMENT.
-		allowedOrigins := []string{
-			"https://darkpawns.labz0rz.com",
-		}
+// allowedWebSocketOrigins lists the public origins that may connect without
+// presenting an agent key.
+var allowedWebSocketOrigins = []string{
+	"https://darkpawns.labz0rz.com",
+}
 
-		origin := r.Header.Get("Origin")
-		if origin == "" {
-			// Allow Docker-internal connections (private IPs) without Origin header.
-			// Agent containers connect from 172.x/10.x/192.168.x ranges inside Docker.
-			host, _, _ := net.SplitHostPort(r.RemoteAddr)
-			if ip := net.ParseIP(host); ip != nil && ip.IsPrivate() {
-				return true
-			}
-			slog.Warn("rejected WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
-			return false
-		}
+// agentKeyHeaderNames and agentKeyQueryParams name where an agent may present
+// its API key during the WebSocket handshake. These are configurable for
+// deployments where a reverse proxy strips or rewrites headers.
+var (
+	agentKeyHeaderNames = []string{"X-Agent-Key"}
+	agentKeyQueryParams = []string{"agent_key"}
+)
 
-		for _, allowed := range allowedOrigins {
-			if origin == allowed {
-				return true
-			}
-		}
-
-		slog.Warn("rejected WebSocket connection from unauthorized origin", "origin", origin) // #nosec G706
-		return false
-	},
+func init() {
+	if v := os.Getenv("AGENT_KEY_HEADER"); v != "" {
+		agentKeyHeaderNames = strings.Split(v, ",")
+	}
+	if v := os.Getenv("AGENT_KEY_QUERY_PARAMS"); v != "" {
+		agentKeyQueryParams = strings.Split(v, ",")
+	}
 }
 
 // Manager handles all active sessions.
@@ -81,6 +71,7 @@ type Manager struct {
 	hasDB        bool
 	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
 	doorManager  *systems.DoorManager
+	upgrader     websocket.Upgrader
 
 	// Per-IP connection tracking (C5)
 	ipConnCount map[string]int
@@ -106,6 +97,62 @@ type Manager struct {
 	// decisionLog is the write buffer for decision capture (DP-213).
 	// nil when decision capture is disabled.
 	decisionLog *db.DecisionLogWriter
+}
+
+// checkOrigin validates WebSocket origins. Public origins in the allowlist are
+// permitted without further credentials. Connections from private IPs with no
+// Origin header must present a valid agent API key (DP-594).
+func (m *Manager) checkOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		host, _, _ := net.SplitHostPort(r.RemoteAddr)
+		ip := net.ParseIP(host)
+		if ip == nil || !ip.IsPrivate() {
+			slog.Warn("rejected WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
+			return false
+		}
+
+		// Private IP without Origin: require a valid agent key.
+		key := findAgentKey(r)
+		if key == "" {
+			slog.Warn("rejected private WebSocket connection without agent key", "remote_addr", r.RemoteAddr)
+			return false
+		}
+		if m.db == nil {
+			slog.Warn("rejected private WebSocket connection: no database to validate agent key", "remote_addr", r.RemoteAddr)
+			return false
+		}
+		if _, _, valid := m.db.ValidateAgentKey(key); !valid {
+			slog.Warn("rejected private WebSocket connection: invalid agent key", "remote_addr", r.RemoteAddr)
+			return false
+		}
+		return true
+	}
+
+	for _, allowed := range allowedWebSocketOrigins {
+		if origin == allowed {
+			return true
+		}
+	}
+
+	slog.Warn("rejected WebSocket connection from unauthorized origin", "origin", origin) // #nosec G706
+	return false
+}
+
+// findAgentKey returns the first non-empty agent key from configured headers
+// or query parameters.
+func findAgentKey(r *http.Request) string {
+	for _, h := range agentKeyHeaderNames {
+		if v := r.Header.Get(strings.TrimSpace(h)); v != "" {
+			return v
+		}
+	}
+	for _, p := range agentKeyQueryParams {
+		if v := r.URL.Query().Get(strings.TrimSpace(p)); v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 // ModerationChecker defines the moderation interface the session layer needs.
@@ -175,6 +222,12 @@ func NewManager(world *game.World, database db.Database) *Manager {
 	if database != nil {
 		m.db = database
 		m.hasDB = true
+	}
+
+	m.upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     m.checkOrigin,
 	}
 
 	// Wire moderation checker (in-memory when no DB, DB-backed when available).
@@ -437,7 +490,7 @@ func (m *Manager) SetDecisionLog(dlw *db.DecisionLogWriter) {
 
 // HandleWebSocket upgrades HTTP to WebSocket and manages the session.
 func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := m.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Error("WebSocket upgrade failed", "error", err)
 		return
