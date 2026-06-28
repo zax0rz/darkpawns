@@ -2,6 +2,7 @@ import websocket
 import json
 import time
 import threading
+import copy
 
 class DarkPawnsAgent:
     def __init__(self, api_key, player_name="agent"):
@@ -11,6 +12,7 @@ class DarkPawnsAgent:
         self.state = {}
         self.variables = {}
         self.running = True
+        self._state_lock = threading.Lock()
         
     def connect(self, url="ws://localhost:4350/ws"):
         """Connect, login, and subscribe to variables"""
@@ -65,11 +67,13 @@ class DarkPawnsAgent:
                 
                 if msg_type == "vars":
                     # Update variables from vars message
-                    self.variables.update(data)
-                    # Also update state for backward compatibility
-                    self._update_state_from_vars(data)
+                    with self._state_lock:
+                        self.variables.update(data)
+                        # Also update state for backward compatibility
+                        self._update_state_from_vars(data)
                 elif msg_type == "state":
-                    self.state = data
+                    with self._state_lock:
+                        self.state = data
                 elif msg_type == "event":
                     print(f"Event: {data.get('text')}")
                 elif msg_type == "error":
@@ -118,11 +122,13 @@ class DarkPawnsAgent:
         
     def get_health(self):
         """Get current health from variables"""
-        return self.variables.get("HEALTH", 100)
+        with self._state_lock:
+            return self.variables.get("HEALTH", 100)
     
     def get_room_mobs(self):
         """Get mobs in current room"""
-        return self.variables.get("ROOM_MOBS", [])
+        with self._state_lock:
+            return copy.deepcopy(self.variables.get("ROOM_MOBS", []))
     
     def explore(self):
         """Basic exploration behavior"""
@@ -133,40 +139,48 @@ class DarkPawnsAgent:
         time.sleep(0.5)
         
         # Check room info
-        room_name = self.variables.get("ROOM_NAME", "Unknown")
-        room_exits = self.variables.get("ROOM_EXITS", [])
-        room_mobs = self.variables.get("ROOM_MOBS", [])
+        with self._state_lock:
+            room_name = self.variables.get("ROOM_NAME", "Unknown")
+            room_exits = list(self.variables.get("ROOM_EXITS", []))
+            room_mobs = copy.deepcopy(self.variables.get("ROOM_MOBS", []))
         
         print(f"Room: {room_name}")
         print(f"Exits: {', '.join(room_exits)}")
         
         if room_mobs:
-            print(f"Found mobs: {[m['name'] for m in room_mobs]}")
+            print(f"Found mobs: {[m.get('name', 'unknown') for m in room_mobs]}")
             # Attack first mob
             if room_mobs:
-                target = room_mobs[0]['target_string']
-                print(f"Attacking {target}...")
-                self.command("hit", [target])
-                
-                # Simple combat loop
-                for _ in range(5):  # Limit to 5 rounds
-                    time.sleep(2.1)  # Combat tick rate
-                    health = self.get_health()
-                    print(f"Health: {health}")
-                    if health < 30:
-                        print("Health low - fleeing!")
-                        self.command("flee")
-                        break
+                target = room_mobs[0].get('target_string', '')
+                if not target:
+                    print("Mob missing target_string, skipping attack")
+                else:
+                    print(f"Attacking {target}...")
+                    self.command("hit", [target])
+                    
+                    # Simple combat loop
+                    for _ in range(5):  # Limit to 5 rounds
+                        time.sleep(2.1)  # Combat tick rate
+                        health = self.get_health()
+                        print(f"Health: {health}")
+                        if health < 30:
+                            print("Health low - fleeing!")
+                            self.command("flee")
+                            break
         
         # Check for items
-        room_items = self.variables.get("ROOM_ITEMS", [])
+        with self._state_lock:
+            room_items = copy.deepcopy(self.variables.get("ROOM_ITEMS", []))
         if room_items:
-            print(f"Found items: {[i['name'] for i in room_items]}")
+            print(f"Found items: {[i.get('name', 'unknown') for i in room_items]}")
             # Pick up first item
             if room_items:
-                item = room_items[0]['target_string']
-                print(f"Getting {item}...")
-                self.command("get", [item])
+                item = room_items[0].get('target_string', '')
+                if not item:
+                    print("Item missing target_string, skipping get")
+                else:
+                    print(f"Getting {item}...")
+                    self.command("get", [item])
             
     def close(self):
         self.running = False

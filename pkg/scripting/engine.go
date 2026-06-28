@@ -460,6 +460,16 @@ func (e *Engine) loadGlobalsOn(L *lua.LState) {
 	} else {
 		slog.Debug("globals.lua loaded successfully")
 	}
+	// Load shared utility scripts separately to avoid re-entrant DoFile crash (DP-600).
+	// globals.lua used to call Lua dofile("mob/no_move.lua") but gopher-lua's DoFile
+	// is not re-entrant — calling e.l.DoFile from inside a DoFile execution nil-pointers.
+	sharedScripts := []string{"mob/no_move.lua"}
+	for _, script := range sharedScripts {
+		fullPath := filepath.Join(e.scriptsDir, script)
+		if err := L.DoFile(fullPath); err != nil {
+			slog.Warn("could not load shared script", "path", script, "error", err)
+		}
+	}
 	// Always set up basic constants
 	e.setupBasicConstantsOn(L)
 }
@@ -1681,7 +1691,7 @@ func (e *Engine) luaDofile(L *lua.LState) int {
 		slog.Warn("dofile: path traversal blocked", "path", path)
 		return 0
 	}
-	if err := e.l.DoFile(fullPath); err != nil {
+	if err := L.DoFile(fullPath); err != nil {
 		slog.Debug("dofile error", "path", path, "error", err)
 	}
 	return 0
