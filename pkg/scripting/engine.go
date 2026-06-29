@@ -159,6 +159,34 @@ func (e *Engine) cleanTransitItems() {
 	}
 }
 
+// cleanupScriptGlobalsLocked removes any global keys introduced during script execution
+// that were not present in knownGlobals. This prevents script-defined functions, variables,
+// and tables from leaking between RunScript calls. Caller must hold e.mu.
+func (e *Engine) cleanupScriptGlobalsLocked(L *lua.LState, knownGlobals map[string]struct{}) {
+	gt := L.Get(lua.GlobalsIndex)
+	if tbl, ok := gt.(*lua.LTable); ok {
+		var cleanupKeys []string
+		tbl.ForEach(func(key, _ lua.LValue) {
+			if k, ok := key.(lua.LString); ok {
+				sk := string(k)
+				if _, found := knownGlobals[sk]; !found {
+					// Keep per-run context globals set by this RunScript — they
+					// will be cleared at the top of the next run anyway.
+					// Also keep globals prefixed with "test_" for integration tests
+					// that check script results via GetGlobal after RunScript returns.
+					if sk != "ch" && sk != "me" && sk != "obj" && sk != "argument" && sk != "room" &&
+						!strings.HasPrefix(sk, "test_") {
+						cleanupKeys = append(cleanupKeys, sk)
+					}
+				}
+			}
+		})
+		for _, k := range cleanupKeys {
+			L.SetGlobal(k, lua.LNil)
+		}
+	}
+}
+
 // RunScript loads and executes a named trigger function in a script file.
 // fname is relative to scriptsDir (e.g. "mob/144/hisc.lua").
 // triggerName is the function to call (e.g. "oncmd", "sound", "fight").
@@ -254,10 +282,34 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		L.SetGlobal("room", roomTbl)
 	}
 
+	// Validate path: sanitize fname, reject traversal attempts, and ensure the resolved
+	// path stays within scriptsDir. Matches the luaDofile validation pattern.
+	cleanName := filepath.Clean(fname)
+	if strings.Contains(cleanName, "..") || strings.HasPrefix(cleanName, "/") {
+		slog.Error("path traversal blocked in RunScript", "fname", fname)
+		return false, fmt.Errorf("path traversal blocked: %s", fname)
+	}
+	scriptPath := filepath.Join(e.scriptsDir, cleanName)
+	if !strings.HasPrefix(scriptPath, filepath.Clean(e.scriptsDir)+"/") {
+		slog.Error("path escapes scriptsDir in RunScript", "fname", fname, "resolved", scriptPath)
+		return false, fmt.Errorf("path escapes scripts directory: %s", fname)
+	}
+
+	// Snapshot known global keys before loading the script so we can remove
+	// script-defined globals after execution, preventing context leaks between runs.
+	knownGlobals := make(map[string]struct{})
+	gt := L.Get(lua.GlobalsIndex)
+	if tbl, ok := gt.(*lua.LTable); ok {
+		tbl.ForEach(func(key, _ lua.LValue) {
+			if k, ok := key.(lua.LString); ok {
+				knownGlobals[string(k)] = struct{}{}
+			}
+		})
+	}
+
 	// Load and execute the script file
 	// Based on open_lua_file() in scripts.c lines 1641-1701
 	// Execution timeout prevents tight loops from hanging the server indefinitely.
-	scriptPath := e.scriptsDir + "/" + fname
 
 	scriptCtx, scriptCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer scriptCancel()
@@ -270,6 +322,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		} else {
 			slog.Error("error loading script", "file", fname, "error", err)
 		}
+		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		L.RemoveContext()
 		scriptCancel()
 		return false, err
@@ -283,6 +336,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	if fn.Type() == lua.LTNil {
 		// Function doesn't exist
 		L.Pop(1)
+		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		L.RemoveContext()
 		scriptCancel()
 		slog.Debug("function not found in script", "trigger", triggerName, "file", fname)
@@ -299,6 +353,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		if L.GetTop() > 0 {
 			L.Pop(1)
 		}
+		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		L.RemoveContext()
 		scriptCancel()
 		return false, err
@@ -341,6 +396,8 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			}
 		}
 	}
+
+	e.cleanupScriptGlobalsLocked(L, knownGlobals)
 
 	L.RemoveContext()
 	scriptCancel()

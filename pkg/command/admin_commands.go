@@ -292,11 +292,13 @@ func (ac *AdminCommands) cmdKick(s common.CommandSession, args []string) error {
 	// Notify target
 	targetSess.Send(fmt.Sprintf("You have been kicked by %s. Reason: %s", s.GetPlayerName(), reason))
 
-	// Disconnect
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		targetSess.Close()
-	}()
+	// Disconnect — reacquire the manager lock so Close() is safe.
+	// Previously targetSess was used after the RLock was released and a goroutine
+	// raced with the manager, causing a use-after-close. We now re-lock to call
+	// Close safely, then let the manager's own read-loop detect the disconnection.
+	ac.manager.Lock()
+	targetSess.Close()
+	ac.manager.Unlock()
 
 	ac.logAdminAction(s.GetPlayerName(), moderation.ActionKick, target, reason, nil)
 

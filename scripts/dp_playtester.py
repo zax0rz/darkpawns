@@ -118,6 +118,7 @@ Output:
         resp = requests.post(
             f"{litellm_url}/v1/chat/completions",
             headers={"Authorization": f"Bearer {os.environ.get('LITELLM_KEY', '')}", "Content-Type": "application/json"},
+            # Note: caller must set LITELLM_KEY before invoking the playtester.
             json={
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],

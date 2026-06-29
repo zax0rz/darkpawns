@@ -30,7 +30,12 @@ DB_URL = os.environ.get(
     "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable",
 )
 LITELLM_URL = os.environ.get("LITELLM_URL", "http://192.168.1.106:4000")
-LITELLM_KEY = os.environ.get("LITELLM_KEY", "")
+LITELLM_KEY = os.environ.get("LITELLM_KEY")
+if not LITELLM_KEY:
+    raise RuntimeError(
+        "LITELLM_KEY environment variable is required. "
+        "Set it to your LiteLLM API key before running this script."
+    )
 CONSOLIDATION_MODEL = os.environ.get("CONSOLIDATION_MODEL", "deepseek-chat")
 
 # Agent to consolidate (BRENDA's character ID in the DB)
@@ -103,7 +108,7 @@ This will be injected into future sessions as CHARACTER HISTORY context."""
 
     try:
         resp = requests.post(
-            f"{LITELLM_URL}/chat/completions",
+            f"{LITELLM_URL}/v1/chat/completions",
             headers={"Authorization": f"Bearer {LITELLM_KEY}"},
             json={
                 "model": CONSOLIDATION_MODEL,

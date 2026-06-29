@@ -34,7 +34,12 @@ DEFAULT_PORT = 4350
 DEFAULT_LITELLM = "http://192.168.1.106:4000"
 DEFAULT_MODEL_FAST = "zai/glm-5-turbo"
 DEFAULT_MODEL_FALLBACK = "anthropic/claude-sonnet-4-6"
-LITELLM_KEY = os.environ.get("LITELLM_KEY", "")
+LITELLM_KEY = os.environ.get("LITELLM_KEY")
+if not LITELLM_KEY:
+    raise RuntimeError(
+        "LITELLM_KEY environment variable is required. "
+        "Set it to your LiteLLM API key before running this script."
+    )
 
 QDRANT_HOST = "192.168.1.15"
 QDRANT_PORT = 6333
