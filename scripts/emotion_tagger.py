@@ -191,7 +191,8 @@ class EmotionTagger:
             stats["fallback_percentage"] = stats["fallback_classifications"] / total * 100
             
             # Category percentages
-            for category in stats["category_distribution"]:
+            # NOTE: iterate over a snapshot to avoid mutating the dict during iteration
+            for category in list(stats["category_distribution"].keys()):
                 count = stats["category_distribution"][category]
                 stats["category_distribution"][f"{category}_percentage"] = count / total * 100
         
