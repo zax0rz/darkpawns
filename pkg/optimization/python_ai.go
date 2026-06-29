@@ -149,23 +149,24 @@ func (bp *AIBatchProcessor) processBatch() {
 // Close gracefully shuts down the batch processor.
 func (bp *AIBatchProcessor) Close() error {
 	bp.mu.Lock()
-	defer bp.mu.Unlock()
-
 	bp.closed = true
 	bp.timer.Stop()
 
-	// Process any remaining items
+	// Flush any remaining items synchronously so Close() is guaranteed
+	// to complete before the caller shuts down resources the AI processor
+	// depends on (a fire-and-forget goroutine would race with shutdown).
 	if len(bp.batch) > 0 {
 		batch := bp.batch
 		bp.batch = nil
+		bp.mu.Unlock()
 
-		go func() {
-			if err := bp.processFunc(batch); err != nil {
-				bp.sendBatchError(batch, err)
-			}
-		}()
+		if err := bp.processFunc(batch); err != nil {
+			bp.sendBatchError(batch, err)
+		}
+		return nil
 	}
 
+	bp.mu.Unlock()
 	return nil
 }
 

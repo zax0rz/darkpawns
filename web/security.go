@@ -1,12 +1,16 @@
 package web
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"log"
 	"net/http"
 	"os"
 )
+
+// CSPNonceKey is the context key for the CSP nonce value.
+type CSPNonceKey struct{}
 
 func generateCSPNonce() string {
 	b := make([]byte, 18)
@@ -16,6 +20,18 @@ func generateCSPNonce() string {
 		return ""
 	}
 	return base64.StdEncoding.EncodeToString(b)
+}
+
+// CSPNonceFromContext retrieves the CSP nonce stored on the request context.
+// Returns "" if no nonce was set (e.g., the request did not pass through
+// SecurityHeaders).
+func CSPNonceFromContext(r *http.Request) string {
+	if v := r.Context().Value(CSPNonceKey{}); v != nil {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
 }
 
 func SecurityHeaders(next http.Handler) http.Handler {
@@ -58,6 +74,7 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
 
 		// Expose nonce to templates/middleware via request context
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), CSPNonceKey{}, nonce)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

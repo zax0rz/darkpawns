@@ -186,7 +186,9 @@ type BatchProcessor struct {
 	flushInterval time.Duration
 	operations    []BatchOperation
 	flushFunc     func([]BatchOperation) error
-	timer         *time.Timer
+	closeCh       chan struct{}
+	resetCh       chan struct{}
+	wg            sync.WaitGroup
 }
 
 // BatchOperation represents a single batchable database operation.
@@ -204,9 +206,12 @@ func NewBatchProcessor(batchSize int, flushInterval time.Duration, flushFunc fun
 		flushInterval: flushInterval,
 		operations:    make([]BatchOperation, 0, batchSize),
 		flushFunc:     flushFunc,
+		closeCh:       make(chan struct{}),
+		resetCh:       make(chan struct{}, 1),
 	}
 
-	bp.timer = time.AfterFunc(flushInterval, bp.flushTimer)
+	bp.wg.Add(1)
+	go bp.flushLoop()
 	return bp
 }
 
@@ -222,9 +227,11 @@ func (bp *BatchProcessor) Add(op BatchOperation) error {
 		return bp.flushLocked()
 	}
 
-	// Reset timer
-	bp.timer.Stop()
-	bp.timer.Reset(bp.flushInterval)
+	// Signal flushLoop to reset its timer
+	select {
+	case bp.resetCh <- struct{}{}:
+	default:
+	}
 
 	return nil
 }
@@ -272,22 +279,38 @@ func (bp *BatchProcessor) flushLocked() error {
 	return lastErr
 }
 
-// flushTimer handles timer-based flushing.
-func (bp *BatchProcessor) flushTimer() {
-	bp.mu.Lock()
-	defer bp.mu.Unlock()
+// flushLoop runs in a background goroutine, flushing on interval or when resetCh signals.
+func (bp *BatchProcessor) flushLoop() {
+	defer bp.wg.Done()
+	ticker := time.NewTicker(bp.flushInterval)
+	defer ticker.Stop()
 
-	if len(bp.operations) > 0 {
-		_ = bp.flushLocked()
+	for {
+		select {
+		case <-ticker.C:
+			bp.mu.Lock()
+			if len(bp.operations) > 0 {
+				_ = bp.flushLocked()
+			}
+			bp.mu.Unlock()
+
+		case <-bp.resetCh:
+			ticker.Reset(bp.flushInterval)
+
+		case <-bp.closeCh:
+			return
+		}
 	}
 }
 
 // Close gracefully shuts down the batch processor.
 func (bp *BatchProcessor) Close() error {
+	close(bp.closeCh)
+	bp.wg.Wait()
+
 	bp.mu.Lock()
 	defer bp.mu.Unlock()
 
-	bp.timer.Stop()
 	// Flush any remaining operations synchronously.
 	return bp.flushLocked()
 }
@@ -299,6 +322,7 @@ type ConnectionMonitor struct {
 	stats         ConnectionStats
 	checkInterval time.Duration
 	stopChan      chan struct{}
+	stopOnce      sync.Once
 }
 
 // ConnectionStats holds database connection statistics.
@@ -388,5 +412,7 @@ func (cm *ConnectionMonitor) GetStats() ConnectionStats {
 
 // Stop stops the connection monitor.
 func (cm *ConnectionMonitor) Stop() {
-	close(cm.stopChan)
+	cm.stopOnce.Do(func() {
+		close(cm.stopChan)
+	})
 }
