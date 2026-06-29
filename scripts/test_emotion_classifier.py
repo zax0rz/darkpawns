@@ -84,28 +84,21 @@ def test_rule_based_classifier():
     
     for i, test in enumerate(test_cases, 1):
         result = classifier.classify(test["text"])
-        
-        print(f"\nTest {i}: {test['text'][:50]}...")
-        print(f"  Expected: {test['expected_category']} (min intensity: {test['expected_min_intensity']})")
-        print(f"  Got: {result['category']} (intensity: {result['intensity']})")
-        print(f"  Confidence: {result['confidence']}")
-        print(f"  Primary emotions: {result['primary_emotions']}")
-        
-        # Check results
-        category_correct = result['category'] == test['expected_category']
-        intensity_correct = result['intensity'] >= test['expected_min_intensity']
-        
-        if category_correct and intensity_correct:
-            print("  ✓ PASS")
-            passed += 1
-        else:
-            print("  ✗ FAIL")
-            if not category_correct:
-                print(f"    Category mismatch: expected {test['expected_category']}, got {result['category']}")
-            if not intensity_correct:
-                print(f"    Intensity too low: expected at least {test['expected_min_intensity']}, got {result['intensity']}")
-    
-    print(f"\nRule-based classifier: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
+
+        # Assert result structure and values
+        assert isinstance(result, dict), f"Expected dict, got {type(result)}"
+        assert "category" in result, f"Test {i}: missing 'category' in result"
+        assert "intensity" in result
+        assert "confidence" in result
+        assert result['category'] == test['expected_category'], \
+            f"Test {i}: {test['text'][:30]}... expected {test['expected_category']}, got {result['category']}"
+        assert result['intensity'] >= test['expected_min_intensity'], \
+            f"Test {i}: expected intensity >= {test['expected_min_intensity']}, got {result['intensity']}"
+
+        passed += 1
+        print(f"  Test {i}: {str(test['text'])[:40]:40} ✓ {result['category']} (intensity={result['intensity']})")
+
+    print(f"\nRule-based classifier: {passed}/{total} tests passed")
     return passed == total
 
 
@@ -113,39 +106,35 @@ def test_llm_classifier_mock():
     """Test LLM classifier with mock data (no actual API calls)"""
     print("\n\nTesting LLMEmotionClassifier (mock mode)")
     print("=" * 80)
-    
+
     # Create classifier with fallback
     classifier = LLMEmotionClassifier(model="minimax-m2.7", use_fallback=True)
-    
-    # Test with simple text
+
     test_text = "Killed the dragon and took its treasure. Feeling invincible!"
     context = {"event_type": "mob_kill", "valence": 3}
-    
+
     result = classifier.classify(test_text, context)
-    
+
     print(f"Text: {test_text}")
     print(f"Result: {json.dumps(result, indent=2)}")
-    
-    # Check that we got a valid result
+
+    # Assert valid result structure
     required_fields = ['category', 'intensity', 'confidence', 'method']
-    has_required = all(field in result for field in required_fields)
+    for field in required_fields:
+        assert field in result, f"LLM classifier result missing required field '{field}": got keys {list(result.keys())}"'
     
-    if has_required:
-        print("✓ LLM classifier returned valid result structure")
-        return True
-    else:
-        print("✗ LLM classifier missing required fields")
-        return False
+    print("✓ LLM classifier returned valid result structure")
+    return True
 
 
 def test_emotion_tagger():
     """Test main emotion tagger pipeline"""
     print("\n\nTesting EmotionTagger")
     print("=" * 80)
-    
+
     # Test without LLM for speed
     tagger = EmotionTagger(use_llm=False, cache_results=True)
-    
+
     test_memories = [
         {
             "id": 1,
@@ -163,41 +152,55 @@ def test_emotion_tagger():
             "context": {"event_type": "room_visit", "valence": 0}
         }
     ]
-    
-    print("Testing single classification:")
+
+    # Single classification
     test_text = "Found an amazing magical sword! This is fantastic!"
     test_context = {"event_type": "item_loot", "valence": 2}
-    
+
     result = tagger.tag_memory(test_text, test_context)
-    print(f"Text: {test_text}")
-    print(f"Result: category={result['category']}, intensity={result['intensity']}, "
-          f"confidence={result['confidence']}, method={result.get('method', 'unknown')}")
-    
-    print("\nTesting batch classification:")
+    assert isinstance(result, dict), f"Expected dict, got {type(result)}"
+    assert "category" in result, f"Result missing 'category', keys: {list(result.keys())}"
+    assert "intensity" in result
+    assert "confidence" in result
+    assert isinstance(result["confidence"], (int, float)), \
+        f"confidence should be numeric, got {type(result['confidence'])}"
+    assert 0 <= result["confidence"] <= 1, \
+        f"confidence {result['confidence']} out of range [0,1]"
+    print(f"  [PASS] Single: {result['category']} (intensity={result['intensity']}, "
+          f"confidence={result['confidence']}, method={result.get('method', 'unknown')})")
+
+    # Batch classification
     results = tagger.batch_tag(test_memories, batch_size=2)
-    
-    for i, result in enumerate(results, 1):
-        print(f"\nMemory {i}:")
-        print(f"  Text: {result['text'][:50]}...")
-        tags = result['tags']
-        print(f"  Category: {tags['category']}")
-        print(f"  Intensity: {tags['intensity']}")
-        print(f"  Confidence: {tags['confidence']}")
-    
-    print("\nTagger statistics:")
+    assert len(results) == len(test_memories), \
+        f"Expected {len(test_memories)} results, got {len(results)}"
+    for r in results:
+        assert "text" in r
+        assert "tags" in r
+        tags = r["tags"]
+        assert "category" in tags
+        assert "intensity" in tags
+        assert "confidence" in tags
+    print(f"  [PASS] Batch: {len(results)} memories tagged")
+
+    # Statistics
     stats = tagger.get_statistics()
-    print(json.dumps(stats, indent=2))
-    
-    # Test cache
-    print("\nTesting cache:")
+    assert isinstance(stats, dict), f"Expected dict, got {type(stats)}"
+    print(f"  [PASS] Statistics: {json.dumps(stats)}")
+
+    # Cache test
     cached_result = tagger.tag_memory(test_text, test_context)
-    print(f"Cached result has 'cached' field: {'cached' in cached_result}")
-    
-    # Clear cache and test again
+    assert "cached" in cached_result
+    assert cached_result["cached"] is True
+    print(f"  [PASS] Cache hit: {cached_result.get('cached')}")
+
+    # Clear cache and verify
     tagger.clear_cache()
     uncached_result = tagger.tag_memory(test_text, test_context)
-    print(f"After clearing cache, 'cached' field: {'cached' in uncached_result}")
-    
+    # After clearing, cached should be False or field absent
+    assert not uncached_result.get("cached", False), \
+        "Expected uncached result after clear_cache"
+    print(f"  [PASS] Cache cleared: cached={uncached_result.get('cached')}")
+
     return True
 
 
