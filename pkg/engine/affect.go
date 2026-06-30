@@ -123,7 +123,13 @@ func NewAffectDirect(spellID int, location int, duration int, magnitude int, fla
 	}
 
 	if flags != 0 {
-		affect.StackID = spellStackKey(spellID)
+		if spellID != 0 {
+			affect.StackID = spellStackKey(spellID)
+		} else {
+			// spellID=0 flag affects (equipment, compat) must stack independently
+			// by their flags value, not collapse into "spell_0" (DP-793).
+			affect.StackID = fmt.Sprintf("flags_%016x", flags)
+		}
 		affect.MaxStacks = 1
 	}
 
@@ -376,7 +382,9 @@ var StatusAffectFlags = map[int]uint64{
 func NewAffectCompat(affectType int, duration int, magnitude int, source string) *Affect {
 	// Check if this is a status affect (has flags)
 	if flags, ok := StatusAffectFlags[affectType]; ok {
-		return NewAffectDirect(0, ApplyNone, duration, magnitude, flags, source)
+		af := NewAffectDirect(0, ApplyNone, duration, magnitude, flags, source)
+		af.Type = affectType // backward compat — same as NewAffectDeprecated (DP-801)
+		return af
 	}
 	// Otherwise treat as a stat affect — affectType IS the location
 	return NewAffect(0, affectType, duration, magnitude, source)
