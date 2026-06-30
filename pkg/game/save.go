@@ -5,9 +5,11 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -94,6 +96,18 @@ type saveAffect struct {
 	Type int `json:"type,omitempty"` //nolint:govet // deprecated compat field
 }
 
+// validateSaveData checks that loaded save data has the minimum required fields
+// to construct a valid Player. Returns an error if the data is clearly corrupt.
+func validateSaveData(data savePlayerData) error {
+	if data.Name == "" {
+		return fmt.Errorf("corrupt save: missing player name")
+	}
+	if data.ID <= 0 {
+		return fmt.Errorf("corrupt save: invalid player ID %d", data.ID)
+	}
+	return nil
+}
+
 // SavePlayer serializes a player's state to disk as JSON.
 // Save path: ./data/players/{name}.json
 func SavePlayer(player *Player) error {
@@ -108,16 +122,36 @@ func SavePlayer(player *Player) error {
 	data := playerToSaveData(player)
 
 	path := filepath.Join(saveDir, sanitizeName(player.Name)+".json")
-	f, err := os.Create(filepath.Clean(path))
+	tmpPath := path + ".tmp"
+
+	f, err := os.Create(filepath.Clean(tmpPath))
 	if err != nil {
-		return fmt.Errorf("create save file: %w", err)
+		return fmt.Errorf("create temp save file: %w", err)
 	}
-	defer func() { _ = f.Close() }()
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(data); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("encode save data: %w", err)
+	}
+
+	// fsync to ensure data is on disk before rename
+	if err := f.Sync(); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("fsync save file: %w", err)
+	}
+
+	if err := f.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("close save file: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, path); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("rename save file: %w", err)
 	}
 
 	slog.Debug("Player saved", "name", player.Name, "path", path)
@@ -137,6 +171,10 @@ func LoadPlayer(name string) (*Player, error) {
 	var data savePlayerData
 	if err := json.NewDecoder(f).Decode(&data); err != nil {
 		return nil, fmt.Errorf("decode save data: %w", err)
+	}
+
+	if err := validateSaveData(data); err != nil {
+		return nil, err
 	}
 
 	return saveDataToPlayer(data), nil
@@ -598,6 +636,55 @@ func DeserializeWorld(data string, w *World) error {
 	return nil
 }
 
+// atomicWriteFile writes data to path atomically using write-to-temp + fsync + rename.
+// If backupPath is non-empty and the original file exists, the original is preserved
+// at backupPath. On close error, backupPath is NOT removed.
+func atomicWriteFile(path string, data []byte, backupPath string) error {
+	tmpPath := path + ".tmp"
+
+	f, err := os.Create(filepath.Clean(tmpPath))
+	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+
+	// Preserve original as backup if requested and it exists
+	if backupPath != "" {
+		if _, err := os.Stat(path); err == nil {
+			if err := os.Rename(path, backupPath); err != nil {
+				_ = f.Close()
+				_ = os.Remove(tmpPath)
+				return fmt.Errorf("create backup: %w", err)
+			}
+		}
+	}
+
+	if _, err := f.Write(data); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("write temp file: %w", err)
+	}
+
+	if err := f.Sync(); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("fsync temp file: %w", err)
+	}
+
+	if err := f.Close(); err != nil {
+		// Don't remove backup on close error — data may be partially written
+		slog.Warn("save file close failed, backup preserved", "path", path, "error", err)
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("close save file: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, path); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("rename save file: %w", err)
+	}
+
+	return nil
+}
+
 // SaveWorld persists the world state to disk.
 func SaveWorld(w *World) error {
 	data, err := SerializeWorld(w)
@@ -609,16 +696,8 @@ func SaveWorld(w *World) error {
 		return fmt.Errorf("create data dir: %w", err)
 	}
 
-	f, err := os.Create(filepath.Clean(worldStateFile))
-	if err != nil {
-		return fmt.Errorf("create world state file: %w", err)
-	}
-	defer func() { _ = f.Close() }()
-
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(data); err != nil {
-		return fmt.Errorf("encode world state: %w", err)
+	if err := atomicWriteFile(worldStateFile, []byte(data), worldStateFile+".bak"); err != nil {
+		return fmt.Errorf("save world state: %w", err)
 	}
 
 	slog.Info("World state saved", "path", worldStateFile)
@@ -639,12 +718,12 @@ func LoadWorld(w *World) error {
 	}
 	defer func() { _ = f.Close() }()
 
-	var raw string
-	if err := json.NewDecoder(f).Decode(&raw); err != nil {
-		return fmt.Errorf("decode world state: %w", err)
+	raw, err := io.ReadAll(f)
+	if err != nil {
+		return fmt.Errorf("read world state file: %w", err)
 	}
 
-	if err := DeserializeWorld(raw, w); err != nil {
+	if err := DeserializeWorld(string(raw), w); err != nil {
 		return fmt.Errorf("deserialize world: %w", err)
 	}
 
@@ -669,16 +748,34 @@ func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
 	data.SavedBankGold = p.BankGold
 
 	path := filepath.Join(saveDir, sanitizeName(p.Name)+".json")
-	f, err := os.Create(filepath.Clean(path))
-	if err != nil {
-		return fmt.Errorf("create save file: %w", err)
-	}
-	defer func() { _ = f.Close() }()
+	backupPath := path + ".bak"
 
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(data); err != nil {
-		return fmt.Errorf("encode save data: %w", err)
+	// Serialize to JSON bytes
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal save data: %w", err)
+	}
+
+	// Preserve previous save as backup
+	if _, err := os.Stat(path); err == nil {
+		if err := os.Rename(path, backupPath); err != nil {
+			return fmt.Errorf("create backup: %w", err)
+		}
+	}
+
+	if err := atomicWriteFile(path, jsonData, ""); err != nil {
+		// On failure, try to restore backup
+		if _, err2 := os.Stat(backupPath); err2 == nil {
+			if err3 := os.Rename(backupPath, path); err3 != nil {
+				slog.Warn("failed to restore backup after save failure", "player", p.Name, "error", err3)
+			}
+		}
+		return fmt.Errorf("save player with rent: %w", err)
+	}
+
+	// Success — remove backup unless we're on Windows where file locking may interfere
+	if runtime.GOOS != "windows" {
+		_ = os.Remove(backupPath)
 	}
 
 	slog.Debug("Player saved with rent", "name", p.Name, "rent_code", rentCode, "cost", netCostPerDiem)
@@ -692,17 +789,11 @@ func writeSaveData(name string, data savePlayerData) error {
 		return fmt.Errorf("create save dir: %w", err)
 	}
 	path := filepath.Join(saveDir, sanitizeName(name)+".json")
-	f, err := os.Create(filepath.Clean(path))
+	jsonData, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		return fmt.Errorf("create save file: %w", err)
+		return fmt.Errorf("marshal save data: %w", err)
 	}
-	defer func() { _ = f.Close() }()
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(data); err != nil {
-		return fmt.Errorf("encode save data: %w", err)
-	}
-	return nil
+	return atomicWriteFile(path, jsonData, "")
 }
 
 // LoadSaveData loads raw save data (without creating a Player) for inspection.
