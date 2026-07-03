@@ -536,27 +536,34 @@ func bitmaskToFlagNames(mask int64, names []string) []string {
 }
 
 // actionBitNames mirrors game.ActionBitNames to avoid circular dependency.
-// Bit positions: 0=SPEC, 1=SENTINEL, 2=SCAVENGER, ...
+// Bit positions match src/structs.h MOB_* constants.
 var actionBitNames = []string{
-	"SPEC",
-	"SENTINEL",
-	"SCAVENGER",
-	"ISNPC",
-	"NICE",
-	"AGGRESSIVE",
-	"GREEDY",
-	"STAY_ZONE",
-	"WIMPY",
-	"FOLLOW",
-	"PURSUE",
-	"DEADLY",
-	"POLYSELF",
-	"META_AGG",
-	"GUARD",
-	"AUCTION",
-	"CHARITABLE",
-	"MOUNT",
-	"INVISIBLE",
+	"SPEC",         // 0  MOB_SPEC
+	"SENTINEL",     // 1  MOB_SENTINEL
+	"SCAVENGER",    // 2  MOB_SCAVENGER
+	"ISNPC",        // 3  MOB_ISNPC
+	"AWARE",        // 4  MOB_AWARE
+	"AGGRESSIVE",   // 5  MOB_AGGRESSIVE
+	"STAY_ZONE",    // 6  MOB_STAY_ZONE
+	"WIMPY",        // 7  MOB_WIMPY
+	"AGGR_EVIL",    // 8  MOB_AGGR_EVIL
+	"AGGR_GOOD",    // 9  MOB_AGGR_GOOD
+	"AGGR_NEUTRAL", // 10 MOB_AGGR_NEUTRAL
+	"MEMORY",       // 11 MOB_MEMORY
+	"HELPER",       // 12 MOB_HELPER
+	"NOCHARM",      // 13 MOB_NOCHARM
+	"NOSUMMON",     // 14 MOB_NOSUMMON
+	"NOSLEEP",      // 15 MOB_NOSLEEP
+	"NOBASH",       // 16 MOB_NOBASH
+	"NOBLIND",      // 17 MOB_NOBLIND
+	"HUNTER",       // 18 MOB_HUNTER
+	"AGGR24",       // 19 MOB_AGGR24
+	"RANDZON",      // 20 MOB_RANDZON
+	"MOUNTABLE",    // 21 MOB_MOUNTABLE
+	"RARE",         // 22 MOB_RARE
+	"LOOTS",        // 23 MOB_LOOTS
+	"OKGIVE",       // 24 MOB_OKGIVE
+	"EXTRACT",      // 25 MOB_EXTRACT
 }
 
 // affectBitNames mirrors game.AffectedBitNames to avoid circular dependency.

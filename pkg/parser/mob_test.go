@@ -678,9 +678,9 @@ func TestParseMobFile_HighBitmask(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	// Action flags bitmask: bit 18 (INVISIBLE, last entry) = 262144
+	// Action flags bitmask: bit 25 (EXTRACT, last entry) = 33554432
 	// Affect flags bitmask: bit 34 (DETECT_INV, last entry) = 17179869184
-	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n262144 17179869184 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n33554432 17179869184 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -691,8 +691,8 @@ func TestParseMobFile_HighBitmask(t *testing.T) {
 	}
 	m := mobs[0]
 
-	if len(m.ActionFlags) != 1 || m.ActionFlags[0] != "INVISIBLE" {
-		t.Errorf("expected [INVISIBLE], got %v", m.ActionFlags)
+	if len(m.ActionFlags) != 1 || m.ActionFlags[0] != "EXTRACT" {
+		t.Errorf("expected [EXTRACT], got %v", m.ActionFlags)
 	}
 	if len(m.AffectFlags) != 1 || m.AffectFlags[0] != "DETECT_INV" {
 		t.Errorf("expected [DETECT_INV], got %v", m.AffectFlags)
@@ -703,7 +703,7 @@ func TestParseMobFile_BitBeyondArrayLength(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	// Bit 30 (beyond both arrays which have 19 and 35 entries) — should be silently skipped, not panic
+	// Bit 30 (beyond action array which has 26 entries; affect array has 35) — should be silently skipped, not panic
 	// 1 << 30 = 1073741824
 	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n1073741824 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
@@ -741,10 +741,41 @@ func TestParseMobFile_AllActionFlags(t *testing.T) {
 		t.Fatalf("expected 19 action flags, got %d", len(m.ActionFlags))
 	}
 	// Spot check a few
-	expected := []string{"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "NICE", "AGGRESSIVE", "GREEDY", "STAY_ZONE", "WIMPY", "FOLLOW", "PURSUE", "DEADLY", "POLYSELF", "META_AGG", "GUARD", "AUCTION", "CHARITABLE", "MOUNT", "INVISIBLE"}
+	expected := []string{
+		"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGRESSIVE",
+		"STAY_ZONE", "WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL",
+		"MEMORY", "HELPER", "NOCHARM", "NOSUMMON", "NOSLEEP", "NOBASH",
+		"NOBLIND", "HUNTER",
+	}
 	for i, want := range expected {
 		if m.ActionFlags[i] != want {
 			t.Errorf("action flag[%d]: expected %q, got %q", i, want, m.ActionFlags[i])
 		}
+	}
+}
+
+func TestMobActionBitNamesMatchCStructs(t *testing.T) {
+	// src/structs.h MOB_* bit positions must match exactly.
+	expected := []string{
+		"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGRESSIVE",
+		"STAY_ZONE", "WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL",
+		"MEMORY", "HELPER", "NOCHARM", "NOSUMMON", "NOSLEEP", "NOBASH",
+		"NOBLIND", "HUNTER", "AGGR24", "RANDZON", "MOUNTABLE", "RARE",
+		"LOOTS", "OKGIVE", "EXTRACT",
+	}
+	if len(actionBitNames) != len(expected) {
+		t.Fatalf("actionBitNames has %d entries, expected %d", len(actionBitNames), len(expected))
+	}
+	for bit, want := range expected {
+		if actionBitNames[bit] != want {
+			t.Errorf("bit %d: got %q, want %q", bit, actionBitNames[bit], want)
+		}
+	}
+}
+
+func TestMobActionBitNamesStayZone(t *testing.T) {
+	// MOB_STAY_ZONE is bit 6 in src/structs.h.
+	if actionBitNames[6] != "STAY_ZONE" {
+		t.Errorf("actionBitNames[6] = %q, want STAY_ZONE", actionBitNames[6])
 	}
 }
