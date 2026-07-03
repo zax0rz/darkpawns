@@ -265,6 +265,18 @@ func strIndex(c Combatant) int {
 	return 30 // 18/100
 }
 
+// StrAppToDam returns the strength to-damage bonus for a combatant, looking up
+// str_app[STRENGTH_APPLY_INDEX(ch)].todam from constants.c. Exported so the
+// game layer (skill damage formulas) can share the single canonical strApp
+// table rather than duplicating it.
+func StrAppToDam(c Combatant) int {
+	idx := strIndex(c)
+	if idx < 0 || idx >= len(strApp) {
+		return 0
+	}
+	return strApp[idx].ToDam
+}
+
 // dexIndex returns the dex_app index for a combatant.
 // Source: fight.c uses GET_DEX(ch) directly for dex_app index
 func dexIndex(c Combatant) int {

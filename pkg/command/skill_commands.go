@@ -1552,6 +1552,20 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		s.GetWorld().DoSpellDamage(ch, target, result.Damage, "")
 	}
 
+	// Initiate combat when the skill signals it (miss / MOB_AWARE notice) even
+	// though no damage was dealt. C: skills like backstab call
+	// damage(ch, vict, 0, SKILL) on a miss, which enters set_fighting.
+	// StartCombat is also set when a damage-dealing hit didn't go through
+	// DoSpellDamage above (Damage == 0). DoSpellDamage already sets fighting
+	// state, so we only enroll when no damage was applied.
+	if result.StartCombat && target != nil && result.Damage <= 0 {
+		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
+			if ch.GetFighting() == "" {
+				_ = engine.StartCombat(ch, target)
+			}
+		}
+	}
+
 	// Apply position changes
 	if result.SelfStumble {
 		ch.SetPosition(combat.PosSitting)
