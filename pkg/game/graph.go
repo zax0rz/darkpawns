@@ -169,13 +169,9 @@ func (w *World) doTrack(ch *Player, me *MobInstance, argument string) bool {
 
 		if foundMob != nil {
 			// Sentinel mobs can't be tracked
-			if foundMob.Prototype != nil {
-				for _, f := range foundMob.Prototype.ActionFlags {
-					if f == "sentinel" {
-						ch.SendMessage("You sense no trail.\r\n")
-						return true
-					}
-				}
+			if hasMobFlag(foundMob, "sentinel") {
+				ch.SendMessage("You sense no trail.\r\n")
+				return true
 			}
 			dir := w.findFirstStep(ch.GetRoom(), foundMob.GetRoom())
 			switch dir {

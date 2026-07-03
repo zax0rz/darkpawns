@@ -11,6 +11,7 @@ package game
 import (
 	"log/slog"
 	"math/rand/v2"
+	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -25,7 +26,7 @@ func hasMobFlag(mob *MobInstance, flag string) bool {
 		return false
 	}
 	for _, f := range mob.Prototype.ActionFlags {
-		if f == flag {
+		if strings.EqualFold(f, flag) {
 			return true
 		}
 	}
@@ -37,7 +38,7 @@ func roomHasFlag(room *parser.Room, flag string) bool { //nolint:unused // mob h
 		return false
 	}
 	for _, f := range room.Flags {
-		if f == flag {
+		if strings.EqualFold(f, flag) {
 			return true
 		}
 	}

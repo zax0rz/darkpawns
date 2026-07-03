@@ -31,8 +31,8 @@ type Room struct {
 }
 
 // HasFlag checks if a room flag bit is set.
-// Room flags are stored as 4 hex strings representing bit positions 0-63.
-// C defines: ROOM_PEACEFUL=4, ROOM_PRIVATE=9, ROOM_BFR=17, ROOM_NOMAGIC=20
+// Room flags are stored as 4 decimal strings representing bit positions 0-63.
+// C defines: ROOM_PEACEFUL=4, ROOM_PRIVATE=9, ROOM_BFR=17, ROOM_NOMAGIC=7
 func (r *Room) HasFlag(bit int) bool {
 	if len(r.Flags) < 4 {
 		return false
@@ -42,7 +42,7 @@ func (r *Room) HasFlag(bit int) bool {
 		return false
 	}
 	bitPos := bit % 16
-	val, _ := strconv.ParseUint(r.Flags[word], 16, 32)
+	val, _ := strconv.ParseUint(r.Flags[word], 10, 32)
 	if bitPos < 0 || bitPos > 63 {
 		return false
 	}

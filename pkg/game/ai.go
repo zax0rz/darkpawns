@@ -74,17 +74,9 @@ func (w *World) runMobAI(mob *MobInstance) {
 
 	// Post-activity: wandering. Prototype is immutable after creation, so it is
 	// safe to read its flags without holding mob.mu.
-	isSentinel := false
-	for _, flag := range mob.Prototype.ActionFlags {
-		if flag == "sentinel" {
-			isSentinel = true
-			break
-		}
-	}
-
-	// Wandering behavior — MOB_SENTINEL prevents movement only
+	// MOB_SENTINEL prevents movement only.
 	// #nosec G404 — game RNG, not cryptographic
-	if !isSentinel && rand.IntN(100) < 25 {
+	if !hasMobFlag(mob, "sentinel") && rand.IntN(100) < 25 {
 		w.wanderMob(mob)
 	}
 }
@@ -108,15 +100,6 @@ func (w *World) wanderMob(mob *MobInstance) {
 		return
 	}
 
-	// Check if mob has MOB_STAY_ZONE flag
-	hasStayZone := false
-	for _, flag := range mob.Prototype.ActionFlags {
-		if flag == "stay_zone" {
-			hasStayZone = true
-			break
-		}
-	}
-
 	// Pick random exit, filtering by zone if MOB_STAY_ZONE
 	var validDirections []string
 	for dir, exit := range room.Exits {
@@ -128,7 +111,7 @@ func (w *World) wanderMob(mob *MobInstance) {
 
 		// MOB_STAY_ZONE: skip exits that lead to a different zone
 		// Source: mobact.c:127
-		if hasStayZone && targetRoom.Zone != room.Zone {
+		if hasMobFlag(mob, "stay_zone") && targetRoom.Zone != room.Zone {
 			continue
 		}
 
@@ -142,17 +125,7 @@ func (w *World) wanderMob(mob *MobInstance) {
 		}
 
 		// Check ROOM_DEATH and ROOM_NOMOB before mob movement
-		hasDeath := false
-		hasNoMob := false
-		for _, flag := range targetRoom.Flags {
-			if flag == "death" {
-				hasDeath = true
-			}
-			if flag == "nomob" {
-				hasNoMob = true
-			}
-		}
-		if hasDeath || hasNoMob {
+		if roomHasFlag(targetRoom, "death") || roomHasFlag(targetRoom, "no_mob") {
 			continue
 		}
 
