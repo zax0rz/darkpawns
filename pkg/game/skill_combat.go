@@ -8,54 +8,95 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
+// DoBackstab implements do_backstab() from act.offensive.c lines 165-235.
+//
+// Gates (mirrors DoCircle in this file, which already ports the C gates):
+//  1. Skill known
+//  2. Not targeting self
+//  3. Piercing weapon wielded (TYPE_PIERCE — obj Values[3] == 11)
+//  4. Not mounted
+//  5. Target not already fighting
+//  6. MOB_AWARE awake mobs notice and retaliate (start combat, no damage)
+//  7. Skill roll; on miss, still initiate combat (C: damage(ch, vict, 0, SKILL_BACKSTAB))
+//
+// Damage: (str_app.todam + damroll + weapon_dice) * backstab_mult(level).
+// Source: fight.c damage() + class.c backstab_mult().
 func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
-	// Check skill requirement
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Backstab who?"}
+	}
+
+	// 1. Skill requirement
 	if ch.GetSkill(SkillBackstab) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
 	}
 
-	// Must wield a weapon
-	weaponNum, weaponSides := ch.Equipment.GetWeaponDamage()
-	if weaponNum <= 0 || weaponSides <= 0 {
-		return SkillResult{Success: false, MessageToCh: "You need to wield a weapon to make it a success."}
+	// 2. Self-check — act.offensive.c:185
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "How can you sneak up on yourself?"}
 	}
 
-	// Target must not be fighting
+	// 3. Must wield a piercing weapon — act.offensive.c:189,194
+	weapon, ok := ch.Equipment.GetItemInSlot(SlotWield)
+	if !ok || weapon == nil {
+		return SkillResult{Success: false, MessageToCh: "You need to wield a weapon to make it a success."}
+	}
+	if weapon.Prototype.Values[3] != 11 { // TYPE_PIERCE - TYPE_HIT
+		return SkillResult{Success: false, MessageToCh: "Only piercing weapons can be used for backstabbing."}
+	}
+
+	// 4. Mounted check — act.offensive.c:206
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+
+	// 5. Target must not be fighting — act.offensive.c:209
 	if target.GetFighting() != "" {
 		return SkillResult{Success: false, MessageToCh: "You can't backstab a fighting person -- they're too alert!"}
 	}
 
-	// Roll for success
+	chPronouns := GetPronouns(ch.Name, ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
+
+	// 6. MOB_AWARE awake mobs notice the attempt and retaliate — act.offensive.c:212
+	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagAware) && target.GetPosition() > combat.PosSleeping {
+		if target.GetFighting() == "" {
+			target.SetFighting(ch.Name)
+		}
+		return SkillResult{
+			Success:       false,
+			MessageToCh:   ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
+			MessageToVict: ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
+			MessageToRoom: ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
+			StartCombat:   true,
+		}
+	}
+
+	// 7. Roll for success — act.offensive.c:220
 	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
 	percent := rand.IntN(101) + 1 // 1-101
 	skillLevel := ch.GetSkill(SkillBackstab)
 	prob := skillLevel
-	if prob == 0 {
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		prob = rand.IntN(51) + 50 // 50-100 fallback
-	}
-
-	chPronouns := GetPronouns(ch.Name, ch.GetSex()) // default male for now
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
-		// Miss
+		// Miss — C still calls damage(ch, vict, 0, SKILL_BACKSTAB), which starts
+		// combat. Flag the caller to initiate via the combat engine.
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("You try to backstab $N, but $E notices you!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to backstab you, but you notice $m in time!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to backstab $N, but fails.", chPronouns, &victPronouns, ""),
+			StartCombat:   true,
+			WaitCh:        1,
 		}
 	}
 
 	// Hit — calculate damage
-	// Source: fight.c + backstab_mult() from class.c
-	// C: dam = str_app[...].todam + GET_DAMROLL(ch) + weapon_dice
+	// C: dam = str_app[STRENGTH_APPLY_INDEX(ch)].todam + GET_DAMROLL(ch) + weapon_dice
 	//     dam *= backstab_mult(GET_LEVEL(ch))
+	weaponNum, weaponSides := ch.Equipment.GetWeaponDamage()
 	weaponDam := combat.RollDice(weaponNum, weaponSides)
-	dam := weaponDam + ch.GetDamroll()
+	dam := weaponDam + ch.GetDamroll() + ch.GetStrToDam()
 	mult := combat.BackstabMult(ch.GetLevel())
 	dam = int(float64(dam) * mult)
 

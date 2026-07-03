@@ -307,6 +307,11 @@ type SkillResult struct {
 	TargetFalls   bool // target position changes to sitting
 	WaitCh        int  // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)
 	WaitTarget    int  // WAIT_STATE for target (PULSE_VIOLENCE ticks)
+	// StartCombat signals the caller to initiate combat even when the skill
+	// deals no damage (miss / zero-damage hit). C: skills like backstab call
+	// damage(ch, vict, 0, SKILL) on a miss, which starts combat via set_fighting.
+	// The caller (sendSkillResult) routes this through the combat engine.
+	StartCombat bool
 }
 
 // DoBackstab implements do_backstab() from act.offensive.c lines 172-220.

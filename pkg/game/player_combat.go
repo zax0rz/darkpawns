@@ -1,5 +1,7 @@
 package game
 
+import "github.com/zax0rz/darkpawns/pkg/combat"
+
 func (p *Player) StopFighting() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -93,6 +95,13 @@ func (p *Player) GetStrAdd() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.Stats.StrAdd
+}
+
+// GetStrToDam returns the strength to-damage bonus.
+// Source: fight.c damage() — str_app[STRENGTH_APPLY_INDEX(ch)].todam.
+// Delegates to combat.StrAppToDam so the str_app table lives in one place.
+func (p *Player) GetStrToDam() int {
+	return combat.StrAppToDam(p)
 }
 
 // GetSex returns the player's sex.

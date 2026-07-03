@@ -131,26 +131,27 @@ func TestDoBackstab_TargetFighting(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// TestDoBackstab_BareHands — backstab with bare hands uses default (1,4) damage
+// TestDoBackstab_BareHands — bare-handed backstab is rejected (C gate).
+// Source: act.offensive.c:189 — GET_EQ(ch, WEAR_WIELD) must be set.
+// (Previously this test asserted non-C behavior — bare hands allowed.
+// DP-906 corrects the gate to match C, so the test now asserts rejection.)
 // ---------------------------------------------------------------------------
 
 func TestDoBackstab_BareHands(t *testing.T) {
 	w, player := newCombatTestWorld(t)
 
-	// Give player backstab skill
+	// Give player backstab skill so we reach the weapon gate, not the skill gate.
 	player.SetSkill(SkillBackstab, 50)
 
-	// Don't equip any weapon — bare hands (1,4) still count
+	// Don't equip any weapon.
 	target := spawnTargetMob(t, w)
 
 	result := DoBackstab(player, target, w)
-	// In CircleMUD, bare-handed backstab uses default damage (1,4)
-	// Should NOT fail with "no idea how" or "need a weapon" message
-	if result.MessageToCh == "You have no idea how." {
-		t.Error("bare-handed backstab should not fail for missing skill")
+	if result.Success {
+		t.Error("bare-handed backstab should fail (C requires a wielded weapon)")
 	}
-	if result.MessageToCh == "You need to wield a weapon to make it a success." {
-		t.Error("bare-handed backstab should not fail for missing weapon (CircleMUD default is 1,4)")
+	if result.MessageToCh != "You need to wield a weapon to make it a success." {
+		t.Errorf("expected weapon-required message, got %q", result.MessageToCh)
 	}
 }
 

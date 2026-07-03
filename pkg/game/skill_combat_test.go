@@ -351,6 +351,214 @@ func TestDoCircle_Success(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// DP-906: DoBackstab C-gate regression tests.
+// Mirror the DoCircle tests above. newBackstabTestWorld equips a thief with
+// a piercing weapon and backstab skill so each test can mutate one variable.
+// ---------------------------------------------------------------------------
+
+// newBackstabTestWorld builds a thief with a piercing dagger and backstab 100.
+func newBackstabTestWorld(t *testing.T) (*World, *Player) {
+	t.Helper()
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Test Room", Zone: 1},
+		},
+		Mobs: []parser.Mob{
+			{VNum: 2001, ShortDesc: "a training dummy"},
+		},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	ch := NewPlayer(1, "Rogue", 1001)
+	ch.Level = 20
+	ch.Class = ClassThief
+	ch.SetSkill(SkillBackstab, 100)
+	w.AddPlayer(ch)
+	return w, ch
+}
+
+func TestDoBackstab_SelfTarget(t *testing.T) {
+	w, ch := newBackstabTestWorld(t)
+	_ = w
+	result := DoBackstab(ch, ch, w)
+	if result.Success {
+		t.Error("expected backstab to block self-target")
+	}
+	if !strings.Contains(result.MessageToCh, "sneak up on yourself") {
+		t.Errorf("expected self-target message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoBackstab_NoWeapon(t *testing.T) {
+	w, ch := newBackstabTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	result := DoBackstab(ch, mob, w)
+	if result.Success {
+		t.Error("expected backstab to fail without weapon")
+	}
+	if !strings.Contains(result.MessageToCh, "wield a weapon") {
+		t.Errorf("expected wield requirement message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoBackstab_WrongWeaponType(t *testing.T) {
+	w, ch := newBackstabTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	weapon := makeSpikeWeapon("sword") // Values[3] == 3 (slash), not piercing
+	equipWeapon(t, ch, weapon)
+
+	result := DoBackstab(ch, mob, w)
+	if result.Success {
+		t.Error("expected backstab to fail with non-piercing weapon")
+	}
+	if !strings.Contains(result.MessageToCh, "Only piercing weapons") {
+		t.Errorf("expected piercing-weapon message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoBackstab_WhileMounted(t *testing.T) {
+	w, ch := newBackstabTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	ch.MountName = "pony"
+
+	weapon := makeCircleWeapon() // piercing
+	equipWeapon(t, ch, weapon)
+
+	result := DoBackstab(ch, mob, w)
+	if result.Success {
+		t.Error("expected backstab to fail while mounted")
+	}
+	if !strings.Contains(result.MessageToCh, "Dismount") {
+		t.Errorf("expected mount message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoBackstab_TargetFighting_Gate(t *testing.T) {
+	w, ch := newBackstabTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	weapon := makeCircleWeapon()
+	equipWeapon(t, ch, weapon)
+
+	// Target is already fighting someone else — too alert.
+	mob.SetFighting("SomeoneElse")
+
+	result := DoBackstab(ch, mob, w)
+	if result.Success {
+		t.Error("expected backstab to fail when target is fighting")
+	}
+	if !strings.Contains(result.MessageToCh, "too alert") {
+		t.Errorf("expected target-fighting message, got %q", result.MessageToCh)
+	}
+}
+
+// TestDoBackstab_MobAware_NoticesAndStartsCombat: a MOB_AWARE awake mob
+// notices the attempt, sets fighting state, and the result carries
+// StartCombat=true so the caller enrolls the player too.
+func TestDoBackstab_MobAware_NoticesAndStartsCombat(t *testing.T) {
+	w, ch := newBackstabTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetMobFlag(MobFlagAware)
+
+	weapon := makeCircleWeapon()
+	equipWeapon(t, ch, weapon)
+
+	result := DoBackstab(ch, mob, w)
+	if result.Success {
+		t.Error("expected aware mob to block backstab")
+	}
+	if mob.GetFighting() != ch.Name {
+		t.Errorf("expected aware mob to start fighting %q, got %q", ch.Name, mob.GetFighting())
+	}
+	if !strings.Contains(result.MessageToCh, "notices you") {
+		t.Errorf("expected noticed message, got %q", result.MessageToCh)
+	}
+	if !result.StartCombat {
+		t.Error("DP-906: MOB_AWARE notice should set StartCombat so the caller enrolls the player")
+	}
+}
+
+// TestDoBackstab_HitIncludesStrToDam: a successful backstab's damage must
+// include the str_app to-dam bonus (DP-906 str-to-dam gate). With a known
+// strength we can bound the damage below the pre-fix formula's max.
+func TestDoBackstab_HitIncludesStrToDam(t *testing.T) {
+	w, ch := newBackstabTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	weapon := makeCircleWeapon()
+	equipWeapon(t, ch, weapon)
+
+	// Force a high strength so StrAppToDam is meaningfully positive. Str 25 →
+	// str_app[25].todam == 14 (see pkg/combat/formulas.go strApp table).
+	ch.Stats.Str = 25
+
+	// Backstab a sleeping mob so the skill roll auto-succeeds (percent > prob
+	// only fails when AWAKE). Run a few attempts to absorb RNG variance.
+	var result SkillResult
+	for i := 0; i < 20; i++ {
+		mob.SetPosition(combat.PosSleeping)
+		result = DoBackstab(ch, mob, w)
+		if result.Success {
+			break
+		}
+	}
+	if !result.Success {
+		t.Fatalf("expected at least one backstab hit in 20 tries, last msg %q", result.MessageToCh)
+	}
+
+	// Lower bound: weapon dice (1d6=1) + damroll(0) + strToDam(14) = 15, × mult.
+	// At level 20 mult = 20*0.2+1 = 5.0, so min damage ≥ int(15*5) = 75. The
+	// str-to-dam term alone contributes 14*5 = 70. Without the fix the floor
+	// would have been int((1+0)*5)=5. Use a conservative threshold that only
+	// the str-to-dam-inclusive formula can clear.
+	if result.Damage < 70 {
+		t.Errorf("DP-906: backstab damage %d looks like it omits str-to-dam (str 25 → +14×mult); expected ≥ 70", result.Damage)
+	}
+}
+
+// TestDoBackstab_MissSetsStartCombat: a miss against an awake mob must flag
+// StartCombat so the caller initiates combat (C: damage(ch, vict, 0, SKILL)).
+// We force a miss by giving the mob high position (awake) and cranking skill
+// to 0 AFTER passing the skill gate would fail — instead set skill low and
+// retry until a miss is observed.
+func TestDoBackstab_MissSetsStartCombat(t *testing.T) {
+	w, ch := newBackstabTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	weapon := makeCircleWeapon()
+	equipWeapon(t, ch, weapon)
+
+	// Low skill → high miss probability against an awake mob.
+	ch.SetSkill(SkillBackstab, 1)
+	mob.SetPosition(combat.PosStanding)
+
+	var missed bool
+	for i := 0; i < 50; i++ {
+		result := DoBackstab(ch, mob, w)
+		if !result.Success && result.Damage == 0 {
+			// A miss (not a gate failure): must signal combat start.
+			if !result.StartCombat {
+				t.Errorf("DP-906: backstab miss should set StartCombat (C: damage(ch,vict,0,SKILL)), msg %q", result.MessageToCh)
+			}
+			if !strings.Contains(result.MessageToCh, "notices you") {
+				t.Errorf("expected miss message, got %q", result.MessageToCh)
+			}
+			missed = true
+			break
+		}
+	}
+	if !missed {
+		t.Skip("no miss observed in 50 tries (RNG); StartCombat-on-miss not exercised")
+	}
+}
+
 // newChargeTestWorld builds a minimal world for charge tests.
 func newChargeTestWorld(t *testing.T) (*World, *Player) {
 	t.Helper()
