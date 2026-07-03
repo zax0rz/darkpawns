@@ -1543,10 +1543,13 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 
 	// Apply damage
 	if result.Damage > 0 && target != nil {
-		target.TakeDamage(result.Damage)
-		if target.GetHP() <= 0 {
-			_ = s.SendMessage(fmt.Sprintf("%s is dead!\r\n", target.GetName()))
-		}
+		// Route through DoSpellDamage so skill damage uses the same death
+		// pipeline as combat and spells: corpse creation (rawKill for players,
+		// handleMobDeath for mobs), XP, removal from world, and StartCombat
+		// for both parties. Previously this only called TakeDamage + printed
+		// "is dead!" — no corpse, no XP, no removal, no combat initiation.
+		// See DP-901 / pkg/game/damage_stubs.go.
+		s.GetWorld().DoSpellDamage(ch, target, result.Damage, "")
 	}
 
 	// Apply position changes

@@ -219,28 +219,78 @@ func (ce *CombatEngine) IsFighting(charName string) bool {
 	return false
 }
 
-// PerformRound executes one round of combat for all active fighters
+// PerformRound executes one round of combat for all active fighters.
+//
+// Source: fight.c perform_violence() — iterates ALL characters on the combat
+// list (every character with FIGHTING set), not just the attacker side of each
+// pair. In the C codebase combat is a flat linked list; in Go we store directed
+// pairs (attacker→defender) but both participants may need to swing.
+//
+// We collect one exchange per unique combatant, resolving each fighter's actual
+// FIGHTING target (which may differ from its pair edge — e.g. a defender that
+// was already fighting someone else). This mirrors C semantics where each
+// character attacks whoever THEY are fighting, and gives retaliatory retarget
+// for free when a target dies mid-round.
 func (ce *CombatEngine) PerformRound() {
 	ce.mu.RLock()
 
-	// Snapshot pairs under read lock — we only iterate, never modify combatPairs.
-	// Actual pair processing (mutations) happens after releasing the lock.
-	pairs := make([]*CombatPair, 0, len(ce.combatPairs))
+	// Snapshot every directed pair edge under the read lock. Pair processing
+	// mutates combatants and may stop combat; we never touch combatPairs after
+	// releasing the lock here.
+	type edge struct{ attacker, defender Combatant }
+	edges := make([]edge, 0, len(ce.combatPairs)*2)
+	seen := make(map[string]bool, len(ce.combatPairs)*2)
+
 	for _, pair := range ce.combatPairs {
-		pairs = append(pairs, pair)
+		for _, fighter := range []Combatant{pair.Attacker, pair.Defender} {
+			if fighter == nil {
+				continue
+			}
+			name := fighter.GetName()
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+			target := ce.findFightingTarget(name, fighter)
+			if target == nil {
+				continue
+			}
+			edges = append(edges, edge{attacker: fighter, defender: target})
+		}
 	}
 
 	ce.mu.RUnlock()
 
-	// Process each combat pair
-	for _, pair := range pairs {
-		ce.processCombatPair(pair)
+	// Process each combatant's attack against whoever they are fighting.
+	for _, e := range edges {
+		ce.processCombatPair(&CombatPair{Attacker: e.attacker, Defender: e.defender})
 	}
 
 	// C-10: decrement wait states each round
 	if ce.OnRoundEnd != nil {
 		ce.OnRoundEnd()
 	}
+}
+
+// findFightingTarget resolves the Combatant that `fighter` is currently
+// attacking. Returns nil if the fighter has no FIGHTING target, or if that
+// target cannot be located among the active combat pairs.
+//
+// Must be called with ce.mu held (at least RLock).
+func (ce *CombatEngine) findFightingTarget(fighterName string, fighter Combatant) Combatant {
+	targetName := fighter.GetFighting()
+	if targetName == "" {
+		return nil
+	}
+	for _, pair := range ce.combatPairs {
+		if pair.Attacker.GetName() == targetName {
+			return pair.Attacker
+		}
+		if pair.Defender.GetName() == targetName {
+			return pair.Defender
+		}
+	}
+	return nil
 }
 
 // processCombatPair handles a single combat exchange

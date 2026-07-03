@@ -66,35 +66,55 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 	}
 }
 
+// doDamage applies skill/offensive damage to a player or mob and handles death.
+// Used by bash, kick, backstab, disembowel, ambush, neckbreak, tiger/dragon
+// kick, spec_proc hits, etc. — every skill that goes through the "path 2"
+// damage pipeline documented at the top of this file.
+//
+// DP-901: previously type-asserted vict.(*Player) and silently returned false
+// for mobs, so every offensive skill against a mob no-op'd. Now mirrors
+// DoSpellDamage: damages both types, sets fighting state, and routes death
+// through rawKill (players) / handleMobDeath (mobs).
 func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
-	victim, ok := vict.(*Player)
-	if !ok {
-		return false
-	}
+	attackerName := getAttackerName(ch)
 
 	if dam <= 0 {
-		victim.SendMessage(fmt.Sprintf("%s hits you, but it doesn't hurt!\r\n", getAttackerName(ch)))
+		// C: damage(ch, vict, 0, ...) prints the no-damage message and still
+		// counts as a hit (used by skills that connect for zero damage).
+		switch v := vict.(type) {
+		case *Player:
+			v.SendMessage(fmt.Sprintf("%s hits you, but it doesn't hurt!\r\n", attackerName))
+		case *MobInstance:
+			// Mobs don't get a player-style message; the call site reports.
+		}
 		return false
 	}
 
-	victim.TakeDamage(dam)
-	victim.SetFighting(getAttackerName(ch))
-
-	if victim.GetHP() <= 0 {
-		w.rawKill(victim, 303)
+	switch v := vict.(type) {
+	case *Player:
+		v.TakeDamage(dam)
+		v.SetFighting(attackerName)
+		if v.GetHP() <= 0 {
+			w.rawKill(v, 303)
+		}
+		return true
+	case *MobInstance:
+		v.TakeDamage(dam)
+		v.SetFighting(attackerName)
+		if v.GetHP() <= 0 {
+			w.handleMobDeath(v, nil, 303)
+		}
+		return true
+	default:
+		return false
 	}
-	return true
 }
 
 // hitSkill performs a skill-based hit (fight.c: hit_skill())
 func (w *World) hitSkill(ch, vict interface{}, skill string) bool {
-	victim, ok := vict.(*Player)
-	if !ok {
-		return false
-	}
+	// #nosec G404 — game RNG, not cryptographic
 	dam := randRange(1, 8) + 2
 	w.doDamage(ch, vict, dam, skill)
-	_ = victim
 	return true
 }
 
@@ -132,15 +152,13 @@ func (w *World) doMurder(ch *Player, me *MobInstance, cmd string, arg string) bo
 
 // doBackstab handles the backstab command
 
-// diceRoll rolls N dice of D sides each
+// diceRoll rolls N dice of D sides each.
+// DP-901: previously called rand.IntN(d) twice per iteration and discarded the
+// first roll, inflating the roll count and halving the effective randomness.
 func diceRoll(n, d int) int {
 	total := 0
 	for i := 0; i < n; i++ {
 		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		rand.IntN(d)
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
 		total += rand.IntN(d) + 1
 	}
 	return total
