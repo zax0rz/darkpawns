@@ -9,17 +9,7 @@ func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int, ce CombatEngine)
 	mobs := w.GetMobsInRoom(roomVNum)
 	for _, mob := range mobs {
 		// Check if mob is aggressive
-		isAggressive := false
-		if mob.Prototype != nil {
-			for _, flag := range mob.Prototype.ActionFlags {
-				if flag == "aggressive" {
-					isAggressive = true
-					break
-				}
-			}
-		}
-
-		if isAggressive && !player.IsFighting() {
+		if hasMobFlag(mob, "aggressive") && !player.IsFighting() {
 			// Check if mob is already fighting
 			if !ce.IsFighting(mob.GetName()) {
 				go func(m *MobInstance) {
