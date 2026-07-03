@@ -122,3 +122,138 @@ func TestHandleDeath_PassesAttackType(t *testing.T) {
 		t.Errorf("expected attackType %d, got %d", int(AttackNormal), receivedAttackType)
 	}
 }
+
+// dp900Fighter returns a mock combatant tuned to land hits deterministically.
+//
+// TestMain (formulas_test.go) wires GetSkill to return 50 for everyone and
+// GetWeaponInfo to grant every non-"unarmed_guy" a weapon — which means the
+// global parry/dodge checks would otherwise consume ScriptedRoller values and
+// randomly negate hits. Making these mocks NPCs (npc: true) short-circuits
+// CheckParry at its first line (formulas.go:641), and the dodge probe is fed
+// a failing value by the test's ScriptedRoller.
+//
+// Level 10 keeps GetAttacksPerRound at its baseline 1 attack without firing
+// the level-gated bonus-attack d100 rolls (formulas.go:578-602), so the only
+// roller call before the hit roll is the single Number(0,500) probe at line 602.
+func dp900Fighter(name string) *mockCombatant {
+	return &mockCombatant{
+		name:       name,
+		npc:        true,
+		hp:         100,
+		maxHP:      100,
+		room:       1,
+		level:      10,
+		thac0:      1,
+		ac:         10,
+		hitroll:    50,
+		intVal:     25,
+		wis:        25,
+		damageRoll: DiceRoll{Num: 1, Sides: 8, Plus: 5},
+		position:   PosStanding,
+	}
+}
+
+// TestPerformRound_DefenderRetaliates is the DP-900 regression: previously
+// PerformRound only processed pair.Attacker, so defenders never swung. With the
+// fix it iterates both sides of every pair, so both the attacker and the
+// defender deal damage in the same round.
+//
+// Determinism: a ScriptedRoller forces every d20 to 20 (natural-20 auto-hit)
+// and every dodge probe to 101 (dodge fails, since skill is 50). NPCs skip
+// the parry check entirely. The remaining values feed the attacks-per-round
+// probe and the damage dice. The pattern repeats for each combatant's edge.
+func TestPerformRound_DefenderRetaliates(t *testing.T) {
+	attacker := dp900Fighter("Attacker")
+	defender := dp900Fighter("Defender")
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	// Both combatants must be flagged fighting for PerformRound to swing them.
+	if defender.GetFighting() == "" {
+		t.Fatalf("DP-900 precondition: defender should have FIGHTING set after StartCombat, got %q", defender.GetFighting())
+	}
+
+	old := GetRoller()
+	// Per edge: Number(0,500)=500 [no bonus attack], Number(1,20)=20 [auto-hit],
+	// Number(1,101)=101 [dodge fails], Dice(1,8)=8 [damage die].
+	SetRoller(NewScriptedRoller([]int{
+		500, 20, 101, 8, // attacker → defender
+		500, 20, 101, 8, // defender → attacker
+		500, 20, 101, 8, 500, 20, 101, 8, // headroom
+	}))
+	defer SetRoller(old)
+
+	ce.PerformRound()
+
+	if defender.GetHP() >= 100 {
+		t.Errorf("DP-900: defender should have taken damage from attacker, HP still %d", defender.GetHP())
+	}
+	if attacker.GetHP() >= 100 {
+		t.Errorf("DP-900: attacker should have taken retaliation damage from defender, HP still %d", attacker.GetHP())
+	}
+}
+
+// TestPerformRound_BothSidesDealDamageOverRounds runs several rounds and
+// confirms both combatants bleed HP — the core symptom from the Fable repro
+// ("player HP never moves"). Same deterministic roller as the single-round
+// test, sized to cover 10 rounds × 2 edges.
+func TestPerformRound_BothSidesDealDamageOverRounds(t *testing.T) {
+	p := dp900Fighter("Player")
+	m := dp900Fighter("Mob")
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(p, m); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	old := GetRoller()
+	// 10 rounds × 2 edges × 4 values = 80; supply extra headroom. ScriptedRoller
+	// wraps if it runs short, so this is belt-and-suspenders.
+	script := make([]int, 0, 100)
+	for i := 0; i < 25; i++ {
+		script = append(script, 500, 20, 101, 8) // one edge: probe, hit, dodge-fail, dmg
+	}
+	SetRoller(NewScriptedRoller(script))
+	defer SetRoller(old)
+
+	for i := 0; i < 10; i++ {
+		if p.GetHP() <= 0 || m.GetHP() <= 0 {
+			break
+		}
+		ce.PerformRound()
+	}
+
+	if p.GetHP() >= 100 {
+		t.Errorf("DP-900: player should have lost HP over 10 rounds, still %d", p.GetHP())
+	}
+	if m.GetHP() >= 100 {
+		t.Errorf("DP-900: mob should have lost HP over 10 rounds, still %d", m.GetHP())
+	}
+}
+
+// TestPerformRound_IgnoresNonFightingCombatant confirms a combatant whose
+// FIGHTING target was cleared (e.g. fled) does not get a phantom attack — the
+// fix resolves each fighter's actual FIGHTING target rather than blindly
+// processing every pair edge.
+func TestPerformRound_IgnoresNonFightingCombatant(t *testing.T) {
+	attacker := dp900Fighter("Attacker")
+	defender := dp900Fighter("Defender")
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	// Defender "flees" — clears its own FIGHTING but the pair still exists.
+	defender.SetFighting("")
+
+	startHP := attacker.GetHP()
+	ce.PerformRound()
+
+	if attacker.GetHP() != startHP {
+		t.Errorf("DP-900: attacker should not be hit by a non-fighting defender, HP %d → %d", startHP, attacker.GetHP())
+	}
+}
