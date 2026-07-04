@@ -1,6 +1,6 @@
 # Binaries
-server
-darkpawns
+/server
+/darkpawns
 *.exe
 
 # Go

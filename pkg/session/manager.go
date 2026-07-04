@@ -35,6 +35,14 @@ import (
 const (
 	jwtEffectiveLifetime = 1 * time.Hour
 	jwtRefreshWindow     = 15 * time.Minute
+
+	// Linkdead reaper thresholds. Structurally faithful to C check_idling()
+	// (limits.c IDLE_TO_VOID / IDLE_DISCONNECT), but using wall-clock time
+	// so dead TCP sockets are detected and cleaned up quickly.
+	linkdeadVoidThreshold      = 60 * time.Second
+	linkdeadExtractThreshold   = 5 * time.Minute
+	linkdeadVoidRoomVNum       = 1
+	linkdeadDisconnectRoomVNum = 3
 )
 
 // allowedWebSocketOrigins lists the public origins that may connect without
@@ -730,6 +738,126 @@ func (m *Manager) Unregister(playerName string) {
 	}
 }
 
+// ReapLinkdeadSessions checks for authenticated sessions that have not sent an
+// inbound message in linkdeadVoidThreshold or linkdeadExtractThreshold. It
+// mirrors the C check_idling() two-stage behaviour, but uses wall-clock time
+// so dead TCP sockets are cleaned up quickly (DP-902).
+//
+// Stage 1 (>60s): move the player to the void room (vnum 1) and remember the
+// original room in WasInRoom.
+// Stage 2 (>5m): move the player to the disconnect room (vnum 3), save, and
+// close the WebSocket — this triggers readPump/writePump exit → Unregister.
+func (m *Manager) ReapLinkdeadSessions() {
+	m.mu.RLock()
+	var toVoid []*Session
+	var toExtract []*Session
+	now := time.Now().UnixNano()
+	for _, s := range m.sessions {
+		if !s.authenticated || s.player == nil {
+			continue
+		}
+		last := s.lastActive.Load()
+		if last == 0 {
+			continue
+		}
+		elapsed := time.Duration(now - last)
+		if elapsed > linkdeadExtractThreshold {
+			toExtract = append(toExtract, s)
+		} else if elapsed > linkdeadVoidThreshold {
+			toVoid = append(toVoid, s)
+		}
+	}
+	m.mu.RUnlock()
+
+	for _, s := range toVoid {
+		s.moveToVoid()
+	}
+	for _, s := range toExtract {
+		s.extractLinkdead()
+	}
+}
+
+// moveToVoid moves a linkdead player to the void room (vnum 1), remembering
+// the original room so they can be returned when they send a command.
+// Equivalent to the first branch of C check_idling() (limits.c:426-437).
+func (s *Session) moveToVoid() {
+	p := s.player
+	if p == nil {
+		return
+	}
+
+	// Re-check activity: the session may have become active while we were
+	// iterating under the read lock.
+	if time.Since(time.Unix(0, s.lastActive.Load())) <= linkdeadVoidThreshold {
+		return
+	}
+
+	wasIn := p.GetWasInRoom()
+	roomVNum := p.GetRoom()
+	level := p.GetLevel()
+
+	// Only mortal players who are not already voided.
+	if level >= game.LVL_IMMORT || wasIn != 0 || roomVNum <= 0 || roomVNum == linkdeadVoidRoomVNum {
+		return
+	}
+
+	p.SetWasInRoom(roomVNum)
+
+	if err := s.manager.world.PlayerTransfer(p, linkdeadVoidRoomVNum); err != nil {
+		slog.Warn("linkdead reaper: PlayerTransfer to void failed", "player", s.playerName, "error", err)
+		return
+	}
+
+	s.sendText("You have been idle, and are pulled into a void.\r\n")
+	s.manager.world.SendToRoom(roomVNum, fmt.Sprintf("%s disappears into the void.\r\n", p.Name))
+	slog.Info("linkdead reaper: moved to void", "player", s.playerName, "room", roomVNum)
+}
+
+// extractLinkdead moves a long-idle player to the disconnect room (vnum 3),
+// saves them, and closes the WebSocket so the pump defers run Unregister.
+// Equivalent to the second branch of C check_idling() (limits.c:438-451).
+func (s *Session) extractLinkdead() {
+	p := s.player
+	playerName := s.playerName
+	if p == nil || playerName == "" {
+		return
+	}
+
+	// Re-check activity: the session may have become active while we were
+	// iterating under the read lock.
+	if time.Since(time.Unix(0, s.lastActive.Load())) <= linkdeadExtractThreshold {
+		return
+	}
+
+	elapsed := time.Since(time.Unix(0, s.lastActive.Load()))
+	slog.Warn("reaping linkdead session",
+		"player", playerName,
+		"idle", elapsed.Round(time.Second),
+	)
+
+	if err := s.manager.world.PlayerTransfer(p, linkdeadDisconnectRoomVNum); err != nil {
+		slog.Warn("linkdead reaper: PlayerTransfer to disconnect room failed", "player", playerName, "error", err)
+	}
+
+	// Save before closing the connection.
+	if s.manager.hasDB && p.ID > 0 && !s.isGuest {
+		if rec, err := db.PlayerToRecord(p, nil); err == nil {
+			if err := s.manager.db.SavePlayer(rec); err != nil {
+				slog.Error("linkdead reaper: DB save error", "player", playerName, "error", err)
+			}
+		}
+	}
+
+	// Closing the socket triggers readPump/writePump to exit; their deferred
+	// cleanups call Unregister, which runs the full cleanupSession teardown.
+	if s.conn != nil {
+		_ = s.conn.Close()
+	} else {
+		// No live WebSocket (e.g., test/telnet sessions): clean up directly.
+		s.manager.UnregisterAndClose(playerName)
+	}
+}
+
 // GetSession returns a session by player name.
 func (m *Manager) GetSession(playerName string) (*Session, bool) {
 	m.mu.RLock()
@@ -855,6 +983,11 @@ type Session struct {
 	// Atomic to avoid data race between Register (m.mu) and readPump (no lock).
 	takeOverPending atomic.Bool
 	takeOverAt      time.Time
+
+	// lastActive is the Unix-nano timestamp of the most recent inbound message.
+	// Updated by readPump on every successful ReadMessage and used by the
+	// linkdead reaper to detect dead TCP sockets (DP-902).
+	lastActive atomic.Int64
 
 	// Force-command safety state
 	IsForced             bool      // true while executing a forced command (prevents transitive force)

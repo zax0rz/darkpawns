@@ -3,6 +3,7 @@ package session
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"runtime/debug"
 	"strings"
@@ -56,11 +57,20 @@ func (s *Session) readPump() {
 			break
 		}
 
+		// DP-902: any inbound message proves the TCP socket is alive.
+		s.lastActive.Store(time.Now().UnixNano())
+
 		// DP-GOAT P0-3: Clear takeover probe — any incoming message proves
 		// this session is alive and should not be replaced.
 		if s.takeOverPending.Load() {
 			s.takeOverPending.Store(false)
 			slog.Info("takeover probe cleared: session is alive", "player", s.playerName)
+		}
+
+		// DP-902 / limits.c: return a player from the void when they send a
+		// command, mirroring comm.c:600.
+		if s.authenticated && s.player != nil {
+			s.maybeReturnFromVoid()
 		}
 
 		if err := s.handleMessage(message); err != nil {
@@ -84,6 +94,10 @@ func (s *Session) writePump() {
 		}
 		ticker.Stop()
 		s.Close()
+		// NEW (DP-902): ensure session is cleaned up if writePump exits first.
+		// readPump also defers Unregister, so both pumps converge on the same
+		// idempotent cleanupSession path.
+		s.manager.Unregister(s.playerName)
 	}()
 
 	for {
@@ -154,6 +168,35 @@ func (s *Session) handleMessage(data []byte) error {
 	default:
 		return ErrUnknownMessageType
 	}
+}
+
+// maybeReturnFromVoid returns a player from the void room to their previous
+// room when they send any command. Matches comm.c:600-608.
+func (s *Session) maybeReturnFromVoid() {
+	p := s.player
+	if p == nil {
+		return
+	}
+
+	wasIn := p.GetWasInRoom()
+	roomVNum := p.GetRoom()
+
+	if wasIn == 0 {
+		return
+	}
+
+	p.SetIdleTimer(0)
+	p.SetWasInRoom(0)
+
+	if roomVNum == wasIn {
+		return
+	}
+
+	if err := s.manager.world.PlayerTransfer(p, wasIn); err != nil {
+		slog.Warn("return from void failed", "player", s.playerName, "error", err)
+		return
+	}
+	s.manager.world.SendToRoom(wasIn, fmt.Sprintf("%s has returned.\r\n", p.Name))
 }
 
 // stripANSIRecursive walks a decoded JSON structure and strips ANSI escape
