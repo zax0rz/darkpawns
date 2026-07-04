@@ -234,6 +234,9 @@ func main() {
 		OnCheckIdlePasswords: func() {
 			manager.CheckIdlePasswords()
 		},
+		OnReapLinkdeadSessions: func() {
+			manager.ReapLinkdeadSessions()
+		},
 	})
 	gameLoop.Start()
 	defer gameLoop.Stop()

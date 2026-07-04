@@ -131,6 +131,16 @@ func (s *Session) Close() {
 	if s.conn != nil {
 		_ = s.conn.Close()
 	}
+	if s.closeFunc != nil {
+		s.closeFunc()
+	}
+}
+
+// SetCloseFunc sets an optional transport-specific close callback. Telnet uses
+// this so that the linkdead reaper can force-close the raw TCP connection
+// (DP-928).
+func (s *Session) SetCloseFunc(fn func()) {
+	s.closeFunc = fn
 }
 
 // IsCharCreating returns whether the session is currently in character creation.

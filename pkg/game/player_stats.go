@@ -27,6 +27,35 @@ func (p *Player) GetRoom() int {
 	return p.RoomVNum
 }
 
+// GetWasInRoom returns the room the player was in before being pulled into the
+// void (limits.c GET_WAS_IN()).
+func (p *Player) GetWasInRoom() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.WasInRoom
+}
+
+// SetWasInRoom sets the room to return to when leaving the void.
+func (p *Player) SetWasInRoom(vnum int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.WasInRoom = vnum
+}
+
+// GetIdleTimer returns the player's idle timer in point-update ticks.
+func (p *Player) GetIdleTimer() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.IdleTimer
+}
+
+// SetIdleTimer sets the player's idle timer.
+func (p *Player) SetIdleTimer(ticks int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.IdleTimer = ticks
+}
+
 // Combatant interface implementation
 
 // GetLevel returns the player's level.
