@@ -248,6 +248,15 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		}
 	}
 
+	// Validate sector types before indexing movementLoss (DP-924).
+	// C uses SECT() macro with no bounds check (UB on bad values);
+	// Go panics on out-of-range, so we guard explicitly.
+	if room.Sector < 0 || room.Sector >= len(movementLoss) ||
+		toRoom.Sector < 0 || toRoom.Sector >= len(movementLoss) {
+		sendToChar(ch, "You can't go that way.\r\n")
+		return false
+	}
+
 	// Movement points needed is avg of src and dest sector movement loss
 	needMovement := (movementLoss[room.Sector] + movementLoss[toRoom.Sector]) >> 1
 

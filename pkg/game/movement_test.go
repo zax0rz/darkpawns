@@ -263,6 +263,50 @@ func TestPerformMove_Sneak(t *testing.T) {
 	}
 }
 
+// TestMovementBadSector verifies that malformed room sector values do not panic
+// the movement code. C reads garbage; Go guards the movementLoss index (DP-924).
+func TestMovementBadSector(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{
+				VNum: 1001, Name: "Room A", Zone: 1, Sector: 0,
+				Exits: map[string]parser.Exit{
+					"north": {Direction: "north", ToRoom: 1002, DoorState: 0},
+				},
+			},
+			{
+				VNum: 1002, Name: "Bad Sector Room", Zone: 1, Sector: 99,
+				Exits: map[string]parser.Exit{
+					"south": {Direction: "south", ToRoom: 1001, DoorState: 0},
+				},
+			},
+		},
+		Mobs: []parser.Mob{},
+		Objs: []parser.Obj{},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+
+	player := NewPlayer(1, "TestPlayer", 1001)
+	player.SetMove(100)
+	if err := w.AddPlayer(player); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	ok := doSimpleMove(w, player, 0, false) // north into bad sector
+	if ok {
+		t.Error("doSimpleMove should fail for bad sector")
+	}
+
+	if player.GetRoom() != 1001 {
+		t.Errorf("player should still be in room 1001, got %d", player.GetRoom())
+	}
+}
+
 // contains checks if s contains substr
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstr(s, substr))

@@ -51,22 +51,23 @@ func (w *World) AffectUpdate() {
 		var remaining []*engine.Affect
 
 		for _, af := range affects {
-			if af.Duration <= 0 {
-				// Permanent affect: 0 is the engine.NewAffect contract,
-				// -1 is a legacy implementor-level sentinel (CircleMUD items).
+			if af.Duration == -1 {
+				// Permanent affect (immortal only). Matches C: duration == -1 → no action.
 				remaining = append(remaining, af)
 				continue
 			}
-			af.Duration--
-			if af.Duration > 0 {
+			if af.Duration >= 1 {
+				// Active spell — decrement. Matches C: duration >= 1 → duration--.
+				af.Duration--
 				remaining = append(remaining, af)
-			} else {
-				// Duration expired — remove and print wear-off
-				if msg := SpellWearOffMsg(af.SpellID); msg != "" {
-					p.SendMessage(msg + "\r\n")
-				}
-				engine.AffectFromChar(p, af.SpellID)
+				continue
 			}
+			// Duration == 0 (or unexpected negative) — expires this tick.
+			// Matches C: else branch → affect_remove.
+			if msg := SpellWearOffMsg(af.SpellID); msg != "" {
+				p.SendMessage(msg + "\r\n")
+			}
+			engine.AffectFromChar(p, af.SpellID)
 		}
 
 		p.mu.Lock()

@@ -45,6 +45,9 @@ func TestCombatMessages_HaveNewlines(t *testing.T) {
 	}
 }
 
+// TestShopkeeperProtection_RemovesCombatPair is the DP-923 regression:
+// shopkeeper protection must stop combat for both attacker and defender,
+// matching C fight.c:1359-1366.
 func TestShopkeeperProtection_RemovesCombatPair(t *testing.T) {
 	oldIsShopkeeper := IsShopkeeper
 	defer func() { IsShopkeeper = oldIsShopkeeper }()
