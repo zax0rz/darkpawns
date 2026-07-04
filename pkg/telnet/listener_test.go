@@ -182,6 +182,86 @@ func TestReadLineCapsBufferWithoutNewline(t *testing.T) {
 	}
 }
 
+// TestReadLinePreAuthIdleTimeout confirms that readLinePreAuth drops an idle
+// pre-auth connection (no input) after loginIdleTimeout and writes the goodbye
+// line (DP-912).
+func TestReadLinePreAuthIdleTimeout(t *testing.T) {
+	client, server := net.Pipe()
+	defer client.Close()
+	defer server.Close()
+
+	tc := &telnetConn{
+		Conn: server,
+		br:   bufio.NewReader(server),
+		wmu:  make(chan struct{}, 1),
+	}
+
+	// Shorten the idle timeout for a deterministic, fast test.
+	prev := loginIdleTimeout
+	loginIdleTimeout = 100 * time.Millisecond
+	t.Cleanup(func() { loginIdleTimeout = prev })
+
+	// net.Pipe writes block until read; drain the client side in a goroutine so
+	// readLinePreAuth's goodbye write doesn't deadlock.
+	got := make(chan []byte, 1)
+	go func() {
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, client)
+		got <- buf.Bytes()
+	}()
+
+	start := time.Now()
+	_, ok := tc.readLinePreAuth()
+	elapsed := time.Since(start)
+
+	if ok {
+		t.Fatal("readLinePreAuth returned ok=true on an idle connection, want timeout")
+	}
+	if elapsed > 2*time.Second {
+		t.Errorf("readLinePreAuth took %v, want it to time out within ~%v", elapsed, loginIdleTimeout)
+	}
+
+	// Closing the server side (via defer) lets the drain goroutine finish.
+	server.Close()
+	client.Close()
+	select {
+	case b := <-got:
+		if !bytes.Contains(b, []byte("Idle timeout")) {
+			t.Errorf("expected goodbye containing 'Idle timeout', got %q", b)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for goodbye bytes on client side")
+	}
+}
+
+// TestReadLinePreAuthSuccess confirms a prompt read still returns the line when
+// input arrives before the idle timeout.
+func TestReadLinePreAuthSuccess(t *testing.T) {
+	client, server := net.Pipe()
+	defer client.Close()
+	defer server.Close()
+
+	tc := &telnetConn{
+		Conn: server,
+		br:   bufio.NewReader(server),
+		wmu:  make(chan struct{}, 1),
+	}
+	loginIdleTimeout = 5 * time.Second
+
+	go func() {
+		_, _ = client.Write([]byte("bob\r\n"))
+		go drain(client)
+	}()
+
+	line, ok := tc.readLinePreAuth()
+	if !ok {
+		t.Fatal("readLinePreAuth returned false, want true")
+	}
+	if line != "bob" {
+		t.Errorf("readLinePreAuth line = %q, want %q", line, "bob")
+	}
+}
+
 // TestReadLineCapsIACEscapedBytes verifies that a stream of IAC IAC escape
 // sequences (each appending a literal 0xFF byte) is also capped at
 // maxInputLen (DP-622).

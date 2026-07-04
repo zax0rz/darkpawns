@@ -42,8 +42,9 @@ const (
 )
 
 var (
-	maxConnsPerIP = 3
-	maxTotalConns = 200
+	maxConnsPerIP   = 3
+	maxTotalConns   = 200
+	loginIdleTimeout = 120 * time.Second // DP-912: drop parked pre-auth connections
 )
 
 func init() {
@@ -61,6 +62,17 @@ func init() {
 			slog.Warn("TELNET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", maxConnsPerIP)
 		} else {
 			maxConnsPerIP = n
+		}
+	}
+	// DP-912: idle timeout for pre-auth (banner/login/char-create) reads.
+	// A connection parked at the banner used to idle indefinitely. Tunable via
+	// LOGIN_IDLE_TIMEOUT (seconds). Invalid values keep the default.
+	if v := os.Getenv("LOGIN_IDLE_TIMEOUT"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			slog.Warn("LOGIN_IDLE_TIMEOUT invalid, using default", "value", v, "default", loginIdleTimeout)
+		} else {
+			loginIdleTimeout = time.Duration(n) * time.Second
 		}
 	}
 }
@@ -278,10 +290,8 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	tc.writeLine(greetingsLogo)
 	tc.writeLine("By what name do you wish to be known? ")
 
-	// Read name with timeout
-	//nolint:errcheck // best-effort cleanup
-	rawConn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	name, ok := tc.readLine()
+	// Read name with the pre-auth idle timeout (DP-912).
+	name, ok := tc.readLinePreAuth()
 	if !ok {
 		return
 	}
@@ -317,7 +327,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			tc.write([]byte{IAC, WILL, OPT_ECHO})
 			tc.writeLine("Password: ")
 			var ok bool
-			password, ok = tc.readLine()
+			password, ok = tc.readLinePreAuth()
 			tc.write([]byte{IAC, WONT, OPT_ECHO})
 			tc.writeLine("\r\n")
 			if !ok {
@@ -331,9 +341,8 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		} else {
 			// New character - ask to confirm creation
 			tc.writeLine("Character does not exist. Do you want to create a new character? (Y/N): ")
-			choice, ok := tc.readLine()
+			choice, ok := tc.readLinePreAuth()
 			if !ok {
-				tc.writeLine("\r\nGoodbye.\r\n")
 				return
 			}
 			choice = strings.TrimSpace(strings.ToLower(choice))
@@ -345,14 +354,14 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// Prompt to create and confirm a password (ECHO OFF)
 			tc.write([]byte{IAC, WILL, OPT_ECHO})
 			tc.writeLine("Choose a password: ")
-			p1, ok := tc.readLine()
+			p1, ok := tc.readLinePreAuth()
 			if !ok {
 				tc.write([]byte{IAC, WONT, OPT_ECHO})
 				tc.writeLine("\r\n")
 				return
 			}
 			tc.writeLine("\r\nConfirm password: ")
-			p2, ok := tc.readLine()
+			p2, ok := tc.readLinePreAuth()
 			if !ok {
 				tc.write([]byte{IAC, WONT, OPT_ECHO})
 				tc.writeLine("\r\n")
@@ -375,9 +384,8 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	} else {
 		// No DB - ask to confirm creation and create password
 		tc.writeLine("No database connection. Create new character? (Y/N): ")
-		choice, ok := tc.readLine()
+		choice, ok := tc.readLinePreAuth()
 		if !ok {
-			tc.writeLine("\r\nGoodbye.\r\n")
 			return
 		}
 		choice = strings.TrimSpace(strings.ToLower(choice))
@@ -388,14 +396,14 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 
 		tc.write([]byte{IAC, WILL, OPT_ECHO})
 		tc.writeLine("Choose a password: ")
-		p1, ok := tc.readLine()
+		p1, ok := tc.readLinePreAuth()
 		if !ok {
 			tc.write([]byte{IAC, WONT, OPT_ECHO})
 			tc.writeLine("\r\n")
 			return
 		}
 		tc.writeLine("\r\nConfirm password: ")
-		p2, ok := tc.readLine()
+		p2, ok := tc.readLinePreAuth()
 		if !ok {
 			tc.write([]byte{IAC, WONT, OPT_ECHO})
 			tc.writeLine("\r\n")
@@ -862,6 +870,36 @@ func (tc *telnetConn) readLine() (string, bool) {
 		}
 		line = append(line, b)
 	}
+}
+
+// readLinePreAuth reads a line with the pre-auth idle deadline applied (DP-912).
+// It refreshes the read deadline to now+loginIdleTimeout before reading so a
+// connection parked at the banner or a password prompt is dropped instead of
+// idling forever. On any failed read it sends a best-effort goodbye line; the
+// caller treats the (false) return as "disconnect now".
+func (tc *telnetConn) readLinePreAuth() (string, bool) {
+	//nolint:errcheck // best-effort deadline; a failure here means the conn is dead anyway
+	tc.SetReadDeadline(time.Now().Add(loginIdleTimeout))
+	line, ok := tc.readLine()
+	if !ok {
+		// Best-effort goodbye. Write errors on a closed/timed-out conn are
+		// ignored by writeLine; the caller still tears the connection down.
+		tc.writeLine("\r\nIdle timeout reached — disconnecting.\r\n")
+		slog.Info("Telnet pre-auth idle timeout / read failure, disconnecting",
+			"remote_addr", addrOrNull(tc))
+	}
+	return line, ok
+}
+
+// addrOrNull returns the remote address of a telnetConn, or "" if unset/errored.
+func addrOrNull(tc *telnetConn) string {
+	if tc == nil {
+		return ""
+	}
+	if a := tc.RemoteAddr(); a != nil {
+		return a.String()
+	}
+	return ""
 }
 
 // write sends bytes with a simple mutex to avoid interleaving.
