@@ -1,4 +1,3 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -87,21 +86,6 @@ func actToRoom(w *World, roomVNum int, format string, excludeName string) {
 	}
 }
 
-// getPlayerByName finds a player by name in a slice.
-func getPlayerByName(players []*Player, name string) *Player {
-	for _, p := range players {
-		if strings.EqualFold(p.Name, name) {
-			return p
-		}
-	}
-	return nil
-}
-
-// strCompare returns true if strings differ case-insensitively (matching C str_cmp).
-func strCompare(a, b string) bool {
-	return !strings.EqualFold(a, b)
-}
-
 // hasRoomFlag checks if a room has the named flag (e.g. "indoors", "death", "tunnel").
 func hasRoomFlag(room *parser.Room, flag string) bool {
 	for _, f := range room.Flags {
@@ -138,18 +122,4 @@ func isOutdoors(room *parser.Room) bool {
 	return !hasRoomFlag(room, "indoors")
 }
 
-// getMount finds the mount mob for a rider.
-func getMount(ch *Player, w *World) *MobInstance {
-	if !ch.IsAffected(affMounted) {
-		return nil
-	}
-	mobs := w.GetMobsInRoom(ch.GetRoomVNum())
-	for _, m := range mobs {
-		if m.HasFlag("mount") {
-			// Check if this mob is mounted with this player as rider
-			// We check if the mob is also marked as mounted
-			return m
-		}
-	}
-	return nil
-}
+
