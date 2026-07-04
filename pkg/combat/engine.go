@@ -425,7 +425,7 @@ func (ce *CombatEngine) sendHitMessage(attacker, defender Combatant, damage int)
 	// Message to room
 	if ce.BroadcastFunc != nil {
 		ce.BroadcastFunc(roomVNum,
-			fmt.Sprintf("%s hits %s!", attackerName, defenderName),
+			fmt.Sprintf("%s hits %s!\r\n", attackerName, defenderName),
 			attackerName)
 	}
 }
@@ -441,7 +441,7 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant) {
 
 	if ce.BroadcastFunc != nil {
 		ce.BroadcastFunc(roomVNum,
-			fmt.Sprintf("%s misses %s!", attackerName, defenderName),
+			fmt.Sprintf("%s misses %s!\r\n", attackerName, defenderName),
 			attackerName)
 	}
 }

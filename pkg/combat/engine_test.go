@@ -19,10 +19,15 @@ func TestCombatMessages_HaveNewlines(t *testing.T) {
 	defender := &msgMockCombatant{mockCombatant: mockCombatant{name: "Defender"}}
 
 	ce := NewCombatEngine()
+	var broadcasts []string
+	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
+		broadcasts = append(broadcasts, message)
+	}
 
 	// Test hit message
 	attacker.messages = nil
 	defender.messages = nil
+	broadcasts = nil
 	ce.sendHitMessage(attacker, defender, 10)
 
 	if len(attacker.messages) != 1 || !strings.HasSuffix(attacker.messages[0], "\r\n") {
@@ -31,10 +36,14 @@ func TestCombatMessages_HaveNewlines(t *testing.T) {
 	if len(defender.messages) != 1 || !strings.HasSuffix(defender.messages[0], "\r\n") {
 		t.Errorf("defender hit message does not end with \\r\\n: %q", defender.messages)
 	}
+	if len(broadcasts) != 1 || !strings.HasSuffix(broadcasts[0], "\r\n") {
+		t.Errorf("room hit broadcast does not end with \\r\\n: %q", broadcasts)
+	}
 
 	// Test miss message
 	attacker.messages = nil
 	defender.messages = nil
+	broadcasts = nil
 	ce.sendMissMessage(attacker, defender)
 
 	if len(attacker.messages) != 1 || !strings.HasSuffix(attacker.messages[0], "\r\n") {
@@ -42,6 +51,9 @@ func TestCombatMessages_HaveNewlines(t *testing.T) {
 	}
 	if len(defender.messages) != 1 || !strings.HasSuffix(defender.messages[0], "\r\n") {
 		t.Errorf("defender miss message does not end with \\r\\n: %q", defender.messages)
+	}
+	if len(broadcasts) != 1 || !strings.HasSuffix(broadcasts[0], "\r\n") {
+		t.Errorf("room miss broadcast does not end with \\r\\n: %q", broadcasts)
 	}
 }
 
