@@ -94,6 +94,14 @@ func (p *AdvancedWorkerPool) priorityDispatcher() {
 						return
 					}
 
+					// Check stop again before attempting send — channel may have closed during timer.
+					select {
+					case <-p.stop:
+						atomic.AddInt64(&p.metrics.TasksFailed, 1)
+						return
+					default:
+					}
+
 					select {
 					case p.taskQueue <- pt.task:
 						waitTime := time.Since(pt.submitted)
@@ -145,8 +153,8 @@ func (p *AdvancedWorkerPool) updateWaitTime(waitTime time.Duration) {
 	defer p.mu.Unlock()
 
 	p.metrics.TotalWaitTime += waitTime
-	if p.metrics.TasksCompleted > 0 {
-		p.metrics.AvgWaitTime = p.metrics.TotalWaitTime / time.Duration(p.metrics.TasksCompleted)
+	if completed := atomic.LoadInt64(&p.metrics.TasksCompleted); completed > 0 {
+		p.metrics.AvgWaitTime = p.metrics.TotalWaitTime / time.Duration(completed)
 	}
 	if waitTime > p.metrics.MaxWaitTime {
 		p.metrics.MaxWaitTime = waitTime
