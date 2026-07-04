@@ -9,8 +9,8 @@ import (
 )
 
 func TestGuestLoginAndRestrictions(t *testing.T) {
-	// Set JWT secret to avoid token generation failure
-	t.Setenv("JWT_SECRET", "super_secret_jwt_sign_key")
+	// Set JWT secret to avoid token generation failure (must be >=32 chars, DP-910)
+	t.Setenv("JWT_SECRET", "test-jwt-secret-at-least-32-chars-long-please")
 
 	// Create dummy game world with starting room 8004
 	parsed := &parser.World{

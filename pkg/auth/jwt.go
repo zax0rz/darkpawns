@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -16,6 +17,12 @@ var (
 	// ErrExpiredToken indicates the JWT has passed its expiration time.
 	ErrExpiredToken = errors.New("token expired")
 )
+
+// MinJWTSecretLength is the minimum acceptable length (in bytes) for a JWT
+// signing secret. HS256 security relies on key length; a sub-32-byte secret
+// is too short and is rejected by GenerateJWT/ValidateJWT at runtime.
+// ValidateJWTSecret uses the same threshold at boot.
+const MinJWTSecretLength = 32
 
 // contextKey is a private type for context keys to avoid collisions.
 type contextKey string
@@ -69,8 +76,8 @@ func GenerateJWT(playerName string, isAgent bool, agentKeyID int64, role string)
 	if secret == "" {
 		return "", errors.New("JWT_SECRET environment variable not set")
 	}
-	if len(secret) < 32 {
-		return "", errors.New("JWT_SECRET must be at least 32 characters")
+	if len(secret) < MinJWTSecretLength {
+		return "", fmt.Errorf("JWT_SECRET must be at least %d characters", MinJWTSecretLength)
 	}
 
 	// Default role to "player" if empty
@@ -105,8 +112,8 @@ func ValidateJWT(tokenString string) (*Claims, error) {
 	if secret == "" {
 		return nil, errors.New("JWT_SECRET environment variable not set")
 	}
-	if len(secret) < 32 {
-		return nil, errors.New("JWT_SECRET must be at least 32 characters")
+	if len(secret) < MinJWTSecretLength {
+		return nil, fmt.Errorf("JWT_SECRET must be at least %d characters", MinJWTSecretLength)
 	}
 
 	token, err := jwt.ParseWithClaims(
@@ -126,4 +133,21 @@ func ValidateJWT(tokenString string) (*Claims, error) {
 	}
 
 	return nil, ErrInvalidToken
+}
+
+// ValidateJWTSecret checks the JWT_SECRET environment variable at boot.
+// It returns a descriptive error if the secret is missing or shorter than
+// MinJWTSecretLength. Callers should fail fast (refuse to start) in production
+// and, in development, may instead generate an ephemeral secret. This is a
+// startup-time gate so token issuance can't silently be broken for the entire
+// process lifetime (DP-910).
+func ValidateJWTSecret() error {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return errors.New("JWT_SECRET environment variable not set")
+	}
+	if len(secret) < MinJWTSecretLength {
+		return fmt.Errorf("JWT_SECRET must be at least %d characters (got %d)", MinJWTSecretLength, len(secret))
+	}
+	return nil
 }

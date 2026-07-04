@@ -395,7 +395,9 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 	)
 	cmd.Dir = root // world loading reads some paths relative to cwd
 	// JWT_SECRET is required for token issuance; production sets it via env.
-	cmd.Env = append(os.Environ(), "JWT_SECRET=e2e-smoke-test-secret", "ENVIRONMENT=development")
+	// Must be >=32 chars so boot validation passes and CI exercises the real
+	// issuance path (DP-910), not the silent-failure path.
+	cmd.Env = append(os.Environ(), "JWT_SECRET=e2e-smoke-test-secret-at-least-32-chars-long", "ENVIRONMENT=development")
 	var logBuf strings.Builder
 	cmd.Stdout = &logBuf
 	cmd.Stderr = &logBuf

@@ -76,3 +76,35 @@ func TestValidateJWT_RejectsHS512(t *testing.T) {
 		t.Fatal("ValidateJWT accepted an HS512 token")
 	}
 }
+
+func TestValidateJWTSecret(t *testing.T) {
+	cases := []struct {
+		name    string
+		secret  string
+		wantErr bool
+	}{
+		{"unset", "", true},
+		{"too short", "short", true},
+		{"just under minimum", "0123456789012345678901234567890", true}, // 30 chars
+		{"exactly minimum", "01234567890123456789012345678901", false},  // 32 chars
+		{"long", "test-secret-that-is-at-least-32-characters-long", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.secret == "" {
+				os.Unsetenv("JWT_SECRET")
+			} else {
+				os.Setenv("JWT_SECRET", tc.secret)
+			}
+			t.Cleanup(func() { os.Unsetenv("JWT_SECRET") })
+
+			err := ValidateJWTSecret()
+			if tc.wantErr && err == nil {
+				t.Errorf("ValidateJWTSecret() = nil, want error (secret %q)", tc.secret)
+			}
+			if !tc.wantErr && err != nil {
+				t.Errorf("ValidateJWTSecret() = %v, want nil (secret %q)", err, tc.secret)
+			}
+		})
+	}
+}
