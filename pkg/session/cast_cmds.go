@@ -223,35 +223,10 @@ func cmdCast(s *Session, args []string) error {
 		// Self-cast
 		target = s.player
 	} else {
-		// Find target in room — check mobs first, then players
-		room, ok := s.manager.world.GetRoom(s.player.GetRoom())
-		if !ok {
-			s.Send("You are in a strange void.")
-			return nil
-		}
-
-		// Check mobs in room
-		mobs := s.manager.world.GetMobsInRoom(room.VNum)
-		for _, mob := range mobs {
-			if strings.Contains(strings.ToLower(mob.GetShortDesc()), strings.ToLower(targetName)) ||
-				strings.Contains(strings.ToLower(mob.GetName()), strings.ToLower(targetName)) {
-				target = mob
-				break
-			}
-		}
-
-		// Check players if no mob found
-		if target == nil {
-			players := s.manager.world.GetPlayersInRoom(room.VNum)
-			for _, p := range players {
-				if strings.EqualFold(p.Name, targetName) {
-					target = p
-					break
-				}
-			}
-		}
-
-		if target == nil {
+		// Resolve target via the canonical in-room resolver (DP-907) so
+		// `cast <spell> X` agrees with consider/kick/... on what "X" is.
+		tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName)
+		if !found {
 			s.Send("They aren't here.")
 			// Refund mana on failed targeting
 			s.player.Mana += cost
@@ -259,6 +234,12 @@ func cmdCast(s *Session, args []string) error {
 				s.player.Mana = s.player.MaxMana
 			}
 			return nil
+		}
+		switch {
+		case tgt.Player != nil:
+			target = tgt.Player
+		case tgt.Mob != nil:
+			target = tgt.Mob
 		}
 	}
 

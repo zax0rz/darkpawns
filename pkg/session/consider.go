@@ -27,49 +27,34 @@ func cmdConsider(s *Session, args []string) error {
 		return nil
 	}
 
-	// Look for target in room — players first, then mobs
+	// Resolve target via the canonical in-room resolver (DP-907): "self"/"me",
+	// ordinals (2.guard), keyword-list abbreviation matching, and visibility —
+	// identical to kick/backstab/bash/... so consider and kick agree.
+	tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName)
+	if !found {
+		s.Send("They aren't here.")
+		return nil
+	}
+
 	var targetNameFound string
 	var targetSex int
 	var targetLevel int
 	var targetHP int
-
-	// Check players
-	players := s.manager.world.GetPlayersInRoom(roomVNum)
 	var targetPlayer *game.Player
-	for _, p := range players {
-		if strings.EqualFold(p.Name, targetName) && p.Name != s.player.Name {
-			targetPlayer = p
-			targetNameFound = p.Name
-			targetSex = p.Sex
-			targetLevel = p.Level
-			targetHP = p.Health
-			break
-		}
-	}
-
-	// Check mobs if no player found
 	var targetMob *game.MobInstance
-	if targetPlayer == nil {
-		mobs := s.manager.world.GetMobsInRoom(roomVNum)
-		for _, m := range mobs {
-			mobName := m.GetName()
-			if mobName == "" {
-				mobName = m.GetShortDesc()
-			}
-			if strings.EqualFold(mobName, targetName) || strings.EqualFold(m.GetShortDesc(), targetName) {
-				targetMob = m
-				targetNameFound = mobName
-				targetSex = m.GetSex()
-				targetLevel = m.GetLevel()
-				targetHP = m.GetHP()
-				break
-			}
-		}
-	}
-
-	if targetNameFound == "" {
-		s.Send("They aren't here.")
-		return nil
+	switch {
+	case tgt.Player != nil:
+		targetPlayer = tgt.Player
+		targetNameFound = targetPlayer.Name
+		targetSex = targetPlayer.Sex
+		targetLevel = targetPlayer.Level
+		targetHP = targetPlayer.Health
+	case tgt.Mob != nil:
+		targetMob = tgt.Mob
+		targetNameFound = targetMob.GetShortDesc()
+		targetSex = targetMob.GetSex()
+		targetLevel = targetMob.GetLevel()
+		targetHP = targetMob.GetHP()
 	}
 
 	// Part 1: Damage comparison — from C lines 2390-2412

@@ -293,8 +293,10 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		{"Choose a password", password + "\r\n"},
 		{"Confirm password", password + "\r\n"},
 		{"Did I get that right", "Y\r\n"},
-		{"Give me a password", password + "\r\n"},
-		{"retype password", password + "\r\n"},
+		// DP-909: the nanny no longer re-prompts for the password — the telnet
+		// auth layer already collected it (Choose/Confirm above), so confirming
+		// the name jumps straight to the ANSI color stage (single collection,
+		// matching C interpreter.c CON_NEWPASSWD/CON_CNFPASSWD).
 		{"ANSI color", "N\r\n"},
 		{"sex", "M\r\n"},
 		{"Race:", "H\r\n"},
@@ -395,7 +397,9 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 	)
 	cmd.Dir = root // world loading reads some paths relative to cwd
 	// JWT_SECRET is required for token issuance; production sets it via env.
-	cmd.Env = append(os.Environ(), "JWT_SECRET=e2e-smoke-test-secret", "ENVIRONMENT=development")
+	// Must be >=32 chars so boot validation passes and CI exercises the real
+	// issuance path (DP-910), not the silent-failure path.
+	cmd.Env = append(os.Environ(), "JWT_SECRET=e2e-smoke-test-secret-at-least-32-chars-long", "ENVIRONMENT=development")
 	var logBuf strings.Builder
 	cmd.Stdout = &logBuf
 	cmd.Stderr = &logBuf
@@ -438,8 +442,8 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 		{"Choose a password", password + "\r\n"},
 		{"Confirm password", password + "\r\n"},
 		{"Did I get that right", "Y\r\n"}, // confirm_name
-		{"Give me a password", password + "\r\n"},
-		{"retype password", password + "\r\n"},
+		// DP-909: nanny no longer re-prompts for password (telnet layer
+		// already collected it above) — straight to ANSI color.
 		{"ANSI color", "N\r\n"},
 		{"sex", "M\r\n"},
 		{"Race:", "H\r\n"}, // Human

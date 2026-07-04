@@ -36,6 +36,8 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"flag"
 	"log/slog"
 	"net/http"
@@ -47,6 +49,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/audit"
+	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -83,6 +86,30 @@ func main() {
 	if *dbURL == "" {
 		slog.Error("Database URL is required; pass -db or set DATABASE_URL")
 		os.Exit(1)
+	}
+
+	// Validate JWT signing secret at boot. A sub-32-char secret silently breaks
+	// token issuance for the whole process lifetime (DP-910): GenerateJWT/
+	// ValidateJWT return an error that call sites log-and-continue, so WS agent
+	// clients get empty tokens and CI never notices because telnet play doesn't
+	// need a token. Fail loud at startup instead.
+	//   - production: refuse to start with a clear message.
+	//   - development: derive an ephemeral 32-byte secret so local boot works.
+	if err := auth.ValidateJWTSecret(); err != nil {
+		if os.Getenv("ENVIRONMENT") != "development" {
+			slog.Error("JWT_SECRET invalid; refusing to start in production",
+				"error", err,
+				"hint", "set JWT_SECRET to a >=32 char value, e.g. openssl rand -hex 32")
+			os.Exit(1)
+		}
+		ephemeral, gerr := generateEphemeralJWTSecret()
+		if gerr != nil {
+			slog.Error("failed to generate ephemeral dev JWT secret", "error", gerr)
+			os.Exit(1)
+		}
+		_ = os.Setenv("JWT_SECRET", ephemeral)
+		slog.Warn("JWT_SECRET missing/short in development; generated an ephemeral secret",
+			"hint", "issued tokens are invalid across restarts; set JWT_SECRET for stable dev")
 	}
 
 	slog.Info("Dark Pawns Phase 1 Server Starting...")
@@ -402,4 +429,15 @@ func main() {
 		slog.Error("Failed to save world state", "error", err)
 	}
 	slog.Info("Shutdown complete. Farewell.")
+}
+
+// generateEphemeralJWTSecret returns a random hex-encoded 32-byte secret for
+// development boots where JWT_SECRET is unset or too short. The result is 64
+// hex chars (>= auth.MinJWTSecretLength). Used only when ENVIRONMENT=development.
+func generateEphemeralJWTSecret() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }

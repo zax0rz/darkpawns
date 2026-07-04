@@ -132,10 +132,19 @@ type TextData struct {
 
 // CharCreateData is sent to client during char creation.
 type CharCreateData struct {
-	Stage   string            `json:"stage"` // "sex", "race", "class", "hometown", "rollstats", "confirm"
-	Prompt  string            `json:"prompt"`
-	Options map[string]string `json:"options,omitempty"` // key → description
-	Stats   *CharStatsDisplay `json:"stats,omitempty"`   // only on rollstats/confirm stage
+	Stage   string             `json:"stage"` // "sex", "race", "class", "hometown", "rollstats", "confirm"
+	Prompt  string             `json:"prompt"`
+	Options []CharCreateOption `json:"options,omitempty"` // key → label, ordered (DP-909)
+	Stats   *CharStatsDisplay  `json:"stats,omitempty"`   // only on rollstats/confirm stage
+}
+
+// CharCreateOption is one selectable option in a character-creation menu. The
+// slice (not a map) keeps option order stable across renders — important for
+// AI agents keying off option labels and for matching C's static-array menus
+// (DP-909). The JSON shape is an array of {key,label} objects.
+type CharCreateOption struct {
+	Key   string `json:"key"`
+	Label string `json:"label"`
 }
 
 // CharStatsDisplay is the rolled stats shown to player during creation.

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/audit"
@@ -16,6 +17,15 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/validation"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// guestSeq is a monotonic counter for generated guest names so two guests
+// never share a "Guest_NNNN" name (DP-912). The previous scheme derived the
+// suffix from time.Now().UnixNano()%10000, which collided for sequential
+// logins (a name freed by disconnect could be reassigned) and raced under
+// concurrency. A counter is unique across both sequential and concurrent
+// logins. Note: C has no "guest" login — this is a Go-only affordance, so
+// uniqueness (not fidelity to any C scheme) is the goal.
+var guestSeq atomic.Int64
 
 func (s *Session) handleLogin(data json.RawMessage) error {
 	var login LoginData
@@ -66,13 +76,15 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		// Bypasses DB password authentication & character creation completely!
 		guestName := login.PlayerName
 		if strings.EqualFold(guestName, "guest") {
-			// Generate dynamic unique name Guest_XXXX
-			guestName = fmt.Sprintf("Guest_%d", time.Now().UnixNano()%10000)
+			// Generate a unique name from a monotonic counter (DP-912).
+			guestName = fmt.Sprintf("Guest_%d", guestSeq.Add(1))
 		}
-		// Avoid duplicate names for active sessions
+		// Belt-and-suspenders: if the (extremely unlikely, counter-wrap) name
+		// is already live, keep incrementing until free. The counter makes the
+		// common sequential case collision-free without this loop.
 		for {
 			if _, ok := s.manager.GetSession(guestName); ok {
-				guestName = fmt.Sprintf("Guest_%d", time.Now().UnixNano()%10000)
+				guestName = fmt.Sprintf("Guest_%d", guestSeq.Add(1))
 			} else {
 				break
 			}

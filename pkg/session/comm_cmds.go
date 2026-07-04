@@ -338,21 +338,23 @@ func cmdSay(s *Session, args []string) error {
 	}
 	text = filtered
 
-	// Determine verb based on trailing punctuation — act.comm.c do_say() switch
-	verb := "says"
+	// Determine verb based on trailing punctuation — act.comm.c do_say() switch.
+	// verbSelf is the second-person form the actor sees ("You say ...");
+	// verb is the third-person form the room sees ("$n says ...").
+	verb, verbSelf := "says", "say"
 	if len(text) > 0 {
 		switch text[len(text)-1] {
 		case '!':
-			verb = "exclaims"
+			verb, verbSelf = "exclaims", "exclaim"
 		case '?':
-			verb = "asks"
+			verb, verbSelf = "asks", "ask"
 		case '.':
-			verb = "states"
+			verb, verbSelf = "states", "state"
 		}
 	}
 
 	// Sender sees: "You say '$message'"
-	s.Send(fmt.Sprintf("You %s '%s'", verb, text))
+	s.Send(fmt.Sprintf("You %s '%s'", verbSelf, text))
 
 	// Room sees: "$n says, '$message'"
 	roomText := fmt.Sprintf("%s %s, '%s'", s.player.Name, verb, text)

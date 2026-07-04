@@ -145,16 +145,28 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	case "confirm_name":
 		switch strings.ToUpper(choice) {
 		case "Y":
-			s.charStage = "create_password"
-			s.sendCharCreatePrompt("create_password", fmt.Sprintf("New character.\r\nGive me a password for %s: ", s.charName), nil)
+			// C (interpreter.c) collects the new-character password once, in
+			// CON_NEWPASSWD/CON_CNFPASSWD right after name confirmation. When
+			// the auth layer (telnet/WS) already collected the password, skip
+			// the nanny's create_password/confirm_password stages and go
+			// straight to color — so the password is asked exactly once per
+			// flow (DP-909). The supplied password is still plaintext here;
+			// hash it now, exactly as confirm_password would.
+			if s.charPasswordSupplied {
+				if err := s.hashCharPassword(); err != nil {
+					return err
+				}
+				s.charStage = "color"
+				s.sendCharCreatePrompt("color", "Do you want ANSI color (Y/N)? ", charOpts("Y", "Yes", "N", "No"))
+			} else {
+				s.charStage = "create_password"
+				s.sendCharCreatePrompt("create_password", fmt.Sprintf("New character.\r\nGive me a password for %s: ", s.charName), nil)
+			}
 		case "N":
 			s.sendText("Okay, what IS it, then? ")
 			s.Close()
 		default:
-			s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Please type Yes or No: \r\nDid I get that right, %s (Y/N)? ", s.charName), map[string]string{
-				"Y": "Yes",
-				"N": "No",
-			})
+			s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Please type Yes or No: \r\nDid I get that right, %s (Y/N)? ", s.charName), charOpts("Y", "Yes", "N", "No"))
 		}
 
 	case "create_password":
@@ -172,28 +184,22 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			s.charStage = "create_password"
 			return nil
 		}
-		hashedPwd, err := bcrypt.GenerateFromPassword([]byte(s.charPassword), bcrypt.DefaultCost)
-		if err != nil {
-			slog.ErrorContext(s.sessionCtx, "bcrypt hash error", s.logAttrs(slog.Any("error", err))...)
+		if err := s.hashCharPassword(); err != nil {
 			return err
 		}
-		s.charPassword = string(hashedPwd)
 		s.charStage = "color"
-		s.sendCharCreatePrompt("color", "Do you want ANSI color (Y/N)? ", map[string]string{
-			"Y": "Yes",
-			"N": "No",
-		})
+		s.sendCharCreatePrompt("color", "Do you want ANSI color (Y/N)? ", charOpts("Y", "Yes", "N", "No"))
 
 	case "color":
 		switch strings.ToUpper(choice) {
 		case "Y":
 			s.charColor = true
-			s.advanceCharStage("sex", "What is your sex (M/F)? ", map[string]string{"M": "Male", "F": "Female"})
+			s.advanceCharStage("sex", "What is your sex (M/F)? ", charOpts("M", "Male", "F", "Female"))
 		case "N":
 			s.charColor = false
-			s.advanceCharStage("sex", "What is your sex (M/F)? ", map[string]string{"M": "Male", "F": "Female"})
+			s.advanceCharStage("sex", "What is your sex (M/F)? ", charOpts("M", "Male", "F", "Female"))
 		default:
-			s.sendCharCreatePrompt("color", "Please answer Y or N.\r\nDo you want ANSI color (Y/N)? ", map[string]string{"Y": "Yes", "N": "No"})
+			s.sendCharCreatePrompt("color", "Please answer Y or N.\r\nDo you want ANSI color (Y/N)? ", charOpts("Y", "Yes", "N", "No"))
 		}
 
 	case "sex":
@@ -205,7 +211,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			s.charSex = 1
 			s.advanceCharStage("race", RaceMenuText+"\r\nRace: ", s.getRaceOptions())
 		default:
-			s.sendCharCreatePrompt("sex", "That is not a sex..\r\nWhat IS your sex? ", map[string]string{"M": "Male", "F": "Female"})
+			s.sendCharCreatePrompt("sex", "That is not a sex..\r\nWhat IS your sex? ", charOpts("M", "Male", "F", "Female"))
 		}
 
 	case "race":
@@ -297,11 +303,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 
 		s.charClass = classID
 		s.charStats = game.RollRealAbils(s.charClass, s.charRace)
-		s.advanceCharStage("hometown", HometownMenuText+"\r\nSelect: ", map[string]string{
-			"K": "Kir Drax'in",
-			"O": "Kir-Oshi",
-			"A": "Alaozar",
-		})
+		s.advanceCharStage("hometown", HometownMenuText+"\r\nSelect: ", charOpts("K", "Kir Drax'in", "O", "Kir-Oshi", "A", "Alaozar"))
 
 	case "hometown":
 		upperChoice := strings.ToUpper(choice)
@@ -314,11 +316,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		case "A":
 			hometown = 3
 		default:
-			s.sendCharCreatePrompt("hometown", "Invalid choice!\r\nSelect: ", map[string]string{
-				"K": "Kir Drax'in",
-				"O": "Kir-Oshi",
-				"A": "Alaozar",
-			})
+			s.sendCharCreatePrompt("hometown", "Invalid choice!\r\nSelect: ", charOpts("K", "Kir Drax'in", "O", "Kir-Oshi", "A", "Alaozar"))
 			return nil
 		}
 
@@ -408,7 +406,7 @@ func (s *Session) sendStatsRollPrompt() {
 	data := CharCreateData{
 		Stage:   "stats_roll",
 		Prompt:  prompt,
-		Options: map[string]string{"Y": "Keep", "N": "Reroll"},
+		Options: charOpts("Y", "Keep", "N", "Reroll"),
 		Stats:   stats,
 	}
 	s.charStage = "stats_roll"
@@ -430,20 +428,25 @@ func (s *Session) startCharCreation(playerName string) {
 	s.startNewCharFlow(playerName, "")
 }
 
-// startNewCharFlow begins stateful character creation starting at name confirmation.
+// startNewCharFlow begins stateful character creation starting at name
+// confirmation. C (interpreter.c nanny) collects the new-character password
+// exactly once, in CON_NEWPASSWD/CON_CNFPASSWD right after name confirmation.
+// To match that and avoid the previous double-prompt (telnet layer AND nanny
+// both asking), when a password was already supplied by the caller (the
+// telnet/WS auth layer), the nanny skips its create_password/confirm_password
+// stages and advances straight to color — so the password is collected exactly
+// once per flow (DP-909).
 func (s *Session) startNewCharFlow(playerName, password string) {
 	s.charCreating = true
 	s.charName = playerName
 	s.charPassword = password
+	s.charPasswordSupplied = password != "" // auth layer collected it; nanny will skip its prompt
 	s.charStage = "confirm_name"
-	s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Did I get that right, %s (Y/N)? ", playerName), map[string]string{
-		"Y": "Yes",
-		"N": "No",
-	})
+	s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Did I get that right, %s (Y/N)? ", playerName), charOpts("Y", "Yes", "N", "No"))
 }
 
 // sendCharCreatePrompt sends a character creation prompt to the client.
-func (s *Session) sendCharCreatePrompt(stage, prompt string, options map[string]string) {
+func (s *Session) sendCharCreatePrompt(stage, prompt string, options []CharCreateOption) {
 	data := CharCreateData{
 		Stage:   stage,
 		Prompt:  prompt,
@@ -548,6 +551,7 @@ func (s *Session) completeCharCreation() error {
 	s.charStage = ""
 	s.charName = ""
 	s.charPassword = ""
+	s.charPasswordSupplied = false
 	s.charColor = false
 	s.charSex = 0
 	s.charRace = 0
@@ -596,37 +600,64 @@ func (s *Session) completeCharCreation() error {
 	return nil
 }
 
+// hashCharPassword bcrypt-hashes the plaintext password currently in
+// s.charPassword, storing the hash back into s.charPassword. Shared by the
+// confirm_password stage and the confirm_name skip-branch (DP-909).
+func (s *Session) hashCharPassword() error {
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(s.charPassword), bcrypt.DefaultCost)
+	if err != nil {
+		slog.ErrorContext(s.sessionCtx, "bcrypt hash error", s.logAttrs(slog.Any("error", err))...)
+		return err
+	}
+	s.charPassword = string(hashedPwd)
+	return nil
+}
+
 // advanceCharStage moves to the next char creation stage.
-func (s *Session) advanceCharStage(stage, prompt string, options map[string]string) {
+func (s *Session) advanceCharStage(stage, prompt string, options []CharCreateOption) {
 	s.charStage = stage
 	s.sendCharCreatePrompt(stage, prompt, options)
 }
 
-// getRaceOptions returns available races for character creation.
-func (s *Session) getRaceOptions() map[string]string {
-	return map[string]string{
-		"H": "Human",
-		"E": "Elven",
-		"D": "Dwarven",
-		"K": "Kenderkin",
-		"M": "Minotauran",
-		"R": "Rakshasan",
-		"S": "Ssauran",
+// getRaceOptions returns available races for character creation in a stable
+// order (Human, Elven, Dwarven, …) matching the RaceMenuText layout and C's
+// static race array. A slice — not a map — so render order is deterministic
+// across renders (DP-909).
+func (s *Session) getRaceOptions() []CharCreateOption {
+	return []CharCreateOption{
+		{"H", "Human"},
+		{"E", "Elven"},
+		{"D", "Dwarven"},
+		{"K", "Kenderkin"},
+		{"M", "Minotauran"},
+		{"R", "Rakshasan"},
+		{"S", "Ssauran"},
 	}
 }
 
-// getClassOptions returns available classes for character creation, filtered by race.
-// Matches valid_user_class_choice() from interpreter.c.
-func (s *Session) getClassOptions(race int) map[string]string {
-	opts := map[string]string{
-		"C": "Cleric",
-		"T": "Thief",
-		"W": "Warrior",
-		"M": "Magic-user",
-		"I": "Psionic",
+// getClassOptions returns available classes for character creation, filtered
+// by race, in stable menu order (Cleric, Thief, Warrior, Magic-user, Psionic,
+// and Ninja for humans) matching ClassMenuText/HumanClassMenuText (DP-909).
+func (s *Session) getClassOptions(race int) []CharCreateOption {
+	opts := []CharCreateOption{
+		{"C", "Cleric"},
+		{"T", "Thief"},
+		{"W", "Warrior"},
+		{"M", "Magic-user"},
+		{"I", "Psionic"},
 	}
 	if race == game.RaceHuman {
-		opts["N"] = "Ninja"
+		opts = append(opts, CharCreateOption{"N", "Ninja"})
+	}
+	return opts
+}
+
+// charOpts is a small helper to build a []CharCreateOption from key/label
+// pairs inline, keeping call sites readable (DP-909).
+func charOpts(pairs ...string) []CharCreateOption {
+	opts := make([]CharCreateOption, 0, len(pairs)/2)
+	for i := 0; i+1 < len(pairs); i += 2 {
+		opts = append(opts, CharCreateOption{Key: pairs[i], Label: pairs[i+1]})
 	}
 	return opts
 }

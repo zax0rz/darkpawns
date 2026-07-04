@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"log/slog"
 	"math/rand/v2"
 	"time"
 
@@ -70,20 +71,33 @@ func (w *World) runMobAI(mob *MobInstance) {
 	// This fixes the O(N²) bug where runMobAI called MobileActivity()
 	// which re-iterated ALL mobs — making every mob get processed N times
 	// per tick. MobileActivityForMob processes a single mob.
+	//
+	// Wandering happens inside MobileActivityForMob (mobileActivityForMob →
+	// wanderMob), exactly once per tick — matching C mobile_activity, which
+	// runs the movement block once per mob. DP-908 removed a redundant second
+	// wanderMob call here plus a non-C 25% gate (rand.IntN(100) < 25) that had
+	// no equivalent in mobact.c and dropped the effective wander rate to ~8%.
 	w.MobileActivityForMob(mob)
-
-	// Post-activity: wandering. Prototype is immutable after creation, so it is
-	// safe to read its flags without holding mob.mu.
-	// MOB_SENTINEL prevents movement only.
-	// #nosec G404 — game RNG, not cryptographic
-	if !hasMobFlag(mob, "sentinel") && rand.IntN(100) < 25 {
-		w.wanderMob(mob)
-	}
 }
 
-// wanderMob moves a mob to a random adjacent room.
-// Caller must hold mob.mu. Uses direct field access to avoid deadlock.
-// MED-010: snapshot-based room reads, direct mob field writes.
+// wanderMob moves a mob to a random adjacent room, faithful to C mobact.c's
+// movement block (src/mobact.c:119-143). Caller must NOT hold mob.mu — the
+// accessors lock individually (DP-590).
+//
+// C semantics reproduced here (DP-908):
+//   - door = number(0, 18): a SINGLE random draw in [0,18].
+//   - door < NUM_OF_DIRS (6): the same draw both gates movement (~6/19 ≈ 31.6%
+//     chance the door is even a real cardinal direction) AND picks the exit.
+//     Previously Go matched the *probability* but drew the direction separately,
+//     which changes the per-direction distribution. We now reuse the gate draw
+//     as the direction index.
+//   - CAN_GO(ch, door): the exit exists in that cardinal direction.
+//   - ROOM_DEATH / ROOM_NOMOB: skip.
+//   - MOB_STAY_ZONE: skip exits that leave the mob's home zone.
+//   - Sector swim/fly checks (Go has no CAN_SWIM/IS_FLYING, so water/flying
+//     rooms are skipped for all mobs — pre-existing conservative behavior).
+//
+// Note: SENTINEL is checked by the caller (mobileActivityForMob), not here.
 func (w *World) wanderMob(mob *MobInstance) {
 	snap := w.snapshots.Snapshot()
 	room, ok := snap.Rooms[mob.GetRoom()] // getter — mutex-protected
@@ -91,60 +105,58 @@ func (w *World) wanderMob(mob *MobInstance) {
 		return
 	}
 
-	if rand.IntN(19) >= 6 {
-		return
-	}
-
-	// Get available exits
-	if len(room.Exits) == 0 {
-		return
-	}
-
-	// Pick random exit, filtering by zone if MOB_STAY_ZONE
-	var validDirections []string
-	for dir, exit := range room.Exits {
-		// Check if target room exists
-		targetRoom, ok := snap.Rooms[exit.ToRoom]
-		if !ok {
-			continue
-		}
-
-		// MOB_STAY_ZONE: skip exits that lead to a different zone
-		// Source: mobact.c:127
-		if hasMobFlag(mob, "stay_zone") && targetRoom.Zone != room.Zone {
-			continue
-		}
-
-		// Sector constraints (C: mobact.c:130-138)
-		// Skip water rooms for mobs that can't swim (no CAN_SWIM check in Go — skip water for all non-water mobs)
-		if targetRoom.Sector == SECT_WATER_SWIM || targetRoom.Sector == SECT_WATER_NOSWIM {
-			continue // Conservative: skip water rooms for all wandering mobs
-		}
-		if targetRoom.Sector == SECT_FLYING {
-			continue // Skip flying rooms — mobs can't fly unless flagged
-		}
-
-		// Check ROOM_DEATH and ROOM_NOMOB before mob movement
-		if roomHasFlag(targetRoom, "death") || roomHasFlag(targetRoom, "no_mob") {
-			continue
-		}
-
-		validDirections = append(validDirections, dir)
-	}
-
-	if len(validDirections) == 0 {
-		return
-	}
-
+	// Single random draw, exactly like C's door = number(0, 18).
 	// #nosec G404 — game RNG, not cryptographic
-	direction := validDirections[rand.IntN(len(validDirections))]
-	exit := room.Exits[direction]
-	targetRoom := snap.Rooms[exit.ToRoom]
+	door := rand.IntN(19) // [0, 18]
+
+	// door < NUM_OF_DIRS (len(dirs) == 6): if the draw isn't a real direction,
+	// the mob doesn't move this tick. This is both the gate and the direction.
+	if door >= len(dirs) {
+		return
+	}
+
+	direction := dirs[door]
+	exit, ok := room.Exits[direction] // CAN_GO(ch, door)
+	if !ok {
+		return
+	}
+	targetRoom, ok := snap.Rooms[exit.ToRoom]
+	if !ok {
+		return
+	}
+
+	// MOB_STAY_ZONE: skip exits that lead to a different zone (mobact.c:127-128).
+	if hasMobFlag(mob, "stay_zone") && targetRoom.Zone != room.Zone {
+		return
+	}
+
+	// Sector constraints (C: mobact.c:130-138). Go has no CAN_SWIM/IS_FLYING,
+	// so skip water/flying rooms for all wandering mobs (pre-existing behavior).
+	if targetRoom.Sector == SECT_WATER_SWIM || targetRoom.Sector == SECT_WATER_NOSWIM {
+		return
+	}
+	if targetRoom.Sector == SECT_FLYING {
+		return
+	}
+
+	// ROOM_DEATH and ROOM_NOMOB (mobact.c:125-126).
+	if roomHasFlag(targetRoom, "death") || roomHasFlag(targetRoom, "no_mob") {
+		return
+	}
 
 	// Move mob. GetRoom/SetRoom lock individually; the caller no longer holds
 	// mob.mu (DP-590), so there is no lock to release or re-acquire here.
 	oldRoom := mob.GetRoom()
 	mob.SetRoom(targetRoom.VNum)
+
+	slog.Debug(
+		"mob wandered",
+		"mob_vnum", mob.GetVNum(),
+		"name", mob.GetName(),
+		"from", oldRoom,
+		"to", targetRoom.VNum,
+		"dir", direction,
+	)
 
 	// Notify players in old room
 	oldPlayers := w.GetPlayersInRoom(oldRoom)

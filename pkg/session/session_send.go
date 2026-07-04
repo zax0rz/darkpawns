@@ -111,7 +111,7 @@ func (s *Session) sendErrorWithState(err error) {
 	case !s.authenticated:
 		// Not in char creation, not authenticated — prompt for login
 		s.sendCharCreatePrompt("login", "Send a login message to begin.",
-			map[string]string{"login": "{type:'login', data:{player_name, password, new_char}}"})
+			charOpts("login", "{type:'login', data:{player_name, password, new_char}}"))
 	case s.authenticated && s.player != nil:
 		// Already in the world — re-send room state
 		s.sendCurrentRoomState()
@@ -124,24 +124,23 @@ func (s *Session) resendCurrentCharPrompt() {
 	switch s.charStage {
 	case "color":
 		s.sendCharCreatePrompt("color", "Do you want ANSI color? (Y/N):",
-			map[string]string{"Y": "Yes", "N": "No"})
+			charOpts("Y", "Yes", "N", "No"))
 	case "sex":
 		s.sendCharCreatePrompt("sex", "Select your sex (M/F):",
-			map[string]string{"M": "Male", "F": "Female"})
+			charOpts("M", "Male", "F", "Female"))
 	case "race":
 		s.sendCharCreatePrompt("race", "Select your race:", s.getRaceOptions())
 	case "class":
 		s.sendCharCreatePrompt("class", "Select your class:", s.getClassOptions(s.charRace))
 	case "hometown":
-		s.sendCharCreatePrompt("hometown", "Choose your hometown:", map[string]string{
-			"K": "Kir Drax'in", "O": "Kir-Oshi", "A": "Alaozar",
-		})
+		s.sendCharCreatePrompt("hometown", "Choose your hometown:",
+			charOpts("K", "Kir Drax'in", "O", "Kir-Oshi", "A", "Alaozar"))
 	case "stats_roll":
 		s.sendStatsRollPrompt()
 	default:
 		// Unknown stage — fall back to login prompt
 		s.sendCharCreatePrompt("login", "Send a login message to begin.",
-			map[string]string{"login": "{type:'login', data:{player_name, password, new_char}}"})
+			charOpts("login", "{type:'login', data:{player_name, password, new_char}}"))
 	}
 }
 

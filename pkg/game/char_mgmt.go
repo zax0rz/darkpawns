@@ -155,8 +155,16 @@ func (w *World) ExtractPendingChars() {
 			// Remove from world
 			delete(w.players, name)
 
-			// Save to disk
-			_ = SavePlayer(p)
+			// Save to disk. The player has already been removed from the world
+			// and can't be messaged, so a failure here is logged with character
+			// context rather than swallowed — DP-911.
+			if err := SavePlayer(p); err != nil {
+				slog.Error(
+					"failed to save player on extract",
+					"name", name,
+					"error", err,
+				)
+			}
 
 			// Clear flag
 			p.Flags &^= extractMask

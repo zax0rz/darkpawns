@@ -215,30 +215,52 @@ func CanUseSkill(p *Player, skillName string) (bool, string) {
 // Target finding helpers
 // ---------------------------------------------------------------------------
 
-// FindTargetInRoom finds a character (player or mob) in the same room.
+// FindTargetInRoom finds a character (player or mob) in the same room. It is a
+// thin wrapper over World.ResolveCharInRoom (DP-907) so every command that
+// takes an in-room character target — consider, kick, backstab, bash, trip,
+// rescue, steal, ... — resolves through the single canonical get_char_room_vis
+// port (keyword-list abbreviation matching, ordinals like 2.guard, self/me,
+// CAN_SEE). Before DP-907 this used a substring match against the ShortDesc,
+// which is why `consider postman` and `kick postman` disagreed in the same
+// room.
+//
+// `exclude` is retained for signature compatibility; ResolveCharInRoom already
+// excludes the viewer `ch`, so callers passing `ch` as exclude get the same
+// behavior. `roomVNum` is taken from `ch.GetRoom()` by ResolveCharInRoom, so
+// the explicit room is only authoritative when it matches ch's room; this
+// matches every existing caller (which passes ch.GetRoom()).
 func FindTargetInRoom(world *World, roomVNum int, targetName string, exclude *Player) (combat.Combatant, string, bool) {
-	targetName = strings.ToLower(targetName)
-
-	// Check mobs
-	mobs := world.GetMobsInRoom(roomVNum)
-	for _, mob := range mobs {
-		if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
-			return mob, mob.GetShortDesc(), true
-		}
+	ch := exclude
+	if ch == nil {
+		// No viewer supplied: fall back to a match without visibility/ordinal
+		// semantics by using a throwaway viewer located in roomVNum. This path
+		// is not used by any current caller (all pass ch), but keeps the
+		// function safe if it ever is.
+		ch = &Player{}
+		ch.RoomVNum = roomVNum
 	}
-
-	// Check players
-	players := world.GetPlayersInRoom(roomVNum)
-	for _, p := range players {
-		if exclude != nil && p.Name == exclude.Name {
-			continue
-		}
-		if strings.Contains(strings.ToLower(p.Name), targetName) {
-			return p, p.Name, true
-		}
+	if ch.RoomVNum == 0 {
+		// A zero-valued RoomVNum (unset) would resolve against room 0; honour
+		// the explicit roomVNum the caller passed instead.
+		ch.RoomVNum = roomVNum
 	}
+	tgt, ok := world.ResolveCharInRoom(ch, targetName)
+	if !ok {
+		return nil, "", false
+	}
+	return tgt.Combatant, charDisplayName(tgt), true
+}
 
-	return nil, "", false
+// charDisplayName returns the player name or mob ShortDesc for a resolved
+// target — the second return value FindTargetInRoom historically carried.
+func charDisplayName(t CharTarget) string {
+	switch {
+	case t.Player != nil:
+		return t.Player.Name
+	case t.Mob != nil:
+		return t.Mob.GetShortDesc()
+	}
+	return ""
 }
 
 // ---------------------------------------------------------------------------

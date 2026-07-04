@@ -19,33 +19,23 @@ func cmdKill(s *Session, args []string) error {
 
 	// Immortal instakill (C: src/act.offensive.c do_kill())
 	if s.player.GetLevel() >= LVL_IMMORT {
-		targetName := strings.ToLower(args[0])
-		room, ok := s.manager.world.GetRoom(s.player.GetRoom())
-		if !ok {
-			return fmt.Errorf("invalid room")
+		// Resolve via the canonical in-room resolver (DP-907) so `kill X`
+		// agrees with consider/kick/... on what "X" is.
+		tgt, found := s.manager.world.ResolveCharInRoom(s.player, strings.Join(args, " "))
+		if !found {
+			s.Send("They aren't here.")
+			return nil
 		}
-
-		// Check mobs
-		mobs := s.manager.world.GetMobsInRoom(room.VNum)
-		for _, mob := range mobs {
-			if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
-				s.manager.world.HandleDeath(mob, s.player, 0)
-				s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", mob.GetShortDesc()))
-				return nil
-			}
+		switch {
+		case tgt.Mob != nil:
+			s.manager.world.HandleDeath(tgt.Mob, s.player, 0)
+			s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", tgt.Mob.GetShortDesc()))
+		case tgt.Player != nil:
+			s.manager.world.HandleDeath(tgt.Player, s.player, 0)
+			s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", tgt.Player.Name))
+		default:
+			s.Send("They aren't here.")
 		}
-
-		// Check players
-		players := s.manager.world.GetPlayersInRoom(room.VNum)
-		for _, p := range players {
-			if p.Name != s.player.Name && strings.Contains(strings.ToLower(p.Name), targetName) {
-				s.manager.world.HandleDeath(p, s.player, 0)
-				s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", p.Name))
-				return nil
-			}
-		}
-
-		s.Send("They aren't here.")
 		return nil
 	}
 
@@ -59,8 +49,6 @@ func cmdHit(s *Session, args []string) error {
 		return nil
 	}
 
-	targetName := strings.ToLower(args[0])
-
 	// Auto-dismount before attacking (C: do_hit calls do_dismount if mounted).
 	if s.player.IsMounted() {
 		s.manager.world.ExecDismount(s.player, "")
@@ -72,83 +60,83 @@ func cmdHit(s *Session, args []string) error {
 		return nil
 	}
 
-	// Find target in room
 	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
 	if !ok {
 		return fmt.Errorf("invalid room")
 	}
 
-	// Check for mobs in room
-	mobs := s.manager.world.GetMobsInRoom(room.VNum)
-	for _, mob := range mobs {
-		if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
-			// Start combat
-			err := s.manager.combatEngine.StartCombat(s.player, mob)
-			if err != nil {
-				s.Send(err.Error())
-				return nil
-			}
-
-			// Notify player
-			s.Send(fmt.Sprintf("You attack %s!", mob.GetShortDesc()))
-			s.markDirty(VarFighting)
-
-			// Notify room
-			msg, err := json.Marshal(ServerMessage{
-				Type: MsgEvent,
-				Data: EventData{
-					Type: "combat",
-					From: s.player.Name,
-					Text: fmt.Sprintf("%s attacks %s!", s.player.Name, mob.GetShortDesc()),
-				},
-			})
-			if err != nil {
-				slog.Error("json.Marshal error", "error", err)
-				return nil
-			}
-			s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
-
-			return nil
-		}
+	// Resolve target via the canonical in-room resolver (DP-907): keyword-list
+	// abbreviation matching, ordinals, self/me, visibility — identical to
+	// consider/kick/backstab/...
+	tgt, found := s.manager.world.ResolveCharInRoom(s.player, strings.Join(args, " "))
+	if !found {
+		s.Send("They aren't here.")
+		return nil
 	}
 
-	// Check for players in room
-	players := s.manager.world.GetPlayersInRoom(room.VNum)
-	for _, p := range players {
-		if p.Name != s.player.Name && strings.Contains(strings.ToLower(p.Name), targetName) {
-			// Start combat with player
-			err := s.manager.combatEngine.StartCombat(s.player, p)
-			if err != nil {
-				s.Send(err.Error())
-				return nil
-			}
-
-			// Notify both players
-			s.Send(fmt.Sprintf("You attack %s!", p.Name))
-			s.markDirty(VarFighting)
-
-			// Notify target
-			if targetSession, ok := s.manager.GetSession(p.Name); ok {
-				targetSession.Send(fmt.Sprintf("%s attacks you!", s.player.Name))
-			}
-
-			// Notify room
-			msg, err := json.Marshal(ServerMessage{
-				Type: MsgEvent,
-				Data: EventData{
-					Type: "combat",
-					From: s.player.Name,
-					Text: fmt.Sprintf("%s attacks %s!", s.player.Name, p.Name),
-				},
-			})
-			if err != nil {
-				slog.Error("json.Marshal error", "error", err)
-				return nil
-			}
-			s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
-
+	if tgt.Mob != nil {
+		mob := tgt.Mob
+		// Start combat
+		err := s.manager.combatEngine.StartCombat(s.player, mob)
+		if err != nil {
+			s.Send(err.Error())
 			return nil
 		}
+
+		// Notify player
+		s.Send(fmt.Sprintf("You attack %s!", mob.GetShortDesc()))
+		s.markDirty(VarFighting)
+
+		// Notify room
+		msg, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "combat",
+				From: s.player.Name,
+				Text: fmt.Sprintf("%s attacks %s!", s.player.Name, mob.GetShortDesc()),
+			},
+		})
+		if err != nil {
+			slog.Error("json.Marshal error", "error", err)
+			return nil
+		}
+		s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
+		return nil
+	}
+
+	if tgt.Player != nil {
+		p := tgt.Player
+		// Start combat with player
+		err := s.manager.combatEngine.StartCombat(s.player, p)
+		if err != nil {
+			s.Send(err.Error())
+			return nil
+		}
+
+		// Notify both players
+		s.Send(fmt.Sprintf("You attack %s!", p.Name))
+		s.markDirty(VarFighting)
+
+		// Notify target
+		if targetSession, ok := s.manager.GetSession(p.Name); ok {
+			targetSession.Send(fmt.Sprintf("%s attacks you!", s.player.Name))
+		}
+
+		// Notify room
+		msg, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "combat",
+				From: s.player.Name,
+				Text: fmt.Sprintf("%s attacks %s!", s.player.Name, p.Name),
+			},
+		})
+		if err != nil {
+			slog.Error("json.Marshal error", "error", err)
+			return nil
+		}
+		s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
+		return nil
 	}
 
 	s.Send("They aren't here.")
