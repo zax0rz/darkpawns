@@ -408,18 +408,6 @@ func hisHer(sex int) string {
 	}
 }
 
-// heSheIt returns subject pronouns "he" / "she" / "it" based on sex.
-func heSheIt(sex int) string {
-	switch sex {
-	case 1:
-		return "he"
-	case 2:
-		return "she"
-	default:
-		return "it"
-	}
-}
-
 // ---------------------------------------------------------------------------
 // C-10: Missing combat skill Do* functions — ported from act.offensive.c
 // ---------------------------------------------------------------------------
