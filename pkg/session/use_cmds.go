@@ -63,32 +63,18 @@ func cmdRecite(s *Session, args []string) error {
 		spellNumbers = append(spellNumbers, item.Prototype.Values[3])
 	}
 
-	// Determine target
-	var target interface{} = s.player // default: self
+	// Determine target — default to self.
+	var target interface{} = s.player
 
 	if targetName != "" {
-		// Try to find target — check players first, then mobs
-		room, ok := s.manager.world.GetRoom(s.player.GetRoom())
-		if ok {
-			// Check players in room
-			players := s.manager.world.GetPlayersInRoom(room.VNum)
-			for _, p := range players {
-				if strings.Contains(strings.ToLower(p.Name), strings.ToLower(targetName)) {
-					target = p
-					break
-				}
-			}
-
-			// Check mobs if no player found
-			if target == s.player {
-				mobs := s.manager.world.GetMobsInRoom(room.VNum)
-				for _, mob := range mobs {
-					if strings.Contains(strings.ToLower(mob.GetShortDesc()), strings.ToLower(targetName)) ||
-						strings.Contains(strings.ToLower(mob.GetName()), strings.ToLower(targetName)) {
-						target = mob
-						break
-					}
-				}
+		// Resolve via the canonical in-room resolver (DP-907) so `recite scroll
+		// X` agrees with consider/kick/... on what "X" is.
+		if tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName); found {
+			switch {
+			case tgt.Player != nil:
+				target = tgt.Player
+			case tgt.Mob != nil:
+				target = tgt.Mob
 			}
 		}
 	}
@@ -180,35 +166,17 @@ func cmdZap(s *Session, args []string) error {
 		return nil
 	}
 
-	// Find target in room
+	// Resolve target via the canonical in-room resolver (DP-907) so `use/zap
+	// <item> X` agrees with consider/kick/... on what "X" is.
 	var target interface{}
-	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
-	if !ok {
-		s.Send("You are in a strange void.")
-		return nil
-	}
-
-	// Check players in room
-	players := s.manager.world.GetPlayersInRoom(room.VNum)
-	for _, p := range players {
-		if strings.Contains(strings.ToLower(p.Name), strings.ToLower(targetName)) {
-			target = p
-			break
+	if tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName); found {
+		switch {
+		case tgt.Player != nil:
+			target = tgt.Player
+		case tgt.Mob != nil:
+			target = tgt.Mob
 		}
 	}
-
-	// Check mobs if no player found
-	if target == nil {
-		mobs := s.manager.world.GetMobsInRoom(room.VNum)
-		for _, mob := range mobs {
-			if strings.Contains(strings.ToLower(mob.GetShortDesc()), strings.ToLower(targetName)) ||
-				strings.Contains(strings.ToLower(mob.GetName()), strings.ToLower(targetName)) {
-				target = mob
-				break
-			}
-		}
-	}
-
 	if target == nil {
 		s.Send("They aren't here.")
 		return nil

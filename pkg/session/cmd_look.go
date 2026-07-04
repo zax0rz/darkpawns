@@ -171,11 +171,12 @@ func cmdLookDirection(s *Session, room *parser.Room, dir string) error {
 
 // cmdLookAt looks at a specific mob, player, or item.
 func cmdLookAt(s *Session, room *parser.Room, targetName string) error {
-	// Check players
-	players := s.manager.world.GetPlayersInRoom(room.VNum)
-	for _, p := range players {
-		pName := p.GetName()
-		if strings.EqualFold(pName, targetName) || strings.Contains(strings.ToLower(pName), strings.ToLower(targetName)) {
+	// Resolve a character (player or mob) via the canonical in-room resolver
+	// (DP-907) so `look X` agrees with consider/kick/... on what "X" is.
+	if tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName); found {
+		if tgt.Player != nil {
+			p := tgt.Player
+			pName := p.GetName()
 			desc := pName
 			if title := p.GetTitle(); title != "" {
 				desc = pName + " " + title
@@ -190,14 +191,8 @@ func cmdLookAt(s *Session, room *parser.Room, targetName string) error {
 			s.sendText(desc)
 			return nil
 		}
-	}
-
-	// Check mobs
-	mobs := s.manager.world.GetMobsInRoom(room.VNum)
-	for _, mob := range mobs {
-		mobName := mob.GetShortDesc()
-		if strings.Contains(strings.ToLower(mobName), strings.ToLower(targetName)) {
-			longDesc := mob.GetLongDesc()
+		if tgt.Mob != nil {
+			longDesc := tgt.Mob.GetLongDesc()
 			if longDesc != "" {
 				s.sendText(longDesc)
 			}
