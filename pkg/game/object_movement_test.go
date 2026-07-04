@@ -550,11 +550,6 @@ func TestMoveObjectInvalidDestination(t *testing.T) {
 // ---------------------------------------------------------------------------
 // TestContainerCyclePrevention — A contains B; putting A into B must fail
 // ---------------------------------------------------------------------------
-//
-// BUG: This test currently FAILS. attachObjectLocked(ObjInContainer) has no
-// cycle check. MoveObjectToContainer(A, B) succeeds even when B is already
-// inside A, creating a reference cycle that corrupts GetTotalWeight and any
-// code that recursively walks Contains.
 
 func TestContainerCyclePrevention(t *testing.T) {
 	w, _ := newTestWorld(t)
@@ -579,10 +574,49 @@ func TestContainerCyclePrevention(t *testing.T) {
 	// Now try to put A inside B — must fail (would create A→B→A cycle)
 	err = w.MoveObjectToContainer(containerA, containerB)
 	if err == nil {
-		t.Error("BUG: MoveObjectToContainer(A into B) succeeded, creating a container cycle")
+		t.Error("MoveObjectToContainer(A into B) succeeded, creating a container cycle")
 	}
 
 	// containerA must still be in the room, not inside containerB
+	if containerA.Location.Kind == ObjInContainer {
+		t.Errorf("containerA.Location should not be ObjInContainer after failed cycle attempt, got %v", containerA.Location.Kind)
+	}
+}
+
+func TestContainerCyclePreventionDeep(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	containerA, err := w.SpawnObject(3003, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject A failed: %v", err)
+	}
+	containerB, err := w.SpawnObject(3003, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject B failed: %v", err)
+	}
+	containerC, err := w.SpawnObject(3003, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject C failed: %v", err)
+	}
+
+	w.AddItemToRoom(containerA, 1001)
+	w.AddItemToRoom(containerB, 1001)
+	w.AddItemToRoom(containerC, 1001)
+
+	// Build chain: A contains B, B contains C
+	if err := w.MoveObjectToContainer(containerB, containerA); err != nil {
+		t.Fatalf("setup MoveObjectToContainer(B→A) failed: %v", err)
+	}
+	if err := w.MoveObjectToContainer(containerC, containerB); err != nil {
+		t.Fatalf("setup MoveObjectToContainer(C→B) failed: %v", err)
+	}
+
+	// Now try to put A inside C — must fail (would create A→B→C→A cycle)
+	err = w.MoveObjectToContainer(containerA, containerC)
+	if err == nil {
+		t.Error("MoveObjectToContainer(A into C) succeeded, creating a deep container cycle")
+	}
+
 	if containerA.Location.Kind == ObjInContainer {
 		t.Errorf("containerA.Location should not be ObjInContainer after failed cycle attempt, got %v", containerA.Location.Kind)
 	}
