@@ -491,6 +491,41 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 }
 
 // writeLoop reads from the session's send channel and writes formatted output to the telnet conn.
+// promptContainsMenu reports whether the char-create prompt text already
+// embeds a formatted option menu. The static menu texts (RaceMenuText,
+// ClassMenuText, HometownMenuText, …) all render options as "[X] label" lines,
+// so a '[' in the prompt means the menu is already shown and the separate
+// options list should NOT be printed again (DP-909: menus were doubled).
+func promptContainsMenu(prompt string) bool {
+	return strings.Contains(prompt, "[")
+}
+
+// renderCharCreateOptions renders the char-create options list for telnet.
+// Options arrive as a JSON array of {"key":..,"label":..} objects (formerly a
+// map, which randomized order). Each is printed as "  [key] label". If the
+// payload is absent or in the legacy map shape, the map path is used as a
+// fallback (DP-909).
+func renderCharCreateOptions(tc *telnetConn, options interface{}) {
+	if arr, ok := options.([]interface{}); ok {
+		for _, item := range arr {
+			m, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			k, _ := m["key"].(string)
+			v, _ := m["label"].(string)
+			tc.writeLine(fmt.Sprintf("  [%s] %s\r\n", k, v))
+		}
+		return
+	}
+	// Legacy map shape (pre-DP-909). Kept for mixed-version clients.
+	if m, ok := options.(map[string]interface{}); ok {
+		for k, v := range m {
+			tc.writeLine(fmt.Sprintf("  [%s] %v\r\n", k, v))
+		}
+	}
+}
+
 func writeLoop(tc *telnetConn, s *session.Session) {
 	ch := s.SendChannel()
 	for msg := range ch {
@@ -522,13 +557,20 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 			}
 		case "char_create":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
-				if prompt, ok := ed["prompt"].(string); ok {
+				prompt, _ := ed["prompt"].(string)
+				if prompt != "" {
 					tc.writeLine(fmt.Sprintf("\r\n%s\r\n", prompt))
 				}
-				if options, ok := ed["options"].(map[string]interface{}); ok {
-					for k, v := range options {
-						tc.writeLine(fmt.Sprintf("  [%s] %s\r\n", k, v))
-					}
+				// DP-909: the prompt text already carries the full formatted
+				// menu (e.g. RaceMenuText). Options are now a stable-order
+				// array of {key,label} for structured clients (web/agent); the
+				// telnet path used to ALSO print a randomized duplicate
+				// [key] list, doubling every menu. Only render the option list
+				// when the prompt did not already include the menu — detected
+				// by the absence of a "[" bracket line, which the static menu
+				// texts always contain.
+				if !promptContainsMenu(prompt) {
+					renderCharCreateOptions(tc, ed["options"])
 				}
 				tc.writeLine("> ")
 			}

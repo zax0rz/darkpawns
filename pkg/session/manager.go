@@ -805,11 +805,12 @@ type Session struct {
 	wantsStructuredData bool
 
 	// Character creation state
-	charCreating bool
-	charStage    string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
-	charName     string
-	charPassword string // hashed password during creation
-	charColor    bool   // ANSI color preference
+	charCreating         bool
+	charStage            string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
+	charName             string
+	charPassword         string // hashed password during creation
+	charPasswordSupplied bool   // auth layer already collected the password; nanny skips its prompt (DP-909)
+	charColor            bool   // ANSI color preference
 	charSex      int
 	charRace     int
 	charClass    int

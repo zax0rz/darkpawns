@@ -232,9 +232,13 @@ func TestGetRaceOptions(t *testing.T) {
 	if len(opts) != len(expected) {
 		t.Errorf("getRaceOptions len = %d, want %d", len(opts), len(expected))
 	}
+	got := make(map[string]string, len(opts))
+	for _, o := range opts {
+		got[o.Key] = o.Label
+	}
 	for k, v := range expected {
-		if got, ok := opts[k]; !ok || got != v {
-			t.Errorf("getRaceOptions[%q] = %q, want %q", k, got, v)
+		if gotV, ok := got[k]; !ok || gotV != v {
+			t.Errorf("getRaceOptions[%q] = %q, want %q", k, gotV, v)
 		}
 	}
 }
@@ -247,12 +251,12 @@ func TestGetClassOptions(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCharSession(t, m)
 
-	humanOpts := s.getClassOptions(game.RaceHuman)
+	humanOpts := sliceToMap(s.getClassOptions(game.RaceHuman))
 	if _, ok := humanOpts["N"]; !ok {
 		t.Error("human should have Ninja (N) available")
 	}
 
-	elfOpts := s.getClassOptions(1) // elf
+	elfOpts := sliceToMap(s.getClassOptions(1)) // elf
 	if _, ok := elfOpts["N"]; ok {
 		t.Error("elf should not have Ninja (N) available")
 	}
@@ -265,6 +269,16 @@ func TestGetClassOptions(t *testing.T) {
 			}
 		}
 	}
+}
+
+// sliceToMap converts a []CharCreateOption to a map[string]string for test
+// lookups (order is verified separately by TestCharCreateOptionOrder).
+func sliceToMap(opts []CharCreateOption) map[string]string {
+	m := make(map[string]string, len(opts))
+	for _, o := range opts {
+		m[o.Key] = o.Label
+	}
+	return m
 }
 
 // ---------------------------------------------------------------------------
@@ -347,7 +361,7 @@ func TestAdvanceCharStage(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCharSession(t, m)
 
-	opts := map[string]string{"M": "Male", "F": "Female"}
+	opts := charOpts("M", "Male", "F", "Female")
 	s.advanceCharStage("sex", "Select your sex:", opts)
 
 	if s.charStage != "sex" {
@@ -357,7 +371,8 @@ func TestAdvanceCharStage(t *testing.T) {
 	if cd.Stage != "sex" {
 		t.Errorf("CharCreateData.Stage = %q, want sex", cd.Stage)
 	}
-	if cd.Options["M"] != "Male" || cd.Options["F"] != "Female" {
+	optMap := sliceToMap(cd.Options)
+	if optMap["M"] != "Male" || optMap["F"] != "Female" {
 		t.Errorf("options mismatch: got %v", cd.Options)
 	}
 }
@@ -423,5 +438,126 @@ func TestHandleMessage_CharInput_WhenNotInCharCreation(t *testing.T) {
 	err := s.handleMessage(msg)
 	if err != ErrNotInCharCreation {
 		t.Errorf("expected ErrNotInCharCreation, got %v", err)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestCharCreateOptionsAreOrdered (DP-909)
+// ---------------------------------------------------------------------------
+
+func TestCharCreateOptionsAreOrdered(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeCharSession(t, m)
+
+	// Race options must be in a stable, C-menu order — not Go's randomized map
+	// order. Re-fetch several times and confirm the key sequence is identical.
+	raceKeys := func() []string {
+		ks := make([]string, 0)
+		for _, o := range s.getRaceOptions() {
+			ks = append(ks, o.Key)
+		}
+		return ks
+	}
+	first := raceKeys()
+	want := []string{"H", "E", "D", "K", "M", "R", "S"}
+	if len(first) != len(want) {
+		t.Fatalf("race option count = %d, want %d", len(first), len(want))
+	}
+	for i, k := range want {
+		if first[i] != k {
+			t.Errorf("race option[%d] = %q, want %q (order: %v)", i, first[i], k, first)
+		}
+	}
+
+	// Human class options include Ninja last, in menu order.
+	humanKeys := func() []string {
+		ks := make([]string, 0)
+		for _, o := range s.getClassOptions(game.RaceHuman) {
+			ks = append(ks, o.Key)
+		}
+		return ks
+	}
+	hc := humanKeys()
+	wantClass := []string{"C", "T", "W", "M", "I", "N"}
+	for i, k := range wantClass {
+		if i >= len(hc) || hc[i] != k {
+			t.Errorf("human class option[%d] = %q, want %q (order: %v)", i, firstKey(hc, i), k, hc)
+		}
+	}
+}
+
+func firstKey(ks []string, i int) string {
+	if i >= len(ks) {
+		return ""
+	}
+	return ks[i]
+}
+
+// ---------------------------------------------------------------------------
+// TestNewCharFlowSkipsPasswordWhenSupplied (DP-909)
+// ---------------------------------------------------------------------------
+
+// TestNewCharFlowSkipsPasswordWhenSupplied confirms that when the auth layer
+// already supplied a password, confirming the name jumps straight to the color
+// stage — the password is collected exactly once, matching C (interpreter.c
+// CON_NEWPASSWD/CON_CNFPASSWD is the single collection point).
+func TestNewCharFlowSkipsPasswordWhenSupplied(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeCharSession(t, m)
+
+	// Auth layer supplied a password.
+	s.startNewCharFlow("Hero", "supersecretpassword")
+	if !s.charPasswordSupplied {
+		t.Fatal("charPasswordSupplied should be true after startNewCharFlow with a password")
+	}
+	// Drain the confirm_name prompt.
+	drainMsg(t, s)
+
+	// Confirm the name.
+	msg, _ := json.Marshal(ClientMessage{
+		Type: MsgCharInput,
+		Data: json.RawMessage(`{"choice":"Y"}`),
+	})
+	if err := s.handleMessage(msg); err != nil {
+		t.Fatalf("handleMessage confirm Y: %v", err)
+	}
+
+	// The next prompt must be the color stage, NOT create_password — the
+	// password was already collected by the auth layer, so no second prompt.
+	_, cd := unmarshalCharCreate(t, drainMsg(t, s))
+	if cd.Stage != "color" {
+		t.Errorf("after confirming name with a supplied password, stage = %q, want %q (no double password prompt)",
+			cd.Stage, "color")
+	}
+	// The supplied password must now be hashed (bcrypt hashes start with $2).
+	if len(s.charPassword) == 0 || s.charPassword[0] != '$' {
+		t.Errorf("charPassword should be bcrypt-hashed after skip, got %q", s.charPassword)
+	}
+}
+
+// TestNewCharFlowPromptsPasswordWhenNotSupplied confirms the nanny still
+// collects the password itself when no password was pre-supplied (the pure-
+// nanny flow C uses), so the skip is conditional, not unconditional.
+func TestNewCharFlowPromptsPasswordWhenNotSupplied(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeCharSession(t, m)
+
+	s.startNewCharFlow("Hero", "") // no password from auth layer
+	if s.charPasswordSupplied {
+		t.Fatal("charPasswordSupplied should be false when no password supplied")
+	}
+	drainMsg(t, s) // confirm_name prompt
+
+	msg, _ := json.Marshal(ClientMessage{
+		Type: MsgCharInput,
+		Data: json.RawMessage(`{"choice":"Y"}`),
+	})
+	if err := s.handleMessage(msg); err != nil {
+		t.Fatalf("handleMessage confirm Y: %v", err)
+	}
+
+	_, cd := unmarshalCharCreate(t, drainMsg(t, s))
+	if cd.Stage != "create_password" {
+		t.Errorf("without a supplied password, stage = %q, want create_password", cd.Stage)
 	}
 }
