@@ -217,6 +217,7 @@ func newCircleTestWorld(t *testing.T) (*World, *Player) {
 	ch := NewPlayer(1, "Rogue", 1001)
 	ch.Level = 20
 	ch.Class = ClassThief
+	ch.Stats.Str = 12 // str_app[12].ToDam == 0; avoids skewing damage assertions
 	ch.SetSkill(SkillCircle, 100)
 	w.AddPlayer(ch)
 	return w, ch
@@ -330,6 +331,11 @@ func TestDoCircle_MobAware(t *testing.T) {
 	if !strings.Contains(result.MessageToCh, "notices you") {
 		t.Errorf("expected noticed message, got %q", result.MessageToCh)
 	}
+	// DP-circle-fidelity: MOB_AWARE notice must signal combat start so the
+	// caller enrolls the circler (C: hit(vict, ch) retaliates immediately).
+	if !result.StartCombat {
+		t.Error("MOB_AWARE notice should set StartCombat")
+	}
 }
 
 func TestDoCircle_Success(t *testing.T) {
@@ -348,6 +354,80 @@ func TestDoCircle_Success(t *testing.T) {
 	}
 	if result.WaitCh != 3 {
 		t.Errorf("expected wait 3, got %d", result.WaitCh)
+	}
+}
+
+// TestDoCircle_MissPullsAggro — C: new_cmds.c:2457. A botched circle against
+// a target that's fighting someone else pulls the mob's aggro onto the circler
+// (stop_fighting + hit(vict, ch)), and the circler enters combat too
+// (damage(ch, vict, 0, SKILL_CIRCLE)). The Go port retargets the mob and sets
+// StartCombat so the caller enrolls the circler.
+func TestDoCircle_MissPullsAggro(t *testing.T) {
+	w, ch := newCircleTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	weapon := makeCircleWeapon()
+	equipWeapon(t, ch, weapon)
+
+	// Mob is tanked on someone else; circler is assisting (not the mob's target).
+	mob.SetFighting("TheTank")
+	// Low skill so a miss is near-certain; awake mob so the AWAKE gate applies.
+	ch.SetSkill(SkillCircle, 1)
+	mob.SetPosition(combat.PosStanding)
+
+	var missed bool
+	for i := 0; i < 50; i++ {
+		mob.SetFighting("TheTank") // reset each attempt
+		result := DoCircle(ch, mob)
+		if !result.Success && result.Damage == 0 {
+			// Miss: mob should turn onto the circler, and combat should start.
+			if mob.GetFighting() != ch.Name {
+				t.Errorf("missed circle should pull aggro onto circler %q, mob fighting %q", ch.Name, mob.GetFighting())
+			}
+			if !result.StartCombat {
+				t.Error("missed circle should set StartCombat so the circler enters combat")
+			}
+			if !strings.Contains(result.MessageToCh, "notices you") {
+				t.Errorf("expected miss message, got %q", result.MessageToCh)
+			}
+			missed = true
+			break
+		}
+	}
+	if !missed {
+		t.Skip("no miss observed in 50 tries (RNG); miss-pulls-aggro not exercised")
+	}
+}
+
+// TestDoCircle_HitIncludesStrToDam — the damage formula must include the
+// str_app to-dam bonus (DP-circle-fidelity gap #4). With high strength the
+// damage floor rises above what weapon-dice + damroll alone could produce.
+func TestDoCircle_HitIncludesStrToDam(t *testing.T) {
+	w, ch := newCircleTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	weapon := makeCircleWeapon()
+	equipWeapon(t, ch, weapon)
+
+	// Str 25 → str_app[25].todam == 14. Circle uses backstab_mult(level)/3;
+	// at level 20 mult = (20*0.2+1)/3 = 5/3 = 1. The str-to-dam term adds 14*1.
+	// Without the fix the floor is weapon(1d6=1)+damroll(0) = 1; with it, ≥15.
+	ch.Stats.Str = 25
+
+	var hit bool
+	for i := 0; i < 20; i++ {
+		mob.SetPosition(combat.PosSleeping) // sleeping → auto-hit
+		result := DoCircle(ch, mob)
+		if result.Success {
+			if result.Damage < 15 {
+				t.Errorf("circle damage %d looks like it omits str-to-dam (str 25 → +14); expected ≥ 15", result.Damage)
+			}
+			hit = true
+			break
+		}
+	}
+	if !hit {
+		t.Fatalf("expected at least one circle hit in 20 tries")
 	}
 }
 
