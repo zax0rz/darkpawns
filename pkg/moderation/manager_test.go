@@ -71,6 +71,31 @@ func TestWordFilterRegex(t *testing.T) {
 	}
 }
 
+func TestWordFilterCensor_RegexCaseVariants(t *testing.T) {
+	wf := WordFilterEntry{
+		Pattern: `hate\s+speech`,
+		IsRegex: true,
+		Action:  FilterActionCensor,
+	}
+
+	tests := []struct {
+		message  string
+		expected string
+	}{
+		{"I hate speech here", "I *********** here"},
+		{"HATE SPEECH is bad", "*********** is bad"},
+		{"Hate Speech too", "*********** too"},
+		{"This is fine", "This is fine"},
+	}
+
+	for _, tt := range tests {
+		result := wf.censor(tt.message)
+		if result != tt.expected {
+			t.Errorf("censor(%q) = %q, want %q", tt.message, result, tt.expected)
+		}
+	}
+}
+
 func TestSpamDetection(t *testing.T) {
 	m := &Manager{
 		messageHistory: make(map[string][]time.Time),

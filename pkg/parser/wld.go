@@ -162,7 +162,18 @@ func parseRoom(scanner *bufio.Scanner, vnum int) (Room, error) {
 
 	room.Zone, _ = strconv.Atoi(fields[0])
 	room.Flags = []string{fields[1], fields[2], fields[3], fields[4]}
-	room.Sector, _ = strconv.Atoi(fields[5])
+
+	sector, err := strconv.Atoi(fields[5])
+	if err != nil {
+		return room, fmt.Errorf("invalid sector %q: %w", fields[5], err)
+	}
+	// Sector must fit the SECT_* range used by the movement code (0..15).
+	// C inherits the same lack of validation, but Go panics on an out-of-range
+	// index into movementLoss, so reject malformed world files at parse time.
+	if sector < 0 || sector > 15 {
+		return room, fmt.Errorf("sector %d out of range (0..15) for room %d", sector, vnum)
+	}
+	room.Sector = sector
 
 	// Parse sections until 'S' (end of room)
 	for scanner.Scan() {

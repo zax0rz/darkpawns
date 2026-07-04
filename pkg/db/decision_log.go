@@ -254,6 +254,7 @@ type DecisionLogWriter struct {
 	combat      []*CombatRecord
 	flushTicker *time.Ticker
 	stopCh      chan struct{}
+	stopOnce    sync.Once
 }
 
 // NewDecisionLogWriter creates a writer and starts the background flush loop.
@@ -269,8 +270,11 @@ func (db *DB) NewDecisionLogWriter() *DecisionLogWriter {
 }
 
 // Stop terminates the background flush loop and flushes remaining records.
+// Safe to call multiple times; subsequent calls are no-ops.
 func (dlw *DecisionLogWriter) Stop() {
-	close(dlw.stopCh)
+	dlw.stopOnce.Do(func() {
+		close(dlw.stopCh)
+	})
 	dlw.Flush()
 }
 
