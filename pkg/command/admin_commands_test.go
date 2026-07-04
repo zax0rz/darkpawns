@@ -15,16 +15,18 @@ type mockCommandManager struct {
 	sessions []common.CommandSession
 }
 
-func (m *mockCommandManager) RegisterCommand(name string, handler func(common.CommandSession, []string) error) {}
+func (m *mockCommandManager) RegisterCommand(name string, handler func(common.CommandSession, []string) error) {
+}
+
 func (m *mockCommandManager) Sessions() []common.CommandSession {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.sessions
 }
-func (m *mockCommandManager) Lock()    { m.mu.Lock() }
-func (m *mockCommandManager) Unlock()  { m.mu.Unlock() }
-func (m *mockCommandManager) RLock()   { m.mu.RLock() }
-func (m *mockCommandManager) RUnlock() { m.mu.RUnlock() }
+func (m *mockCommandManager) Lock()           { m.mu.Lock() }
+func (m *mockCommandManager) Unlock()         { m.mu.Unlock() }
+func (m *mockCommandManager) RLock()          { m.mu.RLock() }
+func (m *mockCommandManager) RUnlock()        { m.mu.RUnlock() }
 func (m *mockCommandManager) Mu() interface{} { return &m.mu }
 
 // mockAdminSession is a mock session with configurable fields.

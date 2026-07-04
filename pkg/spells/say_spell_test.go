@@ -101,4 +101,3 @@ func TestSaySpell_TargetMessageNotDeliveredToCaster(t *testing.T) {
 		}
 	}
 }
-

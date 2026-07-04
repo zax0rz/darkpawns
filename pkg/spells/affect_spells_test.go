@@ -319,6 +319,7 @@ func (w *mockAnimateWorld) GetItemsInRoomI(roomVNum int) []interface{} { return 
 func (w *mockAnimateWorld) RemoveItemFromRoomI(item interface{}, roomVNum int) {
 	w.removed = true
 }
+
 func (w *mockAnimateWorld) SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error) {
 	w.spawnedVNum = vnum
 	w.spawnedRoom = roomVNum

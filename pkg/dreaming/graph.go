@@ -34,13 +34,13 @@ const (
 
 // Node in the memory graph.
 type Node struct {
-	ID         string    `json:"id"`
-	Kind       NodeKind  `json:"kind"`
-	Label      string    `json:"label"`
-	Salience   float64   `json:"salience"` // 0.0–1.0, decays over time
-	Valence    int       `json:"valence"`  // -3 to +3
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID        string    `json:"id"`
+	Kind      NodeKind  `json:"kind"`
+	Label     string    `json:"label"`
+	Salience  float64   `json:"salience"` // 0.0–1.0, decays over time
+	Valence   int       `json:"valence"`  // -3 to +3
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// OccurredAt is the original event timestamp for event nodes.
 	// For non-event nodes this is unused. When set, summaries use this
 	// instead of graph insertion time for chronological ordering.

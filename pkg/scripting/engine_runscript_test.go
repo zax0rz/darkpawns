@@ -20,7 +20,7 @@ func TestRunScriptClearsPerRunGlobals(t *testing.T) {
 	return TRUE
 end
 `
-	if err := os.WriteFile(first, []byte(firstSrc), 0644); err != nil {
+	if err := os.WriteFile(first, []byte(firstSrc), 0o644); err != nil {
 		t.Fatalf("write first.lua: %v", err)
 	}
 
@@ -29,7 +29,7 @@ end
 if argument ~= nil then leak = "yes" end
 if room ~= nil then leak = "yes" end
 `
-	if err := os.WriteFile(second, []byte(secondSrc), 0644); err != nil {
+	if err := os.WriteFile(second, []byte(secondSrc), 0o644); err != nil {
 		t.Fatalf("write second.lua: %v", err)
 	}
 
@@ -81,7 +81,7 @@ func TestRunScriptPathTraversal(t *testing.T) {
 
 	// Create a legitimate script in the test directory
 	legit := filepath.Join(dir, "legit.lua")
-	if err := os.WriteFile(legit, []byte(`function test() return TRUE end`), 0644); err != nil {
+	if err := os.WriteFile(legit, []byte(`function test() return TRUE end`), 0o644); err != nil {
 		t.Fatalf("write legit.lua: %v", err)
 	}
 

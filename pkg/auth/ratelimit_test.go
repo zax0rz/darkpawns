@@ -480,9 +480,11 @@ type failingAccountLockoutStore struct{}
 func (f *failingAccountLockoutStore) GetAccountLockout(string) (int, *time.Time, error) {
 	return 0, nil, errors.New("store unavailable")
 }
+
 func (f *failingAccountLockoutStore) RecordLoginFailure(string, int, time.Duration) (bool, error) {
 	return false, errors.New("store unavailable")
 }
+
 func (f *failingAccountLockoutStore) RecordLoginSuccess(string) error {
 	return errors.New("store unavailable")
 }

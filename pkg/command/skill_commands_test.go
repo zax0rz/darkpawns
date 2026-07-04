@@ -35,12 +35,14 @@ func (s *rescueCommandSession) SetTempData(key string, value interface{}) {
 	}
 	s.tempData[key] = value
 }
+
 func (s *rescueCommandSession) GetTempData(key string) interface{} {
 	if s.tempData == nil {
 		return nil
 	}
 	return s.tempData[key]
 }
+
 func (s *rescueCommandSession) ClearTempData(key string) {
 	if s.tempData != nil {
 		delete(s.tempData, key)

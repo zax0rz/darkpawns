@@ -39,7 +39,7 @@ func makeSpikeWeapon(keyword string) *ObjectInstance {
 			VNum:      1,
 			Keywords:  keyword + " weapon",
 			ShortDesc: "a sharp " + keyword,
-			TypeFlag:  5, // ITEM_WEAPON
+			TypeFlag:  5,                        // ITEM_WEAPON
 			WearFlags: [4]int{1 << 13, 0, 0, 0}, // ITEM_WEAR_WIELD
 			Values:    [4]int{0, 1, 4, 3},
 		},
@@ -230,7 +230,7 @@ func makeCircleWeapon() *ObjectInstance {
 			VNum:      1,
 			Keywords:  "dagger piercing",
 			ShortDesc: "a slim dagger",
-			TypeFlag:  5,                       // ITEM_WEAPON
+			TypeFlag:  5,                        // ITEM_WEAPON
 			WearFlags: [4]int{1 << 13, 0, 0, 0}, // ITEM_WEAR_WIELD
 			Values:    [4]int{0, 1, 6, 11},
 		},
@@ -671,7 +671,7 @@ func makeChargeWeapon(weaponType int) *ObjectInstance {
 			VNum:      1,
 			Keywords:  "charge weapon",
 			ShortDesc: "a heavy weapon",
-			TypeFlag:  5,                       // ITEM_WEAPON
+			TypeFlag:  5,                        // ITEM_WEAPON
 			WearFlags: [4]int{1 << 13, 0, 0, 0}, // ITEM_WEAR_WIELD
 			Values:    [4]int{0, 1, 8, weaponType},
 		},

@@ -80,10 +80,10 @@ func TestStartPProfServerStartsWithAuth(t *testing.T) {
 
 func TestPProfBindAddr(t *testing.T) {
 	tests := []struct {
-		name   string
-		args   []string
-		env    map[string]string
-		want   string
+		name string
+		args []string
+		env  map[string]string
+		want string
 	}{
 		{
 			name: "default localhost",
