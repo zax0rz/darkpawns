@@ -174,10 +174,53 @@ func TestAffectBitMapping(t *testing.T) {
 	}
 }
 
-// TestAffectUpdateDurationZeroSurvives verifies that an affect with duration 0
-// is treated as permanent and survives AffectUpdate, matching the engine
-// contract (DP-663).
-func TestAffectUpdateDurationZeroSurvives(t *testing.T) {
+// TestAffectUpdateDurationZeroExpires verifies that an affect with duration 0
+// is removed on the first AffectUpdate tick, matching C magic.c:441-450 (DP-669).
+func TestAffectUpdateDurationZeroExpires(t *testing.T) {
+	world, err := NewWorld(&parser.World{})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	defer world.StopAITicker()
+
+	var messages []string
+	world.MessageSink = func(_ string, msg []byte) {
+		messages = append(messages, string(msg))
+	}
+
+	p := NewPlayer(1, "Tester", 3001)
+	world.AddPlayer(p)
+
+	const spellID = 0
+	af := engine.NewAffect(spellID, engine.ApplyHitroll, 0, 5, "zero-duration buff")
+	p.AddAffect(af)
+
+	if len(p.ActiveAffects) != 1 {
+		t.Fatalf("expected 1 affect before update, got %d", len(p.ActiveAffects))
+	}
+
+	world.AffectUpdate()
+
+	if len(p.ActiveAffects) != 0 {
+		t.Errorf("expected duration-0 affect to be removed after AffectUpdate, got %d affects", len(p.ActiveAffects))
+	}
+
+	expectedMsg := SpellWearOffMsg(spellID) + "\r\n"
+	found := false
+	for _, msg := range messages {
+		if msg == expectedMsg {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected wear-off message %q, got %v", expectedMsg, messages)
+	}
+}
+
+// TestAffectUpdateDurationOneTicksDown verifies that an affect with duration 1
+// decrements to 0 and survives until the next tick, matching C magic.c:441-450 (DP-669).
+func TestAffectUpdateDurationOneTicksDown(t *testing.T) {
 	world, err := NewWorld(&parser.World{})
 	if err != nil {
 		t.Fatalf("NewWorld: %v", err)
@@ -187,19 +230,46 @@ func TestAffectUpdateDurationZeroSurvives(t *testing.T) {
 	p := NewPlayer(1, "Tester", 3001)
 	world.AddPlayer(p)
 
-	af := engine.NewAffect(0, engine.ApplyHitroll, 0, 5, "permanent buff")
+	af := engine.NewAffect(0, engine.ApplyHitroll, 1, 5, "one-tick buff")
 	p.AddAffect(af)
-
-	if len(p.ActiveAffects) != 1 {
-		t.Fatalf("expected 1 affect before update, got %d", len(p.ActiveAffects))
-	}
 
 	world.AffectUpdate()
 
 	if len(p.ActiveAffects) != 1 {
-		t.Errorf("expected duration-0 affect to survive AffectUpdate, got %d affects", len(p.ActiveAffects))
+		t.Fatalf("expected affect to survive first tick, got %d", len(p.ActiveAffects))
 	}
 	if got := p.ActiveAffects[0].Duration; got != 0 {
-		t.Errorf("expected duration to remain 0, got %d", got)
+		t.Errorf("expected duration 0 after first tick, got %d", got)
+	}
+
+	world.AffectUpdate()
+
+	if len(p.ActiveAffects) != 0 {
+		t.Errorf("expected affect removed after second tick, got %d", len(p.ActiveAffects))
+	}
+}
+
+// TestAffectUpdateDurationNegativeOnePermanent verifies that duration -1
+// survives AffectUpdate unchanged, matching C's GOD-only unlimited affect (DP-669).
+func TestAffectUpdateDurationNegativeOnePermanent(t *testing.T) {
+	world, err := NewWorld(&parser.World{})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	defer world.StopAITicker()
+
+	p := NewPlayer(1, "Tester", 3001)
+	world.AddPlayer(p)
+
+	af := engine.NewAffect(0, engine.ApplyHitroll, -1, 5, "permanent buff")
+	p.AddAffect(af)
+
+	world.AffectUpdate()
+
+	if len(p.ActiveAffects) != 1 {
+		t.Errorf("expected duration -1 affect to survive AffectUpdate, got %d affects", len(p.ActiveAffects))
+	}
+	if got := p.ActiveAffects[0].Duration; got != -1 {
+		t.Errorf("expected duration to remain -1, got %d", got)
 	}
 }
