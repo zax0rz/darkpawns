@@ -183,6 +183,43 @@ func TestCmdScore(t *testing.T) {
 	if !strings.Contains(got, "Alice") || !strings.Contains(got, "Hit points") {
 		t.Errorf("expected score output, got %q", got)
 	}
+	// DP-913: armor line must not double the subject ("You You are well armored.").
+	if strings.Contains(got, "You You") {
+		t.Errorf("armor line doubles the subject, got %q", got)
+	}
+	if !strings.Contains(got, "You are ") {
+		t.Errorf("expected single-subject armor line, got %q", got)
+	}
+}
+
+func TestCmdSaySelfEcho(t *testing.T) {
+	// DP-913: self-echo must conjugate in the second person ("You say"),
+	// not third ("You says"). The room echo keeps third person.
+	cases := []struct {
+		name, text, wantSelf string
+	}{
+		{"plain", "hello", "You say 'hello'"},
+		{"exclaim", "hi!", "You exclaim 'hi!'"},
+		{"question", "what?", "You ask 'what?'"},
+		{"statement", "ok.", "You state 'ok.'"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := makeTestManager(t)
+			s := makeTestSession(t, m, "Alice", 1001, true)
+
+			if err := cmdSay(s, []string{tc.text}); err != nil {
+				t.Fatalf("cmdSay failed: %v", err)
+			}
+			got := readSessionText(t, s)
+			if !strings.Contains(got, tc.wantSelf) {
+				t.Errorf("self-echo = %q, want substring %q", got, tc.wantSelf)
+			}
+			if strings.Contains(got, "You says") {
+				t.Errorf("self-echo still uses third-person verb: %q", got)
+			}
+		})
+	}
 }
 
 func TestCmdHelp(t *testing.T) {

@@ -165,8 +165,10 @@ func cmdScore(s *Session) error {
 	buf.WriteString(alignmentText(p.Alignment))
 	buf.WriteString("\r\n")
 
-	// 4. AC text (from C lines 1240-1265)
-	fmt.Fprintf(&buf, "You %s\r\n", acText(p.AC))
+	// 4. AC text (from C lines 1240-1265). acText already returns "You are ..."
+	// sentences, so do not prepend another "You" — that produced "You You are well armored."
+	buf.WriteString(acText(p.AC))
+	buf.WriteString("\r\n")
 
 	// 5. Experience (from C line 1267)
 	fmt.Fprintf(&buf, "Experience:    %d points\r\n", p.Exp)
