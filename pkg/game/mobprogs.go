@@ -18,10 +18,8 @@ import (
 // IS_* checks from mobprog.h
 // ---------------------------------------------------------------------------
 
-func isDog(mob *MobInstance) bool       { v := mob.GetVNum(); return v == 8063 || v == 8065 }
-func isJanitor(mob *MobInstance) bool   { return mob.GetVNum() == 8061 } //nolint:unused // mobprog helper
-func isDemon(mob *MobInstance) bool     { return mob.GetVNum() == 14401 }
-func isMercenary(mob *MobInstance) bool { return mob.GetVNum() == 3063 } //nolint:unused // mobprog helper
+func isDog(mob *MobInstance) bool   { v := mob.GetVNum(); return v == 8063 || v == 8065 }
+func isDemon(mob *MobInstance) bool { return mob.GetVNum() == 14401 }
 
 func isWhore(mob *MobInstance) bool {
 	specName, ok := MobSpecAssign[mob.GetVNum()]
@@ -211,50 +209,6 @@ func (w *World) isCityguard(ch *MobInstance) bool {
 		return true
 	}
 	return false
-}
-
-// ---------------------------------------------------------------------------
-// getBadGuy / killBadGuy — port of get_bad_guy() and kill_bad_guy()
-// ---------------------------------------------------------------------------
-
-func (w *World) getBadGuy(ch *MobInstance) *MobInstance { //nolint:unused // mobprog helper
-	candidates := w.GetMobsInRoom(ch.GetRoom())
-	var badGuys []*MobInstance
-	for _, m := range candidates {
-		targetName := m.GetFighting()
-		if targetName == "" {
-			continue
-		}
-		for _, roomMob := range candidates {
-			if roomMob.GetName() == targetName && (w.isCitizen(roomMob) || w.isCityguard(roomMob)) {
-				badGuys = append(badGuys, m)
-				break
-			}
-		}
-	}
-	if len(badGuys) == 0 {
-		return nil
-	}
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	iVictim := rand.IntN(len(badGuys) + 1)
-	if iVictim == 0 {
-		return nil
-	}
-	return badGuys[iVictim-1]
-}
-
-func (w *World) killBadGuy(ch *MobInstance) bool { //nolint:unused // mobprog helper
-	if ch.GetPosition() < 6 || ch.GetFighting() != "" {
-		return false
-	}
-	opponent := w.getBadGuy(ch)
-	if opponent == nil {
-		return false
-	}
-	w.roomMessage(ch.GetRoom(), "$n roars: 'Protect the innocent!  BANZAIIII!  CHARGE!'")
-	w.StartMobCombat(ch, opponent)
-	return true
 }
 
 // ---------------------------------------------------------------------------

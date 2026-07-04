@@ -344,46 +344,8 @@ func (w *World) sendClanFormat(ch *Player) {
 }
 
 // ---------------------------------------------------------------------------
-// Resolve clan context for mortal vs immortal commands.
-// Returns (clanIndex, clannum, clan, isImmortal, ok).
-// For mortals: uses the player's own clan. For immortals: parses optional <clan> from arg.
+// Resolve clan context for immortal commands.
 // ---------------------------------------------------------------------------
-
-func (w *World) resolveClanContext(ch *Player, argument string, requirePrivilege int) (int, *Clan, bool) {
-	var clanNum int
-	var c *Clan
-
-	if ch.Level < LVL_IMMORT {
-		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
-		if c == nil {
-			ch.SendMessage("You don't belong to any clan!\r\n")
-			return -1, nil, false
-		}
-		if requirePrivilege >= 0 && ch.ClanRank < c.Privilege[requirePrivilege] {
-			ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
-			return -1, nil, false
-		}
-		return clanNum, c, true
-	}
-
-	// Immortal route: parse optional clan name from argument
-	// immcom is handled by return value
-	if ch.Level < LVL_GOD {
-		ch.SendMessage("You do not have clan privileges.\r\n")
-		return -1, nil, false
-	}
-	_, arg2 := halfChop(argument)
-	if arg2 == "" {
-		ch.SendMessage("Unknown clan.\r\n")
-		return -1, nil, false
-	}
-	clanNum, c = w.Clans.FindClan(arg2)
-	if c == nil {
-		ch.SendMessage("Unknown clan.\r\n")
-		return -1, nil, false
-	}
-	return clanNum, c, true
-}
 
 func (w *World) resolveClanForImmortal(ch *Player, argument string) (int, *Clan, bool, bool) {
 	if ch.Level < LVL_IMMORT {

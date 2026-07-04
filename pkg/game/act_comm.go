@@ -44,13 +44,6 @@ const (
 )
 
 // ---------------------------------------------------------------------------
-// Condition indices — canonical source: pkg/game/limits.go
-// ---------------------------------------------------------------------------
-const (
-	condDrunk = CondDrunk // used in comm_say.go
-)
-
-// ---------------------------------------------------------------------------
 // PLR flags (Player Flags) bit positions — same bits as structs.h PLR_*
 // These go into p.Flags (uint64).
 // ---------------------------------------------------------------------------
@@ -394,19 +387,6 @@ var deadspeakSyllables = []syllable{
 	{"of", "eof"},
 }
 
-var drunkSyllables = []syllable{ // used by speakDrunk
-	{" ", " "},
-	{"are", "arsh"},
-	{"and", "andsh"},
-	{"how", "howsh"},
-	{"what", "wha'"},
-	{"is", "ish"},
-	{"where", "whersh"},
-	{"kill", "murderize"},
-	{"ck", "shkin"},
-	{"the ", "th' "},
-}
-
 // ---------------------------------------------------------------------------
 // Language translation functions
 // ---------------------------------------------------------------------------
@@ -420,7 +400,6 @@ func speakDraconian(said string) string { return applySyllableSubstitution(said,
 func speakGiantish(said string) string { return applySyllableSubstitution(said, giantishSyllables) }
 
 func speakDeadspeak(said string) string { return applySyllableSubstitution(said, deadspeakSyllables) }
-func speakDrunk(said string) string     { return applySyllableSubstitution(said, drunkSyllables) } // used in comm_say.go
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -466,17 +445,6 @@ func (w *World) AllPlayers() []*Player {
 	return players
 }
 
-// getCharVis finds a player by name anywhere in the world (case-insensitive, prefix).
-func (w *World) getCharVis(ch *Player, name string) *Player { // used in comm_channel.go, graph.go
-	for _, p := range w.AllPlayers() {
-		if !p.IsNPC() && (strings.EqualFold(p.Name, name) ||
-			strings.HasPrefix(strings.ToLower(p.Name), strings.ToLower(name))) {
-			return p
-		}
-	}
-	return nil
-}
-
 // getCharRoomVis finds a player by name in the same room as ch.
 func (w *World) getCharRoomVis(ch *Player, name string) *Player {
 	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
@@ -499,25 +467,6 @@ func isNumber(s string) bool {
 	var n int
 	_, err := fmt.Sscanf(s, "%d", &n)
 	return err == nil
-}
-
-// deleteAnsiControls strips ANSI escape sequences from a string.
-func deleteAnsiControls(s string) string { // used in comm_say.go
-	var buf strings.Builder
-	for i := 0; i < len(s); i++ {
-		if s[i] == '\x1B' && i+1 < len(s) && s[i+1] == '[' {
-			// Skip the escape sequence.
-			for j := i; j < len(s); j++ {
-				if s[j] >= 'A' && s[j] <= 'Z' || s[j] >= 'a' && s[j] <= 'z' {
-					i = j
-					break
-				}
-			}
-			continue
-		}
-		buf.WriteByte(s[i])
-	}
-	return buf.String()
 }
 
 // checkStupid returns true if the character is too stupid to speak.

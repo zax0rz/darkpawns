@@ -111,22 +111,6 @@ func (w *World) validEdge(exit parser.Exit, marks map[int]bool) bool {
 	return true
 }
 
-// canGo checks if a character can physically move in a direction from their current room.
-func (w *World) canGo(roomVNum int, dir int) bool {
-	room, ok := w.GetRoom(roomVNum)
-	if !ok {
-		return false
-	}
-	exit, exists := room.Exits[dirKeys[dir]]
-	if !exists || exit.ToRoom == -1 {
-		return false
-	}
-	if exit.DoorState != 0 { // EX_CLOSED
-		return false
-	}
-	return true
-}
-
 // huntVictim moves a mob toward its hunting target.
 // Handles door opening, evasion, safe-room checks, and trash-talk messages.
 func (w *World) huntVictim(m *MobInstance) {
