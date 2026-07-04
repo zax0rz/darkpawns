@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -196,6 +197,25 @@ func (e *Engine) cleanupScriptGlobalsLocked(L *lua.LState, knownGlobals map[stri
 	}
 }
 
+// resolveScriptPath looks for a script file in scriptsDir, then in known
+// subdirectories (mob/, room/, obj/). Matches C's SCRIPT_DIR/type/script_name
+// pattern from scripts.c:1775.
+func (e *Engine) resolveScriptPath(cleanName string) string {
+	// 1. Direct lookup (flat — globals.lua lives here)
+	direct := filepath.Join(e.scriptsDir, cleanName)
+	if _, err := os.Stat(direct); err == nil {
+		return direct
+	}
+	// 2. Search known subdirectories (matches C's type parameter)
+	for _, sub := range []string{"mob", "room", "obj"} {
+		candidate := filepath.Join(e.scriptsDir, sub, cleanName)
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+	}
+	return "" // not found
+}
+
 // RunScript loads and executes a named trigger function in a script file.
 // fname is relative to scriptsDir (e.g. "mob/144/hisc.lua").
 // triggerName is the function to call (e.g. "oncmd", "sound", "fight").
@@ -291,17 +311,12 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		L.SetGlobal("room", roomTbl)
 	}
 
-	// Validate path: sanitize fname, reject traversal attempts, and ensure the resolved
-	// path stays within scriptsDir. Matches the luaDofile validation pattern.
+	// Validate path: sanitize fname, reject traversal attempts.
+	// Subdirectory resolution below only searches known folders under scriptsDir.
 	cleanName := filepath.Clean(fname)
 	if strings.Contains(cleanName, "..") || strings.HasPrefix(cleanName, "/") {
 		slog.Error("path traversal blocked in RunScript", "fname", fname)
 		return false, fmt.Errorf("path traversal blocked: %s", fname)
-	}
-	scriptPath := filepath.Join(e.scriptsDir, cleanName)
-	if !strings.HasPrefix(scriptPath, filepath.Clean(e.scriptsDir)+"/") {
-		slog.Error("path escapes scriptsDir in RunScript", "fname", fname, "resolved", scriptPath)
-		return false, fmt.Errorf("path escapes scripts directory: %s", fname)
 	}
 
 	// Negative cache: if this script previously failed to load (file-not-found,
@@ -310,6 +325,13 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	// retries on a missing script would otherwise flood the log (DP-903).
 	if _, failed := e.failedScripts[cleanName]; failed {
 		return false, fmt.Errorf("script %s previously failed to load", cleanName)
+	}
+
+	scriptPath := e.resolveScriptPath(cleanName)
+	if scriptPath == "" {
+		e.failedScripts[cleanName] = struct{}{}
+		slog.Error("error loading script", "file", fname, "error", "script not found")
+		return false, fmt.Errorf("script not found: %s", fname)
 	}
 
 	// Snapshot known global keys before loading the script so we can remove
