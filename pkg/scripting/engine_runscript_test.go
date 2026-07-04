@@ -1,8 +1,12 @@
 package scripting
 
 import (
+	"context"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 
 	lua "github.com/yuin/gopher-lua"
@@ -115,4 +119,139 @@ func TestRunScriptPathTraversal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("legitimate path should not error: %v", err)
 	}
+}
+
+// TestScriptLoadFailureCaching verifies that a missing/broken script is
+// attempted once, recorded in the negative cache, and skipped on subsequent
+// calls — the second call must return a cheap cached error without hitting
+// disk again. This is the core of the DP-903 fix: without caching, every
+// pulse retried the load and logged ERROR+WARN pairs per mob.
+func TestScriptLoadFailureCaching(t *testing.T) {
+	dir := t.TempDir()
+	engine := NewEngine(dir, nil)
+
+	const missing = "nonexistent.lua"
+
+	// First call: file does not exist → DoFile errors, cached, slog.Error once.
+	_, err := engine.RunScript(&ScriptContext{}, missing, "test")
+	if err == nil {
+		t.Fatal("first call: expected error for missing script, got nil")
+	}
+
+	// Confirm the script landed in the negative cache.
+	if _, ok := engine.failedScripts[filepath.Clean(missing)]; !ok {
+		t.Fatalf("first call: expected %q in failedScripts cache after load error", missing)
+	}
+
+	// Second call: must return the cached error and NOT re-attempt the load.
+	// We detect a re-attempt by checking the error message — the cached path
+	// returns "previously failed to load", whereas a fresh DoFile failure
+	// would surface a filesystem error from gopher-lua.
+	_, err2 := engine.RunScript(&ScriptContext{}, missing, "test")
+	if err2 == nil {
+		t.Fatal("second call: expected cached error, got nil")
+	}
+	if !strings.Contains(err2.Error(), "previously failed to load") {
+		t.Fatalf("second call: expected cached-error message, got: %v", err2)
+	}
+
+	// Sanity: a different missing script is NOT cached by the first failure.
+	if _, ok := engine.failedScripts["other_missing.lua"]; ok {
+		t.Error("failedScripts should only contain the script that actually failed")
+	}
+}
+
+// TestScriptLoadFailureDoesNotFloodLog verifies that calling RunScript many
+// times for the same missing script produces exactly ONE slog.Error line,
+// not one per call. Before the DP-903 fix, 100 pulses × 2 log lines = 200
+// log lines per affected script; on the live server this was ~86K lines in
+// 25 minutes across 5 missing scripts.
+func TestScriptLoadFailureDoesNotFloodLog(t *testing.T) {
+	dir := t.TempDir()
+	engine := NewEngine(dir, nil)
+
+	// Counting slog handler — captures only Error-level records.
+	handler := &countingHandler{level: slog.LevelError}
+	// Replace the default logger for the duration of the test.
+	restore := replaceSlogDefault(handler)
+	defer restore()
+
+	const missing = "troll.lua" // matches one of the 5 missing scripts in the bug report
+	const pulses = 100
+	for i := 0; i < pulses; i++ {
+		if _, err := engine.RunScript(&ScriptContext{}, missing, "onpulse"); err == nil {
+			t.Fatalf("pulse %d: expected error, got nil", i)
+		}
+	}
+
+	if got := handler.count(); got != 1 {
+		t.Errorf("expected exactly 1 Error log line for %d pulses of a missing script, got %d", pulses, got)
+	}
+}
+
+// TestPathTraversalNotCached verifies that path-traversal rejections are NOT
+// negative-cached. The DP-903 brief is explicit: only file-not-found / load
+// errors are cached, since traversal attempts are a security signal that
+// should keep firing every time.
+func TestPathTraversalNotCached(t *testing.T) {
+	dir := t.TempDir()
+	engine := NewEngine(dir, nil)
+
+	const traversal = "../../etc/passwd"
+
+	// First call: rejected with an error.
+	_, err1 := engine.RunScript(&ScriptContext{}, traversal, "test")
+	if err1 == nil {
+		t.Fatal("first traversal call: expected error, got nil")
+	}
+
+	// Must NOT be in the cache.
+	if _, ok := engine.failedScripts[filepath.Clean(traversal)]; ok {
+		t.Error("path-traversal rejection must not be cached — it should keep logging")
+	}
+
+	// Second call: also rejected (and re-logged, since not cached).
+	_, err2 := engine.RunScript(&ScriptContext{}, traversal, "test")
+	if err2 == nil {
+		t.Fatal("second traversal call: expected error, got nil")
+	}
+}
+
+// --- slog counting harness for the no-flood test ---
+
+// countingHandler is a minimal slog.Handler that counts records at or above
+// the configured level. Used to assert that a missing script logs exactly once.
+type countingHandler struct {
+	mu    sync.Mutex
+	n     int
+	level slog.Level
+}
+
+func (h *countingHandler) Enabled(_ context.Context, level slog.Level) bool {
+	return level >= h.level
+}
+
+func (h *countingHandler) Handle(_ context.Context, _ slog.Record) error {
+	h.mu.Lock()
+	h.n++
+	h.mu.Unlock()
+	return nil
+}
+
+func (h *countingHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
+func (h *countingHandler) WithGroup(_ string) slog.Handler      { return h }
+
+func (h *countingHandler) count() int {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.n
+}
+
+// replaceSlogDefault swaps slog's default logger for one using h and returns
+// a restore function. Tests use this to capture slog.Error output from
+// RunScript's error paths.
+func replaceSlogDefault(h slog.Handler) func() {
+	prev := slog.Default()
+	slog.SetDefault(slog.New(h))
+	return func() { slog.SetDefault(prev) }
 }

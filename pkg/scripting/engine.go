@@ -27,6 +27,14 @@ type Engine struct {
 	mu           sync.Mutex
 	world        ScriptableWorld
 	transitItems map[int]*transitEntry // in-flight items moved by objfrom/objto (key = instance ID)
+	// failedScripts is a negative cache of scripts that failed to load
+	// (file-not-found, Lua parse/compile errors, load timeouts). The first
+	// failure is logged at slog.Error; subsequent RunScript calls for the
+	// same script return immediately with a cheap error and no log line,
+	// so a missing script can't flood the log every pulse. Path-traversal
+	// rejections are intentionally NOT cached — those should keep logging.
+	// Accessed only under e.mu.
+	failedScripts map[string]struct{}
 }
 
 // LState returns the underlying Lua state. The caller must NOT hold the engine mutex
@@ -122,9 +130,10 @@ func matchKeyword(keywords, search string) bool {
 // NewEngine creates a new Lua scripting engine.
 func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	engine := &Engine{
-		scriptsDir:   scriptsDir,
-		transitItems: make(map[int]*transitEntry),
-		world:        world,
+		scriptsDir:    scriptsDir,
+		transitItems:  make(map[int]*transitEntry),
+		failedScripts: make(map[string]struct{}),
+		world:         world,
 	}
 
 	// Create a properly sandboxed LState
@@ -295,6 +304,14 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		return false, fmt.Errorf("path escapes scripts directory: %s", fname)
 	}
 
+	// Negative cache: if this script previously failed to load (file-not-found,
+	// parse error, load timeout), skip the disk hit and log entirely. The first
+	// failure was already logged when it was added to failedScripts. Per-pulse
+	// retries on a missing script would otherwise flood the log (DP-903).
+	if _, failed := e.failedScripts[cleanName]; failed {
+		return false, fmt.Errorf("script %s previously failed to load", cleanName)
+	}
+
 	// Snapshot known global keys before loading the script so we can remove
 	// script-defined globals after execution, preventing context leaks between runs.
 	knownGlobals := make(map[string]struct{})
@@ -316,6 +333,10 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	L.SetContext(scriptCtx)
 
 	if err := L.DoFile(scriptPath); err != nil {
+		// Negative-cache the script so subsequent pulses skip the disk hit
+		// and the error log. Both timeout and file-not-found/parse errors are
+		// stable per file — they won't fix themselves between pulses (DP-903).
+		e.failedScripts[cleanName] = struct{}{}
 		if errors.Is(err, context.DeadlineExceeded) {
 			slog.Error("script timed out during load", "file", fname, "error", err)
 			needsRecreate = true
