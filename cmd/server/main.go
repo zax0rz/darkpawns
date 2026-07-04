@@ -181,12 +181,13 @@ func main() {
 	// partitions can be ensured. If partition creation fails, leave the writer
 	// unset so the manager falls back to its no-op behavior and records are not
 	// silently dropped during flush.
+	var decisionLogWriter *db.DecisionLogWriter
 	if database != nil {
 		if err := database.EnsureDecisionLogPartitions(); err != nil {
 			slog.Warn("failed to create decision log partitions; decision capture disabled", "error", err)
 		} else {
-			dlw := database.NewDecisionLogWriter()
-			manager.SetDecisionLog(dlw)
+			decisionLogWriter = database.NewDecisionLogWriter()
+			manager.SetDecisionLog(decisionLogWriter)
 			slog.Info("decision capture enabled")
 		}
 	}
@@ -422,6 +423,11 @@ func main() {
 
 	// 4. Drain active player sessions (stops combat, broadcasts leave, saves profiles, closes connections)
 	manager.ShutdownGracefully(5 * time.Second)
+
+	// 5. Flush buffered decision/combat records before closing the database.
+	if decisionLogWriter != nil {
+		decisionLogWriter.Stop()
+	}
 
 	// Wait for zone resets to finish before saving — prevents concurrent
 	// writes to world state from corrupting the save file.

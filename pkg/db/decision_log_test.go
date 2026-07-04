@@ -127,6 +127,23 @@ func TestConnectionPoolDefaults(t *testing.T) {
 	}
 }
 
+// TestStopFlushesAndIsIdempotent verifies that Stop flushes buffered records
+// and can be called multiple times without panicking (DP-797).
+func TestStopFlushesAndIsIdempotent(t *testing.T) {
+	db := newFakeDB(t, false)
+	dlw := db.NewDecisionLogWriter()
+
+	dlw.RecordDecision(&DecisionRecord{SessionID: "s3", PlayerName: "p3", Command: "look", OutcomeCategory: "ok"})
+	dlw.Stop()
+
+	if len(dlw.decisions) != 0 {
+		t.Errorf("expected decisions to be flushed on stop, got %d", len(dlw.decisions))
+	}
+
+	// Second stop must not panic and should remain safe.
+	dlw.Stop()
+}
+
 // TestFlushClearsRecordsOnSuccess verifies that Flush clears buffered records
 // after a successful database write.
 func TestFlushClearsRecordsOnSuccess(t *testing.T) {
