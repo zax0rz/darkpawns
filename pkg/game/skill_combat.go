@@ -538,17 +538,20 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// MOB_AWARE mobs that are awake notice the attempt and retaliate.
+	// C: new_cmds.c:2427 — hit(vict, ch) if the mob isn't already fighting.
+	// Go has no instant-hit primitive here, so we redirect the mob onto the
+	// circler and set StartCombat; the combat engine's next PerformRound
+	// (bidirectional since DP-900) delivers the mob's retaliatory swing.
 	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagAware) && target.GetPosition() > combat.PosSleeping {
 		victPronouns := GetPronouns(target.GetName(), target.GetSex())
 		chPronouns := GetPronouns(ch.Name, ch.GetSex())
-		if target.GetFighting() == "" {
-			target.SetFighting(ch.Name)
-		}
+		target.SetFighting(ch.Name)
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
 			MessageToVict: ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
 			MessageToRoom: ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
+			StartCombat:   true,
 		}
 	}
 
@@ -565,24 +568,31 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
-		// Miss. If the target is fighting, they stop and turn on the attacker.
-		if target.GetFighting() != "" {
-			target.SetFighting("")
-			target.SetFighting(ch.Name)
-		}
+		// Miss. C: new_cmds.c:2457 — if the target is fighting, stop_fighting
+		// + hit(vict, ch): the botched circle pulls the mob's aggro onto the
+		// circler. Then damage(ch, vict, 0, SKILL_CIRCLE) starts combat for the
+		// circler too. We retarget the mob onto the circler and set StartCombat
+		// so the caller enrolls the circler; the engine delivers the mob's
+		// swing next round. (C also deals the mob's hit instantly; the engine's
+		// tick delivers it within one PULSE_VIOLENCE — acceptable fidelity
+		// trade consistent with the rest of the Go combat engine.)
+		target.SetFighting(ch.Name)
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("You try to circle $N, but $E notices you!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to circle you, but you notice $m in time!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to circle $N, but fails.", chPronouns, &victPronouns, ""),
+			StartCombat:   true,
 			WaitCh:        3, // PULSE_VIOLENCE + 2
 		}
 	}
 
-	// Hit — weapon damage + damroll, multiplied by backstab_mult(level)/3.
+	// Hit — weapon damage + damroll + str-to-dam, multiplied by
+	// backstab_mult(level)/3. C: hit() → damage() includes str_app.todam;
+	// this was missing before (DP-906 added GetStrToDam for backstab).
 	weaponNum, weaponSides := ch.Equipment.GetWeaponDamage()
 	weaponDam := combat.RollDice(weaponNum, weaponSides)
-	dam := weaponDam + ch.GetDamroll()
+	dam := weaponDam + ch.GetDamroll() + ch.GetStrToDam()
 	mult := int(combat.BackstabMult(ch.GetLevel())) / 3
 	if mult < 1 {
 		mult = 1
