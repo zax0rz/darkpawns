@@ -1,11 +1,10 @@
 package optimization
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
-
-	"encoding/json"
 )
 
 func TestBatchProcessor_FlushReturnsError(t *testing.T) {

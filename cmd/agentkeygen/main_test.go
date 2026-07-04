@@ -29,6 +29,7 @@ func (m *mockDatabase) UpdatePassword(playerID int, hash string) error { return 
 func (m *mockDatabase) GetAccountLockout(name string) (int, *time.Time, error) {
 	return 0, nil, nil
 }
+
 func (m *mockDatabase) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
 	return false, nil
 }

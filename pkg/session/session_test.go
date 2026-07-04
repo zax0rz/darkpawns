@@ -430,41 +430,65 @@ type mockAgentKeyDB struct {
 	validKey string
 }
 
-func (m *mockAgentKeyDB) Close() error                                                   { return nil }
-func (m *mockAgentKeyDB) GetPlayer(name string) (*db.PlayerRecord, error)                { return nil, nil }
-func (m *mockAgentKeyDB) CreatePlayer(p *db.PlayerRecord) error                          { return nil }
-func (m *mockAgentKeyDB) SavePlayer(p *db.PlayerRecord) error                            { return nil }
-func (m *mockAgentKeyDB) UpdatePassword(playerID int, hash string) error                 { return nil }
-func (m *mockAgentKeyDB) GetAccountLockout(name string) (int, *time.Time, error)         { return 0, nil, nil }
+func (m *mockAgentKeyDB) Close() error { return nil }
+
+func (m *mockAgentKeyDB) GetPlayer(name string) (*db.PlayerRecord, error) { return nil, nil }
+
+func (m *mockAgentKeyDB) CreatePlayer(p *db.PlayerRecord) error { return nil }
+
+func (m *mockAgentKeyDB) SavePlayer(p *db.PlayerRecord) error { return nil }
+
+func (m *mockAgentKeyDB) UpdatePassword(playerID int, hash string) error { return nil }
+
+func (m *mockAgentKeyDB) GetAccountLockout(name string) (int, *time.Time, error) { return 0, nil, nil }
+
 func (m *mockAgentKeyDB) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
 	return false, nil
 }
-func (m *mockAgentKeyDB) RecordLoginSuccess(name string) error                          { return nil }
-func (m *mockAgentKeyDB) Exec(query string, args ...interface{}) (interface{}, error)    { return nil, nil }
-func (m *mockAgentKeyDB) CreateAgentKey(characterName string) (string, int64, error)     { return "", 0, nil }
+
+func (m *mockAgentKeyDB) RecordLoginSuccess(name string) error { return nil }
+
+func (m *mockAgentKeyDB) Exec(query string, args ...interface{}) (interface{}, error) {
+	return nil, nil
+}
+
+func (m *mockAgentKeyDB) CreateAgentKey(characterName string) (string, int64, error) {
+	return "", 0, nil
+}
+
 func (m *mockAgentKeyDB) ValidateAgentKey(rawKey string) (string, int64, bool) {
 	return "", 1, rawKey == m.validKey
 }
-func (m *mockAgentKeyDB) EnsureDecisionLogPartitions() error                            { return nil }
-func (m *mockAgentKeyDB) NewDecisionLogWriter() *db.DecisionLogWriter                   { return nil }
-func (m *mockAgentKeyDB) InitNarrativeMemory() error                                     { return nil }
-func (m *mockAgentKeyDB) WriteNarrativeMemory(m2 *db.NarrativeMemory) (int64, error)     { return 0, nil }
+
+func (m *mockAgentKeyDB) EnsureDecisionLogPartitions() error { return nil }
+
+func (m *mockAgentKeyDB) NewDecisionLogWriter() *db.DecisionLogWriter { return nil }
+
+func (m *mockAgentKeyDB) InitNarrativeMemory() error { return nil }
+
+func (m *mockAgentKeyDB) WriteNarrativeMemory(m2 *db.NarrativeMemory) (int64, error) { return 0, nil }
+
 func (m *mockAgentKeyDB) BootstrapMemories(agentName string, limit int) ([]*db.NarrativeMemory, error) {
 	return nil, nil
 }
+
 func (m *mockAgentKeyDB) RecentMemories(agentName, sessionID string) ([]*db.NarrativeMemory, error) {
 	return nil, nil
 }
+
 func (m *mockAgentKeyDB) SocialEventMemories(socialEventID string) ([]*db.NarrativeMemory, error) {
 	return nil, nil
 }
+
 func (m *mockAgentKeyDB) WriteSessionSummary(agentName, sessionID, summary string, eventCount int, start, end time.Time) error {
 	return nil
 }
+
 func (m *mockAgentKeyDB) GetSessionSummaries(agentName string, limit int) ([]string, error) {
 	return nil, nil
 }
-func (m *mockAgentKeyDB) DecayStaleMemories(cutoffDays int) (int, int, error)            { return 0, 0, nil }
+
+func (m *mockAgentKeyDB) DecayStaleMemories(cutoffDays int) (int, int, error) { return 0, 0, nil }
 
 // TestCheckOrigin_PrivateIPWithoutAgentKeyRejects verifies that a private-IP
 // connection without an Origin header or agent key is rejected (DP-594).

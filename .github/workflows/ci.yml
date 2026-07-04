@@ -96,7 +96,19 @@ jobs:
       run: go install mvdan.cc/gofumpt@latest
 
     - name: Check formatting
-      run: test -z "$(gofumpt -l .)"
+      run: |
+        # List offending files (and show a diff) before failing, so the
+        # failure is self-explanatory in the Actions log instead of silent.
+        set +e
+        files=$(gofumpt -l .)
+        if [ -n "$files" ]; then
+          echo "::error::gofumpt found unformatted files:"
+          echo "$files"
+          echo
+          echo "Proposed diff:"
+          gofumpt -d .
+          exit 1
+        fi
 
     - name: Run golangci-lint
       run: golangci-lint run ./...

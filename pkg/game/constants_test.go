@@ -23,7 +23,10 @@ func TestRoomBitNamesMatchCSourceOrder(t *testing.T) {
 
 func TestRoomBitConstantsMatchCStructs(t *testing.T) {
 	// Verify key constants match C src/structs.h values
-	tests := []struct{ name string; got, want uint32 }{
+	tests := []struct {
+		name      string
+		got, want uint32
+	}{
 		{"ROOM_DARK", RoomDark, 1 << 0},
 		{"ROOM_DEATH", RoomDeath, 1 << 1},
 		{"ROOM_TUNNEL", RoomTunnel, 1 << 8},
