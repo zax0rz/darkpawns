@@ -1,5 +1,4 @@
 // Package session manages WebSocket connections and player sessions.
-//
 package session
 
 import (

@@ -1,6 +1,5 @@
 // Package combat — fight_core.go
 // Port of src/fight.c from the Dark Pawns C codebase.
-//
 package combat
 
 import (
