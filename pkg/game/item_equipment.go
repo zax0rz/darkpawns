@@ -1,4 +1,3 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -310,63 +309,3 @@ func (w *World) performRemove(ch *Player, pos int) {
 	w.actToRoom(ch, "$n stops using $p.", obj, nil)
 }
 
-// doRemove handles the remove command
-func (w *World) doRemove(ch *Player, me *MobInstance, cmd, arg string) bool {
-	parts := strings.Fields(arg)
-	if len(parts) == 0 {
-		ch.SendMessage("Remove what?\r\n")
-		return true
-	}
-	arg1 := parts[0]
-
-	dotmode := findAllDots(arg1)
-
-	if dotmode == findAll {
-		found := false
-		for i := 0; i < eqWearMax; i++ {
-			if w.IsEquipped(ch, i) {
-				w.performRemove(ch, i)
-				found = true
-			}
-		}
-		if !found {
-			ch.SendMessage("You're not using anything.\r\n")
-		}
-		return true
-	}
-
-	if dotmode == findAlldot {
-		keyword := arg1[4:]
-		if keyword == "" {
-			ch.SendMessage("Remove all of what?\r\n")
-			return true
-		}
-		found := false
-		for i := 0; i < eqWearMax; i++ {
-			if w.IsEquipped(ch, i) {
-				obj, _ := ch.Equipment.GetItemInSlot(EquipmentSlot(i))
-				if obj != nil && isname(keyword, obj.GetKeywords()) {
-					w.performRemove(ch, i)
-					found = true
-				}
-			}
-		}
-		if !found {
-			ch.SendMessage(fmt.Sprintf("You don't seem to be using any %ss.\r\n", keyword))
-		}
-		return true
-	}
-
-	// Individual remove
-	for i := 0; i < eqWearMax; i++ {
-		if w.IsEquipped(ch, i) {
-			obj, _ := ch.Equipment.GetItemInSlot(EquipmentSlot(i))
-			if obj != nil && isname(arg1, obj.GetKeywords()) {
-				w.performRemove(ch, i)
-				return true
-			}
-		}
-	}
-	ch.SendMessage(fmt.Sprintf("You don't seem to be using %s %s.\r\n", an(arg1), arg1))
-	return true
-}
