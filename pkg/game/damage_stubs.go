@@ -1,4 +1,3 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 // CRIT-009: Dual hit-resolution paths in Dark Pawns combat
@@ -110,14 +109,6 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 	}
 }
 
-// hitSkill performs a skill-based hit (fight.c: hit_skill())
-func (w *World) hitSkill(ch, vict interface{}, skill string) bool {
-	// #nosec G404 — game RNG, not cryptographic
-	dam := randRange(1, 8) + 2
-	w.doDamage(ch, vict, dam, skill)
-	return true
-}
-
 // getAttackerName returns the name of the attacker for messages.
 func getAttackerName(ch interface{}) string {
 	if p, ok := ch.(*Player); ok {
@@ -145,11 +136,6 @@ func (w *World) doForced(ch *Player, command string) bool {
 	return w.executeCommand(ch, command)
 }
 
-// doMurder handles the murder command
-func (w *World) doMurder(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	return true
-}
-
 // doBackstab handles the backstab command
 
 // diceRoll rolls N dice of D sides each.
@@ -164,8 +150,3 @@ func diceRoll(n, d int) int {
 	return total
 }
 
-// updatePosFromHP delegates to the canonical free function in limits_exp.go.
-// Kept as a World method for combat callers that have World receiver.
-func (w *World) updatePosFromHP(victim *Player) {
-	updatePosFromHP(victim, victim.GetHP())
-}

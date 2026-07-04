@@ -1,4 +1,3 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 // combat_helpers.go — helper functions for combat
@@ -24,62 +23,12 @@ import (
 	"math/rand/v2"
 )
 
-// lvlImpl — implementor level for kill command (LVL_IMPL in structs.h)
-// Source: act.offensive.c do_kill() check
-const lvlImpl = 40
-
 // Internal helpers (ported from C macros)
 // ---------------------------------------------------------------------------
 
 // IS_MOUNTED — from act.offensive.c: checks if a player is mounted.
 func isMounted(ch *Player) bool {
 	return ch.IsAffected(affMount)
-}
-
-// IS_OUTLAW — from act.offensive.c (used in subdue and sleeper)
-func isOutlaw(ch *Player) bool {
-	return ch.Flags&plrOutlaw != 0
-}
-
-// shopSpecNames are spec procedure names that indicate a shopkeeper.
-var shopSpecNames = map[string]bool{
-	"shop_keeper": true,
-	"guild":       true,
-	"guild_guard": true,
-	"butler":      true,
-	"clerk":       true,
-}
-
-// isShopkeeper checks if a victim is a shopkeeper.
-// Players cannot be shopkeepers. Returns false for all *Player victims.
-// For mob checks, use IsMobShopkeeper(mobVNum) directly.
-//
-// In the C code this was: IS_SHOPKEEPER(ch) =
-//
-//	(ch)->player_specials->saved.command_interpreter == shop_keeper
-//
-// Our Go equivalent uses the MobSpecAssign lookup table instead.
-func isShopkeeper(w *World, victim *Player) bool {
-	_ = w
-	// Players cannot be shopkeepers.
-	return false
-}
-
-// IsMobShopkeeper checks if a mob VNum is assigned a shopkeeper-related spec.
-func IsMobShopkeeper(mobVNum int) bool {
-	if specName, ok := MobSpecAssign[mobVNum]; ok {
-		return shopSpecNames[specName]
-	}
-	return false
-}
-
-// isPiercingWeapon checks if a weapon is a piercing type (dagger, etc.)
-func isPiercingWeapon(obj *ObjectInstance) bool {
-	if obj == nil || obj.Prototype == nil {
-		return false
-	}
-	// CircleMUD: TYPE_PIERCE weapon type
-	return obj.Prototype.Values[3] == 11
 }
 
 // improveSkill implements CircleMUD-style skill improvement.
