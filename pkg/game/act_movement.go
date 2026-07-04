@@ -1,9 +1,6 @@
 // Package game: act_movement.go — movement commands, door handling, sleep/rest/stand/sit/wake, follow.
 //
 // Ported from src/act.movement.c (CircleMUD / Dark Pawns MUD).
-//
-//nolint:unused // Complete C port — command handlers not yet wired to registry.
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -22,9 +19,8 @@ import (
 
 // Room flag string constants — parser stores these as string names.
 const (
-	roomFlagDeath   = "death" //nolint:unused // used in this file
-	roomFlagIndoors = "indoors"
-	roomFlagTunnel  = "tunnel"
+	roomFlagDeath  = "death" // used in doSimpleMove
+	roomFlagTunnel = "tunnel"
 )
 
 // Sector type constants — from structs.h SECT_*.
@@ -144,16 +140,6 @@ func getExit(w *World, ch *Player, dir int) (parser.Exit, bool) {
 	}
 	ext, ok := room.Exits[dirs[dir]]
 	return ext, ok
-}
-
-// getExitByDirStr returns an exit by direction string name.
-func getExitByDirStr(w *World, ch *Player, dirStr string) (parser.Exit, string, bool) {
-	room := w.GetRoomInWorld(ch.GetRoom())
-	if room == nil {
-		return parser.Exit{}, "", false
-	}
-	ext, ok := room.Exits[dirStr]
-	return ext, dirStr, ok
 }
 
 // hasBoat checks if a player can traverse water sectors.
@@ -410,11 +396,6 @@ func performMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		}
 	}
 	return true
-}
-
-// doMove maps ACMD command index to direction and executes move.
-func doMove(w *World, ch *Player, cmd int) {
-	performMove(w, ch, cmd-1, false)
 }
 
 // ---------------------------------------------------------------------------
@@ -687,241 +668,6 @@ func doGenDoor(w *World, ch *Player, argument string, scmd int) {
 	}
 
 	doDoorcmd(w, ch, nil, door, scmd)
-}
-
-// ---------------------------------------------------------------------------
-// do_enter / do_leave
-// ---------------------------------------------------------------------------
-
-// doEnter handles the 'enter' command.
-func doEnter(w *World, ch *Player, argument string) {
-	arg := strings.TrimSpace(argument)
-	if arg == "" {
-		sendToChar(ch, "Enter what?\r\n")
-		return
-	}
-
-	room := w.GetRoomInWorld(ch.GetRoom())
-	if room == nil {
-		return
-	}
-
-	for door := 0; door < len(dirs); door++ {
-		ext, ok := room.Exits[dirs[door]]
-		if !ok {
-			continue
-		}
-		if ext.Keywords != "" && isName(arg, ext.Keywords) {
-			if ext.DoorState == doorClosed || ext.DoorState == doorLocked {
-				sendToChar(ch, "It seems to be closed.\r\n")
-				return
-			}
-			doSimpleMove(w, ch, door, false)
-			return
-		}
-	}
-
-	sendToChar(ch, fmt.Sprintf("You don't see a %s here.\r\n", arg))
-}
-
-// doLeave handles the 'leave' command.
-func doLeave(w *World, ch *Player) {
-	room := w.GetRoomInWorld(ch.GetRoom())
-	if room == nil {
-		return
-	}
-
-	for door := 0; door < len(dirs); door++ {
-		ext, ok := room.Exits[dirs[door]]
-		if !ok {
-			continue
-		}
-		if ext.Keywords != "" && isName("leave", ext.Keywords) {
-			if ext.DoorState == doorClosed || ext.DoorState == doorLocked {
-				sendToChar(ch, "It seems to be closed.\r\n")
-				return
-			}
-			doSimpleMove(w, ch, door, false)
-			return
-		}
-	}
-
-	sendToChar(ch, "You don't see a way out.\r\n")
-}
-
-// ---------------------------------------------------------------------------
-// Position Commands: stand, sit, rest, sleep, wake
-// ---------------------------------------------------------------------------
-
-// doStand handles the 'stand' command.
-func doStand(w *World, ch *Player) {
-	switch ch.GetPosition() {
-	case combat.PosSleeping:
-		sendToChar(ch, "You wake and stand up.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n wakes and stands up.")
-	case combat.PosSitting:
-		sendToChar(ch, "You stand up.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n stands up.")
-	case combat.PosResting:
-		sendToChar(ch, "You stop resting and stand up.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n stops resting.")
-	case combat.PosFighting:
-		sendToChar(ch, "You are already fighting!\r\n")
-		return
-	case combat.PosStanding:
-		sendToChar(ch, "You are already standing.\r\n")
-		return
-	}
-	ch.SetPosition(combat.PosStanding)
-	ch.SetAffect(affSleep, false)
-}
-
-// doSit handles the 'sit' command.
-func doSit(w *World, ch *Player) {
-	switch ch.GetPosition() {
-	case combat.PosSleeping:
-		sendToChar(ch, "You wake and sit up.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n wakes and sits up.")
-	case combat.PosResting:
-		sendToChar(ch, "You stop resting and sit up.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n sits up.")
-	case combat.PosStanding:
-		sendToChar(ch, "You sit down.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n sits down.")
-	case combat.PosSitting:
-		sendToChar(ch, "You are already sitting.\r\n")
-		return
-	case combat.PosFighting:
-		sendToChar(ch, "Sit down? You are fighting!\r\n")
-		return
-	}
-	ch.SetPosition(combat.PosSitting)
-}
-
-// doRest handles the 'rest' command.
-func doRest(w *World, ch *Player) {
-	switch ch.GetPosition() {
-	case combat.PosSleeping:
-		sendToChar(ch, "You wake and start resting.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n wakes and starts resting.")
-	case combat.PosSitting:
-		sendToChar(ch, "You rest.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n rests.")
-	case combat.PosStanding:
-		sendToChar(ch, "You sit down and rest.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n sits down and rests.")
-	case combat.PosResting:
-		sendToChar(ch, "You are already resting.\r\n")
-		return
-	case combat.PosFighting:
-		sendToChar(ch, "Rest? You are fighting!\r\n")
-		return
-	}
-	ch.SetPosition(combat.PosResting)
-}
-
-// doSleep handles the 'sleep' command.
-func doSleep(w *World, ch *Player) {
-	switch ch.GetPosition() {
-	case combat.PosSleeping:
-		sendToChar(ch, "You are already sleeping.\r\n")
-	case combat.PosResting:
-		sendToChar(ch, "You lie down and go to sleep.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n lies down and goes to sleep.")
-		ch.SetPosition(combat.PosSleeping)
-	case combat.PosSitting:
-		sendToChar(ch, "You lie down and go to sleep.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n lies down and goes to sleep.")
-		ch.SetPosition(combat.PosSleeping)
-	case combat.PosStanding:
-		sendToChar(ch, "You lie down and go to sleep.\r\n")
-		w.roomMessage(ch.GetRoom(), "$n lies down and goes to sleep.")
-		ch.SetPosition(combat.PosSleeping)
-	case combat.PosFighting:
-		sendToChar(ch, "Sleep? You are fighting!\r\n")
-	}
-}
-
-// doWake handles the 'wake' command.
-func doWake(w *World, ch *Player, argument string) {
-	arg := strings.TrimSpace(argument)
-	if arg == "" {
-		if ch.GetPosition() == combat.PosSleeping {
-			sendToChar(ch, "You wake.\r\n")
-			w.roomMessage(ch.GetRoom(), "$n wakes.")
-			ch.SetPosition(combat.PosStanding)
-		} else {
-			sendToChar(ch, "You are already awake.\r\n")
-		}
-		return
-	}
-
-	if ch.IsFighting() {
-		sendToChar(ch, "You can't do that while fighting.\r\n")
-		return
-	}
-
-	players := w.GetPlayersInRoom(ch.GetRoom())
-	for _, p := range players {
-		if isName(arg, p.Name) && p.GetPosition() == combat.PosSleeping {
-			sendToChar(p, fmt.Sprintf("You are awakened by %s.\r\n", ch.Name))
-			w.roomMessage(ch.GetRoom(), fmt.Sprintf("$n awakens %s.", p.Name))
-			p.SetPosition(combat.PosStanding)
-			return
-		}
-	}
-
-	sendToChar(ch, "You don't see anyone sleeping by that name.\r\n")
-}
-
-// ---------------------------------------------------------------------------
-// Follow Command
-// ---------------------------------------------------------------------------
-
-// doFollow handles the 'follow' command.
-func doFollow(w *World, ch *Player, argument string) {
-	arg := strings.TrimSpace(argument)
-	if arg == "" {
-		if ch.GetFollowing() != "" {
-			sendToChar(ch, fmt.Sprintf("You are currently following %s.\r\n", ch.GetFollowing()))
-		} else {
-			sendToChar(ch, "Follow who?\r\n")
-		}
-		return
-	}
-
-	if strings.EqualFold(arg, ch.Name) {
-		if ch.GetFollowing() != "" {
-			prevLeader := ch.GetFollowing()
-			ch.SetFollowing("")
-			ch.SetInGroup(false)
-			sendToChar(ch, "You stop following.\r\n")
-			w.roomMessage(ch.GetRoom(), fmt.Sprintf("$n stops following %s.", prevLeader))
-		} else {
-			sendToChar(ch, "You are not following anyone.\r\n")
-		}
-		return
-	}
-
-	if ch.IsAffected(affCharm) {
-		sendToChar(ch, "You can't change what you follow while charmed!\r\n")
-		return
-	}
-
-	target, ok := w.GetPlayer(arg)
-	if !ok || target == nil {
-		sendToChar(ch, fmt.Sprintf("You don't see '%s' here.\r\n", arg))
-		return
-	}
-
-	if target == ch {
-		sendToChar(ch, "You can't follow yourself (try 'cancel' to stop following).\r\n")
-		return
-	}
-
-	ch.SetFollowing(target.Name)
-	sendToChar(ch, fmt.Sprintf("You now follow %s.\r\n", target.Name))
-	sendToChar(target, fmt.Sprintf("%s now follows you.\r\n", ch.Name))
 }
 
 // ---------------------------------------------------------------------------

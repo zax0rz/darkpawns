@@ -1,6 +1,4 @@
 // Package game manages the game world state and player interactions.
-//
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -112,9 +110,6 @@ type World struct {
 
 	// CloseConnection routes close requests through the session layer.
 	CloseConn CloseConnectionFunc
-
-	// lastTellers tracks last tell recipients per character ID.
-	lastTellers *lastTellersData //nolint:unused // used via methods in act_comm.go
 
 	// gossipHistory records the last 25 gossip messages for the review command.
 	// Matches C: struct review_t review[25] in db.c.

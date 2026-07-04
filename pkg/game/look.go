@@ -1,4 +1,3 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -456,52 +455,6 @@ func (w *World) doAutoExits(ch *Player) {
 	} else {
 		ch.SendMessage(fmt.Sprintf("[Exits: %s ]\r\n", strings.Join(exits, " ")))
 	}
-}
-
-// ---------------------------------------------------------------------------
-// doExits — verbose exit listing (ACMD(do_exits))
-// ---------------------------------------------------------------------------
-
-func (w *World) doExits(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsAffected(affBlind) {
-		ch.SendMessage("You can't see a damned thing, you're blind!\r\n")
-		return true
-	}
-
-	room := w.GetRoomInWorld(ch.GetRoom())
-	if room == nil {
-		ch.SendMessage("You're in a void.\r\n")
-		return true
-	}
-
-	ch.SendMessage("Obvious exits:\r\n")
-	anyExit := false
-	for _, dir := range dirList {
-		exit, ok := room.Exits[dir]
-		if !ok || exit.ToRoom <= 0 {
-			continue
-		}
-		anyExit = true
-		if exit.DoorState > 0 {
-			continue
-		}
-		dest := w.GetRoomInWorld(exit.ToRoom)
-		if dest == nil {
-			ch.SendMessage(fmt.Sprintf("%-5s - somewhere\r\n", dir))
-			continue
-		}
-		if ch.GetLevel() >= 31 {
-			ch.SendMessage(fmt.Sprintf("%-5s - [%5d] %s\r\n", dir, dest.VNum, dest.Name))
-		} else if w.isRoomDark(dest.VNum) && !chCanSeeInDark(ch) {
-			ch.SendMessage(fmt.Sprintf("%-5s - Too dark to tell\r\n", dir))
-		} else {
-			ch.SendMessage(fmt.Sprintf("%-5s - %s\r\n", dir, dest.Name))
-		}
-	}
-	if !anyExit {
-		ch.SendMessage(" None.\r\n")
-	}
-	return true
 }
 
 // ---------------------------------------------------------------------------

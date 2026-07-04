@@ -1,8 +1,6 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -148,19 +146,7 @@ const (
 	extraFlagTwoHanded = 28 // ITEM_TWO_HANDED
 )
 
-// SCMD for drink/eat
-const (
-	scmdDrink = iota
-	scmdSip
-	scmdEat
-	scmdTaste
-)
 
-// SCMD for pour/fill
-const (
-	scmdPour = iota
-	scmdFill
-)
 
 // Equipment position constants matching C WEAR_*
 const (
@@ -302,52 +288,7 @@ var drinks = []string{
 	"mountain dew",
 }
 
-// drinkAff[liqIdx][0]=drunk, [1]=full, [2]=thirst
-var drinkAff = [][]int{
-	{0, 1, 10}, // water
-	{3, 2, 5},  // beer
-	{5, 3, 3},  // wine
-	{3, 2, 5},  // ale
-	{3, 2, 5},  // dark ale
-	{6, 2, 1},  // whisky
-	{0, 1, 8},  // lemonade
-	{8, 1, 1},  // firebreather
-	{3, 3, 3},  // local speciality
-	{0, 4, -8}, // slime mold juice
-	{0, 3, 6},  // milk
-	{0, 1, 6},  // tea
-	{0, 1, 6},  // coffee
-	{0, 2, 6},  // blood
-	{0, 1, -1}, // salt water
-	{0, 0, 13}, // clear water
-	{10, 2, 3}, // skunk essence
-	{0, 2, 7},  // cocoa
-	{7, 4, 3},  // elvish wine
-	{5, 5, 2},  // dwarven spirits
-	{10, 2, 5}, // green dragon
-	{10, 0, 0}, // liquid fire
-	{6, 2, 1},  // sake
-	{0, 0, 0},  // battery acid
-	{0, 0, 0},  // lab reagent
-	{0, 0, 0},  // ichor
-	{0, 0, 0},  // oil
-	{0, 0, 0},  // healing potion
-	{0, 0, 0},  // mana potion
-	{5, 2, 5},  // white wine
-	{6, 1, 6},  // champagne
-	{6, 3, 5},  // mead
-	{3, 1, 8},  // rose wine
-	{0, 0, 12}, // spring water
-	{0, 0, 12}, // holy water
-	{3, 3, 3},  // ratafee
-	{0, 0, 12}, // mountain dew
-}
-
 // Container flag helpers
-func contIsCloseable(obj *ObjectInstance) bool {
-	return obj.Prototype.Values[contFlags]&contCloseable != 0
-}
-
 func contIsClosed(obj *ObjectInstance) bool {
 	return obj.Prototype.Values[contFlags]&contClosed != 0
 }
@@ -355,36 +296,6 @@ func contIsClosed(obj *ObjectInstance) bool {
 // IsContainerClosed is the exported version of contIsClosed for session layer use.
 func IsContainerClosed(obj *ObjectInstance) bool {
 	return contIsClosed(obj)
-}
-
-func contIsLocked(obj *ObjectInstance) bool {
-	return obj.Prototype.Values[contFlags]&contLocked != 0
-}
-
-func contSetClosed(obj *ObjectInstance, val bool) {
-	if val {
-		obj.Prototype.Values[contFlags] |= contClosed
-	} else {
-		obj.Prototype.Values[contFlags] &^= contClosed
-	}
-}
-
-func contSetLocked(obj *ObjectInstance, val bool) {
-	if val {
-		obj.Prototype.Values[contFlags] |= contLocked
-	} else {
-		obj.Prototype.Values[contFlags] &^= contLocked
-	}
-}
-
-// drinkLiquidIndex maps a drink name to its index
-func drinkLiquidIndex(name string) int {
-	for i, d := range drinks {
-		if strings.EqualFold(d, name) {
-			return i
-		}
-	}
-	return 0
 }
 
 // wearBitForPosition returns the wear flag bit for a given eq position
@@ -479,16 +390,6 @@ func an(s string) string {
 		return "an"
 	}
 	return "a"
-}
-
-// removeFromSlice removes an item from a pointer slice
-func removeFromSlice(items []*ObjectInstance, obj *ObjectInstance) []*ObjectInstance {
-	for i, item := range items {
-		if item == obj {
-			return append(items[:i], items[i+1:]...)
-		}
-	}
-	return items
 }
 
 // FindPlayerInRoom finds a player by name in a specific room
@@ -637,14 +538,6 @@ func (w *World) actToRoomExclude(ch, vict *Player, msg string, obj1, obj2 interf
 	s = strings.ReplaceAll(s, "$m", "him")
 	s = strings.ReplaceAll(s, "$F", "it")
 	w.roomMessageExcludeTwo(ch.GetRoomVNum(), s, ch.Name, vict.Name)
-}
-
-// moneyDesc describes an amount of money
-func moneyDesc(amount int) string {
-	if amount == 0 {
-		return "nothing"
-	}
-	return fmt.Sprintf("%d gold coin%s", amount, map[bool]string{true: "s", false: ""}[amount != 1])
 }
 
 // atoi converts string to int

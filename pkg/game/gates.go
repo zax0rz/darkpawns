@@ -1,9 +1,7 @@
-//nolint:unused // Game logic port — not yet wired to command registry.
 // gates.go — Ported from src/gate.c
 //
 // Moongate system: blue gates that appear at night based on moon phase,
 // permanent blue gates, red portal spell gate, and moon gate spec_proc.
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 
 package game
 
@@ -43,60 +41,8 @@ var gatePhases = []gateEntry{
 	{4018, -1, 4008, 0},
 }
 
-const numGates = 16 //nolint:unused // gate count constant
-
 // Blue portal room VNums that allow the red gate spell
 var legalRedRooms = []int{4001, 4002, 4003, 4004, 4005, 4006, 4007, 4008}
-
-// ---------------------------------------------------------------------------
-// LoadNightGate — port of load_night_gate()
-// Spawn blue portals in rooms matching the current moon phase.
-// ---------------------------------------------------------------------------
-
-func (w *World) LoadNightGate(moonPhase int) {
-	for _, ge := range gatePhases {
-		if ge.Phase == -1 {
-			continue // permanent gates, always present
-		}
-		if moonPhase == ge.Phase {
-			rnum := w.RealRoom(ge.Room)
-			if rnum < 0 {
-				continue
-			}
-			gate := w.CreateObject(BluePortalVNum, rnum)
-			if gate != nil {
-				gate.SetTimer(1) // will be checked in point_update
-				w.SendToRoom(rnum, "A shimmering portal of blue light suddenly appears in the darkness!\r\n")
-			}
-		}
-	}
-}
-
-// ---------------------------------------------------------------------------
-// RemoveNightGate — port of remove_night_gate()
-// Remove all blue portals from phase-matching rooms.
-// ---------------------------------------------------------------------------
-
-func (w *World) RemoveNightGate(moonPhase int) {
-	for _, ge := range gatePhases {
-		if ge.Phase == -1 {
-			continue
-		}
-		rnum := w.RealRoom(ge.Room)
-		if rnum < 0 {
-			continue
-		}
-		objs := w.GetItemsInRoom(rnum)
-		for _, obj := range objs {
-			if obj.GetVNum() == BluePortalVNum {
-				if err := w.MoveObjectToNowhere(obj); err != nil {
-					slog.Warn("MoveObjectToNowhere failed in gate expiration", "obj_vnum", obj.GetVNum(), "error", err)
-				}
-				w.SendToRoom(rnum, "The shimmering blue portal of light fades out of existence.\r\n")
-			}
-		}
-	}
-}
 
 // ---------------------------------------------------------------------------
 // SpellGate — port of spell_gate()

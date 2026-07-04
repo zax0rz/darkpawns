@@ -1,9 +1,7 @@
-//nolint:unused // Game logic port — not yet wired to command registry.
 // mail.go — Ported from src/mail.c
 //
 // MUD mail system: store, read, and delete mail messages for players.
 // Postmaster NPC spec_proc handled elsewhere.
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 
 package game
 
@@ -74,7 +72,6 @@ var (
 	mailIndex     *MailIndex
 	freeList      *MailPosList
 	fileEndPos    int64
-	noMail        bool //nolint:unused // mail system flag
 	worldNameFunc func(id int) string
 	worldIDFunc   func(name string) int
 
@@ -149,24 +146,20 @@ func findCharInIndex(recipient int) *MailIndex {
 func writeToFile(buf []byte, size int, filepos int) {
 	if filepos%MailBlockSize != 0 {
 		log.Printf("SYSERR: Mail system -- fatal error #2!!! (invalid file position %d)", filepos)
-		noMail = true
 		return
 	}
 	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFile)
-		noMail = true
 		return
 	}
 	defer func() { _ = f.Close() }()
 	if _, err := f.Seek(int64(filepos), 0); err != nil {
 		log.Printf("SYSERR: Seek error in mail file: %v", err)
-		noMail = true
 		return
 	}
 	if _, err := f.Write(buf[:size]); err != nil {
 		log.Printf("SYSERR: Write error in mail file: %v", err)
-		noMail = true
 		return
 	}
 	// Find end of file
@@ -179,24 +172,20 @@ func writeToFile(buf []byte, size int, filepos int) {
 func readFromFile(buf []byte, size int, filepos int) {
 	if filepos%MailBlockSize != 0 {
 		log.Printf("SYSERR: Mail system -- fatal error #3!!! (invalid filepos read %d)", filepos)
-		noMail = true
 		return
 	}
 	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFile)
-		noMail = true
 		return
 	}
 	defer func() { _ = f.Close() }()
 	if _, err := f.Seek(int64(filepos), 0); err != nil {
 		log.Printf("SYSERR: Seek error in mail file read: %v", err)
-		noMail = true
 		return
 	}
 	if _, err := f.Read(buf[:size]); err != nil {
 		log.Printf("SYSERR: Read error in mail file: %v", err)
-		noMail = true
 		return
 	}
 }
@@ -390,7 +379,6 @@ func readDelete(recipient int) string {
 
 	if header.BlockType != MailBlockHeader {
 		log.Printf("SYSERR: Oh dear. (Header block %d != %d)", header.BlockType, MailBlockHeader)
-		noMail = true
 		log.Print("SYSERR: Mail system disabled!  -- Error #9.")
 		return ""
 	}

@@ -3,8 +3,6 @@
 // Communication commands: say, race-say, group-say, tell, reply, shout,
 // whisper, ask, write, page, gossip, chat, auction, gratz, newbie, think,
 // clan-tell, and language translation functions.
-//
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -46,13 +44,6 @@ const (
 )
 
 // ---------------------------------------------------------------------------
-// Condition indices — canonical source: pkg/game/limits.go
-// ---------------------------------------------------------------------------
-const (
-	condDrunk = CondDrunk //nolint:unused // used in comm_say.go
-)
-
-// ---------------------------------------------------------------------------
 // PLR flags (Player Flags) bit positions — same bits as structs.h PLR_*
 // These go into p.Flags (uint64).
 // ---------------------------------------------------------------------------
@@ -86,7 +77,7 @@ const (
 // Level constants. lvlImmort is declared in spec_procs4.go (31).
 // ---------------------------------------------------------------------------
 const (
-	lvlGod = 34 //nolint:unused // used in item_consumable.go, item_transfer.go
+	lvlGod = 34 // used in item_transfer.go
 )
 
 // ---------------------------------------------------------------------------
@@ -396,19 +387,6 @@ var deadspeakSyllables = []syllable{
 	{"of", "eof"},
 }
 
-var drunkSyllables = []syllable{ //nolint:unused // used by speakDrunk in comm_say.go
-	{" ", " "},
-	{"are", "arsh"},
-	{"and", "andsh"},
-	{"how", "howsh"},
-	{"what", "wha'"},
-	{"is", "ish"},
-	{"where", "whersh"},
-	{"kill", "murderize"},
-	{"ck", "shkin"},
-	{"the ", "th' "},
-}
-
 // ---------------------------------------------------------------------------
 // Language translation functions
 // ---------------------------------------------------------------------------
@@ -422,7 +400,6 @@ func speakDraconian(said string) string { return applySyllableSubstitution(said,
 func speakGiantish(said string) string { return applySyllableSubstitution(said, giantishSyllables) }
 
 func speakDeadspeak(said string) string { return applySyllableSubstitution(said, deadspeakSyllables) }
-func speakDrunk(said string) string     { return applySyllableSubstitution(said, drunkSyllables) } //nolint:unused // used in comm_say.go
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -468,17 +445,6 @@ func (w *World) AllPlayers() []*Player {
 	return players
 }
 
-// getCharVis finds a player by name anywhere in the world (case-insensitive, prefix).
-func (w *World) getCharVis(ch *Player, name string) *Player { //nolint:unused // used in comm_channel.go, comm_tell.go, graph.go
-	for _, p := range w.AllPlayers() {
-		if !p.IsNPC() && (strings.EqualFold(p.Name, name) ||
-			strings.HasPrefix(strings.ToLower(p.Name), strings.ToLower(name))) {
-			return p
-		}
-	}
-	return nil
-}
-
 // getCharRoomVis finds a player by name in the same room as ch.
 func (w *World) getCharRoomVis(ch *Player, name string) *Player {
 	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
@@ -503,25 +469,6 @@ func isNumber(s string) bool {
 	return err == nil
 }
 
-// deleteAnsiControls strips ANSI escape sequences from a string.
-func deleteAnsiControls(s string) string { //nolint:unused // used in comm_say.go, comm_tell.go
-	var buf strings.Builder
-	for i := 0; i < len(s); i++ {
-		if s[i] == '\x1B' && i+1 < len(s) && s[i+1] == '[' {
-			// Skip the escape sequence.
-			for j := i; j < len(s); j++ {
-				if s[j] >= 'A' && s[j] <= 'Z' || s[j] >= 'a' && s[j] <= 'z' {
-					i = j
-					break
-				}
-			}
-			continue
-		}
-		buf.WriteByte(s[i])
-	}
-	return buf.String()
-}
-
 // checkStupid returns true if the character is too stupid to speak.
 // (C: GET_WIS == 0 || GET_INT == 0)
 func checkStupid(ch *Player) bool {
@@ -543,35 +490,6 @@ func determineVerb(msg string) string {
 	default:
 		return "says"
 	}
-}
-
-// ---------------------------------------------------------------------------
-// Global last-teller tracking (replacing C GET_LAST_TELL, NOBODY sentinel)
-// ---------------------------------------------------------------------------
-
-// lastTellers is a map of tellerID -> lastTellRecipientID.
-// Initialized lazily in getLastTellers/setLastTeller.
-type lastTellersData struct { //nolint:unused // used in world.go
-	store map[int]int
-}
-
-func (w *World) initLastTellers() { //nolint:unused // used in setLastTeller/getLastTeller
-	if w.lastTellers == nil {
-		w.lastTellers = &lastTellersData{store: make(map[int]int)}
-	}
-}
-
-func (w *World) setLastTeller(chID, victID int) { //nolint:unused // used in comm_tell.go
-	w.initLastTellers()
-	w.lastTellers.store[chID] = victID
-}
-
-func (w *World) getLastTeller(chID int) int { //nolint:unused // used in comm_tell.go
-	w.initLastTellers()
-	if id, ok := w.lastTellers.store[chID]; ok {
-		return id
-	}
-	return noBody
 }
 
 // ---------------------------------------------------------------------------
