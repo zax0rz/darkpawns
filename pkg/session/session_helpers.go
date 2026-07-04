@@ -2,20 +2,11 @@
 package session
 
 import (
-	"context"
 	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/game/systems"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
-
-// ctx returns the connection context, falling back to context.Background if nil.
-func (s *Session) ctx() context.Context {
-	if s.sessionCtx == nil {
-		return context.Background()
-	}
-	return s.sessionCtx
-}
 
 // logAttrs returns standard structured logging attributes for the session.
 func (s *Session) logAttrs(extra ...slog.Attr) []interface{} {

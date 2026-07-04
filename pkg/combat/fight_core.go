@@ -1,7 +1,5 @@
 // Package combat — fight_core.go
 // Port of src/fight.c from the Dark Pawns C codebase.
-//
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package combat
 
 import (
@@ -58,9 +56,7 @@ var (
 	SetAlignment             func(name string, val int)
 	GetExp                   func(name string) int
 	BuildTHAC0               func(class, level int) int
-	GetNPCData               func(name string) (attackType int, damDice, damSize int)
 	GetWeaponInfo            func(chName string) (wType, damDice, damSize int, isBlessed bool)
-	GetMobAC                 func(name string) int
 	GetAdjacentRoom          func(roomVNum, door int) int
 	GetFollowersInRoom       func(name string, roomVNum int) int
 	GetMasterInRoom          func(name string, roomVNum int) bool
@@ -994,150 +990,6 @@ func replaceMessageTokens(msg, chName, victimName, singular, plural string, sex 
 	result = strings.ReplaceAll(result, "#w", singular)
 	result = strings.ReplaceAll(result, "#W", plural)
 	return result
-}
-
-// ---------------------------------------------------------------------------
-// 6. makeHit()
-// **********************************
-
-func MakeHit(ch, victim Combatant, attackType int) {
-	chName := ch.GetName()
-	victimName := victim.GetName()
-
-	if ch.GetRoom() != victim.GetRoom() {
-		if ch.GetFighting() == victimName {
-			ch.StopFighting()
-		}
-		return
-	}
-
-	calcThaco := getTHAC0(ch)
-
-	strIdx := strIndex(ch)
-	if strIdx < len(strApp) {
-		calcThaco -= strApp[strIdx].ToHit
-	}
-
-	wieldDamNum, wieldDamSize := 0, 0
-	isBlessed := false
-
-	if GetWeaponInfo != nil {
-		_, wieldDamNum, wieldDamSize, isBlessed = GetWeaponInfo(chName)
-	} else if !ch.IsNPC() {
-		dr := ch.GetDamageRoll()
-		wieldDamNum, wieldDamSize = dr.Num, dr.Sides
-	} else if GetNPCData != nil {
-		_, npcDamDice, npcDamSize := GetNPCData(chName)
-		wieldDamNum, wieldDamSize = npcDamDice, npcDamSize
-	}
-
-	if isBlessed {
-		calcThaco--
-	}
-
-	calcThaco -= ch.GetHitroll()
-	calcThaco -= int(float64(ch.GetInt()-13) / 1.5)
-	calcThaco -= int(float64(ch.GetWis()-13) / 1.5)
-
-	diceroll := GetRoller().Number(1, 20)
-
-	victimAC := 0
-	if GetMobAC != nil && victim.IsNPC() {
-		victimAC = GetMobAC(victimName) / 10
-	} else {
-		victimAC = victim.GetAC() / 10
-	}
-	if victim.GetPosition() > PosSleeping {
-		dexIdx := dexIndex(victim)
-		if dexIdx >= 0 && dexIdx < len(dexApp) {
-			victimAC += dexApp[dexIdx].Defensive
-		}
-	}
-	if victimAC < -10 {
-		victimAC = -10
-	}
-
-	isMiss := false
-	if diceroll < 20 && victim.GetPosition() > PosSleeping {
-		if diceroll == 1 || (calcThaco-diceroll) > victimAC {
-			isMiss = true
-		}
-	}
-
-	if !isMiss {
-		// Parry check — before any damage is calculated or applied
-		parryResult := CheckParry(victim, ch)
-		if parryResult == ParrySuccess {
-			ch.SendMessage(fmt.Sprintf("With a dazzling show of swordplay, %s parries your attack!\r\n", victimName))
-			victim.SendMessage("With a dazzling show of swordplay, you parry the attack!\r\n")
-			if BroadcastMessage != nil {
-				BroadcastMessage(ch.GetRoom(),
-					fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's blow!", victimName, chName), "")
-			}
-			return
-		}
-
-		// Dodge check — checked after parry, works without weapons
-		dodgeResult := CheckDodge(victim, ch)
-		if dodgeResult == DodgeSuccess {
-			ch.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", victimName))
-			victim.SendMessage("You dodge the attack!\r\n")
-			if BroadcastMessage != nil {
-				BroadcastMessage(ch.GetRoom(),
-					fmt.Sprintf("%s dodges %s's attack!", victimName, chName), "")
-			}
-			return
-		}
-
-		dam := 0
-		if strIdx < len(strApp) {
-			dam = strApp[strIdx].ToDam
-		}
-		dam += ch.GetDamroll()
-		if wieldDamNum > 0 && wieldDamSize > 0 {
-			dam += RollDice(wieldDamNum, wieldDamSize)
-		} else {
-			dam += GetRoller().Number(0, ch.GetLevel()/3)
-		}
-
-		defPos := victim.GetPosition()
-		if defPos < PosFighting {
-			// FIX: C source had integer truncation bug. Developer comments say:
-			//   sitting=1.33x, resting=1.66x, sleeping=2.0x, stunned=2.33x
-			// But C integer math `dam *= 1 + (7-pos)/3` truncated the division,
-			// producing: sitting=1x (bug), resting=1x (bug), sleeping=2x, stunned=2x.
-			// Go port uses float math to restore developer intent.
-			// See: DP-515, src/fight.c:1855-1860
-			dam = int(float64(dam) * (1.0 + float64(PosFighting-defPos)/3.0))
-		}
-		if dam < 1 {
-			dam = 1
-		}
-
-		// Backstab / Circle / Disembowel multipliers — from C fight.c hit()
-		switch attackType {
-		case SKILL_BACKSTAB:
-			dam = int(float64(dam) * BackstabMult(ch.GetLevel()))
-		case SKILL_CIRCLE:
-			dam = int(float64(dam) * BackstabMult(ch.GetLevel()) / 3.0)
-		case SKILL_DISEMBOWEL:
-			dam = ch.GetLevel()*2 + ch.GetDamroll()
-		default:
-			dam = getMinusDam(dam, victim.GetAC())
-		}
-
-		if ch.GetStr() == 0 {
-			dam = 1
-		}
-		TakeDamage(ch, victim, dam, attackType)
-	} else {
-		TakeDamage(ch, victim, 0, attackType)
-	}
-
-	if ch.IsNPC() && ch.GetPosition() > PosStunned && HasScriptFlag != nil &&
-		HasScriptFlag(chName, "MS_FIGHTING") && RunFightScript != nil {
-		RunFightScript(chName, victimName, ch.GetRoom())
-	}
 }
 
 // BackstabMult mirrors backstab_mult() from src/class.c lines 720-729.

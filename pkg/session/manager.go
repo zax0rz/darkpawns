@@ -1,6 +1,4 @@
 // Package session manages WebSocket connections and player sessions.
-//
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package session
 
 import (
