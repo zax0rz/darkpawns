@@ -1,4 +1,3 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -108,30 +107,6 @@ func guardCanAct(ch *Player, me *MobInstance) bool {
 	return true
 }
 
-// guardAssist checks if any mob in the room with the same spec vnum is fighting,
-// and if so, joins combat. Returns true if assisted.
-func guardAssist(w *World, me *MobInstance, specVNum int) bool {
-	if me.GetFighting() != "" || me.GetPosition() <= combat.PosSleeping {
-		return false
-	}
-	for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-		if mob == me {
-			continue
-		}
-		if mob.GetVNum() == specVNum && mob.IsFighting() {
-			// Find who the mob is fighting
-			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if pl.GetName() == mob.GetFightingTarget() && !pl.IsNPC() {
-					if err := me.Attack(pl, w); err != nil {
-						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-					}
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
 
 // isOwnerGrouped checks if a player is grouped with the house owner.
 func isOwnerGrouped(w *World, ch *Player, roomVNum int) bool {

@@ -1,6 +1,5 @@
 // Package game — clan system, ported from src/clan.c
 //
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
 package game
 
 import (
@@ -342,19 +341,6 @@ func (w *World) sendClanFormat(ch *Player) {
 			}
 		}
 	}
-}
-
-// ---------------------------------------------------------------------------
-// Find helpers (package-level for clan lookup by name/id)
-// ---------------------------------------------------------------------------
-
-func (m *ClanManager) findClanOrError(clanNum int) (*Clan, bool) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	if clanNum < 0 || clanNum >= len(m.Clans) {
-		return nil, false
-	}
-	return m.Clans[clanNum], true
 }
 
 // ---------------------------------------------------------------------------
