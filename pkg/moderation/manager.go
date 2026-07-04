@@ -367,11 +367,14 @@ func (wf *WordFilterEntry) matches(message string) bool {
 }
 
 // censor replaces matched patterns with asterisks.
+// Matching is case-insensitive (the message is lowercased for exact filters and
+// regex filters are applied to the original text), so censoring must also be
+// case-insensitive to avoid leaving mixed/upper-case variants uncensored.
 func (wf *WordFilterEntry) censor(message string) string {
 	var re *regexp.Regexp
 	var err error
 	if wf.IsRegex {
-		re, err = regexp.Compile(wf.Pattern)
+		re, err = regexp.Compile(`(?i)` + wf.Pattern)
 	} else {
 		re, err = regexp.Compile(`(?i)` + regexp.QuoteMeta(wf.Pattern))
 	}
