@@ -112,6 +112,75 @@ $
 	}
 }
 
+func TestParseWldFile_InvalidSectorRejected(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	valid := `#100
+Valid Room~
+Desc.
+~
+1 0 0 0 0 15
+S
+$
+`
+	invalidHigh := `#101
+Bad Room~
+Desc.
+~
+1 0 0 0 0 16
+S
+$
+`
+	invalidNegative := `#102
+Bad Room~
+Desc.
+~
+1 0 0 0 0 -1
+S
+$
+`
+	invalidNaN := `#103
+Bad Room~
+Desc.
+~
+1 0 0 0 0 abc
+S
+$
+`
+
+	for _, tc := range []struct {
+		name    string
+		content string
+	}{
+		{"sector too high", invalidHigh},
+		{"sector negative", invalidNegative},
+		{"sector not a number", invalidNaN},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testFile := filepath.Join(tmpDir, tc.name+".wld")
+			if err := os.WriteFile(testFile, []byte(tc.content), 0o644); err != nil {
+				t.Fatalf("write test file: %v", err)
+			}
+			if _, err := ParseWldFile(testFile); err == nil {
+				t.Error("expected parse error for invalid sector, got nil")
+			}
+		})
+	}
+
+	// Valid maximum sector should parse successfully.
+	validFile := filepath.Join(tmpDir, "valid.wld")
+	if err := os.WriteFile(validFile, []byte(valid), 0o644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+	rooms, err := ParseWldFile(validFile)
+	if err != nil {
+		t.Fatalf("expected valid sector to parse, got error: %v", err)
+	}
+	if len(rooms) != 1 || rooms[0].Sector != 15 {
+		t.Errorf("expected sector 15, got %v", rooms)
+	}
+}
+
 func TestRoom_HasFlagOutOfBounds(t *testing.T) {
 	room := &Room{
 		Flags: []string{"0", "0", "0", "0"},
