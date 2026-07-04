@@ -2,6 +2,24 @@
 
 Living document. Updated per session by Daeron.
 
+## [SESSION] 2026-07-03 — Fable Review Sprint (15 issues, 4 PRs)
+
+**Massive sprint session.** The Architect ran a Fable codebase review and we executed fixes all night. 4 PRs merged, ~15 issues closed. CI was broken when we started, now unblocked.
+
+**The game is playable.** Combat is bidirectional (DP-900), skills kill things (DP-901), backstab and circle have their C gates (DP-906/914). Mobs stay in their shops (DP-898/899). Room flags parse correctly (DP-896/897). Character creation is deterministic (DP-909). The world doesn't degrade over uptime (DP-908).
+
+**GLM-5.2 via ZCode is production-ready.** Dispatched by The Architect for DP-900/901/906/914. All build gates green. Reads brief + Linear + code + C source in one pass. Found and fixed circle fidelity gaps proactively. 1.5x pricing is good value for this quality.
+
+**The Fable review surfaced 14 findings (F-1 through F-14).** All CRITICAL/HIGH now fixed. Key finding: "verified dead code" phenomenon — fidelity fixes landed in MakeHit() which had zero callers. The unit tests passed because they tested the dead function in isolation. This is paper-worthy.
+
+**DP-902 (session wedging) is the last CRITICAL.** Brief written. Root cause: writePump doesn't call Unregister on exit, no lastActive tracking, no linkdead reaper. Ghost players accumulate and block rooms.
+
+**Paper-relevant observations:**
+- The "verified dead code" pattern (DP-905) — fidelity fixes in dead code pass tests but change nothing in the live game. Static analysis can't catch this because the tests are correct for the function they test.
+- Multi-agent parallel execution (Claude + GLM-5.2) with zero conflicts when file domains don't overlap.
+- Brief-driven workflow proven across 3 sprints now. The bottleneck is writing good briefs, not execution.
+- The gateway rendering bug (exec outputs as images) is a meta-observation about AI agent tooling reliability.
+
 ## [SESSION] 2026-06-26 — Kimi Batch Deploy + Database Permissions + Linear Grooming
 
 **Kimi K2.7-code completed the full 62-finding clawpatch batch.** Merged to main, deployed to CT 120. 108 files changed, 4,229 lines added. Build, vet, tests all green. Cross-compiled linux/amd64 binary deployed at 21:10 EDT.
@@ -3333,3 +3351,7 @@ All Linear issues updated and closed.
 **Pipeline performance:** Reek identified → Daeron triaged/briefed → Kimi/Reek implemented → Daeron verified → Architect approved → deployed. Full cycle from brief to production in under 1 hour per batch.
 
 **Paper-relevant:** The "find one, find the class" audit pattern (DP-597 → 7 more 0o644 sites) demonstrates how a single confirmed finding can trigger a broader codebase audit. This is a measurable outcome of the human-in-the-loop triage model — the agent didn't just fix the reported issue, it asked "what else is in this class?" and found more.
+
+## 2026-07-04 — Session 84: Board Clearing Sprint
+
+29 issues closed, 4 PRs merged. Reek June HIGH batch was 82% stale (14/17 already fixed). Key insight: stale finding cleanup is high-value — verifies codebase health without writing new code. Kimi K2.7-code proven as execution model for C-source-grounded fidelity briefs. Workflow: brief → Kimi CLI → Daeron review → merge.
