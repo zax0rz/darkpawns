@@ -11,7 +11,9 @@ _Generated 2026-07-03 via `staticcheck -checks U1000 ./...` with all `//lint:fil
 
 ## Why not remove all 46 + add a CI gate now
 
-A blanket `staticcheck U1000` CI gate today would be **red** on 154 symbols. These are intentional C-port stubs awaiting wiring, not accidental cruft — mass-deleting them discards fidelity work; mass-wiring them is a large effort. The safe path: **burn down per system, then flip the gate on** (or add a non-increasing ratchet first). Suppressions are retired file-by-file only once a file reaches zero dead symbols, as done for the 6 above.
+A blanket `staticcheck U1000` CI gate today would be **red** on 154 symbols. These are intentional C-port stubs awaiting wiring, not accidental cruft — mass-deleting them discards fidelity work; mass-wiring them is a large effort. The safe path: **burn down per system, then flip the gate on**.
+
+**Interim guard (implemented):** `internal/lintguard/u1000_ratchet_test.go` is a non-increasing ratchet — it fails `go test` if the count of blanket `//lint:file-ignore U1000` suppressions rises above today's **40** (and nudges you to lower the baseline when cleanup drops it). This stops the dead-code surface from growing while the per-system burn-down proceeds, without needing the full gate yet. When you retire a suppression, lower `maxFileIgnores` to lock it in. Suppressions are retired file-by-file only once a file reaches zero dead symbols, as done for the 6 above.
 
 ## Remaining dead symbols by file (154)
 
