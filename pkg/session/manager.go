@@ -848,13 +848,12 @@ func (s *Session) extractLinkdead() {
 		}
 	}
 
-	// Closing the socket triggers readPump/writePump to exit; their deferred
-	// cleanups call Unregister, which runs the full cleanupSession teardown.
-	if s.conn != nil {
-		_ = s.conn.Close()
-	} else {
-		// No live WebSocket (e.g., test/telnet sessions): clean up directly.
-		s.manager.UnregisterAndClose(playerName)
+	// Close the underlying connection. For WebSocket this triggers the pump
+	// defers to run Unregister; for telnet and other transports there is no
+	// pump defer, so we Unregister directly after closing.
+	s.Close()
+	if s.conn == nil {
+		s.manager.Unregister(playerName)
 	}
 }
 
@@ -1019,6 +1018,11 @@ type Session struct {
 	sessionCtx context.Context
 	// cancelFunc triggers cancellation of the entire session context on disconnect.
 	cancelFunc context.CancelFunc
+
+	// closeFunc is an optional transport-specific close callback. WebSocket
+	// sessions use s.conn directly; telnet/other transports set this so that
+	// s.Close() can tear down the underlying connection (DP-928).
+	closeFunc func()
 }
 
 // LiveAgentSession is already defined in admin package.

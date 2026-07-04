@@ -533,3 +533,68 @@ func TestConfigurableConnectionLimits(t *testing.T) {
 		t.Error("expected third same-IP connection to be rejected/closed")
 	}
 }
+
+// TestTelnetLinkdeadReaperCleanup verifies that inbound telnet traffic updates
+// the session's shared lastActive timestamp and that the linkdead reaper can
+// extract an idle telnet session (DP-928).
+func TestTelnetLinkdeadReaperCleanup(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1, Name: "Limbo", Zone: 0},
+			{VNum: 3, Name: "A Totally Empty Room", Zone: 0},
+			{VNum: game.MortalStartRoom, Name: "The Adventurers Guild", Zone: 80},
+		},
+	}
+	world, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	defer world.StopAITicker()
+	manager := session.NewManager(world, nil)
+
+	client, server := net.Pipe()
+	defer client.Close()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, manager, game.BanNot)
+	}()
+
+	go drain(client)
+
+	// Wait for the banner and "By what name" prompt.
+	time.Sleep(100 * time.Millisecond)
+
+	// Use a non-generic guest name so we can look up the session deterministically.
+	playerName := "guest_telnet_reaper"
+	_, _ = client.Write([]byte(playerName + "\r\n"))
+
+	// Wait for guest login to complete and enter the input loop.
+	time.Sleep(300 * time.Millisecond)
+
+	s, ok := manager.GetSession(playerName)
+	if !ok {
+		t.Fatal("telnet guest session not registered")
+	}
+	if !s.IsAuthenticated() {
+		t.Fatal("telnet guest session not authenticated")
+	}
+
+	// Simulate idle linkdead: set last active to 10 minutes ago.
+	s.SetLastActiveForTest(time.Now().Add(-10 * time.Minute).UnixNano())
+
+	manager.ReapLinkdeadSessions()
+
+	if _, ok := manager.GetSession(playerName); ok {
+		t.Error("idle telnet session should have been reaped")
+	}
+
+	// Closing the client lets the handleConn goroutine exit cleanly.
+	_ = client.Close()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handleConn did not return after client close")
+	}
+}

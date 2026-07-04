@@ -280,6 +280,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 
 	s := manager.NewSession()
 	tc.sess = s
+	s.SetCloseFunc(func() { _ = rawConn.Close() })
 	remoteIP := ipFromAddr(remoteAddr)
 	s.SetRemoteIP(remoteIP)
 	if banLevel != game.BanNot {
@@ -461,6 +462,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// EOF or connection error — the client hung up.
 			break
 		}
+
+		// DP-928: any inbound traffic proves the TCP socket is alive. Update the
+		// shared lastActive timestamp so the linkdead reaper also covers telnet.
+		s.OnInboundActivity()
+
 		line = strings.TrimSpace(line)
 
 		_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))

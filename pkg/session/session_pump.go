@@ -57,20 +57,15 @@ func (s *Session) readPump() {
 			break
 		}
 
-		// DP-902: any inbound message proves the TCP socket is alive.
-		s.lastActive.Store(time.Now().UnixNano())
+		// DP-902 + DP-928: record inbound activity (WebSocket path). The telnet
+		// path calls the same helper from its input loop.
+		s.OnInboundActivity()
 
 		// DP-GOAT P0-3: Clear takeover probe — any incoming message proves
 		// this session is alive and should not be replaced.
 		if s.takeOverPending.Load() {
 			s.takeOverPending.Store(false)
 			slog.Info("takeover probe cleared: session is alive", "player", s.playerName)
-		}
-
-		// DP-902 / limits.c: return a player from the void when they send a
-		// command, mirroring comm.c:600.
-		if s.authenticated && s.player != nil {
-			s.maybeReturnFromVoid()
 		}
 
 		if err := s.handleMessage(message); err != nil {
@@ -168,6 +163,23 @@ func (s *Session) handleMessage(data []byte) error {
 	default:
 		return ErrUnknownMessageType
 	}
+}
+
+// OnInboundActivity records that the session received inbound traffic and
+// performs idle-timer / void-return housekeeping. Called by both the WebSocket
+// readPump and the telnet input loop so both protocols share the same linkdead
+// detection state (DP-902, DP-928).
+func (s *Session) OnInboundActivity() {
+	s.lastActive.Store(time.Now().UnixNano())
+	if s.authenticated && s.player != nil {
+		s.maybeReturnFromVoid()
+	}
+}
+
+// SetLastActiveForTest allows tests in other packages to manipulate the
+// lastActive timestamp without exporting the field.
+func (s *Session) SetLastActiveForTest(ts int64) {
+	s.lastActive.Store(ts)
 }
 
 // maybeReturnFromVoid returns a player from the void room to their previous
