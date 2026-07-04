@@ -11,17 +11,17 @@ func TestIsnameWithAbbrevs(t *testing.T) {
 		str, namelist string
 		want          bool
 	}{
-		{"guard", "guard city", true},   // exact token
-		{"gu", "guard city", true},      // abbreviation of "guard"
-		{"ci", "guard city", true},      // abbreviation of "city"
-		{"GU", "guard city", true},      // case-insensitive
-		{"guardian", "guard city", false}, // longer than token
-		{"post", "postman mail", true},  // abbreviation of "postman"
+		{"guard", "guard city", true},            // exact token
+		{"gu", "guard city", true},               // abbreviation of "guard"
+		{"ci", "guard city", true},               // abbreviation of "city"
+		{"GU", "guard city", true},               // case-insensitive
+		{"guardian", "guard city", false},        // longer than token
+		{"post", "postman mail", true},           // abbreviation of "postman"
 		{"postman", "the postman is here", true}, // "postman" is a token here
-		{"xyz", "the postman is here", false},   // not a token/abbrev of any token
-		{"", "guard", false},            // empty str
-		{"guard", "", false},            // empty namelist
-		{"x", "guard city", false},      // no match
+		{"xyz", "the postman is here", false},    // not a token/abbrev of any token
+		{"", "guard", false},                     // empty str
+		{"guard", "", false},                     // empty namelist
+		{"x", "guard city", false},               // no match
 	}
 	for _, tc := range cases {
 		got := isnameWithAbbrevs(tc.str, tc.namelist)
@@ -52,8 +52,8 @@ func newResolverTestWorld(t *testing.T) (*World, *Player) {
 
 	// Two guards (for ordinal tests) + a postman + a second player.
 	for _, kmob := range []struct {
-		vnum                                  int
-		keywords, short                       string
+		vnum            int
+		keywords, short string
 	}{
 		{200, "guard city", "a cityguard is here"},
 		{201, "guard royal", "a royal guard stands here"},

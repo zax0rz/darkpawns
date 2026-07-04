@@ -149,7 +149,8 @@ func (w *World) wanderMob(mob *MobInstance) {
 	oldRoom := mob.GetRoom()
 	mob.SetRoom(targetRoom.VNum)
 
-	slog.Debug("mob wandered",
+	slog.Debug(
+		"mob wandered",
 		"mob_vnum", mob.GetVNum(),
 		"name", mob.GetName(),
 		"from", oldRoom,

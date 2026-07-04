@@ -42,8 +42,8 @@ const (
 )
 
 var (
-	maxConnsPerIP   = 3
-	maxTotalConns   = 200
+	maxConnsPerIP    = 3
+	maxTotalConns    = 200
 	loginIdleTimeout = 120 * time.Second // DP-912: drop parked pre-auth connections
 )
 

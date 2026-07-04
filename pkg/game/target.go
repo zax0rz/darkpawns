@@ -28,7 +28,7 @@ func isnameWithAbbrevs(str, namelist string) bool {
 // charKeywords returns the keyword namelist a target should be matched
 // against, mirroring C's i->player.name field:
 //   - mobs:  the prototype's Keywords (space-separated), falling back to the
-//            name parsed out of the ShortDesc if Keywords is empty.
+//     name parsed out of the ShortDesc if Keywords is empty.
 //   - players: the player's Name.
 func charKeywords(c combat.Combatant) string {
 	if c == nil {

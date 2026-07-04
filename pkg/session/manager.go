@@ -811,11 +811,11 @@ type Session struct {
 	charPassword         string // hashed password during creation
 	charPasswordSupplied bool   // auth layer already collected the password; nanny skips its prompt (DP-909)
 	charColor            bool   // ANSI color preference
-	charSex      int
-	charRace     int
-	charClass    int
-	charHometown int
-	charStats    game.CharStats
+	charSex              int
+	charRace             int
+	charClass            int
+	charHometown         int
+	charStats            game.CharStats
 
 	// Character switch state (wizard commands)
 	isSwitched            bool
