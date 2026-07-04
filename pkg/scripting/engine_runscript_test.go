@@ -121,6 +121,64 @@ func TestRunScriptPathTraversal(t *testing.T) {
 	}
 }
 
+// TestResolveScriptPathSubdirectory verifies that script resolution searches
+// scriptsDir first, then falls back to mob/, room/, and obj/ subdirectories,
+// matching C's SCRIPT_DIR/type/script_name pattern (DP-926).
+func TestResolveScriptPathSubdirectory(t *testing.T) {
+	dir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(dir, "globals.lua"), []byte(""), 0o644); err != nil {
+		t.Fatalf("write globals.lua: %v", err)
+	}
+
+	mobDir := filepath.Join(dir, "mob")
+	if err := os.MkdirAll(mobDir, 0o755); err != nil {
+		t.Fatalf("mkdir mob: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(mobDir, "troll.lua"), []byte(""), 0o644); err != nil {
+		t.Fatalf("write troll.lua: %v", err)
+	}
+
+	engine := NewEngine(dir, nil)
+
+	if got := engine.resolveScriptPath("globals.lua"); got != filepath.Join(dir, "globals.lua") {
+		t.Errorf("globals.lua: expected %q, got %q", filepath.Join(dir, "globals.lua"), got)
+	}
+	if got := engine.resolveScriptPath("troll.lua"); got != filepath.Join(mobDir, "troll.lua") {
+		t.Errorf("troll.lua: expected %q, got %q", filepath.Join(mobDir, "troll.lua"), got)
+	}
+	if got := engine.resolveScriptPath("nonexistent.lua"); got != "" {
+		t.Errorf("nonexistent.lua: expected empty path, got %q", got)
+	}
+}
+
+// TestRunScriptSubdirectory verifies that RunScript can execute a script located
+// in a subdirectory under scriptsDir (DP-926).
+func TestRunScriptSubdirectory(t *testing.T) {
+	dir := t.TempDir()
+
+	mobDir := filepath.Join(dir, "mob")
+	if err := os.MkdirAll(mobDir, 0o755); err != nil {
+		t.Fatalf("mkdir mob: %v", err)
+	}
+	src := `function onpulse()
+	return TRUE
+end
+`
+	if err := os.WriteFile(filepath.Join(mobDir, "test.lua"), []byte(src), 0o644); err != nil {
+		t.Fatalf("write test.lua: %v", err)
+	}
+
+	engine := NewEngine(dir, nil)
+	handled, err := engine.RunScript(&ScriptContext{}, "test.lua", "onpulse")
+	if err != nil {
+		t.Fatalf("RunScript error: %v", err)
+	}
+	if !handled {
+		t.Error("expected handled=true")
+	}
+}
+
 // TestScriptLoadFailureCaching verifies that a missing/broken script is
 // attempted once, recorded in the negative cache, and skipped on subsequent
 // calls — the second call must return a cheap cached error without hitting
