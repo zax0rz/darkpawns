@@ -74,7 +74,8 @@ func (ac *AdminCommands) initReports() {
 
 	reportsMu.Lock()
 	defer reportsMu.Unlock()
-	for _, dr := range dbReports {
+		for i := range dbReports {
+			dr := &dbReports[i]
 		reports = append(reports, Report{
 			ID:          dr.ID,
 			Reporter:    dr.Reporter,
