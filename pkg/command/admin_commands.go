@@ -41,9 +41,50 @@ type AdminCommands struct {
 
 // NewAdminCommands creates a new AdminCommands instance.
 func NewAdminCommands(manager common.CommandManager, mod *moderation.Manager) *AdminCommands {
-	return &AdminCommands{
+	ac := &AdminCommands{
 		manager: manager,
 		mod:     mod,
+	}
+	ac.initReports()
+	return ac
+}
+
+// initReports seeds the in-memory report store and ID counter from the
+// database, so report IDs stay unique and previously-filed reports remain
+// visible to `investigate`/`reports` across a process restart.
+func (ac *AdminCommands) initReports() {
+	if ac.mod == nil {
+		return
+	}
+
+	maxID, err := ac.mod.MaxReportID()
+	if err != nil {
+		slog.Warn("failed to load max report ID, starting from 0", "error", err)
+	} else {
+		reportsMu.Lock()
+		reportSeq = maxID
+		reportsMu.Unlock()
+	}
+
+	dbReports, err := ac.mod.ListReports()
+	if err != nil {
+		slog.Warn("failed to load reports from DB", "error", err)
+		return
+	}
+
+	reportsMu.Lock()
+	defer reportsMu.Unlock()
+	for i := range dbReports {
+		dr := &dbReports[i]
+		reports = append(reports, Report{
+			ID:          dr.ID,
+			Reporter:    dr.Reporter,
+			Target:      dr.Target,
+			ReportType:  string(dr.ReportType),
+			Description: dr.Description,
+			Timestamp:   dr.Timestamp,
+			Resolved:    dr.Status == moderation.ReportStatusResolved,
+		})
 	}
 }
 

@@ -405,6 +405,74 @@ func (m *Manager) AddReport(r AbuseReport) error {
 	return nil
 }
 
+// MaxReportID returns the highest existing abuse report ID, or 0 if there are
+// none (or no DB is configured). Used to seed the in-memory report ID counter
+// on startup so IDs stay unique across restarts.
+func (m *Manager) MaxReportID() (int, error) {
+	if !m.hasDB {
+		return 0, nil
+	}
+
+	var maxID int
+	if err := m.db.QueryRow(`SELECT COALESCE(MAX(id), 0) FROM abuse_reports`).Scan(&maxID); err != nil {
+		return 0, fmt.Errorf("query max report id: %w", err)
+	}
+	return maxID, nil
+}
+
+// ListReports returns all abuse reports from the database, most recent first.
+// Returns nil if no DB is configured.
+func (m *Manager) ListReports() ([]AbuseReport, error) {
+	if !m.hasDB {
+		return nil, nil
+	}
+
+	rows, err := m.db.Query(`
+		SELECT id, reporter, target, report_type, description, room_vnum, timestamp, status, reviewed_by, reviewed_at, resolution
+		FROM abuse_reports
+		ORDER BY id DESC
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("query reports: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var result []AbuseReport
+	for rows.Next() {
+		var r AbuseReport
+		var reportType, status string
+		var reviewedBy sql.NullString
+		var reviewedAt sql.NullTime
+		var resolution sql.NullString
+
+		if err := rows.Scan(
+			&r.ID, &r.Reporter, &r.Target, &reportType, &r.Description, &r.RoomVNum,
+			&r.Timestamp, &status, &reviewedBy, &reviewedAt, &resolution,
+		); err != nil {
+			return nil, fmt.Errorf("scan report: %w", err)
+		}
+
+		r.ReportType = ReportType(reportType)
+		r.Status = ReportStatus(status)
+		if reviewedBy.Valid {
+			r.ReviewedBy = reviewedBy.String
+		}
+		if reviewedAt.Valid {
+			r.ReviewedAt = &reviewedAt.Time
+		}
+		if resolution.Valid {
+			r.Resolution = resolution.String
+		}
+
+		result = append(result, r)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate reports: %w", err)
+	}
+
+	return result, nil
+}
+
 // AddPenalty stores a penalty (in-memory + DB if available). Returns a non-nil
 // error if the DB write failed; the penalty is still applied in memory, but
 // callers should warn the admin that it will not survive a restart.
