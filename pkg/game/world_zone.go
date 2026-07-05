@@ -46,12 +46,11 @@ func (w *World) SetShopManager(manager common.ShopManager) {
 }
 
 // GetShopByKeeper returns a shop by keeper NPC VNum.
-// Uses the concrete *ShopManager if available.
+// Uses the concrete ShopManager if available.
 func (w *World) GetShopByKeeper(vnum int) (*Shop, bool) {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 
-	// Try the concrete ShopManager first
 	if sm, ok := w.shopManager.(*ShopManager); ok {
 		shop := sm.GetShopByKeeper(vnum)
 		return shop, shop != nil

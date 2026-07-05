@@ -2,8 +2,10 @@
 // between packages like game, engine, session, command, and world.
 package common
 
-// ShopManagerInterface defines the interface for shop management.
-// This allows game package to work with shops without importing the world package.
+// ShopManagerInterface defines an extended shop management interface.
+//
+// Deprecated: This interface includes methods (FindShopForTransaction) that no
+// concrete type implements. Use ShopManager from common.go instead.
 type ShopManagerInterface interface {
 	// CreateShop creates a new shop
 	CreateShop(vnum int, name string, roomVNum int) interface{} // Returns *world.Shop

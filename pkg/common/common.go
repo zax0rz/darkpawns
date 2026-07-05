@@ -2,9 +2,8 @@
 package common
 
 // ShopManager defines the interface for shop management.
-//
-// Deprecated: Use ShopManagerInterface from shop.go instead. It exposes the
-// full API including removal, restock, and transaction lookup.
+// This is the canonical interface satisfied by both game.ShopManager
+// and systems.ShopManager.
 type ShopManager interface {
 	CreateShop(vnum int, name string, roomVNum int) interface{}
 	GetShop(id int) (interface{}, bool)
