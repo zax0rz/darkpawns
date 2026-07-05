@@ -438,11 +438,14 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 }
 
 // specBrainEater eats brains from headless corpses.
+// C: SPECIAL(brain_eater) is always called with ch==the mob itself
+// (mobile_activity.c calls func(ch, ch, 0, "")); ch is nil in the Go
+// autonomous path, so the mob's own state must be read via me.
 func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.GetFighting() != "" || cmd != "" || ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
+	if me.GetFighting() != "" || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	items := w.GetItemsInRoom(ch.GetRoomVNum())
+	items := w.GetItemsInRoom(me.GetRoomVNum())
 	for _, obj := range items {
 		if !obj.IsContainer() {
 			continue
@@ -475,17 +478,20 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 }
 
 // specTeleportVictim teleports an attacker away.
+// C: SPECIAL(teleport_victim) is always called with ch==the mob itself
+// (mobile_activity.c / fight.c call func(ch, ch, 0, "")); ch is nil in the
+// Go autonomous path, so the mob's own state and identity come from me.
 func specTeleportVictim(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch.GetFighting() == "" || ch.GetPosition() <= combat.PosSleeping {
+	if cmd != "" || me.GetFighting() == "" || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s scoffs at you.", ch.GetName()))
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s says, 'You can't harm me, mortal. Begone.'", ch.GetName()))
-	fightingName := ch.GetFighting()
+	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s scoffs at you.", mobName(me)))
+	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'You can't harm me, mortal. Begone.'", mobName(me)))
+	fightingName := me.GetFighting()
 	if fightingName != "" {
 		fighting, _ := w.GetPlayer(fightingName)
 		if fighting != nil {
-			spells.Cast(ch, fighting, spells.SpellTeleport, ch.GetLevel(), w)
+			spells.Cast(me, fighting, spells.SpellTeleport, me.GetLevel(), w)
 		}
 	}
 	return true

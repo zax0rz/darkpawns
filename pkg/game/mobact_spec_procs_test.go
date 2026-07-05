@@ -119,6 +119,90 @@ func TestSpecRescuer_SkipsWhenNoAllyBeingAttacked(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Regression tests for BRIEF-2026-07-05-remaining-spec-proc-nil-crashes.md.
+// ---------------------------------------------------------------------------
+
+func TestSpecRemorter_NilChDoesNotPanic(t *testing.T) {
+	w, _ := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosStanding)
+
+	if specRemorter(w, nil, mob, "", "") {
+		t.Error("expected specRemorter to return false on the autonomous (nil ch) path")
+	}
+}
+
+func TestSpecBreedKiller_NilChDoesNotPanic(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	player.Level = 10
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosStanding)
+
+	// specBreedKiller only attacks on a 5% roll; the point of this test is
+	// that the nil-ch state checks don't panic, not that the roll lands —
+	// so a couple of calls suffice without skewing the shared RNG stream
+	// for other unseeded-random tests later in the suite.
+	specBreedKiller(w, nil, mob, "", "")
+	specBreedKiller(w, nil, mob, "", "")
+}
+
+func TestSpecNeverDie_NilChDoesNotPanic_HealsToFull(t *testing.T) {
+	w, _ := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosStanding)
+	mob.SetHealth(1)
+
+	handled := specNeverDie(w, nil, mob, "", "")
+
+	if !handled {
+		t.Error("expected specNeverDie to report handled when healing a damaged mob")
+	}
+	if mob.GetHP() != mob.GetMaxHP() {
+		t.Errorf("expected mob to be healed to max HP, got %d/%d", mob.GetHP(), mob.GetMaxHP())
+	}
+}
+
+func TestSpecNeverDie_SkipsWhenAlreadyFull(t *testing.T) {
+	w, _ := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosStanding)
+
+	if specNeverDie(w, nil, mob, "", "") {
+		t.Error("expected specNeverDie to skip a mob already at full HP")
+	}
+}
+
+func TestSpecBrainEater_NilChDoesNotPanic(t *testing.T) {
+	w, _ := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosStanding)
+
+	if specBrainEater(w, nil, mob, "", "") {
+		t.Error("expected specBrainEater to return false with no corpse in the room")
+	}
+}
+
+func TestSpecTeleportVictim_NilChDoesNotPanic_SkipsWhenNotFighting(t *testing.T) {
+	w, _ := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosStanding)
+
+	if specTeleportVictim(w, nil, mob, "", "") {
+		t.Error("expected specTeleportVictim to skip a mob that isn't fighting")
+	}
+}
+
+func TestSpecCastleGuardDown_NilChDoesNotPanic(t *testing.T) {
+	w, _ := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosStanding)
+
+	if specCastleGuardDown(w, nil, mob, "", "") {
+		t.Error("expected specCastleGuardDown to return false when no other mob is fighting")
+	}
+}
+
 func TestSpecRescuer_SkipsWhenRescuerAlreadyFighting(t *testing.T) {
 	w, player := newCombatTestWorld(t)
 	rescuer, err := w.SpawnMob(2001, 1001)

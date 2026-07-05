@@ -97,9 +97,13 @@ func isOwner(w *World, ch *Player, roomVNum int) bool {
 }
 
 // guardCanAct returns false if the guard is asleep/dead or player is immortal.
+// ch is nil during autonomous AI ticks (no player is present to check).
 func guardCanAct(ch *Player, me *MobInstance) bool {
 	if me.GetPosition() <= combat.PosSleeping {
 		return false
+	}
+	if ch == nil {
+		return true
 	}
 	if !ch.IsNPC() && ch.GetLevel() >= LVL_IMMORT {
 		return false
@@ -490,7 +494,8 @@ func specRemorter(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 		return false
 	}
-	if randN(6) != 0 {
+	// ch is nil during autonomous AI ticks — no player to speak the tip to.
+	if ch == nil || randN(6) != 0 {
 		return false
 	}
 	msgs := []string{
@@ -971,16 +976,15 @@ func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 // breed_killer — 5% chance per tick to screech and attack
 // ================================================================
 func specBreedKiller(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	// ch is nil during autonomous AI ticks; the mob's own state is checked
+	// via me (mirrors the C source, which is always called with ch==the mob).
 	if cmd != "" {
 		return false
 	}
-	if ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
+	if me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	if ch.GetFighting() != "" {
-		return false
-	}
-	if ch.IsNPC() {
+	if me.GetFighting() != "" {
 		return false
 	}
 	if randRange(1, 100) > 5 {
@@ -1274,15 +1278,14 @@ func specNoMoveNorth(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 // specNeverDie — Revives at full HP when killed
 // ================================================================
 func specNeverDie(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	// C: SPECIAL(never_die) is always called with ch==the mob itself here
+	// (mobile_activity.c calls func(ch, ch, 0, "")); ch is nil in the Go
+	// autonomous path, so the mob's own state must be read via me.
 	if cmd != "" {
 		return false
 	}
-	if ch.GetPosition() <= combat.PosDead && ch.GetHP() > 0 {
-		return false
-	}
-	if ch.GetHP() <= 0 && ch.GetPosition() <= combat.PosMortally {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s refuses to die!", mobName(me)))
-		ch.SetHP(ch.GetMaxHP())
+	if me.GetHP() < me.GetMaxHP() {
+		me.SetHealth(me.GetMaxHP())
 		return true
 	}
 	return false
