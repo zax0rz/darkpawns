@@ -1,5 +1,4 @@
 // Package game — clan system, ported from src/clan.c
-//
 package game
 
 import (

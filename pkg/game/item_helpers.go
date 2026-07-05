@@ -146,8 +146,6 @@ const (
 	extraFlagTwoHanded = 28 // ITEM_TWO_HANDED
 )
 
-
-
 // Equipment position constants matching C WEAR_*
 const (
 	eqWearLight = iota

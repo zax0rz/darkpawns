@@ -308,4 +308,3 @@ func (w *World) performRemove(ch *Player, pos int) {
 	w.actToChar(ch, "You stop using $p.", obj, nil)
 	w.actToRoom(ch, "$n stops using $p.", obj, nil)
 }
-

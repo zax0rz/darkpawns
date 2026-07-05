@@ -828,7 +828,8 @@ func (s *Session) extractLinkdead() {
 	}
 
 	elapsed := time.Since(time.Unix(0, s.lastActive.Load()))
-	slog.Warn("reaping linkdead session",
+	slog.Warn(
+		"reaping linkdead session",
 		"player", playerName,
 		"idle", elapsed.Round(time.Second),
 	)
