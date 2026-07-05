@@ -164,7 +164,7 @@ func TestDoBash_NotFighter(t *testing.T) {
 
 	target := spawnTargetMob(t, w)
 
-	result := DoBash(player, target)
+	result := DoBash(player, target, w)
 	if result.Success {
 		t.Error("DoBash should fail for player without bash skill")
 	}
@@ -182,7 +182,7 @@ func TestDoBash_NoMovePoints(t *testing.T) {
 
 	target := spawnTargetMob(t, w)
 
-	result := DoBash(player, target)
+	result := DoBash(player, target, w)
 	if result.Success {
 		t.Error("DoBash should fail with no move points")
 	}
@@ -206,7 +206,7 @@ func TestDoBash_TargetSitting(t *testing.T) {
 	target.Status = "sitting"
 	target.mu.Unlock()
 
-	result := DoBash(player, target)
+	result := DoBash(player, target, w)
 	if result.Success {
 		t.Error("DoBash should fail when target is sitting")
 	}
@@ -236,7 +236,7 @@ func TestDoTrip_NotThief(t *testing.T) {
 
 	target := spawnTargetMob(t, w)
 
-	result := DoTrip(player, target)
+	result := DoTrip(player, target, w)
 	if result.Success {
 		t.Error("DoTrip should fail for player without trip skill")
 	}

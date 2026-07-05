@@ -617,7 +617,7 @@ func CmdBash(s SessionInterface, args []string) error {
 		return s.SendMessage("Aren't we funny today...\r\n")
 	}
 
-	result := game.DoBash(ch, target)
+	result := game.DoBash(ch, target, world)
 	return sendSkillResult(s, ch, target, result)
 }
 
@@ -687,7 +687,7 @@ func CmdTrip(s SessionInterface, args []string) error {
 		return s.SendMessage("You trip over your shoe laces...\r\n")
 	}
 
-	result := game.DoTrip(ch, target)
+	result := game.DoTrip(ch, target, world)
 	return sendSkillResult(s, ch, target, result)
 }
 
@@ -722,7 +722,7 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 		return s.SendMessage("You contemplate headbutting yourself... maybe later.\r\n")
 	}
 
-	result := game.DoHeadbutt(ch, target)
+	result := game.DoHeadbutt(ch, target, world)
 	return sendSkillResult(s, ch, target, result)
 }
 

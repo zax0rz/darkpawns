@@ -797,3 +797,799 @@ func TestDoCharge_Success(t *testing.T) {
 		}
 	})
 }
+
+// ---------------------------------------------------------------------------
+// DP-931/DP-933: DoBash C-gate regression tests.
+// Source: src/act.offensive.c:419-490 (do_bash). Gate order in C: skill ->
+// peaceful room -> self-target -> target-sitting -> mounted -> move points ->
+// roll (with NOBASH force-fail and sleeping/immortal-caster auto-success
+// overrides on percent) -> unconditional WAIT_STATE(ch, PULSE_VIOLENCE*2)
+// after either branch (since ch is always a player, !IS_NPC(ch) is always true).
+// ---------------------------------------------------------------------------
+
+func newBashTestWorld(t *testing.T) (*World, *Player) {
+	t.Helper()
+	w, ch := newCombatTestWorld(t)
+	ch.Level = 20
+	ch.SetSkill(SkillBash, 100)
+	ch.Move = 100
+	return w, ch
+}
+
+func TestDoBash_BlocksPeacefulRoom(t *testing.T) {
+	w, ch := newBashTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosFighting)
+
+	room := w.GetRoomInWorld(1001)
+	room.Flags = []string{"peaceful"}
+
+	result := DoBash(ch, mob, w)
+	if result.Success {
+		t.Error("expected bash to fail in peaceful room")
+	}
+	if !strings.Contains(result.MessageToCh, "peaceful") {
+		t.Errorf("expected peaceful-room message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoBash_BlocksSelfTarget(t *testing.T) {
+	w, ch := newBashTestWorld(t)
+	_ = w
+
+	result := DoBash(ch, ch, w)
+	if result.Success {
+		t.Error("expected bash to block self-target")
+	}
+	if !strings.Contains(result.MessageToCh, "funny today") {
+		t.Errorf("expected self-target message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoBash_BlocksMounted(t *testing.T) {
+	w, ch := newBashTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosFighting)
+	ch.MountName = "pony"
+
+	result := DoBash(ch, mob, w)
+	if result.Success {
+		t.Error("expected bash to fail while mounted")
+	}
+	if !strings.Contains(result.MessageToCh, "Dismount") {
+		t.Errorf("expected mount message, got %q", result.MessageToCh)
+	}
+}
+
+// TestDoBash_NobashMobForcesFail: MOB_NOBASH forces percent=101 (always fails)
+// unless the caster is an immortal. act.offensive.c:478.
+func TestDoBash_NobashMobForcesFail(t *testing.T) {
+	w, ch := newBashTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosFighting)
+	mob.SetMobFlag(MobFlagNobash)
+
+	for i := 0; i < 20; i++ {
+		result := DoBash(ch, mob, w)
+		if result.Success {
+			t.Fatal("DP-931/933: MOB_NOBASH mob should never be bashable by a mortal")
+		}
+	}
+}
+
+// TestDoBash_ImmortalCasterAutoSucceeds: GET_LEVEL(ch) >= LEVEL_IMMORT forces
+// percent=0 (always succeeds), even with zero bash skill. act.offensive.c:481.
+func TestDoBash_ImmortalCasterAutoSucceeds(t *testing.T) {
+	w, ch := newBashTestWorld(t)
+	ch.SetSkill(SkillBash, 1) // low skill — would normally miss almost always
+	ch.Level = LVL_IMMORT
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosFighting)
+
+	for i := 0; i < 20; i++ {
+		ch.Move = 100
+		mob.SetPosition(combat.PosFighting)
+		result := DoBash(ch, mob, w)
+		if !result.Success {
+			t.Fatalf("DP-931/933: immortal caster should auto-succeed bash, got %q", result.MessageToCh)
+		}
+	}
+}
+
+// TestDoBash_WaitStateAlwaysTwo: C applies `if (!IS_NPC(ch)) WAIT_STATE(ch,
+// PULSE_VIOLENCE*2)` unconditionally AFTER the success/fail branch (overwriting
+// whatever the branch set) — since ch is always a player here, WaitCh must be
+// 2 on both outcomes. act.offensive.c:488-489.
+func TestDoBash_WaitStateAlwaysTwo(t *testing.T) {
+	w, ch := newBashTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	// Immortal-caster override guarantees success deterministically.
+	ch.Level = LVL_IMMORT
+	mob.SetPosition(combat.PosFighting)
+	result := DoBash(ch, mob, w)
+	if !result.Success {
+		t.Fatalf("expected bash success (immortal auto-success), got %q", result.MessageToCh)
+	}
+	if result.WaitCh != 2 {
+		t.Errorf("expected WaitCh 2 on success, got %d", result.WaitCh)
+	}
+
+	// Low skill against a mortal target guarantees a miss (percent range
+	// 11-111 vs prob 1 almost always exceeds prob).
+	ch.Level = 20
+	ch.SetSkill(SkillBash, 1)
+	var missResult SkillResult
+	var missed bool
+	for i := 0; i < 50; i++ {
+		ch.Move = 100
+		mob.SetPosition(combat.PosFighting)
+		missResult = DoBash(ch, mob, w)
+		if !missResult.Success {
+			missed = true
+			break
+		}
+	}
+	if !missed {
+		t.Skip("no miss observed in 50 tries (RNG)")
+	}
+	if missResult.WaitCh != 2 {
+		t.Errorf("expected WaitCh 2 on failure (unconditional post-branch WAIT_STATE), got %d", missResult.WaitCh)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// DP-932: DoRescue C-gate + combat-engine-wiring regression tests.
+// Source: src/act.offensive.c:499-581 (do_rescue). Gate order: skill -> self
+// -> already-fighting-target -> mounted -> peaceful-room (outlaws exempt) ->
+// find attacker -> roll -> on success: stop_fighting all three, then
+// bidirectionally interpose ch between attacker and victim.
+// ---------------------------------------------------------------------------
+
+// newRescueTestWorld builds a rescuer (ch), a victim (player), and an
+// attacker (mob) already fighting the victim via the real combat engine.
+func newRescueTestWorld(t *testing.T) (w *World, ch *Player, victim *Player, attacker *MobInstance, ce *combat.CombatEngine) {
+	t.Helper()
+	w, ch = newCombatTestWorld(t)
+	ch.SetSkill(SkillRescue, 100)
+
+	victim = NewPlayer(2, "Victim", 1001)
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+
+	attacker = spawnTargetMob(t, w)
+
+	ce = combat.NewCombatEngine()
+	if err := ce.StartCombat(attacker, victim); err != nil {
+		t.Fatalf("StartCombat setup: %v", err)
+	}
+	return w, ch, victim, attacker, ce
+}
+
+func TestDoRescue_BlocksMounted(t *testing.T) {
+	w, ch, victim, _, ce := newRescueTestWorld(t)
+	_ = w
+	ch.MountName = "pony"
+
+	result := DoRescue(ch, victim, w, ce)
+	if result.Success {
+		t.Error("expected rescue to fail while mounted")
+	}
+	if !strings.Contains(result.MessageToCh, "Dismount") {
+		t.Errorf("expected mount message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoRescue_BlocksPeacefulRoomForNonOutlaw(t *testing.T) {
+	w, ch, victim, _, ce := newRescueTestWorld(t)
+	room := w.GetRoomInWorld(1001)
+	room.Flags = []string{"peaceful"}
+
+	result := DoRescue(ch, victim, w, ce)
+	if result.Success {
+		t.Error("expected rescue to fail in peaceful room for a non-outlaw")
+	}
+	if !strings.Contains(result.MessageToCh, "peaceful") {
+		t.Errorf("expected peaceful-room message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoRescue_AllowsPeacefulRoomForOutlaw(t *testing.T) {
+	w, ch, victim, _, ce := newRescueTestWorld(t)
+	room := w.GetRoomInWorld(1001)
+	room.Flags = []string{"peaceful"}
+	ch.SetPlrFlag(PlrOutlaw, true)
+
+	result := DoRescue(ch, victim, w, ce)
+	if !result.Success {
+		t.Errorf("expected outlaw to bypass peaceful-room gate, got %q", result.MessageToCh)
+	}
+}
+
+// TestDoRescue_WiresCombatEngine: DP-932's core finding — a successful rescue
+// must actually redirect combat via the engine (attacker turns onto the
+// rescuer, victim is freed), not just return cosmetic success messages.
+func TestDoRescue_WiresCombatEngine(t *testing.T) {
+	w, ch, victim, attacker, ce := newRescueTestWorld(t)
+
+	result := DoRescue(ch, victim, w, ce)
+	if !result.Success {
+		t.Fatalf("expected rescue success, got %q", result.MessageToCh)
+	}
+
+	if victim.GetFighting() != "" {
+		t.Errorf("DP-932: victim should be freed from combat, still fighting %q", victim.GetFighting())
+	}
+	if attacker.GetFighting() != ch.Name {
+		t.Errorf("DP-932: attacker should now be fighting the rescuer %q, got %q", ch.Name, attacker.GetFighting())
+	}
+	if ch.GetFighting() != attacker.GetName() {
+		t.Errorf("DP-932: rescuer should now be fighting the attacker %q, got %q", attacker.GetName(), ch.GetFighting())
+	}
+	if result.WaitCh != 0 {
+		t.Errorf("DP-932: C sets no WaitCh on a successful rescue, got %d", result.WaitCh)
+	}
+	if result.WaitTarget != 2 {
+		t.Errorf("expected WaitTarget 2 (2*PULSE_VIOLENCE on victim), got %d", result.WaitTarget)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// DP-934: DoKick C-gate regression tests.
+// Source: src/act.offensive.c:587-634 (do_kick) — sparser than bash: only a
+// self-target check, a mount check, and an unconditional
+// WAIT_STATE(ch, PULSE_VIOLENCE+2) applied AFTER the hit/miss branch (so both
+// outcomes get WaitCh=3). No peaceful-room, NOBASH, or sleeping overrides.
+// ---------------------------------------------------------------------------
+
+func newKickTestWorld(t *testing.T) (*World, *Player) {
+	t.Helper()
+	w, ch := newCombatTestWorld(t)
+	ch.Level = 20
+	ch.SetSkill(SkillKick, 100)
+	return w, ch
+}
+
+func TestDoKick_BlocksSelfTarget(t *testing.T) {
+	_, ch := newKickTestWorld(t)
+
+	result := DoKick(ch, ch)
+	if result.Success {
+		t.Error("expected kick to block self-target")
+	}
+	if !strings.Contains(result.MessageToCh, "funny today") {
+		t.Errorf("expected self-target message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoKick_BlocksMounted(t *testing.T) {
+	w, ch := newKickTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	ch.MountName = "pony"
+
+	result := DoKick(ch, mob)
+	if result.Success {
+		t.Error("expected kick to fail while mounted")
+	}
+	if !strings.Contains(result.MessageToCh, "Dismount") {
+		t.Errorf("expected mount message, got %q", result.MessageToCh)
+	}
+}
+
+// TestDoKick_WaitStateAlwaysThree: C's WAIT_STATE(ch, PULSE_VIOLENCE+2) sits
+// outside the hit/miss if/else, so WaitCh must be 3 on both outcomes.
+func TestDoKick_WaitStateAlwaysThree(t *testing.T) {
+	w, ch := newKickTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	// percent ranges up to 115, so skill 100 doesn't guarantee a hit on the
+	// first roll; retry like the rest of this file's RNG-backed tests do.
+	var result SkillResult
+	var hit bool
+	for i := 0; i < 20; i++ {
+		result = DoKick(ch, mob)
+		if result.Success {
+			hit = true
+			break
+		}
+	}
+	if !hit {
+		t.Fatalf("expected kick success with skill 100 vs AC 0 within 20 tries, last msg %q", result.MessageToCh)
+	}
+	if result.WaitCh != 3 {
+		t.Errorf("expected WaitCh 3 on hit, got %d", result.WaitCh)
+	}
+
+	ch.SetSkill(SkillKick, 1)
+	var missResult SkillResult
+	var missed bool
+	for i := 0; i < 50; i++ {
+		missResult = DoKick(ch, mob)
+		if !missResult.Success {
+			missed = true
+			break
+		}
+	}
+	if !missed {
+		t.Skip("no miss observed in 50 tries (RNG)")
+	}
+	if missResult.WaitCh != 3 {
+		t.Errorf("expected WaitCh 3 on miss, got %d", missResult.WaitCh)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// DP-937: DoTrip C-gate regression tests.
+// Source: src/new_cmds.c:735-815 (do_trip). Gate order: skill -> peaceful ->
+// mount -> self -> flying-target -> sleeping-target -> roll (with
+// immortal-victim and NOBASH force-fail overrides) -> level-gap penalty.
+// On success only the victim gets a wait state (WaitTarget=1); C sets no
+// WaitCh at all on a successful trip.
+// ---------------------------------------------------------------------------
+
+func newTripTestWorld(t *testing.T) (*World, *Player) {
+	t.Helper()
+	w, ch := newCombatTestWorld(t)
+	ch.Level = 20
+	ch.SetSkill(SkillTrip, 100)
+	return w, ch
+}
+
+func TestDoTrip_BlocksPeacefulRoom(t *testing.T) {
+	w, ch := newTripTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosFighting)
+	room := w.GetRoomInWorld(1001)
+	room.Flags = []string{"peaceful"}
+
+	result := DoTrip(ch, mob, w)
+	if result.Success {
+		t.Error("expected trip to fail in peaceful room")
+	}
+	if !strings.Contains(result.MessageToCh, "peaceful") {
+		t.Errorf("expected peaceful-room message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoTrip_BlocksMounted(t *testing.T) {
+	w, ch := newTripTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosFighting)
+	ch.MountName = "pony"
+
+	result := DoTrip(ch, mob, w)
+	if result.Success {
+		t.Error("expected trip to fail while mounted")
+	}
+	if !strings.Contains(result.MessageToCh, "Dismount") {
+		t.Errorf("expected mount message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoTrip_BlocksSelfTarget(t *testing.T) {
+	w, ch := newTripTestWorld(t)
+
+	result := DoTrip(ch, ch, w)
+	if result.Success {
+		t.Error("expected trip to block self-target")
+	}
+	if !strings.Contains(result.MessageToCh, "shoe laces") {
+		t.Errorf("expected self-target message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoTrip_BlocksFlyingTarget(t *testing.T) {
+	w, ch := newTripTestWorld(t)
+	victim := NewPlayer(2, "Bird", 1001)
+	victim.SetAffect(affFly, true)
+	w.AddPlayer(victim)
+
+	result := DoTrip(ch, victim, w)
+	if result.Success {
+		t.Error("DP-937: flying target should be untrippable")
+	}
+	if !strings.Contains(result.MessageToCh, "FLYING") {
+		t.Errorf("expected flying message, got %q", result.MessageToCh)
+	}
+}
+
+// TestDoTrip_ImmortalVictimForcesFail: GET_LEVEL(victim) >= LEVEL_IMMORT
+// forces percent=101 (always fails), regardless of skill. new_cmds.c:775.
+func TestDoTrip_ImmortalVictimForcesFail(t *testing.T) {
+	w, ch := newTripTestWorld(t)
+	victim := NewPlayer(2, "God", 1001)
+	victim.Level = LVL_IMMORT
+	w.AddPlayer(victim)
+
+	for i := 0; i < 20; i++ {
+		result := DoTrip(ch, victim, w)
+		if result.Success {
+			t.Fatal("DP-937: mortals should never be able to trip an immortal")
+		}
+	}
+}
+
+// TestDoTrip_NobashMobForcesFail: MOB_NOBASH forces percent=101 for NPC
+// victims. new_cmds.c:776.
+func TestDoTrip_NobashMobForcesFail(t *testing.T) {
+	w, ch := newTripTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosFighting)
+	mob.SetMobFlag(MobFlagNobash)
+
+	for i := 0; i < 20; i++ {
+		result := DoTrip(ch, mob, w)
+		if result.Success {
+			t.Fatal("DP-937: MOB_NOBASH mob should never be trippable")
+		}
+	}
+}
+
+// TestDoTrip_SuccessSetsWaitTargetNotWaitCh: C only calls WAIT_STATE on the
+// victim on a successful trip (WAIT_STATE(victim, PULSE_VIOLENCE)); ch gets no
+// wait state at all on success. new_cmds.c:803-808.
+func TestDoTrip_SuccessSetsWaitTargetNotWaitCh(t *testing.T) {
+	w, ch := newTripTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	// percent ranges up to 121, so skill 100 doesn't guarantee a hit on the
+	// first roll; retry like the rest of this file's RNG-backed tests do.
+	var result SkillResult
+	var hit bool
+	for i := 0; i < 20; i++ {
+		result = DoTrip(ch, mob, w)
+		if result.Success {
+			hit = true
+			break
+		}
+	}
+	if !hit {
+		t.Fatalf("expected trip success with skill 100 vs equal level within 20 tries, last msg %q", result.MessageToCh)
+	}
+	if result.WaitTarget != 1 {
+		t.Errorf("expected WaitTarget 1, got %d", result.WaitTarget)
+	}
+	if result.WaitCh != 0 {
+		t.Errorf("DP-937: C sets no WaitCh on a successful trip, got %d", result.WaitCh)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// DP-936: DoHeadbutt full rewrite regression tests.
+// Source: src/new_cmds.c:368-460 (do_headbutt). This is a from-scratch port
+// replacing a fabricated formula: damage is flat GET_LEVEL(ch) (not
+// skill-based), the success roll is 1-121 (not 1-101), a successful headbutt
+// costs the caster HP as recoil (level/4, or level/3 wearing a helm), an HP
+// gate refuses the attempt if the recoil could be fatal, and NOBASH/sleeping
+// targets auto-succeed (percent=0) rather than the mob being unbashable.
+// ---------------------------------------------------------------------------
+
+func newHeadbuttTestWorld(t *testing.T) (*World, *Player) {
+	t.Helper()
+	w, ch := newCombatTestWorld(t)
+	ch.Level = 40
+	ch.SetSkill(SkillHeadbutt, 100)
+	ch.SetHP(200)
+	ch.Move = 100
+	return w, ch
+}
+
+func makeHeadItem() *ObjectInstance {
+	return &ObjectInstance{
+		Prototype: &parser.Obj{
+			VNum:      1,
+			Keywords:  "helm",
+			ShortDesc: "an iron helm",
+			TypeFlag:  9, // ITEM_ARMOR (any nonzero, unused by headbutt logic)
+			WearFlags: [4]int{1 << 4, 0, 0, 0},
+		},
+	}
+}
+
+func TestDoHeadbutt_BlocksPeacefulRoom(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	room := w.GetRoomInWorld(1001)
+	room.Flags = []string{"peaceful"}
+
+	result := DoHeadbutt(ch, mob, w)
+	if result.Success {
+		t.Error("expected headbutt to fail in peaceful room")
+	}
+	if !strings.Contains(result.MessageToCh, "Gods prevent") {
+		t.Errorf("expected the C peaceful-room headbutt message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoHeadbutt_NoSkillMessage(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	ch.SetSkill(SkillHeadbutt, 0)
+	mob := spawnTargetMob(t, w)
+
+	result := DoHeadbutt(ch, mob, w)
+	if result.Success {
+		t.Error("expected headbutt to fail without skill")
+	}
+	if !strings.Contains(result.MessageToCh, "qualified to headbutt") {
+		t.Errorf("expected C's exact no-skill message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoHeadbutt_BlocksMounted(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	ch.MountName = "pony"
+
+	result := DoHeadbutt(ch, mob, w)
+	if result.Success {
+		t.Error("expected headbutt to fail while mounted")
+	}
+	if !strings.Contains(result.MessageToCh, "Dismount") {
+		t.Errorf("expected mount message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoHeadbutt_BlocksSelfTarget(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+
+	result := DoHeadbutt(ch, ch, w)
+	if result.Success {
+		t.Error("expected headbutt to block self-target")
+	}
+	if !strings.Contains(result.MessageToCh, "wall") {
+		t.Errorf("expected self-target message, got %q", result.MessageToCh)
+	}
+}
+
+// TestDoHeadbutt_BlocksImmortalTarget: a mortal cannot headbutt a non-NPC
+// immortal — new_cmds.c:407-414. The attacker is thrown to the ground.
+func TestDoHeadbutt_BlocksImmortalTarget(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	god := NewPlayer(2, "God", 1001)
+	god.Level = LVL_IMMORT
+	w.AddPlayer(god)
+
+	result := DoHeadbutt(ch, god, w)
+	if result.Success {
+		t.Error("expected headbutt to block a non-NPC immortal target")
+	}
+	if !strings.Contains(result.MessageToCh, "dare you") {
+		t.Errorf("expected immortal-target message, got %q", result.MessageToCh)
+	}
+	if !result.SelfStumble {
+		t.Error("expected caster to be thrown down (SelfStumble) attempting to headbutt a god")
+	}
+}
+
+// TestDoHeadbutt_HPGateRefuses: GET_LEVEL(ch)/2 > GET_HIT(ch) refuses the
+// attempt outright — new_cmds.c:429-433.
+func TestDoHeadbutt_HPGateRefuses(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	ch.SetHP(ch.GetLevel()/2 - 1) // just under the threshold
+	mob := spawnTargetMob(t, w)
+
+	result := DoHeadbutt(ch, mob, w)
+	if result.Success {
+		t.Error("expected headbutt to be refused when recoil could be fatal")
+	}
+	if !strings.Contains(result.MessageToCh, "could kill you") {
+		t.Errorf("expected HP-gate message, got %q", result.MessageToCh)
+	}
+}
+
+// TestDoHeadbutt_DamageIsFlatLevel: damage = GET_LEVEL(ch), not a skill-based
+// formula. Force a hit via a sleeping target (percent=0 override).
+func TestDoHeadbutt_DamageIsFlatLevel(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosSleeping)
+
+	result := DoHeadbutt(ch, mob, w)
+	if !result.Success {
+		t.Fatalf("expected headbutt to auto-hit a sleeping target, got %q", result.MessageToCh)
+	}
+	if result.Damage != ch.GetLevel() {
+		t.Errorf("DP-936: expected damage == level (%d), got %d", ch.GetLevel(), result.Damage)
+	}
+}
+
+// TestDoHeadbutt_SelfRecoilNoHelm: a successful headbutt costs the caster
+// level/4 HP when not wearing a helm — new_cmds.c:443-445.
+func TestDoHeadbutt_SelfRecoilNoHelm(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	ch.SetHP(200)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosSleeping)
+
+	result := DoHeadbutt(ch, mob, w)
+	if !result.Success {
+		t.Fatalf("expected headbutt success, got %q", result.MessageToCh)
+	}
+	wantHP := 200 - ch.GetLevel()/4
+	if ch.GetHP() != wantHP {
+		t.Errorf("DP-936: expected caster HP %d after no-helm recoil, got %d", wantHP, ch.GetHP())
+	}
+}
+
+// TestDoHeadbutt_SelfRecoilWithHelm: wearing WEAR_HEAD reduces recoil to
+// level/3 instead of level/4 — new_cmds.c:439-442.
+func TestDoHeadbutt_SelfRecoilWithHelm(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	ch.SetHP(200)
+	equipWeapon(t, ch, makeHeadItem())
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosSleeping)
+
+	result := DoHeadbutt(ch, mob, w)
+	if !result.Success {
+		t.Fatalf("expected headbutt success, got %q", result.MessageToCh)
+	}
+	wantHP := 200 - ch.GetLevel()/3
+	if ch.GetHP() != wantHP {
+		t.Errorf("DP-936: expected caster HP %d after helmed recoil, got %d", wantHP, ch.GetHP())
+	}
+}
+
+// TestDoHeadbutt_NobashMobAutoSucceeds: unlike bash/trip, C's MOB_NOBASH
+// override on headbutt sets percent=0 (always SUCCEEDS), not force-fail —
+// new_cmds.c:428 (`if (MOB_FLAGGED(victim, MOB_NOBASH)) percent = 0;`).
+func TestDoHeadbutt_NobashMobAutoSucceeds(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	ch.Level = 20 // below LVL_IMMORT, so only the NOBASH override is in play
+	ch.SetSkill(SkillHeadbutt, 1) // low skill — would normally miss almost always
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosFighting)
+	mob.SetMobFlag(MobFlagNobash)
+
+	for i := 0; i < 20; i++ {
+		ch.SetHP(200)
+		result := DoHeadbutt(ch, mob, w)
+		if !result.Success {
+			t.Fatalf("DP-936: MOB_NOBASH should auto-succeed headbutt (C quirk), got %q", result.MessageToCh)
+		}
+	}
+}
+
+// TestDoHeadbutt_TargetSitsOnHit: a successful headbutt sits the victim
+// (TargetFalls), not a stun — new_cmds.c:448-452.
+func TestDoHeadbutt_TargetSitsOnHit(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosSleeping)
+
+	result := DoHeadbutt(ch, mob, w)
+	if !result.Success {
+		t.Fatalf("expected headbutt success, got %q", result.MessageToCh)
+	}
+	if !result.TargetFalls {
+		t.Error("DP-936: expected TargetFalls (C sits the victim), not a stun")
+	}
+	if result.StunTarget {
+		t.Error("DP-936: C headbutt sits the victim, it does not stun")
+	}
+}
+
+// TestDoHeadbutt_WaitStateAlwaysThree: WAIT_STATE(ch, PULSE_VIOLENCE*3) sits
+// outside the hit/miss if/else — new_cmds.c:459.
+func TestDoHeadbutt_WaitStateAlwaysThree(t *testing.T) {
+	w, ch := newHeadbuttTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosSleeping)
+
+	result := DoHeadbutt(ch, mob, w)
+	if !result.Success {
+		t.Fatalf("expected headbutt success, got %q", result.MessageToCh)
+	}
+	if result.WaitCh != 3 {
+		t.Errorf("expected WaitCh 3 on hit, got %d", result.WaitCh)
+	}
+
+	ch.SetHP(200)
+	ch.Level = 20 // below LVL_IMMORT, so the immortal-caster auto-success override doesn't apply
+	ch.SetSkill(SkillHeadbutt, 1)
+	mob.SetPosition(combat.PosFighting)
+	var missResult SkillResult
+	var missed bool
+	for i := 0; i < 50; i++ {
+		ch.SetHP(200)
+		missResult = DoHeadbutt(ch, mob, w)
+		if !missResult.Success {
+			missed = true
+			break
+		}
+	}
+	if !missed {
+		t.Skip("no miss observed in 50 tries (RNG)")
+	}
+	if missResult.WaitCh != 3 {
+		t.Errorf("expected WaitCh 3 on miss, got %d", missResult.WaitCh)
+	}
+	if missResult.Damage != 0 || ch.GetHP() != 200 {
+		t.Errorf("DP-936: a miss must not apply the fabricated self-stun/recoil path, HP=%d dam=%d", ch.GetHP(), missResult.Damage)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// DP-935: DoDragonKick C-gate regression tests.
+// Source: src/act.offensive.c:636-690 (do_dragon_kick) — same shape as kick:
+// self-target + mount gates, unconditional WAIT_STATE(ch, PULSE_VIOLENCE+2)
+// after the hit/miss branch.
+// ---------------------------------------------------------------------------
+
+func newDragonKickTestWorld(t *testing.T) (*World, *Player) {
+	t.Helper()
+	w, ch := newCombatTestWorld(t)
+	ch.Level = 20
+	ch.SetSkill(SkillDragonKick, 100)
+	ch.Move = 100
+	return w, ch
+}
+
+func TestDoDragonKick_BlocksSelfTarget(t *testing.T) {
+	_, ch := newDragonKickTestWorld(t)
+
+	result := DoDragonKick(ch, ch)
+	if result.Success {
+		t.Error("expected dragon kick to block self-target")
+	}
+	if !strings.Contains(result.MessageToCh, "funny today") {
+		t.Errorf("expected self-target message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoDragonKick_BlocksMounted(t *testing.T) {
+	w, ch := newDragonKickTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	ch.MountName = "pony"
+
+	result := DoDragonKick(ch, mob)
+	if result.Success {
+		t.Error("expected dragon kick to fail while mounted")
+	}
+	if !strings.Contains(result.MessageToCh, "Dismount") {
+		t.Errorf("expected mount message, got %q", result.MessageToCh)
+	}
+}
+
+func TestDoDragonKick_WaitStateAlwaysThree(t *testing.T) {
+	w, ch := newDragonKickTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	// percent ranges up to 111, so skill 100 doesn't guarantee a hit on the
+	// first roll; retry like the rest of this file's RNG-backed tests do.
+	var result SkillResult
+	var hit bool
+	for i := 0; i < 20; i++ {
+		ch.Move = 100
+		result = DoDragonKick(ch, mob)
+		if result.Success {
+			hit = true
+			break
+		}
+	}
+	if !hit {
+		t.Fatalf("expected dragon kick success with skill 100 vs AC 0 within 20 tries, last msg %q", result.MessageToCh)
+	}
+	if result.WaitCh != 3 {
+		t.Errorf("expected WaitCh 3 on hit, got %d", result.WaitCh)
+	}
+
+	ch.SetSkill(SkillDragonKick, 1)
+	var missResult SkillResult
+	var missed bool
+	for i := 0; i < 50; i++ {
+		ch.Move = 100
+		missResult = DoDragonKick(ch, mob)
+		if !missResult.Success {
+			missed = true
+			break
+		}
+	}
+	if !missed {
+		t.Skip("no miss observed in 50 tries (RNG)")
+	}
+	if missResult.WaitCh != 3 {
+		t.Errorf("expected WaitCh 3 on miss, got %d", missResult.WaitCh)
+	}
+}
