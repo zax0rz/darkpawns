@@ -61,7 +61,8 @@ func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 		if r.Body != nil {
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
-				slog.Warn("failed to read request body in privacy middleware",
+				slog.Warn(
+					"failed to read request body in privacy middleware",
 					"error", err,
 					"path", r.URL.Path,
 					"method", r.Method,
