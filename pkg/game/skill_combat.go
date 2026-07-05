@@ -636,9 +636,9 @@ func DoCharge(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You need sword or a lance to run 'em through!\r\n"}
 	}
 
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
+	// Route through combat.Roller so tests can seed/script the success roll
+	// (math/rand/v2's global source cannot be seeded). #nosec G404 — game RNG.
+	percent := ((5 - (target.GetAC() / 10)) * 2) + (combat.GetRoller().IntN(101) + 1)
 	if ch.IsMounted() {
 		percent += 5
 	}
