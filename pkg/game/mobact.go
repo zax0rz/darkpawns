@@ -43,6 +43,25 @@ func roomHasFlag(room *parser.Room, flag string) bool {
 	return false
 }
 
+// callMobSpecSafely invokes a mob's registered spec proc during autonomous
+// activity (ch=nil, matching the "no player involved" tick path) and
+// recovers from any panic. Spec procs are called for every spec-flagged mob
+// on every AI tick, and several were ported from C code where `ch` was the
+// acting mob itself during this path (not absent) — a proc that dereferences
+// `ch` without a nil-check will panic here. One misbehaving spec proc must
+// not crash-loop the whole server; this is a safety net, not a substitute
+// for fixing the individual procs (BRIEF-2026-07-04-spec-proc-nil-crash.md).
+func callMobSpecSafely(specFn SpecFunc, w *World, mob *MobInstance) (handled bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("mob spec proc panicked during autonomous activity — skipping this tick",
+				"mob", mob.GetName(), "vnum", mob.Prototype.VNum, "panic", r)
+			handled = false
+		}
+	}()
+	return specFn(w, nil, mob, "", "")
+}
+
 func mobIsEvil(mob *MobInstance) bool {
 	if mob == nil || mob.Prototype == nil {
 		return false
@@ -138,7 +157,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// C: spec proc returns true to skip to next mob.
 	if hasMobFlag(ch, "spec") {
 		specFn := getMobVNumSpec(ch.Prototype.VNum)
-		if specFn != nil && specFn(w, nil, ch, "", "") {
+		if specFn != nil && callMobSpecSafely(specFn, w, ch) {
 			return
 		}
 	}

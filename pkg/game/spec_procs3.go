@@ -579,22 +579,32 @@ func npcRegen(ch *Player) {
 
 // specTroll regenerates health over time.
 func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch.GetPosition() <= combat.PosSleeping || ch.GetHP() <= 0 {
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() <= 0 {
 		return false
 	}
-	if ch.GetFighting() == "" && ch.GetHP() != ch.GetMaxHP() {
+	if me.GetFighting() == "" && me.GetHP() != me.GetMaxHP() {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
 		if rand.IntN(21) == 0 {
-			npcRegen(ch)
-			w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s's wounds glow brightly for a moment, then disappear!", ch.GetName()))
+			regenRate := 2
+			newHP := me.GetHP() + me.GetLevel()*regenRate
+			if newHP > me.GetMaxHP() {
+				newHP = me.GetMaxHP()
+			}
+			me.SetHealth(newHP)
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's wounds glow brightly for a moment, then disappear!", mobName(me)))
 		}
-	} else if ch.GetFighting() != "" {
+	} else if me.GetFighting() != "" {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
 		if rand.IntN(11) == 0 {
-			npcRegen(ch)
-			w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s's wounds glow brightly for a moment, then disappear!", ch.GetName()))
+			regenRate := 2
+			newHP := me.GetHP() + me.GetLevel()*regenRate
+			if newHP > me.GetMaxHP() {
+				newHP = me.GetMaxHP()
+			}
+			me.SetHealth(newHP)
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's wounds glow brightly for a moment, then disappear!", mobName(me)))
 		}
 	} else {
 		return false

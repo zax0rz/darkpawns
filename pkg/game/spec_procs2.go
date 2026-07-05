@@ -133,10 +133,13 @@ func mobName(me *MobInstance) string {
 // normal_checker — Sees non-immortals, jumps and attacks them
 // ================================================================
 func specNormalChecker(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
+	// ch is nil during autonomous mob activity (mobileActivityForMob); in the
+	// original C (spec_procs2.c:162), ch IS the mob on that path, so these
+	// guards are about the mob's own state (me), not a triggering player's.
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	if ch.GetFighting() != "" {
+	if me.GetFighting() != "" {
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
@@ -412,19 +415,33 @@ func specTipster(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 }
 
 // ================================================================
-// rescuer — Rescues players being attacked in the same room
+// rescuer — a mob defends a fellow mob that's being attacked by a
+// non-NPC, by attacking that attacker.
+// Source: src/spec_procs2.c:523 SPECIAL(rescuer) — `ch` there is the mob
+// itself during autonomous activity, and the proc scans for another NPC
+// `i` fighting a non-NPC, then does `do_rescue(ch, GET_NAME(i), 0, 1)`
+// (ch defends i). The Go port previously misread this as "rescue a
+// player" and routed through the player-only doRescue(), which both
+// diverged from the real behavior and crashed on the nil ch passed in
+// during autonomous ticks.
 // ================================================================
 func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	if ch.GetFighting() != "" || me.GetPosition() <= combat.PosSleeping {
+	if me.GetFighting() != "" {
 		return false
 	}
-	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if !pl.IsNPC() && pl.GetLevel() < 50 && pl.GetFighting() != "" {
-			sendToChar(ch, fmt.Sprintf("%s says 'Fear not! I shall rescue you!'\r\n", mobName(me)))
-			w.doRescue(ch, me, "rescue", pl.GetName())
+	for _, ally := range w.GetMobsInRoom(me.GetRoomVNum()) {
+		if ally.GetID() == me.GetID() || ally.GetFighting() == "" {
+			continue
+		}
+		attackerName := ally.GetFighting()
+		for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+			if pl.GetName() != attackerName {
+				continue
+			}
+			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says 'Fear not! I shall rescue you!'", mobName(me)))
 			if err := me.Attack(pl, w); err != nil {
 				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 			}
@@ -791,7 +808,11 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	if cmd != "" {
 		return false
 	}
-	if ch.GetPosition() <= combat.PosSleeping || me.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
+	// ch is nil during autonomous mob activity (mobileActivityForMob)
+	if ch != nil && (ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0) {
+		return false
+	}
+	if me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
@@ -804,7 +825,6 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		if randN(6) != 0 {
 			continue
 		}
-		sendToChar(ch, fmt.Sprintf("%s says 'You're under arrest!'\r\n", mobName(me)))
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s grabs %s and drags them off to jail!", mobName(me), pl.GetName()))
 		pl.SetRoom(jailRoomVnum)
 		pl.JailTimer = 300 // ~5 minutes at 1 tick/second
