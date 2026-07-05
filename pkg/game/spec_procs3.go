@@ -568,15 +568,6 @@ func specConSeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	return true
 }
 
-// npcRegen regenerates health for NPC mobs.
-func npcRegen(ch *Player) {
-	regenRate := 2
-	ch.Health += ch.GetLevel() * regenRate
-	if ch.Health > ch.GetMaxHP() {
-		ch.Health = ch.GetMaxHP()
-	}
-}
-
 // specTroll regenerates health over time.
 func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() <= 0 {
