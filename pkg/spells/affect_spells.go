@@ -17,17 +17,37 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	if victim == nil || ch == nil {
 		return
 	}
-	_ = level
-	_ = ch
-	_ = savetype
-	_ = world
 
+	// Pre-compute reagent bonuses before applying affects so the deterministic
+	// apply path can be tested independently.
+	reag := 0
+	switch spellNum {
+	case SpellBlindness, SpellSmokescreen:
+		if isClassMage(ch) {
+			reag = checkReagents(ch, SpellBlindness, level)
+			if reag > 0 {
+				sendToCaster(ch, "You crush a small lens under your heel.\r\n")
+			}
+		}
+	case SpellMetalskin:
+		reag = checkReagents(ch, SpellMetalskin, getLevel(ch), "chunk of iron",
+			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
+	}
+
+	saved := magSavingThrow(victim, savetype)
+	magAffectsApply(level, ch, victim, spellNum, saved, reag, world)
+}
+
+// magAffectsApply is the deterministic core of MagAffects. It applies the spell
+// affects for a given spell number assuming the saving throw result and reagent
+// bonus are already known. This makes the C affect table testable without RNG.
+func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool, reag int, world interface{}) {
 	var aff *engine.Affect
 
 	switch spellNum {
 	case SpellChillTouch:
 		dur := 4
-		if magSavingThrow(victim, savetype) {
+		if saved {
 			dur = 1
 		}
 		aff = engine.NewAffect(SpellChillTouch, engine.ApplyStr, dur, -1, "chill touch")
@@ -36,17 +56,11 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		applyAffect(victim, aff)
 		aff = engine.NewAffect(SpellBless, engine.ApplySavingSpell, 6, -2, "bless")
 		applyAffect(victim, aff)
+		aff = nil
 	case SpellArmor:
 		aff = engine.NewAffect(SpellArmor, engine.ApplyAC, 24, -15, "armor")
 	case SpellBlindness, SpellSmokescreen:
-		reag := 0
-		if isClassMage(ch) {
-			reag = checkReagents(ch, SpellBlindness, level)
-			if reag > 0 {
-				sendToCaster(ch, "You crush a small lens under your heel.\r\n")
-			}
-		}
-		if magSavingThrow(victim, savetype) {
+		if saved {
 			if spellNum == SpellBlindness {
 				sendToCaster(ch, "Your magic fades, then dies out totally.\r\n")
 			}
@@ -56,9 +70,11 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		aff = engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4 + reag), "blindness")
 		applyAffect(victim, aff)
 		aff = engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness")
+		applyAffect(victim, aff)
 		sendToVictim(victim, "You have been blinded!\r\n")
+		aff = nil
 	case SpellCurse:
-		if magSavingThrow(victim, savetype) {
+		if saved {
 			sendToVictim(victim, "The spell had no effect.\r\n")
 			npcRetaliate(victim, ch)
 			return
@@ -72,8 +88,10 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		applyAffect(victim, aff)
 		// Hitroll penalty — C source: magic.c curse also applies APPLY_HITROLL
 		aff = engine.NewAffect(SpellCurse, engine.ApplyHitroll, curseDur, -3, "curse")
+		applyAffect(victim, aff)
 		sendToVictim(victim, "You feel very unlucky.\r\n")
 		sendToCaster(ch, "They are now cursed!\r\n")
+		aff = nil
 	case SpellInvisible:
 		aff = engine.NewAffectDirect(SpellInvisible, engine.ApplyNone, 12+getLevel(ch)/4, 0, engine.AFFInvisible, "invisibility")
 	case SpellSanctuary:
@@ -89,7 +107,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 			sendToCaster(ch, "Your victim is immune to sleep!\r\n")
 			return
 		}
-		if magSavingThrow(victim, savetype) {
+		if saved {
 			sendToVictim(victim, "You resist the spell!\r\n")
 			npcRetaliate(victim, ch)
 			return
@@ -106,7 +124,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		return
 	case SpellFlameStrike:
 		// C source: magic.c:1109-1129 — outdoor-only DOT with saving throw
-		if magSavingThrow(victim, savetype) {
+		if saved {
 			sendToCaster(ch, "Nothing seems to happen.\r\n")
 			return
 		}
@@ -129,7 +147,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		}
 		aff = engine.NewAffectDirect(SpellFlameStrike, engine.ApplyNone, dur, 0, engine.AFFFlaming, "flamestrike")
 	case SpellPoison:
-		if magSavingThrow(victim, savetype) {
+		if saved {
 			npcRetaliate(victim, ch)
 			return
 		}
@@ -207,8 +225,6 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	case SpellChameleon:
 		aff = engine.NewAffectDirect(SpellChameleon, engine.ApplyNone, getLevel(ch), 0, engine.AFFHide, "chameleon")
 	case SpellMetalskin:
-		reag := checkReagents(ch, SpellMetalskin, getLevel(ch), "chunk of iron",
-			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
 		applyAffect(victim, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"))
 		applyAffect(victim, engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
 	case SpellInvulnerability:
@@ -230,7 +246,9 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 		return
 	}
 
-	applyAffect(victim, aff)
+	if aff != nil {
+		applyAffect(victim, aff)
+	}
 }
 
 // MagPoints handles HP/MV restoration spells.
@@ -238,58 +256,95 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 	if victim == nil {
 		return
 	}
-	_ = ch
 	_ = savetype
 	_ = world
 
-	hit := 0
+	isPsiMystic := isClassPsionicOrMystic(getClass(ch))
+	formula, ok := magPointsFormula(level, spellNum, isPsiMystic)
+	if !ok {
+		return
+	}
+
+	hit := dice(formula.hitNum, formula.hitSides) + formula.hitFlat
+	move := dice(formula.moveNum, formula.moveSides) + formula.moveFlat
 
 	switch spellNum {
 	case SpellCureLight:
-		hit = dice(2, 8) + 1 + (level >> 2)
 		sendToVictim(victim, "You feel better.\r\n")
 	case SpellCureCritic:
-		hit = dice(5, 8) + 3 + (level >> 2)
 		sendToVictim(victim, "You feel a lot better!\r\n")
-	case SpellHeal:
-		hit = 100 + dice(3, 8)
+	case SpellHeal, SpellMassHeal:
 		sendToVictim(victim, "A warm feeling floods your body.\r\n")
-	case SpellVitality:
-		hit = dice(5, 10)
-		sendToVictim(victim, "You feel vitalized!\r\n")
 	case SpellCellAdjustment:
-		hit = 90 + dice(2, 8)
-		sendToVictim(victim, "You focus your mind on healing your body..\r\n")
-	case SpellMassHeal:
-		hit = 200
-		sendToVictim(victim, "A warm feeling floods your body.\r\n")
+		if isPsiMystic {
+			sendToVictim(victim, "You focus your mind on healing your body..\r\n")
+			sendToVictim(victim, "Your wounds mend themselves!\r\n")
+		} else {
+			sendToVictim(victim, "A warm feeling floods your body.\r\n")
+		}
+	case SpellVitality:
+		sendToVictim(victim, "You feel vitalized!\r\n")
 	case SpellInvigorate:
 		sendToVictim(victim, "You feel invigorated!\r\n")
-		// Movement restoration — healHP handles hit, we handle move separately
-		type mover interface {
-			GetMove() int
-			GetMaxMove() int
-			SetMove(int)
-		}
-		if m, ok := victim.(mover); ok {
-			move := dice(10, 10)
-			newMove := m.GetMove() + move
-			if newMove > m.GetMaxMove() {
-				newMove = m.GetMaxMove()
-			}
-			m.SetMove(newMove)
-		}
 	case SpellLayHands:
 		if ch == victim {
 			sendToVictim(victim, "Your wounds mend beneath your hands!\r\n")
 		} else {
 			sendToCaster(ch, "Your wounds start to heal beneath $n's hands!\r\n")
 		}
-		hit = dice(3, getLevel(ch))
 	}
 
 	if hit > 0 {
 		healHP(victim, hit)
+	}
+	if move > 0 {
+		type mover interface {
+			GetMove() int
+			GetMaxMove() int
+			SetMove(int)
+		}
+		if m, ok := victim.(mover); ok {
+			newMove := m.GetMove() + move
+			if newMove > m.GetMaxMove() {
+				newMove = m.GetMaxMove()
+			}
+			m.SetMove(newMove)
+		}
+	}
+}
+
+// pointsFormula describes the dice + flat components of a healing/movement spell.
+// It mirrors src/magic.c:mag_points() without applying any RNG.
+type pointsFormula struct {
+	hitNum, hitSides, hitFlat   int
+	moveNum, moveSides, moveFlat int
+}
+
+// magPointsFormula returns the base healing (hit) and movement restoration formula for a spell.
+// It mirrors src/magic.c:mag_points() dice formulas exactly, with no RNG and no side effects.
+// isPsionicOrMystic controls the heal/cell-adjustment branch (C: IS_PSIONIC || IS_MYSTIC).
+// Returns ok=false for spell numbers that are not healing spells in C's mag_points().
+func magPointsFormula(level, spellNum int, isPsionicOrMystic bool) (pointsFormula, bool) {
+	switch spellNum {
+	case SpellCureLight:
+		return pointsFormula{hitNum: 2, hitSides: 8, hitFlat: 1 + (level >> 2)}, true
+	case SpellCureCritic:
+		return pointsFormula{hitNum: 5, hitSides: 8, hitFlat: 3 + (level >> 2)}, true
+	case SpellHeal, SpellCellAdjustment:
+		if isPsionicOrMystic {
+			return pointsFormula{hitNum: 2, hitSides: 8, hitFlat: 90}, true
+		}
+		return pointsFormula{hitNum: 3, hitSides: 8, hitFlat: 100}, true
+	case SpellMassHeal:
+		return pointsFormula{hitFlat: 200}, true
+	case SpellVitality:
+		return pointsFormula{hitNum: 5, hitSides: 10, moveNum: 10, moveSides: 10}, true
+	case SpellInvigorate:
+		return pointsFormula{moveNum: 10, moveSides: 10}, true
+	case SpellLayHands:
+		return pointsFormula{hitNum: 3, hitSides: level}, true
+	default:
+		return pointsFormula{}, false
 	}
 }
 
@@ -945,112 +1000,115 @@ func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int 
 }
 
 func init() {
-	// Wave A manual spell registrations — from src/spell_parser.c spello() calls.
-	// C spello() arg order: maxMana, minMana, change.
-	// setupSpellInfo() arg order: manaMin, manaMax, manaChange.
+	// Spell info table transcribed verbatim from src/spell_parser.c spello() calls.
+	setupSpellInfo(SpellArmor, PosFighting, 15, 30, 3, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellTeleport, PosFighting, 50, 60, 3, RoutineManual, false, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellBless, PosStanding, 10, 36, 2, RoutineAffects | RoutineAlterObjs, false, TarCharRoom | TarObjInv)
+	setupSpellInfo(SpellBlindness, PosFighting, 25, 35, 1, RoutineAffects, true, TarCharRoom | TarNotSelf | TarFightVict)
+	setupSpellInfo(SpellBurningHands, PosFighting, 20, 45, 5, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellCallLightning, PosFighting, 52, 68, 5, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellCharm, PosFighting, 50, 75, 5, RoutineManual, true, TarCharRoom | TarNotSelf)
+	setupSpellInfo(SpellChillTouch, PosFighting, 15, 35, 5, RoutineDamage | RoutineAffects, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellClone, PosStanding, 65, 80, 5, RoutineSummons, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellColorSpray, PosFighting, 38, 58, 4, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellControlWeather, PosStanding, 25, 75, 5, RoutineManual, false, TarIgnore)
+	setupSpellInfo(SpellCreateFood, PosStanding, 10, 35, 5, RoutineCreations, false, TarIgnore)
+	setupSpellInfo(SpellCreateWater, PosStanding, 10, 35, 5, RoutineManual, false, TarObjInv | TarObjEquip)
+	setupSpellInfo(SpellCureBlind, PosStanding, 5, 35, 5, RoutineUnaffects, false, TarCharRoom)
+	setupSpellInfo(SpellCureCritic, PosFighting, 40, 70, 5, RoutinePoints, false, TarCharRoom)
+	setupSpellInfo(SpellCureLight, PosFighting, 10, 30, 2, RoutinePoints, false, TarCharRoom)
+	setupSpellInfo(SpellCurse, PosFighting, 50, 80, 2, RoutineAffects | RoutineAlterObjs, true, TarCharRoom | TarObjInv | TarFightVict)
+	setupSpellInfo(SpellDetectAlign, PosStanding, 10, 20, 2, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellDetectInvis, PosStanding, 10, 20, 2, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellDetectMagic, PosStanding, 10, 20, 2, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellDetectPoison, PosStanding, 10, 20, 2, RoutineManual, false, TarCharRoom | TarObjInv | TarObjRoom)
+	setupSpellInfo(SpellDispelEvil, PosFighting, 65, 95, 5, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellDispelGood, PosFighting, 65, 95, 5, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellEarthquake, PosFighting, 50, 70, 5, RoutineAreas, true, TarIgnore)
+	setupSpellInfo(SpellDreamTravel, PosStanding, 45, 60, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellEnchantWeapon, PosStanding, 150, 200, 10, RoutineManual, false, TarObjInv | TarObjEquip)
+	setupSpellInfo(SpellEnergyDrain, PosFighting, 45, 60, 5, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellHolyShield, PosStanding, 65, 90, 5, RoutineGroups, false, TarIgnore)
+	setupSpellInfo(SpellFireball, PosFighting, 50, 70, 2, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellGroupHeal, PosFighting, 150, 210, 5, RoutineGroups, false, TarIgnore)
+	setupSpellInfo(SpellChameleon, PosStanding, 30, 50, 5, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellGroupRecall, PosStanding, 125, 155, 5, RoutineGroups, false, TarIgnore)
+	setupSpellInfo(SpellHarm, PosFighting, 75, 105, 5, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellHaste, PosStanding, 140, 140, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellHeal, PosFighting, 80, 90, 3, RoutinePoints | RoutineAffects | RoutineUnaffects, false, TarCharRoom)
+	setupSpellInfo(SpellHellfire, PosFighting, 150, 200, 10, RoutineManual | RoutineAreas, true, TarIgnore)
+	setupSpellInfo(SpellInfravision, PosStanding, 25, 25, 1, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellGroupInvis, PosStanding, 135, 135, 1, RoutineGroups, false, TarIgnore)
+	setupSpellInfo(SpellInvisible, PosStanding, 45, 45, 1, RoutineAffects | RoutineAlterObjs, false, TarCharRoom | TarObjInv | TarObjRoom)
+	setupSpellInfo(SpellLevitate, PosStanding, 70, 90, 5, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellLightningBolt, PosFighting, 34, 54, 4, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellLocateObject, PosStanding, 20, 25, 1, RoutineManual, false, TarObjWorld)
+	setupSpellInfo(SpellMagicMissile, PosFighting, 15, 30, 5, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellMindPoke, PosFighting, 15, 30, 5, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellMindBlast, PosFighting, 40, 70, 2, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellPoison, PosFighting, 40, 50, 2, RoutineAffects | RoutineAlterObjs, true, TarCharRoom | TarNotSelf | TarObjInv | TarFightVict)
+	setupSpellInfo(SpellFlamestrike, PosStanding, 100, 105, 1, RoutineAffects, true, TarCharRoom | TarNotSelf)
+	setupSpellInfo(SpellProtFromEvil, PosStanding, 50, 50, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellProtFromGood, PosStanding, 50, 50, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellRemoveCurse, PosStanding, 45, 45, 1, RoutineUnaffects | RoutineAlterObjs, false, TarCharRoom | TarObjInv)
+	setupSpellInfo(SpellSanctuary, PosStanding, 85, 110, 2, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellShockingGrasp, PosFighting, 35, 55, 5, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellSleep, PosStanding, 35, 40, 1, RoutineAffects, true, TarCharRoom | TarNotSelf)
 	setupSpellInfo(SpellSobriety, PosStanding, 20, 35, 5, RoutineManual, false, TarCharRoom)
-	setupSpellInfo(SpellZen, PosFighting, 60, 70, 4, RoutineManual, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellDetectPoison, PosStanding, 10, 20, 2, RoutineManual, false, TarCharRoom|TarObjInv|TarObjRoom)
-	setupSpellInfo(SpellCalliope, PosFighting, 50, 100, 10, RoutineManual, true, TarCharRoom|TarFightVict)
+	setupSpellInfo(SpellStrength, PosStanding, 30, 35, 1, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellSummon, PosStanding, 70, 90, 1, RoutineManual, false, TarCharWorld | TarNotSelf)
+	setupSpellInfo(SpellCoC, PosStanding, 70, 90, 1, RoutineManual, false, TarIgnore)
+	setupSpellInfo(SpellWordOfRecall, PosFighting, 50, 50, 1, RoutineManual, false, TarCharRoom)
+	setupSpellInfo(SpellRemovePoison, PosStanding, 30, 40, 1, RoutineUnaffects | RoutineAlterObjs, false, TarCharRoom | TarObjInv | TarObjRoom)
+	setupSpellInfo(SpellSenseLife, PosStanding, 20, 30, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellSlow, PosStanding, 50, 80, 2, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellMassHeal, PosFighting, 100, 130, 1, RoutinePoints | RoutineAffects | RoutineUnaffects, false, TarCharRoom)
+	setupSpellInfo(SpellWaterwalk, PosStanding, 55, 80, 1, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellFly, PosStanding, 80, 100, 5, RoutineAffects, false, TarCharRoom)
 	setupSpellInfo(SpellLycanthropy, PosStanding, 1, 1, 1, RoutineManual, false, TarCharRoom)
 	setupSpellInfo(SpellVampirism, PosStanding, 1, 1, 1, RoutineManual, false, TarCharRoom)
-	setupSpellInfo(SpellControlWeather, PosStanding, 25, 75, 5, RoutineManual, false, TarIgnore)
-	setupSpellInfo(SpellCoC, PosStanding, 70, 90, 1, RoutineManual, false, TarIgnore)
-	setupSpellInfo(SpellMentalLapse, PosStanding, 90, 100, 1, RoutineManual, false, TarCharWorld)
-	// Wave B manual spell registrations
-	setupSpellInfo(SpellCreateWater, PosStanding, 10, 35, 5, RoutineManual, false, TarObjInv|TarObjEquip)
-	setupSpellInfo(SpellEnchantWeapon, PosStanding, 150, 200, 10, RoutineManual, false, TarObjInv|TarObjEquip)
-	setupSpellInfo(SpellEnchantArmor, PosStanding, 130, 150, 10, RoutineManual, false, TarObjInv|TarObjEquip)
-	setupSpellInfo(SpellIdentify, PosStanding, 100, 125, 10, RoutineManual, false, TarCharRoom|TarObjInv|TarObjRoom)
-	setupSpellInfo(SpellWordOfRecall, PosFighting, 50, 50, 1, RoutineManual, false, TarCharRoom)
-	setupSpellInfo(SpellTeleport, PosFighting, 60, 50, 3, RoutineManual, false, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellMeteorSwarm, PosFighting, 80, 120, 8, RoutineManual, true, TarIgnore)
-	setupSpellInfo(SpellHellfire, PosFighting, 100, 150, 10, RoutineManual, true, TarIgnore)
-	setupSpellInfo(SpellCharm, PosFighting, 50, 50, 1, RoutineManual, false, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellSummon, PosFighting, 100, 100, 5, RoutineManual, false, TarCharRoom)
-	setupSpellInfo(SpellDivineInt, PosFighting, 200, 200, 10, RoutineManual, false, TarIgnore)
-	setupSpellInfo(SpellConjureElemental, PosFighting, 150, 150, 5, RoutineManual, false, TarIgnore)
-	setupSpellInfo(SpellMindsight, PosFighting, 80, 120, 5, RoutineManual, false, TarCharRoom)
-
-	// --- Routine-based spell registrations (MagAffects/MagDamage/MagPoints/etc.) ---
-	// From C source spello() calls. These use the generic framework, not custom cast functions.
-	// MAG_AFFECTS spells
-	setupSpellInfo(SpellArmor, PosStanding, 15, 30, 3, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellBless, PosStanding, 15, 30, 3, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellBlindness, PosStanding, 25, 50, 2, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellChillTouch, PosFighting, 15, 30, 3, RoutineAffects, false, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellDetectInvis, PosStanding, 20, 30, 2, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellDetectMagic, PosStanding, 15, 30, 2, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellHaste, PosFighting, 50, 80, 3, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellSlow, PosFighting, 50, 80, 2, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellInvisible, PosStanding, 25, 50, 4, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellPoison, PosFighting, 25, 50, 3, RoutineAffects, false, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellSanctuary, PosStanding, 50, 80, 4, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellSleep, PosStanding, 25, 50, 1, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellStrength, PosStanding, 20, 35, 1, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellSenseLife, PosStanding, 20, 30, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellInfravision, PosStanding, 20, 40, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellWaterBreathe, PosStanding, 58, 92, 6, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellFly, PosStanding, 80, 100, 5, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellLevitate, PosStanding, 40, 60, 3, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellProtFromEvil, PosStanding, 25, 50, 3, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellProtFromGood, PosStanding, 25, 50, 3, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellMetalskin, PosStanding, 60, 75, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellInvulnerability, PosStanding, 85, 85, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellPsyshield, PosStanding, 20, 30, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellAdrenaline, PosStanding, 30, 35, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellLessPercept, PosStanding, 30, 40, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellGreatPercept, PosStanding, 45, 65, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellChangeDensity, PosStanding, 55, 70, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellTransparency, PosStanding, 25, 35, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellKnowAlign, PosStanding, 20, 20, 1, RoutineAffects, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellIntellect, PosStanding, 60, 60, 1, RoutineAffects, false, TarCharRoom)
-	setupSpellInfo(SpellMindBar, PosStanding, 100, 115, 1, RoutineAffects, true, TarCharRoom)
-	setupSpellInfo(SpellSmokescreen, PosFighting, 100, 100, 1, RoutineMasses, true, TarIgnore)
-	// MAG_POINTS spells
-	setupSpellInfo(SpellCureLight, PosFighting, 10, 20, 2, RoutinePoints, false, TarCharRoom)
-	setupSpellInfo(SpellCureCritic, PosFighting, 30, 50, 2, RoutinePoints, false, TarCharRoom)
-	setupSpellInfo(SpellHeal, PosFighting, 50, 100, 5, RoutinePoints, false, TarCharRoom)
+	setupSpellInfo(SpellEnchantArmor, PosStanding, 130, 150, 10, RoutineManual, false, TarObjInv | TarObjEquip)
+	setupSpellInfo(SpellIdentify, PosStanding, 100, 125, 10, RoutineManual, false, TarCharRoom | TarObjInv | TarObjRoom)
+	setupSpellInfo(SpellMetalskin, PosFighting, 60, 75, 1, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellInvulnerability, PosFighting, 85, 85, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
 	setupSpellInfo(SpellVitality, PosFighting, 100, 110, 1, RoutinePoints, false, TarCharRoom)
 	setupSpellInfo(SpellInvigorate, PosFighting, 95, 110, 1, RoutinePoints, false, TarCharRoom)
-	setupSpellInfo(SpellLayHands, PosStanding, 90, 90, 1, RoutinePoints, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellCellAdjustment, PosFighting, 75, 85, 1, RoutinePoints, false, TarCharRoom|TarSelfOnly)
-	setupSpellInfo(SpellCureBlind, PosStanding, 25, 50, 2, RoutineUnaffects, false, TarCharRoom)
-	setupSpellInfo(SpellRemoveCurse, PosStanding, 25, 50, 2, RoutineUnaffects, false, TarCharRoom)
-	setupSpellInfo(SpellRemovePoison, PosStanding, 30, 40, 1, RoutineUnaffects, false, TarCharRoom|TarObjInv|TarObjRoom)
-	// MAG_GROUPS spells
-	setupSpellInfo(SpellGroupHeal, PosFighting, 150, 210, 5, RoutineGroups, false, TarCharRoom)
-	setupSpellInfo(SpellGroupRecall, PosFighting, 125, 155, 5, RoutineGroups, false, TarCharRoom)
-	setupSpellInfo(SpellGroupInvis, PosStanding, 50, 100, 5, RoutineGroups, false, TarCharRoom)
-	setupSpellInfo(SpellMassHeal, PosFighting, 100, 130, 1, RoutineGroups, false, TarCharRoom)
-	// MAG_AREAS spells
+	setupSpellInfo(SpellPsyshield, PosFighting, 20, 30, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellAdrenaline, PosStanding, 30, 35, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellMindAttack, PosFighting, 25, 55, 1, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellLessPercept, PosStanding, 30, 40, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellGreatPercept, PosStanding, 45, 65, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellChangeDensity, PosStanding, 55, 70, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
 	setupSpellInfo(SpellAcidBlast, PosFighting, 20, 35, 1, RoutineAreas, true, TarIgnore)
-	setupSpellInfo(SpellEarthquake, PosFighting, 50, 80, 4, RoutineAreas, true, TarIgnore)
-	setupSpellInfo(SpellFireBreath, PosFighting, 50, 70, 5, RoutineAreas, true, TarIgnore)
-	// MAG_SUMMONS spells
+	setupSpellInfo(SpellDominate, PosFighting, 50, 75, 5, RoutineManual, true, TarCharRoom | TarNotSelf)
+	setupSpellInfo(SpellMassDominate, PosStanding, 150, 220, 10, RoutineAreas, true, TarIgnore)
+	setupSpellInfo(SpellCellAdjustment, PosFighting, 75, 85, 1, RoutinePoints, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellZen, PosFighting, 60, 70, 4, RoutineManual, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellMirrorImage, PosStanding, 130, 150, 5, RoutineManual, false, TarIgnore)
+	setupSpellInfo(SpellSoulLeech, PosFighting, 55, 60, 1, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellMindsight, PosStanding, 60, 70, 1, RoutineManual, false, TarCharWorld)
+	setupSpellInfo(SpellMindBar, PosStanding, 100, 115, 1, RoutineAffects, true, TarCharRoom)
+	setupSpellInfo(SpellTransparency, PosStanding, 25, 35, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellKnowAlign, PosStanding, 20, 20, 1, RoutineAffects, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellGate, PosStanding, 95, 95, 1, RoutineManual, false, TarIgnore)
+	setupSpellInfo(SpellIntellect, PosStanding, 60, 60, 1, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellLayHands, PosStanding, 90, 90, 1, RoutinePoints, false, TarCharRoom | TarSelfOnly)
+	setupSpellInfo(SpellMentalLapse, PosStanding, 90, 100, 1, RoutineManual, false, TarCharWorld)
+	setupSpellInfo(SpellSmokescreen, PosFighting, 100, 100, 1, RoutineMasses, true, TarIgnore)
+	setupSpellInfo(SpellDisrupt, PosFighting, 165, 175, 1, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellDivineInt, PosStanding, 290, 290, 1, RoutineManual, false, TarIgnore)
+	setupSpellInfo(SpellDisintegrate, PosFighting, 120, 120, 1, RoutineDamage, true, TarCharRoom | TarFightVict)
 	setupSpellInfo(SpellAnimateDead, PosStanding, 100, 120, 10, RoutineSummons, false, TarObjRoom)
-	// MAG_CREATIONS spells
-	setupSpellInfo(SpellCreateFood, PosStanding, 10, 25, 1, RoutineCreations, false, TarIgnore)
-	// MAG_DAMAGE spells (registered separately for damage routing)
-	setupSpellInfo(SpellMagicMissile, PosFighting, 15, 35, 3, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellBurningHands, PosFighting, 15, 35, 3, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellLightningBolt, PosFighting, 15, 40, 3, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellColorSpray, PosFighting, 15, 45, 3, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellFireball, PosFighting, 15, 60, 3, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellDisrupt, PosFighting, 165, 175, 1, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellDisintegrate, PosFighting, 120, 120, 1, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellDispelEvil, PosFighting, 65, 95, 5, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellDispelGood, PosFighting, 65, 95, 5, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellCallLightning, PosFighting, 15, 40, 3, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellHarm, PosFighting, 50, 100, 5, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellSoulLeech, PosFighting, 55, 60, 1, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellEnergyDrain, PosFighting, 50, 100, 2, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellPsiblast, PosFighting, 150, 180, 10, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellMindPoke, PosFighting, 15, 30, 5, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellMindBlast, PosFighting, 40, 70, 2, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellMindAttack, PosFighting, 25, 55, 1, RoutineDamage, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellFlameStrike, PosFighting, 100, 105, 1, RoutineAffects, true, TarCharRoom|TarFightVict)
-	setupSpellInfo(SpellGate, PosStanding, 95, 95, 1, RoutineManual, true, TarCharWorld|TarNotSelf)
+	setupSpellInfo(SpellCalliope, PosFighting, 50, 100, 10, RoutineManual, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellMeteorSwarm, PosStanding, 170, 180, 5, RoutineManual, true, TarIgnore)
+	setupSpellInfo(SpellPsiblast, PosFighting, 150, 180, 10, RoutineDamage, true, TarCharRoom | TarFightVict)
+	setupSpellInfo(SpellWaterBreathe, PosStanding, 58, 92, 6, RoutineAffects, false, TarCharRoom)
+	setupSpellInfo(SpellConjureElemental, PosStanding, 145, 165, 1, RoutineManual, false, TarIgnore)
+	setupSpellInfo(SpellFireBreath, PosFighting, 50, 70, 5, RoutineAreas, true, TarIgnore)
+	setupSpellInfo(SpellFrostBreath, PosFighting, 50, 70, 5, RoutineAreas, true, TarIgnore)
+	setupSpellInfo(SpellGasBreath, PosFighting, 50, 70, 5, RoutineAreas, true, TarIgnore)
+	setupSpellInfo(SpellAcidBreath, PosFighting, 50, 70, 5, RoutineAreas, true, TarIgnore)
+	setupSpellInfo(SpellLightningBreath, PosFighting, 50, 70, 5, RoutineAreas, true, TarIgnore)
 }
 
 // --- Wave A manual spell implementations ---

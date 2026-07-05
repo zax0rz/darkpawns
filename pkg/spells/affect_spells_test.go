@@ -99,9 +99,9 @@ func TestMagAffects_Bless(t *testing.T) {
 
 	MagAffects(20, ch, victim, SpellBless, int(SaveSpell), nil)
 
-	// Note: Code double-applies the saving spell affect in Bless, ending up with 3 affects.
-	if len(victim.activeAffects) != 3 {
-		t.Fatalf("expected 3 affects on victim for Bless, got %d", len(victim.activeAffects))
+	// Bless applies two affects: hitroll +2 and saving spell -2.
+	if len(victim.activeAffects) != 2 {
+		t.Fatalf("expected 2 affects on victim for Bless, got %d", len(victim.activeAffects))
 	}
 	aff1 := victim.activeAffects[0]
 	if aff1.Location != engine.ApplyHitroll || aff1.Magnitude != 2 {
@@ -215,9 +215,9 @@ func TestMagAffects_Metalskin(t *testing.T) {
 
 	MagAffects(30, ch, victim, SpellMetalskin, int(SaveSpell), nil)
 
-	// Metalskin double-applies the AC affect at the end of MagAffects, ending up with 3 affects.
-	if len(victim.activeAffects) != 3 {
-		t.Fatalf("expected 3 affects for Metalskin, got %d", len(victim.activeAffects))
+	// Metalskin applies two affects: AFF_METALSKIN flag and AC modifier.
+	if len(victim.activeAffects) != 2 {
+		t.Fatalf("expected 2 affects for Metalskin, got %d", len(victim.activeAffects))
 	}
 	aff1 := victim.activeAffects[0]
 	if aff1.SpellID != SpellMetalskin || aff1.Flags != engine.AFFMetalskin {

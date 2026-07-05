@@ -14,82 +14,54 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		return
 	}
 
-	// Character type checks
 	isMage := isClassMage(ch)
-	dam := 0
 
+	// Consume reagents for mage damage spells. In C, has_reagents() is a boolean;
+	// the bonus is the full caster level when the reagent is present.
+	hasReag := false
 	switch spellNum {
-	/* --- MAGE SPELLS --- */
 	case SpellMagicMissile:
-		if isMage {
-			reag := checkReagents(ch, SpellMagicMissile, level, "shard of obsidian",
-				"Pulling a shard of obsidian from a pocket, you crush it under your heel...",
-				"$n pulls something out of $s pocket and crushes it beneath $s heel...")
-			dam = dice(4, 3) + reag + level
-		} else {
-			dam = dice(4, 3) + level
-		}
-
-	case SpellChillTouch:
-		dam = dice(5, 3) + level
-
-	case SpellBurningHands:
-		dam = dice(4, 5) + level
-
-	case SpellShockingGrasp:
-		dam = dice(4, 7) + level
-
-	case SpellLightningBolt:
-		dam = dice(9, 4) + level
-
+		hasReag = isMage && consumeReagent(ch, SpellMagicMissile, level, "shard of obsidian",
+			"Pulling a shard of obsidian from a pocket, you crush it under your heel...",
+			"$n pulls something out of $s pocket and crushes it beneath $s heel...")
 	case SpellColorSpray:
-		if isMage {
-			reag := checkReagents(ch, SpellColorSpray, level, "prism",
-				"Pulling a prism from a pocket, you crush it under your heel...",
-				"$n pulls something out of $s pocket and crushes it beneath $s heel...")
-			dam = dice(9, 7) + reag + level
-		} else {
-			dam = dice(9, 7) + level
-		}
-
+		hasReag = isMage && consumeReagent(ch, SpellColorSpray, level, "prism",
+			"Pulling a prism from a pocket, you crush it under your heel...",
+			"$n pulls something out of $s pocket and crushes it beneath $s heel...")
 	case SpellFireball:
-		if isMage {
-			reag := checkReagents(ch, SpellFireball, level, "pinch of ash",
-				"Pulling a pinch of ash from a pocket, you cast it about the room...",
-				"$n pulls a pinch of ash out of a pocket and casts it about the room.")
-			dam = dice(12, 8) + 20 + level + level + reag
-		} else {
-			dam = dice(12, 8) + level*2
-		}
-
+		hasReag = isMage && consumeReagent(ch, SpellFireball, level, "pinch of ash",
+			"Pulling a pinch of ash from a pocket, you cast it about the room...",
+			"$n pulls a pinch of ash out of a pocket and casts it about the room.")
 	case SpellDisintegrate:
-		if isMage {
-			reag := checkReagents(ch, SpellDisintegrate, level, "eye of a beholder",
-				"Pulling the eye of a beholder from a pocket, you throw it to the ground...",
-				"$n pulls a small orb out of a pocket and dashes it to the ground.")
-			dam = dice(18, 8) + 3*level + reag
-		} else {
-			dam = dice(18, 8) + level
-		}
+		hasReag = isMage && consumeReagent(ch, SpellDisintegrate, level, "eye of a beholder",
+			"Pulling the eye of a beholder from a pocket, you throw it to the ground...",
+			"$n pulls a small orb out of a pocket and dashes it to the ground.")
+	case SpellSoulLeech, SpellEnergyDrain:
+		hasReag = isMage && consumeReagent(ch, SpellEnergyDrain, level, "vampire dust",
+			"Pulling the vampire dust from a pocket, you throw it into the air...",
+			"$n throws some dust into the air...")
+	}
+
+	// Compute base damage dice/flat from the C mag_damage() formula table.
+	num, sides, flat, ok := magDamageFormula(level, getLevel(victim), spellNum, isMage, hasReag)
+	if !ok {
+		return
+	}
+
+	dam := dice(num, sides) + flat
+
+	// Backfire chances for mage spells that can turn the spell on the caster.
+	switch spellNum {
+	case SpellDisintegrate, SpellDisrupt:
 		if randBool(51) && !isNPC(ch) {
 			sendToCaster(ch, "Your magick backfires!\r\n")
 			victim = ch
 		}
+	}
 
-	case SpellDisrupt:
-		if isMage {
-			dam = dice(20, 7) + 3*level
-		} else {
-			dam = dice(20, 7) + level
-		}
-		if randBool(51) && !isNPC(ch) {
-			sendToCaster(ch, "Your magick backfires!\r\n")
-			victim = ch
-		}
-
-	/* --- CLERIC SPELLS --- */
+	// Alignment-based lethal/special cases for dispel evil/good.
+	switch spellNum {
 	case SpellDispelEvil:
-		dam = dice(9, 5) + level + 5 + level/2
 		if isEvil(ch) {
 			if !isNPC(ch) {
 				victim = ch
@@ -99,9 +71,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 			sendToCaster(ch, "The gods protect $N.\r\n")
 			return
 		}
-
 	case SpellDispelGood:
-		dam = dice(9, 5) + level + 5
 		if isGood(ch) {
 			if !isNPC(ch) {
 				victim = ch
@@ -111,74 +81,12 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 			sendToCaster(ch, "The gods protect $N.\r\n")
 			return
 		}
+	}
 
-	case SpellCallLightning:
-		dam = dice(10, 8) + level + 5
-
-	case SpellHarm:
-		dam = dice(12, 8) + level*2
-
-	/* --- NINJA / MAGE --- */
-	case SpellSoulLeech, SpellEnergyDrain:
-		if getLevel(victim) <= 2 {
-			dam = 100
-		} else {
-			dam = dice(10, 6) + level
-		}
-		if isMage {
-			reag := checkReagents(ch, SpellEnergyDrain, level, "vampire dust",
-				"Pulling the vampire dust from a pocket, you throw it into the air...",
-				"$n throws some dust into the air...")
-			dam += reag
-		}
-
-	/* --- AREA SPELLS --- */
-	case SpellEarthquake:
-		dam = dice(7, 7) + level
-
-	case SpellAcidBlast:
-		dam = dice(4, 3) + level
-
-	/* --- PSIONIC SPELLS --- */
-	case SpellMindPoke:
-		dam = dice(3, 3) + level
-
-	case SpellMindAttack:
-		dam = dice(4, 6) + level
-
-	case SpellMindBlast:
-		dam = dice(9, 7) + level + level/2
-
-	case SpellPsiblast:
-		dam = dice(15, 13) + 3*level
-		if randBool(31) && !isNPC(ch) {
-			sendToCaster(ch, "Suddenly, your psionic power recoils!\r\n")
-			victim = ch
-		}
-
-		// DIVERGENCE (DP-938): the following spell numbers have no case in C's
-		// mag_damage() switch (src/magic.c:615-819) and must not fabricate damage
-		// here. Each has a different real home:
-		//   - SpellHellfire, SpellMeteorSwarm, SpellCalliope: real MANUAL_SPELL
-		//     routines, ported as castHellfire/castMeteorSwarm/castCalliope and
-		//     dispatched via CallMagic's RoutineManual path (see area_spells_test.go).
-		//   - SpellSmokescreen: not a damage spell in C — an affect (blindness),
-		//     handled via RoutineMasses/MagAffects.
-		//   - SpellMentalLapse: not a damage spell — resets a mob's hunting/aggro
-		//     state, ported as castMentalLapse via RoutineManual.
-		//   - SpellFireBreath/GasBreath/FrostBreath/AcidBreath/LightningBreath: mob
-		//     breath attacks (src/spec_procs.c dragon_breath). In C these are
-		//     registered MAG_AREAS with no case in mag_areas()'s switch either, so
-		//     they fall through to mag_damage() with dam left at 0 — breath
-		//     weapons deal zero damage in the original game, a long-standing C
-		//     engine bug, not a divergence to fix here.
-		//   - SpellDragonBreath: not a real C spell at all (dragon_breath picks
-		//     one of the five breath types above by mob vnum).
-		//   - SpellDrowning: C applies a flat 25hp self-damage tick in the room
-		//     pulse loop (src/comm.c:715), unrelated to spellcasting.
-		//   - SpellPetrify: C is `raw_kill()` triggered by a failed saving throw in
-		//     the Medusa special mob procedure (src/spec_procs2.c:1577), not a
-		//     dice-damage spell.
+	// Backfire / recoil effects that change the target.
+	if spellNum == SpellPsiblast && randBool(31) && !isNPC(ch) {
+		sendToCaster(ch, "Suddenly, your psionic power recoils!\r\n")
+		victim = ch
 	}
 
 	// Apply saving throw — half damage on success
@@ -222,6 +130,108 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 			sendToZone("Thunder rumbles through the air.", ch, world)
 		}
 	}
+}
+
+// magDamageFormula returns the base dice parameters and flat bonus for a damage spell.
+// It mirrors src/magic.c:mag_damage() dice formulas exactly, with no RNG and no side effects.
+// hasReagent should be true when the caster is a mage and consumed the spell's reagent.
+// For flat-only spells (e.g. energy drain on a level<=2 victim) it returns (0, 0, flat, true).
+// Returns ok=false for spell numbers that are not dice-damage spells in C's mag_damage().
+func magDamageFormula(level, victimLevel, spellNum int, isMage, hasReagent bool) (numDice, sidesDice, flat int, ok bool) {
+	switch spellNum {
+	/* --- MAGE SPELLS --- */
+	case SpellMagicMissile:
+		bonus := 0
+		if isMage && hasReagent {
+			bonus = level
+		}
+		return 4, 3, level + bonus, true
+	case SpellChillTouch:
+		return 5, 3, level, true
+	case SpellBurningHands:
+		return 4, 5, level, true
+	case SpellShockingGrasp:
+		return 4, 7, level, true
+	case SpellLightningBolt:
+		return 9, 4, level, true
+	case SpellColorSpray:
+		bonus := 0
+		if isMage && hasReagent {
+			bonus = level
+		}
+		return 9, 7, level + bonus, true
+	case SpellFireball:
+		if isMage {
+			bonus := 0
+			if hasReagent {
+				bonus = level
+			}
+			return 12, 8, 20 + level*2 + bonus, true
+		}
+		return 12, 8, level * 2, true
+	case SpellDisintegrate:
+		if isMage {
+			bonus := 0
+			if hasReagent {
+				bonus = level
+			}
+			return 18, 8, 3*level + bonus, true
+		}
+		return 18, 8, level, true
+	case SpellDisrupt:
+		if isMage {
+			return 20, 7, 3*level, true
+		}
+		return 20, 7, level, true
+
+	/* --- CLERIC SPELLS --- */
+	case SpellDispelEvil:
+		return 9, 5, 5 + level + level/2, true
+	case SpellDispelGood:
+		return 9, 5, 5 + level, true
+	case SpellCallLightning:
+		return 10, 8, 5 + level, true
+	case SpellHarm:
+		return 12, 8, level*2, true
+
+	/* --- NINJA / MAGE --- */
+	case SpellSoulLeech, SpellEnergyDrain:
+		if victimLevel <= 2 {
+			return 0, 0, 100, true
+		}
+		bonus := 0
+		if isMage && hasReagent {
+			bonus = level
+		}
+		return 10, 6, level + bonus, true
+
+	/* --- AREA SPELLS --- */
+	case SpellEarthquake:
+		return 7, 7, level, true
+	case SpellAcidBlast:
+		return 4, 3, level, true
+
+	/* --- PSIONIC SPELLS --- */
+	case SpellMindPoke:
+		return 3, 3, level, true
+	case SpellMindAttack:
+		return 4, 6, level, true
+	case SpellMindBlast:
+		return 9, 7, level + level/2, true
+	case SpellPsiblast:
+		return 15, 13, 3*level, true
+
+	default:
+		// Not a dice-damage spell in C mag_damage() (manual spells, breath weapons, etc.)
+		return 0, 0, 0, false
+	}
+}
+
+// consumeReagent checks for and removes a reagent from the caster's inventory,
+// returning true if the reagent was found. It sends flavor messages when consumed.
+func consumeReagent(ch interface{}, spellNum, level int, reagentName, casterMsg, roomMsg string) bool {
+	reag := checkReagents(ch, spellNum, level, reagentName, casterMsg, roomMsg)
+	return reag > 0
 }
 
 // inflictDamage applies damage to a victim via combat.TakeDamage().
