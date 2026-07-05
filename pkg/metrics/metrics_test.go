@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
@@ -142,6 +143,12 @@ func TestConnectionClosed_NegativeFloor(t *testing.T) {
 	if got := testutil.ToFloat64(connectionsUnderflow) - before; got != 2 {
 		t.Errorf("connections_underflow_total increased by %v, want 2", got)
 	}
+}
+
+func TestInit_TwiceDoesNotPanic(t *testing.T) {
+	fresh := prometheus.NewRegistry()
+	Init(fresh)
+	Init(fresh) // second call must not panic
 }
 
 func TestDamageDealt_Negative(t *testing.T) {

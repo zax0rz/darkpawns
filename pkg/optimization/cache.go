@@ -111,7 +111,7 @@ func (c *Cache) Stats() map[string]interface{} {
 	}
 
 	if len(c.items) > 0 {
-		stats["avg_access_per_item"] = totalAccess / len(c.items)
+		stats["avg_access_per_item"] = float64(totalAccess) / float64(len(c.items))
 		stats["expired_count"] = expiredCount
 		stats["hit_ratio"] = float64(totalAccess) / float64(len(c.items)+totalAccess)
 	}

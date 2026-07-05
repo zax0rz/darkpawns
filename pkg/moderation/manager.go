@@ -90,10 +90,14 @@ func (m *Manager) createTables() error {
 			penalty_type VARCHAR(32) NOT NULL,
 			issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			expires_at TIMESTAMP,
+			expired_at TIMESTAMP,
+			status VARCHAR(32) DEFAULT 'active',
 			reason TEXT NOT NULL,
 			issued_by VARCHAR(32) NOT NULL,
 			PRIMARY KEY (player_name, penalty_type, issued_at)
 		)`,
+		`ALTER TABLE player_penalties ADD COLUMN IF NOT EXISTS expired_at TIMESTAMP`,
+		`ALTER TABLE player_penalties ADD COLUMN IF NOT EXISTS status VARCHAR(32) DEFAULT 'active'`,
 
 		`CREATE TABLE IF NOT EXISTS word_filters (
 			id SERIAL PRIMARY KEY,
@@ -123,7 +127,7 @@ func (m *Manager) loadActivePenalties() {
 	rows, err := m.db.Query(`
 		SELECT player_name, penalty_type, issued_at, expires_at, reason, issued_by
 		FROM player_penalties
-		WHERE expires_at IS NULL OR expires_at > NOW()
+		WHERE status = 'active' AND (expires_at IS NULL OR expires_at > NOW())
 	`)
 	if err != nil {
 		slog.Error("Failed to load penalties", "error", err)
@@ -215,14 +219,17 @@ func (m *Manager) cleanupExpiredPenalties() {
 		m.activePenalties[player] = active
 	}
 
-	// Clean database if available
+	// Mark database penalties as expired instead of deleting them, preserving
+	// an audit trail for admin investigation.
 	if m.hasDB {
 		_, err := m.db.Exec(`
-			DELETE FROM player_penalties
+			UPDATE player_penalties
+			SET status = 'expired', expired_at = NOW()
 			WHERE expires_at IS NOT NULL AND expires_at <= NOW()
+			  AND status != 'expired'
 		`)
 		if err != nil {
-			slog.Error("Failed to clean expired penalties", "error", err)
+			slog.Error("Failed to mark expired penalties", "error", err)
 		}
 	}
 }

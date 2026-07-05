@@ -294,6 +294,28 @@ func TestIsMuted_CaseInsensitiveLookup(t *testing.T) {
 	}
 }
 
+func TestCleanupExpiredPenalties_RemovesFromMemory(t *testing.T) {
+	m := NewManager(nil)
+	player := "ExpiredPlayer"
+	past := time.Now().Add(-time.Hour)
+
+	m.activePenalties[player] = []PlayerPenalty{
+		{
+			PlayerName:  player,
+			PenaltyType: ActionMute,
+			IssuedAt:    past,
+			ExpiresAt:   &past,
+			IssuedBy:    "admin",
+		},
+	}
+
+	m.cleanupExpiredPenalties()
+
+	if len(m.activePenalties[player]) != 0 {
+		t.Errorf("expected expired penalty to be removed from memory, got %d", len(m.activePenalties[player]))
+	}
+}
+
 func TestPenaltyHelpersConcurrentAccess(t *testing.T) {
 	m := NewManager(nil)
 	player := "ConcurrentPlayer"

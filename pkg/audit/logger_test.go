@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 )
 
@@ -51,6 +52,43 @@ func TestAuditInit_RepeatedCalls(t *testing.T) {
 	if !bytes.Contains(data, []byte(`"action":"second"`)) {
 		t.Errorf("second audit log missing expected event: %s", data)
 	}
+}
+
+func TestAuditInit_ConcurrentLogEvent(t *testing.T) {
+	tmpDir := t.TempDir()
+	first := filepath.Join(tmpDir, "audit1.log")
+	second := filepath.Join(tmpDir, "audit2.log")
+
+	if err := Init(first); err != nil {
+		t.Fatalf("first Init failed: %v", err)
+	}
+
+	var wg sync.WaitGroup
+	stop := make(chan struct{})
+
+	// Goroutine continuously logging events.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				LogEvent(AuditEvent{EventType: "test", Action: "concurrent", Success: true})
+			}
+		}
+	}()
+
+	// Re-initialize from the main goroutine while logging is active.
+	if err := Init(second); err != nil {
+		close(stop)
+		wg.Wait()
+		t.Fatalf("second Init failed: %v", err)
+	}
+
+	close(stop)
+	wg.Wait()
 }
 
 func TestAuditLogger_LogAndClose(t *testing.T) {

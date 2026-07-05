@@ -81,6 +81,29 @@ func TestRoomCacheZeroTTLDoesNotPanic(t *testing.T) {
 	cache.Close()
 }
 
+func TestCache_Stats_AvgAccessPerItem(t *testing.T) {
+	cache := NewCache(time.Minute)
+	defer cache.Close()
+
+	cache.Set("a", 1)
+	cache.Set("b", 2)
+	cache.Set("c", 3)
+
+	cache.Get("a")
+	cache.Get("a")
+	cache.Get("b")
+
+	stats := cache.Stats()
+	avg, ok := stats["avg_access_per_item"].(float64)
+	if !ok {
+		t.Fatalf("avg_access_per_item is not float64: %T", stats["avg_access_per_item"])
+	}
+	want := 3.0 / 3.0 // totalAccess=3, itemCount=3
+	if avg != want {
+		t.Errorf("avg_access_per_item = %v, want %v", avg, want)
+	}
+}
+
 func TestCache_GetExpired(t *testing.T) {
 	cache := NewCache(50 * time.Millisecond)
 	defer cache.Close()

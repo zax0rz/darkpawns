@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -83,10 +84,16 @@ func (a *AuditLogger) Close() error {
 }
 
 // Global audit logger instance
-var globalLogger *AuditLogger
+var (
+	globalLogger *AuditLogger
+	loggerMu     sync.RWMutex
+)
 
 // Initialize the global audit logger
 func Init(filename string) error {
+	loggerMu.Lock()
+	defer loggerMu.Unlock()
+
 	if globalLogger != nil {
 		if err := globalLogger.Close(); err != nil {
 			slog.Warn("audit logger close on re-init failed", "error", err)
@@ -103,6 +110,9 @@ func Init(filename string) error {
 
 // LogEvent logs an event using the global logger
 func LogEvent(event AuditEvent) {
+	loggerMu.RLock()
+	defer loggerMu.RUnlock()
+
 	if globalLogger != nil {
 		globalLogger.Log(event)
 	}
