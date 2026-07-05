@@ -417,11 +417,12 @@ $`)
 	}
 }
 
-// command 'L' (lock) parsing
-func TestParseZonFile_LockCommand(t *testing.T) {
+// command 'L' (Start/End Looping) parsing — src/db.c:2097-2104.
+// Arg2 is loop control (0=start, non-zero=end), Arg3 is loop count.
+func TestParseZonFile_LoopCommand(t *testing.T) {
 	tmpDir := t.TempDir()
 	f := writeZonFile(t, tmpDir, "test.zon", `#700
-Lock Test~
+Loop Test~
 50 5 1
 L 0 300 2 7
 S
@@ -437,6 +438,39 @@ $`)
 	l := zone.Commands[0]
 	if l.Command != "L" || l.IfFlag != 0 || l.Arg1 != 300 || l.Arg2 != 2 || l.Arg3 != 7 {
 		t.Errorf("L command: got %+v", l)
+	}
+}
+
+// TestParseZonFile_LoopCommand_StartEnd verifies a full start/end loop pair
+// parses with the field positions the loop executor (spawner.go) expects:
+// Arg2=0 marks the loop start, Arg2!=0 marks the loop end, Arg3 is the count.
+func TestParseZonFile_LoopCommand_StartEnd(t *testing.T) {
+	tmpDir := t.TempDir()
+	f := writeZonFile(t, tmpDir, "test.zon", `#700
+Loop Start End Test~
+50 5 1
+L 0 0 0 3
+M 0 100 5 200
+L 0 0 1 0
+S
+$`)
+
+	zone, err := ParseZonFile(f)
+	if err != nil {
+		t.Fatalf("parse zon file: %v", err)
+	}
+	if len(zone.Commands) != 3 {
+		t.Fatalf("expected 3 commands, got %d", len(zone.Commands))
+	}
+
+	start := zone.Commands[0]
+	if start.Command != "L" || start.Arg2 != 0 || start.Arg3 != 3 {
+		t.Errorf("loop start: expected L with Arg2=0 (start) Arg3=3 (count), got %+v", start)
+	}
+
+	end := zone.Commands[2]
+	if end.Command != "L" || end.Arg2 != 1 {
+		t.Errorf("loop end: expected L with Arg2!=0 (end), got %+v", end)
 	}
 }
 

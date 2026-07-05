@@ -169,15 +169,8 @@ func (w *World) ValidateCrossReferences() {
 				}
 				// Arg3 is door state (0=open,1=closed,2=locked), not a key vnum — no key check
 			case "L":
-				// 'L' <room_vnum> <door_state> <key_vnum> (like 'D')
-				if !roomVnums[cmd.Arg1] {
-					slog.Warn("zone command references non-existent room",
-						"zone", z.Number, "cmd_index", i, "command", "L", "room_vnum", cmd.Arg1)
-				}
-				if cmd.Arg3 > 0 && !objVnums[cmd.Arg3] {
-					slog.Warn("zone command references non-existent key object",
-						"zone", z.Number, "cmd_index", i, "command", "L", "key_vnum", cmd.Arg3)
-				}
+				// 'L' <if_flag> <loop_control> <loop_count> — Start/End Looping (src/db.c:2097-2104)
+				// Arg1 is unused, Arg2 is loop control, Arg3 is a loop count — neither is a vnum.
 			case "R":
 				// 'R' <room_vnum> <last_room> (remove rooms... unclear)
 				if cmd.Arg1 > 0 && !roomVnums[cmd.Arg1] {

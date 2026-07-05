@@ -773,6 +773,90 @@ func TestMobActionBitNamesMatchCStructs(t *testing.T) {
 	}
 }
 
+func TestParseDiceExpr(t *testing.T) {
+	cases := []struct {
+		expr                         string
+		wantNum, wantSides, wantPlus int
+	}{
+		{"38d5+5078", 38, 5, 5078},
+		{"25d4+25", 25, 4, 25},
+		{"1d1+0", 1, 1, 0},
+		{"1d1", 1, 1, 0},
+		{"10d10+100", 10, 10, 100},
+		{"0d0+5", 0, 0, 5},
+		{"10d10-5", 10, 10, -5},
+		{"1d1-0", 1, 1, 0},
+	}
+	for _, tc := range cases {
+		num, sides, plus, err := parseDiceExpr(tc.expr)
+		if err != nil {
+			t.Fatalf("parseDiceExpr(%q) unexpected error: %v", tc.expr, err)
+		}
+		if num != tc.wantNum || sides != tc.wantSides || plus != tc.wantPlus {
+			t.Errorf("parseDiceExpr(%q) = (%d, %d, %d), want (%d, %d, %d)",
+				tc.expr, num, sides, plus, tc.wantNum, tc.wantSides, tc.wantPlus)
+		}
+	}
+}
+
+func TestParseDiceExpr_Invalid(t *testing.T) {
+	cases := []string{"", "38", "38+5", "abcd5+1", "38dabc"}
+	for _, expr := range cases {
+		if _, _, _, err := parseDiceExpr(expr); err == nil {
+			t.Errorf("parseDiceExpr(%q) expected error, got nil", expr)
+		}
+	}
+}
+
+func TestParseMobFile_DiceNotationStats(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	// Real .mob format: level thac0 ac hpdice damagedice (5 space-separated fields)
+	content := "#100\nmob~\nA test mob~\nA test mob stands here.\n~\n0 0 0 7 E\n38 -18 -28 38d5+5078 25d4+25\n0 0\n8 3 0\n"
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	m := mobs[0]
+	if m.Level != 38 {
+		t.Errorf("expected level 38, got %d", m.Level)
+	}
+	if m.HP.Num != 38 || m.HP.Sides != 5 || m.HP.Plus != 5078 {
+		t.Errorf("expected HP 38d5+5078, got %s", m.HP.String())
+	}
+	if m.Damage.Num != 25 || m.Damage.Sides != 4 || m.Damage.Plus != 25 {
+		t.Errorf("expected damage 25d4+25, got %s", m.Damage.String())
+	}
+}
+
+func TestParseMobFile_DiceNotationBackwardCompat9Field(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	// Old 9-field space-separated format must still parse correctly.
+	content := "#100\nmob~\nA test mob~\nA test mob stands here.\n~\n0 0 0 7 E\n1 20 0 5 10 20 1 4 2\n0 0\n8 3 0\n"
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	m := mobs[0]
+	if m.HP.Num != 5 || m.HP.Sides != 10 || m.HP.Plus != 20 {
+		t.Errorf("expected HP 5d10+20, got %s", m.HP.String())
+	}
+	if m.Damage.Num != 1 || m.Damage.Sides != 4 || m.Damage.Plus != 2 {
+		t.Errorf("expected damage 1d4+2, got %s", m.Damage.String())
+	}
+}
+
 func TestMobActionBitNamesStayZone(t *testing.T) {
 	// MOB_STAY_ZONE is bit 6 in src/structs.h.
 	if actionBitNames[6] != "STAY_ZONE" {

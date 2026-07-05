@@ -4,6 +4,7 @@ package parser
 import (
 	"bufio"
 	"fmt"
+	"log/slog"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
@@ -91,6 +92,47 @@ type DiceRoll struct {
 
 func (d DiceRoll) String() string {
 	return fmt.Sprintf("%dd%d+%d", d.Num, d.Sides, d.Plus)
+}
+
+// parseDiceExpr parses a dice expression like "38d5+5078", "1d1", or "10d10-5"
+// into its num/sides/plus components. Mirrors C source src/db.c:1041-1047,
+// which uses sscanf(" %dd%d+%d ") to parse NdS+P notation.
+func parseDiceExpr(s string) (num, sides, plus int, err error) {
+	numStr, rest, ok := strings.Cut(s, "d")
+	if !ok {
+		return 0, 0, 0, fmt.Errorf("no 'd' separator in dice expr %q", s)
+	}
+	num, err = strconv.Atoi(numStr)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("invalid dice num in %q: %w", s, err)
+	}
+	// Find the +/- separating sides from the plus modifier. Skip index 0 since
+	// sides itself may not be negative, but the plus term's sign lives here.
+	sepIdx := -1
+	for i := 1; i < len(rest); i++ {
+		if rest[i] == '+' || rest[i] == '-' {
+			sepIdx = i
+			break
+		}
+	}
+
+	if sepIdx < 0 {
+		sides, err = strconv.Atoi(rest)
+		if err != nil {
+			return 0, 0, 0, fmt.Errorf("invalid dice sides in %q: %w", s, err)
+		}
+		return num, sides, 0, nil
+	}
+
+	sides, err = strconv.Atoi(rest[:sepIdx])
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("invalid dice sides in %q: %w", s, err)
+	}
+	plus, err = strconv.Atoi(rest[sepIdx:])
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("invalid dice plus in %q: %w", s, err)
+	}
+	return num, sides, plus, nil
 }
 
 // ParseMobFile parses a single .mob file and returns all mobs.
@@ -261,8 +303,11 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	if !lb.Scan() {
 		return mob, "", fmt.Errorf("expected mob stats line")
 	}
-	stats := strings.Fields(lb.Text())
-	if len(stats) >= 9 {
+	statsLine := lb.Text()
+	stats := strings.Fields(statsLine)
+	switch {
+	case len(stats) >= 9:
+		// Old 9-field space-separated format: level thac0 ac hpnum hpsides hpplus dmgnum dmgsides dmgplus
 		mob.Level, _ = strconv.Atoi(stats[0])
 		mob.THAC0, _ = strconv.Atoi(stats[1])
 
@@ -277,6 +322,29 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 		mob.Damage.Num, _ = strconv.Atoi(stats[6])
 		mob.Damage.Sides, _ = strconv.Atoi(stats[7])
 		mob.Damage.Plus, _ = strconv.Atoi(stats[8])
+	case len(stats) >= 5:
+		// C source (src/db.c:1041-1047): "%d %d %d %dd%d+%d %dd%d+%d" — level thac0 ac hpdice damagedice
+		mob.Level, _ = strconv.Atoi(stats[0])
+		mob.THAC0, _ = strconv.Atoi(stats[1])
+
+		rawAC, _ := strconv.Atoi(stats[2])
+		mob.AC = 10 * rawAC
+
+		hpNum, hpSides, hpPlus, err := parseDiceExpr(stats[3])
+		if err != nil {
+			slog.Warn("mob HP dice parse failed", "vnum", vnum, "expr", stats[3], "error", err)
+		} else {
+			mob.HP.Num, mob.HP.Sides, mob.HP.Plus = hpNum, hpSides, hpPlus
+		}
+
+		dmgNum, dmgSides, dmgPlus, err := parseDiceExpr(stats[4])
+		if err != nil {
+			slog.Warn("mob damage dice parse failed", "vnum", vnum, "expr", stats[4], "error", err)
+		} else {
+			mob.Damage.Num, mob.Damage.Sides, mob.Damage.Plus = dmgNum, dmgSides, dmgPlus
+		}
+	default:
+		slog.Warn("mob stats line has unexpected field count", "vnum", vnum, "line", statsLine, "fields", len(stats))
 	}
 
 	// C source (parse_simple_mob): base stats start at 11

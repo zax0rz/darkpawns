@@ -119,7 +119,7 @@ func parseZoneCommand(line string) (ZoneCommand, error) {
 	// E <if_flag> <obj_vnum> <max_in_world> <equip_position>
 	// P <if_flag> <obj_vnum> <max_in_world> <container_vnum>
 	// D <if_flag> <room_vnum> <direction> <door_state>
-	// L <if_flag> <room_vnum> <direction> <lock_state>
+	// L <if_flag> <loop_control> <loop_count> — Start/End Looping (arg1 unused)
 	// R <if_flag> <room_vnum> <obj_or_mob_vnum> <is_obj>
 
 	switch cmd.Command {
@@ -164,12 +164,12 @@ func parseZoneCommand(line string) (ZoneCommand, error) {
 			cmd.Arg2, _ = strconv.Atoi(fields[3]) // direction
 			cmd.Arg3, _ = strconv.Atoi(fields[4]) // door state (0=open, 1=closed, 2=locked)
 		}
-	case "L": // Lock door
+	case "L": // Start/End Looping (src/db.c:2097-2104) — arg1 unused, arg2=loop control (0=start, nonzero=end), arg3=loop count
 		if len(fields) >= 5 {
 			cmd.IfFlag, _ = strconv.Atoi(fields[1])
-			cmd.Arg1, _ = strconv.Atoi(fields[2]) // room vnum
-			cmd.Arg2, _ = strconv.Atoi(fields[3]) // direction
-			cmd.Arg3, _ = strconv.Atoi(fields[4]) // lock state
+			cmd.Arg1, _ = strconv.Atoi(fields[2]) // unused (room vnum, resolved but not read during execution)
+			cmd.Arg2, _ = strconv.Atoi(fields[3]) // loop control: 0=start loop, non-zero=end loop
+			cmd.Arg3, _ = strconv.Atoi(fields[4]) // loop count
 		}
 	case "R": // Remove obj/mob from room
 		if len(fields) >= 5 {
