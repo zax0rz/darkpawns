@@ -6,6 +6,8 @@ import (
 	"math/rand/v2"
 	"sync"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // ---------------------------------------------------------------------------
@@ -53,13 +55,6 @@ func displayHour(hour int) int {
 		return 12
 	}
 	return h
-}
-
-// Month names (17 months per year)
-var monthNames = []string{
-	"January", "February", "March", "April", "May", "June",
-	"July", "August", "September", "October", "November", "December",
-	"Frost", "Dark", "Void", "Ash", "Bloom",
 }
 
 // Ordinal suffix helper
@@ -136,12 +131,18 @@ func cmdTime(s *Session, args []string) error {
 	period := timePeriodName(hour)
 	ampm := amPm(hour)
 	dspHour := displayHour(hour)
-	monthName := monthNames[month]
+	weekday := (35*month + day + 1) % 7
+	monthName := game.MonthNames[month]
 	suffix := daySuffix(day)
 	dayDisplay := day + 1 // 1-based for display
 
-	s.Send(fmt.Sprintf("It is %d o'clock %s %s, on the %d%s day of %s, Year %d.",
-		dspHour, period, ampm, dayDisplay, suffix, monthName, year))
+	s.Send(fmt.Sprintf("It is %d o'clock %s %s, on %s, the %d%s day of %s, Year %d.",
+		dspHour, period, ampm, game.WeekdayNames[weekday], dayDisplay, suffix, monthName, year))
+
+	if hour >= 22 || hour <= 4 {
+		phase := game.Phases[(35*month+day)%8]
+		s.Send(fmt.Sprintf("The moon is %s.", phase))
+	}
 
 	return nil
 }

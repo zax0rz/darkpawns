@@ -5,14 +5,14 @@ package game
 
 // Phase names (phases[])
 var Phases = []string{
-	"New Moon",
-	"Waxing Crescent",
-	"First Quarter",
-	"Waxing Gibbous",
-	"Full Moon",
-	"Waning Gibbous",
-	"Last Quarter",
-	"Waning Crescent",
+	"not in the sky",
+	"one-quarter full(waxing)",
+	"half full(waxing)",
+	"three-quarters full(waxing)",
+	"full",
+	"three-quarters full(waning)",
+	"half full(waning)",
+	"one-quarter full(waning)",
 }
 
 // Hometown names (hometowns[])
