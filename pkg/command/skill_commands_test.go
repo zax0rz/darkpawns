@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -108,5 +109,70 @@ func TestCmdRescueUnavailableCombatEngineDoesNotPanic(t *testing.T) {
 				t.Fatalf("unexpected message: %q", session.messages[0])
 			}
 		})
+	}
+}
+
+func newBashCommandSession(t *testing.T) *rescueCommandSession {
+	t.Helper()
+
+	world, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+
+	basher := game.NewPlayer(1, "Basher", 1001)
+	basher.Class = game.ClassWarrior
+	basher.SetLevel(10)
+	basher.SetSkill(game.SkillBash, 100)
+	basher.SetPosition(combat.PosFighting)
+	if err := world.AddPlayer(basher); err != nil {
+		t.Fatalf("AddPlayer basher: %v", err)
+	}
+
+	target := game.NewPlayer(2, "Target", 1001)
+	target.SetPosition(combat.PosFighting)
+	if err := world.AddPlayer(target); err != nil {
+		t.Fatalf("AddPlayer target: %v", err)
+	}
+
+	return &rescueCommandSession{
+		player: basher,
+		world:  world,
+	}
+}
+
+func TestCmdBash_FightingTargetFallback(t *testing.T) {
+	session := newBashCommandSession(t)
+	session.player.SetFighting("Target")
+
+	if err := CmdBash(session, nil); err != nil {
+		t.Fatalf("CmdBash returned error: %v", err)
+	}
+
+	for _, msg := range session.messages {
+		if strings.Contains(msg, "Bash who?") {
+			t.Errorf("expected bash to target fighting opponent, got: %q", msg)
+		}
+	}
+}
+
+func TestCmdBash_NoFightingNoArgs(t *testing.T) {
+	session := newBashCommandSession(t)
+
+	if err := CmdBash(session, nil); err != nil {
+		t.Fatalf("CmdBash returned error: %v", err)
+	}
+
+	found := false
+	for _, msg := range session.messages {
+		if strings.Contains(msg, "Bash who?") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected 'Bash who?' when not fighting and no args, got: %v", session.messages)
 	}
 }

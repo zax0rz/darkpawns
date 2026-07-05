@@ -403,6 +403,14 @@ func (cm *ConnectionMonitor) checkHealth() {
 	cm.stats.LastCheck = time.Now()
 	cm.stats.Healthy = true
 
+	// Populate Go sql.DB stats (InUse/Idle/WaitCount/WaitDuration) from the
+	// connection pool itself.
+	dbStats := cm.db.Stats()
+	cm.stats.InUse = dbStats.InUse
+	cm.stats.Idle = dbStats.Idle
+	cm.stats.WaitCount = dbStats.WaitCount
+	cm.stats.WaitDuration = dbStats.WaitDuration
+
 	// Simple health check: ping the database
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

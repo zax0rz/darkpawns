@@ -601,11 +601,14 @@ func CmdBash(s SessionInterface, args []string) error {
 	var target combat.Combatant
 	var found bool
 	world := s.GetWorld()
-	if ch.GetFighting() != "" && len(args) == 0 {
-		return s.SendMessage("Bash who?\r\n")
-	} else if len(args) > 0 {
+	if len(args) > 0 {
 		targetName := strings.Join(args, " ")
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Bash who?\r\n")
+		}
+	} else if ch.GetFighting() != "" {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
 			return s.SendMessage("Bash who?\r\n")
 		}
@@ -636,11 +639,14 @@ func CmdKick(s SessionInterface, args []string) error {
 	var target combat.Combatant
 	var found bool
 	world := s.GetWorld()
-	if ch.GetFighting() != "" && len(args) == 0 {
-		return s.SendMessage("Kick who?\r\n")
-	} else if len(args) > 0 {
+	if len(args) > 0 {
 		targetName := strings.Join(args, " ")
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Kick who?\r\n")
+		}
+	} else if ch.GetFighting() != "" {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
 			return s.SendMessage("Kick who?\r\n")
 		}
@@ -671,11 +677,14 @@ func CmdTrip(s SessionInterface, args []string) error {
 	var target combat.Combatant
 	var found bool
 	world := s.GetWorld()
-	if ch.GetFighting() != "" && len(args) == 0 {
-		return s.SendMessage("Trip who?\r\n")
-	} else if len(args) > 0 {
+	if len(args) > 0 {
 		targetName := strings.Join(args, " ")
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Trip who?\r\n")
+		}
+	} else if ch.GetFighting() != "" {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
 			return s.SendMessage("Trip who?\r\n")
 		}
@@ -706,11 +715,14 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 	var target combat.Combatant
 	var found bool
 	world := s.GetWorld()
-	if ch.GetFighting() != "" && len(args) == 0 {
-		return s.SendMessage("Headbutt who?\r\n")
-	} else if len(args) > 0 {
+	if len(args) > 0 {
 		targetName := strings.Join(args, " ")
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		if !found {
+			return s.SendMessage("Headbutt who?\r\n")
+		}
+	} else if ch.GetFighting() != "" {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
 			return s.SendMessage("Headbutt who?\r\n")
 		}

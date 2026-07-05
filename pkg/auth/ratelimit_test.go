@@ -363,6 +363,22 @@ func TestIPRateLimiter_CleanupPreservesActive(t *testing.T) {
 	}
 }
 
+func TestSetTrustedProxies_SkipsInvalidCIDR(t *testing.T) {
+	resetTrustedProxies()
+
+	// Mix of valid and invalid CIDRs; invalid ones should be skipped, not panic.
+	_ = SetTrustedProxies([]string{"not-a-cidr", "10.0.0.0/8", "bad"})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = "10.0.0.5:43210"
+	req.Header.Set("X-Forwarded-For", "203.0.113.50")
+
+	ip := GetIPFromRequest(req)
+	if ip != "203.0.113.50" {
+		t.Errorf("expected valid CIDR to be trusted, got %q", ip)
+	}
+}
+
 // Benchmark for GetIPFromRequest with trusted proxy
 func BenchmarkGetIPFromRequest_TrustedProxy(b *testing.B) {
 	resetTrustedProxies()

@@ -722,9 +722,9 @@ func specFieldObject(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 			// Use mob proto values as dice params (matches C: GET_OBJ_VAL(obj,0), GET_OBJ_VAL(obj,1))
 			dam := me.GetLevel()/2 + 1
 			if dam > 0 {
-				vict.Health -= dam
+				vict.TakeDamage(dam)
 				sendToChar(vict, "An incredible force hits you!\r\n")
-				if vict.Health <= 0 {
+				if vict.GetHP() <= 0 {
 					w.roomMessage(roomVNum, fmt.Sprintf("%s falls to the ground, screaming in agony!", vict.GetName()))
 					w.rawKill(vict, 0)
 				}

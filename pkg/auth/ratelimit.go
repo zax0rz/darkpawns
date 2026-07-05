@@ -35,7 +35,7 @@ func SetTrustedProxies(cidrs []string) error {
 		for _, c := range cidrs {
 			_, network, err := net.ParseCIDR(c)
 			if err != nil {
-				// skip bad entries, log in real init
+				slog.Warn("skipping invalid trusted proxy CIDR", "cidr", c, "error", err)
 				continue
 			}
 			trustedProxies = append(trustedProxies, network)

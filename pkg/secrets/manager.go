@@ -120,7 +120,7 @@ func (sm *SecretManager) decrypt(encrypted string) (string, error) {
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%w: %v", ErrDecryptionFailed, err)
 	}
 
 	return string(plaintext), nil

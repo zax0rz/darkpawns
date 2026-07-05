@@ -881,13 +881,15 @@ func (w *World) counter_procs(ch *Player) {
 	if counterProcsBoostMilestones[kills] {
 		ch.SendMessage("The gods reward your many victories!\r\n")
 		// C fall-through: all three stat boosts apply (no break between cases 1/2/3)
+		ch.Lock()
 		ch.MaxHealth++
 		ch.MaxMana++
 		ch.MaxMove++
 		ch.Health = ch.MaxHealth // heal to full
+		ch.Unlock()
 	} else if counterProcsHealMilestones[kills] {
 		ch.SendMessage("The gods reward your glory in battle!\r\n")
-		ch.Health = ch.MaxHealth // heal to full
+		ch.SetHP(ch.GetMaxHP()) // heal to full
 	} else {
 		return // not a milestone
 	}
@@ -897,7 +899,7 @@ func (w *World) counter_procs(ch *Player) {
 	for _, p := range w.AllPlayers() {
 		if p != ch {
 			p.SendMessage("The gods of war and death bestow a blessing upon you.\r\n")
-			p.Health = p.MaxHealth // heal everyone
+			p.SetHP(p.GetMaxHP()) // heal everyone
 		}
 	}
 

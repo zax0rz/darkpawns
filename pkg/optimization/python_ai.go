@@ -16,7 +16,6 @@ type AIRequest struct {
 	MaxTokens   int
 	Temperature float64
 	Timestamp   time.Time
-	Callback    func(AIResponse, error)
 }
 
 // AIResponse represents a response from the AI service.
