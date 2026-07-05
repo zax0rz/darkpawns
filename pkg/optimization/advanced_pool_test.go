@@ -183,3 +183,17 @@ func TestGetMetrics_AtomicRead(t *testing.T) {
 		t.Error("expected non-zero TasksSubmitted")
 	}
 }
+
+func TestGetQueueStats_NoDivideByZero(t *testing.T) {
+	pool := NewAdvancedWorkerPool(2, 8)
+	defer pool.Close()
+
+	stats := pool.GetQueueStats()
+	successRate, ok := stats["success_rate"].(float64)
+	if !ok {
+		t.Fatalf("success_rate not float64, got %T", stats["success_rate"])
+	}
+	if successRate != 0.0 {
+		t.Errorf("expected success_rate 0.0 for fresh pool, got %v", successRate)
+	}
+}

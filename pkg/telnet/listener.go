@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -248,7 +249,7 @@ type telnetConn struct {
 	br             *bufio.Reader
 	wmu            chan struct{} // buffered(1) acts as a write mutex
 	manager        *session.Manager
-	hasGMCP        bool
+	hasGMCP        atomic.Bool
 	sess           *session.Session
 	compressWriter *zlib.Writer
 }
@@ -259,7 +260,6 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		br:      bufio.NewReader(rawConn),
 		wmu:     make(chan struct{}, 1),
 		manager: manager,
-		hasGMCP: false,
 	}
 	defer func() {
 		if tc.compressWriter != nil {
@@ -581,7 +581,7 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 				tc.writeLine("> ")
 			}
 		case "vars":
-			if tc.hasGMCP {
+			if tc.hasGMCP.Load() {
 				if ed, ok := sm.Data.(map[string]interface{}); ok {
 					// Build all GMCP frames and send in a single write to minimize syscalls.
 					var buf []byte
@@ -776,7 +776,7 @@ func (tc *telnetConn) readLine() (string, bool) {
 					tc.write([]byte{IAC, DO, opt})
 				case OPT_GMCP:
 					tc.write([]byte{IAC, DO, OPT_GMCP})
-					tc.hasGMCP = true
+					tc.hasGMCP.Store(true)
 					if tc.sess != nil {
 						tc.sess.SetWantsStructuredData(true)
 					}
@@ -799,7 +799,7 @@ func (tc *telnetConn) readLine() (string, bool) {
 					tc.sendMSSP()
 				case OPT_GMCP:
 					tc.write([]byte{IAC, WILL, OPT_GMCP})
-					tc.hasGMCP = true
+					tc.hasGMCP.Store(true)
 					if tc.sess != nil {
 						tc.sess.SetWantsStructuredData(true)
 					}

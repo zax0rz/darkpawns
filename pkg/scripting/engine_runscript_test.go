@@ -5,9 +5,11 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -312,4 +314,25 @@ func replaceSlogDefault(h slog.Handler) func() {
 	prev := slog.Default()
 	slog.SetDefault(slog.New(h))
 	return func() { slog.SetDefault(prev) }
+}
+
+func TestEngine_CloseStopsCleanupGoroutine(t *testing.T) {
+	runtime.GC()
+	before := runtime.NumGoroutine()
+
+	engine := NewEngine(t.TempDir(), nil)
+	// Give the cleanup goroutine time to start.
+	time.Sleep(50 * time.Millisecond)
+
+	engine.Close()
+	engine.Close() // idempotency check
+
+	// Give the goroutine time to exit.
+	time.Sleep(100 * time.Millisecond)
+	runtime.GC()
+	after := runtime.NumGoroutine()
+
+	if after > before {
+		t.Errorf("expected goroutine count to return to baseline, before=%d after=%d", before, after)
+	}
 }

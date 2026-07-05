@@ -91,7 +91,7 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 
 	// Check minimum victim position (DP-411)
 	if social.MinVictimPosition > 0 && targetActor.GetPosition() < social.MinVictimPosition {
-		ch.SendMessage("$N is not in a proper position for that.\r\n")
+		Act(nil, false, ch, targetActor, nil, nil, "$N is not in a proper position for that.\r\n", "", ToChar)
 		return true
 	}
 

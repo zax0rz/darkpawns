@@ -262,7 +262,11 @@ func (p *AdvancedWorkerPool) GetQueueStats() map[string]interface{} {
 	stats["avg_wait_time_ms"] = metrics.AvgWaitTime.Milliseconds()
 	stats["max_wait_time_ms"] = metrics.MaxWaitTime.Milliseconds()
 	stats["worker_utilization"] = metrics.WorkerUtilization
-	stats["success_rate"] = float64(metrics.TasksCompleted) / float64(metrics.TasksSubmitted)
+	if metrics.TasksSubmitted > 0 {
+		stats["success_rate"] = float64(metrics.TasksCompleted) / float64(metrics.TasksSubmitted)
+	} else {
+		stats["success_rate"] = 0.0
+	}
 
 	return stats
 }

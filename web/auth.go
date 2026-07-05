@@ -26,16 +26,11 @@ const (
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
+		if len(authHeader) < 7 || !strings.EqualFold(authHeader[:6], "Bearer") || authHeader[6] != ' ' {
 			http.Error(w, `{"error":"Unauthorized"}`, http.StatusUnauthorized)
 			return
 		}
-
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if token == authHeader {
-			http.Error(w, `{"error":"Unauthorized"}`, http.StatusUnauthorized)
-			return
-		}
+		token := authHeader[7:]
 
 		claims, err := auth.ValidateJWT(token)
 		if err != nil {

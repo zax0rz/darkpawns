@@ -36,6 +36,8 @@ type Engine struct {
 	// rejections are intentionally NOT cached — those should keep logging.
 	// Accessed only under e.mu.
 	failedScripts map[string]struct{}
+	done          chan struct{}
+	closeOnce     sync.Once
 }
 
 // LState returns the underlying Lua state. The caller must NOT hold the engine mutex
@@ -135,6 +137,7 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 		transitItems:  make(map[int]*transitEntry),
 		failedScripts: make(map[string]struct{}),
 		world:         world,
+		done:          make(chan struct{}),
 	}
 
 	// Create a properly sandboxed LState
@@ -157,16 +160,32 @@ type transitEntry struct {
 func (e *Engine) cleanTransitItems() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
-	for range ticker.C {
-		e.mu.Lock()
-		for id, entry := range e.transitItems {
-			if time.Since(entry.placedAt) > transitItemTTL {
-				slog.Warn("transitItem orphaned, discarding", "instanceID", id, "vnum", entry.obj.GetVNum())
-				delete(e.transitItems, id)
+	for {
+		select {
+		case <-ticker.C:
+			e.mu.Lock()
+			for id, entry := range e.transitItems {
+				if time.Since(entry.placedAt) > transitItemTTL {
+					slog.Warn("transitItem orphaned, discarding", "instanceID", id, "vnum", entry.obj.GetVNum())
+					delete(e.transitItems, id)
+				}
 			}
+			e.mu.Unlock()
+		case <-e.done:
+			return
 		}
-		e.mu.Unlock()
 	}
+}
+
+// Close shuts down the background cleanup goroutine and releases the Lua VM.
+// Safe to call multiple times.
+func (e *Engine) Close() {
+	e.closeOnce.Do(func() {
+		close(e.done)
+		if e.l != nil {
+			e.l.Close()
+		}
+	})
 }
 
 // cleanupScriptGlobalsLocked removes any global keys introduced during script execution

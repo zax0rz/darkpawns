@@ -138,6 +138,7 @@ func main() {
 	slog.Info("Loading scripts", "path", *scriptsDir)
 	worldAdapter := game.NewWorldScriptableAdapter(gameWorld)
 	scriptEngine := scripting.NewEngine(*scriptsDir, worldAdapter)
+	defer scriptEngine.Close()
 	game.ScriptEngine = scriptEngine
 
 	// Connect to database
