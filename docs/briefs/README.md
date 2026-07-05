@@ -1,41 +1,122 @@
 # Briefs — Coding Agent Task System
 
+## Core Principle: C Fidelity
+
+**Every behavior must match the C source exactly.** The Go port is from DikuMUD/Merc 2.2 (`src/`). C files in `src/` are the single source of truth for all gameplay mechanics — combat formulas, spell tables, skill success rates, spec proc behaviors, saving throws, AC reduction, damage messages, attribute applications, class tables, etc.
+
+- If a brief touches gameplay mechanics, it **must cite the C source** with `**Cite:**` field pointing to the exact function/line
+- The coding agent reads the C source directly when given the path
+- When Go deliberately diverges from C (e.g., immortal caps, float64 vs integer division), this **must be documented as an explicit deviation** in both the code and the test
+- Golden tests (C→Go table transcriptions) are the highest-value test investment — they catch silent drift that no functional test would find
+
 ## Workflow
 
 ```
-Daeron writes brief → Coding agent branches & implements → Daeron reviews PR → Merge → Linear update
+Triage Linear issues → Verify against codebase → Write brief → Hand to coding agent → Review → Build gate → Commit/push → Close Linear
 ```
 
-### 1. Daeron writes the brief
+### 1. Triage
+
+Scan open Linear issues. Classify each as:
+- **Already fixed** (close with commit reference)
+- **Stale/obsolete** (cancel with reason)
+- **Actionable** (verify against code, write brief)
+- **Test coverage** (demote to Low)
+- **Feature/architecture** (defer to roadmap)
+- **Research** (note and defer)
+
+### 2. Verify before briefing
+
+Before writing a brief, **read the actual code**. Confirm:
+- The file and line numbers are current
+- The bug still exists
+- The C source (if applicable) matches what you expect
+- No prior fix attempt was made that partially addressed it
+
+### 3. Write the brief
 
 Create `docs/briefs/BRIEF-YYYY-MM-DD-<slug>.md` following the template below. Each brief should be:
-- Self-contained (coding agent has everything it needs)
-- Scoped to 1-5 related issues max
-- Verified against actual code (read the files, confirm line numbers, confirm the bug)
+- **Self-contained** — coding agent has everything it needs (no "check with Zach" ambiguity)
+- Scoped to 1-8 related issues max
+- Include `**Cite:**` fields for every C source reference
 - Include regression tests where they make sense
+- Include exact file:line references
 
-### 2. Coding agent implements
+### 4. Hand to coding agent
 
-Hand the brief to Claude Code (or Gemini, etc.). The agent:
+Pick the best agent for the job (see Agent Rotation below). The agent:
+- Reads the brief
+- May propose an implementation plan for review before coding (recommended for L+ effort)
 - Creates a branch from `main`
 - Implements the fixes
 - Runs build gates: `go build ./... && go vet ./... && go test ./...`
-- Pushes the branch
+- Pushes the branch (Kimi commits to main directly — known process issue)
 
-### 3. Daeron reviews
+### 5. Review
 
-Read the PR diff against the brief. Check:
-- Does the fix match the brief's description?
+This is the critical step. **Do not skip review.** Check:
+- C source fidelity — does the Go match the cited C behavior?
 - Are lock safety / concurrency concerns addressed?
 - Did the agent introduce side effects?
-- Are regression tests included where the brief requested them?
-- Do all build gates pass?
+- Are regression tests / golden tests included where requested?
+- Did the agent handle edge cases (nil guards, empty collections, zero values)?
+- Do all build gates pass? (`go build ./... && go vet ./... && go test ./...`)
+- For golden tests: spot-check a sample of C→Go transcriptions against source
 
-### 4. Merge & update Linear
+### 6. Commit, push, close Linear
 
-After merge:
-- Add commit hash comment to each Linear issue
+After review:
+- Stage and commit with conventional commit message
+- Push to remote
+- Add commit hash to each Linear issue
 - Move issues to Done
+
+## Agent Rotation
+
+Multiple coding agents are available. Rotate to avoid rate-limit burnout:
+
+| Agent | Strengths | Rate Limits | Notes |
+|-------|-----------|-------------|-------|
+| **Kimi k2.6/k2.7** | Bug fixes, golden tests, large briefs | 403 after ~7 parallel subagents; ~1hr cooldown | Commits directly to main |
+| **Gemini 3.5-flash** | Golden tests, mechanical fixes, code review | Generous — good fallback | Produces clean walkthroughs |
+| **Claude Fable 5** | Full audits, architecture review, complex analysis | Expensive — use sparingly | Best for code review, not implementation |
+| **Claude Sonnet** | Complex multi-file changes, refactoring | Moderate | Good for PR review |
+| **DeepSeek** | Easy/small tasks, cleanup, nits | Cheap, fast | Good for quick wins |
+
+**Dispatch rule:** Don't default to Claude for implementation — save it for review and audit. Rotate Kimi/Gemini for coding work. DeepSeek for trivial fixes.
+
+## Brief Types
+
+### Bug Fix Brief
+Standard format (see template below). 1-8 related issues. Include C citations.
+
+### Golden Test Brief
+Transcribe C static tables/formulas into Go test assertions. Higher volume, lower risk.
+- Include the full C source excerpt (table, formula, or function)
+- Specify the Go test file name and package
+- Specify expected assertion count
+- Note any deliberate Go divergences from C
+- Example: `BRIEF-2026-07-05-round8a-spell-golden.md`
+
+### Audit Brief
+For full codebase reviews (e.g., Fable). Three-phase: Sweep → Deep Dive → Roadmap.
+- Phase 1: Package health survey, architecture risks, port completeness
+- Phase 2: Findings with file:line, severity, category, effort, fix approach
+- Phase 3: Prioritized roadmap, work streams, coverage targets
+- Example: `BRIEF-2026-07-05-fable-full-audit.md`
+
+## Review Checklist (for every PR/commit)
+
+- [ ] Build gate passes: `go build ./... && go vet ./... && go test ./...`
+- [ ] Fix matches the brief's description
+- [ ] C source citations verified (spot-check at least 2)
+- [ ] No side effects or regressions
+- [ ] Concurrency safety: locks acquired/released correctly, no check-then-act races
+- [ ] Error handling: player-facing paths check errors (no swallowed returns)
+- [ ] Golden tests: C values match, Go divergences documented
+- [ ] No `fmt.Fprintf` converted to `slog` (those are MUD output)
+- [ ] No `CustomData` removed (it's the escape hatch)
+- [ ] No C files modified (they're reference only)
 
 ## Brief Template
 
