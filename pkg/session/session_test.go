@@ -1,6 +1,7 @@
 package session
 
 import (
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -448,7 +449,7 @@ func (m *mockAgentKeyDB) RecordLoginFailure(name string, threshold int, lockoutD
 
 func (m *mockAgentKeyDB) RecordLoginSuccess(name string) error { return nil }
 
-func (m *mockAgentKeyDB) Exec(query string, args ...interface{}) (interface{}, error) {
+func (m *mockAgentKeyDB) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return nil, nil
 }
 

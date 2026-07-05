@@ -240,7 +240,7 @@ func (e *Engine) resolveScriptPath(cleanName string) string {
 // triggerName is the function to call (e.g. "oncmd", "sound", "fight").
 // Returns true if the script handled the event (returned TRUE), false otherwise.
 // Based on run_script() in scripts.c lines 1718-1810.
-func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string) (bool, error) {
+func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string) (handled bool, err error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -251,6 +251,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		if r := recover(); r != nil {
 			slog.Warn("lua script panic, recreating LState", "reason", r, "file", fname, "trigger", triggerName)
 			needsRecreate = true
+			err = fmt.Errorf("lua script panic: %v", r)
 		}
 		if needsRecreate {
 			slog.Info("recreating Lua state after script crash", "file", fname)

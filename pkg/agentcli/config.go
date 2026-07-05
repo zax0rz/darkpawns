@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // DefaultConfig values.
@@ -81,13 +82,22 @@ func SaveConfig(cfg *AgentConfig) error {
 	return nil
 }
 
-// Validate checks required fields are present.
+// Validate checks required fields are present and sanitizes path-related values.
 func (c *AgentConfig) Validate() error {
 	if c.Key == "" && os.Getenv("DP_KEY") == "" {
 		return fmt.Errorf("agent key required: set DP_KEY or run `dp-agent config --key dp_...`")
 	}
 	if c.PlayerName == "" {
 		return fmt.Errorf("player_name required: set in config or via --player-name")
+	}
+	// Sanitize PlayerName — reject path separators and traversal sequences before
+	// the name is joined into log/summary paths.
+	if strings.ContainsAny(c.PlayerName, "/\\") || strings.Contains(c.PlayerName, "..") {
+		return fmt.Errorf("player_name %q contains invalid characters", c.PlayerName)
+	}
+	// Sanitize LogDir — must be a clean path.
+	if c.LogDir != "" {
+		c.LogDir = filepath.Clean(c.LogDir)
 	}
 	if c.Tier != "small" && c.Tier != "medium" && c.Tier != "large" && c.Tier != "unlimited" {
 		return fmt.Errorf("invalid tier %q: must be small, medium, large, or unlimited", c.Tier)

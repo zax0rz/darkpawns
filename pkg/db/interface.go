@@ -2,6 +2,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -19,7 +20,7 @@ type Database interface {
 	GetAccountLockout(name string) (failedAttempts int, lockedUntil *time.Time, err error)
 	RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error)
 	RecordLoginSuccess(name string) error
-	Exec(query string, args ...interface{}) (interface{}, error)
+	Exec(query string, args ...interface{}) (sql.Result, error)
 
 	// Agent Authorization & Keys
 	CreateAgentKey(characterName string) (rawKey string, id int64, err error)

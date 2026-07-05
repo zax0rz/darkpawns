@@ -336,3 +336,51 @@ func TestEngine_CloseStopsCleanupGoroutine(t *testing.T) {
 		t.Errorf("expected goroutine count to return to baseline, before=%d after=%d", before, after)
 	}
 }
+
+func TestRunScript_RecoveredPanicReturnsError(t *testing.T) {
+	dir := t.TempDir()
+
+	panicScript := filepath.Join(dir, "panic.lua")
+	panicSrc := `function oncmd()
+	trigger_panic()
+	return TRUE
+end
+`
+	if err := os.WriteFile(panicScript, []byte(panicSrc), 0o644); err != nil {
+		t.Fatalf("write panic.lua: %v", err)
+	}
+
+	goodScript := filepath.Join(dir, "good.lua")
+	goodSrc := `function oncmd()
+	return TRUE
+end
+`
+	if err := os.WriteFile(goodScript, []byte(goodSrc), 0o644); err != nil {
+		t.Fatalf("write good.lua: %v", err)
+	}
+
+	engine := NewEngine(dir, nil)
+	defer engine.Close()
+
+	// Register a Go function that panics when called from Lua.
+	engine.LState().SetGlobal("trigger_panic", engine.LState().NewFunction(func(L *lua.LState) int {
+		panic("intentional test panic")
+	}))
+
+	handled, err := engine.RunScript(&ScriptContext{}, "panic.lua", "oncmd")
+	if err == nil {
+		t.Fatal("RunScript expected error after recovered panic, got nil")
+	}
+	if handled {
+		t.Error("expected handled=false after panic")
+	}
+
+	// Verify the engine recovered and can still run scripts.
+	handled, err = engine.RunScript(&ScriptContext{}, "good.lua", "oncmd")
+	if err != nil {
+		t.Fatalf("RunScript failed after panic recovery: %v", err)
+	}
+	if !handled {
+		t.Error("expected handled=true for good script")
+	}
+}

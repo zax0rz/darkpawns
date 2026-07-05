@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"os"
 	"os/exec"
@@ -34,7 +35,7 @@ func (m *mockDatabase) RecordLoginFailure(name string, threshold int, lockoutDur
 	return false, nil
 }
 func (m *mockDatabase) RecordLoginSuccess(name string) error { return nil }
-func (m *mockDatabase) Exec(query string, args ...interface{}) (interface{}, error) {
+func (m *mockDatabase) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return nil, nil
 }
 
