@@ -743,16 +743,20 @@ func TestDoCharge_MountedBonusDamage(t *testing.T) {
 	weapon := makeChargeWeapon(12) // lance
 	equipWeapon(t, ch, weapon)
 
-	result := DoCharge(ch, mob)
-	if !result.Success {
-		t.Errorf("expected mounted charge success, got %q", result.MessageToCh)
-	}
-	if result.Damage < 50 {
-		t.Errorf("expected mounted bonus damage >= 50, got %d", result.Damage)
-	}
-	if result.SelfStumble {
-		t.Error("mounted charge should not stumble")
-	}
+	// Deterministic RNG: success roll (low) + weapon die (low). Wrapped so the
+	// global math/rand/v2 source (unseedable) can't flake the test under -race.
+	combat.WithRoller(combat.NewScriptedRoller([]int{1, 1}), func() {
+		result := DoCharge(ch, mob)
+		if !result.Success {
+			t.Errorf("expected mounted charge success, got %q", result.MessageToCh)
+		}
+		if result.Damage < 50 {
+			t.Errorf("expected mounted bonus damage >= 50, got %d", result.Damage)
+		}
+		if result.SelfStumble {
+			t.Error("mounted charge should not stumble")
+		}
+	})
 }
 
 func TestDoCharge_MobNobashPenalty(t *testing.T) {
@@ -778,14 +782,18 @@ func TestDoCharge_Success(t *testing.T) {
 	weapon := makeChargeWeapon(3) // sword
 	equipWeapon(t, ch, weapon)
 
-	result := DoCharge(ch, mob)
-	if !result.Success {
-		t.Errorf("expected charge success, got %q", result.MessageToCh)
-	}
-	if result.Damage <= 0 {
-		t.Errorf("expected positive damage, got %d", result.Damage)
-	}
-	if result.WaitCh != 2 {
-		t.Errorf("expected wait 2, got %d", result.WaitCh)
-	}
+	// Deterministic RNG: success roll (low) + weapon die (low). Wrapped so the
+	// global math/rand/v2 source (unseedable) can't flake the test under -race.
+	combat.WithRoller(combat.NewScriptedRoller([]int{1, 1}), func() {
+		result := DoCharge(ch, mob)
+		if !result.Success {
+			t.Errorf("expected charge success, got %q", result.MessageToCh)
+		}
+		if result.Damage <= 0 {
+			t.Errorf("expected positive damage, got %d", result.Damage)
+		}
+		if result.WaitCh != 2 {
+			t.Errorf("expected wait 2, got %d", result.WaitCh)
+		}
+	})
 }
