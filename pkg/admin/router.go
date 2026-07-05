@@ -1,8 +1,10 @@
 package admin
 
 import (
+	"errors"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/audit"
@@ -157,13 +159,29 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 }
 
 // requireRole wraps a handler, rejecting requests that lack the required role.
-// Claims must already be on the context (set by web.AuthMiddleware).
+// It first ensures a valid JWT is present (parsing the Authorization header if
+// claims aren't already on the context), then enforces the role. This makes
+// the router self-protecting: even if an outer wrapper forgets to install
+// web.AuthMiddleware, protected routes still require a valid bearer token
+// (DP-855). The double validation is harmless — already-set claims skip the
+// parse — and matches what pkg/admin/handlers_test.go's authMiddlewareForTest
+// has always simulated.
 func requireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		claims, ok := auth.GetClaimsFromContext(r.Context())
 		if !ok {
-			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
-			return
+			// No outer middleware injected claims — parse the bearer token
+			// ourselves. This is the production path today; outer wrapping
+			// is still welcomed as defense-in-depth.
+			parsed, err := claimsFromAuthorization(r)
+			if err != nil {
+				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+				return
+			}
+			claims = parsed
+			// Re-store on context so downstream handlers and requireRole's
+			// outer-wrapped siblings see the same claims.
+			r = r.WithContext(auth.SetClaimsOnContext(r.Context(), claims))
 		}
 		if !claims.HasRole(role) {
 			http.Error(w, `{"error":"forbidden","required":"`+role+`"}`, http.StatusForbidden)
@@ -172,6 +190,25 @@ func requireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 		next(w, r)
 	}
 }
+
+// claimsFromAuthorization extracts and validates a Bearer JWT from the
+// Authorization header. Returns an error on any failure (missing header,
+// wrong scheme, invalid/expired/wrong-issuer token).
+func claimsFromAuthorization(r *http.Request) (*auth.Claims, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil, errNoBearerToken
+	}
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return nil, errNoBearerToken
+	}
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+	return auth.ValidateJWT(token)
+}
+
+// errNoBearerToken is returned by claimsFromAuthorization when the request
+// has no usable Bearer token. Callers map this to a 401.
+var errNoBearerToken = errors.New("missing or malformed Authorization header")
 
 // corsMiddleware adds CORS headers for allowed origins.
 // Production: set ADMIN_CORS_ORIGIN env var to the SPA origin.

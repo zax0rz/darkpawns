@@ -1502,6 +1502,57 @@ func TestNewRouter_InvalidToken(t *testing.T) {
 	}
 }
 
+// TestNewRouter_SelfProtects_WithoutOuterAuthMiddleware is the DP-855
+// regression guard. The production wiring at cmd/server/main.go mounts the
+// admin router directly (no web.AuthMiddleware wrap), so the router MUST
+// validate bearer tokens itself. Without this, a request with no
+// Authorization header could reach requireRole, which (before the fix) had
+// no way to obtain claims — locking everyone out by accident rather than
+// validating tokens by design.
+//
+// This test deliberately does NOT wrap the router in authMiddlewareForTest.
+// It proves the router self-validates the bearer token from the
+// Authorization header alone.
+func TestNewRouter_SelfProtects_WithoutOuterAuthMiddleware(t *testing.T) {
+	setJWTSecret(t)
+	w := testWorld(t)
+	lb := NewLogBuffer(10)
+
+	// NO authMiddlewareForTest wrap — bare router, as in cmd/server/main.go:313.
+	router := NewRouter(w, nil, lb, nil, nil)
+
+	t.Run("no auth header returns 401", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized && rec.Code != http.StatusTooManyRequests {
+			t.Errorf("status = %d, want 401 (or 429 if rate-limited); body: %s", rec.Code, rec.Body.String())
+		}
+	})
+
+	t.Run("valid builder token reaches handler", func(t *testing.T) {
+		token := generateTestToken(t, "builder")
+		req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200 (router must accept its own bearer token); body: %s",
+				rec.Code, rec.Body.String())
+		}
+	})
+
+	t.Run("garbage token returns 401", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
+		req.Header.Set("Authorization", "Bearer not-a-real-token")
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized && rec.Code != http.StatusTooManyRequests {
+			t.Errorf("status = %d, want 401 (or 429); body: %s", rec.Code, rec.Body.String())
+		}
+	})
+}
+
 // ---------------------------------------------------------------------------
 // Rate limiting test
 // ---------------------------------------------------------------------------
