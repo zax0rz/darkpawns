@@ -112,17 +112,32 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 }
 
-// DoBash implements do_bash() from act.offensive.c lines 423-478.
+// DoBash implements do_bash() from act.offensive.c lines 419-490.
 // Strength-based check. On success: damage + target sits + stunned.
 // On failure: user sits.
-func DoBash(ch *Player, target combat.Combatant) SkillResult {
+func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if ch.GetSkill(SkillBash) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You'd better leave all the martial arts to fighters."}
 	}
 
-	// Target must be standing or fighting
+	// Peaceful room — act.offensive.c:435-439
+	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{Success: false, MessageToCh: "This room just has such a peaceful, easy feeling...\r\n"}
+	}
+
+	// Self-target — act.offensive.c:450-454
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Aren't we funny today...\r\n"}
+	}
+
+	// Target must be standing or fighting — act.offensive.c:456-459
 	if target.GetPosition() < combat.PosFighting {
 		return SkillResult{Success: false, MessageToCh: "You can't bash someone who's sitting already!"}
+	}
+
+	// Mounted — act.offensive.c:461-465
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
 
 	// Check move points
@@ -138,9 +153,23 @@ func DoBash(ch *Player, target combat.Combatant) SkillResult {
 	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillBash)
 
+	// MOB_NOBASH force-fail unless the caster is an immortal — act.offensive.c:478
+	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagNobash) && ch.GetLevel() < LVL_IMMORT {
+		percent = 101
+	}
+	// Sleeping-target / immortal-caster auto-success — act.offensive.c:479-480.
+	// In practice this is unreachable when the target is asleep (the
+	// PosFighting gate above already rejects it first, matching the C
+	// original's own dead branch), but the immortal-caster half fires.
+	if target.GetPosition() <= combat.PosSleeping || ch.GetLevel() >= LVL_IMMORT {
+		percent = 0
+	}
+
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
+	// C applies `if (!IS_NPC(ch)) WAIT_STATE(ch, PULSE_VIOLENCE*2)` unconditionally
+	// after either branch; ch is always a player here, so WaitCh is always 2.
 	if percent > prob {
 		// Failure
 		return SkillResult{
@@ -149,7 +178,7 @@ func DoBash(ch *Player, target combat.Combatant) SkillResult {
 			MessageToVict: ActMessage("$n tries to bash you, but misses and falls!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to bash $N, but misses and falls!", chPronouns, &victPronouns, ""),
 			SelfStumble:   true,
-			WaitCh:        1, // PULSE_VIOLENCE
+			WaitCh:        2, // PULSE_VIOLENCE * 2 (act.offensive.c:489)
 		}
 	}
 
@@ -165,16 +194,26 @@ func DoBash(ch *Player, target combat.Combatant) SkillResult {
 		MessageToRoom: ActMessage("$n sends $N flying with a powerful bash!", chPronouns, &victPronouns, ""),
 		TargetFalls:   true,
 		StunTarget:    true,
-		WaitCh:        2, // PULSE_VIOLENCE * 2 (heavy move)
-		WaitTarget:    2,
+		WaitCh:        2, // PULSE_VIOLENCE * 2 (act.offensive.c:489)
+		WaitTarget:    2, // PULSE_VIOLENCE * 2 (act.offensive.c:485)
 	}
 }
 
-// DoKick implements do_kick() from act.offensive.c lines 541-576.
+// DoKick implements do_kick() from act.offensive.c lines 587-634.
 // Simple damage: level >> 1 (level/2).
 func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillKick) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You'd better leave all the martial arts to fighters."}
+	}
+
+	// Self-target — act.offensive.c:610-614
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Aren't we funny today...\r\n"}
+	}
+
+	// Mounted — act.offensive.c:615-619
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
 
 	// Formula: percent = ((7 - (GET_AC(vict)/10)) << 1) + number(1,101)
@@ -186,12 +225,15 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
+	// C: WAIT_STATE(ch, PULSE_VIOLENCE+2) sits outside the if/else, so both
+	// branches get WaitCh=3 — act.offensive.c:633.
 	if percent > prob {
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("You try to kick $N, but miss!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to kick you, but misses!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to kick $N, but misses!", chPronouns, &victPronouns, ""),
+			WaitCh:        3,
 		}
 	}
 
@@ -204,19 +246,36 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 		MessageToCh:   ActMessage("You kick $N square in the chest!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n kicks you square in the chest!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n kicks $N square in the chest!", chPronouns, &victPronouns, ""),
-		WaitCh:        1, // PULSE_VIOLENCE
+		WaitCh:        3, // PULSE_VIOLENCE + 2
 	}
 }
 
-// DoTrip implements do_trip() from new_cmds.c lines 728-792.
+// DoTrip implements do_trip() from new_cmds.c lines 735-815.
 // Dexterity check. On success: target falls (sitting).
-func DoTrip(ch *Player, target combat.Combatant) SkillResult {
+func DoTrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if ch.GetSkill(SkillTrip) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You'd better leave the sneaky stuff to the thieves."}
 	}
 
-	// Can't trip flying targets
-	// (In original: IS_AFFECTED(vict, AFF_FLY) — we don't have affects yet, skip)
+	// Peaceful room — new_cmds.c:749-753
+	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{Success: false, MessageToCh: "This room just has such a peaceful, easy feeling...\r\n"}
+	}
+
+	// Mounted — new_cmds.c:765-769
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+
+	// Self-target — new_cmds.c:771-775
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "You trip over your shoe laces...\r\n"}
+	}
+
+	// Can't trip flying targets — new_cmds.c:776-779
+	if flyer, ok := target.(interface{ IsAffected(int) bool }); ok && flyer.IsAffected(affFly) {
+		return SkillResult{Success: false, MessageToCh: "You can't trip something that's FLYING!"}
+	}
 
 	if target.GetPosition() <= combat.PosSleeping {
 		return SkillResult{Success: false, MessageToCh: "What's the point of doing that now?"}
@@ -226,14 +285,26 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
 	percent := rand.IntN(121) + 1
-	percent += max(target.GetLevel()-ch.GetLevel(), 0)
+
+	// Immortal-victim force-fail — new_cmds.c:782
+	if target.GetLevel() >= LVL_IMMORT {
+		percent = 101
+	}
+	// MOB_NOBASH force-fail (NPC victims only) — new_cmds.c:783
+	if target.IsNPC() {
+		if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagNobash) {
+			percent = 101
+		}
+	}
+
 	prob := ch.GetSkill(SkillTrip)
+	percent += max(target.GetLevel()-ch.GetLevel(), 0)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent > prob {
-		// Failure — user falls
+		// Failure — user falls. C: WAIT_STATE(ch, PULSE_VIOLENCE) — new_cmds.c:807
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("You try to trip $N, but fail and fall!", chPronouns, &victPronouns, ""),
@@ -244,7 +315,9 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
-	// Success — damage = (level/2)+1, target falls
+	// Success — damage = (level/2)+1, target falls. C only sets a wait state
+	// on the victim (WAIT_STATE(victim, PULSE_VIOLENCE)); ch gets none —
+	// new_cmds.c:811-813.
 	dam := (ch.GetLevel() / 2) + 1
 	improveSkill(ch, SkillTrip)
 
@@ -255,77 +328,104 @@ func DoTrip(ch *Player, target combat.Combatant) SkillResult {
 		MessageToVict: ActMessage("$n trips you sending you crashing to the ground!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n trips $N sending $M crashing to the ground!", chPronouns, &victPronouns, ""),
 		TargetFalls:   true,
-		WaitCh:        1,
+		WaitTarget:    1,
 	}
 }
 
-// DoHeadbutt implements headbutt — high damage melee with self-stun risk.
-// Formula: hitroll = DAMAGE_ROLL(skill_level) - 10, damage = DAMAGE_ROLL(skill_level) + 4.
-// On miss: 25% chance attacker takes half damage and is stunned 1 round.
-func DoHeadbutt(ch *Player, target combat.Combatant) SkillResult {
+// DoHeadbutt implements do_headbutt() from new_cmds.c lines 368-460.
+// Damage is flat GET_LEVEL(ch) — a successful hit costs the caster HP as
+// recoil (level/4, or level/3 wearing a helm), gated by an HP check that
+// refuses the attempt outright if the recoil could be fatal.
+func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
+	// Peaceful room — checked before even the skill gate — new_cmds.c:378-381
+	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{Success: false, MessageToCh: "The Gods prevent thy violent act.\r\n"}
+	}
+
 	if ch.GetSkill(SkillHeadbutt) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You'd better leave all the martial arts to fighters."}
+		return SkillResult{Success: false, MessageToCh: "You aren't qualified to headbutt anyone!\r\n"}
 	}
 
-	if target.GetPosition() <= combat.PosSleeping {
-		return SkillResult{Success: false, MessageToCh: "What's the point of doing that now?"}
+	// Mounted — new_cmds.c:388-392
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
 
-	// Check move points
-	if ch.GetMove() < 15 {
-		return SkillResult{Success: false, MessageToCh: "You haven't the energy!"}
+	// Self-target — new_cmds.c:405-408
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "You bang your head into the nearest wall...\r\n"}
 	}
-	ch.SetMove(ch.GetMove() - 15)
 
-	skillLevel := ch.GetSkill(SkillHeadbutt)
-	damage := (skillLevel/2 + 1) + 4 // higher base damage
+	// Can't headbutt a non-NPC immortal — caster is thrown down — new_cmds.c:410-416
+	if target.GetLevel() >= LVL_IMMORT && !target.IsNPC() {
+		return SkillResult{
+			Success:     false,
+			MessageToCh: "How dare you try to headbutt a god!\r\nYou are thrown across the room...\r\n",
+			SelfStumble: true,
+		}
+	}
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(101) + 1
+	percent := rand.IntN(121) + 1 // 1-121; new_cmds.c:422
 
+	// Sleeping-target / immortal-caster auto-success — new_cmds.c:424-426.
+	// Note: strictly-greater-than LEVEL_IMMORT, unlike bash's >=.
+	if target.GetPosition() <= combat.PosSleeping || ch.GetLevel() > LVL_IMMORT {
+		percent = 0
+	}
+	// MOB_NOBASH auto-success (not force-fail, unlike bash/trip) — new_cmds.c:428
+	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagNobash) {
+		percent = 0
+	}
+
+	// HP gate — refuses outright if the recoil could kill the caster — new_cmds.c:429-433
+	if ch.GetLevel()/2 > ch.GetHP() {
+		return SkillResult{Success: false, MessageToCh: "But that could kill you!\r\n"}
+	}
+
+	skillLevel := ch.GetSkill(SkillHeadbutt)
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
+	// C: WAIT_STATE(ch, PULSE_VIOLENCE*3) sits outside the hit/miss if/else —
+	// both branches get WaitCh=3 — new_cmds.c:459.
 	if percent > skillLevel {
-		// Miss
-		result := SkillResult{
+		// Miss — new_cmds.c:435-437
+		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("You try to headbutt $N but miss!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to headbutt you but misses!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to headbutt $N but misses!", chPronouns, &victPronouns, ""),
-			WaitCh:        1,
+			WaitCh:        3,
 		}
-		// 25% self-stun on failure
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		if rand.IntN(4) == 0 {
-			selfDam := damage / 2
-			if selfDam < 1 {
-				selfDam = 1
-			}
-			ch.TakeDamage(selfDam)
-			result.SelfStumble = true
-			result.MessageToCh += " You crack your skull against thin air and see stars!\r\n"
-		}
-		return result
 	}
 
-	// Hit — success
+	// Hit — recoil damage to caster based on helm, then flat level damage to
+	// victim, victim sits (not stunned) if above POS_STUNNED — new_cmds.c:438-455.
+	recoil := ch.GetLevel() / 4
+	if _, wearingHelm := ch.Equipment.GetItemInSlot(SlotHead); wearingHelm {
+		recoil = ch.GetLevel() / 3
+	}
+	ch.TakeDamage(recoil)
+
 	improveSkill(ch, SkillHeadbutt)
 
-	return SkillResult{
+	result := SkillResult{
 		Success:       true,
-		Damage:        damage,
+		Damage:        ch.GetLevel(),
 		MessageToCh:   ActMessage("You slam your forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n slams $s forehead into you with a sickening crack!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n slams $s forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
-		StunTarget:    true,
-		WaitCh:        2,
+		WaitCh:        3,
 	}
+	if target.GetPosition() > combat.PosStunned {
+		result.TargetFalls = true
+	}
+	return result
 }
 
-// DoRescue implements do_rescue() from act.offensive.c lines 480-539.
+// DoRescue implements do_rescue() from act.offensive.c lines 499-581.
 // Interposes between attacker and target.
 func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine interface {
 	StartCombat(combat.Combatant, combat.Combatant) error
@@ -344,6 +444,16 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	// Can't rescue someone you're fighting
 	if ch.GetFighting() == target.GetName() {
 		return SkillResult{Success: false, MessageToCh: "How can you rescue someone you are trying to kill?"}
+	}
+
+	// Mounted — act.offensive.c:531-535
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+
+	// Peaceful room — outlaws are exempt (they can fight anywhere) — act.offensive.c:537-542
+	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") && ch.GetFlags()&(1<<PlrOutlaw) == 0 {
+		return SkillResult{Success: false, MessageToCh: "This room just has such a peaceful, easy feeling...\r\n"}
 	}
 
 	// Find who is fighting the target
@@ -382,22 +492,31 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	if percent > prob {
+		// C sets no wait state at all on a failed rescue.
 		return SkillResult{
 			Success:     false,
 			MessageToCh: "You fail the rescue!",
 		}
 	}
 
-	// Success — stop fighting for all, start ch vs attacker
+	// Success — stop fighting for all three parties, then interpose ch between
+	// attacker and target: attacker turns onto ch, ch turns onto attacker.
+	// act.offensive.c:569-579.
 	improveSkill(ch, SkillRescue)
+
+	combatEngine.StopCombat(target.GetName())
+	combatEngine.StopCombat(attacker.GetName())
+	combatEngine.StopCombat(ch.Name)
+	// Errors here mean one side is already paired (shouldn't happen right
+	// after the StopCombat calls above); nothing more we can do but proceed.
+	_ = combatEngine.StartCombat(ch, attacker)
 
 	return SkillResult{
 		Success:       true,
 		MessageToCh:   "Banzai!  To the rescue...",
 		MessageToVict: ActMessage("You are rescued by $N, you are confused!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n heroically rescues $N!", chPronouns, &victPronouns, ""),
-		WaitCh:        1,
-		WaitTarget:    2,
+		WaitTarget:    2, // WAIT_STATE(vict, 2*PULSE_VIOLENCE) — act.offensive.c:579; no WaitCh in C
 	}
 }
 

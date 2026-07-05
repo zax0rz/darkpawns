@@ -47,6 +47,17 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillDragonKick) == 0 {
 		return SkillResult{Success: false, MessageToCh: "What's that, idiot-san?"}
 	}
+
+	// Self-target — act.offensive.c:659-663
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Aren't we funny today...\r\n"}
+	}
+
+	// Mounted — act.offensive.c:664-668
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+
 	if ch.GetMove() < 10 {
 		return SkillResult{Success: false, MessageToCh: "You're too exhausted!"}
 	}
@@ -56,9 +67,11 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	// #nosec G404
 	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
 	prob := ch.GetSkill(SkillDragonKick)
+	// C: WAIT_STATE(ch, PULSE_VIOLENCE+2) sits outside the if/else — both
+	// branches get WaitCh=3 — act.offensive.c:689.
 	if percent > prob {
 		return SkillResult{
-			Success: false, WaitCh: 1,
+			Success: false, WaitCh: 3,
 			MessageToCh:   ActMessage("You attempt a dragon kick on $N but miss!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n attempts a dragon kick on you but misses!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n attempts a dragon kick on $N but misses!", chPronouns, &victPronouns, ""),
@@ -67,7 +80,7 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	dam := int(float64(ch.GetLevel()) * 1.5)
 	improveSkill(ch, SkillDragonKick)
 	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 1,
+		Success: true, Damage: dam, WaitCh: 3,
 		MessageToCh:   ActMessage("You unleash a devastating dragon kick against $N!", chPronouns, &victPronouns, ""),
 		MessageToVict: ActMessage("$n unleashes a devastating dragon kick against you!", chPronouns, &victPronouns, ""),
 		MessageToRoom: ActMessage("$n dragon kicks $N!", chPronouns, &victPronouns, ""),

@@ -21,8 +21,11 @@ type mockSpellsChar struct {
 	maxHP         int
 	move          int
 	maxMove       int
+	dex           int
 	aff           uint64
 	flags         uint64
+	inGroup       bool
+	following     string
 	messages      []string
 	activeAffects []*engine.Affect
 	inventory     *mockInventory
@@ -57,6 +60,9 @@ func (m *mockSpellsChar) RemoveAffectBySpell(spellNum int) {
 	}
 	m.activeAffects = filtered
 }
+func (m *mockSpellsChar) GetDex() int                { return m.dex }
+func (m *mockSpellsChar) IsInGroup() bool            { return m.inGroup }
+func (m *mockSpellsChar) GetFollowing() string       { return m.following }
 func (m *mockSpellsChar) IsAffected(bit int) bool    { return m.aff&(1<<bit) != 0 }
 func (m *mockSpellsChar) HasMobFlag(bit uint64) bool { return m.flags&bit != 0 }
 func (m *mockSpellsChar) GetInventory() ReagentInventory {
