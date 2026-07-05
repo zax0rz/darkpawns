@@ -1,7 +1,8 @@
 .PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report fmt check-fmt vet lint lint-fix test-parse
 
-# Default world directory (relative to darkpawns original)
-WORLD_DIR ?= ../darkpawns/lib
+# Default world directory — resolve relative to this Makefile so it works
+# regardless of the checkout directory name.
+WORLD_DIR ?= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))lib
 
 build:
 	go build -o darkpawns ./cmd/server
@@ -94,7 +95,7 @@ lint-fix:
 
 # Testing with actual world files
 test-parse:
-	go test -v ./pkg/parser -world $(WORLD_DIR)
+	go test -v ./pkg/parser
 
 DEPLOY_USER ?= root
 DEPLOY_HOST ?= 192.168.1.121

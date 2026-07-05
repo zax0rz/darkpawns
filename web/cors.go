@@ -16,7 +16,7 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		origin := r.Header.Get("Origin")
 
 		// Check if origin is allowed
-		if origin != "" && isOriginAllowed(origin, allowedOrigins) {
+		if origin != "" && isOriginAllowed(origin, allowedOrigins, r) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -49,7 +49,7 @@ func getAllowedOrigins() []string {
 	}
 
 	// Default development origins
-	if isDevMode() {
+	if isDevMode(nil) {
 		return []string{"http://localhost:3000", "http://localhost:4350", "http://127.0.0.1:3000"}
 	}
 
@@ -63,15 +63,30 @@ func getAllowedOrigins() []string {
 // M-12: No wildcard matching — only explicitly listed subdomains are allowed.
 var allowedSubdomains = map[string][]string{}
 
-func isDevMode() bool {
-	return os.Getenv("ENVIRONMENT") == "development"
+func isDevMode(r *http.Request) bool {
+	if os.Getenv("ENVIRONMENT") != "development" {
+		return false
+	}
+	if r == nil {
+		return true
+	}
+	host := r.Host
+	if strings.HasPrefix(host, "localhost") ||
+		strings.HasPrefix(host, "127.0.0.1") ||
+		strings.HasPrefix(host, "[::1]") ||
+		strings.HasPrefix(host, "0.0.0.0") {
+		return true
+	}
+	log.Printf("[CORS] WARNING: dev mode CORS rejected for non-local origin %q", r.RemoteAddr)
+	return false
 }
 
-func isOriginAllowed(origin string, allowed []string) bool {
-	// M-13: Development mode allows all origins.
-	// This must NEVER activate in production. The guard is explicitly
-	// checking ENVIRONMENT and cannot be overridden via CORS_ALLOWED_ORIGINS.
-	if isDevMode() {
+func isOriginAllowed(origin string, allowed []string, r *http.Request) bool {
+	// M-13: Development mode allows all origins, but only when the request is
+	// directed at a local address. This must NEVER activate in production.
+	// The guard checks ENVIRONMENT and the request host and cannot be overridden
+	// via CORS_ALLOWED_ORIGINS.
+	if isDevMode(r) {
 		log.Printf("[CORS] WARNING: dev mode — allowing origin %q (NEVER ship this config)", origin)
 		return true
 	}

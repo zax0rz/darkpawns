@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,6 +23,33 @@ func TestAuditLogger_CloseReturnsError(t *testing.T) {
 	// Second close should return an error because the file is already closed.
 	if err := logger.Close(); err == nil {
 		t.Error("expected error on second Close, got nil")
+	}
+}
+
+func TestAuditInit_RepeatedCalls(t *testing.T) {
+	tmpDir := t.TempDir()
+	first := filepath.Join(tmpDir, "audit1.log")
+	second := filepath.Join(tmpDir, "audit2.log")
+
+	if err := Init(first); err != nil {
+		t.Fatalf("first Init failed: %v", err)
+	}
+
+	LogEvent(AuditEvent{EventType: "test", Action: "first", Success: true})
+
+	if err := Init(second); err != nil {
+		t.Fatalf("second Init failed: %v", err)
+	}
+
+	LogEvent(AuditEvent{EventType: "test", Action: "second", Success: true})
+
+	// Verify the second file received its event.
+	data, err := os.ReadFile(second)
+	if err != nil {
+		t.Fatalf("read second audit log: %v", err)
+	}
+	if !bytes.Contains(data, []byte(`"action":"second"`)) {
+		t.Errorf("second audit log missing expected event: %s", data)
 	}
 }
 

@@ -171,11 +171,12 @@ func WebsocketOptimizationExample() {
 	// Wait for messages to be processed
 	time.Sleep(50 * time.Millisecond)
 
-	// Cleanup
-	close(session1)
-	close(session2)
+	// Cleanup: unregister from the pool before closing the channels so the
+	// pool cannot send on a channel that has just been closed.
 	pool.Unregister("session-1")
 	pool.Unregister("session-2")
+	close(session1)
+	close(session2)
 }
 
 func QueryOptimizationExample() {

@@ -437,6 +437,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	// Send login with password
 	if err := sendLoginWithPassword(s, name, password, newChar); err != nil {
 		tc.writeLine(fmt.Sprintf("\r\nLogin failed: %v\r\n", err))
+		// Set a write deadline so a client that stops reading cannot block
+		// writeLoop forever and leak this goroutine/file descriptor.
+		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		s.CloseSend()
 		<-done
 		return
@@ -448,6 +451,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	// the send channel so writeLoop flushes that message and exits, then
 	// disconnect instead of leaving the client stuck and unauthenticated. (DP-591)
 	if !s.IsAuthenticated() && !s.IsCharCreating() {
+		// Set a write deadline so a client that stops reading cannot block
+		// writeLoop forever and leak this goroutine/file descriptor.
+		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		s.CloseSend()
 		<-done
 		return

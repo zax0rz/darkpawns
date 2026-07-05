@@ -87,6 +87,12 @@ var globalLogger *AuditLogger
 
 // Initialize the global audit logger
 func Init(filename string) error {
+	if globalLogger != nil {
+		if err := globalLogger.Close(); err != nil {
+			slog.Warn("audit logger close on re-init failed", "error", err)
+		}
+	}
+
 	logger, err := NewAuditLogger(filename)
 	if err != nil {
 		return err
