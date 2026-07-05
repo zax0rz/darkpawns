@@ -46,6 +46,44 @@ var conApp = []conAppType{
 	{6, 99}, // con = 25
 }
 
+// intAppType represents the int_app[] table from constants.c:1156-1183
+// Original: struct int_app_type { sh_int learn; };
+type intAppType struct {
+	Learn int
+}
+
+// intApp is the int_app[] table from constants.c:1156-1183
+// Index is INT score (0-25).
+// TODO: wire to score display (act.wizard.c:771) and practice gain (spec_procs.c:242)
+var intApp = []intAppType{
+	{3},  // int = 0
+	{5},  // int = 1
+	{7},
+	{8},
+	{9},
+	{10}, // int = 5
+	{11},
+	{12},
+	{13},
+	{15},
+	{17}, // int = 10
+	{19},
+	{22},
+	{25},
+	{30},
+	{35}, // int = 15
+	{40},
+	{45},
+	{50}, // int = 18
+	{53},
+	{55}, // int = 20
+	{56},
+	{57},
+	{58},
+	{59},
+	{60}, // int = 25
+}
+
 // wisAppType represents the wis_app[] table from constants.c:1152-1178
 // Original: struct wis_app_type { sh_int bonus; };
 type wisAppType struct {
