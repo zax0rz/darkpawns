@@ -98,7 +98,7 @@ func TestCache_Stats_AvgAccessPerItem(t *testing.T) {
 	if !ok {
 		t.Fatalf("avg_access_per_item is not float64: %T", stats["avg_access_per_item"])
 	}
-	want := 3.0 / 3.0 // totalAccess=3, itemCount=3
+	want := 1.0 // totalAccess=3, itemCount=3 → 3.0/3.0
 	if avg != want {
 		t.Errorf("avg_access_per_item = %v, want %v", avg, want)
 	}

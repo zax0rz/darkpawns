@@ -2,6 +2,7 @@
 package common
 
 // ShopManager defines the interface for shop management.
+//
 // Deprecated: Use ShopManagerInterface from shop.go instead. It exposes the
 // full API including removal, restock, and transaction lookup.
 type ShopManager interface {
