@@ -1436,7 +1436,7 @@ func TestDoHeadbutt_SelfRecoilWithHelm(t *testing.T) {
 // new_cmds.c:428 (`if (MOB_FLAGGED(victim, MOB_NOBASH)) percent = 0;`).
 func TestDoHeadbutt_NobashMobAutoSucceeds(t *testing.T) {
 	w, ch := newHeadbuttTestWorld(t)
-	ch.Level = 20 // below LVL_IMMORT, so only the NOBASH override is in play
+	ch.Level = 20                 // below LVL_IMMORT, so only the NOBASH override is in play
 	ch.SetSkill(SkillHeadbutt, 1) // low skill — would normally miss almost always
 	mob := spawnTargetMob(t, w)
 	mob.SetPosition(combat.PosFighting)

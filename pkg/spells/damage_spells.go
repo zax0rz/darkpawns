@@ -156,29 +156,29 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 			victim = ch
 		}
 
-	// DIVERGENCE (DP-938): the following spell numbers have no case in C's
-	// mag_damage() switch (src/magic.c:615-819) and must not fabricate damage
-	// here. Each has a different real home:
-	//   - SpellHellfire, SpellMeteorSwarm, SpellCalliope: real MANUAL_SPELL
-	//     routines, ported as castHellfire/castMeteorSwarm/castCalliope and
-	//     dispatched via CallMagic's RoutineManual path (see area_spells_test.go).
-	//   - SpellSmokescreen: not a damage spell in C — an affect (blindness),
-	//     handled via RoutineMasses/MagAffects.
-	//   - SpellMentalLapse: not a damage spell — resets a mob's hunting/aggro
-	//     state, ported as castMentalLapse via RoutineManual.
-	//   - SpellFireBreath/GasBreath/FrostBreath/AcidBreath/LightningBreath: mob
-	//     breath attacks (src/spec_procs.c dragon_breath). In C these are
-	//     registered MAG_AREAS with no case in mag_areas()'s switch either, so
-	//     they fall through to mag_damage() with dam left at 0 — breath
-	//     weapons deal zero damage in the original game, a long-standing C
-	//     engine bug, not a divergence to fix here.
-	//   - SpellDragonBreath: not a real C spell at all (dragon_breath picks
-	//     one of the five breath types above by mob vnum).
-	//   - SpellDrowning: C applies a flat 25hp self-damage tick in the room
-	//     pulse loop (src/comm.c:715), unrelated to spellcasting.
-	//   - SpellPetrify: C is `raw_kill()` triggered by a failed saving throw in
-	//     the Medusa special mob procedure (src/spec_procs2.c:1577), not a
-	//     dice-damage spell.
+		// DIVERGENCE (DP-938): the following spell numbers have no case in C's
+		// mag_damage() switch (src/magic.c:615-819) and must not fabricate damage
+		// here. Each has a different real home:
+		//   - SpellHellfire, SpellMeteorSwarm, SpellCalliope: real MANUAL_SPELL
+		//     routines, ported as castHellfire/castMeteorSwarm/castCalliope and
+		//     dispatched via CallMagic's RoutineManual path (see area_spells_test.go).
+		//   - SpellSmokescreen: not a damage spell in C — an affect (blindness),
+		//     handled via RoutineMasses/MagAffects.
+		//   - SpellMentalLapse: not a damage spell — resets a mob's hunting/aggro
+		//     state, ported as castMentalLapse via RoutineManual.
+		//   - SpellFireBreath/GasBreath/FrostBreath/AcidBreath/LightningBreath: mob
+		//     breath attacks (src/spec_procs.c dragon_breath). In C these are
+		//     registered MAG_AREAS with no case in mag_areas()'s switch either, so
+		//     they fall through to mag_damage() with dam left at 0 — breath
+		//     weapons deal zero damage in the original game, a long-standing C
+		//     engine bug, not a divergence to fix here.
+		//   - SpellDragonBreath: not a real C spell at all (dragon_breath picks
+		//     one of the five breath types above by mob vnum).
+		//   - SpellDrowning: C applies a flat 25hp self-damage tick in the room
+		//     pulse loop (src/comm.c:715), unrelated to spellcasting.
+		//   - SpellPetrify: C is `raw_kill()` triggered by a failed saving throw in
+		//     the Medusa special mob procedure (src/spec_procs2.c:1577), not a
+		//     dice-damage spell.
 	}
 
 	// Apply saving throw — half damage on success
