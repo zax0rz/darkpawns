@@ -156,45 +156,29 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 			victim = ch
 		}
 
-	/* --- ADDITIONAL SPELLS --- */
-	case SpellHellfire:
-		dam = dice(10, 8) + level*3
-
-	case SpellMeteorSwarm:
-		dam = dice(20, 6) + level*4
-
-	case SpellCalliope:
-		dam = dice(8, 10) + level
-
-	case SpellSmokescreen:
-		dam = dice(3, 4) + level/2
-
-	case SpellMentalLapse:
-		dam = dice(5, 5) + level
-
-	case SpellFireBreath:
-		dam = dice(8, 6) + level
-
-	case SpellGasBreath:
-		dam = dice(6, 8) + level
-
-	case SpellFrostBreath:
-		dam = dice(7, 7) + level
-
-	case SpellAcidBreath:
-		dam = dice(9, 5) + level
-
-	case SpellLightningBreath:
-		dam = dice(10, 6) + level
-
-	case SpellDragonBreath:
-		dam = dice(15, 10) + level*3
-
-	case SpellDrowning:
-		dam = dice(8, 4) + level
-
-	case SpellPetrify:
-		dam = dice(6, 6) + level
+	// DIVERGENCE (DP-938): the following spell numbers have no case in C's
+	// mag_damage() switch (src/magic.c:615-819) and must not fabricate damage
+	// here. Each has a different real home:
+	//   - SpellHellfire, SpellMeteorSwarm, SpellCalliope: real MANUAL_SPELL
+	//     routines, ported as castHellfire/castMeteorSwarm/castCalliope and
+	//     dispatched via CallMagic's RoutineManual path (see area_spells_test.go).
+	//   - SpellSmokescreen: not a damage spell in C — an affect (blindness),
+	//     handled via RoutineMasses/MagAffects.
+	//   - SpellMentalLapse: not a damage spell — resets a mob's hunting/aggro
+	//     state, ported as castMentalLapse via RoutineManual.
+	//   - SpellFireBreath/GasBreath/FrostBreath/AcidBreath/LightningBreath: mob
+	//     breath attacks (src/spec_procs.c dragon_breath). In C these are
+	//     registered MAG_AREAS with no case in mag_areas()'s switch either, so
+	//     they fall through to mag_damage() with dam left at 0 — breath
+	//     weapons deal zero damage in the original game, a long-standing C
+	//     engine bug, not a divergence to fix here.
+	//   - SpellDragonBreath: not a real C spell at all (dragon_breath picks
+	//     one of the five breath types above by mob vnum).
+	//   - SpellDrowning: C applies a flat 25hp self-damage tick in the room
+	//     pulse loop (src/comm.c:715), unrelated to spellcasting.
+	//   - SpellPetrify: C is `raw_kill()` triggered by a failed saving throw in
+	//     the Medusa special mob procedure (src/spec_procs2.c:1577), not a
+	//     dice-damage spell.
 	}
 
 	// Apply saving throw — half damage on success
