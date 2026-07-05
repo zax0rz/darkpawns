@@ -97,7 +97,7 @@ func cmdDoorName(subcmd int) string {
 	}
 }
 
-func (s *Session) doDoorOpen(door *systems.Door, roomVNum int, dir string) {
+func (s *Session) doDoorOpen(door systems.DoorSnapshot, roomVNum int, dir string) {
 	if !door.IsClosed() {
 		s.Send("It's already open.")
 		return
@@ -118,7 +118,7 @@ func (s *Session) doDoorOpen(door *systems.Door, roomVNum int, dir string) {
 	}
 }
 
-func (s *Session) doDoorClose(door *systems.Door, roomVNum int, dir string) {
+func (s *Session) doDoorClose(door systems.DoorSnapshot, roomVNum int, dir string) {
 	if door.IsClosed() {
 		s.Send("It's already closed.")
 		return
@@ -135,7 +135,7 @@ func (s *Session) doDoorClose(door *systems.Door, roomVNum int, dir string) {
 	}
 }
 
-func (s *Session) doDoorUnlock(door *systems.Door, roomVNum int, dir string) {
+func (s *Session) doDoorUnlock(door systems.DoorSnapshot, roomVNum int, dir string) {
 	if !door.IsLocked() {
 		s.Send("It's already unlocked.")
 		return
@@ -161,7 +161,7 @@ func (s *Session) doDoorUnlock(door *systems.Door, roomVNum int, dir string) {
 	}
 }
 
-func (s *Session) doDoorLock(door *systems.Door, roomVNum int, dir string) {
+func (s *Session) doDoorLock(door systems.DoorSnapshot, roomVNum int, dir string) {
 	if door.IsLocked() {
 		s.Send("It's already locked.")
 		return
@@ -187,7 +187,7 @@ func (s *Session) doDoorLock(door *systems.Door, roomVNum int, dir string) {
 	}
 }
 
-func (s *Session) doDoorPick(door *systems.Door, roomVNum int, dir string) {
+func (s *Session) doDoorPick(door systems.DoorSnapshot, roomVNum int, dir string) {
 	if !door.IsLocked() {
 		s.Send("It's not locked.")
 		return
@@ -222,7 +222,7 @@ func (s *Session) doDoorPick(door *systems.Door, roomVNum int, dir string) {
 	}
 }
 
-func (s *Session) doDoorBash(door *systems.Door, roomVNum int, dir string) {
+func (s *Session) doDoorBash(door systems.DoorSnapshot, roomVNum int, dir string) {
 	if !door.IsClosed() {
 		s.Send("It's already open.")
 		return
@@ -248,7 +248,7 @@ func (s *Session) doDoorBash(door *systems.Door, roomVNum int, dir string) {
 	}
 }
 
-func (s *Session) findKeyForDoor(door *systems.Door) int {
+func (s *Session) findKeyForDoor(door systems.DoorSnapshot) int {
 	keyVNum := door.GetKeyVNum()
 	if keyVNum >= 0 {
 		if playerHasKey(s, keyVNum) {
@@ -274,7 +274,7 @@ func (s *Session) findItemByVNum(vnum int) bool {
 	return false
 }
 
-func (s *Session) mirrorDoorState(door *systems.Door, closed bool) {
+func (s *Session) mirrorDoorState(door systems.DoorSnapshot, closed bool) {
 	toRoom := door.GetToRoom()
 	if toRoom <= 0 {
 		return

@@ -387,8 +387,8 @@ func TestDoorManager_AddGetDoor(t *testing.T) {
 	if !ok {
 		t.Fatal("GetDoor() should find the door")
 	}
-	if retrieved != door {
-		t.Error("GetDoor() should return the same door")
+	if retrieved.FromRoom != door.FromRoom || retrieved.ToRoom != door.ToRoom || retrieved.Direction != door.Direction {
+		t.Error("GetDoor() should return a snapshot of the same door")
 	}
 
 	// Test GetDoorBetween
@@ -396,8 +396,8 @@ func TestDoorManager_AddGetDoor(t *testing.T) {
 	if !ok {
 		t.Fatal("GetDoorBetween() should find the door")
 	}
-	if retrieved2 != door {
-		t.Error("GetDoorBetween() should return the same door")
+	if retrieved2.FromRoom != door.FromRoom || retrieved2.ToRoom != door.ToRoom || retrieved2.Direction != door.Direction {
+		t.Error("GetDoorBetween() should return a snapshot of the same door")
 	}
 
 	// Test reverse direction
@@ -405,8 +405,8 @@ func TestDoorManager_AddGetDoor(t *testing.T) {
 	if !ok {
 		t.Fatal("GetDoorBetween() should find the door in reverse")
 	}
-	if retrieved3 != door {
-		t.Error("GetDoorBetween() should return the same door in reverse")
+	if retrieved3.FromRoom != door.FromRoom || retrieved3.ToRoom != door.ToRoom || retrieved3.Direction != door.Direction {
+		t.Error("GetDoorBetween() should return a snapshot of the same door in reverse")
 	}
 
 	// Test non-existent door
@@ -644,7 +644,7 @@ func TestDoorManager_Operations(t *testing.T) {
 
 	// Test GetVisibleDoorsInRoom
 	visible := dm.GetVisibleDoorsInRoom(100)
-	if len(visible) != 1 || visible[0] != door {
+	if len(visible) != 1 || visible[0].Direction != door.Direction || visible[0].FromRoom != door.FromRoom {
 		t.Errorf("Expected 1 visible door, got %d", len(visible))
 	}
 

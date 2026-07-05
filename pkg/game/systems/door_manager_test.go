@@ -90,6 +90,77 @@ func TestConcurrentCanPassAndToggle(t *testing.T) {
 	wg.Wait()
 }
 
+// TestDoorManager_GetDoorReturnsCopy verifies that GetDoor returns an
+// independent snapshot: mutating the returned value must not affect the
+// door held by the DoorManager (DP-698).
+func TestDoorManager_GetDoorReturnsCopy(t *testing.T) {
+	dm := NewDoorManager()
+	door := &Door{
+		FromRoom:  100,
+		ToRoom:    101,
+		Direction: "north",
+		Closed:    true,
+		Locked:    true,
+		Hp:        100,
+	}
+	dm.AddDoor(door)
+
+	snapshot, ok := dm.GetDoor(100, "north")
+	if !ok {
+		t.Fatal("GetDoor() should find the door")
+	}
+
+	snapshot.Closed = false
+	snapshot.Locked = false
+	snapshot.Hp = 0
+
+	if snapshot.Closed || snapshot.Locked || snapshot.Hp != 0 {
+		t.Fatal("mutation of the snapshot's own fields should have taken effect")
+	}
+	if !door.Closed || !door.Locked || door.Hp != 100 {
+		t.Error("mutating the returned snapshot should not affect the underlying door")
+	}
+}
+
+// TestDoorManager_ConcurrentAccess runs GetDoor readers concurrently with
+// OpenDoor writers under -race to confirm no data race occurs now that
+// GetDoor returns a value snapshot instead of a shared *Door (DP-698).
+func TestDoorManager_ConcurrentAccess(t *testing.T) {
+	dm := NewDoorManager()
+	door := &Door{
+		FromRoom:  100,
+		ToRoom:    101,
+		Direction: "north",
+		Closed:    true,
+	}
+	dm.AddDoor(door)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 100; j++ {
+				snapshot, ok := dm.GetDoor(100, "north")
+				if ok {
+					_ = snapshot.Closed
+				}
+			}
+		}()
+	}
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				_, _ = dm.OpenDoor(100, "north")
+				_, _ = dm.CloseDoor(100, "north")
+			}
+		}()
+	}
+	wg.Wait()
+}
+
 func TestConcurrentBashAndLock(t *testing.T) {
 	dm := NewDoorManager()
 

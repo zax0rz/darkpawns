@@ -79,7 +79,7 @@ func TestDoDoorOpen(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorOpen(door, 1001, "north")
+	s.doDoorOpen(door.Snapshot(), 1001, "north")
 
 	if door.Closed {
 		t.Error("door should be open after doDoorOpen")
@@ -109,7 +109,7 @@ func TestDoDoorOpen_AlreadyOpen(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorOpen(door, 1001, "north")
+	s.doDoorOpen(door.Snapshot(), 1001, "north")
 
 	if door.Closed {
 		t.Error("door should remain open")
@@ -139,7 +139,7 @@ func TestDoDoorOpen_Locked(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorOpen(door, 1001, "north")
+	s.doDoorOpen(door.Snapshot(), 1001, "north")
 
 	if !door.Closed {
 		t.Error("locked door should remain closed")
@@ -172,7 +172,7 @@ func TestDoDoorClose(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorClose(door, 1001, "north")
+	s.doDoorClose(door.Snapshot(), 1001, "north")
 
 	if !door.Closed {
 		t.Error("door should be closed after doDoorClose")
@@ -201,7 +201,7 @@ func TestDoDoorClose_AlreadyClosed(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorClose(door, 1001, "north")
+	s.doDoorClose(door.Snapshot(), 1001, "north")
 
 	if !door.Closed {
 		t.Error("door should stay closed")
@@ -238,7 +238,7 @@ func TestDoDoorUnlock(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorUnlock(door, 1001, "north")
+	s.doDoorUnlock(door.Snapshot(), 1001, "north")
 
 	if door.Locked {
 		t.Error("door should be unlocked after doDoorUnlock")
@@ -271,7 +271,7 @@ func TestDoDoorUnlock_NoKey(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorUnlock(door, 1001, "north")
+	s.doDoorUnlock(door.Snapshot(), 1001, "north")
 
 	if !door.Locked {
 		t.Error("door should remain locked without key")
@@ -301,7 +301,7 @@ func TestDoDoorUnlock_AlreadyUnlocked(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorUnlock(door, 1001, "north")
+	s.doDoorUnlock(door.Snapshot(), 1001, "north")
 
 	msg := readDoorMessage(t, s)
 	if msg != "It's already unlocked." {
@@ -333,7 +333,7 @@ func TestDoDoorUnlock_NotClosed(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorUnlock(door, 1001, "north")
+	s.doDoorUnlock(door.Snapshot(), 1001, "north")
 
 	msg := readDoorMessage(t, s)
 	if msg != "You must close it first." {
@@ -365,7 +365,7 @@ func TestDoDoorLock(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorLock(door, 1001, "north")
+	s.doDoorLock(door.Snapshot(), 1001, "north")
 
 	if !door.Locked {
 		t.Error("door should be locked after doDoorLock")
@@ -395,7 +395,7 @@ func TestDoDoorLock_AlreadyLocked(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorLock(door, 1001, "north")
+	s.doDoorLock(door.Snapshot(), 1001, "north")
 
 	msg := readDoorMessage(t, s)
 	if msg != "It's already locked." {
@@ -421,7 +421,7 @@ func TestDoDoorLock_NotClosed(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorLock(door, 1001, "north")
+	s.doDoorLock(door.Snapshot(), 1001, "north")
 
 	msg := readDoorMessage(t, s)
 	if msg != "You must close it first." {
@@ -448,7 +448,7 @@ func TestDoDoorLock_NoKey(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorLock(door, 1001, "north")
+	s.doDoorLock(door.Snapshot(), 1001, "north")
 
 	if door.Locked {
 		t.Error("door should not be locked without key")
@@ -489,7 +489,7 @@ func TestDoDoorPick(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorPick(door, 1001, "north")
+	s.doDoorPick(door.Snapshot(), 1001, "north")
 
 	if door.Locked {
 		t.Error("door should be unlocked after successful pick")
@@ -523,7 +523,7 @@ func TestDoDoorPick_NoLockpick(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorPick(door, 1001, "north")
+	s.doDoorPick(door.Snapshot(), 1001, "north")
 
 	if !door.Locked {
 		t.Error("door should remain locked without lockpick")
@@ -561,7 +561,7 @@ func TestDoDoorPick_NoSkill(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorPick(door, 1001, "north")
+	s.doDoorPick(door.Snapshot(), 1001, "north")
 
 	msg := readDoorMessage(t, s)
 	if msg != "You have no idea how to pick locks." {
@@ -595,7 +595,7 @@ func TestDoDoorPick_Pickproof(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorPick(door, 1001, "north")
+	s.doDoorPick(door.Snapshot(), 1001, "north")
 
 	if !door.Locked {
 		t.Error("pickproof door should remain locked")
@@ -625,7 +625,7 @@ func TestDoDoorPick_NotLocked(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorPick(door, 1001, "north")
+	s.doDoorPick(door.Snapshot(), 1001, "north")
 
 	msg := readDoorMessage(t, s)
 	if msg != "It's not locked." {
@@ -658,7 +658,7 @@ func TestDoDoorBash(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorBash(door, 1001, "north")
+	s.doDoorBash(door.Snapshot(), 1001, "north")
 
 	if door.Closed {
 		t.Error("door should be open after bash success")
@@ -699,7 +699,7 @@ func TestDoDoorBash_NotDestroyed(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorBash(door, 1001, "north")
+	s.doDoorBash(door.Snapshot(), 1001, "north")
 
 	if !door.Closed {
 		t.Error("door should remain closed after partial bash")
@@ -732,7 +732,7 @@ func TestDoDoorBash_NotBashable(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorBash(door, 1001, "north")
+	s.doDoorBash(door.Snapshot(), 1001, "north")
 
 	msg := readDoorMessage(t, s)
 	if msg != "This door cannot be bashed." {
@@ -757,7 +757,7 @@ func TestDoDoorBash_AlreadyOpen(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorBash(door, 1001, "north")
+	s.doDoorBash(door.Snapshot(), 1001, "north")
 
 	msg := readDoorMessage(t, s)
 	if msg != "It's already open." {
@@ -785,7 +785,7 @@ func TestDoDoorBash_AlreadyDestroyed(t *testing.T) {
 	}
 	dm.AddDoor(door)
 
-	s.doDoorBash(door, 1001, "north")
+	s.doDoorBash(door.Snapshot(), 1001, "north")
 
 	msg := readDoorMessage(t, s)
 	if msg != "The door has already been destroyed." {
@@ -810,7 +810,7 @@ func TestFindKeyForDoor(t *testing.T) {
 		KeyVNum: 500,
 	}
 
-	result := s.findKeyForDoor(door)
+	result := s.findKeyForDoor(door.Snapshot())
 	if result != 500 {
 		t.Errorf("findKeyForDoor = %d, want 500", result)
 	}
@@ -830,7 +830,7 @@ func TestFindKeyForDoor_NoKey(t *testing.T) {
 		KeyVNum: 500,
 	}
 
-	result := s.findKeyForDoor(door)
+	result := s.findKeyForDoor(door.Snapshot())
 	if result != -1 {
 		t.Errorf("findKeyForDoor = %d, want -1", result)
 	}
@@ -853,7 +853,7 @@ func TestFindKeyForDoor_WrongKey(t *testing.T) {
 		KeyVNum: 500,
 	}
 
-	result := s.findKeyForDoor(door)
+	result := s.findKeyForDoor(door.Snapshot())
 	if result != -1 {
 		t.Errorf("findKeyForDoor = %d, want -1", result)
 	}
@@ -878,7 +878,7 @@ func TestFindKeyForDoor_AnyKey(t *testing.T) {
 		KeyVNum: -1,
 	}
 
-	result := s.findKeyForDoor(door)
+	result := s.findKeyForDoor(door.Snapshot())
 	if result != 999 {
 		t.Errorf("findKeyForDoor = %d, want 999 (first ITEM_KEY)", result)
 	}
@@ -896,7 +896,7 @@ func TestFindKeyForDoor_AnyKey_NoItems(t *testing.T) {
 		KeyVNum: -1,
 	}
 
-	result := s.findKeyForDoor(door)
+	result := s.findKeyForDoor(door.Snapshot())
 	if result != -1 {
 		t.Errorf("findKeyForDoor = %d, want -1", result)
 	}

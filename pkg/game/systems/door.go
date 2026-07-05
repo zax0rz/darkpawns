@@ -38,6 +38,120 @@ type Door struct {
 	initialLocked bool
 }
 
+// DoorSnapshot is a concurrency-safe, immutable copy of a Door's exported
+// state. DoorManager getters return DoorSnapshot instead of *Door so callers
+// can't mutate a door's fields outside the Door's own lock; unlike Door, it
+// holds no mutex, so it's safe to copy and pass around by value.
+type DoorSnapshot struct {
+	Closed    bool
+	Locked    bool
+	Pickproof bool
+	Bashable  bool
+	Hidden    bool
+
+	KeyVNum    int
+	Difficulty int
+	Hp         int
+	MaxHp      int
+
+	FromRoom  int
+	ToRoom    int
+	Direction string
+}
+
+// IsClosed reports whether the door is closed.
+func (s DoorSnapshot) IsClosed() bool { return s.Closed }
+
+// IsLocked reports whether the door is locked.
+func (s DoorSnapshot) IsLocked() bool { return s.Locked }
+
+// IsHidden reports whether the door is hidden.
+func (s DoorSnapshot) IsHidden() bool { return s.Hidden }
+
+// IsPickproof reports whether the door is pickproof.
+func (s DoorSnapshot) IsPickproof() bool { return s.Pickproof }
+
+// IsBashable reports whether the door can be bashed.
+func (s DoorSnapshot) IsBashable() bool { return s.Bashable }
+
+// GetHp returns the door's hit points as of the snapshot.
+func (s DoorSnapshot) GetHp() int { return s.Hp }
+
+// GetKeyVNum returns the VNum of the key that unlocks this door.
+func (s DoorSnapshot) GetKeyVNum() int { return s.KeyVNum }
+
+// GetToRoom returns the destination room VNum.
+func (s DoorSnapshot) GetToRoom() int { return s.ToRoom }
+
+// GetDirection returns the door's direction string.
+func (s DoorSnapshot) GetDirection() string { return s.Direction }
+
+// IsPassable returns true if a player can pass through this door.
+func (s DoorSnapshot) IsPassable() bool { return !s.Closed }
+
+// CanSee returns true if the door is visible (not hidden).
+func (s DoorSnapshot) CanSee() bool { return !s.Hidden }
+
+// GetStatus returns a string describing the door's state.
+func (s DoorSnapshot) GetStatus() string {
+	if s.Hidden {
+		return "hidden"
+	}
+	if s.Closed {
+		if s.Locked {
+			return "closed and locked"
+		}
+		return "closed"
+	}
+	return "open"
+}
+
+// GetDescription returns a descriptive string for the door.
+func (s DoorSnapshot) GetDescription() string {
+	parts := []string{}
+
+	if s.Hidden {
+		parts = append(parts, "hidden")
+	}
+
+	if s.Closed {
+		parts = append(parts, "closed")
+		if s.Locked {
+			parts = append(parts, "locked")
+		}
+		if s.Pickproof {
+			parts = append(parts, "pickproof")
+		}
+		if s.Bashable {
+			parts = append(parts, "bashable")
+		}
+	} else {
+		parts = append(parts, "open")
+	}
+
+	return strings.Join(parts, ", ")
+}
+
+// Snapshot returns a concurrency-safe copy of the door's exported state.
+func (d *Door) Snapshot() DoorSnapshot {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return DoorSnapshot{
+		Closed:     d.Closed,
+		Locked:     d.Locked,
+		Pickproof:  d.Pickproof,
+		Bashable:   d.Bashable,
+		Hidden:     d.Hidden,
+		KeyVNum:    d.KeyVNum,
+		Difficulty: d.Difficulty,
+		Hp:         d.Hp,
+		MaxHp:      d.MaxHp,
+		FromRoom:   d.FromRoom,
+		ToRoom:     d.ToRoom,
+		Direction:  d.Direction,
+	}
+}
+
 // NewDoor creates a new door from an exit definition.
 func NewDoor(fromRoom, toRoom int, direction string, doorState, keyVNum int) *Door {
 	d := &Door{
