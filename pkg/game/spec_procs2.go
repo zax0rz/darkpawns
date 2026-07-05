@@ -107,7 +107,6 @@ func guardCanAct(ch *Player, me *MobInstance) bool {
 	return true
 }
 
-
 // isOwnerGrouped checks if a player is grouped with the house owner.
 func isOwnerGrouped(w *World, ch *Player, roomVNum int) bool {
 	if ch.GetFollowing() == "" {

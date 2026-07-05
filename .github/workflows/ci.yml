@@ -86,9 +86,15 @@ jobs:
         go-version: '1.26.4'
 
     - name: Install golangci-lint
-      uses: golangci/golangci-lint-action@v6
+      uses: golangci/golangci-lint-action@v9
       with:
-        version: latest
+        # Pin to a v2.x release built with Go ≥ 1.26 so it can load the
+        # go 1.26.4 toolchain declared in go.mod. The action's v6 line only
+        # supports golangci-lint v1.x (built with go1.24), which fails with
+        # "Go language version (go1.24) is lower than the targeted Go
+        # version (1.26.4)". Match the version used locally.
+        # Update coordinately with .golangci.yml (already v2-style).
+        version: v2.12.2
 
     - name: Install gofumpt
       run: go install mvdan.cc/gofumpt@latest

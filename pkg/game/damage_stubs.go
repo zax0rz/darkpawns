@@ -149,4 +149,3 @@ func diceRoll(n, d int) int {
 	}
 	return total
 }
-

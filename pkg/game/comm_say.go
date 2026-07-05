@@ -76,5 +76,4 @@ func (w *World) doRaceSay(ch *Player, me *MobInstance, cmd string, arg string) b
 	return true
 }
 
-
 // performTell — port of perform_tell().

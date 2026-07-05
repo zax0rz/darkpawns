@@ -121,5 +121,3 @@ func isDark(room *parser.Room) bool {
 func isOutdoors(room *parser.Room) bool {
 	return !hasRoomFlag(room, "indoors")
 }
-
-
