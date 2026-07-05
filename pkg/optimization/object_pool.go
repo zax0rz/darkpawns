@@ -164,10 +164,21 @@ func (op *ObjectPool) TryGet() (interface{}, bool) {
 	return obj, true
 }
 
-// Clear removes all objects from the pool
+// Clear removes all objects from the pool.
+// If objects are still borrowed, only the available pool is drained and the
+// counters are left intact so that returning objects later does not corrupt
+// the accounting.
 func (op *ObjectPool) Clear() {
 	op.mu.Lock()
 	defer op.mu.Unlock()
+
+	if op.borrowed > 0 {
+		// Only drain the available pool; do not reset counters while objects
+		// are still in flight.
+		op.pool = make([]interface{}, 0, op.maxSize)
+		op.stats.LastReset = time.Now()
+		return
+	}
 
 	op.pool = make([]interface{}, 0, op.maxSize)
 	op.created = 0

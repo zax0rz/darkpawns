@@ -74,8 +74,12 @@ func (a *AuditLogger) Log(event AuditEvent) {
 }
 
 // Close flushes and closes the underlying audit log file.
-func (a *AuditLogger) Close() {
-	_ = a.file.Close()
+func (a *AuditLogger) Close() error {
+	if err := a.file.Close(); err != nil {
+		slog.Error("audit log close failed", "error", err)
+		return err
+	}
+	return nil
 }
 
 // Global audit logger instance

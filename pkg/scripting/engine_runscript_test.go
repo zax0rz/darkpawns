@@ -384,3 +384,56 @@ end
 		t.Error("expected handled=true for good script")
 	}
 }
+
+func TestLuaSandbox_RequireBlocked(t *testing.T) {
+	dir := t.TempDir()
+
+	requireScript := filepath.Join(dir, "require.lua")
+	if err := os.WriteFile(requireScript, []byte(`function oncmd() require("os") return true end`), 0o644); err != nil {
+		t.Fatalf("write require.lua: %v", err)
+	}
+
+	engine := NewEngine(dir, nil)
+	defer engine.Close()
+
+	handled, err := engine.RunScript(&ScriptContext{}, "require.lua", "oncmd")
+	if err == nil {
+		t.Fatal("expected error when sandboxed script calls require, got nil")
+	}
+	if handled {
+		t.Error("expected handled=false when require fails")
+	}
+}
+
+func TestRunScript_BooleanReturn(t *testing.T) {
+	dir := t.TempDir()
+
+	boolTrue := filepath.Join(dir, "bool_true.lua")
+	if err := os.WriteFile(boolTrue, []byte(`function oncmd() return true end`), 0o644); err != nil {
+		t.Fatalf("write bool_true.lua: %v", err)
+	}
+
+	boolFalse := filepath.Join(dir, "bool_false.lua")
+	if err := os.WriteFile(boolFalse, []byte(`function oncmd() return false end`), 0o644); err != nil {
+		t.Fatalf("write bool_false.lua: %v", err)
+	}
+
+	engine := NewEngine(dir, nil)
+	defer engine.Close()
+
+	handled, err := engine.RunScript(&ScriptContext{}, "bool_true.lua", "oncmd")
+	if err != nil {
+		t.Fatalf("RunScript failed: %v", err)
+	}
+	if !handled {
+		t.Error("expected handled=true for boolean true return")
+	}
+
+	handled, err = engine.RunScript(&ScriptContext{}, "bool_false.lua", "oncmd")
+	if err != nil {
+		t.Fatalf("RunScript failed: %v", err)
+	}
+	if handled {
+		t.Error("expected handled=false for boolean false return")
+	}
+}

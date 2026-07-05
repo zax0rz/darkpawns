@@ -97,6 +97,9 @@ func (e *Engine) newSafeLState() *lua.LState {
 
 	// Remove package library (can load arbitrary code)
 	L.SetGlobal("package", lua.LNil)
+	// Also clear the package loaders from the registry so require() cannot work.
+	L.SetField(L.Get(lua.RegistryIndex), "_LOADED", lua.LNil)
+	L.SetField(L.Get(lua.RegistryIndex), "_PRELOAD", lua.LNil)
 
 	// Remove debug library
 	L.SetGlobal("debug", lua.LNil)
@@ -465,9 +468,12 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	L.RemoveContext()
 	scriptCancel()
 
-	// Check return value
+	// Check return value. Both numeric 1 and boolean true mean "handled".
 	if ret.Type() == lua.LTNumber {
 		return lua.LVAsNumber(ret) == 1, nil
+	}
+	if ret == lua.LTrue {
+		return true, nil
 	}
 	return false, nil
 }

@@ -1,8 +1,10 @@
 package parser
 
 import (
+	"bufio"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -195,5 +197,18 @@ func TestRoom_HasFlagOutOfBounds(t *testing.T) {
 	}
 	if room.HasFlag(-1) {
 		t.Error("Expected HasFlag(-1) to be false")
+	}
+}
+
+func TestReadTildeString_TrailingWhitespace(t *testing.T) {
+	input := "hello ~  "
+	scanner := bufio.NewScanner(strings.NewReader(input))
+
+	got, err := readTildeString(scanner)
+	if err != nil {
+		t.Fatalf("readTildeString returned error: %v", err)
+	}
+	if got != "hello " {
+		t.Errorf("expected %q, got %q", "hello ", got)
 	}
 }

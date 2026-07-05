@@ -125,6 +125,25 @@ func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || contains(s[1:], substr)))
 }
 
+func TestConnectionClosed_NegativeFloor(t *testing.T) {
+	// Reset shared state so this test is independent of execution order.
+	activeConnections.Store(0)
+	connectionsActive.Set(0)
+
+	before := testutil.ToFloat64(connectionsUnderflow)
+
+	// Closing without opening should not drive the gauge negative.
+	ConnectionClosed()
+	ConnectionClosed()
+
+	if got := testutil.ToFloat64(connectionsActive); got != 0 {
+		t.Errorf("connections_active = %v, want 0", got)
+	}
+	if got := testutil.ToFloat64(connectionsUnderflow) - before; got != 2 {
+		t.Errorf("connections_underflow_total increased by %v, want 2", got)
+	}
+}
+
 func TestDamageDealt_Negative(t *testing.T) {
 	// Add positive damage
 	DamageDealt("player_test", 10)

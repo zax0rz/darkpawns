@@ -50,7 +50,7 @@ func (p *Profiler) StartCPUProfile() error {
 	}
 
 	// Start CPU profiling
-	cpuFile := fmt.Sprintf("%s/cpu-%d.prof", p.profileDir, time.Now().Unix())
+	cpuFile := fmt.Sprintf("%s/cpu-%d.prof", p.profileDir, time.Now().UnixNano())
 	// #nosec G302
 	// #nosec G304
 	// #nosec G703
@@ -107,7 +107,7 @@ func (p *Profiler) WriteHeapProfile() (err error) {
 	}
 
 	// Write heap profile
-	heapFile := fmt.Sprintf("%s/heap-%d.prof", p.profileDir, time.Now().Unix())
+	heapFile := fmt.Sprintf("%s/heap-%d.prof", p.profileDir, time.Now().UnixNano())
 	// #nosec G302
 	// #nosec G304
 	// #nosec G703
@@ -148,7 +148,7 @@ func (p *Profiler) StopBlockProfile() (err error) {
 	}
 
 	// Write block profile
-	blockFile := fmt.Sprintf("%s/block-%d.prof", p.profileDir, time.Now().Unix())
+	blockFile := fmt.Sprintf("%s/block-%d.prof", p.profileDir, time.Now().UnixNano())
 	// #nosec G302
 	// #nosec G304
 	// #nosec G703
@@ -192,7 +192,7 @@ func (p *Profiler) StopMutexProfile() (err error) {
 	}
 
 	// Write mutex profile
-	mutexFile := fmt.Sprintf("%s/mutex-%d.prof", p.profileDir, time.Now().Unix())
+	mutexFile := fmt.Sprintf("%s/mutex-%d.prof", p.profileDir, time.Now().UnixNano())
 	// #nosec G302
 	// #nosec G304
 	// #nosec G703
@@ -230,7 +230,7 @@ func (p *Profiler) GoroutineDump() (err error) {
 	}
 
 	// Write goroutine dump
-	goroutineFile := fmt.Sprintf("%s/goroutine-%d.txt", p.profileDir, time.Now().Unix())
+	goroutineFile := fmt.Sprintf("%s/goroutine-%d.txt", p.profileDir, time.Now().UnixNano())
 	// #nosec G302
 	// #nosec G304
 	// #nosec G703

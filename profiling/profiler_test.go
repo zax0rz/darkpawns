@@ -117,6 +117,38 @@ func TestPProfBindAddr(t *testing.T) {
 	}
 }
 
+func TestProfileFilename_Uniqueness(t *testing.T) {
+	profileDir := t.TempDir()
+	p := NewProfiler(profileDir)
+
+	// Generate two heap profiles in rapid succession.
+	if err := p.WriteHeapProfile(); err != nil {
+		t.Fatalf("first WriteHeapProfile failed: %v", err)
+	}
+	if err := p.WriteHeapProfile(); err != nil {
+		t.Fatalf("second WriteHeapProfile failed: %v", err)
+	}
+
+	entries, err := os.ReadDir(profileDir)
+	if err != nil {
+		t.Fatalf("ReadDir: %v", err)
+	}
+
+	heapFiles := make(map[string]struct{})
+	for _, e := range entries {
+		if !e.Type().IsRegular() {
+			continue
+		}
+		name := e.Name()
+		if len(name) > 5 && name[:5] == "heap-" {
+			heapFiles[name] = struct{}{}
+		}
+	}
+	if len(heapFiles) != 2 {
+		t.Fatalf("expected 2 distinct heap profile files, got %v", heapFiles)
+	}
+}
+
 func TestProfilerWriteHeapProfileReturnsErrorOnReadOnlyDir(t *testing.T) {
 	profileDir := t.TempDir()
 	if err := os.Chmod(profileDir, 0o000); err != nil {

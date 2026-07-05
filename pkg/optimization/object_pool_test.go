@@ -4,6 +4,33 @@ import (
 	"testing"
 )
 
+func TestObjectPool_ClearWithBorrowedObjects(t *testing.T) {
+	create := func() interface{} { return "object" }
+	reset := func(interface{}) {}
+	validate := func(interface{}) bool { return true }
+
+	pool := NewObjectPool(create, reset, validate, 2)
+
+	obj := pool.Get()
+	if obj == nil {
+		t.Fatal("expected Get to return an object")
+	}
+
+	// Clear while an object is still borrowed should not reset counters.
+	pool.Clear()
+
+	// Returning the borrowed object must not make borrowed negative.
+	pool.Put(obj)
+
+	stats := pool.Stats()
+	if borrowed, ok := stats["borrowed"].(int); !ok || borrowed != 0 {
+		t.Errorf("expected borrowed=0 after Put, got %v", stats["borrowed"])
+	}
+	if created, ok := stats["created"].(int); !ok || created != 1 {
+		t.Errorf("expected created=1 after Put, got %v", stats["created"])
+	}
+}
+
 func TestObjectPool_TryGet_NoDeadlock(t *testing.T) {
 	createdCount := 0
 	create := func() interface{} {

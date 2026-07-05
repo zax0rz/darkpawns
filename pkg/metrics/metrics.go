@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,6 +26,15 @@ var (
 		Name: "darkpawns_connection_errors_total",
 		Help: "Total number of WebSocket connection errors",
 	})
+
+	connectionsUnderflow = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "darkpawns_connections_underflow_total",
+		Help: "Total number of connection close events that would have driven the active gauge negative",
+	})
+
+	// activeConnections mirrors connectionsActive so we can guard against
+	// unmatched close events without reading the Prometheus gauge value.
+	activeConnections atomic.Int64
 
 	// Command metrics
 	commandsProcessed = promauto.NewCounterVec(prometheus.CounterOpts{
@@ -102,12 +112,24 @@ var (
 
 // Connection tracking
 func ConnectionOpened() {
+	activeConnections.Add(1)
 	connectionsActive.Inc()
 	connectionsTotal.Inc()
 }
 
 func ConnectionClosed() {
-	connectionsActive.Dec()
+	for {
+		v := activeConnections.Load()
+		if v > 0 {
+			if activeConnections.CompareAndSwap(v, v-1) {
+				connectionsActive.Dec()
+				return
+			}
+			continue
+		}
+		connectionsUnderflow.Inc()
+		return
+	}
 }
 
 func ConnectionError() {

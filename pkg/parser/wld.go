@@ -120,7 +120,7 @@ func ParseWldFile(path string) ([]Room, error) {
 func readTildeString(scanner *bufio.Scanner) (string, error) {
 	var parts []string
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := strings.TrimSpace(scanner.Text())
 		if strings.HasSuffix(line, "~") {
 			parts = append(parts, strings.TrimSuffix(line, "~"))
 			return strings.Join(parts, "\n"), nil
