@@ -793,9 +793,15 @@ func (ac *AdminCommands) getSpamConfig() moderation.SpamDetectionConfig {
 func parseDuration(s string) (time.Duration, error) {
 	if strings.HasSuffix(s, "d") {
 		var days int
-		if _, err := fmt.Sscanf(s[:len(s)-1], "%d", &days); err == nil {
+		remaining := s[:len(s)-1]
+		n, err := fmt.Sscanf(remaining, "%d", &days)
+		if err == nil && n == 1 && fmt.Sprintf("%d", days) == remaining {
 			return time.Duration(days) * 24 * time.Hour, nil
 		}
+		if err != nil {
+			return 0, fmt.Errorf("invalid duration %q: %w", s, err)
+		}
+		return 0, fmt.Errorf("invalid duration %q: trailing characters in day specification", s)
 	}
 	return time.ParseDuration(s)
 }

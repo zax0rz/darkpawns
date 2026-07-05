@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
 )
@@ -112,5 +113,42 @@ func TestCmdReportAssignsSequentialIDs(t *testing.T) {
 	}
 	if adminReports != 2 {
 		t.Errorf("expected admin to receive 2 REPORT notifications, got %d", adminReports)
+	}
+}
+
+func TestParseDuration_ValidDays(t *testing.T) {
+	d, err := parseDuration("5d")
+	if err != nil {
+		t.Fatalf("parseDuration(\"5d\") returned unexpected error: %v", err)
+	}
+	if want := 120 * time.Hour; d != want {
+		t.Errorf("parseDuration(\"5d\") = %v, want %v", d, want)
+	}
+}
+
+func TestParseDuration_InvalidTrailing(t *testing.T) {
+	cases := []string{"5days", "5dd", "5df"}
+	for _, tc := range cases {
+		t.Run(tc, func(t *testing.T) {
+			if _, err := parseDuration(tc); err == nil {
+				t.Errorf("parseDuration(%q) expected error, got nil", tc)
+			}
+		})
+	}
+}
+
+func TestParseDuration_TimeUnits(t *testing.T) {
+	d, err := parseDuration("2h30m")
+	if err != nil {
+		t.Fatalf("parseDuration(\"2h30m\") returned unexpected error: %v", err)
+	}
+	if want := 2*time.Hour + 30*time.Minute; d != want {
+		t.Errorf("parseDuration(\"2h30m\") = %v, want %v", d, want)
+	}
+}
+
+func TestParseDuration_Empty(t *testing.T) {
+	if _, err := parseDuration(""); err == nil {
+		t.Errorf("parseDuration(\"\") expected error, got nil")
 	}
 }

@@ -105,6 +105,48 @@ func TestBatchFilter(t *testing.T) {
 	}
 }
 
+func TestBatchFilter_PartialError(t *testing.T) {
+	var requestCount int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if requestCount == 2 {
+			// Malformed JSON triggers FilterText error for the second element.
+			_, _ = w.Write([]byte(`{not valid json`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"filtered_text": "[REDACTED]", "detected_categories": ["person"]}`))
+	}))
+	defer server.Close()
+
+	config := DefaultFilterConfig()
+	client := NewClient(server.URL, config)
+
+	texts := []string{"first", "second", "third"}
+	filtered, detected, err := client.BatchFilter(texts)
+	if err == nil {
+		t.Fatal("BatchFilter expected error for malformed element, got nil")
+	}
+
+	if len(filtered) != 3 {
+		t.Errorf("Expected 3 filtered texts, got %d", len(filtered))
+	}
+	if len(detected) != 3 {
+		t.Errorf("Expected 3 detection lists, got %d", len(detected))
+	}
+
+	if filtered[0] != "[REDACTED]" || filtered[2] != "[REDACTED]" {
+		t.Errorf("Expected successful elements to be filtered, got %v", filtered)
+	}
+	if filtered[1] != "[FILTERED]" {
+		t.Errorf("Expected failed element to use fallback, got %q", filtered[1])
+	}
+	if !contains(detected[1], "fallback") {
+		t.Errorf("Expected failed element to report fallback, got %v", detected[1])
+	}
+}
+
 func TestConfig_LoadFromEnv(t *testing.T) {
 	// Set environment variables
 	_ = os.Setenv("PRIVACY_FILTER_URL", "http://test:8000")

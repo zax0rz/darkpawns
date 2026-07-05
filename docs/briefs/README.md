@@ -58,7 +58,7 @@ After merge:
 **Fix:**
 <Exact code change needed. Show before/after when helpful.>
 
-**Cite:** C source — `<file>:<line>` (function name). <How the Go port differs from C, if applicable.>
+**Cite:** C source — `<file>:<line>` (function name). <How the Go port differs from C, if applicable.> If no C equivalent exists (Go-only addition), say so explicitly — the coding agent shouldn't waste time hunting for one.
 
 **Regression Test:**
 <What test should exist, specific assertions, whether one exists already or needs writing.>

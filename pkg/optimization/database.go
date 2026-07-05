@@ -168,6 +168,10 @@ func (ia *IndexAnalyzer) AnalyzeTable(tableName string) ([]IndexRecommendation, 
 		}
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating pg_stats rows: %w", err)
+	}
+
 	return recommendations, nil
 }
 
@@ -290,7 +294,12 @@ func (bp *BatchProcessor) flushLoop() {
 		case <-ticker.C:
 			bp.mu.Lock()
 			if len(bp.operations) > 0 {
-				_ = bp.flushLocked()
+				if err := bp.flushLocked(); err != nil {
+					// flushLocked already logged the error with details;
+					// this is the final propagated failure from the background loop.
+					slog.Error("background flush failed, data may be lost",
+						"error", err)
+				}
 			}
 			bp.mu.Unlock()
 

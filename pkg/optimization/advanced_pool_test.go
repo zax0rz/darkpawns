@@ -1,6 +1,7 @@
 package optimization
 
 import (
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -134,5 +135,51 @@ func TestAdvancedWorkerPoolCloseWithFullQueueDoesNotPanic(t *testing.T) {
 		case <-time.After(time.Second):
 			t.Fatal("Close did not return")
 		}
+	}
+}
+
+// TestGetMetrics_AtomicRead exercises GetMetrics while concurrent submissions
+// mutate the metrics. Run with -race to detect non-atomic reads.
+func TestGetMetrics_AtomicRead(t *testing.T) {
+	pool := NewAdvancedWorkerPool(4, 16)
+	defer pool.Close()
+
+	var submitWg sync.WaitGroup
+	var readerWg sync.WaitGroup
+	done := make(chan struct{})
+
+	// Goroutines that continuously submit tiny tasks.
+	for i := 0; i < 4; i++ {
+		submitWg.Add(1)
+		go func() {
+			defer submitWg.Done()
+			for {
+				select {
+				case <-done:
+					return
+				default:
+				}
+				_ = pool.Submit(func() {})
+			}
+		}()
+	}
+
+	// Goroutine that continuously reads metrics.
+	readerWg.Add(1)
+	go func() {
+		defer readerWg.Done()
+		for i := 0; i < 1000; i++ {
+			_ = pool.GetMetrics()
+		}
+	}()
+
+	readerWg.Wait()
+	close(done)
+	submitWg.Wait()
+
+	// Sanity check: at least some tasks were submitted.
+	m := pool.GetMetrics()
+	if m.TasksSubmitted == 0 {
+		t.Error("expected non-zero TasksSubmitted")
 	}
 }

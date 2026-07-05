@@ -1,6 +1,12 @@
 package optimization
 
 import (
+	"bytes"
+	"database/sql"
+	"database/sql/driver"
+	"errors"
+	"log/slog"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -63,4 +69,97 @@ func TestQueryOptimizerStatsConcurrency(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+// rowsErrDriver is a minimal sql.Driver that returns rows whose Next call
+// fails, causing rows.Err() to surface the error after iteration.
+type rowsErrDriver struct{}
+
+type rowsErrConn struct{}
+
+type rowsErrStmt struct{}
+
+type rowsErrRows struct{}
+
+func init() {
+	sql.Register("rowsErrDriver", rowsErrDriver{})
+}
+
+func (rowsErrDriver) Open(name string) (driver.Conn, error) { return rowsErrConn{}, nil }
+
+func (rowsErrConn) Prepare(query string) (driver.Stmt, error) { return rowsErrStmt{}, nil }
+func (rowsErrConn) Close() error                              { return nil }
+func (rowsErrConn) Begin() (driver.Tx, error)                 { return nil, errors.New("not supported") }
+
+func (rowsErrStmt) Close() error { return nil }
+func (rowsErrStmt) NumInput() int { return 1 }
+func (rowsErrStmt) Exec(args []driver.Value) (driver.Result, error) {
+	return nil, errors.New("not supported")
+}
+func (rowsErrStmt) Query(args []driver.Value) (driver.Rows, error) { return rowsErrRows{}, nil }
+
+func (rowsErrRows) Columns() []string {
+	return []string{"attname", "most_common_vals", "most_common_freqs", "histogram_bounds", "correlation"}
+}
+func (rowsErrRows) Close() error { return nil }
+func (rowsErrRows) Next(dest []driver.Value) error {
+	return errors.New("simulated rows iteration error")
+}
+
+func TestAnalyzeTable_RowsError(t *testing.T) {
+	db, err := sql.Open("rowsErrDriver", "")
+	if err != nil {
+		t.Fatalf("sql.Open failed: %v", err)
+	}
+	defer db.Close()
+
+	ia := NewIndexAnalyzer(db)
+	_, err = ia.AnalyzeTable("players")
+	if err == nil {
+		t.Fatal("AnalyzeTable expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "iterating pg_stats rows") {
+		t.Errorf("expected error to mention 'iterating pg_stats rows', got: %v", err)
+	}
+}
+
+func TestBatchProcessor_FlushLoopError(t *testing.T) {
+	var buf bytes.Buffer
+	textHandler := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelWarn})
+	oldLogger := slog.Default()
+	slog.SetDefault(slog.New(textHandler))
+	defer slog.SetDefault(oldLogger)
+
+	flushErr := errors.New("simulated flush failure")
+	bp := NewBatchProcessor(10, 20*time.Millisecond, func(ops []BatchOperation) error {
+		return flushErr
+	})
+
+	bp.Add(BatchOperation{Type: "insert", Table: "test", Data: "data"})
+
+	// Wait long enough for the ticker to fire and flushLocked to exhaust
+	// its three retries (0ms + 100ms + 400ms backoff).
+	time.Sleep(700 * time.Millisecond)
+
+	// Close before inspecting logs so the background goroutine stops writing
+	// to the shared buffer.
+	_ = bp.Close()
+
+	logs := buf.String()
+	if !strings.Contains(logs, "background flush failed, data may be lost") {
+		t.Errorf("expected error log for background flush failure, got:\n%s", logs)
+	}
+}
+
+func TestBatchProcessor_CloseReturnsError(t *testing.T) {
+	flushErr := errors.New("simulated flush failure")
+	bp := NewBatchProcessor(10, time.Hour, func(ops []BatchOperation) error {
+		return flushErr
+	})
+
+	bp.Add(BatchOperation{Type: "insert", Table: "test", Data: "data"})
+
+	if err := bp.Close(); err != flushErr {
+		t.Errorf("Close() expected %v, got %v", flushErr, err)
+	}
 }

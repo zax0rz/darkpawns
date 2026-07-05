@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
@@ -58,7 +59,15 @@ func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 		// Read request body
 		var requestBody bytes.Buffer
 		if r.Body != nil {
-			bodyBytes, _ := io.ReadAll(r.Body)
+			bodyBytes, err := io.ReadAll(r.Body)
+			if err != nil {
+				slog.Warn("failed to read request body in privacy middleware",
+					"error", err,
+					"path", r.URL.Path,
+					"method", r.Method,
+				)
+				bodyBytes = nil
+			}
 			requestBody.Write(bodyBytes)
 			r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}

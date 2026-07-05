@@ -228,7 +228,17 @@ func (p *AdvancedWorkerPool) GetMetrics() PoolMetrics {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	metrics := p.metrics
+	// Copy only the fields protected by p.mu. The fields updated with
+	// sync/atomic must be read with atomic.LoadInt64 to avoid racing the
+	// goroutines that call atomic.AddInt64.
+	metrics := PoolMetrics{
+		AvgWaitTime:   p.metrics.AvgWaitTime,
+		MaxWaitTime:   p.metrics.MaxWaitTime,
+		TotalWaitTime: p.metrics.TotalWaitTime,
+	}
+	metrics.TasksSubmitted = atomic.LoadInt64(&p.metrics.TasksSubmitted)
+	metrics.TasksCompleted = atomic.LoadInt64(&p.metrics.TasksCompleted)
+	metrics.TasksFailed = atomic.LoadInt64(&p.metrics.TasksFailed)
 	metrics.QueueLength = atomic.LoadInt64(&p.metrics.QueueLength)
 	metrics.PriorityLength = atomic.LoadInt64(&p.metrics.PriorityLength)
 

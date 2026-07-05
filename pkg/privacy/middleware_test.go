@@ -2,8 +2,10 @@ package privacy
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -110,6 +112,41 @@ func TestWebSocketLogger_UsesInstanceClient(t *testing.T) {
 	}
 	if !strings.Contains(string(out), "WS-FILTERED") {
 		t.Errorf("expected WebSocket logger output to use its own client, got:\n%s", string(out))
+	}
+}
+
+type failingBody struct{}
+
+func (failingBody) Read(p []byte) (int, error) {
+	return 0, errors.New("simulated body read failure")
+}
+
+func (failingBody) Close() error { return nil }
+
+func TestHTTPMiddleware_BodyReadFailure(t *testing.T) {
+	var buf bytes.Buffer
+	textHandler := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelWarn})
+	oldLogger := slog.Default()
+	slog.SetDefault(slog.New(textHandler))
+	defer slog.SetDefault(oldLogger)
+
+	var receivedBody []byte
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedBody, _ = io.ReadAll(r.Body)
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/test", failingBody{})
+	rec := httptest.NewRecorder()
+	HTTPMiddleware(handler, nil).ServeHTTP(rec, req)
+
+	if len(receivedBody) != 0 {
+		t.Errorf("expected downstream handler to receive empty body, got %q", receivedBody)
+	}
+
+	logs := buf.String()
+	if !strings.Contains(logs, "failed to read request body in privacy middleware") {
+		t.Errorf("expected warning log for body read failure, got:\n%s", logs)
 	}
 }
 

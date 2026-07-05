@@ -122,22 +122,29 @@ func (i *IPRateLimiter) cleanupLoop() {
 	for {
 		select {
 		case <-ticker.C:
-			// Remove stale entries individually rather than nuking the entire map.
-			// The old approach (replace with empty map) let any IP with a full
-			// burst get a fresh limiter and bypass the rate limit window.
-			count := 0
-			i.ips.Range(func(key, value any) bool {
-				count++
-				limiter := value.(*rate.Limiter)
-				if count > 10000 && limiter.Tokens() >= float64(limiter.Burst()) {
-					i.ips.Delete(key)
-				}
-				return true
-			})
+			i.cleanupOnce()
 		case <-i.stopCh:
 			return
 		}
 	}
+}
+
+// cleanupOnce removes up to maxDeletions stale limiters. A limiter is stale
+// when it has regained its full burst, meaning it has not been used recently.
+func (i *IPRateLimiter) cleanupOnce() {
+	const maxDeletions = 500
+	deleted := 0
+	i.ips.Range(func(key, value any) bool {
+		if deleted >= maxDeletions {
+			return false // stop iterating
+		}
+		limiter := value.(*rate.Limiter)
+		if limiter.Tokens() >= float64(limiter.Burst()) {
+			i.ips.Delete(key)
+			deleted++
+		}
+		return true
+	})
 }
 
 func (i *IPRateLimiter) AddIP(ip string) *rate.Limiter {

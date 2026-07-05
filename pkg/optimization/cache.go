@@ -53,25 +53,20 @@ func (c *Cache) Set(key string, value interface{}) {
 
 // Get retrieves an item from cache
 func (c *Cache) Get(key string) (interface{}, bool) {
-	c.mu.RLock()
-	item, exists := c.items[key]
-	c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
+	item, exists := c.items[key]
 	if !exists {
 		return nil, false
 	}
 
 	if time.Now().After(item.expiresAt) {
-		c.mu.Lock()
 		delete(c.items, key)
-		c.mu.Unlock()
 		return nil, false
 	}
 
-	c.mu.Lock()
 	item.accessCount++
-	c.mu.Unlock()
-
 	return item.value, true
 }
 

@@ -136,21 +136,30 @@ func (c *Client) fallbackFilter(text string) string {
 	return "[FILTERED]"
 }
 
-// BatchFilter filters multiple texts at once
+// BatchFilter filters multiple texts at once.
+// If an individual element fails, the failed element is replaced with the
+// local fallback result and the first error is returned alongside all other
+// accumulated results so callers do not lose partial work.
 func (c *Client) BatchFilter(texts []string) ([]string, [][]string, error) {
 	// For simplicity, process sequentially
 	// In production, you might want to implement batch API if supported
 	var filteredTexts []string
 	var allDetected [][]string
+	var firstErr error
 
 	for _, text := range texts {
 		filtered, detected, err := c.FilterText(text)
 		if err != nil {
-			return nil, nil, err
+			// Use fallback for the failed element; record first error.
+			filtered = c.fallbackFilter(text)
+			detected = []string{"fallback"}
+			if firstErr == nil {
+				firstErr = fmt.Errorf("FilterText failed for element %d: %w", len(filteredTexts), err)
+			}
 		}
 		filteredTexts = append(filteredTexts, filtered)
 		allDetected = append(allDetected, detected)
 	}
 
-	return filteredTexts, allDetected, nil
+	return filteredTexts, allDetected, firstErr
 }

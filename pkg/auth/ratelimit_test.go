@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -309,6 +310,56 @@ func TestIPRateLimiter_DifferentIPs(t *testing.T) {
 
 	if allowed < 10 {
 		t.Errorf("separate IP limiter should have full burst, got %d", allowed)
+	}
+}
+
+func TestIPRateLimiter_CleanupDeletesAllStale(t *testing.T) {
+	rl := NewIPRateLimiter()
+	t.Cleanup(func() { rl.Stop() })
+
+	const totalIPs = 10050
+	for i := 0; i < totalIPs; i++ {
+		rl.AddIP(fmt.Sprintf("192.168.0.%d", i))
+	}
+
+	// All limiters are stale (full burst, never used). Each cleanup pass deletes
+	// at most maxDeletions entries, so keep running until the map is empty.
+	for passes := 0; passes < 25; passes++ {
+		rl.cleanupOnce()
+		empty := true
+		rl.ips.Range(func(key, value any) bool {
+			empty = false
+			return false
+		})
+		if empty {
+			return
+		}
+	}
+
+	t.Fatalf("expected all %d stale limiters to be deleted within cleanup passes", totalIPs)
+}
+
+func TestIPRateLimiter_CleanupPreservesActive(t *testing.T) {
+	rl := NewIPRateLimiter()
+	t.Cleanup(func() { rl.Stop() })
+
+	activeIP := "10.0.0.1"
+	staleIP := "10.0.0.2"
+
+	active := rl.GetLimiter(activeIP)
+	for i := 0; i < 15; i++ {
+		active.Allow()
+	}
+
+	rl.AddIP(staleIP)
+
+	rl.cleanupOnce()
+
+	if _, ok := rl.ips.Load(activeIP); !ok {
+		t.Error("expected active limiter to be preserved")
+	}
+	if _, ok := rl.ips.Load(staleIP); ok {
+		t.Error("expected stale limiter to be deleted")
 	}
 }
 
