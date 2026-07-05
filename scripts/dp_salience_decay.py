@@ -11,7 +11,6 @@ Source: PHASE4-AGENT-PROTOCOL.md Part 11 — Hosted Memory Tier
 
 import os
 import sys
-import psycopg2
 import logging
 from datetime import datetime, timezone
 
@@ -21,10 +20,18 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-DB_URL = os.environ.get(
-    "DARKPAWNS_DB",
-    "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable",
-)
+# Required — no hardcoded default. A missing env var should fail loudly
+# rather than silently connect to a default local DB (DP-718). Checked
+# before heavy imports so misconfiguration fails fast.
+DB_URL = os.environ.get("DARKPAWNS_DB")
+if not DB_URL:
+    log.error(
+        "DARKPAWNS_DB environment variable is required. "
+        "Set it to the target database DSN before running this script."
+    )
+    sys.exit(2)
+
+import psycopg2  # noqa: E402 — imported after env check (fail-fast)
 
 PRUNE_THRESHOLD = 0.05   # memories below this are deleted
 HALF_LIFE_DAYS = 30.0    # neutral memory half-life

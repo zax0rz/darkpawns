@@ -77,6 +77,65 @@ func TestValidateJWT_RejectsHS512(t *testing.T) {
 	}
 }
 
+// TestValidateJWT_RejectsWrongIssuer verifies that a token signed with the
+// correct HS256 secret but a wrong/empty issuer is rejected. GenerateJWT sets
+// Issuer = "darkpawns"; ValidateJWT must enforce it so a secret reused across
+// services can't accept tokens issued elsewhere (DP-795).
+func TestValidateJWT_RejectsWrongIssuer(t *testing.T) {
+	setTestJWTSecret(t)
+	secret := os.Getenv("JWT_SECRET")
+
+	cases := []struct {
+		name   string
+		issuer string
+	}{
+		{"empty", ""},
+		{"wrong service", "other-service"},
+		{"close typo", "DarkPawns"}, // case-sensitive
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			claims := &Claims{
+				PlayerName: "Hero",
+				Role:       "player",
+				RegisteredClaims: jwt.RegisteredClaims{
+					ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+					Issuer:    tc.issuer,
+					Subject:   "Hero",
+				},
+			}
+			token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
+			if err != nil {
+				t.Fatalf("sign token: %v", err)
+			}
+
+			if _, err := ValidateJWT(token); err == nil {
+				t.Fatalf("ValidateJWT accepted token with issuer %q (want rejection)", tc.issuer)
+			}
+		})
+	}
+}
+
+// TestValidateJWT_AcceptsCorrectIssuer verifies the happy path still works
+// after WithIssuer is added to ValidateJWT.
+func TestValidateJWT_AcceptsCorrectIssuer(t *testing.T) {
+	setTestJWTSecret(t)
+
+	token, err := GenerateJWT("Hero", false, 0, "player")
+	if err != nil {
+		t.Fatalf("GenerateJWT failed: %v", err)
+	}
+
+	claims, err := ValidateJWT(token)
+	if err != nil {
+		t.Fatalf("ValidateJWT failed for token with issuer %q: %v", JWTIssuer, err)
+	}
+	if claims.Issuer != JWTIssuer {
+		t.Errorf("claims.Issuer = %q, want %q", claims.Issuer, JWTIssuer)
+	}
+}
+
 func TestValidateJWTSecret(t *testing.T) {
 	cases := []struct {
 		name    string

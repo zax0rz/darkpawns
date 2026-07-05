@@ -24,6 +24,12 @@ var (
 // ValidateJWTSecret uses the same threshold at boot.
 const MinJWTSecretLength = 32
 
+// JWTIssuer is the required issuer claim ("iss") for all Dark Pawns tokens.
+// GenerateJWT sets it; ValidateJWT enforces it. Pin both sides to a single
+// constant so a token signed with the right secret but the wrong issuer
+// (e.g. issued for a different service sharing the secret) is rejected.
+const JWTIssuer = "darkpawns"
+
 // contextKey is a private type for context keys to avoid collisions.
 type contextKey string
 
@@ -97,7 +103,7 @@ func GenerateJWT(playerName string, isAgent bool, agentKeyID int64, role string)
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "darkpawns",
+			Issuer:    JWTIssuer,
 			Subject:   playerName,
 		},
 	}
@@ -123,6 +129,7 @@ func ValidateJWT(tokenString string) (*Claims, error) {
 			return []byte(secret), nil
 		},
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		jwt.WithIssuer(JWTIssuer),
 	)
 	if err != nil {
 		return nil, err

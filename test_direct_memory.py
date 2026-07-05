@@ -3,11 +3,24 @@
 Direct test of memory hooks by simulating a kill event via DB.
 We'll insert a memory directly, then test consolidation and bootstrap.
 """
+import os
+import sys
+
+# Required — no hardcoded default. Prevents accidental connection to the
+# wrong database (e.g. production) when the env var is unset (DP-715).
+# Checked before heavy imports so misconfiguration fails fast.
+DB_URL = os.environ.get("DARKPAWNS_DB")
+if not DB_URL:
+    print(
+        "DARKPAWNS_DB environment variable is required. "
+        "Set it to the target database DSN before running this script.",
+        file=sys.stderr,
+    )
+    sys.exit(2)
+
 import psycopg2
 import json
 import time
-
-DB_URL = "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable"
 
 def test_memory_insert():
     """Insert a test memory directly, simulating a kill hook"""
