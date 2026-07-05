@@ -54,29 +54,32 @@ func (dm *DoorManager) AddDoor(door *Door) {
 	dm.doors[key] = door
 }
 
-// GetDoor returns a door by fromRoom and direction.
-func (dm *DoorManager) GetDoor(fromRoom int, direction string) (*Door, bool) {
+// GetDoor returns a snapshot of the door at fromRoom/direction.
+func (dm *DoorManager) GetDoor(fromRoom int, direction string) (DoorSnapshot, bool) {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
 
 	key := dm.key(fromRoom, direction)
 	door, ok := dm.doors[key]
-	return door, ok
+	if !ok {
+		return DoorSnapshot{}, false
+	}
+	return door.Snapshot(), true
 }
 
-// GetDoorBetween returns a door connecting two rooms.
-func (dm *DoorManager) GetDoorBetween(room1, room2 int) (*Door, bool) {
+// GetDoorBetween returns a snapshot of the door connecting two rooms.
+func (dm *DoorManager) GetDoorBetween(room1, room2 int) (DoorSnapshot, bool) {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
 
 	for _, door := range dm.doors {
 		if (door.FromRoom == room1 && door.ToRoom == room2) ||
 			(door.FromRoom == room2 && door.ToRoom == room1) {
-			return door, true
+			return door.Snapshot(), true
 		}
 	}
 
-	return nil, false
+	return DoorSnapshot{}, false
 }
 
 // RemoveDoor removes a door from the manager.
@@ -101,26 +104,26 @@ func (dm *DoorManager) LoadDoorsFromWorld(world *parser.World) {
 	}
 }
 
-// GetDoorsInRoom returns all doors in a room.
-func (dm *DoorManager) GetDoorsInRoom(roomVNum int) []*Door {
+// GetDoorsInRoom returns snapshots of all doors in a room.
+func (dm *DoorManager) GetDoorsInRoom(roomVNum int) []DoorSnapshot {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
 
-	var doors []*Door
+	var doors []DoorSnapshot
 	for _, door := range dm.doors {
 		// Check if key starts with roomVNum:
 		if door.FromRoom == roomVNum {
-			doors = append(doors, door)
+			doors = append(doors, door.Snapshot())
 		}
 	}
 
 	return doors
 }
 
-// GetVisibleDoorsInRoom returns only visible doors in a room.
-func (dm *DoorManager) GetVisibleDoorsInRoom(roomVNum int) []*Door {
+// GetVisibleDoorsInRoom returns snapshots of only visible doors in a room.
+func (dm *DoorManager) GetVisibleDoorsInRoom(roomVNum int) []DoorSnapshot {
 	allDoors := dm.GetDoorsInRoom(roomVNum)
-	var visibleDoors []*Door
+	var visibleDoors []DoorSnapshot
 
 	for _, door := range allDoors {
 		if door.CanSee() {

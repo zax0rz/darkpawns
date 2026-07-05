@@ -91,7 +91,7 @@ func (rowsErrConn) Prepare(query string) (driver.Stmt, error) { return rowsErrSt
 func (rowsErrConn) Close() error                              { return nil }
 func (rowsErrConn) Begin() (driver.Tx, error)                 { return nil, errors.New("not supported") }
 
-func (rowsErrStmt) Close() error { return nil }
+func (rowsErrStmt) Close() error  { return nil }
 func (rowsErrStmt) NumInput() int { return 1 }
 func (rowsErrStmt) Exec(args []driver.Value) (driver.Result, error) {
 	return nil, errors.New("not supported")
