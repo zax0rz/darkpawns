@@ -9,6 +9,20 @@ import (
 
 // ---------------------------------------------------------------------------
 // Game-layer hooks
+//
+// These 54 function pointers are the bridge between the combat package (which
+// only knows the Combatant interface) and the game layer (Player/Mob structs
+// with direct state access). Only four are wired in production:
+//   - BroadcastMessage  (pkg/session/manager.go SetCombatMessageFunc)
+//   - SendToCharFunc    (pkg/session/manager.go SetCombatMessageFunc)
+//   - DoFlee            (pkg/session/manager.go SetFleeHooks)
+//   - DoRetreat         (pkg/session/manager.go SetFleeHooks)
+// The remaining ~50 are referenced on live code paths but are nil in
+// production, relying on the existing nil guards at each call site.
+//
+// The primary combat path uses CombatEngine struct callbacks; these hooks
+// serve the legacy fight_core path. Future work should migrate them to a
+// GameCallbacks struct (see docs/briefs/BRIEF-2026-07-06-stream4b-combat-hooks-v3-gamecallbacks.md).
 // ---------------------------------------------------------------------------
 
 var (
@@ -28,7 +42,6 @@ var (
 	RemoveAffect             func(name string, skillNum int)
 	RemoveAllAffects         func(name string)
 	RunDeathScript           func(killer, victim string, roomVNum int)
-	RunFightScript           func(mob, target string, roomVNum int)
 	HasScriptFlag            func(name string, flag string) bool
 	HasMobFlag               func(name string, flag string) bool
 	HasMobVNum               func(name string, vnum int) bool
@@ -55,7 +68,6 @@ var (
 	GetAlignment             func(name string) int
 	SetAlignment             func(name string, val int)
 	GetExp                   func(name string) int
-	BuildTHAC0               func(class, level int) int
 	GetWeaponInfo            func(chName string) (wType, damDice, damSize int, isBlessed bool)
 	GetAdjacentRoom          func(roomVNum, door int) int
 	GetFollowersInRoom       func(name string, roomVNum int) int
@@ -68,7 +80,6 @@ var (
 	// JunkInventoryItems is called by AttitudeLoot to discard cheap items ($GOLD_OBJ_COST <= 150)
 	// from the mob's inventory. The game layer provides this because it has direct object access.
 	JunkInventoryItems func(chName string)
-	IsInRoom           func(name string, roomVNum int) bool
 	IncreaseMaxStat    func(name string, stat string) // "hp", "mana", or "move"
 	HealAllPlayers     func()                         // Heal all connected players to full
 	GetGold            func(name string) int
@@ -181,51 +192,8 @@ const (
 	RACE_VAMPIRE = 8
 )
 
-// fleshAlteredType returns the attack_hit_text index for unarmed NPCs with
-// AFF_FLESH_ALTER based on mob level.
-// Ported from flesh_altered_type() in new_cmds.c:1783.
-// Maps level ranges to attack type indices matching the C implementation.
-// Note: if attack_hit_text is changed, this function must be updated too.
-func fleshAlteredType(level int) int {
-	switch {
-	case level <= 3:
-		return 7 // pound
-	case level <= 6:
-		return 11 // pierce
-	case level <= 9:
-		return 3 // slash
-	case level <= 15:
-		return 7 // pound
-	case level <= 21:
-		return 3 // slash
-	case level <= 24:
-		return 7 // pound
-	default:
-		return 3 // slash (level >= 25)
-	}
-}
-
 // **********************************
-// 1. appear()
-// **********************************
-
-func Appear(ch Combatant) {
-	if HasAffect != nil && HasAffect(ch.GetName(), SPELL_INVISIBLE) {
-		if RemoveAffect != nil {
-			RemoveAffect(ch.GetName(), SPELL_INVISIBLE)
-		}
-	}
-	msg := fmt.Sprintf("%s slowly fades into existence.", ch.GetName())
-	if ch.GetLevel() >= LVL_IMMORT {
-		msg = fmt.Sprintf("You feel a strange presence as %s appears, seemingly from nowhere.", ch.GetName())
-	}
-	if BroadcastMessage != nil {
-		BroadcastMessage(ch.GetRoom(), msg, ch.GetName())
-	}
-}
-
-// **********************************
-// 2. updatePos()
+// 1. updatePos()
 // **********************************
 
 func GetPositionFromHP(hp, currentPos int) int {
@@ -562,7 +530,10 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			if IsInGroup(ch) {
 				GroupGain(ch, victim)
 			} else {
-				exp := GetExp(victimName)
+				exp := 0
+				if GetExp != nil {
+					exp = GetExp(victimName)
+				}
 				if exp > maxExpGain {
 					exp = maxExpGain
 				}
@@ -1085,7 +1056,10 @@ func GroupGain(ch, victim Combatant) {
 		numMembers = 1
 	}
 
-	victimExp := GetExp(victim.GetName())
+	victimExp := 0
+	if GetExp != nil {
+		victimExp = GetExp(victim.GetName())
+	}
 	base := victimExp / numMembers
 	if base > 100 {
 		base -= int(float64(base) * 0.01)
@@ -1150,7 +1124,11 @@ func DieWithKiller(ch, killer Combatant, attackType int) {
 	chName := ch.GetName()
 
 	if GainExp != nil {
-		GainExp(chName, -(GetExp(chName) / 37))
+		loss := 0
+		if GetExp != nil {
+			loss = GetExp(chName) / 37
+		}
+		GainExp(chName, -loss)
 	}
 
 	if !ch.IsNPC() && GetConstitution != nil && SetConstitution != nil {
@@ -1176,40 +1154,7 @@ func DieWithKiller(ch, killer Combatant, attackType int) {
 }
 
 // **********************************
-// 10. die()
-// **********************************
-
-func Die(ch Combatant) {
-	if GainExp != nil {
-		GainExp(ch.GetName(), -(GetExp(ch.GetName()) / 3))
-	}
-	RawKill(ch, TYPE_UNDEFINED)
-}
-
-// **********************************
-// 11. makeCorpse()
-// **********************************
-
-func MakeCorpse(victim Combatant, attackType int) {
-	name := victim.GetName()
-	if MakeCorpseFunc != nil {
-		MakeCorpseFunc(name, attackType)
-	}
-}
-
-// **********************************
-// 12. makeDust()
-// **********************************
-
-func MakeDust(victim Combatant, attackType int) {
-	name := victim.GetName()
-	if MakeDustFunc != nil {
-		MakeDustFunc(name, attackType)
-	}
-}
-
-// **********************************
-// 13. counterProcs()
+// 10. counterProcs()
 // **********************************
 
 func CounterProcs(ch Combatant) {
@@ -1410,19 +1355,7 @@ func pickBragMessage(chName, victimName string, victimIsNPC bool, victimSex int)
 // **********************************
 
 // **********************************
-// 16. skillMessage()
-// **********************************
-
-func SkillMessage(dam int, ch, victim Combatant, attackType int) {
-	if attackType < TYPE_HIT {
-		if SkillMessageFunc != nil {
-			SkillMessageFunc(dam, ch.GetName(), victim.GetName(), attackType, ch.GetRoom())
-		}
-	}
-}
-
-// **********************************
-// 21. stopFighting / setFighting helpers
+// 16. stopFighting / setFighting helpers
 // **********************************
 
 func NewNamedCombatant(name string, roomVNum int) Combatant {
