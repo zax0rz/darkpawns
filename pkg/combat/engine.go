@@ -94,6 +94,22 @@ func (ce *CombatEngine) SetCallbacks(cb *GameCallbacks) {
 	SetCallbacks(cb)
 }
 
+// ValidateCallbacks returns an error if the callbacks struct is missing hooks
+// required for the combat engine to function. Broadcast and SendToChar are the
+// minimum required hooks; without them combat messages are silently dropped.
+func (ce *CombatEngine) ValidateCallbacks() error {
+	if ce.Callbacks == nil {
+		return fmt.Errorf("combat callbacks not configured")
+	}
+	if ce.Callbacks.Broadcast == nil {
+		return fmt.Errorf("combat callback Broadcast is required")
+	}
+	if ce.Callbacks.SendToChar == nil {
+		return fmt.Errorf("combat callback SendToChar is required")
+	}
+	return nil
+}
+
 // Start begins the combat tick loop
 func (ce *CombatEngine) Start() {
 	ce.ticker = time.NewTicker(2 * time.Second) // Combat round every 2 seconds
@@ -329,15 +345,15 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 
 	// Shopkeeper protection — C: fight.c:1359-1366
 	// Any attempt to damage a shopkeeper halts combat for both sides.
-	if IsShopkeeper != nil && IsShopkeeper(defender.GetName()) {
+	if cbIsShopkeeper(defender.GetName()) {
 		ce.StopCombat(attacker.GetName())
 		ce.StopCombat(defender.GetName())
 		return
 	}
 
 	// Calculate number of attacks for attacker
-	hasHaste := HasAffect != nil && HasAffect(attacker.GetName(), AFF_HASTE)
-	hasSlow := HasAffect != nil && HasAffect(attacker.GetName(), AFF_SLOW)
+	hasHaste := cbHasAffect(attacker.GetName(), AFF_HASTE)
+	hasSlow := cbHasAffect(attacker.GetName(), AFF_SLOW)
 	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
 
 	// roundPenalty tracks whether a parry or dodge succeeded earlier in this

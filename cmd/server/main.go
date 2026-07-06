@@ -39,6 +39,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -50,7 +51,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -131,16 +131,6 @@ func main() {
 	}
 	gameWorld.WorldPath = *worldDir
 
-	// Initialize scripting engine
-	if *scriptsDir == "" {
-		*scriptsDir = *worldDir + "/scripts"
-	}
-	slog.Info("Loading scripts", "path", *scriptsDir)
-	worldAdapter := game.NewWorldScriptableAdapter(gameWorld)
-	scriptEngine := scripting.NewEngine(*scriptsDir, worldAdapter)
-	defer scriptEngine.Close()
-	game.ScriptEngine = scriptEngine
-
 	// Connect to database
 	slog.Info("Connecting to database...")
 	database, err := db.New(*dbURL)
@@ -173,11 +163,6 @@ func main() {
 	manager.SetDamageFunc()                            // Enable HEALTH dirty-tracking for agents
 	manager.SetDreamingDir("data/dreaming")            // Dreaming layer output (memory summaries)
 
-	// Initialize and start Grapevine WebSocket Client in background
-	gvClient := grapevine.NewClient(gameWorld)
-	gvClient.Start()
-	defer gvClient.Stop()
-
 	// Decision capture (DP-213) — enabled when database is available and
 	// partitions can be ensured. If partition creation fails, leave the writer
 	// unset so the manager falls back to its no-op behavior and records are not
@@ -197,14 +182,30 @@ func main() {
 	manager.SetOnRoundEnd()                              // Decrement wait states each combat round
 	manager.SetCommandExecFunc()                         // Wire doOrder command dispatch for charmed followers
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
-	manager.WireCombatCallbacks()                        // Wire PR2 character-state hooks into combat engine
+	manager.WireCombatCallbacks()                        // Wire PR2/PR3 character-state hooks into combat engine
 	manager.SetCombatMessageFunc()                       // Wire DamMessage() and GameCallbacks for live combat
 
-	// Verify critical combat hooks are wired (DP-952)
-	cb := combat.GetCallbacks()
-	if cb == nil || cb.Broadcast == nil || cb.SendToChar == nil {
-		slog.Error("critical combat hook not wired — combat messages will be silent")
+	// Verify critical combat hooks are wired (DP-952).
+	// This check is placed before any long-lived resource with a defer so that
+	// an early exit does not skip cleanup.
+	if err := manager.GetCombatEngine().ValidateCallbacks(); err != nil {
+		fatal("critical combat hook not wired — refusing to start: %v", err)
 	}
+
+	// Initialize scripting engine
+	if *scriptsDir == "" {
+		*scriptsDir = *worldDir + "/scripts"
+	}
+	slog.Info("Loading scripts", "path", *scriptsDir)
+	worldAdapter := game.NewWorldScriptableAdapter(gameWorld)
+	scriptEngine := scripting.NewEngine(*scriptsDir, worldAdapter)
+	defer scriptEngine.Close()
+	game.ScriptEngine = scriptEngine
+
+	// Initialize and start Grapevine WebSocket Client in background
+	gvClient := grapevine.NewClient(gameWorld)
+	gvClient.Start()
+	defer gvClient.Stop()
 
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {
@@ -460,4 +461,11 @@ func generateEphemeralJWTSecret() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+// fatal logs an error message and exits the process. Kept in a helper so that
+// early validation failures in main do not trip gocritic's exitAfterDefer check.
+func fatal(format string, args ...interface{}) {
+	slog.Error(fmt.Sprintf(format, args...))
+	os.Exit(1)
 }

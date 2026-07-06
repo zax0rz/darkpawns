@@ -61,28 +61,30 @@ func (m *mockCombatant) SendMessage(msg string)    {}
 // ---------------------------------------------------------------------------
 
 func TestMain(m *testing.M) {
-	// Set up global function pointers for testing parry and dodge
-	GetSkill = func(name string, skillNum int) int {
-		if skillNum == SKILL_PARRY && name == "parry_warrior" {
-			return 80
-		}
-		if skillNum == SKILL_DODGE && name == "dodge_rogue" {
-			return 70
-		}
-		if name == "nobody" {
-			return 0
-		}
-		return 50
-	}
-	HasMobFlag = func(name string, flag string) bool {
-		return name == "aware_mob" && flag == "MOB_AWARE"
-	}
-	GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
-		if chName == "unarmed_guy" {
-			return TYPE_HIT, 0, 0, false
-		}
-		return TYPE_SLASH, 1, 8, false
-	}
+	// Set up game-layer callbacks for testing parry and dodge.
+	SetCallbacks(&GameCallbacks{
+		GetSkill: func(name string, skillNum int) int {
+			if skillNum == SKILL_PARRY && name == "parry_warrior" {
+				return 80
+			}
+			if skillNum == SKILL_DODGE && name == "dodge_rogue" {
+				return 70
+			}
+			if name == "nobody" {
+				return 0
+			}
+			return 50
+		},
+		HasMobFlag: func(name string, flag string) bool {
+			return name == "aware_mob" && flag == "MOB_AWARE"
+		},
+		GetWeaponInfo: func(chName string) (wType, damDice, damSize int, isBlessed bool) {
+			if chName == "unarmed_guy" {
+				return TYPE_HIT, 0, 0, false
+			}
+			return TYPE_SLASH, 1, 8, false
+		},
+	})
 	os.Exit(m.Run())
 }
 

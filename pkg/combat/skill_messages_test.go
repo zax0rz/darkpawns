@@ -77,19 +77,17 @@ func TestSexPronouns(t *testing.T) {
 }
 
 func TestInitSkillMessages(t *testing.T) {
-	orig := SkillMessageFunc
-	defer func() { SkillMessageFunc = orig }()
-	SkillMessageFunc = nil
+	cb := &GameCallbacks{}
 
-	InitSkillMessages(nil)
+	InitSkillMessages(cb)
 
-	if SkillMessageFunc == nil {
-		t.Fatal("InitSkillMessages(nil) did not set SkillMessageFunc")
+	if cb.SkillMessage == nil {
+		t.Fatal("InitSkillMessages(cb) did not set cb.SkillMessage")
 	}
 
 	// Unknown attack type → no match
-	result := SkillMessageFunc(10, "Alice", "Bob", 9999, 100)
+	result := cb.SkillMessage(10, "Alice", "Bob", 9999, 100)
 	if result != false {
-		t.Errorf("SkillMessageFunc for unknown type = %v, want false", result)
+		t.Errorf("SkillMessage for unknown type = %v, want false", result)
 	}
 }
