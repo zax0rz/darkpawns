@@ -160,6 +160,9 @@ func petPrice(pet *MobInstance) int {
 }
 
 func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if me == nil {
+		return false
+	}
 	petRoom := me.GetRoom() + 1
 
 	if cmd == "list" {

@@ -1215,7 +1215,7 @@ func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 // specTeleporter — Picks random room and teleports players there
 // ================================================================
 func specTeleporter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch.GetPosition() <= combat.PosSleeping {
+	if cmd != "" || ch == nil || ch.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 	if ch.GetFighting() != "" {

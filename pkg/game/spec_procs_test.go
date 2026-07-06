@@ -2,10 +2,14 @@ package game
 
 import (
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -45,6 +49,430 @@ func newSpecProcTestWorld(t *testing.T) (*World, *Player, func() string) {
 	}
 
 	return w, player, lastMsg
+}
+
+var specProcTestMobVNum atomic.Int64
+
+// newSpecProcTestMob creates a minimal, non-spec-bearing mob instance for use
+// in spec proc tests. The mob is positioned in roomVNum with the given level,
+// standing, and positive HP.
+func newSpecProcTestMob(t *testing.T, w *World, roomVNum, level int) *MobInstance {
+	t.Helper()
+
+	vnum := int(specProcTestMobVNum.Add(1)) + 99000
+	proto := &parser.Mob{
+		VNum:      vnum,
+		Keywords:  "testmob",
+		ShortDesc: "a test mob",
+		LongDesc:  "A test mob is here.",
+		Level:     level,
+		HP:        parser.DiceRoll{Num: 1, Sides: 8, Plus: 20},
+		Alignment: 0,
+		Race:      1,
+	}
+	w.mu.Lock()
+	w.mobs[vnum] = proto
+	w.mu.Unlock()
+
+	mob, err := w.SpawnMob(vnum, roomVNum)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	mob.SetLevel(level)
+	mob.SetPosition(combat.PosStanding)
+	mob.CurrentHP = 50
+	return mob
+}
+
+// assertNotPanic wraps fn in a deferred recover and fails the test if it panics.
+func assertNotPanic(t *testing.T, fn func()) {
+	t.Helper()
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("panic: %v\n%s", r, debug.Stack())
+		}
+	}()
+	fn()
+}
+
+// isMobSpecName returns true if name appears in MobSpecAssign.
+func isMobSpecName(name string) bool {
+	for _, n := range MobSpecAssign {
+		if n == name {
+			return true
+		}
+	}
+	return false
+}
+
+// isObjSpecName returns true if name appears in ObjSpecAssign.
+func isObjSpecName(name string) bool {
+	for _, n := range ObjSpecAssign {
+		if n == name {
+			return true
+		}
+	}
+	return false
+}
+
+// isRoomSpecName returns true if name appears in RoomSpecAssign.
+func isRoomSpecName(name string) bool {
+	for _, n := range RoomSpecAssign {
+		if n == name {
+			return true
+		}
+	}
+	return false
+}
+
+// TestSpecProc_SmokeAll invokes every registered spec proc with benign input
+// and asserts no panic. This catches nil-pointer crashes across the entire
+// spec proc registry (DP-965).
+func TestSpecProc_SmokeAll(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+
+	names := AllSpecNames()
+	for name := range names {
+		t.Run(name, func(t *testing.T) {
+			fn := SpecRegistry[name]
+			if fn == nil {
+				t.Skipf("spec %q registered but function is nil", name)
+			}
+
+			if isMobSpecName(name) {
+				// Mob specs are dispatched with a non-nil me.
+				assertNotPanic(t, func() {
+					fn(w, player, mob, "look", "")
+				})
+				// Autonomous AI tick: ch is nil, cmd is empty.
+				assertNotPanic(t, func() {
+					fn(w, nil, mob, "", "")
+				})
+			}
+
+			if isObjSpecName(name) || isRoomSpecName(name) {
+				// Object and room specs are dispatched with me == nil.
+				assertNotPanic(t, func() {
+					fn(w, player, nil, "look", "")
+				})
+			}
+		})
+	}
+}
+
+// TestSpecGuild_Golden verifies guildmaster practice behavior.
+func TestSpecGuild_Golden(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+
+	// Configure a learned, practicable skill.
+	skill := engine.NewSkill("backstab", "Backstab", engine.SkillTypeCombat, 1)
+	skill.Learned = true
+	skill.Level = 10
+	skill.MaxLevel = 100
+	skill.Practice = 5
+	player.SkillManager.RegisterSkill(skill)
+
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+
+	if got := specGuild(w, player, mob, "look", ""); got {
+		t.Error("specGuild should return false for non-practice commands")
+	}
+
+	if got := specGuild(w, player, mob, "practice", ""); !got {
+		t.Error("specGuild should handle practice with empty arg")
+	}
+	if msg := lastMsg(); !strings.Contains(msg, "Practise what?") {
+		t.Errorf("expected 'Practise what?', got %q", msg)
+	}
+
+	if got := specGuild(w, player, mob, "practice", "nonexistent"); !got {
+		t.Error("specGuild should handle practice with unknown skill")
+	}
+	if msg := lastMsg(); !strings.Contains(msg, "You do not know of that skill.") {
+		t.Errorf("expected unknown skill message, got %q", msg)
+	}
+
+	beforeLevel := skill.Level
+	if got := specGuild(w, player, mob, "practice", "backstab"); !got {
+		t.Error("specGuild should handle practicing a known skill")
+	}
+	if msg := lastMsg(); !strings.Contains(msg, "You practice for a while...") {
+		t.Errorf("expected practice message, got %q", msg)
+	}
+	if skill.Level == beforeLevel && skill.Practice == 5 {
+		t.Error("practice should improve skill level or consume practice points")
+	}
+
+	// Player.IsNPC is always false for *Player; the NPC guard in specGuild is
+	// unreachable through current dispatch, so it is covered by the smoke test.
+}
+
+// TestSpecDump_Golden verifies C-fidelity dump value awards.
+func TestSpecDump_Golden(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+
+	sword := NewObjectInstance(w.objs[3001], -1)
+	if err := w.MoveObjectToPlayerInventory(sword, player); err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory failed: %v", err)
+	}
+
+	if got := specDump(w, player, nil, "look", ""); got {
+		t.Error("specDump should return false for non-drop commands")
+	}
+
+	startGold := player.GetGold()
+	if got := specDump(w, player, nil, "drop", "sword"); !got {
+		t.Fatal("specDump should handle drop command")
+	}
+	if player.GetGold() != startGold+10 {
+		t.Errorf("level 5 dump of 100-cost sword awarded %d gold, want %d", player.GetGold()-startGold, 10)
+	}
+
+	// Non-matching drop consumes the command but awards nothing.
+	startGold = player.GetGold()
+	if got := specDump(w, player, nil, "drop", "nonexistent"); !got {
+		t.Error("specDump should consume drop command even with no match")
+	}
+	if player.GetGold() != startGold {
+		t.Errorf("non-matching drop awarded %d gold, want 0", player.GetGold()-startGold)
+	}
+
+	// Low-level player receives EXP instead of gold.
+	lowLevel := NewPlayer(2, "Newbie", 1001)
+	lowLevel.SetLevel(2)
+	lowLevel.SkillManager = engine.NewSkillManager()
+	lowLevel.Inventory = NewInventory()
+	lowLevel.Inventory.SetCapacity(10, 1)
+	if err := w.AddPlayer(lowLevel); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+	cheap := NewObjectInstance(w.objs[3001], -1)
+	if err := w.MoveObjectToPlayerInventory(cheap, lowLevel); err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory failed: %v", err)
+	}
+	startExp := lowLevel.GetExp()
+	if got := specDump(w, lowLevel, nil, "drop", "sword"); !got {
+		t.Error("specDump should handle drop for low-level player")
+	}
+	if lowLevel.GetExp() != startExp+10 {
+		t.Errorf("level 2 dump awarded %d exp, want %d", lowLevel.GetExp()-startExp, 10)
+	}
+}
+
+// TestSpecSnake_Golden verifies guard conditions for the snake poison bite.
+func TestSpecSnake_Golden(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+	victim := newSpecProcTestMob(t, w, 1001, 10)
+
+	if got := specSnake(w, player, mob, "look", ""); got {
+		t.Error("specSnake should return false for non-empty cmd")
+	}
+
+	mob.SetPosition(combat.PosStanding)
+	if got := specSnake(w, nil, mob, "", ""); got {
+		t.Error("specSnake should return false when not fighting")
+	}
+
+	mob.SetPosition(combat.PosFighting)
+	mob.SetTarget(victim)
+	assertNotPanic(t, func() {
+		_ = specSnake(w, nil, mob, "", "")
+	})
+}
+
+// TestSpecThief_Golden verifies thief guard conditions and steal path.
+func TestSpecThief_Golden(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+
+	if got := specThief(w, player, mob, "look", ""); got {
+		t.Error("specThief should return false for non-empty cmd")
+	}
+
+	mob.SetPosition(combat.PosStanding)
+	player.SetLevel(60)
+	if got := specThief(w, nil, mob, "", ""); got {
+		t.Error("specThief should return false when all players are level 50+")
+	}
+
+	player.SetLevel(10)
+	player.SetPosition(combat.PosSleeping)
+	player.Gold = 1000
+	startGold := player.GetGold()
+	// Sleeping victims are stealable; specThief returns true if it attempts a steal.
+	if got := specThief(w, nil, mob, "", ""); got {
+		if player.GetGold() >= startGold {
+			t.Error("specThief should steal gold from a sleeping victim")
+		}
+	}
+
+	player.SetPosition(combat.PosStanding)
+	player.Gold = 1000
+	assertNotPanic(t, func() {
+		_ = specThief(w, nil, mob, "", "")
+	})
+}
+
+// TestSpecMagicUser_Golden verifies magic user guard conditions and cast path.
+func TestSpecMagicUser_Golden(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+
+	if got := specMagicUser(w, player, mob, "look", ""); got {
+		t.Error("specMagicUser should return false for non-empty cmd")
+	}
+
+	mob.SetPosition(combat.PosStanding)
+	if got := specMagicUser(w, nil, mob, "", ""); got {
+		t.Error("specMagicUser should return false when not fighting")
+	}
+
+	mob.SetPosition(combat.PosFighting)
+	mob.SetFighting(player.Name)
+	player.SetFighting(mob.GetName())
+	if got := specMagicUser(w, nil, mob, "", ""); !got {
+		t.Error("specMagicUser should return true when fighting with a target")
+	}
+}
+
+// TestSpecFighter_Golden verifies fighter guard conditions.
+func TestSpecFighter_Golden(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+	victim := newSpecProcTestMob(t, w, 1001, 10)
+
+	if got := specFighter(w, player, mob, "look", ""); got {
+		t.Error("specFighter should return false for non-empty cmd")
+	}
+
+	mob.SetPosition(combat.PosStanding)
+	if got := specFighter(w, nil, mob, "", ""); got {
+		t.Error("specFighter should return false when not fighting")
+	}
+
+	mob.SetPosition(combat.PosFighting)
+	mob.SetTarget(victim)
+	assertNotPanic(t, func() {
+		_ = specFighter(w, nil, mob, "", "")
+	})
+}
+
+// TestSpecCleric_Golden verifies cleric guard conditions and cast path.
+func TestSpecCleric_Golden(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+
+	if got := specCleric(w, player, mob, "look", ""); got {
+		t.Error("specCleric should return false for non-empty cmd")
+	}
+
+	mob.SetPosition(combat.PosStanding)
+	if got := specCleric(w, nil, mob, "", ""); got {
+		t.Error("specCleric should return false when not fighting")
+	}
+
+	mob.SetPosition(combat.PosFighting)
+	mob.SetFighting(player.Name)
+	player.SetFighting(mob.GetName())
+	assertNotPanic(t, func() {
+		_ = specCleric(w, nil, mob, "", "")
+	})
+}
+
+// TestSpecCityguard_Golden verifies cityguard patrol and intervention logic.
+func TestSpecCityguard_Golden(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	guard := newSpecProcTestMob(t, w, 1001, 10)
+
+	if got := specCityguard(w, player, guard, "look", ""); got {
+		t.Error("specCityguard should return false for non-empty cmd")
+	}
+
+	guard.SetPosition(combat.PosStanding)
+	if got := specCityguard(w, nil, guard, "", ""); got {
+		t.Error("specCityguard should return false with no outlaws or crime")
+	}
+
+	player.SetPlrFlag(PlrOutlaw, true)
+	beforeHP := player.GetHP()
+	_ = lastMsg()
+	specCityguard(w, nil, guard, "", "")
+	if player.GetHP() >= beforeHP {
+		t.Error("specCityguard should damage an outlaw")
+	}
+	if msg := lastMsg(); !strings.Contains(msg, "OUTLAWS") {
+		t.Errorf("expected outlaw warning message, got %q", msg)
+	}
+	player.SetPlrFlag(PlrOutlaw, false)
+
+	evildoer := NewPlayer(3, "Evildoer", 1001)
+	evildoer.SetLevel(5)
+	evildoer.SetAlignment(-500)
+	if err := w.AddPlayer(evildoer); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+	victim := NewPlayer(4, "Victim", 1001)
+	victim.SetLevel(5)
+	victim.SetAlignment(100)
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+	evildoer.SetFighting(victim.Name)
+	victim.SetFighting(evildoer.Name)
+	beforeHP = evildoer.GetHP()
+	_ = lastMsg()
+	specCityguard(w, nil, guard, "", "")
+	if evildoer.GetHP() >= beforeHP {
+		t.Error("specCityguard should damage an evil attacker")
+	}
+	if msg := lastMsg(); !strings.Contains(msg, "PROTECT THE INNOCENT") {
+		t.Errorf("expected protect message, got %q", msg)
+	}
+}
+
+// TestSpecDragonBreath_Golden verifies dragon breath guard conditions.
+func TestSpecDragonBreath_Golden(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+	victim := newSpecProcTestMob(t, w, 1001, 10)
+
+	if got := specDragonBreath(w, player, mob, "look", ""); got {
+		t.Error("specDragonBreath should return false for non-empty cmd")
+	}
+
+	mob.SetPosition(combat.PosStanding)
+	if got := specDragonBreath(w, nil, mob, "", ""); got {
+		t.Error("specDragonBreath should return false when not fighting")
+	}
+
+	mob.SetPosition(combat.PosFighting)
+	mob.SetTarget(victim)
+	assertNotPanic(t, func() {
+		_ = specDragonBreath(w, nil, mob, "", "")
+	})
+}
+
+// TestSpecJanitor_Golden verifies janitor cleanup behavior.
+func TestSpecJanitor_Golden(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+
+	if got := specJanitor(w, player, mob, "look", ""); got {
+		t.Error("specJanitor should return false for non-empty cmd")
+	}
+
+	mob.SetPosition(combat.PosStanding)
+	if got := specJanitor(w, nil, mob, "", ""); got {
+		t.Error("specJanitor should return false in an empty room")
+	}
+
+	trash := NewObjectInstance(w.objs[3001], 1001)
+	w.AddItemToRoom(trash, 1001)
+	assertNotPanic(t, func() {
+		_ = specJanitor(w, nil, mob, "", "")
+	})
 }
 
 // TestSpecDumpPerformDrop verifies that specDump actually drops the item,
