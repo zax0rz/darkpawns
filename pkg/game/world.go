@@ -828,6 +828,17 @@ func (w *World) HasSpecInRoom(roomVNum int) bool {
 	return w.specRooms[roomVNum]
 }
 
+// flagSpecRoomForMob flags a mob's current room in the spec-room cache if the
+// mob has a special procedure. Call after any mob room change (wander, hunt,
+// teleport, spawn, etc.) to avoid stale-negative entries.
+func (w *World) flagSpecRoomForMob(mob *MobInstance) {
+	if GetMobSpec(mob.VNum) != nil {
+		w.specRoomsMu.Lock()
+		w.specRooms[mob.GetRoom()] = true
+		w.specRoomsMu.Unlock()
+	}
+}
+
 // RebuildSpecRooms recomputes the specRooms cache from current world state.
 // Call once after zone resets and then periodically to keep the fast path
 // safe. Stale-positive is acceptable; stale-negative is not.
@@ -1015,6 +1026,7 @@ func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	mob.ID = w.nextMobID
 	w.activeMobs[w.nextMobID] = mob
 	w.nextMobID++
+	w.flagSpecRoomForMob(mob)
 
 	// Copy players in the room while holding the lock.
 	var targets []*Player

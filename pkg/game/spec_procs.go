@@ -197,11 +197,13 @@ func specDump(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	if value > 0 {
 		sendToChar(ch, "You are awarded for outstanding performance.")
 		w.roomMessage(roomVNum, ch.GetName()+" has been awarded by the gods!")
-		if ch.GetLevel() < 3 {
+		ch.mu.Lock()
+		if ch.Level < 3 {
 			ch.Exp += value
 		} else {
 			ch.Gold += value
 		}
+		ch.mu.Unlock()
 	}
 	return true
 }
