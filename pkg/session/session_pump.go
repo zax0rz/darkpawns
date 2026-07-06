@@ -72,6 +72,14 @@ func (s *Session) readPump() {
 			slog.Error("handle message error", "error", err)
 			s.sendErrorWithState(err)
 		}
+
+		// If handleLogin rejected the client (wrong password, invalid name,
+		// banned, rate-limited, etc.), it calls CloseSend instead of Close so
+		// writePump can flush the error message. Detect that here and break
+		// the read loop so the deferred cleanup (Unregister + Close) runs.
+		if s.SendClosed() {
+			break
+		}
 	}
 }
 

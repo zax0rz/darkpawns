@@ -445,12 +445,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		return
 	}
 
-	// handleLogin rejects bad credentials (wrong password, invalid name)
+	// handleLogin rejects bad credentials (wrong password, invalid name, banned)
 	// without returning an error — it has already queued the reason on the
-	// session output channel and closed s.conn, which is nil for telnet. Close
-	// the send channel so writeLoop flushes that message and exits, then
-	// disconnect instead of leaving the client stuck and unauthenticated. (DP-591)
-	if !s.IsAuthenticated() && !s.IsCharCreating() {
+	// session output channel and called CloseSend. Flush writeLoop so the
+	// error message reaches the client before the raw connection closes. (DP-591)
+	if s.SendClosed() {
 		// Set a write deadline so a client that stops reading cannot block
 		// writeLoop forever and leak this goroutine/file descriptor.
 		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
