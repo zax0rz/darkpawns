@@ -66,6 +66,11 @@ type Player struct {
 	Class int
 	Race  int
 	Sex   int // 0=male, 1=female, 2=neutral (matching C SEX_* constants)
+
+	// RaceHates tracks 5 racial hatred slots (src/structs.h race_hate[5]).
+	// Initialized to -1 for all slots; matching a mob's race triggers aggression.
+	RaceHates [5]int
+
 	Stats CharStats
 
 	// SavingThrows — array of 5 saving throw values: para, rod, petri, breath, spell
@@ -260,6 +265,11 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		Parrying:     false,
 
 		SpellMap: make(map[string]int),
+	}
+
+	// Initialize race-hate slots to empty (-1) per src/db.c.
+	for i := range player.RaceHates {
+		player.RaceHates[i] = -1
 	}
 
 	// Initialize inventory and equipment

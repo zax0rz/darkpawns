@@ -286,7 +286,7 @@ func playerToSaveData(p *Player) savePlayerData {
 
 // saveDataToPlayer converts savePlayerData back to a Player with runtime fields.
 func saveDataToPlayer(data savePlayerData) *Player {
-	return &Player{
+	p := &Player{
 		ID:            data.ID,
 		Name:          data.Name,
 		PoofIn:        data.PoofIn,
@@ -329,6 +329,11 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		Inventory:     NewInventory(),
 		Equipment:     NewEquipment(),
 	}
+	// Initialize race-hate slots to empty (-1); old saves do not contain this field.
+	for i := range p.RaceHates {
+		p.RaceHates[i] = -1
+	}
+	return p
 }
 
 // restoreAffects converts saved affect data back into engine.Affect objects.

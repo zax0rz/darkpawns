@@ -7,6 +7,7 @@
 package game
 
 import (
+	"fmt"
 	"log/slog"
 	"math/rand/v2"
 	"strings"
@@ -188,7 +189,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		}
 	}
 
-	// Hunter mobs chase their targets (C: mobact.c)
+	// Hunter mobs chase their targets (C: mobact.c).
+	// The C source calls hunt_victim() twice in a row for double-speed hunting.
+	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFighting() == "" {
+		w.huntVictim(ch)
+	}
 	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFighting() == "" {
 		w.huntVictim(ch)
 	}
@@ -250,6 +255,53 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 						slog.Warn("StartCombat failed in aggressive mob", "mob", ch.GetName(), "error", err)
 					}
 				}
+				break
+			}
+		}
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 {
+		return
+	}
+
+	// -- Race-hate aggression (src/mobact.c:236-258) --
+	// Mobs attack players whose race_hate slots match the mob's race.
+	if MobSpecAssign[ch.Prototype.VNum] != "shop_keeper" {
+		mobRace := ch.Prototype.Race
+		for _, vict := range w.GetPlayersInRoom(ch.RoomVNum) {
+			if vict.IsNPC() {
+				continue
+			}
+			attacked := false
+			for i := 0; i < 5 && !attacked; i++ {
+				vict.mu.RLock()
+				hates := vict.RaceHates[i] == mobRace
+				vict.mu.RUnlock()
+				if !hates {
+					continue
+				}
+				if !canSee(ch, vict) {
+					continue
+				}
+				if vict.GetFlags()&(1<<PrfNohassle) != 0 {
+					continue
+				}
+				// AFF_PROTECT_EVIL blocks unless the mob is evil AND a 1-in-6 check passes.
+				// #nosec G404 — game RNG, not cryptographic
+				if vict.IsAffected(affProtectEvil) && (!mobIsEvil(ch) || rand.IntN(6) != 0) {
+					continue
+				}
+				// #nosec G404 — game RNG, not cryptographic
+				if rand.IntN(6) == 0 && ch.CanSpeak() {
+					w.RoomEcho(ch.RoomVNum, fmt.Sprintf("'Come to destroy my kin? Die!', exclaims %s.", ch.GetName()), ch.GetName())
+				}
+				if w.combatEngine != nil {
+					if err := w.combatEngine.StartCombat(ch, vict); err != nil {
+						slog.Warn("StartCombat failed in race-hate mob", "mob", ch.GetName(), "error", err)
+					}
+				}
+				attacked = true
+			}
+			if attacked {
 				break
 			}
 		}

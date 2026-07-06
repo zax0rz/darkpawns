@@ -29,8 +29,17 @@ const (
 	ApplySavingPetri  = 22
 	ApplySavingBreath = 23
 	ApplySavingSpell  = 24
+	ApplyRaceHate     = 25 // Special: handler.c:205-238 slot management, not a numeric modifier.
 	ApplySpell        = 29
 )
+
+// TODO: port handler.c:205-238 APPLY_RACE_HATE slot management when an object
+// uses it. No current world objects have ApplyRaceHate affects, so the race_hate
+// slots are initialized to -1 and only modified by explicit test setup.
+// Expected semantics:
+//   mod < 0  : find slot matching -mod and clear it to -1
+//   mod == 0 : toggle human (race 0) hatred
+//   mod > 0  : add mod to the first empty (-1) slot
 
 // --------------------------------------------------------------------------
 // GetMinusDam — damage reduction based on target AC
