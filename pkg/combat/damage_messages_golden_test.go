@@ -8,8 +8,8 @@ import (
 // damage message tiers and thresholds defined in the Go implementation.
 func TestDamageMessages_Golden(t *testing.T) {
 	tests := []struct {
-		damage          int
-		expectedMinDam  int
+		damage         int
+		expectedMinDam int
 	}{
 		{damage: 0, expectedMinDam: 0},
 		{damage: 1, expectedMinDam: 1},

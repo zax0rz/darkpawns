@@ -63,40 +63,40 @@ func TestPCGetAttacksPerRound_Deterministic(t *testing.T) {
 		want     int
 	}{
 		{
-			name: "Warrior Level 11, passes class check",
+			name:  "Warrior Level 11, passes class check",
 			level: 11, class: ClassWarrior,
 			rolls: []int{70, 5}, // 70 < 60+11 (passes warrior check), 5 != 0 (fails level > 30 check)
-			want: 2,
+			want:  2,
 		},
 		{
-			name: "Warrior Level 11, fails class check",
+			name:  "Warrior Level 11, fails class check",
 			level: 11, class: ClassWarrior,
 			rolls: []int{72, 5}, // 72 >= 71 (fails warrior check), 5 != 0
-			want: 1,
+			want:  1,
 		},
 		{
-			name: "Avatar Level 13, passes class check",
+			name:  "Avatar Level 13, passes class check",
 			level: 13, class: ClassAvatar,
 			rolls: []int{70, 5}, // 70 < 60+13 (passes class check), 5 != 0
-			want: 2,
+			want:  2,
 		},
 		{
-			name: "Thief Level 16, passes class check",
+			name:  "Thief Level 16, passes class check",
 			level: 16, class: ClassThief,
 			rolls: []int{45, 5}, // 45 < 30+16 (passes class check), 5 != 0
-			want: 2,
+			want:  2,
 		},
 		{
-			name: "Warrior Level 40 (high level), haste active",
+			name:  "Warrior Level 40 (high level), haste active",
 			level: 40, class: ClassWarrior, hasHaste: true,
 			rolls: []int{101, 101}, // fails level 10 and 25 check (level 30 short-circuited)
-			want: 5, // 1 base + 1 (lvl > 30) + 2 (lvl > 39) + 1 (haste) = 5
+			want:  5,               // 1 base + 1 (lvl > 30) + 2 (lvl > 39) + 1 (haste) = 5
 		},
 		{
-			name: "Mage Level 30, slow active, passes level > 25 and level 30 checks",
+			name:  "Mage Level 30, slow active, passes level > 25 and level 30 checks",
 			level: 30, class: ClassMage, hasSlow: true,
 			rolls: []int{50, 0}, // 50 < 75 (passes >25), 0 == 0 (passes 30 check)
-			want: 2, // 1 base + 1 (>25) + 1 (0==0 check) - 1 (slow) = 2
+			want:  2,            // 1 base + 1 (>25) + 1 (0==0 check) - 1 (slow) = 2
 		},
 	}
 

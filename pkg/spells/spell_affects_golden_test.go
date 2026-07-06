@@ -9,11 +9,11 @@ import (
 // mockAffectVictim records every affect applied to it and satisfies the
 // interfaces MagAffects/magAffectsApply require for the no-save test path.
 type mockAffectVictim struct {
-	affects      []*engine.Affect
-	position     int
-	alignment    int
-	npc          bool
-	hasMobFlags  uint64
+	affects     []*engine.Affect
+	position    int
+	alignment   int
+	npc         bool
+	hasMobFlags uint64
 }
 
 func (m *mockAffectVictim) AddAffect(a *engine.Affect) {
@@ -22,12 +22,12 @@ func (m *mockAffectVictim) AddAffect(a *engine.Affect) {
 	}
 }
 
-func (m *mockAffectVictim) SetPosition(pos int)           { m.position = pos }
-func (m *mockAffectVictim) GetAlignment() int             { return m.alignment }
-func (m *mockAffectVictim) IsNPC() bool                   { return m.npc }
-func (m *mockAffectVictim) HasMobFlag(flag uint64) bool   { return m.hasMobFlags&flag != 0 }
-func (m *mockAffectVictim) GetLevel() int                 { return 20 }
-func (m *mockAffectVictim) GetClass() int                 { return 0 }
+func (m *mockAffectVictim) SetPosition(pos int)         { m.position = pos }
+func (m *mockAffectVictim) GetAlignment() int           { return m.alignment }
+func (m *mockAffectVictim) IsNPC() bool                 { return m.npc }
+func (m *mockAffectVictim) HasMobFlag(flag uint64) bool { return m.hasMobFlags&flag != 0 }
+func (m *mockAffectVictim) GetLevel() int               { return 20 }
+func (m *mockAffectVictim) GetClass() int               { return 0 }
 
 // mockAffectCaster supplies level/class for duration/magnitude calculations.
 type mockAffectCaster struct {
@@ -387,7 +387,7 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, ch, v, SpellMindBar, false, 0, nil)
 		expectAffects(t, "mind bar", v, []affectExpectation{
-			{SpellMindBar, engine.ApplyNone, (20/2)-2, -18, engine.AFFMindBar},
+			{SpellMindBar, engine.ApplyNone, (20 / 2) - 2, -18, engine.AFFMindBar},
 		})
 	})
 }

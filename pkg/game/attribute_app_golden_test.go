@@ -36,8 +36,8 @@ var conAppGolden = [26][2]int{
 
 // intAppGolden is the int_app[] table transcribed verbatim from src/constants.c:1156-1183
 var intAppGolden = [26]int{
-	3,  // int = 0
-	5,  // int = 1
+	3, // int = 0
+	5, // int = 1
 	7,
 	8,
 	9,

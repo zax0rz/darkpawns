@@ -56,8 +56,8 @@ type intAppType struct {
 // Index is INT score (0-25).
 // TODO: wire to score display (act.wizard.c:771) and practice gain (spec_procs.c:242)
 var intApp = []intAppType{
-	{3},  // int = 0
-	{5},  // int = 1
+	{3}, // int = 0
+	{5}, // int = 1
 	{7},
 	{8},
 	{9},

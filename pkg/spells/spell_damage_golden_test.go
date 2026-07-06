@@ -7,15 +7,15 @@ import "testing"
 // For each case we verify magDamageFormula() returns the expected dice count,
 // die size, and flat bonus at representative caster/victim levels.
 type spellDamageGoldenCase struct {
-	name       string
-	spellNum   int
-	level      int
+	name        string
+	spellNum    int
+	level       int
 	victimLevel int
-	isMage     bool
-	hasReagent bool
-	wantNum    int
-	wantSides  int
-	wantFlat   int
+	isMage      bool
+	hasReagent  bool
+	wantNum     int
+	wantSides   int
+	wantFlat    int
 }
 
 func TestMagDamageFormula_GoldenAgainstCSource(t *testing.T) {

@@ -180,7 +180,7 @@ func magDamageFormula(level, victimLevel, spellNum int, isMage, hasReagent bool)
 		return 18, 8, level, true
 	case SpellDisrupt:
 		if isMage {
-			return 20, 7, 3*level, true
+			return 20, 7, 3 * level, true
 		}
 		return 20, 7, level, true
 
@@ -192,7 +192,7 @@ func magDamageFormula(level, victimLevel, spellNum int, isMage, hasReagent bool)
 	case SpellCallLightning:
 		return 10, 8, 5 + level, true
 	case SpellHarm:
-		return 12, 8, level*2, true
+		return 12, 8, level * 2, true
 
 	/* --- NINJA / MAGE --- */
 	case SpellSoulLeech, SpellEnergyDrain:
@@ -219,7 +219,7 @@ func magDamageFormula(level, victimLevel, spellNum int, isMage, hasReagent bool)
 	case SpellMindBlast:
 		return 9, 7, level + level/2, true
 	case SpellPsiblast:
-		return 15, 13, 3*level, true
+		return 15, 13, 3 * level, true
 
 	default:
 		// Not a dice-damage spell in C mag_damage() (manual spells, breath weapons, etc.)
