@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 )
@@ -31,7 +32,14 @@ func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname 
 
 	switch mode {
 	case scmdDonate:
-		_ = w.MoveObjectToRoom(obj, donationRoom)
+		if err := w.MoveObjectToRoom(obj, donationRoom); err != nil {
+			slog.Error("donation move failed",
+				"player", ch.GetName(), "item_vnum", obj.VNum, "error", err)
+			ch.SendMessage("Something went wrong. Your item was not donated.\r\n")
+			//nolint:errcheck // best-effort rollback — player already saw failure message
+			ch.Inventory.AddItem(obj)
+			return 0
+		}
 		w.roomMessage(donationRoom, strings.ReplaceAll("$p suddenly appears in a puff a smoke!", "$p", obj.GetShortDesc()))
 		return 0
 	case scmdJunk:
@@ -62,7 +70,12 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 		ch.SendMessage("You throw some gold into the air where it disappears in a puff of smoke!\r\n")
 		w.actToRoom(ch, "$n throws some gold into the air where it disappears in a puff of smoke!", nil, nil)
 		moneyObj := w.createMoneyObject(amount)
-		_ = w.MoveObjectToRoom(moneyObj, donationRoom)
+		if err := w.MoveObjectToRoom(moneyObj, donationRoom); err != nil {
+			slog.Error("donation gold move failed",
+				"player", ch.GetName(), "error", err)
+			ch.SendMessage("Something went wrong. Your gold was not donated.\r\n")
+			return
+		}
 		w.roomMessage(donationRoom, strings.ReplaceAll("$p suddenly appears in a puff of orange smoke!", "$p", moneyObj.GetShortDesc()))
 	}
 

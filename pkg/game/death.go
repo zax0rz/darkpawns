@@ -802,12 +802,22 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	// Transfer inventory into corpse (obj_to_obj in original)
 	for _, item := range invCopy {
 		if item != nil {
-			_ = w.MoveObjectToContainer(item, corpse)
+			if err := w.MoveObjectToContainer(item, corpse); err != nil {
+				slog.Error("failed to move item to corpse",
+					"player", name, "item_vnum", item.VNum, "error", err)
+				//nolint:errcheck // best-effort fallback — item already detached, scatter to floor
+				w.MoveObjectToRoom(item, roomVNum)
+			}
 		}
 	}
 	for _, item := range equipCopy {
 		if item != nil {
-			_ = w.MoveObjectToContainer(item, corpse)
+			if err := w.MoveObjectToContainer(item, corpse); err != nil {
+				slog.Error("failed to move equipped item to corpse",
+					"player", name, "item_vnum", item.VNum, "error", err)
+				//nolint:errcheck // best-effort fallback
+				w.MoveObjectToRoom(item, roomVNum)
+			}
 		}
 	}
 
@@ -815,7 +825,12 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	// if (GET_GOLD(ch) > 0) { money = create_money(GET_GOLD(ch)); obj_to_obj(money, corpse); GET_GOLD(ch) = 0; }
 	if gold > 0 {
 		moneyObj := w.createMoneyObject(gold)
-		_ = w.MoveObjectToContainer(moneyObj, corpse)
+		if err := w.MoveObjectToContainer(moneyObj, corpse); err != nil {
+			slog.Error("failed to move gold to corpse",
+				"player", name, "error", err)
+			//nolint:errcheck // best-effort fallback
+			w.MoveObjectToRoom(moneyObj, roomVNum)
+		}
 	}
 
 	return corpse
@@ -827,21 +842,30 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 	// Scatter ALL inventory items directly to room floor
 	for _, item := range inventory {
 		if item != nil {
-			_ = w.MoveObjectToRoom(item, roomVNum)
+			if err := w.MoveObjectToRoom(item, roomVNum); err != nil {
+				slog.Error("failed to scatter inventory item to room in makeDust",
+					"item_vnum", item.VNum, "room", roomVNum, "error", err)
+			}
 		}
 	}
 
 	// Scatter ALL equipment directly to room floor
 	for _, item := range equipment {
 		if item != nil {
-			_ = w.MoveObjectToRoom(item, roomVNum)
+			if err := w.MoveObjectToRoom(item, roomVNum); err != nil {
+				slog.Error("failed to scatter equipped item to room in makeDust",
+					"item_vnum", item.VNum, "room", roomVNum, "error", err)
+			}
 		}
 	}
 
 	// Scatter gold as money objects to room floor (original make_dust also drops gold)
 	if gold > 0 {
 		moneyObj := w.createMoneyObject(gold)
-		_ = w.MoveObjectToRoom(moneyObj, roomVNum)
+		if err := w.MoveObjectToRoom(moneyObj, roomVNum); err != nil {
+			slog.Error("failed to scatter gold to room in makeDust",
+				"room", roomVNum, "error", err)
+		}
 	}
 
 	// Create ash object
