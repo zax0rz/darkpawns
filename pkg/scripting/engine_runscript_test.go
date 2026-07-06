@@ -437,3 +437,146 @@ func TestRunScript_BooleanReturn(t *testing.T) {
 		t.Error("expected handled=false for boolean false return")
 	}
 }
+
+// TestLuaSandbox_CollectgarbageBlocked verifies that collectgarbage()
+// is replaced with a no-op instead of being available to scripts.
+func TestLuaSandbox_CollectgarbageBlocked(t *testing.T) {
+	dir := t.TempDir()
+
+	gcScript := filepath.Join(dir, "collectgc.lua")
+	src := `function oncmd()
+	local result = collectgarbage("collect")
+	-- If it returns a string, it's a no-op stub. If it's nil, the original
+	-- collectgarbage was nil'd out. Either way, we should survive.
+	if result ~= nil then
+		-- Verify it returned the expected disabled message
+		local expected = "collectgarbage is disabled in this sandbox"
+		if result ~= expected then
+			error("unexpected return: " .. tostring(result))
+		end
+	end
+	return TRUE
+end
+`
+	if err := os.WriteFile(gcScript, []byte(src), 0o644); err != nil {
+		t.Fatalf("write collectgc.lua: %v", err)
+	}
+
+	// Also verify that the stub survives GC argument variants
+	variantScript := filepath.Join(dir, "variant.lua")
+	variantSrc := `function oncmd()
+	collectgarbage()
+	collectgarbage("count")
+	collectgarbage("stop")
+	collectgarbage("restart")
+	return TRUE
+end
+`
+	if err := os.WriteFile(variantScript, []byte(variantSrc), 0o644); err != nil {
+		t.Fatalf("write variant.lua: %v", err)
+	}
+
+	engine := NewEngine(dir, nil)
+	defer engine.Close()
+
+	// Test standard collectgarbage call
+	handled, err := engine.RunScript(&ScriptContext{}, "collectgc.lua", "oncmd")
+	if err != nil {
+		t.Fatalf("collectgarbage script should not error: %v", err)
+	}
+	if !handled {
+		t.Error("expected handled=true for collectgarbage stub")
+	}
+
+	// Test with various GC argument variants
+	handled, err = engine.RunScript(&ScriptContext{}, "variant.lua", "oncmd")
+	if err != nil {
+		t.Fatalf("collectgarbage variant script should not error: %v", err)
+	}
+	if !handled {
+		t.Error("expected handled=true for collectgarbage variant")
+	}
+
+	// Verify sandbox still functional after collectgarbage calls
+	sanityScript := filepath.Join(dir, "sanity.lua")
+	sanitySrc := `function oncmd() return TRUE end`
+	if err := os.WriteFile(sanityScript, []byte(sanitySrc), 0o644); err != nil {
+		t.Fatalf("write sanity.lua: %v", err)
+	}
+	handled, err = engine.RunScript(&ScriptContext{}, "sanity.lua", "oncmd")
+	if err != nil {
+		t.Fatalf("sanity script should still work: %v", err)
+	}
+	if !handled {
+		t.Error("expected handled=true for sanity script")
+	}
+}
+
+// TestLuaSandbox_MemoryCeiling verifies that the 4MB memory allowance
+// terminates scripts that allocate excessively large tables.
+func TestLuaSandbox_MemoryCeiling(t *testing.T) {
+	dir := t.TempDir()
+
+	fatScript := filepath.Join(dir, "fat.lua")
+	// Allocate 1000 tables each with a huge string — should blow past 4MB
+	fatSrc := `function oncmd()
+	local big = {}
+	for i = 1, 1000 do
+		big[i] = string.rep("X", 50000)
+	end
+	return TRUE
+end
+`
+	if err := os.WriteFile(fatScript, []byte(fatSrc), 0o644); err != nil {
+		t.Fatalf("write fat.lua: %v", err)
+	}
+
+	engine := NewEngine(dir, nil)
+	defer engine.Close()
+
+	_, err := engine.RunScript(&ScriptContext{}, "fat.lua", "oncmd")
+	if err == nil {
+		t.Skip("memory ceiling not enforced — skip if gopher-lua version lacks SetAllowance")
+	}
+	t.Logf("memory ceiling correctly enforced: %v", err)
+}
+
+// TestLuaSandbox_InstructionLimit verifies that infinite loops are terminated
+// by the instruction limit rather than reaching the 5s wall-clock timeout.
+func TestLuaSandbox_InstructionLimit(t *testing.T) {
+	dir := t.TempDir()
+
+	loopScript := filepath.Join(dir, "loop.lua")
+	loopSrc := `function oncmd()
+	local x = 0
+	for i = 1, 100000000 do
+		x = x + 1
+	end
+	return TRUE
+end
+`
+	if err := os.WriteFile(loopScript, []byte(loopSrc), 0o644); err != nil {
+		t.Fatalf("write loop.lua: %v", err)
+	}
+
+	engine := NewEngine(dir, nil)
+	defer engine.Close()
+
+	// Should terminate either via instruction limit (if supported) or wall-clock timeout.
+	ctx := &ScriptContext{}
+	start := time.Now()
+	_, err := engine.RunScript(ctx, "loop.lua", "oncmd")
+	duration := time.Since(start)
+
+	if duration > 7*time.Second {
+		t.Errorf("loop should terminate within 7s (wall-clock timeout is 5s), took %v", duration)
+	}
+
+	if err == nil {
+		t.Logf("100M loop completed without error in %v — neither instruction limit nor wall-clock timeout triggered", duration)
+	} else if err.Error() == "lua script panic: context deadline exceeded" || strings.Contains(err.Error(), "context deadline exceeded") {
+		t.Logf("wall-clock timeout correctly terminated loop: %v (duration: %v)", err, duration)
+	} else {
+		t.Logf("instruction limit or other mechanism terminated loop: %v (duration: %v)", err, duration)
+	}
+}

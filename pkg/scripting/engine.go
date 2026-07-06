@@ -51,6 +51,25 @@ func (e *Engine) LState() *lua.LState {
 // standard libraries opened, dangerous functions removed, and custom
 // API functions registered. Used both for initial engine creation and
 // for state recreation after a script timeout or crash.
+// Lua Script Security Model
+//
+// Scripts are operator-authored (immortal/builder), loaded from the server
+// filesystem. Players cannot inject or upload scripts. The sandbox prevents
+// buggy or malicious operator scripts from:
+//
+//   - Accessing the filesystem (io, os.execute, etc.)
+//   - Loading arbitrary code (dofile, load, require)
+//   - Exporting bytecode (string.dump)
+//   - Escaping the Lua VM (package, debug)
+//   - Forcing garbage collection cycles (collectgarbage)
+//
+// Scripts CAN access: math, string, table, coroutine, os.time/os.date, and
+// ~60 registered game API functions (act, say, spell, oload, steal, etc.).
+//
+// NOTE: gopher-lua v1.1.2 does not support SetAllowance (memory ceiling) or
+// SetInstructionLimit. Memory is bounded by the OS and the 5s wall-clock
+// timeout prevents runaway scripts in practice. Both limits should be added
+// when gopher-lua is upgraded.
 func (e *Engine) newSafeLState() *lua.LState {
 	L := lua.NewState()
 
@@ -106,6 +125,12 @@ func (e *Engine) newSafeLState() *lua.LState {
 
 	// Remove io library
 	L.SetGlobal("io", lua.LNil)
+
+	// Block collectgarbage to prevent GC abuse (DoS vector — forced GC cycles)
+	L.SetGlobal("collectgarbage", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString("collectgarbage is disabled in this sandbox"))
+		return 1
+	}))
 
 	// Register our custom functions on the fresh state
 	e.registerFunctionsOn(L)
