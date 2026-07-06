@@ -586,22 +586,12 @@ func InitSkillMessages(cb *GameCallbacks) {
 				cb.SendToChar(chName, charMsg)
 				cb.SendToChar(victimName, victimMsg)
 			}
-		} else {
-			if BroadcastMessage != nil {
-				BroadcastMessage(roomVNum, roomMsg, chName+" "+victimName)
-			}
-			if SendToCharFunc != nil {
-				SendToCharFunc(chName, charMsg)
-				SendToCharFunc(victimName, victimMsg)
-			}
 		}
 		return true
 	}
 
 	if cb != nil {
 		cb.SkillMessage = impl
-	} else {
-		SkillMessageFunc = impl
 	}
 }
 

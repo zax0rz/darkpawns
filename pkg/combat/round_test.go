@@ -4,8 +4,8 @@
 // Appear, DeathCry, CounterProcs, and the engine round execution
 // (processCombatPair, handleDeath, StartCombat, StopCombat).
 //
-// Global function pointers (the var hooks) are wired per-test and
-// restored via defer to avoid cross-test contamination.
+// Game-layer callbacks are wired per-test via SetCallbacks to avoid
+// cross-test contamination.
 package combat
 
 import (
@@ -13,6 +13,70 @@ import (
 	"strings"
 	"testing"
 )
+
+// defaultCombatCallbacks returns a GameCallbacks with all hooks wired to safe
+// no-ops. Tests can override specific fields before calling SetCallbacks.
+func defaultCombatCallbacks() *GameCallbacks {
+	return &GameCallbacks{
+		Broadcast:                func(roomVNum int, msg string, exclude string) {},
+		SendToChar:               func(name string, msg string) {},
+		SkillMessage:             func(dam int, ch, vict string, attackType int, roomVNum int) bool { return false },
+		BroadChat:                func(chName string, msg string) {},
+		Log:                      func(msg string, level string, minLevel int, toLog bool) {},
+		GetRace:                  func(name string) int { return 0 },
+		GetRaceHate:              func(name string, index int) int { return 0 },
+		GetAlignment:             func(name string) int { return 0 },
+		SetAlignment:             func(name string, val int) {},
+		GetSex:                   func(name string) int { return 0 },
+		GetSkill:                 func(name string, skillNum int) int { return 0 },
+		HasAffect:                func(name string, aff int) bool { return false },
+		HasAffectStr:             func(name string, aff string) bool { return false },
+		RemoveAffect:             func(name string, skillNum int) {},
+		RemoveAllAffects:         func(name string) {},
+		HasPlrFlag:               func(name string, flag string) bool { return false },
+		SetPlrFlag:               func(name string) bool { return false },
+		HasPrfFlag:               func(name string, flag string) bool { return false },
+		HasMobFlag:               func(name string, flag string) bool { return false },
+		HasMobVNum:               func(name string, vnum int) bool { return false },
+		HasRoomFlag:              func(roomVNum int, flag string) bool { return false },
+		HasScriptFlag:            func(name string, flag string) bool { return false },
+		IsShopkeeper:             func(name string) bool { return false },
+		IsMounted:                func(name string) bool { return false },
+		Dismount:                 func(name string) {},
+		Unmount:                  func(name string) {},
+		GetWeaponInfo:            func(chName string) (wType, damDice, damSize int, isBlessed bool) { return TYPE_HIT, 0, 0, false },
+		GetAdjacentRoom:          func(roomVNum, door int) int { return -1 },
+		GainExp:                  func(name string, amount int) {},
+		GetExp:                   func(name string) int { return 0 },
+		GetKills:                 func(name string) int64 { return 0 },
+		SetKills:                 func(name string, kills int64) {},
+		GetDeaths:                func(name string) int64 { return 0 },
+		SetDeaths:                func(name string, deaths int64) {},
+		SetLastDeath:             func(name string, t int64) {},
+		GetPks:                   func(name string) int64 { return 0 },
+		SetPks:                   func(name string, pks int64) {},
+		GetConstitution:          func(name string) int { return 0 },
+		SetConstitution:          func(name string, val int) {},
+		MakeCorpse:               func(victim string, attackType int) {},
+		MakeDust:                 func(victim string, attackType int) {},
+		ExtractChar:              func(name string) {},
+		RunDeathScript:           func(killer, victim string, roomVNum int) {},
+		GetFollowersInRoom:       func(name string, roomVNum int) int { return 0 },
+		GetMasterInRoom:          func(name string, roomVNum int) bool { return false },
+		GetFellowFollowersInRoom: func(name string, roomVNum int) bool { return false },
+		CountGroupMembers:        func(leaderName string, roomVNum int) int { return 1 },
+		ApplyToGroupMembers:      func(leaderName string, roomVNum int, fn func(name string)) {},
+		GetGold:                  func(name string) int { return 0 },
+		SetGold:                  func(name string, gold int) {},
+		JunkInventoryItems:       func(chName string) {},
+		PerformCommand:           func(chName, cmd string) {},
+		GetWimpyLev:              func(name string) int { return 0 },
+		DoFlee:                   func(name string) {},
+		DoRetreat:                func(name string) {},
+		IncreaseMaxStat:          func(name string, stat string) {},
+		HealAllPlayers:           func() {},
+	}
+}
 
 // ---------------------------------------------------------------------------
 // TestDamMessage — damage message tier selection
@@ -23,20 +87,15 @@ func TestDamMessage_TierSelection(t *testing.T) {
 	var broadcastMsg string
 	var sendToCalls []string
 
-	origBroadcast := BroadcastMessage
-	origSendTo := SendToCharFunc
-	defer func() {
-		BroadcastMessage = origBroadcast
-		SendToCharFunc = origSendTo
-	}()
-
-	BroadcastMessage = func(room int, msg string, exclude string) {
-		broadcastRoom = room
+	cb := defaultCombatCallbacks()
+	cb.Broadcast = func(roomVNum int, msg string, exclude string) {
+		broadcastRoom = roomVNum
 		broadcastMsg = msg
 	}
-	SendToCharFunc = func(name string, msg string) {
+	cb.SendToChar = func(name string, msg string) {
 		sendToCalls = append(sendToCalls, name+":"+msg)
 	}
+	SetCallbacks(cb)
 
 	attacker := &mockCombatant{name: "Warrior", room: 100, sex: 0, position: PosStanding}
 	defender := &mockCombatant{name: "Goblin", room: 100, sex: 1, position: PosStanding}
@@ -57,17 +116,12 @@ func TestDamMessage_TierSelection(t *testing.T) {
 
 func TestDamMessage_HighDamageTier(t *testing.T) {
 	var broadcastMessages []string
-	origBroadcast := BroadcastMessage
-	origSendTo := SendToCharFunc
-	defer func() {
-		BroadcastMessage = origBroadcast
-		SendToCharFunc = origSendTo
-	}()
 
-	BroadcastMessage = func(room int, msg string, exclude string) {
+	cb := defaultCombatCallbacks()
+	cb.Broadcast = func(roomVNum int, msg string, exclude string) {
 		broadcastMessages = append(broadcastMessages, msg)
 	}
-	SendToCharFunc = func(name string, msg string) {}
+	SetCallbacks(cb)
 
 	attacker := &mockCombatant{name: "Hero", room: 100, sex: 0, position: PosStanding}
 	defender := &mockCombatant{name: "Dragon", room: 100, sex: 1, position: PosStanding}
@@ -91,17 +145,12 @@ func TestDamMessage_HighDamageTier(t *testing.T) {
 
 func TestDamMessage_ZeroDamage(t *testing.T) {
 	var broadcastCalled bool
-	origBroadcast := BroadcastMessage
-	origSendTo := SendToCharFunc
-	defer func() {
-		BroadcastMessage = origBroadcast
-		SendToCharFunc = origSendTo
-	}()
 
-	BroadcastMessage = func(room int, msg string, exclude string) {
+	cb := defaultCombatCallbacks()
+	cb.Broadcast = func(roomVNum int, msg string, exclude string) {
 		broadcastCalled = true
 	}
-	SendToCharFunc = func(name string, msg string) {}
+	SetCallbacks(cb)
 
 	attacker := &mockCombatant{name: "Player", room: 100, sex: 0, position: PosStanding}
 	defender := &mockCombatant{name: "Rat", room: 100, sex: 0, position: PosStanding}
@@ -119,22 +168,18 @@ func TestDamMessage_ZeroDamage(t *testing.T) {
 
 func TestDeathCry_Basic(t *testing.T) {
 	var broadcastMessages []string
-	origBroadcast := BroadcastMessage
-	origGetAdj := GetAdjacentRoom
-	defer func() {
-		BroadcastMessage = origBroadcast
-		GetAdjacentRoom = origGetAdj
-	}()
 
-	BroadcastMessage = func(room int, msg string, exclude string) {
-		broadcastMessages = append(broadcastMessages, fmt.Sprintf("room=%d msg=%q", room, msg))
+	cb := defaultCombatCallbacks()
+	cb.Broadcast = func(roomVNum int, msg string, exclude string) {
+		broadcastMessages = append(broadcastMessages, fmt.Sprintf("room=%d msg=%q", roomVNum, msg))
 	}
-	GetAdjacentRoom = func(room int, door int) int {
-		if room == 100 && door < 2 {
+	cb.GetAdjacentRoom = func(roomVNum, door int) int {
+		if roomVNum == 100 && door < 2 {
 			return 101 + door
 		}
 		return -1
 	}
+	SetCallbacks(cb)
 
 	ch := &mockCombatant{name: "Orc", room: 100}
 	result := DeathCry(ch)
@@ -159,25 +204,15 @@ func TestCounterProcs_NoMilestone(t *testing.T) {
 
 func TestCounterProcs_KillCountTracking(t *testing.T) {
 	var loggedMsg string
-	origGetKills := GetKills
-	origLogMsg := LogMessage
-	origIncMaxStat := IncreaseMaxStat
-	origHealAll := HealAllPlayers
-	defer func() {
-		GetKills = origGetKills
-		LogMessage = origLogMsg
-		IncreaseMaxStat = origIncMaxStat
-		HealAllPlayers = origHealAll
-	}()
 
-	GetKills = func(name string) int64 {
+	cb := defaultCombatCallbacks()
+	cb.GetKills = func(name string) int64 {
 		return 5000 // minor milestone
 	}
-	LogMessage = func(msg string, level string, minLevel int, toLog bool) {
+	cb.Log = func(msg string, level string, minLevel int, toLog bool) {
 		loggedMsg = msg
 	}
-	IncreaseMaxStat = func(name string, stat string) {}
-	HealAllPlayers = func() {}
+	SetCallbacks(cb)
 
 	player := &mockCombatant{name: "Hero", npc: false, hp: 50, maxHP: 100}
 	CounterProcs(player)
@@ -190,27 +225,18 @@ func TestCounterProcs_KillCountTracking(t *testing.T) {
 func TestCounterProcs_MajorMilestone(t *testing.T) {
 	var statCalls []string
 	var logged bool
-	origGetKills := GetKills
-	origLogMsg := LogMessage
-	origIncMaxStat := IncreaseMaxStat
-	origHealAll := HealAllPlayers
-	defer func() {
-		GetKills = origGetKills
-		LogMessage = origLogMsg
-		IncreaseMaxStat = origIncMaxStat
-		HealAllPlayers = origHealAll
-	}()
 
-	GetKills = func(name string) int64 {
+	cb := defaultCombatCallbacks()
+	cb.GetKills = func(name string) int64 {
 		return 2000 // major milestone
 	}
-	LogMessage = func(msg string, level string, minLevel int, toLog bool) {
+	cb.Log = func(msg string, level string, minLevel int, toLog bool) {
 		logged = true
 	}
-	IncreaseMaxStat = func(name string, stat string) {
+	cb.IncreaseMaxStat = func(name string, stat string) {
 		statCalls = append(statCalls, stat)
 	}
-	HealAllPlayers = func() {}
+	SetCallbacks(cb)
 
 	player := &mockCombatant{name: "Hero", npc: false, hp: 50, maxHP: 100}
 	CounterProcs(player)
@@ -233,26 +259,19 @@ func TestPerformGroupGain_Basic(t *testing.T) {
 	var gainedName string
 	var alignSet bool
 
-	origGainExp := GainExp
-	origGetAlign := GetAlignment
-	origSetAlign := SetAlignment
-	defer func() {
-		GainExp = origGainExp
-		GetAlignment = origGetAlign
-		SetAlignment = origSetAlign
-	}()
-
-	GainExp = func(name string, amount int) {
+	cb := defaultCombatCallbacks()
+	cb.GainExp = func(name string, amount int) {
 		gainedName = name
 		gainedExp = amount
 	}
-	GetAlignment = func(name string) int {
+	cb.GetAlignment = func(name string) int {
 		if name == "Orc" {
 			return 900 // good-aligned victim triggers alignment shift
 		}
 		return 0
 	}
-	SetAlignment = func(name string, val int) { alignSet = true }
+	cb.SetAlignment = func(name string, val int) { alignSet = true }
+	SetCallbacks(cb)
 
 	ch := &mockCombatant{name: "Fighter", level: 10, room: 100, npc: false}
 	victim := &mockCombatant{name: "Orc", level: 8, npc: true}
@@ -271,18 +290,11 @@ func TestPerformGroupGain_Basic(t *testing.T) {
 }
 
 func TestPerformGroupGain_OneExpPoint(t *testing.T) {
-	origGainExp := GainExp
-	origGetAlign := GetAlignment
-	origSetAlign := SetAlignment
-	defer func() {
-		GainExp = origGainExp
-		GetAlignment = origGetAlign
-		SetAlignment = origSetAlign
-	}()
-
-	GainExp = func(name string, amount int) {}
-	GetAlignment = func(name string) int { return 0 }
-	SetAlignment = func(name string, val int) {}
+	cb := defaultCombatCallbacks()
+	cb.GainExp = func(name string, amount int) {}
+	cb.GetAlignment = func(name string) int { return 0 }
+	cb.SetAlignment = func(name string, val int) {}
+	SetCallbacks(cb)
 
 	ch := &mockCombatant{name: "Fighter", level: 99, room: 100, npc: false}
 	victim := &mockCombatant{name: "Rat", level: 1, npc: true}
@@ -452,147 +464,14 @@ func TestProcessCombatPair_MobAttack(t *testing.T) {
 	engine := NewCombatEngine()
 	defer engine.Stop()
 
-	origHasAffect := HasAffect
-	origBroadcast := BroadcastMessage
-	origSendTo := SendToCharFunc
-	origGetSkill := GetSkill
-	origHasMobFlag := HasMobFlag
-	origGetWeapon := GetWeaponInfo
-	origHasScript := HasScriptFlag
-	origMakeCorpse := MakeCorpseFunc
-	origMakeDust := MakeDustFunc
-	origExtract := ExtractChar
-	origGainExp := GainExp
-	origGetExp := GetExp
-	origGetKills := GetKills
-	origSetKills := SetKills
-	origGetDeaths := GetDeaths
-	origSetDeaths := SetDeaths
-	origGetPks := GetPks
-	origSetPks := SetPks
-	origSetLastDeath := SetLastDeath
-	origLogMsg := LogMessage
-	origHasPlr := HasPlrFlag
-	origSetPlr := SetPlrFlag
-	origHasRoom := HasRoomFlag
-	origIsShop := IsShopkeeper
-	origHasMobVNum := HasMobVNum
-	origGetRace := GetRace
-	origGetRaceHate := GetRaceHate
-	origHasAffectStr := HasAffectStr
-	origIsMounted := IsMounted
-	origDismount := Dismount
-	origHasPrf := HasPrfFlag
-	origPerformCmd := PerformCommand
-	origGetGold := GetGold
-	origSetGold := SetGold
-	origCountGroup := CountGroupMembers
-	origApplyGroup := ApplyToGroupMembers
-	origGetAlign := GetAlignment
-	origSetAlign := SetAlignment
-	origGetWimpy := GetWimpyLev
-	origDoFlee := DoFlee
-	origDoRetreat := DoRetreat
-	origSkillMsg := SkillMessageFunc
-	origRunDeath := RunDeathScript
-	origBroadChat := BroadChatFunc
-	defer func() {
-		HasAffect = origHasAffect
-		BroadcastMessage = origBroadcast
-		SendToCharFunc = origSendTo
-		GetSkill = origGetSkill
-		HasMobFlag = origHasMobFlag
-		GetWeaponInfo = origGetWeapon
-		HasScriptFlag = origHasScript
-		MakeCorpseFunc = origMakeCorpse
-		MakeDustFunc = origMakeDust
-		ExtractChar = origExtract
-		GainExp = origGainExp
-		GetExp = origGetExp
-		GetKills = origGetKills
-		SetKills = origSetKills
-		GetDeaths = origGetDeaths
-		SetDeaths = origSetDeaths
-		GetPks = origGetPks
-		SetPks = origSetPks
-		SetLastDeath = origSetLastDeath
-		LogMessage = origLogMsg
-		HasPlrFlag = origHasPlr
-		SetPlrFlag = origSetPlr
-		HasRoomFlag = origHasRoom
-		IsShopkeeper = origIsShop
-		HasMobVNum = origHasMobVNum
-		GetRace = origGetRace
-		GetRaceHate = origGetRaceHate
-		HasAffectStr = origHasAffectStr
-		IsMounted = origIsMounted
-		Dismount = origDismount
-		HasPrfFlag = origHasPrf
-		PerformCommand = origPerformCmd
-		GetGold = origGetGold
-		SetGold = origSetGold
-		CountGroupMembers = origCountGroup
-		ApplyToGroupMembers = origApplyGroup
-		GetAlignment = origGetAlign
-		SetAlignment = origSetAlign
-		GetWimpyLev = origGetWimpy
-		DoFlee = origDoFlee
-		DoRetreat = origDoRetreat
-		SkillMessageFunc = origSkillMsg
-		RunDeathScript = origRunDeath
-		BroadChatFunc = origBroadChat
-	}()
-
-	// Wire global hooks
-	HasAffect = func(name string, aff int) bool { return false }
-	BroadcastMessage = func(room int, msg string, exclude string) {}
-	SendToCharFunc = func(name string, msg string) {}
-	GetSkill = func(name string, skillNum int) int { return 0 }
-	HasMobFlag = func(name string, flag string) bool { return false }
-	GetWeaponInfo = func(name string) (int, int, int, bool) {
-		if name == "Hero" {
+	cb := defaultCombatCallbacks()
+	cb.GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
+		if chName == "Hero" {
 			return TYPE_SLASH, 1, 8, false
 		}
 		return TYPE_HIT, 0, 0, false
 	}
-	HasScriptFlag = func(name string, flag string) bool { return false }
-	MakeCorpseFunc = func(name string, attackType int) {}
-	MakeDustFunc = func(name string, attackType int) {}
-	ExtractChar = func(name string) {}
-	GainExp = func(name string, amount int) {}
-	GetExp = func(name string) int { return 0 }
-	GetKills = func(name string) int64 { return 0 }
-	SetKills = func(name string, kills int64) {}
-	GetDeaths = func(name string) int64 { return 0 }
-	SetDeaths = func(name string, deaths int64) {}
-	GetPks = func(name string) int64 { return 0 }
-	SetPks = func(name string, pks int64) {}
-	SetLastDeath = func(name string, t int64) {}
-	LogMessage = func(msg string, level string, minLevel int, toLog bool) {}
-	HasPlrFlag = func(name string, flag string) bool { return false }
-	SetPlrFlag = func(name string) bool { return false }
-	HasRoomFlag = func(room int, flag string) bool { return false }
-	IsShopkeeper = func(name string) bool { return false }
-	HasMobVNum = func(name string, vnum int) bool { return false }
-	GetRace = func(name string) int { return 0 }
-	GetRaceHate = func(name string, index int) int { return 0 }
-	HasAffectStr = func(name string, aff string) bool { return false }
-	IsMounted = func(name string) bool { return false }
-	Dismount = func(name string) {}
-	HasPrfFlag = func(name string, flag string) bool { return false }
-	PerformCommand = func(name, cmd string) {}
-	GetGold = func(name string) int { return 0 }
-	SetGold = func(name string, gold int) {}
-	CountGroupMembers = func(name string, room int) int { return 1 }
-	ApplyToGroupMembers = func(name string, room int, fn func(string)) {}
-	GetAlignment = func(name string) int { return 0 }
-	SetAlignment = func(name string, val int) {}
-	GetWimpyLev = func(name string) int { return 0 }
-	DoFlee = func(name string) {}
-	DoRetreat = func(name string) {}
-	SkillMessageFunc = func(dam int, ch, vict string, atk int, room int) bool { return false }
-	RunDeathScript = func(killer, victim string, room int) {}
-	BroadChatFunc = func(name string, msg string) {}
+	SetCallbacks(cb)
 
 	// Wire engine callbacks
 	engine.BroadcastFunc = func(room int, msg string, exclude string) {}
@@ -657,150 +536,14 @@ func TestProcessCombatPair_PlayerDeath(t *testing.T) {
 	engine := NewCombatEngine()
 	defer engine.Stop()
 
-	origHasAffect := HasAffect
-	origBroadcast := BroadcastMessage
-	origSendTo := SendToCharFunc
-	origGetSkill := GetSkill
-	origHasMobFlag := HasMobFlag
-	origGetWeapon := GetWeaponInfo
-	origHasScript := HasScriptFlag
-	origMakeCorpse := MakeCorpseFunc
-	origMakeDust := MakeDustFunc
-	origExtract := ExtractChar
-	origGainExp := GainExp
-	origGetExp := GetExp
-	origGetKills := GetKills
-	origSetKills := SetKills
-	origGetDeaths := GetDeaths
-	origSetDeaths := SetDeaths
-	origGetPks := GetPks
-	origSetPks := SetPks
-	origSetLastDeath := SetLastDeath
-	origLogMsg := LogMessage
-	origHasPlr := HasPlrFlag
-	origSetPlr := SetPlrFlag
-	origHasRoom := HasRoomFlag
-	origIsShop := IsShopkeeper
-	origHasMobVNum := HasMobVNum
-	origGetRace := GetRace
-	origGetRaceHate := GetRaceHate
-	origHasAffectStr := HasAffectStr
-	origIsMounted := IsMounted
-	origDismount := Dismount
-	origHasPrf := HasPrfFlag
-	origPerformCmd := PerformCommand
-	origGetGold := GetGold
-	origSetGold := SetGold
-	origCountGroup := CountGroupMembers
-	origApplyGroup := ApplyToGroupMembers
-	origGetAlign := GetAlignment
-	origSetAlign := SetAlignment
-	origGetWimpy := GetWimpyLev
-	origDoFlee := DoFlee
-	origDoRetreat := DoRetreat
-	origSkillMsg := SkillMessageFunc
-	origRunDeath := RunDeathScript
-	origBroadChat := BroadChatFunc
-	origRemoveAff := RemoveAffect
-	defer func() {
-		HasAffect = origHasAffect
-		BroadcastMessage = origBroadcast
-		SendToCharFunc = origSendTo
-		GetSkill = origGetSkill
-		HasMobFlag = origHasMobFlag
-		GetWeaponInfo = origGetWeapon
-		HasScriptFlag = origHasScript
-		MakeCorpseFunc = origMakeCorpse
-		MakeDustFunc = origMakeDust
-		ExtractChar = origExtract
-		GainExp = origGainExp
-		GetExp = origGetExp
-		GetKills = origGetKills
-		SetKills = origSetKills
-		GetDeaths = origGetDeaths
-		SetDeaths = origSetDeaths
-		GetPks = origGetPks
-		SetPks = origSetPks
-		SetLastDeath = origSetLastDeath
-		LogMessage = origLogMsg
-		HasPlrFlag = origHasPlr
-		SetPlrFlag = origSetPlr
-		HasRoomFlag = origHasRoom
-		IsShopkeeper = origIsShop
-		HasMobVNum = origHasMobVNum
-		GetRace = origGetRace
-		GetRaceHate = origGetRaceHate
-		HasAffectStr = origHasAffectStr
-		IsMounted = origIsMounted
-		Dismount = origDismount
-		HasPrfFlag = origHasPrf
-		PerformCommand = origPerformCmd
-		GetGold = origGetGold
-		SetGold = origSetGold
-		CountGroupMembers = origCountGroup
-		ApplyToGroupMembers = origApplyGroup
-		GetAlignment = origGetAlign
-		SetAlignment = origSetAlign
-		GetWimpyLev = origGetWimpy
-		DoFlee = origDoFlee
-		DoRetreat = origDoRetreat
-		SkillMessageFunc = origSkillMsg
-		RunDeathScript = origRunDeath
-		BroadChatFunc = origBroadChat
-		RemoveAffect = origRemoveAff
-	}()
-
-	// Wire all the hooks
-	HasAffect = func(name string, aff int) bool { return false }
-	BroadcastMessage = func(room int, msg string, exclude string) {}
-	SendToCharFunc = func(name string, msg string) {}
-	GetSkill = func(name string, skillNum int) int { return 0 }
-	HasMobFlag = func(name string, flag string) bool { return false }
-	GetWeaponInfo = func(name string) (int, int, int, bool) {
-		if name == "Hero" {
+	cb := defaultCombatCallbacks()
+	cb.GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
+		if chName == "Hero" {
 			return TYPE_SLASH, 1, 8, false
 		}
 		return TYPE_HIT, 0, 0, false
 	}
-	HasScriptFlag = func(name string, flag string) bool { return false }
-	GainExp = func(name string, amount int) {}
-	GetExp = func(name string) int { return 0 }
-	GetKills = func(name string) int64 { return 0 }
-	SetKills = func(name string, kills int64) {}
-	GetDeaths = func(name string) int64 { return 0 }
-	SetDeaths = func(name string, deaths int64) {}
-	GetPks = func(name string) int64 { return 0 }
-	SetPks = func(name string, pks int64) {}
-	SetLastDeath = func(name string, t int64) {}
-	LogMessage = func(msg string, level string, minLevel int, toLog bool) {}
-	HasPlrFlag = func(name string, flag string) bool { return false }
-	SetPlrFlag = func(name string) bool { return false }
-	HasRoomFlag = func(room int, flag string) bool { return false }
-	IsShopkeeper = func(name string) bool { return false }
-	HasMobVNum = func(name string, vnum int) bool { return false }
-	GetRace = func(name string) int { return 0 }
-	GetRaceHate = func(name string, index int) int { return 0 }
-	HasAffectStr = func(name string, aff string) bool { return false }
-	IsMounted = func(name string) bool { return false }
-	Dismount = func(name string) {}
-	HasPrfFlag = func(name string, flag string) bool { return false }
-	PerformCommand = func(name, cmd string) {}
-	GetGold = func(name string) int { return 0 }
-	SetGold = func(name string, gold int) {}
-	CountGroupMembers = func(name string, room int) int { return 1 }
-	ApplyToGroupMembers = func(name string, room int, fn func(string)) {}
-	GetAlignment = func(name string) int { return 0 }
-	SetAlignment = func(name string, val int) {}
-	GetWimpyLev = func(name string) int { return 0 }
-	DoFlee = func(name string) {}
-	DoRetreat = func(name string) {}
-	SkillMessageFunc = func(dam int, ch, vict string, atk int, room int) bool { return false }
-	RunDeathScript = func(killer, victim string, room int) {}
-	BroadChatFunc = func(name string, msg string) {}
-	RemoveAffect = func(name string, skillNum int) {}
-	MakeCorpseFunc = func(name string, attackType int) {}
-	MakeDustFunc = func(name string, attackType int) {}
-	ExtractChar = func(name string) {}
+	SetCallbacks(cb)
 
 	var deathCalled bool
 	engine.BroadcastFunc = func(room int, msg string, exclude string) {}
@@ -872,17 +615,7 @@ func TestProcessCombatPair_DifferentRoom(t *testing.T) {
 	engine := NewCombatEngine()
 	defer engine.Stop()
 
-	origBroadcast := BroadcastMessage
-	origSendTo := SendToCharFunc
-	origHasAffect := HasAffect
-	defer func() {
-		BroadcastMessage = origBroadcast
-		SendToCharFunc = origSendTo
-		HasAffect = origHasAffect
-	}()
-	BroadcastMessage = func(room int, msg string, exclude string) {}
-	SendToCharFunc = func(name string, msg string) {}
-	HasAffect = func(name string, aff int) bool { return false }
+	SetCallbacks(defaultCombatCallbacks())
 
 	attacker := &mockCombatant{name: "Hero", room: 100, hp: 100, position: PosStanding}
 	defender := &mockCombatant{name: "Orc", room: 200, hp: 50, position: PosStanding}
@@ -905,20 +638,7 @@ func TestHandleDeath_Basic(t *testing.T) {
 
 	var deathFuncCalled bool
 
-	origSendTo := SendToCharFunc
-	origBroadcast := BroadcastMessage
-	origHasScript := HasScriptFlag
-	origRunDeath := RunDeathScript
-	defer func() {
-		SendToCharFunc = origSendTo
-		BroadcastMessage = origBroadcast
-		HasScriptFlag = origHasScript
-		RunDeathScript = origRunDeath
-	}()
-	SendToCharFunc = func(name string, msg string) {}
-	BroadcastMessage = func(room int, msg string, exclude string) {}
-	HasScriptFlag = func(name string, flag string) bool { return false }
-	RunDeathScript = func(killer, victim string, room int) {}
+	SetCallbacks(defaultCombatCallbacks())
 
 	attacker := &mockCombatant{name: "Hero", room: 100, hp: 100}
 	defender := &mockCombatant{name: "Orc", room: 100, hp: 0}
@@ -1011,14 +731,9 @@ func (m *messagingCombatant) SendMessage(msg string) {
 
 func TestChangeAlignment_NPCKiller(t *testing.T) {
 	var alignResult int
-	origGetAlign := GetAlignment
-	origSetAlign := SetAlignment
-	defer func() {
-		GetAlignment = origGetAlign
-		SetAlignment = origSetAlign
-	}()
 
-	GetAlignment = func(name string) int {
+	cb := defaultCombatCallbacks()
+	cb.GetAlignment = func(name string) int {
 		if name == "good_victim" {
 			return 900
 		}
@@ -1027,9 +742,10 @@ func TestChangeAlignment_NPCKiller(t *testing.T) {
 		}
 		return 0
 	}
-	SetAlignment = func(name string, val int) {
+	cb.SetAlignment = func(name string, val int) {
 		alignResult = val
 	}
+	SetCallbacks(cb)
 
 	npcKiller := &mockCombatant{name: "npc_killer", npc: false}
 	goodVictim := &mockCombatant{name: "good_victim", npc: true}
@@ -1042,15 +758,11 @@ func TestChangeAlignment_NPCKiller(t *testing.T) {
 
 func TestChangeAlignment_NPCKillerNPC(t *testing.T) {
 	var alignCalled bool
-	origGetAlign := GetAlignment
-	origSetAlign := SetAlignment
-	defer func() {
-		GetAlignment = origGetAlign
-		SetAlignment = origSetAlign
-	}()
 
-	GetAlignment = func(name string) int { return 0 }
-	SetAlignment = func(name string, val int) { alignCalled = true }
+	cb := defaultCombatCallbacks()
+	cb.GetAlignment = func(name string) int { return 0 }
+	cb.SetAlignment = func(name string, val int) { alignCalled = true }
+	SetCallbacks(cb)
 
 	killer := &mockCombatant{name: "Orc", npc: true}
 	victim := &mockCombatant{name: "Elf", npc: true}

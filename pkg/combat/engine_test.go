@@ -134,14 +134,16 @@ func TestSendMissMessageFallsBackWhenNil(t *testing.T) {
 // shopkeeper protection must stop combat for both attacker and defender,
 // matching C fight.c:1359-1366.
 func TestShopkeeperProtection_RemovesCombatPair(t *testing.T) {
-	oldIsShopkeeper := IsShopkeeper
-	defer func() { IsShopkeeper = oldIsShopkeeper }()
-	IsShopkeeper = func(name string) bool { return name == "Shopkeeper" }
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
 
 	attacker := &mockCombatant{name: "Attacker", hp: 100, room: 1}
 	defender := &mockCombatant{name: "Shopkeeper", hp: 100, room: 1}
 
 	ce := NewCombatEngine()
+	ce.SetCallbacks(&GameCallbacks{
+		IsShopkeeper: func(name string) bool { return name == "Shopkeeper" },
+	})
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat failed: %v", err)
 	}

@@ -150,6 +150,18 @@ func (w *World) DoJunk(ch *Player, arg string) {
 	w.doDispose(ch, arg, scmdJunk, "junk", 0)
 }
 
+// junkCheapItems removes inventory items with a base cost of 150 or less,
+// matching the attitude_loot() behavior in src/fight.c:1128.
+func (w *World) junkCheapItems(ch *Player) {
+	items := make([]*ObjectInstance, len(ch.Inventory.Items))
+	copy(items, ch.Inventory.Items)
+	for _, obj := range items {
+		if obj.GetCost() <= 150 {
+			w.performDispose(ch, obj, scmdJunk, "junk", 0)
+		}
+	}
+}
+
 // DoDonate implements the donate command — src/act.item.c ACMD(do_drop)
 // with subcmd SCMD_DONATE. A single dice roll up front decides the fate of
 // everything in the command (act.item.c:551-567): 25% chance (case 0) the

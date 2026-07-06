@@ -287,12 +287,159 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	}
 
 	// -------------------------------------------------------------------------
-	// Corpse & extraction — left nil for PR2. These are invoked by the legacy
-	// combat.RawKill path; the active engine path uses CombatEngine.DeathFunc,
-	// which already routes through World.HandleDeath. Wiring these in PR2 would
-	// change behavior because the legacy hooks were nil in production. They will
-	// be wired to game-layer helpers in PR3.
+	// Corpse & extraction — wired to game-layer helpers for the legacy RawKill
+	// path. The active engine path still uses CombatEngine.DeathFunc.
 	// -------------------------------------------------------------------------
+	cb.MakeCorpse = func(victim string, attackType int) {
+		if p, ok := w.GetPlayer(victim); ok {
+			_ = MakeCorpse(p)
+		}
+	}
+
+	cb.ExtractChar = func(name string) {
+		if p, ok := w.GetPlayer(name); ok {
+			ExtractChar(p)
+		}
+	}
+
+	cb.RunDeathScript = func(killer, victim string, roomVNum int) {
+		w.FireMobDeathScript(victim, killer, roomVNum)
+	}
+
+	// -------------------------------------------------------------------------
+	// Group/Party
+	// -------------------------------------------------------------------------
+	cb.GetFollowersInRoom = func(name string, roomVNum int) int {
+		return len(w.GetFollowersInRoom(name, roomVNum))
+	}
+
+	cb.GetMasterInRoom = func(name string, roomVNum int) bool {
+		p, ok := w.GetPlayer(name)
+		if !ok {
+			return false
+		}
+		masterName := p.GetFollowing()
+		if masterName == "" {
+			return false
+		}
+		master, ok := w.GetPlayer(masterName)
+		if !ok {
+			return false
+		}
+		return master.GetRoom() == roomVNum
+	}
+
+	cb.GetFellowFollowersInRoom = func(name string, roomVNum int) bool {
+		p, ok := w.GetPlayer(name)
+		if !ok {
+			return false
+		}
+		leaderName := p.GetFollowing()
+		if leaderName == "" {
+			return false
+		}
+		for _, follower := range w.GetFollowers(leaderName) {
+			if follower.GetName() != name && follower.GetRoom() == roomVNum {
+				return true
+			}
+		}
+		return false
+	}
+
+	cb.CountGroupMembers = func(leaderName string, roomVNum int) int {
+		members := w.GetGroupMembers(leaderName)
+		count := 0
+		for _, m := range members {
+			if m.GetRoom() == roomVNum {
+				count++
+			}
+		}
+		return count
+	}
+
+	cb.ApplyToGroupMembers = func(leaderName string, roomVNum int, fn func(name string)) {
+		for _, m := range w.GetGroupMembers(leaderName) {
+			if m.GetRoom() == roomVNum {
+				fn(m.GetName())
+			}
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Gold
+	// -------------------------------------------------------------------------
+	cb.GetGold = func(name string) int {
+		if p, ok := w.GetPlayer(name); ok {
+			return p.GetGold()
+		}
+		return 0
+	}
+
+	cb.SetGold = func(name string, gold int) {
+		if p, ok := w.GetPlayer(name); ok {
+			p.SetGold(gold)
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Items
+	// -------------------------------------------------------------------------
+	cb.JunkInventoryItems = func(chName string) {
+		p, ok := w.GetPlayer(chName)
+		if !ok {
+			return
+		}
+		w.junkCheapItems(p)
+	}
+
+	// -------------------------------------------------------------------------
+	// Commands
+	// -------------------------------------------------------------------------
+	cb.PerformCommand = func(chName, cmd string) {
+		p, ok := w.GetPlayer(chName)
+		if !ok {
+			return
+		}
+		if w.CommandExecFunc != nil {
+			w.CommandExecFunc(p, cmd)
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Flee/Retreat — wired by the session layer via Manager.SetFleeHooks because
+	// they need access to player sessions. Leave nil here so SetFleeHooks can
+	// install its callbacks without conflict.
+	// -------------------------------------------------------------------------
+	cb.GetWimpyLev = func(name string) int {
+		if p, ok := w.GetPlayer(name); ok {
+			return p.WimpLevel
+		}
+		return 0
+	}
+
+	// -------------------------------------------------------------------------
+	// World
+	// -------------------------------------------------------------------------
+	cb.IncreaseMaxStat = func(name string, stat string) {
+		p, ok := w.GetPlayer(name)
+		if !ok {
+			return
+		}
+		switch strings.ToLower(stat) {
+		case "hp", "hit", "health":
+			p.SetMaxHP(p.GetMaxHP() + 1)
+		case "mana":
+			p.SetMaxMana(p.GetMaxMana() + 1)
+		case "move", "movement":
+			p.SetMaxMove(p.GetMaxMove() + 1)
+		}
+	}
+
+	cb.HealAllPlayers = func() {
+		for _, p := range w.AllPlayers() {
+			p.SetHP(p.GetMaxHP())
+		}
+	}
 
 	return cb
 }

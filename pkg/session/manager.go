@@ -408,11 +408,6 @@ func (m *Manager) SetCombatMessageFunc() {
 	combat.InitSkillMessages(cb)
 	m.combatEngine.SetCallbacks(cb)
 
-	// Legacy aliases — kept for tests and any code paths that still read the
-	// package-level variables directly. Remove once the migration is complete.
-	combat.BroadcastMessage = broadcast
-	combat.SendToCharFunc = sendToChar
-
 	m.combatEngine.MessageFunc = func(attacker, defender combat.Combatant, dam, attackType int) bool {
 		combat.DamMessage(dam, attacker, defender, attackType)
 		return true
@@ -550,9 +545,14 @@ func (m *Manager) SetCommandExecFunc() {
 }
 
 // SetFleeHooks wires wimpy auto-flee into the combat engine (DP-389).
-// Must be called after NewManager(), before the server starts accepting connections.
+// Must be called after WireCombatCallbacks() so the GameCallbacks struct exists.
 func (m *Manager) SetFleeHooks() {
-	combat.DoFlee = func(name string) {
+	cb := m.combatEngine.Callbacks
+	if cb == nil {
+		cb = &combat.GameCallbacks{}
+		m.combatEngine.SetCallbacks(cb)
+	}
+	cb.DoFlee = func(name string) {
 		s, ok := m.GetSession(name)
 		if !ok || s == nil {
 			return
@@ -561,7 +561,7 @@ func (m *Manager) SetFleeHooks() {
 			slog.Error("DoFlee failed", "player", name, "error", err)
 		}
 	}
-	combat.DoRetreat = func(name string) {
+	cb.DoRetreat = func(name string) {
 		s, ok := m.GetSession(name)
 		if !ok || s == nil {
 			return
