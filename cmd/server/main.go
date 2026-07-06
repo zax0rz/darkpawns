@@ -200,6 +200,11 @@ func main() {
 	combat.InitSkillMessages()                           // Wire multi-variant combat messages
 	manager.SetCombatMessageFunc()                       // Wire DamMessage() for live combat hits/misses
 
+	// Verify critical combat hooks are wired (DP-952)
+	if combat.BroadcastMessage == nil || combat.SendToCharFunc == nil {
+		slog.Error("critical combat hook not wired — combat messages will be silent")
+	}
+
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {
 		modManager := moderation.NewManager(database.SQLDB())

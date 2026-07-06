@@ -177,33 +177,6 @@ func TestRandPick_SingleElement(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// fleshAlteredType
-// ---------------------------------------------------------------------------
-
-func TestFleshAlteredType(t *testing.T) {
-	// Level 1: pound (7)
-	result := fleshAlteredType(1)
-	if result != 7 {
-		t.Errorf("fleshAlteredType(1) = %d, want 7 (pound)", result)
-	}
-	// Level 5: pierce (11)
-	result = fleshAlteredType(5)
-	if result != 11 {
-		t.Errorf("fleshAlteredType(5) = %d, want 11 (pierce)", result)
-	}
-	// Level 8: slash (3)
-	result = fleshAlteredType(8)
-	if result != 3 {
-		t.Errorf("fleshAlteredType(8) = %d, want 3 (slash)", result)
-	}
-	// Level 30: slash (3)
-	result = fleshAlteredType(30)
-	if result != 3 {
-		t.Errorf("fleshAlteredType(30) = %d, want 3 (slash)", result)
-	}
-}
-
-// ---------------------------------------------------------------------------
 // GetPositionFromHP
 // ---------------------------------------------------------------------------
 
@@ -401,4 +374,57 @@ func TestRawKill_NilGetRace(t *testing.T) {
 	if !madeCorpse {
 		t.Error("expected MakeCorpseFunc to be called when GetRace is nil")
 	}
+}
+
+// TestGetExpNilGuard_GroupGain verifies GroupGain does not panic when GetExp is nil.
+func TestGetExpNilGuard_GroupGain(t *testing.T) {
+	origGetExp := GetExp
+	origCountGroup := CountGroupMembers
+	origApplyGroup := ApplyToGroupMembers
+	defer func() {
+		GetExp = origGetExp
+		CountGroupMembers = origCountGroup
+		ApplyToGroupMembers = origApplyGroup
+	}()
+
+	GetExp = nil
+	CountGroupMembers = func(leaderName string, roomVNum int) int { return 1 }
+	ApplyToGroupMembers = func(leaderName string, roomVNum int, fn func(string)) {
+		fn(leaderName)
+	}
+
+	leader := &mockCombatant{name: "Leader", room: 100, level: 10}
+	victim := &mockCombatant{name: "Victim", room: 100, level: 5}
+
+	// Should not panic; with GetExp nil the base share becomes 0, then clamped to 1.
+	GroupGain(leader, victim)
+}
+
+// TestGetExpNilGuard_DieWithKiller verifies DieWithKiller does not panic when
+// GetExp is nil but GainExp is wired.
+func TestGetExpNilGuard_DieWithKiller(t *testing.T) {
+	origGainExp := GainExp
+	origGetExp := GetExp
+	origRemoveAll := RemoveAllAffects
+	origMakeCorpse := MakeCorpseFunc
+	origExtract := ExtractChar
+	defer func() {
+		GainExp = origGainExp
+		GetExp = origGetExp
+		RemoveAllAffects = origRemoveAll
+		MakeCorpseFunc = origMakeCorpse
+		ExtractChar = origExtract
+	}()
+
+	GainExp = func(name string, amount int) {}
+	GetExp = nil
+	RemoveAllAffects = func(name string) {}
+	MakeCorpseFunc = func(name string, attackType int) {}
+	ExtractChar = func(name string) {}
+
+	victim := &mockCombatant{name: "Victim", room: 100, level: 10}
+	killer := &mockCombatant{name: "Killer", room: 100, level: 10}
+
+	// Should not panic even though GetExp is nil.
+	DieWithKiller(victim, killer, TYPE_UNDEFINED)
 }

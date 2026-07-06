@@ -114,68 +114,6 @@ func TestDamMessage_ZeroDamage(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// TestAppear — become visible
-// ---------------------------------------------------------------------------
-
-func TestAppear_Basic(t *testing.T) {
-	var broadcastMsg string
-	origBroadcast := BroadcastMessage
-	origHasAffect := HasAffect
-	origRemoveAffect := RemoveAffect
-	defer func() {
-		BroadcastMessage = origBroadcast
-		HasAffect = origHasAffect
-		RemoveAffect = origRemoveAffect
-	}()
-
-	BroadcastMessage = func(room int, msg string, exclude string) {
-		broadcastMsg = msg
-	}
-	HasAffect = func(name string, aff int) bool {
-		return name == "Rogue" && aff == SPELL_INVISIBLE
-	}
-	RemoveAffect = func(name string, skillNum int) {
-		if name != "Rogue" || skillNum != SPELL_INVISIBLE {
-			t.Errorf("RemoveAffect called with unexpected args: %s, %d", name, skillNum)
-		}
-	}
-
-	ch := &mockCombatant{name: "Rogue", room: 200, level: 10}
-	Appear(ch)
-
-	if !strings.Contains(broadcastMsg, "fades into existence") {
-		t.Errorf("expected fade message, got %q", broadcastMsg)
-	}
-}
-
-func TestAppear_ImmortalLevel(t *testing.T) {
-	var broadcastMsg string
-	origBroadcast := BroadcastMessage
-	origHasAffect := HasAffect
-	origRemoveAffect := RemoveAffect
-	defer func() {
-		BroadcastMessage = origBroadcast
-		HasAffect = origHasAffect
-		RemoveAffect = origRemoveAffect
-	}()
-
-	BroadcastMessage = func(room int, msg string, exclude string) {
-		broadcastMsg = msg
-	}
-	HasAffect = func(name string, aff int) bool {
-		return name == "Wizard" && aff == SPELL_INVISIBLE
-	}
-	RemoveAffect = func(name string, skillNum int) {}
-
-	ch := &mockCombatant{name: "Wizard", room: 200, level: LVL_IMMORT}
-	Appear(ch)
-
-	if !strings.Contains(broadcastMsg, "strange presence") {
-		t.Errorf("expected strange presence message for immortal, got %q", broadcastMsg)
-	}
-}
-
-// ---------------------------------------------------------------------------
 // TestDeathCry
 // ---------------------------------------------------------------------------
 
@@ -521,7 +459,6 @@ func TestProcessCombatPair_MobAttack(t *testing.T) {
 	origHasMobFlag := HasMobFlag
 	origGetWeapon := GetWeaponInfo
 	origHasScript := HasScriptFlag
-	origRunFight := RunFightScript
 	origMakeCorpse := MakeCorpseFunc
 	origMakeDust := MakeDustFunc
 	origExtract := ExtractChar
@@ -567,7 +504,6 @@ func TestProcessCombatPair_MobAttack(t *testing.T) {
 		HasMobFlag = origHasMobFlag
 		GetWeaponInfo = origGetWeapon
 		HasScriptFlag = origHasScript
-		RunFightScript = origRunFight
 		MakeCorpseFunc = origMakeCorpse
 		MakeDustFunc = origMakeDust
 		ExtractChar = origExtract
@@ -868,7 +804,6 @@ func TestProcessCombatPair_PlayerDeath(t *testing.T) {
 	MakeDustFunc = func(name string, attackType int) {}
 	ExtractChar = func(name string) {}
 	NowUnix = func() int64 { return 12345 }
-	RunFightScript = func(mob, target string, room int) {}
 
 	var deathCalled bool
 	engine.BroadcastFunc = func(room int, msg string, exclude string) {}
