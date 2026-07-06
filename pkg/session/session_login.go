@@ -380,6 +380,7 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		switch line {
 		case "~":
 			s.manager.world.Boards.FinalizeBoardWrite(s.player.WriteMagic, s.player)
+			s.player.WriteMagic = 0
 		case "@":
 			s.player.WriteMagic = 0
 			s.player.SendMessage("Message aborted.\r\n")
