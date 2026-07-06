@@ -2,6 +2,7 @@ package game
 
 import (
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -267,5 +268,93 @@ func TestHandleDeath_Player(t *testing.T) {
 	items := w.roomItems[1001]
 	if len(items) != 1 {
 		t.Errorf("room items count = %d, want 1 (corpse)", len(items))
+	}
+}
+
+// TestHandlePlayerDeathIdempotent verifies that concurrent calls to
+// handlePlayerDeath only apply death penalties once (DP-943).
+func TestHandlePlayerDeathIdempotent(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 8},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	victim := NewPlayer(1, "Victim", 1001)
+	victim.SetLevel(10)
+	victim.SetExp(10000)
+	victim.Stats.Con = 15
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	startExp := victim.GetExp()
+	startCon := victim.Stats.Con
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		w.handlePlayerDeath(victim, true, 303, "Killer")
+	}()
+	go func() {
+		defer wg.Done()
+		w.handlePlayerDeath(victim, true, 303, "Killer")
+	}()
+	wg.Wait()
+
+	expectedExp := startExp - (startExp / 37)
+	if victim.GetExp() != expectedExp {
+		t.Errorf("exp deducted multiple times: got %d want %d", victim.GetExp(), expectedExp)
+	}
+	if victim.Stats.Con < startCon-2 {
+		t.Errorf("CON reduced too much: got %d from %d", victim.Stats.Con, startCon)
+	}
+
+	corpseCount := 0
+	for _, item := range w.roomItems[1001] {
+		if item.IsCorpse {
+			corpseCount++
+		}
+	}
+	if corpseCount != 1 {
+		t.Errorf("expected 1 corpse in death room, got %d", corpseCount)
+	}
+}
+
+// TestHandlePlayerDeathDyingReset verifies that the dying flag is cleared
+// after respawn so future deaths can be processed normally (DP-943).
+func TestHandlePlayerDeathDyingReset(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 8},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	victim := NewPlayer(1, "Victim", 1001)
+	victim.SetLevel(1)
+	victim.SetExp(100)
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	w.handlePlayerDeath(victim, true, 303, "Killer")
+
+	if victim.IsDying() {
+		t.Error("IsDying should be false after respawn")
 	}
 }

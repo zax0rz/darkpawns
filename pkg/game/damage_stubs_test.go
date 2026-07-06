@@ -1,7 +1,11 @@
 package game
 
 import (
+	"context"
+	"sync"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/events"
 )
 
 // TestDoDamage_AppliesToMob is the DP-901 regression: doDamage previously
@@ -100,6 +104,96 @@ func TestDoDamage_ZeroDamageNoOpsOnMob(t *testing.T) {
 	}
 	if mob.GetHP() != startHP {
 		t.Errorf("doDamage(dam=0) should not change mob HP: %d → %d", startHP, mob.GetHP())
+	}
+}
+
+// TestDoDamageAwardsXP confirms skill/spell kills route through HandleDeath
+// and award XP, increment the kill counter, and publish events (DP-942).
+func TestDoDamageAwardsXP(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.Prototype.Exp = 1000
+	mob.Prototype.Gold = 100
+	mob.Prototype.Level = 5
+
+	startExp := player.GetExp()
+	startKills := player.Kills
+
+	hp := mob.GetHP()
+	w.doDamage(player, mob, hp, "backstab")
+
+	if mob.IsAlive() {
+		t.Error("mob should be dead")
+	}
+	if player.GetExp() <= startExp {
+		t.Errorf("player should gain XP, got %d want > %d", player.GetExp(), startExp)
+	}
+	if player.Kills != startKills+1 {
+		t.Errorf("player Kills = %d, want %d", player.Kills, startKills+1)
+	}
+}
+
+// TestDoSpellDamageAwardsXP confirms the spell damage path awards XP and
+// increments the kill counter (DP-942).
+func TestDoSpellDamageAwardsXP(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.Prototype.Exp = 1000
+	mob.Prototype.Gold = 100
+	mob.Prototype.Level = 5
+
+	startExp := player.GetExp()
+	startKills := player.Kills
+
+	hp := mob.GetHP()
+	w.DoSpellDamage(player, mob, hp, "hellfire")
+
+	if mob.IsAlive() {
+		t.Error("mob should be dead")
+	}
+	if player.GetExp() <= startExp {
+		t.Errorf("player should gain XP, got %d want > %d", player.GetExp(), startExp)
+	}
+	if player.Kills != startKills+1 {
+		t.Errorf("player Kills = %d, want %d", player.Kills, startKills+1)
+	}
+}
+
+// TestDoDamagePlayerDeathHasKillerName verifies that when a mob kills a player
+// via doDamage, the player death path records the killer's name (DP-942).
+func TestDoDamagePlayerDeathHasKillerName(t *testing.T) {
+	w, _ := newCombatTestWorld(t)
+
+	victim := NewPlayer(2, "Victim", 1001)
+	victim.SetHP(10)
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	mob := spawnTargetMob(t, w)
+
+	bus := events.NewInProcessBus()
+	w.Events = bus
+	var gotKiller string
+	var mu sync.Mutex
+	bus.Subscribe(events.PlayerKilledEvent{}.Type(), func(_ context.Context, e events.BusEvent) error {
+		if pke, ok := e.(events.PlayerKilledEvent); ok {
+			mu.Lock()
+			gotKiller = pke.KillerID
+			mu.Unlock()
+		}
+		return nil
+	})
+
+	w.doDamage(mob, victim, 20, "bash")
+
+	mu.Lock()
+	defer mu.Unlock()
+	if gotKiller == "" {
+		t.Error("player death should record a non-empty killer name")
+	}
+	if gotKiller != mob.GetName() {
+		t.Errorf("killer name = %q, want %q", gotKiller, mob.GetName())
 	}
 }
 

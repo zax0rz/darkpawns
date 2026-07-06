@@ -2,6 +2,7 @@ package game
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -93,6 +94,9 @@ type Player struct {
 	// State
 	ConnectedAt time.Time
 	LastActive  time.Time
+
+	// DP-943: atomic guard to make player death idempotent under concurrent kills.
+	dying atomic.Bool
 
 	// Birth — Unix timestamp of character creation (ch->player.time.birth).
 	// Used by Age() to calculate character age in MUD years.
@@ -331,6 +335,12 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	}
 
 	return p
+}
+
+// IsDying reports whether the player is currently in the death-handling path.
+// Used by DP-943 idempotency guard.
+func (p *Player) IsDying() bool {
+	return p.dying.Load()
 }
 
 // thaco local reference for player creation

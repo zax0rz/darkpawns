@@ -28,6 +28,8 @@ package game
 import (
 	"fmt"
 	"math/rand/v2"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // ---------------------------------------------------------------------------
@@ -35,7 +37,38 @@ import (
 // These match the CircleMUD fight.c patterns: damage() and hit_skill()
 // ---------------------------------------------------------------------------
 
-// doDamage applies damage to a target.
+// skillToAttackType maps a skill/spell name to the closest TYPE_* / SKILL_*
+// numeric attack type used by the corpse-description system. Unknown skills
+// fall back to TYPE_SLASH (303) to preserve legacy behavior.
+func skillToAttackType(skill string) int {
+	switch skill {
+	case "backstab", "circle":
+		return TypeSting // 301
+	case "bash", "kick", "punch", "dragon_kick", "tiger_punch", "headbutt",
+		"smackheads", "slug", "serpent_kick":
+		return TypeBludgeon // 305
+	case "bite":
+		return TypeBite // 304
+	case "disembowel":
+		return SkillDisembowelNum // 184
+	case "neckbreak":
+		return SkillNeckbreakNum // 190
+	default:
+		return TypeSlash // 303 fallback
+	}
+}
+
+// combatantFromInterface converts an interface{} attacker to a combat.Combatant.
+func combatantFromInterface(attacker interface{}) combat.Combatant {
+	if attacker == nil {
+		return nil
+	}
+	if c, ok := attacker.(combat.Combatant); ok {
+		return c
+	}
+	return nil
+}
+
 // DoSpellDamage applies damage to a player or mob, handling death.
 // Used by damage spells (hellfire, meteor_swarm, etc.) that need to hit any character type.
 func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill string) bool {
@@ -44,20 +77,22 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 	}
 
 	attackerName := getAttackerName(attacker)
+	killer := combatantFromInterface(attacker)
+	attackType := skillToAttackType(skill)
 
 	switch v := victim.(type) {
 	case *Player:
 		v.TakeDamage(dam)
 		v.SetFighting(attackerName)
 		if v.GetHP() <= 0 {
-			w.rawKill(v, 303)
+			w.HandleDeath(v, killer, attackType)
 		}
 		return true
 	case *MobInstance:
 		v.TakeDamage(dam)
 		v.SetFighting(attackerName)
 		if v.GetHP() <= 0 {
-			w.handleMobDeath(v, nil, 303)
+			w.HandleDeath(v, killer, attackType)
 		}
 		return true
 	default:
@@ -73,9 +108,11 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 // DP-901: previously type-asserted vict.(*Player) and silently returned false
 // for mobs, so every offensive skill against a mob no-op'd. Now mirrors
 // DoSpellDamage: damages both types, sets fighting state, and routes death
-// through rawKill (players) / handleMobDeath (mobs).
+// through HandleDeath so XP, kill counters, events, and autoloot fire.
 func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 	attackerName := getAttackerName(ch)
+	killer := combatantFromInterface(ch)
+	attackType := skillToAttackType(skill)
 
 	if dam <= 0 {
 		// C: damage(ch, vict, 0, ...) prints the no-damage message and still
@@ -94,14 +131,14 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 		v.TakeDamage(dam)
 		v.SetFighting(attackerName)
 		if v.GetHP() <= 0 {
-			w.rawKill(v, 303)
+			w.HandleDeath(v, killer, attackType)
 		}
 		return true
 	case *MobInstance:
 		v.TakeDamage(dam)
 		v.SetFighting(attackerName)
 		if v.GetHP() <= 0 {
-			w.handleMobDeath(v, nil, 303)
+			w.HandleDeath(v, killer, attackType)
 		}
 		return true
 	default:
