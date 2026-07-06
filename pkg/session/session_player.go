@@ -120,6 +120,8 @@ func (s *Session) CloseSend() {
 // that handleLogin rejected the client, so they can flush pending error
 // messages before closing the raw connection (DP-591 race).
 func (s *Session) SendClosed() bool {
+	s.sendMu.RLock()
+	defer s.sendMu.RUnlock()
 	return s.sendClosed
 }
 
