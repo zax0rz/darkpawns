@@ -63,6 +63,11 @@ type World struct {
 	// All live object instances: instance ID -> ObjectInstance
 	objectInstances map[int]*ObjectInstance
 
+	// specRooms tracks room VNums that contain at least one entity with a spec.
+	// Used by the session dispatch fast path to skip spec scanning.
+	specRooms   map[int]bool
+	specRoomsMu sync.RWMutex
+
 	// AI combat engine (CRIT-006: moved from global to World field)
 	combatEngine CombatEngine
 
@@ -142,6 +147,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		roomItems:       make(map[int][]*ObjectInstance),
 		nextObjID:       1,
 		objectInstances: make(map[int]*ObjectInstance),
+		specRooms:       make(map[int]bool),
 		done:            make(chan bool),
 		shopManager:     nil,    // Will be set via SetShopManager
 		parsedData:      parsed, // Keep reference for door loading etc.
@@ -810,6 +816,55 @@ func (w *World) GetPlayersInRoom(roomVNum int) []*Player {
 // interface for the extracted board system.
 func (w *World) RoomEcho(roomVNum int, message string, excludeName string) {
 	actToRoom(w, roomVNum, message, excludeName)
+}
+
+// HasSpecInRoom returns true if the room may contain at least one entity with
+// a special procedure. This is the fast-path guard for spec dispatch. A false
+// positive is safe (causes one extra scan); a false negative would skip spec
+// behavior, so callers must ensure the cache is never stale-negative.
+func (w *World) HasSpecInRoom(roomVNum int) bool {
+	w.specRoomsMu.RLock()
+	defer w.specRoomsMu.RUnlock()
+	return w.specRooms[roomVNum]
+}
+
+// RebuildSpecRooms recomputes the specRooms cache from current world state.
+// Call once after zone resets and then periodically to keep the fast path
+// safe. Stale-positive is acceptable; stale-negative is not.
+func (w *World) RebuildSpecRooms() {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	w.rebuildSpecRoomsLocked()
+}
+
+// rebuildSpecRoomsLocked rebuilds specRooms under w.mu and specRoomsMu.
+// Caller must hold w.mu (read lock is sufficient since the scanned maps are
+// only mutated under w.mu).
+func (w *World) rebuildSpecRoomsLocked() {
+	newSet := make(map[int]bool, len(w.specRooms))
+
+	for _, mob := range w.activeMobs {
+		if GetMobSpec(mob.VNum) != nil {
+			newSet[mob.GetRoom()] = true
+		}
+	}
+
+	for roomVNum, items := range w.roomItems {
+		for _, item := range items {
+			if GetObjSpec(item.VNum) != nil {
+				newSet[roomVNum] = true
+				break
+			}
+		}
+	}
+
+	for roomVNum := range RoomSpecAssign {
+		newSet[roomVNum] = true
+	}
+
+	w.specRoomsMu.Lock()
+	defer w.specRoomsMu.Unlock()
+	w.specRooms = newSet
 }
 
 // MovePlayer moves a player to a new room if the exit exists and doors permit.
