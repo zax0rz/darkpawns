@@ -31,9 +31,6 @@ const (
 	SECS_PER_MUD_HOUR = 75                  // 75 real seconds per Mud hour (C default)
 )
 
-// DefaultCrashSaveInterval is the number of minutes between automatic crash saves.
-const DefaultCrashSaveInterval = 15
-
 // UptimeSnapshot records a server uptime reading.
 type UptimeSnapshot struct {
 	StartedAt    time.Time
@@ -80,15 +77,6 @@ type GameLoopCallbacks struct {
 	OnHuntItems func()
 	// OnFlushPlayerFile — called every Mud hour. Ported from fflush(player_fl).
 	OnFlushPlayerFile func()
-
-	// OnAutoSave — called every 60 * PASSES_PER_SEC (60s) only if auto_save is true.
-	// ported from Crash_save_all().
-	OnAutoSave func()
-	// getAutoSave returns the current auto_save state.
-	AutoSaveEnabled func() bool
-	// getAutoSaveTime returns the configured autosave interval in minutes.
-	// Ported from 'autosave_time' — usually 15 minutes.
-	AutoSaveIntervalMinutes func() int
 
 	// OnRecordUsage — called every 5 * 60 * PASSES_PER_SEC (5 min).
 	// Ported from record_usage() in comm.c.
@@ -270,23 +258,6 @@ func (gl *GameLoop) heartbeat(pulse int64) {
 		}
 		if cb.OnFlushPlayerFile != nil {
 			cb.OnFlushPlayerFile()
-		}
-	}
-
-	// Auto-save: every 60 * PASSES_PER_SEC (60s) if auto_save is on
-	if pulse%(60*PASSES_PER_SEC) == 0 {
-		autoSave := false
-		if cb.AutoSaveEnabled != nil {
-			autoSave = cb.AutoSaveEnabled()
-		}
-		if autoSave && cb.AutoSaveIntervalMinutes != nil && cb.OnAutoSave != nil {
-			interval := cb.AutoSaveIntervalMinutes()
-			// We track crash-save ticks via the pulse counter:
-			// autosave_time is in minutes, so we need
-			// interval * 60 * PASSES_PER_SEC pulses.
-			if interval > 0 && pulse%(int64(interval)*60*PASSES_PER_SEC) == 0 {
-				cb.OnAutoSave()
-			}
 		}
 	}
 

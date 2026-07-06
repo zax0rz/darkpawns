@@ -28,7 +28,7 @@ func TestCombatMessages_HaveNewlines(t *testing.T) {
 	attacker.messages = nil
 	defender.messages = nil
 	broadcasts = nil
-	ce.sendHitMessage(attacker, defender, 10)
+	ce.sendHitMessage(attacker, defender, 10, 0)
 
 	if len(attacker.messages) != 1 || !strings.HasSuffix(attacker.messages[0], "\r\n") {
 		t.Errorf("attacker hit message does not end with \\r\\n: %q", attacker.messages)
@@ -44,7 +44,7 @@ func TestCombatMessages_HaveNewlines(t *testing.T) {
 	attacker.messages = nil
 	defender.messages = nil
 	broadcasts = nil
-	ce.sendMissMessage(attacker, defender)
+	ce.sendMissMessage(attacker, defender, 0)
 
 	if len(attacker.messages) != 1 || !strings.HasSuffix(attacker.messages[0], "\r\n") {
 		t.Errorf("attacker miss message does not end with \\r\\n: %q", attacker.messages)
@@ -54,6 +54,79 @@ func TestCombatMessages_HaveNewlines(t *testing.T) {
 	}
 	if len(broadcasts) != 1 || !strings.HasSuffix(broadcasts[0], "\r\n") {
 		t.Errorf("room miss broadcast does not end with \\r\\n: %q", broadcasts)
+	}
+}
+
+func TestSendHitMessageUsesMessageFunc(t *testing.T) {
+	ce := NewCombatEngine()
+	var gotAttacker, gotDefender Combatant
+	var gotDam, gotAttackType int
+	ce.MessageFunc = func(attacker, defender Combatant, dam int, atkType int) bool {
+		gotAttacker = attacker
+		gotDefender = defender
+		gotDam = dam
+		gotAttackType = atkType
+		return true
+	}
+
+	atk := &mockCombatant{name: "Alice", room: 1}
+	def := &mockCombatant{name: "Bob", room: 1}
+	ce.sendHitMessage(atk, def, 25, 5)
+
+	if gotAttacker != atk {
+		t.Errorf("MessageFunc got attacker %v, want %v", gotAttacker, atk)
+	}
+	if gotDefender != def {
+		t.Errorf("MessageFunc got defender %v, want %v", gotDefender, def)
+	}
+	if gotDam != 25 {
+		t.Errorf("MessageFunc got dam=%d, want 25", gotDam)
+	}
+	if gotAttackType != 5 {
+		t.Errorf("MessageFunc got attackType=%d, want 5", gotAttackType)
+	}
+}
+
+func TestSendMissMessageUsesMessageFunc(t *testing.T) {
+	ce := NewCombatEngine()
+	var gotDam, gotAttackType int
+	ce.MessageFunc = func(attacker, defender Combatant, dam int, atkType int) bool {
+		gotDam = dam
+		gotAttackType = atkType
+		return true
+	}
+
+	atk := &mockCombatant{name: "Alice", room: 1}
+	def := &mockCombatant{name: "Bob", room: 1}
+	ce.sendMissMessage(atk, def, 7)
+
+	if gotDam != 0 {
+		t.Errorf("MessageFunc miss got dam=%d, want 0", gotDam)
+	}
+	if gotAttackType != 7 {
+		t.Errorf("MessageFunc miss got attackType=%d, want 7", gotAttackType)
+	}
+}
+
+func TestSendHitMessageFallsBackWhenNil(t *testing.T) {
+	ce := NewCombatEngine()
+	atk := &msgMockCombatant{mockCombatant: mockCombatant{name: "Alice"}}
+	def := &msgMockCombatant{mockCombatant: mockCombatant{name: "Bob"}}
+	ce.sendHitMessage(atk, def, 25, 5)
+
+	if len(atk.messages) != 1 || !strings.Contains(atk.messages[0], "You hit Bob for 25 damage") {
+		t.Errorf("fallback hit message wrong: %q", atk.messages)
+	}
+}
+
+func TestSendMissMessageFallsBackWhenNil(t *testing.T) {
+	ce := NewCombatEngine()
+	atk := &msgMockCombatant{mockCombatant: mockCombatant{name: "Alice"}}
+	def := &msgMockCombatant{mockCombatant: mockCombatant{name: "Bob"}}
+	ce.sendMissMessage(atk, def, 5)
+
+	if len(atk.messages) != 1 || !strings.Contains(atk.messages[0], "You miss Bob") {
+		t.Errorf("fallback miss message wrong: %q", atk.messages)
 	}
 }
 

@@ -36,6 +36,9 @@ func randRange(min, max int) int {
 	return rand.IntN(max-min+1) + min
 }
 
+// randN returns a uniform random integer in [0, n). It is exclusive, so it
+// is safe for array indexing and switch selection. For C-style inclusive
+// probability gates use number(from, to) instead.
 func randN(n int) int {
 	if n <= 0 {
 		return 0
@@ -208,7 +211,7 @@ func specSnake(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
 		return false
 	}
-	if randN(32-me.GetLevel()) != 0 {
+	if number(0, 32-me.GetLevel()) != 0 {
 		return false
 	}
 	melee := mobMeleeTarget(me)
@@ -252,7 +255,7 @@ func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 			}
 		}
 	}
-	if vict != nil && randN(4) == 0 {
+	if vict != nil && number(0, 4) == 0 {
 		spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), w)
 		if me.RoomVNum == vict.GetRoomVNum() {
 			me.SetFighting(vict.Name)
@@ -268,7 +271,7 @@ func specThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		return false
 	}
 	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if !p.IsNPC() && p.GetLevel() < 50 && randN(5) == 0 {
+		if !p.IsNPC() && p.GetLevel() < 50 && number(0, 5) == 0 {
 			npcSteal(w, me, p)
 			return true
 		}
@@ -280,7 +283,7 @@ func npcSteal(w *World, me *MobInstance, victim *Player) {
 	if victim.IsNPC() || victim.GetLevel() >= 50 {
 		return
 	}
-	if victim.GetPosition() > combat.PosSleeping && randN(me.GetLevel()) == 0 {
+	if victim.GetPosition() > combat.PosSleeping && number(0, me.GetLevel()) == 0 {
 		w.roomMessage(me.RoomVNum, me.GetName()+" tries to steal gold from "+victim.GetName()+".")
 		sendToChar(victim, "You discover that "+me.GetName()+" has its hands in your wallet.")
 	} else {
@@ -301,7 +304,7 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 	var vict *Player
 	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if p.IsFighting() && p.GetName() == me.GetName() && randN(5) == 0 {
+		if p.IsFighting() && p.GetName() == me.GetName() && number(0, 5) == 0 {
 			vict = p
 			break
 		}
@@ -332,7 +335,7 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	case spellRoll == 13:
 		spells.Cast(me, vict, spells.SpellLightningBolt, me.GetLevel(), w)
 	case spellRoll == 14:
-		if randN(11) == 0 {
+		if number(0, 11) == 0 {
 			spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), w)
 		}
 	case spellRoll >= 15 && spellRoll <= 17:
@@ -499,7 +502,7 @@ func specPuff(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		"I'll be back.",
 		"Negative.  I am a meat popsicle.",
 	}
-	if randN(91) == 0 {
+	if number(0, 91) == 0 {
 		saying := puffSayings[randN(len(puffSayings))]
 		w.roomMessage(me.RoomVNum, me.GetName()+" says, '"+saying+"'")
 		return true
@@ -509,7 +512,7 @@ func specPuff(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 
 // fido — mob spec: dog scavenges corpses
 func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || randN(3) != 0 {
+	if cmd != "" || number(0, 3) != 0 {
 		return false
 	}
 	items := w.GetItemsInRoom(me.RoomVNum)
@@ -532,12 +535,12 @@ func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 
 // janitor — mob spec: cleans up items
 func specJanitor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || randN(5) != 0 {
+	if cmd != "" || number(0, 5) != 0 {
 		return false
 	}
 	items := w.GetItemsInRoom(me.RoomVNum)
 	for _, obj := range items {
-		if !strings.Contains(obj.GetKeywords(), "corpse") && randN(2) == 0 {
+		if !strings.Contains(obj.GetKeywords(), "corpse") && number(0, 2) == 0 {
 			w.roomMessage(me.GetRoom(), me.GetName()+" picks up "+obj.GetShortDesc()+".")
 			// Move to janitor's inventory (matches C obj_to_char) — players can kill
 			// janitor to retrieve items, unlike RemoveItemFromRoom which destroys them.
@@ -751,7 +754,7 @@ func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg str
 		return false
 	}
 	melee := mobMeleeTarget(me)
-	if melee == nil || randN(4) != 0 {
+	if melee == nil || number(0, 4) != 0 {
 		return false
 	}
 	breathSpells := []int{
@@ -770,7 +773,7 @@ func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg str
 
 // citizen — mob spec: random greetings
 func specCitizen(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || randN(8) != 0 {
+	if cmd != "" || number(0, 8) != 0 {
 		return false
 	}
 	citizenSayings := []string{
@@ -810,7 +813,7 @@ func specCuchi(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-	if cmd != "" || randN(4) != 0 {
+	if cmd != "" || number(0, 4) != 0 {
 		return false
 	}
 	cuchiSayings := []string{
@@ -829,11 +832,11 @@ func specCuchi(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 
 // mini_thief — mob spec: steals small items
 func specMiniThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosStanding || randN(3) != 0 {
+	if cmd != "" || me.GetPosition() != combat.PosStanding || number(0, 3) != 0 {
 		return false
 	}
 	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if !p.IsNPC() && randN(2) == 0 {
+		if !p.IsNPC() && number(0, 2) == 0 {
 			stealAmt := randRange(1, 20)
 			p.mu.Lock()
 			if p.Gold >= stealAmt {
@@ -875,7 +878,7 @@ func specBlackUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, ar
 	}
 	mobs := w.GetMobsInRoom(me.RoomVNum)
 	for _, m := range mobs {
-		if m.VNum == 11471 && m != me && randN(3) == 0 {
+		if m.VNum == 11471 && m != me && number(0, 3) == 0 {
 			w.roomMessage(me.GetRoom(), me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
 			me.SetTarget(m)
 			me.SetFighting(m.GetName())
@@ -909,7 +912,7 @@ func specRedUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	}
 	mobs := w.GetMobsInRoom(me.RoomVNum)
 	for _, m := range mobs {
-		if m.VNum == 11470 && m != me && randN(3) == 0 {
+		if m.VNum == 11470 && m != me && number(0, 3) == 0 {
 			w.roomMessage(me.GetRoom(), me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
 			me.SetTarget(m)
 			me.SetFighting(m.GetName())

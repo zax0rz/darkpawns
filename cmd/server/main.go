@@ -198,6 +198,7 @@ func main() {
 	manager.SetCommandExecFunc()                         // Wire doOrder command dispatch for charmed followers
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
 	combat.InitSkillMessages()                           // Wire multi-variant combat messages
+	manager.SetCombatMessageFunc()                       // Wire DamMessage() for live combat hits/misses
 
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {

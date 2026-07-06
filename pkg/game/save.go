@@ -62,13 +62,6 @@ type savePlayerData struct {
 	// Poof messages — immortals only
 	PoofIn  string `json:"poof_in,omitempty"`
 	PoofOut string `json:"poof_out,omitempty"`
-
-	// Rent metadata — tracks why/how items were saved.
-	RentCode       int   `json:"rent_code"`         // RentCrash, RentRented, RentCryo, RentTimedOut, RentForced
-	RentTime       int64 `json:"rent_time"`         // Unix timestamp when saved
-	NetCostPerDiem int   `json:"net_cost_per_diem"` // daily rent cost
-	SavedGold      int   `json:"saved_gold"`        // gold at time of save
-	SavedBankGold  int   `json:"saved_bank_gold"`   // bank gold at time of save
 }
 
 type SaveItemData struct {
@@ -650,76 +643,6 @@ func LoadWorld(w *World) error {
 
 	slog.Info("World state loaded", "path", worldStateFile)
 	return nil
-}
-
-// Used by CrashSave, RentSave, CryoSave, Idlesave.
-func SavePlayerWithRent(p *Player, rentCode int, netCostPerDiem int) error {
-	if p == nil {
-		return fmt.Errorf("cannot save nil player")
-	}
-	if err := os.MkdirAll(saveDir, 0o750); err != nil {
-		return fmt.Errorf("create save dir: %w", err)
-	}
-
-	data := playerToSaveData(p)
-	data.RentCode = rentCode
-	data.RentTime = time.Now().Unix()
-	data.NetCostPerDiem = netCostPerDiem
-	data.SavedGold = p.GetGold()
-	data.SavedBankGold = p.BankGold
-
-	path := filepath.Join(saveDir, sanitizeName(p.Name)+".json")
-	f, err := os.Create(filepath.Clean(path))
-	if err != nil {
-		return fmt.Errorf("create save file: %w", err)
-	}
-	defer func() { _ = f.Close() }()
-
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(data); err != nil {
-		return fmt.Errorf("encode save data: %w", err)
-	}
-
-	slog.Debug("Player saved with rent", "name", p.Name, "rent_code", rentCode, "cost", netCostPerDiem)
-	return nil
-}
-
-// writeSaveData writes a savePlayerData struct directly to disk.
-// Used by DeleteCrashFile to clear item fields without destroying the character.
-func writeSaveData(name string, data savePlayerData) error {
-	if err := os.MkdirAll(saveDir, 0o750); err != nil {
-		return fmt.Errorf("create save dir: %w", err)
-	}
-	path := filepath.Join(saveDir, sanitizeName(name)+".json")
-	f, err := os.Create(filepath.Clean(path))
-	if err != nil {
-		return fmt.Errorf("create save file: %w", err)
-	}
-	defer func() { _ = f.Close() }()
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(data); err != nil {
-		return fmt.Errorf("encode save data: %w", err)
-	}
-	return nil
-}
-
-// LoadSaveData loads raw save data (without creating a Player) for inspection.
-// Used by CleanCrashFile and CrashLoad to check rent metadata.
-func LoadSaveData(name string) (savePlayerData, error) {
-	path := filepath.Join(saveDir, sanitizeName(name)+".json")
-	f, err := os.Open(filepath.Clean(path))
-	if err != nil {
-		return savePlayerData{}, fmt.Errorf("open save file: %w", err)
-	}
-	defer func() { _ = f.Close() }()
-
-	var data savePlayerData
-	if err := json.NewDecoder(f).Decode(&data); err != nil {
-		return savePlayerData{}, fmt.Errorf("decode save data: %w", err)
-	}
-	return data, nil
 }
 
 // sanitizeName ensures the player name is safe for use as a filename.

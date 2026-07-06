@@ -495,7 +495,7 @@ func specRemorter(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		return false
 	}
 	// ch is nil during autonomous AI ticks — no player to speak the tip to.
-	if ch == nil || randN(6) != 0 {
+	if ch == nil || number(0, 6) != 0 {
 		return false
 	}
 	msgs := []string{
@@ -790,10 +790,10 @@ func specIra(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 		if pl.IsNPC() || pl == ch || pl.GetFighting() != "" {
 			continue
 		}
-		if randN(5) != 0 {
+		if number(0, 5) != 0 {
 			continue
 		}
-		if randN(31) == 0 {
+		if number(0, 31) == 0 {
 			sendToChar(ch, fmt.Sprintf("%s says 'I don't like you, and you'd better leave before I make you!'\r\n", mobName(me)))
 			if err := me.Attack(pl, w); err != nil {
 				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
@@ -827,7 +827,7 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		if pl.GetLevel() >= 50 {
 			continue
 		}
-		if randN(6) != 0 {
+		if number(0, 6) != 0 {
 			continue
 		}
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s grabs %s and drags them off to jail!", mobName(me), pl.GetName()))
@@ -894,7 +894,7 @@ func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 				if !pl.IsNPC() {
 					// Save vs petrify: level-based saving throw
-					if randN(100) >= pl.GetLevel()*2 {
+					if number(0, 100) >= pl.GetLevel()*2 {
 						if err := me.Attack(pl, w); err != nil {
 							slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 						}
@@ -904,7 +904,7 @@ func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		}
 		return true
 	}
-	if randN(6) != 0 {
+	if number(0, 6) != 0 {
 		return false
 	}
 	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's snake-hair writhes around and it snaps at the air!", mobName(me)))
@@ -924,7 +924,7 @@ func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	if ch.IsNPC() {
 		return false
 	}
-	if randN(101) > 20 {
+	if number(0, 101) > 20 {
 		return false
 	}
 	a := strings.TrimSpace(arg)
@@ -953,7 +953,7 @@ func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 // ================================================================
 func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "north" || cmd == "south" || cmd == "east" || cmd == "west" || cmd == "up" || cmd == "down" {
-		if !ch.IsNPC() && randN(2) != 0 {
+		if !ch.IsNPC() && number(0, 2) != 0 {
 			sendToChar(ch, "A shimmering portal appears and sucks you in!\r\n")
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s stumbles through a shimmering portal!", ch.GetName()))
 			// Teleport to a random room
@@ -1017,7 +1017,7 @@ func specCarrion(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	if ch.GetFighting() == "" {
 		return false
 	}
-	if randN(5) != 0 {
+	if number(0, 5) != 0 {
 		return false
 	}
 	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tears into its victim with renewed fury!", mobName(me)))
@@ -1073,7 +1073,7 @@ func specBat(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 	if a == "" {
 		return false
 	}
-	if strings.Contains(a, "dripping") && randN(4) == 0 {
+	if strings.Contains(a, "dripping") && number(0, 4) == 0 {
 		sendToChar(ch, "A bat swoops down and attacks you!\r\n")
 		if err := me.Attack(ch, w); err != nil {
 			slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
@@ -1182,7 +1182,7 @@ func specMindflayer(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if !pl.IsNPC() && pl.GetLevel() < 50 && randN(5) == 0 {
+		if !pl.IsNPC() && pl.GetLevel() < 50 && number(0, 5) == 0 {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s stares at %s with hollow, empty eyes!", mobName(me), pl.GetName()))
 			pl.Stats.Int = max(3, pl.Stats.Int-1)
 			sendToChar(pl, "You feel your intelligence draining away...\r\n")
@@ -1200,7 +1200,7 @@ func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if !pl.IsNPC() && pl.GetFighting() == "" && randN(3) == 0 {
+		if !pl.IsNPC() && pl.GetFighting() == "" && number(0, 3) == 0 {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("From the shadows, %s backstabs %s!", mobName(me), pl.GetName()))
 			if err := me.Attack(pl, w); err != nil {
 				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
@@ -1221,7 +1221,7 @@ func specTeleporter(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	if ch.GetFighting() != "" {
 		return false
 	}
-	if !ch.IsNPC() && randN(4) == 0 {
+	if !ch.IsNPC() && number(0, 4) == 0 {
 		// Pick random room, ensure not private/godroom/death/nomob
 		rooms := w.Rooms()
 		var toRoom int
@@ -1309,7 +1309,7 @@ func specNoMoveSouth(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 // specChosenGuard — Guards the chosen, attacks players who fight near it
 // ================================================================
 func specChosenGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.GetPosition() <= combat.PosSleeping || me.GetPosition() <= combat.PosSleeping {
+	if ch == nil || ch.GetPosition() <= combat.PosSleeping || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 	if cmd != "" {

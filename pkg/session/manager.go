@@ -330,6 +330,70 @@ func (m *Manager) SetCombatBroadcastFunc() {
 	})
 }
 
+// SetCombatMessageFunc wires the golden-tested DamMessage() path into the live
+// combat engine. It sets the package-level combat hooks used by DamMessage and
+// registers the engine callback that forwards hit/miss events to it.
+func (m *Manager) SetCombatMessageFunc() {
+	wrap := func(text string) []byte {
+		msg, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "combat",
+				Text: text,
+			},
+		})
+		if err != nil {
+			slog.Error("json.Marshal error in combat message", "error", err)
+			return nil
+		}
+		return msg
+	}
+
+	combat.BroadcastMessage = func(roomVNum int, message string, exclude string) {
+		msg := wrap(message)
+		if msg == nil {
+			return
+		}
+		excluded := make(map[string]bool)
+		for _, name := range strings.Fields(exclude) {
+			excluded[name] = true
+		}
+		m.mu.RLock()
+		defer m.mu.RUnlock()
+		for name, s := range m.sessions {
+			if excluded[name] {
+				continue
+			}
+			if s.player != nil && s.player.GetRoom() == roomVNum {
+				select {
+				case s.send <- msg:
+				default:
+					slog.Warn("dropping combat broadcast: channel full", "player", name, "room", roomVNum)
+				}
+			}
+		}
+	}
+
+	combat.SendToCharFunc = func(name string, message string) {
+		msg := wrap(message)
+		if msg == nil {
+			return
+		}
+		if s, ok := m.GetSession(name); ok {
+			select {
+			case s.send <- msg:
+			default:
+				slog.Warn("dropping combat message: channel full", "player", name)
+			}
+		}
+	}
+
+	m.combatEngine.MessageFunc = func(attacker, defender combat.Combatant, dam, attackType int) bool {
+		combat.DamMessage(dam, attacker, defender, attackType)
+		return true
+	}
+}
+
 // GetCombatEngine returns the combat engine for AI integration.
 // GetShopManager returns the session manager's shop manager.
 func (m *Manager) GetShopManager() *systems.ShopManager {

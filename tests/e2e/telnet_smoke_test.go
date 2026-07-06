@@ -150,10 +150,25 @@ func TestTelnetSmoke_Combat(t *testing.T) {
 	}
 
 	// The engine fires a round every ~2s. Misses are common, so accept any
-	// round outcome. If combat deadlocked we would see nothing and time out.
-	rounds := readUntilAny(t, conn, r,
-		[]string{"You miss", "You hit", " damage", "hits you", "misses you", "dies", "is dead"},
-		12*time.Second)
+	// round outcome. After F7 (DP-950) live combat uses the DamMessage table
+	// instead of generic "You hit ... for N damage!" text, so we match the
+	// attacker-side char messages from that table (miss tier + hit tiers).
+	roundMarkers := []string{
+		// Miss tier
+		"You try to", "but miss", "You swing at", "Your clumsy",
+		// Hit tiers (attacker messages after #w/#W replacement)
+		"You scratch", "You clip",
+		"You barely",
+		"You hit", "You land a light hit", "You land a pathetic blow",
+		"Your solid strike", "You connect firmly",
+		"Your heavy blow", "You wallop",
+		"You massacre", "You OBLITERATE", "You MUTILATE", "You EVISCERATE",
+		"You DISEMBOWEL", "You open", "You DESTROY", "You annihilate",
+		"You reduce", "You deliver", "You R O C K",
+		// Death fallback
+		"dies", "is dead",
+	}
+	rounds := readUntilAny(t, conn, r, roundMarkers, 12*time.Second)
 	if rounds == "" {
 		t.Error("engaged a target but observed no combat rounds — engine stalled?")
 	}

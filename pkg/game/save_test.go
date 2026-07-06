@@ -121,39 +121,32 @@ func TestSaveLoadPlayerDisk(t *testing.T) {
 	}
 }
 
-func TestSavePlayerWithRent(t *testing.T) {
-	testName := "Test_Rent_Disk_Plr_99"
+func TestSaveLoadPlayerGoldAndBank(t *testing.T) {
+	testName := "Test_GoldBank_Disk_Plr_99"
 	player := NewPlayer(888, testName, 1002)
 	player.SetLevel(12)
 	player.SetGold(500)
 	player.BankGold = 3000
 
-	err := SavePlayerWithRent(player, 2, 50) // RentRented=2, cost=50
+	err := SavePlayer(player)
 	if err != nil {
-		t.Fatalf("SavePlayerWithRent failed: %v", err)
+		t.Fatalf("SavePlayer failed: %v", err)
 	}
 
 	t.Cleanup(func() {
 		_ = DeletePlayer(testName)
 	})
 
-	// Load save data directly
-	data, err := LoadSaveData(testName)
+	loaded, err := LoadPlayer(testName)
 	if err != nil {
-		t.Fatalf("LoadSaveData failed: %v", err)
+		t.Fatalf("LoadPlayer failed: %v", err)
 	}
 
-	if data.RentCode != 2 {
-		t.Errorf("Loaded RentCode = %d, want 2", data.RentCode)
+	if loaded.GetGold() != 500 {
+		t.Errorf("Loaded Gold = %d, want 500", loaded.GetGold())
 	}
-	if data.NetCostPerDiem != 50 {
-		t.Errorf("Loaded NetCostPerDiem = %d, want 50", data.NetCostPerDiem)
-	}
-	if data.SavedGold != 500 {
-		t.Errorf("Loaded SavedGold = %d, want 500", data.SavedGold)
-	}
-	if data.SavedBankGold != 3000 {
-		t.Errorf("Loaded SavedBankGold = %d, want 3000", data.SavedBankGold)
+	if loaded.BankGold != 3000 {
+		t.Errorf("Loaded BankGold = %d, want 3000", loaded.BankGold)
 	}
 }
 
