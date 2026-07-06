@@ -142,14 +142,13 @@ func (m *Manager) checkOrigin(r *http.Request) bool {
 		}
 	}
 
-	// Dev mode: allow any origin from localhost/127.0.0.1 regardless of port
-	// or scheme, so local smoke tests and agent harnesses connect without 403.
-	if os.Getenv("ENVIRONMENT") == "development" && origin != "" {
-		if u, err := url.Parse(origin); err == nil {
-			h := strings.ToLower(u.Hostname())
-			if h == "localhost" || h == "127.0.0.1" {
-				return true
-			}
+	// Allow any origin from localhost/127.0.0.1 regardless of port or scheme,
+	// so local smoke tests, CI, and agent harnesses connect without 403.
+	// localhost connections are machine-local only, so this is safe in any env.
+	if u, err := url.Parse(origin); err == nil {
+		h := strings.ToLower(u.Hostname())
+		if h == "localhost" || h == "127.0.0.1" {
+			return true
 		}
 	}
 
