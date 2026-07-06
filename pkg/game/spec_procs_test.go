@@ -112,7 +112,8 @@ func TestActMessageAudienceRouting(t *testing.T) {
 	var msgs syncMap
 	w.MessageSink = func(name string, msg []byte) { msgs.Store(name, string(msg)) }
 
-	w.actMessage(1001, actor, victim,
+	w.actMessage(
+		1001, actor, victim,
 		"You poke yourself.",
 		"Actor pokes you!",
 		"Actor pokes Victim.",
