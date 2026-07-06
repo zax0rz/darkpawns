@@ -197,6 +197,7 @@ func main() {
 	manager.SetOnRoundEnd()                              // Decrement wait states each combat round
 	manager.SetCommandExecFunc()                         // Wire doOrder command dispatch for charmed followers
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
+	manager.WireCombatCallbacks()                        // Wire PR2 character-state hooks into combat engine
 	manager.SetCombatMessageFunc()                       // Wire DamMessage() and GameCallbacks for live combat
 
 	// Verify critical combat hooks are wired (DP-952)

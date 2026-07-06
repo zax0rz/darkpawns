@@ -5,6 +5,7 @@ package combat
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 // ---------------------------------------------------------------------------
@@ -38,7 +39,6 @@ var (
 	GetRaceHate              func(name string, index int) int
 	HasAffect                func(name string, aff int) bool
 	HasAffectStr             func(name string, aff string) bool
-	GetCharacterSex          func(name string) int
 	RemoveAffect             func(name string, skillNum int)
 	RemoveAllAffects         func(name string)
 	RunDeathScript           func(killer, victim string, roomVNum int)
@@ -223,11 +223,11 @@ func ChangeAlignment(killer, victim Combatant) {
 	if killer.IsNPC() {
 		return
 	}
-	if GetAlignment == nil {
+	if (callbacks == nil || callbacks.GetAlignment == nil) && GetAlignment == nil {
 		return
 	}
-	victimAlign := GetAlignment(victim.GetName())
-	killerAlign := GetAlignment(killer.GetName())
+	victimAlign := cbGetAlignment(victim.GetName())
+	killerAlign := cbGetAlignment(killer.GetName())
 	if victimAlign > -350 && victimAlign < 350 {
 		return
 	}
@@ -238,9 +238,7 @@ func ChangeAlignment(killer, victim Combatant) {
 	if newAlign < -1000 {
 		newAlign = -1000
 	}
-	if SetAlignment != nil {
-		SetAlignment(killer.GetName(), newAlign)
-	}
+	cbSetAlignment(killer.GetName(), newAlign)
 }
 
 // **********************************
@@ -254,12 +252,10 @@ func DeathCry(ch Combatant) string {
 	cbBroadcast(roomVNum, msg, "")
 	rooms = append(rooms, fmt.Sprintf("%d", roomVNum))
 	for door := 0; door < NUM_OF_DIRS; door++ {
-		if GetAdjacentRoom != nil {
-			adjRoom := GetAdjacentRoom(roomVNum, door)
-			if adjRoom >= 0 {
-				cbBroadcast(adjRoom, "Your blood freezes as you hear someone's death cry.", "")
-				rooms = append(rooms, fmt.Sprintf("%d", adjRoom))
-			}
+		adjRoom := cbGetAdjacentRoom(roomVNum, door)
+		if adjRoom >= 0 {
+			cbBroadcast(adjRoom, "Your blood freezes as you hear someone's death cry.", "")
+			rooms = append(rooms, fmt.Sprintf("%d", adjRoom))
 		}
 	}
 	return strings.Join(rooms, ";")
@@ -285,9 +281,9 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		return false
 	}
 
-	isOutlaw := HasPlrFlag != nil && HasPlrFlag(victimName, "PLR_OUTLAW")
+	isOutlaw := cbHasPlrFlag(victimName, "PLR_OUTLAW")
 	if !isOutlaw && victim.GetFighting() != chName && chName != victimName {
-		if HasRoomFlag != nil && HasRoomFlag(roomVNum, "ROOM_PEACEFUL") {
+		if cbHasRoomFlag(roomVNum, "ROOM_PEACEFUL") {
 			return false
 		}
 	}
@@ -301,8 +297,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 	}
 
-	if IsShopkeeper != nil && IsShopkeeper(victimName) {
-
+	if cbIsShopkeeper(victimName) {
 		if ch.GetFighting() != "" {
 			ch.StopFighting()
 		}
@@ -313,11 +308,11 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	}
 
 	// jail guard logic (fight.c:1370): guards respond to PK in cities
-	if ch.IsNPC() && !victim.IsNPC() && HasMobVNum != nil &&
-		(HasMobVNum(chName, 8102) || HasMobVNum(chName, 8103)) {
+	if ch.IsNPC() && !victim.IsNPC() &&
+		(cbHasMobVNum(chName, 8102) || cbHasMobVNum(chName, 8103)) {
 		if dam > 0 && ch.GetHP() > ch.GetMaxHP()/2 {
-			hasVampire := HasAffectStr != nil && HasAffectStr(victimName, AFF_STR_VAMPIRE)
-			hasWerewolf := HasAffectStr != nil && HasAffectStr(victimName, AFF_STR_WEREWOLF)
+			hasVampire := cbHasAffectStr(victimName, AFF_STR_VAMPIRE)
+			hasWerewolf := cbHasAffectStr(victimName, AFF_STR_WEREWOLF)
 			if !hasVampire && !hasWerewolf {
 				cbBroadcast(ch.GetRoom(),
 					fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
@@ -346,20 +341,20 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		if victim.GetPosition() > PosStunned && victim.GetFighting() == "" {
 			victim.SetFighting(chName)
 			// MOB_MEMORY: NPC remembers PC attacker (fight.c:1445)
-			if HasMobFlag != nil && HasMobFlag(victimName, "MOB_MEMORY") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
+			if cbHasMobFlag(victimName, "MOB_MEMORY") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
 				if PerformCommand != nil {
 					PerformCommand(victimName, fmt.Sprintf("remember %s", chName))
 				}
 			}
 			// MOB_HUNTER: NPC starts hunting PC attacker (fight.c:1449)
-			if HasMobFlag != nil && HasMobFlag(victimName, "MOB_HUNTER") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
+			if cbHasMobFlag(victimName, "MOB_HUNTER") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
 				if PerformCommand != nil {
 					PerformCommand(victimName, fmt.Sprintf("hunt %s", chName))
 				}
 			}
 		}
 		// MOB_HUNTER: attacker also hunts victim (fight.c:1453)
-		if HasMobFlag != nil && HasMobFlag(chName, "MOB_HUNTER") && !victim.IsNPC() && victim.GetLevel() < LVL_IMMORT {
+		if cbHasMobFlag(chName, "MOB_HUNTER") && !victim.IsNPC() && victim.GetLevel() < LVL_IMMORT {
 			if PerformCommand != nil {
 				PerformCommand(chName, fmt.Sprintf("hunt %s", victimName))
 			}
@@ -370,30 +365,29 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	// Handled via game-layer hooks.
 
 	// AFF_HIDE: attacker becomes visible on offensive action (fight.c:1459)
-	if HasAffect != nil && HasAffect(chName, AFF_HIDE) {
-		if RemoveAffect != nil {
-			RemoveAffect(chName, AFF_HIDE)
-		}
+	if cbHasAffect(chName, AFF_HIDE) {
+		cbRemoveAffect(chName, AFF_HIDE)
 		cbBroadcast(ch.GetRoom(),
 			fmt.Sprintf("%s slowly fades into existence.", chName), chName)
 	}
 
-	if GetRaceHate != nil && GetRace != nil {
-		victimRace := GetRace(victimName)
+	if (callbacks != nil && callbacks.GetRaceHate != nil && callbacks.GetRace != nil) ||
+		(GetRaceHate != nil && GetRace != nil) {
+		victimRace := cbGetRace(victimName)
 		for i := 0; i < 5; i++ {
-			if GetRaceHate(chName, i) == victimRace {
+			if cbGetRaceHate(chName, i) == victimRace {
 				dam += ch.GetLevel() // no break — C applies for every matching slot
 			}
 		}
 	}
 
-	if HasAffect != nil && HasAffect(victimName, AFF_SANCTUARY) {
+	if cbHasAffect(victimName, AFF_SANCTUARY) {
 		dam /= 2
 	}
-	if HasAffect != nil && HasAffect(victimName, AFF_PROTECT_EVIL) && GetAlignment != nil && GetAlignment(chName) <= -350 {
+	if cbHasAffect(victimName, AFF_PROTECT_EVIL) && cbGetAlignment(chName) <= -350 {
 		dam -= victim.GetLevel() / 4
 	}
-	if HasAffect != nil && HasAffect(victimName, AFF_PROTECT_GOOD) && GetAlignment != nil && GetAlignment(chName) >= 350 {
+	if cbHasAffect(victimName, AFF_PROTECT_GOOD) && cbGetAlignment(chName) >= 350 {
 		dam -= victim.GetLevel() / 4
 	}
 
@@ -411,9 +405,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	victim.TakeDamage(dam)
 
 	if chName != victimName && !ch.IsNPC() && ch.GetLevel() < 2 {
-		if GainExp != nil {
-			GainExp(chName, victim.GetLevel()*dam)
-		}
+		cbGainExp(chName, victim.GetLevel()*dam)
 	}
 
 	newPos := GetPositionFromHP(victim.GetHP(), victim.GetPosition())
@@ -422,7 +414,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		if ch.IsNPC() && !victim.IsNPC() && victim.GetLevel() <= 5 {
 			ch.StopFighting()
 		}
-		if !victim.IsNPC() && HasRoomFlag != nil && HasRoomFlag(victim.GetRoom(), "ROOM_NEUTRAL") {
+		if !victim.IsNPC() && cbHasRoomFlag(victim.GetRoom(), "ROOM_NEUTRAL") {
 			if victim.GetFighting() != "" {
 				victim.StopFighting()
 			}
@@ -447,10 +439,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 	}
 
-	if !victim.IsNPC() && IsMounted != nil && IsMounted(victimName) && dam > 0 && GetRoller().IntN(100) < 10 {
-		if Dismount != nil {
-			Dismount(victimName)
-		}
+	if !victim.IsNPC() && cbIsMounted(victimName) && dam > 0 && GetRoller().IntN(100) < 10 {
+		cbDismount(victimName)
 	}
 
 	switch newPos {
@@ -475,7 +465,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 		if victim.GetHP() < victim.GetMaxHP()/4 {
 			victim.SendMessage("You wish that your wounds would stop BLEEDING so much!\r\n")
-			if HasMobFlag != nil && HasMobFlag(victimName, "MOB_WIMPY") && chName != victimName {
+			if cbHasMobFlag(victimName, "MOB_WIMPY") && chName != victimName {
 				if DoFlee != nil {
 					DoFlee(victimName)
 				}
@@ -483,8 +473,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			if !victim.IsNPC() && GetWimpyLev != nil && GetWimpyLev(victimName) > 0 &&
 				victimName != chName && newPos >= PosFighting &&
 				victim.GetHP() < GetWimpyLev(victimName) {
-				hasRetreat := GetSkill != nil && GetSkill(victimName, SKILL_RETREAT) > 0
-				hasEscape := GetSkill != nil && GetSkill(victimName, SKILL_ESCAPE) > 0
+				hasRetreat := cbGetSkill(victimName, SKILL_RETREAT) > 0
+				hasEscape := cbGetSkill(victimName, SKILL_ESCAPE) > 0
 				if hasRetreat || hasEscape {
 					if DoRetreat != nil {
 						DoRetreat(victimName)
@@ -505,10 +495,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			if IsInGroup(ch) {
 				GroupGain(ch, victim)
 			} else {
-				exp := 0
-				if GetExp != nil {
-					exp = GetExp(victimName)
-				}
+				exp := cbGetExp(victimName)
 				if exp > maxExpGain {
 					exp = maxExpGain
 				}
@@ -519,19 +506,19 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 				} else {
 					ch.SendMessage("You receive one lousy experience point.\r\n")
 				}
-				if !ch.IsNPC() && GainExp != nil {
-					GainExp(chName, exp)
+				if !ch.IsNPC() {
+					cbGainExp(chName, exp)
 				}
 
 				// autogold on kill (fight.c:1654)
-				if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOGOLD") {
+				if cbHasPrfFlag(chName, "PRF_AUTOGOLD") {
 					if PerformCommand != nil {
 						PerformCommand(chName, "get all gold corpse")
 					}
 				}
 
 				// autosplit — fight.c:756-830
-				if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOSPLIT") && GetGold != nil && SetGold != nil && ApplyToGroupMembers != nil {
+				if cbHasPrfFlag(chName, "PRF_AUTOSPLIT") && GetGold != nil && SetGold != nil && ApplyToGroupMembers != nil {
 					gold := GetGold(chName)
 					if gold > 0 {
 						numMembers := CountGroupMembers(chName, ch.GetRoom())
@@ -565,41 +552,33 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 				cbLog(fmt.Sprintf("(PK) %s killed by %s at room %d", victimName, chName, roomVNum),
 					"BRF", LVL_IMMORT, true)
 				// flag killer as outlaw if victim wasn't one (fight.c:1675)
-				if HasPlrFlag != nil && !HasPlrFlag(victimName, "PLR_OUTLAW") {
-					if SetPlrFlag != nil {
-						SetPlrFlag(chName)
-					}
+				if !cbHasPlrFlag(victimName, "PLR_OUTLAW") {
+					cbSetPlrFlag(chName)
 				}
 			} else {
 				cbLog(fmt.Sprintf("%s killed by %s at room %d", victimName, chName, roomVNum),
 					"BRF", LVL_IMMORT, true)
 			}
-			if chName != victimName && GetPks != nil && SetPks != nil {
-				SetPks(chName, GetPks(chName)+1)
+			if chName != victimName {
+				cbSetPks(chName, cbGetPks(chName)+1)
 			}
-			if GetDeaths != nil && SetDeaths != nil {
-				SetDeaths(victimName, GetDeaths(victimName)+1)
-			}
-			if SetLastDeath != nil {
-				SetLastDeath(victimName, NowUnix())
-			}
+			cbSetDeaths(victimName, cbGetDeaths(victimName)+1)
+			cbSetLastDeath(victimName, time.Now().Unix())
 		}
 
-		if GetKills != nil && SetKills != nil {
-			SetKills(chName, GetKills(chName)+1)
-		}
+		cbSetKills(chName, cbGetKills(chName)+1)
 
 		CounterProcs(ch)
 		DieWithKiller(victim, ch, attackType)
 
-		if chName != victimName && HasMobFlag != nil &&
-			(HasMobFlag(chName, "MOB_AGGR24") || HasMobFlag(chName, "MOB_LOOTS")) {
+		if chName != victimName &&
+			(cbHasMobFlag(chName, "MOB_AGGR24") || cbHasMobFlag(chName, "MOB_LOOTS")) {
 			AttitudeLoot(ch, victim)
 		}
 
 		// autoloot on kill (fight.c:1708)
 		if !ch.IsNPC() && victim.IsNPC() && chName != victimName {
-			if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOLOOT") {
+			if cbHasPrfFlag(chName, "PRF_AUTOLOOT") {
 				if PerformCommand != nil {
 					PerformCommand(chName, "get all corpse")
 				}
@@ -612,8 +591,6 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	}
 	return false
 }
-
-var NowUnix = func() int64 { return 0 }
 
 // ---------------------------------------------------------------------------
 // Skill message functions for DamMessage
@@ -949,7 +926,7 @@ func BackstabMult(level int) float64 {
 func IsInGroup(ch Combatant) bool {
 	chName := ch.GetName()
 	chRoom := ch.GetRoom()
-	if HasAffectStr != nil && HasAffectStr(chName, AFF_STR_GROUP) {
+	if cbHasAffectStr(chName, AFF_STR_GROUP) {
 		if ch.GetName() == "" {
 			if GetFollowersInRoom != nil {
 				return GetFollowersInRoom(chName, chRoom) > 0
@@ -1004,8 +981,8 @@ func PerformGroupGain(ch, victim Combatant, base int) {
 	} else {
 		ch.SendMessage("You receive your share of experience -- one measly little point!\r\n")
 	}
-	if !ch.IsNPC() && GainExp != nil {
-		GainExp(ch.GetName(), share)
+	if !ch.IsNPC() {
+		cbGainExp(ch.GetName(), share)
 	}
 	ChangeAlignment(ch, victim)
 }
@@ -1023,10 +1000,7 @@ func GroupGain(ch, victim Combatant) {
 		numMembers = 1
 	}
 
-	victimExp := 0
-	if GetExp != nil {
-		victimExp = GetExp(victim.GetName())
-	}
+	victimExp := cbGetExp(victim.GetName())
 	base := victimExp / numMembers
 	if base > 100 {
 		base -= int(float64(base) * 0.01)
@@ -1055,32 +1029,19 @@ func RawKill(ch Combatant, attackType int) {
 	if ch.GetFighting() != "" {
 		ch.StopFighting()
 	}
-	if RemoveAllAffects != nil {
-		RemoveAllAffects(chName)
-	}
-	if Unmount != nil {
-		Unmount(chName)
-	}
+	cbRemoveAllAffects(chName)
+	cbUnmount(chName)
 	DeathCry(ch)
 
 	// Default to corpse unless GetRace tells us the victim is undead/vampire.
-	makeDust := false
-	if GetRace != nil {
-		victimRace := GetRace(chName)
-		makeDust = victimRace == RACE_UNDEAD || victimRace == RACE_VAMPIRE
-	}
+	victimRace := cbGetRace(chName)
+	makeDust := victimRace == RACE_UNDEAD || victimRace == RACE_VAMPIRE
 	if makeDust {
-		if MakeDustFunc != nil {
-			MakeDustFunc(chName, attackType)
-		}
+		cbMakeDust(chName, attackType)
 	} else {
-		if MakeCorpseFunc != nil {
-			MakeCorpseFunc(chName, attackType)
-		}
+		cbMakeCorpse(chName, attackType)
 	}
-	if ExtractChar != nil {
-		ExtractChar(chName)
-	}
+	cbExtractChar(chName)
 }
 
 // **********************************
@@ -1090,31 +1051,26 @@ func RawKill(ch Combatant, attackType int) {
 func DieWithKiller(ch, killer Combatant, attackType int) {
 	chName := ch.GetName()
 
-	if GainExp != nil {
-		loss := 0
-		if GetExp != nil {
-			loss = GetExp(chName) / 37
-		}
-		GainExp(chName, -loss)
-	}
+	cbGainExp(chName, -cbGetExp(chName)/37)
 
-	if !ch.IsNPC() && GetConstitution != nil && SetConstitution != nil {
+	if !ch.IsNPC() && ((callbacks != nil && callbacks.GetConstitution != nil && callbacks.SetConstitution != nil) ||
+		(GetConstitution != nil && SetConstitution != nil)) {
 		level := ch.GetLevel()
 		if level > 5 && GetRoller().Number(0, 3) == 0 { // 25% chance (C: !number(0,3))
-			conVal := GetConstitution(chName) - 1
+			conVal := cbGetConstitution(chName) - 1
 			if level > 20 && GetRoller().Number(0, 5) == 0 { // ~17% chance (C: !number(0,5))
 				conVal--
 			}
 			if conVal < 0 {
 				conVal = 0
 			}
-			SetConstitution(chName, conVal)
+			cbSetConstitution(chName, conVal)
 		}
 	}
 
 	roomVNum := ch.GetRoom()
-	if HasScriptFlag != nil && HasScriptFlag(chName, "MS_DEATH") && RunDeathScript != nil {
-		RunDeathScript(killer.GetName(), chName, roomVNum)
+	if cbHasScriptFlag(chName, "MS_DEATH") {
+		cbRunDeathScript(killer.GetName(), chName, roomVNum)
 	}
 
 	RawKill(ch, attackType)
@@ -1128,10 +1084,7 @@ func CounterProcs(ch Combatant) {
 	if ch.IsNPC() {
 		return
 	}
-	kills := int64(0)
-	if GetKills != nil {
-		kills = GetKills(ch.GetName())
-	}
+	kills := cbGetKills(ch.GetName())
 
 	reward := false
 	switch kills {
@@ -1242,17 +1195,11 @@ func BragMessage(ch, victim Combatant) {
 // Returns empty string if the killer shouldn't speak (certain messages skip mob kills).
 func pickBragMessage(chName, victimName string, victimIsNPC bool, victimSex int) string {
 	// Get alignment for case 5
-	alignment := 0
-	if GetAlignment != nil {
-		alignment = GetAlignment(chName)
-	}
+	alignment := cbGetAlignment(chName)
 	isEvil := alignment <= -350
 
 	// Get kill count for case 6
-	kills := int64(0)
-	if GetKills != nil {
-		kills = GetKills(chName)
-	}
+	kills := cbGetKills(chName)
 
 	// Possessive pronoun matching C HSHR(victim) — sex of the victim
 	// C: 0=male, 1=female, 2=neutral (from SEX_* constants, matching player.go line 67)

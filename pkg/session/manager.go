@@ -335,6 +335,13 @@ func (m *Manager) SetCombatBroadcastFunc() {
 // broadcast/send implementations, wires it into the engine, and keeps the legacy
 // package-level hooks as aliases so existing tests continue to pass during the
 // multi-PR migration.
+// WireCombatCallbacks wires the game-layer character-state callbacks into the
+// combat engine. Called once during initialization before SetCombatMessageFunc.
+func (m *Manager) WireCombatCallbacks() {
+	cb := m.world.WireCombatCallbacks()
+	m.combatEngine.SetCallbacks(cb)
+}
+
 func (m *Manager) SetCombatMessageFunc() {
 	wrap := func(text string) []byte {
 		msg, err := json.Marshal(ServerMessage{
@@ -390,10 +397,14 @@ func (m *Manager) SetCombatMessageFunc() {
 		}
 	}
 
-	cb := &combat.GameCallbacks{
-		Broadcast:  broadcast,
-		SendToChar: sendToChar,
+	// Reuse the callbacks struct wired by WireCombatCallbacks so PR2 character
+	// state hooks are preserved. If no struct exists yet, create one.
+	cb := m.combatEngine.Callbacks
+	if cb == nil {
+		cb = &combat.GameCallbacks{}
 	}
+	cb.Broadcast = broadcast
+	cb.SendToChar = sendToChar
 	combat.InitSkillMessages(cb)
 	m.combatEngine.SetCallbacks(cb)
 
