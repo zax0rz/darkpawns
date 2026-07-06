@@ -606,7 +606,7 @@ func InitSkillMessages(cb *GameCallbacks) {
 }
 
 // basicTokenReplace handles $n/$N/$s/$e substitution with sex-aware pronouns.
-// Falls back to male pronouns if GetCharacterSex hook is not wired.
+// Falls back to male pronouns if the GetSex callback is not wired.
 func basicTokenReplace(msg, chName, victimName string) string {
 	result := msg
 	result = strings.ReplaceAll(result, "$n", chName)
@@ -614,16 +614,12 @@ func basicTokenReplace(msg, chName, victimName string) string {
 
 	// Pronoun resolution for attacker ($s = possessive, $e = subjective)
 	chSex := 0 // default male
-	if GetCharacterSex != nil {
-		if s := GetCharacterSex(chName); s >= 0 {
-			chSex = s
-		}
+	if s := cbGetSex(chName); s >= 0 {
+		chSex = s
 	}
 	victimSex := 0
-	if GetCharacterSex != nil {
-		if s := GetCharacterSex(victimName); s >= 0 {
-			victimSex = s
-		}
+	if s := cbGetSex(victimName); s >= 0 {
+		victimSex = s
 	}
 	_ = victimSex // available for future victim pronoun tokens ($o/$O)
 

@@ -22,23 +22,25 @@ func TestBasicTokenReplace(t *testing.T) {
 }
 
 func TestBasicTokenReplace_Pronouns(t *testing.T) {
-	// Default (GetCharacterSex nil) → male pronouns
+	// Default (GetSex callback nil) → male pronouns
 	got := basicTokenReplace("$n raises $s blade.", "Warrior", "Enemy")
 	if got != "Warrior raises his blade." {
 		t.Errorf("male pronouns: got %q, want %q", got, "Warrior raises his blade.")
 	}
 
-	// Wire GetCharacterSex
-	orig := GetCharacterSex
-	defer func() { GetCharacterSex = orig }()
-	GetCharacterSex = func(name string) int {
-		if name == "Alice" {
-			return 1 // female
-		}
-		if name == "Golem" {
-			return 2 // neuter
-		}
-		return 0 // male
+	// Wire GetSex through callbacks.
+	orig := callbacks
+	defer func() { callbacks = orig }()
+	callbacks = &GameCallbacks{
+		GetSex: func(name string) int {
+			if name == "Alice" {
+				return 1 // female
+			}
+			if name == "Golem" {
+				return 2 // neuter
+			}
+			return 0 // male
+		},
 	}
 
 	got = basicTokenReplace("$n raises $s blade.", "Alice", "Enemy")

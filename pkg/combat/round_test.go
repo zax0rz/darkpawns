@@ -702,7 +702,6 @@ func TestProcessCombatPair_PlayerDeath(t *testing.T) {
 	origRunDeath := RunDeathScript
 	origBroadChat := BroadChatFunc
 	origRemoveAff := RemoveAffect
-	origNowUnix := NowUnix
 	defer func() {
 		HasAffect = origHasAffect
 		BroadcastMessage = origBroadcast
@@ -749,7 +748,6 @@ func TestProcessCombatPair_PlayerDeath(t *testing.T) {
 		RunDeathScript = origRunDeath
 		BroadChatFunc = origBroadChat
 		RemoveAffect = origRemoveAff
-		NowUnix = origNowUnix
 	}()
 
 	// Wire all the hooks
@@ -803,7 +801,6 @@ func TestProcessCombatPair_PlayerDeath(t *testing.T) {
 	MakeCorpseFunc = func(name string, attackType int) {}
 	MakeDustFunc = func(name string, attackType int) {}
 	ExtractChar = func(name string) {}
-	NowUnix = func() int64 { return 12345 }
 
 	var deathCalled bool
 	engine.BroadcastFunc = func(room int, msg string, exclude string) {}

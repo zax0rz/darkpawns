@@ -655,10 +655,7 @@ func CheckParry(defender, attacker Combatant) ParryResult {
 	}
 
 	// Must have parry skill
-	if GetSkill == nil {
-		return ParryFail
-	}
-	skill := GetSkill(defender.GetName(), SKILL_PARRY)
+	skill := cbGetSkill(defender.GetName(), SKILL_PARRY)
 	if skill <= 0 {
 		return ParryFail
 	}
@@ -669,16 +666,14 @@ func CheckParry(defender, attacker Combatant) ParryResult {
 	}
 
 	// Mob-aware mobs can't be parried
-	if attacker.IsNPC() && HasMobFlag != nil && HasMobFlag(attacker.GetName(), "MOB_AWARE") {
+	if attacker.IsNPC() && cbHasMobFlag(attacker.GetName(), "MOB_AWARE") {
 		return ParryFail
 	}
 
 	// Must be wielding a weapon
-	if GetWeaponInfo != nil {
-		wType, _, _, _ := GetWeaponInfo(defender.GetName())
-		if wType <= TYPE_HIT {
-			return ParryUnarmed
-		}
+	wType, _, _, _ := cbGetWeaponInfo(defender.GetName())
+	if wType <= TYPE_HIT {
+		return ParryUnarmed
 	}
 
 	// C: percent = number(1, 101); prob = GET_SKILL(ch, SKILL_PARRY)
@@ -711,10 +706,7 @@ func CheckDodge(defender, attacker Combatant) DodgeResult {
 	}
 
 	// Must have dodge skill
-	if GetSkill == nil {
-		return DodgeFail
-	}
-	skill := GetSkill(defender.GetName(), SKILL_DODGE)
+	skill := cbGetSkill(defender.GetName(), SKILL_DODGE)
 	if skill <= 0 {
 		return DodgeFail
 	}
