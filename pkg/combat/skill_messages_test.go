@@ -79,10 +79,10 @@ func TestInitSkillMessages(t *testing.T) {
 	defer func() { SkillMessageFunc = orig }()
 	SkillMessageFunc = nil
 
-	InitSkillMessages()
+	InitSkillMessages(nil)
 
 	if SkillMessageFunc == nil {
-		t.Fatal("InitSkillMessages() did not set SkillMessageFunc")
+		t.Fatal("InitSkillMessages(nil) did not set SkillMessageFunc")
 	}
 
 	// Unknown attack type → no match

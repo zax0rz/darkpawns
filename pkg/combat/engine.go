@@ -68,6 +68,10 @@ type CombatEngine struct {
 	// Captures: attacker, defender, attack_type, damage, outcome, target state.
 	// Used by decision capture (DP-213) for the combat_log table.
 	OnCombatAction func(attacker Combatant, defender Combatant, attackType string, damage int, outcome string, targetCount int)
+
+	// Callbacks holds the game-layer bridge functions used by the legacy
+	// fight_core path. Populated during engine initialization.
+	Callbacks *GameCallbacks
 }
 
 // NewCombatEngine creates a new combat engine
@@ -81,6 +85,13 @@ func NewCombatEngine() *CombatEngine {
 // SetBroadcastFunc sets the function used to broadcast messages to rooms
 func (ce *CombatEngine) SetBroadcastFunc(fn func(roomVNum int, message string, exclude string)) {
 	ce.BroadcastFunc = fn
+}
+
+// SetCallbacks wires the game-layer callback struct into the engine and sets
+// the temporary package-level accessor used by fight_core during migration.
+func (ce *CombatEngine) SetCallbacks(cb *GameCallbacks) {
+	ce.Callbacks = cb
+	SetCallbacks(cb)
 }
 
 // Start begins the combat tick loop

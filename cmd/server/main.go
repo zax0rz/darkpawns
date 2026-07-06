@@ -197,11 +197,11 @@ func main() {
 	manager.SetOnRoundEnd()                              // Decrement wait states each combat round
 	manager.SetCommandExecFunc()                         // Wire doOrder command dispatch for charmed followers
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
-	combat.InitSkillMessages()                           // Wire multi-variant combat messages
-	manager.SetCombatMessageFunc()                       // Wire DamMessage() for live combat hits/misses
+	manager.SetCombatMessageFunc()                       // Wire DamMessage() and GameCallbacks for live combat
 
 	// Verify critical combat hooks are wired (DP-952)
-	if combat.BroadcastMessage == nil || combat.SendToCharFunc == nil {
+	cb := combat.GetCallbacks()
+	if cb == nil || cb.Broadcast == nil || cb.SendToChar == nil {
 		slog.Error("critical combat hook not wired — combat messages will be silent")
 	}
 

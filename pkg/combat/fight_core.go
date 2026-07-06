@@ -251,17 +251,13 @@ func DeathCry(ch Combatant) string {
 	var rooms []string
 	roomVNum := ch.GetRoom()
 	msg := fmt.Sprintf("Your blood freezes as you hear %s's death cry.", ch.GetName())
-	if BroadcastMessage != nil {
-		BroadcastMessage(roomVNum, msg, "")
-	}
+	cbBroadcast(roomVNum, msg, "")
 	rooms = append(rooms, fmt.Sprintf("%d", roomVNum))
 	for door := 0; door < NUM_OF_DIRS; door++ {
 		if GetAdjacentRoom != nil {
 			adjRoom := GetAdjacentRoom(roomVNum, door)
 			if adjRoom >= 0 {
-				if BroadcastMessage != nil {
-					BroadcastMessage(adjRoom, "Your blood freezes as you hear someone's death cry.", "")
-				}
+				cbBroadcast(adjRoom, "Your blood freezes as you hear someone's death cry.", "")
 				rooms = append(rooms, fmt.Sprintf("%d", adjRoom))
 			}
 		}
@@ -283,10 +279,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 
 	if ch.GetRoom() != victim.GetRoom() {
 		if !ch.IsNPC() || ch.GetLevel() >= LVL_IMMORT {
-			if LogMessage != nil {
-				LogMessage("Attempt to assign damage when ch and vict are in different rooms.",
-					"NRM", LVL_IMMORT, false)
-			}
+			cbLog("Attempt to assign damage when ch and vict are in different rooms.",
+				"NRM", LVL_IMMORT, false)
 		}
 		return false
 	}
@@ -325,11 +319,9 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			hasVampire := HasAffectStr != nil && HasAffectStr(victimName, AFF_STR_VAMPIRE)
 			hasWerewolf := HasAffectStr != nil && HasAffectStr(victimName, AFF_STR_WEREWOLF)
 			if !hasVampire && !hasWerewolf {
-				if BroadcastMessage != nil {
-					BroadcastMessage(ch.GetRoom(),
-						fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
-							chName, victimName, victimName), "")
-				}
+				cbBroadcast(ch.GetRoom(),
+					fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
+						chName, victimName, victimName), "")
 				victim.StopFighting()
 				return false
 			}
@@ -382,10 +374,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		if RemoveAffect != nil {
 			RemoveAffect(chName, AFF_HIDE)
 		}
-		if BroadcastMessage != nil {
-			BroadcastMessage(ch.GetRoom(),
-				fmt.Sprintf("%s slowly fades into existence.", chName), chName)
-		}
+		cbBroadcast(ch.GetRoom(),
+			fmt.Sprintf("%s slowly fades into existence.", chName), chName)
 	}
 
 	if GetRaceHate != nil && GetRace != nil {
@@ -437,25 +427,18 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 				victim.StopFighting()
 			}
 			victim.TakeDamage(-(victim.GetHP() - 1))
-			if BroadcastMessage != nil {
-				BroadcastMessage(victim.GetRoom(),
-					fmt.Sprintf("%s is saved by the powers of the gods!", victimName), "")
-			}
+			cbBroadcast(victim.GetRoom(),
+				fmt.Sprintf("%s is saved by the powers of the gods!", victimName), "")
 			return false
 		}
 	}
 
 	isWeapon := attackType >= TYPE_HIT && attackType < TYPE_SUFFERING
 	if !isWeapon {
-		if SkillMessageFunc != nil {
-			SkillMessageFunc(dam, chName, victimName, attackType, ch.GetRoom())
-		}
+		cbSkillMessage(dam, chName, victimName, attackType, ch.GetRoom())
 	} else {
 		if newPos == PosDead || dam == 0 {
-			sent := false
-			if SkillMessageFunc != nil {
-				sent = SkillMessageFunc(dam, chName, victimName, attackType, ch.GetRoom())
-			}
+			sent := cbSkillMessage(dam, chName, victimName, attackType, ch.GetRoom())
 			if !sent {
 				DamMessage(dam, ch, victim, attackType-TYPE_HIT)
 			}
@@ -473,27 +456,19 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	switch newPos {
 	case PosMortally:
 		victim.SendMessage("You are mortally wounded, and will die soon, if not aided.\r\n")
-		if BroadcastMessage != nil {
-			BroadcastMessage(ch.GetRoom(),
-				fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", victimName), "")
-		}
+		cbBroadcast(ch.GetRoom(),
+			fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", victimName), "")
 	case PosIncap:
 		victim.SendMessage("You are incapacitated and will slowly die, if not aided.\r\n")
-		if BroadcastMessage != nil {
-			BroadcastMessage(ch.GetRoom(),
-				fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", victimName), "")
-		}
+		cbBroadcast(ch.GetRoom(),
+			fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", victimName), "")
 	case PosStunned:
 		victim.SendMessage("You're stunned, but will probably regain consciousness again.\r\n")
-		if BroadcastMessage != nil {
-			BroadcastMessage(ch.GetRoom(),
-				fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", victimName), "")
-		}
+		cbBroadcast(ch.GetRoom(),
+			fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", victimName), "")
 	case PosDead:
 		victim.SendMessage("You are dead!  Sorry...\r\n")
-		if BroadcastMessage != nil {
-			BroadcastMessage(roomVNum, fmt.Sprintf("%s is dead!  R.I.P.", victimName), "")
-		}
+		cbBroadcast(roomVNum, fmt.Sprintf("%s is dead!  R.I.P.", victimName), "")
 	default:
 		if dam > victim.GetMaxHP()/4 {
 			victim.SendMessage("That really did HURT!\r\n")
@@ -587,10 +562,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		if !victim.IsNPC() {
 			if !ch.IsNPC() && chName != victimName {
 				// Pkill (fight.c:1672)
-				if LogMessage != nil {
-					LogMessage(fmt.Sprintf("(PK) %s killed by %s at room %d", victimName, chName, roomVNum),
-						"BRF", LVL_IMMORT, true)
-				}
+				cbLog(fmt.Sprintf("(PK) %s killed by %s at room %d", victimName, chName, roomVNum),
+					"BRF", LVL_IMMORT, true)
 				// flag killer as outlaw if victim wasn't one (fight.c:1675)
 				if HasPlrFlag != nil && !HasPlrFlag(victimName, "PLR_OUTLAW") {
 					if SetPlrFlag != nil {
@@ -598,10 +571,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 					}
 				}
 			} else {
-				if LogMessage != nil {
-					LogMessage(fmt.Sprintf("%s killed by %s at room %d", victimName, chName, roomVNum),
-						"BRF", LVL_IMMORT, true)
-				}
+				cbLog(fmt.Sprintf("%s killed by %s at room %d", victimName, chName, roomVNum),
+					"BRF", LVL_IMMORT, true)
 			}
 			if chName != victimName && GetPks != nil && SetPks != nil {
 				SetPks(chName, GetPks(chName)+1)
@@ -926,16 +897,12 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 	charMsg := replaceMessageTokens(randPick(tier.Char), ch.GetName(), victim.GetName(), singular, plural, sex)
 	victimMsg := replaceMessageTokens(randPick(tier.Victim), ch.GetName(), victim.GetName(), singular, plural, sex)
 
-	if BroadcastMessage != nil {
-		BroadcastMessage(ch.GetRoom(), roomMsg, ch.GetName()+" "+victim.GetName())
-	}
+	cbBroadcast(ch.GetRoom(), roomMsg, ch.GetName()+" "+victim.GetName())
 
 	// CRIT-010: Send attacker and victim their own messages.
 	// In C, act() sent to TO_CHAR and TO_VICT separately.
-	if SendToCharFunc != nil {
-		SendToCharFunc(ch.GetName(), charMsg)
-		SendToCharFunc(victim.GetName(), victimMsg)
-	}
+	cbSendToChar(ch.GetName(), charMsg)
+	cbSendToChar(victim.GetName(), victimMsg)
 }
 
 // replaceMessageTokens substitutes $n, $N, $e, #w, #W in a message template.
@@ -1199,9 +1166,7 @@ func CounterProcs(ch Combatant) {
 			HealAllPlayers()
 		}
 		// Log milestone
-		if LogMessage != nil {
-			LogMessage(fmt.Sprintf("%s hit %d kills.", ch.GetName(), kills), "NRM", LVL_IMMORT, false)
-		}
+		cbLog(fmt.Sprintf("%s hit %d kills.", ch.GetName(), kills), "NRM", LVL_IMMORT, false)
 	}
 }
 
@@ -1270,9 +1235,7 @@ func BragMessage(ch, victim Combatant) {
 		return
 	}
 
-	if BroadChatFunc != nil {
-		BroadChatFunc(chName, msg)
-	}
+	cbBroadChat(chName, msg)
 }
 
 // pickBragMessage returns one of 12 brag messages matching the C source (fight.c:1173-1248).

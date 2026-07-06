@@ -331,8 +331,10 @@ func (m *Manager) SetCombatBroadcastFunc() {
 }
 
 // SetCombatMessageFunc wires the golden-tested DamMessage() path into the live
-// combat engine. It sets the package-level combat hooks used by DamMessage and
-// registers the engine callback that forwards hit/miss events to it.
+// combat engine. It builds a combat.GameCallbacks struct with the game-layer
+// broadcast/send implementations, wires it into the engine, and keeps the legacy
+// package-level hooks as aliases so existing tests continue to pass during the
+// multi-PR migration.
 func (m *Manager) SetCombatMessageFunc() {
 	wrap := func(text string) []byte {
 		msg, err := json.Marshal(ServerMessage{
@@ -349,7 +351,7 @@ func (m *Manager) SetCombatMessageFunc() {
 		return msg
 	}
 
-	combat.BroadcastMessage = func(roomVNum int, message string, exclude string) {
+	broadcast := func(roomVNum int, message string, exclude string) {
 		msg := wrap(message)
 		if msg == nil {
 			return
@@ -374,7 +376,7 @@ func (m *Manager) SetCombatMessageFunc() {
 		}
 	}
 
-	combat.SendToCharFunc = func(name string, message string) {
+	sendToChar := func(name string, message string) {
 		msg := wrap(message)
 		if msg == nil {
 			return
@@ -387,6 +389,18 @@ func (m *Manager) SetCombatMessageFunc() {
 			}
 		}
 	}
+
+	cb := &combat.GameCallbacks{
+		Broadcast:  broadcast,
+		SendToChar: sendToChar,
+	}
+	combat.InitSkillMessages(cb)
+	m.combatEngine.SetCallbacks(cb)
+
+	// Legacy aliases — kept for tests and any code paths that still read the
+	// package-level variables directly. Remove once the migration is complete.
+	combat.BroadcastMessage = broadcast
+	combat.SendToCharFunc = sendToChar
 
 	m.combatEngine.MessageFunc = func(attacker, defender combat.Combatant, dam, attackType int) bool {
 		combat.DamMessage(dam, attacker, defender, attackType)
