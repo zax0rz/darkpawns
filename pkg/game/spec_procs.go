@@ -52,6 +52,31 @@ func (w *World) roomMessage(roomVNum int, msg string) {
 	}
 }
 
+// actMessage sends audience-aware messages to players in a room.
+// toChar is sent to the actor (if actor is a player), toVict to the victim,
+// and toRoom to everyone else. Empty strings are skipped.
+// Mirrors C's act() with TO_CHAR / TO_VICT / TO_ROOM.
+func (w *World) actMessage(roomVNum int, actor, victim combat.Combatant, toChar, toVict, toRoom string) {
+	players := w.GetPlayersInRoom(roomVNum)
+	for _, p := range players {
+		if actor != nil && p.GetName() == actor.GetName() {
+			if toChar != "" {
+				p.SendMessage(toChar + "\r\n")
+			}
+			continue
+		}
+		if victim != nil && p.GetName() == victim.GetName() {
+			if toVict != "" {
+				p.SendMessage(toVict + "\r\n")
+			}
+			continue
+		}
+		if toRoom != "" {
+			p.SendMessage(toRoom + "\r\n")
+		}
+	}
+}
+
 func sendToChar(ch *Player, msg string) {
 	ch.SendMessage(msg + "\r\n")
 }
@@ -160,6 +185,11 @@ func specDump(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		return false
 	}
 
+	// Perform the actual drop (mirrors C's do_drop(ch, argument, cmd, 0)).
+	// This moves items from player inventory to the room so they can be valued.
+	w.doDrop(ch, me, cmd, arg)
+
+	// Value and remove the dropped items.
 	value := w.roomCleanup(roomVNum)
 	if value > 0 {
 		sendToChar(ch, "You are awarded for outstanding performance.")
@@ -185,7 +215,12 @@ func specSnake(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if melee == nil {
 		return false
 	}
-	w.roomMessage(me.RoomVNum, me.GetName()+" bites "+melee.GetName()+"!")
+	w.actMessage(
+		me.RoomVNum, me, melee,
+		"",                         // TO_CHAR (mob doesn't need a message)
+		me.GetName()+" bites you!", // TO_VICT
+		me.GetName()+" bites "+melee.GetName()+"!", // TO_ROOM
+	)
 	spells.Cast(me, melee, spells.SpellPoison, me.GetLevel(), w)
 	return true
 }

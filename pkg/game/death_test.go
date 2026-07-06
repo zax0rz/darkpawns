@@ -269,3 +269,91 @@ func TestHandleDeath_Player(t *testing.T) {
 		t.Errorf("room items count = %d, want 1 (corpse)", len(items))
 	}
 }
+
+// TestHandlePlayerDeathIdempotent verifies that the dying guard prevents
+// double death penalties (DP-943).
+//
+// The death path is synchronous and completes before a second goroutine is
+// typically scheduled, so we test the guard directly:
+//  1. dying=true → handlePlayerDeath is a complete no-op (CAS rejects)
+//  2. dying=false → handlePlayerDeath applies penalties normally, resets via defer
+func TestHandlePlayerDeathIdempotent(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 8},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	// Test 1: dying=true → handlePlayerDeath is a no-op.
+	victim := NewPlayer(1, "Victim", 1001)
+	victim.SetLevel(10)
+	victim.SetExp(10000)
+	victim.Stats.Con = 15
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	victim.dying.Store(true)
+	w.handlePlayerDeath(victim, true, 303, "Killer")
+	if victim.GetExp() != 10000 {
+		t.Errorf("dying guard failed: exp changed to %d, want 10000 (no-op)", victim.GetExp())
+	}
+	if victim.Stats.Con != 15 {
+		t.Errorf("dying guard failed: CON changed to %d, want 15 (no-op)", victim.Stats.Con)
+	}
+	// Guard stays set — we set it externally, the CAS rejected the call.
+	if !victim.IsDying() {
+		t.Error("dying should still be true after rejected call")
+	}
+
+	// Test 2: dying=false → handlePlayerDeath applies penalties normally.
+	victim.dying.Store(false)
+	victim.SetRoom(1001) // reset room since no-op above didn't move player
+	startExp := victim.GetExp()
+	w.handlePlayerDeath(victim, true, 303, "Killer")
+	expectedExp := startExp - (startExp / 37)
+	if victim.GetExp() != expectedExp {
+		t.Errorf("normal death: exp = %d, want %d", victim.GetExp(), expectedExp)
+	}
+	// After return, defer has reset dying to false.
+	if victim.IsDying() {
+		t.Error("dying should be false after handlePlayerDeath returns (defer reset)")
+	}
+}
+
+// TestHandlePlayerDeathDyingReset verifies that the dying flag is cleared
+// after respawn so future deaths can be processed normally (DP-943).
+func TestHandlePlayerDeathDyingReset(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 8},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	victim := NewPlayer(1, "Victim", 1001)
+	victim.SetLevel(1)
+	victim.SetExp(100)
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	w.handlePlayerDeath(victim, true, 303, "Killer")
+
+	if victim.IsDying() {
+		t.Error("IsDying should be false after respawn")
+	}
+}

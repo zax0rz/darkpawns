@@ -365,6 +365,16 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		return
 	}
 
+	// DP-943: idempotent death guard. Concurrent kills (combat tick + skill/spell
+	// session goroutine) can both drop the same player to <=0 HP. Only the first
+	// caller runs the full death path; the second finds dying already set and
+	// no-ops. In production this window is narrow (HP > 0 after respawn), but
+	// the guard protects against the theoretical race.
+	if !player.dying.CompareAndSwap(false, true) {
+		return
+	}
+	defer player.dying.Store(false)
+
 	// EXP loss based on death type
 	// die_with_killer(): GET_EXP(ch)/37 (combat death) - fight.c line 590
 	// die(): GET_EXP(ch)/3 (non-combat death) - fight.c line 628
