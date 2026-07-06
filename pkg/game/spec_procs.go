@@ -979,8 +979,6 @@ func specMallory(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 // Initialization — registers all spec procs into SpecRegistry
 // ================================================================
 
-// WAVE 4a: remaining functions from spec_procs.c will be added in Wave 5
-
 func init() {
 	RegisterSpec("guild", specGuild)
 	RegisterSpec("dump", specDump)
