@@ -73,6 +73,10 @@ type MobInstance struct {
 	// Gold — instance-level with +/-20% variance from prototype (db.c:1766-1775)
 	Gold int
 
+	// RaceHates tracks 5 racial hatred slots (src/structs.h race_hate[5]).
+	// Initialized to -1 for all slots; matching a mob's race triggers aggression.
+	RaceHates [5]int
+
 	// Affect flags bitmask — same bit positions as AFF_* constants used by Player
 	Affects uint64
 
@@ -162,6 +166,11 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	}
 
 	mob.alive.Store(true)
+
+	// Initialize race-hate slots to empty (-1) per src/db.c.
+	for i := range mob.RaceHates {
+		mob.RaceHates[i] = -1
+	}
 
 	// Create AI brain
 	// mob.Brain = ai.NewBrain(mob) // Temporarily commented out

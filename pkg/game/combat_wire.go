@@ -26,6 +26,23 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return 0
 	}
 
+	cb.GetRaceHate = func(name string, index int) int {
+		if index < 0 || index >= 5 {
+			return -1
+		}
+		if p, ok := w.GetPlayer(name); ok {
+			p.mu.RLock()
+			defer p.mu.RUnlock()
+			return p.RaceHates[index]
+		}
+		if m := w.GetMobByName(name); m != nil {
+			m.mu.RLock()
+			defer m.mu.RUnlock()
+			return m.RaceHates[index]
+		}
+		return -1
+	}
+
 	cb.GetAlignment = func(name string) int {
 		if p, ok := w.GetPlayer(name); ok {
 			return p.GetAlignment()
