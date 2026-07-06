@@ -1,7 +1,9 @@
 package game
 
 import (
+	"runtime"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -355,5 +357,263 @@ func TestHandlePlayerDeathDyingReset(t *testing.T) {
 
 	if victim.IsDying() {
 		t.Error("IsDying should be false after respawn")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// COV-2: Death-Path Concurrency Tests (DP-963)
+// ---------------------------------------------------------------------------
+
+// TestHandlePlayerDeath_ConcurrentKills verifies that handlePlayerDeath is
+// idempotent when two goroutines simultaneously call HandleDeath for the same
+// player. The dying CAS guard (DP-943) lets exactly one death path process;
+// the second goroutine finds dying=true and no-ops.
+//
+// Assertions:
+//  1. Player respawned (in MortalStartRoom, HP > 0)
+//  2. EXACTLY one EXP penalty applied (not doubled)
+//  3. Exactly one corpse in the death room
+//  4. No -race violations
+func TestHandlePlayerDeath_ConcurrentKills(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 8},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	// Create victim player with some EXP and low HP
+	victim := NewPlayer(1, "Victim", 1001)
+	victim.SetLevel(10)
+	victim.SetExp(10000)
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	// Killer doesn't get Kills++ for player kills, so no Kills race here
+	killer := NewPlayer(2, "Killer", 1001)
+	if err := w.AddPlayer(killer); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	startExp := victim.GetExp()
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		w.HandleDeath(victim, killer, TypeSlash)
+	}()
+	go func() {
+		defer wg.Done()
+		runtime.Gosched() // nudge scheduler to increase collision probability
+		w.HandleDeath(victim, killer, TypeSlash)
+	}()
+
+	wg.Wait()
+
+	// Assertion 1: player respawned to MortalStartRoom with positive HP
+	if victim.GetRoom() != MortalStartRoom {
+		t.Errorf("victim room = %d, want %d (respawn)", victim.GetRoom(), MortalStartRoom)
+	}
+	if victim.GetHP() <= 0 {
+		t.Errorf("victim HP = %d, want > 0 after respawn", victim.GetHP())
+	}
+
+	// Assertion 2: EXACTLY one EXP penalty (combat death: exp/37, not doubled)
+	expectedExp := startExp - (startExp / 37)
+	if victim.GetExp() != expectedExp {
+		t.Errorf("victim Exp = %d, want %d (single penalty, not doubled)",
+			victim.GetExp(), expectedExp)
+	}
+
+	// Assertion 3: exactly one corpse in the death room
+	items := w.GetItemsInRoom(1001)
+	corpseCount := 0
+	for _, item := range items {
+		if item.IsCorpse {
+			corpseCount++
+		}
+	}
+	if corpseCount != 1 {
+		t.Errorf("corpse count in room 1001 = %d, want 1", corpseCount)
+	}
+}
+
+// TestHandleMobDeath_ConcurrentKills verifies that handleMobDeath is
+// idempotent when two goroutines simultaneously call HandleDeath for the same
+// mob. The alive CAS guard (DP-963) lets exactly one death path process;
+// the second caller finds alive already false and returns before the mob
+// death hook, AwardMobKillXP, and Kills++.
+//
+// Assertions:
+//  1. Exactly one corpse in the room
+//  2. Killer Kills incremented exactly once
+//  3. No -race violations
+func TestHandleMobDeath_ConcurrentKills(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+		},
+		Mobs: []parser.Mob{
+			{
+				VNum:      1,
+				ShortDesc: "a goblin",
+				LongDesc:  "A goblin is here.",
+				Keywords:  "goblin",
+				Level:     9,
+				Exp:       1000,
+				Gold:      500,
+			},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	// Spawn the mob
+	mob, err := w.SpawnMob(1, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+
+	// Create the killer player
+	killer := NewPlayer(99, "Hero", 1001)
+	killer.SetLevel(10)
+	if err := w.AddPlayer(killer); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	startKills := killer.Kills
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		w.HandleDeath(mob, killer, TypeSlash)
+	}()
+	go func() {
+		defer wg.Done()
+		runtime.Gosched()
+		w.HandleDeath(mob, killer, TypeSlash)
+	}()
+
+	wg.Wait()
+
+	// Assertion 1: exactly one corpse in the room
+	items := w.GetItemsInRoom(1001)
+	corpseCount := 0
+	for _, item := range items {
+		if item.IsCorpse {
+			corpseCount++
+		}
+	}
+	if corpseCount != 1 {
+		t.Errorf("corpse count in room 1001 = %d, want 1", corpseCount)
+	}
+
+	// Assertion 2: Kills incremented exactly once
+	expectedKills := startKills + 1
+	if killer.Kills != expectedKills {
+		t.Errorf("killer Kills = %d, want %d (single increment)",
+			killer.Kills, expectedKills)
+	}
+}
+
+// TestHandlePlayerDeath_SecondKillNoOps verifies the dying CAS guard in the
+// sequential case: calling HandleDeath twice on the same player. The first
+// call processes the death path normally (CAS succeeds, defer resets). The
+// second call also processes because dying is reset — this confirms the
+// guard doesn't permanently lock the player out of future deaths.
+func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 8},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	victim := NewPlayer(1, "Victim", 1001)
+	victim.SetLevel(10)
+	victim.SetExp(20000) // enough for two deaths
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	killer := NewPlayer(2, "Killer", 1001)
+	if err := w.AddPlayer(killer); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	// First death
+	w.HandleDeath(victim, killer, TypeSlash)
+
+	// After first death: respawned at MortalStartRoom, dying flag reset
+	if victim.IsDying() {
+		t.Error("dying should be false after first death completes (defer reset)")
+	}
+	if victim.GetRoom() != MortalStartRoom {
+		t.Errorf("after first death: room = %d, want %d", victim.GetRoom(), MortalStartRoom)
+	}
+	expAfterFirst := victim.GetExp()
+	expectedFirstExp := 20000 - (20000 / 37)
+	if expAfterFirst != expectedFirstExp {
+		t.Errorf("after first death: Exp = %d, want %d", expAfterFirst, expectedFirstExp)
+	}
+
+	// Move victim back to arena room for second death
+	victim.SetRoom(1001)
+
+	// Verify there's exactly 1 corpse from the first death
+	items := w.GetItemsInRoom(1001)
+	corpseCount := 0
+	for _, item := range items {
+		if item.IsCorpse {
+			corpseCount++
+		}
+	}
+	if corpseCount != 1 {
+		t.Errorf("first death: corpse count = %d, want 1", corpseCount)
+	}
+
+	// Second death — should process normally (dying was reset by first death's defer)
+	w.HandleDeath(victim, killer, TypeSlash)
+
+	// After second death: EXP penalized again, second corpse
+	expectedSecondExp := expAfterFirst - (expAfterFirst / 37)
+	if victim.GetExp() != expectedSecondExp {
+		t.Errorf("after second death: Exp = %d, want %d", victim.GetExp(), expectedSecondExp)
+	}
+	if victim.IsDying() {
+		t.Error("dying should be false after second death completes (defer reset)")
+	}
+
+	// Exactly 2 corpses now in the room (one from each death)
+	items = w.GetItemsInRoom(1001)
+	corpseCount = 0
+	for _, item := range items {
+		if item.IsCorpse {
+			corpseCount++
+		}
+	}
+	if corpseCount != 2 {
+		t.Errorf("second death: corpse count = %d, want 2 (one per death)", corpseCount)
 	}
 }

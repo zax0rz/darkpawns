@@ -111,6 +111,17 @@ func LoginStartRoom(p *Player) int {
 // Source: fight.c die_with_killer() uses GET_EXP(ch)/37
 func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 	if victim.IsNPC() {
+		// DP-963: idempotent death guard for mobs. The alive CAS filters out
+		// concurrent HandleDeath calls for the same mob (two goroutines
+		// both delivering lethal damage). Only the first caller proceeds;
+		// the second finds alive already false and returns immediately.
+		// Without this guard, AwardMobKillXP and Kills++ would fire twice.
+		if mob, ok := victim.(*MobInstance); ok {
+			if !mob.alive.CompareAndSwap(true, false) {
+				return
+			}
+		}
+
 		// Capture mob vnum/exp/gold before the mob is removed from the world.
 		// Source: fight.c die_with_killer() line 1638 — group_gain(ch, victim)
 		mobExp := 0
@@ -162,9 +173,16 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 
 		// Increment kill counter and check milestone blessings
 		// Source: fight.c:1689-1690 — GET_KILLS(ch)++; counter_procs(ch);
+		// DP-963: guard Kills++ with player.mu to prevent data race under
+		// concurrent HandleDeath calls (same killer, multiple mob kills).
+		// Extract kills before calling counter_procs to avoid reentrant lock
+		// (counter_procs calls ch.Lock() internally).
 		if kp, ok := w.GetPlayer(killerName); ok {
+			kp.mu.Lock()
 			kp.Kills++
-			w.counter_procs(kp)
+			kills := kp.Kills
+			kp.mu.Unlock()
+			w.counter_procs(kp, kills)
 		}
 	} else {
 		// Fire player death hook
@@ -909,9 +927,7 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 // At certain kill counts, players receive stat boosts or full heals.
 // Note: The C switch has intentional fall-through on cases 1/2/3 — all three
 // stats are boosted, not a random one. This is preserved faithfully.
-func (w *World) counter_procs(ch *Player) {
-	kills := ch.Kills
-
+func (w *World) counter_procs(ch *Player, kills int) {
 	if counterProcsBoostMilestones[kills] {
 		ch.SendMessage("The gods reward your many victories!\r\n")
 		// C fall-through: all three stat boosts apply (no break between cases 1/2/3)
