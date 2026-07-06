@@ -676,6 +676,9 @@ func (s *Spawner) StartPeriodicResets(interval time.Duration) {
 			select {
 			case <-ticker.C:
 				s.resetEmptyZones()
+				if s.world != nil {
+					s.world.RebuildSpecRooms()
+				}
 			case <-s.done:
 				ticker.Stop()
 				return

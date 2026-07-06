@@ -342,6 +342,9 @@ func main() {
 			slog.Info("World state restored")
 		}
 
+		// Build initial spec-room cache now that mobs/items are in place.
+		gameWorld.RebuildSpecRooms()
+
 		gameWorld.StartPeriodicResets(60 * time.Second)
 	}()
 

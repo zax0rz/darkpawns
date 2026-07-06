@@ -523,66 +523,69 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		}
 	}
 
-	// Spec procedure command interception
+	// Spec procedure command interception — fast path skips all scans when
+	// the room is known to contain no spec-bearing entities.
 	if s.player != nil && s.player.GetRoomVNum() > 0 {
 		roomVNum := s.player.GetRoomVNum()
-		argStr := strings.Join(args, " ")
+		if s.manager.world.HasSpecInRoom(roomVNum) {
+			argStr := strings.Join(args, " ")
 
-		// 1. Mob spec procedures
-		mobs := s.manager.world.GetMobsInRoom(roomVNum)
-		for _, mob := range mobs {
-			if mob != nil {
-				if mobSpec := game.GetMobSpec(mob.VNum); mobSpec != nil {
-					if mobSpec(s.manager.world, s.player, mob, cmd, argStr) {
-						return nil
-					}
-				}
-			}
-		}
-
-		// 2. Room spec procedure
-		if roomSpec := game.GetRoomSpec(roomVNum); roomSpec != nil {
-			if roomSpec(s.manager.world, s.player, nil, cmd, argStr) {
-				return nil
-			}
-		}
-
-		// 2. Object spec procedures
-		// 2a. Equipped items
-		if s.player.Equipment != nil {
-			equipped := s.player.Equipment.GetEquippedItems()
-			for _, item := range equipped {
-				if item != nil {
-					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+			// 1. Mob spec procedures
+			mobs := s.manager.world.GetMobsInRoom(roomVNum)
+			for _, mob := range mobs {
+				if mob != nil {
+					if mobSpec := game.GetMobSpec(mob.VNum); mobSpec != nil {
+						if mobSpec(s.manager.world, s.player, mob, cmd, argStr) {
 							return nil
 						}
 					}
 				}
 			}
-		}
 
-		// 2b. Inventory items
-		if s.player.Inventory != nil {
-			invItems := s.player.Inventory.FindItems("")
-			for _, item := range invItems {
+			// 2. Room spec procedure
+			if roomSpec := game.GetRoomSpec(roomVNum); roomSpec != nil {
+				if roomSpec(s.manager.world, s.player, nil, cmd, argStr) {
+					return nil
+				}
+			}
+
+			// 2. Object spec procedures
+			// 2a. Equipped items
+			if s.player.Equipment != nil {
+				equipped := s.player.Equipment.GetEquippedItems()
+				for _, item := range equipped {
+					if item != nil {
+						if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
+							if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+								return nil
+							}
+						}
+					}
+				}
+			}
+
+			// 2b. Inventory items
+			if s.player.Inventory != nil {
+				invItems := s.player.Inventory.FindItems("")
+				for _, item := range invItems {
+					if item != nil {
+						if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
+							if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+								return nil
+							}
+						}
+					}
+				}
+			}
+
+			// 2c. Room items
+			roomItems := s.manager.world.GetItemsInRoom(roomVNum)
+			for _, item := range roomItems {
 				if item != nil {
 					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
 						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
 							return nil
 						}
-					}
-				}
-			}
-		}
-
-		// 2c. Room items
-		roomItems := s.manager.world.GetItemsInRoom(roomVNum)
-		for _, item := range roomItems {
-			if item != nil {
-				if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-					if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
-						return nil
 					}
 				}
 			}
