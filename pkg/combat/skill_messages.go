@@ -544,14 +544,15 @@ var skillMessageTable = map[int]skillMessageEntry{
 }
 
 // ---------------------------------------------------------------------------
-// InitSkillMessages wires the global SkillMessageFunc to look up per-skill
-// message variants from the skillMessageTable.
+// InitSkillMessages wires the skill-specific message lookup into the provided
+// callbacks. If cb is nil, it falls back to the legacy SkillMessageFunc package
+// variable so existing tests keep working until the migration is complete.
 //
-// Call during combat system initialization (when BroadcastMessage/SendToCharFunc
-// are wired). If called before those hooks are set, messages will still work —
+// Call during combat system initialization after Broadcast/SendToChar hooks are
+// available. If called before those hooks are set, messages will still work —
 // they just won't be delivered until the hooks are assigned.
-func InitSkillMessages() {
-	SkillMessageFunc = func(dam int, chName, victimName string, attackType int, roomVNum int) bool {
+func InitSkillMessages(cb *GameCallbacks) {
+	impl := func(dam int, chName, victimName string, attackType int, roomVNum int) bool {
 		entry, ok := skillMessageTable[attackType]
 		if !ok {
 			return false // no custom messages for this skill
@@ -577,14 +578,30 @@ func InitSkillMessages() {
 		charMsg := basicTokenReplace(msg.Char, chName, victimName)
 		victimMsg := basicTokenReplace(msg.Victim, chName, victimName)
 
-		if BroadcastMessage != nil {
-			BroadcastMessage(roomVNum, roomMsg, chName+" "+victimName)
-		}
-		if SendToCharFunc != nil {
-			SendToCharFunc(chName, charMsg)
-			SendToCharFunc(victimName, victimMsg)
+		if cb != nil {
+			if cb.Broadcast != nil {
+				cb.Broadcast(roomVNum, roomMsg, chName+" "+victimName)
+			}
+			if cb.SendToChar != nil {
+				cb.SendToChar(chName, charMsg)
+				cb.SendToChar(victimName, victimMsg)
+			}
+		} else {
+			if BroadcastMessage != nil {
+				BroadcastMessage(roomVNum, roomMsg, chName+" "+victimName)
+			}
+			if SendToCharFunc != nil {
+				SendToCharFunc(chName, charMsg)
+				SendToCharFunc(victimName, victimMsg)
+			}
 		}
 		return true
+	}
+
+	if cb != nil {
+		cb.SkillMessage = impl
+	} else {
+		SkillMessageFunc = impl
 	}
 }
 
