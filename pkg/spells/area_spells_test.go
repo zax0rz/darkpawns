@@ -124,9 +124,10 @@ func TestCastCalliope_FiresMultipleMissiles(t *testing.T) {
 
 	castCalliope(0, caster, victim)
 
-	// Each missile: dice(4,3)+level(0), bounded [4,12]. 4 missiles -> [16,48] total.
+	// Each missile: dice(4,3)+level(0), bounded [4,12]. 4 missiles -> [16,48] before saves.
+	// magSavingThrow can halve individual missile damage (min 1), so floor is 4×1 = 4.
 	dealt := 1000 - victim.hp
-	if dealt < 16 || dealt > 48 {
-		t.Errorf("DP-938: expected ~4 magic missiles worth of damage (16-48), got %d", dealt)
+	if dealt < 4 || dealt > 48 {
+		t.Errorf("DP-938: expected ~4 magic missiles worth of damage (4-48 after saves), got %d", dealt)
 	}
 }
