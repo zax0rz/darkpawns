@@ -316,18 +316,8 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		return
 	}
 
-	// Shopkeeper protection — C: fight.c:1359-1366
-	// Any attempt to damage a shopkeeper halts combat for both sides.
-	if IsShopkeeper != nil && IsShopkeeper(defender.GetName()) {
-		ce.StopCombat(attacker.GetName())
-		ce.StopCombat(defender.GetName())
-		return
-	}
-
 	// Calculate number of attacks for attacker
-	hasHaste := HasAffect != nil && HasAffect(attacker.GetName(), AFF_HASTE)
-	hasSlow := HasAffect != nil && HasAffect(attacker.GetName(), AFF_SLOW)
-	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
+	numAttacks := GetAttacksPerRound(attacker, false, false)
 
 	// roundPenalty tracks whether a parry or dodge succeeded earlier in this
 	// round. If true, subsequent attacks suffer a THAC0 penalty.

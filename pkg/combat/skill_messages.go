@@ -597,17 +597,7 @@ func basicTokenReplace(msg, chName, victimName string) string {
 
 	// Pronoun resolution for attacker ($s = possessive, $e = subjective)
 	chSex := 0 // default male
-	if GetCharacterSex != nil {
-		if s := GetCharacterSex(chName); s >= 0 {
-			chSex = s
-		}
-	}
 	victimSex := 0
-	if GetCharacterSex != nil {
-		if s := GetCharacterSex(victimName); s >= 0 {
-			victimSex = s
-		}
-	}
 	_ = victimSex // available for future victim pronoun tokens ($o/$O)
 
 	chPronouns := sexPronouns(chSex)

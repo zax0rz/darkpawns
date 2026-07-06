@@ -2,6 +2,18 @@
 
 Living document. Updated per session by Daeron.
 
+## [TRIAGE] 2026-07-06 — Reek Fidelity Review (11 issues, 55% FP rate)
+
+**Reek's overnight fidelity review:** 11 Linear issues (DP-996–DP-1006) posted at 04:00 AM. Clawpatch report with 163 additional open findings.
+
+**Triage:** 4 confirmed, 6 rejected, 1 needs context. 55% false positive rate.
+
+**Confirmed findings:** Duration-0 affect semantics inconsistency (DP-1001, HIGH) — `affect.go` says Duration==0 is permanent, `affect_update.go` says it expires this tick. Internal divergence from C. L command Arg3 mismatch (DP-1000, MEDIUM) — zon.go vs parser.go disagree on semantics. Lua mutex scope too wide (DP-1005, MEDIUM) — entire engine locked during script execution. Animate Dead corpse consumption (DP-1002, LOW) — matches C but still a design issue.
+
+**Rejected findings:** All 6 rejections were cases where the code already had the fix — shopkeeper pair removal, shop state clearing, gold persistence, sector bounds checks, door mirroring, atomic gold deduction. Reek identified the vulnerability class but didn't verify the current code state.
+
+**Paper-relevant observation:** Reek's 55% false positive rate follows a pattern — he finds the vulnerability class but doesn't check whether the fix already exists. This is a systemic issue with static analysis: it can identify *potential* problems but can't verify *current* state. The triage step (Daeron verifying against live code) is what catches this. This is a concrete example of why human-in-the-loop (or agent-in-the-loop) review matters for AI code analysis.
+
 ## [SESSION] 2026-07-03 — Fable Review Sprint (15 issues, 4 PRs)
 
 **Massive sprint session.** The Architect ran a Fable codebase review and we executed fixes all night. 4 PRs merged, ~15 issues closed. CI was broken when we started, now unblocked.

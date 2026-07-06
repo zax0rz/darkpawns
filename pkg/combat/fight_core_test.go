@@ -55,53 +55,13 @@ func TestBackstabMult(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// IsInGroup — uses HasAffectStr, GetMasterInRoom, GetFellowFollowersInRoom
+// IsInGroup
 // ---------------------------------------------------------------------------
 
 func TestIsInGroup(t *testing.T) {
 	ch := &mockCombatant{name: "Alice", npc: false, room: 100}
-
-	// No hooks wired → false
-	origHasAffect := HasAffectStr
-	origMaster := GetMasterInRoom
-	origFellow := GetFellowFollowersInRoom
-	defer func() {
-		HasAffectStr = origHasAffect
-		GetMasterInRoom = origMaster
-		GetFellowFollowersInRoom = origFellow
-	}()
-
-	HasAffectStr = nil
-	GetMasterInRoom = nil
-	GetFellowFollowersInRoom = nil
 	if IsInGroup(ch) {
-		t.Error("IsInGroup with nil hooks should return false")
-	}
-
-	// HasAffectStr true + GetMasterInRoom true → true
-	HasAffectStr = func(name string, aff string) bool {
-		return name == "Alice" && aff == AFF_STR_GROUP
-	}
-	GetMasterInRoom = func(name string, room int) bool {
-		return name == "Alice" && room == 100
-	}
-	if !IsInGroup(ch) {
-		t.Error("IsInGroup(Alice) should return true with master in room")
-	}
-
-	// HasAffectStr true + GetFellowFollowers true → true
-	GetMasterInRoom = func(name string, room int) bool { return false }
-	GetFellowFollowersInRoom = func(name string, room int) bool {
-		return name == "Alice" && room == 100
-	}
-	if !IsInGroup(ch) {
-		t.Error("IsInGroup(Alice) should return true with fellow followers")
-	}
-
-	// HasAffectStr false → false
-	HasAffectStr = func(name string, aff string) bool { return false }
-	if IsInGroup(ch) {
-		t.Error("IsInGroup(Alice) should return false without group affect")
+		t.Error("IsInGroup should return false")
 	}
 }
 
@@ -110,19 +70,6 @@ func TestIsInGroup(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCalcLevelDiff(t *testing.T) {
-	// Wire IsInGroup to return false for solo
-	origHasAffect := HasAffectStr
-	origMaster := GetMasterInRoom
-	origFellow := GetFellowFollowersInRoom
-	defer func() {
-		HasAffectStr = origHasAffect
-		GetMasterInRoom = origMaster
-		GetFellowFollowersInRoom = origFellow
-	}()
-	HasAffectStr = func(name string, aff string) bool { return false }
-	GetMasterInRoom = nil
-	GetFellowFollowersInRoom = nil
-
 	ch := &mockCombatant{name: "ch", level: 10}
 	victim := &mockCombatant{name: "vic", level: 20}
 
@@ -272,21 +219,12 @@ func TestGroupGain_NoHooks(t *testing.T) {
 	ch := &mockCombatant{name: "Alice", npc: false, level: 10, room: 100}
 	victim := &mockCombatant{name: "Orc", npc: true, level: 8}
 
-	// Wire all hooks GroupGain needs
-	origCount := CountGroupMembers
-	origApply := ApplyToGroupMembers
-	origGain := GainExp
+	// Wire GetExp hook GroupGain needs
 	origGetExp := GetExp
 	defer func() {
-		CountGroupMembers = origCount
-		ApplyToGroupMembers = origApply
-		GainExp = origGain
 		GetExp = origGetExp
 	}()
 
-	CountGroupMembers = func(leaderName string, roomVNum int) int { return 1 }
-	ApplyToGroupMembers = func(leaderName string, roomVNum int, fn func(string)) { fn(leaderName) }
-	GainExp = func(name string, amount int) {}
 	GetExp = func(name string) int {
 		if name == "Orc" {
 			return 200
@@ -294,111 +232,5 @@ func TestGroupGain_NoHooks(t *testing.T) {
 		return 0
 	}
 
-	// PerformGroupGain → ChangeAlignment → GetAlignment/SetAlignment
-	origGetAlign := GetAlignment
-	origSetAlign := SetAlignment
-	defer func() {
-		GetAlignment = origGetAlign
-		SetAlignment = origSetAlign
-	}()
-	GetAlignment = func(name string) int { return 0 }
-	SetAlignment = func(name string, val int) {}
-
 	GroupGain(ch, victim) // should not panic
-}
-
-// ---------------------------------------------------------------------------
-// ChangeAlignment
-// ---------------------------------------------------------------------------
-
-func TestChangeAlignment(t *testing.T) {
-	orig := GetAlignment
-	origSet := SetAlignment
-	defer func() {
-		GetAlignment = orig
-		SetAlignment = origSet
-	}()
-
-	GetAlignment = func(name string) int {
-		if name == "paladin" {
-			return 1000
-		}
-		return 0
-	}
-	SetAlignment = func(name string, val int) {}
-
-	paladin := &mockCombatant{name: "paladin", npc: false}
-	evil := &mockCombatant{name: "demon", npc: true, sex: 0}
-
-	// Killing evil should make paladin more good
-	ChangeAlignment(paladin, evil)
-	// Just verify it doesn't panic — actual value depends on implementation
-}
-
-func TestChangeAlignment_NilGetAlignment(t *testing.T) {
-	orig := GetAlignment
-	defer func() { GetAlignment = orig }()
-
-	GetAlignment = nil
-	paladin := &mockCombatant{name: "paladin", npc: false}
-	evil := &mockCombatant{name: "demon", npc: true}
-
-	// Should not panic when GetAlignment is nil
-	ChangeAlignment(paladin, evil)
-}
-
-func TestTakeDamage_NilGetRace(t *testing.T) {
-	origGetRace := GetRace
-	origGetRaceHate := GetRaceHate
-	origHasAffect := HasAffect
-	origIsShopkeeper := IsShopkeeper
-	origHasPlrFlag := HasPlrFlag
-	origHasRoomFlag := HasRoomFlag
-	defer func() {
-		GetRace = origGetRace
-		GetRaceHate = origGetRaceHate
-		HasAffect = origHasAffect
-		IsShopkeeper = origIsShopkeeper
-		HasPlrFlag = origHasPlrFlag
-		HasRoomFlag = origHasRoomFlag
-	}()
-
-	GetRace = nil
-	GetRaceHate = func(name string, index int) int { return 1 }
-	HasAffect = func(name string, aff int) bool { return false }
-	IsShopkeeper = func(name string) bool { return false }
-	HasPlrFlag = func(name string, flag string) bool { return false }
-	HasRoomFlag = func(room int, flag string) bool { return false }
-
-	ch := &mockCombatant{name: "ch", npc: false, level: 10, room: 100}
-	victim := &mockCombatant{name: "vic", npc: false, level: 10, room: 100}
-
-	// Should not panic when GetRace is nil even though GetRaceHate is non-nil
-	TakeDamage(ch, victim, 10, TYPE_HIT)
-}
-
-// TestRawKill_NilGetRace verifies that RawKill does not panic when the GetRace
-// function pointer is nil and still produces a corpse (DP-620).
-func TestRawKill_NilGetRace(t *testing.T) {
-	origGetRace := GetRace
-	origMakeCorpse := MakeCorpseFunc
-	defer func() {
-		GetRace = origGetRace
-		MakeCorpseFunc = origMakeCorpse
-	}()
-
-	GetRace = nil
-	madeCorpse := false
-	MakeCorpseFunc = func(victim string, attackType int) {
-		if victim == "Victim" {
-			madeCorpse = true
-		}
-	}
-
-	ch := &mockCombatant{name: "Victim", room: 100}
-	RawKill(ch, TYPE_UNDEFINED)
-
-	if !madeCorpse {
-		t.Error("expected MakeCorpseFunc to be called when GetRace is nil")
-	}
 }

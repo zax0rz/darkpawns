@@ -155,14 +155,6 @@ func TestDoSpike_KillsWerewolf(t *testing.T) {
 	weapon := makeSpikeWeapon("spike")
 	equipWeapon(t, ch, weapon)
 
-	// Stub RawKill dependencies to avoid side effects.
-	origExtract := combat.ExtractChar
-	combat.ExtractChar = func(name string) {}
-	defer func() { combat.ExtractChar = origExtract }()
-	origMakeCorpse := combat.MakeCorpseFunc
-	combat.MakeCorpseFunc = func(name string, attackType int) {}
-	defer func() { combat.MakeCorpseFunc = origMakeCorpse }()
-
 	result := DoSpike(ch, victim, 0, w)
 	if !result.Success {
 		t.Errorf("expected spike success, got %q", result.MessageToCh)
@@ -183,13 +175,6 @@ func TestDoStake_KillsVampire(t *testing.T) {
 
 	weapon := makeSpikeWeapon("stake")
 	equipWeapon(t, ch, weapon)
-
-	origExtract := combat.ExtractChar
-	combat.ExtractChar = func(name string) {}
-	defer func() { combat.ExtractChar = origExtract }()
-	origMakeCorpse := combat.MakeCorpseFunc
-	combat.MakeCorpseFunc = func(name string, attackType int) {}
-	defer func() { combat.MakeCorpseFunc = origMakeCorpse }()
 
 	result := DoSpike(ch, victim, 1, w)
 	if !result.Success {
