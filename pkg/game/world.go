@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/boards"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -90,7 +91,7 @@ type World struct {
 	Clans *ClanManager
 
 	// Boards system — initialized via GetOrInitBoards()
-	Boards *BoardSystem
+	Boards *boards.BoardSystem
 
 	// Bans — site ban list + invalid name filter (ported from ban.c)
 	Bans *BanManager
@@ -802,6 +803,13 @@ func (w *World) GetPlayersInRoom(roomVNum int) []*Player {
 		}
 	}
 	return players
+}
+
+// RoomEcho broadcasts a message to all players in the given room,
+// optionally excluding one player by name. It satisfies the boards.BoardWorld
+// interface for the extracted board system.
+func (w *World) RoomEcho(roomVNum int, message string, excludeName string) {
+	actToRoom(w, roomVNum, message, excludeName)
 }
 
 // MovePlayer moves a player to a new room if the exit exists and doors permit.
