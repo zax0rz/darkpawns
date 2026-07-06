@@ -35,14 +35,9 @@ func cmdShow(s *Session, args []string) error {
 		s.Send(fmt.Sprintf("Sessions: %d", sessionCount))
 	case "reset":
 		zones := s.manager.world.GetAllZones()
-		zd := s.manager.world.GetZoneDispatcher()
 		var buf strings.Builder
 		fmt.Fprintf(&buf, "Zone Reset Information (%d zones):\r\n", len(zones))
 		for _, z := range zones {
-			ticks := uint64(0)
-			if zd != nil {
-				ticks = zd.ZoneTicks(z.Number)
-			}
 			resetInterval := "never"
 			if z.Lifespan > 0 {
 				resetInterval = fmt.Sprintf("%d min", z.Lifespan)
@@ -54,8 +49,8 @@ func cmdShow(s *Session, args []string) error {
 			case 2:
 				resetMode = "always"
 			}
-			fmt.Fprintf(&buf, "  [%5d] %-30s reset=%s mode=%s ticks=%d\r\n",
-				z.Number, z.Name, resetInterval, resetMode, ticks)
+			fmt.Fprintf(&buf, "  [%5d] %-30s reset=%s mode=%s\r\n",
+				z.Number, z.Name, resetInterval, resetMode)
 		}
 		s.Send(buf.String())
 	default:

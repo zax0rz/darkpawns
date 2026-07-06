@@ -216,11 +216,9 @@ func main() {
 	// Start AI ticker: mob AI loop + event queue (DP-427)
 	gameWorld.StartAITicker()
 
-	// Start game loop (heartbeat, point_update, mobile activity, combat ticks)
+	// Start game loop (heartbeat, mobile activity, combat ticks).
+	// PointUpdate is driven by World's standalone 30s ticker, not this loop.
 	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{
-		OnPointUpdate: func() {
-			gameWorld.PointUpdate()
-		},
 		OnPerformViolence: func() {
 			// Combat engine handles its own 2s tick via CombatEngine.Start()
 		},
@@ -336,8 +334,6 @@ func main() {
 			slog.Info("World state restored")
 		}
 
-		// ZoneDispatcher is implemented but not yet wired in. See pkg/game/zone_dispatcher.go.
-		// Using serial periodic resets for now. Wire in StartZoneDispatcher() when ready.
 		gameWorld.StartPeriodicResets(60 * time.Second)
 	}()
 
@@ -411,6 +407,13 @@ func main() {
 
 	// 1. Stop heartbeat callbacks before draining sessions or saving world state.
 	gameLoop.Stop()
+
+	// 1a. Stop standalone world tickers so they cannot mutate state during save.
+	// The AI ticker and point update ticker share the World's done channel;
+	// StopAITicker closes it and stops both. StopPeriodicResets ends the
+	// zone-reset goroutine started in the boot goroutine below.
+	gameWorld.StopAITicker()
+	gameWorld.StopPeriodicResets()
 
 	// 2. Stop telnet listener (accepting new TCP connections)
 	telnet.Stop()

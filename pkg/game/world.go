@@ -68,6 +68,7 @@ type World struct {
 	// AI tick management
 	aiticker *time.Ticker
 	done     chan bool
+	doneOnce sync.Once
 
 	// Spawner
 	spawner *Spawner
@@ -81,9 +82,6 @@ type World struct {
 
 	// Events is the typed event bus for decoupled subsystem communication.
 	Events events.Bus
-
-	// Zone dispatcher for per-zone goroutine processing
-	zoneDispatcher *ZoneDispatcher
 
 	// House control records — loaded by HouseBoot() during initialization
 	HouseControl []HouseControl
@@ -180,10 +178,6 @@ func NewWorld(parsed *parser.World) (*World, error) {
 
 	// Initialize typed event bus
 	w.Events = events.NewInProcessBus()
-
-	// Initialize zone dispatcher (per-zone goroutine processing)
-	// Interval matches game pulse rate (~100ms)
-	w.zoneDispatcher = NewZoneDispatcher(w, 100*time.Millisecond)
 
 	// Start AI ticker
 	w.StartAITicker()
@@ -926,11 +920,15 @@ func sectorMoveCost(sector int) int {
 	}
 }
 
-// StopAITicker stops the AI tick loop.
+// StopAITicker stops the AI tick loop and the point-update ticker (they share
+// the World's done channel). Safe to call multiple times.
 func (w *World) StopAITicker() {
-	if w.done != nil {
-		close(w.done)
+	if w.done == nil {
+		return
 	}
+	w.doneOnce.Do(func() {
+		close(w.done)
+	})
 }
 
 // SpawnMob spawns a mob in the world.

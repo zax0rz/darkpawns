@@ -22,8 +22,7 @@
 // │  10. Spawner.mu        — zone reset scheduling                     │
 // │  11. BoardState.mu     — bulletin board messages                   │
 // │  12. Shop.mu           — shop inventory, pricing                   │
-// │  13. ZoneDispatcher.mu — zone command routing                      │
-// │  14. logWriterMu       — log file writes (independent)             │
+// │  13. logWriterMu       — log file writes (independent)             │
 // └─────────────────────────────────────────────────────────────────────┘
 //
 // Rules:

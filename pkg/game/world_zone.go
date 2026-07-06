@@ -135,31 +135,19 @@ func (w *World) StartZoneResets() error {
 	return nil
 }
 
-// StartZoneDispatcher starts per-zone goroutines for resets and AI.
-func (w *World) StartZoneDispatcher() {
-	if w.zoneDispatcher != nil {
-		w.zoneDispatcher.Start()
-	}
-}
-
-// StopZoneDispatcher gracefully stops all zone goroutines.
-func (w *World) StopZoneDispatcher() {
-	if w.zoneDispatcher != nil {
-		w.zoneDispatcher.Stop()
-	}
-}
-
-// GetZoneDispatcher returns the zone dispatcher.
-func (w *World) GetZoneDispatcher() *ZoneDispatcher {
-	return w.zoneDispatcher
-}
-
 // StartPeriodicResets starts periodic zone reset checks.
 func (w *World) StartPeriodicResets(interval time.Duration) {
 	if w.spawner == nil {
 		w.spawner = NewSpawner(w)
 	}
 	w.spawner.StartPeriodicResets(interval)
+}
+
+// StopPeriodicResets signals the periodic zone reset goroutine to exit cleanly.
+func (w *World) StopPeriodicResets() {
+	if w.spawner != nil {
+		w.spawner.StopPeriodicResets()
+	}
 }
 
 // GetSpawner returns the world's spawner.

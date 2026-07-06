@@ -53,7 +53,8 @@ type Spawner struct {
 	zoneTimers map[int]*time.Timer // key: zone number
 
 	// done signals the periodic reset goroutine to stop.
-	done chan struct{}
+	done     chan struct{}
+	doneOnce sync.Once
 }
 
 // NewSpawner creates a new spawner for the given world.
@@ -684,10 +685,14 @@ func (s *Spawner) StartPeriodicResets(interval time.Duration) {
 }
 
 // StopPeriodicResets signals the periodic reset goroutine to exit cleanly.
+// Safe to call multiple times.
 func (s *Spawner) StopPeriodicResets() {
-	if s.done != nil {
-		close(s.done)
+	if s.done == nil {
+		return
 	}
+	s.doneOnce.Do(func() {
+		close(s.done)
+	})
 }
 
 // resetEmptyZones resets zones that have no active players in them.

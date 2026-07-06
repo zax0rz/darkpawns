@@ -202,7 +202,7 @@ func (w *World) StartAITicker() {
 
 // StartPointUpdateTicker starts the regen/hunger/thirst tick loop.
 // Source: limits.c point_update() — called every ~75 pulses in stock CircleMUD.
-// Dark Pawns uses a faster tick (30 seconds).
+// Dark Pawns uses a faster tick (30 seconds); this ticker is the sole driver.
 func (w *World) StartPointUpdateTicker(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	go func() {
