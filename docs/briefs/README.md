@@ -197,3 +197,43 @@ Then wait for Daeron to review and merge. Do NOT merge the PR yourself.
 - `BRIEF-YYYY-MM-DD-<slug>.md` for time-boxed batches
 - `BRIEF-<CATEGORY>-<NNN>-<slug>.md` for standalone work
   - Categories: SECURITY, INFRA, CLEANUP, CODE, FEATURE
+
+---
+
+## CI Pipeline
+
+The CI runs on every push to `main` and every PR against `main`. Config: `.github/workflows/ci.yml`. **All checks must pass before merging.**
+
+### Jobs
+
+| Job | What it runs | Gate? |
+|-----|-------------|-------|
+| **test** | `go test -race ./...` (all packages except tests/unit), `go build ./...`, Python pytest (non-e2e), binary build + 10s startup smoke | ✅ Required |
+| **lint** | `golangci-lint run ./...` (v2.12.2, pinned to match Go 1.26.4), `gofumpt` format check | ✅ Required |
+| **build-and-push** | Docker image build + push to ghcr.io (main branch only, `zax0rz` owner only) | Conditional |
+| **deploy** | kubectl apply to k8s (main branch push only, requires KUBECONFIG secret) | Conditional |
+
+### Build Gate (local, run before every commit)
+
+```bash
+go build ./...    # Compilation
+go vet ./...      # Static analysis
+go test ./...     # All tests
+```
+
+CI runs **`go test -race`** which is stricter than local `go test`. If CI fails with a race detection that local tests didn't catch, it means the concurrent code path is only exercised under CI's parallel test runner.
+
+### Lint Rules
+
+- **golangci-lint** uses `.golangci.yml` config (v2-style, matching golangci-lint v2.12.2)
+- **gofumpt** — stricter than `gofmt` (enforces parenthesized return types, etc.)
+- Common failures:
+  - `SA4000` — identical expressions in comparison (e.g., `3.0 / 3.0`)
+  - `SA1019` — deprecated type/field usage
+  - `gocritic` — comment formatting on `// Deprecated:` (must be in its own paragraph)
+
+### What's NOT in CI (yet)
+
+- **e2e smoke test** (`scripts/smoke_test_2b.py`) — not wired. See COV-5 (DP-966) for the plan.
+- **Docker Compose integration** — no compose-based test exists yet
+- **Coverage reporting** — no `codecov` or similar; coverage tracked manually via `go test -cover`
