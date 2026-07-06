@@ -94,7 +94,6 @@ jobs:
         echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
 
     - name: Run Python e2e smoke test
-      continue-on-error: true
       run: |
         pip install websockets
         python3 scripts/smoke_test_2b.py --ws-url ws://localhost:4350/ws
