@@ -928,11 +928,10 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 		if moveErr == nil {
 			// Movement point cost
 			moveCost := (sectorMoveCost(currentRoom.Sector) + sectorMoveCost(newRoom.Sector)) / 2
-			if p.GetMove() < moveCost {
+			if !p.SpendMove(moveCost) {
 				errMsg = "You are too exhausted.\r\n"
 				moveErr = fmt.Errorf("too exhausted")
 			} else {
-				p.SetMove(p.GetMove() - moveCost)
 				p.RoomVNum = newRoom.VNum
 
 				// Adjust room light for equipped light sources

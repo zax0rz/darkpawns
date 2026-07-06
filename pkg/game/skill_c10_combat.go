@@ -58,10 +58,9 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
 
-	if ch.GetMove() < 10 {
+	if !ch.SpendMove(10) {
 		return SkillResult{Success: false, MessageToCh: "You're too exhausted!"}
 	}
-	ch.SetMove(ch.GetMove() - 10)
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
@@ -241,10 +240,9 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 	if func() bool { _, ok := ch.Equipment.GetItemInSlot(SlotWield); return ok }() {
 		return SkillResult{Success: false, MessageToCh: "You can't do this and wield a weapon at the same time!"}
 	}
-	if ch.GetMove() < 51 {
+	if !ch.SpendMove(51) {
 		return SkillResult{Success: false, MessageToCh: "You haven't the energy to do this!"}
 	}
-	ch.SetMove(ch.GetMove() - 51)
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404

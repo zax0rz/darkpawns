@@ -246,7 +246,8 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	// Movement points needed is avg of src and dest sector movement loss
 	needMovement := (movementLoss[room.Sector] + movementLoss[toRoom.Sector]) >> 1
 
-	if ch.GetMove() < needMovement {
+	// Deduct movement if mortal
+	if ch.GetLevel() < lvlImmort && !ch.SpendMove(needMovement) {
 		if needSpecialsCheck && ch.GetFollowing() != "" {
 			sendToChar(ch, "You are too exhausted to follow.\r\n")
 		} else {
@@ -269,11 +270,6 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	// Leave message
 	if !ch.IsAffected(affSneak) {
 		w.roomMessage(wasIn, fmt.Sprintf("$n leaves %s.", dirs[dir]))
-	}
-
-	// Deduct movement
-	if ch.GetLevel() < lvlImmort {
-		ch.SetMove(ch.GetMove() - needMovement)
 	}
 
 	// Move character

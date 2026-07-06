@@ -858,7 +858,7 @@ func specJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 			move = 1
 		}
 		ch.SetGold(ch.GetGold() - gold)
-		ch.SetMove(ch.GetMove() - move)
+		ch.SpendMove(move)
 		sendToChar(ch, "A guard opens the cell door and lets you out.\r\n")
 		ch.SetRoom(8117) // release room per C source
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s is released from jail.", ch.GetName()))

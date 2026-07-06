@@ -174,6 +174,21 @@ func (p *Player) SetMove(v int) {
 	p.Move = v
 }
 
+// SpendMove atomically checks and deducts move points.
+// Returns true if deduction succeeded, false if insufficient move points.
+func (p *Player) SpendMove(n int) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if n <= 0 {
+		return true
+	}
+	if p.Move < n {
+		return false
+	}
+	p.Move -= n
+	return true
+}
+
 // GetMaxMove returns the player's maximum movement points.
 func (p *Player) GetMaxMove() int {
 	p.mu.RLock()

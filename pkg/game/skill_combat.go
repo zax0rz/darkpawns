@@ -141,10 +141,9 @@ func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	// Check move points
-	if ch.GetMove() < 10 {
+	if !ch.SpendMove(10) {
 		return SkillResult{Success: false, MessageToCh: "You haven't the energy!"}
 	}
-	ch.SetMove(ch.GetMove() - 10)
 
 	// Bash formula: percent = ((5 - (GET_AC(vict)/10)) << 1) + number(1,101)
 	// prob = GET_SKILL(ch, SKILL_BASH)
