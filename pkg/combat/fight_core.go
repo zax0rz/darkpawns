@@ -9,29 +9,71 @@ import (
 
 // ---------------------------------------------------------------------------
 // Game-layer hooks
-//
-// These package-level hooks are used by the legacy skill/spell/DamMessage path
-// in fight_core.go. They are wired during initialization:
-//   - BroadcastMessage, SendToCharFunc, DoFlee, DoRetreat in pkg/session/manager.go
-//   - SkillMessageFunc in pkg/combat/skill_messages.go (via InitSkillMessages)
-//   - NowUnix defaults to a zero-returning function below
-//   - GetExp is optional; callers must nil-guard it
-//
-// The primary combat path is CombatEngine struct callbacks (BroadcastFunc,
-// MessageFunc, DeathFunc, etc.). These package-level vars remain for legacy
-// fight_core functions that do not receive an engine reference.
-//
-// All hooks are nil-guarded at every call site.
 // ---------------------------------------------------------------------------
 
 var (
-	BroadcastMessage func(roomVNum int, msg string, exclude string)
-	SendToCharFunc   func(name string, msg string)
-	DoFlee           func(name string)
-	DoRetreat        func(name string)
-	SkillMessageFunc func(dam int, ch, vict string, attackType int, roomVNum int) bool
-	GetExp           func(name string) int
-	NowUnix          = func() int64 { return 0 }
+	BroadcastMessage         func(roomVNum int, msg string, exclude string)
+	SkillMessageFunc         func(dam int, ch, vict string, attackType int, roomVNum int) bool
+	GainExp                  func(name string, amount int)
+	ExtractChar              func(name string)
+	MakeCorpseFunc           func(victim string, attackType int)
+	MakeDustFunc             func(victim string, attackType int)
+	LogMessage               func(msg string, level string, minLevel int, toLog bool)
+	IsShopkeeper             func(name string) bool
+	GetRace                  func(name string) int
+	GetRaceHate              func(name string, index int) int
+	HasAffect                func(name string, aff int) bool
+	HasAffectStr             func(name string, aff string) bool
+	GetCharacterSex          func(name string) int
+	RemoveAffect             func(name string, skillNum int)
+	RemoveAllAffects         func(name string)
+	RunDeathScript           func(killer, victim string, roomVNum int)
+	RunFightScript           func(mob, target string, roomVNum int)
+	HasScriptFlag            func(name string, flag string) bool
+	HasMobFlag               func(name string, flag string) bool
+	HasMobVNum               func(name string, vnum int) bool
+	HasRoomFlag              func(roomVNum int, flag string) bool
+	HasPrfFlag               func(name string, flag string) bool
+	HasPlrFlag               func(name string, flag string) bool
+	SetPlrFlag               func(name string) bool
+	IsMounted                func(name string) bool
+	Dismount                 func(name string)
+	GetWimpyLev              func(name string) int
+	GetSkill                 func(name string, skillNum int) int
+	DoFlee                   func(name string)
+	DoRetreat                func(name string)
+	GetKills                 func(name string) int64
+	SetKills                 func(name string, kills int64)
+	GetDeaths                func(name string) int64
+	SetDeaths                func(name string, deaths int64)
+	SetLastDeath             func(name string, t int64)
+	GetConstitution          func(name string) int
+	SetConstitution          func(name string, val int)
+	GetPks                   func(name string) int64
+	SetPks                   func(name string, pks int64)
+	Unmount                  func(name string)
+	GetAlignment             func(name string) int
+	SetAlignment             func(name string, val int)
+	GetExp                   func(name string) int
+	BuildTHAC0               func(class, level int) int
+	GetWeaponInfo            func(chName string) (wType, damDice, damSize int, isBlessed bool)
+	GetAdjacentRoom          func(roomVNum, door int) int
+	GetFollowersInRoom       func(name string, roomVNum int) int
+	GetMasterInRoom          func(name string, roomVNum int) bool
+	GetFellowFollowersInRoom func(name string, roomVNum int) bool
+	CountGroupMembers        func(leaderName string, roomVNum int) int
+	ApplyToGroupMembers      func(leaderName string, roomVNum int, fn func(name string))
+	PerformCommand           func(chName, cmd string)
+	BroadChatFunc            func(chName string, msg string)
+	// JunkInventoryItems is called by AttitudeLoot to discard cheap items ($GOLD_OBJ_COST <= 150)
+	// from the mob's inventory. The game layer provides this because it has direct object access.
+	JunkInventoryItems func(chName string)
+	IsInRoom           func(name string, roomVNum int) bool
+	IncreaseMaxStat    func(name string, stat string) // "hp", "mana", or "move"
+	HealAllPlayers     func()                         // Heal all connected players to full
+	GetGold            func(name string) int
+	SetGold            func(name string, gold int)
+	SendToCharFunc     func(name string, msg string) // Send message to single character
 )
 
 // ---------------------------------------------------------------------------
@@ -168,6 +210,11 @@ func fleshAlteredType(level int) int {
 // **********************************
 
 func Appear(ch Combatant) {
+	if HasAffect != nil && HasAffect(ch.GetName(), SPELL_INVISIBLE) {
+		if RemoveAffect != nil {
+			RemoveAffect(ch.GetName(), SPELL_INVISIBLE)
+		}
+	}
 	msg := fmt.Sprintf("%s slowly fades into existence.", ch.GetName())
 	if ch.GetLevel() >= LVL_IMMORT {
 		msg = fmt.Sprintf("You feel a strange presence as %s appears, seemingly from nowhere.", ch.GetName())
@@ -201,16 +248,57 @@ func GetPositionFromHP(hp, currentPos int) int {
 }
 
 // **********************************
+// 3. changeAlignment()
+// **********************************
+
+func ChangeAlignment(killer, victim Combatant) {
+	if killer.IsNPC() {
+		return
+	}
+	if GetAlignment == nil {
+		return
+	}
+	victimAlign := GetAlignment(victim.GetName())
+	killerAlign := GetAlignment(killer.GetName())
+	if victimAlign > -350 && victimAlign < 350 {
+		return
+	}
+	newAlign := killerAlign + (-victimAlign-killerAlign)>>4
+	if newAlign > 1000 {
+		newAlign = 1000
+	}
+	if newAlign < -1000 {
+		newAlign = -1000
+	}
+	if SetAlignment != nil {
+		SetAlignment(killer.GetName(), newAlign)
+	}
+}
+
+// **********************************
 // 4. deathCry()
 // **********************************
 
 func DeathCry(ch Combatant) string {
+	var rooms []string
 	roomVNum := ch.GetRoom()
 	msg := fmt.Sprintf("Your blood freezes as you hear %s's death cry.", ch.GetName())
 	if BroadcastMessage != nil {
 		BroadcastMessage(roomVNum, msg, "")
 	}
-	return fmt.Sprintf("%d", roomVNum)
+	rooms = append(rooms, fmt.Sprintf("%d", roomVNum))
+	for door := 0; door < NUM_OF_DIRS; door++ {
+		if GetAdjacentRoom != nil {
+			adjRoom := GetAdjacentRoom(roomVNum, door)
+			if adjRoom >= 0 {
+				if BroadcastMessage != nil {
+					BroadcastMessage(adjRoom, "Your blood freezes as you hear someone's death cry.", "")
+				}
+				rooms = append(rooms, fmt.Sprintf("%d", adjRoom))
+			}
+		}
+	}
+	return strings.Join(rooms, ";")
 }
 
 // **********************************
@@ -226,15 +314,57 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	roomVNum := ch.GetRoom()
 
 	if ch.GetRoom() != victim.GetRoom() {
+		if !ch.IsNPC() || ch.GetLevel() >= LVL_IMMORT {
+			if LogMessage != nil {
+				LogMessage("Attempt to assign damage when ch and vict are in different rooms.",
+					"NRM", LVL_IMMORT, false)
+			}
+		}
 		return false
+	}
+
+	isOutlaw := HasPlrFlag != nil && HasPlrFlag(victimName, "PLR_OUTLAW")
+	if !isOutlaw && victim.GetFighting() != chName && chName != victimName {
+		if HasRoomFlag != nil && HasRoomFlag(roomVNum, "ROOM_PEACEFUL") {
+			return false
+		}
 	}
 
 	if victimName != chName && !ch.IsNPC() && !victim.IsNPC() {
 		if ch.GetLevel() <= 10 {
 			return false
 		}
-		if victim.GetLevel() <= 10 {
+		if victim.GetLevel() <= 10 && !isOutlaw {
 			return false
+		}
+	}
+
+	if IsShopkeeper != nil && IsShopkeeper(victimName) {
+
+		if ch.GetFighting() != "" {
+			ch.StopFighting()
+		}
+		if victim.GetFighting() != "" {
+			victim.StopFighting()
+		}
+		return false
+	}
+
+	// jail guard logic (fight.c:1370): guards respond to PK in cities
+	if ch.IsNPC() && !victim.IsNPC() && HasMobVNum != nil &&
+		(HasMobVNum(chName, 8102) || HasMobVNum(chName, 8103)) {
+		if dam > 0 && ch.GetHP() > ch.GetMaxHP()/2 {
+			hasVampire := HasAffectStr != nil && HasAffectStr(victimName, AFF_STR_VAMPIRE)
+			hasWerewolf := HasAffectStr != nil && HasAffectStr(victimName, AFF_STR_WEREWOLF)
+			if !hasVampire && !hasWerewolf {
+				if BroadcastMessage != nil {
+					BroadcastMessage(ch.GetRoom(),
+						fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
+							chName, victimName, victimName), "")
+				}
+				victim.StopFighting()
+				return false
+			}
 		}
 	}
 
@@ -242,9 +372,71 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		if ch.GetFighting() == "" {
 			ch.SetFighting(victimName)
 		}
+
+		// charm retarget (fight.c:1410): charmed NPC attacking their master's friend
+		// In C: if victim is charmed and master in room, hit(ch, victim->master, TYPE_UNDEFINED)
+		// Can't construct a Combatant for master here — game layer handles via hooks.
+		// We leave a comment; the PerformCommand/Flee/etc hooks should cover it.
+
+		// NPC target switching (fight.c:1420): high-level NPCs switch to highest-damage attacker
+		// Aggro list tracking is done via game-layer hooks.
+		// The C code iterates room people to find FIGHTING(vict)==ch, remembers via memory.
+		// This is inherently game-layer; we signal intent via PerformCommand if possible.
+
 		if victim.GetPosition() > PosStunned && victim.GetFighting() == "" {
 			victim.SetFighting(chName)
+			// MOB_MEMORY: NPC remembers PC attacker (fight.c:1445)
+			if HasMobFlag != nil && HasMobFlag(victimName, "MOB_MEMORY") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
+				if PerformCommand != nil {
+					PerformCommand(victimName, fmt.Sprintf("remember %s", chName))
+				}
+			}
+			// MOB_HUNTER: NPC starts hunting PC attacker (fight.c:1449)
+			if HasMobFlag != nil && HasMobFlag(victimName, "MOB_HUNTER") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
+				if PerformCommand != nil {
+					PerformCommand(victimName, fmt.Sprintf("hunt %s", chName))
+				}
+			}
 		}
+		// MOB_HUNTER: attacker also hunts victim (fight.c:1453)
+		if HasMobFlag != nil && HasMobFlag(chName, "MOB_HUNTER") && !victim.IsNPC() && victim.GetLevel() < LVL_IMMORT {
+			if PerformCommand != nil {
+				PerformCommand(chName, fmt.Sprintf("hunt %s", victimName))
+			}
+		}
+	}
+
+	// stop_follower: if victim follows ch, break following (fight.c:1457)
+	// Handled via game-layer hooks.
+
+	// AFF_HIDE: attacker becomes visible on offensive action (fight.c:1459)
+	if HasAffect != nil && HasAffect(chName, AFF_HIDE) {
+		if RemoveAffect != nil {
+			RemoveAffect(chName, AFF_HIDE)
+		}
+		if BroadcastMessage != nil {
+			BroadcastMessage(ch.GetRoom(),
+				fmt.Sprintf("%s slowly fades into existence.", chName), chName)
+		}
+	}
+
+	if GetRaceHate != nil && GetRace != nil {
+		victimRace := GetRace(victimName)
+		for i := 0; i < 5; i++ {
+			if GetRaceHate(chName, i) == victimRace {
+				dam += ch.GetLevel() // no break — C applies for every matching slot
+			}
+		}
+	}
+
+	if HasAffect != nil && HasAffect(victimName, AFF_SANCTUARY) {
+		dam /= 2
+	}
+	if HasAffect != nil && HasAffect(victimName, AFF_PROTECT_EVIL) && GetAlignment != nil && GetAlignment(chName) <= -350 {
+		dam -= victim.GetLevel() / 4
+	}
+	if HasAffect != nil && HasAffect(victimName, AFF_PROTECT_GOOD) && GetAlignment != nil && GetAlignment(chName) >= 350 {
+		dam -= victim.GetLevel() / 4
 	}
 
 	if !victim.IsNPC() && victim.GetLevel() >= LVL_IMMORT {
@@ -260,7 +452,30 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 
 	victim.TakeDamage(dam)
 
+	if chName != victimName && !ch.IsNPC() && ch.GetLevel() < 2 {
+		if GainExp != nil {
+			GainExp(chName, victim.GetLevel()*dam)
+		}
+	}
+
 	newPos := GetPositionFromHP(victim.GetHP(), victim.GetPosition())
+
+	if newPos <= PosStunned {
+		if ch.IsNPC() && !victim.IsNPC() && victim.GetLevel() <= 5 {
+			ch.StopFighting()
+		}
+		if !victim.IsNPC() && HasRoomFlag != nil && HasRoomFlag(victim.GetRoom(), "ROOM_NEUTRAL") {
+			if victim.GetFighting() != "" {
+				victim.StopFighting()
+			}
+			victim.TakeDamage(-(victim.GetHP() - 1))
+			if BroadcastMessage != nil {
+				BroadcastMessage(victim.GetRoom(),
+					fmt.Sprintf("%s is saved by the powers of the gods!", victimName), "")
+			}
+			return false
+		}
+	}
 
 	isWeapon := attackType >= TYPE_HIT && attackType < TYPE_SUFFERING
 	if !isWeapon {
@@ -278,6 +493,12 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			}
 		} else {
 			DamMessage(dam, ch, victim, attackType-TYPE_HIT)
+		}
+	}
+
+	if !victim.IsNPC() && IsMounted != nil && IsMounted(victimName) && dam > 0 && GetRoller().IntN(100) < 10 {
+		if Dismount != nil {
+			Dismount(victimName)
 		}
 	}
 
@@ -311,8 +532,23 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 		if victim.GetHP() < victim.GetMaxHP()/4 {
 			victim.SendMessage("You wish that your wounds would stop BLEEDING so much!\r\n")
-			if DoFlee != nil {
-				DoFlee(victimName)
+			if HasMobFlag != nil && HasMobFlag(victimName, "MOB_WIMPY") && chName != victimName {
+				if DoFlee != nil {
+					DoFlee(victimName)
+				}
+			}
+			if !victim.IsNPC() && GetWimpyLev != nil && GetWimpyLev(victimName) > 0 &&
+				victimName != chName && newPos >= PosFighting &&
+				victim.GetHP() < GetWimpyLev(victimName) {
+				hasRetreat := GetSkill != nil && GetSkill(victimName, SKILL_RETREAT) > 0
+				hasEscape := GetSkill != nil && GetSkill(victimName, SKILL_ESCAPE) > 0
+				if hasRetreat || hasEscape {
+					if DoRetreat != nil {
+						DoRetreat(victimName)
+					}
+				} else if DoFlee != nil {
+					DoFlee(victimName)
+				}
 			}
 		}
 	}
@@ -326,10 +562,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			if IsInGroup(ch) {
 				GroupGain(ch, victim)
 			} else {
-				exp := 0
-				if GetExp != nil {
-					exp = GetExp(victimName)
-				}
+				exp := GetExp(victimName)
 				if exp > maxExpGain {
 					exp = maxExpGain
 				}
@@ -340,11 +573,96 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 				} else {
 					ch.SendMessage("You receive one lousy experience point.\r\n")
 				}
+				if !ch.IsNPC() && GainExp != nil {
+					GainExp(chName, exp)
+				}
+
+				// autogold on kill (fight.c:1654)
+				if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOGOLD") {
+					if PerformCommand != nil {
+						PerformCommand(chName, "get all gold corpse")
+					}
+				}
+
+				// autosplit — fight.c:756-830
+				if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOSPLIT") && GetGold != nil && SetGold != nil && ApplyToGroupMembers != nil {
+					gold := GetGold(chName)
+					if gold > 0 {
+						numMembers := CountGroupMembers(chName, ch.GetRoom())
+						if numMembers > 1 {
+							perMember := gold / numMembers
+							if perMember > 0 {
+								ApplyToGroupMembers(chName, ch.GetRoom(), func(memberName string) {
+									if memberName != chName {
+										if SetGold != nil {
+											SetGold(memberName, GetGold(memberName)+perMember)
+										}
+									}
+								})
+								ch.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", perMember))
+								SetGold(chName, GetGold(chName)-gold+perMember+(gold%numMembers))
+							} else {
+								ch.SendMessage("You split no gold, you got none.\r\n")
+							}
+						}
+					}
+				}
+
+				ChangeAlignment(ch, victim)
 			}
+		}
+
+		// player death section (fight.c:1665)
+		if !victim.IsNPC() {
+			if !ch.IsNPC() && chName != victimName {
+				// Pkill (fight.c:1672)
+				if LogMessage != nil {
+					LogMessage(fmt.Sprintf("(PK) %s killed by %s at room %d", victimName, chName, roomVNum),
+						"BRF", LVL_IMMORT, true)
+				}
+				// flag killer as outlaw if victim wasn't one (fight.c:1675)
+				if HasPlrFlag != nil && !HasPlrFlag(victimName, "PLR_OUTLAW") {
+					if SetPlrFlag != nil {
+						SetPlrFlag(chName)
+					}
+				}
+			} else {
+				if LogMessage != nil {
+					LogMessage(fmt.Sprintf("%s killed by %s at room %d", victimName, chName, roomVNum),
+						"BRF", LVL_IMMORT, true)
+				}
+			}
+			if chName != victimName && GetPks != nil && SetPks != nil {
+				SetPks(chName, GetPks(chName)+1)
+			}
+			if GetDeaths != nil && SetDeaths != nil {
+				SetDeaths(victimName, GetDeaths(victimName)+1)
+			}
+			if SetLastDeath != nil {
+				SetLastDeath(victimName, NowUnix())
+			}
+		}
+
+		if GetKills != nil && SetKills != nil {
+			SetKills(chName, GetKills(chName)+1)
 		}
 
 		CounterProcs(ch)
 		DieWithKiller(victim, ch, attackType)
+
+		if chName != victimName && HasMobFlag != nil &&
+			(HasMobFlag(chName, "MOB_AGGR24") || HasMobFlag(chName, "MOB_LOOTS")) {
+			AttitudeLoot(ch, victim)
+		}
+
+		// autoloot on kill (fight.c:1708)
+		if !ch.IsNPC() && victim.IsNPC() && chName != victimName {
+			if HasPrfFlag != nil && HasPrfFlag(chName, "PRF_AUTOLOOT") {
+				if PerformCommand != nil {
+					PerformCommand(chName, "get all corpse")
+				}
+			}
+		}
 	}
 
 	if dam > 0 {
@@ -352,6 +670,8 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	}
 	return false
 }
+
+var NowUnix = func() int64 { return 0 }
 
 // ---------------------------------------------------------------------------
 // Skill message functions for DamMessage
@@ -689,6 +1009,22 @@ func BackstabMult(level int) float64 {
 // **********************************
 
 func IsInGroup(ch Combatant) bool {
+	chName := ch.GetName()
+	chRoom := ch.GetRoom()
+	if HasAffectStr != nil && HasAffectStr(chName, AFF_STR_GROUP) {
+		if ch.GetName() == "" {
+			if GetFollowersInRoom != nil {
+				return GetFollowersInRoom(chName, chRoom) > 0
+			}
+		} else {
+			if GetMasterInRoom != nil && GetMasterInRoom(chName, chRoom) {
+				return true
+			}
+			if GetFellowFollowersInRoom != nil && GetFellowFollowersInRoom(chName, chRoom) {
+				return true
+			}
+		}
+	}
 	return false
 }
 
@@ -730,21 +1066,40 @@ func PerformGroupGain(ch, victim Combatant, base int) {
 	} else {
 		ch.SendMessage("You receive your share of experience -- one measly little point!\r\n")
 	}
+	if !ch.IsNPC() && GainExp != nil {
+		GainExp(ch.GetName(), share)
+	}
+	ChangeAlignment(ch, victim)
 }
 
 func GroupGain(ch, victim Combatant) {
-	victimExp := 0
-	if GetExp != nil {
-		victimExp = GetExp(victim.GetName())
+	leaderName := ch.GetName()
+	if leaderName == "" {
+		leaderName = ch.GetName()
 	}
-	base := victimExp
+	numMembers := 1
+	if CountGroupMembers != nil {
+		numMembers = CountGroupMembers(leaderName, ch.GetRoom())
+	}
+	if numMembers < 1 {
+		numMembers = 1
+	}
+
+	victimExp := GetExp(victim.GetName())
+	base := victimExp / numMembers
 	if base > 100 {
 		base -= int(float64(base) * 0.01)
 	}
 	if base < 1 {
 		base = 1
 	}
-	PerformGroupGain(ch, victim, base)
+
+	if ApplyToGroupMembers != nil {
+		ApplyToGroupMembers(leaderName, ch.GetRoom(), func(memberName string) {
+			m := NewNamedCombatant(memberName, ch.GetRoom())
+			PerformGroupGain(m, victim, base)
+		})
+	}
 }
 
 // **********************************
@@ -752,13 +1107,39 @@ func GroupGain(ch, victim Combatant) {
 // **********************************
 
 func RawKill(ch Combatant, attackType int) {
+	chName := ch.GetName()
 	if ch.GetRoom() < 0 {
 		return
 	}
 	if ch.GetFighting() != "" {
 		ch.StopFighting()
 	}
+	if RemoveAllAffects != nil {
+		RemoveAllAffects(chName)
+	}
+	if Unmount != nil {
+		Unmount(chName)
+	}
 	DeathCry(ch)
+
+	// Default to corpse unless GetRace tells us the victim is undead/vampire.
+	makeDust := false
+	if GetRace != nil {
+		victimRace := GetRace(chName)
+		makeDust = victimRace == RACE_UNDEAD || victimRace == RACE_VAMPIRE
+	}
+	if makeDust {
+		if MakeDustFunc != nil {
+			MakeDustFunc(chName, attackType)
+		}
+	} else {
+		if MakeCorpseFunc != nil {
+			MakeCorpseFunc(chName, attackType)
+		}
+	}
+	if ExtractChar != nil {
+		ExtractChar(chName)
+	}
 }
 
 // **********************************
@@ -766,6 +1147,31 @@ func RawKill(ch Combatant, attackType int) {
 // **********************************
 
 func DieWithKiller(ch, killer Combatant, attackType int) {
+	chName := ch.GetName()
+
+	if GainExp != nil {
+		GainExp(chName, -(GetExp(chName) / 37))
+	}
+
+	if !ch.IsNPC() && GetConstitution != nil && SetConstitution != nil {
+		level := ch.GetLevel()
+		if level > 5 && GetRoller().Number(0, 3) == 0 { // 25% chance (C: !number(0,3))
+			conVal := GetConstitution(chName) - 1
+			if level > 20 && GetRoller().Number(0, 5) == 0 { // ~17% chance (C: !number(0,5))
+				conVal--
+			}
+			if conVal < 0 {
+				conVal = 0
+			}
+			SetConstitution(chName, conVal)
+		}
+	}
+
+	roomVNum := ch.GetRoom()
+	if HasScriptFlag != nil && HasScriptFlag(chName, "MS_DEATH") && RunDeathScript != nil {
+		RunDeathScript(killer.GetName(), chName, roomVNum)
+	}
+
 	RawKill(ch, attackType)
 }
 
@@ -774,6 +1180,9 @@ func DieWithKiller(ch, killer Combatant, attackType int) {
 // **********************************
 
 func Die(ch Combatant) {
+	if GainExp != nil {
+		GainExp(ch.GetName(), -(GetExp(ch.GetName()) / 3))
+	}
 	RawKill(ch, TYPE_UNDEFINED)
 }
 
@@ -781,29 +1190,220 @@ func Die(ch Combatant) {
 // 11. makeCorpse()
 // **********************************
 
-func MakeCorpse(victim Combatant, attackType int) {}
+func MakeCorpse(victim Combatant, attackType int) {
+	name := victim.GetName()
+	if MakeCorpseFunc != nil {
+		MakeCorpseFunc(name, attackType)
+	}
+}
 
 // **********************************
 // 12. makeDust()
 // **********************************
 
-func MakeDust(victim Combatant, attackType int) {}
+func MakeDust(victim Combatant, attackType int) {
+	name := victim.GetName()
+	if MakeDustFunc != nil {
+		MakeDustFunc(name, attackType)
+	}
+}
 
 // **********************************
 // 13. counterProcs()
 // **********************************
 
-func CounterProcs(ch Combatant) {}
+func CounterProcs(ch Combatant) {
+	if ch.IsNPC() {
+		return
+	}
+	kills := int64(0)
+	if GetKills != nil {
+		kills = GetKills(ch.GetName())
+	}
+
+	reward := false
+	switch kills {
+	case 5000, 15000, 25000, 35000, 45000:
+		// Minor milestones: full heal + global blessing
+		ch.SendMessage("The gods reward your glory in battle!\r\n")
+		ch.Heal(ch.GetMaxHP() - ch.GetHP())
+		reward = true
+	case 1000, 2000, 10000, 20000, 30000, 40000, 50000:
+		// Major milestones: random +1 max stat, full heal, global blessing
+		ch.SendMessage("The gods reward your many victories!\r\n")
+		reward = true
+		// C has a bug: missing break in switch cases means all 3 branches execute.
+		// Reproducing the bug for fidelity.
+		// In C: case 1: GET_MAX_HIT++; case 2: GET_MAX_MANA++; case 3: GET_MAX_MOVE++;
+		//            default: GET_MAX_HIT++; break;
+		// Since case 3 falls through to default and all lack breaks,
+		// ALL THREE stats get +1 (case 1+3 hit, case 2 mana, case 3 move).
+		if IncreaseMaxStat != nil {
+			IncreaseMaxStat(ch.GetName(), "hp")
+			IncreaseMaxStat(ch.GetName(), "mana")
+			IncreaseMaxStat(ch.GetName(), "move")
+		}
+		ch.Heal(ch.GetMaxHP() - ch.GetHP())
+	default:
+		return
+	}
+
+	if reward {
+		// Global blessing — heal all connected players
+		if HealAllPlayers != nil {
+			HealAllPlayers()
+		}
+		// Log milestone
+		if LogMessage != nil {
+			LogMessage(fmt.Sprintf("%s hit %d kills.", ch.GetName(), kills), "NRM", LVL_IMMORT, false)
+		}
+	}
+}
 
 // **********************************
 // 14. attitudeLoot()
 //
-// Port of fight.c:attitude_loot. The legacy hook-driven loot/brag logic is
-// removed; the engine path handles corpse creation and looting via struct
-// callbacks and the game layer.
+// Port of fight.c:attitude_loot.
+// Loots corpse, junks cheap items in two passes (get → junk → wear → get → junk → wear),
+// and broadcasts one of 12 randomized brag messages for MOB_AGGR24/MOB_LOOTS attackers.
 // **********************************
 
-func AttitudeLoot(ch, victim Combatant) {}
+func AttitudeLoot(ch, victim Combatant) {
+	chName := ch.GetName()
+
+	// Phase 1: loot corpse
+	if PerformCommand != nil {
+		PerformCommand(chName, fmt.Sprintf("get all corpse of %s", victim.GetName()))
+	}
+
+	// C source (fight.c:1128): first junk pass — discard items with cost <= 150
+	if JunkInventoryItems != nil {
+		JunkInventoryItems(chName)
+	}
+
+	// C source (fight.c:1138): auto-wear anything wearable
+	if PerformCommand != nil {
+		PerformCommand(chName, "wear all")
+	}
+
+	// C source (fight.c:1139): second get — picks up items from worn containers
+	if PerformCommand != nil {
+		PerformCommand(chName, fmt.Sprintf("get all corpse of %s", victim.GetName()))
+	}
+
+	// C source (fight.c:1141): second junk pass
+	if JunkInventoryItems != nil {
+		JunkInventoryItems(chName)
+	}
+
+	// C source (fight.c:1156): auto-wear anything newly acquired
+	if PerformCommand != nil {
+		PerformCommand(chName, "wear all")
+	}
+
+	// C source (fight.c:1173-1248): brag messages — only for MOB_AGGR24 mobs (already filtered at call site)
+	// Additional early outs from C source: ch == victim (already handled at call site — chName != victimName)
+	// and !can_speak(ch) — we skip that here; if the mob can't speak, BroadChatFunc does nothing.
+	BragMessage(ch, victim)
+}
+
+// BragMessage sends one of 12 randomized brag messages matching the C source (fight.c:1173-1248).
+// The killer brags via BroadChatFunc if the victim is a player, or randomly (1-in-21) for mobs.
+func BragMessage(ch, victim Combatant) {
+	chName := ch.GetName()
+	victimName := victim.GetName()
+	victimIsNPC := victim.IsNPC()
+
+	// C source: if !IS_MOB(victim) || !number(0,20) — always brag on player kills,
+	// 1-in-21 chance on mob kills.
+	if victimIsNPC && GetRoller().Number(0, 20) != 0 {
+		return
+	}
+
+	msg := pickBragMessage(chName, victimName, victimIsNPC, victim.GetSex())
+	if msg == "" {
+		return
+	}
+
+	if BroadChatFunc != nil {
+		BroadChatFunc(chName, msg)
+	}
+}
+
+// pickBragMessage returns one of 12 brag messages matching the C source (fight.c:1173-1248).
+// Returns empty string if the killer shouldn't speak (certain messages skip mob kills).
+func pickBragMessage(chName, victimName string, victimIsNPC bool, victimSex int) string {
+	// Get alignment for case 5
+	alignment := 0
+	if GetAlignment != nil {
+		alignment = GetAlignment(chName)
+	}
+	isEvil := alignment <= -350
+
+	// Get kill count for case 6
+	kills := int64(0)
+	if GetKills != nil {
+		kills = GetKills(chName)
+	}
+
+	// Possessive pronoun matching C HSHR(victim) — sex of the victim
+	// C: 0=male, 1=female, 2=neutral (from SEX_* constants, matching player.go line 67)
+	var possessive string
+	switch victimSex {
+	case 0: // SEX_MALE
+		possessive = "his"
+	case 1: // SEX_FEMALE
+		possessive = "her"
+	default:
+		possessive = "its"
+	}
+
+	// Uniform random pick [1,12] matching C switch(number(1,12))
+	switch GetRoller().Number(1, 12) {
+	case 1:
+		return fmt.Sprintf("I killed %s and looted %s stinkin' corpse!", victimName, possessive)
+	case 2:
+		return fmt.Sprintf("%s was tough, but had good eq...", victimName)
+	case 3:
+		return fmt.Sprintf("%s was easy xp.", victimName)
+	case 4:
+		return fmt.Sprintf("Muhahahaha... %s is dead!", victimName)
+	case 5:
+		if isEvil {
+			return "Now you will see that evil will always triumph, because good is dumb."
+		}
+		return fmt.Sprintf("%s is dead! R.I.P.", victimName)
+	case 6:
+		return fmt.Sprintf("Kill number %d: %s.", kills, victimName)
+	case 7:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("Oh, did that hurt, %s? *innocent stare*", victimName)
+	case 8:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("What the hell was %s doing out of newbie training?", victimName)
+	case 9:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("I think I finally found a use for that punk %s: fertilizer!", victimName)
+	case 10:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("Hrmm.. Is this your head, %s? *cackle*", victimName)
+	case 11:
+		if victimIsNPC {
+			return ""
+		}
+		return fmt.Sprintf("Hey %s, was that suicide or did you try to fight back?", victimName)
+	default:
+		return ""
+	}
+}
 
 // **********************************
 // 15. damMessage()

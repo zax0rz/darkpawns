@@ -22,10 +22,34 @@ func TestBasicTokenReplace(t *testing.T) {
 }
 
 func TestBasicTokenReplace_Pronouns(t *testing.T) {
-	// Default (no hook) → male pronouns
+	// Default (GetCharacterSex nil) → male pronouns
 	got := basicTokenReplace("$n raises $s blade.", "Warrior", "Enemy")
 	if got != "Warrior raises his blade." {
 		t.Errorf("male pronouns: got %q, want %q", got, "Warrior raises his blade.")
+	}
+
+	// Wire GetCharacterSex
+	orig := GetCharacterSex
+	defer func() { GetCharacterSex = orig }()
+	GetCharacterSex = func(name string) int {
+		if name == "Alice" {
+			return 1 // female
+		}
+		if name == "Golem" {
+			return 2 // neuter
+		}
+		return 0 // male
+	}
+
+	got = basicTokenReplace("$n raises $s blade.", "Alice", "Enemy")
+	if got != "Alice raises her blade." {
+		t.Errorf("female pronouns: got %q, want %q", got, "Alice raises her blade.")
+	}
+
+	// Neuter (sex=2)
+	got = basicTokenReplace("$e attacks $N.", "Golem", "Enemy")
+	if got != "it attacks Enemy." {
+		t.Errorf("neuter pronouns: got %q, want %q", got, "it attacks Enemy.")
 	}
 }
 

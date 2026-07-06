@@ -654,8 +654,41 @@ func CheckParry(defender, attacker Combatant) ParryResult {
 		return ParryFail
 	}
 
-	// Parry skill hook is dead; treat as unarmed/no-skill.
-	return ParryUnarmed
+	// Must have parry skill
+	if GetSkill == nil {
+		return ParryFail
+	}
+	skill := GetSkill(defender.GetName(), SKILL_PARRY)
+	if skill <= 0 {
+		return ParryFail
+	}
+
+	// Must be awake
+	if defender.GetPosition() <= PosSleeping {
+		return ParryFail
+	}
+
+	// Mob-aware mobs can't be parried
+	if attacker.IsNPC() && HasMobFlag != nil && HasMobFlag(attacker.GetName(), "MOB_AWARE") {
+		return ParryFail
+	}
+
+	// Must be wielding a weapon
+	if GetWeaponInfo != nil {
+		wType, _, _, _ := GetWeaponInfo(defender.GetName())
+		if wType <= TYPE_HIT {
+			return ParryUnarmed
+		}
+	}
+
+	// C: percent = number(1, 101); prob = GET_SKILL(ch, SKILL_PARRY)
+	// If percent > prob, parry fails.
+	percent := GetRoller().Number(1, 101)
+	if percent > skill {
+		return ParryFail
+	}
+
+	return ParrySuccess
 }
 
 // CheckDodge implements the CircleMUD dodge skill check for a single attack.
@@ -677,8 +710,23 @@ func CheckDodge(defender, attacker Combatant) DodgeResult {
 		return DodgeIncapable
 	}
 
-	// Dodge skill hook is dead; treat as no-skill.
-	return DodgeFail
+	// Must have dodge skill
+	if GetSkill == nil {
+		return DodgeFail
+	}
+	skill := GetSkill(defender.GetName(), SKILL_DODGE)
+	if skill <= 0 {
+		return DodgeFail
+	}
+
+	// C: percent = number(1, 101); prob = skill level
+	// If percent > prob, dodge fails.
+	percent := GetRoller().Number(1, 101)
+	if percent > skill {
+		return DodgeFail
+	}
+
+	return DodgeSuccess
 }
 
 // RollDice rolls num d-sides dice and returns the sum.

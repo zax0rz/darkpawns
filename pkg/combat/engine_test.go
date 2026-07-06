@@ -130,6 +130,37 @@ func TestSendMissMessageFallsBackWhenNil(t *testing.T) {
 	}
 }
 
+// TestShopkeeperProtection_RemovesCombatPair is the DP-923 regression:
+// shopkeeper protection must stop combat for both attacker and defender,
+// matching C fight.c:1359-1366.
+func TestShopkeeperProtection_RemovesCombatPair(t *testing.T) {
+	oldIsShopkeeper := IsShopkeeper
+	defer func() { IsShopkeeper = oldIsShopkeeper }()
+	IsShopkeeper = func(name string) bool { return name == "Shopkeeper" }
+
+	attacker := &mockCombatant{name: "Attacker", hp: 100, room: 1}
+	defender := &mockCombatant{name: "Shopkeeper", hp: 100, room: 1}
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Attacker", Target: "Shopkeeper"}])
+
+	if ce.IsFighting("Attacker") {
+		t.Error("expected Attacker to be removed from combat after shopkeeper protection")
+	}
+	if ce.IsFighting("Shopkeeper") {
+		t.Error("expected Shopkeeper to be removed from combat after shopkeeper protection")
+	}
+	if attacker.GetFighting() != "" {
+		t.Errorf("expected Attacker.StopFighting called, still fighting %q", attacker.GetFighting())
+	}
+	if defender.GetFighting() != "" {
+		t.Errorf("expected Shopkeeper.StopFighting called, still fighting %q", defender.GetFighting())
+	}
+}
 
 func TestHandleDeath_PassesAttackType(t *testing.T) {
 	attacker := &mockCombatant{
