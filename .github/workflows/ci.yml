@@ -14,9 +14,6 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      DP_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns?sslmode=disable"
-      JWT_SECRET: "ci-smoke-test-secret-at-least-32-characters-long"
     services:
       postgres:
         image: postgres:16-alpine
@@ -74,7 +71,18 @@ jobs:
     - name: Build Go binary
       run: go build -o server ./cmd/server
 
+    - name: Run e2e persistence smoke test (telnet + DB)
+      continue-on-error: true
+      env:
+        DP_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns?sslmode=disable"
+        JWT_SECRET: "ci-smoke-test-secret-at-least-32-characters-long"
+      run: |
+        go test -race ./tests/e2e/ -run TestTelnetSmoke_PersistenceRoundTrip -v -timeout 120s
+
     - name: Start server for Python smoke test
+      env:
+        DP_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns?sslmode=disable"
+        JWT_SECRET: "ci-smoke-test-secret-at-least-32-characters-long"
       run: |
         ./server -world lib/world -port 4350 -telnet-port 0 -db "$DP_TEST_DB_URL" &
         SERVER_PID=$!
