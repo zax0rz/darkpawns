@@ -8,13 +8,13 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
-func (m *Manager) RegisterCommand(name string, handler func(common.CommandSession, []string) error) {
+func (m *Manager) RegisterCommand(name string, handler func(common.CommandSession, []string) error, minLevel int) {
 	// Bridge common.CommandSession handler into cmdRegistry; command name is unused by the legacy signature.
 	wrapped := func(s common.CommandSession, _cmd string, args []string) error {
 		return handler(s, args)
 	}
-	cmdRegistry.Register(name, command.Handler(wrapped), name+" (registered via RegisterCommand)", 0, 0)
-	slog.Debug("RegisterCommand: registered", "name", name)
+	cmdRegistry.Register(name, command.Handler(wrapped), name+" (registered via RegisterCommand)", minLevel, 0)
+	slog.Debug("RegisterCommand: registered", "name", name, "minLevel", minLevel)
 }
 
 // Sessions returns all active sessions

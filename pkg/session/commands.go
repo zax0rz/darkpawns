@@ -609,6 +609,14 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		}
 	}
 
+	// MinLevel enforcement — F10/DP-954
+	if entry.MinLevel > 0 {
+		if getEffectiveLevel(s) < entry.MinLevel {
+			s.sendText("Huh?!?\r\n")
+			return nil
+		}
+	}
+
 	// C-10: WAIT_STATE enforcement — combat skills set cooldowns.
 	// Non-combat informational commands bypass the wait so players can still
 	// look, check inventory, and communicate while their attack is pending.
