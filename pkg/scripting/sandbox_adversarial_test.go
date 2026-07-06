@@ -4,16 +4,21 @@
 //
 // The Lua sandbox (newSafeLState in engine.go) blocks these operations:
 //
-//   CODE LOADING:       load, loadstring, loadfile → nil (dofile is sandboxed)
-//   FILESYSTEM:         os.execute, os.remove, os.rename, os.tmpname → nil
-//   ENVIRONMENT:        os.getenv, os.setenv, os.setlocale → nil
-//   PROCESS:            os.exit, os.clock → nil
-//   BYTECODE:           string.dump → nil
-//   RNG MANIPULATION:   math.randomseed → nil
+//   CODE LOADING:       load, loadstring, loadfile → stub (dofile is sandboxed)
+//   FILESYSTEM:         os.execute, os.remove, os.rename, os.tmpname → stub
+//   ENVIRONMENT:        os.getenv, os.setenv, os.setlocale → stub
+//   PROCESS:            os.exit, os.clock → stub
+//   BYTECODE:           string.dump → stub
+//   RNG MANIPULATION:   math.randomseed → stub
 //   PACKAGE SYSTEM:     package table, _LOADED, _PRELOAD → nil
 //   DEBUG:              debug library → nil
 //   I/O:                io library → nil
-//   GC ABUSE:           collectgarbage → stub returning "disabled" string
+//   GC ABUSE:           collectgarbage → stub
+//
+// Stubs return a string ("X is disabled in this sandbox") instead of erroring.
+// This prevents __index metamethod bypass: a real function occupies the key
+// so Lua never consults the metatable. Nil is only used for whole-library
+// removals (package, debug, io) since metatables on globals are non-standard.
 //
 // Still accessible (intentionally):
 //   os.time, os.date, math (minus randomseed), string (minus dump),
@@ -30,6 +35,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	lua "github.com/yuin/gopher-lua"
 )
 
 // TestSandbox_Adversarial exercises every sandbox boundary with a script that
@@ -78,72 +85,72 @@ func TestSandbox_Adversarial(t *testing.T) {
 		{
 			name:    "loadfile",
 			source:  `function oncmd() loadfile("/etc/passwd") return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string, no error
 		},
 
 		// ── Filesystem access ───────────────────────────────────────────
 		{
 			name:    "os_execute",
 			source:  `function oncmd() os.execute("rm -rf /") return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 		{
 			name:    "os_remove",
 			source:  `function oncmd() os.remove("/etc/passwd") return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 		{
 			name:    "os_rename",
 			source:  `function oncmd() os.rename("/etc/passwd", "/tmp/pwn") return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 		{
 			name:    "os_tmpname",
 			source:  `function oncmd() os.tmpname() return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 
 		// ── Environment access ──────────────────────────────────────────
 		{
 			name:    "os_getenv",
 			source:  `function oncmd() os.getenv("HOME") return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 		{
 			name:    "os_setenv",
 			source:  `function oncmd() os.setenv("PATH", "/tmp") return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 		{
 			name:    "os_setlocale",
 			source:  `function oncmd() os.setlocale("C") return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 
 		// ── Process control ─────────────────────────────────────────────
 		{
 			name:    "os_exit",
 			source:  `function oncmd() os.exit(1) return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 		{
 			name:    "os_clock",
 			source:  `function oncmd() os.clock() return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 
 		// ── Bytecode ────────────────────────────────────────────────────
 		{
 			name:    "string_dump",
 			source:  `function oncmd() string.dump(print) return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 
 		// ── RNG manipulation ────────────────────────────────────────────
 		{
 			name:    "math_randomseed",
 			source:  `function oncmd() math.randomseed(12345) return TRUE end`,
-			verdict: mustFail,
+			verdict: mustPass, // stub returns string
 		},
 
 		// ── Package system ──────────────────────────────────────────────
@@ -178,8 +185,9 @@ func TestSandbox_Adversarial(t *testing.T) {
 		},
 
 		// ── GC abuse ────────────────────────────────────────────────────
-		// collectgarbage is replaced with a stub that returns a string
-		// ("collectgarbage is disabled in this sandbox") instead of erroring.
+		// collectgarbage is a stub that returns a string ("collectgarbage is
+		// disabled in this sandbox") instead of erroring — same pattern as
+		// all other stubbed functions.
 		{
 			name:    "collectgarbage_collect",
 			source:  `function oncmd() collectgarbage("collect") return TRUE end`,
@@ -207,52 +215,55 @@ func TestSandbox_Adversarial(t *testing.T) {
 			verdict: mustPass,
 		},
 
-		// Coroutine escape: os.execute is nil'd on the original os table;
-		// coroutines share the same Lua state, so the nil persists.
+		// Coroutine escape: os.execute is a stub (not nil) on the original os table;
+		// coroutines share the same Lua state, so the stub persists. Verify
+		// the stub returns the expected "disabled" string.
 		{
 			name: "coroutine_os_execute",
 			source: `function oncmd()
-local co = coroutine.create(function()
-	local ok, err = pcall(os.execute, "ls")
-	if ok then error("os.execute was callable from coroutine") end
+	local co = coroutine.create(function()
+		local result = os.execute("ls")
+		if type(result) ~= "string" then error("expected stub string, got " .. type(result)) end
+		return TRUE
+	end)
+	local ok, err = coroutine.resume(co)
+	if not ok then error("coroutine resume failed: " .. tostring(err)) end
 	return TRUE
-end)
-local ok, err = coroutine.resume(co)
-if not ok then error("coroutine resume failed: " .. tostring(err)) end
-return TRUE
-end`,
+	end`,
 			verdict: mustPass,
 		},
 
-		// Rawget bypass: rawget on the os table should return nil for
-		// execute, same as direct access.
+		// Rawget: rawget on the os table should return the stub function
+		// (not nil) — the stub occupies the key so __index never fires.
 		{
 			name: "rawget_os_execute",
 			source: `function oncmd()
-local v = rawget(os, "execute")
-if v ~= nil then error("rawget bypassed os.execute nil: " .. tostring(v)) end
-return TRUE
-end`,
+	local v = rawget(os, "execute")
+	if type(v) ~= "function" then
+		error("rawget(os, 'execute') should be a stub function, got " .. type(v))
+	end
+	return TRUE
+	end`,
 			verdict: mustPass,
 		},
 
-		// Metatable abuse: Lua's __index metamethod fires when a table key
-		// lookup returns nil. Since os.execute = nil on the sandboxed table,
-		// __index can supply a function, bypassing the nil guard.
-		// This documents a known sandbox gap: metatables can override nil'd
-		// fields on tables. The script's assertion fires (`error()`),
-		// returning mustFail to document the bypass exists.
+		// Metatable abuse: setmetatable on os with __index to supply a
+		// fake execute function. With stub guards, __index does NOT fire
+		// because os.execute is a real function (the stub), so the direct
+		// lookup succeeds before __index is consulted.
 		{
 			name: "metatable_os_index",
 			source: `function oncmd()
-setmetatable(os, {__index = function(t, k)
-	if k == "execute" then return function() end end
-end})
-local ok, err = pcall(os.execute, "ls")
-if ok then error("metatable bypass granted os.execute access") end
-return TRUE
+	setmetatable(os, {__index = function(t, k)
+		if k == "execute" then return function() return "bypassed!" end end
+	end})
+	local result = os.execute("ls")
+	if result == "bypassed!" then
+		error("metatable bypass replaced the stub")
+	end
+	return TRUE
 end`,
-			verdict: mustFail,
+			verdict: mustPass,
 		},
 
 		// Global environment access via _G — dofile is sandboxed, not nil'd
@@ -323,16 +334,16 @@ func TestSandbox_Adversarial_PackageNil(t *testing.T) {
 }
 
 // TestSandbox_Adversarial_BlockedGlobals verifies that all globally-nilled
-// functions are actually nil at the top level of the sandbox.
+// functions are actually nil at the top level of the sandbox, and that stub
+// globals (load, loadstring, loadfile) are functions.
 func TestSandbox_Adversarial_BlockedGlobals(t *testing.T) {
 	dir := t.TempDir()
 	engine := NewEngine(dir, nil)
 	defer engine.Close()
 	L := engine.LState()
 
-	// Globals set to nil — these should all be nil
+	// Globals set to nil — whole-library removals
 	blocked := []string{
-		"load", "loadstring", "loadfile",
 		"debug", "io", "package",
 	}
 	for _, name := range blocked {
@@ -342,9 +353,14 @@ func TestSandbox_Adversarial_BlockedGlobals(t *testing.T) {
 		}
 	}
 
-	// dofile is NOT nil — it's re-registered as a sandboxed version
-	dofile := L.GetGlobal("dofile")
-	if dofile.Type() == 0 {
-		t.Error("global dofile should be a function (sandboxed), not nil")
+	// Globals replaced with stubs — should be functions (type 6 = LTFunction)
+	stubbed := []string{
+		"load", "loadstring", "loadfile", "dofile",
+	}
+	for _, name := range stubbed {
+		v := L.GetGlobal(name)
+		if v.Type() != lua.LTFunction {
+			t.Errorf("global %q = %v (type %s), want function (stub)", name, v, v.Type())
+		}
 	}
 }

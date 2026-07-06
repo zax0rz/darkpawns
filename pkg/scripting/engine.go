@@ -76,41 +76,55 @@ func (e *Engine) newSafeLState() *lua.LState {
 	// Open standard libraries
 	L.OpenLibs()
 
-	// Remove dangerous functions for security
-	// Remove file system access (load arbitrary code)
-	// These are intentionally nilled here and re-registered in registerFunctionsOn()
-	// with sandboxed implementations, since each script runs in its own Lua state.
-	L.SetGlobal("dofile", lua.LNil)
-	L.SetGlobal("loadfile", lua.LNil)
-	L.SetGlobal("load", lua.LNil)
-	L.SetGlobal("loadstring", lua.LNil)
+	// Sandbox dangerous functions — replace with stubs rather than nil.
+	// Nilling a table field allows Lua __index metamethods to intercept the
+	// nil lookup and supply a replacement function, bypassing the sandbox.
+	// Stubs return a string error message (like collectgarbage) so scripts
+	// that try to use them get a clear "disabled" response instead of a crash.
+	// Global-level removals (whole libraries) use nil since metatables on
+	// globals are not a standard Lua pattern.
 
-	// Remove OS access — filesystem, process control, environment
-	if osTable := L.GetGlobal("os"); osTable.Type() == lua.LTTable {
-		tb := osTable.(*lua.LTable)
-		tb.RawSetString("clock", lua.LNil)   // DoS: timing-detection busy loop
-		tb.RawSetString("execute", lua.LNil) // arbitrary command execution
-		tb.RawSetString("exit", lua.LNil)    // crash the server
-		tb.RawSetString("getenv", lua.LNil)  // information disclosure
-		tb.RawSetString("remove", lua.LNil)  // file deletion
-		tb.RawSetString("rename", lua.LNil)  // file manipulation
-		tb.RawSetString("setenv", lua.LNil)  // affect other processes
-		tb.RawSetString("setlocale", lua.LNil)
-		tb.RawSetString("tmpname", lua.LNil) // temp file creation
+	disabledFunc := func(name string) *lua.LFunction {
+		return L.NewFunction(func(L *lua.LState) int {
+			L.Push(lua.LString(name + " is disabled in this sandbox"))
+			return 1
+		})
 	}
 
-	// Remove string.dump — produces bytecode that can exploit VM bugs
+	// File system access — load arbitrary code
+	// dofile is re-registered as a sandboxed version in registerFunctionsOn()
+	// (restricted to engine scriptsDir), so we nil it here to let the
+	// sandboxed version take over. The others have no safe variant.
+	L.SetGlobal("loadfile", disabledFunc("loadfile"))
+	L.SetGlobal("load", disabledFunc("load"))
+	L.SetGlobal("loadstring", disabledFunc("loadstring"))
+
+	// OS access — filesystem, process control, environment
+	if osTable := L.GetGlobal("os"); osTable.Type() == lua.LTTable {
+		tb := osTable.(*lua.LTable)
+		tb.RawSetString("clock", disabledFunc("os.clock"))     // DoS: timing-detection busy loop
+		tb.RawSetString("execute", disabledFunc("os.execute")) // arbitrary command execution
+		tb.RawSetString("exit", disabledFunc("os.exit"))       // crash the server
+		tb.RawSetString("getenv", disabledFunc("os.getenv"))   // information disclosure
+		tb.RawSetString("remove", disabledFunc("os.remove"))   // file deletion
+		tb.RawSetString("rename", disabledFunc("os.rename"))   // file manipulation
+		tb.RawSetString("setenv", disabledFunc("os.setenv"))   // affect other processes
+		tb.RawSetString("setlocale", disabledFunc("os.setlocale"))
+		tb.RawSetString("tmpname", disabledFunc("os.tmpname")) // temp file creation
+	}
+
+	// string.dump — produces bytecode that can exploit VM bugs
 	if stringTable := L.GetGlobal("string"); stringTable.Type() == lua.LTTable {
 		if tb, ok := stringTable.(*lua.LTable); ok {
-			tb.RawSetString("dump", lua.LNil)
+			tb.RawSetString("dump", disabledFunc("string.dump"))
 		}
 	}
 
-	// Remove math.randomseed — with a known seed a script can predict or
+	// math.randomseed — with a known seed a script can predict or
 	// break randomness for all subsequent scripts sharing the LState.
 	if mathTable := L.GetGlobal("math"); mathTable.Type() == lua.LTTable {
 		if tb, ok := mathTable.(*lua.LTable); ok {
-			tb.RawSetString("randomseed", lua.LNil)
+			tb.RawSetString("randomseed", disabledFunc("math.randomseed"))
 		}
 	}
 
