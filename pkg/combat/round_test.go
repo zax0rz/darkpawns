@@ -1024,7 +1024,7 @@ func TestSendHitMessage(t *testing.T) {
 	attacker.sendFunc = func(msg string) { attackerMsg = msg }
 	defender.sendFunc = func(msg string) { defenderMsg = msg }
 
-	engine.sendHitMessage(attacker, defender, 15)
+	engine.sendHitMessage(attacker, defender, 15, 0)
 
 	if !strings.Contains(attackerMsg, "15") {
 		t.Errorf("expected damage number in attacker msg, got %q", attackerMsg)
@@ -1051,7 +1051,7 @@ func TestSendMissMessage(t *testing.T) {
 	attacker.sendFunc = func(msg string) { attackerMsg = msg }
 	defender.sendFunc = func(msg string) { defenderMsg = msg }
 
-	engine.sendMissMessage(attacker, defender)
+	engine.sendMissMessage(attacker, defender, 0)
 
 	if !strings.Contains(attackerMsg, "miss") {
 		t.Errorf("expected 'miss' in attacker msg, got %q", attackerMsg)

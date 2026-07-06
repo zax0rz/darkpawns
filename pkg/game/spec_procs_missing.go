@@ -155,7 +155,7 @@ func specZenMaster(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 	melee := mobMeleeTarget(me)
-	if melee == nil || randN(6) != 0 {
+	if melee == nil || number(0, 6) != 0 {
 		return false
 	}
 	w.roomMessage(me.RoomVNum, me.GetName()+" touches "+melee.GetName()+" lightly on the forehead!")

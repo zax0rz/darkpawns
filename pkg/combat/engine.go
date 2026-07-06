@@ -36,6 +36,12 @@ type CombatEngine struct {
 	// Message broadcaster function (set by game)
 	BroadcastFunc func(roomVNum int, message string, exclude string)
 
+	// MessageFunc routes hit/miss messages through the game-layer message system.
+	// If non-nil, sendHitMessage and sendMissMessage call it and skip the generic
+	// fallback output. The callback receives the attacker, defender, damage (0 for
+	// misses), and the attack type recorded on the combat pair.
+	MessageFunc func(attacker, defender Combatant, dam, attackType int) bool
+
 	// DeathFunc handles corpse creation and respawn (set by game layer)
 	// Called after death messages are sent.
 	DeathFunc func(victim, killer Combatant, attackType int)
@@ -337,7 +343,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 
 		// Check hit — apply round penalty if a prior parry/dodge succeeded
 		if !CalculateHitChance(attacker, defender, HitModifiers{RoundPenalty: roundPenalty}) {
-			ce.sendMissMessage(attacker, defender)
+			ce.sendMissMessage(attacker, defender, pair.LastAttackType)
 			continue
 		}
 
@@ -385,7 +391,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		}
 
 		// Send combat messages
-		ce.sendHitMessage(attacker, defender, damage)
+		ce.sendHitMessage(attacker, defender, damage, pair.LastAttackType)
 
 		// Log combat action
 		if ce.OnCombatAction != nil {
@@ -410,8 +416,14 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	}
 }
 
-// sendHitMessage sends hit messages to combatants and room
-func (ce *CombatEngine) sendHitMessage(attacker, defender Combatant, damage int) {
+// sendHitMessage sends hit messages to combatants and room.
+// If MessageFunc is set, it is called and the generic fallback is skipped.
+func (ce *CombatEngine) sendHitMessage(attacker, defender Combatant, damage, attackType int) {
+	if ce.MessageFunc != nil {
+		ce.MessageFunc(attacker, defender, damage, attackType)
+		return
+	}
+
 	attackerName := attacker.GetName()
 	defenderName := defender.GetName()
 	roomVNum := attacker.GetRoom()
@@ -430,8 +442,14 @@ func (ce *CombatEngine) sendHitMessage(attacker, defender Combatant, damage int)
 	}
 }
 
-// sendMissMessage sends miss messages
-func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant) {
+// sendMissMessage sends miss messages.
+// If MessageFunc is set, it is called and the generic fallback is skipped.
+func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant, attackType int) {
+	if ce.MessageFunc != nil {
+		ce.MessageFunc(attacker, defender, 0, attackType)
+		return
+	}
+
 	attackerName := attacker.GetName()
 	defenderName := defender.GetName()
 	roomVNum := attacker.GetRoom()

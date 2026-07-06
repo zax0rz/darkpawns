@@ -44,10 +44,5 @@
   "clan_rank": 0,
   "inventory": null,
   "equipment": null,
-  "affects": null,
-  "rent_code": 0,
-  "rent_time": 0,
-  "net_cost_per_diem": 0,
-  "saved_gold": 0,
-  "saved_bank_gold": 0
+  "affects": null
 }
