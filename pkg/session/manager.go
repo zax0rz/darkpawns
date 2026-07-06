@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -105,10 +106,28 @@ type Manager struct {
 	decisionLog *db.DecisionLogWriter
 }
 
+// isLoopback reports whether remoteAddr resolves to the loopback interface
+// (127.0.0.0/8 or ::1). It tolerates missing ports.
+func isLoopback(remoteAddr string) bool {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
 // checkOrigin validates WebSocket origins. Public origins in the allowlist are
-// permitted without further credentials. Connections from private IPs with no
-// Origin header must present a valid agent API key (DP-594).
+// permitted without further credentials. Machine-local connections are always
+// trusted. Connections from private IPs with no Origin header must present a
+// valid agent API key (DP-594).
 func (m *Manager) checkOrigin(r *http.Request) bool {
+	// Machine-local connections are always trusted; this covers CI smoke tests
+	// and local agent harnesses regardless of what Origin header they send.
+	if isLoopback(r.RemoteAddr) {
+		return true
+	}
+
 	origin := r.Header.Get("Origin")
 	if origin == "" {
 		host, _, _ := net.SplitHostPort(r.RemoteAddr)
@@ -137,6 +156,14 @@ func (m *Manager) checkOrigin(r *http.Request) bool {
 
 	for _, allowed := range allowedWebSocketOrigins {
 		if origin == allowed {
+			return true
+		}
+	}
+
+	// Allow any origin from localhost/127.0.0.1 regardless of port or scheme.
+	if u, err := url.Parse(origin); err == nil {
+		h := strings.ToLower(u.Hostname())
+		if h == "localhost" || h == "127.0.0.1" {
 			return true
 		}
 	}

@@ -37,7 +37,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	ip := s.RemoteIP()
 	if !s.manager.loginLimiter.GetLimiter(ip).Allow() {
 		s.sendError("Too many login attempts. Please try again later.")
-		s.Close()
+		s.CloseSend()
 		audit.LogSecurityEvent("rate_limit_exceeded", "Login rate limit exceeded", login.PlayerName, ip)
 		return nil
 	}
@@ -46,7 +46,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if locked, remaining := s.manager.loginAttempts.IsLocked(ip); locked {
 		mins := int(remaining.Minutes()) + 1
 		s.sendError(fmt.Sprintf("Too many failed login attempts. Try again in %d minutes.", mins))
-		s.Close()
+		s.CloseSend()
 		audit.LogSecurityEvent("login_locked_out", "Login locked out due to repeated failures", login.PlayerName, ip)
 		return nil
 	}
@@ -152,14 +152,14 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	// Validate player name
 	if !validation.IsValidPlayerName(login.PlayerName) {
 		s.sendError("Invalid player name. Names must be 2-32 characters and contain only letters, numbers, spaces, dots, dashes, and underscores.")
-		s.Close()
+		s.CloseSend()
 		audit.LogSecurityEvent("invalid_player_name", "Invalid player name format", login.PlayerName, ip)
 		return nil
 	}
 
 	if login.Password == "" {
 		s.sendError("Password required.")
-		s.Close()
+		s.CloseSend()
 		return nil
 	}
 
@@ -176,7 +176,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				if locked, remaining := s.manager.accountLockouts.IsLocked(login.PlayerName); locked {
 					mins := int(remaining.Minutes()) + 1
 					s.sendError(fmt.Sprintf("Account locked due to too many failed login attempts. Try again in %d minutes.", mins))
-					s.Close()
+					s.CloseSend()
 					audit.LogSecurityEvent("account_locked", "Account locked due to repeated failures", login.PlayerName, ip)
 					return nil
 				}
@@ -186,7 +186,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if rec.Password != "" {
 				if login.Password == "" {
 					s.sendError("Password required.")
-					s.Close()
+					s.CloseSend()
 					return nil
 				}
 				if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)); err != nil {
@@ -195,13 +195,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 						if newlyLocked := s.manager.accountLockouts.RecordFailure(login.PlayerName); newlyLocked {
 							mins := int(s.manager.accountLockouts.Lockout().Minutes())
 							s.sendError(fmt.Sprintf("Account locked due to too many failed login attempts. Try again in %d minutes.", mins))
-							s.Close()
+							s.CloseSend()
 							audit.LogSecurityEvent("account_locked", "Account locked after threshold failures", login.PlayerName, ip)
 							return nil
 						}
 					}
 					s.sendError("Invalid password.")
-					s.Close()
+					s.CloseSend()
 					audit.LogSecurityEvent("login_failed", "Invalid password", login.PlayerName, ip)
 					return nil
 				}
@@ -212,7 +212,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				// Fall back to character creation (only check profanity list/length without active check)
 				if !game.ValidNameNoActive(login.PlayerName) {
 					s.sendError("Invalid player name. Please choose another.")
-					s.Close()
+					s.CloseSend()
 					return nil
 				}
 				s.startNewCharFlow(login.PlayerName, login.Password)
@@ -229,7 +229,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			// Block new char creation from BanNew/BanSelect sites (DP-418)
 			if s.banLevel == game.BanNew || s.banLevel == game.BanSelect {
 				s.sendError("New character creation is not allowed from your site.")
-				s.Close()
+				s.CloseSend()
 				return nil
 			}
 
@@ -242,7 +242,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			// Validate player name for character creation (checks format, profanity, and online duplicates)
 			if !game.ValidName(login.PlayerName) {
 				s.sendError("Invalid player name. Please choose another.")
-				s.Close()
+				s.CloseSend()
 				return nil
 			}
 
@@ -254,7 +254,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		// Validate player name for character creation without active check (to allow no-DB test takeover)
 		if !game.ValidNameNoActive(login.PlayerName) {
 			s.sendError("Invalid player name. Please choose another.")
-			s.Close()
+			s.CloseSend()
 			return nil
 		}
 		s.startNewCharFlow(login.PlayerName, login.Password)
@@ -265,7 +265,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if s.authenticated && s.player != nil && s.manager.modChecker != nil {
 		if errMsg, banned := s.manager.modChecker.CheckPreCommand(s.player.Name, ""); banned {
 			s.sendError(errMsg)
-			s.Close()
+			s.CloseSend()
 			slog.WarnContext(s.sessionCtx, "banned player denied entry", s.logAttrs(slog.String("ip", ip))...)
 			return nil
 		}

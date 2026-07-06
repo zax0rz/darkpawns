@@ -115,6 +115,16 @@ func (s *Session) CloseSend() {
 	})
 }
 
+// SendClosed reports whether the session's outgoing message channel has been
+// closed. Transport layers (telnet, WebSocket) check this after login to detect
+// that handleLogin rejected the client, so they can flush pending error
+// messages before closing the raw connection (DP-591 race).
+func (s *Session) SendClosed() bool {
+	s.sendMu.RLock()
+	defer s.sendMu.RUnlock()
+	return s.sendClosed
+}
+
 // SendChannel returns the session's outgoing message channel (for telnet/embed).
 func (s *Session) SendChannel() <-chan []byte {
 	return s.send

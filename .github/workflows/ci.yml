@@ -71,6 +71,43 @@ jobs:
     - name: Build Go binary
       run: go build -o server ./cmd/server
 
+    - name: Run e2e persistence smoke test (telnet + DB)
+      env:
+        DP_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns?sslmode=disable"
+        JWT_SECRET: "ci-smoke-test-secret-at-least-32-characters-long"
+      run: |
+        go test -race ./tests/e2e/ -run TestTelnetSmoke_PersistenceRoundTrip -v -timeout 120s
+
+    - name: Start server for Python smoke test
+      env:
+        DP_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns?sslmode=disable"
+        JWT_SECRET: "ci-smoke-test-secret-at-least-32-characters-long"
+      run: |
+        ./server -world lib/world -port 4350 -telnet-port 0 -db "$DP_TEST_DB_URL" > server.log 2>&1 &
+        SERVER_PID=$!
+        for i in $(seq 1 30); do
+          if curl -sf http://localhost:4350/health > /dev/null 2>&1; then
+            break
+          fi
+          sleep 1
+        done
+        echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+
+    - name: Run Python e2e smoke test
+      run: |
+        pip install websockets
+        python3 scripts/smoke_test_2b.py --ws-url ws://localhost:4350/ws
+
+    - name: Stop Python smoke server
+      if: always()
+      run: kill $SERVER_PID 2>/dev/null || true
+
+    - name: Print server logs on Python smoke test failure
+      if: failure()
+      run: |
+        echo "--- server.log ---"
+        cat server.log 2>/dev/null || true
+
     - name: Test server startup
       run: |
         timeout 10s ./server -port 9999 &

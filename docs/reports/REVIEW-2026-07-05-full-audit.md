@@ -312,14 +312,14 @@ Package health (inspection depth varies — marked where classification is from 
 
 Current: total 29.7% — combat 59.7, spells 36.1, session 24.1, scripting 24.1, game 21.4, command **8.8**.
 
-1. **`pkg/command` functional tests** (8.8% → ~40%): drive skill commands end-to-end against a test world and *assert XP/gold/kill-counter deltas* — F1 existed precisely because no test asserts the payout. This is the highest-yield test investment in the repo.
+1. **`pkg/command` functional tests** (8.8% → ~40%): drive skill commands end-to-end against a test world and *assert XP/gold/kill-counter deltas* — F1 existed precisely because no test asserts the payout. This is the highest-yield test investment in the repo. **(COV-1, open)**
 2. **Death-path concurrency tests** (`-race`): two goroutines delivering lethal damage to the same player/mob simultaneously; assert exactly one corpse, one EXP loss. Locks in F2's fix.
 3. **Shutdown drain test**: boot world, start tickers, trigger shutdown, assert no goroutine mutates world after SaveWorld begins (can use a mutation counter). Locks in F3.
-4. **Spec proc table test**: for each registered spec, at minimum invoke with benign cmd and assert no panic; add golden fidelity tests for the ~10 most-encountered specs (guild, dump, snake, thief, magic_user...). Catches F5/F6 classes.
-5. **e2e smoke in CI**: wire `scripts/smoke_test_2b.py` (login → look → move → kill → save → quit) into CI with SQLite and an ephemeral JWT secret. This closes the "tests green, game broken" gap permanently — it's the single most important non-unit investment.
-6. **Lua adversarial suite**: scripts that attempt fs/net/require/bytecode/allocation attacks; assert sandbox holds. Mostly documents the F16 trust boundary.
+4. ~~**Spec proc table test**~~: ✅ **LANDED (COV-4)** — `TestSpecProc_SmokeAll` covers all 122 specs, golden fidelity tests for top-10. Also fixed 2 live panics (specTeleporter/specPetShops nil guards).
+5. ~~**e2e smoke in CI**~~: ✅ **LANDED (COV-5)** — Telnet e2e tests (`TestTelnetSmoke_*`) in CI with Postgres. Persistence round-trip test (`TestTelnetSmoke_PersistenceRoundTrip`) gated on `DP_TEST_DB_URL`. Fixed DP-591 race: `handleLogin` now uses `CloseSend()` instead of `Close()` so error messages flush before disconnect. Python WS smoke (`smoke_test_2b.py`) soft-gated.
+6. **Lua adversarial suite**: ✅ **LANDED (COV-6)** — `__index` metamethod bypass fixed; all sandbox tests pass with stub functions. **(also covered by initial sandbox hardening)**
 
-Realistic 30-day targets: total ~38-40%, command ~40%, game ~28%, with CI smoke as the true gate.
+Realistic 30-day targets: total ~38-40%, command ~40%, game ~28%, with CI smoke as the true gate. **COV-4/5/6 complete — COV-1 (command functional tests) is the remaining high-yield coverage investment.**
 
 ### Executive Summary
 
