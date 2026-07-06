@@ -355,10 +355,10 @@ func parseItemNumber(s string) (int, error) {
 // RegisterCommands registers shop commands with the command manager.
 func (sc *ShopCommands) RegisterCommands(manager common.CommandManager) {
 	// Register shop commands
-	manager.RegisterCommand("list", sc.CmdListShop)
-	manager.RegisterCommand("buy", sc.CmdBuy)
-	manager.RegisterCommand("sell", sc.CmdSell)
-	manager.RegisterCommand("repair", sc.CmdRepair)
-	manager.RegisterCommand("identify", sc.CmdIdentify)
-	manager.RegisterCommand("value", sc.CmdValue)
+	manager.RegisterCommand("list", sc.CmdListShop, 0)
+	manager.RegisterCommand("buy", sc.CmdBuy, 0)
+	manager.RegisterCommand("sell", sc.CmdSell, 0)
+	manager.RegisterCommand("repair", sc.CmdRepair, 0)
+	manager.RegisterCommand("identify", sc.CmdIdentify, 0)
+	manager.RegisterCommand("value", sc.CmdValue, 0)
 }

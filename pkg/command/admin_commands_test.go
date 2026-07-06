@@ -22,7 +22,7 @@ type mockCommandManager struct {
 	sessions []common.CommandSession
 }
 
-func (m *mockCommandManager) RegisterCommand(name string, handler func(common.CommandSession, []string) error) {
+func (m *mockCommandManager) RegisterCommand(name string, handler func(common.CommandSession, []string) error, minLevel int) {
 }
 
 func (m *mockCommandManager) Sessions() []common.CommandSession {

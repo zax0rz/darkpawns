@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
 )
 
@@ -91,18 +92,18 @@ func (ac *AdminCommands) initReports() {
 // RegisterCommands registers admin commands with the session manager.
 func (ac *AdminCommands) RegisterCommands() {
 	// Report command for players
-	ac.manager.RegisterCommand("report", ac.cmdReport)
+	ac.manager.RegisterCommand("report", ac.cmdReport, 0)
 
 	// Admin commands
-	ac.manager.RegisterCommand("warn", ac.cmdWarn)
-	ac.manager.RegisterCommand("mute", ac.cmdMute)
-	ac.manager.RegisterCommand("kick", ac.cmdKick)
-	ac.manager.RegisterCommand("ban", ac.cmdBan)
-	ac.manager.RegisterCommand("investigate", ac.cmdInvestigate)
-	ac.manager.RegisterCommand("reports", ac.cmdListReports)
-	ac.manager.RegisterCommand("penalties", ac.cmdListPenalties)
-	ac.manager.RegisterCommand("filter", ac.cmdWordFilter)
-	ac.manager.RegisterCommand("spamconfig", ac.cmdSpamConfig)
+	ac.manager.RegisterCommand("warn", ac.cmdWarn, game.LVL_IMMORT)
+	ac.manager.RegisterCommand("mute", ac.cmdMute, game.LVL_IMMORT)
+	ac.manager.RegisterCommand("kick", ac.cmdKick, game.LVL_IMMORT)
+	ac.manager.RegisterCommand("ban", ac.cmdBan, game.LVL_IMMORT)
+	ac.manager.RegisterCommand("investigate", ac.cmdInvestigate, game.LVL_IMMORT)
+	ac.manager.RegisterCommand("reports", ac.cmdListReports, game.LVL_IMMORT)
+	ac.manager.RegisterCommand("penalties", ac.cmdListPenalties, game.LVL_IMMORT)
+	ac.manager.RegisterCommand("filter", ac.cmdWordFilter, game.LVL_IMMORT)
+	ac.manager.RegisterCommand("spamconfig", ac.cmdSpamConfig, game.LVL_IMMORT)
 }
 
 // cmdReport allows players to report abusive behavior.

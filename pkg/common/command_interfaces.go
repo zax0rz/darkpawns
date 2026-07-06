@@ -61,8 +61,8 @@ type CommandSession interface {
 
 // CommandManager defines the interface for managing commands.
 type CommandManager interface {
-	// RegisterCommand registers a command handler
-	RegisterCommand(name string, handler func(CommandSession, []string) error)
+	// RegisterCommand registers a command handler with a minimum level requirement.
+	RegisterCommand(name string, handler func(CommandSession, []string) error, minLevel int)
 
 	// Sessions returns all active sessions
 	Sessions() []CommandSession
