@@ -14,12 +14,18 @@ import (
 )
 
 const (
+	// CurrentSaveVersion is the current save format version.
+	// Bump this when making a breaking change to the save format.
+	// Existing saves without a version field are treated as version 0.
+	CurrentSaveVersion = 1
+
 	saveDir = "./data/players"
 )
 
 // savePlayerData is a JSON-serializable snapshot of a Player for save/load.
 // It excludes runtime-only fields (mu, Send, Fighting, ConnectedAt, LastActive, etc.).
 type savePlayerData struct {
+	SaveVersion int            `json:"save_version"` // bumped on save format changes
 	ID          int            `json:"id"`
 	Name        string         `json:"name"`
 	Sex         int            `json:"sex"`
@@ -132,6 +138,16 @@ func LoadPlayer(name string) (*Player, error) {
 		return nil, fmt.Errorf("decode save data: %w", err)
 	}
 
+	// Version check: 0 means old format (pre-versioning), silently upgrade.
+	// Non-zero mismatch means a future or corrupted save — warn but still load.
+	if data.SaveVersion != 0 && data.SaveVersion != CurrentSaveVersion {
+		slog.Warn("player save version mismatch",
+			"player", name,
+			"file_version", data.SaveVersion,
+			"expected_version", CurrentSaveVersion,
+			"action", "loading with possible data loss")
+	}
+
 	return saveDataToPlayer(data), nil
 }
 
@@ -158,6 +174,7 @@ func playerToSaveData(p *Player) savePlayerData {
 	defer p.mu.RUnlock()
 
 	data := savePlayerData{
+		SaveVersion: CurrentSaveVersion,
 		ID:          p.ID,
 		Name:        p.Name,
 		PoofIn:      p.PoofIn,
@@ -372,6 +389,15 @@ func DeserializePlayer(data string) (*Player, error) {
 	if err := json.Unmarshal([]byte(data), &sd); err != nil {
 		return nil, fmt.Errorf("unmarshal player: %w", err)
 	}
+
+	if sd.SaveVersion != 0 && sd.SaveVersion != CurrentSaveVersion {
+		slog.Warn("player save version mismatch (deserialize)",
+			"player", sd.Name,
+			"file_version", sd.SaveVersion,
+			"expected_version", CurrentSaveVersion,
+			"action", "loading with possible data loss")
+	}
+
 	return saveDataToPlayer(sd), nil
 }
 
@@ -395,12 +421,13 @@ const worldStateFile = "./data/world_state.json"
 
 // saveWorldData is the top-level JSON-serializable structure for world state.
 type saveWorldData struct {
-	NextMobID  int                    `json:"next_mob_id"`
-	NextObjID  int                    `json:"next_obj_id"`
-	DoorStates map[int]map[string]int `json:"door_states"` // roomVNum → direction → DoorState
-	Mobs       []saveMobPosition      `json:"mobs"`
-	RoomItems  map[int][]saveItemRef  `json:"room_items"` // roomVNum → items
-	Gossip     []saveGossipEntry      `json:"gossip"`
+	SaveVersion int                    `json:"save_version"` // bumped on save format changes
+	NextMobID   int                    `json:"next_mob_id"`
+	NextObjID   int                    `json:"next_obj_id"`
+	DoorStates  map[int]map[string]int `json:"door_states"` // roomVNum → direction → DoorState
+	Mobs        []saveMobPosition      `json:"mobs"`
+	RoomItems   map[int][]saveItemRef  `json:"room_items"` // roomVNum → items
+	Gossip      []saveGossipEntry      `json:"gossip"`
 }
 
 // saveMobPosition captures a mob's runtime position and state.
@@ -431,12 +458,13 @@ func SerializeWorld(w *World) (string, error) {
 	defer w.mu.RUnlock()
 
 	data := saveWorldData{
-		NextMobID:  w.nextMobID,
-		NextObjID:  w.nextObjID,
-		DoorStates: make(map[int]map[string]int),
-		Mobs:       make([]saveMobPosition, 0, len(w.activeMobs)),
-		RoomItems:  make(map[int][]saveItemRef),
-		Gossip:     make([]saveGossipEntry, 0, len(w.gossipHistory)),
+		SaveVersion: CurrentSaveVersion,
+		NextMobID:   w.nextMobID,
+		NextObjID:   w.nextObjID,
+		DoorStates:  make(map[int]map[string]int),
+		Mobs:        make([]saveMobPosition, 0, len(w.activeMobs)),
+		RoomItems:   make(map[int][]saveItemRef),
+		Gossip:      make([]saveGossipEntry, 0, len(w.gossipHistory)),
 	}
 
 	// Collect non-default door states.
@@ -502,6 +530,13 @@ func DeserializeWorld(data string, w *World) error {
 	var sd saveWorldData
 	if err := json.Unmarshal([]byte(data), &sd); err != nil {
 		return fmt.Errorf("unmarshal world state: %w", err)
+	}
+
+	if sd.SaveVersion != 0 && sd.SaveVersion != CurrentSaveVersion {
+		slog.Warn("world save version mismatch",
+			"file_version", sd.SaveVersion,
+			"expected_version", CurrentSaveVersion,
+			"action", "loading with possible data loss")
 	}
 
 	w.mu.Lock()

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -288,6 +289,76 @@ func TestSaveLoadWorldDisk(t *testing.T) {
 	exitUp := room.Exits["up"]
 	if exitUp.DoorState != 2 {
 		t.Errorf("Loaded world door state = %d, want 2", exitUp.DoorState)
+	}
+}
+
+func TestSavePlayer_IncludesVersion(t *testing.T) {
+	player := NewPlayer(77, "VersionTestPlayer", 1001)
+	player.SetLevel(5)
+
+	data := playerToSaveData(player)
+	if data.SaveVersion != CurrentSaveVersion {
+		t.Errorf("SaveVersion = %d, want %d", data.SaveVersion, CurrentSaveVersion)
+	}
+
+	// Also verify through serialization
+	serialized, err := SerializePlayer(player)
+	if err != nil {
+		t.Fatalf("SerializePlayer failed: %v", err)
+	}
+
+	var decoded savePlayerData
+	if err := jsonUnmarshal([]byte(serialized), &decoded); err != nil {
+		t.Fatalf("unmarshal serialized data: %v", err)
+	}
+	if decoded.SaveVersion != CurrentSaveVersion {
+		t.Errorf("SaveVersion after round-trip = %d, want %d", decoded.SaveVersion, CurrentSaveVersion)
+	}
+}
+
+// jsonUnmarshal is a test helper that calls json.Unmarshal.
+func jsonUnmarshal(data []byte, v interface{}) error {
+	return json.Unmarshal(data, v)
+}
+
+func TestLoadPlayer_OldSave_NoVersion_Warns(t *testing.T) {
+	// Simulate an old save file without save_version field.
+	oldJSON := `{
+		"id": 88,
+		"name": "OldSaveGuy",
+		"level": 10
+	}`
+
+	loaded, err := DeserializePlayer(oldJSON)
+	if err != nil {
+		t.Fatalf("DeserializePlayer should succeed for old format: %v", err)
+	}
+	if loaded == nil {
+		t.Fatal("loaded player should not be nil")
+	}
+	if loaded.GetLevel() != 10 {
+		t.Errorf("Level = %d, want 10", loaded.GetLevel())
+	}
+}
+
+func TestLoadPlayer_FutureVersion_Warns(t *testing.T) {
+	// Simulate a save file from a future version.
+	futureJSON := `{
+		"save_version": 99,
+		"id": 42,
+		"name": "FutureGuy",
+		"level": 20
+	}`
+
+	loaded, err := DeserializePlayer(futureJSON)
+	if err != nil {
+		t.Fatalf("DeserializePlayer should still succeed for future version: %v", err)
+	}
+	if loaded == nil {
+		t.Fatal("loaded player should not be nil")
+	}
+	if loaded.GetLevel() != 20 {
+		t.Errorf("Level = %d, want 20", loaded.GetLevel())
 	}
 }
 
