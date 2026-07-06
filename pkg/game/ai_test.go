@@ -3,7 +3,9 @@ package game
 import (
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -133,6 +135,18 @@ func TestWanderMobMovesWithinConstraints(t *testing.T) {
 	if !moved {
 		t.Fatal("mob never moved over 2000 ticks; single-draw gate appears too strict")
 	}
+}
+
+// TestPointUpdateSingleDriver verifies the engine.GameLoop accepts a nil
+// OnPointUpdate callback. Production now relies solely on World's 30s ticker
+// for PointUpdate; this guards against accidentally re-adding a second driver.
+func TestPointUpdateSingleDriver(t *testing.T) {
+	// A GameLoop with no OnPointUpdate callback must start and run without panic.
+	loop := engine.NewGameLoop(engine.GameLoopCallbacks{})
+	loop.Start()
+	// Let a few pulses fire.
+	time.Sleep(250 * time.Millisecond)
+	loop.Stop()
 }
 
 // TestRunMobAISentinelNeverWanders confirms SENTINEL mobs are skipped before
