@@ -148,6 +148,7 @@ func (w *World) wanderMob(mob *MobInstance) {
 	// mob.mu (DP-590), so there is no lock to release or re-acquire here.
 	oldRoom := mob.GetRoom()
 	mob.SetRoom(targetRoom.VNum)
+	w.flagSpecRoomForMob(mob)
 
 	slog.Debug(
 		"mob wandered",

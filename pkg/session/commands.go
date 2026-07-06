@@ -523,13 +523,15 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		}
 	}
 
-	// Spec procedure command interception — fast path skips all scans when
-	// the room is known to contain no spec-bearing entities.
+	// Spec procedure command interception — fast path skips room-bearing scans
+	// when the room is known to contain no spec-bearing entities. Equipment and
+	// inventory scans are unconditional: they iterate the player's own items and
+	// were unconditional before the fast path was introduced.
 	if s.player != nil && s.player.GetRoomVNum() > 0 {
 		roomVNum := s.player.GetRoomVNum()
-		if s.manager.world.HasSpecInRoom(roomVNum) {
-			argStr := strings.Join(args, " ")
+		argStr := strings.Join(args, " ")
 
+		if s.manager.world.HasSpecInRoom(roomVNum) {
 			// 1. Mob spec procedures
 			mobs := s.manager.world.GetMobsInRoom(roomVNum)
 			for _, mob := range mobs {
@@ -549,38 +551,37 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 				}
 			}
 
-			// 2. Object spec procedures
-			// 2a. Equipped items
-			if s.player.Equipment != nil {
-				equipped := s.player.Equipment.GetEquippedItems()
-				for _, item := range equipped {
-					if item != nil {
-						if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-							if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
-								return nil
-							}
-						}
-					}
-				}
-			}
-
-			// 2b. Inventory items
-			if s.player.Inventory != nil {
-				invItems := s.player.Inventory.FindItems("")
-				for _, item := range invItems {
-					if item != nil {
-						if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-							if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
-								return nil
-							}
-						}
-					}
-				}
-			}
-
-			// 2c. Room items
+			// 3. Room items
 			roomItems := s.manager.world.GetItemsInRoom(roomVNum)
 			for _, item := range roomItems {
+				if item != nil {
+					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+							return nil
+						}
+					}
+				}
+			}
+		}
+
+		// 4. Equipped item spec procedures
+		if s.player.Equipment != nil {
+			equipped := s.player.Equipment.GetEquippedItems()
+			for _, item := range equipped {
+				if item != nil {
+					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+							return nil
+						}
+					}
+				}
+			}
+		}
+
+		// 5. Inventory item spec procedures
+		if s.player.Inventory != nil {
+			invItems := s.player.Inventory.FindItems("")
+			for _, item := range invItems {
 				if item != nil {
 					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
 						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {

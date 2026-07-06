@@ -524,13 +524,13 @@ func specHorn(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	arg = strings.TrimSpace(arg)
-	if !strings.Contains(strings.ToLower(arg), strings.ToLower(me.GetName())) {
+	if !strings.Contains(strings.ToLower(arg), "horn") {
 		return false
 	}
 
 	sendToChar(ch, "You inhale deeply then blow hard!\r\n")
 	sendToChar(ch, "A blaring note resounds through the air.\r\n")
-	w.roomMessage(me.GetRoom(), "$n blows into $P.")
-	w.roomMessage(me.GetRoom(), "$P lets out a blaring note...")
+	w.roomMessage(ch.GetRoomVNum(), ch.GetName()+" blows into a horn.")
+	w.roomMessage(ch.GetRoomVNum(), "A horn lets out a blaring note...")
 	return true
 }

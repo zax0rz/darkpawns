@@ -140,6 +140,50 @@ func TestHasSpecInRoom_RoomSpec(t *testing.T) {
 	}
 }
 
+// TestHasSpecInRoom_WanderingSpecMob verifies that a spec mob's destination
+// room is flagged when the mob moves via mobPerformMove (DP-QA#4).
+func TestHasSpecInRoom_WanderingSpecMob(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Room 1", Zone: 1, Exits: map[string]parser.Exit{"north": {ToRoom: 1002}}},
+			{VNum: 1002, Name: "Room 2", Zone: 1, Exits: map[string]parser.Exit{"south": {ToRoom: 1001}}},
+		},
+		Mobs: []parser.Mob{{VNum: 9001, ShortDesc: "wanderer", Level: 1}},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	old := MobSpecAssign[9001]
+	MobSpecAssign[9001] = "puff"
+	defer func() {
+		if old == "" {
+			delete(MobSpecAssign, 9001)
+		} else {
+			MobSpecAssign[9001] = old
+		}
+	}()
+
+	mob, err := w.SpawnMob(9001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	if !w.HasSpecInRoom(1001) {
+		t.Fatal("HasSpecInRoom(1001) = false after spawn, want true")
+	}
+
+	// Move the mob north (0) via the hunt/move path; this should flag the new room.
+	w.mobPerformMove(mob, 0)
+	if mob.GetRoom() != 1002 {
+		t.Fatalf("mob room = %d after move, want 1002", mob.GetRoom())
+	}
+	if !w.HasSpecInRoom(1002) {
+		t.Fatal("HasSpecInRoom(1002) = false after move, want true")
+	}
+}
+
 func TestHasSpecInRoom_AfterRefresh(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Mob Room", Zone: 1}},
