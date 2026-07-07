@@ -17,6 +17,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/events"
@@ -769,6 +770,12 @@ func TestKillPayout_PlayerDeath_FiresPlayerDeathHook(t *testing.T) {
 	})
 
 	ktw.world.HandleDeath(victim, killer, game.TypeSlash)
+
+	// firePlayerDeath runs the hook in a goroutine — give it a moment.
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) && !gotHook.Load() {
+		time.Sleep(time.Millisecond)
+	}
 
 	if !gotHook.Load() {
 		t.Error("expected PlayerDeathHook to fire on player death")
