@@ -900,8 +900,8 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	//nolint:gocritic,staticcheck // badCond/SA4000: two independent RNG rolls are intentional, not a copy-paste error
 	if rand.IntN(10001) == 0 && rand.IntN(10001) == 0 && me.GetMaxHealth() < 11 {
 		w.roomMessage(roomVNum, fmt.Sprintf("%s seems to starve to death and simply fades out of existence.", mobName(me)))
-		// C: extract_char(ch) — set HP to 0 to trigger mob death handling
 		me.SetHealth(0)
+		w.HandleDeath(me, nil, -1)
 		return true
 	}
 
@@ -1048,8 +1048,9 @@ func specConjured(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'My work here is done.'", mobName(me)))
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s disappears in a flash of white light!", mobName(me)))
 	}
-	// Remove mob from world — set HP to 0 to trigger death handling
+	// Remove mob from world via death pipeline (corpse, event, etc.)
 	me.SetHealth(0)
+	w.HandleDeath(me, nil, -1)
 	return true
 }
 

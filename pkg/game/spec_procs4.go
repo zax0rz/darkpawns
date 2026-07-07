@@ -338,6 +338,7 @@ func specElementalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg st
 		m.SetHealth(m.GetHP() - 100)
 		if m.GetHP() <= 0 {
 			w.roomMessage(me.GetRoom(), "The forces of nature slowly rip $N to shreds.")
+			w.HandleDeath(m, nil, -1)
 		}
 	}
 
