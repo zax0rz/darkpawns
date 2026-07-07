@@ -287,14 +287,16 @@ func (m *MobInstance) GetLongDesc() string {
 }
 
 // TakeDamage applies damage to the mob.
+// Death state (alive=false, removal from activeMobs, XP awards, events) is
+// handled exclusively by HandleDeath — not here. Storing alive=false here
+// would pre-empt HandleDeath's CompareAndSwap guard and skip the entire
+// kill-payout pipeline (XP, gold, kill counter, corpse, events).
 func (m *MobInstance) TakeDamage(amount int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.CurrentHP -= amount
 	if m.CurrentHP < 0 {
 		m.CurrentHP = 0
-		m.Status = "dead"
-		m.alive.Store(false)
 	}
 }
 
@@ -671,10 +673,6 @@ func (m *MobInstance) SetHealth(health int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.CurrentHP = health
-	if health <= 0 {
-		m.Status = "dead"
-		m.alive.Store(false)
-	}
 }
 
 func (m *MobInstance) GetMaxHealth() int {
