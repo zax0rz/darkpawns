@@ -10,7 +10,8 @@ import (
 type WorkerPool struct {
 	workers   int
 	taskQueue chan func()
-	wg        sync.WaitGroup
+	wg        sync.WaitGroup // tracks the worker goroutines themselves
+	taskWg    sync.WaitGroup // tracks submitted-but-not-yet-completed tasks
 	mu        sync.RWMutex
 	closed    bool
 }
@@ -36,10 +37,12 @@ func (p *WorkerPool) worker() {
 	defer p.wg.Done()
 	for task := range p.taskQueue {
 		task()
+		p.taskWg.Done()
 	}
 }
 
-// Submit adds a task to the pool.
+// Submit adds a task to the pool. The task is counted by Wait until it has
+// finished executing.
 func (p *WorkerPool) Submit(task func()) error {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -48,15 +51,28 @@ func (p *WorkerPool) Submit(task func()) error {
 		return ErrPoolClosed
 	}
 
+	p.taskWg.Add(1)
 	select {
 	case p.taskQueue <- task:
 		return nil
 	default:
+		p.taskWg.Done()
 		return ErrPoolFull
 	}
 }
 
-// Close gracefully shuts down the pool.
+// Wait blocks until every task submitted before the call has finished
+// running. Unlike Close, it does not stop the pool from accepting further
+// work, so callers can use it to synchronize on a batch of submitted tasks
+// without tearing the pool down.
+func (p *WorkerPool) Wait() {
+	p.taskWg.Wait()
+}
+
+// Close stops the pool from accepting new work, then blocks until every
+// task already queued or in flight has completed before returning. It is
+// always safe to call Close directly (without calling Wait first) since it
+// drains the queue itself.
 func (p *WorkerPool) Close() {
 	p.mu.Lock()
 	defer p.mu.Unlock()

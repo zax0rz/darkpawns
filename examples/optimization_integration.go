@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/optimization"
@@ -44,15 +45,17 @@ func WorkerPoolExample() {
 	// Submit tasks
 	for i := 0; i < 20; i++ {
 		taskID := i
-		// #nosec G104
-		_ = pool.Submit(func() {
+		if err := pool.Submit(func() {
 			time.Sleep(10 * time.Millisecond)
 			fmt.Printf("  Task %d completed\n", taskID)
-		})
+		}); err != nil {
+			log.Printf("  Error submitting task %d: %v", taskID, err)
+		}
 	}
 
-	// Wait for tasks to complete
-	time.Sleep(200 * time.Millisecond)
+	// Wait for all submitted tasks to finish before Close (deferred above)
+	// tears the pool down.
+	pool.Wait()
 }
 
 func ConnectionPoolExample() {
@@ -117,9 +120,16 @@ func AiBatchProcessingExample() {
 	})
 	defer func() { _ = processor.Close() }()
 
-	// Submit requests
+	// Submit requests. reqWg tracks the request goroutines themselves (Add
+	// happens before each goroutine starts) so we can deterministically
+	// wait for every request to be submitted and answered before Close
+	// runs, instead of guessing at a fixed sleep duration.
+	var reqWg sync.WaitGroup
 	for i := 0; i < 15; i++ {
+		reqWg.Add(1)
 		go func(id int) {
+			defer reqWg.Done()
+
 			req := optimization.AIRequest{
 				ID:     fmt.Sprintf("req-%d", id),
 				Prompt: fmt.Sprintf("Question %d", id),
@@ -136,8 +146,11 @@ func AiBatchProcessingExample() {
 		}(i)
 	}
 
-	// Wait for processing
-	time.Sleep(500 * time.Millisecond)
+	// Wait for every submitted request to receive its response (or error),
+	// then wait on the processor itself before the deferred Close above
+	// drains and tears it down.
+	reqWg.Wait()
+	processor.Wait()
 }
 
 func WebsocketOptimizationExample() {

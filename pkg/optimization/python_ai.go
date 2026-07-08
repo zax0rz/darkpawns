@@ -31,6 +31,7 @@ type AIResponse struct {
 // AIBatchProcessor batches AI requests for efficiency.
 type AIBatchProcessor struct {
 	mu          sync.Mutex
+	wg          sync.WaitGroup // tracks in-flight Submit calls
 	batchSize   int
 	maxWaitTime time.Duration
 	batch       []AIBatchItem
@@ -67,6 +68,12 @@ func (bp *AIBatchProcessor) Submit(ctx context.Context, req AIRequest) (AIRespon
 		bp.mu.Unlock()
 		return AIResponse{}, ErrPoolClosed
 	}
+
+	// Counted from here (under the lock, before closed can flip) until
+	// this call returns, so Wait/Close can't observe the counter hit zero
+	// while a new request is still being admitted.
+	bp.wg.Add(1)
+	defer bp.wg.Done()
 
 	item := AIBatchItem{
 		Request:  req,
@@ -129,6 +136,12 @@ func (bp *AIBatchProcessor) sendBatchError(batch []AIBatchItem, err error) {
 // processBatch processes the current batch.
 func (bp *AIBatchProcessor) processBatch() {
 	bp.mu.Lock()
+	if bp.closed {
+		// Close already flushed (or is about to flush) whatever was
+		// pending; don't resurrect the timer or double-process the batch.
+		bp.mu.Unlock()
+		return
+	}
 	if len(bp.batch) == 0 {
 		bp.timer.Reset(bp.maxWaitTime)
 		bp.mu.Unlock()
@@ -145,28 +158,51 @@ func (bp *AIBatchProcessor) processBatch() {
 	}
 }
 
-// Close gracefully shuts down the batch processor.
+// Wait blocks until every request submitted before the call to Wait has
+// either received a response or been cancelled via its context. It does
+// not stop the processor from accepting new submissions.
+func (bp *AIBatchProcessor) Wait() {
+	bp.wg.Wait()
+}
+
+// Close gracefully shuts down the batch processor. It stops accepting new
+// submissions, flushes any items still sitting in the pending batch, and
+// waits for in-flight Submit calls to observe their response before
+// returning. This guarantees no submitted request is silently dropped and
+// that Close() is safe to call immediately before tearing down resources
+// the processor depends on.
 func (bp *AIBatchProcessor) Close() error {
 	bp.mu.Lock()
+	if bp.closed {
+		bp.mu.Unlock()
+		return nil
+	}
 	bp.closed = true
 	bp.timer.Stop()
 
 	// Flush any remaining items synchronously so Close() is guaranteed
 	// to complete before the caller shuts down resources the AI processor
 	// depends on (a fire-and-forget goroutine would race with shutdown).
+	var err error
 	if len(bp.batch) > 0 {
 		batch := bp.batch
 		bp.batch = nil
 		bp.mu.Unlock()
 
-		if err := bp.processFunc(batch); err != nil {
-			bp.sendBatchError(batch, err)
+		if pErr := bp.processFunc(batch); pErr != nil {
+			bp.sendBatchError(batch, pErr)
+			err = pErr
 		}
-		return nil
+	} else {
+		bp.mu.Unlock()
 	}
 
-	bp.mu.Unlock()
-	return nil
+	// Wait for any Submit calls that already pulled a full batch out and
+	// handed it to processFunc themselves (see the shouldProcess branch in
+	// Submit) to finish observing their response before we return.
+	bp.wg.Wait()
+
+	return err
 }
 
 // AICache provides caching for AI responses.
