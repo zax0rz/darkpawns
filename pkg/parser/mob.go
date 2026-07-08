@@ -634,43 +634,48 @@ var actionBitNames = []string{
 	"EXTRACT",      // 25 MOB_EXTRACT
 }
 
-// affectBitNames mirrors game.AffectedBitNames to avoid circular dependency.
+// affectBitNames maps world-file affect bitmask positions to flag names.
+// Bit positions match src/structs.h AFF_* constants (DP-1007).
 var affectBitNames = []string{
-	"BLIND",
-	"CHARM",
-	"CURSE",
-	"POISON",
-	"PROTECT_EVIL",
-	"PROTECT_GOOD",
-	"SLEEP",
-	"NO_FLIGHT",
-	"FLYING",
-	"TRUE_SIGHT",
-	"INFRARED",
-	"WATERWALK",
-	"SANCTUARY",
-	"GROUP",
-	"HASTE",
-	"SLOW",
-	"PLAGUE",
-	"WEAKEN",
-	"INVISIBLE",
-	"DETECT_ALIGN",
-	"DETECT_INVIS",
-	"DETECT_MAGIC",
-	"SENSE_LIFE",
-	"SENSE_PSY",
-	"SHIELD",
-	"WEB",
-	"BERSERK",
-	"BLADE",
-	"BLUR",
-	"FIRESHIELD",
-	"ICESHIELD",
-	"SHOCKSHIELD",
-	"BARKSKIN",
-	"LEVITATE",
-	"DETECT_INV",
+	"BLIND",        // 0  AFF_BLIND
+	"INVISIBLE",    // 1  AFF_INVISIBLE
+	"DETECT_ALIGN", // 2  AFF_DETECT_ALIGN
+	"DETECT_INVIS", // 3  AFF_DETECT_INVIS
+	"DETECT_MAGIC", // 4  AFF_DETECT_MAGIC
+	"SENSE_LIFE",   // 5  AFF_SENSE_LIFE
+	"WATERWALK",    // 6  AFF_WATERWALK
+	"SANCTUARY",    // 7  AFF_SANCTUARY
+	"GROUP",        // 8  AFF_GROUP
+	"CURSE",        // 9  AFF_CURSE
+	"INFRAVISION",  // 10 AFF_INFRAVISION
+	"POISON",       // 11 AFF_POISON
+	"PROTECT_EVIL", // 12 AFF_PROTECT_EVIL
+	"PROTECT_GOOD", // 13 AFF_PROTECT_GOOD
+	"SLEEP",        // 14 AFF_SLEEP
+	"NOTRACK",      // 15 AFF_NOTRACK
+	"FLESH_ALTER",  // 16 AFF_FLESH_ALTER
+	"DODGE",        // 17 AFF_DODGE
+	"SNEAK",        // 18 AFF_SNEAK
+	"HIDE",         // 19 AFF_HIDE
+	"BERSERK",      // 20 AFF_BERSERK
+	"CHARM",        // 21 AFF_CHARM
+	"FOLLOW",       // 22 AFF_FOLLOW
+	"WIMPY",        // 23 AFF_WIMPY
+	"KUJI_KIRI",    // 24 AFF_KUJI_KIRI
+	"CUTTHROAT",    // 25 AFF_CUTTHROAT
+	"FLY",          // 26 AFF_FLY
+	"WEREWOLF",     // 27 AFF_WEREWOLF
+	"VAMPIRE",      // 28 AFF_VAMPIRE
+	"MOUNT",        // 29 AFF_MOUNT
+	"INVULN",       // 30 AFF_INVULN
+	"FLAMING",      // 31 AFF_FLAMING
+	"NOTHING",      // 32 AFF_NOTHING
+	"HASTE",        // 33 AFF_HASTE
+	"SLOW",         // 34 AFF_SLOW
+	"DREAM",        // 35 AFF_DREAM
+	"WATERBREATHE", // 36 AFF_WATERBREATHE
+	"METALSKIN",    // 37 AFF_METALSKIN
+	"ROBBED",       // 38 AFF_ROBBED
 }
 
 // Scripting interface implementations for parser.Mob

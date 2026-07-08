@@ -603,9 +603,9 @@ func TestParseMobFile_ActionFlagsBitmask(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "test.mob")
 
 	// Action flags bitmask: bit 0 (SPEC) + bit 1 (SENTINEL) + bit 5 (AGGRESSIVE) = 1 + 2 + 32 = 35
-	// Affect flags bitmask: bit 0 (BLIND) + bit 8 (FLYING) = 1 + 256 = 257
+	// Affect flags bitmask: bit 0 (BLIND) + bit 26 (FLY) = 1 + 67108864 = 67108865
 	// alignment: -500, race: 1
-	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n35 257 -500 1 E\n1 20 0 5 10 20 1 4 2\n100 500\n8 3 0\n"
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n35 67108865 -500 1 E\n1 20 0 5 10 20 1 4 2\n100 500\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -631,11 +631,11 @@ func TestParseMobFile_ActionFlagsBitmask(t *testing.T) {
 		}
 	}
 
-	// Affect flags: BLIND, FLYING
+	// Affect flags: BLIND, FLY
 	if len(m.AffectFlags) != 2 {
 		t.Fatalf("expected 2 affect flags, got %d: %v", len(m.AffectFlags), m.AffectFlags)
 	}
-	expectedAffects := []string{"BLIND", "FLYING"}
+	expectedAffects := []string{"BLIND", "FLY"}
 	for i, want := range expectedAffects {
 		if m.AffectFlags[i] != want {
 			t.Errorf("affect flag[%d]: expected %q, got %q", i, want, m.AffectFlags[i])
@@ -679,8 +679,8 @@ func TestParseMobFile_HighBitmask(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "test.mob")
 
 	// Action flags bitmask: bit 25 (EXTRACT, last entry) = 33554432
-	// Affect flags bitmask: bit 34 (DETECT_INV, last entry) = 17179869184
-	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n33554432 17179869184 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
+	// Affect flags bitmask: bit 38 (ROBBED, last entry) = 274877906944
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n33554432 274877906944 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -694,8 +694,8 @@ func TestParseMobFile_HighBitmask(t *testing.T) {
 	if len(m.ActionFlags) != 1 || m.ActionFlags[0] != "EXTRACT" {
 		t.Errorf("expected [EXTRACT], got %v", m.ActionFlags)
 	}
-	if len(m.AffectFlags) != 1 || m.AffectFlags[0] != "DETECT_INV" {
-		t.Errorf("expected [DETECT_INV], got %v", m.AffectFlags)
+	if len(m.AffectFlags) != 1 || m.AffectFlags[0] != "ROBBED" {
+		t.Errorf("expected [ROBBED], got %v", m.AffectFlags)
 	}
 }
 
