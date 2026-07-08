@@ -54,10 +54,14 @@ func (sm *SecretManager) GetSecret(secretName string) (string, error) {
 	}
 
 	// Check for encrypted secret file
-	encryptedFile := fmt.Sprintf("/run/secrets/%s.enc", secretName)
+	// Validate the secret name before building the path so a future refactor
+	// can never reach os.Stat/os.ReadFile with a traversal payload. The check
+	// rejects ".." and "/" which are the only separators needed to escape the
+	// /run/secrets directory (DP-815).
 	if strings.Contains(secretName, "..") || strings.Contains(secretName, "/") {
 		return "", ErrSecretNotFound
 	}
+	encryptedFile := fmt.Sprintf("/run/secrets/%s.enc", secretName)
 	if _, err := os.Stat(encryptedFile); err == nil {
 		encryptedData, err := os.ReadFile(encryptedFile)
 		if err != nil {

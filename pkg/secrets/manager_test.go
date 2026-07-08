@@ -37,3 +37,23 @@ func TestDecrypt_WrongKeyReturnsSentinel(t *testing.T) {
 		t.Errorf("expected errors.Is(err, ErrDecryptionFailed), got: %v", err)
 	}
 }
+
+// TestGetSecret_RejectsPathTraversal is a regression test for DP-815: a secret
+// name containing ".." or "/" must be rejected before any path is constructed
+// or stat'd, so it can never escape the /run/secrets directory.
+func TestGetSecret_RejectsPathTraversal(t *testing.T) {
+	os.Setenv("ENCRYPTION_KEY", "test-secret-that-is-at-least-32-characters-long")
+	defer os.Unsetenv("ENCRYPTION_KEY")
+
+	sm, err := NewSecretManager()
+	if err != nil {
+		t.Fatalf("NewSecretManager failed: %v", err)
+	}
+
+	for _, name := range []string{"..", "../etc/passwd", "foo/../bar", "sub/dir", "/abs/path"} {
+		_, err := sm.GetSecret(name)
+		if !errors.Is(err, ErrSecretNotFound) {
+			t.Errorf("GetSecret(%q) = %v, want ErrSecretNotFound", name, err)
+		}
+	}
+}
