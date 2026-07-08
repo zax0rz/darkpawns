@@ -229,7 +229,7 @@ Do not include any other text, markdown, or formatting."""
     def batch_classify(self, texts: List[str], contexts: Optional[List[Dict]] = None) -> List[Dict]:
         """Classify multiple texts"""
         results = []
-        contexts = contexts or [{}] * len(texts)
+        contexts = contexts or [{} for _ in range(len(texts))]
         
         for i, (text, context) in enumerate(zip(texts, contexts)):
             print(f"Classifying {i+1}/{len(texts)}...")
