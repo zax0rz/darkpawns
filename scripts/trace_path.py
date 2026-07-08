@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 """Trace direction paths through Dark Pawns world files."""
 import re, os, sys
+from pathlib import Path
 
-WORLD_DIR = "/home/zach/.openclaw/workspace/darkpawns/lib/world/wld/"
+# Default: lib/world/wld/ relative to the repo root (this script lives in scripts/).
+# Override with the DP_WORLD_DIR env var or a CLI arg (`trace_path.py /path/to/wld`).
+DEFAULT_WORLD_DIR = Path(__file__).resolve().parent.parent / "lib" / "world" / "wld"
 
 DIR_MAP = {'n': 0, 'e': 1, 's': 2, 'w': 3, 'u': 4, 'd': 5}
 DIR_NAME = {0: 'N', 1: 'E', 2: 'S', 3: 'W', 4: 'U', 5: 'D'}
 
-def load_world():
+def resolve_world_dir():
+    if len(sys.argv) > 1:
+        return sys.argv[1]
+    return os.environ.get("DP_WORLD_DIR", str(DEFAULT_WORLD_DIR))
+
+def load_world(world_dir):
     rooms = {}
-    for fname in os.listdir(WORLD_DIR):
+    for fname in os.listdir(world_dir):
         if not fname.endswith('.wld') and not fname.endswith('.new'):
             continue
-        path = os.path.join(WORLD_DIR, fname)
+        path = os.path.join(world_dir, fname)
         try:
             with open(path, 'r', errors='replace') as f:
                 content = f.read()
@@ -65,28 +73,33 @@ def trace(rooms, start_vnum, path_str):
             current = exits[direction]
     return current, rooms.get(current, {}).get('name', 'UNKNOWN')
 
-print("Loading world files...")
-rooms = load_world()
-print(f"Loaded {len(rooms)} rooms\n")
+def main():
+    world_dir = resolve_world_dir()
+    print("Loading world files...")
+    rooms = load_world(world_dir)
+    print(f"Loaded {len(rooms)} rooms\n")
 
-MARKET_SQUARE = 8046  # Market Square, Kir Drax'in (zone 80)
+    MARKET_SQUARE = 8046  # Market Square, Kir Drax'in (zone 80)
 
-paths = [
-    ("Crystal Temple", "2n4e2n"),
-    ("Ender Village",  "14s4wd"),
-    ("Zoo",            "2n2e2n"),
-    ("Cold Village",   "11w7n"),
-    ("Slums",          "4se"),
-    ("King Seilon's Keep", "22w2n"),
-    ("Orcs",           "32w5sd"),
-    ("Ogres",          "16e7nw2s"),
-    ("Hell",           "15w4nw3n3e"),
-    ("Bhyroga",        "15w4nw3nw5n2e4n"),
-    ("Shax'in Brown Dragon", "18s30w4s8ws2wd"),
-]
+    paths = [
+        ("Crystal Temple", "2n4e2n"),
+        ("Ender Village",  "14s4wd"),
+        ("Zoo",            "2n2e2n"),
+        ("Cold Village",   "11w7n"),
+        ("Slums",          "4se"),
+        ("King Seilon's Keep", "22w2n"),
+        ("Orcs",           "32w5sd"),
+        ("Ogres",          "16e7nw2s"),
+        ("Hell",           "15w4nw3n3e"),
+        ("Bhyroga",        "15w4nw3nw5n2e4n"),
+        ("Shax'in Brown Dragon", "18s30w4s8ws2wd"),
+    ]
 
-for label, path in paths:
-    end_vnum, result = trace(rooms, MARKET_SQUARE, path)
-    status = "OK" if "NO EXIT" not in result and "DEAD END" not in result else "FAIL"
-    print(f"[{status}] {label}")
-    print(f"       -> room {end_vnum}: {result}\n")
+    for label, path in paths:
+        end_vnum, result = trace(rooms, MARKET_SQUARE, path)
+        status = "OK" if "NO EXIT" not in result and "DEAD END" not in result else "FAIL"
+        print(f"[{status}] {label}")
+        print(f"       -> room {end_vnum}: {result}\n")
+
+if __name__ == "__main__":
+    main()
