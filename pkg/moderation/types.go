@@ -2,6 +2,7 @@
 package moderation
 
 import (
+	"regexp"
 	"time"
 )
 
@@ -83,6 +84,32 @@ type WordFilterEntry struct {
 	Action    FilterAction `json:"action"` // What to do when matched
 	CreatedBy string       `json:"created_by"`
 	CreatedAt time.Time    `json:"created_at"`
+
+	// compiled caches the compiled match/censor regex so the hot path
+	// (matches/censor, called per chat message) does not recompile on every
+	// check. Built by compile(); lazily built on first use if unset (DP-819).
+	compiled *regexp.Regexp
+	censored *regexp.Regexp
+}
+
+// compile builds the cached match and censor regexes for this filter. It is
+// called when a filter is loaded or added (under the manager's lock), so the
+// per-message read path never pays the regexp.Compile cost. An invalid regex
+// leaves the caches nil; matches()/censor() treat a nil cache as "no match".
+func (wf *WordFilterEntry) compile() {
+	if wf.IsRegex {
+		if re, err := regexp.Compile(wf.Pattern); err == nil {
+			wf.compiled = re
+		}
+		if re, err := regexp.Compile(`(?i)` + wf.Pattern); err == nil {
+			wf.censored = re
+		}
+		return
+	}
+	wf.compiled = nil // exact match uses strings.Contains, no regex needed
+	if re, err := regexp.Compile(`(?i)` + regexp.QuoteMeta(wf.Pattern)); err == nil {
+		wf.censored = re
+	}
 }
 
 // FilterAction represents what to do when a filtered word is detected.

@@ -185,6 +185,7 @@ func (m *Manager) loadWordFilters() {
 			slog.Error("Failed to scan word filter", "error", err)
 			continue
 		}
+		wf.compile()
 
 		m.wordFilters = append(m.wordFilters, wf)
 	}
@@ -362,12 +363,19 @@ func (m *Manager) isSpam(playerName string) bool {
 // matches checks if a word filter matches the message.
 func (wf *WordFilterEntry) matches(message string) bool {
 	if wf.IsRegex {
-		re, err := regexp.Compile(wf.Pattern)
-		if err != nil {
-			slog.Error("Invalid regex pattern", "pattern", wf.Pattern, "error", err)
-			return false
+		// Lazily compile if the cache was not populated at add/load time
+		// (defensive — e.g. a WordFilterEntry built by a test). The hot path
+		// goes through entries added via AddWordFilter/loadWordFilters, which
+		// pre-compile under the manager lock (DP-819).
+		if wf.compiled == nil {
+			re, err := regexp.Compile(wf.Pattern)
+			if err != nil {
+				slog.Error("Invalid regex pattern", "pattern", wf.Pattern, "error", err)
+				return false
+			}
+			wf.compiled = re
 		}
-		return re.MatchString(message)
+		return wf.compiled.MatchString(message)
 	}
 
 	return strings.Contains(strings.ToLower(message), strings.ToLower(wf.Pattern))
@@ -378,17 +386,21 @@ func (wf *WordFilterEntry) matches(message string) bool {
 // regex filters are applied to the original text), so censoring must also be
 // case-insensitive to avoid leaving mixed/upper-case variants uncensored.
 func (wf *WordFilterEntry) censor(message string) string {
-	var re *regexp.Regexp
-	var err error
-	if wf.IsRegex {
-		re, err = regexp.Compile(`(?i)` + wf.Pattern)
-	} else {
-		re, err = regexp.Compile(`(?i)` + regexp.QuoteMeta(wf.Pattern))
+	// Lazily compile if the cache was not populated at add/load time (DP-819).
+	if wf.censored == nil {
+		var re *regexp.Regexp
+		var err error
+		if wf.IsRegex {
+			re, err = regexp.Compile(`(?i)` + wf.Pattern)
+		} else {
+			re, err = regexp.Compile(`(?i)` + regexp.QuoteMeta(wf.Pattern))
+		}
+		if err != nil {
+			return message
+		}
+		wf.censored = re
 	}
-	if err != nil {
-		return message
-	}
-	return re.ReplaceAllStringFunc(message, func(match string) string {
+	return wf.censored.ReplaceAllStringFunc(message, func(match string) string {
 		return strings.Repeat("*", utf8.RuneCountInString(match))
 	})
 }
@@ -580,6 +592,7 @@ func (m *Manager) AddWordFilter(pattern string, isRegex bool, actionStr, created
 		CreatedBy: createdBy,
 		CreatedAt: time.Now(),
 	}
+	entry.compile()
 
 	// Compute a local ID. In DB mode this is temporary until RETURNING gives the
 	// real serial id; in memory-only mode it is the permanent id.
