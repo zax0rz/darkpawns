@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -32,17 +33,37 @@ func NewSecretManager() (*SecretManager, error) {
 		return nil, errors.New("ENCRYPTION_KEY environment variable not set")
 	}
 
-	// Key must be at least 32 bytes for AES-256
-	keyBytes := []byte(key)
-	if len(keyBytes) < 32 {
-		return nil, errors.New("ENCRYPTION_KEY must be at least 32 bytes")
-	} else if len(keyBytes) > 32 {
-		keyBytes = keyBytes[:32]
+	keyBytes, err := decodeEncryptionKey(key)
+	if err != nil {
+		return nil, err
 	}
 
 	return &SecretManager{
 		encryptionKey: keyBytes,
 	}, nil
+}
+
+// decodeEncryptionKey turns the ENCRYPTION_KEY env var into 32 raw AES-256 key
+// bytes. Operators are documented (k8s/server.yaml) to generate the key via
+// `openssl rand -hex 32`, which produces a 64-character hex string. Treating
+// that string as raw bytes via []byte(key) uses the ASCII hex characters
+// themselves as key material instead of the decoded random bytes, silently
+// cutting the real entropy roughly in half (DP-737). Try hex, then base64,
+// before falling back to raw bytes for callers that already pass a raw
+// 32+ byte secret directly.
+func decodeEncryptionKey(key string) ([]byte, error) {
+	if decoded, err := hex.DecodeString(key); err == nil && len(decoded) == 32 {
+		return decoded, nil
+	}
+	if decoded, err := base64.StdEncoding.DecodeString(key); err == nil && len(decoded) == 32 {
+		return decoded, nil
+	}
+
+	keyBytes := []byte(key)
+	if len(keyBytes) < 32 {
+		return nil, errors.New("ENCRYPTION_KEY must decode to 32 bytes (hex or base64) or be at least 32 raw bytes")
+	}
+	return keyBytes[:32], nil
 }
 
 // GetSecret retrieves and decrypts a secret
