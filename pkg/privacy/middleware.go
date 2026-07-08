@@ -12,11 +12,19 @@ import (
 	"time"
 )
 
+// maxLoggedBodyBytes caps how many bytes of a request/response body the
+// logging middleware buffers for its truncated log output. Full bodies are
+// always passed through untouched to downstream handlers and to the client
+// respectively; only the copy captured for logging is bounded, so
+// multi-megabyte uploads/responses don't cause unbounded memory growth.
+const maxLoggedBodyBytes = 1000
+
 // LoggingResponseWriter wraps http.ResponseWriter to capture status code
 type LoggingResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 	body       *bytes.Buffer
+	truncated  bool
 }
 
 // NewLoggingResponseWriter creates a new logging response writer
@@ -34,9 +42,20 @@ func (lrw *LoggingResponseWriter) WriteHeader(code int) {
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
-// Write captures the response body
+// Write captures up to maxLoggedBodyBytes of the response body for logging,
+// then passes the full write through to the underlying ResponseWriter
+// unmodified so the client always receives the complete response.
 func (lrw *LoggingResponseWriter) Write(b []byte) (int, error) {
-	lrw.body.Write(b)
+	if remaining := maxLoggedBodyBytes - lrw.body.Len(); remaining > 0 {
+		if len(b) <= remaining {
+			lrw.body.Write(b)
+		} else {
+			lrw.body.Write(b[:remaining])
+			lrw.truncated = true
+		}
+	} else if len(b) > 0 {
+		lrw.truncated = true
+	}
 	return lrw.ResponseWriter.Write(b)
 }
 
@@ -48,6 +67,51 @@ func (lrw *LoggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 	return nil, nil, fmt.Errorf("response writer does not implement http.Hijacker")
 }
 
+// bodyReadCloser stitches a small pre-read buffer back onto the still-open
+// underlying body reader, so downstream handlers see the same byte stream
+// the original body would have produced, while Close still closes the
+// original reader (e.g. releasing the connection).
+type bodyReadCloser struct {
+	io.Reader
+	closer io.Closer
+}
+
+func (b bodyReadCloser) Close() error {
+	return b.closer.Close()
+}
+
+// captureRequestBody reads at most maxLoggedBodyBytes+1 bytes from r.Body
+// for logging purposes, then reconstructs r.Body so downstream handlers
+// still receive the complete, unaltered body. It returns the bytes to log
+// (capped at maxLoggedBodyBytes) and whether the body was longer than that.
+func captureRequestBody(r *http.Request) (captured []byte, truncated bool) {
+	if r.Body == nil {
+		return nil, false
+	}
+
+	peeked, err := io.ReadAll(io.LimitReader(r.Body, maxLoggedBodyBytes+1))
+	if err != nil {
+		slog.Warn(
+			"failed to read request body in privacy middleware",
+			"error", err,
+			"path", r.URL.Path,
+			"method", r.Method,
+		)
+		r.Body = io.NopCloser(bytes.NewReader(nil))
+		return nil, false
+	}
+
+	r.Body = bodyReadCloser{
+		Reader: io.MultiReader(bytes.NewReader(peeked), r.Body),
+		closer: r.Body,
+	}
+
+	if len(peeked) > maxLoggedBodyBytes {
+		return peeked[:maxLoggedBodyBytes], true
+	}
+	return peeked, false
+}
+
 // HTTPMiddleware provides PII-filtered HTTP request/response logging
 func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -56,22 +120,11 @@ func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 		// Create logging response writer
 		lrw := NewLoggingResponseWriter(w)
 
-		// Read request body
+		// Read request body, capturing only enough for logging while
+		// leaving the full body available to downstream handlers.
 		var requestBody bytes.Buffer
-		if r.Body != nil {
-			bodyBytes, err := io.ReadAll(r.Body)
-			if err != nil {
-				slog.Warn(
-					"failed to read request body in privacy middleware",
-					"error", err,
-					"path", r.URL.Path,
-					"method", r.Method,
-				)
-				bodyBytes = nil
-			}
-			requestBody.Write(bodyBytes)
-			r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
-		}
+		capturedReq, reqTruncated := captureRequestBody(r)
+		requestBody.Write(capturedReq)
 
 		// Process request
 		next.ServeHTTP(lrw, r)
@@ -97,14 +150,14 @@ func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 
 		// Filter request body if it contains sensitive data
 		reqBodyStr := requestBody.String()
-		if len(reqBodyStr) > 1000 {
-			reqBodyStr = reqBodyStr[:1000] + "... [truncated]"
+		if reqTruncated {
+			reqBodyStr += "... [truncated]"
 		}
 
 		// Filter response body if it contains sensitive data
 		respBodyStr := lrw.body.String()
-		if len(respBodyStr) > 1000 {
-			respBodyStr = respBodyStr[:1000] + "... [truncated]"
+		if lrw.truncated {
+			respBodyStr += "... [truncated]"
 		}
 
 		logger.Printf(
