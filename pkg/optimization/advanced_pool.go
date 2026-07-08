@@ -17,6 +17,11 @@ type AdvancedWorkerPool struct {
 	closed        bool
 	metrics       PoolMetrics
 	stop          chan struct{}
+	// shrinkCh is a buffered signal channel. Resize sends one token per worker
+	// it wants to remove; each worker that reads a token exits its loop so the
+	// pool can actually shrink (DP-811). It is buffered large enough that a
+	// Resize never blocks even if all workers are busy running tasks.
+	shrinkCh chan struct{}
 }
 
 // PoolMetrics tracks pool performance
@@ -45,6 +50,9 @@ func NewAdvancedWorkerPool(workers, queueSize int) *AdvancedWorkerPool {
 		taskQueue:     make(chan func(), queueSize),
 		priorityQueue: make(chan priorityTask, queueSize/2),
 		stop:          make(chan struct{}),
+		// Buffer large enough that a downward Resize to 1 worker never blocks
+		// even if the pool was grown far beyond the initial worker count first.
+		shrinkCh: make(chan struct{}, 4096),
 	}
 
 	// Start worker goroutines
@@ -121,29 +129,44 @@ func (p *AdvancedWorkerPool) priorityDispatcher() {
 func (p *AdvancedWorkerPool) advancedWorker(id int) {
 	defer p.wg.Done()
 
-	for task := range p.taskQueue {
-		start := time.Now()
-		atomic.AddInt64(&p.metrics.QueueLength, -1)
+	for {
+		// Watch for a shrink signal between tasks so Resize can actually reduce
+		// the worker count. The select also covers the pool-wide stop channel
+		// (closed by Close) for prompt teardown (DP-811).
+		select {
+		case <-p.shrinkCh:
+			// This worker was asked to exit by a downward Resize. The workers
+			// counter has already been updated by Resize, so just return.
+			return
+		case <-p.stop:
+			return
+		case task, ok := <-p.taskQueue:
+			if !ok {
+				return
+			}
+			start := time.Now()
+			atomic.AddInt64(&p.metrics.QueueLength, -1)
 
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					atomic.AddInt64(&p.metrics.TasksFailed, 1)
-				}
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						atomic.AddInt64(&p.metrics.TasksFailed, 1)
+					}
+				}()
+
+				task()
+				atomic.AddInt64(&p.metrics.TasksCompleted, 1)
 			}()
 
-			task()
-			atomic.AddInt64(&p.metrics.TasksCompleted, 1)
-		}()
-
-		// Update metrics
-		processTime := time.Since(start)
-		p.mu.Lock()
-		p.metrics.TotalWaitTime += processTime
-		if processTime > p.metrics.MaxWaitTime {
-			p.metrics.MaxWaitTime = processTime
+			// Update metrics
+			processTime := time.Since(start)
+			p.mu.Lock()
+			p.metrics.TotalWaitTime += processTime
+			if processTime > p.metrics.MaxWaitTime {
+				p.metrics.MaxWaitTime = processTime
+			}
+			p.mu.Unlock()
 		}
-		p.mu.Unlock()
 	}
 }
 
@@ -290,9 +313,22 @@ func (p *AdvancedWorkerPool) Resize(newWorkers int) error {
 			p.wg.Add(1)
 			go p.advancedWorker(i)
 		}
+	} else if newWorkers < p.workers {
+		// Shrink the pool: send one token per excess worker. Each token is
+		// consumed by a worker which then exits its loop (DP-811). shrinkCh is
+		// buffered generously in the constructor so a send here never blocks
+		// even when all workers are busy running tasks.
+		toRemove := p.workers - newWorkers
+		for i := 0; i < toRemove; i++ {
+			select {
+			case p.shrinkCh <- struct{}{}:
+			default:
+				// Buffer should always have room; defensive fallback in case a
+				// future grow exceeded the initial capacity — drop the token
+				// rather than deadlocking Resize.
+			}
+		}
 	}
-	// If newWorkers < p.workers: cannot easily reduce workers,
-	// they'll exit when pool closes. For now, just update the count.
 
 	p.workers = newWorkers
 	return nil

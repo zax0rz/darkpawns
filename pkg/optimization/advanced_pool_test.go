@@ -1,6 +1,7 @@
 package optimization
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -196,4 +197,98 @@ func TestGetQueueStats_NoDivideByZero(t *testing.T) {
 	if successRate != 0.0 {
 		t.Errorf("expected success_rate 0.0 for fresh pool, got %v", successRate)
 	}
+}
+
+// TestAdvancedWorkerPoolResizeShrinkActuallyReducesWorkers is a regression test
+// for DP-811: Resize to a smaller worker count must actually retire workers,
+// not silently lie about success. Before the fix, Resize updated p.workers but
+// left all goroutines running, so a "shrunk" pool still ran N concurrent tasks.
+func TestAdvancedWorkerPoolResizeShrinkActuallyReducesWorkers(t *testing.T) {
+	const initial = 8
+	pool := NewAdvancedWorkerPool(initial, 64)
+	defer pool.Close()
+
+	// Block all initial workers so the concurrency of the next batch is
+	// determined entirely by how many workers exist after the shrink.
+	block := make(chan struct{})
+	var inFlight atomic.Int32
+	var wg sync.WaitGroup
+	for i := 0; i < initial; i++ {
+		wg.Add(1)
+		if err := pool.Submit(func() {
+			defer wg.Done()
+			inFlight.Add(1)
+			<-block
+		}); err != nil {
+			t.Fatalf("Submit() error = %v", err)
+		}
+	}
+
+	// Wait until every initial worker is parked on the block.
+	if err := waitForCount(&inFlight, initial); err != nil {
+		t.Fatalf("waiting for initial workers to park: %v", err)
+	}
+
+	// Shrink to 2. After the block is released, only 2 of the next batch of
+	// tasks should be able to run concurrently.
+	const resized = 2
+	if err := pool.Resize(resized); err != nil {
+		t.Fatalf("Resize(%d) error = %v", resized, err)
+	}
+
+	close(block)
+	wg.Wait()
+
+	// Now measure live concurrency of a fresh batch with the shrunk pool.
+	var live atomic.Int32
+	var done sync.WaitGroup
+	probe := make(chan struct{})
+	for i := 0; i < resized; i++ {
+		done.Add(1)
+		if err := pool.Submit(func() {
+			defer done.Done()
+			live.Add(1)
+			<-probe
+		}); err != nil {
+			t.Fatalf("Submit() probe error = %v", err)
+		}
+	}
+	if err := waitForCount(&live, resized); err != nil {
+		t.Fatalf("waiting for probe tasks to start: %v", err)
+	}
+
+	// A third task should not start until one of the probes returns, proving
+	// the pool honors the smaller worker count.
+	thirdStarted := make(chan error, 1)
+	done.Add(1)
+	if err := pool.Submit(func() {
+		defer done.Done()
+		select {
+		case thirdStarted <- nil:
+		default:
+		}
+		<-probe
+	}); err != nil {
+		t.Fatalf("Submit() third error = %v", err)
+	}
+	select {
+	case <-thirdStarted:
+		t.Fatal("third task started before a probe finished — Resize did not shrink the pool")
+	case <-time.After(25 * time.Millisecond):
+	}
+
+	close(probe)
+	done.Wait()
+}
+
+// waitForCount blocks until the atomic counter reaches want or times out.
+func waitForCount(c *atomic.Int32, want int32) error {
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if c.Load() >= want {
+			return nil
+		}
+		time.Sleep(time.Millisecond)
+	}
+	return errors.New("timed out waiting for counter")
 }
