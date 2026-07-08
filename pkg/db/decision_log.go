@@ -255,6 +255,7 @@ type DecisionLogWriter struct {
 	flushTicker *time.Ticker
 	stopCh      chan struct{}
 	stopOnce    sync.Once
+	flushWG     sync.WaitGroup
 }
 
 // NewDecisionLogWriter creates a writer and starts the background flush loop.
@@ -265,17 +266,23 @@ func (db *DB) NewDecisionLogWriter() *DecisionLogWriter {
 		combat:    make([]*CombatRecord, 0, flushBatchSize),
 		stopCh:    make(chan struct{}),
 	}
+	dlw.flushWG.Add(1)
 	go dlw.flushLoop()
 	return dlw
 }
 
 // Stop terminates the background flush loop and flushes remaining records.
 // Safe to call multiple times; subsequent calls are no-ops.
+//
+// It signals the loop, waits for it to fully exit so any in-flight Flush the
+// loop started runs to completion, then performs a final Flush of whatever the
+// loop did not drain. This ordering prevents dropped records on shutdown (DP-767).
 func (dlw *DecisionLogWriter) Stop() {
 	dlw.stopOnce.Do(func() {
 		close(dlw.stopCh)
+		dlw.flushWG.Wait()
+		dlw.Flush()
 	})
-	dlw.Flush()
 }
 
 // RecordDecision appends a decision record to the buffer.
@@ -349,6 +356,7 @@ func (dlw *DecisionLogWriter) Flush() {
 }
 
 func (dlw *DecisionLogWriter) flushLoop() {
+	defer dlw.flushWG.Done()
 	dlw.flushTicker = time.NewTicker(flushInterval)
 	defer dlw.flushTicker.Stop()
 	for {

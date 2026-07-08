@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -66,6 +67,18 @@ func New(connString string) (*DB, error) {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
+	// Ensure the opened handle is closed on every init failure path so that
+	// repeated failed startups do not leak connection pools and underlying
+	// database resources (DP-812).
+	success := false
+	defer func() {
+		if !success {
+			if cerr := conn.Close(); cerr != nil {
+				slog.Error("failed to close db connection after init failure", "error", cerr)
+			}
+		}
+	}()
+
 	if err := conn.Ping(); err != nil {
 		return nil, fmt.Errorf("ping database: %w", err)
 	}
@@ -84,6 +97,7 @@ func New(connString string) (*DB, error) {
 		return nil, fmt.Errorf("init narrative memory: %w", err)
 	}
 
+	success = true
 	return db, nil
 }
 
