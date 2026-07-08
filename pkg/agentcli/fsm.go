@@ -15,29 +15,11 @@ func FSMDecision(state *GameState) *LLMResponse {
 		return &LLMResponse{ActionType: "flee"}
 	}
 
-	// In combat but not fighting? Attack.
-	if !isInCombat(state) && len(state.Room.Mobs) > 0 {
-		for _, mob := range state.Room.Mobs {
-			if mob.Fighting {
-				return &LLMResponse{
-					ActionType: "hit",
-					Args:       []string{mob.TargetString},
-				}
-			}
-		}
-	}
+	// Note: there used to be an "attack aggressive mob" block here gated on
+	// !isInCombat(state). It was dead code: isInCombat returns true if any mob
+	// has Fighting==true, so the inner `if mob.Fighting` loop could never fire.
+	// Auto-attacking mobs that are fighting the player is handled by the
+	// auto_attack behavior in behavior.go (DP-755).
 
 	return nil
-}
-
-func isInCombat(state *GameState) bool {
-	if state.Fighting != "" {
-		return true
-	}
-	for _, mob := range state.Room.Mobs {
-		if mob.Fighting {
-			return true
-		}
-	}
-	return false
 }
