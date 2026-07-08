@@ -168,7 +168,7 @@ class AIBatchProcessor:
                 await self._process_batch()
             else:
                 # Schedule batch processing after max_wait
-                asyncio.get_event_loop().call_later(
+                asyncio.get_running_loop().call_later(
                     self.max_wait,
                     lambda: asyncio.create_task(self._process_batch_if_ready())
                 )
@@ -196,7 +196,7 @@ class AIBatchProcessor:
             requests = [item['request'] for item in batch]
             
             # Process batch in thread pool
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             responses = await loop.run_in_executor(
                 self.executor,
                 lambda: self.callback(requests)
