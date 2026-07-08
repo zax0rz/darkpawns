@@ -40,3 +40,13 @@ type FullBackend interface {
 	// Close releases any backend resources.
 	Close() error
 }
+
+// Compile-time assertions that the concrete backend satisfies every storage
+// interface. Adding a method to any of these interfaces without updating
+// SQLiteBackend will then fail at compile time instead of panicking at runtime
+// when a *SQLiteBackend is assigned to the interface (DP-814).
+var (
+	_ PlayerStore  = (*SQLiteBackend)(nil)
+	_ WorldStore   = (*SQLiteBackend)(nil)
+	_ FullBackend  = (*SQLiteBackend)(nil)
+)
