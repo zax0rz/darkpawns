@@ -50,17 +50,34 @@ func TestAffectTick(t *testing.T) {
 	}
 }
 
-// TestPermanentAffect tests that permanent affects don't expire
+// TestPermanentAffect tests that permanent affects (duration -1, GODs only)
+// never expire — the C sentinel from src/magic.c affect_update().
 func TestPermanentAffect(t *testing.T) {
-	affect := NewAffect(0, ApplyStr, 0, 5, "permanent")
+	affect := NewAffect(0, ApplyStr, -1, 5, "permanent")
 
 	for i := 0; i < 10; i++ {
 		expired := affect.Tick()
 		if expired {
-			t.Error("Permanent affect should never expire")
+			t.Error("Permanent affect (duration -1) should never expire")
 		}
-		if affect.Duration != 0 {
-			t.Errorf("Permanent affect duration should remain 0, got %d", affect.Duration)
+		if affect.Duration != -1 {
+			t.Errorf("Permanent affect duration should remain -1, got %d", affect.Duration)
 		}
+	}
+	if affect.IsExpired() {
+		t.Error("Permanent affect (duration -1) should not report IsExpired")
+	}
+}
+
+// TestDurationZeroExpires guards DP-1013: duration 0 expires on the next update
+// (C affect_update() removes anything that is not >= 1 or == -1). The engine
+// previously treated duration 0 as permanent, diverging from game.AffectUpdate.
+func TestDurationZeroExpires(t *testing.T) {
+	affect := NewAffect(0, ApplyStr, 0, 5, "zero")
+	if !affect.Tick() {
+		t.Error("duration-0 affect should expire on tick (C else-branch → affect_remove)")
+	}
+	if !affect.IsExpired() {
+		t.Error("duration-0 affect should report IsExpired")
 	}
 }
