@@ -3,6 +3,8 @@
 End-to-end tests for Dark Pawns web client.
 """
 
+import os
+
 import pytest
 import requests
 import json
@@ -477,14 +479,20 @@ class TestWebClientE2E:
             assert response2["type"] in ["message", "state", "error"]
             
         finally:
-            try:
-                ws1.close()
-            except:
-                pass
-            try:
-                ws2.close()
-            except:
-                pass
+            # ws1/ws2 are assigned inside the try above; guard each close so a
+            # NameError (e.g. make_connection raised before assignment) isn't
+            # hidden by a bare except. Use except Exception rather than bare
+            # except so we don't swallow KeyboardInterrupt/SystemExit.
+            if "ws1" in locals():
+                try:
+                    ws1.close()
+                except Exception:
+                    pass
+            if "ws2" in locals():
+                try:
+                    ws2.close()
+                except Exception:
+                    pass
     
     def test_websocket_large_messages(self, ws_url, test_player):
         """Test handling of large messages."""
@@ -625,28 +633,49 @@ class TestWebSecurityE2E:
         assert response.status_code == 200
     
     def test_security_headers(self, base_url):
-        """Test security headers."""
-        
+        """Test security headers.
+
+        Asserts the real contract enforced by web.SecurityHeaders
+        (web/security.go): the core headers are set unconditionally on every
+        response, while HSTS is production/HTTPS-only. The previous version
+        only counted present headers and printed, so it passed even when the
+        headers were missing entirely.
+        """
         response = requests.get(f"{base_url}/health")
-        
-        # Check for common security headers
-        security_headers = [
-            "X-Content-Type-Options",
-            "X-Frame-Options",
-            "X-XSS-Protection",
-            "Content-Security-Policy",
-            "Strict-Transport-Security"
-        ]
-        
-        # Count how many security headers are present
-        present_headers = [
-            h for h in security_headers 
-            if h in response.headers
-        ]
-        
-        # At least some security headers should be present
-        # (Exact set depends on server configuration)
-        print(f"Security headers present: {present_headers}")
+
+        # Headers the middleware sets on every response, regardless of mode.
+        required_headers = {
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "X-XSS-Protection": "1; mode=block",
+            "Content-Security-Policy": None,  # presence only; value varies by mode
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": None,
+        }
+        missing = [h for h in required_headers if h not in response.headers]
+        assert not missing, (
+            f"expected security headers missing: {missing}; "
+            f"got {dict(response.headers)}"
+        )
+
+        # Value checks for headers with a fixed contract.
+        assert response.headers["X-Content-Type-Options"] == "nosniff"
+        assert response.headers["X-Frame-Options"] == "DENY"
+        assert response.headers["X-XSS-Protection"] == "1; mode=block"
+        assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+
+        # HSTS is set only in production (see web/security.go). Outside
+        # production it should be absent, so assert its presence tracks the
+        # ENVIRONMENT the server reports rather than silently accepting either.
+        is_production = os.environ.get("ENVIRONMENT") == "production"
+        if is_production:
+            assert "Strict-Transport-Security" in response.headers, (
+                "Strict-Transport-Security expected in production"
+            )
+        else:
+            assert "Strict-Transport-Security" not in response.headers, (
+                "Strict-Transport-Security should only be set in production"
+            )
     
     def test_sql_injection_protection(self, base_url):
         """Test SQL injection protection."""
@@ -667,12 +696,15 @@ class TestWebSecurityE2E:
             
             for endpoint in endpoints:
                 response = requests.get(urljoin(base_url, endpoint))
-                
-                # Server should not crash
-                assert response.status_code in [200, 400, 404, 500]
-                
-                # If it returns 500, that might indicate an error
-                # but at least the server is still running
+
+                # The server must not crash on injection payloads: a 500 would
+                # indicate an unhandled exception (and a possible injection
+                # vector). Accept 200 (handled), 400 (bad request) or 404
+                # (unknown endpoint), but reject 500.
+                assert response.status_code != 500, (
+                    f"server returned 500 on injection payload {payload!r} "
+                    f"at {endpoint}: possible unhandled error"
+                )
     
     def test_xss_protection(self, base_url):
         """Test XSS protection."""
