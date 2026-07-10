@@ -38,7 +38,26 @@ type Engine struct {
 	failedScripts map[string]struct{}
 	done          chan struct{}
 	closeOnce     sync.Once
+
+	// Script execution budget. Scripting is single-threaded (e.mu is held for
+	// the whole of RunScript) to match the C game loop, so one script blocks all
+	// others for its entire duration. scriptTimeout is the hard context deadline
+	// that interrupts a runaway script; slowScriptThreshold is the hold time
+	// above which a completed script is logged (so slow/abusive scripts are
+	// visible — DP-702). Tunable via SetScriptBudget; read under e.mu.
+	scriptTimeout       time.Duration
+	slowScriptThreshold time.Duration
 }
+
+const (
+	// defaultScriptTimeout is the hard per-script execution budget. A tight loop
+	// with no yield is interrupted at ~this via the LState context deadline.
+	defaultScriptTimeout = 5 * time.Second
+	// defaultSlowScriptThreshold is well above a normal trigger (microseconds to
+	// low-ms) but far below the hard timeout, so it flags genuinely slow scripts
+	// without spamming on legitimate ones.
+	defaultSlowScriptThreshold = 250 * time.Millisecond
+)
 
 // LState returns the underlying Lua state. The caller must NOT hold the engine mutex
 // when calling into the LState — use RunScript or the lua* methods instead.
@@ -175,11 +194,13 @@ func matchKeyword(keywords, search string) bool {
 // NewEngine creates a new Lua scripting engine.
 func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	engine := &Engine{
-		scriptsDir:    scriptsDir,
-		transitItems:  make(map[int]*transitEntry),
-		failedScripts: make(map[string]struct{}),
-		world:         world,
-		done:          make(chan struct{}),
+		scriptsDir:          scriptsDir,
+		transitItems:        make(map[int]*transitEntry),
+		failedScripts:       make(map[string]struct{}),
+		world:               world,
+		done:                make(chan struct{}),
+		scriptTimeout:       defaultScriptTimeout,
+		slowScriptThreshold: defaultSlowScriptThreshold,
 	}
 
 	// Create a properly sandboxed LState
@@ -189,6 +210,24 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	go engine.cleanTransitItems()
 
 	return engine
+}
+
+// SetScriptBudget tunes the per-script execution budget. timeout is the hard
+// context deadline after which a running script is interrupted and its LState
+// recreated; slowThreshold is the wall-clock hold time above which a completed
+// script is logged as slow. Because scripting is single-threaded (to match the
+// C game loop), a script blocks all others for its whole duration — lowering
+// the timeout bounds a runaway script's impact; the slow log surfaces offenders.
+// Non-positive values leave the corresponding setting unchanged.
+func (e *Engine) SetScriptBudget(timeout, slowThreshold time.Duration) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if timeout > 0 {
+		e.scriptTimeout = timeout
+	}
+	if slowThreshold > 0 {
+		e.slowScriptThreshold = slowThreshold
+	}
 }
 
 const transitItemTTL = 30 * time.Second
@@ -285,6 +324,20 @@ func (e *Engine) resolveScriptPath(cleanName string) string {
 func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string) (handled bool, err error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+
+	// Measure how long this script holds the engine. Because scripting is
+	// single-threaded, this duration is exactly how long every other script was
+	// blocked; log it when it exceeds the threshold so slow/abusive scripts are
+	// visible (DP-702). Registered before the panic defer so it still runs (and
+	// includes any LState recreation) but inside the unlock defer.
+	scriptStart := time.Now()
+	defer func() {
+		if d := time.Since(scriptStart); d > e.slowScriptThreshold {
+			slog.Warn("slow script held the scripting engine",
+				"file", fname, "trigger", triggerName,
+				"duration", d, "budget", e.scriptTimeout)
+		}
+	}()
 
 	// Recover from Lua panics (instruction limit, context timeout, Go triggers, etc.)
 	// and recreate the LState so a single poisoned script doesn't corrupt the engine.
@@ -412,7 +465,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	// Based on open_lua_file() in scripts.c lines 1641-1701
 	// Execution timeout prevents tight loops from hanging the server indefinitely.
 
-	scriptCtx, scriptCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	scriptCtx, scriptCancel := context.WithTimeout(context.Background(), e.scriptTimeout)
 	defer scriptCancel()
 	L.SetContext(scriptCtx)
 

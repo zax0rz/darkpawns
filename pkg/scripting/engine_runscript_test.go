@@ -580,3 +580,29 @@ end
 		t.Logf("instruction limit or other mechanism terminated loop: %v (duration: %v)", err, duration)
 	}
 }
+
+// TestScriptBudgetConfigurableTimeout verifies SetScriptBudget lowers the hard
+// execution deadline: an infinite-loop script is interrupted at the configured
+// timeout rather than the 5s default (DP-702 — bounding one script's block of
+// the single-threaded engine).
+func TestScriptBudgetConfigurableTimeout(t *testing.T) {
+	dir := t.TempDir()
+	script := filepath.Join(dir, "loop.lua")
+	if err := os.WriteFile(script, []byte("function ontest()\n\twhile true do end\n\treturn TRUE\nend\n"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	engine := NewEngine(dir, nil)
+	engine.SetScriptBudget(200*time.Millisecond, time.Millisecond)
+
+	start := time.Now()
+	_, err := engine.RunScript(&ScriptContext{}, "loop.lua", "ontest")
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("expected a timeout error from the infinite-loop script")
+	}
+	if elapsed > 2*time.Second {
+		t.Fatalf("script ran %v; configured 200ms timeout was not applied (still ~5s default?)", elapsed)
+	}
+}
