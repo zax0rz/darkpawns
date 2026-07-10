@@ -66,3 +66,36 @@ func TestValidate_KeyFromEnv(t *testing.T) {
 		t.Errorf("expected validation to pass with DP_KEY set, got: %v", err)
 	}
 }
+
+// TestLoadConfigFrom_ExplicitPath verifies LoadConfigFrom reads the given path
+// (the --config override) rather than the default ConfigPath.
+func TestLoadConfigFrom_ExplicitPath(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/custom.json"
+	if err := os.WriteFile(path, []byte(`{"player_name":"Zork","game_port":9999}`), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	cfg, err := LoadConfigFrom(path)
+	if err != nil {
+		t.Fatalf("LoadConfigFrom: %v", err)
+	}
+	if cfg.PlayerName != "Zork" {
+		t.Errorf("PlayerName = %q, want Zork", cfg.PlayerName)
+	}
+	if cfg.GamePort != 9999 {
+		t.Errorf("GamePort = %d, want 9999", cfg.GamePort)
+	}
+}
+
+// TestLoadConfigFrom_MissingPathUsesDefaults verifies a non-existent explicit
+// path returns defaults without error (mirrors the missing-default-file case).
+func TestLoadConfigFrom_MissingPathUsesDefaults(t *testing.T) {
+	cfg, err := LoadConfigFrom(t.TempDir() + "/nope.json")
+	if err != nil {
+		t.Fatalf("LoadConfigFrom: %v", err)
+	}
+	if cfg.GamePort != DefaultPort {
+		t.Errorf("GamePort = %d, want default %d", cfg.GamePort, DefaultPort)
+	}
+}

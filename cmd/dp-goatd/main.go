@@ -14,7 +14,7 @@ import (
 
 func main() {
 	name := flag.String("name", "", "character name (required)")
-	_ = flag.String("config", "", "config file path (default ~/.dp-agent.json)")
+	configPath := flag.String("config", "", "config file path (default ~/.dp-agent.json)")
 	logLevel := flag.String("log-level", "info", "log level: debug, info, warn, error")
 	flag.Parse()
 
@@ -39,7 +39,7 @@ func main() {
 	// Load config
 	var cfg *agentcli.AgentConfig
 	var err error
-	cfg, err = agentcli.LoadConfig()
+	cfg, err = agentcli.LoadConfigFrom(*configPath)
 	if err != nil {
 		slog.Error("load config", "error", err)
 		os.Exit(1)
