@@ -29,7 +29,7 @@ type Affect struct {
 	ID        string // Unique identifier for this affect
 	SpellID   int    // SPELL_* or SKILL_* number. 0 = not spell-based.
 	Location  int    // APPLY_* constant — which stat this affect modifies
-	Duration  int    // Duration in ticks (0 = permanent until removed)
+	Duration  int    // Duration in ticks (-1 = permanent/GODs only; 0 or less expires next update). Matches C affect_update (magic.c).
 	Magnitude int    // Stat modifier magnitude (positive = buff, negative = debuff)
 
 	// Flags
@@ -55,7 +55,7 @@ type Affect struct {
 // NewAffect creates a new affect with the given parameters.
 //   - spellID: SPELL_* or SKILL_* constant that created this affect
 //   - location: APPLY_* constant — which stat to modify
-//   - duration: ticks (0 = permanent)
+//   - duration: ticks (-1 = permanent/GODs only; 0 expires on the next update, per C)
 //   - magnitude: stat modifier
 //   - source: human-readable name
 func NewAffect(spellID int, location int, duration int, magnitude int, source string) *Affect {
@@ -164,19 +164,28 @@ func (a *Affect) SetType(v int) {
 	}
 }
 
-// IsExpired checks if the affect has expired
+// IsExpired checks if the affect has expired. Permanence uses the C sentinel:
+// duration -1 is permanent (GODs only); duration 0 or lower has expired. This
+// matches game.AffectUpdate and src/magic.c affect_update().
 func (a *Affect) IsExpired() bool {
-	if a.Duration == 0 {
-		return false // Permanent
+	if a.Duration == -1 {
+		return false // Permanent (GODs only)
+	}
+	if a.Duration <= 0 {
+		return true // duration 0 (or lower) expires — C else-branch → affect_remove
 	}
 	return time.Now().After(a.ExpiresAt)
 }
 
 // Tick reduces the duration by one tick and returns true if expired.
-// Each tick represents one mud hour (60 real seconds).
+// Each tick represents one mud hour (60 real seconds). Duration -1 is
+// permanent (GODs only); duration 0 or lower is already expired.
 func (a *Affect) Tick() bool {
-	if a.Duration == 0 {
+	if a.Duration == -1 {
 		return false // Permanent, never expires
+	}
+	if a.Duration <= 0 {
+		return true // already at/below expiry
 	}
 
 	a.Duration--
