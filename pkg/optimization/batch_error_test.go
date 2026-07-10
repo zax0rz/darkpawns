@@ -3,6 +3,7 @@ package optimization
 import (
 	"encoding/json"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 )
@@ -43,6 +44,40 @@ func TestBatchedSender_FlushReturnsError(t *testing.T) {
 	_ = bs.Send(json.RawMessage(`"hello"`))
 	if err := bs.Send(json.RawMessage(`"world"`)); err == nil {
 		t.Error("Send expected flush error, got nil")
+	}
+}
+
+// TestBatchedSender_RequeuesOnFailure verifies a timer-driven send failure
+// requeues the batch instead of dropping it: a later flush delivers the message.
+func TestBatchedSender_RequeuesOnFailure(t *testing.T) {
+	var mu sync.Mutex
+	var calls int
+	var delivered []json.RawMessage
+	bs := NewBatchedSender(20*time.Millisecond, 10, func(msgs []json.RawMessage) error {
+		mu.Lock()
+		defer mu.Unlock()
+		calls++
+		if calls == 1 {
+			return errors.New("send failed")
+		}
+		delivered = append(delivered, msgs...)
+		return nil
+	})
+
+	if err := bs.Send(json.RawMessage(`"hello"`)); err != nil {
+		t.Fatalf("Send: %v", err)
+	}
+	// Let the one-shot timer fire and fail (requeue).
+	time.Sleep(80 * time.Millisecond)
+	// Close retries the requeued batch, which now succeeds.
+	if err := bs.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(delivered) != 1 || string(delivered[0]) != `"hello"` {
+		t.Fatalf("requeued message not delivered: %v", delivered)
 	}
 }
 

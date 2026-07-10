@@ -184,6 +184,10 @@ type IndexRecommendation struct {
 }
 
 // BatchProcessor handles batch database operations.
+// maxBacklogFactor bounds how many batches worth of operations may accumulate
+// when flushes keep failing before the oldest are dropped to cap memory use.
+const maxBacklogFactor = 100
+
 type BatchProcessor struct {
 	mu            sync.Mutex
 	batchSize     int
@@ -276,9 +280,24 @@ func (bp *BatchProcessor) flushLocked() error {
 		return nil
 	}
 
-	slog.Error("batch flush failed after retries",
+	// Requeue the failed batch so it is retried on the next flush instead of
+	// being dropped. This gives at-least-once semantics to every caller,
+	// including the background flushLoop which otherwise silently lost data.
+	// We hold bp.mu, so bp.operations has not been touched since we detached
+	// the batch above; restore it ahead of any (impossible here) new entries.
+	bp.operations = append(operations, bp.operations...)
+	// Bound the backlog: under a sustained flush outage, cap memory by dropping
+	// the oldest operations rather than growing without limit.
+	if limit := bp.batchSize * maxBacklogFactor; limit > 0 && len(bp.operations) > limit {
+		dropped := len(bp.operations) - limit
+		bp.operations = bp.operations[dropped:]
+		slog.Error("batch backlog exceeded cap, dropping oldest operations",
+			"dropped", dropped, "cap", limit)
+	}
+	slog.Error("batch flush failed after retries, requeued for retry",
 		"max_retries", maxRetries,
 		"batch_size", len(operations),
+		"queued", len(bp.operations),
 		"error", lastErr)
 	return lastErr
 }
@@ -295,9 +314,9 @@ func (bp *BatchProcessor) flushLoop() {
 			bp.mu.Lock()
 			if len(bp.operations) > 0 {
 				if err := bp.flushLocked(); err != nil {
-					// flushLocked already logged the error with details;
-					// this is the final propagated failure from the background loop.
-					slog.Error("background flush failed, data may be lost",
+					// flushLocked already logged and requeued the batch for the
+					// next tick; nothing is dropped unless the backlog cap is hit.
+					slog.Warn("background flush failed, batch requeued",
 						"error", err)
 				}
 			}
