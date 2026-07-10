@@ -198,6 +198,14 @@ func (db *DB) createTables() error {
 		return fmt.Errorf("create decision log tables: %w", err)
 	}
 
+	// Bootstrap the current/next-month partitions. decision_log and combat_log
+	// are PARTITION BY RANGE(ts) parents; without a matching partition every
+	// INSERT fails ("no partition of relation ... found for row"). Fail loudly
+	// here rather than only warning, since decision capture is unusable otherwise.
+	if err := db.EnsureDecisionLogPartitions(); err != nil {
+		return fmt.Errorf("ensure decision log partitions: %w", err)
+	}
+
 	return nil
 }
 
