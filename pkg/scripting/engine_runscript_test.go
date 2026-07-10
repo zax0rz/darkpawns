@@ -606,3 +606,41 @@ func TestScriptBudgetConfigurableTimeout(t *testing.T) {
 		t.Fatalf("script ran %v; configured 200ms timeout was not applied (still ~5s default?)", elapsed)
 	}
 }
+
+// TestObjToVnumFallbackNoDeadlock guards against a self-deadlock: luaObjTo's
+// vnum fallback path used to call e.mu.Lock() even though it runs as a Lua
+// callback inside RunScript, which already holds e.mu (non-reentrant). A script
+// calling objto with a table that has only a vnum (no obj_id) would re-lock the
+// held mutex and hang the entire scripting engine.
+func TestObjToVnumFallbackNoDeadlock(t *testing.T) {
+	dir := t.TempDir()
+	script := filepath.Join(dir, "objto_vnum.lua")
+	src := `function ontest()
+	objto({vnum = 123}, "room", 456)
+	return TRUE
+end
+`
+	if err := os.WriteFile(script, []byte(src), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	engine := NewEngine(dir, &mockWorldForTest{})
+	if engine == nil {
+		t.Fatal("nil engine")
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := engine.RunScript(&ScriptContext{RoomVNum: 456}, "objto_vnum.lua", "ontest")
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("RunScript error: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("RunScript deadlocked calling objto with a vnum-only table")
+	}
+}
