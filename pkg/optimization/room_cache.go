@@ -114,17 +114,18 @@ func NewRoomCache(ttl time.Duration) *RoomCache {
 // CachedRoom is a deep copy owned by the caller; mutating it will not affect
 // the cache's internal state.
 func (rc *RoomCache) GetRoom(vnum int, fetchFunc func(int) (*CachedRoom, error)) (*CachedRoom, error) {
-	// Try cache first
-	rc.mu.RLock()
-	cached, exists := rc.rooms[vnum]
-	rc.mu.RUnlock()
-
-	if exists && time.Since(cached.CachedAt) < rc.ttl {
-		rc.mu.Lock()
+	// Try cache first. Hold the write lock across the freshness check, the
+	// access-count increment, and the Clone so the entry cannot be replaced
+	// or deleted by a concurrent writer between the check and the mutation
+	// (a TOCTOU that would increment/return a stale, orphaned entry).
+	rc.mu.Lock()
+	if cached, exists := rc.rooms[vnum]; exists && time.Since(cached.CachedAt) < rc.ttl {
 		cached.AccessCount++
+		result := cached.Clone()
 		rc.mu.Unlock()
-		return cached.Clone(), nil
+		return result, nil
 	}
+	rc.mu.Unlock()
 
 	// Fetch from source
 	room, err := fetchFunc(vnum)
@@ -133,15 +134,19 @@ func (rc *RoomCache) GetRoom(vnum int, fetchFunc func(int) (*CachedRoom, error))
 	}
 
 	// Update cache with a clone so the caller cannot mutate our internal copy.
+	// Clone the return value while still holding the lock — once stored is in
+	// the map, a concurrent GetRoom hit can increment stored.AccessCount, so
+	// reading it after Unlock would race.
 	rc.mu.Lock()
 	stored := room.Clone()
 	stored.CachedAt = time.Now()
 	stored.AccessCount = 1
 	stored.LastUpdated = time.Now()
 	rc.rooms[vnum] = stored
+	result := stored.Clone()
 	rc.mu.Unlock()
 
-	return stored.Clone(), nil
+	return result, nil
 }
 
 // UpdateRoom updates room in cache. The cache stores a deep copy of the

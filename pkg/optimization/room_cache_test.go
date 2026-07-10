@@ -1,9 +1,38 @@
 package optimization
 
 import (
+	"sync"
 	"testing"
 	"time"
 )
+
+// TestRoomCache_GetRoomConcurrent exercises GetRoom against concurrent writers
+// under the race detector. It guards the TOCTOU fix: GetRoom must not read an
+// entry, drop the lock, then mutate/return it while another goroutine replaces
+// or deletes it.
+func TestRoomCache_GetRoomConcurrent(t *testing.T) {
+	cache := NewRoomCache(time.Hour)
+	fetch := func(vnum int) (*CachedRoom, error) {
+		return &CachedRoom{VNum: vnum, Name: "room"}, nil
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 500; j++ {
+				vnum := j % 16
+				if _, err := cache.GetRoom(vnum, fetch); err != nil {
+					t.Errorf("GetRoom: %v", err)
+					return
+				}
+				cache.UpdateRoom(&CachedRoom{VNum: vnum, Name: "updated"})
+			}
+		}()
+	}
+	wg.Wait()
+}
 
 func TestRoomCache_GetRoomReturnsIndependentCopy(t *testing.T) {
 	cache := NewRoomCache(time.Hour)

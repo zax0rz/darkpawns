@@ -78,16 +78,15 @@ func cmdWhisper(s *Session, args []string) error {
 		return nil
 	}
 
-	// ROOM_SOUNDPROOF check — act.comm.c do_spec_comm() (whisper) soundproof gate
-	if roomIsSoundproof(s) {
-		s.Send("The walls seem to absorb your words.\r\n")
-		return nil
-	}
+	// NOTE: no ROOM_SOUNDPROOF gate here — act.comm.c do_spec_comm() (whisper
+	// AND ask) only checks PLR_NOSHOUT. SOUNDPROOF ("Shouts, gossip blocked")
+	// gates ranged comm (do_tell/gossip/shout), not same-room whisper/ask.
 
 	targetName := args[0]
 	message := sanitizeMessage(strings.Join(args[1:], " "))
 
-	// Word filter + spam check
+	// Word filter + spam check (opt-in moderation layer; passthrough when
+	// no modChecker is configured — not part of the C game).
 	filtered, block := filterCommMessage(s, message)
 	if block {
 		s.sendText("Your message was blocked.")
