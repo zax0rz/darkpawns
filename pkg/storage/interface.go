@@ -46,7 +46,7 @@ type FullBackend interface {
 // SQLiteBackend will then fail at compile time instead of panicking at runtime
 // when a *SQLiteBackend is assigned to the interface (DP-814).
 var (
-	_ PlayerStore  = (*SQLiteBackend)(nil)
-	_ WorldStore   = (*SQLiteBackend)(nil)
-	_ FullBackend  = (*SQLiteBackend)(nil)
+	_ PlayerStore = (*SQLiteBackend)(nil)
+	_ WorldStore  = (*SQLiteBackend)(nil)
+	_ FullBackend = (*SQLiteBackend)(nil)
 )
