@@ -1,11 +1,9 @@
 package optimization
 
 import (
-	"bytes"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"log/slog"
 	"strings"
 	"sync"
 	"testing"
@@ -123,31 +121,49 @@ func TestAnalyzeTable_RowsError(t *testing.T) {
 	}
 }
 
-func TestBatchProcessor_FlushLoopError(t *testing.T) {
-	var buf bytes.Buffer
-	textHandler := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelWarn})
-	oldLogger := slog.Default()
-	slog.SetDefault(slog.New(textHandler))
-	defer slog.SetDefault(oldLogger)
+// TestBatchProcessor_FlushLoopRequeuesOnFailure verifies that when a background
+// (timer-driven) flush fails, the batch is requeued and retried rather than
+// silently dropped — at-least-once semantics for the async path.
+func TestBatchProcessor_FlushLoopRequeuesOnFailure(t *testing.T) {
+	var mu sync.Mutex
+	var calls int
+	var delivered []BatchOperation
 
-	flushErr := errors.New("simulated flush failure")
+	// Fail the entire first flush cycle (flushLocked retries 3× internally),
+	// then succeed. If the failed batch were dropped, it would never arrive.
 	bp := NewBatchProcessor(10, 20*time.Millisecond, func(ops []BatchOperation) error {
-		return flushErr
+		mu.Lock()
+		defer mu.Unlock()
+		calls++
+		if calls <= 3 {
+			return errors.New("simulated flush failure")
+		}
+		delivered = append(delivered, ops...)
+		return nil
 	})
+	defer bp.Close()
 
 	bp.Add(BatchOperation{Type: "insert", Table: "test", Data: "data"})
 
-	// Wait long enough for the ticker to fire and flushLocked to exhaust
-	// its three retries (0ms + 100ms + 400ms backoff).
-	time.Sleep(700 * time.Millisecond)
+	deadline := time.After(5 * time.Second)
+	for {
+		mu.Lock()
+		n := len(delivered)
+		mu.Unlock()
+		if n >= 1 {
+			break
+		}
+		select {
+		case <-deadline:
+			t.Fatal("operation never delivered — requeue dropped the batch")
+		case <-time.After(20 * time.Millisecond):
+		}
+	}
 
-	// Close before inspecting logs so the background goroutine stops writing
-	// to the shared buffer.
-	_ = bp.Close()
-
-	logs := buf.String()
-	if !strings.Contains(logs, "background flush failed, data may be lost") {
-		t.Errorf("expected error log for background flush failure, got:\n%s", logs)
+	mu.Lock()
+	defer mu.Unlock()
+	if delivered[0].Data != "data" {
+		t.Errorf("wrong operation delivered after requeue: %+v", delivered[0])
 	}
 }
 

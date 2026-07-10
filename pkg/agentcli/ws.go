@@ -52,12 +52,16 @@ func (w *WSConn) ReadMessage() (int, []byte, error) {
 	return w.conn.ReadMessage()
 }
 
-// Close closes the connection.
+// Close closes the connection. It sends a best-effort close frame and then
+// always closes the underlying TCP connection so the socket/file descriptor is
+// released — sending the close message alone leaks the connection and leads to
+// fd exhaustion across reconnects (gorilla/websocket requires an explicit Close).
 func (w *WSConn) Close() error {
 	w.writeMu.Lock()
 	defer w.writeMu.Unlock()
-	return w.conn.WriteMessage(websocket.CloseMessage,
+	_ = w.conn.WriteMessage(websocket.CloseMessage,
 		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	return w.conn.Close()
 }
 
 // UnmarshalJSON is a helper to parse a raw JSON message into a typed struct.

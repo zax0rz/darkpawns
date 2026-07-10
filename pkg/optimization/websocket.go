@@ -205,7 +205,18 @@ func (bs *BatchedSender) flushLocked() error {
 	bs.batch = nil
 
 	if err := bs.sendFunc(batch.Messages); err != nil {
-		slog.Warn("batched send failed",
+		// Requeue the failed batch instead of dropping it, so the messages are
+		// retried on the next flush (at-least-once). We hold bs.mu, so bs.batch
+		// is still nil here. Bound the retained backlog to cap memory under a
+		// sustained send outage.
+		if limit := bs.maxBatchSize * maxBacklogFactor; limit > 0 && len(batch.Messages) > limit {
+			dropped := len(batch.Messages) - limit
+			batch.Messages = batch.Messages[dropped:]
+			slog.Error("batched send backlog exceeded cap, dropping oldest messages",
+				"dropped", dropped, "cap", limit)
+		}
+		bs.batch = batch
+		slog.Warn("batched send failed, requeued for retry",
 			"batch_size", len(batch.Messages),
 			"error", err)
 		return err

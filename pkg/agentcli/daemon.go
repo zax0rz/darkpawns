@@ -164,12 +164,20 @@ func (d *Daemon) readLoop(ctx context.Context) {
 		default:
 		}
 
-		if d.client.conn == nil {
+		// Snapshot the connection under d.mu: reconnect() swaps d.client.conn
+		// while holding d.mu, so reading the field unsynchronized is a data
+		// race. Take a stable pointer, then release the lock before the
+		// blocking ReadMessage (we must not hold d.mu across a blocking read,
+		// or sendCommand would stall for the read deadline).
+		d.mu.Lock()
+		conn := d.client.conn
+		d.mu.Unlock()
+		if conn == nil {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 
-		_, raw, err := d.client.conn.ReadMessage()
+		_, raw, err := conn.ReadMessage()
 		if err != nil {
 			slog.Warn("read error", "error", err)
 			// Trigger reconnection
@@ -215,11 +223,17 @@ func (d *Daemon) handleMessage(raw []byte) error {
 		return fmt.Errorf("parse: %w", err)
 	}
 
-	// Track sequence number
+	// Track sequence number. Snapshot the connection under d.mu for the same
+	// reason as readLoop: reconnect() can swap d.client.conn concurrently.
 	if env.Seq > 0 {
-		d.client.conn.seqMu.Lock()
-		d.client.conn.lastSeq = env.Seq
-		d.client.conn.seqMu.Unlock()
+		d.mu.Lock()
+		conn := d.client.conn
+		d.mu.Unlock()
+		if conn != nil {
+			conn.seqMu.Lock()
+			conn.lastSeq = env.Seq
+			conn.seqMu.Unlock()
+		}
 	}
 
 	switch env.Type {
