@@ -124,7 +124,9 @@ func (w *World) ValidateCrossReferences() {
 					slog.Warn("zone command references non-existent mob",
 						"zone", z.Number, "cmd_index", i, "command", "M", "mob_vnum", cmd.Arg1)
 				}
-				if cmd.Arg3 > 0 && !roomVnums[cmd.Arg3] {
+				// Room 0 is the Void — a valid vnum. Only NOWHERE (< 0) skips
+				// validation; keep this consistent across M/O/R/D (was `> 0`).
+				if cmd.Arg3 >= 0 && !roomVnums[cmd.Arg3] {
 					slog.Warn("zone command references non-existent room",
 						"zone", z.Number, "cmd_index", i, "command", "M", "room_vnum", cmd.Arg3)
 				}
@@ -134,7 +136,7 @@ func (w *World) ValidateCrossReferences() {
 					slog.Warn("zone command references non-existent object",
 						"zone", z.Number, "cmd_index", i, "command", "O", "obj_vnum", cmd.Arg1)
 				}
-				if cmd.Arg3 > 0 && !roomVnums[cmd.Arg3] {
+				if cmd.Arg3 >= 0 && !roomVnums[cmd.Arg3] {
 					slog.Warn("zone command references non-existent room",
 						"zone", z.Number, "cmd_index", i, "command", "O", "room_vnum", cmd.Arg3)
 				}
@@ -163,7 +165,7 @@ func (w *World) ValidateCrossReferences() {
 				}
 			case "D":
 				// 'D' <if_flag> <room_vnum> <direction> <door_state>
-				if !roomVnums[cmd.Arg1] {
+				if cmd.Arg1 >= 0 && !roomVnums[cmd.Arg1] {
 					slog.Warn("zone command references non-existent room",
 						"zone", z.Number, "cmd_index", i, "command", "D", "room_vnum", cmd.Arg1)
 				}
@@ -173,7 +175,7 @@ func (w *World) ValidateCrossReferences() {
 				// Arg1 is unused, Arg2 is loop control, Arg3 is a loop count — neither is a vnum.
 			case "R":
 				// 'R' <room_vnum> <last_room> (remove rooms... unclear)
-				if cmd.Arg1 > 0 && !roomVnums[cmd.Arg1] {
+				if cmd.Arg1 >= 0 && !roomVnums[cmd.Arg1] {
 					slog.Warn("zone command references non-existent room",
 						"zone", z.Number, "cmd_index", i, "command", "R", "room_vnum", cmd.Arg1)
 				}
