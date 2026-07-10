@@ -43,8 +43,16 @@ func ConfigPath() string {
 	return filepath.Join(home, ".dp-agent.json")
 }
 
-// LoadConfig reads config from disk, with defaults for any missing fields.
+// LoadConfig reads config from the default path (DP_CONFIG or ~/.dp-agent.json),
+// with defaults for any missing fields.
 func LoadConfig() (*AgentConfig, error) {
+	return LoadConfigFrom("")
+}
+
+// LoadConfigFrom reads config from the given path, with defaults for any missing
+// fields. An empty path falls back to the default ConfigPath(); this lets a
+// caller (e.g. a --config flag) override the default location.
+func LoadConfigFrom(path string) (*AgentConfig, error) {
 	cfg := &AgentConfig{
 		Tier:          DefaultTier,
 		ModelFast:     DefaultModelFast,
@@ -57,7 +65,10 @@ func LoadConfig() (*AgentConfig, error) {
 		LogLevel:      "info",
 	}
 
-	data, err := os.ReadFile(ConfigPath())
+	if path == "" {
+		path = ConfigPath()
+	}
+	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return cfg, nil // no config file, defaults are fine
