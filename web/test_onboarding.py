@@ -1,17 +1,37 @@
 #!/usr/bin/env python3
 """
 Test script for Dark Pawns agent onboarding content negotiation.
+
+These tests require a running Dark Pawns server. Read BASE_URL from the
+environment (e.g. ``BASE_URL=http://localhost:4350``); when it is unset the
+onboarding e2e test is skipped so it does not fail in CI. The default request
+timeout is DEFAULT_TIMEOUT seconds so a hung server cannot stall the run.
 """
 
+import os
+
+import pytest
 import requests
 import json
 
+# Default per-request timeout (seconds). Keeps a hung/unreachable server from
+# blocking the whole test run indefinitely.
+DEFAULT_TIMEOUT = 10
 
-def test_content_negotiation(base_url="http://localhost:4350"):
-    """Test that content negotiation works correctly."""
+
+def test_content_negotiation(base_url=None):
+    """Test that content negotiation works correctly.
+
+    ``base_url`` defaults to the BASE_URL env var. When BASE_URL is unset the
+    test skips (it needs a live server), matching the web e2e convention.
+    """
+    if base_url is None:
+        base_url = os.environ.get("BASE_URL")
+    if not base_url:
+        pytest.skip("set BASE_URL to run onboarding e2e")
 
     # Test 1: HTML (default)
-    response = requests.get(f"{base_url}/onboarding")
+    response = requests.get(f"{base_url}/onboarding", timeout=DEFAULT_TIMEOUT)
     assert response.status_code == 200, \
         f"Expected 200, got {response.status_code} for /onboarding"
     content_type = response.headers.get("Content-Type", "")
@@ -23,7 +43,8 @@ def test_content_negotiation(base_url="http://localhost:4350"):
     # Test 2: Markdown
     response = requests.get(
         f"{base_url}/onboarding",
-        headers={"Accept": "text/markdown"}
+        headers={"Accept": "text/markdown"},
+        timeout=DEFAULT_TIMEOUT,
     )
     assert response.status_code == 200, \
         f"Expected 200, got {response.status_code} for markdown"
@@ -38,7 +59,8 @@ def test_content_negotiation(base_url="http://localhost:4350"):
     # Test 3: JSON
     response = requests.get(
         f"{base_url}/onboarding",
-        headers={"Accept": "application/json"}
+        headers={"Accept": "application/json"},
+        timeout=DEFAULT_TIMEOUT,
     )
     assert response.status_code == 200, \
         f"Expected 200, got {response.status_code} for JSON"
@@ -52,7 +74,7 @@ def test_content_negotiation(base_url="http://localhost:4350"):
         "JSON onboarding should include messageTypes"
 
     # Test 4: OpenAPI spec
-    response = requests.get(f"{base_url}/api/openapi.json")
+    response = requests.get(f"{base_url}/api/openapi.json", timeout=DEFAULT_TIMEOUT)
     assert response.status_code == 200, \
         f"Expected 200, got {response.status_code} for OpenAPI spec"
     ct = response.headers.get("Content-Type", "")
@@ -65,7 +87,7 @@ def test_content_negotiation(base_url="http://localhost:4350"):
         "OpenAPI spec should include info.title"
 
     # Test 5: Health check
-    response = requests.get(f"{base_url}/health")
+    response = requests.get(f"{base_url}/health", timeout=DEFAULT_TIMEOUT)
     assert response.status_code == 200, \
         f"Expected 200, got {response.status_code} for health"
     assert response.text.strip() == "OK", \
@@ -172,17 +194,32 @@ if __name__ == "__main__":
     print(python_code)
     print("=" * 50)
 
-    # Save to file
-    with open("example_agent.py", "w") as f:
-        f.write(python_code)
-    print("\nSaved example agent code to 'example_agent.py'")
+    # Save to file. Avoid silently clobbering an existing example_agent.py:
+    # if one is present, write to a unique filename instead.
+    out_path = "example_agent.py"
+    if os.path.exists(out_path):
+        stem, ext = os.path.splitext(out_path)
+        i = 1
+        while os.path.exists(f"{stem}_{i}{ext}"):
+            i += 1
+        out_path = f"{stem}_{i}{ext}"
+        print(f"\nNote: 'example_agent.py' already exists; writing to '{out_path}' instead")
+
+    try:
+        with open(out_path, "w") as f:
+            f.write(python_code)
+    except OSError as exc:
+        print(f"\nError: could not write '{out_path}': {exc}")
+        return
+    print(f"\nSaved example agent code to '{out_path}'")
 
 
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) > 1 and sys.argv[1] == "test":
-        base_url = sys.argv[2] if len(sys.argv) > 2 else "http://localhost:4350"
+        # Allow an explicit base_url arg, else fall back to BASE_URL env.
+        base_url = sys.argv[2] if len(sys.argv) > 2 else None
         test_content_negotiation(base_url)
         print("All content negotiation tests passed!")
     elif len(sys.argv) > 1 and sys.argv[1] == "code":
