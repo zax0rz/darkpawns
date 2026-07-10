@@ -21,6 +21,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -229,8 +230,17 @@ func cmdKeygen(args []string) {
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stderr, "run: go run ./cmd/agentkeygen -name %q -db \"$DB_DSN\"\n", *name)
+	// Single-quote the name for the suggested shell command. Go's %q is not
+	// shell-safe (e.g. a name containing $(...) would execute if pasted inside
+	// double quotes); single-quote escaping is.
+	fmt.Fprintf(os.Stderr, "run: go run ./cmd/agentkeygen -name %s -db \"$DB_DSN\"\n", shellSingleQuote(*name))
 	fmt.Fprintf(os.Stderr, "(keygen integration in next pass)\n")
+}
+
+// shellSingleQuote wraps s in single quotes for safe shell paste, escaping any
+// embedded single quotes via the '\” idiom.
+func shellSingleQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // ─── whoami ───────────────────────────────────────────────────────────────────
@@ -332,16 +342,11 @@ func cmdExec(args []string) {
 		}
 		slog.Debug("exec recv", "type", msg.Type)
 		if msg.Type == "state" {
-			var state struct {
-				Room struct {
-					Name string `json:"name"`
-				} `json:"room"`
-				Player struct {
-					Health    int `json:"health"`
-					MaxHealth int `json:"max_health"`
-				} `json:"player"`
-				Events []string `json:"events"`
-			}
+			// Decode into the canonical client state model. The bespoke struct
+			// this replaced declared Events as []string, but the server sends
+			// structured Event objects — the mismatch made json.Unmarshal fail
+			// and the whole state (room + HP) get silently dropped.
+			var state agentcli.GameState
 			if err := json.Unmarshal(msg.Data, &state); err != nil {
 				slog.Debug("exec parse state", "error", err)
 				continue
@@ -350,7 +355,7 @@ func cmdExec(args []string) {
 				fmt.Printf("%s (HP: %d/%d)\n", state.Room.Name, state.Player.Health, state.Player.MaxHealth)
 			}
 			for _, e := range state.Events {
-				fmt.Println(e)
+				fmt.Printf("%v\n", e.Data)
 			}
 			return // got our response, exit
 		}
