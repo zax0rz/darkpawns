@@ -61,10 +61,12 @@ src/*.Po
 __pycache__/
 maps/world_data.json
 data/
-test-race
-dp-agent
+# Built binaries (anchored to repo root so they don't also exclude the
+# same-named cmd/ source dirs — cmd/test-race, cmd/dp-agent, cmd/dp-goatd).
+/test-race
+/dp-agent
 .clawpatch/
-dp-goatd
+/dp-goatd
 server-linux
 public/
 website/REVIEW-*.md
