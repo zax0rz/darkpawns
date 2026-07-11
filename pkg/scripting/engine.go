@@ -2092,15 +2092,18 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 			return 0
 		}
 		vnum := int(vnumVal.(lua.LNumber))
-		// Look up instance ID from the transit map by finding any entry with matching vnum
-		e.mu.Lock()
+		// Look up instance ID from the transit map by finding any entry with a
+		// matching vnum. Do NOT lock e.mu here: luaObjTo runs as a Lua callback
+		// inside RunScript, which already holds e.mu — re-locking a non-reentrant
+		// sync.Mutex would deadlock the entire scripting engine. transitItems is
+		// already protected by that held lock (as in luaObjFrom and the rest of
+		// this function, which all access it lock-free for the same reason).
 		for id, entry := range e.transitItems {
 			if entry.obj.GetVNum() == vnum {
 				instanceID = id
 				break
 			}
 		}
-		e.mu.Unlock()
 	}
 
 	entry, ok := e.transitItems[instanceID]
