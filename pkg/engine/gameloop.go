@@ -16,6 +16,7 @@ package engine
 
 import (
 	"log/slog"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -195,79 +196,83 @@ func (gl *GameLoop) run() {
 	}
 }
 
+// safeInvoke runs a single heartbeat callback under a recover guard. A panic in
+// any callback (e.g. a nil dereference in AffectUpdate) would otherwise unwind
+// the loop goroutine and take the whole MUD down with no restart mechanism
+// (DP-1019). Instead we log the offending callback, pulse, panic value and
+// stack, then continue — so one bad callback is isolated and the remaining
+// callbacks for this tick, and every future tick, still run.
+func (gl *GameLoop) safeInvoke(name string, pulse int64, fn func()) {
+	if fn == nil {
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("heartbeat callback panicked; loop continues",
+				"callback", name,
+				"pulse", pulse,
+				"panic", r,
+				"stack", string(debug.Stack()),
+			)
+		}
+	}()
+	fn()
+}
+
 // heartbeat dispatches all sub-functions based on the current pulse.
 // Ported from comm.c:heartbeat().
 //
 // The pulse counter starts at 1 (the first Add call) and increments each tick.
 // Pulse modulo checks use the same logic as the C source.
+//
+// Every callback is dispatched through safeInvoke so a panic in one cannot kill
+// the loop goroutine (DP-1019).
 func (gl *GameLoop) heartbeat(pulse int64) {
 	cb := gl.callbacks
 
 	// Every tick (100ms)
-	if cb.OnEventProcess != nil {
-		cb.OnEventProcess()
-	}
-	if cb.OnExtractPending != nil {
-		cb.OnExtractPending()
-	}
+	gl.safeInvoke("EventProcess", pulse, cb.OnEventProcess)
+	gl.safeInvoke("ExtractPending", pulse, cb.OnExtractPending)
 
 	// PULSE_ZONE → every 60 seconds
-	if pulse%PULSE_ZONE == 0 && cb.OnZoneUpdate != nil {
-		cb.OnZoneUpdate()
+	if pulse%PULSE_ZONE == 0 {
+		gl.safeInvoke("ZoneUpdate", pulse, cb.OnZoneUpdate)
 	}
 
 	// 15 * PASSES_PER_SEC → every 15 seconds
-	if pulse%(15*PASSES_PER_SEC) == 0 && cb.OnCheckIdlePasswords != nil {
-		cb.OnCheckIdlePasswords()
-	}
-	if pulse%(15*PASSES_PER_SEC) == 0 && cb.OnReapLinkdeadSessions != nil {
-		cb.OnReapLinkdeadSessions()
+	if pulse%(15*PASSES_PER_SEC) == 0 {
+		gl.safeInvoke("CheckIdlePasswords", pulse, cb.OnCheckIdlePasswords)
+		gl.safeInvoke("ReapLinkdeadSessions", pulse, cb.OnReapLinkdeadSessions)
 	}
 
 	// PULSE_MOBILE → every 4 seconds
 	if pulse%PULSE_MOBILE == 0 {
-		if cb.OnMobileActivity != nil {
-			cb.OnMobileActivity()
-		}
-		if cb.OnRoomActivity != nil {
-			cb.OnRoomActivity()
-		}
-		if cb.OnObjectActivity != nil {
-			cb.OnObjectActivity()
-		}
+		gl.safeInvoke("MobileActivity", pulse, cb.OnMobileActivity)
+		gl.safeInvoke("RoomActivity", pulse, cb.OnRoomActivity)
+		gl.safeInvoke("ObjectActivity", pulse, cb.OnObjectActivity)
 	}
 
 	// PULSE_VIOLENCE → every 2 seconds
-	if pulse%PULSE_VIOLENCE == 0 && cb.OnPerformViolence != nil {
-		cb.OnPerformViolence()
+	if pulse%PULSE_VIOLENCE == 0 {
+		gl.safeInvoke("PerformViolence", pulse, cb.OnPerformViolence)
 	}
 
 	// SECS_PER_MUD_HOUR * PASSES_PER_SEC → every 75 real seconds
 	if pulse%(SECS_PER_MUD_HOUR*PASSES_PER_SEC) == 0 {
-		if cb.OnWeatherAndTime != nil {
-			cb.OnWeatherAndTime()
-		}
-		if cb.OnAffectUpdate != nil {
-			cb.OnAffectUpdate()
-		}
-		if cb.OnPointUpdate != nil {
-			cb.OnPointUpdate()
-		}
-		if cb.OnHuntItems != nil {
-			cb.OnHuntItems()
-		}
-		if cb.OnFlushPlayerFile != nil {
-			cb.OnFlushPlayerFile()
-		}
+		gl.safeInvoke("WeatherAndTime", pulse, cb.OnWeatherAndTime)
+		gl.safeInvoke("AffectUpdate", pulse, cb.OnAffectUpdate)
+		gl.safeInvoke("PointUpdate", pulse, cb.OnPointUpdate)
+		gl.safeInvoke("HuntItems", pulse, cb.OnHuntItems)
+		gl.safeInvoke("FlushPlayerFile", pulse, cb.OnFlushPlayerFile)
 	}
 
 	// Record usage every 5 minutes
-	if pulse%(5*60*PASSES_PER_SEC) == 0 && cb.OnRecordUsage != nil {
-		cb.OnRecordUsage()
+	if pulse%(5*60*PASSES_PER_SEC) == 0 {
+		gl.safeInvoke("RecordUsage", pulse, cb.OnRecordUsage)
 	}
 
 	// Write Mud date every 60 minutes
-	if pulse%(60*60*PASSES_PER_SEC) == 0 && cb.OnWriteMudDate != nil {
-		cb.OnWriteMudDate()
+	if pulse%(60*60*PASSES_PER_SEC) == 0 {
+		gl.safeInvoke("WriteMudDate", pulse, cb.OnWriteMudDate)
 	}
 }
