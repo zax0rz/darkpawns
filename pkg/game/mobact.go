@@ -219,6 +219,14 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if vict.IsNPC() {
 				continue
 			}
+			// C: !CAN_SEE(ch, vict)
+			if !canSee(ch, vict) {
+				continue
+			}
+			// C: PRF_NOHASSLE
+			if vict.GetFlags()&(1<<PrfNohassle) != 0 {
+				continue
+			}
 			// C: MOB_WIMPY && AWAKE(vict)
 			if wimpy && vict.GetPosition() > combat.PosSleeping {
 				continue
@@ -231,6 +239,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			// C: AFF_PROTECT_GOOD + IS_GOOD(ch) + !number(0,5)
 			// #nosec G404 — game RNG, not cryptographic
 			if vict.IsAffected(13) && mobIsGood(ch) && rand.IntN(6) != 0 {
+				continue
+			}
+			// C: AFF_SNEAK + !number(0,3) — 1-in-4 skip
+			// #nosec G404 — game RNG, not cryptographic
+			if vict.IsAffected(affSneak) && rand.IntN(4) == 0 {
 				continue
 			}
 			// Alignment matching faithful to mobact.c:
@@ -316,6 +329,14 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if vict.IsNPC() {
 				continue
 			}
+			// C: !CAN_SEE(ch, vict)
+			if !canSee(ch, vict) {
+				continue
+			}
+			// C: PRF_NOHASSLE
+			if vict.GetFlags()&(1<<PrfNohassle) != 0 {
+				continue
+			}
 			for _, name := range ch.Memory {
 				if name == vict.GetName() {
 					if w.combatEngine != nil {
@@ -367,6 +388,16 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// -- MOB_AGGR24: attack players level 24+ --
 	if hasMobFlag(ch, "aggr24") {
 		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
+			// C: !IS_NPC(tmp_ch) && CAN_SEE(ch, tmp_ch) && !PRF_NOHASSLE && !ROOM_PEACEFUL
+			if !canSee(ch, p) {
+				continue
+			}
+			if p.GetFlags()&(1<<PrfNohassle) != 0 {
+				continue
+			}
+			if w.roomHasFlag(ch.RoomVNum, "peaceful") {
+				continue
+			}
 			if p.GetLevel() >= 24 {
 				if w.combatEngine != nil {
 					if err := w.combatEngine.StartCombat(ch, p); err != nil {
