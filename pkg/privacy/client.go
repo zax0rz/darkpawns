@@ -29,6 +29,9 @@ type FilterConfig struct {
 	Replacement string `json:"replacement"`
 	// Whether to keep original length with asterisks
 	KeepLength bool `json:"keep_length"`
+	// TimeoutSeconds is the HTTP client timeout for calls to the filter
+	// service. NewClient falls back to 10s when zero or negative.
+	TimeoutSeconds int `json:"-"`
 }
 
 // DefaultFilterConfig returns a config that filters all categories
@@ -75,10 +78,16 @@ func NewClient(baseURL string, config FilterConfig) *Client {
 		baseURL = "http://privacy-filter:8000"
 	}
 
+	// Honor a configured timeout; fall back to 10s when unset (≤0).
+	timeout := 10 * time.Second
+	if config.TimeoutSeconds > 0 {
+		timeout = time.Duration(config.TimeoutSeconds) * time.Second
+	}
+
 	return &Client{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: timeout,
 		},
 		config: config,
 	}

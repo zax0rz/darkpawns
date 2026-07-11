@@ -26,11 +26,9 @@ type Config struct {
 	// Batch size
 	BatchSize int
 
-	// Timeout in seconds
+	// Timeout in seconds for calls to the filter service (wired into the
+	// Client via ToFilterConfig).
 	Timeout int
-
-	// Fallback behavior
-	Fallback string
 
 	// Log level
 	LogLevel string
@@ -52,7 +50,6 @@ func DefaultConfig() Config {
 		KeepLength:          false,
 		BatchSize:           10,
 		Timeout:             10,
-		Fallback:            "mask",
 		LogLevel:            "info",
 		FilterPlayerNames:   true,
 		FilterLocationNames: false,
@@ -97,10 +94,6 @@ func LoadConfig() Config {
 		}
 	}
 
-	if fallback := os.Getenv("PRIVACY_FILTER_FALLBACK"); fallback != "" {
-		config.Fallback = fallback
-	}
-
 	if logLevel := os.Getenv("PRIVACY_FILTER_LOG_LEVEL"); logLevel != "" {
 		config.LogLevel = logLevel
 	}
@@ -127,8 +120,9 @@ func LoadConfig() Config {
 // ToFilterConfig converts Config to FilterConfig
 func (c Config) ToFilterConfig() FilterConfig {
 	return FilterConfig{
-		Categories:  c.Categories,
-		Replacement: c.Replacement,
-		KeepLength:  c.KeepLength,
+		Categories:     c.Categories,
+		Replacement:    c.Replacement,
+		KeepLength:     c.KeepLength,
+		TimeoutSeconds: c.Timeout,
 	}
 }
