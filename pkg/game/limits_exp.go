@@ -27,6 +27,28 @@ func updatePosFromHP(p *Player, hp int) {
 	}
 }
 
+// updateMobPosFromHP mirrors updatePosFromHP for NPCs — derives the POS_*
+// wounded band from current HP. Used by the point-update bleed loop so mobs
+// progress incap → mortally → dead instead of dying instantly at HP 0.
+func updateMobPosFromHP(m *MobInstance, hp int) {
+	if hp > 0 {
+		if m.GetPosition() > PosStunned {
+			return
+		}
+		m.SetPosition(PosStanding)
+		return
+	}
+	if hp <= -11 {
+		m.SetPosition(PosDead)
+	} else if hp <= -6 {
+		m.SetPosition(PosMortally)
+	} else if hp <= -3 {
+		m.SetPosition(PosIncap)
+	} else {
+		m.SetPosition(PosStunned)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // SetTitle — from limits.c set_title()
 // ---------------------------------------------------------------------------

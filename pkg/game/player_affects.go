@@ -119,12 +119,18 @@ func (p *Player) SetParry(active bool) {
 }
 
 // TakeDamage applies damage to the player.
+//
+// HP is allowed to go negative into the wounded band; POS_DEAD is HP <= -11
+// (fight.c update_pos). We floor at -11 so a single massive blow can't drive HP
+// arbitrarily negative — anything at or past -11 is dead regardless. Position
+// transitions and death are handled by callers via
+// combat.UpdatePositionAfterDamage / HandleDeath, not here (DP-1021).
 func (p *Player) TakeDamage(amount int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Health -= amount
-	if p.Health < 0 {
-		p.Health = 0
+	if p.Health < -11 {
+		p.Health = -11
 	}
 }
 

@@ -145,6 +145,49 @@ func GetPositionFromHP(hp, currentPos int) int {
 	return PosStunned
 }
 
+// UpdatePositionAfterDamage transitions a victim into the wounded band after
+// damage has already been applied to its HP. It derives the new position from
+// current HP (POS_STUNNED / POS_INCAP / POS_MORTALLYW / POS_DEAD), sets it,
+// emits the matching wounded-state message to the victim and its room, and
+// drops the victim's FIGHTING reference once it can no longer fight
+// (pos < POS_SLEEPING). It returns the new position; callers must invoke the
+// death pipeline when the return value is PosDead (HP <= -11). Death messaging
+// is intentionally left to the death handler, so PosDead emits no message here.
+//
+// Mirrors the update_pos + wound-message block of fight.c:1484-1512. broadcast
+// may be nil to suppress the third-person room message.
+func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, message, exclude string)) int {
+	newPos := GetPositionFromHP(victim.GetHP(), victim.GetPosition())
+	victim.SetPosition(newPos)
+
+	name := victim.GetName()
+	room := victim.GetRoom()
+	switch newPos {
+	case PosMortally:
+		victim.SendMessage("You are mortally wounded, and will die soon, if not aided.\r\n")
+		if broadcast != nil {
+			broadcast(room, fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", name), name)
+		}
+	case PosIncap:
+		victim.SendMessage("You are incapacitated and will slowly die, if not aided.\r\n")
+		if broadcast != nil {
+			broadcast(room, fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", name), name)
+		}
+	case PosStunned:
+		victim.SendMessage("You're stunned, but will probably regain consciousness again.\r\n")
+		if broadcast != nil {
+			broadcast(room, fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", name), name)
+		}
+	}
+
+	// fight.c:1500 — a downed victim can no longer fight back. The attacker
+	// keeps its FIGHTING reference and finishes the victim off next round.
+	if newPos < PosSleeping && victim.GetFighting() != "" {
+		victim.StopFighting()
+	}
+	return newPos
+}
+
 // **********************************
 // 3. changeAlignment()
 // **********************************
