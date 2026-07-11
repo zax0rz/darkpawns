@@ -138,8 +138,7 @@ func TestCastCalliope_FiresMultipleMissiles(t *testing.T) {
 // IsCharmedI mirrors game.World.IsCharmedI: it consults the target's internal
 // charm bit (affCharm == index 21 in pkg/game/affects_constants.go).
 type mockCharmWorld struct {
-	chars   []interface{}
-	damaged []string // names passed to MagDamage (i.e. NOT skipped)
+	chars []interface{}
 }
 
 func (w *mockCharmWorld) GetAllCharsInRoom(int) []interface{} { return w.chars }
