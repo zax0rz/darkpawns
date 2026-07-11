@@ -543,6 +543,12 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 // MagSummons summons NPCs into the world.
 // MagSummons spawns NPCs based on spell type (e.g. Animate Dead creates zombies).
 
+// animateDeadPfailRoll returns number(0,101) for the SPELL_ANIMATE_DEAD pfail
+// check. It is a package var so tests can make the ~8% failure branch
+// deterministic — math/rand/v2's global generator has no Seed, so a raw
+// rand.IntN in the spawn path would flake any test that asserts a spawn.
+var animateDeadPfailRoll = func() int { return rand.IntN(102) } // #nosec G404 — intentional MUD RNG
+
 func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 	if ch == nil {
 		return
@@ -598,7 +604,7 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 		}
 
 		// C magic.c: pfail = 8; number(0, 101) < pfail.
-		if rand.IntN(102) < 8 { // #nosec G404 — intentional MUD RNG
+		if animateDeadPfailRoll() < 8 {
 			sendToCaster(ch, "You failed.\r\n")
 			return
 		}

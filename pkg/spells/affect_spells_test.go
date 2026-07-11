@@ -358,7 +358,18 @@ func (w *mockAnimateWorld) CharmAndFollowI(mob, leader interface{}) {
 	}
 }
 
+// forceAnimateDeadRoll makes the SPELL_ANIMATE_DEAD pfail roll deterministic for
+// the duration of a test: val < 8 always fails the roll, val >= 8 always passes.
+// Restores the real (rand-backed) roll via t.Cleanup.
+func forceAnimateDeadRoll(t *testing.T, val int) {
+	t.Helper()
+	prev := animateDeadPfailRoll
+	animateDeadPfailRoll = func() int { return val }
+	t.Cleanup(func() { animateDeadPfailRoll = prev })
+}
+
 func TestMagSummons_AnimateDead_KeepsCorpseOnSpawnFailure(t *testing.T) {
+	forceAnimateDeadRoll(t, 101) // pass the pfail so we reach the spawn attempt
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
 	corpse := &mockCorpse{keywords: "corpse"}
 	world := &mockAnimateWorld{
@@ -374,6 +385,35 @@ func TestMagSummons_AnimateDead_KeepsCorpseOnSpawnFailure(t *testing.T) {
 	}
 	if world.spawnedVNum != 10 {
 		t.Errorf("expected zombie vnum 10, got %d", world.spawnedVNum)
+	}
+}
+
+func TestMagSummons_AnimateDead_PfailKeepsCorpseNoSpawn(t *testing.T) {
+	forceAnimateDeadRoll(t, 0) // 0 < 8 -> the pfail roll fails
+	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
+	corpse := &mockCorpse{keywords: "corpse"}
+	world := &mockAnimateWorld{
+		items:    []interface{}{corpse},
+		canRaise: true,
+	}
+
+	MagSummons(10, caster, SpellAnimateDead, world)
+
+	if world.spawnedVNum != 0 {
+		t.Errorf("pfail should abort before spawn, but spawned vnum %d", world.spawnedVNum)
+	}
+	if world.removed {
+		t.Error("pfail should not remove the corpse")
+	}
+	foundFailMsg := false
+	for _, m := range caster.messages {
+		if strings.Contains(m, "You failed") {
+			foundFailMsg = true
+			break
+		}
+	}
+	if !foundFailMsg {
+		t.Errorf("expected pfail message, got %v", caster.messages)
 	}
 }
 
@@ -422,6 +462,7 @@ func TestMagSummons_AnimateDead_FollowerCapBlocked(t *testing.T) {
 }
 
 func TestMagSummons_AnimateDead_Success(t *testing.T) {
+	forceAnimateDeadRoll(t, 101) // pass the pfail so the spawn path runs
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
 	corpse := &mockCorpse{keywords: "corpse"}
 	world := &mockAnimateWorld{
@@ -429,24 +470,9 @@ func TestMagSummons_AnimateDead_Success(t *testing.T) {
 		canRaise: true,
 	}
 
-	// The pfail roll fails ~8% of the time; retry enough to guarantee a success.
-	succeeded := false
-	for i := 0; i < 100; i++ {
-		caster.messages = nil
-		world.spawnedVNum = 0
-		world.removed = false
-		world.charmFollowCalled = false
-		world.charmed = false
-		world.following = ""
-
-		MagSummons(10, caster, SpellAnimateDead, world)
-		if world.spawnedVNum == 10 {
-			succeeded = true
-			break
-		}
-	}
-	if !succeeded {
-		t.Fatal("animate dead never succeeded after 100 attempts")
+	MagSummons(10, caster, SpellAnimateDead, world)
+	if world.spawnedVNum != 10 {
+		t.Fatalf("expected zombie vnum 10 spawned, got %d", world.spawnedVNum)
 	}
 
 	if !world.removed {
