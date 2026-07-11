@@ -2,6 +2,7 @@ package admin
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -15,7 +16,8 @@ import (
 
 // NewRouter creates an admin HTTP handler with role-protected endpoints.
 // liveSessions is the session manager (or nil to disable live session endpoints).
-func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions LiveSessionProvider) http.Handler {
+// It returns an error if the agent store cannot be initialized (DP-1016).
+func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions LiveSessionProvider) (http.Handler, error) {
 	mux := http.NewServeMux()
 
 	// Rate limiter for admin endpoints
@@ -125,7 +127,10 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	if storePath == "" {
 		storePath = "data/admin_store.json"
 	}
-	agentStore := NewAgentStore(storePath)
+	agentStore, err := NewAgentStore(storePath)
+	if err != nil {
+		return nil, fmt.Errorf("init agent store: %w", err)
+	}
 	mux.HandleFunc("/admin/agents", wrap(corsMiddleware(requireRole("builder", handleAgents(agentStore)))))
 	mux.HandleFunc("/admin/agents/status", wrap(corsMiddleware(requireRole("builder", handleAgentStatus(agentStore)))))
 	mux.HandleFunc("/admin/findings", wrap(corsMiddleware(requireRole("builder", handleFindings(agentStore)))))
@@ -155,7 +160,7 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		})
 	}
 
-	return mux
+	return mux, nil
 }
 
 // requireRole wraps a handler, rejecting requests that lack the required role.

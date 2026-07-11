@@ -2,7 +2,7 @@ package admin
 
 import (
 	"encoding/json"
-	"log/slog"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -90,12 +90,15 @@ func defaultAgents() map[string]*AgentStatus {
 
 // NewAgentStore creates an AgentStore, loading from filePath if it exists.
 // If the file doesn't exist, a fresh store with seeded defaults is created.
-func NewAgentStore(filePath string) *AgentStore {
+// It returns an error if the parent directory cannot be created, so callers
+// fail loudly at boot instead of silently losing every subsequent Save
+// (DP-1016).
+func NewAgentStore(filePath string) (*AgentStore, error) {
 	// Ensure parent directory exists
 	dir := filepath.Dir(filePath)
 	if dir != "" && dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
-			slog.Error("failed to create agent store directory", "dir", dir, "error", err)
+			return nil, fmt.Errorf("create agent store directory %q: %w", dir, err)
 		}
 	}
 
@@ -112,7 +115,7 @@ func NewAgentStore(filePath string) *AgentStore {
 			s.triages = sj.Triages
 			s.nextFindingID = sj.NextFindingID
 			s.nextTriageID = sj.NextTriageID
-			return s
+			return s, nil
 		}
 	}
 
@@ -120,7 +123,7 @@ func NewAgentStore(filePath string) *AgentStore {
 	s.agents = defaultAgents()
 	s.nextFindingID = 1
 	s.nextTriageID = 1
-	return s
+	return s, nil
 }
 
 // Save persists the store to the JSON file atomically.
