@@ -139,6 +139,69 @@ func TestAdvancedWorkerPoolCloseWithFullQueueDoesNotPanic(t *testing.T) {
 	}
 }
 
+// TestAdvancedWorkerPoolCloseDrainsPriorityQueue verifies that high-priority
+// tasks sitting in the priority queue (not yet forwarded to taskQueue) are
+// executed during Close rather than silently dropped. Before the drain fix,
+// the priorityDispatcher exited on the stop signal and abandoned any buffered
+// priority tasks.
+func TestAdvancedWorkerPoolCloseDrainsPriorityQueue(t *testing.T) {
+	const prioTasks = 5
+	// queueSize 20 -> priority queue size 10, enough to buffer all prio tasks.
+	pool := NewAdvancedWorkerPool(1, 20)
+
+	// Occupy the single worker with a task that blocks until we release it, so
+	// the priority queue is not drained by the dispatcher before Close.
+	started := make(chan struct{})
+	release := make(chan struct{})
+	if err := pool.Submit(func() {
+		close(started)
+		<-release
+	}); err != nil {
+		t.Fatalf("Submit blocking task: %v", err)
+	}
+	<-started
+
+	// Also fill the task queue so the dispatcher cannot immediately forward
+	// priority tasks into it (it would spawn backoff goroutines instead).
+	for i := 0; i < 4; i++ {
+		if err := pool.Submit(func() {}); err != nil {
+			t.Fatalf("Submit filler %d: %v", i, err)
+		}
+	}
+
+	// Submit high-priority tasks. These land in the priority queue and, with
+	// the task queue full, are not yet forwarded.
+	var ran atomic.Int32
+	for i := 0; i < prioTasks; i++ {
+		if err := pool.SubmitWithPriority(func() {
+			ran.Add(1)
+		}, 2); err != nil {
+			t.Fatalf("SubmitWithPriority %d: %v", i, err)
+		}
+	}
+
+	// Close while priority tasks are still pending. The drain must run them.
+	closed := make(chan struct{})
+	go func() {
+		pool.Close()
+		close(closed)
+	}()
+
+	// Release the blocking worker so Close can make progress.
+	close(release)
+
+	select {
+	case <-closed:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Close did not return while draining priority queue")
+	}
+
+	// Every submitted priority task must have executed; none should be dropped.
+	if got := ran.Load(); got != int32(prioTasks) {
+		t.Fatalf("priority tasks executed during Close = %d, want %d (items were dropped)", got, prioTasks)
+	}
+}
+
 // TestGetMetrics_AtomicRead exercises GetMetrics while concurrent submissions
 // mutate the metrics. Run with -race to detect non-atomic reads.
 func TestGetMetrics_AtomicRead(t *testing.T) {

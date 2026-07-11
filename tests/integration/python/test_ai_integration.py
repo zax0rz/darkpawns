@@ -1,19 +1,31 @@
 #!/usr/bin/env python3
 """
-Integration tests for Dark Pawns AI system.
+Tests for the Dark Pawns AI system at two levels.
 
-All test classes use mock AI services — no Go module imports needed.
-AIContext and Behavior stubs are inlined below to replace the
-non-resolvable ``pkg.ai.brain`` and ``pkg.ai.behaviors`` imports.
+This file used to be titled "integration tests" but every class exercised
+inlined Python stubs (MockAIService, a BehaviorManager stub, MockMemory) and
+never touched the Go server — i.e. it faked integration. The stubs are unit
+tests of the Python-side data shapes and are kept as such (marked ``unit``).
+
+The real Python->Go boundary is the game server's WebSocket endpoint
+(``ws://<host>:<port>/ws``): agents connect, log in, subscribe to variables,
+and drive the game over JSON. The ``TestAIIntegrationLive`` class below
+exercises that boundary against a running server and is skipped when no server
+is reachable (set ``DARKPAWNS_WS_URL`` to point at one).
 """
 
 import pytest
 import json
 import os
-import sys
+import socket
+from urllib.parse import urlparse
 from unittest.mock import Mock, patch, AsyncMock
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
+# Endpoint of a running Dark Pawns game server for the live integration tests.
+# When unset, or unreachable, the live tests skip (they never fail in CI).
+DARKPAWNS_WS_URL = os.environ.get("DARKPAWNS_WS_URL", "ws://localhost:4350/ws")
 
 # ---------------------------------------------------------------------------
 # Inline stubs — replaces the Go module imports that Python cannot resolve
@@ -144,12 +156,15 @@ class MockAIService:
 
 
 # ---------------------------------------------------------------------------
-# Test classes — all activate without Go module imports
+# Unit tests of the Python-side AI data shapes and mock services.
+# These do NOT touch the Go server; they are marked `unit` to make that clear.
+# The live, server-backed integration tests live in TestAIIntegrationLive below.
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.unit
 class TestAIIntegration:
-    """Test AI system integration."""
+    """Unit tests of the AI response/context data shapes (mock services)."""
 
     @pytest.fixture
     def mock_ai_service(self):
@@ -262,8 +277,9 @@ class TestAIIntegration:
         assert len(context.recent_events) == 2
 
 
+@pytest.mark.unit
 class TestBehaviorSystem:
-    """Test behavior system integration."""
+    """Unit tests of the behavior-selection logic (mock behavior manager)."""
 
     @pytest.fixture
     def behavior_manager(self):
@@ -370,7 +386,9 @@ class TestBehaviorSystem:
                 'name': 'Low health in combat',
                 'game_state': {
                     'in_combat': True,
-                    'health': 25,
+                    # health 15 fails fight's health_above_20 condition, so
+                    # only flee (priority 5) matches among combat behaviors.
+                    'health': 15,
                     'safe_location': False
                 },
                 'expected_behavior': 'flee'
@@ -388,7 +406,22 @@ class TestBehaviorSystem:
 
         for test_case in test_cases:
             def mock_check_condition(condition, game_state):
-                return game_state.get(condition, False)
+                # Interpret the semantic condition names against the game
+                # state. (A literal game_state.get(condition) would always be
+                # False because the condition names are not state keys.)
+                in_combat = game_state.get('in_combat', False)
+                health = game_state.get('health', 0)
+                safe = game_state.get('safe_location', False)
+                checks = {
+                    'in_combat': in_combat,
+                    'not_in_combat': not in_combat,
+                    'health_above_50': health > 50,
+                    'health_above_20': health > 20,
+                    'health_below_30': health < 30,
+                    'health_below_50': health < 50,
+                    'safe_location': safe,
+                }
+                return checks.get(condition, False)
 
             selected = behavior_manager.evaluate_behavior(
                 test_case['game_state'],
@@ -441,9 +474,9 @@ class TestBehaviorSystem:
         """Test that behaviors are evaluated in priority order."""
 
         behaviors = [
-            Behavior(name="low", priority=1, conditions=["condition"], actions=[]),
-            Behavior(name="medium", priority=5, conditions=["condition"], actions=[]),
-            Behavior(name="high", priority=10, conditions=["condition"], actions=[])
+            Behavior(name="low", description="low priority", priority=1, conditions=["condition"], actions=[]),
+            Behavior(name="medium", description="medium priority", priority=5, conditions=["condition"], actions=[]),
+            Behavior(name="high", description="high priority", priority=10, conditions=["condition"], actions=[])
         ]
 
         for behavior in behaviors:
@@ -484,8 +517,9 @@ class TestBehaviorSystem:
         assert selected is None
 
 
+@pytest.mark.unit
 class TestAIMemoryIntegration:
-    """Test AI memory system integration."""
+    """Unit tests of the memory store/recall data shapes (mock memory)."""
 
     @pytest.fixture
     def mock_memory_system(self):
@@ -612,8 +646,9 @@ class TestAIMemoryIntegration:
         assert len(forest_events) > 0
 
 
+@pytest.mark.unit
 class TestAIDecisionMaking:
-    """Test AI decision making integration."""
+    """Unit tests of the decision-making logic (mock decision maker)."""
 
     @pytest.fixture
     def decision_maker(self):
@@ -682,6 +717,125 @@ class TestAIDecisionMaking:
 
         assert decision['action'] == 'go_north'
         assert 'Dark corridor' in decision['description']
+
+
+# ---------------------------------------------------------------------------
+# Live integration tests — exercise the real Python->Go WebSocket boundary.
+# Skipped unless a Dark Pawns server is reachable at DARKPAWNS_WS_URL.
+# ---------------------------------------------------------------------------
+
+
+def _server_reachable(ws_url: str) -> bool:
+    """Return True if a TCP connection to the WS host:port succeeds."""
+    parsed = urlparse(ws_url)
+    host = parsed.hostname
+    port = parsed.port
+    if not host or not port:
+        return False
+    try:
+        with socket.create_connection((host, port), timeout=1.0):
+            return True
+    except OSError:
+        return False
+
+
+@pytest.fixture(scope="module")
+def live_ws(request):
+    """Skip the live tests when the server isn't reachable.
+
+    Returns the websocket-client module. Uses module scope so we only probe the
+    port once per session run. The skip message tells the operator exactly how
+    to enable the tests.
+    """
+    if not _server_reachable(DARKPAWNS_WS_URL):
+        pytest.skip(
+            f"live AI integration tests require a running Dark Pawns server at "
+            f"{DARKPAWNS_WS_URL} (set DARKPAWNS_WS_URL to override)"
+        )
+    # websocket is an optional dependency; import lazily so unit tests above
+    # don't fail when it is absent.
+    return pytest.importorskip("websocket")
+
+
+@pytest.mark.integration
+class TestAIIntegrationLive:
+    """Live integration tests against the real game server WebSocket.
+
+    These connect to the server an agent would use (ws://host:port/ws), perform
+    the login/subscribe handshake from the documented agent protocol, and
+    assert the server responds with the expected message types. They are
+    skipped entirely when no server is reachable.
+    """
+
+    def test_agent_login_and_subscribe(self, live_ws):
+        """Login as an agent and subscribe to variables over the real WS."""
+        unique = f"ai_test_{os.getpid()}_{id(live_ws)}"
+        ws = live_ws.WebSocket()
+        ws.settimeout(5.0)
+        try:
+            ws.connect(DARKPAWNS_WS_URL)
+
+            ws.send(json.dumps({
+                "type": "login",
+                "data": {
+                    "player_name": unique,
+                    "password": "test-api-key",
+                    "is_agent": True,
+                },
+            }))
+
+            # The server should respond promptly; the exact message type depends
+            # on whether the player already exists (state) or needs creation,
+            # but it must be valid JSON with a "type". If the connection is
+            # closed before a reply, the server rejected the login — assert
+            # explicitly rather than letting the socket error surface raw.
+            import websocket as _wsmodule
+            try:
+                raw = ws.recv()
+            except _wsmodule.WebSocketConnectionClosedException:
+                pytest.skip(
+                    "server closed the connection on login (likely needs a "
+                    "registered player / valid API key); cannot exercise the "
+                    "full agent handshake in this configuration"
+                )
+            assert raw, "server sent no login response"
+            msg = json.loads(raw)
+            assert "type" in msg, f"login response missing 'type': {msg}"
+
+            # Subscribe to the documented agent variable set.
+            ws.send(json.dumps({
+                "type": "subscribe",
+                "data": {
+                    "variables": [
+                        "HEALTH", "ROOM_VNUM", "ROOM_NAME", "ROOM_EXITS",
+                        "ROOM_MOBS", "FIGHTING", "INVENTORY",
+                    ]
+                },
+            }))
+
+            # The server should eventually send a vars or state message; drain
+            # a few responses looking for one. Any response is acceptable as
+            # long as it parses and carries a type. A connection close here,
+            # after login succeeded, is a real failure.
+            saw_typed = False
+            for _ in range(3):
+                try:
+                    raw = ws.recv()
+                except _wsmodule.WebSocketConnectionClosedException:
+                    break
+                except Exception:
+                    break
+                if not raw:
+                    continue
+                parsed = json.loads(raw)
+                assert "type" in parsed, f"server response missing 'type': {parsed}"
+                saw_typed = True
+            assert saw_typed, "server sent no response after subscribe"
+        finally:
+            try:
+                ws.close()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

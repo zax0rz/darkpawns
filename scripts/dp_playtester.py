@@ -237,7 +237,7 @@ class DPPlaytester:
         else:
             await asyncio.sleep(1.0)
 
-    async def run(self):
+    async def run(self, turns: int = 50):
         uri = f"ws://{self.host}:{self.port}/ws"
         log("INFO", f"Connecting to {uri}")
 
@@ -272,7 +272,7 @@ class DPPlaytester:
 
             # Play loop
             turn = 0
-            while turn < 50:  # 50 turns for playtesting
+            while turn < turns:
                 turn += 1
                 log("TURN", f"#{turn}")
                 await self.play_turn()
@@ -294,7 +294,7 @@ async def main():
 
     bot = DPPlaytester(args.host, args.port, args.key, args.name, args.model, args.litellm_url)
     bot.kill_count = 0
-    await bot.run()
+    await bot.run(args.turns)
 
 if __name__ == "__main__":
     asyncio.run(main())

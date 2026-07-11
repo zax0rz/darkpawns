@@ -334,7 +334,12 @@ func (p *AdvancedWorkerPool) Resize(newWorkers int) error {
 	return nil
 }
 
-// Close gracefully shuts down the pool
+// Close gracefully shuts down the pool.
+//
+// On close, workers exit on the stop signal, which can strand tasks still
+// buffered in taskQueue or priorityQueue. To avoid silently dropping submitted
+// work, Close drains both queues inline (running any remaining tasks on the
+// calling goroutine) after the dispatcher has stopped.
 func (p *AdvancedWorkerPool) Close() {
 	p.mu.Lock()
 	if p.closed {
@@ -346,8 +351,75 @@ func (p *AdvancedWorkerPool) Close() {
 	close(p.stop)
 	p.mu.Unlock()
 
+	// Wait for the priority dispatcher (and any backoff goroutines it spawned)
+	// to exit so they stop touching the queues.
 	p.producerWG.Wait()
+
+	// Run any tasks still buffered in the queues so they are not lost. Workers
+	// may have already exited on the stop signal, so drain inline rather than
+	// relying on them. Move priority tasks into taskQueue first (preserving the
+	// single execution path), then run whatever remains in taskQueue.
+	p.drainQueuesInline()
+
 	close(p.taskQueue)
 	close(p.priorityQueue)
 	p.wg.Wait()
+}
+
+// drainQueuesInline runs every task remaining in taskQueue and priorityQueue
+// on the calling goroutine. It is called after the dispatcher has stopped, so
+// no new tasks enter the queues. Each task is recovered so one panicking task
+// cannot prevent the rest from running.
+func (p *AdvancedWorkerPool) drainQueuesInline() {
+	// First fold priority tasks into taskQueue so there is a single drain path.
+	for {
+		select {
+		case pt, ok := <-p.priorityQueue:
+			if !ok {
+				goto drainTask
+			}
+			atomic.AddInt64(&p.metrics.PriorityLength, -1)
+			select {
+			case p.taskQueue <- pt.task:
+			default:
+				if runTaskRecovered(pt.task) {
+					atomic.AddInt64(&p.metrics.TasksCompleted, 1)
+				} else {
+					atomic.AddInt64(&p.metrics.TasksFailed, 1)
+				}
+			}
+		default:
+			goto drainTask
+		}
+	}
+
+drainTask:
+	for {
+		select {
+		case task, ok := <-p.taskQueue:
+			if !ok {
+				return
+			}
+			atomic.AddInt64(&p.metrics.QueueLength, -1)
+			if runTaskRecovered(task) {
+				atomic.AddInt64(&p.metrics.TasksCompleted, 1)
+			} else {
+				atomic.AddInt64(&p.metrics.TasksFailed, 1)
+			}
+		default:
+			return
+		}
+	}
+}
+
+// runTaskRecovered runs f, recovering from a panic so a failing task does not
+// abort a drain loop. Returns true if the task ran without panicking.
+func runTaskRecovered(f func()) (ok bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			ok = false
+		}
+	}()
+	f()
+	return true
 }

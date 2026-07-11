@@ -245,7 +245,16 @@ class AsyncAIProcessor:
         cached = self.cache.get(cache_key)
         if cached:
             logger.debug(f"Cache hit for request {request.request_id}")
-            return cached
+            # Return a copy tagged with the current request's id; the cached
+            # entry carries the original request's id, which would be stale.
+            return AIResponse(
+                request_id=request.request_id,
+                text=cached.text,
+                tokens=cached.tokens,
+                latency=0,
+                model=cached.model,
+                metadata=dict(cached.metadata),
+            )
         
         # Process through batch processor
         logger.debug(f"Processing request {request.request_id}")

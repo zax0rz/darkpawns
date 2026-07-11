@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 )
@@ -148,22 +147,16 @@ func TestBatchFilter_PartialError(t *testing.T) {
 }
 
 func TestConfig_LoadFromEnv(t *testing.T) {
-	// Set environment variables
-	_ = os.Setenv("PRIVACY_FILTER_URL", "http://test:8000")
-	_ = os.Setenv("PRIVACY_FILTER_ENABLED", "false")
-	_ = os.Setenv("PRIVACY_FILTER_CATEGORIES", "email,phone")
-	_ = os.Setenv("PRIVACY_FILTER_REPLACEMENT", "***")
-	_ = os.Setenv("PRIVACY_FILTER_KEEP_LENGTH", "true")
-	_ = os.Setenv("FILTER_PLAYER_NAMES", "false")
-
-	defer func() {
-		_ = os.Unsetenv("PRIVACY_FILTER_URL")
-		_ = os.Unsetenv("PRIVACY_FILTER_ENABLED")
-		_ = os.Unsetenv("PRIVACY_FILTER_CATEGORIES")
-		_ = os.Unsetenv("PRIVACY_FILTER_REPLACEMENT")
-		_ = os.Unsetenv("PRIVACY_FILTER_KEEP_LENGTH")
-		_ = os.Unsetenv("FILTER_PLAYER_NAMES")
-	}()
+	// t.Setenv auto-restores the prior value on test completion, so the env
+	// no longer leaks to other tests (the old os.Setenv/Unsetenv deferred
+	// cleanup raced with parallel tests).
+	t.Setenv("PRIVACY_FILTER_URL", "http://test:8000")
+	t.Setenv("PRIVACY_FILTER_ENABLED", "false")
+	t.Setenv("PRIVACY_FILTER_CATEGORIES", "email,phone")
+	t.Setenv("PRIVACY_FILTER_REPLACEMENT", "***")
+	t.Setenv("PRIVACY_FILTER_KEEP_LENGTH", "true")
+	t.Setenv("FILTER_PLAYER_NAMES", "false")
+	t.Setenv("PRIVACY_FILTER_TIMEOUT", "7")
 
 	config := LoadConfig()
 
@@ -189,6 +182,15 @@ func TestConfig_LoadFromEnv(t *testing.T) {
 
 	if config.FilterPlayerNames {
 		t.Error("Expected FilterPlayerNames false")
+	}
+
+	// Timeout must be loaded and flow through to FilterConfig for the Client.
+	if config.Timeout != 7 {
+		t.Errorf("Expected Timeout 7, got %d", config.Timeout)
+	}
+	fc := config.ToFilterConfig()
+	if fc.TimeoutSeconds != 7 {
+		t.Errorf("Expected FilterConfig.TimeoutSeconds 7, got %d", fc.TimeoutSeconds)
 	}
 }
 

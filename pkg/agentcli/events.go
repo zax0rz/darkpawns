@@ -188,13 +188,27 @@ func (eb *EventBuffer) CompactionWindow(afterSeq uint64) string {
 	for _, ev := range events {
 		typeCounts[ev.Type]++
 
-		// Extract room name from room events
-		if ev.Type == "room_enter" || ev.Type == "state" {
+		// Extract room name from room/state events. room_enter carries the
+		// room name at the top level (ROOM_NAME); state events nest it under
+		// room.name (see context.go for the canonical shape). Using the flat
+		// ROOM_NAME path for state events never matched, so lastRoom was never
+		// updated from state events.
+		switch ev.Type {
+		case "room_enter":
 			var room struct {
 				Name string `json:"ROOM_NAME"`
 			}
 			if json.Unmarshal(ev.Data, &room) == nil && room.Name != "" {
 				lastRoom = room.Name
+			}
+		case "state":
+			var st struct {
+				Room struct {
+					Name string `json:"name"`
+				} `json:"room"`
+			}
+			if json.Unmarshal(ev.Data, &st) == nil && st.Room.Name != "" {
+				lastRoom = st.Room.Name
 			}
 		}
 

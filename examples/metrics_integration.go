@@ -47,7 +47,13 @@ func MetricsIntegration() {
 	metrics.SetPlayersOnline(0)
 
 	fmt.Println("Metrics integration demonstration complete")
-	fmt.Println("Metrics available at: http://localhost:4350/metrics")
-	fmt.Println("Grafana dashboard: http://localhost:3000")
-	fmt.Println("Prometheus: http://localhost:9090")
+	fmt.Println()
+	fmt.Println("Note: this example records metrics into the default Prometheus")
+	fmt.Println("registry but does not start an HTTP server, so it does not serve")
+	fmt.Println("/metrics itself. In the live server, cmd/server registers")
+	fmt.Println("/metrics (see main.go), so the recorded values are scraped there.")
+	fmt.Println("Typical scrape URLs in a dev setup:")
+	fmt.Println("  Dark Pawns /metrics: http://localhost:4350/metrics")
+	fmt.Println("  Grafana:             http://localhost:3000")
+	fmt.Println("  Prometheus:          http://localhost:9090")
 }

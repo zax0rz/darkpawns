@@ -76,37 +76,68 @@ def get_trigger_bitmask(script_name):
     return bitmask
 
 def add_script_to_mob(mob_file, vnum, script_name):
-    """Add or update a Script: line to a mob definition in a .mob file."""
+    """Add or update a Script: line to a mob definition in a .mob file.
+
+    Each mob block runs from ``#<vnum>`` up to (but not including) the next
+    ``\\n#<number>`` or end of file. The Script: line is inserted just before
+    the final standalone ``E`` terminator *within that bounded block*, so it
+    can never land in a neighbouring mob's block. The file is written via a
+    temp file + atomic replace.
+    """
     with open(mob_file, 'r') as f:
         content = f.read()
-    
-    # Find the mob definition: starts with #VNUM, ends with E on its own line
-    # We need to find the LAST E before the next # or end of file
-    pattern = rf'(#{re.escape(str(vnum))}\n.*?)(\nE\n)'
-    match = re.search(pattern, content, re.DOTALL)
-    
-    if not match:
+
+    # Bound the target mob's block: from its #vnum line to the next #<number>
+    # line (or EOF). This prevents the Script line from crossing into an
+    # adjacent mob block when the target block is missing its own terminator.
+    block_start_pattern = rf'(?m)^#{re.escape(str(vnum))}\s*$'
+    block_start = re.search(block_start_pattern, content)
+    if not block_start:
         return False, "mob not found"
-    
-    mob_block = match.group(1)
-    end_marker = match.group(2)
-    
+
+    rest = content[block_start.end():]
+    # Next mob starts at a line beginning with #<digits>.
+    next_mob = re.search(r'(?m)^#\-?\d+\s*$', rest)
+    block_body = rest[:next_mob.start()] if next_mob else rest
+    block_body_end_rel = (next_mob.start() if next_mob else len(rest))
+
+    # Find the LAST standalone 'E' line within the bounded block. A standalone
+    # E is an 'E' on its own line (not '... 1000 E').
+    e_matches = list(re.finditer(r'(?m)^E\s*$', block_body))
+    if not e_matches:
+        return False, "mob block has no E terminator"
+    last_e = e_matches[-1]
+
+    # mob_block is everything in the block before the final E line (excluding
+    # the newline that separates them); end_marker is that separating newline
+    # plus the E line, preserved verbatim.
+    e_line_start = last_e.start()
+    # Include the preceding newline in the end marker so the Script line we
+    # insert lands on its own line before E.
+    if e_line_start > 0 and block_body[e_line_start - 1] == '\n':
+        sep_newline = '\n'
+        mob_block = block_body[:e_line_start - 1]
+    else:
+        sep_newline = ''
+        mob_block = block_body[:e_line_start]
+    end_marker = sep_newline + block_body[e_line_start:]
+
     bitmask = get_trigger_bitmask(script_name)
     script_line = f'Script: {script_name}'
     if bitmask > 0:
         script_line += f' {bitmask}'
-        
+
     # Check if a Script: line already exists in the block
     script_match = re.search(r'Script:\s+(\S+)(?:\s+(\d+))?', mob_block)
-    
+
     if script_match:
         existing_script = script_match.group(1)
         existing_bitmask = int(script_match.group(2)) if script_match.group(2) else 0
-        
+
         # If it matches exactly (same script and same bitmask), skip
         if existing_script == script_name and existing_bitmask == bitmask:
             return False, "already correctly wired"
-            
+
         # Otherwise, replace the existing script line
         new_mob_block = mob_block.replace(script_match.group(0).strip(), script_line)
         new_block = new_mob_block + end_marker
@@ -115,12 +146,18 @@ def add_script_to_mob(mob_file, vnum, script_name):
         # Add Script: line before the final E
         new_block = mob_block + f'\n{script_line}' + end_marker
         msg = f"wired (bitmask: {bitmask})"
-    
-    content = content[:match.start()] + new_block + content[match.end():]
-    
-    with open(mob_file, 'w') as f:
-        f.write(content)
-    
+
+    # Reassemble: prefix + block_start line + new_block + remainder after block.
+    prefix = content[:block_start.end()]
+    suffix = rest[block_body_end_rel:]
+    new_content = prefix + new_block + suffix
+
+    # Atomic write via temp file + os.replace.
+    tmp_path = mob_file + '.tmp'
+    with open(tmp_path, 'w') as f:
+        f.write(new_content)
+    os.replace(tmp_path, mob_file)
+
     return True, msg
 
 def main():

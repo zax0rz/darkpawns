@@ -67,7 +67,8 @@ func (s *SessionLogger) Log(entry LogEntry) {
 }
 
 // WriteJSONL exports all log entries as newline-delimited JSON to path.
-// Creates parent directories if needed. Returns the number of bytes written.
+// Creates parent directories if needed. Returns the number of log entries
+// written.
 func (s *SessionLogger) WriteJSONL(path string) (int64, error) {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o755); err != nil {

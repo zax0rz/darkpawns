@@ -86,8 +86,9 @@ func ConnectionPoolExample() {
 		fmt.Printf("  Using connection: %v\n", conn)
 		time.Sleep(2 * time.Millisecond)
 
-		// #nosec G104
-		_ = pool.Put(conn)
+		if err := pool.Put(conn); err != nil {
+			log.Printf("  Error returning connection to pool: %v", err)
+		}
 	}
 
 	// Print pool stats
@@ -167,13 +168,13 @@ func WebsocketOptimizationExample() {
 	// Start message consumers
 	go func() {
 		for msg := range session1 {
-			fmt.Printf("  Session 1 received: %s\n", string(msg[:20]))
+			fmt.Printf("  Session 1 received: %s\n", string(msg[:min(20, len(msg))]))
 		}
 	}()
 
 	go func() {
 		for msg := range session2 {
-			fmt.Printf("  Session 2 received: %s\n", string(msg[:20]))
+			fmt.Printf("  Session 2 received: %s\n", string(msg[:min(20, len(msg))]))
 		}
 	}()
 
@@ -223,66 +224,4 @@ func QueryOptimizationExample() {
 	// Get all stats
 	allStats := optimizer.GetStats()
 	fmt.Printf("  Total queries tracked: %d\n", len(allStats))
-}
-
-// Integration with existing Dark Pawns server
-func IntegrateWithServer() {
-	/*
-		// Example integration with session manager
-		func (m *Manager) integrateOptimizations() {
-			// Create worker pool for async tasks
-			m.workerPool = optimization.NewWorkerPool(20)
-
-			// Create WebSocket pool for efficient broadcasting
-			m.wsPool = optimization.NewWebSocketPool(256)
-
-			// Create query optimizer
-			m.queryOptimizer = optimization.NewQueryOptimizer(1000, 100*time.Millisecond)
-
-			// Create AI processor (if using AI features)
-			m.aiProcessor = optimization.NewAsyncProcessor(
-				10,  // workers
-				1000, // cache size
-				time.Hour, // cache TTL
-				30*time.Second, // timeout
-			)
-		}
-
-		// Modified WebSocket handler with optimizations
-		func (m *Manager) HandleWebSocketOptimized(w http.ResponseWriter, r *http.Request) {
-			conn, err := upgrader.Upgrade(w, r, nil)
-			if err != nil {
-				log.Printf("WebSocket upgrade failed: %v", err)
-				return
-			}
-
-			// Use compressed WebSocket
-			cws := optimization.NewCompressedWebSocket(conn, gzip.DefaultCompression)
-
-			session := &Session{
-				conn:           cws,
-				manager:        m,
-				send:           make(chan []byte, 256),
-				// ... other fields
-			}
-
-			// Register with WebSocket pool
-			m.wsPool.Register(session.sessionID(), session.send)
-
-			// Start optimized goroutines
-			go session.writePumpOptimized()
-			go session.readPumpOptimized()
-		}
-
-		// Optimized broadcast using pool
-		func (m *Manager) BroadcastToRoomOptimized(roomVNum int, message []byte, excludePlayer string) {
-			m.wsPool.BroadcastToRoom(roomVNum, message, excludePlayer, func(sessionID string) int {
-				// Function to get room number for session
-				if s, ok := m.GetSession(sessionID); ok && s.player != nil {
-					return s.player.GetRoom()
-				}
-				return -1
-			})
-		}
-	*/
 }

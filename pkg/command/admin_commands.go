@@ -748,17 +748,13 @@ func (ac *AdminCommands) cmdSpamConfig(s common.CommandSession, args []string) e
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-// lvlGod mirrors game.LVL_GOD to avoid a circular import.
-// KEEP-IN-SYNC: pkg/game/limits.go LVL_GOD (currently 34).
-const lvlGod = 34
-
 // isAdmin checks if a player is an admin.
-// Primary gate: player level >= LVL_GOD (34). Name list is bootstrap-only.
+// Primary gate: player level >= LVL_GOD. Name list is bootstrap-only.
 func (ac *AdminCommands) isAdmin(s common.CommandSession) bool {
 	if !s.HasPlayer() {
 		return false
 	}
-	if s.GetPlayerLevel() >= lvlGod {
+	if s.GetPlayerLevel() >= game.LVL_GOD {
 		return true
 	}
 	// Bootstrap: allow known admin names that haven't levelled up yet.
