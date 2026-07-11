@@ -90,12 +90,16 @@ func main() {
 		{game.RaceHuman, game.ClassNinja, true},       // Ninja: Human only
 		{game.RaceElf, game.ClassNinja, false},        // Ninja: non-Human rejected
 		{game.RaceDwarf, game.ClassNinja, false},      // Ninja: Dwarf rejected
+		{game.RaceKender, game.ClassNinja, false},     // Ninja: Kender rejected
 		{game.RaceHuman, game.ClassMageUser, true},    // Mage: all races
 		{game.RaceMinotaur, game.ClassMageUser, true}, // Mage: Minotaur allowed
+		{game.RaceKender, game.ClassMageUser, true},   // Mage: Kender allowed
 		{game.RaceRakshasa, game.ClassWarrior, true},  // Warrior: all races
 		{game.RaceSsaur, game.ClassCleric, true},      // Cleric: all races
+		{game.RaceKender, game.ClassThief, true},      // Thief: Kender allowed
 		{game.RaceHuman, game.ClassThief, true},       // Thief: all races
 		{game.RaceHuman, game.ClassPsionic, true},     // Psionic: all races
+		{game.RaceKender, game.ClassPsionic, true},    // Psionic: Kender allowed
 		{game.RaceHuman, game.ClassMagus, false},      // Magus: remort-only
 		{game.RaceHuman, game.ClassAvatar, false},     // Avatar: remort-only
 		{game.RaceHuman, game.ClassAssassin, false},   // Assassin: remort-only
