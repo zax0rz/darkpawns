@@ -96,7 +96,9 @@ func RunDream(cfg DreamConfig) (*DreamResult, error) {
 
 	for i := range allEvents {
 		ev := &allEvents[i]
-		eventID := fmt.Sprintf("%s-%s-%d", cfg.AgentID, ev.Kind, ev.Timestamp.UnixNano())
+		// Include the loop index so two events of the same kind arriving
+		// within the same nanosecond get distinct IDs (UnixNano collision).
+		eventID := makeEventID(cfg.AgentID, ev.Kind, ev.Timestamp.UnixNano(), i)
 		graph.AddOrReinforceNode(eventID, NodeKindEvent, ev.Narrative, ev.Valence, ev.Timestamp)
 
 		// Link event → room.
@@ -152,6 +154,13 @@ func RunDream(cfg DreamConfig) (*DreamResult, error) {
 	}
 
 	return result, nil
+}
+
+// makeEventID builds a unique identifier for an extracted event. The loop
+// index guarantees distinctness even when two events of the same kind share
+// a timestamp down to the nanosecond (UnixNano alone would collide).
+func makeEventID(agentID, kind string, nanoTs int64, index int) string {
+	return fmt.Sprintf("%s-%s-%d-%d", agentID, kind, nanoTs, index)
 }
 
 // processSessionFile reads a JSONL file and returns extracted events.
