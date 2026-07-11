@@ -322,6 +322,13 @@ func TestKillPayout_Backstab_CorpseCreated(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
+	// Backstab still rolls percent (1..101) > prob for a miss even at skill 100
+	// (percent == 101 misses ~1% of the time), which flaked this kill-assertion.
+	// DoBackstab only rolls that miss when the target's position > PosSleeping, so
+	// a sleeping target is a guaranteed hit — faithful to the C source (you can't
+	// miss a backstab on a sleeping victim) and makes the kill deterministic.
+	ktw.mob.SetPosition(combat.PosSleeping)
+
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
 	err := CmdBackstab(sess, []string{"rat"})
