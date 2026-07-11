@@ -1,4 +1,4 @@
-.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report fmt check-fmt vet lint lint-fix test-parse
+.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse
 
 # Default world directory — resolve relative to this Makefile so it works
 # regardless of the checkout directory name.
@@ -78,6 +78,14 @@ privacy-test:
 up-with-privacy: privacy-up
 
 # Development helpers
+
+# Install git hooks (pre-push runs gofumpt so CI's format check can't surprise
+# you). Also installs gofumpt if it's missing. Run once per clone.
+hooks:
+	@command -v gofumpt >/dev/null 2>&1 || test -x "$$(go env GOPATH)/bin/gofumpt" || go install mvdan.cc/gofumpt@latest
+	git config core.hooksPath .githooks
+	@echo "git hooks enabled (core.hooksPath=.githooks); pre-push enforces gofumpt."
+
 fmt:
 	gofumpt -w .
 

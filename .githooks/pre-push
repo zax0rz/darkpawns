@@ -1,0 +1,35 @@
+#!/bin/sh
+# Pre-push hook: block pushes that would fail CI's gofumpt formatting check.
+#
+# CI runs `gofumpt -l .` and fails if anything is unformatted. gofumpt is a
+# strict superset of gofmt, so this is the only formatter you need — code that
+# passes gofumpt is already gofmt-clean.
+#
+# Enable in each clone with:  make hooks   (sets core.hooksPath to .githooks)
+
+# Locate gofumpt: PATH first, then GOPATH/bin (where `go install` puts it).
+gofumpt_bin="$(command -v gofumpt 2>/dev/null)"
+if [ -z "$gofumpt_bin" ]; then
+	gopath="$(go env GOPATH 2>/dev/null)"
+	if [ -n "$gopath" ] && [ -x "$gopath/bin/gofumpt" ]; then
+		gofumpt_bin="$gopath/bin/gofumpt"
+	fi
+fi
+
+if [ -z "$gofumpt_bin" ]; then
+	echo "pre-push: gofumpt not found." >&2
+	echo "  Install it once with: go install mvdan.cc/gofumpt@latest" >&2
+	echo "  (CI enforces gofumpt formatting; pushing without it risks a red build.)" >&2
+	exit 1
+fi
+
+unformatted="$("$gofumpt_bin" -l .)"
+if [ -n "$unformatted" ]; then
+	echo "pre-push: gofumpt found unformatted files — CI would fail:" >&2
+	echo "$unformatted" | sed 's/^/  /' >&2
+	echo >&2
+	echo "  Fix with: make fmt   (runs gofumpt -w .)" >&2
+	exit 1
+fi
+
+exit 0
