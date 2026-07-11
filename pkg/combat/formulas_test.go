@@ -563,19 +563,46 @@ func TestGetAttacksPerRound_NPC(t *testing.T) {
 }
 
 func TestGetAttacksPerRound_HasteSlow(t *testing.T) {
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{100})) // deterministic: no random bonus
+	defer SetRoller(old)
+
 	c := &mockCombatant{npc: true, level: 5}
-	// With haste, attacks should be 1 higher; slow should reduce (min 1)
-	for i := 0; i < 50; i++ {
-		base := GetAttacksPerRound(c, false, false)
-		haste := GetAttacksPerRound(c, true, false)
-		slow := GetAttacksPerRound(c, false, true)
-		if haste != base+1 {
-			// Haste adds +1 guaranteed
-			break
-		}
-		if slow < 1 {
-			t.Errorf("slow should not go below 1, got %d", slow)
-		}
+	base := GetAttacksPerRound(c, false, false)
+	haste := GetAttacksPerRound(c, true, false)
+	slow := GetAttacksPerRound(c, false, true)
+
+	if haste != base+1 {
+		t.Errorf("haste should add +1, got base=%d haste=%d", base, haste)
+	}
+	if slow != base-1 {
+		t.Errorf("slow should reduce by 1, got base=%d slow=%d", base, slow)
+	}
+}
+
+func TestGetAttacksPerRound_SlowCanDenyRound(t *testing.T) {
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{100})) // deterministic: no random bonus
+	defer SetRoller(old)
+
+	// Level 1 mob: base attacks = 1, slow reduces to 0 (C allows 0).
+	c := &mockCombatant{npc: true, level: 1}
+	attacks := GetAttacksPerRound(c, false, true)
+	if attacks != 0 {
+		t.Errorf("expected 0 attacks for slowed level 1 mob, got %d", attacks)
+	}
+}
+
+func TestGetAttacksPerRound_SlowOnHighLevelStillAttacks(t *testing.T) {
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{100})) // deterministic: no random bonus
+	defer SetRoller(old)
+
+	// Level 40 mob: base attacks = 5, slow reduces to 4.
+	c := &mockCombatant{npc: true, level: 40}
+	attacks := GetAttacksPerRound(c, false, true)
+	if attacks <= 0 {
+		t.Errorf("expected >0 attacks for slowed level 40 mob, got %d", attacks)
 	}
 }
 
