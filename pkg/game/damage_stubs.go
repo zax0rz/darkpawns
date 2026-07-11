@@ -72,13 +72,20 @@ func combatantFromInterface(attacker interface{}) combat.Combatant {
 // DoSpellDamage applies damage to a player or mob, handling death.
 // Used by damage spells (hellfire, meteor_swarm, etc.) that need to hit any character type.
 func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill string) bool {
-	if dam <= 0 {
-		return false
-	}
-
 	attackerName := getAttackerName(attacker)
 	killer := combatantFromInterface(attacker)
 	attackType := skillToAttackType(skill)
+
+	// Route the computed damage through the shared damage() modifier block
+	// (sanctuary, protect evil/good, race-hate, immortal immunity, 3000 cap)
+	// before applying — the same funnel melee and skills use (DP-1025). A hit
+	// reduced to 0 (immortal victim / sanctuary on a tiny hit) deals nothing.
+	if victimC := combatantFromInterface(victim); victimC != nil {
+		dam = combat.ApplyDamageModifiers(killer, victimC, dam)
+	}
+	if dam <= 0 {
+		return false
+	}
 
 	switch v := victim.(type) {
 	case *Player:
@@ -117,6 +124,13 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 	attackerName := getAttackerName(ch)
 	killer := combatantFromInterface(ch)
 	attackType := skillToAttackType(skill)
+
+	// Route skill/offensive damage through the shared damage() modifier block
+	// (sanctuary, protect evil/good, race-hate, immortal immunity, 3000 cap)
+	// before applying — the same funnel melee and spells use (DP-1025).
+	if victimC := combatantFromInterface(vict); victimC != nil {
+		dam = combat.ApplyDamageModifiers(killer, victimC, dam)
+	}
 
 	if dam <= 0 {
 		// C: damage(ch, vict, 0, ...) prints the no-damage message and still

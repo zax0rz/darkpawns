@@ -96,3 +96,33 @@ func TestPointUpdateBleedOut(t *testing.T) {
 		t.Errorf("position at HP -6 = %d, want PosMortally(%d)", p.GetPosition(), combat.PosMortally)
 	}
 }
+
+// TestDoDamage_SanctuaryHalvesLiveSkillDamage is the DP-1025 regression: skill
+// (path-2) damage now routes through combat.ApplyDamageModifiers, so a mob under
+// AFF_SANCTUARY takes half damage — previously the modifier block was dead code
+// and sanctuary did nothing against melee/skills. Requires the production
+// callbacks wired so cbHasAffect resolves the mob's affect bit.
+func TestDoDamage_SanctuaryHalvesLiveSkillDamage(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+
+	orig := combat.GetCallbacks()
+	defer combat.SetCallbacks(orig)
+	combat.SetCallbacks(w.WireCombatCallbacks())
+
+	mob.CurrentHP = 200
+	mob.MaxHP = 200
+
+	// Baseline: no sanctuary, 100 damage lands in full.
+	w.doDamage(player, mob, 100, "bash")
+	if got := mob.GetHP(); got != 100 {
+		t.Fatalf("no-sanctuary: mob HP = %d, want 100 (took full 100)", got)
+	}
+
+	// With sanctuary (AFF bit 7), 100 damage is halved to 50.
+	mob.SetAffected(affSanctuary)
+	w.doDamage(player, mob, 100, "bash")
+	if got := mob.GetHP(); got != 50 {
+		t.Errorf("sanctuary: mob HP = %d, want 50 (took halved 50)", got)
+	}
+}
