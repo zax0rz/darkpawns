@@ -659,3 +659,20 @@ func (s *syncMap) Load(key string) string {
 	}
 	return s.m[key]
 }
+
+// TestSpecTakeToJail_NilChNoPanic reproduces a production crash: specTakeToJail
+// runs only autonomously (cmd == ""), where ch is always nil, but it sent the
+// jail taunt to ch — panicking in sendToChar the moment it actually jailed a
+// player. Loop enough that the 1-in-7 jail roll fires with a player present.
+func TestSpecTakeToJail_NilChNoPanic(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	player.SetLevel(5) // < 50, so eligible to be jailed
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+
+	assertNotPanic(t, func() {
+		for i := 0; i < 300; i++ {
+			player.SetRoom(1001) // reset in case a prior iteration jailed them
+			specTakeToJail(w, nil, mob, "", "")
+		}
+	})
+}

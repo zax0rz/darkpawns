@@ -835,7 +835,10 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		pl.JailTimer = 300 // ~5 minutes at 1 tick/second
 		w.roomMessage(jailRoomVnum, fmt.Sprintf("%s drags %s into the room and throws them in a cell!", mobName(me), pl.GetName()))
 		sendToChar(pl, fmt.Sprintf("A guard snarls 'You'll serve %d seconds in here!'\r\n", pl.JailTimer))
-		sendToChar(ch, fmt.Sprintf("%s says 'You'll rot in there!'\r\n", mobName(me)))
+		// Taunt goes to the jailed victim (pl). This spec only runs autonomously
+		// (cmd == "" above), so ch is always nil here — sending to ch panicked in
+		// sendToChar whenever a player was actually jailed.
+		sendToChar(pl, fmt.Sprintf("%s says 'You'll rot in there!'\r\n", mobName(me)))
 		return true
 	}
 	return false
