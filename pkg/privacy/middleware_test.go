@@ -116,6 +116,46 @@ func TestWebSocketLogger_UsesInstanceClient(t *testing.T) {
 	}
 }
 
+// TestWebSocketLogger_LogOutgoingAndEvent drives outgoing and event records
+// through the WebSocketLogger and asserts they reach the sink after PII
+// filtering (DP-871).
+func TestWebSocketLogger_LogOutgoingAndEvent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"filtered_text": "WS-OUT-FILTERED", "detected_categories": []}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, DefaultFilterConfig())
+
+	oldStdout := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe failed: %v", err)
+	}
+	os.Stdout = w
+
+	logger := NewWebSocketLogger(client, "[ws]")
+	logger.LogOutgoing("session-2", "reply to user@example.com")
+	logger.LogEvent("session-2", "disconnect", "user@example.com left")
+
+	_ = w.Close()
+	os.Stdout = oldStdout
+
+	out, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatalf("reading captured stdout: %v", err)
+	}
+	output := string(out)
+	if strings.Contains(output, "user@example.com") {
+		t.Errorf("WebSocket logger leaked unfiltered email: %q", output)
+	}
+	if !strings.Contains(output, "WS-OUT-FILTERED") {
+		t.Errorf("expected filtered output in WebSocket logs, got:\n%s", output)
+	}
+}
+
 type failingBody struct{}
 
 func (failingBody) Read(p []byte) (int, error) {
