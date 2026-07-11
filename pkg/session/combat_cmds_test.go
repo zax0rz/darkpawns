@@ -63,20 +63,6 @@ func makeInstakillSession(t *testing.T, m *Manager, name string, level int) *Ses
 	return s
 }
 
-// readSendText drains one message from the session's send channel and returns
-// it as a string. Returns "" if no message arrives within the timeout.
-func readSendText(s *Session) string {
-	select {
-	case <-s.send:
-		// We don't need to unmarshal — the Send() path also writes to
-		// s.lastText for simpler assertions in tests that set it up. For
-		// this test we use the SendCapture via the text helper below.
-		return ""
-	case <-time.After(100 * time.Millisecond):
-		return ""
-	}
-}
-
 func TestInstakillRequiresImplLevel(t *testing.T) {
 	// A level-35 immortal (>= LVL_IMMORT but < LVL_IMPL-1) must NOT instakill.
 	// C gates instakill to GET_LEVEL(ch) >= LVL_IMPL-1 (level 39).
