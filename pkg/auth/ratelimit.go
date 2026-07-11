@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -26,7 +27,17 @@ var (
 // proxy networks.  Must be called before any request handling (typically in
 // main / server setup).  An empty or nil slice means "trust nothing" and
 // effectively disables X-Forwarded-For processing.
+//
+// Valid CIDRs are always applied even when some entries are invalid; any
+// invalid CIDR strings are collected and reported via the returned error so a
+// misconfiguration is not silently swallowed. Callers that only want to log
+// can ignore the error — the valid entries still take effect.
+//
+// Only the first call takes effect (sync.Once): subsequent calls are no-ops
+// and return nil. This matches an init-time configuration model; to reconfigure
+// in a test, reset trustedProxiesOnce directly.
 func SetTrustedProxies(cidrs []string) error {
+	var invalid []string
 	trustedProxiesOnce.Do(func() {
 		if len(cidrs) == 0 {
 			return
@@ -36,11 +47,15 @@ func SetTrustedProxies(cidrs []string) error {
 			_, network, err := net.ParseCIDR(c)
 			if err != nil {
 				slog.Warn("skipping invalid trusted proxy CIDR", "cidr", c, "error", err)
+				invalid = append(invalid, c)
 				continue
 			}
 			trustedProxies = append(trustedProxies, network)
 		}
 	})
+	if len(invalid) > 0 {
+		return fmt.Errorf("invalid trusted proxy CIDR(s): %s", strings.Join(invalid, ", "))
+	}
 	return nil
 }
 

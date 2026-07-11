@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -366,8 +367,15 @@ func TestIPRateLimiter_CleanupPreservesActive(t *testing.T) {
 func TestSetTrustedProxies_SkipsInvalidCIDR(t *testing.T) {
 	resetTrustedProxies()
 
-	// Mix of valid and invalid CIDRs; invalid ones should be skipped, not panic.
-	_ = SetTrustedProxies([]string{"not-a-cidr", "10.0.0.0/8", "bad"})
+	// Mix of valid and invalid CIDRs; valid ones are applied even when some
+	// are invalid, and the invalid ones are reported via the returned error.
+	err := SetTrustedProxies([]string{"not-a-cidr", "10.0.0.0/8", "bad"})
+	if err == nil {
+		t.Fatal("expected a non-nil error reporting the invalid CIDRs")
+	}
+	if !strings.Contains(err.Error(), "not-a-cidr") || !strings.Contains(err.Error(), "bad") {
+		t.Errorf("error %q should name both invalid CIDRs", err)
+	}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.RemoteAddr = "10.0.0.5:43210"
@@ -376,6 +384,36 @@ func TestSetTrustedProxies_SkipsInvalidCIDR(t *testing.T) {
 	ip := GetIPFromRequest(req)
 	if ip != "203.0.113.50" {
 		t.Errorf("expected valid CIDR to be trusted, got %q", ip)
+	}
+}
+
+func TestSetTrustedProxies_AllValidNoError(t *testing.T) {
+	resetTrustedProxies()
+
+	// All-valid input must return nil and apply the CIDRs.
+	err := SetTrustedProxies([]string{"10.0.0.0/8", "172.16.0.0/12"})
+	if err != nil {
+		t.Fatalf("expected nil error for all-valid CIDRs, got %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = "172.16.5.5:43210"
+	req.Header.Set("X-Forwarded-For", "203.0.113.99")
+	if ip := GetIPFromRequest(req); ip != "203.0.113.99" {
+		t.Errorf("expected valid CIDR to be trusted, got %q", ip)
+	}
+}
+
+func TestSetTrustedProxies_OnlyOnce(t *testing.T) {
+	resetTrustedProxies()
+
+	// First call applies; second call is a no-op and returns nil (init model).
+	if err := SetTrustedProxies([]string{"10.0.0.0/8"}); err != nil {
+		t.Fatalf("first call: %v", err)
+	}
+	// A second call with invalid CIDRs must NOT error (it never runs).
+	if err := SetTrustedProxies([]string{"not-a-cidr"}); err != nil {
+		t.Errorf("second SetTrustedProxies call should be a no-op, got error: %v", err)
 	}
 }
 
