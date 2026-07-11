@@ -97,8 +97,9 @@ lint-fix:
 test-parse:
 	go test -v ./pkg/parser
 
-DEPLOY_USER ?= root
-DEPLOY_HOST ?= 192.168.1.121
+# DEPLOY_USER and DEPLOY_HOST have no defaults on purpose: the ifndef guards
+# in deploy-site below must fire when they are unset, otherwise a bare
+# `make deploy-site` silently targets a hardcoded host as root (DP-785).
 
 # Website commands
 .PHONY: parse-world-json build-site deploy-site
