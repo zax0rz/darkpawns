@@ -700,6 +700,7 @@ func TestKillPayout_PlayerDeath_LossesEXP(t *testing.T) {
 
 	preExp := victim.GetExp()
 
+	victim.SetHP(-1) // pending death: HP <=0, the precondition combat guarantees
 	ktw.world.HandleDeath(victim, killer, game.TypeSlash)
 
 	postExp := victim.GetExp()
@@ -745,6 +746,7 @@ func TestKillPayout_PlayerDeath_Idempotent(t *testing.T) {
 
 	preExp := victim.GetExp()
 
+	victim.SetHP(-1) // pending death: HP <=0, the precondition combat guarantees
 	ktw.world.HandleDeath(victim, killer, game.TypeSlash)
 	loss1 := preExp - victim.GetExp()
 

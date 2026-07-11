@@ -251,7 +251,8 @@ func TestHandleDeath_Player(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	// Handle death
+	// Handle death — HP dropped to <=0, the precondition combat guarantees.
+	victim.SetHP(-1)
 	w.HandleDeath(victim, killer, 303) // Slash
 
 	// Verify victim was moved to respawn room (MortalStartRoom)
@@ -318,6 +319,7 @@ func TestHandlePlayerDeathIdempotent(t *testing.T) {
 	// Test 2: dying=false → handlePlayerDeath applies penalties normally.
 	victim.dying.Store(false)
 	victim.SetRoom(1001) // reset room since no-op above didn't move player
+	victim.SetHP(-1)     // pending death: HP <=0, as combat guarantees
 	startExp := victim.GetExp()
 	w.handlePlayerDeath(victim, true, 303, "Killer")
 	expectedExp := startExp - (startExp / 37)
@@ -353,6 +355,7 @@ func TestHandlePlayerDeathDyingReset(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
+	victim.SetHP(-1) // pending death: HP <=0, as combat guarantees
 	w.handlePlayerDeath(victim, true, 303, "Killer")
 
 	if victim.IsDying() {
@@ -388,10 +391,14 @@ func TestHandlePlayerDeath_ConcurrentKills(t *testing.T) {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 
-	// Create victim player with some EXP and low HP
+	// Create victim player with some EXP, dropped to <=0 HP so a death is
+	// actually pending — the production precondition for HandleDeath (combat only
+	// calls it once HP hits <=0). The first handler respawns + heals; a duplicate
+	// must then no-op (single penalty).
 	victim := NewPlayer(1, "Victim", 1001)
 	victim.SetLevel(10)
 	victim.SetExp(10000)
+	victim.SetHP(-1)
 	if err := w.AddPlayer(victim); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
@@ -562,7 +569,8 @@ func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	// First death
+	// First death — HP <=0, the precondition combat guarantees.
+	victim.SetHP(-1)
 	w.HandleDeath(victim, killer, TypeSlash)
 
 	// After first death: respawned at MortalStartRoom, dying flag reset
@@ -593,7 +601,10 @@ func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
 		t.Errorf("first death: corpse count = %d, want 1", corpseCount)
 	}
 
-	// Second death — should process normally (dying was reset by first death's defer)
+	// Second death — a genuine re-death: the player took lethal damage again
+	// (HP <=0) after respawning. dying was reset by the first death's defer, so
+	// this processes normally and applies a second penalty.
+	victim.SetHP(-1)
 	w.HandleDeath(victim, killer, TypeSlash)
 
 	// After second death: EXP penalized again, second corpse

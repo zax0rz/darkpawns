@@ -393,6 +393,19 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	}
 	defer player.dying.Store(false)
 
+	// DP-943 (cont.): the CAS latch serializes concurrent handlers, but it resets
+	// on return so the player can die again later. That reset reopens a sequential
+	// double-processing window: if a duplicate handler for the SAME death event
+	// arrives after the winning handler has already respawned + Heal(9999)'d the
+	// player, it would re-apply the EXP/CON penalty. Gate on HP: only a player
+	// actually at death's door (HP <= 0) has a pending death to process. The
+	// atomic CAS establishes happens-before, so a handler that acquires the latch
+	// observes the winner's respawn heal and no-ops. In the single-threaded C
+	// original, die()/die_with_killer() are only ever reached with HP already <= 0.
+	if player.GetHP() > 0 {
+		return
+	}
+
 	// EXP loss based on death type
 	// die_with_killer(): GET_EXP(ch)/37 (combat death) - fight.c line 590
 	// die(): GET_EXP(ch)/3 (non-combat death) - fight.c line 628
