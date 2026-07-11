@@ -3,9 +3,11 @@ package privacy
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -90,5 +92,79 @@ func TestPIIHandler_WithGroupAttrsFiltered(t *testing.T) {
 
 	if out := buf.String(); strings.Contains(out, "user@example.com") {
 		t.Errorf("WithGroup+WithAttrs leaked unfiltered email: %q", out)
+	}
+}
+
+// TestPIIHandler_HandleFiltersMixedKindsAndGroups drives a record containing
+// string attrs (PII), non-string attrs, and nested groups through the handler
+// chain. It asserts the email is masked, the integer passes through, the group
+// payload is filtered, and the record reaches the sink (DP-871).
+func TestPIIHandler_HandleFiltersMixedKindsAndGroups(t *testing.T) {
+	server := redactingServer(t)
+	defer server.Close()
+
+	var buf bytes.Buffer
+	inner := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo})
+	client := NewClient(server.URL, DefaultFilterConfig())
+
+	logger := slog.New(NewPIIHandler(inner, client))
+	logger.Info(
+		"login user@example.com",
+		slog.String("email", "user@example.com"),
+		slog.Int("level", 42),
+		slog.Group(
+			"account",
+			slog.String("owner", "user@example.com"),
+			slog.Bool("active", true),
+		),
+	)
+
+	out := buf.String()
+	if strings.Contains(out, "user@example.com") {
+		t.Errorf("Handle leaked unfiltered email: %q", out)
+	}
+	if !strings.Contains(out, "[REDACTED-EMAIL]") {
+		t.Errorf("expected redacted email in output, got: %q", out)
+	}
+	if !strings.Contains(out, "level=42") {
+		t.Errorf("expected non-string attr to pass through, got: %q", out)
+	}
+	if !strings.Contains(out, "active=true") {
+		t.Errorf("expected group bool attr to pass through, got: %q", out)
+	}
+}
+
+// TestInitSlogPII drives a log record through the global slog handler installed
+// by InitSlogPII and asserts PII is masked and the record reaches stdout
+// (DP-871).
+func TestInitSlogPII(t *testing.T) {
+	server := redactingServer(t)
+	defer server.Close()
+
+	oldDefault := slog.Default()
+	oldStdout := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe failed: %v", err)
+	}
+	os.Stdout = w
+
+	InitSlogPII(server.URL)
+	slog.Info("contact user@example.com")
+
+	_ = w.Close()
+	os.Stdout = oldStdout
+	slog.SetDefault(oldDefault)
+
+	out, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatalf("reading captured stdout: %v", err)
+	}
+	output := string(out)
+	if strings.Contains(output, "user@example.com") {
+		t.Errorf("InitSlogPII leaked unfiltered email: %q", output)
+	}
+	if !strings.Contains(output, "[REDACTED-EMAIL]") {
+		t.Errorf("expected redacted email in InitSlogPII output, got: %q", output)
 	}
 }
