@@ -226,6 +226,11 @@ func (w *World) PointUpdate() {
 	}
 
 	// --- NPCs ---
+	// Object decay is driven per-room, not per-mob. C's point_update() iterates
+	// the global object_list exactly once per tick (src/limits.c:525-686); the
+	// decay pass is NOT nested inside the character loop. Without dedup, a room
+	// with N mobs would decay its objects N× per tick (DP-1036).
+	decayedRooms := make(map[int]bool)
 	for _, m := range mobs {
 		pos := m.GetPosition()
 		roomVNum := m.GetRoomVNum()
@@ -279,9 +284,14 @@ func (w *World) PointUpdate() {
 			clearMemory(m)
 		}
 
-		// Object decay for things in this mob's room
+		// Object decay for things in this mob's room — once per room per tick.
+		// C iterates object_list globally; Go iterates per-mob, so dedup by room
+		// to avoid N× decay when N mobs share a room (DP-1036).
 		_ = roomVNum
-		w.decayObjectsInRoom(roomVNum)
+		if !decayedRooms[roomVNum] {
+			decayedRooms[roomVNum] = true
+			w.decayObjectsInRoom(roomVNum)
+		}
 	}
 }
 

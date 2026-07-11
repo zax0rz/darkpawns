@@ -26,8 +26,8 @@ func TestNewNamedCombatant(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// BackstabMult — formula: float64(level)*0.2 + 1.0
-// Source: src/class.c — backstab_mult()
+// BackstabMult — formula: float64(level)*0.2 + 1.0, truncated to int (C fidelity)
+// Source: src/class.c — backstab_mult() returns int, so the float result truncates.
 // ---------------------------------------------------------------------------
 
 func TestBackstabMult(t *testing.T) {
@@ -36,9 +36,11 @@ func TestBackstabMult(t *testing.T) {
 		want  float64
 	}{
 		{0, 1.0},   // level 0: guard → 1.0
-		{1, 1.2},   // 1*0.2+1.0
+		{1, 1.0},   // 1.2 → trunc 1
 		{5, 2.0},   // 5*0.2+1.0
 		{10, 3.0},  // 10*0.2+1.0
+		{14, 3.0},  // 3.8 → trunc 3 (DP-1033)
+		{19, 4.0},  // 4.8 → trunc 4 (DP-1033)
 		{25, 6.0},  // 25*0.2+1.0
 		{30, 7.0},  // 30*0.2+1.0
 		{31, 20.0}, // LVL_IMMORT=31 → cap at 20.0

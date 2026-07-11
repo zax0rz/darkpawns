@@ -18,7 +18,10 @@ func cmdKill(s *Session, args []string) error {
 	}
 
 	// Immortal instakill (C: src/act.offensive.c do_kill())
-	if s.player.GetLevel() >= LVL_IMMORT {
+	// C gates this to GET_LEVEL(ch) >= LVL_IMPL-1 (level 39+), NOT LVL_IMMORT
+	// (31+). Every immortal used to have implementor-grade instakill power.
+	// (DP-1041)
+	if s.player.GetLevel() >= LVL_IMPL-1 {
 		// Resolve via the canonical in-room resolver (DP-907) so `kill X`
 		// agrees with consider/kick/... on what "X" is.
 		tgt, found := s.manager.world.ResolveCharInRoom(s.player, strings.Join(args, " "))
@@ -26,11 +29,27 @@ func cmdKill(s *Session, args []string) error {
 			s.Send("They aren't here.")
 			return nil
 		}
+		// C: else if (GET_LEVEL(vict) == GET_LEVEL(ch)) — blocks equal-level
+		// kills regardless of PC/NPC (act.offensive.c:149).
+		victLevel := 0
+		switch {
+		case tgt.Player != nil:
+			victLevel = tgt.Player.GetLevel()
+		case tgt.Mob != nil:
+			victLevel = tgt.Mob.GetLevel()
+		}
+		if victLevel == s.player.GetLevel() {
+			s.Send("No can do, buddy..\r\n")
+			return nil
+		}
 		switch {
 		case tgt.Mob != nil:
 			s.manager.world.HandleDeath(tgt.Mob, s.player, 0)
 			s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", tgt.Mob.GetShortDesc()))
 		case tgt.Player != nil:
+			// C: act("$N chops you to pieces!", ...) sent to the victim
+			// before raw_kill (act.offensive.c:152-154).
+			tgt.Player.SendMessage(fmt.Sprintf("%s chops you to pieces!\r\n", s.player.GetName()))
 			s.manager.world.HandleDeath(tgt.Player, s.player, 0)
 			s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", tgt.Player.Name))
 		default:

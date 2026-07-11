@@ -221,11 +221,13 @@ func main() {
 	gameWorld.GetOrInitBoards(*worldDir)
 	gameWorld.Boards.SetWorld(gameWorld)
 
-	// Start AI ticker: mob AI loop + event queue (DP-427)
-	gameWorld.StartAITicker()
+	// Start event queue (MobProg delayed events, etc.).
+	// Mob AI is driven by the game loop's OnMobileActivity below (PULSE_MOBILE
+	// = 4s), faithful to C's mobile_activity() (DP-1035).
+	gameWorld.StartEventQueue()
 
 	// Start game loop (heartbeat, mobile activity, combat ticks).
-	// PointUpdate is driven by World's standalone 30s ticker, not this loop.
+	// PointUpdate is driven by World's standalone 63s ticker, not this loop.
 	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{
 		OnPerformViolence: func() {
 			// Combat engine handles its own 2s tick via CombatEngine.Start()

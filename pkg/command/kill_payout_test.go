@@ -246,14 +246,27 @@ func TestKillPayout_Backstab_AwardsXP(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
+	// A sleeping target is a guaranteed backstab hit (DP-1033 added a THAC0
+	// to-hit roll; sleeping victims can't dodge it — faithful to C). We still
+	// retry a bounded number of times because the skill roll has a 1-in-101
+	// auto-fail that fires regardless of position (global RNG ordering across
+	// the full suite can land it on any attempt).
+	ktw.mob.SetPosition(combat.PosSleeping)
+
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
 	preExp := p.GetExp()
 	preKills := p.Kills
 
-	err := CmdBackstab(sess, []string{"rat"})
-	if err != nil {
-		t.Fatalf("CmdBackstab: %v", err)
+	// Bounded retry: the skill auto-fails ~1% of the time even on a sleeping
+	// victim; retry until the kill lands.
+	for attempt := 0; attempt < 50; attempt++ {
+		if err := CmdBackstab(sess, []string{"rat"}); err != nil {
+			t.Fatalf("CmdBackstab: %v", err)
+		}
+		if p.Kills > preKills {
+			break
+		}
 	}
 
 	postExp := p.GetExp()
@@ -271,15 +284,23 @@ func TestKillPayout_Backstab_MobRemovedFromActiveMobs(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
+	// Sleeping target → guaranteed backstab hit (DP-1033 to-hit roll).
+	ktw.mob.SetPosition(combat.PosSleeping)
+
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
 	if ktw.findMob() == nil {
 		t.Fatal("expected mob in room before kill")
 	}
 
-	err := CmdBackstab(sess, []string{"rat"})
-	if err != nil {
-		t.Fatalf("CmdBackstab: %v", err)
+	// Bounded retry for the ~1% skill auto-fail (global RNG ordering).
+	for attempt := 0; attempt < 50; attempt++ {
+		if err := CmdBackstab(sess, []string{"rat"}); err != nil {
+			t.Fatalf("CmdBackstab: %v", err)
+		}
+		if ktw.findMob() == nil {
+			break
+		}
 	}
 
 	if ktw.findMob() != nil {
@@ -293,6 +314,9 @@ func TestKillPayout_Backstab_FiresMobKilledEvent(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
+	// Sleeping target → guaranteed backstab hit (DP-1033 to-hit roll).
+	ktw.mob.SetPosition(combat.PosSleeping)
+
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
 	var gotEvent atomic.Bool
@@ -305,9 +329,14 @@ func TestKillPayout_Backstab_FiresMobKilledEvent(t *testing.T) {
 	})
 	defer unsub()
 
-	err := CmdBackstab(sess, []string{"rat"})
-	if err != nil {
-		t.Fatalf("CmdBackstab: %v", err)
+	// Bounded retry for the ~1% skill auto-fail (global RNG ordering).
+	for attempt := 0; attempt < 50; attempt++ {
+		if err := CmdBackstab(sess, []string{"rat"}); err != nil {
+			t.Fatalf("CmdBackstab: %v", err)
+		}
+		if gotEvent.Load() {
+			break
+		}
 	}
 
 	if !gotEvent.Load() {
@@ -322,18 +351,21 @@ func TestKillPayout_Backstab_CorpseCreated(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
-	// Backstab still rolls percent (1..101) > prob for a miss even at skill 100
-	// (percent == 101 misses ~1% of the time), which flaked this kill-assertion.
-	// DoBackstab only rolls that miss when the target's position > PosSleeping, so
-	// a sleeping target is a guaranteed hit — faithful to the C source (you can't
-	// miss a backstab on a sleeping victim) and makes the kill deterministic.
+	// A sleeping target is a guaranteed backstab hit (DP-1033 to-hit roll;
+	// sleeping victims can't dodge). The skill roll still auto-fails ~1% of
+	// the time (percent == 101), so retry until the kill lands.
 	ktw.mob.SetPosition(combat.PosSleeping)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
-	err := CmdBackstab(sess, []string{"rat"})
-	if err != nil {
-		t.Fatalf("CmdBackstab: %v", err)
+	// Bounded retry for the ~1% skill auto-fail (global RNG ordering).
+	for attempt := 0; attempt < 50; attempt++ {
+		if err := CmdBackstab(sess, []string{"rat"}); err != nil {
+			t.Fatalf("CmdBackstab: %v", err)
+		}
+		if ktw.findMob() == nil {
+			break
+		}
 	}
 
 	// Mob must be dead

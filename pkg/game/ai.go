@@ -175,26 +175,15 @@ func (w *World) wanderMob(mob *MobInstance) {
 	w.EntryProg(mob, targetRoom.VNum)
 }
 
-// StartAITicker starts the AI tick loop and event processing loop.
-// The event loop runs at 10 pulses per second (100ms), matching the
-// original C code: OPT_USEC = 100000, PASSES_PER_SEC = 10.
+// StartEventQueue starts the event processing loop used by MobProg delayed
+// events and other scheduled callbacks. The loop runs at 10 pulses per second
+// (100ms), matching the original C code: OPT_USEC = 100000, PASSES_PER_SEC = 10.
 // Source: comm.c game_loop() — heartbeat(++pulse) calls event_process().
-func (w *World) StartAITicker() {
-	w.aiticker = time.NewTicker(10 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-w.aiticker.C:
-				w.AITick()
-			case <-w.done:
-				w.aiticker.Stop()
-				return
-			}
-		}
-	}()
-
-	// Start event processing loop
-	// Source: events.c event_process() — called once per pulse in heartbeat()
+//
+// Mob AI is NOT driven here. It is driven solely by the game loop's
+// OnMobileActivity callback (PULSE_MOBILE = 4s) → World.MobileActivity(),
+// faithful to C's mobile_activity() called from heartbeat() (DP-1035).
+func (w *World) StartEventQueue() {
 	if w.EventQueue != nil {
 		ctx := context.Background()
 		w.EventQueue.Start(ctx)
@@ -202,8 +191,8 @@ func (w *World) StartAITicker() {
 }
 
 // StartPointUpdateTicker starts the regen/hunger/thirst tick loop.
-// Source: limits.c point_update() — called every ~75 pulses in stock CircleMUD.
-// Dark Pawns uses a faster tick (30 seconds); this ticker is the sole driver.
+// Source: limits.c point_update() — fires once per mud hour
+// (src/utils.h:135 SECS_PER_MUD_HOUR = 63). This ticker is the sole driver.
 func (w *World) StartPointUpdateTicker(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	go func() {
