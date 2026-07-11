@@ -15,6 +15,7 @@
 package engine
 
 import (
+	"context"
 	"log/slog"
 	"runtime/debug"
 	"sync"
@@ -142,7 +143,12 @@ func NewGameLoop(callbacks GameLoopCallbacks) *GameLoop {
 // The ticker runs every 100ms. Each tick increments the pulse counter and
 // dispatches heartbeat callbacks. Start is idempotent: repeated calls are
 // ignored after the loop has been started once.
-func (gl *GameLoop) Start() {
+//
+// The loop stops when ctx is canceled or when Stop is called, whichever comes
+// first — so a server-lifetime context cancellation drains the heartbeat the
+// same way an explicit Stop does (DP-892). Pass context.Background() if you
+// only want signal/Stop-driven shutdown.
+func (gl *GameLoop) Start(ctx context.Context) {
 	gl.startOnce.Do(func() {
 		gl.startedAt = time.Now()
 		gl.started.Store(true)
@@ -151,13 +157,15 @@ func (gl *GameLoop) Start() {
 			"tickerInterval", gl.tickerInterval,
 			"pulsesPerSec", PASSES_PER_SEC,
 		)
-		go gl.run()
+		go gl.run(ctx)
 	})
 }
 
 // Stop signals the loop goroutine to stop and waits for it to finish.
 // Stop is idempotent and safe to call before Start; it returns immediately
-// if the loop was never started.
+// if the loop was never started. Stop is also safe to call after the loop has
+// already exited via context cancellation — it just observes the closed
+// doneCh and returns.
 func (gl *GameLoop) Stop() {
 	if !gl.started.Load() {
 		return
@@ -179,7 +187,7 @@ func (gl *GameLoop) Uptime() UptimeSnapshot {
 }
 
 // run is the main goroutine body.
-func (gl *GameLoop) run() {
+func (gl *GameLoop) run(ctx context.Context) {
 	defer close(gl.doneCh)
 
 	ticker := time.NewTicker(gl.tickerInterval)
@@ -188,6 +196,9 @@ func (gl *GameLoop) run() {
 	for {
 		select {
 		case <-gl.stopCh:
+			return
+		case <-ctx.Done():
+			slog.Info("game loop stopping: context canceled", "err", ctx.Err())
 			return
 		case <-ticker.C:
 			pulse := gl.Pulse.Add(1)

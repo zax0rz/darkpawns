@@ -246,7 +246,12 @@ func main() {
 			manager.ReapLinkdeadSessions()
 		},
 	})
-	gameLoop.Start()
+	// loopCtx ties the heartbeat to the server lifetime: canceling it drains the
+	// loop the same way gameLoop.Stop() does (DP-892). Stop() remains the primary
+	// signal-driven shutdown path below; loopCancel is the belt-and-suspenders.
+	loopCtx, loopCancel := context.WithCancel(context.Background())
+	defer loopCancel()
+	gameLoop.Start(loopCtx)
 	defer gameLoop.Stop()
 
 	// Setup HTTP routes

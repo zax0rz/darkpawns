@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -25,7 +26,7 @@ func TestGameLoopStopBeforeStartReturns(t *testing.T) {
 func TestGameLoopStartStop(t *testing.T) {
 	gl := NewGameLoop(GameLoopCallbacks{})
 
-	gl.Start()
+	gl.Start(context.Background())
 	time.Sleep(150 * time.Millisecond)
 	gl.Stop()
 
@@ -37,7 +38,7 @@ func TestGameLoopStartStop(t *testing.T) {
 func TestGameLoopRepeatedStopDoesNotPanic(t *testing.T) {
 	gl := NewGameLoop(GameLoopCallbacks{})
 
-	gl.Start()
+	gl.Start(context.Background())
 	time.Sleep(150 * time.Millisecond)
 	gl.Stop()
 	gl.Stop()
@@ -47,9 +48,9 @@ func TestGameLoopRepeatedStopDoesNotPanic(t *testing.T) {
 func TestGameLoopStartIsIdempotent(t *testing.T) {
 	gl := NewGameLoop(GameLoopCallbacks{})
 
-	gl.Start()
-	gl.Start()
-	gl.Start()
+	gl.Start(context.Background())
+	gl.Start(context.Background())
+	gl.Start(context.Background())
 
 	time.Sleep(150 * time.Millisecond)
 	gl.Stop()
@@ -86,7 +87,7 @@ func TestGameLoopSurvivesPanickingCallback(t *testing.T) {
 		},
 	})
 
-	gl.Start()
+	gl.Start(context.Background())
 	time.Sleep(350 * time.Millisecond)
 	gl.Stop()
 
@@ -95,5 +96,41 @@ func TestGameLoopSurvivesPanickingCallback(t *testing.T) {
 	}
 	if gl.Pulse.Load() < 2 {
 		t.Fatalf("pulse did not advance past the first panic: %d", gl.Pulse.Load())
+	}
+}
+
+// TestGameLoopStopsOnContextCancel is the DP-892 behavior: canceling the context
+// passed to Start drains the loop the same way Stop does — the goroutine exits
+// (doneCh closes, so a subsequent Stop returns promptly) and the pulse stops
+// advancing.
+func TestGameLoopStopsOnContextCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	gl := NewGameLoop(GameLoopCallbacks{})
+
+	gl.Start(ctx)
+	time.Sleep(150 * time.Millisecond)
+	if gl.Pulse.Load() == 0 {
+		t.Fatal("expected pulse counter to advance before cancel")
+	}
+
+	cancel()
+
+	// The loop should exit on its own; Stop must then return without blocking.
+	done := make(chan struct{})
+	go func() {
+		gl.Stop()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("loop did not stop after context cancellation")
+	}
+
+	// Pulse must be frozen after cancellation.
+	after := gl.Pulse.Load()
+	time.Sleep(150 * time.Millisecond)
+	if gl.Pulse.Load() != after {
+		t.Fatalf("pulse advanced after context cancel: %d -> %d", after, gl.Pulse.Load())
 	}
 }

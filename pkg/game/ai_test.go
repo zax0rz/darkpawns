@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -143,7 +144,7 @@ func TestWanderMobMovesWithinConstraints(t *testing.T) {
 func TestPointUpdateSingleDriver(t *testing.T) {
 	// A GameLoop with no OnPointUpdate callback must start and run without panic.
 	loop := engine.NewGameLoop(engine.GameLoopCallbacks{})
-	loop.Start()
+	loop.Start(context.Background())
 	// Let a few pulses fire.
 	time.Sleep(250 * time.Millisecond)
 	loop.Stop()
