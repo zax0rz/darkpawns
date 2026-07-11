@@ -208,6 +208,12 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 	}
 
 	// 5. BACKSTAB
+	// Backstab success is a two-stage roll (DP-1033): the skill roll must pass,
+	// THEN the THAC0 to-hit roll (hit(ch, vict, SKILL_BACKSTAB) in C). Both
+	// must succeed for damage.
+	//   skill roll: percent ∈ [1,101] <= 50  → 50/101
+	//   to-hit:     calc_thaco=4, victim_ac=6 → only natural 1 misses → 19/20
+	//   combined:   (50/101) × (19/20) ≈ 47.03%
 	t.Run("Backstab", func(t *testing.T) {
 		successes := 0
 		const iterations = 10000
@@ -226,7 +232,7 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 			}
 		}
 		rate := float64(successes) / float64(iterations)
-		expected := 50.0 / 101.0 // 49.50%
+		expected := (50.0 / 101.0) * (19.0 / 20.0) // 47.03%
 		if math.Abs(rate-expected) > 0.03 {
 			t.Errorf("Backstab success rate = %f; expected ~%f (+/- 3%%)", rate, expected)
 		}
