@@ -21,7 +21,7 @@ type hpMock struct {
 	hp int
 }
 
-func (m *hpMock) GetHP() int { return m.hp }
+func (m *hpMock) GetHP() int  { return m.hp }
 func (m *hpMock) SetHP(v int) { m.hp = v }
 
 type alignMock struct {

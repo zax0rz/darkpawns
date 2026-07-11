@@ -112,7 +112,8 @@ func TestPIIHandler_HandleFiltersMixedKindsAndGroups(t *testing.T) {
 		"login user@example.com",
 		slog.String("email", "user@example.com"),
 		slog.Int("level", 42),
-		slog.Group("account",
+		slog.Group(
+			"account",
 			slog.String("owner", "user@example.com"),
 			slog.Bool("active", true),
 		),
