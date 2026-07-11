@@ -15,7 +15,10 @@ func tempStorePath(t *testing.T) (string, func()) {
 
 func TestAgentStore_New(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	agents := store.GetAgents()
 	if len(agents) != 2 {
 		t.Errorf("expected 2 agents (daeron, reek), got %d", len(agents))
@@ -24,7 +27,10 @@ func TestAgentStore_New(t *testing.T) {
 
 func TestAgentStore_UpdateStatus(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 
 	// Update daeron to "active"
 	agent, ok, err := store.UpdateAgentStatus("daeron", "active")
@@ -54,7 +60,10 @@ func TestAgentStore_UpdateStatus(t *testing.T) {
 
 func TestAgentStore_UpdateStatusUnknown(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	_, ok, err := store.UpdateAgentStatus("nonexistent", "active")
 	if err != nil {
 		t.Fatalf("UpdateAgentStatus returned error: %v", err)
@@ -66,7 +75,10 @@ func TestAgentStore_UpdateStatusUnknown(t *testing.T) {
 
 func TestAgentStore_AddAndGetFindings(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 
 	// Add findings
 	f1, err := store.AddFinding("reek", "high", "nil panic", "handlers.go", 42, "potential nil dereference")
@@ -97,7 +109,10 @@ func TestAgentStore_AddAndGetFindings(t *testing.T) {
 
 func TestAgentStore_FindingsFiltered(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 
 	if _, err := store.AddFinding("reek", "critical", "CRIT-001", "panic.go", 1, "critical bug"); err != nil {
 		t.Fatalf("AddFinding returned error: %v", err)
@@ -130,7 +145,10 @@ func TestAgentStore_FindingsFiltered(t *testing.T) {
 
 func TestAgentStore_UpdateFindingStatus(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 
 	f, err := store.AddFinding("reek", "high", "test", "file.go", 1, "desc")
 	if err != nil {
@@ -170,7 +188,10 @@ func TestAgentStore_UpdateFindingStatus(t *testing.T) {
 
 func TestAgentStore_TriageSummaries(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 
 	// Add summaries
 	s1, err := store.AddTriageSummary("2026-05-01", "Good day", 5, 1, 2)
@@ -207,7 +228,10 @@ func TestAgentStore_PersistenceFailureReturnsError(t *testing.T) {
 	defer os.Chmod(dir, 0o755) // best-effort cleanup
 
 	path := filepath.Join(dir, "admin_store.json")
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 
 	if _, _, err := store.UpdateAgentStatus("daeron", "active"); err == nil {
 		t.Error("UpdateAgentStatus expected persistence error, got nil")
@@ -225,7 +249,10 @@ func TestAgentStore_PersistenceFailureReturnsError(t *testing.T) {
 
 func TestAgentStore_EmptyFindings(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	findings := store.GetFindings("", "", "")
 	if len(findings) != 0 {
 		t.Errorf("new store should have 0 findings, got %d", len(findings))
@@ -234,7 +261,10 @@ func TestAgentStore_EmptyFindings(t *testing.T) {
 
 func TestAgentStore_ThreadSafety(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 
 	done := make(chan bool)
 	go func() {
@@ -267,5 +297,52 @@ func TestAgentStore_ThreadSafety(t *testing.T) {
 	findings := store.GetFindings("", "", "")
 	if len(findings) != 50 {
 		t.Errorf("expected 50 findings, got %d (race)", len(findings))
+	}
+}
+
+// TestAgentStore_NewAgentStore_MkdirAllError guards DP-1016: NewAgentStore
+// previously logged but ignored the os.MkdirAll error and returned a store
+// anyway, so every later Save silently failed. With a file where a directory
+// is expected in the path, MkdirAll must fail and the error must propagate.
+func TestAgentStore_NewAgentStore_MkdirAllError(t *testing.T) {
+	dir := t.TempDir()
+	// Create a regular file where a directory would need to be created.
+	blocker := filepath.Join(dir, "blocker")
+	if err := os.WriteFile(blocker, []byte("x"), 0o644); err != nil {
+		t.Fatalf("create blocker: %v", err)
+	}
+	// MkdirAll needs to create "blocker/sub" but "blocker" is a file.
+	path := filepath.Join(blocker, "sub", "admin_store.json")
+
+	store, err := NewAgentStore(path)
+	if err == nil {
+		t.Fatal("expected error when MkdirAll fails, got nil")
+	}
+	if store != nil {
+		t.Errorf("expected nil store on error, got %T", store)
+	}
+}
+
+// TestAgentStore_RoundTrip verifies the happy path: NewAgentStore succeeds,
+// and a Save followed by a reload round-trips the data.
+func TestAgentStore_RoundTrip(t *testing.T) {
+	path, _ := tempStorePath(t)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
+
+	if _, err := store.AddFinding("reek", "high", "roundtrip", "f.go", 1, "desc"); err != nil {
+		t.Fatalf("AddFinding failed: %v", err)
+	}
+
+	// Reload from disk and confirm the finding persisted.
+	reloaded, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("reload NewAgentStore failed: %v", err)
+	}
+	findings := reloaded.GetFindings("", "", "")
+	if len(findings) != 1 || findings[0].Title != "roundtrip" {
+		t.Errorf("reload round-trip failed: %+v", findings)
 	}
 }

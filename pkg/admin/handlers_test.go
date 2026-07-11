@@ -1073,7 +1073,10 @@ func TestHandleShopByKeeper_PUT_NotFound(t *testing.T) {
 
 func TestHandleAgents_GET(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleAgents(store)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/agents", nil)
@@ -1093,7 +1096,10 @@ func TestHandleAgents_GET(t *testing.T) {
 
 func TestHandleAgentStatus_POST_Valid(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleAgentStatus(store)
 
 	body := `{"agent_id": "daeron", "status": "active"}`
@@ -1114,7 +1120,10 @@ func TestHandleAgentStatus_POST_Valid(t *testing.T) {
 
 func TestHandleAgentStatus_POST_NotFound(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleAgentStatus(store)
 
 	body := `{"agent_id": "nonexistent", "status": "active"}`
@@ -1129,7 +1138,10 @@ func TestHandleAgentStatus_POST_NotFound(t *testing.T) {
 
 func TestHandleAgentStatus_POST_MissingFields(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleAgentStatus(store)
 
 	body := `{}`
@@ -1148,7 +1160,10 @@ func TestHandleAgentStatus_POST_MissingFields(t *testing.T) {
 
 func TestHandleFindings_GET_Empty(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleFindings(store)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/findings", nil)
@@ -1168,7 +1183,10 @@ func TestHandleFindings_GET_Empty(t *testing.T) {
 
 func TestHandleFindings_POST_Valid(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleFindings(store)
 
 	body := `{"source": "reek", "severity": "high", "title": "nil panic", "file": "handlers.go", "line": 42}`
@@ -1183,7 +1201,10 @@ func TestHandleFindings_POST_Valid(t *testing.T) {
 
 func TestHandleFindings_POST_MissingFields(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleFindings(store)
 
 	body := `{}`
@@ -1202,7 +1223,10 @@ func TestHandleFindings_POST_MissingFields(t *testing.T) {
 
 func TestHandleFindingByID_PUT_Valid(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	f, err := store.AddFinding("reek", "high", "test", "f.go", 1, "")
 	if err != nil {
 		t.Fatalf("AddFinding returned error: %v", err)
@@ -1221,7 +1245,10 @@ func TestHandleFindingByID_PUT_Valid(t *testing.T) {
 
 func TestHandleFindingByID_PUT_NotFound(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleFindingByID(store)
 
 	body := `{"status": "confirmed"}`
@@ -1236,7 +1263,10 @@ func TestHandleFindingByID_PUT_NotFound(t *testing.T) {
 
 func TestHandleFindingByID_PUT_MissingStatus(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleFindingByID(store)
 
 	body := `{}`
@@ -1255,7 +1285,10 @@ func TestHandleFindingByID_PUT_MissingStatus(t *testing.T) {
 
 func TestHandleTriageSummaries_POST_Valid(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	handler := handleTriageSummaries(store)
 
 	body := `{"date": "2026-05-14", "confirmed": 5, "rejected": 1, "pending": 2, "summary": "Good day"}`
@@ -1270,7 +1303,10 @@ func TestHandleTriageSummaries_POST_Valid(t *testing.T) {
 
 func TestHandleTriageSummaries_GET(t *testing.T) {
 	path, _ := tempStorePath(t)
-	store := NewAgentStore(path)
+	store, err := NewAgentStore(path)
+	if err != nil {
+		t.Fatalf("NewAgentStore failed: %v", err)
+	}
 	if _, err := store.AddTriageSummary("2026-05-14", "test", 1, 0, 0); err != nil {
 		t.Fatalf("AddTriageSummary returned error: %v", err)
 	}
@@ -1320,7 +1356,10 @@ func TestNewRouter_CORS_Headers(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	handler := NewRouter(w, nil, lb, nil, nil)
+	handler, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
 
 	// OPTIONS preflight
 	req := httptest.NewRequest(http.MethodOptions, "/admin/zones", nil)
@@ -1347,7 +1386,10 @@ func TestNewRouter_Unauthenticated_Returns401(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	handler := NewRouter(w, nil, lb, nil, nil)
+	handler, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
 	// No auth middleware wrapper — requireRole checks context directly
 
 	// Endpoints that require auth should return 401 without claims on context.
@@ -1389,7 +1431,10 @@ func TestNewRouter_Forbidden_BuilderAccess(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil, nil)
+	router, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
 	handler := authMiddlewareForTest(router)
 
 	// Generate a "player" role token
@@ -1424,7 +1469,10 @@ func TestNewRouter_AuthenticatedBuilder_Success(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil, nil)
+	router, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
 	handler := authMiddlewareForTest(router)
 	token := generateTestToken(t, "builder")
 
@@ -1443,7 +1491,10 @@ func TestNewRouter_AuthenticatedAdmin_SuccessOnAdminEndpoints(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil, nil)
+	router, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
 	handler := authMiddlewareForTest(router)
 	token := generateTestToken(t, "admin")
 
@@ -1465,7 +1516,10 @@ func TestNewRouter_CORS_NoOrigin(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil, nil)
+	router, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
 	handler := authMiddlewareForTest(router)
 
 	// Request without Origin (e.g. server-side curl) — no CORS headers
@@ -1489,7 +1543,10 @@ func TestNewRouter_InvalidToken(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil, nil)
+	router, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
 	handler := authMiddlewareForTest(router)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
@@ -1519,7 +1576,10 @@ func TestNewRouter_SelfProtects_WithoutOuterAuthMiddleware(t *testing.T) {
 	lb := NewLogBuffer(10)
 
 	// NO authMiddlewareForTest wrap — bare router, as in cmd/server/main.go:313.
-	router := NewRouter(w, nil, lb, nil, nil)
+	router, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
 
 	t.Run("no auth header returns 401", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
@@ -1562,7 +1622,10 @@ func TestNewRouter_RateLimit(t *testing.T) {
 	w := testWorld(t)
 	lb := NewLogBuffer(10)
 
-	router := NewRouter(w, nil, lb, nil, nil)
+	router, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
 	handler := authMiddlewareForTest(router)
 	token := generateTestToken(t, "builder")
 

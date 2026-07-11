@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"math/rand/v2"
+	"sort"
 	"time"
 )
 
@@ -135,17 +136,46 @@ func spellStackKey(spellID int) string {
 	return fmt.Sprintf("spell_%d", spellID)
 }
 
+// statusAffectCandidates is StatusAffectFlags snapshot as a slice sorted by
+// flag value ascending. Built once at package init so GetType() can resolve
+// the lowest set bit deterministically instead of ranging over a map (Go map
+// iteration order is randomized — DP-1018).
+var statusAffectCandidates []struct {
+	affType int
+	flag    uint64
+}
+
+func init() {
+	statusAffectCandidates = make([]struct {
+		affType int
+		flag    uint64
+	}, 0, len(StatusAffectFlags))
+	for affType, flag := range StatusAffectFlags {
+		statusAffectCandidates = append(statusAffectCandidates, struct {
+			affType int
+			flag    uint64
+		}{affType, flag})
+	}
+	sort.Slice(statusAffectCandidates, func(i, j int) bool {
+		return statusAffectCandidates[i].flag < statusAffectCandidates[j].flag
+	})
+}
+
 // Type returns the deprecated AffectType value.
 // For status affects, returns the status constant (AffectBlind, etc.).
 // For stat affects, returns the Location (APPLY_*) constant.
 //
+// When multiple status bits are set, the lowest flag value wins so the result
+// is deterministic across calls (DP-1018).
+//
 // Deprecated: Use SpellID + Location directly.
 func (a *Affect) GetType() int {
 	if a.Flags != 0 {
-		// Status affect — return the status constant
-		for affType, flags := range StatusAffectFlags {
-			if a.Flags&flags != 0 {
-				return affType
+		// Status affect — return the status constant whose flag is the
+		// lowest set bit, for deterministic resolution.
+		for _, c := range statusAffectCandidates {
+			if a.Flags&c.flag != 0 {
+				return c.affType
 			}
 		}
 	}

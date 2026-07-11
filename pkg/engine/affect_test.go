@@ -81,3 +81,31 @@ func TestDurationZeroExpires(t *testing.T) {
 		t.Error("duration-0 affect should report IsExpired")
 	}
 }
+
+// TestGetType_DeterministicMultipleFlags guards DP-1018: GetType() previously
+// ranged over the StatusAffectFlags map, whose iteration order is randomized,
+// so an affect with multiple AFF bits set returned a different affType on
+// different calls. Resolution must now be deterministic (lowest flag value
+// wins): AFFBlind (1<<0, affType 100) < AFFPoison (1<<11, affType 111).
+func TestGetType_DeterministicMultipleFlags(t *testing.T) {
+	a := &Affect{Flags: AFFBlind | AFFPoison}
+
+	first := a.GetType()
+	if first != 100 {
+		t.Fatalf("GetType() = %d, want 100 (AFFBlind, lowest flag)", first)
+	}
+	// Repeated calls must agree — map-iteration nondeterminism would surface here.
+	for i := 0; i < 1000; i++ {
+		if got := a.GetType(); got != first {
+			t.Fatalf("GetType() nondeterministic: got %d on call %d, want %d", got, i, first)
+		}
+	}
+}
+
+// TestGetType_SingleFlag confirms a single-bit affect resolves to its affType.
+func TestGetType_SingleFlag(t *testing.T) {
+	a := &Affect{Flags: AFFPoison} // 1<<11 → affType 111
+	if got := a.GetType(); got != 111 {
+		t.Fatalf("GetType() = %d, want 111 (AFFPoison)", got)
+	}
+}
