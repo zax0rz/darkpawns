@@ -543,6 +543,12 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 // MagSummons summons NPCs into the world.
 // MagSummons spawns NPCs based on spell type (e.g. Animate Dead creates zombies).
 
+// animateDeadPfailRoll returns number(0,101) for the SPELL_ANIMATE_DEAD pfail
+// check. It is a package var so tests can make the ~8% failure branch
+// deterministic — math/rand/v2's global generator has no Seed, so a raw
+// rand.IntN in the spawn path would flake any test that asserts a spawn.
+var animateDeadPfailRoll = func() int { return rand.IntN(102) } // #nosec G404 — intentional MUD RNG
+
 func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 	if ch == nil {
 		return
@@ -585,6 +591,24 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 			return
 		}
 
+		// C magic.c: giddy (AFF_CHARM) check and follower cap, both delegated to
+		// pkg/game because the spell layer cannot import game (import cycle).
+		type raiseChecker interface {
+			CanRaiseUndeadI(interface{}) (bool, string)
+		}
+		if checker, ok2 := world.(raiseChecker); ok2 {
+			if canRaise, msg := checker.CanRaiseUndeadI(ch); !canRaise {
+				sendToCaster(ch, msg)
+				return
+			}
+		}
+
+		// C magic.c: pfail = 8; number(0, 101) < pfail.
+		if animateDeadPfailRoll() < 8 {
+			sendToCaster(ch, "You failed.\r\n")
+			return
+		}
+
 		type mobSpawner interface {
 			SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
 		}
@@ -609,9 +633,10 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 			remover.RemoveItemFromRoomI(corpse, roomVNum)
 		}
 
-		type followerAdder interface{ AddFollowerQuiet(ch, leader interface{}) }
-		if fa, ok := world.(followerAdder); ok {
-			fa.AddFollowerQuiet(mob, ch)
+		// C magic.c: SET_BIT(AFF_FLAGS(mob), AFF_CHARM); add_follower_quiet(mob, ch).
+		type charmer interface{ CharmAndFollowI(mob, leader interface{}) }
+		if cf, ok2 := world.(charmer); ok2 {
+			cf.CharmAndFollowI(mob, ch)
 		}
 
 		sendToCaster(ch, "The corpse starts to twitch, then stands with a life of its own!\r\n")

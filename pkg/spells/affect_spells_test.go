@@ -65,6 +65,7 @@ func (m *mockSpellsChar) IsInGroup() bool            { return m.inGroup }
 func (m *mockSpellsChar) GetFollowing() string       { return m.following }
 func (m *mockSpellsChar) IsAffected(bit int) bool    { return m.aff&(1<<bit) != 0 }
 func (m *mockSpellsChar) HasMobFlag(bit uint64) bool { return m.flags&bit != 0 }
+func (m *mockSpellsChar) GetCha() int                { return 18 }
 func (m *mockSpellsChar) GetInventory() ReagentInventory {
 	if m.inventory == nil {
 		return nil
@@ -314,11 +315,17 @@ func (m *mockCorpse) GetKeywords() string { return m.keywords }
 
 // mockAnimateWorld is a minimal world for testing Animate Dead.
 type mockAnimateWorld struct {
-	items       []interface{}
-	removed     bool
-	spawnErr    error
-	spawnedVNum int
-	spawnedRoom int
+	items             []interface{}
+	removed           bool
+	spawnErr          error
+	spawnedVNum       int
+	spawnedRoom       int
+	canRaise          bool
+	canRaiseMsg       string
+	canRaiseCalled    bool
+	charmFollowCalled bool
+	charmed           bool
+	following         string
 }
 
 func (w *mockAnimateWorld) GetItemsInRoomI(roomVNum int) []interface{} { return w.items }
@@ -335,12 +342,40 @@ func (w *mockAnimateWorld) SpawnMobWithLevelI(vnum, roomVNum, level int) (interf
 	return &mockSpellsChar{name: "zombie"}, nil
 }
 
+func (w *mockAnimateWorld) CanRaiseUndeadI(ch interface{}) (bool, string) {
+	w.canRaiseCalled = true
+	return w.canRaise, w.canRaiseMsg
+}
+
+func (w *mockAnimateWorld) CharmAndFollowI(mob, leader interface{}) {
+	w.charmFollowCalled = true
+	if m, ok := mob.(*mockSpellsChar); ok {
+		m.aff |= 1 << 21 // affCharm bit
+		w.charmed = true
+	}
+	if l, ok := leader.(*mockSpellsChar); ok {
+		w.following = l.name
+	}
+}
+
+// forceAnimateDeadRoll makes the SPELL_ANIMATE_DEAD pfail roll deterministic for
+// the duration of a test: val < 8 always fails the roll, val >= 8 always passes.
+// Restores the real (rand-backed) roll via t.Cleanup.
+func forceAnimateDeadRoll(t *testing.T, val int) {
+	t.Helper()
+	prev := animateDeadPfailRoll
+	animateDeadPfailRoll = func() int { return val }
+	t.Cleanup(func() { animateDeadPfailRoll = prev })
+}
+
 func TestMagSummons_AnimateDead_KeepsCorpseOnSpawnFailure(t *testing.T) {
+	forceAnimateDeadRoll(t, 101) // pass the pfail so we reach the spawn attempt
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
 	corpse := &mockCorpse{keywords: "corpse"}
 	world := &mockAnimateWorld{
 		items:    []interface{}{corpse},
 		spawnErr: fmt.Errorf("spawn failed"),
+		canRaise: true,
 	}
 
 	MagSummons(10, caster, SpellAnimateDead, world)
@@ -350,5 +385,116 @@ func TestMagSummons_AnimateDead_KeepsCorpseOnSpawnFailure(t *testing.T) {
 	}
 	if world.spawnedVNum != 10 {
 		t.Errorf("expected zombie vnum 10, got %d", world.spawnedVNum)
+	}
+}
+
+func TestMagSummons_AnimateDead_PfailKeepsCorpseNoSpawn(t *testing.T) {
+	forceAnimateDeadRoll(t, 0) // 0 < 8 -> the pfail roll fails
+	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
+	corpse := &mockCorpse{keywords: "corpse"}
+	world := &mockAnimateWorld{
+		items:    []interface{}{corpse},
+		canRaise: true,
+	}
+
+	MagSummons(10, caster, SpellAnimateDead, world)
+
+	if world.spawnedVNum != 0 {
+		t.Errorf("pfail should abort before spawn, but spawned vnum %d", world.spawnedVNum)
+	}
+	if world.removed {
+		t.Error("pfail should not remove the corpse")
+	}
+	foundFailMsg := false
+	for _, m := range caster.messages {
+		if strings.Contains(m, "You failed") {
+			foundFailMsg = true
+			break
+		}
+	}
+	if !foundFailMsg {
+		t.Errorf("expected pfail message, got %v", caster.messages)
+	}
+}
+
+func TestMagSummons_AnimateDead_GiddyBlocked(t *testing.T) {
+	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
+	corpse := &mockCorpse{keywords: "corpse"}
+	world := &mockAnimateWorld{
+		items:       []interface{}{corpse},
+		canRaise:    false,
+		canRaiseMsg: "You are too giddy to have any followers!\r\n",
+	}
+
+	MagSummons(10, caster, SpellAnimateDead, world)
+
+	if world.spawnedVNum != 0 {
+		t.Error("expected no spawn when caster is charmed")
+	}
+	if world.removed {
+		t.Error("corpse should not be removed when blocked")
+	}
+	if !strings.Contains(caster.messages[0], "too giddy") {
+		t.Errorf("expected giddy message, got %q", caster.messages)
+	}
+}
+
+func TestMagSummons_AnimateDead_FollowerCapBlocked(t *testing.T) {
+	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
+	corpse := &mockCorpse{keywords: "corpse"}
+	world := &mockAnimateWorld{
+		items:       []interface{}{corpse},
+		canRaise:    false,
+		canRaiseMsg: "You can't have any more followers!\r\n",
+	}
+
+	MagSummons(10, caster, SpellAnimateDead, world)
+
+	if world.spawnedVNum != 0 {
+		t.Error("expected no spawn at follower cap")
+	}
+	if world.removed {
+		t.Error("corpse should not be removed when blocked")
+	}
+	if !strings.Contains(caster.messages[0], "can't have any more followers") {
+		t.Errorf("expected cap message, got %q", caster.messages)
+	}
+}
+
+func TestMagSummons_AnimateDead_Success(t *testing.T) {
+	forceAnimateDeadRoll(t, 101) // pass the pfail so the spawn path runs
+	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
+	corpse := &mockCorpse{keywords: "corpse"}
+	world := &mockAnimateWorld{
+		items:    []interface{}{corpse},
+		canRaise: true,
+	}
+
+	MagSummons(10, caster, SpellAnimateDead, world)
+	if world.spawnedVNum != 10 {
+		t.Fatalf("expected zombie vnum 10 spawned, got %d", world.spawnedVNum)
+	}
+
+	if !world.removed {
+		t.Error("corpse should be removed on successful spawn")
+	}
+	if !world.charmFollowCalled {
+		t.Error("CharmAndFollowI should be called on successful spawn")
+	}
+	if !world.charmed {
+		t.Error("spawned mob should be charmed")
+	}
+	if world.following != caster.name {
+		t.Errorf("expected mob to follow %q, got %q", caster.name, world.following)
+	}
+	foundSuccessMsg := false
+	for _, m := range caster.messages {
+		if strings.Contains(m, "stands with a life of its own") {
+			foundSuccessMsg = true
+			break
+		}
+	}
+	if !foundSuccessMsg {
+		t.Errorf("expected success message, got %v", caster.messages)
 	}
 }
