@@ -133,3 +133,40 @@ func TestCastCalliope_FiresMultipleMissiles(t *testing.T) {
 		t.Errorf("DP-938: expected ~4 magic missiles worth of damage (4-48 after saves), got %d", dealt)
 	}
 }
+
+// mockCharmWorld drives MagAreas'/MagAffectsMass' charm-skip path (DP-1015).
+// IsCharmedI mirrors game.World.IsCharmedI: it consults the target's internal
+// charm bit (affCharm == index 21 in pkg/game/affects_constants.go).
+type mockCharmWorld struct {
+	chars   []interface{}
+	damaged []string // names passed to MagDamage (i.e. NOT skipped)
+}
+
+func (w *mockCharmWorld) GetAllCharsInRoom(int) []interface{} { return w.chars }
+
+func (w *mockCharmWorld) IsCharmedI(ch interface{}) bool {
+	if c, ok := ch.(interface{ IsAffected(int) bool }); ok {
+		return c.IsAffected(21) // affCharm bit index
+	}
+	return false
+}
+
+// TestMagAreas_SkipsCharmedNPC is the DP-1015 regression: area spells must skip
+// charmed NPCs (C: mag_areas -> if (IS_NPC(tch) && IS_AFFECTED(tch, AFF_CHARM))
+// continue;). The old code passed the engine AFF_CHARM mask as a bit index, so
+// the guard was always false and charmed pets got hit.
+func TestMagAreas_SkipsCharmedNPC(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 40, roomVNum: 100}
+	pet := &mockSpellsChar{name: "Pet", npc: true, level: 10, maxHP: 200, hp: 200, aff: 1 << 21}
+	enemy := &mockSpellsChar{name: "Enemy", npc: true, level: 10, maxHP: 200, hp: 200}
+	world := &mockCharmWorld{chars: []interface{}{caster, pet, enemy}}
+
+	MagAreas(40, caster, SpellEarthquake, 0, world)
+
+	if pet.hp != 200 {
+		t.Errorf("charmed pet must be skipped by area spell, but it took %d damage", 200-pet.hp)
+	}
+	if enemy.hp >= 200 {
+		t.Errorf("non-charmed enemy should be damaged by area spell, hp still %d", enemy.hp)
+	}
+}

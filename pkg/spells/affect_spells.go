@@ -430,6 +430,7 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 	}
 	type npcChecker interface{ IsNPC() bool }
 	type lever interface{ GetLevel() int }
+	type charmSkipper interface{ IsCharmedI(interface{}) bool }
 
 	rg, ok := ch.(roomGetter)
 	if !ok {
@@ -460,10 +461,12 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 				continue
 			}
 		}
-		// Skip charmed NPCs
+		// Skip charmed NPCs. The charm bit differs between engine and pkg/game,
+		// so delegate the AFF_CHARM check to the game layer via the world (same
+		// pattern as CanRaiseUndeadI; DP-1015). C: mag_areas skips
+		// if (IS_NPC(tch) && IS_AFFECTED(tch, AFF_CHARM)).
 		if nc, ok := c.(npcChecker); ok && nc.IsNPC() {
-			type affectChecker interface{ IsAffected(int) bool }
-			if ac, ok := c.(affectChecker); ok && ac.IsAffected(int(engine.AFFCharm)) { // AFF_CHARM (1<<10)
+			if cs, ok := world.(charmSkipper); ok && cs.IsCharmedI(c) {
 				continue
 			}
 		}
@@ -490,6 +493,7 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 	}
 	type npcChecker interface{ IsNPC() bool }
 	type lever interface{ GetLevel() int }
+	type charmSkipper interface{ IsCharmedI(interface{}) bool }
 
 	rg, ok := ch.(roomGetter)
 	if !ok {
@@ -524,10 +528,12 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 				continue
 			}
 		}
-		// Skip charmed NPCs
+		// Skip charmed NPCs. The charm bit differs between engine and pkg/game,
+		// so delegate the AFF_CHARM check to the game layer via the world (same
+		// pattern as CanRaiseUndeadI; DP-1015). C: mag_areas skips
+		// if (IS_NPC(tch) && IS_AFFECTED(tch, AFF_CHARM)).
 		if nc, ok := c.(npcChecker); ok && nc.IsNPC() {
-			type affectChecker interface{ IsAffected(int) bool }
-			if ac, ok := c.(affectChecker); ok && ac.IsAffected(int(engine.AFFCharm)) { // AFF_CHARM (1<<10)
+			if cs, ok := world.(charmSkipper); ok && cs.IsCharmedI(c) {
 				continue
 			}
 		}
