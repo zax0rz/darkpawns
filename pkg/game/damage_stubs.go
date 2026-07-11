@@ -84,14 +84,18 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 	case *Player:
 		v.TakeDamage(dam)
 		v.SetFighting(attackerName)
-		if v.GetHP() <= 0 {
+		// Enter the wounded band or POS_DEAD from the new HP; only run the
+		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
+		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
 	case *MobInstance:
 		v.TakeDamage(dam)
 		v.SetFighting(attackerName)
-		if v.GetHP() <= 0 {
+		// Enter the wounded band or POS_DEAD from the new HP; only run the
+		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
+		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
@@ -130,20 +134,30 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 	case *Player:
 		v.TakeDamage(dam)
 		v.SetFighting(attackerName)
-		if v.GetHP() <= 0 {
+		// Enter the wounded band or POS_DEAD from the new HP; only run the
+		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
+		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
 	case *MobInstance:
 		v.TakeDamage(dam)
 		v.SetFighting(attackerName)
-		if v.GetHP() <= 0 {
+		// Enter the wounded band or POS_DEAD from the new HP; only run the
+		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
+		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
 	default:
 		return false
 	}
+}
+
+// woundBroadcast adapts World's room messaging to the signature that
+// combat.UpdatePositionAfterDamage expects (roomVNum, message, exclude).
+func (w *World) woundBroadcast(roomVNum int, message, exclude string) {
+	w.roomMessageExcludeTwo(roomVNum, message, exclude, "")
 }
 
 // getAttackerName returns the name of the attacker for messages.

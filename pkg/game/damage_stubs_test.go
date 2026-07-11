@@ -119,8 +119,10 @@ func TestDoDamageAwardsXP(t *testing.T) {
 	startExp := player.GetExp()
 	startKills := player.Kills
 
+	// Deal HP+11 so the mob crosses the POS_DEAD threshold (HP <= -11), not
+	// merely reaches 0 (which is now POS_STUNNED, not death) — DP-1021.
 	hp := mob.GetHP()
-	w.doDamage(player, mob, hp, "backstab")
+	w.doDamage(player, mob, hp+11, "backstab")
 
 	if mob.IsAlive() {
 		t.Error("mob should be dead")
@@ -145,8 +147,9 @@ func TestDoSpellDamageAwardsXP(t *testing.T) {
 	startExp := player.GetExp()
 	startKills := player.Kills
 
+	// HP+11 to cross the POS_DEAD threshold (DP-1021).
 	hp := mob.GetHP()
-	w.DoSpellDamage(player, mob, hp, "hellfire")
+	w.DoSpellDamage(player, mob, hp+11, "hellfire")
 
 	if mob.IsAlive() {
 		t.Error("mob should be dead")
@@ -185,7 +188,8 @@ func TestDoDamagePlayerDeathHasKillerName(t *testing.T) {
 		return nil
 	})
 
-	w.doDamage(mob, victim, 20, "bash")
+	// Victim has 10 HP; deal 21 so HP reaches -11 (POS_DEAD) — DP-1021.
+	w.doDamage(mob, victim, 21, "bash")
 
 	mu.Lock()
 	defer mu.Unlock()

@@ -267,6 +267,13 @@ func (m *MobInstance) Attack(player *Player, world *World) error {
 		}
 	}
 
+	// Transition into the wounded band or POS_DEAD from the new HP, and run the
+	// death pipeline at POS_DEAD (HP <= -11) so this path can't leave a player
+	// stranded at negative HP with no death — fight.c update_pos (DP-1021).
+	if combat.UpdatePositionAfterDamage(player, world.woundBroadcast) == combat.PosDead {
+		world.HandleDeath(player, m, -1)
+	}
+
 	return nil
 }
 
@@ -295,8 +302,11 @@ func (m *MobInstance) TakeDamage(amount int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.CurrentHP -= amount
-	if m.CurrentHP < 0 {
-		m.CurrentHP = 0
+	// Allow HP into the wounded band; floor at -11 (POS_DEAD threshold,
+	// fight.c update_pos). Position/death transitions are owned by callers via
+	// combat.UpdatePositionAfterDamage / HandleDeath, not here (DP-1021).
+	if m.CurrentHP < -11 {
+		m.CurrentHP = -11
 	}
 }
 
@@ -492,6 +502,12 @@ func (m *MobInstance) GetPosition() int {
 	switch m.Status {
 	case "dead":
 		return combat.PosDead
+	case "mortally_wounded":
+		return combat.PosMortally
+	case "incapacitated":
+		return combat.PosIncap
+	case "stunned":
+		return combat.PosStunned
 	case "sleeping":
 		return combat.PosSleeping
 	case "resting":
@@ -514,6 +530,12 @@ func (m *MobInstance) SetPosition(pos int) {
 	switch pos {
 	case combat.PosDead:
 		m.Status = "dead"
+	case combat.PosMortally:
+		m.Status = "mortally_wounded"
+	case combat.PosIncap:
+		m.Status = "incapacitated"
+	case combat.PosStunned:
+		m.Status = "stunned"
 	case combat.PosSleeping:
 		m.Status = "sleeping"
 	case combat.PosResting:
@@ -550,9 +572,30 @@ func (m *MobInstance) SetFighting(target string) {
 func (m *MobInstance) StopFighting() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.Status = "standing"
 	m.Fighting = false
 	m.FightingTarget = ""
+	// Re-derive position from HP rather than forcing "standing": a mob beaten
+	// into the wounded band must stay downed when it stops fighting. Mirrors
+	// Merc stop_fighting (reset to default_pos, then update_pos). DP-1021.
+	m.Status = mobStatusFromHP(m.CurrentHP)
+}
+
+// mobStatusFromHP maps HP to the Status string for the wounded band, matching
+// combat.GetPositionFromHP for positive HP → standing and the negative bands.
+func mobStatusFromHP(hp int) string {
+	if hp > 0 {
+		return "standing"
+	}
+	if hp <= -11 {
+		return "dead"
+	}
+	if hp <= -6 {
+		return "mortally_wounded"
+	}
+	if hp <= -3 {
+		return "incapacitated"
+	}
+	return "stunned"
 }
 
 // GetFighting returns who the mob is fighting (empty string if not fighting).

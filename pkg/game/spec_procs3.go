@@ -724,7 +724,9 @@ func specFieldObject(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 			if dam > 0 {
 				vict.TakeDamage(dam)
 				sendToChar(vict, "An incredible force hits you!\r\n")
-				if vict.GetHP() <= 0 {
+				// Wounded band / POS_DEAD from the new HP; only kill at POS_DEAD
+				// (HP <= -11) — fight.c update_pos (DP-1021).
+				if combat.UpdatePositionAfterDamage(vict, w.woundBroadcast) == combat.PosDead {
 					w.roomMessage(roomVNum, fmt.Sprintf("%s falls to the ground, screaming in agony!", vict.GetName()))
 					w.rawKill(vict, 0)
 				}

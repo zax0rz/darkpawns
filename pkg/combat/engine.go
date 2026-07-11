@@ -331,8 +331,12 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	attacker := pair.Attacker
 	defender := pair.Defender
 
-	// Check if both combatants are still valid and alive
-	if attacker.GetHP() <= 0 || defender.GetHP() <= 0 {
+	// Check if both combatants are still valid and able to fight. An attacker
+	// that has itself been knocked out of a fighting position (stunned/incap/
+	// mortally/dead) cannot swing; a dead defender has already been extracted.
+	// A merely-downed defender (wounded band, still alive) is NOT skipped —
+	// the attacker keeps swinging to finish it off (fight.c).
+	if attacker.GetPosition() < PosFighting || defender.GetPosition() == PosDead {
 		ce.StopCombat(attacker.GetName())
 		return
 	}
@@ -363,8 +367,9 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 
 	// Perform attacks
 	for i := 0; i < numAttacks; i++ {
-		// Check if defender is still alive
-		if defender.GetHP() <= 0 {
+		// Stop once the defender is dead (extracted next tick). A downed but
+		// still-living defender keeps getting hit — that's how it's finished.
+		if defender.GetPosition() == PosDead {
 			break
 		}
 
@@ -425,8 +430,13 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 			ce.OnCombatAction(attacker, defender, "hit", damage, "hit", 0)
 		}
 
-		// Check for death
-		if defender.GetHP() <= 0 {
+		// Transition the defender into the wounded band (stunned/incap/
+		// mortally) or POS_DEAD based on its new HP, and emit the wound
+		// message. Death only fires at POS_DEAD (HP <= -11) — fight.c
+		// update_pos. A downed-but-living defender stops fighting back but the
+		// attacker keeps swinging on later iterations/rounds.
+		newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc)
+		if newPos == PosDead {
 			ce.handleDeath(defender, attacker)
 			if ce.OnCombatAction != nil {
 				ce.OnCombatAction(attacker, defender, "hit", damage, "killed", 0)
@@ -438,7 +448,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 
 	// Fire fight trigger on mob attacker after combat round
 	// Source: mobact.c — mob_activity() calls mob scripts after violence
-	if attacker.IsNPC() && ce.ScriptFightFunc != nil && defender.GetHP() > 0 {
+	if attacker.IsNPC() && ce.ScriptFightFunc != nil && defender.GetPosition() != PosDead {
 		ce.ScriptFightFunc(attacker.GetName(), defender.GetName(), attacker.GetRoom())
 	}
 }

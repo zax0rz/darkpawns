@@ -191,29 +191,28 @@ func (w *World) PointUpdate() {
 				p.TakeDamage(13)
 			}
 
-			// Check for death after poison/cutthroat damage.
-			// C source: limits.c does if (GET_HP(ch) <= 0) die(ch)
-			if p.GetHP() <= 0 {
+			// Poison/cutthroat can drive HP into the wounded band (or past the
+			// POS_DEAD threshold, HP <= -11). Re-derive position from the new HP
+			// and only die at POS_DEAD — C: damage(ch, ch, dam, ...) runs
+			// update_pos then die() only once GET_HIT <= -11 (DP-1021).
+			updatePosFromHP(p, p.GetHP())
+			if p.GetPosition() == PosDead {
 				w.HandleNonCombatDeath(p)
 				continue
-			}
-
-			// Update position if HP has dropped low — limits.c:507-508
-			// Read current HP after damage (not the stale pre-regen value)
-			if p.GetPosition() <= PosStunned {
-				updatePosFromHP(p, p.GetHP())
 			}
 		} else if pos == PosIncap {
 			// Incapacitated: 1 damage per tick — limits.c:511
 			p.TakeDamage(1)
-			if p.GetHP() <= 0 {
+			updatePosFromHP(p, p.GetHP())
+			if p.GetPosition() == PosDead {
 				w.HandleNonCombatDeath(p)
 				continue
 			}
 		} else if pos == PosMortally {
 			// Mortally wounded: 2 damage per tick — limits.c:513
 			p.TakeDamage(2)
-			if p.GetHP() <= 0 {
+			updatePosFromHP(p, p.GetHP())
+			if p.GetPosition() == PosDead {
 				w.HandleNonCombatDeath(p)
 				continue
 			}
@@ -248,20 +247,25 @@ func (w *World) PointUpdate() {
 			if m.HasAffect(AffCutthroat) {
 				m.TakeDamage(13)
 			}
-			// Check for death after poison/cutthroat damage.
-			if m.GetHP() <= 0 {
+			// Re-derive position from the new HP; only die at POS_DEAD
+			// (HP <= -11) so poison/cutthroat progress through the wounded
+			// band instead of killing instantly at 0 (DP-1021).
+			updateMobPosFromHP(m, m.GetHP())
+			if m.GetPosition() == PosDead {
 				w.handleMobDeath(m, nil, -1)
 				continue
 			}
 		} else if pos == PosIncap {
 			m.TakeDamage(1)
-			if m.GetHP() <= 0 {
+			updateMobPosFromHP(m, m.GetHP())
+			if m.GetPosition() == PosDead {
 				w.handleMobDeath(m, nil, -1)
 				continue
 			}
 		} else if pos == PosMortally {
 			m.TakeDamage(2)
-			if m.GetHP() <= 0 {
+			updateMobPosFromHP(m, m.GetHP())
+			if m.GetPosition() == PosDead {
 				w.handleMobDeath(m, nil, -1)
 				continue
 			}

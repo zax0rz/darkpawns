@@ -58,7 +58,7 @@ func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You don't know how!"}
 	}
 
-	if target.GetHP() <= 0 {
+	if target.GetPosition() == combat.PosDead {
 		return SkillResult{Success: false, MessageToCh: "They're already dead!"}
 	}
 
