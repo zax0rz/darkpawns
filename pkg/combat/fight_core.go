@@ -76,17 +76,23 @@ const (
 	SKILL_DODGE        = 117
 )
 
+// AFF_* are C affect *bit positions* from src/structs.h. They are passed
+// straight through cbHasAffect → (*Player|*MobInstance).IsAffected, which tests
+// bit (1<<pos) and maps via AffBitToEngineFlag — so these MUST match the real
+// structs.h positions, not an arbitrary 1..N sequence. (Previously fabricated as
+// 1..10, which made cbHasAffect check the wrong bits: AFF_SANCTUARY=5 hit
+// SENSE_LIFE, AFF_HASTE=9 hit CURSE, etc. — DP-1025.)
 const (
-	AFF_INVISIBLE    = 1
-	AFF_HIDE         = 2
-	AFF_SLEEP        = 3
-	AFF_CHARM        = 4
-	AFF_SANCTUARY    = 5
-	AFF_PROTECT_EVIL = 6
-	AFF_PROTECT_GOOD = 7
-	AFF_GROUP        = 8
-	AFF_HASTE        = 9
-	AFF_SLOW         = 10
+	AFF_INVISIBLE    = 1  // structs.h AFF_INVISIBLE
+	AFF_SANCTUARY    = 7  // structs.h AFF_SANCTUARY
+	AFF_GROUP        = 8  // structs.h AFF_GROUP
+	AFF_PROTECT_EVIL = 12 // structs.h AFF_PROTECT_EVIL
+	AFF_PROTECT_GOOD = 13 // structs.h AFF_PROTECT_GOOD
+	AFF_SLEEP        = 14 // structs.h AFF_SLEEP
+	AFF_HIDE         = 19 // structs.h AFF_HIDE
+	AFF_CHARM        = 21 // structs.h AFF_CHARM
+	AFF_HASTE        = 33 // structs.h AFF_HASTE
+	AFF_SLOW         = 34 // structs.h AFF_SLOW
 )
 
 const (
@@ -186,6 +192,67 @@ func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, me
 		victim.StopFighting()
 	}
 	return newPos
+}
+
+// ApplyDamageModifiers applies the fight.c damage() modifier block
+// (src/fight.c:1466-1483) to a raw damage figure and returns the adjusted value:
+//
+//	race-hate weapons  dam += GET_LEVEL(ch)   per matching race-hate slot
+//	sanctuary          dam /= 2
+//	protect evil/good  dam -= GET_LEVEL(victim)/4 when attacker is evil/good
+//	immortal victim    dam  = 0
+//	clamp              dam  = MAX(MIN(dam, 3000), 0)
+//
+// It is the single funnel every damage path must pass computed damage through —
+// melee (engine.processCombatPair), skills (game.doDamage), spells
+// (game.DoSpellDamage), and the full damage() port (TakeDamage) — so sanctuary,
+// protection auras, race-hate, the 3000 cap, and immortal invulnerability apply
+// uniformly instead of only on the spell path (DP-1025). The C order is
+// preserved exactly; do not reorder — sanctuary halving before vs after the
+// protection subtractions yields different results.
+//
+// ch may be nil for source-less damage (environment/DoT with no attacker); the
+// attacker-dependent modifiers (race-hate, protection) are skipped in that case
+// while victim-only modifiers (sanctuary, immortal, cap) still apply.
+func ApplyDamageModifiers(ch, victim Combatant, dam int) int {
+	if victim == nil {
+		return dam
+	}
+	victimName := victim.GetName()
+
+	if ch != nil {
+		chName := ch.GetName()
+		// race-hate weapons: +attacker level per matching slot, no break —
+		// C applies the bonus once for every matching race_hate entry.
+		if callbacks != nil && callbacks.GetRaceHate != nil && callbacks.GetRace != nil {
+			victimRace := cbGetRace(victimName)
+			for i := 0; i < 5; i++ {
+				if cbGetRaceHate(chName, i) == victimRace {
+					dam += ch.GetLevel()
+				}
+			}
+		}
+		if cbHasAffect(victimName, AFF_SANCTUARY) {
+			dam /= 2
+		}
+		if cbHasAffect(victimName, AFF_PROTECT_EVIL) && cbGetAlignment(chName) <= -350 {
+			dam -= victim.GetLevel() / 4
+		}
+		if cbHasAffect(victimName, AFF_PROTECT_GOOD) && cbGetAlignment(chName) >= 350 {
+			dam -= victim.GetLevel() / 4
+		}
+	} else if cbHasAffect(victimName, AFF_SANCTUARY) {
+		// Source-less damage still honors sanctuary; race-hate and the
+		// alignment-gated protection auras have no attacker to test against.
+		dam /= 2
+	}
+
+	// You can't damage an immortal (fight.c:1480).
+	if !victim.IsNPC() && victim.GetLevel() >= LVL_IMMORT {
+		dam = 0
+	}
+
+	return max(min(dam, 3000), 0)
 }
 
 // **********************************
@@ -338,35 +405,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			fmt.Sprintf("%s slowly fades into existence.", chName), chName)
 	}
 
-	if callbacks != nil && callbacks.GetRaceHate != nil && callbacks.GetRace != nil {
-		victimRace := cbGetRace(victimName)
-		for i := 0; i < 5; i++ {
-			if cbGetRaceHate(chName, i) == victimRace {
-				dam += ch.GetLevel() // no break — C applies for every matching slot
-			}
-		}
-	}
-
-	if cbHasAffect(victimName, AFF_SANCTUARY) {
-		dam /= 2
-	}
-	if cbHasAffect(victimName, AFF_PROTECT_EVIL) && cbGetAlignment(chName) <= -350 {
-		dam -= victim.GetLevel() / 4
-	}
-	if cbHasAffect(victimName, AFF_PROTECT_GOOD) && cbGetAlignment(chName) >= 350 {
-		dam -= victim.GetLevel() / 4
-	}
-
-	if !victim.IsNPC() && victim.GetLevel() >= LVL_IMMORT {
-		dam = 0
-	}
-
-	if dam > 3000 {
-		dam = 3000
-	}
-	if dam < 0 {
-		dam = 0
-	}
+	dam = ApplyDamageModifiers(ch, victim, dam)
 
 	victim.TakeDamage(dam)
 

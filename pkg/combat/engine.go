@@ -416,6 +416,13 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		pair.LastAttackType = int(AttackNormal)
 		damage := CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
 
+		// Route through the shared damage() modifier block so melee honors
+		// sanctuary, protect evil/good, race-hate weapons, the 3000 cap, and
+		// immortal invulnerability — same funnel as skills and spells (DP-1025).
+		// Applied before the hit message so the reported damage tier reflects
+		// the post-modifier figure, matching fight.c DamMessage.
+		damage = ApplyDamageModifiers(attacker, defender, damage)
+
 		// Apply damage
 		defender.TakeDamage(damage)
 		if ce.DamageFunc != nil {
