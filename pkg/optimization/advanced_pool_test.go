@@ -212,18 +212,22 @@ func TestGetMetrics_AtomicRead(t *testing.T) {
 	var readerWg sync.WaitGroup
 	done := make(chan struct{})
 
-	// Goroutines that continuously submit tiny tasks.
+	// Goroutines that continuously submit tiny tasks. Submit first, THEN check
+	// done — otherwise a fast reader can close(done) before any submitter is
+	// scheduled, leaving TasksSubmitted == 0 (this flaked ~77% under plain
+	// `go test`; -race scheduling happened to hide it). Submit-first guarantees
+	// each of the 4 goroutines lands at least one submission.
 	for i := 0; i < 4; i++ {
 		submitWg.Add(1)
 		go func() {
 			defer submitWg.Done()
 			for {
+				_ = pool.Submit(func() {})
 				select {
 				case <-done:
 					return
 				default:
 				}
-				_ = pool.Submit(func() {})
 			}
 		}()
 	}
