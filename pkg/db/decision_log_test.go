@@ -166,3 +166,30 @@ func TestFlushClearsRecordsOnSuccess(t *testing.T) {
 		t.Errorf("expected combat records to be cleared after flush success, got %d", len(dlw.combat))
 	}
 }
+
+// TestNewMockDecisionLogWriter_RecordAndStop guards DP-1017: the mock writer
+// must be safe for the construct/record/Stop path (no nil-panic from a nil
+// writer). The writer has no database handle, so the buffered-record path that
+// persists via Flush is intentionally out of scope (see NewMockDecisionLogWriter
+// doc). Here we verify the safe paths: RecordDecision buffers without panic,
+// and Stop on empty buffers early-returns without touching the nil db.
+func TestNewMockDecisionLogWriter_RecordAndStop(t *testing.T) {
+	dlw := NewMockDecisionLogWriter()
+	if dlw == nil {
+		t.Fatal("NewMockDecisionLogWriter returned nil")
+	}
+
+	// RecordDecision only appends below flushBatchSize, so it never derefs db.
+	dlw.RecordDecision(&DecisionRecord{SessionID: "s1", PlayerName: "p1", Command: "look", OutcomeCategory: "ok"})
+	if len(dlw.decisions) != 1 {
+		t.Fatalf("expected 1 buffered decision, got %d", len(dlw.decisions))
+	}
+
+	// Drain the buffer so Stop's final Flush early-returns on empty buffers and
+	// never touches the nil db. (Driving a real Flush is out of scope by design.)
+	dlw.decisions = dlw.decisions[:0]
+
+	// Must not panic. Second Stop is a no-op via stopOnce.
+	dlw.Stop()
+	dlw.Stop()
+}

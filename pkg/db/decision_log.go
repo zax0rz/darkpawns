@@ -271,6 +271,21 @@ func (db *DB) NewDecisionLogWriter() *DecisionLogWriter {
 	return dlw
 }
 
+// NewMockDecisionLogWriter returns a DecisionLogWriter with no database handle
+// and no background flush goroutine. It is safe for the construct/record/Stop
+// paths used in tests: RecordDecision appends to the in-memory buffer, and
+// Stop closes stopCh and runs a final Flush that early-returns when the buffers
+// are empty, so it never touches the nil db. It does NOT persist — driving the
+// buffer to flushBatchSize would trigger a real Flush that dereferences the nil
+// db, so it is intended only for low-volume test scenarios.
+func NewMockDecisionLogWriter() *DecisionLogWriter {
+	return &DecisionLogWriter{
+		decisions: make([]*DecisionRecord, 0, flushBatchSize),
+		combat:    make([]*CombatRecord, 0, flushBatchSize),
+		stopCh:    make(chan struct{}),
+	}
+}
+
 // Stop terminates the background flush loop and flushes remaining records.
 // Safe to call multiple times; subsequent calls are no-ops.
 //

@@ -243,9 +243,10 @@ func (m *MockDatabase) EnsureDecisionLogPartitions() error {
 	return nil
 }
 
-// NewDecisionLogWriter satisfies db.Database.
+// NewDecisionLogWriter satisfies db.Database. It returns a non-persisting
+// writer so tests using RecordDecision/Stop do not nil-panic (DP-1017).
 func (m *MockDatabase) NewDecisionLogWriter() *db.DecisionLogWriter {
-	return nil
+	return db.NewMockDecisionLogWriter()
 }
 
 // InitNarrativeMemory satisfies db.Database.

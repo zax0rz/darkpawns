@@ -119,3 +119,16 @@ func TestAssertBehaviorMatchesC(t *testing.T) {
 		t.Error("expected assertion to fail, but fakeT did not fail")
 	}
 }
+
+// TestMockDatabase_NewDecisionLogWriter guards DP-1017: the mock previously
+// returned nil, so any test that called RecordDecision/Stop on the result
+// nil-panicked. The writer must be non-nil and safe for Stop.
+func TestMockDatabase_NewDecisionLogWriter(t *testing.T) {
+	m := NewMockDatabase()
+	w := m.NewDecisionLogWriter()
+	if w == nil {
+		t.Fatal("NewDecisionLogWriter returned nil")
+	}
+	// Stop on empty buffers must not panic.
+	w.Stop()
+}
