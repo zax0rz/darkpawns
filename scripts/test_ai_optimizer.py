@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""
-Tests for the AI optimization module (scripts/ai_optimizer.py).
+"""Tests for the AI optimization module (scripts/ai_optimizer.py).
 
-Covers the cache-hit request_id contract: a cached response must be returned
-tagged with the *current* request's id, not the original request that warmed
-the cache.
+Covers two independent regressions:
+
+- The cache-hit request_id contract: a cached response must be returned tagged
+  with the *current* request's id, not the original request that warmed the
+  cache.
+- DP-1010: AIBatchProcessor held a non-reentrant threading.Lock() across an
+  await, which deadlocked (or serialized the whole pipeline) as soon as a
+  callback re-entered any method that also took the lock.
 """
 
 import asyncio
@@ -13,10 +17,29 @@ import sys
 
 import pytest
 
-# Make scripts/ importable whether run from repo root or from scripts/.
+# Make the module importable whether run from repo root or from scripts/.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ai_optimizer import AIRequest, AIResponse, AsyncAIProcessor  # noqa: E402
+try:
+    from scripts.ai_optimizer import (  # noqa: E402
+        AIBatchProcessor,
+        AIRequest,
+        AIResponse,
+        AsyncAIProcessor,
+    )
+except ImportError:  # pragma: no cover - path fallback
+    from ai_optimizer import (  # noqa: E402
+        AIBatchProcessor,
+        AIRequest,
+        AIResponse,
+        AsyncAIProcessor,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Cache-hit request_id contract
+# ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
@@ -91,6 +114,73 @@ def test_cache_hit_serves_new_id_without_event_loop():
     )
     assert served.request_id == "req-B"
     assert served.text == "payload"
+
+
+# ---------------------------------------------------------------------------
+# DP-1010: AIBatchProcessor must not hold its lock across an await
+# ---------------------------------------------------------------------------
+
+
+def _mock_callback(requests):
+    """Return one response per request."""
+    return [
+        AIResponse(
+            request_id=req.request_id,
+            text=f"response to {req.request_id}",
+            tokens=1,
+            latency=0.001,
+            model=req.model,
+        )
+        for req in requests
+    ]
+
+
+async def _concurrent_submits():
+    """Fire many concurrent submits and return their responses."""
+    processor = AIBatchProcessor(batch_size=5, max_wait=0.05)
+    processor.set_callback(_mock_callback)
+    try:
+        request_count = 20
+        requests = [
+            AIRequest(request_id=f"req-{i}", prompt=f"prompt {i}", model="test")
+            for i in range(request_count)
+        ]
+        return await asyncio.gather(*(processor.submit(req) for req in requests))
+    finally:
+        processor.shutdown()
+
+
+def test_concurrent_submits_no_deadlock_and_correct_results():
+    """Many concurrent submits must all return the correct result (DP-1010)."""
+    responses = asyncio.run(_concurrent_submits())
+
+    assert len(responses) == 20, f"Expected 20 responses, got {len(responses)}"
+    for i, resp in enumerate(responses):
+        assert isinstance(resp, AIResponse), f"Response {i} is not an AIResponse"
+        assert resp.request_id == f"req-{i}"
+        assert resp.text == f"response to req-{i}"
+
+
+async def _partial_batch_via_timer():
+    """Submit fewer items than batch_size and wait for the max_wait timer."""
+    processor = AIBatchProcessor(batch_size=10, max_wait=0.05)
+    processor.set_callback(_mock_callback)
+    try:
+        requests = [
+            AIRequest(request_id=f"wait-{i}", prompt="x", model="test")
+            for i in range(2)
+        ]
+        return await asyncio.gather(*(processor.submit(req) for req in requests))
+    finally:
+        processor.shutdown()
+
+
+def test_partial_batch_processed_after_max_wait():
+    """A partial batch is processed by the max_wait timer, not left stranded."""
+    responses = asyncio.run(_partial_batch_via_timer())
+
+    assert len(responses) == 2, f"Expected 2 responses, got {len(responses)}"
+    assert all(isinstance(r, AIResponse) for r in responses)
 
 
 if __name__ == "__main__":

@@ -155,32 +155,37 @@ class AIBatchProcessor:
         """Submit a request for batch processing."""
         if not self.callback:
             raise ValueError("Callback not set")
-        
+
         future = asyncio.Future()
-        
+
         with self.lock:
             self.batch.append({
                 'request': request,
                 'future': future
             })
-            
-            if len(self.batch) >= self.batch_size:
-                await self._process_batch()
-            else:
-                # Schedule batch processing after max_wait
-                asyncio.get_running_loop().call_later(
-                    self.max_wait,
-                    lambda: asyncio.create_task(self._process_batch_if_ready())
-                )
-        
+            should_process = len(self.batch) >= self.batch_size
+
+        # Never hold the non-reentrant lock across an await that may re-enter
+        # this processor (DP-1010).
+        if should_process:
+            await self._process_batch()
+        else:
+            # Schedule batch processing after max_wait
+            asyncio.get_running_loop().call_later(
+                self.max_wait,
+                lambda: asyncio.create_task(self._process_batch_if_ready())
+            )
+
         return await future
-    
+
     async def _process_batch_if_ready(self):
         """Process batch if it has items."""
         with self.lock:
-            if self.batch and not self.processing:
-                await self._process_batch()
-    
+            should_process = self.batch and not self.processing
+
+        if should_process:
+            await self._process_batch()
+
     async def _process_batch(self):
         """Process the current batch."""
         with self.lock:
