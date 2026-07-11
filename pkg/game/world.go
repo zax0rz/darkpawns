@@ -71,8 +71,7 @@ type World struct {
 	// AI combat engine (CRIT-006: moved from global to World field)
 	combatEngine CombatEngine
 
-	// AI tick management
-	aiticker *time.Ticker
+	// Shutdown coordination (closed once by StopAITicker)
 	done     chan bool
 	doneOnce sync.Once
 
@@ -186,12 +185,16 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	// Initialize typed event bus
 	w.Events = events.NewInProcessBus()
 
-	// Start AI ticker
-	w.StartAITicker()
+	// Start event processing loop (MobProg delayed events, etc.).
+	// Source: events.c event_process() — called once per pulse in heartbeat().
+	// Mob AI itself is driven solely by the game loop's OnMobileActivity
+	// (PULSE_MOBILE = 4s), faithful to C's mobile_activity(); there is no
+	// separate AI ticker in C (DP-1035).
+	w.StartEventQueue()
 
 	// Start point update ticker (regen + hunger/thirst) — limits.c point_update()
-	// Called every ~30 seconds (Dark Pawns may have faster ticks than stock CircleMUD)
-	w.StartPointUpdateTicker(30 * time.Second)
+	// Called every 63 seconds (src/utils.h:135 SECS_PER_MUD_HOUR = 63)
+	w.StartPointUpdateTicker(63 * time.Second)
 
 	// Initialize snapshot manager and publish initial snapshot
 	w.snapshots = NewSnapshotManager()

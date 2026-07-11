@@ -91,6 +91,24 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 		}
 	}
 
+	// Skill roll passed — but a passed backstab roll means "you get to
+	// attempt the backstab," NOT "you automatically hit." C then calls
+	// hit(ch, vict, SKILL_BACKSTAB) (act.offensive.c:226-229), which runs the
+	// full THAC0 d20 to-hit check (fight.c:1825-1830) that can still miss.
+	// Go previously skipped this roll — every successful backstab landed.
+	// (DP-1033)
+	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
+		improveSkill(ch, SkillBackstab)
+		return SkillResult{
+			Success:       false,
+			MessageToCh:   ActMessage("You try to backstab $N, but miss!", chPronouns, &victPronouns, ""),
+			MessageToVict: ActMessage("$n tries to backstab you, but misses!", chPronouns, &victPronouns, ""),
+			MessageToRoom: ActMessage("$n tries to backstab $N, but misses.", chPronouns, &victPronouns, ""),
+			StartCombat:   true,
+			WaitCh:        1,
+		}
+	}
+
 	// Hit — calculate damage
 	// C: dam = str_app[STRENGTH_APPLY_INDEX(ch)].todam + GET_DAMROLL(ch) + weapon_dice
 	//     dam *= backstab_mult(GET_LEVEL(ch))

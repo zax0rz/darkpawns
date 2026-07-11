@@ -904,6 +904,10 @@ func replaceMessageTokens(msg, chName, victimName, singular, plural string, sex 
 
 // BackstabMult mirrors backstab_mult() from src/class.c lines 720-729.
 // Shared by combat/fight_core.go (circle/disembowel) and game/skill_combat.go (DoBackstab).
+//
+// C's backstab_mult() returns int, so the expression (level*.2)+1 is computed
+// in float and then truncated to int on return. We reproduce that truncation
+// (DP-1033): level 14 → 3.8 → 3, level 19 → 4.8 → 4.
 func BackstabMult(level int) float64 {
 	if level <= 0 {
 		return 1.0
@@ -911,7 +915,8 @@ func BackstabMult(level int) float64 {
 	if level >= LVL_IMMORT {
 		return 20.0
 	}
-	return float64(level)*0.2 + 1.0
+	// C: return ((level*.2)+1); — float arithmetic truncated to int on return.
+	return float64(int(float64(level)*0.2 + 1.0))
 }
 
 // **********************************

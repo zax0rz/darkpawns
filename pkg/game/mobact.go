@@ -44,6 +44,41 @@ func roomHasFlag(room *parser.Room, flag string) bool {
 	return false
 }
 
+// mobCarriedWeight returns the total weight a mob is currently carrying.
+// Mirrors C's IS_CARRYING_W(ch) (utils.h). Used by the scavenger check.
+func mobCarriedWeight(m *MobInstance) int {
+	weight := 0
+	for _, obj := range m.Inventory {
+		if obj != nil {
+			weight += obj.GetWeight()
+		}
+	}
+	return weight
+}
+
+// mobMaxCarryWeight returns the maximum weight a mob can carry.
+// Mirrors C's CAN_CARRY_W(ch) = str_app[STRENGTH_APPLY_INDEX(ch)].carry_w
+// (utils.h:448). The carry_w table is from constants.c str_app[].
+func mobMaxCarryWeight(m *MobInstance) int {
+	// carry_w by strength index 0–18 (constants.c str_app[] 4th column).
+	strCarry := [...]int{0, 3, 3, 10, 25, 55, 80, 90, 100, 100, 115, 115, 140, 140, 170, 170, 195, 220, 255}
+	str := m.GetStr()
+	if str < 0 {
+		return 0
+	}
+	if str >= len(strCarry) {
+		str = len(strCarry) - 1
+	}
+	return strCarry[str]
+}
+
+// mobMaxCarryCount returns the maximum number of items a mob can carry.
+// Mirrors C's CAN_CARRY_N(ch) = 5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1)
+// (utils.h:449).
+func mobMaxCarryCount(m *MobInstance) int {
+	return 5 + (m.GetDex() >> 1) + (m.GetLevel() >> 1)
+}
+
 // callMobSpecSafely invokes a mob's registered spec proc during autonomous
 // activity (ch=nil, matching the "no player involved" tick path) and
 // recovers from any panic. Spec procs are called for every spec-flagged mob
@@ -172,20 +207,43 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	}
 
 	// -- Scavenger (pick up best item, ~1-in-10 chance) --
+	// C: mobact.c:103-117 — checks CAN_GET_OBJ(ch, obj) (which requires
+	// ITEM_WEAR_TAKE + carry weight/count headroom + CAN_SEE_OBJ) AND
+	// GET_OBJ_COST(obj) > max starting with max=1, so items costing 0 or 1
+	// are never picked up. Go previously had neither check (DP-1042).
 	// #nosec G404 — game RNG, not cryptographic
 	if hasMobFlag(ch, "scavenger") && rand.IntN(11) == 0 {
 		items := w.GetItemsInRoom(ch.RoomVNum)
 		if len(items) > 0 {
-			best := items[0]
-			bestCost := best.GetCost()
-			for _, obj := range items[1:] {
-				if c := obj.GetCost(); c > bestCost {
-					bestCost = c
-					best = obj
+			maxCost := 1 // C: max = 1; items must cost > 1 to be picked up
+			var best *ObjectInstance
+			carriedW := mobCarriedWeight(ch)
+			carriedN := len(ch.Inventory)
+			maxCarryW := mobMaxCarryWeight(ch)
+			maxCarryN := mobMaxCarryCount(ch)
+			for _, obj := range items {
+				if !obj.IsTakeable() { // CAN_WEAR(obj, ITEM_WEAR_TAKE)
+					continue
 				}
+				if obj.GetCost() <= maxCost { // GET_OBJ_COST(obj) > max
+					continue
+				}
+				// CAN_CARRY_OBJ: weight + count headroom
+				// (utils.h:543-545). CAN_SEE_OBJ is omitted — mobs have no
+				// sight flags in Go (pre-existing behavior).
+				if carriedW+obj.GetWeight() > maxCarryW {
+					continue
+				}
+				if carriedN+1 > maxCarryN {
+					continue
+				}
+				best = obj
+				maxCost = obj.GetCost()
 			}
-			w.RemoveItemFromRoom(best, ch.RoomVNum)
-			ch.AddToInventory(best)
+			if best != nil {
+				w.RemoveItemFromRoom(best, ch.RoomVNum)
+				ch.AddToInventory(best)
+			}
 		}
 	}
 

@@ -246,6 +246,11 @@ func TestKillPayout_Backstab_AwardsXP(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
+	// A sleeping target is a guaranteed backstab hit (DP-1033 added a THAC0
+	// to-hit roll; sleeping victims can't dodge it — faithful to C). This
+	// makes the kill deterministic so the test asserts the payout path.
+	ktw.mob.SetPosition(combat.PosSleeping)
+
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
 	preExp := p.GetExp()
@@ -271,6 +276,9 @@ func TestKillPayout_Backstab_MobRemovedFromActiveMobs(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
+	// Sleeping target → guaranteed backstab hit (DP-1033 to-hit roll).
+	ktw.mob.SetPosition(combat.PosSleeping)
+
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
 	if ktw.findMob() == nil {
@@ -292,6 +300,9 @@ func TestKillPayout_Backstab_FiresMobKilledEvent(t *testing.T) {
 	p := ktw.addPlayer(t, 1, "Rogue", 5, game.ClassThief, false)
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
+
+	// Sleeping target → guaranteed backstab hit (DP-1033 to-hit roll).
+	ktw.mob.SetPosition(combat.PosSleeping)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
