@@ -208,7 +208,8 @@ func (gl *GameLoop) safeInvoke(name string, pulse int64, fn func()) {
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			slog.Error("heartbeat callback panicked; loop continues",
+			slog.Error(
+				"heartbeat callback panicked; loop continues",
 				"callback", name,
 				"pulse", pulse,
 				"panic", r,
