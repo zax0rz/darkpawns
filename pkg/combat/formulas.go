@@ -628,8 +628,8 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 	if hasSlow {
 		attacks--
 	}
-	if attacks < 1 {
-		attacks = 1
+	if attacks < 0 {
+		attacks = 0
 	}
 	return attacks
 }

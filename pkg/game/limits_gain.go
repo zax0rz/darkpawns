@@ -151,7 +151,7 @@ func (w *World) HitGain(p *Player) int {
 func MobHitGain(m *MobInstance) int {
 	lvl := m.GetLevel()
 	if lvl < 23 {
-		return (lvl*5 + 1) / 2 // integer approximation of 2.5×level
+		return lvl * 5 / 2 // integer approximation of 2.5×level (truncates, matching C)
 	}
 	return 4 * lvl
 }

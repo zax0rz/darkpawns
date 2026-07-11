@@ -21,9 +21,9 @@ func TestHitGainNPC_Golden(t *testing.T) {
 		level int
 		want  int
 	}{
-		{1, 3},    // (1*5+1)/2 = 3 (Go faithful port of C's 2.5*level with float truncation)
-		{10, 25},  // (10*5+1)/2 = 25
-		{22, 55},  // (22*5+1)/2 = 55
+		{1, 2},    // 2.5*1 = 2.5 → int truncation in C gives 2
+		{10, 25},  // 2.5*10 = 25
+		{22, 55},  // 2.5*22 = 55
 		{23, 92},  // 4*23 = 92
 		{30, 120}, // 4*30 = 120
 		{40, 160}, // 4*40 = 160
