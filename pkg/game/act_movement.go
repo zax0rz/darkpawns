@@ -70,7 +70,16 @@ var revDir = []int{
 	4, // down → up
 }
 
-// movementLoss per sector type (from constants.c).
+// movementLoss is the single shared per-sector movement-cost table, indexed by
+// the SECT_* enum (from src/constants.c movement_loss[]).
+//
+// WARNING — do NOT "fix" indices 8/9 by copying C's inline comments verbatim.
+// C's array comments are swapped relative to the enum: the comment at index 8
+// reads "/* Flying */" but the enum is SECT_UNDERWATER=8, and index 9 reads
+// "/* Underwater */" but the enum is SECT_FLYING=9. The array is indexed by
+// SECT(room) at runtime, so the VALUES win and the comments are noise. Runtime
+// behavior: UNDERWATER (sector 8) = 2, FLYING (sector 9) = 6.
+// See docs/briefs/BRIEF-2026-07-11-glm-dp1029-movement-cost.md.
 var movementLoss = []int{
 	2, // INSIDE (0)
 	2, // CITY (1)
@@ -80,14 +89,14 @@ var movementLoss = []int{
 	7, // MOUNTAIN (5)
 	5, // WATER_SWIM (6)
 	6, // WATER_NOSWIM (7)
-	6, // UNDERWATER (sector 8)
-	2, // FLYING (sector 9)
-	8, // DESERT
-	6, // FIRE
-	6, // EARTH
-	6, // WIND
-	6, // WATER
-	4, // SWAMP
+	2, // UNDERWATER (sector 8) — C comment LIES ("Flying"); enum wins
+	6, // FLYING (sector 9) — C comment LIES ("Underwater"); enum wins
+	8, // DESERT (10)
+	6, // FIRE (11)
+	6, // EARTH (12)
+	6, // WIND (13)
+	6, // WATER (14)
+	4, // SWAMP (15)
 }
 
 // Door command indices.

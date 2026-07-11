@@ -937,9 +937,10 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 		}
 
 		if moveErr == nil {
-			// Movement point cost
+			// Movement point cost — immortals move free (act.movement.c:210:
+			// GET_MOVE is only charged when GET_LEVEL(ch) < LVL_IMMORT).
 			moveCost := (sectorMoveCost(currentRoom.Sector) + sectorMoveCost(newRoom.Sector)) / 2
-			if !p.SpendMove(moveCost) {
+			if p.Level < LVL_IMMORT && !p.SpendMove(moveCost) {
 				errMsg = "You are too exhausted.\r\n"
 				moveErr = fmt.Errorf("too exhausted")
 			} else {
@@ -964,33 +965,15 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 	return result, moveErr
 }
 
-// sectorMoveCost returns movement point cost for a sector type.
-// Ported from act.movement.c movement_loss[] table.
+// sectorMoveCost returns the movement-point cost for a sector type, reading the
+// shared movementLoss table (src/constants.c movement_loss[]). Out-of-range
+// sectors fall back to the INSIDE cost rather than panicking; C never indexes
+// OOB, but malformed zone data could.
 func sectorMoveCost(sector int) int {
-	switch sector {
-	case 0: // SECT_INSIDE
-		return 1
-	case 1: // SECT_CITY
-		return 1
-	case 2: // SECT_FIELD
-		return 2
-	case 3: // SECT_FOREST
-		return 3
-	case 4: // SECT_HILLS
-		return 4
-	case 5: // SECT_MOUNTAIN
-		return 6
-	case 6: // SECT_WATER_SWIM
-		return 4
-	case 7: // SECT_WATER_NOSWIM
-		return 4
-	case 8: // SECT_UNDERWATER
-		return 4
-	case 9: // SECT_FLYING
-		return 1
-	default:
-		return 1
+	if sector < 0 || sector >= len(movementLoss) {
+		return movementLoss[SECT_INSIDE]
 	}
+	return movementLoss[sector]
 }
 
 // StopAITicker stops the AI tick loop and the point-update ticker (they share
