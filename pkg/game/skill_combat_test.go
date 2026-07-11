@@ -951,7 +951,11 @@ func TestDoBash_WaitStateAlwaysTwo(t *testing.T) {
 func newRescueTestWorld(t *testing.T) (w *World, ch *Player, victim *Player, attacker *MobInstance, ce *combat.CombatEngine) {
 	t.Helper()
 	w, ch = newCombatTestWorld(t)
-	ch.SetSkill(SkillRescue, 100)
+	// DoRescue rolls number(1,101) and fails when the roll > skill (faithful to
+	// C: even a 100-skill rescue has a ~1% base fail chance). Set 101 so the roll
+	// can never exceed it — these tests assert rescue *wiring*, not the dice, and
+	// skill=100 flaked ~1% of runs on a roll of 101.
+	ch.SetSkill(SkillRescue, 101)
 
 	victim = NewPlayer(2, "Victim", 1001)
 	if err := w.AddPlayer(victim); err != nil {

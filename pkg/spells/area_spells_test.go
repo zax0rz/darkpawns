@@ -103,8 +103,10 @@ func TestCastMeteorSwarm_DealsAreaDamage_SkipsImmortalsAndGroup(t *testing.T) {
 
 	castMeteorSwarm(30, caster, world)
 
-	// dam = level*6 + rand(0,level*3+10) - 10, bounded [170,269] for level 30.
-	if victim.hp >= 500 || victim.hp < 500-269 {
+	// dam = level*6 + rand.IntN(level*3+11) - 10 = 180 + [0,100] - 10, so the
+	// damage range is [170,270] for level 30 (max when rand.IntN(101) == 100).
+	// The old bound 500-269 flaked ~1% of runs on the max roll.
+	if victim.hp >= 500 || victim.hp < 500-270 {
 		t.Errorf("expected victim to take meteor swarm damage, got %d HP left", victim.hp)
 	}
 	if immortal.hp != 5000 {
