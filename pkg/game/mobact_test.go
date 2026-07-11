@@ -179,3 +179,186 @@ func TestDoubleSpeedHunt_CalledTwice(t *testing.T) {
 		t.Fatalf("hunter mob ended in room %d, want 1003 (should have moved twice)", mob.GetRoom())
 	}
 }
+
+// -----------------------------------------------------------------------------
+// DP-1034: mob aggression visibility / NOHASSLE / sneak / peaceful-room gates
+// -----------------------------------------------------------------------------
+
+func TestAggressive_CannotSeePlayer_Skips(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9101, 1, 0, "aggressive", "sentinel")
+	p := newMobactTestPlayer(w, "Invisible")
+	p.Affects |= 1 << affInvisible
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 0 {
+		t.Fatalf("expected 0 combat starts for invisible player, got %d", len(ce.starts))
+	}
+}
+
+func TestAggressive_NohasslePlayer_Skips(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9102, 1, 0, "aggressive", "sentinel")
+	p := newMobactTestPlayer(w, "NoHassle")
+	p.SetPlrFlag(PrfNohassle, true)
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 0 {
+		t.Fatalf("expected 0 combat starts for NOHASSLE player, got %d", len(ce.starts))
+	}
+}
+
+func TestAggressive_SneakPlayer_AttacksLessOften(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9103, 1, 0, "aggressive", "sentinel")
+	p := newMobactTestPlayer(w, "Sneaky")
+	p.Affects |= 1 << affSneak
+
+	sneakAttacks := 0
+	const iterations = 200
+	for i := 0; i < iterations; i++ {
+		ce.reset()
+		w.mobileActivityForMob(mob)
+		if len(ce.starts) > 0 {
+			sneakAttacks++
+		}
+	}
+
+	// Non-sneaking player should be attacked every iteration.
+	p2 := newMobactTestPlayer(w, "Loud")
+	p2.RoomVNum = 1001
+	plainAttacks := 0
+	for i := 0; i < iterations; i++ {
+		ce.reset()
+		w.mobileActivityForMob(mob)
+		if len(ce.starts) > 0 {
+			plainAttacks++
+		}
+	}
+
+	if plainAttacks != iterations {
+		t.Fatalf("expected non-sneaking player attacked every iteration, got %d/%d", plainAttacks, iterations)
+	}
+	if sneakAttacks >= plainAttacks {
+		t.Fatalf("expected sneaking player attacked less often than non-sneaking, got %d vs %d", sneakAttacks, plainAttacks)
+	}
+}
+
+func TestAggressive_PlayerAttacked(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9104, 1, 0, "aggressive", "sentinel")
+	p := newMobactTestPlayer(w, "Victim")
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 1 {
+		t.Fatalf("expected 1 combat start, got %d", len(ce.starts))
+	}
+	if ce.starts[0].attacker != mob.GetName() || ce.starts[0].defender != p.Name {
+		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
+
+func TestMemory_CannotSeePlayer_Skips(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9201, 1, 0, "memory", "sentinel")
+	p := newMobactTestPlayer(w, "Forgotten")
+	mob.Memory = []string{p.Name}
+	p.Affects |= 1 << affInvisible
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 0 {
+		t.Fatalf("expected 0 memory combat starts for invisible player, got %d", len(ce.starts))
+	}
+}
+
+func TestMemory_NohasslePlayer_Skips(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9202, 1, 0, "memory", "sentinel")
+	p := newMobactTestPlayer(w, "HassleFree")
+	mob.Memory = []string{p.Name}
+	p.SetPlrFlag(PrfNohassle, true)
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 0 {
+		t.Fatalf("expected 0 memory combat starts for NOHASSLE player, got %d", len(ce.starts))
+	}
+}
+
+func TestMemory_PlayerAttacked(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9203, 1, 0, "memory", "sentinel")
+	p := newMobactTestPlayer(w, "Remembered")
+	mob.Memory = []string{p.Name}
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 1 {
+		t.Fatalf("expected 1 memory combat start, got %d", len(ce.starts))
+	}
+	if ce.starts[0].attacker != mob.GetName() || ce.starts[0].defender != p.Name {
+		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
+
+func TestAggr24_CannotSeePlayer_Skips(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9301, 1, 0, "aggr24", "sentinel")
+	p := newMobactTestPlayer(w, "Invisible24")
+	p.Level = 24
+	p.Affects |= 1 << affInvisible
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 0 {
+		t.Fatalf("expected 0 AGGR24 combat starts for invisible player, got %d", len(ce.starts))
+	}
+}
+
+func TestAggr24_NohasslePlayer_Skips(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9302, 1, 0, "aggr24", "sentinel")
+	p := newMobactTestPlayer(w, "NoHassle24")
+	p.Level = 24
+	p.SetPlrFlag(PrfNohassle, true)
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 0 {
+		t.Fatalf("expected 0 AGGR24 combat starts for NOHASSLE player, got %d", len(ce.starts))
+	}
+}
+
+func TestAggr24_PeacefulRoom_Skips(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	w.rooms[1001].Flags = append(w.rooms[1001].Flags, "peaceful")
+	mob := newMobactTestMob(w, 9303, 1, 0, "aggr24", "sentinel")
+	p := newMobactTestPlayer(w, "Peaceful24")
+	p.Level = 24
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 0 {
+		t.Fatalf("expected 0 AGGR24 combat starts in peaceful room, got %d", len(ce.starts))
+	}
+}
+
+func TestAggr24_PlayerAttacked(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9304, 1, 0, "aggr24", "sentinel")
+	p := newMobactTestPlayer(w, "Victim24")
+	p.Level = 24
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 1 {
+		t.Fatalf("expected 1 AGGR24 combat start, got %d", len(ce.starts))
+	}
+	if ce.starts[0].attacker != mob.GetName() || ce.starts[0].defender != p.Name {
+		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
