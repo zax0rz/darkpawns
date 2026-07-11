@@ -113,11 +113,17 @@ func (sf *StateFile) Get() *GameState {
 
 // Update modifies the state via a callback and saves to disk.
 func (sf *StateFile) Update(fn func(*GameState)) error {
-	sf.mu.Lock()
-	fn(sf.state)
-	copy := cloneGameState(sf.state)
-	sf.mu.Unlock()
-	return sf.Save(copy)
+	// Apply the mutation and snapshot under the lock, using defer so a panic
+	// in fn cannot leave the mutex held. Save takes the lock itself, so it
+	// must run after we release it — hence the snapshot-then-save split.
+	var snap *GameState
+	func() {
+		sf.mu.Lock()
+		defer sf.mu.Unlock()
+		fn(sf.state)
+		snap = cloneGameState(sf.state)
+	}()
+	return sf.Save(snap)
 }
 
 // Path returns the state file path.
