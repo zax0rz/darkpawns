@@ -234,12 +234,38 @@ func consumeReagent(ch interface{}, spellNum, level int, reagentName, casterMsg,
 	return reag > 0
 }
 
-// inflictDamage applies damage to a victim via combat.TakeDamage().
-// Routes through the combat engine so spell damage respects sanctuary,
-// protection evil/good, immortality invulnerability, damage caps,
-// peaceful room checks, and wimpy flee triggers.
-// Ported from C damage() call — in the original C, mag_damage() called
-// the same damage() function as weapon attacks.
+// woundBroadcaster lets spell damage route wound/position messages through the
+// same room broadcaster melee and skills use (game.World.WoundBroadcast →
+// woundBroadcast). Kept as a narrow interface so the spells package needn't
+// import game.
+type woundBroadcaster interface {
+	WoundBroadcast(roomVNum int, message, exclude string)
+}
+
+// spellDeathPipeline is the melee DeathFunc path (game.World.HandleDeath). Spell
+// kills route through it so they award XP/kill-credit and apply the COMBAT death
+// penalty (EXP/37, killer-aware corpse, PK bookkeeping), identical to weapon
+// kills — see inflictDamage / DP-1022.
+type spellDeathPipeline interface {
+	HandleDeath(victim, killer combat.Combatant, attackType int)
+}
+
+// inflictDamage applies spell damage and, on a lethal blow, drives the death
+// pipeline — mirroring the melee/skill damage tail (World.doDamage /
+// World.DoSpellDamage) exactly: shared damage() modifier block → apply damage →
+// set fighting → update_pos → World.HandleDeath at POS_DEAD.
+//
+// In C, mag_damage() (src/magic.c:827) calls the same damage() as weapon hits,
+// so a spell kill must award XP/kill-credit and apply the COMBAT death penalty
+// (EXP/37, killer-aware corpse) through the same HandleDeath path melee uses —
+// not HandleNonCombatDeath (EXP/3, killer=nil), which zeroed the caster's kill
+// XP and made spell PK ~12x more punishing than the original (DP-1022).
+//
+// This replaces the earlier combat.TakeDamage(...) + HandleSpellDeath call. Once
+// TakeDamage stopped clamping HP at 0 (DP-1021, floor at -11), combat.TakeDamage's
+// own award/DieWithKiller block became reachable on the spell path and
+// double-handled death alongside HandleSpellDeath. Routing straight to
+// HandleDeath keeps a single death authority across melee, skills, and spells.
 func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{}) {
 	// Send spell flavor text to victim
 	singular, _ := MagAttackModifier(attackType)
@@ -249,21 +275,31 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		s.SendMessage(victimMsg)
 	}
 
-	// Type-assert to combat.Combatant to route through combat engine
+	// Type-assert to combat.Combatant to run the shared damage tail.
 	chCombat, chOk := ch.(combat.Combatant)
 	victCombat, victOk := victim.(combat.Combatant)
 	if chOk && victOk {
-		// Route through combat.TakeDamage — handles sanctuary, protection,
-		// immortality, damage caps, peaceful rooms, wimpy, death, etc.
-		combat.TakeDamage(chCombat, victCombat, dam, attackType)
+		// Shared damage() modifier block: sanctuary, protect evil/good,
+		// race-hate, the 3000 cap, and immortal invulnerability (DP-1025).
+		dam = combat.ApplyDamageModifiers(chCombat, victCombat, dam)
+		if dam <= 0 {
+			// Fully absorbed (immortal victim, or sanctuary on a tiny hit):
+			// no damage, no death — matches World.DoSpellDamage.
+			return
+		}
 
-		// Fire Lua scripting hook for spell deaths (separate from combat death path)
-		if victCombat.GetHP() <= 0 {
-			type spellDeathHandler interface {
-				HandleSpellDeath(victim interface{})
-			}
-			if dh, ok := world.(spellDeathHandler); ok {
-				dh.HandleSpellDeath(victim)
+		victCombat.TakeDamage(dam)
+		victCombat.SetFighting(chCombat.GetName())
+
+		// Enter the wounded band or POS_DEAD from the new HP; only run the
+		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
+		var wb func(roomVNum int, message, exclude string)
+		if b, ok := world.(woundBroadcaster); ok {
+			wb = b.WoundBroadcast
+		}
+		if combat.UpdatePositionAfterDamage(victCombat, wb) == combat.PosDead {
+			if dp, ok := world.(spellDeathPipeline); ok {
+				dp.HandleDeath(victCombat, chCombat, attackType)
 			}
 		}
 		return
