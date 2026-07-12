@@ -233,9 +233,12 @@ var dexApp = []dexAppType{
 // Implements STRENGTH_APPLY_INDEX macro from utils.h line 440
 // Source: utils.h: STRENGTH_APPLY_INDEX(ch) macro
 func strIndex(c Combatant) int {
-	str := c.GetStr()
-	strAdd := c.GetStrAdd()
+	return StrengthIndex(c.GetStr(), c.GetStrAdd())
+}
 
+// StrengthIndex returns the str_app index for raw and exceptional strength.
+// Source: utils.h STRENGTH_APPLY_INDEX.
+func StrengthIndex(str, strAdd int) int {
 	if strAdd == 0 || str != 18 {
 		// Clamp to the normal strength range. str_app[] (constants.c) has 31
 		// entries: indices 0–25 are normal strength, 26–30 are 18/01–18/100
@@ -279,20 +282,9 @@ func StrAppToDam(c Combatant) int {
 	return strApp[idx].ToDam
 }
 
-// CarryWeight returns the max carry weight for a raw strength value, looking up
-// str_app[str].carry_w from constants.c (DP-1038). This is the canonical
-// CAN_CARRY_W(ch) accessor for callers that only have a strength integer (e.g.
-// Inventory.SetCapacity). It maps raw STR to the str_app index directly;
-// exceptional strength (18/xx) is handled by strIndex when a Combatant is
-// available.
-func CarryWeight(str int) int {
-	if str < 0 {
-		return 0
-	}
-	if str >= len(strApp) {
-		str = len(strApp) - 1
-	}
-	return strApp[str].CarryW
+// CarryWeight returns CAN_CARRY_W for raw and exceptional strength.
+func CarryWeight(str, strAdd int) int {
+	return strApp[StrengthIndex(str, strAdd)].CarryW
 }
 
 // dexIndex returns the dex_app index for a combatant.

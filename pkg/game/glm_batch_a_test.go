@@ -200,9 +200,9 @@ func TestAddItem_WeightCheckedBeforeCount(t *testing.T) {
 }
 
 func TestSetCapacity_SetsMaxWeight(t *testing.T) {
-	// SetCapacity(str, dex, level) must set MaxWeight from the str_app table.
+	// SetCapacity(str, strAdd, dex, level) must set MaxWeight from str_app.
 	inv := NewInventory()
-	inv.SetCapacity(18, 18, 10) // str 18 → carry_w 255
+	inv.SetCapacity(18, 0, 18, 10) // str 18 → carry_w 255
 
 	if inv.MaxWeight != 255 {
 		t.Errorf("str 18 MaxWeight = %d, want 255 (constants.c str_app[])", inv.MaxWeight)
@@ -214,7 +214,7 @@ func TestSetCapacity_SetsMaxWeight(t *testing.T) {
 
 func TestSetCapacity_Str0Weight(t *testing.T) {
 	inv := NewInventory()
-	inv.SetCapacity(0, 10, 1) // str 0 → carry_w 0
+	inv.SetCapacity(0, 0, 10, 1) // str 0 → carry_w 0
 
 	if inv.MaxWeight != 0 {
 		t.Errorf("str 0 MaxWeight = %d, want 0", inv.MaxWeight)

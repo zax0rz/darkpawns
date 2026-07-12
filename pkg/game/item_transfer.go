@@ -10,7 +10,7 @@ import (
 
 // canTakeObj checks if a player can take an object
 func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
-	if len(ch.Inventory.Items) >= ch.Inventory.Capacity {
+	if len(ch.Inventory.Items) >= ch.MaxCarryItems() {
 		w.actToChar(ch, "$p: you can't carry that many items.", obj, nil)
 		return false
 	}

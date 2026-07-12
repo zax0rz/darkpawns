@@ -81,6 +81,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	p.SetRoom(r.RoomVNum)
 	p.ID = r.ID
 	p.Description = r.Description
+	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
 
 	// Restore inventory — try new SaveItemData format first, fall back to legacy []int.
 	if len(r.Inventory) > 0 {

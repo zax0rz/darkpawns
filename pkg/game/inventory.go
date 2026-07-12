@@ -162,12 +162,12 @@ func (inv *Inventory) GetWeight() int {
 //	CAN_CARRY_W(ch) = str_app[STRENGTH_APPLY_INDEX(ch)].carry_w       (utils.h:448)
 //
 // Source: utils.h:448-449 (DP-1038 — weight now enforced).
-func (inv *Inventory) SetCapacity(str, dex, level int) {
+func (inv *Inventory) SetCapacity(str, strAdd, dex, level int) {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
 	// >> 1 means divide by 2 (integer division)
 	inv.Capacity = 5 + (dex >> 1) + (level >> 1)
-	inv.MaxWeight = combat.CarryWeight(str)
+	inv.MaxWeight = combat.CarryWeight(str, strAdd)
 }
 
 // clear removes all items from inventory (internal — no lock).
