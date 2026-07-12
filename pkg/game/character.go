@@ -313,4 +313,14 @@ func GiveStartingSkills(p *Player) {
 	if p.Race == RaceMinotaur {
 		p.SetSkill("headbutt", 25)
 	}
+
+	// Go-specific additions — not present in C do_start(). Kept for gameplay
+	// parity with the previous Go port behavior.
+	// All classes get kick at level 1.
+	p.SetSkill("kick", 10)
+	// Warrior-types get bash and rescue.
+	if p.Class == ClassWarrior || p.Class == ClassPaladin || p.Class == ClassRanger {
+		p.SetSkill("bash", 10)
+		p.SetSkill("rescue", 10)
+	}
 }
