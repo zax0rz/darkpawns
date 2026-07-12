@@ -119,8 +119,10 @@ func (w *World) AffectUpdate() {
 
 		// Send wear-off messages and remove affects outside the mob lock.
 		// RemoveAffectBySpell acquires mob.mu internally via RemoveAffected.
+		// C sends wear-off to the mob itself via send_to_char; mobs have no
+		// terminal, so the message is silently dropped for NPCs.
 		for _, info := range expired {
-			if info.wearOff != "" {
+			if info.wearOff != "" && !mob.IsNPC() {
 				w.roomMessage(roomVNum, fmt.Sprintf("%s %s", shortDesc, info.wearOff))
 			}
 			mob.RemoveAffectBySpell(info.spellNum)

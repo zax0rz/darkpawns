@@ -620,207 +620,93 @@ func randPick[T any](s []T) T {
 //	dam==0 → 0, <=2 → 1, <=4 → 2, <=6 → 3, <=10 → 4, <=14 → 5,
 //	<=19 → 6, <=23 → 7, <=33 → 8, <=43 → 9, <=53 → 10, else → 11
 //
-// MinDamage below is the lowest damage value that selects each tier. The first
-// variant in each tier matches the C dam_weapons[] text verbatim; additional
-// variants are flavor that preserves the CircleMUD multi-variant feel.
+// MinDamage below is the lowest damage value that selects each tier. C's
+// dam_weapons[] has exactly one message per tier, so each tier below keeps
+// that single verbatim string.
 var damMessageTiers = []damMessageTier{
 	// Tier 0: miss (dam == 0)
 	{
 		0,
-		[]string{
-			"$n tries to #w $N, but misses.",
-			"$n's swing goes wide, missing $N entirely.",
-			"$n lunges at $N and connects with nothing but air.",
-		},
-		[]string{
-			"You try to #w $N, but miss.",
-			"You swing at $N and hit nothing.",
-			"Your clumsy strike goes wide of $N.",
-		},
-		[]string{
-			"$n tries to #w you, but misses.",
-			"$n's attack sails past you harmlessly.",
-			"$n lunges at you but can't find the range.",
-		},
+		[]string{"$n tries to #w $N, but misses."},
+		[]string{"You try to #w $N, but miss."},
+		[]string{"$n tries to #w you, but misses."},
 	},
 	// Tier 1: scratch (1-2)
 	{
 		1,
-		[]string{
-			"$n scratches $N as $e #W $M.",
-			"$n grazes $N with a glancing blow.",
-		},
-		[]string{
-			"You scratch $N as you #w $M.",
-			"You clip $N — barely worth the effort.",
-		},
-		[]string{
-			"$n scratches you as $e #W you.",
-			"$n's strike just barely catches you.",
-		},
+		[]string{"$n scratches $N as $e #W $M."},
+		[]string{"You scratch $N as you #w $M."},
+		[]string{"$n scratches you as $e #W you."},
 	},
 	// Tier 2: barely (3-4)
 	{
 		3,
-		[]string{
-			"$n barely #W $N.",
-			"$n's feeble blow barely lands on $N.",
-		},
-		[]string{
-			"You barely #w $N.",
-			"You land a pathetic blow on $N.",
-		},
-		[]string{
-			"$n barely #W you.",
-			"$n's weak strike barely registers.",
-		},
+		[]string{"$n barely #W $N."},
+		[]string{"You barely #w $N."},
+		[]string{"$n barely #W you."},
 	},
 	// Tier 3: light (5-6)
 	{
 		5,
-		[]string{
-			"$n #W $N.",
-			"$n lands a light blow on $N.",
-		},
-		[]string{
-			"You #w $N.",
-			"You land a light hit on $N.",
-		},
-		[]string{
-			"$n #W you.",
-			"$n hits you with a light blow.",
-		},
+		[]string{"$n #W $N."},
+		[]string{"You #w $N."},
+		[]string{"$n #W you."},
 	},
 	// Tier 4: hard (7-10)
 	{
 		7,
-		[]string{
-			"$n #W $N hard.",
-			"$n's solid blow catches $N flush.",
-			"$n connects firmly with $N.",
-		},
-		[]string{
-			"You #w $N hard.",
-			"Your solid strike catches $N flush.",
-			"You connect firmly with $N.",
-		},
-		[]string{
-			"$n #W you hard.",
-			"$n's solid blow catches you flush.",
-			"$n connects firmly with you.",
-		},
+		[]string{"$n #W $N hard."},
+		[]string{"You #w $N hard."},
+		[]string{"$n #W you hard."},
 	},
 	// Tier 5: very hard (11-14)
 	{
 		11,
-		[]string{
-			"$n #W $N very hard.",
-			"$n's heavy strike staggers $N.",
-		},
-		[]string{
-			"You #w $N very hard.",
-			"Your heavy blow staggers $N.",
-		},
-		[]string{
-			"$n #W you very hard.",
-			"$n's heavy strike staggers you.",
-		},
+		[]string{"$n #W $N very hard."},
+		[]string{"You #w $N very hard."},
+		[]string{"$n #W you very hard."},
 	},
 	// Tier 6: extremely hard (15-19)
 	{
 		15,
-		[]string{
-			"$n #W $N extremely hard.",
-			"$n wallops $N with bone-rattling force!",
-		},
-		[]string{
-			"You #w $N extremely hard.",
-			"You wallop $N with bone-rattling force!",
-		},
-		[]string{
-			"$n #W you extremely hard.",
-			"$n wallops you with bone-rattling force!",
-		},
+		[]string{"$n #W $N extremely hard."},
+		[]string{"You #w $N extremely hard."},
+		[]string{"$n #W you extremely hard."},
 	},
 	// Tier 7: massacres (20-23)
 	{
 		20,
-		[]string{
-			"$n massacres $N to small fragments with $s #w.",
-			"$n tears into $N, sending fragments flying!",
-		},
-		[]string{
-			"You massacre $N to small fragments with your #w.",
-			"You tear into $N, sending fragments flying!",
-		},
-		[]string{
-			"$n massacres you to small fragments with $s #w.",
-			"$n tears into you, sending fragments flying!",
-		},
+		[]string{"$n massacres $N to small fragments with $s #w."},
+		[]string{"You massacre $N to small fragments with your #w."},
+		[]string{"$n massacres you to small fragments with $s #w."},
 	},
 	// Tier 8: OBLITERATES (24-33)
 	{
 		24,
-		[]string{
-			"$n OBLITERATES $N with $s deadly #w!!",
-			"$n reduces $N to a bloody smear!!",
-		},
-		[]string{
-			"You OBLITERATE $N with your deadly #w!!",
-			"You reduce $N to a bloody smear!!",
-		},
-		[]string{
-			"$n OBLITERATES you with $s deadly #w!!",
-			"$n reduces you to a bloody smear!!",
-		},
+		[]string{"$n OBLITERATES $N with $s deadly #w!!"},
+		[]string{"You OBLITERATE $N with your deadly #w!!"},
+		[]string{"$n OBLITERATES you with $s deadly #w!!"},
 	},
 	// Tier 9: EVISCERATES (34-43)
 	{
 		34,
-		[]string{
-			"$n EVISCERATES $N with $s incredible #w!!",
-			"$n lays $N open with an incredible strike!!",
-		},
-		[]string{
-			"You EVISCERATE $N with your incredible #w!!",
-			"You lay $N open with an incredible strike!!",
-		},
-		[]string{
-			"$n EVISCERATES you with $s incredible #w!!",
-			"$n lays you open with an incredible strike!!",
-		},
+		[]string{"$n EVISCERATES $N with $s incredible #w!!"},
+		[]string{"You EVISCERATE $N with your incredible #w!!"},
+		[]string{"$n EVISCERATES you with $s incredible #w!!"},
 	},
 	// Tier 10: DESTROYS (44-53)
 	{
 		44,
-		[]string{
-			"$n DESTROYS $N with $s ungodly #w!!",
-			"$n unleashes an ungodly blow upon $N!!",
-		},
-		[]string{
-			"You DESTROY $N with your ungodly #w!!",
-			"You unleash an ungodly blow upon $N!!",
-		},
-		[]string{
-			"$n DESTROYS you with $s ungodly #w!!",
-			"$n unleashes an ungodly blow upon you!!",
-		},
+		[]string{"$n DESTROYS $N with $s ungodly #w!!"},
+		[]string{"You DESTROY $N with your ungodly #w!!"},
+		[]string{"$n DESTROYS you with $s ungodly #w!!"},
 	},
 	// Tier 11: ROCKS THE HELL OUT OF (54+)
 	{
 		54,
-		[]string{
-			"$n ROCKS THE HELL OUT OF $N with $s ultimate #w!!",
-			"$n delivers a catastrophic blow of legend against $N!!",
-		},
-		[]string{
-			"You ROCK THE HELL OUT OF $N with your ultimate #w!!",
-			"You deliver a catastrophic blow of legend against $N!!",
-		},
-		[]string{
-			"$n ROCKS THE HELL OUT OF you with $s ultimate #w!!",
-			"$n delivers a catastrophic blow of legend against you!!",
-		},
+		[]string{"$n ROCKS THE HELL OUT OF $N with $s ultimate #w!!"},
+		[]string{"You ROCK THE HELL OUT OF $N with your ultimate #w!!"},
+		[]string{"$n ROCKS THE HELL OUT OF you with $s ultimate #w!!"},
 	},
 }
 

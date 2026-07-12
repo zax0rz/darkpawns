@@ -191,8 +191,6 @@ type Player struct {
 
 	// C-10: WAIT_STATE cooldown in PULSE_VIOLENCE ticks (1 tick = 2 seconds).
 	WaitState int
-	// C-11: parry stance toggle
-	Parrying  bool
 	RoomFlags bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
 
 	// AutoGold indicates the player auto-loots gold from killed victims (PRF_AUTOGOLD = 24).
@@ -265,7 +263,6 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
 		WaitState:    0,
 		JailTimer:    0,
-		Parrying:     false,
 
 		SpellMap: make(map[string]int),
 	}
