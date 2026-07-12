@@ -13,12 +13,18 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// makeManagerWithStartRoom returns a Manager whose world contains the mortal
-// start room (8004) so sendWelcome can build a valid StateData message.
+// makeManagerWithStartRoom returns a Manager whose world contains the newbie
+// intro and mortal start rooms used during first entry.
 func makeManagerWithStartRoom(t *testing.T) *Manager {
 	t.Helper()
 	parsed := &parser.World{
 		Rooms: []parser.Room{
+			{
+				VNum:        game.NewbieStartRoom,
+				Name:        "A Burning Hut",
+				Description: "Flames dance along the walls of the ruined hut.",
+				Zone:        80,
+			},
 			{
 				VNum:        game.MortalStartRoom,
 				Name:        "The Adventurers Guild",
@@ -145,7 +151,21 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	wsReadUntilType(t, c, MsgCharCreate)
 	wsWrite(t, c, MsgCharInput, map[string]interface{}{"choice": "1"})
 
-	// ── 3. Receive welcome state ──────────────────────────────────────────────
+	// ── 3. Receive the one-time newbie room state ────────────────────────────────
+	introRaw := wsReadUntilType(t, c, MsgState)
+	introBytes, _ := json.Marshal(introRaw["data"])
+	var intro StateData
+	if err := json.Unmarshal(introBytes, &intro); err != nil {
+		t.Fatalf("unmarshal intro StateData: %v", err)
+	}
+	if intro.Room.VNum != game.NewbieStartRoom {
+		t.Errorf("intro: room.vnum = %d, want %d", intro.Room.VNum, game.NewbieStartRoom)
+	}
+	if intro.Room.Name != "A Burning Hut" {
+		t.Errorf("intro: room.name = %q, want A Burning Hut", intro.Room.Name)
+	}
+
+	// ── 4. Receive welcome state in the normal login room ──────────────────────
 	// completeCharCreation calls sendWelcome which does s.send <- state_msg
 	// (blocking, char_creation.go:276 / session_send.go:58).  writePump drains
 	// s.send and calls conn.WriteMessage — the message travels over the real
