@@ -299,13 +299,19 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	p.Health = 10
 	p.MaxMana = 100
 	p.Mana = 100
-	p.MaxMove = 100
-	p.Move = 100
+	p.MaxMove = 82
+	p.Move = 82
 
 	// Start fully fed/hydrated/sober — limits.c
-	p.Hunger = 24
-	p.Thirst = 24
+	p.Hunger = 36
+	p.Thirst = 36
 	p.Drunk = 0
+
+	// Wimp level: HP threshold for auto-flee — class.c:588
+	p.WimpLevel = 5
+
+	// Starting practices — class.c:590
+	p.Practices = 2
 
 	// THAC0 from class table
 	if class >= 0 && class < 12 {

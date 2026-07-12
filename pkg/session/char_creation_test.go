@@ -225,7 +225,7 @@ func TestGetRaceOptions(t *testing.T) {
 		"E": "Elven",
 		"D": "Dwarven",
 		"K": "Kenderkin",
-		"M": "Minotauran",
+		"M": "Minotaur",
 		"R": "Rakshasan",
 		"S": "Ssauran",
 	}
