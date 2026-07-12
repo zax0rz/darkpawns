@@ -196,7 +196,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 				xp = 1
 			}
 		}
-		p.AddExp(xp)
+		w.GainExp(p, xp)
 		if xp > 1 {
 			p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", xp))
 		} else {
@@ -250,7 +250,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 				xp = 1
 			}
 		}
-		m.AddExp(xp)
+		w.GainExp(m, xp)
 		if xp > 1 {
 			m.SendMessage(fmt.Sprintf("You receive your share of experience -- %d points.\r\n", xp))
 		} else {
