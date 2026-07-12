@@ -70,10 +70,9 @@ const (
 	SKILL_BITE         = 111
 	SKILL_DISEMBOWEL   = 112
 	SKILL_NECKBREAK    = 113
-	SKILL_RETREAT      = 114
-	SKILL_ESCAPE       = 115
-	SKILL_PARRY        = 116
-	SKILL_DODGE        = 117
+	SKILL_RETREAT      = 149
+	SKILL_ESCAPE       = 157
+	SKILL_PARRY        = 172
 )
 
 // AFF_* are C affect *bit positions* from src/structs.h. They are passed
@@ -89,6 +88,7 @@ const (
 	AFF_PROTECT_EVIL = 12 // structs.h AFF_PROTECT_EVIL
 	AFF_PROTECT_GOOD = 13 // structs.h AFF_PROTECT_GOOD
 	AFF_SLEEP        = 14 // structs.h AFF_SLEEP
+	AFF_DODGE        = 17 // structs.h AFF_DODGE
 	AFF_HIDE         = 19 // structs.h AFF_HIDE
 	AFF_CHARM        = 21 // structs.h AFF_CHARM
 	AFF_HASTE        = 33 // structs.h AFF_HASTE

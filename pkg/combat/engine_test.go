@@ -219,12 +219,9 @@ func TestHandleDeath_PassesAttackType(t *testing.T) {
 
 // dp900Fighter returns a mock combatant tuned to land hits deterministically.
 //
-// TestMain (formulas_test.go) wires GetSkill to return 50 for everyone and
-// GetWeaponInfo to grant every non-"unarmed_guy" a weapon — which means the
-// global parry/dodge checks would otherwise consume ScriptedRoller values and
-// randomly negate hits. Making these mocks NPCs (npc: true) short-circuits
-// CheckParry at its first line (formulas.go:641), and the dodge probe is fed
-// a failing value by the test's ScriptedRoller.
+// TestMain (formulas_test.go) wires GetSkill to return values for parry tests.
+// Making these mocks NPCs (npc: true) short-circuits player parry; because they
+// do not have AFF_DODGE, the dodge path does not consume roller values either.
 //
 // Level 10 keeps GetAttacksPerRound at its baseline 1 attack without firing
 // the level-gated bonus-attack d100 rolls (formulas.go:578-602), so the only
@@ -252,10 +249,9 @@ func dp900Fighter(name string) *mockCombatant {
 // fix it iterates both sides of every pair, so both the attacker and the
 // defender deal damage in the same round.
 //
-// Determinism: a ScriptedRoller forces every d20 to 20 (natural-20 auto-hit)
-// and every dodge probe to 101 (dodge fails, since skill is 50). NPCs skip
-// the parry check entirely. The remaining values feed the attacks-per-round
-// probe and the damage dice. The pattern repeats for each combatant's edge.
+// Determinism: a ScriptedRoller forces every d20 to 20 (natural-20 auto-hit).
+// The remaining values feed the attacks-per-round probe and the damage dice.
+// The pattern repeats for each combatant's edge.
 func TestPerformRound_DefenderRetaliates(t *testing.T) {
 	attacker := dp900Fighter("Attacker")
 	defender := dp900Fighter("Defender")
@@ -271,12 +267,12 @@ func TestPerformRound_DefenderRetaliates(t *testing.T) {
 	}
 
 	old := GetRoller()
-	// Per edge: Number(0,500)=500 [no bonus attack], Number(1,20)=20 [auto-hit],
-	// Number(1,101)=101 [dodge fails], Dice(1,8)=8 [damage die].
+	// Per edge: Number(0,900)=900 [no bonus attack], Number(1,20)=20 [auto-hit],
+	// Dice(1,8)=8 [damage die].
 	SetRoller(NewScriptedRoller([]int{
-		500, 20, 101, 8, // attacker → defender
-		500, 20, 101, 8, // defender → attacker
-		500, 20, 101, 8, 500, 20, 101, 8, // headroom
+		900, 20, 8, // attacker → defender
+		900, 20, 8, // defender → attacker
+		900, 20, 8, 900, 20, 8, // headroom
 	}))
 	defer SetRoller(old)
 
@@ -304,11 +300,11 @@ func TestPerformRound_BothSidesDealDamageOverRounds(t *testing.T) {
 	}
 
 	old := GetRoller()
-	// 10 rounds × 2 edges × 4 values = 80; supply extra headroom. ScriptedRoller
+	// 10 rounds × 2 edges × 3 values = 60; supply extra headroom. ScriptedRoller
 	// wraps if it runs short, so this is belt-and-suspenders.
 	script := make([]int, 0, 100)
 	for i := 0; i < 25; i++ {
-		script = append(script, 500, 20, 101, 8) // one edge: probe, hit, dodge-fail, dmg
+		script = append(script, 900, 20, 8) // one edge: probe, hit, dmg
 	}
 	SetRoller(NewScriptedRoller(script))
 	defer SetRoller(old)
@@ -325,6 +321,61 @@ func TestPerformRound_BothSidesDealDamageOverRounds(t *testing.T) {
 	}
 	if m.GetHP() >= 100 {
 		t.Errorf("DP-900: mob should have lost HP over 10 rounds, still %d", m.GetHP())
+	}
+}
+
+func TestProcessCombatPair_ParryReducesAttackCountOncePerRound(t *testing.T) {
+	attacker := &mockCombatant{
+		name:       "orc",
+		npc:        true,
+		hp:         100,
+		maxHP:      100,
+		room:       1,
+		level:      11, // C NPC baseline: 2 attacks
+		thac0:      1,
+		ac:         10,
+		hitroll:    50,
+		damageRoll: DiceRoll{Num: 1, Sides: 1},
+		position:   PosStanding,
+		fighting:   "parry_warrior",
+	}
+	defender := &mockCombatant{
+		name:     "parry_warrior",
+		npc:      false,
+		hp:       100,
+		maxHP:    100,
+		room:     1,
+		level:    20,
+		thac0:    1,
+		ac:       10,
+		hitroll:  50,
+		dex:      10,
+		position: PosStanding,
+		fighting: "orc",
+	}
+
+	ce := NewCombatEngine()
+	hits := 0
+	ce.OnCombatAction = func(attacker Combatant, defender Combatant, attackType string, damage int, outcome string, targetCount int) {
+		if outcome == "hit" {
+			hits++
+		}
+	}
+
+	old := GetRoller()
+	// NPC bonus attack probe fails, parry succeeds, then the single remaining
+	// hit lands and rolls 1 damage. If parry still negated individual hits or
+	// fired per-hit, this would not be exactly one hit.
+	SetRoller(NewScriptedRoller([]int{900, 80, 20, 1, 20, 1}))
+	defer SetRoller(old)
+
+	ce.processCombatPair(&CombatPair{Attacker: attacker, Defender: defender})
+
+	if hits != 1 {
+		t.Fatalf("hits after successful parry = %d, want 1", hits)
+	}
+	if got := defender.GetHP(); got != 99 {
+		t.Fatalf("defender HP after parried two-attack round = %d, want 99", got)
 	}
 }
 
