@@ -198,10 +198,8 @@ func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
 	subdued := false
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
-		HasMobVNum: func(name string, vnum int) bool {
-			return name == "jail guard" && vnum == 8102
-		},
-		HasAffect: func(name string, aff int) bool { return false },
+		MobHasJailGuardSpec: func(name string) bool { return name == "jail guard" },
+		HasAffect:           func(name string, aff int) bool { return false },
 		JailGuardSubdue: func(guardName, victimName string) bool {
 			subdued = guardName == "jail guard" && victimName == "Thief"
 			return subdued
@@ -221,6 +219,55 @@ func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
 	}
 	if ce.IsFighting("jail guard") || ce.IsFighting("Thief") {
 		t.Fatal("expected jail guard intercept to clear combat")
+	}
+}
+
+func TestMobRedirect_NonJailMobDoesNotSubdue(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	attacker := &mockCombatant{
+		name:       "angry mob",
+		npc:        true,
+		room:       8117,
+		level:      30,
+		hp:         80,
+		maxHP:      100,
+		position:   PosFighting,
+		damageRoll: DiceRoll{Num: 10, Sides: 10},
+	}
+	// HP set high so the attacker's 10d10 round cannot kill the victim and end
+	// combat — otherwise the "combat continues" assertion below is nondeterministic.
+	victim := &mockCombatant{
+		name:     "Thief",
+		room:     8117,
+		level:    20,
+		hp:       1000,
+		maxHP:    1000,
+		position: PosFighting,
+	}
+
+	subdued := false
+	ce := NewCombatEngine()
+	ce.SetCallbacks(&GameCallbacks{
+		MobHasJailGuardSpec: func(name string) bool { return false },
+		HasAffect:           func(name string, aff int) bool { return false },
+		JailGuardSubdue: func(guardName, victimName string) bool {
+			subdued = true
+			return true
+		},
+	})
+	if err := ce.StartCombat(attacker, victim); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "angry mob", Target: "Thief"}])
+
+	if subdued {
+		t.Fatal("expected JailGuardSubdue not to fire for non-jail mob")
+	}
+	if !ce.IsFighting("angry mob") || !ce.IsFighting("Thief") {
+		t.Fatal("expected combat to continue normally")
 	}
 }
 
