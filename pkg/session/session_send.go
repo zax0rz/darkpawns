@@ -66,6 +66,18 @@ func (s *Session) sendWelcome(token string) {
 		}
 	}
 
+	// Welcome text — matches C WELC_MESSG (config.c:256).
+	welcomeMsg, err := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{
+			Type: "text",
+			Text: "\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n",
+		},
+	})
+	if err == nil {
+		s.send <- welcomeMsg
+	}
+
 	// Send state — this is the "you're in the world" signal for both agents and humans.
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgState,

@@ -145,6 +145,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	case "confirm_name":
 		switch strings.ToUpper(choice) {
 		case "Y":
+			s.sendText("Please remember to choose an appropriate fantasy-oriented name.\r\n")
 			// C (interpreter.c) collects the new-character password once, in
 			// CON_NEWPASSWD/CON_CNFPASSWD right after name confirmation. When
 			// the auth layer (telnet/WS) already collected the password, skip
