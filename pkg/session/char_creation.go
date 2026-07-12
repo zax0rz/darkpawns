@@ -529,6 +529,8 @@ func (s *Session) completeCharCreation() error {
 		return err
 	}
 
+	// C source intro: brand-new characters first appear in the Burning Hut.
+	s.player.SetRoom(game.NewbieStartRoom)
 	if err := s.manager.world.AddPlayer(s.player); err != nil {
 		s.manager.Unregister(s.charName)
 		return err
@@ -538,10 +540,10 @@ func (s *Session) completeCharCreation() error {
 	// and attachObjectLocked can find them; items silently drop otherwise.
 	s.manager.world.GiveStartingItems(s.player)
 
-	// Room 8099 (A Burning Hut) is the C source intro room (interpreter.c:2241)
-	// but it has no exits and no mob spawns in the current world data.
-	// For now, use LoginStartRoom which accounts for immortal/frozen status.
-	s.player.RoomVNum = game.LoginStartRoom(s.player)
+	// Show the intro room once, then move to the normal login room. The later
+	// welcome state renders that destination, matching C's entry sequence.
+	s.sendCurrentRoomState()
+	s.player.SetRoom(game.LoginStartRoom(s.player))
 
 	slog.InfoContext(s.sessionCtx, "completeCharCreation: player added to world", s.logAttrs()...)
 
