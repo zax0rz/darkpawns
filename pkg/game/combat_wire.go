@@ -161,6 +161,19 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return m.Prototype.VNum == vnum
 	}
 
+	cb.MobHasJailGuardSpec = func(name string) bool {
+		m := w.GetMobByName(name)
+		if m == nil || m.Prototype == nil {
+			return false
+		}
+		switch MobSpecAssign[m.Prototype.VNum] {
+		case "take_to_jail", "wall_guard_ns":
+			return true
+		default:
+			return false
+		}
+	}
+
 	cb.HasRoomFlag = func(roomVNum int, flag string) bool {
 		room, ok := w.GetRoom(roomVNum)
 		if !ok {
