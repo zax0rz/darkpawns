@@ -207,16 +207,24 @@
         if (msg.type === 'char_create') {
           charCreating = true;
           if (msg.data && msg.data.prompt) {
-            term.writeln(msg.data.prompt);
+            term.write(msg.data.prompt.replace(/\r/g, ''));
           }
           // Show numbered options if present
           if (msg.data && msg.data.options && typeof msg.data.options === 'object') {
             const opts = msg.data.options;
-            const keys = Object.keys(opts);
-            if (keys.length > 0 && typeof opts[keys[0]] === 'string') {
-              keys.forEach(function (k) {
-                term.writeln('  \x1b[33m' + k + '\x1b[0m) ' + opts[k]);
+            if (Array.isArray(opts)) {
+              // Server sends []CharCreateOption: [{Key, Label}, ...]
+              opts.forEach(function (o) {
+                term.writeln('  \x1b[33m' + o.Key + '\x1b[0m) ' + o.Label);
               });
+            } else {
+              // Fallback: plain {key: label} map
+              const keys = Object.keys(opts);
+              if (keys.length > 0 && typeof opts[keys[0]] === 'string') {
+                keys.forEach(function (k) {
+                  term.writeln('  \x1b[33m' + k + '\x1b[0m) ' + opts[k]);
+                });
+              }
             }
           }
           return;
@@ -238,7 +246,7 @@
       } catch {
         text = evt.data;
       }
-      if (text) term.writeln(text);
+      if (text) term.writeln(text.replace(/\r/g, ''));
     };
 
     ws.onclose = function () {
