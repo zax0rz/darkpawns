@@ -118,7 +118,7 @@ func calcKillXPShare(chLevel, victimLevel, base int, inGroup bool) int {
 // If victimGold > 0 and the killer has AutoGold enabled, gold is looted/split
 // according to the autosplit preference.
 // Source: fight.c group_gain() lines 708–745, called at die_with_killer() line 1638
-func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGold int, victimLevel int) {
+func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGold int, victimLevel int, victimAlign int) {
 	if victimExp <= 0 && victimGold <= 0 {
 		return
 	}
@@ -228,6 +228,8 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 		} else {
 			p.SendMessage("You receive one lousy experience point.\r\n")
 		}
+		// Alignment shift for the killer — fight.c:1667 change_alignment(ch, victim).
+		changeAlignment(p, victimAlign)
 		return
 	}
 
@@ -264,5 +266,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 		} else {
 			m.SendMessage("You receive your share of experience -- one measly little point!\r\n")
 		}
+		// Alignment shift for every group member — fight.c:704 change_alignment(ch, victim).
+		changeAlignment(m, victimAlign)
 	}
 }
