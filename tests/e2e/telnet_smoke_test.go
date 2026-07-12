@@ -362,6 +362,12 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Fatal("conn3: returning player was not prompted for a password")
 	}
 	mustWrite(t, c3, password+"\r\n")
+	// Returning players see the MOTD before CON_MENU, matching C's
+	// CON_RMOTD transition. Acknowledge it before waiting for the menu.
+	if got := readUntil(t, c3, r3, "PRESS RETURN", 10*time.Second); got == "" {
+		t.Fatal("conn3: returning player did not get MOTD prompt")
+	}
+	mustWrite(t, c3, "\r\n")
 	// CON_MENU (DP-1067): returning players hit the menu too.
 	if got := readUntil(t, c3, r3, "Make your choice", 10*time.Second); got == "" {
 		t.Fatal("conn3: returning player did not get menu")
