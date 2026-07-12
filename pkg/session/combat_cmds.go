@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // cmdHit initiates combat with a target.
@@ -91,6 +93,48 @@ func cmdHit(s *Session, args []string) error {
 	if !found {
 		s.Send("They aren't here.")
 		return nil
+	}
+
+	// --- Combat-entry gates (fight.c:1336-1357, DP-1045 partial) ---
+	// These mirror C's damage() pre-swing checks at the command layer — the
+	// faithful, non-spammy home for player-initiated melee in Go.
+
+	// Resolve victim facts uniformly across mob/player targets.
+	victimFighting := ""
+	victimIsOutlaw := false
+	victimIsPlayer := tgt.Player != nil
+	victimLevel := 0
+	switch {
+	case tgt.Player != nil:
+		victimFighting = tgt.Player.GetFighting()
+		victimIsOutlaw = tgt.Player.GetFlags()&(1<<uint(game.PlrOutlaw)) != 0
+		victimLevel = tgt.Player.GetLevel()
+	case tgt.Mob != nil:
+		victimFighting = tgt.Mob.GetFighting()
+		victimLevel = tgt.Mob.GetLevel()
+	}
+
+	// Peaceful room — fight.c:1336. Outlaws and already-engaged retaliation
+	// are exempt. Applies to both mob and player targets (mobs are never
+	// outlaws, so they're always protected here).
+	if !victimIsOutlaw && victimFighting != s.player.Name &&
+		s.manager.world.RoomHasFlag(s.player.GetRoom(), "peaceful") {
+		s.Send("This room just has such a peaceful, easy feeling...\r\n")
+		return nil
+	}
+
+	// Low-level PC protection — fight.c:1344 (PC vs PC only). The attacker is
+	// always a player here (cmdHit is a player command), so we only need the
+	// victim-is-PC test for the IS_NPC(victim) half of the C condition.
+	if victimIsPlayer {
+		if s.player.GetLevel() <= 10 {
+			s.Send(fmt.Sprintf("You are not experienced enough to attack %s!\r\n", tgt.Player.Name))
+			return nil
+		}
+		if victimLevel <= 10 && !victimIsOutlaw {
+			s.Send(fmt.Sprintf("Ancient forces protect %s from your wrath!\r\n", tgt.Player.Name))
+			return nil
+		}
 	}
 
 	if tgt.Mob != nil {
