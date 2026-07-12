@@ -178,6 +178,51 @@ func TestCmdBash_NoFightingNoArgs(t *testing.T) {
 	}
 }
 
+func TestCmdBash_AppliesWaitStateToMobTarget(t *testing.T) {
+	world, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}},
+		Mobs: []parser.Mob{{
+			VNum:      1,
+			Keywords:  "rat",
+			ShortDesc: "a rat",
+			LongDesc:  "A rat is here.",
+			Level:     1,
+			HP:        parser.DiceRoll{Num: 1, Sides: 1, Plus: 10},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+
+	basher := game.NewPlayer(1, "Basher", 1001)
+	basher.Class = game.ClassWarrior
+	basher.SetLevel(game.LVL_IMMORT) // auto-succeed bash
+	basher.SetSkill(game.SkillBash, 100)
+	basher.SetPosition(combat.PosFighting)
+	basher.SetMove(100)
+	if err := world.AddPlayer(basher); err != nil {
+		t.Fatalf("AddPlayer basher: %v", err)
+	}
+
+	mob, err := world.SpawnMob(1, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+	mob.SetPosition(combat.PosFighting)
+
+	session := &rescueCommandSession{player: basher, world: world}
+	if err := CmdBash(session, []string{"rat"}); err != nil {
+		t.Fatalf("CmdBash returned error: %v", err)
+	}
+
+	if mob.GetWaitState() != 2 {
+		t.Errorf("expected mob wait state 2 after bash, got %d", mob.GetWaitState())
+	}
+	if mob.GetPosition() != combat.PosSitting {
+		t.Errorf("expected mob position sitting after bash, got %d", mob.GetPosition())
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Utility skill command tests (DP-608 / DP-658)
 // ---------------------------------------------------------------------------

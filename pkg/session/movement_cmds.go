@@ -245,14 +245,17 @@ func cmdFleeMovement(s *Session) error {
 
 		// Successful flee
 
-		// Apply XP loss for players level > 10
+		// Apply XP loss. Base loss (opponent missing HP * opponent level) is
+		// computed at ALL levels. Bonus loss is gated to level > 10.
+		// Source: act.offensive.c:365-369; limits.c:319 caps at max_exp_loss.
 		level := s.player.GetLevel()
 		if level > 10 {
 			xpLoss += int(500 * (float64(level) / 2.6))
-			s.player.LoseExp(xpLoss)
-			if xpLoss > 0 {
-				s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", xpLoss))
-			}
+		}
+
+		if xpLoss > 0 {
+			actualLoss := s.player.LoseExp(xpLoss)
+			s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", actualLoss))
 		}
 
 		s.manager.combatEngine.StopCombat(s.player.Name)

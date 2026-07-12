@@ -628,3 +628,77 @@ func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
 		t.Errorf("second death: corpse count = %d, want 2 (one per death)", corpseCount)
 	}
 }
+
+// -----------------------------------------------------------------------------
+// DP-1031: alignment shift from kills
+// -----------------------------------------------------------------------------
+
+func testAlignmentSetup(t *testing.T, victimAlignment int) (*World, *Player, *MobInstance) {
+	t.Helper()
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+		},
+		Mobs: []parser.Mob{
+			{
+				VNum:      1,
+				ShortDesc: "a test mob",
+				LongDesc:  "A test mob is here.",
+				Keywords:  "test mob",
+				Level:     5,
+				Exp:       100,
+				Gold:      10,
+				Alignment: victimAlignment,
+			},
+		},
+	}
+
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	mob, err := w.SpawnMob(1, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+
+	killer := NewPlayer(99, "Hero", 1001)
+	killer.SetAlignment(0) // neutral
+	if err := w.AddPlayer(killer); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	return w, killer, mob
+}
+
+func TestHandleDeath_KillingEvilMobShiftsAlignmentGood(t *testing.T) {
+	w, killer, mob := testAlignmentSetup(t, -500)
+
+	w.HandleDeath(mob, killer, 303)
+
+	if killer.GetAlignment() <= 0 {
+		t.Errorf("killing evil mob should shift alignment positive, got %d", killer.GetAlignment())
+	}
+}
+
+func TestHandleDeath_KillingGoodMobShiftsAlignmentEvil(t *testing.T) {
+	w, killer, mob := testAlignmentSetup(t, 500)
+
+	w.HandleDeath(mob, killer, 303)
+
+	if killer.GetAlignment() >= 0 {
+		t.Errorf("killing good mob should shift alignment negative, got %d", killer.GetAlignment())
+	}
+}
+
+func TestHandleDeath_KillingNeutralMobNoShift(t *testing.T) {
+	w, killer, mob := testAlignmentSetup(t, 0)
+
+	w.HandleDeath(mob, killer, 303)
+
+	if killer.GetAlignment() != 0 {
+		t.Errorf("killing neutral mob should not shift alignment, got %d", killer.GetAlignment())
+	}
+}

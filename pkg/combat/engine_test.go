@@ -347,3 +347,79 @@ func TestPerformRound_IgnoresNonFightingCombatant(t *testing.T) {
 		t.Errorf("DP-900: attacker should not be hit by a non-fighting defender, HP %d → %d", startHP, attacker.GetHP())
 	}
 }
+
+// -----------------------------------------------------------------------------
+// DP-1032: mob wait-state enforcement in combat rounds
+// -----------------------------------------------------------------------------
+
+type waitStateMockCombatant struct {
+	mockCombatant
+	waitState int
+}
+
+func (m *waitStateMockCombatant) GetWaitState() int      { return m.waitState }
+func (m *waitStateMockCombatant) SetWaitState(ticks int) { m.waitState = ticks }
+func (m *waitStateMockCombatant) DecrementWaitState() {
+	if m.waitState > 0 {
+		m.waitState--
+	}
+}
+
+func TestProcessCombatPair_MobWithWaitSkipsAttack(t *testing.T) {
+	attacker := &waitStateMockCombatant{
+		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10},
+		waitState:     2,
+	}
+	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {}
+
+	// processCombatPair will skip attacks when wait is active, so defender HP
+	// should stay at 100.
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
+
+	if attacker.waitState != 1 {
+		t.Errorf("expected wait state decremented to 1, got %d", attacker.waitState)
+	}
+	if defender.hp != 100 {
+		t.Errorf("expected defender HP unchanged while mob waits, got %d", defender.hp)
+	}
+	if attacker.GetPosition() != PosSitting {
+		t.Errorf("expected attacker still sitting while wait active, got %d", attacker.GetPosition())
+	}
+}
+
+func TestProcessCombatPair_MobStandsWhenWaitExpires(t *testing.T) {
+	attacker := &waitStateMockCombatant{
+		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10},
+		waitState:     1,
+	}
+	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	var broadcasts []string
+	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
+		broadcasts = append(broadcasts, message)
+	}
+
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
+
+	if attacker.waitState != 0 {
+		t.Errorf("expected wait state 0 after expiry, got %d", attacker.waitState)
+	}
+	if attacker.GetPosition() != PosFighting {
+		t.Errorf("expected attacker to stand up when wait expires, got %d", attacker.GetPosition())
+	}
+	if len(broadcasts) == 0 || !strings.Contains(broadcasts[0], "scrambles") {
+		t.Errorf("expected stand-up room broadcast, got %v", broadcasts)
+	}
+}

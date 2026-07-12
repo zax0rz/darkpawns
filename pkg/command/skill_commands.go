@@ -1620,8 +1620,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		ch.SetWaitState(result.WaitCh)
 	}
 	if result.WaitTarget > 0 && target != nil {
-		if p, ok := target.(*game.Player); ok {
-			p.SetWaitState(result.WaitTarget)
+		switch t := target.(type) {
+		case *game.Player:
+			t.SetWaitState(result.WaitTarget)
+		case *game.MobInstance:
+			t.SetWaitState(result.WaitTarget)
 		}
 	}
 
