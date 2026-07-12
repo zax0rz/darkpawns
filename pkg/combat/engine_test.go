@@ -198,9 +198,13 @@ func TestHandleDeath_PassesAttackType(t *testing.T) {
 	pairKey := CombatPairKey{Attacker: "Attacker", Target: "Defender"}
 	pair := ce.combatPairs[pairKey]
 
-	// Run processCombatPair. Loop to handle potential natural 1 misses.
+	// Run processCombatPair until a blow lands. Reset the defender to just
+	// above the POS_DEAD floor (-11, DP-1021) each iteration so ANY landed hit
+	// is lethal — the loop only needs to survive natural-1 misses, not also
+	// roll >=12 damage. Resetting to hp=1 made the kill depend on the damage
+	// roll crossing -11, which flaked when 10 straight swings rolled low.
 	for i := 0; i < 10 && !deathFuncCalled; i++ {
-		defender.hp = 1
+		defender.hp = -10
 		ce.processCombatPair(pair)
 	}
 
