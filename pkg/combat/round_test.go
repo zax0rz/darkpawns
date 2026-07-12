@@ -128,12 +128,11 @@ func TestDamMessage_HighDamageTier(t *testing.T) {
 
 	DamMessage(1000, attacker, defender, 5) // bludgeon
 
-	// Tier 12 (OBLITERATES, 101+) and Tier 13 (ROCKS, 10000+) are both valid.
+	// Damage 1000 maps to tier 11 (ROCKS THE HELL OUT OF, 54+).
 	// randPick chooses one variant at random, so check any tier-appropriate keyword.
 	foundTier := false
 	for _, msg := range broadcastMessages {
-		if strings.Contains(msg, "OBLITERATES") || strings.Contains(msg, "blow of legend") ||
-			strings.Contains(msg, "R O C K S") || strings.Contains(msg, "smear") {
+		if strings.Contains(msg, "ROCKS THE HELL OUT OF") || strings.Contains(msg, "catastrophic") {
 			foundTier = true
 			break
 		}

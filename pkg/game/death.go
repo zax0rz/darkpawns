@@ -961,17 +961,38 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 // counter_procs checks kill milestone rewards after every player kill.
 // Source: fight.c:1252-1310 — counter_procs()
 // At certain kill counts, players receive stat boosts or full heals.
-// Note: The C switch has intentional fall-through on cases 1/2/3 — all three
-// stats are boosted, not a random one. This is preserved faithfully.
+//
+// The C switch(number(1,3)) has fall-through WITH a default clause (DP-1040):
+//
+//	switch(number(1,3)) {
+//	case 1: GET_MAX_HIT(ch)++;   // falls through
+//	case 2: GET_MAX_MANA(ch)++;  // falls through
+//	case 3: GET_MAX_MOVE(ch)++;  // falls through
+//	default: GET_MAX_HIT(ch)++; break;
+//	}
+//
+// Outcomes:
+//
+//	roll 1: +2 hit, +1 mana, +1 move  (case 1→2→3→default)
+//	roll 2: +1 hit, +1 mana, +1 move  (case 2→3→default)
+//	roll 3: +1 hit, +1 move           (case 3→default, no mana)
 func (w *World) counter_procs(ch *Player, kills int) {
 	if counterProcsBoostMilestones[kills] {
 		ch.SendMessage("The gods reward your many victories!\r\n")
-		// C fall-through: all three stat boosts apply (no break between cases 1/2/3)
+		// Faithful C fall-through: case 3 → default always fires (+1 move,
+		// +1 hit); case 2 adds +1 mana; case 1 adds another +1 hit.
+		// #nosec G404 — game RNG, not cryptographic
+		roll := combat.GetRoller().Number(1, 3) // C: number(1, 3) → 1..3
 		ch.Lock()
-		ch.MaxHealth++
-		ch.MaxMana++
-		ch.MaxMove++
-		ch.Health = ch.MaxHealth // heal to full
+		ch.MaxMove++   // case 3 (always reached via fall-through)
+		ch.MaxHealth++ // default (always reached via fall-through)
+		if roll <= 2 { // case 2 (reached from roll 1 or 2)
+			ch.MaxMana++
+		}
+		if roll <= 1 { // case 1 (reached from roll 1 only)
+			ch.MaxHealth++
+		}
+		ch.Health = ch.MaxHealth // C: GET_HIT(ch)=GET_MAX_HIT(ch)
 		ch.Unlock()
 	} else if counterProcsHealMilestones[kills] {
 		ch.SendMessage("The gods reward your glory in battle!\r\n")

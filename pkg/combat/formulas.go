@@ -147,46 +147,48 @@ var thaco = [12][41]int{
 }
 
 // strApp mirrors str_app[] from constants.c
-// Fields: {tohit, todam, carry_w, carry_n}
+// Fields: {tohit, todam, carry_w, wield_w}
+// carry_w is the max carry weight (CAN_CARRY_W); wield_w is max wield weight.
 type strAppType struct {
-	ToHit int
-	ToDam int
+	ToHit  int
+	ToDam  int
+	CarryW int
+	WieldW int
 }
 
 // strApp — from constants.c str_app[], indices 0–30
-// We only need tohit and todam fields.
 var strApp = []strAppType{
-	{-5, -4}, // 0
-	{-5, -4}, // 1
-	{-3, -2}, // 2
-	{-3, -1}, // 3
-	{-2, -1}, // 4
-	{-2, -1}, // 5
-	{-1, 0},  // 6
-	{-1, 0},  // 7
-	{0, 0},   // 8
-	{0, 0},   // 9
-	{0, 0},   // 10
-	{0, 0},   // 11
-	{0, 0},   // 12
-	{0, 0},   // 13
-	{0, 0},   // 14
-	{0, 0},   // 15
-	{0, 1},   // 16
-	{1, 1},   // 17
-	{1, 2},   // 18
-	{3, 7},   // 19
-	{3, 8},   // 20
-	{4, 9},   // 21
-	{4, 10},  // 22
-	{5, 11},  // 23
-	{6, 12},  // 24
-	{7, 14},  // 25
-	{1, 3},   // 18/01-50
-	{2, 3},   // 18/51-75
-	{2, 4},   // 18/76-90
-	{2, 5},   // 18/91-99
-	{3, 6},   // 18/100
+	{-5, -4, 0, 0},    // 0
+	{-5, -4, 3, 1},    // 1
+	{-3, -2, 3, 2},    // 2
+	{-3, -1, 10, 3},   // 3
+	{-2, -1, 25, 4},   // 4
+	{-2, -1, 55, 5},   // 5
+	{-1, 0, 80, 6},    // 6
+	{-1, 0, 90, 7},    // 7
+	{0, 0, 100, 8},    // 8
+	{0, 0, 100, 9},    // 9
+	{0, 0, 115, 10},   // 10
+	{0, 0, 115, 11},   // 11
+	{0, 0, 140, 12},   // 12
+	{0, 0, 140, 13},   // 13
+	{0, 0, 170, 14},   // 14
+	{0, 0, 170, 15},   // 15
+	{0, 1, 195, 16},   // 16
+	{1, 1, 220, 18},   // 17
+	{1, 2, 255, 20},   // 18
+	{3, 7, 640, 40},   // 19
+	{3, 8, 700, 40},   // 20
+	{4, 9, 810, 40},   // 21
+	{4, 10, 970, 40},  // 22
+	{5, 11, 1130, 40}, // 23
+	{6, 12, 1440, 40}, // 24
+	{7, 14, 1750, 40}, // 25
+	{1, 3, 280, 22},   // 18/01-50
+	{2, 3, 305, 24},   // 18/51-75
+	{2, 4, 330, 26},   // 18/76-90
+	{2, 5, 380, 28},   // 18/91-99
+	{3, 6, 480, 30},   // 18/100
 }
 
 // dexApp mirrors dex_app[] from constants.c
@@ -275,6 +277,22 @@ func StrAppToDam(c Combatant) int {
 		return 0
 	}
 	return strApp[idx].ToDam
+}
+
+// CarryWeight returns the max carry weight for a raw strength value, looking up
+// str_app[str].carry_w from constants.c (DP-1038). This is the canonical
+// CAN_CARRY_W(ch) accessor for callers that only have a strength integer (e.g.
+// Inventory.SetCapacity). It maps raw STR to the str_app index directly;
+// exceptional strength (18/xx) is handled by strIndex when a Combatant is
+// available.
+func CarryWeight(str int) int {
+	if str < 0 {
+		return 0
+	}
+	if str >= len(strApp) {
+		str = len(strApp) - 1
+	}
+	return strApp[str].CarryW
 }
 
 // dexIndex returns the dex_app index for a combatant.
