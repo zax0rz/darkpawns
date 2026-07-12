@@ -53,12 +53,18 @@ func TestTelnetSmoke_GuestEntersWorld(t *testing.T) {
 	// and drops straight into the world as a level-1 Warrior.
 	mustWrite(t, conn, "guest\r\n")
 
-	// Read through to the MOTD, which the server sends *after* the
-	// look-on-entry room block. By the time "Welcome to Dark Pawns" arrives,
+	// Guests now hit the CON_MENU (DP-1067). Wait for the menu, select
+	// option 1 to enter the game.
+	if got := readUntil(t, conn, r, "Make your choice", 10*time.Second); got == "" {
+		t.Fatal("guest never received the main menu")
+	}
+	mustWrite(t, conn, "1\r\n")
+
+	// Read through to the room entry. By the time "[8004]" arrives,
 	// the room name, vnum and exits have all already been streamed.
-	entered := readUntil(t, conn, r, "Welcome to Dark Pawns", 10*time.Second)
+	entered := readUntil(t, conn, r, "[8004]", 10*time.Second)
 	if entered == "" {
-		t.Fatal("guest never entered the world (no MOTD received after login)")
+		t.Fatal("guest never entered the world")
 	}
 	for _, want := range []string{"Temple Altar", "[8004]", "Exits:"} {
 		if !strings.Contains(entered, want) {
@@ -326,6 +332,11 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		}
 		mustWrite(t, c1, st.send)
 	}
+	// CON_MENU (DP-1067): select option 1 to enter the game.
+	if got := readUntil(t, c1, r1, "Make your choice", 10*time.Second); got == "" {
+		t.Fatal("conn1: never received the main menu after character creation")
+	}
+	mustWrite(t, c1, "1\r\n")
 	if got := readUntil(t, c1, r1, "[8004]", 10*time.Second); got == "" {
 		t.Fatal("conn1: new character did not enter the world")
 	}
@@ -357,6 +368,11 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Fatal("conn3: returning player was not prompted for a password")
 	}
 	mustWrite(t, c3, password+"\r\n")
+	// CON_MENU (DP-1067): returning players hit the menu too.
+	if got := readUntil(t, c3, r3, "Make your choice", 10*time.Second); got == "" {
+		t.Fatal("conn3: returning player did not get menu")
+	}
+	mustWrite(t, c3, "1\r\n")
 	loaded := readUntil(t, c3, r3, "[8004]", 10*time.Second)
 	if loaded == "" {
 		t.Fatal("conn3: persisted character did not load back into the world")
@@ -472,6 +488,14 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 		}
 		mustWrite(t, conn, st.send)
 	}
+
+	// CON_MENU (DP-1067): after MOTD the player lands at the main menu.
+	// Select option 1 to enter the game.
+	if got := readUntil(t, conn, r, "Make your choice", 10*time.Second); got == "" {
+		t.Fatal("never received the main menu after character creation")
+	}
+	mustWrite(t, conn, "1\r\n")
+
 	entered := readUntil(t, conn, r, "[8004]", 10*time.Second)
 	if entered == "" {
 		t.Fatal("new character never entered the world")
