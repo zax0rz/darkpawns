@@ -564,6 +564,80 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
 }
 
+// deathTrap performs an immortal-exempt ROOM_DEATH extraction, faithful to
+// src/act.movement.c:288-301. Unlike handlePlayerDeath this is corpse-less and
+// penalty-free: no XP loss, no CON loss, no gold drop, no equipment/inventory
+// scatter — extract_char() removes the char and respawns them at the temple.
+// The player keeps everything they carried. Called from MovePlayer, OUTSIDE w.mu.
+func (w *World) deathTrap(player *Player) {
+	// log_death_trap (src/utils.c:141) — mudlog line only.
+	slog.Info("death trap", "player", player.GetName(), "room", player.GetRoom())
+
+	// death_cry to the room the player is dying in.
+	w.roomMessage(player.GetRoom(),
+		fmt.Sprintf("The sound of a death cry is heard as %s enters the room!\r\n", player.GetName()))
+	player.SendMessage("You have entered a death trap!\r\n")
+
+	// If mounted, the mount dies too (C extracts it identically). At minimum the
+	// player must be dismounted so they don't ride a ghost after respawn.
+	w.deathTrapMount(player)
+
+	// Respawn tail — the SAME machinery handlePlayerDeath uses at death.go:550-564,
+	// MINUS every penalty/corpse block.
+	player.SetRoom(LoginStartRoom(player))
+	player.SetPosition(combat.PosStanding)
+	player.Heal(9999)
+	player.StopFighting()
+	if player.IsAffected(affWerewolf) {
+		player.SetAffect(affWerewolf, false)
+	}
+	player.SendMessage("\r\nYou feel your soul wrenched from your body...\r\n")
+	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
+}
+
+// deathTrapMount extracts a player's mount when the player hits a death trap.
+// C's act.movement.c:296-300 extracts both rider and mount via extract_char().
+// This helper finds the mount in the player's current room, removes it from the
+// world, and clears the player's mounted state so they respawn dismounted.
+func (w *World) deathTrapMount(player *Player) {
+	if !player.IsMounted() {
+		return
+	}
+
+	roomVNum := player.GetRoom()
+	mounts := w.GetMobsInRoom(roomVNum)
+	var mount *MobInstance
+	for _, m := range mounts {
+		if m.GetMountRider() == player.GetName() {
+			mount = m
+			break
+		}
+	}
+
+	// Mount not found in room (e.g. already extracted or Go movement left it
+	// behind). Still clear the player's mounted state so they don't ride a ghost.
+	if mount == nil {
+		player.MountName = ""
+		player.SetAffect(affMounted, false)
+		player.SetFollowing("")
+		return
+	}
+
+	w.roomMessage(roomVNum,
+		fmt.Sprintf("The sound of a death cry is heard as %s enters the room!\r\n", mount.GetShortDesc()))
+
+	// Extract the mount using the existing mob-extraction helper. This deletes the
+	// mob from w.activeMobs under w.mu. Spawner instance-count cleanup is handled
+	// by ExtractMob's callers elsewhere; for a DT mount this is the established
+	// removal path in this codebase.
+	w.ExtractMob(mount)
+	mount.SetMountRider("")
+
+	player.MountName = ""
+	player.SetAffect(affMounted, false)
+	player.SetFollowing("")
+}
+
 // Attack type constants (TYPE_*) from spells.h:266-283
 // Weapon types: TYPE_HIT(300) through TYPE_SUFFERING(399)
 const (

@@ -964,15 +964,10 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 	w.mu.Unlock()
 
 	if result != nil && roomHasFlagBit(result.Flags, 1) && p.Level < LVL_IMMORT {
-		// Death trap check — act.movement.c:289-302
-		// ROOM_DEATH is bit 1 in RoomBitNames (constants.go:135).
-		// Performed outside the world lock because SendMessage/roomMessage
-		// acquire their own locks and would deadlock if called while holding
-		// w.mu.Lock().
-		slog.Info("death trap", "player", p.GetName(), "room", result.VNum)
-		p.TakeDamage(p.GetHP() + 1)
-		p.SendMessage("You have entered a death trap!\r\n")
-		w.roomMessage(result.VNum, fmt.Sprintf("The sound of a death cry is heard as %s enters the room!\r\n", p.GetName()))
+		// Death trap — act.movement.c:288-301. Corpse-less, penalty-free extraction
+		// to the temple; performed outside the world lock because roomMessage/
+		// SendMessage/SetRoom acquire their own locks.
+		w.deathTrap(p)
 	}
 
 	if errMsg != "" {
