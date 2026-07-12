@@ -4,8 +4,11 @@ import (
 	"testing"
 )
 
-// TestDamageMessages_Golden verifies that damage values correctly map to the expected
-// damage message tiers and thresholds defined in the Go implementation.
+// TestDamageMessages_Golden verifies that damage values correctly map to the
+// expected damage message tiers. Boundaries match src/fight.c:981-992 (DP-1043):
+//
+//	dam==0 → 0, <=2 → 1, <=4 → 2, <=6 → 3, <=10 → 4, <=14 → 5,
+//	<=19 → 6, <=23 → 7, <=33 → 8, <=43 → 9, <=53 → 10, else → 11
 func TestDamageMessages_Golden(t *testing.T) {
 	tests := []struct {
 		damage         int
@@ -21,23 +24,20 @@ func TestDamageMessages_Golden(t *testing.T) {
 		{damage: 7, expectedMinDam: 7},
 		{damage: 10, expectedMinDam: 7},
 		{damage: 11, expectedMinDam: 11},
-		{damage: 17, expectedMinDam: 11},
-		{damage: 18, expectedMinDam: 18},
-		{damage: 25, expectedMinDam: 18},
-		{damage: 26, expectedMinDam: 26},
-		{damage: 35, expectedMinDam: 26},
-		{damage: 36, expectedMinDam: 36},
-		{damage: 47, expectedMinDam: 36},
-		{damage: 48, expectedMinDam: 48},
-		{damage: 59, expectedMinDam: 48},
-		{damage: 60, expectedMinDam: 60},
-		{damage: 79, expectedMinDam: 60},
-		{damage: 80, expectedMinDam: 80},
-		{damage: 100, expectedMinDam: 80},
-		{damage: 101, expectedMinDam: 101},
-		{damage: 9999, expectedMinDam: 101},
-		{damage: 10000, expectedMinDam: 10000},
-		{damage: 15000, expectedMinDam: 10000},
+		{damage: 14, expectedMinDam: 11},
+		{damage: 15, expectedMinDam: 15},
+		{damage: 19, expectedMinDam: 15},
+		{damage: 20, expectedMinDam: 20},
+		{damage: 23, expectedMinDam: 20},
+		{damage: 24, expectedMinDam: 24},
+		{damage: 33, expectedMinDam: 24},
+		{damage: 34, expectedMinDam: 34},
+		{damage: 43, expectedMinDam: 34},
+		{damage: 44, expectedMinDam: 44},
+		{damage: 53, expectedMinDam: 44},
+		{damage: 54, expectedMinDam: 54},
+		{damage: 100, expectedMinDam: 54},
+		{damage: 9999, expectedMinDam: 54},
 	}
 
 	for _, tt := range tests {

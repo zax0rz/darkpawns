@@ -612,8 +612,19 @@ func randPick[T any](s []T) T {
 	return s[GetRoller().IntN(len(s))]
 }
 
+// damMessageTiers — weapon damage message tiers.
+//
+// Boundaries and texts follow src/fight.c:895-992 exactly (DP-1043). The C
+// if/else chain is:
+//
+//	dam==0 → 0, <=2 → 1, <=4 → 2, <=6 → 3, <=10 → 4, <=14 → 5,
+//	<=19 → 6, <=23 → 7, <=33 → 8, <=43 → 9, <=53 → 10, else → 11
+//
+// MinDamage below is the lowest damage value that selects each tier. The first
+// variant in each tier matches the C dam_weapons[] text verbatim; additional
+// variants are flavor that preserves the CircleMUD multi-variant feel.
 var damMessageTiers = []damMessageTier{
-	// Tier 0: miss
+	// Tier 0: miss (dam == 0)
 	{
 		0,
 		[]string{
@@ -699,7 +710,7 @@ var damMessageTiers = []damMessageTier{
 			"$n connects firmly with you.",
 		},
 	},
-	// Tier 5: very hard (11-17)
+	// Tier 5: very hard (11-14)
 	{
 		11,
 		[]string{
@@ -715,9 +726,9 @@ var damMessageTiers = []damMessageTier{
 			"$n's heavy strike staggers you.",
 		},
 	},
-	// Tier 6: extremely hard (18-25)
+	// Tier 6: extremely hard (15-19)
 	{
-		18,
+		15,
 		[]string{
 			"$n #W $N extremely hard.",
 			"$n wallops $N with bone-rattling force!",
@@ -731,119 +742,84 @@ var damMessageTiers = []damMessageTier{
 			"$n wallops you with bone-rattling force!",
 		},
 	},
-	// Tier 7: violently (26-35) — C version: "massacres $N to small fragments"
+	// Tier 7: massacres (20-23)
 	{
-		26,
+		20,
 		[]string{
-			"$n #W $N violently.",
-			"$n massacres $N to small fragments with $s #w!",
+			"$n massacres $N to small fragments with $s #w.",
+			"$n tears into $N, sending fragments flying!",
 		},
 		[]string{
-			"You #w $N violently.",
-			"You massacre $N to small fragments with your #w!",
+			"You massacre $N to small fragments with your #w.",
+			"You tear into $N, sending fragments flying!",
 		},
 		[]string{
-			"$n #W you violently.",
-			"$n massacres you to small fragments with $s #w!",
+			"$n massacres you to small fragments with $s #w.",
+			"$n tears into you, sending fragments flying!",
 		},
 	},
-	// Tier 8: savagely (36-47) — C version: "OBLITERATES $N with deadly #w"
+	// Tier 8: OBLITERATES (24-33)
 	{
-		36,
+		24,
 		[]string{
-			"$n #W $N savagely.",
 			"$n OBLITERATES $N with $s deadly #w!!",
+			"$n reduces $N to a bloody smear!!",
 		},
 		[]string{
-			"You #w $N savagely.",
 			"You OBLITERATE $N with your deadly #w!!",
+			"You reduce $N to a bloody smear!!",
 		},
 		[]string{
-			"$n #W you savagely.",
 			"$n OBLITERATES you with $s deadly #w!!",
+			"$n reduces you to a bloody smear!!",
 		},
 	},
-	// Tier 9: MUTILATES (48-59) — C version: "EVISCERATES $N with incredible #w"
+	// Tier 9: EVISCERATES (34-43)
 	{
-		48,
+		34,
 		[]string{
-			"$n MUTILATES $N!",
 			"$n EVISCERATES $N with $s incredible #w!!",
+			"$n lays $N open with an incredible strike!!",
 		},
 		[]string{
-			"You MUTILATE $N!",
 			"You EVISCERATE $N with your incredible #w!!",
+			"You lay $N open with an incredible strike!!",
 		},
 		[]string{
-			"$n MUTILATES you!",
 			"$n EVISCERATES you with $s incredible #w!!",
+			"$n lays you open with an incredible strike!!",
 		},
 	},
-	// Tier 10: DISEMBOWELS (60-79)
+	// Tier 10: DESTROYS (44-53)
 	{
-		60,
+		44,
 		[]string{
-			"$n DISEMBOWELS $N!!",
-			"$n opens $N up like a gutted fish!!",
+			"$n DESTROYS $N with $s ungodly #w!!",
+			"$n unleashes an ungodly blow upon $N!!",
 		},
 		[]string{
-			"You DISEMBOWEL $N!!",
-			"You open $N up like a gutted fish!!",
+			"You DESTROY $N with your ungodly #w!!",
+			"You unleash an ungodly blow upon $N!!",
 		},
 		[]string{
-			"$n DISEMBOWELS you!!",
-			"$n opens you up like a gutted fish!!",
+			"$n DESTROYS you with $s ungodly #w!!",
+			"$n unleashes an ungodly blow upon you!!",
 		},
 	},
-	// Tier 11: DESTROYS (80-100)
+	// Tier 11: ROCKS THE HELL OUT OF (54+)
 	{
-		80,
+		54,
 		[]string{
-			"$n DESTROYS $N!!!",
-			"$n annihilates $N with a devastating blow!!!",
+			"$n ROCKS THE HELL OUT OF $N with $s ultimate #w!!",
+			"$n delivers a catastrophic blow of legend against $N!!",
 		},
 		[]string{
-			"You DESTROY $N!!!",
-			"You annihilate $N with a devastating blow!!!",
+			"You ROCK THE HELL OUT OF $N with your ultimate #w!!",
+			"You deliver a catastrophic blow of legend against $N!!",
 		},
 		[]string{
-			"$n DESTROYS you!!!",
-			"$n annihilates you with a devastating blow!!!",
-		},
-	},
-	// Tier 12: OBLITERATES (101-9999)
-	{
-		101,
-		[]string{
-			"$n OBLITERATES $N!!!!",
-			"$n reduces $N to a bloody smear on the ground!!!!",
-			"$n delivers a blow of legend against $N!!!!",
-		},
-		[]string{
-			"You OBLITERATE $N!!!!",
-			"You reduce $N to a bloody smear on the ground!!!!",
-			"You deliver a blow of legend against $N!!!!",
-		},
-		[]string{
-			"$n OBLITERATES you!!!!",
-			"$n reduces you to a bloody smear on the ground!!!!",
-			"$n delivers a blow of legend against you!!!!",
-		},
-	},
-	// Tier 13: ROCK (10000+)
-	{
-		10000,
-		[]string{
-			"$n R O C K S the Hell Out Of $N!!!!!!!!!!!!!!!!!!!!!!!!",
-			"$n delivers a blow so catastrophic that reality itself flinches!!!!!!!!!!",
-		},
-		[]string{
-			"You R O C K the Hell Out Of $N!!!!!!!!!!!!!!!!!!!!!!!!",
-			"You deliver a blow so catastrophic that reality itself flinches!!!!!!!!!!",
-		},
-		[]string{
-			"$n R O C K S the Hell Out Of You!!!!!!!!!!!!!!!!!!!!!!!!",
-			"$n delivers a blow so catastrophic that reality itself flinches!!!!!!!!!!",
+			"$n ROCKS THE HELL OUT OF you with $s ultimate #w!!",
+			"$n delivers a catastrophic blow of legend against you!!",
 		},
 	},
 }

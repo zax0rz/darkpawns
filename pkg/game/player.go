@@ -277,7 +277,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 	player.Equipment = NewEquipment()
 	player.Equipment.OwnerName = player.Name
 	// Set default capacity (will be updated when stats are set)
-	player.Inventory.SetCapacity(10, 1) // Default DEX=10, level=1
+	player.Inventory.SetCapacity(10, 10, 1) // Default STR=10, DEX=10, level=1
 
 	return player
 }
@@ -316,9 +316,10 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	// This adds con_app[con].hitp + class-specific random HP
 	p.AdvanceLevel()
 
-	// Set inventory capacity based on DEX and level
-	// Formula: 5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1)
-	p.Inventory.SetCapacity(p.Stats.Dex, p.Level)
+	// Set inventory capacity and carry weight based on STR, DEX and level
+	// CAN_CARRY_N = 5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1)
+	// CAN_CARRY_W = str_app[str].carry_w
+	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.Dex, p.Level)
 
 	// Initialize default skills
 	p.SkillManager.InitializeDefaultSkills()
