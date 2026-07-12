@@ -164,7 +164,8 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			}
 		case "N":
 			s.sendText("Okay, what IS it, then? ")
-			s.Close()
+			s.charStage = "get_name"
+			s.charName = ""
 		default:
 			s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Please type Yes or No: \r\nDid I get that right, %s (Y/N)? ", s.charName), charOpts("Y", "Yes", "N", "No"))
 		}
@@ -629,7 +630,7 @@ func (s *Session) getRaceOptions() []CharCreateOption {
 		{"E", "Elven"},
 		{"D", "Dwarven"},
 		{"K", "Kenderkin"},
-		{"M", "Minotauran"},
+		{"M", "Minotaur"},
 		{"R", "Rakshasan"},
 		{"S", "Ssauran"},
 	}
@@ -643,7 +644,7 @@ func (s *Session) getClassOptions(race int) []CharCreateOption {
 		{"C", "Cleric"},
 		{"T", "Thief"},
 		{"W", "Warrior"},
-		{"M", "Magic-user"},
+		{"M", "Mage"},
 		{"I", "Psionic"},
 	}
 	if race == game.RaceHuman {
