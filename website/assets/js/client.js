@@ -389,6 +389,7 @@
 
   let loggedIn = false;
   let inCharCreation = false;
+  let charInputSecret = false;
   let loginStage = 'name'; // 'name', 'password', 'new_char', 'confirm_password'
   let username = '';
   let password = '';
@@ -458,10 +459,15 @@
         } else if (msg.type === 'char_create') {
           inCharCreation = true;
           loggedIn = false;
+          charInputSecret = Boolean(msg.data.secret);
           term.write('\r\n' + msg.data.prompt + '\r\n');
-          if (msg.data.options) {
-            for (const [key, desc] of Object.entries(msg.data.options)) {
-              term.write(`  [${key}] - ${desc}\r\n`);
+          const promptContainsOptions = msg.data.prompt.includes('0) Exit from Dark Pawns') || msg.data.prompt.includes('[');
+          if (msg.data.options && !promptContainsOptions) {
+            const options = Array.isArray(msg.data.options)
+              ? msg.data.options
+              : Object.entries(msg.data.options).map(([key, label]) => ({ key, label }));
+            for (const option of options) {
+              term.write(`  [${option.key}] - ${option.label}\r\n`);
             }
           }
           term.write('> ');
@@ -478,6 +484,7 @@
           if (!loggedIn && msg.data && msg.data.player && msg.data.player.name) {
             loggedIn = true;
             inCharCreation = false;
+            charInputSecret = false;
           }
           if (loggedIn && msg.data) {
             handleStateMsg(msg.data);
@@ -496,6 +503,7 @@
       term.writeln('\x1b[31m\r\n--- Connection lost ---\x1b[0m');
       loggedIn = false;
       inCharCreation = false;
+      charInputSecret = false;
       loginStage = 'name';
       username = '';
       password = '';
@@ -574,9 +582,7 @@
       }
 
       if (inCharCreation) {
-        if (input.trim()) {
-          ws.send(JSON.stringify({ type: 'char_input', data: { choice: input.trim() } }));
-        }
+        ws.send(JSON.stringify({ type: 'char_input', data: { choice: input } }));
         return;
       }
 
@@ -585,13 +591,13 @@
     } else if (data === '\x7f' || data === '\b') {
       if (inputBuffer.length > 0) {
         inputBuffer = inputBuffer.slice(0, -1);
-        if (loginStage !== 'password' && loginStage !== 'confirm_password') {
+        if (loginStage !== 'password' && loginStage !== 'confirm_password' && !charInputSecret) {
           term.write('\b \b');
         }
       }
     } else if (data.charCodeAt(0) >= 32) {
       inputBuffer += data;
-      if (loginStage !== 'password' && loginStage !== 'confirm_password') {
+      if (loginStage !== 'password' && loginStage !== 'confirm_password' && !charInputSecret) {
         term.write(data);
       }
     }
@@ -600,6 +606,7 @@
   reconnectBtn.addEventListener('click', function () {
     loggedIn = false;
     inCharCreation = false;
+    charInputSecret = false;
     loginStage = 'name';
     username = '';
     password = '';

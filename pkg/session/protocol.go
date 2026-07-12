@@ -136,6 +136,7 @@ type CharCreateData struct {
 	Prompt  string             `json:"prompt"`
 	Options []CharCreateOption `json:"options,omitempty"` // key → label, ordered (DP-909)
 	Stats   *CharStatsDisplay  `json:"stats,omitempty"`   // only on rollstats/confirm stage
+	Secret  bool               `json:"secret,omitempty"`  // mask input for password prompts
 }
 
 // CharCreateOption is one selectable option in a character-creation menu. The

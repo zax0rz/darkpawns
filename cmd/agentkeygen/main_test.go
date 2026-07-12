@@ -27,6 +27,10 @@ func (m *mockDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 func (m *mockDatabase) CreatePlayer(p *db.PlayerRecord) error          { return nil }
 func (m *mockDatabase) SavePlayer(p *db.PlayerRecord) error            { return nil }
 func (m *mockDatabase) UpdatePassword(playerID int, hash string) error { return nil }
+func (m *mockDatabase) UpdateDescription(playerID int, description string) error {
+	return nil
+}
+func (m *mockDatabase) DeletePlayer(playerID int) error { return nil }
 func (m *mockDatabase) GetAccountLockout(name string) (int, *time.Time, error) {
 	return 0, nil, nil
 }

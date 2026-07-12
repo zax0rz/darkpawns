@@ -43,6 +43,20 @@ func TestUpdatePasswordExecutes(t *testing.T) {
 	}
 }
 
+func TestUpdateDescriptionExecutes(t *testing.T) {
+	db := newFakeDB(t, false)
+	if err := db.UpdateDescription(1, "A weathered traveler."); err != nil {
+		t.Fatalf("UpdateDescription error: %v", err)
+	}
+}
+
+func TestDeletePlayerExecutes(t *testing.T) {
+	db := newFakeDB(t, false)
+	if err := db.DeletePlayer(1); err != nil {
+		t.Fatalf("DeletePlayer error: %v", err)
+	}
+}
+
 // TestSavePlayerExecutes verifies that SavePlayer runs the full update
 // statement without error.
 func TestSavePlayerExecutes(t *testing.T) {

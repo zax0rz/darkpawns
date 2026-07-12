@@ -316,6 +316,23 @@ func ShowMOTD(worldPath string) string {
 	return ""
 }
 
+// ShowBackground reads the setting's background story, falling back to a
+// short built-in introduction when an older world install has no text file.
+func ShowBackground(worldPath string) string {
+	paths := []string{
+		worldPath + "/text/background",
+		worldPath + "/background",
+	}
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err == nil {
+			return string(data)
+		}
+	}
+	return "Darkness has settled over the old kingdoms. From the ruins, rival powers " +
+		"move their pawns across a world of forgotten magick, ancient grudges, and dangerous ambition.\r\n"
+}
+
 // decayObjectsInRoom decays objects in the given room.
 // Ported from limits.c point_update() object section (lines 527-686).
 func (w *World) decayObjectsInRoom(roomVNum int) {

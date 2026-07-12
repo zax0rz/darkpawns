@@ -340,11 +340,9 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		}
 
 	case "motd":
-		// When they press return, finalize character creation!
-		if err := s.completeCharCreation(); err != nil {
-			slog.ErrorContext(s.sessionCtx, "char creation failed", s.logAttrs(slog.Any("error", err))...)
-			return err
-		}
+		// Both new and returning characters choose what to do after the MOTD.
+		s.charCreating = false
+		s.showMainMenu()
 
 	default:
 		return fmt.Errorf("unexpected char creation stage: %s", s.charStage)
@@ -449,10 +447,15 @@ func (s *Session) startNewCharFlow(playerName, password string) {
 
 // sendCharCreatePrompt sends a character creation prompt to the client.
 func (s *Session) sendCharCreatePrompt(stage, prompt string, options []CharCreateOption) {
+	s.sendCharCreatePromptWithSecret(stage, prompt, options, false)
+}
+
+func (s *Session) sendCharCreatePromptWithSecret(stage, prompt string, options []CharCreateOption, secret bool) {
 	data := CharCreateData{
 		Stage:   stage,
 		Prompt:  prompt,
 		Options: options,
+		Secret:  secret,
 	}
 
 	msg, err := json.Marshal(ServerMessage{
@@ -472,6 +475,7 @@ func (s *Session) completeCharCreation() error {
 	// Create the player with collected attributes
 	s.player = game.NewCharacter(0, s.charName, s.charClass, s.charRace)
 	s.player.Stats = s.charStats
+	s.player.Description = s.menuDescription
 
 	// Set sex
 	s.player.Sex = s.charSex
@@ -560,6 +564,7 @@ func (s *Session) completeCharCreation() error {
 	s.charClass = 0
 	s.charHometown = 0
 	s.charStats = game.CharStats{}
+	s.clearMenuState()
 	slog.InfoContext(s.sessionCtx, "completeCharCreation: state cleared", s.logAttrs()...)
 
 	// Generate JWT token

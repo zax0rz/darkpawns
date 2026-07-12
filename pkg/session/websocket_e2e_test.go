@@ -141,6 +141,10 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	wsReadUntilType(t, c, MsgCharCreate)
 	wsWrite(t, c, MsgCharInput, map[string]interface{}{"choice": ""})
 
+	// main menu prompt → enter the game
+	wsReadUntilType(t, c, MsgCharCreate)
+	wsWrite(t, c, MsgCharInput, map[string]interface{}{"choice": "1"})
+
 	// ── 3. Receive welcome state ──────────────────────────────────────────────
 	// completeCharCreation calls sendWelcome which does s.send <- state_msg
 	// (blocking, char_creation.go:276 / session_send.go:58).  writePump drains
