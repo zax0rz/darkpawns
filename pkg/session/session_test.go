@@ -441,6 +441,10 @@ func (m *mockAgentKeyDB) SavePlayer(p *db.PlayerRecord) error { return nil }
 
 func (m *mockAgentKeyDB) UpdatePassword(playerID int, hash string) error { return nil }
 
+func (m *mockAgentKeyDB) UpdateDescription(playerID int, description string) error { return nil }
+
+func (m *mockAgentKeyDB) DeletePlayer(playerID int) error { return nil }
+
 func (m *mockAgentKeyDB) GetAccountLockout(name string) (int, *time.Time, error) { return 0, nil, nil }
 
 func (m *mockAgentKeyDB) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {

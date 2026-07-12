@@ -223,6 +223,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			}
 			s.player = p
 			s.authenticated = true
+			s.menuPasswordHash = rec.Password
 		} else {
 			// New character or player doesn't exist — start stateful creation flow
 
@@ -271,64 +272,15 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		}
 	}
 
-	// If we created a player directly (not through char creation), proceed with registration
+	// Returning characters stop at the post-MOTD menu. World registration and
+	// room entry happen only after option 1 is selected.
 	if s.authenticated && s.player != nil {
-		// Returning players: reconcile known spells with class/level. Saved
-		// characters predate spell-granting (or leveled up while offline), so
-		// fill in any spells they now qualify for.
-		grantClassSpells(s.player)
-
 		s.manager.loginAttempts.RecordSuccess(ip)
 		if s.manager.accountLockouts != nil {
 			s.manager.accountLockouts.RecordSuccess(login.PlayerName)
 		}
-		if err := s.manager.Register(login.PlayerName, s); err != nil {
-			return err
-		}
-
-		if err := s.manager.world.AddPlayer(s.player); err != nil {
-			s.manager.Unregister(login.PlayerName)
-			return err
-		}
-
-		// Look around so they see the room on entry!
-		if err := ExecuteCommand(s, "look", nil); err != nil {
-			slog.ErrorContext(s.sessionCtx, "look command failed on entry", s.logAttrs(slog.Any("error", err))...)
-		}
-
-		// Generate JWT token for API access
-		token, err := auth.GenerateJWT(login.PlayerName, s.isAgent, s.agentKeyID, "")
-		if err != nil {
-			slog.ErrorContext(s.sessionCtx, "failed to generate JWT token", s.logAttrs(slog.Any("error", err))...)
-		}
-		s.tokenIssuedAt = time.Now()
-
-		// Send welcome with token
-		s.sendWelcome(token)
-
-		// Agents get a full variable dump + memory bootstrap + dreaming summary immediately after login.
-		// Human structured sessions also get a full variable dump to populate their status bars/UI immediately.
-		if s.isAgent || s.wantsStructuredData {
-			s.sendFullVarDump()
-			if s.isAgent {
-				s.SendMemoryBootstrap()
-				s.SendMemorySummary()
-			}
-		}
-
-		// Broadcast to room
-		enterMsg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "enter",
-				Text: s.player.Name + " has arrived.",
-			},
-		})
-		if err != nil {
-			slog.ErrorContext(s.sessionCtx, "json.Marshal error", s.logAttrs(slog.Any("error", err))...)
-			return nil
-		}
-		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
+		s.startReturningMenu(s.menuPasswordHash)
+		return nil
 	}
 
 	return nil

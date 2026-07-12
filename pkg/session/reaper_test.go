@@ -154,6 +154,8 @@ func TestWritePumpExitTriggersCleanup(t *testing.T) {
 	wsWrite(t, client, MsgCharInput, map[string]interface{}{"choice": "Y"})
 	wsReadUntilType(t, client, MsgCharCreate)
 	wsWrite(t, client, MsgCharInput, map[string]interface{}{"choice": ""})
+	wsReadUntilType(t, client, MsgCharCreate)
+	wsWrite(t, client, MsgCharInput, map[string]interface{}{"choice": "1"})
 	wsReadUntilType(t, client, MsgState)
 
 	if _, ok := m.GetSession("WritePumpGhost"); !ok {

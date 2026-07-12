@@ -158,6 +158,11 @@ func (s *Session) IsCharCreating() bool {
 	return s.charCreating
 }
 
+// IsMenuActive reports whether the session is waiting at the post-MOTD menu.
+func (s *Session) IsMenuActive() bool {
+	return s.menuActive
+}
+
 // HasDatabase returns whether the session manager has a database connection.
 func (m *Manager) HasDatabase() bool {
 	return m.hasDB

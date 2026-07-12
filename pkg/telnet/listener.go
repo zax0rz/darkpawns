@@ -476,7 +476,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 
 		_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
-		if s.IsCharCreating() {
+		if s.IsCharCreating() || s.IsMenuActive() {
 			// A blank line is meaningful during character creation (e.g. the
 			// "PRESS RETURN" step), so forward it as char_input rather than
 			// swallowing it. Forwarding "" disconnected new players otherwise.
@@ -493,6 +493,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			}
 			tc.writeLine("> ")
 		}
+		if s.SendClosed() {
+			break
+		}
 	}
 
 	// Cleanup
@@ -508,7 +511,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 // so a '[' in the prompt means the menu is already shown and the separate
 // options list should NOT be printed again (DP-909: menus were doubled).
 func promptContainsMenu(prompt string) bool {
-	return strings.Contains(prompt, "[")
+	return strings.Contains(prompt, "[") || strings.Contains(prompt, "0) Exit from Dark Pawns")
 }
 
 // renderCharCreateOptions renders the char-create options list for telnet.
@@ -568,6 +571,12 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 			}
 		case "char_create":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
+				secret, _ := ed["secret"].(bool)
+				if secret {
+					tc.write([]byte{IAC, WILL, OPT_ECHO})
+				} else {
+					tc.write([]byte{IAC, WONT, OPT_ECHO})
+				}
 				prompt, _ := ed["prompt"].(string)
 				if prompt != "" {
 					tc.writeLine(fmt.Sprintf("\r\n%s\r\n", prompt))

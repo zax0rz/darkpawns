@@ -118,6 +118,8 @@ func (s *Session) sendErrorWithState(err error) {
 
 	// Re-broadcast the current expected input, derived from server state.
 	switch {
+	case s.menuActive:
+		s.resendCurrentMenuPrompt()
 	case s.charCreating:
 		s.resendCurrentCharPrompt()
 	case !s.authenticated:

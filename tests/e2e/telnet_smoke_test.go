@@ -326,6 +326,11 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		}
 		mustWrite(t, c1, st.send)
 	}
+	// CON_MENU (DP-1067): select option 1 to enter the game.
+	if got := readUntil(t, c1, r1, "Make your choice", 10*time.Second); got == "" {
+		t.Fatal("conn1: never received the main menu after character creation")
+	}
+	mustWrite(t, c1, "1\r\n")
 	if got := readUntil(t, c1, r1, "[8004]", 10*time.Second); got == "" {
 		t.Fatal("conn1: new character did not enter the world")
 	}
@@ -357,6 +362,17 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Fatal("conn3: returning player was not prompted for a password")
 	}
 	mustWrite(t, c3, password+"\r\n")
+	// Returning players see the MOTD before CON_MENU, matching C's
+	// CON_RMOTD transition. Acknowledge it before waiting for the menu.
+	if got := readUntil(t, c3, r3, "PRESS RETURN", 10*time.Second); got == "" {
+		t.Fatal("conn3: returning player did not get MOTD prompt")
+	}
+	mustWrite(t, c3, "\r\n")
+	// CON_MENU (DP-1067): returning players hit the menu too.
+	if got := readUntil(t, c3, r3, "Make your choice", 10*time.Second); got == "" {
+		t.Fatal("conn3: returning player did not get menu")
+	}
+	mustWrite(t, c3, "1\r\n")
 	loaded := readUntil(t, c3, r3, "[8004]", 10*time.Second)
 	if loaded == "" {
 		t.Fatal("conn3: persisted character did not load back into the world")
@@ -472,6 +488,14 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 		}
 		mustWrite(t, conn, st.send)
 	}
+
+	// CON_MENU (DP-1067): after MOTD the player lands at the main menu.
+	// Select option 1 to enter the game.
+	if got := readUntil(t, conn, r, "Make your choice", 10*time.Second); got == "" {
+		t.Fatal("never received the main menu after character creation")
+	}
+	mustWrite(t, conn, "1\r\n")
+
 	entered := readUntil(t, conn, r, "[8004]", 10*time.Second)
 	if entered == "" {
 		t.Fatal("new character never entered the world")

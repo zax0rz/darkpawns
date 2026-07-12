@@ -17,6 +17,8 @@ type Database interface {
 	CreatePlayer(p *PlayerRecord) error
 	SavePlayer(p *PlayerRecord) error
 	UpdatePassword(playerID int, hash string) error
+	UpdateDescription(playerID int, description string) error
+	DeletePlayer(playerID int) error
 	GetAccountLockout(name string) (failedAttempts int, lockedUntil *time.Time, err error)
 	RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error)
 	RecordLoginSuccess(name string) error

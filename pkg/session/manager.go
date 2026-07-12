@@ -1059,6 +1059,15 @@ type Session struct {
 	charHometown         int
 	charStats            game.CharStats
 
+	// Post-MOTD main menu state. This is separate from character creation
+	// because returning players pass through the same menu before world entry.
+	menuActive           bool
+	menuStage            string
+	menuDescription      string
+	menuDescriptionDraft []string
+	menuPasswordHash     string
+	menuNewPasswordHash  string
+
 	// Character switch state (wizard commands)
 	isSwitched            bool
 	switchedOriginal      *game.Player

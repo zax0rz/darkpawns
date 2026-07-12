@@ -20,33 +20,34 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 	}
 
 	return &PlayerRecord{
-		ID:         p.ID,
-		Name:       p.Name,
-		RoomVNum:   p.GetRoom(),
-		Level:      p.Level,
-		Exp:        p.Exp,
-		Health:     p.Health,
-		MaxHealth:  p.MaxHealth,
-		Mana:       p.Mana,
-		MaxMana:    p.MaxMana,
-		Move:       p.Move,
-		MaxMove:    p.MaxMove,
-		Strength:   p.Strength,
-		Class:      p.Class,
-		Race:       p.Race,
-		StatStr:    p.Stats.Str,
-		StatStrAdd: p.Stats.StrAdd,
-		StatInt:    p.Stats.Int,
-		StatWis:    p.Stats.Wis,
-		StatDex:    p.Stats.Dex,
-		StatCon:    p.Stats.Con,
-		StatCha:    p.Stats.Cha,
-		Hunger:     p.Hunger,
-		Thirst:     p.Thirst,
-		Drunk:      p.Drunk,
-		Hometown:   p.Hometown,
-		Inventory:  invBytes,
-		Equipment:  eqBytes,
+		ID:          p.ID,
+		Name:        p.Name,
+		Description: p.Description,
+		RoomVNum:    p.GetRoom(),
+		Level:       p.Level,
+		Exp:         p.Exp,
+		Health:      p.Health,
+		MaxHealth:   p.MaxHealth,
+		Mana:        p.Mana,
+		MaxMana:     p.MaxMana,
+		Move:        p.Move,
+		MaxMove:     p.MaxMove,
+		Strength:    p.Strength,
+		Class:       p.Class,
+		Race:        p.Race,
+		StatStr:     p.Stats.Str,
+		StatStrAdd:  p.Stats.StrAdd,
+		StatInt:     p.Stats.Int,
+		StatWis:     p.Stats.Wis,
+		StatDex:     p.Stats.Dex,
+		StatCon:     p.Stats.Con,
+		StatCha:     p.Stats.Cha,
+		Hunger:      p.Hunger,
+		Thirst:      p.Thirst,
+		Drunk:       p.Drunk,
+		Hometown:    p.Hometown,
+		Inventory:   invBytes,
+		Equipment:   eqBytes,
 	}, nil
 }
 
@@ -79,6 +80,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	p.Hometown = r.Hometown
 	p.SetRoom(r.RoomVNum)
 	p.ID = r.ID
+	p.Description = r.Description
 
 	// Restore inventory — try new SaveItemData format first, fall back to legacy []int.
 	if len(r.Inventory) > 0 {

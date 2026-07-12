@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"sync"
@@ -173,6 +174,32 @@ func (m *MockDatabase) UpdatePassword(playerID int, hash string) error {
 	return fmt.Errorf("player not found")
 }
 
+// UpdateDescription satisfies db.Database.
+func (m *MockDatabase) UpdateDescription(playerID int, description string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, p := range m.players {
+		if p.ID == playerID {
+			p.Description = description
+			return nil
+		}
+	}
+	return fmt.Errorf("player not found")
+}
+
+// DeletePlayer satisfies db.Database.
+func (m *MockDatabase) DeletePlayer(playerID int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for name, p := range m.players {
+		if p.ID == playerID {
+			delete(m.players, name)
+			return nil
+		}
+	}
+	return fmt.Errorf("player not found")
+}
+
 // RecordLoginFailure satisfies db.Database.
 func (m *MockDatabase) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
 	m.mu.Lock()
@@ -202,7 +229,7 @@ func (m *MockDatabase) RecordLoginSuccess(name string) error {
 }
 
 // Exec satisfies db.Database.
-func (m *MockDatabase) Exec(query string, args ...interface{}) (interface{}, error) {
+func (m *MockDatabase) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return nil, nil
 }
 

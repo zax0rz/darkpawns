@@ -31,6 +31,7 @@ type PlayerRecord struct {
 	ID                  int
 	Name                string
 	Password            string // hashed
+	Description         string
 	RoomVNum            int
 	Level               int
 	Exp                 int
@@ -150,6 +151,7 @@ func (db *DB) createTables() error {
 		hometown INTEGER DEFAULT 0,
 		inventory JSONB DEFAULT '[]',
 		equipment JSONB DEFAULT '{}',
+		description TEXT DEFAULT '',
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
@@ -175,6 +177,7 @@ func (db *DB) createTables() error {
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS hometown INTEGER DEFAULT 0;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP;
+	ALTER TABLE players ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
 
 	CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
 	CREATE INDEX IF NOT EXISTS idx_players_locked_until ON players(locked_until);
@@ -265,7 +268,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		       hunger, thirst, drunk, hometown,
 		       inventory, equipment,
-		       COALESCE(failed_login_attempts, 0), locked_until
+		       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, '')
 		FROM players WHERE name = $1
 	`
 	var p PlayerRecord
@@ -276,7 +279,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
 		&p.Hunger, &p.Thirst, &p.Drunk, &p.Hometown,
 		&p.Inventory, &p.Equipment,
-		&p.FailedLoginAttempts, &lockedUntil,
+		&p.FailedLoginAttempts, &lockedUntil, &p.Description,
 	)
 	if lockedUntil.Valid {
 		p.LockedUntil = &lockedUntil.Time
@@ -297,8 +300,8 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		  (name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
 		   class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		   hunger, thirst, drunk, hometown,
-		   inventory, equipment)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+		   inventory, equipment, description)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
 		RETURNING id
 	`
 	return db.conn.QueryRow(
@@ -306,13 +309,25 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
-		p.Inventory, p.Equipment,
+		p.Inventory, p.Equipment, p.Description,
 	).Scan(&p.ID)
 }
 
 // UpdatePassword updates a player's password hash.
 func (db *DB) UpdatePassword(playerID int, hash string) error {
 	_, err := db.conn.Exec(`UPDATE players SET password_hash = $1 WHERE id = $2`, hash, playerID)
+	return err
+}
+
+// UpdateDescription updates the description displayed when another player looks at this character.
+func (db *DB) UpdateDescription(playerID int, description string) error {
+	_, err := db.conn.Exec(`UPDATE players SET description = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, description, playerID)
+	return err
+}
+
+// DeletePlayer permanently removes a player record.
+func (db *DB) DeletePlayer(playerID int) error {
+	_, err := db.conn.Exec(`DELETE FROM players WHERE id = $1`, playerID)
 	return err
 }
 
@@ -385,8 +400,8 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		  class=$11, race=$12,
 		  stat_str=$13, stat_str_add=$14, stat_int=$15, stat_wis=$16, stat_dex=$17, stat_con=$18, stat_cha=$19,
 		  hunger=$20, thirst=$21, drunk=$22, hometown=$23,
-		  inventory=$24, equipment=$25, updated_at=CURRENT_TIMESTAMP
-		WHERE id=$26
+		  inventory=$24, equipment=$25, description=$26, updated_at=CURRENT_TIMESTAMP
+		WHERE id=$27
 	`
 	_, err := db.conn.Exec(
 		query,
@@ -395,7 +410,7 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		p.Class, p.Race,
 		p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
-		p.Inventory, p.Equipment, p.ID,
+		p.Inventory, p.Equipment, p.Description, p.ID,
 	)
 	return err
 }

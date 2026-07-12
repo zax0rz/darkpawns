@@ -154,7 +154,7 @@ func (s *Session) handleMessage(data []byte) error {
 	case MsgLogin:
 		return s.handleLogin(msg.Data)
 	case MsgCommand:
-		if !s.authenticated {
+		if !s.authenticated || s.menuActive {
 			return ErrNotAuthenticated
 		}
 		return s.handleCommand(msg.Data)
@@ -164,6 +164,9 @@ func (s *Session) handleMessage(data []byte) error {
 		}
 		return s.handleSubscribe(msg.Data)
 	case MsgCharInput:
+		if s.menuActive {
+			return s.handleMenuInput(msg.Data)
+		}
 		if s.charCreating {
 			return s.handleCharInput(msg.Data)
 		}
