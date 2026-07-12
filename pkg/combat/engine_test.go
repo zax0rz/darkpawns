@@ -236,12 +236,14 @@ func TestMobRedirect_NonJailMobDoesNotSubdue(t *testing.T) {
 		position:   PosFighting,
 		damageRoll: DiceRoll{Num: 10, Sides: 10},
 	}
+	// HP set high so the attacker's 10d10 round cannot kill the victim and end
+	// combat — otherwise the "combat continues" assertion below is nondeterministic.
 	victim := &mockCombatant{
 		name:     "Thief",
 		room:     8117,
 		level:    20,
-		hp:       50,
-		maxHP:    50,
+		hp:       1000,
+		maxHP:    1000,
 		position: PosFighting,
 	}
 
