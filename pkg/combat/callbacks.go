@@ -29,14 +29,17 @@ type GameCallbacks struct {
 	RemoveAllAffects func(name string)
 
 	// Player/Mob/Room flags
-	HasPlrFlag    func(name string, flag string) bool
-	SetPlrFlag    func(name string) bool
-	HasPrfFlag    func(name string, flag string) bool
-	HasMobFlag    func(name string, flag string) bool
-	HasMobVNum    func(name string, vnum int) bool
-	HasRoomFlag   func(roomVNum int, flag string) bool
-	HasScriptFlag func(name string, flag string) bool
-	IsShopkeeper  func(name string) bool
+	HasPlrFlag        func(name string, flag string) bool
+	SetPlrFlag        func(name string) bool
+	HasPrfFlag        func(name string, flag string) bool
+	HasMobFlag        func(name string, flag string) bool
+	HasMobVNum        func(name string, vnum int) bool
+	HasRoomFlag       func(roomVNum int, flag string) bool
+	HasScriptFlag     func(name string, flag string) bool
+	IsShopkeeper      func(name string) bool
+	GetRoomCombatants func(roomVNum int) []Combatant
+	GetFollowing      func(name string) string
+	JailGuardSubdue   func(guardName, victimName string) bool
 
 	// Equipment & mounts
 	IsMounted     func(name string) bool
@@ -268,6 +271,27 @@ func cbHasScriptFlag(name string, flag string) bool {
 func cbIsShopkeeper(name string) bool {
 	if cb := callbacks; cb != nil && cb.IsShopkeeper != nil {
 		return cb.IsShopkeeper(name)
+	}
+	return false
+}
+
+func cbGetRoomCombatants(roomVNum int) []Combatant {
+	if cb := callbacks; cb != nil && cb.GetRoomCombatants != nil {
+		return cb.GetRoomCombatants(roomVNum)
+	}
+	return nil
+}
+
+func cbGetFollowing(name string) string {
+	if cb := callbacks; cb != nil && cb.GetFollowing != nil {
+		return cb.GetFollowing(name)
+	}
+	return ""
+}
+
+func cbJailGuardSubdue(guardName, victimName string) bool {
+	if cb := callbacks; cb != nil && cb.JailGuardSubdue != nil {
+		return cb.JailGuardSubdue(guardName, victimName)
 	}
 	return false
 }
