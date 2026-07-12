@@ -179,7 +179,7 @@ func (w *World) GainExp(p *Player, gain int) {
 
 		p.Exp += gain
 
-		if p.Level < LVL_IMPL-1 && p.Exp >= ExpNeededForLevel(p) {
+		if p.Level < LVL_IMMORT-1 && p.Exp >= ExpNeededForLevel(p) {
 			// AFF_FLESH_ALTER handling — adjust hit/damroll before/after level-up
 			// C: flesh_alter_from() removes bonuses, advance_level(), flesh_alter_to() restores
 			// Source: src/new_cmds.c:1751-1769, src/limits.c:305-311
