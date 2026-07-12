@@ -226,7 +226,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 		if xp > 1 {
 			p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", xp))
 		} else {
-			p.SendMessage("You receive one measly little experience point!\r\n")
+			p.SendMessage("You receive one lousy experience point.\r\n")
 		}
 		return
 	}
@@ -249,7 +249,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 	// base = MAX(1, base)
 	base := victimExp / totMembers
 	if base > 100 {
-		base -= base / 100
+		base -= int(float64(base) * 0.01)
 	}
 	if base < 1 {
 		base = 1

@@ -106,11 +106,50 @@ func LoginStartRoom(p *Player) int {
 	return MortalStartRoom
 }
 
+// Instakill performs an immortal instakill extraction without XP, counters, or penalties.
+// Source: src/act.offensive.c do_kill() calls raw_kill(ch, victim) for implementor-level
+// instakills; raw_kill stops fighting, extracts the character, and respawns them.
+func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
+	if victim.IsNPC() {
+		w.handleMobDeath(victim, killer, attackType)
+		return
+	}
+
+	player, ok := victim.(*Player)
+	if !ok {
+		return
+	}
+
+	// Notify victim before extraction, matching C's act() to victim.
+	player.SendMessage("You have been killed!\r\n")
+
+	// Stop fighting and respawn at the appropriate start room with no penalties.
+	player.StopFighting()
+	player.SetRoom(LoginStartRoom(player))
+	player.SetPosition(combat.PosStanding)
+	player.Heal(9999)
+	if player.IsAffected(affWerewolf) {
+		player.SetAffect(affWerewolf, false)
+	}
+	player.SendMessage("\r\nYou feel your soul wrenched from your body...\r\n")
+	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
+}
+
 // HandleDeath is the DeathFunc set on the combat engine.
 // It handles both player and mob death faithfully to the original.
 // This is called for combat deaths (die_with_killer).
 // Source: fight.c die_with_killer() uses GET_EXP(ch)/37
 func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
+	// Capture killer info once for both branches and the shared kill-counter block.
+	killerName := ""
+	killerIsNPC := false
+	killerLevel := 0
+	if killer != nil {
+		killerName = killer.GetName()
+		killerIsNPC = killer.IsNPC()
+		killerLevel = killer.GetLevel()
+	}
+
 	if victim.IsNPC() {
 		// DP-963: idempotent death guard for mobs. The alive CAS filters out
 		// concurrent HandleDeath calls for the same mob (two goroutines
@@ -134,15 +173,6 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			mobGold = mob.Prototype.Gold
 			mobVNum = mob.Prototype.VNum
 			mobLevel = mob.Prototype.Level
-		}
-		// Fire memory hook before removing mob from active list
-		killerName := ""
-		killerIsNPC := false
-		killerLevel := 0
-		if killer != nil {
-			killerName = killer.GetName()
-			killerIsNPC = killer.IsNPC()
-			killerLevel = killer.GetLevel()
 		}
 		roomName := ""
 		if room, ok := w.GetRoom(victim.GetRoom()); ok {
@@ -194,28 +224,8 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 				}
 			}
 		}
-
-		// Increment kill counter and check milestone blessings
-		// Source: fight.c:1689-1690 — GET_KILLS(ch)++; counter_procs(ch);
-		// DP-963: guard Kills++ with player.mu to prevent data race under
-		// concurrent HandleDeath calls (same killer, multiple mob kills).
-		// Extract kills before calling counter_procs to avoid reentrant lock
-		// (counter_procs calls ch.Lock() internally).
-		if kp, ok := w.GetPlayer(killerName); ok {
-			kp.mu.Lock()
-			kp.Kills++
-			kills := kp.Kills
-			kp.mu.Unlock()
-			w.counter_procs(kp, kills)
-		}
 	} else {
 		// Fire player death hook
-		killerName := ""
-		killerIsNPC := false
-		if killer != nil {
-			killerName = killer.GetName()
-			killerIsNPC = killer.IsNPC()
-		}
 		roomName := ""
 		if room, ok := w.GetRoom(victim.GetRoom()); ok {
 			roomName = room.Name
@@ -239,6 +249,19 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 				slog.Warn("Publish PlayerKilledEvent failed", "killer", killerName, "victim", victim.GetName(), "error", err)
 			}
 		}
+	}
+
+	// Increment kill counter and check milestone blessings — fight.c:1689-1690.
+	// C fires GET_KILLS(ch)++ and counter_procs(ch) for ALL kills, including PK.
+	// DP-963: guard Kills++ with player.mu to prevent data race under concurrent
+	// HandleDeath calls (same killer, multiple mob kills). Extract kills before
+	// calling counter_procs to avoid reentrant lock (counter_procs calls ch.Lock()).
+	if kp, ok := w.GetPlayer(killerName); ok {
+		kp.mu.Lock()
+		kp.Kills++
+		kills := kp.Kills
+		kp.mu.Unlock()
+		w.counter_procs(kp, kills)
 	}
 }
 
@@ -449,9 +472,11 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 			slog.Info(fmt.Sprintf("%s killed by %s at room %d", player.GetName(), killerName, roomVNum),
 				"victim", player.GetName(), "killer", killerName, "room", roomVNum)
 		}
-		player.Deaths++
-		player.LastDeath = time.Now().Unix()
 	}
+
+	// Death counter — fight.c:1689. GET_DEATHS(victim)++ is unconditional.
+	player.Deaths++
+	player.LastDeath = time.Now().Unix()
 
 	// EXP loss based on death type
 	// die_with_killer(): GET_EXP(ch)/37 (combat death) - fight.c line 590

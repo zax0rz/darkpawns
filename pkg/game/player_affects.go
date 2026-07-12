@@ -104,20 +104,6 @@ func (p *Player) DecrementWaitState() {
 	}
 }
 
-// IsParrying returns whether parry stance is active.
-func (p *Player) IsParrying() bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.Parrying
-}
-
-// SetParry toggles parry stance on/off.
-func (p *Player) SetParry(active bool) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.Parrying = active
-}
-
 // TakeDamage applies damage to the player.
 //
 // HP is allowed to go negative into the wounded band; POS_DEAD is HP <= -11

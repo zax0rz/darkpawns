@@ -58,18 +58,9 @@ func mobCarriedWeight(m *MobInstance) int {
 
 // mobMaxCarryWeight returns the maximum weight a mob can carry.
 // Mirrors C's CAN_CARRY_W(ch) = str_app[STRENGTH_APPLY_INDEX(ch)].carry_w
-// (utils.h:448). The carry_w table is from constants.c str_app[].
+// (utils.h:448), including exceptional strength (18/xx).
 func mobMaxCarryWeight(m *MobInstance) int {
-	// carry_w by strength index 0–18 (constants.c str_app[] 4th column).
-	strCarry := [...]int{0, 3, 3, 10, 25, 55, 80, 90, 100, 100, 115, 115, 140, 140, 170, 170, 195, 220, 255}
-	str := m.GetStr()
-	if str < 0 {
-		return 0
-	}
-	if str >= len(strCarry) {
-		str = len(strCarry) - 1
-	}
-	return strCarry[str]
+	return combat.CarryWeight(m.GetStr(), m.GetStrAdd())
 }
 
 // mobMaxCarryCount returns the maximum number of items a mob can carry.
@@ -243,6 +234,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if best != nil {
 				w.RemoveItemFromRoom(best, ch.RoomVNum)
 				ch.AddToInventory(best)
+				w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s gets %s.", ch.GetName(), best.GetShortDesc()))
 			}
 		}
 	}

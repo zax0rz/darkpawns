@@ -306,37 +306,6 @@ func DoAmbush(ch *Player, target combat.Combatant) SkillResult {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// C-11: Parry/Dodge system — fight.c:1958-1975
-// ---------------------------------------------------------------------------
-
-// DoParry toggles parry stance on/off.
-func DoParry(ch *Player) SkillResult {
-	if ch.GetSkill(SkillParry) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
-	}
-	if ch.IsParrying() {
-		ch.SetParry(false)
-		return SkillResult{Success: true, MessageToCh: "You lower your defensive stance.\r\n"}
-	}
-	ch.SetParry(true)
-	return SkillResult{Success: true, MessageToCh: "You move into a defensive stance, ready to parry incoming attacks.\r\n"}
-}
-
-// CheckParry checks if a defender parries an incoming attack.
-// Source: fight.c:1958-1968 — number(0,10000) <= GET_SKILL(ch, SKILL_PARRY)
-func CheckParry(defender *Player) bool {
-	if !defender.IsParrying() || defender.GetFighting() == "" {
-		return false
-	}
-	skill := defender.GetSkill(SkillParry)
-	if skill <= 0 {
-		return false
-	}
-	// #nosec G404 — game RNG; skill 0-100 scaled to 0-10000
-	return rand.IntN(10001) <= skill*100
-}
-
 // CheckNPCDodge checks if an NPC mob dodges an attack.
 // Source: fight.c:1970-1975 — number(0,100) < GET_LEVEL(ch)
 func CheckNPCDodge(mob interface {

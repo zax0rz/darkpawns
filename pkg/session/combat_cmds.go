@@ -46,13 +46,13 @@ func cmdKill(s *Session, args []string) error {
 		}
 		switch {
 		case tgt.Mob != nil:
-			s.manager.world.HandleDeath(tgt.Mob, s.player, 0)
+			s.manager.world.Instakill(tgt.Mob, s.player, 0)
 			s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", tgt.Mob.GetShortDesc()))
 		case tgt.Player != nil:
 			// C: act("$N chops you to pieces!", ...) sent to the victim
 			// before raw_kill (act.offensive.c:152-154).
 			tgt.Player.SendMessage(fmt.Sprintf("%s chops you to pieces!\r\n", s.player.GetName()))
-			s.manager.world.HandleDeath(tgt.Player, s.player, 0)
+			s.manager.world.Instakill(tgt.Player, s.player, 0)
 			s.Send(fmt.Sprintf("You chop %s to pieces! Ah! The blood!", tgt.Player.Name))
 		default:
 			s.Send("They aren't here.")
