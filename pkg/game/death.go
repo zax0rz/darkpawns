@@ -171,6 +171,29 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		// Award XP and gold to killer and party members — fight.c group_gain() lines 708-830
 		w.AwardMobKillXP(killer, mobExp, mobGold, mobLevel)
 
+		// Alignment shift from kills — fight.c:1667
+		// Called after autogold/autoloot (via handleMobDeath) and XP award,
+		// before PK bookkeeping. Only PCs change alignment; neutral victims
+		// do not shift it.
+		if killer != nil && !killer.IsNPC() {
+			if pk, ok := killer.(*Player); ok {
+				victimAlign := 0
+				if al, ok := victim.(interface{ GetAlignment() int }); ok {
+					victimAlign = al.GetAlignment()
+				}
+				if victimAlign <= -350 || victimAlign >= 350 {
+					newAlign := pk.GetAlignment() + (-victimAlign-pk.GetAlignment())>>4
+					if newAlign > 1000 {
+						newAlign = 1000
+					}
+					if newAlign < -1000 {
+						newAlign = -1000
+					}
+					pk.SetAlignment(newAlign)
+				}
+			}
+		}
+
 		// Increment kill counter and check milestone blessings
 		// Source: fight.c:1689-1690 — GET_KILLS(ch)++; counter_procs(ch);
 		// DP-963: guard Kills++ with player.mu to prevent data race under

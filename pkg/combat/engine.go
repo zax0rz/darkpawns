@@ -327,9 +327,38 @@ func (ce *CombatEngine) findFightingTarget(fighterName string, fighter Combatant
 }
 
 // processCombatPair handles a single combat exchange
+type waitStateHolder interface {
+	GetWaitState() int
+	SetWaitState(int)
+	DecrementWaitState()
+}
+
 func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	attacker := pair.Attacker
 	defender := pair.Defender
+
+	// C: fight.c:1975-1987 — NPCs with GET_MOB_WAIT > 0 lose the round and
+	// decrement their wait. When the wait expires and the mob is below
+	// POS_FIGHTING, it stands back up.
+	if attacker.IsNPC() {
+		if wc, ok := attacker.(waitStateHolder); ok && wc.GetWaitState() > 0 {
+			wc.DecrementWaitState()
+			if wc.GetWaitState() == 0 && attacker.GetPosition() < PosFighting {
+				attacker.SetPosition(PosFighting)
+				if ce.BroadcastFunc != nil {
+					pronoun := "its"
+					switch attacker.GetSex() {
+					case 0:
+						pronoun = "his"
+					case 1:
+						pronoun = "her"
+					}
+					ce.BroadcastFunc(attacker.GetRoom(), fmt.Sprintf("%s scrambles to %s feet!", attacker.GetName(), pronoun), attacker.GetName())
+				}
+			}
+			return
+		}
+	}
 
 	// Check if both combatants are still valid and able to fight. An attacker
 	// that has itself been knocked out of a fighting position (stunned/incap/

@@ -43,6 +43,7 @@ type MobInstance struct {
 	Target         *MobInstance // or Player
 	Fighting       bool
 	FightingTarget string // Name of the target being fought
+	WaitState      int    // PULSE_VIOLENCE ticks remaining (C GET_MOB_WAIT)
 
 	// Memory: names of players this mob remembers attacking it
 	// Source: mobact.c:262-285, remember()/forget() in mobact.c:346-407
@@ -557,6 +558,32 @@ func (m *MobInstance) GetName() string {
 // SendMessage sends a message to the mob (no-op for mobs, but needed for interface).
 func (m *MobInstance) SendMessage(msg string) {
 	// Mobs don't receive messages
+}
+
+// GetWaitState returns the mob's remaining wait state in PULSE_VIOLENCE ticks.
+// Source: utils.h GET_MOB_WAIT(ch)
+func (m *MobInstance) GetWaitState() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.WaitState
+}
+
+// SetWaitState sets the mob's wait state cooldown.
+// Source: utils.h WAIT_STATE(ch, PULSE_VIOLENCE * n)
+func (m *MobInstance) SetWaitState(ticks int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.WaitState = ticks
+}
+
+// DecrementWaitState reduces the mob's wait state by one tick.
+// Called each combat round (perform_violence) in C.
+func (m *MobInstance) DecrementWaitState() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.WaitState > 0 {
+		m.WaitState--
+	}
 }
 
 // SetFighting sets who the mob is fighting.

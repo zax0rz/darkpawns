@@ -188,14 +188,23 @@ func (p *Player) GetSkill(name string) int {
 	return p.SkillManager.GetSkillLevel(name)
 }
 
-// LoseExp deducts experience from the player, floored at 0.
-func (p *Player) LoseExp(amount int) {
+// LoseExp deducts experience from the player.
+// C: gain_exp() caps negative gains at max_exp_loss and clamps exp to 0.
+// Returns the actual amount subtracted (after cap and clamp).
+func (p *Player) LoseExp(amount int) int {
+	if amount < 0 {
+		amount = 0
+	}
+	if amount > maxExpLoss {
+		amount = maxExpLoss
+	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.Exp -= amount
-	if p.Exp < 0 {
-		p.Exp = 0
+	if amount > p.Exp {
+		amount = p.Exp
 	}
+	p.Exp -= amount
+	return amount
 }
 
 // Heal restores health to the player.

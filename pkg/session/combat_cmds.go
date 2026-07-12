@@ -228,9 +228,10 @@ func cmdFlee(s *Session) error {
 	s.manager.combatEngine.StopCombat(s.player.Name)
 
 	// Apply XP loss to all levels; level > 10 already included extra above.
-	s.player.LoseExp(xpLoss)
+	// LoseExp caps at max_exp_loss and returns the actual amount subtracted.
 	if xpLoss > 0 {
-		s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", xpLoss))
+		actualLoss := s.player.LoseExp(xpLoss)
+		s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", actualLoss))
 	}
 
 	leaveMsg, err := json.Marshal(ServerMessage{
