@@ -140,6 +140,8 @@ func (w *World) wanderMob(mob *MobInstance) {
 	}
 
 	// ROOM_DEATH and ROOM_NOMOB (mobact.c:125-126).
+	// The ROOM_DEATH skip here subsumes C's NPC-DT death path
+	// (act.movement.c:288-301 includes IS_NPC(ch)); wandering mobs never enter DT rooms.
 	if roomHasFlag(targetRoom, "death") || roomHasFlag(targetRoom, "no_mob") {
 		return
 	}

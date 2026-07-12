@@ -8,6 +8,7 @@ package game
 import (
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -91,15 +92,17 @@ func TestHandlePlayerDeath_VictimAlreadyOutlawNoDoubleFlag(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// DP-1027: Death traps kill mortal players
+// DP-1027: Death traps extract mortal players (corpse-less, penalty-free)
 // ---------------------------------------------------------------------------
 
-func TestMovePlayer_DeathTrapKillsMortal(t *testing.T) {
+func TestMovePlayer_DeathTrapExtractsMortal(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{
 			{VNum: 1001, Name: "Safe Room", Zone: 1, Exits: map[string]parser.Exit{"north": {ToRoom: 1002}}},
 			// ROOM_DEATH is bit 1 → bitmask value 2.
 			{VNum: 1002, Name: "Death Trap", Zone: 1, Flags: []string{"2"}},
+			// Respawn destination for mortals.
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 1},
 		},
 	}
 	w, err := NewWorld(parsed)
@@ -111,6 +114,7 @@ func TestMovePlayer_DeathTrapKillsMortal(t *testing.T) {
 	p := NewPlayer(1, "Victim", 1001)
 	p.SetLevel(10)
 	p.SetMove(100)
+	p.SetExp(50000)
 	if err := w.AddPlayer(p); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
@@ -119,8 +123,23 @@ func TestMovePlayer_DeathTrapKillsMortal(t *testing.T) {
 		t.Fatalf("MovePlayer failed: %v", err)
 	}
 
-	if p.GetHP() > 0 {
-		t.Errorf("expected player HP <= 0 after death trap, got %d", p.GetHP())
+	if p.GetRoom() != MortalStartRoom {
+		t.Errorf("expected player extracted to MortalStartRoom (%d), got %d", MortalStartRoom, p.GetRoom())
+	}
+	if p.GetHP() <= 0 {
+		t.Errorf("expected player HP > 0 after DT respawn, got %d", p.GetHP())
+	}
+	if p.GetHP() != p.GetMaxHP() {
+		t.Errorf("expected player at full HP after DT respawn, got %d/%d", p.GetHP(), p.GetMaxHP())
+	}
+	if p.GetPosition() != combat.PosStanding {
+		t.Errorf("expected player standing after DT respawn, got position %d", p.GetPosition())
+	}
+	if p.GetExp() != 50000 {
+		t.Errorf("expected penalty-free DT (exp unchanged), got %d", p.GetExp())
+	}
+	if items := w.GetItemsInRoom(1002); len(items) != 0 {
+		t.Errorf("expected no corpse in DT room, got %d item(s)", len(items))
 	}
 }
 
@@ -150,6 +169,108 @@ func TestMovePlayer_DeathTrapImmortalSurvives(t *testing.T) {
 
 	if p.GetHP() <= 0 {
 		t.Errorf("expected immortal HP > 0 in death trap, got %d", p.GetHP())
+	}
+	if p.GetRoom() != 1002 {
+		t.Errorf("expected immortal to remain in DT room, got room %d", p.GetRoom())
+	}
+}
+
+func TestMovePlayer_DeathTrapKeepsInventory(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Safe Room", Zone: 1, Exits: map[string]parser.Exit{"north": {ToRoom: 1002}}},
+			{VNum: 1002, Name: "Death Trap", Zone: 1, Flags: []string{"2"}},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 1},
+		},
+		Objs: []parser.Obj{{
+			VNum:      1,
+			Keywords:  "keepsake trinket",
+			ShortDesc: "a shiny keepsake",
+			LongDesc:  "A shiny keepsake lies here.",
+		}},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	p := NewPlayer(1, "Victim", 1001)
+	p.SetLevel(10)
+	p.SetMove(100)
+	if err := w.AddPlayer(p); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	keepsake := NewObjectInstance(&parsed.Objs[0], -1)
+	if err := w.MoveObjectToPlayerInventory(keepsake, p); err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory failed: %v", err)
+	}
+
+	if _, err := w.MovePlayer(p, "north"); err != nil {
+		t.Fatalf("MovePlayer failed: %v", err)
+	}
+
+	if p.GetRoom() != MortalStartRoom {
+		t.Errorf("expected player extracted to MortalStartRoom (%d), got %d", MortalStartRoom, p.GetRoom())
+	}
+	found, ok := p.Inventory.FindItem("keepsake")
+	if !ok || found == nil {
+		t.Error("expected player to keep keepsake in inventory after DT respawn")
+	}
+	if items := w.GetItemsInRoom(1002); len(items) != 0 {
+		t.Errorf("expected no dropped corpse/items in DT room, got %d item(s)", len(items))
+	}
+}
+
+func TestMovePlayer_DeathTrapMountDismounts(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Safe Room", Zone: 1, Exits: map[string]parser.Exit{"north": {ToRoom: 1002}}},
+			{VNum: 1002, Name: "Death Trap", Zone: 1, Flags: []string{"2"}},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 1},
+		},
+		Mobs: []parser.Mob{{
+			VNum:      1,
+			Keywords:  "pony mount",
+			ShortDesc: "a gentle pony",
+			LongDesc:  "A gentle pony stands here.",
+			Level:     1,
+		}},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	p := NewPlayer(1, "Rider", 1001)
+	p.SetLevel(10)
+	p.SetMove(100)
+	if err := w.AddPlayer(p); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	mount, err := w.SpawnMob(1, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+
+	// Mount the player on the mob.
+	mount.SetMountRider(p.GetName())
+	p.MountName = mount.GetName()
+	p.SetAffect(affMounted, true)
+	p.SetFollowing(mount.GetShortDesc())
+
+	if _, err := w.MovePlayer(p, "north"); err != nil {
+		t.Fatalf("MovePlayer failed: %v", err)
+	}
+
+	if p.IsMounted() {
+		t.Error("expected player to be dismounted after DT respawn")
+	}
+	if p.GetRoom() != MortalStartRoom {
+		t.Errorf("expected player extracted to MortalStartRoom (%d), got %d", MortalStartRoom, p.GetRoom())
 	}
 }
 
