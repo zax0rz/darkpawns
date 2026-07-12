@@ -291,12 +291,12 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			}
 			// C: AFF_PROTECT_EVIL + IS_EVIL(ch) + !number(0,5)
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(12) && mobIsEvil(ch) && rand.IntN(6) != 0 {
+			if vict.IsAffected(12) && mobIsEvil(ch) && rand.IntN(6) == 0 {
 				continue
 			}
 			// C: AFF_PROTECT_GOOD + IS_GOOD(ch) + !number(0,5)
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(13) && mobIsGood(ch) && rand.IntN(6) != 0 {
+			if vict.IsAffected(13) && mobIsGood(ch) && rand.IntN(6) == 0 {
 				continue
 			}
 			// C: AFF_SNEAK + !number(0,3) — 1-in-4 skip

@@ -48,7 +48,7 @@ func TestReekCommandRegistrations(t *testing.T) {
 		minPosition int
 	}{
 		{name: "detect", minLevel: 0, minPosition: combat.PosStanding},
-		{name: "mold", minLevel: 0, minPosition: combat.PosStanding},
+		{name: "mold", minLevel: LVL_IMMORT, minPosition: combat.PosResting},
 	}
 
 	for _, tt := range tests {
@@ -138,5 +138,49 @@ func TestMinLevelZeroAllowsAll(t *testing.T) {
 
 	if !called {
 		t.Error("handler was not called for a level-1 player on a MinLevel=0 command")
+	}
+}
+
+// TestCommandRegistry_QABatch1 verifies the DP-1059 / DP-1060 registration
+// fixes (BRIEF-2026-07-12-qa-batch1-oneliners.md):
+//   - "search" is the canonical command word for do_detect at level 0 / standing
+//     (C: interpreter.c binds "search" → do_detect).
+//   - "detect" remains registered as an alias word so existing callers still resolve.
+//   - "mold" is gated to LVL_IMMORT / PosResting (C: interpreter.c LVL_IMMORT, POS_RESTING).
+func TestCommandRegistry_QABatch1(t *testing.T) {
+	search, ok := cmdRegistry.Lookup("search")
+	if !ok {
+		t.Fatal("'search' command not found in registry — expected canonical do_detect word (DP-1060)")
+	}
+	if search.Name != "search" {
+		t.Errorf("'search' resolved to primary %q, want 'search'", search.Name)
+	}
+	if search.MinLevel != 0 {
+		t.Errorf("'search' MinLevel = %d, want 0", search.MinLevel)
+	}
+	if search.MinPosition != combat.PosStanding {
+		t.Errorf("'search' MinPosition = %d, want PosStanding", search.MinPosition)
+	}
+
+	detect, ok := cmdRegistry.Lookup("detect")
+	if !ok {
+		t.Fatal("'detect' alias not found in registry — must remain resolvable (DP-1060)")
+	}
+	if detect.MinLevel != 0 {
+		t.Errorf("'detect' MinLevel = %d, want 0", detect.MinLevel)
+	}
+	if detect.MinPosition != combat.PosStanding {
+		t.Errorf("'detect' MinPosition = %d, want PosStanding", detect.MinPosition)
+	}
+
+	mold, ok := cmdRegistry.Lookup("mold")
+	if !ok {
+		t.Fatal("'mold' command not found in registry")
+	}
+	if mold.MinLevel != LVL_IMMORT {
+		t.Errorf("'mold' MinLevel = %d, want LVL_IMMORT (%d) — mortal object creation must be gated (DP-1059)", mold.MinLevel, LVL_IMMORT)
+	}
+	if mold.MinPosition != combat.PosResting {
+		t.Errorf("'mold' MinPosition = %d, want PosResting", mold.MinPosition)
 	}
 }

@@ -30,7 +30,7 @@ const (
 	PULSE_MOBILE      = 4 * PASSES_PER_SEC  // 40  → 4s
 	PULSE_VIOLENCE    = 2 * PASSES_PER_SEC  // 20  → 2s
 	PULSE_TICK        = 30 * PASSES_PER_SEC // 300 → 30s
-	SECS_PER_MUD_HOUR = 75                  // 75 real seconds per Mud hour (C default)
+	SECS_PER_MUD_HOUR = 63                  // 63 real seconds per Mud hour (Dark Pawns override, src/utils.h:135)
 )
 
 // UptimeSnapshot records a server uptime reading.
@@ -68,7 +68,7 @@ type GameLoopCallbacks struct {
 	// OnPerformViolence — called every PULSE_VIOLENCE (2s). Ported from perform_violence().
 	OnPerformViolence func()
 
-	// OnWeatherAndTime — called every SECS_PER_MUD_HOUR * PASSES_PER_SEC (75s).
+	// OnWeatherAndTime — called every SECS_PER_MUD_HOUR * PASSES_PER_SEC (63s).
 	// Ported from weather_and_time(1).
 	OnWeatherAndTime func()
 	// OnAffectUpdate — called every Mud hour. Ported from affect_update().
@@ -269,7 +269,7 @@ func (gl *GameLoop) heartbeat(pulse int64) {
 		gl.safeInvoke("PerformViolence", pulse, cb.OnPerformViolence)
 	}
 
-	// SECS_PER_MUD_HOUR * PASSES_PER_SEC → every 75 real seconds
+	// SECS_PER_MUD_HOUR * PASSES_PER_SEC → every 63 real seconds
 	if pulse%(SECS_PER_MUD_HOUR*PASSES_PER_SEC) == 0 {
 		gl.safeInvoke("WeatherAndTime", pulse, cb.OnWeatherAndTime)
 		gl.safeInvoke("AffectUpdate", pulse, cb.OnAffectUpdate)
