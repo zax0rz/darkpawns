@@ -174,6 +174,15 @@ func (w *World) woundBroadcast(roomVNum int, message, exclude string) {
 	w.roomMessageExcludeTwo(roomVNum, message, exclude, "")
 }
 
+// WoundBroadcast exposes woundBroadcast across the package boundary so the
+// spells package can route spell-damage wound/position messages through the
+// exact same room broadcaster melee and skills use (DP-1022). It is the
+// exported wrapper the spells package asserts via its woundBroadcaster
+// interface; keep its signature aligned with woundBroadcast.
+func (w *World) WoundBroadcast(roomVNum int, message, exclude string) {
+	w.woundBroadcast(roomVNum, message, exclude)
+}
+
 // getAttackerName returns the name of the attacker for messages.
 func getAttackerName(ch interface{}) string {
 	if p, ok := ch.(*Player); ok {
