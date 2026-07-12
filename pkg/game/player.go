@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math/rand/v2"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -25,6 +26,8 @@ type Player struct {
 	Move      int // Movement points — ported from limits.c/structs.h GET_MOVE
 	MaxMove   int // Max movement points
 	Practices int // Practice sessions for skill training
+	Height    int `json:"height"` // Height in cm — randomized by sex at creation (db.c:3041-3047)
+	Weight    int `json:"weight"` // Weight in kg — randomized by sex at creation (db.c:3041-3047)
 
 	Level    int
 	Exp      int
@@ -313,6 +316,15 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	// Starting practices — class.c:590
 	p.Practices = 2
 
+	// Random height/weight by sex — db.c:3041-3047
+	if p.Sex == 0 { // SEX_MALE = 0
+		p.Weight = 120 + rand.IntN(61) // 120-180
+		p.Height = 160 + rand.IntN(41) // 160-200
+	} else {
+		p.Weight = 100 + rand.IntN(61) // 100-160
+		p.Height = 150 + rand.IntN(31) // 150-180
+	}
+
 	// THAC0 from class table
 	if class >= 0 && class < 12 {
 		p.THAC0 = thaco[class][1]
@@ -329,27 +341,6 @@ func NewCharacter(id int, name string, class, race int) *Player {
 
 	// Initialize default skills
 	p.SkillManager.InitializeDefaultSkills()
-
-	// Set starting skill levels based on class — from class.c do_start()
-	// Thieves and Assassins get starting thief skills
-	if p.Class == ClassThief || p.Class == ClassAssassin {
-		p.SetSkill("sneak", 10)
-		p.SetSkill("hide", 5)
-		p.SetSkill("steal", 15)
-		p.SetSkill("backstab", 10)
-		p.SetSkill("pick_lock", 10)
-	}
-	// Kender get bonus steal
-	if p.Race == RaceKender {
-		p.SetSkill("steal", 25)
-	}
-	// All classes get kick at level 1
-	p.SetSkill("kick", 10)
-	// Warrior-types get bash and rescue
-	if p.Class == ClassWarrior || p.Class == ClassPaladin || p.Class == ClassRanger {
-		p.SetSkill("bash", 10)
-		p.SetSkill("rescue", 10)
-	}
 
 	return p
 }
