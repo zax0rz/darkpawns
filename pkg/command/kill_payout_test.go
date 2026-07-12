@@ -645,16 +645,14 @@ func TestKillPayout_XPHigherLevelKiller_LessXP(t *testing.T) {
 	ktw.world.HandleDeath(mob, p, game.TypeSlash)
 	xpGained := p.GetExp() - preExp
 
-	// Level 30 killing level 2: xp = base * victim_level / killer_level = 1000 * 2 / 30 ≈ 66
-	if xpGained >= 1000 {
-		t.Errorf("expected reduced XP for high-level killer: got %d (base=%d)", xpGained, 1000)
-	}
-	if xpGained <= 0 {
-		t.Errorf("expected some XP even with level penalty: got %d", xpGained)
+	// C calc_level_diff: solo level_diff 28 gets 2-level slack, then -70%,
+	// then over-level-20 loses another 20%: 1000 -> 300 -> 240.
+	if xpGained != 240 {
+		t.Errorf("expected C reduced XP for high-level killer: got %d, want 240", xpGained)
 	}
 }
 
-func TestKillPayout_XPLowerLevelKiller_BonusXP(t *testing.T) {
+func TestKillPayout_XPLowerLevelKiller_NoBonusXP(t *testing.T) {
 	ktw := newKillTestWorld(t, 10, 1000, 0, 10, "dragon")
 	p := ktw.addPlayer(t, 1, "Newbie", 2, game.ClassWarrior, false)
 
@@ -663,9 +661,10 @@ func TestKillPayout_XPLowerLevelKiller_BonusXP(t *testing.T) {
 	ktw.world.HandleDeath(mob, p, game.TypeSlash)
 	xpGained := p.GetExp() - preExp
 
-	// Level 2 killing level 10: xp = base * (2*victim - killer) / victim ≈ 1800
-	if xpGained <= 1000 {
-		t.Errorf("expected bonus XP for lower-level killer: got %d (base=%d)", xpGained, 1000)
+	// C calc_level_diff only penalizes higher-level attackers; it never gives
+	// a fight-up bonus for killing a higher-level victim.
+	if xpGained != 1000 {
+		t.Errorf("expected no C fight-up bonus for lower-level killer: got %d, want 1000", xpGained)
 	}
 }
 

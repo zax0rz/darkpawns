@@ -77,8 +77,44 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 	return members
 }
 
+// calcKillXPShare ports src/fight.c calc_level_diff(). The caller supplies
+// inGroup explicitly because AwardMobKillXP has already resolved the live
+// group membership for this death path.
+func calcKillXPShare(chLevel, victimLevel, base int, inGroup bool) int {
+	share := base
+	if share > maxExpGain {
+		share = maxExpGain
+	}
+	if share < 1 {
+		share = 1
+	}
+
+	levelDiff := chLevel - victimLevel
+	if levelDiff > 0 {
+		if !inGroup {
+			levelDiff -= 2
+		}
+		switch {
+		case levelDiff > 15:
+			share = int(float64(share) - float64(share)*0.7)
+		case levelDiff > 10:
+			share = int(float64(share) - float64(share)*0.5)
+		case levelDiff > 5:
+			share = int(float64(share) - float64(share)*0.3)
+		}
+	}
+	if chLevel > 20 {
+		share = int(float64(share) - float64(share)*0.2)
+	}
+	if share < 1 {
+		share = 1
+	}
+	return share
+}
+
 // AwardMobKillXP distributes experience to the killer and all grouped members in the same room.
-// For solo kills (no group), the killer gets the full victimExp.
+// Solo kills use the C calc_level_diff() path with two levels of slack before
+// higher-level penalties apply.
 // If victimGold > 0 and the killer has AutoGold enabled, gold is looted/split
 // according to the autosplit preference.
 // Source: fight.c group_gain() lines 708–745, called at die_with_killer() line 1638
@@ -183,19 +219,9 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 		if !ok {
 			return
 		}
-		// Level-difference XP penalty — fight.c perform_group_gain()
-		xp := victimExp
-		if victimLevel > 0 {
-			killerLevel := killer.GetLevel()
-			if killerLevel > victimLevel {
-				xp = xp * victimLevel / killerLevel
-			} else if killerLevel < victimLevel {
-				xp = xp * (2*victimLevel - killerLevel) / victimLevel
-			}
-			if xp < 1 {
-				xp = 1
-			}
-		}
+		// Level-difference XP penalty — fight.c calc_level_diff(), solo path
+		// gets the C two-level slack before higher-level penalties apply.
+		xp := calcKillXPShare(killer.GetLevel(), victimLevel, victimExp, false)
 		w.GainExp(p, xp)
 		if xp > 1 {
 			p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", xp))
@@ -230,26 +256,8 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 	}
 
 	// perform_group_gain() for each member — fight.c lines 688–705
-	// Apply level-difference XP penalty per member — fight.c perform_group_gain() lines 688–705
 	for _, m := range inRoom {
-		xp := base
-		// Level-difference penalty — fight.c:
-		//   if (GET_LEVEL(ch) > GET_LEVEL(victim))
-		//       gain = gain * GET_LEVEL(victim) / GET_LEVEL(ch);
-		//   else if (GET_LEVEL(ch) < GET_LEVEL(victim))
-		//       gain = gain * (2 * GET_LEVEL(victim) - GET_LEVEL(ch)) / GET_LEVEL(victim);
-		//   if (gain < 1) gain = 1;
-		if victimLevel > 0 {
-			memberLevel := m.GetLevel()
-			if memberLevel > victimLevel {
-				xp = xp * victimLevel / memberLevel
-			} else if memberLevel < victimLevel {
-				xp = xp * (2*victimLevel - memberLevel) / victimLevel
-			}
-			if xp < 1 {
-				xp = 1
-			}
-		}
+		xp := calcKillXPShare(m.GetLevel(), victimLevel, base, true)
 		w.GainExp(m, xp)
 		if xp > 1 {
 			m.SendMessage(fmt.Sprintf("You receive your share of experience -- %d points.\r\n", xp))

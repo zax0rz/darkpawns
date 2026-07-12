@@ -144,6 +144,13 @@ func TestCalcLevelDiff(t *testing.T) {
 	if diff3 != 100 {
 		t.Errorf("CalcLevelDiff(same level 15) = %d, want 100", diff3)
 	}
+
+	ch4 := &mockCombatant{name: "ch4", level: 30}
+	victim4 := &mockCombatant{name: "vic4", level: 10}
+	diff4 := CalcLevelDiff(ch4, victim4, 99)
+	if diff4 != 23 {
+		t.Errorf("CalcLevelDiff(ch=30, victim=10, base=99) = %d, want 23 per C truncation", diff4)
+	}
 }
 
 // ---------------------------------------------------------------------------

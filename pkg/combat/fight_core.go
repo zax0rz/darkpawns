@@ -931,15 +931,15 @@ func CalcLevelDiff(ch, victim Combatant, base int) int {
 		}
 		switch {
 		case levelDiff > 15:
-			share -= int(float64(share) * 0.7)
+			share = int(float64(share) - float64(share)*0.7)
 		case levelDiff > 10:
-			share -= int(float64(share) * 0.5)
+			share = int(float64(share) - float64(share)*0.5)
 		case levelDiff > 5:
-			share -= int(float64(share) * 0.3)
+			share = int(float64(share) - float64(share)*0.3)
 		}
 	}
 	if ch.GetLevel() > 20 {
-		share -= int(float64(share) * 0.2)
+		share = int(float64(share) - float64(share)*0.2)
 	}
 	if share < 1 {
 		share = 1
