@@ -243,7 +243,7 @@ func TestSpecDump_Golden(t *testing.T) {
 	lowLevel.SetLevel(2)
 	lowLevel.SkillManager = engine.NewSkillManager()
 	lowLevel.Inventory = NewInventory()
-	lowLevel.Inventory.SetCapacity(10, 10, 1)
+	lowLevel.Inventory.SetCapacity(10, 0, 10, 1)
 	if err := w.AddPlayer(lowLevel); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}

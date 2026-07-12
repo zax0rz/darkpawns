@@ -259,7 +259,6 @@ func init() {
 	cmdRegistry.Register("sleeper", wrapSkill(command.CmdSleeper), "Apply a sleeper hold to a target.", 0, combat.PosStanding)
 	cmdRegistry.Register("neckbreak", wrapSkill(command.CmdNeckbreak), "Break a target's neck (bare hands).", 0, combat.PosStanding)
 	cmdRegistry.Register("ambush", wrapSkill(command.CmdAmbush), "Ambush a target from hiding.", 0, combat.PosStanding)
-	cmdRegistry.Register("parry", wrapSkill(command.CmdParry), "Toggle parry stance to deflect attacks.", 0, combat.PosStanding)
 
 	// Port completion: skill handlers that were implemented in pkg/command but
 	// never registered, leaving them unreachable by players. Positions/levels

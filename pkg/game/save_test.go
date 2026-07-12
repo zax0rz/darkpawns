@@ -18,6 +18,9 @@ func TestPlayerSerializationRoundTrip(t *testing.T) {
 	player.Hunger = 12
 	player.Thirst = 18
 	player.Drunk = 2
+	player.Stats.Str = 18
+	player.Stats.StrAdd = 100
+	player.Stats.Dex = 16
 
 	// Round-trip serialize
 	serialized, err := SerializePlayer(player)
@@ -60,6 +63,12 @@ func TestPlayerSerializationRoundTrip(t *testing.T) {
 	}
 	if deserialized.Drunk != player.Drunk {
 		t.Errorf("Drunk = %d, want %d", deserialized.Drunk, player.Drunk)
+	}
+	if deserialized.Inventory.MaxWeight != 480 {
+		t.Errorf("MaxWeight = %d, want 480", deserialized.Inventory.MaxWeight)
+	}
+	if deserialized.Inventory.Capacity != 18 {
+		t.Errorf("Capacity = %d, want 18", deserialized.Inventory.Capacity)
 	}
 }
 

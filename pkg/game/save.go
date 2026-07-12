@@ -333,6 +333,7 @@ func saveDataToPlayer(data savePlayerData) *Player {
 	for i := range p.RaceHates {
 		p.RaceHates[i] = -1
 	}
+	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
 	return p
 }
 

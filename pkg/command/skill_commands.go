@@ -1040,16 +1040,6 @@ func CmdAmbush(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, game.DoAmbush(ch, target))
 }
 
-// CmdParry handles the parry toggle command (C-11).
-func CmdParry(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
-	}
-	ch := s.GetPlayer()
-	result := game.DoParry(ch)
-	return s.SendMessage(result.MessageToCh)
-}
-
 // CmdBerserk handles the berserk command (C-10/C-12).
 func CmdBerserk(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {

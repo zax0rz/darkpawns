@@ -191,8 +191,6 @@ type Player struct {
 
 	// C-10: WAIT_STATE cooldown in PULSE_VIOLENCE ticks (1 tick = 2 seconds).
 	WaitState int
-	// C-11: parry stance toggle
-	Parrying  bool
 	RoomFlags bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
 
 	// AutoGold indicates the player auto-loots gold from killed victims (PRF_AUTOGOLD = 24).
@@ -265,7 +263,6 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
 		WaitState:    0,
 		JailTimer:    0,
-		Parrying:     false,
 
 		SpellMap: make(map[string]int),
 	}
@@ -280,7 +277,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 	player.Equipment = NewEquipment()
 	player.Equipment.OwnerName = player.Name
 	// Set default capacity (will be updated when stats are set)
-	player.Inventory.SetCapacity(10, 10, 1) // Default STR=10, DEX=10, level=1
+	player.Inventory.SetCapacity(10, 0, 10, 1) // Default STR=10, DEX=10, level=1
 
 	return player
 }
@@ -337,7 +334,7 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	// Set inventory capacity and carry weight based on STR, DEX and level
 	// CAN_CARRY_N = 5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1)
 	// CAN_CARRY_W = str_app[str].carry_w
-	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.Dex, p.Level)
+	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
 
 	// Initialize default skills
 	p.SkillManager.InitializeDefaultSkills()
@@ -394,20 +391,14 @@ func (p *Player) CarriedWeight() int {
 
 // MaxCarryWeight returns the maximum weight this player can carry.
 // Source: utils.h CAN_CARRY_W(ch) = str_app[STRENGTH_APPLY_INDEX(ch)].carry_w
-// Table from constants.c str_app[] (4th column is carry_w):
-//
-//	STR 0:0, 1:3, 2:3, 3:10, 4:25, 5:55, 6:80, 7:90, 8:100, 9:100,
-//	STR 10:115, 11:115, 12:140, 13:140, 14:170, 15:170, 16:195, 17:220, 18:255
 func (p *Player) MaxCarryWeight() int {
-	strCarry := [...]int{0, 3, 3, 10, 25, 55, 80, 90, 100, 100, 115, 115, 140, 140, 170, 170, 195, 220, 255}
-	str := p.Strength
-	if str < 0 {
-		return 0
-	}
-	if str >= len(strCarry) {
-		str = len(strCarry) - 1
-	}
-	return strCarry[str]
+	return combat.CarryWeight(p.GetStr(), p.GetStrAdd())
+}
+
+// MaxCarryItems returns CAN_CARRY_N from the player's current stats.
+// Source: utils.h CAN_CARRY_N.
+func (p *Player) MaxCarryItems() int {
+	return 5 + (p.GetDex() >> 1) + (p.GetLevel() >> 1)
 }
 
 // MaxWieldWeight returns the maximum weight this player can wield.

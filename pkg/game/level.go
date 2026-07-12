@@ -422,7 +422,13 @@ func (p *Player) AdvanceLevel() {
 	// Release lock before I/O — SavePlayer acquires RLock via playerToSaveData.
 	level := p.Level
 	name := p.Name
+	str := p.Stats.Str
+	strAdd := p.Stats.StrAdd
+	dex := p.Stats.Dex
 	p.mu.Unlock()
+	if p.Inventory != nil {
+		p.Inventory.SetCapacity(str, strAdd, dex, level)
+	}
 
 	// Save after leveling up (outside lock to avoid deadlock with playerToSaveData's RLock)
 	if err := SavePlayer(p); err != nil {

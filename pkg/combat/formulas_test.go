@@ -131,6 +131,25 @@ func TestStrIndex_18WithStrAdd(t *testing.T) {
 	}
 }
 
+func TestCarryWeight_ExceptionalStrength(t *testing.T) {
+	tests := []struct {
+		strAdd int
+		want   int
+	}{
+		{0, 255},
+		{50, 280},
+		{75, 305},
+		{90, 330},
+		{99, 380},
+		{100, 480},
+	}
+	for _, tt := range tests {
+		if got := CarryWeight(18, tt.strAdd); got != tt.want {
+			t.Errorf("CarryWeight(18, %d) = %d, want %d", tt.strAdd, got, tt.want)
+		}
+	}
+}
+
 func TestStrIndex_LowStr(t *testing.T) {
 	c := &mockCombatant{str: 3, strAdd: 0}
 	idx := strIndex(c)

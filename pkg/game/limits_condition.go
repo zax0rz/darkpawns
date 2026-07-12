@@ -293,6 +293,18 @@ func (w *World) PointUpdate() {
 			w.decayObjectsInRoom(roomVNum)
 		}
 	}
+
+	// Second pass: decay objects in rooms that have no mobs. C's point_update()
+	// iterates the global object_list, so corpses in cleared rooms still decay.
+	// The dedup map keeps this from double-decaying rooms already handled above.
+	rooms := w.Rooms()
+	for i := range rooms {
+		room := &rooms[i]
+		if !decayedRooms[room.VNum] {
+			decayedRooms[room.VNum] = true
+			w.decayObjectsInRoom(room.VNum)
+		}
+	}
 }
 
 // clearMemory clears a mob's memory — from handler.c

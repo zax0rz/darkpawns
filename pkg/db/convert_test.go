@@ -42,7 +42,8 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	p.SetMaxMove(100)
 	p.Gold = 500
 	p.BankGold = 1000
-	p.Stats.Str = 16
+	p.Stats.Str = 18
+	p.Stats.StrAdd = 50
 	p.Stats.Int = 14
 	p.Stats.Wis = 12
 	p.Stats.Dex = 15
@@ -114,6 +115,12 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	}
 	if restored.Stats.Str != p.Stats.Str {
 		t.Errorf("Restored Stats.Str = %d, want %d", restored.Stats.Str, p.Stats.Str)
+	}
+	if restored.Inventory.MaxWeight != 280 {
+		t.Errorf("Restored MaxWeight = %d, want 280", restored.Inventory.MaxWeight)
+	}
+	if restored.Inventory.Capacity != 19 {
+		t.Errorf("Restored Capacity = %d, want 19", restored.Inventory.Capacity)
 	}
 
 	// Verify inventory restored

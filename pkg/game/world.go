@@ -1383,7 +1383,7 @@ func (w *World) CanCarryObject(charName string, objVNum int) bool {
 	if !ok {
 		return false
 	}
-	if p.Inventory != nil && p.Inventory.IsFull() {
+	if p.Inventory != nil && p.Inventory.GetItemCount() >= p.MaxCarryItems() {
 		return false
 	}
 	if p.CarriedWeight()+proto.Weight > p.MaxCarryWeight() {
