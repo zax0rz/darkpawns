@@ -67,13 +67,13 @@ func TestMain(m *testing.M) {
 			if skillNum == SKILL_PARRY && name == "parry_warrior" {
 				return 80
 			}
-			if skillNum == SKILL_DODGE && name == "dodge_rogue" {
-				return 70
-			}
 			if name == "nobody" {
 				return 0
 			}
 			return 50
+		},
+		HasAffect: func(name string, aff int) bool {
+			return name == "dodging_mob" && aff == AFF_DODGE
 		},
 		HasMobFlag: func(name string, flag string) bool {
 			return name == "aware_mob" && flag == "MOB_AWARE"
@@ -438,23 +438,13 @@ func TestCheckParry_NoSkill(t *testing.T) {
 	}
 }
 
-func TestCheckParry_Unarmed(t *testing.T) {
-	defender := &mockCombatant{npc: false, name: "unarmed_guy", position: PosStanding}
-	attacker := &mockCombatant{name: "hero", position: PosStanding}
-
-	result := CheckParry(defender, attacker)
-	if result != ParryUnarmed {
-		t.Errorf("expected ParryUnarmed for unarmed defender, got %v", result)
-	}
-}
-
-func TestCheckParry_AwareMob(t *testing.T) {
-	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding}
-	attacker := &mockCombatant{npc: true, name: "aware_mob", position: PosStanding}
+func TestCheckParry_NotMutualFighting(t *testing.T) {
+	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: "someone_else"}
+	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "parry_warrior"}
 
 	result := CheckParry(defender, attacker)
 	if result != ParryFail {
-		t.Errorf("expected ParryFail vs aware mob, got %v", result)
+		t.Errorf("expected ParryFail when combatants are not mutually fighting, got %v", result)
 	}
 }
 
@@ -469,20 +459,31 @@ func TestCheckParry_Sleeping(t *testing.T) {
 }
 
 func TestCheckParry_ArmedSkilled(t *testing.T) {
-	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding}
-	attacker := &mockCombatant{npc: true, name: "orc", position: PosStanding}
+	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: "orc"}
+	attacker := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: "parry_warrior"}
 
-	// With skill 80, ran 100 times — some should succeed
-	succeeded := false
-	for i := 0; i < 200; i++ {
-		result := CheckParry(defender, attacker)
-		if result == ParrySuccess {
-			succeeded = true
-			break
-		}
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{80, 81}))
+	defer SetRoller(old)
+
+	if result := CheckParry(defender, attacker); result != ParrySuccess {
+		t.Fatalf("CheckParry with roll equal to skill = %v, want ParrySuccess", result)
 	}
-	if !succeeded {
-		t.Error("expected at least one parry success with skill 80 over 200 rolls")
+	if result := CheckParry(defender, attacker); result != ParryFail {
+		t.Fatalf("CheckParry with roll above skill = %v, want ParryFail", result)
+	}
+}
+
+func TestCheckParry_CUsesTenThousandRange(t *testing.T) {
+	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: "orc"}
+	attacker := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: "parry_warrior"}
+
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{100}))
+	defer SetRoller(old)
+
+	if result := CheckParry(defender, attacker); result != ParryFail {
+		t.Fatalf("skill-80 parry with C roll 100/10000 = %v, want ParryFail", result)
 	}
 }
 
@@ -490,40 +491,39 @@ func TestCheckParry_ArmedSkilled(t *testing.T) {
 // CheckDodge tests
 // ---------------------------------------------------------------------------
 
-func TestCheckDodge_Sleeping(t *testing.T) {
-	defender := &mockCombatant{name: "dodge_rogue", position: PosSleeping}
-	attacker := &mockCombatant{name: "hero", position: PosStanding}
+func TestCheckDodge_PlayerCannotDodge(t *testing.T) {
+	defender := &mockCombatant{npc: false, name: "dodge_rogue", position: PosStanding, fighting: "hero"}
+	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "dodge_rogue"}
 
 	result := CheckDodge(defender, attacker)
 	if result != DodgeIncapable {
-		t.Errorf("expected DodgeIncapable for sleeping defender, got %v", result)
+		t.Errorf("expected DodgeIncapable for player defender, got %v", result)
 	}
 }
 
-func TestCheckDodge_NoSkill(t *testing.T) {
-	defender := &mockCombatant{name: "nobody", position: PosStanding}
-	attacker := &mockCombatant{name: "hero", position: PosStanding}
+func TestCheckDodge_NoAffect(t *testing.T) {
+	defender := &mockCombatant{npc: true, name: "plain_mob", position: PosStanding, fighting: "hero", level: 50}
+	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "plain_mob"}
 
 	result := CheckDodge(defender, attacker)
 	if result != DodgeFail {
-		t.Errorf("expected DodgeFail for unskilled, got %v", result)
+		t.Errorf("expected DodgeFail for NPC without AFF_DODGE, got %v", result)
 	}
 }
 
-func TestCheckDodge_Skilled(t *testing.T) {
-	defender := &mockCombatant{name: "dodge_rogue", position: PosStanding}
-	attacker := &mockCombatant{name: "hero", position: PosStanding}
+func TestCheckDodge_NPCAffDodge(t *testing.T) {
+	defender := &mockCombatant{npc: true, name: "dodging_mob", position: PosStanding, fighting: "hero", level: 50}
+	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "dodging_mob"}
 
-	succeeded := false
-	for i := 0; i < 200; i++ {
-		result := CheckDodge(defender, attacker)
-		if result == DodgeSuccess {
-			succeeded = true
-			break
-		}
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{49, 50}))
+	defer SetRoller(old)
+
+	if result := CheckDodge(defender, attacker); result != DodgeSuccess {
+		t.Fatalf("CheckDodge with roll below level = %v, want DodgeSuccess", result)
 	}
-	if !succeeded {
-		t.Error("expected at least one dodge success with skill 70 over 200 rolls")
+	if result := CheckDodge(defender, attacker); result != DodgeFail {
+		t.Fatalf("CheckDodge with roll equal to level = %v, want DodgeFail", result)
 	}
 }
 

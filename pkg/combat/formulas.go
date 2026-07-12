@@ -652,21 +652,18 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 	return attacks
 }
 
-// CheckParry implements the CircleMUD parry skill check for a single attack.
-// Source: fight.c:1949-1963, new_cmds.c do_parry()
+// CheckParry implements the automatic CircleMUD parry check.
+// Source: src/fight.c:1949-1963.
 //
 // Parry requirements:
 //   - Defender must be a player (not NPC)
 //   - Defender must have the parry skill (GET_SKILL > 0)
-//   - Defender must be wielding a weapon
 //   - Defender must be awake (position > PosSleeping)
-//   - Attacker must be an "aware" mob — mob-aware mobs can't be parried
 //
-// Formula: percent = rand(1, 101); prob = skill level
-// If percent > prob, parry fails.
+// Formula: number(0,10000) <= GET_SKILL(ch, SKILL_PARRY). At skill 100 this
+// is about 1% per round, not a per-hit near-certainty.
 //
-// Returns ParrySuccess if the attack is parried, ParryUnarmed if skill exists
-// but no weapon is equipped, ParryFail otherwise.
+// Returns ParrySuccess if the attacker's attack count should be reduced.
 func CheckParry(defender, attacker Combatant) ParryResult {
 	if defender.IsNPC() {
 		return ParryFail
@@ -683,56 +680,42 @@ func CheckParry(defender, attacker Combatant) ParryResult {
 		return ParryFail
 	}
 
-	// Mob-aware mobs can't be parried
-	if attacker.IsNPC() && cbHasMobFlag(attacker.GetName(), "MOB_AWARE") {
+	if attacker == nil || defender.GetFighting() != attacker.GetName() || attacker.GetFighting() != defender.GetName() {
 		return ParryFail
 	}
 
-	// Must be wielding a weapon
-	wType, _, _, _ := cbGetWeaponInfo(defender.GetName())
-	if wType <= TYPE_HIT {
-		return ParryUnarmed
-	}
-
-	// C: percent = number(1, 101); prob = GET_SKILL(ch, SKILL_PARRY)
-	// If percent > prob, parry fails.
-	percent := GetRoller().Number(1, 101)
-	if percent > skill {
+	if GetRoller().Number(0, 10000) > skill {
 		return ParryFail
 	}
 
 	return ParrySuccess
 }
 
-// CheckDodge implements the CircleMUD dodge skill check for a single attack.
-// Source: fight.c:1965-1971
+// CheckDodge implements the CircleMUD NPC AFF_DODGE check.
+// Source: src/fight.c:1965-1973.
 //
 // Dodge requirements:
-//   - Defender must have the dodge skill
-//   - Defender must be awake (not sleeping, stunned, etc.)
-//   - Works without weapons
+//   - Defender must be an NPC
+//   - Defender must have AFF_DODGE
+//   - Defender and attacker must be fighting each other
 //
-// Formula: percent = rand(1, 101); prob = skill level
-// If percent > prob, dodge fails.
+// Formula: number(0,100) < GET_LEVEL(ch).
 //
-// Returns DodgeSuccess if the attack is dodged, DodgeIncapable if the
-// defender is sleeping/stunned, DodgeFail otherwise.
+// Returns DodgeSuccess if the attacker's attack count should be reduced.
 func CheckDodge(defender, attacker Combatant) DodgeResult {
-	// Must be awake — sleeping/stunned can't dodge
-	if defender.GetPosition() <= PosSleeping {
+	if !defender.IsNPC() {
 		return DodgeIncapable
 	}
 
-	// Must have dodge skill
-	skill := cbGetSkill(defender.GetName(), SKILL_DODGE)
-	if skill <= 0 {
+	if !cbHasAffect(defender.GetName(), AFF_DODGE) {
 		return DodgeFail
 	}
 
-	// C: percent = number(1, 101); prob = skill level
-	// If percent > prob, dodge fails.
-	percent := GetRoller().Number(1, 101)
-	if percent > skill {
+	if attacker == nil || defender.GetFighting() != attacker.GetName() || attacker.GetFighting() != defender.GetName() {
+		return DodgeFail
+	}
+
+	if GetRoller().Number(0, 100) >= defender.GetLevel() {
 		return DodgeFail
 	}
 

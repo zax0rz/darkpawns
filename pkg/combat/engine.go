@@ -389,10 +389,42 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	hasSlow := cbHasAffect(attacker.GetName(), AFF_SLOW)
 	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
 
-	// roundPenalty tracks whether a parry or dodge succeeded earlier in this
-	// round. If true, subsequent attacks suffer a THAC0 penalty.
-	// Source: fight.c:1251 — round-wide accuracy penalty after parry/dodge.
-	roundPenalty := 0
+	// C checks parry/dodge once per defender round and sets IS_PARRIED on the
+	// attacker. When the attacker swings, IS_PARRIED reduces attack count; it
+	// does not negate each individual hit. Source: src/fight.c:1949-2004.
+	defenseAction := ""
+	switch {
+	case CheckParry(defender, attacker) == ParrySuccess:
+		defenseAction = "parry"
+		attacker.SendMessage(fmt.Sprintf("With a dazzling show of swordplay, %s parries your attack!\r\n", defender.GetName()))
+		defender.SendMessage("With a dazzling show of swordplay, you parry the attack!\r\n")
+		if ce.BroadcastFunc != nil {
+			ce.BroadcastFunc(attacker.GetRoom(),
+				fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's every blow!", defender.GetName(), attacker.GetName()), "")
+		}
+	case CheckDodge(defender, attacker) == DodgeSuccess:
+		defenseAction = "dodge"
+		attacker.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", defender.GetName()))
+		defender.SendMessage("You dodge!\r\n")
+		if ce.BroadcastFunc != nil {
+			ce.BroadcastFunc(attacker.GetRoom(),
+				fmt.Sprintf("%s dodges %s's attack!", defender.GetName(), attacker.GetName()), "")
+		}
+	}
+	if defenseAction != "" {
+		defenderDexDefense := dexApp[dexIndex(defender)].Defensive
+		if defenderDexDefense < 0 {
+			numAttacks += defenderDexDefense
+		} else {
+			numAttacks--
+		}
+		if numAttacks < 0 {
+			numAttacks = 0
+		}
+		if ce.OnCombatAction != nil {
+			ce.OnCombatAction(attacker, defender, defenseAction, 0, defenseAction, 0)
+		}
+	}
 
 	// Perform attacks
 	for i := 0; i < numAttacks; i++ {
@@ -402,41 +434,8 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 			break
 		}
 
-		// Check hit — apply round penalty if a prior parry/dodge succeeded
-		if !CalculateHitChance(attacker, defender, HitModifiers{RoundPenalty: roundPenalty}) {
+		if !CalculateHitChance(attacker, defender, HitModifiers{}) {
 			ce.sendMissMessage(attacker, defender, pair.LastAttackType)
-			continue
-		}
-
-		// Parry check — checked before damage
-		parryResult := CheckParry(defender, attacker)
-		if parryResult == ParrySuccess {
-			roundPenalty = 4 // THAC0 penalty for rest of round — fight.c:1251
-			attacker.SendMessage(fmt.Sprintf("With a dazzling show of swordplay, %s parries your attack!\r\n", defender.GetName()))
-			defender.SendMessage("With a dazzling show of swordplay, you parry the attack!\r\n")
-			if ce.BroadcastFunc != nil {
-				ce.BroadcastFunc(attacker.GetRoom(),
-					fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's blow!", defender.GetName(), attacker.GetName()), "")
-			}
-			if ce.OnCombatAction != nil {
-				ce.OnCombatAction(attacker, defender, "parry", 0, "parry", 0)
-			}
-			continue
-		}
-
-		// Dodge check — checked after parry
-		dodgeResult := CheckDodge(defender, attacker)
-		if dodgeResult == DodgeSuccess {
-			roundPenalty = 4 // THAC0 penalty for rest of round — fight.c:1251
-			attacker.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", defender.GetName()))
-			defender.SendMessage("You dodge the attack!\r\n")
-			if ce.BroadcastFunc != nil {
-				ce.BroadcastFunc(attacker.GetRoom(),
-					fmt.Sprintf("%s dodges %s's attack!", defender.GetName(), attacker.GetName()), "")
-			}
-			if ce.OnCombatAction != nil {
-				ce.OnCombatAction(attacker, defender, "dodge", 0, "dodge", 0)
-			}
 			continue
 		}
 

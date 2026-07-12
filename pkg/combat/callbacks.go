@@ -291,13 +291,6 @@ func cbUnmount(name string) {
 	}
 }
 
-func cbGetWeaponInfo(chName string) (wType, damDice, damSize int, isBlessed bool) {
-	if cb := callbacks; cb != nil && cb.GetWeaponInfo != nil {
-		return cb.GetWeaponInfo(chName)
-	}
-	return 0, 0, 0, false
-}
-
 func cbGetAdjacentRoom(roomVNum, door int) int {
 	if cb := callbacks; cb != nil && cb.GetAdjacentRoom != nil {
 		return cb.GetAdjacentRoom(roomVNum, door)

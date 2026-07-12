@@ -71,7 +71,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 
 	cb.GetSkill = func(name string, skillNum int) int {
 		if p, ok := w.GetPlayer(name); ok {
-			return p.GetSkill(name)
+			return p.GetSkill(combatSkillName(skillNum))
 		}
 		return 0
 	}
