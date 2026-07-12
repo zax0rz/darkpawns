@@ -522,6 +522,9 @@ func TestNewCharFlowSkipsPasswordWhenSupplied(t *testing.T) {
 		t.Fatalf("handleMessage confirm Y: %v", err)
 	}
 
+	// Fantasy-name reminder text is sent before the next prompt.
+	drainMsg(t, s)
+
 	// The next prompt must be the color stage, NOT create_password — the
 	// password was already collected by the auth layer, so no second prompt.
 	_, cd := unmarshalCharCreate(t, drainMsg(t, s))
@@ -555,6 +558,9 @@ func TestNewCharFlowPromptsPasswordWhenNotSupplied(t *testing.T) {
 	if err := s.handleMessage(msg); err != nil {
 		t.Fatalf("handleMessage confirm Y: %v", err)
 	}
+
+	// Fantasy-name reminder text is sent before the next prompt.
+	drainMsg(t, s)
 
 	_, cd := unmarshalCharCreate(t, drainMsg(t, s))
 	if cd.Stage != "create_password" {
