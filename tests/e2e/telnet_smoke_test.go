@@ -53,18 +53,12 @@ func TestTelnetSmoke_GuestEntersWorld(t *testing.T) {
 	// and drops straight into the world as a level-1 Warrior.
 	mustWrite(t, conn, "guest\r\n")
 
-	// Guests now hit the CON_MENU (DP-1067). Wait for the menu, select
-	// option 1 to enter the game.
-	if got := readUntil(t, conn, r, "Make your choice", 10*time.Second); got == "" {
-		t.Fatal("guest never received the main menu")
-	}
-	mustWrite(t, conn, "1\r\n")
-
-	// Read through to the room entry. By the time "[8004]" arrives,
+	// Read through to the MOTD, which the server sends *after* the
+	// look-on-entry room block. By the time "Welcome to Dark Pawns" arrives,
 	// the room name, vnum and exits have all already been streamed.
-	entered := readUntil(t, conn, r, "[8004]", 10*time.Second)
+	entered := readUntil(t, conn, r, "Welcome to Dark Pawns", 10*time.Second)
 	if entered == "" {
-		t.Fatal("guest never entered the world")
+		t.Fatal("guest never entered the world (no MOTD received after login)")
 	}
 	for _, want := range []string{"Temple Altar", "[8004]", "Exits:"} {
 		if !strings.Contains(entered, want) {
