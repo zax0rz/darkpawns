@@ -164,6 +164,141 @@ func TestShopkeeperProtection_RemovesCombatPair(t *testing.T) {
 	}
 }
 
+type fixedRoller struct {
+	number int
+}
+
+func (r fixedRoller) Number(_, _ int) int { return r.number }
+func (r fixedRoller) Dice(_, _ int) int   { return 1 }
+func (r fixedRoller) IntN(int) int        { return 0 }
+
+func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	guard := &mockCombatant{
+		name:       "jail guard",
+		npc:        true,
+		room:       8117,
+		level:      30,
+		hp:         80,
+		maxHP:      100,
+		position:   PosFighting,
+		damageRoll: DiceRoll{Num: 10, Sides: 10},
+	}
+	victim := &mockCombatant{
+		name:     "Thief",
+		room:     8117,
+		level:    20,
+		hp:       50,
+		maxHP:    50,
+		position: PosFighting,
+	}
+
+	subdued := false
+	ce := NewCombatEngine()
+	ce.SetCallbacks(&GameCallbacks{
+		HasMobVNum: func(name string, vnum int) bool {
+			return name == "jail guard" && vnum == 8102
+		},
+		HasAffect: func(name string, aff int) bool { return false },
+		JailGuardSubdue: func(guardName, victimName string) bool {
+			subdued = guardName == "jail guard" && victimName == "Thief"
+			return subdued
+		},
+	})
+	if err := ce.StartCombat(guard, victim); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "jail guard", Target: "Thief"}])
+
+	if !subdued {
+		t.Fatal("expected jail guard subdue callback")
+	}
+	if victim.GetHP() != 50 {
+		t.Errorf("expected no live-path melee damage after subdue, hp=%d", victim.GetHP())
+	}
+	if ce.IsFighting("jail guard") || ce.IsFighting("Thief") {
+		t.Fatal("expected jail guard intercept to clear combat")
+	}
+}
+
+func TestMobRedirect_CharmedPetRetargetsToMaster(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	attacker := &mockCombatant{name: "angry mob", npc: true, room: 10, level: 15, hp: 50, maxHP: 50, position: PosFighting}
+	pet := &mockCombatant{name: "charmed pet", npc: true, room: 10, level: 5, hp: 50, maxHP: 50, position: PosFighting}
+	master := &mockCombatant{name: "Master", room: 10, level: 20, hp: 50, maxHP: 50, position: PosFighting}
+
+	ce := NewCombatEngine()
+	ce.SetCallbacks(&GameCallbacks{
+		HasAffect: func(name string, aff int) bool {
+			return name == "charmed pet" && aff == AFF_CHARM
+		},
+		GetFollowing: func(name string) string {
+			if name == "charmed pet" {
+				return "Master"
+			}
+			return ""
+		},
+		GetRoomCombatants: func(roomVNum int) []Combatant {
+			return []Combatant{attacker, pet, master}
+		},
+	})
+	if err := ce.StartCombat(attacker, pet); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	WithRoller(fixedRoller{number: 0}, func() {
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "angry mob", Target: "charmed pet"}])
+	})
+
+	if attacker.GetFighting() != "Master" {
+		t.Fatalf("expected attacker retargeted to Master, got %q", attacker.GetFighting())
+	}
+	if _, ok := ce.combatPairs[CombatPairKey{Attacker: "angry mob", Target: "Master"}]; !ok {
+		t.Fatal("expected combat pair redirected to Master")
+	}
+	if pet.GetHP() != 50 {
+		t.Errorf("expected charmed pet to take no damage during redirect, hp=%d", pet.GetHP())
+	}
+}
+
+func TestMobRedirect_HighLevelSwitcheroo(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	dragon := &mockCombatant{name: "dragon", npc: true, room: 20, level: 30, hp: 200, maxHP: 200, position: PosFighting}
+	tank := &mockCombatant{name: "Tank", room: 20, level: 20, hp: 100, maxHP: 100, position: PosFighting}
+	rogue := &mockCombatant{name: "Rogue", room: 20, level: 20, hp: 100, maxHP: 100, position: PosFighting, fighting: "dragon"}
+
+	ce := NewCombatEngine()
+	ce.SetCallbacks(&GameCallbacks{
+		GetRoomCombatants: func(roomVNum int) []Combatant {
+			return []Combatant{dragon, tank, rogue}
+		},
+	})
+	if err := ce.StartCombat(dragon, tank); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	WithRoller(fixedRoller{number: 0}, func() {
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "dragon", Target: "Tank"}])
+	})
+
+	if dragon.GetFighting() != "Rogue" {
+		t.Fatalf("expected high-level mob retargeted to Rogue, got %q", dragon.GetFighting())
+	}
+	if _, ok := ce.combatPairs[CombatPairKey{Attacker: "dragon", Target: "Rogue"}]; !ok {
+		t.Fatal("expected combat pair redirected to Rogue")
+	}
+	if tank.GetHP() != 100 {
+		t.Errorf("expected original defender to take no damage during switcheroo, hp=%d", tank.GetHP())
+	}
+}
+
 func TestHandleDeath_PassesAttackType(t *testing.T) {
 	attacker := &mockCombatant{
 		name:     "Attacker",

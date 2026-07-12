@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -174,6 +175,72 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			return false
 		}
 		return m.HasScript(strings.ToLower(strings.TrimPrefix(flag, "MS_")))
+	}
+
+	cb.GetRoomCombatants = func(roomVNum int) []combat.Combatant {
+		players := w.GetPlayersInRoom(roomVNum)
+		mobs := w.GetMobsInRoom(roomVNum)
+		chars := make([]combat.Combatant, 0, len(players)+len(mobs))
+		for _, p := range players {
+			chars = append(chars, p)
+		}
+		for _, m := range mobs {
+			chars = append(chars, m)
+		}
+		return chars
+	}
+
+	cb.GetFollowing = func(name string) string {
+		if p, ok := w.GetPlayer(name); ok {
+			return p.GetFollowing()
+		}
+		for _, m := range w.GetAllMobs() {
+			if m.GetName() == name {
+				return m.GetFollowing()
+			}
+		}
+		return ""
+	}
+
+	cb.JailGuardSubdue = func(guardName, victimName string) bool {
+		victim, ok := w.GetPlayer(victimName)
+		if !ok {
+			return false
+		}
+		var guard *MobInstance
+		for _, m := range w.GetMobsInRoom(victim.GetRoom()) {
+			if m.GetName() == guardName {
+				guard = m
+				break
+			}
+		}
+		if guard == nil {
+			return false
+		}
+
+		victim.SetHP(1)
+		if victim.IsMounted() {
+			victim.Unmount()
+		}
+		if guard.HasFlag("MOB_MEMORY") {
+			guard.Forget(victimName)
+		}
+		if guard.GetHunting() == victimName {
+			guard.ClearHunting()
+		}
+
+		roomVNum := victim.GetRoom()
+		actToRoom(w, roomVNum, fmt.Sprintf("%s grabs %s by the collar, and quickly beats them into submission.\r\nJerking them to their feet, %s carts %s off to jail.\r\n", guard.GetName(), victim.GetName(), guard.GetName(), victim.GetName()), victimName)
+		sendToChar(victim, fmt.Sprintf("%s grabs you by the collar and quickly beats you into submission.\r\n", guard.GetName()))
+		sendToChar(victim, "Jerking you to your feet, he carts you off to jail...\r\n")
+		victim.SetRoom(8118)
+		w.lookAtRoom(victim, false)
+		jailTimer := victim.GetLevel() / 2
+		if jailTimer < 2 {
+			jailTimer = 2
+		}
+		victim.JailTimer = jailTimer
+		return true
 	}
 
 	// -------------------------------------------------------------------------

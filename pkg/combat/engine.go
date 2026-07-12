@@ -384,6 +384,10 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		return
 	}
 
+	if ce.applyMobCombatRedirects(attacker, defender) {
+		return
+	}
+
 	// Calculate number of attacks for attacker
 	hasHaste := cbHasAffect(attacker.GetName(), AFF_HASTE)
 	hasSlow := cbHasAffect(attacker.GetName(), AFF_SLOW)
@@ -486,6 +490,76 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	if attacker.IsNPC() && ce.ScriptFightFunc != nil && defender.GetPosition() != PosDead {
 		ce.ScriptFightFunc(attacker.GetName(), defender.GetName(), attacker.GetRoom())
 	}
+}
+
+// applyMobCombatRedirects ports the mob-initiated damage() redirects from
+// src/fight.c:1370-1440. These run before damage lands and may move the victim
+// or retarget the attacker, causing this combat exchange to abort.
+func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bool {
+	if !attacker.IsNPC() {
+		return false
+	}
+
+	attackerName := attacker.GetName()
+	defenderName := defender.GetName()
+
+	// Jail guard intercept: city jail guards subdue eligible PCs instead of
+	// killing them, then cart them to jail.
+	if !defender.IsNPC() &&
+		(cbHasMobVNum(attackerName, 8102) || cbHasMobVNum(attackerName, 8103)) &&
+		attacker.GetHP() > attacker.GetMaxHP()/2 &&
+		!cbHasAffectStr(defenderName, AFF_STR_VAMPIRE) &&
+		!cbHasAffectStr(defenderName, AFF_STR_WEREWOLF) {
+		if cbJailGuardSubdue(attackerName, defenderName) {
+			ce.StopCombat(defenderName)
+			ce.StopCombat(attackerName)
+			return true
+		}
+	}
+
+	// Charmed-pet retarget: an NPC about to damage a charmed NPC follower may
+	// switch to the follower's master if the master is in the same room.
+	if defender.IsNPC() &&
+		cbHasAffect(defenderName, AFF_CHARM) &&
+		GetRoller().Number(0, 10) == 0 {
+		masterName := cbGetFollowing(defenderName)
+		if masterName != "" {
+			if master := findRoomCombatantByName(attacker.GetRoom(), masterName); master != nil {
+				ce.redirectAttacker(attacker, master)
+				return true
+			}
+		}
+	}
+
+	// High-level NPC switcheroo: high-level mobs sometimes switch to another
+	// character in the room that is currently fighting them.
+	if attacker.GetLevel() > 20 {
+		for _, vict := range cbGetRoomCombatants(attacker.GetRoom()) {
+			if vict == nil || vict.GetName() == defenderName {
+				continue
+			}
+			if vict.GetFighting() == attackerName && GetRoller().Number(0, 80) == 0 {
+				ce.redirectAttacker(attacker, vict)
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func findRoomCombatantByName(roomVNum int, name string) Combatant {
+	for _, ch := range cbGetRoomCombatants(roomVNum) {
+		if ch != nil && ch.GetName() == name {
+			return ch
+		}
+	}
+	return nil
+}
+
+func (ce *CombatEngine) redirectAttacker(attacker, target Combatant) {
+	ce.StopCombat(attacker.GetName())
+	_ = ce.StartCombat(attacker, target)
 }
 
 // sendHitMessage sends hit messages to combatants and room.
