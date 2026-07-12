@@ -7,6 +7,9 @@ package game
 // and remove expired affects with wear-off messages.
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
@@ -73,5 +76,54 @@ func (w *World) AffectUpdate() {
 		p.mu.Lock()
 		p.ActiveAffects = remaining
 		p.mu.Unlock()
+	}
+
+	// Mob affect expiration — magic.c:431-457
+	// C iterates character_list which includes both players and NPCs.
+	mobs := w.GetAllMobs()
+	for _, mob := range mobs {
+		if !mob.IsAlive() {
+			continue
+		}
+
+		mob.mu.Lock()
+		type expireInfo struct {
+			spellNum int
+			wearOff  string
+		}
+		var expired []expireInfo
+		roomVNum := mob.RoomVNum
+		shortDesc := mob.GetShortDesc()
+		for key, val := range mob.CustomData {
+			if !strings.HasPrefix(key, "affect_") {
+				continue
+			}
+			aff, ok := val.(*engine.Affect)
+			if !ok {
+				continue
+			}
+			if aff.Duration == -1 {
+				continue // permanent affect
+			}
+			if aff.Duration >= 1 {
+				aff.Duration--
+				continue
+			}
+			// Duration == 0 — expires this tick.
+			var spellNum int
+			if _, err := fmt.Sscanf(key, "affect_%d", &spellNum); err == nil {
+				expired = append(expired, expireInfo{spellNum: spellNum, wearOff: SpellWearOffMsg(aff.SpellID)})
+			}
+		}
+		mob.mu.Unlock()
+
+		// Send wear-off messages and remove affects outside the mob lock.
+		// RemoveAffectBySpell acquires mob.mu internally via RemoveAffected.
+		for _, info := range expired {
+			if info.wearOff != "" {
+				w.roomMessage(roomVNum, fmt.Sprintf("%s %s", shortDesc, info.wearOff))
+			}
+			mob.RemoveAffectBySpell(info.spellNum)
+		}
 	}
 }

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/events"
@@ -427,6 +428,29 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	// original, die()/die_with_killer() are only ever reached with HP already <= 0.
 	if player.GetHP() > 0 {
 		return
+	}
+
+	// PK bookkeeping — fight.c:1671-1689
+	// Only fire player-vs-player bookkeeping when there is a distinct killer.
+	if killerName != "" && killerName != player.GetName() {
+		if killer, ok := w.GetPlayer(killerName); ok {
+			roomName := ""
+			if room, roomOK := w.GetRoom(roomVNum); roomOK {
+				roomName = room.Name
+			}
+			slog.Info("(PK) "+fmt.Sprintf("%s killed by %s at %s", player.GetName(), killerName, roomName),
+				"victim", player.GetName(), "killer", killerName, "room", roomVNum)
+			// Flag killer as outlaw if the victim wasn't already an outlaw.
+			if player.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
+				killer.SetPlrFlag(PlrOutlaw, true)
+			}
+			killer.PKs++
+		} else {
+			slog.Info(fmt.Sprintf("%s killed by %s at room %d", player.GetName(), killerName, roomVNum),
+				"victim", player.GetName(), "killer", killerName, "room", roomVNum)
+		}
+		player.Deaths++
+		player.LastDeath = time.Now().Unix()
 	}
 
 	// EXP loss based on death type
