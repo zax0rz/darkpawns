@@ -3,6 +3,7 @@ package session
 import (
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -37,6 +38,35 @@ func TestGrabAliasResolvesToHold(t *testing.T) {
 
 	if grabEntry.Name != "hold" {
 		t.Errorf("grab entry primary name = %q, want 'hold'", grabEntry.Name)
+	}
+}
+
+func TestReekCommandRegistrations(t *testing.T) {
+	tests := []struct {
+		name        string
+		minLevel    int
+		minPosition int
+	}{
+		{name: "detect", minLevel: 0, minPosition: combat.PosStanding},
+		{name: "mold", minLevel: 0, minPosition: combat.PosStanding},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			entry, ok := cmdRegistry.Lookup(tt.name)
+			if !ok {
+				t.Fatalf("%q command not found in registry", tt.name)
+			}
+			if entry.Name != tt.name {
+				t.Fatalf("%q resolved to primary command %q", tt.name, entry.Name)
+			}
+			if entry.MinLevel != tt.minLevel {
+				t.Errorf("%q MinLevel = %d, want %d", tt.name, entry.MinLevel, tt.minLevel)
+			}
+			if entry.MinPosition != tt.minPosition {
+				t.Errorf("%q MinPosition = %d, want %d", tt.name, entry.MinPosition, tt.minPosition)
+			}
+		})
 	}
 }
 
