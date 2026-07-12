@@ -110,6 +110,7 @@ async def create_character(ws):
         "hometown": "K",
         "stats_roll": "Y",
         "motd": "",
+        "menu": "1",
     }
     deadline = asyncio.get_event_loop().time() + 30.0
     while True:
@@ -138,8 +139,25 @@ async def create_character(ws):
 async def login_existing(ws, player_name, password):
     """Log in an existing character and return the full welcome state."""
     await send(ws, "login", {"player_name": player_name, "password": password})
-    msgs = await recv_until(ws, timeout=5.0)
-    return find_welcome_state(msgs)
+    deadline = asyncio.get_event_loop().time() + 10.0
+    choices = {"motd": "", "menu": "1"}
+    while True:
+        remaining = deadline - asyncio.get_event_loop().time()
+        if remaining <= 0:
+            return None
+
+        msg = await recv_one(ws, timeout=remaining)
+        if msg is None:
+            return None
+        if msg.get("type") == "state":
+            return msg.get("data")
+        if msg.get("type") == "error":
+            raise RuntimeError(f"Server error during login: {msg.get('data')}")
+        if msg.get("type") == "char_create":
+            stage = msg.get("data", {}).get("stage")
+            if stage not in choices:
+                raise RuntimeError(f"Unexpected returning-login stage: {stage}")
+            await send(ws, "char_input", {"choice": choices[stage]})
 
 
 async def run_test(ws_url):
