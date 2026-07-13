@@ -105,6 +105,7 @@ func init() {
 	registerCommand("drink", wrapArgs(cmdDrink), "Drink from a container.")
 	registerCommand("sip", wrapArgs(cmdSip), "Sip from a container without drinking it.")
 	registerCommand("pour", wrapArgs(cmdPour), "Pour liquid from one container to another.")
+	registerCommand("fill", wrapArgs(cmdFill), "Fill a container from a fountain.")
 	registerCommand("quaff", wrapArgs(cmdQuaff), "Quaff a potion.", "q")
 
 	// Info

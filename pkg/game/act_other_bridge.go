@@ -80,8 +80,23 @@ func (w *World) RoomHasFlag(vnum int, flag string) bool {
 	return hasRoomFlag(room, flag)
 }
 
-// ExecPour pours liquid between containers.
-func (w *World) ExecPour(ch *Player, arg string) { w.doPour(ch, nil, "pour", arg) }
+// ExecDrink drinks from a container or fountain.
+func (w *World) ExecDrink(ch *Player, arg string) { w.DoDrink(ch, nil, "drink", arg, scmdDrink) }
+
+// ExecSip sips from a container or fountain.
+func (w *World) ExecSip(ch *Player, arg string) { w.DoDrink(ch, nil, "sip", arg, scmdSip) }
+
+// ExecEat eats a food item.
+func (w *World) ExecEat(ch *Player, arg string) { w.DoEat(ch, nil, "eat", arg, scmdEat) }
+
+// ExecTaste tastes a food item (or sips a drink container).
+func (w *World) ExecTaste(ch *Player, arg string) { w.DoEat(ch, nil, "taste", arg, scmdTaste) }
+
+// ExecPour pours liquid between containers or out onto the ground.
+func (w *World) ExecPour(ch *Player, arg string) { w.DoPour(ch, nil, "pour", arg, scmdPour) }
+
+// ExecFill fills a container from a room fountain.
+func (w *World) ExecFill(ch *Player, arg string) { w.DoPour(ch, nil, "fill", arg, scmdFill) }
 
 // ExecInsult delivers a randomized insult to a named target in the room.
 func (w *World) ExecInsult(ch *Player, arg string) { DoInsult(w, ch, arg) }

@@ -1,0 +1,54 @@
+# Consumables deterministic probes: eat, drink, empty-drink, pour-out, fill.
+# Uses the warrior starting pack (bread 8010, water skin 8063) and the Market
+# Square fountain (8087) four rooms south of the temple start.
+# NOTE: the water-drink amount is RNG (number(3,8)); only the leading message
+# is deterministic. The alcoholic deterministic path is covered by the seeded
+# Go unit test TestDoDrink_WaterSeededRNG/TestDoDrink_Poison.
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+score
+open pack
+get skin pack
+drink skin
+drink skin
+get bread pack
+eat bread
+pour skin out
+s
+s
+s
+s
+fill skin fountain
+score
+quit

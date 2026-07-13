@@ -87,9 +87,15 @@ func cmdScout(s *Session, args []string) error {
 	return nil
 }
 
-// cmdPour pours liquid between containers.
+// cmdPour pours liquid between containers or out onto the ground.
 func cmdPour(s *Session, args []string) error {
 	s.manager.world.ExecPour(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdFill fills a container from a room fountain.
+func cmdFill(s *Session, args []string) error {
+	s.manager.world.ExecFill(s.player, strings.Join(args, " "))
 	return nil
 }
 

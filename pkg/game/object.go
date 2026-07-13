@@ -35,6 +35,10 @@ type ObjectInstance struct {
 	IsCorpse  bool // true if this is a corpse object
 	CanPickUp bool // true if ITEM_WEAR_TAKE flag is set
 
+	// WeightOverride allows per-instance weight changes (e.g. liquid in a
+	// drink container) without mutating the prototype. C: weight_change_object.
+	WeightOverride *int
+
 	// Instance-level overrides for enchantment spells.
 	// When non-nil, these override the prototype values.
 	// Source: src/spells.c spell_enchant_weapon/armor, spell_silken_missile.
@@ -108,10 +112,23 @@ func (o *ObjectInstance) GetKeywords() string {
 
 // GetWeight returns the object's weight.
 func (o *ObjectInstance) GetWeight() int {
+	if o.WeightOverride != nil {
+		return *o.WeightOverride
+	}
 	if o.Prototype != nil {
 		return o.Prototype.Weight
 	}
 	return 1
+}
+
+// SetWeight updates the object's instance weight. A negative value clears the
+// override and restores the prototype weight. C: weight_change_object.
+func (o *ObjectInstance) SetWeight(weight int) {
+	if weight < 0 {
+		o.WeightOverride = nil
+		return
+	}
+	o.WeightOverride = &weight
 }
 
 // GetCost returns the object's cost.
