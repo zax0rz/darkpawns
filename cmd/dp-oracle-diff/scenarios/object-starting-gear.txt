@@ -1,0 +1,45 @@
+# Object interaction with the warrior starting kit.
+# C do_start() grants: small sword 8037, tunic 8019, backpack 8038
+# containing bread 8010 and a water skin 8063.
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+inventory
+equipment
+wear tunic
+wield sword
+equipment
+remove tunic
+remove sword
+inventory
+quit

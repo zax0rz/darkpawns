@@ -1,0 +1,44 @@
+# Hunger/thirst deterministic responses: eat bread and drink water skin from
+# the warrior starting pack. C do_start() puts one loaf of bread (8010) and one
+# water skin (8063) inside the backpack (8038).
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+score
+open pack
+get skin pack
+drink skin
+get bread pack
+eat bread
+score
+quit
