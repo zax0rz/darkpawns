@@ -26,12 +26,89 @@ func TestUnifiedDiff(t *testing.T) {
 	}
 }
 
-func TestParseScenarioEnter(t *testing.T) {
-	scenario, err := ParseScenario("test", strings.NewReader("# comment\nname\n<ENTER>\n"))
+func TestParseScenarioSections(t *testing.T) {
+	input := `
+# header comment
+[setup:oracle]
+name
+Y
+pass
+
+[setup:port]
+name
+y
+pass
+pass
+Y
+
+[probe]
+look
+look sign
+quit
+`
+	sc, err := ParseScenario("test", strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(scenario.Steps) != 2 || scenario.Steps[1] != "" {
-		t.Fatalf("unexpected steps: %#v", scenario.Steps)
+	if len(sc.SetupOracle) != 3 || sc.SetupOracle[2] != "pass" {
+		t.Fatalf("SetupOracle = %#v", sc.SetupOracle)
+	}
+	if len(sc.SetupPort) != 5 || sc.SetupPort[0] != "name" || sc.SetupPort[4] != "Y" {
+		t.Fatalf("SetupPort = %#v", sc.SetupPort)
+	}
+	if len(sc.Probe) != 3 || sc.Probe[1] != "look sign" {
+		t.Fatalf("Probe = %#v", sc.Probe)
+	}
+}
+
+func TestParseScenarioEnter(t *testing.T) {
+	sc, err := ParseScenario("test", strings.NewReader("[setup:oracle]\nname\n<ENTER>\n[probe]\nlook\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sc.SetupOracle) != 2 || sc.SetupOracle[1] != "" {
+		t.Fatalf("SetupOracle = %#v", sc.SetupOracle)
+	}
+	if len(sc.Probe) != 1 || sc.Probe[0] != "look" {
+		t.Fatalf("Probe = %#v", sc.Probe)
+	}
+}
+
+func TestParseScenarioUnknownSection(t *testing.T) {
+	_, err := ParseScenario("test", strings.NewReader("[setup:unknown]\nlook\n"))
+	if err == nil || !strings.Contains(err.Error(), "unknown section") {
+		t.Fatalf("expected unknown section error, got %v", err)
+	}
+}
+
+func TestParseScenarioNoProbe(t *testing.T) {
+	_, err := ParseScenario("test", strings.NewReader("[setup:oracle]\nname\n"))
+	if err == nil || !strings.Contains(err.Error(), "no [probe] steps") {
+		t.Fatalf("expected no probe error, got %v", err)
+	}
+}
+
+func TestReportNoDivergence(t *testing.T) {
+	diffs := []BlockDiff{
+		{Command: "look", Oracle: "same\n", Go: "same\n"},
+		{Command: "quit", Oracle: "bye\n", Go: "bye\n"},
+	}
+	r := Report(ReportMeta{Scenario: "s", OracleAddr: "a", GoAddr: "b", Seed: "1"}, diffs)
+	if !strings.Contains(r, "no normalized divergence") {
+		t.Fatalf("expected no divergence report, got:\n%s", r)
+	}
+}
+
+func TestReportBlockDivergence(t *testing.T) {
+	diffs := []BlockDiff{
+		{Command: "look", Oracle: "room\n", Go: "room\n"},
+		{Command: "look sign", Oracle: "old\n", Go: "new\n", Diff: UnifiedDiff("c-oracle", "go-port", "old\n", "new\n")},
+	}
+	r := Report(ReportMeta{Scenario: "s", OracleAddr: "a", GoAddr: "b", Seed: "1"}, diffs)
+	if !strings.Contains(r, "normalized divergence detected") {
+		t.Fatalf("expected divergence report, got:\n%s", r)
+	}
+	if !strings.Contains(r, "[look sign]") {
+		t.Fatalf("expected command label, got:\n%s", r)
 	}
 }
