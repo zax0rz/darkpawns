@@ -1,0 +1,47 @@
+{
+  "player": {
+    "name": "Schema Keeper",
+    "health": 101,
+    "max_health": 202,
+    "mana": 303,
+    "max_mana": 404,
+    "move": 505,
+    "max_move": 606,
+    "gold": 707,
+    "level": 8,
+    "class": "Warrior",
+    "race": "Human",
+    "str": 11,
+    "int": 12,
+    "wis": 13,
+    "dex": 14,
+    "con": 15,
+    "cha": 16
+  },
+  "room": {
+    "vnum": 8004,
+    "name": "At the Temple Altar",
+    "description": "A representative room.",
+    "exits": [
+      "north",
+      "east"
+    ],
+    "doors": [
+      {
+        "direction": "east",
+        "closed": true,
+        "locked": false
+      }
+    ],
+    "players": [
+      "Another Player"
+    ],
+    "mobs": [
+      "a temple guardian is here."
+    ],
+    "items": [
+      "A brass lantern rests here."
+    ]
+  },
+  "token": "schema-token"
+}

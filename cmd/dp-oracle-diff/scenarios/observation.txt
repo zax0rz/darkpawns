@@ -1,0 +1,81 @@
+# Observation-domain fidelity: room, room extra description, directional room,
+# exits, container examine, and target diagnosis. Both actors are mortals in the
+# Temple Altar anchor room; the peer supplies a deterministic diagnose target.
+
+[fixture]
+# Keep mobile RNG out of this read-only output probe.
+quiet-mobs
+
+[setup:oracle]
+Obsactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+
+[setup:port]
+Obsactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+w
+s
+
+[setup:oracle:target]
+Obstarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port:target]
+Obstarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+recall
+
+[probe]
+look
+look sign
+look east
+exits
+examine backpack
+diagnose Obstarget

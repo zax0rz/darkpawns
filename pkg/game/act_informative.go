@@ -32,15 +32,6 @@ func splitArg(arg string) (string, string) {
 	return parts[0], strings.TrimSpace(parts[1])
 }
 
-func indexOf(list []string, item string) int {
-	for i, s := range list {
-		if s == item {
-			return i
-		}
-	}
-	return -1
-}
-
 func chCanSee(ch *Player, target interface{}) bool {
 	return !ch.IsAffected(affBlind)
 }
@@ -72,7 +63,7 @@ func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
 }
 
 func chCanSeeInDark(ch *Player) bool {
-	return ch.IsAffected(affInfravision) || ch.Level >= 31
+	return ch.GetHolyLight() || ch.IsAffected(affInfravision) || ch.Level >= 31
 }
 
 func (w *World) isRoomDark(vnum int) bool {

@@ -72,6 +72,28 @@ func TestDoGenTogImmortalGated(t *testing.T) {
 	}
 }
 
+func TestObservationPreferencesReadPersistedPRFBits(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+
+	w.doGenTog(ch, nil, "roomflags", "")
+	if !ch.GetRoomFlags() {
+		t.Fatal("roomflags getter did not observe PRF_ROOMFLAGS toggle")
+	}
+	w.doGenTog(ch, nil, "roomflags", "")
+	if ch.GetRoomFlags() {
+		t.Fatal("roomflags getter remained set after PRF_ROOMFLAGS cleared")
+	}
+
+	w.doGenTog(ch, nil, "holylight", "")
+	if !ch.GetHolyLight() {
+		t.Fatal("holylight getter did not observe PRF_HOLYLIGHT toggle")
+	}
+	w.doGenTog(ch, nil, "holylight", "")
+	if ch.GetHolyLight() {
+		t.Fatal("holylight getter remained set after PRF_HOLYLIGHT cleared")
+	}
+}
+
 // TestDoGenTogUnknownCommand verifies a command name with no mapping (e.g.
 // the old, incorrect "autocxits"/"npcident" stub entries that were removed)
 // falls through cleanly instead of touching player state.

@@ -110,9 +110,9 @@ const (
 // Container flags
 const (
 	contCloseable    = 1 << 0
-	contClosed       = 1 << 1
-	contLocked       = 1 << 2
-	contPickproofBit = 1 << 3
+	contPickproofBit = 1 << 1
+	contClosed       = 1 << 2
+	contLocked       = 1 << 3
 )
 
 // dotMode constants
@@ -288,7 +288,7 @@ var drinks = []string{
 
 // Container flag helpers
 func contIsClosed(obj *ObjectInstance) bool {
-	return obj.Prototype.Values[contFlags]&contClosed != 0
+	return obj != nil && obj.GetValue(contFlags)&contClosed != 0
 }
 
 // IsContainerClosed is the exported version of contIsClosed for session layer use.

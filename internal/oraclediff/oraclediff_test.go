@@ -19,8 +19,8 @@ func TestNormalizeTier1Rules(t *testing.T) {
 }
 
 func TestNormalizeDropsPromptFramingButPreservesTextGreaterThan(t *testing.T) {
-	raw := ">\r\n> Huh?!?\r\nDoor > north\r\n22H 100M 83V >\r\n"
-	want := "Huh?!?\nDoor > north\n"
+	raw := ">\r\n> Huh?!?\r\n>    Indented room text\r\nDoor > north\r\n22H 100M 83V >\r\n"
+	want := "Huh?!?\n   Indented room text\nDoor > north\n"
 	if got := Normalize(raw); got != want {
 		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}
@@ -95,6 +95,9 @@ victim
 victim
 [fixture]
 inert-scroll 8038
+quiet-mobs
+spawn-mob 18306 1 8162 80
+strip-mob-script 18306
 [probe]
 recite scroll
 `
@@ -108,6 +111,15 @@ recite scroll
 	}
 	if len(sc.Fixtures) != 1 || sc.Fixtures[0] != (ObjectFixture{ObjectVNum: 8038}) {
 		t.Fatalf("Fixtures = %#v", sc.Fixtures)
+	}
+	if len(sc.MobFixtures) != 1 || sc.MobFixtures[0] != (MobFixture{MobVNum: 18306, MaxExisting: 1, RoomVNum: 8162, ZoneNumber: 80}) {
+		t.Fatalf("MobFixtures = %#v", sc.MobFixtures)
+	}
+	if !sc.QuietAllMobs {
+		t.Fatal("QuietAllMobs = false, want true")
+	}
+	if len(sc.ScriptlessMobIDs) != 1 || sc.ScriptlessMobIDs[0] != 18306 {
+		t.Fatalf("ScriptlessMobIDs = %#v", sc.ScriptlessMobIDs)
 	}
 }
 

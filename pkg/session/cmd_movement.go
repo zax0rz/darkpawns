@@ -110,8 +110,8 @@ func cmdMove(s *Session, direction string) error {
 			s.manager.BroadcastToRoom(newRoom.VNum, fenterMsg, follower.Name)
 			// Send look to follower's session
 			if fSess, ok := s.manager.GetSession(follower.Name); ok {
-				if err := cmdLook(fSess, nil); err != nil {
-					slog.Error("cmdLook failed for follower", "follower", follower.Name, "error", err)
+				if err := cmdMovementLook(fSess); err != nil {
+					slog.Error("movement look failed for follower", "follower", follower.Name, "error", err)
 				}
 				fSess.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
 			}
@@ -122,7 +122,7 @@ func cmdMove(s *Session, direction string) error {
 	s.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
 
 	// Send new room state to player
-	return cmdLook(s, nil)
+	return cmdMovementLook(s)
 }
 
 // cmdSay sends a message to the room.

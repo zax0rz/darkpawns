@@ -110,7 +110,7 @@ func (p *Player) SetAutoExit(v bool) {
 func (p *Player) GetRoomFlags() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.RoomFlags
+	return p.Flags&(1<<uint(PrfRoomFlags)) != 0
 }
 
 // SetRoomFlags toggles room flag display.
@@ -118,6 +118,11 @@ func (p *Player) SetRoomFlags(v bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.RoomFlags = v
+	if v {
+		p.Flags |= 1 << uint(PrfRoomFlags)
+	} else {
+		p.Flags &^= 1 << uint(PrfRoomFlags)
+	}
 }
 
 // GetNoBroadcast returns whether global broadcasts are disabled.
@@ -138,7 +143,7 @@ func (p *Player) SetNoBroadcast(v bool) {
 func (p *Player) GetHolyLight() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.HolyLight
+	return p.Flags&(1<<uint(PrfHolyLight)) != 0
 }
 
 // SetHolyLight toggles the holy light (see in dark) preference.
@@ -146,6 +151,11 @@ func (p *Player) SetHolyLight(v bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.HolyLight = v
+	if v {
+		p.Flags |= 1 << uint(PrfHolyLight)
+	} else {
+		p.Flags &^= 1 << uint(PrfHolyLight)
+	}
 }
 
 // GetFollowing returns the name of the player's group leader (empty if leading).

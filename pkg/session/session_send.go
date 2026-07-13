@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
-import "github.com/zax0rz/darkpawns/pkg/game"
 
 func (s *Session) sendWelcome(token string) {
 	roomVNum := s.player.GetRoom()
@@ -18,36 +19,6 @@ func (s *Session) sendWelcome(token string) {
 			slog.Error("sendWelcome: mortal start room not found", "vnum", roomVNum)
 			return
 		}
-	}
-
-	state := StateData{
-		Player: PlayerState{
-			Name:      s.player.Name,
-			Health:    s.player.Health,
-			MaxHealth: s.player.MaxHealth,
-			Mana:      s.player.Mana,
-			MaxMana:   s.player.MaxMana,
-			Move:      s.player.Move,
-			MaxMove:   s.player.MaxMove,
-			Gold:      s.player.Gold,
-			Level:     s.player.Level,
-			Class:     game.ClassNames[s.player.Class],
-			Race:      game.RaceNames[s.player.Race],
-			Str:       s.player.Stats.Str,
-			Int:       s.player.Stats.Int,
-			Wis:       s.player.Stats.Wis,
-			Dex:       s.player.Stats.Dex,
-			Con:       s.player.Stats.Con,
-			Cha:       s.player.Stats.Cha,
-		},
-		Room: RoomState{
-			VNum:        room.VNum,
-			Name:        room.Name,
-			Description: room.Description,
-			Exits:       getExitNames(room.Exits),
-			Doors:       getDoorInfo(s.manager.doorManager, room.VNum, room.Exits),
-		},
-		Token: token,
 	}
 
 	// Send MOTD first (splash screen before room — matches original CircleMUD order).
@@ -78,16 +49,9 @@ func (s *Session) sendWelcome(token string) {
 		s.send <- welcomeMsg
 	}
 
-	// Send state — this is the "you're in the world" signal for both agents and humans.
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgState,
-		Data: state,
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return
-	}
-	s.send <- msg
+	// The canonical room result now supplies both C-faithful text and the
+	// unchanged structured "you're in the world" state signal.
+	s.sendRoomObservation(roomVNum, false, token)
 }
 
 // sendError sends an error message to the player.
@@ -165,49 +129,10 @@ func (s *Session) sendCurrentRoomState() {
 		return
 	}
 	roomVNum := s.player.GetRoom()
-	room, ok := s.manager.world.GetRoom(roomVNum)
-	if !ok || room == nil {
+	if room, ok := s.manager.world.GetRoom(roomVNum); !ok || room == nil {
 		return
 	}
-
-	state := StateData{
-		Player: PlayerState{
-			Name:      s.player.Name,
-			Health:    s.player.Health,
-			MaxHealth: s.player.MaxHealth,
-			Mana:      s.player.Mana,
-			MaxMana:   s.player.MaxMana,
-			Move:      s.player.Move,
-			MaxMove:   s.player.MaxMove,
-			Gold:      s.player.Gold,
-			Level:     s.player.Level,
-			Class:     game.ClassNames[s.player.Class],
-			Race:      game.RaceNames[s.player.Race],
-			Str:       s.player.Stats.Str,
-			Int:       s.player.Stats.Int,
-			Wis:       s.player.Stats.Wis,
-			Dex:       s.player.Stats.Dex,
-			Con:       s.player.Stats.Con,
-			Cha:       s.player.Stats.Cha,
-		},
-		Room: RoomState{
-			VNum:        room.VNum,
-			Name:        room.Name,
-			Description: room.Description,
-			Exits:       getExitNames(room.Exits),
-			Doors:       getDoorInfo(s.manager.doorManager, room.VNum, room.Exits),
-		},
-	}
-
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgState,
-		Data: state,
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return
-	}
-	s.send <- msg
+	s.sendRoomObservation(roomVNum, false, "")
 }
 
 func (s *Session) SendMessage(message string) error {

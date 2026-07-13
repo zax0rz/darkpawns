@@ -124,7 +124,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// the first record in an empty file to Implementor, which would invalidate
 	// this mortal-room scenario.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -134,6 +134,32 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		if err := applyObjectFixtures(goWorld, scenario.Fixtures); err != nil {
 			return fmt.Errorf("apply Go port fixtures: %w", err)
+		}
+		if err := applyQuietZoneFixtures(filepath.Join(oracleData, "world"), scenario.QuietZones); err != nil {
+			return fmt.Errorf("apply C oracle quiet-zone fixtures: %w", err)
+		}
+		if err := applyQuietZoneFixtures(goWorld, scenario.QuietZones); err != nil {
+			return fmt.Errorf("apply Go port quiet-zone fixtures: %w", err)
+		}
+		if scenario.QuietAllMobs {
+			if err := applyQuietMobFixtures(filepath.Join(oracleData, "world")); err != nil {
+				return fmt.Errorf("apply C oracle quiet-mob fixture: %w", err)
+			}
+			if err := applyQuietMobFixtures(goWorld); err != nil {
+				return fmt.Errorf("apply Go port quiet-mob fixture: %w", err)
+			}
+		}
+		if err := applyMobFixtures(filepath.Join(oracleData, "world"), scenario.MobFixtures); err != nil {
+			return fmt.Errorf("apply C oracle mob fixtures: %w", err)
+		}
+		if err := applyMobFixtures(goWorld, scenario.MobFixtures); err != nil {
+			return fmt.Errorf("apply Go port mob fixtures: %w", err)
+		}
+		if err := applyScriptlessMobFixtures(filepath.Join(oracleData, "world"), scenario.ScriptlessMobIDs); err != nil {
+			return fmt.Errorf("apply C oracle mob script fixtures: %w", err)
+		}
+		if err := applyScriptlessMobFixtures(goWorld, scenario.ScriptlessMobIDs); err != nil {
+			return fmt.Errorf("apply Go port mob script fixtures: %w", err)
 		}
 	}
 
@@ -299,6 +325,113 @@ func applyObjectFixtures(worldDir string, fixtures []oraclediff.ObjectFixture) e
 		if err := makeScrollFixtureInert(worldDir, fixture.ObjectVNum); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func applyMobFixtures(worldDir string, fixtures []oraclediff.MobFixture) error {
+	for _, fixture := range fixtures {
+		path := filepath.Join(worldDir, "zon", fmt.Sprintf("%d.zon", fixture.ZoneNumber))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read zone %d: %w", fixture.ZoneNumber, err)
+		}
+		marker := []byte("\nS\n$")
+		index := bytes.LastIndex(data, marker)
+		if index < 0 {
+			return fmt.Errorf("zone %d has no terminal reset marker", fixture.ZoneNumber)
+		}
+		command := fmt.Sprintf("\nM 0 %d %d %d", fixture.MobVNum, fixture.MaxExisting, fixture.RoomVNum)
+		updated := make([]byte, 0, len(data)+len(command))
+		updated = append(updated, data[:index]...)
+		updated = append(updated, command...)
+		updated = append(updated, data[index:]...)
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat zone %d: %w", fixture.ZoneNumber, err)
+		}
+		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil {
+			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
+		}
+	}
+	return nil
+}
+
+func applyScriptlessMobFixtures(worldDir string, mobVNums []int) error {
+	for _, mobVNum := range mobVNums {
+		path := filepath.Join(worldDir, "mob", fmt.Sprintf("%d.mob", mobVNum/100))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read mob zone %d: %w", mobVNum/100, err)
+		}
+		lines := strings.Split(string(data), "\n")
+		inTarget := false
+		found := false
+		for index, line := range lines {
+			if strings.HasPrefix(line, "#") {
+				inTarget = line == fmt.Sprintf("#%d", mobVNum)
+				continue
+			}
+			if inTarget && strings.HasPrefix(strings.TrimSpace(line), "Script:") {
+				lines[index] = "* oracle fixture: " + line
+				found = true
+			}
+		}
+		if !found {
+			continue
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat mob zone %d: %w", mobVNum/100, err)
+		}
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil {
+			return fmt.Errorf("write mob zone %d: %w", mobVNum/100, err)
+		}
+	}
+	return nil
+}
+
+func applyQuietZoneFixtures(worldDir string, zoneNumbers []int) error {
+	for _, zoneNumber := range zoneNumbers {
+		path := filepath.Join(worldDir, "zon", fmt.Sprintf("%d.zon", zoneNumber))
+		if err := quietMobResets(path); err != nil {
+			return fmt.Errorf("quiet zone %d: %w", zoneNumber, err)
+		}
+	}
+	return nil
+}
+
+func applyQuietMobFixtures(worldDir string) error {
+	paths, err := filepath.Glob(filepath.Join(worldDir, "zon", "*.zon"))
+	if err != nil {
+		return fmt.Errorf("list zone files: %w", err)
+	}
+	for _, path := range paths {
+		if err := quietMobResets(path); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func quietMobResets(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read %s: %w", path, err)
+	}
+	lines := strings.Split(string(data), "\n")
+	for index, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "M ") || strings.HasPrefix(trimmed, "G ") || strings.HasPrefix(trimmed, "E ") {
+			lines[index] = "* oracle fixture: " + line
+		}
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat %s: %w", path, err)
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
 }
