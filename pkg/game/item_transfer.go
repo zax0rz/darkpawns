@@ -4,6 +4,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"unsafe"
 )
@@ -18,12 +19,15 @@ func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
 		w.actToChar(ch, "$p: you can't carry that much weight.", obj, nil)
 		return false
 	}
-	// Check ITEM_WEAR_TAKE flag
-	hasTake := false
-	for _, wf := range obj.Prototype.WearFlags {
-		if wf == 1 {
-			hasTake = true
-			break
+	// CAN_WEAR(obj, ITEM_WEAR_TAKE): WearFlags stores bitmasks, not one
+	// flag value per array element.
+	hasTake := obj.GetTypeFlag() == ITEM_MONEY
+	if obj.Prototype != nil {
+		for _, wf := range obj.Prototype.WearFlags {
+			if wf&1 != 0 {
+				hasTake = true
+				break
+			}
 		}
 	}
 	if !hasTake {
@@ -35,9 +39,9 @@ func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
 
 // getCheckMoney handles auto-conversion of money items on pickup
 func (w *World) getCheckMoney(ch *Player, obj *ObjectInstance) {
-	if obj.GetTypeFlag() == ITEM_MONEY && obj.Prototype.Values[0] > 0 {
-		ch.Inventory.removeItem(obj)
-		amount := obj.Prototype.Values[0]
+	amount := obj.GetValue(0)
+	if obj.GetTypeFlag() == ITEM_MONEY && amount > 0 {
+		w.ExtractObject(obj, ch.GetRoomVNum())
 		if amount > 1 {
 			ch.SendMessage(fmt.Sprintf("There were %d coins.\r\n", amount))
 		}
@@ -48,6 +52,10 @@ func (w *World) getCheckMoney(ch *Player, obj *ObjectInstance) {
 // performGetFromContainer gets an item from a container
 func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, mode int) {
 	if mode == findObjInv || w.canTakeObj(ch, obj) {
+		if len(ch.Inventory.Items) >= ch.MaxCarryItems() {
+			w.actToChar(ch, "$p: you can't hold any more items.", obj, nil)
+			return
+		}
 		// Ensure Location is set so MoveObject's detach can find the container
 		obj.Location = LocContainer(cont.ID)
 		if err := w.MoveObjectToPlayerInventory(obj, ch); err != nil {
@@ -61,6 +69,50 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 		w.actToChar(ch, "You get $p from $P.", obj, cont)
 		w.actToRoom(ch, "$n gets $p from $P.", obj, cont)
 		w.getCheckMoney(ch, obj)
+	}
+}
+
+// getFromContainer implements C get_from_container() for individual, all,
+// and all.<keyword> object modes.
+func (w *World) getFromContainer(ch *Player, cont *ObjectInstance, arg string, mode int) {
+	if contIsClosed(cont) {
+		w.actToChar(ch, "$p is closed.", cont, nil)
+		return
+	}
+
+	dotmode := findAllDots(arg)
+	if dotmode == findIndiv {
+		for _, obj := range cont.Contains {
+			if isname(arg, obj.GetKeywords()) && canSeeObject(ch, obj) {
+				w.performGetFromContainer(ch, obj, cont, mode)
+				return
+			}
+		}
+		w.actToChar(ch, fmt.Sprintf("There doesn't seem to be %s %s in $p.", an(arg), arg), cont, nil)
+		return
+	}
+
+	keyword := strings.TrimPrefix(arg, "all.")
+	if dotmode == findAlldot && keyword == "" {
+		ch.SendMessage("Get all of what?\r\n")
+		return
+	}
+
+	items := append([]*ObjectInstance(nil), cont.Contains...)
+	found := false
+	for _, obj := range items {
+		if canSeeObject(ch, obj) && (dotmode == findAll || isname(keyword, obj.GetKeywords())) {
+			found = true
+			w.performGetFromContainer(ch, obj, cont, mode)
+		}
+	}
+	if found {
+		return
+	}
+	if dotmode == findAll {
+		w.actToChar(ch, "$p seems to be empty.", cont, nil)
+	} else {
+		w.actToChar(ch, fmt.Sprintf("You can't seem to find any %ss in $p.", keyword), cont, nil)
 	}
 }
 
@@ -78,6 +130,42 @@ func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
 	}
 }
 
+func (w *World) getFromRoom(ch *Player, arg string) {
+	dotmode := findAllDots(arg)
+	items := append([]*ObjectInstance(nil), w.roomItems[ch.GetRoom()]...)
+	if dotmode == findIndiv {
+		for _, obj := range items {
+			if isname(arg, obj.GetKeywords()) && canSeeObject(ch, obj) {
+				w.performGetFromRoom(ch, obj)
+				return
+			}
+		}
+		ch.SendMessage(fmt.Sprintf("You don't see %s %s here.\r\n", an(arg), arg))
+		return
+	}
+
+	keyword := strings.TrimPrefix(arg, "all.")
+	if dotmode == findAlldot && keyword == "" {
+		ch.SendMessage("Get all of what?\r\n")
+		return
+	}
+	found := false
+	for _, obj := range items {
+		if canSeeObject(ch, obj) && (dotmode == findAll || isname(keyword, obj.GetKeywords())) {
+			found = true
+			w.performGetFromRoom(ch, obj)
+		}
+	}
+	if found {
+		return
+	}
+	if dotmode == findAll {
+		ch.SendMessage("There doesn't seem to be anything here.\r\n")
+	} else {
+		ch.SendMessage(fmt.Sprintf("You don't see any %ss here.\r\n", keyword))
+	}
+}
+
 // DoGet is the exported wrapper for doGet. Handles player get commands.
 func (w *World) DoGet(ch *Player, arg string) {
 	w.doGet(ch, nil, "get", arg)
@@ -86,6 +174,11 @@ func (w *World) DoGet(ch *Player, arg string) {
 // DoGive is the exported wrapper for doGive. Handles player give commands.
 func (w *World) DoGive(ch *Player, arg string) {
 	w.doGive(ch, nil, "give", arg)
+}
+
+// DoDrop is the exported wrapper for doDrop. Handles player drop commands.
+func (w *World) DoDrop(ch *Player, arg string) {
+	w.doDrop(ch, nil, "drop", arg)
 }
 
 // doGet handles the get/take command
@@ -100,77 +193,57 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 		arg2 = strings.TrimSpace(parts[1])
 	}
 
+	if len(ch.Inventory.Items) >= ch.MaxCarryItems() {
+		ch.SendMessage("Your arms are already full!\r\n")
+		return true
+	}
 	if arg1 == "" {
 		ch.SendMessage("Get what?\r\n")
 		return true
 	}
-
-	dotmode := findAllDots(arg1)
-
-	if dotmode == findAll {
-		// get all
-		room := w.GetRoomInWorld(ch.GetRoomVNum())
-		if room == nil || len(w.roomItems[ch.GetRoom()]) == 0 {
-			ch.SendMessage("There doesn't seem to be anything here.\r\n")
-			return true
-		}
-		items := make([]*ObjectInstance, len(w.roomItems[ch.GetRoom()]))
-		copy(items, w.roomItems[ch.GetRoom()])
-		for _, obj := range items {
-			w.performGetFromRoom(ch, obj)
-		}
+	if arg2 == "" {
+		w.getFromRoom(ch, arg1)
 		return true
 	}
 
-	if dotmode == findAlldot {
-		keyword := arg1[4:]
-		if keyword == "" {
-			ch.SendMessage("What do you want to get all of?\r\n")
+	contDotmode := findAllDots(arg2)
+	if contDotmode != findIndiv {
+		keyword := strings.TrimPrefix(arg2, "all.")
+		if contDotmode == findAlldot && keyword == "" {
+			ch.SendMessage("Get from all of what?\r\n")
 			return true
 		}
-		room := w.GetRoomInWorld(ch.GetRoomVNum())
-		if room == nil {
-			return true
-		}
-		items := make([]*ObjectInstance, len(w.roomItems[ch.GetRoom()]))
-		copy(items, w.roomItems[ch.GetRoom()])
 		found := false
-		for _, obj := range items {
-			if isname(keyword, obj.GetKeywords()) {
-				w.performGetFromRoom(ch, obj)
-				found = true
+		containers := append([]*ObjectInstance(nil), ch.Inventory.Items...)
+		containers = append(containers, w.roomItems[ch.GetRoom()]...)
+		for _, cont := range containers {
+			if !canSeeObject(ch, cont) || (contDotmode == findAlldot && !isname(keyword, cont.GetKeywords())) {
+				continue
 			}
+			if cont.GetTypeFlag() != ITEM_CONTAINER {
+				if contDotmode == findAlldot {
+					found = true
+					w.actToChar(ch, "$p is not a container.", cont, nil)
+				}
+				continue
+			}
+			found = true
+			mode := findObjRoom
+			if cont.Location.InInventoryOfPlayer(ch.Name) {
+				mode = findObjInv
+			}
+			w.getFromContainer(ch, cont, arg1, mode)
 		}
 		if !found {
-			ch.SendMessage(fmt.Sprintf("You don't see any %ss here.\r\n", keyword))
-		}
-		return true
-	}
-
-	// Individual item
-	if arg2 == "" {
-		// get <item> from room
-		room := w.GetRoomInWorld(ch.GetRoomVNum())
-		if room == nil {
-			return true
-		}
-		var obj *ObjectInstance
-		for _, o := range w.roomItems[ch.GetRoom()] {
-			if isname(arg1, o.GetKeywords()) {
-				obj = o
-				break
+			if contDotmode == findAll {
+				ch.SendMessage("You can't seem to find any containers.\r\n")
+			} else {
+				ch.SendMessage(fmt.Sprintf("You can't seem to find any %ss here.\r\n", keyword))
 			}
 		}
-		if obj == nil {
-			ch.SendMessage(fmt.Sprintf("You don't see %s %s here.\r\n", an(arg1), arg1))
-			return true
-		}
-		w.performGetFromRoom(ch, obj)
 		return true
 	}
 
-	// get <item> <container>
-	// Find container and determine mode
 	var cont *ObjectInstance
 	mode := findObjRoom
 	for _, obj := range ch.Inventory.Items {
@@ -192,40 +265,21 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 		}
 	}
 	if cont == nil {
-		ch.SendMessage(fmt.Sprintf("You don't see %s %s here.\r\n", an(arg2), arg2))
+		ch.SendMessage(fmt.Sprintf("You don't have %s %s.\r\n", an(arg2), arg2))
 		return true
 	}
 	if cont.GetTypeFlag() != ITEM_CONTAINER {
 		w.actToChar(ch, "$p is not a container.", cont, nil)
 		return true
 	}
-	if contIsClosed(cont) {
-		w.actToChar(ch, "$p is closed.", cont, nil)
-		return true
-	}
-
-	// Find item inside container
-	var obj *ObjectInstance
-	for _, o := range cont.Contains {
-		if isname(arg1, o.GetKeywords()) {
-			obj = o
-			break
-		}
-	}
-	if obj == nil {
-		ch.SendMessage(fmt.Sprintf("There doesn't seem to be %s %s in %s.\r\n", an(arg1), arg1, cont.GetShortDesc()))
-		return true
-	}
-
-	// Perform the get
-	w.performGetFromContainer(ch, obj, cont, mode)
+	w.getFromContainer(ch, cont, arg1, mode)
 	return true
 }
 
 // performDrop drops an item to the room floor
-func (w *World) performDrop(ch *Player, obj *ObjectInstance) {
+func (w *World) performDropNamed(ch *Player, obj *ObjectInstance, sname string) {
 	if obj.HasExtraFlag(0, extraFlagNoDrop) && ch.GetLevel() < lvlImmort {
-		w.actToChar(ch, "You can't drop $p, it must be CURSED!", obj, nil)
+		w.actToChar(ch, fmt.Sprintf("You can't %s $p, it must be CURSED!", sname), obj, nil)
 		return
 	}
 	if err := w.MoveObjectToRoom(obj, ch.GetRoomVNum()); err != nil {
@@ -233,19 +287,54 @@ func (w *World) performDrop(ch *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "You can't drop that right now.\n", nil, nil)
 		return
 	}
-	w.actToChar(ch, "You drop $p.", obj, nil)
-	w.actToRoom(ch, "$n drops $p.", obj, nil)
+	w.actToChar(ch, fmt.Sprintf("You %s $p.", sname), obj, nil)
+	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.", sname), obj, nil)
+}
+
+func (w *World) performDrop(ch *Player, obj *ObjectInstance) {
+	w.performDropNamed(ch, obj, "drop")
+}
+
+func (w *World) performDropGold(ch *Player, amount int) {
+	if amount <= 0 {
+		ch.SendMessage("Heh heh heh.. we are jolly funny today, eh?\r\n")
+		return
+	}
+	if ch.GetGold() < amount {
+		ch.SendMessage("You don't have that many coins!\r\n")
+		return
+	}
+
+	money := w.createMoneyObject(amount)
+	if err := w.MoveObjectToRoom(money, ch.GetRoomVNum()); err != nil {
+		slog.Error("drop gold failed", "player", ch.Name, "amount", amount, "error", err)
+		ch.SendMessage("You can't drop that right now.\r\n")
+		return
+	}
+	ch.SetWaitState(1)
+	ch.SetGold(ch.GetGold() - amount)
+	ch.SendMessage("You drop some gold.\r\n")
+	w.actToRoom(ch, fmt.Sprintf("$n drops %s.", createMoneyDesc(amount)), nil, nil)
 }
 
 // doDrop handles the drop command
 func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 	parts := strings.Fields(arg)
 	if len(parts) == 0 {
-		ch.SendMessage("Drop what?\r\n")
+		ch.SendMessage("What do you want to drop?\r\n")
 		return true
 	}
 	arg1 := parts[0]
 	sname := "drop"
+
+	if amount, err := strconv.Atoi(arg1); err == nil {
+		if len(parts) > 1 && (strings.EqualFold(parts[1], "coin") || strings.EqualFold(parts[1], "coins")) {
+			w.performDropGold(ch, amount)
+		} else {
+			ch.SendMessage("Sorry, you can't do that to more than one item at a time.\r\n")
+		}
+		return true
+	}
 
 	dotmode := findAllDots(arg1)
 
@@ -257,7 +346,7 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 		items := make([]*ObjectInstance, len(ch.Inventory.Items))
 		copy(items, ch.Inventory.Items)
 		for _, obj := range items {
-			w.performDrop(ch, obj)
+			w.performDropNamed(ch, obj, sname)
 		}
 		return true
 	}
@@ -273,7 +362,7 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 		found := false
 		for _, obj := range items {
 			if isname(keyword, obj.GetKeywords()) {
-				w.performDrop(ch, obj)
+				w.performDropNamed(ch, obj, sname)
 				found = true
 			}
 		}
@@ -295,7 +384,7 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 		ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
 		return true
 	}
-	w.performDrop(ch, obj)
+	w.performDropNamed(ch, obj, sname)
 	return true
 }
 
@@ -324,6 +413,40 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 	w.actToChar(ch, "You give $p to $N.", obj, vict)
 	actToVictim(ch, vict, "$n gives you $p.", obj, nil)
 	w.actToRoomExclude(ch, vict, "$n gives $p to $N.", obj, vict)
+}
+
+func (w *World) performGiveToMob(ch *Player, vict *MobInstance, obj *ObjectInstance) {
+	if !vict.HasFlag("OKGIVE") && ch.GetLevel() < lvlImmort {
+		Act(nil, false, ch, vict, obj, nil, "$N doesn't seem to be interested in $p.", "", ToChar)
+		return
+	}
+	if obj.HasExtraFlag(0, extraFlagNoDrop) && ch.GetLevel() < lvlImmort {
+		Act(nil, false, ch, nil, obj, nil, "You can't let go of $p!!  Yeech!", "", ToChar)
+		return
+	}
+	if obj.GetWeight()+mobCarriedWeight(vict) > mobMaxCarryWeight(vict) {
+		Act(nil, false, ch, vict, nil, nil, "$E can't carry that much weight.", "", ToChar)
+		return
+	}
+	if err := w.MoveObjectToMobInventory(obj, vict); err != nil {
+		slog.Error("give to mob failed", "player", ch.Name, "mob_vnum", vict.GetVNum(), "obj_vnum", obj.VNum, "error", err)
+		Act(nil, false, ch, vict, nil, nil, "$E can't carry that much weight.", "", ToChar)
+		return
+	}
+
+	Act(nil, false, ch, vict, obj, nil, "You give $p to $N.", "", ToChar)
+	Act(nil, false, ch, vict, obj, nil, "$n gives you $p.", "", ToVict)
+	Act(w, true, ch, vict, obj, nil, "$n gives $p to $N.", "", ToNotVict)
+
+	// C runs the mob's ongive behavior only after the object has moved.
+	if ScriptEngine != nil && vict.HasScript("ongive") {
+		ctx := vict.CreateScriptContext(ch, obj, "")
+		ctx.World = NewWorldScriptableAdapter(w)
+		ctx.RoomVNum = vict.GetRoom()
+		if _, err := vict.RunScript("ongive", ctx); err != nil {
+			slog.Warn("ongive script error", "mob_vnum", vict.GetVNum(), "error", err)
+		}
+	}
 }
 
 // giveFindVict finds the victim for a give command
@@ -462,16 +585,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 			ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
 			return true
 		}
-		if ScriptEngine != nil && mob.HasScript("ongive") {
-			ctx := mob.CreateScriptContext(ch, obj, "")
-			ctx.World = NewWorldScriptableAdapter(w)
-			ctx.RoomVNum = mob.GetRoom()
-			if _, err := mob.RunScript("ongive", ctx); err != nil {
-				slog.Warn("ongive script error", "mob_vnum", mob.GetVNum(), "error", err)
-			}
-		} else {
-			ch.SendMessage("You can't give that to them.\r\n")
-		}
+		w.performGiveToMob(ch, mob, obj)
 		return true
 	}
 

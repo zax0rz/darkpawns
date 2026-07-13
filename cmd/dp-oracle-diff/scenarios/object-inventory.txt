@@ -1,0 +1,45 @@
+# Object-transfer fidelity in the Temple Altar anchor room (8004).
+# The starter sword (8037) has TAKE|WIELD in one wear-flag word, proving TAKE
+# is tested as a bit. Container probes join this scenario in the next chunk,
+# once the unified open/close handler makes the closed starter pack usable.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Objectactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Objectactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[probe]
+drop sword
+get sword
+drop all.sword
+get all.sword

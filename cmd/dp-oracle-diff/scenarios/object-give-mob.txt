@@ -1,0 +1,42 @@
+# Give-to-mob transfer fidelity. Dolkvin (mob 4301) has MOB_OKGIVE; his
+# unrelated singing script is stripped so the probe isolates native give.
+
+[fixture]
+quiet-mobs
+spawn-mob 4301 1 8004 80
+strip-mob-script 4301
+
+[setup:oracle]
+Giveactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Giveactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[probe]
+give sword dolkvin

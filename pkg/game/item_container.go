@@ -8,7 +8,7 @@ import (
 
 // performPut puts an object into a container
 func (w *World) performPut(ch *Player, obj, cont *ObjectInstance) {
-	if cont.GetTotalWeight()+obj.GetWeight() > cont.Prototype.Values[contCapacity] {
+	if cont.GetTotalWeight()+obj.GetWeight() > cont.GetValue(contCapacity) {
 		w.actToChar(ch, "$p won't fit in $P.", obj, cont)
 		return
 	}

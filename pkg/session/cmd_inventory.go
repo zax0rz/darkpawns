@@ -259,10 +259,6 @@ func cmdHold(s *Session, args []string) error {
 //	get <item>, get all, get all.<item>, get <item> <container>
 func cmdGet(s *Session, args []string) error {
 	arg := strings.Join(args, " ")
-	if arg == "" {
-		s.sendText("Get what?")
-		return nil
-	}
 	s.manager.world.DoGet(s.player, arg)
 	s.markDirty(VarInventory, VarRoomItems)
 	return nil
@@ -274,10 +270,6 @@ func cmdGet(s *Session, args []string) error {
 //	give <item> <player>, give <N> coins <player>, give <N> <player>
 func cmdGive(s *Session, args []string) error {
 	arg := strings.Join(args, " ")
-	if arg == "" {
-		s.sendText("Give what to who?")
-		return nil
-	}
 	s.manager.world.DoGive(s.player, arg)
 	s.markDirty(VarInventory)
 	return nil
@@ -289,10 +281,6 @@ func cmdGive(s *Session, args []string) error {
 //	put <item> <container>, put all <container>, put all.<item> <container>
 func cmdPut(s *Session, args []string) error {
 	arg := strings.Join(args, " ")
-	if arg == "" {
-		s.sendText("Put what in what?")
-		return nil
-	}
 	s.manager.world.DoPut(s.player, arg)
 	s.markDirty(VarInventory, VarRoomItems)
 	return nil
@@ -300,44 +288,8 @@ func cmdPut(s *Session, args []string) error {
 
 // cmdDrop drops an item from inventory.
 func cmdDrop(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Drop what?")
-		return nil
-	}
-
-	itemName := strings.Join(args, " ")
-	roomVNum := s.player.GetRoom()
-
-	item, found := s.player.Inventory.FindItem(itemName)
-	if !found {
-		s.sendText(fmt.Sprintf("You don't have '%s'.", itemName))
-		return nil
-	}
-
-	// Remove from inventory and place in room
-	s.player.Inventory.RemoveItem(item)
-	item.RoomVNum = roomVNum
-	if err := s.manager.world.MoveObjectToRoom(item, roomVNum); err != nil {
-		slog.Error("MoveObjectToRoom failed on drop", "error", err)
-	}
-
-	s.sendText(fmt.Sprintf("You drop %s.", item.GetShortDesc()))
+	s.manager.world.DoDrop(s.player, strings.Join(args, " "))
 	s.markDirty(VarInventory, VarRoomItems)
-
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "drop",
-			From: s.player.Name,
-			Text: fmt.Sprintf("%s drops %s.", s.player.Name, item.GetShortDesc()),
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
-
 	return nil
 }
 
