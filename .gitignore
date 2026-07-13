@@ -58,7 +58,6 @@ log/
 # Original C object files (compiled intermediates, no source)
 src/*.o
 src/*.Po
-__pycache__/
 maps/world_data.json
 data/
 # Built binaries (anchored to repo root so they don't also exclude the
@@ -73,6 +72,12 @@ website/REVIEW-*.md
 
 # Clawpatch backup
 .clawpatch.bak-020/
+
+# Coding-agent tooling installs (node_modules, locks — local scratch)
+.mimocode/
+
+# Legacy briefs (local scratch; docs/briefs/ is canonical)
+/briefs/
 
 # Player data (runtime)
 pkg/db/data/
