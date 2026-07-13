@@ -1,0 +1,18 @@
+# One shared input stream is sent verbatim to the C oracle and Go port.
+# The extra Y is intentional: it exposes the different creation-flow structure.
+Oracletst
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+examine sword
+quit
