@@ -79,15 +79,12 @@ func cmdRecite(s *Session, args []string) error {
 		}
 	}
 
-	// Room message
-	if target != s.player {
-		// Pointing at someone — notify target if it's a player
-		broadcastToRoom(s, fmt.Sprintf("$n reads %s and points at you.", item.GetShortDesc()))
-	}
-	broadcastToRoom(s, fmt.Sprintf("$n reads %s.", item.GetShortDesc()))
-
-	// Player message
-	s.Send(fmt.Sprintf("You read %s.", item.GetShortDesc()))
+	// Match C's mag_objectmagic messages. Act owns object substitution and
+	// recipient-specific visibility for both the actor and room audiences.
+	game.Act(nil, true, s.player, nil, item, nil,
+		"You recite $p which dissolves.", "", game.ToChar)
+	game.Act(s.manager.world, false, s.player, nil, item, nil,
+		"$n recites $p.", "", game.ToRoom)
 
 	// Remove scroll from inventory
 	s.player.Inventory.RemoveItem(item)

@@ -44,8 +44,9 @@ var (
 // --------------------------------------------------------------------------
 // Pronoun helpers — faithful to C utils.h macros.
 //
-// Go sex values match C: 0=male, 1=female, 2=neutral (confirmed by
-// MobInstance.GetSex comment and C SEX_* constants).
+// Go sex values are 0=male, 1=female, 2=neutral. This intentionally does not
+// copy C's numeric SEX_* constants (neutral=0, male=1, female=2); the Go Player
+// and MobInstance encoding is authoritative at this boundary.
 // --------------------------------------------------------------------------
 
 // hmhr returns the objective pronoun for ch ("him"/"her"/"it").
@@ -108,12 +109,11 @@ func sana(obj *ObjectInstance) string {
 
 // persName returns the name of ch as seen by observer.
 // C: PERS(ch, vict) — GET_NAME(ch) if CAN_SEE(vict, ch), else "someone".
-// Uses simplified CAN_SEE (awake check only) for now.
 func persName(ch, observer Actor) string {
 	if observer == nil {
 		return ch.GetName()
 	}
-	if observer.GetPosition() <= combat.PosSleeping {
+	if !canSee(observer, ch) {
 		return "someone"
 	}
 	return ch.GetName()
@@ -438,8 +438,15 @@ func performAct(format string, ch, vict Actor, obj, victObj *ObjectInstance, arg
 }
 
 // --------------------------------------------------------------------------
-// Act — the dispatch function.
+// Act — the canonical player-facing text primitive.
 // C: void act(str, hide_invisible, ch, obj, vict_obj, type)
+//
+// Game operations author C-style $-code messages and route them exclusively
+// through Act so substitution, visibility, pronouns, capitalization, audience,
+// and line endings have one implementation. Player.SendMessage crosses the
+// transport boundary through World.MessageSink: telnet renders the resulting
+// text and WebSocket sessions wrap the same text in an EventData{Type:"text"}
+// envelope. Structured MsgState payloads remain separate from Act.
 //
 // Parameters:
 //   - world:       used only for TO_ROOM/TO_NOTVICT to iterate room occupants

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"errors"
@@ -12,6 +13,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -120,6 +123,19 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// mutates the oracle clone. Keep its baseline player file: Circle promotes
 	// the first record in an empty file to Implementor, which would invalidate
 	// this mortal-room scenario.
+	goWorld := filepath.Join(repoRoot, "lib", "world")
+	if len(scenario.Fixtures) > 0 {
+		goWorld = filepath.Join(tmp, "go-world")
+		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
+			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
+		}
+		if err := applyObjectFixtures(filepath.Join(oracleData, "world"), scenario.Fixtures); err != nil {
+			return fmt.Errorf("apply C oracle fixtures: %w", err)
+		}
+		if err := applyObjectFixtures(goWorld, scenario.Fixtures); err != nil {
+			return fmt.Errorf("apply Go port fixtures: %w", err)
+		}
+	}
 
 	goWork := filepath.Join(tmp, "go-work")
 	if err := os.MkdirAll(filepath.Join(goWork, "data"), 0o750); err != nil {
@@ -147,7 +163,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 			"ENVIRONMENT=development",
 		),
 		goBin,
-		"-world", filepath.Join(repoRoot, "lib", "world"),
+		"-world", goWorld,
 		"-port", fmt.Sprint(goHTTPPort),
 		"-telnet-port", fmt.Sprint(goTelnetPort),
 		"-db", deadDBURL,
@@ -169,6 +185,9 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err != nil {
 		return err
 	}
+	if err := waitForLog(goProc, "World state restored", bootTimeout); err != nil {
+		return err
+	}
 	goConn := oraclediff.NewTCPConn(goNetConn)
 	defer func() { _ = goConn.Close() }()
 
@@ -179,26 +198,75 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
 	}
 
-	oracleBlocks, err := oraclediff.RunProbe(oracleConn, scenario.Probe, quiescence)
+	oraclePeers := make(map[string]oraclediff.Conn, len(scenario.Peers))
+	goPeers := make(map[string]oraclediff.Conn, len(scenario.Peers))
+	peerNames := make([]string, 0, len(scenario.Peers))
+	for name := range scenario.Peers {
+		peerNames = append(peerNames, name)
+	}
+	sort.Strings(peerNames)
+	for _, name := range peerNames {
+		peer := scenario.Peers[name]
+		oraclePeerNet, dialErr := dialWhenReady(oracleProc, oracleAddr, bootTimeout)
+		if dialErr != nil {
+			return fmt.Errorf("dial C oracle %s: %w", name, dialErr)
+		}
+		oraclePeer := oraclediff.NewTCPConn(oraclePeerNet)
+		defer func() { _ = oraclePeer.Close() }()
+		if _, setupErr := oraclediff.RunSetup(oraclePeer, peer.SetupOracle, quiescence); setupErr != nil {
+			return fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleProc.log.String())
+		}
+		oraclePeers[name] = oraclePeer
+
+		goPeerNet, dialErr := dialWhenReady(goProc, goAddr, bootTimeout)
+		if dialErr != nil {
+			return fmt.Errorf("dial Go port %s: %w", name, dialErr)
+		}
+		goPeer := oraclediff.NewTCPConn(goPeerNet)
+		defer func() { _ = goPeer.Close() }()
+		if _, setupErr := oraclediff.RunSetup(goPeer, peer.SetupPort, quiescence); setupErr != nil {
+			return fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goProc.log.String())
+		}
+		goPeers[name] = goPeer
+	}
+
+	// Peer arrivals can emit room text to clients that completed setup earlier.
+	// Clear that non-probe output so each compared block starts at its command.
+	if err := drainClients(quiescence, oracleConn, oraclePeers); err != nil {
+		return fmt.Errorf("drain C oracle setup output: %w", err)
+	}
+	if err := drainClients(quiescence, goConn, goPeers); err != nil {
+		return fmt.Errorf("drain Go port setup output: %w", err)
+	}
+	if err := oraclediff.RunWarmup(oracleConn, oraclePeers, scenario.Warmup, quiescence); err != nil {
+		return fmt.Errorf("run C oracle warmup: %w", err)
+	}
+	if err := oraclediff.RunWarmup(goConn, goPeers, scenario.Warmup, quiescence); err != nil {
+		return fmt.Errorf("run Go port warmup: %w", err)
+	}
+
+	oracleBlocks, err := oraclediff.RunAudienceProbe(oracleConn, oraclePeers, scenario.Probe, quiescence)
 	if err != nil {
 		return fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", err, oracleProc.log.String())
 	}
-	goBlocks, err := oraclediff.RunProbe(goConn, scenario.Probe, quiescence)
+	goBlocks, err := oraclediff.RunAudienceProbe(goConn, goPeers, scenario.Probe, quiescence)
 	if err != nil {
 		return fmt.Errorf("run Go port probe: %w\nserver log:\n%s", err, goProc.log.String())
 	}
 
-	diffs := make([]oraclediff.BlockDiff, 0, len(scenario.Probe))
-	for i, cmd := range scenario.Probe {
+	diffs := make([]oraclediff.BlockDiff, 0, len(oracleBlocks))
+	for i, oracleResult := range oracleBlocks {
 		var oracleBlock, goBlock string
-		if i < len(oracleBlocks) {
-			oracleBlock = oraclediff.Normalize(oracleBlocks[i].Output)
-		}
+		oracleBlock = oraclediff.Normalize(oracleResult.Output)
 		if i < len(goBlocks) {
 			goBlock = oraclediff.Normalize(goBlocks[i].Output)
 		}
+		label := oracleResult.Command
+		if len(scenario.Peers) > 0 {
+			label = fmt.Sprintf("%s [%s]", oracleResult.Command, oracleResult.Audience)
+		}
 		diffs = append(diffs, oraclediff.BlockDiff{
-			Command: cmd,
+			Command: label,
 			Oracle:  oracleBlock,
 			Go:      goBlock,
 			Diff:    oraclediff.UnifiedDiff("c-oracle", "go-port", oracleBlock, goBlock),
@@ -211,6 +279,87 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		GoAddr:     goAddr,
 		Seed:       fixedSeed,
 	}, diffs))
+	return nil
+}
+
+func drainClients(quiescence time.Duration, primary oraclediff.Conn, peers map[string]oraclediff.Conn) error {
+	if _, err := primary.ReadUntilQuiescent(quiescence); err != nil {
+		return fmt.Errorf("actor: %w", err)
+	}
+	for name, conn := range peers {
+		if _, err := conn.ReadUntilQuiescent(quiescence); err != nil {
+			return fmt.Errorf("%s: %w", name, err)
+		}
+	}
+	return nil
+}
+
+func applyObjectFixtures(worldDir string, fixtures []oraclediff.ObjectFixture) error {
+	for _, fixture := range fixtures {
+		if err := makeScrollFixtureInert(worldDir, fixture.ObjectVNum); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func makeScrollFixtureInert(worldDir string, objectVNum int) error {
+	path := filepath.Join(worldDir, "obj", fmt.Sprintf("%d.obj", objectVNum/100))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read object file for %d: %w", objectVNum, err)
+	}
+	startMarker := fmt.Sprintf("#%d\n", objectVNum)
+	start := bytes.Index(data, []byte(startMarker))
+	if start < 0 {
+		return fmt.Errorf("object %d not found in %s", objectVNum, path)
+	}
+	end := bytes.Index(data[start+len(startMarker):], []byte("\n#"))
+	if end < 0 {
+		end = len(data) - start - len(startMarker)
+	}
+	end += start + len(startMarker)
+	record := string(data[start:end])
+	lines := strings.Split(record, "\n")
+	changed := false
+	for i := 0; i+1 < len(lines); i++ {
+		fields := strings.Fields(lines[i])
+		if len(fields) < 9 {
+			continue
+		}
+		validFlags := true
+		for _, field := range fields[:9] {
+			if _, parseErr := strconv.Atoi(field); parseErr != nil {
+				validFlags = false
+				break
+			}
+		}
+		if !validFlags {
+			continue
+		}
+		values := strings.Fields(lines[i+1])
+		if len(values) != 4 {
+			return fmt.Errorf("object %d has invalid scroll values %q", objectVNum, lines[i+1])
+		}
+		fields[0] = "2"
+		lines[i] = strings.Join(fields, " ")
+		lines[i+1] = values[0] + " -1 -1 -1"
+		changed = true
+		break
+	}
+	if !changed {
+		return fmt.Errorf("object %d is not a scroll fixture", objectVNum)
+	}
+	updated := append([]byte{}, data[:start]...)
+	updated = append(updated, strings.Join(lines, "\n")...)
+	updated = append(updated, data[end:]...)
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat object file for %d: %w", objectVNum, err)
+	}
+	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil {
+		return fmt.Errorf("write object file for %d: %w", objectVNum, err)
+	}
 	return nil
 }
 
@@ -263,6 +412,22 @@ func dialWhenReady(p *process, addr string, timeout time.Duration) (net.Conn, er
 	}
 	return nil, fmt.Errorf("%s did not accept connections on %s within %s: %w\nserver log:\n%s",
 		p.name, addr, timeout, lastErr, p.log.String())
+}
+
+func waitForLog(p *process, marker string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if strings.Contains(p.log.String(), marker) {
+			return nil
+		}
+		select {
+		case <-p.done:
+			return fmt.Errorf("%s exited before logging %q: %w\nserver log:\n%s", p.name, marker, p.waitErr, p.log.String())
+		default:
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	return fmt.Errorf("%s did not log %q within %s\nserver log:\n%s", p.name, marker, timeout, p.log.String())
 }
 
 // allocatePorts accounts for CircleMUD's undocumented second listener: WHOD

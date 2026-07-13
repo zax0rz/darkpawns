@@ -66,15 +66,15 @@ func cmdQcomm(s *Session, args []string) error {
 // Whisper
 // ---------------------------------------------------------------------------
 
-// cmdWhisper whispers a private message to a player in the same room.
+// cmdWhisper whispers a private message to a visible character in the same room.
 func cmdWhisper(s *Session, args []string) error {
-	if len(args) < 2 {
-		s.Send("Whisper whom what?")
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
+		game.SendToChar(s.player, "Sorry, you cannot do that.")
 		return nil
 	}
 
-	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
-		s.Send("You cannot communicate at all!")
+	if len(args) < 2 {
+		game.SendToChar(s.player, "Whom do you want to whisper to.. and what??")
 		return nil
 	}
 
@@ -89,41 +89,43 @@ func cmdWhisper(s *Session, args []string) error {
 	// no modChecker is configured — not part of the C game).
 	filtered, block := filterCommMessage(s, message)
 	if block {
-		s.sendText("Your message was blocked.")
+		game.SendToChar(s.player, "Your message was blocked.")
 		return nil
 	}
 	message = filtered
 
-	roomVNum := s.player.GetRoomVNum()
-
-	// Find target in the same room
-	var targetSess *Session
-	s.manager.mu.RLock()
-	for _, sess := range s.manager.sessions {
-		if sess.player == nil {
-			continue
-		}
-		if strings.EqualFold(sess.player.Name, targetName) && sess.player.GetRoomVNum() == roomVNum {
-			targetSess = sess
-			break
-		}
-	}
-	s.manager.mu.RUnlock()
-
-	if targetSess == nil {
-		s.Send("No one by that name is here.")
+	target, found := s.manager.world.ResolveCharInRoom(s.player, targetName)
+	if !found {
+		game.SendToChar(s.player, "No-one by that name here.")
 		return nil
 	}
 
-	// Send to victim
-	targetSess.Send(fmt.Sprintf("\x1B[1;33m%s whispers, '%s'\033[0m\r\n", s.player.Name, message))
+	var victim game.Actor
+	switch {
+	case target.Player != nil:
+		victim = target.Player
+	case target.Mob != nil:
+		victim = target.Mob
+	default:
+		game.SendToChar(s.player, "No-one by that name here.")
+		return nil
+	}
 
-	// Confirm to sender
-	s.Send(fmt.Sprintf("You whisper to %s, '%s'", targetSess.player.Name, message))
+	if victim == s.player {
+		game.SendToChar(s.player, "You can't get your mouth close enough to your ear...")
+		return nil
+	}
 
-	// Broadcast to rest of room that whisper occurred
-	roomText := fmt.Sprintf("%s whispers something to %s.\r\n", s.player.Name, targetSess.player.Name)
-	broadcastToRoomText(s, roomVNum, roomText)
+	game.Act(nil, false, s.player, victim, nil, nil,
+		"$n whispers to you, '$T'", message, game.ToVict)
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		game.SendToChar(s.player, "Okay.")
+	} else {
+		game.Act(nil, false, s.player, victim, nil, nil,
+			"You whisper to $N, '$T'", message, game.ToChar)
+	}
+	game.Act(s.manager.world, false, s.player, victim, nil, nil,
+		"$n whispers something to $N.", "", game.ToNotVict)
 
 	return nil
 }

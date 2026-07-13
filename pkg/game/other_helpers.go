@@ -71,19 +71,19 @@ func isPlayerNPC(ch *Player, me *MobInstance) bool {
 	return me != nil
 }
 
-// actToRoom broadcasts a formatted message to all players in the given room,
-// optionally excluding one player by name.
+// actToRoom is a legacy preformatted-message adapter to canonical Act.
 func actToRoom(w *World, roomVNum int, format string, excludeName string) {
-	players := w.GetPlayersInRoom(roomVNum)
-	for _, p := range players {
-		if p.IsNPC() {
-			continue
+	format = legacyActFormat(format)
+	if excludeName != "" {
+		for _, player := range w.GetPlayersInRoom(roomVNum) {
+			if player.Name == excludeName {
+				Act(w, false, player, nil, nil, nil, format, "", ToRoom)
+				return
+			}
 		}
-		if excludeName != "" && p.Name == excludeName {
-			continue
-		}
-		p.SendMessage(format)
 	}
+	anchor := &ObjectInstance{RoomVNum: roomVNum}
+	Act(w, false, nil, nil, anchor, nil, format, "", ToRoom)
 }
 
 // hasRoomFlag checks if a room has the named flag (e.g. "indoors", "death", "tunnel").

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -17,7 +19,24 @@ type Scenario struct {
 	Name        string
 	SetupOracle []string
 	SetupPort   []string
+	Warmup      []string
 	Probe       []string
+	Peers       map[string]*PeerSetup
+	Fixtures    []ObjectFixture
+}
+
+// PeerSetup describes a passive client that remains connected while the
+// primary actor runs the probe. This lets a scenario compare per-recipient
+// room messages, including TO_VICT and TO_NOTVICT output.
+type PeerSetup struct {
+	SetupOracle []string
+	SetupPort   []string
+}
+
+// ObjectFixture identifies an object prototype to turn into an inert scroll in
+// each server's disposable world copy. The source world trees are never modified.
+type ObjectFixture struct {
+	ObjectVNum int
 }
 
 // ProbeBlock is one probe command and the raw output it produced.
@@ -26,12 +45,25 @@ type ProbeBlock struct {
 	Output  string
 }
 
+// AudienceProbeBlock is one command's output as seen by one connected client.
+type AudienceProbeBlock struct {
+	Command  string
+	Audience string
+	Output   string
+}
+
 // ParseScenario reads a sectioned scenario file:
 //
 //	[setup:oracle]      # sent only to the C oracle; not diffed
 //	<creation keystrokes…>
 //	[setup:port]        # sent only to the Go port; not diffed
 //	<creation keystrokes…>
+//	[setup:oracle:victim] / [setup:port:victim]
+//	<optional passive-client creation keystrokes…>
+//	[fixture]
+//	inert-scroll 8038   # patch this prototype in disposable worlds only
+//	[warmup]            # shared commands sent and discarded after peer setup
+//	get scroll
 //	[probe]             # sent to BOTH; this is the only diffed section
 //	look
 //	look sign
@@ -40,9 +72,10 @@ type ProbeBlock struct {
 // Blank lines and lines beginning with # are comments; <ENTER> represents an
 // intentional empty command.
 func ParseScenario(name string, r io.Reader) (Scenario, error) {
-	sc := Scenario{Name: name}
+	sc := Scenario{Name: name, Peers: make(map[string]*PeerSetup)}
 	scanner := bufio.NewScanner(r)
 	var section *[]string
+	fixtureSection := false
 	lineNo := 0
 	for scanner.Scan() {
 		lineNo++
@@ -51,17 +84,52 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			continue
 		}
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-			switch strings.ToLower(line) {
+			fixtureSection = false
+			lower := strings.ToLower(line)
+			switch lower {
 			case "[setup:oracle]":
 				section = &sc.SetupOracle
 			case "[setup:port]", "[setup:go]":
 				section = &sc.SetupPort
 			case "[probe]":
 				section = &sc.Probe
+			case "[warmup]":
+				section = &sc.Warmup
+			case "[fixture]", "[fixtures]":
+				section = nil
+				fixtureSection = true
 			default:
-				return Scenario{}, fmt.Errorf("scenario %q line %d: unknown section %q", name, lineNo, line)
+				parts := strings.Split(strings.Trim(lower, "[]"), ":")
+				if len(parts) != 3 || parts[0] != "setup" || parts[2] == "" {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: unknown section %q", name, lineNo, line)
+				}
+				peer := sc.Peers[parts[2]]
+				if peer == nil {
+					peer = &PeerSetup{}
+					sc.Peers[parts[2]] = peer
+				}
+				switch parts[1] {
+				case "oracle":
+					section = &peer.SetupOracle
+				case "port", "go":
+					section = &peer.SetupPort
+				default:
+					return Scenario{}, fmt.Errorf("scenario %q line %d: unknown section %q", name, lineNo, line)
+				}
 			}
 			continue
+		}
+		if fixtureSection {
+			fields := strings.Fields(line)
+			if len(fields) == 2 && strings.EqualFold(fields[0], "inert-scroll") {
+				objVNum, objErr := strconv.Atoi(fields[1])
+				if objErr != nil || objVNum <= 0 {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fixture %q", name, lineNo, line)
+				}
+				sc.Fixtures = append(sc.Fixtures, ObjectFixture{ObjectVNum: objVNum})
+				continue
+			}
+			return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fixture %q (want: inert-scroll <vnum>)", name, lineNo, line)
 		}
 		if section == nil {
 			return Scenario{}, fmt.Errorf("scenario %q line %d: command %q before any [section]", name, lineNo, line)
@@ -78,6 +146,48 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		return Scenario{}, fmt.Errorf("scenario %q has no [probe] steps", name)
 	}
 	return sc, nil
+}
+
+// RunWarmup plays shared commands after every client has completed setup and
+// discards their output. It is useful for acquiring disposable fixtures before
+// the first compared probe command.
+func RunWarmup(primary Conn, peers map[string]Conn, steps []string, quiescence time.Duration) error {
+	if len(steps) == 0 {
+		return nil
+	}
+	_, err := RunAudienceProbe(primary, peers, steps, quiescence)
+	return err
+}
+
+// RunAudienceProbe plays commands through the primary actor and captures the
+// resulting output separately for the actor and every passive peer.
+func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration) ([]AudienceProbeBlock, error) {
+	peerNames := make([]string, 0, len(peers))
+	for name := range peers {
+		peerNames = append(peerNames, name)
+	}
+	sort.Strings(peerNames)
+
+	blocks := make([]AudienceProbeBlock, 0, len(probe)*(len(peers)+1))
+	for i, step := range probe {
+		if err := primary.Send(step); err != nil {
+			return blocks, fmt.Errorf("probe step %d send %q: %w", i+1, step, err)
+		}
+		output, err := primary.ReadUntilQuiescent(quiescence)
+		if err != nil && (i != len(probe)-1 || !errors.Is(err, io.EOF)) {
+			return blocks, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", i+1, step, err, output)
+		}
+		blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: "actor", Output: output})
+
+		for _, name := range peerNames {
+			peerOutput, peerErr := peers[name].ReadUntilQuiescent(quiescence)
+			if peerErr != nil {
+				return blocks, fmt.Errorf("probe step %d read %s after %q: %w\noutput so far:\n%s", i+1, name, step, peerErr, peerOutput)
+			}
+			blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: name, Output: peerOutput})
+		}
+	}
+	return blocks, nil
 }
 
 // RunSetup plays one server's setup lines and returns the captured transcript.

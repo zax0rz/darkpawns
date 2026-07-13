@@ -3,6 +3,7 @@ package oraclediff
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestNormalizeTier1Rules(t *testing.T) {
@@ -11,7 +12,15 @@ func TestNormalizeTier1Rules(t *testing.T) {
 		"  Wis: decent        Con: good          Cha: bad\r\n" +
 		"22H 100M 83V >   \r\nPlayer HP: 22/22\r\nPlayers online: 7\r\n" +
 		"As of 10-17-2008 there has been a pwipe.\r\n**** Dark Pawns 3.0 beta\r\nDescription  \r\n"
-	want := "Room\n<ROLLED_STATS>\n<PROMPT>\nPlayer <VITALS>\nDescription\n"
+	want := "Room\n<ROLLED_STATS>\nPlayer <VITALS>\nDescription\n"
+	if got := Normalize(raw); got != want {
+		t.Fatalf("Normalize() = %q, want %q", got, want)
+	}
+}
+
+func TestNormalizeDropsPromptFramingButPreservesTextGreaterThan(t *testing.T) {
+	raw := ">\r\nDoor > north\r\n22H 100M 83V >\r\n"
+	want := "Door > north\n"
 	if got := Normalize(raw); got != want {
 		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}
@@ -73,6 +82,96 @@ func TestParseScenarioEnter(t *testing.T) {
 		t.Fatalf("Probe = %#v", sc.Probe)
 	}
 }
+
+func TestParseScenarioPeersAndFixtures(t *testing.T) {
+	input := `
+[setup:oracle]
+actor
+[setup:port]
+actor
+[setup:oracle:victim]
+victim
+[setup:port:victim]
+victim
+[fixture]
+inert-scroll 8038
+[probe]
+recite scroll
+`
+	sc, err := ParseScenario("act", strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	peer := sc.Peers["victim"]
+	if peer == nil || len(peer.SetupOracle) != 1 || peer.SetupOracle[0] != "victim" || len(peer.SetupPort) != 1 {
+		t.Fatalf("victim peer = %#v", peer)
+	}
+	if len(sc.Fixtures) != 1 || sc.Fixtures[0] != (ObjectFixture{ObjectVNum: 8038}) {
+		t.Fatalf("Fixtures = %#v", sc.Fixtures)
+	}
+}
+
+func TestParseScenarioRejectsInvalidFixture(t *testing.T) {
+	_, err := ParseScenario("bad", strings.NewReader("[fixture]\ninert-scroll nope\n[probe]\nlook\n"))
+	if err == nil || !strings.Contains(err.Error(), "invalid fixture") {
+		t.Fatalf("expected invalid fixture error, got %v", err)
+	}
+}
+
+func TestRunAudienceProbeCapturesEachRecipientInStableOrder(t *testing.T) {
+	actor := &scriptedConn{outputs: []string{"actor-one", "actor-two"}}
+	observer := &scriptedConn{outputs: []string{"observer-one", "observer-two"}}
+	victim := &scriptedConn{outputs: []string{"victim-one", "victim-two"}}
+
+	blocks, err := RunAudienceProbe(actor, map[string]Conn{
+		"victim":   victim,
+		"observer": observer,
+	}, []string{"one", "two"}, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []AudienceProbeBlock{
+		{Command: "one", Audience: "actor", Output: "actor-one"},
+		{Command: "one", Audience: "observer", Output: "observer-one"},
+		{Command: "one", Audience: "victim", Output: "victim-one"},
+		{Command: "two", Audience: "actor", Output: "actor-two"},
+		{Command: "two", Audience: "observer", Output: "observer-two"},
+		{Command: "two", Audience: "victim", Output: "victim-two"},
+	}
+	if len(blocks) != len(want) {
+		t.Fatalf("len(blocks) = %d, want %d: %#v", len(blocks), len(want), blocks)
+	}
+	for i := range want {
+		if blocks[i] != want[i] {
+			t.Errorf("blocks[%d] = %#v, want %#v", i, blocks[i], want[i])
+		}
+	}
+	if got := strings.Join(actor.sent, ","); got != "one,two" {
+		t.Errorf("actor commands = %q, want one,two", got)
+	}
+}
+
+type scriptedConn struct {
+	outputs []string
+	sent    []string
+}
+
+func (c *scriptedConn) Send(line string) error {
+	c.sent = append(c.sent, line)
+	return nil
+}
+
+func (c *scriptedConn) ReadUntilQuiescent(time.Duration) (string, error) {
+	if len(c.outputs) == 0 {
+		return "", nil
+	}
+	out := c.outputs[0]
+	c.outputs = c.outputs[1:]
+	return out, nil
+}
+
+func (c *scriptedConn) Close() error { return nil }
 
 func TestParseScenarioUnknownSection(t *testing.T) {
 	_, err := ParseScenario("test", strings.NewReader("[setup:unknown]\nlook\n"))
