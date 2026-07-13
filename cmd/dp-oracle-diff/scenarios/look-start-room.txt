@@ -6,6 +6,8 @@
 [setup:oracle]
 # C nanny() flow: name confirmation, password, color/sex/race/class/hometown,
 # keep stats, PRESS RETURN, then menu option 1 to enter the game.
+# C then teleports a KD-hometown new char to room 8162 (Temple Infirmary) via
+# the start_room special; recall (level <= 5) sends a KD char to mortal_start_room 8004.
 Oracletst
 Y
 oraclepass
@@ -18,10 +20,13 @@ K
 Y
 <ENTER>
 1
+look
+recall
 
 [setup:port]
 # Go telnet flow: create-new confirmation, password, name confirmation,
 # color/sex/race/class/hometown, keep stats, PRESS RETURN, then menu option 1.
+# Go lands at 8004 already, so no navigation is needed.
 Oracletst
 y
 oraclepass

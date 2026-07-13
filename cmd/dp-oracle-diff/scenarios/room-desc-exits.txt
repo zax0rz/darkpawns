@@ -1,0 +1,41 @@
+# Room descriptions and exits in the anchor room (8004) and immediate neighbors.
+# Setup lands both servers in the anchor room; only the shared probe is diffed.
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+look east
+look south
+look west
+exits
+quit
