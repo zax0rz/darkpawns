@@ -172,13 +172,37 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	goConn := oraclediff.NewTCPConn(goNetConn)
 	defer func() { _ = goConn.Close() }()
 
-	oracleRaw, err := oraclediff.RunScenario(oracleConn, scenario, quiescence)
-	if err != nil {
-		return fmt.Errorf("run C oracle scenario: %w\nserver log:\n%s", err, oracleProc.log.String())
+	if _, err := oraclediff.RunSetup(oracleConn, scenario.SetupOracle, quiescence); err != nil {
+		return fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", err, oracleProc.log.String())
 	}
-	goRaw, err := oraclediff.RunScenario(goConn, scenario, quiescence)
+	if _, err := oraclediff.RunSetup(goConn, scenario.SetupPort, quiescence); err != nil {
+		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
+	}
+
+	oracleBlocks, err := oraclediff.RunProbe(oracleConn, scenario.Probe, quiescence)
 	if err != nil {
-		return fmt.Errorf("run Go port scenario: %w\nserver log:\n%s", err, goProc.log.String())
+		return fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", err, oracleProc.log.String())
+	}
+	goBlocks, err := oraclediff.RunProbe(goConn, scenario.Probe, quiescence)
+	if err != nil {
+		return fmt.Errorf("run Go port probe: %w\nserver log:\n%s", err, goProc.log.String())
+	}
+
+	diffs := make([]oraclediff.BlockDiff, 0, len(scenario.Probe))
+	for i, cmd := range scenario.Probe {
+		var oracleBlock, goBlock string
+		if i < len(oracleBlocks) {
+			oracleBlock = oraclediff.Normalize(oracleBlocks[i].Output)
+		}
+		if i < len(goBlocks) {
+			goBlock = oraclediff.Normalize(goBlocks[i].Output)
+		}
+		diffs = append(diffs, oraclediff.BlockDiff{
+			Command: cmd,
+			Oracle:  oracleBlock,
+			Go:      goBlock,
+			Diff:    oraclediff.UnifiedDiff("c-oracle", "go-port", oracleBlock, goBlock),
+		})
 	}
 
 	fmt.Print(oraclediff.Report(oraclediff.ReportMeta{
@@ -186,7 +210,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		OracleAddr: oracleAddr,
 		GoAddr:     goAddr,
 		Seed:       fixedSeed,
-	}, oraclediff.Normalize(oracleRaw), oraclediff.Normalize(goRaw)))
+	}, diffs))
 	return nil
 }
 

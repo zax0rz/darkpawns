@@ -1,5 +1,27 @@
-# One shared input stream is sent verbatim to the C oracle and Go port.
-# The extra Y is intentional: it exposes the different creation-flow structure.
+# Split scenario: per-server setup (not diffed) + shared probe (diffed).
+# The two creation flows consume a different number of prompts, so a shared
+# stream misaligns. Setup drives each server to a level-1 mortal command prompt;
+# probe sends identical world-data commands to both.
+
+[setup:oracle]
+# C nanny() flow: name confirmation, password, color/sex/race/class/hometown,
+# keep stats, PRESS RETURN, then menu option 1 to enter the game.
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+# Go telnet flow: create-new confirmation, password, name confirmation,
+# color/sex/race/class/hometown, keep stats, PRESS RETURN, then menu option 1.
 Oracletst
 y
 oraclepass
@@ -13,6 +35,9 @@ K
 Y
 <ENTER>
 1
+
+[probe]
+# Deterministic world-data probes only. look sign is pure static room extra.
 look
-examine sword
+look sign
 quit
