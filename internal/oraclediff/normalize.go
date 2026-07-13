@@ -8,6 +8,7 @@ import (
 var (
 	ansiEscape   = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
 	vitalsPrompt = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
+	promptOnly   = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
 	statusVitals = regexp.MustCompile(`\b(?:HP|Mana|Move):\s*\d+/\d+`)
 	statsLine    = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
 	volatileLine = regexp.MustCompile(`(?i)^\s*(?:` +
@@ -34,7 +35,9 @@ func Normalize(raw string) string {
 		lines[i] = strings.TrimRight(lines[i], " \t")
 	}
 
-	// 3. Mask vitals prompts: H/M/V values are RNG-derived, while prompt placement is structural.
+	// 3. Remove standalone telnet prompts and mask embedded status values. The
+	// C and Go transports repaint prompts at different times around identical
+	// asynchronous game text, so prompt-only lines are framing, not game output.
 	for i := range lines {
 		lines[i] = vitalsPrompt.ReplaceAllString(lines[i], "<PROMPT>")
 		lines[i] = statusVitals.ReplaceAllString(lines[i], "<VITALS>")
@@ -58,7 +61,7 @@ func Normalize(raw string) string {
 	// 5. Drop volatile status/MOTD metadata lines: wall-clock, uptime, counts, and release dates vary per boot.
 	lines = filtered[:0]
 	for _, line := range filtered {
-		if !volatileLine.MatchString(line) {
+		if !volatileLine.MatchString(line) && !promptOnly.MatchString(line) {
 			lines = append(lines, line)
 		}
 	}

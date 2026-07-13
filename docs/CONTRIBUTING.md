@@ -62,6 +62,10 @@ Any game mechanic ported from the original C source should have a comment citing
 
 If the original has a lookup table, port the lookup table. Don't replace it with a formula you derived yourself — you'll introduce drift and it becomes hard to verify correctness later.
 
+### Player-facing messages use `Act`
+
+Route new game text through `pkg/game.Act` or its `SendToChar` convenience wrappers. Use the canonical `$` substitutions for character names, pronouns, objects, and victims; do not hand-substitute them in session commands or add raw room broadcasters for text. Raw broadcasts are reserved for structured, non-text events. WebSocket `MsgState` payloads remain a separate state channel alongside `Act` text.
+
 ### Phase discipline
 
 Don't start Phase 3 work while Phase 2 items are open. The phases exist because later work depends on earlier foundations being correct. If you're not sure what phase something belongs to, open an issue and ask.

@@ -716,50 +716,18 @@ func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
 
 	if target != nil {
 		// Social with target
-		w.actToRoomMob(mob, social.Messages[2], target) // char to vict
-		w.actToRoomMob(mob, social.Messages[3], target) // room to vict (exclude mob & vict)
+		Act(nil, false, mob, target, nil, nil, social.Messages[2], "", ToChar)
+		Act(w, true, mob, target, nil, nil, social.Messages[3], "", ToNotVict)
 		if len(social.Messages) > 4 {
-			w.actToRoomMob(mob, social.Messages[4], target) // vict to char
+			Act(nil, false, mob, target, nil, nil, social.Messages[4], "", ToVict)
 		}
 	} else if targetName != "" {
 		// Target not found
 		mob.SendMessage(social.Messages[5])
 	} else {
 		// Social without target
-		mob.SendMessage(social.Messages[0])          // char_auto (to mob itself)
-		w.actToRoomMob(mob, social.Messages[1], nil) // room (exclude mob)
-	}
-}
-
-// actToRoomMob sends a social message to the room, formatting $n and $N tokens.
-func (w *World) actToRoomMob(mob *MobInstance, msg string, target *Player) {
-	msg = strings.ReplaceAll(msg, "$n", mob.GetName())
-	// Gender-aware pronouns
-	switch mob.GetSex() {
-	case 0:
-		msg = strings.ReplaceAll(msg, "$m", "him")
-		msg = strings.ReplaceAll(msg, "$s", "his")
-		msg = strings.ReplaceAll(msg, "$e", "he")
-	case 1:
-		msg = strings.ReplaceAll(msg, "$m", "her")
-		msg = strings.ReplaceAll(msg, "$s", "her")
-		msg = strings.ReplaceAll(msg, "$e", "she")
-	default:
-		msg = strings.ReplaceAll(msg, "$m", "it")
-		msg = strings.ReplaceAll(msg, "$s", "its")
-		msg = strings.ReplaceAll(msg, "$e", "it")
-	}
-	if target != nil {
-		msg = strings.ReplaceAll(msg, "$N", target.Name)
-		msg = strings.ReplaceAll(msg, "$M", target.Name)
-		target.SendMessage(msg)
-	} else {
-		players := w.GetPlayersInRoom(mob.GetRoom())
-		for _, p := range players {
-			if p.Name != mob.GetName() {
-				p.SendMessage(msg)
-			}
-		}
+		Act(nil, false, mob, nil, nil, nil, social.Messages[0], "", ToChar)
+		Act(w, true, mob, nil, nil, nil, social.Messages[1], "", ToRoom)
 	}
 }
 

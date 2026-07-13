@@ -410,132 +410,55 @@ func (w *World) FindMobInRoom(vnum int, name string) *MobInstance {
 	return nil
 }
 
-// actToChar sends an act-string to the character
+// legacyActArgs adapts the old loosely typed helper arguments to Act's typed
+// victim/primary-object/secondary-object parameters. Keep this only while
+// domain migrations retire the legacy helper signatures.
+func legacyActArgs(args ...interface{}) (Actor, *ObjectInstance, *ObjectInstance) {
+	var victim Actor
+	var obj, victObj *ObjectInstance
+	for _, arg := range args {
+		switch value := arg.(type) {
+		case Actor:
+			if victim == nil {
+				victim = value
+			}
+		case *ObjectInstance:
+			if obj == nil {
+				obj = value
+			} else if victObj == nil {
+				victObj = value
+			}
+		}
+	}
+	return victim, obj, victObj
+}
+
+func legacyActFormat(msg string) string {
+	return strings.TrimRight(msg, "\r\n")
+}
+
+// actToChar is a legacy signature kept as a thin adapter to canonical Act.
 func (w *World) actToChar(ch *Player, msg string, obj1, obj2 interface{}) {
-	s := msg
-	if obj1 != nil {
-		if o, ok := obj1.(*ObjectInstance); ok {
-			s = strings.ReplaceAll(s, "$p", o.GetShortDesc())
-			s = strings.ReplaceAll(s, "$P", o.GetShortDesc())
-		}
-		if o, ok := obj1.(*Player); ok {
-			s = strings.ReplaceAll(s, "$N", o.Name)
-			s = strings.ReplaceAll(s, "$E", "them")
-			s = strings.ReplaceAll(s, "$S", "their")
-			s = strings.ReplaceAll(s, "$M", "them")
-		}
-	}
-	if obj2 != nil {
-		if o, ok := obj2.(*ObjectInstance); ok {
-			s = strings.ReplaceAll(s, "$p", o.GetShortDesc())
-			s = strings.ReplaceAll(s, "$P", o.GetShortDesc())
-		}
-		if o, ok := obj2.(*Player); ok {
-			s = strings.ReplaceAll(s, "$N", o.Name)
-			s = strings.ReplaceAll(s, "$E", "them")
-			s = strings.ReplaceAll(s, "$S", "their")
-			s = strings.ReplaceAll(s, "$M", "them")
-		}
-	}
-	s = strings.ReplaceAll(s, "$n", "you")
-	s = strings.ReplaceAll(s, "$e", "you")
-	s = strings.ReplaceAll(s, "$s", "your")
-	s = strings.ReplaceAll(s, "$m", "you")
-	s = strings.ReplaceAll(s, "$F", "it")
-	ch.SendMessage(s + "\r\n")
+	victim, obj, victObj := legacyActArgs(obj1, obj2)
+	Act(nil, false, ch, victim, obj, victObj, legacyActFormat(msg), "", ToChar)
 }
 
-// actToRoom sends an act-string to the room (excluding ch)
+// actToRoom is a legacy signature kept as a thin adapter to canonical Act.
 func (w *World) actToRoom(ch *Player, msg string, obj1, obj2 interface{}) {
-	s := msg
-	if obj1 != nil {
-		if o, ok := obj1.(*ObjectInstance); ok {
-			s = strings.ReplaceAll(s, "$p", o.GetShortDesc())
-			s = strings.ReplaceAll(s, "$P", o.GetShortDesc())
-		}
-		if o, ok := obj1.(*Player); ok {
-			s = strings.ReplaceAll(s, "$N", o.Name)
-			s = strings.ReplaceAll(s, "$E", "them")
-			s = strings.ReplaceAll(s, "$S", "their")
-			s = strings.ReplaceAll(s, "$M", "them")
-		}
-	}
-	if obj2 != nil {
-		if o, ok := obj2.(*ObjectInstance); ok {
-			s = strings.ReplaceAll(s, "$p", o.GetShortDesc())
-			s = strings.ReplaceAll(s, "$P", o.GetShortDesc())
-		}
-		if o, ok := obj2.(*Player); ok {
-			s = strings.ReplaceAll(s, "$N", o.Name)
-			s = strings.ReplaceAll(s, "$E", "them")
-			s = strings.ReplaceAll(s, "$S", "their")
-			s = strings.ReplaceAll(s, "$M", "them")
-		}
-	}
-	s = strings.ReplaceAll(s, "$n", ch.Name)
-	s = strings.ReplaceAll(s, "$e", "he")
-	s = strings.ReplaceAll(s, "$s", "his")
-	s = strings.ReplaceAll(s, "$m", "him")
-	s = strings.ReplaceAll(s, "$F", "it")
-	w.roomMessage(ch.GetRoomVNum(), s)
+	victim, obj, victObj := legacyActArgs(obj1, obj2)
+	Act(w, false, ch, victim, obj, victObj, legacyActFormat(msg), "", ToRoom)
 }
 
-// actToVictim sends an act-string to the victim only
+// actToVictim is a legacy signature kept as a thin adapter to canonical Act.
 func actToVictim(ch, vict *Player, msg string, obj1, obj2 interface{}) {
-	s := msg
-	if obj1 != nil {
-		if o, ok := obj1.(*ObjectInstance); ok {
-			s = strings.ReplaceAll(s, "$p", o.GetShortDesc())
-			s = strings.ReplaceAll(s, "$P", o.GetShortDesc())
-		}
-		if o, ok := obj1.(*Player); ok {
-			s = strings.ReplaceAll(s, "$N", o.Name)
-			s = strings.ReplaceAll(s, "$E", "them")
-			s = strings.ReplaceAll(s, "$S", "their")
-			s = strings.ReplaceAll(s, "$M", "them")
-		}
-	}
-	if obj2 != nil {
-		if o, ok := obj2.(*ObjectInstance); ok {
-			s = strings.ReplaceAll(s, "$p", o.GetShortDesc())
-			s = strings.ReplaceAll(s, "$P", o.GetShortDesc())
-		}
-	}
-	s = strings.ReplaceAll(s, "$n", ch.Name)
-	s = strings.ReplaceAll(s, "$e", "he")
-	s = strings.ReplaceAll(s, "$s", "his")
-	s = strings.ReplaceAll(s, "$m", "him")
-	s = strings.ReplaceAll(s, "$N", "you")
-	s = strings.ReplaceAll(s, "$E", "you")
-	s = strings.ReplaceAll(s, "$S", "your")
-	s = strings.ReplaceAll(s, "$M", "you")
-	s = strings.ReplaceAll(s, "$F", "it")
-	vict.SendMessage(s + "\r\n")
+	_, obj, victObj := legacyActArgs(obj1, obj2)
+	Act(nil, false, ch, vict, obj, victObj, legacyActFormat(msg), "", ToVict)
 }
 
-// actToRoomExclude sends to room excluding ch and vict
+// actToRoomExclude is a legacy signature kept as a thin adapter to Act.
 func (w *World) actToRoomExclude(ch, vict *Player, msg string, obj1, obj2 interface{}) {
-	s := msg
-	if obj1 != nil {
-		if o, ok := obj1.(*ObjectInstance); ok {
-			s = strings.ReplaceAll(s, "$p", o.GetShortDesc())
-			s = strings.ReplaceAll(s, "$P", o.GetShortDesc())
-		}
-	}
-	if obj2 != nil {
-		if o, ok := obj2.(*Player); ok {
-			s = strings.ReplaceAll(s, "$N", o.Name)
-			s = strings.ReplaceAll(s, "$E", "them")
-			s = strings.ReplaceAll(s, "$S", "their")
-			s = strings.ReplaceAll(s, "$M", "them")
-		}
-	}
-	s = strings.ReplaceAll(s, "$n", ch.Name)
-	s = strings.ReplaceAll(s, "$e", "he")
-	s = strings.ReplaceAll(s, "$s", "his")
-	s = strings.ReplaceAll(s, "$m", "him")
-	s = strings.ReplaceAll(s, "$F", "it")
-	w.roomMessageExcludeTwo(ch.GetRoomVNum(), s, ch.Name, vict.Name)
+	_, obj, victObj := legacyActArgs(obj1, obj2)
+	Act(w, false, ch, vict, obj, victObj, legacyActFormat(msg), "", ToNotVict)
 }
 
 // atoi converts string to int
