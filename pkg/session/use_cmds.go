@@ -104,6 +104,19 @@ func cmdRecite(s *Session, args []string) error {
 	return nil
 }
 
+// objectivePronoun returns the objective pronoun for a player sex value.
+// Source: C SEX_* constants — 0=male, 1=female, 2=neutral.
+func objectivePronoun(sex int) string {
+	switch sex {
+	case 1: // female
+		return "her"
+	case 2: // neutral
+		return "it"
+	default: // male
+		return "him"
+	}
+}
+
 // cmdZap implements the zap command for using wands and staves.
 // zap <target>
 // Source: src/act.other.c (do_use SCMD_ZAP) + src/spell_parser.c (mag_objectmagic ITEM_WAND)
@@ -134,9 +147,9 @@ func cmdZap(s *Session, args []string) error {
 		return nil
 	}
 
-	// Check it's a wand or staff
+	// Check it's a wand or staff.
 	typeFlag := item.GetTypeFlag()
-	if typeFlag != 4 && typeFlag != 5 { // ITEM_STAFF = 4, ITEM_WAND = 5 in the codebase
+	if typeFlag != game.ITEM_WAND && typeFlag != game.ITEM_STAFF {
 		s.Send("You can't zap with that!")
 		return nil
 	}
@@ -146,20 +159,23 @@ func cmdZap(s *Session, args []string) error {
 		return nil
 	}
 
-	// Check charges — Values[2] = current charges
-	charges := item.Prototype.Values[2]
+	// Check charges — Values[2] = current charges. Use GetValue so an
+	// instance-level override is respected and never mutate the shared
+	// prototype; decrement via SetValue to keep the change instance-local.
+	charges := item.GetValue(2)
 	if charges <= 0 {
-		s.Send("It has no charges left.")
+		s.Send("It seems powerless.")
+		broadcastToRoom(s, "Nothing seems to happen.")
 		return nil
 	}
 
-	// Decrement charges
-	item.Prototype.Values[2]--
+	// Decrement charges instance-safely (DP-1110)
+	item.SetValue(2, charges-1)
 
-	// Extract spell data
-	// Values[0] = spell level, Values[1] = spell number
-	spellLevel := item.Prototype.Values[0]
-	spellNum := item.Prototype.Values[1]
+	// Extract spell data. CircleMUD wand/staff layout:
+	// Values[0] = level, Values[3] = spell number.
+	spellLevel := item.GetValue(0)
+	spellNum := item.GetValue(3)
 
 	if spellNum <= 0 {
 		s.Send("Nothing happens.")
@@ -182,14 +198,42 @@ func cmdZap(s *Session, args []string) error {
 		return nil
 	}
 
-	// Room broadcast for zap effect
-	broadcastToRoom(s, fmt.Sprintf("$n blasts %s with %s.", targetName, item.GetShortDesc()))
+	// Player-facing messages mirror C's mag_objectmagic (src/spell_parser.c).
+	// Unlike C's act(), broadcastToRoom does NOT perform $-substitution, so we
+	// pre-substitute the actor name and pronouns here (see eat_cmds.go).
+	actorName := s.player.Name
+	actorPronoun := objectivePronoun(s.player.Sex)
+	if typeFlag == game.ITEM_WAND {
+		if target == s.player {
+			s.Send(fmt.Sprintf("Your %s bathes you in a blinding glow!", item.GetShortDesc()))
+			broadcastToRoom(s, fmt.Sprintf("%s's %s bathes %s in a blinding glow!", actorName, item.GetShortDesc(), actorPronoun))
+		} else {
+			targetNameDisp := targetName
+			if p, ok := target.(*game.Player); ok {
+				targetNameDisp = p.Name
+			} else if m, ok := target.(*game.MobInstance); ok {
+				targetNameDisp = m.Prototype.ShortDesc
+			}
+			s.Send(fmt.Sprintf("Your %s flares up with a blinding glow that surges toward %s!", item.GetShortDesc(), targetNameDisp))
+			broadcastToRoom(s, fmt.Sprintf("%s's %s flares up with a blinding glow that surges toward %s!", actorName, item.GetShortDesc(), targetNameDisp))
+		}
+		spells.Cast(s.player, target, spellNum, spellLevel, s.manager.world)
+	} else { // ITEM_STAFF
+		s.Send(fmt.Sprintf("Your %s radiates an ethereal glow that lights the room.", item.GetShortDesc()))
+		broadcastToRoom(s, fmt.Sprintf("%s's %s sparks blindingly, bathing you in its glow.", actorName, item.GetShortDesc()))
 
-	// Player message
-	s.Send(fmt.Sprintf("You blast %s with %s.", targetName, item.GetShortDesc()))
-
-	// Cast the spell
-	spells.Cast(s.player, target, spellNum, spellLevel, s.manager.world)
+		room := s.player.GetRoomVNum()
+		for _, p := range s.manager.world.GetPlayersInRoom(room) {
+			if p != nil && p != s.player {
+				spells.Cast(s.player, p, spellNum, spellLevel, s.manager.world)
+			}
+		}
+		for _, m := range s.manager.world.GetMobsInRoom(room) {
+			if m != nil {
+				spells.Cast(s.player, m, spellNum, spellLevel, s.manager.world)
+			}
+		}
+	}
 
 	s.markDirty(VarInventory)
 
