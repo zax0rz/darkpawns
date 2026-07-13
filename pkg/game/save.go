@@ -204,9 +204,9 @@ func playerToSaveData(p *Player) savePlayerData {
 		Damroll:     p.GetDamroll(),
 		Strength:    p.GetStrength(),
 		THAC0:       p.THAC0,
-		Hunger:      p.Hunger,
-		Thirst:      p.Thirst,
-		Drunk:       p.Drunk,
+		Hunger:      p.Conditions[CondFull],
+		Thirst:      p.Conditions[CondThirst],
+		Drunk:       p.Conditions[CondDrunk],
 		Flags:       p.GetFlags(),
 		AutoExit:    p.GetAutoExit(),
 		Stats:       p.Stats,
@@ -333,6 +333,10 @@ func saveDataToPlayer(data savePlayerData) *Player {
 	for i := range p.RaceHates {
 		p.RaceHates[i] = -1
 	}
+	// Sync runtime condition array with serialized hunger/thirst/drunk values.
+	p.Conditions[CondFull] = p.Hunger
+	p.Conditions[CondThirst] = p.Thirst
+	p.Conditions[CondDrunk] = p.Drunk
 	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
 	return p
 }

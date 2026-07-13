@@ -279,6 +279,15 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 	// Set default capacity (will be updated when stats are set)
 	player.Inventory.SetCapacity(10, 0, 10, 1) // Default STR=10, DEX=10, level=1
 
+	// Start fully fed/hydrated/sober — limits.c. NewCharacter overrides these
+	// with rolled values, but bare NewPlayer sessions need valid conditions too.
+	player.Hunger = 36
+	player.Thirst = 36
+	player.Drunk = 0
+	player.Conditions[CondFull] = 36
+	player.Conditions[CondThirst] = 36
+	player.Conditions[CondDrunk] = 0
+
 	return player
 }
 
@@ -306,6 +315,9 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	p.Hunger = 36
 	p.Thirst = 36
 	p.Drunk = 0
+	p.Conditions[CondFull] = 36
+	p.Conditions[CondThirst] = 36
+	p.Conditions[CondDrunk] = 0
 
 	// Wimp level: HP threshold for auto-flee — class.c:588
 	p.WimpLevel = 5

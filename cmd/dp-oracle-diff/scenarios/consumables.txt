@@ -1,0 +1,48 @@
+# Consumables deterministic probes: eat, drink (alcoholic), pour-out, fill.
+# Items are spawned directly into the temple start room (8004) so the scenario
+# never depends on get-from-container, open, score, quit, or movement.
+
+[fixture]
+quiet-mobs
+spawn-obj 8010 1 8004 80
+spawn-obj 18007 1 8004 180
+spawn-obj 1 1 8004 0
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[probe]
+get bread
+eat bread
+get guinness
+drink guinness
+pour guinness out
+fill guinness fountain

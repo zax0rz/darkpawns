@@ -90,6 +90,9 @@ func makeDrinkItem(amount int, poisoned bool) *game.ObjectInstance {
 func TestCmdSipDoesNotConsumeOrPoison(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
+	registerInWorld(t, s)
+	// Sip is blocked when FULL>20 and THIRST>0; empty the stomach so the path runs.
+	s.player.SetCondition(game.CondFull, 0)
 	item := makeDrinkItem(5, true)
 	if err := s.player.Inventory.AddItem(item); err != nil {
 		t.Fatalf("AddItem: %v", err)
@@ -101,8 +104,8 @@ func TestCmdSipDoesNotConsumeOrPoison(t *testing.T) {
 	if msg := readSessionText(t, s); !strings.Contains(msg, "tastes like") {
 		t.Errorf("sip message: got %q", msg)
 	}
-	if item.Prototype.Values[1] != 5 {
-		t.Errorf("sip should not deplete the container, got Values[1]=%d", item.Prototype.Values[1])
+	if item.GetValue(1) != 5 {
+		t.Errorf("sip should not deplete the container, got value[1]=%d", item.GetValue(1))
 	}
 	if len(s.player.ActiveAffects) != 0 {
 		t.Errorf("sip should not apply a poison affect even on a poisoned drink, got %d affects", len(s.player.ActiveAffects))
@@ -112,10 +115,14 @@ func TestCmdSipDoesNotConsumeOrPoison(t *testing.T) {
 func TestCmdDrinkConsumesAndAppliesPoison(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	item := makeDrinkItem(5, true)
+	registerInWorld(t, s)
+	// Use beer (liquid 1) for a deterministic amount with low thirst.
+	item := makeDrinkItem(10, true)
+	item.SetValue(2, 1) // beer
 	if err := s.player.Inventory.AddItem(item); err != nil {
 		t.Fatalf("AddItem: %v", err)
 	}
+	s.player.SetCondition(game.CondThirst, 0)
 
 	if err := cmdDrink(s, []string{"waterskin"}); err != nil {
 		t.Fatalf("cmdDrink: %v", err)
@@ -123,8 +130,9 @@ func TestCmdDrinkConsumesAndAppliesPoison(t *testing.T) {
 	if msg := readSessionText(t, s); !strings.Contains(msg, "You drink the") {
 		t.Errorf("drink message: got %q", msg)
 	}
-	if item.Prototype.Values[1] != 4 {
-		t.Errorf("drink should deplete the container by 1, got Values[1]=%d", item.Prototype.Values[1])
+	// Beer has drunk affect 3, so amount = (25-0)/3 = 8.
+	if item.GetValue(1) != 2 {
+		t.Errorf("drink should deplete the container by 8, got value[1]=%d", item.GetValue(1))
 	}
 	if len(s.player.ActiveAffects) != 1 {
 		t.Errorf("drink should apply a poison affect on a poisoned drink, got %d affects", len(s.player.ActiveAffects))
@@ -138,6 +146,7 @@ func TestCmdDrinkConsumesAndAppliesPoison(t *testing.T) {
 func TestCmdTasteDecrementsBitesWithoutFullyConsuming(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
+	registerInWorld(t, s)
 	item := makeFoodItem(3, false)
 	if err := s.player.Inventory.AddItem(item); err != nil {
 		t.Fatalf("AddItem: %v", err)
@@ -149,8 +158,8 @@ func TestCmdTasteDecrementsBitesWithoutFullyConsuming(t *testing.T) {
 	if msg := readSessionText(t, s); !strings.Contains(msg, "nibble") {
 		t.Errorf("taste message: got %q", msg)
 	}
-	if item.Prototype.Values[0] != 2 {
-		t.Errorf("taste should decrement bites by 1, got Values[0]=%d", item.Prototype.Values[0])
+	if item.GetValue(0) != 2 {
+		t.Errorf("taste should decrement bites by 1, got value[0]=%d", item.GetValue(0))
 	}
 	if _, found := s.player.Inventory.FindItem("bread"); !found {
 		t.Errorf("taste should not remove the item while bites remain")
@@ -160,6 +169,7 @@ func TestCmdTasteDecrementsBitesWithoutFullyConsuming(t *testing.T) {
 func TestCmdTasteRemovesItemOnceBitesRunOut(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
+	registerInWorld(t, s)
 	item := makeFoodItem(1, false)
 	if err := s.player.Inventory.AddItem(item); err != nil {
 		t.Fatalf("AddItem: %v", err)
@@ -169,6 +179,7 @@ func TestCmdTasteRemovesItemOnceBitesRunOut(t *testing.T) {
 		t.Fatalf("cmdTaste: %v", err)
 	}
 	readSessionText(t, s) // "You nibble..."
+	readSessionText(t, s) // "You are full." — C sends this when FULL>20
 	if msg := readSessionText(t, s); !strings.Contains(msg, "nothing left") {
 		t.Errorf("expected 'nothing left' message, got %q", msg)
 	}
@@ -180,6 +191,7 @@ func TestCmdTasteRemovesItemOnceBitesRunOut(t *testing.T) {
 func TestCmdEatRemovesItemImmediately(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
+	registerInWorld(t, s)
 	item := makeFoodItem(3, true)
 	if err := s.player.Inventory.AddItem(item); err != nil {
 		t.Fatalf("AddItem: %v", err)
