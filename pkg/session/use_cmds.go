@@ -238,6 +238,6 @@ func cmdZap(s *Session, args []string) error {
 }
 
 func init() {
-	cmdRegistry.Register("recite", wrapArgs(cmdRecite), "Read a scroll.", 0, 0)
-	cmdRegistry.Register("zap", wrapArgs(cmdZap), "Zap with a wand or staff.", 0, 0)
+	registerCommand("recite", wrapArgs(cmdRecite), "Read a scroll.")
+	registerCommand("zap", wrapArgs(cmdZap), "Zap with a wand or staff.")
 }

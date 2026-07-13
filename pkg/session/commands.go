@@ -18,17 +18,19 @@ import (
 func positionFailMessage(pos int) string {
 	switch pos {
 	case combat.PosDead:
-		return "You are dead! You can't do that."
-	case combat.PosMortally:
-		return "You are mortally wounded and cannot do that."
-	case combat.PosIncap:
-		return "You are incapacitated and cannot do that."
+		return "Lie still; you are DEAD!!! :-("
+	case combat.PosMortally, combat.PosIncap:
+		return "You are in a pretty bad shape, unable to do anything!"
 	case combat.PosStunned:
-		return "You are stunned and cannot do that."
+		return "All you can do right now is think about the stars!"
 	case combat.PosSleeping:
-		return "You are asleep and cannot do that!"
+		return "In your dreams, or what?"
 	case combat.PosResting:
-		return "You need to stand up first."
+		return "Nah... You feel too relaxed to do that.."
+	case combat.PosSitting:
+		return "Maybe you should get on your feet first?"
+	case combat.PosFighting:
+		return "No way!  You're fighting for your life!"
 	default:
 		return "You are in no position to do that!"
 	}
@@ -50,196 +52,198 @@ func (cs *commandSession) GetPlayer() interface{} {
 // init registers all built-in commands at package initialization.
 func init() {
 	// Movement
-	cmdRegistry.Register("north", wrapMove("north"), "Move north.", 0, combat.PosStanding, "n")
-	cmdRegistry.Register("east", wrapMove("east"), "Move east.", 0, combat.PosStanding, "e")
-	cmdRegistry.Register("south", wrapMove("south"), "Move south.", 0, combat.PosStanding, "s")
-	cmdRegistry.Register("west", wrapMove("west"), "Move west.", 0, combat.PosStanding, "w")
-	cmdRegistry.Register("up", wrapMove("up"), "Move up.", 0, combat.PosStanding, "u")
-	cmdRegistry.Register("down", wrapMove("down"), "Move down.", 0, combat.PosStanding, "d")
+	registerCommand("north", wrapMove("north"), "Move north.", "n")
+	registerCommand("east", wrapMove("east"), "Move east.", "e")
+	registerCommand("south", wrapMove("south"), "Move south.", "s")
+	registerCommand("west", wrapMove("west"), "Move west.", "w")
+	registerCommand("up", wrapMove("up"), "Move up.", "u")
+	registerCommand("down", wrapMove("down"), "Move down.", "d")
 
 	// Look
-	cmdRegistry.Register("look", wrapArgs(cmdLook), "Look around the room.", 0, 0, "l")
+	registerCommand("look", wrapArgs(cmdLook), "Look around the room.", "l")
 
 	// Communication
-	cmdRegistry.Register("say", wrapArgs(cmdSay), "Say something to the room.", 0, 0)
-	cmdRegistry.Register("tell", wrapArgs(cmdTell), "Send a private message to a player.", 0, 0)
-	cmdRegistry.Register("emote", wrapArgs(cmdEmote), "Perform a roleplay action.", 0, 0, "me")
-	cmdRegistry.Register("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.", 0, 0)
-	cmdRegistry.Register("gtell", wrapArgs(cmdGtell), "Send a message to your group.", 0, 0, "gsay")
-	cmdRegistry.Register("think", wrapArgs(cmdThink), "Think a thought, optionally aloud.", 0, combat.PosResting)
-	cmdRegistry.Register("insult", wrapArgs(cmdInsult), "Insult a target in the room.", 0, combat.PosResting)
-	cmdRegistry.Register("dream", wrapArgs(cmdDream), "Dream — only does anything while asleep.", 0, combat.PosSleeping)
+	registerCommand("say", wrapArgs(cmdSay), "Say something to the room.")
+	registerCommand("tell", wrapArgs(cmdTell), "Send a private message to a player.")
+	registerCommand("emote", wrapArgs(cmdEmote), "Perform a roleplay action.", "me")
+	registerCommand("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.")
+	registerCommand("gtell", wrapArgs(cmdGtell), "Send a message to your group.", "gsay")
+	registerCommand("think", wrapArgs(cmdThink), "Think a thought, optionally aloud.")
+	registerCommand("insult", wrapArgs(cmdInsult), "Insult a target in the room.")
+	registerCommand("dream", wrapArgs(cmdDream), "Dream — only does anything while asleep.")
 
 	// Combat
-	cmdRegistry.Register("hit", wrapArgs(cmdHit), "Attack a target.", 0, combat.PosStanding, "attack")
-	cmdRegistry.Register("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).", 0, combat.PosStanding)
-	cmdRegistry.Register("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.", 0, combat.PosFighting)
+	registerCommand("hit", wrapArgs(cmdHit), "Attack a target.", "attack")
+	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
+	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
 
 	// Position / Movement
-	cmdRegistry.Register("stand", wrapNoArgs(cmdStand), "Stand up.", 0, 0)
-	cmdRegistry.Register("sit", wrapNoArgs(cmdSit), "Sit down.", 0, 0)
-	cmdRegistry.Register("rest", wrapNoArgs(cmdRest), "Rest.", 0, 0)
-	cmdRegistry.Register("sleep", wrapNoArgs(cmdSleep), "Go to sleep.", 0, 0)
-	cmdRegistry.Register("wake", wrapArgs(cmdWake), "Wake up or wake someone else.", 0, 0)
+	registerCommand("stand", wrapNoArgs(cmdStand), "Stand up.")
+	registerCommand("sit", wrapNoArgs(cmdSit), "Sit down.")
+	registerCommand("rest", wrapNoArgs(cmdRest), "Rest.")
+	registerCommand("sleep", wrapNoArgs(cmdSleep), "Go to sleep.")
+	registerCommand("wake", wrapArgs(cmdWake), "Wake up or wake someone else.")
 
 	// Items
-	cmdRegistry.Register("inventory", wrapArgs(cmdInventory), "Show your inventory.", 0, 0, "i", "inv")
-	cmdRegistry.Register("equipment", wrapArgs(cmdEquipment), "Show your equipped items.", 0, 0, "eq")
-	cmdRegistry.Register("wear", wrapArgs(cmdWear), "Wear an item from your inventory.", 0, 0)
-	cmdRegistry.Register("remove", wrapArgs(cmdRemove), "Remove an equipped item.", 0, 0)
-	cmdRegistry.Register("wield", wrapArgs(cmdWield), "Wield a weapon.", 0, 0)
-	cmdRegistry.Register("hold", wrapArgs(cmdHold), "Hold an item.", 0, 0, "grab")
-	cmdRegistry.Register("get", wrapArgs(cmdGet), "Pick up an item from the room, container, or corpse.", 0, 0, "take")
-	cmdRegistry.Register("give", wrapArgs(cmdGive), "Give an item or gold to another character.", 0, 0)
-	cmdRegistry.Register("put", wrapArgs(cmdPut), "Put an item into a container.", 0, 0)
-	cmdRegistry.Register("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.", 0, 0)
-	cmdRegistry.Register("junk", wrapArgs(cmdJunk), "Destroy an item for a small experience reward.", 0, 0)
-	cmdRegistry.Register("donate", wrapArgs(cmdDonate), "Donate an item to the donation room.", 0, 0)
-	cmdRegistry.Register("eat", wrapArgs(cmdEat), "Eat some food.", 0, 0)
-	cmdRegistry.Register("taste", wrapArgs(cmdTaste), "Nibble a little bit of some food.", 0, 0)
-	cmdRegistry.Register("drink", wrapArgs(cmdDrink), "Drink from a container.", 0, 0)
-	cmdRegistry.Register("sip", wrapArgs(cmdSip), "Sip from a container without drinking it.", 0, 0)
-	cmdRegistry.Register("pour", wrapArgs(cmdPour), "Pour liquid from one container to another.", 0, 0)
-	cmdRegistry.Register("quaff", wrapArgs(cmdQuaff), "Quaff a potion.", 0, 0, "q")
+	registerCommand("inventory", wrapArgs(cmdInventory), "Show your inventory.", "i", "inv")
+	registerCommand("equipment", wrapArgs(cmdEquipment), "Show your equipped items.", "eq")
+	registerCommand("wear", wrapArgs(cmdWear), "Wear an item from your inventory.")
+	registerCommand("remove", wrapArgs(cmdRemove), "Remove an equipped item.")
+	registerCommand("wield", wrapArgs(cmdWield), "Wield a weapon.")
+	registerCommand("hold", wrapArgs(cmdHold), "Hold an item.")
+	// C gives grab and hold distinct level gates despite sharing do_grab.
+	registerCommand("grab", wrapArgs(cmdHold), "Hold an item.")
+	registerCommand("get", wrapArgs(cmdGet), "Pick up an item from the room, container, or corpse.", "take")
+	registerCommand("give", wrapArgs(cmdGive), "Give an item or gold to another character.")
+	registerCommand("put", wrapArgs(cmdPut), "Put an item into a container.")
+	registerCommand("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.")
+	registerCommand("junk", wrapArgs(cmdJunk), "Destroy an item for a small experience reward.")
+	registerCommand("donate", wrapArgs(cmdDonate), "Donate an item to the donation room.")
+	registerCommand("eat", wrapArgs(cmdEat), "Eat some food.")
+	registerCommand("taste", wrapArgs(cmdTaste), "Nibble a little bit of some food.")
+	registerCommand("drink", wrapArgs(cmdDrink), "Drink from a container.")
+	registerCommand("sip", wrapArgs(cmdSip), "Sip from a container without drinking it.")
+	registerCommand("pour", wrapArgs(cmdPour), "Pour liquid from one container to another.")
+	registerCommand("quaff", wrapArgs(cmdQuaff), "Quaff a potion.", "q")
 
 	// Info
-	cmdRegistry.Register("score", wrapNoArgs(cmdScore), "Show your character stats.", 0, 0, "sc")
-	cmdRegistry.Register("who", wrapNoArgs(cmdWho), "List all online players.", 0, 0)
-	cmdRegistry.Register("where", wrapNoArgs(cmdWhere), "Show player locations.", 0, 0)
-	cmdRegistry.Register("coins", wrapNoArgs(cmdCoins), "Display your gold and bank balance.", 0, 0)
+	registerCommand("score", wrapNoArgs(cmdScore), "Show your character stats.", "sc")
+	registerCommand("who", wrapNoArgs(cmdWho), "List all online players.")
+	registerCommand("where", wrapNoArgs(cmdWhere), "Show player locations.")
+	registerCommand("coins", wrapNoArgs(cmdCoins), "Display your gold and bank balance.")
 	// real C command name is "abilities" (src/interpreter.c); "abils" kept as alias.
-	cmdRegistry.Register("abilities", wrapNoArgs(cmdAbils), "Show your ability scores.", 0, 0, "abils")
-	cmdRegistry.Register("levels", wrapNoArgs(cmdLevels), "Show XP table for your class.", 0, 0)
-	cmdRegistry.Register("review", wrapNoArgs(cmdReview), "Show recent gossip history.", 2, 0)
-	cmdRegistry.Register("whois", wrapArgs(cmdWhois), "Look up a player's info.", 2, 0)
-	cmdRegistry.Register("help", wrapArgs(cmdHelp), "Show available commands or help for a topic.", 0, 0)
-	cmdRegistry.Register("credits", wrapArgs(cmdCredits), "Show who built this game.", 0, combat.PosDead)
-	cmdRegistry.Register("news", wrapArgs(cmdNews), "Show current game news.", 0, combat.PosSleeping)
-	cmdRegistry.Register("policy", wrapArgs(cmdPolicy), "Show the game's policies.", 0, combat.PosDead)
-	cmdRegistry.Register("handbook", wrapArgs(cmdHandbook), "Show the immortal handbook.", LVL_IMMORT, combat.PosDead)
-	cmdRegistry.Register("future", wrapArgs(cmdFuture), "Show planned future content.", 0, combat.PosDead)
-	cmdRegistry.Register("whoami", wrapArgs(cmdWhoami), "Show your own name.", 0, combat.PosDead)
-	cmdRegistry.Register("version", wrapArgs(cmdVersion), "Show the game version.", 0, combat.PosDead)
+	registerCommand("abilities", wrapNoArgs(cmdAbils), "Show your ability scores.", "abils")
+	registerCommand("levels", wrapNoArgs(cmdLevels), "Show XP table for your class.")
+	registerCommand("review", wrapNoArgs(cmdReview), "Show recent gossip history.")
+	registerCommand("whois", wrapArgs(cmdWhois), "Look up a player's info.")
+	registerCommand("help", wrapArgs(cmdHelp), "Show available commands or help for a topic.")
+	registerCommand("credits", wrapArgs(cmdCredits), "Show who built this game.")
+	registerCommand("news", wrapArgs(cmdNews), "Show current game news.")
+	registerCommand("policy", wrapArgs(cmdPolicy), "Show the game's policies.")
+	registerCommand("handbook", wrapArgs(cmdHandbook), "Show the immortal handbook.")
+	registerCommand("future", wrapArgs(cmdFuture), "Show planned future content.")
+	registerCommand("whoami", wrapArgs(cmdWhoami), "Show your own name.")
+	registerCommand("version", wrapArgs(cmdVersion), "Show the game version.")
 
 	// Group
-	cmdRegistry.Register("follow", wrapArgs(cmdFollow), "Follow another player.", 0, 0)
-	cmdRegistry.Register("group", wrapArgs(cmdGroup), "Manage your group.", 0, 0, "party")
-	cmdRegistry.Register("ungroup", wrapArgs(cmdUngroup), "Disband or leave a group.", 0, 0, "disband")
+	registerCommand("follow", wrapArgs(cmdFollow), "Follow another player.")
+	registerCommand("group", wrapArgs(cmdGroup), "Manage your group.", "party")
+	registerCommand("ungroup", wrapArgs(cmdUngroup), "Disband or leave a group.", "disband")
 
 	// Skills (delegated to pkg/command)
-	cmdRegistry.Register("skills", wrapSkill(command.CmdSkills), "Show your learned skills.", 0, 0, "sk")
-	cmdRegistry.Register("practice", wrapSkill(command.CmdPractice), "Practice a skill.", 0, 0)
-	cmdRegistry.Register("learn", wrapSkill(command.CmdLearn), "Learn a new skill.", 0, 0)
-	cmdRegistry.Register("listskills", wrapSkill(command.CmdListSkills), "List available skills.", 0, 0, "skills")
+	registerCommand("skills", wrapSkill(command.CmdSkills), "Show your learned skills.", "sk")
+	registerCommand("practice", wrapSkill(command.CmdPractice), "Practice a skill.")
+	registerCommand("learn", wrapSkill(command.CmdLearn), "Learn a new skill.")
+	registerCommand("listskills", wrapSkill(command.CmdListSkills), "List available skills.", "skills")
 
 	// Shop
-	cmdRegistry.Register("list", wrapArgs(cmdList), "List items for sale at a shop.", 0, 0)
-	cmdRegistry.Register("buy", wrapArgs(cmdBuy), "Buy an item from a shop.", 0, 0)
-	cmdRegistry.Register("sell", wrapArgs(cmdSell), "Sell an item to a shop.", 0, 0)
-	cmdRegistry.Register("forget", wrapSkill(command.CmdForget), "Forget a skill.", 0, 0)
-	cmdRegistry.Register("confirm", wrapSkill(command.CmdConfirmForget), "Confirm forgetting a skill.", 0, 0, "confirm forget")
-	cmdRegistry.Register("use", wrapArgs(cmdUse), "Use a wand/staff or a skill.", 0, 0)
-	cmdRegistry.Register("skillinfo", wrapSkill(command.CmdSkillInfo), "Show info about a skill.", 0, 0, "sinfo")
+	registerCommand("list", wrapArgs(cmdList), "List items for sale at a shop.")
+	registerCommand("buy", wrapArgs(cmdBuy), "Buy an item from a shop.")
+	registerCommand("sell", wrapArgs(cmdSell), "Sell an item to a shop.")
+	registerCommand("forget", wrapSkill(command.CmdForget), "Forget a skill.")
+	registerCommand("confirm", wrapSkill(command.CmdConfirmForget), "Confirm forgetting a skill.", "confirm forget")
+	registerCommand("use", wrapArgs(cmdUse), "Use a wand/staff or a skill.")
+	registerCommand("skillinfo", wrapSkill(command.CmdSkillInfo), "Show info about a skill.", "sinfo")
 
 	// Combat skills (delegated to pkg/command)
-	cmdRegistry.Register("backstab", wrapSkill(command.CmdBackstab), "Backstab a target with a piercing weapon.", 0, combat.PosStanding, "bs")
-	cmdRegistry.Register("spike", wrapSkill(command.CmdSpike), "Spike a werewolf with a spiked weapon.", 0, combat.PosStanding)
-	cmdRegistry.Register("stake", wrapSkill(command.CmdStake), "Stake a vampire with a wooden stake.", 0, combat.PosStanding)
-	cmdRegistry.Register("bash", wrapSkill(command.CmdBash), "Bash a target, potentially stunning them.", 0, combat.PosFighting)
-	cmdRegistry.Register("circle", wrapSkill(command.CmdCircle), "Circle behind a target for a piercing attack.", 0, combat.PosFighting)
-	cmdRegistry.Register("charge", wrapSkill(command.CmdCharge), "Charge a target with a sword or lance.", 0, combat.PosFighting)
-	cmdRegistry.Register("kick", wrapSkill(command.CmdKick), "Kick a target for damage.", 0, combat.PosFighting)
-	cmdRegistry.Register("trip", wrapSkill(command.CmdTrip), "Trip a target, knocking them down.", 0, combat.PosFighting)
-	cmdRegistry.Register("headbutt", wrapSkill(command.CmdHeadbutt), "Headbutt a target for high damage.", 0, combat.PosFighting)
-	cmdRegistry.Register("rescue", wrapSkill(command.CmdRescue), "Rescue someone from combat.", 0, combat.PosStanding)
-	cmdRegistry.Register("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.", 0, combat.PosStanding)
-	cmdRegistry.Register("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.", 0, combat.PosResting)
-	cmdRegistry.Register("steal", wrapSkill(command.CmdSteal), "Steal from a target.", 0, combat.PosStanding)
-	cmdRegistry.Register("berserk", wrapSkill(command.CmdBerserk), "Summon your battle rage for a hitroll/damroll boost.", 0, combat.PosFighting)
-	cmdRegistry.Register("rin", wrapSkill(command.CmdKujiKiri(game.SkillKkRin)), "Kuji-kiri seal: harden body for an AC bonus and metalskin.", 0, combat.PosStanding)
-	cmdRegistry.Register("kyo", wrapSkill(command.CmdKujiKiri(game.SkillKkKyo)), "Kuji-kiri seal: focus battle rage for a hitroll bonus.", 0, combat.PosStanding)
-	cmdRegistry.Register("toh", wrapSkill(command.CmdKujiKiri(game.SkillKkToh)), "Kuji-kiri seal: focus inner strength for a damroll/AC bonus.", 0, combat.PosStanding)
-	cmdRegistry.Register("kai", wrapSkill(command.CmdKujiKiri(game.SkillKkKai)), "Kuji-kiri seal: fortify your body, lowering damroll/AC.", 0, combat.PosStanding)
-	cmdRegistry.Register("jin", wrapSkill(command.CmdKujiKiri(game.SkillKkJin)), "Kuji-kiri seal: focus on recuperation for faster HP regen.", 0, combat.PosStanding)
-	cmdRegistry.Register("retsu", wrapSkill(command.CmdKujiKiri(game.SkillKkRetsu)), "Kuji-kiri seal: attempt to teleport away.", 0, combat.PosStanding)
-	cmdRegistry.Register("zai", wrapSkill(command.CmdKujiKiri(game.SkillKkZai)), "Kuji-kiri seal: fade from view.", 0, combat.PosStanding)
-	cmdRegistry.Register("zhen", wrapSkill(command.CmdKujiKiri(game.SkillKkZhen)), "Kuji-kiri seal: focus on endurance for faster movement regen.", 0, combat.PosStanding)
-	cmdRegistry.Register("sha", wrapSkill(command.CmdKujiKiri(game.SkillKkSha)), "Kuji-kiri seal: heal your wounds.", 0, combat.PosStanding)
-	cmdRegistry.Register("pick", wrapArgs(cmdPick), "Pick a lock on a door.", 0, combat.PosStanding, "pick lock")
+	registerCommand("backstab", wrapSkill(command.CmdBackstab), "Backstab a target with a piercing weapon.", "bs")
+	registerCommand("spike", wrapSkill(command.CmdSpike), "Spike a werewolf with a spiked weapon.")
+	registerCommand("stake", wrapSkill(command.CmdStake), "Stake a vampire with a wooden stake.")
+	registerCommand("bash", wrapSkill(command.CmdBash), "Bash a target, potentially stunning them.")
+	registerCommand("circle", wrapSkill(command.CmdCircle), "Circle behind a target for a piercing attack.")
+	registerCommand("charge", wrapSkill(command.CmdCharge), "Charge a target with a sword or lance.")
+	registerCommand("kick", wrapSkill(command.CmdKick), "Kick a target for damage.")
+	registerCommand("trip", wrapSkill(command.CmdTrip), "Trip a target, knocking them down.")
+	registerCommand("headbutt", wrapSkill(command.CmdHeadbutt), "Headbutt a target for high damage.")
+	registerCommand("rescue", wrapSkill(command.CmdRescue), "Rescue someone from combat.")
+	registerCommand("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.")
+	registerCommand("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.")
+	registerCommand("steal", wrapSkill(command.CmdSteal), "Steal from a target.")
+	registerCommand("berserk", wrapSkill(command.CmdBerserk), "Summon your battle rage for a hitroll/damroll boost.")
+	registerCommand("rin", wrapSkill(command.CmdKujiKiri(game.SkillKkRin)), "Kuji-kiri seal: harden body for an AC bonus and metalskin.")
+	registerCommand("kyo", wrapSkill(command.CmdKujiKiri(game.SkillKkKyo)), "Kuji-kiri seal: focus battle rage for a hitroll bonus.")
+	registerCommand("toh", wrapSkill(command.CmdKujiKiri(game.SkillKkToh)), "Kuji-kiri seal: focus inner strength for a damroll/AC bonus.")
+	registerCommand("kai", wrapSkill(command.CmdKujiKiri(game.SkillKkKai)), "Kuji-kiri seal: fortify your body, lowering damroll/AC.")
+	registerCommand("jin", wrapSkill(command.CmdKujiKiri(game.SkillKkJin)), "Kuji-kiri seal: focus on recuperation for faster HP regen.")
+	registerCommand("retsu", wrapSkill(command.CmdKujiKiri(game.SkillKkRetsu)), "Kuji-kiri seal: attempt to teleport away.")
+	registerCommand("zai", wrapSkill(command.CmdKujiKiri(game.SkillKkZai)), "Kuji-kiri seal: fade from view.")
+	registerCommand("zhen", wrapSkill(command.CmdKujiKiri(game.SkillKkZhen)), "Kuji-kiri seal: focus on endurance for faster movement regen.")
+	registerCommand("sha", wrapSkill(command.CmdKujiKiri(game.SkillKkSha)), "Kuji-kiri seal: heal your wounds.")
+	registerCommand("pick", wrapArgs(cmdPick), "Pick a lock on a door.", "pick lock")
 
 	// Admin / debug
-	cmdRegistry.Register("summon", wrapArgs(cmdSummon), "Summon a player to your room.", LVL_IMMORT, 0)
+	registerCommand("summon", wrapArgs(cmdSummon), "Summon a player to your room.")
 
 	// Doors
-	cmdRegistry.Register("open", wrapArgs(cmdOpen), "Open a door in a direction: open <north|south|east|west|up|down>", 0, 0)
-	cmdRegistry.Register("close", wrapArgs(cmdClose), "Close a door in a direction: close <north|south|east|west|up|down>", 0, 0)
-	cmdRegistry.Register("lock", wrapArgs(cmdLock), "Lock a door with your key: lock <north|south|east|west|up|down>", 0, 0)
-	cmdRegistry.Register("unlock", wrapArgs(cmdUnlock), "Unlock a door with your key: unlock <north|south|east|west|up|down>", 0, 0)
-	cmdRegistry.Register("knock", wrapArgs(cmdKnock), "Knock on a door: knock <north|south|east|west|up|down>", 0, 0)
-	cmdRegistry.Register("bashdoor", wrapArgs(cmdBashDoor), "Bash down a door: bashdoor <north|south|east|west|up|down>", 0, 0, "dbash")
+	registerCommand("open", wrapArgs(cmdOpen), "Open a door in a direction: open <north|south|east|west|up|down>")
+	registerCommand("close", wrapArgs(cmdClose), "Close a door in a direction: close <north|south|east|west|up|down>")
+	registerCommand("lock", wrapArgs(cmdLock), "Lock a door with your key: lock <north|south|east|west|up|down>")
+	registerCommand("unlock", wrapArgs(cmdUnlock), "Unlock a door with your key: unlock <north|south|east|west|up|down>")
+	registerCommand("knock", wrapArgs(cmdKnock), "Knock on a door: knock <north|south|east|west|up|down>")
+	registerCommand("bashdoor", wrapArgs(cmdBashDoor), "Bash down a door: bashdoor <north|south|east|west|up|down>", "dbash")
 
 	// Wizard commands
-	cmdRegistry.Register("goto", wrapArgs(cmdGoto), "Teleport to a room by VNum.", LVL_IMMORT, 0)
-	cmdRegistry.Register("at", wrapArgs(cmdAt), "Execute a command at another room.", LVL_IMMORT, 0)
-	cmdRegistry.Register("load", wrapArgs(cmdLoad), "Load a mob or object by VNum.", LVL_IMMORT, 0)
-	cmdRegistry.Register("purge", wrapArgs(cmdPurge), "Remove all mobs/items from a room.", LVL_GOD, 0)
-	cmdRegistry.Register("teleport", wrapArgs(cmdTeleport), "Teleport another player to a room.", LVL_GOD, 0)
-	cmdRegistry.Register("heal", wrapArgs(cmdHeal), "Fully heal a target.", LVL_IMMORT, 0)
-	cmdRegistry.Register("restore", wrapArgs(cmdRestore), "Restore all stats of a target.", LVL_IMMORT, 0)
-	cmdRegistry.Register("set", wrapArgs(cmdSet), "Set character fields.", LVL_IMMORT, 0)
-	cmdRegistry.Register("switch", wrapArgs(cmdSwitch), "Enter another character's body.", LVL_IMMORT, 0)
-	cmdRegistry.Register("return", wrapArgs(cmdReturn), "Return from switched body.", LVL_IMMORT, 0)
-	cmdRegistry.Register("invis", wrapArgs(cmdInvis), "Become invisible to players.", LVL_IMMORT, 0)
-	cmdRegistry.Register("vis", wrapArgs(cmdVis), "Become visible again.", LVL_IMMORT, 0)
-	cmdRegistry.Register("gecho", wrapArgs(cmdGecho), "Echo a message to all players.", LVL_GOD, 0)
-	cmdRegistry.Register("echo", wrapArgs(cmdEcho), "Echo a message to the room.", LVL_IMMORT, 0)
-	cmdRegistry.Register("send", wrapArgs(cmdSend), "Send a message to another character.", LVL_GOD, 0)
-	cmdRegistry.Register("force", wrapArgs(cmdForce), "Force a command on another character.", LVL_GRGOD, 0)
-	cmdRegistry.Register("shutdown", wrapArgs(cmdShutdown), "Shutdown the server.", LVL_GRGOD, 0)
-	cmdRegistry.Register("snoop", wrapArgs(cmdSnoop), "Spy on a player's input.", LVL_GOD, 0)
-	cmdRegistry.Register("advance", wrapArgs(cmdAdvance), "Advance a player's level.", LVL_GRGOD, 0)
-	cmdRegistry.Register("reload", wrapArgs(cmdReload), "Reload world data.", LVL_GOD, 0)
+	registerCommand("goto", wrapArgs(cmdGoto), "Teleport to a room by VNum.")
+	registerCommand("at", wrapArgs(cmdAt), "Execute a command at another room.")
+	registerCommand("load", wrapArgs(cmdLoad), "Load a mob or object by VNum.")
+	registerCommand("purge", wrapArgs(cmdPurge), "Remove all mobs/items from a room.")
+	registerCommand("teleport", wrapArgs(cmdTeleport), "Teleport another player to a room.")
+	registerCommand("heal", wrapArgs(cmdHeal), "Fully heal a target.")
+	registerCommand("restore", wrapArgs(cmdRestore), "Restore all stats of a target.")
+	registerCommand("set", wrapArgs(cmdSet), "Set character fields.")
+	registerCommand("switch", wrapArgs(cmdSwitch), "Enter another character's body.")
+	registerCommand("return", wrapArgs(cmdReturn), "Return from switched body.")
+	registerCommand("invis", wrapArgs(cmdInvis), "Become invisible to players.")
+	registerCommand("vis", wrapArgs(cmdVis), "Become visible again.")
+	registerCommand("gecho", wrapArgs(cmdGecho), "Echo a message to all players.")
+	registerCommand("echo", wrapArgs(cmdEcho), "Echo a message to the room.")
+	registerCommand("send", wrapArgs(cmdSend), "Send a message to another character.")
+	registerCommand("force", wrapArgs(cmdForce), "Force a command on another character.")
+	registerCommand("shutdown", wrapArgs(cmdShutdown), "Shutdown the server.")
+	registerCommand("snoop", wrapArgs(cmdSnoop), "Spy on a player's input.")
+	registerCommand("advance", wrapArgs(cmdAdvance), "Advance a player's level.")
+	registerCommand("reload", wrapArgs(cmdReload), "Reload world data.")
 
 	// Wizard — stat/info
-	cmdRegistry.Register("stat", wrapArgs(cmdStat), "Inspect a character, room, or object.", LVL_IMMORT, 0)
-	cmdRegistry.Register("vnum", wrapArgs(cmdVnum), "Search for vnums by keyword.", LVL_IMMORT, 0)
-	cmdRegistry.Register("vstat", wrapArgs(cmdVstat), "Show detailed prototype info by vnum.", LVL_IMMORT, 0)
-	cmdRegistry.Register("wizlock", wrapArgs(cmdWizlock), "Toggle wizard-only login.", LVL_IMPL, 0)
-	cmdRegistry.Register("dc", wrapArgs(cmdDc), "Disconnect a player.", LVL_GOD, 0)
-	cmdRegistry.Register("home", wrapArgs(cmdHome), "Teleport to home room or specified room.", LVL_IMMORT, 0)
-	cmdRegistry.Register("date", wrapArgs(cmdDate), "Show current system time or uptime.", LVL_IMMORT, 0)
-	cmdRegistry.Register("last", wrapArgs(cmdLast), "Show last login info for a player.", LVL_IMMORT, 0)
-	cmdRegistry.Register("wizutil", wrapArgs(cmdWizutil), "Player utility commands (reroll/pardon/notitle/squelch/freeze/thaw/unaffect).", LVL_IMMORT, 0)
+	registerCommand("stat", wrapArgs(cmdStat), "Inspect a character, room, or object.")
+	registerCommand("vnum", wrapArgs(cmdVnum), "Search for vnums by keyword.")
+	registerCommand("vstat", wrapArgs(cmdVstat), "Show detailed prototype info by vnum.")
+	registerCommand("wizlock", wrapArgs(cmdWizlock), "Toggle wizard-only login.")
+	registerCommand("dc", wrapArgs(cmdDc), "Disconnect a player.")
+	registerCommand("home", wrapArgs(cmdHome), "Teleport to home room or specified room.")
+	registerCommand("date", wrapArgs(cmdDate), "Show current system time or uptime.")
+	registerCommand("last", wrapArgs(cmdLast), "Show last login info for a player.")
+	registerCommand("wizutil", wrapArgs(cmdWizutil), "Player utility commands (reroll/pardon/notitle/squelch/freeze/thaw/unaffect).")
 	// real C top-level names for two of wizutil's sub-actions (src/interpreter.c), stricter-gated than the wizutil meta-command itself.
-	cmdRegistry.Register("reroll", wrapArgs(cmdReroll), "Reroll a player's ability scores.", LVL_GRGOD, 0)
-	cmdRegistry.Register("unaffect", wrapArgs(cmdUnaffect), "Remove all spell affects from a player.", LVL_GOD, 0)
-	cmdRegistry.Register("show", wrapArgs(cmdShow), "Show system info (players/uptime/stats/reset).", LVL_IMMORT, 0)
-	cmdRegistry.Register("dark", wrapArgs(cmdDark), "Stop combat in the current room.", LVL_IMMORT, 0)
-	cmdRegistry.Register("syslog", wrapArgs(cmdSyslog), "Toggle system logging level.", LVL_IMMORT, 0)
-	cmdRegistry.Register("idlist", wrapArgs(cmdIdlist), "Dump object ID list to file.", LVL_IMPL, 0)
-	cmdRegistry.Register("checkload", wrapArgs(cmdCheckload), "Check zone load info for a mob/obj.", LVL_IMMORT, 0)
-	cmdRegistry.Register("poofset", wrapArgs(cmdPoofset), "Set poof in/out messages.", LVL_IMMORT, 0)
-	cmdRegistry.Register("wiznet", wrapArgs(cmdWiznet), "Send message on wizard net.", LVL_IMMORT, 0)
-	cmdRegistry.Register("zreset", wrapArgs(cmdZreset), "Reset a zone by number.", LVL_GOD, 0)
-	cmdRegistry.Register("zlist", wrapArgs(cmdZlist), "List zones matching a filter.", LVL_IMMORT, 0)
-	cmdRegistry.Register("rlist", wrapArgs(cmdRlist), "List rooms matching a keyword.", LVL_IMMORT, 0)
-	cmdRegistry.Register("olist", wrapArgs(cmdOlist), "List objects matching a keyword.", LVL_IMMORT, 0)
-	cmdRegistry.Register("mlist", wrapArgs(cmdMlist), "List mobiles matching a keyword.", LVL_IMMORT, 0)
-	cmdRegistry.Register("sysfile", wrapArgs(cmdSysfile), "Show system file path.", LVL_IMMORT, 0)
-	cmdRegistry.Register("sethunt", wrapArgs(cmdSethunt), "Set hunt target for a character.", LVL_IMMORT, 0)
-	cmdRegistry.Register("tick", wrapArgs(cmdTick), "Show current tick info.", LVL_IMMORT, 0)
-	cmdRegistry.Register("newbiegive", wrapArgs(cmdNewbie), "Give newbie equipment to a player.", LVL_IMMORT, 0)
+	registerCommand("reroll", wrapArgs(cmdReroll), "Reroll a player's ability scores.")
+	registerCommand("unaffect", wrapArgs(cmdUnaffect), "Remove all spell affects from a player.")
+	registerCommand("show", wrapArgs(cmdShow), "Show system info (players/uptime/stats/reset).")
+	registerCommand("dark", wrapArgs(cmdDark), "Stop combat in the current room.")
+	registerCommand("syslog", wrapArgs(cmdSyslog), "Toggle system logging level.")
+	registerCommand("idlist", wrapArgs(cmdIdlist), "Dump object ID list to file.")
+	registerCommand("checkload", wrapArgs(cmdCheckload), "Check zone load info for a mob/obj.")
+	registerCommand("poofset", wrapArgs(cmdPoofset), "Set poof in/out messages.")
+	registerCommand("wiznet", wrapArgs(cmdWiznet), "Send message on wizard net.")
+	registerCommand("zreset", wrapArgs(cmdZreset), "Reset a zone by number.")
+	registerCommand("zlist", wrapArgs(cmdZlist), "List zones matching a filter.")
+	registerCommand("rlist", wrapArgs(cmdRlist), "List rooms matching a keyword.")
+	registerCommand("olist", wrapArgs(cmdOlist), "List objects matching a keyword.")
+	registerCommand("mlist", wrapArgs(cmdMlist), "List mobiles matching a keyword.")
+	registerCommand("sysfile", wrapArgs(cmdSysfile), "Show system file path.")
+	registerCommand("sethunt", wrapArgs(cmdSethunt), "Set hunt target for a character.")
+	registerCommand("tick", wrapArgs(cmdTick), "Show current tick info.")
+	registerCommand("newbiegive", wrapArgs(cmdNewbie), "Give newbie equipment to a player.")
 
 	// Informative
-	cmdRegistry.Register("consider", wrapArgs(cmdConsider), "Compare yourself to a target.", 0, 0, "con")
-	cmdRegistry.Register("examine", wrapArgs(cmdExamine), "Examine something in detail.", 0, 0, "exa")
-	cmdRegistry.Register("time", wrapArgs(cmdTime), "Show the current time.", 0, 0)
-	cmdRegistry.Register("weather", wrapArgs(cmdWeather), "Show the current weather.", 0, 0)
-	cmdRegistry.Register("affects", wrapArgs(cmdAffects), "Show active affects.", 0, 0)
-	cmdRegistry.Register("autoexit", wrapArgs(cmdAutoExit), "Toggle auto-exit display.", 0, 0)
-	cmdRegistry.Register("title", wrapArgs(cmdTitle), "Set your title.", 0, 0)
-	cmdRegistry.Register("describe", wrapArgs(cmdDescribe), "Set your description.", 0, 0, "desc")
-	cmdRegistry.Register("spells", wrapArgs(cmdSpells), "List known spells.", 0, 0)
+	registerCommand("consider", wrapArgs(cmdConsider), "Compare yourself to a target.", "con")
+	registerCommand("examine", wrapArgs(cmdExamine), "Examine something in detail.", "exa")
+	registerCommand("time", wrapArgs(cmdTime), "Show the current time.")
+	registerCommand("weather", wrapArgs(cmdWeather), "Show the current weather.")
+	registerCommand("affects", wrapArgs(cmdAffects), "Show active affects.")
+	registerCommand("autoexit", wrapArgs(cmdAutoExit), "Toggle auto-exit display.")
+	registerCommand("title", wrapArgs(cmdTitle), "Set your title.")
+	registerCommand("describe", wrapArgs(cmdDescribe), "Set your description.", "desc")
+	registerCommand("spells", wrapArgs(cmdSpells), "List known spells.")
 
 	// Quit
 	// "reallyquit" is src/interpreter.c's SCMD_REALLY_QUIT variant of do_quit — in the
@@ -247,139 +251,139 @@ func init() {
 	// required elsewhere (and costs your equipment). This port's cmdQuit doesn't yet
 	// implement that temple-gating/equipment-loss split, so for now both names behave
 	// identically; aliasing at least makes the command reachable.
-	cmdRegistry.Register("quit", wrapNoArgs(cmdQuit), "Quit the game.", 0, 0, "reallyquit")
+	registerCommand("quit", wrapNoArgs(cmdQuit), "Quit the game.", "reallyquit")
 
 	// Offensive commands — delegated to pkg/command (C-10: real damage formulas)
-	cmdRegistry.Register("assist", wrapArgs(cmdAssist), "Assist a target in combat.", 0, combat.PosFighting)
-	cmdRegistry.Register("disembowel", wrapSkill(command.CmdDisembowel), "Disembowel a target with a piercing weapon.", 0, combat.PosFighting, "gut")
-	cmdRegistry.Register("dragonkick", wrapSkill(command.CmdDragonKick), "Dragon-style kick attack.", 0, combat.PosFighting, "dkick", "dragon")
-	cmdRegistry.Register("tigerpunch", wrapSkill(command.CmdTigerPunch), "Tiger-style punch attack (bare hands).", 0, combat.PosFighting, "tpunch", "tiger")
-	cmdRegistry.Register("shoot", wrapSkill(command.CmdShoot), "Shoot a target with a ranged weapon.", 0, combat.PosStanding)
-	cmdRegistry.Register("subdue", wrapSkill(command.CmdSubdue), "Subdue a target (non-lethal).", 0, combat.PosStanding)
-	cmdRegistry.Register("sleeper", wrapSkill(command.CmdSleeper), "Apply a sleeper hold to a target.", 0, combat.PosStanding)
-	cmdRegistry.Register("neckbreak", wrapSkill(command.CmdNeckbreak), "Break a target's neck (bare hands).", 0, combat.PosStanding)
-	cmdRegistry.Register("ambush", wrapSkill(command.CmdAmbush), "Ambush a target from hiding.", 0, combat.PosStanding)
+	registerCommand("assist", wrapArgs(cmdAssist), "Assist a target in combat.")
+	registerCommand("disembowel", wrapSkill(command.CmdDisembowel), "Disembowel a target with a piercing weapon.", "gut")
+	registerCommand("dragonkick", wrapSkill(command.CmdDragonKick), "Dragon-style kick attack.", "dkick", "dragon")
+	registerCommand("tigerpunch", wrapSkill(command.CmdTigerPunch), "Tiger-style punch attack (bare hands).", "tpunch", "tiger")
+	registerCommand("shoot", wrapSkill(command.CmdShoot), "Shoot a target with a ranged weapon.")
+	registerCommand("subdue", wrapSkill(command.CmdSubdue), "Subdue a target (non-lethal).")
+	registerCommand("sleeper", wrapSkill(command.CmdSleeper), "Apply a sleeper hold to a target.")
+	registerCommand("neckbreak", wrapSkill(command.CmdNeckbreak), "Break a target's neck (bare hands).")
+	registerCommand("ambush", wrapSkill(command.CmdAmbush), "Ambush a target from hiding.")
 
 	// Port completion: skill handlers that were implemented in pkg/command but
 	// never registered, leaving them unreachable by players. Positions/levels
 	// mirror src/interpreter.c. See docs/port-reachability-map.md (Bucket A).
-	cmdRegistry.Register("bearhug", wrapSkill(command.CmdBearhug), "Crush a target in a bear hug.", 0, combat.PosFighting)
-	cmdRegistry.Register("behead", wrapSkill(command.CmdBehead), "Attempt to behead a target with a slashing weapon.", 0, combat.PosStanding)
-	cmdRegistry.Register("bite", wrapSkill(command.CmdBite), "Bite a target.", 0, combat.PosResting)
-	cmdRegistry.Register("carve", wrapSkill(command.CmdCarve), "Carve a corpse.", 0, combat.PosStanding)
-	cmdRegistry.Register("compare", wrapSkill(command.CmdCompare), "Compare two items.", 0, combat.PosStanding)
-	cmdRegistry.Register("cutthroat", wrapSkill(command.CmdCutthroat), "Slit a target's throat.", 0, combat.PosFighting)
-	cmdRegistry.Register("search", wrapSkill(command.CmdDetect), "Search for hidden exits.", 0, combat.PosStanding)
-	cmdRegistry.Register("detect", wrapSkill(command.CmdDetect), "Detect hidden exits (alias for search).", 0, combat.PosStanding)
-	cmdRegistry.Register("disarm", wrapSkill(command.CmdDisarm), "Disarm a target's weapon.", 0, combat.PosFighting)
-	cmdRegistry.Register("groinrip", wrapSkill(command.CmdGroinrip), "Rip a target's groin.", 0, combat.PosFighting)
-	cmdRegistry.Register("mindlink", wrapSkill(command.CmdMindlink), "Form a psychic mind link.", 0, combat.PosStanding)
-	cmdRegistry.Register("mold", wrapSkill(command.CmdMold), "Mold a clay item.", LVL_IMMORT, combat.PosResting)
-	cmdRegistry.Register("palm", wrapSkill(command.CmdPalm), "Palm an item discreetly.", 0, combat.PosStanding)
-	cmdRegistry.Register("point", wrapSkill(command.CmdPoint), "Point out something.", 0, combat.PosResting)
-	cmdRegistry.Register("scrounge", wrapSkill(command.CmdScrounge), "Scrounge for useful items.", 0, combat.PosStanding)
-	cmdRegistry.Register("sharpen", wrapSkill(command.CmdSharpen), "Sharpen a bladed weapon.", 0, combat.PosResting)
-	cmdRegistry.Register("slug", wrapSkill(command.CmdSlug), "Slug a target with a heavy blow.", 0, combat.PosFighting)
-	cmdRegistry.Register("smackheads", wrapSkill(command.CmdSmackheads), "Smack two targets' heads together.", 0, combat.PosFighting)
-	cmdRegistry.Register("strike", wrapSkill(command.CmdStrike), "Strike a target with a focused blow.", 0, combat.PosFighting)
-	cmdRegistry.Register("tag", wrapSkill(command.CmdTag), "Tag a target.", 0, combat.PosResting)
-	cmdRegistry.Register("turn", wrapSkill(command.CmdTurn), "Turn undead.", 0, combat.PosStanding)
-	cmdRegistry.Register("aid", wrapSkill(command.CmdFirstAid), "Administer first aid to a target.", 0, combat.PosStanding)
-	cmdRegistry.Register("alter", wrapSkill(command.CmdFleshAlter), "Alter flesh.", 0, combat.PosFighting, "flesh")
-	cmdRegistry.Register("serpent", wrapSkill(command.CmdSerpentKick), "Serpent-style kick attack.", 0, combat.PosFighting)
-	cmdRegistry.Register("scan", wrapSkill(command.CmdScan), "Scan adjacent rooms for creatures.", 0, combat.PosResting)
+	registerCommand("bearhug", wrapSkill(command.CmdBearhug), "Crush a target in a bear hug.")
+	registerCommand("behead", wrapSkill(command.CmdBehead), "Attempt to behead a target with a slashing weapon.")
+	registerCommand("bite", wrapSkill(command.CmdBite), "Bite a target.")
+	registerCommand("carve", wrapSkill(command.CmdCarve), "Carve a corpse.")
+	registerCommand("compare", wrapSkill(command.CmdCompare), "Compare two items.")
+	registerCommand("cutthroat", wrapSkill(command.CmdCutthroat), "Slit a target's throat.")
+	registerCommand("search", wrapSkill(command.CmdDetect), "Search for hidden exits.")
+	registerCommand("detect", wrapSkill(command.CmdDetect), "Detect hidden exits (alias for search).")
+	registerCommand("disarm", wrapSkill(command.CmdDisarm), "Disarm a target's weapon.")
+	registerCommand("groinrip", wrapSkill(command.CmdGroinrip), "Rip a target's groin.")
+	registerCommand("mindlink", wrapSkill(command.CmdMindlink), "Form a psychic mind link.")
+	registerCommand("mold", wrapSkill(command.CmdMold), "Mold a clay item.")
+	registerCommand("palm", wrapSkill(command.CmdPalm), "Palm an item discreetly.")
+	registerCommand("point", wrapSkill(command.CmdPoint), "Point out something.")
+	registerCommand("scrounge", wrapSkill(command.CmdScrounge), "Scrounge for useful items.")
+	registerCommand("sharpen", wrapSkill(command.CmdSharpen), "Sharpen a bladed weapon.")
+	registerCommand("slug", wrapSkill(command.CmdSlug), "Slug a target with a heavy blow.")
+	registerCommand("smackheads", wrapSkill(command.CmdSmackheads), "Smack two targets' heads together.")
+	registerCommand("strike", wrapSkill(command.CmdStrike), "Strike a target with a focused blow.")
+	registerCommand("tag", wrapSkill(command.CmdTag), "Tag a target.")
+	registerCommand("turn", wrapSkill(command.CmdTurn), "Turn undead.")
+	registerCommand("aid", wrapSkill(command.CmdFirstAid), "Administer first aid to a target.")
+	registerCommand("alter", wrapSkill(command.CmdFleshAlter), "Alter flesh.", "flesh")
+	registerCommand("serpent", wrapSkill(command.CmdSerpentKick), "Serpent-style kick attack.")
+	registerCommand("scan", wrapSkill(command.CmdScan), "Scan adjacent rooms for creatures.")
 
-	cmdRegistry.Register("order", wrapArgs(cmdOrder), "Order a pet or follower.", 0, 0)
+	registerCommand("order", wrapArgs(cmdOrder), "Order a pet or follower.")
 
 	// Informative commands (act_informative.go)
-	cmdRegistry.Register("color", wrapArgs(cmdColor), "Toggle ANSI color.", 0, 0)
-	cmdRegistry.Register("commands", wrapArgs(cmdCommands), "List available commands.", 0, 0, "cmds")
-	cmdRegistry.Register("description", wrapArgs(cmdDescription), "Set your character description.", 0, 0)
+	registerCommand("color", wrapArgs(cmdColor), "Toggle ANSI color.")
+	registerCommand("commands", wrapArgs(cmdCommands), "List available commands.", "cmds")
+	registerCommand("description", wrapArgs(cmdDescription), "Set your character description.")
 	// "glance" is src/interpreter.c's other top-level name for do_diagnose — identical handler.
-	cmdRegistry.Register("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", 0, 0, "diag", "glance")
-	cmdRegistry.Register("toggle", wrapArgs(cmdToggle), "Toggle a player preference.", 0, 0)
-	cmdRegistry.Register("lines", wrapArgs(cmdLines), "Set your screen line count (7-50).", 0, 0)
-	cmdRegistry.Register("infobar", wrapArgs(cmdInfoBar), "Toggle the bottom status infobar.", 0, 0)
-	cmdRegistry.Register("users", wrapArgs(cmdUsersSafe), "Show connected players.", LVL_IMMORT, 0)
+	registerCommand("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", "diag", "glance")
+	registerCommand("toggle", wrapArgs(cmdToggle), "Toggle a player preference.")
+	registerCommand("lines", wrapArgs(cmdLines), "Set your screen line count (7-50).")
+	registerCommand("infobar", wrapArgs(cmdInfoBar), "Toggle the bottom status infobar.")
+	registerCommand("users", wrapArgs(cmdUsersSafe), "Show connected players.")
 
 	// Other commands (act_other.go)
-	cmdRegistry.Register("save", wrapArgs(cmdSave), "Save your character.", 0, 0)
-	cmdRegistry.Register("report", wrapArgs(cmdReport), "Show report of your surroundings.", 0, 0)
-	cmdRegistry.Register("split", wrapArgs(cmdSplit), "Split gold with your group.", 0, 0)
-	cmdRegistry.Register("wimpy", wrapArgs(cmdWimpy), "Set your wimpy threshold.", 0, 0)
-	cmdRegistry.Register("display", wrapArgs(cmdDisplay), "Set display preferences.", 0, 0)
-	cmdRegistry.Register("transform", wrapArgs(cmdTransform), "Transform your appearance.", 0, 0)
+	registerCommand("save", wrapArgs(cmdSave), "Save your character.")
+	registerCommand("report", wrapArgs(cmdReport), "Show report of your surroundings.")
+	registerCommand("split", wrapArgs(cmdSplit), "Split gold with your group.")
+	registerCommand("wimpy", wrapArgs(cmdWimpy), "Set your wimpy threshold.")
+	registerCommand("display", wrapArgs(cmdDisplay), "Set display preferences.")
+	registerCommand("transform", wrapArgs(cmdTransform), "Transform your appearance.")
 	// "mount" is src/interpreter.c's other top-level name for do_ride — identical handler, same subcmd.
-	cmdRegistry.Register("ride", wrapArgs(cmdRide), "Ride a mount.", 0, 0, "mount")
-	cmdRegistry.Register("dismount", wrapArgs(cmdDismount), "Dismount from your mount.", 0, 0)
-	cmdRegistry.Register("yank", wrapArgs(cmdYank), "Yank someone from a mount or chair.", 0, 0)
-	cmdRegistry.Register("peek", wrapArgs(cmdPeek), "Peek at another player's inventory.", 0, 0)
-	cmdRegistry.Register("recall", wrapArgs(cmdRecall), "Recall to your home city.", 0, 0)
-	cmdRegistry.Register("stealth", wrapArgs(cmdStealth), "Enter stealth mode.", 0, 0)
-	cmdRegistry.Register("appraise", wrapArgs(cmdAppraise), "Appraise an item's value.", 0, 0)
-	cmdRegistry.Register("scout", wrapArgs(cmdScout), "Scout ahead for danger.", 0, 0)
-	cmdRegistry.Register("roll", wrapArgs(cmdRoll), "Roll a random number.", 0, 0)
-	cmdRegistry.Register("visible", wrapArgs(cmdVisible), "Make yourself visible again.", 0, 0)
-	cmdRegistry.Register("inactive", wrapArgs(cmdInactive), "Toggle inactive status.", 0, 0)
-	cmdRegistry.Register("auto", wrapArgs(cmdAuto), "Toggle auto-attack mode.", 0, 0)
+	registerCommand("ride", wrapArgs(cmdRide), "Ride a mount.", "mount")
+	registerCommand("dismount", wrapArgs(cmdDismount), "Dismount from your mount.")
+	registerCommand("yank", wrapArgs(cmdYank), "Yank someone from a mount or chair.")
+	registerCommand("peek", wrapArgs(cmdPeek), "Peek at another player's inventory.")
+	registerCommand("recall", wrapArgs(cmdRecall), "Recall to your home city.")
+	registerCommand("stealth", wrapArgs(cmdStealth), "Enter stealth mode.")
+	registerCommand("appraise", wrapArgs(cmdAppraise), "Appraise an item's value.")
+	registerCommand("scout", wrapArgs(cmdScout), "Scout ahead for danger.")
+	registerCommand("roll", wrapArgs(cmdRoll), "Roll a random number.")
+	registerCommand("visible", wrapArgs(cmdVisible), "Make yourself visible again.")
+	registerCommand("inactive", wrapArgs(cmdInactive), "Toggle inactive status.")
+	registerCommand("auto", wrapArgs(cmdAuto), "Toggle auto-attack mode.")
 	// Preference toggles (act.other.c do_gen_tog) — each is its own top-level
 	// command in the original C, not a unified dispatcher; src/interpreter.c
 	// lines 366-666.
-	cmdRegistry.Register("nosummon", wrapToggle("nosummon"), "Toggle summon protection.", 0, 0)
-	cmdRegistry.Register("nohassle", wrapToggle("nohassle"), "Toggle nohassle mode.", LVL_IMMORT, 0)
-	cmdRegistry.Register("brief", wrapToggle("brief"), "Toggle brief room descriptions.", 0, 0)
-	cmdRegistry.Register("compact", wrapToggle("compact"), "Toggle compact display mode.", 0, 0)
-	cmdRegistry.Register("notell", wrapToggle("notell"), "Toggle deafness to tells.", 0, 0)
-	cmdRegistry.Register("noauction", wrapToggle("noauction"), "Toggle deafness to auctions.", 0, 0)
-	cmdRegistry.Register("noshout", wrapToggle("noshout"), "Toggle deafness to shouts.", 0, combat.PosSleeping)
-	cmdRegistry.Register("nogossip", wrapToggle("nogossip"), "Toggle deafness to gossip.", 0, 0)
-	cmdRegistry.Register("nograts", wrapToggle("nograts"), "Toggle congratulation messages.", 0, 0)
-	cmdRegistry.Register("nowiz", wrapToggle("nowiz"), "Toggle deafness to the wiz channel.", LVL_IMMORT, 0)
-	cmdRegistry.Register("quest", wrapToggle("quest"), "Toggle quest announcements.", 0, 0)
-	cmdRegistry.Register("roomflags", wrapToggle("roomflags"), "Toggle room flag display.", LVL_IMMORT, 0)
-	cmdRegistry.Register("norepeat", wrapToggle("norepeat"), "Toggle communication echo.", 0, 0)
-	cmdRegistry.Register("holylight", wrapToggle("holylight"), "Toggle holylight mode.", LVL_IMMORT, 0)
-	cmdRegistry.Register("nonewbie", wrapToggle("nonewbie"), "Toggle newbie channel.", 0, 0)
-	cmdRegistry.Register("noctell", wrapToggle("noctell"), "Toggle deafness to clan tells.", 0, 0)
-	cmdRegistry.Register("nobroadcast", wrapToggle("nobroadcast"), "Toggle deafness to broadcasts.", 0, 0)
-	cmdRegistry.Register("bug", wrapArgs(cmdBug), "Report a bug.", 0, 0)
-	cmdRegistry.Register("typo", wrapArgs(cmdTypo), "Report a typo.", 0, 0)
-	cmdRegistry.Register("idea", wrapArgs(cmdIdea), "Submit an idea.", 0, 0)
-	cmdRegistry.Register("todo", wrapArgs(cmdTodo), "Submit a todo suggestion.", 0, 0)
-	cmdRegistry.Register("afk", wrapArgs(cmdAFK), "Toggle away-from-keyboard status.", 0, 0)
+	registerCommand("nosummon", wrapToggle("nosummon"), "Toggle summon protection.")
+	registerCommand("nohassle", wrapToggle("nohassle"), "Toggle nohassle mode.")
+	registerCommand("brief", wrapToggle("brief"), "Toggle brief room descriptions.")
+	registerCommand("compact", wrapToggle("compact"), "Toggle compact display mode.")
+	registerCommand("notell", wrapToggle("notell"), "Toggle deafness to tells.")
+	registerCommand("noauction", wrapToggle("noauction"), "Toggle deafness to auctions.")
+	registerCommand("noshout", wrapToggle("noshout"), "Toggle deafness to shouts.")
+	registerCommand("nogossip", wrapToggle("nogossip"), "Toggle deafness to gossip.")
+	registerCommand("nograts", wrapToggle("nograts"), "Toggle congratulation messages.")
+	registerCommand("nowiz", wrapToggle("nowiz"), "Toggle deafness to the wiz channel.")
+	registerCommand("quest", wrapToggle("quest"), "Toggle quest announcements.")
+	registerCommand("roomflags", wrapToggle("roomflags"), "Toggle room flag display.")
+	registerCommand("norepeat", wrapToggle("norepeat"), "Toggle communication echo.")
+	registerCommand("holylight", wrapToggle("holylight"), "Toggle holylight mode.")
+	registerCommand("nonewbie", wrapToggle("nonewbie"), "Toggle newbie channel.")
+	registerCommand("noctell", wrapToggle("noctell"), "Toggle deafness to clan tells.")
+	registerCommand("nobroadcast", wrapToggle("nobroadcast"), "Toggle deafness to broadcasts.")
+	registerCommand("bug", wrapArgs(cmdBug), "Report a bug.")
+	registerCommand("typo", wrapArgs(cmdTypo), "Report a typo.")
+	registerCommand("idea", wrapArgs(cmdIdea), "Submit an idea.")
+	registerCommand("todo", wrapArgs(cmdTodo), "Submit a todo suggestion.")
+	registerCommand("afk", wrapArgs(cmdAFK), "Toggle away-from-keyboard status.")
 
 	// Ban system (ported from ban.c)
-	cmdRegistry.Register("ban", wrapArgs(cmdBan), "Ban a site (admin only).", LVL_GOD, 0)
-	cmdRegistry.Register("unban", wrapArgs(cmdUnban), "Unban a site (admin only).", LVL_GOD, 0)
+	registerCommand("ban", wrapArgs(cmdBan), "Ban a site (admin only).")
+	registerCommand("unban", wrapArgs(cmdUnban), "Unban a site (admin only).")
 
 	// WHOD (ported from whod.c)
-	cmdRegistry.Register("whod", wrapArgs(cmdWhod), "Toggle WHOD display mode (admin only).", LVL_IMMORT, 0)
+	registerCommand("whod", wrapArgs(cmdWhod), "Toggle WHOD display mode (admin only).")
 
 	// Clan system (ported from clan.c)
-	cmdRegistry.Register("clan", wrapArgs(cmdClan), "Clan management commands.", 0, 0, "clans")
+	registerCommand("clan", wrapArgs(cmdClan), "Clan management commands.", "clans")
 
 	// Houses (ported from house.c)
-	cmdRegistry.Register("house", wrapArgs(cmdHouse), "House management commands.", 0, 0)
-	cmdRegistry.Register("hcontrol", wrapArgs(cmdHcontrol), "Admin house control.", LVL_GRGOD, 0)
-	cmdRegistry.Register("gossip", wrapArgs(cmdGossip), "Gossip on the channel.", 0, 0)
-	cmdRegistry.Register("auction", wrapArgs(cmdAuction), "Auction an item to the channel.", 0, 0)
-	cmdRegistry.Register("gratz", wrapArgs(cmdGratz), "Congratulate someone on the channel.", 0, 0)
-	cmdRegistry.Register("newbie", wrapArgs(cmdNewbieChannel), "Ask a question on the newbie channel.", 0, 0)
-	cmdRegistry.Register("ctell", wrapArgs(cmdCTell), "Send a message to your clan.", 0, 0)
-	cmdRegistry.Register("password", wrapArgs(cmdPassword), "Change your password.", 0, 0)
-	cmdRegistry.Register("prompt", wrapArgs(cmdPrompt), "Set your prompt.", 0, 0)
-	cmdRegistry.Register("reply", wrapArgs(cmdReply), "Reply to the last tell.", 0, 0, "r")
-	cmdRegistry.Register("write", wrapArgs(cmdWrite), "Write on an object.", 0, 0)
-	cmdRegistry.Register("page", wrapArgs(cmdPage), "Page a player.", 0, 0)
-	cmdRegistry.Register("ignore", wrapArgs(cmdIgnore), "Ignore or stop ignoring a player.", 0, 0)
-	cmdRegistry.Register("race_say", wrapArgs(cmdRaceSay), "Say something in your racial language.", 0, 0, "rac")
-	cmdRegistry.Register("whisper", wrapArgs(cmdWhisper), "Whisper to someone in your room.", 0, 0, "whis")
-	cmdRegistry.Register("ask", wrapArgs(cmdAsk), "Ask someone a question.", 0, 0)
-	cmdRegistry.Register("qcomm", wrapArgs(cmdQcomm), "Send a team message.", 0, 0, "team")
+	registerCommand("house", wrapArgs(cmdHouse), "House management commands.")
+	registerCommand("hcontrol", wrapArgs(cmdHcontrol), "Admin house control.")
+	registerCommand("gossip", wrapArgs(cmdGossip), "Gossip on the channel.")
+	registerCommand("auction", wrapArgs(cmdAuction), "Auction an item to the channel.")
+	registerCommand("gratz", wrapArgs(cmdGratz), "Congratulate someone on the channel.")
+	registerCommand("newbie", wrapArgs(cmdNewbieChannel), "Ask a question on the newbie channel.")
+	registerCommand("ctell", wrapArgs(cmdCTell), "Send a message to your clan.")
+	registerCommand("password", wrapArgs(cmdPassword), "Change your password.")
+	registerCommand("prompt", wrapArgs(cmdPrompt), "Set your prompt.")
+	registerCommand("reply", wrapArgs(cmdReply), "Reply to the last tell.", "r")
+	registerCommand("write", wrapArgs(cmdWrite), "Write on an object.")
+	registerCommand("page", wrapArgs(cmdPage), "Page a player.")
+	registerCommand("ignore", wrapArgs(cmdIgnore), "Ignore or stop ignoring a player.")
+	registerCommand("race_say", wrapArgs(cmdRaceSay), "Say something in your racial language.", "rac")
+	registerCommand("whisper", wrapArgs(cmdWhisper), "Whisper to someone in your room.", "whis")
+	registerCommand("ask", wrapArgs(cmdAsk), "Ask someone a question.")
+	registerCommand("qcomm", wrapArgs(cmdQcomm), "Send a team message.", "team")
 	// Social (act_social.go)
 
 	// Alias (game pkg)
-	cmdRegistry.Register("alias", wrapArgs(cmdAlias), "Manage command aliases.", 0, 0)
+	registerCommand("alias", wrapArgs(cmdAlias), "Manage command aliases.")
 
 	// Admin commands (game pkg bans) — duplicate of whod.c port; let the first one win
 	// (no re-register here to avoid overwriting minPosition)
@@ -599,6 +603,9 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	if !ok {
 		// Check social emotes before giving up
 		if _, found := game.Socials[cmd]; found {
+			if commandGateRejected(s, mustCommandGate(cmd)) {
+				return nil
+			}
 			game.DoAction(s.manager.world, s.player, cmd, strings.Join(args, " "))
 			return nil
 		}
@@ -606,21 +613,8 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		return nil
 	}
 
-	// Enforce MinPosition gate — dead players can't attack, sleeping players can't backstab, etc.
-	if entry.MinPosition > 0 && s.player != nil {
-		playerPos := s.player.GetPosition()
-		if playerPos < entry.MinPosition {
-			s.sendText(positionFailMessage(playerPos))
-			return nil
-		}
-	}
-
-	// MinLevel enforcement — F10/DP-954
-	if entry.MinLevel > 0 {
-		if getEffectiveLevel(s) < entry.MinLevel {
-			s.sendText("Huh?!?\r\n")
-			return nil
-		}
+	if commandGateRejected(s, commandGate{MinLevel: entry.MinLevel, MinPosition: entry.MinPosition}) {
+		return nil
 	}
 
 	// C-10: WAIT_STATE enforcement — combat skills set cooldowns.
@@ -646,6 +640,35 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	}
 
 	return entry.Handler(&commandSession{Session: s}, cmd, args)
+}
+
+// commandGateRejected mirrors C interpreter.c:910-947 after a command row is
+// found: level/lookup hiding, frozen, switched-NPC immortal denial, position.
+// Go has no registered nil-handler/not-implemented state, so that C step is
+// intentionally absent.
+func commandGateRejected(s *Session, gate commandGate) bool {
+	effectiveLevel := getEffectiveLevel(s)
+	if effectiveLevel < gate.MinLevel {
+		s.sendText("Huh?!?\r\n")
+		return true
+	}
+	if s.player == nil {
+		return false
+	}
+	if s.player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && effectiveLevel < LVL_IMPL-1 {
+		s.sendText("You try, but the mind-numbing cold prevents you...")
+		return true
+	}
+	if s.isSwitched && s.switchedMob != nil && gate.MinLevel >= LVL_IMMORT {
+		s.sendText("You can't use immortal commands while switched.")
+		return true
+	}
+	playerPos := s.player.GetPosition()
+	if playerPos < gate.MinPosition {
+		s.sendText(positionFailMessage(playerPos))
+		return true
+	}
+	return false
 }
 
 // cmdSocial performs a social emote.

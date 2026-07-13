@@ -1,6 +1,23 @@
-# Probe mortal-only access to summon/hcontrol gates.
-# Setup creates a level-1 mortal; probe tries the two gated commands.
-Oracletst
+# Mortal level-gate matrix. Summon and hcontrol are the already-hardened
+# controls; where, page, and todo expose registrations whose C levels drifted.
+
+[setup:oracle]
+Gateactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+
+[setup:port]
+Gateactor
 y
 oraclepass
 oraclepass
@@ -13,6 +30,12 @@ K
 Y
 <ENTER>
 1
-summon someone
+w
+s
+
+[probe]
 hcontrol show
-quit
+summon someone
+where
+page
+todo

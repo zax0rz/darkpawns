@@ -19,8 +19,8 @@ func TestNormalizeTier1Rules(t *testing.T) {
 }
 
 func TestNormalizeDropsPromptFramingButPreservesTextGreaterThan(t *testing.T) {
-	raw := ">\r\nDoor > north\r\n22H 100M 83V >\r\n"
-	want := "Door > north\n"
+	raw := ">\r\n> Huh?!?\r\nDoor > north\r\n22H 100M 83V >\r\n"
+	want := "Huh?!?\nDoor > north\n"
 	if got := Normalize(raw); got != want {
 		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}

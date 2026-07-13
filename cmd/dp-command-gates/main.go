@@ -1,0 +1,277 @@
+// Command dp-command-gates regenerates pkg/session/command_gates.tsv from the
+// C oracle's cmd_info[] and the Go session registrations.
+package main
+
+import (
+	"bufio"
+	"errors"
+	"flag"
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
+)
+
+type gate struct {
+	level    int
+	position int
+	source   string
+}
+
+var cRowPattern = regexp.MustCompile(`^\s*\{\s*"([^"]+)"\s*,\s*(POS_\w+|0)\s*,\s*[^,]+,\s*([^,]+),`)
+
+var goOnlyCommands = map[string]gate{
+	"affects":     {0, 4, "Go-only: read-only affect view; mortal-usable while sleeping"},
+	"autoexit":    {0, 0, "Go-only: player display preference; safe in every position"},
+	"autoloot":    {0, 0, "Go-only: player loot preference; safe in every position"},
+	"bashdoor":    {0, 8, "Go-only: physical door action; requires standing"},
+	"coins":       {0, 5, "Go spelling of C gold; same mortal/resting gate"},
+	"confirm":     {1, 5, "Go skill-system mutation; follows C practice gate"},
+	"describe":    {0, 0, "Go character-profile setting; safe in every position"},
+	"description": {0, 0, "Go character-profile setting; safe in every position"},
+	"detect":      {0, 8, "Go spelling of C search; same standing gate"},
+	"dragonkick":  {0, 7, "Go spelling of C dragon; same fighting gate"},
+	"forget":      {1, 5, "Go skill-system mutation; follows C practice gate"},
+	"gratz":       {0, 4, "Go spelling of C grats; same sleeping gate"},
+	"heal":        {31, 0, "Go-only wizard heal; defense-in-depth handler requires immortal"},
+	"hiss":        {0, 5, "Go-only social; follows the standard mortal/resting social gate"},
+	"ignore":      {0, 0, "Go communication preference; safe in every position"},
+	"kneel":       {0, 5, "Go-only social; follows the standard mortal/resting social gate"},
+	"knock":       {0, 8, "Go-only physical door action; requires standing"},
+	"learn":       {1, 5, "Go skill-system mutation; follows C practice gate"},
+	"listskills":  {0, 4, "Go skill-system information; mortal-usable while sleeping"},
+	"mutter":      {0, 5, "Go-only social; follows the standard mortal/resting social gate"},
+	"newbiegive":  {31, 0, "Go spelling of C wnewbie; same immortal/dead gate"},
+	"password":    {0, 0, "Go account setting; safe in every position"},
+	"poofset":     {31, 0, "Go aggregate for C poofin/poofout; same immortal/dead gate"},
+	"qcomm":       {0, 4, "Go spelling of C qsay; same sleeping gate"},
+	"race_say":    {0, 5, "Go spelling of C rsay; same resting gate"},
+	"scan":        {0, 5, "Go-only read-only room scan; mortal-usable while resting"},
+	"skillinfo":   {0, 4, "Go skill-system information; mortal-usable while sleeping"},
+	"skills":      {0, 4, "Go skill-system information; mortal-usable while sleeping"},
+	"spells":      {0, 4, "Go spell information; mortal-usable while sleeping"},
+	"summon":      {31, 0, "Go-only wizard summon; defense-in-depth handler requires immortal"},
+	"tigerpunch":  {0, 7, "Go spelling of C tiger; same fighting gate"},
+	"vis":         {31, 0, "Go-only wizard reveal command; distinct from mortal C visible"},
+	"wizutil":     {31, 0, "Go aggregate for C wizutil subcommands; handler applies stricter subcommand gates"},
+	"zap":         {1, 6, "Go direct wand command; follows C use sitting gate"},
+}
+
+func main() {
+	var oracleFile, repoRoot, outputFile string
+	flag.StringVar(&oracleFile, "oracle", "", "path to C oracle src/interpreter.c")
+	flag.StringVar(&repoRoot, "repo", ".", "Dark Pawns Go repository root")
+	flag.StringVar(&outputFile, "out", "pkg/session/command_gates.tsv", "output path relative to repo")
+	flag.Parse()
+	if oracleFile == "" {
+		fmt.Fprintln(os.Stderr, "-oracle is required")
+		os.Exit(2)
+	}
+	if err := run(oracleFile, repoRoot, outputFile); err != nil {
+		fmt.Fprintln(os.Stderr, "dp-command-gates:", err)
+		os.Exit(1)
+	}
+}
+
+func run(oracleFile, repoRoot, outputFile string) error {
+	gates, err := readCGates(oracleFile)
+	if err != nil {
+		return err
+	}
+	registrations, err := readGoRegistrations(filepath.Join(repoRoot, "pkg", "session"))
+	if err != nil {
+		return err
+	}
+	if err := addGoSocials(filepath.Join(repoRoot, "pkg", "game", "socials.go"), registrations); err != nil {
+		return err
+	}
+	for name, primary := range registrations {
+		if _, exists := gates[name]; exists {
+			continue
+		}
+		if explicit, ok := goOnlyCommands[name]; ok {
+			gates[name] = explicit
+			continue
+		}
+		primaryGate, ok := gates[primary]
+		if !ok {
+			explicit, explicitOK := goOnlyCommands[primary]
+			if !explicitOK {
+				return fmt.Errorf("go-only command %q has no documented gate rationale", primary)
+			}
+			primaryGate = explicit
+			gates[primary] = explicit
+		}
+		gates[name] = gate{
+			level:    primaryGate.level,
+			position: primaryGate.position,
+			source:   "Go alias for " + primary,
+		}
+	}
+
+	names := make([]string, 0, len(gates))
+	for name := range gates {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	var out strings.Builder
+	out.WriteString("# Generated by cmd/dp-command-gates; do not edit by hand.\n")
+	out.WriteString("# Regenerate: go run ./cmd/dp-command-gates -oracle /path/to/darkpawns-c-oracle/src/interpreter.c\n")
+	out.WriteString("# name<TAB>minimum level<TAB>minimum position<TAB>source/rationale\n")
+	for _, name := range names {
+		g := gates[name]
+		fmt.Fprintf(&out, "%s\t%d\t%d\t%s\n", name, g.level, g.position, g.source)
+	}
+	path := filepath.Join(repoRoot, outputFile)
+	if err := os.WriteFile(path, []byte(out.String()), 0o644); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
+	}
+	return nil
+}
+
+func readCGates(path string) (map[string]gate, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("open C command table: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	gates := make(map[string]gate)
+	scanner := bufio.NewScanner(f)
+	for lineNo := 1; scanner.Scan(); lineNo++ {
+		match := cRowPattern.FindStringSubmatch(scanner.Text())
+		if len(match) == 0 {
+			continue
+		}
+		name := strings.ToLower(strings.TrimSpace(match[1]))
+		if name == "reserved" || name == `\n` {
+			continue
+		}
+		position, ok := cPositions[strings.TrimSpace(match[2])]
+		if !ok {
+			return nil, fmt.Errorf("c line %d: unknown position %q", lineNo, match[2])
+		}
+		levelExpr := strings.ReplaceAll(strings.TrimSpace(match[3]), " ", "")
+		level, ok := cLevels[levelExpr]
+		if !ok {
+			return nil, fmt.Errorf("c line %d: unknown level %q", lineNo, match[3])
+		}
+		if _, duplicate := gates[name]; duplicate {
+			return nil, fmt.Errorf("c line %d: duplicate normalized command %q", lineNo, name)
+		}
+		gates[name] = gate{level: level, position: position, source: fmt.Sprintf("C interpreter.c:%d", lineNo)}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("read C command table: %w", err)
+	}
+	if len(gates) == 0 {
+		return nil, errors.New("no C command rows found")
+	}
+	return gates, nil
+}
+
+func readGoRegistrations(dir string) (map[string]string, error) {
+	paths, err := filepath.Glob(filepath.Join(dir, "*.go"))
+	if err != nil {
+		return nil, err
+	}
+	registrations := make(map[string]string)
+	fset := token.NewFileSet()
+	for _, path := range paths {
+		if strings.HasSuffix(path, "_test.go") || filepath.Base(path) == "command_gates.go" {
+			continue
+		}
+		file, parseErr := parser.ParseFile(fset, path, nil, 0)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			aliasStart := -1
+			switch fun := call.Fun.(type) {
+			case *ast.SelectorExpr:
+				ident, identOK := fun.X.(*ast.Ident)
+				if identOK && ident.Name == "cmdRegistry" && fun.Sel.Name == "Register" && len(call.Args) >= 5 {
+					aliasStart = 5
+				}
+			case *ast.Ident:
+				if fun.Name == "registerCommand" && len(call.Args) >= 3 {
+					aliasStart = 3
+				}
+			}
+			if aliasStart < 0 {
+				return true
+			}
+			primary := stringLiteral(call.Args[0])
+			if primary == "" {
+				return true
+			}
+			registrations[primary] = primary
+			for _, arg := range call.Args[aliasStart:] {
+				if alias := stringLiteral(arg); alias != "" {
+					registrations[alias] = primary
+				}
+			}
+			return true
+		})
+	}
+	return registrations, nil
+}
+
+func addGoSocials(path string, registrations map[string]string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	pattern := regexp.MustCompile(`(?m)^\s*"([^"]+)":\s*\{`)
+	for _, match := range pattern.FindAllStringSubmatch(string(data), -1) {
+		name := strings.ToLower(strings.TrimSpace(match[1]))
+		registrations[name] = name
+	}
+	return nil
+}
+
+func stringLiteral(expr ast.Expr) string {
+	lit, ok := expr.(*ast.BasicLit)
+	if !ok || lit.Kind != token.STRING {
+		return ""
+	}
+	value, err := strconv.Unquote(lit.Value)
+	if err != nil {
+		return ""
+	}
+	return strings.ToLower(strings.TrimSpace(value))
+}
+
+var cPositions = map[string]int{
+	"0":             0,
+	"POS_DEAD":      0,
+	"POS_MORTALLYW": 1,
+	"POS_SLEEPING":  4,
+	"POS_RESTING":   5,
+	"POS_SITTING":   6,
+	"POS_FIGHTING":  7,
+	"POS_STANDING":  8,
+}
+
+var cLevels = map[string]int{
+	"0":            0,
+	"1":            1,
+	"LVL_BUILDER":  31,
+	"LVL_IMMORT":   31,
+	"LVL_IMMORT+1": 32,
+	"LVL_GOD-1":    33,
+	"LVL_GOD":      34,
+	"LVL_FREEZE":   38,
+	"LVL_GRGOD":    38,
+	"LVL_IMPL-1":   39,
+}

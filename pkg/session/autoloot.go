@@ -30,5 +30,5 @@ func cmdAutoLoot(s *Session, args []string) error {
 }
 
 func init() {
-	cmdRegistry.Register("autoloot", wrapArgs(cmdAutoLoot), "Toggle auto-looting.", 0, 0)
+	registerCommand("autoloot", wrapArgs(cmdAutoLoot), "Toggle auto-looting.")
 }
