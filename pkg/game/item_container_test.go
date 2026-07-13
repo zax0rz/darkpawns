@@ -66,3 +66,32 @@ func TestDoPutAllSkipsUnseenItems(t *testing.T) {
 		t.Errorf("put item should have left the player's inventory")
 	}
 }
+
+func TestPerformPutUsesInstanceCapacity(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+	sack := NewObjectInstance(&parser.Obj{
+		VNum: 4300, ShortDesc: "a leather sack", Keywords: "sack",
+		TypeFlag: ITEM_CONTAINER, Values: [4]int{1, 0, -1, 0},
+	}, -1)
+	sack.SetValue(contCapacity, 100)
+	sack.ID = w.nextObjID
+	w.nextObjID++
+	w.objectInstances[sack.ID] = sack
+	if err := w.MoveObjectToPlayerInventory(sack, ch); err != nil {
+		t.Fatalf("move sack: %v", err)
+	}
+
+	stone := newDonatableItem(4301, "a small stone", "stone", 0)
+	stone.SetWeight(5)
+	stone.ID = w.nextObjID
+	w.nextObjID++
+	w.objectInstances[stone.ID] = stone
+	if err := w.MoveObjectToPlayerInventory(stone, ch); err != nil {
+		t.Fatalf("move stone: %v", err)
+	}
+
+	w.performPut(ch, stone, sack)
+	if len(sack.Contains) != 1 || sack.Contains[0] != stone {
+		t.Fatal("performPut should honor the instance capacity override")
+	}
+}

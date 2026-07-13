@@ -837,17 +837,22 @@ func (w *World) createMoneyObject(amount int) *ObjectInstance {
 		longDesc = fmt.Sprintf("%s is lying here.", capitalize(createMoneyDesc(amount)))
 	}
 
+	typeFlag := ITEM_MONEY
+	values := [4]int{amount, 0, 0, 0}
 	money := &ObjectInstance{
-		Prototype: nil, // synthetic object, no prototype
-		VNum:      -1,
-		RoomVNum:  -1,
-		Contains:  make([]*ObjectInstance, 0),
+		Prototype:        nil, // synthetic object, no prototype
+		VNum:             -1,
+		RoomVNum:         -1,
+		Contains:         make([]*ObjectInstance, 0),
+		TypeFlagOverride: &typeFlag,
+		ValuesOverride:   &values,
 		CustomData: map[string]interface{}{
 			"is_money":     true,
 			"money_amount": amount,
 		},
 	}
 	money.Runtime.Name = name
+	money.Runtime.Keywords = name
 	money.Runtime.ShortDesc = shortDesc
 	money.Runtime.LongDesc = longDesc
 
