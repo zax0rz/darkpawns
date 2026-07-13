@@ -80,6 +80,22 @@ $
 	}
 }
 
+func TestParseWldFilePreservesDescriptionIndentation(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "indent.wld")
+	content := "#100\nIndented Room~\n   First line.\n Second line.\n~\n1 0 0 0 0 0\nS\n$\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	rooms, err := ParseWldFile(path)
+	if err != nil {
+		t.Fatalf("ParseWldFile: %v", err)
+	}
+	if len(rooms) != 1 || rooms[0].Description != "   First line.\n Second line.\n" {
+		t.Fatalf("description indentation was not preserved: %#v", rooms)
+	}
+}
+
 func TestParseAllWldFiles(t *testing.T) {
 	tmpDir := t.TempDir()
 

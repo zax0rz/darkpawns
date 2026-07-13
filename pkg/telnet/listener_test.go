@@ -6,6 +6,7 @@ import (
 	"compress/zlib"
 	"io"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -597,4 +598,50 @@ func TestTelnetLinkdeadReaperCleanup(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("handleConn did not return after client close")
 	}
+}
+
+func TestObservationTelnetRenderingHasNoStateBoxAndGatesVNum(t *testing.T) {
+	world, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{
+		VNum:        1234,
+		Name:        "Viewer-Aware Hall",
+		Description: "No transport-specific decoration belongs here.",
+		Flags:       []string{"0", "0", "0", "0"},
+		Sector:      0,
+	}}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(world.StopAITicker)
+
+	state := session.ServerMessage{Type: session.MsgState, Data: map[string]interface{}{
+		"player": map[string]interface{}{"name": "Viewer", "level": 1, "health": 10, "max_health": 10},
+		"room":   map[string]interface{}{"vnum": 1234, "name": "Viewer-Aware Hall"},
+	}}
+	if got := formatState(state); got != "" {
+		t.Fatalf("retired state renderer produced telnet text %q", got)
+	}
+
+	mortal := game.NewPlayer(1, "Mortal", 1234)
+	mortalResult := world.DoLookRoom(mortal, true)
+	mortalText := observationFormats(mortalResult)
+	if strings.Contains(mortalText, "---") || strings.Contains(mortalText, "Lvl ") || strings.Contains(mortalText, "[ 1234]") {
+		t.Fatalf("mortal room text leaked state decoration or vnum: %q", mortalText)
+	}
+
+	roomflagsViewer := game.NewPlayer(2, "Builder", 1234)
+	roomflagsViewer.SetLevel(game.LVL_IMMORT)
+	roomflagsViewer.SetRoomFlags(true)
+	roomflagsText := observationFormats(world.DoLookRoom(roomflagsViewer, true))
+	if !strings.Contains(roomflagsText, "[ 1234] Viewer-Aware Hall") {
+		t.Fatalf("roomflags viewer did not receive vnum: %q", roomflagsText)
+	}
+}
+
+func observationFormats(result game.ObservationResult) string {
+	var out strings.Builder
+	for _, message := range result.Messages {
+		out.WriteString(message.Format)
+		out.WriteByte('\n')
+	}
+	return out.String()
 }

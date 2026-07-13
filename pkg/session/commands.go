@@ -61,6 +61,7 @@ func init() {
 
 	// Look
 	registerCommand("look", wrapArgs(cmdLook), "Look around the room.", "l")
+	registerCommand("read", wrapArgs(cmdRead), "Read a nearby object or room feature.")
 
 	// Communication
 	registerCommand("say", wrapArgs(cmdSay), "Say something to the room.")
@@ -237,6 +238,7 @@ func init() {
 	// Informative
 	registerCommand("consider", wrapArgs(cmdConsider), "Compare yourself to a target.", "con")
 	registerCommand("examine", wrapArgs(cmdExamine), "Examine something in detail.", "exa")
+	registerCommand("exits", wrapArgs(cmdExits), "List obvious exits.")
 	registerCommand("time", wrapArgs(cmdTime), "Show the current time.")
 	registerCommand("weather", wrapArgs(cmdWeather), "Show the current weather.")
 	registerCommand("affects", wrapArgs(cmdAffects), "Show active affects.")

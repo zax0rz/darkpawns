@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/internal/oraclediff"
@@ -40,5 +41,61 @@ func TestApplyObjectFixturesPreparesDisposableWorlds(t *testing.T) {
 	}
 	if !foundObject {
 		t.Fatal("fixture object 8038 was not parsed")
+	}
+}
+
+func TestObservationMobFixturesPrepareDisposableWorld(t *testing.T) {
+	worldDir := t.TempDir()
+	zoneDir := filepath.Join(worldDir, "zon")
+	mobDir := filepath.Join(worldDir, "mob")
+	if err := os.MkdirAll(zoneDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(mobDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	zonePath := filepath.Join(zoneDir, "80.zon")
+	zone := "#80\nFixture Zone~\n8199 30 2\nM 0 1 1 8000\nG 1 2 1\nE 1 3 1 5\nO 0 4 1 8000\nS\n$\n"
+	if err := os.WriteFile(zonePath, []byte(zone), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	mobPath := filepath.Join(mobDir, "183.mob")
+	mobs := "#18306\ncuchi~\nScript: cuchi.lua\nE\n#18307\nother~\nScript: other.lua\nE\n$\n"
+	if err := os.WriteFile(mobPath, []byte(mobs), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := applyQuietZoneFixtures(worldDir, []int{80}); err != nil {
+		t.Fatalf("quiet zone: %v", err)
+	}
+	fixture := oraclediff.MobFixture{MobVNum: 18306, MaxExisting: 1, RoomVNum: 8162, ZoneNumber: 80}
+	if err := applyMobFixtures(worldDir, []oraclediff.MobFixture{fixture}); err != nil {
+		t.Fatalf("spawn mob: %v", err)
+	}
+	if err := applyScriptlessMobFixtures(worldDir, []int{18306}); err != nil {
+		t.Fatalf("strip mob script: %v", err)
+	}
+
+	gotZoneBytes, err := os.ReadFile(zonePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotZone := string(gotZoneBytes)
+	for _, reset := range []string{"M 0 1 1 8000", "G 1 2 1", "E 1 3 1 5"} {
+		if !strings.Contains(gotZone, "* oracle fixture: "+reset) {
+			t.Fatalf("zone did not suppress reset %q:\n%s", reset, gotZone)
+		}
+	}
+	if !strings.Contains(gotZone, "O 0 4 1 8000") || !strings.Contains(gotZone, "M 0 18306 1 8162\nS\n$") {
+		t.Fatalf("zone did not preserve objects and insert deterministic mob:\n%s", gotZone)
+	}
+
+	gotMobBytes, err := os.ReadFile(mobPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotMobs := string(gotMobBytes)
+	if !strings.Contains(gotMobs, "* oracle fixture: Script: cuchi.lua") || !strings.Contains(gotMobs, "Script: other.lua") {
+		t.Fatalf("script fixture changed the wrong mob record:\n%s", gotMobs)
 	}
 }

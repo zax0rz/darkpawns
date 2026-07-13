@@ -76,28 +76,30 @@ func makeLookTestManager(t *testing.T) *Manager {
 // Fails the test if no message arrives within the timeout.
 func readMsgState(t *testing.T, s *Session) StateData {
 	t.Helper()
-	select {
-	case msg := <-s.send:
-		var sm ServerMessage
-		if err := json.Unmarshal(msg, &sm); err != nil {
-			t.Fatalf("failed to unmarshal ServerMessage: %v", err)
+	deadline := time.After(500 * time.Millisecond)
+	for {
+		select {
+		case msg := <-s.send:
+			var sm ServerMessage
+			if err := json.Unmarshal(msg, &sm); err != nil {
+				t.Fatalf("failed to unmarshal ServerMessage: %v", err)
+			}
+			if sm.Type != MsgState {
+				continue
+			}
+			data, err := json.Marshal(sm.Data)
+			if err != nil {
+				t.Fatalf("failed to re-marshal Data: %v", err)
+			}
+			var state StateData
+			if err := json.Unmarshal(data, &state); err != nil {
+				t.Fatalf("failed to unmarshal StateData: %v", err)
+			}
+			return state
+		case <-deadline:
+			t.Fatal("timeout waiting for state message on s.send")
 		}
-		if sm.Type != MsgState {
-			t.Fatalf("expected MsgState, got %q", sm.Type)
-		}
-		data, err := json.Marshal(sm.Data)
-		if err != nil {
-			t.Fatalf("failed to re-marshal Data: %v", err)
-		}
-		var state StateData
-		if err := json.Unmarshal(data, &state); err != nil {
-			t.Fatalf("failed to unmarshal StateData: %v", err)
-		}
-		return state
-	case <-time.After(500 * time.Millisecond):
-		t.Fatal("timeout waiting for state message on s.send")
 	}
-	panic("unreachable")
 }
 
 // readMsgText reads one JSON message from s.send and returns it as a text string.
@@ -110,53 +112,30 @@ func readMsgText(t *testing.T, s *Session) string {
 		if err := json.Unmarshal(msg, &sm); err != nil {
 			t.Fatalf("failed to unmarshal ServerMessage: %v", err)
 		}
-		if sm.Type != MsgText {
-			t.Fatalf("expected MsgText, got %q", sm.Type)
-		}
 		data, err := json.Marshal(sm.Data)
 		if err != nil {
 			t.Fatalf("failed to re-marshal Data: %v", err)
 		}
-		var td TextData
-		if err := json.Unmarshal(data, &td); err != nil {
-			t.Fatalf("failed to unmarshal TextData: %v", err)
+		switch sm.Type {
+		case MsgText:
+			var td TextData
+			if err := json.Unmarshal(data, &td); err != nil {
+				t.Fatalf("failed to unmarshal TextData: %v", err)
+			}
+			return td.Text
+		case MsgEvent:
+			var event EventData
+			if err := json.Unmarshal(data, &event); err != nil {
+				t.Fatalf("failed to unmarshal EventData: %v", err)
+			}
+			return event.Text
+		default:
+			t.Fatalf("expected text/event message, got %q", sm.Type)
 		}
-		return td.Text
 	case <-time.After(500 * time.Millisecond):
 		t.Fatal("timeout waiting for text message on s.send")
 	}
 	panic("unreachable")
-}
-
-// ---------------------------------------------------------------------------
-// TestPlayerCanSeeInDark
-// ---------------------------------------------------------------------------
-
-func TestPlayerCanSeeInDark(t *testing.T) {
-	m := makeLookTestManager(t)
-
-	// Level ≤ 30 → cannot see in dark
-	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.player.SetLevel(1)
-	if s.playerCanSeeInDark() {
-		t.Error("level 1 player should NOT see in dark")
-	}
-
-	s.player.SetLevel(30)
-	if s.playerCanSeeInDark() {
-		t.Error("level 30 player should NOT see in dark")
-	}
-
-	// Level > 30 → can see in dark (immortal sight)
-	s.player.SetLevel(31)
-	if !s.playerCanSeeInDark() {
-		t.Error("level 31 player SHOULD see in dark")
-	}
-
-	s.player.SetLevel(50)
-	if !s.playerCanSeeInDark() {
-		t.Error("level 50 player SHOULD see in dark")
-	}
 }
 
 // ---------------------------------------------------------------------------
@@ -180,6 +159,26 @@ func TestLook_RoomDescription(t *testing.T) {
 	}
 	if state.Room.Description != "A plain room for testing." {
 		t.Errorf("unexpected description: %q", state.Room.Description)
+	}
+}
+
+func TestMovementLookHonorsBriefWhileExplicitLookDoesNot(t *testing.T) {
+	m := makeLookTestManager(t)
+	s := makeTestSession(t, m, "Alice", 1001, true)
+	s.player.SetPlrFlag(game.PrfBrief, true)
+
+	if err := cmdMovementLook(s); err != nil {
+		t.Fatalf("cmdMovementLook returned error: %v", err)
+	}
+	if state := readMsgState(t, s); state.Room.Description != "" {
+		t.Fatalf("movement room description = %q, want hidden in brief mode", state.Room.Description)
+	}
+
+	if err := cmdLook(s, nil); err != nil {
+		t.Fatalf("cmdLook returned error: %v", err)
+	}
+	if state := readMsgState(t, s); state.Room.Description != "A plain room for testing." {
+		t.Fatalf("explicit look description = %q, want full room text", state.Room.Description)
 	}
 }
 
@@ -242,14 +241,20 @@ func TestLook_EmptyRoom(t *testing.T) {
 func TestLook_DarkRoom(t *testing.T) {
 	m := makeLookTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1002, true) // dark room
+	m.mu.Lock()
+	m.sessions["Alice"] = s
+	m.mu.Unlock()
+	if err := m.world.AddPlayer(s.player); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
 
 	if err := cmdLook(s, nil); err != nil {
 		t.Fatalf("cmdLook returned error: %v", err)
 	}
 
 	text := readMsgText(t, s)
-	if text != "It is pitch black..." {
-		t.Errorf("expected 'It is pitch black...', got %q", text)
+	if text != "Darkness\r\n\r\nIt is too dark here to see much of anything...\r\n" {
+		t.Errorf("unexpected C-faithful darkness text: %q", text)
 	}
 }
 

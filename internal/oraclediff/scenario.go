@@ -16,13 +16,17 @@ const enterStep = "<ENTER>"
 // Scenario is a split differential script: per-server setup (not diffed) plus
 // a shared probe (diffed block-by-block).
 type Scenario struct {
-	Name        string
-	SetupOracle []string
-	SetupPort   []string
-	Warmup      []string
-	Probe       []string
-	Peers       map[string]*PeerSetup
-	Fixtures    []ObjectFixture
+	Name             string
+	SetupOracle      []string
+	SetupPort        []string
+	Warmup           []string
+	Probe            []string
+	Peers            map[string]*PeerSetup
+	Fixtures         []ObjectFixture
+	MobFixtures      []MobFixture
+	QuietZones       []int
+	QuietAllMobs     bool
+	ScriptlessMobIDs []int
 }
 
 // PeerSetup describes a passive client that remains connected while the
@@ -37,6 +41,16 @@ type PeerSetup struct {
 // each server's disposable world copy. The source world trees are never modified.
 type ObjectFixture struct {
 	ObjectVNum int
+}
+
+// MobFixture adds one reset command to a disposable zone file. It is used to
+// place deterministic special-procedure actors in an oracle scenario without
+// modifying either source world tree.
+type MobFixture struct {
+	MobVNum     int
+	MaxExisting int
+	RoomVNum    int
+	ZoneNumber  int
 }
 
 // ProbeBlock is one probe command and the raw output it produced.
@@ -62,6 +76,10 @@ type AudienceProbeBlock struct {
 //	<optional passive-client creation keystrokes…>
 //	[fixture]
 //	inert-scroll 8038   # patch this prototype in disposable worlds only
+//	spawn-mob 18306 1 8162 80 # mob, max existing, room, zone file
+//	quiet-zone 80             # suppress mobile resets in a disposable zone
+//	quiet-mobs                # suppress mobile resets in every disposable zone
+//	strip-mob-script 18306    # force native special dispatch in both copies
 //	[warmup]            # shared commands sent and discarded after peer setup
 //	get scroll
 //	[probe]             # sent to BOTH; this is the only diffed section
@@ -129,7 +147,43 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.Fixtures = append(sc.Fixtures, ObjectFixture{ObjectVNum: objVNum})
 				continue
 			}
-			return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fixture %q (want: inert-scroll <vnum>)", name, lineNo, line)
+			if len(fields) == 5 && strings.EqualFold(fields[0], "spawn-mob") {
+				values := make([]int, 4)
+				valid := true
+				for i := range values {
+					parsed, parseErr := strconv.Atoi(fields[i+1])
+					values[i] = parsed
+					if parseErr != nil || values[i] <= 0 {
+						valid = false
+						break
+					}
+				}
+				if valid {
+					sc.MobFixtures = append(sc.MobFixtures, MobFixture{
+						MobVNum: values[0], MaxExisting: values[1], RoomVNum: values[2], ZoneNumber: values[3],
+					})
+					continue
+				}
+			}
+			if len(fields) == 2 && strings.EqualFold(fields[0], "quiet-zone") {
+				zoneNumber, zoneErr := strconv.Atoi(fields[1])
+				if zoneErr == nil && zoneNumber > 0 {
+					sc.QuietZones = append(sc.QuietZones, zoneNumber)
+					continue
+				}
+			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "quiet-mobs") {
+				sc.QuietAllMobs = true
+				continue
+			}
+			if len(fields) == 2 && strings.EqualFold(fields[0], "strip-mob-script") {
+				mobVNum, mobErr := strconv.Atoi(fields[1])
+				if mobErr == nil && mobVNum > 0 {
+					sc.ScriptlessMobIDs = append(sc.ScriptlessMobIDs, mobVNum)
+					continue
+				}
+			}
+			return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fixture %q", name, lineNo, line)
 		}
 		if section == nil {
 			return Scenario{}, fmt.Errorf("scenario %q line %d: command %q before any [section]", name, lineNo, line)

@@ -55,28 +55,31 @@ func TestTelnetSmoke_GuestEntersWorld(t *testing.T) {
 
 	// Read through to the MOTD, which the server sends *after* the
 	// look-on-entry room block. By the time "Welcome to Dark Pawns" arrives,
-	// the room name, vnum and exits have all already been streamed.
+	// the room name and exits have already been streamed.
 	entered := readUntil(t, conn, r, "Welcome to Dark Pawns", 10*time.Second)
 	if entered == "" {
 		t.Fatal("guest never entered the world (no MOTD received after login)")
 	}
-	for _, want := range []string{"Temple Altar", "[8004]", "Exits:"} {
+	for _, want := range []string{"Temple Altar", "Exits:"} {
 		if !strings.Contains(entered, want) {
 			t.Errorf("entry output missing %q\n---\n%s", want, entered)
 		}
+	}
+	if strings.Contains(entered, "[8004]") || strings.Contains(entered, "[ 8004]") {
+		t.Errorf("mortal entry output leaked room vnum\n---\n%s", entered)
 	}
 
 	// Move east into the adjacent room, then back west. This exercises the
 	// full command pipeline end to end. Under the mob-AI deadlock (DP-590)
 	// these commands hung forever; readUntil's timeout converts that into a
-	// failing test instead of a hang. Room vnums are fixed world data:
-	// Temple Altar (8004) ←→ 8160.
+	// failing test instead of a hang. Temple Altar (8004) connects to the
+	// Eastern Vestibule (8160).
 	mustWrite(t, conn, "east\r\n")
-	if moved := readUntil(t, conn, r, "[8160]", 10*time.Second); moved == "" {
+	if moved := readUntil(t, conn, r, "Eastern Vestibule", 10*time.Second); moved == "" {
 		t.Fatal("`east` did not move guest to room 8160 — command pipeline stalled (deadlock regression?)")
 	}
 	mustWrite(t, conn, "west\r\n")
-	if back := readUntil(t, conn, r, "[8004]", 10*time.Second); back == "" {
+	if back := readUntil(t, conn, r, "At the Temple Altar", 10*time.Second); back == "" {
 		t.Error("`west` did not return guest to room 8004")
 	}
 
@@ -97,8 +100,8 @@ func TestTelnetSmoke_CharacterCreation(t *testing.T) {
 	defer conn.Close()
 
 	entered := createWarrior(t, conn, r, "Smoke_Newbie", "secretpw")
-	if !strings.Contains(entered, "Smoke_Newbie") {
-		t.Errorf("entry output does not name the new character\n---\n%s", entered)
+	if !strings.Contains(entered, "At the Temple Altar") || strings.Contains(entered, "Lvl ") {
+		t.Errorf("entry output is not the canonical room-only render\n---\n%s", entered)
 	}
 
 	mustWrite(t, conn, "quit\r\n")
@@ -123,11 +126,11 @@ func TestTelnetSmoke_Combat(t *testing.T) {
 	// Walk to Temple Square [8021] (8004 →south→ 8008 →south→ 8021), which
 	// always has NPCs passing through.
 	mustWrite(t, conn, "south\r\n")
-	if readUntil(t, conn, r, "[8008]", 10*time.Second) == "" {
+	if readUntil(t, conn, r, "Temple of the Cross", 10*time.Second) == "" {
 		t.Fatal("did not reach Temple of the Cross [8008]")
 	}
 	mustWrite(t, conn, "south\r\n")
-	if readUntil(t, conn, r, "[8021]", 10*time.Second) == "" {
+	if readUntil(t, conn, r, "Temple Square", 10*time.Second) == "" {
 		t.Fatal("did not reach Temple Square [8021]")
 	}
 
@@ -331,7 +334,7 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Fatal("conn1: never received the main menu after character creation")
 	}
 	mustWrite(t, c1, "1\r\n")
-	if got := readUntil(t, c1, r1, "[8004]", 10*time.Second); got == "" {
+	if got := readUntil(t, c1, r1, "At the Temple Altar", 10*time.Second); got == "" {
 		t.Fatal("conn1: new character did not enter the world")
 	}
 	mustWrite(t, c1, "quit\r\n")
@@ -373,12 +376,12 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Fatal("conn3: returning player did not get menu")
 	}
 	mustWrite(t, c3, "1\r\n")
-	loaded := readUntil(t, c3, r3, "[8004]", 10*time.Second)
+	loaded := readUntil(t, c3, r3, "At the Temple Altar", 10*time.Second)
 	if loaded == "" {
 		t.Fatal("conn3: persisted character did not load back into the world")
 	}
-	if !strings.Contains(loaded, name) {
-		t.Errorf("conn3: loaded room output does not name the character\n---\n%s", loaded)
+	if strings.Contains(loaded, "Lvl ") {
+		t.Errorf("conn3: loaded room output included the retired player-status line\n---\n%s", loaded)
 	}
 	mustWrite(t, c3, "quit\r\n")
 	_ = c3.Close()
@@ -496,7 +499,7 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 	}
 	mustWrite(t, conn, "1\r\n")
 
-	entered := readUntil(t, conn, r, "[8004]", 10*time.Second)
+	entered := readUntil(t, conn, r, "At the Temple Altar", 10*time.Second)
 	if entered == "" {
 		t.Fatal("new character never entered the world")
 	}
@@ -509,23 +512,29 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 func walkToTempleSquare(t *testing.T, conn net.Conn, r *bufio.Reader) {
 	t.Helper()
 	mustWrite(t, conn, "south\r\n")
-	if readUntil(t, conn, r, "[8008]", 10*time.Second) == "" {
+	if readUntil(t, conn, r, "Temple of the Cross", 10*time.Second) == "" {
 		t.Fatal("did not reach Temple of the Cross [8008]")
 	}
 	mustWrite(t, conn, "south\r\n")
-	if readUntil(t, conn, r, "[8021]", 10*time.Second) == "" {
+	if readUntil(t, conn, r, "Temple Square", 10*time.Second) == "" {
 		t.Fatal("did not reach Temple Square [8021]")
 	}
 }
 
-// firstMobKeyword extracts a hittable keyword from look output by taking the
-// last word of the first "<something> is here." line. Mobs render before
-// players in the room block, so the first such line is an NPC.
+// firstMobKeyword extracts a hittable keyword from the first C-style mobile
+// presence line. Mobs render before players in the room block, so the first
+// matching line is an NPC rather than the test character.
 func firstMobKeyword(look string) string {
 	for _, line := range strings.Split(look, "\n") {
 		line = strings.TrimRight(strings.TrimSpace(line), "\r")
-		idx := strings.Index(line, " is here")
-		if idx <= 0 {
+		idx := -1
+		for _, marker := range []string{" is here", " is standing here", " stands here", " sits here", " waits here", " lies here"} {
+			if candidate := strings.Index(strings.ToLower(line), marker); candidate > 0 {
+				idx = candidate
+				break
+			}
+		}
+		if idx < 0 {
 			continue
 		}
 		words := strings.Fields(line[:idx]) // e.g. "a large training monster"

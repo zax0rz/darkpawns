@@ -25,7 +25,7 @@ import (
 // suppressions in the tree. It must only decrease. Retire a suppression only
 // once its file is genuinely U1000-clean (`staticcheck -checks U1000 ./...`),
 // then drop this number.
-const maxFileIgnores = 8
+const maxFileIgnores = 7
 
 const suppressionMarker = "//lint:file-ignore U1000"
 

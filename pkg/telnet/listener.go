@@ -549,12 +549,20 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		}
 		switch sm.Type {
 		case "state":
-			// Format game state as readable text
-			tc.writeLine(formatState(sm))
+			// State is structured client data. Room text is emitted from the same
+			// game ObservationResult as act() messages, so telnet must not maintain
+			// a third room renderer here.
+			if stateText := formatState(sm); stateText != "" {
+				tc.writeLine(stateText)
+			}
 		case "event":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
 				if text, ok := ed["text"].(string); ok {
-					tc.writeLine(fmt.Sprintf("\r\n%s\r\n", text))
+					if strings.HasSuffix(text, "\n") {
+						tc.writeLine(text)
+					} else {
+						tc.writeLine(text + "\r\n")
+					}
 				}
 			}
 		case "error":
@@ -670,70 +678,8 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 }
 
 func formatState(sm session.ServerMessage) string {
-	d, ok := sm.Data.(map[string]interface{})
-	if !ok {
-		return string(sm.Data.([]byte))
-	}
-
-	var b strings.Builder
-	b.WriteString("\r\n---\r\n")
-
-	if player, ok := d["player"].(map[string]interface{}); ok {
-		_, _ = fmt.Fprintf(&b, "  %s", player["name"])
-		if cls, ok := player["class"].(string); ok && cls != "" {
-			_, _ = fmt.Fprintf(&b, " the %s", cls)
-		}
-		if race, ok := player["race"].(string); ok && race != "" {
-			_, _ = fmt.Fprintf(&b, " (%s)", race)
-		}
-		_, _ = fmt.Fprintf(&b, "  Lvl %v  HP: %v/%v\r\n",
-			player["level"], player["health"], player["max_health"])
-	}
-
-	if room, ok := d["room"].(map[string]interface{}); ok {
-		fmt.Fprintf(&b, "\r\n  %s [%v]\r\n", room["name"], room["vnum"])
-		if desc, ok := room["description"].(string); ok {
-			fmt.Fprintf(&b, "  %s\r\n", desc)
-		}
-		// Items on the ground, NPCs, and other players present. Without these
-		// a telnet player is blind to everything they can interact with —
-		// loot, the mob they want to fight, who else is in the room. (DP-592)
-		for _, line := range jsonStrings(room["items"]) {
-			fmt.Fprintf(&b, "  %s\r\n", line)
-		}
-		for _, line := range jsonStrings(room["mobs"]) {
-			fmt.Fprintf(&b, "  %s\r\n", line)
-		}
-		for _, name := range jsonStrings(room["players"]) {
-			fmt.Fprintf(&b, "  %s is here.\r\n", name)
-		}
-		if exits, ok := room["exits"].([]interface{}); ok && len(exits) > 0 {
-			names := make([]string, len(exits))
-			for i, e := range exits {
-				names[i] = fmt.Sprintf("%v", e)
-			}
-			fmt.Fprintf(&b, "  Exits: %s\r\n", strings.Join(names, ", "))
-		}
-	}
-
-	b.WriteString("---\r\n")
-	return b.String()
-}
-
-// jsonStrings coerces a JSON-decoded array (interface{}) into a []string,
-// skipping any non-string elements.
-func jsonStrings(v interface{}) []string {
-	arr, ok := v.([]interface{})
-	if !ok {
-		return nil
-	}
-	out := make([]string, 0, len(arr))
-	for _, e := range arr {
-		if s, ok := e.(string); ok {
-			out = append(out, s)
-		}
-	}
-	return out
+	_ = sm
+	return ""
 }
 
 // readLine reads a line, handling IAC negotiation and responding appropriately.

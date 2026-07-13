@@ -1,0 +1,51 @@
+# Immortal observation path. A disposable zone reset places Cuchi in the
+# Temple Infirmary; her canonical Orodreth-only special promotes the actor on
+# both servers. No source world or player database is modified.
+
+[fixture]
+quiet-mobs
+spawn-mob 18306 1 8162 80
+strip-mob-script 18306
+
+[setup:oracle]
+Orodreth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+
+[setup:port]
+Orodreth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+w
+s
+
+[warmup]
+pat Cuchi
+roomflags
+brief
+
+[probe]
+north
+look
+look east
+exits

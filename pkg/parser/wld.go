@@ -120,9 +120,13 @@ func ParseWldFile(path string) ([]Room, error) {
 func readTildeString(scanner *bufio.Scanner) (string, error) {
 	var parts []string
 	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if strings.HasSuffix(line, "~") {
-			parts = append(parts, strings.TrimSuffix(line, "~"))
+		// World descriptions intentionally use leading spaces for first-line
+		// indentation. C's fread_string preserves them; trimming each line made
+		// the Go observation renderer incapable of reproducing room text.
+		line := strings.TrimSuffix(scanner.Text(), "\r")
+		terminatorCandidate := strings.TrimRight(line, " \t")
+		if strings.HasSuffix(terminatorCandidate, "~") {
+			parts = append(parts, strings.TrimSuffix(terminatorCandidate, "~"))
 			return strings.Join(parts, "\n"), nil
 		}
 		parts = append(parts, line)

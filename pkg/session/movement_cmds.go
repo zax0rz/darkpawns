@@ -286,7 +286,7 @@ func cmdFleeMovement(s *Session) error {
 		s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
 
 		// Send new room state
-		return cmdLook(s, nil)
+		return cmdMovementLook(s)
 	}
 
 	if !fled {
