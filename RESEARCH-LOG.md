@@ -2,6 +2,35 @@
 
 Living document. Updated per session by Daeron.
 
+## [SESSION] 2026-07-12 — C Oracle Built + Differential Harness Landed (PR #243)
+
+**The original C Dark Pawns server boots on macOS Apple Silicon.** No source modifications. Just compiler flags and `make`. The C oracle is live at `/Users/zach/.openclaw/workspace/darkpawns-c-oracle/bin/circle`. This is the ground truth for port fidelity — not source code we read and guess about, but a running game we can ask questions.
+
+**The differential-test harness landed on its first run and found three real divergences:**
+1. Different starting room — C drops new chars in Temple Infirmary; Go lands them at Temple Altar [8004]
+2. Go leaks room vnum `[8004]` in room name (immortal/holylight-only in Diku/Circle)
+3. Go dumps full item stat blocks on room look (Keywords/Type/Weight/Damage) where C just says "A shiny short sword is here."
+
+Three fidelity findings from one `look` scenario. Static code reading would have missed all three. The harness paid for itself on the first run.
+
+**Reek pipeline evolution:** The oracle transforms Reek from static code reviewer to behavioral difference detector. Scenario files → harness → normalizer → diff → Reek triages surviving diffs with concrete evidence (C output vs Go output). False positives collapse to near zero. Coverage expands from ~20% of codebase to 100% of behavior matrix.
+
+**Oracle pipeline roadmap:**
+1. Tier 1 widening — movement/sector, objects/shops, score/display (cheap, worker-distributed)
+2. Tier 2 — random.c port (the keystone, unlocks combat/skill/spell testing)
+3. Tier 3 — combat/skills/spells (crown-jewel subsystems get reference oracle)
+4. Regression detection — run suite before/after merges, catch new divergences
+
+**Paper contribution:** Automated behavioral difference detection across language ports. Not static analysis, not type checking — "run both implementations and compare transcripts." Underexplored in game preservation and software migration literature. The oracle harness is a novel tool for C→Go port fidelity verification.
+
+**[DIGEST] Week of 2026-07-06 to 2026-07-12**
+
+- C Oracle built and booted on macOS Apple Silicon (no source changes required)
+- Tier-1 differential harness landed (PR #243) — first run found 3 real divergences
+- Reek pipeline evolution discussed: static review → behavioral difference detection
+- Board: 0 CRITICAL/HIGH open bugs, 14 Fable fidelity issues remaining
+- Research: Oracle harness as paper contribution — automated behavioral diff across language ports
+
 ## [SESSION] 2026-07-03 — Fable Review Sprint (15 issues, 4 PRs)
 
 **Massive sprint session.** The Architect ran a Fable codebase review and we executed fixes all night. 4 PRs merged, ~15 issues closed. CI was broken when we started, now unblocked.

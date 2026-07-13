@@ -70,14 +70,18 @@ server-linux
 public/
 website/REVIEW-*.md
 
-# Clawpatch backup
-.clawpatch.bak-020/
+# Clawpatch backups
+.clawpatch.bak-*/
 
 # Coding-agent tooling installs (node_modules, locks — local scratch)
 .mimocode/
 
-# Legacy briefs (local scratch; docs/briefs/ is canonical)
+# Legacy briefs (consolidated into docs/briefs/)
 /briefs/
+
+# Local scratch — agent briefs, working drafts, anything ephemeral
+# Use this for new briefs before they're ready to commit.
+.local/
 
 # Player data (runtime)
 pkg/db/data/
