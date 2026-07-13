@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // cmdHit initiates combat with a target.
@@ -249,7 +250,7 @@ func cmdFlee(s *Session) error {
 		if !hasExit || exit.ToRoom == -1 {
 			continue
 		}
-		if exit.DoorState != 0 { // closed or locked
+		if exit.ExitInfo&parser.ExitClosed != 0 {
 			continue
 		}
 		// Skip DEATH rooms (ROOM_DEATH = bit 1 in CircleMUD room flags).

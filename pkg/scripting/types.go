@@ -197,9 +197,9 @@ type ScriptableWorld interface {
 	// Source: scripts.c lua_item_check() — iterates SHOP_BUYTYPE().
 	ShopBuysType(mobVNum int, itemType int) bool
 
-	// SetExitDoorState sets the door state for an exit in a room.
+	// SetExitInfo sets the runtime EX_* bitfield for an exit in a room.
 	// Used by the Lua exit_flags() function.
-	SetExitDoorState(roomVNum int, direction string, state int) bool
+	SetExitInfo(roomVNum int, direction string, info int) bool
 }
 
 // ScriptContext holds the game objects exposed to Lua as globals.

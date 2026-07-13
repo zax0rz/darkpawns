@@ -30,7 +30,6 @@ var goOnlyCommands = map[string]gate{
 	"affects":     {0, 4, "Go-only: read-only affect view; mortal-usable while sleeping"},
 	"autoexit":    {0, 0, "Go-only: player display preference; safe in every position"},
 	"autoloot":    {0, 0, "Go-only: player loot preference; safe in every position"},
-	"bashdoor":    {0, 8, "Go-only: physical door action; requires standing"},
 	"coins":       {0, 5, "Go spelling of C gold; same mortal/resting gate"},
 	"confirm":     {1, 5, "Go skill-system mutation; follows C practice gate"},
 	"describe":    {0, 0, "Go character-profile setting; safe in every position"},

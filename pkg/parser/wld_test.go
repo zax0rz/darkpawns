@@ -228,3 +228,34 @@ func TestReadTildeString_TrailingWhitespace(t *testing.T) {
 		t.Errorf("expected %q, got %q", "hello ", got)
 	}
 }
+
+func TestExitInfoDoorCapabilityAndRuntimeStateAreIndependent(t *testing.T) {
+	tests := []struct {
+		doorState int
+		wantInfo  int
+	}{
+		{doorState: 0, wantInfo: 0},
+		{doorState: 1, wantInfo: ExitIsDoor},
+		{doorState: 2, wantInfo: ExitIsDoor | ExitPickproof},
+	}
+	for _, tt := range tests {
+		if got := ExitInfoFromDoorState(tt.doorState); got != tt.wantInfo {
+			t.Errorf("ExitInfoFromDoorState(%d) = %d, want %d", tt.doorState, got, tt.wantInfo)
+		}
+	}
+
+	capabilities := ExitIsDoor | ExitPickproof
+	if got := ApplyDoorReset(capabilities, 1); got != capabilities|ExitClosed {
+		t.Fatalf("closed reset = %d, want %d", got, capabilities|ExitClosed)
+	}
+	locked := ApplyDoorReset(capabilities, 2)
+	if locked != capabilities|ExitClosed|ExitLocked {
+		t.Fatalf("locked reset = %d, want %d", locked, capabilities|ExitClosed|ExitLocked)
+	}
+	if got := ApplyDoorReset(locked, 0); got != capabilities {
+		t.Fatalf("open reset = %d, want preserved capabilities %d", got, capabilities)
+	}
+	if got := LegacyDoorState(locked); got != 2 {
+		t.Fatalf("LegacyDoorState(locked) = %d, want 2", got)
+	}
+}

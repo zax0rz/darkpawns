@@ -308,8 +308,8 @@ func (a *WorldScriptableAdapter) SetObjectExtraFlag(vnum int, flag int, set bool
 	return a.world.SetObjectExtraFlag(vnum, flag, set)
 }
 
-func (a *WorldScriptableAdapter) SetExitDoorState(roomVNum int, direction string, state int) bool {
-	return a.world.SetExitDoorState(roomVNum, direction, state)
+func (a *WorldScriptableAdapter) SetExitInfo(roomVNum int, direction string, info int) bool {
+	return a.world.SetExitInfo(roomVNum, direction, info)
 }
 
 func (a *WorldScriptableAdapter) ShopBuysType(mobVNum int, itemType int) bool {

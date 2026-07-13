@@ -20,6 +20,7 @@ import (
 	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -723,30 +724,32 @@ func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 // mayorMobCloseDoor closes and locks a door for the mayor, matching C do_gen_door(CLOSE+LOCK).
 func mayorMobCloseDoor(w *World, me *MobInstance, dir int, keyword string) {
 	dirName := dirKeys[dir]
-	room := w.GetRoomInWorld(me.GetRoom())
+	w.mu.Lock()
+
+	room := w.rooms[me.GetRoom()]
 	if room == nil {
+		w.mu.Unlock()
 		return
 	}
 	ext, hasExit := room.Exits[dirName]
 	if !hasExit {
+		w.mu.Unlock()
 		return
 	}
 
-	w.mu.Lock()
-	ext.DoorState = doorLocked
+	ext.ExitInfo |= parser.ExitClosed | parser.ExitLocked
 	room.Exits[dirName] = ext
 
-	otherRoom := w.GetRoomInWorld(ext.ToRoom)
+	otherRoom := w.rooms[ext.ToRoom]
 	if otherRoom != nil {
 		backDir := revDir[dir]
 		backExt, hasBack := otherRoom.Exits[dirs[backDir]]
 		if hasBack && backExt.ToRoom == me.GetRoom() {
-			backExt.DoorState = doorLocked
+			backExt.ExitInfo |= parser.ExitClosed | parser.ExitLocked
 			otherRoom.Exits[dirs[backDir]] = backExt
 		}
 	}
 	w.mu.Unlock()
-
 	w.roomMessage(me.GetRoom(), me.GetName()+" closes and locks the gate.")
 }
 

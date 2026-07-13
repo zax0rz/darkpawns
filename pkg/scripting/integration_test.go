@@ -105,7 +105,7 @@ func (m *mockWorldForTest) SetObjectExtraFlag(vnum int, flag int, set bool) bool
 
 func (m *mockWorldForTest) ShopBuysType(mobVNum int, itemType int) bool { return false }
 
-func (m *mockWorldForTest) SetExitDoorState(roomVNum int, direction string, state int) bool {
+func (m *mockWorldForTest) SetExitInfo(roomVNum int, direction string, info int) bool {
 	return false
 }
 

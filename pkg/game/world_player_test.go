@@ -44,7 +44,7 @@ func newStartingItemsWorld(t *testing.T) (*World, *Player) {
 			{VNum: 8036, Keywords: "dagger", ShortDesc: "a dagger", LongDesc: "A small dagger."},
 			{VNum: 8037, Keywords: "sword", ShortDesc: "a small sword", LongDesc: "A small sword."},
 			// pack (container) — TypeFlag 15 = ITEM_CONTAINER (src/structs.h:100)
-			{VNum: 8038, Keywords: "pack", ShortDesc: "a pack", LongDesc: "A leather pack.", TypeFlag: 15},
+			{VNum: 8038, Keywords: "pack", ShortDesc: "a pack", LongDesc: "A leather pack.", TypeFlag: 15, Values: [4]int{20, contCloseable | contClosed, -1, 0}},
 			{VNum: 8010, Keywords: "bread", ShortDesc: "some bread", LongDesc: "A piece of bread."},
 			{VNum: 8063, Keywords: "waterskin", ShortDesc: "a waterskin", LongDesc: "A full waterskin."},
 			{VNum: 8027, Keywords: "lockpick", ShortDesc: "a set of lockpicks", LongDesc: "Lockpicks."},
@@ -91,12 +91,20 @@ func TestGiveStartingItems_Warrior(t *testing.T) {
 	if pack == nil {
 		t.Fatal("pack not found in inventory")
 	}
+	if pack.ID <= 0 || pack.GetValue(contFlags)&contClosed == 0 {
+		t.Fatalf("starter pack id/flags = %d/%d, want registered and closed", pack.ID, pack.GetValue(contFlags))
+	}
 	packVNums := containerVNums(pack)
 	if !containsVNum(packVNums, 8010) {
 		t.Error("pack should contain bread (vnum 8010)")
 	}
 	if !containsVNum(packVNums, 8063) {
 		t.Error("pack should contain waterskin (vnum 8063)")
+	}
+	for _, item := range pack.Contains {
+		if item.ID <= 0 || item.Location != LocContainer(pack.ID) {
+			t.Errorf("starter pack child %d has id/location %d/%+v", item.VNum, item.ID, item.Location)
+		}
 	}
 }
 

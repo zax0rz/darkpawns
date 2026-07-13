@@ -10,7 +10,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/game/systems"
 )
 
 // positionFailMessage returns an appropriate rejection message when
@@ -171,18 +170,17 @@ func init() {
 	registerCommand("zai", wrapSkill(command.CmdKujiKiri(game.SkillKkZai)), "Kuji-kiri seal: fade from view.")
 	registerCommand("zhen", wrapSkill(command.CmdKujiKiri(game.SkillKkZhen)), "Kuji-kiri seal: focus on endurance for faster movement regen.")
 	registerCommand("sha", wrapSkill(command.CmdKujiKiri(game.SkillKkSha)), "Kuji-kiri seal: heal your wounds.")
-	registerCommand("pick", wrapArgs(cmdPick), "Pick a lock on a door.", "pick lock")
+	registerCommand("pick", wrapArgs(cmdPick), "Pick a lock on a container or exit.", "pick lock")
 
 	// Admin / debug
 	registerCommand("summon", wrapArgs(cmdSummon), "Summon a player to your room.")
 
 	// Doors
-	registerCommand("open", wrapArgs(cmdOpen), "Open a door in a direction: open <north|south|east|west|up|down>")
-	registerCommand("close", wrapArgs(cmdClose), "Close a door in a direction: close <north|south|east|west|up|down>")
-	registerCommand("lock", wrapArgs(cmdLock), "Lock a door with your key: lock <north|south|east|west|up|down>")
-	registerCommand("unlock", wrapArgs(cmdUnlock), "Unlock a door with your key: unlock <north|south|east|west|up|down>")
+	registerCommand("open", wrapArgs(cmdOpen), "Open a container or exit.")
+	registerCommand("close", wrapArgs(cmdClose), "Close a container or exit.")
+	registerCommand("lock", wrapArgs(cmdLock), "Lock a container or exit with its key.")
+	registerCommand("unlock", wrapArgs(cmdUnlock), "Unlock a container or exit with its key.")
 	registerCommand("knock", wrapArgs(cmdKnock), "Knock on a door: knock <north|south|east|west|up|down>")
-	registerCommand("bashdoor", wrapArgs(cmdBashDoor), "Bash down a door: bashdoor <north|south|east|west|up|down>", "dbash")
 
 	// Wizard commands
 	registerCommand("goto", wrapArgs(cmdGoto), "Teleport to a room by VNum.")
@@ -711,31 +709,6 @@ func doorBroadcast(s *Session, message string) {
 		return
 	}
 	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
-}
-
-// playerHasKey checks if the player has an item with the given VNum in their inventory.
-func playerHasKey(s *Session, keyVNum int) bool {
-	if s.player == nil {
-		return false
-	}
-	inv := s.player.Inventory
-	if inv == nil {
-		return false
-	}
-	for _, item := range inv.Items {
-		if item.VNum == keyVNum {
-			return true
-		}
-	}
-	return false
-}
-
-// getDoorManager returns the DoorManager from the world.
-func getDoorManager(s *Session) *systems.DoorManager {
-	if s.manager == nil {
-		return nil
-	}
-	return s.manager.doorManager
 }
 
 // cmdUse handles using an item (wand/staff/potion/scroll) or falls back to using a skill.

@@ -322,8 +322,8 @@ func (w *World) SetObjectExtraFlag(vnum int, flag int, set bool) bool {
 	return false
 }
 
-// SetExitDoorState sets the door state for an exit in a room.
-func (w *World) SetExitDoorState(roomVNum int, direction string, state int) bool {
+// SetExitInfo replaces the runtime EX_* bitfield for an exit in a room.
+func (w *World) SetExitInfo(roomVNum int, direction string, info int) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -335,7 +335,7 @@ func (w *World) SetExitDoorState(roomVNum int, direction string, state int) bool
 	if !ok {
 		return false
 	}
-	exit.DoorState = state
+	exit.ExitInfo = info
 	room.Exits[direction] = exit
 	return true
 }
@@ -873,7 +873,7 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 	}
 
 	// Door check — exit must be open to pass
-	if exit.DoorState > 0 {
+	if exit.ExitInfo&parser.ExitClosed != 0 {
 		errMsg = "The door is closed.\r\n"
 		moveErr = fmt.Errorf("door closed")
 	} else {
@@ -1076,12 +1076,24 @@ func (w *World) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 		return nil, fmt.Errorf("object prototype %d not found", objVNum)
 	}
 
+	obj := w.newObjectInstanceLocked(proto, roomVNum)
+	return obj, nil
+}
+
+// newObjectInstance creates a world-owned runtime object with a stable ID.
+// Object movement relies on this registry to resolve container locations.
+func (w *World) newObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.newObjectInstanceLocked(proto, roomVNum)
+}
+
+func (w *World) newObjectInstanceLocked(proto *parser.Obj, roomVNum int) *ObjectInstance {
 	obj := NewObjectInstance(proto, roomVNum)
 	obj.ID = w.nextObjID
 	w.nextObjID++
-	obj.Location = LocRoom(roomVNum)
 	w.objectInstances[obj.ID] = obj
-	return obj, nil
+	return obj
 }
 
 // GetMobsInRoomScriptable returns mobs in a room as ScriptableMob slice.

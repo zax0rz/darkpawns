@@ -9,16 +9,6 @@ import (
 func cmdMove(s *Session, direction string) error {
 	oldRoom := s.player.GetRoom()
 
-	// Check if a door blocks the exit
-	dm := s.manager.doorManager
-	if dm != nil {
-		canPass, msg := dm.CanPass(oldRoom, direction)
-		if !canPass {
-			s.sendText(msg)
-			return nil
-		}
-	}
-
 	// Collect followers in this room before moving (cannot query after move holds lock)
 	followers := s.manager.world.GetFollowersInRoom(s.player.Name, oldRoom)
 

@@ -539,7 +539,7 @@ var helpTopics = map[string]string{
 	"combat":        "Fighting commands: hit <target>, flee, bash <target>, kick <target>, backstab <target>, rescue <target>, trip <target>, headbutt <target>, disembowel <target>, dragonkick <target>, tigerpunch <target>, subdue <target>, shoot <target>, parry, sneak, hide, ambush, neckbreak, sleeper, consider <target>, diagnose <target>",
 	"communication": "Chat commands: say <text>, tell <player> <text>, reply <text>, whisper <player> <text>, emote <text>, shout <text>, gossip <text>, gtell/gsay <text>",
 	"items":         "Item commands: get <item>, drop <item>, inventory/i, equipment/eq, wear <item>, remove <item>, wield <item>, hold <item>, give <item> <player>, put <item> <container>, eat <item>, drink <container>, quaff <item>",
-	"doors":         "Door commands: open <dir>, close <dir>, lock <dir>, unlock <dir>, pick <dir>, bashdoor <dir>, knock <dir>",
+	"doors":         "Door commands: open <target>, close <target>, lock <target>, unlock <target>, pick <target>, knock <dir>",
 	"social":        "Social commands: wave, nod, grin, laugh, bow, curtsey, hug, kiss, cheer, cry, dance, smile, frown, shrug, clap, salute, yawn, stretch, scratch, sit, rest, sleep, wake, stand",
 	"info":          "Information commands: score, who, where, review, whois, consider, examine, time, weather, affects, autoexit, title, describe, spells, commands",
 	"account":       "Account commands: password <old> <new> (change password), prompt [string|on|off|all], save, quit",

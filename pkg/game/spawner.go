@@ -437,8 +437,9 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				slog.Warn("Door command: exit not found", "room", cmd.Arg1, "dir", roomDirNames[cmd.Arg2])
 				continue
 			}
-			// Arg3: 0=open, 1=closed, 2=locked
-			ext.DoorState = cmd.Arg3
+			// Arg3 is runtime state: 0=open, 1=closed, 2=closed+locked.
+			ext.ExitInfo = parser.ApplyDoorReset(ext.ExitInfo, cmd.Arg3)
+			s.world.SetExitInfo(cmd.Arg1, roomDirNames[cmd.Arg2], ext.ExitInfo)
 			lastCmd = 1
 
 		case "R": // Remove obj/mob from room

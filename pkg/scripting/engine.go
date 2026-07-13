@@ -18,6 +18,7 @@ import (
 
 	lua "github.com/yuin/gopher-lua"
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Engine manages the Lua VM.
@@ -3070,18 +3071,8 @@ func (e *Engine) luaExitFlagged(L *lua.LState) int {
 		return 1
 	}
 
-	result := false
-	switch flag {
-	case 0: // EX_ISDOOR
-		result = exit.DoorState > 0
-	case 1: // EX_CLOSED
-		result = exit.DoorState >= 1
-	case 2: // EX_LOCKED
-		result = exit.DoorState == 2
-	case 3: // EX_PICKPROOF
-		// Can't reliably determine from runtime DoorState
-		result = false
-	}
+	bits := []int{parser.ExitIsDoor, parser.ExitClosed, parser.ExitLocked, parser.ExitPickproof}
+	result := flag >= 0 && flag < len(bits) && exit.ExitInfo&bits[flag] != 0
 
 	if result {
 		L.Push(lua.LNumber(1))
@@ -3122,40 +3113,20 @@ func (e *Engine) luaExitFlags(L *lua.LState) int {
 		return 0
 	}
 
-	newState := exit.DoorState
+	bits := []int{parser.ExitIsDoor, parser.ExitClosed, parser.ExitLocked, parser.ExitPickproof}
+	if flag < 0 || flag >= len(bits) {
+		return 0
+	}
+	newInfo := exit.ExitInfo
 	switch op {
 	case "set":
-		switch flag {
-		case 0: // EX_ISDOOR
-			if newState == 0 {
-				newState = 1
-			}
-		case 1: // EX_CLOSED
-			if newState == 0 {
-				newState = 1
-			}
-		case 2: // EX_LOCKED
-			newState = 2
-		case 3: // EX_PICKPROOF
-			// Can't set pickproof at runtime
-		}
+		newInfo |= bits[flag]
 	case "remove":
-		switch flag {
-		case 0: // EX_ISDOOR
-			newState = 0
-		case 1: // EX_CLOSED
-			newState = 0
-		case 2: // EX_LOCKED
-			if newState == 2 {
-				newState = 1
-			}
-		case 3: // EX_PICKPROOF
-			// Can't remove pickproof at runtime
-		}
+		newInfo &^= bits[flag]
 	}
 
-	if newState != exit.DoorState {
-		e.world.SetExitDoorState(vnum, dir, newState)
+	if newInfo != exit.ExitInfo {
+		e.world.SetExitInfo(vnum, dir, newInfo)
 	}
 
 	return 0

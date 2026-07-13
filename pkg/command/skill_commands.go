@@ -1123,24 +1123,6 @@ func CmdSteal(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, result)
 }
 
-// CmdPickLock handles the pick command.
-func CmdPickLock(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
-	}
-
-	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillPickLock)
-	if !canUse {
-		return s.SendMessage(msg + "\r\n")
-	}
-
-	world := s.GetWorld()
-	argument := strings.Join(args, " ")
-	result := game.DoPickLock(world, ch, argument)
-	return s.SendMessage(result.MessageToCh + "\r\n")
-}
-
 // CmdCarve handles the carve command.
 func CmdCarve(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {

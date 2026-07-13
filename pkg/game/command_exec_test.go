@@ -197,14 +197,16 @@ func TestExecuteMobCommand_NoDeadlock(t *testing.T) {
 	room.Exits = map[string]parser.Exit{
 		"north": {
 			ToRoom:    1002,
-			DoorState: 1, // doorClosed
+			DoorState: 1,
+			ExitInfo:  parser.ExitIsDoor | parser.ExitClosed,
 			Keywords:  "door",
 		},
 	}
 	w.rooms[1002] = &parser.Room{VNum: 1002, Name: "North Room", Exits: map[string]parser.Exit{
 		"south": {
 			ToRoom:    1001,
-			DoorState: 1, // doorClosed
+			DoorState: 1,
+			ExitInfo:  parser.ExitIsDoor | parser.ExitClosed,
 		},
 	}}
 	w.mu.Unlock()
@@ -215,9 +217,9 @@ func TestExecuteMobCommand_NoDeadlock(t *testing.T) {
 
 	// Verify the door opened
 	w.mu.RLock()
-	doorState := w.rooms[1001].Exits["north"].DoorState
+	doorState := w.rooms[1001].Exits["north"].ExitInfo
 	w.mu.RUnlock()
-	if doorState != 0 { // doorOpen = 0
+	if doorState&parser.ExitClosed != 0 {
 		t.Errorf("expected door to be open (0), got %d", doorState)
 	}
 }

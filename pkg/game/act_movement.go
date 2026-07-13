@@ -6,7 +6,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -41,13 +40,6 @@ const (
 	SECT_WIND         = 13
 	SECT_WATER        = 14
 	SECT_SWAMP        = 15
-)
-
-// DoorState constants — from parser.Exit.DoorState in wld.go.
-const (
-	doorOpen   = 0
-	doorClosed = 1
-	doorLocked = 2
 )
 
 // Direction name array (matching dirs[] from constants.c).
@@ -183,21 +175,16 @@ func hasBoat(w *World, ch *Player) bool {
 
 // hasKey checks if a player has a key object by vnum.
 func hasKey(ch *Player, key int) bool {
-	if key <= 0 {
-		return false
-	}
 	if ch.Inventory != nil {
 		for _, obj := range ch.Inventory.Items {
-			if obj.VNum == key {
+			if obj != nil && obj.VNum == key {
 				return true
 			}
 		}
 	}
 	if ch.Equipment != nil {
-		for _, obj := range ch.Equipment.Slots {
-			if obj != nil && obj.VNum == key {
-				return true
-			}
+		if obj, ok := ch.Equipment.GetItemInSlot(SlotHold); ok && obj != nil && obj.VNum == key {
+			return true
 		}
 	}
 	return false
@@ -377,7 +364,7 @@ func performMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		return false
 	}
 
-	if ext.DoorState == doorClosed || ext.DoorState == doorLocked {
+	if ext.ExitInfo&parser.ExitClosed != 0 {
 		if ext.Keywords != "" && !strings.Contains(ext.Keywords, "secret") {
 			sendToChar(ch, fmt.Sprintf("The %s seems to be closed.\r\n", firstWord(ext.Keywords)))
 		} else {
@@ -410,6 +397,8 @@ func performMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 // findDoor locates a door by keyword or direction.
 // Returns door index (0-5) or -1 on failure.
 func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
+	room := w.GetRoomInWorld(ch.GetRoom())
+	revealsSecrets := room != nil && room.HasFlag(20)
 	if dir != "" {
 		// A direction was specified
 		door := searchBlock(dir, dirs, false)
@@ -418,7 +407,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 			return -1
 		}
 		ext, ok := getExit(w, ch, door)
-		if !ok {
+		if !ok || strings.Contains(strings.ToLower(ext.Keywords), "secret") && !revealsSecrets {
 			sendToChar(ch, "I really don't see how you can do anything there.\r\n")
 			return -1
 		}
@@ -439,14 +428,14 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 		return -1
 	}
 
-	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return -1
 	}
 
 	for door := 0; door < len(dirs); door++ {
 		ext, ok := room.Exits[dirs[door]]
-		if ok && ext.Keywords != "" && isName(doorType, ext.Keywords) {
+		if ok && ext.Keywords != "" && isName(doorType, ext.Keywords) &&
+			(!strings.Contains(strings.ToLower(ext.Keywords), "secret") || revealsSecrets) {
 			return door
 		}
 	}
@@ -455,22 +444,30 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 	return -1
 }
 
-// doDoorcmd executes a door subcommand (open/close/lock/unlock/pick).
-func doDoorcmd(w *World, ch *Player, _ *ObjectInstance, door int, scmd int) {
+// doDoorcmd executes a container or exit subcommand after the exact C
+// precondition ladder has succeeded.
+func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 	room := w.GetRoomInWorld(ch.GetRoom())
-	if room == nil || door < 0 || door >= len(dirs) {
+	if room == nil || obj == nil && (door < 0 || door >= len(dirs)) {
 		return
 	}
 
-	ext, hasExt := room.Exits[dirs[door]]
-	if !hasExt {
-		return
+	var ext parser.Exit
+	if obj == nil {
+		var hasExt bool
+		ext, hasExt = room.Exits[dirs[door]]
+		if !hasExt {
+			return
+		}
 	}
 
-	otherRoomVNum := ext.ToRoom
+	otherRoomVNum := -1
 	var backExt parser.Exit
 	hasBack := false
-	if otherRoomVNum != -1 {
+	if obj == nil {
+		otherRoomVNum = ext.ToRoom
+	}
+	if obj == nil && otherRoomVNum != -1 {
 		otherRoom := w.GetRoomInWorld(otherRoomVNum)
 		if otherRoom != nil {
 			backDir := revDir[door]
@@ -483,86 +480,92 @@ func doDoorcmd(w *World, ch *Player, _ *ObjectInstance, door int, scmd int) {
 		}
 	}
 
-	doorName := "door"
-	if ext.Keywords != "" {
-		doorName = firstWord(ext.Keywords)
-	}
-
 	switch scmd {
 	case scmdOpen:
-		if ext.DoorState == doorClosed {
-			ext.DoorState = doorOpen
+		if obj != nil {
+			obj.SetValue(contFlags, obj.GetValue(contFlags)^contClosed)
+		} else {
+			ext.ExitInfo ^= parser.ExitClosed
+			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
 			if hasBack {
-				backExt.DoorState = doorOpen
+				backExt.ExitInfo ^= parser.ExitClosed
+				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
-		sendToChar(ch, "OK.\r\n")
-		// Update the exit in room map
-		room.Exits[dirs[door]] = ext
-		if hasBack {
-			otherRoom := w.GetRoomInWorld(otherRoomVNum)
-			otherRoom.Exits[dirs[revDir[door]]] = backExt
-		}
+		sendToChar(ch, "Okay.\r\n")
 
 	case scmdClose:
-		if ext.DoorState == doorOpen {
-			ext.DoorState = doorClosed
+		if obj != nil {
+			obj.SetValue(contFlags, obj.GetValue(contFlags)^contClosed)
+		} else {
+			ext.ExitInfo ^= parser.ExitClosed
+			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
 			if hasBack {
-				backExt.DoorState = doorClosed
+				backExt.ExitInfo ^= parser.ExitClosed
+				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
-		sendToChar(ch, "OK.\r\n")
-		room.Exits[dirs[door]] = ext
-		if hasBack {
-			otherRoom := w.GetRoomInWorld(otherRoomVNum)
-			otherRoom.Exits[dirs[revDir[door]]] = backExt
-		}
+		sendToChar(ch, "Okay.\r\n")
 
 	case scmdUnlock:
-		if ext.DoorState == doorLocked {
-			ext.DoorState = doorClosed
+		if obj != nil {
+			obj.SetValue(contFlags, obj.GetValue(contFlags)^contLocked)
+		} else {
+			ext.ExitInfo ^= parser.ExitLocked
+			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
 			if hasBack {
-				backExt.DoorState = doorClosed
+				backExt.ExitInfo ^= parser.ExitLocked
+				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
 		sendToChar(ch, "*Click*\r\n")
-		room.Exits[dirs[door]] = ext
-		if hasBack {
-			otherRoom := w.GetRoomInWorld(otherRoomVNum)
-			otherRoom.Exits[dirs[revDir[door]]] = backExt
-		}
 
 	case scmdLock:
-		if ext.DoorState == doorClosed {
-			ext.DoorState = doorLocked
+		if obj != nil {
+			obj.SetValue(contFlags, obj.GetValue(contFlags)^contLocked)
+		} else {
+			ext.ExitInfo ^= parser.ExitLocked
+			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
 			if hasBack {
-				backExt.DoorState = doorLocked
+				backExt.ExitInfo ^= parser.ExitLocked
+				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
 		sendToChar(ch, "*Click*\r\n")
-		room.Exits[dirs[door]] = ext
-		if hasBack {
-			otherRoom := w.GetRoomInWorld(otherRoomVNum)
-			otherRoom.Exits[dirs[revDir[door]]] = backExt
-		}
 
 	case scmdPick:
-		if ext.DoorState == doorLocked {
-			ext.DoorState = doorClosed
+		if obj != nil {
+			obj.SetValue(contFlags, obj.GetValue(contFlags)^contLocked)
+		} else {
+			ext.ExitInfo ^= parser.ExitLocked
+			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
 			if hasBack {
-				backExt.DoorState = doorClosed
+				backExt.ExitInfo ^= parser.ExitLocked
+				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
 		sendToChar(ch, "The lock quickly yields to your skills.\r\n")
-		room.Exits[dirs[door]] = ext
-		if hasBack {
-			otherRoom := w.GetRoomInWorld(otherRoomVNum)
-			otherRoom.Exits[dirs[revDir[door]]] = backExt
-		}
 	}
 
 	// Notify the room
-	w.roomMessage(ch.GetRoom(), fmt.Sprintf("$n %ss the %s.", cmdDoor[scmd], doorName))
+	roomFormat := fmt.Sprintf("$n %ss ", cmdDoor[scmd])
+	if scmd == scmdPick {
+		roomFormat = "$n skillfully picks the lock on "
+	}
+	if obj != nil {
+		roomFormat += "$p."
+		if obj.Location.Kind == ObjInRoom {
+			Act(w, false, ch, nil, obj, nil, roomFormat, "", ToRoom)
+		}
+	} else {
+		roomFormat += "the "
+		if ext.Keywords != "" {
+			roomFormat += "$F."
+		} else {
+			roomFormat += "door."
+		}
+		Act(w, false, ch, nil, nil, nil, roomFormat, ext.Keywords, ToRoom)
+	}
 
 	// Notify the other room for open/close
 	if (scmd == scmdOpen || scmd == scmdClose) && hasBack {
@@ -576,104 +579,148 @@ func doDoorcmd(w *World, ch *Player, _ *ObjectInstance, door int, scmd int) {
 		}
 		msg := fmt.Sprintf("The %s %s %s%s from the other side.\r\n",
 			backName, verbIs(backName), cmdDoor[scmd], suffix)
-		players := w.GetPlayersInRoom(otherRoomVNum)
-		for _, p := range players {
-			p.SendMessage(msg)
+		for _, actor := range w.actChar(otherRoomVNum) {
+			actor.SendMessage(msg)
 		}
 	}
 }
 
+var doorNumber = number
+
 // okPick checks whether a pick attempt succeeds.
-func okPick(_ *World, ch *Player, keynum int, _ bool, _ int) bool {
-	if keynum > 0 {
-		sendToChar(ch, "The lock seems to be magical.\r\n")
-		return false
+func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
+	percent := doorNumber(1, 101)
+	if scmd != scmdPick {
+		return true
 	}
 
-	skill := ch.GetSkill(SkillPickLock)
-	if skill == 0 {
-		sendToChar(ch, "You have no idea how to pick locks.\r\n")
-		return false
+	var picks *ObjectInstance
+	if ch.Equipment != nil {
+		picks, _ = ch.Equipment.GetItemInSlot(SlotHold)
 	}
-
-	// #nosec G404 — game RNG, not cryptographic
-	percent := rand.IntN(101) + 1
-	if percent > skill {
+	canBreak := 0
+	switch {
+	case keynum < 0:
+		sendToChar(ch, "Odd - you can't seem to find a keyhole.\r\n")
+	case (picks == nil || picks.VNum != 8027) && ch.GetLevel() < lvlImmort:
+		sendToChar(ch, "You'll need to hold a set of lockpicks before you can pick a lock!\r\n")
+	case pickproof:
+		sendToChar(ch, "It resists your attempts to pick it.\r\n")
+		canBreak = 2
+	case percent > ch.GetSkill(SkillPickLock):
 		sendToChar(ch, "You failed to pick the lock.\r\n")
-		return false
+		canBreak = 1
+	default:
+		return true
 	}
-	return true
+
+	if picks != nil && canBreak != 0 && ch.GetLevel() < doorNumber(0, 30)+canBreak {
+		Act(w, false, ch, nil, nil, nil, "$n curses as $e bends some of $s lockpicks.", "", ToRoom)
+		sendToChar(ch, "You ruin your lockpicks in the process.\r\n")
+		if err := ch.Equipment.Unequip(SlotHold, ch.Inventory); err != nil {
+			slog.Error("unequip ruined lockpicks", "player", ch.GetName(), "error", err)
+			return false
+		}
+		w.ExtractObject(picks, ch.GetRoom())
+		broken, err := w.SpawnObject(8028, -1)
+		if err != nil {
+			slog.Error("spawn broken lockpicks", "player", ch.GetName(), "error", err)
+			return false
+		}
+		if err := ch.Equipment.Equip(broken, ch.Inventory); err != nil {
+			slog.Error("equip broken lockpicks", "player", ch.GetName(), "error", err)
+			if moveErr := w.MoveObject(broken, LocInventoryPlayer(ch.GetName())); moveErr != nil {
+				slog.Error("rollback broken lockpicks to inventory", "player", ch.GetName(), "error", moveErr)
+			}
+		}
+	}
+	return false
 }
 
 // doGenDoor generic door command handler (open/close/lock/unlock/pick).
 func doGenDoor(w *World, ch *Player, argument string, scmd int) {
-	arg := strings.TrimSpace(argument)
-	parts := strings.SplitN(arg, " ", 2)
-	doorType := parts[0]
+	fields := strings.Fields(argument)
+	if len(fields) == 0 {
+		sendToChar(ch, strings.ToUpper(cmdDoor[scmd][:1])+cmdDoor[scmd][1:]+" what?\r\n")
+		return
+	}
+	doorType := fields[0]
 	dir := ""
-	if len(parts) > 1 {
-		dir = parts[1]
+	if len(fields) > 1 {
+		dir = fields[1]
 	}
 
-	if doorType == "" {
-		sendToChar(ch, fmt.Sprintf("What is it you want to %s?\r\n", cmdDoor[scmd]))
-		return
-	}
-
-	door := findDoor(w, ch, doorType, dir, cmdDoor[scmd])
-	if door == -1 {
-		return
-	}
-
-	ext, ok := getExit(w, ch, door)
-	if !ok {
-		return
-	}
-
-	// Has keyword = proper door, else just direction exit
-	if ext.Keywords != "" {
-		// For lock/unlock, check key
-		if scmd == scmdLock || scmd == scmdUnlock {
-			if ext.Key > 0 && !hasKey(ch, ext.Key) {
-				sendToChar(ch, "You don't seem to have the proper key.\r\n")
-				return
+	var obj *ObjectInstance
+	if ch.Inventory != nil {
+		for _, item := range ch.Inventory.Items {
+			if item != nil && canSeeObject(ch, item) && isName(doorType, item.GetKeywords()) {
+				obj = item
+				break
 			}
 		}
-
-		// Check exit state requirements
-		needed := flagsDoor[scmd]
-		if needed&needClosed != 0 && ext.DoorState != doorClosed && ext.DoorState != doorLocked {
-			sendToChar(ch, "It's not closed.\r\n")
-			return
-		}
-		if needed&needOpen != 0 && ext.DoorState != doorOpen {
-			sendToChar(ch, "It's not open.\r\n")
-			return
-		}
-		if needed&needUnlocked != 0 && ext.DoorState != doorClosed {
-			sendToChar(ch, "It's not closed.\r\n")
-			return
-		}
-		if needed&needLocked != 0 && ext.DoorState != doorLocked {
-			sendToChar(ch, "It's not locked.\r\n")
-			return
-		}
-
-		if scmd == scmdPick && ext.Key > 0 {
-			// Magic lock — can't pick
-			sendToChar(ch, "The lock seems to be magical.\r\n")
-			return
-		}
-
-		if scmd == scmdPick {
-			if !okPick(w, ch, ext.Key, false, scmd) {
-				return
+	}
+	if obj == nil {
+		for _, item := range w.GetItemsInRoom(ch.GetRoom()) {
+			if item != nil && canSeeObject(ch, item) && isName(doorType, item.GetKeywords()) {
+				obj = item
+				break
 			}
 		}
 	}
 
-	doDoorcmd(w, ch, nil, door, scmd)
+	door := -1
+	if obj == nil {
+		door = findDoor(w, ch, doorType, dir, cmdDoor[scmd])
+		if door < 0 {
+			return
+		}
+	}
+
+	var keynum int
+	var openable, open, unlocked, pickproof bool
+	if obj != nil {
+		keynum = obj.GetValue(contKey)
+		flags := obj.GetValue(contFlags)
+		openable = obj.GetTypeFlag() == ITEM_CONTAINER && flags&contCloseable != 0
+		open = flags&contClosed == 0
+		unlocked = flags&contLocked == 0
+		pickproof = flags&contPickproofBit != 0
+	} else {
+		ext, ok := getExit(w, ch, door)
+		if !ok {
+			return
+		}
+		keynum = ext.Key
+		openable = ext.ExitInfo&parser.ExitIsDoor != 0
+		open = ext.ExitInfo&parser.ExitClosed == 0
+		unlocked = ext.ExitInfo&parser.ExitLocked == 0
+		pickproof = ext.ExitInfo&parser.ExitPickproof != 0
+	}
+
+	needed := flagsDoor[scmd]
+	switch {
+	case !openable:
+		Act(nil, false, ch, nil, nil, nil, "You can't $F that!", cmdDoor[scmd], ToChar)
+	case !open && needed&needOpen != 0:
+		sendToChar(ch, "But it's already closed!\r\n")
+	case open && needed&needClosed != 0:
+		sendToChar(ch, "But it's currently open!\r\n")
+	case unlocked && needed&needLocked != 0:
+		sendToChar(ch, "Oh.. it wasn't locked, after all..\r\n")
+	case !unlocked && needed&needUnlocked != 0:
+		sendToChar(ch, "It seems to be locked.\r\n")
+	case !hasKey(ch, keynum) && ch.GetLevel() < LVL_GOD && (scmd == scmdLock || scmd == scmdUnlock):
+		sendToChar(ch, "You don't seem to have the proper key.\r\n")
+	case okPick(w, ch, keynum, pickproof, scmd):
+		doDoorcmd(w, ch, obj, door, scmd)
+	}
 }
+
+func (w *World) DoOpen(ch *Player, argument string)   { doGenDoor(w, ch, argument, scmdOpen) }
+func (w *World) DoClose(ch *Player, argument string)  { doGenDoor(w, ch, argument, scmdClose) }
+func (w *World) DoUnlock(ch *Player, argument string) { doGenDoor(w, ch, argument, scmdUnlock) }
+func (w *World) DoLock(ch *Player, argument string)   { doGenDoor(w, ch, argument, scmdLock) }
+func (w *World) DoPick(ch *Player, argument string)   { doGenDoor(w, ch, argument, scmdPick) }
 
 // ---------------------------------------------------------------------------
 // Keyword matching helpers

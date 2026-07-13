@@ -217,7 +217,7 @@ func TestWorldSerializationRoundTrip(t *testing.T) {
 			{
 				VNum: 1001, Name: "Room A", Zone: 1,
 				Exits: map[string]parser.Exit{
-					"north": {Direction: "north", ToRoom: 1002, DoorState: 1}, // doorClosed
+					"north": {Direction: "north", ToRoom: 1002, DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed},
 				},
 			},
 			{
@@ -276,8 +276,8 @@ func TestWorldSerializationRoundTrip(t *testing.T) {
 		t.Fatal("room 1001 missing in deserialized world")
 	}
 	exitNorth := room1001.Exits["north"]
-	if exitNorth.DoorState != 1 {
-		t.Errorf("door state north = %d, want 1", exitNorth.DoorState)
+	if exitNorth.ExitInfo&parser.ExitClosed == 0 {
+		t.Errorf("exit info north = %d, want closed", exitNorth.ExitInfo)
 	}
 
 	// Verify gossip
@@ -297,7 +297,7 @@ func TestSaveLoadWorldDisk(t *testing.T) {
 			{
 				VNum: 5001, Name: "Test Room", Zone: 5,
 				Exits: map[string]parser.Exit{
-					"up": {Direction: "up", ToRoom: 5002, DoorState: 2}, // doorLocked
+					"up": {Direction: "up", ToRoom: 5002, DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed | parser.ExitLocked},
 				},
 			},
 		},
@@ -347,8 +347,8 @@ func TestSaveLoadWorldDisk(t *testing.T) {
 		t.Fatal("room 5001 missing after LoadWorld")
 	}
 	exitUp := room.Exits["up"]
-	if exitUp.DoorState != 2 {
-		t.Errorf("Loaded world door state = %d, want 2", exitUp.DoorState)
+	if exitUp.ExitInfo&parser.ExitLocked == 0 {
+		t.Errorf("loaded world exit info = %d, want locked", exitUp.ExitInfo)
 	}
 }
 
