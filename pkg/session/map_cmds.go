@@ -247,7 +247,7 @@ func CmdMap(s *Session, args []string) error {
 
 // init registers the map command.
 func init() {
-	cmdRegistry.Register("map", wrapArgs(CmdMap), "Display a map of the world.", LVL_IMMORT, 0)
+	registerCommand("map", wrapArgs(CmdMap), "Display a map of the world.")
 }
 
 // Room type alias for brevity — maps to parser.Room

@@ -19,9 +19,9 @@ func makeCommandTestSession(t *testing.T, m *Manager, name string, level, roomVN
 	return s
 }
 
-// TestGrabAliasResolvesToHold verifies that the 'grab' command is registered
-// as an alias for 'hold' (DP-639).
-func TestGrabAliasResolvesToHold(t *testing.T) {
+// TestGrabAndHoldKeepDistinctCGates verifies the two C rows stay distinct even
+// though both words share the same handler. C gives grab level 0 and hold 1.
+func TestGrabAndHoldKeepDistinctCGates(t *testing.T) {
 	holdEntry, ok := cmdRegistry.Lookup("hold")
 	if !ok {
 		t.Fatal("'hold' command not found in registry")
@@ -29,15 +29,17 @@ func TestGrabAliasResolvesToHold(t *testing.T) {
 
 	grabEntry, ok := cmdRegistry.Lookup("grab")
 	if !ok {
-		t.Fatal("'grab' alias not found in registry")
+		t.Fatal("'grab' command not found in registry")
 	}
 
-	if grabEntry != holdEntry {
-		t.Error("'grab' does not resolve to the same command entry as 'hold'")
+	if grabEntry == holdEntry {
+		t.Fatal("grab and hold share one entry, so their distinct C gates cannot be represented")
 	}
-
-	if grabEntry.Name != "hold" {
-		t.Errorf("grab entry primary name = %q, want 'hold'", grabEntry.Name)
+	if grabEntry.MinLevel != 0 || holdEntry.MinLevel != 1 {
+		t.Errorf("grab/hold levels = %d/%d, want 0/1", grabEntry.MinLevel, holdEntry.MinLevel)
+	}
+	if grabEntry.MinPosition != combat.PosResting || holdEntry.MinPosition != combat.PosResting {
+		t.Errorf("grab/hold positions = %d/%d, want resting", grabEntry.MinPosition, holdEntry.MinPosition)
 	}
 }
 

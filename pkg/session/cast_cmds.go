@@ -272,5 +272,5 @@ func cmdCast(s *Session, args []string) error {
 
 func init() {
 	// Register the cast command with aliases
-	cmdRegistry.Register("cast", wrapArgs(cmdCast), "Cast a spell.", 0, 0)
+	registerCommand("cast", wrapArgs(cmdCast), "Cast a spell.")
 }

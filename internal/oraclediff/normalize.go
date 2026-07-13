@@ -9,6 +9,7 @@ var (
 	ansiEscape   = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
 	vitalsPrompt = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
 	promptOnly   = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
+	promptPrefix = regexp.MustCompile(`^>\s+`)
 	statusVitals = regexp.MustCompile(`\b(?:HP|Mana|Move):\s*\d+/\d+`)
 	statsLine    = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
 	volatileLine = regexp.MustCompile(`(?i)^\s*(?:` +
@@ -40,6 +41,7 @@ func Normalize(raw string) string {
 	// asynchronous game text, so prompt-only lines are framing, not game output.
 	for i := range lines {
 		lines[i] = vitalsPrompt.ReplaceAllString(lines[i], "<PROMPT>")
+		lines[i] = promptPrefix.ReplaceAllString(lines[i], "")
 		lines[i] = statusVitals.ReplaceAllString(lines[i], "<VITALS>")
 	}
 
