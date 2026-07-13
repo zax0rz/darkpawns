@@ -135,6 +135,23 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
 }
 
+// changeAlignment shifts a player's alignment based on the victim's alignment.
+// Source: src/fight.c:484-502 change_alignment(ch, victim).
+func changeAlignment(player *Player, victimAlign int) {
+	// Neutral victims do not affect alignment.
+	if victimAlign > -350 && victimAlign < 350 {
+		return
+	}
+	newAlign := player.GetAlignment() + (-victimAlign-player.GetAlignment())>>4
+	if newAlign > 1000 {
+		newAlign = 1000
+	}
+	if newAlign < -1000 {
+		newAlign = -1000
+	}
+	player.SetAlignment(newAlign)
+}
+
 // HandleDeath is the DeathFunc set on the combat engine.
 // It handles both player and mob death faithfully to the original.
 // This is called for combat deaths (die_with_killer).
@@ -199,31 +216,16 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 				slog.Warn("Publish MobKilledEvent failed", "killer", killerName, "mob_vnum", mobVNum, "error", err)
 			}
 		}
-		// Award XP and gold to killer and party members — fight.c group_gain() lines 708-830
-		w.AwardMobKillXP(killer, mobExp, mobGold, mobLevel)
-
-		// Alignment shift from kills — fight.c:1667
-		// Called after autogold/autoloot (via handleMobDeath) and XP award,
-		// before PK bookkeeping. Only PCs change alignment; neutral victims
-		// do not shift it.
-		if killer != nil && !killer.IsNPC() {
-			if pk, ok := killer.(*Player); ok {
-				victimAlign := 0
-				if al, ok := victim.(interface{ GetAlignment() int }); ok {
-					victimAlign = al.GetAlignment()
-				}
-				if victimAlign <= -350 || victimAlign >= 350 {
-					newAlign := pk.GetAlignment() + (-victimAlign-pk.GetAlignment())>>4
-					if newAlign > 1000 {
-						newAlign = 1000
-					}
-					if newAlign < -1000 {
-						newAlign = -1000
-					}
-					pk.SetAlignment(newAlign)
-				}
-			}
+		// Capture victim alignment for the alignment shift inside AwardMobKillXP.
+		// Source: fight.c:1667 — change_alignment is called inside the gain path.
+		victimAlign := 0
+		if al, ok := victim.(interface{ GetAlignment() int }); ok {
+			victimAlign = al.GetAlignment()
 		}
+
+		// Award XP, gold, and alignment shift to killer and party members.
+		// fight.c group_gain() lines 708-830; change_alignment at line 704.
+		w.AwardMobKillXP(killer, mobExp, mobGold, mobLevel, victimAlign)
 	} else {
 		// Fire player death hook
 		roomName := ""

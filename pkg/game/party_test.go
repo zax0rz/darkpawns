@@ -43,7 +43,7 @@ func TestAwardMobKillXPUsesGainExpCap(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	w.AwardMobKillXP(killer, 250000, 0, 10)
+	w.AwardMobKillXP(killer, 250000, 0, 10, 0)
 
 	if got := killer.GetExp(); got != maxExpGain {
 		t.Fatalf("kill XP = %d, want %d cap from src/limits.c gain_exp", got, maxExpGain)
@@ -59,7 +59,7 @@ func TestAwardMobKillXPCanAdvanceOneLevel(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	w.AwardMobKillXP(killer, 200000, 0, 10)
+	w.AwardMobKillXP(killer, 200000, 0, 10, 0)
 
 	if got := killer.GetLevel(); got != 11 {
 		t.Fatalf("level after kill XP = %d, want 11 via src/limits.c gain_exp", got)
@@ -140,7 +140,7 @@ func TestAwardMobKillXPDoesNotGrantFightUpBonus(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	w.AwardMobKillXP(killer, 1000, 0, 20)
+	w.AwardMobKillXP(killer, 1000, 0, 20, 0)
 
 	if got := killer.GetExp(); got != 1000 {
 		t.Fatalf("kill XP against higher-level victim = %d, want 1000 with no C fight-up bonus", got)
@@ -156,7 +156,7 @@ func TestAwardMobKillXPSoloHigherLevelSlack(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	w.AwardMobKillXP(killer, 1000, 0, 10)
+	w.AwardMobKillXP(killer, 1000, 0, 10, 0)
 
 	if got := killer.GetExp(); got != 1000 {
 		t.Fatalf("solo kill XP = %d, want 1000 because C applies two-level solo slack", got)
@@ -182,12 +182,53 @@ func TestAwardMobKillXPGroupHigherLevelPenalty(t *testing.T) {
 		t.Fatalf("AddPlayer follower failed: %v", err)
 	}
 
-	w.AwardMobKillXP(leader, 2000, 0, 10)
+	w.AwardMobKillXP(leader, 2000, 0, 10, 0)
 
 	if got := leader.GetExp(); got != 693 {
 		t.Fatalf("leader grouped kill XP = %d, want 693", got)
 	}
 	if got := follower.GetExp(); got != 693 {
 		t.Fatalf("follower grouped kill XP = %d, want 693", got)
+	}
+}
+
+func TestAwardMobKillXPGroupAlignmentShift(t *testing.T) {
+	w := newXPTestWorld(t)
+
+	leader := NewPlayer(1, "Leader", 1001)
+	leader.SetAlignment(0)
+	leader.SetInGroup(true)
+	if err := w.AddPlayer(leader); err != nil {
+		t.Fatalf("AddPlayer leader failed: %v", err)
+	}
+
+	member1 := NewPlayer(2, "Member1", 1001)
+	member1.SetAlignment(0)
+	member1.SetFollowing(leader.Name)
+	member1.SetInGroup(true)
+	if err := w.AddPlayer(member1); err != nil {
+		t.Fatalf("AddPlayer member1 failed: %v", err)
+	}
+
+	member2 := NewPlayer(3, "Member2", 1001)
+	member2.SetAlignment(0)
+	member2.SetFollowing(leader.Name)
+	member2.SetInGroup(true)
+	if err := w.AddPlayer(member2); err != nil {
+		t.Fatalf("AddPlayer member2 failed: %v", err)
+	}
+
+	// Strong evil victim should pull every group member toward positive.
+	victimAlign := -1000
+	w.AwardMobKillXP(leader, 1000, 0, 10, victimAlign)
+
+	if got := leader.GetAlignment(); got <= 0 {
+		t.Fatalf("leader alignment = %d, want > 0 after group kill of evil victim", got)
+	}
+	if got := member1.GetAlignment(); got <= 0 {
+		t.Fatalf("member1 alignment = %d, want > 0 after group kill of evil victim", got)
+	}
+	if got := member2.GetAlignment(); got <= 0 {
+		t.Fatalf("member2 alignment = %d, want > 0 after group kill of evil victim", got)
 	}
 }
