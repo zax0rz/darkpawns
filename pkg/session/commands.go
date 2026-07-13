@@ -168,7 +168,7 @@ func init() {
 	cmdRegistry.Register("pick", wrapArgs(cmdPick), "Pick a lock on a door.", 0, combat.PosStanding, "pick lock")
 
 	// Admin / debug
-	cmdRegistry.Register("summon", wrapArgs(cmdSummon), "Summon a player to your room.", 0, 0)
+	cmdRegistry.Register("summon", wrapArgs(cmdSummon), "Summon a player to your room.", LVL_IMMORT, 0)
 
 	// Doors
 	cmdRegistry.Register("open", wrapArgs(cmdOpen), "Open a door in a direction: open <north|south|east|west|up|down>", 0, 0)
@@ -360,7 +360,7 @@ func init() {
 
 	// Houses (ported from house.c)
 	cmdRegistry.Register("house", wrapArgs(cmdHouse), "House management commands.", 0, 0)
-	cmdRegistry.Register("hcontrol", wrapArgs(cmdHcontrol), "Admin house control.", 0, 0)
+	cmdRegistry.Register("hcontrol", wrapArgs(cmdHcontrol), "Admin house control.", LVL_GRGOD, 0)
 	cmdRegistry.Register("gossip", wrapArgs(cmdGossip), "Gossip on the channel.", 0, 0)
 	cmdRegistry.Register("auction", wrapArgs(cmdAuction), "Auction an item to the channel.", 0, 0)
 	cmdRegistry.Register("gratz", wrapArgs(cmdGratz), "Congratulate someone on the channel.", 0, 0)

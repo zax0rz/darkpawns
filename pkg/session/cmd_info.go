@@ -519,8 +519,8 @@ func cmdSummon(s *Session, args []string) error {
 			continue
 		}
 		if strings.ToLower(sess.player.Name) == targetName {
-			old := sess.player.RoomVNum
-			sess.player.RoomVNum = s.player.RoomVNum
+			old := sess.player.GetRoom()
+			sess.player.SetRoom(s.player.GetRoom())
 			s.sendText(fmt.Sprintf("%s materializes before you.", sess.player.Name))
 			sess.sendText(fmt.Sprintf("You are summoned by %s.", s.player.Name))
 			_ = old

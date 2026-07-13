@@ -1,0 +1,18 @@
+# Probe mortal-only access to summon/hcontrol gates.
+# Setup creates a level-1 mortal; probe tries the two gated commands.
+Oracletst
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+summon someone
+hcontrol show
+quit

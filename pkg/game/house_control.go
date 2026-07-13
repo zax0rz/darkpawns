@@ -331,6 +331,13 @@ func (w *World) HcontrolSetKey(ch *Player, arg string) {
 // Hcontrol is the dispatcher for the hcontrol command.
 // In C: ACMD(do_hcontrol)
 func (w *World) Hcontrol(ch *Player, argument string) {
+	// Defense-in-depth: this command mutates persistent house state, so
+	// enforce the GRGOD gate here even if another caller reaches the dispatcher.
+	if ch.GetLevel() < LVL_GRGOD {
+		sendToChar(ch, "Huh?!?\r\n")
+		return
+	}
+
 	args := strings.Fields(argument)
 	if len(args) < 1 {
 		sendToChar(ch, HcontrolFormat)
