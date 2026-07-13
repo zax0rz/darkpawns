@@ -124,7 +124,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// the first record in an empty file to Implementor, which would invalidate
 	// this mortal-room scenario.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -134,6 +134,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		if err := applyObjectFixtures(goWorld, scenario.Fixtures); err != nil {
 			return fmt.Errorf("apply Go port fixtures: %w", err)
+		}
+		if err := applyObjectSpawnFixtures(filepath.Join(oracleData, "world"), scenario.ObjectSpawns); err != nil {
+			return fmt.Errorf("apply C oracle object spawn fixtures: %w", err)
+		}
+		if err := applyObjectSpawnFixtures(goWorld, scenario.ObjectSpawns); err != nil {
+			return fmt.Errorf("apply Go port object spawn fixtures: %w", err)
 		}
 		if err := applyQuietZoneFixtures(filepath.Join(oracleData, "world"), scenario.QuietZones); err != nil {
 			return fmt.Errorf("apply C oracle quiet-zone fixtures: %w", err)
@@ -324,6 +330,34 @@ func applyObjectFixtures(worldDir string, fixtures []oraclediff.ObjectFixture) e
 	for _, fixture := range fixtures {
 		if err := makeScrollFixtureInert(worldDir, fixture.ObjectVNum); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func applyObjectSpawnFixtures(worldDir string, fixtures []oraclediff.ObjectSpawnFixture) error {
+	for _, fixture := range fixtures {
+		path := filepath.Join(worldDir, "zon", fmt.Sprintf("%d.zon", fixture.ZoneNumber))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read zone %d: %w", fixture.ZoneNumber, err)
+		}
+		marker := []byte("\nS\n$")
+		index := bytes.LastIndex(data, marker)
+		if index < 0 {
+			return fmt.Errorf("zone %d has no terminal reset marker", fixture.ZoneNumber)
+		}
+		command := fmt.Sprintf("\nO 0 %d %d %d", fixture.ObjectVNum, fixture.MaxExisting, fixture.RoomVNum)
+		updated := make([]byte, 0, len(data)+len(command))
+		updated = append(updated, data[:index]...)
+		updated = append(updated, command...)
+		updated = append(updated, data[index:]...)
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat zone %d: %w", fixture.ZoneNumber, err)
+		}
+		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil {
+			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
 		}
 	}
 	return nil

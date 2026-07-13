@@ -245,47 +245,6 @@ var alreadyWearing = []string{
 	"Something is already hovering near your head.\n\r",
 }
 
-// Drink names from C drinks[] table
-var drinks = []string{
-	"water",
-	"beer",
-	"wine",
-	"ale",
-	"dark ale",
-	"whisky",
-	"lemonade",
-	"firebreather",
-	"local speciality",
-	"slime mold juice",
-	"milk",
-	"tea",
-	"coffee",
-	"blood",
-	"salt water",
-	"clear water",
-	"skunk essence",
-	"cocoa",
-	"elvish wine",
-	"dwarven spirits",
-	"green dragon",
-	"liquid fire",
-	"sake",
-	"battery acid",
-	"lab reagent",
-	"ichor",
-	"oil",
-	"healing potion",
-	"mana potion",
-	"white wine",
-	"champagne",
-	"mead",
-	"rose wine",
-	"spring water",
-	"holy water",
-	"ratafee",
-	"mountain dew",
-}
-
 // Container flag helpers
 func contIsClosed(obj *ObjectInstance) bool {
 	return obj != nil && obj.GetValue(contFlags)&contClosed != 0

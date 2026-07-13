@@ -536,9 +536,18 @@ func TestHandlePlayerDetail_Save_RequiresAdmin(t *testing.T) {
 func TestHandlePlayerDetail_Save_WithAdminClaims(t *testing.T) {
 	setJWTSecret(t)
 	w := testWorld(t)
+
+	// Use a distinct player name so the save artifact is not the committed fixture.
+	savePlayerName := "SaveTestPlayer"
+	savePlayer := game.NewPlayer(3, savePlayerName, 1001)
+	savePlayer.Level = 10
+	if err := w.AddPlayer(savePlayer); err != nil {
+		t.Fatalf("AddPlayer save player: %v", err)
+	}
+
 	handler := handlePlayerDetail(w, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/admin/players/TestPlayer/save", nil)
+	req := httptest.NewRequest(http.MethodPost, "/admin/players/"+savePlayerName+"/save", nil)
 	req = contextWithClaims(req, "admin")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -548,6 +557,11 @@ func TestHandlePlayerDetail_Save_WithAdminClaims(t *testing.T) {
 	if rec.Code != http.StatusInternalServerError && rec.Code != http.StatusOK {
 		t.Errorf("unexpected status %d, wanted 200 or 500 (disk write depends on test env)", rec.Code)
 	}
+
+	// Clean up any disk artifact.
+	t.Cleanup(func() {
+		_ = os.Remove("./data/players/" + savePlayerName + ".json")
+	})
 }
 
 func TestHandlePlayerDetail_Save_BuilderRejected(t *testing.T) {

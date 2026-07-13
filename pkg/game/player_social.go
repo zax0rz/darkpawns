@@ -191,6 +191,8 @@ func (p *Player) GetCondition(cond int) int {
 }
 
 // SetCondition sets condition cond to val, clamped to [0,48], or -1 for immortal.
+// It also keeps the legacy Hunger/Thirst/Drunk fields in sync so the save path
+// and any direct field reads see the same value.
 func (p *Player) SetCondition(cond, val int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -198,6 +200,14 @@ func (p *Player) SetCondition(cond, val int) {
 		return
 	}
 	p.Conditions[cond] = val
+	switch cond {
+	case CondFull:
+		p.Hunger = val
+	case CondThirst:
+		p.Thirst = val
+	case CondDrunk:
+		p.Drunk = val
+	}
 }
 
 // HasPLRFlag returns true if PLR flag bit n is set.

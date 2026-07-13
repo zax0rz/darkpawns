@@ -100,9 +100,6 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 		drunkAff, _, _ := GetDrinkAffects(liqIndex)
 		if drunkAff > 0 {
 			amount = (25 - ch.GetCondition(CondThirst)) / drunkAff
-			if amount < 0 {
-				amount = 0
-			}
 		} else {
 			amount = consumableNumber(3, 8)
 		}
@@ -147,17 +144,16 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 		applyPoison(ch, amount*3, "poisoned drink")
 	}
 
-	// Deplete the container. Fountains are infinite (val1 stays put).
-	if objType == ITEM_DRINKCON {
-		item.SetValue(1, item.GetValue(1)-amount)
-		if item.GetValue(1) <= 0 {
-			item.SetValue(1, 0)
-			item.SetValue(2, 0)
-			item.SetValue(3, 0)
-			clearDrinkconName(item)
-			if item.VNum == 20 {
-				w.ExtractObject(item, ch.GetRoomVNum())
-			}
+	// Deplete the container. C decrements val1 unconditionally for both
+	// drinkcons and fountains (fountains simply have a very large val1).
+	item.SetValue(1, item.GetValue(1)-amount)
+	if item.GetValue(1) <= 0 {
+		item.SetValue(1, 0)
+		item.SetValue(2, 0)
+		item.SetValue(3, 0)
+		clearDrinkconName(item)
+		if item.VNum == 20 {
+			w.ExtractObject(item, ch.GetRoomVNum())
 		}
 	}
 }
@@ -195,9 +191,8 @@ func (w *World) DoEat(ch *Player, me *MobInstance, cmd, arg string, subcmd int) 
 
 	// Werewolf corpse-rip branch: preserve structure as a TODO follow-up.
 	if !found && ch.IsAffected(affWerewolf) && objType == ITEM_CONTAINER && item.GetValue(3) != 0 {
-		// TODO(DP-1102): implement werewolf savage-eat corpse branch including
-		// mangled-flesh proto 19 spawn. For now, preserve the structure without
-		// silently dropping it.
+		// TODO: implement werewolf savage-eat corpse branch including
+		// mangled-flesh proto 19 spawn. Fidelity follow-up, not DP-1102.
 		Act(nil, false, ch, nil, item, nil, "You savagely rip into $p, feeding your insatiable appetite.", "", ToChar)
 		Act(w, true, ch, nil, item, nil, "$n savagely rips into $p, crunching through flesh and bone alike.", "", ToRoom)
 		return
@@ -364,7 +359,7 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 		Act(nil, false, ch, nil, nil, nil, "There is already another liquid in it!", "", ToChar)
 		return
 	}
-	if !(toObj.GetValue(1) < toObj.GetValue(0)) {
+	if toObj.GetValue(1) >= toObj.GetValue(0) {
 		Act(nil, false, ch, nil, nil, nil, "There is no room for more.", "", ToChar)
 		return
 	}

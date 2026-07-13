@@ -23,6 +23,7 @@ type Scenario struct {
 	Probe            []string
 	Peers            map[string]*PeerSetup
 	Fixtures         []ObjectFixture
+	ObjectSpawns     []ObjectSpawnFixture
 	MobFixtures      []MobFixture
 	QuietZones       []int
 	QuietAllMobs     bool
@@ -41,6 +42,16 @@ type PeerSetup struct {
 // each server's disposable world copy. The source world trees are never modified.
 type ObjectFixture struct {
 	ObjectVNum int
+}
+
+// ObjectSpawnFixture adds one object reset command (O 0 vnum max room) to a
+// disposable zone file. Used to place deterministic objects in a room for an
+// oracle scenario without modifying either source world tree.
+type ObjectSpawnFixture struct {
+	ObjectVNum  int
+	MaxExisting int
+	RoomVNum    int
+	ZoneNumber  int
 }
 
 // MobFixture adds one reset command to a disposable zone file. It is used to
@@ -75,8 +86,9 @@ type AudienceProbeBlock struct {
 //	[setup:oracle:victim] / [setup:port:victim]
 //	<optional passive-client creation keystrokes…>
 //	[fixture]
-//	inert-scroll 8038   # patch this prototype in disposable worlds only
+//	inert-scroll 8038         # patch this prototype in disposable worlds only
 //	spawn-mob 18306 1 8162 80 # mob, max existing, room, zone file
+//	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
 //	strip-mob-script 18306    # force native special dispatch in both copies
@@ -161,6 +173,24 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				if valid {
 					sc.MobFixtures = append(sc.MobFixtures, MobFixture{
 						MobVNum: values[0], MaxExisting: values[1], RoomVNum: values[2], ZoneNumber: values[3],
+					})
+					continue
+				}
+			}
+			if len(fields) == 5 && strings.EqualFold(fields[0], "spawn-obj") {
+				values := make([]int, 4)
+				valid := true
+				for i := range values {
+					parsed, parseErr := strconv.Atoi(fields[i+1])
+					values[i] = parsed
+					if parseErr != nil || values[i] < 0 {
+						valid = false
+						break
+					}
+				}
+				if valid && values[0] > 0 && values[1] > 0 && values[2] > 0 && values[3] >= 0 {
+					sc.ObjectSpawns = append(sc.ObjectSpawns, ObjectSpawnFixture{
+						ObjectVNum: values[0], MaxExisting: values[1], RoomVNum: values[2], ZoneNumber: values[3],
 					})
 					continue
 				}

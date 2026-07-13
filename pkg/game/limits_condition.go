@@ -23,16 +23,15 @@ func GainCondition(p *Player, condition int, value int) {
 	}
 	p.mu.RUnlock()
 
-	p.mu.Lock()
-	p.Conditions[condition] += value
-	if p.Conditions[condition] < 0 {
-		p.Conditions[condition] = 0
+	newVal := cond + value
+	if newVal < 0 {
+		newVal = 0
 	}
-	if p.Conditions[condition] > 48 {
-		p.Conditions[condition] = 48
+	if newVal > 48 {
+		newVal = 48
 	}
-	newCond := p.Conditions[condition]
-	p.mu.Unlock()
+	p.SetCondition(condition, newVal)
+	newCond := p.GetCondition(condition)
 
 	// Messages only at threshold 0 or 1
 	if newCond > 1 {

@@ -15,9 +15,9 @@ func TestPlayerSerializationRoundTrip(t *testing.T) {
 	player.BankGold = 2500
 	player.Title = "the Test Hero"
 	player.Description = "A heroic look."
-	player.Hunger = 12
-	player.Thirst = 18
-	player.Drunk = 2
+	player.SetCondition(CondFull, 12)
+	player.SetCondition(CondThirst, 18)
+	player.SetCondition(CondDrunk, 2)
 	player.Stats.Str = 18
 	player.Stats.StrAdd = 100
 	player.Stats.Dex = 16
@@ -157,6 +157,57 @@ func TestSaveLoadPlayerGoldAndBank(t *testing.T) {
 	}
 	if loaded.BankGold != 3000 {
 		t.Errorf("Loaded BankGold = %d, want 3000", loaded.BankGold)
+	}
+}
+
+func TestSaveLoadPlayer_ConditionsPersistAfterGain(t *testing.T) {
+	testName := "Test_Conditions_Persist_Plr_99"
+	player := NewPlayer(777, testName, 1001)
+	player.SetCondition(CondFull, 10)
+	player.SetCondition(CondThirst, 15)
+	player.SetCondition(CondDrunk, 0)
+
+	// Mutate conditions the way consumables do (via GainCondition).
+	GainCondition(player, CondFull, 5)
+	GainCondition(player, CondThirst, -3)
+	GainCondition(player, CondDrunk, 2)
+
+	// Legacy fields should already be in sync, but assert it explicitly.
+	if player.Hunger != player.Conditions[CondFull] {
+		t.Fatalf("pre-save Hunger %d out of sync with Conditions[Full] %d", player.Hunger, player.Conditions[CondFull])
+	}
+
+	err := SavePlayer(player)
+	if err != nil {
+		t.Fatalf("SavePlayer failed: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = DeletePlayer(testName)
+	})
+
+	loaded, err := LoadPlayer(testName)
+	if err != nil {
+		t.Fatalf("LoadPlayer failed: %v", err)
+	}
+
+	if loaded.GetCondition(CondFull) != 15 {
+		t.Errorf("Full condition = %d, want 15", loaded.GetCondition(CondFull))
+	}
+	if loaded.GetCondition(CondThirst) != 12 {
+		t.Errorf("Thirst condition = %d, want 12", loaded.GetCondition(CondThirst))
+	}
+	if loaded.GetCondition(CondDrunk) != 2 {
+		t.Errorf("Drunk condition = %d, want 2", loaded.GetCondition(CondDrunk))
+	}
+	// Ensure legacy fields also reflect the persisted values.
+	if loaded.Hunger != 15 {
+		t.Errorf("Hunger = %d, want 15", loaded.Hunger)
+	}
+	if loaded.Thirst != 12 {
+		t.Errorf("Thirst = %d, want 12", loaded.Thirst)
+	}
+	if loaded.Drunk != 2 {
+		t.Errorf("Drunk = %d, want 2", loaded.Drunk)
 	}
 }
 

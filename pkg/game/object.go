@@ -121,12 +121,11 @@ func (o *ObjectInstance) GetWeight() int {
 	return 1
 }
 
-// SetWeight updates the object's instance weight. A negative value clears the
-// override and restores the prototype weight. C: weight_change_object.
+// SetWeight updates the object's instance weight. Values below 0 are clamped
+// to 0; the override is never silently dropped. C: weight_change_object.
 func (o *ObjectInstance) SetWeight(weight int) {
 	if weight < 0 {
-		o.WeightOverride = nil
-		return
+		weight = 0
 	}
 	o.WeightOverride = &weight
 }
