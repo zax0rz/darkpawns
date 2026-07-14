@@ -927,8 +927,26 @@ func (tc *telnetConn) writeLocked(data []byte) {
 	}
 }
 
+// writeLine writes a text string to the client, normalizing line endings to
+// CRLF first. Much of the game's text (MOTD, room/help files under lib/world)
+// is stored with bare "\n" line endings; a raw telnet terminal treats a lone
+// LF as line-feed-only (cursor drops a row but does not return to column 0),
+// producing the "staircase" indentation where each line starts further right
+// than the last. Canonicalizing to "\r\n" here fixes every text source at the
+// transport boundary. Idempotent: existing "\r\n" is preserved, not doubled.
 func (tc *telnetConn) writeLine(s string) {
-	tc.write([]byte(s))
+	tc.write([]byte(normalizeCRLF(s)))
+}
+
+// normalizeCRLF converts any mix of "\r\n", lone "\r", and lone "\n" line
+// endings into canonical "\r\n". Applied to all text written to telnet clients.
+func normalizeCRLF(s string) string {
+	if !strings.ContainsAny(s, "\r\n") {
+		return s
+	}
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\r", "\n")
+	return strings.ReplaceAll(s, "\n", "\r\n")
 }
 
 // enableCompression starts MCCP2 compression. It sends the COMPRESS_START

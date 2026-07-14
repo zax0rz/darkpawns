@@ -7,6 +7,11 @@
 
   const term = new Terminal({
     cursorBlink: true,
+    // Game text (MOTD, room/help files) uses bare "\n" line endings. Without
+    // convertEol, xterm treats a lone LF as line-feed-only — the cursor drops a
+    // row but keeps its column — producing runaway "staircase" indentation.
+    // convertEol makes every "\n" behave as "\r\n" so lines return to column 0.
+    convertEol: true,
     fontSize: 15,
     fontFamily: '"IM Fell English", "Courier New", monospace',
     theme: {
@@ -209,13 +214,19 @@
           if (msg.data && msg.data.prompt) {
             term.write(msg.data.prompt.replace(/\r/g, ''));
           }
-          // Show numbered options if present
-          if (msg.data && msg.data.options && typeof msg.data.options === 'object') {
+          // Show the option list only when the prompt does not already embed a
+          // formatted menu. Static menu prompts (race/class/hometown) carry
+          // their own "[X] label" lines, so re-printing options duplicates them
+          // (mirrors telnet's promptContainsMenu dedup).
+          const promptText = (msg.data && msg.data.prompt) || '';
+          const promptHasMenu = promptText.indexOf('[') >= 0;
+          if (!promptHasMenu && msg.data && msg.data.options && typeof msg.data.options === 'object') {
             const opts = msg.data.options;
             if (Array.isArray(opts)) {
-              // Server sends []CharCreateOption: [{Key, Label}, ...]
+              // Server sends []CharCreateOption marshalled as [{key, label}, ...]
+              // — JSON tags are lowercase, so read o.key / o.label (not o.Key).
               opts.forEach(function (o) {
-                term.writeln('  \x1b[33m' + o.Key + '\x1b[0m) ' + o.Label);
+                term.writeln('  \x1b[33m' + o.key + '\x1b[0m) ' + o.label);
               });
             } else {
               // Fallback: plain {key: label} map
