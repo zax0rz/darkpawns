@@ -14,7 +14,7 @@ import (
 )
 
 // makeManagerWithStartRoom returns a Manager whose world contains the newbie
-// intro and mortal start rooms used during first entry.
+// intro and Kir Drax'in hometown rooms used during first entry.
 func makeManagerWithStartRoom(t *testing.T) *Manager {
 	t.Helper()
 	parsed := &parser.World{
@@ -26,9 +26,9 @@ func makeManagerWithStartRoom(t *testing.T) *Manager {
 				Zone:        80,
 			},
 			{
-				VNum:        game.MortalStartRoom,
-				Name:        "The Adventurers Guild",
-				Description: "A grand hall where adventurers gather to seek glory.",
+				VNum:        game.NewbieHometownRoom(1),
+				Name:        "Temple Infirmary",
+				Description: "A quiet infirmary tended by the temple healers.",
 				Zone:        80,
 			},
 		},
@@ -133,7 +133,7 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 		"M",       // sex            → male
 		"H",       // race           → human
 		"W",       // class          → warrior
-		"K",       // hometown       → Kir Drax'in (room 8004 = game.MortalStartRoom)
+		"K",       // hometown       → Kir Drax'in (room 8162)
 	}
 	for _, choice := range charStages {
 		wsReadUntilType(t, c, MsgCharCreate)
@@ -165,7 +165,7 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 		t.Errorf("intro: room.name = %q, want A Burning Hut", intro.Room.Name)
 	}
 
-	// ── 4. Receive welcome state in the normal login room ──────────────────────
+	// ── 4. Receive welcome state in the hometown room ──────────────────────────
 	// completeCharCreation calls sendWelcome which does s.send <- state_msg
 	// (blocking, char_creation.go:276 / session_send.go:58).  writePump drains
 	// s.send and calls conn.WriteMessage — the message travels over the real
@@ -180,8 +180,8 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	if welcome.Player.Name != "Testchar" {
 		t.Errorf("welcome: player.name = %q, want Testchar", welcome.Player.Name)
 	}
-	if welcome.Room.VNum != game.MortalStartRoom {
-		t.Errorf("welcome: room.vnum = %d, want %d", welcome.Room.VNum, game.MortalStartRoom)
+	if want := game.NewbieHometownRoom(1); welcome.Room.VNum != want {
+		t.Errorf("welcome: room.vnum = %d, want %d", welcome.Room.VNum, want)
 	}
 
 	// ── 4. Send "look", verify room description arrives ───────────────────────
@@ -200,11 +200,11 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	if err := json.Unmarshal(lookBytes, &look); err != nil {
 		t.Fatalf("unmarshal look StateData: %v", err)
 	}
-	if look.Room.VNum != game.MortalStartRoom {
-		t.Errorf("look: room.vnum = %d, want %d", look.Room.VNum, game.MortalStartRoom)
+	if want := game.NewbieHometownRoom(1); look.Room.VNum != want {
+		t.Errorf("look: room.vnum = %d, want %d", look.Room.VNum, want)
 	}
-	if look.Room.Name != "The Adventurers Guild" {
-		t.Errorf("look: room.name = %q, want The Adventurers Guild", look.Room.Name)
+	if look.Room.Name != "Temple Infirmary" {
+		t.Errorf("look: room.name = %q, want Temple Infirmary", look.Room.Name)
 	}
 	if look.Player.Name != "Testchar" {
 		t.Errorf("look: player.name = %q, want Testchar", look.Player.Name)

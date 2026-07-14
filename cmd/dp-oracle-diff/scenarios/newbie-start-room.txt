@@ -1,0 +1,38 @@
+# New-character hometown start-room fidelity (DP-1085 / O3).
+#
+# C places a new character in room 8099 for the intro beat, then start_room
+# sends hometown-K mortals to room 8162. Go historically overwrote its hometown
+# selection with the generic mortal login room, 8004. No recall or navigation
+# belongs in setup: the shared probes must observe the actual newbie destination.
+
+[setup:oracle]
+Startroom
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Startroom
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+look

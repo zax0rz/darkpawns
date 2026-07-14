@@ -76,6 +76,21 @@ const MortalStartRoom = 8004
 // interpreter.c line 2241: char_to_room(d->character, real_room(8099))
 const NewbieStartRoom = 8099
 
+// NewbieHometownRoom returns the room where the newbie intro sends a character.
+// spec_procs.c start_room maps hometown 1/2/3 to Kir Drax'in/Kir-Oshi/Alaozar.
+func NewbieHometownRoom(hometown int) int {
+	switch hometown {
+	case 1:
+		return 8162
+	case 2:
+		return 18201
+	case 3:
+		return 21202
+	default:
+		return MortalStartRoom
+	}
+}
+
 // ImmortStartRoom is where immortals (level >= LVL_IMMORT) start (config.c: immort_start_room = 1204)
 const ImmortStartRoom = 1204
 

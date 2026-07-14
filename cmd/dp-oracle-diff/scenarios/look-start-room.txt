@@ -26,7 +26,8 @@ recall
 [setup:port]
 # Go telnet flow: create-new confirmation, password, name confirmation,
 # color/sex/race/class/hometown, keep stats, PRESS RETURN, then menu option 1.
-# Go lands at 8004 already, so no navigation is needed.
+# Recall aligns this generic login-room regression at 8004 after the newbie
+# hometown start-room behavior sends Kir Drax'in characters to 8162.
 Oracletst
 y
 oraclepass
@@ -40,9 +41,9 @@ K
 Y
 <ENTER>
 1
+recall
 
 [probe]
 # Deterministic world-data probes only. look sign is pure static room extra.
 look
 look sign
-quit

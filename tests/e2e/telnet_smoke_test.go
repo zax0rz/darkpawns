@@ -100,7 +100,7 @@ func TestTelnetSmoke_CharacterCreation(t *testing.T) {
 	defer conn.Close()
 
 	entered := createWarrior(t, conn, r, "Smoke_Newbie", "secretpw")
-	if !strings.Contains(entered, "At the Temple Altar") || strings.Contains(entered, "Lvl ") {
+	if !strings.Contains(entered, "Temple Infirmary") || strings.Contains(entered, "Lvl ") {
 		t.Errorf("entry output is not the canonical room-only render\n---\n%s", entered)
 	}
 
@@ -122,17 +122,7 @@ func TestTelnetSmoke_Combat(t *testing.T) {
 
 	name := fmt.Sprintf("Brawl%d", time.Now().UnixNano()%100000)
 	createWarrior(t, conn, r, name, "brawlpw")
-
-	// Walk to Temple Square [8021] (8004 →south→ 8008 →south→ 8021), which
-	// always has NPCs passing through.
-	mustWrite(t, conn, "south\r\n")
-	if readUntil(t, conn, r, "Temple of the Cross", 10*time.Second) == "" {
-		t.Fatal("did not reach Temple of the Cross [8008]")
-	}
-	mustWrite(t, conn, "south\r\n")
-	if readUntil(t, conn, r, "Temple Square", 10*time.Second) == "" {
-		t.Fatal("did not reach Temple Square [8021]")
-	}
+	walkToTempleSquare(t, conn, r)
 
 	// Engage: look, target a present NPC, hit it; retry if it wandered off.
 	engaged := false
@@ -334,7 +324,7 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Fatal("conn1: never received the main menu after character creation")
 	}
 	mustWrite(t, c1, "1\r\n")
-	if got := readUntil(t, c1, r1, "At the Temple Altar", 10*time.Second); got == "" {
+	if got := readUntil(t, c1, r1, "Temple Infirmary", 10*time.Second); got == "" {
 		t.Fatal("conn1: new character did not enter the world")
 	}
 	mustWrite(t, c1, "quit\r\n")
@@ -376,7 +366,7 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Fatal("conn3: returning player did not get menu")
 	}
 	mustWrite(t, c3, "1\r\n")
-	loaded := readUntil(t, c3, r3, "At the Temple Altar", 10*time.Second)
+	loaded := readUntil(t, c3, r3, "Temple Infirmary", 10*time.Second)
 	if loaded == "" {
 		t.Fatal("conn3: persisted character did not load back into the world")
 	}
@@ -499,18 +489,26 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 	}
 	mustWrite(t, conn, "1\r\n")
 
-	entered := readUntil(t, conn, r, "At the Temple Altar", 10*time.Second)
+	entered := readUntil(t, conn, r, "Temple Infirmary", 10*time.Second)
 	if entered == "" {
 		t.Fatal("new character never entered the world")
 	}
 	return entered
 }
 
-// walkToTempleSquare moves a freshly-created character from the Temple Altar
-// [8004] down to the busy Temple Square [8021] (8004 →south→ 8008 →south→
-// 8021), which always has NPCs passing through to target.
+// walkToTempleSquare moves a Kir Drax'in newbie from the Temple Infirmary
+// [8162] to the busy Temple Square [8021]
+// (8162 →north→ 8161 →east→ 8004 →south→ 8008 →south→ 8021).
 func walkToTempleSquare(t *testing.T, conn net.Conn, r *bufio.Reader) {
 	t.Helper()
+	mustWrite(t, conn, "north\r\n")
+	if readUntil(t, conn, r, "Western Vestibule", 10*time.Second) == "" {
+		t.Fatal("did not reach Western Vestibule [8161]")
+	}
+	mustWrite(t, conn, "east\r\n")
+	if readUntil(t, conn, r, "At the Temple Altar", 10*time.Second) == "" {
+		t.Fatal("did not reach Temple Altar [8004]")
+	}
 	mustWrite(t, conn, "south\r\n")
 	if readUntil(t, conn, r, "Temple of the Cross", 10*time.Second) == "" {
 		t.Fatal("did not reach Temple of the Cross [8008]")

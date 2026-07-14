@@ -26,6 +26,14 @@ func TestNormalizeDropsPromptFramingButPreservesTextGreaterThan(t *testing.T) {
 	}
 }
 
+func TestNormalizeCanonicalizesAutoExitIndentation(t *testing.T) {
+	raw := "Temple Infirmary\r\n [ Exits: north ]\r\n"
+	want := "Temple Infirmary\n[ Exits: north ]\n"
+	if got := Normalize(raw); got != want {
+		t.Fatalf("Normalize() = %q, want %q", got, want)
+	}
+}
+
 func TestUnifiedDiff(t *testing.T) {
 	diff := UnifiedDiff("c", "go", "same\nold\ntail\n", "same\nnew\ntail\n")
 	for _, want := range []string{"--- c", "+++ go", "@@ -1,3 +1,3 @@", "-old", "+new"} {

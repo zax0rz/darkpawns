@@ -483,18 +483,9 @@ func (s *Session) completeCharCreation() error {
 	// Set hometown
 	s.player.Hometown = s.charHometown
 
-	// Set hometown starting room
-	// K=Kir Draxin/8004, O=Kir-Oshi/18201, A=Alaozar/21258
-	switch s.charHometown {
-	case 1: // Kir Drax'in (main city, new players)
-		s.player.RoomVNum = 8004
-	case 2: // Kir-Oshi (port city)
-		s.player.RoomVNum = 18201
-	case 3: // Alaozar (holy city)
-		s.player.RoomVNum = 21258
-	default: // Mortal start
-		s.player.RoomVNum = 8004
-	}
+	// Persist the post-intro destination, not the transient newbie intro room.
+	newbieRoom := game.NewbieHometownRoom(s.charHometown)
+	s.player.SetRoom(newbieRoom)
 
 	// Save to DB if available
 	if s.manager.hasDB {
@@ -540,10 +531,10 @@ func (s *Session) completeCharCreation() error {
 	// and attachObjectLocked can find them; items silently drop otherwise.
 	s.manager.world.GiveStartingItems(s.player)
 
-	// Show the intro room once, then move to the normal login room. The later
-	// welcome state renders that destination, matching C's entry sequence.
+	// Show the intro room once, then apply the hometown-specific start_room
+	// destination. The later welcome state renders that destination.
 	s.sendCurrentRoomState()
-	s.player.SetRoom(game.LoginStartRoom(s.player))
+	s.player.SetRoom(newbieRoom)
 
 	slog.InfoContext(s.sessionCtx, "completeCharCreation: player added to world", s.logAttrs()...)
 
