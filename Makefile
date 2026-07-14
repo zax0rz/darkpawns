@@ -108,6 +108,12 @@ test-parse:
 # DEPLOY_USER and DEPLOY_HOST have no defaults on purpose: the ifndef guards
 # in deploy-site below must fire when they are unset, otherwise a bare
 # `make deploy-site` silently targets a hardcoded host as root (DP-785).
+#
+# DEPLOY_PATH is the Hugo docroot Caddy serves from on prod. Caddy's fallback
+# handler (`root * /srv/hugo/`) serves the built site; the Go binary's
+# `-web /opt/darkpawns/web` is a separate legacy client, NOT what /play uses.
+# The prod host needs `rsync` installed (apt-get install rsync).
+DEPLOY_PATH ?= /srv/hugo/
 
 # Website commands
 .PHONY: parse-world-json build-site deploy-site
@@ -128,7 +134,7 @@ endif
 ifndef DEPLOY_HOST
 	$(error DEPLOY_HOST is not set)
 endif
-	rsync -avz --delete website/public/ $(DEPLOY_USER)@$(DEPLOY_HOST):/opt/darkpawns/hugo-site/
+	rsync -avz --delete website/public/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)
 
 .DEFAULT_GOAL := build
 
