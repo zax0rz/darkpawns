@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/testutil"
 )
 
 // makeCharSession creates a bare session suitable for char creation tests.
@@ -321,7 +322,7 @@ func TestCompleteCharCreation_WithNilDB(t *testing.T) {
 	s.charClass = 3 // warrior
 	s.charRace = 0  // human
 	s.charSex = 0
-	s.charHometown = 2 // Old City — room 8004 won't exist in test world; sendWelcome returns early
+	s.charHometown = 2 // Kir-Oshi
 	s.charPassword = "hashed_pw"
 	s.charStats = game.CharStats{Str: 15, Dex: 12, Con: 14, Int: 10, Wis: 11, Cha: 9}
 
@@ -347,9 +348,46 @@ func TestCompleteCharCreation_WithNilDB(t *testing.T) {
 	if s.player.Name != "Tester" {
 		t.Errorf("player.Name = %q, want Tester", s.player.Name)
 	}
+	if got, want := s.player.GetRoom(), game.NewbieHometownRoom(2); got != want {
+		t.Errorf("player room = %d, want hometown room %d", got, want)
+	}
 
 	if _, ok := m.GetSession("Tester"); !ok {
 		t.Error("player should be registered in manager after char creation")
+	}
+}
+
+func TestCompleteCharCreation_PersistsHometownRoom(t *testing.T) {
+	database := testutil.NewMockDatabase()
+	world := testutil.NewTestWorld()
+	t.Cleanup(world.StopAITicker)
+	s := makeCharSession(t, NewManager(world, database))
+
+	s.charCreating = true
+	s.charName = "Alaozarnewbie"
+	s.charClass = game.ClassWarrior
+	s.charRace = game.RaceHuman
+	s.charHometown = 3
+	s.charPassword = "hashed_pw"
+	s.charStats = game.CharStats{Str: 15, Dex: 12, Con: 14, Int: 10, Wis: 11, Cha: 9}
+
+	if err := s.completeCharCreation(); err != nil {
+		t.Fatalf("completeCharCreation: %v", err)
+	}
+
+	want := game.NewbieHometownRoom(3)
+	record, err := database.GetPlayer("Alaozarnewbie")
+	if err != nil {
+		t.Fatalf("GetPlayer: %v", err)
+	}
+	if record == nil {
+		t.Fatal("created player record not found")
+	}
+	if record.RoomVNum != want {
+		t.Errorf("persisted room = %d, want hometown room %d", record.RoomVNum, want)
+	}
+	if got := s.player.GetRoom(); got != want {
+		t.Errorf("live player room = %d, want hometown room %d", got, want)
 	}
 }
 

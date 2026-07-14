@@ -170,6 +170,9 @@ func TestReturningPlayerStopsAtMenuThenEntersWorld(t *testing.T) {
 	if _, ok := world.GetPlayer("Returner"); !ok {
 		t.Fatal("returning player was not added to world")
 	}
+	if got := s.player.GetRoom(); got != record.RoomVNum {
+		t.Fatalf("returning player room = %d, want saved room %d", got, record.RoomVNum)
+	}
 }
 
 func TestMenuDeleteReturningPlayer(t *testing.T) {

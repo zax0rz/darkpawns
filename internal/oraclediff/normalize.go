@@ -10,6 +10,7 @@ var (
 	vitalsPrompt = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
 	promptOnly   = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
 	promptPrefix = regexp.MustCompile(`^> ?`)
+	autoExitLine = regexp.MustCompile(`^\s*\[ Exits:`)
 	statusVitals = regexp.MustCompile(`\b(?:HP|Mana|Move):\s*\d+/\d+`)
 	statsLine    = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
 	volatileLine = regexp.MustCompile(`(?i)^\s*(?:` +
@@ -34,6 +35,9 @@ func Normalize(raw string) string {
 	lines := strings.Split(raw, "\n")
 	for i := range lines {
 		lines[i] = strings.TrimRight(lines[i], " \t")
+		if autoExitLine.MatchString(lines[i]) {
+			lines[i] = strings.TrimLeft(lines[i], " \t")
+		}
 	}
 
 	// 3. Remove standalone telnet prompts and mask embedded status values. The
