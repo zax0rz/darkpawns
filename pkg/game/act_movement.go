@@ -175,6 +175,9 @@ func hasBoat(w *World, ch *Player) bool {
 
 // hasKey checks if a player has a key object by vnum.
 func hasKey(ch *Player, key int) bool {
+	if key < 0 {
+		return false
+	}
 	if ch.Inventory != nil {
 		for _, obj := range ch.Inventory.Items {
 			if obj != nil && obj.VNum == key {

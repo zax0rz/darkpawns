@@ -253,3 +253,61 @@ func TestZoneDoorResetUsesRuntimeBits(t *testing.T) {
 		t.Fatalf("reset changed .wld capability code to %d", ext.DoorState)
 	}
 }
+
+func TestKeylessDoorRejectsCoinPileKey(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 200, Name: "Keyless near", Exits: map[string]parser.Exit{
+				"east": {Direction: "east", ToRoom: 201, DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed | parser.ExitLocked, Key: -1, Keywords: "wooden door"},
+			}},
+			{VNum: 201, Name: "Keyless far", Exits: map[string]parser.Exit{
+				"west": {Direction: "west", ToRoom: 200, DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed | parser.ExitLocked, Key: -1, Keywords: "wooden door"},
+			}},
+		},
+		Objs: []parser.Obj{
+			{VNum: -1, Keywords: "coins gold", ShortDesc: "a pile of coins"},
+		},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	p := NewPlayer(1, "KeylessTester", 200)
+	p.SetLevel(10)
+	if err := w.AddPlayer(p); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+
+	coins, err := w.SpawnObject(-1, -1)
+	if err != nil {
+		t.Fatalf("SpawnObject(-1): %v", err)
+	}
+	if err := w.MoveObjectToPlayerInventory(coins, p); err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory: %v", err)
+	}
+
+	messages := make(map[string][]string)
+	w.MessageSink = func(name string, msg []byte) {
+		messages[name] = append(messages[name], string(msg))
+	}
+
+	w.DoUnlock(p, "door east")
+	if got := joinedDoorMessages(messages, p.Name); !strings.Contains(got, "You don't seem to have the proper key.") {
+		t.Fatalf("unlock message = %q, want proper-key rejection", got)
+	}
+
+	// For locking, the door must be closed and unlocked to reach the key check.
+	nearExit := w.GetRoomInWorld(200).Exits["east"]
+	nearExit.ExitInfo &^= parser.ExitLocked
+	w.GetRoomInWorld(200).Exits["east"] = nearExit
+	farExit := w.GetRoomInWorld(201).Exits["west"]
+	farExit.ExitInfo &^= parser.ExitLocked
+	w.GetRoomInWorld(201).Exits["west"] = farExit
+	messages[p.Name] = nil
+	w.DoLock(p, "door east")
+	if got := joinedDoorMessages(messages, p.Name); !strings.Contains(got, "You don't seem to have the proper key.") {
+		t.Fatalf("lock message = %q, want proper-key rejection", got)
+	}
+}
