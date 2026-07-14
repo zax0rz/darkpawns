@@ -1,0 +1,69 @@
+# Inventory/equipment display fidelity probes (Domain 3 chunk 3).
+# Spawned items in room 8004: 3x bread 8010, torch 8030, tunic 8019, small sword 8037.
+# Warmup dresses the actor in the spawned kit (discarding starter kit) so probe-only
+# commands are inventory/equipment/remove/drop and the diff focuses on the view.
+
+[fixture]
+quiet-mobs
+spawn-obj 8010 3 8004 80
+spawn-obj 8030 1 8004 80
+spawn-obj 8019 1 8004 80
+spawn-obj 8037 1 8004 80
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[warmup]
+remove tunic
+remove sword
+junk tunic
+junk sword
+get all.bread
+get torch
+get tunic
+get sword
+wear tunic
+wield sword
+hold torch
+
+[probe]
+inventory
+equipment
+remove tunic
+remove sword
+remove torch
+drop all.bread
+drop pack
+drop tunic
+drop sword
+drop torch
+inventory
+equipment
