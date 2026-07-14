@@ -190,12 +190,11 @@ var eqPosKeywords = map[string]int{
 	"ablegs": eqWearAblegs,
 	"face":   eqWearFace,
 	"hover":  eqWearHover,
-	"wield":  eqWearWield,
-	"hold":   eqWearHold,
 }
 
 // wearMessages maps eq pos index to [room_msg, char_msg]
 var wearMessages = [][]string{
+	{"ITEM_WEAR_TAKE - Tell a god.", "ITEM_WEAR_TAKE - Tell a god."},
 	{"$n slides $p on to $s right ring finger.", "You slide $p on to your right ring finger."},
 	{"$n slides $p on to $s left ring finger.", "You slide $p on to your left ring finger."},
 	{"$n wears $p around $s neck.", "You wear $p around your neck."},

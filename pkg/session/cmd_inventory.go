@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-
-	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdQuit(s *Session) error {
@@ -60,171 +58,29 @@ func cmdEquipment(s *Session, args []string) error {
 
 // cmdWear equips an item from inventory.
 func cmdWear(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Wear what?")
-		return nil
-	}
-
-	itemName := strings.Join(args, " ")
-
-	// Find item in inventory
-	item, found := s.player.Inventory.FindItem(itemName)
-	if !found {
-		s.sendText(fmt.Sprintf("You don't have '%s'.", itemName))
-		return nil
-	}
-
-	// Try to equip the item, with anti-alignment and anti-class checks (DP-369)
-	zapped, err := s.player.Equipment.EquipForPlayer(item, s.player.Inventory, s.player.Alignment, s.player.Class)
-	if zapped {
-		s.sendText(fmt.Sprintf("You are zapped by %s and instantly let go of it.", item.GetShortDesc()))
-		broadcastEquipmentChange(s, "zap", item)
-		return nil
-	}
-	if err != nil {
-		s.sendText(fmt.Sprintf("You can't wear that: %v", err))
-		return nil
-	}
-
-	// Remove from inventory (equip should have moved it)
-	s.player.Inventory.RemoveItem(item)
-	s.sendText(fmt.Sprintf("You wear %s.", item.GetShortDesc()))
+	s.manager.world.DoWear(s.player, strings.Join(args, " "))
 	s.markDirty(VarInventory, VarEquipment)
-
-	// Broadcast to room
-	broadcastEquipmentChange(s, "wear", item)
 	return nil
 }
 
 // cmdRemove unequips an item.
 func cmdRemove(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Remove what?")
-		return nil
-	}
-
-	itemName := strings.Join(args, " ")
-
-	// Find the item in equipment
-	var itemToRemove *game.ObjectInstance
-	var slotToRemove game.EquipmentSlot
-	equipped := s.player.Equipment.GetEquippedItems()
-
-	for slot, item := range equipped {
-		if strings.Contains(strings.ToLower(item.GetKeywords()), strings.ToLower(itemName)) ||
-			strings.Contains(strings.ToLower(item.GetShortDesc()), strings.ToLower(itemName)) {
-			itemToRemove = item
-			slotToRemove = slot
-			break
-		}
-	}
-
-	if itemToRemove == nil {
-		s.sendText(fmt.Sprintf("You don't seem to be using %s %s.", an(itemName), itemName))
-		return nil
-	}
-
-	if err := s.player.Equipment.Unequip(slotToRemove, s.player.Inventory); err != nil {
-		s.sendText(fmt.Sprintf("You can't remove that: %v", err))
-		return nil
-	}
-
-	s.sendText(fmt.Sprintf("You stop using %s.", itemToRemove.GetShortDesc()))
+	s.manager.world.DoRemove(s.player, strings.Join(args, " "))
 	s.markDirty(VarInventory, VarEquipment)
-	broadcastEquipmentChange(s, "remove", itemToRemove)
 	return nil
 }
 
 // cmdWield equips a weapon.
 func cmdWield(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Wield what?")
-		return nil
-	}
-
-	itemName := strings.Join(args, " ")
-
-	// Find item in inventory
-	item, found := s.player.Inventory.FindItem(itemName)
-	if !found {
-		s.sendText(fmt.Sprintf("You don't have '%s'.", itemName))
-		return nil
-	}
-
-	// Check if item is a weapon
-	if item.GetTypeFlag() != 5 { // ITEM_WEAPON = 5 from structs.h
-		s.sendText("That's not a weapon.")
-		return nil
-	}
-
-	// Unequip current weapon if any
-	if _, ok := s.player.Equipment.GetItemInSlot(game.SlotWield); ok {
-		if err := s.player.Equipment.Unequip(game.SlotWield, s.player.Inventory); err != nil {
-			s.sendText(fmt.Sprintf("You can't unwield your current weapon: %v", err))
-			return nil
-		}
-	}
-
-	// Equip new weapon, with anti-alignment and anti-class checks (DP-369)
-	zapped, err := s.player.Equipment.EquipForPlayer(item, s.player.Inventory, s.player.Alignment, s.player.Class)
-	if zapped {
-		s.sendText(fmt.Sprintf("You are zapped by %s and instantly let go of it.", item.GetShortDesc()))
-		broadcastEquipmentChange(s, "zap", item)
-		return nil
-	}
-	if err != nil {
-		s.sendText(fmt.Sprintf("You can't wield that: %v", err))
-		return nil
-	}
-
-	// Remove from inventory
-	s.player.Inventory.RemoveItem(item)
-	s.sendText(fmt.Sprintf("You wield %s.", item.GetShortDesc()))
+	s.manager.world.DoWield(s.player, strings.Join(args, " "))
 	s.markDirty(VarInventory, VarEquipment)
-	broadcastEquipmentChange(s, "wield", item)
 	return nil
 }
 
 // cmdHold holds an item.
 func cmdHold(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Hold what?")
-		return nil
-	}
-
-	itemName := strings.Join(args, " ")
-
-	// Find item in inventory
-	item, found := s.player.Inventory.FindItem(itemName)
-	if !found {
-		s.sendText(fmt.Sprintf("You don't have '%s'.", itemName))
-		return nil
-	}
-
-	// Unequip current held item if any
-	if _, ok := s.player.Equipment.GetItemInSlot(game.SlotHold); ok {
-		if err := s.player.Equipment.Unequip(game.SlotHold, s.player.Inventory); err != nil {
-			s.sendText(fmt.Sprintf("You can't unhold your current item: %v", err))
-			return nil
-		}
-	}
-
-	// Try to equip in hold slot, with anti-alignment and anti-class checks (DP-369)
-	zapped, err := s.player.Equipment.EquipForPlayer(item, s.player.Inventory, s.player.Alignment, s.player.Class)
-	if zapped {
-		s.sendText(fmt.Sprintf("You are zapped by %s and instantly let go of it.", item.GetShortDesc()))
-		broadcastEquipmentChange(s, "zap", item)
-		return nil
-	}
-	if err != nil {
-		s.sendText(fmt.Sprintf("You can't hold that: %v", err))
-		return nil
-	}
-
-	// Remove from inventory
-	s.player.Inventory.RemoveItem(item)
-	s.sendText(fmt.Sprintf("You hold %s.", item.GetShortDesc()))
-	broadcastEquipmentChange(s, "hold", item)
+	s.manager.world.DoGrab(s.player, strings.Join(args, " "))
+	s.markDirty(VarInventory, VarEquipment)
 	return nil
 }
 
@@ -288,39 +144,6 @@ func cmdDonate(s *Session, args []string) error {
 	s.manager.world.DoDonate(s.player, arg)
 	s.markDirty(VarInventory, VarRoomItems)
 	return nil
-}
-
-// broadcastEquipmentChange broadcasts equipment changes to the room.
-func broadcastEquipmentChange(s *Session, action string, item *game.ObjectInstance) {
-	event := EventData{
-		Type: "equipment",
-		From: s.player.Name,
-		Text: fmt.Sprintf("%s %s %s.", s.player.Name, action, item.GetShortDesc()),
-	}
-
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: event,
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return
-	}
-
-	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
-}
-
-// an returns the English indefinite article for a word, mimicking C's AN().
-func an(word string) string {
-	if word == "" {
-		return "a"
-	}
-	switch strings.ToLower(word)[:1] {
-	case "a", "e", "i", "o", "u":
-		return "an"
-	default:
-		return "a"
-	}
 }
 
 // cmdFollow sets the player to follow another player.

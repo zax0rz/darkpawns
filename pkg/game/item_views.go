@@ -36,6 +36,19 @@ var cWearToGoSlot = []EquipmentSlot{
 	21: -1, // HOVER — no Go slot
 }
 
+// cWearSlot maps a C WEAR_ position to the Go EquipmentSlot used for storage.
+// THROW, ABLEGS, FACE, and HOVER do not yet have Go storage slots.
+func cWearSlot(where int) (EquipmentSlot, bool) {
+	if where < 0 || where >= len(cWearToGoSlot) {
+		return 0, false
+	}
+	slot := cWearToGoSlot[where]
+	if slot < 0 {
+		return 0, false
+	}
+	return slot, true
+}
+
 // cWearWhere is the fixed-width label printed by C's do_equipment().
 // Trailing spaces are load-bearing and copied from src/constants.c.
 var cWearWhere = []string{

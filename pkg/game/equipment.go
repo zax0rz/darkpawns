@@ -169,6 +169,26 @@ func NewEquipment() *Equipment {
 	}
 }
 
+// SetSlot places an item in one exact equipment slot without deriving a slot
+// from its wear flags. Callers remain responsible for moving the item out of
+// its previous location and updating its ObjectLocation.
+func (eq *Equipment) SetSlot(slot EquipmentSlot, item *ObjectInstance) error {
+	if item == nil {
+		return fmt.Errorf("cannot equip a nil item")
+	}
+
+	eq.mu.Lock()
+	defer eq.mu.Unlock()
+	if eq.Slots == nil {
+		eq.Slots = make(map[EquipmentSlot]*ObjectInstance)
+	}
+	if _, occupied := eq.Slots[slot]; occupied {
+		return fmt.Errorf("slot %s is already occupied", slot)
+	}
+	eq.Slots[slot] = item
+	return nil
+}
+
 // Equip attempts to equip an item in the appropriate slot(s).
 func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
 	eq.mu.Lock()
