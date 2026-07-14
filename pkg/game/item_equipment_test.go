@@ -12,7 +12,7 @@ func newWieldableItem(vnum int, shortDesc, keywords string, twoHanded bool) *Obj
 		VNum:      vnum,
 		ShortDesc: shortDesc,
 		Keywords:  keywords,
-		WearFlags: [4]int{1 << 13}, // ITEM_WEAR_WIELD
+		WearFlags: [4]int{1<<0 | 1<<13}, // ITEM_WEAR_TAKE | ITEM_WEAR_WIELD
 	}, -1)
 	if twoHanded {
 		obj.SetExtraFlag(0, extraFlagTwoHanded)
@@ -25,22 +25,13 @@ func newHoldableItem(vnum int, shortDesc, keywords string) *ObjectInstance {
 		VNum:      vnum,
 		ShortDesc: shortDesc,
 		Keywords:  keywords,
-		WearFlags: [4]int{1 << 14}, // ITEM_WEAR_HOLD
+		WearFlags: [4]int{1<<0 | 1<<14}, // ITEM_WEAR_TAKE | ITEM_WEAR_HOLD
 	}, -1)
 }
 
 // TestPerformWearTwoHanded verifies the two-handed-weapon checks use
 // ITEM_TWO_HANDED (bit 28), not bit 3 (ITEM_NODONATE's position) —
 // src/structs.h:468-496.
-//
-// performWear's own two-handed checks (item_equipment.go) test occupancy via
-// w.IsEquipped(ch, eqWear*), which casts the eqWear* position constant
-// straight to EquipmentSlot. That space is unrelated to the SlotWield/SlotHold
-// values Equipment.equip() actually assigns via getWearFlags() — a separate,
-// pre-existing mismatch in this unwired ("not yet wired to command registry")
-// code, out of scope here. So equipment state is seeded directly into
-// ch.Equipment.Slots under the EquipmentSlot(eqWear*) keys performWear itself
-// reads, to exercise the two-handed bit check in isolation.
 func TestPerformWearTwoHanded(t *testing.T) {
 	w, ch, lastMsg := newDonateTestWorld(t)
 
@@ -48,7 +39,9 @@ func TestPerformWearTwoHanded(t *testing.T) {
 	twoHanded := newWieldableItem(4102, "a greatsword", "greatsword", true)
 
 	// A two-handed weapon must be rejected while something is held.
-	ch.Equipment.Slots[EquipmentSlot(eqWearHold)] = held
+	if err := w.EquipItem(ch, held, eqWearHold); err != nil {
+		t.Fatalf("EquipItem held: %v", err)
+	}
 	if err := ch.Inventory.AddItem(twoHanded); err != nil {
 		t.Fatalf("AddItem twoHanded: %v", err)
 	}
@@ -61,11 +54,13 @@ func TestPerformWearTwoHanded(t *testing.T) {
 	}
 
 	// Symmetric case: a two-handed weapon already wielded blocks holding.
-	delete(ch.Equipment.Slots, EquipmentSlot(eqWearHold))
-	ch.Equipment.Slots[EquipmentSlot(eqWearWield)] = twoHanded
-	if err := ch.Inventory.AddItem(held); err != nil {
-		t.Fatalf("AddItem held: %v", err)
+	if err := w.UnequipItem(ch, eqWearHold); err != nil {
+		t.Fatalf("UnequipItem held: %v", err)
 	}
+	if err := w.EquipItem(ch, twoHanded, eqWearWield); err != nil {
+		t.Fatalf("EquipItem twoHanded: %v", err)
+	}
+	lastMsg()
 	w.performWear(ch, held, eqWearHold)
 	if w.IsEquipped(ch, eqWearHold) {
 		t.Errorf("holding should be blocked while a two-handed weapon is wielded")
@@ -91,11 +86,8 @@ func TestDoWearAllSkipsUnseenItems(t *testing.T) {
 		t.Fatalf("AddItem invisible: %v", err)
 	}
 
-	w.doWear(ch, nil, "wear", "all")
+	w.DoWear(ch, "all")
 
-	// Equipment.equip() assigns the real storage slot via getWearFlags(),
-	// which is SlotWield — not EquipmentSlot(eqWearWield) (see comment on
-	// TestPerformWearTwoHanded) — so check occupancy through the real slot.
 	if _, ok := ch.Equipment.GetItemInSlot(SlotWield); !ok {
 		t.Errorf("visible item should have been worn")
 	}
@@ -115,14 +107,108 @@ func TestPerformRemoveNoDrop(t *testing.T) {
 		t.Fatalf("EquipItem: %v", err)
 	}
 
-	// EquipItem's slot argument is ignored — Equipment.equip() places the
-	// item via getWearFlags() under SlotWield (see TestPerformWearTwoHanded),
-	// so performRemove must be called with that real slot.
-	w.performRemove(ch, int(SlotWield))
+	w.performRemove(ch, eqWearWield)
 	if msg := lastMsg(); !strings.Contains(msg, "You can't remove") || !strings.Contains(msg, "CURSED") {
 		t.Errorf("NODROP remove message: got %q", msg)
 	}
 	if _, ok := ch.Equipment.GetItemInSlot(SlotWield); !ok {
 		t.Errorf("NODROP item should remain equipped")
+	}
+}
+
+func TestCWearSlotEquipAndRemove(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+	sword := newWieldableItem(4130, "a short sword", "sword", false)
+	if err := ch.Inventory.AddItem(sword); err != nil {
+		t.Fatalf("AddItem sword: %v", err)
+	}
+	if err := w.EquipItem(ch, sword, eqWearWield); err != nil {
+		t.Fatalf("EquipItem sword: %v", err)
+	}
+	if !w.IsEquipped(ch, eqWearWield) {
+		t.Fatal("eqWearWield should map to an occupied SlotWield")
+	}
+	if got, ok := ch.Equipment.GetItemInSlot(SlotWield); !ok || got != sword {
+		t.Fatalf("SlotWield = (%v, %v), want sword, true", got, ok)
+	}
+
+	w.performRemove(ch, eqWearWield)
+	if w.IsEquipped(ch, eqWearWield) {
+		t.Fatal("performRemove(eqWearWield) left the item equipped")
+	}
+	if got, ok := ch.Inventory.FindItem("sword"); !ok || got != sword {
+		t.Fatalf("removed sword = (%v, %v), want sword in inventory", got, ok)
+	}
+}
+
+func TestEquipmentCommandRoomMessages(t *testing.T) {
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	actor := NewPlayer(1, "Eqactor", 1001)
+	observer := NewPlayer(2, "Observer", 1001)
+	if err := w.AddPlayer(actor); err != nil {
+		t.Fatalf("AddPlayer actor: %v", err)
+	}
+	if err := w.AddPlayer(observer); err != nil {
+		t.Fatalf("AddPlayer observer: %v", err)
+	}
+	outputs := map[string]*strings.Builder{
+		actor.Name:    {},
+		observer.Name: {},
+	}
+	w.MessageSink = func(name string, msg []byte) { outputs[name].Write(msg) }
+	assertMessages := func(wantActor, wantObserver string) {
+		t.Helper()
+		if got := outputs[actor.Name].String(); got != wantActor {
+			t.Errorf("actor message = %q, want %q", got, wantActor)
+		}
+		if got := outputs[observer.Name].String(); got != wantObserver {
+			t.Errorf("observer message = %q, want %q", got, wantObserver)
+		}
+		outputs[actor.Name].Reset()
+		outputs[observer.Name].Reset()
+	}
+
+	tunic := NewObjectInstance(&parser.Obj{
+		VNum: 4140, ShortDesc: "a frayed tunic", Keywords: "tunic", WearFlags: [4]int{1<<0 | 1<<3},
+	}, -1)
+	sword := newWieldableItem(4141, "a short sword", "sword", false)
+	torch := newHoldableItem(4142, "a brass torch", "torch")
+	for _, obj := range []*ObjectInstance{tunic, sword, torch} {
+		if err := actor.Inventory.AddItem(obj); err != nil {
+			t.Fatalf("AddItem %s: %v", obj.GetKeywords(), err)
+		}
+	}
+
+	w.DoWear(actor, "tunic")
+	assertMessages("You wear a frayed tunic on your body.\r\n", "Eqactor wears a frayed tunic on his body.\r\n")
+	w.DoWield(actor, "sword")
+	assertMessages("You wield a short sword.\r\n", "Eqactor wields a short sword.\r\n")
+	w.DoGrab(actor, "torch")
+	assertMessages("You grab a brass torch.\r\n", "Eqactor grabs a brass torch.\r\n")
+	w.DoRemove(actor, "sword")
+	assertMessages("You stop using a short sword.\r\n", "Eqactor stops using a short sword.\r\n")
+}
+
+func TestDoGrabRejectsNonHoldableItem(t *testing.T) {
+	w, ch, lastMsg := newDonateTestWorld(t)
+	tunic := NewObjectInstance(&parser.Obj{
+		VNum: 4150, ShortDesc: "a frayed tunic", Keywords: "tunic", TypeFlag: ITEM_ARMOR,
+		WearFlags: [4]int{1<<0 | 1<<3},
+	}, -1)
+	if err := ch.Inventory.AddItem(tunic); err != nil {
+		t.Fatalf("AddItem tunic: %v", err)
+	}
+
+	w.DoGrab(ch, "tunic")
+	if got := lastMsg(); got != "You can't hold that.\r\n" {
+		t.Fatalf("hold rejection = %q, want %q", got, "You can't hold that.\r\n")
+	}
+	if got, ok := ch.Inventory.FindItem("tunic"); !ok || got != tunic {
+		t.Fatal("rejected tunic should remain in inventory")
 	}
 }

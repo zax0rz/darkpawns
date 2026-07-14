@@ -1,0 +1,82 @@
+# Equipment action fidelity (Domain 4: wear/wield/hold/remove — DP-1106/O19).
+# The session layer hand-rolls these verbs with flat wording ("You wear X.",
+# "You hold X.", not-found "You don't have 'X'.", room broadcast "<Name> wear X.")
+# instead of delegating to the C-faithful game layer (perform_wear/wear_message/
+# perform_remove, act.item.c). C prints wear-position-specific text ("You wear $p
+# on your body."), "You grab $p." for hold, and act()-substituted TO_ROOM lines.
+#
+# A newbie starts WEARING a tunic (body) and a sword (wield), so no fixture or
+# recall alignment is needed — we probe the starter gear directly. A passive
+# observer of the same hometown is co-located in the start room and captures the
+# TO_ROOM broadcasts ($n wears/wields/grabs/stops using $p) per-recipient.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Eqactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Eqactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Eqobserv
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Eqobserv
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+# NOTE: `remove` is probed on the sword (not the tunic) because tunic 8019 is
+# ITEM_TAKE_NAME (bit 17) — C renames it to "a tunic" on unequip, an orthogonal
+# mechanic tracked separately. The tunic still exercises the wear-location clause
+# (its wear message uses the prototype short-desc, emitted before equip renames).
+[probe]
+wear tunic
+wield sword
+remove sword
+hold tunic
