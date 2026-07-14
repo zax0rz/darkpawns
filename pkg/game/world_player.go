@@ -3,6 +3,8 @@ package game
 import (
 	"fmt"
 	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int, ce CombatEngine) bool {
@@ -57,20 +59,20 @@ func (w *World) GiveStartingItems(p *Player) {
 
 	// Create pack and fill it
 	if packOK {
-		pack := NewObjectInstance(packProto, -1)
+		pack := w.newObjectInstance(packProto, -1)
 		pack.Contains = make([]*ObjectInstance, 0)
 
 		// bread + waterskin always in pack
 		if bread, ok := w.GetObjPrototype(8010); ok {
-			pack.Contains = append(pack.Contains, NewObjectInstance(bread, -1))
+			w.giveStartingPackItem(p, pack, bread)
 		}
 		if water, ok := w.GetObjPrototype(8063); ok {
-			pack.Contains = append(pack.Contains, NewObjectInstance(water, -1))
+			w.giveStartingPackItem(p, pack, water)
 		}
 		// lockpicks in pack for thieves/assassins
 		if p.Class == ClassThief || p.Class == ClassAssassin {
 			if picks, ok := w.GetObjPrototype(8027); ok {
-				pack.Contains = append(pack.Contains, NewObjectInstance(picks, -1))
+				w.giveStartingPackItem(p, pack, picks)
 			}
 		}
 
@@ -81,13 +83,21 @@ func (w *World) GiveStartingItems(p *Player) {
 	}
 }
 
+func (w *World) giveStartingPackItem(p *Player, pack *ObjectInstance, proto *parser.Obj) {
+	item := w.newObjectInstance(proto, -1)
+	if err := w.MoveObjectToContainer(item, pack); err != nil {
+		slog.Warn("starting pack item failed", "player", p.Name, "vnum", proto.VNum, "error", err)
+		w.ExtractObject(item, p.GetRoom())
+	}
+}
+
 // giveItem creates an ObjectInstance from a prototype vnum and adds it to player inventory.
 func (w *World) giveItem(p *Player, vnum int) {
 	proto, ok := w.GetObjPrototype(vnum)
 	if !ok {
 		return
 	}
-	obj := NewObjectInstance(proto, -1)
+	obj := w.newObjectInstance(proto, -1)
 	if err := w.MoveObjectToPlayerInventory(obj, p); err != nil {
 		slog.Warn("giveItem failed", "player", p.Name, "vnum", vnum, "error", err)
 	}

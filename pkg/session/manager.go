@@ -77,7 +77,6 @@ type Manager struct {
 	db           db.Database
 	hasDB        bool
 	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
-	doorManager  *systems.DoorManager
 	upgrader     websocket.Upgrader
 
 	// Per-IP connection tracking (C5)
@@ -220,11 +219,6 @@ func NewManager(world *game.World, database db.Database) *Manager {
 	ce := combat.NewCombatEngine()
 	ce.Start()
 
-	dm := systems.NewDoorManager()
-	if pw := world.GetParsedWorld(); pw != nil {
-		dm.LoadDoorsFromWorld(pw)
-	}
-
 	m := &Manager{
 		sessions:     make(map[string]*Session),
 		world:        world,
@@ -235,7 +229,6 @@ func NewManager(world *game.World, database db.Database) *Manager {
 			Threshold: 10,
 			Lockout:   15 * time.Minute,
 		}),
-		doorManager: dm,
 		ipConnCount: make(map[string]int),
 	}
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a

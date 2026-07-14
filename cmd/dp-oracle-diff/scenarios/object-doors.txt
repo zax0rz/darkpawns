@@ -1,0 +1,78 @@
+# Unified container/exit door handling. Object 19121 is a real pickproof old
+# chest keyed by 19122. Room 11186's up exit is a real locked door keyed by
+# 11017 and reset by zone 110. Cuchi promotes canonical actor Orodreth so the
+# shared warmup can load the real fixtures and teleport without editing data.
+
+[fixture]
+quiet-mobs
+spawn-mob 18306 1 8004 80
+strip-mob-script 18306
+
+[setup:oracle]
+Orodreth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Orodreth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[warmup]
+pat Cuchi
+holylight
+load obj 19121
+load obj 19122
+load obj 11017
+goto 11186
+
+[probe]
+unlock chest
+open chest
+open chest
+close chest
+close chest
+lock chest
+lock chest
+open chest
+unlock chest
+pick chest
+lock chest
+pick chest
+unlock door up
+open door up
+open door up
+close door up
+close door up
+lock door up
+lock door up
+open door up
+unlock door up
+pick door up
+lock door up
+drop stone key
+unlock door up
+drop shadow key
+unlock chest

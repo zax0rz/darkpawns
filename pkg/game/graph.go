@@ -99,7 +99,7 @@ func (w *World) validEdge(exit parser.Exit, marks map[int]bool) bool {
 	if w.roomHasFlag(exit.ToRoom, "notrack") {
 		return false
 	}
-	if !trackThroughDoors && (exit.DoorState != 0) { // EX_CLOSED = 1
+	if !trackThroughDoors && exit.ExitInfo&parser.ExitClosed != 0 {
 		return false
 	}
 	// Water sector checks
@@ -162,7 +162,7 @@ func (w *World) huntVictim(m *MobInstance) {
 	mobRoom, ok := w.GetRoom(m.GetRoom())
 	if ok {
 		if exit, exists := mobRoom.Exits[dirKeys[dir]]; exists {
-			if (exit.DoorState != 0) && mobIsIntelligent(m) && exit.Keywords != "" {
+			if exit.ExitInfo&parser.ExitClosed != 0 && mobIsIntelligent(m) && exit.Keywords != "" {
 				w.mobOpenDoor(m, dir, exit.Keywords)
 			}
 		}
@@ -290,12 +290,12 @@ func (w *World) mobOpenDoor(m *MobInstance, dir int, keyword string) {
 		w.mu.Unlock()
 		return
 	}
-	if ext.DoorState != doorClosed && ext.DoorState != doorLocked {
+	if ext.ExitInfo&parser.ExitClosed == 0 {
 		w.mu.Unlock()
 		return
 	}
 
-	ext.DoorState = doorOpen
+	ext.ExitInfo &^= parser.ExitClosed | parser.ExitLocked
 	room.Exits[dirName] = ext
 
 	// Handle reverse exit
@@ -305,7 +305,7 @@ func (w *World) mobOpenDoor(m *MobInstance, dir int, keyword string) {
 		backDir := revDir[dir]
 		backExt, hasBack := otherRoom.Exits[dirs[backDir]]
 		if hasBack && backExt.ToRoom == m.GetRoom() {
-			backExt.DoorState = doorOpen
+			backExt.ExitInfo &^= parser.ExitClosed | parser.ExitLocked
 			otherRoom.Exits[dirs[backDir]] = backExt
 		}
 	}

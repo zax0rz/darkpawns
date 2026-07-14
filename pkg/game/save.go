@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 const (
@@ -434,7 +435,7 @@ type saveWorldData struct {
 	SaveVersion int                    `json:"save_version"` // bumped on save format changes
 	NextMobID   int                    `json:"next_mob_id"`
 	NextObjID   int                    `json:"next_obj_id"`
-	DoorStates  map[int]map[string]int `json:"door_states"` // roomVNum → direction → DoorState
+	DoorStates  map[int]map[string]int `json:"door_states"` // roomVNum → direction → legacy runtime state (0/1/2)
 	Mobs        []saveMobPosition      `json:"mobs"`
 	RoomItems   map[int][]saveItemRef  `json:"room_items"` // roomVNum → items
 	Gossip      []saveGossipEntry      `json:"gossip"`
@@ -483,11 +484,12 @@ func SerializeWorld(w *World) (string, error) {
 			continue
 		}
 		for dir, exit := range room.Exits {
-			if exit.DoorState != 0 {
+			state := parser.LegacyDoorState(exit.ExitInfo)
+			if state != 0 {
 				if data.DoorStates[vnum] == nil {
 					data.DoorStates[vnum] = make(map[string]int)
 				}
-				data.DoorStates[vnum][dir] = exit.DoorState
+				data.DoorStates[vnum][dir] = state
 			}
 		}
 	}
@@ -568,7 +570,7 @@ func DeserializeWorld(data string, w *World) error {
 		}
 		for dir, state := range dirMap {
 			if exit, ok := room.Exits[dir]; ok {
-				exit.DoorState = state
+				exit.ExitInfo = parser.ApplyDoorReset(exit.ExitInfo, state)
 				room.Exits[dir] = exit // map value — must reassign
 			}
 		}

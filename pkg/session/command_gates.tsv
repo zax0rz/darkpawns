@@ -35,7 +35,6 @@ bah	0	5	C interpreter.c:344
 balance	1	8	C interpreter.c:346
 ban	38	0	C interpreter.c:345
 bash	1	7	C interpreter.c:347
-bashdoor	0	8	Go-only: physical door action; requires standing
 bearhug	1	7	C interpreter.c:348
 beckon	0	5	C interpreter.c:349
 beg	0	5	C interpreter.c:351
@@ -104,7 +103,6 @@ dance	0	8	C interpreter.c:405
 dark	31	0	C interpreter.c:408
 date	31	0	C interpreter.c:406
 daydream	0	4	C interpreter.c:407
-dbash	0	8	Go alias for bashdoor
 dc	32	0	C interpreter.c:409
 deposit	1	8	C interpreter.c:410
 desc	0	0	Go alias for describe

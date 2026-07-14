@@ -10,6 +10,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Ensure slog is used
@@ -228,12 +229,9 @@ func cmdFleeMovement(s *Session) error {
 		idx := rand.IntN(len(directions))
 		direction := directions[idx]
 
-		// Check if door blocks
-		if s.manager.doorManager != nil {
-			canPass, _ := s.manager.doorManager.CanPass(room.VNum, direction)
-			if !canPass {
-				continue
-			}
+		// Closed exits cannot be used to flee.
+		if exit, ok := room.Exits[direction]; !ok || exit.ExitInfo&parser.ExitClosed != 0 {
+			continue
 		}
 
 		// Try to move

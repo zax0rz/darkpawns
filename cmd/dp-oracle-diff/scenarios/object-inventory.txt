@@ -1,7 +1,8 @@
 # Object-transfer fidelity in the Temple Altar anchor room (8004).
 # The starter sword (8037) has TAKE|WIELD in one wear-flag word, proving TAKE
-# is tested as a bit. Container probes join this scenario in the next chunk,
-# once the unified open/close handler makes the closed starter pack usable.
+# is tested as a bit. The starter backpack (8038) is CLOSEABLE|CLOSED; opening
+# it twice pins the C handler's success and already-open responses before the
+# contained-object transfer probes exercise the now-accessible inventory.
 
 [fixture]
 quiet-mobs
@@ -39,6 +40,14 @@ Y
 recall
 
 [probe]
+open sword
+open pack
+open pack
+get bread pack
+put bread pack
+close pack
+get bread pack
+open pack
 drop sword
 get sword
 drop all.sword

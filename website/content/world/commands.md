@@ -198,7 +198,6 @@ These commands require the relevant skill to be practiced. See `/help/<skill>/` 
 | `lock` | — | Lock a door with your key |
 | `unlock` | — | Unlock a door with your key |
 | `knock` | — | Knock on a door |
-| `bashdoor` | `dbash` | Bash down a door |
 
 ---
 

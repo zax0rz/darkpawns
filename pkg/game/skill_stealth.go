@@ -207,16 +207,4 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string) SkillResult {
 	}
 }
 
-// DoPickLock implements do_pick() via doGenDoor() with SCMD_PICK.
-// Finds the door, checks pickability, rolls against pick lock skill, and unlocks.
-func DoPickLock(w *World, ch *Player, argument string) SkillResult {
-	if ch.GetSkill(SkillPickLock) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
-	}
-
-	doGenDoor(w, ch, argument, scmdPick)
-	// doGenDoor handles its own messaging; return empty result
-	return SkillResult{Success: true}
-}
-
 // DoCarve implements do_carve() — carve food from a corpse.

@@ -59,10 +59,58 @@ func (r *Room) IsLight() bool {
 type Exit struct {
 	Direction   string
 	ToRoom      int
-	DoorState   int // 0=open, 1=EX_ISDOOR, 2=EX_ISDOOR|EX_PICKPROOF
+	DoorState   int // Immutable .wld capability code: 0=no door, 1=door, 2=pickproof door.
+	ExitInfo    int // Runtime EX_* bitfield; initialized from DoorState and changed by zone resets/actions.
 	Key         int // vnum of key, or -1
 	Keywords    string
 	Description string
+}
+
+// ExitInfo bits match the original C EX_* values exactly.
+const (
+	ExitIsDoor    = 1 << 0
+	ExitClosed    = 1 << 1
+	ExitLocked    = 1 << 2
+	ExitPickproof = 1 << 3
+)
+
+// ExitInfoFromDoorState converts the immutable .wld door capability code into
+// the runtime bitfield used by movement and door commands.
+func ExitInfoFromDoorState(doorState int) int {
+	switch doorState {
+	case 1:
+		return ExitIsDoor
+	case 2:
+		return ExitIsDoor | ExitPickproof
+	default:
+		return 0
+	}
+}
+
+// ApplyDoorReset applies a zone D reset's runtime state while preserving the
+// exit's immutable door and pickproof capabilities. Reset values are the C
+// values 0=open, 1=closed, and 2=closed+locked.
+func ApplyDoorReset(info, state int) int {
+	info &^= ExitClosed | ExitLocked
+	switch state {
+	case 1:
+		info |= ExitClosed
+	case 2:
+		info |= ExitClosed | ExitLocked
+	}
+	return info
+}
+
+// LegacyDoorState converts runtime bits to the historic persisted 0/1/2
+// representation. The save-file schema intentionally remains unchanged.
+func LegacyDoorState(info int) int {
+	if info&ExitLocked != 0 {
+		return 2
+	}
+	if info&ExitClosed != 0 {
+		return 1
+	}
+	return 0
 }
 
 // ParseWldFile parses a single .wld file and returns all rooms.
@@ -261,6 +309,7 @@ func parseExit(scanner *bufio.Scanner, direction string) (Exit, error) {
 	nums := strings.Fields(scanner.Text())
 	if len(nums) >= 3 {
 		exit.DoorState, _ = strconv.Atoi(nums[0])
+		exit.ExitInfo = ExitInfoFromDoorState(exit.DoorState)
 		exit.Key, _ = strconv.Atoi(nums[1])
 		exit.ToRoom, _ = strconv.Atoi(nums[2])
 	}

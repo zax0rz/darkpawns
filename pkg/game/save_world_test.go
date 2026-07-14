@@ -55,8 +55,8 @@ func TestSerializeWorldDoorStates(t *testing.T) {
 			{
 				VNum: 100,
 				Exits: map[string]parser.Exit{
-					"north": {Direction: "north", ToRoom: 101, DoorState: 2}, // locked
-					"east":  {Direction: "east", ToRoom: 102, DoorState: 0},  // open — should NOT be saved
+					"north": {Direction: "north", ToRoom: 101, DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed | parser.ExitLocked},
+					"east":  {Direction: "east", ToRoom: 102, DoorState: 0}, // open — should NOT be saved
 				},
 			},
 			{
@@ -139,8 +139,8 @@ func TestDeserializeWorldDoorStates(t *testing.T) {
 	w.mu.RLock()
 	exit := w.rooms[100].Exits["north"]
 	w.mu.RUnlock()
-	if exit.DoorState != 2 {
-		t.Errorf("north door state = %d, want 2 (locked)", exit.DoorState)
+	if exit.ExitInfo&parser.ExitLocked == 0 {
+		t.Errorf("north exit info = %d, want locked", exit.ExitInfo)
 	}
 }
 
@@ -214,7 +214,7 @@ func TestSerializeWorldRoundTrip(t *testing.T) {
 			{
 				VNum: 100,
 				Exits: map[string]parser.Exit{
-					"north": {Direction: "north", ToRoom: 101, DoorState: 1}, // closed
+					"north": {Direction: "north", ToRoom: 101, DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed},
 				},
 			},
 			{
@@ -273,8 +273,8 @@ func TestSerializeWorldRoundTrip(t *testing.T) {
 	w2.mu.RLock()
 	exit := w2.rooms[100].Exits["north"]
 	w2.mu.RUnlock()
-	if exit.DoorState != 1 {
-		t.Errorf("north door state = %d, want 1 (closed)", exit.DoorState)
+	if exit.ExitInfo&parser.ExitClosed == 0 {
+		t.Errorf("north exit info = %d, want closed", exit.ExitInfo)
 	}
 
 	// Verify mob was repositioned

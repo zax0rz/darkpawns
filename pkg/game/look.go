@@ -264,11 +264,11 @@ func (w *World) buildRoomView(ch *Player, room *parser.Room, showDescription boo
 			continue
 		}
 		view.Exits = append(view.Exits, direction)
-		if exit.Keywords != "" || exit.DoorState != doorOpen {
+		if exit.ExitInfo&parser.ExitIsDoor != 0 {
 			view.Doors = append(view.Doors, DoorView{
 				Direction: direction,
-				Closed:    exit.DoorState != doorOpen,
-				Locked:    exit.DoorState == doorLocked,
+				Closed:    exit.ExitInfo&parser.ExitClosed != 0,
+				Locked:    exit.ExitInfo&parser.ExitLocked != 0,
 			})
 		}
 	}
@@ -469,15 +469,15 @@ func (w *World) DoLookDirection(ch *Player, direction int) ObservationResult {
 	}
 	secret := strings.Contains(strings.ToLower(exit.Keywords), "secret")
 	revealSecret := roomHasFlagBit(room.Flags, 20)
-	if exit.DoorState != doorOpen && exit.Keywords != "" && (revealSecret || !secret) {
+	if exit.ExitInfo&parser.ExitClosed != 0 && exit.Keywords != "" && (revealSecret || !secret) {
 		result.literal(ch, fmt.Sprintf("The %s is closed.", fname(exit.Keywords)))
-	} else if exit.DoorState == doorOpen && exit.Keywords != "" && (revealSecret || !secret) {
+	} else if exit.ExitInfo&parser.ExitClosed == 0 && exit.Keywords != "" && (revealSecret || !secret) {
 		result.literal(ch, fmt.Sprintf("The %s is open.", fname(exit.Keywords)))
 	}
 	if secret && !revealSecret {
 		result.literal(ch, "You see nothing special.")
 	}
-	if exit.ToRoom <= 0 || exit.DoorState != doorOpen {
+	if exit.ToRoom <= 0 || exit.ExitInfo&parser.ExitClosed != 0 {
 		return result
 	}
 	destination := w.GetRoomInWorld(exit.ToRoom)
@@ -573,7 +573,7 @@ func (w *World) DoExits(ch *Player) ObservationResult {
 	count := 0
 	for _, direction := range dirList {
 		exit, ok := room.Exits[direction]
-		if !ok || exit.ToRoom <= 0 || exit.DoorState != doorOpen {
+		if !ok || exit.ToRoom <= 0 || exit.ExitInfo&parser.ExitClosed != 0 {
 			continue
 		}
 		destination := w.GetRoomInWorld(exit.ToRoom)
@@ -678,7 +678,7 @@ func (w *World) autoExitsText(ch *Player, room *parser.Room) string {
 		if !ok || exit.ToRoom <= 0 {
 			continue
 		}
-		if exit.DoorState != doorOpen {
+		if exit.ExitInfo&parser.ExitClosed != 0 {
 			if ch.GetLevel() >= LVL_IMMORT {
 				exits = append(exits, "("+direction+")")
 			}

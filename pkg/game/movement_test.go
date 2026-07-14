@@ -97,7 +97,7 @@ func TestDoSimpleMove_ClosedDoor(t *testing.T) {
 			{
 				VNum: 1001, Name: "Room A", Zone: 1,
 				Exits: map[string]parser.Exit{
-					"north": {Direction: "north", ToRoom: 1002, DoorState: doorClosed, Keywords: "wooden door"},
+					"north": {Direction: "north", ToRoom: 1002, DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed, Keywords: "wooden door"},
 				},
 			},
 			{
@@ -142,7 +142,7 @@ func TestDoSimpleMove_LockedDoor(t *testing.T) {
 			{
 				VNum: 1001, Name: "Room A", Zone: 1,
 				Exits: map[string]parser.Exit{
-					"north": {Direction: "north", ToRoom: 1002, DoorState: doorLocked, Keywords: "iron gate"},
+					"north": {Direction: "north", ToRoom: 1002, DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed | parser.ExitLocked, Keywords: "iron gate"},
 				},
 			},
 			{

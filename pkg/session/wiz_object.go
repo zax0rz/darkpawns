@@ -39,9 +39,15 @@ func cmdLoad(s *Session, args []string) error {
 		s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s has created %s!\r\n", s.player.Name, mob.GetShortDesc())), s.playerName)
 		s.Send(fmt.Sprintf("You create %s.\r\n", mob.GetShortDesc()))
 	} else if strings.HasPrefix(kind, "obj") {
-		obj, err := s.manager.world.SpawnObject(vnum, roomVNum)
+		obj, err := s.manager.world.SpawnObject(vnum, -1)
 		if err != nil {
 			s.Send("There is no object with that number.\r\n")
+			return nil
+		}
+		if err := s.manager.world.PlaceWizardLoadedObjectInInventory(obj, s.player); err != nil {
+			slog.Error("wizard load object transfer failed", "who", s.player.Name, "obj_vnum", vnum, "error", err)
+			s.manager.world.ExtractObject(obj, roomVNum)
+			s.Send("You can't carry that right now.\r\n")
 			return nil
 		}
 		slog.Info("(GC) load obj", "who", s.player.Name, "obj", obj.GetShortDesc(), "room", roomVNum)
