@@ -45,41 +45,16 @@ func cmdQuit(s *Session) error {
 }
 
 // cmdInventory shows the player's inventory.
+// Delegates to the game-layer DoInventory for C-faithful formatting.
 func cmdInventory(s *Session, args []string) error {
-	// Get item count first
-	count := s.player.Inventory.GetItemCount()
-	if count == 0 {
-		s.sendText("You are carrying nothing.")
-		return nil
-	}
-
-	// Get all items
-	items := s.player.Inventory.FindItems("") // Empty string returns all items
-	var itemDescs []string
-	for _, item := range items {
-		itemDescs = append(itemDescs, item.GetShortDesc())
-	}
-
-	msg := fmt.Sprintf("You are carrying:\n%s", strings.Join(itemDescs, "\n"))
-	s.sendText(msg)
+	s.manager.world.DoInventory(s.player)
 	return nil
 }
 
 // cmdEquipment shows the player's equipped items.
+// Delegates to the game-layer DoEquipment for C-faithful formatting.
 func cmdEquipment(s *Session, args []string) error {
-	equipped := s.player.Equipment.GetEquippedItems()
-	if len(equipped) == 0 {
-		s.sendText("You are not wearing anything.")
-		return nil
-	}
-
-	var items []string
-	for slot, item := range equipped {
-		items = append(items, fmt.Sprintf("%-10s: %s", slot.String(), item.GetShortDesc()))
-	}
-
-	msg := fmt.Sprintf("You are wearing:\n%s", strings.Join(items, "\n"))
-	s.sendText(msg)
+	s.manager.world.DoEquipment(s.player)
 	return nil
 }
 
@@ -145,7 +120,7 @@ func cmdRemove(s *Session, args []string) error {
 	}
 
 	if itemToRemove == nil {
-		s.sendText(fmt.Sprintf("You're not wearing '%s'.", itemName))
+		s.sendText(fmt.Sprintf("You don't seem to be using %s %s.", an(itemName), itemName))
 		return nil
 	}
 
@@ -154,7 +129,7 @@ func cmdRemove(s *Session, args []string) error {
 		return nil
 	}
 
-	s.sendText(fmt.Sprintf("You remove %s.", itemToRemove.GetShortDesc()))
+	s.sendText(fmt.Sprintf("You stop using %s.", itemToRemove.GetShortDesc()))
 	s.markDirty(VarInventory, VarEquipment)
 	broadcastEquipmentChange(s, "remove", itemToRemove)
 	return nil
@@ -333,6 +308,19 @@ func broadcastEquipmentChange(s *Session, action string, item *game.ObjectInstan
 	}
 
 	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
+}
+
+// an returns the English indefinite article for a word, mimicking C's AN().
+func an(word string) string {
+	if word == "" {
+		return "a"
+	}
+	switch strings.ToLower(word)[:1] {
+	case "a", "e", "i", "o", "u":
+		return "an"
+	default:
+		return "a"
+	}
 }
 
 // cmdFollow sets the player to follow another player.
