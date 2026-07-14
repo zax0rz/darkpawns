@@ -7,6 +7,11 @@
 
   const term = new Terminal({
     cursorBlink: true,
+    // Game text (MOTD, room/help files) uses bare "\n" line endings. Without
+    // convertEol, xterm treats a lone LF as line-feed-only — the cursor drops a
+    // row but keeps its column — producing runaway "staircase" indentation.
+    // convertEol makes every "\n" behave as "\r\n" so lines return to column 0.
+    convertEol: true,
     fontSize: 15,
     fontFamily: '"IM Fell English", "Courier New", monospace',
     theme: {
