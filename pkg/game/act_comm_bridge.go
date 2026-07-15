@@ -14,20 +14,11 @@ package game
 func (w *World) ExecRaceSay(ch *Player, arg string) { w.doRaceSay(ch, nil, "race_say", arg) }
 
 // ---------------------------------------------------------------------------
-// SpecComm bridge (shout, whisper, ask dispatcher)
+// Shout bridge
 // ---------------------------------------------------------------------------
-
-// ExecSpecComm dispatches to shout, whisper, or ask based on subcmd.
-func (w *World) ExecSpecComm(ch *Player, subcmd, arg string) { w.doSpecComm(ch, nil, subcmd, arg) }
 
 // ExecShout executes the shout command.
 func (w *World) ExecShout(ch *Player, arg string) { w.doShout(ch, nil, arg) }
-
-// ExecWhisper executes the whisper command.
-func (w *World) ExecWhisper(ch *Player, arg string) { w.doWhisper(ch, nil, arg) }
-
-// ExecAsk executes the ask command.
-func (w *World) ExecAsk(ch *Player, arg string) { w.doAsk(ch, nil, arg) }
 
 // ---------------------------------------------------------------------------
 // QComm bridge

@@ -445,20 +445,6 @@ func (w *World) AllPlayers() []*Player {
 	return players
 }
 
-// getCharRoomVis finds a player by name in the same room as ch.
-func (w *World) getCharRoomVis(ch *Player, name string) *Player {
-	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
-		if p.Name == ch.Name {
-			continue
-		}
-		if strings.EqualFold(p.Name, name) ||
-			strings.HasPrefix(strings.ToLower(p.Name), strings.ToLower(name)) {
-			return p
-		}
-	}
-	return nil
-}
-
 // isNumber checks if a string parses as an integer.
 func isNumber(s string) bool {
 	if s == "" {
