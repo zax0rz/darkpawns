@@ -1086,9 +1086,8 @@ type Session struct {
 	infobarMode int //nolint:unused // InfobarOff (0) or InfobarOn (1)
 
 	// Communication state
-	lastTeller string   // Last player who told us (for reply)
-	snooping   *Session // Session being snooped (for wizard snoop)
-	snoopBy    *Session // Session that is snooping us
+	snooping *Session // Session being snooped (for wizard snoop)
+	snoopBy  *Session // Session that is snooping us
 
 	// DP-GOAT P0-3: Session handoff grace period
 	// When a new agent login arrives for a character that already has a session,

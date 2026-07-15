@@ -207,6 +207,9 @@ func TestCmdSaySelfEcho(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			m := makeTestManager(t)
 			s := makeTestSession(t, m, "Alice", 1001, true)
+			s.player.Stats.Int = 10
+			s.player.Stats.Wis = 10
+			registerInWorld(t, s)
 
 			if err := cmdSay(s, []string{tc.text}); err != nil {
 				t.Fatalf("cmdSay failed: %v", err)
