@@ -91,6 +91,41 @@ var (
 	weatherWorld *World // set via SetWeatherWorld; used by event functions
 )
 
+// WorldClimateSnapshot is an immutable point-in-time copy of the canonical
+// time_info and weather_info globals. Both halves are captured under the same
+// read lock so commands cannot observe a clock tick paired with stale weather.
+type WorldClimateSnapshot struct {
+	Time    TimeInfoData
+	Weather WeatherData
+}
+
+// TimeWeatherSnapshot returns the canonical time and weather state atomically.
+func TimeWeatherSnapshot() WorldClimateSnapshot {
+	weatherMu.RLock()
+	defer weatherMu.RUnlock()
+	return WorldClimateSnapshot{Time: timeInfo, Weather: weatherInfo}
+}
+
+// TimeSnapshot returns a read-only copy of the canonical MUD clock.
+func TimeSnapshot() TimeInfoData {
+	return TimeWeatherSnapshot().Time
+}
+
+// WeatherSnapshot returns a read-only copy of the canonical weather state.
+func WeatherSnapshot() WeatherData {
+	return TimeWeatherSnapshot().Weather
+}
+
+// IsOutside applies C's OUTSIDE(ch) room contract:
+// !ROOM_INDOORS || sector != SECT_INSIDE.
+func (w *World) IsOutside(roomVNum int) bool {
+	room := w.GetRoomInWorld(roomVNum)
+	if room == nil {
+		return false
+	}
+	return !movementRoomHasFlag(room, roomFlagIndoors, "indoors") || room.Sector != SECT_INSIDE
+}
+
 // SetWeatherWorld sets the World reference used by weather event broadcasts.
 func SetWeatherWorld(w *World) {
 	weatherMu.Lock()

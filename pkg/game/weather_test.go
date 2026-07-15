@@ -168,3 +168,61 @@ func TestWeatherEvents_BroadcastToWorld(t *testing.T) {
 		t.Error("expected fullMoon message in broadcasts")
 	}
 }
+
+func TestTimeWeatherSnapshotTracksCanonicalClock(t *testing.T) {
+	weatherMu.Lock()
+	originalTime, originalWeather := timeInfo, weatherInfo
+	timeInfo = TimeInfoData{Hours: 8, Day: 23, Month: 3, Year: 1260, Moon: MoonHalfFull}
+	weatherInfo = WeatherData{Pressure: 1001, Change: -2, Sky: SkyRaining, Sunlight: SunLight}
+	weatherMu.Unlock()
+	t.Cleanup(func() {
+		weatherMu.Lock()
+		timeInfo, weatherInfo = originalTime, originalWeather
+		weatherMu.Unlock()
+	})
+
+	before := TimeWeatherSnapshot()
+	if before.Time.Hours != 8 || before.Weather.Sky != SkyRaining {
+		t.Fatalf("initial snapshot = %+v", before)
+	}
+
+	WeatherAndTime(false, nil)
+	after := TimeWeatherSnapshot()
+	if after.Time.Hours != 9 {
+		t.Errorf("snapshot hour after canonical tick = %d, want 9", after.Time.Hours)
+	}
+	if after.Weather != before.Weather {
+		t.Errorf("mode=false changed weather: before %+v, after %+v", before.Weather, after.Weather)
+	}
+	if got := TimeSnapshot(); got != after.Time {
+		t.Errorf("TimeSnapshot = %+v, want %+v", got, after.Time)
+	}
+	if got := WeatherSnapshot(); got != after.Weather {
+		t.Errorf("WeatherSnapshot = %+v, want %+v", got, after.Weather)
+	}
+}
+
+func TestWorldIsOutsideMatchesCMacro(t *testing.T) {
+	world, err := NewWorld(&parser.World{Rooms: []parser.Room{
+		{VNum: 1001, Name: "Indoor", Flags: []string{"8"}, Sector: SECT_INSIDE},
+		{VNum: 1002, Name: "Indoor Flag Outside Sector", Flags: []string{"8"}, Sector: SECT_CITY},
+		{VNum: 1003, Name: "No Indoor Flag", Sector: SECT_INSIDE},
+	}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(world.StopAITicker)
+
+	if world.IsOutside(1001) {
+		t.Error("ROOM_INDOORS + SECT_INSIDE should be indoors")
+	}
+	if !world.IsOutside(1002) {
+		t.Error("non-inside sector should be outside even with ROOM_INDOORS")
+	}
+	if !world.IsOutside(1003) {
+		t.Error("room without ROOM_INDOORS should be outside per C macro")
+	}
+	if world.IsOutside(9999) {
+		t.Error("missing room should not be outside")
+	}
+}

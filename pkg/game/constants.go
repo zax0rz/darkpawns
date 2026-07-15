@@ -663,29 +663,34 @@ var MovementLoss = []int{
 
 // Day names (weekdays[])
 var WeekdayNames = []string{
-	"the Feast of the Just",
-	"the Day of the Dark",
-	"the Day of the White",
-	"the Day of the Red",
-	"the Day of the Black",
-	"the Day of the Blue",
-	"the Day of the Green",
+	"the Day of the Moon",
+	"the Day of the Bull",
+	"the Day of the Deception",
+	"the Day of Thunder",
+	"the Day of Freedom",
+	"the day of the Great Gods",
+	"the Day of the Sun",
 }
 
 // Month names (month_name[])
 var MonthNames = []string{
-	"New Year Tide",
-	"Winter Deep",
-	"Snow Melt",
-	"Spring Dawning",
-	"Green Field",
-	"Flower Blooms",
-	"High Sun",
-	"Harvest Tide",
-	"Fruit Picking",
-	"Leaf Fall",
-	"First Ice",
-	"Dark Tide",
+	"Month of Winter",
+	"Month of the Winter Wolf",
+	"Month of the Frost Giant",
+	"Month of the Old Forces",
+	"Month of the Grand Struggle",
+	"Month of the Spring",
+	"Month of Nature",
+	"Month of Futility",
+	"Month of the Dragon",
+	"Month of the Sun",
+	"Month of the Heat",
+	"Month of the Battle",
+	"Month of the Dark Shades",
+	"Month of the Shadows",
+	"Month of the Long Shadows",
+	"Month of the Ancient Darkness",
+	"Month of the Great Evil",
 }
 
 // Sharp damage bonus table (sharp[])
