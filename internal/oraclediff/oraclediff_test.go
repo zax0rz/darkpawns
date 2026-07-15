@@ -216,6 +216,9 @@ func TestReportNoDivergence(t *testing.T) {
 	if !strings.Contains(r, "no normalized divergence") {
 		t.Fatalf("expected no divergence report, got:\n%s", r)
 	}
+	if strings.Count(r, "DP_SEED=1") != 2 {
+		t.Fatalf("expected shared seed for both processes, got:\n%s", r)
+	}
 }
 
 func TestReportBlockDivergence(t *testing.T) {

@@ -27,7 +27,8 @@ package game
 
 import (
 	"fmt"
-	"math/rand/v2"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -212,14 +213,7 @@ func (w *World) doForced(ch *Player, command string) bool {
 
 // doBackstab handles the backstab command
 
-// diceRoll rolls N dice of D sides each.
-// DP-901: previously called rand.IntN(d) twice per iteration and discarded the
-// first roll, inflating the roll count and halving the effective randomness.
+// diceRoll rolls N dice of D sides each through the canonical stream.
 func diceRoll(n, d int) int {
-	total := 0
-	for i := 0; i < n; i++ {
-		// #nosec G404 — game RNG, not cryptographic
-		total += rand.IntN(d) + 1
-	}
-	return total
+	return dprng.Dice(n, d)
 }

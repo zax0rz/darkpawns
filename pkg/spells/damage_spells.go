@@ -1,7 +1,7 @@
 package spells
 
 import (
-	"math/rand/v2"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -393,5 +393,5 @@ func randBool(denom int) bool {
 	}
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	return rand.IntN(denom) == 0
+	return dprng.Number(0, denom-1) == 0
 }

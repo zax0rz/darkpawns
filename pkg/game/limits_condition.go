@@ -3,8 +3,9 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"os"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 func GainCondition(p *Player, condition int, value int) {
@@ -279,7 +280,7 @@ func (w *World) PointUpdate() {
 		// 1 in 99 chance of clearing mob memory
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if len(m.GetMemory()) > 0 && rand.IntN(99) == 0 {
+		if len(m.GetMemory()) > 0 && dprng.Number(0, 98) == 0 {
 			clearMemory(m)
 		}
 
@@ -382,7 +383,7 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 				}
 				// #nosec G404 — game RNG, not cryptographic
 				// #nosec G404
-				msg := fmt.Sprintf(msgs[rand.IntN(len(msgs))], obj.GetShortDesc())
+				msg := fmt.Sprintf(msgs[dprng.Number(0, len(msgs)-1)], obj.GetShortDesc())
 				w.SendToRoom(roomVNum, msg)
 				w.ExtractObject(obj, roomVNum)
 				continue

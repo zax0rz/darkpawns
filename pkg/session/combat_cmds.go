@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -239,7 +240,7 @@ func cmdFlee(s *Session) error {
 	// #nosec G404 — game RNG, not cryptographic
 	allDirs := []string{"north", "east", "south", "west", "up", "down"}
 	for i := len(allDirs) - 1; i > 0; i-- {
-		j := rand.IntN(i + 1)
+		j := dprng.Number(0, i)
 		allDirs[i], allDirs[j] = allDirs[j], allDirs[i]
 	}
 

@@ -52,6 +52,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/grapevine"
@@ -75,6 +76,12 @@ func main() {
 		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
 	)
 	flag.Parse()
+	seed, err := dprng.ConfigureFromEnvironment()
+	if err != nil {
+		slog.Error("Invalid DP_SEED", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("Random stream initialized", "seed", seed, "deterministic", os.Getenv("DP_SEED") != "")
 
 	if *worldDir == "" {
 		slog.Error("Usage: server -world <path-to-lib>")

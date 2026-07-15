@@ -1,7 +1,7 @@
 package spells
 
 import (
-	"math/rand/v2"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // numClasses matches NUM_CLASSES from src/structs.h (12 classes, indices 0-11).
@@ -210,19 +210,11 @@ func CheckSavingThrow(ch interface{}, saveType SavingThrowType) bool {
 		save = 1
 	}
 	// #nosec G404 — game RNG, not cryptographic
-	roll := rand.IntN(100) // number(0, 99) in C
-	return save < roll     // TRUE = successful save
+	roll := dprng.Number(0, 99)
+	return save < roll // TRUE = successful save
 }
 
 // Dice rolls N dice of S sides and returns the total (e.g. dice(2,6) = 2d6).
 func Dice(num, sides int) int {
-	if num <= 0 || sides <= 0 {
-		return 0
-	}
-	total := 0
-	for i := 0; i < num; i++ {
-		// #nosec G404 — game RNG, not cryptographic
-		total += rand.IntN(sides) + 1
-	}
-	return total
+	return dprng.Dice(num, sides)
 }

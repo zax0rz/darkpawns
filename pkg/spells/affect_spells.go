@@ -3,8 +3,9 @@ package spells
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -551,9 +552,8 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 
 // animateDeadPfailRoll returns number(0,101) for the SPELL_ANIMATE_DEAD pfail
 // check. It is a package var so tests can make the ~8% failure branch
-// deterministic — math/rand/v2's global generator has no Seed, so a raw
-// rand.IntN in the spawn path would flake any test that asserts a spawn.
-var animateDeadPfailRoll = func() int { return rand.IntN(102) } // #nosec G404 — intentional MUD RNG
+// deterministic without replacing the process-wide production stream.
+var animateDeadPfailRoll = func() int { return dprng.Number(0, 101) } // #nosec G404 — intentional MUD RNG
 
 func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 	if ch == nil {
@@ -1251,17 +1251,7 @@ func castCalliope(level int, ch, cvict interface{}) {
 		return
 	}
 
-	lo := level / 6
-	hi := level * 2
-	missiles := lo
-	if hi > lo {
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		missiles += rand.IntN(hi - lo + 1)
-	}
-	if missiles < 4 {
-		missiles = 4
-	}
+	missiles := max(4, dprng.Number(level/6, level*2))
 
 	for i := 0; i < missiles; i++ {
 		CallMagic(ch, cvict, nil, SpellMagicMissile, level, CastSpell, nil)
@@ -1400,7 +1390,7 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	if ts, ok := obj.(timerSetter); ok {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		timer := level/2 + rand.IntN(4) - 2 // rand(-2, 1)
+		timer := level/2 + dprng.Number(-2, 1)
 		if timer < 1 {
 			timer = 1
 		}
@@ -2107,7 +2097,7 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 	for attempts := 0; attempts < 100; attempts++ {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		toRoom := rand.IntN(roomCount)
+		toRoom := dprng.Number(0, roomCount-1)
 		roomData := w.GetRoomInWorld(toRoom)
 		if roomData != nil && !roomData.HasFlag(RoomPrivate) {
 			sendToCaster(ch, "The world around you turns black and you suddenly find yourself..\r\n")
@@ -2160,7 +2150,7 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	dam := level*6 + rand.IntN(level*3+11) - 10
+	dam := level*6 + dprng.Number(-10, level*3)
 	if dam < 1 {
 		dam = 1
 	}
@@ -2269,7 +2259,7 @@ func castHellfire(level int, ch, world interface{}) {
 			// if (number(0, 25) > GET_DEX(victim)) SET_POS(victim, POS_SITTING)
 			// POS_SITTING = 5 in combat/formulas.go
 			// #nosec G404 — game RNG, not cryptographic
-			if rand.IntN(26) > cn.GetDex() {
+			if dprng.Number(0, 25) > cn.GetDex() {
 				cn.SetPosition(5) // POS_SITTING
 				if vn, ok := c.(interface{ SendMessage(string) }); ok {
 					vn.SendMessage("The force of the blast knocks you off your feet!\r\n")
@@ -2496,7 +2486,7 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		// 10% backfire chance for PC casters
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if !chIsNPC && rand.IntN(10) == 0 {
+		if !chIsNPC && dprng.Number(0, 9) == 0 {
 			sendToCaster(ch, "Your spell backfires!\r\n")
 			// Transfer caster to victim's room instead
 			type transferWorld interface {
@@ -2769,7 +2759,7 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if (victLevel > casterLevel+4 && rand.IntN(5) == 0) ||
+	if (victLevel > casterLevel+4 && dprng.Number(0, 4) == 0) ||
 		(!victIsNPC && victLevel >= 100 && casterLevel <= victLevel) {
 		sendToCaster(ch, "With a searing pain, your psionic energy recoils!\r\n")
 		return

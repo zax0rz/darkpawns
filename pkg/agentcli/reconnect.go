@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // ReconnectConfig controls reconnection behavior.
@@ -60,7 +61,7 @@ func (a *AgentClient) Reconnect(ctx context.Context, cfg ReconnectConfig) error 
 		}
 
 		// Wait with jitter
-		jitter := time.Duration(float64(backoff) * cfg.Jitter * (rand.Float64()*2 - 1))
+		jitter := time.Duration(float64(backoff) * cfg.Jitter * (float64(dprng.Uniform())*2 - 1))
 		wait := backoff + jitter
 		if wait < 0 {
 			wait = 0

@@ -1,7 +1,7 @@
 package spells
 
 import (
-	"math/rand/v2"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -191,14 +191,5 @@ func MagAttackModifier(attackType int) (singular, plural string) {
 
 // dice rolls N dice of S sides (NdS).
 func dice(num, sides int) int {
-	if num <= 0 || sides <= 0 {
-		return 0
-	}
-	total := 0
-	for i := 0; i < num; i++ {
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		total += rand.IntN(sides) + 1
-	}
-	return total
+	return dprng.Dice(num, sides)
 }

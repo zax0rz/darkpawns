@@ -597,7 +597,7 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 		class := c.GetClass()
 
 		// Warriors/Paladins/Rangers: +1 at level 10+ (60% + level% chance)
-		// C: number(1,100) returns 1-100; rand.IntN(100) returns 0-99 → add 1 for fidelity
+		// C: number(1,100) returns 1-100 inclusive.
 		if (class == ClassWarrior || class == ClassPaladin || class == ClassRanger) &&
 			level > 10 && GetRoller().Number(1, 100) < (60+level) {
 			attacks++

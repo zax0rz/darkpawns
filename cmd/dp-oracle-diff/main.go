@@ -191,6 +191,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		ctx, "Go port", goWork,
 		append(
 			os.Environ(),
+			"DP_SEED="+fixedSeed,
 			"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
 			"ENVIRONMENT=development",
 		),

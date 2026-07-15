@@ -9,8 +9,9 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -203,7 +204,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// GET_OBJ_COST(obj) > max starting with max=1, so items costing 0 or 1
 	// are never picked up. Go previously had neither check (DP-1042).
 	// #nosec G404 — game RNG, not cryptographic
-	if hasMobFlag(ch, "scavenger") && rand.IntN(11) == 0 {
+	if hasMobFlag(ch, "scavenger") && dprng.Number(0, 10) == 0 {
 		items := w.GetItemsInRoom(ch.RoomVNum)
 		if len(items) > 0 {
 			maxCost := 1 // C: max = 1; items must cost > 1 to be picked up
@@ -283,17 +284,17 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			}
 			// C: AFF_PROTECT_EVIL + IS_EVIL(ch) + !number(0,5)
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(12) && mobIsEvil(ch) && rand.IntN(6) == 0 {
+			if vict.IsAffected(12) && mobIsEvil(ch) && dprng.Number(0, 5) == 0 {
 				continue
 			}
 			// C: AFF_PROTECT_GOOD + IS_GOOD(ch) + !number(0,5)
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(13) && mobIsGood(ch) && rand.IntN(6) == 0 {
+			if vict.IsAffected(13) && mobIsGood(ch) && dprng.Number(0, 5) == 0 {
 				continue
 			}
 			// C: AFF_SNEAK + !number(0,3) — 1-in-4 skip
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(affSneak) && rand.IntN(4) == 0 {
+			if vict.IsAffected(affSneak) && dprng.Number(0, 3) == 0 {
 				continue
 			}
 			// Alignment matching faithful to mobact.c:
@@ -350,11 +351,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				}
 				// AFF_PROTECT_EVIL blocks unless the mob is evil AND a 1-in-6 check passes.
 				// #nosec G404 — game RNG, not cryptographic
-				if vict.IsAffected(affProtectEvil) && (!mobIsEvil(ch) || rand.IntN(6) != 0) {
+				if vict.IsAffected(affProtectEvil) && (!mobIsEvil(ch) || dprng.Number(0, 5) != 0) {
 					continue
 				}
 				// #nosec G404 — game RNG, not cryptographic
-				if rand.IntN(6) == 0 && ch.CanSpeak() {
+				if dprng.Number(0, 5) == 0 && ch.CanSpeak() {
 					w.RoomEcho(ch.RoomVNum, fmt.Sprintf("'Come to destroy my kin? Die!', exclaims %s.", ch.GetName()), ch.GetName())
 				}
 				if w.combatEngine != nil {
@@ -481,7 +482,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 
 	// Sound trigger (C: 1-in-16 chance for mp_sound + lua sound)
 	// #nosec G404 — game RNG, not cryptographic
-	if rand.IntN(16) == 0 {
+	if dprng.Number(0, 15) == 0 {
 		w.MpSound(ch)
 	}
 

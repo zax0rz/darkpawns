@@ -3,9 +3,9 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
@@ -19,21 +19,10 @@ const (
 	scmdFill  = 1
 )
 
-// consumableRand is the RNG source used for consumable amount calculations
-// (e.g. water drink amount). Tests can replace this with a seeded source for
-// deterministic verification.
-var consumableRand *rand.Rand = rand.New(rand.NewPCG(1, 2))
-
 // consumableNumber returns a uniform random integer in [from, to] inclusive,
-// using the consumable RNG source.
-func consumableNumber(from, to int) int {
-	if from > to {
-		return from
-	}
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	return consumableRand.IntN(to-from+1) + from
-}
+// using the process-wide C-compatible stream. It remains a variable so unit
+// tests can inject exact rolls without adding a second production generator.
+var consumableNumber = dprng.Number
 
 // DoDrink implements C do_drink (src/act.item.c:895-1032) for both drink and sip.
 // Player-facing text is dispatched through Act(). All object value mutation goes

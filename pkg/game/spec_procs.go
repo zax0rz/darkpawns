@@ -15,9 +15,10 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
 	"sync"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -29,12 +30,7 @@ import (
 // ================================================================
 
 func randRange(min, max int) int {
-	if min > max {
-		return min
-	}
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	return rand.IntN(max-min+1) + min
+	return dprng.Number(min, max)
 }
 
 // randN returns a uniform random integer in [0, n). It is exclusive, so it
@@ -46,7 +42,7 @@ func randN(n int) int {
 	}
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	return rand.IntN(n)
+	return dprng.Number(0, n-1)
 }
 
 func (w *World) roomMessage(roomVNum int, msg string) {

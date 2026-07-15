@@ -1,13 +1,14 @@
 package engine
 
 import (
-	"math/rand/v2"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // skillRand is the random source used by skill progression. It can be
 // overridden in tests to make skill outcomes deterministic.
-var skillRand = rand.IntN
+var skillRand = func(n int) int { return dprng.Number(0, n-1) }
 
 // SkillType represents the category of a skill
 type SkillType int
@@ -91,7 +92,7 @@ func (s *Skill) PracticeSkill(charLevel, stat int) bool {
 
 	// Practice points accumulate
 	// #nosec G404 — game RNG, not cryptographic
-	s.Practice += 10 + rand.IntN(20) // 10-30 practice points
+	s.Practice += dprng.Number(10, 29)
 
 	// Check if we can level up
 	if s.Practice >= 100 {
@@ -107,7 +108,7 @@ func (s *Skill) PracticeSkill(charLevel, stat int) bool {
 
 		// Roll for success
 		// #nosec G404 — game RNG, not cryptographic
-		if rand.IntN(100) < successChance {
+		if dprng.Number(0, 99) < successChance {
 			s.Level++
 			s.Practice = 0
 			return true

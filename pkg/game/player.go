@@ -1,10 +1,11 @@
 package game
 
 import (
-	"math/rand/v2"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -329,11 +330,11 @@ func NewCharacter(id int, name string, class, race int) *Player {
 
 	// Random height/weight by sex — db.c:3041-3047
 	if p.Sex == 0 { // SEX_MALE = 0
-		p.Weight = 120 + rand.IntN(61) // 120-180
-		p.Height = 160 + rand.IntN(41) // 160-200
+		p.Weight = dprng.Number(120, 180) // 120-180
+		p.Height = dprng.Number(160, 200) // 160-200
 	} else {
-		p.Weight = 100 + rand.IntN(61) // 100-160
-		p.Height = 150 + rand.IntN(31) // 150-180
+		p.Weight = dprng.Number(100, 160) // 100-160
+		p.Height = dprng.Number(150, 180) // 150-180
 	}
 
 	// THAC0 from class table

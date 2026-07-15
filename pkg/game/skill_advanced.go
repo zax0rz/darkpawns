@@ -3,8 +3,9 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -65,7 +66,7 @@ func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
 	// Skill check: D100 vs skill
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	roll := rand.IntN(100) + 1
+	roll := dprng.Number(1, 100)
 	if roll > ch.GetSkill(SkillCutthroat) {
 		return SkillResult{
 			Success:     false,
@@ -95,7 +96,7 @@ func DoStrike(ch *Player, target combat.Combatant) SkillResult {
 	// Simple damage based on level
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	damage := rand.IntN(ch.GetLevel()) + 1
+	damage := dprng.Number(1, ch.GetLevel())
 
 	return SkillResult{
 		Success:       true,
@@ -189,7 +190,7 @@ func DoSharpen(ch *Player, objName string) SkillResult {
 	// Simple sharpen: success based on skill level
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	roll := rand.IntN(100) + 1
+	roll := dprng.Number(1, 100)
 	if roll <= ch.GetSkill(SkillSharpen) {
 		return SkillResult{
 			Success:     true,

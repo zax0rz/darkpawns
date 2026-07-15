@@ -117,7 +117,7 @@ func TestPCGetAttacksPerRound_Deterministic(t *testing.T) {
 // TestPCGetAttacksPerRound_Statistical verifies PC attack round probability distribution over 10,000 runs.
 func TestPCGetAttacksPerRound_Statistical(t *testing.T) {
 	// Seeded roller for deterministic statistical tests
-	roller := NewSeededRoller(12345, 67890)
+	roller := NewSeededRoller(12345)
 
 	// Test: Warrior level 20.
 	// Expected:
