@@ -220,6 +220,24 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	return nil
 }
 
+// PerformInitialAttack resolves the single synchronous hit made by do_hit.
+// It deliberately bypasses perform_violence's round-only attack-count,
+// parry/dodge, wait-state, redirect, and fight-trigger work. Subsequent attacks
+// continue through PerformRound on the normal combat pulse.
+func (ce *CombatEngine) PerformInitialAttack(attacker, defender Combatant) error {
+	key := CombatPairKey{Attacker: attacker.GetName(), Target: defender.GetName()}
+
+	ce.mu.RLock()
+	pair, ok := ce.combatPairs[key]
+	ce.mu.RUnlock()
+	if !ok {
+		return fmt.Errorf("combat pair %s -> %s is not active", key.Attacker, key.Target)
+	}
+
+	ce.performOneHit(pair)
+	return nil
+}
+
 // StopCombat ends combat for a character
 func (ce *CombatEngine) StopCombat(charName string) {
 	ce.mu.Lock()
@@ -438,49 +456,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 			break
 		}
 
-		if !CalculateHitChance(attacker, defender, HitModifiers{}) {
-			ce.sendMissMessage(attacker, defender, pair.LastAttackType)
-			continue
-		}
-
-		// Calculate damage
-		weaponDamage := attacker.GetDamageRoll()
-		pair.LastAttackType = int(AttackNormal)
-		damage := CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
-
-		// Route through the shared damage() modifier block so melee honors
-		// sanctuary, protect evil/good, race-hate weapons, the 3000 cap, and
-		// immortal invulnerability — same funnel as skills and spells (DP-1025).
-		// Applied before the hit message so the reported damage tier reflects
-		// the post-modifier figure, matching fight.c DamMessage.
-		damage = ApplyDamageModifiers(attacker, defender, damage)
-
-		// Apply damage
-		defender.TakeDamage(damage)
-		if ce.DamageFunc != nil {
-			ce.DamageFunc(defender.GetName())
-		}
-
-		// Send combat messages
-		ce.sendHitMessage(attacker, defender, damage, pair.LastAttackType)
-
-		// Log combat action
-		if ce.OnCombatAction != nil {
-			ce.OnCombatAction(attacker, defender, "hit", damage, "hit", 0)
-		}
-
-		// Transition the defender into the wounded band (stunned/incap/
-		// mortally) or POS_DEAD based on its new HP, and emit the wound
-		// message. Death only fires at POS_DEAD (HP <= -11) — fight.c
-		// update_pos. A downed-but-living defender stops fighting back but the
-		// attacker keeps swinging on later iterations/rounds.
-		newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc)
-		if newPos == PosDead {
-			ce.handleDeath(defender, attacker)
-			if ce.OnCombatAction != nil {
-				ce.OnCombatAction(attacker, defender, "hit", damage, "killed", 0)
-			}
-			ce.StopCombat(attacker.GetName())
+		if ce.performOneHit(pair) {
 			break
 		}
 	}
@@ -490,6 +466,46 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	if attacker.IsNPC() && ce.ScriptFightFunc != nil && defender.GetPosition() != PosDead {
 		ce.ScriptFightFunc(attacker.GetName(), defender.GetName(), attacker.GetRoom())
 	}
+}
+
+// performOneHit is the shared C hit() path used by both do_hit's synchronous
+// first strike and each attack selected by perform_violence.
+// It returns true when the strike kills the defender.
+func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
+	attacker := pair.Attacker
+	defender := pair.Defender
+
+	if !CalculateHitChance(attacker, defender, HitModifiers{}) {
+		ce.sendMissMessage(attacker, defender, pair.LastAttackType)
+		return false
+	}
+
+	weaponDamage := attacker.GetDamageRoll()
+	pair.LastAttackType = int(AttackNormal)
+	damage := CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
+	damage = ApplyDamageModifiers(attacker, defender, damage)
+
+	defender.TakeDamage(damage)
+	if ce.DamageFunc != nil {
+		ce.DamageFunc(defender.GetName())
+	}
+
+	ce.sendHitMessage(attacker, defender, damage, pair.LastAttackType)
+	if ce.OnCombatAction != nil {
+		ce.OnCombatAction(attacker, defender, "hit", damage, "hit", 0)
+	}
+
+	newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc)
+	if newPos != PosDead {
+		return false
+	}
+
+	ce.handleDeath(defender, attacker)
+	if ce.OnCombatAction != nil {
+		ce.OnCombatAction(attacker, defender, "hit", damage, "killed", 0)
+	}
+	ce.StopCombat(attacker.GetName())
+	return true
 }
 
 // applyMobCombatRedirects ports the mob-initiated damage() redirects from

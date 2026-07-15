@@ -70,8 +70,7 @@ func cmdHit(s *Session, args []string) error {
 		return nil
 	}
 
-	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
-	if !ok {
+	if _, ok := s.manager.world.GetRoom(s.player.GetRoom()); !ok {
 		return fmt.Errorf("invalid room")
 	}
 
@@ -173,66 +172,31 @@ func cmdHit(s *Session, args []string) error {
 
 	if tgt.Mob != nil {
 		mob := tgt.Mob
-		// Start combat
 		err := s.manager.combatEngine.StartCombat(s.player, mob)
 		if err != nil {
 			s.Send(err.Error())
 			return nil
 		}
-
-		// Notify player
-		s.Send(fmt.Sprintf("You attack %s!", mob.GetShortDesc()))
 		s.markDirty(VarFighting)
-
-		// Notify room
-		msg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "combat",
-				From: s.player.Name,
-				Text: fmt.Sprintf("%s attacks %s!", s.player.Name, mob.GetShortDesc()),
-			},
-		})
-		if err != nil {
-			slog.Error("json.Marshal error", "error", err)
-			return nil
+		if err := s.manager.combatEngine.PerformInitialAttack(s.player, mob); err != nil {
+			return err
 		}
-		s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
+		s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE+2)
 		return nil
 	}
 
 	if tgt.Player != nil {
 		p := tgt.Player
-		// Start combat with player
 		err := s.manager.combatEngine.StartCombat(s.player, p)
 		if err != nil {
 			s.Send(err.Error())
 			return nil
 		}
-
-		// Notify both players
-		s.Send(fmt.Sprintf("You attack %s!", p.Name))
 		s.markDirty(VarFighting)
-
-		// Notify target
-		if targetSession, ok := s.manager.GetSession(p.Name); ok {
-			targetSession.Send(fmt.Sprintf("%s attacks you!", s.player.Name))
+		if err := s.manager.combatEngine.PerformInitialAttack(s.player, p); err != nil {
+			return err
 		}
-
-		// Notify room
-		msg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "combat",
-				From: s.player.Name,
-				Text: fmt.Sprintf("%s attacks %s!", s.player.Name, p.Name),
-			},
-		})
-		if err != nil {
-			slog.Error("json.Marshal error", "error", err)
-			return nil
-		}
-		s.manager.BroadcastToRoom(room.VNum, msg, s.player.Name)
+		s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE+2)
 		return nil
 	}
 

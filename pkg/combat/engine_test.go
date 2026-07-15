@@ -108,6 +108,47 @@ func TestSendMissMessageUsesMessageFunc(t *testing.T) {
 	}
 }
 
+func TestPerformInitialAttackResolvesExactlyOneSynchronousHit(t *testing.T) {
+	ce := NewCombatEngine()
+	attacker := &mockCombatant{
+		name: "Attacker", room: 1, level: 1, hp: 20, maxHP: 20,
+		position: PosStanding, class: ClassWarrior, str: 10, dex: 10, intVal: 10, wis: 10,
+	}
+	defender := &mockCombatant{
+		name: "Defender", room: 1, level: 1, hp: 20, maxHP: 20,
+		position: PosStanding, class: ClassWarrior, str: 10, dex: 10, intVal: 10, wis: 10,
+	}
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat() error = %v", err)
+	}
+
+	messageCalls := 0
+	ce.MessageFunc = func(gotAttacker, gotDefender Combatant, damage, attackType int) bool {
+		messageCalls++
+		if gotAttacker != attacker || gotDefender != defender || damage != 0 {
+			t.Errorf("initial miss callback = (%v, %v, %d), want attacker, defender, 0", gotAttacker, gotDefender, damage)
+		}
+		return true
+	}
+
+	roller := NewScriptedRoller([]int{1, 99}) // natural 1: guaranteed miss
+	WithRoller(roller, func() {
+		if err := ce.PerformInitialAttack(attacker, defender); err != nil {
+			t.Fatalf("PerformInitialAttack() error = %v", err)
+		}
+	})
+
+	if got, want := messageCalls, 1; got != want {
+		t.Fatalf("initial attack message calls = %d, want %d", got, want)
+	}
+	if got, want := roller.Index, 1; got != want {
+		t.Fatalf("initial miss draws = %d, want one to-hit draw", got)
+	}
+	if defender.GetHP() != 20 {
+		t.Fatalf("defender HP after forced miss = %d, want 20", defender.GetHP())
+	}
+}
+
 func TestSendHitMessageFallsBackWhenNil(t *testing.T) {
 	ce := NewCombatEngine()
 	atk := &msgMockCombatant{mockCombatant: mockCombatant{name: "Alice"}}

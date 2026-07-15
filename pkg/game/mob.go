@@ -195,10 +195,19 @@ func NewMobInstance(proto *parser.Mob, roomVNum int) *MobInstance {
 	return NewMob(proto, roomVNum)
 }
 
-// GetSex returns the mob's sex (0=male, 1=female, 2=neutral).
+// GetSex returns the mob's sex in Go's actor encoding
+// (0=male, 1=female, 2=neutral). Mob files retain C's encoding
+// (0=neutral, 1=male, 2=female), so translate at the Actor boundary.
 func (m *MobInstance) GetSex() int {
 	if m.Prototype != nil {
-		return m.Prototype.Sex
+		switch m.Prototype.Sex {
+		case 1:
+			return 0
+		case 2:
+			return 1
+		default:
+			return 2
+		}
 	}
 	return 2 // neutral default
 }

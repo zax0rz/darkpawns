@@ -253,3 +253,23 @@ func TestFidelityDigCosmeticStub(t *testing.T) {
 		t.Errorf("Spawned wrong item type: %v", ch.Inventory.Items[0])
 	}
 }
+
+func TestMobGetSexTranslatesCFileEncodingToActorEncoding(t *testing.T) {
+	tests := []struct {
+		name string
+		cSex int
+		want int
+	}{
+		{name: "neutral", cSex: 0, want: 2},
+		{name: "male", cSex: 1, want: 0},
+		{name: "female", cSex: 2, want: 1},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mob := NewMob(&parser.Mob{Sex: test.cSex}, 1001)
+			if got := mob.GetSex(); got != test.want {
+				t.Fatalf("GetSex() = %d, want %d", got, test.want)
+			}
+		})
+	}
+}

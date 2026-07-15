@@ -70,6 +70,33 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return 0
 	}
 
+	cb.GetHP = func(name string) int {
+		if p, ok := w.GetPlayer(name); ok {
+			return p.GetHP()
+		}
+		if m := w.GetMobByName(name); m != nil {
+			return m.GetHP()
+		}
+		return 1
+	}
+
+	cb.GetLevel = func(name string) int {
+		if p, ok := w.GetPlayer(name); ok {
+			return p.GetLevel()
+		}
+		if m := w.GetMobByName(name); m != nil {
+			return m.GetLevel()
+		}
+		return 0
+	}
+
+	cb.IsNPC = func(name string) bool {
+		if _, ok := w.GetPlayer(name); ok {
+			return false
+		}
+		return w.GetMobByName(name) != nil
+	}
+
 	cb.GetSkill = func(name string, skillNum int) int {
 		if p, ok := w.GetPlayer(name); ok {
 			return p.GetSkill(combatSkillName(skillNum))
