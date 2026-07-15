@@ -127,53 +127,72 @@ func mobMeleeTarget(me *MobInstance) *MobInstance {
 // ================================================================
 
 // guild — practice skills with a guildmaster mob
+// specGuild ports the guildmaster mob spec SPECIAL(guild) (spec_procs.c:201).
+// It intercepts `practice` for a player standing with the guildmaster: no-arg
+// lists the catalog; a named skill/spell is learned (guild-owned mutation),
+// gaining MIN(MAXGAIN, MAX(MINGAIN, int_app[INT].learn)) up to the learned cap.
 func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if ch.IsNPC() || cmd != "practice" {
 		return false
 	}
 
-	if ch.SkillManager == nil {
-		sendToChar(ch, "You do not seem to be able to practice now.")
-		return true
-	}
+	class := ch.GetClass()
+	arg = strings.TrimSpace(arg)
 
 	if arg == "" {
-		sendToChar(ch, "Practise what?  You know of the following skills:")
-		for _, skill := range ch.SkillManager.GetLearnedSkills() {
-			sendToChar(ch, fmt.Sprintf("  %s (%d%%)", skill.DisplayName, skill.Level))
-		}
+		sendToChar(ch, RenderSkillList(ch))
+		return true
+	}
+	if ch.GetPractices() <= 0 {
+		sendToChar(ch, "You do not seem to be able to practice now.\r\n")
 		return true
 	}
 
-	skillName := strings.ToLower(strings.TrimSpace(arg))
-	skill := ch.SkillManager.GetSkill(skillName)
-	if skill == nil {
-		sendToChar(ch, "You do not know of that skill.")
-		return true
-	}
-	if !skill.Learned {
-		sendToChar(ch, "You do not know of that skill.")
-		return true
-	}
-	if skill.Difficulty > ch.GetLevel() {
-		sendToChar(ch, "You do not know of that skill.")
-		return true
-	}
-	if skill.Level >= skill.MaxLevel {
-		sendToChar(ch, "You are already learned in that area.")
-		return true
-	}
-	if skill.Practice <= 0 {
-		sendToChar(ch, "You do not seem to be able to practice now.")
+	skillNum := FindSkillNum(arg)
+	if skillNum < 1 || ch.GetLevel() < ClassSkillMinLevel(class, skillNum) {
+		sendToChar(ch, fmt.Sprintf("You do not know of that %s.\r\n", SplSkl(class)))
 		return true
 	}
 
-	sendToChar(ch, "You practice for a while...")
+	name := strings.ToLower(SkillCatalogName(skillNum))
+	learned := pracLearned(class)
+	if ch.GetSkill(name) >= learned {
+		sendToChar(ch, "You are already learned in that area.\r\n")
+		return true
+	}
 
-	intScore := 10 // fallback if Stats not populated
-	ch.SkillManager.PracticeSkill(skillName, ch.GetLevel(), intScore)
+	sendToChar(ch, "You practice for a while...\r\n")
+	ch.SetPractices(ch.GetPractices() - 1)
 
+	// percent += MIN(MAXGAIN, MAX(MINGAIN, int_app[GET_INT].learn)) (spec_procs.c:242)
+	gain := intAppLearn(ch.GetInt())
+	if gain < pracMin(class) {
+		gain = pracMin(class)
+	}
+	if gain > pracMax(class) {
+		gain = pracMax(class)
+	}
+	percent := ch.GetSkill(name) + gain
+	if percent > learned {
+		percent = learned
+	}
+	ch.SetSkill(name, percent)
+
+	if ch.GetSkill(name) >= learned {
+		sendToChar(ch, "You are now learned in that area.\r\n")
+	}
 	return true
+}
+
+// intAppLearn returns int_app[intScore].learn with bounds clamping.
+func intAppLearn(intScore int) int {
+	if intScore < 0 {
+		intScore = 0
+	}
+	if intScore >= len(intApp) {
+		intScore = len(intApp) - 1
+	}
+	return intApp[intScore].Learn
 }
 
 // dump — room spec: trash items vanish, player gets XP/gold
