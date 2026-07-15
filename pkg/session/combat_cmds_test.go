@@ -76,19 +76,22 @@ func TestInstakillRequiresImplLevel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnMob failed: %v", err)
 	}
-	mobCurrentHP := mob.GetHP()
+	mobStartHP := mob.GetHP() // 1d1+100 = 101, deterministic
 
 	s := makeInstakillSession(t, m, "MidImm", 35)
 	if err := cmdKill(s, []string{"target"}); err != nil {
 		t.Fatalf("cmdKill returned error: %v", err)
 	}
 
-	// The mob must still be alive (instakill did NOT fire). At level 35 the
-	// code delegates to cmdHit, which requires a combat engine — but the key
-	// assertion is that HandleDeath was NOT called, so the mob's HP is intact.
-	if mob.GetHP() != mobCurrentHP {
+	// Instakill must NOT have fired: at level 35 cmdKill delegates to cmdHit
+	// (normal combat), which never reaches world.Instakill. The mob must still
+	// be alive. We assert survival rather than exact HP, because a normal cmdHit
+	// swing can legitimately scratch it for a point or two — whether that swing
+	// lands depends on the shared PRNG's position, which shifts with test order.
+	// An instakill, by contrast, drops the mob to a lethal HP (<= 0).
+	if hp := mob.GetHP(); hp <= 0 {
 		t.Errorf("level 35 immortal instakilled the mob (HP %d → %d); instakill requires level 39+ (DP-1041)",
-			mobCurrentHP, mob.GetHP())
+			mobStartHP, hp)
 	}
 }
 
