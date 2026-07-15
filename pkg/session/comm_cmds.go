@@ -27,16 +27,6 @@ func filterCommMessage(s *Session, message string) (string, bool) {
 	return message, false
 }
 
-// roomIsSoundproof returns true if the player's current room has the
-// ROOM_SOUNDPROOF flag (bit 5 — from structs.h ROOM_SOUNDPROOF).
-func roomIsSoundproof(s *Session) bool {
-	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
-	if !ok {
-		return false
-	}
-	return room.HasFlag(5) // ROOM_SOUNDPROOF = bit 5
-}
-
 // cmdTell sends a private message to another player.
 // Source: act.comm.c do_tell() lines 901-931, perform_tell()
 func cmdTell(s *Session, args []string) error {
@@ -78,118 +68,32 @@ func cmdReply(s *Session, args []string) error {
 // Source: act.comm.c do_gen_comm() SCMD_SHOUT lines 1286-1289
 // Original: zone-scoped; receivers must be POS_RESTING or higher.
 func cmdShout(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Yes, shout, fine, shout we must, but WHAT???")
-		return nil
-	}
 	message := sanitizeMessage(strings.Join(args, " "))
-
-	// Word filter + spam check
-	filtered, block := filterCommMessage(s, message)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
-	}
-	message = filtered
-
-	// ROOM_SOUNDPROOF check — act.comm.c do_gen_comm() line 1289
-	if roomIsSoundproof(s) {
-		s.Send("The walls seem to absorb your words.\r\n")
-		return nil
-	}
-
-	// Get the shouter's zone
-	senderRoom, ok := s.manager.world.GetRoom(s.player.GetRoom())
-	if !ok {
-		return nil
-	}
-	senderZone := senderRoom.Zone
-
-	s.Send(fmt.Sprintf("You shout, '%s'", message))
-
-	text := fmt.Sprintf("%s shouts, '%s'", s.player.Name, message)
-
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "shout",
-			From: s.player.Name,
-			Text: text,
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-
-	s.manager.mu.RLock()
-	for name, sess := range s.manager.sessions {
-		if name == s.player.Name || sess.player == nil {
-			continue
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
 		}
-		// Restrict to same zone — act.comm.c line 1287
-		targetRoom, ok := s.manager.world.GetRoom(sess.player.GetRoom())
-		if !ok || targetRoom.Zone != senderZone {
-			continue
-		}
-		// Skip players who are deafened / writing / in soundproof rooms
-		// (simplified: just deliver to all in zone)
-		select {
-		case sess.send <- msg:
-		default:
-			slog.Warn("shout send channel full — dropping message", "target", name)
-		}
+		message = filtered
 	}
-	s.manager.mu.RUnlock()
+	s.manager.world.DoChannel(s.player, message, "shout")
 	return nil
 }
 
 // cmdGossip broadcasts a message to everyone online.
 // Source: act.comm.c do_gen_comm() SCMD_GOSSIP lines 1286+
 func cmdGossip(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Yes, gossip, fine, gossip we must, but WHAT???")
-		return nil
-	}
 	message := sanitizeMessage(strings.Join(args, " "))
-
-	// Word filter + spam check
-	filtered, block := filterCommMessage(s, message)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
-	}
-	message = filtered
-
-	s.Send(fmt.Sprintf("You gossip, '%s'", message))
-
-	text := fmt.Sprintf("%s gossips, '%s'", s.player.Name, message)
-
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "gossip",
-			From: s.player.Name,
-			Text: text,
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-
-	s.manager.mu.RLock()
-	for name, sess := range s.manager.sessions {
-		if name == s.player.Name || sess.player == nil {
-			continue
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
 		}
-		select {
-		case sess.send <- msg:
-		default:
-			slog.Warn("gossip send channel full — dropping message", "target", name)
-		}
+		message = filtered
 	}
-	s.manager.mu.RUnlock()
+	s.manager.world.DoChannel(s.player, message, "gossip")
 	return nil
 }
 
@@ -353,44 +257,44 @@ func cmdWrite(s *Session, args []string) error {
 
 // cmdPage sends an urgent message to one or more remote players.
 // Source: act.comm.c do_page() lines 1056-1084
-// Extended: supports multiple targets as "page target1 target2 ... msg"
-// Can reach any player, anywhere. Uses bell chars for urgency.
 func cmdPage(s *Session, args []string) error {
-	if len(args) < 2 {
+	if len(args) == 0 {
 		s.Send("Whom do you wish to page?")
 		return nil
 	}
 
-	// Multi-target: all args except the last are treated as target names.
-	// The last arg is the message (single word).
-	// Source extension: do_page() originally used half_chop for single target;
-	// this Go version iterates through multiple target names.
-	targetNames := args[:len(args)-1]
-	message := args[len(args)-1]
+	targetName := args[0]
+	message := strings.Join(args[1:], " ")
 
 	// Page message with bell chars for urgency — act.comm.c line 1068
 	// \007 is the bell character
 	pageText := fmt.Sprintf("\x07\x07*%s* %s", s.player.Name, message)
 
-	var matched []string
-
-	for _, targetName := range targetNames {
-		// Find target — get_char_vis (act.comm.c line 1070)
-		target, ok := s.manager.GetSession(targetName)
-		if !ok || target.player == nil {
-			s.Send("No one by that name is playing.\r\n")
-			continue
+	if strings.EqualFold(targetName, "all") {
+		if s.player.GetLevel() <= LVL_GOD {
+			s.Send("You will never be godly enough to do that!")
+			return nil
 		}
-
-		// Deliver to target
-		target.Send(pageText)
-		matched = append(matched, target.player.Name)
+		s.manager.mu.RLock()
+		defer s.manager.mu.RUnlock()
+		for _, target := range s.manager.sessions {
+			if target.player != nil && target.authenticated {
+				target.Send(pageText)
+			}
+		}
+		return nil
 	}
 
-	if len(matched) > 0 {
-		// Confirm to sender listing who was paged
-		s.Send(fmt.Sprintf("You page %s with '%s'\r\n",
-			strings.Join(matched, ", "), message))
+	target, ok := s.manager.GetSession(targetName)
+	if !ok || target.player == nil || !target.authenticated {
+		s.Send("There is no such person in the game!")
+		return nil
+	}
+	target.Send(pageText)
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		s.Send("Ok.")
+	} else {
+		s.Send(pageText)
 	}
 
 	return nil
@@ -403,36 +307,32 @@ func cmdPage(s *Session, args []string) error {
 // cmdAuction sends a message on the auction channel.
 // Source: act.comm.c do_gen_comm() SCMD_AUCTION
 func cmdAuction(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Auction what?")
-		return nil
-	}
 	message := sanitizeMessage(strings.Join(args, " "))
-	filtered, block := filterCommMessage(s, message)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
+		}
+		message = filtered
 	}
-	message = filtered
-	s.manager.world.ExecGenComm(s.player, "auction", message)
+	s.manager.world.DoChannel(s.player, message, "auction")
 	return nil
 }
 
 // cmdGratz sends a message on the gratz channel.
 // Source: act.comm.c do_gen_comm() SCMD_GRATZ
 func cmdGratz(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Gratz whom?")
-		return nil
-	}
 	message := sanitizeMessage(strings.Join(args, " "))
-	filtered, block := filterCommMessage(s, message)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
+		}
+		message = filtered
 	}
-	message = filtered
-	s.manager.world.ExecGenComm(s.player, "gratz", message)
+	s.manager.world.DoChannel(s.player, message, "gratz")
 	return nil
 }
 
@@ -440,18 +340,16 @@ func cmdGratz(s *Session, args []string) error {
 // Source: act.comm.c do_gen_comm() SCMD_NEWBIE
 // Named cmdNewbieChannel to avoid conflict with cmdNewbie (wizard command).
 func cmdNewbieChannel(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Newbie what?")
-		return nil
-	}
 	message := sanitizeMessage(strings.Join(args, " "))
-	filtered, block := filterCommMessage(s, message)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
+		}
+		message = filtered
 	}
-	message = filtered
-	s.manager.world.ExecGenComm(s.player, "newbie", message)
+	s.manager.world.DoChannel(s.player, message, "newbie")
 	return nil
 }
 

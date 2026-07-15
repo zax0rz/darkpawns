@@ -3,10 +3,21 @@ package game
 // Social represents an emote/social command
 type Social struct {
 	Name              string
-	MinLevel          int
-	HideFlag          int
-	MinVictimPosition int // minimum position target must be in; 0 = no check
+	MinLevel          int // legacy generated name: C social hide flag
+	HideFlag          int // legacy generated name: C minimum victim position
+	MinVictimPosition int // explicit override for programmatically defined socials
 	Messages          []string
+}
+
+func (s *Social) hidesInvisibleActor() bool {
+	return s.MinLevel != 0
+}
+
+func (s *Social) minimumVictimPosition() int {
+	if s.MinVictimPosition != 0 {
+		return s.MinVictimPosition
+	}
+	return s.HideFlag
 }
 
 // Socials contains all the social emotes from the original Dark Pawns
