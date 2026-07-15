@@ -89,6 +89,9 @@ func makeGateSession(t *testing.T, m *Manager, id int, name string, level int) *
 	if err := m.world.AddPlayer(p); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
+	m.mu.Lock()
+	m.sessions[name] = s
+	m.mu.Unlock()
 	return s
 }
 

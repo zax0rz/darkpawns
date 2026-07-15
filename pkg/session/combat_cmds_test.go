@@ -60,6 +60,9 @@ func makeInstakillSession(t *testing.T, m *Manager, name string, level int) *Ses
 	if err := m.world.AddPlayer(p); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
+	m.mu.Lock()
+	m.sessions[name] = s
+	m.mu.Unlock()
 	return s
 }
 
