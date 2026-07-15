@@ -321,7 +321,7 @@ func TestCompleteCharCreation_WithNilDB(t *testing.T) {
 	s.charName = "Tester"
 	s.charClass = 3 // warrior
 	s.charRace = 0  // human
-	s.charSex = 0
+	s.charSex = 1
 	s.charHometown = 2 // Kir-Oshi
 	s.charPassword = "hashed_pw"
 	s.charStats = game.CharStats{Str: 15, Dex: 12, Con: 14, Int: 10, Wis: 11, Cha: 9}
@@ -347,6 +347,16 @@ func TestCompleteCharCreation_WithNilDB(t *testing.T) {
 	}
 	if s.player.Name != "Tester" {
 		t.Errorf("player.Name = %q, want Tester", s.player.Name)
+	}
+	wantStats := game.CharStats{Str: 15, Dex: 12, Con: 14, Int: 10, Wis: 11, Cha: 9}
+	if s.player.Stats != wantStats {
+		t.Errorf("player stats = %+v, want accepted stats %+v", s.player.Stats, wantStats)
+	}
+	if s.player.Sex != 1 {
+		t.Errorf("player sex = %d, want female", s.player.Sex)
+	}
+	if s.player.AC != 100 {
+		t.Errorf("player AC = %d, want C newbie base 100", s.player.AC)
 	}
 	if got, want := s.player.GetRoom(), game.NewbieHometownRoom(2); got != want {
 		t.Errorf("player room = %d, want hometown room %d", got, want)

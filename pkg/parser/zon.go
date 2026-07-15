@@ -189,21 +189,17 @@ func ParseAllZonFiles(dir string) ([]Zone, error) {
 		return nil, err
 	}
 
-	entries, err := os.ReadDir(dir)
+	fileNames, err := indexedDataFileNames(dir, ".zon")
 	if err != nil {
-		return nil, fmt.Errorf("read dir %s: %w", dir, err)
+		return nil, err
 	}
 
 	var zones []Zone
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".zon") {
-			continue
-		}
-
-		path := filepath.Join(dir, entry.Name())
+	for _, fileName := range fileNames {
+		path := filepath.Join(dir, fileName)
 		zone, err := ParseZonFile(path)
 		if err != nil {
-			return nil, fmt.Errorf("parse %s: %w", entry.Name(), err)
+			return nil, fmt.Errorf("parse %s: %w", fileName, err)
 		}
 
 		zones = append(zones, *zone)

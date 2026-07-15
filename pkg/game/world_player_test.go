@@ -86,6 +86,14 @@ func TestGiveStartingItems_Warrior(t *testing.T) {
 	if !containsVNum(invVNums, 8038) {
 		t.Error("warrior should receive pack (vnum 8038)")
 	}
+	if equipped := player.Equipment.GetEquippedItems(); len(equipped) != 0 {
+		t.Fatalf("starter gear should be carried, not equipped: %+v", equipped)
+	}
+	for _, item := range player.Inventory.FindItems("") {
+		if item.Location != LocInventoryPlayer(player.Name) {
+			t.Errorf("starter item %d location = %+v, want player inventory", item.VNum, item.Location)
+		}
+	}
 	// Pack should contain bread and waterskin
 	pack := findItemByVNum(player, 8038)
 	if pack == nil {

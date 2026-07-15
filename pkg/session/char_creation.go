@@ -473,12 +473,8 @@ func (s *Session) sendCharCreatePromptWithSecret(stage, prompt string, options [
 // completeCharCreation finalizes character creation and enters the world.
 func (s *Session) completeCharCreation() error {
 	// Create the player with collected attributes
-	s.player = game.NewCharacter(0, s.charName, s.charClass, s.charRace)
-	s.player.Stats = s.charStats
+	s.player = game.NewCharacterWithStats(0, s.charName, s.charClass, s.charRace, s.charSex, s.charStats)
 	s.player.Description = s.menuDescription
-
-	// Set sex
-	s.player.Sex = s.charSex
 
 	// Set hometown
 	s.player.Hometown = s.charHometown

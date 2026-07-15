@@ -122,6 +122,10 @@ var wisApp = []wisAppType{
 	{7}, // wis = 25
 }
 
+// levelNumber is the C number() seam used by advance_level. Production uses
+// the one process-wide stream; tests replace it to assert exact draw order.
+var levelNumber = dprng.Number
+
 // AdvanceLevel implements advance_level() from class.c:600-720
 // Calculates HP/mana/move gains when a player levels up.
 // Called from do_start() at level 1, so even level 1 chars get more than 10 HP.
@@ -145,18 +149,22 @@ func (p *Player) AdvanceLevel() {
 	// Class-specific gains
 	switch p.Class {
 	case ClassMageUser, ClassMagus:
+		hpFrom, hpTo := 4, 8
+		if p.Class == ClassMagus {
+			hpFrom, hpTo = 5, 9
+		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addHP += dprng.Number(4, 8) // number(4,8)
+		addHP += levelNumber(hpFrom, hpTo)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMana = dprng.Number(p.Level, 3*p.Level)
+		addMana = levelNumber(p.Level, 3*p.Level)
 		if addMana > 10 {
 			addMana = 10
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMove = dprng.Number(1, 3) // number(1, 3)
+		addMove = levelNumber(1, 3) // number(1, 3)
 		// Practices: MAX(2, wis_app[GET_WIS(ch)].bonus)
 		wis := p.Stats.Wis
 		if wis < 0 {
@@ -172,18 +180,22 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassCleric, ClassAvatar:
+		hpFrom, hpTo := 5, 9
+		if p.Class == ClassAvatar {
+			hpFrom, hpTo = 6, 11
+		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addHP += dprng.Number(5, 9) // number(5, 9)
+		addHP += levelNumber(hpFrom, hpTo)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMana = dprng.Number(p.Level, 3*p.Level)
+		addMana = levelNumber(p.Level, 3*p.Level)
 		if addMana > 10 {
 			addMana = 10
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMove = dprng.Number(1, 3) // number(1, 3)
+		addMove = levelNumber(1, 3) // number(1, 3)
 		// Practices: MAX(2, wis_app[GET_WIS(ch)].bonus)
 		wis := p.Stats.Wis
 		if wis < 0 {
@@ -201,16 +213,16 @@ func (p *Player) AdvanceLevel() {
 	case ClassAssassin:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addHP += dprng.Number(8, 14) // number(8, 14)
+		addHP += levelNumber(8, 14) // number(8, 14)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMana = dprng.Number(p.Level, 2*p.Level)
+		addMana = levelNumber(p.Level, 2*p.Level)
 		if addMana > 5 {
 			addMana = 5
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMove = dprng.Number(1, 4) // number(1, 4)
+		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
 		if wis < 0 {
@@ -231,10 +243,10 @@ func (p *Player) AdvanceLevel() {
 	case ClassThief:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addHP += dprng.Number(7, 13) // number(7, 13)
+		addHP += levelNumber(7, 13) // number(7, 13)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMove = dprng.Number(1, 4) // number(1, 4)
+		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
 		if wis < 0 {
@@ -255,16 +267,16 @@ func (p *Player) AdvanceLevel() {
 	case ClassPaladin:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMana = dprng.Number(p.Level, 2*p.Level)
+		addMana = levelNumber(p.Level, 2*p.Level)
 		if addMana > 5 {
 			addMana = 5
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addHP += dprng.Number(12, 16) // number(12, 16)
+		addHP += levelNumber(12, 16) // number(12, 16)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMove = dprng.Number(1, 4) // number(1, 4)
+		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
 		if wis < 0 {
@@ -285,10 +297,10 @@ func (p *Player) AdvanceLevel() {
 	case ClassRanger:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addHP += dprng.Number(13, 16) // number(13, 16)
+		addHP += levelNumber(13, 16) // number(13, 16)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMove = dprng.Number(2, 4) // number(2, 4)
+		addMove = levelNumber(2, 4) // number(2, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
 		if wis < 0 {
@@ -309,10 +321,10 @@ func (p *Player) AdvanceLevel() {
 	case ClassWarrior:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addHP += dprng.Number(11, 14) // number(11, 14)
+		addHP += levelNumber(11, 14) // number(11, 14)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMove = dprng.Number(1, 4) // number(1, 4)
+		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
 		if wis < 0 {
@@ -333,16 +345,16 @@ func (p *Player) AdvanceLevel() {
 	case ClassNinja:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addHP += dprng.Number(8, 13) // number(8, 13)
+		addHP += levelNumber(8, 13) // number(8, 13)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMana = dprng.Number(p.Level, 2*p.Level)
+		addMana = levelNumber(p.Level, 2*p.Level)
 		if addMana > 10 {
 			addMana = 10
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMove = dprng.Number(1, 4) // number(1, 4)
+		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
 		wis := p.Stats.Wis
 		if wis < 0 {
@@ -361,23 +373,22 @@ func (p *Player) AdvanceLevel() {
 		p.Practices += practices
 
 	case ClassPsionic, ClassMystic:
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		addHP += dprng.Number(4, 8) // number(4,8) for psionic, (5,9) for mystic
+		hpFrom, hpTo := 4, 8
 		if p.Class == ClassMystic {
-			// #nosec G404 — game RNG, not cryptographic
-			// #nosec G404
-			addHP = dprng.Number(5, 9) // number(5, 9)
+			hpFrom, hpTo = 5, 9
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMana = dprng.Number(p.Level, 2*p.Level)
+		addHP += levelNumber(hpFrom, hpTo)
+		// #nosec G404 — game RNG, not cryptographic
+		// #nosec G404
+		addMana = levelNumber(p.Level, 2*p.Level)
 		if addMana > 10 {
 			addMana = 10
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		addMove = dprng.Number(1, 4) // number(1, 4)
+		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MAX(2, wis_app[GET_WIS(ch)].bonus)
 		wis := p.Stats.Wis
 		if wis < 0 {

@@ -121,6 +121,10 @@ func main() {
 
 	slog.Info("Dark Pawns Phase 1 Server Starting...")
 
+	// C reset_time() initializes weather before loading mob prototypes. Its
+	// pressure roll is therefore the first draw from the process-wide stream.
+	game.InitializeWeather()
+
 	// Parse world files
 	slog.Info("Loading world", "path", *worldDir)
 	parsedWorld, err := parser.ParseWorld(*worldDir)
