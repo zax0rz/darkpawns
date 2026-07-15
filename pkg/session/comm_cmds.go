@@ -292,7 +292,7 @@ func cmdPage(s *Session, args []string) error {
 	}
 	target.Send(pageText)
 	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
-		s.Send("Ok.")
+		s.Send("Okay.")
 	} else {
 		s.Send(pageText)
 	}

@@ -63,6 +63,25 @@ func TestPageUsesOneTargetAndRemainingMessage(t *testing.T) {
 	}
 }
 
+func TestPageNoRepeatUsesCOkayText(t *testing.T) {
+	m := makeTestManager(t)
+	actor := makeCommandTestSession(t, m, "Wizard", LVL_IMMORT, 1001)
+	target := makeCommandTestSession(t, m, "Target", 1, 1002)
+	actor.player.SetPlrFlag(game.PrfNoRepeat, true)
+	m.sessions[actor.player.Name] = actor
+	m.sessions[target.player.Name] = target
+
+	if err := ExecuteCommand(actor, "page", []string{"Target", "hello"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := readMsgText(t, target); got != "\x07\x07*Wizard* hello" {
+		t.Fatalf("target output = %q", got)
+	}
+	if got := readMsgText(t, actor); got != "Okay." {
+		t.Fatalf("actor output = %q", got)
+	}
+}
+
 func TestPageGatesMortalAndPageAll(t *testing.T) {
 	t.Run("immortal command gate", func(t *testing.T) {
 		m := makeTestManager(t)

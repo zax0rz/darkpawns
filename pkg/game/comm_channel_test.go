@@ -97,6 +97,15 @@ func TestDoChannelSenderGatesMatchC(t *testing.T) {
 			t.Fatalf("output = %q", got)
 		}
 	})
+
+	t.Run("norepeat uses C okay text", func(t *testing.T) {
+		w, actor, _, _, output := newChannelWorld(t)
+		actor.SetPlrFlag(PrfNoRepeat, true)
+		w.DoChannel(actor, "hello", "gossip")
+		if got := channelOutput(output, actor.Name); got != "Okay.\r\n" {
+			t.Fatalf("output = %q", got)
+		}
+	})
 }
 
 func TestDoChannelFanoutMatchesC(t *testing.T) {

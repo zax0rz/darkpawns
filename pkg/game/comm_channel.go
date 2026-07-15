@@ -177,7 +177,7 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 	argument = deleteANSIControls(argument)
 
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
-		communicationSend(ch, "Ok.")
+		communicationSend(ch, "Okay.")
 	} else {
 		communicationSend(ch, fmt.Sprintf("You %s, '%s'", spec.verb, argument))
 	}
