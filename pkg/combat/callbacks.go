@@ -20,6 +20,9 @@ type GameCallbacks struct {
 	GetAlignment func(name string) int
 	SetAlignment func(name string, val int)
 	GetSex       func(name string) int
+	GetHP        func(name string) int
+	GetLevel     func(name string) int
+	IsNPC        func(name string) bool
 	GetSkill     func(name string, skillNum int) int
 
 	// Affects
@@ -186,6 +189,27 @@ func cbGetSex(name string) int {
 		return cb.GetSex(name)
 	}
 	return 0
+}
+
+func cbGetHP(name string) int {
+	if cb := callbacks; cb != nil && cb.GetHP != nil {
+		return cb.GetHP(name)
+	}
+	return 1
+}
+
+func cbGetLevel(name string) int {
+	if cb := callbacks; cb != nil && cb.GetLevel != nil {
+		return cb.GetLevel(name)
+	}
+	return 0
+}
+
+func cbIsNPC(name string) bool {
+	if cb := callbacks; cb != nil && cb.IsNPC != nil {
+		return cb.IsNPC(name)
+	}
+	return false
 }
 
 func cbGetSkill(name string, skillNum int) int {

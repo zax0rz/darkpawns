@@ -425,11 +425,14 @@ func (m *Manager) SetCombatMessageFunc() {
 	}
 	cb.Broadcast = broadcast
 	cb.SendToChar = sendToChar
-	combat.InitSkillMessages(cb)
+	if err := combat.InitEmbeddedFightMessages(cb); err != nil {
+		slog.Error("loading combat messages", "error", err)
+		combat.InitSkillMessages(cb)
+	}
 	m.combatEngine.SetCallbacks(cb)
 
 	m.combatEngine.MessageFunc = func(attacker, defender combat.Combatant, dam, attackType int) bool {
-		combat.DamMessage(dam, attacker, defender, attackType)
+		combat.SendWeaponMessage(dam, attacker, defender, attackType)
 		return true
 	}
 }

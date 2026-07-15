@@ -117,6 +117,34 @@ func TestCmdHitShopkeeperGate(t *testing.T) {
 	}
 }
 
+func TestCmdHitResolvesFirstSwingSynchronouslyWithoutInventedAttackLine(t *testing.T) {
+	m := makeGateTestManager(t, false)
+	defer m.combatEngine.Stop()
+	m.WireCombatCallbacks()
+	m.SetCombatMessageFunc()
+	if _, err := m.world.SpawnMob(5000, 1001); err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	s := makeGateSession(t, m, 1, "Hero", 20)
+
+	roller := combat.NewScriptedRoller([]int{1, 2, 99}) // natural-one miss, second C-ordered TYPE_HIT variant
+	combat.WithRoller(roller, func() {
+		if err := cmdHit(s, []string{"target"}); err != nil {
+			t.Fatalf("cmdHit returned error: %v", err)
+		}
+	})
+
+	if got, want := readSendText(t, s), "You try to hit a test target who easily avoids the blow."; got != want {
+		t.Fatalf("synchronous first-swing message = %q, want %q", got, want)
+	}
+	if got := s.player.GetWaitState(); got != 3 {
+		t.Fatalf("post-hit wait state = %d, want 3", got)
+	}
+	if got := roller.Index; got != 2 {
+		t.Fatalf("first-swing draws = %d, want 2 (to-hit + message selection)", got)
+	}
+}
+
 func TestCmdKillMortalDelegatesBeforeArgumentParsing(t *testing.T) {
 	m := makeGateTestManager(t, false)
 	s := makeGateSession(t, m, 1, "Hero", 20)

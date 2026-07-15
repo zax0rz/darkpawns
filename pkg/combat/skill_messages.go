@@ -6,10 +6,6 @@
 // This restores that flavor for Dark Pawns.
 package combat
 
-import (
-	"strings"
-)
-
 // skillMsgTriplet holds room/char/victim perspectives for one message variant.
 type skillMsgTriplet struct {
 	Room   string
@@ -595,14 +591,82 @@ func InitSkillMessages(cb *GameCallbacks) {
 	}
 }
 
+// InitSkillMessagesFromFile loads C's misc/messages corpus and wires its
+// fight_messages lookup into cb.
+func InitSkillMessagesFromFile(cb *GameCallbacks, path string) error {
+	messages, err := LoadFightMessages(path)
+	if err != nil {
+		return err
+	}
+	InitFightMessages(cb, messages)
+	return nil
+}
+
+// InitEmbeddedFightMessages wires the canonical corpus embedded in the server
+// binary. This is the production initializer; the file-based form remains
+// available for tools and parser tests.
+func InitEmbeddedFightMessages(cb *GameCallbacks) error {
+	messages, err := LoadEmbeddedFightMessages()
+	if err != nil {
+		return err
+	}
+	InitFightMessages(cb, messages)
+	return nil
+}
+
+// InitFightMessages wires a parsed C fight_messages table into cb. Selection
+// uses dice(1, N), consuming exactly one shared RNG draw even when N is one.
+func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
+	if cb == nil {
+		return
+	}
+
+	cb.SkillMessage = func(dam int, chName, victimName string, attackType int, roomVNum int) bool {
+		variants, ok := messages.Variants(attackType)
+		if !ok || len(variants) == 0 {
+			return false
+		}
+
+		selection := GetRoller().Dice(1, len(variants)) - 1
+		if selection < 0 || selection >= len(variants) {
+			return false
+		}
+
+		variant := variants[selection]
+		var action FightMessageAction
+		switch {
+		case !cbIsNPC(victimName) && cbGetLevel(victimName) >= LVL_IMMORT:
+			action = variant.God
+		case cbGetHP(victimName) <= -11:
+			action = variant.Die
+		case dam == 0:
+			action = variant.Miss
+		default:
+			action = variant.Hit
+		}
+
+		chSex := cbGetSex(chName)
+		victimSex := cbGetSex(victimName)
+		render := func(message string) string {
+			return replaceMessageTokens(message, chName, victimName, "", "", chSex, victimSex)
+		}
+
+		if action.Room != "" && cb.Broadcast != nil {
+			cb.Broadcast(roomVNum, render(action.Room), chName+" "+victimName)
+		}
+		if action.Attacker != "" && cb.SendToChar != nil {
+			cb.SendToChar(chName, render(action.Attacker))
+		}
+		if action.Victim != "" && cb.SendToChar != nil {
+			cb.SendToChar(victimName, render(action.Victim))
+		}
+		return true
+	}
+}
+
 // basicTokenReplace handles $n/$N/$s/$e substitution with sex-aware pronouns.
 // Falls back to male pronouns if the GetSex callback is not wired.
 func basicTokenReplace(msg, chName, victimName string) string {
-	result := msg
-	result = strings.ReplaceAll(result, "$n", chName)
-	result = strings.ReplaceAll(result, "$N", victimName)
-
-	// Pronoun resolution for attacker ($s = possessive, $e = subjective)
 	chSex := 0 // default male
 	if s := cbGetSex(chName); s >= 0 {
 		chSex = s
@@ -611,20 +675,7 @@ func basicTokenReplace(msg, chName, victimName string) string {
 	if s := cbGetSex(victimName); s >= 0 {
 		victimSex = s
 	}
-	_ = victimSex // available for future victim pronoun tokens ($o/$O)
-
-	chPronouns := sexPronouns(chSex)
-
-	// $s/$S = attacker possessive (his/her/its), $E = attacker subjective (he/she/it)
-	result = strings.ReplaceAll(result, "$s", chPronouns.possessive)
-	result = strings.ReplaceAll(result, "$S", chPronouns.possessive)
-	result = strings.ReplaceAll(result, "$e", chPronouns.subjective)
-	result = strings.ReplaceAll(result, "$E", chPronouns.subjective)
-	// $m/$M = attacker objective (him/her/it)
-	result = strings.ReplaceAll(result, "$m", chPronouns.objective)
-	result = strings.ReplaceAll(result, "$M", chPronouns.objective)
-
-	return result
+	return replaceMessageTokens(msg, chName, victimName, "", "", chSex, victimSex)
 }
 
 type pronounSet struct {

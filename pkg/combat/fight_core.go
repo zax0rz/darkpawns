@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // ---------------------------------------------------------------------------
@@ -592,10 +593,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 // ---------------------------------------------------------------------------
 
 // damMessageTier describes one entry of the weapon damage message table.
-// CRIT-010: In the original C code, messages were loaded from data files via
-// Each tier has multiple variants; one is randomly selected per hit.
-// This restores the C CircleMUD behavior from load_messages() + misc/messages,
-// where 3-4 variants per tier kept combat feeling fresh.
+// C has exactly one fixed message for each audience at each severity.
 type damMessageTier struct {
 	MinDamage int
 	Room      []string
@@ -727,9 +725,10 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 	plural := AttackHitTexts[attackType].Plural
 
 	sex := ch.GetSex()
-	roomMsg := replaceMessageTokens(randPick(tier.Room), ch.GetName(), victim.GetName(), singular, plural, sex)
-	charMsg := replaceMessageTokens(randPick(tier.Char), ch.GetName(), victim.GetName(), singular, plural, sex)
-	victimMsg := replaceMessageTokens(randPick(tier.Victim), ch.GetName(), victim.GetName(), singular, plural, sex)
+	victimSex := victim.GetSex()
+	roomMsg := replaceMessageTokens(tier.Room[0], ch.GetName(), victim.GetName(), singular, plural, sex, victimSex)
+	charMsg := replaceMessageTokens(tier.Char[0], ch.GetName(), victim.GetName(), singular, plural, sex, victimSex)
+	victimMsg := replaceMessageTokens(tier.Victim[0], ch.GetName(), victim.GetName(), singular, plural, sex, victimSex)
 
 	cbBroadcast(ch.GetRoom(), roomMsg, ch.GetName()+" "+victim.GetName())
 
@@ -739,29 +738,45 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 	cbSendToChar(victim.GetName(), victimMsg)
 }
 
-// replaceMessageTokens substitutes $n, $N, $e, #w, #W in a message template.
-// sex follows C SEX_* constants: 0=male, 1=female, 2=neutral/other.
-func replaceMessageTokens(msg, chName, victimName, singular, plural string, sex int) string {
-	var subject, object, possessive string
-	switch sex {
-	case 1:
-		subject, object, possessive = "she", "her", "her"
-	case 0:
-		subject, object, possessive = "he", "him", "his"
-	default:
-		subject, object, possessive = "it", "it", "its"
-	}
+// replaceMessageTokens applies the character and weapon substitutions used by
+// act() fight messages.
+// sex uses the Go Actor encoding: 0=male, 1=female, 2=neutral/other.
+func replaceMessageTokens(msg, chName, victimName, singular, plural string, sex, victimSex int) string {
+	chPronouns := sexPronouns(sex)
+	victimPronouns := sexPronouns(victimSex)
 	result := msg
 	result = strings.ReplaceAll(result, "$n", chName)
 	result = strings.ReplaceAll(result, "$N", victimName)
-	result = strings.ReplaceAll(result, "$e", subject)
-	result = strings.ReplaceAll(result, "$E", object)
-	result = strings.ReplaceAll(result, "$s", possessive)
-	result = strings.ReplaceAll(result, "$m", chName)
-	result = strings.ReplaceAll(result, "$M", victimName)
+	result = strings.ReplaceAll(result, "$e", chPronouns.subjective)
+	result = strings.ReplaceAll(result, "$E", victimPronouns.subjective)
+	result = strings.ReplaceAll(result, "$s", chPronouns.possessive)
+	result = strings.ReplaceAll(result, "$S", victimPronouns.possessive)
+	result = strings.ReplaceAll(result, "$m", chPronouns.objective)
+	result = strings.ReplaceAll(result, "$M", victimPronouns.objective)
 	result = strings.ReplaceAll(result, "#w", singular)
 	result = strings.ReplaceAll(result, "#W", plural)
-	return result
+	return capitalizeFightMessage(result)
+}
+
+func capitalizeFightMessage(message string) string {
+	if message == "" {
+		return message
+	}
+	runes := []rune(message)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
+// SendWeaponMessage mirrors damage()'s weapon-message routing: misses and
+// deaths try the file-backed skill_message table first; ordinary hits use the
+// deterministic severity ladder. attackType is the zero-based weapon index.
+func SendWeaponMessage(dam int, ch, victim Combatant, attackType int) {
+	if dam == 0 || victim.GetHP() <= -11 {
+		if cbSkillMessage(dam, ch.GetName(), victim.GetName(), TYPE_HIT+attackType, ch.GetRoom()) {
+			return
+		}
+	}
+	DamMessage(dam, ch, victim, attackType)
 }
 
 // BackstabMult mirrors backstab_mult() from src/class.c lines 720-729.

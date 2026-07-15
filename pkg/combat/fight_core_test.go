@@ -222,20 +222,20 @@ func TestGetPositionFromHP(t *testing.T) {
 func TestReplaceMessageTokens(t *testing.T) {
 	got := replaceMessageTokens(
 		"$n hits $N with #w!",
-		"Alice", "Bob", "slash", "slashes", 0,
+		"Alice", "Bob", "slash", "slashes", 0, 0,
 	)
 	if got != "Alice hits Bob with slash!" {
 		t.Errorf("replaceMessageTokens() = %q, want %q", got, "Alice hits Bob with slash!")
 	}
 
 	// Pronoun tokens
-	got = replaceMessageTokens("$e hits $N with $s blade.", "Warrior", "Enemy", "hit", "hits", 0)
-	if got != "he hits Enemy with his blade." {
+	got = replaceMessageTokens("$e hits $N with $s blade.", "Warrior", "Enemy", "hit", "hits", 0, 0)
+	if got != "He hits Enemy with his blade." {
 		t.Errorf("pronoun tokens: got %q", got)
 	}
 
-	got = replaceMessageTokens("$e hits $N.", "Alice", "Enemy", "hit", "hits", 1)
-	if got != "she hits Enemy." {
+	got = replaceMessageTokens("$e hits $N.", "Alice", "Enemy", "hit", "hits", 1, 0)
+	if got != "She hits Enemy." {
 		t.Errorf("female pronoun: got %q", got)
 	}
 }

@@ -11,8 +11,8 @@ func TestBasicTokenReplace(t *testing.T) {
 	}
 
 	got = basicTokenReplace("no tokens here", "Alice", "Bob")
-	if got != "no tokens here" {
-		t.Errorf("basicTokenReplace() = %q, want %q", got, "no tokens here")
+	if got != "No tokens here" {
+		t.Errorf("basicTokenReplace() = %q, want %q", got, "No tokens here")
 	}
 
 	got = basicTokenReplace("$n hits $N, then $n hits $N again.", "A", "B")
@@ -50,8 +50,8 @@ func TestBasicTokenReplace_Pronouns(t *testing.T) {
 
 	// Neuter (sex=2)
 	got = basicTokenReplace("$e attacks $N.", "Golem", "Enemy")
-	if got != "it attacks Enemy." {
-		t.Errorf("neuter pronouns: got %q, want %q", got, "it attacks Enemy.")
+	if got != "It attacks Enemy." {
+		t.Errorf("neuter pronouns: got %q, want %q", got, "It attacks Enemy.")
 	}
 }
 
