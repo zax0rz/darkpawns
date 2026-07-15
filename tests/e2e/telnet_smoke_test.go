@@ -124,6 +124,17 @@ func TestTelnetSmoke_Combat(t *testing.T) {
 	createWarrior(t, conn, r, name, "brawlpw")
 	walkToTempleSquare(t, conn, r)
 
+	combatOutputMarkers := []string{
+		// File-backed TYPE_HIT death/miss/god variants
+		"You punch", "You try to", "but miss", "You swing", "You wildly punch", "ducks under your fist",
+		"Your fist", "Instead of letting", "It isn't polite",
+		// Fixed C damage tiers (attacker messages after #w/#W replacement)
+		"You scratch", "You barely", "You hit", "You massacre",
+		"You OBLITERATE", "You EVISCERATE", "You DESTROY", "You ROCK",
+		// Death fallback
+		"dies", "is dead",
+	}
+
 	// Engage: look, target a present NPC, hit it; retry if it wandered off.
 	engaged := false
 	for i := 0; i < 8 && !engaged; i++ {
@@ -134,7 +145,7 @@ func TestTelnetSmoke_Combat(t *testing.T) {
 			continue // no NPC visible this tick; look again
 		}
 		mustWrite(t, conn, "hit "+kw+"\r\n")
-		if readUntil(t, conn, r, "You attack", 3*time.Second) != "" {
+		if readUntilAny(t, conn, r, combatOutputMarkers, 3*time.Second) != "" {
 			engaged = true
 		}
 	}
@@ -146,22 +157,7 @@ func TestTelnetSmoke_Combat(t *testing.T) {
 	// round outcome. After F7 (DP-950) live combat uses the DamMessage table
 	// instead of generic "You hit ... for N damage!" text, so we match the
 	// attacker-side char messages from that table (miss tier + hit tiers).
-	roundMarkers := []string{
-		// Miss tier
-		"You try to", "but miss", "You swing at", "Your clumsy",
-		// Hit tiers (attacker messages after #w/#W replacement)
-		"You scratch", "You clip",
-		"You barely",
-		"You hit", "You land a light hit", "You land a pathetic blow",
-		"Your solid strike", "You connect firmly",
-		"Your heavy blow", "You wallop",
-		"You massacre", "You OBLITERATE", "You MUTILATE", "You EVISCERATE",
-		"You DISEMBOWEL", "You open", "You DESTROY", "You annihilate",
-		"You reduce", "You deliver", "You R O C K",
-		// Death fallback
-		"dies", "is dead",
-	}
-	rounds := readUntilAny(t, conn, r, roundMarkers, 12*time.Second)
+	rounds := readUntilAny(t, conn, r, combatOutputMarkers, 12*time.Second)
 	if rounds == "" {
 		t.Error("engaged a target but observed no combat rounds — engine stalled?")
 	}
