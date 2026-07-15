@@ -1,0 +1,41 @@
+# Phase 1 skill-system foundation RED (Tier-1 deterministic).
+# C has exactly ONE skill command: `practice` (interpreter.c:618 → do_practice).
+# no-arg → list_skills (spec_procs.c:157); any arg (not at a guild) → guild-redirect.
+# Go invented skills/spells/learn/forget + a SkillManager (points/slots/levels) — retire.
+# A fresh L1 K warrior at 8162 runs the readouts. No RNG on display paths.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cfighter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cfighter
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+practice
+practice kick
