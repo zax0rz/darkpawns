@@ -314,13 +314,8 @@ func GiveStartingSkills(p *Player) {
 		p.SetSkill("headbutt", 25)
 	}
 
-	// Go-specific additions — not present in C do_start(). Kept for gameplay
-	// parity with the previous Go port behavior.
-	// All classes get kick at level 1.
-	p.SetSkill("kick", 10)
-	// Warrior-types get bash and rescue.
-	if p.Class == ClassWarrior || p.Class == ClassPaladin || p.Class == ClassRanger {
-		p.SetSkill("bash", 10)
-		p.SetSkill("rescue", 10)
-	}
+	// C do_start grants NO other starting skills — every class begins with its
+	// class/spell abilities "not learned" (0%) and must practice at a guild
+	// (spec_procs.c guild). The former Go-specific kick/bash/rescue grants were
+	// inventions (retired: newbie `practice` now shows "(not learned)" like C).
 }

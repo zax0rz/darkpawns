@@ -291,7 +291,8 @@ func TestHandleCommand_UnknownCommand(t *testing.T) {
 	if err := json.Unmarshal(b, &td); err != nil {
 		t.Fatalf("unmarshal TextData: %v", err)
 	}
-	if !strings.Contains(strings.ToLower(td.Text), "unknown") {
-		t.Errorf("expected 'unknown' in response, got %q", td.Text)
+	// C interpreter.c:916 answers any unmatched command with "Huh?!?".
+	if !strings.Contains(td.Text, "Huh?!?") {
+		t.Errorf("expected 'Huh?!?' in response, got %q", td.Text)
 	}
 }

@@ -39,3 +39,6 @@ Y
 [probe]
 practice
 practice kick
+skills
+spells
+learn kick
