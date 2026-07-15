@@ -1,0 +1,74 @@
+# Communication domain part B: channels / socials / page (O30/O32/O44).
+# Both hometown-K newbies co-locate at 8162 (same room AND same zone 80), so the
+# observer receives gossip (global), shout (zone), and room socials. Gate behaviors
+# (soundproof/consent/off-channel/position/min-level, page immortal-only) mostly
+# need richer fixtures + unit tests; this proves the happy-path wording + the
+# mortal-page gate.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Chanactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Chanactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Chanwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Chanwatch
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+gossip anyone out there
+shout is this thing on
+smile
+wave Chanwatch
+page Chanwatch paging you

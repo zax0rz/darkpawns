@@ -3,6 +3,8 @@ package game
 import (
 	"fmt"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // gossipHistory is a circular buffer of the last 25 gossip messages.
@@ -27,45 +29,9 @@ func (w *World) doSpecComm(ch *Player, me *MobInstance, cmd string, arg string) 
 	return true
 }
 
-// doShout — shout implementation.
+// doShout keeps special-procedure callers on the canonical channel path.
 func (w *World) doShout(ch *Player, me *MobInstance, arg string) bool {
-	arg = skipSpaces(arg)
-
-	if arg == "" {
-		sendToChar(ch, "Shout what?\r\n")
-		return true
-	}
-	if ch.GetLevel() < levelCanShout {
-		sendToChar(ch, "You must be at least level 5 to shout.\r\n")
-		return true
-	}
-	if ch.GetFlags()&prfNoShout != 0 {
-		sendToChar(ch, "You can't shout.\r\n")
-		return true
-	}
-	if w.roomHasFlag(ch.GetRoom(), "soundproof") {
-		sendToChar(ch, "The walls seem to absorb your words.\r\n")
-		return true
-	}
-
-	msg := fmt.Sprintf("%s shouts, '%s'\r\n", ch.Name, arg)
-	for _, p := range w.AllPlayers() {
-		if p.IsNPC() || p.Name == ch.Name {
-			continue
-		}
-		if p.Flags&prfDeaf != 0 {
-			continue
-		}
-		if p.GetFlags()&prfNoShout != 0 {
-			continue
-		}
-		if w.roomHasFlag(p.GetRoom(), "soundproof") {
-			continue
-		}
-		p.SendMessage(msg)
-	}
-
-	sendToChar(ch, fmt.Sprintf("You shout, '%s'\r\n", arg))
+	w.DoChannel(ch, arg, "shout")
 	return true
 }
 
@@ -122,83 +88,129 @@ func (w *World) doAsk(ch *Player, me *MobInstance, arg string) bool {
 	return true
 }
 
-// doGenComm -- port of do_gen_comm() (gossip, chat, auction, gratz, newbie).
-func (w *World) doGenComm(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	arg = skipSpaces(arg)
-	if arg == "" {
-		// Determine channel name from cmd / subcmd
-		switch strings.ToLower(cmd) {
-		case "gossip":
-			sendToChar(ch, "Gossip what?\r\n")
-		case "auction":
-			sendToChar(ch, "Auction what?\r\n")
-		case "gratz":
-			sendToChar(ch, "Gratz whom?\r\n")
-		case "newbie":
-			sendToChar(ch, "Newbie what?\r\n")
-		default:
-			sendToChar(ch, "Say what?\r\n")
-		}
-		return true
+type channelSpec struct {
+	verb          string
+	blocked       string
+	offMessage    string
+	offFlag       int
+	minimumLevel  int
+	zoneLimited   bool
+	minimumHearer int
+}
+
+var communicationChannels = map[string]channelSpec{
+	"shout": {
+		verb:          "shout",
+		blocked:       "You cannot shout!!",
+		offMessage:    "Turn off your noshout flag first!",
+		offFlag:       PrfDeaf,
+		minimumLevel:  levelCanShout,
+		zoneLimited:   true,
+		minimumHearer: combat.PosResting,
+	},
+	"gossip": {
+		verb:         "gossip",
+		blocked:      "You cannot gossip!!",
+		offMessage:   "You aren't even on the channel!",
+		offFlag:      PrfNoGossip,
+		minimumLevel: levelCanShout,
+	},
+	"auction": {
+		verb:         "auction",
+		blocked:      "You cannot auction!!",
+		offMessage:   "You aren't even on the channel!",
+		offFlag:      PrfNoAuctions,
+		minimumLevel: levelCanShout,
+	},
+	"gratz": {
+		verb:         "congrat",
+		blocked:      "You cannot congratulate!",
+		offMessage:   "You aren't even on the channel!",
+		offFlag:      PrfNoGratz,
+		minimumLevel: levelCanShout,
+	},
+	"newbie": {
+		verb:       "newbie",
+		blocked:    "You cannot newbie!",
+		offMessage: "You aren't even on the channel!",
+		offFlag:    PrfNoNewbie,
+	},
+}
+
+// DoChannel implements C do_gen_comm for player-facing channels. It extends
+// directed speech's common eligibility snapshot with channel preference and
+// shout-zone gates.
+func (w *World) DoChannel(ch *Player, argument, subcmd string) {
+	spec, ok := communicationChannels[strings.ToLower(subcmd)]
+	if !ok {
+		communicationSend(ch, "Unknown channel.")
+		return
 	}
 
-	// Build channel header
-	var header string
-	var flag uint64
-	var minLevel int
-	var channelName string
-
-	switch strings.ToLower(cmd) {
-	case "gossip":
-		header = fmt.Sprintf("%s gossips, '%s'\r\n", ch.Name, arg)
-		flag = prfNoGossip
-		minLevel = levelCanGossip
-		channelName = "gossip"
-	case "auction":
-		header = fmt.Sprintf("%s auctions, '%s'\r\n", ch.Name, arg)
-		flag = prfNoAuct
-		channelName = "auction"
-	case "gratz":
-		header = fmt.Sprintf("%s congratulates, '%s'\r\n", ch.Name, arg)
-		flag = prfNoGratz
-		channelName = "gratz"
-	case "newbie":
-		header = fmt.Sprintf("%s says, '%s'\r\n", ch.Name, arg)
-		flag = prfNoNewbie
-		channelName = "newbie"
-	default:
-		sendToChar(ch, "Unknown channel.\r\n")
-		return true
+	state := w.communicationEligibility(ch, nil)
+	if state.senderNoShout {
+		communicationSend(ch, spec.blocked)
+		return
+	}
+	if state.senderSoundproof {
+		communicationSend(ch, "The walls seem to absorb your words.")
+		return
+	}
+	if ch.GetLevel() < spec.minimumLevel {
+		communicationSend(ch, fmt.Sprintf("You must be at least level %d before you can %s.", spec.minimumLevel, spec.verb))
+		return
+	}
+	if checkStupid(ch) {
+		communicationSend(ch, "You are too stupid to communicate with language!")
+		return
+	}
+	if ch.GetFlags()&(1<<uint(spec.offFlag)) != 0 {
+		communicationSend(ch, spec.offMessage)
+		return
 	}
 
-	if ch.GetLevel() < minLevel {
-		sendToChar(ch, fmt.Sprintf("You need to be level %d to use that channel.\r\n", minLevel))
-		return true
+	argument = strings.TrimSpace(argument)
+	if argument == "" {
+		communicationSend(ch, fmt.Sprintf("Yes, %s, fine, %s we must, but WHAT???", spec.verb, spec.verb))
+		return
+	}
+	argument = deleteANSIControls(argument)
+
+	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
+		communicationSend(ch, "Okay.")
+	} else {
+		communicationSend(ch, fmt.Sprintf("You %s, '%s'", spec.verb, argument))
 	}
 
-	for _, p := range w.AllPlayers() {
-		if p.IsNPC() || p.Name == ch.Name {
+	senderRoom := w.GetRoomInWorld(ch.GetRoom())
+	for _, target := range w.GetAllPlayers() {
+		if target == ch {
 			continue
 		}
-		if p.Flags&prfDeaf != 0 {
+		targetState := w.communicationEligibility(ch, target)
+		if target.GetFlags()&(1<<uint(spec.offFlag)) != 0 || targetState.targetWriting || targetState.targetSoundproof {
 			continue
 		}
-		if p.Flags&flag != 0 {
-			continue
+		if spec.zoneLimited {
+			targetRoom := w.GetRoomInWorld(target.GetRoom())
+			if senderRoom == nil || targetRoom == nil || senderRoom.Zone != targetRoom.Zone || target.GetPosition() < spec.minimumHearer {
+				continue
+			}
 		}
-		p.SendMessage(header)
+		Act(nil, false, ch, target, nil, nil, fmt.Sprintf("$n %ss, '%s'", spec.verb, argument), "", ToVict|ToSleep)
 	}
 
-	sendToChar(ch, fmt.Sprintf("You %s, '%s'\r\n", channelName, arg))
-
-	// Record gossip for review command (matches C: update_review in act.comm.c)
-	if channelName == "gossip" {
-		w.updateGossipHistory(ch.Name, arg, 0)
+	if spec.verb == "gossip" {
+		w.updateGossipHistory(ch.Name, argument, 0)
 		if w.OnGossip != nil {
-			w.OnGossip(ch.Name, arg)
+			w.OnGossip(ch.Name, argument)
 		}
 	}
+}
 
+// doGenComm keeps scripts and special procedures on the canonical channel path.
+func (w *World) doGenComm(ch *Player, me *MobInstance, cmd string, arg string) bool {
+	w.DoChannel(ch, arg, cmd)
 	return true
 }
 
