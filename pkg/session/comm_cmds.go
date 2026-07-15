@@ -40,118 +40,33 @@ func roomIsSoundproof(s *Session) bool {
 // cmdTell sends a private message to another player.
 // Source: act.comm.c do_tell() lines 901-931, perform_tell()
 func cmdTell(s *Session, args []string) error {
-	if len(args) < 2 {
-		s.Send("Who do you wish to tell what??")
-		return nil
+	argument := strings.Join(args, " ")
+	if len(args) >= 2 {
+		message := sanitizeMessage(strings.Join(args[1:], " "))
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
+		}
+		argument = args[0] + " " + filtered
 	}
-
-	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
-		s.Send("You cannot tell anyone anything!")
-		return nil
-	}
-
-	// ROOM_SOUNDPROOF check — act.comm.c do_tell() line 905
-	if roomIsSoundproof(s) {
-		s.Send("The walls seem to absorb your words.\r\n")
-		return nil
-	}
-
-	targetName := args[0]
-	message := sanitizeMessage(strings.Join(args[1:], " "))
-
-	// Word filter + spam check
-	filtered, block := filterCommMessage(s, message)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
-	}
-	message = filtered
-
-	if strings.EqualFold(targetName, s.player.Name) {
-		s.Send("You try to tell yourself something.")
-		return nil
-	}
-
-	// Find target session — act.comm.c line 909 get_char_vis()
-	target, ok := s.manager.GetSession(targetName)
-	if !ok || target.player == nil {
-		s.Send("There is no such player online.")
-		return nil
-	}
-
-	// Check if target is ignoring sender
-	if target.player.IsIgnoring(s.player.Name) {
-		s.Send(fmt.Sprintf("%s is ignoring you.", target.player.Name))
-		return nil
-	}
-
-	// Deliver to target — act.comm.c perform_tell()
-	// Target sees: "$n tells you, '$message'"
-	target.Send(fmt.Sprintf("%s tells you, '%s'", s.player.Name, message))
-
-	// Track last teller on target's session for reply support
-	target.lastTeller = s.player.Name
-
-	// AFK warning to sender — act.comm.c perform_tell() line 957
-	if target.player.AFK {
-		s.Send(fmt.Sprintf("%s is AFK right now, %s may not hear you.", target.player.Name, target.player.Name))
-	}
-
-	// Confirm to sender — act.comm.c perform_tell() line 964
-	// Sender sees: "You tell $N, '$message'"
-	s.Send(fmt.Sprintf("You tell %s, '%s'", target.player.Name, message))
+	s.manager.world.DoTell(s.player, argument)
 	return nil
 }
 
 // cmdReply replies to the last person who told you.
 // Source: act.comm.c do_reply() lines 934-975
 func cmdReply(s *Session, args []string) error {
-	if s.lastTeller == "" {
-		s.Send("You have no-one to reply to!")
-		return nil
+	message := sanitizeMessage(strings.Join(args, " "))
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
+		}
+		message = filtered
 	}
-	if len(args) == 0 {
-		s.Send("What is your reply?")
-		return nil
-	}
-
-	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 {
-		s.Send("You cannot tell anyone anything!")
-		return nil
-	}
-
-	// ROOM_SOUNDPROOF check — act.comm.c do_reply() line 937
-	if roomIsSoundproof(s) {
-		s.Send("The walls seem to absorb your words.\r\n")
-		return nil
-	}
-
-	message := strings.Join(args, " ")
-
-	// Find the last teller
-	target, ok := s.manager.GetSession(s.lastTeller)
-	if !ok || target.player == nil {
-		s.Send("They are no longer playing.")
-		return nil
-	}
-
-	// Check if target is ignoring sender
-	if target.player.IsIgnoring(s.player.Name) {
-		s.Send(fmt.Sprintf("%s is ignoring you.", target.player.Name))
-		return nil
-	}
-
-	// Deliver to target
-	target.Send(fmt.Sprintf("%s tells you, '%s'", s.player.Name, message))
-	target.lastTeller = s.player.Name
-
-	// AFK warning
-	if target.player.AFK {
-		s.Send(fmt.Sprintf("%s is AFK right now, %s may not hear you.", target.player.Name, target.player.Name))
-	}
-
-	// Confirm to sender
-	s.Send(fmt.Sprintf("You tell %s, '%s'", target.player.Name, message))
+	s.manager.world.DoReply(s.player, message)
 	return nil
 }
 
@@ -323,54 +238,16 @@ func cmdEmote(s *Session, args []string) error {
 // cmdSay sends a message to the room with punctuation-based variants.
 // Source: act.comm.c do_say() lines 824-870
 func cmdSay(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Yes, but WHAT do you want to say?")
-		return nil
-	}
-
 	text := sanitizeMessage(strings.Join(args, " "))
-
-	// Word filter + spam check
-	filtered, block := filterCommMessage(s, text)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
-	}
-	text = filtered
-
-	// Determine verb based on trailing punctuation — act.comm.c do_say() switch.
-	// verbSelf is the second-person form the actor sees ("You say ...");
-	// verb is the third-person form the room sees ("$n says ...").
-	verb, verbSelf := "says", "say"
-	if len(text) > 0 {
-		switch text[len(text)-1] {
-		case '!':
-			verb, verbSelf = "exclaims", "exclaim"
-		case '?':
-			verb, verbSelf = "asks", "ask"
-		case '.':
-			verb, verbSelf = "states", "state"
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, text)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
 		}
+		text = filtered
 	}
-
-	// Sender sees: "You say '$message'"
-	s.Send(fmt.Sprintf("You %s '%s'", verbSelf, text))
-
-	// Room sees: "$n says, '$message'"
-	roomText := fmt.Sprintf("%s %s, '%s'", s.player.Name, verb, text)
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "say",
-			From: s.player.Name,
-			Text: roomText,
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
+	s.manager.world.DoSay(s.player, text)
 	return nil
 }
 

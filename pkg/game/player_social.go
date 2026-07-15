@@ -64,6 +64,20 @@ func (p *Player) SetAFKMessage(msg string) {
 	p.AFKMessage = msg
 }
 
+// GetLastTeller returns the name of the last player who sent this player a tell.
+func (p *Player) GetLastTeller() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.lastTeller
+}
+
+// SetLastTeller changes the runtime reply target.
+func (p *Player) SetLastTeller(name string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.lastTeller = name
+}
+
 // GetAutoGold returns whether auto-gold is enabled.
 func (p *Player) GetAutoGold() bool {
 	p.mu.RLock()

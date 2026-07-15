@@ -166,6 +166,7 @@ type Player struct {
 	// AFK state
 	AFK        bool   // Player is away from keyboard
 	AFKMessage string // Optional AFK message
+	lastTeller string // Runtime reply target; not persisted in the save format.
 
 	// Character title and description
 	Title       string // Character title (shown in who list)

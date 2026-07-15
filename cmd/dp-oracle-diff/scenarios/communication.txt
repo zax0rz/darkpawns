@@ -1,0 +1,85 @@
+# Communication domain fidelity (Domain: say/tell/reply/whisper/ask — O29/O31).
+#
+# Both hometown-K newbies co-locate at 8162 (DP-1085 aligned). The actor directs
+# speech at the co-located observer; the observer captures the TO_VICT / TO_ROOM
+# lines per-recipient. Channels (O30 shout/gossip — zone-wide) and socials (O32)
+# and page (O44) are NOT in this scenario (need zone-mates / richer fixtures) —
+# cover them per the audit + unit tests.
+#
+# Fidelity probes:
+# - say: C "You say 'msg'" / "$n says, 'msg'" (act() + exact punctuation)
+# - tell: C "You tell $N, 'msg'" / "$n tells you, 'msg'"
+# - whisper: actor/victim text, self rejection, and room broadcast
+# - ask: victim text includes the direct-address "you"
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Comactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Comactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Comobserv
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Comobserv
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+say hello there
+tell Comobserv psst over here
+whisper Comobserv keep this quiet
+ask Comobserv what is the passphrase
+reply nothing to reply to
+tell Comactor talking to myself
+whisper Comactor muttering alone
+say
+tell Nobody are you there
