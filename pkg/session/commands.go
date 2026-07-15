@@ -133,18 +133,16 @@ func init() {
 	registerCommand("group", wrapArgs(cmdGroup), "Manage your group.", "party")
 	registerCommand("ungroup", wrapArgs(cmdUngroup), "Disband or leave a group.", "disband")
 
-	// Skills (delegated to pkg/command)
-	registerCommand("skills", wrapSkill(command.CmdSkills), "Show your learned skills.", "sk")
-	registerCommand("practice", wrapSkill(command.CmdPractice), "Practice a skill.")
-	registerCommand("learn", wrapSkill(command.CmdLearn), "Learn a new skill.")
-	registerCommand("listskills", wrapSkill(command.CmdListSkills), "List available skills.", "skills")
+	// Skills — Dark Pawns has exactly ONE skill command: `practice`
+	// (src/act.other.c do_practice; interpreter.c:618). `skills`/`spells`/`learn`/
+	// `forget`/`listskills` were Go inventions (retired: DP-1116/1128/1129). No-arg
+	// `practice` lists the catalog; a named arg directs to the guild.
+	registerCommand("practice", wrapArgs(cmdPractice), "List your skills / practice at your guild.")
 
 	// Shop
 	registerCommand("list", wrapArgs(cmdList), "List items for sale at a shop.")
 	registerCommand("buy", wrapArgs(cmdBuy), "Buy an item from a shop.")
 	registerCommand("sell", wrapArgs(cmdSell), "Sell an item to a shop.")
-	registerCommand("forget", wrapSkill(command.CmdForget), "Forget a skill.")
-	registerCommand("confirm", wrapSkill(command.CmdConfirmForget), "Confirm forgetting a skill.", "confirm forget")
 	registerCommand("use", wrapArgs(cmdUse), "Use a wand/staff or a skill.")
 	registerCommand("skillinfo", wrapSkill(command.CmdSkillInfo), "Show info about a skill.", "sinfo")
 
@@ -246,7 +244,6 @@ func init() {
 	registerCommand("autoexit", wrapArgs(cmdAutoExit), "Toggle auto-exit display.")
 	registerCommand("title", wrapArgs(cmdTitle), "Set your title.")
 	registerCommand("describe", wrapArgs(cmdDescribe), "Set your description.", "desc")
-	registerCommand("spells", wrapArgs(cmdSpells), "List known spells.")
 
 	// Quit
 	// "reallyquit" is src/interpreter.c's SCMD_REALLY_QUIT variant of do_quit — in the
@@ -612,7 +609,8 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 			game.DoAction(s.manager.world, s.player, cmd, strings.Join(args, " "))
 			return nil
 		}
-		s.sendText(fmt.Sprintf("Unknown command: %s", cmdStr))
+		// C: interpreter.c:916 send_to_char("Huh?!?\r\n", ch) for any unmatched command.
+		s.sendText("Huh?!?\r\n")
 		return nil
 	}
 

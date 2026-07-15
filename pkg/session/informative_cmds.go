@@ -42,8 +42,3 @@ func cmdDescribe(s *Session, args []string) error {
 	s.Send("Description set.")
 	return nil
 }
-
-func cmdSpells(s *Session, args []string) error {
-	s.Send("You know no spells.")
-	return nil
-}

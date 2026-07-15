@@ -1,0 +1,57 @@
+# Combat draw-order parity (Tier-2 Phase 0b Part B-2) — DRAFT / experiment.
+#
+# Proves Go's one_hit() consumes the shared CMWC stream in C's draw order during a
+# real fight. The newbie temple complex is all ROOM_PEACEFUL, so a level-1 K warrior
+# walks out to 8105 "The Street of Wizardry" (non-peaceful) where a non-aggressive
+# level-2 mob (#16303 trainee guard (sentinel, indexed 163.mob)) is spawned, then attacks it. quiet-mobs keeps the
+# rest of the world deterministic; both servers share DP_SEED.
+#
+# C draw map per barehand swing (fight.c one_hit): number(1,20) to-hit; on hit
+# number(0,level/3) [=0 at L1 but still draws]; dam_message number(0,20) (mob victim).
+# Mob retaliation runs its own one_hit each round.
+
+[fixture]
+spawn-mob 16303 1 8105 80
+quiet-mobs
+
+[setup:oracle]
+Cfighter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cfighter
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# Navigate the newbie out of the peaceful temple complex (8162) to the
+# non-peaceful Street of Wizardry (8105) where the sentinel trainee guard is
+# spawned. Path via BFS of 80.wld: n(8161) e(8004) s(8008) e(8105). Warmup
+# output is drained per-server, not diffed — only the `hit trainee` swing is.
+[warmup]
+north
+east
+south
+east
+
+[probe]
+hit trainee
