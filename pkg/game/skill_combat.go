@@ -2,8 +2,9 @@ package game
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -74,7 +75,7 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// 7. Roll for success — act.offensive.c:220
 	// #nosec G404 — game RNG, not cryptographic
-	percent := rand.IntN(101) + 1 // 1-101
+	percent := dprng.Number(1, 101) // 1-101
 	skillLevel := ch.GetSkill(SkillBackstab)
 	prob := skillLevel
 
@@ -167,7 +168,7 @@ func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// prob = GET_SKILL(ch, SKILL_BASH)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
+	percent := ((5 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillBash)
 
 	// MOB_NOBASH force-fail unless the caster is an immortal — act.offensive.c:478
@@ -236,7 +237,7 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	// Formula: percent = ((7 - (GET_AC(vict)/10)) << 1) + number(1,101)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
+	percent := ((7 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillKick)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -301,7 +302,7 @@ func DoTrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// Formula: percent = number(1,121) + MAX(GET_LEVEL(vict)-GET_LEVEL(ch),0)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(121) + 1
+	percent := dprng.Number(1, 121)
 
 	// Immortal-victim force-fail — new_cmds.c:782
 	if target.GetLevel() >= LVL_IMMORT {
@@ -384,7 +385,7 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(121) + 1 // 1-121; new_cmds.c:422
+	percent := dprng.Number(1, 121) // 1-121; new_cmds.c:422
 
 	// Sleeping-target / immortal-caster auto-success — new_cmds.c:424-426.
 	// Note: strictly-greater-than LEVEL_IMMORT, unlike bash's >=.
@@ -502,7 +503,7 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	// Roll for success
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(101) + 1
+	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillRescue)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -614,7 +615,7 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 	// Success if attacker level > victim, level gap < random(0, LVL_IMMORT), or victim asleep.
 	// #nosec G404 — game RNG, not cryptographic
 	if ch.GetLevel() > tp.GetLevel() ||
-		tp.GetLevel()-ch.GetLevel() < rand.IntN(LVL_IMMORT) ||
+		tp.GetLevel()-ch.GetLevel() < dprng.Number(0, LVL_IMMORT-1) ||
 		tp.GetPosition() <= combat.PosSleeping {
 		// Remove vampire/werewolf PLR flag from the victim so raw_kill can proceed.
 		if tp.GetFlags()&(1<<PlrVampire) != 0 {
@@ -697,7 +698,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(101) + 1 // 1-101; 101% is automatic failure
+	percent := dprng.Number(1, 101) // 1-101; 101% is automatic failure
 	prob := ch.GetSkill(SkillCircle)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -773,8 +774,7 @@ func DoCharge(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Route through combat.Roller so tests can seed/script the success roll
-	// (math/rand/v2's global source cannot be seeded). #nosec G404 — game RNG.
-	percent := ((5 - (target.GetAC() / 10)) * 2) + (combat.GetRoller().IntN(101) + 1)
+	percent := ((5 - (target.GetAC() / 10)) * 2) + combat.GetRoller().Number(1, 101)
 	if ch.IsMounted() {
 		percent += 5
 	}

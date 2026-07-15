@@ -1,7 +1,6 @@
 package game
 
 import (
-	"math/rand/v2"
 	"strings"
 	"testing"
 
@@ -184,16 +183,15 @@ func TestDoDrink_WaterSeededRNG(t *testing.T) {
 		t.Fatalf("AddItem: %v", err)
 	}
 
-	oldRand := consumableRand
-	defer func() { consumableRand = oldRand }()
-	consumableRand = rand.New(rand.NewPCG(12345, 67890))
+	oldNumber := consumableNumber
+	defer func() { consumableNumber = oldNumber }()
+	const wantAmount = 5
+	consumableNumber = func(from, to int) int { return wantAmount }
 
 	ch.SetCondition(CondFull, 0)
 	ch.SetCondition(CondThirst, 10)
 	w.DoDrink(ch, nil, "drink", "skin", scmdDrink)
 
-	// Seeded number(3,8) gives a deterministic value.
-	wantAmount := consumableNumber(3, 8)
 	if item.GetValue(1) != 10-wantAmount {
 		t.Errorf("water amount: got remaining %d, want %d", item.GetValue(1), 10-wantAmount)
 	}
@@ -213,9 +211,9 @@ func TestDoDrink_Poison(t *testing.T) {
 	}
 
 	// Seed so amount is deterministic.
-	oldRand := consumableRand
-	defer func() { consumableRand = oldRand }()
-	consumableRand = rand.New(rand.NewPCG(1, 1))
+	oldNumber := consumableNumber
+	defer func() { consumableNumber = oldNumber }()
+	consumableNumber = func(from, to int) int { return 3 }
 
 	ch.SetCondition(CondFull, 0)
 	ch.SetCondition(CondThirst, 0)

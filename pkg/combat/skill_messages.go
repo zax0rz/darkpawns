@@ -571,7 +571,7 @@ func InitSkillMessages(cb *GameCallbacks) {
 			return false // no messages for this outcome
 		}
 
-		msg := variants[GetRoller().IntN(len(variants))]
+		msg := variants[GetRoller().Number(0, len(variants)-1)]
 
 		// We don't have sex info here, so do basic token substitution only.
 		roomMsg := basicTokenReplace(msg.Room, chName, victimName)

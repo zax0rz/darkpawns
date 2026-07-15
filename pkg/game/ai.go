@@ -3,8 +3,9 @@ package game
 import (
 	"context"
 	"log/slog"
-	"math/rand/v2"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -75,7 +76,7 @@ func (w *World) runMobAI(mob *MobInstance) {
 	// Wandering happens inside MobileActivityForMob (mobileActivityForMob →
 	// wanderMob), exactly once per tick — matching C mobile_activity, which
 	// runs the movement block once per mob. DP-908 removed a redundant second
-	// wanderMob call here plus a non-C 25% gate (rand.IntN(100) < 25) that had
+	// wanderMob call here plus a non-C 25% gate (number(0,99) < 25) that had
 	// no equivalent in mobact.c and dropped the effective wander rate to ~8%.
 	w.MobileActivityForMob(mob)
 }
@@ -107,7 +108,7 @@ func (w *World) wanderMob(mob *MobInstance) {
 
 	// Single random draw, exactly like C's door = number(0, 18).
 	// #nosec G404 — game RNG, not cryptographic
-	door := rand.IntN(19) // [0, 18]
+	door := dprng.Number(0, 18) // [0, 18]
 
 	// door < NUM_OF_DIRS (len(dirs) == 6): if the draw isn't a real direction,
 	// the mob doesn't move this tick. This is both the gate and the direction.

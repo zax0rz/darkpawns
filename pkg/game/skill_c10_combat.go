@@ -2,7 +2,8 @@ package game
 
 import (
 	"fmt"
-	"math/rand/v2"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -21,7 +22,7 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404 — game RNG
-	percent := rand.IntN(101) + 1
+	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillDisembowel)
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
 		return SkillResult{
@@ -64,7 +65,7 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := ((5 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
+	percent := ((5 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillDragonKick)
 	// C: WAIT_STATE(ch, PULSE_VIOLENCE+2) sits outside the if/else — both
 	// branches get WaitCh=3 — act.offensive.c:689.
@@ -98,7 +99,7 @@ func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
+	percent := ((7 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillTigerPunch)
 	if percent > prob {
 		return SkillResult{
@@ -128,7 +129,7 @@ func DoShoot(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "But you are already engaged in close-range combat!"}
 	}
 	// #nosec G404
-	percent := rand.IntN(101) + 1
+	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillShoot)
 	if percent >= prob {
 		return SkillResult{
@@ -138,7 +139,7 @@ func DoShoot(ch *Player, target combat.Combatant) SkillResult {
 			MessageToRoom: "A projectile narrowly misses its target!",
 		}
 	}
-	dam := ch.GetDamroll() + rand.IntN(6) + 1 + rand.IntN(4) + 1
+	dam := ch.GetDamroll() + dprng.Number(1, 6) + dprng.Number(1, 4)
 	improveSkill(ch, SkillShoot)
 	return SkillResult{
 		Success: true, Damage: dam, WaitCh: 1,
@@ -163,7 +164,7 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := rand.IntN(101+target.GetLevel()) + 1
+	percent := dprng.Number(1, 101+target.GetLevel())
 	prob := ch.GetSkill(SkillSubdue)
 	if levelDiff := target.GetLevel() - ch.GetLevel(); levelDiff > 0 {
 		percent += levelDiff
@@ -206,7 +207,7 @@ func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := rand.IntN(101+target.GetLevel()) + 1
+	percent := dprng.Number(1, 101+target.GetLevel())
 	prob := ch.GetSkill(SkillSleeper)
 	if levelDiff := target.GetLevel() - ch.GetLevel(); levelDiff > 0 {
 		percent += levelDiff
@@ -246,7 +247,7 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := ((7 - (target.GetAC() / 10)) * 2) + (rand.IntN(101) + 1)
+	percent := ((7 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillNeckbreak)
 	if percent > prob {
 		return SkillResult{
@@ -279,7 +280,7 @@ func DoAmbush(ch *Player, target combat.Combatant) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
-	percent := rand.IntN(131) + 1
+	percent := dprng.Number(1, 131)
 	prob := ch.GetSkill(SkillAmbush)
 	if percent > prob {
 		return SkillResult{
@@ -318,5 +319,5 @@ func CheckNPCDodge(mob interface {
 		return false
 	}
 	// #nosec G404
-	return rand.IntN(100) < mob.GetLevel()
+	return dprng.Number(0, 99) < mob.GetLevel()
 }

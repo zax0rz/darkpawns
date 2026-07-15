@@ -6,8 +6,9 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // NumDreams is the number of entries in the dream travel table.
@@ -95,7 +96,7 @@ func Dream(ch DreamContext) DreamResult {
 			// Source: dream.c lines 63–73 (1/6 chance)
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			if rand.IntN(6) == 0 {
+			if dprng.Number(0, 5) == 0 {
 				ch.SendToChar("You see the visions of your own death and wake up screaming!\r\n")
 				ch.SendToRoom("$n wakes up screaming, with a look of death in $s eyes.")
 				ch.WakeUp()
@@ -106,7 +107,7 @@ func Dream(ch DreamContext) DreamResult {
 			// Source: dream.c lines 74–80 (1/6 chance)
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			if rand.IntN(6) == 0 {
+			if dprng.Number(0, 5) == 0 {
 				ch.SendToChar("In your dreams you keep seeing a dark figure hunched over your corpse.\r\n")
 				ch.SendToRoom("$n shivers in $s sleep.")
 			}
@@ -115,7 +116,7 @@ func Dream(ch DreamContext) DreamResult {
 			// Source: dream.c lines 81–88 (1/6 chance)
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			if rand.IntN(6) == 0 {
+			if dprng.Number(0, 5) == 0 {
 				ch.SendToChar("You toss and turn as a dark cloud hovers over your dreams.\r\n")
 				ch.SendToRoom("$n tosses and turns in $s sleep, must be a bad dream.")
 			}
@@ -124,7 +125,7 @@ func Dream(ch DreamContext) DreamResult {
 			// Source: dream.c lines 89–96 (1/6 chance)
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			if rand.IntN(6) == 0 {
+			if dprng.Number(0, 5) == 0 {
 				ch.SendToChar("You sleep uneasily, as if something looms over your past\r\n")
 				ch.SendToRoom("$n grunts in $s sleep.")
 			}
@@ -151,42 +152,42 @@ func Dream(ch DreamContext) DreamResult {
 	case lvl >= 0 && lvl <= 5:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(16) == 0 {
+		if dprng.Number(0, 15) == 0 {
 			ch.SendToChar("You have dreams of showing this world what you are really made of.\r\n")
 			ch.SendToRoom("$n smiles in $s sleep.")
 		}
 	case lvl >= 6 && lvl <= 10:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(16) == 0 {
+		if dprng.Number(0, 15) == 0 {
 			ch.SendToChar("You have a pleasant dream of safe travels to far places and a hero's welcome when you return.\r\n")
 			ch.SendToRoom("$n begins to hum a happy ditty in $s sleep.")
 		}
 	case lvl >= 11 && lvl <= 20:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(16) == 0 {
+		if dprng.Number(0, 15) == 0 {
 			ch.SendToChar("You dream of your conquest of the world.\r\n")
 			ch.SendToRoom("$n begins to grin in $s sleep.")
 		}
 	case lvl >= 21 && lvl <= 28:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(16) == 0 {
+		if dprng.Number(0, 15) == 0 {
 			ch.SendToChar("You dream of slaying the dark creatures of the night.\r\n")
 			ch.SendToRoom("$n smirks in $s sleep.")
 		}
 	case lvl >= 29 && lvl <= 30:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(16) == 0 {
+		if dprng.Number(0, 15) == 0 {
 			ch.SendToChar("You have a fantastic dream of one day attaining immortality.\r\n")
 			ch.SendToRoom("$n looks like $e is having big dreams.")
 		}
 	case lvl == LVLImmort:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(16) == 0 {
+		if dprng.Number(0, 15) == 0 {
 			ch.SendToChar("You have big, grand dreams of the power of the Gods.\r\n")
 			ch.SendToRoom("$n glows in $s sleep.")
 		}
@@ -194,7 +195,7 @@ func Dream(ch DreamContext) DreamResult {
 		// Above immortal level
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(16) == 0 {
+		if dprng.Number(0, 15) == 0 {
 			ch.SendToChar("You toss and turn under the constant fear of the wrath of Orodreth :-)\r\n")
 			ch.SendToChar("You find yourself wide awake!\r\n")
 			ch.SendToRoom("$n awakens with fear in $s eyes.")
@@ -220,7 +221,7 @@ func DreamTravelFn(ch DreamContext, subcmd int) {
 		// Source: dream.c lines 195–206 (normal) and 208–219 (bad)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if subcmd == 0 && dt.Subcmd == 0 && rand.IntN(16) == 0 {
+		if subcmd == 0 && dt.Subcmd == 0 && dprng.Number(0, 15) == 0 {
 			ch.SendToChar(fmt.Sprintf("You have a dream %s \r\n", dt.Descrip))
 			ch.SendToRoom("The sleeping body of $n fades from existence.")
 			ch.MoveToRoom(dt.RoomNum)
@@ -230,7 +231,7 @@ func DreamTravelFn(ch DreamContext, subcmd int) {
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if subcmd == 1 && rand.IntN(16) == 0 {
+		if subcmd == 1 && dprng.Number(0, 15) == 0 {
 			ch.SendToChar(fmt.Sprintf("You have a dream %s \r\n", dt.Descrip))
 			ch.SendToRoom("The sleeping body of $n fades from existence.")
 			ch.MoveToRoom(dt.RoomNum)
@@ -260,12 +261,12 @@ const LVLImmort = 31
 // #nosec G404 — game RNG, not cryptographic
 // #nosec G404
 //
-//	!number(0,5) meaning 1-in-6 chance. Go's rand.IntN(6) == 0 is equivalent.
+//	!number(0,5) means a 1-in-6 chance.
 //
 // #nosec G404 — game RNG, not cryptographic
 // #nosec G404
 //
-//		Same for the 1/16 chance: number(0,15) → rand.IntN(16) == 0.
+//	The same applies to the 1-in-16 number(0,15) checks.
 //
 //	 4. TIME: C stored lastdeath as a raw long Unix timestamp. Go uses int64 (same
 //	    semantics) to avoid the 2038 problem that C's 32-bit time_t would hit.

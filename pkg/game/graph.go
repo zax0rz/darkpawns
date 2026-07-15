@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -131,10 +132,10 @@ func (w *World) huntVictim(m *MobInstance) {
 	// Evasion check
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if evasion := target.GetSkill("evasion"); evasion > 0 && rand.IntN(151)+1 < evasion {
+	if evasion := target.GetSkill("evasion"); evasion > 0 && dprng.Number(1, 151) < evasion {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		r := rand.IntN(7)
+		r := dprng.Number(0, 6)
 		if m.CanSpeak() && r == 0 {
 			w.mobSayTo(m, "Where the hell did my prey go?!")
 		} else if m.CanSpeak() && r == 1 {
@@ -183,13 +184,13 @@ func (w *World) huntVictim(m *MobInstance) {
 func (w *World) huntTrashTalk(m *MobInstance, victimName string) {
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	switch rand.IntN(151) {
+	switch dprng.Number(0, 150) {
 	case 0:
 		w.mobTellPlayer(m, victimName, "Let's have an ass-kicking contest")
 	case 1:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		w.mobAuction(m, fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, rand.IntN(1001)+1000))
+		w.mobAuction(m, fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, dprng.Number(1000, 2000)))
 	case 2:
 		w.mobTellPlayer(m, victimName, "Run to your momma, pansy!")
 	case 3:
@@ -201,7 +202,7 @@ func (w *World) huntTrashTalk(m *MobInstance, victimName string) {
 	case 6:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(21) == 0 {
+		if dprng.Number(0, 20) == 0 {
 			w.mobGossip(m, fmt.Sprintf("%s flees like a rabbit...", victimName))
 		}
 	case 7:

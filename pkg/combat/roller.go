@@ -1,40 +1,35 @@
 package combat
 
 import (
-	"math/rand/v2"
 	"sync"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
-// Roller defines an interface that mirrors C random primitives and Go slice indexing helpers.
+// Roller defines the injectable combat RNG seam. Production call sites use
+// Number and Dice; IntN remains only for compatibility with existing test doubles.
 type Roller interface {
 	Number(from, to int) int // C number(from,to): inclusive both ends
 	Dice(num, size int) int  // C dice(num,size): sum of num d{size}
-	IntN(n int) int          // escape hatch for the few raw [0,n) sites (e.g. slice picks)
+	IntN(n int) int
 }
 
-// productionRoller is the production implementation wrapping math/rand/v2.
+// productionRoller delegates to Dark Pawns' one process-wide CMWC stream.
 type productionRoller struct{}
 
 func (p *productionRoller) Number(from, to int) int {
-	if to < from {
-		from, to = to, from
-	}
-	return rand.IntN(to-from+1) + from
+	return dprng.Number(from, to)
 }
 
 func (p *productionRoller) Dice(num, size int) int {
-	if num <= 0 || size <= 0 {
-		return 0
-	}
-	total := 0
-	for i := 0; i < num; i++ {
-		total += rand.IntN(size) + 1
-	}
-	return total
+	return dprng.Dice(num, size)
 }
 
 func (p *productionRoller) IntN(n int) int {
-	return rand.IntN(n)
+	if n <= 0 {
+		panic("invalid argument to Roller.IntN")
+	}
+	return dprng.Number(0, n-1)
 }
 
 var (
@@ -74,36 +69,29 @@ func WithRoller(r Roller, fn func()) {
 
 // SeededRoller is a seedable deterministic Roller for tests.
 type SeededRoller struct {
-	rng *rand.Rand
+	rng *dprng.Generator
 }
 
-// NewSeededRoller creates a new SeededRoller.
-func NewSeededRoller(seed1, seed2 uint64) *SeededRoller {
+// NewSeededRoller creates a CMWC-backed test roller from one C-compatible seed.
+func NewSeededRoller(seed uint32) *SeededRoller {
 	return &SeededRoller{
-		rng: rand.New(rand.NewPCG(seed1, seed2)),
+		rng: dprng.New(seed),
 	}
 }
 
 func (s *SeededRoller) Number(from, to int) int {
-	if to < from {
-		from, to = to, from
-	}
-	return s.rng.IntN(to-from+1) + from
+	return s.rng.Number(from, to)
 }
 
 func (s *SeededRoller) Dice(num, size int) int {
-	if num <= 0 || size <= 0 {
-		return 0
-	}
-	total := 0
-	for i := 0; i < num; i++ {
-		total += s.rng.IntN(size) + 1
-	}
-	return total
+	return s.rng.Dice(num, size)
 }
 
 func (s *SeededRoller) IntN(n int) int {
-	return s.rng.IntN(n)
+	if n <= 0 {
+		panic("invalid argument to Roller.IntN")
+	}
+	return s.rng.Number(0, n-1)
 }
 
 // ScriptedRoller is a mock Roller that yields a scripted list of values.

@@ -444,7 +444,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 	}
 
-	if !victim.IsNPC() && cbIsMounted(victimName) && dam > 0 && GetRoller().IntN(100) < 10 {
+	if !victim.IsNPC() && cbIsMounted(victimName) && dam > 0 && GetRoller().Number(0, 99) < 10 {
 		cbDismount(victimName)
 	}
 
@@ -609,7 +609,7 @@ func randPick[T any](s []T) T {
 		var zero T
 		return zero
 	}
-	return s[GetRoller().IntN(len(s))]
+	return s[GetRoller().Number(0, len(s)-1)]
 }
 
 // damMessageTiers — weapon damage message tiers.

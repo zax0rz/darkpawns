@@ -22,8 +22,9 @@
 package game
 
 import (
-	"math/rand/v2"
 	"sync"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // Sun state constants — from structs.h:571-575
@@ -348,16 +349,7 @@ func WeatherChange(sendToOutdoor func(string)) {
 
 // dice simulates the C number() dice roll: roll "num" dice with "size" sides.
 func dice(num, size int) int {
-	if size <= 0 {
-		return 0
-	}
-	total := 0
-	for i := 0; i < num; i++ {
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		total += rand.IntN(size) + 1
-	}
-	return total
+	return dprng.Dice(num, size)
 }
 
 // ---------------------------------------------------------------------------

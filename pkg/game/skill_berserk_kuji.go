@@ -10,7 +10,7 @@
 package game
 
 import (
-	"math/rand/v2"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/spells"
@@ -84,7 +84,7 @@ func DoBerserk(ch *Player) SkillResult {
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
-	percent := rand.IntN(101) + 1 // 1-101, 101 = guaranteed failure
+	percent := dprng.Number(1, 101) // 1-101, 101 = guaranteed failure
 	if ch.GetLevel() > LVL_IMMORT {
 		percent = 0 // immortals always succeed
 	}
@@ -125,7 +125,7 @@ func DoBerserk(ch *Player) SkillResult {
 // success check always fails. Ported faithfully; do not "fix".
 func checkKkSuccess(ch *Player, seal string) bool {
 	// #nosec G404 — game RNG, not cryptographic
-	percent := rand.IntN(101) + 1 // 1-101, 101 = guaranteed failure
+	percent := dprng.Number(1, 101) // 1-101, 101 = guaranteed failure
 	var prob int
 	switch seal {
 	case SkillKkRin:

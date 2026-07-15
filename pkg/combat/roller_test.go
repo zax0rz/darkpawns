@@ -36,8 +36,8 @@ func TestScriptedRoller(t *testing.T) {
 
 func TestSeededRoller(t *testing.T) {
 	// SeededRollers with the same seed should return identical sequences.
-	r1 := NewSeededRoller(42, 42)
-	r2 := NewSeededRoller(42, 42)
+	r1 := NewSeededRoller(42)
+	r2 := NewSeededRoller(42)
 
 	for i := 0; i < 50; i++ {
 		n1 := r1.Number(1, 100)

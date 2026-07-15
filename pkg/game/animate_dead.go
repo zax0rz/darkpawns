@@ -10,7 +10,7 @@ const (
 	animateDeadGiddyMsg  = "You are too giddy to have any followers!\r\n"
 	animateDeadCapMsg    = "You can't have any more followers!\r\n"
 	animateDeadPfail     = 8
-	animateDeadPfailDice = 102 // number(0, 101) -> rand.IntN(102)
+	animateDeadPfailDice = 102 // number(0, 101)
 )
 
 // charWithCharmAndCha describes the concrete types that can animate a corpse.

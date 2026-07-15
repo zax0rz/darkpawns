@@ -5,12 +5,13 @@ import (
 	"bufio"
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // lineBuffer wraps a bufio.Scanner to allow one-line "unread" for the mob parser.
@@ -362,7 +363,7 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 		add := func() int {
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			v := rand.IntN(statmod + 1) // number(0, statmod) = rand.IntN(statmod+1)
+			v := dprng.Number(0, statmod)
 			if v > 7 {
 				return 7
 			}

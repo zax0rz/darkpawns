@@ -3,9 +3,10 @@ package game
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"sync"
 	"sync/atomic"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -112,26 +113,26 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	if proto.Level > 15 {
 		statmod := proto.Level - 15
 		// #nosec G404 — game RNG, not cryptographic
-		str += min(rand.IntN(statmod+1), 7)
+		str += min(dprng.Number(0, statmod), 7)
 		// #nosec G404
-		intel += min(rand.IntN(statmod+1), 7)
+		intel += min(dprng.Number(0, statmod), 7)
 		// #nosec G404
-		wis += min(rand.IntN(statmod+1), 7)
+		wis += min(dprng.Number(0, statmod), 7)
 		// #nosec G404
-		dex += min(rand.IntN(statmod+1), 7)
+		dex += min(dprng.Number(0, statmod), 7)
 		// #nosec G404
-		con += min(rand.IntN(statmod+1), 7)
+		con += min(dprng.Number(0, statmod), 7)
 		// #nosec G404
-		cha += min(rand.IntN(statmod+1), 7)
+		cha += min(dprng.Number(0, statmod), 7)
 	}
 
 	// Gold variance +/-(1-20%) — db.c:1766-1775
 	gold := proto.Gold
 	if gold > 0 {
 		// #nosec G404
-		pct := rand.IntN(20) + 1
+		pct := dprng.Number(1, 20)
 		// #nosec G404
-		if rand.IntN(2) == 0 {
+		if dprng.Number(0, 1) == 0 {
 			gold += pct * gold / 100
 		} else {
 			gold -= pct * gold / 100

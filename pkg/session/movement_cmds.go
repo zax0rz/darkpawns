@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -91,7 +92,7 @@ func cmdFleeMovement(s *Session) error {
 	for i := 0; i < 6 && len(directions) > 0; i++ {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		idx := rand.IntN(len(directions))
+		idx := dprng.Number(0, len(directions)-1)
 		direction := directions[idx]
 
 		// Closed exits cannot be used to flee.

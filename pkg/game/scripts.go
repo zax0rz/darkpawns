@@ -3,7 +3,8 @@ package game
 
 import (
 	"log/slog"
-	"math/rand/v2"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
@@ -143,7 +144,7 @@ func CounterProcsRewards(p *Player) bool {
 		p.SendMessage("The gods reward your many victories!\r\n")
 
 		// #nosec G404 — game RNG, not cryptographic
-		roll := rand.IntN(3) + 1 // number(1,3) returns 1-3
+		roll := dprng.Number(1, 3) // number(1,3) returns 1-3
 
 		switch roll {
 		case 1:

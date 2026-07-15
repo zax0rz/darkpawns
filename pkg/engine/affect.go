@@ -2,9 +2,10 @@ package engine
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"sort"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // TickDuration is the real-world duration of one affect tick.
@@ -257,7 +258,7 @@ func randomString(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
 	for i := range b {
-		b[i] = charset[rand.IntN(len(charset))]
+		b[i] = charset[dprng.Number(0, len(charset)-1)]
 	}
 	return string(b)
 }

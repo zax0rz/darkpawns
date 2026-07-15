@@ -9,12 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	lua "github.com/yuin/gopher-lua"
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -1367,7 +1368,7 @@ func (e *Engine) luaNumber(L *lua.LState) int {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	result := low + rand.IntN(high-low+1)
+	result := dprng.Number(low, high)
 	L.Push(lua.LNumber(result))
 	return 1
 }
@@ -1521,13 +1522,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 
 	// Helper function for dice rolls
 	dice := func(num, sides int) int {
-		total := 0
-		for i := 0; i < num; i++ {
-			// #nosec G404 — game RNG, not cryptographic
-			// #nosec G404
-			total += rand.IntN(sides) + 1
-		}
-		return total
+		return dprng.Dice(num, sides)
 	}
 
 	// Handle different spell types
@@ -1716,7 +1711,7 @@ func (e *Engine) luaSpell(L *lua.LState) int {
 			maxDamage := casterLevel * 3
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			damage = casterLevel*2 + rand.IntN(maxDamage-minDamage+1) + minDamage
+			damage = casterLevel*2 + dprng.Number(minDamage, maxDamage)
 		}
 
 		// Get current HP

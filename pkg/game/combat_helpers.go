@@ -20,7 +20,8 @@ package game
 
 import (
 	"fmt"
-	"math/rand/v2"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // Internal helpers (ported from C macros)
@@ -41,12 +42,12 @@ func improveSkill(ch *Player, skill string) {
 	// Higher skill = harder to improve (like CircleMUD)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if rand.IntN(100)+1 > cur {
+	if dprng.Number(1, 100) > cur {
 		// Stat-based check: INT/WIS average gives improvement chance
 		chance := (ch.GetInt() + ch.GetWis()) / 4
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(100) < chance {
+		if dprng.Number(0, 99) < chance {
 			ch.SetSkill(skill, cur+1)
 			ch.SendMessage(fmt.Sprintf("You feel a bit more competent in %s.\r\n", skill))
 		}

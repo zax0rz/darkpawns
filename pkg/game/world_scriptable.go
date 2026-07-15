@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
@@ -449,7 +450,7 @@ func (w *World) StealRandomItemFromChar(charName string) scripting.ScriptableObj
 	if !ok || len(p.Inventory.Items) == 0 {
 		return nil
 	}
-	idx := rand.IntN(len(p.Inventory.Items))
+	idx := dprng.Number(0, len(p.Inventory.Items)-1)
 	item := p.Inventory.Items[idx]
 	p.Inventory.Items = append(p.Inventory.Items[:idx], p.Inventory.Items[idx+1:]...)
 	return &scriptableObjInstanceWrapper{item: item}

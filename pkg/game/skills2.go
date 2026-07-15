@@ -3,8 +3,9 @@ package game
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -59,7 +60,7 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(100) + 1
+	percent := dprng.Number(1, 100)
 	prob := ch.GetSkill(SkillScrounge)
 
 	if percent < prob {
@@ -115,7 +116,7 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(101) + 1 + target.GetLevel()
+	percent := dprng.Number(1, 101) + target.GetLevel()
 	prob := ch.GetSkill(SkillFirstAid)
 
 	if percent < prob {
@@ -171,7 +172,7 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(101) + 1 + target.GetLevel()
+	percent := dprng.Number(1, 101) + target.GetLevel()
 	prob := ch.GetSkill(SkillDisarm)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -239,7 +240,7 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(100) + 1
+	percent := dprng.Number(1, 100)
 	prob := ch.GetSkill(SkillMindlink)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -249,7 +250,7 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		// Success
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		x := 20 + ch.GetLevel() + rand.IntN(80) // number(20+level, 100)
+		x := dprng.Number(20+ch.GetLevel(), 100)
 		ch.SetHP(ch.GetHP() - x)
 		if ch.GetHP() < 0 {
 			ch.SetHP(0)
@@ -296,7 +297,7 @@ func DoDetect(ch *Player, world *World) SkillResult {
 	prob := ch.GetSkill(SkillDetect)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if prob <= rand.IntN(100)+1 {
+	if prob <= dprng.Number(1, 100) {
 		return SkillResult{Success: false, MessageToCh: "You can't seem to find anything.\r\n"}
 	}
 
@@ -364,7 +365,7 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := ((7 - (target.GetAC() / 10)) * 2) + rand.IntN(101) + 1
+	percent := ((7 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillSerpentKick)
 
 	if target.GetPosition() <= combat.PosSleeping {
@@ -390,7 +391,7 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 	if ch.GetLevel() >= 19 {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(81) == 0 {
+		if dprng.Number(0, 80) == 0 {
 			_, _ = world.SpawnMobWithLevelI(18221, ch.GetRoom(), ch.GetLevel()+3)
 		}
 	}
@@ -440,7 +441,7 @@ func DoDig(ch *Player, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(100) + 1
+	percent := dprng.Number(1, 100)
 	prob := ch.GetSkill(SkillDig)
 	if prob == 0 {
 		prob = 10
@@ -448,9 +449,9 @@ func DoDig(ch *Player, world *World) SkillResult {
 
 	if percent <= prob {
 		// Found something — random loot
-		lootRoll := rand.IntN(5)
+		lootRoll := dprng.Number(0, 4)
 		if lootRoll == 0 {
-			goldAmt := rand.IntN(41) + 10 // 10-50 gold
+			goldAmt := dprng.Number(10, 50) // 10-50 gold
 			ch.mu.Lock()
 			ch.Gold += goldAmt
 			ch.mu.Unlock()

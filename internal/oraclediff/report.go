@@ -26,7 +26,7 @@ func Report(meta ReportMeta, diffs []BlockDiff) string {
 	fmt.Fprintf(&out, "Dark Pawns Tier-1 differential report\n")
 	fmt.Fprintf(&out, "scenario: %s\n", meta.Scenario)
 	fmt.Fprintf(&out, "c-oracle: %s (DP_SEED=%s)\n", meta.OracleAddr, meta.Seed)
-	fmt.Fprintf(&out, "go-port: %s (seed unmatched; Tier 1 masks RNG values)\n", meta.GoAddr)
+	fmt.Fprintf(&out, "go-port: %s (DP_SEED=%s)\n", meta.GoAddr, meta.Seed)
 
 	var anyDiff bool
 	for _, d := range diffs {

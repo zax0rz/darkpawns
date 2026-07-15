@@ -3,8 +3,9 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -139,7 +140,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// lspell = number(0, GET_LEVEL(ch)) + GET_LEVEL(ch)/5, capped at GET_LEVEL, min 1
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	lspell := rand.IntN(me.GetLevel() + 1)
+	lspell := dprng.Number(0, me.GetLevel())
 	lspell += me.GetLevel() / 5
 	if lspell > me.GetLevel() {
 		lspell = me.GetLevel()
@@ -179,7 +180,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		if vict != nil {
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			if rand.IntN(3) != 0 {
+			if dprng.Number(0, 2) != 0 {
 				spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), w)
 			} else {
 				spells.Cast(me, me, spells.SpellTeleport, me.GetLevel(), w)
@@ -202,23 +203,23 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// Roll: hit foe (<3) vs heal self (>=3), out of (healPerc+2)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if rand.IntN(healPerc+2) >= 2 {
+	if dprng.Number(0, healPerc+1) >= 2 {
 		// Heal self — check curses, poisons, blindness
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobHasAffect(me, "blind") && lspell >= 4 && rand.IntN(4) == 0 {
+		if mobHasAffect(me, "blind") && lspell >= 4 && dprng.Number(0, 3) == 0 {
 			spells.Cast(me, me, spells.SpellCureBlind, me.GetLevel(), w)
 			return true
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobHasAffect(me, "curse") && lspell >= 6 && rand.IntN(7) == 0 {
+		if mobHasAffect(me, "curse") && lspell >= 6 && dprng.Number(0, 6) == 0 {
 			spells.Cast(me, me, spells.SpellRemoveCurse, me.GetLevel(), w)
 			return true
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobHasAffect(me, "poison") && lspell >= 5 && rand.IntN(7) == 0 {
+		if mobHasAffect(me, "poison") && lspell >= 5 && dprng.Number(0, 6) == 0 {
 			spells.Cast(me, me, spells.SpellRemovePoison, me.GetLevel(), w)
 			return true
 		}
@@ -226,7 +227,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		// Heal self by level (1 in 4 chance)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(4) == 0 {
+		if dprng.Number(0, 3) == 0 {
 			switch {
 			case lspell <= 5:
 				spells.Cast(me, me, spells.SpellCureLight, me.GetLevel(), w)
@@ -255,7 +256,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	room := w.GetRoomInWorld(me.GetRoomVNum())
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if room != nil && room.Sector != SECT_INSIDE && lspell >= 15 && rand.IntN(6) == 0 {
+	if room != nil && room.Sector != SECT_INSIDE && lspell >= 15 && dprng.Number(0, 5) == 0 {
 		spells.Cast(me, vict, spells.SpellCallLightning, me.GetLevel(), w)
 		return true
 	}
@@ -578,7 +579,7 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if me.GetFighting() == "" && me.GetHP() != me.GetMaxHP() {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(21) == 0 {
+		if dprng.Number(0, 20) == 0 {
 			regenRate := 2
 			newHP := me.GetHP() + me.GetLevel()*regenRate
 			if newHP > me.GetMaxHP() {
@@ -590,7 +591,7 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	} else if me.GetFighting() != "" {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(11) == 0 {
+		if dprng.Number(0, 10) == 0 {
 			regenRate := 2
 			newHP := me.GetHP() + me.GetLevel()*regenRate
 			if newHP > me.GetMaxHP() {
@@ -652,14 +653,14 @@ func specWerewolf(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	// Howl (10% chance)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if rand.IntN(10) == 0 {
+	if dprng.Number(0, 9) == 0 {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s looks up and lets out a long, fierce howl.", mobName(me)))
 		w.SendToZone(me.GetRoomVNum(), "You hear a loud howling in the distance.")
 	}
 	// Bite attack (25% chance)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if rand.IntN(4) == 0 {
+	if dprng.Number(0, 3) == 0 {
 		victName := me.GetFighting()
 		vict, ok := w.GetPlayer(victName)
 		if ok && vict != nil && vict.GetRoom() == me.GetRoomVNum() {
@@ -896,7 +897,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	// Starvation death (extremely rare: 1/10001 * 1/10001 probability)
 	// #nosec G404 — game RNG, not cryptographic
 	//nolint:gocritic,staticcheck // badCond/SA4000: two independent RNG rolls are intentional, not a copy-paste error
-	if rand.IntN(10001) == 0 && rand.IntN(10001) == 0 && me.GetMaxHealth() < 11 {
+	if dprng.Number(0, 10000) == 0 && dprng.Number(0, 10000) == 0 && me.GetMaxHealth() < 11 {
 		w.roomMessage(roomVNum, fmt.Sprintf("%s seems to starve to death and simply fades out of existence.", mobName(me)))
 		me.SetHealth(0)
 		w.HandleDeath(me, nil, -1)
@@ -912,7 +913,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		w.roomMessage(roomVNum, fmt.Sprintf("%s feeds on %s.", mobName(me), obj.GetShortDesc()))
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if rand.IntN(3) == 0 {
+		if dprng.Number(0, 2) == 0 {
 			newMaxHP := me.GetMaxHealth() + obj.GetCost()/2
 			if newMaxHP > 400 {
 				// Split into new roach
@@ -928,7 +929,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 				me.SetMaxHP(newMaxHP)
 				// #nosec G404 — game RNG, not cryptographic
 				// #nosec G404
-				if rand.IntN(2) == 0 {
+				if dprng.Number(0, 1) == 0 {
 					w.roomMessage(roomVNum, "You hear some stretching noises.")
 				} else {
 					w.roomMessage(roomVNum, fmt.Sprintf("You hear a strange rumbling from %s's stonach.", mobName(me)))
@@ -946,7 +947,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	// Random idle behaviors
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	switch rand.IntN(11) {
+	switch dprng.Number(0, 10) {
 	case 0:
 		w.roomMessage(roomVNum, fmt.Sprintf("%s chirps gleefully.", mobName(me)))
 	case 1:
@@ -961,7 +962,7 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		if len(rooms) > 0 {
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			randRoom := rooms[rand.IntN(len(rooms))].VNum
+			randRoom := rooms[dprng.Number(0, len(rooms)-1)].VNum
 			// Check for unwanted room flags (private/godroom/nomagic/death)
 			if w.roomHasFlag(randRoom, "private") || w.roomHasFlag(randRoom, "godroom") ||
 				w.roomHasFlag(randRoom, "nomagic") || w.roomHasFlag(randRoom, "death") {

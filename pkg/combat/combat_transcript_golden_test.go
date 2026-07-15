@@ -33,9 +33,9 @@ func simulateCombat() string {
 	weapon := DiceRoll{Num: 2, Sides: 4}
 
 	var b strings.Builder
-	b.WriteString("# Deterministic combat transcript (seed 1337/7331) — Hero(Warrior L10) vs Orc(L5)\n")
+	b.WriteString("# Deterministic combat transcript (CMWC seed 1337) — Hero(Warrior L10) vs Orc(L5)\n")
 	// Fixed seed → fixed RNG sequence → reproducible encounter. The seam makes this possible.
-	WithRoller(NewSeededRoller(1337, 7331), func() {
+	WithRoller(NewSeededRoller(1337), func() {
 		for round := 1; round <= 15 && orc.hp > 0; round++ {
 			if CalculateHitChance(hero, orc, HitModifiers{}) {
 				dam := CalculateDamage(hero, orc, weapon, AttackNormal)

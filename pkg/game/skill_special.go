@@ -3,8 +3,9 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -165,7 +166,7 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(150) + 1 // 1-150; 101+ is complete failure
+	percent := dprng.Number(1, 150) // 1-150; 101+ is complete failure
 
 	// Immortals always fail bearhug (intentional)
 	if ch.GetLevel() > 60 {
@@ -207,7 +208,7 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(101) + 1
+	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillSlug)
 
 	if percent > prob {
@@ -222,7 +223,7 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	dam := (ch.GetLevel() * (rand.IntN(4) + 1)) / 2
+	dam := (ch.GetLevel() * dprng.Number(1, 4)) / 2
 	return SkillResult{
 		Success:       true,
 		Damage:        dam,
@@ -259,7 +260,7 @@ func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) Ski
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(101) + 1
+	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillSmackheads)
 
 	if percent > prob {
@@ -386,7 +387,7 @@ func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(121) + 1 // 0-120; 101+ is complete failure
+	percent := dprng.Number(1, 121) // 0-120; 101+ is complete failure
 
 	// Immortals always succeed
 	if ch.GetLevel() > 60 {
@@ -467,7 +468,7 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(101) + 1
+	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillPalm)
 
 	if prob > percent {
@@ -501,7 +502,7 @@ func DoFleshAlter(ch *Player) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := rand.IntN(101) + 1
+	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillFleshAlter)
 
 	if percent > prob {
