@@ -92,14 +92,14 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 
 	// Check minimum victim position (DP-411)
 	if minimumPosition := social.minimumVictimPosition(); minimumPosition > 0 && targetActor.GetPosition() < minimumPosition {
-		Act(nil, false, ch, targetActor, nil, nil, "$N is not in a proper position for that.", "", ToChar)
+		Act(nil, false, ch, targetActor, nil, nil, "$N is not in a proper position for that.", "", ToChar|ToSleep)
 		return true
 	}
 
 	// Target is another character — send messages to actor, room, and target
 	// using the new Act() engine which handles $-codes, capitalization, \r\n
 	if socCharFound < len(social.Messages) {
-		Act(nil, false, ch, targetActor, nil, nil, social.Messages[socCharFound], "", ToChar)
+		Act(nil, false, ch, targetActor, nil, nil, social.Messages[socCharFound], "", ToChar|ToSleep)
 	}
 
 	if socOthersFound < len(social.Messages) {

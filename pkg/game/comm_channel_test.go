@@ -171,3 +171,26 @@ func TestSocialTableMapsCHideAndVictimPositionFields(t *testing.T) {
 		t.Fatalf("actor output = %q", got)
 	}
 }
+
+func TestDoActionSleepingActorReceivesMessages(t *testing.T) {
+	t.Run("position-fail message reaches sleeping actor", func(t *testing.T) {
+		w, actor, target, _, output := newChannelWorld(t)
+		actor.SetPosition(combat.PosSleeping)
+		target.SetPosition(combat.PosSleeping)
+		DoAction(w, actor, "dance", target.Name)
+		// Sleeping actor cannot see the target, so $N resolves to "someone".
+		if got := channelOutput(output, actor.Name); got != "Someone is not in a proper position for that.\r\n" {
+			t.Fatalf("actor output = %q, want position-fail message", got)
+		}
+	})
+
+	t.Run("char-found message reaches sleeping actor", func(t *testing.T) {
+		w, actor, target, _, output := newChannelWorld(t)
+		actor.SetPosition(combat.PosSleeping)
+		DoAction(w, actor, "dance", target.Name)
+		// Sleeping actor cannot see the target, so $M resolves to "him".
+		if got := channelOutput(output, actor.Name); got != "You lead him to the dancefloor.\r\n" {
+			t.Fatalf("actor output = %q, want char-found message", got)
+		}
+	})
+}
