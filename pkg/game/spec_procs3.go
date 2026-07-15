@@ -343,11 +343,7 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		}
 		ch.Hometown = homet
 		ch.SetGold(ch.GetGold() - 2000)
-		hometownNames := []string{"", "Midgaard", "Thalos", "New Thalos"}
-		hName := "unknown"
-		if homet >= 0 && homet < len(hometownNames) {
-			hName = hometownNames[homet]
-		}
+		hName := HometownName(homet)
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s You are now a citizen of %s.'", mobName(me), ch.GetName(), hName))
 		return true
 	}

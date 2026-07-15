@@ -123,7 +123,7 @@ type Player struct {
 	Thirst int
 	Drunk  int
 
-	// Hometown index — 0=default, 1=Midgaard, 2=Thalos, 3=New Thalos
+	// Hometown index — 0=invalid sentinel, 1=Kir Drax'in, 2=Kir-Oshi, 3=Alaozar
 	// Source: spec_procs3.c specReceptionist
 	Hometown int
 
@@ -299,6 +299,7 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	p := NewPlayer(id, name, MortalStartRoom)
 	p.Class = class
 	p.Race = race
+	SetTitle(p, "")
 	p.Stats = stats
 	p.Strength = stats.Str
 

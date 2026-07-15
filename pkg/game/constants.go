@@ -17,17 +17,19 @@ var Phases = []string{
 
 // Hometown names (hometowns[])
 var Hometowns = []string{
-	"Kalaman",
-	"Solace",
-	"Port Storm",
-	"Tarsis",
-	"Tarmin Keep",
-	"Highpeak",
-	"Gwynned",
-	"Crystalmir",
-	"Kaolyn",
-	"Erstwhile Temple",
-	"Port Balifor",
+	"!Bad Hometown - Tell a God!",
+	"Kir Drax'in",
+	"Kir-Oshi",
+	"Alaozar",
+}
+
+// HometownName returns the canonical Dark Pawns hometown for a stored
+// GET_HOME index. Invalid values use C's index-zero sentinel.
+func HometownName(hometown int) string {
+	if hometown < 0 || hometown >= len(Hometowns) {
+		return Hometowns[0]
+	}
+	return Hometowns[hometown]
 }
 
 // Ability score names (abil_names[])

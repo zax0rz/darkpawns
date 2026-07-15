@@ -1,0 +1,84 @@
+# Character-view domain fidelity (score / where / who / consider / time — O9/O14/O11/O13/O16/O15).
+#
+# Two hometown-K newbies co-locate at 8162 (DP-1085 aligned). The actor runs the
+# self/roster/eval readouts; the observer exists so `consider`/`who`/`where` have a
+# second body to see (and so we can catch any unintended room broadcast, e.g. the
+# O15 consider leak — a private evaluation must NOT reach the observer).
+#
+# Expected RED (to be confirmed by the run):
+# - score:    O9 hometown "Solace" vs C "Kir Drax'in"; O14 residual score lines.
+# - where:    O11 mortal-accessible + leaks everyone's room+vnum; C where is LVL_IMMORT
+#             (a mortal should be refused, not handed a location dump).
+# - who:      O13 no filters / no visibility contract vs C roster grammar.
+# - consider: O15 not-found text ("Consider killing who?"), TO_CHAR-only (no broadcast),
+#             pronoun/sex mapping.
+# - time:     O16 session clock vs world clock (may be masked by the normalizer; note if so).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cviewactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cviewactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Cviewobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Cviewobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+score
+where
+who
+consider Cviewobs
+consider Nobody
+time
