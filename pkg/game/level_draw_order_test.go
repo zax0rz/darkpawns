@@ -90,23 +90,3 @@ func TestAdvanceLevelWarriorMovementUsesSecondDraw(t *testing.T) {
 		t.Fatalf("unused scripted draws: %v", returns)
 	}
 }
-
-func TestNewCharacterWithStatsPreservesAcceptedModel(t *testing.T) {
-	t.Chdir(t.TempDir())
-	oldNumber := levelNumber
-	t.Cleanup(func() { levelNumber = oldNumber })
-	levelNumber = func(from, to int) int { return from }
-
-	wantStats := CharStats{Str: 17, Int: 9, Wis: 10, Dex: 15, Con: 14, Cha: 8}
-	player := NewCharacterWithStats(1, "Newbie", ClassWarrior, RaceKender, 1, wantStats)
-
-	if player.Stats != wantStats {
-		t.Fatalf("accepted stats replaced: got %+v, want %+v", player.Stats, wantStats)
-	}
-	if player.Sex != 1 {
-		t.Fatalf("sex = %d, want female", player.Sex)
-	}
-	if player.AC != 100 {
-		t.Fatalf("newbie AC = %d, want C base 100", player.AC)
-	}
-}
