@@ -1,6 +1,11 @@
 package game
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
 
 // Room flag bit values matching C's ROOM_* constants in src/structs.h.
 const (
@@ -49,6 +54,73 @@ func roomHasFlagBit(flags []string, flagBit int) bool {
 		return false
 	}
 	return val&(1<<uint(bit)) != 0
+}
+
+// roomFlagBitByName resolves the names used by C, room displays, and legacy Go
+// callers to the canonical bit positions in RoomBitNames.
+var roomFlagBitByName = func() map[string]int {
+	bits := make(map[string]int, len(RoomBitNames))
+	for bit, name := range RoomBitNames {
+		bits[name] = bit
+	}
+	return bits
+}()
+
+// canonicalRoomFlagName normalizes aliases used across the port to the names
+// in C's room_bits[] table. The ROOM_ prefix is accepted because combat-layer
+// callbacks use the C constant spelling directly.
+func canonicalRoomFlagName(flag string) string {
+	name := strings.ToUpper(strings.TrimSpace(flag))
+	name = strings.TrimPrefix(name, "ROOM_")
+	switch name {
+	case "!MOB", "NOMOB":
+		return "NO_MOB"
+	case "!TRACK", "NO_TRACK":
+		return "NOTRACK"
+	case "!MAGIC", "NOMAGIC":
+		return "NO_MAGIC"
+	case "GOD_ROOM":
+		return "GODROOM"
+	case "HCRSH", "HOUSECRASH":
+		return "HOUSE_CRASH"
+	case "REGEN", "REGEN_ROOM":
+		return "REGENROOM"
+	case "NOWHO", "NO_WHO_ROOM":
+		return "NO_WHO"
+	case "FLOW_NORTH":
+		return "FLOW_N"
+	case "FLOW_SOUTH":
+		return "FLOW_S"
+	case "FLOW_EAST":
+		return "FLOW_E"
+	case "FLOW_WEST":
+		return "FLOW_W"
+	case "FLOW_UP":
+		return "FLOW_U"
+	case "FLOW_DOWN":
+		return "FLOW_D"
+	default:
+		return name
+	}
+}
+
+// roomHasNamedFlag checks both parsed numeric room bitvectors and literal
+// runtime flags. Houses append literal "house"/"atrium" flags after world
+// loading, so the name fallback must remain even for names with canonical bits.
+func roomHasNamedFlag(room *parser.Room, flag string) bool {
+	if room == nil {
+		return false
+	}
+	canonicalName := canonicalRoomFlagName(flag)
+	if bit, ok := roomFlagBitByName[canonicalName]; ok && roomHasFlagBit(room.Flags, bit) {
+		return true
+	}
+	for _, roomFlag := range room.Flags {
+		if strings.EqualFold(roomFlag, flag) || canonicalRoomFlagName(roomFlag) == canonicalName {
+			return true
+		}
+	}
+	return false
 }
 
 // hasWearFlag checks if a [4]int wear flags array has a specific bit set.

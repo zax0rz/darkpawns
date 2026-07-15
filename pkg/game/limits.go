@@ -105,15 +105,7 @@ func isVeteran(p *Player) bool {
 // ---------------------------------------------------------------------------
 func (w *World) roomHasFlag(roomVNum int, flag string) bool {
 	room := w.GetRoomInWorld(roomVNum)
-	if room == nil {
-		return false
-	}
-	for _, f := range room.Flags {
-		if f == flag {
-			return true
-		}
-	}
-	return false
+	return roomHasNamedFlag(room, flag)
 }
 
 // ---------------------------------------------------------------------------

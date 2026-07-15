@@ -34,15 +34,7 @@ func hasMobFlag(mob *MobInstance, flag string) bool {
 }
 
 func roomHasFlag(room *parser.Room, flag string) bool {
-	if room == nil {
-		return false
-	}
-	for _, f := range room.Flags {
-		if strings.EqualFold(f, flag) {
-			return true
-		}
-	}
-	return false
+	return roomHasNamedFlag(room, flag)
 }
 
 // mobCarriedWeight returns the total weight a mob is currently carrying.
