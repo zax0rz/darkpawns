@@ -16,10 +16,12 @@ import (
 // Constants ported from structs.h / constants.c
 // ---------------------------------------------------------------------------
 
-// Room flag string constants — parser stores these as string names.
+// Room flag bit indices from structs.h.
 const (
-	roomFlagDeath  = "death" // used in doSimpleMove
-	roomFlagTunnel = "tunnel"
+	roomFlagDeath      = 1
+	roomFlagIndoors    = 3
+	roomFlagTunnel     = 8
+	roomFlagSecretMark = 20
 )
 
 // Sector type constants — from structs.h SECT_*.
@@ -197,26 +199,54 @@ func hasKey(ch *Player, key int) bool {
 // Core Movement
 // ---------------------------------------------------------------------------
 
-// doSimpleMove moves a character assuming no master and no followers.
-// Returns true on success.
+// MoveResult describes the players moved by one command-layer movement
+// transaction. Messages are emitted through Act while the transaction runs;
+// the session layer uses this result only for room observations and dirty vars.
+type MoveResult struct {
+	Success     bool
+	NewRoomVNum int
+	Followers   []string
+}
+
+// DoMove is the canonical command-layer directional movement entry point.
+func (w *World) DoMove(ch *Player, direction string) MoveResult {
+	dir := searchBlock(strings.ToLower(strings.TrimSpace(direction)), dirs, false)
+	if dir < 0 {
+		movementSendToChar(ch, "Alas, you cannot go that way...")
+		return MoveResult{}
+	}
+	result := MoveResult{}
+	result.Success = performMoveResult(w, ch, dir, false, &result)
+	if result.Success {
+		result.NewRoomVNum = ch.GetRoom()
+	}
+	return result
+}
+
+// doSimpleMove moves a character assuming follower traversal is handled by
+// performMoveResult. It mirrors C do_simple_move.
 func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
+	if needSpecialsCheck && w.movementSpecialBlocks(ch, dirs[dir]) {
+		return false
+	}
+
 	// Charmed check
 	if ch.IsAffected(affCharm) && ch.GetFollowing() != "" {
-		if leader, ok := w.GetPlayer(ch.GetFollowing()); ok && ch.GetRoom() == leader.GetRoom() {
-			sendToChar(ch, "The thought of leaving your master makes you weep.\r\n")
+		if leader := w.followingActor(ch.GetFollowing()); leader != nil && ch.GetRoom() == leader.GetRoom() {
+			movementSendToChar(ch, "The thought of leaving your master makes you weep.")
 			return false
 		}
 	}
 
 	ext, ok := getExit(w, ch, dir)
 	if !ok {
-		sendToChar(ch, "Alas, you cannot go that way...\r\n")
+		movementSendToChar(ch, "Alas, you cannot go that way...")
 		return false
 	}
 
 	toRoom := w.GetRoomInWorld(ext.ToRoom)
 	if toRoom == nil {
-		sendToChar(ch, "Alas, you cannot go that way...\r\n")
+		movementSendToChar(ch, "Alas, you cannot go that way...")
 		return false
 	}
 
@@ -228,7 +258,7 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	// Water sector boat check
 	if room.Sector == SECT_WATER_NOSWIM || toRoom.Sector == SECT_WATER_NOSWIM {
 		if !hasBoat(w, ch) {
-			sendToChar(ch, "You need a boat to go there.\r\n")
+			movementSendToChar(ch, "You need a boat to go there.")
 			return false
 		}
 	}
@@ -238,58 +268,68 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	// Go panics on out-of-range, so we guard explicitly.
 	if room.Sector < 0 || room.Sector >= len(movementLoss) ||
 		toRoom.Sector < 0 || toRoom.Sector >= len(movementLoss) {
-		sendToChar(ch, "You can't go that way.\r\n")
+		movementSendToChar(ch, "You can't go that way.")
 		return false
 	}
 
-	// Movement points needed is avg of src and dest sector movement loss
+	// Movement points needed is avg of src and dest sector movement loss.
 	needMovement := (movementLoss[room.Sector] + movementLoss[toRoom.Sector]) >> 1
 
-	// Deduct movement if mortal
-	if ch.GetLevel() < lvlImmort && !ch.SpendMove(needMovement) {
+	// Exhaustion is checked before tunnel/mount gates, but movement is not
+	// deducted until every precondition has passed.
+	if !ch.IsMounted() && ch.GetLevel() < lvlImmort && ch.GetMove() < needMovement {
 		if needSpecialsCheck && ch.GetFollowing() != "" {
-			sendToChar(ch, "You are too exhausted to follow.\r\n")
+			movementSendToChar(ch, "You are too exhausted to follow.")
 		} else {
-			sendToChar(ch, "You are too exhausted.\r\n")
+			movementSendToChar(ch, "You are too exhausted.")
 		}
 		return false
 	}
 
 	// Room tunnel check
-	if roomHasFlagStatic(toRoom, roomFlagTunnel) {
+	if movementRoomHasFlag(toRoom, roomFlagTunnel, "tunnel") {
 		players := w.GetPlayersInRoom(toRoom.VNum)
 		if len(players) >= 1 {
-			sendToChar(ch, "There isn't enough room there!\r\n")
+			movementSendToChar(ch, "There isn't enough room there!")
 			return false
 		}
+	}
+
+	// TODO(DP-mount): move the mount/rider pair and charge the mount's move
+	// points once MobInstance has a movement pool. Until then, mounted movement
+	// is explicitly gated rather than silently moving only the rider.
+	if ch.IsMounted() {
+		if movementRoomHasFlag(toRoom, roomFlagIndoors, "indoors") {
+			movementSendToChar(ch, "You can't ride in there! Dismount first!")
+		} else {
+			movementSendToChar(ch, "Your mount is in no position to go ANYWHERE!")
+		}
+		return false
+	}
+
+	if ch.GetLevel() < lvlImmort && !ch.SpendMove(needMovement) {
+		return false
 	}
 
 	wasIn := ch.GetRoom()
 
 	// Leave message
 	if !ch.IsAffected(affSneak) {
-		w.roomMessage(wasIn, fmt.Sprintf("$n leaves %s.", dirs[dir]))
+		Act(w, true, ch, nil, nil, nil, fmt.Sprintf("$n leaves %s.", dirs[dir]), "", ToRoom)
 	}
 
-	// Move character
-	ch.SetRoom(ext.ToRoom)
+	// Move character using the world transfer primitive so light accounting and
+	// room membership invariants remain centralized.
+	if err := w.PlayerTransfer(ch, ext.ToRoom); err != nil {
+		slog.Error("movement transfer failed", "player", ch.Name, "from", wasIn, "to", ext.ToRoom, "error", err)
+		return false
+	}
 
 	// Arrival message
 	if !ch.IsAffected(affSneak) {
-		var direct string
-		switch dir {
-		case 0:
-			direct = "south"
-		case 1:
-			direct = "west"
-		case 2:
-			direct = "north"
-		case 3:
-			direct = "east"
-		}
-
 		switch dir {
 		case 0, 1, 2, 3:
+			direct := dirs[revDir[dir]]
 			var msg string
 			if ch.IsAffected(affFly) {
 				msg = fmt.Sprintf("$n flies in from the %s.", direct)
@@ -298,56 +338,116 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 			} else {
 				msg = fmt.Sprintf("$n arrives from the %s.", direct)
 			}
-			w.roomMessage(toRoom.VNum, msg)
+			Act(w, true, ch, nil, nil, nil, msg, "", ToRoom)
 		case 4:
 			if ch.IsAffected(affFly) {
-				w.roomMessage(toRoom.VNum, "$n flies in from below.")
+				Act(w, true, ch, nil, nil, nil, "$n flies in from below.", "", ToRoom)
 			} else if toRoom.Sector == SECT_UNDERWATER {
-				w.roomMessage(toRoom.VNum, "$n swims in from below.")
+				Act(w, true, ch, nil, nil, nil, "$n swims in from below.", "", ToRoom)
 			} else {
-				w.roomMessage(toRoom.VNum, "$n climbs in from below.")
+				Act(w, true, ch, nil, nil, nil, "$n climbs in from below.", "", ToRoom)
 			}
 		case 5:
 			if ch.IsAffected(affFly) {
-				w.roomMessage(toRoom.VNum, "$n flies in from above.")
+				Act(w, true, ch, nil, nil, nil, "$n flies in from above.", "", ToRoom)
 			} else if toRoom.Sector == SECT_UNDERWATER {
-				w.roomMessage(toRoom.VNum, "$n swims in from above.")
+				Act(w, true, ch, nil, nil, nil, "$n swims in from above.", "", ToRoom)
 			} else {
-				w.roomMessage(toRoom.VNum, "$n climbs in from above.")
+				Act(w, true, ch, nil, nil, nil, "$n climbs in from above.", "", ToRoom)
 			}
 		}
 	}
 
-	// MobProg greet: C-style trigger for specific mobs
-	w.MpGreet(ch, ext.ToRoom)
-	// Lua greet triggers for all mobs in the new room with the script
-	if ScriptEngine != nil {
-		for _, mob := range w.GetMobsInRoom(ext.ToRoom) {
-			if mob.HasScript("greet") {
-				ctx := mob.CreateScriptContext(ch, nil, "")
-				ctx.World = NewWorldScriptableAdapter(w)
-				ctx.RoomVNum = ext.ToRoom
-				if _, err := mob.RunScript("greet", ctx); err != nil {
-					slog.Warn("greet script error", "mob_vnum", mob.GetVNum(), "error", err)
+	if !ch.IsAffected(affSneak) {
+		// MobProg greet: C-style trigger for specific mobs.
+		w.MpGreet(ch, ext.ToRoom)
+		// Lua greet triggers for all mobs in the new room with the script.
+		if ScriptEngine != nil {
+			for _, mob := range w.GetMobsInRoom(ext.ToRoom) {
+				if mob.HasScript("greet") {
+					ctx := mob.CreateScriptContext(ch, nil, "")
+					ctx.World = NewWorldScriptableAdapter(w)
+					ctx.RoomVNum = ext.ToRoom
+					if _, err := mob.RunScript("greet", ctx); err != nil {
+						slog.Warn("greet script error", "mob_vnum", mob.GetVNum(), "error", err)
+					}
 				}
 			}
 		}
 	}
 
 	// Death trap check
-	if roomHasFlagStatic(toRoom, roomFlagDeath) && ch.GetLevel() < lvlImmort {
-		ch.TakeDamage(ch.GetHP() + 1)
-		sendToChar(ch, "You have entered a death trap!\r\n")
+	if movementRoomHasFlag(toRoom, roomFlagDeath, "death") && ch.GetLevel() < lvlImmort {
+		w.deathTrap(ch)
 		return false
+	}
+
+	if ScriptEngine != nil && toRoom.ScriptName != "" && toRoom.ScriptFunctions&(1<<1) != 0 {
+		ctx := &ScriptContext{Ch: ch, RoomVNum: toRoom.VNum, World: NewWorldScriptableAdapter(w)}
+		if _, err := ScriptEngine.RunScript(ctx, toRoom.ScriptName, "enter"); err != nil {
+			slog.Warn("room enter script error", "room_vnum", toRoom.VNum, "script", toRoom.ScriptName, "error", err)
+		}
 	}
 
 	return true
 }
 
-// roomHasFlagStatic checks a room's Flags slice for a string flag.
-func roomHasFlagStatic(room *parser.Room, flag string) bool {
+// movementSpecialBlocks mirrors C special(ch, dir+1, "") for recursively
+// moved followers. The command interpreter has already run specials for the
+// original mover, but followers must independently be allowed or blocked by
+// the entities in their room.
+func (w *World) movementSpecialBlocks(ch *Player, direction string) bool {
+	roomVNum := ch.GetRoom()
+	for _, mob := range w.GetMobsInRoom(roomVNum) {
+		if spec := GetMobSpec(mob.VNum); spec != nil && spec(w, ch, mob, direction, "") {
+			return true
+		}
+	}
+	if spec := GetRoomSpec(roomVNum); spec != nil && spec(w, ch, nil, direction, "") {
+		return true
+	}
+	for _, item := range w.GetItemsInRoom(roomVNum) {
+		if item == nil {
+			continue
+		}
+		if spec := GetObjSpec(item.VNum); spec != nil && spec(w, ch, nil, direction, "") {
+			return true
+		}
+	}
+	if ch.Equipment != nil {
+		for _, item := range ch.Equipment.GetEquippedItems() {
+			if item == nil {
+				continue
+			}
+			if spec := GetObjSpec(item.VNum); spec != nil && spec(w, ch, nil, direction, "") {
+				return true
+			}
+		}
+	}
+	if ch.Inventory != nil {
+		for _, item := range ch.Inventory.FindItems("") {
+			if item == nil {
+				continue
+			}
+			if spec := GetObjSpec(item.VNum); spec != nil && spec(w, ch, nil, direction, "") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// roomHasFlag supports both parsed numeric bitmasks and the legacy named flags
+// used by focused in-memory tests.
+func movementRoomHasFlag(room *parser.Room, bit int, legacyName string) bool {
+	if room == nil {
+		return false
+	}
+	if roomHasFlagBit(room.Flags, bit) {
+		return true
+	}
 	for _, f := range room.Flags {
-		if f == flag {
+		if strings.EqualFold(f, legacyName) {
 			return true
 		}
 	}
@@ -357,21 +457,31 @@ func roomHasFlagStatic(room *parser.Room, flag string) bool {
 // performMove moves a character and all followers.
 // Returns true on success.
 func performMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
+	return performMoveResult(w, ch, dir, needSpecialsCheck, nil)
+}
+
+func performMoveResult(w *World, ch *Player, dir int, needSpecialsCheck bool, result *MoveResult) bool {
 	if ch == nil || dir < 0 || dir >= len(dirs) {
 		return false
 	}
 
 	ext, ok := getExit(w, ch, dir)
 	if !ok || ext.ToRoom == -1 {
-		sendToChar(ch, "Alas, you cannot go that way...\r\n")
+		movementSendToChar(ch, "Alas, you cannot go that way...")
 		return false
 	}
 
 	if ext.ExitInfo&parser.ExitClosed != 0 {
-		if ext.Keywords != "" && !strings.Contains(ext.Keywords, "secret") {
-			sendToChar(ch, fmt.Sprintf("The %s seems to be closed.\r\n", firstWord(ext.Keywords)))
+		if ext.Keywords != "" {
+			room := w.GetRoomInWorld(ch.GetRoom())
+			isSecret := strings.Contains(strings.ToLower(ext.Keywords), "secret")
+			if isSecret && !movementRoomHasFlag(room, roomFlagSecretMark, "secret_mark") {
+				movementSendToChar(ch, "Alas, you cannot go that way...")
+			} else {
+				movementSendToChar(ch, fmt.Sprintf("The %s seems to be closed.", firstWord(ext.Keywords)))
+			}
 		} else {
-			sendToChar(ch, "Alas, you cannot go that way...\r\n")
+			movementSendToChar(ch, "It seems to be closed.")
 		}
 		return false
 	}
@@ -385,9 +495,11 @@ func performMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	followers := w.GetFollowers(ch.Name)
 	for _, f := range followers {
 		if f.GetRoom() == wasIn && f.GetPosition() >= combat.PosStanding {
-			sendToChar(f, fmt.Sprintf("You follow %s.\r\n", ch.Name))
+			Act(nil, false, f, ch, nil, nil, "You follow $N.", "", ToChar)
 			f.SetAffect(affHide, false)
-			performMove(w, f, dir, true)
+			if performMoveResult(w, f, dir, true, result) && result != nil {
+				result.Followers = append(result.Followers, f.Name)
+			}
 		}
 	}
 	return true

@@ -137,7 +137,7 @@ func HookGetMinusDam(dam int, targetAC int) int {
 // --------------------------------------------------------------------------
 
 func (p *Player) IsMounted() bool {
-	return p.MountName != ""
+	return p.MountName != "" || p.IsAffected(affMounted)
 }
 
 func (m *MobInstance) IsMountedMob() bool {

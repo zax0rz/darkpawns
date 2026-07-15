@@ -96,10 +96,7 @@ func StopFollower(w *World, ch *Player) {
 
 	// Look up the leader for act messages that need $N.
 	leaderName := ch.GetFollowing()
-	var leader Actor
-	if l, ok := w.GetPlayer(leaderName); ok {
-		leader = l
-	}
+	leader := w.followingActor(leaderName)
 
 	charmAffected := ch.IsAffected(affCharm)
 

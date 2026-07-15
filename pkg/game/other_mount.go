@@ -56,6 +56,7 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 	}
 
 	mountMob.MountRider = ch.Name
+	ch.MountName = mountMob.GetName()
 	ch.SetAffect(affMounted, true)
 	ch.SetFollowing(mountMob.GetShortDesc())
 	ch.SendMessage(fmt.Sprintf("You climb onto %s.\r\n", mountMob.GetShortDesc()))
@@ -84,6 +85,7 @@ func (w *World) doDismount(ch *Player, me *MobInstance, cmd string, arg string) 
 		}
 	}
 	ch.SetAffect(affMounted, false)
+	ch.MountName = ""
 	ch.SetFollowing("")
 	ch.SendMessage("You dismount.\r\n")
 	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s dismounts.\r\n", ch.Name), ch.Name)

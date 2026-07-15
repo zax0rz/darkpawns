@@ -1,0 +1,89 @@
+# Movement domain fidelity (Domain 5: move / position / follow / enter — O25/O26/O27/O28).
+#
+# PREREQ: DP-1085 (PR #335) — Go now routes hometown-K newbies to 8162 like C, so both
+# servers co-locate. Shared newbie-zone graph (byte-identical 80.wld):
+#   8162 Temple Infirmary   north->8161
+#   8161 Western Vestibule   north->8146, east->8004, south->8162
+# A north/south round trip keeps the passive observer in 8162 to witness BOTH the
+# leave broadcast (actor departs north) and the arrive broadcast (actor returns south).
+# All position/follow/enter probes then run at 8162 with the observer co-located.
+#
+# Fidelity probes (actor + observer, per-recipient):
+# - O25 leave/arrive use act(), including the reversed arrival direction.
+# - O26 position broadcasts use act() pronouns.
+# - O27 follow tells the leader "$n starts following you." and uses $M when already following.
+# - O28 enter is registered and preserves C's indoors/named-target responses.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Movactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Movactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Movobserv
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Movobserv
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+north
+south
+sit
+stand
+sleep
+wake
+stand
+follow Movobserv
+follow Movobserv
+enter
+enter fountain

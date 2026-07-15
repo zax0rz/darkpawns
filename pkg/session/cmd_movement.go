@@ -1,120 +1,49 @@
 package session
 
 import (
-	"encoding/json"
-	"fmt"
 	"log/slog"
+	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdMove(s *Session, direction string) error {
-	oldRoom := s.player.GetRoom()
-
-	// Collect followers in this room before moving (cannot query after move holds lock)
-	followers := s.manager.world.GetFollowersInRoom(s.player.Name, oldRoom)
-
-	newRoom, err := s.manager.world.MovePlayer(s.player, direction)
-	if err != nil {
-		s.sendText(fmt.Sprintf("You can't go %s.", direction))
-		return nil
-	}
-
-	// Notify old room
-	leaveMsg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "leave",
-			From: s.player.Name,
-			Text: fmt.Sprintf("%s leaves %s.", s.player.Name, direction),
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-	s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
-
-	// Notify new room
-	enterMsg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "enter",
-			From: s.player.Name,
-			Text: fmt.Sprintf("%s has arrived.", s.player.Name),
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-	s.manager.BroadcastToRoom(newRoom.VNum, enterMsg, s.player.Name)
-
-	// Check for mobs with greet scripts
-	mobs := s.manager.world.GetMobsInRoom(newRoom.VNum)
-	for _, mob := range mobs {
-		if mob.HasScript("greet") {
-			ctx := mob.CreateScriptContext(s.player, nil, "")
-			if _, err := mob.RunScript("greet", ctx); err != nil {
-				slog.Error("greet script failed", "mob", mob.GetName(), "error", err)
-			}
-		}
-	}
-
-	// Check for aggressive mobs in new room
-	if s.manager.world.OnPlayerEnterRoom(s.player, newRoom.VNum, s.manager.combatEngine) {
-		// Combat was initiated, notify player
-		s.sendText("You are attacked!")
-	}
-
-	// Drag followers into the new room — act.movement.c follower movement
-	for _, follower := range followers {
-		followerOldRoom := follower.GetRoom()
-		if _, ferr := s.manager.world.MovePlayer(follower, direction); ferr == nil {
-			follower.SendMessage(fmt.Sprintf("You follow %s %s.\r\n", s.player.Name, direction))
-			// Notify follower's old room
-			fleaveMsg, err := json.Marshal(ServerMessage{
-				Type: MsgEvent,
-				Data: EventData{
-					Type: "leave",
-					From: follower.Name,
-					Text: fmt.Sprintf("%s leaves %s.", follower.Name, direction),
-				},
-			})
-			if err != nil {
-				slog.Error("json.Marshal error", "error", err)
-				continue
-			}
-			s.manager.BroadcastToRoom(followerOldRoom, fleaveMsg, follower.Name)
-			// Notify new room of follower arrival
-			fenterMsg, err := json.Marshal(ServerMessage{
-				Type: MsgEvent,
-				Data: EventData{
-					Type: "enter",
-					From: follower.Name,
-					Text: fmt.Sprintf("%s has arrived.", follower.Name),
-				},
-			})
-			if err != nil {
-				slog.Error("json.Marshal error", "error", err)
-				continue
-			}
-			s.manager.BroadcastToRoom(newRoom.VNum, fenterMsg, follower.Name)
-			// Send look to follower's session
-			if fSess, ok := s.manager.GetSession(follower.Name); ok {
-				if err := cmdMovementLook(fSess); err != nil {
-					slog.Error("movement look failed for follower", "follower", follower.Name, "error", err)
-				}
-				fSess.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
-			}
-		}
-	}
-
-	// Mark room vars dirty for agents after movement
-	s.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
-
-	// Send new room state to player
-	return cmdMovementLook(s)
+	return finishMovementCommand(s, s.manager.world.DoMove(s.player, direction))
 }
 
-// cmdSay sends a message to the room.
+func cmdEnter(s *Session, args []string) error {
+	return finishMovementCommand(s, s.manager.world.DoEnter(s.player, strings.Join(args, " ")))
+}
 
-// cmdQuit handles player logout.
+func cmdLeave(s *Session) error {
+	return finishMovementCommand(s, s.manager.world.DoLeave(s.player))
+}
+
+// finishMovementCommand is the transport adapter around game-owned movement.
+// The game transaction owns validation, messages, follower dragging, scripts,
+// and room mutation; sessions only publish room observations and agent vars.
+func finishMovementCommand(s *Session, result game.MoveResult) error {
+	if !result.Success {
+		return nil
+	}
+
+	for _, followerName := range result.Followers {
+		follower, ok := s.manager.world.GetPlayer(followerName)
+		if !ok {
+			continue
+		}
+		_ = s.manager.world.OnPlayerEnterRoom(follower, follower.GetRoom(), s.manager.combatEngine)
+		if followerSession, ok := s.manager.GetSession(followerName); ok {
+			if err := cmdMovementLook(followerSession); err != nil {
+				slog.Error("movement look failed for follower", "follower", followerName, "error", err)
+			}
+			followerSession.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
+		}
+	}
+
+	if s.manager.world.OnPlayerEnterRoom(s.player, result.NewRoomVNum, s.manager.combatEngine) {
+		s.sendText("You are attacked!")
+	}
+	s.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
+	return cmdMovementLook(s)
+}
