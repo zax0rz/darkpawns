@@ -93,21 +93,13 @@ var (
 	weatherWorld *World // set via SetWeatherWorld; used by event functions
 )
 
-// InitializeWeather mirrors reset_time()'s weather initialization in db.c.
-// The pressure roll is the first C number() consumption during boot, before
-// mob prototypes and zone resets are loaded.
+// InitializeWeather mirrors reset_time()'s pressure initialization in db.c.
+// Its roll is the first C number() consumption during boot, before mob
+// prototypes and zone resets are loaded. Sunlight remains unchanged until Go's
+// placeholder world clock is initialized from the C epoch in a later phase.
 func InitializeWeather() {
 	weatherMu.Lock()
 	defer weatherMu.Unlock()
-
-	weatherInfo.Sunlight = SunDark
-	if timeInfo.Hours == 5 {
-		weatherInfo.Sunlight = SunRise
-	} else if timeInfo.Hours >= 6 && timeInfo.Hours <= 20 {
-		weatherInfo.Sunlight = SunLight
-	} else if timeInfo.Hours == 21 {
-		weatherInfo.Sunlight = SunSet
-	}
 
 	pressureRange := 80
 	if timeInfo.Month >= 7 && timeInfo.Month <= 12 {

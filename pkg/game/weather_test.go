@@ -76,6 +76,7 @@ func TestInitializeWeatherConsumesCPressureRoll(t *testing.T) {
 		return 25
 	}
 	timeInfo = TimeInfoData{Hours: 5, Month: 8}
+	weatherInfo = WeatherData{Sunlight: SunLight}
 
 	InitializeWeather()
 
@@ -85,8 +86,8 @@ func TestInitializeWeatherConsumesCPressureRoll(t *testing.T) {
 	if weatherInfo.Pressure != 985 || weatherInfo.Change != 0 || weatherInfo.Sky != SkyRaining {
 		t.Fatalf("initialized weather = %+v, want pressure 985, change 0, raining", weatherInfo)
 	}
-	if weatherInfo.Sunlight != SunRise {
-		t.Fatalf("initialized sunlight = %d, want sunrise", weatherInfo.Sunlight)
+	if weatherInfo.Sunlight != SunLight {
+		t.Fatalf("initialized sunlight = %d, want existing sunlight preserved", weatherInfo.Sunlight)
 	}
 }
 
