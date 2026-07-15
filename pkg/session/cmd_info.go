@@ -157,8 +157,8 @@ func cmdScore(s *Session) error {
 	buf.WriteString("\r\n")
 
 	// 2. HP/Mana/Move (from C line 1196)
-	manaLabel := "Mana"
-	fmt.Fprintf(&buf, "Hit points: %d(%d)  %s: %d(%d)  Movement points: %d(%d)\r\n",
+	manaLabel := scoreManaLabel(p.Class)
+	fmt.Fprintf(&buf, "Hit points: %d(%d)  %s points: %d(%d)  Movement points: %d(%d)\r\n",
 		p.Health, p.MaxHealth, manaLabel, p.Mana, p.MaxMana, p.Move, p.MaxMove)
 
 	// 3. Alignment text (from C lines 1213-1238)
@@ -199,11 +199,7 @@ func cmdScore(s *Session) error {
 	}
 
 	// 11. Citizenship (from C line 1283)
-	hometown := "Unknown"
-	if p.Hometown >= 0 && p.Hometown < len(game.Hometowns) {
-		hometown = game.Hometowns[p.Hometown]
-	}
-	fmt.Fprintf(&buf, "You are a citizen of %s.\r\n", hometown)
+	fmt.Fprintf(&buf, "You are a citizen of %s.\r\n", game.HometownName(p.Hometown))
 
 	// 12. Clan info (from C lines 1284-1292)
 	if p.ClanID != 0 && p.ClanRank != 0 {
@@ -219,7 +215,7 @@ func cmdScore(s *Session) error {
 
 	// 14. Race + Class (from C lines 1295-1298)
 	raceName := game.RaceNames[p.Race]
-	fmt.Fprintf(&buf, "You are %s %s %s.\r\n", articleFor(raceName), raceName, className)
+	fmt.Fprintf(&buf, "You are %s %s %s.\r\n\r\n", articleFor(raceName), raceName, className)
 
 	// 15. Pack weight (from C lines 1304-1315)
 	carriedW := p.CarriedWeight()
@@ -263,13 +259,13 @@ func cmdScore(s *Session) error {
 	buf.WriteString("\r\n")
 
 	// 17. Status conditions (from C lines 1342-1347)
-	if p.Drunk > 0 {
+	if p.Drunk > 10 {
 		buf.WriteString("You are intoxicated.\r\n")
 	}
-	if p.Hunger <= 0 && p.Level < game.LVL_IMMORT {
+	if p.Hunger == 0 {
 		buf.WriteString("You are hungry.\r\n")
 	}
-	if p.Thirst <= 0 && p.Level < game.LVL_IMMORT {
+	if p.Thirst == 0 {
 		buf.WriteString("You are thirsty.\r\n")
 	}
 
@@ -349,6 +345,13 @@ func cmdScore(s *Session) error {
 
 	s.Send(buf.String())
 	return nil
+}
+
+func scoreManaLabel(class int) string {
+	if class == game.ClassPsionic || class == game.ClassMystic {
+		return "Mind/Psi"
+	}
+	return "Mana"
 }
 
 // articleFor returns "a" or "an" for a given word.

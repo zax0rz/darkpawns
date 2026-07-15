@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func readSessionText(t *testing.T, s *Session) string {
@@ -189,6 +191,73 @@ func TestCmdScore(t *testing.T) {
 	}
 	if !strings.Contains(got, "You are ") {
 		t.Errorf("expected single-subject armor line, got %q", got)
+	}
+}
+
+func TestScoreManaLabelMatchesCClassBranch(t *testing.T) {
+	for class := game.ClassMageUser; class <= game.ClassMystic; class++ {
+		want := "Mana"
+		if class == game.ClassPsionic || class == game.ClassMystic {
+			want = "Mind/Psi"
+		}
+		if got := scoreManaLabel(class); got != want {
+			t.Errorf("class %d mana label = %q, want %q", class, got, want)
+		}
+	}
+}
+
+func TestCmdScoreFixedFixtureGolden(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Scoretest", 1001, true)
+	p := s.player
+	p.Class = game.ClassWarrior
+	p.Race = game.RaceHuman
+	p.Stats.Str = 10
+	p.Stats.Dex = 10
+	p.Title = "the Warrior"
+	p.Hometown = 1
+	p.Level = 1
+	p.Exp = 1
+	p.Health = 22
+	p.MaxHealth = 22
+	p.Mana = 100
+	p.MaxMana = 100
+	p.Move = 85
+	p.MaxMove = 85
+	p.Alignment = 0
+	p.AC = 100
+	p.Gold = 0
+	p.BankGold = 0
+	p.Kills = 0
+	p.PKs = 0
+	p.Deaths = 0
+	p.Position = game.PosStanding
+	p.Hunger = 36
+	p.Thirst = 36
+	p.Drunk = 0
+	p.Birth = time.Now().Unix()
+	p.ConnectedAt = time.Now()
+	p.PlayedDuration = 0
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	const want = "Scoretest                           Age: 17 years (It's your birthday today.)\r\n" +
+		"Hit points: 22(22)  Mana points: 100(100)  Movement points: 85(85)\r\n" +
+		"You are neutral, how boring.\r\n" +
+		"You are naked, have you no shame?\r\n" +
+		"Experience:    1 points\r\n" +
+		"Coins carried: 0 gold coins    Coins in bank: 0 gold coins\r\n" +
+		"Kills: 0  Pks: 0  Deaths: 0\r\n" +
+		"You need 1499 exp to reach your next level.\r\n" +
+		"You have been playing for 0 days and 0 hours.\r\n" +
+		"You are a citizen of Kir Drax'in.\r\n" +
+		"This ranks you as Scoretest the Warrior (level 1).\r\n" +
+		"You are a Human Warrior.\r\n\r\n" +
+		"Your pack is empty.\r\n" +
+		"You are standing.\r\n"
+	if got := readSessionText(t, s); got != want {
+		t.Fatalf("score output mismatch\n--- got ---\n%q\n--- want ---\n%q", got, want)
 	}
 }
 

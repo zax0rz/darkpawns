@@ -184,7 +184,7 @@ func TestHandleCharInput_AllStages(t *testing.T) {
 		t.Errorf("after hometown: stage = %q, want stats_roll", cd.Stage)
 	}
 	if s.charHometown != 1 {
-		t.Errorf("charHometown = %d, want 1 (Kiroshi)", s.charHometown)
+		t.Errorf("charHometown = %d, want 1 (Kir Drax'in)", s.charHometown)
 	}
 	if s.charStage != "stats_roll" {
 		t.Errorf("s.charStage = %q, want stats_roll", s.charStage)
