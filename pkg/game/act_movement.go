@@ -446,12 +446,7 @@ func movementRoomHasFlag(room *parser.Room, bit int, legacyName string) bool {
 	if roomHasFlagBit(room.Flags, bit) {
 		return true
 	}
-	for _, f := range room.Flags {
-		if strings.EqualFold(f, legacyName) {
-			return true
-		}
-	}
-	return false
+	return roomHasNamedFlag(room, legacyName)
 }
 
 // performMove moves a character and all followers.

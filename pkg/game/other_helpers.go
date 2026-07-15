@@ -1,10 +1,6 @@
 package game
 
-import (
-	"strings"
-
-	"github.com/zax0rz/darkpawns/pkg/parser"
-)
+import "github.com/zax0rz/darkpawns/pkg/parser"
 
 // ---------------------------------------------------------------------------
 // PLR flag bit positions (from structs.h PLR_* constants)
@@ -88,12 +84,7 @@ func actToRoom(w *World, roomVNum int, format string, excludeName string) {
 
 // hasRoomFlag checks if a room has the named flag (e.g. "indoors", "death", "tunnel").
 func hasRoomFlag(room *parser.Room, flag string) bool {
-	for _, f := range room.Flags {
-		if strings.EqualFold(f, flag) {
-			return true
-		}
-	}
-	return false
+	return roomHasNamedFlag(room, flag)
 }
 
 // isDark returns true if the room is dark (no light source, not outdoors with sun).

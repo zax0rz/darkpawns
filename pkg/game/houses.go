@@ -178,15 +178,7 @@ func removeRoomFlag(room *parser.Room, flag string) {
 // roomHasFlagLocal checks if a room has a specific flag string.
 // This is a standalone version (World.roomHasFlag is defined in limits.go).
 func roomHasFlagLocal(room *parser.Room, flag string) bool {
-	if room == nil {
-		return false
-	}
-	for _, f := range room.Flags {
-		if f == flag {
-			return true
-		}
-	}
-	return false
+	return roomHasNamedFlag(room, flag)
 }
 
 // toRoom returns the destination room vnum for a given exit direction from a room.

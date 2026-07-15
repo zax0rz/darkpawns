@@ -7,6 +7,7 @@ package session
 // SCOPE — they need combat-engine retargeting, not a command-layer guard.
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
@@ -17,12 +18,12 @@ import (
 )
 
 // makeGateTestManager builds a Manager with a room whose flags can be customized.
-// If peaceful is true, the room gets the "peaceful" flag.
+// If peaceful is true, the room gets the parsed numeric ROOM_PEACEFUL bit.
 func makeGateTestManager(t *testing.T, peaceful bool) *Manager {
 	t.Helper()
-	flags := []string{}
+	flags := []string{"0", "0", "0", "0"}
 	if peaceful {
-		flags = append(flags, "peaceful")
+		flags[0] = "16"
 	}
 	parsed := &parser.World{
 		Rooms: []parser.Room{
@@ -45,6 +46,27 @@ func makeGateTestManager(t *testing.T, peaceful bool) *Manager {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 	return NewManager(w, nil)
+}
+
+func readSendText(t *testing.T, s *Session) string {
+	t.Helper()
+	select {
+	case message := <-s.send:
+		var envelope struct {
+			Data json.RawMessage `json:"data"`
+		}
+		if err := json.Unmarshal(message, &envelope); err != nil {
+			t.Fatalf("unmarshal server message: %v", err)
+		}
+		var event EventData
+		if err := json.Unmarshal(envelope.Data, &event); err != nil {
+			t.Fatalf("unmarshal event data: %v", err)
+		}
+		return event.Text
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for session output")
+		return ""
+	}
 }
 
 // makeGateSession creates a session for a player at the given level in room 1001.
@@ -107,8 +129,8 @@ func TestPeacefulRoom_BlocksAttackOnMob(t *testing.T) {
 	if m.combatEngine.IsFighting("Hero") {
 		t.Error("combat should not start in a peaceful room")
 	}
-	if !drainSendContains(s, "peaceful") {
-		t.Error("expected 'peaceful, easy feeling' message")
+	if got, want := readSendText(t, s), "This room just has such a peaceful, easy feeling...\r\n"; got != want {
+		t.Errorf("peaceful gate message = %q, want %q", got, want)
 	}
 }
 
@@ -196,8 +218,8 @@ func TestLowLevelGate_AttackerTooLow(t *testing.T) {
 	if m.combatEngine.IsFighting("Rookie") {
 		t.Error("level 5 attacker should be blocked from attacking a player")
 	}
-	if !drainSendContains(attacker, "not experienced") {
-		t.Error("expected 'not experienced enough' message")
+	if got, want := readSendText(t, attacker), "You are not experienced enough to attack Highlevel!\r\n"; got != want {
+		t.Errorf("attacker newbie gate message = %q, want %q", got, want)
 	}
 }
 
@@ -218,8 +240,26 @@ func TestLowLevelGate_VictimTooLow(t *testing.T) {
 	if m.combatEngine.IsFighting("Bully") {
 		t.Error("attacking a level 5 player should be blocked")
 	}
-	if !drainSendContains(attacker, "ancient forces protect") {
-		t.Error("expected 'Ancient forces protect' message")
+	if got, want := readSendText(t, attacker), "Ancient forces protect Newbie from your wrath!\r\n"; got != want {
+		t.Errorf("victim newbie gate message = %q, want %q", got, want)
+	}
+}
+
+func TestCombatGateOrder_PeacefulBeforeNewbieProtection(t *testing.T) {
+	m := makeGateTestManager(t, true)
+	attacker := makeGateSession(t, m, 1, "Rookie", 5)
+	victim := game.NewPlayer(2, "Newbie", 1001)
+	victim.SetLevel(5)
+	if err := m.world.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer victim failed: %v", err)
+	}
+
+	if err := cmdHit(attacker, []string{"newbie"}); err != nil {
+		t.Fatalf("cmdHit returned error: %v", err)
+	}
+
+	if got, want := readSendText(t, attacker), "This room just has such a peaceful, easy feeling...\r\n"; got != want {
+		t.Errorf("first combat gate message = %q, want %q", got, want)
 	}
 }
 
