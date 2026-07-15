@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,6 +14,30 @@ func writeZonFile(t *testing.T, dir, name, content string) string {
 		t.Fatalf("write test file: %v", err)
 	}
 	return p
+}
+
+func TestParseAllZonFilesHonorsIndexSelectionAndOrder(t *testing.T) {
+	tmpDir := t.TempDir()
+	zone := func(number int, name string) string {
+		return fmt.Sprintf("#%d\n%s~\n%d 15 1\nS\n$\n", number, name, number*100+99)
+	}
+	writeZonFile(t, tmpDir, "1.zon", zone(1, "one"))
+	writeZonFile(t, tmpDir, "2.zon", zone(2, "two"))
+	writeZonFile(t, tmpDir, "3.zon", zone(3, "unused"))
+	if err := os.WriteFile(filepath.Join(tmpDir, "index"), []byte("2.zon\n1.zon\n$\n3.zon\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	zones, err := ParseAllZonFiles(tmpDir)
+	if err != nil {
+		t.Fatalf("parse indexed zone files: %v", err)
+	}
+	if len(zones) != 2 {
+		t.Fatalf("indexed zone count = %d, want 2", len(zones))
+	}
+	if zones[0].Number != 2 || zones[1].Number != 1 {
+		t.Fatalf("indexed zone order = [%d %d], want [2 1]", zones[0].Number, zones[1].Number)
+	}
 }
 
 // basic single zone with M, O, E, G, P, D commands

@@ -296,10 +296,21 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 // NewCharacter creates a brand new level 1 character with class/race and rolled stats.
 // Implements do_start() from class.c — call this on first login.
 func NewCharacter(id int, name string, class, race int) *Player {
-	stats := RollRealAbils(class, race)
+	return newCharacter(id, name, class, race, 0, RollRealAbils(class, race))
+}
+
+// NewCharacterWithStats creates a level-1 character from the stats and sex
+// already accepted during nanny character creation. C rolls abilities before
+// do_start(); consuming another roll here would shift every later RNG draw.
+func NewCharacterWithStats(id int, name string, class, race, sex int, stats CharStats) *Player {
+	return newCharacter(id, name, class, race, sex, stats)
+}
+
+func newCharacter(id int, name string, class, race, sex int, stats CharStats) *Player {
 	p := NewPlayer(id, name, MortalStartRoom)
 	p.Class = class
 	p.Race = race
+	p.Sex = sex
 	SetTitle(p, "")
 	p.Stats = stats
 	p.Strength = stats.Str
@@ -313,6 +324,7 @@ func NewCharacter(id int, name string, class, race int) *Player {
 	p.Mana = 100
 	p.MaxMove = 82
 	p.Move = 82
+	p.AC = 100
 
 	// Start fully fed/hydrated/sober — limits.c
 	p.Hunger = 36

@@ -1,8 +1,10 @@
 package parser
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -595,6 +597,36 @@ func TestParseAllMobFiles(t *testing.T) {
 	}
 	if len(mobs) != 2 {
 		t.Errorf("expected 2 mobs total, got %d", len(mobs))
+	}
+}
+
+func TestParseAllMobFilesHonorsIndexSelectionAndOrder(t *testing.T) {
+	tmpDir := t.TempDir()
+	mobFile := func(vnum int, keyword string) string {
+		return fmt.Sprintf("#%d\n%s~\n%s~\n%s stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n", vnum, keyword, keyword, keyword)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "a.mob"), []byte(mobFile(100, "first")), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "b.mob"), []byte(mobFile(200, "second")), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "unused.mob"), []byte(mobFile(300, "unused")), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "index"), []byte("b.mob\na.mob\n$\nunused.mob\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	mobs, err := ParseAllMobFiles(tmpDir)
+	if err != nil {
+		t.Fatalf("parse indexed mob files: %v", err)
+	}
+	if len(mobs) != 2 {
+		t.Fatalf("indexed mob count = %d, want 2", len(mobs))
+	}
+	if got := []int{mobs[0].VNum, mobs[1].VNum}; !slices.Equal(got, []int{200, 100}) {
+		t.Fatalf("indexed mob order = %v, want [200 100]", got)
 	}
 }
 

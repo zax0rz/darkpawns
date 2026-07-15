@@ -569,27 +569,61 @@ func ParseAllMobFiles(dir string) ([]Mob, error) {
 		return nil, err
 	}
 
-	entries, err := os.ReadDir(dir)
+	fileNames, err := indexedDataFileNames(dir, ".mob")
 	if err != nil {
-		return nil, fmt.Errorf("read dir %s: %w", dir, err)
+		return nil, err
 	}
 
 	var allMobs []Mob
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".mob") {
-			continue
-		}
-
-		path := filepath.Join(dir, entry.Name())
+	for _, fileName := range fileNames {
+		path := filepath.Join(dir, fileName)
 		mobs, err := ParseMobFile(path)
 		if err != nil {
-			return nil, fmt.Errorf("parse %s: %w", entry.Name(), err)
+			return nil, fmt.Errorf("parse %s: %w", fileName, err)
 		}
 
 		allMobs = append(allMobs, mobs...)
 	}
 
 	return allMobs, nil
+}
+
+// indexedDataFileNames follows Circle's index file when one is present.
+// Selection and order are observable: mob parsing consumes RNG and zone order
+// controls reset-time RNG. The fallback keeps standalone parser fixtures
+// convenient.
+func indexedDataFileNames(dir, suffix string) ([]string, error) {
+	indexPath := filepath.Join(dir, "index")
+	indexData, err := os.ReadFile(indexPath) // #nosec G304 -- validated world directory
+	if err == nil {
+		var names []string
+		for _, line := range strings.Split(string(indexData), "\n") {
+			name := strings.TrimSpace(line)
+			if name == "$" {
+				break
+			}
+			if name == "" || strings.HasPrefix(name, "*") {
+				continue
+			}
+			names = append(names, name)
+		}
+		return names, nil
+	}
+	if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("read data index %s: %w", indexPath, err)
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("read dir %s: %w", dir, err)
+	}
+	fileNames := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), suffix) {
+			fileNames = append(fileNames, entry.Name())
+		}
+	}
+	return fileNames, nil
 }
 
 // bitmaskToFlagNames converts an integer bitmask to a slice of flag name strings.

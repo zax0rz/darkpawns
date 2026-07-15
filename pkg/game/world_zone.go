@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
@@ -117,6 +118,7 @@ func (w *World) GetAllZones() []*parser.Zone {
 	for _, zone := range w.zones {
 		zones = append(zones, zone)
 	}
+	sort.Slice(zones, func(i, j int) bool { return zones[i].Number < zones[j].Number })
 	return zones
 }
 

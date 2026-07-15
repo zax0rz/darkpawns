@@ -7,6 +7,19 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+func TestGetAllZonesReturnsDeterministicOrder(t *testing.T) {
+	w, err := NewWorld(&parser.World{Zones: []parser.Zone{{Number: 30}, {Number: 10}, {Number: 20}}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	zones := w.GetAllZones()
+	if len(zones) != 3 || zones[0].Number != 10 || zones[1].Number != 20 || zones[2].Number != 30 {
+		t.Fatalf("zone order = %+v, want [10 20 30]", zones)
+	}
+}
+
 // TestStopAITickerStopsBothTickers verifies that StopAITicker can be called
 // without panic and that the World remains usable afterwards. The AI and point
 // tickers share the World's done channel; closing it stops both loops.

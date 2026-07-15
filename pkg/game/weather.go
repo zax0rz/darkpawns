@@ -75,7 +75,8 @@ type WeatherData struct {
 }
 
 var (
-	timeInfo = TimeInfoData{
+	weatherInitNumber = dprng.Number
+	timeInfo          = TimeInfoData{
 		Hours: 0,
 		Day:   0,
 		Month: 0,
@@ -91,6 +92,32 @@ var (
 	weatherMu    sync.RWMutex
 	weatherWorld *World // set via SetWeatherWorld; used by event functions
 )
+
+// InitializeWeather mirrors reset_time()'s pressure initialization in db.c.
+// Its roll is the first C number() consumption during boot, before mob
+// prototypes and zone resets are loaded. Sunlight remains unchanged until Go's
+// placeholder world clock is initialized from the C epoch in a later phase.
+func InitializeWeather() {
+	weatherMu.Lock()
+	defer weatherMu.Unlock()
+
+	pressureRange := 80
+	if timeInfo.Month >= 7 && timeInfo.Month <= 12 {
+		pressureRange = 50
+	}
+	weatherInfo.Pressure = 960 + weatherInitNumber(1, pressureRange)
+	weatherInfo.Change = 0
+	switch {
+	case weatherInfo.Pressure <= 980:
+		weatherInfo.Sky = SkyLightning
+	case weatherInfo.Pressure <= 1000:
+		weatherInfo.Sky = SkyRaining
+	case weatherInfo.Pressure <= 1020:
+		weatherInfo.Sky = SkyCloudy
+	default:
+		weatherInfo.Sky = SkyCloudless
+	}
+}
 
 // WorldClimateSnapshot is an immutable point-in-time copy of the canonical
 // time_info and weather_info globals. Both halves are captured under the same

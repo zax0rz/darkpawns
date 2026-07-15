@@ -60,6 +60,37 @@ func TestAnotherHour_AdvancesTimeAndSunlight(t *testing.T) {
 	}
 }
 
+func TestInitializeWeatherConsumesCPressureRoll(t *testing.T) {
+	originalNumber := weatherInitNumber
+	originalTime := timeInfo
+	originalWeather := weatherInfo
+	t.Cleanup(func() {
+		weatherInitNumber = originalNumber
+		timeInfo = originalTime
+		weatherInfo = originalWeather
+	})
+
+	var gotFrom, gotTo int
+	weatherInitNumber = func(from, to int) int {
+		gotFrom, gotTo = from, to
+		return 25
+	}
+	timeInfo = TimeInfoData{Hours: 5, Month: 8}
+	weatherInfo = WeatherData{Sunlight: SunLight}
+
+	InitializeWeather()
+
+	if gotFrom != 1 || gotTo != 50 {
+		t.Fatalf("weather pressure draw = number(%d,%d), want number(1,50)", gotFrom, gotTo)
+	}
+	if weatherInfo.Pressure != 985 || weatherInfo.Change != 0 || weatherInfo.Sky != SkyRaining {
+		t.Fatalf("initialized weather = %+v, want pressure 985, change 0, raining", weatherInfo)
+	}
+	if weatherInfo.Sunlight != SunLight {
+		t.Fatalf("initialized sunlight = %d, want existing sunlight preserved", weatherInfo.Sunlight)
+	}
+}
+
 func TestAnotherHour_AdvancesMoonsAndMonths(t *testing.T) {
 	timeInfo = TimeInfoData{
 		Hours: 23,
