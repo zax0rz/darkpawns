@@ -101,6 +101,17 @@ func Seed(seed uint32) {
 	stream.Seed(seed)
 }
 
+// ResetStream reinstalls a fresh process-wide stream seeded with `seed`, discarding
+// any accumulated carry/index. Unlike Seed (which preserves C's persistent carry
+// contract across reseeds), this yields a byte-identical stream on every call. It
+// exists so tests of code that draws from the global stream can establish a
+// reproducible starting state; production boot uses Seed/ConfigureFromEnvironment.
+func ResetStream(seed uint32) {
+	streamMu.Lock()
+	defer streamMu.Unlock()
+	stream = New(seed)
+}
+
 // ConfigureFromEnvironment seeds the process-wide stream from DP_SEED, or
 // from the current Unix time when DP_SEED is unset, matching C init_game().
 func ConfigureFromEnvironment() (uint32, error) {
