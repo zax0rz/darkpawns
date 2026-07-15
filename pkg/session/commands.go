@@ -243,7 +243,6 @@ func init() {
 	registerCommand("affects", wrapArgs(cmdAffects), "Show active affects.")
 	registerCommand("autoexit", wrapArgs(cmdAutoExit), "Toggle auto-exit display.")
 	registerCommand("title", wrapArgs(cmdTitle), "Set your title.")
-	registerCommand("describe", wrapArgs(cmdDescribe), "Set your description.", "desc")
 
 	// Quit
 	// "reallyquit" is src/interpreter.c's SCMD_REALLY_QUIT variant of do_quit — in the
@@ -298,7 +297,6 @@ func init() {
 	// Informative commands (act_informative.go)
 	registerCommand("color", wrapArgs(cmdColor), "Toggle ANSI color.")
 	registerCommand("commands", wrapArgs(cmdCommands), "List available commands.", "cmds")
-	registerCommand("description", wrapArgs(cmdDescription), "Set your character description.")
 	// "glance" is src/interpreter.c's other top-level name for do_diagnose — identical handler.
 	registerCommand("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", "diag", "glance")
 	registerCommand("toggle", wrapArgs(cmdToggle), "Toggle a player preference.")

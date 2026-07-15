@@ -57,8 +57,14 @@ func communicationSend(ch Actor, message string) {
 	Act(nil, false, ch, nil, nil, nil, strings.TrimSuffix(message, "\r\n"), "", ToChar|ToSleep)
 }
 
-func deleteANSIControls(message string) string {
+// DeleteANSIControls strips MUD color-code markers from message text.
+// It is the Go equivalent of C delete_ansi_controls().
+func DeleteANSIControls(message string) string {
 	return strings.ReplaceAll(message, "&", "")
+}
+
+func deleteANSIControls(message string) string {
+	return DeleteANSIControls(message)
 }
 
 func splitDirectedSpeech(argument string) (string, string) {

@@ -1,5 +1,12 @@
 package session
 
+import (
+	"fmt"
+	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
+)
+
 // ---------------------------------------------------------------------------
 // Informative command stubs (act.informative.c)
 // These are referenced in commands.go but have partial implementations
@@ -23,22 +30,34 @@ func cmdAutoExit(s *Session, args []string) error {
 	return nil
 }
 
+// cmdTitle sets the player's title, matching C do_title() (src/act.other.c:595-620).
 func cmdTitle(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Set your title to what?")
+	if s.player == nil {
 		return nil
 	}
-	s.player.Title = args[0]
-	s.Send("Title set.")
-	return nil
-}
+	if len(args) == 0 {
+		s.Send("Set your title to what?\r\n")
+		return nil
+	}
 
-func cmdDescribe(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Describe yourself with what?")
-		return nil
+	// Recover the full argument, then apply C's preprocessing.
+	title := strings.Join(args, " ")
+	title = strings.TrimSpace(title)
+	title = strings.ReplaceAll(title, "$$", "$")
+	title = game.DeleteANSIControls(title)
+
+	switch {
+	case s.player.IsNPC():
+		s.Send("Your title is fine... go away.\r\n")
+	case s.player.GetFlags()&(1<<uint(game.PlrNotitle)) != 0:
+		s.Send("You can't title yourself -- you shouldn't have abused it!\r\n")
+	case strings.Contains(title, "(") || strings.Contains(title, ")"):
+		s.Send("Titles can't contain the ( or ) characters.\r\n")
+	case len(title) > game.MAX_TITLE_LENGTH:
+		s.Send(fmt.Sprintf("Sorry, titles can't be longer than %d characters.\r\n", game.MAX_TITLE_LENGTH))
+	default:
+		game.SetTitle(s.player, title)
+		s.Send(fmt.Sprintf("Okay, you're now %s %s.\r\n", s.player.Name, s.player.Title))
 	}
-	s.player.Description = args[0]
-	s.Send("Description set.")
 	return nil
 }
