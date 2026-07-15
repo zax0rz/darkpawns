@@ -17,74 +17,9 @@ type gossipEntry struct {
 
 const maxGossipHistory = 25
 
-func (w *World) doSpecComm(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	switch strings.ToLower(cmd) {
-	case "shout":
-		return w.doShout(ch, me, arg)
-	case "whisper":
-		return w.doWhisper(ch, me, arg)
-	case "ask":
-		return w.doAsk(ch, me, arg)
-	}
-	return true
-}
-
 // doShout keeps special-procedure callers on the canonical channel path.
 func (w *World) doShout(ch *Player, me *MobInstance, arg string) bool {
 	w.DoChannel(ch, arg, "shout")
-	return true
-}
-
-// doWhisper — whisper implementation.
-func (w *World) doWhisper(ch *Player, me *MobInstance, arg string) bool {
-	target, msg := oneArgument(arg)
-	if target == "" || msg == "" {
-		sendToChar(ch, "Whisper whom what?\r\n")
-		return true
-	}
-
-	vict := w.getCharRoomVis(ch, target)
-	if vict == nil {
-		sendToChar(ch, "No one by that name is here.\r\n")
-		return true
-	}
-
-	vict.SendMessage(fmt.Sprintf("\x1B[1;33m%s whispers, '%s'\033[0m\r\n", ch.Name, msg))
-	ch.SendMessage(fmt.Sprintf("You whisper to %s, '%s'\r\n", vict.Name, msg))
-
-	// Broadcast to rest of room that whisper occurred.
-	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
-		if p.Name != ch.Name && p.Name != vict.Name {
-			p.SendMessage(fmt.Sprintf("%s whispers something to %s.\r\n", ch.Name, vict.Name))
-		}
-	}
-
-	return true
-}
-
-// doAsk — ask implementation (identical to whisper but broadcasts as ask).
-func (w *World) doAsk(ch *Player, me *MobInstance, arg string) bool {
-	target, msg := oneArgument(arg)
-	if target == "" || msg == "" {
-		sendToChar(ch, "Ask whom what?\r\n")
-		return true
-	}
-
-	vict := w.getCharRoomVis(ch, target)
-	if vict == nil {
-		sendToChar(ch, "No one by that name is here.\r\n")
-		return true
-	}
-
-	vict.SendMessage(fmt.Sprintf("\x1B[1;36m%s asks, '%s'\033[0m\r\n", ch.Name, msg))
-	ch.SendMessage(fmt.Sprintf("You ask %s, '%s'\r\n", vict.Name, msg))
-
-	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
-		if p.Name != ch.Name && p.Name != vict.Name {
-			p.SendMessage(fmt.Sprintf("%s asks %s something.\r\n", ch.Name, vict.Name))
-		}
-	}
-
 	return true
 }
 

@@ -840,7 +840,7 @@ var helpTopics = map[string]string{
 	"items":         "Item commands: get <item>, drop <item>, inventory/i, equipment/eq, wear <item>, remove <item>, wield <item>, hold <item>, give <item> <player>, put <item> <container>, eat <item>, drink <container>, quaff <item>",
 	"doors":         "Door commands: open <target>, close <target>, lock <target>, unlock <target>, pick <target>, knock <dir>",
 	"social":        "Social commands: wave, nod, grin, laugh, bow, curtsey, hug, kiss, cheer, cry, dance, smile, frown, shrug, clap, salute, yawn, stretch, scratch, sit, rest, sleep, wake, stand",
-	"info":          "Information commands: score, who, where, review, whois, consider, examine, time, weather, affects, autoexit, title, describe, spells, commands",
+	"info":          "Information commands: score, who, where, review, whois, consider, examine, time, weather, affects, autoexit, title, spells, commands",
 	"account":       "Account commands: password <old> <new> (change password), prompt [string|on|off|all], save, quit",
 	"groups":        "Group commands: follow <player>, group <player>, ungroup/disband, gtell/gsay <text>, split <amount>, assist <target>",
 	"reporting":     "Player help: report <player> <type> [desc] — report abusive behavior. Types: harassment, spam, cheating, hate_speech, exploit, other. Also: bug, typo, idea, todo",

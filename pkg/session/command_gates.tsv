@@ -105,9 +105,6 @@ date	31	0	C interpreter.c:406
 daydream	0	4	C interpreter.c:407
 dc	32	0	C interpreter.c:409
 deposit	1	8	C interpreter.c:410
-desc	0	0	Go alias for describe
-describe	0	0	Go character-profile setting; safe in every position
-description	0	0	Go character-profile setting; safe in every position
 detect	0	8	Go spelling of C search; same standing gate
 diag	0	5	Go alias for diagnose
 diagnose	0	5	C interpreter.c:412

@@ -80,20 +80,6 @@ func cmdCommands(s *Session, args []string) error {
 	return nil
 }
 
-// cmdDescription — set the player's character description.
-func cmdDescription(s *Session, args []string) error {
-	if s.player == nil {
-		return nil
-	}
-	if len(args) == 0 {
-		s.Send("Set your description to what?")
-		return nil
-	}
-	s.player.Description = strings.Join(args, " ")
-	s.Send("Description set.")
-	return nil
-}
-
 // cmdToggle — show the player's preference-flag grid.
 // Source: act.informative.c do_toggle(), which is purely informational —
 // it ignores its argument and always prints the full grid. Individual
