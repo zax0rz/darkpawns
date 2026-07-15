@@ -165,47 +165,43 @@ func TestSpecProc_SmokeAll(t *testing.T) {
 func TestSpecGuild_Golden(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 
-	// Configure a learned, practicable skill.
-	skill := engine.NewSkill("backstab", "Backstab", engine.SkillTypeCombat, 1)
-	skill.Learned = true
-	skill.Level = 10
-	skill.MaxLevel = 100
-	skill.Practice = 5
-	player.SkillManager.RegisterSkill(skill)
+	// A thief who can learn backstab (skill 131, thief min level 1).
+	player.Class = ClassThief
+	player.SetLevel(5)
+	player.SetPractices(5)
+	player.Stats.Int = 13 // int_app[13].learn = 25 → full gain (thief MAXGAIN = 25)
 
 	mob := newSpecProcTestMob(t, w, 1001, 10)
 
-	if got := specGuild(w, player, mob, "look", ""); got {
+	// Non-practice commands pass through (spec_procs.c:208).
+	if specGuild(w, player, mob, "look", "") {
 		t.Error("specGuild should return false for non-practice commands")
 	}
 
-	if got := specGuild(w, player, mob, "practice", ""); !got {
-		t.Error("specGuild should handle practice with empty arg")
-	}
-	if msg := lastMsg(); !strings.Contains(msg, "Practise what?") {
-		t.Errorf("expected 'Practise what?', got %q", msg)
+	// No-arg → list_skills catalog.
+	specGuild(w, player, mob, "practice", "")
+	if msg := lastMsg(); !strings.Contains(msg, "You know of the following skills:") {
+		t.Errorf("expected catalog listing, got %q", msg)
 	}
 
-	if got := specGuild(w, player, mob, "practice", "nonexistent"); !got {
-		t.Error("specGuild should handle practice with unknown skill")
-	}
+	// A skill the class cannot learn → "You do not know of that <splskl>."
+	specGuild(w, player, mob, "practice", "fireball") // a mage spell
 	if msg := lastMsg(); !strings.Contains(msg, "You do not know of that skill.") {
-		t.Errorf("expected unknown skill message, got %q", msg)
+		t.Errorf("expected unknown-skill message, got %q", msg)
 	}
 
-	beforeLevel := skill.Level
-	if got := specGuild(w, player, mob, "practice", "backstab"); !got {
-		t.Error("specGuild should handle practicing a known skill")
-	}
+	// Practicing a learnable skill: message, one practice consumed, skill gains
+	// MIN(MAXGAIN, MAX(MINGAIN, int_app[INT].learn)) = MIN(25, 25) from 0 → 25.
+	specGuild(w, player, mob, "practice", "backstab")
 	if msg := lastMsg(); !strings.Contains(msg, "You practice for a while...") {
 		t.Errorf("expected practice message, got %q", msg)
 	}
-	if skill.Level == beforeLevel && skill.Practice == 5 {
-		t.Error("practice should improve skill level or consume practice points")
+	if player.GetPractices() != 4 {
+		t.Errorf("practices = %d, want 4 (one consumed)", player.GetPractices())
 	}
-
-	// Player.IsNPC is always false for *Player; the NPC guard in specGuild is
-	// unreachable through current dispatch, so it is covered by the smoke test.
+	if got := player.GetSkill("backstab"); got != 25 {
+		t.Errorf("backstab %% = %d, want 25", got)
+	}
 }
 
 // TestSpecDump_Golden verifies C-fidelity dump value awards.

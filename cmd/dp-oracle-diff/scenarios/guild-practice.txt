@@ -1,0 +1,45 @@
+# Phase 1 guild learning: `practice <skill>` at a guildmaster actually learns it.
+# C SPECIAL(guild) (spec_procs.c:201) intercepts `practice` when a guildmaster mob
+# shares the room. We spawn guildmaster #8012 (Belar, warrior GM, 80.mob, assigned `guild`
+# on both servers) into the newbie's start room 8162 rather than solving guild
+# navigation. Gain = MIN(MAXGAIN, MAX(MINGAIN, int_app[INT].learn)) — deterministic
+# under DP_SEED (same rolled INT both servers). quiet-mobs keeps the world still.
+
+[fixture]
+spawn-mob 8012 1 8162 80
+quiet-mobs
+
+[setup:oracle]
+Cfighter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cfighter
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+practice
+practice kick
+practice kick
+practice

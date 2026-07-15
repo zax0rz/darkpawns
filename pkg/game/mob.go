@@ -92,11 +92,12 @@ type MobInstance struct {
 // NewMob creates a new mob instance from a prototype.
 // This is called NewMob to match the existing code in world.go
 func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
-	// Calculate HP from dice roll
+	// Roll HP from the mob's hit dice — C read_mobile() rolls dice(hp_num, hp_size)
+	// per instance (db.c), consuming hp_num shared-PRNG draws. A prior "average"
+	// shortcut drew nothing, desyncing the seeded stream on every mob spawn.
 	hp := 0
 	if proto.HP.Num > 0 && proto.HP.Sides > 0 {
-		// Simple average calculation for now
-		hp = (proto.HP.Num * (proto.HP.Sides + 1) / 2) + proto.HP.Plus
+		hp = dprng.Dice(proto.HP.Num, proto.HP.Sides) + proto.HP.Plus
 	} else {
 		hp = 100 // Default
 	}

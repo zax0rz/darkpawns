@@ -1,6 +1,10 @@
 package session
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
+)
 
 // spellLevelGolden is transcribed verbatim from src/class.c init_spell_levels().
 var spellLevelGolden = []struct {
@@ -291,7 +295,7 @@ var spellLevelGolden = []struct {
 func TestSpellLevels_GoldenAgainstCSource(t *testing.T) {
 	// Build a lookup from classSpells for fast verification.
 	lookup := make(map[int]map[int]int) // class -> spellNum -> level
-	for classIdx, entries := range classSpells {
+	for classIdx, entries := range game.ClassSpells {
 		lookup[classIdx] = make(map[int]int)
 		for _, e := range entries {
 			lookup[classIdx][e.Num] = e.Level
