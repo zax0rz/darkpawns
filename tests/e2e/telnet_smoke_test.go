@@ -184,12 +184,13 @@ func TestTelnetSmoke_SkillKick(t *testing.T) {
 	createWarrior(t, conn, r, name, "kickpw")
 	walkToTempleSquare(t, conn, r)
 
-	// Look, target a present NPC, kick it; retry if it wandered off. Both
-	// outcomes name the skill: "You kick <x> square in the chest!" (hit) or
-	// "You try to kick <x>, but miss!" (miss) — match the lowercase "kick" that
-	// only the skill emits ("Kick who?" for a missing target is capitalized).
-	kicked := false
-	for i := 0; i < 8 && !kicked; i++ {
+	// A freshly-created warrior has NOT learned kick (0%) — C do_start grants no
+	// starting skills, so do_kick's `!GET_SKILL` gate fires: "You'd better leave
+	// all the martial arts to fighters." (act.offensive.c). This exercises the
+	// skill-command dispatch faithfully; actually landing a kick requires
+	// practicing it at a guild first (a separate follow-on).
+	gated := false
+	for i := 0; i < 8 && !gated; i++ {
 		mustWrite(t, conn, "look\r\n")
 		look := readUntil(t, conn, r, "Exits:", 4*time.Second)
 		kw := firstMobKeyword(look)
@@ -197,12 +198,12 @@ func TestTelnetSmoke_SkillKick(t *testing.T) {
 			continue // no NPC visible this tick; look again
 		}
 		mustWrite(t, conn, "kick "+kw+"\r\n")
-		if readUntil(t, conn, r, "kick", 3*time.Second) != "" {
-			kicked = true
+		if readUntil(t, conn, r, "leave all the martial arts to fighters", 3*time.Second) != "" {
+			gated = true
 		}
 	}
-	if !kicked {
-		t.Fatal("could not land a `kick` on any NPC in Temple Square — skill pipeline broken?")
+	if !gated {
+		t.Fatal("unlearned newbie `kick` did not produce the C martial-arts gate — skill pipeline broken?")
 	}
 
 	mustWrite(t, conn, "quit\r\n")
