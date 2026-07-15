@@ -173,6 +173,13 @@ func canSee(observer, subject Actor) bool {
 	return true
 }
 
+// CanSee reports whether observer can see subject using the canonical
+// CAN_SEE rules. Session-owned commands such as who use this viewer-aware
+// boundary instead of duplicating visibility policy.
+func CanSee(observer, subject Actor) bool {
+	return canSee(observer, subject)
+}
+
 // sendOk checks whether 'to' can receive a message.
 // C: SENDOK(ch, to_sleep) — desc && (AWAKE(ch) || to_sleep) && !PLR_WRITING
 func sendOk(to Actor, toSleep bool) bool {

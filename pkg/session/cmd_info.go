@@ -2,6 +2,8 @@ package session
 
 import (
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -426,43 +428,334 @@ func cmdUsersSafe(s *Session, args []string) error {
 	return nil
 }
 
-func cmdWho(s *Session) error {
+const (
+	whoFormat        = "format: who [minlev[-maxlev]] [-n name] [-c classlist] [-s] [-o] [-q] \r\n"
+	roomNoWhoFlagBit = 19 // ROOM_NO_WHO_ROOM in src/structs.h
+)
+
+type whoOptions struct {
+	low       int
+	high      int
+	name      string
+	classMask int64
+	short     bool
+	quest     bool
+	outlaws   bool
+	sameZone  bool
+	sameRoom  bool
+}
+
+func parseWhoLevelRange(arg string, low, high int) (int, int, bool) {
+	parts := strings.SplitN(arg, "-", 2)
+	parsedLow, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return low, high, false
+	}
+	low = parsedLow
+	if len(parts) == 2 {
+		parsedHigh, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return low, high, false
+		}
+		high = parsedHigh
+	}
+	return low, high, true
+}
+
+func parseWhoArgs(args []string) (whoOptions, bool) {
+	opts := whoOptions{low: 1, high: LVL_IMPL}
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "" {
+			continue
+		}
+
+		if arg[0] >= '0' && arg[0] <= '9' {
+			low, high, ok := parseWhoLevelRange(arg, opts.low, opts.high)
+			if !ok {
+				return opts, false
+			}
+			opts.low, opts.high = low, high
+			// Accept the brief's space-separated spelling as well as C's
+			// min-max token. A second bare number is the upper bound.
+			if !strings.Contains(arg, "-") && i+1 < len(args) {
+				if upper, err := strconv.Atoi(args[i+1]); err == nil {
+					opts.high = upper
+					i++
+				}
+			}
+			continue
+		}
+
+		if !strings.HasPrefix(arg, "-") || len(arg) < 2 {
+			return opts, false
+		}
+		switch arg[1] {
+		case 'o', 'k':
+			opts.outlaws = true
+		case 's':
+			opts.short = true
+		case 'q':
+			opts.quest = true
+		case 'r':
+			opts.sameZone = true
+		case 'z':
+			opts.sameRoom = true
+		case 'l':
+			if i+1 >= len(args) {
+				continue
+			}
+			i++
+			low, high, ok := parseWhoLevelRange(args[i], opts.low, opts.high)
+			if !ok {
+				return opts, false
+			}
+			opts.low, opts.high = low, high
+			if !strings.Contains(args[i], "-") && i+1 < len(args) {
+				if upper, err := strconv.Atoi(args[i+1]); err == nil {
+					opts.high = upper
+					i++
+				}
+			}
+		case 'n':
+			if i+1 < len(args) {
+				i++
+				opts.name = args[i]
+			}
+		case 'c':
+			if i+1 < len(args) {
+				i++
+				for _, classLetter := range strings.ToLower(args[i]) {
+					opts.classMask |= game.FindClassBitvector(byte(classLetter))
+				}
+			}
+		default:
+			return opts, false
+		}
+	}
+	return opts, true
+}
+
+func whoClassAbbrev(class int) string {
+	if class >= 0 && class < len(game.ClassAbbrevs) {
+		return game.ClassAbbrevs[class]
+	}
+	return "--"
+}
+
+func whoShortRank(level int) string {
+	switch {
+	case level >= LVL_IMPL:
+		return "[ *IMP*  ]"
+	case level >= LVL_GRGOD:
+		return "[ GRGOD  ]"
+	case level >= LVL_HIGOD:
+		return "[ HIGOD  ]"
+	case level >= LVL_LEGEND:
+		return "[ LEGEND ]"
+	case level >= LVL_GOD:
+		return "[  GOD   ]"
+	case level >= LVL_IMMORT+1:
+		return "[ TITAN  ]"
+	case level >= LVL_IMMORT:
+		return "[ IMMORT ]"
+	default:
+		return ""
+	}
+}
+
+func whoHasFlag(player *game.Player, bit int) bool {
+	return player.GetFlags()&(1<<uint(bit)) != 0
+}
+
+func whoStatus(player *game.Player) string {
+	var status strings.Builder
+	flags := player.GetFlags()
+	if flags&(1<<uint(game.PlrMailing)) != 0 {
+		status.WriteString(" (mailing)")
+	} else if flags&(1<<uint(game.PlrWriting)) != 0 {
+		status.WriteString(" (writing)")
+	}
+	if flags&(1<<uint(game.PrfDeaf)) != 0 {
+		status.WriteString(" (deaf)")
+	}
+	if flags&(1<<uint(game.PrfNotell)) != 0 {
+		status.WriteString(" (notell)")
+	}
+	if flags&(1<<uint(game.PrfQuest)) != 0 {
+		status.WriteString(" (quest)")
+	}
+	if flags&(1<<uint(game.PrfAFK)) != 0 {
+		status.WriteString(" (AFK)")
+	}
+	if flags&(1<<uint(game.PrfInactive)) != 0 {
+		status.WriteString(" (INACTIVE)")
+	}
+	if flags&(1<<uint(game.PlrIt)) != 0 {
+		status.WriteString(" (IT)")
+	}
+	if flags&(1<<uint(game.PlrOutlaw)) != 0 {
+		status.WriteString(" (OUTLAW)")
+	}
+	return status.String()
+}
+
+func whoTargetVisible(s *Session, target *game.Player, opts whoOptions) bool {
+	viewer := s.player
+	if viewer == nil || target == nil || !game.CanSee(viewer, target) {
+		return false
+	}
+	level := target.GetLevel()
+	if level < opts.low || level > opts.high {
+		return false
+	}
+	if opts.quest && !whoHasFlag(target, game.PrfQuest) {
+		return false
+	}
+	if opts.outlaws && !whoHasFlag(target, game.PlrOutlaw) {
+		return false
+	}
+	if room, ok := s.manager.world.GetRoom(target.GetRoom()); ok && room != nil &&
+		(room.HasFlag(roomNoWhoFlagBit) || roomFlagNamed(room.Flags, "no_who_room", "no_who")) &&
+		viewer.GetLevel() < LVL_IMPL {
+		return false
+	}
+	if opts.sameZone && s.manager.world.GetRoomZone(viewer.GetRoom()) != s.manager.world.GetRoomZone(target.GetRoom()) {
+		return false
+	}
+	if opts.sameRoom && viewer.GetRoom() != target.GetRoom() {
+		return false
+	}
+	class := target.GetClass()
+	if opts.classMask != 0 && (class < 0 || opts.classMask&(1<<uint(class)) == 0) {
+		return false
+	}
+	if opts.name != "" && !strings.EqualFold(target.GetName(), opts.name) && !strings.Contains(target.GetTitle(), opts.name) {
+		return false
+	}
+	return true
+}
+
+func roomFlagNamed(flags []string, names ...string) bool {
+	for _, flag := range flags {
+		for _, name := range names {
+			if strings.EqualFold(flag, name) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func whoColorEnabled(viewer *game.Player) bool {
+	if viewer == nil {
+		return false
+	}
+	flags := viewer.GetFlags()
+	return flags&(1<<uint(game.PrfColor1)) != 0 || flags&(1<<uint(game.PrfColor2)) != 0
+}
+
+func renderWhoLong(viewer, player *game.Player) string {
+	level := player.GetLevel()
+	name, title := player.GetName(), player.GetTitle()
+	var line string
+	var color string
+	switch {
+	case level >= LVL_IMMORT:
+		line = fmt.Sprintf("[ Wizard ] %s %s", name, title)
+		if whoColorEnabled(viewer) {
+			color = "\x1b[0;31m"
+		}
+	case whoHasFlag(player, game.PlrChosen):
+		line = fmt.Sprintf("[ Chosen ] %s %s", name, title)
+		if whoColorEnabled(viewer) {
+			color = "\x1b[0;33m"
+		}
+	default:
+		line = fmt.Sprintf("[ %2d  %s ] %s %s", level, whoClassAbbrev(player.GetClass()), name, title)
+	}
+	line += whoStatus(player)
+	if color != "" {
+		line = color + line + "\x1b[0m"
+	}
+	return line + "\r\n"
+}
+
+func renderWhoShort(viewer, player *game.Player) string {
+	rank := whoShortRank(player.GetLevel())
+	if rank == "" {
+		rank = fmt.Sprintf("[ %2d  %s ]", player.GetLevel(), whoClassAbbrev(player.GetClass()))
+	}
+	line := fmt.Sprintf("%s %-12.12s", rank, player.GetName())
+	if whoColorEnabled(viewer) {
+		return "\x1b[33m" + line + "\x1b[0m"
+	}
+	return line
+}
+
+func cmdWho(s *Session, args []string) error {
+	opts, ok := parseWhoArgs(args)
+	if !ok {
+		s.sendText(whoFormat)
+		return nil
+	}
+
 	s.manager.mu.RLock()
 	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, sess := range s.manager.sessions {
 		sessions = append(sessions, sess)
 	}
 	s.manager.mu.RUnlock()
+	sort.SliceStable(sessions, func(i, j int) bool {
+		return sessions[i].connectedAt.After(sessions[j].connectedAt)
+	})
 
-	isImm := s.player != nil && s.player.Level >= LVL_IMMORT
-
-	out := "Players\n-------\n"
+	var out strings.Builder
+	out.WriteString("Players\r\n-------\r\n")
 	count := 0
+	lastShort := ""
 	for _, sess := range sessions {
-		if sess.player == nil {
+		if !whoTargetVisible(s, sess.player, opts) {
 			continue
 		}
-		p := sess.player
-		className := game.ClassNames[p.Class]
-		raceName := game.RaceNames[p.Race]
-		// Format: [ LV  Class ] Name Race — act.informative.c line 1874
-		tag := "player"
-		if sess.isAgent && isImm {
-			tag = "agent"
+		if opts.short {
+			lastShort = renderWhoShort(s.player, sess.player)
+			out.WriteString(lastShort)
+			count++
+			if count%4 == 0 {
+				out.WriteString("\r\n")
+			}
+			continue
 		}
-		out += fmt.Sprintf("[ %2d  %-8s] %-15s (%s, %s, %s)\n",
-			p.Level, className, p.Name, raceName, className, tag)
+		out.WriteString(renderWhoLong(s.player, sess.player))
 		count++
 	}
+	if opts.short {
+		// The C implementation builds the trailer in the same scratch buffer
+		// as the final short-list cell. For a partial four-column row it sends
+		// that buffer again, so the last cell is observably repeated.
+		if count%4 != 0 {
+			out.WriteString(lastShort)
+			switch count {
+			case 1:
+				out.WriteString("\r\nOne character displayed.\r\n\r\n")
+			default:
+				fmt.Fprintf(&out, "\r\n%d characters displayed.\r\n\r\n", count)
+			}
+		}
+		s.sendText(out.String())
+		return nil
+	}
+
 	switch count {
 	case 0:
-		out += "\nNo-one at all!\n"
+		out.WriteString("\r\nNo-one at all!\r\n")
 	case 1:
-		out += "\nOne character displayed.\n"
+		out.WriteString("\r\nOne character displayed.\r\n")
 	default:
-		out += fmt.Sprintf("\n%d characters displayed.\n", count)
+		fmt.Fprintf(&out, "\r\n%d characters displayed.\r\n", count)
 	}
-	s.sendText(out)
+	s.sendText(out.String())
 	return nil
 }
 
@@ -478,6 +771,9 @@ func cmdWho(s *Session) error {
 
 // cmdWhere lists all online players and their locations.
 // Source: act.informative.c do_where() lines 2244-2307
+// TODO(domain7b): the critical mortal vnum exposure is closed by the
+// LVL_IMMORT command gate; the optional immortal target-search and C visibility
+// residual still belongs here.
 func cmdWhere(s *Session) error {
 	s.manager.mu.RLock()
 	sessions := make([]*Session, 0, len(s.manager.sessions))

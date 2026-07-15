@@ -9,6 +9,8 @@ import (
 const (
 	LVL_IMMORT = 31
 	LVL_GOD    = 34
+	LVL_LEGEND = 35
+	LVL_HIGOD  = 36
 	LVL_GRGOD  = 38
 	LVL_IMPL   = 40
 )
