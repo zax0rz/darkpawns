@@ -57,6 +57,8 @@ func init() {
 	registerCommand("west", wrapMove("west"), "Move west.", "w")
 	registerCommand("up", wrapMove("up"), "Move up.", "u")
 	registerCommand("down", wrapMove("down"), "Move down.", "d")
+	registerCommand("enter", wrapArgs(cmdEnter), "Enter a nearby doorway or indoor area.")
+	registerCommand("leave", wrapNoArgs(cmdLeave), "Leave for the outdoors.")
 
 	// Look
 	registerCommand("look", wrapArgs(cmdLook), "Look around the room.", "l")

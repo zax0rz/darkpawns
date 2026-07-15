@@ -8,61 +8,7 @@ import (
 )
 
 func cmdFollow(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Whom do you wish to follow?")
-		return nil
-	}
-
-	targetName := args[0]
-
-	// follow self = stop following (act.movement.c line 912–917)
-	if strings.EqualFold(targetName, s.player.Name) {
-		if s.player.GetFollowing() == "" {
-			s.sendText("You are already following yourself.")
-			return nil
-		}
-		oldLeader := s.player.GetFollowing()
-		s.player.SetFollowing("")
-		s.player.InGroup = false // REMOVE_BIT AFF_GROUP — act.movement.c line 926
-		s.sendText(fmt.Sprintf("You stop following %s.", oldLeader))
-		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
-			leader.SendMessage(fmt.Sprintf("%s stops following you.\r\n", s.player.Name))
-		}
-		return nil
-	}
-
-	// Find target — get_char_room_vis (act.movement.c line 895)
-	target, ok := s.manager.world.GetPlayer(targetName)
-	if !ok {
-		s.sendText("There is no one by that name here.")
-		return nil
-	}
-	if target.GetRoom() != s.player.GetRoom() {
-		s.sendText("They are not here.")
-		return nil
-	}
-
-	// Already following? (act.movement.c line 904)
-	if s.player.GetFollowing() == target.Name {
-		s.sendText(fmt.Sprintf("You are already following %s.", target.Name))
-		return nil
-	}
-
-	// Stop following previous leader (act.movement.c line 924–925 stop_follower)
-	if s.player.GetFollowing() != "" {
-		oldLeader := s.player.GetFollowing()
-		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
-			leader.SendMessage(fmt.Sprintf("%s stops following you.\r\n", s.player.Name))
-		}
-	}
-
-	// REMOVE_BIT AFF_GROUP — act.movement.c line 926 (leaving old group when changing leader)
-	s.player.SetFollowing(target.Name)
-	s.player.InGroup = false
-
-	// add_follower() — act.movement.c line 948
-	s.sendText(fmt.Sprintf("You now follow %s.", target.Name))
-	target.SendMessage(fmt.Sprintf("%s now follows you.\r\n", s.player.Name))
+	s.manager.world.DoFollow(s.player, strings.Join(args, " "), false)
 	return nil
 }
 

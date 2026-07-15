@@ -9,168 +9,33 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
-	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Ensure slog is used
 
-// cmdStand handles the 'stand' command.
-// Source: act.movement.c do_stand() lines 691–730
 func cmdStand(s *Session) error {
-	pos := s.player.GetPosition()
-
-	switch pos {
-	case combat.PosStanding:
-		s.Send("You are already standing.")
-	case combat.PosSitting:
-		s.Send("You stand up.")
-		broadcastToRoom(s, fmt.Sprintf("%s clambers to %s feet.", s.player.Name, genderHisHer(s.player)))
-		s.player.SetPosition(combat.PosStanding)
-	case combat.PosResting:
-		s.Send("You stop resting, and stand up.")
-		broadcastToRoom(s, fmt.Sprintf("%s stops resting, and clambers on %s feet.", s.player.Name, genderHisHer(s.player)))
-		s.player.SetPosition(combat.PosStanding)
-	case combat.PosSleeping:
-		s.Send("You have to wake up first!")
-	case combat.PosFighting:
-		s.Send("Do you not consider fighting as standing?")
-	default:
-		s.Send("You stop floating around, and put your feet on the ground.")
-		broadcastToRoom(s, fmt.Sprintf("%s stops floating around, and puts %s feet on the ground.", s.player.Name, genderHisHer(s.player)))
-		s.player.SetPosition(combat.PosStanding)
-	}
+	s.manager.world.DoStand(s.player)
 	return nil
 }
 
-// cmdSit handles the 'sit' command.
-// Source: act.movement.c do_sit() lines 732–762
 func cmdSit(s *Session) error {
-	pos := s.player.GetPosition()
-
-	switch pos {
-	case combat.PosStanding:
-		s.Send("You sit down.")
-		broadcastToRoom(s, fmt.Sprintf("%s sits down.", s.player.Name))
-		s.player.SetPosition(combat.PosSitting)
-	case combat.PosSitting:
-		s.Send("You're sitting already.")
-	case combat.PosResting:
-		s.Send("You stop resting, and sit up.")
-		broadcastToRoom(s, fmt.Sprintf("%s stops resting.", s.player.Name))
-		s.player.SetPosition(combat.PosSitting)
-	case combat.PosSleeping:
-		s.Send("You have to wake up first.")
-	case combat.PosFighting:
-		s.Send("Sit down while fighting? are you MAD?")
-	default:
-		s.Send("You stop floating around, and sit down.")
-		broadcastToRoom(s, fmt.Sprintf("%s stops floating around, and sits down.", s.player.Name))
-		s.player.SetPosition(combat.PosSitting)
-	}
+	s.manager.world.DoSit(s.player)
 	return nil
 }
 
-// cmdRest handles the 'rest' command.
-// Source: act.movement.c do_rest() lines 764–795
 func cmdRest(s *Session) error {
-	pos := s.player.GetPosition()
-
-	switch pos {
-	case combat.PosStanding:
-		s.Send("You sit down and rest your tired bones.")
-		broadcastToRoom(s, fmt.Sprintf("%s sits down and rests.", s.player.Name))
-		s.player.SetPosition(combat.PosResting)
-	case combat.PosSitting:
-		s.Send("You rest your tired bones.")
-		broadcastToRoom(s, fmt.Sprintf("%s rests.", s.player.Name))
-		s.player.SetPosition(combat.PosResting)
-	case combat.PosResting:
-		s.Send("You are already resting.")
-	case combat.PosSleeping:
-		s.Send("You have to wake up first.")
-	case combat.PosFighting:
-		s.Send("Rest while fighting?  Are you MAD?")
-	default:
-		s.Send("You stop floating around, and stop to rest your tired bones.")
-		broadcastToRoom(s, fmt.Sprintf("%s stops floating around, and rests.", s.player.Name))
-		s.player.SetPosition(combat.PosResting)
-	}
+	s.manager.world.DoRest(s.player)
 	return nil
 }
 
-// cmdSleep handles the 'sleep' command.
-// Source: act.movement.c do_sleep() lines 797–825
 func cmdSleep(s *Session) error {
-	pos := s.player.GetPosition()
-
-	switch pos {
-	case combat.PosStanding, combat.PosSitting, combat.PosResting:
-		s.Send("You go to sleep.")
-		broadcastToRoom(s, fmt.Sprintf("%s lies down and falls asleep.", s.player.Name))
-		s.player.SetPosition(combat.PosSleeping)
-	case combat.PosSleeping:
-		s.Send("You are already sound asleep.")
-	case combat.PosFighting:
-		s.Send("Sleep while fighting?  Are you MAD?")
-	default:
-		s.Send("You stop floating around, and lie down to sleep.")
-		broadcastToRoom(s, fmt.Sprintf("%s stops floating around, and lie down to sleep.", s.player.Name))
-		s.player.SetPosition(combat.PosSleeping)
-	}
+	s.manager.world.DoSleep(s.player)
 	return nil
 }
 
-// cmdWake handles the 'wake' command with optional target.
-// Source: act.movement.c do_wake() lines 827–870
 func cmdWake(s *Session, args []string) error {
-	if len(args) > 0 {
-		targetName := strings.Join(args, " ")
-
-		// Can't wake others while sleeping
-		if s.player.GetPosition() == combat.PosSleeping {
-			s.Send("Maybe you should wake yourself up first.")
-			return nil
-		}
-
-		// Find target in room
-		target, ok := s.manager.world.GetPlayer(targetName)
-		if !ok {
-			s.Send("There is no one by that name here.")
-			return nil
-		}
-		if target.GetRoom() != s.player.GetRoom() {
-			s.Send("They are not here.")
-			return nil
-		}
-
-		if target == s.player {
-			// Fall through to self-wake below
-		} else if target.GetPosition() > combat.PosSleeping {
-			s.Send(fmt.Sprintf("%s is already awake.", target.Name))
-			return nil
-		} else if target.GetPosition() < combat.PosSleeping {
-			s.Send(fmt.Sprintf("%s's in pretty bad shape!", target.Name))
-			return nil
-		} else {
-			// Wake the target
-			s.Send(fmt.Sprintf("You wake %s up.", target.Name))
-			target.SendMessage(fmt.Sprintf("%s wakes you up.", s.player.Name))
-			broadcastToRoomExcept(s, fmt.Sprintf("%s wakes up %s.", s.player.Name, target.Name), target.Name)
-			target.SetPosition(combat.PosSitting)
-			return nil
-		}
-	}
-
-	// Self-wake
-	if s.player.GetPosition() > combat.PosSleeping {
-		s.Send("You are already awake...")
-		return nil
-	}
-
-	s.Send("You awaken, and sit up.")
-	broadcastToRoom(s, fmt.Sprintf("%s awakens.", s.player.Name))
-	s.player.SetPosition(combat.PosSitting)
+	s.manager.world.DoWake(s.player, strings.Join(args, " "))
 	return nil
 }
 
@@ -294,68 +159,6 @@ func cmdFleeMovement(s *Session) error {
 	return nil
 }
 
-// cmdFollowMovement is a movement-phase variant of cmdFollow.
-// The canonical implementation lives in commands.go; this alias is kept
-// for any routing that needs to reference it from the movement package.
-// Source: act.movement.c do_follow() lines 883–951
-func cmdFollowMovement(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Whom do you wish to follow?")
-		return nil
-	}
-
-	targetName := args[0]
-
-	// follow self = stop following
-	if strings.EqualFold(targetName, s.player.Name) {
-		if s.player.GetFollowing() == "" {
-			s.Send("You are already following yourself.")
-			return nil
-		}
-		oldLeader := s.player.GetFollowing()
-		s.player.SetFollowing("")
-		s.player.InGroup = false
-		s.Send(fmt.Sprintf("You stop following %s.", oldLeader))
-		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
-			leader.SendMessage(fmt.Sprintf("%s stops following you.\r\n", s.player.Name))
-		}
-		return nil
-	}
-
-	// Find target in room
-	target, ok := s.manager.world.GetPlayer(targetName)
-	if !ok {
-		s.Send("There is no one by that name here.")
-		return nil
-	}
-	if target.GetRoom() != s.player.GetRoom() {
-		s.Send("They are not here.")
-		return nil
-	}
-
-	// Already following?
-	if s.player.GetFollowing() == target.Name {
-		s.Send(fmt.Sprintf("You are already following %s.", target.Name))
-		return nil
-	}
-
-	// Stop following previous leader
-	if s.player.GetFollowing() != "" {
-		oldLeader := s.player.GetFollowing()
-		if leader, ok := s.manager.world.GetPlayer(oldLeader); ok {
-			leader.SendMessage(fmt.Sprintf("%s stops following you.\r\n", s.player.Name))
-		}
-	}
-
-	// Set new follow target
-	s.player.SetFollowing(target.Name)
-	s.player.InGroup = false
-
-	s.Send(fmt.Sprintf("You now follow %s.", target.Name))
-	target.SendMessage(fmt.Sprintf("%s now follows you.\r\n", s.player.Name))
-	return nil
-}
-
 // cmdSneak handles the 'sneak' command.
 // This is a wrapper around the skill-based sneak in pkg/command.
 // The actual skill implementation lives in pkg/game/skills.go.
@@ -386,45 +189,4 @@ func broadcastToRoom(s *Session, text string) {
 		return
 	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
-}
-
-// broadcastToRoomExcept sends a message to the room excluding both sender and a named target.
-func broadcastToRoomExcept(s *Session, text string, exclude string) {
-	if s.player == nil {
-		return
-	}
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "position",
-			From: s.player.Name,
-			Text: text,
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return
-	}
-	// Broadcast excluding sender
-	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
-	// Also exclude target if they have a session
-	if targetSess, ok := s.manager.GetSession(exclude); ok {
-		_ = targetSess
-		// target already got a direct message, skip the broadcast to them
-	}
-}
-
-// genderHisHer returns "his" or "her" based on player gender.
-func genderHisHer(p interface{}) string {
-	if pl, ok := p.(*game.Player); ok {
-		switch pl.GetSex() {
-		case 0:
-			return "his"
-		case 1:
-			return "her"
-		default:
-			return "its"
-		}
-	}
-	return "his"
 }
