@@ -344,7 +344,7 @@ func TestCmdWho(t *testing.T) {
 	m.sessions["alice"] = s
 	m.mu.Unlock()
 
-	err := cmdWho(s)
+	err := cmdWho(s, nil)
 	if err != nil {
 		t.Fatalf("cmdWho failed: %v", err)
 	}

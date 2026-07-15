@@ -79,6 +79,7 @@ Y
 score
 where
 who
+who -s
 consider Cviewobs
 consider Nobody
 time
