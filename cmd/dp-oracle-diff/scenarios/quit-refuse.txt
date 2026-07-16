@@ -1,0 +1,38 @@
+# DP-1115 RED: `quit` from an unsafe room (8162 Temple Infirmary, NOT in the
+# safe-quit set {8004,8008,homes,owned}). C do_quit (act.other.c:114-131)
+# refuses and directs to REALLYQUIT without disconnecting; the port currently
+# collapses quit/reallyquit into one unrestricted logout.
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cprowler
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cprowler
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[probe]
+quit
