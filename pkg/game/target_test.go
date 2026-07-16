@@ -88,6 +88,28 @@ func TestResolveCharInRoomSelfAndMe(t *testing.T) {
 	}
 }
 
+func TestResolveCharInRoomCasterNameAndPlayerOnlyPrefix(t *testing.T) {
+	w, viewer := newResolverTestWorld(t)
+
+	for _, name := range []string{"hero", "he"} {
+		target, ok := w.ResolveCharInRoom(viewer, name)
+		if !ok || target.Player != viewer {
+			t.Errorf("ResolveCharInRoom(%q) = %+v ok=%v, want caster", name, target, ok)
+		}
+	}
+
+	target, ok := w.ResolveCharInRoom(viewer, "0.Zax")
+	if !ok || target.Player == nil || target.Player.Name != "Zax" {
+		t.Fatalf("ResolveCharInRoom(0.Zax) = %+v ok=%v, want player Zax", target, ok)
+	}
+	if _, ok := w.ResolveCharInRoom(viewer, "0.guard"); ok {
+		t.Fatal("ResolveCharInRoom(0.guard) resolved a mob, want player-only lookup")
+	}
+	if _, ok := w.ResolveCharInRoom(viewer, "0.Za"); ok {
+		t.Fatal("ResolveCharInRoom(0.Za) accepted an abbreviation, want exact player name")
+	}
+}
+
 func TestResolveCharInRoomAbbrevAndKeywords(t *testing.T) {
 	w, viewer := newResolverTestWorld(t)
 

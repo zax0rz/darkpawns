@@ -6,10 +6,10 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-// grantClassSpells populates the player's SpellMap with every castable spell
-// their class qualifies for at their current level. Without this, SpellMap is
-// never filled and `cast` rejects every spell with "You don't know ..." — no
-// player could ever cast anything.
+// grantClassSpells maintains the legacy SpellMap catalog with every castable
+// spell the player's class qualifies for at their current level. The cast
+// command uses the canonical class-level table plus practiced proficiency;
+// SpellMap remains populated for save compatibility and older consumers.
 //
 // It is additive and idempotent: safe to call on character creation, on login,
 // and after leveling up. Entries whose number is not a castable spell (i.e. the

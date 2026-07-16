@@ -209,13 +209,11 @@ func TestTelnetSmoke_SkillKick(t *testing.T) {
 	mustWrite(t, conn, "quit\r\n")
 }
 
-// TestTelnetSmoke_SpellCasting creates a level-1 Mage and exercises the spell
-// pipeline that was 100% broken until grantClassSpells populated SpellMap (the
-// data existed but was never wired in, so `cast` rejected every spell). It
-// asserts three things end to end: a known low-level spell casts, a too-high
-// spell stays unknown (SpellMap is scoped by level, not blanket-granted), and an
-// offensive spell can be thrown at an NPC.
-func TestTelnetSmoke_SpellCasting(t *testing.T) {
+// TestTelnetSmoke_CastEligibility creates a level-1 Mage and exercises C's
+// quoted-name, class-level, and proficiency gates end to end. Fresh characters
+// have 0% in class spells until guild practice, so a level-eligible spell is
+// "unfamiliar" rather than receiving Go's retired synthetic 95% proficiency.
+func TestTelnetSmoke_CastEligibility(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e: builds and launches the server binary; skipped in -short")
 	}
@@ -226,59 +224,20 @@ func TestTelnetSmoke_SpellCasting(t *testing.T) {
 	name := fmt.Sprintf("Mage%d", time.Now().UnixNano()%100000)
 	createChar(t, conn, r, name, "magepw", "M")
 
-	// A level-1 Mage knows infravision; the self-cast must succeed. This is the
-	// core regression guard: before grantClassSpells, SpellMap was empty and
-	// every cast came back "You don't know ...".
-	infravisionCast := false
-	for i := 0; i < 4 && !infravisionCast; i++ {
-		mustWrite(t, conn, "cast infravision\r\n")
-		infravisionCast = readUntil(t, conn, r, "Your eyes glow red.", 3*time.Second) != ""
-	}
-	if !infravisionCast {
-		t.Fatal("level-1 Mage could not cast infravision — SpellMap not populated (grantClassSpells regression?)")
-	}
-	// Successful casts now carry C's one-PULSE_VIOLENCE wait state.
-	time.Sleep(2100 * time.Millisecond)
-
-	// fireball is a level-15 Mage spell; a level-1 Mage must NOT know it yet.
-	// This guards that spells are granted by level rather than all at once.
-	mustWrite(t, conn, "cast fireball\r\n")
-	if readUntil(t, conn, r, "You don't know", 5*time.Second) == "" {
-		t.Error("level-1 Mage was allowed to cast the level-15 fireball — spell levels not enforced")
+	mustWrite(t, conn, "cast infravision\r\n")
+	if readUntil(t, conn, r, "Spell names must be enclosed in the magick symbols: '", 3*time.Second) == "" {
+		t.Error("unquoted cast did not receive the C quote gate")
 	}
 
-	// Offensive cast at an NPC: walk to Temple Square and throw flame arrow
-	// (the player-facing name for internal SPELL_MAGIC_MISSILE=32).
-	// Mobs wander, so look, target a present NPC, and retry. A failed target is
-	// refunded, so only a real cast spends mana — the Mage's 100 mana is ample.
-	walkToTempleSquare(t, conn, r)
-	cast := false
-	var castAttempts []string
-	for i := 0; i < 8 && !cast; i++ {
-		mustWrite(t, conn, "look\r\n")
-		look := readUntil(t, conn, r, "Exits:", 4*time.Second)
-		kw := firstMobKeyword(look)
-		if kw == "" {
-			continue
-		}
-		mustWrite(t, conn, "cast 'flame arrow' "+kw+"\r\n")
-		result := readUntilAny(t, conn, r, []string{
-			"You attempt the spell without the components..",
-			"Pulling a shard of obsidian from a pocket",
-			"You lost your concentration!",
-			"They aren't here.",
-			"You don't know",
-			"peaceful, easy feeling",
-			"haven't the energy",
-		}, 3*time.Second)
-		castAttempts = append(castAttempts, result)
-		if strings.Contains(result, "You attempt the spell without the components..") ||
-			strings.Contains(result, "Pulling a shard of obsidian from a pocket") {
-			cast = true
-		}
+	mustWrite(t, conn, "cast 'infravision'\r\n")
+	if readUntil(t, conn, r, "You are unfamiliar with that spell.", 3*time.Second) == "" {
+		t.Error("fresh Mage bypassed the 0% proficiency gate for infravision")
 	}
-	if !cast {
-		t.Fatalf("could not cast flame arrow at any NPC in Temple Square; attempts: %q", castAttempts)
+
+	// Fireball is a level-15 Mage spell; class eligibility precedes proficiency.
+	mustWrite(t, conn, "cast 'fireball'\r\n")
+	if readUntil(t, conn, r, "You do not know that spell!", 3*time.Second) == "" {
+		t.Error("level-1 Mage bypassed the class-level gate for fireball")
 	}
 
 	mustWrite(t, conn, "quit\r\n")

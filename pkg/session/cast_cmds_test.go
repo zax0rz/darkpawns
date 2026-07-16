@@ -6,6 +6,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -24,8 +25,301 @@ func prepareCaster(s *Session, class int, spellName string, proficiency int) {
 	s.player.Class = class
 	s.player.SetLevel(1)
 	s.player.SetMana(100)
-	s.player.SpellMap[spellName] = 1
 	s.player.SetSkill(spellName, proficiency)
+}
+
+func captureCastDraws(t *testing.T) *int {
+	t.Helper()
+	draws := 0
+	original := castNumber
+	castNumber = func(minVal, maxVal int) int {
+		draws++
+		return original(minVal, maxVal)
+	}
+	t.Cleanup(func() { castNumber = original })
+	return &draws
+}
+
+func TestCastEarlyGatesAreExactAndDrawFree(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     []string
+		peaceful bool
+		prepare  func(*Session)
+		want     string
+	}{
+		{
+			name: "empty command",
+			want: "Cast what where?\r\n",
+		},
+		{
+			name: "unquoted spell",
+			args: []string{"flame", "arrow"},
+			want: "Spell names must be enclosed in the magick symbols: '\r\n",
+		},
+		{
+			name: "missing closing quote",
+			args: []string{"'flame", "arrow"},
+			want: "Spell names must be enclosed in the magick symbols: '\r\n",
+		},
+		{
+			name: "unknown spell",
+			args: []string{"'bogusspell'"},
+			want: "Cast what?!?\r\n",
+		},
+		{
+			name: "class level gate",
+			args: []string{"'cure", "light'"},
+			prepare: func(s *Session) {
+				prepareCaster(s, game.ClassMageUser, "cure light", 95)
+			},
+			want: "You do not know that spell!\r\n",
+		},
+		{
+			name: "zero proficiency gate",
+			args: []string{"'flame", "arrow'"},
+			prepare: func(s *Session) {
+				prepareCaster(s, game.ClassMageUser, "flame arrow", 0)
+			},
+			want: "You are unfamiliar with that spell.\r\n",
+		},
+		{
+			name: "peaceful violent gate",
+			args: []string{"'flame", "arrow'"},
+			prepare: func(s *Session) {
+				prepareCaster(s, game.ClassMageUser, "flame arrow", 95)
+			},
+			peaceful: true,
+			want:     "This room just has such a peaceful, easy feeling..\r\n",
+		},
+		{
+			name: "empty violent target",
+			args: []string{"'flame", "arrow'"},
+			prepare: func(s *Session) {
+				prepareCaster(s, game.ClassMageUser, "flame arrow", 95)
+			},
+			want: "Upon who should the spell be cast?\r\n",
+		},
+		{
+			name: "violent self by name",
+			args: []string{"'flame", "arrow'", "Caster"},
+			prepare: func(s *Session) {
+				prepareCaster(s, game.ClassMageUser, "flame arrow", 95)
+			},
+			want: "You shouldn't cast that on yourself -- could be bad for your health!\r\n",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var manager *Manager
+			if test.peaceful {
+				manager = makeGateTestManager(t, true)
+			} else {
+				manager = makeTestManager(t)
+			}
+			session := makeTestSession(t, manager, "Caster", 1001, true)
+			registerInWorld(t, session)
+			session.player.SetMana(100)
+			if test.prepare != nil {
+				test.prepare(session)
+			}
+			manaBefore := session.player.GetMana()
+			draws := captureCastDraws(t)
+
+			if err := cmdCast(session, test.args); err != nil {
+				t.Fatalf("cmdCast: %v", err)
+			}
+			if got := readSessionText(t, session); got != test.want {
+				t.Errorf("output = %q, want %q", got, test.want)
+			}
+			if *draws != 0 {
+				t.Errorf("cast draws = %d, want 0", *draws)
+			}
+			if got := session.player.GetMana(); got != manaBefore {
+				t.Errorf("mana = %d, want unchanged %d", got, manaBefore)
+			}
+			if got := session.player.GetWaitState(); got != 0 {
+				t.Errorf("wait = %d, want 0", got)
+			}
+		})
+	}
+}
+
+func TestResolveCastTargetOrderAndEmptyDefaults(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Caster Room", Zone: 1},
+			{VNum: 1002, Name: "World Room", Zone: 1},
+		},
+		Mobs: []parser.Mob{{
+			VNum:      5000,
+			Keywords:  "target",
+			ShortDesc: "a distant target",
+			Level:     1,
+			HP:        parser.DiceRoll{Num: 1, Sides: 1, Plus: 10},
+		}},
+		Objs: []parser.Obj{
+			{VNum: 6001, Keywords: "inventory focus", ShortDesc: "an inventory focus"},
+			{VNum: 6002, Keywords: "equipped focus", ShortDesc: "an equipped focus"},
+			{VNum: 6003, Keywords: "room focus", ShortDesc: "a room focus"},
+			{VNum: 6004, Keywords: "world focus", ShortDesc: "a world focus"},
+		},
+	}
+	world, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(func() { world.StopAITicker() })
+	manager := NewManager(world, nil)
+	caster := makeTestSession(t, manager, "Caster", 1001, true)
+	roomTarget := makeTestSession(t, manager, "Target", 1001, true)
+	registerInWorld(t, caster)
+	registerInWorld(t, roomTarget)
+	worldTarget, err := world.SpawnMob(5000, 1002)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+
+	roomAndWorld := &spells.SpellInfo{Routines: spells.SpellRoutines{
+		Targets: spells.TarCharRoom | spells.TarCharWorld,
+	}}
+	target, prompt := resolveCastTarget(caster, roomAndWorld, "target")
+	if prompt != "" {
+		t.Fatalf("room/world prompt = %q, want empty", prompt)
+	}
+	if !target.found || target.character != roomTarget.player {
+		t.Fatalf("room/world target = %#v, want in-room player", target.character)
+	}
+
+	nonviolent := &spells.SpellInfo{Routines: spells.SpellRoutines{Targets: spells.TarCharRoom}}
+	target, prompt = resolveCastTarget(caster, nonviolent, "")
+	if prompt != "" || !target.found || target.character != caster.player {
+		t.Fatalf("empty nonviolent target = %#v, prompt %q; want caster", target.character, prompt)
+	}
+
+	violent := &spells.SpellInfo{Routines: spells.SpellRoutines{
+		Targets: spells.TarCharRoom,
+		Violent: true,
+	}}
+	target, prompt = resolveCastTarget(caster, violent, "")
+	if target.found || prompt != "Upon who should the spell be cast?\r\n" {
+		t.Fatalf("empty violent target found=%v prompt=%q", target.found, prompt)
+	}
+
+	worldTarget.SetRoom(1001)
+	caster.player.SetFighting(worldTarget.GetName())
+	fightVictim := &spells.SpellInfo{Routines: spells.SpellRoutines{
+		Targets: spells.TarFightVict,
+		Violent: true,
+	}}
+	target, prompt = resolveCastTarget(caster, fightVictim, "")
+	if prompt != "" || !target.found || target.character != worldTarget {
+		t.Fatalf("fighting target = %#v, prompt %q; want mob opponent", target.character, prompt)
+	}
+
+	caster.player.SetHolyLight(true)
+	inventoryObject, err := world.SpawnObject(6001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject inventory: %v", err)
+	}
+	if err := caster.player.Inventory.AddItem(inventoryObject); err != nil {
+		t.Fatalf("AddItem inventory: %v", err)
+	}
+	equippedObject, err := world.SpawnObject(6002, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject equipped: %v", err)
+	}
+	if err := caster.player.Equipment.SetSlot(game.SlotHead, equippedObject); err != nil {
+		t.Fatalf("SetSlot equipped: %v", err)
+	}
+	roomObject, err := world.SpawnObject(6003, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject room: %v", err)
+	}
+	world.AddItemToRoom(roomObject, 1001)
+	worldObject, err := world.SpawnObject(6004, 1002)
+	if err != nil {
+		t.Fatalf("SpawnObject world: %v", err)
+	}
+
+	objectScopes := []struct {
+		name   string
+		flag   spells.TargetFlags
+		query  string
+		object *game.ObjectInstance
+	}{
+		{"inventory", spells.TarObjInv, "inventory", inventoryObject},
+		{"equipment", spells.TarObjEquip, "equipped", equippedObject},
+		{"room", spells.TarObjRoom, "room", roomObject},
+		{"world", spells.TarObjWorld, "world", worldObject},
+	}
+	for _, scope := range objectScopes {
+		info := &spells.SpellInfo{Routines: spells.SpellRoutines{Targets: scope.flag}}
+		target, prompt = resolveCastTarget(caster, info, scope.query)
+		if prompt != "" || !target.found || target.object != scope.object {
+			t.Errorf("%s object target = %#v, prompt %q; want %#v", scope.name, target.object, prompt, scope.object)
+		}
+	}
+
+	allObjectScopes := &spells.SpellInfo{Routines: spells.SpellRoutines{Targets: spells.TarObjInv |
+		spells.TarObjEquip | spells.TarObjRoom | spells.TarObjWorld}}
+	target, prompt = resolveCastTarget(caster, allObjectScopes, "focus")
+	if prompt != "" || !target.found || target.object != inventoryObject {
+		t.Fatalf("object scope order target = %#v, prompt %q; want inventory object", target.object, prompt)
+	}
+}
+
+func TestCastMissingTargetPreservesOkayIncantationEdge(t *testing.T) {
+	manager := makeTestManager(t)
+	session := makeTestSession(t, manager, "Caster", 1001, true)
+	registerInWorld(t, session)
+	prepareCaster(session, game.ClassMageUser, "flame arrow", 95)
+	draws := captureCastDraws(t)
+
+	if err := cmdCast(session, []string{"'flame", "arrow'", "missing"}); err != nil {
+		t.Fatalf("cmdCast: %v", err)
+	}
+	if got := readSessionText(t, session); got != "Okay.\r\n" {
+		t.Errorf("first output = %q, want Okay", got)
+	}
+	if got := readSessionText(t, session); got != "Cannot find the target of your spell!\r\n" {
+		t.Errorf("second output = %q", got)
+	}
+	if *draws != 0 {
+		t.Errorf("cast draws = %d, want 0", *draws)
+	}
+	if got := session.player.GetMana(); got != 100 {
+		t.Errorf("mana = %d, want 100", got)
+	}
+	if got := session.player.GetWaitState(); got != 0 {
+		t.Errorf("wait = %d, want 0", got)
+	}
+}
+
+func TestCastInsufficientManaDrawsNothingAndSpendsNothing(t *testing.T) {
+	manager := makeTestManager(t)
+	session := makeTestSession(t, manager, "Cleric", 1001, true)
+	registerInWorld(t, session)
+	prepareCaster(session, game.ClassCleric, "cure light", 95)
+	session.player.SetMana(29)
+	draws := captureCastDraws(t)
+
+	if err := cmdCast(session, []string{"'cure", "light'"}); err != nil {
+		t.Fatalf("cmdCast: %v", err)
+	}
+	if got := readSessionText(t, session); got != "You haven't the energy to cast that spell!\r\n" {
+		t.Errorf("output = %q", got)
+	}
+	if *draws != 0 {
+		t.Errorf("cast draws = %d, want 0", *draws)
+	}
+	if got := session.player.GetMana(); got != 29 {
+		t.Errorf("mana = %d, want unchanged 29", got)
+	}
+	if got := session.player.GetWaitState(); got != 0 {
+		t.Errorf("wait = %d, want 0", got)
+	}
 }
 
 func TestManaCostUsesClassMinimumLevel(t *testing.T) {
@@ -90,7 +384,7 @@ func TestCastInfravisionConsumesOnlyConcentrationAndAccumulates(t *testing.T) {
 	wantNext := wantStream.Number(0, 101)
 	dprng.ResetStream(seed)
 
-	if err := cmdCast(s, []string{"infravision"}); err != nil {
+	if err := cmdCast(s, []string{"'infravision'"}); err != nil {
 		t.Fatalf("cmdCast infravision: %v", err)
 	}
 	if got := readSessionText(t, s); got != "Okay.\r\n" {
@@ -109,7 +403,7 @@ func TestCastInfravisionConsumesOnlyConcentrationAndAccumulates(t *testing.T) {
 	// Direct command invocation bypasses the dispatcher wait gate so the recast
 	// can exercise C affect_join(accum_duration=true).
 	dprng.ResetStream(seed)
-	if err := cmdCast(s, []string{"infravision"}); err != nil {
+	if err := cmdCast(s, []string{"'infravision'"}); err != nil {
 		t.Fatalf("recast infravision: %v", err)
 	}
 	if got := readSessionText(t, s); got != "Okay.\r\n" {

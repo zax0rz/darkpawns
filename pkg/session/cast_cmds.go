@@ -2,12 +2,19 @@ package session
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
+
+const maxCastSpell = 130 // C spells.h MAX_SPELLS
+
+// castNumber is a test seam for the single do_cast concentration roll.
+// Production always uses the process-wide deterministic stream.
+var castNumber = dprng.Number
 
 // spellData holds spell mana parameters from the original spello() table.
 type spellData struct {
@@ -126,15 +133,6 @@ var spellDB = map[int]*spellData{
 	105: {105, "conjure elemental", 165, 145, 1, [12]int{}},
 }
 
-// buildSpellIndex builds a case-insensitive lookup from spell name -> spellData.
-var spellByName = func() map[string]*spellData {
-	m := make(map[string]*spellData)
-	for _, sd := range spellDB {
-		m[strings.ToLower(sd.Name)] = sd
-	}
-	return m
-}()
-
 // manaCost computes the mana cost for a spell at a given caster level and class.
 // Formula: MAX(mana_max - (mana_change * (caster_level - min_level)), mana_min)
 func manaCost(sd *spellData, casterLevel int, class int) int {
@@ -154,138 +152,208 @@ func manaCost(sd *spellData, casterLevel int, class int) int {
 	return cost
 }
 
+type castTarget struct {
+	character interface{}
+	object    interface{}
+	found     bool
+}
+
+func parseCastArguments(args []string) (spellName, targetName, errorMessage string) {
+	input := strings.Join(args, " ")
+	if strings.TrimSpace(input) == "" {
+		return "", "", "Cast what where?\r\n"
+	}
+	opening := strings.IndexByte(input, '\'')
+	if opening < 0 {
+		return "", "", "Spell names must be enclosed in the magick symbols: '\r\n"
+	}
+	remaining := input[opening+1:]
+	closing := strings.IndexByte(remaining, '\'')
+	if closing < 0 {
+		return "", "", "Spell names must be enclosed in the magick symbols: '\r\n"
+	}
+	return strings.TrimSpace(remaining[:closing]), strings.TrimSpace(remaining[closing+1:]), ""
+}
+
+func resolveCastTarget(s *Session, info *spells.SpellInfo, targetName string) (castTarget, string) {
+	if info.HasTarget(spells.TarIgnore) {
+		return castTarget{found: true}, ""
+	}
+
+	if targetName != "" {
+		if info.HasTarget(spells.TarCharRoom) {
+			if target, ok := s.manager.world.ResolveCharInRoom(s.player, targetName); ok {
+				return castTarget{character: target.Combatant, found: true}, ""
+			}
+		}
+		if info.HasTarget(spells.TarCharWorld) {
+			if target, ok := s.manager.world.ResolveCharWorld(s.player, targetName); ok {
+				return castTarget{character: target.Combatant, found: true}, ""
+			}
+		}
+		if info.HasTarget(spells.TarObjInv) {
+			if target, ok := s.manager.world.ResolveObjectInInventory(s.player, targetName); ok {
+				return castTarget{object: target, found: true}, ""
+			}
+		}
+		if info.HasTarget(spells.TarObjEquip) {
+			if target, ok := s.manager.world.ResolveObjectInEquipment(s.player, targetName); ok {
+				return castTarget{object: target, found: true}, ""
+			}
+		}
+		if info.HasTarget(spells.TarObjRoom) {
+			if target, ok := s.manager.world.ResolveObjectInRoom(s.player, targetName); ok {
+				return castTarget{object: target, found: true}, ""
+			}
+		}
+		if info.HasTarget(spells.TarObjWorld) {
+			if target, ok := s.manager.world.ResolveObjectWorld(s.player, targetName); ok {
+				return castTarget{object: target, found: true}, ""
+			}
+		}
+		return castTarget{}, ""
+	}
+
+	fighting := s.player.GetFighting()
+	if fighting != "" && info.HasTarget(spells.TarFightSelf) {
+		return castTarget{character: s.player, found: true}, ""
+	}
+	if fighting != "" && info.HasTarget(spells.TarFightVict) {
+		if target, ok := s.manager.world.ResolveFightingTarget(s.player); ok {
+			return castTarget{character: target.Combatant, found: true}, ""
+		}
+	}
+	if info.HasTarget(spells.TarCharRoom) && !info.IsViolent() {
+		return castTarget{character: s.player, found: true}, ""
+	}
+
+	targetWord := "who"
+	if info.Routines.Targets&(spells.TarObjRoom|spells.TarObjInv|spells.TarObjWorld) != 0 {
+		targetWord = "what"
+	}
+	return castTarget{}, fmt.Sprintf("Upon %s should the spell be cast?\r\n", targetWord)
+}
+
+func checkCastSpellContract(s *Session, info *spells.SpellInfo, target castTarget) bool {
+	if !checkCastPosition(s, info) {
+		return false
+	}
+	if target.character != s.player && info.HasTarget(spells.TarSelfOnly) {
+		s.Send("You can only cast this spell upon yourself!\r\n")
+		return false
+	}
+	if target.character == s.player && info.HasTarget(spells.TarNotSelf) {
+		s.Send("You cannot cast this spell upon yourself!\r\n")
+		return false
+	}
+	if info.HasRoutine(spells.RoutineGroups) && !s.player.InGroup {
+		s.Send("You can't cast this spell if you're not in a group!\r\n")
+		return false
+	}
+	return true
+}
+
 // cmdCast handles the "cast <spell> [target]" command.
 // Implements do_cast from cast.c / spell_parser.c.
 func cmdCast(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Cast which spell?")
+	if s.player == nil || s.player.IsNPC() {
 		return nil
 	}
 
-	fullInput := strings.Join(args, " ")
-
-	// Parse spell name and target.
-	// Support: cast <spell> and cast '<spell>' <target>
-	var spellName string
-	var targetName string
-
-	if strings.HasPrefix(fullInput, "'") {
-		// Quoted spell name: cast '<spell>' <target>
-		endQuote := strings.Index(fullInput[1:], "'")
-		if endQuote == -1 {
-			s.Send("Cast which spell?")
-			return nil
-		}
-		spellName = fullInput[1 : endQuote+1]
-		targetName = strings.TrimSpace(fullInput[endQuote+2:])
-	} else {
-		// No quotes: cast <spell> or cast <spell> <target>
-		parts := strings.SplitN(fullInput, " ", 2)
-		spellName = parts[0]
-		if len(parts) > 1 {
-			targetName = strings.TrimSpace(parts[1])
-		}
-	}
-
-	spellName = strings.ToLower(spellName)
-
-	// Look up spell
-	sd, ok := spellByName[spellName]
-	if !ok {
-		s.Send("You don't know any spells of that name.")
+	spellName, targetName, parseError := parseCastArguments(args)
+	if parseError != "" {
+		s.Send(parseError)
 		return nil
 	}
 
-	// SpellMap is the port's established castability gate. Characters created
-	// before per-spell proficiency existed have no SkillManager entry, so retain
-	// their former effective proficiency while still making the C success draw.
-	_, knows := s.player.SpellMap[spellName]
-	if !knows {
-		s.Send(fmt.Sprintf("You don't know '%s'.", sd.Name))
+	spellNum := game.FindSkillNum(spellName)
+	if spellNum < 1 || spellNum > maxCastSpell {
+		s.Send("Cast what?!?\r\n")
 		return nil
 	}
-	proficiency := s.player.GetSkill(spellName)
+	sd := spellDB[spellNum]
+	info := spells.GetSpellInfo(spellNum)
+	if sd == nil || info == nil {
+		s.Send("Cast what?!?\r\n")
+		return nil
+	}
+
+	minLevel := game.ClassSkillMinLevel(s.player.GetClass(), spellNum)
+	if s.player.GetLevel() < minLevel {
+		s.Send("You do not know that spell!\r\n")
+		return nil
+	}
+	canonicalName := strings.ToLower(game.SkillCatalogName(spellNum))
+	proficiency := s.player.GetSkill(canonicalName)
 	if proficiency == 0 {
-		proficiency = 95
-	}
-	info := spells.GetSpellInfo(sd.SpellNum)
-	if !checkCastPosition(s, info) {
+		s.Send("You are unfamiliar with that spell.\r\n")
 		return nil
 	}
-	if info != nil && info.IsViolent() {
+
+	if info.IsViolent() {
 		room := s.manager.world.GetRoomInWorld(s.player.GetRoomVNum())
-		if room != nil && room.HasFlag(spells.RoomPeaceful) && s.player.GetLevel() < LVL_IMMORT {
+		if room != nil && room.HasFlag(spells.RoomPeaceful) {
 			s.Send("This room just has such a peaceful, easy feeling..\r\n")
 			return nil
 		}
 	}
 
-	// Determine caster level: minimum of player level and class min level
-	class := s.player.Class
-	playerLevel := s.player.Level
-	casterLevel := playerLevel
-
-	// Calculate mana cost
-	cost := manaCost(sd, casterLevel, class)
-
-	// Check mana
-	if s.player.GetMana() < cost && s.player.GetLevel() < LVL_IMMORT {
-		s.Send("You haven't the energy to cast that spell!\r\n")
+	target, prompt := resolveCastTarget(s, info, targetName)
+	if prompt != "" {
+		s.Send(prompt)
+		return nil
+	}
+	if target.found && target.character == s.player && info.IsViolent() {
+		s.Send("You shouldn't cast that on yourself -- could be bad for your health!\r\n")
+		return nil
+	}
+	if !target.found {
+		s.Send("Okay.\r\n")
+		spells.SaySpell(s.player, spellNum, nil, nil, s.manager.world)
+		s.Send("Cannot find the target of your spell!\r\n")
 		return nil
 	}
 
-	// Determine target
-	var target interface{}
+	casterLevel := s.player.GetLevel()
+	cost := manaCost(sd, casterLevel, s.player.GetClass())
 
-	if targetName == "" && info != nil && info.IsViolent() {
-		if fighting := s.player.GetFighting(); fighting != "" {
-			targetName = fighting
-		} else {
-			s.Send("Upon who should the spell be cast?\r\n")
-			return nil
-		}
-	}
-	if targetName == "" || strings.EqualFold(targetName, s.player.Name) || strings.EqualFold(targetName, "self") || strings.EqualFold(targetName, "me") {
-		if info != nil && info.IsViolent() {
-			s.Send("You shouldn't cast that on yourself -- could be bad for your health!\r\n")
-			return nil
-		}
-		// Self-cast
-		target = s.player
-	} else {
-		// Resolve target via the canonical in-room resolver (DP-907) so
-		// `cast <spell> X` agrees with consider/kick/... on what "X" is.
-		tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName)
-		if !found {
-			s.Send("They aren't here.")
-			return nil
-		}
-		switch {
-		case tgt.Player != nil:
-			target = tgt.Player
-		case tgt.Mob != nil:
-			target = tgt.Mob
-		}
+	if cost > 0 && s.player.GetMana() < cost && s.player.GetLevel() < LVL_IMMORT {
+		s.Send("You haven't the energy to cast that spell!\r\n")
+		return nil
 	}
 
 	weightAdd := castWeightPenalty(s.player)
 	if s.player.Level >= LVL_IMMORT {
 		weightAdd = -20
 	}
-	if dprng.Number(0, 101+weightAdd) > proficiency {
+	// #nosec G404 — game RNG, not cryptographic
+	if castNumber(0, 101+weightAdd) > proficiency {
 		s.player.SetWaitState(1)
 		s.Send("You lost your concentration!\r\n")
-		s.player.SetMana(max(0, s.player.GetMana()-(cost>>1)))
+		if cost > 0 {
+			s.player.SetMana(max(0, s.player.GetMana()-(cost>>1)))
+		}
+		if info.IsViolent() {
+			if mob, ok := target.character.(*game.MobInstance); ok && mob.GetFighting() == "" && s.manager.combatEngine != nil {
+				if err := s.manager.combatEngine.StartCombat(mob, s.player); err != nil {
+					slog.Warn("cast-failure retaliation failed", "mob", mob.GetName(), "caster", s.player.Name, "error", err)
+				}
+			}
+		}
 		return nil
 	}
 
-	// C cast_spell sends OK and the room incantation before dispatching the
-	// effect. Mana and wait state are charged only when call_magic succeeds.
+	if !checkCastSpellContract(s, info, target) {
+		return nil
+	}
+
 	s.Send("Okay.\r\n")
-	spells.SaySpell(s.player, sd.SpellNum, target, nil, s.manager.world)
-	if spells.Cast(s.player, target, sd.SpellNum, casterLevel, s.manager.world) {
+	spells.SaySpell(s.player, spellNum, target.character, target.object, s.manager.world)
+	if spells.CallMagic(s.player, target.character, target.object, spellNum, casterLevel, spells.CastSpell, s.manager.world) {
 		s.player.SetWaitState(1)
-		s.player.SetMana(max(0, s.player.GetMana()-cost))
+		if cost > 0 {
+			s.player.SetMana(max(0, s.player.GetMana()-cost))
+		}
 	}
 
 	return nil

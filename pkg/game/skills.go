@@ -224,11 +224,10 @@ func CanUseSkill(p *Player, skillName string) (bool, string) {
 // which is why `consider postman` and `kick postman` disagreed in the same
 // room.
 //
-// `exclude` is retained for signature compatibility; ResolveCharInRoom already
-// excludes the viewer `ch`, so callers passing `ch` as exclude get the same
-// behavior. `roomVNum` is taken from `ch.GetRoom()` by ResolveCharInRoom, so
-// the explicit room is only authoritative when it matches ch's room; this
-// matches every existing caller (which passes ch.GetRoom()).
+// `exclude` is retained for signature compatibility and supplies the viewer
+// for visibility checks. `roomVNum` is taken from `ch.GetRoom()` by
+// ResolveCharInRoom, so the explicit room is only authoritative when it
+// matches ch's room; this matches every existing caller.
 func FindTargetInRoom(world *World, roomVNum int, targetName string, exclude *Player) (combat.Combatant, string, bool) {
 	ch := exclude
 	if ch == nil {
