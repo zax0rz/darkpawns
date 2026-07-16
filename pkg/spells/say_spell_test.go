@@ -86,6 +86,12 @@ func TestSaySpell_TargetMessageDeliveredToTarget(t *testing.T) {
 	if !foundTargetMsg {
 		t.Errorf("target should receive a 'stares at you' message, got: %v", target.messages)
 	}
+	if len(target.messages) != 1 {
+		t.Errorf("target received room message plus TO_VICT duplicate: %v", target.messages)
+	}
+	if strings.Contains(target.messages[0], "$") || !strings.HasSuffix(target.messages[0], "\r\n") {
+		t.Errorf("target message has unresolved act token or missing CRLF: %q", target.messages[0])
+	}
 }
 
 func TestSaySpell_TargetMessageNotDeliveredToCaster(t *testing.T) {

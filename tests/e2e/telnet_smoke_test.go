@@ -229,10 +229,16 @@ func TestTelnetSmoke_SpellCasting(t *testing.T) {
 	// A level-1 Mage knows infravision; the self-cast must succeed. This is the
 	// core regression guard: before grantClassSpells, SpellMap was empty and
 	// every cast came back "You don't know ...".
-	mustWrite(t, conn, "cast infravision\r\n")
-	if readUntil(t, conn, r, "You cast 'infravision'", 5*time.Second) == "" {
+	infravisionCast := false
+	for i := 0; i < 4 && !infravisionCast; i++ {
+		mustWrite(t, conn, "cast infravision\r\n")
+		infravisionCast = readUntil(t, conn, r, "Your eyes glow red.", 3*time.Second) != ""
+	}
+	if !infravisionCast {
 		t.Fatal("level-1 Mage could not cast infravision — SpellMap not populated (grantClassSpells regression?)")
 	}
+	// Successful casts now carry C's one-PULSE_VIOLENCE wait state.
+	time.Sleep(2100 * time.Millisecond)
 
 	// fireball is a level-15 Mage spell; a level-1 Mage must NOT know it yet.
 	// This guards that spells are granted by level rather than all at once.
@@ -241,11 +247,13 @@ func TestTelnetSmoke_SpellCasting(t *testing.T) {
 		t.Error("level-1 Mage was allowed to cast the level-15 fireball — spell levels not enforced")
 	}
 
-	// Offensive cast at an NPC: walk to Temple Square and throw magic missile.
+	// Offensive cast at an NPC: walk to Temple Square and throw flame arrow
+	// (the player-facing name for internal SPELL_MAGIC_MISSILE=32).
 	// Mobs wander, so look, target a present NPC, and retry. A failed target is
 	// refunded, so only a real cast spends mana — the Mage's 100 mana is ample.
 	walkToTempleSquare(t, conn, r)
 	cast := false
+	var castAttempts []string
 	for i := 0; i < 8 && !cast; i++ {
 		mustWrite(t, conn, "look\r\n")
 		look := readUntil(t, conn, r, "Exits:", 4*time.Second)
@@ -253,13 +261,24 @@ func TestTelnetSmoke_SpellCasting(t *testing.T) {
 		if kw == "" {
 			continue
 		}
-		mustWrite(t, conn, "cast 'magic missile' "+kw+"\r\n")
-		if readUntil(t, conn, r, "You cast 'magic missile'", 3*time.Second) != "" {
+		mustWrite(t, conn, "cast 'flame arrow' "+kw+"\r\n")
+		result := readUntilAny(t, conn, r, []string{
+			"You attempt the spell without the components..",
+			"Pulling a shard of obsidian from a pocket",
+			"You lost your concentration!",
+			"They aren't here.",
+			"You don't know",
+			"peaceful, easy feeling",
+			"haven't the energy",
+		}, 3*time.Second)
+		castAttempts = append(castAttempts, result)
+		if strings.Contains(result, "You attempt the spell without the components..") ||
+			strings.Contains(result, "Pulling a shard of obsidian from a pocket") {
 			cast = true
 		}
 	}
 	if !cast {
-		t.Fatal("could not cast magic missile at any NPC in Temple Square")
+		t.Fatalf("could not cast flame arrow at any NPC in Temple Square; attempts: %q", castAttempts)
 	}
 
 	mustWrite(t, conn, "quit\r\n")

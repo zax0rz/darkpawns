@@ -3,9 +3,8 @@ package engine
 import (
 	"fmt"
 	"sort"
+	"sync/atomic"
 	"time"
-
-	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // TickDuration is the real-world duration of one affect tick.
@@ -249,18 +248,13 @@ func (a *Affect) HasFlag(flag uint64) bool {
 }
 
 // Helper function to generate a unique affect ID
-func generateAffectID() string {
-	return "aff_" + time.Now().Format("20060102150405") + "_" + randomString(8)
-}
+var affectIDSequence atomic.Uint64
 
-// randomString generates a random alphanumeric string of the given length.
-func randomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[dprng.Number(0, len(charset)-1)]
-	}
-	return string(b)
+func generateAffectID() string {
+	// Affect bookkeeping is not a game mechanic.  Using the deterministic game
+	// stream here consumed eight invisible draws for every applied affect and
+	// desynchronized all later C-oracle observations.
+	return fmt.Sprintf("aff_%s_%d", time.Now().Format("20060102150405.000000000"), affectIDSequence.Add(1))
 }
 
 // --- APPLY_* location constants (from CircleMUD structs.h) ---

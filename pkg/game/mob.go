@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
@@ -1008,6 +1009,24 @@ func (m *MobInstance) AddAffect(aff *engine.Affect) {
 			}
 		}
 	}
+}
+
+// JoinAffect mirrors C affect_join for mob spell affects.
+func (m *MobInstance) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) {
+	if m.CustomData == nil {
+		m.CustomData = make(map[string]interface{})
+	}
+	key := fmt.Sprintf("affect_%d", aff.SpellID)
+	if current, ok := m.CustomData[key].(*engine.Affect); ok && current.Location == aff.Location {
+		if addDuration {
+			aff.Duration += current.Duration
+		}
+		if addMagnitude {
+			aff.Magnitude += current.Magnitude
+		}
+	}
+	aff.ExpiresAt = time.Now().Add(time.Duration(aff.Duration) * engine.TickDuration)
+	m.AddAffect(aff)
 }
 
 // RemoveAffectBySpell removes affects matching the given spell number from the mob.

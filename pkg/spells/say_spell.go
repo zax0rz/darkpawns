@@ -81,7 +81,7 @@ func SaySpell(ch interface{}, spellNum int, tch, tobj interface{}, world interfa
 			}
 			targetMsg = "$n stares at you and utters the words, '" + spellForTarget + "'."
 		}
-		sendAct(targetMsg, ch, nil, tch, world)
+		sendAct(targetMsg+"\r\n", ch, nil, tch, world)
 	}
 }
 
@@ -224,7 +224,7 @@ var spellNamesTable = []string{
 	"invisible",
 	"lightning bolt",
 	"locate object",
-	"magic missile",
+	"flame arrow",
 	"poison",
 	"protect evil",
 	"remove curse",
@@ -392,6 +392,9 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 	}
 
 	w.ForEachPlayerInRoomInterface(roomVNum, func(p interface{}) {
+		if selfTarget(ch, p) || (tch != nil && selfTarget(tch, p)) {
+			return
+		}
 		rp, ok := p.(msgSender)
 		if !ok {
 			return
@@ -407,7 +410,7 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 				msg = strings.ReplaceAll(msg, "$N", vn.GetName())
 			}
 		}
-		msg = strings.ReplaceAll(msg, "$s", "their")
+		msg = strings.ReplaceAll(msg, "$s", possessivePronoun(ch))
 		if tobj != nil {
 			if on, ok := tobj.(msgNamed); ok {
 				msg = strings.ReplaceAll(msg, "$p", on.GetName())
@@ -417,7 +420,7 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 		} else {
 			msg = strings.ReplaceAll(msg, "$p", "something")
 		}
-		rp.SendMessage(msg)
+		rp.SendMessage(msg + "\r\n")
 	})
 }
 
@@ -431,6 +434,28 @@ func sendAct(format string, ch, obj, victim interface{}, world interface{}) {
 		recipient = victim
 	}
 	if s, ok := recipient.(sender); ok {
-		s.SendMessage(format)
+		type namer interface{ GetName() string }
+		name := "someone"
+		if n, ok := ch.(namer); ok {
+			name = n.GetName()
+		}
+		msg := strings.ReplaceAll(format, "$n", name)
+		msg = strings.ReplaceAll(msg, "$s", possessivePronoun(ch))
+		s.SendMessage(msg)
 	}
+}
+
+func possessivePronoun(ch interface{}) string {
+	type sexer interface{ GetSex() int }
+	if s, ok := ch.(sexer); ok {
+		switch s.GetSex() {
+		case 0:
+			return "his"
+		case 1:
+			return "her"
+		default:
+			return "its"
+		}
+	}
+	return "its"
 }

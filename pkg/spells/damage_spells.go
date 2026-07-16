@@ -24,6 +24,11 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		hasReag = isMage && consumeReagent(ch, SpellMagicMissile, level, "shard of obsidian",
 			"Pulling a shard of obsidian from a pocket, you crush it under your heel...",
 			"$n pulls something out of $s pocket and crushes it beneath $s heel...")
+		if isMage && !hasReag {
+			sendToCaster(ch, "You attempt the spell without the components..\r\n")
+		} else if hasReag {
+			sendAffectRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...\r\n", world)
+		}
 	case SpellColorSpray:
 		hasReag = isMage && consumeReagent(ch, SpellColorSpray, level, "prism",
 			"Pulling a prism from a pocket, you crush it under your heel...",
