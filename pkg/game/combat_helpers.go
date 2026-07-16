@@ -32,25 +32,30 @@ func isMounted(ch *Player) bool {
 	return ch.IsAffected(affMount)
 }
 
-// improveSkill implements CircleMUD-style skill improvement.
-// Random chance based on current skill level and player stats.
+// improveSkill ports src/act.other.c:1704 improve_skill(). Use-based skill gain
+// on a successful skill use. Draw-parity is law: number(1,200) is drawn on EVERY
+// PC call, BEFORE the percent bounds check — a skill already at >=97 still burns
+// exactly one draw. number(1,3) is drawn only when the stat gate passes AND
+// percent is in (0,97). The "improves" line fires only on a +3 roll. spells[skill]
+// (act.other.c:1721) is the DP catalog name, which is exactly the Skill* constant.
 func improveSkill(ch *Player, skill string) {
-	cur := ch.GetSkill(skill)
-	if cur <= 0 || cur >= 100 {
+	if ch.IsNPC() {
 		return
 	}
-	// Higher skill = harder to improve (like CircleMUD)
+	percent := ch.GetSkill(skill)
 	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	if dprng.Number(1, 100) > cur {
-		// Stat-based check: INT/WIS average gives improvement chance
-		chance := (ch.GetInt() + ch.GetWis()) / 4
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		if dprng.Number(0, 99) < chance {
-			ch.SetSkill(skill, cur+1)
-			ch.SendMessage(fmt.Sprintf("You feel a bit more competent in %s.\r\n", skill))
-		}
+	if dprng.Number(1, 200) > ch.GetWis()+ch.GetInt() {
+		return
+	}
+	if percent >= 97 || percent <= 0 {
+		return
+	}
+	// #nosec G404 — game RNG, not cryptographic
+	newpercent := dprng.Number(1, 3)
+	percent += newpercent
+	ch.SetSkill(skill, percent)
+	if newpercent == 3 {
+		ch.SendMessage(fmt.Sprintf("Your skill in %s improves.\r\n", skill))
 	}
 }
 
