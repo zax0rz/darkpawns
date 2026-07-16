@@ -224,10 +224,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	goConn := oraclediff.NewTCPConn(goNetConn)
 	defer func() { _ = goConn.Close() }()
 
-	if _, err := oraclediff.RunSetup(oracleConn, scenario.SetupOracle, quiescence); err != nil {
+	oracleSetup, err := oraclediff.RunSetup(oracleConn, scenario.SetupOracle, quiescence)
+	if err != nil {
 		return fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", err, oracleProc.log.String())
 	}
-	if _, err := oraclediff.RunSetup(goConn, scenario.SetupPort, quiescence); err != nil {
+	goSetup, err := oraclediff.RunSetup(goConn, scenario.SetupPort, quiescence)
+	if err != nil {
 		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
 	}
 
@@ -287,7 +289,20 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		return fmt.Errorf("run Go port probe: %w\nserver log:\n%s", err, goProc.log.String())
 	}
 
-	diffs := make([]oraclediff.BlockDiff, 0, len(oracleBlocks))
+	diffs := make([]oraclediff.BlockDiff, 0, len(oracleBlocks)+1)
+	// Character-creation coverage: diff the whole normalized setup transcript
+	// (the nanny dialogue) as one block when the scenario opts in via
+	// [creation:oracle]/[creation:port].
+	if scenario.DiffSetup {
+		oracleCreation := oraclediff.Normalize(oracleSetup)
+		goCreation := oraclediff.Normalize(goSetup)
+		diffs = append(diffs, oraclediff.BlockDiff{
+			Command: "creation",
+			Oracle:  oracleCreation,
+			Go:      goCreation,
+			Diff:    oraclediff.UnifiedDiff("c-oracle", "go-port", oracleCreation, goCreation),
+		})
+	}
 	for i, oracleResult := range oracleBlocks {
 		var oracleBlock, goBlock string
 		oracleBlock = oraclediff.Normalize(oracleResult.Output)

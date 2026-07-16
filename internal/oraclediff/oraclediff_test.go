@@ -207,6 +207,26 @@ func TestParseScenarioNoProbe(t *testing.T) {
 	}
 }
 
+func TestParseScenarioCreationSection(t *testing.T) {
+	// [creation:*] feeds the ordinary setup streams but flips DiffSetup, and a
+	// creation-only scenario needs no [probe].
+	sc, err := ParseScenario("test", strings.NewReader(
+		"[creation:oracle]\nname\nY\n[creation:port]\nname\ny\n",
+	))
+	if err != nil {
+		t.Fatalf("creation-only scenario should parse without a probe, got %v", err)
+	}
+	if !sc.DiffSetup {
+		t.Fatal("DiffSetup should be set by a [creation:*] section")
+	}
+	if len(sc.SetupOracle) != 2 || sc.SetupOracle[1] != "Y" {
+		t.Fatalf("creation keystrokes should populate SetupOracle, got %v", sc.SetupOracle)
+	}
+	if len(sc.SetupPort) != 2 || sc.SetupPort[1] != "y" {
+		t.Fatalf("creation keystrokes should populate SetupPort, got %v", sc.SetupPort)
+	}
+}
+
 func TestReportNoDivergence(t *testing.T) {
 	diffs := []BlockDiff{
 		{Command: "look", Oracle: "same\n", Go: "same\n"},

@@ -28,6 +28,11 @@ type Scenario struct {
 	QuietZones       []int
 	QuietAllMobs     bool
 	ScriptlessMobIDs []int
+	// DiffSetup diffs the primary client's whole setup transcript (the
+	// character-creation dialogue) as one normalized block, instead of
+	// draining it. Set by the [creation:oracle]/[creation:port] sections,
+	// whose keystrokes still feed the ordinary setup machinery.
+	DiffSetup bool
 }
 
 // PeerSetup describes a passive client that remains connected while the
@@ -121,6 +126,14 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				section = &sc.SetupOracle
 			case "[setup:port]", "[setup:go]":
 				section = &sc.SetupPort
+			case "[creation:oracle]":
+				// Same keystroke stream as [setup:oracle], but the resulting
+				// transcript is diffed rather than drained.
+				section = &sc.SetupOracle
+				sc.DiffSetup = true
+			case "[creation:port]", "[creation:go]":
+				section = &sc.SetupPort
+				sc.DiffSetup = true
 			case "[probe]":
 				section = &sc.Probe
 			case "[warmup]":
@@ -226,7 +239,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	if err := scanner.Err(); err != nil {
 		return Scenario{}, fmt.Errorf("read scenario: %w", err)
 	}
-	if len(sc.Probe) == 0 {
+	if len(sc.Probe) == 0 && !sc.DiffSetup {
 		return Scenario{}, fmt.Errorf("scenario %q has no [probe] steps", name)
 	}
 	return sc, nil

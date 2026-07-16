@@ -1,0 +1,48 @@
+# DP character-creation fidelity (the nanny() dialogue).
+#
+# Creation is the very first thing a player sees, yet it has never been
+# differentially tested — every other scenario uses it only as drained [setup].
+# The [creation:oracle]/[creation:port] sections feed the same keystroke streams
+# as [setup:*] but diff the whole normalized transcript as one "creation" block.
+#
+# Expected RED: the Go port re-skins creation heavily vs C — bracketed
+# [M] Male/[F] Female menus, an extra ANSI-color menu, a fabricated
+# "Rules of the Realm" MOTD block (which does not exist in the C original,
+# and is emitted twice), a leaked "No database connection" line, and terser
+# C prompt wording throughout. The campaign target is: drive this to GREEN by
+# making nanny() reproduce C's prompts + welcome/MOTD text byte-for-byte.
+#
+# NOTE: the oracle and port keystroke streams legitimately differ today (the
+# port asks an extra ANSI question) — that difference is itself a finding. As
+# the port converges on C, the two streams should converge too.
+[fixture]
+quiet-mobs
+
+[creation:oracle]
+Ccreator
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[creation:port]
+Ccreator
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
