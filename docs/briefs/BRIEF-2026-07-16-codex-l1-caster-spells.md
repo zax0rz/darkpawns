@@ -8,10 +8,10 @@ Same "provable at level 1" sweet spot as the thief skills: a fresh L1 mage/cleri
 cast their starting spells, so every fix is oracle-gateable by a live telnet
 differential. The L1-castable spells (from `class.c` spell_level assignments) are:
 
-- **mage (CLASS_MAGIC_USER, level 1):** `magic missile` (damage), `infravision` (affect)
+- **mage (CLASS_MAGIC_USER, level 1):** `flame arrow` (damage; internal SPELL_MAGIC_MISSILE, spells[32]), `infravision` (affect)
 - **cleric (CLASS_CLERIC, level 1):** `cure light` (heal)
 
-Start with **magic missile** and **cure light** (RNG damage/heal → the draw-parity
+DP renames spells: the player casts **flame arrow** (internal `SPELL_MAGIC_MISSILE`=32, `spells[32]`). Start with **flame arrow** and **cure light** (RNG damage/heal → the draw-parity
 test); `infravision` (a pure affect + message) is a good third.
 
 ## The casting pipeline — draw order is LAW
@@ -32,7 +32,7 @@ Any reordering or missing draw here desyncs the seeded stream. Verify whether th
 draws the success roll BEFORE `say_spell` and the effect, exactly as C does.
 
 ## The effects
-- **magic missile** — `mag_damage` (`src/magic.c:~618-633`): `dam = dice(4,3) + level`
+- **flame arrow** — `mag_damage` (`src/magic.c:~618-633`): `dam = dice(4,3) + level`
   (plus a reagent bonus if `has_reagents`; a fresh newbie has none → `dice(4,3)+level`).
   4 `number(1,3)` draws for the dice, in order, AFTER the success roll. Then damage is
   applied via the normal damage path (mind its own draws/messages — compare to the
@@ -47,15 +47,15 @@ draws the success roll BEFORE `say_spell` and the effect, exactly as C does.
 The port already has spell scaffolding — audit and fix, don't rebuild from scratch:
 `pkg/spells/` (`damage_spells.go`, `affect_spells.go`, `say_spell.go`, `spells.go`),
 `pkg/session/cast_cmds.go`. Check: (a) the cast-success roll uses
-`number(0, 101+weight_add)` in C's position; (b) magic missile is `dice(4,3)+level`
+`number(0, 101+weight_add)` in C's position; (b) flame arrow (SPELL_MAGIC_MISSILE) is `dice(4,3)+level`
 with the draws in C's order; (c) `say_spell` strings match; (d) cure_light dice + cap +
 messages; (e) mana cost and WAIT_STATE parity.
 
 ## Oracle gate (Claude runs — you don't need DP_ORACLE_BIN)
 Provide a scenario sketch per spell in the PR description; Claude authors/normalizes and
 runs `dp-oracle-diff`. Shapes:
-- **magic missile:** fresh L1 mage, `spawn-mob 16303 1 8105 80`, warmup `n/e/s/e`, probe
-  `cast 'magic missile' trainee` repeated. Diff the incantation, hit/damage message, and
+- **flame arrow:** fresh L1 mage, `spawn-mob 16303 1 8105 80`, warmup `n/e/s/e`, probe
+  `cast 'flame arrow' trainee` repeated. Diff the incantation, hit/damage message, and
   next RNG observation. (Caveat: a mob target means mob-spawn draws precede the cast —
   those are already stream-aligned per the combat-swing scenario, but if you see an
   unexplained divergence, flag it against **DP-1170**, the open steal-from-mob draw
@@ -78,6 +78,6 @@ Each must be RED on pre-fix `main` and GREEN after. Claude gates every one.
   class prompt).
 
 ## Deliverable
-Faithful `magic missile`, `cure light`, `infravision` (cast pipeline draws + effect
+Faithful `flame arrow`, `cure light`, `infravision` (cast pipeline draws + effect
 formulas + messages + mana/wait), with unit tests, plus the per-spell oracle scenario
 sketches. Claude reconciles + runs the oracle gate.
