@@ -723,7 +723,7 @@ func appendObjectLook(result *ObservationResult, ch *Player, object *ObjectInsta
 		return
 	}
 	if mode == 6 {
-		flags := objectVisibleFlags(ch, object)
+		flags := coloredObjectVisibleFlags(ch, object)
 		if flags == "" {
 			// C show_obj_to_char(mode 6) emits an otherwise empty line.
 			result.literal(ch, " ")
@@ -744,33 +744,70 @@ func appendObjectLook(result *ObservationResult, ch *Player, object *ObjectInsta
 	if object.GetTypeFlag() == ITEM_DRINKCON {
 		text = "It looks like a drink container."
 	}
-	result.literal(ch, text+objectVisibleFlags(ch, object))
+	result.literal(ch, text+coloredObjectVisibleFlags(ch, object))
 }
 
+// objectVisibleFlags builds the parenthesized flag annotations C appends in
+// show_obj_to_char and list_obj_to_char, without color. This is the form used
+// by C's oc_show_list-derived views (room contents, container contents,
+// inventory), which stay plain at every color level (src/oc.c:82-170).
 func objectVisibleFlags(ch *Player, object *ObjectInstance) string {
+	return objectFlagAnnotations(ch, object, false)
+}
+
+// coloredObjectVisibleFlags is the C show_obj_to_char variant: at exactly
+// complete color level (COLOR_LEV(ch)==C_CMP) the bless/magic/glow phrases are
+// wrapped in KBLU/KYEL/KWHT and reset with KNRM before the closing paren
+// (src/act.informative.c:132-164, src/screen.h). Levels 0-2 stay plain.
+func coloredObjectVisibleFlags(ch *Player, object *ObjectInstance) string {
+	return objectFlagAnnotations(ch, object, completeObservationColor(ch))
+}
+
+func objectFlagAnnotations(ch *Player, object *ObjectInstance, colorize bool) string {
 	if object == nil {
 		return ""
 	}
 	var flags []string
-	if object.HasExtraFlag(0, 5) {
+	if object.HasExtraFlag(0, itemExtraInvisible) {
 		flags = append(flags, "(invisible)")
 	}
-	if object.HasExtraFlag(0, 8) && ch.IsAffected(affDetectAlign) {
-		flags = append(flags, "(blue glow)")
+	if object.HasExtraFlag(0, itemExtraBless) && ch.IsAffected(affDetectAlign) {
+		flags = append(flags, glowAnnotation("\x1b[34m", "blue glow", colorize)) // KBLU
 	}
-	if object.HasExtraFlag(0, 6) && ch.IsAffected(affDetectMagic) {
-		flags = append(flags, "(yellow glow)")
+	if object.HasExtraFlag(0, itemExtraMagic) && ch.IsAffected(affDetectMagic) {
+		flags = append(flags, glowAnnotation("\x1b[33m", "yellow glow", colorize)) // KYEL
 	}
-	if object.HasExtraFlag(0, 0) {
-		flags = append(flags, "(glowing)")
+	if object.HasExtraFlag(0, itemExtraGlow) {
+		flags = append(flags, glowAnnotation("\x1b[37m", "glowing", colorize)) // KWHT
 	}
-	if object.HasExtraFlag(0, 1) {
+	if object.HasExtraFlag(0, itemExtraHum) {
 		flags = append(flags, "(humming)")
 	}
 	if len(flags) == 0 {
 		return ""
 	}
 	return " " + strings.Join(flags, " ")
+}
+
+// glowAnnotation renders one parenthesized glow flag the way C's
+// show_obj_to_char does: " (" + color + phrase + KNRM + ")" when colorized,
+// " (" + phrase + ")" otherwise. Parentheses and the leading space are never
+// colored.
+func glowAnnotation(color, phrase string, colorize bool) string {
+	if colorize {
+		return "(" + color + phrase + "\x1b[0m)" // KNRM
+	}
+	return "(" + phrase + ")"
+}
+
+// completeObservationColor reports whether the viewer's color level is exactly
+// C's C_CMP (3): both PRF_COLOR bits set. C gates show_obj_to_char's flag
+// colors on COLOR_LEV(ch)==C_CMP, so levels 0-2 must stay plain here; this is
+// deliberately stricter than observationColors, which colors other views at
+// level >= 2.
+func completeObservationColor(ch *Player) bool {
+	flags := ch.GetFlags()
+	return flags&(1<<uint(PrfColor1)) != 0 && flags&(1<<uint(PrfColor2)) != 0
 }
 
 func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
@@ -787,7 +824,7 @@ func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}
-		result.literal(ch, fmt.Sprintf("%-20s%s%s", equipmentWhere(slot), item.GetShortDesc(), objectVisibleFlags(ch, item)))
+		result.literal(ch, fmt.Sprintf("%-20s%s%s", equipmentWhere(slot), item.GetShortDesc(), coloredObjectVisibleFlags(ch, item)))
 	}
 }
 
@@ -810,7 +847,7 @@ func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstan
 		if position >= 0 && position < len(WhereNames) {
 			where = WhereNames[position]
 		}
-		result.literal(ch, where+item.GetShortDesc()+objectVisibleFlags(ch, item))
+		result.literal(ch, where+item.GetShortDesc()+coloredObjectVisibleFlags(ch, item))
 	}
 }
 
