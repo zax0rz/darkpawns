@@ -96,7 +96,7 @@ func (w *World) DoEquipment(ch *Player) {
 		b.WriteString(cWearWhere[i])
 		if chCanSeeObj(ch, item) {
 			b.WriteString(item.GetShortDesc())
-			b.WriteString(equipmentVisibleFlags(ch, item))
+			b.WriteString(coloredObjectVisibleFlags(ch, item))
 			b.WriteString("\r\n")
 		} else {
 			b.WriteString("Something.\r\n")
@@ -220,34 +220,6 @@ func pluralPT(n int) string {
 		return ""
 	}
 	return "s"
-}
-
-// equipmentVisibleFlags returns the trailing flag annotations used by C's
-// show_obj_to_char(..., mode 1) on the equipment list.
-func equipmentVisibleFlags(ch *Player, item *ObjectInstance) string {
-	if item == nil {
-		return ""
-	}
-	var flags []string
-	if item.HasExtraFlag(0, itemExtraInvisible) {
-		flags = append(flags, "(invisible)")
-	}
-	if item.HasExtraFlag(0, itemExtraBless) && ch.IsAffected(affDetectAlign) {
-		flags = append(flags, "(blue glow)")
-	}
-	if item.HasExtraFlag(0, itemExtraMagic) && ch.IsAffected(affDetectMagic) {
-		flags = append(flags, "(yellow glow)")
-	}
-	if item.HasExtraFlag(0, itemExtraGlow) {
-		flags = append(flags, "(glowing)")
-	}
-	if item.HasExtraFlag(0, itemExtraHum) {
-		flags = append(flags, "(humming)")
-	}
-	if len(flags) == 0 {
-		return ""
-	}
-	return " " + strings.Join(flags, " ")
 }
 
 // Item extra-flag bits used by the view helpers (src/structs.h).
