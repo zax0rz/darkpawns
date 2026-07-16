@@ -140,7 +140,7 @@ func FindSkillNum(name string) int {
 	if q == "" {
 		return -1
 	}
-	for num := 1; num < len(dpSkillCatalogNames); num++ {
+	for num := 1; num < skillCatalogSize(); num++ {
 		cname := SkillCatalogName(num)
 		if cname == "" {
 			continue

@@ -45,7 +45,7 @@ func TestSaySpell_RoomMessageNamesCaster(t *testing.T) {
 	if !strings.Contains(msg, "Alice") {
 		t.Errorf("room message should name caster Alice, got: %s", msg)
 	}
-	if !strings.Contains(msg, "armor") {
+	if !strings.Contains(msg, "holy ward") {
 		t.Errorf("room message should show real spell name to same-class observer, got: %s", msg)
 	}
 }
@@ -64,8 +64,33 @@ func TestSaySpell_RoomMessageObfuscatesForDifferentClass(t *testing.T) {
 	if !strings.Contains(msg, "Alice") {
 		t.Errorf("room message should name caster Alice, got: %s", msg)
 	}
-	if strings.Contains(msg, "armor") {
+	if strings.Contains(msg, "holy ward") {
 		t.Errorf("room message should obfuscate spell for different-class observer, got: %s", msg)
+	}
+}
+
+func TestGetSpellNameUsesDarkPawnsCatalog(t *testing.T) {
+	tests := map[int]string{
+		1:   "holy ward",
+		7:   "charm person",
+		16:  "cure light",
+		32:  "flame arrow",
+		50:  "infravision",
+		134: "kick",
+	}
+	for num, want := range tests {
+		if got := GetSpellName(num); got != want {
+			t.Errorf("GetSpellName(%d) = %q, want %q", num, got, want)
+		}
+	}
+	if got := GetSpellName(0); got != "" {
+		t.Errorf("GetSpellName(0 reserved) = %q, want empty", got)
+	}
+	if got := GetSpellName(207); got != "" {
+		t.Errorf("GetSpellName(C sentinel) = %q, want empty", got)
+	}
+	if got := GetSpellName(9999); got != "" {
+		t.Errorf("GetSpellName(out of range) = %q, want empty", got)
 	}
 }
 

@@ -160,8 +160,13 @@ ARRAY_MAP: tuple[ArrayMapping, ...] = (
     # Class abbreviations.
     ArrayMapping("class_abbrevs", "ClassAbbrevs", "src/class.c", "pkg/game/character.go"),
 
-    # Spell names.
-    ArrayMapping("spells", "spellNamesTable", "src/constants.c", "pkg/spells/say_spell.go"),
+    # Dark Pawns' canonical spell/skill names.
+    ArrayMapping(
+        "spells",
+        "dpSkillCatalogNames",
+        "src/spell_parser.c",
+        "pkg/spells/skill_catalog_names.go",
+    ),
 
     # Spell wear-off messages.
     ArrayMapping(
