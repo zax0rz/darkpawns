@@ -35,7 +35,13 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
 	}
 
-	saved := magSavingThrow(victim, savetype)
+	// C only rolls a save inside the hostile cases that explicitly request it.
+	// Benign affects such as infravision consume no gameplay RNG.
+	saved := false
+	switch spellNum {
+	case SpellChillTouch, SpellBlindness, SpellSmokescreen, SpellCurse, SpellSleep, SpellFlameStrike, SpellPoison:
+		saved = magSavingThrow(victim, savetype)
+	}
 	magAffectsApply(level, ch, victim, spellNum, saved, reag, world)
 }
 
@@ -179,6 +185,13 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		aff = engine.NewAffectDirect(SpellDetectInvis, engine.ApplyNone, 12+level, 0, engine.AFFDetectInvisible, "detect invis")
 	case SpellInfravision:
 		aff = engine.NewAffectDirect(SpellInfravision, engine.ApplyNone, 12+level, 0, engine.AFFInfrared, "infravision")
+		joinAffect(victim, aff, true, false)
+		sendToVictim(victim, "Your eyes glow red.\r\n")
+		if ch != victim {
+			sendToCaster(ch, "With a light touch, you bestow the magick into "+possessivePronoun(victim)+" eyes.\r\n")
+		}
+		sendAffectRoom(victim, nil, "$n's eyes glow red.\r\n", world)
+		return
 	case SpellWaterBreathe:
 		aff = engine.NewAffectDirect(SpellWaterBreathe, engine.ApplyNone, getLevel(ch), 0, engine.AFFWaterBreathing, "water breathe")
 	case SpellDetectAlign, SpellKnowAlign:
@@ -272,6 +285,9 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 	switch spellNum {
 	case SpellCureLight:
 		sendToVictim(victim, "You feel better.\r\n")
+		if ch != victim {
+			sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+		}
 	case SpellCureCritic:
 		sendToVictim(victim, "You feel a lot better!\r\n")
 	case SpellHeal, SpellMassHeal:
@@ -919,6 +935,40 @@ func applyAffect(entity interface{}, aff *engine.Affect) {
 	}
 }
 
+func joinAffect(entity interface{}, aff *engine.Affect, addDuration, addMagnitude bool) {
+	type joiner interface {
+		JoinAffect(*engine.Affect, bool, bool)
+	}
+	if j, ok := entity.(joiner); ok {
+		j.JoinAffect(aff, addDuration, addMagnitude)
+		return
+	}
+	applyAffect(entity, aff)
+}
+
+func sendAffectRoom(victim, exclude interface{}, format string, world interface{}) {
+	type roomed interface{ GetRoomVNum() int }
+	type named interface{ GetName() string }
+	type sender interface{ SendMessage(string) }
+	w, ok := world.(roomIterable)
+	vr, roomOK := victim.(roomed)
+	vn, nameOK := victim.(named)
+	if !ok || !roomOK || !nameOK {
+		return
+	}
+	msg := strings.ReplaceAll(format, "$n", vn.GetName())
+	msg = strings.ReplaceAll(msg, "$N", vn.GetName())
+	msg = strings.ReplaceAll(msg, "$s", possessivePronoun(victim))
+	w.ForEachPlayerInRoomInterface(vr.GetRoomVNum(), func(p interface{}) {
+		if selfTarget(victim, p) || (exclude != nil && selfTarget(exclude, p)) {
+			return
+		}
+		if s, ok := p.(sender); ok {
+			s.SendMessage(msg)
+		}
+	})
+}
+
 func removeAffect(entity interface{}, spellNum int) {
 	type remover interface{ RemoveAffectBySpell(int) }
 	if r, ok := entity.(remover); ok {
@@ -994,7 +1044,9 @@ func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int 
 	type messageSender interface{ SendMessage(string) }
 
 	var found bool
-	if holder, ok := ch.(InventoryHolder); ok {
+	if consumer, ok := ch.(interface{ ConsumeSpellReagent(string) bool }); ok {
+		found = consumer.ConsumeSpellReagent(reagentName)
+	} else if holder, ok := ch.(InventoryHolder); ok {
 		if item, ok := holder.GetInventory().FindItem(reagentName); ok {
 			holder.GetInventory().RemoveItem(item)
 			found = true

@@ -17,7 +17,7 @@ type SpellLearnEntry struct {
 var ClassSpells = [12][]SpellLearnEntry{
 	// MAGES (CLASS_MAGIC_USER=0)
 	ClassMageUser: {
-		{32, 1},   // magic missile
+		{32, 1},   // flame arrow (internal SPELL_MAGIC_MISSILE)
 		{50, 1},   // infravision
 		{75, 2},   // acid blast
 		{19, 2},   // detect invis
@@ -168,7 +168,7 @@ var ClassSpells = [12][]SpellLearnEntry{
 
 	// MAGUS (CLASS_MAGUS=4)
 	ClassMagus: {
-		{32, 1},   // magic missile
+		{32, 1},   // flame arrow (internal SPELL_MAGIC_MISSILE)
 		{50, 1},   // infravision
 		{75, 2},   // acid blast
 		{19, 2},   // detect invis

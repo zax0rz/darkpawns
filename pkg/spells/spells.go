@@ -202,6 +202,6 @@ const (
 // spellNum is one of the Spell* constants above.
 // casterLevel scales duration and magnitude of affects.
 // world is the game world reference (interface{} to avoid circular imports); may be nil.
-func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int, world interface{}) {
-	CallMagic(caster, target, nil, spellNum, casterLevel, CastSpell, world)
+func Cast(caster interface{}, target interface{}, spellNum int, casterLevel int, world interface{}) bool {
+	return CallMagic(caster, target, nil, spellNum, casterLevel, CastSpell, world)
 }

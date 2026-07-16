@@ -1,6 +1,8 @@
 package game
 
 import (
+	"time"
+
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
@@ -268,6 +270,28 @@ func (p *Player) GetInventoryItems() []scripting.ScriptableObject {
 func (p *Player) AddAffect(aff *engine.Affect) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	p.ActiveAffects = append(p.ActiveAffects, aff)
+}
+
+// JoinAffect mirrors C affect_join for spell affects sharing a spell and
+// APPLY location. Infravision uses addDuration=true on every recast.
+func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for i, current := range p.ActiveAffects {
+		if current == nil || current.SpellID != aff.SpellID || current.Location != aff.Location {
+			continue
+		}
+		if addDuration {
+			aff.Duration += current.Duration
+		}
+		if addMagnitude {
+			aff.Magnitude += current.Magnitude
+		}
+		aff.ExpiresAt = time.Now().Add(time.Duration(aff.Duration) * engine.TickDuration)
+		p.ActiveAffects[i] = aff
+		return
+	}
 	p.ActiveAffects = append(p.ActiveAffects, aff)
 }
 

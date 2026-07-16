@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -51,7 +52,7 @@ var spellDB = map[int]*spellData{
 	29:  {29, "invisible", 45, 45, 1, [12]int{}},
 	30:  {30, "lightning bolt", 54, 34, 4, [12]int{}},
 	31:  {31, "locate object", 25, 20, 1, [12]int{}},
-	32:  {32, "magic missile", 30, 15, 5, [12]int{}},
+	32:  {32, "flame arrow", 30, 15, 5, [12]int{}},
 	33:  {33, "poison", 50, 40, 2, [12]int{}},
 	34:  {34, "protect evil", 50, 50, 1, [12]int{}},
 	35:  {35, "remove curse", 45, 45, 1, [12]int{}},
@@ -137,7 +138,10 @@ var spellByName = func() map[string]*spellData {
 // manaCost computes the mana cost for a spell at a given caster level and class.
 // Formula: MAX(mana_max - (mana_change * (caster_level - min_level)), mana_min)
 func manaCost(sd *spellData, casterLevel int, class int) int {
-	minLvl := sd.MinLevel[class]
+	minLvl := game.ClassSkillMinLevel(class, sd.SpellNum)
+	if minLvl == 999 {
+		minLvl = sd.MinLevel[class]
+	}
 	// Don't allow negative scaling; if caster below min level, use max cost
 	diff := casterLevel - minLvl
 	if diff < 0 {
@@ -192,11 +196,28 @@ func cmdCast(s *Session, args []string) error {
 		return nil
 	}
 
-	// Check player knows the spell via SpellMap
+	// SpellMap is the port's established castability gate. Characters created
+	// before per-spell proficiency existed have no SkillManager entry, so retain
+	// their former effective proficiency while still making the C success draw.
 	_, knows := s.player.SpellMap[spellName]
 	if !knows {
 		s.Send(fmt.Sprintf("You don't know '%s'.", sd.Name))
 		return nil
+	}
+	proficiency := s.player.GetSkill(spellName)
+	if proficiency == 0 {
+		proficiency = 95
+	}
+	info := spells.GetSpellInfo(sd.SpellNum)
+	if !checkCastPosition(s, info) {
+		return nil
+	}
+	if info != nil && info.IsViolent() {
+		room := s.manager.world.GetRoomInWorld(s.player.GetRoomVNum())
+		if room != nil && room.HasFlag(spells.RoomPeaceful) && s.player.GetLevel() < LVL_IMMORT {
+			s.Send("This room just has such a peaceful, easy feeling..\r\n")
+			return nil
+		}
 	}
 
 	// Determine caster level: minimum of player level and class min level
@@ -208,18 +229,27 @@ func cmdCast(s *Session, args []string) error {
 	cost := manaCost(sd, casterLevel, class)
 
 	// Check mana
-	if s.player.Mana < cost {
-		s.Send(fmt.Sprintf("You don't have enough mana to cast '%s'. You need %d mana.", sd.Name, cost))
+	if s.player.GetMana() < cost && s.player.GetLevel() < LVL_IMMORT {
+		s.Send("You haven't the energy to cast that spell!\r\n")
 		return nil
 	}
-
-	// Deduct mana
-	s.player.Mana -= cost
 
 	// Determine target
 	var target interface{}
 
+	if targetName == "" && info != nil && info.IsViolent() {
+		if fighting := s.player.GetFighting(); fighting != "" {
+			targetName = fighting
+		} else {
+			s.Send("Upon who should the spell be cast?\r\n")
+			return nil
+		}
+	}
 	if targetName == "" || strings.EqualFold(targetName, s.player.Name) || strings.EqualFold(targetName, "self") || strings.EqualFold(targetName, "me") {
+		if info != nil && info.IsViolent() {
+			s.Send("You shouldn't cast that on yourself -- could be bad for your health!\r\n")
+			return nil
+		}
 		// Self-cast
 		target = s.player
 	} else {
@@ -228,11 +258,6 @@ func cmdCast(s *Session, args []string) error {
 		tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName)
 		if !found {
 			s.Send("They aren't here.")
-			// Refund mana on failed targeting
-			s.player.Mana += cost
-			if s.player.Mana > s.player.MaxMana {
-				s.player.Mana = s.player.MaxMana
-			}
 			return nil
 		}
 		switch {
@@ -243,31 +268,64 @@ func cmdCast(s *Session, args []string) error {
 		}
 	}
 
-	// Execute the spell
-	spells.Cast(s.player, target, sd.SpellNum, casterLevel, s.manager.world)
+	weightAdd := castWeightPenalty(s.player)
+	if s.player.Level >= LVL_IMMORT {
+		weightAdd = -20
+	}
+	if dprng.Number(0, 101+weightAdd) > proficiency {
+		s.player.SetWaitState(1)
+		s.Send("You lost your concentration!\r\n")
+		s.player.SetMana(max(0, s.player.GetMana()-(cost>>1)))
+		return nil
+	}
 
-	// Send confirmation
-	if target == s.player {
-		s.Send(fmt.Sprintf("You cast '%s' on yourself.", sd.Name))
-	} else {
-		// Get target name for display
-		targetDisplay := targetName
-		if t, ok := target.(*game.Player); ok {
-			targetDisplay = t.Name
-		} else if t, ok := target.(interface{ GetShortDesc() string }); ok {
-			targetDisplay = t.GetShortDesc()
-		}
-		s.Send(fmt.Sprintf("You cast '%s' on %s.", sd.Name, targetDisplay))
-
-		// Notify target if it's a player
-		if t, ok := target.(*game.Player); ok {
-			if targetSession, ok := s.manager.GetSession(t.Name); ok {
-				targetSession.Send(fmt.Sprintf("%s casts '%s' on you.", s.player.Name, sd.Name))
-			}
-		}
+	// C cast_spell sends OK and the room incantation before dispatching the
+	// effect. Mana and wait state are charged only when call_magic succeeds.
+	s.Send("Okay.\r\n")
+	spells.SaySpell(s.player, sd.SpellNum, target, nil, s.manager.world)
+	if spells.Cast(s.player, target, sd.SpellNum, casterLevel, s.manager.world) {
+		s.player.SetWaitState(1)
+		s.player.SetMana(max(0, s.player.GetMana()-cost))
 	}
 
 	return nil
+}
+
+func checkCastPosition(s *Session, info *spells.SpellInfo) bool {
+	if info == nil || s.player.GetPosition() >= int(info.MinPosition) {
+		return true
+	}
+	switch s.player.GetPosition() {
+	case int(spells.PosSleeping):
+		s.Send("You dream about great magical powers.\r\n")
+	case int(spells.PosResting):
+		s.Send("You cannot concentrate while resting.\r\n")
+	case int(spells.PosSitting):
+		s.Send("You can't do this sitting!\r\n")
+	case int(spells.PosFighting):
+		s.Send("Impossible!  You can't concentrate enough!\r\n")
+	default:
+		s.Send("You can't do much of anything like this!\r\n")
+	}
+	return false
+}
+
+func castWeightPenalty(ch *game.Player) int {
+	carried := ch.CarriedWeight()
+	if carried == 0 {
+		return 0
+	}
+	ratio := ch.MaxCarryWeight() / carried
+	switch ratio {
+	case 1:
+		return 10
+	case 2:
+		return 7
+	case 3:
+		return 5
+	default:
+		return 0
+	}
 }
 
 func init() {
