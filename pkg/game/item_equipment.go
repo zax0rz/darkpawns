@@ -245,8 +245,10 @@ func (w *World) EquipItem(ch *Player, obj *ObjectInstance, slot int) error {
 		}
 		return err
 	}
-	// TODO(DP-1156): apply ITEM_TAKE_NAME's equipped short-description rename.
 	obj.Location = LocEquippedPlayer(ch.Name, goSlot)
+	if obj.HasExtraFlag(0, extraFlagTakeName) {
+		obj.Runtime.ShortDescOverride = fmt.Sprintf("%s's %s", ch.Name, obj.GetKeywords())
+	}
 	return nil
 }
 
@@ -259,7 +261,10 @@ func (w *World) UnequipItem(ch *Player, slot int) error {
 	if !ok {
 		return fmt.Errorf("c wear position %d has no Go equipment slot", slot)
 	}
-	// TODO(DP-1156): restore ITEM_TAKE_NAME's unequipped short description.
+	if obj, found := ch.Equipment.GetItemInSlot(goSlot); found && obj.HasExtraFlag(0, extraFlagTakeName) {
+		keywords := obj.GetKeywords()
+		obj.Runtime.ShortDescOverride = an(keywords) + " " + keywords
+	}
 	return ch.Equipment.Unequip(goSlot, ch.Inventory)
 }
 

@@ -143,6 +143,7 @@ const (
 	extraFlagNoDonate  = 3  // ITEM_NODONATE
 	extraFlagInvisible = 5  // ITEM_INVISIBLE
 	extraFlagNoDrop    = 7  // ITEM_NODROP
+	extraFlagTakeName  = 17 // ITEM_TAKE_NAME
 	extraFlagTwoHanded = 28 // ITEM_TWO_HANDED
 )
 

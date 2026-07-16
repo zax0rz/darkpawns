@@ -142,6 +142,76 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	}
 }
 
+func TestTakeNameOverrideDoesNotPersistAcrossRecordReload(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Spawn Room", Zone: 1}},
+		Objs: []parser.Obj{
+			{
+				VNum:       8019,
+				ShortDesc:  "a frayed tunic",
+				Keywords:   "tunic",
+				WearFlags:  [4]int{1<<0 | 1<<3},
+				ExtraFlags: [4]int{1 << 17}, // ITEM_TAKE_NAME
+			},
+			{VNum: 8020, ShortDesc: "a plain token", Keywords: "token"},
+		},
+	}
+	world, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(world.StopAITicker)
+
+	p := game.NewPlayer(456, "Rebooter", 1001)
+	tunicProto, ok := world.GetObjPrototype(8019)
+	if !ok {
+		t.Fatal("expected tunic prototype")
+	}
+	tunic := game.NewObjectInstance(tunicProto, -1)
+	tunic.Runtime.ShortDescOverride = "Rebooter's tunic"
+	tunic.Location = game.LocEquippedPlayer(p.Name, game.SlotBody)
+	if err := p.Equipment.SetSlot(game.SlotBody, tunic); err != nil {
+		t.Fatalf("SetSlot tunic: %v", err)
+	}
+
+	// A non-take-name override remains persistent; the exclusion must be
+	// specific to C's runtime-only ITEM_TAKE_NAME rename.
+	tokenProto, ok := world.GetObjPrototype(8020)
+	if !ok {
+		t.Fatal("expected token prototype")
+	}
+	token := game.NewObjectInstance(tokenProto, -1)
+	token.Runtime.ShortDescOverride = "a personalized token"
+	token.Location = game.LocInventoryPlayer(p.Name)
+	if err := p.Inventory.AddItem(token); err != nil {
+		t.Fatalf("AddItem token: %v", err)
+	}
+
+	rec, err := PlayerToRecord(p, nil)
+	if err != nil {
+		t.Fatalf("PlayerToRecord: %v", err)
+	}
+	restored, err := RecordToPlayer(rec, world)
+	if err != nil {
+		t.Fatalf("RecordToPlayer: %v", err)
+	}
+
+	restoredTunic, found := restored.Equipment.GetItemInSlot(game.SlotBody)
+	if !found {
+		t.Fatal("restored take-name tunic is not equipped")
+	}
+	if got, want := restoredTunic.GetShortDesc(), "a frayed tunic"; got != want {
+		t.Fatalf("take-name description after reload = %q, want prototype %q", got, want)
+	}
+	restoredToken, found := restored.Inventory.FindItem("token")
+	if !found {
+		t.Fatal("restored ordinary override item is missing")
+	}
+	if got, want := restoredToken.GetShortDesc(), "a personalized token"; got != want {
+		t.Fatalf("ordinary description override after reload = %q, want %q", got, want)
+	}
+}
+
 // TestRecordToPlayer_OverCapacityInventoryNotDropped guards against silent item
 // loss on load: a saved inventory larger than the current capacity must be fully
 // restored, not truncated. Before the fix, RecordToPlayer discarded the
