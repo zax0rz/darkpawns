@@ -768,6 +768,13 @@ func (m *MobInstance) GetGold() int {
 	return m.Gold
 }
 
+// SetGold updates the mob's instance gold.
+func (m *MobInstance) SetGold(gold int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Gold = gold
+}
+
 // IsAffected returns true if the given AFF bit is set on the mob.
 func (m *MobInstance) IsAffected(bit int) bool {
 	m.mu.RLock()

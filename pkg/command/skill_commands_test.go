@@ -289,6 +289,67 @@ func newSkillCommandSession(t *testing.T) *skillCommandSession {
 	return &skillCommandSession{player: player, world: world}
 }
 
+func TestNewbieThiefUtilityCommandsBypassGuildMinimumLevels(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.Class = game.ClassThief
+	session.player.SetLevel(1)
+	session.player.SetPosition(combat.PosStanding)
+	session.player.SetSkill(game.SkillSneak, 10)
+	session.player.SetSkill(game.SkillHide, 5)
+
+	if err := CmdSneak(session, nil); err != nil {
+		t.Fatalf("CmdSneak: %v", err)
+	}
+	if got := session.messages[len(session.messages)-1]; got != "Okay, you'll try to move silently for a while.\r\n" {
+		t.Errorf("level-1 sneak output = %q", got)
+	}
+
+	if err := CmdHide(session, nil); err != nil {
+		t.Fatalf("CmdHide: %v", err)
+	}
+	if got := session.messages[len(session.messages)-1]; got != "You attempt to hide yourself.\r\n" {
+		t.Errorf("level-1 hide output = %q", got)
+	}
+
+	world, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}},
+		Mobs: []parser.Mob{{
+			VNum:      2001,
+			Keywords:  "mark target",
+			ShortDesc: "a test mark",
+			Level:     1,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld for steal: %v", err)
+	}
+	defer world.StopAITicker()
+
+	thief := game.NewPlayer(2, "Newbie", 1001)
+	thief.Class = game.ClassThief
+	thief.SetLevel(1)
+	thief.SetPosition(combat.PosStanding)
+	thief.Stats.Str = 25
+	thief.Stats.Dex = 25
+	thief.SetSkill(game.SkillSteal, 1000)
+	if err := world.AddPlayer(thief); err != nil {
+		t.Fatalf("AddPlayer thief: %v", err)
+	}
+	mob, err := world.SpawnMob(2001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+	mob.SetGold(0)
+
+	stealSession := &skillCommandSession{player: thief, world: world}
+	if err := CmdSteal(stealSession, []string{"coins", "mark"}); err != nil {
+		t.Fatalf("CmdSteal: %v", err)
+	}
+	if got := stealSession.messages[len(stealSession.messages)-1]; got != "You couldn't get any gold...\r\n" {
+		t.Errorf("level-1 steal output = %q", got)
+	}
+}
+
 func TestCmdSkills(t *testing.T) {
 	t.Run("no player", func(t *testing.T) {
 		session := &skillCommandSession{}
