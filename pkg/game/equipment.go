@@ -526,3 +526,20 @@ func (eq *Equipment) GetEquippedItems() map[EquipmentSlot]*ObjectInstance {
 	}
 	return result
 }
+
+// extractAll removes every equipped item without moving it through inventory.
+// It is reserved for terminal character-state transitions such as death and an
+// unsafe REALLYQUIT, where the objects are destroyed rather than carried.
+func (eq *Equipment) extractAll() []*ObjectInstance {
+	eq.mu.Lock()
+	defer eq.mu.Unlock()
+
+	items := make([]*ObjectInstance, 0, len(eq.Slots))
+	for _, item := range eq.Slots {
+		if item != nil {
+			items = append(items, item)
+		}
+	}
+	eq.Slots = make(map[EquipmentSlot]*ObjectInstance)
+	return items
+}

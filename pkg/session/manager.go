@@ -766,7 +766,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	m.combatEngine.StopCombat(playerName)
 
 	// 2. Broadcast leave message
-	if s.player != nil {
+	if s.player != nil && !s.leaveBroadcastHandled {
 		leaveMsg, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
 			Data: EventData{
@@ -845,6 +845,43 @@ func (m *Manager) Unregister(playerName string) {
 
 	if ok {
 		m.cleanupSession(s, playerName)
+	}
+}
+
+// closeDuplicateSessions implements C do_quit's IDNUM anti-dupe sweep. Each
+// duplicate is fully cleaned up (including its save) before the quitting
+// session performs its final save, so the selected quit equipment policy wins.
+func (m *Manager) closeDuplicateSessions(quitting *Session) {
+	if quitting == nil || quitting.player == nil || quitting.player.GetID() <= 0 {
+		return
+	}
+
+	type duplicate struct {
+		name    string
+		session *Session
+	}
+	id := quitting.player.GetID()
+	m.mu.RLock()
+	duplicates := make([]duplicate, 0)
+	for name, candidate := range m.sessions {
+		if candidate != quitting && candidate != nil && candidate.player != nil && candidate.player.GetID() == id {
+			duplicates = append(duplicates, duplicate{name: name, session: candidate})
+		}
+	}
+	m.mu.RUnlock()
+
+	for _, duplicate := range duplicates {
+		m.mu.Lock()
+		current, ok := m.sessions[duplicate.name]
+		if ok && current == duplicate.session {
+			delete(m.sessions, duplicate.name)
+		}
+		m.mu.Unlock()
+		if !ok || current != duplicate.session {
+			continue
+		}
+		m.cleanupSession(duplicate.session, duplicate.name)
+		duplicate.session.Close()
 	}
 }
 
@@ -1087,6 +1124,10 @@ type Session struct {
 	// Infobar / display state (from act.display.c)
 	screenSize  int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)
 	infobarMode int //nolint:unused // InfobarOff (0) or InfobarOn (1)
+	// leaveBroadcastHandled is set by an orderly quit after it applies C's
+	// invisibility gate, preventing generic disconnect cleanup from announcing
+	// the same departure a second time.
+	leaveBroadcastHandled bool
 
 	// Communication state
 	snooping *Session // Session being snooped (for wizard snoop)

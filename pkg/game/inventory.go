@@ -210,6 +210,17 @@ func (inv *Inventory) Clear() {
 	inv.clear()
 }
 
+// extractAll removes and returns every carried item. Unlike Clear, it gives
+// terminal state transitions a snapshot to recursively destroy afterward.
+func (inv *Inventory) extractAll() []*ObjectInstance {
+	inv.mu.Lock()
+	defer inv.mu.Unlock()
+
+	items := append([]*ObjectInstance(nil), inv.Items...)
+	inv.clear()
+	return items
+}
+
 // ==========================================================================
 // Handler.c utility functions — on-demand helpers
 // ==========================================================================
