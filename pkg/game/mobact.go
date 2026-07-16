@@ -17,6 +17,10 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+// mobactNumber is a test seam for verifying the shared CMWC draw order.
+// Production always uses the process-wide deterministic stream.
+var mobactNumber = dprng.Number
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -168,6 +172,16 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	if ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
 		return
 	}
+
+	// Hunter mobs chase their targets two steps at a time. C performs both
+	// calls before special procedures and every other per-tick activity.
+	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFighting() == "" {
+		w.huntVictim(ch)
+	}
+	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFighting() == "" {
+		w.huntVictim(ch)
+	}
+
 	// C: if (GET_HIT(ch) < GET_MAX_HIT(ch) && MOB_FLAGGED(ch, MOB_CHARMED)) continue;
 	if ch.GetHP() < ch.GetMaxHP() && hasMobFlag(ch, "charmed") {
 		return
@@ -195,10 +209,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// ITEM_WEAR_TAKE + carry weight/count headroom + CAN_SEE_OBJ) AND
 	// GET_OBJ_COST(obj) > max starting with max=1, so items costing 0 or 1
 	// are never picked up. Go previously had neither check (DP-1042).
-	// #nosec G404 — game RNG, not cryptographic
-	if hasMobFlag(ch, "scavenger") && dprng.Number(0, 10) == 0 {
+	if hasMobFlag(ch, "scavenger") {
 		items := w.GetItemsInRoom(ch.RoomVNum)
-		if len(items) > 0 {
+		// C only burns this draw when the room actually has contents.
+		// #nosec G404 — game RNG, not cryptographic
+		if len(items) > 0 && mobactNumber(0, 10) == 0 {
 			maxCost := 1 // C: max = 1; items must cost > 1 to be picked up
 			var best *ObjectInstance
 			carriedW := mobCarriedWeight(ch)
@@ -232,21 +247,23 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		}
 	}
 
-	// Hunter mobs chase their targets (C: mobact.c).
-	// The C source calls hunt_victim() twice in a row for double-speed hunting.
-	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFighting() == "" {
-		w.huntVictim(ch)
-	}
-	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFighting() == "" {
-		w.huntVictim(ch)
-	}
-
 	// -- Mob Movement (wandering) --
-	if !hasMobFlag(ch, "sentinel") && ch.GetPosition() >= combat.PosStanding {
-		w.wanderMob(ch)
+	// C draws the door unconditionally before checking SENTINEL, position, or
+	// whether the exit exists. Every mob that passed the outer gate burns it.
+	// #nosec G404 — game RNG, not cryptographic
+	door := mobactNumber(0, 18)
+	if !hasMobFlag(ch, "sentinel") && ch.GetPosition() == combat.PosStanding {
+		w.wanderMobWithDoor(ch, door)
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
 		return
+	}
+
+	// Sound trigger (C: 1-in-16 chance for mp_sound + lua sound). This draw is
+	// unconditional and occurs before all aggression draws.
+	// #nosec G404 — game RNG, not cryptographic
+	if mobactNumber(0, 15) == 0 {
+		w.MpSound(ch)
 	}
 
 	// -- Aggressive Mobs --
@@ -276,17 +293,17 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			}
 			// C: AFF_PROTECT_EVIL + IS_EVIL(ch) + !number(0,5)
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(12) && mobIsEvil(ch) && dprng.Number(0, 5) == 0 {
+			if vict.IsAffected(12) && mobIsEvil(ch) && mobactNumber(0, 5) == 0 {
 				continue
 			}
 			// C: AFF_PROTECT_GOOD + IS_GOOD(ch) + !number(0,5)
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(13) && mobIsGood(ch) && dprng.Number(0, 5) == 0 {
+			if vict.IsAffected(13) && mobIsGood(ch) && mobactNumber(0, 5) == 0 {
 				continue
 			}
 			// C: AFF_SNEAK + !number(0,3) — 1-in-4 skip
 			// #nosec G404 — game RNG, not cryptographic
-			if vict.IsAffected(affSneak) && dprng.Number(0, 3) == 0 {
+			if vict.IsAffected(affSneak) && mobactNumber(0, 3) == 0 {
 				continue
 			}
 			// Alignment matching faithful to mobact.c:
@@ -343,11 +360,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				}
 				// AFF_PROTECT_EVIL blocks unless the mob is evil AND a 1-in-6 check passes.
 				// #nosec G404 — game RNG, not cryptographic
-				if vict.IsAffected(affProtectEvil) && (!mobIsEvil(ch) || dprng.Number(0, 5) != 0) {
+				if vict.IsAffected(affProtectEvil) && (!mobIsEvil(ch) || mobactNumber(0, 5) != 0) {
 					continue
 				}
 				// #nosec G404 — game RNG, not cryptographic
-				if dprng.Number(0, 5) == 0 && ch.CanSpeak() {
+				if mobactNumber(0, 5) == 0 && ch.CanSpeak() {
 					w.RoomEcho(ch.RoomVNum, fmt.Sprintf("'Come to destroy my kin? Die!', exclaims %s.", ch.GetName()), ch.GetName())
 				}
 				if w.combatEngine != nil {
@@ -470,12 +487,6 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				break
 			}
 		}
-	}
-
-	// Sound trigger (C: 1-in-16 chance for mp_sound + lua sound)
-	// #nosec G404 — game RNG, not cryptographic
-	if dprng.Number(0, 15) == 0 {
-		w.MpSound(ch)
 	}
 
 	// Lua onpulse triggers — fired every tick for mobs with the script

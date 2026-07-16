@@ -107,7 +107,7 @@ func TestWanderMobRespectsStayZone(t *testing.T) {
 
 	mob := NewMobInstance(&parser.Mob{ActionFlags: []string{"STAY_ZONE"}}, 10)
 	for i := 0; i < 500; i++ {
-		w.wanderMob(mob)
+		w.wanderMobWithDoor(mob, 0)
 		if got := mob.GetRoom(); got != 10 {
 			t.Fatalf("STAY_ZONE mob left its zone: now in room %d after %d ticks", got, i+1)
 		}
@@ -115,26 +115,23 @@ func TestWanderMobRespectsStayZone(t *testing.T) {
 }
 
 // TestWanderMobMovesWithinConstraints confirms a non-sentinel, non-stay-zone
-// mob only ever lands in a connected room (1 or 2), and that it moves at least
-// once over many ticks — exercising the single-draw gate (DP-908).
+// mob only ever lands in a connected room (1 or 2). The caller supplies each
+// door because mobileActivityForMob now owns the unconditional draw (DP-1170).
 func TestWanderMobMovesWithinConstraints(t *testing.T) {
 	w := newWanderTestWorld(t)
 	mob := NewMobInstance(&parser.Mob{Keywords: "rat", ShortDesc: "a rat"}, 1)
 
-	moved := false
 	valid := map[int]bool{1: true, 2: true}
-	for i := 0; i < 2000; i++ {
-		w.wanderMob(mob)
+	for i := 0; i < 20; i++ {
+		door := 0 // north from room 1
+		if mob.GetRoom() == 2 {
+			door = 2 // south from room 2
+		}
+		w.wanderMobWithDoor(mob, door)
 		got := mob.GetRoom()
 		if !valid[got] {
 			t.Fatalf("mob wandered to invalid room %d", got)
 		}
-		if got != 1 {
-			moved = true
-		}
-	}
-	if !moved {
-		t.Fatal("mob never moved over 2000 ticks; single-draw gate appears too strict")
 	}
 }
 

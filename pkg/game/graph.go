@@ -24,6 +24,10 @@ var dirKeys = []string{"north", "east", "south", "west", "up", "down"}
 // trackThroughDoors enables tracking through closed/hidden doors.
 const trackThroughDoors = true
 
+// huntNumber is a test seam for verifying hunt_victim's CMWC draw order.
+// Production always uses the process-wide deterministic stream.
+var huntNumber = dprng.Number
+
 // bfsQueueEntry is a BFS queue element: room vnum and the first-step direction.
 type bfsQueueEntry struct {
 	room int
@@ -129,16 +133,15 @@ func (w *World) huntVictim(m *MobInstance) {
 		return
 	}
 
-	// Evasion check
+	dir := w.findFirstStep(m.GetRoom(), target.GetRoom())
+
+	// C finds the path first and skips evasion only when hunter and target are
+	// already together. Its two speech checks use independent number(0,6) draws.
 	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	if evasion := target.GetSkill("evasion"); evasion > 0 && dprng.Number(1, 151) < evasion {
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		r := dprng.Number(0, 6)
-		if m.CanSpeak() && r == 0 {
+	if evasion := target.GetSkill("evasion"); evasion > 0 && dir != BFS_ALREADY_THERE && huntNumber(1, 151) < evasion {
+		if m.CanSpeak() && huntNumber(0, 6) == 0 {
 			w.mobSayTo(m, "Where the hell did my prey go?!")
-		} else if m.CanSpeak() && r == 1 {
+		} else if m.CanSpeak() && huntNumber(0, 6) == 0 {
 			w.mobSayTo(m, "Fuck this...")
 		}
 		return
@@ -148,8 +151,6 @@ func (w *World) huntVictim(m *MobInstance) {
 	if w.roomHasFlag(target.GetRoom(), "peaceful") || w.roomHasFlag(target.GetRoom(), "house") {
 		return
 	}
-
-	dir := w.findFirstStep(m.GetRoom(), target.GetRoom())
 
 	if dir < 0 {
 		if dir == BFS_ALREADY_THERE && m.GetRoom() == target.GetRoom() {
@@ -184,13 +185,13 @@ func (w *World) huntVictim(m *MobInstance) {
 func (w *World) huntTrashTalk(m *MobInstance, victimName string) {
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	switch dprng.Number(0, 150) {
+	switch huntNumber(0, 150) {
 	case 0:
 		w.mobTellPlayer(m, victimName, "Let's have an ass-kicking contest")
 	case 1:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		w.mobAuction(m, fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, dprng.Number(1000, 2000)))
+		w.mobAuction(m, fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, huntNumber(1000, 2000)))
 	case 2:
 		w.mobTellPlayer(m, victimName, "Run to your momma, pansy!")
 	case 3:
@@ -202,7 +203,7 @@ func (w *World) huntTrashTalk(m *MobInstance, victimName string) {
 	case 6:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 20) == 0 {
+		if huntNumber(0, 20) == 0 {
 			w.mobGossip(m, fmt.Sprintf("%s flees like a rabbit...", victimName))
 		}
 	case 7:

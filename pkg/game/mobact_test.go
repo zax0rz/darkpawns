@@ -1,11 +1,140 @@
 package game
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
+
+type mobactDrawRange struct {
+	from int
+	to   int
+}
+
+func captureMobactDraws(t *testing.T) *[]mobactDrawRange {
+	t.Helper()
+	draws := make([]mobactDrawRange, 0, 4)
+	previous := mobactNumber
+	mobactNumber = func(from, to int) int {
+		draws = append(draws, mobactDrawRange{from: from, to: to})
+		return dprng.Number(from, to)
+	}
+	t.Cleanup(func() { mobactNumber = previous })
+	return &draws
+}
+
+func newMobactDrawTestWorld() *World {
+	room := &parser.Room{VNum: 1001, Name: "Draw Test Room", Zone: 1}
+	snapshots := NewSnapshotManager()
+	snapshots.Publish(map[int]*parser.Room{room.VNum: room})
+	return &World{
+		snapshots:  snapshots,
+		rooms:      map[int]*parser.Room{room.VNum: room},
+		mobs:       make(map[int]*parser.Mob),
+		players:    make(map[string]*Player),
+		activeMobs: make(map[int]*MobInstance),
+		roomItems:  make(map[int][]*ObjectInstance),
+	}
+}
+
+func newMobactDrawTestMob(flags ...string) *MobInstance {
+	return NewMobInstance(&parser.Mob{
+		VNum:        9401,
+		Keywords:    "draw test mob",
+		ShortDesc:   "a draw test mob",
+		ActionFlags: flags,
+		HP:          parser.DiceRoll{Num: 1, Sides: 1, Plus: 10},
+	}, 1001)
+}
+
+func assertMobactDraws(t *testing.T, got *[]mobactDrawRange, want []mobactDrawRange) {
+	t.Helper()
+	if !reflect.DeepEqual(*got, want) {
+		t.Fatalf("draw sequence = %+v, want %+v", *got, want)
+	}
+}
+
+func assertTwoDrawStreamPosition(t *testing.T, seed uint32) {
+	t.Helper()
+	wantStream := dprng.New(seed)
+	wantStream.Number(0, 18)
+	wantStream.Number(0, 15)
+	wantNext := wantStream.Next()
+	if gotNext := dprng.Next(); gotNext != wantNext {
+		t.Fatalf("stream after mob tick = %d, want %d (exactly two draws)", gotNext, wantNext)
+	}
+}
+
+func TestMobileActivitySentinelBurnsMovementAndSoundDraws(t *testing.T) {
+	w := newMobactDrawTestWorld()
+	mob := newMobactDrawTestMob("sentinel")
+	startRoom := mob.GetRoom()
+
+	const seed = 1
+	dprng.ResetStream(seed)
+	draws := captureMobactDraws(t)
+	w.mobileActivityForMob(mob)
+
+	assertMobactDraws(t, draws, []mobactDrawRange{{0, 18}, {0, 15}})
+	if got := mob.GetRoom(); got != startRoom {
+		t.Fatalf("sentinel moved from %d to %d", startRoom, got)
+	}
+	assertTwoDrawStreamPosition(t, seed)
+}
+
+func TestMobileActivityStandingMobBurnsSameTwoDraws(t *testing.T) {
+	w := newMobactDrawTestWorld()
+	mob := newMobactDrawTestMob()
+
+	const seed = 1
+	dprng.ResetStream(seed)
+	draws := captureMobactDraws(t)
+	w.mobileActivityForMob(mob)
+
+	assertMobactDraws(t, draws, []mobactDrawRange{{0, 18}, {0, 15}})
+	assertTwoDrawStreamPosition(t, seed)
+}
+
+func TestMobileActivitySoundDrawPrecedesAggressiveDraw(t *testing.T) {
+	w := newMobactDrawTestWorld()
+	w.combatEngine = &testCombatEngine{}
+	mob := newMobactDrawTestMob("aggressive", "sentinel")
+	player := NewPlayer(1, "Sneaky", 1001)
+	player.Affects |= 1 << affSneak
+	w.players[player.Name] = player
+
+	dprng.ResetStream(1)
+	draws := captureMobactDraws(t)
+	w.mobileActivityForMob(mob)
+
+	assertMobactDraws(t, draws, []mobactDrawRange{{0, 18}, {0, 15}, {0, 3}})
+}
+
+func TestMobileActivityEmptyScavengerRoomSkipsScavengeDraw(t *testing.T) {
+	w := newMobactDrawTestWorld()
+	mob := newMobactDrawTestMob("scavenger", "sentinel")
+
+	dprng.ResetStream(1)
+	draws := captureMobactDraws(t)
+	w.mobileActivityForMob(mob)
+
+	assertMobactDraws(t, draws, []mobactDrawRange{{0, 18}, {0, 15}})
+}
+
+func TestMobileActivityScavengerDrawPrecedesMovementWhenRoomHasContents(t *testing.T) {
+	w := newMobactDrawTestWorld()
+	mob := newMobactDrawTestMob("scavenger", "sentinel")
+	w.roomItems[mob.GetRoom()] = []*ObjectInstance{{}}
+
+	dprng.ResetStream(1)
+	draws := captureMobactDraws(t)
+	w.mobileActivityForMob(mob)
+
+	assertMobactDraws(t, draws, []mobactDrawRange{{0, 10}, {0, 18}, {0, 15}})
+}
 
 // testCombatEngine is a minimal CombatEngine implementation for mobact tests.
 type testCombatEngine struct {
