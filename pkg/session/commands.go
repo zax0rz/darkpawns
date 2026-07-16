@@ -249,13 +249,12 @@ func init() {
 	registerCommand("autoexit", wrapArgs(cmdAutoExit), "Toggle auto-exit display.")
 	registerCommand("title", wrapArgs(cmdTitle), "Set your title.")
 
-	// Quit
-	// "reallyquit" is src/interpreter.c's SCMD_REALLY_QUIT variant of do_quit — in the
-	// original, plain "quit" only works from recall/temple rooms and "reallyquit" is
-	// required elsewhere (and costs your equipment). This port's cmdQuit doesn't yet
-	// implement that temple-gating/equipment-loss split, so for now both names behave
-	// identically; aliasing at least makes the command reachable.
-	registerCommand("quit", wrapNoArgs(cmdQuit), "Quit the game.", "reallyquit")
+	// Quit — two explicit entries mirroring C's SCMD_QUIT / SCMD_REALLY_QUIT
+	// subcmds of do_quit (src/interpreter.c:630,657): quit is safe-room gated
+	// and keeps equipment; reallyquit logs out anywhere but loses equipment
+	// outside a safe room. Both delegate to one game-owned logout op.
+	registerCommand("quit", wrapNoArgs(cmdQuit), "Quit the game.")
+	registerCommand("reallyquit", wrapNoArgs(cmdReallyQuit), "Quit the game, losing your equipment.")
 
 	// Offensive commands — delegated to pkg/command (C-10: real damage formulas)
 	registerCommand("assist", wrapArgs(cmdAssist), "Assist a target in combat.")
@@ -503,7 +502,7 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 			"stand": true, "sit": true,
 			"rest": true, "sleep": true,
 			"wake": true,
-			"quit": true,
+			"quit": true, "reallyquit": true,
 		}
 		if !guestAllowedCmds[cmd] {
 			s.sendText("Guest accounts are restricted from using this command.")

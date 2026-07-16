@@ -5,37 +5,59 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdQuit(s *Session) error {
-	if s.player.IsFighting() {
-		s.sendText("No way!  You are fighting!")
+	return execQuit(s, false)
+}
+
+func cmdReallyQuit(s *Session) error {
+	return execQuit(s, true)
+}
+
+// execQuit is the session-teardown half of C do_quit (src/act.other.c:72-181).
+// The game layer (World.DoQuit) owns the safe-room gate, the refuse messages,
+// and the equipment kept-vs-lost fork; this half performs the descriptor-side
+// logout sequence only when the game layer approves the logout. reallyQuit
+// mirrors C's SCMD_REALLY_QUIT subcmd.
+func execQuit(s *Session, reallyQuit bool) error {
+	outcome := s.manager.world.DoQuit(s.player, reallyQuit)
+	if outcome != game.QuitLogoutKeepEQ && outcome != game.QuitLogoutLoseEQ {
 		return nil
 	}
 
 	room := s.player.GetRoom()
-	if s.manager.world.RoomHasFlag(room, "death") {
-		s.sendText("You cannot quit from this room!")
-		return nil
+	// C: act("$n has left the game.", TRUE, ch, 0, 0, TO_ROOM) iff !GET_INVIS_LEV(ch).
+	s.leaveBroadcastHandled = true
+	if s.player.GetFlags()&game.PLR_INVISIBLE == 0 {
+		msg, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "leave",
+				From: s.player.Name,
+				Text: fmt.Sprintf("%s has left the game.", s.player.Name),
+			},
+		})
+		if err != nil {
+			slog.Error("json.Marshal error", "error", err)
+		} else {
+			s.manager.BroadcastToRoom(room, msg, s.player.Name)
+		}
 	}
 
-	// Notify room
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "leave",
-			From: s.player.Name,
-			Text: fmt.Sprintf("%s has left the game.", s.player.Name),
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
+	// C: InfoBarOff(ch) if the infobar is on.
+	if s.infobarMode == InfobarOn {
+		s.infobarMode = InfobarOff
 	}
-	s.manager.BroadcastToRoom(room, msg, s.player.Name)
 
-	// Remove from world and close connection
-	s.manager.world.RemovePlayer(s.player.Name)
+	// C: close_socket on every other descriptor sharing this character's
+	// IDNUM (anti-dupe). Their saves run before ours so the quitting save —
+	// with the equipment fork applied — is the final state.
+	s.manager.closeDuplicateSessions(s)
+
+	// Unregister → cleanupSession performs the final save and world removal.
 	s.manager.Unregister(s.player.Name)
 	s.Close()
 
