@@ -13,7 +13,7 @@ type SpellLearnEntry struct {
 //
 // This is the canonical class→skill catalog: it powers the practice catalog
 // (list_skills), the guild-practice min-level gate (spec_procs.c guild), and
-// session's grantClassSpells (spell knowledge).
+// session's grantClassSpells (legacy spell-catalog metadata).
 var ClassSpells = [12][]SpellLearnEntry{
 	// MAGES (CLASS_MAGIC_USER=0)
 	ClassMageUser: {

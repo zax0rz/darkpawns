@@ -73,17 +73,18 @@ func (w *World) ResolveCharInRoom(ch *Player, name string) (CharTarget, bool) {
 		return CharTarget{}, false
 	}
 	original := name
-	n := GetNumber(&name) // strips "N." prefix; returns 1 if none, 0 if non-numeric
-	if n == 0 {
+	n := GetNumber(&name)                           // strips "N." prefix; returns 1 if none, 0 if non-numeric
+	playerOnly := strings.HasPrefix(original, "0.") // C: 0.<name> → get_player_vis
+	if playerOnly {
+		n = 1
+	} else if n == 0 {
 		return CharTarget{}, false
 	}
 
 	// "self" / "me" → ch (C: handler.c:1284-1285).
-	if lc := strings.ToLower(name); lc == "self" || lc == "me" {
+	if lc := strings.ToLower(name); !playerOnly && (lc == "self" || lc == "me") {
 		return CharTarget{Combatant: ch, Player: ch}, true
 	}
-
-	playerOnly := strings.HasPrefix(original, "0.") // C: 0.<name> → get_player_vis
 
 	// Build the visible candidate list in a STABLE order. Players first
 	// (existing Go convention), then mobs — unless the caller only wants a
@@ -92,13 +93,7 @@ func (w *World) ResolveCharInRoom(ch *Player, name string) (CharTarget, bool) {
 	// then instance ID) to make ordinals like "2.guard" reproducible across
 	// calls — matching C's stable people-list ordering. (DP-907)
 	chRoom := ch.GetRoom()
-	var players []*Player
-	for _, p := range w.GetPlayersInRoom(chRoom) {
-		if p == ch {
-			continue
-		}
-		players = append(players, p)
-	}
+	players := w.GetPlayersInRoom(chRoom)
 	sort.Slice(players, func(i, j int) bool { return players[i].Name < players[j].Name })
 
 	var mobs []*MobInstance
@@ -127,7 +122,10 @@ func (w *World) ResolveCharInRoom(ch *Player, name string) (CharTarget, bool) {
 		if !canSee(ch, asActor(c)) {
 			continue
 		}
-		if !isnameWithAbbrevs(name, charKeywords(c)) {
+		if playerOnly && !strings.EqualFold(name, c.GetName()) {
+			continue
+		}
+		if !playerOnly && !isnameWithAbbrevs(name, charKeywords(c)) {
 			continue
 		}
 		matched++
@@ -136,6 +134,157 @@ func (w *World) ResolveCharInRoom(ch *Player, name string) (CharTarget, bool) {
 		}
 	}
 	return CharTarget{}, false
+}
+
+// ResolveCharWorld is the canonical world-scope character resolver, faithful
+// to C get_char_vis. It checks the caster's room first, then the global
+// character list. Global matches use complete keywords (C isname), while the
+// room pass retains get_char_room_vis abbreviation semantics.
+func (w *World) ResolveCharWorld(ch *Player, name string) (CharTarget, bool) {
+	if target, ok := w.ResolveCharInRoom(ch, name); ok {
+		return target, true
+	}
+	if ch == nil {
+		return CharTarget{}, false
+	}
+
+	original := name
+	n := GetNumber(&name)
+	playerOnly := strings.HasPrefix(original, "0.")
+	if playerOnly {
+		n = 1
+	} else if n == 0 {
+		return CharTarget{}, false
+	}
+
+	players := w.GetAllPlayers()
+	sort.Slice(players, func(i, j int) bool { return players[i].Name < players[j].Name })
+	mobs := w.GetAllMobs()
+	sort.Slice(mobs, func(i, j int) bool {
+		if mobs[i].GetVNum() != mobs[j].GetVNum() {
+			return mobs[i].GetVNum() < mobs[j].GetVNum()
+		}
+		return mobs[i].ID < mobs[j].ID
+	})
+
+	candidates := make([]combat.Combatant, 0, len(players)+len(mobs))
+	for _, p := range players {
+		candidates = append(candidates, p)
+	}
+	if !playerOnly {
+		for _, m := range mobs {
+			candidates = append(candidates, m)
+		}
+	}
+
+	matched := 0
+	for _, candidate := range candidates {
+		if !canSee(ch, asActor(candidate)) || !isCompleteName(name, charKeywords(candidate)) {
+			continue
+		}
+		matched++
+		if matched == n {
+			return newCharTarget(candidate), true
+		}
+	}
+	return CharTarget{}, false
+}
+
+// ResolveFightingTarget converts Go's name-backed fighting state into the
+// character pointer C stores in FIGHTING(ch). Combat uses GetName(), which is
+// a mob's short description rather than its command keyword list, so routing
+// this through ResolveCharInRoom would lose valid mob opponents.
+func (w *World) ResolveFightingTarget(ch *Player) (CharTarget, bool) {
+	if ch == nil || ch.GetFighting() == "" {
+		return CharTarget{}, false
+	}
+	fightingName := ch.GetFighting()
+	for _, player := range w.GetPlayersInRoom(ch.GetRoom()) {
+		if player != ch && strings.EqualFold(player.GetName(), fightingName) {
+			return newCharTarget(player), true
+		}
+	}
+	for _, mob := range w.GetMobsInRoom(ch.GetRoom()) {
+		if strings.EqualFold(mob.GetName(), fightingName) {
+			return newCharTarget(mob), true
+		}
+	}
+	return CharTarget{}, false
+}
+
+func isCompleteName(name, namelist string) bool {
+	for _, keyword := range strings.Fields(namelist) {
+		if strings.EqualFold(name, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func resolveVisibleObject(ch *Player, name string, objects []*ObjectInstance, lightAlwaysVisible bool) (*ObjectInstance, bool) {
+	n := GetNumber(&name)
+	if n == 0 {
+		return nil, false
+	}
+	matched := 0
+	for _, object := range objects {
+		if object == nil || !isnameWithAbbrevs(name, object.GetKeywords()) {
+			continue
+		}
+		if !canSeeObject(ch, object) && (!lightAlwaysVisible || object.GetTypeFlag() != ITEM_LIGHT) {
+			continue
+		}
+		matched++
+		if matched == n {
+			return object, true
+		}
+	}
+	return nil, false
+}
+
+// ResolveObjectInInventory mirrors get_obj_in_list_vis over ch->carrying.
+func (w *World) ResolveObjectInInventory(ch *Player, name string) (*ObjectInstance, bool) {
+	if ch == nil || ch.Inventory == nil {
+		return nil, false
+	}
+	return resolveVisibleObject(ch, name, ch.Inventory.FindItems(""), true)
+}
+
+// ResolveObjectInEquipment mirrors do_cast's ordered NUM_WEARS scan.
+func (w *World) ResolveObjectInEquipment(ch *Player, name string) (*ObjectInstance, bool) {
+	if ch == nil || ch.Equipment == nil {
+		return nil, false
+	}
+	equipped := ch.Equipment.GetEquippedItems()
+	for slot := EquipmentSlot(0); slot < SlotMax; slot++ {
+		if object := equipped[slot]; object != nil && isCompleteName(name, object.GetKeywords()) {
+			return object, true
+		}
+	}
+	return nil, false
+}
+
+// ResolveObjectInRoom mirrors get_obj_in_list_vis over room contents.
+func (w *World) ResolveObjectInRoom(ch *Player, name string) (*ObjectInstance, bool) {
+	if ch == nil {
+		return nil, false
+	}
+	return resolveVisibleObject(ch, name, w.GetItemsInRoom(ch.GetRoom()), true)
+}
+
+// ResolveObjectWorld mirrors C get_obj_vis: inventory, room, then the global
+// object list. The preliminary scopes apply even when the spell only carries
+// TAR_OBJ_WORLD because get_obj_vis itself performs them.
+func (w *World) ResolveObjectWorld(ch *Player, name string) (*ObjectInstance, bool) {
+	if object, ok := w.ResolveObjectInInventory(ch, name); ok {
+		return object, true
+	}
+	if object, ok := w.ResolveObjectInRoom(ch, name); ok {
+		return object, true
+	}
+	objects := w.GetAllObjects()
+	sort.Slice(objects, func(i, j int) bool { return objects[i].ID < objects[j].ID })
+	return resolveVisibleObject(ch, name, objects, false)
 }
 
 // CharTarget is the result of ResolveCharInRoom. At most one of Player / Mob is

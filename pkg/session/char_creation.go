@@ -505,7 +505,7 @@ func (s *Session) completeCharCreation() error {
 		game.GiveStartingSkills(s.player)
 	}
 
-	// Grant the spells this class knows at level 1 so casters can actually cast.
+	// Populate legacy spell-catalog metadata; proficiency still requires practice.
 	grantClassSpells(s.player)
 
 	// Register and add to world
