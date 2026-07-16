@@ -127,16 +127,19 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		cha += min(dprng.Number(0, statmod), 7)
 	}
 
-	// Gold variance +/-(1-20%) — db.c:1766-1775
+	// Gold variance +/-(1-20%) — db.c:1766-1774. C draws number(0,1) (the sign
+	// coin-flip) BEFORE number(1,20) (the percentage), and the number(1,20) is
+	// drawn inside the taken branch. Draw order is law: the two draws must match
+	// C's sequence or the shared stream desyncs / mob gold values diverge.
 	gold := proto.Gold
 	if gold > 0 {
 		// #nosec G404
-		pct := dprng.Number(1, 20)
-		// #nosec G404
 		if dprng.Number(0, 1) == 0 {
-			gold += pct * gold / 100
+			// #nosec G404
+			gold += dprng.Number(1, 20) * gold / 100
 		} else {
-			gold -= pct * gold / 100
+			// #nosec G404
+			gold -= dprng.Number(1, 20) * gold / 100
 		}
 		if gold < 0 {
 			gold = 0

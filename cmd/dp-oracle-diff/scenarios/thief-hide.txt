@@ -1,0 +1,49 @@
+# Newbie hide fidelity (DP-1168 follow-on / codex thief-utility-skills).
+# do_hide (act.other.c:247-306): always "You attempt to hide yourself.", clears
+# AFF_HIDE then rerolls (not a toggle), percent=number(1,101) vs GET_SKILL(HIDE)+
+# dex_app_skill[DEX].hide, silent on fail, SET AFF_HIDE + improve_skill on success.
+# A fresh L1 thief (HIDE=5) hides repeatedly in the start room 8162 (indoor →
+# the daytime sector gate never fires, so the still-unported weather guard is not
+# exercised here). Both servers share DP_SEED, so the rolled DEX (hence the dex
+# bonus) and every number(1,101) match. RED on main (invented toggle/fail/success
+# text, no dex bonus, no improve draw); GREEN on this branch.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cprowler
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cprowler
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[probe]
+hide
+hide
+hide
+hide
+hide
+hide

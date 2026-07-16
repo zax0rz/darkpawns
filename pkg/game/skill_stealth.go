@@ -19,6 +19,11 @@ const (
 
 // DoSneak implements do_sneak() from src/act.other.c:214-244.
 func DoSneak(ch *Player) SkillResult {
+	// IS_MOUNTED gate — act.other.c:219-223, before any roll.
+	if isMounted(ch) {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+
 	message := "Okay, you'll try to move silently for a while."
 
 	// C removes both the ordinary sneak and ninja stealth affects, clears the
@@ -51,6 +56,13 @@ func DoSneak(ch *Player) SkillResult {
 // DoHide implements the newbie path through do_hide() from
 // src/act.other.c:247-306 (subcmd == 0).
 func DoHide(ch *Player) SkillResult {
+	// IS_MOUNTED gate — act.other.c:251-255, before the sector/weather gate and
+	// any roll. (The daytime sector/weather guard, act.other.c:257-282, is still
+	// unported — tracked separately; it needs the weather model.)
+	if isMounted(ch) {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+
 	message := "You attempt to hide yourself."
 
 	// C clears AFF_HIDE and immediately rerolls; it does not toggle out with a

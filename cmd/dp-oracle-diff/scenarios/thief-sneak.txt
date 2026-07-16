@@ -1,0 +1,48 @@
+# Newbie sneak fidelity (DP-1168 follow-on / codex thief-utility-skills).
+# do_sneak (act.other.c:214-244): always "Okay, you'll try to move silently for
+# a while.", clears AFF_SNEAK + the ninja stealth affect then rerolls,
+# percent=number(1,101) vs GET_SKILL(SNEAK)+dex_app_skill[DEX].sneak, silent on
+# fail, on success applies a timed SKILL_SNEAK affect (duration=GET_LEVEL). NO
+# improve_skill. Fresh L1 thief (SNEAK=10) sneaks repeatedly in 8162. Shared
+# DP_SEED → identical DEX/dex-bonus and every number(1,101). RED on main (invented
+# toggle/fail text, raw skill only); GREEN on this branch.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cprowler
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cprowler
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[probe]
+sneak
+sneak
+sneak
+sneak
+sneak
+sneak
