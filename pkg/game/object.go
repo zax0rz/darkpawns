@@ -384,8 +384,12 @@ func (o *ObjectInstance) GetSaveState() map[string]interface{} {
 	if o.CustomData == nil {
 		o.CustomData = make(map[string]interface{})
 	}
+	// C ITEM_TAKE_NAME rewrites short_description only for the live object;
+	// reboot reconstructs it from the prototype. Other short-description
+	// overrides remain persistent object state.
+	persistShortDescOverride := o.Runtime.ShortDescOverride != "" && !o.HasExtraFlag(0, extraFlagTakeName)
 	hasRuntime := o.Runtime.Name != "" || o.Runtime.ShortDesc != "" ||
-		o.Runtime.LongDesc != "" || o.Runtime.ShortDescOverride != "" ||
+		o.Runtime.LongDesc != "" || persistShortDescOverride ||
 		o.Runtime.MoldName != "" || o.Runtime.MoldDesc != "" ||
 		o.Runtime.MailText != "" || o.Runtime.Horse != nil ||
 		len(o.Runtime.Script) > 0
@@ -407,7 +411,7 @@ func (o *ObjectInstance) GetSaveState() map[string]interface{} {
 	if o.Runtime.LongDesc != "" {
 		state["long_desc"] = o.Runtime.LongDesc
 	}
-	if o.Runtime.ShortDescOverride != "" {
+	if persistShortDescOverride {
 		state["short_desc_override"] = o.Runtime.ShortDescOverride
 	}
 	if o.Runtime.MoldName != "" {

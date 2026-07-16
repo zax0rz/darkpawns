@@ -141,6 +141,93 @@ func TestCWearSlotEquipAndRemove(t *testing.T) {
 	}
 }
 
+func TestTakeNameEquipAndUnequipOrdering(t *testing.T) {
+	w, ch, lastMsg := newDonateTestWorld(t)
+	proto := &parser.Obj{
+		VNum:       4135,
+		ShortDesc:  "a frayed tunic",
+		Keywords:   "tunic",
+		WearFlags:  [4]int{1<<0 | 1<<3}, // ITEM_WEAR_TAKE | ITEM_WEAR_BODY
+		ExtraFlags: [4]int{1 << extraFlagTakeName},
+	}
+	tunic := NewObjectInstance(proto, -1)
+	if err := ch.Inventory.AddItem(tunic); err != nil {
+		t.Fatalf("AddItem tunic: %v", err)
+	}
+
+	w.DoWear(ch, "tunic")
+	if got, want := lastMsg(), "You wear a frayed tunic on your body.\r\n"; got != want {
+		t.Fatalf("wear message = %q, want pre-rename %q", got, want)
+	}
+	if got, want := tunic.GetShortDesc(), "Tester's tunic"; got != want {
+		t.Fatalf("equipped short description = %q, want %q", got, want)
+	}
+	if got := tunic.GetKeywords(); got != "tunic" {
+		t.Fatalf("equip changed targeting keywords to %q", got)
+	}
+	if got := proto.ShortDesc; got != "a frayed tunic" {
+		t.Fatalf("equip mutated prototype short description to %q", got)
+	}
+	if got := NewObjectInstance(proto, -1).GetShortDesc(); got != "a frayed tunic" {
+		t.Fatalf("fresh instance inherited runtime rename %q", got)
+	}
+
+	// Targeting still uses the original keyword even though the displayed name
+	// changed while equipped.
+	w.DoRemove(ch, "tunic")
+	if got, want := lastMsg(), "You stop using a tunic.\r\n"; got != want {
+		t.Fatalf("remove message = %q, want post-rename %q", got, want)
+	}
+	if got, want := tunic.GetShortDesc(), "a tunic"; got != want {
+		t.Fatalf("unequipped short description = %q, want %q", got, want)
+	}
+	if got, found := ch.Inventory.FindItem("tunic"); !found || got != tunic {
+		t.Fatal("removed take-name item was not targetable in inventory by its original keyword")
+	}
+}
+
+func TestTakeNameUsesWholeKeywordStringAndArticle(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+	amulet := NewObjectInstance(&parser.Obj{
+		VNum:       4136,
+		ShortDesc:  "a cloudy charm",
+		Keywords:   "ivory amulet charm",
+		WearFlags:  [4]int{1<<0 | 1<<3},
+		ExtraFlags: [4]int{1 << extraFlagTakeName},
+	}, -1)
+
+	if err := w.EquipItem(ch, amulet, eqWearBody); err != nil {
+		t.Fatalf("EquipItem: %v", err)
+	}
+	if got, want := amulet.GetShortDesc(), "Tester's ivory amulet charm"; got != want {
+		t.Fatalf("equipped multi-keyword description = %q, want %q", got, want)
+	}
+	if err := w.UnequipItem(ch, eqWearBody); err != nil {
+		t.Fatalf("UnequipItem: %v", err)
+	}
+	if got, want := amulet.GetShortDesc(), "an ivory amulet charm"; got != want {
+		t.Fatalf("unequipped multi-keyword description = %q, want %q", got, want)
+	}
+}
+
+func TestNonTakeNameDescriptionUnchangedByEquipCycle(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+	sword := newWieldableItem(4137, "a short sword", "sword", false)
+
+	if err := w.EquipItem(ch, sword, eqWearWield); err != nil {
+		t.Fatalf("EquipItem: %v", err)
+	}
+	if got := sword.GetShortDesc(); got != "a short sword" {
+		t.Fatalf("equipped ordinary item description = %q", got)
+	}
+	if err := w.UnequipItem(ch, eqWearWield); err != nil {
+		t.Fatalf("UnequipItem: %v", err)
+	}
+	if got := sword.GetShortDesc(); got != "a short sword" {
+		t.Fatalf("unequipped ordinary item description = %q", got)
+	}
+}
+
 func TestEquipmentCommandRoomMessages(t *testing.T) {
 	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}}})
 	if err != nil {
