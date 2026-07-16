@@ -49,6 +49,7 @@ const (
 // Exported constants for compatibility with outside packages (e.g. command)
 const (
 	AffSleep   = affSleep
+	AffHide    = affHide
 	affMounted = affMount
 )
 

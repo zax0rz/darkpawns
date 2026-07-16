@@ -9,8 +9,13 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/common"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
+
+// commandNumber is a test seam for verifying command_interpreter draw parity.
+// Production always uses the process-wide deterministic stream.
+var commandNumber = dprng.Number
 
 // positionFailMessage returns an appropriate rejection message when
 // the player's position is too low for a command.
@@ -428,6 +433,14 @@ func wrapSkill(fn func(command.SessionInterface, []string) error) command.Handle
 
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, cmdStr string, args []string) error {
+	// C command_interpreter draws number(0,3) at the top of every playing
+	// character command and clears AFF_HIDE on 0 (interpreter.c:889-890).
+	// This must precede moderation, alias expansion, and command lookup.
+	// #nosec G404 — game RNG, not cryptographic
+	if s.player != nil && commandNumber(0, 3) == 0 {
+		s.player.SetAffect(game.AffHide, false)
+	}
+
 	// Moderation pre-check: mute, ban
 	if s.manager.modChecker != nil && s.player != nil {
 		errMsg, reject := s.manager.modChecker.CheckPreCommand(s.player.Name, cmdStr)
