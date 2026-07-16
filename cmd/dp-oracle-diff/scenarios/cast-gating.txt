@@ -1,0 +1,38 @@
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Msparky
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Msparky
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+cast
+cast flame arrow
+cast 'frobnicate'
+cast 'cure light'
+cast 'flame arrow'
