@@ -1,0 +1,50 @@
+# DP-1156 RED: ITEM_TAKE_NAME (bit 17) object auto-rename on equip/unequip.
+# Newbie starter tunic (obj 8019, extra-flags 131072 = 1<<17) is carried by
+# every fresh char. C equip_char renames its short-desc to "<Owner>'s <kw>"
+# (handler.c:719); unequip_char renames to "a <kw>" (handler.c:766) — NOT back
+# to the prototype. The ordering is asymmetric: the wear message is emitted
+# BEFORE equip renames (so it shows the prototype "a frayed tunic"), while
+# unequip renames BEFORE the remove message (so it shows "a tunic"). The Go
+# port has no concept of the flag and shows "a frayed tunic" throughout.
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Tunwearer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tunwearer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# wear -> prototype desc (message precedes rename); equipment view shows the
+# renamed "Tunwearer's tunic"; remove -> "a tunic" (renamed before message,
+# which also proves the carried short-desc is now "a tunic", not the prototype).
+# NOTE: an `inventory` probe is intentionally omitted — it surfaces a pre-existing
+# carried-list ORDERING divergence (C sword/backpack/tunic vs Go reversed) that is
+# orthogonal to this take-name rename and tracked as its own issue.
+[probe]
+wear tunic
+equipment
+remove tunic
