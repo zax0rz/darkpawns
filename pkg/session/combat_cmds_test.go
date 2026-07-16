@@ -38,7 +38,7 @@ func makeInstakillTestManager(t *testing.T) *Manager {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	return NewManager(w, nil)
+	return newTestManager(t, w, nil)
 }
 
 func makeInstakillSession(t *testing.T, m *Manager, name string, level int) *Session {

@@ -45,7 +45,7 @@ func makeGateTestManager(t *testing.T, peaceful bool) *Manager {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	return NewManager(w, nil)
+	return newTestManager(t, w, nil)
 }
 
 func readSendText(t *testing.T, s *Session) string {

@@ -3,7 +3,6 @@ package combat
 import (
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -28,10 +27,13 @@ type CombatEngine struct {
 	// Active combat pairs
 	combatPairs map[CombatPairKey]*CombatPair // key: (attacker, target)
 
-	// Combat ticker
-	ticker   *time.Ticker
-	stopChan chan struct{}
-	stopped  atomic.Bool
+	// Background-loop lifecycle. Stop closes stopChan exactly once and waits
+	// for every started loop to exit, including an in-flight combat round.
+	lifecycleMu sync.Mutex
+	background  sync.WaitGroup
+	stopChan    chan struct{}
+	stopped     bool
+	tickEvery   time.Duration
 
 	// Message broadcaster function (set by game)
 	BroadcastFunc func(roomVNum int, message string, exclude string)
@@ -79,6 +81,7 @@ func NewCombatEngine() *CombatEngine {
 	return &CombatEngine{
 		combatPairs: make(map[CombatPairKey]*CombatPair),
 		stopChan:    make(chan struct{}),
+		tickEvery:   2 * time.Second,
 	}
 }
 
@@ -112,15 +115,23 @@ func (ce *CombatEngine) ValidateCallbacks() error {
 
 // Start begins the combat tick loop
 func (ce *CombatEngine) Start() {
-	ce.ticker = time.NewTicker(2 * time.Second) // Combat round every 2 seconds
+	ce.lifecycleMu.Lock()
+	if ce.stopped {
+		ce.lifecycleMu.Unlock()
+		return
+	}
+	ce.background.Add(1)
+	ce.lifecycleMu.Unlock()
 
 	go func() {
+		defer ce.background.Done()
+		ticker := time.NewTicker(ce.tickEvery) // Combat round every 2 seconds
+		defer ticker.Stop()
 		for {
 			select {
-			case <-ce.ticker.C:
+			case <-ticker.C:
 				ce.PerformRound()
 			case <-ce.stopChan:
-				ce.ticker.Stop()
 				return
 			}
 		}
@@ -140,7 +151,16 @@ type PositionedMob interface {
 // getMobs returns all mobs that should be checked for position recovery.
 // Separate from the combat ticker so position recovery runs at its own cadence.
 func (ce *CombatEngine) StartMobPositionRecovery(getMobs func() []PositionedMob) {
+	ce.lifecycleMu.Lock()
+	if ce.stopped {
+		ce.lifecycleMu.Unlock()
+		return
+	}
+	ce.background.Add(1)
+	ce.lifecycleMu.Unlock()
+
 	go func() {
+		defer ce.background.Done()
 		ticker := time.NewTicker(3 * time.Second)
 		defer ticker.Stop()
 		for {
@@ -159,18 +179,22 @@ func (ce *CombatEngine) StartMobPositionRecovery(getMobs func() []PositionedMob)
 					mob.SetStatus("standing")
 				}
 			case <-ce.stopChan:
-				ticker.Stop()
 				return
 			}
 		}
 	}()
 }
 
-// Stop halts the combat engine
+// Stop halts the combat engine and waits for all background loops to exit.
+// It is safe to call more than once.
 func (ce *CombatEngine) Stop() {
-	if ce.stopped.CompareAndSwap(false, true) {
+	ce.lifecycleMu.Lock()
+	if !ce.stopped {
+		ce.stopped = true
 		close(ce.stopChan)
 	}
+	ce.lifecycleMu.Unlock()
+	ce.background.Wait()
 }
 
 // StartCombat initiates combat between two combatants

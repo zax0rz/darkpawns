@@ -34,7 +34,8 @@ func makeFleeTestManager(t *testing.T) *Manager {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 
-	m := NewManager(w, nil)
+	m := newTestManager(t, w, nil)
+	m.combatEngine.Stop()
 	m.combatEngine = combat.NewCombatEngine()
 	return m
 }

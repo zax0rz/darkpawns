@@ -171,7 +171,7 @@ func TestResolveCastTargetOrderAndEmptyDefaults(t *testing.T) {
 		t.Fatalf("NewWorld: %v", err)
 	}
 	t.Cleanup(func() { world.StopAITicker() })
-	manager := NewManager(world, nil)
+	manager := newTestManager(t, world, nil)
 	caster := makeTestSession(t, manager, "Caster", 1001, true)
 	roomTarget := makeTestSession(t, manager, "Target", 1001, true)
 	registerInWorld(t, caster)

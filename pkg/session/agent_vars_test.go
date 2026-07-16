@@ -66,7 +66,7 @@ func makeTestWorldWithMobs(t *testing.T) *game.World {
 func makeTestManagerWithMobs(t *testing.T) *Manager {
 	t.Helper()
 	w := makeTestWorldWithMobs(t)
-	return NewManager(w, nil)
+	return newTestManager(t, w, nil)
 }
 
 // registerMob spawns a mob prototype in a room and returns the instance.

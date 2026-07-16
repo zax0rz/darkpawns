@@ -40,7 +40,7 @@ func makeManagerWithStartRoom(t *testing.T) *Manager {
 		t.Fatalf("NewWorld: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	return NewManager(w, nil)
+	return newTestManager(t, w, nil)
 }
 
 // wsReadUntilType drains WebSocket messages and returns the first one whose

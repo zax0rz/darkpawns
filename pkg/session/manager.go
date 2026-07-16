@@ -447,6 +447,13 @@ func (m *Manager) GetCombatEngine() *combat.CombatEngine {
 	return m.combatEngine
 }
 
+// Stop halts the manager's background workers and waits for them to exit.
+// Tests must register this with t.Cleanup after NewManager so combat rounds
+// cannot outlive their manager and race later package-global callback wiring.
+func (m *Manager) Stop() {
+	m.combatEngine.Stop()
+}
+
 // GetBanManager returns the ban manager for checking host bans.
 func (m *Manager) GetBanManager() *game.BanManager {
 	return m.world.Bans
@@ -1243,6 +1250,8 @@ func (s *Session) WantsStructuredData() bool {
 
 // ShutdownGracefully drains and shuts down all active sessions gracefully.
 func (m *Manager) ShutdownGracefully(timeout time.Duration) {
+	m.Stop()
+
 	m.mu.Lock()
 	sessions := make(map[string]*Session)
 	for name, s := range m.sessions {

@@ -31,7 +31,7 @@ func makeTestManager(t *testing.T) *Manager {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	return NewManager(w, nil) // nil database is fine for tests
+	return newTestManager(t, w, nil) // nil database is fine for tests
 }
 
 // makeTestSession creates a minimal Session with a mock WebSocket connection.
@@ -519,7 +519,7 @@ func TestCheckOrigin_PrivateIPWithValidAgentKeyAccepts(t *testing.T) {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 
-	mgr := NewManager(w, &mockAgentKeyDB{validKey: "dp_test_key_12345"})
+	mgr := newTestManager(t, w, &mockAgentKeyDB{validKey: "dp_test_key_12345"})
 	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
 	req.RemoteAddr = "192.168.1.10:12345"
 	req.Header.Set("X-Agent-Key", "dp_test_key_12345")
@@ -541,7 +541,7 @@ func TestCheckOrigin_PrivateIPWithInvalidAgentKeyRejects(t *testing.T) {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 
-	mgr := NewManager(w, &mockAgentKeyDB{validKey: "dp_test_key_12345"})
+	mgr := newTestManager(t, w, &mockAgentKeyDB{validKey: "dp_test_key_12345"})
 	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
 	req.RemoteAddr = "192.168.1.10:12345"
 	req.Header.Set("X-Agent-Key", "wrong_key")
