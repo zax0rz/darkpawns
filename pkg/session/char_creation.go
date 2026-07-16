@@ -588,8 +588,8 @@ func (s *Session) completeCharCreation() error {
 	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 
-	// Look around on entry
-	if err := ExecuteCommand(s, "look", nil); err != nil {
+	// C's entry look calls do_look directly and consumes no command draw.
+	if err := cmdLook(s, nil); err != nil {
 		slog.ErrorContext(s.sessionCtx, "look command failed on entry for new character", s.logAttrs(slog.Any("error", err))...)
 	}
 

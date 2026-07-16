@@ -120,8 +120,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 		s.manager.world.GiveStartingItems(s.player)
 
-		// Look around so they see the room on entry!
-		if err := ExecuteCommand(s, "look", nil); err != nil {
+		// C enters guests with a direct do_look call, not command_interpreter.
+		// Keep this out of ExecuteCommand so entry consumes no command draw.
+		if err := cmdLook(s, nil); err != nil {
 			slog.ErrorContext(s.sessionCtx, "look command failed on entry for guest", s.logAttrs(slog.Any("error", err))...)
 		}
 

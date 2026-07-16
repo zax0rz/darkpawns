@@ -301,7 +301,8 @@ func (s *Session) enterReturningPlayer() error {
 	if err == nil {
 		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, name)
 	}
-	if err := ExecuteCommand(s, "look", nil); err != nil {
+	// C's entry look calls do_look directly and consumes no command draw.
+	if err := cmdLook(s, nil); err != nil {
 		slog.ErrorContext(s.sessionCtx, "look command failed on entry", s.logAttrs(slog.Any("error", err))...)
 	}
 	s.clearMenuState()

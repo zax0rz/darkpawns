@@ -551,7 +551,7 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 // Sneak / Hide / Steal state
 // ---------------------------------------------------------------------------
 // Sneak and hide state are stored via Player.Affects bit vector using
-// affSneak (0) and affHide (1) constants from act_movement.go.
+// affSneak (18) and affHide (19) are the C AFF_* bit positions.
 // Player.mu protects all access. No global maps needed.
 
 // DoSneak implements do_sneak() from act.other.c lines 214-245.
