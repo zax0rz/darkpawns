@@ -32,7 +32,7 @@ func TestGuestLoginAndRestrictions(t *testing.T) {
 	}
 	t.Cleanup(func() { world.StopAITicker() })
 
-	manager := NewManager(world, nil)
+	manager := newTestManager(t, world, nil)
 
 	// Create a new session
 	s := manager.NewSession()
@@ -93,7 +93,7 @@ func TestGuestNameUniqueSequential(t *testing.T) {
 		t.Fatalf("failed to create world: %v", err)
 	}
 	t.Cleanup(func() { world.StopAITicker() })
-	manager := NewManager(world, nil)
+	manager := newTestManager(t, world, nil)
 
 	loginGuest := func() string {
 		s := manager.NewSession()
@@ -133,7 +133,7 @@ func TestGuestNameUniqueConcurrent(t *testing.T) {
 		t.Fatalf("failed to create world: %v", err)
 	}
 	t.Cleanup(func() { world.StopAITicker() })
-	manager := NewManager(world, nil)
+	manager := newTestManager(t, world, nil)
 
 	const n = 16
 	names := make([]string, n)

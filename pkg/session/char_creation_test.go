@@ -371,7 +371,7 @@ func TestCompleteCharCreation_PersistsHometownRoom(t *testing.T) {
 	database := testutil.NewMockDatabase()
 	world := testutil.NewTestWorld()
 	t.Cleanup(world.StopAITicker)
-	s := makeCharSession(t, NewManager(world, database))
+	s := makeCharSession(t, newTestManager(t, world, database))
 
 	s.charCreating = true
 	s.charName = "Alaozarnewbie"

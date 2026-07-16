@@ -54,7 +54,7 @@ func makeQuitTestManager(t *testing.T, database db.Database) *Manager {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	return NewManager(w, database)
+	return newTestManager(t, w, database)
 }
 
 // makeQuitSession registers an authenticated session whose player is live in

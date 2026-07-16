@@ -2,12 +2,55 @@ package combat
 
 import (
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 type msgMockCombatant struct {
 	mockCombatant
 	messages []string
+}
+
+func TestCombatEngineStopWaitsForInFlightTick(t *testing.T) {
+	ce := NewCombatEngine()
+	ce.tickEvery = time.Millisecond
+
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	var enteredOnce sync.Once
+	ce.OnRoundEnd = func() {
+		enteredOnce.Do(func() { close(entered) })
+		<-release
+	}
+	ce.Start()
+
+	select {
+	case <-entered:
+	case <-time.After(time.Second):
+		close(release)
+		ce.Stop()
+		t.Fatal("combat ticker did not enter a round")
+	}
+
+	stopped := make(chan struct{})
+	go func() {
+		ce.Stop()
+		close(stopped)
+	}()
+
+	select {
+	case <-stopped:
+		t.Error("Stop returned while a combat tick was still running")
+	case <-time.After(25 * time.Millisecond):
+	}
+
+	close(release)
+	select {
+	case <-stopped:
+	case <-time.After(time.Second):
+		t.Fatal("Stop did not return after the in-flight tick exited")
+	}
 }
 
 func (m *msgMockCombatant) SendMessage(msg string) {

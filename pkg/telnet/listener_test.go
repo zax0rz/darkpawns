@@ -22,6 +22,7 @@ func newTestManager(t *testing.T) (*session.Manager, *game.World) {
 		t.Fatalf("NewWorld: %v", err)
 	}
 	manager := session.NewManager(world, nil)
+	t.Cleanup(manager.Stop)
 	return manager, world
 }
 
@@ -552,6 +553,7 @@ func TestTelnetLinkdeadReaperCleanup(t *testing.T) {
 	}
 	defer world.StopAITicker()
 	manager := session.NewManager(world, nil)
+	t.Cleanup(manager.Stop)
 
 	client, server := net.Pipe()
 	defer client.Close()

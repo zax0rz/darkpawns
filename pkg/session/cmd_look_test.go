@@ -69,7 +69,7 @@ func makeLookTestManager(t *testing.T) *Manager {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	return NewManager(w, nil) // nil database is fine for tests
+	return newTestManager(t, w, nil) // nil database is fine for tests
 }
 
 // readMsgState reads one JSON message from s.send and returns it as StateData.

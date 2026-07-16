@@ -128,7 +128,7 @@ func TestReturningPlayerStopsAtMenuThenEntersWorld(t *testing.T) {
 	database := testutil.NewMockDatabase()
 	world := testutil.NewTestWorld()
 	t.Cleanup(world.StopAITicker)
-	m := NewManager(world, database)
+	m := newTestManager(t, world, database)
 	hash, err := bcrypt.GenerateFromPassword([]byte("hunter2"), bcrypt.MinCost)
 	if err != nil {
 		t.Fatal(err)
@@ -179,7 +179,7 @@ func TestMenuDeleteReturningPlayer(t *testing.T) {
 	database := testutil.NewMockDatabase()
 	world := testutil.NewTestWorld()
 	t.Cleanup(world.StopAITicker)
-	m := NewManager(world, database)
+	m := newTestManager(t, world, database)
 	hash, err := bcrypt.GenerateFromPassword([]byte("hunter2"), bcrypt.MinCost)
 	if err != nil {
 		t.Fatal(err)
