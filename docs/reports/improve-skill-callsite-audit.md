@@ -181,3 +181,65 @@ The audit below lists, for each call site, the RNG draws that precede the `impro
 **Overall:** 5/9 audited sites diverge from the C reference in the placement or gating of the `improve_skill` call. The most common pattern is the missing `subcmd` guard in the Go port for bash, trip, and charge. Headbutt additionally differs in call count. Backstab differs structurally by splitting one C call into two Go sites.
 
 No game logic was changed in producing this report.
+
+---
+
+## Reconciliation — Claude verification (DP-1168, part 2)
+
+The part-1 audit correctly identified the structural differences, but the gate
+step is: **does the difference change player-observable behavior / the seeded draw
+stream?** Verifying each against C reduces the 4 reported divergences to **1 real
+fidelity bug**.
+
+### The `subcmd` divergences are no-ops for players — bash, trip, charge: NOT real
+`subcmd` is only ever non-zero when a **mob spec-proc** invokes the skill
+(`spec_procs.c:524/528/553/555` pass `subcmd=1`); every command-table registration
+passes `subcmd=0` (`interpreter.c:347/378/783/…`). And `improve_skill` returns
+immediately on `IS_NPC` (`act.other.c:1710`). So **anyone who can actually improve a
+skill is always `subcmd==0`**, making C's `if(!subcmd)` guard always-true for them.
+The port's unconditional `improveSkill` on player success is therefore **behaviorally
+identical to C**. (The `number(50,100)` prob draw that C makes "only when subcmd" also
+never fires for a player, matching the port.) Trip is never even called with
+`subcmd=1` anywhere. **Verdict: MATCH for player fidelity.**
+
+### backstab — NOT real (draw-equivalent)
+Go's two call sites are **mutually exclusive**: the skill-roll miss path
+(`skill_combat.go:82`) calls neither; on skill-roll success exactly one of `:102`
+(to-hit miss) or `:122` (to-hit hit) fires — one `improveSkill` per execution, same as
+C's single call after `hit()`. Draw order also matches: C does `hit()` (to-hit d20,
+then damage dice on a hit) → `improve_skill`; Go does `CalculateHitChance` (to-hit) →
+[damage dice on hit] → `improveSkill`. **Verdict: MATCH.**
+
+### headbutt — REAL (fixed)
+C calls `improve_skill` **twice** on a player's success: `new_cmds.c:450`
+(unconditional) and `:457` (`if(!subcmd)`, always true for players), separated only
+by a non-drawing position update. The port called it once, **dropping a `number(1,200)`
+gate draw and desyncing the seeded stream on every successful headbutt.** Fixed in
+`skill_combat.go` (two consecutive `improveSkill` calls). Proven by
+`TestDoHeadbutt_ImprovesSkillTwice` (golden, red→green: success yields two independent
+`number(1,3)` increments; ResetStream-seeded, deterministic).
+
+### Reconciled summary
+| Skill | Part-1 verdict | Verified verdict | Action |
+|---|---|---|---|
+| backstab | DIVERGENCE | **MATCH** (draw-equivalent) | none |
+| bash | DIVERGENCE | **MATCH** (subcmd no-op for players) | none |
+| kick | MATCH | MATCH | none |
+| trip | DIVERGENCE | **MATCH** (subcmd no-op for players) | none |
+| headbutt | DIVERGENCE | **DIVERGENCE** (missing 2nd call) | **fixed + golden test** |
+| rescue | MATCH* | MATCH | none |
+| circle | MATCH | MATCH | none |
+| charge | DIVERGENCE | **MATCH** (subcmd no-op for players) | none |
+| berserk | MATCH | MATCH | none |
+
+**Net: 1 real fidelity bug (headbutt), fixed.** The audit's value was flagging the
+structural differences; the gate's value was determining which are observable.
+
+### Oracle note
+`improve_skill` fires only mid-combat on a skill the caster owns. The only
+improve-wired skill a newbie can use is **backstab** (thief, L1) — and it's a MATCH,
+so there's nothing to prove red→green there. Headbutt is a **level-15 warrior skill**;
+the C oracle has no auto-implementor and `advance`/`set` need an already-god char, so a
+level-15 char can't be scripted into a fresh oracle boot. The headbutt fix is therefore
+gated by the deterministic CMWC-stream golden test (same standard accepted for the
+slice-3a core), not a live telnet differential.
