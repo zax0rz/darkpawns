@@ -1069,11 +1069,6 @@ func CmdSneak(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillSneak)
-	if !canUse {
-		return s.SendMessage(msg + "\r\n")
-	}
-
 	result := game.DoSneak(ch)
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
@@ -1085,11 +1080,6 @@ func CmdHide(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillHide)
-	if !canUse {
-		return s.SendMessage(msg + "\r\n")
-	}
-
 	result := game.DoHide(ch)
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
@@ -1104,11 +1094,6 @@ func CmdSteal(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillSteal)
-	if !canUse {
-		return s.SendMessage(msg + "\r\n")
-	}
-
 	// Parse: "steal <item> <target>" or "steal coins <target>"
 	itemName := args[0]
 	targetName := strings.Join(args[1:], " ")
@@ -1119,7 +1104,7 @@ func CmdSteal(s SessionInterface, args []string) error {
 		return s.SendMessage("Steal what from who?\r\n")
 	}
 
-	result := game.DoSteal(ch, target, itemName)
+	result := game.DoSteal(ch, target, itemName, world)
 	return sendSkillResult(s, ch, target, result)
 }
 

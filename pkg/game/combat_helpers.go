@@ -39,24 +39,35 @@ func isMounted(ch *Player) bool {
 // percent is in (0,97). The "improves" line fires only on a +3 roll. spells[skill]
 // (act.other.c:1721) is the DP catalog name, which is exactly the Skill* constant.
 func improveSkill(ch *Player, skill string) {
+	if message := improveSkillMessage(ch, skill); message != "" {
+		ch.SendMessage(message)
+	}
+}
+
+// improveSkillMessage performs improveSkill's exact draw/mutation contract and
+// returns its optional player-facing line. Most callers use improveSkill,
+// which writes the line immediately. Result-based command implementations use
+// this form when C sends another line before calling improve_skill.
+func improveSkillMessage(ch *Player, skill string) string {
 	if ch.IsNPC() {
-		return
+		return ""
 	}
 	percent := ch.GetSkill(skill)
 	// #nosec G404 — game RNG, not cryptographic
 	if dprng.Number(1, 200) > ch.GetWis()+ch.GetInt() {
-		return
+		return ""
 	}
 	if percent >= 97 || percent <= 0 {
-		return
+		return ""
 	}
 	// #nosec G404 — game RNG, not cryptographic
 	newpercent := dprng.Number(1, 3)
 	percent += newpercent
 	ch.SetSkill(skill, percent)
 	if newpercent == 3 {
-		ch.SendMessage(fmt.Sprintf("Your skill in %s improves.\r\n", skill))
+		return fmt.Sprintf("Your skill in %s improves.\r\n", skill)
 	}
+	return ""
 }
 
 // ---------------------------------------------------------------------------

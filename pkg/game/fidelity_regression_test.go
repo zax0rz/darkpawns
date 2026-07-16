@@ -117,6 +117,7 @@ func TestFidelityChCanSeeObjInvisibility(t *testing.T) {
 func TestFidelityStealMobRestrictions(t *testing.T) {
 	thief := NewPlayer(1, "Thief", 1001)
 	thief.SetSkill(SkillSteal, 1000) // extremely high skill to guarantee success
+	thief.Stats.Str = 10
 
 	// Construct a mob target
 	mobProto := &parser.Mob{
@@ -148,7 +149,7 @@ func TestFidelityStealMobRestrictions(t *testing.T) {
 	mob.AddToInventory(item)
 
 	// Perform steal
-	result := DoSteal(thief, mob, "sword")
+	result := DoSteal(thief, mob, "sword", world)
 	if !result.Success {
 		t.Fatalf("DoSteal failed: %s", result.MessageToCh)
 	}
