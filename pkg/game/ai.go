@@ -5,8 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/zax0rz/darkpawns/pkg/dprng"
-
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -52,7 +50,7 @@ func (w *World) AITick() {
 //
 // DP-590: this used to hold mob.mu for the whole AI cycle (CRIT-004), but the
 // dispatch below runs entirely through self-locking accessors (GetName,
-// GetFighting, SetStatus, wanderMob → GetRoom/SetRoom, …). Holding the write
+// GetFighting, SetStatus, wanderMobWithDoor → GetRoom/SetRoom, …). Holding the write
 // lock made the first accessor self-deadlock, so the mob AI never ran. The
 // accessors provide their own synchronization; we no longer hold mob.mu here.
 func (w *World) runMobAI(mob *MobInstance) {
@@ -74,16 +72,18 @@ func (w *World) runMobAI(mob *MobInstance) {
 	// per tick. MobileActivityForMob processes a single mob.
 	//
 	// Wandering happens inside MobileActivityForMob (mobileActivityForMob →
-	// wanderMob), exactly once per tick — matching C mobile_activity, which
+	// wanderMobWithDoor), exactly once per tick — matching C mobile_activity, which
 	// runs the movement block once per mob. DP-908 removed a redundant second
-	// wanderMob call here plus a non-C 25% gate (number(0,99) < 25) that had
+	// wanderMobWithDoor call here plus a non-C 25% gate (number(0,99) < 25) that had
 	// no equivalent in mobact.c and dropped the effective wander rate to ~8%.
 	w.MobileActivityForMob(mob)
 }
 
-// wanderMob moves a mob to a random adjacent room, faithful to C mobact.c's
-// movement block (src/mobact.c:119-143). Caller must NOT hold mob.mu — the
-// accessors lock individually (DP-590).
+// wanderMobWithDoor moves a mob to the adjacent room selected by door, faithful
+// to C mobact.c's movement block (src/mobact.c:119-143). The caller performs
+// the unconditional number(0,18) draw before checking SENTINEL or position;
+// this helper never draws PRNG. Caller must NOT hold mob.mu — the accessors lock
+// individually (DP-590).
 //
 // C semantics reproduced here (DP-908):
 //   - door = number(0, 18): a SINGLE random draw in [0,18].
@@ -98,21 +98,18 @@ func (w *World) runMobAI(mob *MobInstance) {
 //   - Sector swim/fly checks (Go has no CAN_SWIM/IS_FLYING, so water/flying
 //     rooms are skipped for all mobs — pre-existing conservative behavior).
 //
-// Note: SENTINEL is checked by the caller (mobileActivityForMob), not here.
-func (w *World) wanderMob(mob *MobInstance) {
-	snap := w.snapshots.Snapshot()
-	room, ok := snap.Rooms[mob.GetRoom()] // getter — mutex-protected
-	if !ok {
+// Note: SENTINEL and exact POS_STANDING are checked by the caller only after it
+// has consumed the unconditional door draw.
+func (w *World) wanderMobWithDoor(mob *MobInstance, door int) {
+	// door < NUM_OF_DIRS (len(dirs) == 6): if the draw isn't a real direction,
+	// the mob doesn't move this tick. This is both the gate and the direction.
+	if door < 0 || door >= len(dirs) {
 		return
 	}
 
-	// Single random draw, exactly like C's door = number(0, 18).
-	// #nosec G404 — game RNG, not cryptographic
-	door := dprng.Number(0, 18) // [0, 18]
-
-	// door < NUM_OF_DIRS (len(dirs) == 6): if the draw isn't a real direction,
-	// the mob doesn't move this tick. This is both the gate and the direction.
-	if door >= len(dirs) {
+	snap := w.snapshots.Snapshot()
+	room, ok := snap.Rooms[mob.GetRoom()] // getter — mutex-protected
+	if !ok {
 		return
 	}
 
