@@ -427,6 +427,15 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 	ch.TakeDamage(recoil)
 
+	// C do_headbutt calls improve_skill TWICE on a player's success: once
+	// unconditionally (new_cmds.c:450) and again under `if (!subcmd)`
+	// (new_cmds.c:457), separated only by a non-drawing position update. A
+	// player is always subcmd==0 (the command table registers headbutt with
+	// subcmd 0; only mob spec-procs pass subcmd 1, and improve_skill's IS_NPC
+	// guard bails on those anyway), so both calls fire and each can consume a
+	// number(1,200) gate draw. The port previously called it once, dropping a
+	// draw and desyncing the seeded stream on every successful headbutt.
+	improveSkill(ch, SkillHeadbutt)
 	improveSkill(ch, SkillHeadbutt)
 
 	result := SkillResult{
