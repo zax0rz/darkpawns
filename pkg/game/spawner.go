@@ -211,9 +211,14 @@ func percentLoad(obj *parser.Obj) bool {
 		return true
 	}
 	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
 	return obj.LoadPercent > (float64(dprng.Uniform()) * 100.0)
 }
+
+var (
+	zoneObjectPercentLoad = percentLoad
+	zoneObjectInitRare    = initRare
+	zoneRareNumber        = dprng.Number
+)
 
 // ExecuteZoneReset executes all reset commands for a zone.
 // Matches C's reset_zone() semantics including if_flag, loop, percent_load,
@@ -300,32 +305,20 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				continue
 			}
 
-			proto, ok := s.world.GetObjPrototype(cmd.Arg1)
-			if !ok {
-				slog.Warn("object prototype not found", "obj_vnum", cmd.Arg1)
+			obj, err := s.SpawnObject(cmd.Arg1, cmd.Arg3)
+			if err != nil {
+				slog.Error("error spawning object", "obj_vnum", cmd.Arg1, "error", err)
 				continue
 			}
-
-			if !percentLoad(proto) {
-				slog.Debug("object not loaded per percent_load", "obj_vnum", cmd.Arg1, "load_percent", proto.LoadPercent)
+			if cmd.Arg3 < 0 {
+				// C floating O commands skip percent_load entirely.
+				lastCmd = 1
 				continue
 			}
-
-			if cmd.Arg3 >= 0 {
-				// Load object to specific room
-				_, err := s.SpawnObject(cmd.Arg1, cmd.Arg3)
-				if err != nil {
-					slog.Error("error spawning object", "obj_vnum", cmd.Arg1, "error", err)
-					continue
-				}
-			} else {
-				// arg3 < 0: create object floating (NOWHERE) — like C's obj->in_room = NOWHERE
-				obj, err := s.SpawnObject(cmd.Arg1, -1)
-				if err != nil {
-					slog.Error("error spawning floating object", "obj_vnum", cmd.Arg1, "error", err)
-					continue
-				}
-				obj.Location = LocNowhere()
+			if !zoneObjectPercentLoad(obj.Prototype) {
+				slog.Debug("object not loaded per percent_load", "obj_vnum", cmd.Arg1, "load_percent", obj.Prototype.LoadPercent)
+				s.extractSpawnedObject(obj)
+				continue
 			}
 			lastCmd = 1
 
@@ -339,19 +332,14 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				continue
 			}
 
-			proto, ok := s.world.GetObjPrototype(cmd.Arg1)
-			if !ok {
-				slog.Warn("object prototype not found for G command", "obj_vnum", cmd.Arg1)
-				continue
-			}
-			if !percentLoad(proto) {
-				slog.Debug("object not loaded per percent_load (G)", "obj_vnum", cmd.Arg1, "load_percent", proto.LoadPercent)
-				continue
-			}
-
 			obj, err := s.SpawnObject(cmd.Arg1, -1)
 			if err != nil {
 				slog.Error("error spawning object for mob", "obj_vnum", cmd.Arg1, "error", err, "context", "mob_inventory")
+				continue
+			}
+			if !zoneObjectPercentLoad(obj.Prototype) {
+				slog.Debug("object not loaded per percent_load (G)", "obj_vnum", cmd.Arg1, "load_percent", obj.Prototype.LoadPercent)
+				s.extractSpawnedObject(obj)
 				continue
 			}
 			lastMob.Inventory = append(lastMob.Inventory, obj)
@@ -367,16 +355,6 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				continue
 			}
 
-			proto, ok := s.world.GetObjPrototype(cmd.Arg1)
-			if !ok {
-				slog.Warn("object prototype not found for E command", "obj_vnum", cmd.Arg1)
-				continue
-			}
-			if !percentLoad(proto) {
-				slog.Debug("object not loaded per percent_load (E)", "obj_vnum", cmd.Arg1, "load_percent", proto.LoadPercent)
-				continue
-			}
-
 			if cmd.Arg3 < 0 || cmd.Arg3 >= numWears {
 				slog.Warn("invalid equipment position", "pos", cmd.Arg3)
 				continue
@@ -387,6 +365,11 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				slog.Error("error spawning object for mob equip", "obj_vnum", cmd.Arg1, "error", err, "context", "mob_equip")
 				continue
 			}
+			if !zoneObjectPercentLoad(obj.Prototype) {
+				slog.Debug("object not loaded per percent_load (E)", "obj_vnum", cmd.Arg1, "load_percent", obj.Prototype.LoadPercent)
+				s.extractSpawnedObject(obj)
+				continue
+			}
 			if lastMob.Equipment == nil {
 				lastMob.Equipment = make(map[int]*ObjectInstance)
 			}
@@ -394,29 +377,26 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 			lastCmd = 1
 
 		case "P": // Put object in container
-			container := s.findObjectInstance(cmd.Arg3)
-			if container == nil {
-				slog.Warn("P command: container object not found", "container_vnum", cmd.Arg3)
-				continue
-			}
 			if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
 				slog.Warn("cannot spawn object for container: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "container")
-				continue
-			}
-
-			proto, ok := s.world.GetObjPrototype(cmd.Arg1)
-			if !ok {
-				slog.Warn("object prototype not found for P command", "obj_vnum", cmd.Arg1)
-				continue
-			}
-			if !percentLoad(proto) {
-				slog.Debug("object not loaded per percent_load (P)", "obj_vnum", cmd.Arg1, "load_percent", proto.LoadPercent)
 				continue
 			}
 
 			obj, err := s.SpawnObject(cmd.Arg1, -1)
 			if err != nil {
 				slog.Error("error spawning object for container", "obj_vnum", cmd.Arg1, "error", err, "context", "container")
+				continue
+			}
+			container := s.findObjectInstance(cmd.Arg3)
+			if container == nil {
+				// C leaves the newly read object floating and counted when the
+				// target container is missing, without calling percent_load.
+				slog.Warn("P command: container object not found", "container_vnum", cmd.Arg3)
+				continue
+			}
+			if !zoneObjectPercentLoad(obj.Prototype) {
+				slog.Debug("object not loaded per percent_load (P)", "obj_vnum", cmd.Arg1, "load_percent", obj.Prototype.LoadPercent)
+				s.extractSpawnedObject(obj)
 				continue
 			}
 			if err := s.world.MoveObjectToContainer(obj, container); err != nil {
@@ -446,12 +426,15 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 
 		case "R": // Remove obj/mob from room
 			// Go parser convention: Arg2=vnum, Arg3=type (1=obj, 0=mob)
+			removed := false
 			if cmd.Arg3 == 1 { // Remove object
-				s.removeObjectFromRoom(cmd.Arg1, cmd.Arg2)
+				removed = s.removeObjectFromRoom(cmd.Arg1, cmd.Arg2)
 			} else { // Remove mob
-				s.removeMobFromRoom(cmd.Arg1, cmd.Arg2)
+				removed = s.removeMobFromRoom(cmd.Arg1, cmd.Arg2)
 			}
-			lastCmd = 1
+			if removed {
+				lastCmd = 1
+			}
 		}
 	}
 
@@ -525,7 +508,7 @@ func (s *Spawner) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 
 	// Apply ITEM_RARE affect variance — db.c:1899-1925 init_rare() (DP-376)
 	if obj.Prototype != nil && obj.Prototype.ExtraFlags[0]&FlagItemRare != 0 {
-		initRare(obj)
+		zoneObjectInitRare(obj)
 	}
 
 	s.objInstances[objVNum] = append(s.objInstances[objVNum], obj)
@@ -548,20 +531,19 @@ func initRare(obj *ObjectInstance) {
 			continue
 		}
 		// #nosec G404 — game RNG, not cryptographic
-		if dprng.Number(0, 99) >= 20 {
+		if zoneRareNumber(1, 100) > 20 {
 			continue
 		}
-		var mod int
+		mod := 0
 		switch a.Location {
 		case 19, 18: // APPLY_DAMROLL, APPLY_HITROLL
 			mod = 1
 		case 17: // APPLY_AC
 			mod = 5
-		default:
-			continue
 		}
-		// #nosec G404
-		if dprng.Number(0, 1) == 1 {
+		// C consumes the sign draw even for an unhandled apply location, where
+		// mod remains zero.
+		if zoneRareNumber(0, 1) == 0 {
 			mod = -mod
 		}
 		affects[i].Modifier += mod
@@ -587,8 +569,39 @@ func (s *Spawner) findObjectInstance(objVNum int) *ObjectInstance {
 	return nil
 }
 
+// extractSpawnedObject undoes SpawnObject after a failed percent_load gate.
+// C's extract_obj decrements obj_index[].number; removing every spawner index
+// here keeps CanSpawn at the same command-boundary count.
+func (s *Spawner) extractSpawnedObject(obj *ObjectInstance) {
+	if obj == nil {
+		return
+	}
+
+	s.mu.Lock()
+	if instances := s.objInstances[obj.VNum]; len(instances) > 0 {
+		for i, candidate := range instances {
+			if candidate == obj {
+				s.objInstances[obj.VNum] = append(instances[:i], instances[i+1:]...)
+				break
+			}
+		}
+	}
+	roomVNum := obj.GetRoomVNum()
+	if instances := s.roomObjects[roomVNum]; len(instances) > 0 {
+		for i, candidate := range instances {
+			if candidate == obj {
+				s.roomObjects[roomVNum] = append(instances[:i], instances[i+1:]...)
+				break
+			}
+		}
+	}
+	s.mu.Unlock()
+
+	s.world.ExtractObject(obj, roomVNum)
+}
+
 // removeObjectFromRoom removes an object instance from a room.
-func (s *Spawner) removeObjectFromRoom(roomVNum, objVNum int) {
+func (s *Spawner) removeObjectFromRoom(roomVNum, objVNum int) bool {
 	if instances, ok := s.roomObjects[roomVNum]; ok {
 		for i, obj := range instances {
 			if obj.VNum == objVNum {
@@ -603,14 +616,15 @@ func (s *Spawner) removeObjectFromRoom(roomVNum, objVNum int) {
 				}
 				// Clean up global state — db.c zone reset 'R' (DP-373)
 				s.world.ExtractObject(obj, roomVNum)
-				break
+				return true
 			}
 		}
 	}
+	return false
 }
 
 // removeMobFromRoom removes a mob instance from a room.
-func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) {
+func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) bool {
 	if instances, ok := s.roomMobs[roomVNum]; ok {
 		for i, mob := range instances {
 			if mob.VNum == mobVNum {
@@ -625,10 +639,11 @@ func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) {
 				}
 				// Clean up global state — db.c zone reset 'R' (DP-373)
 				s.world.ExtractMob(mob)
-				break
+				return true
 			}
 		}
 	}
+	return false
 }
 
 // RegisterObjectInstance adds a deserialized object to the spawner's tracking.
