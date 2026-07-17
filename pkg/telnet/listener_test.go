@@ -146,6 +146,62 @@ func TestHandleConnRepromptsEmptyPassword(t *testing.T) {
 	}
 }
 
+func TestHandleConnQuitFlushesGoodbyeBeforeDisconnect(t *testing.T) {
+	world, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{
+		VNum: game.MortalStartRoom,
+		Name: "The Temple",
+		Zone: 80,
+	}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager := session.NewManager(world, nil)
+	t.Cleanup(manager.Stop)
+
+	client, server := net.Pipe()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, manager, game.BanNot)
+	}()
+
+	transcript := make(chan []byte, 1)
+	go func() {
+		output, _ := io.ReadAll(client)
+		transcript <- output
+	}()
+
+	const playerName = "guest_quit_flush"
+	if _, err := client.Write([]byte(playerName + "\r\n")); err != nil {
+		t.Fatal(err)
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if _, ok := manager.GetSession(playerName); ok {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("guest session was not registered")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	if _, err := client.Write([]byte("quit\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handleConn did not return after quit")
+	}
+
+	visible := string(stripTelnetCommands(<-transcript))
+	if !strings.Contains(visible, "Goodbye, friend.. Come back soon!\r\n") {
+		t.Fatalf("quit transcript dropped goodbye: %q", visible)
+	}
+}
+
 func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 	world, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{
 		VNum:        game.NewbieStartRoom,

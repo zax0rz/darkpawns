@@ -58,8 +58,9 @@ func execQuit(s *Session, reallyQuit bool) error {
 	s.manager.closeDuplicateSessions(s)
 
 	// Unregister → cleanupSession performs the final save and world removal.
+	// Closing the send channel lets each transport flush the queued goodbye
+	// before its writer closes the underlying connection.
 	s.manager.Unregister(s.player.Name)
-	s.Close()
 
 	return nil
 }

@@ -44,7 +44,11 @@ func (inv *Inventory) addItem(item *ObjectInstance) error {
 	if len(inv.Items) >= inv.Capacity {
 		return ErrInventoryFull
 	}
-	inv.Items = append(inv.Items, item)
+	// C obj_to_char() links each acquired object at the head of carrying.
+	// Keep the same newest-first order; object list rendering reverses it.
+	inv.Items = append(inv.Items, nil)
+	copy(inv.Items[1:], inv.Items[:len(inv.Items)-1])
+	inv.Items[0] = item
 	return nil
 }
 

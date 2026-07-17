@@ -1,6 +1,7 @@
 package game
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -77,6 +78,9 @@ func TestGiveStartingItems_Warrior(t *testing.T) {
 
 	// Warrior gets: small sword (8037) + tunic (8019) directly, then pack with bread+water
 	invVNums := collectInventoryVNums(player)
+	if want := []int{8038, 8019, 8037}; !slices.Equal(invVNums, want) {
+		t.Errorf("warrior inventory order = %v, want C obj_to_char order %v", invVNums, want)
+	}
 	if !containsVNum(invVNums, 8037) {
 		t.Error("warrior should receive small sword (vnum 8037)")
 	}
@@ -113,6 +117,23 @@ func TestGiveStartingItems_Warrior(t *testing.T) {
 		if item.ID <= 0 || item.Location != LocContainer(pack.ID) {
 			t.Errorf("starter pack child %d has id/location %d/%+v", item.VNum, item.ID, item.Location)
 		}
+	}
+}
+
+func TestInventoryAddItemPrependsLikeObjToChar(t *testing.T) {
+	inv := NewInventory()
+	first := &ObjectInstance{VNum: 1}
+	second := &ObjectInstance{VNum: 2}
+
+	if err := inv.AddItem(first); err != nil {
+		t.Fatalf("AddItem(first) failed: %v", err)
+	}
+	if err := inv.AddItem(second); err != nil {
+		t.Fatalf("AddItem(second) failed: %v", err)
+	}
+
+	if got := []int{inv.Items[0].VNum, inv.Items[1].VNum}; !slices.Equal(got, []int{2, 1}) {
+		t.Errorf("inventory order = %v, want newest-first [2 1]", got)
 	}
 }
 
