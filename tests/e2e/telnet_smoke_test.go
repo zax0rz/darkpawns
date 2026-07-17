@@ -267,41 +267,7 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 
 	// --- Connection 1: create the character, which writes it to the DB. ---
 	c1, r1 := launchAndDialDB(t, dbURL)
-	if got := readUntil(t, c1, r1, "By what name", 10*time.Second); got == "" {
-		t.Fatal("conn1: never got name prompt")
-	}
-	mustWrite(t, c1, name+"\r\n")
-	creation := []struct{ awaitPrompt, send string }{
-		{"new character?", "y\r\n"}, // DB: "...create a new character?"; no-DB: "Create new character?"
-		{"Choose a password", password + "\r\n"},
-		{"Confirm password", password + "\r\n"},
-		{"Did I get that right", "Y\r\n"},
-		// DP-909: the nanny no longer re-prompts for the password — the telnet
-		// auth layer already collected it (Choose/Confirm above), so confirming
-		// the name jumps straight to the ANSI color stage (single collection,
-		// matching C interpreter.c CON_NEWPASSWD/CON_CNFPASSWD).
-		{"ANSI color", "N\r\n"},
-		{"sex", "M\r\n"},
-		{"Race:", "H\r\n"},
-		{"Class:", "W\r\n"},
-		{"home town", "K\r\n"},
-		{"keep these stats", "Y\r\n"},
-		{"PRESS RETURN", "\r\n"},
-	}
-	for _, st := range creation {
-		if got := readUntil(t, c1, r1, st.awaitPrompt, 10*time.Second); got == "" {
-			t.Fatalf("conn1: creation stalled at %q", st.awaitPrompt)
-		}
-		mustWrite(t, c1, st.send)
-	}
-	// CON_MENU (DP-1067): select option 1 to enter the game.
-	if got := readUntil(t, c1, r1, "Make your choice", 10*time.Second); got == "" {
-		t.Fatal("conn1: never received the main menu after character creation")
-	}
-	mustWrite(t, c1, "1\r\n")
-	if got := readUntil(t, c1, r1, "Temple Infirmary", 10*time.Second); got == "" {
-		t.Fatal("conn1: new character did not enter the world")
-	}
+	createChar(t, c1, r1, name, password, "W")
 	mustWrite(t, c1, "quit\r\n")
 	_ = c1.Close()
 
