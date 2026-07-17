@@ -474,16 +474,17 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			if cbHasMobFlag(victimName, "MOB_WIMPY") && chName != victimName {
 				cbDoFlee(victimName)
 			}
-			if !victim.IsNPC() && cbGetWimpyLev(victimName) > 0 &&
-				victimName != chName && newPos >= PosFighting &&
-				victim.GetHP() < cbGetWimpyLev(victimName) {
-				hasRetreat := cbGetSkill(victimName, SKILL_RETREAT) > 0
-				hasEscape := cbGetSkill(victimName, SKILL_ESCAPE) > 0
-				if hasRetreat || hasEscape {
-					cbDoRetreat(victimName)
-				} else {
-					cbDoFlee(victimName)
-				}
+		}
+		if !victim.IsNPC() && cbGetWimpyLev(victimName) > 0 &&
+			victimName != chName && newPos >= PosFighting &&
+			victim.GetHP() < cbGetWimpyLev(victimName) {
+			victim.SendMessage("You wimp out, and attempt to flee!\r\n")
+			hasRetreat := cbGetSkill(victimName, SKILL_RETREAT) > 0
+			hasEscape := cbGetSkill(victimName, SKILL_ESCAPE) > 0
+			if hasRetreat || hasEscape {
+				cbDoRetreat(victimName)
+			} else {
+				cbDoFlee(victimName)
 			}
 		}
 	}

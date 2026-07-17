@@ -84,6 +84,42 @@ func TestZoneResetSuccessfulRemoveEnablesDependentCommand(t *testing.T) {
 	}
 }
 
+func TestZoneResetObjectLoadIndexesObjectInRoom(t *testing.T) {
+	world, spawner := newZoneResetTestSpawner(t)
+	zone := &parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "O", Arg1: 200, Arg2: 1, Arg3: 100},
+	}}
+
+	if err := spawner.ExecuteZoneReset(zone); err != nil {
+		t.Fatal(err)
+	}
+	items := world.GetItemsInRoom(100)
+	if len(items) != 1 || items[0].GetVNum() != 200 {
+		t.Fatalf("room 100 zone objects = %v, want one object vnum 200", items)
+	}
+}
+
+func TestZoneResetObjectMaxCountsCharacterCreationObjects(t *testing.T) {
+	world, spawner := newZoneResetTestSpawner(t)
+	proto, ok := world.GetObjPrototype(200)
+	if !ok {
+		t.Fatal("missing object prototype 200")
+	}
+	if obj := world.newObjectInstance(proto, -1); obj == nil {
+		t.Fatal("failed to create non-spawner runtime object")
+	}
+
+	zone := &parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "O", Arg1: 200, Arg2: 1, Arg3: 100},
+	}}
+	if err := spawner.ExecuteZoneReset(zone); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(world.GetItemsInRoom(100)); got != 0 {
+		t.Fatalf("zone reset spawned %d room objects despite global max already being reached", got)
+	}
+}
+
 func installZoneObjectOrderHooks(t *testing.T, percentResult bool) *[]string {
 	t.Helper()
 	calls := &[]string{}
@@ -155,7 +191,7 @@ func TestZoneResetObjectLoadCreatesBeforePercentAndExtractsOnFailure(t *testing.
 			if got := len(spawner.objInstances[202]); got != 0 {
 				t.Fatalf("failed-load object instances = %d, want 0", got)
 			}
-			if !spawner.CanSpawn(202, 1) {
+			if !spawner.canSpawnObject(202, 1) {
 				t.Fatal("failed percent_load still counts against max-in-world")
 			}
 			for _, obj := range world.objectInstances {

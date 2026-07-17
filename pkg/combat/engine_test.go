@@ -210,6 +210,42 @@ func TestPerformInitialAttackResolvesExactlyOneSynchronousHit(t *testing.T) {
 	}
 }
 
+func TestHandleSurvivingVictimState_AutoWimpyFleesAfterBleedingMessage(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	attacker := &msgMockCombatant{mockCombatant: mockCombatant{
+		name: "a guard trainee", npc: true, room: 8105, hp: 20, maxHP: 20,
+		position: PosFighting, fighting: "Cfighter",
+	}}
+	defender := &msgMockCombatant{mockCombatant: mockCombatant{
+		name: "Cfighter", room: 8105, hp: 4, maxHP: 20,
+		position: PosFighting, fighting: "a guard trainee",
+	}}
+	fled := false
+	ce := NewCombatEngine()
+	ce.SetCallbacks(&GameCallbacks{
+		GetWimpyLev: func(name string) int { return 5 },
+		GetSkill:    func(name string, skill int) int { return 0 },
+		DoFlee: func(name string) {
+			fled = name == "Cfighter"
+			defender.StopFighting()
+		},
+	})
+
+	if ended := ce.handleSurvivingVictimState(attacker, defender, 3, PosFighting); !ended {
+		t.Fatal("successful wimpy flee should end the current exchange")
+	}
+	if !fled {
+		t.Fatal("low-HP player did not invoke the C wimpy flee hook")
+	}
+	want := "You wish that your wounds would stop BLEEDING so much!\r\n" +
+		"You wimp out, and attempt to flee!\r\n"
+	if got := strings.Join(defender.messages, ""); got != want {
+		t.Fatalf("wimpy message order = %q, want %q", got, want)
+	}
+}
+
 func TestSendHitMessageFallsBackWhenNil(t *testing.T) {
 	ce := NewCombatEngine()
 	atk := &msgMockCombatant{mockCombatant: mockCombatant{name: "Alice"}}
@@ -637,8 +673,8 @@ func TestPerformRound_BothSidesDealDamageOverRounds(t *testing.T) {
 	}
 }
 
-func TestProcessCombatPair_ParryReducesAttackCountOncePerRound(t *testing.T) {
-	attacker := &mockCombatant{
+func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
+	mob := &mockCombatant{
 		name:       "orc",
 		npc:        true,
 		hp:         100,
@@ -646,13 +682,13 @@ func TestProcessCombatPair_ParryReducesAttackCountOncePerRound(t *testing.T) {
 		room:       1,
 		level:      11, // C NPC baseline: 2 attacks
 		thac0:      1,
-		ac:         10,
+		ac:         100,
 		hitroll:    50,
 		damageRoll: DiceRoll{Num: 1, Sides: 1},
 		position:   PosStanding,
 		fighting:   "parry_warrior",
 	}
-	defender := &mockCombatant{
+	player := &mockCombatant{
 		name:     "parry_warrior",
 		npc:      false,
 		hp:       100,
@@ -660,7 +696,7 @@ func TestProcessCombatPair_ParryReducesAttackCountOncePerRound(t *testing.T) {
 		room:     1,
 		level:    20,
 		thac0:    1,
-		ac:       10,
+		ac:       100,
 		hitroll:  50,
 		dex:      10,
 		position: PosStanding,
@@ -675,19 +711,29 @@ func TestProcessCombatPair_ParryReducesAttackCountOncePerRound(t *testing.T) {
 		}
 	}
 	old := GetRoller()
-	// NPC bonus attack probe fails, parry succeeds, then the single remaining
-	// hit lands and rolls 1 damage. If parry still negated individual hits or
-	// fired per-hit, this would not be exactly one hit.
-	SetRoller(NewScriptedRoller([]int{900, 80, 20, 1, 20, 1}))
+	// First mob turn: bonus probe, then two hit/damage pairs. The player then
+	// succeeds on its own parry-position probe. The next mob turn is reduced
+	// from two attacks to one.
+	SetRoller(NewScriptedRoller([]int{900, 20, 1, 20, 1, 80, 900, 20, 1}))
 	defer SetRoller(old)
 
-	ce.processCombatPair(&CombatPair{Attacker: attacker, Defender: defender})
-
-	if hits != 1 {
-		t.Fatalf("hits after successful parry = %d, want 1", hits)
+	pair := &CombatPair{Attacker: mob, Defender: player}
+	ce.processCombatPair(pair)
+	if hits != 2 {
+		t.Fatalf("hits before opponent prepares parry = %d, want 2", hits)
 	}
-	if got := defender.GetHP(); got != 99 {
-		t.Fatalf("defender HP after parried two-attack round = %d, want 99", got)
+
+	ce.prepareRoundDefense(player, mob)
+	if hits != 2 {
+		t.Fatalf("preparing parry performed an immediate attack: hits = %d, want 2", hits)
+	}
+
+	ce.processCombatPair(pair)
+	if hits != 3 {
+		t.Fatalf("hits after deferred parry reduction = %d, want 3", hits)
+	}
+	if got := player.GetHP(); got != 97 {
+		t.Fatalf("player HP after 2-hit then parried 1-hit turns = %d, want 97", got)
 	}
 }
 

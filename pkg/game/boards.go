@@ -10,6 +10,7 @@ package game
 
 import (
 	"log/slog"
+	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/boards"
 )
@@ -67,6 +68,10 @@ func genBoard(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		}
 		return true
 	case "look", "examine":
+		fields := strings.Fields(arg)
+		if len(fields) == 0 || (!strings.EqualFold(fields[0], "board") && !strings.EqualFold(fields[0], "bulletin")) {
+			return false
+		}
 		return w.Boards.ShowBoard(boardType, ch)
 	case "read":
 		return w.Boards.DisplayMsg(boardType, ch, arg)

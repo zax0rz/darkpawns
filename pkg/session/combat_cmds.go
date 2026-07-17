@@ -234,6 +234,10 @@ func cmdFlee(s *Session) error {
 		s.Send("You're not fighting anyone!")
 		return nil
 	}
+	if s.player.GetPosition() < combat.PosFighting {
+		s.Send("Get on your feet first!")
+		return nil
+	}
 
 	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
 	if !ok {
@@ -254,17 +258,15 @@ func cmdFlee(s *Session) error {
 		xpLoss += int(500 * (float64(level) / 2.6))
 	}
 
-	// Try up to 6 shuffled directions (C: do_flee loops up to 6 random dirs).
-	// #nosec G404 — game RNG, not cryptographic
+	// C makes up to six independent number(0, NUM_OF_DIRS-1) attempts. Sampling
+	// a shuffled list consumes a different number and shape of shared RNG draws.
 	allDirs := []string{"north", "east", "south", "west", "up", "down"}
-	for i := len(allDirs) - 1; i > 0; i-- {
-		j := dprng.Number(0, i)
-		allDirs[i], allDirs[j] = allDirs[j], allDirs[i]
-	}
 
 	oldRoom := s.player.GetRoom()
 	newRoomVNum := -1
-	for _, dir := range allDirs {
+	for range 6 {
+		// #nosec G404 — game RNG, not cryptographic
+		dir := allDirs[dprng.Number(0, len(allDirs)-1)]
 		exit, hasExit := room.Exits[dir]
 		if !hasExit || exit.ToRoom == -1 {
 			continue
@@ -276,16 +278,31 @@ func cmdFlee(s *Session) error {
 		if dest, ok := s.manager.world.GetRoom(exit.ToRoom); ok && dest.HasFlag(1) {
 			continue
 		}
+		leaveMsg, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "flee",
+				From: s.player.Name,
+				Text: fmt.Sprintf("%s panics, and attempts to flee!", s.player.Name),
+			},
+		})
+		if err != nil {
+			slog.Error("json.Marshal error", "error", err)
+			return nil
+		}
+		s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
+
 		nr, err := s.manager.world.MovePlayer(s.player, dir)
 		if err != nil {
-			continue
+			broadcastToRoom(s, fmt.Sprintf("%s tries to flee, but can't!", s.player.Name))
+			return nil
 		}
 		newRoomVNum = nr.VNum
 		break
 	}
 
 	if newRoomVNum == -1 {
-		s.Send("You panic but can't find a way out!")
+		s.Send("PANIC!  You couldn't escape!")
 		return nil
 	}
 
@@ -297,20 +314,6 @@ func cmdFlee(s *Session) error {
 		actualLoss := s.player.LoseExp(xpLoss)
 		s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", actualLoss))
 	}
-
-	leaveMsg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "flee",
-			From: s.player.Name,
-			Text: fmt.Sprintf("%s panics, and attempts to flee!", s.player.Name),
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-	s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
 
 	enterMsg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
@@ -326,8 +329,11 @@ func cmdFlee(s *Session) error {
 	}
 	s.manager.BroadcastToRoom(newRoomVNum, enterMsg, s.player.Name)
 
-	s.Send("You flee head over heels.")
 	s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
 
-	return cmdMovementLook(s)
+	if err := cmdMovementLook(s); err != nil {
+		return err
+	}
+	s.Send("You flee head over heels.")
+	return nil
 }

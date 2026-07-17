@@ -114,6 +114,32 @@ func (w *World) Stats() string {
 	)
 }
 
+func (w *World) countMobInstances(vnum int) int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	count := 0
+	for _, mob := range w.activeMobs {
+		// VNum is immutable after construction. Read it directly so a global
+		// world lock never nests a mob lock.
+		if mob != nil && mob.VNum == vnum {
+			count++
+		}
+	}
+	return count
+}
+
+func (w *World) countObjectInstances(vnum int) int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	count := 0
+	for _, obj := range w.objectInstances {
+		if obj != nil && obj.VNum == vnum {
+			count++
+		}
+	}
+	return count
+}
+
 // ScriptableWorld interface implementation
 
 // GetPlayersInRoomScriptable returns all players in a given room as ScriptablePlayer.

@@ -87,6 +87,10 @@ func TestCalculateHitChance(t *testing.T) {
 }
 
 func TestCalculateDamage(t *testing.T) {
+	oldRoller := combat.GetRoller()
+	combat.SetRoller(combat.NewScriptedRoller([]int{0}))
+	defer combat.SetRoller(oldRoller)
+
 	attacker := &mockCombatant{
 		name:    "Attacker",
 		level:   5,
@@ -103,8 +107,8 @@ func TestCalculateDamage(t *testing.T) {
 
 	damage := combat.CalculateDamage(attacker, defender, combat.DiceRoll{}, combat.AttackNormal)
 
-	if damage < 1 {
-		t.Errorf("CalculateDamage() = %d, expected at least 1", damage)
+	if damage != 0 {
+		t.Errorf("CalculateDamage() = %d, expected C AC reduction to lower the one-point hit to 0", damage)
 	}
 }
 

@@ -396,7 +396,8 @@ func (eq *Equipment) GetWeaponDamage() (numDice, diceType int) {
 			return weapon.Prototype.Values[1], weapon.Prototype.Values[2]
 		}
 	}
-	return 1, 4 // Default bare-handed damage
+	// Bare hands use number(0, level/3) in the combat formula, not weapon dice.
+	return 0, 0
 }
 
 // getWearFlags returns which equipment slots an item can be worn in.
