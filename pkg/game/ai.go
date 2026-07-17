@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -194,6 +195,9 @@ func (w *World) StartEventQueue() {
 // Source: limits.c point_update() — fires once per mud hour
 // (src/utils.h:135 SECS_PER_MUD_HOUR = 63). This ticker is the sole driver.
 func (w *World) StartPointUpdateTicker(interval time.Duration) {
+	if dpclock.Frozen() {
+		return
+	}
 	ticker := time.NewTicker(interval)
 	go func() {
 		for {

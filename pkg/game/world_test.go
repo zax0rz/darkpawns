@@ -80,6 +80,35 @@ func TestStopPeriodicResetsWithoutSpawner(t *testing.T) {
 	w.StopPeriodicResets()
 }
 
+func TestRealtimeWorldTickersFreezeWhenDPClockIsSet(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	w, err := NewWorld(&parser.World{})
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	player := NewCharacter(1, "Clocktest", ClassWarrior, RaceHuman)
+	if err := w.AddPlayer(player); err != nil {
+		t.Fatal(err)
+	}
+	full := player.GetCondition(CondFull)
+	w.StartPointUpdateTicker(time.Millisecond)
+
+	w.StartPeriodicResets(time.Millisecond)
+	time.Sleep(20 * time.Millisecond)
+
+	if got := player.GetCondition(CondFull); got != full {
+		t.Fatalf("point update changed fullness under DP_CLOCK: %d -> %d", full, got)
+	}
+	if w.spawner == nil {
+		t.Fatal("expected world spawner")
+	}
+	if w.spawner.done != nil {
+		t.Fatal("periodic reset ticker started under DP_CLOCK")
+	}
+}
+
 func TestHasSpecInRoom_NoSpecs(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Empty Room", Zone: 1}},

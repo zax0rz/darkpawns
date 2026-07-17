@@ -48,6 +48,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
@@ -82,6 +83,9 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("Random stream initialized", "seed", seed, "deterministic", os.Getenv("DP_SEED") != "")
+	if dpclock.Frozen() {
+		slog.Info("DP_CLOCK enabled; real-time game pulses are frozen")
+	}
 
 	if *worldDir == "" {
 		slog.Error("Usage: server -world <path-to-lib>")

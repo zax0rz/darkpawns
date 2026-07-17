@@ -35,6 +35,20 @@ func TestGameLoopStartStop(t *testing.T) {
 	}
 }
 
+func TestGameLoopStartFreezesWhenDPClockIsSet(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	gl := NewGameLoop(GameLoopCallbacks{})
+	gl.tickerInterval = time.Millisecond
+
+	gl.Start(context.Background())
+	time.Sleep(20 * time.Millisecond)
+	gl.Stop()
+
+	if got := gl.Pulse.Load(); got != 0 {
+		t.Fatalf("pulse advanced under DP_CLOCK: %d", got)
+	}
+}
+
 func TestGameLoopRepeatedStopDoesNotPanic(t *testing.T) {
 	gl := NewGameLoop(GameLoopCallbacks{})
 

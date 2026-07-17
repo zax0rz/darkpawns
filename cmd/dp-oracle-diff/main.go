@@ -181,7 +181,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	oracleProc, err := startProcess(ctx, "C oracle", oracleRoot,
-		append(os.Environ(), "DP_SEED="+fixedSeed), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
+		append(os.Environ(), "DP_SEED="+fixedSeed, "DP_CLOCK=1"), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
 	if err != nil {
 		return err
 	}
@@ -192,6 +192,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		append(
 			os.Environ(),
 			"DP_SEED="+fixedSeed,
+			"DP_CLOCK=1",
 			"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
 			"ENVIRONMENT=development",
 		),

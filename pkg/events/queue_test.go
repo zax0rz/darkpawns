@@ -8,6 +8,19 @@ import (
 	"time"
 )
 
+func TestEventQueueStartFreezesWhenDPClockIsSet(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	eq := NewEventQueue(time.Millisecond)
+
+	eq.Start(context.Background())
+	time.Sleep(20 * time.Millisecond)
+	eq.Stop()
+
+	if got := eq.Pulse(); got != 0 {
+		t.Fatalf("event pulse advanced under DP_CLOCK: %d", got)
+	}
+}
+
 // TestCreateAndProcess verifies basic event creation and processing.
 // Based on event_create() and event_process() in src/events.c.
 func TestCreateAndProcess(t *testing.T) {

@@ -21,6 +21,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 )
 
 // Pulse constants — matching comm.c PASSES_PER_SEC = 10.
@@ -149,6 +151,10 @@ func NewGameLoop(callbacks GameLoopCallbacks) *GameLoop {
 // same way an explicit Stop does (DP-892). Pass context.Background() if you
 // only want signal/Stop-driven shutdown.
 func (gl *GameLoop) Start(ctx context.Context) {
+	if dpclock.Frozen() {
+		slog.Info("game loop wall-clock ticker frozen", "env", "DP_CLOCK")
+		return
+	}
 	gl.startOnce.Do(func() {
 		gl.startedAt = time.Now()
 		gl.started.Store(true)
