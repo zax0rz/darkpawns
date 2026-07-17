@@ -74,6 +74,8 @@ type Manager struct {
 	world        *game.World
 	combatEngine *combat.CombatEngine
 	shopManager  *systems.ShopManager
+	pulsePumpMu  sync.RWMutex
+	pulsePump    func(int) error
 	db           db.Database
 	hasDB        bool
 	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
@@ -445,6 +447,25 @@ func (m *Manager) GetShopManager() *systems.ShopManager {
 
 func (m *Manager) GetCombatEngine() *combat.CombatEngine {
 	return m.combatEngine
+}
+
+// SetPulsePump installs the DP_CLOCK-only synchronous heartbeat driver.
+func (m *Manager) SetPulsePump(pump func(int) error) {
+	m.pulsePumpMu.Lock()
+	defer m.pulsePumpMu.Unlock()
+	m.pulsePump = pump
+}
+
+// PumpPulses advances the deterministic heartbeat without routing through the
+// player command interpreter.
+func (m *Manager) PumpPulses(n int) error {
+	m.pulsePumpMu.RLock()
+	pump := m.pulsePump
+	m.pulsePumpMu.RUnlock()
+	if pump == nil {
+		return fmt.Errorf("pulse pump is not configured")
+	}
+	return pump(n)
 }
 
 // Stop halts the manager's background workers and waits for them to exit.

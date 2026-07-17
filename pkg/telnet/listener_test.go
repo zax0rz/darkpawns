@@ -54,6 +54,33 @@ func TestGreetingsLogoMatchesCFixture(t *testing.T) {
 	}
 }
 
+func TestHandlePulseControlIsDPClockOnlyAndDrawNeutral(t *testing.T) {
+	manager, _ := newTestManager(t)
+	var pumped int
+	manager.SetPulsePump(func(n int) error {
+		pumped += n
+		return nil
+	})
+
+	if handlePulseControl(manager, "~dpclock pulse 40") {
+		t.Fatal("control intercepted with DP_CLOCK unset")
+	}
+	if pumped != 0 {
+		t.Fatalf("pumped %d pulses with DP_CLOCK unset", pumped)
+	}
+
+	t.Setenv("DP_CLOCK", "1")
+	if !handlePulseControl(manager, "~dpclock pulse 40") {
+		t.Fatal("valid control was not intercepted")
+	}
+	if pumped != 40 {
+		t.Fatalf("pumped %d pulses, want 40", pumped)
+	}
+	if handlePulseControl(manager, "~dpclock pulse 0") {
+		t.Fatal("invalid pulse count was intercepted")
+	}
+}
+
 // TestHandleConnDisconnectDuringPasswordPrompt verifies that handleConn returns
 // when the client disconnects instead of proceeding with an empty password.
 func TestHandleConnDisconnectDuringPasswordPrompt(t *testing.T) {

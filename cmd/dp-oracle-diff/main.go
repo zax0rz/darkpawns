@@ -23,8 +23,9 @@ import (
 )
 
 const (
-	fixedSeed = "1"
-	deadDBURL = "postgres://x:x@127.0.0.1:1/nope?sslmode=disable&connect_timeout=1"
+	fixedSeed    = "1"
+	settlePulses = 40 // C PULSE_MOBILE: births a newbie exactly once.
+	deadDBURL    = "postgres://x:x@127.0.0.1:1/nope?sslmode=disable&connect_timeout=1"
 )
 
 //go:embed scenarios/*.txt
@@ -93,7 +94,6 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err != nil {
 		return err
 	}
-
 	repoRoot, err := findRepoRoot()
 	if err != nil {
 		return err
@@ -229,9 +229,23 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err != nil {
 		return fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", err, oracleProc.log.String())
 	}
+	oracleSettle, err := oraclediff.PumpPulses(oracleConn, settlePulses, quiescence)
+	if err != nil {
+		return fmt.Errorf("settle C oracle setup: %w\nserver log:\n%s", err, oracleProc.log.String())
+	}
+	if scenario.DiffSetup {
+		oracleSetup += oracleSettle
+	}
 	goSetup, err := oraclediff.RunSetup(goConn, scenario.SetupPort, quiescence)
 	if err != nil {
 		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
+	}
+	goSettle, err := oraclediff.PumpPulses(goConn, settlePulses, quiescence)
+	if err != nil {
+		return fmt.Errorf("settle Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
+	}
+	if scenario.DiffSetup {
+		goSetup += goSettle
 	}
 
 	oraclePeers := make(map[string]oraclediff.Conn, len(scenario.Peers))
@@ -252,6 +266,9 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		if _, setupErr := oraclediff.RunSetup(oraclePeer, peer.SetupOracle, quiescence); setupErr != nil {
 			return fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleProc.log.String())
 		}
+		if _, settleErr := oraclediff.PumpPulses(oraclePeer, settlePulses, quiescence); settleErr != nil {
+			return fmt.Errorf("settle C oracle %s setup: %w\nserver log:\n%s", name, settleErr, oracleProc.log.String())
+		}
 		oraclePeers[name] = oraclePeer
 
 		goPeerNet, dialErr := dialWhenReady(goProc, goAddr, bootTimeout)
@@ -262,6 +279,9 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		defer func() { _ = goPeer.Close() }()
 		if _, setupErr := oraclediff.RunSetup(goPeer, peer.SetupPort, quiescence); setupErr != nil {
 			return fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goProc.log.String())
+		}
+		if _, settleErr := oraclediff.PumpPulses(goPeer, settlePulses, quiescence); settleErr != nil {
+			return fmt.Errorf("settle Go port %s setup: %w\nserver log:\n%s", name, settleErr, goProc.log.String())
 		}
 		goPeers[name] = goPeer
 	}
