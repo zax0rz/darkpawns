@@ -129,11 +129,13 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 	}
 	obj.LongDesc = strings.TrimSuffix(lb.Text(), "~")
 
-	// Action description (ends with ~, can be empty)
-	if !lb.Scan() {
-		return obj, "", fmt.Errorf("expected obj action desc")
+	// Action descriptions can span multiple lines in the production object
+	// files. Reading only one line shifts all numeric fields that follow.
+	var err error
+	obj.ActionDesc, err = readObjTildeString(lb)
+	if err != nil {
+		return obj, "", fmt.Errorf("expected obj action desc: %w", err)
 	}
-	obj.ActionDesc = strings.TrimSuffix(lb.Text(), "~")
 
 	// Type flag and flags line
 	if !lb.Scan() {
@@ -256,6 +258,22 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 	}
 
 	return obj, nextLine, nil
+}
+
+// readObjTildeString mirrors C's fread_string: source newlines before the
+// terminating line become CRLF, while text after the first '~' is ignored.
+func readObjTildeString(lb *lineBuffer) (string, error) {
+	var result strings.Builder
+	for lb.Scan() {
+		line := strings.TrimSuffix(lb.Text(), "\r")
+		if terminator := strings.IndexByte(line, '~'); terminator >= 0 {
+			result.WriteString(line[:terminator])
+			return result.String(), nil
+		}
+		result.WriteString(line)
+		result.WriteString("\r\n")
+	}
+	return "", fmt.Errorf("unexpected EOF while reading ~-terminated string")
 }
 
 // parseFlag converts a flag value to an integer.

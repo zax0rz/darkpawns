@@ -175,6 +175,43 @@ $
 	}
 }
 
+func TestParseObjFile_MultilineActionDescriptionPreservesNumericFields(t *testing.T) {
+	tmpDir := t.TempDir()
+	f := writeObjFile(t, tmpDir, "test.obj", `#4305
+cistern grapes~
+a cistern of grapes~
+A cistern here is filled with grapes.~
+The first action line.
+The second action line.
+~
+23 0 0 0 0 0 0 0 0
+100 100 2 0
+100 1000 40.00
+$
+`)
+
+	objs, err := ParseObjFile(f)
+	if err != nil {
+		t.Fatalf("parse obj file: %v", err)
+	}
+	if len(objs) != 1 {
+		t.Fatalf("expected 1 object, got %d", len(objs))
+	}
+	obj := objs[0]
+	if obj.ActionDesc != "The first action line.\r\nThe second action line.\r\n" {
+		t.Errorf("action description = %q", obj.ActionDesc)
+	}
+	if obj.TypeFlag != ITEM_FOUNTAIN {
+		t.Errorf("type flag = %d, want %d", obj.TypeFlag, ITEM_FOUNTAIN)
+	}
+	if obj.Values != [4]int{100, 100, 2, 0} {
+		t.Errorf("values = %v", obj.Values)
+	}
+	if obj.LoadPercent != 40 {
+		t.Errorf("load percent = %v, want 40", obj.LoadPercent)
+	}
+}
+
 // container weight validation for ITEM_DRINKCON (17)
 func TestParseObjFile_DrinkconWeightAdjustment(t *testing.T) {
 	tmpDir := t.TempDir()
