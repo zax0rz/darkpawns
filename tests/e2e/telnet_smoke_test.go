@@ -262,7 +262,7 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 
 	// game.ValidName caps names at 20 chars, so keep this short and unique.
 	name := fmt.Sprintf("Rt%d", time.Now().UnixNano()%100000000)
-	const password = "roundtrippw"
+	const password = "roundtrip"
 	t.Cleanup(func() { deleteTestPlayer(t, dbURL, name) })
 
 	// --- Connection 1: create the character, which writes it to the DB. ---
