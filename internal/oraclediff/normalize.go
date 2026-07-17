@@ -29,8 +29,9 @@ func Normalize(raw string) string {
 	// 1. Strip ANSI CSI escapes: color capability is transport presentation, not game text.
 	raw = ansiEscape.ReplaceAllString(raw, "")
 
-	// 2. Canonicalize CRLF/CR and trailing whitespace: both telnet stacks may frame lines differently.
+	// 2. Canonicalize CRLF/LFCR/CR and trailing whitespace: both telnet stacks may frame lines differently.
 	raw = strings.ReplaceAll(raw, "\r\n", "\n")
+	raw = strings.ReplaceAll(raw, "\n\r", "\n")
 	raw = strings.ReplaceAll(raw, "\r", "\n")
 	lines := strings.Split(raw, "\n")
 	for i := range lines {

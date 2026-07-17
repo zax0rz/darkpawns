@@ -165,25 +165,6 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 		t.Errorf("intro: room.name = %q, want A Burning Hut", intro.Room.Name)
 	}
 
-	// ── 4. Receive welcome state in the hometown room ──────────────────────────
-	// completeCharCreation calls sendWelcome which does s.send <- state_msg
-	// (blocking, char_creation.go:276 / session_send.go:58).  writePump drains
-	// s.send and calls conn.WriteMessage — the message travels over the real
-	// TCP socket to our test client.
-	welcomeRaw := wsReadUntilType(t, c, MsgState)
-
-	stateBytes, _ := json.Marshal(welcomeRaw["data"])
-	var welcome StateData
-	if err := json.Unmarshal(stateBytes, &welcome); err != nil {
-		t.Fatalf("unmarshal welcome StateData: %v", err)
-	}
-	if welcome.Player.Name != "Testchar" {
-		t.Errorf("welcome: player.name = %q, want Testchar", welcome.Player.Name)
-	}
-	if want := game.NewbieHometownRoom(1); welcome.Room.VNum != want {
-		t.Errorf("welcome: room.vnum = %d, want %d", welcome.Room.VNum, want)
-	}
-
 	// ── 4. Send "look", verify room description arrives ───────────────────────
 	// handleCommand (session_login.go:249) → ExecuteCommand → cmdLook
 	// (cmd_look.go:101) → s.send <- state_msg (BLOCKING direct send).

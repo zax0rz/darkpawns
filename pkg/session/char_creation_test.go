@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -86,6 +87,93 @@ func TestStartCharCreation(t *testing.T) {
 	}
 	if cd.Stage != "confirm_name" {
 		t.Errorf("CharCreateData.Stage = %q, want confirm_name", cd.Stage)
+	}
+	want := "Please remember to choose an appropriate fantasy-oriented name.\r\n" +
+		"Did I get that right, Gandalf (Y/N)? "
+	if cd.Prompt != want {
+		t.Errorf("confirm prompt = %q, want %q", cd.Prompt, want)
+	}
+}
+
+func TestCharacterCreationExactInvalidPrompts(t *testing.T) {
+	tests := []struct {
+		stage  string
+		choice string
+		setup  func(*Session)
+		want   string
+	}{
+		{stage: "confirm_name", choice: "maybe", setup: func(s *Session) { s.charName = "Hero" }, want: "Please type Yes or No: "},
+		{stage: "sex", choice: "x", want: "That is not a sex..\r\nWhat IS your sex? "},
+		{stage: "race", choice: "x", want: "That is not a race..\r\nWhat IS your race? "},
+		{stage: "class", choice: "x", setup: func(s *Session) { s.charRace = game.RaceHuman }, want: "\r\nThat's not a class.\r\nClass: "},
+		{stage: "hometown", choice: "x", want: "Invalid choice!\r\nSelect: "},
+		{stage: "stats_roll", choice: "x", want: "Invalid choice! Select 'Y' or 'N':"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.stage, func(t *testing.T) {
+			s := makeCharSession(t, makeTestManager(t))
+			s.charCreating = true
+			s.charStage = tt.stage
+			if tt.setup != nil {
+				tt.setup(s)
+			}
+			sendCharInput(t, s, tt.choice)
+			_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
+			if prompt.Prompt != tt.want {
+				t.Errorf("prompt = %q, want %q", prompt.Prompt, tt.want)
+			}
+		})
+	}
+}
+
+func TestCharacterCreationPasswordMismatchReprompts(t *testing.T) {
+	s := makeCharSession(t, makeTestManager(t))
+	s.charCreating = true
+	s.charStage = "confirm_password"
+	s.charPassword = "hunter2"
+
+	sendCharInput(t, s, "different")
+	_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
+	if prompt.Prompt != "\r\nPasswords don't match... start over.\r\nPassword: " {
+		t.Errorf("prompt = %q", prompt.Prompt)
+	}
+	if s.charStage != "create_password" || !prompt.Secret {
+		t.Errorf("mismatch state = %q secret=%v, want create_password with echo off", s.charStage, prompt.Secret)
+	}
+	if s.SendClosed() {
+		t.Fatal("password mismatch disconnected the session")
+	}
+}
+
+func TestCharacterCreationPasswordConfirmationStartsColorOnNewLine(t *testing.T) {
+	s := makeCharSession(t, makeTestManager(t))
+	s.charCreating = true
+	s.charStage = "confirm_password"
+	s.charPassword = "hunter2"
+
+	sendCharInput(t, s, "hunter2")
+	_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
+	if prompt.Prompt != "\r\nDo you want ANSI color (Y/N)? " {
+		t.Errorf("prompt = %q", prompt.Prompt)
+	}
+	if s.charStage != "color" || prompt.Secret {
+		t.Errorf("confirmation state = %q secret=%v, want visible color prompt", s.charStage, prompt.Secret)
+	}
+}
+
+func TestCharacterCreationIllegalPasswordExactPrompt(t *testing.T) {
+	s := makeCharSession(t, makeTestManager(t))
+	s.charCreating = true
+	s.charStage = "create_password"
+	s.charName = "Hero"
+
+	for _, password := range []string{"", "ab", "Hero", "12345678901"} {
+		sendCharInput(t, s, password)
+		_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
+		if prompt.Prompt != "\r\nIllegal password.\r\nPassword: " || !prompt.Secret {
+			t.Errorf("password %q prompt = %q secret=%v", password, prompt.Prompt, prompt.Secret)
+		}
 	}
 }
 
@@ -401,6 +489,59 @@ func TestCompleteCharCreation_PersistsHometownRoom(t *testing.T) {
 	}
 }
 
+func TestCompleteCharCreationEmitsOneRoomAndNoDuplicateMOTD(t *testing.T) {
+	s := makeCharSession(t, makeManagerWithStartRoom(t))
+	s.charCreating = true
+	s.charName = "Oneentry"
+	s.charClass = game.ClassWarrior
+	s.charRace = game.RaceHuman
+	s.charHometown = 1
+	s.charPassword = "hashed_pw"
+	s.charStats = game.CharStats{Str: 15, Dex: 12, Con: 14, Int: 10, Wis: 11, Cha: 9}
+
+	if err := s.completeCharCreation(); err != nil {
+		t.Fatal(err)
+	}
+
+	states := 0
+	motds := 0
+	welcome := ""
+	for {
+		select {
+		case raw := <-s.send:
+			var msg ServerMessage
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				t.Fatal(err)
+			}
+			if msg.Type == MsgState {
+				states++
+			}
+			if msg.Type == MsgEvent {
+				data, _ := json.Marshal(msg.Data)
+				var event EventData
+				_ = json.Unmarshal(data, &event)
+				if event.Type == "motd" {
+					motds++
+				}
+				if strings.Contains(event.Text, "May your visit here") {
+					welcome = event.Text
+				}
+			}
+		default:
+			if states != 1 {
+				t.Fatalf("entry state messages = %d, want exactly 1", states)
+			}
+			if motds != 0 {
+				t.Fatalf("post-menu MOTD messages = %d, want 0", motds)
+			}
+			if welcome != "\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n\r\n" {
+				t.Fatalf("welcome = %q", welcome)
+			}
+			return
+		}
+	}
+}
+
 // ---------------------------------------------------------------------------
 // TestAdvanceCharStage
 // ---------------------------------------------------------------------------
@@ -542,24 +683,17 @@ func firstKey(ks []string, i int) string {
 }
 
 // ---------------------------------------------------------------------------
-// TestNewCharFlowSkipsPasswordWhenSupplied (DP-909)
+// TestNewCharFlowAlwaysPromptsPassword
 // ---------------------------------------------------------------------------
 
-// TestNewCharFlowSkipsPasswordWhenSupplied confirms that when the auth layer
-// already supplied a password, confirming the name jumps straight to the color
-// stage — the password is collected exactly once, matching C (interpreter.c
-// CON_NEWPASSWD/CON_CNFPASSWD is the single collection point).
-func TestNewCharFlowSkipsPasswordWhenSupplied(t *testing.T) {
+// TestNewCharFlowAlwaysPromptsPassword confirms transports cannot skip C's
+// CON_NEWPASSWD/CON_CNFPASSWD dialogue by supplying a login password.
+func TestNewCharFlowAlwaysPromptsPassword(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCharSession(t, m)
 
-	// Auth layer supplied a password.
-	s.startNewCharFlow("Hero", "supersecretpassword")
-	if !s.charPasswordSupplied {
-		t.Fatal("charPasswordSupplied should be true after startNewCharFlow with a password")
-	}
-	// Drain the confirm_name prompt.
-	drainMsg(t, s)
+	s.startNewCharFlow("Hero")
+	_ = drainMsg(t, s) // fantasy-name reminder + confirm_name prompt
 
 	// Confirm the name.
 	msg, _ := json.Marshal(ClientMessage{
@@ -570,19 +704,15 @@ func TestNewCharFlowSkipsPasswordWhenSupplied(t *testing.T) {
 		t.Fatalf("handleMessage confirm Y: %v", err)
 	}
 
-	// Fantasy-name reminder text is sent before the next prompt.
-	drainMsg(t, s)
-
-	// The next prompt must be the color stage, NOT create_password — the
-	// password was already collected by the auth layer, so no second prompt.
 	_, cd := unmarshalCharCreate(t, drainMsg(t, s))
-	if cd.Stage != "color" {
-		t.Errorf("after confirming name with a supplied password, stage = %q, want %q (no double password prompt)",
-			cd.Stage, "color")
+	if cd.Stage != "create_password" {
+		t.Errorf("after confirming name, stage = %q, want create_password", cd.Stage)
 	}
-	// The supplied password must now be hashed (bcrypt hashes start with $2).
-	if len(s.charPassword) == 0 || s.charPassword[0] != '$' {
-		t.Errorf("charPassword should be bcrypt-hashed after skip, got %q", s.charPassword)
+	if !cd.Secret {
+		t.Fatal("create-password prompt must disable client echo")
+	}
+	if s.charPassword != "" {
+		t.Errorf("transport-supplied password leaked into nanny state: %q", s.charPassword)
 	}
 }
 
@@ -593,11 +723,8 @@ func TestNewCharFlowPromptsPasswordWhenNotSupplied(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCharSession(t, m)
 
-	s.startNewCharFlow("Hero", "") // no password from auth layer
-	if s.charPasswordSupplied {
-		t.Fatal("charPasswordSupplied should be false when no password supplied")
-	}
-	drainMsg(t, s) // confirm_name prompt
+	s.startNewCharFlow("Hero")
+	_ = drainMsg(t, s) // fantasy-name reminder + confirm_name prompt
 
 	msg, _ := json.Marshal(ClientMessage{
 		Type: MsgCharInput,
@@ -606,9 +733,6 @@ func TestNewCharFlowPromptsPasswordWhenNotSupplied(t *testing.T) {
 	if err := s.handleMessage(msg); err != nil {
 		t.Fatalf("handleMessage confirm Y: %v", err)
 	}
-
-	// Fantasy-name reminder text is sent before the next prompt.
-	drainMsg(t, s)
 
 	_, cd := unmarshalCharCreate(t, drainMsg(t, s))
 	if cd.Stage != "create_password" {

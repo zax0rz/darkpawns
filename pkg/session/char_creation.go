@@ -12,15 +12,16 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/validation"
 )
 
 // C source race help constants from src/constants.c
-const RaceMenuText = `
-Choose a race:
-  [H]uman        [E]lven       [D]warven      [K]enderkin
-  [M]inotaur     [R]akshasan   [S]sauran
-  [?]Help on races in general
-  [?<race abbreviation>] Help on a specific race (i.e ?D for help on dwarves)`
+const RaceMenuText = "\r\n" +
+	"Choose a race:\r\n" +
+	"  [H]uman        [E]lven       [D]warven      [K]enderkin\r\n" +
+	"  [M]inotaur     [R]akshasan   [S]sauran\r\n" +
+	"  [?]Help on races in general\r\n" +
+	"  [?<race abbreviation>] Help on a specific race (i.e ?D for help on dwarves)\r\n"
 
 const RaceHelpText = `
 Your race is pretty much class independant; it affects innate abilities such
@@ -107,28 +108,30 @@ intelligence, they appear to be the same as lizardman, although less evil-
 looking. Ssaurs spend most of their lives in swamps and marshes, but some have
 been known to adventure far away from their homes.`
 
-const ClassMenuText = `
-Select a class:
-  [C]leric     - Healers and warriors of the gods
-  [T]hief      - Stealthy, quick-fingered, lock-picking back-stabbers
-  [W]arrior    - Fierce, battle-trained fighters
-  [M]agic-user - Spell-casters trained in the art of magick
-  Ps[i]onic    - Fighters endowed with the powers of the mind`
+const ClassMenuText = "\r\n" +
+	"Select a class:\r\n" +
+	"  [C]leric     - Healers and warriors of the gods\r\n" +
+	"  [T]hief      - Stealthy, quick-fingered, lock-picking back-stabbers\r\n" +
+	"  [W]arrior    - Fierce, battle-trained fighters\r\n" +
+	"  [M]agic-user - Spell-casters trained in the art of magick\r\n" +
+	"  Ps[i]onic    - Fighters endowed with the powers of the mind"
 
-const HumanClassMenuText = `
-Select a class:
-  [C]leric     - Healers and warriors of the gods
-  [T]hief      - Stealthy, quick-fingered, lock-picking back-stabbers
-  [W]arrior    - Fierce, battle-trained fighters
-  [M]agic-user - Spell-casters trained in the art of magick
-  [N]inja      - Stealthy, magick-endowed warriors from the orient
-  Ps[i]onic    - Fighters endowed with the powers of the mind`
+const HumanClassMenuText = "\r\n" +
+	"Select a class:\r\n" +
+	"  [C]leric     - Healers and warriors of the gods\r\n" +
+	"  [T]hief      - Stealthy, quick-fingered, lock-picking back-stabbers\r\n" +
+	"  [W]arrior    - Fierce, battle-trained fighters\r\n" +
+	"  [M]agic-user - Spell-casters trained in the art of magick\r\n" +
+	"  [N]inja      - Stealthy, magick-endowed warriors from the orient\r\n" +
+	"  Ps[i]onic    - Fighters endowed with the powers of the mind"
 
-const HometownMenuText = `
-Choose your home town:
-  [K]ir Drax'in  - The Main City. New players should choose this.
-  Kir-[O]shi     - The Port City.
-  [A]laozar      - The Holy City.`
+const HometownMenuText = "\r\n" +
+	"Choose your home town:\r\n" +
+	"  [K]ir Drax'in  - The Main City. New players should choose this.\r\n" +
+	"  Kir-[O]shi     - The Port City.\r\n" +
+	"  [A]laozar      - The Holy City.\r\n"
+
+const maxCreationPasswordLength = 10
 
 // handleCharInput processes character creation input from the client.
 // Implements the nanny() flow from interpreter.c.
@@ -142,47 +145,40 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	choice := strings.TrimSpace(input.Choice)
 
 	switch s.charStage {
+	case "get_name":
+		if !validation.IsValidPlayerName(choice) || !game.ValidName(choice) {
+			s.sendCharCreatePrompt("get_name", "Invalid name, please try another.\r\nName: ", nil)
+			return nil
+		}
+		s.charName = choice
+		s.charStage = "confirm_name"
+		s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Please remember to choose an appropriate fantasy-oriented name.\r\nDid I get that right, %s (Y/N)? ", choice), nil)
+
 	case "confirm_name":
 		switch strings.ToUpper(choice) {
 		case "Y":
-			s.sendText("Please remember to choose an appropriate fantasy-oriented name.\r\n")
-			// C (interpreter.c) collects the new-character password once, in
-			// CON_NEWPASSWD/CON_CNFPASSWD right after name confirmation. When
-			// the auth layer (telnet/WS) already collected the password, skip
-			// the nanny's create_password/confirm_password stages and go
-			// straight to color — so the password is asked exactly once per
-			// flow (DP-909). The supplied password is still plaintext here;
-			// hash it now, exactly as confirm_password would.
-			if s.charPasswordSupplied {
-				if err := s.hashCharPassword(); err != nil {
-					return err
-				}
-				s.charStage = "color"
-				s.sendCharCreatePrompt("color", "Do you want ANSI color (Y/N)? ", charOpts("Y", "Yes", "N", "No"))
-			} else {
-				s.charStage = "create_password"
-				s.sendCharCreatePrompt("create_password", fmt.Sprintf("New character.\r\nGive me a password for %s: ", s.charName), nil)
-			}
+			s.charStage = "create_password"
+			s.sendCharCreatePromptWithSecret("create_password", fmt.Sprintf("New character.\r\nGive me a password for %s: ", s.charName), nil, true)
 		case "N":
-			s.sendText("Okay, what IS it, then? ")
 			s.charStage = "get_name"
 			s.charName = ""
+			s.sendCharCreatePrompt("get_name", "Okay, what IS it, then? ", nil)
 		default:
-			s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Please type Yes or No: \r\nDid I get that right, %s (Y/N)? ", s.charName), charOpts("Y", "Yes", "N", "No"))
+			s.sendCharCreatePrompt("confirm_name", "Please type Yes or No: ", nil)
 		}
 
 	case "create_password":
-		if len(choice) < 3 {
-			s.sendCharCreatePrompt("create_password", "\r\nIllegal password. Password must be at least 3 characters.\r\nPassword: ", nil)
+		if len(choice) < 3 || len(choice) > maxCreationPasswordLength || strings.EqualFold(choice, s.charName) {
+			s.sendCharCreatePromptWithSecret("create_password", "\r\nIllegal password.\r\nPassword: ", nil, true)
 			return nil
 		}
 		s.charPassword = choice
 		s.charStage = "confirm_password"
-		s.sendCharCreatePrompt("confirm_password", "Please retype password: ", nil)
+		s.sendCharCreatePromptWithSecret("confirm_password", "\r\nPlease retype password: ", nil, true)
 
 	case "confirm_password":
 		if choice != s.charPassword {
-			s.sendCharCreatePrompt("create_password", "\r\nPasswords don't match... start over.\r\nPassword: ", nil)
+			s.sendCharCreatePromptWithSecret("create_password", "\r\nPasswords don't match... start over.\r\nPassword: ", nil, true)
 			s.charStage = "create_password"
 			return nil
 		}
@@ -190,18 +186,18 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			return err
 		}
 		s.charStage = "color"
-		s.sendCharCreatePrompt("color", "Do you want ANSI color (Y/N)? ", charOpts("Y", "Yes", "N", "No"))
+		s.sendCharCreatePrompt("color", "\r\nDo you want ANSI color (Y/N)? ", nil)
 
 	case "color":
 		switch strings.ToUpper(choice) {
 		case "Y":
 			s.charColor = true
-			s.advanceCharStage("sex", "What is your sex (M/F)? ", charOpts("M", "Male", "F", "Female"))
+			s.advanceCharStage("sex", "What is your sex (M/F)? ", nil)
 		case "N":
 			s.charColor = false
-			s.advanceCharStage("sex", "What is your sex (M/F)? ", charOpts("M", "Male", "F", "Female"))
+			s.advanceCharStage("sex", "What is your sex (M/F)? ", nil)
 		default:
-			s.sendCharCreatePrompt("color", "Please answer Y or N.\r\nDo you want ANSI color (Y/N)? ", charOpts("Y", "Yes", "N", "No"))
+			s.sendCharCreatePrompt("color", "Please answer Y or N.\r\nDo you want ANSI color (Y/N)? ", nil)
 		}
 
 	case "sex":
@@ -213,7 +209,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			s.charSex = 1
 			s.advanceCharStage("race", RaceMenuText+"\r\nRace: ", s.getRaceOptions())
 		default:
-			s.sendCharCreatePrompt("sex", "That is not a sex..\r\nWhat IS your sex? ", charOpts("M", "Male", "F", "Female"))
+			s.sendCharCreatePrompt("sex", "That is not a sex..\r\nWhat IS your sex? ", nil)
 		}
 
 	case "race":
@@ -242,8 +238,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			} else {
 				help = RaceHelpText
 			}
-			s.sendText(help)
-			s.sendCharCreatePrompt("race", RaceMenuText+"\r\nRace: ", s.getRaceOptions())
+			s.sendCharCreatePrompt("race", creationCRLF(help)+RaceMenuText+"\r\nRace: ", s.getRaceOptions())
 			return nil
 		}
 
@@ -264,7 +259,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		case "S":
 			race = game.RaceSsaur
 		default:
-			s.sendCharCreatePrompt("race", "That is not a race..\r\nWhat IS your race? \r\n"+RaceMenuText+"\r\nRace: ", s.getRaceOptions())
+			s.sendCharCreatePrompt("race", "That is not a race..\r\nWhat IS your race? ", s.getRaceOptions())
 			return nil
 		}
 
@@ -304,7 +299,6 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		}
 
 		s.charClass = classID
-		s.charStats = game.RollRealAbils(s.charClass, s.charRace)
 		s.advanceCharStage("hometown", HometownMenuText+"\r\nSelect: ", charOpts("K", "Kir Drax'in", "O", "Kir-Oshi", "A", "Alaozar"))
 
 	case "hometown":
@@ -323,6 +317,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		}
 
 		s.charHometown = hometown
+		s.charStats = game.RollRealAbils(s.charClass, s.charRace)
 		s.sendStatsRollPrompt()
 
 	case "stats_roll":
@@ -336,7 +331,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			s.charStats = game.RollRealAbils(s.charClass, s.charRace)
 			s.sendStatsRollPrompt()
 		default:
-			s.sendStatsRollPrompt()
+			s.sendCharCreatePrompt("stats_roll", "Invalid choice! Select 'Y' or 'N':", nil)
 		}
 
 	case "motd":
@@ -399,7 +394,7 @@ func (s *Session) sendStatsRollPrompt() {
 		Cha: s.charStats.Cha,
 	}
 	prompt := fmt.Sprintf(
-		"Your ability scores:\r\n  Str: %-13s Dex: %-13s Int: %-13s\r\n  Wis: %-13s Con: %-13s Cha: %-13s\r\n\r\nPress 'Y' to keep these stats, and 'N' to reroll:",
+		"\r\nYour ability scores:\r\n  Str: %-13s Dex: %-13s Int: %-13s\r\n  Wis: %-13s Con: %-13s Cha: %-13s\r\n\r\nPress 'Y' to keep these stats, and 'N' to reroll:",
 		getAbilName(stats.Str), getAbilName(stats.Dex), getAbilName(stats.Int),
 		getAbilName(stats.Wis), getAbilName(stats.Con), getAbilName(stats.Cha),
 	)
@@ -425,24 +420,34 @@ func (s *Session) sendStatsRollPrompt() {
 //
 // Deprecated: prefer startNewCharFlow to match stateful C nanny flow.
 func (s *Session) startCharCreation(playerName string) {
-	s.startNewCharFlow(playerName, "")
+	s.startNewCharFlow(playerName)
 }
 
-// startNewCharFlow begins stateful character creation starting at name
-// confirmation. C (interpreter.c nanny) collects the new-character password
-// exactly once, in CON_NEWPASSWD/CON_CNFPASSWD right after name confirmation.
-// To match that and avoid the previous double-prompt (telnet layer AND nanny
-// both asking), when a password was already supplied by the caller (the
-// telnet/WS auth layer), the nanny skips its create_password/confirm_password
-// stages and advances straight to color — so the password is collected exactly
-// once per flow (DP-909).
-func (s *Session) startNewCharFlow(playerName, password string) {
+// startNewCharFlow begins the C nanny flow at name confirmation. Passwords for
+// new characters are always collected here, never by a transport auth shim.
+func (s *Session) startNewCharFlow(playerName string) {
 	s.charCreating = true
 	s.charName = playerName
-	s.charPassword = password
-	s.charPasswordSupplied = password != "" // auth layer collected it; nanny will skip its prompt
+	s.charPassword = ""
 	s.charStage = "confirm_name"
-	s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Did I get that right, %s (Y/N)? ", playerName), charOpts("Y", "Yes", "N", "No"))
+	s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Please remember to choose an appropriate fantasy-oriented name.\r\nDid I get that right, %s (Y/N)? ", playerName), nil)
+}
+
+func (s *Session) restartNameEntry() {
+	s.charCreating = true
+	s.charStage = "get_name"
+	s.charName = ""
+	s.charPassword = ""
+	s.sendCharCreatePrompt("get_name", "Invalid name, please try another.\r\nName: ", nil)
+}
+
+func creationCRLF(text string) string {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\n", "\r\n")
+	if !strings.HasSuffix(text, "\r\n") {
+		text += "\r\n"
+	}
+	return text
 }
 
 // sendCharCreatePrompt sends a character creation prompt to the client.
@@ -527,11 +532,6 @@ func (s *Session) completeCharCreation() error {
 	// and attachObjectLocked can find them; items silently drop otherwise.
 	s.manager.world.GiveStartingItems(s.player)
 
-	// Show the intro room once, then apply the hometown-specific start_room
-	// destination. The later welcome state renders that destination.
-	s.sendCurrentRoomState()
-	s.player.SetRoom(newbieRoom)
-
 	slog.InfoContext(s.sessionCtx, "completeCharCreation: player added to world", s.logAttrs()...)
 
 	// Safety: catch any panic in the rest of char creation
@@ -546,7 +546,6 @@ func (s *Session) completeCharCreation() error {
 	s.charStage = ""
 	s.charName = ""
 	s.charPassword = ""
-	s.charPasswordSupplied = false
 	s.charColor = false
 	s.charSex = 0
 	s.charRace = 0
@@ -564,6 +563,11 @@ func (s *Session) completeCharCreation() error {
 
 	// Send welcome with token
 	s.sendWelcome(token)
+
+	// The C-facing entry surface is the Burning Hut, emitted once above. Keep
+	// the port's existing post-intro gameplay destination without rendering a
+	// second room; persistence already records this hometown room.
+	s.player.SetRoom(newbieRoom)
 
 	// Mirror the agent initialization that handleLogin sends for returning players.
 	if s.isAgent || s.wantsStructuredData {
@@ -587,11 +591,6 @@ func (s *Session) completeCharCreation() error {
 		return nil
 	}
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
-
-	// C's entry look calls do_look directly and consumes no command draw.
-	if err := cmdLook(s, nil); err != nil {
-		slog.ErrorContext(s.sessionCtx, "look command failed on entry for new character", s.logAttrs(slog.Any("error", err))...)
-	}
 
 	return nil
 }

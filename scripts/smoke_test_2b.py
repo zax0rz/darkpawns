@@ -20,9 +20,9 @@ except ImportError:
     print("pip install websockets")
     sys.exit(1)
 
-# Password supplied at login. The server's character-creation nanny skips its
-# own password prompt when the auth layer already collected one (DP-909).
-PASSWORD = "smoke2b-password"
+# The C nanny collects new-character passwords after name confirmation and
+# limits them to 10 characters. The same password logs the character back in.
+PASSWORD = "smoke2bpw"
 
 PASS = "✓"
 FAIL = "✗"
@@ -103,6 +103,8 @@ async def create_character(ws):
     """Walk the interactive character-creation prompts and return the welcome state."""
     choices = {
         "confirm_name": "Y",
+        "create_password": PASSWORD,
+        "confirm_password": PASSWORD,
         "color": "N",
         "sex": "M",
         "race": "H",
@@ -170,7 +172,7 @@ async def run_test(ws_url):
     # --- Session 1: New character ---
     print("[ Session 1: Create warrior, look around, wield weapon, quit ]")
     async with websockets.connect(ws_url) as ws:
-        # Login as new warrior. The password is required; new_char enters creation.
+        # new_char enters the shared nanny; its login password field is ignored.
         await send(ws, "login", {
             "player_name": char_name,
             "password": PASSWORD,

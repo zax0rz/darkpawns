@@ -16,7 +16,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/session"
 	"github.com/zax0rz/darkpawns/pkg/validation"
@@ -102,7 +101,9 @@ const greetingsLogo = "\r\n\r\n" +
 	"                                  `.'\r\n\r\n" +
 	"             Based on CircleMUD 3.0 created by J. Elson and\r\n" +
 	"            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,\r\n" +
-	"                H. Staerfeldt, M. Seifert, and S. Hammer\r\n\r\n"
+	"                H. Staerfeldt, M. Seifert, and S. Hammer\r\n\r\n" +
+	"   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!\r\n" +
+	"\r\n\r\n"
 
 var (
 	connMu   sync.Mutex
@@ -289,23 +290,30 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 
 	// Welcome + prompt
 	tc.writeLine(greetingsLogo)
-	tc.writeLine("By what name do you wish to be known? ")
+	// C emits one visible line break at the ident-to-name boundary. Use a
+	// well-formed CRLF rather than carrying its legacy LFCR framing forward.
+	tc.writeLine("\r\nBy what name do you wish to be known? ")
 
-	// Read name with the pre-auth idle timeout (DP-912).
-	name, ok := tc.readLinePreAuth()
-	if !ok {
-		return
-	}
-	name = strings.TrimSpace(name)
-	if name == "" {
-		tc.writeLine("\r\nGoodbye.\r\n")
-		return
-	}
-
-	// Validate player name (same rules as WebSocket path)
-	if !validation.IsValidPlayerName(name) {
-		tc.writeLine("\r\nInvalid name. Use 2-32 characters: letters, numbers, spaces, dots, dashes, underscores.\r\n")
-		return
+	// C's CON_GET_NAME keeps the connection open until it receives a valid
+	// fantasy name. Transport only owns this first read; new-character dialogue
+	// after it belongs entirely to the shared session nanny.
+	var name string
+	for {
+		var ok bool
+		name, ok = tc.readLinePreAuth()
+		if !ok {
+			return
+		}
+		name = strings.TrimSpace(name)
+		if name == "" {
+			tc.writeLine("\r\nGoodbye.\r\n")
+			return
+		}
+		if strings.HasPrefix(strings.ToLower(name), "guest") ||
+			(validation.IsValidPlayerName(name) && game.ValidNameNoActive(name)) {
+			break
+		}
+		tc.writeLine("Invalid name, please try another.\r\nName: ")
 	}
 
 	var password string
@@ -316,9 +324,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		newChar = false
 	} else if manager.HasDatabase() {
 		database := manager.GetDatabase()
-		var rec *db.PlayerRecord
-		var err error
-		rec, err = database.GetPlayer(name)
+		rec, err := database.GetPlayer(name)
 		if err != nil {
 			slog.Error("Telnet DB lookup error", "player", name, "error", err)
 		}
@@ -340,88 +346,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			}
 			newChar = false
 		} else {
-			// New character - ask to confirm creation
-			tc.writeLine("Character does not exist. Do you want to create a new character? (Y/N): ")
-			choice, ok := tc.readLinePreAuth()
-			if !ok {
-				return
-			}
-			choice = strings.TrimSpace(strings.ToLower(choice))
-			if choice != "y" && choice != "yes" {
-				tc.writeLine("\r\nGoodbye.\r\n")
-				return
-			}
-
-			// Prompt to create and confirm a password (ECHO OFF)
-			tc.write([]byte{IAC, WILL, OPT_ECHO})
-			tc.writeLine("Choose a password: ")
-			p1, ok := tc.readLinePreAuth()
-			if !ok {
-				tc.write([]byte{IAC, WONT, OPT_ECHO})
-				tc.writeLine("\r\n")
-				return
-			}
-			tc.writeLine("\r\nConfirm password: ")
-			p2, ok := tc.readLinePreAuth()
-			if !ok {
-				tc.write([]byte{IAC, WONT, OPT_ECHO})
-				tc.writeLine("\r\n")
-				return
-			}
-			tc.write([]byte{IAC, WONT, OPT_ECHO})
-			tc.writeLine("\r\n")
-
-			if strings.TrimSpace(p1) == "" || strings.TrimSpace(p2) == "" {
-				tc.writeLine("Password cannot be empty. Disconnecting.\r\n")
-				return
-			}
-			if p1 != p2 {
-				tc.writeLine("Passwords do not match. Disconnecting.\r\n")
-				return
-			}
-			password = p1
 			newChar = true
 		}
 	} else {
-		// No DB - ask to confirm creation and create password
-		tc.writeLine("No database connection. Create new character? (Y/N): ")
-		choice, ok := tc.readLinePreAuth()
-		if !ok {
-			return
-		}
-		choice = strings.TrimSpace(strings.ToLower(choice))
-		if choice != "y" && choice != "yes" {
-			tc.writeLine("\r\nGoodbye.\r\n")
-			return
-		}
-
-		tc.write([]byte{IAC, WILL, OPT_ECHO})
-		tc.writeLine("Choose a password: ")
-		p1, ok := tc.readLinePreAuth()
-		if !ok {
-			tc.write([]byte{IAC, WONT, OPT_ECHO})
-			tc.writeLine("\r\n")
-			return
-		}
-		tc.writeLine("\r\nConfirm password: ")
-		p2, ok := tc.readLinePreAuth()
-		if !ok {
-			tc.write([]byte{IAC, WONT, OPT_ECHO})
-			tc.writeLine("\r\n")
-			return
-		}
-		tc.write([]byte{IAC, WONT, OPT_ECHO})
-		tc.writeLine("\r\n")
-
-		if strings.TrimSpace(p1) == "" || strings.TrimSpace(p2) == "" {
-			tc.writeLine("Password cannot be empty. Disconnecting.\r\n")
-			return
-		}
-		if p1 != p2 {
-			tc.writeLine("Passwords do not match. Disconnecting.\r\n")
-			return
-		}
-		password = p1
+		// In no-DB/dev mode every non-guest name follows the same C creation
+		// path as an unknown player-file name.
 		newChar = true
 	}
 
@@ -505,41 +434,6 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 }
 
 // writeLoop reads from the session's send channel and writes formatted output to the telnet conn.
-// promptContainsMenu reports whether the char-create prompt text already
-// embeds a formatted option menu. The static menu texts (RaceMenuText,
-// ClassMenuText, HometownMenuText, …) all render options as "[X] label" lines,
-// so a '[' in the prompt means the menu is already shown and the separate
-// options list should NOT be printed again (DP-909: menus were doubled).
-func promptContainsMenu(prompt string) bool {
-	return strings.Contains(prompt, "[") || strings.Contains(prompt, "0) Exit from Dark Pawns")
-}
-
-// renderCharCreateOptions renders the char-create options list for telnet.
-// Options arrive as a JSON array of {"key":..,"label":..} objects (formerly a
-// map, which randomized order). Each is printed as "  [key] label". If the
-// payload is absent or in the legacy map shape, the map path is used as a
-// fallback (DP-909).
-func renderCharCreateOptions(tc *telnetConn, options interface{}) {
-	if arr, ok := options.([]interface{}); ok {
-		for _, item := range arr {
-			m, ok := item.(map[string]interface{})
-			if !ok {
-				continue
-			}
-			k, _ := m["key"].(string)
-			v, _ := m["label"].(string)
-			tc.writeLine(fmt.Sprintf("  [%s] %s\r\n", k, v))
-		}
-		return
-	}
-	// Legacy map shape (pre-DP-909). Kept for mixed-version clients.
-	if m, ok := options.(map[string]interface{}); ok {
-		for k, v := range m {
-			tc.writeLine(fmt.Sprintf("  [%s] %v\r\n", k, v))
-		}
-	}
-}
-
 func writeLoop(tc *telnetConn, s *session.Session) {
 	ch := s.SendChannel()
 	for msg := range ch {
@@ -587,20 +481,11 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 				}
 				prompt, _ := ed["prompt"].(string)
 				if prompt != "" {
-					tc.writeLine(fmt.Sprintf("\r\n%s\r\n", prompt))
+					// Nanny prompts are already byte-exact C strings. In particular,
+					// MENU intentionally contains mixed LF/CR ordering, so bypass the
+					// general telnet newline normalizer here.
+					tc.write([]byte(prompt))
 				}
-				// DP-909: the prompt text already carries the full formatted
-				// menu (e.g. RaceMenuText). Options are now a stable-order
-				// array of {key,label} for structured clients (web/agent); the
-				// telnet path used to ALSO print a randomized duplicate
-				// [key] list, doubling every menu. Only render the option list
-				// when the prompt did not already include the menu — detected
-				// by the absence of a "[" bracket line, which the static menu
-				// texts always contain.
-				if !promptContainsMenu(prompt) {
-					renderCharCreateOptions(tc, ed["options"])
-				}
-				tc.writeLine("> ")
 			}
 		case "vars":
 			if tc.hasGMCP.Load() {

@@ -6,6 +6,8 @@ import (
 	"compress/zlib"
 	"io"
 	"net"
+	"os"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -34,6 +36,21 @@ func drain(c net.Conn) {
 		if err != nil {
 			return
 		}
+	}
+}
+
+func cGreetingsFixture(t *testing.T) string {
+	t.Helper()
+	raw, err := os.ReadFile("testdata/c_greetings.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.ReplaceAll(string(raw), "\n", "\r\n")
+}
+
+func TestGreetingsLogoMatchesCFixture(t *testing.T) {
+	if want := cGreetingsFixture(t); greetingsLogo != want {
+		t.Fatalf("greetingsLogo differs from C fixture\ngot:  %q\nwant: %q", greetingsLogo, want)
 	}
 }
 
@@ -67,9 +84,9 @@ func TestHandleConnDisconnectDuringPasswordPrompt(t *testing.T) {
 	}
 }
 
-// TestHandleConnRejectsEmptyPassword verifies that empty new-character passwords
-// are rejected and the connection handler returns instead of continuing.
-func TestHandleConnRejectsEmptyPassword(t *testing.T) {
+// TestHandleConnRepromptsEmptyPassword verifies C's illegal-password branch
+// keeps the connection open instead of disconnecting the new character.
+func TestHandleConnRepromptsEmptyPassword(t *testing.T) {
 	manager, world := newTestManager(t)
 	defer world.StopAITicker()
 
@@ -84,14 +101,138 @@ func TestHandleConnRejectsEmptyPassword(t *testing.T) {
 
 	go drain(client)
 
-	// No DB path: name -> yes -> empty password -> empty confirmation.
-	_, _ = client.Write([]byte("newplayer\r\ny\r\n\r\n\r\n"))
+	// No DB path: name -> confirm yes -> empty password.
+	_, _ = client.Write([]byte("newplayer\r\ny\r\n\r\n"))
+	time.Sleep(100 * time.Millisecond)
 
 	select {
 	case <-done:
-	case <-time.After(2 * time.Second):
-		t.Fatal("handleConn did not return after empty password")
+		t.Fatal("handleConn disconnected after an illegal password")
+	default:
 	}
+
+	_ = client.Close()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handleConn did not return after client disconnect")
+	}
+}
+
+func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
+	world, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{
+		VNum:        game.NewbieStartRoom,
+		Name:        "A Burning Hut",
+		Description: "Flames dance along the walls of the ruined hut.",
+		Zone:        80,
+	}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	world.WorldPath = "../../lib/world"
+	manager := session.NewManager(world, nil)
+	t.Cleanup(manager.Stop)
+
+	client, server := net.Pipe()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, manager, game.BanNot)
+	}()
+	t.Cleanup(func() { _ = client.Close() })
+
+	var transcript []byte
+	readUntil := func(want string) {
+		t.Helper()
+		_ = client.SetReadDeadline(time.Now().Add(5 * time.Second))
+		buf := make([]byte, 4096)
+		for !bytes.Contains(transcript, []byte(want)) {
+			n, readErr := client.Read(buf)
+			if readErr != nil {
+				t.Fatalf("read waiting for %q: %v\ntranscript: %q", want, readErr, stripTelnetCommands(transcript))
+			}
+			transcript = append(transcript, buf[:n]...)
+		}
+	}
+	answer := func(prompt, input string) {
+		t.Helper()
+		readUntil(prompt)
+		if _, writeErr := client.Write([]byte(input + "\r\n")); writeErr != nil {
+			t.Fatal(writeErr)
+		}
+	}
+
+	answer("By what name do you wish to be known? ", "!")
+	answer("Invalid name, please try another.\r\nName: ", "Transcript")
+	answer("Did I get that right, Transcript (Y/N)? ", "Y")
+	answer("Give me a password for Transcript: ", "hunter2")
+	answer("Please retype password: ", "hunter2")
+	answer("Do you want ANSI color (Y/N)? ", "N")
+	answer("What is your sex (M/F)? ", "M")
+	answer("Race: ", "H")
+	answer("Class: ", "W")
+	answer("Select: ", "K")
+	answer("reroll:", "Y")
+	answer("*** PRESS RETURN: ", "")
+	answer("Make your choice: ", "1")
+	readUntil("Flames dance along the walls of the ruined hut.")
+	if bytes.Contains(transcript, []byte{'\f'}) {
+		t.Fatal("telnet transcript leaked C's malformed echo-on form-feed byte")
+	}
+
+	visible := string(stripTelnetCommands(transcript))
+	statsPattern := regexp.MustCompile(`\r\nYour ability scores:\r\n  Str: .+ Dex: .+ Int: .+\r\n  Wis: .+ Con: .+ Cha: .+\r\n`)
+	visible = statsPattern.ReplaceAllString(visible, "<ROLLED_STATS>")
+	motd, err := os.ReadFile("../../lib/world/text/motd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantPrefix := cGreetingsFixture(t) +
+		"\r\nBy what name do you wish to be known? " +
+		"Invalid name, please try another.\r\nName: " +
+		"Please remember to choose an appropriate fantasy-oriented name.\r\n" +
+		"Did I get that right, Transcript (Y/N)? " +
+		"New character.\r\nGive me a password for Transcript: " +
+		"\r\nPlease retype password: " +
+		"\r\nDo you want ANSI color (Y/N)? " +
+		"What is your sex (M/F)? " +
+		session.RaceMenuText + "\r\nRace: " +
+		session.HumanClassMenuText + "\r\nClass: " +
+		session.HometownMenuText + "\r\nSelect: " +
+		"<ROLLED_STATS>\r\nPress 'Y' to keep these stats, and 'N' to reroll:" +
+		string(motd) + "\r\n\n*** PRESS RETURN: " +
+		"\n\rWelcome to Dark Pawns!\n\r0) Exit from Dark Pawns.\n\r1) Enter the game.\r\n" +
+		"2) Enter description.\r\n3) Read the background story.\r\n4) Change password.\r\n" +
+		"5) Delete this character.\r\n\r\n   Make your choice: " +
+		"\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n\r\n"
+	if !strings.HasPrefix(visible, wantPrefix) {
+		t.Fatalf("creation transcript prefix differs from C\ngot:  %q\nwant: %q", visible, wantPrefix)
+	}
+	if got := strings.Count(visible, "Welcome to Dark Pawns: darkpawns.com 4300"); got != 1 {
+		t.Errorf("MOTD count = %d, want 1", got)
+	}
+	if got := strings.Count(visible, "A Burning Hut"); got != 1 {
+		t.Errorf("start-room count = %d, want 1", got)
+	}
+
+	_ = client.Close()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handleConn did not stop after transcript client closed")
+	}
+}
+
+func stripTelnetCommands(data []byte) []byte {
+	visible := make([]byte, 0, len(data))
+	for i := 0; i < len(data); i++ {
+		if data[i] == IAC && i+2 < len(data) {
+			i += 2
+			continue
+		}
+		visible = append(visible, data[i])
+	}
+	return visible
 }
 
 func TestEffectiveBanLevel_IPAndHostname(t *testing.T) {

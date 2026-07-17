@@ -44,6 +44,21 @@ func TestNewCharacterMOTDTransitionsToMenu(t *testing.T) {
 	if prompt.Stage != "menu" || len(prompt.Options) != 6 {
 		t.Fatalf("menu prompt = stage %q with %d options", prompt.Stage, len(prompt.Options))
 	}
+	if prompt.Prompt != menuText {
+		t.Errorf("menu prompt = %q, want %q", prompt.Prompt, menuText)
+	}
+}
+
+func TestMenuExitExactPrompt(t *testing.T) {
+	s := makeCharSession(t, makeTestManager(t))
+	s.showMainMenu()
+	_ = drainMsg(t, s)
+
+	sendMenuInput(t, s, "0")
+	_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
+	if prompt.Prompt != "Goodbye.\r\n" {
+		t.Errorf("exit prompt = %q", prompt.Prompt)
+	}
 }
 
 func TestMenuInvalidChoiceAndBackgroundReturnToMenu(t *testing.T) {

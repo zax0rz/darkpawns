@@ -120,8 +120,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 		s.manager.world.GiveStartingItems(s.player)
 
-		// C enters guests with a direct do_look call, not command_interpreter.
-		// Keep this out of ExecuteCommand so entry consumes no command draw.
+		// Guest login is a Go-only shortcut and historically performs an
+		// explicit full look. The shared welcome observation honors BRIEF, so
+		// this call remains necessary for the guest telnet entry surface.
 		if err := cmdLook(s, nil); err != nil {
 			slog.ErrorContext(s.sessionCtx, "look command failed on entry for guest", s.logAttrs(slog.Any("error", err))...)
 		}
@@ -152,15 +153,8 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 	// Validate player name
 	if !validation.IsValidPlayerName(login.PlayerName) {
-		s.sendError("Invalid player name. Names must be 2-32 characters and contain only letters, numbers, spaces, dots, dashes, and underscores.")
-		s.CloseSend()
+		s.restartNameEntry()
 		audit.LogSecurityEvent("invalid_player_name", "Invalid player name format", login.PlayerName, ip)
-		return nil
-	}
-
-	if login.Password == "" {
-		s.sendError("Password required.")
-		s.CloseSend()
 		return nil
 	}
 
@@ -212,11 +206,10 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				slog.ErrorContext(s.sessionCtx, "RecordToPlayer error", s.logAttrs(slog.Any("error", err))...)
 				// Fall back to character creation (only check profanity list/length without active check)
 				if !game.ValidNameNoActive(login.PlayerName) {
-					s.sendError("Invalid player name. Please choose another.")
-					s.CloseSend()
+					s.restartNameEntry()
 					return nil
 				}
-				s.startNewCharFlow(login.PlayerName, login.Password)
+				s.startNewCharFlow(login.PlayerName)
 				return nil
 			}
 			if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
@@ -243,23 +236,21 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 			// Validate player name for character creation (checks format, profanity, and online duplicates)
 			if !game.ValidName(login.PlayerName) {
-				s.sendError("Invalid player name. Please choose another.")
-				s.CloseSend()
+				s.restartNameEntry()
 				return nil
 			}
 
-			s.startNewCharFlow(login.PlayerName, login.Password)
+			s.startNewCharFlow(login.PlayerName)
 			return nil
 		}
 	} else {
 		// No DB - start creation flow statefully
 		// Validate player name for character creation without active check (to allow no-DB test takeover)
 		if !game.ValidNameNoActive(login.PlayerName) {
-			s.sendError("Invalid player name. Please choose another.")
-			s.CloseSend()
+			s.restartNameEntry()
 			return nil
 		}
-		s.startNewCharFlow(login.PlayerName, login.Password)
+		s.startNewCharFlow(login.PlayerName)
 		return nil
 	}
 

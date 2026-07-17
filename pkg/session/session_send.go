@@ -21,28 +21,12 @@ func (s *Session) sendWelcome(token string) {
 		}
 	}
 
-	// Send MOTD first (splash screen before room — matches original CircleMUD order).
-	// Agents still receive the state signal immediately after.
-	motd := game.ShowMOTD(s.manager.world.WorldPath)
-	if motd != "" {
-		motdMsg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "motd",
-				Text: motd,
-			},
-		})
-		if err == nil {
-			s.send <- motdMsg
-		}
-	}
-
 	// Welcome text — matches C WELC_MESSG (config.c:256).
 	welcomeMsg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
 			Type: "text",
-			Text: "\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n",
+			Text: "\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n\r\n",
 		},
 	})
 	if err == nil {
@@ -100,18 +84,28 @@ func (s *Session) sendErrorWithState(err error) {
 // Pure lookup — no DB access, no side effects.
 func (s *Session) resendCurrentCharPrompt() {
 	switch s.charStage {
+	case "get_name":
+		s.sendCharCreatePrompt("get_name", "Name: ", nil)
+	case "confirm_name":
+		s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Did I get that right, %s (Y/N)? ", s.charName), nil)
+	case "create_password":
+		s.sendCharCreatePromptWithSecret("create_password", "Password: ", nil, true)
+	case "confirm_password":
+		s.sendCharCreatePromptWithSecret("confirm_password", "\r\nPlease retype password: ", nil, true)
 	case "color":
-		s.sendCharCreatePrompt("color", "Do you want ANSI color? (Y/N):",
-			charOpts("Y", "Yes", "N", "No"))
+		s.sendCharCreatePrompt("color", "Do you want ANSI color (Y/N)? ", nil)
 	case "sex":
-		s.sendCharCreatePrompt("sex", "Select your sex (M/F):",
-			charOpts("M", "Male", "F", "Female"))
+		s.sendCharCreatePrompt("sex", "What is your sex (M/F)? ", nil)
 	case "race":
-		s.sendCharCreatePrompt("race", "Select your race:", s.getRaceOptions())
+		s.sendCharCreatePrompt("race", RaceMenuText+"\r\nRace: ", s.getRaceOptions())
 	case "class":
-		s.sendCharCreatePrompt("class", "Select your class:", s.getClassOptions(s.charRace))
+		menu := ClassMenuText
+		if s.charRace == game.RaceHuman {
+			menu = HumanClassMenuText
+		}
+		s.sendCharCreatePrompt("class", menu+"\r\nClass: ", s.getClassOptions(s.charRace))
 	case "hometown":
-		s.sendCharCreatePrompt("hometown", "Choose your hometown:",
+		s.sendCharCreatePrompt("hometown", HometownMenuText+"\r\nSelect: ",
 			charOpts("K", "Kir Drax'in", "O", "Kir-Oshi", "A", "Alaozar"))
 	case "stats_roll":
 		s.sendStatsRollPrompt()

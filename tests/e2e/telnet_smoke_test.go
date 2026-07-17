@@ -100,7 +100,7 @@ func TestTelnetSmoke_CharacterCreation(t *testing.T) {
 	defer conn.Close()
 
 	entered := createWarrior(t, conn, r, "Smoke_Newbie", "secretpw")
-	if !strings.Contains(entered, "Temple Infirmary") || strings.Contains(entered, "Lvl ") {
+	if !strings.Contains(entered, "A Burning Hut") || strings.Contains(entered, "Lvl ") {
 		t.Errorf("entry output is not the canonical room-only render\n---\n%s", entered)
 	}
 
@@ -262,46 +262,12 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 
 	// game.ValidName caps names at 20 chars, so keep this short and unique.
 	name := fmt.Sprintf("Rt%d", time.Now().UnixNano()%100000000)
-	const password = "roundtrippw"
+	const password = "roundtrip"
 	t.Cleanup(func() { deleteTestPlayer(t, dbURL, name) })
 
 	// --- Connection 1: create the character, which writes it to the DB. ---
 	c1, r1 := launchAndDialDB(t, dbURL)
-	if got := readUntil(t, c1, r1, "By what name", 10*time.Second); got == "" {
-		t.Fatal("conn1: never got name prompt")
-	}
-	mustWrite(t, c1, name+"\r\n")
-	creation := []struct{ awaitPrompt, send string }{
-		{"new character?", "y\r\n"}, // DB: "...create a new character?"; no-DB: "Create new character?"
-		{"Choose a password", password + "\r\n"},
-		{"Confirm password", password + "\r\n"},
-		{"Did I get that right", "Y\r\n"},
-		// DP-909: the nanny no longer re-prompts for the password — the telnet
-		// auth layer already collected it (Choose/Confirm above), so confirming
-		// the name jumps straight to the ANSI color stage (single collection,
-		// matching C interpreter.c CON_NEWPASSWD/CON_CNFPASSWD).
-		{"ANSI color", "N\r\n"},
-		{"sex", "M\r\n"},
-		{"Race:", "H\r\n"},
-		{"Class:", "W\r\n"},
-		{"home town", "K\r\n"},
-		{"keep these stats", "Y\r\n"},
-		{"PRESS RETURN", "\r\n"},
-	}
-	for _, st := range creation {
-		if got := readUntil(t, c1, r1, st.awaitPrompt, 10*time.Second); got == "" {
-			t.Fatalf("conn1: creation stalled at %q", st.awaitPrompt)
-		}
-		mustWrite(t, c1, st.send)
-	}
-	// CON_MENU (DP-1067): select option 1 to enter the game.
-	if got := readUntil(t, c1, r1, "Make your choice", 10*time.Second); got == "" {
-		t.Fatal("conn1: never received the main menu after character creation")
-	}
-	mustWrite(t, c1, "1\r\n")
-	if got := readUntil(t, c1, r1, "Temple Infirmary", 10*time.Second); got == "" {
-		t.Fatal("conn1: new character did not enter the world")
-	}
+	createChar(t, c1, r1, name, password, "W")
 	mustWrite(t, c1, "quit\r\n")
 	_ = c1.Close()
 
@@ -428,8 +394,8 @@ func createWarrior(t *testing.T, conn net.Conn, r *bufio.Reader, name, password 
 // the given class (the letter shown on the class menu: "W" Warrior, "M" Mage,
 // …) and returns the room text shown on entry. The name must be <=20 chars to
 // satisfy game.ValidName. Human is used because every class is available to it.
-// Works against both the DB and no-DB paths (the confirm prompt differs
-// slightly, so it keys on the shared substring "new character?").
+// Works against both the DB and no-DB paths because both now hand unknown
+// names to the same C-faithful nanny flow.
 func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, class string) string {
 	t.Helper()
 	if got := readUntil(t, conn, r, "By what name", 10*time.Second); got == "" {
@@ -437,12 +403,9 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 	}
 	mustWrite(t, conn, name+"\r\n")
 	for _, st := range []struct{ awaitPrompt, send string }{
-		{"new character?", "y\r\n"}, // create-new confirmation
-		{"Choose a password", password + "\r\n"},
-		{"Confirm password", password + "\r\n"},
 		{"Did I get that right", "Y\r\n"}, // confirm_name
-		// DP-909: nanny no longer re-prompts for password (telnet layer
-		// already collected it above) — straight to ANSI color.
+		{"Give me a password", password + "\r\n"},
+		{"Please retype password", password + "\r\n"},
 		{"ANSI color", "N\r\n"},
 		{"sex", "M\r\n"},
 		{"Race:", "H\r\n"}, // Human
@@ -464,7 +427,7 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 	}
 	mustWrite(t, conn, "1\r\n")
 
-	entered := readUntil(t, conn, r, "Temple Infirmary", 10*time.Second)
+	entered := readUntil(t, conn, r, "A Burning Hut", 10*time.Second)
 	if entered == "" {
 		t.Fatal("new character never entered the world")
 	}
