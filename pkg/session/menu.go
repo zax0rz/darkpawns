@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	menuText = "Welcome to Dark Pawns!\r\n" +
-		"0) Exit from Dark Pawns.\r\n" +
+	menuText = "\n\rWelcome to Dark Pawns!\n\r" +
+		"0) Exit from Dark Pawns.\n\r" +
 		"1) Enter the game.\r\n" +
 		"2) Enter description.\r\n" +
 		"3) Read the background story.\r\n" +
@@ -135,7 +135,7 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 func (s *Session) handleMenuChoice(choice string) error {
 	switch choice {
 	case "0":
-		s.sendText("Goodbye.\r\n")
+		s.sendCharCreatePrompt("closing", "Goodbye.\r\n", nil)
 		s.menuActive = false
 		s.CloseSend()
 	case "1":
@@ -300,10 +300,6 @@ func (s *Session) enterReturningPlayer() error {
 	enterMsg, err := json.Marshal(ServerMessage{Type: MsgEvent, Data: EventData{Type: "enter", Text: name + " has arrived."}})
 	if err == nil {
 		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, name)
-	}
-	// C's entry look calls do_look directly and consumes no command draw.
-	if err := cmdLook(s, nil); err != nil {
-		slog.ErrorContext(s.sessionCtx, "look command failed on entry", s.logAttrs(slog.Any("error", err))...)
 	}
 	s.clearMenuState()
 	return nil

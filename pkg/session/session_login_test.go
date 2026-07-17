@@ -96,47 +96,37 @@ func TestHandleLogin_EmptyFields(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// TestHandleLogin_PasswordRequired — valid name, missing password, no DB
+// TestHandleLogin_NewCharacterNeedsNoTransportPassword — the shared nanny
+// collects a new character password after name confirmation.
 // ---------------------------------------------------------------------------
 
-func TestHandleLogin_PasswordRequired(t *testing.T) {
+func TestHandleLogin_NewCharacterNeedsNoTransportPassword(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCharSession(t, m)
 
 	data := loginMsg("Tester", "")
-	_, panicked := callHandleLogin(s, data)
-
-	// Error path calls conn.Close() on nil conn → panic after sendError
-	if !panicked {
-		// If the implementation changed and no longer panics, verify an error was sent
-		msg, ok := drainSend(s)
-		if !ok {
-			t.Fatal("expected either panic (nil conn.Close) or error message on send channel")
-		}
-		srv := unmarshalServerMsg(t, msg)
-		if srv.Type != MsgError {
-			t.Errorf("expected error message type, got %q", srv.Type)
-		}
-		return
+	err, panicked := callHandleLogin(s, data)
+	if panicked || err != nil {
+		t.Fatalf("handleLogin = (%v, panicked=%v), want success", err, panicked)
 	}
+	if !s.charCreating || s.charStage != "confirm_name" {
+		t.Fatalf("creation state = (%v, %q), want confirm_name", s.charCreating, s.charStage)
+	}
+	if s.charPassword != "" {
+		t.Fatalf("transport populated new-character password %q", s.charPassword)
+	}
+	if got := unmarshalServerMsg(t, mustDrainSend(t, s)).Type; got != MsgCharCreate {
+		t.Fatalf("message type = %q, want confirm prompt", got)
+	}
+}
 
-	// The sendError call writes to send BEFORE conn.Close() panics
-	msg, ok := drainSendWait(s, 100*time.Millisecond)
+func mustDrainSend(t *testing.T, s *Session) []byte {
+	t.Helper()
+	msg, ok := drainSendWait(s, 500*time.Millisecond)
 	if !ok {
-		t.Fatal("expected error message on send channel before conn.Close() panic")
+		t.Fatal("expected message on send channel")
 	}
-	srv := unmarshalServerMsg(t, msg)
-	if srv.Type != MsgError {
-		t.Errorf("message type = %q, want %q", srv.Type, MsgError)
-	}
-	b, _ := json.Marshal(srv.Data)
-	var errData ErrorData
-	if err := json.Unmarshal(b, &errData); err != nil {
-		t.Fatalf("unmarshal ErrorData: %v", err)
-	}
-	if !strings.Contains(errData.Message, "Password") {
-		t.Errorf("expected password error, got %q", errData.Message)
-	}
+	return msg
 }
 
 // ---------------------------------------------------------------------------
@@ -164,15 +154,11 @@ func TestHandleLogin_NewCharacter(t *testing.T) {
 	if s.charName != "NewChar" {
 		t.Errorf("charName = %q, want NewChar", s.charName)
 	}
-	if s.charPassword == "" {
-		t.Error("charPassword should be set after new character login")
+	if s.charPassword != "" {
+		t.Error("transport password must be ignored for a new character")
 	}
 
-	// A char_create prompt should be on the send channel
-	msg, ok := drainSendWait(s, 500*time.Millisecond)
-	if !ok {
-		t.Fatal("expected char_create message on send channel")
-	}
+	msg := mustDrainSend(t, s)
 	srv := unmarshalServerMsg(t, msg)
 	if srv.Type != MsgCharCreate {
 		t.Errorf("message type = %q, want %q", srv.Type, MsgCharCreate)
@@ -209,11 +195,7 @@ func TestHandleLogin_ExistingPlayer(t *testing.T) {
 	if !s.charCreating {
 		t.Error("charCreating should be true; no-DB path always starts char creation")
 	}
-	// A char_create prompt should arrive
-	msg, ok := drainSendWait(s, 500*time.Millisecond)
-	if !ok {
-		t.Fatal("expected char_create message on send channel")
-	}
+	msg := mustDrainSend(t, s)
 	srv := unmarshalServerMsg(t, msg)
 	if srv.Type != MsgCharCreate {
 		t.Errorf("message type = %q, want %q", srv.Type, MsgCharCreate)
