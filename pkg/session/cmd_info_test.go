@@ -253,7 +253,7 @@ func TestCmdScoreFixedFixtureGolden(t *testing.T) {
 		"You have been playing for 0 days and 0 hours.\r\n" +
 		"You are a citizen of Kir Drax'in.\r\n" +
 		"This ranks you as Scoretest the Warrior (level 1).\r\n" +
-		"You are a Human Warrior.\r\n\r\n" +
+		"You are a Human Warrior.\r\n" +
 		"Your pack is empty.\r\n" +
 		"You are standing.\r\n"
 	if got := readSessionText(t, s); got != want {
