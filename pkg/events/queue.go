@@ -22,6 +22,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 )
 
 // EventFunc is the callback signature for event handlers.
@@ -238,6 +240,9 @@ func (eq *EventQueue) Pulse() int64 {
 // This is optional; callers can also call Process() manually from their
 // own game loop (as the original C code does from heartbeat()).
 func (eq *EventQueue) Start(ctx context.Context) {
+	if dpclock.Frozen() {
+		return
+	}
 	eq.mu.Lock()
 	if eq.started {
 		eq.mu.Unlock()

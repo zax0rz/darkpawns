@@ -16,11 +16,14 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 )
 
 // Pulse constants — matching comm.c PASSES_PER_SEC = 10.
@@ -112,6 +115,7 @@ type GameLoop struct {
 
 	// callbacks contains the dispatch functions.
 	callbacks GameLoopCallbacks
+	pumpMu    sync.Mutex
 
 	// tickerInterval is the base tick interval (100ms / PASSES_PER_SEC).
 	tickerInterval time.Duration
@@ -128,6 +132,8 @@ type GameLoop struct {
 	startOnce sync.Once
 	stopOnce  sync.Once
 }
+
+const maxPumpPulses = 100_000
 
 // NewGameLoop creates a new GameLoop with the given callbacks.
 func NewGameLoop(callbacks GameLoopCallbacks) *GameLoop {
@@ -149,6 +155,10 @@ func NewGameLoop(callbacks GameLoopCallbacks) *GameLoop {
 // same way an explicit Stop does (DP-892). Pass context.Background() if you
 // only want signal/Stop-driven shutdown.
 func (gl *GameLoop) Start(ctx context.Context) {
+	if dpclock.Frozen() {
+		slog.Info("game loop wall-clock ticker frozen", "env", "DP_CLOCK")
+		return
+	}
 	gl.startOnce.Do(func() {
 		gl.startedAt = time.Now()
 		gl.started.Store(true)
@@ -159,6 +169,26 @@ func (gl *GameLoop) Start(ctx context.Context) {
 		)
 		go gl.run(ctx)
 	})
+}
+
+// PumpPulses advances the deterministic clock synchronously. The telnet
+// oracle-control seam calls this only while DP_CLOCK has disabled the
+// wall-clock loop, so callbacks cannot interleave with ticker-driven pulses.
+func (gl *GameLoop) PumpPulses(n int) error {
+	if !dpclock.Frozen() {
+		return fmt.Errorf("pulse pump requires DP_CLOCK")
+	}
+	if n <= 0 || n > maxPumpPulses {
+		return fmt.Errorf("pulse count must be between 1 and %d", maxPumpPulses)
+	}
+
+	gl.pumpMu.Lock()
+	defer gl.pumpMu.Unlock()
+	for range n {
+		pulse := gl.Pulse.Add(1)
+		gl.heartbeat(pulse)
+	}
+	return nil
 }
 
 // Stop signals the loop goroutine to stop and waits for it to finish.

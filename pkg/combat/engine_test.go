@@ -12,6 +12,24 @@ type msgMockCombatant struct {
 	messages []string
 }
 
+func TestCombatEngineStartFreezesWhenDPClockIsSet(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	ce := NewCombatEngine()
+	ce.tickEvery = time.Millisecond
+	round := make(chan struct{}, 1)
+	ce.OnRoundEnd = func() { round <- struct{}{} }
+
+	ce.Start()
+	time.Sleep(20 * time.Millisecond)
+	ce.Stop()
+
+	select {
+	case <-round:
+		t.Fatal("combat round ran under DP_CLOCK")
+	default:
+	}
+}
+
 func TestCombatEngineStopWaitsForInFlightTick(t *testing.T) {
 	ce := NewCombatEngine()
 	ce.tickEvery = time.Millisecond

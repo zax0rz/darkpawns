@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 )
 
 // CombatPairKey uniquely identifies a combat pair by both participants.
@@ -115,6 +117,9 @@ func (ce *CombatEngine) ValidateCallbacks() error {
 
 // Start begins the combat tick loop
 func (ce *CombatEngine) Start() {
+	if dpclock.Frozen() {
+		return
+	}
 	ce.lifecycleMu.Lock()
 	if ce.stopped {
 		ce.lifecycleMu.Unlock()

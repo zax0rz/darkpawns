@@ -13,6 +13,8 @@ import (
 
 const enterStep = "<ENTER>"
 
+const pulseControl = "~dpclock pulse "
+
 // Scenario is a split differential script: per-server setup (not diffed) plus
 // a shared probe (diffed block-by-block).
 type Scenario struct {
@@ -308,6 +310,23 @@ func RunSetup(conn Conn, setup []string, quiescence time.Duration) (string, erro
 		transcript.WriteString(output)
 	}
 	return transcript.String(), nil
+}
+
+// PumpPulses advances a DP_CLOCK-frozen server and returns all heartbeat
+// side-effect output. The control line itself is intercepted before either
+// command interpreter and emits no acknowledgement.
+func PumpPulses(conn Conn, pulses int, quiescence time.Duration) (string, error) {
+	if pulses <= 0 {
+		return "", fmt.Errorf("pulse count must be positive")
+	}
+	if err := conn.Send(pulseControl + strconv.Itoa(pulses)); err != nil {
+		return "", fmt.Errorf("send pulse control: %w", err)
+	}
+	output, err := conn.ReadUntilQuiescent(quiescence)
+	if err != nil {
+		return output, fmt.Errorf("read pulse output: %w", err)
+	}
+	return output, nil
 }
 
 // RunProbe plays the shared probe commands and returns a block per command.

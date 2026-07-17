@@ -489,7 +489,8 @@ func TestCompleteCharCreation_PersistsHometownRoom(t *testing.T) {
 	}
 }
 
-func TestCompleteCharCreationEmitsOneRoomAndNoDuplicateMOTD(t *testing.T) {
+func TestCompleteCharCreationEmitsBirthTransitionAndNoDuplicateMOTD(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
 	s := makeCharSession(t, makeManagerWithStartRoom(t))
 	s.charCreating = true
 	s.charName = "Oneentry"
@@ -506,6 +507,7 @@ func TestCompleteCharCreationEmitsOneRoomAndNoDuplicateMOTD(t *testing.T) {
 	states := 0
 	motds := 0
 	welcome := ""
+	birth := ""
 	for {
 		select {
 		case raw := <-s.send:
@@ -515,6 +517,14 @@ func TestCompleteCharCreationEmitsOneRoomAndNoDuplicateMOTD(t *testing.T) {
 			}
 			if msg.Type == MsgState {
 				states++
+			}
+			if msg.Type == MsgText {
+				data, _ := json.Marshal(msg.Data)
+				var text TextData
+				_ = json.Unmarshal(data, &text)
+				if strings.Contains(text.Text, "Your life begins now") {
+					birth = text.Text
+				}
 			}
 			if msg.Type == MsgEvent {
 				data, _ := json.Marshal(msg.Data)
@@ -528,14 +538,59 @@ func TestCompleteCharCreationEmitsOneRoomAndNoDuplicateMOTD(t *testing.T) {
 				}
 			}
 		default:
-			if states != 1 {
-				t.Fatalf("entry state messages = %d, want exactly 1", states)
+			if states != 2 {
+				t.Fatalf("entry state messages = %d, want intro and hometown rooms", states)
 			}
 			if motds != 0 {
 				t.Fatalf("post-menu MOTD messages = %d, want 0", motds)
 			}
 			if welcome != "\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n\r\n" {
 				t.Fatalf("welcome = %q", welcome)
+			}
+			if birth != newbieBirthMessage("Oneentry") {
+				t.Fatalf("birth transition = %q", birth)
+			}
+			return
+		}
+	}
+}
+
+func TestCompleteCharCreationKeepsProductionEntryUnchanged(t *testing.T) {
+	s := makeCharSession(t, makeManagerWithStartRoom(t))
+	s.charCreating = true
+	s.charName = "Prodentry"
+	s.charClass = game.ClassWarrior
+	s.charRace = game.RaceHuman
+	s.charHometown = 1
+	s.charPassword = "hashed_pw"
+	s.charStats = game.CharStats{Str: 15, Dex: 12, Con: 14, Int: 10, Wis: 11, Cha: 9}
+
+	if err := s.completeCharCreation(); err != nil {
+		t.Fatal(err)
+	}
+
+	states := 0
+	for {
+		select {
+		case raw := <-s.send:
+			var msg ServerMessage
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				t.Fatal(err)
+			}
+			if msg.Type == MsgState {
+				states++
+			}
+			if msg.Type == MsgText {
+				data, _ := json.Marshal(msg.Data)
+				var text TextData
+				_ = json.Unmarshal(data, &text)
+				if strings.Contains(text.Text, "Your life begins now") {
+					t.Fatal("DP_CLOCK-only birth transition leaked into production entry")
+				}
+			}
+		default:
+			if states != 1 {
+				t.Fatalf("production entry state messages = %d, want exactly 1", states)
 			}
 			return
 		}

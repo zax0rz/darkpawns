@@ -48,6 +48,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
@@ -82,6 +83,9 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("Random stream initialized", "seed", seed, "deterministic", os.Getenv("DP_SEED") != "")
+	if dpclock.Frozen() {
+		slog.Info("DP_CLOCK enabled; real-time game pulses are frozen")
+	}
 
 	if *worldDir == "" {
 		slog.Error("Usage: server -world <path-to-lib>")
@@ -240,12 +244,24 @@ func main() {
 	// Start game loop (heartbeat, mobile activity, combat ticks).
 	// PointUpdate is driven by World's standalone 63s ticker, not this loop.
 	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{
+		OnEventProcess: func() {
+			gameWorld.EventQueue.Process(context.Background())
+		},
 		OnPerformViolence: func() {
-			// Combat engine handles its own 2s tick via CombatEngine.Start()
+			// Production combat keeps its standalone ticker until the Phase 2
+			// unification. Pumped DP_CLOCK heartbeats must dispatch C's
+			// perform_violence slot, which is a no-op before combat begins.
+			if dpclock.Frozen() {
+				manager.GetCombatEngine().PerformRound()
+			}
 		},
 		OnMobileActivity: func() {
 			gameWorld.MobileActivity()
 		},
+		// start_room birth already occurs synchronously in Go; retain C's
+		// room_activity/object_activity positions as explicit no-op seams.
+		OnRoomActivity:   func() {},
+		OnObjectActivity: func() {},
 		OnWeatherAndTime: func() {
 			game.WeatherAndTime(true, manager.SendToOutdoor)
 		},
@@ -259,6 +275,7 @@ func main() {
 			manager.ReapLinkdeadSessions()
 		},
 	})
+	manager.SetPulsePump(gameLoop.PumpPulses)
 	// loopCtx ties the heartbeat to the server lifetime: canceling it drains the
 	// loop the same way gameLoop.Stop() does (DP-892). Stop() remains the primary
 	// signal-driven shutdown path below; loopCancel is the belt-and-suspenders.
@@ -343,11 +360,11 @@ func main() {
 	// Serve admin UI static assets (compiled React app)
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("admin-ui-dist/assets"))))
 
-	// Track zone reset goroutine for graceful shutdown
+	// Track the production zone reset goroutine for graceful shutdown.
+	// DP_CLOCK performs this initial population synchronously so the harness's
+	// readiness marker guarantees fixtures exist before character setup.
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	initializeWorld := func() {
 		slog.Info("Starting zone resets...")
 		if err := gameWorld.StartZoneResets(); err != nil {
 			slog.Error("Zone reset error", "error", err)
@@ -367,7 +384,16 @@ func main() {
 		gameWorld.RebuildSpecRooms()
 
 		gameWorld.StartPeriodicResets(60 * time.Second)
-	}()
+	}
+	if dpclock.Frozen() {
+		initializeWorld()
+	} else {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			initializeWorld()
+		}()
+	}
 
 	// Start server
 	addr := ":" + *port

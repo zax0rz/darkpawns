@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/session"
 	"github.com/zax0rz/darkpawns/pkg/validation"
@@ -46,6 +47,8 @@ var (
 	maxTotalConns    = 200
 	loginIdleTimeout = 120 * time.Second // DP-912: drop parked pre-auth connections
 )
+
+const maxControlPumpPulses = 100_000
 
 func init() {
 	if v := os.Getenv("TELNET_MAX_CONNS"); v != "" {
@@ -397,13 +400,20 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			break
 		}
 
-		// DP-928: any inbound traffic proves the TCP socket is alive. Update the
-		// shared lastActive timestamp so the linkdead reaper also covers telnet.
-		s.OnInboundActivity()
-
 		line = strings.TrimSpace(line)
 
 		_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+
+		// The oracle harness control is intercepted before player/session
+		// command handling so the trigger itself consumes no command RNG, wait
+		// state, or activity state. Only the pumped heartbeats may draw.
+		if handlePulseControl(manager, line) {
+			continue
+		}
+
+		// DP-928: any inbound traffic proves the TCP socket is alive. Update the
+		// shared lastActive timestamp so the linkdead reaper also covers telnet.
+		s.OnInboundActivity()
 
 		if s.IsCharCreating() || s.IsMenuActive() {
 			// A blank line is meaningful during character creation (e.g. the
@@ -431,6 +441,24 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	s.Manager().Unregister(s.PlayerName())
 	s.CloseSend()
 	slog.Info("Telnet disconnect", "remote_addr", remoteAddr, "player", s.PlayerName())
+}
+
+func handlePulseControl(manager *session.Manager, line string) bool {
+	if !dpclock.Frozen() {
+		return false
+	}
+	fields := strings.Fields(line)
+	if len(fields) != 3 || fields[0] != "~dpclock" || fields[1] != "pulse" {
+		return false
+	}
+	n, err := strconv.Atoi(fields[2])
+	if err != nil || n <= 0 || n > maxControlPumpPulses {
+		return false
+	}
+	if err := manager.PumpPulses(n); err != nil {
+		slog.Error("DP_CLOCK pulse pump failed", "pulses", n, "error", err)
+	}
+	return true
 }
 
 // writeLoop reads from the session's send channel and writes formatted output to the telnet conn.

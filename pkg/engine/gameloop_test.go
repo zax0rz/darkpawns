@@ -2,6 +2,8 @@ package engine
 
 import (
 	"context"
+	"os"
+	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -32,6 +34,56 @@ func TestGameLoopStartStop(t *testing.T) {
 
 	if gl.Pulse.Load() == 0 {
 		t.Fatal("expected pulse counter to advance")
+	}
+}
+
+func TestGameLoopStartFreezesWhenDPClockIsSet(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	gl := NewGameLoop(GameLoopCallbacks{})
+	gl.tickerInterval = time.Millisecond
+
+	gl.Start(context.Background())
+	time.Sleep(20 * time.Millisecond)
+	gl.Stop()
+
+	if got := gl.Pulse.Load(); got != 0 {
+		t.Fatalf("pulse advanced under DP_CLOCK: %d", got)
+	}
+}
+
+func TestGameLoopPumpPulsesDispatchesCOrder(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	var calls []string
+	gl := NewGameLoop(GameLoopCallbacks{
+		OnMobileActivity:  func() { calls = append(calls, "mobile") },
+		OnRoomActivity:    func() { calls = append(calls, "room") },
+		OnObjectActivity:  func() { calls = append(calls, "object") },
+		OnPerformViolence: func() { calls = append(calls, "violence") },
+	})
+
+	if err := gl.PumpPulses(PULSE_MOBILE); err != nil {
+		t.Fatal(err)
+	}
+	if got := gl.Pulse.Load(); got != PULSE_MOBILE {
+		t.Fatalf("pulse = %d, want %d", got, PULSE_MOBILE)
+	}
+	want := []string{"violence", "mobile", "room", "object", "violence"}
+	if !slices.Equal(calls, want) {
+		t.Fatalf("callback order = %v, want %v", calls, want)
+	}
+}
+
+func TestGameLoopPumpPulsesRequiresDPClock(t *testing.T) {
+	if err := os.Unsetenv("DP_CLOCK"); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Unsetenv("DP_CLOCK") })
+	gl := NewGameLoop(GameLoopCallbacks{})
+	if err := gl.PumpPulses(1); err == nil {
+		t.Fatal("PumpPulses succeeded without DP_CLOCK")
+	}
+	if got := gl.Pulse.Load(); got != 0 {
+		t.Fatalf("pulse advanced without DP_CLOCK: %d", got)
 	}
 }
 

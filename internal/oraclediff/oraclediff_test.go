@@ -201,6 +201,20 @@ func (c *scriptedConn) ReadUntilQuiescent(time.Duration) (string, error) {
 
 func (c *scriptedConn) Close() error { return nil }
 
+func TestPumpPulsesSendsReservedControlAndReturnsOutput(t *testing.T) {
+	conn := &scriptedConn{outputs: []string{"birth dream\r\n"}}
+	got, err := PumpPulses(conn, 40, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "birth dream\r\n" {
+		t.Fatalf("output = %q", got)
+	}
+	if len(conn.sent) != 1 || conn.sent[0] != "~dpclock pulse 40" {
+		t.Fatalf("sent = %v", conn.sent)
+	}
+}
+
 func TestParseScenarioUnknownSection(t *testing.T) {
 	_, err := ParseScenario("test", strings.NewReader("[setup:unknown]\nlook\n"))
 	if err == nil || !strings.Contains(err.Error(), "unknown section") {

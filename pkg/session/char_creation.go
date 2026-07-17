@@ -9,6 +9,7 @@ import (
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -564,10 +565,16 @@ func (s *Session) completeCharCreation() error {
 	// Send welcome with token
 	s.sendWelcome(token)
 
-	// The C-facing entry surface is the Burning Hut, emitted once above. Keep
-	// the port's existing post-intro gameplay destination without rendering a
-	// second room; persistence already records this hometown room.
+	// C's start_room special emits this birth transition on the first
+	// PULSE_MOBILE after entry. Go completes it synchronously; under the frozen
+	// oracle clock, expose the equivalent output at that existing transition.
+	if dpclock.Frozen() {
+		s.sendText(newbieBirthMessage(s.player.Name))
+	}
 	s.player.SetRoom(newbieRoom)
+	if dpclock.Frozen() {
+		s.sendRoomObservation(newbieRoom, false, "")
+	}
 
 	// Mirror the agent initialization that handleLogin sends for returning players.
 	if s.isAgent || s.wantsStructuredData {
@@ -593,6 +600,19 @@ func (s *Session) completeCharCreation() error {
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 
 	return nil
+}
+
+func newbieBirthMessage(name string) string {
+	return "\r\n   Suddenly the hairs on the back of your neck stand up as if lightning had\r\n" +
+		"struck nearby. A keen wailing fills the air, and an ethereal image appears\r\n" +
+		"before you.\r\n" +
+		fmt.Sprintf("   '%s, now is not your time to die,' speaks the figure.\r\n", name) +
+		"   'Prove your worth and I may well grant you eternal life.'\r\n" +
+		"   'Trust no one, for all here are but dark pawns above which you must\r\n" +
+		"struggle to prove yourself.  All here strive to be a king... at any cost.'\r\n" +
+		"   The figure glows a moment, then disappears, but his voice remains.\r\n" +
+		"   'Your life begins now...' it says, then fades -- just as the world around\r\n" +
+		"you does the same.\r\n"
 }
 
 // hashCharPassword bcrypt-hashes the plaintext password currently in

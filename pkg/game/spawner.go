@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -671,6 +672,9 @@ func (s *Spawner) RemoveMobInstance(mobVNum int, mob *MobInstance) {
 
 // StartPeriodicResets starts the periodic zone reset timer.
 func (s *Spawner) StartPeriodicResets(interval time.Duration) {
+	if dpclock.Frozen() {
+		return
+	}
 	s.done = make(chan struct{})
 	ticker := time.NewTicker(interval)
 	go func() {
