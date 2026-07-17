@@ -217,7 +217,7 @@ func cmdScore(s *Session) error {
 
 	// 14. Race + Class (from C lines 1295-1298)
 	raceName := game.RaceNames[p.Race]
-	fmt.Fprintf(&buf, "You are %s %s %s.\r\n\r\n", articleFor(raceName), raceName, className)
+	fmt.Fprintf(&buf, "You are %s %s %s.\r\n", articleFor(raceName), raceName, className)
 
 	// 15. Pack weight (from C lines 1304-1315)
 	carriedW := p.CarriedWeight()
