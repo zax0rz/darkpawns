@@ -570,6 +570,35 @@ func TestPerformRound_DefenderRetaliates(t *testing.T) {
 	}
 }
 
+func TestPerformRoundUsesReverseEngagementOrder(t *testing.T) {
+	attacker := dp900Fighter("Attacker")
+	defender := dp900Fighter("Defender")
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	var swingOrder []string
+	ce.MessageFunc = func(attacker, _ Combatant, _ int, _ int) bool {
+		swingOrder = append(swingOrder, attacker.GetName())
+		return true
+	}
+
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{
+		900, 20, 8, // defender → attacker
+		900, 20, 8, // attacker → defender
+	}))
+	defer SetRoller(old)
+
+	ce.PerformRound()
+
+	if got, want := strings.Join(swingOrder, ","), "Defender,Attacker"; got != want {
+		t.Fatalf("swing order = %s, want %s", got, want)
+	}
+}
+
 // TestPerformRound_BothSidesDealDamageOverRounds runs several rounds and
 // confirms both combatants bleed HP — the core symptom from the Fable repro
 // ("player HP never moves"). Same deterministic roller as the single-round
@@ -645,7 +674,6 @@ func TestProcessCombatPair_ParryReducesAttackCountOncePerRound(t *testing.T) {
 			hits++
 		}
 	}
-
 	old := GetRoller()
 	// NPC bonus attack probe fails, parry succeeds, then the single remaining
 	// hit lands and rolls 1 damage. If parry still negated individual hits or

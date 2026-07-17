@@ -390,6 +390,43 @@ func TestStartCombat_DefenderKeepsExistingTarget(t *testing.T) {
 	}
 }
 
+func TestCombatOrderPrependsNewFightersAndRemovesStoppedFighters(t *testing.T) {
+	engine := NewCombatEngine()
+	defer engine.Stop()
+
+	hero := &mockCombatant{name: "Hero", room: 100}
+	orc := &mockCombatant{name: "Orc", npc: true, room: 100}
+	goblin := &mockCombatant{name: "Goblin", npc: true, room: 100}
+
+	if err := engine.StartCombat(orc, hero); err != nil {
+		t.Fatalf("StartCombat(orc, hero) failed: %v", err)
+	}
+	if err := engine.StartCombat(goblin, hero); err != nil {
+		t.Fatalf("StartCombat(goblin, hero) failed: %v", err)
+	}
+
+	order := func() string {
+		names := make([]string, 0, len(engine.combatOrder))
+		for _, fighter := range engine.combatOrder {
+			names = append(names, fighter.GetName())
+		}
+		return strings.Join(names, ",")
+	}
+	if got, want := order(), "Goblin,Hero,Orc"; got != want {
+		t.Fatalf("combat order = %s, want %s", got, want)
+	}
+
+	engine.StopCombat("Goblin")
+	if got, want := order(), "Hero,Orc"; got != want {
+		t.Fatalf("combat order after stopping Goblin = %s, want %s", got, want)
+	}
+
+	engine.StopCombat("Hero")
+	if got := order(); got != "" {
+		t.Fatalf("combat order after stopping Hero = %s, want empty", got)
+	}
+}
+
 // TestStopCombat removes a combat pair and clears fighting states.
 func TestStopCombat(t *testing.T) {
 	engine := NewCombatEngine()

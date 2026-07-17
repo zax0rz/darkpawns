@@ -28,6 +28,7 @@ type CombatEngine struct {
 
 	// Active combat pairs
 	combatPairs map[CombatPairKey]*CombatPair // key: (attacker, target)
+	combatOrder []Combatant                   // C combat_list order: most recently engaged first
 
 	// Background-loop lifecycle. Stop closes stopChan exactly once and waits
 	// for every started loop to exit, including an in-flight combat round.
@@ -235,8 +236,10 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	// leave the defender's FIGHTING pointing at the new attacker while its
 	// original combat pair still exists — an inconsistent state.
 	attacker.SetFighting(defenderName)
+	ce.prependFighterLocked(attacker)
 	if defender.GetFighting() == "" {
 		defender.SetFighting(attackerName)
+		ce.prependFighterLocked(defender)
 	}
 
 	// Start combat
@@ -282,6 +285,52 @@ func (ce *CombatEngine) StopCombat(charName string) {
 			delete(ce.combatPairs, key)
 		}
 	}
+	ce.removeFighterLocked(charName)
+	ce.pruneCombatOrderLocked()
+}
+
+// prependFighterLocked mirrors C's set_fighting(), which inserts a newly
+// fighting character at the head of combat_list. A fighter may appear once.
+// ce.mu must be held for writing.
+func (ce *CombatEngine) prependFighterLocked(fighter Combatant) {
+	if fighter == nil {
+		return
+	}
+	name := fighter.GetName()
+	for _, existing := range ce.combatOrder {
+		if existing != nil && existing.GetName() == name {
+			return
+		}
+	}
+	ce.combatOrder = append(ce.combatOrder, nil)
+	copy(ce.combatOrder[1:], ce.combatOrder[:len(ce.combatOrder)-1])
+	ce.combatOrder[0] = fighter
+}
+
+// removeFighterLocked removes one character from the combat_list analogue.
+// ce.mu must be held for writing.
+func (ce *CombatEngine) removeFighterLocked(name string) {
+	for i, fighter := range ce.combatOrder {
+		if fighter != nil && fighter.GetName() == name {
+			copy(ce.combatOrder[i:], ce.combatOrder[i+1:])
+			ce.combatOrder[len(ce.combatOrder)-1] = nil
+			ce.combatOrder = ce.combatOrder[:len(ce.combatOrder)-1]
+			return
+		}
+	}
+}
+
+// pruneCombatOrderLocked drops characters whose FIGHTING state was cleared
+// while StopCombat removed a related pair. ce.mu must be held for writing.
+func (ce *CombatEngine) pruneCombatOrderLocked() {
+	active := ce.combatOrder[:0]
+	for _, fighter := range ce.combatOrder {
+		if fighter != nil && fighter.GetFighting() != "" {
+			active = append(active, fighter)
+		}
+	}
+	clear(ce.combatOrder[len(active):])
+	ce.combatOrder = active
 }
 
 // IsFighting checks if a character is in combat
@@ -301,49 +350,34 @@ func (ce *CombatEngine) IsFighting(charName string) bool {
 
 // PerformRound executes one round of combat for all active fighters.
 //
-// Source: fight.c perform_violence() — iterates ALL characters on the combat
-// list (every character with FIGHTING set), not just the attacker side of each
-// pair. In the C codebase combat is a flat linked list; in Go we store directed
-// pairs (attacker→defender) but both participants may need to swing.
-//
-// We collect one exchange per unique combatant, resolving each fighter's actual
-// FIGHTING target (which may differ from its pair edge — e.g. a defender that
-// was already fighting someone else). This mirrors C semantics where each
-// character attacks whoever THEY are fighting, and gives retaliatory retarget
-// for free when a target dies mid-round.
+// Source: fight.c perform_violence() walks combat_list head-first. set_fighting
+// prepends newly engaged characters, so the most recently engaged fighter acts
+// first. Each fighter attacks its own current FIGHTING target.
 func (ce *CombatEngine) PerformRound() {
 	ce.mu.RLock()
-
-	// Snapshot every directed pair edge under the read lock. Pair processing
-	// mutates combatants and may stop combat; we never touch combatPairs after
-	// releasing the lock here.
-	type edge struct{ attacker, defender Combatant }
-	edges := make([]edge, 0, len(ce.combatPairs)*2)
-	seen := make(map[string]bool, len(ce.combatPairs)*2)
-
-	for _, pair := range ce.combatPairs {
-		for _, fighter := range []Combatant{pair.Attacker, pair.Defender} {
-			if fighter == nil {
-				continue
-			}
-			name := fighter.GetName()
-			if seen[name] {
-				continue
-			}
-			seen[name] = true
-			target := ce.findFightingTarget(name, fighter)
-			if target == nil {
-				continue
-			}
-			edges = append(edges, edge{attacker: fighter, defender: target})
-		}
-	}
-
+	fighters := append([]Combatant(nil), ce.combatOrder...)
 	ce.mu.RUnlock()
 
-	// Process each combatant's attack against whoever they are fighting.
-	for _, e := range edges {
-		ce.processCombatPair(&CombatPair{Attacker: e.attacker, Defender: e.defender})
+	seen := make(map[string]bool, len(fighters))
+	for _, fighter := range fighters {
+		if fighter == nil || fighter.GetPosition() == PosDead || fighter.GetFighting() == "" {
+			continue
+		}
+		name := fighter.GetName()
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+
+		// Combat can mutate while a round is executing (death, flee, redirect),
+		// so resolve the fighter's live target immediately before its turn.
+		ce.mu.RLock()
+		target := ce.findFightingTarget(name, fighter)
+		ce.mu.RUnlock()
+		if target == nil {
+			continue
+		}
+		ce.processCombatPair(&CombatPair{Attacker: fighter, Defender: target})
 	}
 
 	// C-10: decrement wait states each round
