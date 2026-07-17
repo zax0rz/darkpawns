@@ -430,7 +430,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			if err := sendCommand(s, parts[0], parts[1:]); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
-			tc.writeLine("> ")
+			if !s.SendClosed() {
+				tc.writeLine("> ")
+			}
 		}
 		if s.SendClosed() {
 			break
@@ -440,6 +442,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	// Cleanup
 	s.Manager().Unregister(s.PlayerName())
 	s.CloseSend()
+	// A successful quit queues its goodbye immediately before Unregister closes
+	// the send channel. Let writeLoop drain that queue before handleConn's defer
+	// closes the TCP socket.
+	_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	<-done
 	slog.Info("Telnet disconnect", "remote_addr", remoteAddr, "player", s.PlayerName())
 }
 

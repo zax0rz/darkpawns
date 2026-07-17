@@ -70,11 +70,11 @@ func TestDoGenDoorContainerLadderAndInstanceIsolation(t *testing.T) {
 	second.SetValue(contFlags, contCloseable|contClosed)
 
 	w.DoOpen(p, "test")
-	if first.GetValue(contFlags)&contClosed != 0 {
-		t.Fatal("opening the first matching container left it closed")
+	if second.GetValue(contFlags)&contClosed != 0 {
+		t.Fatal("opening the newest matching container left it closed")
 	}
-	if second.GetValue(contFlags)&contClosed == 0 {
-		t.Fatal("opening one instance mutated the second instance")
+	if first.GetValue(contFlags)&contClosed == 0 {
+		t.Fatal("opening one instance mutated the older instance")
 	}
 	if first.Prototype.Values[contFlags] != contCloseable|contClosed|contLocked {
 		t.Fatalf("prototype flags mutated: got %d", first.Prototype.Values[contFlags])
