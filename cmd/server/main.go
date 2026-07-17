@@ -173,7 +173,6 @@ func main() {
 	game.SetWeatherWorld(gameWorld)                    // Wire world for weather broadcasts
 	manager.SetCombatBroadcastFunc()                   // Enable combat messages to rooms
 	manager.SetDeathFunc()                             // Enable death/respawn handling
-	manager.SetFleeHooks()                             // Wire wimpy auto-flee (DP-389)
 	manager.RegisterMemoryHooks()                      // Enable narrative memory writes on kill/death
 	manager.SetDamageFunc()                            // Enable HEALTH dirty-tracking for agents
 	manager.SetDreamingDir("data/dreaming")            // Dreaming layer output (memory summaries)
@@ -199,6 +198,7 @@ func main() {
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
 	manager.WireCombatCallbacks()                        // Wire PR2/PR3 character-state hooks into combat engine
 	manager.SetCombatMessageFunc()                       // Wire DamMessage() and GameCallbacks for live combat
+	manager.SetFleeHooks()                               // Wire wimpy auto-flee after callback replacement (DP-389)
 
 	// Verify critical combat hooks are wired (DP-952).
 	// This check is placed before any long-lived resource with a defer so that

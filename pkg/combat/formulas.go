@@ -389,7 +389,6 @@ func CalculateHitChance(attacker, defender Combatant, mods HitModifiers) bool {
 	if victimAC < -10 {
 		victimAC = -10
 	}
-
 	// Natural 20 always hits; otherwise miss if thaco-roll > victim_ac
 	if diceroll == 20 {
 		return true
@@ -406,6 +405,12 @@ func CalculateHitChance(attacker, defender Combatant, mods HitModifiers) bool {
 // Source: fight.c get_minusdam() function
 func getMinusDam(dam int, ac int) int {
 	pcmod := 2.0 // Player character modifier
+	reduced := func(percent float64) int {
+		// C converts the completed double expression back to int. Truncating
+		// only the reduction first changes low-damage hits (1 - 0.02 is 0 in C,
+		// not 1).
+		return int(float64(dam) - (float64(dam) * (percent * pcmod)))
+	}
 
 	// Note: In original, lower AC is better (negative values).
 	// The function checks if ac > X, meaning less negative (worse armor).
@@ -413,99 +418,99 @@ func getMinusDam(dam int, ac int) int {
 		return dam
 	}
 	if ac > 80 {
-		return dam - int(float64(dam)*(0.01*pcmod))
+		return reduced(0.01)
 	}
 	if ac > 70 {
-		return dam - int(float64(dam)*(0.02*pcmod))
+		return reduced(0.02)
 	}
 	if ac > 60 {
-		return dam - int(float64(dam)*(0.03*pcmod))
+		return reduced(0.03)
 	}
 	if ac > 50 {
-		return dam - int(float64(dam)*(0.04*pcmod))
+		return reduced(0.04)
 	}
 	if ac > 40 {
-		return dam - int(float64(dam)*(0.05*pcmod))
+		return reduced(0.05)
 	}
 	if ac > 30 {
-		return dam - int(float64(dam)*(0.06*pcmod))
+		return reduced(0.06)
 	}
 	if ac > 20 {
-		return dam - int(float64(dam)*(0.07*pcmod))
+		return reduced(0.07)
 	}
 	if ac > 10 {
-		return dam - int(float64(dam)*(0.08*pcmod))
+		return reduced(0.08)
 	}
 	if ac > 0 {
-		return dam - int(float64(dam)*(0.10*pcmod))
+		return reduced(0.10)
 	}
 	if ac > -10 {
-		return dam - int(float64(dam)*(0.11*pcmod))
+		return reduced(0.11)
 	}
 	if ac > -20 {
-		return dam - int(float64(dam)*(0.12*pcmod))
+		return reduced(0.12)
 	}
 	if ac > -30 {
-		return dam - int(float64(dam)*(0.13*pcmod))
+		return reduced(0.13)
 	}
 	if ac > -40 {
-		return dam - int(float64(dam)*(0.14*pcmod))
+		return reduced(0.14)
 	}
 	if ac > -50 {
-		return dam - int(float64(dam)*(0.15*pcmod))
+		return reduced(0.15)
 	}
 	if ac > -60 {
-		return dam - int(float64(dam)*(0.16*pcmod))
+		return reduced(0.16)
 	}
 	if ac > -70 {
-		return dam - int(float64(dam)*(0.17*pcmod))
+		return reduced(0.17)
 	}
 	if ac > -80 {
-		return dam - int(float64(dam)*(0.18*pcmod))
+		return reduced(0.18)
 	}
 	if ac > -90 {
-		return dam - int(float64(dam)*(0.19*pcmod))
+		return reduced(0.19)
 	}
 	if ac > -95 {
-		return dam - int(float64(dam)*(0.20*pcmod))
+		return reduced(0.20)
 	}
 	if ac > -110 {
-		return dam - int(float64(dam)*(0.21*pcmod))
+		return reduced(0.21)
 	}
 	if ac > -130 {
-		return dam - int(float64(dam)*(0.22*pcmod))
+		return reduced(0.22)
 	}
 	if ac > -150 {
-		return dam - int(float64(dam)*(0.23*pcmod))
+		return reduced(0.23)
 	}
 
 	if ac > -170 {
-		return dam - int(float64(dam)*(0.24*pcmod))
+		return reduced(0.24)
 	}
 	if ac > -190 {
-		return dam - int(float64(dam)*(0.25*pcmod))
+		return reduced(0.25)
 	}
 	if ac > -210 {
-		return dam - int(float64(dam)*(0.26*pcmod))
+		return reduced(0.26)
 	}
 	if ac > -230 {
-		return dam - int(float64(dam)*(0.27*pcmod))
+		return reduced(0.27)
 	}
 	if ac > -250 {
-		return dam - int(float64(dam)*(0.28*pcmod))
+		return reduced(0.28)
 	}
 	if ac > -270 {
-		return dam - int(float64(dam)*(0.29*pcmod))
+		return reduced(0.29)
 	}
 	if ac > -290 {
-		return dam - int(float64(dam)*(0.30*pcmod))
+		return reduced(0.30)
 	}
 	if ac > -310 {
-		return dam - int(float64(dam)*(0.31*pcmod))
+		return reduced(0.31)
 	}
 
 	// ac <= -310
-	return dam - int(float64(dam)*(0.32*pcmod))
+	return reduced(0.32)
 }
 
 // CalculateDamage implements the original damage calculation from fight.c lines 1840–1858.
@@ -548,17 +553,20 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 		dam = int(float64(dam) * (1.0 + float64(PosFighting-defPos)/3.0))
 	}
 
+	// C establishes a one-point floor before attack-specific handling. Normal
+	// weapon attacks can then be reduced back to zero by get_minusdam.
+	if dam < 1 {
+		dam = 1
+	}
+
 	// Apply AC damage reduction (get_minusdam) - fight.c line 1882
 	// Only for normal weapon hits, not spells
 	if attackType == AttackNormal {
 		dam = getMinusDam(dam, defender.GetAC())
 	}
-
-	// Minimum 1 damage
-	if dam < 1 {
+	if attacker.GetStr() == 0 {
 		dam = 1
 	}
-
 	return dam
 }
 
@@ -644,39 +652,32 @@ func GetAttacksPerRound(c Combatant, hasHaste, hasSlow bool) int {
 	return attacks
 }
 
-// CheckParry implements the automatic CircleMUD parry check.
+// CheckParry implements the automatic CircleMUD parry-position probe made by
+// the current fighter on its own perform_violence turn.
 // Source: src/fight.c:1949-1963.
 //
 // Parry requirements:
-//   - Defender must be a player (not NPC)
-//   - Defender must have the parry skill (GET_SKILL > 0)
-//   - Defender must be awake (position > PosSleeping)
+//   - Fighter must be a player (not NPC)
+//   - The inclusive number(0,10000) roll must not exceed its parry skill
+//   - Fighter and opponent must be mutually fighting
 //
-// Formula: number(0,10000) <= GET_SKILL(ch, SKILL_PARRY). At skill 100 this
-// is about 1% per round, not a per-hit near-certainty.
+// C evaluates number(0,10000) before GET_SKILL and the mutual-fighting checks,
+// so every player turn consumes the probe even at skill zero.
 //
-// Returns ParrySuccess if the attacker's attack count should be reduced.
-func CheckParry(defender, attacker Combatant) ParryResult {
-	if defender.IsNPC() {
+// Returns ParrySuccess if the opponent's attack count should be reduced on its
+// next turn.
+func CheckParry(fighter, opponent Combatant) ParryResult {
+	if fighter.IsNPC() {
 		return ParryFail
 	}
 
-	// Must have parry skill
-	skill := cbGetSkill(defender.GetName(), SKILL_PARRY)
-	if skill <= 0 {
+	roll := GetRoller().Number(0, 10000)
+	skill := cbGetSkill(fighter.GetName(), SKILL_PARRY)
+	if roll > skill {
 		return ParryFail
 	}
 
-	// Must be awake
-	if defender.GetPosition() <= PosSleeping {
-		return ParryFail
-	}
-
-	if attacker == nil || defender.GetFighting() != attacker.GetName() || attacker.GetFighting() != defender.GetName() {
-		return ParryFail
-	}
-
-	if GetRoller().Number(0, 10000) > skill {
+	if opponent == nil || fighter.GetFighting() != opponent.GetName() || opponent.GetFighting() != fighter.GetName() {
 		return ParryFail
 	}
 

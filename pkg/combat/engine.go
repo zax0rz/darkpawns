@@ -29,6 +29,7 @@ type CombatEngine struct {
 	// Active combat pairs
 	combatPairs map[CombatPairKey]*CombatPair // key: (attacker, target)
 	combatOrder []Combatant                   // C combat_list order: most recently engaged first
+	parried     map[string]string             // C IS_PARRIED flag, keyed by fighter whose next turn is reduced
 
 	// Background-loop lifecycle. Stop closes stopChan exactly once and waits
 	// for every started loop to exit, including an in-flight combat round.
@@ -83,6 +84,7 @@ type CombatEngine struct {
 func NewCombatEngine() *CombatEngine {
 	return &CombatEngine{
 		combatPairs: make(map[CombatPairKey]*CombatPair),
+		parried:     make(map[string]string),
 		stopChan:    make(chan struct{}),
 		tickEvery:   2 * time.Second,
 	}
@@ -282,9 +284,12 @@ func (ce *CombatEngine) StopCombat(charName string) {
 			if pair.Defender.GetFighting() == key.Attacker {
 				pair.Defender.StopFighting()
 			}
+			delete(ce.parried, pair.Attacker.GetName())
+			delete(ce.parried, pair.Defender.GetName())
 			delete(ce.combatPairs, key)
 		}
 	}
+	delete(ce.parried, charName)
 	ce.removeFighterLocked(charName)
 	ce.pruneCombatOrderLocked()
 }
@@ -474,28 +479,15 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	hasSlow := cbHasAffect(attacker.GetName(), AFF_SLOW)
 	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
 
-	// C checks parry/dodge once per defender round and sets IS_PARRIED on the
-	// attacker. When the attacker swings, IS_PARRIED reduces attack count; it
-	// does not negate each individual hit. Source: src/fight.c:1949-2004.
-	defenseAction := ""
-	switch {
-	case CheckParry(defender, attacker) == ParrySuccess:
-		defenseAction = "parry"
-		attacker.SendMessage(fmt.Sprintf("With a dazzling show of swordplay, %s parries your attack!\r\n", defender.GetName()))
-		defender.SendMessage("With a dazzling show of swordplay, you parry the attack!\r\n")
-		if ce.BroadcastFunc != nil {
-			ce.BroadcastFunc(attacker.GetRoom(),
-				fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's every blow!", defender.GetName(), attacker.GetName()), "")
-		}
-	case CheckDodge(defender, attacker) == DodgeSuccess:
-		defenseAction = "dodge"
-		attacker.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", defender.GetName()))
-		defender.SendMessage("You dodge!\r\n")
-		if ce.BroadcastFunc != nil {
-			ce.BroadcastFunc(attacker.GetRoom(),
-				fmt.Sprintf("%s dodges %s's attack!", defender.GetName(), attacker.GetName()), "")
-		}
-	}
+	// C evaluates the current fighter's own parry/dodge posture, then marks
+	// FIGHTING(ch) as IS_PARRIED. Because combat_list is walked head-first, that
+	// flag may reduce the opponent later this round or on its next round.
+	// Source: src/fight.c:1949-2004.
+	ce.prepareRoundDefense(attacker, defender)
+
+	// IS_PARRIED(ch) reduces this fighter's attack count once and is cleared at
+	// the end of its turn.
+	defenseAction := ce.consumeParried(attacker.GetName())
 	if defenseAction != "" {
 		defenderDexDefense := dexApp[dexIndex(defender)].Defensive
 		if defenderDexDefense < 0 {
@@ -505,9 +497,6 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		}
 		if numAttacks < 0 {
 			numAttacks = 0
-		}
-		if ce.OnCombatAction != nil {
-			ce.OnCombatAction(attacker, defender, defenseAction, 0, defenseAction, 0)
 		}
 	}
 
@@ -531,9 +520,68 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	}
 }
 
+func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
+	defenseAction := ""
+	switch {
+	case CheckParry(fighter, opponent) == ParrySuccess:
+		defenseAction = "parry"
+		fighter.SendMessage("With a dazzling show of swordplay, you move into defensive position...\r\n")
+		opponent.SendMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName()))
+		ce.sendDefenseObserverMessage(
+			fighter,
+			opponent,
+			fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's every blow!\r\n", fighter.GetName(), opponent.GetName()),
+		)
+	case CheckDodge(fighter, opponent) == DodgeSuccess:
+		defenseAction = "dodge"
+		fighter.SendMessage("You dodge!\r\n")
+		opponent.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", fighter.GetName()))
+		ce.sendDefenseObserverMessage(
+			fighter,
+			opponent,
+			fmt.Sprintf("%s dodges %s's attack!\r\n", fighter.GetName(), opponent.GetName()),
+		)
+	}
+	if defenseAction != "" {
+		ce.setParried(opponent.GetName(), defenseAction)
+		if ce.OnCombatAction != nil {
+			ce.OnCombatAction(opponent, fighter, defenseAction, 0, defenseAction, 0)
+		}
+	}
+}
+
+func (ce *CombatEngine) sendDefenseObserverMessage(fighter, opponent Combatant, message string) {
+	observed := false
+	for _, observer := range cbGetRoomCombatants(fighter.GetRoom()) {
+		if observer == nil || observer.GetName() == fighter.GetName() || observer.GetName() == opponent.GetName() {
+			continue
+		}
+		observer.SendMessage(message)
+		observed = true
+	}
+	if !observed && ce.BroadcastFunc != nil {
+		// Test and embedding fallback when the game-layer room lookup is absent.
+		ce.BroadcastFunc(fighter.GetRoom(), message, fighter.GetName())
+	}
+}
+
+func (ce *CombatEngine) setParried(name, defenseAction string) {
+	ce.mu.Lock()
+	defer ce.mu.Unlock()
+	ce.parried[name] = defenseAction
+}
+
+func (ce *CombatEngine) consumeParried(name string) string {
+	ce.mu.Lock()
+	defer ce.mu.Unlock()
+	defenseAction := ce.parried[name]
+	delete(ce.parried, name)
+	return defenseAction
+}
+
 // performOneHit is the shared C hit() path used by both do_hit's synchronous
 // first strike and each attack selected by perform_violence.
-// It returns true when the strike kills the defender.
+// It returns true when death or a successful flee ends the exchange.
 func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	attacker := pair.Attacker
 	defender := pair.Defender
@@ -560,7 +608,7 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 
 	newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc)
 	if newPos != PosDead {
-		return false
+		return ce.handleSurvivingVictimState(attacker, defender, damage, newPos)
 	}
 
 	ce.handleDeath(defender, attacker)
@@ -569,6 +617,48 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	}
 	ce.StopCombat(attacker.GetName())
 	return true
+}
+
+// handleSurvivingVictimState mirrors damage()'s default position branch after
+// the weapon message: high-damage pain, low-HP bleeding, and automatic wimpy
+// retreat/flee. It reports whether the callback ended this exchange.
+func (ce *CombatEngine) handleSurvivingVictimState(attacker, defender Combatant, damage, newPos int) bool {
+	if newPos < PosSleeping {
+		return false
+	}
+
+	if damage > defender.GetMaxHP()/4 {
+		defender.SendMessage("That really did HURT!\r\n")
+		if GetRoller().Number(0, 2) == 0 {
+			ce.sendDefenseObserverMessage(
+				defender,
+				attacker,
+				fmt.Sprintf("%s screams in pain!\r\n", defender.GetName()),
+			)
+		}
+	}
+
+	if defender.GetHP() < defender.GetMaxHP()/4 {
+		defender.SendMessage("You wish that your wounds would stop BLEEDING so much!\r\n")
+		if cbHasMobFlag(defender.GetName(), "MOB_WIMPY") && attacker.GetName() != defender.GetName() {
+			cbDoFlee(defender.GetName())
+		}
+	}
+
+	wimpLevel := cbGetWimpyLev(defender.GetName())
+	if !defender.IsNPC() && wimpLevel > 0 &&
+		attacker.GetName() != defender.GetName() &&
+		newPos >= PosFighting && defender.GetHP() < wimpLevel {
+		defender.SendMessage("You wimp out, and attempt to flee!\r\n")
+		if cbGetSkill(defender.GetName(), SKILL_RETREAT) > 0 ||
+			cbGetSkill(defender.GetName(), SKILL_ESCAPE) > 0 {
+			cbDoRetreat(defender.GetName())
+		} else {
+			cbDoFlee(defender.GetName())
+		}
+	}
+
+	return defender.GetRoom() != attacker.GetRoom() || defender.GetFighting() == ""
 }
 
 // applyMobCombatRedirects ports the mob-initiated damage() redirects from

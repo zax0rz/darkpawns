@@ -215,6 +215,35 @@ func TestPumpPulsesSendsReservedControlAndReturnsOutput(t *testing.T) {
 	}
 }
 
+func TestRunSetupAndSettlePumpsImmediatelyAfterEnteringGame(t *testing.T) {
+	conn := &scriptedConn{outputs: []string{
+		"greeting",
+		"name prompt",
+		"menu",
+		"staging room",
+		"birth dream",
+		"recalled room",
+	}}
+	got, err := RunSetupAndSettle(conn, []string{"name", "", "1", "recall"}, 40, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "greetingname promptmenustaging roombirth dreamrecalled room" {
+		t.Fatalf("transcript = %q", got)
+	}
+	if sent := strings.Join(conn.sent, ","); sent != "name,,1,~dpclock pulse 40,recall" {
+		t.Fatalf("sent = %q", sent)
+	}
+}
+
+func TestRunSetupAndSettleRejectsAmbiguousEnterGameChoice(t *testing.T) {
+	conn := &scriptedConn{}
+	_, err := RunSetupAndSettle(conn, []string{"1", "other", "1"}, 40, time.Millisecond)
+	if err == nil || !strings.Contains(err.Error(), "ambiguous") {
+		t.Fatalf("ambiguous setup error = %v", err)
+	}
+}
+
 func TestParseScenarioUnknownSection(t *testing.T) {
 	_, err := ParseScenario("test", strings.NewReader("[setup:unknown]\nlook\n"))
 	if err == nil || !strings.Contains(err.Error(), "unknown section") {

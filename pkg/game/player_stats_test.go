@@ -53,3 +53,12 @@ func TestSpendMove_Negative(t *testing.T) {
 		t.Errorf("expected 5 remaining (unchanged), got %d", p.Move)
 	}
 }
+
+func TestPlayerGetDamageRoll_BareHandsAreNotWeaponDice(t *testing.T) {
+	p := NewPlayer(1, "Barehands", 100)
+
+	got := p.GetDamageRoll()
+	if got.Num != 0 || got.Sides != 0 {
+		t.Fatalf("bare-hand weapon dice = %dd%d, want 0d0", got.Num, got.Sides)
+	}
+}

@@ -27,6 +27,7 @@ type mockCombatant struct {
 	damroll    int
 	sex        int
 	fighting   string
+	messages   []string
 }
 
 func (m *mockCombatant) GetName() string           { return m.name }
@@ -54,7 +55,7 @@ func (m *mockCombatant) Heal(amount int)           { m.hp += amount }
 func (m *mockCombatant) SetFighting(target string) { m.fighting = target }
 func (m *mockCombatant) StopFighting()             { m.fighting = "" }
 func (m *mockCombatant) GetFighting() string       { return m.fighting }
-func (m *mockCombatant) SendMessage(msg string)    {}
+func (m *mockCombatant) SendMessage(msg string)    { m.messages = append(m.messages, msg) }
 
 // ---------------------------------------------------------------------------
 // TestMain — sets global function pointers for tests that need them
@@ -290,9 +291,8 @@ func TestGetMinusDam_ACAbove90(t *testing.T) {
 }
 
 func TestGetMinusDam_ACThresholds(t *testing.T) {
-	// Expected values based on: dam - int(float64(dam) * pct * 2.0)
-	// for dam=100. Pre-computed as integer literals to avoid float-to-int
-	// conversion issues in test compilation.
+	// Expected values based on C converting the completed double expression:
+	// int(float64(dam) - float64(dam)*(pct*2.0)).
 	tests := []struct {
 		name     string
 		ac       int
@@ -324,8 +324,8 @@ func TestGetMinusDam_ACThresholds(t *testing.T) {
 		{"ac=-180 (-190 to -170)", -180, 50}, // 100 - int(100 * 0.25 * 2.0) = 100 - 50
 		{"ac=-200 (-210 to -190)", -200, 48}, // 100 - int(100 * 0.26 * 2.0) = 100 - 52
 		{"ac=-220 (-230 to -210)", -220, 46}, // 100 - int(100 * 0.27 * 2.0) = 100 - 54
-		{"ac=-240 (-250 to -230)", -240, 44}, // 100 - int(100 * 0.28 * 2.0) = 100 - 56
-		{"ac=-260 (-270 to -250)", -260, 43}, // 100 - int(100 * 0.29 * 2.0) = 100 - 57.999... = 43
+		{"ac=-240 (-250 to -230)", -240, 43}, // int(100 - (100 * 0.28 * 2.0))
+		{"ac=-260 (-270 to -250)", -260, 42}, // int(100 - (100 * 0.29 * 2.0))
 		{"ac=-280 (-290 to -270)", -280, 40}, // 100 - int(100 * 0.30 * 2.0) = 100 - 60
 		{"ac=-300 (-310 to -290)", -300, 38}, // 100 - int(100 * 0.31 * 2.0) = 100 - 62
 		{"ac=-350 (<= -310)", -350, 36},      // 100 - int(100 * 0.32 * 2.0) = 100 - 64
@@ -346,6 +346,12 @@ func TestGetMinusDam_ZeroDamage(t *testing.T) {
 	result := getMinusDam(0, -999)
 	if result != 0 {
 		t.Errorf("expected 0 damage always, got %d", result)
+	}
+}
+
+func TestGetMinusDam_TruncatesCompletedCExpression(t *testing.T) {
+	if got := getMinusDam(1, 90); got != 0 {
+		t.Fatalf("getMinusDam(1, 90) = %d, want 0 from C double-to-int conversion", got)
 	}
 }
 
@@ -447,33 +453,44 @@ func TestCheckParry_NPCDefender(t *testing.T) {
 	}
 }
 
-func TestCheckParry_NoSkill(t *testing.T) {
-	defender := &mockCombatant{npc: false, name: "nobody", position: PosStanding}
-	attacker := &mockCombatant{name: "hero", position: PosStanding}
+func TestCheckParry_NoSkillStillConsumesCProbe(t *testing.T) {
+	fighter := &mockCombatant{npc: false, name: "nobody", position: PosStanding, fighting: "orc"}
+	opponent := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: "nobody"}
+	roller := NewScriptedRoller([]int{7000, 7001})
+	old := GetRoller()
+	SetRoller(roller)
+	defer SetRoller(old)
 
-	result := CheckParry(defender, attacker)
-	if result != ParryFail {
-		t.Errorf("expected ParryFail for defender with no skill, got %v", result)
+	if result := CheckParry(fighter, opponent); result != ParryFail {
+		t.Fatalf("zero-skill parry probe = %v, want ParryFail", result)
+	}
+	if roller.Index != 1 {
+		t.Fatalf("zero-skill player consumed %d parry draws, want 1", roller.Index)
 	}
 }
 
 func TestCheckParry_NotMutualFighting(t *testing.T) {
-	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: "someone_else"}
-	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "parry_warrior"}
+	fighter := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: "someone_else"}
+	opponent := &mockCombatant{name: "hero", position: PosStanding, fighting: "parry_warrior"}
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{80}))
+	defer SetRoller(old)
 
-	result := CheckParry(defender, attacker)
+	result := CheckParry(fighter, opponent)
 	if result != ParryFail {
 		t.Errorf("expected ParryFail when combatants are not mutually fighting, got %v", result)
 	}
 }
 
-func TestCheckParry_Sleeping(t *testing.T) {
-	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosSleeping}
-	attacker := &mockCombatant{name: "hero", position: PosStanding}
+func TestCheckParry_CDoesNotGateSleepingFighter(t *testing.T) {
+	fighter := &mockCombatant{npc: false, name: "parry_warrior", position: PosSleeping, fighting: "orc"}
+	opponent := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: "parry_warrior"}
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{80}))
+	defer SetRoller(old)
 
-	result := CheckParry(defender, attacker)
-	if result != ParryFail {
-		t.Errorf("expected ParryFail for sleeping defender, got %v", result)
+	if result := CheckParry(fighter, opponent); result != ParrySuccess {
+		t.Fatalf("sleeping fighter's C parry probe = %v, want ParrySuccess", result)
 	}
 }
 
@@ -674,6 +691,22 @@ func TestCalculateHitChance_Natural20(t *testing.T) {
 	}
 }
 
+func TestCalculateHitChance_NPCHitrollMatchesCStoredTHAC0Boundary(t *testing.T) {
+	defender := &mockCombatant{position: PosStanding, ac: 100, dex: 13}
+	withoutFileHitroll := &mockCombatant{npc: true, str: 11, intVal: 11, wis: 11}
+	withFileHitroll := &mockCombatant{npc: true, str: 11, intVal: 11, wis: 11, hitroll: 1}
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{11, 11}))
+	defer SetRoller(old)
+
+	if CalculateHitChance(withoutFileHitroll, defender, HitModifiers{}) {
+		t.Fatal("NPC without file-derived hitroll unexpectedly hit on boundary roll 11")
+	}
+	if !CalculateHitChance(withFileHitroll, defender, HitModifiers{}) {
+		t.Fatal("NPC with C hitroll 20-19=1 missed on boundary roll 11")
+	}
+}
+
 func TestCalculateHitChance_LowACAlwaysHits(t *testing.T) {
 	// Very low AC (100) and bad attacker THAC0 — runs without panic
 	defender := &mockCombatant{npc: true, position: PosStanding, ac: 1000, dex: 10}
@@ -727,14 +760,30 @@ func TestCalculateHitChance_NegativeDefenderACClamped(t *testing.T) {
 // CalculateDamage tests
 // ---------------------------------------------------------------------------
 
-func TestCalculateDamage_NPCMinimum(t *testing.T) {
+func TestCalculateDamage_ACCanReduceMinimumHitToZero(t *testing.T) {
 	attacker := &mockCombatant{npc: true, level: 1, str: 10, strAdd: 0, damroll: 0, damageRoll: DiceRoll{Num: 1, Sides: 1}}
 	defender := &mockCombatant{position: PosStanding, ac: 0}
 	weapon := DiceRoll{}
 
 	dam := CalculateDamage(attacker, defender, weapon, AttackNormal)
-	if dam < 1 {
-		t.Errorf("expected minimum 1 damage, got %d", dam)
+	if dam != 0 {
+		t.Fatalf("one-point hit after C AC reduction = %d, want 0", dam)
+	}
+}
+
+func TestCalculateDamage_LevelOneBareHandsUsesCNumberRange(t *testing.T) {
+	attacker := &mockCombatant{npc: false, level: 1, str: 13, damroll: 0}
+	defender := &mockCombatant{position: PosStanding, ac: 90}
+	roller := NewScriptedRoller([]int{0, 99})
+	old := GetRoller()
+	SetRoller(roller)
+	defer SetRoller(old)
+
+	if got := CalculateDamage(attacker, defender, DiceRoll{}, AttackNormal); got != 0 {
+		t.Fatalf("level-one bare-hand damage = %d, want 0 after C AC reduction", got)
+	}
+	if roller.Index != 1 {
+		t.Fatalf("bare-hand formula consumed %d RNG draws, want one number(0, level/3) probe", roller.Index)
 	}
 }
 

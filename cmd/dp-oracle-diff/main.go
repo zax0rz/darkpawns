@@ -225,27 +225,13 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	goConn := oraclediff.NewTCPConn(goNetConn)
 	defer func() { _ = goConn.Close() }()
 
-	oracleSetup, err := oraclediff.RunSetup(oracleConn, scenario.SetupOracle, quiescence)
+	oracleSetup, err := oraclediff.RunSetupAndSettle(oracleConn, scenario.SetupOracle, settlePulses, quiescence)
 	if err != nil {
 		return fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", err, oracleProc.log.String())
 	}
-	oracleSettle, err := oraclediff.PumpPulses(oracleConn, settlePulses, quiescence)
-	if err != nil {
-		return fmt.Errorf("settle C oracle setup: %w\nserver log:\n%s", err, oracleProc.log.String())
-	}
-	if scenario.DiffSetup {
-		oracleSetup += oracleSettle
-	}
-	goSetup, err := oraclediff.RunSetup(goConn, scenario.SetupPort, quiescence)
+	goSetup, err := oraclediff.RunSetupAndSettle(goConn, scenario.SetupPort, settlePulses, quiescence)
 	if err != nil {
 		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
-	}
-	goSettle, err := oraclediff.PumpPulses(goConn, settlePulses, quiescence)
-	if err != nil {
-		return fmt.Errorf("settle Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
-	}
-	if scenario.DiffSetup {
-		goSetup += goSettle
 	}
 
 	oraclePeers := make(map[string]oraclediff.Conn, len(scenario.Peers))
@@ -263,11 +249,8 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		oraclePeer := oraclediff.NewTCPConn(oraclePeerNet)
 		defer func() { _ = oraclePeer.Close() }()
-		if _, setupErr := oraclediff.RunSetup(oraclePeer, peer.SetupOracle, quiescence); setupErr != nil {
+		if _, setupErr := oraclediff.RunSetupAndSettle(oraclePeer, peer.SetupOracle, settlePulses, quiescence); setupErr != nil {
 			return fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleProc.log.String())
-		}
-		if _, settleErr := oraclediff.PumpPulses(oraclePeer, settlePulses, quiescence); settleErr != nil {
-			return fmt.Errorf("settle C oracle %s setup: %w\nserver log:\n%s", name, settleErr, oracleProc.log.String())
 		}
 		oraclePeers[name] = oraclePeer
 
@@ -277,11 +260,8 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		goPeer := oraclediff.NewTCPConn(goPeerNet)
 		defer func() { _ = goPeer.Close() }()
-		if _, setupErr := oraclediff.RunSetup(goPeer, peer.SetupPort, quiescence); setupErr != nil {
+		if _, setupErr := oraclediff.RunSetupAndSettle(goPeer, peer.SetupPort, settlePulses, quiescence); setupErr != nil {
 			return fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goProc.log.String())
-		}
-		if _, settleErr := oraclediff.PumpPulses(goPeer, settlePulses, quiescence); settleErr != nil {
-			return fmt.Errorf("settle Go port %s setup: %w\nserver log:\n%s", name, settleErr, goProc.log.String())
 		}
 		goPeers[name] = goPeer
 	}
@@ -309,7 +289,6 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err != nil {
 		return fmt.Errorf("run Go port probe: %w\nserver log:\n%s", err, goProc.log.String())
 	}
-
 	diffs := make([]oraclediff.BlockDiff, 0, len(oracleBlocks)+1)
 	// Character-creation coverage: diff the whole normalized setup transcript
 	// (the nanny dialogue) as one block when the scenario opts in via

@@ -407,7 +407,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	}
 
 	// Decrement spawner instance count so the mob can respawn on next zone reset.
-	// Without this, CanSpawn() always returns false for killed mob vnums.
+	// Without this, zone max-in-world checks stay saturated for killed mob vnums.
 	if w.spawner != nil {
 		w.spawner.RemoveMobInstance(deadMob.VNum, deadMob)
 	}

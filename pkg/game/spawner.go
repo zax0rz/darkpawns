@@ -224,7 +224,7 @@ var (
 // Matches C's reset_zone() semantics including if_flag, loop, percent_load,
 // MOB_RANDZON, zone79, door-state, and remove commands.
 func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
-	// Do NOT hold s.mu — SpawnMob/SpawnObject/CanSpawn each lock internally.
+	// Do NOT hold s.mu — spawn and global-count helpers lock internally.
 	// Holding s.mu causes a deadlock.
 
 	var lastMob *MobInstance
@@ -269,7 +269,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 			continue
 
 		case "M": // Load mobile
-			if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
+			if !s.canSpawnMob(cmd.Arg1, cmd.Arg2) {
 				slog.Warn("cannot spawn mob: max in world reached", "mob_vnum", cmd.Arg1, "max_in_world", cmd.Arg2)
 				continue
 			}
@@ -300,7 +300,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 			}
 
 		case "O": // Load object to room
-			if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
+			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
 				slog.Warn("cannot spawn object: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2)
 				continue
 			}
@@ -327,7 +327,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				slog.Warn("G command: no lastMob available")
 				continue
 			}
-			if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
+			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
 				slog.Warn("cannot spawn object for mob: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "mob_inventory")
 				continue
 			}
@@ -350,7 +350,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				slog.Warn("E command: no lastMob available")
 				continue
 			}
-			if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
+			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
 				slog.Warn("cannot spawn object for mob equip: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "mob_equip")
 				continue
 			}
@@ -377,7 +377,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 			lastCmd = 1
 
 		case "P": // Put object in container
-			if !s.CanSpawn(cmd.Arg1, cmd.Arg2) {
+			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
 				slog.Warn("cannot spawn object for container: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "container")
 				continue
 			}
@@ -465,18 +465,15 @@ func (s *Spawner) moveMobToRoom(mob *MobInstance, newRoomVNum int) {
 	}
 }
 
-// CanSpawn checks if we can spawn more of a given mob/obj based on maxInWorld.
-func (s *Spawner) CanSpawn(vnum int, maxInWorld int) bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// C tests each prototype's global live-instance count. Runtime instances made
+// outside this Spawner (including character-creation gear) still count against
+// zone command maxima.
+func (s *Spawner) canSpawnMob(vnum int, maxInWorld int) bool {
+	return s.world.countMobInstances(vnum) < maxInWorld
+}
 
-	if instances, ok := s.mobInstances[vnum]; ok {
-		return len(instances) < maxInWorld
-	}
-	if instances, ok := s.objInstances[vnum]; ok {
-		return len(instances) < maxInWorld
-	}
-	return maxInWorld > 0
+func (s *Spawner) canSpawnObject(vnum int, maxInWorld int) bool {
+	return s.world.countObjectInstances(vnum) < maxInWorld
 }
 
 // SpawnMob creates a new mob instance in the specified room.
@@ -504,6 +501,12 @@ func (s *Spawner) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 	obj, err := s.world.SpawnObject(objVNum, roomVNum)
 	if err != nil {
 		return nil, err
+	}
+	if roomVNum >= 0 {
+		// World.SpawnObject registers runtime identity and location but leaves
+		// room indexing to its caller. Zone O commands are obj_to_room calls in
+		// C, so the spawner must also make the object visible in room contents.
+		s.world.AddItemToRoom(obj, roomVNum)
 	}
 
 	// Apply ITEM_RARE affect variance — db.c:1899-1925 init_rare() (DP-376)
@@ -571,7 +574,7 @@ func (s *Spawner) findObjectInstance(objVNum int) *ObjectInstance {
 
 // extractSpawnedObject undoes SpawnObject after a failed percent_load gate.
 // C's extract_obj decrements obj_index[].number; removing every spawner index
-// here keeps CanSpawn at the same command-boundary count.
+// here keeps max-in-world checks at the same command-boundary count.
 func (s *Spawner) extractSpawnedObject(obj *ObjectInstance) {
 	if obj == nil {
 		return

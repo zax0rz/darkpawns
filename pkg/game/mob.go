@@ -697,12 +697,16 @@ func (m *MobInstance) GetCha() int {
 	return m.Cha
 }
 
-// GetHitroll returns the mob's hitroll bonus from equipment
-// Sums APPLY_HITROLL (location 18) from all equipped items.
+// GetHitroll returns the mob's file-derived hitroll plus equipment bonuses.
+// C parses the mob-file THAC0 field as points.hitroll = 20 - thac0
+// (src/db.c:1064), while hit() itself always starts NPCs at THAC0 20.
 func (m *MobInstance) GetHitroll() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	total := 0
+	if m.Prototype != nil {
+		total = 20 - m.Prototype.THAC0
+	}
 	for _, item := range m.Equipment {
 		if item == nil || item.Prototype == nil {
 			continue

@@ -13,6 +13,8 @@ import (
 
 const enterStep = "<ENTER>"
 
+const enterGameStep = "1"
+
 const pulseControl = "~dpclock pulse "
 
 // Scenario is a split differential script: per-server setup (not diffed) plus
@@ -292,6 +294,35 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 // RunSetup plays one server's setup lines and returns the captured transcript.
 // It reads and discards the initial greeting before the first scripted line.
 func RunSetup(conn Conn, setup []string, quiescence time.Duration) (string, error) {
+	return runSetup(conn, setup, -1, 0, quiescence)
+}
+
+// RunSetupAndSettle plays setup and advances a frozen DP_CLOCK immediately
+// after the final "1" menu choice enters the game. C's newbie start-room
+// transition is pulse-driven, so post-entry setup commands must not run before
+// this settle point.
+func RunSetupAndSettle(conn Conn, setup []string, pulses int, quiescence time.Duration) (string, error) {
+	entryIndex := -1
+	entryCount := 0
+	for i, step := range setup {
+		if step == enterGameStep {
+			entryIndex = i
+			entryCount++
+		}
+	}
+	if entryIndex < 0 {
+		return "", errors.New("setup has no enter-game step")
+	}
+	if entryCount > 1 {
+		return "", errors.New("setup has ambiguous enter-game steps")
+	}
+	if pulses <= 0 {
+		return "", errors.New("settle pulse count must be positive")
+	}
+	return runSetup(conn, setup, entryIndex, pulses, quiescence)
+}
+
+func runSetup(conn Conn, setup []string, settleAfter, pulses int, quiescence time.Duration) (string, error) {
 	var transcript strings.Builder
 	initial, err := conn.ReadUntilQuiescent(quiescence)
 	if err != nil {
@@ -308,6 +339,13 @@ func RunSetup(conn Conn, setup []string, quiescence time.Duration) (string, erro
 			return transcript.String(), fmt.Errorf("setup step %d read after %q: %w\ntranscript so far:\n%s", i+1, step, err, transcript.String())
 		}
 		transcript.WriteString(output)
+		if i == settleAfter {
+			settleOutput, settleErr := PumpPulses(conn, pulses, quiescence)
+			transcript.WriteString(settleOutput)
+			if settleErr != nil {
+				return transcript.String(), fmt.Errorf("settle after setup step %d %q: %w\ntranscript so far:\n%s", i+1, step, settleErr, transcript.String())
+			}
+		}
 	}
 	return transcript.String(), nil
 }
