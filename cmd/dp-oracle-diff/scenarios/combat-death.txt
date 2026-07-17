@@ -1,0 +1,74 @@
+# Combat to the death — first multi-round DP_CLOCK-pumped fidelity scenario.
+#
+# Builds on combat-swing (now GREEN): same L1 warrior walks to 8105 and attacks the
+# sentinel trainee guard (#16303). Then, with the clock frozen (DP_CLOCK), each
+# `~dpclock pulse 20` advances exactly one PULSE_VIOLENCE round (=20 passes),
+# deterministically driving perform_violence on both engines until someone dies.
+# Diffs every round + the aftermath look — exercising the damage tiers, the
+# stunned/incap/mortally-wounded ladder, the death message, corpse creation, and
+# XP/CON handling (see docs death.go fidelity map).
+#
+# `hit trainee` = the synchronous initiating swing (combat-swing's probe). Each
+# subsequent pump = one round where BOTH combatants swing. Extra pumps after a
+# death are harmless (no combatants left → empty, matching blocks).
+
+[fixture]
+spawn-mob 16303 1 8105 80
+quiet-mobs
+
+[setup:oracle]
+Cfighter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cfighter
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+north
+east
+south
+east
+
+[probe]
+hit trainee
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+look
