@@ -186,7 +186,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			return err
 		}
 		s.charStage = "color"
-		s.sendCharCreatePrompt("color", "Do you want ANSI color (Y/N)? ", nil)
+		s.sendCharCreatePrompt("color", "\r\nDo you want ANSI color (Y/N)? ", nil)
 
 	case "color":
 		switch strings.ToUpper(choice) {

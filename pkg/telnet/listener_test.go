@@ -39,6 +39,21 @@ func drain(c net.Conn) {
 	}
 }
 
+func cGreetingsFixture(t *testing.T) string {
+	t.Helper()
+	raw, err := os.ReadFile("testdata/c_greetings.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.ReplaceAll(string(raw), "\n", "\r\n")
+}
+
+func TestGreetingsLogoMatchesCFixture(t *testing.T) {
+	if want := cGreetingsFixture(t); greetingsLogo != want {
+		t.Fatalf("greetingsLogo differs from C fixture\ngot:  %q\nwant: %q", greetingsLogo, want)
+	}
+}
+
 // TestHandleConnDisconnectDuringPasswordPrompt verifies that handleConn returns
 // when the client disconnects instead of proceeding with an empty password.
 func TestHandleConnDisconnectDuringPasswordPrompt(t *testing.T) {
@@ -161,6 +176,9 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 	answer("*** PRESS RETURN: ", "")
 	answer("Make your choice: ", "1")
 	readUntil("Flames dance along the walls of the ruined hut.")
+	if bytes.Contains(transcript, []byte{'\f'}) {
+		t.Fatal("telnet transcript leaked C's malformed echo-on form-feed byte")
+	}
 
 	visible := string(stripTelnetCommands(transcript))
 	statsPattern := regexp.MustCompile(`\r\nYour ability scores:\r\n  Str: .+ Dex: .+ Int: .+\r\n  Wis: .+ Con: .+ Cha: .+\r\n`)
@@ -169,14 +187,14 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantPrefix := greetingsLogo +
-		"By what name do you wish to be known? " +
+	wantPrefix := cGreetingsFixture(t) +
+		"\r\nBy what name do you wish to be known? " +
 		"Invalid name, please try another.\r\nName: " +
 		"Please remember to choose an appropriate fantasy-oriented name.\r\n" +
 		"Did I get that right, Transcript (Y/N)? " +
 		"New character.\r\nGive me a password for Transcript: " +
 		"\r\nPlease retype password: " +
-		"Do you want ANSI color (Y/N)? " +
+		"\r\nDo you want ANSI color (Y/N)? " +
 		"What is your sex (M/F)? " +
 		session.RaceMenuText + "\r\nRace: " +
 		session.HumanClassMenuText + "\r\nClass: " +

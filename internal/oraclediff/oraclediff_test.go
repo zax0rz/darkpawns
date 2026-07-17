@@ -18,6 +18,14 @@ func TestNormalizeTier1Rules(t *testing.T) {
 	}
 }
 
+func TestNormalizeCanonicalizesCRLFAndLFCRAsSingleNewlines(t *testing.T) {
+	raw := "crlf\r\nlfcr\n\rlone-cr\rlone-lf\n"
+	want := "crlf\nlfcr\nlone-cr\nlone-lf\n"
+	if got := Normalize(raw); got != want {
+		t.Fatalf("Normalize() = %q, want %q", got, want)
+	}
+}
+
 func TestNormalizeDropsPromptFramingButPreservesTextGreaterThan(t *testing.T) {
 	raw := ">\r\n> Huh?!?\r\n>    Indented room text\r\nDoor > north\r\n22H 100M 83V >\r\n"
 	want := "Huh?!?\n   Indented room text\nDoor > north\n"

@@ -146,6 +146,22 @@ func TestCharacterCreationPasswordMismatchReprompts(t *testing.T) {
 	}
 }
 
+func TestCharacterCreationPasswordConfirmationStartsColorOnNewLine(t *testing.T) {
+	s := makeCharSession(t, makeTestManager(t))
+	s.charCreating = true
+	s.charStage = "confirm_password"
+	s.charPassword = "hunter2"
+
+	sendCharInput(t, s, "hunter2")
+	_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
+	if prompt.Prompt != "\r\nDo you want ANSI color (Y/N)? " {
+		t.Errorf("prompt = %q", prompt.Prompt)
+	}
+	if s.charStage != "color" || prompt.Secret {
+		t.Errorf("confirmation state = %q secret=%v, want visible color prompt", s.charStage, prompt.Secret)
+	}
+}
+
 func TestCharacterCreationIllegalPasswordExactPrompt(t *testing.T) {
 	s := makeCharSession(t, makeTestManager(t))
 	s.charCreating = true

@@ -290,7 +290,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 
 	// Welcome + prompt
 	tc.writeLine(greetingsLogo)
-	tc.writeLine("By what name do you wish to be known? ")
+	// C emits one visible line break at the ident-to-name boundary. Use a
+	// well-formed CRLF rather than carrying its legacy LFCR framing forward.
+	tc.writeLine("\r\nBy what name do you wish to be known? ")
 
 	// C's CON_GET_NAME keeps the connection open until it receives a valid
 	// fantasy name. Transport only owns this first read; new-character dialogue

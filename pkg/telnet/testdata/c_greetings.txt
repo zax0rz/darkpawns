@@ -1,0 +1,19 @@
+
+
+         (_____)           (_)    (_____)
+   _     /  __ \           | |    |  __ \                            _
+  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;
+   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \ \ /\ / / '_ \/ __|    =
+ .***.  /| |__| | (_| | |  |   <  | |  | (_| |\ V  V /| | | \__ \  .***.
+ ~~~~~  /|_____/ \__,_|_|  |_|\_\ |||   \__,_| \_/\_/ |_| |_|___/  ~~~~~
+                                  |||
+                                  |||
+                                  `.'
+
+             Based on CircleMUD 3.0 created by J. Elson and
+            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,
+                H. Staerfeldt, M. Seifert, and S. Hammer
+
+   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!
+
+
