@@ -81,7 +81,9 @@ func (w *World) doPeek(ch *Player, me *MobInstance, cmd string, arg string) bool
 }
 
 // ---------------------------------------------------------------------------
-// do_recall — from act.other.c
+// do_recall — from act.other.c:1727-1748, with spell_recall (spells.c:124-163)
+// inlined; the command is always self-targeted (spell_recall(30, ch, ch, ...)),
+// so spell_recall's BFR/FIGHTING re-checks are subsumed by the gates below.
 // ---------------------------------------------------------------------------
 
 func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bool {
@@ -90,33 +92,57 @@ func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bo
 	}
 
 	if ch.GetLevel() > 5 {
-		ch.SendMessage("You are too powerful to be teleported to the temple!\r\n")
+		ch.SendMessage("This command is not available for someone of your experience!\r\n")
+		return true
+	}
+
+	// Only ROOM_BFR (bit 17) blocks by room; C has no no_recall room flag.
+	room := w.GetRoomInWorld(ch.GetRoomVNum())
+	if room != nil && hasRoomFlag(room, "bfr") {
+		ch.SendMessage("You can't recall from this magickal place.\r\n")
 		return true
 	}
 
 	if ch.IsFighting() {
-		ch.SendMessage("No way!  You are fighting!\r\n")
+		// C sends this one without a trailing CRLF (act.other.c:1742).
+		ch.SendMessage("Your concentration is broken by your fighting!")
 		return true
 	}
 
-	room := w.GetRoomInWorld(ch.GetRoomVNum())
-	if room != nil && (hasRoomFlag(room, "no_recall") || hasRoomFlag(room, "bfr")) {
-		ch.SendMessage("You can't recall from this room!\r\n")
+	// "$n disappears." to the old room; the recaller sees nothing.
+	Act(w, true, ch, nil, nil, nil, "$n disappears.", "", ToRoom)
+
+	// Target keys on GET_HOME (config.c): 2 = kiroshi_start_room,
+	// 3 = alaozar_start_room, else mortal_start_room — same 2/3/else
+	// hometown split as quit's isokquit.
+	recallRoom := MortalStartRoom
+	switch ch.GetHometown() {
+	case 2:
+		recallRoom = 18201
+	case 3:
+		recallRoom = 21258
+	}
+
+	// C unmounts in place and the mount stays behind; unmount before the
+	// transfer so CharTransfer's mount-follow does not bring it along.
+	if ch.IsMounted() {
+		Unmount(ch, w.GetMount(ch))
+		ch.SetAffect(affMounted, false)
+	}
+
+	if err := w.PlayerTransfer(ch, recallRoom); err != nil {
+		slog.Error("recall transfer failed", "player", ch.Name, "target", recallRoom, "error", err)
 		return true
 	}
 
-	ch.SetPosition(combat.PosStanding)
+	Act(w, true, ch, nil, nil, nil, "$n appears in the middle of the room.", "", ToRoom)
 
-	// Recall to temple (room 8004)
-	recallRoom := 8004
-
-	ch.SendMessage("You close your eyes and pray...\r\n")
-	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s closes %s eyes and prays...\r\n", ch.Name, hisHer(ch.GetSex())), ch.Name)
-
-	ch.SendMessage("You are recalled!\r\n")
-	ch.SetRoom(recallRoom)
-	actToRoom(w, recallRoom, fmt.Sprintf("%s appears in the room.\r\n", ch.Name), "")
-	w.doLook(ch, nil, "look", "")
+	// AWAKE(victim): the recaller sees only the new room's look output.
+	if ch.GetPosition() > combat.PosSleeping {
+		w.lookAtRoom(ch, false)
+	} else {
+		ch.SendMessage("You have a strange dream about falling..\r\n")
+	}
 
 	return true
 }

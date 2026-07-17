@@ -19,10 +19,9 @@ recall
 
 [setup:port]
 Oracletst
-y
-oraclepass
-oraclepass
 Y
+oraclepass
+oraclepass
 N
 M
 H
@@ -31,6 +30,8 @@ K
 Y
 <ENTER>
 1
+look
+recall
 
 [probe]
 look
