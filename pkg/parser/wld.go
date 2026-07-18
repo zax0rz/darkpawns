@@ -323,21 +323,17 @@ func ParseAllWldFiles(dir string) ([]Room, error) {
 		return nil, err
 	}
 
-	entries, err := os.ReadDir(dir)
+	fileNames, err := indexedDataFileNames(dir, ".wld")
 	if err != nil {
-		return nil, fmt.Errorf("read dir %s: %w", dir, err)
+		return nil, err
 	}
 
 	var allRooms []Room
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".wld") {
-			continue
-		}
-
-		path := filepath.Join(dir, entry.Name())
+	for _, fileName := range fileNames {
+		path := filepath.Join(dir, fileName)
 		rooms, err := ParseWldFile(path)
 		if err != nil {
-			return nil, fmt.Errorf("parse %s: %w", entry.Name(), err)
+			return nil, fmt.Errorf("parse %s: %w", fileName, err)
 		}
 
 		allRooms = append(allRooms, rooms...)
