@@ -20,7 +20,7 @@ func TestGetAllZonesReturnsDeterministicOrder(t *testing.T) {
 	}
 }
 
-func TestRoomsReturnsDeterministicOrder(t *testing.T) {
+func TestRoomsPreservesParsedRNumOrder(t *testing.T) {
 	w, err := NewWorld(&parser.World{Rooms: []parser.Room{
 		{VNum: 300},
 		{VNum: 100},
@@ -35,7 +35,7 @@ func TestRoomsReturnsDeterministicOrder(t *testing.T) {
 	if len(rooms) != 3 {
 		t.Fatalf("Rooms returned %d rooms, want 3", len(rooms))
 	}
-	for i, want := range []int{100, 200, 300} {
+	for i, want := range []int{300, 100, 200} {
 		if got := rooms[i].VNum; got != want {
 			t.Fatalf("Rooms()[%d].VNum = %d, want %d", i, got, want)
 		}
