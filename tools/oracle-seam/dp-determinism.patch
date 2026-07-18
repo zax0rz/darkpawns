@@ -1,0 +1,121 @@
+diff --git a/src/comm.c b/src/comm.c
+index 5d8df96..8be02f0 100644
+--- a/src/comm.c
++++ b/src/comm.c
+@@ -93,6 +93,7 @@ extern int autosave_time;   /* see config.c */
+ struct timeval null_time;   /* zero-valued time structure */
+ int port;           /* port mud is running on */
+ unsigned long pulse = 0;        /* number of pulses since game began */
++int dp_clock = 0;       /* deterministic heartbeat gate */
+ FILE *logfile = NULL;           /* where to send the log messages. */
+ 
+ /* functions in this file */
+@@ -115,6 +116,7 @@ void flush_queues(struct descriptor_data *d);
+ void nonblock(int s);
+ int perform_subst(struct descriptor_data *t, char *orig, char *subst);
+ int perform_alias(struct descriptor_data *d, char *orig);
++int process_dpclock_control(char *input);
+ void record_usage(void);
+ char *make_prompt(struct descriptor_data *point);
+ void check_idle_passwords(void);
+@@ -259,8 +261,12 @@ int dp_main(int argc, char *argv[])
+ void init_game(int port)
+ {
+   int mother_desc;
++  char *dp_seed_env;
+ 
+-  prng_seed(time(0));
++  dp_seed_env = getenv("DP_SEED");
++  dp_clock = (getenv("DP_CLOCK") != NULL);
++  prng_seed(dp_seed_env ? (uint32_t) strtoul(dp_seed_env, NULL, 10) :
++      (uint32_t) time(0));
+ 
+   log("Finding player limit.");
+   max_players = get_max_players();
+@@ -675,8 +681,9 @@ void game_loop(int mother_desc)
+     }
+ 
+     /* Now execute the heartbeat functions */
+-    while (missed_pulses--)
+-      heartbeat(++pulse);
++    if (!dp_clock)
++      while (missed_pulses--)
++        heartbeat(++pulse);
+ 
+ 
+     /* Roll pulse over after 10 hours */
+@@ -1821,6 +1828,34 @@ int write_to_descriptor(int desc, const char *txt, struct compr *comp)
+   return (write_total);
+ }
+ 
++/*
++ * Handle the deterministic-clock control line before normal command queuing.
++ * This keeps the primitive draw-neutral and avoids command history, aliases,
++ * wait-state, and command_interpreter side effects.
++ */
++int process_dpclock_control(char *input)
++{
++  char command[16], action[16], extra[2];
++  unsigned long count;
++
++  if (!dp_clock)
++    return 0;
++
++  if (sscanf(input, "%15s %15s %lu %1s",
++      command, action, &count, extra) != 3)
++    return 0;
++  if (strcmp(command, "~dpclock") || strcmp(action, "pulse"))
++    return 0;
++  if (count == 0 || count > 100000)
++    return 0;
++
++  while (count--)
++    heartbeat(++pulse);
++
++  return 1;
++}
++
++
+ /*
+  * ASSUMPTION: There will be no newlines in the raw input buffer when this
+  * function is called.  We must maintain that before returning.
+@@ -1989,23 +2024,25 @@ int process_input(struct descriptor_data *t)
+       if (write_to_descriptor(t->descriptor, buffer, t->comp) < 0)
+     return -1;
+     }
+-    if (t->snoop_by) {
+-      SEND_TO_Q("% ", t->snoop_by);
+-      SEND_TO_Q(tmp, t->snoop_by);
+-      SEND_TO_Q("\r\n", t->snoop_by);
+-    }
+-    failed_subst = 0;
++    if (!process_dpclock_control(tmp)) {
++      if (t->snoop_by) {
++        SEND_TO_Q("% ", t->snoop_by);
++        SEND_TO_Q(tmp, t->snoop_by);
++        SEND_TO_Q("\r\n", t->snoop_by);
++      }
++      failed_subst = 0;
+ 
+-    if (*tmp == '!')
+-      strcpy(tmp, t->last_input);
+-    else if (*tmp == '^') {
+-      if (!(failed_subst = perform_subst(t, t->last_input, tmp)))
+-    strcpy(t->last_input, tmp);
+-    } else
++      if (*tmp == '!')
++        strcpy(tmp, t->last_input);
++      else if (*tmp == '^') {
++        if (!(failed_subst = perform_subst(t, t->last_input, tmp)))
+       strcpy(t->last_input, tmp);
++      } else
++        strcpy(t->last_input, tmp);
+ 
+-    if (!failed_subst)
+-      write_to_q(tmp, &t->input, 0);
++      if (!failed_subst)
++        write_to_q(tmp, &t->input, 0);
++    }
+ 
+     /* find the end of this line */
+     while (ISNEWL(*nl_pos))
