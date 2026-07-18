@@ -364,7 +364,24 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 	// JWT_SECRET is required for token issuance; production sets it via env.
 	// Must be >=32 chars so boot validation passes and CI exercises the real
 	// issuance path (DP-910), not the silent-failure path.
-	cmd.Env = append(os.Environ(), "JWT_SECRET=e2e-smoke-test-secret-at-least-32-chars-long", "ENVIRONMENT=development")
+	//
+	// DP_SEED pins the boot PRNG stream; DP_FIXED_TIME pins the Unix instant
+	// reset_time() derives the calendar from, so the clock is stable at a
+	// daytime hour (12 = noon, SunLight) instead of drifting with wall time.
+	// Without these the server boots non-deterministically off time.Now(), and
+	// outdoor rooms like Temple Square render "pitch black" during night MUD
+	// hours (the MUD hour advances every 63 real seconds) — hiding the NPCs
+	// these tests engage. DP_FIXED_TIME (not DP_CLOCK) is used so real-time
+	// game pulses keep firing, which the combat-round observation depends on.
+	// The timestamp is beginning_of_time + 12 MUD-hours (12*63s), a daytime
+	// instant.
+	cmd.Env = append(
+		os.Environ(),
+		"JWT_SECRET=e2e-smoke-test-secret-at-least-32-chars-long",
+		"ENVIRONMENT=development",
+		"DP_SEED=1",
+		"DP_FIXED_TIME=650337471",
+	)
 	var logBuf strings.Builder
 	cmd.Stdout = &logBuf
 	cmd.Stderr = &logBuf

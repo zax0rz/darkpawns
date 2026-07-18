@@ -23,7 +23,11 @@ import (
 )
 
 const (
-	fixedSeed    = "1"
+	fixedSeed = "1"
+	// fixedTime pins the game calendar on both engines (DP_FIXED_TIME seam,
+	// orthogonal to DP_CLOCK's pulse freeze). 1770838461 => 2pm/daytime,
+	// {hours:14,day:17,month:8,year:1245}; both derive an identical calendar.
+	fixedTime    = "1770838461"
 	settlePulses = 40 // C PULSE_MOBILE: births a newbie exactly once.
 	deadDBURL    = "postgres://x:x@127.0.0.1:1/nope?sslmode=disable&connect_timeout=1"
 )
@@ -181,7 +185,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	oracleProc, err := startProcess(ctx, "C oracle", oracleRoot,
-		append(os.Environ(), "DP_SEED="+fixedSeed, "DP_CLOCK=1"), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
+		append(os.Environ(), "DP_SEED="+fixedSeed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
 	if err != nil {
 		return err
 	}
@@ -193,6 +197,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 			os.Environ(),
 			"DP_SEED="+fixedSeed,
 			"DP_CLOCK=1",
+			"DP_FIXED_TIME="+fixedTime,
 			"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
 			"ENVIRONMENT=development",
 		),

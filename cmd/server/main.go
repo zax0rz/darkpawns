@@ -86,6 +86,13 @@ func main() {
 	if dpclock.Frozen() {
 		slog.Info("DP_CLOCK enabled; real-time game pulses are frozen")
 	}
+	// DP_FIXED_TIME pins the Unix instant reset_time() derives the calendar
+	// from, so sunlight/weather are stable independent of wall-clock MUD hour.
+	// Separate from DP_CLOCK (which freezes pulses); tests needing real-time
+	// pulses plus a pinned daytime clock use DP_FIXED_TIME.
+	if ts, ok := game.ConfigureNowFromEnv(); ok {
+		slog.Info("DP_FIXED_TIME pinned", "now", ts)
+	}
 
 	if *worldDir == "" {
 		slog.Error("Usage: server -world <path-to-lib>")

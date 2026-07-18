@@ -22,6 +22,8 @@
 package game
 
 import (
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -73,11 +75,38 @@ const (
 // mudTimePassed, exactly as C's reset_time() does at boot.
 const beginningOfTime = 650336715
 
-// nowFunc returns the current Unix timestamp. It is a seam so tests (and the
-// DP_CLOCK fixed-time gate Claude will add) can inject a deterministic time
-// instead of wall time. Production boot uses time.Now().Unix(), matching C's
-// reset_time() calling time(0).
+// nowFunc returns the Unix timestamp reset_time() derives the calendar from.
+// It is a seam so tests and deterministic runs can inject a fixed time
+// instead of wall time. ConfigureNowFromEnv overrides it from DP_FIXED_TIME;
+// otherwise production uses time.Now().Unix(), matching C's reset_time()
+// calling time(0).
+//
+// Note: DP_FIXED_TIME is intentionally separate from DP_CLOCK. DP_CLOCK's
+// presence freezes real-time game pulses (internal/dpclock.Frozen) for the
+// oracle harness, which also drives heartbeats explicitly via ~dpclock pulse.
+// Tests that need real-time pulses (e.g. e2e combat, which observes live
+// combat rounds) but still require a pinned, daytime clock use DP_FIXED_TIME
+// instead, so pulses keep running while sunlight stays stable.
 var nowFunc = func() int64 { return time.Now().Unix() }
+
+// ConfigureNowFromEnv wires nowFunc to the DP_FIXED_TIME seam: when set to a
+// Unix timestamp, reset_time() derives the calendar from that fixed instant
+// instead of time.Now(). This pins sunlight/weather deterministically,
+// independent of the wall-clock MUD hour (which advances every 63 real
+// seconds). Returns the configured timestamp and true when a value was
+// applied.
+func ConfigureNowFromEnv() (int64, bool) {
+	v, ok := os.LookupEnv("DP_FIXED_TIME")
+	if !ok || v == "" {
+		return 0, false
+	}
+	ts, err := strconv.ParseInt(v, 10, 64)
+	if err != nil || ts < 0 {
+		return 0, false
+	}
+	nowFunc = func() int64 { return ts }
+	return ts, true
+}
 
 // mudTimePassed ports C's mud_time_passed (utils.c:306-327). It converts
 // elapsed real seconds (t2 - t1) into {hours, day, month, year} on the MUD
