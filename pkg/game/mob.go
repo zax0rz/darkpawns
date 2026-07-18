@@ -103,30 +103,20 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		hp = 100 // Default
 	}
 
-	// Initialize ability scores from prototype — db.c:1053-1062
+	// Initialize ability scores from prototype. C applies the level>15 random
+	// stat boosts (db.c:1053-1062) ONCE, at parse/boot time on the prototype
+	// (parse_simple_mob); read_mobile only copies the prototype and rolls HP
+	// dice + gold. The Go parser (parser/mob.go) already applies those boosts
+	// at parse time with the matching draw order, so NewMob must NOT re-roll
+	// them — doing so double-applied the boost and burned 6 extra PRNG draws
+	// per high-level mob spawn, desyncing the shared stream (fixes the
+	// hunger-thirst stat divergence).
 	str := proto.Str
 	intel := proto.Int
 	wis := proto.Wis
 	dex := proto.Dex
 	con := proto.Con
 	cha := proto.Cha
-
-	// Random stat boosts for mobs above level 15 — db.c:1053-1062
-	if proto.Level > 15 {
-		statmod := proto.Level - 15
-		// #nosec G404 — game RNG, not cryptographic
-		str += min(dprng.Number(0, statmod), 7)
-		// #nosec G404
-		intel += min(dprng.Number(0, statmod), 7)
-		// #nosec G404
-		wis += min(dprng.Number(0, statmod), 7)
-		// #nosec G404
-		dex += min(dprng.Number(0, statmod), 7)
-		// #nosec G404
-		con += min(dprng.Number(0, statmod), 7)
-		// #nosec G404
-		cha += min(dprng.Number(0, statmod), 7)
-	}
 
 	// Gold variance +/-(1-20%) — db.c:1766-1774. C draws number(0,1) (the sign
 	// coin-flip) BEFORE number(1,20) (the percentage), and the number(1,20) is
