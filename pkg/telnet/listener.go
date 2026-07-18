@@ -275,9 +275,13 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	remoteAddr := rawConn.RemoteAddr().String()
 	slog.Info("Telnet connect", "remote_addr", remoteAddr)
 
-	// Send initial negotiation: WONT echo (so client local echo is ON by default)
+	// Send initial negotiation: WONT echo (so client local echo is ON by default).
+	// Do NOT offer WILL SGA: the original C DarkPawns never negotiates
+	// Suppress-Go-Ahead, and offering it here — combined with the transient
+	// WILL ECHO around the password prompt — is the classic character-at-a-time
+	// signature that makes line-mode clients (e.g. Mudlet) warn and mishandle
+	// input. Password echo-off works without it.
 	tc.write([]byte{IAC, WONT, OPT_ECHO})
-	tc.write([]byte{IAC, WILL, OPT_SGA})
 	tc.write([]byte{IAC, WILL, OPT_MSSP})
 	tc.write([]byte{IAC, WILL, OPT_GMCP})
 	tc.write([]byte{IAC, WILL, OPT_COMPRESS2})
@@ -672,7 +676,11 @@ func (tc *telnetConn) readLine() (string, bool) {
 					return "", false
 				}
 				switch opt {
-				case OPT_ECHO, OPT_SGA:
+				case OPT_ECHO:
+					// Server manages ECHO explicitly (password masking).
+					// Never assert WILL SGA (see connect negotiation) — a
+					// client's DO SGA gets WONT via default, so the server
+					// never enters the character-at-a-time signature.
 					tc.write([]byte{IAC, WILL, opt})
 				case OPT_MSSP:
 					tc.write([]byte{IAC, WILL, OPT_MSSP})
