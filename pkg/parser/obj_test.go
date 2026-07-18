@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -111,6 +112,29 @@ $
 	}
 	if objs[2].VNum != 300 {
 		t.Errorf("obj2 vnum: expected 300, got %d", objs[2].VNum)
+	}
+}
+
+func TestParseAllObjFilesUsesIndexOrder(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeObject := func(name string, vnum int) {
+		t.Helper()
+		content := fmt.Sprintf("#%d\nobject %d~\nan object~\nAn object is here.~\n~\n1 0 0 0 0 0 0 0 0\n0 0 0 0\n1 1 100.0\n$\n", vnum, vnum)
+		writeObjFile(t, tmpDir, name, content)
+	}
+	writeObject("1.obj", 100)
+	writeObject("2.obj", 200)
+	writeObject("3.obj", 300)
+	if err := os.WriteFile(filepath.Join(tmpDir, "index"), []byte("2.obj\n1.obj\n$\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	objs, err := ParseAllObjFiles(tmpDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(objs) != 2 || objs[0].VNum != 200 || objs[1].VNum != 100 {
+		t.Fatalf("indexed objects = %+v, want vnums [200 100]", objs)
 	}
 }
 

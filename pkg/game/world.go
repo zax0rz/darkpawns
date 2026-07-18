@@ -44,6 +44,7 @@ type World struct {
 
 	// Static world data (from parsed files)
 	rooms      map[int]*parser.Room
+	roomOrder  []int // room VNums in C world[] RNUM/load order
 	mobs       map[int]*parser.Mob
 	objs       map[int]*parser.Obj
 	zones      map[int]*parser.Zone
@@ -138,6 +139,7 @@ func (w *World) SetCombatEngine(ce CombatEngine) {
 func NewWorld(parsed *parser.World) (*World, error) {
 	w := &World{
 		rooms:           make(map[int]*parser.Room),
+		roomOrder:       make([]int, 0, len(parsed.Rooms)),
 		mobs:            make(map[int]*parser.Mob),
 		objs:            make(map[int]*parser.Obj),
 		zones:           make(map[int]*parser.Zone),
@@ -157,6 +159,9 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	// Index rooms by VNum
 	for i := range parsed.Rooms {
 		room := &parsed.Rooms[i]
+		if _, exists := w.rooms[room.VNum]; !exists {
+			w.roomOrder = append(w.roomOrder, room.VNum)
+		}
 		w.rooms[room.VNum] = room
 	}
 
@@ -246,8 +251,13 @@ func (w *World) ReplaceParsedWorld(pw *parser.World) {
 	defer w.mu.Unlock()
 	w.parsedData = pw
 	w.rooms = make(map[int]*parser.Room)
+	w.roomOrder = make([]int, 0, len(pw.Rooms))
 	for i := range pw.Rooms {
-		w.rooms[pw.Rooms[i].VNum] = &pw.Rooms[i]
+		room := &pw.Rooms[i]
+		if _, exists := w.rooms[room.VNum]; !exists {
+			w.roomOrder = append(w.roomOrder, room.VNum)
+		}
+		w.rooms[room.VNum] = room
 	}
 }
 
@@ -473,15 +483,27 @@ func (w *World) Rooms() []parser.Room {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	result := make([]parser.Room, 0, len(w.rooms))
-	for _, r := range w.rooms {
-		result = append(result, *r)
+	seen := make(map[int]struct{}, len(w.roomOrder))
+	for _, vnum := range w.roomOrder {
+		if room, ok := w.rooms[vnum]; ok {
+			result = append(result, *room)
+			seen[vnum] = struct{}{}
+		}
 	}
-	// C indexes world[] in file/vnum order. Several reset-time random-placement
-	// paths draw an index into this slice and conditionally retry based on the
-	// selected room. Letting Go map iteration choose the slice order therefore
-	// changes both draw-to-room assignment and sometimes the number of draws,
-	// shifting the process-wide stream before character creation.
-	sort.Slice(result, func(i, j int) bool { return result[i].VNum < result[j].VNum })
+
+	// Rooms added outside parsed world data have no C RNUM equivalent. Include
+	// them in stable vnum order so test fixtures and live edits remain visible
+	// without reintroducing map-order nondeterminism.
+	extraVNums := make([]int, 0, len(w.rooms)-len(result))
+	for vnum := range w.rooms {
+		if _, ok := seen[vnum]; !ok {
+			extraVNums = append(extraVNums, vnum)
+		}
+	}
+	sort.Ints(extraVNums)
+	for _, vnum := range extraVNums {
+		result = append(result, *w.rooms[vnum])
+	}
 	return result
 }
 

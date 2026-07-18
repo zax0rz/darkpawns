@@ -143,9 +143,6 @@ func isRoomValidForRandZon(room *parser.Room, zone int) bool {
 	if hasRoomFlagBit(room, roomAtrium) {
 		return false
 	}
-	if room.Sector == sectCity {
-		return false
-	}
 	if room.Zone != zone {
 		return false
 	}
@@ -159,23 +156,16 @@ func (s *Spawner) pickRandomRoom() *parser.Room {
 		return nil
 	}
 
-	// Try random picks first
-	for attempt := 0; attempt < 5; attempt++ {
+	// C (db.c:2116-2126) rejection-samples without an attempt cap or fallback.
+	// Every rejected room consumes another draw from the shared stream.
+	for {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		idx := dprng.Number(0, len(rooms)-1)
+		idx := zoneRoomNumber(0, len(rooms)-1)
 		if isRoomValidForSpawn(&rooms[idx]) {
 			return &rooms[idx]
 		}
 	}
-
-	// Fallback: linear scan
-	for i := range rooms {
-		if isRoomValidForSpawn(&rooms[i]) {
-			return &rooms[i]
-		}
-	}
-	return nil
 }
 
 // pickRandomZoneRoom selects a random valid room in the given zone (RANDZON style).
@@ -185,23 +175,16 @@ func (s *Spawner) pickRandomZoneRoom(zone int) *parser.Room {
 		return nil
 	}
 
-	// Try random picks first
-	for attempt := 0; attempt < 5; attempt++ {
+	// C (db.c:2133-2141) rejection-samples without an attempt cap or fallback.
+	// Unlike zone79 placement, RANDZON accepts city-sector rooms.
+	for {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		idx := dprng.Number(0, len(rooms)-1)
+		idx := zoneRoomNumber(0, len(rooms)-1)
 		if isRoomValidForRandZon(&rooms[idx], zone) {
 			return &rooms[idx]
 		}
 	}
-
-	// Fallback: linear scan
-	for i := range rooms {
-		if isRoomValidForRandZon(&rooms[i], zone) {
-			return &rooms[i]
-		}
-	}
-	return nil
 }
 
 // percentLoad returns true if an object should load based on its load probability.
@@ -218,6 +201,7 @@ var (
 	zoneObjectPercentLoad = percentLoad
 	zoneObjectInitRare    = initRare
 	zoneRareNumber        = dprng.Number
+	zoneRoomNumber        = dprng.Number
 )
 
 // ExecuteZoneReset executes all reset commands for a zone.
@@ -292,7 +276,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 
 			// MOB_RANDZON: random room within the same zone
 			spawnRoom := s.world.GetRoomInWorld(cmd.Arg3)
-			if spawnRoom != nil && mob.HasFlag("randzon") {
+			if spawnRoom != nil && mob.HasFlag("RANDZON") {
 				randRoom := s.pickRandomZoneRoom(spawnRoom.Zone)
 				if randRoom != nil {
 					s.moveMobToRoom(mob, randRoom.VNum)

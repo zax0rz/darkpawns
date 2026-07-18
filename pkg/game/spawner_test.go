@@ -260,6 +260,97 @@ func TestZoneResetInvalidEquipPositionSkipsCreationAndPercent(t *testing.T) {
 	}
 }
 
+func installZoneRoomNumbers(t *testing.T, values ...int) *int {
+	t.Helper()
+	previous := zoneRoomNumber
+	calls := 0
+	zoneRoomNumber = func(from, to int) int {
+		if calls >= len(values) {
+			t.Fatalf("unexpected placement draw %d for number(%d,%d)", calls+1, from, to)
+		}
+		value := values[calls]
+		calls++
+		if value < from || value > to {
+			t.Fatalf("placement value %d outside number(%d,%d)", value, from, to)
+		}
+		return value
+	}
+	t.Cleanup(func() { zoneRoomNumber = previous })
+	return &calls
+}
+
+func TestPickRandomRoomRetriesPastFiveRejections(t *testing.T) {
+	world, err := NewWorld(&parser.World{Rooms: []parser.Room{
+		{VNum: 100, Zone: 1, Flags: []string{"4"}}, // ROOM_NOMOB
+		{VNum: 200, Zone: 1},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(world.StopAITicker)
+	spawner := NewSpawner(world)
+	calls := installZoneRoomNumbers(t, 0, 0, 0, 0, 0, 0, 1)
+
+	room := spawner.pickRandomRoom()
+	if room == nil || room.VNum != 200 {
+		t.Fatalf("picked room = %#v, want vnum 200", room)
+	}
+	if *calls != 7 {
+		t.Fatalf("placement draws = %d, want 7", *calls)
+	}
+}
+
+func TestRandZonAcceptsCitySectorRoom(t *testing.T) {
+	room := &parser.Room{VNum: 100, Zone: 1, Sector: sectCity}
+	if !isRoomValidForRandZon(room, 1) {
+		t.Fatal("RANDZON rejected city-sector room accepted by C")
+	}
+	if isRoomValidForSpawn(room) {
+		t.Fatal("zone79 placement accepted city-sector room rejected by C")
+	}
+}
+
+func TestZoneResetRelocatesUppercaseRandZonMob(t *testing.T) {
+	world, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{
+			{VNum: 100, Zone: 1},
+			{VNum: 200, Zone: 1},
+		},
+		Mobs: []parser.Mob{{
+			VNum:       300,
+			Keywords:   "wanderer",
+			ShortDesc:  "a wanderer",
+			Position:   8,
+			DefaultPos: 8,
+			ActionFlags: []string{
+				"RANDZON",
+			},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(world.StopAITicker)
+	spawner := NewSpawner(world)
+	calls := installZoneRoomNumbers(t, 1)
+
+	if err := spawner.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{
+		Command: "M",
+		Arg1:    300,
+		Arg2:    1,
+		Arg3:    100,
+	}}}); err != nil {
+		t.Fatal(err)
+	}
+	if *calls != 1 {
+		t.Fatalf("RANDZON placement draws = %d, want 1", *calls)
+	}
+	mobs := spawner.GetMobsInRoom(200)
+	if len(mobs) != 1 || mobs[0].GetVNum() != 300 {
+		t.Fatalf("room 200 mobs = %#v, want RANDZON mob 300", mobs)
+	}
+}
+
 func TestInitRareMatchesCDrawRangesAndUnsupportedApplyBurn(t *testing.T) {
 	previous := zoneRareNumber
 	var ranges [][2]int

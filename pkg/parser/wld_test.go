@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -127,6 +128,31 @@ $
 
 	if len(rooms) != 2 {
 		t.Errorf("expected 2 rooms total, got %d", len(rooms))
+	}
+}
+
+func TestParseAllWldFilesUsesIndexOrder(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeRoom := func(name string, vnum int) {
+		t.Helper()
+		content := fmt.Sprintf("#%d\nRoom %d~\nDescription.\n~\n1 0 0 0 0 0\nS\n$\n", vnum, vnum)
+		if err := os.WriteFile(filepath.Join(tmpDir, name), []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeRoom("1.wld", 100)
+	writeRoom("2.wld", 200)
+	writeRoom("3.wld", 300)
+	if err := os.WriteFile(filepath.Join(tmpDir, "index"), []byte("2.wld\n1.wld\n$\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	rooms, err := ParseAllWldFiles(tmpDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rooms) != 2 || rooms[0].VNum != 200 || rooms[1].VNum != 100 {
+		t.Fatalf("indexed rooms = %+v, want vnums [200 100]", rooms)
 	}
 }
 

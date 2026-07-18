@@ -311,21 +311,17 @@ func ParseAllObjFiles(dir string) ([]Obj, error) {
 		return nil, err
 	}
 
-	entries, err := os.ReadDir(dir)
+	fileNames, err := indexedDataFileNames(dir, ".obj")
 	if err != nil {
-		return nil, fmt.Errorf("read dir %s: %w", dir, err)
+		return nil, err
 	}
 
 	var allObjs []Obj
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".obj") {
-			continue
-		}
-
-		path := filepath.Join(dir, entry.Name())
+	for _, fileName := range fileNames {
+		path := filepath.Join(dir, fileName)
 		objs, err := ParseObjFile(path)
 		if err != nil {
-			return nil, fmt.Errorf("parse %s: %w", entry.Name(), err)
+			return nil, fmt.Errorf("parse %s: %w", fileName, err)
 		}
 
 		allObjs = append(allObjs, objs...)
