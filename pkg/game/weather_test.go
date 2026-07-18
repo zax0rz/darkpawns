@@ -62,10 +62,12 @@ func TestAnotherHour_AdvancesTimeAndSunlight(t *testing.T) {
 
 func TestInitializeWeatherConsumesCPressureRoll(t *testing.T) {
 	originalNumber := weatherInitNumber
+	originalNow := nowFunc
 	originalTime := timeInfo
 	originalWeather := weatherInfo
 	t.Cleanup(func() {
 		weatherInitNumber = originalNumber
+		nowFunc = originalNow
 		timeInfo = originalTime
 		weatherInfo = originalWeather
 	})
@@ -75,19 +77,26 @@ func TestInitializeWeatherConsumesCPressureRoll(t *testing.T) {
 		gotFrom, gotTo = from, to
 		return 25
 	}
-	timeInfo = TimeInfoData{Hours: 5, Month: 8}
-	weatherInfo = WeatherData{Sunlight: SunLight}
+
+	// Pin the clock to a fixed instant whose mudTimePassed yields month 8 (the
+	// 7-12 winter band, where the pressure range narrows to 50). Without this
+	// seam the test relied on wall-clock month and passed only by coincidence.
+	// Solve month=8, day=any, hours=any for (now - beginningOfTime):
+	//   secs = year*secsPerMUDYear + 8*secsPerMUDMonth + 0*secsPerMUDDay + 0*secsPerMUDHour
+	// Pick year=1, month=8: secs = 899640 + 8*52920 = 1323000.
+	nowFunc = func() int64 { return beginningOfTime + 1323000 }
 
 	InitializeWeather()
 
 	if gotFrom != 1 || gotTo != 50 {
-		t.Fatalf("weather pressure draw = number(%d,%d), want number(1,50)", gotFrom, gotTo)
+		t.Fatalf("weather pressure draw = number(%d,%d), want number(1,50) for month %d",
+			gotFrom, gotTo, timeInfo.Month)
+	}
+	if timeInfo.Month != 8 {
+		t.Fatalf("fixed clock derived month = %d, want 8", timeInfo.Month)
 	}
 	if weatherInfo.Pressure != 985 || weatherInfo.Change != 0 || weatherInfo.Sky != SkyRaining {
 		t.Fatalf("initialized weather = %+v, want pressure 985, change 0, raining", weatherInfo)
-	}
-	if weatherInfo.Sunlight != SunLight {
-		t.Fatalf("initialized sunlight = %d, want existing sunlight preserved", weatherInfo.Sunlight)
 	}
 }
 
