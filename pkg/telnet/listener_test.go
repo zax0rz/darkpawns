@@ -563,11 +563,18 @@ func TestInitialNegotiationOffersMCCP2(t *testing.T) {
 
 	data := readAllAvailable(t, client, 200*time.Millisecond)
 	found := bytes.Contains(data, []byte{IAC, WILL, OPT_COMPRESS2})
+	// The server must NOT offer WILL SGA: combined with the password WILL ECHO
+	// it is the character-at-a-time signature that breaks line-mode clients
+	// (Mudlet). Original C DarkPawns never negotiates SGA.
+	offeredSGA := bytes.Contains(data, []byte{IAC, WILL, OPT_SGA})
 	_ = client.Close()
 	<-done
 
 	if !found {
 		t.Errorf("initial negotiation did not include IAC WILL COMPRESS2, got %v", data)
+	}
+	if offeredSGA {
+		t.Errorf("initial negotiation must not offer IAC WILL SGA (char-at-a-time), got %v", data)
 	}
 }
 
