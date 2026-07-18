@@ -23,6 +23,7 @@ package game
 
 import (
 	"sync"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
@@ -54,6 +55,54 @@ const (
 	MoonHalfEmpty    = 6
 	MoonThreeEmpty   = 7
 )
+
+// MUD calendar constants — from utils.h:135-138. The MUD clock advances faster
+// than real time: one MUD hour = 63 real seconds, so a full MUD day is ~25
+// minutes. These must match C exactly — mud_time_passed's modular arithmetic
+// depends on them.
+const (
+	secsPerMUDHour  = 63
+	secsPerMUDDay   = 24 * secsPerMUDHour
+	secsPerMUDMonth = 35 * secsPerMUDDay
+	secsPerMUDYear  = 17 * secsPerMUDMonth
+)
+
+// beginningOfTime is C's epoch for the game calendar (db.c:417
+// `long beginning_of_time = 650336715;`, a Unix timestamp in 1990-07). Elapsed
+// seconds since this instant are converted to {hours,day,month,year} by
+// mudTimePassed, exactly as C's reset_time() does at boot.
+const beginningOfTime = 650336715
+
+// nowFunc returns the current Unix timestamp. It is a seam so tests (and the
+// DP_CLOCK fixed-time gate Claude will add) can inject a deterministic time
+// instead of wall time. Production boot uses time.Now().Unix(), matching C's
+// reset_time() calling time(0).
+var nowFunc = func() int64 { return time.Now().Unix() }
+
+// mudTimePassed ports C's mud_time_passed (utils.c:306-327). It converts
+// elapsed real seconds (t2 - t1) into {hours, day, month, year} on the MUD
+// calendar using integer division with sequential subtraction — the exact
+// arithmetic C uses, so the same (now - beginning_of_time) yields identical
+// fields on both engines. moon is left for ResetTime to derive (C sets it to
+// 0 here and computes it in reset_time from day).
+func mudTimePassed(t2, t1 int64) TimeInfoData {
+	secs := t2 - t1
+
+	now := TimeInfoData{}
+	now.Hours = int((secs / secsPerMUDHour) % 24)
+	secs -= secsPerMUDHour * int64(now.Hours)
+
+	now.Day = int((secs / secsPerMUDDay) % 35)
+	secs -= secsPerMUDDay * int64(now.Day)
+
+	now.Month = int((secs / secsPerMUDMonth) % 17)
+	secs -= secsPerMUDMonth * int64(now.Month)
+
+	now.Year = int(secs / secsPerMUDYear)
+
+	now.Moon = 0
+	return now
+}
 
 // TimeInfoData holds the current MUD time.
 // Ported from structs.h:struct time_info_data.
@@ -93,20 +142,80 @@ var (
 	weatherWorld *World // set via SetWeatherWorld; used by event functions
 )
 
-// InitializeWeather mirrors reset_time()'s pressure initialization in db.c.
-// Its roll is the first C number() consumption during boot, before mob
-// prototypes and zone resets are loaded. Sunlight remains unchanged until Go's
-// placeholder world clock is initialized from the C epoch in a later phase.
-func InitializeWeather() {
+// ResetTime ports C's reset_time() (db.c:415-451): it derives the game
+// calendar from the real-time epoch (beginningOfTime), then derives sunlight
+// from the hour, the moon phase from the day, and initial barometric pressure
+// (whose dice roll is the first PRNG draw during boot, ahead of mob prototypes
+// and zone resets — see db.c:447-451). Call once at boot where the world
+// initializes its clock, matching C's boot ordering (reset_time is the first
+// thing boot_db does, db.c:311).
+//
+// C's reset_time additionally calls read_mud_date_from_file() (db.c:421) to
+// overwrite {year,month,day} from etc/date_record; that persistence override is
+// not ported here (Go has no date_record file). The calendar derived from the
+// epoch alone is the faithful default C falls back to when date_record is
+// missing (db.c:3206-3208).
+func ResetTime() {
 	weatherMu.Lock()
 	defer weatherMu.Unlock()
 
+	resetTimeLocked()
+}
+
+// resetTimeLocked is the lock-holding body of ResetTime, split out so a single
+// weatherMu.Lock() guards the time → sunlight → moon → pressure sequence.
+func resetTimeLocked() {
+	// db.c:420 — time_info = mud_time_passed(time(0), beginning_of_time);
+	timeInfo = mudTimePassed(nowFunc(), beginningOfTime)
+
+	// db.c:423-432 — sunlight from the hour of day.
+	switch {
+	case timeInfo.Hours <= 4:
+		weatherInfo.Sunlight = SunDark
+	case timeInfo.Hours == 5:
+		weatherInfo.Sunlight = SunRise
+	case timeInfo.Hours <= 20:
+		weatherInfo.Sunlight = SunLight
+	case timeInfo.Hours == 21:
+		weatherInfo.Sunlight = SunSet
+	default:
+		weatherInfo.Sunlight = SunDark
+	}
+
+	// db.c:438-445 — moon phase from the day of month. The cascade of < checks
+	// means each line refines the phase downward as the day decreases.
+	timeInfo.Moon = MoonThreeEmpty
+	if timeInfo.Day < 33 {
+		timeInfo.Moon = MoonHalfEmpty
+	}
+	if timeInfo.Day < 29 {
+		timeInfo.Moon = MoonQuarterEmpty
+	}
+	if timeInfo.Day < 25 {
+		timeInfo.Moon = MoonFull
+	}
+	if timeInfo.Day < 21 {
+		timeInfo.Moon = MoonThreeFull
+	}
+	if timeInfo.Day < 16 {
+		timeInfo.Moon = MoonHalfFull
+	}
+	if timeInfo.Day < 11 {
+		timeInfo.Moon = MoonQuarterFull
+	}
+	if timeInfo.Day < 5 {
+		timeInfo.Moon = MoonNew
+	}
+
+	// db.c:447-451 — initial pressure. The range narrows in months 7-12. This
+	// dice() roll is the first draw from the process-wide stream during boot.
 	pressureRange := 80
 	if timeInfo.Month >= 7 && timeInfo.Month <= 12 {
 		pressureRange = 50
 	}
 	weatherInfo.Pressure = 960 + weatherInitNumber(1, pressureRange)
 	weatherInfo.Change = 0
+	// db.c:455-462 — initial sky condition derived from pressure.
 	switch {
 	case weatherInfo.Pressure <= 980:
 		weatherInfo.Sky = SkyLightning
@@ -117,6 +226,14 @@ func InitializeWeather() {
 	default:
 		weatherInfo.Sky = SkyCloudless
 	}
+}
+
+// InitializeWeather is retained for compatibility with existing boot call
+// sites; it delegates to ResetTime, which supersedes the prior placeholder
+// (the old version set only pressure from a Year-0 clock). Deprecated: prefer
+// ResetTime.
+func InitializeWeather() {
+	ResetTime()
 }
 
 // WorldClimateSnapshot is an immutable point-in-time copy of the canonical

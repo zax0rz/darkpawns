@@ -125,9 +125,13 @@ func main() {
 
 	slog.Info("Dark Pawns Phase 1 Server Starting...")
 
-	// C reset_time() initializes weather before loading mob prototypes. Its
-	// pressure roll is therefore the first draw from the process-wide stream.
-	game.InitializeWeather()
+	// C reset_time() (db.c:415-451) is the first thing boot_db does: it derives
+	// the game calendar from the real-time epoch (beginning_of_time), then
+	// derives sunlight, moon phase, and initial barometric pressure. That
+	// pressure dice roll is the first draw from the process-wide stream,
+	// ahead of mob prototypes and zone resets, so ResetTime must run before
+	// the world is parsed.
+	game.ResetTime()
 
 	// Parse world files
 	slog.Info("Loading world", "path", *worldDir)
