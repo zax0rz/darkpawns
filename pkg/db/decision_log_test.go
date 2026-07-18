@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"unicode/utf8"
 )
 
 var (
@@ -92,6 +93,35 @@ func TestFlushRetainsRecordsOnDBError(t *testing.T) {
 
 // TestGetEnvInt verifies the environment-variable helper used for connection
 // pool configuration (DP-633).
+func TestSanitizeLogArgs(t *testing.T) {
+	// 0x85 is a valid UTF-8 continuation byte but invalid standalone — the
+	// exact byte that stalled the prod decision_log flush.
+	args := []interface{}{
+		"clean",
+		"bad\x85input",
+		[]string{"ok", "arg\x85two"},
+		42,   // non-string untouched
+		true, // non-string untouched
+		[]string(nil),
+	}
+	sanitizeLogArgs(args)
+
+	if args[0] != "clean" {
+		t.Errorf("valid string mutated: %q", args[0])
+	}
+	if got := args[1].(string); !utf8.ValidString(got) {
+		t.Errorf("string still invalid UTF-8: %q", got)
+	}
+	for _, s := range args[2].([]string) {
+		if !utf8.ValidString(s) {
+			t.Errorf("slice element still invalid UTF-8: %q", s)
+		}
+	}
+	if args[3] != 42 || args[4] != true {
+		t.Errorf("non-string args mutated: %v %v", args[3], args[4])
+	}
+}
+
 func TestGetEnvInt(t *testing.T) {
 	orig := os.Getenv("DP_TEST_INT")
 	defer func() { _ = os.Setenv("DP_TEST_INT", orig) }()

@@ -384,6 +384,27 @@ func (dlw *DecisionLogWriter) flushLoop() {
 	}
 }
 
+// sanitizeLogArgs replaces invalid UTF-8 in string / []string query args with
+// U+FFFD. A single non-UTF-8 byte (e.g. 0x85 from raw telnet client input in
+// raw_input/outcome_text) otherwise makes Postgres reject the whole multi-row
+// INSERT ("invalid byte sequence for encoding UTF8"), and Flush requeues the
+// failed batch at the front — a poison record then stalls the flush buffer
+// indefinitely. Sanitizing at flush time also rescues already-requeued records.
+func sanitizeLogArgs(args []interface{}) {
+	for i, a := range args {
+		switch v := a.(type) {
+		case string:
+			args[i] = strings.ToValidUTF8(v, "�")
+		case []string:
+			clean := make([]string, len(v))
+			for j, s := range v {
+				clean[j] = strings.ToValidUTF8(s, "�")
+			}
+			args[i] = clean
+		}
+	}
+}
+
 func (dlw *DecisionLogWriter) flushDecisions(ctx context.Context, records []*DecisionRecord) error {
 	if len(records) == 0 {
 		return nil
@@ -445,6 +466,7 @@ func (dlw *DecisionLogWriter) flushDecisions(ctx context.Context, records []*Dec
 		argIdx += 42
 	}
 
+	sanitizeLogArgs(args)
 	_, err := dlw.db.conn.ExecContext(ctx, sb.String(), args...)
 	return err
 }
@@ -488,6 +510,7 @@ func (dlw *DecisionLogWriter) flushCombat(ctx context.Context, records []*Combat
 		argIdx += 15
 	}
 
+	sanitizeLogArgs(args)
 	_, err := dlw.db.conn.ExecContext(ctx, sb.String(), args...)
 	return err
 }
