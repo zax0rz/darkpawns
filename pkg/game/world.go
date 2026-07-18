@@ -4,6 +4,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -471,10 +472,16 @@ func (w *World) GetAllPlayers() []*Player {
 func (w *World) Rooms() []parser.Room {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
-	var result []parser.Room
+	result := make([]parser.Room, 0, len(w.rooms))
 	for _, r := range w.rooms {
 		result = append(result, *r)
 	}
+	// C indexes world[] in file/vnum order. Several reset-time random-placement
+	// paths draw an index into this slice and conditionally retry based on the
+	// selected room. Letting Go map iteration choose the slice order therefore
+	// changes both draw-to-room assignment and sometimes the number of draws,
+	// shifting the process-wide stream before character creation.
+	sort.Slice(result, func(i, j int) bool { return result[i].VNum < result[j].VNum })
 	return result
 }
 

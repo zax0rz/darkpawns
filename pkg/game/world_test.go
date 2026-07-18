@@ -20,6 +20,28 @@ func TestGetAllZonesReturnsDeterministicOrder(t *testing.T) {
 	}
 }
 
+func TestRoomsReturnsDeterministicOrder(t *testing.T) {
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{
+		{VNum: 300},
+		{VNum: 100},
+		{VNum: 200},
+	}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	rooms := w.Rooms()
+	if len(rooms) != 3 {
+		t.Fatalf("Rooms returned %d rooms, want 3", len(rooms))
+	}
+	for i, want := range []int{100, 200, 300} {
+		if got := rooms[i].VNum; got != want {
+			t.Fatalf("Rooms()[%d].VNum = %d, want %d", i, got, want)
+		}
+	}
+}
+
 // TestStopAITickerStopsBothTickers verifies that StopAITicker can be called
 // without panic and that the World remains usable afterwards. The AI and point
 // tickers share the World's done channel; closing it stops both loops.
