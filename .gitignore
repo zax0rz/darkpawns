@@ -86,3 +86,6 @@ website/REVIEW-*.md
 # Player data (runtime)
 pkg/db/data/
 darkpawns-server
+
+# Outreach — contains PII, do not commit
+docs/outreach/
