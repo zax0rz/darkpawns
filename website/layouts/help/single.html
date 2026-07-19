@@ -13,13 +13,7 @@
 
 <article class="container content-narrow help-single-article">
   <!-- Breadcrumbs -->
-  <nav class="help-breadcrumbs" aria-label="Breadcrumb">
-    <a href="/help/">Help</a>
-    <span class="help-breadcrumbs-separator">&raquo;</span>
-    <span class="help-breadcrumbs-current">{{ $category_name }}</span>
-    <span class="help-breadcrumbs-separator">&raquo;</span>
-    <span class="help-breadcrumbs-current">{{ .Title }}</span>
-  </nav>
+  {{ partial "breadcrumbs.html" (dict "page" . "middle" $category_name) }}
 
   <!-- Article Header -->
   <header class="article-header help-article-header">

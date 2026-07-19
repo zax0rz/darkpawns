@@ -1,0 +1,30 @@
+{{ define "main" }}
+<div class="container content-narrow">
+  <header class="section-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+  </header>
+  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  {{ with hugo.Data.changelog }}
+  <section class="changelog-recent">
+    <h2>Recent Development</h2>
+    <p class="lead">Auto-generated from the commit log. Full release history above.</p>
+    {{ $lastDate := "" }}
+    {{ range . }}
+      {{ if ne .date $lastDate }}
+        {{ if $lastDate }}</ul>{{ end }}
+        <h3>{{ .date }}</h3>
+        <ul class="page-list">
+        {{ $lastDate = .date }}
+      {{ end }}
+      <li>
+        <span class="help-badge">{{ .type }}</span>
+        {{ .subject }}
+        <code>{{ .hash }}</code>
+      </li>
+    {{ end }}
+    {{ if $lastDate }}</ul>{{ end }}
+  </section>
+  {{ end }}
+</div>
+{{ end }}

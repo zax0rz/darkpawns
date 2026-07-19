@@ -1,0 +1,47 @@
+{{/*
+  section-cards — the one shared card-grid pattern for section index pages.
+
+  Usage:
+    {{ partial "section-cards.html" (dict "pages" .Pages "context" .) }}
+
+  Args:
+    "pages"     page collection (required) — the cards to render
+    "context"   the calling page (required) — kept for future per-section logic
+    "gridId"    string — id attribute on the grid (e.g. "help-grid" for JS filtering)
+    "gridClass" string — extra class(es) on the grid container
+    "cardAttrs" bool   — emit data-title/data-category/data-keywords on each card
+                         (client-side search/filter, used by /help/)
+    "badges"    bool   — render a subsection badge in the card header
+    "labels"    dict   — badge label overrides keyed by subsection directory name
+    "counts"    bool   — render "N pages" meta line for subsection cards
+    "dates"     bool   — render the page date as the meta line
+*/}}
+{{- $pages := .pages -}}
+<div class="section-cards{{ with .gridClass }} {{ . }}{{ end }}"{{ with .gridId }} id="{{ . }}"{{ end }}>
+  {{- range $pages }}
+  {{- $subsection := "" -}}
+  {{- with .File -}}
+    {{- $dirParts := split (trim .Dir "/") "/" -}}
+    {{- $subsection = index $dirParts (sub (len $dirParts) 1) -}}
+  {{- end }}
+  <a href="{{ .RelPermalink }}" class="section-card"
+    {{- if $.cardAttrs }} data-title="{{ lower .Title }}" data-category="{{ $subsection }}" data-keywords="{{ lower .Title }}{{ with .File }} {{ .BaseFileName }}{{ end }}{{ with .Params.aliases }} {{ lower (delimit . " ") }}{{ end }} {{ lower .Params.description }}"{{ end }}>
+    <div class="section-card-header">
+      <h2 class="section-card-title">{{ .Title }}</h2>
+      {{- if and $.badges $subsection }}
+      {{- $label := humanize $subsection -}}
+      {{- with $.labels }}{{ with index . $subsection }}{{ $label = . }}{{ end }}{{ end }}
+      <span class="help-badge badge-{{ $subsection }}">{{ $label }}</span>
+      {{- end }}
+    </div>
+    {{- with .Params.description }}
+    <p class="section-card-desc">{{ . }}</p>
+    {{- end }}
+    {{- if and $.counts .IsSection (gt (len .Pages) 0) }}
+    <p class="section-card-meta">{{ len .Pages }} {{ if eq (len .Pages) 1 }}page{{ else }}pages{{ end }}</p>
+    {{- else if and $.dates (not .Date.IsZero) }}
+    <p class="section-card-meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time></p>
+    {{- end }}
+  </a>
+  {{- end }}
+</div>

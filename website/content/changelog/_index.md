@@ -14,7 +14,6 @@ draft: false
 - Historical player quotes and community content preserved
 - Web client with cream-chrome wrapper and dark terminal
 - AI-readable: llms.txt, Markdown content negotiation, JSON-LD structured data
-- Zero JavaScript in site templates — CSS-only mobile nav
 - Responsive, accessible (WCAG AA), print stylesheet
 
 ## v2.0.0 — 2025-06-01 — The Go Port

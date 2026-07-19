@@ -116,16 +116,23 @@ test-parse:
 DEPLOY_PATH ?= /srv/hugo/
 
 # Website commands
-.PHONY: parse-world-json build-site deploy-site
+.PHONY: parse-world-json build-site deploy-site new-post
 
 parse-world-json:
 	python3 website/scripts/parse_world.py
 	python3 website/scripts/parse_db.py
 	python3 website/scripts/interlink_help.py
 	python3 website/scripts/precompute_sphere.py
+	python3 website/scripts/gen_changelog.py
 
 build-site: parse-world-json
 	cd website && hugo --minify
+
+# Create a dated news post from archetypes/news.md:
+#   make new-post TITLE=my-headline
+# Creates website/content/news/YYYY-MM-DD-my-headline.md (draft: true).
+new-post:
+	cd website && hugo new news/$$(date +%Y-%m-%d)-$(TITLE).md
 
 deploy-site: build-site
 ifndef DEPLOY_USER

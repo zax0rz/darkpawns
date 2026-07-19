@@ -1,11 +1,52 @@
-<nav class="breadcrumb" aria-label="Breadcrumb">
-  <a href="/">Home</a>
-  {{ range .Ancestors.Reverse }}
-    {{ if ne .RelPermalink "/" }}
-      <span class="separator">/</span>
-      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+{{/* Shared breadcrumb trail: Section » Subsection » Page, with BreadcrumbList JSON-LD.
+    Usage:  {{ partial "breadcrumbs.html" . }}
+    With a plain-text middle crumb (e.g. help categories that are not real sections):
+            {{ partial "breadcrumbs.html" (dict "page" . "middle" "Commands") }}
+*/}}
+{{ $page := . }}
+{{ $middle := "" }}
+{{ if reflect.IsMap . }}
+  {{ $page = .page }}
+  {{ $middle = .middle | default "" }}
+{{ end }}
+
+{{ $crumbs := slice }}
+{{ $p := $page.Parent }}
+{{ range $i := seq 6 }}
+  {{ if $p }}
+    {{ if and (not $p.IsHome) $p.Title }}
+      {{ $crumbs = $crumbs | collections.Append $p }}
+    {{ end }}
+    {{ $p = $p.Parent }}
+  {{ end }}
+{{ end }}
+{{ $crumbs = collections.Reverse $crumbs }}
+
+{{ $items := slice }}
+{{ range $crumbs }}
+  {{ $items = $items | collections.Append (dict "name" .Title "url" .RelPermalink "abs" .Permalink "current" false) }}
+{{ end }}
+{{ with $middle }}
+  {{ $items = $items | collections.Append (dict "name" . "url" "" "abs" "" "current" false) }}
+{{ end }}
+{{ $items = $items | collections.Append (dict "name" $page.Title "url" "" "abs" $page.Permalink "current" true) }}
+
+{{ if gt (len $items) 1 }}
+<nav class="site-breadcrumbs" aria-label="Breadcrumb">
+  {{ range $i, $it := $items }}
+    {{ if $i }}<span class="site-breadcrumbs-separator" aria-hidden="true">&raquo;</span>{{ end }}
+    {{ if and $it.url (not $it.current) }}
+      <a href="{{ $it.url }}">{{ $it.name }}</a>
+    {{ else }}
+      <span class="site-breadcrumbs-current"{{ if $it.current }} aria-current="page"{{ end }}>{{ $it.name }}</span>
     {{ end }}
   {{ end }}
-  <span class="separator">/</span>
-  <span aria-current="page">{{ .Title }}</span>
 </nav>
+{{ $ld := slice }}
+{{ range $i, $it := $items }}
+  {{ $entry := dict "@type" "ListItem" "position" (add $i 1) "name" $it.name }}
+  {{ with $it.abs }}{{ $entry = merge $entry (dict "item" .) }}{{ end }}
+  {{ $ld = $ld | collections.Append $entry }}
+{{ end }}
+<script type="application/ld+json">{{ dict "@context" "https://schema.org" "@type" "BreadcrumbList" "itemListElement" $ld | jsonify | safeJS }}</script>
+{{ end }}

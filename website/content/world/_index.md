@@ -93,12 +93,3 @@ HP, mana, and movement regenerate over time:
 - **CON** boosts HP regen; **WIS** boosts mana regen.
 
 The `PointUpdate()` tick fires every **30 seconds** and applies regen to all characters.
-
----
-
-## Guide Directory
-
-- **[Commands Reference](/world/commands/)** — Every command, alias, and minimum position requirement.
-- **[Game Mechanics Deep-Dive](/world/mechanics/)** — Combat formulas, THAC0 vs AC, economy, PK rules, and the remort system.
-- **[Zone Guide](/world/zones/)** — All 95 zones across the three continents with VNUM ranges, difficulty, and key mobs.
-- **[Progression Walkthrough](/world/progression/)** — Level 1 to Hero (level 30): where to go, what to kill, when to practice.

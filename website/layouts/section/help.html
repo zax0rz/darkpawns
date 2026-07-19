@@ -27,39 +27,8 @@
   </div>
 
   <!-- Help Cards Grid -->
-  <div class="help-grid" id="help-grid">
-    {{ range .Pages }}
-      {{ $dirParts := split (trim .File.Dir "/") "/" }}
-      {{ $subsection := index $dirParts (sub (len $dirParts) 1) }}
-      
-      {{ $label := $subsection }}
-      {{ if eq $subsection "commands" }}{{ $label = "Command" }}
-      {{ else if eq $subsection "spells" }}{{ $label = "Spell" }}
-      {{ else if eq $subsection "info" }}{{ $label = "Info" }}
-      {{ else if eq $subsection "socials" }}{{ $label = "Social" }}
-      {{ else if eq $subsection "wizhelp" }}{{ $label = "Immortal" }}
-      {{ else if eq $subsection "help" }}{{ $label = "FAQ" }}
-      {{ end }}
-
-      {{ $aliasesStr := "" }}
-      {{ with .Params.aliases }}
-        {{ $aliasesStr = delimit . " " }}
-      {{ end }}
-
-      <a href="{{ .RelPermalink }}" class="card help-card" style="border-bottom:none" 
-         data-title="{{ lower .Title }}" 
-         data-category="{{ $subsection }}" 
-         data-keywords="{{ lower .Title }} {{ .File.BaseFileName }} {{ lower $aliasesStr }} {{ lower .Params.description }}">
-        <div class="help-card-header">
-          <h2>{{ .Title }}</h2>
-          <span class="help-badge badge-{{ $subsection }}">{{ $label }}</span>
-        </div>
-        {{ with .Params.description }}
-          <p class="help-card-desc">{{ . }}</p>
-        {{ end }}
-      </a>
-    {{ end }}
-  </div>
+  {{ $labels := dict "commands" "Command" "spells" "Spell" "info" "Info" "socials" "Social" "wizhelp" "Immortal" "help" "FAQ" }}
+  {{ partial "section-cards.html" (dict "pages" .Pages "context" . "gridId" "help-grid" "cardAttrs" true "badges" true "labels" $labels) }}
 
   <!-- No Results Placeholder -->
   <div id="no-results-msg" class="help-no-results" style="display: none;">
@@ -76,7 +45,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const searchInput = document.getElementById("help-search");
   const clearBtn = document.getElementById("help-search-clear");
   const categoryPills = document.querySelectorAll(".help-filter-pill");
-  const cards = document.querySelectorAll(".help-card");
+  const cards = document.querySelectorAll(".section-card");
   const grid = document.getElementById("help-grid");
   const noResults = document.getElementById("no-results-msg");
   const resultsCount = document.getElementById("help-results-count");

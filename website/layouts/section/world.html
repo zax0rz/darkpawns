@@ -5,86 +5,36 @@
     {{ with .Params.description }}<p class="lead">{{ . }}</p>{{ end }}
   </header>
 
-  <!-- Section 1: Gameplay Handbooks & Reference Manuals -->
-  <div style="margin-bottom: var(--space-xl);">
-    <h2>Gameplay Handbooks & Reference</h2>
-    <p class="lead">Essential instruction manuals for human players and autonomous agents operating on the MUD.</p>
-    
-    <div class="help-grid" style="margin-top: var(--space-md);">
-      <a href="/world/commands/" class="card help-card" style="border-bottom: none;">
-        <div class="help-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-          <h3 style="margin: 0; font-size: 1.25rem;">Command Reference</h3>
-          <span class="help-badge badge-info" style="font-size: 0.75rem;">Reference</span>
-        </div>
-        <p class="help-card-desc" style="color: var(--ink-muted); margin: 0; font-size: 0.9375rem; line-height: 1.5;">Factual tables of movement, observation, communication, combat, and immortal-level commands.</p>
-      </a>
-      
-      <a href="/world/mechanics/" class="card help-card" style="border-bottom: none;">
-        <div class="help-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-          <h3 style="margin: 0; font-size: 1.25rem;">Game Mechanics</h3>
-          <span class="help-badge badge-info" style="font-size: 0.75rem;">System</span>
-        </div>
-        <p class="help-card-desc" style="color: var(--ink-muted); margin: 0; font-size: 0.9375rem; line-height: 1.5;">Precise combat formulas, THAC0 vs AC calculations, player-killing rules, and shop banking multipliers.</p>
-      </a>
-      
-      <a href="/world/progression/" class="card help-card" style="border-bottom: none;">
-        <div class="help-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-          <h3 style="margin: 0; font-size: 1.25rem;">Progression</h3>
-          <span class="help-badge badge-info" style="font-size: 0.75rem;">Guide</span>
-        </div>
-        <p class="help-card-desc" style="color: var(--ink-muted); margin: 0; font-size: 0.9375rem; line-height: 1.5;">Step-by-step level-up maps, mob hunting routines, and optimal guildmaster practice schedules from level 1 to Hero.</p>
-      </a>
-      
-      <a href="/world/zones/" class="card help-card" style="border-bottom: none;">
-        <div class="help-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-          <h3 style="margin: 0; font-size: 1.25rem;">Zone Guide</h3>
-          <span class="help-badge badge-info" style="font-size: 0.75rem;">Geography</span>
-        </div>
-        <p class="help-card-desc" style="color: var(--ink-muted); margin: 0; font-size: 0.9375rem; line-height: 1.5;">Detailed index of all 95 zones and continents, with VNUM ranges, difficulty gates, and mob concentrations.</p>
-      </a>
-    </div>
-  </div>
+  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
 
-  <hr class="news-divider" style="margin: var(--space-xl) auto;">
+  {{ if .Parent.IsHome }}
+    {{/* Section root (/world/): hub grouped in three bands from actual content. */}}
+    {{ $world := . }}
+    <section class="card-band">
+      <h2>Reference</h2>
+      {{ $reference := slice }}
+      {{ range (slice "races" "classes" "skills") }}
+        {{ with $world.Site.GetPage (printf "/world/%s" .) }}{{ $reference = $reference | append . }}{{ end }}
+      {{ end }}
+      {{ partial "section-cards.html" (dict "pages" $reference "context" $world "counts" true) }}
+    </section>
 
-  <!-- Section 2: Fictional & Thematic Dossiers -->
-  <div style="margin-bottom: var(--space-xl);">
-    <h2>Thematic Dossiers & Historical Records</h2>
-    <p class="lead">Preserved system databases and historical mythologies from the original 1997-2010 MUD.</p>
-    
-    <div class="help-grid" style="margin-top: var(--space-md);">
-      <a href="/world/races/races/" class="card help-card" style="border-bottom: none;">
-        <div class="help-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-          <h3 style="margin: 0; font-size: 1.25rem;">Mortal Races</h3>
-          <span class="help-badge badge-spells" style="font-size: 0.75rem;">Archive</span>
-        </div>
-        <p class="help-card-desc" style="color: var(--ink-muted); margin: 0; font-size: 0.9375rem; line-height: 1.5;">Profiles of the seven playable races, detailing their lore, starter homelands, and mechanical stat adjustments.</p>
-      </a>
-      
-      <a href="/world/classes/classes/" class="card help-card" style="border-bottom: none;">
-        <div class="help-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-          <h3 style="margin: 0; font-size: 1.25rem;">Character Classes</h3>
-          <span class="help-badge badge-spells" style="font-size: 0.75rem;">Archive</span>
-        </div>
-        <p class="help-card-desc" style="color: var(--ink-muted); margin: 0; font-size: 0.9375rem; line-height: 1.5;">Guide to the six base classes and six advanced remort classes, including weapon bans and stat priorities.</p>
-      </a>
-      
-      <a href="/world/skills/skills/" class="card help-card" style="border-bottom: none;">
-        <div class="help-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-          <h3 style="margin: 0; font-size: 1.25rem;">Skills & Spells</h3>
-          <span class="help-badge badge-spells" style="font-size: 0.75rem;">Archive</span>
-        </div>
-        <p class="help-card-desc" style="color: var(--ink-muted); margin: 0; font-size: 0.9375rem; line-height: 1.5;">Complete index of combat maneuvers, stealth states, and divine/arcane spell pools available for practice.</p>
-      </a>
-      
-      <a href="/world/lore/world-creation/" class="card help-card" style="border-bottom: none;">
-        <div class="help-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-          <h3 style="margin: 0; font-size: 1.25rem;">Legends & Lore</h3>
-          <span class="help-badge badge-spells" style="font-size: 0.75rem;">Mythology</span>
-        </div>
-        <p class="help-card-desc" style="color: var(--ink-muted); margin: 0; font-size: 0.9375rem; line-height: 1.5;">Historical background records, including the creation myth of the Dark Pawns world and Friar Drake's letters.</p>
-      </a>
-    </div>
-  </div>
+    <section class="card-band">
+      <h2>Handbooks</h2>
+      {{ partial "section-cards.html" (dict "pages" $world.RegularPages "context" $world) }}
+    </section>
+
+    <section class="card-band">
+      <h2>Lore</h2>
+      {{ $lore := slice }}
+      {{ with $world.Site.GetPage "/world/lore" }}{{ $lore = $lore | append . }}{{ end }}
+      {{ partial "section-cards.html" (dict "pages" $lore "context" $world "counts" true) }}
+    </section>
+  {{ else }}
+    {{/* Subsection list page (/world/races/ etc.): own .Content above, child pages below. */}}
+    {{ if .Pages }}
+      {{ partial "section-cards.html" (dict "pages" .Pages "context" .) }}
+    {{ end }}
+  {{ end }}
 </div>
 {{ end }}

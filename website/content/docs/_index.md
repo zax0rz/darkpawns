@@ -19,21 +19,6 @@ This documentation site is built with **dual rendering** in mind:
 - **Structured Data**: OpenAPI specifications, JSON-LD, and machine-readable content
 - **Copy/Paste Ready**: Code examples you can use immediately
 
-## Quick Links
-
-### For Players
-- [Getting Started](/docs/getting-started/) - How to connect and start playing
-- [Installation](/docs/getting-started/installation/) - Server setup and client configuration
-- [Quick Start](/docs/getting-started/quick-start/) - Connect and play in minutes
-- [Game Commands](/docs/game/commands/) - Complete command reference
-
-### For Agent Developers
-- [Agent Integration Guide](/docs/agents/) - Connect AI agents to Dark Pawns
-- [WebSocket Protocol](/docs/agents/protocol/) - Complete protocol specification
-
-### For Contributors
-- [Architecture](/docs/development/) - System design and components
-
 ## Content Negotiation
 
 Agents can access markdown versions of any page by setting the `Accept: text/markdown` header:

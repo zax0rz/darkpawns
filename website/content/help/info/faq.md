@@ -4,7 +4,6 @@ description: "New players: The guard barracks on the Street of Swords is designe
 date: 2026-04-28
 draft: false
 section: "help"
-aliases: ['/help/faq']
 ---
 
 New players: The guard barracks on the Street of Swords is designed

@@ -4,13 +4,6 @@
     <h1>{{ .Title }}</h1>
     {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
   </header>
-  <div class="help-grid">
-    {{ range .Pages }}
-    <a href="{{ .RelPermalink }}" class="card" style="border-bottom:none">
-      <h2>{{ .Title }}</h2>
-      {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
-    </a>
-    {{ end }}
-  </div>
+  {{ partial "section-cards.html" (dict "pages" .Pages "context" . "counts" true) }}
 </div>
 {{ end }}

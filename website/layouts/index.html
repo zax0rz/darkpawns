@@ -7,19 +7,15 @@
     {{ $newsSection := site.GetPage "section" "news" }}
     {{ if $newsSection }}
       <div class="news-feed">
-        {{ range $newsSection.Pages.ByDate.Reverse }}
-        <article class="news-entry blog-post">
-          <header class="news-post-header">
-            <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
-            <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
-          </header>
-          <div class="prose news-post-content">
-            {{ .Content }}
-          </div>
-          <hr class="news-divider">
+        {{ range first 3 $newsSection.Pages.ByDate.Reverse }}
+        <article class="news-entry">
+          <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
+          <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+          {{ with (.Params.description | default .Params.summary | default .Summary) }}<p>{{ . }}</p>{{ end }}
         </article>
         {{ end }}
       </div>
+      <p><a href="/news/">Read the dispatch →</a></p>
     {{ else }}
       <p class="lead">No dispatches filed yet.</p>
     {{ end }}
@@ -57,18 +53,6 @@
       <span class="connect-label">TELNET</span>
       <code>darkpawns.labz0rz.com 7777</code>
     </div>
-
-    <!-- Quick Nav Links -->
-    <nav class="sidebar-quicknav" aria-label="Site navigation">
-      <ul>
-        <li><a href="/play"><span class="qnav-num">01.</span>Launch Web Client</a></li>
-        <li><a href="/map"><span class="qnav-num">02.</span>World Map</a></li>
-        <li><a href="/database"><span class="qnav-num">03.</span>Database Codex</a></li>
-        <li><a href="/help"><span class="qnav-num">04.</span>Help Files</a></li>
-        <li><a href="/world"><span class="qnav-num">05.</span>Historical Lore</a></li>
-        <li><a href="/about"><span class="qnav-num">06.</span>Colophon & History</a></li>
-      </ul>
-    </nav>
 
     <div class="sidebar-colophon">FILED UNDER: muds · archives · Go · ROM 2.4b · SEE ALSO: DikuMUD · MERC · CircleMUD</div>
   </aside>

@@ -4,7 +4,6 @@ description: "Interactive map of the Dark Pawns world — browse zones, explore 
 date: 2026-05-24
 draft: false
 layout: map
-section: "docs"
 weight: 30
 tags: ["game", "world", "map", "interactive"]
 categories: ["Game"]

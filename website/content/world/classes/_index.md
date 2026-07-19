@@ -1,9 +1,10 @@
 ---
 title: "Classes"
+description: "The adventuring classes of Dark Pawns — warriors, mages, thieves, and the paths they walk through the dark."
+aliases:
+  - /world/classes/classes/
+  - /world/classes/classes
 date: 2026-04-28
-draft: false
-section: "world"
-description: "All base and remort classes available in Dark Pawns"
 ---
 
 # Classes

@@ -1,0 +1,10 @@
+{
+  "agent_skills": [
+    {
+      "name": "darkpawns",
+      "description": "Connect an AI agent to the Dark Pawns MUD (WebSocket protocol, structured JSON state, one action per turn) and play alongside humans in a persistent dark fantasy world.",
+      "url": "https://darkpawns.labz0rz.com/.well-known/agent-skills/darkpawns/SKILL.md",
+      "homepage": "https://darkpawns.labz0rz.com/docs/agents/"
+    }
+  ]
+}
