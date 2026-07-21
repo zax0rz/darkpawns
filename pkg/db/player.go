@@ -366,7 +366,7 @@ func (db *DB) RecordLoginFailure(name string, threshold int, lockoutDuration tim
 	`
 	var attempts int
 	var lockedUntil sql.NullTime
-	err := db.conn.QueryRow(query, name, threshold, lockoutDuration.Minutes()).Scan(&attempts, &lockedUntil)
+	err := db.conn.QueryRow(query, name, threshold, lockoutDuration.Seconds()).Scan(&attempts, &lockedUntil)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
