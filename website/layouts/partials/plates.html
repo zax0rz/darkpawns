@@ -1,0 +1,83 @@
+{{/* The Plates — real terminal output quoted as specimens in the paperback.
+    Ink-black band (the CRT exception), JetBrains Mono, letterpress captions.
+    Signal data (player count, narrative events) comes from data/signal.json,
+    baked at build time by scripts/gen_signal.py — absent means static only. */}}
+{{ $sig := site.Data.signal }}
+<section class="plates-band" aria-labelledby="plates-title">
+  <div class="container">
+    <header class="plates-header">
+      <h2 id="plates-title" class="plates-title">Signal &amp; Specimen</h2>
+      <p class="plates-status">
+        <span class="plates-status-dot" id="plates-dot">&#9679;</span>
+        <span id="plates-status-text">{{ with $sig }}{{ .players_online }} souls wandering as of the {{ time.Format "January 2" .generated_at }} pressing{{ else }}contacting the world&hellip;{{ end }}</span>
+      </p>
+    </header>
+
+    <div class="plates-grid">
+      <figure class="plate">
+        <div class="plate-screen"><pre><span class="plate-room-name">The Temple Altar</span>
+
+   In the center of the room, you see a black marble altar shaped like a huge
+tiger claw.  There are bloodstains all around the room, not just on the altar.
+There have obviously been many sacrifices to the Brown Dragon in this room.
+You can almost hear the screams of those who have been tortured here.
+   To the north and west you can see the chamber lead away from the altar.</pre></div>
+        <figcaption class="plate-cap"><span class="plate-num">Plate I</span> A room, as written in 1997 — domain of the Brown Dragon</figcaption>
+      </figure>
+
+      <figure class="plate">
+        <div class="plate-screen"><pre>Welcome to Dark Pawns!
+0) Exit from Dark Pawns.
+1) Enter the game.
+2) Enter description.
+3) Read the background story.
+4) Change password.
+5) Delete this character.
+
+   Make your choice:</pre></div>
+        <figcaption class="plate-cap"><span class="plate-num">Plate II</span> The threshold — every player, every agent, passes here</figcaption>
+      </figure>
+
+      <figure class="plate">
+        <div class="plate-screen"><pre>{ "type": "event", "seq": 2,
+  "data": { "type": "text",
+    "text": "You scream and hit a vigilant town guard!" } }
+
+{ "type": "vars", "seq": 3,
+  "data": { "HEALTH": 92, "FIGHTING": true,
+    "ROOM_MOBS": [ { "name": "a vigilant town guard",
+      "target_string": "guard", "fighting": true } ] } }</pre></div>
+        <figcaption class="plate-cap"><span class="plate-num">Plate III</span> A turn of combat, as the agent sees it</figcaption>
+      </figure>
+
+      {{ with $sig }}
+      <figure class="plate">
+        <div class="plate-screen"><pre>{{ with .events }}{{ range . }}{{ . }}
+{{ end }}{{ else }}The wires are quiet.
+
+No transmissions from the world since the
+{{ time.Format "January 2, 2006" $sig.generated_at }} pressing.{{ end }}</pre></div>
+        <figcaption class="plate-cap"><span class="plate-num">Plate IV</span> Transmissions from the world, latest pressing</figcaption>
+      </figure>
+      {{ end }}
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var dot = document.getElementById('plates-dot');
+  var txt = document.getElementById('plates-status-text');
+  if (!dot || !txt) return;
+  fetch('/health', {signal: AbortSignal.timeout(4000)})
+    .then(function(r){
+      if (!r.ok) return Promise.reject();
+      dot.style.color = '#3a8a3a';
+      if (txt.textContent.indexOf('contacting') === 0) txt.textContent = 'the world is awake';
+    })
+    .catch(function(){
+      dot.style.color = '#a8201a';
+      txt.textContent = 'the world is silent';
+    });
+})();
+</script>

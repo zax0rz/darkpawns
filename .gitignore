@@ -69,6 +69,11 @@ data/
 server-linux
 public/
 website/REVIEW-*.md
+# Design-review / planning scratch (conversational review artifacts)
+website/DESIGN-REVIEW-*.md
+website/PLAN-*.md
+# Generated map/graph artifact (precompute_graph.py output)
+website/static/map/world-graph.json
 
 # Clawpatch backups
 .clawpatch.bak-*/
