@@ -9,13 +9,14 @@ import (
 )
 
 // validateWorldPath ensures a path does not contain directory traversal
-// components before opening world data files.
-func validateWorldPath(path string) error {
+// components before opening world data files. Returns the cleaned path
+// that callers must use for file operations.
+func validateWorldPath(path string) (string, error) {
 	clean := filepath.Clean(path)
 	if strings.Contains(clean, "..") {
-		return fmt.Errorf("invalid path contains '..': %s", path)
+		return "", fmt.Errorf("invalid path contains '..': %s", path)
 	}
-	return nil
+	return clean, nil
 }
 
 // World represents the entire parsed game world.

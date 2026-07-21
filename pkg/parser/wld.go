@@ -115,10 +115,11 @@ func LegacyDoorState(info int) int {
 
 // ParseWldFile parses a single .wld file and returns all rooms.
 func ParseWldFile(path string) ([]Room, error) {
-	if err := validateWorldPath(path); err != nil {
+	cleanPath, err := validateWorldPath(path)
+	if err != nil {
 		return nil, err
 	}
-	file, err := os.Open(path) // #nosec G703 — world data, trusted internal path
+	file, err := os.Open(cleanPath) // #nosec G703 — world data, trusted internal path
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
@@ -319,7 +320,7 @@ func parseExit(scanner *bufio.Scanner, direction string) (Exit, error) {
 
 // ParseAllWldFiles parses all .wld files in a directory.
 func ParseAllWldFiles(dir string) ([]Room, error) {
-	if err := validateWorldPath(dir); err != nil {
+	if _, err := validateWorldPath(dir); err != nil {
 		return nil, err
 	}
 

@@ -55,10 +55,11 @@ type ExtraDesc struct {
 
 // ParseObjFile parses a single .obj file and returns all objects.
 func ParseObjFile(path string) ([]Obj, error) {
-	if err := validateWorldPath(path); err != nil {
+	cleanPath, err := validateWorldPath(path)
+	if err != nil {
 		return nil, err
 	}
-	file, err := os.Open(path) // #nosec G703 — world data, trusted internal path
+	file, err := os.Open(cleanPath) // #nosec G703 — world data, trusted internal path
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
@@ -307,7 +308,7 @@ func toUpper(r rune) rune {
 
 // ParseAllObjFiles parses all .obj files in a directory.
 func ParseAllObjFiles(dir string) ([]Obj, error) {
-	if err := validateWorldPath(dir); err != nil {
+	if _, err := validateWorldPath(dir); err != nil {
 		return nil, err
 	}
 
