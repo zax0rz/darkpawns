@@ -138,10 +138,11 @@ func parseDiceExpr(s string) (num, sides, plus int, err error) {
 
 // ParseMobFile parses a single .mob file and returns all mobs.
 func ParseMobFile(path string) ([]Mob, error) {
-	if err := validateWorldPath(path); err != nil {
+	cleanPath, err := validateWorldPath(path)
+	if err != nil {
 		return nil, err
 	}
-	file, err := os.Open(path) // #nosec G703 — world data, trusted internal path
+	file, err := os.Open(cleanPath) // #nosec G703 — world data, trusted internal path
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
@@ -565,7 +566,7 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 
 // ParseAllMobFiles parses all .mob files in a directory.
 func ParseAllMobFiles(dir string) ([]Mob, error) {
-	if err := validateWorldPath(dir); err != nil {
+	if _, err := validateWorldPath(dir); err != nil {
 		return nil, err
 	}
 

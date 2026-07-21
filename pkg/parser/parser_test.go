@@ -10,7 +10,7 @@ import (
 
 // validateWorldPath rejects paths with ".."
 func TestValidateWorldPath_Traversal(t *testing.T) {
-	err := validateWorldPath("../../etc/passwd")
+	_, err := validateWorldPath("../../etc/passwd")
 	if err == nil {
 		t.Fatal("expected error for path traversal, got nil")
 	}
@@ -18,7 +18,7 @@ func TestValidateWorldPath_Traversal(t *testing.T) {
 
 // validateWorldPath rejects paths with ".." in middle
 func TestValidateWorldPath_TraversalMiddle(t *testing.T) {
-	err := validateWorldPath("wld/../mob/test.mob")
+	_, err := validateWorldPath("wld/../mob/test.mob")
 	// filepath.Clean("wld/../mob/test.mob") = "mob/test.mob" which doesn't
 	// contain "..", so validateWorldPath returns nil. This is fine — the
 	// function checks for ".." after Clean().
@@ -29,7 +29,7 @@ func TestValidateWorldPath_TraversalMiddle(t *testing.T) {
 
 // validateWorldPath rejects paths with ".." components that survive Clean
 func TestValidateWorldPath_EmbeddedTraversal(t *testing.T) {
-	err := validateWorldPath("safe/..dangerous/file.txt")
+	_, err := validateWorldPath("safe/..dangerous/file.txt")
 	if err == nil {
 		t.Fatal("expected error for embedded '..' in path, got nil")
 	}
@@ -37,7 +37,7 @@ func TestValidateWorldPath_EmbeddedTraversal(t *testing.T) {
 
 // validateWorldPath rejects paths with leading ".."
 func TestValidateWorldPath_TraversalLeading(t *testing.T) {
-	err := validateWorldPath("..")
+	_, err := validateWorldPath("..")
 	if err == nil {
 		t.Fatal("expected error for '..' alone, got nil")
 	}
@@ -45,25 +45,45 @@ func TestValidateWorldPath_TraversalLeading(t *testing.T) {
 
 // validateWorldPath accepts clean absolute paths
 func TestValidateWorldPath_AbsoluteClean(t *testing.T) {
-	err := validateWorldPath("/home/darkpawns/lib/wld/test.wld")
+	clean, err := validateWorldPath("/home/darkpawns/lib/wld/test.wld")
 	if err != nil {
 		t.Fatalf("expected no error for clean path, got %v", err)
+	}
+	if clean != "/home/darkpawns/lib/wld/test.wld" {
+		t.Errorf("expected cleaned path unchanged, got %q", clean)
 	}
 }
 
 // validateWorldPath accepts clean relative paths
 func TestValidateWorldPath_RelativeClean(t *testing.T) {
-	err := validateWorldPath("lib/wld/test.wld")
+	clean, err := validateWorldPath("lib/wld/test.wld")
 	if err != nil {
 		t.Fatalf("expected no error for clean relative path, got %v", err)
+	}
+	if clean != "lib/wld/test.wld" {
+		t.Errorf("expected cleaned path unchanged, got %q", clean)
+	}
+}
+
+// validateWorldPath returns cleaned path for traversal that Clean resolves
+func TestValidateWorldPath_ReturnsCleanedPath(t *testing.T) {
+	clean, err := validateWorldPath("/trusted/root/../../../etc/passwd")
+	if err != nil {
+		t.Fatalf("expected no error (Clean resolves traversal), got %v", err)
+	}
+	if clean != "/etc/passwd" {
+		t.Errorf("expected cleaned path /etc/passwd, got %q", clean)
 	}
 }
 
 // validateWorldPath rejects empty string
 func TestValidateWorldPath_Empty(t *testing.T) {
-	err := validateWorldPath("")
+	clean, err := validateWorldPath("")
 	if err != nil {
 		t.Fatalf("expected no error for empty string, got %v", err)
+	}
+	if clean != "." {
+		t.Errorf("expected cleaned path '.', got %q", clean)
 	}
 }
 
