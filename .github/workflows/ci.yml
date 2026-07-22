@@ -72,7 +72,14 @@ jobs:
           echo "::error::coverage $total is below the ${MIN}% floor"; exit 1
         fi
         echo "coverage $total >= ${MIN}% floor — ok"
-    
+
+    # Reachability ratchet (R2/R5c): fail if the count of unreachable commands
+    # (implemented-unwired + missing) rises vs the newest committed snapshot in
+    # docs/reports/. The floor only moves one way. Floor as of 2026-07-22: 61.
+    # Stdlib-only (~0.1s); see scripts/reachability_ci_gate.py for the set/why.
+    - name: Reachability ratchet
+      run: python3 scripts/reachability_ci_gate.py
+
     - name: Verify all packages build
       run: go build ./...
     
