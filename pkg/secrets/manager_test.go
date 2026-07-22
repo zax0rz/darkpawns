@@ -139,3 +139,23 @@ func TestGetSecret_RejectsPathTraversal(t *testing.T) {
 		}
 	}
 }
+
+// TestGetSecret_DoesNotLeakEncryptionKey is a regression test for DP-???:
+// calling GetSecret("encryption_key") must not return the ENCRYPTION_KEY
+// env var value, which is the AES-256 master key.
+func TestGetSecret_DoesNotLeakEncryptionKey(t *testing.T) {
+	os.Setenv("ENCRYPTION_KEY", "test-secret-that-is-at-least-32-characters-long")
+	defer os.Unsetenv("ENCRYPTION_KEY")
+
+	sm, err := NewSecretManager()
+	if err != nil {
+		t.Fatalf("NewSecretManager failed: %v", err)
+	}
+
+	for _, name := range []string{"encryption_key", "ENCRYPTION_KEY", "Encryption_Key"} {
+		_, err := sm.GetSecret(name)
+		if !errors.Is(err, ErrSecretNotFound) {
+			t.Errorf("GetSecret(%q) = %v, want ErrSecretNotFound", name, err)
+		}
+	}
+}
