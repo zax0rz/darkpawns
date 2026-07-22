@@ -199,6 +199,25 @@ func TestZap_BroadcastToRoom_SubstitutesActorNameAndPronoun(t *testing.T) {
 	}
 }
 
+func TestObjectivePronoun(t *testing.T) {
+	tests := []struct {
+		sex  int
+		want string
+	}{
+		{sex: 0, want: "him"},
+		{sex: 1, want: "her"},
+		{sex: 2, want: "it"},
+		{sex: 99, want: "him"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			if got := objectivePronoun(tt.sex); got != tt.want {
+				t.Errorf("objectivePronoun(%d) = %q, want %q", tt.sex, got, tt.want)
+			}
+		})
+	}
+}
+
 // drainSendChannel returns all text accumulated on the session's send channel.
 func drainSendChannel(t *testing.T, s *Session) string {
 	t.Helper()
