@@ -1,4 +1,10 @@
-.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse
+.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability
+
+# Regenerate the port reachability report (C command table vs Go registry).
+# Deterministic; output is dated by run date. See docs/port-reachability-map.md
+# for the original manual methodology this mechanizes.
+reachability:
+	python3 scripts/gen_reachability.py
 
 # Default world directory — resolve relative to this Makefile so it works
 # regardless of the checkout directory name.
