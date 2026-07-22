@@ -328,5 +328,54 @@ func TestHTTPMiddleware_LargeBodiesFullyPassedThroughButBoundedInLogs(t *testing
 	}
 }
 
+// TestHTTPMiddleware_IgnoresSpoofedXForwardedFor verifies that a spoofed
+// X-Forwarded-For header is not used as the remote address in log output,
+// preventing log injection via that header (finding fnd_sig-feat-library-7f89dd24fa-1a97_d2656a1f14).
+func TestHTTPMiddleware_IgnoresSpoofedXForwardedFor(t *testing.T) {
+	filterServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var freq FilterRequest
+		_ = json.NewDecoder(r.Body).Decode(&freq)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(FilterResponse{FilteredText: freq.Text, Detected: []string{}})
+	}))
+	defer filterServer.Close()
+
+	client := NewClient(filterServer.URL, DefaultFilterConfig())
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	oldStdout := os.Stdout
+	rPipe, wPipe, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe failed: %v", err)
+	}
+	os.Stdout = wPipe
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.RemoteAddr = "10.0.0.1:54321"
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+	rec := httptest.NewRecorder()
+	HTTPMiddleware(handler, client).ServeHTTP(rec, req)
+
+	_ = wPipe.Close()
+	os.Stdout = oldStdout
+
+	out, err := io.ReadAll(rPipe)
+	if err != nil {
+		t.Fatalf("reading captured stdout: %v", err)
+	}
+	output := string(out)
+
+	if strings.Contains(output, "1.2.3.4") {
+		t.Errorf("log output should not contain spoofed X-Forwarded-For value, got:\n%s", output)
+	}
+	if !strings.Contains(output, "10.0.0.1") {
+		t.Errorf("log output should contain the real RemoteAddr, got:\n%s", output)
+	}
+}
+
 // silence unused imports in case helpers are not needed.
 var _ = log.New(bytes.NewBuffer(nil), "", 0)
