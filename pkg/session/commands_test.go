@@ -1,6 +1,7 @@
 package session
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -67,6 +68,98 @@ func TestReekCommandRegistrations(t *testing.T) {
 			}
 			if entry.MinPosition != tt.minPosition {
 				t.Errorf("%q MinPosition = %d, want %d", tt.name, entry.MinPosition, tt.minPosition)
+			}
+		})
+	}
+}
+
+func TestR2CommandSurfaceRegistrationsMatchC(t *testing.T) {
+	tests := []struct {
+		name        string
+		minLevel    int
+		minPosition int
+	}{
+		{name: "grats", minLevel: 0, minPosition: combat.PosSleeping},
+		{name: ".", minLevel: 0, minPosition: combat.PosSleeping},
+		{name: ":", minLevel: 1, minPosition: combat.PosResting},
+		{name: ";", minLevel: 0, minPosition: combat.PosDead},
+		{name: "?", minLevel: 0, minPosition: combat.PosDead},
+		{name: "'", minLevel: 0, minPosition: combat.PosResting},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			entry, ok := cmdRegistry.Lookup(tt.name)
+			if !ok {
+				t.Fatalf("%q command not found in registry", tt.name)
+			}
+			if entry.Name != tt.name {
+				t.Errorf("%q resolved to primary command %q", tt.name, entry.Name)
+			}
+			if entry.MinLevel != tt.minLevel {
+				t.Errorf("%q MinLevel = %d, want %d", tt.name, entry.MinLevel, tt.minLevel)
+			}
+			if entry.MinPosition != tt.minPosition {
+				t.Errorf("%q MinPosition = %d, want %d", tt.name, entry.MinPosition, tt.minPosition)
+			}
+		})
+	}
+
+	if _, ok := cmdRegistry.Lookup("gratz"); ok {
+		t.Error("Go-only player command \"gratz\" remains registered; C only exposes \"grats\"")
+	}
+}
+
+func TestSplitCommandInputMatchesCNonLetterRule(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		wantCmd  string
+		wantArgs []string
+	}{
+		{name: "apostrophe attached", input: "'hello", wantCmd: "'", wantArgs: []string{"hello"}},
+		{name: "apostrophe separated", input: "' hello", wantCmd: "'", wantArgs: []string{"hello"}},
+		{name: "emote attached", input: ":grins broadly", wantCmd: ":", wantArgs: []string{"grins", "broadly"}},
+		{name: "reply attached", input: ".hi", wantCmd: ".", wantArgs: []string{"hi"}},
+		{name: "wiznet attached", input: ";test", wantCmd: ";", wantArgs: []string{"test"}},
+		{name: "help alone", input: "?", wantCmd: "?", wantArgs: nil},
+		{name: "leading whitespace", input: "\t  'hello", wantCmd: "'", wantArgs: []string{"hello"}},
+		{name: "letter command", input: "say hello there", wantCmd: "say", wantArgs: []string{"hello", "there"}},
+		{name: "blank line", input: " \t ", wantCmd: "", wantArgs: nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotCmd, gotArgs := splitCommandInput(tt.input)
+			if gotCmd != tt.wantCmd {
+				t.Errorf("command = %q, want %q", gotCmd, tt.wantCmd)
+			}
+			if len(gotArgs) != len(tt.wantArgs) {
+				t.Fatalf("args = %#v, want %#v", gotArgs, tt.wantArgs)
+			}
+			for i := range tt.wantArgs {
+				if gotArgs[i] != tt.wantArgs[i] {
+					t.Errorf("args[%d] = %q, want %q", i, gotArgs[i], tt.wantArgs[i])
+				}
+			}
+		})
+	}
+}
+
+func TestExecuteCommandAcceptsAttachedAndSeparatedSayShorthand(t *testing.T) {
+	for _, input := range []string{"'hello", "' hello"} {
+		t.Run(input, func(t *testing.T) {
+			m := makeTestManager(t)
+			s := makeTestSession(t, m, "Alice", 1001, true)
+			s.player.Stats.Int = 10
+			s.player.Stats.Wis = 10
+			registerInWorld(t, s)
+
+			if err := ExecuteCommand(s, input, nil); err != nil {
+				t.Fatalf("ExecuteCommand(%q): %v", input, err)
+			}
+			if got := readSessionText(t, s); !strings.Contains(got, "You say 'hello'") {
+				t.Errorf("ExecuteCommand(%q) output = %q, want say self-echo", input, got)
 			}
 		})
 	}

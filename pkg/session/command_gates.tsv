@@ -173,7 +173,6 @@ gossip	0	4	C interpreter.c:468
 goto	31	4	C interpreter.c:467
 grab	0	5	C interpreter.c:472
 grats	0	4	C interpreter.c:473
-gratz	0	4	Go spelling of C grats; same sleeping gate
 greet	0	5	C interpreter.c:474
 grimace	0	5	C interpreter.c:476
 grin	0	5	C interpreter.c:475

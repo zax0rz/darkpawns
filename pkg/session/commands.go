@@ -71,8 +71,10 @@ func init() {
 
 	// Communication
 	registerCommand("say", wrapArgs(cmdSay), "Say something to the room.")
+	registerCommand("'", wrapArgs(cmdSay), "Say something to the room.")
 	registerCommand("tell", wrapArgs(cmdTell), "Send a private message to a player.")
 	registerCommand("emote", wrapArgs(cmdEmote), "Perform a roleplay action.", "me")
+	registerCommand(":", wrapArgs(cmdEmote), "Perform a roleplay action.")
 	registerCommand("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.")
 	registerCommand("gtell", wrapArgs(cmdGtell), "Send a message to your group.", "gsay")
 	registerCommand("think", wrapArgs(cmdThink), "Think a thought, optionally aloud.")
@@ -125,6 +127,7 @@ func init() {
 	registerCommand("review", wrapNoArgs(cmdReview), "Show recent gossip history.")
 	registerCommand("whois", wrapArgs(cmdWhois), "Look up a player's info.")
 	registerCommand("help", wrapArgs(cmdHelp), "Show available commands or help for a topic.")
+	registerCommand("?", wrapArgs(cmdHelp), "Show available commands or help for a topic.")
 	registerCommand("credits", wrapArgs(cmdCredits), "Show who built this game.")
 	registerCommand("news", wrapArgs(cmdNews), "Show current game news.")
 	registerCommand("policy", wrapArgs(cmdPolicy), "Show the game's policies.")
@@ -229,6 +232,7 @@ func init() {
 	registerCommand("checkload", wrapArgs(cmdCheckload), "Check zone load info for a mob/obj.")
 	registerCommand("poofset", wrapArgs(cmdPoofset), "Set poof in/out messages.")
 	registerCommand("wiznet", wrapArgs(cmdWiznet), "Send message on wizard net.")
+	registerCommand(";", wrapArgs(cmdWiznet), "Send message on wizard net.")
 	registerCommand("zreset", wrapArgs(cmdZreset), "Reset a zone by number.")
 	registerCommand("zlist", wrapArgs(cmdZlist), "List zones matching a filter.")
 	registerCommand("rlist", wrapArgs(cmdRlist), "List rooms matching a keyword.")
@@ -369,12 +373,13 @@ func init() {
 	registerCommand("hcontrol", wrapArgs(cmdHcontrol), "Admin house control.")
 	registerCommand("gossip", wrapArgs(cmdGossip), "Gossip on the channel.")
 	registerCommand("auction", wrapArgs(cmdAuction), "Auction an item to the channel.")
-	registerCommand("gratz", wrapArgs(cmdGratz), "Congratulate someone on the channel.")
+	registerCommand("grats", wrapArgs(cmdGratz), "Congratulate someone on the channel.")
 	registerCommand("newbie", wrapArgs(cmdNewbieChannel), "Ask a question on the newbie channel.")
 	registerCommand("ctell", wrapArgs(cmdCTell), "Send a message to your clan.")
 	registerCommand("password", wrapArgs(cmdPassword), "Change your password.")
 	registerCommand("prompt", wrapArgs(cmdPrompt), "Set your prompt.")
 	registerCommand("reply", wrapArgs(cmdReply), "Reply to the last tell.", "r")
+	registerCommand(".", wrapArgs(cmdReply), "Reply to the last tell.")
 	registerCommand("write", wrapArgs(cmdWrite), "Write on an object.")
 	registerCommand("page", wrapArgs(cmdPage), "Page a player.")
 	registerCommand("ignore", wrapArgs(cmdIgnore), "Ignore or stop ignoring a player.")
@@ -430,6 +435,29 @@ func wrapSkill(fn func(command.SessionInterface, []string) error) command.Handle
 	}
 }
 
+const cCommandWhitespace = " \t\n\v\f\r"
+
+// splitCommandInput mirrors command_interpreter's command tokenization. A
+// non-letter first character is always a one-character command, so punctuation
+// commands do not require a separating space (for example, "'hello").
+func splitCommandInput(input string) (string, []string) {
+	input = strings.TrimLeft(input, cCommandWhitespace)
+	if input == "" {
+		return "", nil
+	}
+
+	first := input[0]
+	isLetter := (first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z')
+	if !isLetter {
+		return input[:1], strings.Fields(input[1:])
+	}
+
+	if idx := strings.IndexAny(input, cCommandWhitespace); idx >= 0 {
+		return input[:idx], strings.Fields(input[idx+1:])
+	}
+	return input, nil
+}
+
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	// C command_interpreter draws number(0,3) at the top of every playing
@@ -448,12 +476,12 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 			return nil
 		}
 	}
-	// Split command from arguments if args not provided separately
+	// Split command from arguments if args were not provided separately.
 	if len(args) == 0 {
-		if idx := strings.IndexByte(cmdStr, ' '); idx >= 0 {
-			args = strings.Fields(cmdStr[idx+1:])
-			cmdStr = cmdStr[:idx]
-		}
+		cmdStr, args = splitCommandInput(cmdStr)
+	}
+	if cmdStr == "" {
+		return nil
 	}
 	cmd := strings.ToLower(cmdStr)
 
@@ -464,16 +492,11 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 			fullInput = cmd + " " + strings.Join(args, " ")
 		}
 		if expanded, ok := game.PerformAlias(s.player.Aliases, fullInput); ok {
-			expanded = strings.TrimSpace(expanded)
-			if idx := strings.IndexByte(expanded, ' '); idx >= 0 {
-				cmd = strings.ToLower(expanded[:idx])
-				cmdStr = expanded[:idx]
-				args = strings.Fields(expanded[idx+1:])
-			} else {
-				cmd = strings.ToLower(expanded)
-				cmdStr = expanded
-				args = nil
+			cmdStr, args = splitCommandInput(expanded)
+			if cmdStr == "" {
+				return nil
 			}
+			cmd = strings.ToLower(cmdStr)
 		}
 	}
 
