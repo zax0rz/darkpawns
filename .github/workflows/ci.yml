@@ -58,17 +58,20 @@ jobs:
     - name: Run Go tests with race detector
       run: go test -race -covermode=atomic -coverprofile=coverage.out $(go list ./... | grep -v /tests/unit) -v -timeout 120s
 
-    - name: Coverage report (non-blocking ratchet)
+    - name: Coverage report + ratchet
       run: |
         total=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}')
         echo "Total statement coverage: $total"
         echo "### Go coverage: $total" >> "$GITHUB_STEP_SUMMARY"
         echo "Worst-covered functions:"
-        go tool cover -func=coverage.out | sort -k3 -n | head -15
-        # RATCHET GATE (enabled 2026-07-22; baseline 42.0%): fail CI if coverage regresses below the
-        # floor. The 2-pt buffer absorbs run-to-run noise; raise MIN as coverage climbs (reek's coverage
-        # autofix lane is built to push it up).
-        MIN=40.0; num=${total%\%}; awk "BEGIN{exit !($num+0 < $MIN)}" && { echo "::error::coverage $total below ${MIN}%"; exit 1; }
+        go tool cover -func=coverage.out | sort -k3 -n | head -15 || true
+        # RATCHET GATE (baseline 42.0%): fail only if coverage REGRESSES below the floor. 2-pt buffer
+        # absorbs run-to-run noise; raise MIN as coverage climbs. awk exits 0 when below floor → we fail.
+        MIN=40.0; num=${total%\%}
+        if awk "BEGIN{exit !($num+0 < $MIN)}"; then
+          echo "::error::coverage $total is below the ${MIN}% floor"; exit 1
+        fi
+        echo "coverage $total >= ${MIN}% floor — ok"
     
     - name: Verify all packages build
       run: go build ./...
