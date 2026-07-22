@@ -2,7 +2,10 @@
 
 **Owner:** glm-5.2. **Gate:** CI must pass on the PR itself; Claude reviews both failure
 directions before merge.
-**Branch off `main`.** Sized to one small PR.
+**Git:** branch off `main` as `glm/ci-reachability-ratchet` (house convention, cf.
+`glm/reset-time-port` → PR #401). Commit to that branch, push it, open a PR against
+`main` with the deliverable's both-directions test output in the description. Do NOT
+merge — review is Claude/Daeron's. Sized to one small PR.
 **Closes:** DP-1188.
 **Cite:** rules **R2**, **R5c** (`docs/fidelity/RULEBOOK.md`).
 
