@@ -56,7 +56,18 @@ jobs:
       run: go mod download
 
     - name: Run Go tests with race detector
-      run: go test -race $(go list ./... | grep -v /tests/unit) -v -timeout 120s
+      run: go test -race -covermode=atomic -coverprofile=coverage.out $(go list ./... | grep -v /tests/unit) -v -timeout 120s
+
+    - name: Coverage report (non-blocking ratchet)
+      run: |
+        total=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}')
+        echo "Total statement coverage: $total"
+        echo "### Go coverage: $total" >> "$GITHUB_STEP_SUMMARY"
+        echo "Worst-covered functions:"
+        go tool cover -func=coverage.out | sort -k3 -n | head -15
+        # RATCHET GATE (disabled): mirrors reek's coverage_low signal. Once MIN is set to the current
+        # baseline printed above, uncomment to fail CI on regressions.
+        # MIN=60.0; num=${total%\%}; awk "BEGIN{exit !($num+0 < $MIN)}" && { echo "::error::coverage $total below ${MIN}%"; exit 1; }
     
     - name: Verify all packages build
       run: go build ./...
@@ -153,6 +164,40 @@ jobs:
 
     - name: Run golangci-lint
       run: golangci-lint run ./...
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.26.4'
+
+    # Supply-chain integrity: every dependency's content matches its go.sum hash. Deterministic and
+    # fast; a failure means a tampered or corrupted module — always worth blocking. (Same check reek's
+    # nightly govulncheck lane runs.)
+    - name: go mod verify
+      run: go mod verify
+
+    # Reachable known-vulnerabilities — CVEs in code actually called, not merely present in go.sum.
+    # NON-blocking until the current backlog is cleared: as of 2026-07-22 there are 2 reachable vulns —
+    # GO-2026-5856 (crypto/tls ECH privacy leak, fix = Go 1.26.5) + 1 in golang.org/x/text. Once those
+    # are bumped, drop continue-on-error so a NEW reachable vuln blocks the merge.
+    - name: govulncheck (report-only until backlog cleared)
+      continue-on-error: true
+      run: |
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        "$(go env GOPATH)/bin/govulncheck" ./...
+
+    # Static security scan (HIGH severity) — the same gosec lane reek's toolpass runs nightly.
+    # NON-blocking for now: the repo has known HIGH candidates already flowing through reek's autofix
+    # lane, so this step is CI *visibility*, not yet a gate. Flip continue-on-error to false to enforce
+    # once the backlog is burned down.
+    - name: gosec (report-only)
+      continue-on-error: true
+      run: |
+        go install github.com/securego/gosec/v2/cmd/gosec@latest
+        "$(go env GOPATH)/bin/gosec" -severity=high -quiet ./... || true
 
   build-and-push:
     needs: test
