@@ -65,9 +65,10 @@ jobs:
         echo "### Go coverage: $total" >> "$GITHUB_STEP_SUMMARY"
         echo "Worst-covered functions:"
         go tool cover -func=coverage.out | sort -k3 -n | head -15
-        # RATCHET GATE (disabled): mirrors reek's coverage_low signal. Once MIN is set to the current
-        # baseline printed above, uncomment to fail CI on regressions.
-        # MIN=60.0; num=${total%\%}; awk "BEGIN{exit !($num+0 < $MIN)}" && { echo "::error::coverage $total below ${MIN}%"; exit 1; }
+        # RATCHET GATE (enabled 2026-07-22; baseline 42.0%): fail CI if coverage regresses below the
+        # floor. The 2-pt buffer absorbs run-to-run noise; raise MIN as coverage climbs (reek's coverage
+        # autofix lane is built to push it up).
+        MIN=40.0; num=${total%\%}; awk "BEGIN{exit !($num+0 < $MIN)}" && { echo "::error::coverage $total below ${MIN}%"; exit 1; }
     
     - name: Verify all packages build
       run: go build ./...
