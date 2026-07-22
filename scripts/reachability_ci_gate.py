@@ -13,15 +13,15 @@ report into a blocking CI signal.
 
 Which statuses count as "unreachable" here:
 
-    {"implemented-unwired", "missing"}
+    {"implemented-unwired", "missing", "missing-social"}
 
-NOTE: this is deliberately NARROWER than ``reachability_weekly.py``'s
-``UNREACHABLE`` set, which also includes ``missing-social``. The weekly report
-treats unported socials as regressions; the CI gate does not, because socials
-are bulk-imported and their count moves for data reasons unrelated to whether
-the code surface is wired. The committed floor (61 = 25 unwired + 36 missing,
-as of 2026-07-22) reflects this narrower set. Do not silently widen the set —
-the floor number and the set must stay in lockstep.
+This matches ``reachability_weekly.py``'s ``UNREACHABLE`` set. Socials in the
+C table are player-facing surface (RULEBOOK R1/R2), so a social dropping out
+of ``socials.txt`` is as much a ratchet regression as an unwired command.
+``missing-social`` is 0 as of 2026-07-22, so the committed floor
+(61 = 25 unwired + 36 missing) is unchanged by including it. The floor number
+and the set must stay in lockstep — don't change one without re-deriving the
+other.
 
 The status constants are duplicated here (rather than imported from
 ``reachability_weekly.py``) because that module imports ``subprocess`` at
@@ -51,9 +51,9 @@ ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "docs" / "reports"
 GENERATOR = ROOT / "scripts" / "gen_reachability.py"
 
-# Statuses this gate ratchets on. See module docstring for why this set is
-# narrower than reachability_weekly.py's and why it is duplicated, not shared.
-UNREACHABLE = {"implemented-unwired", "missing"}
+# Statuses this gate ratchets on. Mirrors reachability_weekly.py's UNREACHABLE;
+# see module docstring for why it is duplicated, not shared.
+UNREACHABLE = {"implemented-unwired", "missing", "missing-social"}
 
 _STATUS_COL = 5  # TSV is 1-indexed in the header; "status" is column 6 → fields[5]
 _DATE_RE = re.compile(r"reachability-(\d{4}-\d{2}-\d{2})\.tsv$")
