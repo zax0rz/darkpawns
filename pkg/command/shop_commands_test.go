@@ -17,14 +17,14 @@ type mockShopSession struct {
 	roomVNum int
 }
 
-func (m *mockShopSession) Send(msg string)           { m.messages = append(m.messages, msg) }
-func (m *mockShopSession) Close()                    {}
-func (m *mockShopSession) GetPlayer() interface{}    { return m.player }
-func (m *mockShopSession) GetPlayerName() string     { return m.player.Name }
-func (m *mockShopSession) GetPlayerRoomVNum() int    { return m.roomVNum }
-func (m *mockShopSession) IsAuthenticated() bool     { return true }
-func (m *mockShopSession) HasPlayer() bool           { return m.player != nil }
-func (m *mockShopSession) GetPlayerLevel() int       { return m.player.GetLevel() }
+func (m *mockShopSession) Send(msg string)        { m.messages = append(m.messages, msg) }
+func (m *mockShopSession) Close()                 {}
+func (m *mockShopSession) GetPlayer() interface{} { return m.player }
+func (m *mockShopSession) GetPlayerName() string  { return m.player.Name }
+func (m *mockShopSession) GetPlayerRoomVNum() int { return m.roomVNum }
+func (m *mockShopSession) IsAuthenticated() bool  { return true }
+func (m *mockShopSession) HasPlayer() bool        { return m.player != nil }
+func (m *mockShopSession) GetPlayerLevel() int    { return m.player.GetLevel() }
 
 func TestParseItemNumber(t *testing.T) {
 	tests := []struct {
