@@ -227,7 +227,7 @@ func (eq *Equipment) EquipForPlayer(item *ObjectInstance, inv *Inventory, alignm
 			}
 		}
 
-		if InvalidClass(class, uint32(xf), isSlash, isShieldItem) {
+		if InvalidClass(class, uint32(xf), isSlash, isShieldItem) { // #nosec G115 -- xf is a non-negative Diku extra-flags bitmask that fits in uint32
 			return true, nil
 		}
 	}

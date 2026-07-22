@@ -110,7 +110,7 @@ func objInvalidClass(ch *Player, obj *ObjectInstance) bool {
 	flags := obj.GetExtraFlags()[0]
 	isSlashWeapon := canWearObject(obj, eqWearWield) && obj.GetValue(3) == 3
 	isShield := canWearObject(obj, eqWearShield)
-	return InvalidClass(ch.Class, uint32(flags), isSlashWeapon, isShield)
+	return InvalidClass(ch.Class, uint32(flags), isSlashWeapon, isShield) // #nosec G115 -- flags is a non-negative Diku extra-flags bitmask that fits in uint32
 }
 
 // performWear equips an item at a given position

@@ -48,7 +48,7 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	if adminUIDir == "" {
 		adminUIDir = "admin-ui-dist"
 	}
-	if _, err := os.Stat(adminUIDir); err == nil {
+	if _, err := os.Stat(adminUIDir); err == nil { // #nosec G703 -- adminUIDir is operator-set (ADMIN_UI_DIR env), not request-derived
 		mux.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/admin/", http.StatusMovedPermanently)
 		})
@@ -56,13 +56,13 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
-			http.ServeFile(w, r, adminUIDir+"/favicon.svg")
+			http.ServeFile(w, r, adminUIDir+"/favicon.svg") // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
 		})
 		mux.HandleFunc("/admin/icons.svg", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
-			http.ServeFile(w, r, adminUIDir+"/icons.svg")
+			http.ServeFile(w, r, adminUIDir+"/icons.svg") // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
 		})
 		mux.HandleFunc("/admin/assets/", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -75,7 +75,7 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
-			http.ServeFile(w, r, adminUIDir+"/index.html")
+			http.ServeFile(w, r, adminUIDir+"/index.html") // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
 		})
 	}
 
@@ -154,9 +154,9 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// SPA fallback — this MUST be registered last, after all API routes.
 	// Catches any /admin/* path that didn't match an API route above.
-	if _, err := os.Stat(adminUIDir); err == nil {
+	if _, err := os.Stat(adminUIDir); err == nil { // #nosec G703 -- adminUIDir is operator-set (ADMIN_UI_DIR env), not request-derived
 		mux.HandleFunc("/admin/", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, adminUIDir+"/index.html")
+			http.ServeFile(w, r, adminUIDir+"/index.html") // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
 		})
 	}
 
