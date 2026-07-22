@@ -11,6 +11,7 @@ Usage:
 """
 
 import argparse
+import datetime
 import re
 import sys
 from pathlib import Path
@@ -426,8 +427,11 @@ def main():
     )
     parser.add_argument(
         "--out",
-        default=str(ROOT / "docs" / "reports" / "reachability-2026-07-22.tsv"),
-        help="Output TSV path (default: docs/reports/reachability-2026-07-22.tsv)",
+        default=str(
+            ROOT / "docs" / "reports"
+            / f"reachability-{datetime.date.today().isoformat()}.tsv"
+        ),
+        help="Output TSV path (default: docs/reports/reachability-<today>.tsv)",
     )
     args = parser.parse_args()
 

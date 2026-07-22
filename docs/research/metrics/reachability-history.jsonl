@@ -1,0 +1,2 @@
+{"counts": {"implemented-unwired": 64, "missing": 82, "registered": 208, "social": 183}, "date": "2026-06-18", "delta": null, "note": "manual audit (docs/port-reachability-map.md); methodology differs — specproc-reachable lumped into unreachable, single-char aliases excluded", "previous": null, "source": "manual-audit", "total": 537}
+{"counts": {"abbrev-stub": 2, "implemented-unwired": 25, "missing": 36, "registered": 252, "social": 183, "specproc": 10}, "date": "2026-07-22", "delta": null, "previous": null, "source": "generator", "total": 508}
