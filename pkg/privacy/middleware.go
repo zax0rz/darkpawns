@@ -142,11 +142,10 @@ func HTTPMiddleware(next http.Handler, client *Client) http.Handler {
 			logger = GetGlobalLogger()
 		}
 
-		// Log request (filtered)
+		// Log request (filtered) — use the actual TCP peer address only.
+		// X-Forwarded-For is trivially spoofable and we have no proxy trust
+		// configuration, so we ignore it to prevent log injection attacks.
 		remoteAddr := r.RemoteAddr
-		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-			remoteAddr = forwarded
-		}
 
 		// Filter request body if it contains sensitive data
 		reqBodyStr := requestBody.String()
