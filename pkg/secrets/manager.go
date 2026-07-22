@@ -70,6 +70,11 @@ func decodeEncryptionKey(key string) ([]byte, error) {
 func (sm *SecretManager) GetSecret(secretName string) (string, error) {
 	// First check environment variable
 	envVar := strings.ToUpper(secretName)
+
+	// Never expose the master encryption key via the env-var lookup path.
+	if envVar == "ENCRYPTION_KEY" {
+		return "", ErrSecretNotFound
+	}
 	if value := os.Getenv(envVar); value != "" {
 		return value, nil
 	}
