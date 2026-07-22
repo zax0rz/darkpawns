@@ -624,5 +624,5 @@ func readInt32(buf []byte, off int) int32 {
 }
 
 func readInt64(buf []byte, off int) int64 {
-	return int64(uint32(readInt32(buf, off))) | int64(uint32(readInt32(buf, off+4)))<<32
+	return int64(uint32(readInt32(buf, off))) | int64(uint32(readInt32(buf, off+4)))<<32 // #nosec G115 -- deliberate bit-reinterpret of two int32 words when decoding the fixed save-file format
 }

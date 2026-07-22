@@ -52,7 +52,7 @@ func (g *Generator) Next() uint32 {
 	g.index = (g.index + 1) & 1023
 	t := multiplier*uint64(g.q[g.index]) + uint64(g.carry)
 	g.carry = uint32(t >> 32)
-	x := uint32(t + uint64(g.carry))
+	x := uint32(t + uint64(g.carry)) // #nosec G115 -- intentional modular truncation required to match the C CMWC algorithm
 	if x < g.carry {
 		x++
 		g.carry++
@@ -124,7 +124,7 @@ func ConfigureFromEnvironment() (uint32, error) {
 }
 
 func seedFromEnvironment(lookup func(string) (string, bool), now func() time.Time) (uint32, error) {
-	seed := uint32(now().Unix())
+	seed := uint32(now().Unix()) // #nosec G115 -- intentional truncation of Unix time to a 32-bit PRNG seed
 	if value, ok := lookup("DP_SEED"); ok {
 		parsed, err := strconv.ParseUint(value, 10, 32)
 		if err != nil {

@@ -421,7 +421,7 @@ func (p *Player) GetEquipAffects() []engine.EquipAffectData {
 			if i < 0 || i >= 2 {
 				continue
 			}
-			bv |= uint64(f) << (uint(i) * 32)
+			bv |= uint64(f) << (uint(i) * 32) // #nosec G115 -- f is a non-negative 32-bit Diku flag word being packed into a 64-bit bitvector
 		}
 		for _, af := range item.Prototype.Affects {
 			result = append(result, engine.EquipAffectData{

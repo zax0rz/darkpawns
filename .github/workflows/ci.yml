@@ -45,7 +45,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.26.4'
+        go-version: '1.26.5'
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -131,7 +131,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
-        go-version: '1.26.4'
+        go-version: '1.26.5'
 
     - name: Install golangci-lint
       uses: golangci/golangci-lint-action@v9
@@ -171,7 +171,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
-        go-version: '1.26.4'
+        go-version: '1.26.5'
 
     # Supply-chain integrity: every dependency's content matches its go.sum hash. Deterministic and
     # fast; a failure means a tampered or corrupted module — always worth blocking. (Same check reek's
@@ -180,24 +180,20 @@ jobs:
       run: go mod verify
 
     # Reachable known-vulnerabilities — CVEs in code actually called, not merely present in go.sum.
-    # NON-blocking until the current backlog is cleared: as of 2026-07-22 there are 2 reachable vulns —
-    # GO-2026-5856 (crypto/tls ECH privacy leak, fix = Go 1.26.5) + 1 in golang.org/x/text. Once those
-    # are bumped, drop continue-on-error so a NEW reachable vuln blocks the merge.
-    - name: govulncheck (report-only until backlog cleared)
-      continue-on-error: true
+    # ENFORCING: the 2026-07-22 backlog (GO-2026-5856 crypto/tls ECH → Go 1.26.5; GO-2026-5970 x/text
+    # → v0.40.0) was cleared in this change. A NEW reachable vuln now blocks the merge.
+    - name: govulncheck
       run: |
         go install golang.org/x/vuln/cmd/govulncheck@latest
         "$(go env GOPATH)/bin/govulncheck" ./...
 
     # Static security scan (HIGH severity) — the same gosec lane reek's toolpass runs nightly.
-    # NON-blocking for now: the repo has known HIGH candidates already flowing through reek's autofix
-    # lane, so this step is CI *visibility*, not yet a gate. Flip continue-on-error to false to enforce
-    # once the backlog is burned down.
-    - name: gosec (report-only)
-      continue-on-error: true
+    # ENFORCING: the 28 HIGH findings were triaged to zero in this change (all false positives, each
+    # suppressed with a justified `#nosec`). A NEW unjustified HIGH now blocks the merge.
+    - name: gosec
       run: |
         go install github.com/securego/gosec/v2/cmd/gosec@latest
-        "$(go env GOPATH)/bin/gosec" -severity=high -quiet ./... || true
+        "$(go env GOPATH)/bin/gosec" -severity=high -quiet ./...
 
   build-and-push:
     needs: test

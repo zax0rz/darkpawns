@@ -31,7 +31,7 @@ func sendDiscordNotification(content string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
+		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data)) // #nosec G704 -- webhook URL is operator-set (DISCORD_WEBHOOK_URL env), not user-controlled
 		if err != nil {
 			slog.Error("Discord: failed to create request", "error", err)
 			return
@@ -39,7 +39,7 @@ func sendDiscordNotification(content string) {
 		req.Header.Set("Content-Type", "application/json")
 
 		client := &http.Client{}
-		resp, err := client.Do(req)
+		resp, err := client.Do(req) // #nosec G704 -- webhook URL is operator-set (DISCORD_WEBHOOK_URL env), not user-controlled
 		if err != nil {
 			slog.Error("Discord: webhook delivery failed", "error", err)
 			return

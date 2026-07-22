@@ -34,6 +34,13 @@ linters:
       - path: _test\.go
         linters:
           - errcheck
+      # staticcheck SA5011 (nil-deref) false-positives on the `if x == nil { t.Fatal() }; x.field`
+      # guard idiom in tests — surfaced only under the go1.26.5 toolchain (staticcheck stops tracking
+      # that t.Fatal is terminal). Scoped to test files; SA5011 still guards non-test code.
+      - path: _test\.go
+        linters:
+          - staticcheck
+        text: "nil pointer dereference|pointer can be nil"
       # Third-party / generated directories
       - path: admin-ui/
         linters:

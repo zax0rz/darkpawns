@@ -97,7 +97,7 @@ func NewAgentStore(filePath string) (*AgentStore, error) {
 	// Ensure parent directory exists
 	dir := filepath.Dir(filePath)
 	if dir != "" && dir != "." {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+		if err := os.MkdirAll(dir, 0o755); err != nil { // #nosec G703 -- filePath is operator-set (ADMIN_STORE_PATH env), not request-derived
 			return nil, fmt.Errorf("create agent store directory %q: %w", dir, err)
 		}
 	}
@@ -106,7 +106,7 @@ func NewAgentStore(filePath string) (*AgentStore, error) {
 		filePath: filePath,
 	}
 
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(filePath) // #nosec G703 -- filePath is operator-set (ADMIN_STORE_PATH env), not request-derived
 	if err == nil {
 		var sj storeJSON
 		if json.Unmarshal(data, &sj) == nil {
@@ -306,8 +306,8 @@ func (s *AgentStore) save() error {
 	}
 
 	tmp := s.filePath + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+	if err := os.WriteFile(tmp, data, 0o600); err != nil { // #nosec G703 -- filePath is operator-set (ADMIN_STORE_PATH env), not request-derived
 		return err
 	}
-	return os.Rename(tmp, s.filePath)
+	return os.Rename(tmp, s.filePath) // #nosec G703 -- filePath is operator-set (ADMIN_STORE_PATH env), not request-derived
 }

@@ -1376,7 +1376,7 @@ func handleMetrics(world *game.World) http.HandlerFunc {
 			MemoryHeap:   memStats.HeapInuse,
 			Goroutines:   runtime.NumGoroutine(),
 			GCCycles:     memStats.NumGC,
-			LastGC:       time.Unix(0, int64(memStats.LastGC)).Format(time.RFC3339Nano),
+			LastGC:       time.Unix(0, int64(memStats.LastGC)).Format(time.RFC3339Nano), // #nosec G115 -- runtime GC nanosecond timestamp cannot exceed int64 before year 2262
 			PauseTotalNs: memStats.PauseTotalNs,
 			Uptime:       time.Since(processStartTime).Round(time.Second).String(),
 			PlayerCount:  world.GetPlayerCount(),

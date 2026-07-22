@@ -28,8 +28,8 @@ const (
 	// orthogonal to DP_CLOCK's pulse freeze). 1770838461 => 2pm/daytime,
 	// {hours:14,day:17,month:8,year:1245}; both derive an identical calendar.
 	fixedTime    = "1770838461"
-	settlePulses = 40 // C PULSE_MOBILE: births a newbie exactly once.
-	deadDBURL    = "postgres://x:x@127.0.0.1:1/nope?sslmode=disable&connect_timeout=1"
+	settlePulses = 40                                                                  // C PULSE_MOBILE: births a newbie exactly once.
+	deadDBURL    = "postgres://x:x@127.0.0.1:1/nope?sslmode=disable&connect_timeout=1" // #nosec G101 -- deliberately unreachable placeholder DSN (dev oracle-diff harness), not a real credential
 )
 
 //go:embed scenarios/*.txt
@@ -377,7 +377,7 @@ func applyObjectSpawnFixtures(worldDir string, fixtures []oraclediff.ObjectSpawn
 		if err != nil {
 			return fmt.Errorf("stat zone %d: %w", fixture.ZoneNumber, err)
 		}
-		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil {
+		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
 			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
 		}
 	}
@@ -405,7 +405,7 @@ func applyMobFixtures(worldDir string, fixtures []oraclediff.MobFixture) error {
 		if err != nil {
 			return fmt.Errorf("stat zone %d: %w", fixture.ZoneNumber, err)
 		}
-		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil {
+		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
 			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
 		}
 	}
@@ -439,7 +439,7 @@ func applyScriptlessMobFixtures(worldDir string, mobVNums []int) error {
 		if err != nil {
 			return fmt.Errorf("stat mob zone %d: %w", mobVNum/100, err)
 		}
-		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil {
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
 			return fmt.Errorf("write mob zone %d: %w", mobVNum/100, err)
 		}
 	}
@@ -485,7 +485,7 @@ func quietMobResets(path string) error {
 	if err != nil {
 		return fmt.Errorf("stat %s: %w", path, err)
 	}
-	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil {
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
@@ -545,7 +545,7 @@ func makeScrollFixtureInert(worldDir string, objectVNum int) error {
 	if err != nil {
 		return fmt.Errorf("stat object file for %d: %w", objectVNum, err)
 	}
-	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil {
+	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
 		return fmt.Errorf("write object file for %d: %w", objectVNum, err)
 	}
 	return nil
@@ -553,7 +553,7 @@ func makeScrollFixtureInert(worldDir string, objectVNum int) error {
 
 func startProcess(ctx context.Context, name, dir string, env []string, command string, args ...string) (*process, error) {
 	log := &safeBuffer{}
-	cmd := exec.CommandContext(ctx, command, args...)
+	cmd := exec.CommandContext(ctx, command, args...) // #nosec G702 -- dev oracle-diff harness; command/args are hardcoded engine binaries, not request-derived
 	cmd.Dir = dir
 	cmd.Env = env
 	cmd.Stdout = log

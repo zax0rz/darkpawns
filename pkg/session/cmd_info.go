@@ -526,7 +526,7 @@ func parseWhoArgs(args []string) (whoOptions, bool) {
 			if i+1 < len(args) {
 				i++
 				for _, classLetter := range strings.ToLower(args[i]) {
-					opts.classMask |= game.FindClassBitvector(byte(classLetter))
+					opts.classMask |= game.FindClassBitvector(byte(classLetter)) // #nosec G115 -- class filter letters are ASCII; a truncated non-ASCII rune only fails the lookup, no security impact
 				}
 			}
 		default:
