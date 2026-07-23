@@ -1,4 +1,4 @@
-.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly
+.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -10,6 +10,14 @@ reachability:
 # Exits non-zero if any command regressed from reachable to unreachable.
 reachability-weekly:
 	python3 scripts/reachability_weekly.py --commit
+
+# Scenario coverage: which C commands the oracle suite exercises (static —
+# probed != passing). Weekly form appends the JSONL time series.
+scenario-coverage:
+	python3 scripts/gen_scenario_coverage.py
+
+scenario-coverage-weekly:
+	python3 scripts/scenario_coverage_weekly.py --commit
 
 # Default world directory — resolve relative to this Makefile so it works
 # regardless of the checkout directory name.

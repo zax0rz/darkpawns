@@ -34,6 +34,7 @@ Usage:
 
 import argparse
 import datetime
+import re
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -343,7 +344,15 @@ def main():
 
     scenarios_dir = ROOT / "cmd" / "dp-oracle-diff" / "scenarios"
     command_order_path = ROOT / "pkg" / "session" / "command_order.tsv"
-    reachability_path = ROOT / "docs" / "reports" / "reachability-2026-07-22.tsv"
+    # Newest committed reachability snapshot by filename date (never hardcode a
+    # date here — the weekly cron regenerates reachability first, then this).
+    reach_candidates = sorted(
+        p for p in (ROOT / "docs" / "reports").glob("reachability-*.tsv")
+        if re.search(r"reachability-\d{4}-\d{2}-\d{2}\.tsv$", p.name)
+    )
+    if not reach_candidates:
+        raise SystemExit("no reachability-<date>.tsv found in docs/reports/")
+    reachability_path = reach_candidates[-1]
 
     PLAYER_LEVEL = 1  # Scenarios run as fresh mortals
 
