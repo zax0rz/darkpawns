@@ -293,6 +293,25 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 	return &p, nil
 }
 
+// ListPlayerNames returns all registered player names sorted alphabetically.
+// Source: C player_table iteration in do_gen_ps SCMD_PLAYER_LIST.
+func (db *DB) ListPlayerNames() ([]string, error) {
+	rows, err := db.conn.Query(`SELECT name FROM players ORDER BY name`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var names []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		names = append(names, name)
+	}
+	return names, rows.Err()
+}
+
 // CreatePlayer inserts a new player record.
 func (db *DB) CreatePlayer(p *PlayerRecord) error {
 	query := `

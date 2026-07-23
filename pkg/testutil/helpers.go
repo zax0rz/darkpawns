@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -115,6 +116,18 @@ func NewMockDatabase() *MockDatabase {
 // Close satisfies db.Database.
 func (m *MockDatabase) Close() error {
 	return nil
+}
+
+// ListPlayerNames satisfies db.Database.
+func (m *MockDatabase) ListPlayerNames() ([]string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	names := make([]string, 0, len(m.players))
+	for name := range m.players {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names, nil
 }
 
 // GetPlayer satisfies db.Database.

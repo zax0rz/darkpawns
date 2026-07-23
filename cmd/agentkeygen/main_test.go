@@ -17,7 +17,8 @@ type mockDatabase struct {
 	createAgentKeyFunc func(characterName string) (string, int64, error)
 }
 
-func (m *mockDatabase) Close() error { return nil }
+func (m *mockDatabase) Close() error                       { return nil }
+func (m *mockDatabase) ListPlayerNames() ([]string, error) { return nil, nil }
 func (m *mockDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 	if m.getPlayerFunc != nil {
 		return m.getPlayerFunc(name)
