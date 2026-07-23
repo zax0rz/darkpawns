@@ -1128,6 +1128,16 @@ type Session struct {
 	menuPasswordHash     string
 	menuNewPasswordHash  string
 
+	// Output pager state (DP-1195; port of the Buselli pager, modify.c:346-527).
+	// While pagerCount > 0, every input line routes to handlePagerInput instead
+	// of the command interpreter — mirroring C's showstr_count routing
+	// (comm.c:617). pagerPages holds the pre-split page byte slices,
+	// pagerPage is the 0-based current page (C's showstr_page). Telnet/plain-text
+	// only; structured-data clients receive whole text and never enter this mode.
+	pagerPages [][]byte
+	pagerPage  int
+	pagerCount int
+
 	// Character switch state (wizard commands)
 	isSwitched            bool
 	switchedOriginal      *game.Player

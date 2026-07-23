@@ -21,7 +21,9 @@ func cmdLevels(s *Session) error {
 		xpPrev := game.FindExp(p.Class, i-1)
 		fmt.Fprintf(&buf, "[%2d] %8d-%-8d    (%6d)\r\n", i, xpPrev, xpNeeded, xpNeeded-xpPrev)
 	}
-	s.Send(buf.String())
+	// 30 lines > PAGE_LENGTH(22) → paginated on plain-text clients; agents and
+	// structured-data clients receive the whole table (DP-1195).
+	PageString(s, buf.String())
 	return nil
 }
 

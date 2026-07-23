@@ -426,6 +426,15 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			if err := sendCharInput(s, line); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
+		} else if s.IsPaging() {
+			// Output pager (DP-1195): while paging, every input line — including
+			// a bare RETURN (next page) — routes to the pager navigator, never
+			// to ExecuteCommand (C: comm.c:617 showstr_count routing). This
+			// branch sits above the `line == ""` refresh so RETURN reaches the
+			// pager. No "> " prompt: the pager prints its own prompt.
+			if err := sendPagerInput(s, line); err != nil {
+				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
+			}
 		} else if line == "" {
 			// Pressing Enter with no command just refreshes the prompt.
 			tc.writeLine("> ")
@@ -1017,6 +1026,25 @@ func sendCharInput(s *session.Session, choice string) error {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
 	return s.HandleMessage(choiceMsg)
+}
+
+// sendPagerInput forwards a pager navigation line (including "" for RETURN) to
+// the session's pager navigator. Mirrors sendCharInput's envelope shape.
+func sendPagerInput(s *session.Session, line string) error {
+	lineData, err := json.Marshal(map[string]interface{}{
+		"choice": line,
+	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
+	lineMsg, err := json.Marshal(session.ClientMessage{
+		Type: "pager_input",
+		Data: lineData,
+	})
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
+	return s.HandleMessage(lineMsg)
 }
 
 func sendCommand(s *session.Session, cmd string, args []string) error {
