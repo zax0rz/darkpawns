@@ -1,0 +1,69 @@
+# Combat skill OPENER — first oracle-gated combat skill (post-DP-1201).
+#
+# Strategy (DP-1202): a skill issued as the OPENING move runs at wait==0, so it
+# drains live and deterministically — exactly like the green `hit` — sidestepping
+# the mid-combat input-timing race that the DP_CLOCK oracle can't reproduce. This
+# is how we gate the combat *skill* layer now that the input-queue (DP-1201) has
+# landed.
+#
+# Backstab is the natural opener: do_backstab (act.offensive.c:165-231) REQUIRES
+# not-fighting. Fixture facts (verified against the C source):
+#   - SKILL_BACKSTAB is a LEVEL-1 thief skill (class.c:833) — a fresh thief has it.
+#   - Thief do_start grants two daggers (obj #8036), a PIERCING weapon
+#     (val3 = 11 = TYPE_PIERCE - TYPE_HIT) — backstab-legal. Not auto-wielded
+#     (like the warrior's sword), so we `wield dagger` in warmup.
+#   - Trainee guard #16303 is NOT MOB_AWARE (action flags 10 = bits 2|8; AWARE=4
+#     unset), so it can be backstabbed (an aware mob would trigger a normal hit).
+#   - Same start room + n/e/s/e path as combat-swing (hometown K, not class,
+#     picks the start room), reaching non-peaceful 8105 where #16303 is spawned.
+#
+# do_backstab draw: percent = number(1,101); prob = GET_SKILL(SKILL_BACKSTAB);
+# then damage(0) on miss or hit() on success, WAIT_STATE(ch, PULSE_VIOLENCE).
+# Both servers share DP_SEED, so the backstab + aftermath rounds must byte-match.
+# Only class letter (W→T) and name differ from the green combat-swing fixture.
+
+[fixture]
+spawn-mob 16303 1 8105 80
+quiet-mobs
+
+[setup:oracle]
+Cthief
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cthief
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+# Walk to 8105 (drained, not diffed) and wield a dagger so backstab is legal.
+[warmup]
+north
+east
+south
+east
+wield dagger
+
+[probe]
+backstab trainee
+~dpclock pulse 20
+~dpclock pulse 20
