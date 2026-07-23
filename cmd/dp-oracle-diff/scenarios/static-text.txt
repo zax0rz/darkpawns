@@ -1,0 +1,51 @@
+# 2010 static text via do_gen_ps (act.informative.c:2120-2170; db.c file cache).
+# Files are byte-identical on both sides (repo lib/text = oracle lib/text,
+# frozen at the 2010 shutdown per Zach's directive).
+# Probes: small files inline (motd/wizlist/immlist fit one page), whoami name
+# echo, credits paginates (~25 lines) -> RETURN through, q from info's pager.
+# version deliberately NOT probed: C prints compile-era strings with no Go
+# analog — documented deviation in the PR.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Textactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Textactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+motd
+wizlist
+immlist
+whoami
+news
+credits
+<ENTER>
+info
+q
+score

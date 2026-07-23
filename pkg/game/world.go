@@ -110,6 +110,9 @@ type World struct {
 	// Set by the session manager on initialization. If nil, messages are silently dropped.
 	MessageSink MessageSinkFunc
 
+	// LibTextDir is the lib/text root (2010 static text + help), derived from
+	// the -world flag's parent at boot; "lib/text" when no source dir is known.
+	LibTextDir string
 	// HelpTable holds all loaded help entries (from lib/text/help/).
 	// Populated by LoadHelpFiles during world boot.
 	HelpTable []HelpEntry
@@ -223,11 +226,14 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	// keyword-sorted (C qsort/hsort). We then append the hardcoded race help
 	// entries and RE-SORT, because do_help's prefix binary search requires the
 	// whole table to be sorted — appending after the sort would break it.
-	helpDir := "lib/text/help" // CWD fallback for hand-built worlds/tests
+	// lib/text root: derived from -world's parent (see parser.World.SourceDir);
+	// CWD fallback for hand-built worlds/tests. Shared by help and the
+	// do_gen_ps static-text commands (session layer reads World.LibTextDir).
+	w.LibTextDir = "lib/text"
 	if parsed != nil && parsed.SourceDir != "" {
-		// -world points at lib/world; help data is the sibling lib/text/help.
-		helpDir = filepath.Join(parsed.SourceDir, "..", "text", "help")
+		w.LibTextDir = filepath.Join(parsed.SourceDir, "..", "text")
 	}
+	helpDir := filepath.Join(w.LibTextDir, "help")
 	if loaded, err := LoadHelpFiles(helpDir); err == nil {
 		w.HelpTable = append(w.HelpTable, loaded...)
 	}

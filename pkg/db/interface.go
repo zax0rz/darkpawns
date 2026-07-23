@@ -14,6 +14,7 @@ type Database interface {
 
 	// Player Persistence
 	GetPlayer(name string) (*PlayerRecord, error)
+	ListPlayerNames() ([]string, error)
 	CreatePlayer(p *PlayerRecord) error
 	SavePlayer(p *PlayerRecord) error
 	UpdatePassword(playerID int, hash string) error
