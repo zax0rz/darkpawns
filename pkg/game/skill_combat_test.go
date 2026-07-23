@@ -605,10 +605,10 @@ func TestDoBackstab_HitIncludesStrToDam(t *testing.T) {
 }
 
 // TestDoBackstab_MissSetsStartCombat: a miss against an awake mob must flag
-// StartCombat so the caller initiates combat (C: damage(ch, vict, 0, SKILL)).
-// We force a miss by giving the mob high position (awake) and cranking skill
-// to 0 AFTER passing the skill gate would fail — instead set skill low and
-// retry until a miss is observed.
+// StartCombat so the caller initiates combat (C: damage(ch, vict, 0, SKILL)),
+// and must route its message through the skill_message path (SkillMsgType=131)
+// rather than a hardcoded string (R4). We force a miss by giving the mob high
+// position (awake) and low skill, retrying until a miss is observed.
 func TestDoBackstab_MissSetsStartCombat(t *testing.T) {
 	w, ch := newBackstabTestWorld(t)
 	mob := spawnTargetMob(t, w)
@@ -624,12 +624,19 @@ func TestDoBackstab_MissSetsStartCombat(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		result := DoBackstab(ch, mob, w)
 		if !result.Success && result.Damage == 0 {
-			// A miss (not a gate failure): must signal combat start.
+			// A miss (not a gate failure): must signal combat start and route
+			// the message through the skill_message path (set 131), carrying NO
+			// hardcoded MessageToCh (R4 — the old invented "notices you" string
+			// is gone).
 			if !result.StartCombat {
-				t.Errorf("DP-906: backstab miss should set StartCombat (C: damage(ch,vict,0,SKILL)), msg %q", result.MessageToCh)
+				t.Errorf("DP-906: backstab miss should set StartCombat (C: damage(ch,vict,0,SKILL)), SkillMsgType %d", result.SkillMsgType)
 			}
-			if !strings.Contains(result.MessageToCh, "notices you") {
-				t.Errorf("expected miss message, got %q", result.MessageToCh)
+			if result.SkillMsgType != SkillBackstabNum {
+				t.Errorf("miss should route via skill_message (SkillMsgType=%d), got %d", SkillBackstabNum, result.SkillMsgType)
+			}
+			if result.MessageToCh != "" || result.MessageToVict != "" || result.MessageToRoom != "" {
+				t.Errorf("miss should carry no hardcoded messages (R4), got ch=%q vict=%q room=%q",
+					result.MessageToCh, result.MessageToVict, result.MessageToRoom)
 			}
 			missed = true
 			break

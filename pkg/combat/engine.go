@@ -102,6 +102,20 @@ func (ce *CombatEngine) SetCallbacks(cb *GameCallbacks) {
 	SetCallbacks(cb)
 }
 
+// SkillMessage routes a combat message through the same skill_message path C's
+// damage() uses (fight.c:1023-1092): it draws Dice(1, len(variants)) from the
+// shared roller and emits the selected set's char/vict/room text for the given
+// attackType. Returns false when attackType has no loaded message set.
+//
+// This is the public entry point the skill layer (e.g. DoBackstab) calls to
+// emit a combat message from lib/misc/messages instead of a hardcoded string
+// (R4/R3). attackType is the messages-file key — e.g. 131 for the Backstab set
+// — NOT the Go-internal SKILL_* enum (fight_core.go:60), which is unrelated to
+// the messages file and would miss the lookup.
+func (ce *CombatEngine) SkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool {
+	return cbSkillMessage(dam, ch, vict, attackType, roomVNum)
+}
+
 // ValidateCallbacks returns an error if the callbacks struct is missing hooks
 // required for the combat engine to function. Broadcast and SendToChar are the
 // minimum required hooks; without them combat messages are silently dropped.

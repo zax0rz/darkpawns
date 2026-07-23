@@ -80,15 +80,20 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	prob := skillLevel
 
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
-		// Miss — C still calls damage(ch, vict, 0, SKILL_BACKSTAB), which starts
-		// combat. Flag the caller to initiate via the combat engine.
+		// Miss — C calls damage(ch, vict, 0, SKILL_BACKSTAB), which routes the
+		// message through skill_message (fight.c:1023-1092): it draws
+		// dice(1, number_of_attacks) and emits the Backstab set's miss_msg trio
+		// from lib/misc/messages (set 131). We set SkillMsgType so the caller
+		// (sendSkillResult) invokes that same path with attacktype 131 — the
+		// messages-file key — instead of a hardcoded string (R4). The miss path
+		// consumes exactly TWO shared draws, in order: this number(1,101) then
+		// the skill_message dice(1,N) (R3). damage() also starts combat; flag
+		// the caller to enroll via the engine.
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You try to backstab $N, but $E notices you!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to backstab you, but you notice $m in time!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to backstab $N, but fails.", chPronouns, &victPronouns, ""),
-			StartCombat:   true,
-			WaitCh:        1,
+			Success:      false,
+			SkillMsgType: SkillBackstabNum, // 131 — lib/misc/messages Backstab set
+			StartCombat:  true,
+			WaitCh:       1,
 		}
 	}
 
@@ -100,13 +105,13 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// (DP-1033)
 	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
 		improveSkill(ch, SkillBackstab)
+		// To-hit miss: C's hit() calls damage(ch, vict, 0, SKILL_BACKSTAB) on a
+		// miss too, so the same skill_message path emits the miss_msg (R1/R4).
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You try to backstab $N, but miss!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to backstab you, but misses!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to backstab $N, but misses.", chPronouns, &victPronouns, ""),
-			StartCombat:   true,
-			WaitCh:        1,
+			Success:      false,
+			SkillMsgType: SkillBackstabNum,
+			StartCombat:  true,
+			WaitCh:       1,
 		}
 	}
 
@@ -121,13 +126,17 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	improveSkill(ch, SkillBackstab)
 
+	// Hit: C's hit() routes the damage through damage(ch, vict, dam,
+	// SKILL_BACKSTAB), which emits the Backstab set's hit_msg via
+	// skill_message. SkillMsgType + Damage>0 selects the Hit variant (R1/R4).
+	// The caller routes dam>0 through DoSpellDamage for the death pipeline
+	// (corpse/XP — DP-942) and emits the message via SkillMessage; HP is
+	// applied exactly once (no double-apply).
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   "Your deadly backstab strikes deep!",
-		MessageToVict: ActMessage("$n sneaks up from behind and plunges a dagger into you!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n sneaks up from behind and backstabs $N!", chPronouns, &victPronouns, ""),
-		WaitCh:        1, // PULSE_VIOLENCE
+		Success:      true,
+		Damage:       dam,
+		SkillMsgType: SkillBackstabNum,
+		WaitCh:       1, // PULSE_VIOLENCE
 	}
 }
 
