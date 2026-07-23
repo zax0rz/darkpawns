@@ -1,0 +1,61 @@
+# act.obj domain sweep (Layer-2, 2026-07-23). Highest-traffic verbs.
+#
+# DISCOVERY: both servers on current main; divergence = new finding. The
+# warrior starting kit (do_start: sword 8037, tunic 8019, backpack 8038 w/
+# bread 8010 + water skin 8063) is the free fixture — no spawns needed.
+# wear/wield/remove already covered by object-starting-gear; this sweeps the
+# rest: get/drop/put/give/eat/drink + the no-arg error paths.
+#
+# Deterministic: DP_SEED + DP_FIXED_TIME cover hunger/thirst condition updates.
+# Probes chosen for stable message paths, not RNG.
+#
+# Result 2026-07-23: 13/14 GREEN. One quarantined below — `give <item>
+# <missing-person>` diverges (DP-1200, NOPERSON class); un-quarantine at fix.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Objactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Objactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get
+drop
+give
+put
+eat
+wear
+drop sword
+get sword
+put bread backpack
+get bread backpack
+eat bread
+# give sword nobody — QUARANTINED: C NOPERSON vs Go invention → DP-1200
+hold bread
+junk bread
