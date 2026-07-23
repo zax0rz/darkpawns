@@ -86,8 +86,6 @@ commands	0	0	C interpreter.c:392
 compact	0	0	C interpreter.c:394
 compare	0	8	C interpreter.c:393
 con	0	5	Go alias for consider
-confirm	1	5	Go skill-system mutation; follows C practice gate
-confirm forget	1	5	Go alias for confirm
 consider	0	5	C interpreter.c:387
 cough	0	5	C interpreter.c:395
 credits	0	0	C interpreter.c:396
@@ -152,7 +150,6 @@ flirt	0	5	C interpreter.c:449
 follow	0	5	C interpreter.c:450
 fondle	0	5	C interpreter.c:451
 force	34	4	C interpreter.c:438
-forget	1	5	Go skill-system mutation; follows C practice gate
 freeze	38	0	C interpreter.c:452
 french	0	5	C interpreter.c:453
 frown	0	5	C interpreter.c:454
@@ -238,7 +235,6 @@ l	0	5	Go alias for look
 lambada	0	8	C interpreter.c:534
 last	33	0	C interpreter.c:535
 laugh	0	5	C interpreter.c:533
-learn	1	5	Go skill-system mutation; follows C practice gate
 leave	0	8	C interpreter.c:536
 leer	0	5	C interpreter.c:537
 levels	0	0	C interpreter.c:538
@@ -246,7 +242,6 @@ lick	0	5	C interpreter.c:541
 lines	0	0	C interpreter.c:542
 list	0	8	C interpreter.c:539
 listen	0	5	C interpreter.c:540
-listskills	0	4	Go skill-system information; mortal-usable while sleeping
 load	31	0	C interpreter.c:544
 lock	0	6	C interpreter.c:543
 look	0	5	C interpreter.c:532
@@ -418,9 +413,7 @@ sinfo	0	4	Go alias for skillinfo
 sing	0	5	C interpreter.c:701
 sip	0	5	C interpreter.c:702
 sit	0	5	C interpreter.c:703
-sk	0	4	Go alias for skills
 skillinfo	0	4	Go skill-system information; mortal-usable while sleeping
-skills	0	4	Go skill-system information; mortal-usable while sleeping
 skillset	38	4	C interpreter.c:704
 slap	0	5	C interpreter.c:707
 sleep	0	4	C interpreter.c:705
@@ -446,7 +439,6 @@ socials	0	0	C interpreter.c:725
 south	0	8	C interpreter.c:316
 spackle	0	5	C interpreter.c:727
 spank	0	5	C interpreter.c:728
-spells	0	4	Go spell information; mortal-usable while sleeping
 spew	0	5	C interpreter.c:729
 spike	0	8	C interpreter.c:730
 spit	0	5	C interpreter.c:731
