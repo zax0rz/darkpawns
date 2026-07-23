@@ -61,9 +61,9 @@ func TestGenderPronoun(t *testing.T) {
 		sex  int
 		want string
 	}{
-		{name: "male", sex: 1, want: "himself"},
-		{name: "female", sex: 0, want: "herself"},
-		{name: "neutral default", sex: 2, want: "itself"},
+		{name: "male", sex: game.SexMale, want: "himself"},
+		{name: "female", sex: game.SexFemale, want: "herself"},
+		{name: "neutral default", sex: game.SexNeutral, want: "itself"},
 		{name: "negative unused", sex: -1, want: "itself"},
 	}
 	for _, tt := range tests {

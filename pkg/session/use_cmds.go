@@ -102,7 +102,7 @@ func cmdRecite(s *Session, args []string) error {
 }
 
 // objectivePronoun returns the objective pronoun for a player sex value.
-// Source: C SEX_* constants — 0=male, 1=female, 2=neutral.
+// Go encoding: 0=male, 1=female, 2=neutral (differs from C SEX_* in structs.h).
 func objectivePronoun(sex int) string {
 	switch sex {
 	case 1: // female
