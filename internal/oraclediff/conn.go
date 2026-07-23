@@ -54,8 +54,12 @@ func (c *TCPConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 			return string(out), err
 		}
 		if b == 255 { // IAC
-			if err := consumeIAC(c.reader); err != nil {
+			escaped, err := consumeIAC(c.reader)
+			if err != nil {
 				return string(out), err
+			}
+			if escaped {
+				out = append(out, 255)
 			}
 			continue
 		}
@@ -67,33 +71,35 @@ func (c *TCPConn) Close() error {
 	return c.conn.Close()
 }
 
-func consumeIAC(r *bufio.Reader) error {
+func consumeIAC(r *bufio.Reader) (escaped bool, err error) {
 	cmd, err := r.ReadByte()
 	if err != nil {
-		return err
+		return false, err
 	}
 	switch cmd {
+	case 255: // IAC IAC - literal 0xFF byte
+		return true, nil
 	case 251, 252, 253, 254: // WILL, WONT, DO, DONT
 		_, err = r.ReadByte()
-		return err
+		return false, err
 	case 250: // SB ... IAC SE
 		for {
 			b, readErr := r.ReadByte()
 			if readErr != nil {
-				return readErr
+				return false, readErr
 			}
 			if b != 255 {
 				continue
 			}
 			next, readErr := r.ReadByte()
 			if readErr != nil {
-				return readErr
+				return false, readErr
 			}
 			if next == 240 {
-				return nil
+				return false, nil
 			}
 		}
 	default:
-		return nil
+		return false, nil
 	}
 }

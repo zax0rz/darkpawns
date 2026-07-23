@@ -1,6 +1,7 @@
 package oraclediff
 
 import (
+	"net"
 	"strings"
 	"testing"
 	"time"
@@ -289,6 +290,29 @@ func TestReportNoDivergence(t *testing.T) {
 	}
 	if strings.Count(r, "DP_SEED=1") != 2 {
 		t.Fatalf("expected shared seed for both processes, got:\n%s", r)
+	}
+}
+
+func TestReadUntilQuiescentEscapedIAC(t *testing.T) {
+	server, client := net.Pipe()
+	t.Cleanup(func() { server.Close() })
+	t.Cleanup(func() { client.Close() })
+
+	tcpConn := NewTCPConn(client)
+
+	go func() {
+		server.Write([]byte{255, 255, 65, 66, 67})
+		server.Close()
+	}()
+
+	out, err := tcpConn.ReadUntilQuiescent(time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The IAC IAC sequence should produce a literal 0xFF byte before ABC.
+	want := "\xffABC"
+	if out != want {
+		t.Fatalf("ReadUntilQuiescent() = %q, want %q", out, want)
 	}
 }
 
