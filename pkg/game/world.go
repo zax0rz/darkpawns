@@ -4,6 +4,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -222,13 +223,18 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	// keyword-sorted (C qsort/hsort). We then append the hardcoded race help
 	// entries and RE-SORT, because do_help's prefix binary search requires the
 	// whole table to be sorted — appending after the sort would break it.
-	if loaded, err := LoadHelpFiles("lib/text/help"); err == nil {
+	helpDir := "lib/text/help" // CWD fallback for hand-built worlds/tests
+	if parsed != nil && parsed.SourceDir != "" {
+		// -world points at lib/world; help data is the sibling lib/text/help.
+		helpDir = filepath.Join(parsed.SourceDir, "..", "text", "help")
+	}
+	if loaded, err := LoadHelpFiles(helpDir); err == nil {
 		w.HelpTable = append(w.HelpTable, loaded...)
 	}
 	w.HelpTable = append(w.HelpTable, RaceHelpEntries()...)
 	sortHelpTable(w.HelpTable)
 	// No-argument help screen (lib/text/help/screen), page_string'd by do_help.
-	if screen, err := LoadHelpScreen("lib/text/help"); err == nil {
+	if screen, err := LoadHelpScreen(helpDir); err == nil {
 		w.HelpScreen = screen
 	}
 

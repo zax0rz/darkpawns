@@ -890,12 +890,15 @@ func cmdHelp(s *Session, args []string) error {
 	// (C uppercases the whole keyword string).
 	topic := strings.ToUpper(entry.Keyword)
 	header := helpGreen + "\r\n[ " + helpCyan + topic + helpGreen + " ]\r\n" + helpNormal
-	s.sendText(header)
-	s.sendText(helpSeparator + "\r\n")
+	// Header + separator go as ONE message: the transport appends a line
+	// break per message that doesn't end in a newline (both header and
+	// separator end in ANSI-normal codes), so per-message emission injected
+	// blank lines C doesn't have. One message = C's contiguous stc stream.
+	s.sendText(header + helpSeparator)
 
-	// Body: the entry text AFTER its first line (C: while (*help != '\n') help++;
-	// the keyword line is skipped). The stored Entry's first line is the keyword
-	// line, terminated by \n.
+	// Body: after the keyword line. C's pointer stops AT the first '\n' and
+	// that newline terminates the dash line; here the message framing supplies
+	// that break, so the body starts past the newline.
 	body := entry.Entry
 	if i := strings.IndexByte(body, '\n'); i >= 0 {
 		body = body[i+1:]

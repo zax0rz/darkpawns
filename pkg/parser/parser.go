@@ -25,6 +25,10 @@ type World struct {
 	Mobs  []Mob
 	Objs  []Obj
 	Zones []Zone
+	// SourceDir is the directory ParseWorld read from (the -world flag).
+	// Consumers derive sibling lib paths from it (e.g. ../text/help) instead
+	// of relying on the process CWD, which differs under the oracle harness.
+	SourceDir string
 }
 
 // Stats returns statistics about the parsed world.
@@ -41,7 +45,7 @@ func (w *World) Stats() string {
 
 // ParseWorld parses all world files from the given lib directory.
 func ParseWorld(libDir string) (*World, error) {
-	world := &World{}
+	world := &World{SourceDir: libDir}
 
 	// Parse rooms
 	rooms, err := ParseAllWldFiles(libDir + "/wld")

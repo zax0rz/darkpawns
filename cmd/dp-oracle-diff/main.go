@@ -133,6 +133,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
 		}
+		// Sibling lib/text rides along: the server derives help (and future
+		// static text) from the -world dir's parent, so the throwaway layout
+		// must mirror lib/{world,text}.
+		if err := os.CopyFS(filepath.Join(tmp, "text"), os.DirFS(filepath.Join(repoRoot, "lib", "text"))); err != nil {
+			return fmt.Errorf("copy lib/text to throwaway directory: %w", err)
+		}
 		if err := applyObjectFixtures(filepath.Join(oracleData, "world"), scenario.Fixtures); err != nil {
 			return fmt.Errorf("apply C oracle fixtures: %w", err)
 		}
