@@ -95,6 +95,13 @@ cannot observe them.
 - **R5d. Flag uncertainty at the site.** Low-confidence translations get
   `// TODO(port): <what's unverified>` so later passes can queue them
   mechanically.
+- **R5e. A finding isn't confirmed until its call path is.** Verify that the
+  offending code is *reachable* before filing or fixing — grep the call sites,
+  trace the data. (Taught twice on 2026-07-23: DP-1198's invented equipment
+  strings lived only in dead code while the live path was faithful; a review
+  matcher blamed obj #3117 for another object's indentation. Both survived
+  first review because the finding's existence was checked and its reachability
+  wasn't.)
 
 ---
 
@@ -103,3 +110,4 @@ cannot observe them.
 | date | rule | incident |
 |---|---|---|
 | 2026-07-22 | R1–R5 seeded | July fidelity sprint (DP_CLOCK, zone-reset, nanny, recall) + reachability findings (DP-1185/1186/1187) |
+| 2026-07-23 | R5e added | DP-1198 dead-code false alarm + the obj-3117 misattribution — reachability of findings must be verified |

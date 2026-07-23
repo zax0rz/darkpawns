@@ -300,12 +300,17 @@ func TestReadUntilQuiescentEscapedIAC(t *testing.T) {
 
 	tcpConn := NewTCPConn(client)
 
+	// Write synchronously: net.Pipe writes rendezvous with reads, so this
+	// returns once the reader has consumed all five bytes. Do NOT close the
+	// server here — net.Pipe reads after a peer close return ErrClosedPipe
+	// (not EOF, unlike real TCP), which races the quiescence deadline and
+	// flaked under -race (PR #438 CI). The deadline ends the read instead;
+	// t.Cleanup closes both ends afterward.
 	go func() {
 		server.Write([]byte{255, 255, 65, 66, 67})
-		server.Close()
 	}()
 
-	out, err := tcpConn.ReadUntilQuiescent(time.Second)
+	out, err := tcpConn.ReadUntilQuiescent(250 * time.Millisecond)
 	if err != nil {
 		t.Fatal(err)
 	}
