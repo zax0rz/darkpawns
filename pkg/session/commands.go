@@ -258,6 +258,10 @@ func init() {
 	// and keeps equipment; reallyquit logs out anywhere but loses equipment
 	// outside a safe room. Both delegate to one game-owned logout op.
 	registerCommand("quit", wrapNoArgs(cmdQuit), "Quit the game.")
+	// C abbreviation stubs (interpreter.c:629, :698): the table entries that
+	// force exact typing. Their refusal messages are player-facing surface.
+	registerCommand("qui", wrapNoArgs(cmdQuiStub), "You have to type quit in full.")
+	registerCommand("shutdow", wrapNoArgs(cmdShutdowStub), "Type shutdown in full.")
 	registerCommand("reallyquit", wrapNoArgs(cmdReallyQuit), "Quit the game, losing your equipment.")
 
 	// Offensive commands — delegated to pkg/command (C-10: real damage formulas)

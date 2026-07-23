@@ -17,6 +17,27 @@ func cmdReallyQuit(s *Session) error {
 	return execQuit(s, true)
 }
 
+// cmdQuiStub mirrors C do_quit's subcmd guard (src/act.other.c:114-116): the
+// table's "qui" entry (interpreter.c:629) forces mortals to type quit in full
+// — the exact refusal is player-facing surface. C's guard is level-gated, so
+// immortals typing "qui" fall through to a real quit.
+func cmdQuiStub(s *Session) error {
+	if getEffectiveLevel(s) < LVL_IMMORT {
+		s.Send("You have to type quit--no less, to quit!")
+		return nil
+	}
+	return cmdQuit(s)
+}
+
+// cmdShutdowStub mirrors C do_shutdown's subcmd guard (src/act.wizard.c:
+// 1079-1080) for the "shutdow" table entry (interpreter.c:698). Reachable only
+// at LVL_IMPL-1+ via command_gates.tsv; below that, resolution skips it (law 3)
+// and exact typing is gate-rejected, matching C's scan behavior.
+func cmdShutdowStub(s *Session) error {
+	s.Send("If you want to shut something down, say so!")
+	return nil
+}
+
 // execQuit is the session-teardown half of C do_quit (src/act.other.c:72-181).
 // The game layer (World.DoQuit) owns the safe-room gate, the refuse messages,
 // and the equipment kept-vs-lost fork; this half performs the descriptor-side

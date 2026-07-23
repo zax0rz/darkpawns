@@ -1,0 +1,95 @@
+# Command abbreviation/prefix resolution (R2d; BRIEF-2026-07-22-glm-prefix-matching).
+#
+# C command_interpreter() lookup (interpreter.c:909-912): typed word must be a
+# prefix of the table name; first match in TABLE order wins (socials interleaved,
+# qui/shutdow stubs load-bearing); entries above the player's level are skipped
+# DURING the scan. Go pre-fix is exact-match only, so most probes below are
+# "Huh?!?" on the port = RED on pre-fix main.
+#
+# Probe notes:
+# - l          → guard probe: Go already aliases l→look; C resolves l by table
+#                order. Both should agree (and prove the fix doesn't regress it).
+# - in         → RED: prefix resolution (inventory vs info etc. — table decides)
+# - sa …       → RED: prefix + args through to do_say
+# - gos …      → RED: prefix onto a channel command (level gate text is surface)
+# - gri        → RED: SOCIAL prefix — grin (:475) must beat grimace (:476);
+#                the table-order proof
+# - qui        → RED: the abbreviation stub's exact message (and must NOT quit)
+# - zz         → guard probe: no match on either server (shared miss path)
+# - go hello   → RED: LAW-3 PROOF. goto (seq 146, L31) precedes gossip (seq
+#                147, L0); a level-1 mortal must skip goto and resolve gossip
+#                ("You must be at least level 2 before you can gossip.").
+# - da         → RED: dance (an early L0 social) wins the da prefix for
+#                everyone — validates the resolver-simulation pair selection.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Abbrevactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Abbrevactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Abbrevobser
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Abbrevobser
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+l
+in
+sa test phrase
+gos hello
+gri
+qui
+go hello
+da
+zz
