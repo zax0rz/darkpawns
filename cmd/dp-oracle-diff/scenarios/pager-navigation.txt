@@ -1,0 +1,87 @@
+# Output pager navigation (DP-1195; BRIEF-2026-07-23-glm-pager-port).
+#
+# C pager: modify.c:346-527 (Buselli) + comm.c:617 input routing. `levels`
+# (30 rows) paginates to 2 pages. Two passes exercise both exit paths:
+#
+# Pass 1 — full navigation while staying in the pager:
+#   levels → r (refresh p1) → junkword (exact Valid-commands line, no
+#   advance) → b (back from p1, clamps to p1) → q (quit) → score (proves
+#   clean pager exit: next input is a COMMAND again)
+# Pass 2 — RETURN-through to the auto-exit path:
+#   levels → <ENTER> (p2 = last page, auto-exit) → score (command again)
+#
+# RED on pre-fix main: Go dumps all 30 levels unpaginated, then r resolves
+# to `rest`, b to a b-command, junk to Huh?!? — nav input hits the command
+# interpreter. GREEN on the pager branch.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Pageractor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pageractor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Pagerobser
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Pagerobser
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+levels
+r
+junkword
+b
+q
+score
+levels
+<ENTER>
+score

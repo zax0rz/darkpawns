@@ -149,11 +149,14 @@ func pagerPrompt(current, total int) string {
 	// where the %d's are showstr_page / showstr_count. show_string increments
 	// showstr_page AFTER sending, so make_prompt (which runs after) shows the
 	// page just displayed, 1-based.
-	return "\r" + cyan + "[ " + red + "Return" + cyan +
+	// C make_prompt (comm.c:1044-1046): leading \r only, NO trailing newline —
+	// the player types on the prompt line. The blank line before the prompt
+	// comes from the output-flush cycle, which the caller supplies.
+	return cyan + "[ " + red + "Return" + cyan +
 		" to continue, (" + red + "q" + cyan + ")uit, (" +
 		red + "r" + cyan + ")efresh, (" + red + "b" + cyan +
 		")ack, or page number (" + red + pageItoa(current) + cyan + "/" +
-		red + pageItoa(total) + cyan + ") ]" + norm + "\r\n"
+		red + pageItoa(total) + cyan + ") ]" + norm
 }
 
 func pageItoa(n int) string {
@@ -193,6 +196,10 @@ func (s *Session) displayPage() {
 		return
 	}
 	s.pagerPage = idx + 1
+	// Line separation before the prompt comes from the message framing; the
+	// prompt carries neither C's leading \r (a same-line cursor return the Go
+	// write path doesn't need — oracle-verified parity without it) nor any
+	// trailing newline (the player types on the prompt line).
 	s.sendText(pagerPrompt(shown, s.pagerCount))
 }
 
@@ -274,8 +281,12 @@ func (s *Session) navigatePager(line string) {
 		s.pagerPage = n
 	case first != 0:
 		// Non-empty, unrecognized input — print the exact line and do NOT
-		// advance or display (C:497-502 returns early).
+		// advance or display (C:497-502 returns early). C's prompt cycle
+		// (make_prompt, comm.c:647) still reprints the pager prompt after the
+		// message: emit it without redisplaying the page. pagerPage is the
+		// next-to-display index, so the page on screen is pagerPage (1-based).
 		s.sendText("Valid commands while paging are RETURN, Q, R, B, or a numeric value.\r\n")
+		s.sendText(pagerPrompt(s.pagerPage, s.pagerCount))
 		return
 	}
 	// Empty input (RETURN) and R/B/number all fall through to display the page
