@@ -641,6 +641,18 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		}
 	}
 
+	// R2d: C prefix/abbreviation resolution. Scan the ordered C table (law 2:
+	// table order wins), level-filter DURING the scan (law 3 — load-bearing: a
+	// mortal typing `go` must resolve to gossip, not the earlier goto which is
+	// immortal-gated). First prefix match wins; typed-longer-than-entry never
+	// matches. Go-only commands are not in the C table, so a prefix that only
+	// matches them misses here and falls through to the exact-match registry
+	// below — the only way Go-only names resolve (R4). Position/frozen gating
+	// stays in commandGateRejected, post-resolution; not duplicated here.
+	if canonical, ok := resolveCommandPrefix(cmd, getEffectiveLevel(s)); ok {
+		cmd = canonical
+	}
+
 	entry, ok := cmdRegistry.Lookup(cmd)
 	if !ok {
 		// Check social emotes before giving up
