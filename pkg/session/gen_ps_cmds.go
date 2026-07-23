@@ -143,7 +143,7 @@ func cmdPlayers(s *Session, args []string) error {
 	buf.WriteString("A list of registered players:\r\n")
 	count := 0
 	for _, name := range names {
-		buf.WriteString(fmt.Sprintf("%-20.20s", name))
+		fmt.Fprintf(&buf, "%-20.20s", name)
 		count++
 		if count == 3 {
 			count = 0
