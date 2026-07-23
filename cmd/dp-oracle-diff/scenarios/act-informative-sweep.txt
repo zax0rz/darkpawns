@@ -1,0 +1,101 @@
+# act.informative domain sweep (Layer-2 dark-surface campaign, 2026-07-23).
+#
+# DISCOVERY scenario, not a fix gate: both servers run current main; every
+# divergence is a new finding (probed-red), every match is a command promoted
+# to probed-green forever. Mortal-legal, mob-free, deterministic (DP_SEED +
+# DP_FIXED_TIME cover time/weather/score-age).
+#
+# Deliberately excluded: help (DP-1189, known invented), look (covered by
+# look-start-room), inventory/equipment (inv-equip), examine/read (need object
+# fixtures — object scenarios' turf), consider (needs a mob), where/uptime
+# (LVL_IMMORT in DP's table — interpreter.c:820,795 — unreachable to mortals).
+#
+# Probes (C cite = interpreter.c line):
+# - score (:674)     — the everything-display; age needs DP_FIXED_TIME
+# - time (:778)      — game clock (reset_time port, eebcb33b)
+# - weather (:810)   — seeded weather state
+# - who (:814)       — both players visible, ordering matters
+# - levels (:538)    — level table listing
+# - credits (:396)   — do_gen_ps static text
+# - wizlist (:833)   — static file text
+# - immlist (:514)   — static file text
+# - commands (:392)  — do_commands listing; HIGH re-skin risk (registry-derived?)
+# - socials (:725)   — do_commands SCMD_SOCIALS listing
+# - title (:773)     — no-arg display path (post-28e93bea faithfulness check)
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Infoactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Infoactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Infowatcher
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Infowatcher
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+# PAGER QUARANTINE (discovered on first run, 2026-07-23): C paginates output
+# >~22 lines and STAYS in the pager, consuming subsequent probe lines as pager
+# navigation — contaminating every later probe. Until the C pager is ported
+# (see the pager class issue), long-output commands are excluded here:
+# levels, credits, wizlist, immlist, commands, socials. First-run partial
+# verdicts: levels content faithful page-1 (pager missing); credits = invented
+# Go stub ("That information is not available right now."); wizlist/immlist/
+# socials = missing handlers (Layer-1, C-truth pending pager).
+
+[probe]
+score
+time
+weather
+who
+title
