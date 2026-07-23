@@ -387,6 +387,41 @@ $
 	}
 }
 
+// extra description with leading whitespace on terminating line
+func TestParseObjFile_ExtraDescLeadingWhitespace(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := `#507
+book~
+A book~
+A book lies here.
+~
+1 0 0 0 0 0 0 0 0
+0 0 0 0
+1 50 100.0
+E
+cover title~
+  The title reads "Ancient Secrets".
+  ~
+$
+`
+	f := writeObjFile(t, tmpDir, "test.obj", content)
+
+	objs, err := ParseObjFile(f)
+	if err != nil {
+		t.Fatalf("parse obj file: %v", err)
+	}
+	if len(objs[0].ExtraDescs) != 1 {
+		t.Fatalf("expected 1 extra desc, got %d", len(objs[0].ExtraDescs))
+	}
+	ed := objs[0].ExtraDescs[0]
+	if ed.Keywords != "cover title" {
+		t.Errorf("extra desc keywords: expected 'cover title', got %q", ed.Keywords)
+	}
+	if ed.Description != "  The title reads \"Ancient Secrets\".\n  " {
+		t.Errorf("extra desc description: expected leading whitespace preserved, got %q", ed.Description)
+	}
+}
+
 // multiple extra descriptions
 func TestParseObjFile_MultipleExtraDescs(t *testing.T) {
 	tmpDir := t.TempDir()

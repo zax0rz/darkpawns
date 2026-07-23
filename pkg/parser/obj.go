@@ -212,7 +212,7 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 			var descLines []string
 			for lb.Scan() {
 				descLine := lb.Text()
-				trimmed := strings.TrimSpace(descLine)
+				trimmed := strings.TrimRight(descLine, " \t")
 				if strings.HasSuffix(trimmed, "~") {
 					descLines = append(descLines, strings.TrimSuffix(trimmed, "~"))
 					break
