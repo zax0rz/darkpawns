@@ -258,6 +258,10 @@ func init() {
 	// and keeps equipment; reallyquit logs out anywhere but loses equipment
 	// outside a safe room. Both delegate to one game-owned logout op.
 	registerCommand("quit", wrapNoArgs(cmdQuit), "Quit the game.")
+	// C abbreviation stubs (interpreter.c:629, :698): the table entries that
+	// force exact typing. Their refusal messages are player-facing surface.
+	registerCommand("qui", wrapNoArgs(cmdQuiStub), "You have to type quit in full.")
+	registerCommand("shutdow", wrapNoArgs(cmdShutdowStub), "Type shutdown in full.")
 	registerCommand("reallyquit", wrapNoArgs(cmdReallyQuit), "Quit the game, losing your equipment.")
 
 	// Offensive commands — delegated to pkg/command (C-10: real damage formulas)
@@ -639,6 +643,18 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 				}
 			}
 		}
+	}
+
+	// R2d: C prefix/abbreviation resolution. Scan the ordered C table (law 2:
+	// table order wins), level-filter DURING the scan (law 3 — load-bearing: a
+	// mortal typing `go` must resolve to gossip, not the earlier goto which is
+	// immortal-gated). First prefix match wins; typed-longer-than-entry never
+	// matches. Go-only commands are not in the C table, so a prefix that only
+	// matches them misses here and falls through to the exact-match registry
+	// below — the only way Go-only names resolve (R4). Position/frozen gating
+	// stays in commandGateRejected, post-resolution; not duplicated here.
+	if canonical, ok := resolveCommandPrefix(cmd, getEffectiveLevel(s)); ok {
+		cmd = canonical
 	}
 
 	entry, ok := cmdRegistry.Lookup(cmd)
