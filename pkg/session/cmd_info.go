@@ -832,88 +832,75 @@ func cmdSummon(s *Session, args []string) error {
 	return nil
 }
 
-// Help topics provides category-based help beyond individual commands.
-// Each entry describes a theme or system within the game.
-var helpTopics = map[string]string{
-	"commands":      "Type 'commands' to see all available commands.",
-	"movement":      "Move around the world using: north, south, east, west, up, down (or n/s/e/w/u/d).",
-	"combat":        "Fighting commands: hit <target>, flee, bash <target>, kick <target>, backstab <target>, rescue <target>, trip <target>, headbutt <target>, disembowel <target>, dragonkick <target>, tigerpunch <target>, subdue <target>, shoot <target>, parry, sneak, hide, ambush, neckbreak, sleeper, consider <target>, diagnose <target>",
-	"communication": "Chat commands: say <text>, tell <player> <text>, reply <text>, whisper <player> <text>, emote <text>, shout <text>, gossip <text>, gtell/gsay <text>",
-	"items":         "Item commands: get <item>, drop <item>, inventory/i, equipment/eq, wear <item>, remove <item>, wield <item>, hold <item>, give <item> <player>, put <item> <container>, eat <item>, drink <container>, quaff <item>",
-	"doors":         "Door commands: open <target>, close <target>, lock <target>, unlock <target>, pick <target>, knock <dir>",
-	"social":        "Social commands: wave, nod, grin, laugh, bow, curtsey, hug, kiss, cheer, cry, dance, smile, frown, shrug, clap, salute, yawn, stretch, scratch, sit, rest, sleep, wake, stand",
-	"info":          "Information commands: score, who, where, review, whois, consider, examine, time, weather, affects, autoexit, title, spells, commands",
-	"account":       "Account commands: password <old> <new> (change password), prompt [string|on|off|all], save, quit",
-	"groups":        "Group commands: follow <player>, group <player>, ungroup/disband, gtell/gsay <text>, split <amount>, assist <target>",
-	"reporting":     "Player help: report <player> <type> [desc] — report abusive behavior. Types: harassment, spam, cheating, hate_speech, exploit, other. Also: bug, typo, idea, todo",
-	"admin":         "Admin commands (admin/mod only): warn <player> <reason>, mute <player> <duration> [reason], kick <player> <reason>, ban <player> <duration/permanent> [reason], reports [pending], penalties, investigate <player>, filter <add|remove|list>, spamconfig <threshold> [action], users, wizlock, last, snoop, force",
-	"wizard":        "Wizard commands (immortal+): goto <vnum/player>, at <vnum> <cmd>, stat <target>, vnum <keyword>, vstat <vnum>, load <vnum>, purge, heal <player>, restore <player>, set <target> <field> <value>, switch <target>, return, invis, vis, gecho <msg>, echo <msg>, send <target> <msg>, reload, shut down, advance <target>, poofset, wiznet, zreset, zlist, rlist, olist, mlist, home, date, last, wizutil, show, dark, syslog",
-	"mounts":        "Mount commands: ride <mount>, dismount, yank <player> from mount",
-	"ignore":        "Ignore system: ignore <player> to toggle ignoring someone, ignore alone shows your ignore list.",
-	"skills":        "Skill commands: skills (show learned skills), practice <skill>, learn <skill>, listskills (list available skills), skillinfo <skill> (show skill details), use <skill> <target>",
-	"shops":         "Shop commands: list (show items for sale), buy <item>, sell <item>, appraise <item>",
-	"clans":         "Clan commands: clan (shows clan info), clan create <name>, clan join <name>, clan leave, clan members, clan info",
-	"houses":        "House commands: house (manage your house), hcontrol (admin house control)",
-}
+// Help ANSI codes (CCGRN/CCRED/CCCYN/CCNRM, C_CMP mode — act.informative.c).
+const (
+	helpGreen  = "\x1b[32m"
+	helpRed    = "\x1b[31m"
+	helpCyan   = "\x1b[36m"
+	helpNormal = "\x1b[0m"
+)
 
-// cmdHelp provides help on commands and game systems.
+// helpSeparator is the red 75-dash rule do_help prints under the topic header.
+// C sends two concatenated string chunks that total 75 dashes (a leading space
+// + 74 dashes in the source), act.informative.c:1643-1645.
+const helpSeparator = helpRed +
+	" ---------------------------------------------------------------------------" +
+	helpNormal
+
+// cmdHelp serves ONLY what the help files serve (R4). It is a faithful port of
+// C do_help (act.informative.c:1566-1674): no-arg page_strings the help screen;
+// otherwise a prefix lookup (game.SearchHelp) into the keyword-sorted table,
+// with wizonly entries hidden from mortals and misses reporting the exact C
+// line. The invented helpTopics map, registry-description fallback, and fuzzy
+// "did you mean" surface are all removed — a command with no help entry is, per
+// C, "There is no help on:".
 func cmdHelp(s *Session, args []string) error {
+	// no argument → page_string the help screen (C: page_string(ch->desc, help, 0)).
 	if len(args) == 0 {
-		// Show overview of categories
-		s.sendText("Help Topics\n===========\n" +
-			"Type 'help <topic>' for detailed help.\n\n" +
-			"Game topics: commands, movement, combat, communication, items, doors, social, info, account, groups, reporting, skills, shops, mounts, ignore, clans, houses\n" +
-			"Admin: admin, wizard\n" +
-			"Type 'help <topic>' for details, or 'help <command>' for a specific command.")
+		PageString(s, s.manager.world.HelpScreen)
 		return nil
 	}
 
-	topic := strings.ToLower(strings.Join(args, " "))
-
-	// Check helpTopics first
-	if text, ok := helpTopics[topic]; ok {
-		s.sendText("[" + topic + "]\n" + strings.Repeat("-", len(topic)+4) + "\n" + text)
+	table := s.manager.world.HelpTable
+	if len(table) == 0 {
+		// C: "No help available.\r\n" when help_table is empty.
+		s.sendText("No help available.\r\n")
 		return nil
 	}
 
-	// Check registered commands
-	if entry, ok := cmdRegistry.Lookup(topic); ok {
-		desc := entry.HelpText
-		if desc == "" {
-			desc = topic + " (command)"
-		}
-		aliases := ""
-		if len(entry.Aliases) > 0 {
-			aliases = "\nAliases: /" + strings.Join(entry.Aliases, ", /")
-		}
-		levelInfo := ""
-		if entry.MinLevel > 0 {
-			levelInfo = fmt.Sprintf("\nMinimum level: %d", entry.MinLevel)
-		}
-		s.sendText(fmt.Sprintf("%s%s%s", desc, aliases, levelInfo))
+	argument := strings.Join(args, " ")
+	entry := game.SearchHelp(table, argument)
+	if entry == nil {
+		// C: "There is no help on: %s\r\n" + mudlog + append to misc/help file.
+		// The mudlog and the misc/help usage file are server-side only (not
+		// player-facing); the file write is intentionally skipped here.
+		s.sendText(fmt.Sprintf("There is no help on: %s\r\n", argument))
 		return nil
 	}
 
-	// Try fuzzy match on help topics
-	var suggestions []string
-	for helpTopic := range helpTopics {
-		if strings.Contains(helpTopic, topic) || strings.Contains(topic, helpTopic) {
-			suggestions = append(suggestions, helpTopic)
-		}
-	}
-	// Also fuzzy match on commands
-	for _, entry := range cmdRegistry.GetAll() {
-		if strings.Contains(entry.Name, topic) || strings.Contains(topic, entry.Name) {
-			suggestions = append(suggestions, entry.Name)
-		}
+	// Mortals cannot see wizonly entries — existence is hidden, same as a miss
+	// (C: GET_LEVEL(ch) < LVL_IMMORT && strstr(entry, "wizonly")).
+	if s.player != nil && s.player.GetLevel() < LVL_IMMORT &&
+		strings.Contains(entry.Entry, "wizonly") {
+		s.sendText(fmt.Sprintf("There is no help on: %s\r\n", argument))
+		return nil
 	}
 
-	if len(suggestions) > 0 {
-		s.sendText(fmt.Sprintf("No exact match for '%s'. Did you mean:\n  %s",
-			topic, strings.Join(suggestions, ", ")))
-	} else {
-		s.sendText(fmt.Sprintf("No help available for '%s'. Try 'help' for a list of topics.", topic))
+	// Header: green "\r\n[ " cyan TOPIC-UPPERCASED green " ]\r\n" normal
+	// (C uppercases the whole keyword string).
+	topic := strings.ToUpper(entry.Keyword)
+	header := helpGreen + "\r\n[ " + helpCyan + topic + helpGreen + " ]\r\n" + helpNormal
+	s.sendText(header)
+	s.sendText(helpSeparator + "\r\n")
+
+	// Body: the entry text AFTER its first line (C: while (*help != '\n') help++;
+	// the keyword line is skipped). The stored Entry's first line is the keyword
+	// line, terminated by \n.
+	body := entry.Entry
+	if i := strings.IndexByte(body, '\n'); i >= 0 {
+		body = body[i+1:]
 	}
+	PageString(s, body)
 	return nil
 }
 
