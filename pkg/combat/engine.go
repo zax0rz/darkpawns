@@ -600,8 +600,16 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	attacker := pair.Attacker
 	defender := pair.Defender
 
+	// fight.c:1792-1806 one_hit w_type derivation: the message attack-type is
+	// derived from the wielded weapon (offset val3), NOT from the damage type.
+	// Compute it fresh every round so the miss branch (below) doesn't read a
+	// stale pair.LastAttackType. This offset is handed ONLY to the message
+	// senders — CalculateDamage keeps AttackNormal so AC reduction still applies
+	// (R3: damage math is unchanged).
+	msgAttackType := cbWeaponInfo(attacker.GetName())
+
 	if !CalculateHitChance(attacker, defender, HitModifiers{}) {
-		ce.sendMissMessage(attacker, defender, pair.LastAttackType)
+		ce.sendMissMessage(attacker, defender, msgAttackType)
 		return false
 	}
 
@@ -615,7 +623,7 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		ce.DamageFunc(defender.GetName())
 	}
 
-	ce.sendHitMessage(attacker, defender, damage, pair.LastAttackType)
+	ce.sendHitMessage(attacker, defender, damage, msgAttackType)
 	if ce.OnCombatAction != nil {
 		ce.OnCombatAction(attacker, defender, "hit", damage, "hit", 0)
 	}

@@ -50,7 +50,7 @@ func defaultCombatCallbacks() *GameCallbacks {
 		IsMounted:                func(name string) bool { return false },
 		Dismount:                 func(name string) {},
 		Unmount:                  func(name string) {},
-		GetWeaponInfo:            func(chName string) (wType, damDice, damSize int, isBlessed bool) { return TYPE_HIT, 0, 0, false },
+		GetWeaponInfo:            func(chName string) (wType, damDice, damSize int, isBlessed bool) { return 0, 0, 0, false }, // offset 0 = "hit"
 		GetAdjacentRoom:          func(roomVNum, door int) int { return -1 },
 		GainExp:                  func(name string, amount int) {},
 		GetExp:                   func(name string) int { return 0 },
@@ -509,9 +509,11 @@ func TestProcessCombatPair_MobAttack(t *testing.T) {
 	cb := defaultCombatCallbacks()
 	cb.GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
 		if chName == "Hero" {
-			return TYPE_SLASH, 1, 8, false
+			// wType is the 0-based OFFSET (val3), not a TYPE_* constant:
+			// SendWeaponMessage adds TYPE_HIT itself. Slash offset = 3.
+			return 3, 1, 8, false
 		}
-		return TYPE_HIT, 0, 0, false
+		return 0, 0, 0, false // barehand → "hit"
 	}
 	SetCallbacks(cb)
 
@@ -581,9 +583,11 @@ func TestProcessCombatPair_PlayerDeath(t *testing.T) {
 	cb := defaultCombatCallbacks()
 	cb.GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
 		if chName == "Hero" {
-			return TYPE_SLASH, 1, 8, false
+			// wType is the 0-based OFFSET (val3), not a TYPE_* constant:
+			// SendWeaponMessage adds TYPE_HIT itself. Slash offset = 3.
+			return 3, 1, 8, false
 		}
-		return TYPE_HIT, 0, 0, false
+		return 0, 0, 0, false // barehand → "hit"
 	}
 	SetCallbacks(cb)
 
