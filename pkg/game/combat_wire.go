@@ -315,6 +315,28 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		}
 	}
 
+	// GetWeaponInfo returns the wielded weapon's message attack-type for the
+	// named attacker — fight.c:1792-1806 one_hit w_type derivation. The wType
+	// return is the 0-based OFFSET (C's GET_OBJ_VAL(wielded,3), e.g. 11 for a
+	// piercing dagger, 3 for slash) that SendWeaponMessage adds TYPE_HIT to.
+	// damDice/damSize/isBlessed are unused by the current message path (left
+	// zero) — only wType is consumed by performOneHit. Mobs have no wired
+	// attack_type yet (parser BareHandAttack isn't carried onto the prototype),
+	// so they return 0 ("hit"), matching C's barehand fallback.
+	cb.GetWeaponInfo = func(name string) (wType, damDice, damSize int, isBlessed bool) {
+		if p, ok := w.GetPlayer(name); ok && p.Equipment != nil {
+			if weapon, wielded := p.Equipment.GetItemInSlot(SlotWield); wielded && weapon != nil && weapon.Prototype != nil {
+				// Values[3] holds the weapon attack type (pierce=11, slash=3,
+				// bludgeon=5, …) — the offset into attack_hit_text, NOT a
+				// TYPE_* constant. fight.c:1795 w_type = val3 + TYPE_HIT, and
+				// SendWeaponMessage performs that +TYPE_HIT itself.
+				return weapon.Prototype.Values[3], 0, 0, false
+			}
+			return 0, 0, 0, false // barehand → "hit"
+		}
+		return 0, 0, 0, false // mob / unknown → "hit"
+	}
+
 	// -------------------------------------------------------------------------
 	// Room navigation
 	// -------------------------------------------------------------------------

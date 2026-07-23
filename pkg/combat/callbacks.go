@@ -141,6 +141,20 @@ func cbSkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool
 	return false
 }
 
+// cbWeaponInfo returns the wielded weapon's message attack-type OFFSET for the
+// named attacker (fight.c:1792-1806 one_hit w_type derivation). The value is
+// C's val3 (e.g. 11 for pierce, 3 for slash) — the 0-based offset that
+// SendWeaponMessage adds TYPE_HIT to. It is NOT a TYPE_* constant and NOT
+// TYPE_HIT+offset. Returns 0 ("hit") when unwired, barehand, or for mobs with
+// no accessible attack_type.
+func cbWeaponInfo(chName string) int {
+	if cb := callbacks; cb != nil && cb.GetWeaponInfo != nil {
+		wType, _, _, _ := cb.GetWeaponInfo(chName)
+		return wType
+	}
+	return 0
+}
+
 func cbBroadChat(chName string, msg string) {
 	if cb := callbacks; cb != nil && cb.BroadChat != nil {
 		cb.BroadChat(chName, msg)
