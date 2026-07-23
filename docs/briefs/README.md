@@ -5,6 +5,7 @@
 **Every behavior must match the C source exactly.** The Go port is from DikuMUD/Merc 2.2 (`src/`). C files in `src/` are the single source of truth for all gameplay mechanics — combat formulas, spell tables, skill success rates, spec proc behaviors, saving throws, AC reduction, damage messages, attribute applications, class tables, etc.
 
 - If a brief touches gameplay mechanics, it **must cite the C source** with `**Cite:**` field pointing to the exact function/line
+- Fidelity briefs **also cite the governing rulebook rule by number** (`docs/fidelity/RULEBOOK.md`, e.g. "rules R2a, R4") — and if a finding matches no rule but should, propose the amendment
 - The coding agent reads the C source directly when given the path
 - When Go deliberately diverges from C (e.g., immortal caps, float64 vs integer division), this **must be documented as an explicit deviation** in both the code and the test
 - Golden tests (C→Go table transcriptions) are the highest-value test investment — they catch silent drift that no functional test would find
@@ -12,8 +13,16 @@
 ## Workflow
 
 ```
-Triage Linear issues → Verify against codebase → Write brief → Hand to coding agent → Review → Build gate → Commit/push → Close Linear
+Triage Linear issues → Verify against codebase → Write brief → Hand to coding agent → Review → Build gate → ORACLE GATE (fidelity briefs) → Commit/push → Close Linear
 ```
+
+**Oracle proof gate** (fidelity briefs only): a player-facing fix is done when its
+`cmd/dp-oracle-diff` scenario runs RED on pre-fix `main` and GREEN on the branch —
+not before. The reviewer runs it; the executor provides scenario sketches in the PR.
+The 2026-07-22 sessions are the reference runs: the oracle caught a live-path
+tokenization bug that passed unit tests and frontier-model review, and a six-year-old
+emote re-skin, in its first two gates. Unit tests verify what you thought to assert;
+the oracle verifies against the running C truth.
 
 ### 1. Triage
 
@@ -50,7 +59,14 @@ Pick the best agent for the job (see Agent Rotation below). The agent:
 - Creates a branch from `main`
 - Implements the fixes
 - Runs build gates: `go build ./... && go vet ./... && go test ./...`
-- Pushes the branch (Kimi commits to main directly — known process issue)
+- Follows the brief's **Git:** section exactly (branch name, push-or-not, PR-or-outbox) —
+  every brief must have one; executors differ (see rotation table)
+
+**Git isolation warning (2026-07-22, learned twice in one day):** coding agents run in
+the live repo unless isolated, and sandboxes that block ref *creation* can still flip
+`.git/HEAD` between existing branches. Codex and GLM both left the repo checked out on
+their branch mid-session. Either run executors in a `git worktree`, or check
+`git status -sb` + `git reflog` before any commit after an agent has run.
 
 ### 5. Review
 
@@ -77,13 +93,15 @@ Multiple coding agents are available. Rotate to avoid rate-limit burnout:
 
 | Agent | Strengths | Rate Limits | Notes |
 |-------|-----------|-------------|-------|
-| **Kimi k2.6/k2.7** | Bug fixes, golden tests, large briefs | 403 after ~7 parallel subagents; ~1hr cooldown | Commits directly to main |
+| **Codex (frontier)** | Class fixes, multi-file fidelity work, finds adjacent data pipelines on its own | Occasional availability | `codex exec -C <repo> --sandbox workspace-write`; can't create git refs — pre-create the branch or use a worktree; proven on DP-1185/1186/1187 (#420) |
+| **GLM-5.2** | C-source-grounded ports, data-driven mechanisms, disciplined negative testing | Good | Delivered by Zach's harness; pushes `glm/*` branches + opens PRs itself; proven on reset_time (#401) + CI ratchet (#419) |
+| **Kimi k2.6/k2.7** | Bug fixes, golden tests, large briefs | 403 after ~7 parallel subagents; ~1hr cooldown | Historic workhorse; rate-limited often as of Jul 2026 |
 | **Gemini 3.5-flash** | Golden tests, mechanical fixes, code review | Generous — good fallback | Produces clean walkthroughs |
 | **Claude Fable 5** | Full audits, architecture review, complex analysis | Expensive — use sparingly | Best for code review, not implementation |
 | **Claude Sonnet** | Complex multi-file changes, refactoring | Moderate | Good for PR review |
-| **DeepSeek** | Easy/small tasks, cleanup, nits | Cheap, fast | Good for quick wins |
+| **DeepSeek** | Mechanical batch work, generators, scans | Cheap, fast | Built the reachability generator (2.6M own-tokens, verified good) |
 
-**Dispatch rule:** Don't default to Claude for implementation — save it for review and audit. Rotate Kimi/Gemini for coding work. DeepSeek for trivial fixes.
+**Dispatch rule:** Don't default to Claude for implementation — save it for brief-writing, review, and the oracle gate. Codex for judgment-adjacent class fixes; GLM for precision-heavy well-specified ports; DeepSeek for mechanical tooling. The brief absorbs the risk: the more precisely the C semantics are specified, the cheaper the executor can be.
 
 ## Brief Types
 
@@ -97,6 +115,12 @@ Transcribe C static tables/formulas into Go test assertions. Higher volume, lowe
 - Specify expected assertion count
 - Note any deliberate Go divergences from C
 - Example: `BRIEF-2026-07-05-round8a-spell-golden.md`
+
+### Fidelity Brief (oracle-gated)
+Player-facing behavior restoration. Cites C source lines AND rulebook rules by number.
+Must define the oracle gate: which scenario (existing or sketched), which probes, and
+the RED-on-pre-fix-main requirement. Reference examples:
+`BRIEF-2026-07-22-codex-r2-command-surface.md`, `BRIEF-2026-07-22-glm-prefix-matching.md`.
 
 ### Audit Brief
 For full codebase reviews (e.g., Fable). Three-phase: Sweep → Deep Dive → Roadmap.
@@ -117,6 +141,9 @@ For full codebase reviews (e.g., Fable). Three-phase: Sweep → Deep Dive → Ro
 - [ ] No `fmt.Fprintf` converted to `slog` (those are MUD output)
 - [ ] No `CustomData` removed (it's the escape hatch)
 - [ ] No C files modified (they're reference only)
+- [ ] Fidelity fixes: oracle scenario RED on pre-fix `main` → GREEN on the branch (run it, don't trust the claim)
+- [ ] `make reachability` — zero reachable→unreachable regressions (CI ratchet enforces, but check locally first)
+- [ ] Rulebook: does a repeated failure pattern indict a rule? Amend `docs/fidelity/RULEBOOK.md` + audit the class (R5b/R5c)
 
 ## Brief Template
 
@@ -208,8 +235,9 @@ The CI runs on every push to `main` and every PR against `main`. Config: `.githu
 
 | Job | What it runs | Gate? |
 |-----|-------------|-------|
-| **test** | `go test -race ./...` (all packages except tests/unit), `go build ./...`, Python pytest (non-e2e), binary build + 10s startup smoke | ✅ Required |
+| **test** | `go test -race ./...` (all packages except tests/unit), `go build ./...`, Python pytest (non-e2e), binary build + 10s startup smoke, **coverage ratchet** (40% floor, a9139c30), **reachability ratchet** (`scripts/reachability_ci_gate.py`, unreachable count must not rise; floor 61 as of 2026-07-22, PR #419) | ✅ Required |
 | **lint** | `golangci-lint run ./...` (v2.12.2, pinned to match Go 1.26.4), `gofumpt` format check | ✅ Required |
+| **security** | `go mod verify`, `govulncheck`, `gosec` (058c7d87) | ✅ Required |
 | **build-and-push** | Docker image build + push to ghcr.io (main branch only, `zax0rz` owner only) | Conditional |
 | **deploy** | kubectl apply to k8s (main branch push only, requires KUBECONFIG secret) | Conditional |
 
@@ -236,4 +264,5 @@ CI runs **`go test -race`** which is stricter than local `go test`. If CI fails 
 
 - **e2e smoke test** (`scripts/smoke_test_2b.py`) — not wired. See COV-5 (DP-966) for the plan.
 - **Docker Compose integration** — no compose-based test exists yet
-- **Coverage reporting** — no `codecov` or similar; coverage tracked manually via `go test -cover`
+- **Oracle differential runs** — need the local C oracle binary (`DP_ORACLE_BIN`); run
+  locally at gate time, not in CI. (Coverage IS in CI now — ratchet at 40% floor.)
