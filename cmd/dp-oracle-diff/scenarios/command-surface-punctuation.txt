@@ -1,0 +1,90 @@
+# Command-surface punctuation + grats fidelity (DP-1185/1186/1187, rules R2a/R2b/R4).
+#
+# Probes the C command-table names restored by the codex/r2-command-surface fix:
+# the non-alpha one-char tokenization (interpreter.c:883-907) and the entries at
+# interpreter.c:430 (:), :473 (grats), :488 (?), :648 (.), :671 ('), :831 (;).
+# Both hometown-K newbies co-locate (communication.txt pattern); the observer
+# captures TO_ROOM speech/emote lines.
+#
+# Fidelity probes:
+# - 'hello (attached) and ' hello (spaced) must both dispatch to do_say
+# - :grins broadly → do_echo SCMD_EMOTE ($n grins broadly)
+# - .hi → do_reply with nothing to reply to (C's exact rejection line)
+# - ;test as a mortal → whatever C's do_wiznet mortal path prints — mirror it
+# - grats works; gratz must be "Huh?!?" on BOTH servers (R4: C has no gratz)
+#
+# Scoped out (communication.txt precedent): "? say" — the `?` registration is
+# dispatch-proven by unit tests + reachability, but Go's help CONTENT is a
+# wholesale re-skin (registry descriptions, invented topics) vs C's help files,
+# a pre-existing R1/R4 class that `help say` on main hits identically. Tracked
+# in its own DP issue; gets its own scenario when help fidelity lands.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Punctactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Punctactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Punctobser
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Punctobser
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+'hello there
+' hello again
+:grins broadly
+.hi
+;test message
+grats everyone
+gratz everyone

@@ -458,6 +458,15 @@ func splitCommandInput(input string) (string, []string) {
 	return input, nil
 }
 
+// SplitCommandInput exposes the C-faithful tokenization for input layers that
+// pre-split raw lines (the telnet listener). Without this, attached punctuation
+// forms ("'hello", ":grins") are split on whitespace upstream and arrive here
+// as unknown multi-char commands — caught by the command-surface-punctuation
+// oracle scenario, invisible to direct ExecuteCommand unit tests.
+func SplitCommandInput(input string) (string, []string) {
+	return splitCommandInput(input)
+}
+
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	// C command_interpreter draws number(0,3) at the top of every playing

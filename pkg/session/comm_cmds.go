@@ -118,8 +118,10 @@ func cmdEmote(s *Session, args []string) error {
 	}
 	action = filtered
 
-	// Sender sees: "You emit: $message"
-	s.Send(fmt.Sprintf("You emit: %s", action))
+	// Sender sees their own name, exactly like the room does — C do_echo
+	// sends the same "$n <text>" act() line TO_CHAR (oracle-proven:
+	// command-surface-punctuation scenario; was an invented "You emit:").
+	s.Send(fmt.Sprintf("%s %s", s.player.Name, action))
 
 	// Room sees: "$n $message"
 	text := fmt.Sprintf("%s %s", s.player.Name, action)
