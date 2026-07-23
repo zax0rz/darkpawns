@@ -13,6 +13,9 @@ import (
 type rescueCombatEngine interface {
 	StartCombat(combat.Combatant, combat.Combatant) error
 	StopCombat(string)
+	// SkillMessage routes a combat message through the skill_message path
+	// (fight.c:1023-1092), drawing Dice(1,N) and emitting the set's text.
+	SkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool
 }
 
 // cmdSkills displays all learned skills
@@ -1506,8 +1509,19 @@ func genderPronoun(sex int) string {
 // ---------------------------------------------------------------------------
 
 func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatant, result game.SkillResult) error {
-	// Send to character
-	if result.MessageToCh != "" {
+	// Emit the combat message. When SkillMsgType is set, the message comes from
+	// lib/misc/messages via the skill_message path (fight.c:1023-1092): the
+	// engine draws Dice(1,N) and emits the selected set's char/vict/room text
+	// itself, so we do NOT also emit MessageToCh/Vict/Room (R4 — no invented
+	// strings; R3 — the Dice draw is DRAW 2, ordered after the skill's
+	// number(1,101) in DoBackstab, so it must run before any combat-initiation
+	// side effects that could draw). Otherwise emit the literal MessageTo*
+	// fields as before.
+	if result.SkillMsgType != 0 && target != nil {
+		if eng, ok := s.GetCombatEngine().(rescueCombatEngine); ok && eng != nil {
+			eng.SkillMessage(result.Damage, ch.GetName(), target.GetName(), result.SkillMsgType, ch.GetRoom())
+		}
+	} else if result.MessageToCh != "" {
 		_ = s.SendMessage(result.MessageToCh + "\r\n")
 	}
 

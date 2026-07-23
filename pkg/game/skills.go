@@ -333,6 +333,16 @@ type SkillResult struct {
 	// damage(ch, vict, 0, SKILL) on a miss, which starts combat via set_fighting.
 	// The caller (sendSkillResult) routes this through the combat engine.
 	StartCombat bool
+
+	// SkillMsgType, when non-zero, routes the combat message through the
+	// skill_message path (fight.c:1023-1092) instead of emitting MessageToCh/
+	// Vict/Room directly. It holds the lib/misc/messages attack-type key (e.g.
+	// 131 for the Backstab set) — NOT the Go-internal SKILL_* enum. When set,
+	// the caller (sendSkillResult) draws Dice(1,N) and emits the selected set's
+	// char/vict/room text via the combat engine, mirroring C's damage() path,
+	// and MessageToCh/Vict/Room are ignored. R4 (no invented strings) + R3
+	// (the Dice draw must happen in order).
+	SkillMsgType int
 }
 
 // DoBackstab implements do_backstab() from act.offensive.c lines 172-220.
