@@ -171,6 +171,15 @@ func (s *Session) handleMessage(data []byte) error {
 			return s.handleCharInput(msg.Data)
 		}
 		return ErrNotInCharCreation
+	case MsgPagerInput:
+		// Pager navigation (DP-1195). While paging, input lines route here
+		// instead of the command interpreter — mirrors C's showstr_count
+		// routing (comm.c:617). The transport forks only send pager_input
+		// while IsPaging(); guard anyway in case a client mis-sends it.
+		if !s.IsPaging() {
+			return ErrNotInCharCreation
+		}
+		return s.handlePagerInputMsg(msg.Data)
 	default:
 		return ErrUnknownMessageType
 	}

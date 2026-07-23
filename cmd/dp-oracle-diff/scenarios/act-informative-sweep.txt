@@ -88,7 +88,8 @@ Y
 # >~22 lines and STAYS in the pager, consuming subsequent probe lines as pager
 # navigation — contaminating every later probe. Until the C pager is ported
 # (see the pager class issue), long-output commands are excluded here:
-# levels, credits, wizlist, immlist, commands, socials. First-run partial
+# credits, wizlist, immlist, commands, socials (levels now has full pager
+# coverage in pager-navigation.txt). First-run partial
 # verdicts: levels content faithful page-1 (pager missing); credits = invented
 # Go stub ("That information is not available right now."); wizlist/immlist/
 # socials = missing handlers (Layer-1, C-truth pending pager).

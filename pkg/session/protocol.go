@@ -4,9 +4,10 @@ import "encoding/json"
 
 // Client to Server message types
 const (
-	MsgLogin     = "login"
-	MsgCommand   = "command"
-	MsgCharInput = "char_input" // client → server: answers during char creation
+	MsgLogin      = "login"
+	MsgCommand    = "command"
+	MsgCharInput  = "char_input"  // client → server: answers during char creation
+	MsgPagerInput = "pager_input" // client → server: pager navigation while paging
 )
 
 // Server to Client message types
