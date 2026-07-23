@@ -298,24 +298,17 @@ func TestCmdHelp(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
 
-	// Test general help
-	err := cmdHelp(s, nil)
+	// With an empty help table, a topic lookup reports the C "No help
+	// available" line. The invented overview/registry fallback is gone (R4).
+	m.world.HelpTable = nil
+	m.world.HelpScreen = ""
+	err := cmdHelp(s, []string{"commands"})
 	if err != nil {
 		t.Fatalf("cmdHelp failed: %v", err)
 	}
 	got := readSessionText(t, s)
-	if !strings.Contains(got, "Help Topics") {
-		t.Errorf("expected help overview, got %q", got)
-	}
-
-	// Test help for a topic
-	err = cmdHelp(s, []string{"commands"})
-	if err != nil {
-		t.Fatalf("cmdHelp failed: %v", err)
-	}
-	got = readSessionText(t, s)
-	if !strings.Contains(got, "commands") {
-		t.Errorf("expected topic help, got %q", got)
+	if !strings.Contains(got, "No help available") {
+		t.Errorf("empty-table help = %q; want \"No help available\" (invented overview removed)", got)
 	}
 }
 

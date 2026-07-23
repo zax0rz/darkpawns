@@ -1,0 +1,59 @@
+# Help system fidelity (DP-1189; BRIEF-2026-07-23-glm-help-system).
+#
+# C: do_help (act.informative.c:1566-1674) over help_table booted from
+# lib/text/help (load_help, qsort/hsort = case-insensitive str_cmp, db.c:684).
+# Probes:
+# - help zzqx     → exact miss line "There is no help on: zzqx"
+# - help say      → the [ SAY ] page: green/cyan header, 75-dash red separator,
+#                   entry text (documents the ' shorthand — poetic since #420)
+# - help s        → prefix + Jeff-Fink first-match backtrack, settled by table
+#                   order empirically (C and Go both hsort-sorted)
+# - ? cure light  → multi-word topic through the ? dispatch (#420) and the
+#                   one_word quoted-keyword loader path
+# - help          → no-arg screen; C's page_string counts it past one page, so
+#                   both servers enter the pager — q exits symmetrically
+# - score         → guard: session sane after clean pager exit
+#
+# RED on pre-fix main (invented overview/registry one-liners); GREEN on
+# glm/help-system.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Helpactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Helpactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+help zzqx
+help say
+help s
+? cure light
+help
+q
+score

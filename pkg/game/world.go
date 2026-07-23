@@ -4,6 +4,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -113,6 +114,11 @@ type World struct {
 	// Populated by LoadHelpFiles during world boot.
 	HelpTable []HelpEntry
 
+	// HelpScreen is the no-argument help text (lib/text/help/screen), page_string'd
+	// by do_help on a bare `help`. Loaded once at boot (C: file_to_string_alloc of
+	// HELP_PAGE_FILE into the `help` global, db.c:193).
+	HelpScreen string
+
 	// CloseConnection routes close requests through the session layer.
 	CloseConn CloseConnectionFunc
 
@@ -213,12 +219,24 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	w.Bans = NewBanManager()
 	w.WhodDisplay = NewWhod()
 
-	// Load help files from lib/text/help/
-	if helpTable, err := LoadHelpFiles("lib/text/help"); err == nil {
-		w.HelpTable = helpTable
+	// Load help files from lib/text/help/. LoadHelpFiles returns the table
+	// keyword-sorted (C qsort/hsort). We then append the hardcoded race help
+	// entries and RE-SORT, because do_help's prefix binary search requires the
+	// whole table to be sorted — appending after the sort would break it.
+	helpDir := "lib/text/help" // CWD fallback for hand-built worlds/tests
+	if parsed != nil && parsed.SourceDir != "" {
+		// -world points at lib/world; help data is the sibling lib/text/help.
+		helpDir = filepath.Join(parsed.SourceDir, "..", "text", "help")
 	}
-	// Append hardcoded race help text from C constants.c
+	if loaded, err := LoadHelpFiles(helpDir); err == nil {
+		w.HelpTable = append(w.HelpTable, loaded...)
+	}
 	w.HelpTable = append(w.HelpTable, RaceHelpEntries()...)
+	sortHelpTable(w.HelpTable)
+	// No-argument help screen (lib/text/help/screen), page_string'd by do_help.
+	if screen, err := LoadHelpScreen(helpDir); err == nil {
+		w.HelpScreen = screen
+	}
 
 	return w, nil
 }

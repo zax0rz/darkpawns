@@ -4,32 +4,43 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
 // HelpEntry represents a single help file entry.
 type HelpEntry struct {
-	Keyword string // Primary keyword (for display)
-	Entry   string // Full entry text
+	Keyword string // Primary keyword (lowercased, one per word on the keyword line)
+	// Entry is the entry text INCLUDING the keyword line as its first line
+	// (C load_help stores key\r\n + body; do_help skips past the first \n at
+	// display). Keeping the keyword line lets the display path mirror C exactly.
+	Entry string
 }
 
-// LoadHelpFiles loads all .hlp files from the given directory into a help table.
-// Format (from C db.c load_help):
+// LoadHelpFiles loads all .hlp files listed in dir/index (falling back to
+// dir/index.mini, as C does only in mini_mud mode) into a keyword-sorted help
+// table — a faithful port of C's index_boot(DB_BOOT_HLP) + load_help + qsort
+// (db.c:644-685, 1618-1661).
 //
-//	keyword1 [keyword2 ...]
-//	entry text lines
-//	#
-//	...
+// Record format (lib/text/help/*.hlp):
+//
+//	keyword1 [keyword2 ...]      ← keyword line; one_word splits it (lowercase,
+//	                              "QUOTED PHRASE" → one keyword)
+//	body line
+//	…
+//	#                            ← terminator (a line whose FIRST char is '#')
 //	$
 //
-// Each keyword line creates a separate HelpEntry with the same text.
-// The '$' line terminates the file.
+// Each keyword on the keyword line yields a separate HelpEntry sharing the same
+// Entry text. The table is sorted by case-insensitive keyword (C's hsort), the
+// order do_help's binary search depends on.
 func LoadHelpFiles(dir string) ([]HelpEntry, error) {
-	// Read the index file to get the list of .hlp files
+	// C index_boot picks index.mini only in mini_mud mode; the normal path uses
+	// index. We try index first and fall back to index.mini if it is absent
+	// (keeps the loader usable in reduced-data checkouts without a mini flag).
 	indexPath := filepath.Join(dir, "index")
 	indexFile, err := os.Open(indexPath)
 	if err != nil {
-		// Try index.mini as fallback
 		indexPath = filepath.Join(dir, "index.mini")
 		indexFile, err = os.Open(indexPath)
 		if err != nil {
@@ -41,21 +52,34 @@ func LoadHelpFiles(dir string) ([]HelpEntry, error) {
 	var entries []HelpEntry
 	scanner := bufio.NewScanner(indexFile)
 	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || line == "$" {
+		name := strings.TrimSpace(scanner.Text())
+		// C: while (*buf1 != '$') — '$' terminates the index. Blank lines are
+		// not expected but skipped defensively.
+		if name == "" || name == "$" {
 			continue
 		}
-		// line is a .hlp filename
-		hlpEntries, err := loadHelpFile(filepath.Join(dir, line))
+		hlpEntries, err := loadHelpFile(filepath.Join(dir, name))
 		if err != nil {
-			continue // skip unreadable files
+			continue // C perror+exit; we skip unreadable files (boot resilience)
 		}
 		entries = append(entries, hlpEntries...)
 	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	// C qsort(help_table, …, hsort) — str_cmp (case-insensitive) on keyword.
+	sort.Slice(entries, func(i, j int) bool {
+		return strings.ToLower(entries[i].Keyword) < strings.ToLower(entries[j].Keyword)
+	})
 	return entries, nil
 }
 
-// loadHelpFile loads a single .hlp file and returns all entries in it.
+// loadHelpFile loads a single .hlp file — a faithful port of C load_help
+// (db.c:1618-1649). The entry text is built as `keywordline\r\n` + each body
+// line + `\r\n` (C: strcpy(entry, strcat(key, "\r\n")) then strcat of each
+// line+"\r\n"), so the keyword line is retained as the first line. A body line
+// whose first char is '#' terminates the entry (C: while (*line != '#')).
 func loadHelpFile(path string) ([]HelpEntry, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -63,69 +87,198 @@ func loadHelpFile(path string) ([]HelpEntry, error) {
 	}
 	defer f.Close()
 
-	var entries []HelpEntry
-	var currentKeywords []string
-	var currentEntry strings.Builder
-
+	// Read raw lines preserving the trailing '\r' that get_one_line leaves in
+	// place (it strips only the '\n'). bufio.ReadString('\n') keeps the '\n';
+	// we trim exactly one trailing '\n' (and a following '\r' is retained in the
+	// line content, matching C, then re-appended below — see getOneLine).
+	var raw []string
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		line := scanner.Text()
+		raw = append(raw, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
 
-		// '$' terminates the entire file
-		if strings.TrimSpace(line) == "$" {
+	// getOneLine indexes: C reads sequentially; we mirror with a cursor.
+	lines := make([]string, len(raw))
+	copy(lines, raw)
+
+	var entries []HelpEntry
+	pos := 0
+	// get the first keyword line (C: get_one_line(fl, key); while (*key != '$'))
+	for pos < len(lines) {
+		key := getOneLine(lines, &pos)
+		if key == "" || key[0] == '$' {
 			break
 		}
 
-		// '#' terminates the current entry
-		if strings.TrimSpace(line) == "#" {
-			// Save the current entry under all its keywords
-			entryText := currentEntry.String()
-			for _, kw := range currentKeywords {
-				entries = append(entries, HelpEntry{
-					Keyword: kw,
-					Entry:   entryText,
-				})
+		// Build entry = key + "\r\n" + each body line + "\r\n", until a line
+		// whose first char is '#'.
+		var entry strings.Builder
+		entry.WriteString(key)
+		entry.WriteString("\r\n")
+
+		for pos < len(lines) {
+			line := getOneLine(lines, &pos)
+			if line != "" && line[0] == '#' {
+				break
 			}
-			currentKeywords = nil
-			currentEntry.Reset()
-			continue
+			entry.WriteString(line)
+			entry.WriteString("\r\n")
 		}
+		entryText := entry.String()
 
-		// If we have no keywords yet, this line is the keyword line
-		if currentKeywords == nil {
-			currentKeywords = strings.Fields(line)
-			continue
-		}
-
-		// Otherwise, it's entry text
-		currentEntry.WriteString(line)
-		currentEntry.WriteString("\r\n")
-	}
-
-	// Handle any trailing entry (if file doesn't end with #)
-	if currentEntry.Len() > 0 && len(currentKeywords) > 0 {
-		entryText := currentEntry.String()
-		for _, kw := range currentKeywords {
-			entries = append(entries, HelpEntry{
-				Keyword: kw,
-				Entry:   entryText,
-			})
+		// Add an entry under each keyword on the keyword line (C: one_word loop).
+		for _, kw := range oneWord(key) {
+			entries = append(entries, HelpEntry{Keyword: kw, Entry: entryText})
 		}
 	}
-
 	return entries, nil
 }
 
-// SearchHelp searches the help table for a keyword (case-insensitive).
-// Returns the matching entry or nil if not found.
-func SearchHelp(table []HelpEntry, keyword string) *HelpEntry {
-	keyword = strings.ToLower(keyword)
-	for i := range table {
-		if strings.ToLower(table[i].Keyword) == keyword {
-			return &table[i]
+// getOneLine mirrors C get_one_line (db.c:1607): return the next line with
+// exactly one trailing '\n' removed (the '\r', if present, is KEPT). Advances
+// *pos past the consumed line. Returns "" at end of input.
+func getOneLine(lines []string, pos *int) string {
+	if *pos >= len(lines) {
+		return ""
+	}
+	line := lines[*pos]
+	*pos++
+	// C: buf[strlen(buf)-1] = '\0' strips the trailing \n only. bufio.Scanner
+	// already dropped the \n, so the line is as C would have it (with any \r).
+	return line
+}
+
+// oneWord splits a help keyword line into individual lowercased keywords — a
+// faithful port of C one_word (interpreter.c:1291-1320): a double-quoted span
+// becomes a single keyword (e.g. `"FIRST AID"` → `first aid`); otherwise a run
+// of non-space characters is one keyword. All bytes are lowercased.
+func oneWord(s string) []string {
+	var words []string
+	i := 0
+	for i < len(s) {
+		// skip_spaces
+		for i < len(s) && isASCIISpace(s[i]) {
+			i++
+		}
+		if i >= len(s) {
+			break
+		}
+		var w strings.Builder
+		if s[i] == '"' {
+			// quoted span: take until the closing quote
+			i++
+			for i < len(s) && s[i] != '"' {
+				w.WriteByte(lowerByte(s[i]))
+				i++
+			}
+			if i < len(s) {
+				i++ // skip closing quote
+			}
+		} else {
+			for i < len(s) && !isASCIISpace(s[i]) {
+				w.WriteByte(lowerByte(s[i]))
+				i++
+			}
+		}
+		if w.Len() > 0 {
+			words = append(words, w.String())
+		}
+	}
+	return words
+}
+
+func isASCIISpace(b byte) bool {
+	return b == ' ' || b == '\t' || b == '\r' || b == '\n' || b == '\v' || b == '\f'
+}
+
+func lowerByte(b byte) byte {
+	if b >= 'A' && b <= 'Z' {
+		return b + ('a' - 'A')
+	}
+	return b
+}
+
+// strnCmp is a faithful port of C strn_cmp (utils.c:125-138): a case-insensitive
+// comparison of the first n bytes of a and b. It scans while EITHER string still
+// has bytes, so:
+//   - returns 0 if a is a prefix of (or equal to) b's first n bytes (a match);
+//   - returns ±1 at the first differing byte;
+//   - returns ±1 if a is longer than b but agrees on b's full length (so a
+//     longer-than-keyword argument does NOT match — prefix, one direction).
+func strnCmp(a, b string, n int) int {
+	i := 0
+	for (i < len(a) || i < len(b)) && n > 0 {
+		var ca, cb byte
+		if i < len(a) {
+			ca = lowerByte(a[i])
+		}
+		if i < len(b) {
+			cb = lowerByte(b[i])
+		}
+		if ca != cb {
+			if ca < cb {
+				return -1
+			}
+			return 1
+		}
+		i++
+		n--
+	}
+	return 0
+}
+
+// SearchHelp searches a keyword-sorted help table for argument — a faithful port
+// of C do_help's lookup (act.informative.c:1594-1630): a binary search on
+// strnCmp(argument, keyword, len(argument)) (a PREFIX match), then a backtrack
+// to the FIRST matching entry ("trace backwards… Thanks Jeff Fink!"). Returns
+// the first-match entry, or nil if no entry's keyword has argument as a prefix.
+//
+// The table MUST be sorted by case-insensitive keyword (LoadHelpFiles does this).
+func SearchHelp(table []HelpEntry, argument string) *HelpEntry {
+	if len(table) == 0 || argument == "" {
+		return nil
+	}
+	minlen := len(argument)
+	bot, top := 0, len(table)-1
+	for bot <= top {
+		mid := (bot + top) / 2
+		chk := strnCmp(argument, table[mid].Keyword, minlen)
+		switch {
+		case chk == 0:
+			// Match — trace backwards to the first matching entry (Jeff Fink loop).
+			for mid > 0 && strnCmp(argument, table[mid-1].Keyword, minlen) == 0 {
+				mid--
+			}
+			return &table[mid]
+		case chk > 0:
+			bot = mid + 1
+		default:
+			top = mid - 1
 		}
 	}
 	return nil
+}
+
+// sortHelpTable sorts a help table by case-insensitive keyword in place — C's
+// qsort/hsort order (db.c:684). do_help's binary search requires it.
+func sortHelpTable(table []HelpEntry) {
+	sort.Slice(table, func(i, j int) bool {
+		return strings.ToLower(table[i].Keyword) < strings.ToLower(table[j].Keyword)
+	})
+}
+
+// LoadHelpScreen reads the no-argument help screen (lib/text/help/screen) into a
+// string — the Go analog of C file_to_string_alloc(HELP_PAGE_FILE, &help)
+// (db.c:193), which do_help page_strings on a bare `help` (act.informative.c:1584).
+func LoadHelpScreen(dir string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(dir, "screen"))
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 // RaceHelpEntries returns hardcoded race help text from src/constants.c:205-350.
