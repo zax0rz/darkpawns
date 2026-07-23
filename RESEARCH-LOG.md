@@ -3428,3 +3428,13 @@ ai-code-migration post as external validation: the methodology is *discoverable*
 session's landing — next digest picks up the rulebook + reachability apparatus. Also next:
 R2d prefix/abbreviation matching is the sequel — today's tokenizer was half of
 command_interpreter(); C's table-order first-match scan is the other half.)
+
+**Addendum (same evening):** R2d landed — PR #422 (glm-5.2), oracle-gated, merged.
+Second full loop through the pipeline in one day. The pattern held: the gate's only
+catch (`qui` stub resolved but handler-less; C's guard is level-gated so immortals
+typing `qui` actually quit) was a *brief* gap, not an execution error — across both
+loops, every gate failure indicted a brief or a seam, never the executor's work on
+what was specified. Bonus find: command_gates.tsv golden can't reproduce itself
+(8 hand-added skill rows missing from the generator) → DP-1191. Registered 258→260,
+the abbreviation surface (~500 commands × every prefix) now C-faithful, law 3
+(level-filter-during-scan) proven live: mortal `go` → gossip, immortal `go` → goto.
