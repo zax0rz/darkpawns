@@ -1055,7 +1055,7 @@ func pickBragMessage(chName, victimName string, victimIsNPC bool, victimSex int)
 	kills := cbGetKills(chName)
 
 	// Possessive pronoun matching C HSHR(victim) — sex of the victim
-	// C: 0=male, 1=female, 2=neutral (from SEX_* constants, matching player.go line 67)
+	// Go encoding: 0=male, 1=female, 2=neutral (differs from C SEX_* in structs.h)
 	var possessive string
 	switch victimSex {
 	case 0: // SEX_MALE

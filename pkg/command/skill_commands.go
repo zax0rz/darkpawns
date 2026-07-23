@@ -1489,11 +1489,12 @@ func CmdTurn(s SessionInterface, args []string) error {
 }
 
 // genderPronoun returns the appropriate "himself" / "herself" / "itself" pronoun.
+// Go encoding: 0=male, 1=female, 2=neutral.
 func genderPronoun(sex int) string {
 	switch sex {
-	case 1:
+	case game.SexMale:
 		return "himself"
-	case 0:
+	case game.SexFemale:
 		return "herself"
 	default:
 		return "itself"

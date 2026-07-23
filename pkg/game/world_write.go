@@ -417,7 +417,8 @@ func (w *World) SetMobDefaultPos(vnum int, pos int) bool {
 	return true
 }
 
-// SetMobSex updates a mob's sex. Returns false if the mob doesn't exist.
+// SetMobSex updates a mob's sex. sex is C-encoded (structs.h: 0=neutral/1=male/2=female).
+// Returns false if the mob doesn't exist.
 func (w *World) SetMobSex(vnum int, sex int) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()

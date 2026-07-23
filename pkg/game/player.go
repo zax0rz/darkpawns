@@ -11,6 +11,15 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
+// Sex constants — Go's actor encoding, deliberately different from C's SEX_*
+// (structs.h: 0=neutral/1=male/2=female). C-encoded data translates at the
+// Actor boundary; see MobInstance.GetSex.
+const (
+	SexMale    = 0
+	SexFemale  = 1
+	SexNeutral = 2
+)
+
 // Player represents an active player in the game.
 type Player struct {
 	mu sync.RWMutex
@@ -69,7 +78,7 @@ type Player struct {
 	// Character identity — from do_start()/roll_real_abils() in class.c
 	Class int
 	Race  int
-	Sex   int // 0=male, 1=female, 2=neutral (matching C SEX_* constants)
+	Sex   int // SexMale=0, SexFemale=1, SexNeutral=2 (Go encoding; C data translates at boundary)
 
 	// RaceHates tracks 5 racial hatred slots (src/structs.h race_hate[5]).
 	// Initialized to -1 for all slots; matching a mob's race triggers aggression.
