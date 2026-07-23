@@ -1347,6 +1347,10 @@ func TestCmdTag_NoPlayer(t *testing.T) {
 	}
 }
 
+	// DP-1197: these expectations DOCUMENT current genderPronoun behavior,
+	// which matches neither C (structs.h: 0=neutral/1=male/2=female) nor
+	// player.go's claimed convention. Update when the sex-encoding class
+	// audit converges on C's constants — do not treat these as C truth.
 func TestCmdTag_NoArgs(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosStanding)
