@@ -137,8 +137,8 @@ func TestCmdHitResolvesFirstSwingSynchronouslyWithoutInventedAttackLine(t *testi
 	if got, want := readSendText(t, s), "You try to hit a test target who easily avoids the blow."; got != want {
 		t.Fatalf("synchronous first-swing message = %q, want %q", got, want)
 	}
-	if got := s.player.GetWaitState(); got != 3 {
-		t.Fatalf("post-hit wait state = %d, want 3", got)
+	if got := s.player.GetWaitState(); got != 3*engine.PULSE_VIOLENCE {
+		t.Fatalf("post-hit wait state = %d, want %d (3 rounds → 3*PULSE_VIOLENCE pulses)", got, 3*engine.PULSE_VIOLENCE)
 	}
 	if got := roller.Index; got != 2 {
 		t.Fatalf("first-swing draws = %d, want 2 (to-hit + message selection)", got)

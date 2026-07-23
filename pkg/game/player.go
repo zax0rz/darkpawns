@@ -200,7 +200,9 @@ type Player struct {
 	AutoExit  bool // Show exits automatically in room descriptions
 	HolyLight bool // Can see in the dark (PRF_HOLYLIGHT)
 
-	// C-10: WAIT_STATE cooldown in PULSE_VIOLENCE ticks (1 tick = 2 seconds).
+	// WaitState is the WAIT_STATE cooldown in game-loop pulses (heartbeat
+	// ticks). SetWaitState stores rounds*PULSE_VIOLENCE here; the per-pulse
+	// drain in the heartbeat decrements it (port of comm.c:603).
 	WaitState int
 	RoomFlags bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
 

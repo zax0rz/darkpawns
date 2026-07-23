@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
@@ -364,8 +365,8 @@ func TestCastCureLightDrawOrderManaWaitAndFullHPCap(t *testing.T) {
 	if got := s.player.GetMana(); got != 70 {
 		t.Errorf("mana = %d, want 70", got)
 	}
-	if got := s.player.GetWaitState(); got != 1 {
-		t.Errorf("wait = %d, want 1", got)
+	if got := s.player.GetWaitState(); got != engine.PULSE_VIOLENCE {
+		t.Errorf("wait = %d, want %d (1 round → PULSE_VIOLENCE pulses)", got, engine.PULSE_VIOLENCE)
 	}
 	if got := dprng.Number(0, 101); got != wantNext {
 		t.Errorf("next RNG = %d, want %d after concentration + 2d8", got, wantNext)
@@ -460,8 +461,8 @@ func TestCastFlameArrowDrawOrderIncantationAndComponentMessage(t *testing.T) {
 	if got := caster.player.GetMana(); got != 70 {
 		t.Errorf("mana = %d, want 70", got)
 	}
-	if got := caster.player.GetWaitState(); got != 1 {
-		t.Errorf("wait = %d, want 1", got)
+	if got := caster.player.GetWaitState(); got != engine.PULSE_VIOLENCE {
+		t.Errorf("wait = %d, want %d (1 round → PULSE_VIOLENCE pulses)", got, engine.PULSE_VIOLENCE)
 	}
 	if got := dprng.Number(0, 101); got != wantNext {
 		t.Errorf("next RNG = %d, want %d after concentration + 4d3 + save", got, wantNext)
@@ -491,8 +492,8 @@ func TestCastFailureConsumesOneDrawHalfManaAndNoIncantation(t *testing.T) {
 	if got := s.player.GetMana(); got != 85 {
 		t.Errorf("failure mana = %d, want 85", got)
 	}
-	if got := s.player.GetWaitState(); got != 1 {
-		t.Errorf("failure wait = %d, want 1", got)
+	if got := s.player.GetWaitState(); got != engine.PULSE_VIOLENCE {
+		t.Errorf("failure wait = %d, want %d (1 round → PULSE_VIOLENCE pulses)", got, engine.PULSE_VIOLENCE)
 	}
 	select {
 	case msg := <-observer.send:

@@ -364,6 +364,21 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	preState := s.capturePlayerState()
 	startTime := time.Now()
 
+	// C-faithful per-pulse command-drain gate (DP-1201; port of comm.c:603).
+	// A command issued while wait>0 — or while earlier commands are still
+	// draining — is NOT executed now and NOT rejected: it is appended to the
+	// session's drain queue and runs later, one per heartbeat pulse, with no
+	// message (the C delay). tryExecuteNow does the atomic wait>0 / queue-empty
+	// check + append under inputMu, preserving strict FIFO. Only the wait==0
+	// fast path (queue empty) executes immediately here. This is placed after
+	// the PLR_WRITING / board / rate-limit intercepts (which have their own
+	// game-loop routing in C) and does not touch sendCharInput/sendPagerInput.
+	// Internal ExecuteCommand callers (order/force) bypass handleCommand and
+	// stay immediate.
+	if s.player != nil && s.tryExecuteNow(cmd.Command, cmd.Args) {
+		return nil
+	}
+
 	err := ExecuteCommand(s, cmd.Command, cmd.Args)
 
 	// Emit dynamic execution telemetry warning for slow commands (>500ms)
