@@ -279,3 +279,36 @@ func TestCommandRegistry_QABatch1(t *testing.T) {
 		t.Errorf("'mold' MinPosition = %d, want PosResting", mold.MinPosition)
 	}
 }
+
+func TestResolveDirection(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{input: "north", want: "north"},
+		{input: "n", want: "north"},
+		{input: "south", want: "south"},
+		{input: "s", want: "south"},
+		{input: "east", want: "east"},
+		{input: "e", want: "east"},
+		{input: "west", want: "west"},
+		{input: "w", want: "west"},
+		{input: "up", want: "up"},
+		{input: "u", want: "up"},
+		{input: "down", want: "down"},
+		{input: "d", want: "down"},
+		{input: "", want: ""},
+		{input: "northeast", want: ""},
+		{input: "somewhere", want: ""},
+		{input: "North", want: ""},
+		{input: "N", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			if got := resolveDirection(tt.input); got != tt.want {
+				t.Errorf("resolveDirection(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
