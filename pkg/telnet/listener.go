@@ -430,8 +430,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// Pressing Enter with no command just refreshes the prompt.
 			tc.writeLine("> ")
 		} else {
-			parts := strings.Fields(line)
-			if err := sendCommand(s, parts[0], parts[1:]); err != nil {
+			// C-faithful tokenization (interpreter.c:883-907): a non-letter
+			// first char is a one-char command, no separating space needed
+			// ("'hello"). Plain whitespace splitting broke those forms.
+			cmdWord, cmdArgs := session.SplitCommandInput(line)
+			if err := sendCommand(s, cmdWord, cmdArgs); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
 			if !s.SendClosed() {
