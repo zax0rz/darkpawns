@@ -54,7 +54,9 @@ func TestGameLoopStartFreezesWhenDPClockIsSet(t *testing.T) {
 func TestGameLoopPumpPulsesDispatchesCOrder(t *testing.T) {
 	t.Setenv("DP_CLOCK", "1")
 	var calls []string
+	var drainCount int64
 	gl := NewGameLoop(GameLoopCallbacks{
+		OnDrainInput:      func() { drainCount++ }, // fires every tick; asserted separately
 		OnMobileActivity:  func() { calls = append(calls, "mobile") },
 		OnRoomActivity:    func() { calls = append(calls, "room") },
 		OnObjectActivity:  func() { calls = append(calls, "object") },
@@ -70,6 +72,45 @@ func TestGameLoopPumpPulsesDispatchesCOrder(t *testing.T) {
 	want := []string{"violence", "mobile", "room", "object", "violence"}
 	if !slices.Equal(calls, want) {
 		t.Fatalf("callback order = %v, want %v", calls, want)
+	}
+	if got := drainCount; got != int64(PULSE_MOBILE) {
+		t.Fatalf("OnDrainInput fired %d times, want %d (once per pulse)", got, PULSE_MOBILE)
+	}
+}
+
+// TestGameLoopDrainBeforeViolence verifies fact 4 (comm.c:603): the per-pulse
+// command drain (OnDrainInput) runs BEFORE perform_violence (OnPerformViolence)
+// within a PULSE_VIOLENCE tick. This ordering is what lets a command that
+// becomes eligible on a violence pulse act before that pulse's combat round.
+//
+// OnDrainInput fires every tick; OnPerformViolence fires only on the
+// PULSE_VIOLENCE-th. Across PumpPulses(PULSE_VIOLENCE) we see PULSE_VIOLENCE
+// drains then one violence. The load-bearing assertion is that a drain
+// immediately precedes the violence on the violence pulse — i.e. the element
+// right before "violence" in the order is "drain", not the other way around.
+func TestGameLoopDrainBeforeViolence(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	var order []string
+	gl := NewGameLoop(GameLoopCallbacks{
+		OnDrainInput:      func() { order = append(order, "drain") },
+		OnPerformViolence: func() { order = append(order, "violence") },
+	})
+
+	if err := gl.PumpPulses(PULSE_VIOLENCE); err != nil {
+		t.Fatal(err)
+	}
+	// PULSE_VIOLENCE drains (one per tick) + one violence on the final tick.
+	wantLen := PULSE_VIOLENCE + 1
+	if len(order) != wantLen {
+		t.Fatalf("expected %d callbacks, got %d: %v", wantLen, len(order), order)
+	}
+	// Every tick drains first; violence only appears once, as the LAST entry,
+	// preceded immediately by a drain.
+	if order[len(order)-1] != "violence" {
+		t.Fatalf("violence must be the last callback on a PULSE_VIOLENCE pump, got %v", order)
+	}
+	if order[len(order)-2] != "drain" {
+		t.Fatalf("a drain must immediately precede violence, got %v", order)
 	}
 }
 

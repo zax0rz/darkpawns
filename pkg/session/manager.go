@@ -569,14 +569,16 @@ func (m *Manager) SetScriptDeathFunc() {
 	}
 }
 
-// OnRoundEnd decrements all player wait states each combat round.
-// Set after combat engine initialization.
+// SetOnRoundEnd wires the combat engine's per-round-end callback. Player wait
+// states used to be decremented here (once per combat round), but the faithful
+// command-drain port (DP-1201) moved that decrement to the heartbeat's per-pulse
+// OnDrainInput (Manager.DrainInputQueues), matching comm.c:603 where wait
+// decrements once per loop pass, not once per combat round. The seam is kept so
+// CombatEngine.PerformRound's OnRoundEnd dispatch is unchanged, and to host any
+// future round-granular work. The mob wait-state decrement
+// (combat/engine.go:429-433) is separate and still runs.
 func (m *Manager) SetOnRoundEnd() {
-	m.combatEngine.OnRoundEnd = func() {
-		m.world.ForEachPlayer(func(p *game.Player) {
-			p.DecrementWaitState()
-		})
-	}
+	m.combatEngine.OnRoundEnd = func() {}
 }
 
 // SetCommandExecFunc wires the session layer's command dispatch into the game
@@ -592,6 +594,110 @@ func (m *Manager) SetCommandExecFunc() {
 			return false
 		}
 		return true
+	}
+}
+
+// queuedInput is a single buffered command awaiting the per-pulse drain
+// (DP-1201; port of comm.c:603 game_loop input queue).
+type queuedInput struct {
+	cmd  string
+	args []string
+}
+
+// tryExecuteNow is the single player-input funnel gate (called from
+// handleCommand in session_login.go). It mirrors comm.c:603: a command issued
+// while wait>0 is NOT rejected — it stays queued and drains later, with no
+// message. It returns true when the command was enqueued (caller returns nil,
+// emitting nothing — the C delay), and false when the command should execute
+// immediately (the wait==0 fast path).
+//
+// The wait>0 / queue-empty check and the append are one atomic critical section
+// under inputMu. This preserves strict FIFO order: once the queue is non-empty,
+// every new command appends to the tail, so a freshly-typed command can never
+// jump ahead of a still-draining queue (e.g. if [A,B] are queued from a wait,
+// A drains without setting a new wait, then a freshly-typed C arrives while
+// wait==0 — C must still go behind B). The fast path is taken only when BOTH
+// wait==0 AND the queue is empty.
+func (s *Session) tryExecuteNow(cmd string, args []string) bool {
+	s.inputMu.Lock()
+	defer s.inputMu.Unlock()
+	if (s.player != nil && s.player.GetWaitState() > 0) || len(s.inputQueue) > 0 {
+		s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args})
+		return true
+	}
+	return false
+}
+
+// enqueueInput appends a command to the tail of the drain queue regardless of
+// wait state. Used by tests to pre-seed the queue without going through the
+// funnel gate.
+func (s *Session) enqueueInput(cmd string, args []string) {
+	s.inputMu.Lock()
+	defer s.inputMu.Unlock()
+	s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args})
+}
+
+// dequeueInput pops the head of the drain queue. Returns ok=false when empty.
+func (s *Session) dequeueInput() (string, []string, bool) {
+	s.inputMu.Lock()
+	defer s.inputMu.Unlock()
+	if len(s.inputQueue) == 0 {
+		return "", nil, false
+	}
+	head := s.inputQueue[0]
+	s.inputQueue = s.inputQueue[1:]
+	return head.cmd, head.args, true
+}
+
+// queueLen returns the current drain-queue depth (test helper).
+func (s *Session) queueLen() int {
+	s.inputMu.Lock()
+	defer s.inputMu.Unlock()
+	return len(s.inputQueue)
+}
+
+// DrainInputQueues is the heartbeat's per-pulse command-drain step (wired as
+// OnDrainInput, dispatched at the TOP of heartbeat before OnPerformViolence —
+// comm.c drains commands before perform_violence within a pass). Per session it:
+//  1. decrements the player's wait by one pulse (comm.c:603 `--wait`); and
+//  2. if wait<=0 and the queue is non-empty, dequeues exactly one command
+//     (the drain is an `if`, not a `while` — one command per pulse).
+//
+// ExecuteCommand is deferred to a lock-free pass. Go's RWMutex is not
+// reentrant, and command handlers reach GetSession/broadcasts that re-acquire
+// m.mu — so mirroring the DamageFunc pattern (manager.go SetDamageFunc), we
+// collect the drainable (session, cmd, args) tuples under m.mu.RLock, release
+// the lock, then ExecuteCommand each outside it. DecrementWaitState is safe
+// under the lock (it touches only Player.WaitState under p.mu, never m.mu).
+func (m *Manager) DrainInputQueues() {
+	type drainJob struct {
+		s    *Session
+		cmd  string
+		args []string
+	}
+
+	m.mu.RLock()
+	jobs := make([]drainJob, 0)
+	for _, s := range m.sessions {
+		if s.player == nil {
+			continue
+		}
+		// Fact 2: wait decrements once per pulse.
+		s.player.DecrementWaitState()
+		// Fact 3: one command drains per pulse (if, not while).
+		if s.player.GetWaitState() <= 0 {
+			if cmd, args, ok := s.dequeueInput(); ok {
+				jobs = append(jobs, drainJob{s: s, cmd: cmd, args: args})
+			}
+		}
+	}
+	m.mu.RUnlock()
+
+	for _, job := range jobs {
+		if err := ExecuteCommand(job.s, job.cmd, job.args); err != nil {
+			slog.Error("drained command failed",
+				"player", job.s.playerName, "command", job.cmd, "error", err)
+		}
 	}
 }
 
@@ -1154,6 +1260,18 @@ type Session struct {
 
 	// Decision capture: incremented per command for turn_number in decision log
 	commandCount int
+
+	// C-faithful per-pulse command-drain queue (DP-1201; port of comm.c:603
+	// game_loop). A command issued while wait>0 is NOT rejected — it stays
+	// queued here and drains one per heartbeat pulse once wait reaches 0, with
+	// no message (the C delay). tryExecuteNow is the single funnel at
+	// handleCommand (session_login.go); DrainInputQueues drains from the
+	// heartbeat's OnDrainInput. inputMu guards the slice; the queue is only
+	// ever appended at the funnel and popped at the drain, and the atomic
+	// wait>0/empty check + append under inputMu preserves strict FIFO order
+	// (nothing can jump a draining queue).
+	inputMu    sync.Mutex
+	inputQueue []queuedInput
 
 	// Temporary data storage for command handlers
 	tempData map[string]interface{}

@@ -683,28 +683,13 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 		return nil
 	}
 
-	// C-10: WAIT_STATE enforcement — combat skills set cooldowns.
-	// Non-combat informational commands bypass the wait so players can still
-	// look, check inventory, and communicate while their attack is pending.
-	waitBypass := map[string]bool{
-		"look": true, "l": true,
-		"inventory": true, "inv": true, "i": true,
-		"equipment": true, "eq": true,
-		"score": true, "sc": true,
-		"say": true, "'": true,
-		"tell":    true,
-		"who":     true,
-		"time":    true,
-		"weather": true,
-		"help":    true,
-		"exits":   true,
-		"quit":    true,
-	}
-	if s.player != nil && s.player.GetWaitState() > 0 && !waitBypass[cmd] {
-		s.sendText("You're too busy!\r\n")
-		return nil
-	}
-
+	// NOTE: C's WAIT_STATE no longer gates commands here. comm.c:603's game-loop
+	// drain short-circuits get_from_q while wait>0 — the command STAYS QUEUED
+	// and drains later, with NO message. The invented "You're too busy!" gate
+	// (plus its bypass allowlist) was R4 surface invention and has been deleted.
+	// The wait gate now lives in the heartbeat's per-pulse drain
+	// (Manager.DrainInputQueues), which queues wait>0 commands at the
+	// handleCommand funnel (session_login.go) and drains one per pulse.
 	return entry.Handler(&commandSession{Session: s}, cmd, args)
 }
 

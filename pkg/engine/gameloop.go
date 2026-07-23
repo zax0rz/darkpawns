@@ -50,6 +50,14 @@ type UptimeSnapshot struct {
 // GameLoopCallbacks groups all optional heartbeat dispatch functions.
 // Each is called on its corresponding pulse cycle from the main ticker.
 type GameLoopCallbacks struct {
+	// OnDrainInput — called every heartbeat tick (100ms), at the TOP of
+	// heartbeat before any other dispatch. Port of comm.c:603: the game_loop
+	// drains pending player input (one command per session) BEFORE
+	// perform_violence within a pass. The manager wires this to
+	// DrainInputQueues, which decrements each player's wait by one pulse and
+	// drains one queued command per session when wait reaches 0 (DP-1201).
+	OnDrainInput func()
+
 	// OnZoneUpdate — called every PULSE_ZONE (60s). Ported from zone_update().
 	OnZoneUpdate func()
 
@@ -271,6 +279,10 @@ func (gl *GameLoop) safeInvoke(name string, pulse int64, fn func()) {
 // the loop goroutine (DP-1019).
 func (gl *GameLoop) heartbeat(pulse int64) {
 	cb := gl.callbacks
+
+	// Per-pulse command drain — FIRST, before perform_violence (comm.c:603
+	// drains input before the violence pass within a heartbeat). DP-1201.
+	gl.safeInvoke("DrainInput", pulse, cb.OnDrainInput)
 
 	// Every tick (100ms)
 	gl.safeInvoke("EventProcess", pulse, cb.OnEventProcess)

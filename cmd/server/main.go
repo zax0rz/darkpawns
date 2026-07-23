@@ -255,6 +255,12 @@ func main() {
 	// Start game loop (heartbeat, mobile activity, combat ticks).
 	// PointUpdate is driven by World's standalone 63s ticker, not this loop.
 	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{
+		OnDrainInput: func() {
+			// DP-1201: per-pulse command drain (comm.c:603). Drains one queued
+			// command per session when its wait reaches 0. Runs every tick, at
+			// the top of heartbeat before OnPerformViolence.
+			manager.DrainInputQueues()
+		},
 		OnEventProcess: func() {
 			gameWorld.EventQueue.Process(context.Background())
 		},

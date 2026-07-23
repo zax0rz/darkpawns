@@ -83,21 +83,26 @@ func (p *Player) SetFighting(target string) {
 	p.Fighting = target
 }
 
-// GetWaitState returns the current wait state (PULSE_VIOLENCE ticks).
+// GetWaitState returns the current wait state in pulses (game-loop heartbeats).
 func (p *Player) GetWaitState() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.WaitState
 }
 
-// SetWaitState sets the wait state cooldown.
-func (p *Player) SetWaitState(ticks int) {
+// SetWaitState sets the wait-state cooldown. The argument is expressed in
+// PULSE_VIOLENCE rounds (matching C's WAIT_STATE(ch, PULSE_VIOLENCE*n)) and is
+// converted to pulses internally — n rounds × per-round decrement must equal
+// n*PULSE_VIOLENCE pulses × per-pulse decrement, so the drain gate in the
+// heartbeat (which decrements once per pulse) preserves the C expiry.
+func (p *Player) SetWaitState(rounds int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.WaitState = ticks
+	p.WaitState = rounds * engine.PULSE_VIOLENCE
 }
 
-// DecrementWaitState reduces wait state by 1 (called each PULSE_VIOLENCE).
+// DecrementWaitState reduces wait state by one pulse (called per heartbeat
+// drain; port of comm.c:603 `--(d->character->wait)`).
 func (p *Player) DecrementWaitState() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
