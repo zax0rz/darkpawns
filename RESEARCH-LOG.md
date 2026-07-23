@@ -3384,3 +3384,47 @@ All Linear issues updated and closed.
 ## 2026-07-04 — Session 84: Board Clearing Sprint
 
 29 issues closed, 4 PRs merged. Reek June HIGH batch was 82% stale (14/17 already fixed). Key insight: stale finding cleanup is high-value — verifies codebase health without writing new code. Kimi K2.7-code proven as execution model for C-source-grounded fidelity briefs. Workflow: brief → Kimi CLI → Daeron review → merge.
+
+## 2026-07-22 — Session: Migration-Kit Test Drive (rulebook, reachability, dual-agent oracle gate)
+
+Prompted by Anthropic's "How Anthropic runs large-scale code migrations with Claude Code"
+(claude.com/blog/ai-code-migration) + their code-migration-kit repo. Mapped their six-step
+methodology onto the port and instantiated the missing artifacts, each load-bearing same-day:
+
+- **Reachability mechanized.** `scripts/gen_reachability.py` (DeepSeek-built, verified against
+  source anchors): 508 C entries parsed vs Go registry/socials/spec-procs. The June 18 manual map
+  was badly stale — 146 "unreachable" was actually 61. Weekly cron (Daeron, Mondays 9am ET) emits
+  TSV + delta + JSONL time series (`docs/research/metrics/`) + gbrain page
+  `darkpawns/port-reachability` + Discord embed; regressions turn it red.
+- **CI reachability ratchet** (PR #419, glm-5.2): blocks any reachable→unreachable regression,
+  coverage-ratchet pattern. Verified both failure directions incl. a doctored baseline.
+- **RULEBOOK.md seeded (R1–R5)** — every rule carries the incident that taught it; briefs and
+  Reek/Daeron reviews now cite rules by number. First rulebook-driven *deletion*: player-typed
+  `gratz` removed (R4 — C has only `grats`/`nograts`).
+- **Dual coding-agent test drive.** Codex (frontier) took DP-1185/1186/1187 as one class fix
+  (C tokenization + six surface names); GLM-5.2 took DP-1188 in parallel. Zero file overlap;
+  GLM's gate validated Codex's branch (56 ≤ 61) before either merged.
+- **The oracle gate caught two bugs frontier review + unit tests missed** (PR #420):
+  (1) telnet listener pre-split input on whitespace, so attached punctuation (`'hello`) never
+  reached the new C-faithful tokenizer — unit tests called ExecuteCommand directly and passed;
+  the first differential run went RED in seconds. (2) `cmdEmote` self-echo was an invented
+  "You emit:" vs C's own-name echo — wrong since the day it was written, exposed the moment `:`
+  became reachable. **Paper exhibit: a bug that passes unit tests and frontier-model review,
+  falling to differential testing in ten seconds.**
+- **Oracle-discovered class finding:** the Go help system is a wholesale re-skin (registry
+  one-liners vs C's help files) → DP-1189 (High). `? say` scoped out of the new
+  `command-surface-punctuation` scenario with in-file rationale, communication.txt precedent.
+- **Numbers:** registered 208 (Jun 18 manual) → 252 (Jul 22 generated) → 258 (post-#420);
+  unreachable 146 → 61 → 56. Two PRs merged (#419, #420), four DP issues filed (DP-1185–1189
+  minus 1187 folded), three closed by #420.
+
+**Research note:** the independently-derived pipeline (oracle judge, deterministic queue,
+brief→execute→verify loop) converges with Anthropic's published methodology — their
+rulebook / dependency-map / judge triad all now exist here, and each caught something real
+within hours of existing (the map found `grats`; the gate caught the doctored baseline; the
+rulebook drove a deletion; the judge caught what unit tests structurally couldn't). Cite the
+ai-code-migration post as external validation: the methodology is *discoverable*, not invented.
+(Cross-ref: Daeron's weekly digest, soviet post b7b06770, covers Jul 16–22 and predates this
+session's landing — next digest picks up the rulebook + reachability apparatus. Also next:
+R2d prefix/abbreviation matching is the sequel — today's tokenizer was half of
+command_interpreter(); C's table-order first-match scan is the other half.)
