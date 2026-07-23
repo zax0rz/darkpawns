@@ -15,7 +15,9 @@ func addWhoSession(t *testing.T, manager *Manager, name string, level, class, ro
 	session.connectedAt = connected
 	session.player.SetLevel(level)
 	session.player.Class = class
-	game.SetTitle(session.player, "")
+	if class >= 0 && class < len(game.Titles) {
+		game.SetTitle(session.player, game.Titles[class])
+	}
 	manager.mu.Lock()
 	manager.sessions[strings.ToLower(name)] = session
 	manager.mu.Unlock()

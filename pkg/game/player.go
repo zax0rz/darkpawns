@@ -311,7 +311,11 @@ func newCharacter(id int, name string, class, race, sex int, stats CharStats) *P
 	p.Class = class
 	p.Race = race
 	p.Sex = sex
-	SetTitle(p, "")
+	if class >= 0 && class < len(Titles) {
+		SetTitle(p, Titles[class])
+	} else {
+		SetTitle(p, "the Adventurer")
+	}
 	p.Stats = stats
 	p.Strength = stats.Str
 
