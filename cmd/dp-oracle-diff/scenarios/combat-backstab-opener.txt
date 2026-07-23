@@ -21,6 +21,11 @@
 # then damage(0) on miss or hit() on success, WAIT_STATE(ch, PULSE_VIOLENCE).
 # Both servers share DP_SEED, so the backstab + aftermath rounds must byte-match.
 # Only class letter (W→T) and name differ from the green combat-swing fixture.
+#
+# STATUS: GREEN (2026-07-23). Drove two fixes to close: DP-1203 (backstab routed
+# through skill_message — the miss message + dice(1,N) draw) and DP-1204 (combat
+# rounds derive the hit verb from the wielded dagger → "pierce", not "hit"). Now
+# a passing regression anchor for the whole opener-gated combat skill layer.
 
 [fixture]
 spawn-mob 16303 1 8105 80
