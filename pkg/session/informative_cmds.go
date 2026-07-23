@@ -35,10 +35,6 @@ func cmdTitle(s *Session, args []string) error {
 	if s.player == nil {
 		return nil
 	}
-	if len(args) == 0 {
-		s.Send("Set your title to what?\r\n")
-		return nil
-	}
 
 	// Recover the full argument, then apply C's preprocessing.
 	title := strings.Join(args, " ")

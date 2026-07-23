@@ -53,14 +53,6 @@ func updateMobPosFromHP(m *MobInstance, hp int) {
 // SetTitle — from limits.c set_title()
 // ---------------------------------------------------------------------------
 func SetTitle(p *Player, title string) {
-	if title == "" {
-		class := p.Class
-		if class >= 0 && class < len(Titles) {
-			title = Titles[class]
-		} else {
-			title = "the Adventurer"
-		}
-	}
 	if len(title) > MAX_TITLE_LENGTH {
 		title = title[:MAX_TITLE_LENGTH]
 	}
