@@ -127,9 +127,9 @@ func TestGetACString(t *testing.T) {
 	}
 }
 
-	// DP-1198: "You are not wearing anything." / "Armor Class:" DOCUMENT current
-	// (invented) display output — C do_equipment (act.informative.c:1474) says
-	// "You are using:" + per-slot lines. Update expectations with the fix.
+// DP-1198: "You are not wearing anything." / "Armor Class:" DOCUMENT current
+// (invented) display output — C do_equipment (act.informative.c:1474) says
+// "You are using:" + per-slot lines. Update expectations with the fix.
 func TestGetEquipmentString_Empty(t *testing.T) {
 	p := game.NewPlayer(1, "TestPlayer", 1001)
 	want := "You are not wearing anything."
