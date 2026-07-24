@@ -180,8 +180,45 @@ var SkillPosReq = map[string]int{
 // Helper: check if player can use a skill
 // ---------------------------------------------------------------------------
 
-// CanUseSkill checks class/level and position requirements.
+// SkillUnknownMsg holds the byte-exact (bare — no terminator; the handler
+// appends "\r\n") message a Wave-1 combat command sends when the actor does
+// not know the skill. C gates skill USE purely on `if (!GET_SKILL(ch, SKILL_X))`
+// (act.offensive.c / new_cmds.c), emitting each command's own hardcoded line —
+// there is no class check and no generic level message. These are ported
+// per-command from the C do_ functions (R1/R4, DP-1206).
+//
+// Messages are stored BARE because every handler uniformly does
+// `SendMessage(CanUseSkill_msg + "\r\n")`; storing them with "\r\n" would
+// double-terminate. Backstab's message is "You have no idea how." (verified at
+// act.offensive.c:174, the registered do_backstab) — NOT the "sneaky stuff"
+// line (that's do_trip). Disarm is omitted: CmdDisarm never calls CanUseSkill
+// and DoDisarm already gates faithfully on GetSkill==0 with the byte-exact
+// message (skills2.go:156).
+var SkillUnknownMsg = map[string]string{
+	SkillBackstab: "You have no idea how.",
+	SkillBash:     "You'd better leave all the martial arts to fighters.",
+	SkillKick:     "You'd better leave all the martial arts to fighters.",
+	SkillTrip:     "You'd better leave the sneaky stuff to the thieves.",
+	SkillHeadbutt: "You aren't qualified to headbutt anyone!",
+	SkillRescue:   "But only true warriors can do this!",
+}
+
+// CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
+// (those in SkillUnknownMsg) it gates faithfully on GetSkill()==0 with the
+// command's exact C message — no class or level check (DP-1206). For all other
+// skills it keeps the legacy class/level/position behavior verbatim until their
+// Wave-2 audit. The position block is shared by both paths and is unchanged
+// (position bytes/ordering is a separate finding).
 func CanUseSkill(p *Player, skillName string) (bool, string) {
+	if msg, audited := SkillUnknownMsg[skillName]; audited {
+		// FAITHFUL path (DP-1206): C gates on !GET_SKILL, no class/level.
+		if p.GetSkill(skillName) == 0 {
+			return false, msg
+		}
+		return skillPositionGate(p, skillName)
+	}
+
+	// LEGACY path — un-audited skills keep today's class/level behavior verbatim.
 	classReqs, ok := SkillClassReq[skillName]
 	if !ok {
 		return false, "You have no idea how."
@@ -195,7 +232,13 @@ func CanUseSkill(p *Player, skillName string) (bool, string) {
 		return false, fmt.Sprintf("You must be at least level %d to use that skill.", minLevel)
 	}
 
-	// Check position
+	return skillPositionGate(p, skillName)
+}
+
+// skillPositionGate enforces the skill's minimum position and returns the
+// existing (unchanged) position messages. Shared by both CanUseSkill paths so
+// the audited fork does not perturb position bytes (a separate finding).
+func skillPositionGate(p *Player, skillName string) (bool, string) {
 	minPos := SkillPosReq[skillName]
 	if p.GetPosition() < minPos {
 		switch minPos {
@@ -207,7 +250,6 @@ func CanUseSkill(p *Player, skillName string) (bool, string) {
 			return false, "You can't do that right now."
 		}
 	}
-
 	return true, ""
 }
 
