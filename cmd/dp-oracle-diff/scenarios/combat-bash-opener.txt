@@ -1,0 +1,105 @@
+# Combat skill OPENER (R5c sweep) — BASH, granted via the God/skillset fixture.
+#
+# First scenario to use the full skill-gate stack (skillset #450 + first-player-God
+# #451 + empty-players/probe-on-peer harness #452). Pattern:
+#   - empty-players ⇒ the PRIMARY connection is crowned Implementor (first player).
+#   - a PEER "mortal" (ordinary L1 warrior) is created and walks to 8105.
+#   - [warmup] runs on the PRIMARY (God): `skillset Bashmortal 'bash' 75` grants
+#     the mortal the skill (get_char_vis is world-wide, so the God — wherever it
+#     spawns — reaches the mortal at 8105). Warmup is drained, not diffed.
+#   - [probe:mortal] runs on the mortal at 8105: `bash trainee` as an OPENER
+#     (wait==0), so it drains deterministically (DP-1202 opener strategy).
+#
+# do_bash (act.offensive.c): needs 10 moves + target standing; percent = (AC term) + number(1,101); prob = GET_SKILL.
+# Miss → damage(ch,vict,0,SKILL_BASH); hit → damage(ch,vict,LEVEL>>1,SKILL_BASH) —
+# both route through skill_message (fight.c:1023) → dice(1,N). WAIT_STATE PULSE_VIOLENCE+2.
+# Expected to be RED: Go's DoBash almost certainly hardcodes its messages (R5c),
+# skipping the skill_message set + the dice draw — the same class DP-1203 fixed
+# for backstab. This is the gate for the bash reroute.
+#
+# The God spawns in a different room (immort start on C, mortal start on Go per
+# DP-1205) but never enters 8105, so it can't pollute the mortal's diffed probe.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+# PRIMARY = first player ⇒ God (the skillset configurator).
+[setup:oracle]
+Bashgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bashgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# PEER = ordinary L1 warrior. Created after the God (so it is NOT crowned), then
+# walks the newbie path to non-peaceful 8105 (hometown K → same start room + path
+# as combat-swing/backstab-opener). These commands are peer-setup, not diffed.
+[setup:oracle:mortal]
+Bashmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Bashmortal
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+# God grants the mortal bash (world-wide skillset). Drained, not diffed.
+[warmup]
+skillset Bashmortal 'bash' 75
+
+[probe:mortal]
+bash trainee
+~dpclock pulse 20
+~dpclock pulse 20
