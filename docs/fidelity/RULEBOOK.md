@@ -1,6 +1,6 @@
 ---
 tags: [active, governing, fidelity, port, rulebook]
-last_updated: 2026-07-22
+last_updated: 2026-07-24
 author: Claude Code (Opus) with The Architect
 ---
 # The Port Rulebook — C→Go Translation Law
@@ -68,6 +68,17 @@ port consumes randomness and time in exactly C's order.
   (and DP_FIXED_TIME for the game clock) so scenarios are reproducible. New
   time-dependent code must respect the seam or it breaks the oracle for
   everyone.
+- **R3d. Conditional draws are gated draws.** A `number()`/`dice()` call C
+  makes only under a condition — or *skips* under one — must be gated
+  identically in Go. Special-cased creation paths are the trap: C sets the
+  first player to `LVL_IMPL` in `init_char`, so `do_start`→`advance_level`
+  (gated `if (!GET_LEVEL(ch))`) is *skipped* for the God — zero level-up draws.
+  Go called `AdvanceLevel` unconditionally in the shared constructor, before
+  the `isGod` check → the God drew 2 that C never did → a constant **+2 stream
+  offset** on every God-fixture scenario, corrupting all downstream rolls. When
+  a draw sits behind a C conditional, replicate the *condition*, not just the
+  call. (Taught by DP-1212 — the second "+2 offset masquerading as unrelated
+  combat divergence" after R3b.)
 
 ## R4. No invention
 
@@ -85,7 +96,12 @@ cannot observe them.
 ## R5. Process rules
 
 - **R5a. Oracle proof gate.** A fidelity fix is done when its oracle scenario
-  runs green, not before.
+  runs green, not before — but a single green is **not** proof of *RNG-outcome*
+  parity. For a random hit/miss/damage roll, both sides can land the same side
+  of a threshold on different underlying values: kick/backstab read green while
+  the shared stream was +2 off (DP-1212). Validate roll *values* (or multiple
+  samples) before trusting green for an RNG-outcome fix; message/state greens
+  remain proof.
 - **R5b. Repeat reds indict rules.** The second time a red has the same root
   cause, stop fixing files: amend this rulebook and audit the class.
 - **R5c. Find one, find the class.** Every confirmed finding triggers the
@@ -111,3 +127,4 @@ cannot observe them.
 |---|---|---|
 | 2026-07-22 | R1–R5 seeded | July fidelity sprint (DP_CLOCK, zone-reset, nanny, recall) + reachability findings (DP-1185/1186/1187) |
 | 2026-07-23 | R5e added | DP-1198 dead-code false alarm + the obj-3117 misattribution — reachability of findings must be verified |
+| 2026-07-24 | R3d added; R5a refined | DP-1212 — God creation drew 2 phantom AdvanceLevel values (C gates do_start on !GET_LEVEL); +2 offset flipped bash/trip/headbutt, left kick/backstab green by coincidence |
