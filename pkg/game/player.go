@@ -369,9 +369,16 @@ func newCharacter(id int, name string, class, race, sex int, stats CharStats) *P
 		p.THAC0 = thaco[class][1]
 	}
 
-	// Call advance_level() for level 1 HP bonus (class.c:600-720)
-	// This adds con_app[con].hitp + class-specific random HP
-	p.AdvanceLevel()
+	// NOTE: advance_level() is NOT called here. C calls do_start()→
+	// advance_level() only `if (!GET_LEVEL(ch))` (interpreter.c:2214), i.e. for
+	// a real level-1 mortal — never for the first-player God (already LVL_IMPL)
+	// nor a DB-loaded character (level restored from the record). Calling it
+	// unconditionally in the constructor consumed 2 phantom RNG draws on the God
+	// path (DP-1212), desyncing the shared stream by +2 vs C. Callers that need
+	// the level-1 HP/move bonus (the char-creation mortal path) must call
+	// AdvanceLevel() explicitly after deciding God-ness. The God path
+	// (BootstrapFirstPlayerGod) and the DB-load path (RecordToPlayer) set their
+	// own stats and must NOT call it.
 
 	// Set inventory capacity and carry weight based on STR, DEX and level
 	// CAN_CARRY_N = 5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1)

@@ -90,3 +90,88 @@ func TestAdvanceLevelWarriorMovementUsesSecondDraw(t *testing.T) {
 		t.Fatalf("unused scripted draws: %v", returns)
 	}
 }
+
+// TestNewCharacterConstructorConsumesZeroLevelDraws — DP-1212 regression: the
+// shared constructor (newCharacter → NewCharacterWithStats/NewCharacter) must
+// NOT call AdvanceLevel, because that consumed 2 phantom draws on the God path
+// (C skips do_start for an already-leveled God — interpreter.c:2214). The
+// constructor now sets base stats only; AdvanceLevel is the caller's job.
+func TestNewCharacterConstructorConsumesZeroLevelDraws(t *testing.T) {
+	t.Chdir(t.TempDir())
+	oldNumber := levelNumber
+	t.Cleanup(func() { levelNumber = oldNumber })
+
+	var got []levelDraw
+	levelNumber = func(from, to int) int {
+		got = append(got, levelDraw{from: from, to: to})
+		return from
+	}
+
+	// Construct a warrior — previously this drew number(11,14)+number(1,4); now
+	// it draws nothing.
+	p := NewCharacterWithStats(1, "God", ClassWarrior, RaceHuman, 0, CharStats{Str: 15, Con: 14, Wis: 10, Dex: 12, Int: 10, Cha: 9})
+	if len(got) != 0 {
+		t.Fatalf("constructor consumed %d level-draws (%+v), want 0 — AdvanceLevel must not run in the constructor (DP-1212)", len(got), got)
+	}
+	// The base stats stand (no level-1 bonus applied).
+	if p.MaxHealth != 10 {
+		t.Errorf("constructor MaxHealth = %d, want 10 (base only; no AdvanceLevel)", p.MaxHealth)
+	}
+}
+
+// TestBootstrapFirstPlayerGodConsumesZeroLevelDraws — the God bootstrap
+// (init_char first-player block) is pure assignment: level 40, max_hit 500,
+// every skill 100, conditions -1. It must draw nothing (R3 — matches C's
+// skipped do_start for the already-LVL_IMPL God).
+func TestBootstrapFirstPlayerGodConsumesZeroLevelDraws(t *testing.T) {
+	t.Chdir(t.TempDir())
+	oldNumber := levelNumber
+	t.Cleanup(func() { levelNumber = oldNumber })
+
+	var got []levelDraw
+	levelNumber = func(from, to int) int {
+		got = append(got, levelDraw{from: from, to: to})
+		return from
+	}
+
+	p := NewCharacterWithStats(1, "FirstGod", ClassWarrior, RaceHuman, 0, CharStats{Str: 15, Con: 14, Wis: 10, Dex: 12, Int: 10, Cha: 9})
+	BootstrapFirstPlayerGod(p)
+
+	if len(got) != 0 {
+		t.Fatalf("BootstrapFirstPlayerGod consumed %d level-draws (%+v), want 0 (pure assignment, DP-1212)", len(got), got)
+	}
+	if p.Level != LVL_IMPL || p.GetMaxHP() != 500 {
+		t.Errorf("God stats wrong: level=%d maxHP=%d, want 40/500", p.Level, p.GetMaxHP())
+	}
+}
+
+// TestGodThenMortalCreationDrawSequence — the regression guard for the whole
+// DP-1212 class: a God (0 draws) then a mortal warrior (2 draws: number(11,14)
+// then number(1,4)) = 2 total, not 4. This is the stream position C expects.
+func TestGodThenMortalCreationDrawSequence(t *testing.T) {
+	t.Chdir(t.TempDir())
+	oldNumber := levelNumber
+	t.Cleanup(func() { levelNumber = oldNumber })
+
+	var got []levelDraw
+	levelNumber = func(from, to int) int {
+		got = append(got, levelDraw{from: from, to: to})
+		return from
+	}
+
+	// God: constructor (0 draws) + bootstrap (0 draws).
+	god := NewCharacterWithStats(1, "FirstGod", ClassWarrior, RaceHuman, 0, CharStats{Str: 15, Con: 14, Wis: 10, Dex: 12, Int: 10, Cha: 9})
+	BootstrapFirstPlayerGod(god)
+	if len(got) != 0 {
+		t.Fatalf("God creation drew %d, want 0 (DP-1212)", len(got))
+	}
+
+	// Mortal: constructor (0 draws) + explicit AdvanceLevel (2 draws).
+	mortal := NewCharacterWithStats(2, "Hero", ClassWarrior, RaceHuman, 0, CharStats{Str: 15, Con: 14, Wis: 10, Dex: 12, Int: 10, Cha: 9})
+	mortal.AdvanceLevel()
+
+	want := []levelDraw{{11, 14}, {1, 4}} // warrior: HP then move
+	if !slices.Equal(got, want) {
+		t.Fatalf("God+mortal draw sequence = %+v, want %+v (God 0 + mortal 2 = 2 total, not 4)", got, want)
+	}
+}
