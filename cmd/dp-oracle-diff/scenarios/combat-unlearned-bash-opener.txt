@@ -1,0 +1,98 @@
+# Combat skill UNLEARNED gate (R5c / DP-1206) — BASH with skill == 0.
+#
+# The mirror of combat-bash-opener: identical recipe, but with NO [warmup]
+# skillset — so the L1 warrior peer never learns bash (GiveStartingSkills grants
+# starting skills only to thief/assassin; every other class begins at 0). The
+# mortal then types `bash trainee` with GET_SKILL(bash)==0.
+#
+# C do_bash (act.offensive.c:427): `if (!GET_SKILL(ch, SKILL_BASH)) send_to_char(
+# "You'd better leave all the martial arts to fighters.\r\n", ch); if(!subcmd)
+# return;` — the skill-known gate fires first, no class/level involved.
+#
+# This is the direct oracle proof for DP-1206: before the fix Go emitted the
+# INVENTED "You must be at least level 3 to use that skill." (warrior in
+# SkillClassReq[bash], Level 1 < learn-level 3); after the fix Go gates on
+# GetSkill==0 and emits the exact C line. Expected GREEN on #460.
+#
+# The God (primary) spawns elsewhere and never enters 8105, so it can't pollute
+# the mortal's diffed probe.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+# PRIMARY = first player ⇒ God (unused here beyond crowning; keeps the recipe
+# symmetric with the granted-skill openers).
+[setup:oracle]
+Nobashgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nobashgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# PEER = ordinary L1 warrior, created after the God (not crowned), walks the
+# newbie path to non-peaceful 8105. NO skillset warmup ⇒ bash stays 0.
+[setup:oracle:mortal]
+Nobashmort
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Nobashmort
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+# No [warmup] — the mortal never learns bash.
+
+[probe:mortal]
+bash trainee
