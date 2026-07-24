@@ -712,6 +712,7 @@ const (
 	SkillPunchNum       = 136
 	SkillBiteNum        = 150
 	SkillHeadbuttNum    = 141
+	SkillTripNum        = 144
 	SkillSmackheadsNum  = 145
 	SkillSlugNum        = 146
 	SkillSerpentKickNum = 156
@@ -771,7 +772,7 @@ func attackTypeToCorpseAttack(attackType int) CorpseAttackType {
 		return AttackPetrify
 	case TypeBludgeon, TypePound, TypePunch, TypeWhip,
 		SkillBashNum, SkillKickNum, SkillPunchNum, SkillDragonKickNum, SkillTigerPunchNum,
-		SkillHeadbuttNum, SkillSmackheadsNum, SkillSlugNum, SkillSerpentKickNum:
+		SkillHeadbuttNum, SkillTripNum, SkillSmackheadsNum, SkillSlugNum, SkillSerpentKickNum:
 		return AttackBruised
 	case SkillBiteNum, TypeBite, TypeClaw, TypeSlash,
 		SkillBackstabNum, SkillCircleNum:

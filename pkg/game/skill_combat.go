@@ -327,35 +327,34 @@ func DoTrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 	prob := ch.GetSkill(SkillTrip)
 	percent += max(target.GetLevel()-ch.GetLevel(), 0)
 
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
-
 	if percent > prob {
-		// Failure — user falls. C: WAIT_STATE(ch, PULSE_VIOLENCE) — new_cmds.c:807
+		// Failure — C: damage(ch, victim, 0, SKILL_TRIP) routes the message
+		// through skill_message (the Trip set 144) and starts combat; then the
+		// caster is set sitting. SkillMsgType + StartCombat make the caller
+		// (sendSkillResult) do both; SelfStumble preserves the caster-falls
+		// effect. The miss path draws number(1,121) then dice(1,N) (R3).
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You try to trip $N, but fail and fall!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to trip you, but fails and falls!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to trip $N, but fails and falls!", chPronouns, &victPronouns, ""),
-			SelfStumble:   true,
-			WaitCh:        1,
+			Success:      false,
+			SkillMsgType: SkillTripNum, // 144 — lib/misc/messages Trip set
+			StartCombat:  true,
+			SelfStumble:  true,
+			WaitCh:       1,
 		}
 	}
 
-	// Success — damage = (level/2)+1, target falls. C only sets a wait state
-	// on the victim (WAIT_STATE(victim, PULSE_VIOLENCE)); ch gets none —
-	// new_cmds.c:811-813.
+	// Success — C: damage(ch, victim, (GET_LEVEL/2)+1, SKILL_TRIP) routes the
+	// message + damage through skill_message + the damage/death pipeline and
+	// starts combat; the victim is set sitting. improve_skill runs only on the
+	// player path (subcmd 0). new_cmds.c:805-815.
 	dam := (ch.GetLevel() / 2) + 1
 	improveSkill(ch, SkillTrip)
 
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   ActMessage("You trip $N sending $M crashing to the ground!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n trips you sending you crashing to the ground!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n trips $N sending $M crashing to the ground!", chPronouns, &victPronouns, ""),
-		TargetFalls:   true,
-		WaitTarget:    1,
+		Success:      true,
+		Damage:       dam,
+		SkillMsgType: SkillTripNum,
+		TargetFalls:  true,
+		WaitTarget:   1,
 	}
 }
 
@@ -412,19 +411,18 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	skillLevel := ch.GetSkill(SkillHeadbutt)
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	// C: WAIT_STATE(ch, PULSE_VIOLENCE*3) sits outside the hit/miss if/else —
 	// both branches get WaitCh=3 — new_cmds.c:459.
 	if percent > skillLevel {
-		// Miss — new_cmds.c:435-437
+		// Miss — C: damage(ch, victim, 0, SKILL_HEADBUTT) routes the message
+		// through skill_message (the Headbutt set 141) and starts combat.
+		// new_cmds.c:437-440. SkillMsgType + StartCombat make the caller do both.
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You try to headbutt $N but miss!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to headbutt you but misses!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to headbutt $N but misses!", chPronouns, &victPronouns, ""),
-			WaitCh:        3,
+			Success:      false,
+			SkillMsgType: SkillHeadbuttNum, // 141 — lib/misc/messages Headbutt set
+			StartCombat:  true,
+			WaitCh:       3,
 		}
 	}
 
@@ -447,13 +445,14 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 	improveSkill(ch, SkillHeadbutt)
 	improveSkill(ch, SkillHeadbutt)
 
+	// C: damage(ch, victim, GET_LEVEL(ch), SKILL_HEADBUTT) routes the hit
+	// message through skill_message + the damage/death pipeline and starts
+	// combat. SkillMsgType + Damage>0 selects the Hit variant.
 	result := SkillResult{
-		Success:       true,
-		Damage:        ch.GetLevel(),
-		MessageToCh:   ActMessage("You slam your forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n slams $s forehead into you with a sickening crack!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n slams $s forehead into $N with a sickening crack!", chPronouns, &victPronouns, ""),
-		WaitCh:        3,
+		Success:      true,
+		Damage:       ch.GetLevel(),
+		SkillMsgType: SkillHeadbuttNum,
+		WaitCh:       3,
 	}
 	if target.GetPosition() > combat.PosStunned {
 		result.TargetFalls = true
