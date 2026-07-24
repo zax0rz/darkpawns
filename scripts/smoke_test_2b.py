@@ -5,6 +5,12 @@ Verifies the ROADMAP deliverable over WebSocket JSON:
   Create a warrior, equip the starting weapon, log out, log back in, and verify
   the weapon is still equipped and inventory persisted.
 
+Note: on a fresh MUD (empty player store) the FIRST character created is crowned
+Implementor — C init_char's first-player-God, faithfully ported to Go. CI wipes
+the DB each run, so this test seeds a throwaway bootstrap admin (Session 0)
+first, making the warrior under test character #2 — an ordinary mortal — exactly
+as on a real server that already has an admin.
+
 Requires: websockets (pip install websockets)
 Usage: python3 scripts/smoke_test_2b.py [--ws-url ws://localhost:4350/ws]
 """
@@ -168,6 +174,26 @@ async def run_test(ws_url):
     char_name = f"SmokeTest2B{int(time.time()) % 100000}"
     print(f"\n=== Phase 2b Smoke Test ===")
     print(f"Server: {ws_url}\n")
+
+    # --- Session 0: consume the first-player-God crown ---
+    # On a fresh MUD (empty player store) the FIRST character created is crowned
+    # Implementor — C init_char's first-player-God, now faithfully ported to Go.
+    # CI wipes the DB each run, so without this the warrior below would be that
+    # God (level 40, all skills 100). Create + quit a throwaway bootstrap char
+    # first so the warrior under test is character #2 — an ordinary mortal —
+    # exactly as on a real server that already has an admin.
+    bootstrap_name = f"SmokeBoot{int(time.time()) % 100000}"
+    print("[ Session 0: consume first-player-God crown (throwaway bootstrap char) ]")
+    async with websockets.connect(ws_url) as ws:
+        await send(ws, "login", {
+            "player_name": bootstrap_name,
+            "password": PASSWORD,
+            "new_char": True,
+        })
+        await create_character(ws)
+        await cmd(ws, "quit", wait=1.0)
+        print("  [bootstrap god created + logged out]")
+    await asyncio.sleep(1.0)  # let the DB write land before Session 1
 
     # --- Session 1: New character ---
     print("[ Session 1: Create warrior, look around, wield weapon, quit ]")

@@ -312,6 +312,17 @@ func (db *DB) ListPlayerNames() ([]string, error) {
 	return names, rows.Err()
 }
 
+// CountPlayers returns the number of persisted player rows. Used by the
+// first-player-is-God bootstrap (init_char, db.c:3016) to detect a fresh MUD:
+// when the player store is empty, the first character created is crowned God.
+func (db *DB) CountPlayers() (int, error) {
+	var n int
+	if err := db.conn.QueryRow(`SELECT COUNT(*) FROM players`).Scan(&n); err != nil {
+		return 0, err
+	}
+	return n, nil
+}
+
 // CreatePlayer inserts a new player record.
 func (db *DB) CreatePlayer(p *PlayerRecord) error {
 	query := `
