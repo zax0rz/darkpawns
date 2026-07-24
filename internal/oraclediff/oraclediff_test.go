@@ -112,10 +112,11 @@ victim
 victim
 [fixture]
 inert-scroll 8038
+empty-players
 quiet-mobs
 spawn-mob 18306 1 8162 80
 strip-mob-script 18306
-[probe]
+[probe:victim]
 recite scroll
 `
 	sc, err := ParseScenario("act", strings.NewReader(input))
@@ -135,6 +136,12 @@ recite scroll
 	if !sc.QuietAllMobs {
 		t.Fatal("QuietAllMobs = false, want true")
 	}
+	if !sc.EmptyPlayers {
+		t.Fatal("EmptyPlayers = false, want true")
+	}
+	if sc.ProbeActor != "victim" {
+		t.Fatalf("ProbeActor = %q, want victim", sc.ProbeActor)
+	}
 	if len(sc.ScriptlessMobIDs) != 1 || sc.ScriptlessMobIDs[0] != 18306 {
 		t.Fatalf("ScriptlessMobIDs = %#v", sc.ScriptlessMobIDs)
 	}
@@ -144,6 +151,13 @@ func TestParseScenarioRejectsInvalidFixture(t *testing.T) {
 	_, err := ParseScenario("bad", strings.NewReader("[fixture]\ninert-scroll nope\n[probe]\nlook\n"))
 	if err == nil || !strings.Contains(err.Error(), "invalid fixture") {
 		t.Fatalf("expected invalid fixture error, got %v", err)
+	}
+}
+
+func TestParseScenarioRejectsUnknownProbeActor(t *testing.T) {
+	_, err := ParseScenario("bad-actor", strings.NewReader("[probe:missing]\nlook\n"))
+	if err == nil || !strings.Contains(err.Error(), `probe actor "missing" is not a configured peer`) {
+		t.Fatalf("expected unknown probe actor error, got %v", err)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zax0rz/darkpawns/internal/oraclediff"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -99,3 +100,95 @@ func TestObservationMobFixturesPrepareDisposableWorld(t *testing.T) {
 		t.Fatalf("script fixture changed the wrong mob record:\n%s", gotMobs)
 	}
 }
+
+func TestPrepareOracleDataEmptiesOnlyDisposablePlayerFile(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "lib")
+	if err := os.MkdirAll(filepath.Join(source, "etc"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	sourcePlayers := filepath.Join(source, "etc", "players")
+	if err := os.WriteFile(sourcePlayers, []byte("existing players"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	destination := filepath.Join(t.TempDir(), "lib")
+	if err := prepareOracleData(source, destination, true); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(filepath.Join(destination, "etc", "players"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("disposable player file = %q, want empty", got)
+	}
+	original, err := os.ReadFile(sourcePlayers)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(original) != "existing players" {
+		t.Fatalf("source player file changed to %q", original)
+	}
+}
+
+func TestPrepareOracleDataPreservesPlayersByDefault(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "lib")
+	if err := os.MkdirAll(filepath.Join(source, "etc"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(source, "etc", "players"), []byte("existing players"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	destination := filepath.Join(t.TempDir(), "lib")
+	if err := prepareOracleData(source, destination, false); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(filepath.Join(destination, "etc", "players"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "existing players" {
+		t.Fatalf("disposable player file = %q, want preserved contents", got)
+	}
+}
+
+func TestWithFreshMUDEnvFollowsEmptyPlayersFixture(t *testing.T) {
+	base := []string{"KEEP=1", "DP_FRESH_MUD=stale"}
+	enabled := withFreshMUDEnv(base, true)
+	if got := strings.Join(enabled, ","); got != "KEEP=1,DP_FRESH_MUD=1" {
+		t.Fatalf("enabled env = %q", got)
+	}
+	disabled := withFreshMUDEnv(base, false)
+	if got := strings.Join(disabled, ","); got != "KEEP=1" {
+		t.Fatalf("disabled env = %q", got)
+	}
+}
+
+func TestProbeClientsSelectsNamedPeerAndKeepsOtherAudiences(t *testing.T) {
+	var primary oraclediff.Conn = &scriptedTestConn{name: "primary"}
+	var mortal oraclediff.Conn = &scriptedTestConn{name: "mortal"}
+	var observer oraclediff.Conn = &scriptedTestConn{name: "observer"}
+	actor, audience := probeClients(primary, map[string]oraclediff.Conn{
+		"mortal":   mortal,
+		"observer": observer,
+	}, "mortal")
+
+	if actor != mortal {
+		t.Fatal("named peer was not selected as probe actor")
+	}
+	if audience["primary"] != primary || audience["observer"] != observer {
+		t.Fatalf("audience = %#v, want primary and observer", audience)
+	}
+	if _, ok := audience["mortal"]; ok {
+		t.Fatal("probe actor was also retained as an audience peer")
+	}
+}
+
+type scriptedTestConn struct {
+	name string
+}
+
+func (*scriptedTestConn) Send(string) error                                { return nil }
+func (*scriptedTestConn) ReadUntilQuiescent(time.Duration) (string, error) { return "", nil }
+func (*scriptedTestConn) Close() error                                     { return nil }
