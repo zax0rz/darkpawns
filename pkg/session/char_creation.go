@@ -489,6 +489,16 @@ func (s *Session) completeCharCreation() error {
 	newbieRoom := game.NewbieHometownRoom(s.charHometown)
 	s.player.SetRoom(newbieRoom)
 
+	// First-player-God bootstrap (init_char, db.c:3016). On a fresh MUD the
+	// very first character becomes an Implementor. Runs before the DB save so
+	// the persisted row reflects Level 40 / God stats. The God gets every skill
+	// at 100, so skip the class's low starting-skill grants for it (C's
+	// init_char sets all-100 after do_start would, unconditionally).
+	isGod := s.manager.shouldCrownFirstPlayer()
+	if isGod {
+		game.BootstrapFirstPlayerGod(s.player)
+	}
+
 	// Save to DB if available
 	if s.manager.hasDB {
 		if r, err := db.PlayerToRecord(s.player, nil); err == nil {
@@ -504,10 +514,12 @@ func (s *Session) completeCharCreation() error {
 				return fmt.Errorf("failed to save character: %w", err)
 			} else {
 				s.player.ID = r.ID
-				game.GiveStartingSkills(s.player)
+				if !isGod {
+					game.GiveStartingSkills(s.player)
+				}
 			}
 		}
-	} else {
+	} else if !isGod {
 		game.GiveStartingSkills(s.player)
 	}
 

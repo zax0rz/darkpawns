@@ -130,6 +130,13 @@ func (m *MockDatabase) ListPlayerNames() ([]string, error) {
 	return names, nil
 }
 
+// CountPlayers satisfies db.Database. Used by the first-player-God bootstrap.
+func (m *MockDatabase) CountPlayers() (int, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.players), nil
+}
+
 // GetPlayer satisfies db.Database.
 func (m *MockDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 	m.mu.RLock()

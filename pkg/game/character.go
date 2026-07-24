@@ -3,7 +3,12 @@ package game
 // character.go — class/race definitions and stat rolling
 // Source: class.c, structs.h
 
-import "github.com/zax0rz/darkpawns/pkg/dprng"
+import (
+	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/spells"
+)
 
 // Class constants — from structs.h / class.c
 const (
@@ -318,4 +323,47 @@ func GiveStartingSkills(p *Player) {
 	// class/spell abilities "not learned" (0%) and must practice at a guild
 	// (spec_procs.c guild). The former Go-specific kick/bash/rescue grants were
 	// inventions (retired: newbie `practice` now shows "(not learned)" like C).
+}
+
+// BootstrapFirstPlayerGod ports the init_char first-player block (db.c:3014-3024
+// + the skills/conditions loops at 3059-3074). On a fresh MUD (top_of_p_table
+// == 0) the very first character becomes an Implementor: level LVL_IMPL (40),
+// exp 7,000,000, max_hit 500 / max_mana 100 / max_move 82, every skill at 100,
+// and all three conditions -1 (no hunger/thirst/drunk). The block is pure
+// assignment — no number() draws — so it cannot perturb the shared RNG stream
+// (R3); the only creation draws remain the sex weight/height number() calls.
+//
+// Called from char creation BEFORE GiveStartingSkills so the God's all-100
+// stands; where a class grants a specific skill GiveStartingSkills would
+// overwrite it, the caller skips GiveStartingSkills for the God (C's init_char
+// runs before do_start, and the God's 100 is set there unconditionally).
+func BootstrapFirstPlayerGod(p *Player) {
+	// db.c:3016-3024 — the God stat block.
+	p.SetExp(7000000)
+	p.SetLevel(LVL_IMPL)
+	p.SetMaxHP(500)
+	p.SetHP(500)
+	p.SetMaxMana(100)
+	p.SetMana(100)
+	p.SetMaxMove(82)
+	p.SetMove(82)
+
+	// db.c:3059-3065 — SET_SKILL(ch, i, 100) for every skill when level == LVL_IMPL.
+	size := spells.SkillCatalogSize()
+	for num := 1; num < size; num++ {
+		name := strings.ToLower(SkillCatalogName(num))
+		if name == "" {
+			continue
+		}
+		p.SetSkill(name, 100)
+	}
+
+	// db.c:3073-3074 — GET_COND(ch, i) = -1 (immortal: no hunger/thirst/drunk).
+	// Set both the named fields (persisted) and the Conditions array (runtime).
+	p.Hunger = -1
+	p.Thirst = -1
+	p.Drunk = -1
+	p.Conditions[CondFull] = -1
+	p.Conditions[CondThirst] = -1
+	p.Conditions[CondDrunk] = -1
 }

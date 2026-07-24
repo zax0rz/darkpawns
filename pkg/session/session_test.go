@@ -434,6 +434,7 @@ type mockAgentKeyDB struct {
 func (m *mockAgentKeyDB) Close() error { return nil }
 
 func (m *mockAgentKeyDB) ListPlayerNames() ([]string, error)              { return nil, nil }
+func (m *mockAgentKeyDB) CountPlayers() (int, error)                      { return 0, nil }
 func (m *mockAgentKeyDB) GetPlayer(name string) (*db.PlayerRecord, error) { return nil, nil }
 
 func (m *mockAgentKeyDB) CreatePlayer(p *db.PlayerRecord) error { return nil }

@@ -19,6 +19,7 @@ type mockDatabase struct {
 
 func (m *mockDatabase) Close() error                       { return nil }
 func (m *mockDatabase) ListPlayerNames() ([]string, error) { return nil, nil }
+func (m *mockDatabase) CountPlayers() (int, error)         { return 0, nil }
 func (m *mockDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 	if m.getPlayerFunc != nil {
 		return m.getPlayerFunc(name)

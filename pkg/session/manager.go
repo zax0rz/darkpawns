@@ -105,6 +105,14 @@ type Manager struct {
 	// decisionLog is the write buffer for decision capture (DP-213).
 	// nil when decision capture is disabled.
 	decisionLog *db.DecisionLogWriter
+
+	// godCrowned is the in-process latch for the first-player-God bootstrap
+	// (init_char, db.c:3016). Under DP_FRESH_MUD (the oracle harness path), the
+	// MUD is treated as fresh and exactly ONE character per process is crowned —
+	// godCrowned flips true on the first crown so subsequent chars are ordinary
+	// mortals, matching C's "first player ever" semantics within a single boot.
+	// Production uses the persisted CountPlayers()==0 check instead.
+	godCrowned atomic.Bool
 }
 
 // isLoopback reports whether remoteAddr resolves to the loopback interface
@@ -595,6 +603,41 @@ func (m *Manager) SetCommandExecFunc() {
 		}
 		return true
 	}
+}
+
+// shouldCrownFirstPlayer reports whether the character currently being created
+// should be crowned God (init_char first-player block, db.c:3016). Two paths:
+//
+//  1. Harness path: DP_FRESH_MUD is set → treat the MUD as fresh and crown the
+//     FIRST character created this process, gated by the in-process godCrowned
+//     latch (exactly one crown per boot). The harness runs Go with a dead DB, so
+//     CountPlayers can't be used there; the env + latch stand in for "no players
+//     yet."
+//
+//  2. Production path: DP_FRESH_MUD unset → crown iff the persisted player
+//     store is empty (CountPlayers == 0). Only the very first player ever is
+//     crowned; subsequent ones see a non-empty store and are ordinary mortals.
+//
+// DP_FRESH_MUD is a Go-side test control over initial store state (the
+// DP_SEED/DP_CLOCK category — an external input), NOT a gameplay-output
+// injection; the harness sets it ONLY for God-fixture scenarios so existing
+// scenarios (combat-death, backstab-opener) still get ordinary mortals.
+func (m *Manager) shouldCrownFirstPlayer() bool {
+	if os.Getenv("DP_FRESH_MUD") != "" {
+		// Harness path: crown exactly one, then the latch sticks.
+		return !m.godCrowned.Swap(true)
+	}
+	// Production path: persisted store must be empty. No DB → can't be fresh
+	// (there's nothing to be "first" against); behave as a normal mortal MUD.
+	if !m.hasDB {
+		return false
+	}
+	count, err := m.db.CountPlayers()
+	if err != nil {
+		slog.Warn("CountPlayers failed during char-creation God check; treating as non-fresh", "error", err)
+		return false
+	}
+	return count == 0
 }
 
 // queuedInput is a single buffered command awaiting the per-pulse drain
