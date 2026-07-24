@@ -46,24 +46,37 @@ The first-player block has **no `number()` draws** — it's pure assignment — 
 cannot perturb the shared RNG stream (R3). (The sex-based weight/height `number()`
 draws in `init_char` already happen for every char and are unchanged.)
 
-## The trigger — key on the player store being EMPTY
+## The trigger — "fresh MUD" (two paths: production DB-empty, harness env)
 
-C's `top_of_p_table == 0` means "no players exist yet." The faithful Go
-equivalent is **"the player store is empty at creation time."** Implement a
-`CountPlayers()` (or equivalent existence check) on the DB layer
-(`pkg/db/player.go` — there is a `players` table) and, at char-creation
-finalization (around `pkg/session/char_creation.go:497` where `CreatePlayer` is
-called, and/or `pkg/game/character.go DoStart`), apply the God block **iff the
-player table has 0 rows** before this character is inserted.
+C's `top_of_p_table == 0` means "no players exist yet." The Go bootstrap fires
+when the MUD is **fresh** (no players). Implement a single predicate,
+`World.IsFreshMUD()` (name yours), used at char-creation finalization (around
+`pkg/session/char_creation.go:497` where `CreatePlayer` is called, and/or
+`pkg/game/character.go DoStart`) — apply the God block iff it returns true for
+the character being created:
 
-> ⚠️ **Interface contract with the harness (Claude's parallel work):** the
-> bootstrap MUST key on this "player store empty" signal and nothing else. The
-> oracle harness will control emptiness per scenario — empty for God-fixture
-> scenarios (first char → God), pre-seeded (≥1 row) for all normal scenarios
-> (first char → mortal, exactly as today). Do NOT key on an in-process
-> "first-connection-this-boot" counter — that would wrongly crown the primary
-> actor in every existing scenario (combat-death, backstab-opener) and desync
-> against C. Empty-store is the one correct signal.
+1. **Production path (faithful):** the player store is empty — add a
+   `CountPlayers()` on the DB layer (`pkg/db/player.go`, `players` table) and
+   return true when it reports 0 rows (only the very first char).
+2. **Harness path (required):** the oracle harness runs Go with a **deliberately
+   dead DB** (`-db` = an unreachable Postgres DSN — see
+   `cmd/dp-oracle-diff/main.go:32`), so `CountPlayers()` can't be used there. When
+   the env var **`DP_FRESH_MUD`** is set (non-empty), treat the MUD as fresh and
+   bootstrap the **first character created this process** (an in-process "have I
+   crowned anyone yet this boot" latch — crown exactly one, then behave normally).
+
+> ⚠️ **Interface contract with the harness (Claude's parallel work):** the harness
+> sets `DP_FRESH_MUD=1` **only** for God-fixture scenarios, and passes the C
+> oracle an empty players file for the same scenarios — so both servers crown
+> their first character. For every existing/normal scenario, `DP_FRESH_MUD` is
+> UNSET and the C players file is non-empty, so the first char is an ordinary
+> mortal exactly as today. **Do NOT bootstrap the first char in the harness
+> without `DP_FRESH_MUD`** — that would wrongly crown the primary actor in
+> combat-death/backstab-opener and desync against C. The env gates it.
+>
+> `DP_FRESH_MUD` is a Go-side test control over *initial store state* (the
+> DP_SEED/DP_CLOCK category — an external input), not a gameplay-output injection;
+> it's fine to add (Go is ours; the read-only rule is C-oracle-only).
 
 ## Ordering with do_start
 
@@ -78,13 +91,17 @@ gate-worthy.)
 
 ## Tests
 
-- **first player → God:** with an empty player table, a newly created character
+- **fresh MUD, first char → God:** with `DP_FRESH_MUD` set (harness path) OR
+  `CountPlayers()==0` (production path, with a test DB), a newly created character
   has level `LVL_IMPL`, exp 7000000, max_hit 500, max_mana 100, max_move 82,
   `GetSkill` == 100 for a representative set of skills, and conditions -1.
-- **second player → mortal:** with the table non-empty (one row present), a new
-  character is an ordinary level-1 of its class — conditions 24, skills 0 except
-  its `DoStart` class grants (e.g. thief backstab 10). This is the regression
-  guard that existing scenarios still get mortals.
+- **fresh MUD, second char → mortal:** with `DP_FRESH_MUD` set, the *second*
+  character created this process is an ordinary level-1 of its class (conditions
+  24, skills 0 except its `DoStart` class grants, e.g. thief backstab 10) — the
+  first-crown latch is consumed exactly once.
+- **not fresh → mortal:** with `DP_FRESH_MUD` unset and no DB (harness default),
+  the first char is an ordinary mortal — the regression guard that existing
+  scenarios (combat-death, backstab-opener) still get mortals, unchanged.
 - **no RNG perturbation:** the God block consumes zero draws (assert the shared
   stream position is unchanged across the block, mirroring the cast_cmds draw
   tests) — the only creation draws remain the sex weight/height `number()` calls.
