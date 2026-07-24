@@ -104,14 +104,17 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// Go previously skipped this roll — every successful backstab landed.
 	// (DP-1033)
 	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
-		improveSkill(ch, SkillBackstab)
 		// To-hit miss: C's hit() calls damage(ch, vict, 0, SKILL_BACKSTAB) on a
 		// miss too, so the same skill_message path emits the miss_msg (R1/R4).
+		// C's improve_skill(ch, SKILL_BACKSTAB) runs AFTER hit() returns
+		// (act.offensive.c:228-229) — i.e. after the skill_message dice — so it
+		// is deferred to sendSkillResult (DP-1212 / R3b).
 		return SkillResult{
-			Success:      false,
-			SkillMsgType: SkillBackstabNum,
-			StartCombat:  true,
-			WaitCh:       1,
+			Success:         false,
+			SkillMsgType:    SkillBackstabNum,
+			StartCombat:     true,
+			WaitCh:          1,
+			DeferredImprove: []string{SkillBackstab},
 		}
 	}
 
@@ -124,19 +127,22 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	mult := combat.BackstabMult(ch.GetLevel())
 	dam = int(float64(dam) * mult)
 
-	improveSkill(ch, SkillBackstab)
-
 	// Hit: C's hit() routes the damage through damage(ch, vict, dam,
 	// SKILL_BACKSTAB), which emits the Backstab set's hit_msg via
 	// skill_message. SkillMsgType + Damage>0 selects the Hit variant (R1/R4).
 	// The caller routes dam>0 through DoSpellDamage for the death pipeline
 	// (corpse/XP — DP-942) and emits the message via SkillMessage; HP is
-	// applied exactly once (no double-apply).
+	// applied exactly once (no double-apply). C's improve_skill runs after
+	// hit() returns (act.offensive.c:228-229), so it is deferred to
+	// sendSkillResult (DP-1212 / R3b). StartCombat mirrors C's damage(),
+	// which enrolls both combatants even when the damage truncates to zero.
 	return SkillResult{
-		Success:      true,
-		Damage:       dam,
-		SkillMsgType: SkillBackstabNum,
-		WaitCh:       1, // PULSE_VIOLENCE
+		Success:         true,
+		Damage:          dam,
+		SkillMsgType:    SkillBackstabNum,
+		StartCombat:     true,
+		WaitCh:          1, // PULSE_VIOLENCE
+		DeferredImprove: []string{SkillBackstab},
 	}
 }
 
@@ -271,15 +277,20 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	// call routes the message through skill_message (the Kick set's hit_msg)
 	// and the damage/death pipeline. SkillMsgType + Damage>0 selects the Hit
 	// variant; the caller routes dam>0 through DoSpellDamage (corpse/XP) and
-	// emits via SkillMessage, applying HP once (no double-apply).
+	// emits via SkillMessage, applying HP once (no double-apply). C runs
+	// improve_skill AFTER damage() returns (act.offensive.c:630-631) — after
+	// the skill_message dice — so it is deferred to sendSkillResult
+	// (DP-1212 / R3b). StartCombat mirrors C's damage(), which enrolls both
+	// combatants even when GET_LEVEL(ch)>>1 truncates to 0 (level-1 kick).
 	dam := ch.GetLevel() >> 1 // level / 2
-	improveSkill(ch, SkillKick)
 
 	return SkillResult{
-		Success:      true,
-		Damage:       dam,
-		SkillMsgType: SkillKickNum,
-		WaitCh:       3, // PULSE_VIOLENCE + 2
+		Success:         true,
+		Damage:          dam,
+		SkillMsgType:    SkillKickNum,
+		StartCombat:     true,
+		WaitCh:          3, // PULSE_VIOLENCE + 2
+		DeferredImprove: []string{SkillKick},
 	}
 }
 
@@ -351,16 +362,22 @@ func DoTrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// Success — C: damage(ch, victim, (GET_LEVEL/2)+1, SKILL_TRIP) routes the
 	// message + damage through skill_message + the damage/death pipeline and
 	// starts combat; the victim is set sitting. improve_skill runs only on the
-	// player path (subcmd 0). new_cmds.c:805-815.
+	// player path (subcmd 0), AFTER damage() returns — i.e. after the
+	// skill_message dice (new_cmds.c:805-808) — so it is deferred to
+	// sendSkillResult (DP-1212 / R3b). damage() returns TRUE whenever dam>0
+	// (fight.c:1715-1718), and trip's success dam is always >= 1, so the C
+	// gate on damage()'s return always passes here. StartCombat mirrors C's
+	// damage(), which enrolls both combatants.
 	dam := (ch.GetLevel() / 2) + 1
-	improveSkill(ch, SkillTrip)
 
 	return SkillResult{
-		Success:      true,
-		Damage:       dam,
-		SkillMsgType: SkillTripNum,
-		TargetFalls:  true,
-		WaitTarget:   1,
+		Success:         true,
+		Damage:          dam,
+		SkillMsgType:    SkillTripNum,
+		StartCombat:     true,
+		TargetFalls:     true,
+		WaitTarget:      1,
+		DeferredImprove: []string{SkillTrip},
 	}
 }
 
@@ -446,19 +463,21 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// player is always subcmd==0 (the command table registers headbutt with
 	// subcmd 0; only mob spec-procs pass subcmd 1, and improve_skill's IS_NPC
 	// guard bails on those anyway), so both calls fire and each can consume a
-	// number(1,200) gate draw. The port previously called it once, dropping a
-	// draw and desyncing the seeded stream on every successful headbutt.
-	improveSkill(ch, SkillHeadbutt)
-	improveSkill(ch, SkillHeadbutt)
-
+	// number(1,200) gate draw. Both run AFTER damage() — i.e. after the
+	// skill_message dice — so they are deferred to sendSkillResult, in order
+	// (DP-1212 / R3b).
+	//
 	// C: damage(ch, victim, GET_LEVEL(ch), SKILL_HEADBUTT) routes the hit
 	// message through skill_message + the damage/death pipeline and starts
-	// combat. SkillMsgType + Damage>0 selects the Hit variant.
+	// combat. SkillMsgType + Damage>0 selects the Hit variant. StartCombat
+	// mirrors C's damage(), which enrolls both combatants.
 	result := SkillResult{
-		Success:      true,
-		Damage:       ch.GetLevel(),
-		SkillMsgType: SkillHeadbuttNum,
-		WaitCh:       3,
+		Success:         true,
+		Damage:          ch.GetLevel(),
+		SkillMsgType:    SkillHeadbuttNum,
+		StartCombat:     true,
+		WaitCh:          3,
+		DeferredImprove: []string{SkillHeadbutt, SkillHeadbutt},
 	}
 	if target.GetPosition() > combat.PosStunned {
 		result.TargetFalls = true

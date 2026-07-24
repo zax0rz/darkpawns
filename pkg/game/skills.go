@@ -385,6 +385,12 @@ type SkillResult struct {
 	// and MessageToCh/Vict/Room are ignored. R4 (no invented strings) + R3
 	// (the Dice draw must happen in order).
 	SkillMsgType int
+
+	// DeferredImprove lists the skills to run improveSkill() on AFTER the
+	// skill_message/damage step, matching C's order (skill_message draws its
+	// dice inside damage()/hit(), THEN improve_skill runs). Ordered; repeat an
+	// entry for a skill C improves twice (headbutt). DP-1212 / R3b.
+	DeferredImprove []string
 }
 
 // DoBackstab implements do_backstab() from act.offensive.c lines 172-220.
