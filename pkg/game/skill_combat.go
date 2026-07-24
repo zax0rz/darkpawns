@@ -198,37 +198,40 @@ func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
 		percent = 0
 	}
 
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
-
 	// C applies `if (!IS_NPC(ch)) WAIT_STATE(ch, PULSE_VIOLENCE*2)` unconditionally
 	// after either branch; ch is always a player here, so WaitCh is always 2.
 	if percent > prob {
-		// Failure
+		// Failure — C: damage(ch, vict, 0, SKILL_BASH) routes the message through
+		// skill_message (the Bash set 132) and starts combat (set_fighting); then
+		// the caster is set sitting. SkillMsgType + StartCombat make the caller
+		// (sendSkillResult) do both; SelfStumble preserves the caster-falls effect.
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You try to bash $N, but miss and fall!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to bash you, but misses and falls!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to bash $N, but misses and falls!", chPronouns, &victPronouns, ""),
-			SelfStumble:   true,
-			WaitCh:        2, // PULSE_VIOLENCE * 2 (act.offensive.c:489)
+			Success:      false,
+			SkillMsgType: SkillBashNum, // 132 — lib/misc/messages Bash set
+			StartCombat:  true,
+			SelfStumble:  true,
+			WaitCh:       2, // PULSE_VIOLENCE * 2 (act.offensive.c:496-497 overwrites the miss's PULSE_VIOLENCE)
 		}
 	}
 
-	// Success — damage = (level/2)+1
+	// Success — C: damage(ch, vict, (GET_LEVEL/2)+1, SKILL_BASH) routes the
+	// message + damage through skill_message + the damage/death pipeline and
+	// starts combat; the victim is set sitting. improve_skill runs only on the
+	// player path (subcmd 0), AFTER damage() returns — deferred to
+	// sendSkillResult so its number(1,200) draw follows the skill_message dice
+	// (R3b). act.offensive.c:489-495.
 	dam := (ch.GetLevel() / 2) + 1
-	improveSkill(ch, SkillBash)
 
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   ActMessage("You send $N flying with a powerful bash!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n sends you flying with a powerful bash!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n sends $N flying with a powerful bash!", chPronouns, &victPronouns, ""),
-		TargetFalls:   true,
-		StunTarget:    true,
-		WaitCh:        2, // PULSE_VIOLENCE * 2 (act.offensive.c:489)
-		WaitTarget:    2, // PULSE_VIOLENCE * 2 (act.offensive.c:485)
+		Success:         true,
+		Damage:          dam,
+		SkillMsgType:    SkillBashNum,
+		StartCombat:     true,
+		TargetFalls:     true,
+		StunTarget:      true, // see PR note: C sets only POS_SITTING; StunTarget may over-stun — separate finding
+		WaitCh:          2,
+		WaitTarget:      2, // PULSE_VIOLENCE * 2 (act.offensive.c:494)
+		DeferredImprove: []string{SkillBash},
 	}
 }
 
