@@ -25,12 +25,14 @@ type Scenario struct {
 	SetupPort        []string
 	Warmup           []string
 	Probe            []string
+	ProbeActor       string
 	Peers            map[string]*PeerSetup
 	Fixtures         []ObjectFixture
 	ObjectSpawns     []ObjectSpawnFixture
 	MobFixtures      []MobFixture
 	QuietZones       []int
 	QuietAllMobs     bool
+	EmptyPlayers     bool
 	ScriptlessMobIDs []int
 	// DiffSetup diffs the primary client's whole setup transcript (the
 	// character-creation dialogue) as one normalized block, instead of
@@ -107,6 +109,7 @@ type AudienceProbeBlock struct {
 //	look
 //	look sign
 //	quit
+//	[probe:victim]      # alternatively, send and diff from a named peer
 //
 // Blank lines and lines beginning with # are comments; <ENTER> represents an
 // intentional empty command.
@@ -140,6 +143,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.DiffSetup = true
 			case "[probe]":
 				section = &sc.Probe
+				sc.ProbeActor = ""
 			case "[warmup]":
 				section = &sc.Warmup
 			case "[fixture]", "[fixtures]":
@@ -147,6 +151,11 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				fixtureSection = true
 			default:
 				parts := strings.Split(strings.Trim(lower, "[]"), ":")
+				if len(parts) == 2 && parts[0] == "probe" && parts[1] != "" {
+					section = &sc.Probe
+					sc.ProbeActor = parts[1]
+					continue
+				}
 				if len(parts) != 3 || parts[0] != "setup" || parts[2] == "" {
 					return Scenario{}, fmt.Errorf("scenario %q line %d: unknown section %q", name, lineNo, line)
 				}
@@ -223,6 +232,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.QuietAllMobs = true
 				continue
 			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "empty-players") {
+				sc.EmptyPlayers = true
+				continue
+			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "strip-mob-script") {
 				mobVNum, mobErr := strconv.Atoi(fields[1])
 				if mobErr == nil && mobVNum > 0 {
@@ -245,6 +258,11 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	}
 	if len(sc.Probe) == 0 && !sc.DiffSetup {
 		return Scenario{}, fmt.Errorf("scenario %q has no [probe] steps", name)
+	}
+	if sc.ProbeActor != "" {
+		if _, ok := sc.Peers[sc.ProbeActor]; !ok {
+			return Scenario{}, fmt.Errorf("scenario %q probe actor %q is not a configured peer", name, sc.ProbeActor)
+		}
 	}
 	return sc, nil
 }

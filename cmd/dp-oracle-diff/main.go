@@ -120,13 +120,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		return err
 	}
 	oracleData := filepath.Join(tmp, "oracle-lib")
-	if err := os.CopyFS(oracleData, os.DirFS(filepath.Join(oracleRoot, "lib"))); err != nil {
-		return fmt.Errorf("copy C oracle lib to throwaway directory: %w", err)
+	if err := prepareOracleData(filepath.Join(oracleRoot, "lib"), oracleData, scenario.EmptyPlayers); err != nil {
+		return err
 	}
 	// The copied data directory is disposable, so character creation never
-	// mutates the oracle clone. Keep its baseline player file: Circle promotes
-	// the first record in an empty file to Implementor, which would invalidate
-	// this mortal-room scenario.
+	// mutates the oracle clone. Unless empty-players is requested, keep its
+	// baseline player file so existing mortal scenarios retain today's boot.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
 	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
@@ -197,16 +196,18 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	}
 	defer oracleProc.stop()
 
+	goEnv := append(
+		os.Environ(),
+		"DP_SEED="+fixedSeed,
+		"DP_CLOCK=1",
+		"DP_FIXED_TIME="+fixedTime,
+		"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
+		"ENVIRONMENT=development",
+	)
+	goEnv = withFreshMUDEnv(goEnv, scenario.EmptyPlayers)
 	goProc, err := startProcess(
 		ctx, "Go port", goWork,
-		append(
-			os.Environ(),
-			"DP_SEED="+fixedSeed,
-			"DP_CLOCK=1",
-			"DP_FIXED_TIME="+fixedTime,
-			"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
-			"ENVIRONMENT=development",
-		),
+		goEnv,
 		goBin,
 		"-world", goWorld,
 		"-port", fmt.Sprint(goHTTPPort),
@@ -292,11 +293,13 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		return fmt.Errorf("run Go port warmup: %w", err)
 	}
 
-	oracleBlocks, err := oraclediff.RunAudienceProbe(oracleConn, oraclePeers, scenario.Probe, quiescence)
+	oracleActor, oracleAudience := probeClients(oracleConn, oraclePeers, scenario.ProbeActor)
+	goActor, goAudience := probeClients(goConn, goPeers, scenario.ProbeActor)
+	oracleBlocks, err := oraclediff.RunAudienceProbe(oracleActor, oracleAudience, scenario.Probe, quiescence)
 	if err != nil {
 		return fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", err, oracleProc.log.String())
 	}
-	goBlocks, err := oraclediff.RunAudienceProbe(goConn, goPeers, scenario.Probe, quiescence)
+	goBlocks, err := oraclediff.RunAudienceProbe(goActor, goAudience, scenario.Probe, quiescence)
 	if err != nil {
 		return fmt.Errorf("run Go port probe: %w\nserver log:\n%s", err, goProc.log.String())
 	}
@@ -339,6 +342,47 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		Seed:       fixedSeed,
 	}, diffs))
 	return nil
+}
+
+func prepareOracleData(source, destination string, emptyPlayers bool) error {
+	if err := os.CopyFS(destination, os.DirFS(source)); err != nil {
+		return fmt.Errorf("copy C oracle lib to throwaway directory: %w", err)
+	}
+	if !emptyPlayers {
+		return nil
+	}
+	playersPath := filepath.Join(destination, "etc", "players")
+	if err := os.WriteFile(playersPath, nil, 0o600); err != nil {
+		return fmt.Errorf("empty disposable C oracle player file: %w", err)
+	}
+	return nil
+}
+
+func withFreshMUDEnv(env []string, enabled bool) []string {
+	filtered := make([]string, 0, len(env)+1)
+	for _, entry := range env {
+		if !strings.HasPrefix(entry, "DP_FRESH_MUD=") {
+			filtered = append(filtered, entry)
+		}
+	}
+	if enabled {
+		filtered = append(filtered, "DP_FRESH_MUD=1")
+	}
+	return filtered
+}
+
+func probeClients(primary oraclediff.Conn, peers map[string]oraclediff.Conn, actorName string) (oraclediff.Conn, map[string]oraclediff.Conn) {
+	if actorName == "" {
+		return primary, peers
+	}
+	audience := make(map[string]oraclediff.Conn, len(peers))
+	audience["primary"] = primary
+	for name, conn := range peers {
+		if name != actorName {
+			audience[name] = conn
+		}
+	}
+	return peers[actorName], audience
 }
 
 func drainClients(quiescence time.Duration, primary oraclediff.Conn, peers map[string]oraclediff.Conn) error {
