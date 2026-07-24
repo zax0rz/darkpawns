@@ -1,5 +1,16 @@
 # Dark Pawns — AI Agent Instructions
 
+## Prime Directive — Fidelity Law
+
+Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-facing bytes* as the original C. "The game is the game." Before you change any player-observable behavior, read the port bible:
+
+**[`docs/fidelity/RULEBOOK.md`](docs/fidelity/RULEBOOK.md)** — the C→Go translation law (R1–R5).
+
+- **R1** player-facing bytes are law · **R2** the command surface is part of the game · **R3** determinism & draw parity · **R4** no invention · **R5** process rules (find-one-find-the-class; verify the call path).
+- **Cite rules by number** in commits, PRs, reviews, and Linear — "violates R4" is a complete verdict.
+- `src/` and `darkpawns-c-oracle/` are the **read-only oracle** (ground truth). Never edit them; diff against them with `cmd/dp-oracle-diff`.
+- When a byte is in question, **the C source wins** (R5e — verify the actual call path, don't trust a summary). A repeated failure indicts the rule, not the file: amend the rulebook + audit the whole class (R5b/R5c).
+
 ## Build & Verify
 
 ```bash
