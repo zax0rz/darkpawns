@@ -91,6 +91,15 @@ func TestAuditInit_ConcurrentLogEvent(t *testing.T) {
 	wg.Wait()
 }
 
+func TestNewAuditLogger_PathTraversalRejected(t *testing.T) {
+	for _, p := range []string{"/foo/../../etc/passwd", "../../etc/passwd", "a/../../../etc/hosts"} {
+		_, err := NewAuditLogger(p)
+		if err == nil {
+			t.Errorf("expected error for path %q", p)
+		}
+	}
+}
+
 func TestAuditLogger_LogAndClose(t *testing.T) {
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "audit.log")
