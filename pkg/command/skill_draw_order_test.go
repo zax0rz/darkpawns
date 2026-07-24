@@ -347,3 +347,41 @@ func TestSendSkillResult_BackstabSuccess_DrawOrderMatchesC(t *testing.T) {
 		},
 	)
 }
+
+// TestSendSkillResult_BashSuccess_DrawOrderMatchesC — bash success: number(1,101)
+// [percent roll] → dice(1,N) [skill_message] → number(1,200) → number(1,3)
+// [deferred improve]. Positive damage ((level/2)+1) enrolls via DoSpellDamage.
+// Bash improves only on hit, once (act.offensive.c:492).
+func TestSendSkillResult_BashSuccess_DrawOrderMatchesC(t *testing.T) {
+	ktw := newKillTestWorld(t, 500, 0, 0, 1, "rat")
+	ktw.world.StopAITicker()
+	p := ktw.addPlayer(t, 1, "Basher", 10, game.ClassWarrior, false)
+	p.SetSkill(game.SkillBash, 50)
+	p.Stats.Int = 100
+	p.Stats.Wis = 100
+
+	rig := newDrawOrderRig(t, p.Name)
+	defer rig.teardown()
+	sess := &killPayoutSession{player: p, world: ktw.world, combatEngine: rig.engine}
+
+	assertPipelineDrawOrder(
+		t, rig, sess, p, ktw.mob, game.SkillBashNum, game.SkillBash, 1,
+		func(s uint32) (game.SkillResult, bool) {
+			p.Move = 100 // reset move (SpendMove(10) drains it)
+			ktw.mob.SetPosition(combat.PosFighting)
+			dprng.ResetStream(s)
+			res := game.DoBash(p, ktw.mob, ktw.world)
+			return res, res.Success
+		},
+		func() {
+			dprng.Number(1, 101) // percent roll (act.offensive.c:475)
+		},
+		func(t *testing.T) {
+			t.Helper()
+			if ktw.mob.GetFighting() != p.Name {
+				t.Errorf("bash success should enroll the victim on the attacker: fighting=%q want %q",
+					ktw.mob.GetFighting(), p.Name)
+			}
+		},
+	)
+}
