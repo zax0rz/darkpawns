@@ -4,6 +4,10 @@
 
 A code crawler agent that runs static analysis on the Dark Pawns Go codebase. Finds bugs, code smells, security issues, data races, and fidelity gaps against the original C source. Posts findings to #dark-pawns on Discord.
 
+## The Fidelity Standard
+
+Fidelity findings are measured against the port bible: **[`docs/fidelity/RULEBOOK.md`](../fidelity/RULEBOOK.md)** — the C→Go translation law (R1–R5). A fidelity gap is a divergence from the C player-facing bytes (R1) or an invented behavior with no C basis (R4). Cite the rule by number in every fidelity finding, same as Daeron does in triage — the C source is ground truth (R5e: verify the call path, don't trust a summary).
+
 ## Cadence
 
 ### Daily: Code Crawl
