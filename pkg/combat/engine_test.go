@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 type msgMockCombatant struct {
@@ -834,5 +836,129 @@ func TestProcessCombatPair_MobStandsWhenWaitExpires(t *testing.T) {
 	}
 	if len(broadcasts) == 0 || !strings.Contains(broadcasts[0], "scrambles") {
 		t.Errorf("expected stand-up room broadcast, got %v", broadcasts)
+	}
+}
+
+// -----------------------------------------------------------------------------
+// DP-1213: positive-damage skill enrollment + downed-mob stand-up
+// -----------------------------------------------------------------------------
+
+// TestStartCombat_EnrollsDefenderWhoseFightingWasPreSet — DoSpellDamage sets
+// the victim's FIGHTING field directly (damage_stubs.go) without enrolling it
+// in combatOrder. StartCombat must STILL prepend such a defender (C:
+// set_fighting adds both combatants to combat_list); previously the prepend
+// was gated on an empty FIGHTING field, so positive-damage skill victims
+// never got a turn (DP-1213).
+func TestStartCombat_EnrollsDefenderWhoseFightingWasPreSet(t *testing.T) {
+	attacker := &mockCombatant{name: "Rogue", room: 1, position: PosFighting, hp: 100, maxHP: 100}
+	defender := &mockCombatant{name: "Guard", npc: true, room: 1, position: PosFighting, hp: 100, maxHP: 100}
+	defender.SetFighting("Rogue") // exactly what DoSpellDamage does before enrollment
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat: %v", err)
+	}
+
+	inOrder := map[string]bool{}
+	for _, f := range ce.combatOrder {
+		if f != nil {
+			inOrder[f.GetName()] = true
+		}
+	}
+	if !inOrder["Rogue"] {
+		t.Error("attacker missing from combatOrder")
+	}
+	if !inOrder["Guard"] {
+		t.Error("defender with pre-set FIGHTING missing from combatOrder — it would never get a turn (DP-1213)")
+	}
+	if defender.GetFighting() != "Rogue" {
+		t.Errorf("defender should keep fighting its pre-set target, got %q", defender.GetFighting())
+	}
+	if attacker.GetFighting() != "Guard" {
+		t.Errorf("attacker should fight the defender, got %q", attacker.GetFighting())
+	}
+}
+
+// TestStartCombat_DrawsNoRNG — C's set_fighting is pure combat_list
+// manipulation, so StartCombat must advance the shared dprng stream by ZERO
+// (R3a). sendSkillResult calls it between the skill_message dice and the
+// deferred improvement; a phantom draw there would be the DP-1212 class of
+// stream desync.
+func TestStartCombat_DrawsNoRNG(t *testing.T) {
+	const seed = 123
+	dprng.ResetStream(seed)
+	wantNext := dprng.Number(0, 999)
+
+	dprng.ResetStream(seed)
+	attacker := &mockCombatant{name: "Rogue", room: 1, position: PosFighting, hp: 100, maxHP: 100}
+	defender := &mockCombatant{name: "Guard", npc: true, room: 1, position: PosFighting, hp: 100, maxHP: 100}
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat: %v", err)
+	}
+	if got := dprng.Number(0, 999); got != wantNext {
+		t.Errorf("StartCombat advanced the shared stream (next=%d want=%d) — it must be draw-free like C's set_fighting (R3a)",
+			got, wantNext)
+	}
+}
+
+// TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks — C
+// (fight.c:1982-1987) makes the stand-up a SEPARATE step from the wait
+// decrement: a downed NPC whose wait is ALREADY 0 stands up ("scrambles to
+// his feet!") and attacks. The old gating nested the stand-up inside the
+// wait>0 block, so a wait-0 downed mob fell through to the StopCombat branch
+// and combat ENDED instead (DP-1213).
+func TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks(t *testing.T) {
+	var attacker *waitStateMockCombatant
+	var defender *mockCombatant
+	var ce *CombatEngine
+	var broadcasts []string
+	setup := func() {
+		attacker = &waitStateMockCombatant{
+			mockCombatant: mockCombatant{
+				name: "Orc", npc: true, room: 1, position: PosSitting, fighting: "Hero",
+				hp: 100, maxHP: 100, level: 10, thac0: 1, ac: 10, hitroll: 50,
+				intVal: 25, wis: 25, str: 18, damroll: 5,
+				damageRoll: DiceRoll{Num: 1, Sides: 4},
+			},
+			waitState: 0, // downed with NO wait — the DP-1213 case
+		}
+		defender = &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+		ce = NewCombatEngine()
+		if err := ce.StartCombat(attacker, defender); err != nil {
+			t.Fatalf("StartCombat: %v", err)
+		}
+		broadcasts = nil
+		ce.BroadcastFunc = func(_ int, msg, _ string) { broadcasts = append(broadcasts, msg) }
+	}
+
+	// Standing up, staying in the fight, and the broadcast are unconditional
+	// — they must not depend on whether the attack connects (fixed seed).
+	setup()
+	dprng.ResetStream(1)
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
+
+	if attacker.GetPosition() != PosFighting {
+		t.Errorf("downed wait-0 mob should stand up (C: POS_FIGHTING), got position %d", attacker.GetPosition())
+	}
+	if len(broadcasts) == 0 || !strings.Contains(broadcasts[0], "scrambles") {
+		t.Errorf("expected 'scrambles to his feet' room broadcast, got %v", broadcasts)
+	}
+	if attacker.GetFighting() != "Hero" {
+		t.Errorf("combat must NOT stop when a downed wait-0 mob stands (old buggy path), fighting=%q",
+			attacker.GetFighting())
+	}
+
+	// The attack itself is chance-gated; sweep seeds until the d20 connects.
+	// Only this assertion may skip.
+	hit := false
+	for s := uint32(1); s < 50 && !hit; s++ {
+		setup()
+		dprng.ResetStream(s)
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
+		hit = defender.hp < 100
+	}
+	if !hit {
+		t.Skip("no seed in 1..49 landed the stood-up mob's attack")
 	}
 }
