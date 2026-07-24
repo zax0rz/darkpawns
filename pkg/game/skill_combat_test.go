@@ -1486,10 +1486,11 @@ func TestDoHeadbutt_TargetSitsOnHit(t *testing.T) {
 // outside the hit/miss if/else — new_cmds.c:459.
 // TestDoHeadbutt_ImprovesSkillTwice pins the DP-1168 fix: C do_headbutt calls
 // improve_skill TWICE on a player's success (new_cmds.c:450 unconditional + :457
-// under `if(!subcmd)`, and a player is always subcmd==0). The port previously
-// called it once, dropping a number(1,200) gate draw and desyncing the seeded
-// stream on every successful headbutt. On success with the stat gate forced to
-// pass, the skill must gain TWO independent number(1,3) increments.
+// under `if(!subcmd)`, and a player is always subcmd==0). Both calls run AFTER
+// damage() — after the skill_message dice — so DP-1212 defers them to
+// sendSkillResult via SkillResult.DeferredImprove; this test runs them the way
+// the sender does. On success with the stat gate forced to pass, the skill
+// must gain TWO independent number(1,3) increments.
 func TestDoHeadbutt_ImprovesSkillTwice(t *testing.T) {
 	w, ch := newHeadbuttTestWorld(t) // level 40 → percent=0 → guaranteed hit
 	w.StopAITicker()                 // quiesce the shared stream during draw-count assertions
@@ -1498,10 +1499,11 @@ func TestDoHeadbutt_ImprovesSkillTwice(t *testing.T) {
 	mob := spawnTargetMob(t, w) // mob 2001 has no HP dice → spawn draws nothing
 	mob.SetPosition(combat.PosFighting)
 
-	// DoHeadbutt draws number(1,121) (skill roll, line 388), then on success two
-	// improveSkill calls, each number(1,200) gate + number(1,3) increment. Derive
-	// both increments from the seeded stream (ResetStream, not Seed — Seed keeps
-	// C's carry so it can't reproduce a start state).
+	// DoHeadbutt draws number(1,121) (skill roll, line 388) and defers the two
+	// improves; run them (as sendSkillResult does), each number(1,200) gate +
+	// number(1,3) increment. Derive both increments from the seeded stream
+	// (ResetStream, not Seed — Seed keeps C's carry so it can't reproduce a
+	// start state).
 	dprng.ResetStream(1)
 	dprng.Number(1, 121) // skill roll (percent, then overwritten to 0 for the L40 caster — draw still happens)
 	dprng.Number(1, 200) // improveSkill #1 gate (passes)
@@ -1514,6 +1516,12 @@ func TestDoHeadbutt_ImprovesSkillTwice(t *testing.T) {
 	result := DoHeadbutt(ch, mob, w)
 	if !result.Success {
 		t.Fatalf("expected headbutt success (level-40 caster), got %q", result.MessageToCh)
+	}
+	if len(result.DeferredImprove) != 2 {
+		t.Fatalf("headbutt success DeferredImprove = %v, want two entries (C improves twice)", result.DeferredImprove)
+	}
+	for _, skill := range result.DeferredImprove {
+		improveSkill(ch, skill)
 	}
 	if got, want := ch.GetSkill(SkillHeadbutt), 50+inc1+inc2; got != want {
 		t.Errorf("headbutt skill after success = %d, want %d (two improve_skill calls: 50 + %d + %d); "+
