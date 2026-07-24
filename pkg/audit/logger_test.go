@@ -2,6 +2,7 @@ package audit
 
 import (
 	"bytes"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sync"
@@ -97,6 +98,22 @@ func TestNewAuditLogger_PathTraversalRejected(t *testing.T) {
 		if err == nil {
 			t.Errorf("expected error for path %q", p)
 		}
+	}
+}
+
+func TestLogEvent_SilentDropWhenUninitialized(t *testing.T) {
+	var buf bytes.Buffer
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+
+	// Reset global logger — prior tests may have called Init.
+	loggerMu.Lock()
+	globalLogger = nil
+	loggerMu.Unlock()
+
+	LogEvent(AuditEvent{EventType: "test", Action: "dropped", Success: true})
+
+	if buf.Len() == 0 {
+		t.Error("expected a log warning when globalLogger is nil")
 	}
 }
 
