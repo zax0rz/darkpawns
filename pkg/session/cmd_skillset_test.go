@@ -32,6 +32,23 @@ func readOneText(t *testing.T, s *Session) string {
 	return readSessionText(t, s)
 }
 
+// headOf returns the first n bytes of s (or all of s if shorter), for readable
+// error messages. Safe against short strings.
+func headOf(s string, n int) string {
+	if len(s) < n {
+		return s
+	}
+	return s[:n]
+}
+
+// tailOf returns the last n bytes of s (or all of s if shorter).
+func tailOf(s string, n int) string {
+	if len(s) < n {
+		return s
+	}
+	return s[len(s)-n:]
+}
+
 // --- Step 1: no-argument syntax + skill list ---
 
 func TestCmdSkillset_NoArg_SyntaxAndSkillList(t *testing.T) {
@@ -46,13 +63,15 @@ func TestCmdSkillset_NoArg_SyntaxAndSkillList(t *testing.T) {
 		t.Errorf("syntax line = %q, want %q", got, want)
 	}
 
-	// Second message: the skill list. Verify its byte-exact structure by
-	// rebuilding the reference from the same spells[] table the handler uses.
+	// Second message: the skill list. The reference is hand-traced from C
+	// (modify.c:266-279): completed lines (i%4==3) flush with \r\n; the partial
+	// final line is sent AS-IS (no \r\n), then a single trailing \n\r. The last
+	// printed skill is index 206 ("lightning breath", 206%4==2 → partial), so C
+	// ends …lightning breath\n\r — never …lightning breath\r\n\n\r.
 	list := readOneText(t, wiz)
 	var wantB strings.Builder
 	wantB.WriteString("Skill being one of the following:\n\r")
 	size := spells.SkillCatalogSize()
-	lineHasEntry := false
 	for i := 0; i < size; i++ {
 		raw := spells.SpellRawName(i)
 		if raw == "" || raw[0] == '\n' {
@@ -62,24 +81,33 @@ func TestCmdSkillset_NoArg_SyntaxAndSkillList(t *testing.T) {
 			continue
 		}
 		fmt.Fprintf(&wantB, "%18s", raw)
-		lineHasEntry = true
 		if i%4 == 3 {
 			wantB.WriteString("\r\n")
-			lineHasEntry = false
 		}
-	}
-	if lineHasEntry {
-		wantB.WriteString("\r\n")
 	}
 	wantB.WriteString("\n\r")
 	if list != wantB.String() {
 		t.Errorf("skill list mismatch:\n--- got ---\n%q\n--- want ---\n%q", list, wantB.String())
 	}
 
+	// Sharp guards tracing C exactly — these FAIL on the buggy \r\n-on-partial
+	// version and PASS on the fix, independent of the reference builder above.
+	// (1) The double terminator "\r\n\n\r" never appears: a partial line has no
+	//     trailing \r\n, so only the final \n\r follows the last entry.
+	if strings.Contains(list, "\r\n\n\r") {
+		t.Errorf("skill list has a spurious \\r\\n before the trailing \\n\\r (partial line must have no \\r\\n): %q", list)
+	}
+	// (2) The list ends with the last printed skill ("lightning breath", index
+	//     206) followed by a single \n\r — no \r\n between them. The last skill
+	//     on a partial line (206 % 4 == 2) is sent verbatim, then \n\r.
+	if want := "lightning breath\n\r"; !strings.HasSuffix(list, want) {
+		t.Errorf("skill list tail = %q, want suffix ending in %q (partial final line, no \\r\\n)", tailOf(list, 60), want)
+	}
+
 	// Spot-check the leading content: index 0 (!RESERVED!) is skipped; the list
 	// begins with "holy ward","shift reality","bless" then \r\n (i=3 break).
 	if !strings.HasPrefix(list, "Skill being one of the following:\n\r") {
-		t.Errorf("skill list should start with the header, got prefix %q", list[:50])
+		t.Errorf("skill list should start with the header, got prefix %q", headOf(list, 50))
 	}
 	// The first line holds indices 1,2,3 (holy ward / shift reality / bless),
 	// each %18s right-justified, then \r\n.

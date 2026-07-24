@@ -449,17 +449,17 @@ func cmdSkillset(s *Session, args []string) error {
 		return nil
 	}
 	value, err := strconv.Atoi(valueStr)
-	if err != nil || value < 0 {
-		// C's atoi("garbage") returns 0, which passes the >=0 check and would
-		// set the skill to 0. But atoi of a negative like "-5" yields -5 → min
-		// error. Reproduce: strconv.Atoi fails → treat as 0? C atoi returns 0
-		// on non-numeric. Mirror that: a parse failure is value 0 (in range).
-		if err != nil {
-			value = 0
-		} else {
-			s.Send("Minimum value for learned is 0.\n\r")
-			return nil
-		}
+	if err != nil {
+		// C's atoi returns 0 on non-numeric input (e.g. atoi("garbage")==0),
+		// which passes the >=0 check and sets the skill to 0. strconv.Atoi
+		// rejects the whole string, so mirror C by treating a parse failure as
+		// value 0. Known divergence: C atoi("75abc")==75 (leading digits), but
+		// strconv.Atoi("75abc") fails → 0 here. Edge case; left as-is (note).
+		value = 0
+	} else if value < 0 {
+		// atoi of a negative like "-5" yields -5 → min error.
+		s.Send("Minimum value for learned is 0.\n\r")
+		return nil
 	}
 	if value > 100 {
 		s.Send("Max value for learned is 100.\n\r")
@@ -495,13 +495,15 @@ const noPersonHere = "No-one by that name here.\r\n"
 // skillsetSkillList renders the no-argument skill list exactly as C's
 // do_skillset (modify.c:266-279): "Skill being one of the following:\n\r",
 // then every spells[] entry 4-per-line at %18s, skipping names whose first
-// char is '!', breaking the line on the RAW index modulo 4 (i%4==3), and a
-// trailing "\n\r".
+// char is '!', breaking the line on the RAW index modulo 4 (i%4==3). A
+// completed line (i%4==3) gets a trailing "\r\n"; the partial final line is
+// sent AS-IS with no "\r\n", followed by a single trailing "\n\r" — matching C,
+// which flushes completed lines in-loop and sends the leftover help buffer
+// verbatim. Do NOT add a "\r\n" to the partial line (R1).
 func skillsetSkillList() string {
 	var b strings.Builder
 	b.WriteString("Skill being one of the following:\n\r")
 	size := spells.SkillCatalogSize()
-	lineHasEntry := false
 	for i := 0; i < size; i++ {
 		raw := spells.SpellRawName(i)
 		if raw == "" {
@@ -514,15 +516,12 @@ func skillsetSkillList() string {
 			continue // skip ! entries, but i still increments
 		}
 		fmt.Fprintf(&b, "%18s", raw)
-		lineHasEntry = true
 		if i%4 == 3 {
-			b.WriteString("\r\n")
-			lineHasEntry = false
+			b.WriteString("\r\n") // completed line; C resets the help buffer here
 		}
 	}
-	if lineHasEntry {
-		b.WriteString("\r\n") // C sends whatever's in help, then the trailing \n\r
-	}
+	// C: if (*help) send_to_char(help, ch); — the partial final line is already
+	// in the builder with NO trailing \r\n. Then the single trailing "\n\r".
 	b.WriteString("\n\r")
 	return b.String()
 }
