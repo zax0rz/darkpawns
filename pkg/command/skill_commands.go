@@ -1535,13 +1535,22 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		s.GetWorld().DoSpellDamage(ch, target, result.Damage, "")
 	}
 
-	// Initiate combat when the skill signals it (miss / MOB_AWARE notice) even
-	// though no damage was dealt. C: skills like backstab call
-	// damage(ch, vict, 0, SKILL) on a miss, which enters set_fighting.
-	// StartCombat is also set when a damage-dealing hit didn't go through
-	// DoSpellDamage above (Damage == 0). DoSpellDamage already sets fighting
-	// state, so we only enroll when no damage was applied.
-	if result.StartCombat && target != nil && result.Damage <= 0 {
+	// Initiate engine combat whenever the skill signals it and the target
+	// SURVIVED. C's damage() calls set_fighting (mutual, adds both to
+	// combat_list) unconditionally on every hit — miss, zero-damage hit, and
+	// positive-damage hit alike. The old `result.Damage <= 0` gate only
+	// enrolled misses and zero-damage hits (L1 kick): positive-damage hits
+	// (trip, headbutt) went through DoSpellDamage, which sets the victim's
+	// FIGHTING field but enrolls NEITHER combatant in the engine's
+	// combatOrder, so no combat rounds ever fired (DP-1213, R1/R3b).
+	// Order matters and matches C: skill_message dice → damage →
+	// set_fighting → improve_skill (the DeferredImprove loop below).
+	// DoSpellDamage runs the death pipeline at POS_DEAD; C does not enroll a
+	// corpse, so skip enrollment when the hit killed the target.
+	// engine.StartCombat consumes ZERO dprng draws (pure combat_list
+	// manipulation, like C's set_fighting) — inserting it between the
+	// message dice and the improvement does not perturb the stream (R3a).
+	if result.StartCombat && target != nil && target.GetPosition() != combat.PosDead {
 		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
 			if ch.GetFighting() == "" {
 				_ = engine.StartCombat(ch, target)

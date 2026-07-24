@@ -255,6 +255,14 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	ce.prependFighterLocked(attacker)
 	if defender.GetFighting() == "" {
 		defender.SetFighting(attackerName)
+	}
+	// The defender must be in combatOrder (C's combat_list) whenever it is
+	// fighting this attacker — even when its FIGHTING field was set before
+	// StartCombat ran. DoSpellDamage sets the victim's field directly
+	// (damage_stubs.go) without enrolling it, so gating the prepend on an
+	// empty field left positive-damage skill victims out of combatOrder and
+	// they never got a turn (DP-1213). prependFighterLocked is idempotent.
+	if defender.GetFighting() == attackerName {
 		ce.prependFighterLocked(defender)
 	}
 
@@ -437,26 +445,38 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	attacker := pair.Attacker
 	defender := pair.Defender
 
-	// C: fight.c:1975-1987 — NPCs with GET_MOB_WAIT > 0 lose the round and
-	// decrement their wait. When the wait expires and the mob is below
-	// POS_FIGHTING, it stands back up.
+	// C: fight.c:1975-1987 — TWO SEPARATE steps for NPCs: (1) a mob with
+	// GET_MOB_WAIT > 0 loses this round's attacks and decrements its wait;
+	// (2) INDEPENDENTLY, a mob below POS_FIGHTING with no remaining wait
+	// stands back up ("$n scrambles to $s feet!"). Nesting the stand-up
+	// inside the wait block (previous behavior) meant a downed mob whose
+	// wait was already 0 fell through to the StopCombat check below and
+	// combat ENDED instead of the mob standing (DP-1213).
 	if attacker.IsNPC() {
-		if wc, ok := attacker.(waitStateHolder); ok && wc.GetWaitState() > 0 {
-			wc.DecrementWaitState()
-			if wc.GetWaitState() == 0 && attacker.GetPosition() < PosFighting {
-				attacker.SetPosition(PosFighting)
-				if ce.BroadcastFunc != nil {
-					pronoun := "its"
-					switch attacker.GetSex() {
-					case 0:
-						pronoun = "his"
-					case 1:
-						pronoun = "her"
-					}
-					ce.BroadcastFunc(attacker.GetRoom(), fmt.Sprintf("%s scrambles to %s feet!", attacker.GetName(), pronoun), attacker.GetName())
-				}
+		waitedThisRound := false
+		waitZero := true // a combatant without wait tracking reads as GET_MOB_WAIT == 0
+		if wc, ok := attacker.(waitStateHolder); ok {
+			if wc.GetWaitState() > 0 {
+				wc.DecrementWaitState()
+				waitedThisRound = true // attacks = 0 this round
 			}
-			return
+			waitZero = wc.GetWaitState() == 0
+		}
+		if attacker.GetPosition() < PosFighting && waitZero {
+			attacker.SetPosition(PosFighting)
+			if ce.BroadcastFunc != nil {
+				pronoun := "its"
+				switch attacker.GetSex() {
+				case 0:
+					pronoun = "his"
+				case 1:
+					pronoun = "her"
+				}
+				ce.BroadcastFunc(attacker.GetRoom(), fmt.Sprintf("%s scrambles to %s feet!", attacker.GetName(), pronoun), attacker.GetName())
+			}
+		}
+		if waitedThisRound {
+			return // attacks = 0 — but the stand-up above still ran (C order)
 		}
 	}
 
