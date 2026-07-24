@@ -233,3 +233,16 @@ func GetSpellName(num int) string {
 func SkillCatalogSize() int {
 	return len(dpSkillCatalogNames)
 }
+
+// SpellRawName returns the RAW spells[] table entry for num (including
+// "!UNUSED!"/"!RESERVED!"/"\n" markers and exactly as indexed in C). It is the
+// byte-faithful read do_skillset needs to reproduce the C no-argument skill
+// list (modify.c:267-279): that loop skips entries whose first char is '!' but
+// still uses the RAW index i for the 4-per-line modulo (i%4==3), so collapsing
+// !-entries (as GetSpellName does) would misalign the columns. Out-of-range → "".
+func SpellRawName(num int) string {
+	if num < 0 || num >= len(dpSkillCatalogNames) {
+		return ""
+	}
+	return dpSkillCatalogNames[num]
+}
