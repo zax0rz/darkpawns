@@ -497,6 +497,15 @@ func (s *Session) completeCharCreation() error {
 	isGod := s.manager.shouldCrownFirstPlayer()
 	if isGod {
 		game.BootstrapFirstPlayerGod(s.player)
+	} else {
+		// C: do_start()→advance_level() runs only `if (!GET_LEVEL(ch))`
+		// (interpreter.c:2214) — i.e. for a real level-1 mortal, never for the
+		// God (already LVL_IMPL). AdvanceLevel grants the level-1 HP/move bonus
+		// (and its 2 RNG draws); GiveStartingSkills then layers the class skills,
+		// matching C's do_start order. The constructor no longer calls
+		// AdvanceLevel (DP-1212: it consumed 2 phantom draws on the God path).
+		s.player.AdvanceLevel()
+		game.GiveStartingSkills(s.player)
 	}
 
 	// Save to DB if available
@@ -512,15 +521,9 @@ func (s *Session) completeCharCreation() error {
 				}
 				slog.ErrorContext(s.sessionCtx, "DB create error during char creation", s.logAttrs(slog.Any("error", err))...)
 				return fmt.Errorf("failed to save character: %w", err)
-			} else {
-				s.player.ID = r.ID
-				if !isGod {
-					game.GiveStartingSkills(s.player)
-				}
 			}
+			s.player.ID = r.ID
 		}
-	} else if !isGod {
-		game.GiveStartingSkills(s.player)
 	}
 
 	// Populate legacy spell-catalog metadata; proficiency still requires practice.

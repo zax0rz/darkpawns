@@ -192,12 +192,15 @@ func TestDoHeadbutt_MissDrawCountAndOrder(t *testing.T) {
 	}
 }
 
-// TestDoHeadbutt_HitDrawSequenceIncludesImproveSkill — R3: the headbutt HIT
-// path draws number(1,121), then dice(1,N) (skill_message), then TWO
-// number(1,200) (the double improve_skill C calls). Assert the dice(1,N) sits
-// where damage() is called (before the improve draws) by checking the stream
-// advances past all of them in the documented order. This is the risky path
-// the brief flagged — a mis-ordered/missing draw here desyncs the oracle.
+// TestDoHeadbutt_HitDrawSequenceIncludesImproveSkill — R3b: the headbutt HIT
+// path draws, in C order (new_cmds.c:437-457), number(1,121) [skill roll] →
+// dice(1,N) [skill_message, inside C's damage()] → number(1,200) [improve #1]
+// → number(1,200) [improve #2]. The improves are deferred to sendSkillResult
+// via SkillResult.DeferredImprove (DP-1212), so this test drives the same
+// sequence the sender runs: DoHeadbutt, then SkillMessage, then the deferred
+// improves. An earlier version of this test asserted the OLD Go order
+// (improve → dice), which was built from the implementation and encoded the
+// bug (R5a); it is now reversed to the C order.
 func TestDoHeadbutt_HitDrawSequenceIncludesImproveSkill(t *testing.T) {
 	w, ch := newHeadbuttTestWorld(t)
 	mob := spawnTargetMob(t, w)
@@ -229,39 +232,43 @@ func TestDoHeadbutt_HitDrawSequenceIncludesImproveSkill(t *testing.T) {
 		t.Skip("no headbutt hit observed in 29 seeds (RNG); hit draw-sequence not exercised")
 	}
 
-	// Run the hit with the messages callback wired: DoHeadbutt draws
-	// number(1,121) + (on hit) the two improve number(1,200)s; SkillMessage
-	// draws dice(1,N) where damage() is called (between the percent and the
-	// improve calls). Capture the full sequence position.
+	// Run the hit the way sendSkillResult does (DP-1212): DoHeadbutt draws only
+	// number(1,121) and returns DeferredImprove=[headbutt, headbutt];
+	// SkillMessage draws dice(1,N) where C's damage() calls skill_message; the
+	// two improves run LAST, in C order.
 	dprng.ResetStream(hitSeed)
 	result := DoHeadbutt(ch, mob, w)
 	if !result.Success {
 		t.Fatalf("seed %d: re-run did not hit (non-deterministic?)", hitSeed)
 	}
-	// The dice(1,N) happens in sendSkillResult's SkillMessage call, AFTER
-	// DoHeadbutt returns (which has consumed number(1,121) + the two improves).
+	if len(result.DeferredImprove) != 2 ||
+		result.DeferredImprove[0] != SkillHeadbutt || result.DeferredImprove[1] != SkillHeadbutt {
+		t.Fatalf("hit DeferredImprove = %v, want [%s %s] (C improves twice)",
+			result.DeferredImprove, SkillHeadbutt, SkillHeadbutt)
+	}
 	cb.SkillMessage(result.Damage, ch.Name, mob.GetName(), SkillHeadbuttNum, ch.GetRoom())
+	for _, skill := range result.DeferredImprove {
+		improveSkill(ch, skill)
+	}
 
-	// Reference the SAME sequence: number(1,121), then dice(1,N), then the two
-	// number(1,200) improves — BUT the dice happens in SkillMessage (called
-	// above), and the improves happen INSIDE DoHeadbutt. So the actual order on
-	// the wire is: number(1,121) [DoHeadbutt] → number(1,200) → number(1,200)
-	// [improve, inside DoHeadbutt] → dice(1,N) [SkillMessage, in sendSkillResult].
-	// Verify the total draw count is 4 (1 + 2 improves + 1 dice) by lockstep.
+	// Reference the SAME sequence in C order: number(1,121), then dice(1,N),
+	// then the two improve number(1,200)s (skill >= 97 here → gate-only draws).
 	dprng.ResetStream(hitSeed)
 	dprng.Number(1, 121) // percent
-	// improve_skill x2 (each draws number(1,200) on a mastered skill):
-	dprng.Number(1, 200)
-	dprng.Number(1, 200)
-	dprng.Dice(1, n) // skill_message dice
+	dprng.Dice(1, n)     // skill_message dice — BEFORE the improves (C order)
+	dprng.Number(1, 200) // improve #1 gate
+	dprng.Number(1, 200) // improve #2 gate
 	wantNext := dprng.Number(0, 999)
 
 	dprng.ResetStream(hitSeed)
-	DoHeadbutt(ch, mob, w)                                                                 // consumes number(1,121) + 2× number(1,200)
-	cb.SkillMessage(result.Damage, ch.Name, mob.GetName(), SkillHeadbuttNum, ch.GetRoom()) // dice(1,N)
+	result = DoHeadbutt(ch, mob, w) // consumes number(1,121) only
+	cb.SkillMessage(result.Damage, ch.Name, mob.GetName(), SkillHeadbuttNum, ch.GetRoom())
+	for _, skill := range result.DeferredImprove {
+		improveSkill(ch, skill)
+	}
 	if got := dprng.Number(0, 999); got != wantNext {
-		t.Fatalf("headbutt HIT draw sequence wrong: next=%d want=%d. Expected order: "+
-			"number(1,121) → 2×number(1,200) [improve] → dice(1,%d) [skill_message]", got, wantNext, n)
+		t.Fatalf("headbutt HIT draw sequence wrong: next=%d want=%d. Expected C order: "+
+			"number(1,121) → dice(1,%d) [skill_message] → 2×number(1,200) [improve]", got, wantNext, n)
 	}
 }
 

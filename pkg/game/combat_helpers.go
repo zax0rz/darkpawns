@@ -44,6 +44,14 @@ func improveSkill(ch *Player, skill string) {
 	}
 }
 
+// ImproveSkill is the exported form of improveSkill for out-of-package callers
+// — pkg/command's sendSkillResult runs SkillResult.DeferredImprove entries
+// through it AFTER the skill_message/damage step, matching C's order (R3b,
+// DP-1212). Same draw/message contract as improveSkill.
+func ImproveSkill(ch *Player, skill string) {
+	improveSkill(ch, skill)
+}
+
 // improveSkillMessage performs improveSkill's exact draw/mutation contract and
 // returns its optional player-facing line. Most callers use improveSkill,
 // which writes the line immediately. Result-based command implementations use

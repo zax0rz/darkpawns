@@ -1549,6 +1549,19 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		}
 	}
 
+	// Run deferred skill improvement AFTER the skill_message dice and the
+	// damage/enrollment step, matching C's order: damage()/hit() draws the
+	// skill_message dice first, then improve_skill() runs back in the command
+	// handler (act.offensive.c do_kick/do_backstab, new_cmds.c do_trip/
+	// do_headbutt). Uses the real improveSkill — it draws number(1,200) [+
+	// number(1,3)] and may print "Your skill in X improves." (R1/R3b/R4 —
+	// no stubbing or dummy draws). DoSpellDamage draws no RNG for these
+	// skills (fixed damage formula; ApplyDamageModifiers is draw-free), so
+	// message-dice → improve-draw is the exact C sequence. DP-1212.
+	for _, skill := range result.DeferredImprove {
+		game.ImproveSkill(ch, skill)
+	}
+
 	// Apply position changes
 	if result.SelfStumble {
 		ch.SetPosition(combat.PosSitting)
