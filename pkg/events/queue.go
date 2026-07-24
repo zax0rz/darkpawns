@@ -73,6 +73,7 @@ type EventQueue struct {
 	events   eventHeap
 	nextID   uint64
 	stopCh   chan struct{}
+	stopOnce sync.Once
 	pulse    int64 // current game pulse, incremented by Process()
 	pulseDur time.Duration
 	started  bool
@@ -269,8 +270,11 @@ func (eq *EventQueue) Start(ctx context.Context) {
 }
 
 // Stop halts the background goroutine started by Start().
+// Safe to call multiple times; subsequent calls are no-ops.
 func (eq *EventQueue) Stop() {
-	close(eq.stopCh)
+	eq.stopOnce.Do(func() {
+		close(eq.stopCh)
+	})
 }
 
 // TimeUntilNext returns the duration until the next event fires.

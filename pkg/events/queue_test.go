@@ -379,3 +379,19 @@ func TestCreateRaceWithBackgroundProcess(t *testing.T) {
 	wg.Wait()
 	time.Sleep(200 * time.Millisecond)
 }
+
+// TestStopMultipleCalls verifies that calling Stop() more than once
+// does not panic (regression test for double-close of stopCh).
+func TestStopMultipleCalls(t *testing.T) {
+	eq := NewEventQueue(10 * time.Millisecond)
+	eq.Start(context.Background())
+
+	// First call should close stopCh and stop the goroutine.
+	eq.Stop()
+
+	// Second call must be a no-op (no panic).
+	eq.Stop()
+
+	// A third call for good measure.
+	eq.Stop()
+}
