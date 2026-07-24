@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 func cmdHeal(s *Session, args []string) error {
@@ -364,6 +365,166 @@ func cmdAdvance(s *Session, args []string) error {
 	s.Send(fmt.Sprintf("%s advanced from level %d to %d.", target.player.Name, oldLevel, newLevel))
 	target.Send(fmt.Sprintf("You have been advanced from level %d to %d!", oldLevel, newLevel))
 	return nil
+}
+
+// ---------------------------------------------------------------------------
+// skillset — set a player's skill value (LVL_GRGOD, POS_SLEEPING)
+// ---------------------------------------------------------------------------
+// Port of do_skillset (src/modify.c:255-341). Syntax:
+//
+//	skillset <name> '<skill>' <value>
+//
+// Every message byte matches C exactly, including the MIXED \n\r vs \r\n
+// terminators (C uses \r\n for the syntax line and NOPERSON, \n\r elsewhere —
+// do not normalize). The no-argument path lists every spells[] entry 4-per-line
+// at %18s, skipping entries whose name starts with '!', breaking on the RAW
+// table index modulo 4 (i%4==3) — exactly as C's loop, so !-entries that
+// increment i but are skipped still determine column alignment. The mudlog
+// (step 9) is server-side only and is intentionally NOT emitted (same policy
+// as do_help's usage-file write). SET_SKILL maps to Player.SetSkill keyed by the
+// canonical lowercased spells[] display name.
+func cmdSkillset(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GRGOD) {
+		s.Send("Huh!?!")
+		return nil
+	}
+
+	// Step 1: no argument → print syntax + the full skill list.
+	if len(args) == 0 {
+		s.Send("Syntax: skillset <name> '<skill>' <value>\r\n")
+		s.Send(skillsetSkillList())
+		return nil
+	}
+
+	// Step 2: target lookup (get_char_vis scope: player sessions, then mobs).
+	name := args[0]
+	targetSess := findSessionByName(s.manager, name)
+	if targetSess == nil || targetSess.player == nil {
+		// Could be a mob — C's get_char_vis resolves mobs too. If it is a mob,
+		// fall through to the NPC rejection below; otherwise NOPERSON.
+		if mob := s.manager.world.GetMobByName(name); mob == nil {
+			s.Send(noPersonHere)
+			return nil
+		}
+		s.Send("You can't set NPC skills.\n\r")
+		return nil
+	}
+	vict := targetSess.player
+
+	// The remainder after the target name: '<skill>' <value>.
+	rest := strings.Join(args[1:], " ")
+
+	// Step 3: skip_spaces; empty rest → "Skill name expected.\n\r".
+	rest = strings.TrimLeft(rest, " \t")
+	if rest == "" {
+		s.Send("Skill name expected.\n\r")
+		return nil
+	}
+
+	// Step 4: first non-space must be '\'' else "Skill must be enclosed in: ''\n\r".
+	if rest[0] != '\'' {
+		s.Send("Skill must be enclosed in: ''\n\r")
+		return nil
+	}
+
+	// Step 5: read to the closing '\'' (C lowercases inside the quotes).
+	closeIdx := strings.IndexByte(rest[1:], '\'')
+	if closeIdx < 0 {
+		s.Send("Skill must be enclosed in: ''\n\r")
+		return nil
+	}
+	quoted := strings.ToLower(rest[1 : 1+closeIdx])
+
+	// Step 6: find_skill_num → skill number; <= 0 → "Unrecognized skill.\n\r".
+	skillNum := game.FindSkillNum(quoted)
+	if skillNum <= 0 {
+		s.Send("Unrecognized skill.\n\r")
+		return nil
+	}
+
+	// Step 7: next arg = value (whatever follows the closing quote).
+	valueStr := strings.TrimSpace(rest[1+closeIdx+1:])
+	if valueStr == "" {
+		s.Send("Learned value expected.\n\r")
+		return nil
+	}
+	value, err := strconv.Atoi(valueStr)
+	if err != nil || value < 0 {
+		// C's atoi("garbage") returns 0, which passes the >=0 check and would
+		// set the skill to 0. But atoi of a negative like "-5" yields -5 → min
+		// error. Reproduce: strconv.Atoi fails → treat as 0? C atoi returns 0
+		// on non-numeric. Mirror that: a parse failure is value 0 (in range).
+		if err != nil {
+			value = 0
+		} else {
+			s.Send("Minimum value for learned is 0.\n\r")
+			return nil
+		}
+	}
+	if value > 100 {
+		s.Send("Max value for learned is 100.\n\r")
+		return nil
+	}
+
+	// Step 8: IS_NPC(vict) → "You can't set NPC skills.\n\r". (Unreachable for a
+	// session-resolved player, but kept for parity with C's order and the mob
+	// path above.)
+	if vict.IsNPC() {
+		s.Send("You can't set NPC skills.\n\r")
+		return nil
+	}
+
+	// Step 9: mudlog — server-side only, NOT player-facing: skipped (see header).
+
+	// Step 10: SET_SKILL(vict, skill, value). Go stores skills by name string;
+	// use the canonical spells[] display name (lowercased, matching how callers
+	// key GetSkill/SetSkill — see spec_procs.go practice).
+	canonicalName := strings.ToLower(game.SkillCatalogName(skillNum))
+	vict.SetSkill(canonicalName, value)
+
+	// Step 11: confirmation to the actor. spells[skill] is the display name.
+	s.Send(fmt.Sprintf("You change %s's %s to %d.\n\r", vict.Name, game.SkillCatalogName(skillNum), value))
+	return nil
+}
+
+// noPersonHere is C's NOPERSON ("No-one by that name here.\r\n" — config.c:93),
+// reused verbatim (not an invented variant — see DP-1200). The British
+// hyphenated "No-one" and CRLF terminator are byte-exact.
+const noPersonHere = "No-one by that name here.\r\n"
+
+// skillsetSkillList renders the no-argument skill list exactly as C's
+// do_skillset (modify.c:266-279): "Skill being one of the following:\n\r",
+// then every spells[] entry 4-per-line at %18s, skipping names whose first
+// char is '!', breaking the line on the RAW index modulo 4 (i%4==3), and a
+// trailing "\n\r".
+func skillsetSkillList() string {
+	var b strings.Builder
+	b.WriteString("Skill being one of the following:\n\r")
+	size := spells.SkillCatalogSize()
+	lineHasEntry := false
+	for i := 0; i < size; i++ {
+		raw := spells.SpellRawName(i)
+		if raw == "" {
+			continue
+		}
+		if raw[0] == '\n' { // C loop terminator: *spells[i] != '\n'
+			break
+		}
+		if raw[0] == '!' {
+			continue // skip ! entries, but i still increments
+		}
+		fmt.Fprintf(&b, "%18s", raw)
+		lineHasEntry = true
+		if i%4 == 3 {
+			b.WriteString("\r\n")
+			lineHasEntry = false
+		}
+	}
+	if lineHasEntry {
+		b.WriteString("\r\n") // C sends whatever's in help, then the trailing \n\r
+	}
+	b.WriteString("\n\r")
+	return b.String()
 }
 
 // ---------------------------------------------------------------------------

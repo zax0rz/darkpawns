@@ -1,0 +1,247 @@
+package session
+
+import (
+	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/spells"
+)
+
+// makeSkillsetTestSession creates a wizard-actor session (LVL_GRGOD) registered
+// in the manager so it can resolve targets, plus a separate target player
+// session. Returns (wizard, target).
+func makeSkillsetTestSession(t *testing.T) (*Session, *Session) {
+	t.Helper()
+	m := makeTestManager(t)
+	wiz := makeTestSession(t, m, "God", 1001, true)
+	wiz.player.Level = LVL_GRGOD
+
+	target := makeTestSession(t, m, "Hero", 1001, true)
+	m.mu.Lock()
+	m.sessions["god"] = wiz
+	m.sessions["hero"] = target
+	m.mu.Unlock()
+	return wiz, target
+}
+
+// readOneText drains and returns the first MsgText the session produced. Many
+// cmdSkillset paths emit a single message; this asserts its exact bytes.
+func readOneText(t *testing.T, s *Session) string {
+	t.Helper()
+	return readSessionText(t, s)
+}
+
+// --- Step 1: no-argument syntax + skill list ---
+
+func TestCmdSkillset_NoArg_SyntaxAndSkillList(t *testing.T) {
+	wiz, _ := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, nil); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	// First message: the exact syntax line (\r\n, not \n\r).
+	got := readOneText(t, wiz)
+	if want := "Syntax: skillset <name> '<skill>' <value>\r\n"; got != want {
+		t.Errorf("syntax line = %q, want %q", got, want)
+	}
+
+	// Second message: the skill list. Verify its byte-exact structure by
+	// rebuilding the reference from the same spells[] table the handler uses.
+	list := readOneText(t, wiz)
+	var wantB strings.Builder
+	wantB.WriteString("Skill being one of the following:\n\r")
+	size := spells.SkillCatalogSize()
+	lineHasEntry := false
+	for i := 0; i < size; i++ {
+		raw := spells.SpellRawName(i)
+		if raw == "" || raw[0] == '\n' {
+			break
+		}
+		if raw[0] == '!' {
+			continue
+		}
+		fmt.Fprintf(&wantB, "%18s", raw)
+		lineHasEntry = true
+		if i%4 == 3 {
+			wantB.WriteString("\r\n")
+			lineHasEntry = false
+		}
+	}
+	if lineHasEntry {
+		wantB.WriteString("\r\n")
+	}
+	wantB.WriteString("\n\r")
+	if list != wantB.String() {
+		t.Errorf("skill list mismatch:\n--- got ---\n%q\n--- want ---\n%q", list, wantB.String())
+	}
+
+	// Spot-check the leading content: index 0 (!RESERVED!) is skipped; the list
+	// begins with "holy ward","shift reality","bless" then \r\n (i=3 break).
+	if !strings.HasPrefix(list, "Skill being one of the following:\n\r") {
+		t.Errorf("skill list should start with the header, got prefix %q", list[:50])
+	}
+	// The first line holds indices 1,2,3 (holy ward / shift reality / bless),
+	// each %18s right-justified, then \r\n.
+	firstLine := strings.Split(list, "\r\n")[0]
+	if !strings.Contains(firstLine, "holy ward") || !strings.Contains(firstLine, "bless") {
+		t.Errorf("first list line should contain holy ward and bless, got %q", firstLine)
+	}
+}
+
+// --- Step 2: NOPERSON on unknown target (exact C bytes) ---
+
+func TestCmdSkillset_UnknownTarget_NOPERSON(t *testing.T) {
+	wiz, _ := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"nobody", "'backstab'", "75"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "No-one by that name here.\r\n"; got != want {
+		t.Errorf("unknown target = %q, want exact C NOPERSON %q", got, want)
+	}
+}
+
+// --- Step 3: skill-name-expected (no quoted skill) ---
+
+func TestCmdSkillset_SkillNameExpected(t *testing.T) {
+	wiz, _ := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"hero"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "Skill name expected.\n\r"; got != want {
+		t.Errorf("empty skill = %q, want %q", got, want)
+	}
+}
+
+// --- Step 4: skill must be quoted (no opening quote) ---
+
+func TestCmdSkillset_NotQuoted(t *testing.T) {
+	wiz, _ := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"hero", "backstab", "75"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "Skill must be enclosed in: ''\n\r"; got != want {
+		t.Errorf("unquoted skill = %q, want %q", got, want)
+	}
+}
+
+// --- Step 5: unterminated quote ---
+
+func TestCmdSkillset_UnterminatedQuote(t *testing.T) {
+	wiz, _ := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"hero", "'backstab", "75"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "Skill must be enclosed in: ''\n\r"; got != want {
+		t.Errorf("unterminated quote = %q, want %q", got, want)
+	}
+}
+
+// --- Step 6: unrecognized skill ---
+
+func TestCmdSkillset_UnrecognizedSkill(t *testing.T) {
+	wiz, _ := makeSkillsetTestSession(t)
+
+	// Properly-closed quotes around a name that is not a real skill.
+	if err := cmdSkillset(wiz, []string{"hero", "'zzznotaskill'", "75"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "Unrecognized skill.\n\r"; got != want {
+		t.Errorf("unrecognized skill = %q, want %q", got, want)
+	}
+}
+
+// --- Step 7: value-expected ---
+
+func TestCmdSkillset_ValueExpected(t *testing.T) {
+	wiz, _ := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"hero", "'backstab'"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "Learned value expected.\n\r"; got != want {
+		t.Errorf("empty value = %q, want %q", got, want)
+	}
+}
+
+// --- Step 7: value < 0 ---
+
+func TestCmdSkillset_ValueBelowMin(t *testing.T) {
+	wiz, _ := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"hero", "'backstab'", "-1"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "Minimum value for learned is 0.\n\r"; got != want {
+		t.Errorf("value < 0 = %q, want %q", got, want)
+	}
+}
+
+// --- Step 7: value > 100 ---
+
+func TestCmdSkillset_ValueAboveMax(t *testing.T) {
+	wiz, _ := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"hero", "'backstab'", "101"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "Max value for learned is 100.\n\r"; got != want {
+		t.Errorf("value > 100 = %q, want %q", got, want)
+	}
+}
+
+// --- Step 11: success — sets the skill and emits the byte-exact confirmation ---
+
+func TestCmdSkillset_Success_SetsSkillAndConfirms(t *testing.T) {
+	wiz, target := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"hero", "'backstab'", "75"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	got := readOneText(t, wiz)
+	if want := "You change Hero's backstab to 75.\n\r"; got != want {
+		t.Errorf("confirmation = %q, want %q", got, want)
+	}
+	// The skill was actually set (keyed by the canonical lowercased name).
+	if lvl := target.player.GetSkill("backstab"); lvl != 75 {
+		t.Errorf("target backstab = %d, want 75", lvl)
+	}
+}
+
+// --- Multiword skill name round-trips through the quotes (e.g. 'cure light') ---
+
+func TestCmdSkillset_Success_MultiwordSkill(t *testing.T) {
+	wiz, target := makeSkillsetTestSession(t)
+
+	// 'cure light' splits across args after Fields; the handler rejoins them.
+	if err := cmdSkillset(wiz, []string{"hero", "'cure", "light'", "80"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	got := readOneText(t, wiz)
+	if want := "You change Hero's cure light to 80.\n\r"; got != want {
+		t.Errorf("multiword confirmation = %q, want %q", got, want)
+	}
+	if lvl := target.player.GetSkill("cure light"); lvl != 80 {
+		t.Errorf("target cure light = %d, want 80", lvl)
+	}
+}
+
+// --- Level gate: a mortal (< LVL_GRGOD) is rejected ---
+
+func TestCmdSkillset_MortalRejected(t *testing.T) {
+	m := makeTestManager(t)
+	mortal := makeTestSession(t, m, "Mort", 1001, true)
+	mortal.player.Level = 10 // well below LVL_GRGOD (38)
+
+	if err := cmdSkillset(mortal, nil); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	// The handler's own checkLevel gate fires ("Huh!?!" — matching cmdSet/advance).
+	if got := readOneText(t, mortal); !strings.HasPrefix(got, "Huh") {
+		t.Errorf("mortal should be gated, got %q", got)
+	}
+}

@@ -366,7 +366,7 @@ sigh	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
 sing	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
 sip	do_drink	POS_RESTING	0	SCMD_SIP	registered	pkg/session/commands.go:registerCommand("sip", ...)
 sit	do_sit	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("sit", ...)
-skillset	do_skillset	POS_SLEEPING	LVL_GRGOD	0	missing	no implementation found
+skillset	do_skillset	POS_SLEEPING	LVL_GRGOD	0	registered	pkg/session/commands.go:registerCommand("skillset", ...)
 slap	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
 sleep	do_sleep	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("sleep", ...)
 sleeper	do_sleeper	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("sleeper", ...)
