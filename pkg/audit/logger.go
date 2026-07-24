@@ -115,6 +115,8 @@ func LogEvent(event AuditEvent) {
 
 	if globalLogger != nil {
 		globalLogger.Log(event)
+	} else {
+		slog.Warn("audit event dropped: globalLogger not initialized")
 	}
 }
 
