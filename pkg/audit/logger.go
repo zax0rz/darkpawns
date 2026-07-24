@@ -30,10 +30,10 @@ type AuditLogger struct {
 
 // NewAuditLogger opens (or creates) an audit log file with restrictive permissions.
 func NewAuditLogger(filename string) (*AuditLogger, error) {
-	clean := filepath.Clean(filename)
-	if strings.Contains(clean, "..") {
+	if strings.Contains(filename, "..") {
 		return nil, fmt.Errorf("invalid audit log path: %s", filename)
 	}
+	clean := filepath.Clean(filename)
 	file, err := os.OpenFile(clean, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return nil, err
