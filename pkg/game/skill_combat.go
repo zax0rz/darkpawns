@@ -249,31 +249,37 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	percent := ((7 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillKick)
 
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
-
 	// C: WAIT_STATE(ch, PULSE_VIOLENCE+2) sits outside the if/else, so both
 	// branches get WaitCh=3 — act.offensive.c:633.
 	if percent > prob {
+		// Miss — C calls damage(ch, vict, 0, SKILL_KICK), which routes the
+		// message through skill_message (fight.c) — the Kick set (134) from
+		// lib/misc/messages, drawing dice(1, number_of_attacks) — and starts
+		// combat (set_fighting). SkillMsgType makes the caller (sendSkillResult)
+		// invoke that same path with attacktype 134; StartCombat enrolls via the
+		// engine. The miss path consumes exactly TWO shared draws, in order:
+		// this number(1,101) then the skill_message dice(1,N) (R3).
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You try to kick $N, but miss!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to kick you, but misses!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to kick $N, but misses!", chPronouns, &victPronouns, ""),
-			WaitCh:        3,
+			Success:      false,
+			SkillMsgType: SkillKickNum, // 134 — lib/misc/messages Kick set
+			StartCombat:  true,
+			WaitCh:       3, // PULSE_VIOLENCE + 2
 		}
 	}
 
+	// Hit — C: damage(ch, vict, GET_LEVEL(ch) >> 1, SKILL_KICK). The damage()
+	// call routes the message through skill_message (the Kick set's hit_msg)
+	// and the damage/death pipeline. SkillMsgType + Damage>0 selects the Hit
+	// variant; the caller routes dam>0 through DoSpellDamage (corpse/XP) and
+	// emits via SkillMessage, applying HP once (no double-apply).
 	dam := ch.GetLevel() >> 1 // level / 2
 	improveSkill(ch, SkillKick)
 
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   ActMessage("You kick $N square in the chest!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n kicks you square in the chest!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n kicks $N square in the chest!", chPronouns, &victPronouns, ""),
-		WaitCh:        3, // PULSE_VIOLENCE + 2
+		Success:      true,
+		Damage:       dam,
+		SkillMsgType: SkillKickNum,
+		WaitCh:       3, // PULSE_VIOLENCE + 2
 	}
 }
 
