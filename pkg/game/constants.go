@@ -693,6 +693,11 @@ var MonthNames = []string{
 	"Month of the Great Evil",
 }
 
+// NoPersonHere is C's NOPERSON global (src/config.c:93) — one canonical
+// string for "target person not found in room". The British hyphenated
+// "No-one" and CRLF terminator are byte-exact. Do not reword.
+const NoPersonHere = "No-one by that name here.\r\n"
+
 // Sharp damage bonus table (sharp[])
 var SharpDamage = []int{
 	0, 1, 1, 1, 2, 2, 2, 3, 3, 3,

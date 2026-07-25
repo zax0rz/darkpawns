@@ -150,7 +150,7 @@ func cmdForce(s *Session, args []string) error {
 
 	target := findSessionByName(s.manager, targetName)
 	if target == nil || target.player == nil {
-		s.Send("No one by that name here.")
+		s.Send(noPersonHere)
 		return nil
 	}
 
