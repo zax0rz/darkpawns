@@ -67,6 +67,9 @@ These are Go-side inputs in the `DP_SEED`/`DP_CLOCK` category — external contr
 ## Git hygiene
 
 - Branch off `main` as `glm/<feature>`. If local `main` has diverged from `origin/main`, rebase onto `origin/main` first.
+  - **Never branch from whatever HEAD is checked out.** Multiple agents share this live repo; HEAD may be another agent's feature branch. The orchestrator pre-creates your branch from `main` or hands you a `git worktree` — if it hasn't, run `git checkout main && git pull` before branching and say so in the PR.
+  - **Leave the repo on `main` when you finish** — after every session, including revise/force-push rounds: `git checkout main`. The next agent's branch base depends on it.
+  - 2026-07-25 incidents: HEAD was flipped ×3 in one week by executor sessions, and PR #480 was silently stacked on top of PR #479 because its branch started from #479's HEAD. See the warning in `docs/briefs/README.md`.
 - Conventional commits: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
 - **Stage only the deliverables.** Do NOT stage:
   - `website/static/map/world-sphere.json`
