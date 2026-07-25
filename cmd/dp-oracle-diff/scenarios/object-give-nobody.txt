@@ -1,0 +1,44 @@
+# Give-to-missing-person NOPERSON fidelity gate (DP-1200).
+#
+# A Human Warrior from hometown K recalls to room 8004 while carrying starter
+# sword #8037. No mob fixture is installed, so "nobody" cannot resolve to a
+# recipient. do_give reaches the shared NOPERSON constant in src/config.c:93,
+# so C and Go must both emit exactly "No-one by that name here." (R1, R4, R5a).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Givenobody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Givenobody
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[probe]
+give sword nobody
