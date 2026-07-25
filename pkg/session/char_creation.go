@@ -485,10 +485,6 @@ func (s *Session) completeCharCreation() error {
 	// Set hometown
 	s.player.Hometown = s.charHometown
 
-	// Persist the post-intro destination, not the transient newbie intro room.
-	newbieRoom := game.NewbieHometownRoom(s.charHometown)
-	s.player.SetRoom(newbieRoom)
-
 	// First-player-God bootstrap (init_char, db.c:3016). On a fresh MUD the
 	// very first character becomes an Implementor. Runs before the DB save so
 	// the persisted row reflects Level 40 / God stats. The God gets every skill
@@ -506,6 +502,16 @@ func (s *Session) completeCharCreation() error {
 		// AdvanceLevel (DP-1212: it consumed 2 phantom draws on the God path).
 		s.player.AdvanceLevel()
 		game.GiveStartingSkills(s.player)
+	}
+
+	// Level-based entry routing (interpreter.c:2191-2243). Immortals enter
+	// ImmortStartRoom (1204); mortals use the newbie intro room (8099) then
+	// transition to their hometown room after the birth sequence.
+	newbieRoom := game.NewbieHometownRoom(s.charHometown)
+	if s.player.GetLevel() >= game.LVL_IMMORT {
+		s.player.SetRoom(game.ImmortStartRoom)
+	} else {
+		s.player.SetRoom(newbieRoom)
 	}
 
 	// Save to DB if available
@@ -537,8 +543,13 @@ func (s *Session) completeCharCreation() error {
 		return err
 	}
 
-	// C source intro: brand-new characters first appear in the Burning Hut.
-	s.player.SetRoom(game.NewbieStartRoom)
+	// C source intro: brand-new mortals first appear in the Burning Hut (8099);
+	// immortals enter ImmortStartRoom (1204) and skip the intro entirely.
+	if s.player.GetLevel() >= game.LVL_IMMORT {
+		s.player.SetRoom(game.ImmortStartRoom)
+	} else {
+		s.player.SetRoom(game.NewbieStartRoom)
+	}
 	if err := s.manager.world.AddPlayer(s.player); err != nil {
 		s.manager.Unregister(s.charName)
 		return err
@@ -583,12 +594,16 @@ func (s *Session) completeCharCreation() error {
 	// C's start_room special emits this birth transition on the first
 	// PULSE_MOBILE after entry. Go completes it synchronously; under the frozen
 	// oracle clock, expose the equivalent output at that existing transition.
-	if dpclock.Frozen() {
-		s.sendText(newbieBirthMessage(s.player.Name))
-	}
-	s.player.SetRoom(newbieRoom)
-	if dpclock.Frozen() {
-		s.sendRoomObservation(newbieRoom, false, "")
+	// Immortals skip the Burning Hut intro entirely (C never routes them
+	// through 8099 — interpreter.c:2191-2243).
+	if s.player.GetLevel() < game.LVL_IMMORT {
+		if dpclock.Frozen() {
+			s.sendText(newbieBirthMessage(s.player.Name))
+		}
+		s.player.SetRoom(newbieRoom)
+		if dpclock.Frozen() {
+			s.sendRoomObservation(newbieRoom, false, "")
+		}
 	}
 
 	// Mirror the agent initialization that handleLogin sends for returning players.

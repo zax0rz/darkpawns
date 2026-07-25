@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/testutil"
 )
 
 // TestShouldCrownFirstPlayer_HarnessLatch — under DP_FRESH_MUD, the in-process
@@ -81,6 +82,9 @@ func TestCompleteCharCreation_FreshGodThenMortal(t *testing.T) {
 	if god.Hunger != -1 || god.Thirst != -1 {
 		t.Errorf("God conditions = hunger %d thirst %d, want -1/-1", god.Hunger, god.Thirst)
 	}
+	if got := god.GetRoom(); got != game.ImmortStartRoom {
+		t.Errorf("God room = %d, want ImmortStartRoom (%d)", got, game.ImmortStartRoom)
+	}
 
 	// Second char: ordinary mortal thief. GiveStartingSkills runs (backstab 10),
 	// level 1, conditions 24/36 (not -1).
@@ -96,5 +100,60 @@ func TestCompleteCharCreation_FreshGodThenMortal(t *testing.T) {
 	}
 	if mortal.Hunger == -1 {
 		t.Error("mortal hunger = -1, want a finite value (not God)")
+	}
+	// Mortal with hometown=0 (default) ends at MortalStartRoom after birth transition.
+	if got := mortal.GetRoom(); got != game.MortalStartRoom {
+		t.Errorf("mortal room = %d, want MortalStartRoom (%d)", got, game.MortalStartRoom)
+	}
+}
+
+// TestCompleteCharCreation_GodRoomWithDB — the first-player God's live room and
+// persisted RoomVNum must both be ImmortStartRoom (1204). No 8099, no
+// NewbieHometownRoom anywhere on the God path (DP-1205).
+func TestCompleteCharCreation_GodRoomWithDB(t *testing.T) {
+	t.Setenv("DP_FRESH_MUD", "1")
+	database := testutil.NewMockDatabase()
+	world := testutil.NewTestWorld()
+	t.Cleanup(world.StopAITicker)
+	m := newTestManager(t, world, database)
+
+	s := makeCharSession(t, m)
+	s.charCreating = true
+	s.charName = "TestGod"
+	s.charClass = game.ClassWarrior
+	s.charRace = game.RaceHuman
+	s.charSex = 1
+	s.charHometown = 1
+	s.charPassword = "hashed_pw"
+	s.charStats = game.CharStats{Str: 18, Dex: 18, Con: 18, Int: 18, Wis: 18, Cha: 18}
+
+	if err := s.completeCharCreation(); err != nil {
+		t.Fatalf("completeCharCreation: %v", err)
+	}
+
+	if got := s.player.GetLevel(); got != game.LVL_IMPL {
+		t.Fatalf("God level = %d, want LVL_IMPL (%d)", got, game.LVL_IMPL)
+	}
+
+	// Live room must be ImmortStartRoom.
+	if got := s.player.GetRoom(); got != game.ImmortStartRoom {
+		t.Errorf("God live room = %d, want ImmortStartRoom (%d)", got, game.ImmortStartRoom)
+	}
+
+	// Persisted RoomVNum must also be ImmortStartRoom.
+	record, err := database.GetPlayer("TestGod")
+	if err != nil {
+		t.Fatalf("GetPlayer: %v", err)
+	}
+	if record == nil {
+		t.Fatal("created player record not found")
+	}
+	if record.RoomVNum != game.ImmortStartRoom {
+		t.Errorf("God persisted room = %d, want ImmortStartRoom (%d)", record.RoomVNum, game.ImmortStartRoom)
+	}
+
+	// The Burning Hut (8099) must not appear anywhere on the God path.
+	if record.RoomVNum == game.NewbieStartRoom {
+		t.Error("God persisted room is NewbieStartRoom (8099); should be ImmortStartRoom")
 	}
 }

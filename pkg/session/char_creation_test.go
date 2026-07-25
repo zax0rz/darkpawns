@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/testutil"
 )
@@ -457,6 +458,11 @@ func TestCompleteCharCreation_WithNilDB(t *testing.T) {
 
 func TestCompleteCharCreation_PersistsHometownRoom(t *testing.T) {
 	database := testutil.NewMockDatabase()
+	// Seed one player so CountPlayers() > 0 and shouldCrownFirstPlayer
+	// returns false — this test covers mortal routing, not God routing.
+	if err := database.CreatePlayer(&db.PlayerRecord{Name: "Existing", Level: 1}); err != nil {
+		t.Fatalf("seed player: %v", err)
+	}
 	world := testutil.NewTestWorld()
 	t.Cleanup(world.StopAITicker)
 	s := makeCharSession(t, newTestManager(t, world, database))
