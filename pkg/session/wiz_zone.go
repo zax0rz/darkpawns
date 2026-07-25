@@ -283,29 +283,32 @@ func cmdSethunt(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 2 {
-		s.Send("Usage: sethunt <victim> <hunter>")
+	if len(args) == 0 {
+		s.Send("Who do you wish to hunt?\n\r")
 		return nil
 	}
 	victimName := args[0]
-	hunterName := args[1]
+	hunterName := ""
+	if len(args) > 1 {
+		hunterName = args[1]
+	}
 
 	if strings.EqualFold(victimName, hunterName) {
-		s.Send("Yeah right.")
+		s.Send("Yeah right.\n\r")
 		return nil
 	}
 
 	// Find victim (can be any character visible to the wizard)
 	victimSess := findSessionByName(s.manager, victimName)
 	if victimSess == nil || victimSess.player == nil {
-		s.Send("No-one by that name around.")
+		s.Send("No-one by that name around.\n\r")
 		return nil
 	}
 
 	// Find hunter — must be a mob in the same room system
 	hunterSess := findSessionByName(s.manager, hunterName)
 	if hunterSess == nil || hunterSess.player == nil {
-		s.Send("No-one by that name around.")
+		s.Send("Who shall be the hunter?\n\r")
 		return nil
 	}
 

@@ -220,6 +220,21 @@ func TestPerformGiveNoDrop(t *testing.T) {
 	}
 }
 
+// TestGiveFindVictNoperson verifies giveFindVict uses C's canonical NOPERSON
+// string when the target person is not in the room.
+func TestGiveFindVictNoperson(t *testing.T) {
+	w, ch, lastMsg := newDonateTestWorld(t)
+
+	// give to "nobody" — no player or mob with that name in room
+	vict := w.giveFindVict(ch, "nobody")
+	if vict != nil {
+		t.Fatal("giveFindVict should return nil for missing target")
+	}
+	if got := lastMsg(); got != NoPersonHere {
+		t.Fatalf("giveFindVict not-found = %q, want exact C NOPERSON %q", got, NoPersonHere)
+	}
+}
+
 // TestDoGiveAllSkipsUnseenItems verifies the give-all loop skips items the
 // giver can't see (CAN_SEE_OBJ — act.item.c:824), not items with some
 // unrelated extra-flag bit set.

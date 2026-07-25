@@ -457,7 +457,7 @@ func (w *World) giveFindVict(ch *Player, arg string) *Player {
 	}
 	vict := w.FindPlayerInRoom(ch.GetRoomVNum(), arg)
 	if vict == nil {
-		ch.SendMessage("There doesn't seem to be anyone here by that name.\r\n")
+		ch.SendMessage(NoPersonHere)
 		return nil
 	}
 	if vict == ch {
