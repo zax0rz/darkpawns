@@ -91,3 +91,6 @@ website/static/map/world-graph.json
 # Player data (runtime)
 pkg/db/data/
 darkpawns-server
+
+# Claude Code local tooling
+.claude/
