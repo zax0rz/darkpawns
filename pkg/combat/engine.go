@@ -445,82 +445,60 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	attacker := pair.Attacker
 	defender := pair.Defender
 
-	// C: fight.c:1975-1987 — TWO SEPARATE steps for NPCs: (1) a mob with
-	// GET_MOB_WAIT > 0 loses this round's attacks and decrements its wait;
-	// (2) INDEPENDENTLY, a mob below POS_FIGHTING with no remaining wait
-	// stands back up ("$n scrambles to $s feet!"). Nesting the stand-up
-	// inside the wait block (previous behavior) meant a downed mob whose
-	// wait was already 0 fell through to the StopCombat check below and
-	// combat ENDED instead of the mob standing (DP-1213).
-	if attacker.IsNPC() {
-		waitedThisRound := false
-		waitZero := true // a combatant without wait tracking reads as GET_MOB_WAIT == 0
-		if wc, ok := attacker.(waitStateHolder); ok {
-			if wc.GetWaitState() > 0 {
-				wc.DecrementWaitState()
-				waitedThisRound = true // attacks = 0 this round
-			}
-			waitZero = wc.GetWaitState() == 0
-		}
-		if attacker.GetPosition() < PosFighting && waitZero {
-			attacker.SetPosition(PosFighting)
-			if ce.BroadcastFunc != nil {
-				pronoun := "its"
-				switch attacker.GetSex() {
-				case 0:
-					pronoun = "his"
-				case 1:
-					pronoun = "her"
-				}
-				ce.BroadcastFunc(attacker.GetRoom(), fmt.Sprintf("%s scrambles to %s feet!", attacker.GetName(), pronoun), attacker.GetName())
-			}
-		}
-		if waitedThisRound {
-			return // attacks = 0 — but the stand-up above still ran (C order)
-		}
-	}
+	// C perform_violence per-combatant sequence (fight.c:1906-2025): attacks-
+	// count draws → parry/dodge draws → wait/stand-up → IS_PARRIED adjust →
+	// attack loop gated on AWAKE. The draw-bearing blocks run FIRST, before
+	// any early exit — C draws them even when the combatant is downed or about
+	// to stop fighting (DP-1215, R3a/R3b).
 
-	// Check if both combatants are still valid and able to fight. An attacker
-	// that has itself been knocked out of a fighting position (stunned/incap/
-	// mortally/dead) cannot swing; a dead defender has already been extracted.
-	// A merely-downed defender (wounded band, still alive) is NOT skipped —
-	// the attacker keeps swinging to finish it off (fight.c).
-	if attacker.GetPosition() < PosFighting || defender.GetPosition() == PosDead {
-		ce.StopCombat(attacker.GetName())
+	// 1. Attacks-count computation (fight.c:1910-1947). NPC draws Number(0,900);
+	// PC draws Number(1,100)/Number(0,500). These run unconditionally.
+	hasHaste := cbHasAffect(attacker.GetName(), AFF_HASTE)
+	hasSlow := cbHasAffect(attacker.GetName(), AFF_SLOW)
+	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
+
+	// 2. Parry/dodge pre-check (fight.c:1949-1973). PC draws Number(0,10000)
+	// every round; NPC dodge draws Number(0,100) if AFF_DODGE.
+	ce.prepareRoundDefense(attacker, defender)
+
+	// 3. Mob combat redirects — leave in current position (draws short-circuited
+	// off in gated scenarios where the defender is a PC).
+	if ce.applyMobCombatRedirects(attacker, defender) {
 		return
 	}
 
-	// Check if they're in the same room
-	if attacker.GetRoom() != defender.GetRoom() {
-		ce.StopCombat(attacker.GetName())
-		return
-	}
-
-	// Shopkeeper protection — C: fight.c:1359-1366
-	// Any attempt to damage a shopkeeper halts combat for both sides.
+	// 4. Shopkeeper protection — C: fight.c:1359-1366.
 	if cbIsShopkeeper(defender.GetName()) {
 		ce.StopCombat(attacker.GetName())
 		ce.StopCombat(defender.GetName())
 		return
 	}
 
-	if ce.applyMobCombatRedirects(attacker, defender) {
-		return
+	// 5. NPC stand-up (fight.c:1975-1988). C zeros attacks only for
+	// GET_MOB_WAIT > 0, which only the Lua bridge writes (scripts.c:2017) —
+	// never WAIT_STATE (utils.h:462-464 writes ch->wait, a different field).
+	// Go's scripting layer writes no mob wait, so NPC attacks are NEVER zeroed
+	// by wait. A downed mob stands and swings in the same round (DP-1215).
+	if attacker.IsNPC() && attacker.GetPosition() < PosFighting {
+		attacker.SetPosition(PosFighting)
+		ce.scrambleBroadcast(attacker)
 	}
 
-	// Calculate number of attacks for attacker
-	hasHaste := cbHasAffect(attacker.GetName(), AFF_HASTE)
-	hasSlow := cbHasAffect(attacker.GetName(), AFF_SLOW)
-	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
+	// 6. PC stand-up (fight.c:1990-1998). C: !IS_NPC && GET_POS < POS_FIGHTING
+	// && !CHECK_WAIT (wait <= 1). PC wait drains in the heartbeat (manager.go
+	// OnDrainInput), NOT here — do not decrement (C drains in comm.c:597).
+	if !attacker.IsNPC() && attacker.GetPosition() < PosFighting {
+		waitOK := true // a combatant without wait tracking reads as !CHECK_WAIT
+		if wc, ok := attacker.(waitStateHolder); ok {
+			waitOK = wc.GetWaitState() <= 1 // C CHECK_WAIT: ch->wait > 1
+		}
+		if waitOK {
+			attacker.SetPosition(PosFighting)
+			ce.scrambleBroadcast(attacker)
+		}
+	}
 
-	// C evaluates the current fighter's own parry/dodge posture, then marks
-	// FIGHTING(ch) as IS_PARRIED. Because combat_list is walked head-first, that
-	// flag may reduce the opponent later this round or on its next round.
-	// Source: src/fight.c:1949-2004.
-	ce.prepareRoundDefense(attacker, defender)
-
-	// IS_PARRIED(ch) reduces this fighter's attack count once and is cleared at
-	// the end of its turn.
+	// 7. IS_PARRIED adjustment (fight.c:1999-2007).
 	defenseAction := ce.consumeParried(attacker.GetName())
 	if defenseAction != "" {
 		defenderDexDefense := dexApp[dexIndex(defender)].Defensive
@@ -534,24 +512,54 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		}
 	}
 
-	// Perform attacks
+	// 8. Attack loop (fight.c:2009-2025). Gated ONLY on AWAKE (GET_POS >
+	// POS_SLEEPING) and same-room — a sitting/resting attacker (downed but
+	// awake) still swings. NOT awake or different room → stop_fighting.
+	if attacker.GetPosition() <= PosSleeping {
+		ce.StopCombat(attacker.GetName())
+		return
+	}
+	if defender.GetPosition() == PosDead {
+		return // defender extracted; nothing to hit
+	}
+	if attacker.GetRoom() != defender.GetRoom() {
+		ce.StopCombat(attacker.GetName())
+		return
+	}
+
 	for i := 0; i < numAttacks; i++ {
-		// Stop once the defender is dead (extracted next tick). A downed but
-		// still-living defender keeps getting hit — that's how it's finished.
 		if defender.GetPosition() == PosDead {
 			break
 		}
-
 		if ce.performOneHit(pair) {
 			break
 		}
 	}
 
 	// Fire fight trigger on mob attacker after combat round
-	// Source: mobact.c — mob_activity() calls mob scripts after violence
 	if attacker.IsNPC() && ce.ScriptFightFunc != nil && defender.GetPosition() != PosDead {
 		ce.ScriptFightFunc(attacker.GetName(), defender.GetName(), attacker.GetRoom())
 	}
+}
+
+// scrambleBroadcast emits the "$n scrambles to $s feet!" stand-up message
+// (fight.c:1985/1995) — the room broadcast (capitalized via CAP, comm.c:2477)
+// plus the "You drag yourself to your feet.\r\n" self-message.
+func (ce *CombatEngine) scrambleBroadcast(c Combatant) {
+	pronoun := "its"
+	switch c.GetSex() {
+	case 0:
+		pronoun = "his"
+	case 1:
+		pronoun = "her"
+	}
+	if ce.BroadcastFunc != nil {
+		// C act() → CAP uppercases the first byte of the fully-composed string.
+		ce.BroadcastFunc(c.GetRoom(),
+			capitalizeFightMessage(fmt.Sprintf("%s scrambles to %s feet!", c.GetName(), pronoun)),
+			c.GetName())
+	}
+	c.SendMessage("You drag yourself to your feet.\r\n")
 }
 
 func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
@@ -560,20 +568,22 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 	case CheckParry(fighter, opponent) == ParrySuccess:
 		defenseAction = "parry"
 		fighter.SendMessage("With a dazzling show of swordplay, you move into defensive position...\r\n")
-		opponent.SendMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName()))
+		// C act() → CAP uppercases the first byte (comm.c:2477). The fighter's
+		// name may be lowercase (e.g. "a guard trainee").
+		opponent.SendMessage(capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName())))
 		ce.sendDefenseObserverMessage(
 			fighter,
 			opponent,
-			fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's every blow!\r\n", fighter.GetName(), opponent.GetName()),
+			capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's every blow!\r\n", fighter.GetName(), opponent.GetName())),
 		)
 	case CheckDodge(fighter, opponent) == DodgeSuccess:
 		defenseAction = "dodge"
 		fighter.SendMessage("You dodge!\r\n")
-		opponent.SendMessage(fmt.Sprintf("%s dodges your attack!\r\n", fighter.GetName()))
+		opponent.SendMessage(capitalizeFightMessage(fmt.Sprintf("%s dodges your attack!\r\n", fighter.GetName())))
 		ce.sendDefenseObserverMessage(
 			fighter,
 			opponent,
-			fmt.Sprintf("%s dodges %s's attack!\r\n", fighter.GetName(), opponent.GetName()),
+			capitalizeFightMessage(fmt.Sprintf("%s dodges %s's attack!\r\n", fighter.GetName(), opponent.GetName())),
 		)
 	}
 	if defenseAction != "" {
