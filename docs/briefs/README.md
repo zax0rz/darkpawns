@@ -59,14 +59,19 @@ Pick the best agent for the job (see Agent Rotation below). The agent:
 - Creates a branch from `main`
 - Implements the fixes
 - Runs build gates: `go build ./... && go vet ./... && go test ./...`
-- Follows the brief's **Git:** section exactly (branch name, push-or-not, PR-or-outbox) —
-  every brief must have one; executors differ (see rotation table)
+- Follows the brief's **Git:** section exactly (base branch, branch name, push-or-not,
+  PR-or-outbox) — every brief must have one; executors differ (see rotation table)
 
-**Git isolation warning (2026-07-22, learned twice in one day):** coding agents run in
-the live repo unless isolated, and sandboxes that block ref *creation* can still flip
-`.git/HEAD` between existing branches. Codex and GLM both left the repo checked out on
-their branch mid-session. Either run executors in a `git worktree`, or check
-`git status -sb` + `git reflog` before any commit after an agent has run.
+**Git isolation warning (2026-07-22, learned twice in one day; 2026-07-25, learned twice more):** coding agents run in the live repo unless isolated, and sandboxes that block ref *creation* can still flip `.git/HEAD` between existing branches. Incidents so far:
+
+- 2026-07-22: Codex and GLM both left the repo checked out on their branch mid-session.
+- 2026-07-25: glm and deepseek both ran in the live repo. HEAD was left on the executor branch after the initial runs AND again after deepseek's force-push round. Worse: the second executor branched off the first executor's checked-out branch instead of `main`, silently **stacking PR #480 on PR #479** — a merge-order dependency nobody asked for.
+
+Rules for the orchestrator / delivery harness:
+
+1. **Branch from `main`, explicitly.** Pre-create the executor's branch from `main` — or hand the executor a `git worktree` — before delivery. Every brief's **Git:** section must name the base branch; never let an executor branch from whatever HEAD happens to be checked out.
+2. **Check after EVERY executor session** — the initial run and every revise/force-push round: `git status -sb` + `git reflog -3`. If HEAD is on the executor's branch, `git checkout main` before doing anything else.
+3. **Check PR stacking at review time:** `git log --oneline main..<branch>` must contain only that executor's own commits; `git merge-base --is-ancestor <other-branch> <branch>` detects stacking. Stacked PRs must merge in order — call it out in the review.
 
 ### 5. Review
 
