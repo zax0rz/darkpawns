@@ -1,0 +1,95 @@
+# Combat skill OPENER — TRIP, granted via the God/skillset fixture.
+#
+# Mirrors combat-bash-opener's full skill-gate stack:
+#   - empty-players crowns the PRIMARY as Implementor.
+#   - a mortal level-1 warrior peer walks to the trainee at 8105.
+#   - [warmup] grants the mortal trip at 75 via world-wide skillset.
+#   - [probe:mortal] issues trip as the opening move at wait==0.
+#
+# R5e call-path check: trip is registered at POS_FIGHTING/level 1 in
+# interpreter.c and implemented by do_trip in new_cmds.c:735-815. It requires
+# a learned skill, a non-peaceful room, a visible non-self target that is not
+# flying and is above POS_SLEEPING. It has no move-cost gate. The attempt draws
+# number(1,121); a miss sits the attacker and waits one pulse before the final
+# two-pulse WAIT_STATE, while a hit sits/waits the victim. Both outcomes route
+# through damage(..., SKILL_TRIP), so the opener and ensuing stand-up round gate
+# message bytes and RNG draw order (R1, R3, R5a).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Tripgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tripgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Tripmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Tripmortal
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Tripmortal 'trip' 75
+
+[probe:mortal]
+trip trainee
+~dpclock pulse 20
+~dpclock pulse 20

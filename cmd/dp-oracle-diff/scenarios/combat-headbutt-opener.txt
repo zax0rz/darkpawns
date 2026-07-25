@@ -1,0 +1,95 @@
+# Combat skill OPENER — HEADBUTT, granted via the God/skillset fixture.
+#
+# Mirrors combat-bash-opener's full skill-gate stack:
+#   - empty-players crowns the PRIMARY as Implementor.
+#   - a mortal level-1 warrior peer walks to the trainee at 8105.
+#   - [warmup] grants the mortal headbutt at 75 via world-wide skillset.
+#   - [probe:mortal] issues headbutt as the opening move at wait==0.
+#
+# R5e call-path check: headbutt is registered at POS_FIGHTING/level 1 in
+# interpreter.c and implemented by do_headbutt in new_cmds.c:368-460. It checks
+# peaceful-room and learned-skill gates, disallows mounted/self targets and
+# mortal attacks on non-NPC immortals, then draws number(1,121). A level-1
+# mortal easily passes the level/2 > HP safety gate and pays zero recoil on a
+# hit. Both hit and miss route through damage(..., SKILL_HEADBUTT), then apply
+# a three-pulse WAIT_STATE; a hit also sits the victim. The opener and ensuing
+# stand-up round therefore gate message bytes and RNG draw order (R1, R3, R5a).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Headbuttgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Headbuttgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Headbuttmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Headbuttmortal
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Headbuttmortal 'headbutt' 75
+
+[probe:mortal]
+headbutt trainee
+~dpclock pulse 20
+~dpclock pulse 20
