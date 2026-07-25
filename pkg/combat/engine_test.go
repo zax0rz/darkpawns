@@ -780,39 +780,17 @@ func (m *waitStateMockCombatant) DecrementWaitState() {
 	}
 }
 
-func TestProcessCombatPair_MobWithWaitSkipsAttack(t *testing.T) {
+// TestProcessCombatPair_MobWithWaitStillAttacks — DP-1215: C's perform_violence
+// zeroes mob attacks only for GET_MOB_WAIT (written solely by the Lua bridge,
+// scripts.c:2017), NOT for ch->wait (written by WAIT_STATE, utils.h:462). Go's
+// scripting layer writes no mob wait, so a downed mob with a wait state (the
+// ch->wait analogue) STILL stands up and attacks in the same round — the engine
+// does NOT decrement the wait or skip the attack. (Previously the engine
+// incorrectly zeroed attacks from the generic wait field.)
+func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	attacker := &waitStateMockCombatant{
 		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10},
 		waitState:     2,
-	}
-	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
-
-	ce := NewCombatEngine()
-	if err := ce.StartCombat(attacker, defender); err != nil {
-		t.Fatalf("StartCombat failed: %v", err)
-	}
-
-	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {}
-
-	// processCombatPair will skip attacks when wait is active, so defender HP
-	// should stay at 100.
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
-
-	if attacker.waitState != 1 {
-		t.Errorf("expected wait state decremented to 1, got %d", attacker.waitState)
-	}
-	if defender.hp != 100 {
-		t.Errorf("expected defender HP unchanged while mob waits, got %d", defender.hp)
-	}
-	if attacker.GetPosition() != PosSitting {
-		t.Errorf("expected attacker still sitting while wait active, got %d", attacker.GetPosition())
-	}
-}
-
-func TestProcessCombatPair_MobStandsWhenWaitExpires(t *testing.T) {
-	attacker := &waitStateMockCombatant{
-		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10},
-		waitState:     1,
 	}
 	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
 
@@ -825,17 +803,61 @@ func TestProcessCombatPair_MobStandsWhenWaitExpires(t *testing.T) {
 	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
 		broadcasts = append(broadcasts, message)
 	}
+	origCB := GetCallbacks()
+	t.Cleanup(func() { SetCallbacks(origCB) })
+	SetCallbacks(defaultCombatCallbacks())
 
 	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
 
-	if attacker.waitState != 0 {
-		t.Errorf("expected wait state 0 after expiry, got %d", attacker.waitState)
-	}
+	// The mob stands (scramble broadcast) — wait does NOT block stand-up.
 	if attacker.GetPosition() != PosFighting {
-		t.Errorf("expected attacker to stand up when wait expires, got %d", attacker.GetPosition())
+		t.Errorf("mob should stand (wait does not block stand-up): pos %d, want %d", attacker.GetPosition(), PosFighting)
 	}
 	if len(broadcasts) == 0 || !strings.Contains(broadcasts[0], "scrambles") {
-		t.Errorf("expected stand-up room broadcast, got %v", broadcasts)
+		t.Errorf("expected scramble broadcast, got %v", broadcasts)
+	}
+	// The wait is NOT decremented by the engine (it drains in the heartbeat,
+	// matching C's comm.c:597 descriptor-loop decrement, not perform_violence).
+	if attacker.waitState != 2 {
+		t.Errorf("mob wait should NOT be decremented by the engine: got %d, want 2", attacker.waitState)
+	}
+}
+
+// TestProcessCombatPair_MobStandsWhenDowned — DP-1215: a downed mob (below
+// PosFighting) always stands up on its combat turn, regardless of wait. The
+// scramble broadcast is emitted (capitalized). Matches C fight.c:1982-1986.
+func TestProcessCombatPair_MobStandsWhenDowned(t *testing.T) {
+	attacker := &waitStateMockCombatant{
+		mockCombatant: mockCombatant{name: "a guard trainee", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10, sex: 0},
+		waitState:     0,
+	}
+	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+
+	var broadcasts []string
+	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
+		broadcasts = append(broadcasts, message)
+	}
+	origCB := GetCallbacks()
+	t.Cleanup(func() { SetCallbacks(origCB) })
+	SetCallbacks(defaultCombatCallbacks())
+
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "a guard trainee", Target: "Hero"}])
+
+	if attacker.GetPosition() != PosFighting {
+		t.Errorf("downed mob should stand: pos %d, want %d", attacker.GetPosition(), PosFighting)
+	}
+	// Capitalization (R1): C act() → CAP uppercases the first byte. "a guard
+	// trainee" → "A guard trainee scrambles to his feet!".
+	if len(broadcasts) == 0 {
+		t.Fatal("expected scramble broadcast")
+	}
+	if want := "A guard trainee scrambles to his feet!"; broadcasts[0] != want {
+		t.Errorf("scramble capitalization: got %q, want %q", broadcasts[0], want)
 	}
 }
 
