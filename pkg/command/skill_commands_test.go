@@ -300,14 +300,18 @@ func TestNewbieThiefUtilityCommandsBypassGuildMinimumLevels(t *testing.T) {
 	if err := CmdSneak(session, nil); err != nil {
 		t.Fatalf("CmdSneak: %v", err)
 	}
-	if got := session.messages[len(session.messages)-1]; got != "Okay, you'll try to move silently for a while.\r\n" {
+	// Use-based improvement (improve_skill, act.other.c:1704) may lawfully
+	// append "Your skill in X improves." (R1) — the time-seeded dprng stream
+	// makes that fire a few percent of runs, so assert the skill's own line
+	// was emitted rather than being the last message (CI flake, DP-1215 era).
+	if got := strings.Join(session.messages, ""); !strings.Contains(got, "Okay, you'll try to move silently for a while.\r\n") {
 		t.Errorf("level-1 sneak output = %q", got)
 	}
 
 	if err := CmdHide(session, nil); err != nil {
 		t.Fatalf("CmdHide: %v", err)
 	}
-	if got := session.messages[len(session.messages)-1]; got != "You attempt to hide yourself.\r\n" {
+	if got := strings.Join(session.messages, ""); !strings.Contains(got, "You attempt to hide yourself.\r\n") {
 		t.Errorf("level-1 hide output = %q", got)
 	}
 
