@@ -261,14 +261,6 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Skip("set DP_TEST_DB_URL to a test database to run the persistence round-trip")
 	}
 
-	// DP-1205: the first character on an empty playerbase is crowned God and
-	// (correctly) skips the Burning Hut intro for the immortal start room.
-	// This test exercises MORTAL persistence, so seed a sentinel player to
-	// guarantee the created character is not the first one.
-	const seedName = "E2ESeedSentinel"
-	seedTestPlayer(t, dbURL, seedName)
-	t.Cleanup(func() { deleteTestPlayer(t, dbURL, seedName) })
-
 	// game.ValidName caps names at 20 chars, so keep this short and unique.
 	name := fmt.Sprintf("Rt%d", time.Now().UnixNano()%100000000)
 	const password = "roundtrip"
@@ -276,6 +268,17 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 
 	// --- Connection 1: create the character, which writes it to the DB. ---
 	c1, r1 := launchAndDialDB(t, dbURL)
+
+	// DP-1205: the first character on an empty playerbase is crowned God and
+	// (correctly) skips the Burning Hut intro for the immortal start room.
+	// This test exercises MORTAL persistence, so seed a sentinel player to
+	// guarantee the created character is not the first one. Seeded AFTER
+	// server boot: createTables() runs during startup, and the telnet port
+	// (which launchAndDialDB waits on) only listens once boot completes.
+	const seedName = "E2ESeedSentinel"
+	seedTestPlayer(t, dbURL, seedName)
+	t.Cleanup(func() { deleteTestPlayer(t, dbURL, seedName) })
+
 	createChar(t, c1, r1, name, password, "W")
 	mustWrite(t, c1, "quit\r\n")
 	_ = c1.Close()
