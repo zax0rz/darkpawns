@@ -99,6 +99,42 @@ func TestCompactionWindowEmpty(t *testing.T) {
 	}
 }
 
+// TestHandleEventPreservesTypeWhenDataUnexpected verifies that handleEvent
+// falls back to the envelope's type when the event data payload has
+// unexpected structure (plain string, array, or malformed JSON) or lacks an
+// inner type field, so events are never dropped or stored with an empty type.
+func TestHandleEventPreservesTypeWhenDataUnexpected(t *testing.T) {
+	d := &Daemon{events: newTestEventBuffer(t, "handle-event")}
+
+	cases := []struct {
+		name     string
+		data     json.RawMessage
+		wantType string
+	}{
+		{name: "structured with type", data: json.RawMessage(`{"type":"tell","text":"hi"}`), wantType: "tell"},
+		{name: "structured without type", data: json.RawMessage(`{"message":"hi"}`), wantType: "event"},
+		{name: "plain string", data: json.RawMessage(`"hello world"`), wantType: "event"},
+		{name: "array payload", data: json.RawMessage(`[1,2,3]`), wantType: "event"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			before := d.events.Since(0)
+			if err := d.handleEvent("event", tc.data); err != nil {
+				t.Fatalf("handleEvent: %v", err)
+			}
+			after := d.events.Since(0)
+			if len(after) != len(before)+1 {
+				t.Fatalf("expected event to be appended, before=%d after=%d", len(before), len(after))
+			}
+			ev := after[len(after)-1]
+			if ev.Type != tc.wantType {
+				t.Fatalf("event type = %q, want %q", ev.Type, tc.wantType)
+			}
+		})
+	}
+}
+
 func mustJSON(t *testing.T, v any) []byte {
 	t.Helper()
 	b, err := json.Marshal(v)

@@ -242,7 +242,7 @@ func (d *Daemon) handleMessage(raw []byte) error {
 	case "state":
 		return d.handleState(env.Data)
 	case "event":
-		return d.handleEvent(env.Data)
+		return d.handleEvent(env.Type, env.Data)
 	case "error":
 		slog.Error("server error", "msg", string(env.Data))
 		return nil
@@ -318,16 +318,24 @@ func (d *Daemon) handleState(data json.RawMessage) error {
 }
 
 // handleEvent processes a game event (text message, combat, etc.).
-func (d *Daemon) handleEvent(data json.RawMessage) error {
+// envType is the envelope's type, used as a fallback so events are never
+// stored with an empty type or silently dropped when the data payload has
+// unexpected structure.
+func (d *Daemon) handleEvent(envType string, data json.RawMessage) error {
 	// Extract event type from the data
 	var evt struct {
 		Type string `json:"type"`
 		Text string `json:"text,omitempty"`
 	}
 	if err := json.Unmarshal(data, &evt); err != nil {
-		return nil // not all events have structured data
+		// Not all events have structured data; fall back to the envelope type.
+		_, _ = d.events.Append(envType, data)
+		return nil
 	}
 
+	if evt.Type == "" {
+		evt.Type = envType
+	}
 	_, _ = d.events.Append(evt.Type, data)
 	return nil
 }
