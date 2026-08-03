@@ -60,6 +60,11 @@ type Affect struct {
 //   - magnitude: stat modifier
 //   - source: human-readable name
 func NewAffect(spellID int, location int, duration int, magnitude int, source string) *Affect {
+	// Duration < -1 is invalid: -1 is permanent, 0 or lower expires on the
+	// next update. Clamp so ExpiresAt stays consistent with IsExpired.
+	if duration < -1 {
+		duration = -1
+	}
 	now := time.Now()
 	affect := &Affect{
 		ID:        generateAffectID(),
@@ -105,6 +110,11 @@ func NewAffectDeprecated(affectType int, duration int, magnitude int, source str
 // NewAffectDirect creates an affect with explicit flags and stack settings.
 // Used by equipment and item code that needs full control over the affect.
 func NewAffectDirect(spellID int, location int, duration int, magnitude int, flags uint64, source string) *Affect {
+	// Duration < -1 is invalid: -1 is permanent, 0 or lower expires on the
+	// next update. Clamp so ExpiresAt stays consistent with IsExpired.
+	if duration < -1 {
+		duration = -1
+	}
 	now := time.Now()
 	affect := &Affect{
 		ID:        generateAffectID(),
