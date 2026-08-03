@@ -82,6 +82,28 @@ func TestDurationZeroExpires(t *testing.T) {
 	}
 }
 
+// TestNewAffect_NegativeDuration guards invalid durations < -1: -1 is permanent
+// (GODs only), 0 expires immediately, and any value below -1 is invalid. Both
+// constructors must clamp duration to -1 so ExpiresAt stays consistent with
+// IsExpired instead of landing in the past.
+func TestNewAffect_NegativeDuration(t *testing.T) {
+	affect := NewAffect(0, ApplyStr, -2, 5, "bad")
+	if affect.Duration != -1 {
+		t.Errorf("NewAffect: duration -2 should be clamped to -1, got %d", affect.Duration)
+	}
+	if affect.IsExpired() {
+		t.Error("clamped permanent affect should not report IsExpired")
+	}
+
+	direct := NewAffectDirect(0, ApplyStr, -2, 5, 0, "bad")
+	if direct.Duration != -1 {
+		t.Errorf("NewAffectDirect: duration -2 should be clamped to -1, got %d", direct.Duration)
+	}
+	if direct.IsExpired() {
+		t.Error("clamped permanent direct affect should not report IsExpired")
+	}
+}
+
 // TestGetType_DeterministicMultipleFlags guards DP-1018: GetType() previously
 // ranged over the StatusAffectFlags map, whose iteration order is randomized,
 // so an affect with multiple AFF bits set returned a different affType on
