@@ -181,6 +181,7 @@ func (bs *BoardSystem) loadBoard(boardType int) {
 			if slot >= 0 && slot < len(bs.msgStorage) {
 				msgBytes := make([]byte, info.MessageLen)
 				if _, err := f.Read(msgBytes); err != nil {
+					bs.msgStorageTaken[slot] = true
 					continue
 				}
 				bs.msgStorage[slot] = string(msgBytes[:info.MessageLen-1])
