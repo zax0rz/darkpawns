@@ -138,6 +138,70 @@ func TestAIBatchProcessor_CloseFlushesPendingBatchBeforeReturning(t *testing.T) 
 	}
 }
 
+// TestAICache_GetConcurrent exercises Get, Set, and Delete concurrently so
+// the read-modify-write window in Get is covered under -race.
+func TestAICache_GetConcurrent(t *testing.T) {
+	cache := NewAICache(1000, time.Minute)
+
+	for i := 0; i < 100; i++ {
+		cache.Set(string(rune('a'+i%26)), AIResponse{ID: "seed", Text: "seed"})
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < 500; j++ {
+				key := string(rune('a' + (id+j)%26))
+				switch j % 3 {
+				case 0:
+					cache.Get(key)
+				case 1:
+					cache.Set(key, AIResponse{ID: string(rune('a' + j%26)), Text: "fresh"})
+				case 2:
+					cache.Clear()
+					for i := 0; i < 100; i++ {
+						cache.Set(string(rune('a'+i%26)), AIResponse{ID: "repl", Text: "repl"})
+					}
+				}
+			}
+		}(i)
+	}
+	wg.Wait()
+}
+
+// TestAICache_GetDoesNotOverwriteNewerEntry ensures a Get write-back cannot
+// resurrect or clobber an entry that a concurrent Set replaced.
+func TestAICache_GetDoesNotOverwriteNewerEntry(t *testing.T) {
+	cache := NewAICache(10, time.Minute)
+	cache.Set("k", AIResponse{ID: "old", Text: "old"})
+
+	// Get may bump hits and write back; a subsequent Set with a fresh value
+	// must be the surviving entry regardless of interleaving.
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			cache.Get("k")
+		}()
+		go func() {
+			defer wg.Done()
+			cache.Set("k", AIResponse{ID: "new", Text: "new"})
+		}()
+	}
+	wg.Wait()
+
+	resp, ok := cache.Get("k")
+	if !ok {
+		t.Fatal("expected key to remain in cache")
+	}
+	if resp.Text != "new" {
+		t.Fatalf("stale Get overwrote newer Set: got %q, want %q", resp.Text, "new")
+	}
+}
+
 func TestAIBatchProcessor_FullBatchErrorFansOut(t *testing.T) {
 	wantErr := errors.New("batch processing failed")
 	processor := NewAIBatchProcessor(2, 5*time.Second, func(items []AIBatchItem) error {

@@ -247,29 +247,28 @@ func (ac *AICache) GenerateCacheKey(req AIRequest) string {
 	return string(keyBytes)
 }
 
-// Get retrieves a cached response.
+// Get retrieves a cached response. The write lock is held for the entire
+// read-modify-write window so a concurrent Set/Delete cannot replace or
+// remove the entry between the lookup and the hit-count write-back (a TOCTOU
+// that would let a stale Get overwrite a newer entry).
 func (ac *AICache) Get(key string) (AIResponse, bool) {
-	ac.mu.RLock()
-	entry, exists := ac.cache[key]
-	ac.mu.RUnlock()
+	ac.mu.Lock()
+	defer ac.mu.Unlock()
 
+	entry, exists := ac.cache[key]
 	if !exists {
 		return AIResponse{}, false
 	}
 
 	// Check TTL
 	if time.Since(entry.Timestamp) > ac.ttl {
-		ac.mu.Lock()
 		delete(ac.cache, key)
-		ac.mu.Unlock()
 		return AIResponse{}, false
 	}
 
 	// Update hit count
-	ac.mu.Lock()
 	entry.Hits++
 	ac.cache[key] = entry
-	ac.mu.Unlock()
 
 	return entry.Response, true
 }
