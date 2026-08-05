@@ -74,6 +74,41 @@ func TestAddReport_DBFailureReturnsError(t *testing.T) {
 	}
 }
 
+// TestRemoveWordFilter_DBFailureKeepsMemoryEntry verifies RemoveWordFilter
+// preserves the in-memory entry when the DB delete fails, keeping the slice in
+// sync with the database so the filter does not reappear after a restart.
+func TestRemoveWordFilter_DBFailureKeepsMemoryEntry(t *testing.T) {
+	m := newClosedDBManager(t)
+	m.wordFilters = []WordFilterEntry{
+		{ID: 7, Pattern: "badword", Action: FilterActionCensor},
+	}
+
+	m.RemoveWordFilter(7)
+
+	filters := m.GetWordFilters()
+	if len(filters) != 1 {
+		t.Fatalf("expected filter to remain in memory on DB failure, got %d filter(s)", len(filters))
+	}
+	if filters[0].ID != 7 {
+		t.Errorf("remaining filter ID = %d, want 7", filters[0].ID)
+	}
+}
+
+// TestRemoveWordFilter_NoDBRemovesMemoryEntry confirms the no-DB path removes
+// the in-memory entry (there is no DB row to stay in sync with).
+func TestRemoveWordFilter_NoDBRemovesMemoryEntry(t *testing.T) {
+	m := NewManager(nil)
+	m.wordFilters = []WordFilterEntry{
+		{ID: 7, Pattern: "badword", Action: FilterActionCensor},
+	}
+
+	m.RemoveWordFilter(7)
+
+	if got := len(m.GetWordFilters()); got != 0 {
+		t.Errorf("expected filter removed from memory, got %d filter(s)", got)
+	}
+}
+
 // TestAddPenalty_NoDBReturnsNil confirms the no-DB path reports success.
 func TestAddPenalty_NoDBReturnsNil(t *testing.T) {
 	m := NewManager(nil)
