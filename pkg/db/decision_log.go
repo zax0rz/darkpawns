@@ -242,6 +242,12 @@ type CombatRecord struct {
 const (
 	flushInterval  = 1 * time.Second
 	flushBatchSize = 100
+	// maxBufferSize caps the number of records held in memory per log. A
+	// sustained DB outage would otherwise grow the requeued buffer without
+	// bound (each failed flush re-queues the previous batch); once the cap is
+	// reached the oldest records are dropped. Telemetry loss on persistent
+	// failure is preferable to unbounded memory growth (OOM).
+	maxBufferSize = flushBatchSize * 10
 )
 
 // DecisionLogWriter buffers decision and combat records and flushes them to
@@ -256,6 +262,10 @@ type DecisionLogWriter struct {
 	stopCh      chan struct{}
 	stopOnce    sync.Once
 	flushWG     sync.WaitGroup
+	// consecutiveFailures counts back-to-back failed flushes and resets on the
+	// first successful flush. It tracks the retry budget so a persistent DB
+	// outage is surfaced in logs, while maxBufferSize bounds memory.
+	consecutiveFailures int
 }
 
 // NewDecisionLogWriter creates a writer and starts the background flush loop.
@@ -336,7 +346,11 @@ func (dlw *DecisionLogWriter) HashPlayerName(name string, isAgent bool) string {
 
 // Flush writes all buffered records to the database. Failed batches are
 // requeued at the front of their buffers so transient errors do not silently
-// drop telemetry. Flushes are serialized with flushMu.
+// drop telemetry, but each buffer is capped at maxBufferSize so a sustained
+// database outage cannot grow memory without bound — once the cap is reached
+// the oldest records are dropped. The consecutive-failure counter tracks how
+// long an outage has been running and resets on the first successful flush.
+// Flushes are serialized with flushMu.
 func (dlw *DecisionLogWriter) Flush() {
 	dlw.flushMu.Lock()
 	defer dlw.flushMu.Unlock()
@@ -356,23 +370,58 @@ func (dlw *DecisionLogWriter) Flush() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	failed := false
+
 	if len(decisions) > 0 {
 		if err := dlw.flushDecisions(ctx, decisions); err != nil {
-			slog.Error("decision_log flush failed", "count", len(decisions), "error", err)
+			failed = true
 			dlw.mu.Lock()
-			dlw.decisions = append(decisions, dlw.decisions...)
+			dlw.consecutiveFailures++
+			failures := dlw.consecutiveFailures
+			dlw.decisions = cappedRequeue(dlw.decisions, decisions)
 			dlw.mu.Unlock()
+			slog.Error("decision_log flush failed",
+				"count", len(decisions),
+				"consecutive_failures", failures,
+				"error", err)
 		}
 	}
 
 	if len(combat) > 0 {
 		if err := dlw.flushCombat(ctx, combat); err != nil {
-			slog.Error("combat_log flush failed", "count", len(combat), "error", err)
+			failed = true
 			dlw.mu.Lock()
-			dlw.combat = append(combat, dlw.combat...)
+			dlw.consecutiveFailures++
+			failures := dlw.consecutiveFailures
+			dlw.combat = cappedRequeue(dlw.combat, combat)
 			dlw.mu.Unlock()
+			slog.Error("combat_log flush failed",
+				"count", len(combat),
+				"consecutive_failures", failures,
+				"error", err)
 		}
 	}
+
+	if !failed {
+		dlw.mu.Lock()
+		dlw.consecutiveFailures = 0
+		dlw.mu.Unlock()
+	}
+}
+
+// cappedRequeue prepends a failed batch to the front of a buffer, mirroring the
+// retry behavior of Flush, but drops the oldest records if the combined length
+// would exceed maxBufferSize. The oldest records sit at the front of the buffer
+// (the requeued batch precedes everything recorded since), so trimming from the
+// front keeps the most recent telemetry.
+func cappedRequeue[T any](buffered, failed []T) []T {
+	if len(failed)+len(buffered) <= maxBufferSize {
+		return append(failed, buffered...)
+	}
+	combined := make([]T, 0, maxBufferSize)
+	combined = append(combined, failed...)
+	combined = append(combined, buffered...)
+	return combined[len(combined)-maxBufferSize:]
 }
 
 func (dlw *DecisionLogWriter) flushLoop() {
