@@ -25,6 +25,7 @@ type AuditEvent struct {
 
 // AuditLogger writes structured audit events to an append-only file.
 type AuditLogger struct {
+	mu   sync.Mutex
 	file *os.File
 }
 
@@ -58,8 +59,11 @@ func (a *AuditLogger) Log(event AuditEvent) {
 		return
 	}
 
-	if _, err := a.file.Write(append(data, '\n')); err != nil {
-		slog.Error("audit log write failed", "error", err)
+	a.mu.Lock()
+	_, werr := a.file.Write(append(data, '\n'))
+	a.mu.Unlock()
+	if werr != nil {
+		slog.Error("audit log write failed", "error", werr)
 	}
 
 	// Also log to console for important events
