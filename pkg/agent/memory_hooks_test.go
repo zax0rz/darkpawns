@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/db"
 )
 
 func TestSendMemoryEvent_2xxSuccess(t *testing.T) {
@@ -98,5 +100,43 @@ func TestSendMemoryEvent_429Retries(t *testing.T) {
 	}
 	if calls.Load() != 3 {
 		t.Errorf("expected 3 attempts, got %d", calls.Load())
+	}
+}
+
+func TestConvertNarrativeMemoryToEvent_MarshalError(t *testing.T) {
+	mem := &db.NarrativeMemory{
+		ID:        42,
+		AgentName: "tester",
+		EventType: db.NarrEventMobKill,
+		Summary:   "Killed a rat.",
+	}
+
+	unmarshalable := struct {
+		Name string
+		Ch   chan int
+	}{Name: "with-channel"}
+
+	event := ConvertNarrativeMemoryToEvent(mem, unmarshalable)
+	if event.RawEventData != "" {
+		t.Errorf("expected empty RawEventData on marshal failure, got %q", event.RawEventData)
+	}
+	if event.EventID != "mem_42" {
+		t.Errorf("expected EventID mem_42, got %q", event.EventID)
+	}
+	if event.Summary != mem.Summary {
+		t.Errorf("expected Summary %q, got %q", mem.Summary, event.Summary)
+	}
+}
+
+func TestConvertNarrativeMemoryToEvent_ValidRawEvent(t *testing.T) {
+	mem := &db.NarrativeMemory{
+		ID:        43,
+		AgentName: "tester",
+		EventType: db.NarrEventMobKill,
+	}
+
+	event := ConvertNarrativeMemoryToEvent(mem, map[string]string{"victim": "rat"})
+	if event.RawEventData == "" {
+		t.Fatal("expected non-empty RawEventData for marshalable raw event")
 	}
 }
