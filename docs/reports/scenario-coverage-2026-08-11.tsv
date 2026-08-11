@@ -1,7 +1,7 @@
 command	reach_status	coverage	scenarios
-# Assumption: player level = 1 (scenarios run as fresh mortals).
+# Assumption: player level = 1 (scenarios run as fresh mortals); probes in empty-players (God-harness) scenarios resolve at LVL_IMPL=40.
 # Resolution table: pkg/session/command_order.tsv (508 rows).
-# Scenario files parsed: 49.
+# Scenario files parsed: 50.
 '	registered	probed	command-surface-punctuation.txt
 .	registered	probed	command-surface-punctuation.txt
 :	registered	probed	command-surface-punctuation.txt
@@ -123,7 +123,7 @@ faint	social	never-probed
 farewell	social	never-probed	
 fart	social	never-probed	
 fill	registered	probed	consumables.txt
-finger	implemented-unwired	probed	mortal-503-sweep.txt
+finger	registered	probed	mortal-503-sweep.txt
 flee	registered	never-probed	
 flesh	registered	never-probed	
 flex	social	never-probed	
@@ -132,7 +132,7 @@ flirt	social	never-probed
 follow	registered	probed	movement.txt
 fondle	social	never-probed	
 force	registered	never-probed	
-freeze	implemented-unwired	never-probed	
+freeze	registered	probed	god-503-sweep.txt
 french	social	never-probed	
 frown	social	never-probed	
 fume	social	never-probed	
@@ -146,7 +146,7 @@ giggle	social	never-probed
 give	registered	probed	act-obj-sweep.txt,object-give-mob.txt,object-give-nobody.txt
 glance	registered	never-probed	
 glare	social	never-probed	
-gold	implemented-unwired	probed	mortal-503-sweep.txt
+gold	registered	probed	mortal-503-sweep.txt
 goose	social	never-probed	
 gossip	registered	probed	command-abbreviations.txt,communication-channels.txt
 goto	registered	never-probed	
@@ -199,7 +199,7 @@ invis	registered	never-probed
 jeer	social	never-probed	
 jin	registered	never-probed	
 junk	registered	probed	act-obj-sweep.txt
-kabuki	implemented-unwired	never-probed	
+kabuki	registered	never-probed	
 kai	registered	never-probed	
 kick	registered	never-probed	
 kill	registered	never-probed	
@@ -233,8 +233,8 @@ motd	registered	probed	static-text.txt
 mount	registered	never-probed	
 muhaha	social	never-probed	
 mumble	social	never-probed	
-murder	implemented-unwired	never-probed	
-mute	implemented-unwired	never-probed	
+murder	registered	never-probed	
+mute	registered	probed	god-503-sweep.txt
 neckbreak	registered	never-probed	
 newbie	registered	never-probed	
 news	registered	probed	static-text.txt
@@ -253,7 +253,7 @@ north	registered	probed	movement.txt,observation-roomflags.txt,position-gates.tx
 noshout	registered	probed	toggle-cluster.txt
 nosummon	registered	never-probed	
 notell	registered	probed	toggle-cluster.txt
-notitle	implemented-unwired	never-probed	
+notitle	registered	probed	god-503-sweep.txt
 nowiz	registered	never-probed	
 nudge	social	never-probed	
 nuzzle	social	never-probed	
@@ -268,7 +268,7 @@ pace	social	never-probed
 page	registered	never-probed	
 palm	registered	never-probed	
 pant	social	never-probed	
-pardon	implemented-unwired	never-probed	
+pardon	registered	probed	god-503-sweep.txt
 parry	missing	never-probed	
 pat	social	never-probed	
 peek	registered	never-probed	
@@ -282,8 +282,8 @@ point	registered	never-probed
 poke	social	never-probed	
 policy	registered	never-probed	
 ponder	social	never-probed	
-poofin	implemented-unwired	never-probed	
-poofout	implemented-unwired	never-probed	
+poofin	registered	probed	god-503-sweep.txt
+poofout	registered	probed	god-503-sweep.txt
 pose	social	never-probed	
 pour	registered	probed	consumables.txt
 pout	social	never-probed	
@@ -295,8 +295,8 @@ punch	social	never-probed
 purge	registered	never-probed	
 purr	social	never-probed	
 put	registered	probed	act-obj-sweep.txt,object-inventory.txt
-qecho	implemented-unwired	never-probed	
-qsay	implemented-unwired	never-probed	
+qecho	registered	probed	god-503-sweep.txt
+qsay	registered	never-probed	
 quaff	registered	probed	help-system.txt,pager-navigation.txt,static-text.txt
 quest	registered	never-probed	
 qui	abbrev-stub	probed	command-abbreviations.txt
@@ -333,7 +333,7 @@ roar	social	never-probed
 rofl	social	never-probed	
 roll	registered	never-probed	
 roomflags	registered	never-probed	
-rsay	implemented-unwired	never-probed	
+rsay	registered	never-probed	
 ruffle	social	never-probed	
 salute	social	never-probed	
 save	registered	never-probed	
@@ -352,7 +352,7 @@ serpent	registered	never-probed
 set	registered	never-probed	
 sethunt	registered	never-probed	
 sha	registered	never-probed	
-shadow	implemented-unwired	never-probed	
+shadow	registered	never-probed	
 shake	social	never-probed	
 shame	social	never-probed	
 sharpen	registered	never-probed	
@@ -390,7 +390,7 @@ snoop	registered	never-probed
 snore	social	never-probed	
 snowball	social	never-probed	
 snuggle	social	never-probed	
-socials	implemented-unwired	never-probed	
+socials	registered	never-probed	
 south	registered	probed	movement.txt
 spackle	social	never-probed	
 spank	social	never-probed	
@@ -431,7 +431,7 @@ tedit	missing	never-probed
 teleport	registered	never-probed	
 tell	registered	probed	communication.txt
 thank	social	never-probed	
-thaw	implemented-unwired	never-probed	
+thaw	registered	probed	god-503-sweep.txt
 think	registered	never-probed	
 thpbt	social	never-probed	
 threaten	social	never-probed	
@@ -460,7 +460,7 @@ unban	registered	never-probed
 ungroup	registered	never-probed	
 unlock	registered	probed	object-doors.txt
 up	registered	never-probed	
-uptime	implemented-unwired	never-probed	
+uptime	registered	never-probed	
 use	registered	never-probed	
 users	registered	never-probed	
 value	missing	never-probed	
@@ -494,11 +494,11 @@ will	specproc	never-probed
 wimpy	registered	never-probed	
 wink	social	never-probed	
 withdraw	specproc	never-probed	
-wizhelp	implemented-unwired	never-probed	
+wizhelp	registered	never-probed	
 wizlist	registered	probed	static-text.txt
 wizlock	registered	never-probed	
 wiznet	registered	never-probed	
-wnewbie	implemented-unwired	never-probed	
+wnewbie	registered	never-probed	
 worship	social	never-probed	
 write	registered	never-probed	
 yank	registered	never-probed	

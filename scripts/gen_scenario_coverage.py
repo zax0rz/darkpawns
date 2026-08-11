@@ -98,28 +98,41 @@ def parse_reachability(path: Path) -> dict[str, str]:
 # Step C: Parse scenario files and extract probe words
 # ---------------------------------------------------------------------------
 
-def extract_probe_words(scenarios_dir: Path) -> dict[str, set[str]]:
+def extract_probe_words(
+    scenarios_dir: Path,
+) -> tuple[dict[str, set[str]], set[str]]:
     """Parse every *.txt scenario file in scenarios_dir.
 
-    Returns dict mapping probe_word (lowercased, tokenized) -> set of scenario basenames.
+    Returns (probe_word_scenarios, god_scenarios):
+      - probe_word_scenarios: probe_word (lowercased, tokenized) -> set of
+        scenario basenames.
+      - god_scenarios: basenames of scenarios that use the ``empty-players``
+        fixture. The empty-players fixture crowns the first created character
+        LVL_IMPL (C db.c:3016; Go mirrors via DP_FRESH_MUD), so probes in those
+        scenarios run at LVL_IMPL and may reach immortal-gated commands.
     """
     probe_word_scenarios: dict[str, set[str]] = {}
+    god_scenarios: set[str] = set()
 
     for scenario_path in sorted(scenarios_dir.glob("*.txt")):
         basename = scenario_path.name
         text = scenario_path.read_text(encoding="utf-8")
 
         in_probe = False
+        section = ""
         for line in text.splitlines():
             stripped = line.strip()
 
             # Track section boundaries
             if stripped.startswith("["):
-                if stripped.startswith("[probe]"):
-                    in_probe = True
-                else:
-                    in_probe = False
+                lower = stripped.lower()
+                in_probe = lower == "[probe]"
+                section = lower.strip("[]").split(":")[0]  # e.g. probe/fixture/setup
                 continue
+
+            # Detect the God harness: empty-players in the [fixture] section.
+            if section == "fixture" and stripped.lower() == "empty-players":
+                god_scenarios.add(basename)
 
             # Only process lines inside [probe] sections
             if not in_probe:
@@ -140,7 +153,7 @@ def extract_probe_words(scenarios_dir: Path) -> dict[str, set[str]]:
                 probe_word_scenarios[word] = set()
             probe_word_scenarios[word].add(basename)
 
-    return probe_word_scenarios
+    return probe_word_scenarios, god_scenarios
 
 
 def tokenize_command(line: str) -> str | None:
@@ -183,6 +196,8 @@ def resolve_probe_words(
     probe_word_scenarios: dict[str, set[str]],
     command_order: list[dict],
     player_level: int = 1,
+    god_scenarios: set[str] | None = None,
+    god_level: int = 40,
 ) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
     """Resolve each probe word to its canonical C command.
 
@@ -190,16 +205,27 @@ def resolve_probe_words(
       Scan the command_order rows in order; the first row whose name has
       the typed word as a PREFIX AND whose min_level <= player_level wins.
 
+    A probe word that appears in ANY God-harness scenario (god_scenarios) is
+    resolved at god_level (LVL_IMPL=40): the empty-players fixture crowns the
+    probe actor LVL_IMPL, so immortal-gated commands are reachable there. Other
+    words resolve at player_level (fresh mortal = 1).
+
     Returns (resolved: canonical_cmd -> scenario_set,
              unresolved: probe_word -> scenario_set).
     """
+    if god_scenarios is None:
+        god_scenarios = set()
     resolved: dict[str, set[str]] = {}
     unresolved: dict[str, set[str]] = {}
 
     for word, scenarios in sorted(probe_word_scenarios.items()):
+        # A command is "probed" if exercised in any scenario; a God-harness
+        # scenario supplies the LVL_IMPL reach, so resolve at god_level whenever
+        # the word appears in one.
+        effective_level = god_level if (scenarios & god_scenarios) else player_level
         match = None
         for row in command_order:
-            if row["name"].startswith(word) and row["min_level"] <= player_level:
+            if row["name"].startswith(word) and row["min_level"] <= effective_level:
                 match = row["name"]
                 break
 
@@ -366,14 +392,19 @@ def main():
     print(f"Parsed {len(reachability)} commands from {reachability_path.relative_to(ROOT)}")
 
     # --- Extract probe words from scenarios ---
-    probe_word_scenarios = extract_probe_words(scenarios_dir)
+    probe_word_scenarios, god_scenarios = extract_probe_words(scenarios_dir)
 
     scenario_files = sorted(p.name for p in scenarios_dir.glob("*.txt"))
     print(f"Parsed {len(scenario_files)} scenario files from {scenarios_dir.relative_to(ROOT)}")
+    if god_scenarios:
+        print(
+            f"God-harness scenarios (probes resolved at LVL_IMPL=40): "
+            f"{', '.join(sorted(god_scenarios))}"
+        )
 
     # --- Resolve probe words ---
     resolved, unresolved = resolve_probe_words(
-        probe_word_scenarios, command_order, PLAYER_LEVEL
+        probe_word_scenarios, command_order, PLAYER_LEVEL, god_scenarios
     )
 
     # --- Build report ---
@@ -384,7 +415,8 @@ def main():
     tsv_lines = [tsv_header]
     # Add a comment line documenting the assumption
     tsv_lines.append(
-        "# Assumption: player level = 1 (scenarios run as fresh mortals)."
+        "# Assumption: player level = 1 (scenarios run as fresh mortals); "
+        "probes in empty-players (God-harness) scenarios resolve at LVL_IMPL=40."
     )
     tsv_lines.append(
         f"# Resolution table: pkg/session/command_order.tsv ({len(command_order)} rows)."

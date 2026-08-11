@@ -284,16 +284,19 @@ func cmdWizutil(s *Session, args []string) error {
 }
 
 // wizutilDispatch performs one wizutil sub-action against a named target.
-// Shared by cmdWizutil (the meta-command) and the standalone top-level
-// commands that alias individual sub-actions (reroll, unaffect).
+// Faithful port of do_wizutil (act.wizard.c:2077). The mortal-affecting cases
+// (pardon/notitle/squelch/freeze/thaw) now mirror C byte-for-byte: the right
+// pre-state guards, the actual PLR flag toggles, the victim (TO_VICT) and room
+// (TO_ROOM) messages, and the "(GC) ... by <god>." acknowledgements. The
+// mudlog() calls are not player-facing and are intentionally not reproduced.
 func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error {
 	target := findSessionByName(s.manager, targetName)
 	if target == nil || target.player == nil {
-		s.Send("There is no such player.")
+		s.Send("There is no such player.\r\n")
 		return nil
 	}
 	if target.player.Level > s.player.Level && target.player.Level >= LVL_IMMORT {
-		s.Send("Hmmm...you'd better not.")
+		s.Send("Hmmm...you'd better not.\r\n")
 		return nil
 	}
 
@@ -304,22 +307,56 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 			target.player.Stats.Str, target.player.Stats.Int, target.player.Stats.Wis,
 			target.player.Stats.Dex, target.player.Stats.Con, target.player.Stats.Cha))
 	case wizutilPardon:
-		s.Send("Pardoned.")
-		target.Send("You have been pardoned by the Gods!")
-	case wizutilNotitle:
-		s.Send(fmt.Sprintf("Notitle toggled for %s.", target.player.Name))
-	case wizutilSquelch:
-		s.Send(fmt.Sprintf("Squelch toggled for %s.", target.player.Name))
-	case wizutilFreeze:
-		if target == s {
-			s.Send("Oh, yeah, THAT'S real smart...")
+		// act.wizard.c:2113 — a non-outlaw victim is rejected.
+		if target.player.GetFlags()&(1<<game.PlrOutlaw) == 0 {
+			s.Send("Your victim is not flagged.\r\n")
 			return nil
 		}
-		target.Send("You feel frozen!")
-		s.Send("Frozen.")
+		target.player.SetPlrFlag(game.PlrOutlaw, false)
+		s.Send("Pardoned.\r\n")
+		target.Send("You have been pardoned by the Gods!\r\n")
+	case wizutilNotitle:
+		// PLR_TOG_CHK toggles and returns the NEW state; ch sees the (GC) ack.
+		newState := target.player.GetFlags()&(1<<game.PlrNotitle) == 0
+		target.player.SetPlrFlag(game.PlrNotitle, newState)
+		s.Send(fmt.Sprintf("(GC) Notitle %s for %s by %s.\r\n", onOff(newState), target.player.Name, s.player.Name))
+	case wizutilSquelch:
+		// SCMD_SQUELCH toggles PLR_NOSHOUT; the command name is "mute".
+		newState := target.player.GetFlags()&(1<<game.PlrNoshout) == 0
+		target.player.SetPlrFlag(game.PlrNoshout, newState)
+		s.Send(fmt.Sprintf("(GC) Squelch %s for %s by %s.\r\n", onOff(newState), target.player.Name, s.player.Name))
+	case wizutilFreeze:
+		if target == s {
+			s.Send("Oh, yeah, THAT'S real smart...\r\n")
+			return nil
+		}
+		if target.player.GetFlags()&(1<<game.PlrFrozen) != 0 {
+			s.Send("Your victim is already pretty cold.\r\n")
+			return nil
+		}
+		target.player.SetPlrFlag(game.PlrFrozen, true)
+		target.player.FreezeLevel = s.player.Level // GET_FREEZE_LEV(vict) = GET_LEVEL(ch)
+		target.Send("A bitter wind suddenly rises and drains every ounce of heat from your body!\r\nYou feel frozen!\r\n")
+		s.Send("Frozen.\r\n")
+		// act("A sudden cold wind conjured from nowhere freezes $n!", vict, TO_ROOM)
+		broadcastToRoomExcept(s, target.player.GetRoom(), target.player.Name,
+			fmt.Sprintf("A sudden cold wind conjured from nowhere freezes %s!\r\n", target.player.Name))
 	case wizutilThaw:
-		target.Send("You feel thawed.")
-		s.Send("Thawed.")
+		if target.player.GetFlags()&(1<<game.PlrFrozen) == 0 {
+			s.Send("Sorry, your victim is not morbidly encased in ice at the moment.\r\n")
+			return nil
+		}
+		if target.player.FreezeLevel > s.player.Level {
+			s.Send(fmt.Sprintf("Sorry, a level %d God froze %s... you can't unfreeze %s.\r\n",
+				target.player.FreezeLevel, target.player.Name, hmhr(target.player)))
+			return nil
+		}
+		target.player.SetPlrFlag(game.PlrFrozen, false)
+		target.Send("A fireball suddenly explodes in front of you, melting the ice!\r\nYou feel thawed.\r\n")
+		s.Send("Thawed.\r\n")
+		// act("A sudden fireball conjured from nowhere thaws $n!", vict, TO_ROOM)
+		broadcastToRoomExcept(s, target.player.GetRoom(), target.player.Name,
+			fmt.Sprintf("A sudden fireball conjured from nowhere thaws %s!\r\n", target.player.Name))
 	case wizutilUnaffect:
 		target.player.Lock()
 		if target.player.ActiveAffects != nil {
@@ -333,6 +370,29 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		}
 	}
 	return nil
+}
+
+// broadcastToRoomExcept sends msg to every player in roomVNum except the named
+// player — the TO_ROOM recipient set for act(..., TO_ROOM) where the named
+// player is the act's ch (excluded). Used by freeze/thaw room messages.
+func broadcastToRoomExcept(s *Session, roomVNum int, excludeName, msg string) {
+	if s.manager != nil {
+		s.manager.BroadcastToRoom(roomVNum, []byte(msg), excludeName)
+	}
+}
+
+// hmhr mirrors C's HMHR macro (utils.h:507): him/her/it by sex. Used only in
+// thaw's freeze-level guard (act.wizard.c:2162), which a single-God harness
+// never reaches; included for faithfulness.
+func hmhr(p *game.Player) string {
+	switch p.Sex {
+	case game.SexFemale:
+		return "her"
+	case game.SexMale:
+		return "him"
+	default:
+		return "it"
+	}
 }
 
 // wizutilAuthed mirrors do_wizutil's inner authority guard (act.wizard.c:2083): a caller may
@@ -382,7 +442,7 @@ func cmdFreeze(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: freeze <player>")
+		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
 	return wizutilDispatch(s, wizutilFreeze, args[0])
@@ -396,7 +456,7 @@ func cmdThaw(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: thaw <player>")
+		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
 	return wizutilDispatch(s, wizutilThaw, args[0])
@@ -411,7 +471,7 @@ func cmdPardon(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: pardon <player>")
+		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
 	return wizutilDispatch(s, wizutilPardon, args[0])
@@ -425,7 +485,7 @@ func cmdNotitle(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: notitle <player>")
+		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
 	return wizutilDispatch(s, wizutilNotitle, args[0])
@@ -444,7 +504,7 @@ func cmdMute(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: mute <player>")
+		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
 	return wizutilDispatch(s, wizutilSquelch, args[0])
