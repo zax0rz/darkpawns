@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/admin"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -197,7 +198,12 @@ func sendUptime(s *Session, now time.Time) {
 	days := int(elapsed.Hours()) / 24
 	hours := int(elapsed.Hours()) % 24
 	minutes := int(elapsed.Minutes()) % 60
-	s.Send(fmt.Sprintf("Up since %s: %d day(s), %d:%02d", boot.Format("Mon Jan 2 15:04:05 2006"), days, hours, minutes))
+	// C (act.wizard.c:1825) uses real singular/plural: "1 day" vs "3 days".
+	dayWord := "days"
+	if days == 1 {
+		dayWord = "day"
+	}
+	s.Send(fmt.Sprintf("Up since %s: %d %s, %d:%02d", boot.Format("Mon Jan 2 15:04:05 2006"), days, dayWord, hours, minutes))
 }
 
 // cmdLast — show last login info for a player (LVL_IMMORT)
@@ -329,6 +335,17 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 	return nil
 }
 
+// wizutilAuthed mirrors do_wizutil's inner authority guard (act.wizard.c:2083): a caller may
+// run a wizutil sub-action if they are level >= LVL_IMMORT OR carry the PLR_CHOSEN flag. The
+// low-table-gate commands (pardon, mute) rely on this inner guard; the higher-gated wrappers
+// (freeze/thaw/notitle at LVL_GRGOD/LVL_GOD) satisfy it via level alone but call this for parity.
+func wizutilAuthed(s *Session) bool {
+	if checkLevel(s, LVL_IMMORT) {
+		return true
+	}
+	return s.player != nil && s.player.GetFlags()&(1<<uint(game.PlrChosen)) != 0
+}
+
 // cmdReroll — standalone "reroll <player>" command.
 // Source: src/interpreter.c do_wizutil/SCMD_REROLL, gated at LVL_GRGOD.
 func cmdReroll(s *Session, args []string) error {
@@ -389,7 +406,7 @@ func cmdThaw(s *Session, args []string) error {
 // Source: src/interpreter.c do_wizutil/SCMD_PARDON, gated at level 1 (do_wizutil's inner
 // LVL_IMMORT||PLR_CHOSEN guard applies; the table level is the C default of 1).
 func cmdPardon(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	if !wizutilAuthed(s) {
 		s.Send("Huh?!?")
 		return nil
 	}
@@ -422,7 +439,7 @@ func cmdNotitle(s *Session, args []string) error {
 // startup (NewAdminCommands has no caller), so it never registers — this C-faithful command
 // is the one that actually runs. See DP-1225.
 func cmdMute(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	if !wizutilAuthed(s) {
 		s.Send("Huh?!?")
 		return nil
 	}

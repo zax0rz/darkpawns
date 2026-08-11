@@ -30,9 +30,7 @@ func cmdRaceSay(s *Session, args []string) error {
 // cmdQcomm handles question communication (question asked to all questing players).
 // Source: act.comm.c do_qcomm() — requires PRF_QUEST flag to participate.
 func cmdQcomm(s *Session, args []string) error {
-	// Quest flag check — act.comm.c do_qcomm() PRF_FLAGGED(ch, PRF_QUEST)
-	if s.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
-		s.Send("You aren't even part of the quest!")
+	if blocked := qcommGuard(s); blocked {
 		return nil
 	}
 
@@ -65,12 +63,11 @@ func cmdQcomm(s *Session, args []string) error {
 // cmdQsay — "qsay <message>" quest-say (act.comm.c do_qcomm/SCMD_QSAY, level 0).
 // Broadcasts "<name> quest-says, '<msg>'" to PRF_QUEST participants. C colors it &W...&n.
 func cmdQsay(s *Session, args []string) error {
-	if s.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
-		s.Send("You aren't even part of the quest!")
+	if blocked := qcommGuard(s); blocked {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Yes, but what?")
+		s.Send(qcommEmptyMsg("qsay"))
 		return nil
 	}
 	msg := sanitizeMessage(strings.Join(args, " "))
@@ -84,20 +81,44 @@ func cmdQsay(s *Session, args []string) error {
 // Echoes the raw text verbatim to PRF_QUEST participants (no prefix, no color).
 func cmdQecho(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh!?!")
+		s.Send("Huh?!?")
 		return nil
 	}
-	if s.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
-		s.Send("You aren't even part of the quest!")
+	if blocked := qcommGuard(s); blocked {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("What do you want to echo?")
+		s.Send(qcommEmptyMsg("qecho"))
 		return nil
 	}
 	msg := sanitizeMessage(strings.Join(args, " "))
 	broadcastQuest(s, msg, msg)
 	return nil
+}
+
+// qcommGuard enforces the two do_qcomm pre-checks (act.comm.c:1306-1314) shared by every qcomm
+// variant: PRF_QUEST required, and PLR_NOSHOUT (the "mute" flag this same pipeline sets) blocks
+// the channel. Returns true if the caller should abort (message already sent).
+func qcommGuard(s *Session) bool {
+	if s.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
+		s.Send("You aren't even part of the quest!")
+		return true
+	}
+	if s.player.GetFlags()&(1<<uint(game.PlrNoshout)) != 0 {
+		s.Send("You cannot quest-say!")
+		return true
+	}
+	return false
+}
+
+// qcommEmptyMsg returns C's do_qcomm empty-argument chide for the given command name
+// (act.comm.c:1320): "<Cmd>?  Yes, fine, <cmd> we must, but WHAT??" (capitalized first letter).
+func qcommEmptyMsg(cmd string) string {
+	c := []byte(cmd)
+	if len(c) > 0 && c[0] >= 'a' && c[0] <= 'z' {
+		c[0] -= 32
+	}
+	return fmt.Sprintf("%s?  Yes, fine, %s we must, but WHAT??", string(c), cmd)
 }
 
 // broadcastQuest sends a self/other message to every other PRF_QUEST participant online.
