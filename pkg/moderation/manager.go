@@ -631,22 +631,26 @@ func (m *Manager) AddWordFilter(pattern string, isRegex bool, actionStr, created
 	return nil
 }
 
-// RemoveWordFilter removes a word filter by ID.
+// RemoveWordFilter removes a word filter by ID. The DB row is deleted first so
+// the in-memory slice stays in sync with the database: if the delete fails, the
+// filter remains active in memory (it would otherwise reappear on the next
+// restart, since loadWordFilters re-loads the still-present row).
 func (m *Manager) RemoveWordFilter(filterID int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	for i, f := range m.wordFilters {
-		if f.ID == filterID {
-			m.wordFilters = append(m.wordFilters[:i], m.wordFilters[i+1:]...)
-			break
-		}
-	}
 
 	if m.hasDB {
 		_, err := m.db.Exec(`DELETE FROM word_filters WHERE id = $1`, filterID)
 		if err != nil {
 			slog.Error("failed to delete word filter", "error", err)
+			return
+		}
+	}
+
+	for i, f := range m.wordFilters {
+		if f.ID == filterID {
+			m.wordFilters = append(m.wordFilters[:i], m.wordFilters[i+1:]...)
+			break
 		}
 	}
 }
