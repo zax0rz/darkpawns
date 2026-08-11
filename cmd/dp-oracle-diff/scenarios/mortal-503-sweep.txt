@@ -1,0 +1,92 @@
+# Mortal recently-wired (#503) informative sweep (oracle-coverage expansion,
+# 2026-08-11).
+#
+# Two mortal-legal, low-RNG, deterministic commands wired in PR #503 that had
+# NO oracle scenario over them, plus the `whois` alias sharing do_whois:
+# - gold   (:469) do_coins  — act.informative.c:2743 (carried/bank/net gold)
+# - finger (:444) do_whois  — new_cmds.c:1402 (player lookup: no-arg / found /
+#                             not-found paths)
+# - whois  (alias of finger, same handler)
+#
+# The observer exists so the actor can resolve a real target (`finger
+# Goldwatch`) — exercising do_whois's found-path, which prints the player's
+# title. Both are Human hometown-K newbies.
+#
+# Sibling #503 commands NOT probed here (filed as DP issues with oracle
+# evidence rather than shipped wrong):
+# - rsay    — do_race_say's race-speak system is broken for every player race
+#             (switch keyed on invented constants that never match real
+#             game.Race* values; Human/Kender/Minotaur/Ssaur + their speak
+#             tables missing). Own port cluster.
+# - socials — do_commands SCMD_SOCIALS paginates via C page_string() (the Go
+#             side dumps unpaged) and uses a wider column than C's %-11s.
+#             Blocked on the pager port (a class gap that also covers
+#             commands/wizhelp/credits/immlist).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Goldact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Goldact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Goldwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Goldwatch
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+gold
+finger
+finger Goldwatch
+finger Nobody
+whois Goldwatch
