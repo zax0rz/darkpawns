@@ -72,6 +72,7 @@ func init() {
 	// Communication
 	registerCommand("say", wrapArgs(cmdSay), "Say something to the room.")
 	registerCommand("'", wrapArgs(cmdSay), "Say something to the room.")
+	registerCommand("rsay", wrapArgs(cmdRaceSay), "Say something in your racial tongue.")
 	registerCommand("tell", wrapArgs(cmdTell), "Send a private message to a player.")
 	registerCommand("emote", wrapArgs(cmdEmote), "Perform a roleplay action.", "me")
 	registerCommand(":", wrapArgs(cmdEmote), "Perform a roleplay action.")
@@ -83,6 +84,7 @@ func init() {
 
 	// Combat
 	registerCommand("hit", wrapArgs(cmdHit), "Attack a target.", "attack")
+	registerCommand("murder", wrapArgs(cmdHit), "Attack a target (C alias of hit).")
 	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
 	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
 
@@ -121,11 +123,13 @@ func init() {
 	registerCommand("who", wrapArgs(cmdWho), "List all online players.")
 	registerCommand("where", wrapNoArgs(cmdWhere), "Show player locations.")
 	registerCommand("coins", wrapNoArgs(cmdCoins), "Display your gold and bank balance.")
+	registerCommand("gold", wrapNoArgs(cmdCoins), "Display your gold and bank balance (C alias of coins).")
 	// real C command name is "abilities" (src/interpreter.c); "abils" kept as alias.
 	registerCommand("abilities", wrapNoArgs(cmdAbils), "Show your ability scores.", "abils")
 	registerCommand("levels", wrapNoArgs(cmdLevels), "Show XP table for your class.")
 	registerCommand("review", wrapNoArgs(cmdReview), "Show recent gossip history.")
 	registerCommand("whois", wrapArgs(cmdWhois), "Look up a player's info.")
+	registerCommand("finger", wrapArgs(cmdWhois), "Look up a player's info (C alias of whois).")
 	registerCommand("help", wrapArgs(cmdHelp), "Show available commands or help for a topic.")
 	registerCommand("?", wrapArgs(cmdHelp), "Show available commands or help for a topic.")
 	registerCommand("credits", wrapArgs(cmdCredits), "Show who built this game.")
@@ -145,6 +149,7 @@ func init() {
 
 	// Group
 	registerCommand("follow", wrapArgs(cmdFollow), "Follow another player.")
+	registerCommand("shadow", wrapArgs(cmdShadow), "Follow another player quietly (shadow skill).")
 	registerCommand("group", wrapArgs(cmdGroup), "Manage your group.", "party")
 	registerCommand("ungroup", wrapArgs(cmdUngroup), "Disband or leave a group.", "disband")
 
@@ -174,6 +179,11 @@ func init() {
 	registerCommand("rescue", wrapSkill(command.CmdRescue), "Rescue someone from combat.")
 	registerCommand("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.")
 	registerCommand("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.")
+	registerCommand("kabuki", wrapSkill(command.CmdKabuki), "Practice the art of kabuki (hide variant).")
+	// NOTE: the dig command is deliberately NOT registered here. C do_dig (src/new_cmds2.c:818)
+	// is a LVL_BUILDER OLC exit-creator; the Go CmdDig is an unrelated mortal foraging skill.
+	// Wiring the foraging handler under the C name plus the C builder gate would serve neither
+	// audience (builders get foraging; mortals cannot reach it). The C OLC dig is unported — DP-1225.
 	registerCommand("steal", wrapSkill(command.CmdSteal), "Steal from a target.")
 	registerCommand("berserk", wrapSkill(command.CmdBerserk), "Summon your battle rage for a hitroll/damroll boost.")
 	registerCommand("rin", wrapSkill(command.CmdKujiKiri(game.SkillKkRin)), "Kuji-kiri seal: harden body for an AC bonus and metalskin.")
@@ -228,17 +238,25 @@ func init() {
 	registerCommand("dc", wrapArgs(cmdDc), "Disconnect a player.")
 	registerCommand("home", wrapArgs(cmdHome), "Teleport to home room or specified room.")
 	registerCommand("date", wrapArgs(cmdDate), "Show current system time or uptime.")
+	registerCommand("uptime", wrapArgs(cmdUptime), "Show server uptime.")
 	registerCommand("last", wrapArgs(cmdLast), "Show last login info for a player.")
 	registerCommand("wizutil", wrapArgs(cmdWizutil), "Player utility commands (reroll/pardon/notitle/squelch/freeze/thaw/unaffect).")
-	// real C top-level names for two of wizutil's sub-actions (src/interpreter.c), stricter-gated than the wizutil meta-command itself.
+	// real C top-level names for wizutil's sub-actions (src/interpreter.c), stricter-gated than the wizutil meta-command itself.
 	registerCommand("reroll", wrapArgs(cmdReroll), "Reroll a player's ability scores.")
 	registerCommand("unaffect", wrapArgs(cmdUnaffect), "Remove all spell affects from a player.")
+	registerCommand("freeze", wrapArgs(cmdFreeze), "Freeze a player.")
+	registerCommand("thaw", wrapArgs(cmdThaw), "Thaw a frozen player.")
+	registerCommand("pardon", wrapArgs(cmdPardon), "Pardon a player's outlaw flag.")
+	registerCommand("notitle", wrapArgs(cmdNotitle), "Toggle a player's notitle flag.")
+	registerCommand("mute", wrapArgs(cmdMute), "Toggle a player's squelch (PLR_NOSHOUT) flag.")
 	registerCommand("show", wrapArgs(cmdShow), "Show system info (players/uptime/stats/reset).")
 	registerCommand("dark", wrapArgs(cmdDark), "Stop combat in the current room.")
 	registerCommand("syslog", wrapArgs(cmdSyslog), "Toggle system logging level.")
 	registerCommand("idlist", wrapArgs(cmdIdlist), "Dump object ID list to file.")
 	registerCommand("checkload", wrapArgs(cmdCheckload), "Check zone load info for a mob/obj.")
 	registerCommand("poofset", wrapArgs(cmdPoofset), "Set poof in/out messages.")
+	registerCommand("poofin", wrapArgs(cmdPoofin), "Set your poof-in message.")
+	registerCommand("poofout", wrapArgs(cmdPoofout), "Set your poof-out message.")
 	registerCommand("wiznet", wrapArgs(cmdWiznet), "Send message on wizard net.")
 	registerCommand(";", wrapArgs(cmdWiznet), "Send message on wizard net.")
 	registerCommand("zreset", wrapArgs(cmdZreset), "Reset a zone by number.")
@@ -250,6 +268,7 @@ func init() {
 	registerCommand("sethunt", wrapArgs(cmdSethunt), "Set hunt target for a character.")
 	registerCommand("tick", wrapArgs(cmdTick), "Show current tick info.")
 	registerCommand("newbiegive", wrapArgs(cmdNewbie), "Give newbie equipment to a player.")
+	registerCommand("wnewbie", wrapArgs(cmdNewbie), "Give newbie equipment to a player (C name).")
 
 	// Informative
 	registerCommand("consider", wrapArgs(cmdConsider), "Compare yourself to a target.", "con")
@@ -317,6 +336,8 @@ func init() {
 	// Informative commands (act_informative.go)
 	registerCommand("color", wrapArgs(cmdColor), "Toggle ANSI color.")
 	registerCommand("commands", wrapArgs(cmdCommands), "List available commands.", "cmds")
+	registerCommand("socials", wrapArgs(cmdSocials), "List available socials.")
+	registerCommand("wizhelp", wrapArgs(cmdWizhelp), "List privileged (immortal) commands.")
 	// "glance" is src/interpreter.c's other top-level name for do_diagnose — identical handler.
 	registerCommand("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", "diag", "glance")
 	registerCommand("toggle", wrapArgs(cmdToggle), "Toggle a player preference.")
@@ -399,6 +420,8 @@ func init() {
 	registerCommand("whisper", wrapArgs(cmdWhisper), "Whisper to someone in your room.", "whis")
 	registerCommand("ask", wrapArgs(cmdAsk), "Ask someone a question.")
 	registerCommand("qcomm", wrapArgs(cmdQcomm), "Send a team message.", "team")
+	registerCommand("qsay", wrapArgs(cmdQsay), "Say something to quest participants.")
+	registerCommand("qecho", wrapArgs(cmdQecho), "Echo text to quest participants (immortal).")
 	// Social (act_social.go)
 
 	// Alias (game pkg)

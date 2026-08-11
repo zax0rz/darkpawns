@@ -1087,6 +1087,18 @@ func CmdHide(s SessionInterface, args []string) error {
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
 
+// CmdKabuki handles the kabuki command (do_hide SCMD_KABUKI, src/act.other.c:247-306).
+// Same flow as hide but rolls against SkillKabuki and uses the kabuki message.
+func CmdKabuki(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	result := game.DoKabuki(ch)
+	return s.SendMessage(result.MessageToCh + "\r\n")
+}
+
 // CmdSteal handles the steal command.
 func CmdSteal(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {

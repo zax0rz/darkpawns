@@ -282,5 +282,19 @@ func cmdPoofset(s *Session, args []string) error {
 	return nil
 }
 
+// cmdPoofin — standalone "poofin [message]" command.
+// Source: src/interpreter.c do_poofset/SCMD_POOFIN, gated at LVL_IMMORT.
+// Thin wrapper over cmdPoofset that fixes the direction to "in" (the C subcmd).
+func cmdPoofin(s *Session, args []string) error {
+	return cmdPoofset(s, append([]string{"in"}, args...))
+}
+
+// cmdPoofout — standalone "poofout [message]" command.
+// Source: src/interpreter.c do_poofset/SCMD_POOFOUT, gated at LVL_IMMORT.
+// Thin wrapper over cmdPoofset that fixes the direction to "out" (the C subcmd).
+func cmdPoofout(s *Session, args []string) error {
+	return cmdPoofset(s, append([]string{"out"}, args...))
+}
+
 // cmdWiznet — send message on wizard net (LVL_IMMORT)
 // Original: act.wizard.c do_wiznet() — supports level-tagged, emote, and @list variants

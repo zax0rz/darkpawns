@@ -12,6 +12,14 @@ func cmdFollow(s *Session, args []string) error {
 	return nil
 }
 
+// cmdShadow — "shadow <target>" quiet follow (act.movement.c do_follow/SCMD shadow,
+// subcmd=TRUE). The quiet path suppresses the normal follow announcement; the deeper
+// SKILL_SHADOW success roll + AFF_DODGE affect remains a game-layer TODO (DoFollow line 261).
+func cmdShadow(s *Session, args []string) error {
+	s.manager.world.DoFollow(s.player, strings.Join(args, " "), true)
+	return nil
+}
+
 // cmdGroup adds/removes players from a group, or prints group status.
 // Source: act.other.c do_group() lines 685–740 and perform_group() lines 624–635
 func cmdGroup(s *Session, args []string) error {

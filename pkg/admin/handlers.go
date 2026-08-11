@@ -20,6 +20,10 @@ import (
 // processStartTime captures when the server booted — used for uptime calculation.
 var processStartTime = time.Now()
 
+// ProcessStartTime returns the server boot timestamp. Used by the `uptime` command
+// (pkg/session) and the admin API to report a faithful C-style "Up since ..." line.
+func ProcessStartTime() time.Time { return processStartTime }
+
 // PlayerDB is the interface admin needs from the game database to authenticate logins.
 type PlayerDB interface {
 	GetPlayer(name string) (*PlayerRecord, error)

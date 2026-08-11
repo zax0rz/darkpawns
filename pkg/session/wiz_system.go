@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/admin"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -169,12 +171,39 @@ func cmdDate(s *Session, args []string) error {
 	now := time.Now()
 	isUptime := len(args) > 0 && strings.ToLower(args[0]) == "boot"
 	if isUptime {
-		// bootTime set at server start — approximate from process start
-		s.Send(fmt.Sprintf("Up since %s", now.Format(time.RFC1123)))
+		sendUptime(s, now)
 	} else {
 		s.Send(fmt.Sprintf("Current machine time: %s", now.Format("Mon Jan 2 15:04:05 2006")))
 	}
 	return nil
+}
+
+// cmdUptime — standalone "uptime" command.
+// Source: src/interpreter.c do_date/SCMD_UPTIME, gated at LVL_IMMORT.
+// C (act.wizard.c) prints "Up since <boot_time>: N day(s), H:MM".
+func cmdUptime(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	sendUptime(s, time.Now())
+	return nil
+}
+
+// sendUptime prints the server uptime in C's day(s)/H:MM format relative to bootTime.
+func sendUptime(s *Session, now time.Time) {
+	// admin.processStartTime is the server boot timestamp (set at package init).
+	boot := admin.ProcessStartTime()
+	elapsed := now.Sub(boot)
+	days := int(elapsed.Hours()) / 24
+	hours := int(elapsed.Hours()) % 24
+	minutes := int(elapsed.Minutes()) % 60
+	// C (act.wizard.c:1825) uses real singular/plural: "1 day" vs "3 days".
+	dayWord := "days"
+	if days == 1 {
+		dayWord = "day"
+	}
+	s.Send(fmt.Sprintf("Up since %s: %d %s, %d:%02d", boot.Format("Mon Jan 2 15:04:05 2006"), days, dayWord, hours, minutes))
 }
 
 // cmdLast — show last login info for a player (LVL_IMMORT)
@@ -306,6 +335,17 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 	return nil
 }
 
+// wizutilAuthed mirrors do_wizutil's inner authority guard (act.wizard.c:2083): a caller may
+// run a wizutil sub-action if they are level >= LVL_IMMORT OR carry the PLR_CHOSEN flag. The
+// low-table-gate commands (pardon, mute) rely on this inner guard; the higher-gated wrappers
+// (freeze/thaw/notitle at LVL_GRGOD/LVL_GOD) satisfy it via level alone but call this for parity.
+func wizutilAuthed(s *Session) bool {
+	if checkLevel(s, LVL_IMMORT) {
+		return true
+	}
+	return s.player != nil && s.player.GetFlags()&(1<<uint(game.PlrChosen)) != 0
+}
+
 // cmdReroll — standalone "reroll <player>" command.
 // Source: src/interpreter.c do_wizutil/SCMD_REROLL, gated at LVL_GRGOD.
 func cmdReroll(s *Session, args []string) error {
@@ -332,6 +372,82 @@ func cmdUnaffect(s *Session, args []string) error {
 		return nil
 	}
 	return wizutilDispatch(s, wizutilUnaffect, args[0])
+}
+
+// cmdFreeze — standalone "freeze <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_FREEZE, gated at LVL_FREEZE (=LVL_GRGOD=38).
+func cmdFreeze(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GRGOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: freeze <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilFreeze, args[0])
+}
+
+// cmdThaw — standalone "thaw <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_THAW, gated at LVL_FREEZE (=LVL_GRGOD=38).
+func cmdThaw(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GRGOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: thaw <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilThaw, args[0])
+}
+
+// cmdPardon — standalone "pardon <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_PARDON, gated at level 1 (do_wizutil's inner
+// LVL_IMMORT||PLR_CHOSEN guard applies; the table level is the C default of 1).
+func cmdPardon(s *Session, args []string) error {
+	if !wizutilAuthed(s) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: pardon <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilPardon, args[0])
+}
+
+// cmdNotitle — standalone "notitle <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_NOTITLE, gated at LVL_GOD.
+func cmdNotitle(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: notitle <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilNotitle, args[0])
+}
+
+// cmdMute — standalone "mute <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_SQUELCH, table level 1 (do_wizutil's inner
+// LVL_IMMORT||PLR_CHOSEN guard applies). C toggles PLR_NOSHOUT; the dispatch case
+// (wizutilSquelch) carries the behavior. NOTE: pkg/command/admin_commands.go also defines a
+// "mute" (duration-based moderation), but AdminCommands is never instantiated/wired at
+// startup (NewAdminCommands has no caller), so it never registers — this C-faithful command
+// is the one that actually runs. See DP-1225.
+func cmdMute(s *Session, args []string) error {
+	if !wizutilAuthed(s) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: mute <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilSquelch, args[0])
 }
 
 // cmdShow — show system info (LVL_IMMORT)
