@@ -1,10 +1,13 @@
 package audit
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/json"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 )
@@ -90,6 +93,59 @@ func TestAuditInit_ConcurrentLogEvent(t *testing.T) {
 
 	close(stop)
 	wg.Wait()
+}
+
+func TestAuditLogger_ConcurrentWriteProducesValidJSON(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "audit.log")
+
+	logger, err := NewAuditLogger(path)
+	if err != nil {
+		t.Fatalf("NewAuditLogger failed: %v", err)
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				logger.Log(AuditEvent{
+					EventType: "test",
+					Action:    "concurrent_write",
+					Details:   strings.Repeat("x", 1000),
+					Success:   true,
+				})
+			}
+		}()
+	}
+	wg.Wait()
+
+	if err := logger.Close(); err != nil {
+		t.Fatalf("Close failed: %v", err)
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("open audit log: %v", err)
+	}
+	defer f.Close()
+
+	count := 0
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		var e AuditEvent
+		if err := json.Unmarshal(scanner.Bytes(), &e); err != nil {
+			t.Fatalf("invalid JSON line: %v", err)
+		}
+		count++
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatalf("scan audit log: %v", err)
+	}
+	if count != 500 {
+		t.Errorf("expected 500 events, got %d", count)
+	}
 }
 
 func TestNewAuditLogger_PathTraversalRejected(t *testing.T) {
