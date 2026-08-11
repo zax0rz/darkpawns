@@ -312,10 +312,12 @@ def self_verify(
         "'zz' is unresolved (deliberate miss probe)",
     )
 
-    # 7. Scenario file count should be ~33-34
+    # 7. Scenario file count sanity floor. The scenario set only grows, so this
+    # is a floor-only guard (a broken glob / moved directory reads as near-zero);
+    # no upper bound, which would need bumping every time a scenario is added.
     check(
-        30 <= len(scenario_files) <= 40,
-        f"Scenario file count is {len(scenario_files)} (~33-34 expected)",
+        len(scenario_files) >= 30,
+        f"Scenario file count is {len(scenario_files)} (>=30 expected)",
     )
 
     return ok

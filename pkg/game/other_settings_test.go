@@ -142,3 +142,60 @@ func TestDoGenTogUnknownCommand(t *testing.T) {
 		t.Errorf("unmapped command should not change player flags")
 	}
 }
+
+// TestDoDisplay pins do_display (src/act.other.c:1024) output fidelity:
+//   - no arg  → the usage line
+//   - "all"   → sets the PRF_DISP* bits, replies "Okay.\r\n" (C OK macro, config.c:92)
+//   - "off"   → clears the bits and returns SILENTLY (act.other.c:1053-1055 skips
+//     the trailing send_to_char(OK)); Go previously replied "Ok.\r\n" — the bug
+//     this guards.
+//   - letters → sets only the named bits, replies "Okay.\r\n"
+func TestDoDisplay(t *testing.T) {
+	const usage = "Usage: prompt { H | M | V | T | F | all | none }\r\n"
+
+	t.Run("no arg prints usage", func(t *testing.T) {
+		w, ch, lastMsg := newDonateTestWorld(t)
+		w.doDisplay(ch, nil, "display", "")
+		if got := lastMsg(); got != usage {
+			t.Errorf("no-arg: got %q, want %q", got, usage)
+		}
+	})
+
+	t.Run("all sets flags and replies Okay", func(t *testing.T) {
+		w, ch, lastMsg := newDonateTestWorld(t)
+		w.doDisplay(ch, nil, "display", "all")
+		if got := lastMsg(); got != "Okay.\r\n" {
+			t.Errorf("all: got %q, want %q", got, "Okay.\r\n")
+		}
+		if ch.GetFlags()&(1<<PrfDisphp) == 0 {
+			t.Errorf("all: PrfDisphp should be set")
+		}
+	})
+
+	t.Run("off clears flags and stays silent", func(t *testing.T) {
+		w, ch, lastMsg := newDonateTestWorld(t)
+		w.doDisplay(ch, nil, "display", "all")
+		lastMsg() // drain the "all" reply
+		w.doDisplay(ch, nil, "display", "off")
+		if got := lastMsg(); got != "" {
+			t.Errorf("off must be silent (C skips OK): got %q, want empty", got)
+		}
+		if ch.GetFlags()&(1<<PrfDisphp) != 0 {
+			t.Errorf("off: PrfDisphp should be cleared")
+		}
+	})
+
+	t.Run("letters set only named bits and reply Okay", func(t *testing.T) {
+		w, ch, lastMsg := newDonateTestWorld(t)
+		w.doDisplay(ch, nil, "display", "hm")
+		if got := lastMsg(); got != "Okay.\r\n" {
+			t.Errorf("hm: got %q, want %q", got, "Okay.\r\n")
+		}
+		if ch.GetFlags()&(1<<PrfDisphp) == 0 || ch.GetFlags()&(1<<PrfDispmmana) == 0 {
+			t.Errorf("hm: hp and mana bits should be set")
+		}
+		if ch.GetFlags()&(1<<PrfDispmove) != 0 {
+			t.Errorf("hm: move bit should NOT be set")
+		}
+	})
+}
