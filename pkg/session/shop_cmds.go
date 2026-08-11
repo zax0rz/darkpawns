@@ -50,7 +50,11 @@ func findShopKeeperInRoom(s *Session) (*game.Shop, string) {
 func cmdList(s *Session, args []string) error {
 	shop, keeperName := findShopKeeperInRoom(s)
 	if shop == nil {
-		s.Send("There is no shop here.")
+		// No shop special-proc → C routes buy/sell/list to do_not_here
+		// (act.other.c:208): "Sorry, but you cannot do that here!" — the
+		// command is registered under do_not_here and only a shop spec_proc
+		// intercepts it; with no shop the fallback fires regardless of args.
+		s.Send("Sorry, but you cannot do that here!\r\n")
 		return nil
 	}
 
@@ -108,14 +112,16 @@ func cmdList(s *Session, args []string) error {
 // cmdBuy buys an item from the shop.
 // Usage: buy <item> [count]
 func cmdBuy(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Buy what?")
+	shop, keeperName := findShopKeeperInRoom(s)
+	if shop == nil {
+		// No shop spec-proc → do_not_here fires first (act.other.c:208),
+		// before any argument parsing; see cmdList.
+		s.Send("Sorry, but you cannot do that here!\r\n")
 		return nil
 	}
 
-	shop, keeperName := findShopKeeperInRoom(s)
-	if shop == nil {
-		s.Send("There is no shop here.")
+	if len(args) == 0 {
+		s.Send("Buy what?")
 		return nil
 	}
 
@@ -204,14 +210,16 @@ func cmdBuy(s *Session, args []string) error {
 // cmdSell sells an item to the shop.
 // Usage: sell <item>  or  sell all
 func cmdSell(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Sell what?")
+	shop, keeperName := findShopKeeperInRoom(s)
+	if shop == nil {
+		// No shop spec-proc → do_not_here fires first (act.other.c:208),
+		// before any argument parsing; see cmdList.
+		s.Send("Sorry, but you cannot do that here!\r\n")
 		return nil
 	}
 
-	shop, keeperName := findShopKeeperInRoom(s)
-	if shop == nil {
-		s.Send("There is no shop here.")
+	if len(args) == 0 {
+		s.Send("Sell what?")
 		return nil
 	}
 
