@@ -80,6 +80,65 @@ func cmdCommands(s *Session, args []string) error {
 	return nil
 }
 
+// cmdSocials — "socials" lists the available social commands.
+// Source: act.informative.c do_commands/SCMD_SOCIALS — lists commands whose handler is
+// do_action (the social handler). The Go equivalent is the game.Socials map.
+func cmdSocials(s *Session, args []string) error {
+	names := make([]string, 0, len(game.Socials))
+	for name := range game.Socials {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	if len(names) == 0 {
+		s.Send("No socials available.")
+		return nil
+	}
+	var buf strings.Builder
+	buf.WriteString("The following socials are available to you:\r\n")
+	for i, name := range names {
+		fmt.Fprintf(&buf, "%-16s", name)
+		if (i+1)%7 == 0 {
+			buf.WriteString("\r\n")
+		}
+	}
+	if len(names)%7 != 0 {
+		buf.WriteString("\r\n")
+	}
+	s.Send(buf.String())
+	return nil
+}
+
+// cmdWizhelp — "wizhelp" lists the privileged (immortal+) commands.
+// Source: act.informative.c do_commands/SCMD_WIZHELP — lists commands whose min level is
+// >= LVL_IMMORT. The Go registry carries MinLevel on every entry.
+func cmdWizhelp(s *Session, args []string) error {
+	entries := cmdRegistry.GetAll()
+	var names []string
+	for _, e := range entries {
+		if e.MinLevel >= LVL_IMMORT {
+			names = append(names, e.Name)
+		}
+	}
+	sort.Strings(names)
+	if len(names) == 0 {
+		s.Send("No privileged commands available.")
+		return nil
+	}
+	var buf strings.Builder
+	buf.WriteString("The following privileged commands are available:\r\n")
+	for i, name := range names {
+		fmt.Fprintf(&buf, "%-16s", name)
+		if (i+1)%5 == 0 {
+			buf.WriteString("\r\n")
+		}
+	}
+	if len(names)%5 != 0 {
+		buf.WriteString("\r\n")
+	}
+	s.Send(buf.String())
+	return nil
+}
+
 // cmdToggle — show the player's preference-flag grid.
 // Source: act.informative.c do_toggle(), which is purely informational —
 // it ignores its argument and always prints the full grid. Individual

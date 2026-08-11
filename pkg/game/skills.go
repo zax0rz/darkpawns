@@ -60,6 +60,8 @@ const (
 	SkillWhois      = "whois"
 	SkillPalm       = "palm"
 	SkillFleshAlter = "flesh_alter"
+	SkillKabuki     = "kabuki" // src/act.other.c do_hide SCMD_KABUKI — distinct from SkillHide
+	SkillShadow     = "shadow" // src/act.movement.c do_follow SCMD shadow (the quiet-follow skill)
 
 	// C-10: Combat skill constants (from combat_helpers.go)
 	SkillDisembowel = "disembowel"

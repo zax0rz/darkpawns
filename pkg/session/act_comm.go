@@ -62,6 +62,60 @@ func cmdQcomm(s *Session, args []string) error {
 	return nil
 }
 
+// cmdQsay — "qsay <message>" quest-say (act.comm.c do_qcomm/SCMD_QSAY, level 0).
+// Broadcasts "<name> quest-says, '<msg>'" to PRF_QUEST participants. C colors it &W...&n.
+func cmdQsay(s *Session, args []string) error {
+	if s.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
+		s.Send("You aren't even part of the quest!")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Yes, but what?")
+		return nil
+	}
+	msg := sanitizeMessage(strings.Join(args, " "))
+	self := fmt.Sprintf("You quest-say, '%s'", msg)
+	other := fmt.Sprintf("%s quest-says, '%s'", s.player.Name, msg)
+	broadcastQuest(s, self, other)
+	return nil
+}
+
+// cmdQecho — "qecho <text>" immortal quest-echo (act.comm.c do_qcomm/SCMD_QECHO, LVL_IMMORT).
+// Echoes the raw text verbatim to PRF_QUEST participants (no prefix, no color).
+func cmdQecho(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh!?!")
+		return nil
+	}
+	if s.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
+		s.Send("You aren't even part of the quest!")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("What do you want to echo?")
+		return nil
+	}
+	msg := sanitizeMessage(strings.Join(args, " "))
+	broadcastQuest(s, msg, msg)
+	return nil
+}
+
+// broadcastQuest sends a self/other message to every other PRF_QUEST participant online.
+func broadcastQuest(s *Session, selfMsg, otherMsg string) {
+	s.Send(selfMsg)
+	s.manager.mu.RLock()
+	for _, sess := range s.manager.sessions {
+		if sess.player == nil || sess == s {
+			continue
+		}
+		if sess.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
+			continue
+		}
+		sess.Send(otherMsg)
+	}
+	s.manager.mu.RUnlock()
+}
+
 // ---------------------------------------------------------------------------
 // Whisper
 // ---------------------------------------------------------------------------

@@ -82,6 +82,32 @@ func DoHide(ch *Player) SkillResult {
 	return SkillResult{Success: true, MessageToCh: appendImprovementMessage(message, improveSkillMessage(ch, SkillHide))}
 }
 
+// DoKabuki implements the SCMD_KABUKI path through do_hide() from src/act.other.c:247-306.
+// It is the same roll/flow as DoHide but uses the kabuki skill (SkillKabuki) and message.
+// TODO(DP-kabuki): the C daytime sector/weather guard (act.other.c:257-282) is shared with
+// DoHide and still unported — it needs the weather model. Affect application matches DoHide.
+func DoKabuki(ch *Player) SkillResult {
+	if isMounted(ch) {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+
+	message := "You attempt to practice the art of kabuki."
+
+	if ch.IsAffected(affHide) {
+		ch.SetAffect(affHide, false)
+	}
+
+	// #nosec G404 — game RNG, not cryptographic
+	percent := dprng.Number(1, 101)
+	prob := ch.GetSkill(SkillKabuki) + dexAppSkill(ch.GetDex()).Hide
+	if percent > prob {
+		return SkillResult{Success: false, MessageToCh: message}
+	}
+
+	ch.SetAffect(affHide, true)
+	return SkillResult{Success: true, MessageToCh: appendImprovementMessage(message, improveSkillMessage(ch, SkillKabuki))}
+}
+
 // DoSteal implements the ordinary (subcmd == 0) path through do_steal() from
 // src/act.other.c:309-531. Draw order follows C: the initial percent roll is
 // made before object lookup and the coin amount is rolled only after success.

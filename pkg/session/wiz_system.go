@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -169,12 +170,34 @@ func cmdDate(s *Session, args []string) error {
 	now := time.Now()
 	isUptime := len(args) > 0 && strings.ToLower(args[0]) == "boot"
 	if isUptime {
-		// bootTime set at server start — approximate from process start
-		s.Send(fmt.Sprintf("Up since %s", now.Format(time.RFC1123)))
+		sendUptime(s, now)
 	} else {
 		s.Send(fmt.Sprintf("Current machine time: %s", now.Format("Mon Jan 2 15:04:05 2006")))
 	}
 	return nil
+}
+
+// cmdUptime — standalone "uptime" command.
+// Source: src/interpreter.c do_date/SCMD_UPTIME, gated at LVL_IMMORT.
+// C (act.wizard.c) prints "Up since <boot_time>: N day(s), H:MM".
+func cmdUptime(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	sendUptime(s, time.Now())
+	return nil
+}
+
+// sendUptime prints the server uptime in C's day(s)/H:MM format relative to bootTime.
+func sendUptime(s *Session, now time.Time) {
+	// admin.processStartTime is the server boot timestamp (set at package init).
+	boot := admin.ProcessStartTime()
+	elapsed := now.Sub(boot)
+	days := int(elapsed.Hours()) / 24
+	hours := int(elapsed.Hours()) % 24
+	minutes := int(elapsed.Minutes()) % 60
+	s.Send(fmt.Sprintf("Up since %s: %d day(s), %d:%02d", boot.Format("Mon Jan 2 15:04:05 2006"), days, hours, minutes))
 }
 
 // cmdLast — show last login info for a player (LVL_IMMORT)
@@ -332,6 +355,63 @@ func cmdUnaffect(s *Session, args []string) error {
 		return nil
 	}
 	return wizutilDispatch(s, wizutilUnaffect, args[0])
+}
+
+// cmdFreeze — standalone "freeze <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_FREEZE, gated at LVL_FREEZE (=LVL_GRGOD=38).
+func cmdFreeze(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GRGOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: freeze <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilFreeze, args[0])
+}
+
+// cmdThaw — standalone "thaw <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_THAW, gated at LVL_FREEZE (=LVL_GRGOD=38).
+func cmdThaw(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GRGOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: thaw <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilThaw, args[0])
+}
+
+// cmdPardon — standalone "pardon <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_PARDON, gated at level 1 (do_wizutil's inner
+// LVL_IMMORT||PLR_CHOSEN guard applies; the table level is the C default of 1).
+func cmdPardon(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: pardon <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilPardon, args[0])
+}
+
+// cmdNotitle — standalone "notitle <player>" command.
+// Source: src/interpreter.c do_wizutil/SCMD_NOTITLE, gated at LVL_GOD.
+func cmdNotitle(s *Session, args []string) error {
+	if !checkLevel(s, LVL_GOD) {
+		s.Send("Huh?!?")
+		return nil
+	}
+	if len(args) == 0 {
+		s.Send("Usage: notitle <player>")
+		return nil
+	}
+	return wizutilDispatch(s, wizutilNotitle, args[0])
 }
 
 // cmdShow — show system info (LVL_IMMORT)
