@@ -1,0 +1,54 @@
+# Shop-command no-shop rejection (do_not_here) — buy / sell / list.
+#
+# In C (interpreter.c) buy/sell/list are registered under do_not_here
+# (act.other.c:208); a shop's special procedure intercepts them only when a
+# shopkeeper is present. With no shop in the room, do_not_here fires and prints
+# "Sorry, but you cannot do that here!\r\n" — regardless of arguments, because
+# do_not_here is the registered handler and never parses args.
+#
+# The Go port (shop_cmds.go) formerly checked shop presence but emitted an
+# invented "There is no shop here." and, for buy/sell, checked args BEFORE the
+# shop gate (so bare "buy" printed "Buy what?" instead of C's rejection). This
+# scenario drove that divergence RED and now drives it GREEN: the no-shop gate
+# runs first and prints C's verbatim message.
+#
+# Probes run from the hometown-K newbie start room (8162 Temple Infirmary),
+# which has no shop spec-proc. Self-only output, so no observer peer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Shopact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+list
+buy sword
+buy
+sell tunic
