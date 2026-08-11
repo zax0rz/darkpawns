@@ -140,12 +140,14 @@ func cmdWizhelp(s *Session, args []string) error {
 }
 
 // cmdToggle — show the player's preference-flag grid.
-// Source: act.informative.c do_toggle(), which is purely informational —
-// it ignores its argument and always prints the full grid. Individual
-// settings are changed via their own commands (brief, compact, notell, …,
-// see commands.go's "Preference toggles" block), matching src/interpreter.c
-// where each toggle is its own top-level command, not a "toggle <name>"
-// dispatcher.
+// Source: act.informative.c do_toggle() (the sprintf at lines 2513-2579). It is
+// purely informational — it ignores its argument and always prints the grid.
+// Individual settings are changed via their own commands (brief, compact,
+// notell, …, see commands.go's "Preference toggles" block), matching
+// src/interpreter.c where each toggle is its own top-level command, not a
+// "toggle <name>" dispatcher. The grid labels, column spacing, ONOFF/YESNO
+// choice, and flag inversions (!PRF_*) are copied verbatim from C — do not
+// reflow or relabel.
 func cmdToggle(s *Session, args []string) error {
 	if s.player == nil {
 		return nil
@@ -153,55 +155,61 @@ func cmdToggle(s *Session, args []string) error {
 
 	p := s.player
 	g := p.Flags
-	var buf strings.Builder
-	buf.WriteString("Toggles:\r\n")
-	// Row 1
-	toggleRow(&buf, "hitpoint", prfOnOff(g, game.PrfDisphp), "brief", prfOnOff(g, game.PrfBrief), "summonable", prfOnOff(g, game.PrfSummonable))
-	// Row 2
-	toggleRow(&buf, "move", prfOnOff(g, game.PrfDispmove), "compact", prfOnOff(g, game.PrfCompact), "quest", prfOnOff(g, game.PrfQuest))
-	// Row 3
-	toggleRow(&buf, "mana", prfOnOff(g, game.PrfDispmmana), "notell", prfOnOff(g, game.PrfNotell), "norepeat", prfOnOff(g, game.PrfNoRepeat))
-	// Row 4
-	toggleRow(&buf, "autoexit", prfOnOffStr(p.AutoExit), "autoloot", prfOnOff(g, game.PrfAutoLoot), "autogold", prfOnOff(g, game.PrfAutoGold))
-	// Row 5
-	toggleRow(&buf, "autosplit", prfOnOff(g, game.PrfAutoSplit), "deaf", prfOnOff(g, game.PrfDeaf), "wimpy", wimpyStr(p.WimpLevel))
-	// Row 6
-	toggleRow(&buf, "nogossip", prfOnOff(g, game.PrfNoGossip), "noauction", prfOnOff(g, game.PrfNoAuctions), "nogratz", prfOnOff(g, game.PrfNoGratz))
-	// Row 7
-	toggleRow(&buf, "disptank", prfOnOff(g, game.PrfDispTank), "disptarget", prfOnOff(g, game.PrfDispTarget), "color", colorLevelStr(g))
-	// Row 8
-	toggleRow(&buf, "newbie", prfOnOff(g, game.PrfNoNewbie), "noctell", prfOnOff(g, game.PrfNoCTell), "nobroad", prfOnOff(g, game.PrfNoBroad))
-	s.Send(buf.String())
+	bit := func(b int) bool { return g&(1<<b) != 0 }
+
+	// Wimp level: "OFF" when 0, else a 3-wide left-justified number (C buf2).
+	wimp := "OFF"
+	if p.WimpLevel != 0 {
+		wimp = fmt.Sprintf("%-3d", p.WimpLevel)
+	}
+
+	// Color level: CAP(ctypes[COLOR_LEV(ch)]) — capitalize the lowercase name.
+	color := colorLevelStr(g)
+	if color != "" {
+		color = strings.ToUpper(color[:1]) + color[1:]
+	}
+
+	// NOTE(autoexit): C reads PRF_AUTOEXIT here; Go's "auto" command toggles the
+	// dedicated p.AutoExit bool (the PrfAutoexit bit is a separate slot), so the
+	// grid reads p.AutoExit to stay consistent with what "auto" actually flips.
+	// A fresh mortal has both ON, matching C's do_start default (class.c:589).
+	grid := fmt.Sprintf(
+		"Hit Pnt Display: %-3s         Brief Mode: %-3s     Summon Protect: %-3s\r\n"+
+			"   Move Display: %-3s       Compact Mode: %-3s           On Quest: %-3s\r\n"+
+			"   Mana Display: %-3s             NoTell: %-3s       Repeat Comm.: %-3s\r\n"+
+			" Auto Show Exit: %-3s          Auto Loot: %-3s          Auto Gold: %-3s\r\n"+
+			"     Auto Split: %-3s               Deaf: %-3s         Wimp Level: %-3s\r\n"+
+			" Gossip Channel: %-3s    Auction Channel: %-3s      Grats Channel: %-3s\r\n"+
+			"  Dsp Tank Stat: %-3s    Dsp Fightg Stat: %-3s        Color Level: %s\r\n"+
+			" Newbie Channel: %-3s    Clan tells: %-3s     Broadcasts: %-3s",
+		onOff(bit(game.PrfDisphp)), onOff(bit(game.PrfBrief)), onOff(!bit(game.PrfSummonable)),
+		onOff(bit(game.PrfDispmove)), onOff(bit(game.PrfCompact)), yesNo(bit(game.PrfQuest)),
+		onOff(bit(game.PrfDispmmana)), onOff(bit(game.PrfNotell)), yesNo(!bit(game.PrfNoRepeat)),
+		onOff(p.AutoExit), onOff(bit(game.PrfAutoLoot)), onOff(bit(game.PrfAutoGold)),
+		onOff(bit(game.PrfAutoSplit)), yesNo(bit(game.PrfDeaf)), wimp,
+		onOff(!bit(game.PrfNoGossip)), onOff(!bit(game.PrfNoAuctions)), onOff(!bit(game.PrfNoGratz)),
+		onOff(bit(game.PrfDispTank)), onOff(bit(game.PrfDispTarget)), color,
+		onOff(!bit(game.PrfNoNewbie)), onOff(!bit(game.PrfNoCTell)), onOff(!bit(game.PrfNoBroad)),
+	)
+	// C finishes with sprintf(buf, "%s\r\n", buf) — a single trailing CRLF.
+	s.Send(grid + "\r\n")
 	return nil
 }
 
-// toggleRow writes one row of 3 toggles with fixed-width formatting.
-func toggleRow(buf *strings.Builder, name1, val1, name2, val2, name3, val3 string) {
-	fmt.Fprintf(buf, "  %-12s : %-6s   %-12s : %-6s   %-12s : %s\r\n", name1, val1, name2, val2, name3, val3)
-}
-
-// prfOnOff returns "ON" or "OFF" based on a PRF flag bit in the flags bitmask.
-func prfOnOff(flags uint64, bit int) string {
-	if flags&(1<<bit) != 0 {
-		return "ON"
-	}
-	return "OFF"
-}
-
-// prfOnOffStr returns "ON" or "OFF" for a bool.
-func prfOnOffStr(b bool) string {
+// onOff mirrors C's ONOFF macro (utils.h:159): true → "ON", else "OFF".
+func onOff(b bool) string {
 	if b {
 		return "ON"
 	}
 	return "OFF"
 }
 
-// wimpyStr returns the wimpy level as a string, or "OFF" if 0.
-func wimpyStr(level int) string {
-	if level == 0 {
-		return "OFF"
+// yesNo mirrors C's YESNO macro (utils.h:158): true → "YES", else "NO".
+func yesNo(b bool) string {
+	if b {
+		return "YES"
 	}
-	return fmt.Sprintf("%d", level)
+	return "NO"
 }
 
 // colorLevelStr returns the color level string based on PRF_COLOR flags.

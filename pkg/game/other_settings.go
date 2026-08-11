@@ -189,99 +189,97 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
+	// tog_messages[subcmd][TOG_OFF=0/TOG_ON=1] — copied verbatim from C
+	// act.other.c:1147. Here each entry is keyed by the C command name and
+	// stored as {TOG_ON, TOG_OFF}: index 0 is printed when the flag is being
+	// switched ON (PRF_TOG_CHK returned the new state = on), index 1 when it
+	// is being switched OFF. SCMD_* constants are from interpreter.h:117-136.
 	toggleMessages := map[string][2]string{
-		"summon":    {"You are now summonable by others.\r\n", "You are no longer summonable.\r\n"},
-		"nohassle":  {"You are now immune to annoying players.\r\n", "You may now be hassled again.\r\n"},
-		"brief":     {"Brief mode on.\r\n", "Brief mode off.\r\n"},
-		"compact":   {"Compact mode on.\r\n", "Compact mode off.\r\n"},
-		"notell":    {"You are now deaf to tells.\r\n", "You may now receive tells again.\r\n"},
-		"noauction": {"You are now deaf to auctions.\r\n", "You can now hear auctions again.\r\n"},
-		"deaf":      {"You are now deaf to all shouts.\r\n", "You can now hear shouts again.\r\n"},
-		"nogossip":  {"You are now deaf to gossip.\r\n", "You can now hear gossip again.\r\n"},
-		"nogratz":   {"You will no longer see grat messages.\r\n", "You will now see grat messages again.\r\n"},
-		"nowiz":     {"You are now deaf to the WizChannel.\r\n", "You can now hear the WizChannel again.\r\n"},
-		"quest":     {"You will now see quest announcements.\r\n", "You will no longer see quest announcements.\r\n"},
-		"roomflags": {"Room flags on.\r\n", "Room flags off.\r\n"},
-		"norepeat":  {"No repeat mode on.\r\n", "No repeat mode off.\r\n"},
-		"holylight": {"Holy light mode on.\r\n", "Holy light mode off.\r\n"},
-		"nonewbie":  {"You will now see newbie chat.\r\n", "You will no longer see newbie chat.\r\n"},
-		"noctell":   {"You are now deaf to clan tells.\r\n", "You can now hear clan tells again.\r\n"},
-		"nobroad":   {"You are now deaf to broadcasts.\r\n", "You can now hear broadcasts again.\r\n"},
+		"nosummon":    {"You may now be summoned by other players.\r\n", "You are now safe from summoning by other players.\r\n"},         // SCMD_NOSUMMON
+		"nohassle":    {"Nohassle enabled.\r\n", "Nohassle disabled.\r\n"},                                                                // SCMD_NOHASSLE
+		"brief":       {"Brief mode on.\r\n", "Brief mode off.\r\n"},                                                                      // SCMD_BRIEF
+		"compact":     {"Compact mode on.\r\n", "Compact mode off.\r\n"},                                                                  // SCMD_COMPACT
+		"notell":      {"You are now deaf to tells.\r\n", "You can now hear tells.\r\n"},                                                  // SCMD_NOTELL
+		"noauction":   {"You are now deaf to auctions.\r\n", "You can now hear auctions.\r\n"},                                            // SCMD_NOAUCTION
+		"noshout":     {"You are now deaf to shouts.\r\n", "You can now hear shouts.\r\n"},                                                // SCMD_DEAF
+		"nogossip":    {"You are now deaf to gossip.\r\n", "You can now hear gossip.\r\n"},                                                // SCMD_NOGOSSIP
+		"nograts":     {"You are now deaf to the congratulation messages.\r\n", "You can now hear the congratulation messages.\r\n"},      // SCMD_NOGRATZ
+		"nowiz":       {"You are now deaf to the Wiz-channel.\r\n", "You can now hear the Wiz-channel.\r\n"},                              // SCMD_NOWIZ
+		"quest":       {"Okay, you are part of the Quest!\r\n", "You are no longer part of the Quest.\r\n"},                               // SCMD_QUEST
+		"roomflags":   {"You will now see the room flags.\r\n", "You will no longer see the room flags.\r\n"},                             // SCMD_ROOMFLAGS
+		"norepeat":    {"You will no longer have your communication repeated.\r\n", "You will now have your communication repeated.\r\n"}, // SCMD_NOREPEAT
+		"holylight":   {"HolyLight mode on.\r\n", "HolyLight mode off.\r\n"},                                                              // SCMD_HOLYLIGHT
+		"nonewbie":    {"Newbie channel off.\r\n", "Newbie channel on.\r\n"},                                                              // SCMD_NONEWBIE
+		"noctell":     {"Clan tells are now off.\r\n", "Clan tells are now on.\r\n"},                                                      // SCMD_NOCTELL
+		"nobroadcast": {"Broadcast channel is now off.\r\n", "Broadcast channel is now on.\r\n"},                                          // SCMD_NOBROAD
 	}
 
 	toggleFlags := map[string]int{
-		"summon":    PrfSummonable,
-		"nohassle":  PrfNohassle,
-		"brief":     PrfBrief,
-		"compact":   PrfCompact,
-		"notell":    PrfNotell,
-		"noauction": PrfNoAuctions,
-		"deaf":      PrfDeaf,
-		"nogossip":  PrfNoGossip,
-		"nogratz":   PrfNoGratz,
-		"nowiz":     PrfNowiz,
-		"quest":     PrfQuest,
-		"roomflags": PrfRoomFlags,
-		"norepeat":  PrfNoRepeat,
-		"holylight": PrfHolyLight,
-		"nonewbie":  PrfNoNewbie,
-		"noctell":   PrfNoCTell,
-		"nobroad":   PrfNoBroad,
+		"nosummon":    PrfSummonable,
+		"nohassle":    PrfNohassle,
+		"brief":       PrfBrief,
+		"compact":     PrfCompact,
+		"notell":      PrfNotell,
+		"noauction":   PrfNoAuctions,
+		"noshout":     PrfDeaf,
+		"nogossip":    PrfNoGossip,
+		"nograts":     PrfNoGratz,
+		"nowiz":       PrfNowiz,
+		"quest":       PrfQuest,
+		"roomflags":   PrfRoomFlags,
+		"norepeat":    PrfNoRepeat,
+		"holylight":   PrfHolyLight,
+		"nonewbie":    PrfNoNewbie,
+		"noctell":     PrfNoCTell,
+		"nobroadcast": PrfNoBroad,
 	}
 
-	// Map the real C command name (src/interpreter.c) to the internal toggle
-	// key above, for the handful where they differ.
-	cmdMap := map[string]string{
-		"nosummon":    "summon",
-		"nohassle":    "nohassle",
-		"brief":       "brief",
-		"compact":     "compact",
-		"notell":      "notell",
-		"noauction":   "noauction",
-		"noshout":     "deaf",
-		"nogossip":    "nogossip",
-		"nograts":     "nogratz",
-		"nowiz":       "nowiz",
-		"quest":       "quest",
-		"roomflags":   "roomflags",
-		"norepeat":    "norepeat",
-		"holylight":   "holylight",
-		"nonewbie":    "nonewbie",
-		"noctell":     "noctell",
-		"nobroadcast": "nobroad",
+	flag, ok := toggleFlags[cmd]
+	if !ok {
+		ch.SendMessage("Unknown toggle.\r\n")
+		return true
 	}
-
-	key, ok := cmdMap[cmd]
+	msgs, ok := toggleMessages[cmd]
 	if !ok {
 		ch.SendMessage("Unknown toggle.\r\n")
 		return true
 	}
 
-	flag, ok := toggleFlags[key]
-	if !ok {
-		ch.SendMessage("Unknown toggle.\r\n")
-		return true
-	}
-	msgs, ok := toggleMessages[key]
-	if !ok {
-		ch.SendMessage("Unknown toggle.\r\n")
+	// SCMD_NOCTELL clan gate — act.other.c:1194. A clanless player cannot toggle
+	// clan tells. GET_CLAN(ch) is 0 for a fresh mortal (no clan joined).
+	if cmd == "noctell" && ch.ClanID == 0 {
+		ch.SendMessage("You aren't even in a clan!\r\n")
 		return true
 	}
 
-	// Special checks
-	if key == "nowiz" && ch.GetLevel() < LVL_IMMORT {
-		ch.SendMessage("You are not holy enough to use that feature.\r\n")
+	// SCMD_NOWIZ gate — act.other.c:1200. Below LVL_IMMORT and not a chosen of
+	// the gods: "Huh?!?" (nowiz is also LVL_IMMORT-gated at the dispatcher, so
+	// this in-handler check is faithful C defense for the rare chosen case).
+	if cmd == "nowiz" && ch.GetLevel() < LVL_IMMORT && ch.GetFlags()&(1<<PlrChosen) == 0 {
+		ch.SendMessage("Huh?!?\r\n")
 		return true
 	}
 
-	// "noctell": clan check skipped — clan field not yet implemented
-
+	// PRF_TOG_CHK: toggle the bit and capture the NEW state. result==1 means the
+	// flag is now ON → print TOG_ON (msgs[0]); result==0 → print TOG_OFF (msgs[1]).
+	var result bool
 	if ch.GetFlags()&(1<<flag) != 0 {
 		ch.SetPlrFlag(flag, false)
-		ch.SendMessage(msgs[1])
+		result = false
 	} else {
 		ch.SetPlrFlag(flag, true)
+		result = true
+	}
+
+	// SCMD_NOSUMMON sets a WAIT_STATE of PULSE_VIOLENCE*2 — act.other.c:1210.
+	if cmd == "nosummon" {
+		ch.SetWaitState(2)
+	}
+
+	if result {
 		ch.SendMessage(msgs[0])
+	} else {
+		ch.SendMessage(msgs[1])
 	}
 
 	return true

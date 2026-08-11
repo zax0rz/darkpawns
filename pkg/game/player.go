@@ -352,6 +352,17 @@ func newCharacter(id int, name string, class, race, sex int, stats CharStats) *P
 	// Wimp level: HP threshold for auto-flee — class.c:588
 	p.WimpLevel = 5
 
+	// Default preference flags from do_start() — class.c:585-589. These set the
+	// fresh-character PRF defaults that do_toggle's grid (act.informative.c)
+	// reports as "ON": Hit Pnt / Move / Mana display, plus autoexits. AUTOEXIT is
+	// already ON via NewPlayer.AutoExit; the three display bits live in the PRF
+	// bitmask (PrfDisphp/Dispmmana/Dispmove), which the toggle grid reads, so set
+	// them here. Without these the oracle do_toggle grid diverges from C on a
+	// fresh mortal (all three display as OFF in Go vs ON in C).
+	p.SetPlrFlag(PrfDisphp, true)
+	p.SetPlrFlag(PrfDispmmana, true)
+	p.SetPlrFlag(PrfDispmove, true)
+
 	// Starting practices — class.c:590
 	p.Practices = 2
 
