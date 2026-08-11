@@ -205,6 +205,19 @@ func TestCheckMessage(t *testing.T) {
 	}
 }
 
+func TestClose_StopsCleanupRoutine(t *testing.T) {
+	m := NewManager(nil)
+
+	m.Close()
+	m.Close() // double Close must not panic
+
+	select {
+	case <-m.done:
+	default:
+		t.Fatal("cleanup goroutine still running after Close")
+	}
+}
+
 func TestHasPenalty(t *testing.T) {
 	now := time.Now()
 	future := now.Add(1 * time.Hour)
@@ -258,6 +271,7 @@ func TestHasPenalty(t *testing.T) {
 
 func TestAddWordFilter_MemoryIDsDoNotCollide(t *testing.T) {
 	m := NewManager(nil)
+	t.Cleanup(m.Close)
 	// Simulate DB load ordering by created_at DESC: ids 2 then 1.
 	m.wordFilters = []WordFilterEntry{
 		{ID: 2, Pattern: "second", Action: FilterActionCensor},
@@ -279,6 +293,7 @@ func TestAddWordFilter_MemoryIDsDoNotCollide(t *testing.T) {
 
 func TestIsMuted_CaseInsensitiveLookup(t *testing.T) {
 	m := NewManager(nil)
+	t.Cleanup(m.Close)
 	_ = m.AddPenalty(PlayerPenalty{
 		PlayerName:  "MixedCasePlayer",
 		PenaltyType: ActionMute,
@@ -296,6 +311,7 @@ func TestIsMuted_CaseInsensitiveLookup(t *testing.T) {
 
 func TestCleanupExpiredPenalties_RemovesFromMemory(t *testing.T) {
 	m := NewManager(nil)
+	t.Cleanup(m.Close)
 	player := "ExpiredPlayer"
 	past := time.Now().Add(-time.Hour)
 
@@ -318,6 +334,7 @@ func TestCleanupExpiredPenalties_RemovesFromMemory(t *testing.T) {
 
 func TestPenaltyHelpersConcurrentAccess(t *testing.T) {
 	m := NewManager(nil)
+	t.Cleanup(m.Close)
 	player := "ConcurrentPlayer"
 	now := time.Now()
 

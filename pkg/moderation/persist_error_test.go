@@ -112,6 +112,7 @@ func TestRemoveWordFilter_NoDBRemovesMemoryEntry(t *testing.T) {
 // TestAddPenalty_NoDBReturnsNil confirms the no-DB path reports success.
 func TestAddPenalty_NoDBReturnsNil(t *testing.T) {
 	m := NewManager(nil)
+	t.Cleanup(m.Close)
 	if err := m.AddPenalty(PlayerPenalty{
 		PlayerName:  "villain",
 		PenaltyType: ActionMute,
