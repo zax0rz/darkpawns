@@ -91,6 +91,65 @@ func TestFlushRetainsRecordsOnDBError(t *testing.T) {
 	}
 }
 
+// TestFlushUnboundedGrowth verifies that repeated flush failures cannot grow
+// the buffer without bound: each failed batch is requeued but the buffer
+// saturates at maxBufferSize (oldest records dropped) rather than accumulating
+// across flushes, and the consecutive-failure counter resets once the DB
+// recovers.
+//
+// The requeue cap is driven through Flush directly rather than via Record* so
+// the test does not amplify its workload: once the buffer saturates, every
+// Record* call would otherwise trigger a full maxBufferSize flush attempt, so
+// looping thousands of records through Record* would issue millions of fake
+// SQL calls. The cap itself lives in cappedRequeue, which Flush exercises on
+// every failure regardless of how the records arrived.
+func TestFlushUnboundedGrowth(t *testing.T) {
+	db := newFakeDB(t, true)
+	dlw := &DecisionLogWriter{
+		db:        db,
+		decisions: make([]*DecisionRecord, 0, maxBufferSize),
+		combat:    make([]*CombatRecord, 0, maxBufferSize),
+	}
+
+	// Sustained outage: enqueue several full buffers' worth of records, then
+	// flush. Each failed flush requeues its batch at the front of the buffer;
+	// once the combined length exceeds maxBufferSize the oldest records are
+	// dropped. Repeating this with more batches than the cap can hold proves
+	// the buffer saturates instead of growing on every failed flush.
+	for batch := 0; batch < 4; batch++ {
+		for i := 0; i < maxBufferSize; i++ {
+			dlw.decisions = append(dlw.decisions, &DecisionRecord{
+				SessionID:       "s1",
+				PlayerName:      "p1",
+				Command:         "cmd",
+				OutcomeCategory: "ok",
+			})
+		}
+		dlw.Flush()
+		if len(dlw.decisions) > maxBufferSize {
+			t.Fatalf("batch %d: buffer grew past maxBufferSize: len=%d max=%d", batch, len(dlw.decisions), maxBufferSize)
+		}
+	}
+
+	if len(dlw.decisions) != maxBufferSize {
+		t.Errorf("expected buffer to saturate at maxBufferSize=%d, got %d", maxBufferSize, len(dlw.decisions))
+	}
+	if dlw.consecutiveFailures == 0 {
+		t.Error("expected consecutive_failures to be tracked across failed flushes")
+	}
+	failuresBeforeRecovery := dlw.consecutiveFailures
+
+	// Recovery: a successful flush drains the buffer and resets the counter.
+	setFakeFail(false)
+	dlw.Flush()
+	if len(dlw.decisions) != 0 {
+		t.Errorf("expected buffer drained after recovery, got %d", len(dlw.decisions))
+	}
+	if dlw.consecutiveFailures != 0 {
+		t.Errorf("expected consecutive_failures reset on success, got %d (was %d before recovery)", dlw.consecutiveFailures, failuresBeforeRecovery)
+	}
+}
+
 // TestGetEnvInt verifies the environment-variable helper used for connection
 // pool configuration (DP-633).
 func TestSanitizeLogArgs(t *testing.T) {
