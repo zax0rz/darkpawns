@@ -358,6 +358,12 @@ func cmdNewbieChannel(s *Session, args []string) error {
 // cmdCTell sends a message on the clan tell channel.
 // Source: act.comm.c do_ctell()
 func cmdCTell(s *Session, args []string) error {
+	// C do_ctell (act.comm.c:1451) rejects a clanless mortal BEFORE anything
+	// else — "You're not part of a clan." — ahead of argument/broadcast logic.
+	if s.player.ClanID == 0 || s.player.ClanRank == 0 {
+		s.sendText("You're not part of a clan.\r\n")
+		return nil
+	}
 	if len(args) == 0 {
 		s.Send("What do you want to tell your clan?")
 		return nil
