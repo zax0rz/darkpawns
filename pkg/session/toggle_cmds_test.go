@@ -97,6 +97,11 @@ func TestCmdAutoExitTogglesPersistently(t *testing.T) {
 // "toggle autoexit" as the only working sub-toggle and reject every other
 // name; individual toggles now have their own top-level commands instead
 // (see commands.go's "Preference toggles" block).
+//
+// The grid is the C-verbatim sprintf from act.informative.c:2513-2579 — the
+// header-less 8-row layout beginning "Hit Pnt Display:". This assertion would
+// have failed against the prior Go re-skin (an invented "Toggles:\r\n  hitpoint
+// : OFF ..." table).
 func TestCmdToggleIgnoresArguments(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
@@ -105,16 +110,19 @@ func TestCmdToggleIgnoresArguments(t *testing.T) {
 		t.Fatalf("cmdToggle: %v", err)
 	}
 	noArgMsg := readSessionText(t, s)
-	if !strings.Contains(noArgMsg, "Toggles:") {
-		t.Errorf("no-arg toggle should show the grid: got %q", noArgMsg)
+	if !strings.HasPrefix(noArgMsg, "Hit Pnt Display:") {
+		t.Errorf("no-arg toggle should show the C grid: got %q", noArgMsg)
+	}
+	if !strings.Contains(noArgMsg, "Broadcasts:") {
+		t.Errorf("grid should include the final Broadcasts column: got %q", noArgMsg)
 	}
 
 	if err := cmdToggle(s, []string{"brief"}); err != nil {
 		t.Fatalf("cmdToggle: %v", err)
 	}
 	argMsg := readSessionText(t, s)
-	if !strings.Contains(argMsg, "Toggles:") {
-		t.Errorf("toggle with an argument should still show the grid: got %q", argMsg)
+	if !strings.HasPrefix(argMsg, "Hit Pnt Display:") {
+		t.Errorf("toggle with an argument should still show the C grid: got %q", argMsg)
 	}
 	if strings.Contains(argMsg, "Unknown toggle") {
 		t.Errorf("toggle should never reject an argument: got %q", argMsg)

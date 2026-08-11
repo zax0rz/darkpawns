@@ -1,0 +1,76 @@
+# do_gen_tog / do_toggle preference cluster (oracle-coverage expansion, 2026-08-11).
+#
+# Domain: act.other.c::do_gen_tog (per-toggle messages) +
+#         act.informative.c::do_toggle (the aggregate preference grid).
+# Every command here is mortal-legal, deterministic, and RNG-free — ideal
+# low-noise cluster for the coverage metric. All toggle output is self-only
+# (send_to_char to ch), so no observer peer is required.
+#
+# Fidelity probes (C cite = interpreter.c line / SCMD_* = interpreter.h):
+# - toggle (:779)         — do_toggle aggregate grid (8-line status display)
+# - brief (:366, SCMD_BRIEF=2)
+# - compact (:394, SCMD_COMPACT=3)
+# - notell (:579, SCMD_NOTELL=4)        — LVL 1, fresh mortal reaches it
+# - noauction (:569, SCMD_NOAUCTION=5)
+# - noshout (:577, SCMD_DEAF=6)         — LVL 1
+# - nogossip (:572, SCMD_NOGOSSIP=7)
+# - nograts (:573, SCMD_NOGRATZ=8)
+# - norepeat (:576, SCMD_NOREPEAT=12)
+# - nonewbie (:575, SCMD_NONEWBIE=17)
+# - nobroadcast (:570, SCMD_NOBROAD=19)
+# - noctell (:571, SCMD_NOCTELL=18)     — gated: requires a clan; fresh mortal
+#                                         is clanless → "You aren't even in a clan!"
+#
+# Excluded from this cluster: nosummon (SCMD_NOSUMMON) sets WAIT_STATE of
+# PULSE_VIOLENCE*2, which would wait-block the following probe under the frozen
+# DP_CLOCK (no pulses advance between probes). It belongs in a wait-aware
+# follow-up. The aggregate `toggle` is run twice — once over the fresh defaults,
+# once after every toggle has been flipped — so both the per-toggle messages AND
+# the grid's resulting state are exercised.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Togactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Togactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+toggle
+brief
+compact
+notell
+noauction
+noshout
+nogossip
+nograts
+norepeat
+nonewbie
+nobroadcast
+noctell
+toggle
