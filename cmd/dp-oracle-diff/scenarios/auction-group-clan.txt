@@ -1,0 +1,51 @@
+# act.comm.c / act.other.c / clan.c channels — auction / group / clan.
+#
+# Three registered, mortal-legal commands (RNG-free for these paths) that had no
+# oracle scenario, probed from a fresh mortal (no group, no clan):
+#
+# - auction (do_gen_comm SCMD_AUCTION, interpreter.c :345): same generic-channel
+#   handler as the already-green gossip/shout. A message echoes "You auction,
+#   '...'" to the sender.
+# - group  (do_group, act.other.c:685): no-arg → print_group(); a non-grouped
+#   mortal gets "But you are not the member of a group!".
+# - clan   (do_clan, clan.c:1541): no recognized subcommand → send_clan_format()
+#   listing (clanless mortal sees the minimal status/info/apply set).
+#
+# Self-only output; no observer peer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Aucgrp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aucgrp
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+auction selling a fine sword
+group
+clan
