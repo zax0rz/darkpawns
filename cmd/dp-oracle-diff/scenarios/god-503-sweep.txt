@@ -1,0 +1,102 @@
+# God-harness recently-wired (#503) immortal sweep (oracle-coverage expansion,
+# 2026-08-11).
+#
+# Immortal-gated commands wired in PR #503 that had no oracle scenario over
+# them. The first created character is crowned God (LVL_IMPL) by the
+# empty-players fixture (DP_FRESH_MUD on the Go side; C crowns its first
+# character natively). The God is the probe actor; a mortal peer is the named
+# target for the wizutil actions. God spawns at the immortal start room (1204)
+# and the mortal at the mortal start room (8004); get_char_vis (handler.c:1303)
+# searches the whole character list for CAN_SEE matches, so the God targets the
+# mortal cross-room, and freeze/thaw's TO_ROOM act has no other witness in the
+# mortal's room — only the God (TO_CHAR) and mortal (TO_VICT) views are
+# compared.
+#
+# Fidelity probes (C cite = interpreter.c line / handler):
+# - qecho   (:627) do_qcomm SCMD_QECHO   — act.comm.c:1301; a fresh God is not
+#             on a Quest, so the PRF_QUEST gate fires first.
+# - poofin  (:613) do_poofset SCMD_POOFIN  — act.wizard.c:1711; replies OK.
+# - poofout (:614) do_poofset SCMD_POOFOUT — same handler; replies OK.
+# - notitle (:580) do_wizutil SCMD_NOTITLE — act.wizard.c:2123; "(GC) Notitle …".
+# - mute    (:559) do_wizutil SCMD_SQUELCH — act.wizard.c:2131; "(GC) Squelch …".
+# - pardon  (:601) do_wizutil SCMD_PARDON  — act.wizard.c:2112; non-outlaw guard.
+# - freeze  (:452) do_wizutil SCMD_FREEZE  — act.wizard.c:2139; TO_CHAR/TO_VICT.
+# - thaw    (:768) do_wizutil SCMD_THAW    — act.wizard.c:2156; unfreezes.
+#
+# Excluded from this sweep (filed / blocked):
+# - uptime — do_date SCMD_UPTIME emits one volatile wall-clock line (boot time +
+#   elapsed), a vacuous probe once normalized; low value.
+# - wizhelp — do_commands SCMD_WIZHELP paginates via page_string() (DP-1227,
+#   the pager class gap that also blocks socials/commands/credits/immlist).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Godprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Godprobe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Godmortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Godmortal
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+qecho hello
+poofin a swirl of mist
+poofout a fading echo
+notitle Godmortal
+mute Godmortal
+pardon Godmortal
+freeze Godmortal
+thaw Godmortal

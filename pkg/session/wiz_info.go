@@ -235,7 +235,7 @@ func cmdCheckload(s *Session, args []string) error {
 }
 
 // cmdPoofset — set poof in/out messages (LVL_IMMORT)
-// Original: act.wizard.c do_poofset()
+// Original: act.wizard.c do_poofset() (1711).
 func cmdPoofset(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
@@ -250,12 +250,10 @@ func cmdPoofset(s *Session, args []string) error {
 		s.Send("Usage: poofset <in|out> [message]")
 		return nil
 	}
-	var msg string
-	if len(args) >= 2 {
-		msg = strings.Join(args[1:], " ")
-	}
 
-	// Save poof to player record for persistence across logins
+	// C do_poofset: with an argument, str_dup it into the poof slot; with no
+	// argument, clear the slot. Either way it replies with the global OK
+	// ("Okay.\r\n", config.c:92) — never an invented set/cleared message.
 	player := s.GetPlayer()
 	if player == nil {
 		s.Send("You don't seem to exist.")
@@ -263,22 +261,11 @@ func cmdPoofset(s *Session, args []string) error {
 	}
 
 	if direction == "in" {
-		if strings.TrimSpace(msg) == "" {
-			player.PoofIn = ""
-			s.Send("Poof-in message cleared.")
-		} else {
-			player.PoofIn = msg
-			s.Send(fmt.Sprintf("Poof-in message set to: %s", msg))
-		}
+		player.PoofIn = strings.Join(args[1:], " ")
 	} else {
-		if strings.TrimSpace(msg) == "" {
-			player.PoofOut = ""
-			s.Send("Poof-out message cleared.")
-		} else {
-			player.PoofOut = msg
-			s.Send(fmt.Sprintf("Poof-out message set to: %s", msg))
-		}
+		player.PoofOut = strings.Join(args[1:], " ")
 	}
+	s.Send("Okay.\r\n")
 	return nil
 }
 

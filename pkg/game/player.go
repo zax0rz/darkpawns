@@ -242,6 +242,12 @@ type Player struct {
 	// LastDeath — timestamp of last death (unix time).
 	// Used by dream.c for nightmare progression.
 	LastDeath int64
+
+	// FreezeLevel records the level of the God who froze this player
+	// (C GET_FREEZE_LEV; act.wizard.c:2149). Thaw consults it to stop a
+	// lower-level God from un-freezing a higher-level God's freeze. In-memory
+	// only (json:"-") — not part of the save format.
+	FreezeLevel int `json:"-"`
 }
 
 // NewPlayer creates a new player with default stats (no class/race yet).
