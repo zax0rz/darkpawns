@@ -838,7 +838,8 @@ func TestCmdCompare_NoPlayer(t *testing.T) {
 
 func TestCmdCompare_Fighting(t *testing.T) {
 	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosFighting)
+	// C do_compare checks FIGHTING(ch) (the actual fight target), not position.
+	session.player.Fighting = "goblin"
 	if err := CmdCompare(session, []string{"sword"}); err != nil {
 		t.Fatalf("CmdCompare: %v", err)
 	}
@@ -853,8 +854,10 @@ func TestCmdCompare_NoArgs(t *testing.T) {
 	if err := CmdCompare(session, nil); err != nil {
 		t.Fatalf("CmdCompare: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	// C do_compare: empty/missing args → get_obj_in_list_vis fails →
+	// "Looks like you don't have those objects.." (no CanUseSkill gate).
+	if !strings.Contains(joinMessages(session.messages), "don't have those objects") {
+		t.Errorf("expected 'don't have those objects', got: %v", session.messages)
 	}
 }
 
