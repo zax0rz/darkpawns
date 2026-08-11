@@ -120,6 +120,51 @@ func TestAssertBehaviorMatchesC(t *testing.T) {
 	}
 }
 
+// TestMockDatabase_SessionSummaryIsolation guards the fidelity of the mock:
+// summaries must be scoped by (agentName, sessionID), so summaries from
+// different sessions never collapse into a single per-agent list.
+func TestMockDatabase_SessionSummaryIsolation(t *testing.T) {
+	m := NewMockDatabase()
+	now := time.Now()
+
+	// Two distinct sessions for the same agent must each be retrievable.
+	if err := m.WriteSessionSummary("Brenda", "session_a", "Summary A.", 1, now, now); err != nil {
+		t.Fatalf("failed to write session_a summary: %v", err)
+	}
+	if err := m.WriteSessionSummary("Brenda", "session_b", "Summary B.", 1, now, now); err != nil {
+		t.Fatalf("failed to write session_b summary: %v", err)
+	}
+
+	summaries, err := m.GetSessionSummaries("Brenda", 5)
+	if err != nil {
+		t.Fatalf("failed to get summaries: %v", err)
+	}
+	if len(summaries) != 2 {
+		t.Fatalf("expected 2 summaries (one per session), got %d: %v", len(summaries), summaries)
+	}
+
+	// Re-writing the same session must upsert, not append a duplicate.
+	if err := m.WriteSessionSummary("Brenda", "session_a", "Summary A v2.", 2, now, now); err != nil {
+		t.Fatalf("failed to rewrite session_a summary: %v", err)
+	}
+	summaries, err = m.GetSessionSummaries("Brenda", 5)
+	if err != nil {
+		t.Fatalf("failed to get summaries: %v", err)
+	}
+	if len(summaries) != 2 {
+		t.Fatalf("expected 2 summaries after upsert, got %d: %v", len(summaries), summaries)
+	}
+
+	// A different agent must see none of Brenda's summaries.
+	other, err := m.GetSessionSummaries("Zach", 5)
+	if err != nil {
+		t.Fatalf("failed to get other agent summaries: %v", err)
+	}
+	if other != nil {
+		t.Fatalf("expected no summaries for other agent, got %v", other)
+	}
+}
+
 // TestMockDatabase_NewDecisionLogWriter guards DP-1017: the mock previously
 // returned nil, so any test that called RecordDecision/Stop on the result
 // nil-panicked. The writer must be non-nil and safe for Stop.

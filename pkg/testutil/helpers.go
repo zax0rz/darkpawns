@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -96,7 +97,8 @@ type MockDatabase struct {
 	memories     []*db.NarrativeMemory
 	nextMemoryID int64
 
-	summaries map[string][]string // agentName -> summaries
+	summaries    map[string]string // agentName+"\x00"+sessionID -> summary
+	summaryOrder []string          // compound keys in first-write order (deterministic reads)
 }
 
 // NewMockDatabase creates an initialized MockDatabase instance.
@@ -109,7 +111,7 @@ func NewMockDatabase() *MockDatabase {
 		nextAgentKeyID: 1,
 		memories:       make([]*db.NarrativeMemory, 0),
 		nextMemoryID:   1,
-		summaries:      make(map[string][]string),
+		summaries:      make(map[string]string),
 	}
 }
 
@@ -356,27 +358,40 @@ func (m *MockDatabase) SocialEventMemories(socialEventID string) ([]*db.Narrativ
 	return out, nil
 }
 
-// WriteSessionSummary satisfies db.Database.
+// WriteSessionSummary satisfies db.Database. Summaries are keyed by
+// (agentName, sessionID) so distinct sessions never collapse into one list.
+// Re-writing the same session upserts, mirroring the real DB's
+// session_id UNIQUE + ON CONFLICT DO UPDATE behavior.
 func (m *MockDatabase) WriteSessionSummary(agentName, sessionID, summary string, eventCount int, start, end time.Time) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.summaries[agentName] = append(m.summaries[agentName], summary)
+	key := agentName + "\x00" + sessionID
+	if _, ok := m.summaries[key]; !ok {
+		m.summaryOrder = append(m.summaryOrder, key)
+	}
+	m.summaries[key] = summary
 	return nil
 }
 
-// GetSessionSummaries satisfies db.Database.
+// GetSessionSummaries satisfies db.Database. Returns the most recent `limit`
+// summaries for the agent across all sessions, in write order.
 func (m *MockDatabase) GetSessionSummaries(agentName string, limit int) ([]string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	sums := m.summaries[agentName]
+	prefix := agentName + "\x00"
+	var sums []string
+	for _, key := range m.summaryOrder {
+		if strings.HasPrefix(key, prefix) {
+			sums = append(sums, m.summaries[key])
+		}
+	}
 	if len(sums) == 0 {
 		return nil, nil
 	}
-	start := len(sums) - limit
-	if start < 0 {
-		start = 0
+	if len(sums) > limit {
+		sums = sums[len(sums)-limit:]
 	}
-	return sums[start:], nil
+	return sums, nil
 }
 
 // DecayStaleMemories satisfies db.Database.
