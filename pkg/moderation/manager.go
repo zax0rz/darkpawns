@@ -26,6 +26,12 @@ type Manager struct {
 
 	// Spam tracking
 	messageHistory map[string][]time.Time // player -> timestamps of recent messages
+
+	// Lifecycle: stop closes to halt the cleanup goroutine; done is closed by
+	// the goroutine when it exits; closeOnce guards against double Close.
+	stop      chan struct{}
+	done      chan struct{}
+	closeOnce sync.Once
 }
 
 // NewManager creates a new moderation manager.
@@ -41,6 +47,8 @@ func NewManager(db *sql.DB) *Manager {
 			DuplicateWindow:   5 * time.Second,
 			Action:            FilterActionWarn,
 		},
+		stop: make(chan struct{}),
+		done: make(chan struct{}),
 	}
 
 	if m.hasDB {
@@ -193,13 +201,29 @@ func (m *Manager) loadWordFilters() {
 
 // cleanupRoutine periodically cleans up expired penalties and old message history.
 func (m *Manager) cleanupRoutine() {
+	defer close(m.done)
+
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		m.cleanupExpiredPenalties()
-		m.cleanupOldMessageHistory()
+	for {
+		select {
+		case <-m.stop:
+			return
+		case <-ticker.C:
+			m.cleanupExpiredPenalties()
+			m.cleanupOldMessageHistory()
+		}
 	}
+}
+
+// Close stops the background cleanup goroutine and waits for it to exit. It is
+// safe to call Close multiple times.
+func (m *Manager) Close() {
+	m.closeOnce.Do(func() {
+		close(m.stop)
+		<-m.done
+	})
 }
 
 // cleanupExpiredPenalties removes expired penalties from memory and database.
