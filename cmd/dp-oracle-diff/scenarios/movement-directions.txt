@@ -1,0 +1,63 @@
+# Direction-command fidelity (east / west / up / down — all share do_move,
+# act.movement.c). Deterministic, RNG-free, mortal-legal.
+#
+# The existing movement.txt covers north/south (leave/arrive broadcasts via a
+# co-located observer). This scenario covers the remaining four registered
+# direction commands, none of which had an oracle scenario:
+#   - up / down: no up/down exits exist anywhere in the hometown-K newbie graph
+#     (8162/8161/8004 — only N/E/S/W exits), so these exercise do_move's
+#     no-exit branch: "Alas, you cannot go that way."
+#   - east / west: probed BOTH ways — the no-exit branch from 8162 (which has
+#     only a north exit) AND actual movement via an 8162 -> N -> 8161 -> E ->
+#     8004 -> W -> 8161 -> S -> 8162 round trip (8161 E->8004, 8004 W->8161).
+#
+# No observer peer: a direction's player-facing output is the actor's own view
+# (the destination room description, or the "Alas..." rejection); leave/arrive
+# broadcasts to other room occupants are already covered by movement.txt.
+#
+# Room graph (lib/world/wld/80.wld, DP-1085 hometown-K co-location at 8162):
+#   8162 Temple Infirmary   N->8161
+#   8161 Western Vestibule  N->8146, E->8004, S->8162
+#   8004 At the Temple Altar E->8160, S->8008, W->8161
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Diractor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Diractor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+up
+down
+east
+west
+north
+east
+west
+south
