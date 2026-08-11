@@ -197,6 +197,29 @@ func TestFlushClearsRecordsOnSuccess(t *testing.T) {
 	}
 }
 
+// TestRecordCombatAutoFlushAtBatchSize verifies that RecordCombat triggers a
+// synchronous flush once the combat buffer reaches flushBatchSize, mirroring
+// RecordDecision. Previously combat records only flushed on the periodic
+// ticker (finding fnd_sig-feat-service-97f60e84e1-bfb6_fc4c0242e7).
+func TestRecordCombatAutoFlushAtBatchSize(t *testing.T) {
+	db := newFakeDB(t, false)
+	dlw := &DecisionLogWriter{
+		db:        db,
+		decisions: make([]*DecisionRecord, 0, flushBatchSize),
+		combat:    make([]*CombatRecord, 0, flushBatchSize),
+	}
+
+	for i := 0; i < flushBatchSize; i++ {
+		dlw.RecordCombat(&CombatRecord{SessionID: "s1", RoundNumber: i + 1, AttackerName: "p1"})
+	}
+
+	dlw.mu.Lock()
+	defer dlw.mu.Unlock()
+	if len(dlw.combat) != 0 {
+		t.Errorf("expected combat buffer to auto-flush at batch size %d, got %d buffered", flushBatchSize, len(dlw.combat))
+	}
+}
+
 // TestNewMockDecisionLogWriter_RecordAndStop guards DP-1017: the mock writer
 // must be safe for the construct/record/Stop path (no nil-panic from a nil
 // writer). The writer has no database handle, so the buffered-record path that

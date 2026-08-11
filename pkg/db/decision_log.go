@@ -316,7 +316,12 @@ func (dlw *DecisionLogWriter) RecordDecision(r *DecisionRecord) {
 func (dlw *DecisionLogWriter) RecordCombat(r *CombatRecord) {
 	dlw.mu.Lock()
 	dlw.combat = append(dlw.combat, r)
+	shouldFlush := len(dlw.combat) >= flushBatchSize
 	dlw.mu.Unlock()
+
+	if shouldFlush {
+		dlw.Flush()
+	}
 }
 
 // HashPlayerName returns a pseudonymized name for human players.
