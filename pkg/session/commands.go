@@ -245,6 +245,7 @@ func init() {
 	registerCommand("thaw", wrapArgs(cmdThaw), "Thaw a frozen player.")
 	registerCommand("pardon", wrapArgs(cmdPardon), "Pardon a player's outlaw flag.")
 	registerCommand("notitle", wrapArgs(cmdNotitle), "Toggle a player's notitle flag.")
+	registerCommand("mute", wrapArgs(cmdMute), "Toggle a player's squelch (PLR_NOSHOUT) flag.")
 	registerCommand("show", wrapArgs(cmdShow), "Show system info (players/uptime/stats/reset).")
 	registerCommand("dark", wrapArgs(cmdDark), "Stop combat in the current room.")
 	registerCommand("syslog", wrapArgs(cmdSyslog), "Toggle system logging level.")
