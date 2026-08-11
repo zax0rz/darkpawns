@@ -270,7 +270,14 @@ func (w *World) SaveClans() {
 // ---------------------------------------------------------------------------
 
 func (w *World) sendClanFormat(ch *Player) {
-	cIdx, _ := w.Clans.FindClanByID(ch.ClanID)
+	// Guard against an uninitialized clan manager (e.g. a minimal/harness world
+	// that never loaded data/clans.json). C clan.c:find_clan_by_id returns -1
+	// for a missing clan, so a nil manager is equivalent to "no clans loaded"
+	// → cIdx = -1 (no clan), which is the right answer for a clanless mortal.
+	cIdx := -1
+	if w.Clans != nil {
+		cIdx, _ = w.Clans.FindClanByID(ch.ClanID)
+	}
 	r := ch.ClanRank
 
 	ch.SendMessage("Clan commands available to you:\r\n" +
