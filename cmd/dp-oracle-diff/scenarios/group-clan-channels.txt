@@ -1,0 +1,56 @@
+# Group/clan channel rejection paths — gtell/gsay (do_gsay) + ctell (do_ctell).
+#
+# Three registered, mortal-legal, deterministic, RNG-free channel commands that
+# had no oracle scenario, probed via their no-group / no-clan rejections from a
+# fresh mortal (no AFF_GROUP, ClanID==0):
+#
+# - gtell / gsay (act.comm.c do_gsay, interpreter.c :471/:521 @L0): not in a
+#   group → "But you are not the member of a group!". The Go cmdGtell already
+#   matches C (it gates on InGroup first). Green, no fix.
+# - ctell (act.comm.c do_ctell, interpreter.c :399 @L0): a clanless mortal is
+#   rejected FIRST → "You're not part of a clan.". The Go cmdCTell formerly
+#   checked arguments before clan (and even then broadcast to nobody, printing
+#   "You tell your clan, '...'") — fixed to gate on ClanID/Rank first, matching
+#   C's order and message.
+#
+# Self-only output; no observer peer. (group/clan themselves — do_group's
+# print_group and do_clan's clan.c listing — are deeper displays deferred to a
+# follow-up; this scenario covers only the channel-send rejections.)
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Chanact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Chanact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+gtell hello
+gsay hello
+ctell hello
+ctell
