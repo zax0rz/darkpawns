@@ -76,7 +76,7 @@ func (w *World) doDisplay(ch *Player, me *MobInstance, cmd string, arg string) b
 		ch.SetPlrFlag(PrfDispmove, true)
 		ch.SetPlrFlag(PrfDispTank, true)
 		ch.SetPlrFlag(PrfDispTarget, true)
-		ch.SendMessage("Ok.\r\n")
+		ch.SendMessage("Okay.\r\n") // C OK macro (config.c:92) is "Okay.\r\n"
 		return true
 	}
 
@@ -86,24 +86,29 @@ func (w *World) doDisplay(ch *Player, me *MobInstance, cmd string, arg string) b
 	ch.SetPlrFlag(PrfDispTank, false)
 	ch.SetPlrFlag(PrfDispTarget, false)
 
-	if !strings.EqualFold(arg, "off") {
-		for _, c := range strings.ToLower(arg) {
-			switch c {
-			case 'h':
-				ch.SetPlrFlag(PrfDisphp, true)
-			case 'f':
-				ch.SetPlrFlag(PrfDispTarget, true)
-			case 'm':
-				ch.SetPlrFlag(PrfDispmmana, true)
-			case 't':
-				ch.SetPlrFlag(PrfDispTank, true)
-			case 'v':
-				ch.SetPlrFlag(PrfDispmove, true)
-			}
+	// C do_display (act.other.c:1053-1055): "off" clears the bits and returns
+	// silently — the `if (!str_cmp(argument,"off")) return;` skips the trailing
+	// send_to_char(OK). Mirror the silent early return.
+	if strings.EqualFold(arg, "off") {
+		return true
+	}
+
+	for _, c := range strings.ToLower(arg) {
+		switch c {
+		case 'h':
+			ch.SetPlrFlag(PrfDisphp, true)
+		case 'f':
+			ch.SetPlrFlag(PrfDispTarget, true)
+		case 'm':
+			ch.SetPlrFlag(PrfDispmmana, true)
+		case 't':
+			ch.SetPlrFlag(PrfDispTank, true)
+		case 'v':
+			ch.SetPlrFlag(PrfDispmove, true)
 		}
 	}
 
-	ch.SendMessage("Ok.\r\n")
+	ch.SendMessage("Okay.\r\n") // C OK macro (config.c:92) is "Okay.\r\n"
 	return true
 }
 

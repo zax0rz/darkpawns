@@ -1,0 +1,58 @@
+# display (do_display) preference-flag toggle — oracle-coverage expansion, 2026-08-11.
+#
+# `display` (:417) and `prompt` (:619) both map to do_display in C
+# (src/act.other.c:1024). This scenario probes the C-faithful `display` path
+# (pkg/game/other_settings.go doDisplay via ExecDisplay). All probes are
+# mortal-legal, level 0, deterministic (no RNG, no world state).
+#
+# The divergence this catches: C do_display's "off" branch clears the five
+# PRF_DISP* bits and RETURNS SILENTLY (act.other.c:1053-1055 — the
+# `if (!str_cmp(argument,"off")) return;` skips the trailing send_to_char(OK)).
+# Go's doDisplay cleared the bits but fell through to send "Ok.\r\n" for "off"
+# too. Fixed to mirror C's silent return.
+#
+# NOT probed here (filed as a DP issue with oracle evidence, not shipped wrong):
+# - prompt — C aliases `prompt` to do_display (the same flag toggle), but the
+#   Go port reimagined `prompt` (pkg/session/cmd_account.go cmdPrompt) as a
+#   bash-style custom prompt-string setter (%h/%H, "Prompt set to: ..."). That
+#   is a deliberate-looking design divergence, not a mechanical mis-port — it
+#   needs a rules call, not a silent revert. Its own DP issue.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Goldact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Goldact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+display
+display all
+display off
+display hmv
+display none

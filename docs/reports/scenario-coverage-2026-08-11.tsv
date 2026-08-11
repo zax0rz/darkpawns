@@ -1,7 +1,7 @@
 command	reach_status	coverage	scenarios
 # Assumption: player level = 1 (scenarios run as fresh mortals).
 # Resolution table: pkg/session/command_order.tsv (508 rows).
-# Scenario files parsed: 48.
+# Scenario files parsed: 49.
 '	registered	probed	command-surface-punctuation.txt
 .	registered	probed	command-surface-punctuation.txt
 :	registered	probed	command-surface-punctuation.txt
@@ -98,7 +98,7 @@ dig	implemented-unwired	never-probed
 disarm	registered	never-probed	
 disembowel	registered	never-probed	
 dismount	registered	never-probed	
-display	registered	never-probed	
+display	registered	probed	display-cluster.txt
 dns	missing	never-probed	
 doh	social	never-probed	
 donate	registered	never-probed	
