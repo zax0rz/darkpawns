@@ -1245,39 +1245,28 @@ func CmdStrike(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, result)
 }
 
-// CmdCompare handles the compare command.
+// CmdCompare handles the compare command — a faithful port of do_compare
+// (src/new_cmds.c:1952). C half_chops the argument into (arg, arg2) — the first
+// word and the remainder — and does NOT gate the command on a skill (APPRAISE
+// only sets the success probability inside DoCompare). The prior Go wrapper
+// invented a CanUseSkill gate, a "compare to equipped" path, and an unreachable
+// "Compare what and what?" — all removed here.
 func CmdCompare(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
 		return fmt.Errorf("not logged in")
 	}
-
 	ch := s.GetPlayer()
-	if ch.GetPosition() == combat.PosFighting {
-		return s.SendMessage("You're pretty busy right now!\n\r")
+
+	// half_chop: first word → arg, the rest → arg2.
+	arg, arg2 := "", ""
+	if len(args) > 0 {
+		arg = args[0]
+	}
+	if len(args) > 1 {
+		arg2 = strings.Join(args[1:], " ")
 	}
 
-	canUse, msg := game.CanUseSkill(ch, game.SkillCompare)
-	if !canUse {
-		return s.SendMessage(msg + "\r\n")
-	}
-
-	if len(args) == 0 {
-		return s.SendMessage("Compare what and what?\r\n")
-	}
-
-	var objName1, objName2 string
-	var compareToEquipped bool
-
-	if len(args) == 1 {
-		// Compare with equipped item
-		objName1 = args[0]
-		compareToEquipped = true
-	} else {
-		objName1 = args[0]
-		objName2 = strings.Join(args[1:], " ")
-	}
-
-	result := game.DoCompare(ch, objName1, objName2, compareToEquipped)
+	result := game.DoCompare(ch, arg, arg2)
 	return sendSkillResult(s, ch, nil, result)
 }
 

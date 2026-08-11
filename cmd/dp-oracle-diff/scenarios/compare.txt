@@ -1,0 +1,53 @@
+# compare (do_compare) — faithful port verification.
+#
+# compare (do_compare, src/new_cmds.c:1952) had two fidelity bugs the oracle
+# surfaced: the Go wrapper invented a CanUseSkill gate (C uses APPRAISE only
+# for the success prob, never to gate), and Go's DoCompare was a stub
+# ("You don't have that item." / "X vs Y: comparing..."). Both fixed to C's
+# verbatim flow. This scenario probes the deterministic rejection paths (the
+# RNG comparison path needs two comparable items, which the fresh-mortal
+# fixture can't supply — left TODO(port) in DoCompare).
+#
+# Fresh Warrior inventory (C do_start obj_to_char, all in carrying — none
+# auto-wielded): a small sword (8037, weapon), a frayed tunic (8019, armor),
+# a pack. Probes:
+# - compare            → empty arg → "Looks like you don't have those objects.."
+# - compare sword sword→ same object → "They're the same thing!"
+# - compare sword tunic→ weapon vs armor (type mismatch) → "You can't compare those things!"
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cmpactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cmpactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+compare
+compare sword sword
+compare sword tunic
