@@ -13,7 +13,7 @@ func cmdGoto(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Goto where? (room number)")
+		s.Send("You must supply a room number or name.\r\n")
 		return nil
 	}
 	dest, err := strconv.Atoi(args[0])

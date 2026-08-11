@@ -1,0 +1,53 @@
+# Wizard-verb no-arg/usage paths — last / vnum / stat / goto (God harness).
+#
+# Four LVL_IMMORT wiz verbs, probed via their deterministic no-arg/usage paths
+# (no target, no RNG). The God (crowned LVL_IMPL by the empty-players fixture,
+# db.c:3016) is the actor.
+#
+# - last (do_last)              — no-arg → "For whom do you wish to search?"
+# - vnum (do_vnum)              — <2 args → "Usage: vnum { obj | mob } <name>"
+# - stat (do_stat)              — no-arg → "Stats on who or what?"
+# - goto (do_goto/find_target_room) — no-arg → "You must supply a room number or name."
+#
+# The Go wrappers formerly printed invented Usage strings for vnum/stat/goto
+# ("Usage: vnum <mob|obj|room> ...", "Usage: stat ...", "Goto where? ...");
+# fixed to C verbatim. `last` was already faithful.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizusager
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizusager
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+last
+vnum
+stat
+goto
