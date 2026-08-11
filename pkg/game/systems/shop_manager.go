@@ -226,54 +226,49 @@ func (sm *ShopManager) processSell(shop *Shop, player *game.Player, item common.
 		return false, "The shopkeeper isn't interested in that type of item."
 	}
 
-	// Check if item is in player's inventory
 	// Type assert to *game.ObjectInstance for Inventory methods
 	gameItem, ok := item.(*game.ObjectInstance)
 	if !ok {
 		return false, "Internal error: item type mismatch"
 	}
-	if !player.Inventory.RemoveItem(gameItem) {
-		return false, "You don't have that item."
-	}
 
 	// Calculate price (player's CHA affects sell bonus)
 	price := shop.CalculateBuyPrice(item, player.Stats.Cha)
 
-	// Check keeper gold atomically — src/shop.h:63 bankAccount, src/shop.c missing_cash1.
-	// TryDeductGold returns false without modifying Gold if the shop cannot pay,
-	// preventing concurrent sells from overdrawing the keeper.
-	if !shop.TryDeductGold(price) {
-		if err := player.Inventory.AddItem(gameItem); err != nil {
-			slog.Error("shop sell rollback: restore item failed", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
-		}
-		return false, "Sorry, I don't have enough cash to buy that."
-	}
+	// C shop.c:763 shopping_sell — verify the shop can buy BEFORE the item
+	// leaves the player, so no rejection path can orphan it.
 
-	// Check if shop has inventory space
+	// 1. Space check (no mutation).
 	if len(shop.GetInventory()) >= shop.MaxItems {
-		// Refund the gold we already deducted.
-		shop.AddGold(price)
-		if err := player.Inventory.AddItem(gameItem); err != nil {
-			slog.Error("shop sell rollback: inventory full, failed to restore item", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
-		}
 		return false, "The shop's inventory is full."
 	}
 
-	// Transfer gold: keeper pays player.
-	player.Gold += price
-
-	// Transfer item to shop
-	if g, ok := item.(*game.ObjectInstance); ok {
-		g.Location = game.LocNowhere()
+	// 2. Gold: atomic check-and-deduct (no item mutation yet). TryDeductGold
+	// returns false without modifying Gold if the shop cannot pay, preventing
+	// concurrent sells from overdrawing the keeper (DP-660/DP-757).
+	if !shop.TryDeductGold(price) {
+		return false, "Sorry, I don't have enough cash to buy that."
 	}
-	if !shop.AddItem(item) {
-		// Rollback
+
+	// 3. Only now remove from the player. If the item isn't actually there,
+	//    refund the gold we just deducted.
+	if !player.Inventory.RemoveItem(gameItem) {
 		shop.AddGold(price)
+		return false, "You don't have that item."
+	}
+
+	// 4. Pay the player and hand the item to the shop.
+	player.Gold += price
+	gameItem.Location = game.LocNowhere()
+	if !shop.AddItem(item) {
+		// Rollback: un-pay, refund shop, restore item (just removed, so this
+		// restore is safe).
 		player.Gold -= price
+		shop.AddGold(price)
 		if err := player.Inventory.AddItem(gameItem); err != nil {
 			slog.Error("shop sell rollback: failed shop add, failed to restore item", "player", player.Name, "obj_vnum", gameItem.VNum, "error", err)
 		}
-		return false, "Failed to add item to shop inventory."
+		return false, "The shopkeeper can't take that right now."
 	}
 
 	return true, fmt.Sprintf("You sell %s for %d gold.", item.GetShortDesc(), price)
