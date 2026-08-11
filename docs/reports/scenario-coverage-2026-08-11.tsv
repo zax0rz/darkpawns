@@ -1,7 +1,7 @@
 command	reach_status	coverage	scenarios
 # Assumption: player level = 1 (scenarios run as fresh mortals); probes in empty-players (God-harness) scenarios resolve at LVL_IMPL=40.
 # Resolution table: pkg/session/command_order.tsv (508 rows).
-# Scenario files parsed: 52.
+# Scenario files parsed: 53.
 '	registered	probed	command-surface-punctuation.txt
 .	registered	probed	command-surface-punctuation.txt
 :	registered	probed	command-surface-punctuation.txt
@@ -208,7 +208,7 @@ kyo	registered	never-probed
 lambada	social	never-probed	
 last	registered	never-probed	
 laugh	social	never-probed	
-leave	registered	never-probed	
+leave	registered	probed	order-leave.txt
 leer	social	never-probed	
 levels	registered	probed	pager-navigation.txt
 lick	social	never-probed	
@@ -262,7 +262,7 @@ offer	specproc	never-probed
 olc	missing	never-probed	
 olist	registered	never-probed	
 open	registered	probed	hunger-thirst.txt,object-door-messages.txt,object-doors.txt,object-inventory.txt
-order	registered	never-probed	
+order	registered	probed	order-leave.txt
 orgasm	missing	never-probed	
 pace	social	never-probed	
 page	registered	never-probed	
