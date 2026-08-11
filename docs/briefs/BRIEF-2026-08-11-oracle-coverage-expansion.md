@@ -47,7 +47,8 @@ down cluster by cluster.** `make scenario-coverage` is that metric for the oracl
      C's intent is genuinely ambiguous, **stop forcing it**: file a DP issue with the diff evidence
      (R5d) and leave that command flagged rather than shipped wrong.
 5. **Gate + ship.** `gofumpt -w` every Go file you touched; `make lint` and `go test ./...` clean;
-   update the coverage report so the metric visibly moves; open the PR. **Do not merge; do not
+   report the probed-count delta in the PR body (the `scenario-coverage-*.tsv` is gitignored —
+   do NOT commit it; it serializes every PR on one generated file); open the PR. **Do not merge; do not
    self-approve** — surface findings/uncertainties as Linear DP comments.
 
 ## Hard rules
@@ -116,7 +117,8 @@ THE LOOP (repeat; each iteration = one PR):
    green; C is authority (R2). If deep/ambiguous, STOP forcing it: file a DP issue with
    diff evidence (R5d) and leave that command flagged rather than wrong.
 5. gofumpt -w every Go file touched; `make lint` and `go test ./...` clean; update the
-   coverage report so the metric moves; open the PR.
+   probed-count delta in the PR body (scenario-coverage-*.tsv is gitignored — do NOT commit it);
+   open the PR.
 
 HARD RULES:
 - Fidelity Law is supreme. Red oracle = the PORT is wrong until proven otherwise.

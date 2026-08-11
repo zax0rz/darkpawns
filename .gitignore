@@ -94,3 +94,10 @@ darkpawns-server
 
 # Claude Code local tooling
 .claude/
+
+# Generated scenario-coverage report — a derived artifact of `make
+# scenario-coverage` (scripts/gen_scenario_coverage.py). Committing it in every
+# scenario PR serialized all of them on one generated file (each PR regenerates
+# it -> add/add conflicts -> a rebase per PR). It's reproducible on demand and
+# by the weekly cron; do NOT commit it. (Cron that wants a snapshot: `git add -f`.)
+docs/reports/scenario-coverage-*.tsv
