@@ -1,0 +1,56 @@
+# Mortal status/preference batch — wimpy / color / qsay.
+#
+# Three registered, mortal-legal, deterministic, RNG-free commands that had no
+# oracle scenario. All three were already faithful in Go; this scenario just
+# covers them. Probed from a fresh hometown-K mortal (default wimpy 5, color
+# level "off", not questing):
+#
+# - wimpy (do_wimpy no-arg, act.other.c) — "Your current wimp level is 5 hit
+#   points."
+# - color (do_color no-arg, act.informative.c) — "Your current color level is
+#   off."
+# - qsay  (do_qcomm SCMD_QSAY, act.comm.c) — a non-questing mortal hits the
+#   PRF_QUEST gate: "You aren't even part of the quest!" (sibling of qecho,
+#   which is probed via the God harness).
+#
+# Self-only output; no observer peer.
+# (afk was investigated alongside these but deferred: C renders an "AFK "
+# prompt prefix via make_prompt when AFK (comm.c:1148) that Go's prompt
+# renderer doesn't — a prompt-system class fix, not the afk command itself.)
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Prefact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Prefact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+wimpy
+color
+qsay hello
