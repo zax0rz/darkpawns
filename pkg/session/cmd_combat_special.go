@@ -8,7 +8,7 @@ import (
 // cmdOrder — order a charmed pet or follower to perform a command.
 func cmdOrder(s *Session, args []string) error {
 	if len(args) < 2 {
-		s.Send("Order whom to do what?")
+		s.Send("Order who to do what?\r\n")
 		return nil
 	}
 
@@ -36,6 +36,8 @@ func cmdOrder(s *Session, args []string) error {
 		return nil
 	}
 
-	s.Send("No follower by that name here.")
+	// No matching target in the room — C do_order (act.offensive.c): when
+	// get_char_room_vis fails and the name isn't an abbreviation of "followers".
+	s.Send("That person isn't here.\r\n")
 	return nil
 }

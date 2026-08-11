@@ -1,0 +1,55 @@
+# Auxiliary manipulation/movement verbs — order (do_order) + leave (do_leave).
+#
+# Two registered, mortal-legal, deterministic, RNG-free commands that had no
+# oracle scenario, probed via their rejection paths from the hometown-K newbie
+# start room (8162 Temple Infirmary):
+#
+# - order (act.offensive.c do_order, interpreter.c :601 @LVL1): a fresh mortal
+#   has no followers. Bare "order" → "Order who to do what?"; an unknown target
+#   → "That person isn't here." The Go port formerly printed invented text
+#   ("Order whom to do what?" / "No follower by that name here.") — fixed to
+#   C verbatim. (The with-follower ordering path is out of scope: no follower
+#   exists to exercise it.)
+# - leave (act.movement.c do_leave, interpreter.c :491): 8162 is INDOORS and
+#   every reachable room in the newbie graph (8161/8146/8004) is also INDOORS,
+#   so do_leave finds no exit to the outside → "I see no obvious exits to the
+#   outside." The Go port (DoLeave) already matches C here — green, no fix.
+#
+# Self-only output; no observer peer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Ordleaver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ordleaver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+order
+order Nobody jump
+leave
