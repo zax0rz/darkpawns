@@ -1,6 +1,10 @@
 package boards
 
 import (
+	"bytes"
+	"encoding/binary"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -222,5 +226,71 @@ func TestBoardSystem_DisplayMsg_InvalidNumber(t *testing.T) {
 	}
 	if !strings.Contains(out.lastMessage(), "imagination") {
 		t.Fatalf("expected out-of-range message, got %q", out.lastMessage())
+	}
+}
+
+func TestBoardSystem_LoadTruncatedFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, defaultBoardInfo[0].Filename)
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	heading := "Mon Jan  2 15:04:05 2006 (Alice) :: truncated"
+	headingBytes := []byte(heading + "\x00")
+	const messageLen = 64 // declared longer than the truncated body actually written
+
+	var buf bytes.Buffer
+	if err := binary.Write(&buf, binary.LittleEndian, int32(1)); err != nil {
+		t.Fatal(err)
+	}
+	if err := binary.Write(&buf, binary.LittleEndian, int32(0)); err != nil { // SlotNum
+		t.Fatal(err)
+	}
+	if err := binary.Write(&buf, binary.LittleEndian, int32(0)); err != nil { // heading pointer padding
+		t.Fatal(err)
+	}
+	if err := binary.Write(&buf, binary.LittleEndian, int32(50)); err != nil { // Level
+		t.Fatal(err)
+	}
+	if err := binary.Write(&buf, binary.LittleEndian, int32(len(headingBytes))); err != nil { // HeadingLen
+		t.Fatal(err)
+	}
+	if err := binary.Write(&buf, binary.LittleEndian, int32(messageLen)); err != nil { // MessageLen
+		t.Fatal(err)
+	}
+	buf.Write(headingBytes)
+	buf.Write([]byte("trun")) // truncated body: far fewer bytes than messageLen
+
+	if err := os.WriteFile(path, buf.Bytes(), 0o640); err != nil {
+		t.Fatal(err)
+	}
+
+	bs := InitBoards(dir)
+	if bs.numOfMsgs[0] != 1 {
+		t.Fatalf("numOfMsgs[0] = %d, want 1", bs.numOfMsgs[0])
+	}
+	if !bs.msgStorageTaken[0] {
+		t.Fatal("slot from truncated body read must be marked taken")
+	}
+
+	ch := newMockBoardPlayer("Bob", 10, 1001)
+	magic := bs.WriteMessage(0, ch, "second message")
+	if magic != BoardMagic {
+		t.Fatalf("WriteMessage magic = %d, want %d", magic, BoardMagic)
+	}
+
+	bs.mu.RLock()
+	defer bs.mu.RUnlock()
+	if bs.numOfMsgs[0] != 2 {
+		t.Fatalf("numOfMsgs[0] = %d, want 2", bs.numOfMsgs[0])
+	}
+	slotA := bs.msgIndex[0][0].SlotNum
+	slotB := bs.msgIndex[0][1].SlotNum
+	if slotA < 0 || slotB < 0 {
+		t.Fatalf("expected valid slots, got %d and %d", slotA, slotB)
+	}
+	if slotA == slotB {
+		t.Fatalf("slot double-booking: msgIndex[0][0].SlotNum == msgIndex[0][1].SlotNum == %d", slotA)
 	}
 }
