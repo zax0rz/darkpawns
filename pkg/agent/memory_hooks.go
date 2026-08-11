@@ -244,7 +244,16 @@ func ConvertNarrativeMemoryToEvent(mem *db.NarrativeMemory, rawEvent interface{}
 
 	// Add raw event data if provided
 	if rawEvent != nil {
-		if data, err := json.Marshal(rawEvent); err == nil {
+		data, err := json.Marshal(rawEvent)
+		if err != nil {
+			slog.Warn(
+				"failed to marshal raw event data",
+				"agent_name", mem.AgentName,
+				"event_type", mem.EventType,
+				"memory_id", mem.ID,
+				"error", err,
+			)
+		} else {
 			event.RawEventData = string(data)
 		}
 	}
