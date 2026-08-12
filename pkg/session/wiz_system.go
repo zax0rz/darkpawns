@@ -33,7 +33,7 @@ func cmdSnoop(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Snoop whom?")
+		s.Send("You aren't snooping anyone.\r\n")
 		return nil
 	}
 	targetName := args[0]

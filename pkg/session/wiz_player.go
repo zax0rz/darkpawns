@@ -154,7 +154,7 @@ func cmdSwitch(s *Session, args []string) error {
 	}
 
 	if len(args) == 0 {
-		s.Send("Switch into whom?\r\n")
+		s.Send("Switch with who?\r\n")
 		return nil
 	}
 	targetName := strings.ToLower(args[0])
@@ -347,7 +347,7 @@ func cmdAdvance(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) < 2 {
-		s.Send("Advance whom to what level?")
+		s.Send("Advance who?\r\n")
 		return nil
 	}
 	targetName := args[0]
