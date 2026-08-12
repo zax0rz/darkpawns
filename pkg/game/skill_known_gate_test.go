@@ -8,19 +8,23 @@ import (
 
 // TestCanUseSkill_Audited_UnknownSkill_ExactMessages — for each Wave-1 combat
 // skill, a character with GetSkill==0 is blocked with the command's exact C
-// message (bare — the handler appends "\r\n"). C gates purely on
-// !GET_SKILL(ch, SKILL_X); there is no class/level check. DP-1206.
+// message INCLUDING its C-exact terminator (handlers send it as-is, no append).
+// C gates purely on !GET_SKILL(ch, SKILL_X); there is no class/level check.
+// DP-1206. Terminators are "\r\n" except cutthroat/slug ("\n\r"; new_cmds.c:561,
+// new_cmds2.c:829) — the reason the messages carry their own terminator.
 func TestCanUseSkill_Audited_UnknownSkill_ExactMessages(t *testing.T) {
 	cases := []struct {
 		skill string
-		want  string // bare C message (handler appends \r\n)
+		want  string // full C message with its own terminator
 	}{
-		{SkillBackstab, "You have no idea how."},
-		{SkillBash, "You'd better leave all the martial arts to fighters."},
-		{SkillKick, "You'd better leave all the martial arts to fighters."},
-		{SkillTrip, "You'd better leave the sneaky stuff to the thieves."},
-		{SkillHeadbutt, "You aren't qualified to headbutt anyone!"},
-		{SkillRescue, "But only true warriors can do this!"},
+		{SkillBackstab, "You have no idea how.\r\n"},
+		{SkillBash, "You'd better leave all the martial arts to fighters.\r\n"},
+		{SkillKick, "You'd better leave all the martial arts to fighters.\r\n"},
+		{SkillTrip, "You'd better leave the sneaky stuff to the thieves.\r\n"},
+		{SkillHeadbutt, "You aren't qualified to headbutt anyone!\r\n"},
+		{SkillRescue, "But only true warriors can do this!\r\n"},
+		{SkillCutthroat, "You're not trained in slitting throats!\n\r"},
+		{SkillSlug, "You couldn't slug your way out of a wet paper bag.\n\r"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.skill, func(t *testing.T) {
@@ -33,7 +37,7 @@ func TestCanUseSkill_Audited_UnknownSkill_ExactMessages(t *testing.T) {
 				t.Errorf("skill %q with GetSkill==0 should be blocked", tc.skill)
 			}
 			if msg != tc.want {
-				t.Errorf("skill %q unknown-message = %q, want %q (bare; handler appends \\r\\n)",
+				t.Errorf("skill %q unknown-message = %q, want %q (full message, own terminator)",
 					tc.skill, msg, tc.want)
 			}
 		})
@@ -107,8 +111,8 @@ func TestCanUseSkill_Legacy_Unaudited_Unchanged(t *testing.T) {
 	if canUse {
 		t.Error("mage with circle=0 on the legacy path should be blocked")
 	}
-	if msg != "You have no idea how." {
-		t.Errorf("legacy class-block message = %q, want %q (unchanged)", msg, "You have no idea how.")
+	if msg != "You have no idea how.\r\n" {
+		t.Errorf("legacy class-block message = %q, want %q (unchanged)", msg, "You have no idea how.\r\n")
 	}
 
 	// A warrior below the learn level → the legacy level message (exact).
@@ -121,7 +125,7 @@ func TestCanUseSkill_Legacy_Unaudited_Unchanged(t *testing.T) {
 	// legacy behavior is unchanged — just assert it returns a non-empty legacy
 	// message and doesn't leak an audited message.
 	_, legacyMsg := CanUseSkill(lowWarrior, SkillCircle)
-	if legacyMsg == "You'd better leave all the martial arts to fighters." {
+	if legacyMsg == "You'd better leave all the martial arts to fighters.\r\n" {
 		t.Errorf("legacy skill circle leaked an audited message: %q", legacyMsg)
 	}
 }

@@ -568,7 +568,7 @@ func CmdBackstab(s SessionInterface, args []string) error {
 	// (SkillUnknownMsg, DP-1206).
 	canUse, msg := game.CanUseSkill(ch, game.SkillBackstab)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Backstab who?\r\n")
@@ -600,7 +600,7 @@ func CmdBash(s SessionInterface, args []string) error {
 	ch := s.GetPlayer()
 	canUse, msg := game.CanUseSkill(ch, game.SkillBash)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	// Find target — if in combat, default to fighting target
@@ -639,7 +639,7 @@ func CmdKick(s SessionInterface, args []string) error {
 	ch := s.GetPlayer()
 	canUse, msg := game.CanUseSkill(ch, game.SkillKick)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	var target combat.Combatant
@@ -677,7 +677,7 @@ func CmdTrip(s SessionInterface, args []string) error {
 	ch := s.GetPlayer()
 	canUse, msg := game.CanUseSkill(ch, game.SkillTrip)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	var target combat.Combatant
@@ -721,7 +721,7 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 	}
 	canUse, msg := game.CanUseSkill(ch, game.SkillHeadbutt)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	var target combat.Combatant
@@ -761,7 +761,7 @@ func CmdRescue(s SessionInterface, args []string) error {
 	// (SkillUnknownMsg, DP-1206).
 	canUse, msg := game.CanUseSkill(ch, game.SkillRescue)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Whom do you want to rescue?\r\n")
@@ -795,7 +795,7 @@ func CmdDisembowel(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 	if canUse, msg := game.CanUseSkill(ch, game.SkillDisembowel); !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	var target combat.Combatant
 	var found bool
@@ -826,7 +826,7 @@ func CmdDragonKick(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 	if canUse, msg := game.CanUseSkill(ch, game.SkillDragonKick); !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	var target combat.Combatant
 	var found bool
@@ -857,7 +857,7 @@ func CmdTigerPunch(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 	if canUse, msg := game.CanUseSkill(ch, game.SkillTigerPunch); !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	var target combat.Combatant
 	var found bool
@@ -888,7 +888,7 @@ func CmdShoot(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 	if canUse, msg := game.CanUseSkill(ch, game.SkillShoot); !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Shoot whom?\r\n")
@@ -969,7 +969,7 @@ func CmdSubdue(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 	if canUse, msg := game.CanUseSkill(ch, game.SkillSubdue); !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Subdue who?\r\n")
@@ -992,7 +992,7 @@ func CmdSleeper(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 	if canUse, msg := game.CanUseSkill(ch, game.SkillSleeper); !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Use a sleeper hold on who?\r\n")
@@ -1015,7 +1015,7 @@ func CmdNeckbreak(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 	if canUse, msg := game.CanUseSkill(ch, game.SkillNeckbreak); !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Neckbreak whom?\r\n")
@@ -1038,7 +1038,7 @@ func CmdAmbush(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 	if canUse, msg := game.CanUseSkill(ch, game.SkillAmbush); !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Ambush whom?\r\n")
@@ -1140,7 +1140,7 @@ func CmdCarve(s SessionInterface, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	if len(args) == 0 {
-		return s.SendMessage("You want to carve what?!?!\r\n")
+		return s.SendMessage("You want to carve what?!?\r\n")
 	}
 
 	ch := s.GetPlayer()
@@ -1150,7 +1150,7 @@ func CmdCarve(s SessionInterface, args []string) error {
 
 	canUse, msg := game.CanUseSkill(ch, game.SkillCarve)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	targetName := strings.ToLower(strings.Join(args, " "))
@@ -1180,12 +1180,9 @@ func CmdCutthroat(s SessionInterface, args []string) error {
 	// throats!" regardless of args.
 	canUse, msg := game.CanUseSkill(ch, game.SkillCutthroat)
 	if !canUse {
-		// C do_cutthroat (new_cmds.c:561) terminates the no-skill message with
-		// "\n\r", not "\r\n" like every other SkillUnknownMsg entry — matching
-		// the no-arg "Cut what throat where?\n\r" line below. cutthroat has no
-		// SkillPosReq entry, so skillPositionGate never rejects it; the only
-		// message reaching here is the no-skill line, so "\n\r" is unconditional.
-		return s.SendMessage(msg + "\n\r")
+		// msg carries its own C-exact terminator (cutthroat's is "\n\r",
+		// new_cmds.c:561; see SkillUnknownMsg). Send as-is — no append.
+		return s.SendMessage(msg)
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Cut what throat where?\n\r")
@@ -1216,7 +1213,7 @@ func CmdStrike(s SessionInterface, args []string) error {
 	ch := s.GetPlayer()
 	canUse, msg := game.CanUseSkill(ch, game.SkillStrike)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	// Determine target
@@ -1297,7 +1294,7 @@ func CmdScan(s SessionInterface, args []string) error {
 	ch := s.GetPlayer()
 	canUse, msg := game.CanUseSkill(ch, game.SkillScan)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	world := s.GetWorld()
@@ -1321,7 +1318,7 @@ func CmdSharpen(s SessionInterface, args []string) error {
 
 	canUse, msg := game.CanUseSkill(ch, game.SkillSharpen)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	objName := strings.Join(args, " ")
@@ -1374,7 +1371,7 @@ func CmdDisarm(s SessionInterface, args []string) error {
 	// carries the exact C message (SkillUnknownMsg, DP-1206).
 	canUse, msg := game.CanUseSkill(ch, game.SkillDisarm)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	// Determine target: either specified or current fighting target
@@ -1701,7 +1698,7 @@ func CmdBearhug(s SessionInterface, args []string) error {
 
 	canUse, msg := game.CanUseSkill(ch, game.SkillBearhug)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	var target combat.Combatant
@@ -1738,7 +1735,7 @@ func CmdSlug(s SessionInterface, args []string) error {
 
 	canUse, msg := game.CanUseSkill(ch, game.SkillSlug)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	var target combat.Combatant
@@ -1775,7 +1772,7 @@ func CmdSmackheads(s SessionInterface, args []string) error {
 
 	canUse, msg := game.CanUseSkill(ch, game.SkillSmackheads)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	if len(args) < 2 {
@@ -1864,7 +1861,7 @@ func CmdGroinrip(s SessionInterface, args []string) error {
 
 	canUse, msg := game.CanUseSkill(ch, game.SkillGroinrip)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	var target combat.Combatant
@@ -1949,7 +1946,7 @@ func CmdFleshAlter(s SessionInterface, args []string) error {
 
 	canUse, msg := game.CanUseSkill(ch, game.SkillFleshAlter)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	result := game.DoFleshAlter(ch)
@@ -1962,13 +1959,13 @@ func CmdSpike(s SessionInterface, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	if len(args) == 0 {
-		return s.SendMessage("Spike whom?\r\n")
+		return s.SendMessage("Whom do you wish to spike?\r\n")
 	}
 
 	ch := s.GetPlayer()
 	canUse, msg := game.CanUseSkill(ch, game.SkillSpike)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	targetName := strings.Join(args, " ")
@@ -1994,7 +1991,7 @@ func CmdStake(s SessionInterface, args []string) error {
 	ch := s.GetPlayer()
 	canUse, msg := game.CanUseSkill(ch, game.SkillStake)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	targetName := strings.Join(args, " ")
@@ -2054,7 +2051,7 @@ func CmdCharge(s SessionInterface, args []string) error {
 	ch := s.GetPlayer()
 	canUse, msg := game.CanUseSkill(ch, game.SkillCharge)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		return s.SendMessage(msg)
 	}
 
 	world := s.GetWorld()
