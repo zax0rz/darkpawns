@@ -784,8 +784,10 @@ func TestCmdCutthroat_NoArgs(t *testing.T) {
 	if err := CmdCutthroat(session, nil); err != nil {
 		t.Fatalf("CmdCutthroat: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "throat where") {
-		t.Errorf("expected 'throat where', got: %v", session.messages)
+	// C do_cutthroat: GET_SKILL checked before no-arg — a no-skill caller gets
+	// "You're not trained in slitting throats!" regardless of args.
+	if !strings.Contains(joinMessages(session.messages), "slitting throats") {
+		t.Errorf("expected skill-gate message, got: %v", session.messages)
 	}
 }
 
@@ -795,8 +797,9 @@ func TestCmdCutthroat_NoSkill(t *testing.T) {
 	if err := CmdCutthroat(session, []string{"target"}); err != nil {
 		t.Fatalf("CmdCutthroat: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	// C: "You're not trained in slitting throats!" (SkillUnknownMsg, DP-1206).
+	if !strings.Contains(joinMessages(session.messages), "slitting throats") {
+		t.Errorf("expected 'slitting throats', got: %v", session.messages)
 	}
 }
 

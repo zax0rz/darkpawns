@@ -1,0 +1,46 @@
+# Combat-skill no-skill rejection paths — disembowel / cutthroat.
+#
+# Two more combat skills audited into SkillUnknownMsg (DP-1206 Wave-2):
+# - disembowel (do_disembowel, act.offensive.c:234): GET_SKILL(DISEMBOWEL) first
+#   → "You have no idea how." CmdDisembowel already checked CanUseSkill first.
+# - cutthroat (do_cutthroat, new_cmds.c:559): GET_SKILL(CUTTHROAT) first →
+#   "You're not trained in slitting throats!" CmdCutthroat formerly checked the
+#   no-arg path first; reordered to skill-first.
+#
+# Fresh Human Warrior (neither skill). Self-only; no observer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Disemactr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Disemactr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+disembowel
+cutthroat
