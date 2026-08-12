@@ -17,14 +17,17 @@ func (w *World) doPeek(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
-	if arg == "" {
-		ch.SendMessage("Peek at whom?\r\n")
+	// C do_peek (act.other.c:1665): the class gate runs BEFORE the no-arg path
+	// — a non-thief/assassin mortal is rejected with "You're not a thief!"
+	// regardless of arguments.
+	if ch.Class != ClassThief && ch.Class != ClassAssassin && ch.GetLevel() < LVL_IMMORT {
+		ch.SendMessage("You're not a thief!\r\n")
 		return true
 	}
 
-	if ch.Class != ClassThief && ch.Class != ClassAssassin && ch.GetLevel() < LVL_IMMORT {
-		ch.SendMessage("You have no idea how to peek!\r\n")
+	arg = strings.TrimSpace(arg)
+	if arg == "" {
+		ch.SendMessage("Whom do you wish to peek at?\r\n")
 		return true
 	}
 
@@ -187,22 +190,26 @@ func (w *World) doAppraise(ch *Player, me *MobInstance, cmd string, arg string) 
 		return true
 	}
 
+	// C do_appraise (act.other.c:1786) draws number(1,101) at the TOP, before
+	// the no-arg/obj checks — so even a rejection consumes one stream draw. Move
+	// it here for draw parity (R3a); randRange is the shared dprng stream.
+	percent := randRange(1, 101)
+
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
-		ch.SendMessage("Appraise what?\r\n")
+		ch.SendMessage("What do you want to appraise?\r\n")
 		return true
 	}
 
 	// Find object in inventory
 	obj := w.findObjNear(ch, arg)
 	if obj == nil {
-		ch.SendMessage("You don't have that item.\r\n")
+		ch.SendMessage("You don't seem to have one of those...\r\n")
 		return true
 	}
 
 	cost := obj.Prototype.Cost
 	skill := ch.GetSkill("appraise")
-	percent := randRange(1, 101)
 
 	if percent > skill {
 		// Failed appraise — random value

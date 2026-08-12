@@ -1,0 +1,58 @@
+# Object-utility skill rejection paths — peek / steal / appraise.
+#
+# Three registered, mortal-legal commands probed via their deterministic
+# rejection paths from a fresh Human Warrior (not a thief/assassin; no peek;
+# carrying only the starting gear):
+#
+# - peek (do_peek, act.other.c:1665) — class gate (thief/assassin/immortal) runs
+#   FIRST → "You're not a thief!". Go doPeek formerly checked the no-arg path
+#   first and printed invented "You have no idea how to peek!"; reordered to
+#   class-first with C's verbatim message.
+# - steal (do_steal, act.other.c:309) — no target → "Steal what from who?" (Go
+#   CmdSteal already faithful).
+# - appraise (do_appraise, act.other.c:1784) — no-arg → "What do you want to
+#   appraise?"; obj-not-found → "You don't seem to have one of those...". C draws
+#   number(1,101) at the TOP of do_appraise (before the no-arg check), so even a
+#   rejection consumes one stream draw; Go doAppraise formerly drew it AFTER the
+#   checks and used invented messages. Fixed: draw moved to the top (R3a draw
+#   parity via the shared dprng stream) + C-verbatim messages.
+#
+# Self-only output; no observer peer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Utilact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Utilact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+peek
+steal
+appraise
+appraise foo
