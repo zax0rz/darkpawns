@@ -1215,8 +1215,8 @@ func TestCmdFleshAlter_NoSkill(t *testing.T) {
 	if err := CmdFleshAlter(session, nil); err != nil {
 		t.Fatalf("CmdFleshAlter: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	if !strings.Contains(joinMessages(session.messages), "altering your flesh") {
+		t.Errorf("expected 'altering your flesh', got: %v", session.messages)
 	}
 }
 
@@ -1322,8 +1322,8 @@ func TestCmdSmackheads_NoSkill(t *testing.T) {
 	if err := CmdSmackheads(session, []string{"one", "two"}); err != nil {
 		t.Fatalf("CmdSmackheads: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	if !strings.Contains(joinMessages(session.messages), "Rosie") {
+		t.Errorf("expected 'Rosie', got: %v", session.messages)
 	}
 }
 
