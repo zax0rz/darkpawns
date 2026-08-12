@@ -212,6 +212,8 @@ var SkillUnknownMsg = map[string]string{
 	SkillNeckbreak:  "What's that, idiot-san?\r\n",
 	SkillSlug:       "You couldn't slug your way out of a wet paper bag.\n\r", // C: \n\r (new_cmds2.c:829)
 	SkillStrike:     "Yeah, right.\r\n",
+	SkillSmackheads: "The only heads you're gonna smack are yours and Rosie's.\n\r", // C: \n\r (new_cmds.c:980)
+	SkillFleshAlter: "You know nothing of altering your flesh!\n\r",                 // C: \n\r (new_cmds.c:1900)
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
