@@ -1,0 +1,46 @@
+# Mortal no-arg batch (batch 7) — 9 faithful greens.
+# smackheads deferred: C "The only heads you're gonna smack are yours and Rosie's."
+# vs Go "You have no idea how." — needs SkillUnknownMsg audit.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Batsevenactr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Batsevenactr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+kai
+kyo
+zai
+zhen
+jin
+sleeper
+whod
+hcontrol
+mindlink
