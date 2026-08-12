@@ -197,14 +197,17 @@ var SkillPosReq = map[string]int{
 // and DoDisarm already gates faithfully on GetSkill==0 with the byte-exact
 // message (skills2.go:156).
 var SkillUnknownMsg = map[string]string{
-	SkillBackstab: "You have no idea how.",
-	SkillBash:     "You'd better leave all the martial arts to fighters.",
-	SkillKick:     "You'd better leave all the martial arts to fighters.",
-	SkillTrip:     "You'd better leave the sneaky stuff to the thieves.",
-	SkillHeadbutt: "You aren't qualified to headbutt anyone!",
-	SkillRescue:   "But only true warriors can do this!",
-	SkillDisarm:   "You'd better leave all the martial arts to fighters.",
-	SkillCharge:   "You couldn't charge if you wanted to!",
+	SkillBackstab:  "You have no idea how.",
+	SkillBash:      "You'd better leave all the martial arts to fighters.",
+	SkillKick:      "You'd better leave all the martial arts to fighters.",
+	SkillTrip:      "You'd better leave the sneaky stuff to the thieves.",
+	SkillHeadbutt:  "You aren't qualified to headbutt anyone!",
+	SkillRescue:    "But only true warriors can do this!",
+	SkillDisarm:    "You'd better leave all the martial arts to fighters.",
+	SkillCharge:    "You couldn't charge if you wanted to!",
+	SkillNeckbreak: "What's that, idiot-san?",
+	SkillSlug:      "You couldn't slug your way out of a wet paper bag.",
+	SkillStrike:    "Yeah, right.",
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills

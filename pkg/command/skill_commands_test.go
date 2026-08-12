@@ -766,8 +766,8 @@ func TestCmdStrike_NoSkill(t *testing.T) {
 	if err := CmdStrike(session, []string{"target"}); err != nil {
 		t.Fatalf("CmdStrike: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	if !strings.Contains(joinMessages(session.messages), "Yeah, right") {
+		t.Errorf("expected 'Yeah, right', got: %v", session.messages)
 	}
 }
 
@@ -1252,9 +1252,9 @@ func TestCmdSpike_NoArgs(t *testing.T) {
 	if err := CmdSpike(session, nil); err != nil {
 		t.Fatalf("CmdSpike: %v", err)
 	}
-	// Arg check fires before skill check for this command
-	if !strings.Contains(joinMessages(session.messages), "Spike whom") {
-		t.Errorf("expected 'Spike whom', got: %v", session.messages)
+	// C do_spike no-arg → "Whom do you wish to spike?"
+	if !strings.Contains(joinMessages(session.messages), "wish to spike") {
+		t.Errorf("expected 'wish to spike', got: %v", session.messages)
 	}
 }
 
@@ -1330,8 +1330,9 @@ func TestCmdSlug_NoSkill(t *testing.T) {
 	if err := CmdSlug(session, nil); err != nil {
 		t.Fatalf("CmdSlug: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	// C: "You couldn't slug your way out of a wet paper bag." (SkillUnknownMsg, DP-1206).
+	if !strings.Contains(joinMessages(session.messages), "wet paper bag") {
+		t.Errorf("expected 'wet paper bag', got: %v", session.messages)
 	}
 }
 
