@@ -1676,7 +1676,7 @@ func CmdBehead(s SessionInterface, args []string) error {
 	}
 
 	if len(args) == 0 {
-		return s.SendMessage("Behead what?\r\n")
+		return s.SendMessage("Behead who?\r\n")
 	}
 
 	targetName := strings.Join(args, " ")
@@ -2008,11 +2008,9 @@ func CmdCircle(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillCircle)
-	if !canUse {
-		return s.SendMessage(msg + "\r\n")
-	}
-
+	// C do_circle (new_cmds.c): NO skill gate — goes straight to the target
+	// lookup. A no-target / no-fight caller gets "Circle who?" regardless of
+	// skill. The former CanUseSkill gate was invented (R4).
 	world := s.GetWorld()
 	var target combat.Combatant
 	var found bool

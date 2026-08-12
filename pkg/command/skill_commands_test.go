@@ -914,8 +914,8 @@ func TestCmdBehead_NoArgs(t *testing.T) {
 	if err := CmdBehead(session, nil); err != nil {
 		t.Fatalf("CmdBehead: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "Behead what") {
-		t.Errorf("expected 'Behead what', got: %v", session.messages)
+	if !strings.Contains(joinMessages(session.messages), "Behead who") {
+		t.Errorf("expected 'Behead who', got: %v", session.messages)
 	}
 }
 

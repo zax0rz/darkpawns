@@ -1,0 +1,49 @@
+# Combat-skill target-gated rejection paths — circle / behead.
+#
+# Two combat skills with NO skill gate in C — both go straight to target lookup.
+# Probed from a fresh Human Warrior (POS_STANDING, not fighting):
+#
+# - circle (do_circle, new_cmds.c): NO GET_SKILL check — target-first.
+#   No-arg + no fighting → "Circle who?". Go CmdCircle formerly invented a
+#   CanUseSkill gate (R4); removed to match C's target-first flow.
+# - behead (do_behead, new_cmds.c): POS_FIGHTING check first, then no-arg →
+#   "Behead who?". Go CmdBehead had the right flow but invented "Behead what?"
+#   instead of C's "Behead who?".
+#
+# Self-only output; no observer peer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Circlactr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Circlactr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+circle
+behead
