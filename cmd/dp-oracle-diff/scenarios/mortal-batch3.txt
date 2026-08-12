@@ -36,6 +36,7 @@ Y
 
 [probe]
 scout
+scout north
 dark
 visible
 dream

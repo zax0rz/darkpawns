@@ -272,33 +272,44 @@ func (w *World) doScout(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	// C do_scout: NO skill gate — target-first. No-arg → "Scout where?"
+	// C do_scout (new_cmds.c): no-arg → valid-direction-word → skill gate →
+	// outside → exit-exists → execute. Ordering and reject messages are
+	// byte-faithful to C. The skill gate is LATE (after the direction check)
+	// but it IS a hard reject — a no-skill scouter gets "You have no idea how!"
+	// before the outside/exit checks, regardless of location — so it must be
+	// repositioned to match C, never removed.
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
 		ch.SendMessage("Scout where?\r\n")
 		return true
 	}
 
-	room := w.GetRoomInWorld(ch.GetRoomVNum())
-	if room == nil || !isOutdoors(room) {
-		ch.SendMessage("You can't scout from in here!\r\n")
+	dir := directionIndex(arg)
+	if dir < 0 {
+		ch.SendMessage("Scout in which direction?\r\n")
 		return true
 	}
 
-	currentRoom := w.GetRoomInWorld(ch.GetRoomVNum())
-	if currentRoom == nil {
-		ch.SendMessage("Nothing in that direction.\r\n")
+	if ch.GetSkill("scout") <= 0 {
+		ch.SendMessage("You have no idea how!\r\n")
 		return true
 	}
-	exitObj, exitOk := currentRoom.Exits[strings.ToLower(arg)]
+
+	room := w.GetRoomInWorld(ch.GetRoomVNum())
+	if room == nil || !isOutdoors(room) {
+		ch.SendMessage("You can only do this outdoors.\r\n")
+		return true
+	}
+
+	exitObj, exitOk := room.Exits[dirs[dir]]
 	if !exitOk {
-		ch.SendMessage("Nothing in that direction.\r\n")
+		ch.SendMessage("There is nothing of interest there.\r\n")
 		return true
 	}
 
 	toRoom := w.GetRoomInWorld(exitObj.ToRoom)
 	if toRoom == nil {
-		ch.SendMessage("Nothing in that direction.\r\n")
+		ch.SendMessage("There is nothing of interest there.\r\n")
 		return true
 	}
 
