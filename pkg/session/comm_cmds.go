@@ -105,7 +105,7 @@ func cmdGossip(s *Session, args []string) error {
 // Source: act.comm.c do_emote() — "$n laughs." style
 func cmdEmote(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.Send("Emote what?")
+		s.Send("Yes.. but what?")
 		return nil
 	}
 	action := sanitizeMessage(strings.Join(args, " "))
