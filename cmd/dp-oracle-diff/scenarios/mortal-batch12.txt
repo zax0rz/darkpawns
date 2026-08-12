@@ -1,0 +1,52 @@
+# Mortal no-arg batch (batch 12).
+# Fixes: stake message, subdue SkillUnknownMsg, version trailing dash.
+# Deferred: stealth (no skill gate in C), turn (Huh?!? — level gate?),
+# typo (gen_write "That must be a mistake..."), use (invented usage).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Batchtwelveactr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Batchtwelveactr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+shoot
+stake
+subdue
+sysfile
+syslog
+take
+think
+todo
+toh
+unaffect
+users
+version
+where
+yank
