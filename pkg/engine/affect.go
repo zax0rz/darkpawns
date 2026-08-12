@@ -134,7 +134,15 @@ func NewAffectDirect(spellID int, location int, duration int, magnitude int, fla
 	}
 
 	if flags != 0 {
-		affect.StackID = spellStackKey(spellID)
+		if spellID != 0 {
+			affect.StackID = spellStackKey(spellID)
+		} else {
+			// Non-spell affect (item/equipment): spellStackKey(0) would yield
+			// "spell_0" for every source, so distinct statuses (e.g. AFFSanctuary
+			// and AFFPoison) would share a StackID and collide on dedup. Key on
+			// the AFF flags instead so each distinct status dedups independently.
+			affect.StackID = fmt.Sprintf("flags_%d", flags)
+		}
 		affect.MaxStacks = 1
 	}
 

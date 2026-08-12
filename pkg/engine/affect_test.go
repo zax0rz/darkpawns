@@ -131,3 +131,34 @@ func TestGetType_SingleFlag(t *testing.T) {
 		t.Fatalf("GetType() = %d, want 111 (AFFPoison)", got)
 	}
 }
+
+// TestNewAffectDirectStackKey guards the non-spell dedup key: NewAffectDirect
+// with spellID=0 (item/equipment affects) must not collapse every flags-based
+// affect onto spellStackKey(0) == "spell_0", which made distinct statuses such
+// as AFFSanctuary and AFFPoison share a StackID and collide on dedup.
+func TestNewAffectDirectStackKey(t *testing.T) {
+	sanctuary := NewAffectDirect(0, ApplyNone, 10, 5, AFFSanctuary, "item_a")
+	poison := NewAffectDirect(0, ApplyNone, 10, 5, AFFPoison, "item_b")
+
+	if sanctuary.StackID == "" {
+		t.Error("flags-based non-spell affect should get a StackID")
+	}
+	if poison.StackID == "" {
+		t.Error("flags-based non-spell affect should get a StackID")
+	}
+	if sanctuary.StackID == poison.StackID {
+		t.Errorf("distinct flags must yield distinct StackIDs, got %q for both", sanctuary.StackID)
+	}
+
+	// Non-spell affects with identical flags still dedup to one key.
+	twin := NewAffectDirect(0, ApplyNone, 10, 5, AFFSanctuary, "item_c")
+	if twin.StackID != sanctuary.StackID {
+		t.Errorf("same flags must yield the same StackID: %q vs %q", twin.StackID, sanctuary.StackID)
+	}
+
+	// Spell-based affects keep the spell stack key.
+	spellAffect := NewAffectDirect(42, ApplyNone, 10, 0, AFFBlind, "blindness")
+	if got, want := spellAffect.StackID, spellStackKey(42); got != want {
+		t.Errorf("spell-based affect StackID = %q, want %q", got, want)
+	}
+}
