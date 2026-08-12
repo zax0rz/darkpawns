@@ -212,7 +212,7 @@ func cmdVstat(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) < 2 {
-		s.Send("Usage: vstat { obj | mob } <number>")
+		s.Send("Usage: vstat { obj | mob } <number>\r\n")
 		return nil
 	}
 
@@ -279,7 +279,7 @@ func cmdVstat(s *Session, args []string) error {
 		}
 
 	default:
-		s.Send("Usage: vstat { obj | mob } <number>")
+		s.Send("Usage: vstat { obj | mob } <number>\r\n")
 	}
 	return nil
 }

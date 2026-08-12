@@ -83,7 +83,7 @@ func cmdTeleport(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) < 2 {
-		s.Send("Whom do you wish to teleport?")
+		s.Send("Whom do you wish to teleport?\r\n")
 		return nil
 	}
 	targetName := args[0]

@@ -347,7 +347,7 @@ func cmdAdvance(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) < 2 {
-		s.Send("Advance who?")
+		s.Send("Advance who?\r\n")
 		return nil
 	}
 	targetName := args[0]
