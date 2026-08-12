@@ -131,7 +131,7 @@ func cmdDc(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: dc <playername|all>")
+		s.Send("Usage: DC <connection number> (type USERS for a list)\r\n")
 		return nil
 	}
 	target := strings.ToLower(args[0])

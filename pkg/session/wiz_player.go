@@ -43,6 +43,12 @@ func cmdRestore(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
+	// C do_restore (act.wizard.c) no-arg → "Whom do you wish to restore?";
+	// cmdRestore otherwise delegates the with-target path to cmdHeal.
+	if len(args) == 0 {
+		s.Send("Whom do you wish to restore?\r\n")
+		return nil
+	}
 	return cmdHeal(s, args)
 }
 

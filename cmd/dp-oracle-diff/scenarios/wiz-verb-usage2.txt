@@ -1,0 +1,52 @@
+# More wiz-verb no-arg/usage paths — force / restore / dc (God harness).
+#
+# Three more LVL_IMMORT/GRGOD/IMMORT wiz verbs, probed via their deterministic
+# no-arg/usage paths (no target, no state change). The God (crowned LVL_IMPL by
+# the empty-players fixture, db.c:3016) is the actor.
+#
+# - force   (do_force)   — <2 args → "Whom do you wish to force do what?" (Go
+#                          cmdForce already faithful).
+# - restore (do_restore) — no-arg → "Whom do you wish to restore?" The Go
+#                          cmdRestore delegated straight to cmdHeal (which prints
+#                          "Heal whom?"); fixed to print C's restore line first.
+# - dc      (do_dc)      — no-arg → "Usage: DC <connection number> (type USERS
+#                          for a list)". The Go cmdDc printed an invented
+#                          "Usage: dc <playername|all>"; fixed to C verbatim.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizusagr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizusagr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+force
+restore
+dc
