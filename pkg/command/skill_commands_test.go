@@ -1275,8 +1275,8 @@ func TestCmdStake_NoArgs(t *testing.T) {
 		t.Fatalf("CmdStake: %v", err)
 	}
 	// Arg check fires before skill check for this command
-	if !strings.Contains(joinMessages(session.messages), "Stake whom") {
-		t.Errorf("expected 'Stake whom', got: %v", session.messages)
+	if !strings.Contains(joinMessages(session.messages), "wish to stake") {
+		t.Errorf("expected 'wish to stake', got: %v", session.messages)
 	}
 }
 
