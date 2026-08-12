@@ -1,0 +1,52 @@
+# Immortal do_gen_tog toggles — quest / nowiz / holylight / nohassle / roomflags.
+#
+# The remaining do_gen_tog sub-commands not covered by the mortal toggle
+# cluster (toggle-cluster.txt): the four LVL_IMMORT-gated toggles plus the
+# mortal-legal `quest`. do_gen_tog (act.other.c:1142) was already ported
+# byte-faithful in #504 (toggle-cluster), so these are coverage-only God-harness
+# probes. The God (first created character, crowned LVL_IMPL by the empty-players
+# fixture — db.c:3016) is the actor; each toggle is self-only (send_to_char to ch).
+#
+# A God created without advance_level (the first-player crown path skips it,
+# DP-1212) starts with HOLYLIGHT/NOHASSLE/ROOMFLAGS/NOWIZ/QUEST all OFF, so each
+# first toggle prints the "on/enabled/now-see/part of the Quest" line.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Godtog
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Godtog
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+quest
+nowiz
+holylight
+nohassle
+roomflags
