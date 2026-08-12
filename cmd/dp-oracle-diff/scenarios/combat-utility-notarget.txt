@@ -1,0 +1,57 @@
+# Combat/utility no-target & no-skill paths — murder / assist / rescue / save.
+#
+# Four registered, mortal-legal commands probed via their deterministic
+# rejection paths (no target, no skill, no RNG) from a fresh hometown-K mortal
+# (no rescue skill, not fighting, not mounted):
+#
+# - murder (do_hit SCMD_MURDER, act.offensive.c:101) — no-arg → "Hit who?"
+#   (Go cmdHit already faithful; `hit` is probed elsewhere, this covers the
+#   `murder` alias).
+# - assist (do_assist, act.offensive.c:54) — not fighting/mounted, no-arg →
+#   "Whom do you wish to assist?" (Go cmdAssist already faithful).
+# - rescue (do_rescue, act.offensive.c:501) — a no-skill caller hits the skill
+#   gate FIRST → "But only true warriors can do this!". The Go CmdRescue
+#   formerly checked args before the skill gate; reordered to match C
+#   (CanUseSkill carries the exact message, DP-1206).
+# - save   (do_save, act.other.c) — "Saving <name>." The Go doSave formerly
+#   dropped the name ("Saving."); fixed to C verbatim.
+#
+# Self-only output; no observer peer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cmbatactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cmbatactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+murder
+assist
+rescue
+save

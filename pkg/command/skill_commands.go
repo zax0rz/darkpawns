@@ -746,14 +746,17 @@ func CmdRescue(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
 		return fmt.Errorf("not logged in")
 	}
-	if len(args) == 0 {
-		return s.SendMessage("Whom do you want to rescue?\r\n")
-	}
-
 	ch := s.GetPlayer()
+	// C do_rescue (act.offensive.c:501) checks GET_SKILL(RESCUE) BEFORE the
+	// no-argument path — a no-skill caller gets "But only true warriors can do
+	// this!" regardless of args. CanUseSkill carries that exact message
+	// (SkillUnknownMsg, DP-1206).
 	canUse, msg := game.CanUseSkill(ch, game.SkillRescue)
 	if !canUse {
 		return s.SendMessage(msg + "\r\n")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Whom do you want to rescue?\r\n")
 	}
 
 	targetName := strings.Join(args, " ")
