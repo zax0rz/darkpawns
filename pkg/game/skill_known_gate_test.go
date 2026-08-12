@@ -25,6 +25,12 @@ func TestCanUseSkill_Audited_UnknownSkill_ExactMessages(t *testing.T) {
 		{SkillRescue, "But only true warriors can do this!\r\n"},
 		{SkillCutthroat, "You're not trained in slitting throats!\n\r"},
 		{SkillSlug, "You couldn't slug your way out of a wet paper bag.\n\r"},
+		{SkillSmackheads, "The only heads you're gonna smack are yours and Rosie's.\n\r"},
+		{SkillFleshAlter, "You know nothing of altering your flesh!\n\r"},
+		{SkillFirstAid, "You have no idea how!\r\n"},
+		// ambush's gate is late (after target) so this message is not
+		// oracle-probed by the no-arg scenario — the unit test is its guard.
+		{SkillAmbush, "You'd better not.\r\n"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.skill, func(t *testing.T) {

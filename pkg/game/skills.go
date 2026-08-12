@@ -214,6 +214,8 @@ var SkillUnknownMsg = map[string]string{
 	SkillStrike:     "Yeah, right.\r\n",
 	SkillSmackheads: "The only heads you're gonna smack are yours and Rosie's.\n\r", // C: \n\r (new_cmds.c:980)
 	SkillFleshAlter: "You know nothing of altering your flesh!\n\r",                 // C: \n\r (new_cmds.c:1900)
+	SkillFirstAid:   "You have no idea how!\r\n",                                    // C: \r\n (new_cmds2.c:148)
+	SkillAmbush:     "You'd better not.\r\n",                                        // C: \r\n (act.offensive.c:1467), gate is late (after target)
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
