@@ -561,14 +561,17 @@ func CmdBackstab(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
 		return fmt.Errorf("not logged in")
 	}
-	if len(args) == 0 {
-		return s.SendMessage("Backstab who?\r\n")
-	}
-
 	ch := s.GetPlayer()
+	// C do_backstab (act.offensive.c:166) checks GET_SKILL(BACKSTAB) BEFORE the
+	// target lookup — a no-skill caller gets "You have no idea how." regardless
+	// of args (subcmd==0 returns). CanUseSkill carries that exact message
+	// (SkillUnknownMsg, DP-1206).
 	canUse, msg := game.CanUseSkill(ch, game.SkillBackstab)
 	if !canUse {
 		return s.SendMessage(msg + "\r\n")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Backstab who?\r\n")
 	}
 
 	// Find target in room
@@ -710,6 +713,12 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
+	world := s.GetWorld()
+	// C do_headbutt (new_cmds.c:378): ROOM_PEACEFUL is checked BEFORE the skill
+	// gate (unlike bash/kick), so a peaceful room rejects even a no-skill caller.
+	if world != nil && world.RoomHasFlag(ch.GetRoom(), "peaceful") {
+		return s.SendMessage("The Gods prevent thy violent act.\r\n")
+	}
 	canUse, msg := game.CanUseSkill(ch, game.SkillHeadbutt)
 	if !canUse {
 		return s.SendMessage(msg + "\r\n")
@@ -717,7 +726,6 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 
 	var target combat.Combatant
 	var found bool
-	world := s.GetWorld()
 	if len(args) > 0 {
 		targetName := strings.Join(args, " ")
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
