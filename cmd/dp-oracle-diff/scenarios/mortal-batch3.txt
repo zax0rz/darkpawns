@@ -1,0 +1,47 @@
+# Mortal no-arg/no-target rejection batch (batch 3, inactive removed).
+# inactive deferred: it toggles the INACTIVE prompt prefix (a prompt-system
+# class issue, same as AFK) which contaminates subsequent probes.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Batchactr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Batchactr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+scout
+scout north
+dark
+visible
+dream
+ride
+dismount
+shadow
+kabuki
+report
