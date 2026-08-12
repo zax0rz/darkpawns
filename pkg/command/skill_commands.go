@@ -1180,7 +1180,12 @@ func CmdCutthroat(s SessionInterface, args []string) error {
 	// throats!" regardless of args.
 	canUse, msg := game.CanUseSkill(ch, game.SkillCutthroat)
 	if !canUse {
-		return s.SendMessage(msg + "\r\n")
+		// C do_cutthroat (new_cmds.c:561) terminates the no-skill message with
+		// "\n\r", not "\r\n" like every other SkillUnknownMsg entry — matching
+		// the no-arg "Cut what throat where?\n\r" line below. cutthroat has no
+		// SkillPosReq entry, so skillPositionGate never rejects it; the only
+		// message reaching here is the no-skill line, so "\n\r" is unconditional.
+		return s.SendMessage(msg + "\n\r")
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Cut what throat where?\n\r")
