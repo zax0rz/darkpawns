@@ -1,0 +1,61 @@
+# Combat-skill no-skill rejection paths — bash / kick / trip / headbutt / backstab.
+#
+# Five registered combat skills probed via their deterministic no-skill gates
+# (no target, no RNG) from a fresh Human Warrior, who starts with NONE of these
+# skills (GiveStartingSkills grants only thief/assassin/kender/minotaur skills).
+# C checks GET_SKILL before the target lookup for each, so a no-skill caller is
+# rejected regardless of arguments; Go routes through CanUseSkill, whose
+# SkillUnknownMsg (DP-1206) carries each command's exact C line.
+#
+# - bash     → "You'd better leave all the martial arts to fighters."
+# - kick     → "You'd better leave all the martial arts to fighters."
+# - trip     → "You'd better leave the sneaky stuff to the thieves."
+# - headbutt → "You aren't qualified to headbutt anyone!"
+# - backstab → "You have no idea how."  (Go CmdBackstab formerly checked the
+#               no-arg "Backstab who?" before the skill gate; reordered to match
+#               C do_backstab's skill-first order.)
+#
+# This credits the skills the combat-*-opener scenarios exercise but don't
+# [probe] (those scenarios drive combat during the settle pump, so the coverage
+# generator never sees a [probe] line for them).
+#
+# Self-only output; no observer peer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Skillact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Skillact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+bash
+kick
+trip
+headbutt
+backstab
