@@ -1,0 +1,45 @@
+# Mortal object/utility no-arg rejection batch.
+# Probes a batch of never-probed registered commands via their deterministic
+# no-arg/no-target paths from a fresh Human Warrior. Greens ship as coverage
+# wins; reds get diagnosed and fixed or deferred.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Batchactr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Batchactr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+alias
+sharpen
+point
+taste
+sip
+palm
+tag

@@ -41,7 +41,7 @@ func cmdAlias(s *Session, args []string) error {
 	if len(args) == 0 {
 		aliases := player.Aliases
 		if len(aliases) == 0 {
-			s.Send("No aliases defined. Usage: alias <from> <to>  or  alias <from> (to delete)")
+			s.Send("Currently defined aliases:\r\n None.")
 			return nil
 		}
 		for _, a := range aliases {
