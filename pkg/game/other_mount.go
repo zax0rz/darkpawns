@@ -16,6 +16,14 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
+	// C do_ride (act.other.c:1556): ROOM_INDOORS checked BEFORE no-arg — an
+	// indoors player gets "Go outside if you want to ride!" regardless of args.
+	room := w.GetRoomInWorld(ch.GetRoomVNum())
+	if room == nil || !isOutdoors(room) {
+		ch.SendMessage("Go outside if you want to ride!\r\n")
+		return true
+	}
+
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
 		ch.SendMessage("Ride what?\r\n")
@@ -24,12 +32,6 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	if ch.IsFighting() {
 		ch.SendMessage("You are fighting!\r\n")
-		return true
-	}
-
-	room := w.GetRoomInWorld(ch.GetRoomVNum())
-	if room == nil || !isOutdoors(room) {
-		ch.SendMessage("You can't ride in here!\r\n")
 		return true
 	}
 

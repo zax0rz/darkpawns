@@ -272,15 +272,10 @@ func (w *World) doScout(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	skill := ch.GetSkill("scout")
-	if skill <= 0 {
-		ch.SendMessage("You have no idea how to scout.\r\n")
-		return true
-	}
-
+	// C do_scout: NO skill gate — target-first. No-arg → "Scout where?"
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
-		ch.SendMessage("Scout which direction?\r\n")
+		ch.SendMessage("Scout where?\r\n")
 		return true
 	}
 
