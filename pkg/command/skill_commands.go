@@ -1174,14 +1174,16 @@ func CmdCutthroat(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
 		return fmt.Errorf("not logged in")
 	}
-	if len(args) == 0 {
-		return s.SendMessage("Cut what throat where?\n\r")
-	}
-
 	ch := s.GetPlayer()
+	// C do_cutthroat (new_cmds.c:559): GET_SKILL(CUTTHROAT) checked BEFORE the
+	// no-arg path — a no-skill caller gets "You're not trained in slitting
+	// throats!" regardless of args.
 	canUse, msg := game.CanUseSkill(ch, game.SkillCutthroat)
 	if !canUse {
 		return s.SendMessage(msg + "\r\n")
+	}
+	if len(args) == 0 {
+		return s.SendMessage("Cut what throat where?\n\r")
 	}
 
 	// Find target
