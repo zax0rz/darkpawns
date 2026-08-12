@@ -32,6 +32,98 @@ func redactingServer(t *testing.T) *httptest.Server {
 	}))
 }
 
+// failingFilterServer returns a privacy-filter stub that always replies with
+// malformed JSON, forcing Client.FilterText to return a real error instead of
+// a silent fallback.
+func failingFilterServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{not valid json`))
+	}))
+}
+
+// TestPIIHandler_FilterErrorPreservesMessage is the regression guard for the
+// silent data-loss bug: when FilterText fails (e.g. the filter service returns
+// malformed JSON), the original message must survive with a pii_filter_error
+// annotation instead of being silently replaced by "" or "[FILTERED]".
+func TestPIIHandler_FilterErrorPreservesMessage(t *testing.T) {
+	server := failingFilterServer(t)
+	defer server.Close()
+
+	var buf bytes.Buffer
+	inner := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo})
+	client := NewClient(server.URL, DefaultFilterConfig())
+
+	logger := slog.New(NewPIIHandler(inner, client))
+	logger.Info("login attempt")
+
+	out := buf.String()
+	if !strings.Contains(out, "login attempt") {
+		t.Errorf("filter error destroyed the original message, got: %q", out)
+	}
+	if !strings.Contains(out, "pii_filter_error") {
+		t.Errorf("expected pii_filter_error annotation on filter error, got: %q", out)
+	}
+	if strings.Contains(out, "[FILTERED]") {
+		t.Errorf("message must not be replaced by the fallback sentinel, got: %q", out)
+	}
+}
+
+// TestPIIHandler_FilterErrorPreservesAttr is the regression guard for attr
+// data loss: when FilterText fails, the original string attr value must be kept
+// (not silently replaced by "[FILTERED]") and the record must carry a
+// pii_filter_error annotation.
+func TestPIIHandler_FilterErrorPreservesAttr(t *testing.T) {
+	server := failingFilterServer(t)
+	defer server.Close()
+
+	var buf bytes.Buffer
+	inner := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo})
+	client := NewClient(server.URL, DefaultFilterConfig())
+
+	logger := slog.New(NewPIIHandler(inner, client))
+	logger.Info("login attempt", slog.String("email", "user@example.com"))
+
+	out := buf.String()
+	if !strings.Contains(out, "user@example.com") {
+		t.Errorf("filter error destroyed the string attr, got: %q", out)
+	}
+	if !strings.Contains(out, "pii_filter_error") {
+		t.Errorf("expected pii_filter_error annotation on filter error, got: %q", out)
+	}
+	if strings.Contains(out, "[FILTERED]") {
+		t.Errorf("attr must not be replaced by the fallback sentinel, got: %q", out)
+	}
+}
+
+// TestPIIHandler_FilterErrorWithAttrs is the regression guard for the
+// WithAttrs path: handler-level attrs that fail filtering must be preserved
+// and the error must be annotated on subsequently handled records.
+func TestPIIHandler_FilterErrorWithAttrs(t *testing.T) {
+	server := failingFilterServer(t)
+	defer server.Close()
+
+	var buf bytes.Buffer
+	inner := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo})
+	client := NewClient(server.URL, DefaultFilterConfig())
+
+	logger := slog.New(NewPIIHandler(inner, client))
+	logger.With("email", "user@example.com").Info("login attempt")
+
+	out := buf.String()
+	if !strings.Contains(out, "user@example.com") {
+		t.Errorf("filter error destroyed the WithAttrs attr, got: %q", out)
+	}
+	if !strings.Contains(out, "pii_filter_error") {
+		t.Errorf("expected pii_filter_error annotation on filter error, got: %q", out)
+	}
+	if strings.Contains(out, "[FILTERED]") {
+		t.Errorf("WithAttrs attr must not be replaced by the fallback sentinel, got: %q", out)
+	}
+}
+
 // TestPIIHandler_WithAttrsFiltered is the regression guard for the WithAttrs
 // PII bypass: handler-level attrs added via slog.With must be filtered, not
 // passed through raw. Without the fix the email appears in plaintext.
