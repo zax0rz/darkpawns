@@ -1011,8 +1011,10 @@ func TestCmdFirstAid_NoArgs(t *testing.T) {
 	if err := CmdFirstAid(session, nil); err != nil {
 		t.Fatalf("CmdFirstAid: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "Aid who") {
-		t.Errorf("expected 'Aid who', got: %v", session.messages)
+	// C do_first_aid: GET_SKILL checked before no-arg — no-skill player gets
+	// "You have no idea how!" (SkillUnknownMsg, DP-1206).
+	if !strings.Contains(joinMessages(session.messages), "no idea how") {
+		t.Errorf("expected skill-gate message, got: %v", session.messages)
 	}
 }
 
@@ -1022,8 +1024,9 @@ func TestCmdFirstAid_NoTarget(t *testing.T) {
 	if err := CmdFirstAid(session, []string{"ghost"}); err != nil {
 		t.Fatalf("CmdFirstAid: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "don't seem to be here") {
-		t.Errorf("expected not found message, got: %v", session.messages)
+	// Skill gate fires before target lookup (C do_first_aid order).
+	if !strings.Contains(joinMessages(session.messages), "no idea how") {
+		t.Errorf("expected skill-gate message, got: %v", session.messages)
 	}
 }
 
