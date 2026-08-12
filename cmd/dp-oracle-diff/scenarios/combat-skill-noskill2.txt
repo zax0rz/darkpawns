@@ -1,0 +1,50 @@
+# Combat-skill no-skill rejection paths (batch 2) — disarm / charge.
+#
+# Two more combat skills probed via their deterministic no-skill gates from a
+# fresh Human Warrior (who has neither skill). C checks GET_SKILL before the
+# target lookup for both; Go now routes through CanUseSkill (SkillUnknownMsg
+# carries each command's exact C line).
+#
+# - disarm → "You'd better leave all the martial arts to fighters." (same C msg
+#   as bash/kick). CmdDisarm formerly checked target lookup before the skill
+#   gate; reordered (DP-1206 faithful path). SkillDisarm added to SkillUnknownMsg.
+# - charge → "You couldn't charge if you wanted to!" CmdCharge already checked
+#   CanUseSkill first. SkillCharge added to SkillUnknownMsg.
+#
+# Self-only output; no observer peer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Skilactr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Skilactr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+disarm
+charge
