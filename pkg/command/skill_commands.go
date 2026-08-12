@@ -1037,16 +1037,19 @@ func CmdAmbush(s SessionInterface, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	ch := s.GetPlayer()
-	if canUse, msg := game.CanUseSkill(ch, game.SkillAmbush); !canUse {
-		return s.SendMessage(msg)
-	}
+	// C do_ambush (act.offensive.c:1459): target lookup runs FIRST — no-arg →
+	// "Ambush who?". The GET_SKILL gate (line 1467) is AFTER target, so
+	// reposition it here (never delete — per the scout #541 lesson).
 	if len(args) == 0 {
-		return s.SendMessage("Ambush whom?\r\n")
+		return s.SendMessage("Ambush who?\r\n")
 	}
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
 	if !found {
-		return s.SendMessage("They aren't here.\r\n")
+		return s.SendMessage("Ambush who?\r\n")
+	}
+	if canUse, msg := game.CanUseSkill(ch, game.SkillAmbush); !canUse {
+		return s.SendMessage(msg)
 	}
 	if target.GetName() == ch.Name {
 		return s.SendMessage("Ambush yourself? You idiot!\r\n")
@@ -1343,11 +1346,17 @@ func CmdFirstAid(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
 		return fmt.Errorf("not logged in")
 	}
+	ch := s.GetPlayer()
+	// C do_first_aid (new_cmds2.c:146): GET_SKILL checked BEFORE the no-arg
+	// path — a no-skill caller gets "You have no idea how!" regardless of args.
+	canUse, msg := game.CanUseSkill(ch, game.SkillFirstAid)
+	if !canUse {
+		return s.SendMessage(msg)
+	}
 	if len(args) == 0 {
 		return s.SendMessage("Aid who?\r\n")
 	}
 
-	ch := s.GetPlayer()
 	targetName := strings.Join(args, " ")
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
