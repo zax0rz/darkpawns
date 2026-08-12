@@ -15,7 +15,7 @@ func cmdStat(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: stat <name|room|obj <vnum|name>>")
+		s.Send("Stats on who or what?\r\n")
 		return nil
 	}
 	target := strings.Join(args, " ")
@@ -136,7 +136,7 @@ func cmdVnum(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) < 2 {
-		s.Send("Usage: vnum <mob|obj|room> <keyword>")
+		s.Send("Usage: vnum { obj | mob } <name>\r\n")
 		return nil
 	}
 
