@@ -1,5 +1,7 @@
 package game
 
+import "fmt"
+
 // ---------------------------------------------------------------------------
 // do_save
 // ---------------------------------------------------------------------------
@@ -14,6 +16,7 @@ func (w *World) doSave(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	ch.SendMessage("Saving.\r\n")
+	// C do_save (act.other.c): "Saving %s.\r\n" with GET_NAME(ch).
+	ch.SendMessage(fmt.Sprintf("Saving %s.\r\n", ch.Name))
 	return true
 }
