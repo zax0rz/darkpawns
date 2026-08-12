@@ -96,14 +96,16 @@ func TestCanUseSkill_Audited_CrossClassGrant_Passes(t *testing.T) {
 // SkillCharge) returns today's class/level messages exactly. Regression guard
 // that the audited fork did not perturb the legacy path.
 func TestCanUseSkill_Legacy_Unaudited_Unchanged(t *testing.T) {
-	// A class that cannot learn charge → the legacy "You have no idea how."
+	// Use SkillCircle — still unaudited (not in SkillUnknownMsg), exercises the
+	// legacy class/level path. A class that cannot learn circle → "You have no
+	// idea how."
 	p := NewPlayer(1, "Magey", 1001)
 	p.Class = ClassMageUser
 	p.Level = 20
 	p.Position = combat.PosFighting
-	canUse, msg := CanUseSkill(p, SkillCharge)
+	canUse, msg := CanUseSkill(p, SkillCircle)
 	if canUse {
-		t.Error("mage with charge=0 on the legacy path should be blocked")
+		t.Error("mage with circle=0 on the legacy path should be blocked")
 	}
 	if msg != "You have no idea how." {
 		t.Errorf("legacy class-block message = %q, want %q (unchanged)", msg, "You have no idea how.")
@@ -112,14 +114,14 @@ func TestCanUseSkill_Legacy_Unaudited_Unchanged(t *testing.T) {
 	// A warrior below the learn level → the legacy level message (exact).
 	lowWarrior := NewPlayer(2, "Rooky", 1001)
 	lowWarrior.Class = ClassWarrior
-	lowWarrior.Level = 1 // below charge's learn level
+	lowWarrior.Level = 1 // below circle's learn level
 	lowWarrior.Position = combat.PosFighting
-	// Charge's SkillClassReq entry for warrior (if any) determines minLevel;
+	// Circle's SkillClassReq entry for warrior (if any) determines minLevel;
 	// if warrior isn't in the map, it's the class block above. Either way the
 	// legacy behavior is unchanged — just assert it returns a non-empty legacy
 	// message and doesn't leak an audited message.
-	_, legacyMsg := CanUseSkill(lowWarrior, SkillCharge)
+	_, legacyMsg := CanUseSkill(lowWarrior, SkillCircle)
 	if legacyMsg == "You'd better leave all the martial arts to fighters." {
-		t.Errorf("legacy skill charge leaked an audited message: %q", legacyMsg)
+		t.Errorf("legacy skill circle leaked an audited message: %q", legacyMsg)
 	}
 }

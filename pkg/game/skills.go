@@ -203,6 +203,8 @@ var SkillUnknownMsg = map[string]string{
 	SkillTrip:     "You'd better leave the sneaky stuff to the thieves.",
 	SkillHeadbutt: "You aren't qualified to headbutt anyone!",
 	SkillRescue:   "But only true warriors can do this!",
+	SkillDisarm:   "You'd better leave all the martial arts to fighters.",
+	SkillCharge:   "You couldn't charge if you wanted to!",
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills

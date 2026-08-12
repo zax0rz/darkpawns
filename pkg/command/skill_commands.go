@@ -1362,6 +1362,13 @@ func CmdDisarm(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
+	// C do_disarm (new_cmds2.c): GET_SKILL(DISARM) is checked BEFORE the target
+	// lookup — a no-skill caller is rejected regardless of args. CanUseSkill
+	// carries the exact C message (SkillUnknownMsg, DP-1206).
+	canUse, msg := game.CanUseSkill(ch, game.SkillDisarm)
+	if !canUse {
+		return s.SendMessage(msg + "\r\n")
+	}
 
 	// Determine target: either specified or current fighting target
 	var target combat.Combatant

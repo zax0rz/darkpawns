@@ -1073,8 +1073,10 @@ func TestCmdDisarm_NoFightingNoArgs(t *testing.T) {
 	if err := CmdDisarm(session, nil); err != nil {
 		t.Fatalf("CmdDisarm: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "Disarm who") {
-		t.Errorf("expected 'Disarm who', got: %v", session.messages)
+	// C do_disarm: GET_SKILL(DISARM) checked before target lookup — a no-skill
+	// caller gets "You'd better leave all the martial arts to fighters."
+	if !strings.Contains(joinMessages(session.messages), "martial arts") {
+		t.Errorf("expected skill-gate message, got: %v", session.messages)
 	}
 }
 
