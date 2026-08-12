@@ -1,0 +1,45 @@
+# Mortal no-arg/no-target rejection batch (batch 4).
+# Probed from a fresh Human Warrior. Groinrip (peaceful-room check) and roll
+# (RNG draw-parity) deferred.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Batfouractr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Batfouractr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+neckbreak
+slug
+spike
+strike
+carve
+write
+dark
+abilities

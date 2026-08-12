@@ -196,7 +196,7 @@ func cmdThink(s *Session, args []string) error {
 // Simplified: requires "pen" and "paper" in inventory.
 func cmdWrite(s *Session, args []string) error {
 	if len(args) < 2 {
-		s.Send("Write what on what?")
+		s.Send("Write?  With what?  ON what?  What are you trying to do?!?")
 		return nil
 	}
 

@@ -1140,7 +1140,7 @@ func CmdCarve(s SessionInterface, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	if len(args) == 0 {
-		return s.SendMessage("You want to carve what?!?!\r\n")
+		return s.SendMessage("You want to carve what?!?\r\n")
 	}
 
 	ch := s.GetPlayer()
@@ -1962,7 +1962,7 @@ func CmdSpike(s SessionInterface, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	if len(args) == 0 {
-		return s.SendMessage("Spike whom?\r\n")
+		return s.SendMessage("Whom do you wish to spike?\r\n")
 	}
 
 	ch := s.GetPlayer()

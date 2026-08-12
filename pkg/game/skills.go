@@ -207,6 +207,9 @@ var SkillUnknownMsg = map[string]string{
 	SkillCharge:     "You couldn't charge if you wanted to!",
 	SkillDisembowel: "You have no idea how.",
 	SkillCutthroat:  "You're not trained in slitting throats!",
+	SkillNeckbreak:  "What's that, idiot-san?",
+	SkillSlug:       "You couldn't slug your way out of a wet paper bag.",
+	SkillStrike:     "Yeah, right.",
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
