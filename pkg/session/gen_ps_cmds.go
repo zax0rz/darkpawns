@@ -116,7 +116,7 @@ func cmdClear(s *Session, args []string) error {
 // timestamp; this port has no equivalent build-time tracking, so the Go
 // runtime version is shown instead as the closest honest substitute.
 func cmdVersion(s *Session, args []string) error {
-	s.Send("Dark Pawns 2.3")
+	s.Send("Dark Pawns 2.3-")
 	if s.player != nil && s.player.Level >= LVL_IMMORT {
 		s.Send(fmt.Sprintf("Built with: %s", runtime.Version()))
 	}

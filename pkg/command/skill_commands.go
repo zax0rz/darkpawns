@@ -1994,7 +1994,7 @@ func CmdStake(s SessionInterface, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	if len(args) == 0 {
-		return s.SendMessage("Stake whom?\r\n")
+		return s.SendMessage("Whom do you wish to stake?\r\n")
 	}
 
 	ch := s.GetPlayer()
