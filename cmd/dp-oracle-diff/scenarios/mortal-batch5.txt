@@ -1,0 +1,42 @@
+# Mortal no-arg batch (batch 5) — echo / emote / grab / scrounge.
+# Deferred from this batch: auto (display format), bug/idea (C "That must be a
+# mistake..." — needs gen_write investigation), search/transform (C silent —
+# peaceful/gate investigation), future (Go invented multi-line display).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Batfiveactr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Batfiveactr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+echo
+emote
+grab
+scrounge
