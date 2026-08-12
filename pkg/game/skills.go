@@ -182,34 +182,36 @@ var SkillPosReq = map[string]int{
 // Helper: check if player can use a skill
 // ---------------------------------------------------------------------------
 
-// SkillUnknownMsg holds the byte-exact (bare — no terminator; the handler
-// appends "\r\n") message a Wave-1 combat command sends when the actor does
-// not know the skill. C gates skill USE purely on `if (!GET_SKILL(ch, SKILL_X))`
-// (act.offensive.c / new_cmds.c), emitting each command's own hardcoded line —
-// there is no class check and no generic level message. These are ported
-// per-command from the C do_ functions (R1/R4, DP-1206).
+// SkillUnknownMsg holds the byte-exact message a Wave-1 combat command sends
+// when the actor does not know the skill. C gates skill USE purely on
+// `if (!GET_SKILL(ch, SKILL_X))` (act.offensive.c / new_cmds.c), emitting each
+// command's own hardcoded line — there is no class check and no generic level
+// message. These are ported per-command from the C do_ functions (R1/R4, DP-1206).
 //
-// Messages are stored BARE because every handler uniformly does
-// `SendMessage(CanUseSkill_msg + "\r\n")`; storing them with "\r\n" would
-// double-terminate. Backstab's message is "You have no idea how." (verified at
-// act.offensive.c:174, the registered do_backstab) — NOT the "sneaky stuff"
-// line (that's do_trip). Disarm is omitted: CmdDisarm never calls CanUseSkill
-// and DoDisarm already gates faithfully on GetSkill==0 with the byte-exact
-// message (skills2.go:156).
+// Each message carries its OWN C-exact terminator — usually "\r\n", but
+// do_cutthroat (new_cmds.c:561) and do_slug (new_cmds2.c:829) use "\n\r".
+// Handlers send the message AS-IS (SendMessage(msg), no append): the oracle
+// normalizes terminators so a uniform "+\r\n" append passed green while
+// silently rewriting those two "\n\r" quirks (the cutthroat #532/#537 and slug
+// #535 findings). Storing the terminator per-message kills that bug class.
+// Backstab's message is "You have no idea how." (verified at act.offensive.c:174,
+// the registered do_backstab) — NOT the "sneaky stuff" line (that's do_trip).
+// Disarm: CmdDisarm never calls CanUseSkill and DoDisarm already gates faithfully
+// on GetSkill==0 with the byte-exact message (skills2.go:156).
 var SkillUnknownMsg = map[string]string{
-	SkillBackstab:   "You have no idea how.",
-	SkillBash:       "You'd better leave all the martial arts to fighters.",
-	SkillKick:       "You'd better leave all the martial arts to fighters.",
-	SkillTrip:       "You'd better leave the sneaky stuff to the thieves.",
-	SkillHeadbutt:   "You aren't qualified to headbutt anyone!",
-	SkillRescue:     "But only true warriors can do this!",
-	SkillDisarm:     "You'd better leave all the martial arts to fighters.",
-	SkillCharge:     "You couldn't charge if you wanted to!",
-	SkillDisembowel: "You have no idea how.",
-	SkillCutthroat:  "You're not trained in slitting throats!",
-	SkillNeckbreak:  "What's that, idiot-san?",
-	SkillSlug:       "You couldn't slug your way out of a wet paper bag.",
-	SkillStrike:     "Yeah, right.",
+	SkillBackstab:   "You have no idea how.\r\n",
+	SkillBash:       "You'd better leave all the martial arts to fighters.\r\n",
+	SkillKick:       "You'd better leave all the martial arts to fighters.\r\n",
+	SkillTrip:       "You'd better leave the sneaky stuff to the thieves.\r\n",
+	SkillHeadbutt:   "You aren't qualified to headbutt anyone!\r\n",
+	SkillRescue:     "But only true warriors can do this!\r\n",
+	SkillDisarm:     "You'd better leave all the martial arts to fighters.\r\n",
+	SkillCharge:     "You couldn't charge if you wanted to!\r\n",
+	SkillDisembowel: "You have no idea how.\r\n",
+	SkillCutthroat:  "You're not trained in slitting throats!\n\r", // C: \n\r (new_cmds.c:561)
+	SkillNeckbreak:  "What's that, idiot-san?\r\n",
+	SkillSlug:       "You couldn't slug your way out of a wet paper bag.\n\r", // C: \n\r (new_cmds2.c:829)
+	SkillStrike:     "Yeah, right.\r\n",
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
@@ -230,15 +232,15 @@ func CanUseSkill(p *Player, skillName string) (bool, string) {
 	// LEGACY path — un-audited skills keep today's class/level behavior verbatim.
 	classReqs, ok := SkillClassReq[skillName]
 	if !ok {
-		return false, "You have no idea how."
+		return false, "You have no idea how.\r\n"
 	}
 
 	minLevel, classOk := classReqs[p.Class]
 	if !classOk {
-		return false, "You have no idea how."
+		return false, "You have no idea how.\r\n"
 	}
 	if p.Level < minLevel {
-		return false, fmt.Sprintf("You must be at least level %d to use that skill.", minLevel)
+		return false, fmt.Sprintf("You must be at least level %d to use that skill.\r\n", minLevel)
 	}
 
 	return skillPositionGate(p, skillName)
@@ -252,11 +254,11 @@ func skillPositionGate(p *Player, skillName string) (bool, string) {
 	if p.GetPosition() < minPos {
 		switch minPos {
 		case combat.PosStanding:
-			return false, "You must be standing to do that."
+			return false, "You must be standing to do that.\r\n"
 		case combat.PosFighting:
-			return false, "You must be fighting to do that!"
+			return false, "You must be fighting to do that!\r\n"
 		default:
-			return false, "You can't do that right now."
+			return false, "You can't do that right now.\r\n"
 		}
 	}
 	return true, ""
