@@ -1812,6 +1812,12 @@ func CmdBite(s SessionInterface, args []string) error {
 	var found bool
 	world := s.GetWorld()
 
+	// C do_bite (new_cmds.c): a peaceful room is a silent no-op — the command
+	// returns without sending anything.
+	if world != nil && world.RoomHasFlag(ch.GetRoomVNum(), "peaceful") {
+		return nil
+	}
+
 	if len(args) == 0 {
 		fighting := ch.GetFighting()
 		if fighting == "" {
@@ -1873,6 +1879,12 @@ func CmdGroinrip(s SessionInterface, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	ch := s.GetPlayer()
+
+	// C do_groinrip (new_cmds.c): the peaceful-room rejection runs BEFORE the
+	// skill gate — anyone in a peaceful room is stopped here regardless of skill.
+	if w := s.GetWorld(); w != nil && w.RoomHasFlag(ch.GetRoomVNum(), "peaceful") {
+		return s.SendMessage("You cannot commit acts of violence here!\r\n")
+	}
 
 	canUse, msg := game.CanUseSkill(ch, game.SkillGroinrip)
 	if !canUse {
