@@ -358,7 +358,7 @@ func init() {
 	registerCommand("yank", wrapArgs(cmdYank), "Yank someone from a mount or chair.")
 	registerCommand("peek", wrapArgs(cmdPeek), "Peek at another player's inventory.")
 	registerCommand("recall", wrapArgs(cmdRecall), "Recall to your home city.")
-	registerCommand("stealth", wrapArgs(cmdStealth), "Enter stealth mode.")
+	registerCommand("stealth", wrapSkill(command.CmdStealth), "Enter stealth mode.")
 	registerCommand("appraise", wrapArgs(cmdAppraise), "Appraise an item's value.")
 	registerCommand("scout", wrapArgs(cmdScout), "Scout ahead for danger.")
 	registerCommand("roll", wrapArgs(cmdRoll), "Roll a random number.")

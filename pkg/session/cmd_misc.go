@@ -69,12 +69,6 @@ func cmdRecall(s *Session, args []string) error {
 	return nil
 }
 
-// cmdStealth enters stealth mode.
-func cmdStealth(s *Session, args []string) error {
-	s.manager.world.ExecStealth(s.player, strings.Join(args, " "))
-	return nil
-}
-
 // cmdAppraise appraises an item's value.
 func cmdAppraise(s *Session, args []string) error {
 	s.manager.world.ExecAppraise(s.player, strings.Join(args, " "))

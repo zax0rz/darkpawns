@@ -39,9 +39,6 @@ func (w *World) ExecPeek(ch *Player, arg string) { w.doPeek(ch, nil, "peek", arg
 // ExecRecall recalls to home/start location.
 func (w *World) ExecRecall(ch *Player, arg string) { w.doRecall(ch, nil, "recall", arg) }
 
-// ExecStealth toggles stealth movement.
-func (w *World) ExecStealth(ch *Player, arg string) { w.doStealth(ch, nil, "stealth", arg) }
-
 // ExecAppraise estimates an item's value.
 func (w *World) ExecAppraise(ch *Player, arg string) { w.doAppraise(ch, nil, "appraise", arg) }
 

@@ -1,0 +1,41 @@
+# stealth (do_stealth, act.other.c) — a fresh Human Warrior. C do_stealth is
+# do_sneak with the stealth skill/affect: it unconditionally sends "Okay, you'll
+# try to move silently for a while." then rolls silently. The port's former
+# stealth handler was fully invented ("become one with the shadows" + a skill
+# gate C does not have); replaced with a faithful DoStealth (one number(1,101)
+# draw, SKILL_STEALTH affect). Self-only.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Stealthact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stealthact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+stealth

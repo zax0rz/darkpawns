@@ -53,6 +53,41 @@ func DoSneak(ch *Player) SkillResult {
 	return SkillResult{Success: true, MessageToCh: message}
 }
 
+// DoStealth implements do_stealth() from src/act.other.c. It is do_sneak with
+// SKILL_STEALTH driving the probability and the applied affect (same message,
+// same AFF_SNEAK bit, same single number(1,101) draw). The former Go stealth
+// handler was invented ("become one with the shadows" + a skill gate C has not).
+func DoStealth(ch *Player) SkillResult {
+	if isMounted(ch) {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+
+	message := "Okay, you'll try to move silently for a while."
+
+	if ch.IsAffected(affSneak) {
+		ch.RemoveAffectBySpell(skillNumSneak)
+		ch.RemoveAffectBySpell(skillNumStealth)
+		ch.SetAffect(affSneak, false)
+	}
+
+	// #nosec G404 — game RNG, not cryptographic
+	percent := dprng.Number(1, 101)
+	prob := ch.GetSkill(SkillStealth) + dexAppSkill(ch.GetDex()).Sneak
+	if percent > prob {
+		return SkillResult{Success: false, MessageToCh: message}
+	}
+
+	ch.AddAffect(engine.NewAffectDirect(
+		skillNumStealth,
+		engine.ApplyNone,
+		ch.GetLevel(),
+		0,
+		engine.AFFSneak,
+		SkillStealth,
+	))
+	return SkillResult{Success: true, MessageToCh: message}
+}
+
 // DoHide implements the newbie path through do_hide() from
 // src/act.other.c:247-306 (subcmd == 0).
 func DoHide(ch *Player) SkillResult {
