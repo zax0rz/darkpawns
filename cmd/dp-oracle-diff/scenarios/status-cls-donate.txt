@@ -1,0 +1,43 @@
+# cls / donate — two registered non-social commands already faithful to C.
+# Fresh Human Warrior, self-only. No code change; adds the [probe] coverage.
+#
+# - cls (do_gen_ps SCMD_CLEAR) → the VT clear sequence "\033[H\033[J"; the port
+#   emits the identical bytes (gen_ps_cmds.go).
+# - donate (do_drop SCMD_DONATE) no-arg → C's generic drop no-arg message; the
+#   port already matches.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Clsdonate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clsdonate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+cls
+donate
