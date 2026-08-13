@@ -19,27 +19,42 @@
 
 ## Build Platform
 
-Build on **mac-mini** (`192.168.1.196`, darwin/arm64). **Do not build on the mac-mini without the cross-compile flags** — the resulting binary will be Mach-O and will fail with `status=203/EXEC`.
+Production (CT 120) is **linux/amd64**. The build artifact must be an
+`ELF 64-bit LSB x86-64` binary — anything else fails with `status=203/EXEC`.
 
-### Cross-compile for CT 120
+### Native build (Linux dev workstation) — preferred
+
+On a linux/amd64 workstation the build is native; no cross-compile flags:
+
+```bash
+cd darkpawns
+go build -o darkpawns-server ./cmd/server
+```
+
+### Cross-compile (mac-mini fallback)
+
+When building on the mac-mini (`192.168.1.196`, darwin/arm64) — e.g. during the
+dev-environment transition — you **must** cross-compile, or the binary is Mach-O
+and won't run on CT 120:
 
 ```bash
 cd /Users/zach/darkpawns
 GOOS=linux GOARCH=amd64 go build -o darkpawns-server ./cmd/server
 ```
 
-### Verify the binary
+### Verify the binary (either path)
 
 ```bash
 file darkpawns-server
 # Expected: "ELF 64-bit LSB executable, x86-64, ..."
-# Wrong:   "Mach-O 64-bit executable arm64"  ← rebuild with GOOS=linux GOARCH=amd64
+# Wrong:   "Mach-O 64-bit executable arm64"  ← you built on the mac without cross-compile flags
 ```
 
 ## Deploy Steps
 
 ```bash
-# 1. Build (with cross-compile flags — see above)
+# 1. Build. On Linux/amd64: `go build -o darkpawns-server ./cmd/server`
+#    On the mac-mini, cross-compile (see Build Platform above):
 GOOS=linux GOARCH=amd64 go build -o darkpawns-server ./cmd/server
 
 # 2. Copy to CT 120 as .new (so the old binary stays in place until we're ready)
