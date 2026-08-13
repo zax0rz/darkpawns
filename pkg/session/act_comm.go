@@ -18,7 +18,7 @@ import (
 // Source: act.comm.c do_race_say() — wired to ExecRaceSay bridge in comm_say.go
 func cmdRaceSay(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.Send("What do you want to say?")
+		s.Send("Yes, but WHAT do you want to say?\n\r")
 		return nil
 	}
 
