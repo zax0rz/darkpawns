@@ -37,6 +37,9 @@ func TestCanUseSkill_Audited_UnknownSkill_ExactMessages(t *testing.T) {
 		// for. The oracle normalizes it away, so this is its only byte-guard.
 		{SkillBearhug, "You'd better leave all the martial arts to fighters.\n\r"},
 		{SkillSerpentKick, "You'd better leave all the martial arts to others.\r\n"},
+		// groinrip's no-skill message terminates "\n\r" (new_cmds.c:2582); the
+		// oracle normalizes terminators, so this is its only byte-guard.
+		{SkillGroinrip, "You're not trained in martial arts!\n\r"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.skill, func(t *testing.T) {
