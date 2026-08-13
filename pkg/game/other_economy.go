@@ -20,7 +20,9 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
-		ch.SendMessage("How many coins do you wish to split with your group?\r\n")
+		// C do_split (act.other.c): is_number("") is true, so amount = atoi("")
+		// = 0, which hits the amount<=0 branch → "Sorry, you can't do that."
+		ch.SendMessage("Sorry, you can't do that.\r\n")
 		return true
 	}
 
