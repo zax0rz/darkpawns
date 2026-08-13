@@ -151,37 +151,6 @@ func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bo
 }
 
 // ---------------------------------------------------------------------------
-// do_stealth — from act.other.c (superior sneak)
-// ---------------------------------------------------------------------------
-
-func (w *World) doStealth(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if isPlayerNPC(ch, me) {
-		return true
-	}
-
-	if ch.IsAffected(affMounted) {
-		ch.SendMessage("You can't sneak around on a mount!\r\n")
-		return true
-	}
-
-	skill := ch.GetSkill("stealth")
-	if skill <= 0 {
-		ch.SendMessage("You have no idea how to become one with the shadows.\r\n")
-		return true
-	}
-
-	percent := randRange(1, 101)
-	if percent > skill {
-		ch.SendMessage("You try to become one with the shadows, but fail.\r\n")
-		return true
-	}
-
-	ch.SetAffect(affSneak, true)
-	ch.SendMessage("You become one with the shadows.\r\n")
-	return true
-}
-
-// ---------------------------------------------------------------------------
 // do_appraise — from act.other.c
 // ---------------------------------------------------------------------------
 

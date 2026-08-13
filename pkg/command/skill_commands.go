@@ -1090,6 +1090,18 @@ func CmdSneak(s SessionInterface, args []string) error {
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
 
+// CmdStealth handles the stealth command. C do_stealth == do_sneak with the
+// stealth skill/affect; routes through game.DoStealth (self-only, no target).
+func CmdStealth(s SessionInterface, args []string) error {
+	if s.GetPlayer() == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	ch := s.GetPlayer()
+	result := game.DoStealth(ch)
+	return s.SendMessage(result.MessageToCh + "\r\n")
+}
+
 // CmdHide handles the hide command.
 func CmdHide(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
