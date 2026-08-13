@@ -221,6 +221,7 @@ var SkillUnknownMsg = map[string]string{
 	SkillSerpentKick: "You'd better leave all the martial arts to others.\r\n",       // C: \r\n (new_cmds2.c:700)
 	SkillTigerPunch:  "What's that, idiot-san?\r\n",                                  // C: \r\n (act.offensive.c:700)
 	SkillDragonKick:  "What's that, idiot-san?\r\n",                                  // C: \r\n (do_dragon_kick) — shared with neckbreak/tiger_punch
+	SkillGroinrip:    "You're not trained in martial arts!\n\r",                      // C: \n\r (new_cmds.c:2582)
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
