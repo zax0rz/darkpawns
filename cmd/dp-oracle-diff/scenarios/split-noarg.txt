@@ -1,0 +1,40 @@
+# split (do_split, act.other.c) no-arg — fresh Human Warrior, self-only.
+# C: one_argument gives an empty buf; is_number("") is true, so amount =
+# atoi("") = 0 and the amount<=0 branch fires → "Sorry, you can't do that.".
+# The port invented "How many coins do you wish to split with your group?";
+# corrected the empty-arg path to C's message.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Splitact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Splitact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+split
