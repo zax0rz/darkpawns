@@ -124,18 +124,9 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 
 	if arg == "" {
-		switch cmd {
-		case "bug":
-			ch.SendMessage("Describe the bug you've discovered?\r\n")
-		case "typo":
-			ch.SendMessage("What typo did you find?\r\n")
-		case "idea":
-			ch.SendMessage("What is your idea?\r\n")
-		case "todo":
-			ch.SendMessage("What would you like to see added?\r\n")
-		default:
-			ch.SendMessage("Report what?\r\n")
-		}
+		// C do_gen_write (act.other.c:1114): all subcmds share the same
+		// no-arg message — "That must be a mistake..."
+		ch.SendMessage("That must be a mistake...\r\n")
 		return true
 	}
 
