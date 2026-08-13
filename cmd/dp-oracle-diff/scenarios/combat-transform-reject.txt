@@ -1,0 +1,54 @@
+# Combat / self-command rejection paths — dragon / flesh / transform.
+#
+# Three registered, non-social commands probed via their deterministic front-door
+# rejections from a fresh Human Warrior (no combat skills, not a werewolf/vampire):
+#
+# - dragon (do_dragon_kick) → "What's that, idiot-san?"  — skill-first gate; Go
+#   CmdDragonKick routed through CanUseSkill but SkillDragonKick was NOT in
+#   SkillUnknownMsg, so it returned the legacy message. Audited into the map
+#   (\r\n; shared with neckbreak/tiger_punch).
+# - flesh (do_flesh_alter) → "You know nothing of altering your flesh!" (\n\r) —
+#   already audited (SkillFleshAlter); this adds the [probe] for the "flesh"
+#   command spelling.
+# - transform (do_transform) → "You aren't transformable!" (\n\r) — C rejects any
+#   non-werewolf/non-vampire up front; the port's doTransform was missing that
+#   guard (fell through to the werewolf branch). Guard added.
+#
+# All three fire before any RNG draw. Self-only output; no observer peer.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Dragform
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dragform
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+dragon
+flesh
+transform

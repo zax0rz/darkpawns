@@ -118,6 +118,13 @@ func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string)
 		return true
 	}
 
+	// C do_transform (act.other.c): only werewolves/vampires can transform;
+	// everyone else is rejected up front. This guard was missing from the port.
+	if ch.GetFlags()&(1<<PlrWerewolf) == 0 && ch.GetFlags()&(1<<PlrVampire) == 0 {
+		ch.SendMessage("You aren't transformable!\n\r")
+		return true
+	}
+
 	if ch.GetFlags()&(1<<PlrWerewolf) != 0 {
 		// Werewolf: toggle affWerewolf
 		if ch.IsAffected(affWerewolf) {

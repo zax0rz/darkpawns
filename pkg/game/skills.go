@@ -220,6 +220,7 @@ var SkillUnknownMsg = map[string]string{
 	SkillBearhug:     "You'd better leave all the martial arts to fighters.\n\r",     // C: \n\r (new_cmds.c:481) — same text as bash/kick but \n\r not \r\n
 	SkillSerpentKick: "You'd better leave all the martial arts to others.\r\n",       // C: \r\n (new_cmds2.c:700)
 	SkillTigerPunch:  "What's that, idiot-san?\r\n",                                  // C: \r\n (act.offensive.c:700)
+	SkillDragonKick:  "What's that, idiot-san?\r\n",                                  // C: \r\n (do_dragon_kick) — shared with neckbreak/tiger_punch
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
