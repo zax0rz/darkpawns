@@ -41,7 +41,7 @@ func cmdAt(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) < 2 {
-		s.Send("Usage: at <room> <command>")
+		s.Send("You must supply a room number or a name.\r\n")
 		return nil
 	}
 	dest, err := strconv.Atoi(args[0])

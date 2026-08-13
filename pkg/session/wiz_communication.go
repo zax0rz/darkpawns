@@ -14,7 +14,7 @@ func cmdGecho(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Echo what?")
+		s.Send("That must be a mistake...\r\n")
 		return nil
 	}
 	msg := strings.Join(args, " ")
