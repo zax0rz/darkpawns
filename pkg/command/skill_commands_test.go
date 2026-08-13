@@ -964,8 +964,9 @@ func TestCmdDragonKick_NoSkill(t *testing.T) {
 	if err := CmdDragonKick(session, []string{"rat"}); err != nil {
 		t.Fatalf("CmdDragonKick: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	// C do_dragon_kick: "What's that, idiot-san?\r\n" (SkillUnknownMsg audit).
+	if !strings.Contains(joinMessages(session.messages), "idiot-san") {
+		t.Errorf("expected 'idiot-san', got: %v", session.messages)
 	}
 }
 
@@ -975,8 +976,9 @@ func TestCmdDragonKick_NoArgs(t *testing.T) {
 	if err := CmdDragonKick(session, nil); err != nil {
 		t.Fatalf("CmdDragonKick: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	// C do_dragon_kick: "What's that, idiot-san?\r\n" (SkillUnknownMsg audit).
+	if !strings.Contains(joinMessages(session.messages), "idiot-san") {
+		t.Errorf("expected 'idiot-san', got: %v", session.messages)
 	}
 }
 
