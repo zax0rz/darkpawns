@@ -791,7 +791,7 @@ func cmdUse(s *Session, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	if len(args) == 0 {
-		s.sendText("Use what? Usage: use <item> [target] OR use <skill> [target]\r\n")
+		s.sendText("What do you want to use?\r\n")
 		return nil
 	}
 

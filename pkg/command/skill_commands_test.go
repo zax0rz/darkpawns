@@ -993,8 +993,9 @@ func TestCmdTigerPunch_NoSkill(t *testing.T) {
 	if err := CmdTigerPunch(session, []string{"rat"}); err != nil {
 		t.Fatalf("CmdTigerPunch: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	// C: "What's that, idiot-san?\r\n" (SkillUnknownMsg, DP-1206).
+	if !strings.Contains(joinMessages(session.messages), "idiot-san") {
+		t.Errorf("expected 'idiot-san', got: %v", session.messages)
 	}
 }
 
