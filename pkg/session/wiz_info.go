@@ -161,7 +161,7 @@ func cmdCheckload(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) < 2 {
-		s.Send("Usage: checkload <mob|obj> <vnum>")
+		s.Send("Usage: checkload { obj | mob } <number>\r\n")
 		return nil
 	}
 
@@ -222,7 +222,7 @@ func cmdCheckload(s *Session, args []string) error {
 		}
 
 	default:
-		s.Send("Usage: checkload <mob|obj> <vnum>")
+		s.Send("Usage: checkload { obj | mob } <number>\r\n")
 		return nil
 	}
 
