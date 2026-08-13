@@ -1,0 +1,44 @@
+# bite / groinrip — peaceful-room rejection paths (the fresh-char start room is
+# peaceful, same as the headbutt probe in #525). Fresh Human Warrior, self-only.
+#
+# - bite (do_bite, new_cmds.c): a peaceful room is a SILENT no-op. The port
+#   printed "Bite who?"; added the peaceful silent-return guard.
+# - groinrip (do_groinrip, new_cmds.c): peaceful check runs BEFORE the skill gate
+#   → "You cannot commit acts of violence here!". The port gated on skill first;
+#   moved the peaceful check ahead of CanUseSkill to match C.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Peaceact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Peaceact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+bite
+groinrip
