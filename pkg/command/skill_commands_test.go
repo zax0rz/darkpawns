@@ -1061,8 +1061,10 @@ func TestCmdSerpentKick_NoFightingNoArgs(t *testing.T) {
 	if err := CmdSerpentKick(session, nil); err != nil {
 		t.Fatalf("CmdSerpentKick: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "Kick who") {
-		t.Errorf("expected 'Kick who', got: %v", session.messages)
+	// C do_serpent_kick: GET_SKILL checked before target — no-skill player gets
+	// "You'd better leave all the martial arts to others."
+	if !strings.Contains(joinMessages(session.messages), "martial arts to others") {
+		t.Errorf("expected skill-gate message, got: %v", session.messages)
 	}
 }
 
@@ -1314,8 +1316,9 @@ func TestCmdBearhug_NoSkill(t *testing.T) {
 	if err := CmdBearhug(session, nil); err != nil {
 		t.Fatalf("CmdBearhug: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	// C: "You'd better leave all the martial arts to fighters.\n\r"
+	if !strings.Contains(joinMessages(session.messages), "martial arts to fighters") {
+		t.Errorf("expected 'martial arts to fighters', got: %v", session.messages)
 	}
 }
 

@@ -1449,6 +1449,12 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
+	// C do_serpent_kick (new_cmds2.c:698): GET_SKILL checked BEFORE target
+	// lookup — a no-skill caller is rejected regardless of args.
+	canUse, msg := game.CanUseSkill(ch, game.SkillSerpentKick)
+	if !canUse {
+		return s.SendMessage(msg)
+	}
 
 	var target combat.Combatant
 	var found bool

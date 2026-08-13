@@ -1,0 +1,47 @@
+# Mortal no-arg batch (batch 13).
+# Fixes: bearhug audit (\n\r), serpent audit + CanUseSkill added.
+# Faithful greens: insult, send, sethunt, show, skillset, wnewbie, zreset, wiznet.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Batchthirteen
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Batchthirteen
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+bearhug
+serpent
+insult
+send
+sethunt
+show
+skillset
+wnewbie
+zreset
+wiznet
