@@ -87,13 +87,9 @@ func cmdPassword(s *Session, args []string) error {
 func cmdPrompt(s *Session, args []string) error {
 	arg := strings.Join(args, " ")
 
+	// C do_display (act.other.c:1035): no-arg → usage message (NOT a toggle).
 	if arg == "" {
-		s.player.PromptOn = !s.player.PromptOn
-		if s.player.PromptOn {
-			s.Send("Prompt now on.")
-		} else {
-			s.Send("Prompt now off.")
-		}
+		s.Send("Usage: prompt { H | M | V | T | F | all | none }\r\n")
 		return nil
 	}
 

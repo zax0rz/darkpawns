@@ -395,7 +395,8 @@ func (w *World) doRoll(ch *Player, me *MobInstance, cmd string, arg string) bool
 	}
 
 	result := randRange(1, maxRoll)
-	ch.SendMessage(fmt.Sprintf("You roll %d out of %d.\r\n", result, maxRoll))
-	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s rolls %d out of %d.\r\n", ch.Name, result, maxRoll), ch.Name)
+	// C do_roll (act.other.c:1942): "You roll %u (1-%u)." + act TO_ROOM.
+	ch.SendMessage(fmt.Sprintf("You roll %d (1-%d).\r\n", result, maxRoll))
+	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("With a toss of the dice, %s rolls %d (1-%d).\r\n", ch.Name, result, maxRoll), ch.Name)
 	return true
 }
