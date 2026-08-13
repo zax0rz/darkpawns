@@ -217,7 +217,7 @@ var SkillUnknownMsg = map[string]string{
 	SkillFirstAid:    "You have no idea how!\r\n",                                    // C: \r\n (new_cmds2.c:148)
 	SkillAmbush:      "You'd better not.\r\n",                                        // C: \r\n (act.offensive.c:1467), gate is late (after target)
 	SkillSubdue:      "You have no idea how!\r\n",                                    // C: \r\n (new_cmds.c)
-	SkillBearhug:     "You'd better leave all the martial arts to fighters.\n\r",     // C: \n\r (act.offensive.c:481)
+	SkillBearhug:     "You'd better leave all the martial arts to fighters.\n\r",     // C: \n\r (new_cmds.c:481) — same text as bash/kick but \n\r not \r\n
 	SkillSerpentKick: "You'd better leave all the martial arts to others.\r\n",       // C: \r\n (new_cmds2.c:700)
 }
 

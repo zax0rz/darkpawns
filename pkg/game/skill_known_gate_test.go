@@ -31,6 +31,12 @@ func TestCanUseSkill_Audited_UnknownSkill_ExactMessages(t *testing.T) {
 		// ambush's gate is late (after target) so this message is not
 		// oracle-probed by the no-arg scenario — the unit test is its guard.
 		{SkillAmbush, "You'd better not.\r\n"},
+		// bearhug is byte-identical to bash/kick above EXCEPT it terminates
+		// "\n\r" (new_cmds.c:481), where bash/kick are "\r\n" — the
+		// same-string-different-terminator case per-message terminators exist
+		// for. The oracle normalizes it away, so this is its only byte-guard.
+		{SkillBearhug, "You'd better leave all the martial arts to fighters.\n\r"},
+		{SkillSerpentKick, "You'd better leave all the martial arts to others.\r\n"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.skill, func(t *testing.T) {
