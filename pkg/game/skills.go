@@ -199,24 +199,26 @@ var SkillPosReq = map[string]int{
 // Disarm: CmdDisarm never calls CanUseSkill and DoDisarm already gates faithfully
 // on GetSkill==0 with the byte-exact message (skills2.go:156).
 var SkillUnknownMsg = map[string]string{
-	SkillBackstab:   "You have no idea how.\r\n",
-	SkillBash:       "You'd better leave all the martial arts to fighters.\r\n",
-	SkillKick:       "You'd better leave all the martial arts to fighters.\r\n",
-	SkillTrip:       "You'd better leave the sneaky stuff to the thieves.\r\n",
-	SkillHeadbutt:   "You aren't qualified to headbutt anyone!\r\n",
-	SkillRescue:     "But only true warriors can do this!\r\n",
-	SkillDisarm:     "You'd better leave all the martial arts to fighters.\r\n",
-	SkillCharge:     "You couldn't charge if you wanted to!\r\n",
-	SkillDisembowel: "You have no idea how.\r\n",
-	SkillCutthroat:  "You're not trained in slitting throats!\n\r", // C: \n\r (new_cmds.c:561)
-	SkillNeckbreak:  "What's that, idiot-san?\r\n",
-	SkillSlug:       "You couldn't slug your way out of a wet paper bag.\n\r", // C: \n\r (new_cmds2.c:829)
-	SkillStrike:     "Yeah, right.\r\n",
-	SkillSmackheads: "The only heads you're gonna smack are yours and Rosie's.\n\r", // C: \n\r (new_cmds.c:980)
-	SkillFleshAlter: "You know nothing of altering your flesh!\n\r",                 // C: \n\r (new_cmds.c:1900)
-	SkillFirstAid:   "You have no idea how!\r\n",                                    // C: \r\n (new_cmds2.c:148)
-	SkillAmbush:     "You'd better not.\r\n",                                        // C: \r\n (act.offensive.c:1467), gate is late (after target)
-	SkillSubdue:     "You have no idea how!\r\n",                                    // C: \r\n (new_cmds.c)
+	SkillBackstab:    "You have no idea how.\r\n",
+	SkillBash:        "You'd better leave all the martial arts to fighters.\r\n",
+	SkillKick:        "You'd better leave all the martial arts to fighters.\r\n",
+	SkillTrip:        "You'd better leave the sneaky stuff to the thieves.\r\n",
+	SkillHeadbutt:    "You aren't qualified to headbutt anyone!\r\n",
+	SkillRescue:      "But only true warriors can do this!\r\n",
+	SkillDisarm:      "You'd better leave all the martial arts to fighters.\r\n",
+	SkillCharge:      "You couldn't charge if you wanted to!\r\n",
+	SkillDisembowel:  "You have no idea how.\r\n",
+	SkillCutthroat:   "You're not trained in slitting throats!\n\r", // C: \n\r (new_cmds.c:561)
+	SkillNeckbreak:   "What's that, idiot-san?\r\n",
+	SkillSlug:        "You couldn't slug your way out of a wet paper bag.\n\r", // C: \n\r (new_cmds2.c:829)
+	SkillStrike:      "Yeah, right.\r\n",
+	SkillSmackheads:  "The only heads you're gonna smack are yours and Rosie's.\n\r", // C: \n\r (new_cmds.c:980)
+	SkillFleshAlter:  "You know nothing of altering your flesh!\n\r",                 // C: \n\r (new_cmds.c:1900)
+	SkillFirstAid:    "You have no idea how!\r\n",                                    // C: \r\n (new_cmds2.c:148)
+	SkillAmbush:      "You'd better not.\r\n",                                        // C: \r\n (act.offensive.c:1467), gate is late (after target)
+	SkillSubdue:      "You have no idea how!\r\n",                                    // C: \r\n (new_cmds.c)
+	SkillBearhug:     "You'd better leave all the martial arts to fighters.\n\r",     // C: \n\r (act.offensive.c:481)
+	SkillSerpentKick: "You'd better leave all the martial arts to others.\r\n",       // C: \r\n (new_cmds2.c:700)
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
