@@ -55,14 +55,46 @@ cd ..
 gh repo clone zax0rz/darkpawns-c-oracle
 cd darkpawns-c-oracle
 
-# Native build on Linux — no cross-compile, no Mac patches
-./configure
+# Native build on Linux. Two CFLAGS are load-bearing (notes below):
+#   -fcommon : the vintage C has duplicate tentative globals (e.g. buf2) that
+#              GNU ld rejects by default; macOS ld coalesces them, so this is
+#              only needed on Linux.
+#   -O0      : deliberate — build the fixture oracle unoptimized. See below.
+./configure CFLAGS="-g -O0 -fcommon"
 make
 file bin/circle       # expect: ELF 64-bit LSB executable, x86-64
 ```
 
 `bin/circle` needs its sibling `lib/` tree (world files, text, player dir) to
-boot. Keep them together as cloned.
+boot. Keep them together as cloned. The repo ships a baseline `lib/etc/players`;
+without it the first character created is auto-crowned Implementor (stock
+CircleMUD), and every mortal scenario silently diverges (oracle sees a god, the
+Go port sees a mortal).
+
+### Why -O0 — read before you "optimize" the fixture
+
+The DikuMUD-derived C carries a lot of latent undefined behavior: self-aliasing
+`sprintf(dst, "…%s…", dst, …)` appends (~180 sites), `1 << 31` signed shifts,
+etc. At `-O0` — and on the reference arm64/clang build — these are tolerated; at
+`-O2`/amd64 the optimizer exploits them into arch-specific Heisenbugs that
+surface as spurious differential divergences (the first one found: a fresh
+char's prompt dropping its H/M segments to render move-only `NNV >`). This is a
+*test* oracle: runtime speed is irrelevant, and determinism is seed-driven, so
+opt level cannot affect parity. Building at `-O0` reproduces arm64's UB-tolerance
+across all sites at once. Hot paths still get real source fixes as they surface
+(belt and suspenders); `-O0` is the blanket mitigation, not a cure.
+
+### If `make` fails wanting `aclocal-1.14`
+
+git checkout can set the autotools file mtimes so `make` tries to regenerate
+`aclocal.m4` with an ancient automake. The committed `configure` / `Makefile.in`
+are valid — just refresh their timestamps (there is no maintainer-mode switch):
+
+```bash
+find . \( -name configure.ac -o -name Makefile.am \) -exec touch {} +
+sleep 1; touch aclocal.m4
+sleep 1; touch configure; find . -name Makefile.in -exec touch {} +
+```
 
 ## 3. Point the harness at the oracle
 
