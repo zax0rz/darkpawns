@@ -17,11 +17,12 @@ type AgentClient struct {
 	conn    *WSConn
 	state   *GameState
 	session *SessionLogger
+	be      *BehaviorEngine
 }
 
 // NewAgentClient creates a new agent client with the given config.
 func NewAgentClient(cfg *AgentConfig) *AgentClient {
-	return &AgentClient{Cfg: cfg}
+	return &AgentClient{Cfg: cfg, be: NewBehaviorEngine()}
 }
 
 // GameState holds the latest structured state from the server.
@@ -250,6 +251,9 @@ func (a *AgentClient) handleVars(ctx context.Context, data json.RawMessage) erro
 	a.state.Fighting = vars.FIGHTING
 	a.state.Inventory = vars.INVENTORY
 
+	if action := a.be.Evaluate(a.state); action != nil {
+		return a.executeAction(ctx, action, 0)
+	}
 	if action := FSMDecision(a.state); action != nil {
 		return a.executeAction(ctx, action, 0)
 	}
