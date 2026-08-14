@@ -105,3 +105,8 @@ darkpawns-server
 # it -> add/add conflicts -> a rebase per PR). It's reproducible on demand and
 # by the weekly cron; do NOT commit it. (Cron that wants a snapshot: `git add -f`.)
 docs/reports/scenario-coverage-*.tsv
+
+# impeccable design skill — vendored per-harness, not part of the app
+.github/agents/
+.github/hooks/
+.github/skills/

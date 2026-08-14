@@ -14,3 +14,7 @@ content/items/
 .idea/
 .vscode/
 
+
+# impeccable tool state — keep only the design source of truth
+.impeccable/*
+!.impeccable/design.json
