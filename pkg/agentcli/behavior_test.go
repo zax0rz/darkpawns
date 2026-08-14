@@ -1,7 +1,15 @@
 package agentcli
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"testing"
+	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 // ---------------------------------------------------------------------------
@@ -190,6 +198,84 @@ func TestEquipBestWeapon_NoTriggerWhenEquipped(t *testing.T) {
 	action := be.Evaluate(s)
 	if action != nil && action.ActionType == "wield" {
 		t.Fatal("should not wield when already wielding")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Integration: BehaviorEngine in the production decision loop
+// ---------------------------------------------------------------------------
+
+// TestHandleVars_EvaluatesBehaviorEngineBeforeLLM proves the BehaviorEngine is
+// consulted by AgentClient.handleVars. It uses the auto_attack pattern, which
+// FSMDecision does NOT emit when the player is already engaged (it only
+// auto-attacks while idle). So a "hit" command on the wire proves the engine
+// fired instead of falling through to llmDecision.
+func TestHandleVars_EvaluatesBehaviorEngineBeforeLLM(t *testing.T) {
+	cmdCh := make(chan map[string]any, 4)
+	upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+		var login map[string]any
+		_ = c.ReadJSON(&login)
+		_ = c.WriteJSON(map[string]any{"type": "state", "data": map[string]any{}})
+		var sub map[string]any
+		_ = c.ReadJSON(&sub)
+		for {
+			var msg map[string]any
+			if err := c.ReadJSON(&msg); err != nil {
+				return
+			}
+			cmdCh <- msg
+		}
+	}))
+	defer srv.Close()
+
+	u, err := url.Parse(srv.URL)
+	if err != nil {
+		t.Fatalf("parse server url: %v", err)
+	}
+	port, err := strconv.Atoi(u.Port())
+	if err != nil {
+		t.Fatalf("parse server port: %v", err)
+	}
+
+	cfg := &AgentConfig{
+		Key:        "test-key",
+		PlayerName: "Bot",
+		GameHost:   u.Hostname(),
+		GamePort:   port,
+	}
+	client := NewAgentClient(cfg)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := client.Connect(ctx); err != nil {
+		t.Fatalf("connect: %v", err)
+	}
+
+	// Full HP + engaged in combat: only auto_attack (priority 10) matches.
+	// FSMDecision returns nil here (player already engaged), so this command can
+	// only come from the BehaviorEngine.
+	vars := []byte(`{"HEALTH":100,"MAX_HEALTH":100,"MANA":0,"LEVEL":1,"EXP":0,` +
+		`"ROOM_VNUM":1,"ROOM_NAME":"The Great Hall","ROOM_EXITS":["north"],` +
+		`"ROOM_MOBS":[{"name":"goblin","instance_id":"goblin.1","target_string":"goblin.1","vnum":1,"fighting":true}],` +
+		`"ROOM_ITEMS":[],"FIGHTING":"goblin.1","INVENTORY":[]}`)
+	if err := client.handleVars(ctx, vars); err != nil {
+		t.Fatalf("handleVars: %v", err)
+	}
+
+	select {
+	case msg := <-cmdCh:
+		data, _ := msg["data"].(map[string]any)
+		if msg["type"] != "command" || data["command"] != "hit" {
+			t.Fatalf("expected hit command from behavior engine, got %+v", msg)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for behavior-engine command")
 	}
 }
 
