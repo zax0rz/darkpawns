@@ -1,0 +1,78 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 3);
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+<Base title="Dark Pawns — a MUD from 1994, running again">
+  <div class="container">
+    <section class="callout">
+      <p class="blurb">
+        A persistent dark-fantasy MUD first built in 1994, resurrected as a modern Go engine in
+        2026. A historic archive and a living laboratory for autonomous AI-agent research.
+      </p>
+      <div class="callout-actions">
+        <a class="btn-primary" href="/play/">Enter the Game</a>
+        <a class="btn-secondary" href="/about/">The whole story</a>
+      </div>
+    </section>
+
+    <section class="home-blog">
+      <div class="home-blog-head">
+        <h2>From the Blog</h2>
+        <a href="/blog/">All posts &rarr;</a>
+      </div>
+      <ul class="feed">
+        {posts.map((p) => (
+          <li>
+            <time datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time>
+            <h3><a href={`/blog/${p.id}/`}>{p.data.title}</a></h3>
+            <p>{p.data.description}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .callout {
+    max-width: var(--content-width);
+    padding-block: var(--space-xl) var(--space-lg);
+  }
+  .blurb {
+    font-size: 1.35rem;
+    line-height: 1.5;
+    max-width: 42ch;
+  }
+  .callout-actions { display: flex; gap: var(--space-md); flex-wrap: wrap; margin-top: var(--space-lg); }
+  .btn-primary, .btn-secondary {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.4rem;
+    border: 1px solid var(--ink);
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+  .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); text-decoration: none; }
+  .btn-secondary { background: transparent; color: var(--ink); }
+  .btn-secondary:hover { background: var(--ink); color: var(--paper); text-decoration: none; }
+
+  .home-blog { margin-top: var(--space-xl); border-top: 2px solid var(--rule); padding-top: var(--space-lg); }
+  .home-blog-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); }
+  .home-blog-head h2 { margin: 0; }
+  .home-blog-head a { font-family: var(--font-mono); font-size: 0.8rem; }
+  .feed { list-style: none; margin: var(--space-md) 0 0; padding: 0; }
+  .feed li { padding: var(--space-md) 0; border-top: 1px solid var(--rule); }
+  .feed time { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .feed h3 { margin: var(--space-xs) 0; }
+  .feed h3 a { color: var(--ink); }
+  .feed h3 a:hover { color: var(--accent); text-decoration: none; }
+  .feed p { color: var(--ink-muted); margin: 0; max-width: 60ch; }
+</style>

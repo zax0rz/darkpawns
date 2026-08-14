@@ -1,0 +1,47 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+<Base title={`${post.data.title} — Dark Pawns`} description={post.data.description}>
+  <article class="container post">
+    <p class="post-meta"><a href="/blog/">Blog</a> » <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time></p>
+    <h1>{post.data.title}</h1>
+    <div class="prose"><Content /></div>
+  </article>
+</Base>
+
+<style>
+  .post { max-width: var(--content-width); padding-block: var(--space-lg) var(--space-xl); }
+  .post-meta {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: var(--space-sm);
+  }
+  .post > h1 { margin-bottom: var(--space-lg); }
+  .prose :global(p) { margin: 0 0 var(--space-md); }
+  .prose :global(h2), .prose :global(h3) { margin-top: var(--space-lg); }
+  .prose :global(a) { color: var(--accent); }
+  .prose :global(blockquote) {
+    border-left: 3px solid var(--accent);
+    margin: var(--space-lg) 0;
+    padding: var(--space-xs) var(--space-md);
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+  }
+  .prose :global(hr) { border: none; border-top: 1px solid var(--rule); margin: var(--space-lg) 0; }
+  .prose :global(code) { font-family: var(--font-mono); font-size: 0.9em; }
+  .prose :global(em) { color: var(--ink-muted); }
+</style>

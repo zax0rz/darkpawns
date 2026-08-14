@@ -1,0 +1,42 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+<Base title="Blog — Dark Pawns" description="Notes on the port, the world, and the development of Dark Pawns.">
+  <div class="container blog-index">
+    <h1>Blog</h1>
+    <p class="lede">Notes on the port, the world, and where this is all going.</p>
+    <ul class="post-list">
+      {posts.map((p) => (
+        <li class="post-item">
+          <time datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time>
+          <h2><a href={`/blog/${p.id}/`}>{p.data.title}</a></h2>
+          <p>{p.data.description}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Base>
+
+<style>
+  .blog-index { max-width: var(--content-width); padding-block: var(--space-xl) var(--space-lg); }
+  .lede { color: var(--ink-muted); font-size: 1.1rem; margin-bottom: var(--space-lg); }
+  .post-list { list-style: none; margin: 0; padding: 0; }
+  .post-item { padding: var(--space-lg) 0; border-top: 1px solid var(--rule); }
+  .post-item time {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .post-item h2 { margin: var(--space-xs) 0 var(--space-sm); }
+  .post-item h2 a { color: var(--ink); }
+  .post-item h2 a:hover { color: var(--accent); text-decoration: none; }
+  .post-item p { color: var(--ink-muted); margin: 0; }
+</style>

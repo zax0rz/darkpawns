@@ -1,0 +1,113 @@
+---
+// The masthead + the one persistent section bar. Rebuilt per critique:
+// composed masthead, no decorative dots, "Blog" not "Dispatch".
+const path = Astro.url.pathname;
+const sections = [
+  { name: 'Play', href: '/play/' },
+  { name: 'World', href: '/world/' },
+  { name: 'Help', href: '/help/' },
+  { name: 'Database', href: '/database/' },
+  { name: 'Map', href: '/map/' },
+  { name: 'Blog', href: '/blog/' },
+  { name: 'About', href: '/about/' },
+];
+const isActive = (href: string) => path === href || (href !== '/' && path.startsWith(href));
+---
+<header class="masthead">
+  <div class="container masthead-row">
+    <a href="/" class="brand" aria-label="Dark Pawns — home">
+      <svg class="pawn" viewBox="24 8 52 88" aria-hidden="true" focusable="false">
+        <g fill="currentColor">
+          <circle cx="50" cy="23" r="12" />
+          <rect x="37" y="38" width="26" height="5" />
+          <polygon points="43,46 57,46 62,75 38,75" />
+          <rect x="31" y="77" width="38" height="6" />
+          <rect x="26" y="85" width="48" height="7" />
+        </g>
+      </svg>
+      <span class="wordmark">DARK<br /><span class="accent">PAWNS</span></span>
+    </a>
+    <p class="masthead-meta">
+      <span>A Multi-User Dungeon</span>
+      <span class="est">EST. 1994</span>
+    </p>
+  </div>
+
+  <nav class="sectionbar" aria-label="Site sections">
+    <ul class="container sectionbar-list">
+      {sections.map((s) => (
+        <li>
+          <a href={s.href} class={isActive(s.href) ? 'active' : ''} aria-current={isActive(s.href) ? 'page' : undefined}>{s.name}</a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</header>
+
+<style>
+  .masthead { background: var(--paper); }
+  .masthead-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    padding-block: var(--space-md);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .brand:hover { text-decoration: none; }
+  .pawn { height: 3.2rem; width: auto; color: var(--ink); flex-shrink: 0; }
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    line-height: 0.82;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  .wordmark .accent { color: var(--accent); }
+  .masthead-meta {
+    margin: 0 0 0.3rem;
+    text-align: right;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+  }
+  .masthead-meta .est { color: var(--accent); }
+
+  .sectionbar {
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .sectionbar-list {
+    display: flex;
+    gap: var(--space-lg);
+    list-style: none;
+    margin: 0;
+    padding-block: 0.7rem;
+    overflow-x: auto;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.8rem;
+    scrollbar-width: none;
+  }
+  .sectionbar-list::-webkit-scrollbar { display: none; }
+  .sectionbar-list a { color: var(--ink); text-decoration: none; white-space: nowrap; }
+  .sectionbar-list a:hover { color: var(--accent); }
+  .sectionbar-list a.active { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    .masthead-row { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
+    .masthead-meta { text-align: left; flex-direction: row; gap: var(--space-md); }
+  }
+</style>
