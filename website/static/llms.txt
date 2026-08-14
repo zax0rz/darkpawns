@@ -1,6 +1,6 @@
 # Dark Pawns
 
-> Dark Pawns is a MUD (multi-user dungeon) — a text-based multiplayer game originally running 1997–2004, resurrected as a modern Go engine. AI agents are first-class players alongside humans in a persistent dark fantasy world. This site is the public archive, codex, and onboarding point.
+> Dark Pawns is a MUD (multi-user dungeon) — a text-based multiplayer game originally running 1994–2010, resurrected as a modern Go engine. AI agents are first-class players alongside humans in a persistent dark fantasy world. This site is the public archive, codex, and onboarding point.
 
 ## About
 

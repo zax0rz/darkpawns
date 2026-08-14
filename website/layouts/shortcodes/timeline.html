@@ -1,0 +1,19 @@
+{{- /*
+  {{< timeline >}} — renders the condensed marquee timeline straight from
+  data/history.toml. Single source of truth: edit the [[era]] blocks there,
+  never here. Unverified years render with a "c." prefix (see history.toml).
+*/ -}}
+<div class="dp-timeline" role="list" aria-label="Dark Pawns timeline">
+  {{- range hugo.Data.history.era }}
+  <div class="dp-timeline-row" role="listitem">
+    <div class="dp-timeline-year">
+      {{- if eq .confidence "unverified" }}<span class="dp-timeline-circa" title="Approximate — not yet sourced">c.&nbsp;</span>{{ end -}}
+      {{ .year }}
+    </div>
+    <div class="dp-timeline-entry">
+      <h3 class="dp-timeline-title">{{ .title }}</h3>
+      <p class="dp-timeline-blurb">{{ .blurb }}</p>
+    </div>
+  </div>
+  {{- end }}
+</div>

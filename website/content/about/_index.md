@@ -1,39 +1,37 @@
 ---
 title: "About"
-description: "The history of Dark Pawns — a dark fantasy MUD that ran from 1997 to 2010, resurrected as a Go engine and AI research platform in 2026."
+description: "The history of Dark Pawns — a dark fantasy MUD that ran from 1994 to 2010, resurrected as a Go engine and AI research platform in 2026."
 date: 2026-04-28
 draft: false
 ---
 
-## 1997 — The First Age
+## 1994 — Where It Started
 
-In 1994, a CircleMUD 1.7 derivative appeared on a server called knight.ufp.org, built by Serapis and Tracer. By 1997, after three codebase overhauls and a migration through half the free hosting providers on the early internet, Dark Pawns landed at darkrune.guru.org and started to become what people would remember.
+In September 1994, Serapis (Derek Karnes) and Tracer (C. Jackson) started Dark Pawns on CircleMUD 1.7, running on a machine called knight.ufp.org. Over the next few years the base code was overhauled more than once — CircleMUD 2.2, then 3.0 — and the game migrated through half the free hosting providers on the early internet before it settled. Orodreth and Frontline (R.E. Paret) joined as coders in 1996; by 1998 Serapis had moved on, and the two of them were running the world.
 
-The world was enormous — two continents, oceans, terrain that flowed instead of snapping between disconnected zones. Six base classes fed into a remort system with six more on top of that. Vampirism, lycanthropy, magical tattoos, talking weaponry. A custom mobile AI that let mobs hold conversations, run quests, and fight back with something approaching malice. Player killing was allowed but not required; the world was dangerous enough on its own.
+It was an enormous world — two continents, terrain that flowed instead of snapping between disconnected zones. A remort class system with real depth. Vampirism, lycanthropy, magical tattoos, talking weaponry. A custom mobile AI that let mobs hold conversations, run quests, and fight back with something close to malice — years before anyone expected that from a text game.
 
-The class system alone was the stuff of 3 AM arguments. Assassins were extremely efficient, extremely deadly. Magi shaped reality at whim. And somewhere in the Wyldlands, where magick ran strong and wild, the dreams you had while sleeping could actually hurt you.
-
-The clans formed. Bannor built. Selene ruled. People who had never met face to face spent years inside this world together — and for a lot of them, those years mattered more than they'd ever admit.
+The class system alone was the stuff of 3 AM arguments. Assassins were extremely efficient, extremely deadly. Magi shaped reality at whim. And in the Wyldlands, where magick ran strong and wild, the dreams you had while sleeping could become real.
 
 > Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.
 
-## 2010 — The Long Silence
+{{< timeline >}}
 
-Then it stopped.
+## The Game Today — darkpawns.net
 
-The server went dark. Players scattered to other games, other lives, other things that wouldn't fit on a terminal screen. The inside jokes went quiet. The clans dissolved into forum signatures and half-remembered mudmails. Thirteen years of world, compressed into whatever survived on a hard drive nobody was checking.
+The old site never said so, and it should have: **Dark Pawns never fully died.** A crew of former players stood a server back up at **[darkpawns.net](https://www.darkpawns.net/)** — the *DPReturns* revival — and it is **still online today**, run by people who loved the world enough to keep the lights on themselves. If you want the original experience, unbroken, that's the door. Go say hello.
 
-It wasn't dramatic. Nobody burned anything down. The world just... wasn't there anymore.
+The full, unabridged chronicle — every host move, every version, the 2001 break-in — is preserved in Frontline's own words: [the complete history of Dark Pawns](/community/history/).
 
 ---
 
-## 2026 — The Resurrection
+## 2026 — The Go Rewrite
 
 A text game. In 2026. Why?
 
-Because the game was genuinely good. Not good for its era — good on its own terms. The mobile AI was doing things that modern games still struggle with. The class system had depth that most MMOs never attempted. The worldbuilding was literary, specific, and completely its own thing. And all of it was locked inside a codebase that had been sitting untouched for fifteen years.
+Because the game was genuinely good. Not good for its era — good on its own terms. The mobile AI was doing things modern games still struggle with. The class system had depth most MMOs never attempted. The worldbuilding was literary, specific, and completely its own thing. And all of it was locked inside a codebase that had been sitting untouched for the better part of two decades.
 
-So someone ported it to Go. The entire CircleMUD-derived engine, rewritten from scratch, running on modern infrastructure. The world is back. The AI is back, and it's getting smarter. The code is on GitHub now — open source, for anyone who wants to poke at the guts of a late-90s MUD and see how the thing actually worked.
+So it was ported to Go — the entire CircleMUD-derived engine, rewritten from scratch on modern infrastructure. The world is back. The AI is back, and it's getting smarter. The code is on GitHub, open source, for anyone who wants to poke at the guts of a '90s MUD and see how the thing actually worked.
 
 The server is live. The door is open.
 

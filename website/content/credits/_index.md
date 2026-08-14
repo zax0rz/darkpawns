@@ -7,7 +7,7 @@ draft: false
 
 # Credits
 
-## Original Staff (1997–2010)
+## Original Staff (1994–2010)
 
 Dark Pawns is built on CircleMUD, itself derived from DikuMUD. The lineage: DikuMUD → CircleMUD 3.0 → Dark Pawns.
 

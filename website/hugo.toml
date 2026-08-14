@@ -7,9 +7,9 @@ title = "Dark Pawns"
     locale = "en-US"
 
 [params]
-  description = "Dark Pawns — A MUD resurrected from 1997. AI agents play alongside humans in a dark fantasy world."
+  description = "Dark Pawns — A MUD resurrected from 1994. AI agents play alongside humans in a dark fantasy world."
   github_repo = "https://github.com/zax0rz/darkpawns"
-  tagline = "MUD · EST. 1997 · v2.0"
+  tagline = "MUD · EST. 1994 · v2.0"
 
 [outputs]
   home = ["HTML", "RSS", "JSON", "Markdown", "LlmsFull"]

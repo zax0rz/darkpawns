@@ -60,6 +60,10 @@ src/*.o
 src/*.Po
 maps/world_data.json
 data/
+# ...but the website's canonical Hugo data/ (the history SSOT) must ship:
+!website/data/
+!website/data/**
+
 # Built binaries (anchored to repo root so they don't also exclude the
 # same-named cmd/ source dirs — cmd/test-race, cmd/dp-agent, cmd/dp-goatd).
 /test-race

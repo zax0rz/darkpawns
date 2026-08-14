@@ -1,0 +1,87 @@
+# Canonical Dark Pawns history — SINGLE SOURCE OF TRUTH.
+#
+# Every surface that states a date or founding fact (about page, llms.txt,
+# OG image alt, the timeline shortcode) reads from this file. Do NOT hardcode
+# these facts anywhere else — that is how the site ended up claiming "1994",
+# "1997-2004", and "1997-2010" all at once.
+#
+# ROOT SOURCE: content/community/history/timeline.md — Frontline's "a brief
+# history of dark pawns" (updating Orodreth's circa-1999 doc), preserved from
+# dp-players.com via the Wayback Machine (July 2004 capture). Shutdown year
+# from github.com/rparet/darkpawns. When these disagree, the timeline doc wins
+# for anything up to 2004; rparet wins for the shutdown.
+#
+# RULE: if a fact is not sourced, it does not go in this file. Unverified facts
+# are marked confidence = "unverified" and MUST be hedged wherever they render.
+
+[facts]
+founded_year      = 1994                     # "September 1994 | DP is Born!" — timeline.md
+founded_month     = "September"
+shutdown_year     = 2010                      # rparet/darkpawns README — "approximately 1997 to 2010"
+run_span          = "1994–2010"          # en dash; end approximate
+founders          = "Serapis (Derek Karnes) & Tracer (C. Jackson)"
+last_implementors = "Frontline (R.E. Paret) & Orodreth (S. Thompson)"
+lineage           = "CircleMUD 1.7 → 2.2 → 3.0 (DikuMUD lineage)"
+go_revival_year   = 2026                      # this project — the Go rewrite
+
+# RESOLVED 2026-08-13: canonical founding = September 1994 (primary source beats
+# the old "EST. 1997" chrome, which was inherited drift). All surfaces now read 1994.
+est_year_displayed = 1994
+
+# The one line of real Frontline lore that anchors the brand.
+# Sourced: background.html (docs/wayback/background.html-content.md); live on darkpawns.net.
+tagline_lore = "Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood."
+
+# --- Condensed timeline (renders via {{< timeline >}}) ------------------
+# The FULL 15-row record lives in content/community/history/timeline.md.
+# This is the deliberately-short marquee version. Every beat traces to that file.
+
+[[era]]
+year   = 1994
+key    = "born"
+title  = "DP is born"
+source = "timeline.md — September 1994"
+blurb  = "Serapis (Derek Karnes) and Tracer (C. Jackson) start Dark Pawns on CircleMUD 1.7, running on knight.ufp.org."
+
+[[era]]
+year   = 1996
+key    = "team"
+title  = "The team forms"
+source = "timeline.md — Feb–Mar 1996"
+blurb  = "Orodreth and Frontline join as coders, Oddity as head builder. The base moves to CircleMUD 3.0 and the world starts to grow into what players remember."
+
+[[era]]
+year   = 1998
+key    = "v22"
+title  = "v2.2 — the big one"
+source = "timeline.md — May & Dec 1998"
+blurb  = "Serapis departs; Frontline and Orodreth take over as co-implementors. Wolfpaw hosts the game free, and the largest update in DP's history ships."
+
+[[era]]
+year   = 2001
+key    = "breakin"
+title  = "The break-in"
+source = "timeline.md — February 2001"
+blurb  = "An intruder destroys DP's files. Orodreth's backups save most of the world, but player data and much of the unfinished 3.0 are lost. darkpawns.com is registered."
+
+[[era]]
+year   = 2010
+key    = "dark"
+title  = "Dark"
+source = "rparet/darkpawns README — “approximately 1997 to 2010”"
+blurb  = "The server goes quiet. The code and world survive; the game does not."
+
+[[era]]
+year       = 2019
+key         = "revival_net"
+title       = "The community revival"
+confidence  = "unverified"                   # year approximate — hedge wherever it renders
+source      = "darkpawns.net (“DPReturns”) — confirmed live; founding year not yet sourced"
+blurb       = "Former players stand a server back up at darkpawns.net. It is still online today."
+
+[[era]]
+year   = 2026
+key    = "go_rewrite"
+title  = "The Go rewrite"
+source = "github.com/zax0rz/darkpawns"
+blurb  = "The engine is rebuilt from scratch in Go, open-sourced, and opened to AI agents as first-class players alongside humans."
