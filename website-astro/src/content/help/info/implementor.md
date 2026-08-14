@@ -1,0 +1,12 @@
+---
+title: "IMPLEMENTOR"
+description: "The most powerful being in existence."
+date: 2026-04-28
+draft: false
+section: "help"
+aliases: ['/help/implementor']
+---
+
+The most powerful being in existence.
+
+See also: [IMMLIST](/help/commands/wizlist-immlist/), [WIZLIST](/help/commands/wizlist-immlist/)

@@ -1,0 +1,32 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('help');
+  return entries.map((entry) => {
+    const [category, ...rest] = entry.id.split('/');
+    return { params: { category, slug: rest.join('/') }, props: { entry } };
+  });
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const category = entry.id.split('/')[0];
+const labels: Record<string, string> = {
+  commands: 'Commands', spells: 'Spells', info: 'Info & Lore', socials: 'Socials', wizhelp: 'Wizard Help',
+};
+---
+<Base title={`${entry.data.title} — Help — Dark Pawns`} description={entry.data.description}>
+  <article class="container help-entry">
+    <p class="crumb"><a href="/help/">Help</a> &raquo; <a href={`/help/${category}/`}>{labels[category] ?? category}</a> &raquo; {entry.data.title}</p>
+    <h1>{entry.data.title}</h1>
+    <div class="prose"><Content /></div>
+  </article>
+</Base>
+
+<style>
+  .help-entry { padding-block: var(--space-lg) var(--space-xl); }
+  .crumb { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: var(--space-sm); }
+  .help-entry > h1 { margin-bottom: var(--space-lg); text-transform: uppercase; }
+</style>

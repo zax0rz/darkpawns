@@ -1,0 +1,16 @@
+---
+title: "'LESSER PERCEPTION'"
+description: "Conquering the realm of the unseen, the psionic can focus his mental"
+date: 2026-04-28
+draft: false
+section: "help"
+aliases: ['/help/lesser-perception']
+---
+
+Conquering the realm of the unseen, the psionic can focus his mental
+energies towards seeing the unseen.  This lesser version is great for 
+seeing in the dark, as well as seeing other people's true nature.
+
+See also: "[GREATER](/help/spells/greater-perception/) [PERCEPTION](/help/spells/greater-perception/)"
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

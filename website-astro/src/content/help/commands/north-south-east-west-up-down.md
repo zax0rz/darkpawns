@@ -1,0 +1,22 @@
+---
+title: "NORTH SOUTH EAST WEST UP DOWN"
+description: "Usage: north"
+date: 2026-04-28
+draft: false
+section: "help"
+aliases: ['/help/north-south-east-west-up-down']
+---
+
+Usage: north
+       south
+       east
+       west
+       up
+       down
+
+To travel in a given direction. To see directions available for travel, 
+use [EXITS](/help/commands/exits/) or better yet [AUTO](/help/commands/auto-loot-split/) EXIT.
+
+See also: EXIT, [AUTO](/help/commands/auto-loot-split/)
+
+Full documentation: [Docs Game Commands](/docs/game/commands/)

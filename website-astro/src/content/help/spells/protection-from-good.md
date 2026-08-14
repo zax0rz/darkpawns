@@ -1,0 +1,21 @@
+---
+title: "'PROTECTION FROM GOOD'"
+description: "Usage     : cast 'protection from good' <self>"
+date: 2026-04-28
+draft: false
+section: "help"
+aliases: ['/help/protection-from-good']
+---
+
+Usage	    : cast 'protection from good' <self>
+Accumulative: No
+Duration    : About [24](/help/info/attitude-attitudes-24-atti/) hours
+
+Gives minor protection from the attacks of good opponents, and wards
+of those pesky do-gooders who always wish you harm.
+
+Note: casting this spell upon yourself while you are good can have
+      disasterous side effects.
+
+
+Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

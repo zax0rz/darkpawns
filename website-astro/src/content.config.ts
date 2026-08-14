@@ -26,4 +26,17 @@ const world = defineCollection({
   }),
 });
 
-export const collections = { blog, world };
+// The in-game help archive (~425 files across commands, spells, info, socials,
+// wizhelp). _index category pages are excluded; category pages are built in
+// src/pages/help/. Same schema discipline.
+const help = defineCollection({
+  loader: glob({ pattern: ['**/*.md', '!**/_index.md'], base: './src/content/help' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    date: z.coerce.date().optional(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { blog, world, help };

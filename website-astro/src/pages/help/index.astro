@@ -1,0 +1,49 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const entries = await getCollection('help');
+const catInfo: Record<string, { title: string; desc: string }> = {
+  commands: { title: 'Commands', desc: 'Every player command, from ABILITIES to YANK.' },
+  spells: { title: 'Spells', desc: 'The full spell list, with casting syntax.' },
+  info: { title: 'Info & Lore', desc: 'Races, places, mechanics, and world reference.' },
+  socials: { title: 'Socials', desc: 'Emotes and social commands. Mind the company.' },
+  wizhelp: { title: 'Wizard Help', desc: 'Immortal and world-building documentation.' },
+};
+const order = ['commands', 'spells', 'info', 'socials', 'wizhelp'];
+const cats = [...new Set(entries.map((e) => e.id.split('/')[0]))].sort(
+  (a, b) => order.indexOf(a) - order.indexOf(b),
+);
+const countOf = (c: string) => entries.filter((e) => e.id.startsWith(c + '/')).length;
+---
+<Base title="Help — Dark Pawns" description="The Dark Pawns help archive: commands, spells, lore, socials, and wizard documentation, preserved from the original game.">
+  <div class="container help-hub">
+    <h1>Help</h1>
+    <p class="lede">
+      The complete in-game help archive, preserved verbatim from the original Dark Pawns.
+      {entries.length} files, from ABILITIES to YANK, with all their aggressive helpfulness intact.
+    </p>
+    <div class="card-grid">
+      {cats.map((c) => (
+        <a class="card" href={`/help/${c}/`}>
+          <h2 class="card-title">{catInfo[c]?.title ?? c}</h2>
+          <p class="card-desc">{catInfo[c]?.desc ?? ''}</p>
+          <p class="card-count">{countOf(c)} entries</p>
+        </a>
+      ))}
+    </div>
+  </div>
+</Base>
+
+<style>
+  .help-hub { padding-block: var(--space-xl) var(--space-lg); }
+  .help-hub .lede { color: var(--ink-muted); font-size: 1.15rem; max-width: 62ch; margin-bottom: var(--space-lg); }
+  .card-count {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: var(--space-sm) 0 0;
+  }
+</style>

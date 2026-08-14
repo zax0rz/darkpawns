@@ -1,0 +1,54 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('help');
+  const cats = [...new Set(entries.map((e) => e.id.split('/')[0]))];
+  return cats.map((category) => ({
+    params: { category },
+    props: {
+      category,
+      items: entries
+        .filter((e) => e.id.startsWith(category + '/'))
+        .sort((a, b) => a.data.title.localeCompare(b.data.title)),
+    },
+  }));
+}
+
+const { category, items } = Astro.props;
+const labels: Record<string, string> = {
+  commands: 'Commands', spells: 'Spells', info: 'Info & Lore', socials: 'Socials', wizhelp: 'Wizard Help',
+};
+const label = labels[category] ?? category;
+---
+<Base title={`${label} — Help — Dark Pawns`} description={`Help files: ${label} (${items.length} entries).`}>
+  <div class="container help-cat">
+    <p class="crumb"><a href="/help/">Help</a> &raquo; {label}</p>
+    <h1>{label}</h1>
+    <p class="count mono">{items.length} entries</p>
+    <ul class="help-index">
+      {items.map((e) => (
+        <li><a href={`/help/${e.id}/`}>{e.data.title}</a></li>
+      ))}
+    </ul>
+  </div>
+</Base>
+
+<style>
+  .help-cat { padding-block: var(--space-lg) var(--space-xl); }
+  .crumb { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: var(--space-sm); }
+  .help-cat .count { color: var(--ink-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: var(--space-lg); }
+  .help-index {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    columns: 3;
+    column-gap: var(--space-lg);
+  }
+  .help-index li { break-inside: avoid; padding: 0.15rem 0; }
+  .help-index a { color: var(--ink); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.02em; }
+  .help-index a:hover { color: var(--accent); text-decoration: none; }
+  @media (max-width: 720px) { .help-index { columns: 2; } }
+  @media (max-width: 480px) { .help-index { columns: 1; } }
+</style>
