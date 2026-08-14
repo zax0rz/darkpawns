@@ -1,0 +1,35 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const entries = await getCollection('world');
+const byId = Object.fromEntries(entries.map((e) => [e.id, e]));
+// Curated order for the hub; anything not listed falls in at the end.
+const order = ['systems', 'classes', 'races', 'skills', 'progression', 'mechanics', 'commands', 'zones', 'lore', 'world-creation'];
+const cards = [
+  ...order.filter((id) => byId[id]).map((id) => byId[id]),
+  ...entries.filter((e) => !order.includes(e.id)),
+];
+---
+<Base title="World — Dark Pawns" description="The Dark Pawns game world: classes, races, skills, and the systems that define life and death on the MUD.">
+  <div class="container world-hub">
+    <h1>The World</h1>
+    <p class="lede">
+      Three continents, ninety-five zones, six classes, seven races, and a combat engine that
+      reproduces the original C codebase's rules exactly. This is how life and death work in Dark Pawns.
+    </p>
+    <div class="card-grid">
+      {cards.map((e) => (
+        <a class="card" href={`/world/${e.id}/`}>
+          <h2 class="card-title">{e.data.title}</h2>
+          <p class="card-desc">{e.data.description}</p>
+        </a>
+      ))}
+    </div>
+  </div>
+</Base>
+
+<style>
+  .world-hub { padding-block: var(--space-xl) var(--space-lg); }
+  .world-hub .lede { color: var(--ink-muted); font-size: 1.15rem; max-width: 60ch; margin-bottom: var(--space-lg); }
+</style>

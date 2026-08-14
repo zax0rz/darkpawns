@@ -89,3 +89,68 @@ a:active, button:active { transform: translateY(1px); }
   a, button { transition: none; }
   a:active, button:active { transform: none; }
 }
+
+/* --- Card grid (shared section-hub pattern, per DESIGN.md) ---------------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-md);
+}
+.card {
+  display: block;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: var(--space-md);
+  color: var(--ink);
+  text-decoration: none;
+}
+.card:hover { text-decoration: none; border-color: var(--accent); }
+.card:hover .card-title { color: var(--accent); }
+.card-title { font-family: var(--font-display); font-size: 1.2rem; margin: 0 0 var(--space-xs); }
+.card-desc { color: var(--ink-muted); font-size: 0.95rem; margin: 0; }
+
+/* --- Prose (rendered markdown articles) ---------------------------------- */
+.prose { max-width: var(--content-width); }
+.prose > :first-child { margin-top: 0; }
+.prose p, .prose ul, .prose ol { margin: 0 0 var(--space-md); }
+.prose h2 { margin: var(--space-lg) 0 var(--space-sm); }
+.prose h3 { margin: var(--space-lg) 0 var(--space-sm); font-size: 1.2rem; }
+.prose a { color: var(--accent); }
+.prose ul, .prose ol { padding-left: 1.25rem; }
+.prose li { margin: 0.2rem 0; }
+.prose blockquote {
+  border-left: 3px solid var(--accent);
+  margin: var(--space-lg) 0;
+  padding: var(--space-xs) var(--space-md);
+  color: var(--ink-muted);
+}
+.prose hr { border: none; border-top: 1px solid var(--rule); margin: var(--space-lg) 0; }
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--paper-deep);
+  padding: 0.1em 0.35em;
+  border-radius: 2px;
+}
+.prose pre {
+  font-family: var(--font-mono);
+  background: var(--paper-deep);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  padding: var(--space-md);
+  border-radius: 2px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+}
+.prose pre code { background: none; padding: 0; }
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-md) 0;
+  font-size: 0.95rem;
+  display: block;
+  overflow-x: auto;
+}
+.prose th, .prose td { border: 1px solid var(--rule); padding: 0.4rem 0.6rem; text-align: left; }
+.prose th { background: var(--paper-deep); font-family: var(--font-display); font-weight: 400; }

@@ -14,4 +14,16 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog };
+// The world handbook: classes, races, skills, systems, lore. Same schema
+// discipline as the blog — every page needs a title and description.
+const world = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/world' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    date: z.coerce.date().optional(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { blog, world };

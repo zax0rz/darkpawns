@@ -1,0 +1,32 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('world');
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+<Base title={`${entry.data.title} — Dark Pawns`} description={entry.data.description}>
+  <article class="container world-article">
+    <p class="crumb"><a href="/world/">World</a> &raquo; {entry.data.title}</p>
+    <h1>{entry.data.title}</h1>
+    <div class="prose"><Content /></div>
+  </article>
+</Base>
+
+<style>
+  .world-article { padding-block: var(--space-lg) var(--space-xl); }
+  .crumb {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: var(--space-sm);
+  }
+  .world-article > h1 { margin-bottom: var(--space-lg); }
+</style>

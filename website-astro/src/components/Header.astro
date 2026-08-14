@@ -1,14 +1,18 @@
 ---
-// The masthead + the one persistent section bar. Rebuilt per critique:
-// composed masthead, no decorative dots, "Blog" not "Dispatch".
+// Masthead + the one persistent section bar.
+// Nav encodes priority by position: player content left, utility right.
 const path = Astro.url.pathname;
-const sections = [
+const primary = [
   { name: 'Play', href: '/play/' },
   { name: 'World', href: '/world/' },
   { name: 'Help', href: '/help/' },
-  { name: 'Database', href: '/database/' },
   { name: 'Map', href: '/map/' },
+  { name: 'Database', href: '/database/' },
+  { name: 'Community', href: '/community/' },
   { name: 'Blog', href: '/blog/' },
+];
+const secondary = [
+  { name: 'Docs', href: '/docs/' },
   { name: 'About', href: '/about/' },
 ];
 const isActive = (href: string) => path === href || (href !== '/' && path.startsWith(href));
@@ -34,13 +38,22 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
   </div>
 
   <nav class="sectionbar" aria-label="Site sections">
-    <ul class="container sectionbar-list">
-      {sections.map((s) => (
-        <li>
-          <a href={s.href} class={isActive(s.href) ? 'active' : ''} aria-current={isActive(s.href) ? 'page' : undefined}>{s.name}</a>
-        </li>
-      ))}
-    </ul>
+    <div class="container sectionbar-inner">
+      <ul class="nav-primary">
+        {primary.map((s) => (
+          <li>
+            <a href={s.href} class={isActive(s.href) ? 'active' : ''} aria-current={isActive(s.href) ? 'page' : undefined}>{s.name}</a>
+          </li>
+        ))}
+      </ul>
+      <ul class="nav-secondary">
+        {secondary.map((s) => (
+          <li>
+            <a href={s.href} class={isActive(s.href) ? 'active' : ''} aria-current={isActive(s.href) ? 'page' : undefined}>{s.name}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
   </nav>
 </header>
 
@@ -53,13 +66,7 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
     gap: var(--space-lg);
     padding-block: var(--space-md);
   }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    color: var(--ink);
-    text-decoration: none;
-  }
+  .brand { display: flex; align-items: center; gap: var(--space-sm); color: var(--ink); text-decoration: none; }
   .brand:hover { text-decoration: none; }
   .pawn { height: 3.2rem; width: auto; color: var(--ink); flex-shrink: 0; }
   .wordmark {
@@ -84,30 +91,40 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
   }
   .masthead-meta .est { color: var(--accent); }
 
-  .sectionbar {
-    border-top: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
+  .sectionbar { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .sectionbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    overflow-x: auto;
+    scrollbar-width: none;
   }
-  .sectionbar-list {
+  .sectionbar-inner::-webkit-scrollbar { display: none; }
+  .nav-primary, .nav-secondary {
     display: flex;
     gap: var(--space-lg);
     list-style: none;
     margin: 0;
     padding-block: 0.7rem;
-    overflow-x: auto;
     font-family: var(--font-display);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-size: 0.8rem;
-    scrollbar-width: none;
+    white-space: nowrap;
   }
-  .sectionbar-list::-webkit-scrollbar { display: none; }
-  .sectionbar-list a { color: var(--ink); text-decoration: none; white-space: nowrap; }
-  .sectionbar-list a:hover { color: var(--accent); }
-  .sectionbar-list a.active { color: var(--accent); }
+  .nav-secondary { gap: var(--space-md); }
+  .sectionbar a { color: var(--ink); text-decoration: none; }
+  .sectionbar a:hover { color: var(--accent); }
+  .sectionbar a.active { color: var(--accent); }
+  /* Utility cluster reads a touch quieter than the player spine. */
+  .nav-secondary a { color: var(--ink-muted); }
+  .nav-secondary a:hover, .nav-secondary a.active { color: var(--accent); }
 
   @media (max-width: 640px) {
     .masthead-row { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
     .masthead-meta { text-align: left; flex-direction: row; gap: var(--space-md); }
+    .sectionbar-inner { justify-content: flex-start; gap: var(--space-md); }
+    .nav-primary, .nav-secondary { gap: var(--space-md); }
   }
 </style>
