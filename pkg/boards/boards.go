@@ -197,33 +197,38 @@ func (bs *BoardSystem) loadBoard(boardType int) {
 
 // saveBoard writes one board's data to its save file.
 // Caller must hold bs.mu (read or write lock).
-func (bs *BoardSystem) saveBoard(boardType int) {
+func (bs *BoardSystem) saveBoard(boardType int) error {
 	if boardType < 0 || boardType >= NumBoards {
-		return
+		return fmt.Errorf("boards: invalid board type %d", boardType)
 	}
 	num := bs.numOfMsgs[boardType]
+	path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
 	if num == 0 {
-		path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
 		if err := os.Remove(filepath.Clean(path)); err != nil && !os.IsNotExist(err) {
 			slog.Warn("board remove failed", "path", path, "error", err)
 		}
-		return
+		return nil
 	}
 
-	path := filepath.Join(bs.BasePath, bs.boards[boardType].Filename)
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		slog.Warn("board mkdir failed", "path", filepath.Dir(path), "error", err)
 	}
 
-	f, err := os.Create(filepath.Clean(path))
+	// Write to a temp file and rename into place so a partial write can never
+	// corrupt an existing board file.
+	f, err := os.CreateTemp(filepath.Dir(path), "board-*.tmp")
 	if err != nil {
 		slog.Error("SYSERR: Board save failed", "error", err)
-		return
+		return err
 	}
-	defer func() { _ = f.Close() }()
+	tmpName := f.Name()
+	defer func() {
+		_ = f.Close()
+		_ = os.Remove(tmpName)
+	}()
 
 	if err := binary.Write(f, binary.LittleEndian, safeInt32(num)); err != nil {
-		return
+		return err
 	}
 
 	for i := 0; i < num; i++ {
@@ -238,33 +243,45 @@ func (bs *BoardSystem) saveBoard(boardType int) {
 
 		// Write binary header matching C struct layout
 		if err := binary.Write(f, binary.LittleEndian, safeInt32(mi.SlotNum)); err != nil {
-			return
+			return err
 		}
 		// Skip the heading pointer (4 bytes padding)
 		if err := binary.Write(f, binary.LittleEndian, int32(0)); err != nil {
-			return
+			return err
 		}
 		if err := binary.Write(f, binary.LittleEndian, safeInt32(mi.Level)); err != nil {
-			return
+			return err
 		}
 		if err := binary.Write(f, binary.LittleEndian, headingLen); err != nil {
-			return
+			return err
 		}
 		if err := binary.Write(f, binary.LittleEndian, messageLen); err != nil {
-			return
+			return err
 		}
 
 		// Write heading
 		if _, err := f.Write([]byte(mi.Heading + "\x00")); err != nil {
-			return
+			return err
 		}
 		// Write message text
 		if messageLen > 0 {
 			if _, err := f.Write([]byte(msgStr + "\x00")); err != nil {
-				return
+				return err
 			}
 		}
 	}
+
+	if err := f.Sync(); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpName, filepath.Clean(path)); err != nil {
+		slog.Error("SYSERR: Board save rename failed", "path", path, "error", err)
+		return err
+	}
+	return nil
 }
 
 // resetBoard clears all messages on a board and deletes its save file.
@@ -527,7 +544,9 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch BoardPlayer, arg string) bool
 	}
 
 	// Save while still holding the write lock
-	bs.saveBoard(boardType)
+	if err := bs.saveBoard(boardType); err != nil {
+		slog.Error("board save failed after remove", "board", boardType, "error", err)
+	}
 
 	return true
 }
@@ -561,6 +580,10 @@ func (bs *BoardSystem) FinalizeBoardWrite(magic int, ch BoardPlayer) {
 	}
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	bs.saveBoard(boardType)
+	if err := bs.saveBoard(boardType); err != nil {
+		slog.Error("board save failed", "board", boardType, "error", err)
+		ch.SendMessage("The board could not be saved.\r\n")
+		return
+	}
 	ch.SendMessage("Message written.\r\n")
 }

@@ -294,3 +294,32 @@ func TestBoardSystem_LoadTruncatedFile(t *testing.T) {
 		t.Fatalf("slot double-booking: msgIndex[0][0].SlotNum == msgIndex[0][1].SlotNum == %d", slotA)
 	}
 }
+
+func TestBoardSystem_SaveFailureNotifiesPlayer(t *testing.T) {
+	blocker := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(blocker, []byte("blocker"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// BasePath is a regular file, so any save under it must fail.
+	bs := InitBoards(blocker)
+	ch := newMockBoardPlayer("Ivy", 10, 8001)
+
+	magic := bs.WriteMessage(0, ch, "unsaved")
+	if magic != BoardMagic {
+		t.Fatalf("WriteMessage magic = %d, want %d", magic, BoardMagic)
+	}
+	bs.AppendBoardLine(magic, "body")
+	bs.FinalizeBoardWrite(magic, ch)
+
+	if strings.Contains(ch.lastMessage(), "Message written.") {
+		t.Fatalf("player told 'Message written.' despite save failure, got %q", ch.lastMessage())
+	}
+	if !strings.Contains(ch.lastMessage(), "saved") {
+		t.Fatalf("expected save failure notice, got %q", ch.lastMessage())
+	}
+
+	remover := newMockBoardPlayer("Ivy", 10, 8001)
+	if !bs.RemoveMsg(0, remover, "1") {
+		t.Fatal("RemoveMsg = false, want true")
+	}
+}
