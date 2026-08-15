@@ -1,0 +1,115 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const entries = (await getCollection('archive', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.sortDate.getTime() - b.data.sortDate.getTime());
+const shelves = [
+  {
+    title: 'Forum Threads',
+    note: 'Conversations recovered from the dp-players.com forums.',
+    entries: entries.filter((entry) => entry.data.kind === 'forum-thread'),
+  },
+  {
+    title: 'History',
+    note: 'Records written by the people who built and maintained the game.',
+    entries: entries.filter((entry) => entry.data.kind === 'history'),
+  },
+  {
+    title: 'Guides',
+    note: 'The original guide index survived, but its linked articles have not yet been recovered.',
+    entries: entries.filter((entry) => entry.data.kind === 'guide'),
+  },
+  {
+    title: 'Voices',
+    note: 'Quotes and fragments of daily life on the MUD.',
+    entries: entries.filter((entry) => entry.data.kind === 'quote' || entry.data.kind === 'roster'),
+  },
+];
+---
+<Base title="Archive — Dark Pawns" description="Recovered conversations and records from the original Dark Pawns community.">
+  <div class="container archive-hub">
+    <p class="eyebrow">Recovered from the old web</p>
+    <h1>The Archive</h1>
+    <p class="lede">
+      Dark Pawns was more than a codebase. It was arguments, jokes, quests, grudges, and people
+      trying to keep a world alive. These records were recovered from archived copies of
+      dp-players.com and darkpawns.com, then checked and preserved with their provenance intact.
+    </p>
+    <aside class="archive-note">
+      <strong>A living collection.</strong> Some pages survived whole; others vanished between
+      captures. We publish only material we can trace to an archived source, and we do not publish
+      private contact information.
+    </aside>
+    <div class="shelves">
+      {shelves.map((shelf) => (
+        <section class="shelf" aria-labelledby={`shelf-${shelf.title.toLowerCase().replace(' ', '-')}`}>
+          <header class="shelf-head">
+            <h2 id={`shelf-${shelf.title.toLowerCase().replace(' ', '-')}`}>{shelf.title}</h2>
+            <p>{shelf.note}</p>
+          </header>
+          {shelf.entries.length > 0 ? (
+            <ol class="archive-list">
+              {shelf.entries.map((entry) => (
+                <li>
+                  <a href={`/archive/${entry.id}/`}>
+                    <span class="archive-date">{entry.data.dateLabel}</span>
+                    <span class="archive-title">{entry.data.title}</span>
+                    <span class="archive-desc">{entry.data.description}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p class="empty-shelf">Recovery in progress.</p>
+          )}
+        </section>
+      ))}
+    </div>
+  </div>
+</Base>
+
+<style>
+  .archive-hub { padding-block: var(--space-xl) var(--space-lg); }
+  .eyebrow {
+    margin-bottom: var(--space-xs);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .lede { max-width: 58ch; color: var(--ink-muted); font-size: 1.15rem; }
+  .archive-note {
+    max-width: 58rem;
+    margin: var(--space-lg) 0;
+    border-block: 1px solid var(--rule);
+    padding: var(--space-md) 0;
+  }
+  .shelves { max-width: 58rem; }
+  .shelf { margin-top: var(--space-xl); }
+  .shelf-head { display: grid; grid-template-columns: 10rem 1fr; gap: var(--space-lg); align-items: baseline; }
+  .shelf-head h2 { margin: 0; }
+  .shelf-head p { margin: 0 0 var(--space-sm); color: var(--ink-muted); }
+  .archive-list { margin: 0; padding: 0; list-style: none; }
+  .archive-list li { border-top: 1px solid var(--rule); }
+  .archive-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .archive-list a {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: var(--space-xs) var(--space-lg);
+    padding: var(--space-md) 0;
+    color: var(--ink);
+  }
+  .archive-list a:hover { color: var(--accent); text-decoration: none; }
+  .archive-date { grid-row: span 2; color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.75rem; }
+  .archive-title { font-family: var(--font-display); font-size: 1.25rem; line-height: 1.2; }
+  .archive-desc { color: var(--ink-muted); }
+  .empty-shelf { margin-left: 12rem; border-top: 1px solid var(--rule); padding-top: var(--space-md); color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.8rem; text-transform: uppercase; }
+  @media (max-width: 580px) {
+    .shelf-head { grid-template-columns: 1fr; gap: var(--space-xs); }
+    .archive-list a { grid-template-columns: 1fr; gap: var(--space-xs); }
+    .archive-date { grid-row: auto; }
+    .empty-shelf { margin-left: 0; }
+  }
+</style>

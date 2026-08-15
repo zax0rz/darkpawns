@@ -1,0 +1,51 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('archive', ({ data }) => !data.draft);
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+<Base title={`${entry.data.title} — Dark Pawns Archive`} description={entry.data.description}>
+  <article class="container archive-article">
+    <p class="crumb"><a href="/archive/">Archive</a> &raquo; {entry.data.title}</p>
+    <h1>{entry.data.title}</h1>
+    <dl class="provenance">
+      <div><dt>Date</dt><dd>{entry.data.dateLabel}</dd></div>
+      <div><dt>Source</dt><dd><a href={entry.data.captureUrl}>{entry.data.sourceSite} via the Wayback Machine</a></dd></div>
+      <div><dt>Record type</dt><dd>{entry.data.kind.replace('-', ' ')}</dd></div>
+    </dl>
+    {entry.data.contentWarning && <p class="content-warning"><strong>Content note:</strong> {entry.data.contentWarning}</p>}
+    <div class="prose archive-copy"><Content /></div>
+  </article>
+</Base>
+
+<style>
+  .archive-article { padding-block: var(--space-lg) var(--space-xl); }
+  .crumb {
+    margin-bottom: var(--space-sm);
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .provenance {
+    max-width: var(--content-width);
+    margin: 0 0 var(--space-lg);
+    border-block: 1px solid var(--rule);
+    padding: var(--space-sm) 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+  .provenance div { display: grid; grid-template-columns: 10rem 1fr; gap: var(--space-md); padding: 0.15rem 0; }
+  .provenance dt { color: var(--ink-muted); }
+  .provenance dd { margin: 0; }
+  .archive-copy :global(h3) { border-top: 1px solid var(--rule); padding-top: var(--space-md); }
+  .content-warning { max-width: var(--content-width); border-left: 3px solid var(--accent); padding-left: var(--space-md); color: var(--ink-muted); }
+  @media (max-width: 520px) { .provenance div { grid-template-columns: 1fr; gap: 0; } }
+</style>

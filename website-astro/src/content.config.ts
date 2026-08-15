@@ -39,4 +39,25 @@ const help = defineCollection({
   }),
 });
 
-export const collections = { blog, world, help };
+// Curated primary-source material recovered from the original community sites.
+// Every published item must identify what it is, when it originally appeared,
+// and the archived capture used to verify it.
+const archive = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/archive' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    kind: z.enum(['forum-thread', 'history', 'guide', 'quote', 'roster']),
+    sortDate: z.coerce.date(),
+    dateLabel: z.string(),
+    publishedAt: z.coerce.date().optional(),
+    sourceSite: z.enum(['dp-players.com', 'darkpawns.com']),
+    sourceUrl: z.string().url(),
+    captureUrl: z.string().url(),
+    recoveredAt: z.coerce.date(),
+    contentWarning: z.string().optional(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { blog, world, help, archive };

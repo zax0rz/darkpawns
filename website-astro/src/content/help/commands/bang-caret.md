@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/!']
 ---
 
-Use [!](/help/commands/!/) to repeat the last command typed at the keyboard.
+Use [!](/help/commands/bang-caret/) to repeat the last command typed at the keyboard.
 
-Use [^](/help/commands/!/) to replace a string from the last command with a new string.  The
+Use [^](/help/commands/bang-caret/) to replace a string from the last command with a new string.  The
 syntax is the same as in unix: "^old-string^replacement"
 
 Examples:
