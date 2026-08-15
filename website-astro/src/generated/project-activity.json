@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T10:01:36-04:00",
+  "generatedAt": "2026-08-15T10:09:07-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 84
+      "commits": 85
     }
   ],
   "recentCommits": [
+    {
+      "sha": "394eea4c4c640489af2f3605f0d37c05567122cc",
+      "date": "2026-08-15",
+      "title": "feat(web): add private contact form",
+      "url": "https://github.com/zax0rz/darkpawns/commit/394eea4c4c640489af2f3605f0d37c05567122cc"
+    },
     {
       "sha": "446390f7c908b0842d4f2b3fecbdc5f4a18df967",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "feat(web): document the DPReturns revival",
       "url": "https://github.com/zax0rz/darkpawns/commit/cb7ec3ff863c370de3c3832655a709b0af7f78ad"
-    },
-    {
-      "sha": "68c28f904834b6bb0e5192fe747db72b97203017",
-      "date": "2026-08-15",
-      "title": "feat(web): tell the sourced Dark Pawns story",
-      "url": "https://github.com/zax0rz/darkpawns/commit/68c28f904834b6bb0e5192fe747db72b97203017"
     }
   ],
   "pullRequests": [
