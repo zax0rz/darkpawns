@@ -99,3 +99,28 @@ func TestLoadConfigFrom_MissingPathUsesDefaults(t *testing.T) {
 		t.Errorf("GamePort = %d, want default %d", cfg.GamePort, DefaultPort)
 	}
 }
+
+func TestLoadConfigFrom_SecureFlagParsed(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/secure.json"
+	if err := os.WriteFile(path, []byte(`{"player_name":"Zork","game_secure":true}`), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	cfg, err := LoadConfigFrom(path)
+	if err != nil {
+		t.Fatalf("LoadConfigFrom: %v", err)
+	}
+	if !cfg.Secure {
+		t.Errorf("Secure = false, want true from game_secure config")
+	}
+}
+
+func TestWsScheme(t *testing.T) {
+	if got := wsScheme(&AgentConfig{Secure: true}); got != "wss" {
+		t.Errorf("wsScheme(secure) = %q, want wss", got)
+	}
+	if got := wsScheme(&AgentConfig{}); got != "ws" {
+		t.Errorf("wsScheme(insecure) = %q, want ws", got)
+	}
+}
