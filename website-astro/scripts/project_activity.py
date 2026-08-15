@@ -80,8 +80,11 @@ def github_prs() -> list[dict[str, object]] | None:
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    with urllib.request.urlopen(request, timeout=15) as response:
-        records = json.load(response)
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            records = json.load(response)
+    except Exception:
+        return None
 
     return [
         {

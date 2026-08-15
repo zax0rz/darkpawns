@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T14:02:28-04:00",
+  "generatedAt": "2026-08-15T14:34:20-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 98
+      "commits": 99
     }
   ],
   "recentCommits": [
+    {
+      "sha": "31f15abb1dd1d1a58efa4f8438c82c0222ce20a7",
+      "date": "2026-08-15",
+      "title": "feat(web): map links into zone and room records",
+      "url": "https://github.com/zax0rz/darkpawns/commit/31f15abb1dd1d1a58efa4f8438c82c0222ce20a7"
+    },
     {
       "sha": "4a10ab743481bd1a481922a20df0b238ee2788d2",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "fix(web): guest entry renders room once; /play constrained to content width",
       "url": "https://github.com/zax0rz/darkpawns/commit/19acb079c9194bbf4076975ee553f71a92a73049"
-    },
-    {
-      "sha": "c56a47014df0ed594445cd9fd16e5309d38f6058",
-      "date": "2026-08-15",
-      "title": "docs(web): record Astro production deployment",
-      "url": "https://github.com/zax0rz/darkpawns/commit/c56a47014df0ed594445cd9fd16e5309d38f6058"
     }
   ],
   "pullRequests": [
