@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/freeze-thaw']
 ---
 
-Usage: freeze <victim>
-       thaw <victim>
+Usage: freeze &lt;victim&gt;
+       thaw &lt;victim&gt;
 
 [FREEZE](/help/wizhelp/freeze-thaw/), originally invented here at CircleMUD (we think), is used to prevent
 a player from playing.  If frozen, the game will ignore all commands entered

@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/goto-trans-wizteleport']
 ---
 
-Usage: goto <location>
-       trans <victim>
-       teleport <victim> <location>
+Usage: goto &lt;location&gt;
+       trans &lt;victim&gt;
+       teleport &lt;victim&gt; &lt;location&gt;
 
 These commands are used to transports yourself and others to different rooms.
 [GOTO](/help/wizhelp/goto-trans-wizteleport/) allows you to go to other rooms; [TRANS](/help/wizhelp/goto-trans-wizteleport/) transports a person from wherever

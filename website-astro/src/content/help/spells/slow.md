@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/slow']
 ---
 
-Usage		: cast 'slow' <victim>
+Usage		: cast 'slow' &lt;victim&gt;
 Accumulative: Yes
 Duration	: varies per level of caster
 
@@ -16,5 +16,3 @@ In relation to other PC's and [NPC](/help/info/mob-mobile-npc-mobs/)'s in the ga
 Combat and skill use.
 
 See also: [HASTE](/help/spells/haste/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

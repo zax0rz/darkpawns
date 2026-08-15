@@ -13,5 +13,3 @@ Calling upon your skills, you attempt to disarm your opponent. Failed
 attempts are usually pretty messy.
 
 See also: [RANGER](/help/info/ranger-rangers/), [PALADIN](/help/info/paladin/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

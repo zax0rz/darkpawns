@@ -17,7 +17,7 @@ to physically effect the dreamer, in essence, the [DREAMS](/help/info/dream-drea
 
 Some [DREAMS](/help/info/dream-dreams-nightmare-nightmares/) are known to be savage and twisted in nature.  These [DREAMS](/help/info/dream-dreams-nightmare-nightmares/)
 are normally referred to as [NIGHTMARES](/help/info/dream-dreams-nightmare-nightmares/), and like their counterpart [DREAMS](/help/info/dream-dreams-nightmare-nightmares/),
-are more intense in the Wyldlands.  Many adventurers report that their 
+are more intense in the Wyldlands.  Many adventurers report that their
 [NIGHTMARES](/help/info/dream-dreams-nightmare-nightmares/) are most intense after they have been recently reincarnated.
 
 See Also: [SLEEP](/help/commands/sleep/)

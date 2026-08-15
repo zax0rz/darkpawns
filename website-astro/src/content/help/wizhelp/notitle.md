@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/notitle']
 ---
 
-Usage: notitle <vicitim>
+Usage: notitle &lt;vicitim&gt;
 
 Prevent players from being able to set their own titles; i.e., if the
 player consistently has an offensive title.  The definition of offensive

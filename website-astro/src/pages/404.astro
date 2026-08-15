@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Page not found | Dark Pawns" description="The requested Dark Pawns page could not be found." noindex>
+  <section class="container missing-page" aria-labelledby="missing-title">
+    <p class="code">404</p>
+    <h1 id="missing-title">That page is not here.</h1>
+    <p>The address may be old, incomplete, or part of the archive we have not recovered.</p>
+    <nav aria-label="Page not found options">
+      <a href="/">Return home</a>
+      <a href="/archive/">Search the archive</a>
+      <a href="/help/">Browse the help files</a>
+    </nav>
+  </section>
+</Base>
+
+<style>
+  .missing-page { min-height: 55vh; padding-block: var(--space-xl); }
+  .code { color: var(--accent); font-family: var(--font-mono); font-size: .8rem; letter-spacing: .12em; }
+  .missing-page p:not(.code) { color: var(--ink-muted); font-size: 1.15rem; }
+  .missing-page nav { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-top: var(--space-lg); }
+</style>

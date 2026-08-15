@@ -118,6 +118,7 @@ def structural_entries() -> list[Entry]:
         "/about/project/": "src/pages/about/project.astro",
         "/credits/": "src/pages/credits.astro",
         "/contact/": "src/pages/contact.astro",
+        "/privacy/": "src/pages/privacy.astro",
         "/play/": "src/pages/play.astro",
         "/map/": "src/pages/map.astro",
         "/database/": "src/pages/database.astro",
@@ -137,6 +138,8 @@ def structural_entries() -> list[Entry]:
         "/llms.txt": "../website/static/llms.txt",
         "/.well-known/agent-skills/index.json": "../website/static/.well-known/agent-skills/index.json",
         "/.well-known/agent-skills/darkpawns/SKILL.md": "../website/static/.well-known/agent-skills/darkpawns/SKILL.md",
+        "/.well-known/security.txt": "../website/static/.well-known/security.txt",
+        "/rss.xml": "src/pages/rss.xml.ts",
     }
     entries.extend(Entry(route, source, "agent-discovery", "machine-readable discovery", 3, "schema-and-link QA") for route, source in agent_resources.items())
 

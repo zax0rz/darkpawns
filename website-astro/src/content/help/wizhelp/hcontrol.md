@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/hcontrol']
 ---
 
-Usage: hcontrol build <house vnum> <exit dir> <player name>
-       hcontrol destroy <house vnum>
-       hcontrol pay <house vnum>
+Usage: hcontrol build &lt;house vnum&gt; &lt;exit dir&gt; &lt;player name&gt;
+       hcontrol destroy &lt;house vnum&gt;
+       hcontrol pay &lt;house vnum&gt;
        hcontrol show
 
 House control, controls the addition, removal, and payments of houses.

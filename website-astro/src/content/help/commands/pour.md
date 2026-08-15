@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/pour']
 ---
 
-Usage: pour <from container> <to container>
-       pour <from container> out
+Usage: pour &lt;from container&gt; &lt;to container&gt;
+       pour &lt;from container&gt; out
 
 If you want to pour some liquid from one container to another.  Pouring
 out simply empties the contents of the container onto the ground.
@@ -19,5 +19,3 @@ Examples:
   > pour cup out
 
 See also: [FILL](/help/commands/fill/), [DRINK](/help/commands/eat-drink-sip-taste/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

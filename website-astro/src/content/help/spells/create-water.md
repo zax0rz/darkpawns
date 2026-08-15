@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/create-water']
 ---
 
-Usage       : cast 'create water' <drink container>
+Usage       : cast 'create water' &lt;drink container&gt;
 Accumulative: No
 Duration    : Instantaneous
 
@@ -18,5 +18,3 @@ depending on the level of the caster.
 Double amount of water will be created if it is raining (or worse).
 
 See also: "[CREATE](/help/spells/create-water/) [FOOD](/help/spells/create-food/)"
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

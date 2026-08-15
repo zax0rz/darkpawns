@@ -7,13 +7,10 @@ section: "help"
 aliases: ['/help/energy-drain']
 ---
 
-Usage       : cast 'energy drain' <victim>
+Usage       : cast 'energy drain' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 Save        : Versus spell for half damage.
 
 This spell sucks the life force from the victim, causing a
 tremendous amount damage.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

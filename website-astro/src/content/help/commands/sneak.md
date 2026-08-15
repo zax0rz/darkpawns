@@ -14,5 +14,3 @@ When you type sneak, there is no way to know if you're actually sneaking.
 If you successfully sneak, then you'll continue to sneak for a little while.
 
 See also: [HIDE](/help/commands/hide/), [STEALTH](/help/commands/stealth/), [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -12,7 +12,7 @@ Usage: abilities
 This command will display your current ability scores in the following
 format:
 
-   Your current ability scores: 
+   Your current ability scores:
     Strength:      (excellent)
     Dexterity:     (decent)
     Intelligence:  (decent)
@@ -21,6 +21,3 @@ format:
     Charisma:      (bad)
 
 There are not any numeric representations of ability scores on Dark Pawns.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

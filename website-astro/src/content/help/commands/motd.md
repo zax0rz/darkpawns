@@ -14,5 +14,3 @@ regarding the status of the [MUD](/database#item-5810).  You should be sure to r
 when you login.  If you miss it at login, just use this command!
 
 See also: [INFO](/help/commands/info-news-policy-version-future/), [NEWS](/help/commands/info-news-policy-version-future/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

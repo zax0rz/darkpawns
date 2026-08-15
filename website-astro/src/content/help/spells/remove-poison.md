@@ -7,12 +7,10 @@ section: "help"
 aliases: ['/help/remove-poison']
 ---
 
-Usage       : cast 'remove poison' <victim | food | drink> 
+Usage       : cast 'remove poison' &lt;victim | food | drink&gt;
 Accumulative: No
 Duration    : Instantaneous
 
 Will remove the affects of poison from a victim or an object.
 
 See also: [POISON](/help/spells/detect-poison/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

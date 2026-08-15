@@ -8,5 +8,5 @@ aliases: ['/help/mushroom']
 ---
 
 Magic mushrooms are created by clerics with the "create food" spell. The
-mushroom given to new players at the start of the game is edible and not 
+mushroom given to new players at the start of the game is edible and not
 poisonous.

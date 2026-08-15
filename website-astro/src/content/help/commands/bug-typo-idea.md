@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/bug-typo-idea']
 ---
 
-Usage: bug <bug report>
-       idea <your new idea>
-       typo <that nasty typo>       
+Usage: bug &lt;bug report&gt;
+       idea &lt;your new idea&gt;
+       typo &lt;that nasty typo&gt;
 
 For making useful suggestions and reporting problems to the Powers that Be.
 
@@ -22,6 +22,3 @@ Examples:
 There's no need to tell where the bug/typo is; We can tell what room you're in.
 
  > typo there is no exit to the west here, but the descript says there is
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

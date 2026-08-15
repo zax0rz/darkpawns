@@ -7,10 +7,8 @@ section: "help"
 aliases: ['/help/qsay']
 ---
 
-Usage: qsay <message>
+Usage: qsay &lt;message&gt;
 
 To tell something to everyone on the current Quest.
 
 See also: [QUEST](/help/commands/quest/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

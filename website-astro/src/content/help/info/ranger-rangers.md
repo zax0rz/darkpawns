@@ -7,12 +7,12 @@ section: "help"
 aliases: ['/help/ranger-rangers']
 ---
 
-Rangers are the warriors and guardians of the wilderness.  They are 
+Rangers are the warriors and guardians of the wilderness.  They are
 skilled in tracking and hunting, and make very good guides.  Rangers can
-be found worldwide, in deserts, swamps, or any other type of open, 
-undeveloped land.  Rangers hail mainly from races whose cultures are 
+be found worldwide, in deserts, swamps, or any other type of open,
+undeveloped land.  Rangers hail mainly from races whose cultures are
 agrarian instead of urban, and they detest the smell of cities and industry.
-Because of the skill required to master their environment, the class of 
+Because of the skill required to master their environment, the class of
 Ranger is a remort class only.
 
 Skill list:

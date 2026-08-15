@@ -7,11 +7,9 @@ section: "help"
 aliases: ['/help/ride-mount-mounts']
 ---
 
-Usage: ride <mount name>
+Usage: ride &lt;mount name&gt;
 Example: Ride horse
 
 Used to mount your favorite mode of transport.
 
 See also: [DISMOUNT](/help/commands/dismount/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

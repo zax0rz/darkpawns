@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/read']
 ---
 
-Usage: read <object>
-       read <board message number>
+Usage: read &lt;object&gt;
+       read &lt;board message number&gt;
 
 When you want to read something.
 
@@ -20,5 +20,3 @@ Example:
   > read note
 
 See also: [BOARDS](/help/info/boards/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

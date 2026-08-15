@@ -8,7 +8,7 @@ aliases: ['/help/lines']
 ---
 
 Usage: lines
-       lines <number>
+       lines &lt;number&gt;
 
 Allows you to set the number of lines you have to your screen.  It can
 range anywhere from 7 to 50 inclusive.  Without an argument, this
@@ -16,5 +16,3 @@ command will tell you what your current screen is set at.  This number
 is only used in the infobar and [OLC](/help/wizhelp/olc/) for immorts.
 
 See also: [INFOBAR](/help/commands/infobar/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/auto-loot-split']
 ---
 
-Usage: auto [ <option> ]
+Usage: auto [ &lt;option&gt; ]
 
 When used alone, "auto" will show what handy automatic features you are
 using.  When used with an option (see down a few lines) it will toggle that
@@ -22,5 +22,3 @@ The options available are:
 Note: To use [AUTO](/help/commands/auto-loot-split/) [SPLIT](/help/commands/split/), [AUTO](/help/commands/auto-loot-split/) [GOLD](/help/commands/gold/) must be set.
 
 See also: [TOGGLE](/help/commands/toggle/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

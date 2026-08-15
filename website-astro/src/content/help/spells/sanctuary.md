@@ -7,13 +7,11 @@ section: "help"
 aliases: ['/help/sanctuary']
 ---
 
-Usage       : cast 'sanctuary' <victim>
+Usage       : cast 'sanctuary' &lt;victim&gt;
 Accumulative: Yes (Duration)
 Duration    : 4 hours
 
-When protected by sanctuary <victim> will only receive 1/2 the normal
+When protected by sanctuary &lt;victim&gt; will only receive 1/2 the normal
 Damage caused by a particular blow. The default victim is the caster.
 
 See also: [HOLY](/help/spells/holy-shield/) [WARD](/help/spells/holy-ward-ward/), [HOLY](/help/spells/holy-shield/) [SHIELD](/help/spells/holy-shield/), [BLESS](/help/spells/bless/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -11,6 +11,3 @@ Usage:  behead corpse
 
 Lets you take home a trophy from your kill....
 Beheads the corpse of your fallen adversary and places it in your inventory.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

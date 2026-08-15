@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/tank']
 ---
 
-The tank is defined as "the person being hit by the person you are 
+The tank is defined as "the person being hit by the person you are
 fighting."
 
 See also: [COMBAT](/help/info/combat/)

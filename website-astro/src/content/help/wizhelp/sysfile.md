@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/sysfile']
 ---
 
-Usage: sysfile <file>
+Usage: sysfile &lt;file&gt;
 Valid Files:
 
 bugs		todo		ideas		typos

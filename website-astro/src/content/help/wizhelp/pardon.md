@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/pardon']
 ---
 
-Usage: pardon <victim>
+Usage: pardon &lt;victim&gt;
 
 Removes killer and thief flags from a player.
 wizonly

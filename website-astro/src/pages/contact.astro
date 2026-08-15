@@ -6,7 +6,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
 
 <Base title="Contact Dark Pawns" description="Send a private message about Dark Pawns, its history, or the current restoration.">
   {turnstileSiteKey && <script slot="head" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
-  <main class="contact-page container">
+  <div class="contact-page container">
     <header>
       <p class="eyebrow">Private correspondence</p>
       <h1>Were you there?</h1>
@@ -42,6 +42,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         ) : (
           <p class="preview-note">Spam protection is not configured in this local preview.</p>
         )}
+        <p class="privacy-note">The <a href="/privacy/">privacy page</a> explains how messages and spam checks are handled.</p>
         <div class="form-actions">
           <button class="btn-primary" type="submit" disabled={!turnstileSiteKey}>Send privately</button>
           <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
@@ -55,7 +56,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         <p>This form is also the place to request a correction or ask for archived material to be removed.</p>
       </aside>
     </div>
-  </main>
+  </div>
 </Base>
 
 <script>
@@ -113,6 +114,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
   input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
   .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
   .preview-note { border-block: 1px solid var(--rule); color: var(--ink-muted); padding-block: var(--space-sm); }
+  .privacy-note { color: var(--ink-muted); font-size: .85rem; }
   .form-actions { display: flex; align-items: center; gap: var(--space-md); margin-top: var(--space-md); }
   .btn-primary { border: 1px solid var(--accent); background: var(--accent); color: var(--paper); padding: .65rem 1rem; font-family: var(--font-display); font-size: 1rem; }
   .btn-primary:hover:not(:disabled) { background: var(--accent-deep); }

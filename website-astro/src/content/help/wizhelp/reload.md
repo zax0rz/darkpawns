@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/reload']
 ---
 
-Usage: reload < '*' | all | file >
+Usage: reload &lt; '*' | all | file &gt;
 
 Reload is used to reload text files such as the [MOTD](/help/commands/motd/) from disk into memory.
 reload * reloads all the text files below.
@@ -27,5 +27,5 @@ Valid files are:
   wizlist    (/mud_dir/lib/text/wizlist)
   xhelp      (/mud_dir/lib/text/help/*)
   future     (/mud_dir/lib/text/future)
-  
+
 wizonly

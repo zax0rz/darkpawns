@@ -9,15 +9,12 @@ aliases: ['/help/flame-strike']
 
 [FLAME](/help/spells/flame-arrow/) [STRIKE](/help/commands/strike-of-revenge/)
 
-Usage	    : cast 'flame strike' <victim>
+Usage	    : cast 'flame strike' &lt;victim&gt;
 Accumulative: -
 Duration    : Varies
 Save        : Versus spell for half damage.
 
 Causes a bolt of fire from the heavens to come down and strike the victim.
-Will usually cause the victim to be set on fire and burn considerably. 
+Will usually cause the victim to be set on fire and burn considerably.
 Can only be used outdoors, of course.
 Fun for the whole family.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

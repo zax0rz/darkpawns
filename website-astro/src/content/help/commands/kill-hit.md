@@ -7,11 +7,9 @@ section: "help"
 aliases: ['/help/kill-hit']
 ---
 
-Usage: kill <victim>
-       hit <victim>
+Usage: kill &lt;victim&gt;
+       hit &lt;victim&gt;
 
 A good way to start a fight.  Not a good idea to hit other players.
 
 See also: [FLEE](/help/commands/flee/), [WIMPY](/help/commands/wimpy/), [PK](/help/info/pk-player-killing-pkill-pkilling-pkiller/), [POLICY](/help/commands/info-news-policy-version-future/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

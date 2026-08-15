@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T10:41:13-04:00",
+  "generatedAt": "2026-08-15T10:49:07-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 88
+      "commits": 89
     }
   ],
   "recentCommits": [
+    {
+      "sha": "4f84268edc9362e5982e89ec6a244389b5cae678",
+      "date": "2026-08-15",
+      "title": "feat(web): add agent discovery surfaces",
+      "url": "https://github.com/zax0rz/darkpawns/commit/4f84268edc9362e5982e89ec6a244389b5cae678"
+    },
     {
       "sha": "c3c52ce34eb1327512598bc40092a4613bcdacfe",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "feat(web): add private contact form",
       "url": "https://github.com/zax0rz/darkpawns/commit/394eea4c4c640489af2f3605f0d37c05567122cc"
-    },
-    {
-      "sha": "446390f7c908b0842d4f2b3fecbdc5f4a18df967",
-      "date": "2026-08-15",
-      "title": "feat(web): publish the restoration ledger",
-      "url": "https://github.com/zax0rz/darkpawns/commit/446390f7c908b0842d4f2b3fecbdc5f4a18df967"
     }
   ],
   "pullRequests": [

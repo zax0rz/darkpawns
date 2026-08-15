@@ -12,5 +12,3 @@ Usage: equipment
 Gives you a list of all the equipment you're wearing, holding, and wielding.
 
 See also: [INVENTORY](/help/commands/inventory/), [REMOVE](/help/commands/remove/), [WEAR](/help/commands/wear/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

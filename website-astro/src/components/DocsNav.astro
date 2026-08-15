@@ -19,7 +19,7 @@ const sections = [
     const items = entries.filter((entry) => entry.data.section === section.id).sort((a, b) => a.data.order - b.data.order);
     return (
       <section>
-        <h2><a href={`/docs/${section.id}/`}>{section.label}</a></h2>
+        <p class="section-label"><a href={`/docs/${section.id}/`}>{section.label}</a></p>
         <ul>
           {items.map((entry) => (
             <li><a class={entry.id === currentId ? 'active' : ''} aria-current={entry.id === currentId ? 'page' : undefined} href={`/docs/${entry.id}/`}>{entry.data.title}</a></li>
@@ -34,8 +34,8 @@ const sections = [
   .docs-nav { border-right: 1px solid var(--rule); padding-right: var(--space-lg); }
   .docs-home { display: block; margin-bottom: var(--space-lg); color: var(--ink); font-family: var(--font-display); font-size: 1.25rem; }
   .docs-nav section { margin-bottom: var(--space-lg); }
-  .docs-nav h2 { margin: 0 0 var(--space-xs); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
-  .docs-nav h2 a { color: var(--ink-muted); }
+  .docs-nav .section-label { margin: 0 0 var(--space-xs); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .docs-nav .section-label a { color: var(--ink-muted); }
   .docs-nav ul { margin: 0; padding: 0; list-style: none; }
   .docs-nav li { margin: 0.25rem 0; }
   .docs-nav li a { color: var(--ink); font-size: 0.9rem; }

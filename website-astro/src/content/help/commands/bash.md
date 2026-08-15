@@ -16,5 +16,3 @@ your balance and fall.
 A bash makes you unable to type commands for 2 rounds of violence.
 
 See also: [KICK](/help/commands/dragon-kick-dragon/), [RESCUE](/help/commands/rescue/), [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

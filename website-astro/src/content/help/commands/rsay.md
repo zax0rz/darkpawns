@@ -7,12 +7,10 @@ section: "help"
 aliases: ['/help/rsay']
 ---
 
-Usage: rsay <sentence>
+Usage: rsay &lt;sentence&gt;
 
-Rsay (race-say) lets you speak in your own native tongue. Those 
+Rsay (race-say) lets you speak in your own native tongue. Those
 not of your race see a gibberish-type message. Careful.. this message
 IS decipherable.
 
 See also: [RACE](/help/info/race-races/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

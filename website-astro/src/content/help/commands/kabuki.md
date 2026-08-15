@@ -7,15 +7,13 @@ section: "help"
 aliases: ['/help/kabuki']
 ---
 
-Usage	:	kabuki	
+Usage	:	kabuki
 
 Named after the ancient Oriental play-acting, this skill hides the user, if
 successful. You can only been sensed by the "sense life" spell, or seen by
-a thorough search (The seeker types "look at <your name here>", for example.)
+a thorough search (The seeker types "look at &lt;your name here&gt;", for example.)
 If you perform any actions while using kabuki, you will be discovered.  However,
-there is a small chance that you will be able to perform certain actions and 
+there is a small chance that you will be able to perform certain actions and
 still remain hidden.
 
 See also: [NINJA](/help/info/ninja-ninjas/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

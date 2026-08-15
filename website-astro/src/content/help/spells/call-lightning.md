@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/call-lightning']
 ---
 
-Usage       : cast 'call lightning' <victim>
+Usage       : cast 'call lightning' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 Save        : Versus spell for half damage.
@@ -17,5 +17,3 @@ strike the victim.  It is therefore only possible to call lightning
 outside, and it has to be raining (or worse).
 
 See also: "[CONTROL](/help/spells/control-weather/) [WEATHER](/help/commands/weather/)", [WEATHER](/help/commands/weather/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

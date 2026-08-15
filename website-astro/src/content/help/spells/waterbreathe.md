@@ -7,10 +7,7 @@ section: "help"
 aliases: ['/help/waterbreathe']
 ---
 
-Usage: cast 'waterbreathe' <target>
+Usage: cast 'waterbreathe' &lt;target&gt;
 
-The target gains the ability to breathe underwater like a fish. 
+The target gains the ability to breathe underwater like a fish.
 This magick does not affect the targets ability to move underwater, however.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

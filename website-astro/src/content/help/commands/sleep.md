@@ -13,10 +13,10 @@ The [SLEEP](/help/commands/sleep/) command puts you to sleep, allowing you to re
 quickly.  You will be largely unaware of your surroundings while asleep.
 You can awaken yourself with the [WAKE](/help/commands/wake-sleeping-rest-sit-stand/) command.
 
-The [SLEEP](/help/commands/sleep/) spell forces the victim into a magical sleep such that they 
+The [SLEEP](/help/commands/sleep/) spell forces the victim into a magical sleep such that they
 Cannot be awakened until the spell wears off.
 
-Usage       : cast 'sleep' <victim>
+Usage       : cast 'sleep' &lt;victim&gt;
 Accumulative: Yes (Duration)
 Duration    : 4 hours + level/4
 Level       : Mage level 8.
@@ -25,5 +25,3 @@ If failing saving throw versus spell, the person will fall asleep.
 A person who is affected by sleep can only be awakened if attacked.
 
 See also: [WAKE](/help/commands/wake-sleeping-rest-sit-stand/), [MAGE](/help/info/magic-user-wizard-mage-mages-wizards/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

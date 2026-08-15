@@ -7,18 +7,17 @@ section: "help"
 aliases: ['/help/cast']
 ---
 
-Usage: cast '<spell name>' [target]
+Usage: cast '&lt;spell name&gt;' [target]
 
 For magickal people.  If you want to throw a spell at someone or something.
 
 Example:
 
-  > cast 'burning hands' <player>
+  > cast 'burning hands' &lt;player&gt;
   Note that the name of the spell must be enclosed by "'"s.
 
 See also: help on each individual spell:
 
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)
 
 Examples:
 

@@ -32,6 +32,7 @@ The canonical site is https://darkpawns.labz0rz.com/. Source code is maintained 
 ## Machine-readable resources
 
 - [Sitemap](https://darkpawns.labz0rz.com/sitemap-index.xml): Index of canonical HTML pages.
+- [RSS feed](https://darkpawns.labz0rz.com/rss.xml): Project notes from the restoration.
 - [Agent skills index](https://darkpawns.labz0rz.com/.well-known/agent-skills/index.json): Available agent instructions.
 - [Database JSON](https://darkpawns.labz0rz.com/data/database.json): Complete mob and item dataset.
 - [Map index](https://darkpawns.labz0rz.com/map/map-index.json): Generated map metadata and zone files.

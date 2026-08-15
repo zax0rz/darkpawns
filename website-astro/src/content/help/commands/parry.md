@@ -14,9 +14,7 @@ opponent. Most effective on opponents with multiple attacks. A successful
 parry will counter one of your opponents attacks.  A higher dexterity means
 that more of your opponent's attacks will be countered.
 
-Parry is sometimes automatic once you have learned the skill.  It occurs 
+Parry is sometimes automatic once you have learned the skill.  It occurs
 reflexively in combat, with greater skill providing more frequent parries.
 
 See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

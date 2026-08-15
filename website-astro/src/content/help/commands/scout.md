@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/scout']
 ---
 
-Usage: scout <direction>
+Usage: scout &lt;direction&gt;
 
 Rangers are superior scouts, and they can use their scouting abilities to
 determine what lies in a specific direction.  This can be useful in finding
@@ -15,5 +15,3 @@ difficult to track persons, as well as assessing the size of an enemy force
 and avoiding certain natural pitfalls.
 
 See also: [RANGER](/help/info/ranger-rangers/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

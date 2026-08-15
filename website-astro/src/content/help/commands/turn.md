@@ -17,5 +17,3 @@ Please note that this is a SKILL, not a [SPELL](/help/spells/spell-strength/), a
 [MANA](/help/info/mana/).  The amount of mana consumed is proportional to the clerics level.
 
 See also: [COMBAT](/help/info/combat/), [CLERIC](/help/info/cleric-clerics/), [AVATAR](/help/info/avatar-avatars/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

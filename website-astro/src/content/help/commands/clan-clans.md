@@ -13,7 +13,7 @@ to work together for mutual gain.
 
 If you would like to form your own clan, you need to be over level 10 and enlist
 the aid of two other players (not multis) who are currently not in any other clans.
-After these requirements have been met, ask to speak to a God.  Additionally, there 
+After these requirements have been met, ask to speak to a God.  Additionally, there
 is usually a minor quest or task involved in order to finalize the creation of your
 new clan.
 
@@ -35,7 +35,7 @@ new clan.
             without any arguments shows a list of players who have applied to
             join your clan.
 
-[CLAN](/help/commands/clan-clans/) EXPEL Allows you to kick someone out of your clan. 
+[CLAN](/help/commands/clan-clans/) EXPEL Allows you to kick someone out of your clan.
 
 [CLAN](/help/commands/clan-clans/) PROMOTE Promote a player in your clan to a higher rank
 
@@ -62,5 +62,3 @@ new clan.
 [CLAN](/help/commands/clan-clans/) [SET](/help/wizhelp/set/) [TITLE](/help/commands/title/) Set the title for each rank in your clan
 
 See also: [CTELL](/help/commands/ctell/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

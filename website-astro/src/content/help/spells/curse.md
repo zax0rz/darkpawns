@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/curse']
 ---
 
-Usage       : cast 'curse' <victim | object>
+Usage       : cast 'curse' &lt;victim | object&gt;
 Accumulative: Yes
 Duration    : Several hours, permanent on objects.
 
@@ -18,6 +18,3 @@ a curse might cause the victim to have an unfortunate accident of the
 lethal type.
 
 When cast upon an object, the object will become undropable.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -17,5 +17,3 @@ Examples:
   > balance
 
 See also: [GOLD](/help/commands/gold/), [SCORE](/help/commands/score/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

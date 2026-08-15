@@ -7,10 +7,7 @@ section: "help"
 aliases: ['/help/vitality']
 ---
 
-Usage: cast 'vitality' <target>
+Usage: cast 'vitality' &lt;target&gt;
 
-This spell restores the vital functions of the target, leaving them healthier 
+This spell restores the vital functions of the target, leaving them healthier
 and refreshed.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

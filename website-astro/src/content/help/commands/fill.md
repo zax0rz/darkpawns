@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/fill']
 ---
 
-Usage: fill <item> <object to fill from>
+Usage: fill &lt;item&gt; &lt;object to fill from&gt;
 
 If you want to fill a container you're holding with liquid from a fountain
 in the same room as you.
@@ -17,5 +17,3 @@ Example:
   > fill canteen fountain
 
 See also: [POUR](/help/commands/pour/), [DRINK](/help/commands/eat-drink-sip-taste/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -12,7 +12,7 @@ Citizenship allows you to quit out in the safe room of that city and
 Return there upon re-entering the game.  You can only be a citizen of one
 city at a time.
 
-The "safe rooms" in the cities are generally the Temples or common 
+The "safe rooms" in the cities are generally the Temples or common
 Meeting places of the city.
 
 See also: [HOMETOWNS](/help/info/hometown-hometowns/), [QUIT](/help/commands/quit/), [REALLYQUIT](/help/commands/reallyquit/)

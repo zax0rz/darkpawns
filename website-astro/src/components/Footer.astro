@@ -6,7 +6,7 @@ const year = new Date().getFullYear();
 <footer class="footer">
   <div class="container footer-grid">
     <div class="footer-col">
-      <h3>Play &amp; Explore</h3>
+      <h2>Play &amp; Explore</h2>
       <ul>
         <li><a href="/play/">Play In-Browser</a></li>
         <li><a href="/map/">Interactive World Map</a></li>
@@ -15,26 +15,27 @@ const year = new Date().getFullYear();
       </ul>
     </div>
     <div class="footer-col">
-      <h3>Research &amp; Code</h3>
+      <h2>Research &amp; Code</h2>
       <ul>
         <li><a href="/research/">AI Agent Research</a></li>
         <li><a href="/docs/">Developer Docs</a></li>
         <li><a href="https://github.com/zax0rz/darkpawns">GitHub Repository</a></li>
         <li><a href="/credits/">Credits &amp; Staff</a></li>
+        <li><a href="/privacy/">Privacy</a></li>
       </ul>
     </div>
     <div class="footer-col">
-      <h3>Historic Resources</h3>
+      <h2>Historic Resources</h2>
       <ul>
         <li><a href="https://web.archive.org/web/20040803063038/http://www.dp-players.com/">dp-players.com (2004)</a></li>
         <li><a href="https://www.darkpawns.net/">darkpawns.net (revival)</a></li>
-        <li><a href="http://circlemud.org/">CircleMUD Engine</a></li>
+        <li><a href="https://www.circlemud.org/">CircleMUD Engine</a></li>
         <li><a href="https://www.mudlet.org/">Mudlet Desktop Client</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom container">
-    <h2 class="footer-wordmark">DARK PAWNS · EST. 1994 · RESURRECTED 2026</h2>
+    <p class="footer-wordmark">DARK PAWNS · EST. 1994 · RESURRECTED 2026</p>
     <div class="footer-bottom-info">
       <span class="status" id="footer-status" title="MUD server status">
         <span class="dot" aria-hidden="true"></span><span id="footer-status-text">checking status</span>
@@ -51,7 +52,7 @@ const year = new Date().getFullYear();
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-lg);
   }
-  .footer-col h3 {
+  .footer-col h2 {
     font-family: var(--font-display);
     font-size: 1.1rem;
     margin: 0 0 var(--space-sm);

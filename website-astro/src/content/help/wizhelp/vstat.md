@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/vstat']
 ---
 
-Usage: vstat < mob | obj > <virtual number>
+Usage: vstat &lt; mob | obj &gt; &lt;virtual number&gt;
 
 Used to stat a prototypical mobile or object by virtual number.
 

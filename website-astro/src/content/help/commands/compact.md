@@ -13,5 +13,3 @@ This command toggles the extra blank line output to your screen after each
 command.  Useful if you have a small display.
 
 See also: [BRIEF](/help/commands/brief/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

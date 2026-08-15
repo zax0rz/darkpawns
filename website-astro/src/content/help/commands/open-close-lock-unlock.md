@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/open-close-lock-unlock']
 ---
 
-Usage: open | close | lock | unlock <door> [direction]
+Usage: open | close | lock | unlock &lt;door&gt; [direction]
 
 To open, close, lock, and unlock doors, of course.
 
@@ -19,5 +19,3 @@ Examples:
   > close gate
 
 See also: [ENTER](/help/commands/enter/), [LEAVE](/help/commands/leave/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

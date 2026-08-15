@@ -7,10 +7,10 @@ section: "help"
 aliases: ['/help/mold']
 ---
 
-Usage: mold <object> <name> <description>
+Usage: mold &lt;object&gt; &lt;name&gt; &lt;description&gt;
 
 Makes an object have a TEMPORARY name and description. This only lasts until
-reboot or owner's logout, at which point the oject reverts to what it started 
+reboot or owner's logout, at which point the oject reverts to what it started
 as.
 Only certain objects are moldable- a halo, clay, or playdoh(tm).
 

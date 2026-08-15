@@ -11,9 +11,7 @@ Usage	    : cast 'holy shield'
 Accumulative: No
 Duration    : Varies
 
-An improved version of the holy ward spell that allows you to ward your 
+An improved version of the holy ward spell that allows you to ward your
 entire party at one time.
 
 See also: [HOLY](/help/spells/holy-shield/) [WARD](/help/spells/holy-ward-ward/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

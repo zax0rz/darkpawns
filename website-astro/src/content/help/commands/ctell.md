@@ -7,15 +7,13 @@ section: "help"
 aliases: ['/help/ctell']
 ---
 
-Usage: ctell [ '#' ] <message>
+Usage: ctell [ '#' ] &lt;message&gt;
 
 Use ctell to communicate privately with members of your clan that are
-currently online. Use ctell #<number> to send a message to all clan members
-ranked <number> and over.
+currently online. Use ctell #&lt;number&gt; to send a message to all clan members
+ranked &lt;number&gt; and over.
 
 > ctell How is everyone today?
 > ctell #5 Shh, here is a secret message for you guys.
 
 See also: [CLAN](/help/commands/clan-clans/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

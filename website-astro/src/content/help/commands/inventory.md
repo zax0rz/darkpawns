@@ -13,5 +13,3 @@ If you're uncertain about what you're carrying, or simply want to check
 that no thieves have got to your backpack.
 
 See also: [EQUIPMENT](/help/commands/equipment/), [GRAB](/help/commands/grab-hold/), [HOLD](/help/commands/grab-hold/), [REMOVE](/help/commands/remove/), [WEAR](/help/commands/wear/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

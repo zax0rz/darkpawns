@@ -17,16 +17,16 @@ const allEntries = await getCollection('docs', ({ data }) => !data.draft);
 const entries = allEntries.filter((entry) => entry.data.section === section).sort((a, b) => a.data.order - b.data.order);
 const meta = metadata[section];
 ---
-<Base title={`${meta.title} — Documentation — Dark Pawns`} description={meta.description}>
+<Base title={`${meta.title} | Documentation | Dark Pawns`} description={meta.description}>
   <div class="container docs-shell">
     <DocsNav entries={allEntries} />
-    <main class="section-main">
+    <section class="section-main">
       <p class="crumb"><a href="/docs/">Documentation</a> &raquo; {meta.title}</p>
       <h1>{meta.title}</h1><p class="lede">{meta.description}</p>
       <ol class="section-list">
         {entries.map((entry) => <li><a href={`/docs/${entry.id}/`}><h2>{entry.data.title}</h2><p>{entry.data.description}</p><span>{entry.data.audience.replace('-', ' ')}</span></a></li>)}
       </ol>
-    </main>
+    </section>
   </div>
 </Base>
 <style>

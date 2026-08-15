@@ -9,30 +9,30 @@ aliases: ['/help/redit-sedit-oedit-medit-zedit-tedit']
 
 Usage:
 
-redit                           - edit the room you are standing in 
-redit <virtual room num>        - edit/create room
-redit save <zone>               - save all the rooms in zone to disk 
+redit                           - edit the room you are standing in
+redit &lt;virtual room num&gt;        - edit/create room
+redit save &lt;zone&gt;               - save all the rooms in zone to disk
 
-zedit                           - edit the zone info for the room 
+zedit                           - edit the zone info for the room
 					you are standing in
-zedit <virtual room num>        - edit the zone info for that room 
-zedit save <zone>               - save all the zone info for that zone
-					to disk 
-zedit new <zone>                - IMPLs only - create a new zone. 
+zedit &lt;virtual room num&gt;        - edit the zone info for that room
+zedit save &lt;zone&gt;               - save all the zone info for that zone
+					to disk
+zedit new &lt;zone&gt;                - IMPLs only - create a new zone.
 
-oedit <virtual obj num>         - edit/create object
-oedit save <zone>               - save all the objects in zone to disk 
+oedit &lt;virtual obj num&gt;         - edit/create object
+oedit save &lt;zone&gt;               - save all the objects in zone to disk
 
-medit <virtual mob num>         - edit/create mobile
-medit save <zone>               - save all the mobiles in zone to disk 
+medit &lt;virtual mob num&gt;         - edit/create mobile
+medit save &lt;zone&gt;               - save all the mobiles in zone to disk
 
-sedit <virtual shop num>        - edit/create shop
-sedit save <zone>               - save all shops in zone to disk.
+sedit &lt;virtual shop num&gt;        - edit/create shop
+sedit save &lt;zone&gt;               - save all shops in zone to disk.
 
 tedit 	   			- list text files
-tedit <file>			- edit a text file
+tedit &lt;file&gt;			- edit a text file
 
-set <player name> olc <zone>    - IMPLs only - allow player to edit
+set &lt;player name&gt; olc &lt;zone&gt;    - IMPLs only - allow player to edit
 olc                             - List all the things that have been edited
                                    	but not yet saved.
 
@@ -40,7 +40,7 @@ WARNING:  This [OLC](/help/wizhelp/olc/) will let you set values to values that
 shouldn't be set.  For example, it'll let you set a mobile with a
 [GROUP](/help/commands/group/) flag.  This is good in the sense that it allows you to test
 anything you please, but bad in the sense that builders can crash
-the mud with ease. (Hey, that rhymes!). 
+the mud with ease. (Hey, that rhymes!).
 /****************************************************************
 In short: If you don't know what it does, ask before using it!!!!
 ****************************************************************/

@@ -9,6 +9,3 @@ aliases: ['/help/clear-cls']
 
 Clears the screen.
 Note that in most clients, this typically erases scrollback.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

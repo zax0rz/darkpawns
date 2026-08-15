@@ -7,10 +7,7 @@ section: "help"
 aliases: ['/help/cell-adjustment']
 ---
 
-Usage       : will 'cell adjustment' <self>
+Usage       : will 'cell adjustment' &lt;self&gt;
 
 The psionic focuses his mental abilities on his own healing processes,
 Causing his wounds to mend much faster than normal.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -7,15 +7,13 @@ section: "help"
 aliases: ['/help/recite-scroll-scrolls']
 ---
 
-Usage: recite <scroll> [Target]
- 
+Usage: recite &lt;scroll&gt; [Target]
+
 Is used to "read" a magical scroll.  Target can be an object, character or
-nothing (which defaults to yourself). When read, scrolls will dissolve. Some 
+nothing (which defaults to yourself). When read, scrolls will dissolve. Some
 scrolls may contain more than one spell.
 
 [IMPORTANT](/database#item-9906) NOTE: Recall scrolls *cannot* be used during combat. You *must* be
 out of battle to use a recall scroll.
- 
-See also: [SPELLS](/help/info/spell-spells/), [MAGICK](/help/info/magick-magic/)
 
-Full documentation: [Docs Game Commands](/docs/game/commands/)
+See also: [SPELLS](/help/info/spell-spells/), [MAGICK](/help/info/magick-magic/)

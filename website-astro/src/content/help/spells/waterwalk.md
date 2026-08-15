@@ -7,9 +7,6 @@ section: "help"
 aliases: ['/help/waterwalk']
 ---
 
-Usage: cast 'waterwalk' <target>
+Usage: cast 'waterwalk' &lt;target&gt;
 
 Target gains the ability to walk on water. (and not just when it freezes!)
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

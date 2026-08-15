@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/steal']
 ---
 
-Usage: steal <item> <victim>
+Usage: steal &lt;item&gt; &lt;victim&gt;
 
 Use steal to steal gold or items from people.  The chance of not getting
 caught depends on how well you have practiced steal, and if the person
@@ -22,5 +22,3 @@ Examples:
     (If it's wielded, only possible if he is sleeping)
 
 See also: [FLAGS](/help/info/flags/), [PSTEAL](/help/info/psteal-player-stealing-pstealing/), [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

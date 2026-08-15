@@ -8,9 +8,9 @@ aliases: ['/help/action-a-desc']
 ---
 
 The A-desc (action desc) of objs is used for held wands, held staves, scrolls
-and potions! Please don't confuse it with Extra description, which is what you 
-see when you [LOOK](/help/commands/look/) <object>. 
-The A-desc is shown when the item is used/quaffed/recited. For example, a 
+and potions! Please don't confuse it with Extra description, which is what you
+see when you [LOOK](/help/commands/look/) &lt;object&gt;.
+The A-desc is shown when the item is used/quaffed/recited. For example, a
 potion of lycanthropy might have:
 $n quaffs $p and hair sprouts from $s every pore!
 

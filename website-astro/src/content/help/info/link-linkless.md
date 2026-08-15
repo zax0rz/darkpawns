@@ -15,7 +15,7 @@ very hazardous to your health in the middle of a battle, of course.
     will be saved by divine forces, and put in a safe place until you
     reconnect to the game.
 
-II. If your link jams (freezes), you have a problem.  The only solution 
+II. If your link jams (freezes), you have a problem.  The only solution
     We can give is that you break your link as quickly as possible.  By
     breaking the link you can hope that the above procedure is initiated.
 

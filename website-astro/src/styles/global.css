@@ -29,7 +29,7 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; }
 
 body {
   margin: 0;
@@ -55,6 +55,13 @@ p { margin: 0 0 var(--space-md); max-width: 68ch; }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+button, input, select, textarea { min-height: 1.5rem; }
 
 code, pre, .mono { font-family: var(--font-mono); }
 
@@ -86,8 +93,30 @@ a, button { transition: transform 0.06s ease; }
 a:active, button:active { transform: translateY(1px); }
 
 @media (prefers-reduced-motion: reduce) {
-  a, button { transition: none; }
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
   a:active, button:active { transform: none; }
+}
+
+@media (forced-colors: active) {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible { outline-color: Highlight; }
+  .card, button, input, select, textarea { border-color: CanvasText; }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* --- Card grid (shared section-hub pattern, per DESIGN.md) ---------------- */
@@ -154,3 +183,7 @@ a:active, button:active { transform: translateY(1px); }
 }
 .prose th, .prose td { border: 1px solid var(--rule); padding: 0.4rem 0.6rem; text-align: left; }
 .prose th { background: var(--paper-deep); font-family: var(--font-display); font-weight: 400; }
+
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 1rem; }
+}

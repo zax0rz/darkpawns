@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/colorspray-color-spray']
 ---
 
-Usage       : cast 'color spray' <victim>
+Usage       : cast 'color spray' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 Save        : Versus spell for half damage.
@@ -17,6 +17,5 @@ This spell is more powerful than the lightning bolt spell.
 
 See also: "[LIGHTNING](/help/spells/call-lightning/) [BOLT](/help/spells/lightning-bolt/)"
 
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)
 
 For help on actual color, see: [ANSI](/help/commands/ansi-color/)

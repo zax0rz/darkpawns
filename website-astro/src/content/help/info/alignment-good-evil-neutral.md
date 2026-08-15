@@ -7,10 +7,10 @@ section: "help"
 aliases: ['/help/alignment-good-evil-neutral']
 ---
 
-Alignment is the measure of how Good, Evil or Neutral you are, relative 
-to the rest of the world.  In effects what kind of spells you can cast, 
+Alignment is the measure of how Good, Evil or Neutral you are, relative
+to the rest of the world.  In effects what kind of spells you can cast,
 what types of equipment you can wear, whether certain creatures act
-aggressively towards you, etc.  You can see your relative current 
+aggressively towards you, etc.  You can see your relative current
 alignment in [SCORE](/help/commands/score/).
 
 See also: [SCORE](/help/commands/score/)

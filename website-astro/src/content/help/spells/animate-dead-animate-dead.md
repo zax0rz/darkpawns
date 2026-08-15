@@ -12,6 +12,3 @@ Usage	: cast 'animate dead' corpse
 With a powerful prayer (or unholy curse!) a cleric may seek to
 infuse life into the dead. The resulting undead zombie will obey the cleric
 and follow loyally until destroyed.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

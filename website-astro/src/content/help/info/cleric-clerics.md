@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/cleric-clerics']
 ---
 
-Clerics have an ancient belief in not carrying sharp weapons.  Hence, 
+Clerics have an ancient belief in not carrying sharp weapons.  Hence,
 they can only wield bludgeoning weapons.  This class gives you the wisdom
-of peace, blessing and healing, though it is possible to learn more 
+of peace, blessing and healing, though it is possible to learn more
 violent spells.
 
 You can improve your spells by using the practice command.

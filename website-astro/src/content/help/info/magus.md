@@ -8,8 +8,8 @@ aliases: ['/help/magus']
 ---
 
 The Magus represents the extreme power of magickal spellcraft, wielding
-power on a cosmic scale, able to create, destroy, or shape realities at 
-whim. Because of the destabilizing effect magic has on the humanoid 
+power on a cosmic scale, able to create, destroy, or shape realities at
+whim. Because of the destabilizing effect magic has on the humanoid
 psyche, as well as the intense lifelong training and study, the class of
 Magus is remort only.
 

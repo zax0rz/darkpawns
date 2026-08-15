@@ -7,10 +7,8 @@ section: "help"
 aliases: ['/help/think']
 ---
 
-Usage: think <message>
+Usage: think &lt;message&gt;
 
 Lets others see what you're thinking!
 
 See also: [SOCIALS](/help/socials/socials/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

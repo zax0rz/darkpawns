@@ -7,13 +7,10 @@ section: "help"
 aliases: ['/help/mind-attack-mindattack']
 ---
 
-Usage: will 'mind attack' <victim>
+Usage: will 'mind attack' &lt;victim&gt;
 
-A psionic's attack on the mind of a victim is an appalling sight. The 
+A psionic's attack on the mind of a victim is an appalling sight. The
 Victim first feels a mental invasion, which causes pressure that slowly
-increases to the point of extreme, incredible pain. The victim's brain, 
-revolting against the attack, sometime succumbs to the pressure, exploding 
+increases to the point of extreme, incredible pain. The victim's brain,
+revolting against the attack, sometime succumbs to the pressure, exploding
 through the skull of the unfortunate victim.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

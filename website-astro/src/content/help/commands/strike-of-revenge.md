@@ -7,14 +7,12 @@ section: "help"
 aliases: ['/help/strike-of-revenge']
 ---
 
-Usage	: strike <victim>
+Usage	: strike &lt;victim&gt;
 
-Allows the trained martial artist to deal a stunning, sometimes lethal 
+Allows the trained martial artist to deal a stunning, sometimes lethal
 Strike to the victim's throat.
 
 Developed by the Mist Viper school of Ninjitsu, "Saito Yuriko's Strike of
 Revenge" is a brutal, devastating blow.
 
 See also: [NINJA](/help/info/ninja-ninjas/), [COMBAT](/help/info/combat/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

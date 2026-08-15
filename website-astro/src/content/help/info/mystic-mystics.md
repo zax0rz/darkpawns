@@ -10,9 +10,9 @@ aliases: ['/help/mystic-mystics']
 The Mystic is an esthetic, a psionicist who has achieved a level of peace
 and enlightenment unknown to other mortals. The Mystic is a true master of
 time and space with his amazing mental powers, and can be quite a deadly foe
-if enraged.  Mystics tend to lead a detached, intellectual lifestyle, but 
-some have decided to use their considerable mental prowess to fight for 
-Good or Evil.  Because of the intense training needed to attain their 
+if enraged.  Mystics tend to lead a detached, intellectual lifestyle, but
+some have decided to use their considerable mental prowess to fight for
+Good or Evil.  Because of the intense training needed to attain their
 enlightened state, the class of Mystic is Remort only.
 
 Powers:

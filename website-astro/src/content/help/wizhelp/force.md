@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/force']
 ---
 
-Usage: force <victim | all> <command> <arguments>
+Usage: force &lt;victim | all&gt; &lt;command&gt; &lt;arguments&gt;
 
 [FORCE](/help/wizhelp/force/) forces a character, either monster or player, to perform a certain
 action.  [FORCE](/help/wizhelp/force/) ALL forces everyone in the game; [FORCE](/help/wizhelp/force/) [ROOM](/help/wizhelp/flow-room-flow-room-flow-north-flowing/) forces everyone in

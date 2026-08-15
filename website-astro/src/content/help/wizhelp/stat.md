@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/stat']
 ---
 
-Usage: stat [player | object | mobile | file | room] <name>
+Usage: stat [player | object | mobile | file | room] &lt;name&gt;
 
 Gives information about players, monsters, and objects in the game.  The type
 argument is optional.

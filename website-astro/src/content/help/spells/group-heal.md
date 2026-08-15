@@ -12,5 +12,3 @@ Usage    : cast 'group heal'
 This powerful prayer heals the caster's entire group.
 
 See also: [HEAL](/help/spells/group-heal/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

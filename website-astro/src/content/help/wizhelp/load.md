@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/load']
 ---
 
-Usage: load <mob | obj> <virtual number>
-       load <mob | obj> <name>
+Usage: load &lt;mob | obj&gt; &lt;virtual number&gt;
+       load &lt;mob | obj&gt; &lt;name&gt;
 
 [LOAD](/help/wizhelp/load/) is used to create mobiles and objects.  The first argument specifies if
 you are trying to load a mobile or an object; the second is the virtual

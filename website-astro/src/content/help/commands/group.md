@@ -10,8 +10,8 @@ aliases: ['/help/group']
 Usage: group [player]
        group all
 
-[GROUP](/help/commands/group/) with no arguments shows the status of your group.  [GROUP](/help/commands/group/) <player>
-adds or removes <player> from your group.  [GROUP](/help/commands/group/) ALL adds everyone who is
+[GROUP](/help/commands/group/) with no arguments shows the status of your group.  [GROUP](/help/commands/group/) &lt;player&gt;
+adds or removes &lt;player&gt; from your group.  [GROUP](/help/commands/group/) ALL adds everyone who is
 following you to your group.
 
 If you are a group member, then you will share experience points for killing
@@ -26,7 +26,7 @@ Group with no argument shows a list of people with whom you are grouped.
 To make a group, a "leader" must be selected.  All members of the group
 must then "follow" the leader using the follow command.  The leader should
 NOT follow anyone at all!  The leader can now toggle group membership for
-each player in the group, by using "group <player_name>".  The leader
+each player in the group, by using "group &lt;player_name&gt;".  The leader
 should remember to include himself in the group.
 
 Example:
@@ -44,5 +44,3 @@ Later when Dragon get upset at Quifael (because he is sleeping all the time)
 he types : "Group Quifael" to kick Quifael out of the group.
 
 See also: [EXPERIENCE](/help/info/experience-xp/), [UNGROUP](/help/commands/ungroup/), [XP](/help/info/experience-xp/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

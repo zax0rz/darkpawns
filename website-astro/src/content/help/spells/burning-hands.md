@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/burning-hands']
 ---
 
-Usage       : cast 'burning hands' <victim>
+Usage       : cast 'burning hands' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 Save        : Versus spell for half damage.
@@ -15,5 +15,3 @@ Save        : Versus spell for half damage.
 This spell is more powerful than the chill touch spell.
 
 See also: "[CHILL](/help/spells/chill-touch/) [TOUCH](/help/spells/chill-touch/)"
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -24,7 +24,7 @@ character.
 Players under level 10 are protected from being pkilled, and they are
 also prohibited from pkilling.
 
-Stealing items from another players corpse is prohibited.  The only 
+Stealing items from another players corpse is prohibited.  The only
 situation that this is allowed in is with the case of recovery of an item
 which has been stolen by the killed player.  If this is the case, expect to
 be able to prove it.

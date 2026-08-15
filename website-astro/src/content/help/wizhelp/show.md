@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/show']
 ---
 
-Usage: show <mode> [argument]
+Usage: show &lt;mode&gt; [argument]
 
 Valid Modes:
 

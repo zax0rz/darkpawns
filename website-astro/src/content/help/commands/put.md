@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/put']
 ---
 
-Usage: put <item> <container>
-       put all.<item> <container>
-       put all <container>
+Usage: put &lt;item&gt; &lt;container&gt;
+       put all.&lt;item&gt; &lt;container&gt;
+       put all &lt;container&gt;
 
 For putting items into containers.
 
@@ -20,5 +20,3 @@ Examples:
   > put all chest
 
 See also: GET
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

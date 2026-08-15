@@ -7,12 +7,9 @@ section: "help"
 aliases: ['/help/holy-ward-ward']
 ---
 
-Usage	    : cast 'holy ward' <target>
-Accumulative: No   
+Usage	    : cast 'holy ward' &lt;target&gt;
+Accumulative: No
 Duration    : Varies
 
 The holy ward grants magickal protection to the target against things that
 would normally damage him or her.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

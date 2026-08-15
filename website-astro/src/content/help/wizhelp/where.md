@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/where']
 ---
 
-Usage: where < obj | mob >
+Usage: where &lt; obj | mob &gt;
 
 To locate an object and/or mobile with a specific name.
 

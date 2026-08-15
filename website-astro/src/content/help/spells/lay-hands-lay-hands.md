@@ -7,10 +7,7 @@ section: "help"
 aliases: ['/help/lay-hands-lay-hands']
 ---
 
-Usage: cast "lay hands" <self>
+Usage: cast "lay hands" &lt;self&gt;
 
-This prayer-spell brings a flow of healing through the Paladin's hands, 
+This prayer-spell brings a flow of healing through the Paladin's hands,
 restoring health to himself.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

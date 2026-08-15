@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/damage-race-slayer']
 ---
 
-Some equipment is identified as: "Does extra damage to race: <xxx>"
+Some equipment is identified as: "Does extra damage to race: &lt;xxx&gt;"
 
 These items, known as race slayers, are both coveted and hated. Although
 the damage bonus they give is powerful, the user of such weapons becomes

@@ -21,7 +21,7 @@ Toh   - "force and vulnerability"          - more power, less defense
 Sha   - "healing"                          - hit points increase
 Kai   - "the strength within"              - less power, more defense
 Zhen  - "endurance"                        - vitality increases
-Retsu - "mastery of time and space"        - ninja teleports 
+Retsu - "mastery of time and space"        - ninja teleports
 Zai   - "the mask of illusion"             - ninja becomes invisible
 Jin   - "regeneration"                     - increased healing
 
@@ -31,5 +31,3 @@ Usage:  rin
 	  etc....
 
 See also: [NINJA](/help/info/ninja-ninjas/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

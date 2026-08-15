@@ -14,11 +14,11 @@ Hitroll: Your chance to hit someone during combat, as applied to
          their [AC](/help/info/ac-armor/).  Plus hitroll is good, minus hitroll is bad.
 
 Damroll: The amount of damage you do in addition to the average
-         per round damage of your weapon. Again, plus is more 
+         per round damage of your weapon. Again, plus is more
          damage, minus, less damage.
 
-Saving Throws: How well your character is protected against 
+Saving Throws: How well your character is protected against
                certain specialized attacks, like spells, breath
                weapons, and petrification. Minus saving throws
-               indicates better protection against a certain 
+               indicates better protection against a certain
                type.

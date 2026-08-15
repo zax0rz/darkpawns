@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/page']
 ---
 
-Usage: page <player | all> <message>
+Usage: page &lt;player | all&gt; &lt;message&gt;
 
 [PAGE](/help/wizhelp/page/) is used to send a message, along with a beep, to another player.  Use
 [PAGE](/help/wizhelp/page/) ALL to send a message and a beep to everyone in the game.

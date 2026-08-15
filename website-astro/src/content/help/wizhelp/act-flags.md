@@ -9,7 +9,7 @@ aliases: ['/help/act-flags']
 
 Each control character is preceded by a '$'.
 
-$n - Write name, short description, or "someone", for ch, depending on whether 
+$n - Write name, short description, or "someone", for ch, depending on whether
 	ch is a PC, a [NPC](/help/info/mob-mobile-npc-mobs/), or an invisible PC/[NPC](/help/info/mob-mobile-npc-mobs/).
 $N - Like $n, except insert the text for victim
 $m - "him", "her", or "it", depending on the gender of ch.

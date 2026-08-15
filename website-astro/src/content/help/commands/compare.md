@@ -7,12 +7,10 @@ section: "help"
 aliases: ['/help/compare']
 ---
 
-Usage	:	compare <item1> <item2>
+Usage	:	compare &lt;item1&gt; &lt;item2&gt;
 
 Compare two weapons, or two pieces of armor of the same type.
-Thieves and Assassins excel at this comparison, but everyone has a chance 
+Thieves and Assassins excel at this comparison, but everyone has a chance
 of comparing accurately.
 
 See also: [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

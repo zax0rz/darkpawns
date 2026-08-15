@@ -8,9 +8,9 @@ aliases: ['/help/check-mail-receive']
 ---
 
 Usage: check
-       mail <person>
+       mail &lt;person&gt;
        receive
-       
+
 The commands used by the Dark Pawns Mail System (DPMS) are [MAIL](/help/commands/check-mail-receive/), [CHECK](/help/commands/check-mail-receive/), and
 [RECEIVE](/help/commands/check-mail-receive/).  These commands can only be used while in an Official DPMS Post
 Office.  You must be at least second level in order to use the DPMS.
@@ -27,6 +27,3 @@ Examples:
   > receive
 
 Stamps cost 25 coins.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

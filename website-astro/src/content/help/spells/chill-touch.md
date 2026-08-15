@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/chill-touch']
 ---
 
-Usage       : cast 'chill touch' <victim>
+Usage       : cast 'chill touch' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 Save        : Versus spell for half damage.
@@ -17,5 +17,3 @@ A victim failing its saving throw will get its strength
 reduced by one.
 
 See also: "[FLAME](/help/spells/flame-arrow/) [ARROW](/help/commands/shoot-bow-arrow/)"
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

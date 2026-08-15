@@ -17,6 +17,3 @@ Of miles while he sleeps.  The psionic merely wills 'dream travel' and then
 Goes to sleep. Then he/she has a dream about the place they are going to, and
 When they awake, they find that they have arrived! A very efficient means of
 Transportation.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

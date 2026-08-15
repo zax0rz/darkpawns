@@ -14,9 +14,9 @@ messages, etc.  Naturally, not all players may be allowed to read all
 types of boards.
 
 Type "[LOOK](/help/commands/look/) [BOARD](/database#item-8099)" to see the messages already posted on a board.  Type
-"[WRITE](/help/commands/write/) <subject>" to post a message to a board; terminate a message with
-a '@' as the first character on a line.  Type "[READ](/help/commands/read/) <number>" to read a
-post.  Type "[REMOVE](/help/commands/remove/) <number>" to remove your own messages.
+"[WRITE](/help/commands/write/) &lt;subject&gt;" to post a message to a board; terminate a message with
+a '@' as the first character on a line.  Type "[READ](/help/commands/read/) &lt;number&gt;" to read a
+post.  Type "[REMOVE](/help/commands/remove/) &lt;number&gt;" to remove your own messages.
 
 Example:
 

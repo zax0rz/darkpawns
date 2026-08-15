@@ -20,8 +20,8 @@ The following switches are available:
 -p         Show only sockets in the playing sockets.
 -d         Show only non-playing (deadweight) sockets.
 -l min-max Show only sockets whose characters are from level min to max.
--n <name>  Show the socket with <name> associated with it.
--h <host>  Show all sockets from <host>.
+-n &lt;name&gt;  Show the socket with &lt;name&gt; associated with it.
+-h &lt;host&gt;  Show all sockets from &lt;host&gt;.
 -c list    Show only sockets whose characters' classes are in list.
 
 See also: [DC](/help/wizhelp/dc/), [SLOWNS](/help/wizhelp/slowns/)

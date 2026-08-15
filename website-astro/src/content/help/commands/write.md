@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/write']
 ---
 
-Usage: write <object>
-       write <title of board note>
+Usage: write &lt;object&gt;
+       write &lt;title of board note&gt;
 
 In order to write a note, you need a piece of blank paper (or similar), and
 a pen of some sort.  You can then type something like "write on the paper with
@@ -18,5 +18,3 @@ the pen", whereupon you'll be asked to type in your note at the keyboard.
 for more information.
 
 See also: [BOARDS](/help/info/boards/), [MAIL](/help/commands/check-mail-receive/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

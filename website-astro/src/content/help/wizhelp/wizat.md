@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/wizat']
 ---
 
-Usage: at <room [VNUM](/help/wizhelp/vnum/) | item | mob | player name> <command> <arguments>
+Usage: at &lt;room [VNUM](/help/wizhelp/vnum/) | item | mob | player name&gt; &lt;command&gt; &lt;arguments&gt;
 
 AT can be used to perform an action in a location other than where you are
 standing.  The first argument can be a virtual room number or the name of a

@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/mute']
 ---
 
-Usage: mute <victim>
+Usage: mute &lt;victim&gt;
 
 [MUTE](/help/wizhelp/mute/) is used to shut a player up.  When muted, a player will not be able to
 use most communication channels until he/she is unmuted.

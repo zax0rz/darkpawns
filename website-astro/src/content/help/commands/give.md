@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/give']
 ---
 
-Usage: give <object> <victim>
-       give <number> coins <victim>
+Usage: give &lt;object&gt; &lt;victim&gt;
+       give &lt;number&gt; coins &lt;victim&gt;
 
 If you feel benevolent, you may give some stuff to someone in need.
 
@@ -16,6 +16,3 @@ If you feel benevolent, you may give some stuff to someone in need.
   > give bread doctor
   > give all.bronze mirlen
   > give 40000 coins nia
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

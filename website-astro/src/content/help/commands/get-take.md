@@ -9,10 +9,10 @@ aliases: ['/help/get-take']
 
 "Get" and "take" are exactly the same and can be used interchangeably.
 
-Usage: get | take <object>
+Usage: get | take &lt;object&gt;
        get | take all [object]
-       get | take all all.<object>
-       get | take all.<object> all.<object>
+       get | take all all.&lt;object&gt;
+       get | take all.&lt;object&gt; all.&lt;object&gt;
 
 If you find something interesting on the ground, you may use 'get' to pick
 it up. 'get' can also be used to extract items from containers.
@@ -25,5 +25,3 @@ Examples:
   > get all.bread all.bag
 
 See also: [DROP](/help/commands/drop/), PUT
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

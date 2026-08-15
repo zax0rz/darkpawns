@@ -13,6 +13,3 @@ Duration    : Instantaneous
 
 Summon the flames of hell to scorch thy enemies.
 Let the pretenders drown in the fiery grave you create for them.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/psionicist-psionics-psionist-psionic-psionics']
 ---
 
-A Psionicist (Psionic) is the master of the mind. The amazing mental 
+A Psionicist (Psionic) is the master of the mind. The amazing mental
 abilities of this class can be a very powerful assistant in battle.
 
 List of Powers:

@@ -7,11 +7,8 @@ section: "help"
 aliases: ['/help/ray-of-disruption-ray-disruption']
 ---
 
-Usage	:	cast 'ray of disruption' <victim>
+Usage	:	cast 'ray of disruption' &lt;victim&gt;
 
 Karnek's Ray of Disruption is one of the most powerful spells known. It
 calls forth a ray of pure energy that can burn through most anything. This
 spell can backfire, the results usually being fatal.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

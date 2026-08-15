@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/vnum']
 ---
 
-Usage: vnum <mob | obj> <name>
+Usage: vnum &lt;mob | obj&gt; &lt;name&gt;
 
 Gives a list of the virtual numbers of objects or mobiles which have the
 specified name.
@@ -18,7 +18,7 @@ Examples:
   1. [  904] a platinum ring
   2. [ 2543] a seashell ring
   3. [ 2588] a small emerald ring
-  
+
   > vnum mob dragon
   1. [    1] Puff
   2. [  908] the dragon turtle

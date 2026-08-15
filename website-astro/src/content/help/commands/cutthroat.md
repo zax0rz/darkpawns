@@ -7,12 +7,10 @@ section: "help"
 aliases: ['/help/cutthroat']
 ---
 
-Usage: cutthroat <victim>
+Usage: cutthroat &lt;victim&gt;
 
-With the proper weapon, you can slit their throat, making it hard for them to 
-fight, heal, and generally making life hell until they are healed by magickal 
+With the proper weapon, you can slit their throat, making it hard for them to
+fight, heal, and generally making life hell until they are healed by magickal
 means.
 
 See also: [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

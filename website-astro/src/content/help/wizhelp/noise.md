@@ -16,13 +16,13 @@ not know their origins.  Application: Haunted House -moaning spirits-
                                     : Monster cave -drums in the deep-
       But the noise option doesn't need to be limited to noises.  Using
 the noise option the mud simply states your noise statement as you have
-written in. 
+written in.
          O)Noise : You here the chirping of crickets.
          > You hear the chirping of crickets.
-With this idea in mind you can create non-noise 'noises'.  Using the 
+With this idea in mind you can create non-noise 'noises'.  Using the
 noise option and the 'hidden' mob, you can create enviromental effects.
-Ex. 'You feel a cool breeze', 'You stumble on the slick floor.'  
-These effects will continue to occur at the same interval as regular 
+Ex. 'You feel a cool breeze', 'You stumble on the slick floor.'
+These effects will continue to occur at the same interval as regular
 noises, but because the mob is unreachable and unkillable (!SUMM,[SENTINEL](/database#mob-19510)),
 The noise will never end.  Application: Sea shore -breeze-
                                       : Garbage heap -trip-

@@ -12,6 +12,3 @@ Usage: enter [place]
 If you type 'enter' while you are outdoors, you'll enter any nearby shelter.
 You can also follow 'enter' with an argument; for example, 'enter window', or
 'enter moongate'.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

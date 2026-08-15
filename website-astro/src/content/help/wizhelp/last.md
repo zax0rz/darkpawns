@@ -7,12 +7,12 @@ section: "help"
 aliases: ['/help/last']
 ---
 
-Usage: last <player_name>
+Usage: last &lt;player_name&gt;
 
 For checking the last time a person logged on, their sitename, and their
 ID number.
 
-Example: 
+Example:
 
   > last ras
   [  [24](/help/info/attitude-attitudes-24-atti/)] [14 Cl] Ras          : somesite.edu : Tue May 16 22:07:09 1995

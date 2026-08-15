@@ -11,8 +11,6 @@ Usage: commands
 
 The [COMMANDS](/help/commands/commands/) command gives a canonical list of all the known verbs.
 
-Each command listed should have help available by typing "[HELP](/help/commands/help/) <command>".
+Each command listed should have help available by typing "[HELP](/help/commands/help/) &lt;command&gt;".
 
 See also: SOCIAL, [SOCIALS](/help/socials/socials/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

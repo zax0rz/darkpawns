@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/junk']
 ---
 
-Usage: junk <object>
-       junk <number> coins
+Usage: junk &lt;object&gt;
+       junk &lt;number&gt; coins
 
 Use [JUNK](/help/commands/junk/) instead of [DROP](/help/commands/drop/) if you want to keep the world a little cleaner.  If
 you [JUNK](/help/commands/junk/) something, it will disappear and you'll get a few coins or experience
@@ -21,5 +21,3 @@ Examples:
   > junk 500 coins
 
 See also: [DONATE](/help/commands/donate/), [DROP](/help/commands/drop/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

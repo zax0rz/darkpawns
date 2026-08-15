@@ -7,12 +7,9 @@ section: "help"
 aliases: ['/help/appraise']
 ---
 
-Usage	: appraise <object in inventory>
+Usage	: appraise &lt;object in inventory&gt;
 Example	: appraise sword
 		  appraise 2.dagger
 
 A successful appraisal gives an item value within 20 or so coins.
 Unsuccessful appraisals can be much, much worse.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

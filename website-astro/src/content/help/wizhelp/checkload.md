@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/checkload']
 ---
 
-Usage: checkload < obj | mob > <virtual number>
+Usage: checkload &lt; obj | mob &gt; &lt;virtual number&gt;
 
 Used to check where a particular mobile or object loads given its virtual
 number.

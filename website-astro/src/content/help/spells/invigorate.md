@@ -7,10 +7,7 @@ section: "help"
 aliases: ['/help/invigorate']
 ---
 
-Usage       : cast 'invigorate' <victim>
+Usage       : cast 'invigorate' &lt;victim&gt;
 
 This spell alleviates the pains of traveling, leaving the victim refreshed
 and ready to continue their journey.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

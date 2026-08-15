@@ -15,5 +15,3 @@ room which is hiding.  The true identity will remain hidden however.
 Invisible persons are also considered hidden.
 
 See also: [HIDE](/help/commands/hide/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

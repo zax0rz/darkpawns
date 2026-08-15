@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/detect-poison']
 ---
 
-Usage       : cast 'detect poison' <victim | food | drink>
+Usage       : cast 'detect poison' &lt;victim | food | drink&gt;
 Accumulative: No
 Duration    : Instantaneous
 
@@ -16,6 +16,3 @@ sense if it is poisoned.
 
 Cast on a person you will be able to see if that person is
 poisoned.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

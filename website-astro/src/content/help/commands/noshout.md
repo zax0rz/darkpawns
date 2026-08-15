@@ -13,5 +13,3 @@ Usage: noshout
 your name in the WHO list.
 
 See also: [FLAGS](/help/info/flags/), [HOLLER](/help/commands/say-tell-ask-whisper-shout-holler/), [SHOUT](/help/commands/say-tell-ask-whisper-shout-holler/), [TOGGLE](/help/commands/toggle/), WHO
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

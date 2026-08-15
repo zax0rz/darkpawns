@@ -14,11 +14,9 @@ fighting someone, you can use [DIAGNOSE](/help/commands/diagnose/) with no argum
 person you're fighting. This can be particularly useful if looking at your
 adversary has particularly nasty side effects.
 
-Examples: 
+Examples:
 
   > diagnose
   > diagnose rasmussen
 
 See also: [CONSIDER](/help/commands/consider/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

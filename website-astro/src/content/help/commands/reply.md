@@ -7,12 +7,12 @@ section: "help"
 aliases: ['/help/reply']
 ---
 
-Usage: reply <message>
+Usage: reply &lt;message&gt;
 	or
-       . <message>
+       . &lt;message&gt;
 
 This command will send a reply to the last person to send you a message
-using [TELL](/help/commands/say-tell-ask-whisper-shout-holler/).  It works just as if you had typed 'tell <player> <message>'
+using [TELL](/help/commands/say-tell-ask-whisper-shout-holler/).  It works just as if you had typed 'tell &lt;player&gt; &lt;message&gt;'
 but makes it a bit easier.  It can also be very useful in case someone
 invisible sends you a message.
 
@@ -27,5 +27,3 @@ Someone tells you, 'I am your secret admirer.'
 You tell someone, 'Who are you?'
 
 See also: [TELL](/help/commands/say-tell-ask-whisper-shout-holler/), [NOTELL](/help/commands/notell/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

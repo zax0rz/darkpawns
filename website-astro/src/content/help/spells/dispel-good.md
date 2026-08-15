@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/dispel-good']
 ---
 
-Usage       : cast 'dispel good' <victim>
+Usage       : cast 'dispel good' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 Save        : Special
@@ -17,5 +17,3 @@ equal or less than caster will suffer much damage. While a good person
 of higher level will suffer slightly less damage.
 
 See also: [DISPEL](/help/spells/dispel-good/) [EVIL](/help/spells/protection-from-evil/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

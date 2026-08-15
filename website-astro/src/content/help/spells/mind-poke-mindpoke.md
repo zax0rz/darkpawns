@@ -7,11 +7,8 @@ section: "help"
 aliases: ['/help/mind-poke-mindpoke']
 ---
 
-Usage: will 'mind poke' <victim>
+Usage: will 'mind poke' &lt;victim&gt;
 
 A victim of this mind-spell receives a powerful jolt of psionic energy in
 their mind, causing level-based damage ranging from a mild head-ache to a
 physical hole.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

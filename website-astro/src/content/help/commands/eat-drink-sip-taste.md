@@ -7,10 +7,10 @@ section: "help"
 aliases: ['/help/eat-drink-sip-taste']
 ---
 
-Usage: eat <item>
-       taste [from] <item>
-       drink [from] <item>
-       sip [from] <item>
+Usage: eat &lt;item&gt;
+       taste [from] &lt;item&gt;
+       drink [from] &lt;item&gt;
+       sip [from] &lt;item&gt;
 
 If you're hungry or thirsty, these commands are for you!
 
@@ -18,6 +18,3 @@ If you're hungry or thirsty, these commands are for you!
   > taste bread
   > drink from cup
 > sip fountain
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

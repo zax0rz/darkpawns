@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/dc']
 ---
 
-Usage: dc <descriptor number>
+Usage: dc &lt;descriptor number&gt;
 
 [DC](/help/wizhelp/dc/) (DisConnect) is used to disconnect a socket.  If used on a playing socket,
 the player will lose his/her link, but, unlike [PURGE](/help/wizhelp/purge/), will not extract the

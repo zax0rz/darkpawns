@@ -7,15 +7,12 @@ section: "help"
 aliases: ['/help/protection-from-evil']
 ---
 
-Usage       : cast 'protection from evil' <self>
+Usage       : cast 'protection from evil' &lt;self&gt;
 Accumulative: No
 Duration    : [24](/help/info/attitude-attitudes-24-atti/) hours
 
 Gives minor protection from the attacks of
-evil opponents, and wards off some aggressive mobs. 
+evil opponents, and wards off some aggressive mobs.
 
 Note: casting this spell upon yourself when you are evil can have
       disasterous side effects.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

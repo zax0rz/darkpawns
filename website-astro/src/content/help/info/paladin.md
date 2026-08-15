@@ -9,8 +9,8 @@ aliases: ['/help/paladin']
 
 PALADINS
 
-The Paladin is the warrior of the church, sent out to further the church 
-interests across the land in a provisional sense. Paladins are also the 
+The Paladin is the warrior of the church, sent out to further the church
+interests across the land in a provisional sense. Paladins are also the
 leaders of the churches armies, and are typically fanatical and deadly
 fighters who have mastered their art. Because of the large amount of
 training and religious study that are involved, the class of Paladin
@@ -38,6 +38,6 @@ Skills and Spells:
 	23	charge
 	25	protection from evil
 	25	protection from good
-	30	disarm	
+	30	disarm
 
 See also: [REMORT](/help/info/remort-immort-remorting-immorting-immortality/)

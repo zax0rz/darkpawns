@@ -12,7 +12,7 @@ just one particular [MUD](/database#item-5810). As a newbie you start out with a
 of equipment and enough food to last until you gather enough money to buy
 more. The [INFO](/help/commands/info-news-policy-version-future/) and [POLICY](/help/commands/info-news-policy-version-future/) commands will tell you the rules and basics of
 Dark Pawns, and the [NEWS](/help/commands/info-news-policy-version-future/) file will keep you updated on various added features.
-Also, check out help [FAQ](/help/faq/), which has the answers to some of frequently asked
+Also, check out help [FAQ](/help/info/faq/), which has the answers to some of frequently asked
 newbie questions.
 
 You will start out in the Temple of your home town.  The first thing you should
@@ -28,6 +28,4 @@ Kir Drax'in, and the locations of all the stores, guilds and sub-areas within.
 Once you get on your way, you'll probably want to check out information on
 MULTIplaying, which the mud is designed for.
 
-See also: [FAQ](/help/faq/), [NEWS](/help/commands/info-news-policy-version-future/), [POLICY](/help/commands/info-news-policy-version-future/), [MULTI](/help/commands/multi-multiplay-multi-play/), [MAP](/help/info/map/), [CLASSES](/help/info/class-classes/), [RACES](/help/info/race-races/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)
+See also: [FAQ](/help/info/faq/), [NEWS](/help/commands/info-news-policy-version-future/), [POLICY](/help/commands/info-news-policy-version-future/), [MULTI](/help/commands/multi-multiplay-multi-play/), [MAP](/help/info/map/), [CLASSES](/help/info/class-classes/), [RACES](/help/info/race-races/)

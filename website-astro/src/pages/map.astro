@@ -4,6 +4,7 @@ import mapScriptUrl from '../../../website/assets/js/map.js?url';
 ---
 
 <Base title="Dark Pawns World Map" description="Explore the rooms, zones, and paths of the Dark Pawns world." hideFooter>
+<h1 class="visually-hidden">Dark Pawns world map</h1>
 <style is:global>
 /* ── Map page layout ─────────────────────────────────── */
 #map-page {
@@ -313,7 +314,7 @@ import mapScriptUrl from '../../../website/assets/js/map.js?url';
   font-family: var(--font-body);
 }
 
-#detail-exits h4, #detail-path-section h4 {
+#detail-exits h2, #detail-path-section h2 {
   font-size: 0.65rem;
   font-family: var(--font-display);
   text-transform: uppercase;
@@ -495,7 +496,7 @@ import mapScriptUrl from '../../../website/assets/js/map.js?url';
 
       <!-- World map: Canvas (all rooms, pan/zoom) -->
       <div id="map-canvas-wrap">
-        <canvas id="map-canvas" aria-label="World map — all rooms"></canvas>
+        <canvas id="map-canvas" aria-label="World map, all rooms"></canvas>
       </div>
 
       <!-- Zone view: SVG with pre-baked positions -->
@@ -545,7 +546,7 @@ import mapScriptUrl from '../../../website/assets/js/map.js?url';
       <div id="detail-exits"></div>
       <div id="detail-mobs"></div>
       <div id="detail-path-section">
-        <h4>Pathfinding</h4>
+        <h2>Pathfinding</h2>
         <div id="path-status"></div>
         <button class="path-btn" id="btn-set-start">Set as path start</button>
         <button class="path-btn clear" id="btn-clear-path" style="display:none;margin-top:.3rem">Clear path</button>

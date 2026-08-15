@@ -8,9 +8,9 @@ aliases: ['/help/warrior-fighter-warriors']
 ---
 
 Warriors are known to have more strength than the average class. This
-Makes them better at hand-to-hand-combat, as they possess skills of 
-violence and fighting unequaled by the members of any other class.  
-However, they lack the ability to use magic of any sort. 
+Makes them better at hand-to-hand-combat, as they possess skills of
+violence and fighting unequaled by the members of any other class.
+However, they lack the ability to use magic of any sort.
 
 You can improve your skills by using the practice command.
 

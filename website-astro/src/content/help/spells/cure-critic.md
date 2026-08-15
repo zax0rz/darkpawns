@@ -7,11 +7,8 @@ section: "help"
 aliases: ['/help/cure-critic']
 ---
 
-Usage       : cast 'cure critic' <victim>
+Usage       : cast 'cure critic' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 
 This spell cures many hitpoints of damage.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

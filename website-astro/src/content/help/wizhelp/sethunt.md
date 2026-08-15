@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/sethunt']
 ---
 
-Usage: sethunt <victim> <hunter>
+Usage: sethunt &lt;victim&gt; &lt;hunter&gt;
 Sets hunter hunting victim. If victim is not specified, it takes the first
 mobile in the room.
 

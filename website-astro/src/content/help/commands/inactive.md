@@ -11,6 +11,3 @@ Usage: inactive
 
 This command toggles your "inactive" status. While inactive, you don't get
 hungry or thirsty, but you don't heal or regenerate movement or mana, either.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

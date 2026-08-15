@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/consider']
 ---
 
-Usage: consider <monster>
+Usage: consider &lt;monster&gt;
 
-This command gives a rough estimate of your opponent. Three things are 
+This command gives a rough estimate of your opponent. Three things are
 considered: Your enemy's strength, health, and level. So while they may
 be very powerful, and have be a much higher level, they may be almost
 dead, etc.
@@ -19,5 +19,3 @@ Example:
   > consider fido
 
 See also: [HIT](/help/commands/kill-hit/), [KILL](/help/commands/kill-hit/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

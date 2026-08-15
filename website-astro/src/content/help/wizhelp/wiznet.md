@@ -9,11 +9,11 @@ aliases: ['/help/wiznet']
 
 The immortal communication channel.
 
-Usage: wiznet [ '@' | '*' | '#' ] [<text>]
+Usage: wiznet [ '@' | '*' | '#' ] [&lt;text&gt;]
 
 Examples:
 
-  >; <text>    - just sends text
+  >; &lt;text&gt;    - just sends text
   >; *burp     - sends "<--- burp"
   >; #32 Immortals suck	- sends "Immortals suck" to everyone level 32 and above.
   >; @         - shows all gods that are on and visible to you

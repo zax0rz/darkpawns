@@ -19,9 +19,7 @@ surroundings could mean the difference between life and death!
 If you explicitly type 'look', you will always see the full room description,
 even in [BRIEF](/help/commands/brief/) mode.
 
-Looking into other rooms by typing [LOOK](/help/commands/look/) [direction] will appear in 
+Looking into other rooms by typing [LOOK](/help/commands/look/) [direction] will appear in
 "brief mode" if brief is on.
 
 See also: [COMPACT](/help/commands/compact/), [LOOK](/help/commands/look/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

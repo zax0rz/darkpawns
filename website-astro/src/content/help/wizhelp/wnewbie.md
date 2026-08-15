@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/wnewbie']
 ---
 
-Usage: wnewbie <victim>
+Usage: wnewbie &lt;victim&gt;
 
-Conjures up a bunch of newbie eq for <victim> and sticks it in their inventory.
+Conjures up a bunch of newbie eq for &lt;victim&gt; and sticks it in their inventory.
 
 wizonly

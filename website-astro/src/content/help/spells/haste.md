@@ -7,12 +7,9 @@ section: "help"
 aliases: ['/help/haste']
 ---
 
-Usage		: will 'haste' <self>
+Usage		: will 'haste' &lt;self&gt;
 Accumulative    : No
 Duration	: Instantaneous
 
 By use of this power, the Mystic can speed up his actions in movement as
 well as in combat.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

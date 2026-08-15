@@ -7,10 +7,8 @@ section: "help"
 aliases: ['/help/glance']
 ---
 
-Usage: glance <victim>
+Usage: glance &lt;victim&gt;
 
 Use [GLANCE](/help/commands/glance/) to get a rough estimate of how wounded your opponent is.
 
 See also: [DIAGNOSE](/help/commands/diagnose/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

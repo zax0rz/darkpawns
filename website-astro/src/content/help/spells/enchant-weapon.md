@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/enchant-weapon']
 ---
 
-Usage       : cast 'enchant weapon' <weapon>
+Usage       : cast 'enchant weapon' &lt;weapon&gt;
 Accumulative: No
 Duration    : Permanent
 
@@ -26,6 +26,3 @@ The enchantment will modify the weapon as:
 
 Enchanted weapons become not useable by people of the caster's opposite
 alignment.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

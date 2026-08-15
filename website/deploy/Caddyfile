@@ -3,6 +3,20 @@
 }
 
 :80 {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https://challenges.cloudflare.com; connect-src 'self' wss://darkpawns.labz0rz.com https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+	}
+
+	@fingerprinted path /_astro/*
+	header @fingerprinted Cache-Control "public, max-age=31536000, immutable"
+
 	# Route soviet to The Soviet
 	@soviet {
 		host soviet.labz0rz.com
@@ -41,7 +55,7 @@
 	handle {
 		root * /srv/hugo/
 		# Discovery headers for agents and crawlers.
-		header Link "</llms.txt>; rel=\"alternate\"; type=\"text/plain\", </sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\", </.well-known/agent-skills/index.json>; rel=\"alternate\"; type=\"application/json\""
+		header Link "</llms.txt>; rel=\"alternate\"; type=\"text/plain\", </sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\", </rss.xml>; rel=\"alternate\"; type=\"application/rss+xml\", </.well-known/agent-skills/index.json>; rel=\"alternate\"; type=\"application/json\""
 		try_files {path} {path}/index.html
 		file_server
 	}

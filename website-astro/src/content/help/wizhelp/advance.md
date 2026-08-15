@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/advance']
 ---
 
-Usage: advance <victim> <level>
+Usage: advance &lt;victim&gt; &lt;level&gt;
 
 [ADVANCE](/help/wizhelp/advance/) moves a player to a new level.  If used to promote a player to an
 immortal level, and if you have the autowiz program installed, the wizlist and

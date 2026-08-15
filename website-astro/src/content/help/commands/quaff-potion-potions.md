@@ -7,10 +7,7 @@ section: "help"
 aliases: ['/help/quaff-potion-potions']
 ---
 
-Usage: quaff <potion>
+Usage: quaff &lt;potion&gt;
 
 Quaff is used to "drink" a (magical) potion.  The magic will take effect
 immediately, for better or for worse...
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

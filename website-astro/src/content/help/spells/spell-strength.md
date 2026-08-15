@@ -7,12 +7,9 @@ section: "help"
 aliases: ['/help/spell-strength']
 ---
 
-Usage       : cast 'strength' <victim>
+Usage       : cast 'strength' &lt;victim&gt;
 Accumulative: Yes (affect)
 Duration    : Level/2 + 4
 
 The target of this spell will benifit from increased strength for its
 duration.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

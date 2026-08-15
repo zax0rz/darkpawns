@@ -13,5 +13,3 @@ Lists the most powerful beings on the [MUD](/database#item-5810).  These are the
 responsible for the background operation of Dark Pawns.
 
 See also: [IMPLEMENTOR](/help/info/implementor/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

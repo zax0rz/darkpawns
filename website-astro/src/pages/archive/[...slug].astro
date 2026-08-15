@@ -10,7 +10,7 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 ---
-<Base title={`${entry.data.title} — Dark Pawns Archive`} description={entry.data.description}>
+<Base title={`${entry.data.title} | Dark Pawns Archive`} description={entry.data.description}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/archive/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
   <article class="container archive-article">
     <p class="crumb"><a href="/archive/">Archive</a> &raquo; {entry.data.title}</p>

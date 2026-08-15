@@ -30,5 +30,3 @@ The effect is more noticeable on slower connections.  Even if you have
 color turned on, non-colorized messages will not be slowed down at all.
 
 See also: [COLORSPRAY](/help/spells/colorspray-color-spray/), "[COLOR](/help/commands/ansi-color/) [SPRAY](/help/spells/colorspray-color-spray/)"
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

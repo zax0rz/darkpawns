@@ -31,5 +31,3 @@ Level  		Weapon
 
 
 See also: [PSIONIC](/help/info/psionicist-psionics-psionist-psionic-psionics/), [MYSTIC](/help/info/mystic-mystics/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

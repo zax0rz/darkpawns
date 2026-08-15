@@ -7,11 +7,8 @@ section: "help"
 aliases: ['/help/remove-curse']
 ---
 
-Usage       : cast 'remove curse' <victim | object>
+Usage       : cast 'remove curse' &lt;victim | object&gt;
 Accumulative: No
 Duration    : Instantaneous
 
 Will remove a curse on carried objects or any persons in the room.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

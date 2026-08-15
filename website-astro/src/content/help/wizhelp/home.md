@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/home']
 ---
 
-Usage:	home <vnum>
+Usage:	home &lt;vnum&gt;
 	home
 
 This command sets your load room. The standard home is 1204. Certain rooms,

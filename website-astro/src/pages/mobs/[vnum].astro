@@ -33,6 +33,7 @@ const jsonLd = {
     <section class="record-panel">
       <h2>Stats</h2>
       <table class="record-stats">
+        <caption class="visually-hidden">Stats for {mob.s}</caption>
         <tbody>
           <tr><th scope="row">Level</th><td>{mob.lvl}</td></tr>
           <tr><th scope="row">Race code</th><td>{mob.rc}</td></tr>
@@ -50,6 +51,7 @@ const jsonLd = {
     <section class="record-panel">
       <h2>Base attributes</h2>
       <table class="record-stats">
+        <caption class="visually-hidden">Base attributes for {mob.s}</caption>
         <tbody>
           {['STR', 'INT', 'WIS', 'DEX', 'CON', 'CHA'].map((label, index) => (
             <tr><th scope="row">{label}</th><td>{mob.stat[index]}</td></tr>

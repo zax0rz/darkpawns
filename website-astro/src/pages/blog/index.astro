@@ -7,7 +7,7 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 );
 const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 ---
-<Base title="Blog — Dark Pawns" description="Notes on the port, the world, and the development of Dark Pawns.">
+<Base title="Blog | Dark Pawns" description="Notes on the port, the world, and the development of Dark Pawns.">
   <div class="container blog-index">
     <h1>Blog</h1>
     <p class="lede">Notes on the port, the world, and where this is all going.</p>

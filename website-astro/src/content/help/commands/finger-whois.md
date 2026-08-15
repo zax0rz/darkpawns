@@ -7,10 +7,7 @@ section: "help"
 aliases: ['/help/finger-whois']
 ---
 
-Usage	: finger <player name>
-	  whois  <player name>
+Usage	: finger &lt;player name&gt;
+	  whois  &lt;player name&gt;
 
-Lists the level, class, name and title of <player name>, if they exist.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)
+Lists the level, class, name and title of &lt;player name&gt;, if they exist.

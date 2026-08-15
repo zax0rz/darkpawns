@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/dig']
 ---
 
-Usage: dig <dir> <roomnum>
+Usage: dig &lt;dir&gt; &lt;roomnum&gt;
 
-Creates an exit leading <dir> to <roomnumber>, and the reverse direction, too. 
+Creates an exit leading &lt;dir&gt; to &lt;roomnumber&gt;, and the reverse direction, too.
 Dir can be: N S E W U or D.
 
 Example:

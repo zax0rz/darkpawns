@@ -13,7 +13,7 @@ To steal from other players, you must be flagged as an [OUTLAW](/help/info/outla
 All the gorey details of this flag are listed in its help file.
 
 You may NEVER junk equipment that you have stolen from other characters.
-Junking of stolen equipment represents an irreplacable loss to the 
+Junking of stolen equipment represents an irreplacable loss to the
 character whose item it was.  If you junk equipment you steal,
 you will be removed from the game.
 

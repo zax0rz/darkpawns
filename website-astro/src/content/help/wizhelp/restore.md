@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/restore']
 ---
 
-Usage: restore <player | mobile>
+Usage: restore &lt;player | mobile&gt;
 
 [RESTORE](/help/wizhelp/restore/) restores a player or mobile to full hit, mana, and movement points.
 If used on immortals, it also sets all skill levels to 100%.

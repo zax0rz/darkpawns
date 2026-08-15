@@ -9,10 +9,10 @@ aliases: ['/help/bribe-hire']
 
 Mercenaries can be hired, the current market rate is about 100 coins.
 
-Guards can be bribed; the price varies from guard to guard, but they 
+Guards can be bribed; the price varies from guard to guard, but they
 don't come cheap.
 
-To bribe or hire someone, just [GIVE](/help/commands/give/) <amount> coins <person>
+To bribe or hire someone, just [GIVE](/help/commands/give/) &lt;amount&gt; coins &lt;person&gt;
 
 Examples:
 > give 101 coins mercenary

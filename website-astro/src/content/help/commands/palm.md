@@ -7,15 +7,13 @@ section: "help"
 aliases: ['/help/palm']
 ---
 
-Usage	:	palm <item in room>
+Usage	:	palm &lt;item in room&gt;
 
 Used for getting an item without getting noticed. A successful palm of an
-item lets you acquire it (to your inventory) with no one noticing. A 
-failed palm is just like a normal "get <object>". 
+item lets you acquire it (to your inventory) with no one noticing. A
+failed palm is just like a normal "get &lt;object&gt;".
 
-Only items in the room can be palmed, not objects in containers. The 
+Only items in the room can be palmed, not objects in containers. The
 Smaller the object, the easier it is to palm.
 
 See also: [STEAL](/help/commands/steal/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/order']
 ---
 
-Usage: order <character> <command>
-       order followers <command>
+Usage: order &lt;character&gt; &lt;command&gt;
+       order followers &lt;command&gt;
 
 Used for ordering pets and charmed people to do your evil bidding.  You
 can order everyone under your command with "order followers".
@@ -20,5 +20,3 @@ Examples:
   > order followers kill Link
 
 See also: [CHARM](/help/spells/charm-person/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

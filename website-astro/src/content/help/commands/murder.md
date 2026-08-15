@@ -7,11 +7,9 @@ section: "help"
 aliases: ['/help/murder']
 ---
 
-Usage: murder <victim>
+Usage: murder &lt;victim&gt;
 
 Kill command to hit another player.  To avoid accidental flagging (i.e.
 trying to type "kiss Nia" but accidentally typing "kill Nia").
 
 See also: [FLAGS](/help/info/flags/), [PK](/help/info/pk-player-killing-pkill-pkilling-pkiller/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/socials']
 ---
 
-Usage: <social> [<victim>]
+Usage: &lt;social&gt; [&lt;victim&gt;]
 
 Socials are commands used to show your affective state to others.  The
 actor, victim and bystanders may receive different messages.  Generally,

@@ -31,7 +31,7 @@ export default defineConfig({
     sitemap({
       filter: (page) => {
         const path = new URL(page).pathname;
-        return !page.endsWith('.json') && !page.endsWith('.md') && path !== '/play/' && !(path.replace(/\/$/, '') in redirects);
+        return !page.endsWith('.json') && !page.endsWith('.md') && path !== '/404/' && !(path.replace(/\/$/, '') in redirects);
       },
     }),
   ],

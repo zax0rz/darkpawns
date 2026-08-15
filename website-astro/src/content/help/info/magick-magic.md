@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/magick-magic']
 ---
 
-Magick is defined as the energy field that surrounds the world, giving 
+Magick is defined as the energy field that surrounds the world, giving
 it existence.  Mortals skilled in the magickal arts are able to manipulate
 this energy to their own benefit, either through sorcery, the violent magick
 of wizards, or through prayers to an idol or deity spirit, as clerics and avatars

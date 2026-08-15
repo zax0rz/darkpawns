@@ -21,7 +21,7 @@ flags are always in parentheses, not brackets or braces.
   (notell)    Player has chosen not to accept tells.
   (quest)     Player is participating in a quest currently being run by
               the gods.
-  ([AFK](/help/info/afk/))       Player may be Away From the Keyboard and may not hear 
+  ([AFK](/help/info/afk/))       Player may be Away From the Keyboard and may not hear
               anything.
   ([OUTLAW](/help/info/outlaw-outlaws/))    Player is an [OUTLAW](/help/info/outlaw-outlaws/).
 

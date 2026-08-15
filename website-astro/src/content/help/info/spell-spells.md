@@ -8,7 +8,7 @@ aliases: ['/help/spell-spells']
 ---
 
 Spells are cast with the command [CAST](/help/spells/cast/), in the form:
- 	[CAST](/help/spells/cast/) '<spell name>' <target name>
+	[CAST](/help/spells/cast/) '&lt;spell name&gt;' &lt;target name&gt;
 Examples:
  	cast 'armor' me
  	cast 'fireball' troll

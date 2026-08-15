@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/assist']
 ---
 
-Usage: [ASSIST](/help/commands/assist/) <person in need>
+Usage: [ASSIST](/help/commands/assist/) &lt;person in need&gt;
 
 If Quifael is being beaten senseless by a warg and you feel brave enough
 to help him, type [ASSIST](/help/commands/assist/) QUIFAEL to hit the warg.  Note that the warg will
@@ -17,5 +17,3 @@ person you're assisting is fighting.
   > assist Quifael
 
 See also: [FLEE](/help/commands/flee/), [KILL](/help/commands/kill-hit/), [RESCUE](/help/commands/rescue/), [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

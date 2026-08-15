@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/zreset']
 ---
 
-Usage: zreset < zone | '*' | '.' >
+Usage: zreset &lt; zone | '*' | '.' &gt;
 
 Used to force a zone to reset.  '*' forces all zones to reset.  '.' forces
 the zone you are in to reset.

@@ -7,13 +7,13 @@ section: "help"
 aliases: ['/help/drop']
 ---
 
-Usage: drop <item>
-       drop all.<item>
+Usage: drop &lt;item&gt;
+       drop all.&lt;item&gt;
        drop all
-       drop <number> coins
+       drop &lt;number&gt; coins
 
 If you lose interest in a carried item, you can drop it on the ground.
-You should always respect other players however and not leave your stuff 
+You should always respect other players however and not leave your stuff
 littering the ground.  To get rid of items, use [JUNK](/help/commands/junk/) or [DONATE](/help/commands/donate/).
 
   > drop bottle
@@ -22,5 +22,3 @@ littering the ground.  To get rid of items, use [JUNK](/help/commands/junk/) or 
   > drop 1000 coins
 
 See also: [DONATE](/help/commands/donate/), GET, [JUNK](/help/commands/junk/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

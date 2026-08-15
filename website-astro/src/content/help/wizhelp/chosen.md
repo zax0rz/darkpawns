@@ -10,9 +10,9 @@ aliases: ['/help/chosen']
 The [CHOSEN](/help/wizhelp/chosen/) flag means a mortal is chosen of the gods.
 
 The [CHOSEN](/help/wizhelp/chosen/) character is basically a playtester for the game, and can
-both see and use [WIZNET](/help/wizhelp/wiznet/). 
+both see and use [WIZNET](/help/wizhelp/wiznet/).
 
-To speak to true imms only, use [WIZNET](/help/wizhelp/wiznet/) #31 <message>.
+To speak to true imms only, use [WIZNET](/help/wizhelp/wiznet/) #31 &lt;message&gt;.
 
 Mortals do not see the [CHOSEN](/help/wizhelp/chosen/) flag (even Chosen mortals) on anyone but
 themselves.

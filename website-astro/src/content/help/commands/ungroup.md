@@ -19,5 +19,3 @@ Examples:
   > ungroup homer
 
 See also: [GROUP](/help/commands/group/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

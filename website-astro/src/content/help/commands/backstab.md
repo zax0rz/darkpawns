@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/backstab']
 ---
 
-Usage	: 	backstab <victim>
+Usage	: 	backstab &lt;victim&gt;
 
 Backstab is a way to sneak up on a person and attempt to place your dagger
 in his back, at exactly the point where it does most damage.  A successful
@@ -18,5 +18,3 @@ practiced backstab at your guild. Also, backstabbing a person will lag you
 for about two rounds of combat.
 
 See also: [THIEF](/help/info/thief-thieves/), [ASSASSIN](/help/info/assassin-assassins/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

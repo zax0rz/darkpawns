@@ -11,18 +11,13 @@ interface Props {
 
 const { kind, vnum, name, description, jsonLd } = Astro.props;
 const section = kind === 'Mob' ? 'mobs' : 'items';
-const canonical = `https://darkpawns.labz0rz.com/${section}/${vnum}/`;
 const jsonUrl = `/${section}/${vnum}.json`;
 const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
 ---
 
-<Base title={`${name} | ${kind} ${vnum} | Dark Pawns`} {description}>
+<Base title={`${name} | ${kind} ${vnum} | Dark Pawns`} {description} ogType="article">
   <Fragment slot="head">
     <link rel="alternate" type="application/json" href={jsonUrl} title={`${name} as JSON`} />
-    <meta property="og:type" content="article" />
-    <meta property="og:title" content={`${name} | Dark Pawns`} />
-    <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
     <script type="application/ld+json" set:html={safeJsonLd}></script>
   </Fragment>
 

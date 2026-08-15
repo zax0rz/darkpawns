@@ -7,6 +7,6 @@ section: "help"
 aliases: ['/help/nobits']
 ---
 
-The term "[NOBITS](/help/info/nobits/)" is mud slang for "Has no bits". What it means, 
+The term "[NOBITS](/help/info/nobits/)" is mud slang for "Has no bits". What it means,
 essentially, is that the item has no special affects to it. It
 doesn't do anything remarkable.

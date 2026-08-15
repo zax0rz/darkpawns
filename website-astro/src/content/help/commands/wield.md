@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/wield']
 ---
 
-Usage: wield <weapon>
+Usage: wield &lt;weapon&gt;
 
 When you get tired of bashing monsters with your fists, you might consider
 wielding a weapon.
@@ -18,5 +18,3 @@ Example:
   > wield 3.sword    (Wield the third sword in your inventory)
 
 See also: [EQUIPMENT](/help/commands/equipment/), [REMOVE](/help/commands/remove/), [WEAR](/help/commands/wear/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

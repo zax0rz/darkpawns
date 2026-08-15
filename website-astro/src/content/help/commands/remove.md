@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/remove']
 ---
 
-Usage: remove <item>
+Usage: remove &lt;item&gt;
        remove all
-       remove all.<keyword>
+       remove all.&lt;keyword&gt;
 
 If you tire of wearing some armor or wielding a weapon, remove it.
 
@@ -21,5 +21,3 @@ Examples:
   > remove all.bronze
 
 See also: [GRAB](/help/commands/grab-hold/), [HOLD](/help/commands/grab-hold/), [WEAR](/help/commands/wear/), [WIELD](/help/commands/wield/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

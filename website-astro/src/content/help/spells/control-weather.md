@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/control-weather']
 ---
 
-Usage       : cast 'control weather' <'better' | 'worse'>
+Usage       : cast 'control weather' &lt;'better' | 'worse'&gt;
 Accumulative: Yes
 Duration    : -
 
@@ -21,6 +21,3 @@ Obviously, you must be outside to cast this spell.
 Example:
 
   > cast 'control wea' worse
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

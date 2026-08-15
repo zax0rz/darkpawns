@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/blindness']
 ---
 
-Usage       : cast 'blindness' <victim>
+Usage       : cast 'blindness' &lt;victim&gt;
 Accumulative: No
 Duration    : 2 hours.
 
@@ -15,5 +15,3 @@ Blindness will blind a victim failing its saving throw.
 A blinded person will have -4 penalty to both hitroll and [AC](/help/info/ac-armor/).
 
 See also: [AC](/help/info/ac-armor/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

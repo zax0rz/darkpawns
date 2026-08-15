@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/display-prompt']
 ---
 
-Usage: prompt < H | M | V | T | F | all | off >
+Usage: prompt &lt; H | M | V | T | F | all | off &gt;
 
 Modify your prompt to show your hit points, mana, and/or movement points.
 
@@ -19,5 +19,3 @@ Modify your prompt to show your hit points, mana, and/or movement points.
   > prompt off         Return to normal prompt
 
 See also: [TOGGLE](/help/commands/toggle/) [COLOR](/help/commands/ansi-color/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

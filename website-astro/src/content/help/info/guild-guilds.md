@@ -7,9 +7,9 @@ section: "help"
 aliases: ['/help/guild-guilds']
 ---
 
-The Guildhouse is the place where mortals may go to escape the troubles 
+The Guildhouse is the place where mortals may go to escape the troubles
 and perils of a cruel world.  Each guild is heavily guarded, so that only
-members may enter the building.  Guilds are also the places where people 
+members may enter the building.  Guilds are also the places where people
 come to learn and practice the skills of their trade.
 
 &cGuild locations in Kir Drax'in: (see help [MAP](/help/info/map/) for more info)&n

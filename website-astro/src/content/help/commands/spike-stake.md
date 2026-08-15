@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/spike-stake']
 ---
 
-Usage: [SPIKE](/help/commands/spike-stake/) <werewolf name>
-       [STAKE](/help/commands/spike-stake/) <vampire name>
+Usage: [SPIKE](/help/commands/spike-stake/) &lt;werewolf name&gt;
+       [STAKE](/help/commands/spike-stake/) &lt;vampire name&gt;
 
 You must be holding the correct spike or stake for your form of beastly
 target, and it must be done while the target is in beastly form.
@@ -16,5 +16,3 @@ A failed save throw by the beast results in immediate, painful
 death and loss of beastliness. Do not pass go, do not collect $200.00.
 
 See also: [WEREWOLF](/help/info/lycanthropy-werewolf-werewolves-lycanthrope/), [VAMPIRE](/help/info/vampirism-vampire-vampires/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

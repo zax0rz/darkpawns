@@ -7,16 +7,16 @@ section: "help"
 aliases: ['/help/auction-channel-channels-gossip-grats-noauction-nogossip-nograts']
 ---
 
-Usage: auction <message>
-       gossip <message>
-       grats <message>
-       newbie <message>
+Usage: auction &lt;message&gt;
+       gossip &lt;message&gt;
+       grats &lt;message&gt;
+       newbie &lt;message&gt;
 
 These are channels reserved for specific purposes.  Messages on these
 channels reach everyone who is monitoring them.  You must be at least level
 two to use these channels, except the newbie channel.
 
-To toggle a channel on and off, use the NONEWBIE, NOGOSS, NOAUC, etc. 
+To toggle a channel on and off, use the NONEWBIE, NOGOSS, NOAUC, etc.
 commands.
 Usage: nonewbie
        nogossip
@@ -31,5 +31,3 @@ Examples:
   > newbie Help me please, any high levelers listening?
 
 See also: [EMOTE](/help/commands/emote/), [GSAY](/help/commands/gsay-gtell/), [HOLLER](/help/commands/say-tell-ask-whisper-shout-holler/), [NOREPEAT](/help/commands/norepeat/), [SAY](/help/commands/say-tell-ask-whisper-shout-holler/), [SHOUT](/help/commands/say-tell-ask-whisper-shout-holler/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -1,6 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /play/
 
 # AI crawlers are explicitly welcome on Dark Pawns.
 User-agent: GPTBot

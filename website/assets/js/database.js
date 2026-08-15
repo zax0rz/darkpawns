@@ -800,7 +800,7 @@
       }).join('');
       panel1Html = `
         <div class="skyline-panel">
-          <h4>Level Curve Density</h4>
+          <h2>Level Curve Density</h2>
           <div class="skyline-chart">${barsHtml}</div>
         </div>
       `;
@@ -832,7 +832,7 @@
       }).join('');
       panel1Html = `
         <div class="skyline-panel">
-          <h4>Weight Spectrum (lbs)</h4>
+          <h2>Weight Spectrum (lbs)</h2>
           <div class="skyline-chart">${barsHtml}</div>
         </div>
       `;
@@ -863,7 +863,7 @@
     
     const panel2Html = `
       <div class="skyline-panel">
-        <h4>Top Spawn Areas</h4>
+        <h2>Top Spawn Areas</h2>
         <div class="skyline-list" style="margin-top:0.25rem;">
           ${zonesListHtml || '<div style="font-size:0.65rem;color:var(--ink-muted);">No zones spawned.</div>'}
         </div>
@@ -882,7 +882,7 @@
       }
       panel3Html = `
         <div class="skyline-panel">
-          <h4>Observable Temperaments</h4>
+          <h2>Observable Temperaments</h2>
           <div class="skyline-chips">
             <span class="skyline-chip ${filters.mobs.shopkeeper ? 'active' : ''}" id="sky-chip-shop">§ Shopkeepers (${shops})</span>
             <span class="skyline-chip ${filters.mobs.aggressive ? 'active' : ''}" id="sky-chip-agg">‼ Aggressive (${aggs})</span>
@@ -900,7 +900,7 @@
       }
       panel3Html = `
         <div class="skyline-panel">
-          <h4>Object Attributes</h4>
+          <h2>Object Attributes</h2>
           <div class="skyline-chips">
             <span class="skyline-chip ${filters.items.magic ? 'active' : ''}" id="sky-chip-mag">🪄 Magic (${magical})</span>
             <span class="skyline-chip ${filters.items.script ? 'active' : ''}" id="sky-chip-scr">📜 Scripted (${scripted})</span>

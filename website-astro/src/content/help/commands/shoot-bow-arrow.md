@@ -7,15 +7,12 @@ section: "help"
 aliases: ['/help/shoot-bow-arrow']
 ---
 
-Usage: shoot <projectile name> <direction> <target name>
+Usage: shoot &lt;projectile name&gt; &lt;direction&gt; &lt;target name&gt;
 
 Example: shoot arrow east janitor
          shoot quarrel up anybody
-      
-You must be wielding a missile weapon, such as a bow, and carrying the 
-projectile. You can't shoot while fighting. If the <target name> is not
-found in the room to the <direction>, your projectile will fly toward 
+
+You must be wielding a missile weapon, such as a bow, and carrying the
+projectile. You can't shoot while fighting. If the &lt;target name&gt; is not
+found in the room to the &lt;direction&gt;, your projectile will fly toward
 the first creature in the room.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

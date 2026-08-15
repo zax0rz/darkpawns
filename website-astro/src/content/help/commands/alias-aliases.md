@@ -15,7 +15,7 @@ The [ALIAS](/help/commands/alias-aliases/) command can be used to manipulate you
 
   > alias
 
-Type [ALIAS](/help/commands/alias-aliases/) <alias name> <command> to create a new alias.  The alias name must
+Type [ALIAS](/help/commands/alias-aliases/) &lt;alias name&gt; &lt;command&gt; to create a new alias.  The alias name must
 be one word.  The command can be any string.  Aliases may not be nested or
 used recursively.  Any command may be overridden by an alias (other than the
 [ALIAS](/help/commands/alias-aliases/) command itself, of course).
@@ -23,7 +23,7 @@ used recursively.  Any command may be overridden by an alias (other than the
   > alias gbb get bread bag
   > alias gac get all corpse
 
-Type [ALIAS](/help/commands/alias-aliases/) <alias-name> to delete an alias that has already been defined.
+Type [ALIAS](/help/commands/alias-aliases/) &lt;alias-name&gt; to delete an alias that has already been defined.
 
   > alias gbb
 
@@ -53,6 +53,4 @@ The special variable $* represents the entire input line after an alias:
   > tr hi there, how are you today?
   You tell Rasmussen, 'hi there, how are you today?'
 
-See also: [!](/help/commands/!/) [^](/help/commands/!/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)
+See also: [!](/help/commands/bang-caret/) [^](/help/commands/bang-caret/)

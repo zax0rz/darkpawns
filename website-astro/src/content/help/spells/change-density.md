@@ -7,10 +7,7 @@ section: "help"
 aliases: ['/help/change-density']
 ---
 
-Usage       : will 'change density' <self>
+Usage       : will 'change density' &lt;self&gt;
 
 The psionic changes the physical make-up of his body, assuming the
 ability  to walk, lie down, etc, on liquid surfaces.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/shocking-grasp']
 ---
 
-Usage       : cast 'shocking grasp' <victim>
+Usage       : cast 'shocking grasp' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 Save        : Versus spell for half damage.
@@ -15,5 +15,3 @@ Save        : Versus spell for half damage.
 This spell is more powerful than the burning hands spell.
 
 See also: "[BURNING](/help/spells/burning-hands/) [HANDS](/help/spells/burning-hands/)"
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

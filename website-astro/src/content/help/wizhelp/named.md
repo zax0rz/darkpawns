@@ -7,14 +7,14 @@ section: "help"
 aliases: ['/help/named']
 ---
 
-Named items: These objects should have a namelist consisting of the short 
+Named items: These objects should have a namelist consisting of the short
 descrip minus the leading article.
 Example:
   name:             emerald ring
   short_descrition: an emerald ring
   long description: An emerald ring lies here.
-When worn, the ring's short descrip becomes <wearer name> <name>
+When worn, the ring's short descrip becomes &lt;wearer name&gt; &lt;name&gt;
 For example, if Bob wears the ring above, you'd look at Bob and see:
-<Worn on right finger> Bob's emerald ring
+&lt;Worn on right finger&gt; Bob's emerald ring
 
 wizonly

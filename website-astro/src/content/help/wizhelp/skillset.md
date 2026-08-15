@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/skillset']
 ---
 
-Usage: skillset <name> '<skill>' <value>
+Usage: skillset &lt;name&gt; '&lt;skill&gt;' &lt;value&gt;
 
 Sets the specified skill to the specified value.
 

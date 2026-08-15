@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/charm-person']
 ---
 
-Usage       : cast 'charm person' <victim>
+Usage       : cast 'charm person' &lt;victim&gt;
 Accumulative: No
 
 It is not possible to charm anyone that is already charmed, if
@@ -20,5 +20,3 @@ like being charmed, and a failed attempt will usually result in your
 being attacked.
 
 See also: [FOLLOW](/help/commands/follow/), [ORDER](/help/commands/order/)
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

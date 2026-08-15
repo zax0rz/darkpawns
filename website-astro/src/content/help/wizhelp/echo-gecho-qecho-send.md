@@ -7,10 +7,10 @@ section: "help"
 aliases: ['/help/echo-gecho-qecho-send']
 ---
 
-Usage: echo <message>
-       gecho <message>
-       send <victim> <message>
-       qecho <message>
+Usage: echo &lt;message&gt;
+       gecho &lt;message&gt;
+       send &lt;victim&gt; &lt;message&gt;
+       qecho &lt;message&gt;
 
 [ECHO](/help/wizhelp/echo-gecho-qecho-send/) displays a string to everyone in your room.
 [GECHO](/help/wizhelp/echo-gecho-qecho-send/) displays the string to everyone in the game.

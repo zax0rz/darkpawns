@@ -7,11 +7,8 @@ section: "help"
 aliases: ['/help/cure-light']
 ---
 
-Usage       : cast 'cure light' <victim>
+Usage       : cast 'cure light' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 
 Cures minor wounds and scratches.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

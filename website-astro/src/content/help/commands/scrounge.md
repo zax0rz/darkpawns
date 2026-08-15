@@ -13,5 +13,3 @@ The skilled Ranger can scrounge up a meal anywhere, just by feeding off of the
 land.
 
 See also: [RANGER](/help/info/ranger-rangers/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

@@ -7,12 +7,12 @@ section: "help"
 aliases: ['/help/emote']
 ---
 
-Usage: emote <message>
-       : <message>
+Usage: emote &lt;message&gt;
+       : &lt;message&gt;
 
 Show people what you're feeling.  The shorthand is ":".
 
-"emote <string>" will display your name, then the string.
+"emote &lt;string&gt;" will display your name, then the string.
 
 Example:
 
@@ -25,5 +25,3 @@ will display:
 Helt is feeling very sad today.
 
 See also: [SOCIALS](/help/socials/socials/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

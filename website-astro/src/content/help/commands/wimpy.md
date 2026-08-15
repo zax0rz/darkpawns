@@ -21,5 +21,3 @@ Examples:
   > wimpy       will show you your current wimp status.
 
 See also: [FLEE](/help/commands/flee/), [TOGGLE](/help/commands/toggle/), [ESCAPE](/help/commands/escape-of-the-mongoose-escape/), [RETREAT](/help/commands/retreat/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

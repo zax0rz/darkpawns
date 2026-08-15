@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/pick-locks-locks-lockpicks-picks']
 ---
 
-Usage: pick <lock name> [direction]
+Usage: pick &lt;lock name&gt; [direction]
 
 For picking locks.  Not all locks can be picked. Those that can require a
 set of held lockpicks. Lockpicks can be found in most major cities and are
@@ -21,5 +21,3 @@ Examples:
   > pick safe
 
 See also: [OPEN](/help/commands/open-close-lock-unlock/), [CLOSE](/help/commands/open-close-lock-unlock/), [LOCK](/help/commands/open-close-lock-unlock/), [UNLOCK](/help/commands/open-close-lock-unlock/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

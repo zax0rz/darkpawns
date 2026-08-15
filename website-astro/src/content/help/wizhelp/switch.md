@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/switch']
 ---
 
-Usage: switch <monster>
+Usage: switch &lt;monster&gt;
 
 [SWITCH](/help/wizhelp/switch/) is used to take over the body of mobiles; useful for interactive
 adventures.  If the monster in which you are switched is killed you will be

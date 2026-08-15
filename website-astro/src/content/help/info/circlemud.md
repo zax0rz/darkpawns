@@ -15,7 +15,7 @@ to CircleMUD is protected under a copyright by the Trustees of the Johns
 Hopkins University.
 
 Many, many people contributed to CircleMUD in one way or another throughout
-the course of its development.  Although it's impossible for me to remember  
+the course of its development.  Although it's impossible for me to remember
 them all, I'd like to extend special thanks to certain people:
 
   -- Gekke Eekhoorn, Jeff Fink, Chris Epler, Eric Green, and Chris Herringshaw,
@@ -27,17 +27,17 @@ them all, I'd like to extend special thanks to certain people:
      code and area submissions for Circle 2.x.
   -- The DikuMUD folk, and the good old WhatMUD implementors Dave & Justin,
      for starting the ball rolling.
-  -- Bryan Jolson, Steven Lacher, Cat Stanton, and Naved Surve, for being  
+  -- Bryan Jolson, Steven Lacher, Cat Stanton, and Naved Surve, for being
      there in the very early days of Circle's development.
   -- Bill Bogstad and Tim Stearns, for allowing Circle to exist at JHU CS.
-   
+
 ...plus everyone else in the Circle community who has submitted code, areas,
 utilities, suggestions, and otherwise supported CircleMUD in one way or
 another.  I absolutely couldn't (and wouldn't) do this if it wasn't for all
 of your help.  Thanks everyone!
-  
+
  Anonymous FTP:  ftp.cs.jhu.edu:/pub/CircleMUD
-Author's Email:  jelson@jhu.edu 
+Author's Email:  jelson@jhu.edu
            URL:  http://www.cs.jhu.edu/~jelson/circle.html
   Mailing List:  circle@pvv.unit.no
 

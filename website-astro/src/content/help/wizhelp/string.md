@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/string']
 ---
 
-Usage: string <type> <name> <field> [<string> | <keyword>]
+Usage: string &lt;type&gt; &lt;name&gt; &lt;field&gt; [&lt;string&gt; | &lt;keyword&gt;]
 
 For changing the text-strings associated with objects and characters.  The
 format is:

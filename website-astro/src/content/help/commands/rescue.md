@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/rescue']
 ---
 
-Usage: rescue <victim>
+Usage: rescue &lt;victim&gt;
 
 This command is useful if you want to try and make an attacker hit you
 instead of your poor friend who is being pummeled.  You can only 'turn'
@@ -19,5 +19,3 @@ Example:
 > rescue Yankee
 
 See also: [WARRIOR](/help/info/warrior-fighter-warriors/), [PALADIN](/help/info/paladin/), [RANGER](/help/info/ranger-rangers/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

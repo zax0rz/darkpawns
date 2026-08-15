@@ -8,12 +8,9 @@ aliases: ['/help/point']
 ---
 
 Usage:  point
-	point <victim>
-	point <object>
-	point <direction>
+	point &lt;victim&gt;
+	point &lt;object&gt;
+	point &lt;direction&gt;
 
 Used for... pointing things out.
 Remember what your mother said however... its not nice to point.
-
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

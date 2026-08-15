@@ -15,6 +15,3 @@ Save: versus spell for half damage
 By means of this powerful magick, the magus can call meteors from the heavens
 down to smite all of his enemies in the room.  This can obviously only work
 when the magus is outdoors.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

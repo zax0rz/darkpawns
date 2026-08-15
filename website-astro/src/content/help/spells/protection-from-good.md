@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/protection-from-good']
 ---
 
-Usage	    : cast 'protection from good' <self>
+Usage	    : cast 'protection from good' &lt;self&gt;
 Accumulative: No
 Duration    : About [24](/help/info/attitude-attitudes-24-atti/) hours
 
@@ -16,6 +16,3 @@ of those pesky do-gooders who always wish you harm.
 
 Note: casting this spell upon yourself while you are good can have
       disasterous side effects.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

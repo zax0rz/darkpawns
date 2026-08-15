@@ -15,5 +15,3 @@ stealthily.  If you are successful, then you'll continue to move unnoticed
 for a little while.
 
 See also: [KABUKI](/help/commands/kabuki/), [NINJA](/help/info/ninja-ninjas/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

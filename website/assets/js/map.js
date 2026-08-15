@@ -1785,7 +1785,7 @@
     // Exits
     const exits = (room.exits ?? []).filter(e => ['n','s','e','w','u','d'].includes(e.d));
     $detailExits.innerHTML = exits.length
-      ? `<h4>Exits</h4>` + exits.map(ex => {
+      ? `<h2>Exits</h2>` + exits.map(ex => {
           const target = currentRooms.find(r => r.id === ex.t);
           return `<div class="exit-item" data-target="${ex.t}" tabindex="0" role="button">
             <span class="exit-dir">${ex.d}</span>

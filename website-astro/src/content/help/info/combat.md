@@ -11,8 +11,8 @@ Combat is the very essence of Dark Pawns, when it is just the player or
 players against the mob in the field of battle.  To that end, most of
 the [SPELLS](/help/info/spell-spells/) in the game are designed to aid you in combat in some way.
 
-Combat on Dark Pawns takes the form of standard rounds. During 
-each round, you have the opportunity to hit your opponent, and he or 
+Combat on Dark Pawns takes the form of standard rounds. During
+each round, you have the opportunity to hit your opponent, and he or
 she has the opportunity to hit you.  Different things can affect the
 rounds of combat, of course.  As you get higher in level, most classes
 will gain extra [ATTACKS](/help/info/number-attacks/) to help you in battle.  You may also use the

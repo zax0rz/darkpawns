@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/magic-user-wizard-mage-mages-wizards']
 ---
 
-This is the class of powerful and violent magick, but the magic user does 
+This is the class of powerful and violent magick, but the magic user does
 not control nature, and can therefore not bless and protect.
 
 You can improve your spells by using the practice command.
@@ -39,7 +39,7 @@ Spell list:
 	22	waterbreathe
 	[24](/help/info/attitude-attitudes-24-atti/)	enchant armor
 	25 	disintegrate
-	26	enchant weapon	
+	26	enchant weapon
 	28	globe of invulnerability
 
 

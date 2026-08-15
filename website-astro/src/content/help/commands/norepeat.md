@@ -14,5 +14,3 @@ back to you (i.e., from commands such as [SAY](/help/commands/say-tell-ask-whisp
 Useful if you have a slow connection or if it just annoys you.
 
 See also: [TOGGLE](/help/commands/toggle/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

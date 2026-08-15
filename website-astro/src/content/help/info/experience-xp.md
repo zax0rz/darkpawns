@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/experience-xp']
 ---
 
-Whenever you kill a monster, you earn experience points.  When enough 
+Whenever you kill a monster, you earn experience points.  When enough
 experience points are earned, you raise a level.
 
 Things you should know about experience points:

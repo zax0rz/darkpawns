@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/unaffect']
 ---
 
-Usage: unaffect <victim>
+Usage: unaffect &lt;victim&gt;
 
 Removes all affections (i.e., spell effects) from a player.
 

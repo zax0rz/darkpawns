@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Privacy | Dark Pawns" description="What the Dark Pawns website collects and how contact messages are handled.">
+  <article class="container privacy-page">
+    <p class="eyebrow">Site record</p>
+    <h1>Privacy</h1>
+    <p class="lede">Most of this website is static. It does not run advertising or behavioral analytics.</p>
+
+    <div class="prose">
+      <h2>Contact messages</h2>
+      <p>The contact form collects the reply address, message, and any optional character name or years played that you provide. The server sends that information by email to the project maintainer. It is used to reply, correct the historical record, or follow up on an offer to help.</p>
+      <p>Messages remain in the maintainer's mailbox until they are no longer useful for that conversation or record. Use the same <a href="/contact/">contact form</a> to ask for a message or personal detail to be removed.</p>
+
+      <h2>Spam protection</h2>
+      <p>The form uses Cloudflare Turnstile. The server sends the Turnstile response and your network address to Cloudflare to check that the submission is legitimate. Cloudflare describes its handling of this data in its <a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a>.</p>
+      <p>The Dark Pawns server also keeps a temporary, in-memory count of contact attempts by network address for up to one hour. This limits automated abuse. The counter is not written to the project database.</p>
+
+      <h2>Server records</h2>
+      <p>The hosting and delivery systems may keep ordinary request records such as network address, requested path, browser identifier, response status, and time. These records are used to operate and secure the service.</p>
+
+      <h2>Cookies and local storage</h2>
+      <p>The public site does not set advertising or analytics cookies. The embedded game client, Cloudflare, or Turnstile may use storage needed to provide their requested function. Because the site does not use non-essential tracking, it does not show a consent banner.</p>
+
+      <h2>Public archive</h2>
+      <p>The community archive contains selected material that was published on earlier Dark Pawns websites. Each archived page identifies its source. If an entry concerns you and you want it corrected or removed, use the <a href="/contact/">private contact form</a>.</p>
+
+      <h2>Questions</h2>
+      <p>Privacy questions and requests can be sent through the <a href="/contact/">contact form</a>. A reply address is required so the maintainer can respond.</p>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .privacy-page { max-width: 52rem; padding-block: var(--space-xl); }
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .lede { color: var(--ink-muted); font-size: 1.2rem; }
+</style>

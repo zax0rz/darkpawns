@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/ban-unban']
 ---
 
-Usage: ban [<all | new | select> <site>]
-       unban <site>
+Usage: ban [&lt;all | new | select&gt; &lt;site&gt;]
+       unban &lt;site&gt;
 
 These commands prevent anyone from a site with a hostname containing the
 site substring from logging in to the game.  You may ban a site to ALL, [NEW](/database#mob-16302)

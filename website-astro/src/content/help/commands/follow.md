@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/follow']
 ---
 
-Usage: follow <leader>
+Usage: follow &lt;leader&gt;
 
 Use [FOLLOW](/help/commands/follow/) to automatically follow someone else.
 
@@ -17,5 +17,3 @@ Examples:
   > follow self
 
 See also: [GROUP](/help/commands/group/), [SNEAK](/help/commands/sneak/), [SHADOW](/help/commands/shadow/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

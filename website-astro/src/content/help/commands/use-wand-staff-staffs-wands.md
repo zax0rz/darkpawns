@@ -7,8 +7,8 @@ section: "help"
 aliases: ['/help/use-wand-staff-staffs-wands']
 ---
 
-Usage: use <staff>
-       use <wand> <Target>
+Usage: use &lt;staff&gt;
+       use &lt;wand&gt; &lt;Target&gt;
 
 Using a staff will automatically target everybody (or everything) in a
 room, except yourself.  Therefore staffs are naturally very powerful, and
@@ -22,5 +22,3 @@ grab or hold commands).  You must still supply the name of the staff or
 wand to avoid confusion.
 
 See also: [RECITE](/help/commands/recite-scroll-scrolls/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

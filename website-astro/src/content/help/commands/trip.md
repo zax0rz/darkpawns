@@ -7,10 +7,8 @@ section: "help"
 aliases: ['/help/trip']
 ---
 
-Usage: trip <victim>
+Usage: trip &lt;victim&gt;
 
 Causes the victim to fall, leaving them open for more damage.
 
 See also: [COMBAT](/help/info/combat/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

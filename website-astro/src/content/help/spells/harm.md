@@ -7,12 +7,9 @@ section: "help"
 aliases: ['/help/harm']
 ---
 
-Usage       : cast 'harm' <victim>
+Usage       : cast 'harm' &lt;victim&gt;
 Accumulative: -
 Duration    : Instantaneous
 Save        : Versus spell for half damage.
 
 Using this spell, a priest can inflict grievous harm upon his or her enemies.
-
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

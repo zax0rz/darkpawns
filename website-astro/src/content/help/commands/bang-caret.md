@@ -24,5 +24,3 @@ Examples:
   You tell Rasmussen, 'Hi there, how are you doing?'
 
 See also: [ALIAS](/help/commands/alias-aliases/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

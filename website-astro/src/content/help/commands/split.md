@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/split']
 ---
 
-Usage: split <amount to split>
+Usage: split &lt;amount to split&gt;
 
 Split is used to split money among people in your group who are in the same
 room as you.  If you are in a group with 4 other people, all of whom are in
@@ -16,5 +16,3 @@ other 4 group members 20 coins each.  (100 coins is split 5 ways; you keep
 your share and give everyone else their share).
 
 See also: [FOLLOW](/help/commands/follow/), [GROUP](/help/commands/group/), [GOLD](/help/commands/gold/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)

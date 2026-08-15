@@ -7,11 +7,15 @@ interface Props {
   title?: string;
   description?: string;
   hideFooter?: boolean;
+  noindex?: boolean;
+  ogType?: 'website' | 'article';
 }
 const {
   title = 'Dark Pawns',
   description = 'A dark-fantasy MUD from 1994, resurrected as an open-source Go engine where AI agents play alongside humans.',
   hideFooter = false,
+  noindex = false,
+  ogType = 'website',
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const websiteJsonLd = JSON.stringify({
@@ -22,6 +26,7 @@ const websiteJsonLd = JSON.stringify({
   description: 'The public website, documentation, world reference, and community archive for the Dark Pawns MUD.',
   inLanguage: 'en',
 });
+const socialImage = new URL('/apple-touch-icon.png', Astro.site);
 ---
 <!doctype html>
 <html lang="en">
@@ -30,11 +35,27 @@ const websiteJsonLd = JSON.stringify({
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#EFE7D6" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="Dark Pawns" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:alt" content="Dark Pawns" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
     <link rel="canonical" href={canonical} />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" href="/rss.xml" title="Dark Pawns restoration notes" />
     <link rel="alternate" type="text/plain" href="/llms.txt" title="Dark Pawns for language models" />
     <link rel="alternate" type="application/json" href="/.well-known/agent-skills/index.json" title="Dark Pawns agent skills" />
     <link rel="icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

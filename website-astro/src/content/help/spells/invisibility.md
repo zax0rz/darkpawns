@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/invisibility']
 ---
 
-Usage       : cast 'invisibility' <victim | object>
+Usage       : cast 'invisibility' &lt;victim | object&gt;
 Accumulative: No
 Duration    : 12 hours + level/2
 
@@ -16,5 +16,3 @@ the "detect invisibility" spell.
 
 
 See also: "[DETECT](/help/commands/search-secret-doors-door-detect/) [INVISIBILITY](/help/spells/invisibility/)"
-
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)

@@ -7,7 +7,7 @@ section: "help"
 aliases: ['/help/will']
 ---
 
-Usage: will '<mind-skill name>' [target]
+Usage: will '&lt;mind-skill name&gt;' [target]
 
 For psionics.  If you want to use your mental abilities on someone or
 something. (i.e Force your will)
@@ -19,7 +19,6 @@ Example:
 
 See also: help on each individual mind-skill:
 
-Full documentation: [Docs Game Mechanics](/docs/game/mechanics/)
 
 Examples:
 

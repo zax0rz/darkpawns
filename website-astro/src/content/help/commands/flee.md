@@ -18,5 +18,3 @@ Fleeing from battle will also cost you some experience points, but hey, thats
 what you get for wimping out.
 
 See also: [WIMPY](/help/commands/wimpy/)
-
-Full documentation: [Docs Game Commands](/docs/game/commands/)
