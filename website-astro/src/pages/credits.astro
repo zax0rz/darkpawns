@@ -1,0 +1,105 @@
+---
+import Base from '../layouts/Base.astro';
+
+const earlyStaff = [
+  ['Serapis (Derek Karnes)', 'Founder and original implementor'],
+  ['Tracer (C. Jackson)', 'Co-founder and early developer'],
+  ['Orodreth (S. Thompson)', 'Coder and later co-implementor'],
+  ['Frontline (R.E. Paret)', 'Coder, co-implementor, historian, and website author'],
+  ['Arak (B. Parker)', 'Coder'],
+  ['Oddity (A. McConnell)', 'Head builder'],
+  ['Nimos', 'Builder'],
+  ['Aralius (R. Martin)', 'Builder'],
+  ['Doragar', 'Builder and coder'],
+];
+---
+
+<Base title="Dark Pawns Credits" description="The creators, builders, players, and free-software projects behind Dark Pawns.">
+  <article class="credits-page container">
+    <header>
+      <p class="eyebrow">Roll the names</p>
+      <h1>Credits</h1>
+      <p class="lede">No persistent world is made by one person. Dark Pawns carries the work of its founders, implementors, builders, engine authors, and the players who kept returning.</p>
+    </header>
+
+    <section>
+      <div class="section-heading">
+        <p class="section-number">01</p>
+        <div><h2>Dark Pawns staff</h2><p>Names and roles below are drawn from the preserved project history and original wizard list.</p></div>
+      </div>
+      <dl class="credit-list">
+        {earlyStaff.map(([name, role]) => <div><dt>{name}</dt><dd>{role}</dd></div>)}
+      </dl>
+    </section>
+
+    <section id="archived-staff-list">
+      <div class="section-heading">
+        <p class="section-number">02</p>
+        <div><h2>Preserved wizard list</h2><p>A snapshot from Frontline’s original Dark Pawns website—not an all-time roster.</p></div>
+      </div>
+      <p class="archived-quote">“Wizards are a secret lot, and very powerful. They are not to be trifled with.”</p>
+      <ul class="wizard-list"><li>Orodreth</li><li>Frontline</li><li>Doragar</li></ul>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <p class="section-number">03</p>
+        <div><h2>The engine lineage</h2><p>Dark Pawns descends from software shared freely by generations of MUD developers.</p></div>
+      </div>
+      <div class="lineage" aria-label="Engine lineage">
+        <span>DikuMUD</span><b aria-hidden="true">→</b><span>CircleMUD</span><b aria-hidden="true">→</b><span>Dark Pawns</span>
+      </div>
+      <p>CircleMUD was created by Jeremy Elson and is derived from DikuMUD Gamma 0.0 by Katja Nyboe, Tom Madsen, Hans Henrik Stærfeldt, Michael Seifert, and Sebastian Hammer.</p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <p class="section-number">04</p>
+        <div><h2>The restoration</h2><p>The current Go port and website are maintained as an open-source project.</p></div>
+      </div>
+      <dl class="credit-list compact">
+        <div><dt>Zach Greene (zax0rz)</dt><dd>Project lead, Go restoration, and modern website</dd></div>
+        <div><dt>Contributors</dt><dd>Everyone whose code, testing, research, and corrections appear in the repository history</dd></div>
+      </dl>
+      <p><a href="https://github.com/zax0rz/darkpawns">View the complete contributor history on GitHub <span aria-hidden="true">→</span></a></p>
+    </section>
+
+    <section class="community-credit">
+      <p class="section-number">05</p>
+      <h2>And the players.</h2>
+      <p>The clans, arguments, late-night sessions, forum posts, bug reports, maps, rumors, and friendships were part of the game too. The surviving record is incomplete, but it is being gathered in the <a href="/archive/">Archive</a>.</p>
+    </section>
+  </article>
+</Base>
+
+<style>
+  .credits-page { max-width: 62rem; padding-block: var(--space-xl); }
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .credits-page header { padding-bottom: var(--space-xl); }
+  .credits-page header h1 { font-size: clamp(3.5rem, 10vw, 7rem); margin-bottom: var(--space-sm); }
+  .lede { max-width: 48rem; color: var(--ink-muted); font-size: 1.2rem; }
+  .credits-page section { padding-block: var(--space-lg); border-top: 1px solid var(--rule); }
+  .section-heading { display: grid; grid-template-columns: 4rem 1fr; gap: var(--space-md); margin-bottom: var(--space-lg); }
+  .section-heading h2 { margin-bottom: var(--space-xs); }
+  .section-heading p:last-child { color: var(--ink-muted); margin: 0; }
+  .section-number { color: var(--accent); font-family: var(--font-mono); font-size: .8rem; letter-spacing: .08em; }
+  .credit-list { margin: 0 0 0 5rem; }
+  .credit-list div { display: grid; grid-template-columns: minmax(14rem, 1fr) 2fr; gap: var(--space-md); padding: .7rem 0; border-top: 1px solid color-mix(in srgb, var(--rule) 35%, transparent); }
+  .credit-list dt { font-family: var(--font-display); font-size: 1.1rem; }
+  .credit-list dd { color: var(--ink-muted); margin: 0; }
+  .archived-quote { max-width: 44rem; margin-left: 5rem; font-family: var(--font-display); font-size: 1.35rem; }
+  .wizard-list { display: flex; flex-wrap: wrap; gap: var(--space-sm); list-style: none; margin-left: 5rem; padding: 0; }
+  .wizard-list li { border: 1px solid var(--rule); background: var(--paper-deep); padding: .4rem .7rem; font-family: var(--font-mono); font-size: .85rem; }
+  .lineage { display: flex; align-items: center; gap: var(--space-md); margin: 0 0 var(--space-lg) 5rem; font-family: var(--font-display); font-size: clamp(1.2rem, 3vw, 2rem); }
+  .lineage b { color: var(--accent); }
+  .credits-page section > p:not(.section-number):not(.archived-quote) { max-width: 48rem; margin-left: 5rem; }
+  .community-credit h2 { margin-left: 5rem; font-size: clamp(2.5rem, 6vw, 4rem); }
+  @media (max-width: 650px) {
+    .credits-page { padding-inline: var(--space-md); }
+    .section-heading { grid-template-columns: 2rem 1fr; }
+    .credit-list, .archived-quote, .wizard-list, .lineage, .credits-page section > p:not(.section-number):not(.archived-quote), .community-credit h2 { margin-left: 3rem; }
+    .credit-list div { grid-template-columns: 1fr; gap: 0; }
+    .lineage { align-items: flex-start; flex-direction: column; gap: var(--space-xs); }
+    .lineage b { transform: rotate(90deg); }
+  }
+</style>

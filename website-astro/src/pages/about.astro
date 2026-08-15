@@ -1,0 +1,106 @@
+---
+import Base from '../layouts/Base.astro';
+
+const timeline = [
+  { year: '1994', title: 'Dark Pawns begins', text: 'Serapis and Tracer start the game on CircleMUD 1.7 at knight.ufp.org.' },
+  { year: '1996', title: 'The team forms', text: 'Orodreth and Frontline join as coders while Oddity leads the builders.' },
+  { year: '1998', title: 'A new stewardship', text: 'Frontline and Orodreth become co-implementors and the large 2.2 update ships.' },
+  { year: '2001', title: 'The break-in', text: 'An intruder destroys the server files. Orodreth’s backups preserve most of the world.' },
+  { year: '≈2010', title: 'The old server goes quiet', text: 'The public game closes, but its source and world files survive.' },
+  { year: '2026', title: 'The Go restoration', text: 'The engine is rebuilt in Go under a strict fidelity rule and opened to human and autonomous players.' },
+];
+---
+
+<Base title="About Dark Pawns" description="The sourced history of Dark Pawns, from its 1994 CircleMUD origins to the modern Go restoration.">
+  <article class="about-page">
+    <header class="about-hero container">
+      <p class="eyebrow">A world with a long memory</p>
+      <h1>Dark Pawns began in 1994.</h1>
+      <blockquote>
+        “Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.”
+      </blockquote>
+      <p class="attribution">— R.E. Paret (Frontline), original Dark Pawns website</p>
+    </header>
+
+    <section class="about-intro container">
+      <div>
+        <h2>The game</h2>
+        <p>Serapis (Derek Karnes) and Tracer (C. Jackson) started Dark Pawns in September 1994. What began on CircleMUD 1.7 grew through several generations of code and more than a decade of builders, immortals, and players.</p>
+        <p>The result was a persistent dark-fantasy world spread across two continents: remort classes, vampirism and lycanthropy, dreams that could become real, talking weapons, and mobiles built to do more than wait to be killed.</p>
+      </div>
+      <aside>
+        <p class="aside-label">If you were there</p>
+        <p>The recovered forum conversations, player quotes, and history belong in the <a href="/archive/">Archive</a>. We are still looking for the old crew.</p>
+      </aside>
+    </section>
+
+    <section class="history-section">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">The short version</p>
+          <h2>Thirty years on the board</h2>
+          <p>This chronology is condensed from Frontline’s history of Dark Pawns, which updated an earlier account by Orodreth.</p>
+        </div>
+        <ol class="timeline">
+          {timeline.map((event) => (
+            <li>
+              <time>{event.year}</time>
+              <div><h3>{event.title}</h3><p>{event.text}</p></div>
+            </li>
+          ))}
+        </ol>
+        <p class="source-link"><a href="/archive/history/">Read the preserved history <span aria-hidden="true">→</span></a></p>
+      </div>
+    </section>
+
+    <section class="revivals container">
+      <article>
+        <p class="eyebrow">The continuing world</p>
+        <h2>DPReturns</h2>
+        <p>Former players brought Dark Pawns back at <a href="https://www.darkpawns.net/">darkpawns.net</a>. That community-run revival remains the place to seek the original server experience.</p>
+      </article>
+      <article>
+        <p class="eyebrow">The restoration</p>
+        <h2>The Go port</h2>
+        <p>This project rebuilds the server in Go while treating the original C implementation as the oracle. Player-facing behavior is preserved rather than redesigned; the game is the game.</p>
+        <p><a href="/docs/research/port-fidelity/">Read the fidelity rules <span aria-hidden="true">→</span></a></p>
+      </article>
+    </section>
+
+    <footer class="about-cta container">
+      <p>Dark Pawns is open again.</p>
+      <a class="btn-primary" href="/play/">Enter the game</a>
+      <a class="text-link" href="/credits/">Meet the people behind it</a>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .about-hero { padding-block: var(--space-xl); }
+  .about-hero h1 { max-width: 13ch; font-size: clamp(3rem, 8vw, 6rem); }
+  .about-hero blockquote { max-width: 50rem; margin: var(--space-lg) 0 var(--space-sm); padding-left: var(--space-lg); border-left: 4px solid var(--accent); font-family: var(--font-display); font-size: clamp(1.4rem, 3vw, 2.25rem); line-height: 1.25; }
+  .attribution { color: var(--ink-muted); font-size: .9rem; margin-left: calc(var(--space-lg) + 4px); }
+  .about-intro { display: grid; grid-template-columns: minmax(0, 2fr) minmax(15rem, 1fr); gap: var(--space-xl); padding-bottom: var(--space-xl); }
+  .about-intro > div { max-width: var(--content-width); }
+  .about-intro aside { align-self: start; border-top: 3px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
+  .aside-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+  .history-section { background: var(--paper-deep); border-block: 1px solid var(--rule); padding-block: var(--space-xl); }
+  .section-heading { max-width: var(--content-width); }
+  .section-heading > p:last-child { color: var(--ink-muted); }
+  .timeline { list-style: none; margin: var(--space-lg) 0; padding: 0; border-top: 1px solid var(--rule); }
+  .timeline li { display: grid; grid-template-columns: 7rem 1fr; gap: var(--space-lg); padding: var(--space-md) 0; border-bottom: 1px solid var(--rule); }
+  .timeline time { color: var(--accent); font-family: var(--font-mono); font-weight: 700; }
+  .timeline h3 { font-size: 1.2rem; margin-bottom: var(--space-xs); }
+  .timeline p { color: var(--ink-muted); margin: 0; }
+  .source-link { margin: 0; }
+  .revivals { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); padding-block: var(--space-xl); }
+  .revivals article { border-top: 3px solid var(--rule); padding-top: var(--space-md); }
+  .about-cta { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; padding-block: var(--space-lg) var(--space-xl); border-top: 1px solid var(--rule); }
+  .about-cta p { font-family: var(--font-display); font-size: 1.4rem; margin: 0 auto 0 0; }
+  .btn-primary { display: inline-block; background: var(--accent); color: var(--paper); border: 1px solid var(--accent); padding: .65rem 1rem; font-family: var(--font-display); }
+  .btn-primary:hover { background: var(--accent-deep); text-decoration: none; }
+  .text-link { padding: .65rem 0; }
+  @media (max-width: 720px) { .about-intro, .revivals { grid-template-columns: 1fr; gap: var(--space-lg); } .timeline li { grid-template-columns: 5rem 1fr; gap: var(--space-md); } }
+  @media (max-width: 520px) { .about-hero, .about-intro, .history-section .container, .revivals, .about-cta { padding-inline: var(--space-md); } .about-hero blockquote { padding-left: var(--space-md); } .attribution { margin-left: calc(var(--space-md) + 4px); } }
+</style>
