@@ -9,6 +9,9 @@ sourceSite: "dp-players.com"
 sourceUrl: "http://www.dp-players.com/go.php?dp=history.mud"
 captureUrl: "https://web.archive.org/web/20040720230810/http://www.dp-players.com/go.php?dp=history.mud"
 recoveredAt: 2026-08-14
+textKind: "verbatim"
+source: "Wayback capture identified by captureUrl"
+voiceLayer: "frontline"
 ---
 
 **Recorded by: Frontline**

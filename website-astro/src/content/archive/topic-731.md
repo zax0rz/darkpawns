@@ -10,6 +10,9 @@ sourceSite: "dp-players.com"
 sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?p=731#731"
 captureUrl: "https://web.archive.org/web/20040803020622/http://www.dp-players.com/forum/viewtopic.php?p=731#731"
 recoveredAt: 2026-08-14
+textKind: "verbatim"
+source: "Wayback capture identified by captureUrl"
+voiceLayer: "frontline"
 ---
 
 ### Aidan — Thu Jul 01, 2004 6:57 pm

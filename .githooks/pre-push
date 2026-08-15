@@ -32,4 +32,10 @@ if [ -n "$unformatted" ]; then
 	exit 1
 fi
 
+if ! python3 website-astro/scripts/voice_lint.py --quiet-warnings; then
+	echo "pre-push: new website copy violates docs/brand-voice.md." >&2
+	echo "  Run: make voice-lint" >&2
+	exit 1
+fi
+
 exit 0

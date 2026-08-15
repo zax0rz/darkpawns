@@ -3,6 +3,9 @@ title: "A Proper Website (Finally)"
 date: 2026-04-28
 description: "The archive is online. Hundreds of help files, class descriptions, lore, quotes, and a cream-paper design that would make Stephen King nod."
 draft: false
+textKind: "original"
+source: "Dark Pawns repository and recovered Wayback captures"
+voiceLayer: "mythic-admin"
 ---
 
 The website is live. A real one this time, not a single HTML file and a prayer.

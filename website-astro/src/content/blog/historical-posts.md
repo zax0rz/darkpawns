@@ -3,6 +3,9 @@ title: "Historical News Posts"
 date: 2026-04-28
 description: "News posts from the original Dark Pawns website, preserved from the Wayback Machine."
 draft: false
+textKind: "summary"
+source: "https://web.archive.org/web/*/http://darkpawns.com/main.html"
+voiceLayer: "frontline"
 ---
 
 > Source: darkpawns.com/main.html

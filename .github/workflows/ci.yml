@@ -176,6 +176,9 @@ jobs:
     - name: Run golangci-lint
       run: golangci-lint run ./...
 
+    - name: Check website voice
+      run: python3 website-astro/scripts/voice_lint.py --quiet-warnings
+
   security:
     runs-on: ubuntu-latest
     steps:

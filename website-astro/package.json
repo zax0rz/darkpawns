@@ -7,7 +7,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "voice-lint": "python3 scripts/voice_lint.py",
+    "test:voice-lint": "python3 -m unittest scripts/test_voice_lint.py"
   },
   "dependencies": {
     "astro": "^5"

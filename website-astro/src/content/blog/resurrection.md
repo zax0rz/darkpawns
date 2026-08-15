@@ -3,6 +3,9 @@ title: "The Resurrection"
 date: 2025-06-01
 description: "Dark Pawns is back. A Go port, an open-source codebase, and a door that's been closed for fifteen years is open again."
 draft: false
+textKind: "original"
+source: "Dark Pawns repository and Zach's account of the revival"
+voiceLayer: "mythic-admin"
 ---
 
 Dark Pawns is running again.

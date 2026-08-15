@@ -9,6 +9,9 @@ sourceSite: "dp-players.com"
 sourceUrl: "http://www.dp-players.com/go.php?dp=quotes.mud"
 captureUrl: "https://web.archive.org/web/20040720230810/http://www.dp-players.com/go.php?dp=quotes.mud"
 recoveredAt: 2026-08-14
+textKind: "verbatim"
+source: "Wayback capture identified by captureUrl"
+voiceLayer: "frontline"
 contentWarning: "This page preserves crude language, sexual humor, and a racial slur from the original community archive."
 ---
 

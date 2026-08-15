@@ -11,6 +11,9 @@ const blog = defineCollection({
     date: z.coerce.date(),
     description: z.string(),
     draft: z.boolean().default(false),
+    textKind: z.enum(['original', 'summary', 'reconstruction']),
+    source: z.string(),
+    voiceLayer: z.enum(['engine', 'mythic-admin', 'frontline']),
   }),
 });
 
@@ -36,6 +39,7 @@ const help = defineCollection({
     description: z.string(),
     date: z.coerce.date().optional(),
     draft: z.boolean().default(false),
+    textKind: z.literal('verbatim').default('verbatim'),
   }),
 });
 
@@ -57,6 +61,9 @@ const archive = defineCollection({
     recoveredAt: z.coerce.date(),
     contentWarning: z.string().optional(),
     draft: z.boolean().default(false),
+    textKind: z.enum(['verbatim', 'transcription', 'edited-excerpt']),
+    source: z.string(),
+    voiceLayer: z.enum(['engine', 'edgelord-dm', 'mythic-admin', 'frontline']),
   }),
 });
 
