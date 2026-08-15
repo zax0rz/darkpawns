@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import databaseScriptUrl from '../../../website/assets/js/database.js?url';
 ---
 
 <Base title="Dark Pawns Codex" description="Search the mobs and objects preserved in the Dark Pawns world files." hideFooter>
@@ -1078,13 +1079,21 @@ input[type="range"] {
 @media (max-width: 640px) {
   #db-page { height: calc(100dvh - 9.75rem); }
 }
+
+.record-directories {
+  display: flex;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
 </style>
 
 <!-- Editorial masthead -->
 <div style="padding: 2rem 2rem 0; max-width: 1200px; margin: 0 auto;">
   <div style="font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-muted); margin-bottom: 0.25rem;">№ 003 · Knowledge Codex</div>
   <h1 style="font-family: var(--font-display); font-size: 2.4rem; color: var(--accent); margin: 0 0 0.5rem 0; line-height: 1.1;">The codex.</h1>
-  <div style="font-family: var(--font-body); font-size: 0.95rem; color: var(--ink-muted); margin-bottom: 1rem; font-style: italic;">Every mob, every object — cross-referenced, searchable, indexed.</div>
+  <div style="font-family: var(--font-body); font-size: 0.95rem; color: var(--ink-muted); margin-bottom: 0.5rem; font-style: italic;">Every mob and every object, cross-referenced and searchable.</div>
+  <nav class="record-directories" aria-label="Database record indexes"><a href="/mobs/">Mob index</a><a href="/items/">Item index</a></nav>
 </div>
 
 <!-- Skyline overview strip -->
@@ -1313,5 +1322,5 @@ input[type="range"] {
 
 </div>
 
-<script is:inline src="/js/database.js"></script>
+<script is:inline src={databaseScriptUrl}></script>
 </Base>

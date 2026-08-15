@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T10:13:25-04:00",
+  "generatedAt": "2026-08-15T10:32:33-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 86
+      "commits": 87
     }
   ],
   "recentCommits": [
+    {
+      "sha": "3e6b6722c7c64889ed2725837c4d962c030e7b93",
+      "date": "2026-08-15",
+      "title": "fix(web): restore map parity in Astro",
+      "url": "https://github.com/zax0rz/darkpawns/commit/3e6b6722c7c64889ed2725837c4d962c030e7b93"
+    },
     {
       "sha": "622d245da7c6ce6de2d4963c6205779bba2c9694",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "fix(web): curate the community archive",
       "url": "https://github.com/zax0rz/darkpawns/commit/4bee4f483d2dcc148911e34b438cda860b545a2c"
-    },
-    {
-      "sha": "459036cc110a62cf27a75cedd3a2626bb31aef7c",
-      "date": "2026-08-15",
-      "title": "fix(web): clarify the DPReturns home",
-      "url": "https://github.com/zax0rz/darkpawns/commit/459036cc110a62cf27a75cedd3a2626bb31aef7c"
     }
   ],
   "pullRequests": [

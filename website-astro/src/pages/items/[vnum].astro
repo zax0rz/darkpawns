@@ -1,0 +1,98 @@
+---
+import DatabaseRecord from '../../components/DatabaseRecord.astro';
+import { descriptionFor, items, mobByVnum, signed, zoneNames, type Item } from '../../lib/database';
+
+export function getStaticPaths() {
+  return items.map((item) => ({ params: { vnum: String(item.v) }, props: { item } }));
+}
+
+interface Props { item: Item }
+const { item } = Astro.props;
+const description = descriptionFor(item.s, item.l, item.k);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: item.s,
+  description: item.l,
+  sku: String(item.v),
+  category: item.type,
+  isRelatedTo: { '@type': 'VideoGame', name: 'Dark Pawns', url: 'https://darkpawns.labz0rz.com/' },
+  additionalProperty: [
+    { '@type': 'PropertyValue', name: 'Dark Pawns item VNUM', value: item.v },
+    { '@type': 'PropertyValue', name: 'Weight', value: item.wt },
+    { '@type': 'PropertyValue', name: 'Cost in gold', value: item.cst },
+    { '@type': 'PropertyValue', name: 'Load probability', value: `${item.load}%` },
+  ],
+};
+---
+
+<DatabaseRecord kind="Item" vnum={item.v} name={item.s} {description} {jsonLd}>
+  <p slot="summary" class="record-lede">{item.l}</p>
+
+  <div>
+    <section class="record-panel">
+      <h2>Object specs</h2>
+      <table class="record-stats">
+        <tbody>
+          <tr><th scope="row">Item type</th><td>{item.type}</td></tr>
+          <tr><th scope="row">Wear locations</th><td>{item.wear.join(', ') || 'None'}</td></tr>
+          <tr><th scope="row">Weight</th><td>{item.wt}</td></tr>
+          <tr><th scope="row">Cost</th><td>{item.cst} gold</td></tr>
+          <tr><th scope="row">Load probability</th><td>{item.load}%</td></tr>
+          {item.val.map((value, index) => <tr><th scope="row">Value {index}</th><td>{value}</td></tr>)}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="record-panel">
+      <h2>Flags</h2>
+      <h3>Wear</h3>
+      {item.wear.length ? <ul class="flag-list">{item.wear.map((flag) => <li>{flag}</li>)}</ul> : <p class="record-empty">None</p>}
+      <h3>Extra</h3>
+      {item.extra.length ? <ul class="flag-list">{item.extra.map((flag) => <li>{flag}</li>)}</ul> : <p class="record-empty">None</p>}
+    </section>
+
+    <section class="record-panel">
+      <h2>Magical affects</h2>
+      {item.aff.length ? (
+        <ul class="record-list">{item.aff.map((affect) => <li>{affect.location} <small>Modifier {signed(affect.modifier)}</small></li>)}</ul>
+      ) : <p class="record-empty">No magical affects are defined.</p>}
+    </section>
+  </div>
+
+  <div>
+    {item.edesc.length > 0 && (
+      <section class="record-panel">
+        <h2>Detailed descriptions</h2>
+        {item.edesc.map((entry) => <div><h3>{entry.keywords}</h3><p class="record-description">{entry.desc}</p></div>)}
+      </section>
+    )}
+
+    <section class="record-panel">
+      <h2>Carried by mobs</h2>
+      {item.mobs.length ? (
+        <ul class="record-list">{item.mobs.map((mob) => <li><a href={`/mobs/${mob.mob_vnum}/`}>{mob.name}</a><small>Mob {mob.mob_vnum} / {mob.slot}</small></li>)}</ul>
+      ) : <p class="record-empty">No mobs load with this item through the world reset files.</p>}
+    </section>
+
+    <section class="record-panel">
+      <h2>Placed in the world</h2>
+      {item.rms.length ? (
+        <ul class="record-list">
+          {item.rms.map((place) => place.container_vnum ? (
+            <li><a href={`/items/${place.container_vnum}/`}>{place.name}</a><small>Inside item {place.container_vnum}</small></li>
+          ) : (
+            <li><a href={`/map/?room=${place.room}`}>{place.name || `Room ${place.room}`}</a><small>Room {place.room} / {zoneNames[place.zone ?? -1] ?? `Zone ${place.zone}`}</small></li>
+          ))}
+        </ul>
+      ) : <p class="record-empty">No direct room or container placement is defined.</p>}
+    </section>
+
+    {item.shp.length > 0 && (
+      <section class="record-panel">
+        <h2>Sold by merchants</h2>
+        <ul class="record-list">{item.shp.map((shop) => <li>{mobByVnum[String(shop.keeper_vnum)] ? <a href={`/mobs/${shop.keeper_vnum}/`}>{shop.keeper_name}</a> : <span>{shop.keeper_name}</span>}<small>Mob {shop.keeper_vnum} / {shop.price} gold</small></li>)}</ul>
+      </section>
+    )}
+  </div>
+</DatabaseRecord>

@@ -1,0 +1,30 @@
+---
+import Base from '../../layouts/Base.astro';
+import { mobs } from '../../lib/database';
+
+const records = [...mobs].sort((a, b) => a.v - b.v);
+---
+
+<Base title="Dark Pawns Mob Index" description={`${records.length.toLocaleString('en-US')} mobs parsed from the active Dark Pawns world files.`}>
+  <article class="directory container">
+    <p class="eyebrow">Database / mobs</p>
+    <h1>Mob index</h1>
+    <p class="lede">{records.length.toLocaleString('en-US')} records parsed from the active world files. Use the <a href="/database/">searchable database</a> for filters and comparisons.</p>
+    <ol class="record-index">
+      {records.map((mob) => <li><a href={`/mobs/${mob.v}/`}><span>{mob.s}</span><small>VNUM {mob.v} / level {mob.lvl}</small></a></li>)}
+    </ol>
+  </article>
+</Base>
+
+<style>
+  .directory { padding-block: var(--space-lg) var(--space-xl); }
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .lede { color: var(--ink-muted); }
+  .record-index { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); list-style: none; margin: var(--space-lg) 0 0; padding: 0; border-top: 1px solid var(--rule); }
+  .record-index li { border-bottom: 1px solid var(--rule); }
+  .record-index a { color: var(--ink); display: block; padding: .65rem var(--space-sm); }
+  .record-index a:hover { color: var(--accent); text-decoration: none; }
+  .record-index span { display: block; font-family: var(--font-display); overflow-wrap: anywhere; }
+  .record-index small { color: var(--ink-muted); font-family: var(--font-mono); font-size: .65rem; }
+  @media (max-width: 560px) { .directory { padding-inline: var(--space-md); } }
+</style>

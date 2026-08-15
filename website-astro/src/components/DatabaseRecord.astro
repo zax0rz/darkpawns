@@ -1,0 +1,80 @@
+---
+import Base from '../layouts/Base.astro';
+
+interface Props {
+  kind: 'Mob' | 'Item';
+  vnum: number;
+  name: string;
+  description: string;
+  jsonLd: Record<string, unknown>;
+}
+
+const { kind, vnum, name, description, jsonLd } = Astro.props;
+const section = kind === 'Mob' ? 'mobs' : 'items';
+const canonical = `https://darkpawns.labz0rz.com/${section}/${vnum}/`;
+const jsonUrl = `/${section}/${vnum}.json`;
+const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+---
+
+<Base title={`${name} | ${kind} ${vnum} | Dark Pawns`} {description}>
+  <Fragment slot="head">
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/json" href={jsonUrl} title={`${name} as JSON`} />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={`${name} | Dark Pawns`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <script type="application/ld+json" set:html={safeJsonLd}></script>
+  </Fragment>
+
+  <article class="record-page container" data-record-kind={kind.toLowerCase()} data-vnum={vnum}>
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="/database/">Database</a> / <a href={`/${section}/`}>{kind === 'Mob' ? 'Mobs' : 'Items'}</a> / {vnum}
+    </nav>
+    <header class="record-header">
+      <p class="eyebrow">{kind} record / VNUM {vnum}</p>
+      <h1>{name}</h1>
+      <slot name="summary" />
+      <p class="record-formats"><a href={jsonUrl}>JSON record</a></p>
+    </header>
+    <div class="record-body">
+      <slot />
+    </div>
+    <footer class="record-source">
+      <p>This page is generated from the world files used by the current Dark Pawns server.</p>
+      <p><a href="/database/">Return to the searchable database</a></p>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .record-page { max-width: 68rem; padding-block: var(--space-lg) var(--space-xl); }
+  .crumb { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; margin-bottom: var(--space-lg); }
+  .record-header { border-top: 4px solid var(--accent); padding-top: var(--space-md); }
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .72rem; font-weight: 700; letter-spacing: .1em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .record-header h1 { max-width: 20ch; font-size: clamp(2.7rem, 6vw, 5rem); overflow-wrap: anywhere; }
+  .record-formats { font-family: var(--font-mono); font-size: .72rem; }
+  .record-body { display: grid; grid-template-columns: minmax(16rem, .72fr) minmax(0, 1.28fr); gap: var(--space-xl); border-top: 1px solid var(--rule); margin-top: var(--space-lg); padding-top: var(--space-lg); }
+  .record-source { border-top: 1px solid var(--rule); color: var(--ink-muted); font-size: .9rem; margin-top: var(--space-xl); padding-top: var(--space-md); }
+  .record-source p { margin-bottom: var(--space-xs); }
+  :global(.record-lede) { color: var(--ink-muted); font-size: 1.15rem; max-width: 54ch; white-space: pre-line; }
+  :global(.record-panel) { border-top: 3px solid var(--rule); padding-top: var(--space-md); }
+  :global(.record-panel + .record-panel) { margin-top: var(--space-lg); }
+  :global(.record-panel h2) { font-size: 1.35rem; }
+  :global(.record-panel h3) { font-size: 1.05rem; margin-top: var(--space-md); }
+  :global(.record-stats) { border-collapse: collapse; width: 100%; }
+  :global(.record-stats th), :global(.record-stats td) { border-top: 1px solid var(--rule); padding: .45rem 0; text-align: left; vertical-align: top; }
+  :global(.record-stats th) { color: var(--ink-muted); font-family: var(--font-mono); font-size: .68rem; font-weight: 400; padding-right: var(--space-md); text-transform: uppercase; width: 48%; }
+  :global(.record-stats td) { font-family: var(--font-mono); font-size: .8rem; overflow-wrap: anywhere; }
+  :global(.record-list) { list-style: none; margin: 0; padding: 0; }
+  :global(.record-list li) { border-top: 1px solid var(--rule); padding-block: .45rem; }
+  :global(.record-list small) { color: var(--ink-muted); display: block; font-family: var(--font-mono); font-size: .68rem; }
+  :global(.record-empty) { color: var(--ink-muted); font-style: italic; }
+  :global(.record-description) { white-space: pre-line; }
+  :global(.flag-list) { display: flex; flex-wrap: wrap; gap: .35rem; list-style: none; margin: 0; padding: 0; }
+  :global(.flag-list li) { border: 1px solid var(--rule); font-family: var(--font-mono); font-size: .65rem; padding: .15rem .4rem; }
+  @media (max-width: 760px) {
+    .record-page { padding-inline: var(--space-md); }
+    .record-body { grid-template-columns: 1fr; gap: var(--space-lg); }
+  }
+</style>

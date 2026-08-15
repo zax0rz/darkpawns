@@ -1102,6 +1102,7 @@
           <div class="detail-stamp">№ ${m.v} · Mob record of ${totalCount}</div>
           <h2 class="detail-short">${m.s}</h2>
           <p class="detail-long">${m.l}</p>
+          <p style="font-family:var(--font-mono);font-size:0.65rem;margin:0.5rem 0 0;"><a href="/mobs/${m.v}/">Permanent record</a></p>
         </header>
 
         <div class="detail-grid">
@@ -1294,6 +1295,7 @@
           <div class="detail-stamp">№ ${o.v} · Item record of ${totalCount}</div>
           <h2 class="detail-short">${o.s}</h2>
           <p class="detail-long">${o.l}</p>
+          <p style="font-family:var(--font-mono);font-size:0.65rem;margin:0.5rem 0 0;"><a href="/items/${o.v}/">Permanent record</a></p>
         </header>
 
         <div class="detail-grid">

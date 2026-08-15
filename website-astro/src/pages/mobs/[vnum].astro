@@ -1,0 +1,97 @@
+---
+import DatabaseRecord from '../../components/DatabaseRecord.astro';
+import { alignmentName, descriptionFor, mobs, sexName, zoneNames, type Mob } from '../../lib/database';
+
+export function getStaticPaths() {
+  return mobs.map((mob) => ({ params: { vnum: String(mob.v) }, props: { mob } }));
+}
+
+interface Props { mob: Mob }
+const { mob } = Astro.props;
+const description = descriptionFor(mob.s, mob.l, mob.d);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Thing',
+  name: mob.s,
+  description: mob.l || mob.d,
+  identifier: { '@type': 'PropertyValue', propertyID: 'Dark Pawns mob VNUM', value: String(mob.v) },
+  isPartOf: { '@type': 'VideoGame', name: 'Dark Pawns', url: 'https://darkpawns.labz0rz.com/' },
+  additionalProperty: [
+    { '@type': 'PropertyValue', name: 'Level', value: mob.lvl },
+    { '@type': 'PropertyValue', name: 'Race code', value: mob.rc },
+    { '@type': 'PropertyValue', name: 'Alignment', value: mob.alg },
+    { '@type': 'PropertyValue', name: 'Hit points', value: mob.hp },
+    { '@type': 'PropertyValue', name: 'Damage', value: mob.dmg },
+  ],
+};
+---
+
+<DatabaseRecord kind="Mob" vnum={mob.v} name={mob.s} {description} {jsonLd}>
+  <p slot="summary" class="record-lede">{mob.l || mob.d}</p>
+
+  <div>
+    <section class="record-panel">
+      <h2>Stats</h2>
+      <table class="record-stats">
+        <tbody>
+          <tr><th scope="row">Level</th><td>{mob.lvl}</td></tr>
+          <tr><th scope="row">Race code</th><td>{mob.rc}</td></tr>
+          <tr><th scope="row">Sex</th><td>{sexName(mob.sex)}</td></tr>
+          <tr><th scope="row">Alignment</th><td>{alignmentName(mob.alg)} ({mob.alg})</td></tr>
+          <tr><th scope="row">Armor class</th><td>{mob.ac}</td></tr>
+          <tr><th scope="row">Hit points</th><td>{mob.hp}</td></tr>
+          <tr><th scope="row">Damage</th><td>{mob.dmg}</td></tr>
+          <tr><th scope="row">Gold</th><td>{mob.gld}</td></tr>
+          <tr><th scope="row">Experience</th><td>{mob.exp.toLocaleString('en-US')}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="record-panel">
+      <h2>Base attributes</h2>
+      <table class="record-stats">
+        <tbody>
+          {['STR', 'INT', 'WIS', 'DEX', 'CON', 'CHA'].map((label, index) => (
+            <tr><th scope="row">{label}</th><td>{mob.stat[index]}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <div>
+    {mob.d && <section class="record-panel"><h2>Description</h2><p class="record-description">{mob.d}</p></section>}
+
+    <section class="record-panel">
+      <h2>Spawn locations</h2>
+      {mob.spw.length ? (
+        <ul class="record-list">
+          {mob.spw.map((spawn) => (
+            <li><a href={`/map/?room=${spawn.room}`}>{spawn.name || `Room ${spawn.room}`}</a><small>Room {spawn.room} / {zoneNames[spawn.zone] ?? `Zone ${spawn.zone}`}</small></li>
+          ))}
+        </ul>
+      ) : <p class="record-empty">This mob does not spawn through the world reset files.</p>}
+    </section>
+
+    <section class="record-panel">
+      <h2>Equipment and inventory</h2>
+      {mob.drp.length ? (
+        <ul class="record-list">
+          {mob.drp.map((drop) => (
+            <li><a href={`/items/${drop.obj_vnum}/`}>{drop.name}</a><small>Item {drop.obj_vnum} / {drop.slot}</small></li>
+          ))}
+        </ul>
+      ) : <p class="record-empty">No items are assigned through the world reset files.</p>}
+    </section>
+
+    {mob.shop && (
+      <section class="record-panel">
+        <h2>Shop inventory</h2>
+        <p>Shop {mob.shop.shop_vnum}, open {mob.shop.open_hours}. Sell multiplier {mob.shop.sell_mult}; buy multiplier {mob.shop.buy_mult}.</p>
+        <ul class="record-list">
+          {mob.shop.items_sold.map((item) => <li><a href={`/items/${item.vnum}/`}>{item.name}</a><small>Item {item.vnum}</small></li>)}
+        </ul>
+      </section>
+    )}
+  </div>
+</DatabaseRecord>
