@@ -8,16 +8,17 @@ source: "https://web.archive.org/web/*/http://darkpawns.com/main.html"
 voiceLayer: "frontline"
 ---
 
-> **Source:** darkpawns.com/main.html (R.E. Paret / Frontline)  
+> **Source:** darkpawns.com/main.html and darkpawns.com/faq.html (R.E. Paret / Frontline)  
 > **Preserved:** Wayback Machine captures from the original site run.
 
 <div class="archive-dispatch">
   <div class="dispatch-header">
-    <span class="dispatch-tag">ANNOUNCEMENT</span>
+    <span class="dispatch-tag">FAQ EXCERPT · GAME MECHANICS</span>
     <time>Circa 2001</time>
   </div>
   <h3>OUTLAW System</h3>
-  <p>Frontline introduced the OUTLAW system for player killing. An outlaw flag is automatically assigned after a successful PK. The flag is permanent, and will not be removed through death or remort of your character.</p>
+  <p><em>Note: Frontline's original news post introducing the system on main.html was not recovered in full. The preserved FAQ entry on faq.html defines the rule verbatim:</em></p>
+  <blockquote>"An 'outlaw' flag is automatically assigned after a successful PK. The flag is permanent, and will not be removed through death or remort of your character."</blockquote>
 </div>
 
 <div class="archive-dispatch">
@@ -47,5 +48,6 @@ voiceLayer: "frontline"
   <h3>Forums</h3>
   <p>Oh my god forums! Please please please register with your correct account name!</p>
 </div>
+
 
 
