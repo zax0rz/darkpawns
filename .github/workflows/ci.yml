@@ -179,6 +179,9 @@ jobs:
     - name: Check website voice
       run: python3 website-astro/scripts/voice_lint.py --quiet-warnings
 
+    - name: Check content inventory
+      run: python3 website-astro/scripts/content_inventory.py --check
+
   security:
     runs-on: ubuntu-latest
     steps:
