@@ -48,4 +48,4 @@ Allow: /
 # Content signals (IETF AI Preferences draft): searching, agent input, and training are all permitted.
 Content-Signal: search=yes, ai-input=yes, ai-train=yes
 
-Sitemap: https://darkpawns.labz0rz.com/sitemap.xml
+Sitemap: https://darkpawns.labz0rz.com/sitemap-index.xml

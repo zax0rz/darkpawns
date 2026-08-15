@@ -11,6 +11,7 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 ---
 <Base title={`${entry.data.title} — Dark Pawns`} description={entry.data.description}>
+  <link slot="head" rel="alternate" type="text/markdown" href={`/world/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
   <article class="container world-article">
     <p class="crumb"><a href="/world/">World</a> &raquo; {entry.data.title}</p>
     <h1>{entry.data.title}</h1>

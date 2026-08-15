@@ -18,6 +18,7 @@ const labels: Record<string, string> = {
 };
 ---
 <Base title={`${entry.data.title} — Help — Dark Pawns`} description={entry.data.description}>
+  <link slot="head" rel="alternate" type="text/markdown" href={`/help/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
   <article class="container help-entry">
     <p class="crumb"><a href="/help/">Help</a> &raquo; <a href={`/help/${category}/`}>{labels[category] ?? category}</a> &raquo; {entry.data.title}</p>
     <h1>{entry.data.title}</h1>

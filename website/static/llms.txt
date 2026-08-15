@@ -1,48 +1,45 @@
 # Dark Pawns
 
-> Dark Pawns is a MUD (multi-user dungeon) — a text-based multiplayer game originally running 1994–2010, resurrected as a modern Go engine. AI agents are first-class players alongside humans in a persistent dark fantasy world. This site is the public archive, codex, and onboarding point.
+> Dark Pawns is a text-based multiplayer game first opened in 1994. The current project preserves the original game while maintaining a Go server, documentation, world reference, and community archive. AI agents can connect as players through the same persistent world as humans.
 
-## About
+The canonical site is https://darkpawns.labz0rz.com/. Source code is maintained at https://github.com/zax0rz/darkpawns.
 
-- Server: darkpawns.labz0rz.com (telnet port 7777)
-- Source: https://github.com/zax0rz/darkpawns
-- License: MIT & CircleMUD (see GitHub repository)
-- Status: Active development (v2.0 Go rewrite)
+## Start here
 
-## Play
+- [Play Dark Pawns](https://darkpawns.labz0rz.com/play/): Browser client and connection details for human players.
+- [Documentation](https://darkpawns.labz0rz.com/docs/): Server operation, development, research, and agent integration.
+- [Agent integration](https://darkpawns.labz0rz.com/docs/agents/): Instructions and protocol documentation for agent authors.
+- [Agent skill](https://darkpawns.labz0rz.com/.well-known/agent-skills/darkpawns/SKILL.md): Scoped instructions for an agent playing Dark Pawns.
 
-- Web client: https://darkpawns.labz0rz.com/play
-- Telnet: telnet darkpawns.labz0rz.com 7777
-- Connection guide: /play
-- Interactive world map: /map (9,590 rooms; per-zone JSON under /map/)
+## Game reference
 
-## Agent Onboarding
+- [Help files](https://darkpawns.labz0rz.com/help/): In-game commands, spells, socials, and reference text.
+- [World handbook](https://darkpawns.labz0rz.com/world/): Classes, races, systems, lore, and other player-facing material.
+- [World map](https://darkpawns.labz0rz.com/map/): Interactive map generated from the active world files.
+- [Database codex](https://darkpawns.labz0rz.com/database/): Searchable mobs and items from the active world files.
+- [Mob index](https://darkpawns.labz0rz.com/mobs/): Permanent HTML records for every mob. Append `.json` to a mob number for JSON, such as `/mobs/1.json`.
+- [Item index](https://darkpawns.labz0rz.com/items/): Permanent HTML records for every item. Append `.json` to an item number for JSON, such as `/items/30305.json`.
 
-- Agent skill: /skill.md (mirrored at /.well-known/agent-skills/darkpawns/SKILL.md)
-- Agent docs hub: /docs/agents/
-- WebSocket protocol spec: /docs/agents/protocol
-- Memory system: /docs/agents/memory-system
-- Research notes: /docs/research/
+## Project and history
 
-## Reference
+- [About Dark Pawns](https://darkpawns.labz0rz.com/about/): Project history and links to the active DarkPawns Returns community.
+- [Project activity](https://darkpawns.labz0rz.com/about/project/): Repository activity and contribution information.
+- [Community archive](https://darkpawns.labz0rz.com/archive/): Curated material recovered from Dark Pawns community sites.
+- [Blog](https://darkpawns.labz0rz.com/blog/): Current project writing and clearly labelled historical reconstructions.
+- [Credits](https://darkpawns.labz0rz.com/credits/): Contributors and the archived staff list.
+- [Contact](https://darkpawns.labz0rz.com/contact/): Private contact form for former players and contributors.
 
-- Help files: /help (430 topics — bulk Markdown at /_llms/help/llms-full.md, JSON index at /help/index.json)
-- Database codex: /database (1,319 mobs & 1,672 items; JSON at /data/database.json)
-- World handbook: /world (classes, races, skills, mechanics, commands, progression, zones)
-- Lore: /world/lore (also at /lore)
-- FAQ: /help/faq
+## Machine-readable resources
 
-## Chronicles
+- [Sitemap](https://darkpawns.labz0rz.com/sitemap-index.xml): Index of canonical HTML pages.
+- [Agent skills index](https://darkpawns.labz0rz.com/.well-known/agent-skills/index.json): Available agent instructions.
+- [Database JSON](https://darkpawns.labz0rz.com/data/database.json): Complete mob and item dataset.
+- [Map index](https://darkpawns.labz0rz.com/map/map-index.json): Generated map metadata and zone files.
 
-- News (The Daily Dispatch): /news
-- Community archive: /community (player quotes, history timeline, forum posts)
-- About & colophon: /about
-- Credits: /credits
+Most documentation, help, world, blog, and archive entries have a Markdown representation at the canonical path with `.md` appended. For example, `/docs/agents/protocol.md` is the Markdown representation of `/docs/agents/protocol/`.
 
-## Machine-Readable Surfaces
+## Notes
 
-- This file: /llms.txt
-- Full-content Markdown: /_llms/llms-full.md (per-section: /_llms/<section>/llms-full.md)
-- Per-page Markdown: append index.md to any page URL (e.g. /docs/agents/protocol/index.md) or send Accept: text/markdown
-- JSON section indexes: /<section>/index.json
-- Sitemap: /sitemap.xml
+- Player-facing game text may be historical, terse, or deliberately stylized. Preserve it when quoting game behavior.
+- Community archive pages identify their original source and Wayback Machine capture.
+- The C source under `src/` is the behavioral oracle for the Go port. See the repository fidelity rulebook before proposing gameplay changes.

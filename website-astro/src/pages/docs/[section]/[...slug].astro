@@ -19,6 +19,7 @@ const sectionLabel = labels[entry.data.section as keyof typeof labels];
 const sourceUrl = `https://github.com/zax0rz/darkpawns/blob/main/${entry.data.sourcePath}`;
 ---
 <Base title={`${entry.data.title} — Documentation — Dark Pawns`} description={entry.data.description}>
+  <link slot="head" rel="alternate" type="text/markdown" href={`/docs/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
   <div class="container docs-shell">
     <DocsNav entries={allEntries} currentId={entry.id} />
     <article class="docs-article">

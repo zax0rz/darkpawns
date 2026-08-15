@@ -13,6 +13,7 @@
     "test:voice-lint": "python3 -m unittest scripts/test_voice_lint.py"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
     "astro": "^5"
   }
 }

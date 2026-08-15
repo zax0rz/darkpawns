@@ -40,8 +40,8 @@
 	# Hugo static files (catch-all)
 	handle {
 		root * /srv/hugo/
-		# Discovery headers for AI agents & crawlers (specification.website: HTTP Link headers)
-		header Link "</llms.txt>; rel=\"llms-txt\", </sitemap.xml>; rel=\"sitemap\"; type=\"application/xml\", </index.xml>; rel=\"alternate\"; type=\"application/rss+xml\""
+		# Discovery headers for agents and crawlers.
+		header Link "</llms.txt>; rel=\"alternate\"; type=\"text/plain\", </sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\", </.well-known/agent-skills/index.json>; rel=\"alternate\"; type=\"application/json\""
 		try_files {path} {path}/index.html
 		file_server
 	}
