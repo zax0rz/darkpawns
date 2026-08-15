@@ -1,0 +1,56 @@
+---
+import Base from '../../../layouts/Base.astro';
+import DocsNav from '../../../components/DocsNav.astro';
+import { getCollection, render } from 'astro:content';
+
+const labels = { 'getting-started': 'Getting Started', server: 'Server & Development', agents: 'Agent Integration', research: 'Research' };
+export async function getStaticPaths() {
+  const entries = await getCollection('docs', ({ data }) => !data.draft);
+  return entries.map((entry) => { const [section, ...slug] = entry.id.split('/'); return { params: { section, slug: slug.join('/') }, props: { entry } }; });
+}
+const { entry } = Astro.props;
+const allEntries = await getCollection('docs', ({ data }) => !data.draft);
+const ordered = allEntries.filter((item) => item.data.section === entry.data.section).sort((a, b) => a.data.order - b.data.order);
+const index = ordered.findIndex((item) => item.id === entry.id);
+const previous = index > 0 ? ordered[index - 1] : undefined;
+const next = index < ordered.length - 1 ? ordered[index + 1] : undefined;
+const { Content, headings } = await render(entry);
+const sectionLabel = labels[entry.data.section as keyof typeof labels];
+const sourceUrl = `https://github.com/zax0rz/darkpawns/blob/main/${entry.data.sourcePath}`;
+---
+<Base title={`${entry.data.title} — Documentation — Dark Pawns`} description={entry.data.description}>
+  <div class="container docs-shell">
+    <DocsNav entries={allEntries} currentId={entry.id} />
+    <article class="docs-article">
+      <p class="crumb"><a href="/docs/">Documentation</a> &raquo; <a href={`/docs/${entry.data.section}/`}>{sectionLabel}</a></p>
+      <p class="audience">For: {entry.data.audience.replace('-', ' ')}</p>
+      <h1>{entry.data.title}</h1>
+      <p class="summary">{entry.data.description}</p>
+      <div class="prose"><Content /></div>
+      <footer class="doc-footer">
+        <a href={sourceUrl}>Source or edit this page</a>
+        <nav aria-label="Previous and next documentation pages">
+          {previous && <a href={`/docs/${previous.id}/`}>&larr; {previous.data.title}</a>}
+          {next && <a href={`/docs/${next.id}/`}>{next.data.title} &rarr;</a>}
+        </nav>
+      </footer>
+    </article>
+    {headings.length > 0 && <aside class="toc"><h2>On this page</h2><ol>{headings.filter((h) => h.depth === 2).map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol></aside>}
+  </div>
+</Base>
+<style>
+  .docs-shell { display: grid; grid-template-columns: 15rem minmax(0, 42rem) 12rem; gap: var(--space-xl); padding-block: var(--space-lg) var(--space-xl); }
+  .docs-article { min-width: 0; }
+  .crumb, .audience { color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; }
+  .audience { margin-bottom: var(--space-xs); color: var(--accent); }
+  .summary { color: var(--ink-muted); font-size: 1.1rem; }
+  .toc { position: sticky; top: var(--space-md); align-self: start; border-left: 1px solid var(--rule); padding-left: var(--space-md); }
+  .toc h2 { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; }
+  .toc ol { margin: 0; padding: 0; list-style: none; }
+  .toc li { margin: 0.35rem 0; font-size: 0.8rem; }
+  .toc a { color: var(--ink-muted); }
+  .doc-footer { margin-top: var(--space-xl); border-top: 1px solid var(--rule); padding-top: var(--space-md); font-family: var(--font-mono); font-size: 0.75rem; }
+  .doc-footer nav { display: flex; justify-content: space-between; gap: var(--space-md); margin-top: var(--space-lg); }
+  @media (max-width: 1050px) { .docs-shell { grid-template-columns: 14rem minmax(0, 1fr); } .toc { display: none; } }
+  @media (max-width: 780px) { .docs-shell { grid-template-columns: 1fr; gap: var(--space-lg); } }
+</style>

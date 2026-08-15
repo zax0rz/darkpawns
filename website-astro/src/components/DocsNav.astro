@@ -1,0 +1,49 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  entries: CollectionEntry<'docs'>[];
+  currentId?: string;
+}
+const { entries, currentId } = Astro.props;
+const sections = [
+  { id: 'getting-started', label: 'Getting Started' },
+  { id: 'server', label: 'Server & Development' },
+  { id: 'agents', label: 'Agent Integration' },
+  { id: 'research', label: 'Research' },
+];
+---
+<nav class="docs-nav" aria-label="Documentation sections">
+  <a class="docs-home" href="/docs/">Documentation</a>
+  {sections.map((section) => {
+    const items = entries.filter((entry) => entry.data.section === section.id).sort((a, b) => a.data.order - b.data.order);
+    return (
+      <section>
+        <h2><a href={`/docs/${section.id}/`}>{section.label}</a></h2>
+        <ul>
+          {items.map((entry) => (
+            <li><a class={entry.id === currentId ? 'active' : ''} aria-current={entry.id === currentId ? 'page' : undefined} href={`/docs/${entry.id}/`}>{entry.data.title}</a></li>
+          ))}
+        </ul>
+      </section>
+    );
+  })}
+</nav>
+
+<style>
+  .docs-nav { border-right: 1px solid var(--rule); padding-right: var(--space-lg); }
+  .docs-home { display: block; margin-bottom: var(--space-lg); color: var(--ink); font-family: var(--font-display); font-size: 1.25rem; }
+  .docs-nav section { margin-bottom: var(--space-lg); }
+  .docs-nav h2 { margin: 0 0 var(--space-xs); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .docs-nav h2 a { color: var(--ink-muted); }
+  .docs-nav ul { margin: 0; padding: 0; list-style: none; }
+  .docs-nav li { margin: 0.25rem 0; }
+  .docs-nav li a { color: var(--ink); font-size: 0.9rem; }
+  .docs-nav li a.active, .docs-nav li a:hover { color: var(--accent); }
+  @media (max-width: 780px) {
+    .docs-nav { border-right: 0; border-bottom: 1px solid var(--rule); padding: 0 0 var(--space-md); }
+    .docs-home { margin-bottom: var(--space-sm); }
+    .docs-nav section { display: inline-block; margin: 0 var(--space-md) 0 0; }
+    .docs-nav section ul { display: none; }
+  }
+</style>

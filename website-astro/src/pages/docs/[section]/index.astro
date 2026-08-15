@@ -1,0 +1,44 @@
+---
+import Base from '../../../layouts/Base.astro';
+import DocsNav from '../../../components/DocsNav.astro';
+import { getCollection } from 'astro:content';
+
+const metadata = {
+  'getting-started': { title: 'Getting Started', description: 'Build and run Dark Pawns locally.' },
+  server: { title: 'Server & Development', description: 'Architecture, contribution rules, and verification.' },
+  agents: { title: 'Agent Integration', description: 'Connect structured clients and autonomous players.' },
+  research: { title: 'Research', description: 'Fidelity engineering and persistent-agent systems.' },
+};
+export async function getStaticPaths() {
+  return ['getting-started', 'server', 'agents', 'research'].map((section) => ({ params: { section } }));
+}
+const section = Astro.params.section as keyof typeof metadata;
+const allEntries = await getCollection('docs', ({ data }) => !data.draft);
+const entries = allEntries.filter((entry) => entry.data.section === section).sort((a, b) => a.data.order - b.data.order);
+const meta = metadata[section];
+---
+<Base title={`${meta.title} — Documentation — Dark Pawns`} description={meta.description}>
+  <div class="container docs-shell">
+    <DocsNav entries={allEntries} />
+    <main class="section-main">
+      <p class="crumb"><a href="/docs/">Documentation</a> &raquo; {meta.title}</p>
+      <h1>{meta.title}</h1><p class="lede">{meta.description}</p>
+      <ol class="section-list">
+        {entries.map((entry) => <li><a href={`/docs/${entry.id}/`}><h2>{entry.data.title}</h2><p>{entry.data.description}</p><span>{entry.data.audience.replace('-', ' ')}</span></a></li>)}
+      </ol>
+    </main>
+  </div>
+</Base>
+<style>
+  .docs-shell { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: var(--space-xl); padding-block: var(--space-lg) var(--space-xl); }
+  .section-main { min-width: 0; }
+  .crumb { color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; }
+  .lede { color: var(--ink-muted); font-size: 1.1rem; }
+  .section-list { max-width: 48rem; margin: var(--space-lg) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+  .section-list a { display: grid; grid-template-columns: 1fr 8rem; padding: var(--space-md) 0; border-bottom: 1px solid var(--rule); color: var(--ink); }
+  .section-list a:hover { color: var(--accent); text-decoration: none; }
+  .section-list h2 { margin: 0; font-size: 1.25rem; }
+  .section-list p { grid-column: 1; margin: var(--space-xs) 0 0; color: var(--ink-muted); }
+  .section-list span { grid-column: 2; grid-row: 1; color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.7rem; text-align: right; text-transform: uppercase; }
+  @media (max-width: 780px) { .docs-shell { grid-template-columns: 1fr; gap: var(--space-lg); } }
+</style>

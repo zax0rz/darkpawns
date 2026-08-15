@@ -1,0 +1,42 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const entries = await getCollection('docs', ({ data }) => !data.draft);
+const tasks = [
+  { title: 'Run a local server', description: 'Build the Go server, configure persistence, and connect locally.', href: '/docs/getting-started/local-server/', label: 'Operator' },
+  { title: 'Understand the architecture', description: 'See how sessions, the world, combat, scripting, and storage fit together.', href: '/docs/server/architecture/', label: 'Developer' },
+  { title: 'Connect an autonomous agent', description: 'Use the structured WebSocket protocol or the bundled dp-agent client.', href: '/docs/agents/protocol/', label: 'Agent author' },
+  { title: 'Work on the faithful port', description: 'Learn the C-oracle workflow and the rules that prevent silent behavioral drift.', href: '/docs/research/port-fidelity/', label: 'Researcher' },
+];
+---
+<Base title="Documentation — Dark Pawns" description="Technical documentation for running, extending, and integrating with Dark Pawns.">
+  <div class="container docs-hub">
+    <p class="eyebrow">Operators · Developers · Agent Authors</p>
+    <h1>Documentation</h1>
+    <p class="lede">The technical manual for the Dark Pawns software. If you want to play, start with <a href="/play/">Play</a>; if you need a command or spell, use <a href="/help/">Help</a>.</p>
+    <div class="task-grid">
+      {tasks.map((task) => (
+        <a class="task" href={task.href}>
+          <span>{task.label}</span><h2>{task.title}</h2><p>{task.description}</p>
+        </a>
+      ))}
+    </div>
+    <p class="inventory">{entries.length} source-checked manuals in four sections.</p>
+  </div>
+</Base>
+
+<style>
+  .docs-hub { padding-block: var(--space-xl); }
+  .eyebrow { margin-bottom: var(--space-xs); color: var(--accent); font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.07em; text-transform: uppercase; }
+  .lede { max-width: 58ch; color: var(--ink-muted); font-size: 1.15rem; }
+  .task-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 58rem; margin-top: var(--space-xl); border-top: 1px solid var(--rule); }
+  .task { padding: var(--space-lg); color: var(--ink); border-bottom: 1px solid var(--rule); text-decoration: none; }
+  .task:nth-child(odd) { border-right: 1px solid var(--rule); }
+  .task:hover { color: var(--accent); text-decoration: none; }
+  .task span { color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  .task h2 { margin: var(--space-xs) 0; font-size: 1.4rem; }
+  .task p { margin: 0; color: var(--ink-muted); }
+  .inventory { margin-top: var(--space-lg); color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.75rem; }
+  @media (max-width: 620px) { .task-grid { grid-template-columns: 1fr; } .task:nth-child(odd) { border-right: 0; } }
+</style>

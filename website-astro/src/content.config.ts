@@ -60,4 +60,20 @@ const archive = defineCollection({
   }),
 });
 
-export const collections = { blog, world, help, archive };
+// Technical manuals for operators, contributors, and agent authors. Player
+// commands belong in /help; world material belongs in /world.
+const docs = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/docs' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    section: z.enum(['getting-started', 'server', 'agents', 'research']),
+    audience: z.enum(['operator', 'developer', 'agent-author', 'researcher']),
+    order: z.number().int().nonnegative(),
+    sourcePath: z.string(),
+    updated: z.coerce.date(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { blog, world, help, archive, docs };
