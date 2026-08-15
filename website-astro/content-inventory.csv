@@ -28,8 +28,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /blog/,src/pages/blog/index.astro,hub,authored collection framing,1,full editorial review,,,,
 /blog/historical-posts.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,104,summary,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
 /blog/historical-posts/,src/content/blog/historical-posts.md,blog,authored editorial,1,replace or remove,104,summary,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
-/blog/resurrection.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,241,original,mythic-admin,Dark Pawns repository and Zach
-/blog/resurrection/,src/content/blog/resurrection.md,blog,authored editorial,1,rewrite and source review,241,original,mythic-admin,Dark Pawns repository and Zach
+/blog/resurrection.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,389,original,mythic-admin,Dark Pawns repository and Zach
+/blog/resurrection/,src/content/blog/resurrection.md,blog,authored editorial,1,rewrite and source review,389,original,mythic-admin,Dark Pawns repository and Zach
 /blog/website-launch.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,215,original,mythic-admin,Dark Pawns repository and recovered Wayback captures
 /blog/website-launch/,src/content/blog/website-launch.md,blog,authored editorial,1,rewrite and source review,215,original,mythic-admin,Dark Pawns repository and recovered Wayback captures
 /contact/,src/pages/contact.astro,core,authored static page,1,full editorial review,,,,
