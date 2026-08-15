@@ -1,0 +1,144 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const timeline = [
+  {
+    date: 'October 2019',
+    title: 'Former players reopen Dark Pawns',
+    text: 'A public announcement invited players to connect to dpreturns.com on port 6969. It described the revival as the work of former Dark Pawns players.',
+    source: 'https://www.reddit.com/r/MUD/comments/dp83z3/',
+    sourceLabel: 'Reopening announcement',
+  },
+  {
+    date: 'December 2019',
+    title: 'The revival code reaches GitHub',
+    text: 'The first commit in the public darkpawns-returns repository records the initial fork. A second commit restored house item saving a few days later.',
+    source: 'https://github.com/RustySpeedy/darkpawns-returns/commits/master/',
+    sourceLabel: 'Repository history',
+  },
+  {
+    date: '2020 to 2021',
+    title: 'Slayer runs the revival',
+    text: 'The project README names Slayer as Implementor and webmaster through 2021. Public posts in 2020 and 2021 continued to invite players back.',
+    source: 'https://github.com/RustySpeedy/darkpawns-returns/blob/master/README.md',
+    sourceLabel: 'Project README',
+  },
+  {
+    date: '2022',
+    title: 'Vintage takes over',
+    text: 'The project README says Vintage became Implementor in 2022 and used the repository to preserve the work done by Slayer. Commits from that year include build repairs, world updates, and quest work.',
+    source: 'https://github.com/RustySpeedy/darkpawns-returns/commits/master/',
+    sourceLabel: 'README and commits',
+  },
+  {
+    date: '2023 to 2026',
+    title: 'Snapshots of a living codebase',
+    text: 'Later commits preserve successive states of the game in 2023, 2024, and May 2026. The repository has no formal releases or tags, so these snapshots are the clearest public development record.',
+    source: 'https://github.com/RustySpeedy/darkpawns-returns/commits/master/',
+    sourceLabel: 'Repository history',
+  },
+];
+---
+
+<Base title="DPReturns: a sourced reconstruction" description="What the public record tells us about the Dark Pawns revival, from its 2019 reopening through the current DPReturns project.">
+  <article class="history-page">
+    <header class="hero container">
+      <p class="eyebrow"><a href="/about/">About Dark Pawns</a> / DPReturns</p>
+      <h1>Dark Pawns Returns, 2019 to now.</h1>
+      <p class="lede">Dark Pawns closed around 2010. In 2019, former players brought it back. This is what we can document about that revival without pretending the public record is complete.</p>
+    </header>
+
+    <section class="summary container">
+      <div>
+        <h2>What we know</h2>
+        <p>The first public reopening announcement appeared on October 30, 2019. It called the project Dark Pawns Returns and directed players to <code>dpreturns.com:6969</code>.</p>
+        <p>The project’s own README says Slayer served as Implementor and webmaster until 2021. Vintage took over as Implementor in 2022 and created the public repository to capture Slayer’s work. The repository also says that many others have contributed to the world since then.</p>
+        <p>The dates do not line up perfectly. The README calls the version a 2020 fork, while the reopening announcement and first public commit both date to 2019. We have kept that discrepancy visible.</p>
+      </div>
+      <aside>
+        <p class="aside-label">Current signs of life</p>
+        <p><a href="https://www.darkpawns.net/">darkpawns.net</a> was online when checked. A Dark Pawns server also answered at <code>50.16.123.54:6969</code>, the address in the current Mud Connector listing.</p>
+        <p class="checked">Checked August 15, 2026.</p>
+      </aside>
+    </section>
+
+    <section class="record-section">
+      <div class="container">
+        <p class="eyebrow">The public record</p>
+        <h2>A working chronology</h2>
+        <ol class="timeline">
+          {timeline.map((event) => (
+            <li>
+              <time>{event.date}</time>
+              <div>
+                <h3>{event.title}</h3>
+                <p>{event.text}</p>
+                <a href={event.source}>{event.sourceLabel} <span aria-hidden="true">→</span></a>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <section class="gaps container">
+      <div>
+        <p class="eyebrow">Still missing</p>
+        <h2>The parts only the staff and players can tell us</h2>
+        <ul>
+          <li>Who helped plan and open the revival in 2019</li>
+          <li>What changed in the world under Slayer and Vintage</li>
+          <li>Who built areas, ran quests, repaired code, and kept the server alive</li>
+          <li>Which addresses and names the project used over time</li>
+          <li>The moments the community itself considers important</li>
+        </ul>
+      </div>
+      <aside>
+        <p class="aside-label">Help correct this account</p>
+        <p>If you worked on DPReturns or played there, we would like your corrections, missing names, dates, and memories. This page is a starting point for your history, not a claim to own it.</p>
+        <p><a href="/credits/">See how contributions are credited</a></p>
+      </aside>
+    </section>
+
+    <section class="sources container">
+      <p class="eyebrow">Sources</p>
+      <h2>What this account rests on</h2>
+      <ul>
+        <li><a href="https://www.reddit.com/r/MUD/comments/dp83z3/">October 2019 reopening announcement</a></li>
+        <li><a href="https://www.reddit.com/r/MUD/comments/gr7tio/">May 2020 community announcement</a></li>
+        <li><a href="https://www.reddit.com/r/MUD/comments/ppdx65/">September 2021 community announcement</a></li>
+        <li><a href="https://github.com/RustySpeedy/darkpawns-returns/blob/master/README.md">Dark Pawns Returns project README</a></li>
+        <li><a href="https://github.com/RustySpeedy/darkpawns-returns/commits/master/">Public repository history</a></li>
+        <li><a href="https://www.mudconnect.com/cgi-bin/search.cgi?mode=modal_listing&amp;mud=Dark+Pawns">Mud Connector listing</a></li>
+      </ul>
+      <p>Public sources can establish dates, code snapshots, and a few staff roles. They cannot substitute for the people who did the work.</p>
+    </section>
+  </article>
+</Base>
+
+<style>
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .eyebrow a { color: inherit; }
+  .hero { padding-block: var(--space-xl); }
+  .hero h1 { max-width: 14ch; font-size: clamp(3rem, 8vw, 6rem); }
+  .lede { max-width: 43rem; color: var(--ink-muted); font-family: var(--font-display); font-size: clamp(1.25rem, 2.5vw, 1.75rem); line-height: 1.4; }
+  .summary, .gaps { display: grid; grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); gap: var(--space-xl); padding-bottom: var(--space-xl); }
+  .summary > div, .gaps > div { max-width: var(--content-width); }
+  aside { align-self: start; border-top: 3px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
+  .aside-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+  .checked { color: var(--ink-muted); font-family: var(--font-mono); font-size: .75rem; }
+  code { font-family: var(--font-mono); font-size: .9em; }
+  .record-section { background: var(--paper-deep); border-block: 1px solid var(--rule); padding-block: var(--space-xl); }
+  .timeline { list-style: none; margin: var(--space-lg) 0 0; padding: 0; border-top: 1px solid var(--rule); }
+  .timeline li { display: grid; grid-template-columns: 9rem 1fr; gap: var(--space-lg); padding: var(--space-md) 0; border-bottom: 1px solid var(--rule); }
+  .timeline time { color: var(--accent); font-family: var(--font-mono); font-weight: 700; }
+  .timeline h3 { font-size: 1.2rem; margin-bottom: var(--space-xs); }
+  .timeline p { color: var(--ink-muted); margin: 0 0 var(--space-xs); max-width: var(--content-width); }
+  .timeline a { font-family: var(--font-mono); font-size: .78rem; }
+  .gaps { padding-top: var(--space-xl); }
+  .gaps ul, .sources ul { padding-left: 1.2rem; }
+  .gaps li, .sources li { margin-bottom: var(--space-sm); }
+  .sources { max-width: var(--content-width); padding-block: var(--space-lg) var(--space-xl); border-top: 1px solid var(--rule); }
+  @media (max-width: 720px) { .summary, .gaps { grid-template-columns: 1fr; gap: var(--space-lg); } .timeline li { grid-template-columns: 7rem 1fr; gap: var(--space-md); } }
+  @media (max-width: 520px) { .hero, .summary, .record-section .container, .gaps { padding-inline: var(--space-md); } .timeline li { grid-template-columns: 1fr; gap: var(--space-xs); } }
+</style>
