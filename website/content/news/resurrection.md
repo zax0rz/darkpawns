@@ -23,4 +23,4 @@ The door is open again.
 
 ---
 
-*Connect at [darkpawns.labz0rz.com/play](/play) or read the [connection guide](/connect).*
+*Connect at [darkpawns.labz0rz.com/play](/play).*

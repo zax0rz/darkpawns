@@ -1,0 +1,151 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Play Dark Pawns" description="Enter Dark Pawns in your browser or connect with a desktop MUD client.">
+  <link
+    slot="head"
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css"
+    integrity="sha384-LJcOxlx9IMbNXDqJ2axpfEQKkAYbFjJfhXexLfiRJhjDU81mzgkiQq8rkV0j6dVh"
+    crossorigin="anonymous"
+  />
+
+  <section class="play-shell" aria-labelledby="play-heading">
+    <div class="play-intro container">
+      <p class="eyebrow">The gates are open</p>
+      <h1 id="play-heading">Enter Dark Pawns</h1>
+      <p>Play immediately in the browser, or use a dedicated MUD client for longer expeditions.</p>
+    </div>
+
+    <div class="play-wrapper">
+      <div class="terminal-frame">
+        <div class="terminal-header">
+          <span class="terminal-title">Dark Pawns // Web Client</span>
+          <div class="terminal-actions">
+            <span class="conn-status disconnected"><span class="dot"></span><span>Disconnected</span></span>
+            <button id="reconnect-btn" type="button">Reconnect</button>
+          </div>
+        </div>
+        <div id="terminal" aria-label="Dark Pawns game terminal"></div>
+        <div id="status-bar" class="status-bar hidden">
+          <div class="stat-group"><span class="stat-label">HP</span><div class="bar-track"><div class="bar-fill" id="hp-bar"></div></div><span class="stat-value" id="hp-text">—</span></div>
+          <div class="stat-group"><span class="stat-label">Mana</span><div class="bar-track"><div class="bar-fill" id="mana-bar"></div></div><span class="stat-value" id="mana-text">—</span></div>
+          <div class="stat-group"><span class="stat-label">Move</span><div class="bar-track"><div class="bar-fill" id="move-bar"></div></div><span class="stat-value" id="move-text">—</span></div>
+          <span class="stat-info" id="level-info">Lv —</span><span class="stat-info" id="gold-info">Gold —</span>
+        </div>
+      </div>
+
+      <aside class="play-sidebar" aria-label="Connection help">
+        <div id="sidebar-connect-panel">
+          <h2>At the prompt</h2>
+          <p>Enter an existing character name, create a new character, or type <strong>guest</strong> for an ephemeral visit.</p>
+          <p><a href="#desktop-client">Prefer Mudlet or TinTin++?</a></p>
+        </div>
+        <div id="minimap-container" class="sidebar-panel hidden"></div>
+        <div id="target-container" class="sidebar-panel hidden"></div>
+        <div id="room-contents-container" class="sidebar-panel hidden"></div>
+        <div id="inventory-equipment-container" class="sidebar-panel hidden"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="connection-guide container" aria-labelledby="desktop-client">
+    <div class="guide-heading">
+      <p class="eyebrow">Long-form play</p>
+      <h2 id="desktop-client">Connect with a MUD client</h2>
+      <p>A dedicated client gives you persistent scrollback, aliases, triggers, and mapping tools.</p>
+    </div>
+    <dl class="connection-card">
+      <div><dt>Host</dt><dd><code>darkpawns.labz0rz.com</code></dd></div>
+      <div><dt>Port</dt><dd><code>7777</code></dd></div>
+      <div><dt>Protocol</dt><dd>Telnet / raw TCP</dd></div>
+    </dl>
+    <div class="client-grid">
+      <article>
+        <h3>Mudlet</h3>
+        <p>The friendly graphical choice for Windows, macOS, and Linux. Create a new profile using the host and port above.</p>
+        <a href="https://www.mudlet.org/download/">Download Mudlet <span aria-hidden="true">→</span></a>
+      </article>
+      <article>
+        <h3>TinTin++</h3>
+        <p>A terminal-native client with scripting, aliases, triggers, and an automapper.</p>
+        <a href="https://tintin.mudhalla.net/download.php">Get TinTin++ <span aria-hidden="true">→</span></a>
+      </article>
+      <article>
+        <h3>Raw terminal</h3>
+        <p>If a Telnet client is already installed, connect directly:</p>
+        <pre><code>telnet darkpawns.labz0rz.com 7777</code></pre>
+      </article>
+    </div>
+    <div class="first-steps">
+      <h2>Once you are inside</h2>
+      <ol>
+        <li>Type <code>help</code> to browse the in-game help system.</li>
+        <li>Type <code>look</code> whenever you need to read the room again.</li>
+        <li>Type <code>commands</code> to see the command surface available to you.</li>
+      </ol>
+      <p>Need a reference outside the game? Visit the <a href="/help/">searchable help files</a> or read the <a href="/world/">world guide</a>.</p>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js" integrity="sha384-xjfWUeCWdMtvpAb/SmM6lMzS6pQGcQa0loOl1d97j6Odw0vjK9nW3+dTb/bn/mwH" crossorigin="anonymous" defer is:inline></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js" integrity="sha384-XGqKrV8Jrukp1NITJbOEHwg01tNkuXr6uB6YEj69ebpYU3v7FvoGgEg23C1Gcehk" crossorigin="anonymous" defer is:inline></script>
+  <script src="/js/client.js" defer is:inline></script>
+</Base>
+
+<style>
+  .play-shell { border-bottom: 1px solid var(--rule); }
+  .play-intro { padding-block: var(--space-lg); }
+  .play-intro h1 { margin-bottom: var(--space-sm); }
+  .play-intro p:last-child { color: var(--ink-muted); margin: 0; }
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .play-wrapper { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; min-height: 36rem; border-top: 1px solid var(--rule); }
+  .terminal-frame { display: flex; flex-direction: column; min-width: 0; background: var(--paper-deep); padding: var(--space-md); }
+  .terminal-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); padding: .65rem var(--space-md); background: var(--paper); border: 1px solid var(--rule); border-bottom: 0; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+  .terminal-title { color: var(--accent); font-weight: 700; }
+  .terminal-actions, .conn-status { display: flex; align-items: center; gap: .5rem; }
+  .conn-status .dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--accent); }
+  .conn-status.connected .dot { background: var(--online); }
+  #reconnect-btn { display: none; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; font: inherit; padding: .25rem .55rem; text-transform: uppercase; }
+  #reconnect-btn.visible { display: inline-block; }
+  #terminal { flex: 1; min-height: 30rem; overflow: hidden; background: #0a0908; border: 2px solid var(--rule); padding: .5rem; }
+  .play-sidebar { padding: var(--space-lg); background: var(--paper-deep); border-left: 1px solid var(--rule); overflow-y: auto; }
+  .play-sidebar h2 { font-size: 1.25rem; }
+  .play-sidebar p { color: var(--ink-muted); font-size: .95rem; }
+  .hidden { display: none; }
+  .sidebar-panel { border-top: 1px solid var(--rule); padding-top: var(--space-md); margin-top: var(--space-md); }
+  .status-bar { display: flex; align-items: center; flex-wrap: wrap; gap: .8rem; padding: .45rem .8rem; background: #141210; color: #c4b89a; font-family: var(--font-mono); font-size: .68rem; }
+  .stat-group { display: flex; align-items: center; gap: .35rem; }
+  .stat-label { color: #8a7a6a; font-weight: 700; text-transform: uppercase; }
+  .bar-track { width: 5rem; height: .5rem; overflow: hidden; background: #0a0908; border: 1px solid #56504a; }
+  .bar-fill { height: 100%; }
+  .connection-guide { padding-block: var(--space-xl); }
+  .guide-heading { max-width: var(--content-width); margin-bottom: var(--space-lg); }
+  .guide-heading > p:last-child { color: var(--ink-muted); }
+  .connection-card { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 var(--space-lg); border: 1px solid var(--rule); }
+  .connection-card div { padding: var(--space-md); }
+  .connection-card div + div { border-left: 1px solid var(--rule); }
+  .connection-card dt { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+  .connection-card dd { margin: .25rem 0 0; }
+  .client-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); }
+  .client-grid article { border-top: 3px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
+  .client-grid h3 { font-size: 1.25rem; }
+  .client-grid p { color: var(--ink-muted); font-size: .95rem; }
+  .client-grid pre { overflow-x: auto; font-size: .72rem; margin: 0; }
+  .first-steps { max-width: var(--content-width); margin-top: var(--space-xl); }
+  .first-steps li { margin-bottom: var(--space-sm); }
+  @media (max-width: 800px) {
+    .play-wrapper { grid-template-columns: 1fr; }
+    .play-sidebar { border-left: 0; border-top: 1px solid var(--rule); }
+    .connection-card, .client-grid { grid-template-columns: 1fr; }
+    .connection-card div + div { border-left: 0; border-top: 1px solid var(--rule); }
+  }
+  @media (max-width: 520px) {
+    .play-intro, .connection-guide { padding-inline: var(--space-md); }
+    .terminal-frame { padding: var(--space-sm); }
+    .terminal-header { align-items: flex-start; flex-direction: column; }
+    #terminal { min-height: 27rem; }
+    .bar-track { width: 3rem; }
+  }
+</style>

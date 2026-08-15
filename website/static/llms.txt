@@ -13,7 +13,7 @@
 
 - Web client: https://darkpawns.labz0rz.com/play
 - Telnet: telnet darkpawns.labz0rz.com 7777
-- Connection guide: /connect
+- Connection guide: /play
 - Interactive world map: /map (9,590 rooms; per-zone JSON under /map/)
 
 ## Agent Onboarding
@@ -35,7 +35,6 @@
 ## Chronicles
 
 - News (The Daily Dispatch): /news
-- Changelog: /changelog (auto-generated from git conventional commits at build time)
 - Community archive: /community (player quotes, history timeline, forum posts)
 - About & colophon: /about
 - Credits: /credits

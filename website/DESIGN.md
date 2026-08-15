@@ -221,7 +221,6 @@ Concrete guardrails. These are enforceable by `impeccable detect` and by review;
 ## Posting News
 
 - **Dispatch posts are manual:** a news post is a Markdown file in `content/news/`, from the `archetypes/news.md` archetype; `make new-post TITLE="..."` wraps `hugo new`.
-- **The changelog is automatic:** `/changelog` is generated from conventional commits at build time. Do not hand-edit the generated section; only the hand-written release history at the top is maintained by hand.
 
 ## History facts
 

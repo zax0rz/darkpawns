@@ -12,5 +12,5 @@ you'll see the message above. The data refreshes each time you load the page.
 
 ## Having Trouble Connecting?
 
-See the [connection instructions](/connect/connection-instructions/)
+See the [connection instructions](/play/)
 for client setup, or visit the [help section](/help/) for common issues.

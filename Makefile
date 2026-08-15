@@ -142,7 +142,6 @@ parse-world-json:
 	python3 website/scripts/parse_db.py
 	python3 website/scripts/interlink_help.py
 	python3 website/scripts/precompute_sphere.py
-	python3 website/scripts/gen_changelog.py
 
 build-site: parse-world-json
 	cd website && hugo --minify
@@ -163,4 +162,3 @@ endif
 	rsync -avz --delete website/public/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)
 
 .DEFAULT_GOAL := build
-
