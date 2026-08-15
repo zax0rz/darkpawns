@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-08-15T11:21:46-04:00",
+  "generatedAt": "2026-08-15T11:28:00-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
     {
       "week": "2026-05-25",
-      "commits": 50
+      "commits": 49
     },
     {
       "week": "2026-06-01",
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 91
+      "commits": 92
     }
   ],
   "recentCommits": [
+    {
+      "sha": "c3e621ff726c99b34bb4f57000bbd7a675c47eeb",
+      "date": "2026-08-15",
+      "title": "fix(web): deploy Astro site deterministically",
+      "url": "https://github.com/zax0rz/darkpawns/commit/c3e621ff726c99b34bb4f57000bbd7a675c47eeb"
+    },
     {
       "sha": "9800212f06c8b26dcebf7acc138ae620f1d61b2b",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "feat(web): restore database record pages",
       "url": "https://github.com/zax0rz/darkpawns/commit/c3c52ce34eb1327512598bc40092a4613bcdacfe"
-    },
-    {
-      "sha": "3e6b6722c7c64889ed2725837c4d962c030e7b93",
-      "date": "2026-08-15",
-      "title": "fix(web): restore map parity in Astro",
-      "url": "https://github.com/zax0rz/darkpawns/commit/3e6b6722c7c64889ed2725837c4d962c030e7b93"
     }
   ],
   "pullRequests": [

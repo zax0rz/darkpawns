@@ -20,7 +20,10 @@ import (
 	"time"
 )
 
-const maxBodyBytes = 16 << 10
+const (
+	maxBodyBytes            = 16 << 10
+	expectedTurnstileAction = "contact"
+)
 
 type submission struct {
 	Character string `json:"character"`
@@ -55,7 +58,14 @@ func NewFromEnvironment() (*Handler, error) {
 	user := os.Getenv("CONTACT_SMTP_USER")
 	password := os.Getenv("CONTACT_SMTP_PASSWORD")
 	turnstileSecret := os.Getenv("CONTACT_TURNSTILE_SECRET")
-	if to == "" || host == "" || port == "" || user == "" || password == "" || turnstileSecret == "" {
+	turnstileHostnames := strings.Split(os.Getenv("CONTACT_TURNSTILE_HOSTNAMES"), ",")
+	expectedHostnames := make(map[string]struct{}, len(turnstileHostnames))
+	for _, hostname := range turnstileHostnames {
+		if hostname = strings.TrimSpace(hostname); hostname != "" {
+			expectedHostnames[hostname] = struct{}{}
+		}
+	}
+	if to == "" || host == "" || port == "" || user == "" || password == "" || turnstileSecret == "" || len(expectedHostnames) == 0 {
 		return nil, errors.New("contact delivery environment is incomplete")
 	}
 	if _, err := mail.ParseAddress(to); err != nil {
@@ -66,7 +76,10 @@ func NewFromEnvironment() (*Handler, error) {
 	}
 
 	return &Handler{
-		verify: &turnstileVerifier{secret: turnstileSecret, client: &http.Client{Timeout: 8 * time.Second}},
+		verify: &turnstileVerifier{
+			secret: turnstileSecret, expectedAction: expectedTurnstileAction,
+			expectedHostnames: expectedHostnames, client: &http.Client{Timeout: 8 * time.Second},
+		},
 		send: &smtpSender{
 			address: net.JoinHostPort(host, port), host: host, username: user,
 			password: password, from: user, to: to,
@@ -139,7 +152,7 @@ func validate(form submission) string {
 	if len(form.Character) > 80 || len(form.Years) > 80 || len(form.Email) > 254 || len(form.Message) > 4000 {
 		return "One or more fields are too long."
 	}
-	if form.Email == "" || form.Message == "" || form.Turnstile == "" {
+	if form.Email == "" || form.Message == "" || form.Turnstile == "" || len(form.Turnstile) > 2048 {
 		return "A reply address, message, and completed spam check are required."
 	}
 	address, err := mail.ParseAddress(form.Email)
@@ -177,8 +190,24 @@ func writeJSON(w http.ResponseWriter, status int, message string) {
 }
 
 type turnstileVerifier struct {
-	secret string
-	client *http.Client
+	secret            string
+	expectedAction    string
+	expectedHostnames map[string]struct{}
+	client            *http.Client
+}
+
+type turnstileResult struct {
+	Success  bool   `json:"success"`
+	Action   string `json:"action"`
+	Hostname string `json:"hostname"`
+}
+
+func (v *turnstileVerifier) accepts(result turnstileResult) bool {
+	if !result.Success || result.Action != v.expectedAction {
+		return false
+	}
+	_, allowed := v.expectedHostnames[result.Hostname]
+	return allowed
 }
 
 func (v *turnstileVerifier) Verify(ctx context.Context, token, remoteIP string) error {
@@ -193,13 +222,11 @@ func (v *turnstileVerifier) Verify(ctx context.Context, token, remoteIP string) 
 		return err
 	}
 	defer response.Body.Close()
-	var result struct {
-		Success bool `json:"success"`
-	}
+	var result turnstileResult
 	if err := json.NewDecoder(io.LimitReader(response.Body, 8<<10)).Decode(&result); err != nil {
 		return err
 	}
-	if !result.Success {
+	if !v.accepts(result) {
 		return errors.New("turnstile rejected submission")
 	}
 	return nil

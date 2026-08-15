@@ -38,7 +38,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
           <input name="website" type="text" tabindex="-1" autocomplete="off" />
         </label>
         {turnstileSiteKey ? (
-          <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="light"></div>
+          <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action="contact" data-theme="light"></div>
         ) : (
           <p class="preview-note">Spam protection is not configured in this local preview.</p>
         )}

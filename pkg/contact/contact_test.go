@@ -92,3 +92,27 @@ func TestRateLimiter(t *testing.T) {
 		t.Fatal("rate limit did not expire")
 	}
 }
+
+func TestTurnstileResultRequiresSuccessActionAndHostname(t *testing.T) {
+	verifier := &turnstileVerifier{
+		expectedAction:    "contact",
+		expectedHostnames: map[string]struct{}{"darkpawns.labz0rz.com": {}},
+	}
+	tests := []struct {
+		name   string
+		result turnstileResult
+		want   bool
+	}{
+		{"valid", turnstileResult{Success: true, Action: "contact", Hostname: "darkpawns.labz0rz.com"}, true},
+		{"failed", turnstileResult{Success: false, Action: "contact", Hostname: "darkpawns.labz0rz.com"}, false},
+		{"wrong action", turnstileResult{Success: true, Action: "login", Hostname: "darkpawns.labz0rz.com"}, false},
+		{"wrong hostname", turnstileResult{Success: true, Action: "contact", Hostname: "localhost"}, false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := verifier.accepts(test.result); got != test.want {
+				t.Fatalf("accepts() = %t, want %t", got, test.want)
+			}
+		})
+	}
+}
