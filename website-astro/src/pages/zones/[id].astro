@@ -1,0 +1,145 @@
+---
+import Base from '../../layouts/Base.astro';
+import { zoneById, zonesSorted, sectorName, type ZoneRecord } from '../../lib/zones';
+
+export function getStaticPaths() {
+  return zonesSorted.map((zone) => ({ params: { id: String(zone.id) }, props: { zone } }));
+}
+
+interface Props { zone: ZoneRecord }
+const { zone } = Astro.props;
+const jsonUrl = `/zones/${zone.id}.json`;
+const description = `${zone.name}: ${zone.roomCount} rooms, ${zone.mobs.length} mobs, ${zone.items.length} items in the Dark Pawns world files.`;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Place',
+  name: zone.name,
+  description,
+  identifier: { '@type': 'PropertyValue', propertyID: 'Dark Pawns zone ID', value: String(zone.id) },
+  isPartOf: { '@type': 'VideoGame', name: 'Dark Pawns', url: 'https://darkpawns.labz0rz.com/' },
+  additionalProperty: [
+    { '@type': 'PropertyValue', name: 'Rooms', value: zone.roomCount },
+    { '@type': 'PropertyValue', name: 'Mobs', value: zone.mobs.length },
+    { '@type': 'PropertyValue', name: 'Items', value: zone.items.length },
+    { '@type': 'PropertyValue', name: 'Connected zones', value: zone.connectedZoneIds.join(', ') || 'none' },
+  ],
+};
+const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+const zoneName = (id: number) => zoneById.get(id)?.name ?? `Zone ${id}`;
+const roomChunks = zone.rooms;
+---
+
+<Base title={`${zone.name} | Zone ${zone.id} | Dark Pawns`} {description} ogType="article">
+  <Fragment slot="head">
+    <link rel="alternate" type="application/json" href={jsonUrl} title={`${zone.name} as JSON`} />
+    <script type="application/ld+json" set:html={safeJsonLd}></script>
+  </Fragment>
+
+  <article class="record-page container">
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="/map/">Map</a> / <a href="/zones/">Zones</a> / {zone.id}
+    </nav>
+    <header class="record-header">
+      <p class="eyebrow">Zone record / {zone.id}</p>
+      <h1>{zone.name}</h1>
+      <p class="record-lede">
+        {zone.roomCount} rooms / {zone.mobs.length} mobs / {zone.items.length} items.
+        <a href={`/map/?zone=${zone.id}`}>Open this zone on the interactive map</a>
+        (<a href={jsonUrl}>JSON record</a>)
+      </p>
+    </header>
+    <div class="record-body">
+      <div>
+        <section class="record-panel">
+          <h2>Connected zones</h2>
+          {zone.connectedZoneIds.length ? (
+            <ul class="record-list">
+              {zone.connectedZoneIds.map((id) => (
+                <li><a href={`/zones/${id}/`}>{zoneName(id)}</a><small>Zone {id}</small></li>
+              ))}
+            </ul>
+          ) : <p class="record-empty">No walkable connections recorded.</p>}
+        </section>
+
+        {zone.shops.length > 0 && (
+          <section class="record-panel">
+            <h2>Shops</h2>
+            <ul class="record-list">
+              {zone.shops.map((shop) => (
+                <li><a href={`/mobs/${shop.keeperVnum}/`}>{shop.keeperName}</a><small>Open {shop.openHours}</small></li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {zone.mobs.length > 0 && (
+          <section class="record-panel">
+            <h2>Mobs ({zone.mobs.length})</h2>
+            <ul class="record-list">
+              {zone.mobs.map((mob) => (
+                <li><a href={`/mobs/${mob.vnum}/`}>{mob.name}</a><small>VNUM {mob.vnum} / level {mob.level}</small></li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {zone.items.length > 0 && (
+          <section class="record-panel">
+            <h2>Items ({zone.items.length})</h2>
+            <ul class="record-list">
+              {zone.items.map((item) => (
+                <li><a href={`/items/${item.vnum}/`}>{item.name}</a><small>VNUM {item.vnum}</small></li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+
+      <section class="record-panel">
+        <h2>Rooms ({zone.roomCount})</h2>
+        <ul class="room-list">
+          {roomChunks.map((room) => (
+            <li>
+              <a href={`/map/?room=${room.id}`}>{room.name || 'Unnamed room'}</a>
+              <small>{room.id} / {sectorName(room.sector)} / {room.exitCount} exits</small>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+    <footer class="record-source">
+      <p>This page is generated from the world files used by the current Dark Pawns server.</p>
+      <p><a href="/zones/">Return to the zone index</a></p>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .record-page { max-width: 68rem; padding-block: var(--space-lg) var(--space-xl); }
+  .crumb { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; margin-bottom: var(--space-lg); }
+  .record-header { border-top: 4px solid var(--accent); padding-top: var(--space-md); }
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .72rem; font-weight: 700; letter-spacing: .1em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .record-header h1 { max-width: 20ch; font-size: clamp(2.2rem, 5vw, 4rem); overflow-wrap: anywhere; }
+  .record-lede { color: var(--ink-muted); }
+  .record-body { display: grid; grid-template-columns: minmax(16rem, .72fr) minmax(0, 1.28fr); gap: var(--space-xl); border-top: 1px solid var(--rule); margin-top: var(--space-lg); padding-top: var(--space-lg); }
+  .record-source { border-top: 1px solid var(--rule); color: var(--ink-muted); font-size: .9rem; margin-top: var(--space-xl); padding-top: var(--space-md); }
+  .record-source p { margin-bottom: var(--space-xs); }
+  .room-list { list-style: none; margin: 0; padding: 0; }
+  .room-list li { border-top: 1px solid var(--rule); padding-block: .3rem; }
+  .room-list a { color: var(--ink); }
+  .room-list a:hover { color: var(--accent); }
+  .room-list small { color: var(--ink-muted); font-family: var(--font-mono); font-size: .65rem; margin-left: .5rem; }
+  @media (max-width: 760px) {
+    .record-page { padding-inline: var(--space-md); }
+    .record-body { grid-template-columns: 1fr; gap: var(--space-lg); }
+  }
+</style>
+<style is:global>
+  .record-panel { border-top: 3px solid var(--rule); padding-top: var(--space-md); }
+  .record-panel + .record-panel { margin-top: var(--space-lg); }
+  .record-panel h2 { font-size: 1.35rem; }
+  .record-list { list-style: none; margin: 0; padding: 0; }
+  .record-list li { border-top: 1px solid var(--rule); padding-block: .45rem; }
+  .record-list small { color: var(--ink-muted); display: block; font-family: var(--font-mono); font-size: .68rem; }
+  .record-empty { color: var(--ink-muted); font-style: italic; }
+</style>

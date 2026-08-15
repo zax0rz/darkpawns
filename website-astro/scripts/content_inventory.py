@@ -159,6 +159,11 @@ def database_entries() -> list[Entry]:
         for vnum in sorted(data[surface], key=int):
             entries.append(Entry(f"/{surface}/{vnum}/", source_file, surface, "generated world-file record", 3, "template-and-sample QA", text_kind="engine data", voice_layer="engine", source="active world files"))
             entries.append(Entry(f"/{surface}/{vnum}.json", f"src/pages/{surface}/[vnum].json.ts", "agent-json", "generated machine-readable record", 3, "schema-and-sample QA", text_kind="engine data", voice_layer="engine", source="active world files"))
+    map_index = json.loads((ROOT / "website/static/map/map-index.json").read_text(encoding="utf-8"))
+    entries.append(Entry("/zones/", "src/pages/zones/index.astro", "zone-index", "generated world-file index", 3, "template-and-sample QA"))
+    for zone in map_index["zones"]:
+        entries.append(Entry(f"/zones/{zone['id']}/", "src/pages/zones/[id].astro", "zone", "generated world-file record", 3, "template-and-sample QA", text_kind="engine data", voice_layer="engine", source="active world files"))
+        entries.append(Entry(f"/zones/{zone['id']}.json", "src/pages/zones/[id].json.ts", "agent-json", "generated machine-readable record", 3, "schema-and-sample QA", text_kind="engine data", voice_layer="engine", source="active world files"))
     return entries
 
 

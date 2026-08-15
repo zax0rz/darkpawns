@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T12:17:02-04:00",
+  "generatedAt": "2026-08-15T13:29:26-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 94
+      "commits": 95
     }
   ],
   "recentCommits": [
+    {
+      "sha": "19acb079c9194bbf4076975ee553f71a92a73049",
+      "date": "2026-08-15",
+      "title": "fix(web): guest entry renders room once; /play constrained to content width",
+      "url": "https://github.com/zax0rz/darkpawns/commit/19acb079c9194bbf4076975ee553f71a92a73049"
+    },
     {
       "sha": "c56a47014df0ed594445cd9fd16e5309d38f6058",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "fix(web): preserve Hugo route parity",
       "url": "https://github.com/zax0rz/darkpawns/commit/9800212f06c8b26dcebf7acc138ae620f1d61b2b"
-    },
-    {
-      "sha": "8efd6206f976faa0cd5c83ec023a05f2a2ed7ad8",
-      "date": "2026-08-15",
-      "title": "feat(web): complete pre-launch site audit",
-      "url": "https://github.com/zax0rz/darkpawns/commit/8efd6206f976faa0cd5c83ec023a05f2a2ed7ad8"
     }
   ],
   "pullRequests": [

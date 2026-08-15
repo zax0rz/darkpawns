@@ -58,6 +58,14 @@ import mapScriptUrl from '../../../website/assets/js/map.js?url';
   padding: 0.75rem;
 }
 
+#zone-index-link {
+  border-top: 1px solid var(--ink);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.7rem;
+}
+#zone-index-link a { color: var(--accent); text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; }
+#zone-index-link a:hover { text-decoration: underline; }
+
 #room-search-results {
   margin-top: 0.5rem;
   display: none;
@@ -468,6 +476,7 @@ import mapScriptUrl from '../../../website/assets/js/map.js?url';
       <input id="zone-search" type="text" placeholder="Search zones…" autocomplete="off" aria-label="Search zones">
     </div>
     <div id="zone-list" role="list" aria-label="Zone list"></div>
+    <div id="zone-index-link"><a href="/zones/">Zone records</a></div>
     <div id="room-search-section">
       <input id="room-search" type="text" placeholder="Search rooms in zone…" autocomplete="off" aria-label="Search rooms">
       <div id="room-search-results" role="list" aria-label="Room search results"></div>

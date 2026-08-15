@@ -6,6 +6,19 @@ Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-
 
 **[`docs/fidelity/RULEBOOK.md`](docs/fidelity/RULEBOOK.md)** — the C→Go translation law (R1–R5).
 
+**Documentation map** — read these before touching the matching surface:
+
+| Doc | Governs |
+|---|---|
+| [`docs/fidelity/RULEBOOK.md`](docs/fidelity/RULEBOOK.md) | C→Go port fidelity law (R1–R5) |
+| [`DEPLOYMENT.md`](DEPLOYMENT.md) | Server topology, systemd, deploy procedure |
+| [`docs/brand-voice.md`](docs/brand-voice.md) | Site prose voice — three-layer framework; public site uses Layer 3 |
+| [`website-astro/DESIGN.md`](website-astro/DESIGN.md) | Site design system ("Haunted Paperback"); machine-readable twin in `website-astro/.impeccable/design.json` |
+| [`website-astro/PRODUCT.md`](website-astro/PRODUCT.md) | Site audience and product decisions |
+| [`website-astro/ARCHIVE-POLICY.md`](website-astro/ARCHIVE-POLICY.md) | What recovered community material may be published |
+| [`website-astro/CONTENT-AUDIT.md`](website-astro/CONTENT-AUDIT.md) | Post-migration content review queue |
+| [`website-astro/SPEC-AUDIT.md`](website-astro/SPEC-AUDIT.md) | specification.website release checklist status |
+
 - **R1** player-facing bytes are law · **R2** the command surface is part of the game · **R3** determinism & draw parity · **R4** no invention · **R5** process rules (find-one-find-the-class; verify the call path).
 - **Cite rules by number** in commits, PRs, reviews, and Linear — "violates R4" is a complete verdict.
 - `src/` and `darkpawns-c-oracle/` are the **read-only oracle** (ground truth). Never edit them; diff against them with `cmd/dp-oracle-diff`.
@@ -84,7 +97,7 @@ The Dark Pawns website is a static site built using **Astro** and served via Cad
 * **NEVER** edit or build website source on the production server. `/srv/hugo/` is only the deployed document root; its name is historical.
 
 ### Design Aesthetics & Philosophy
-* **Stephen King Paperback Style**: Clean ivory/cream backgrounds, charcoal ink text, and dark oxblood highlights.
+* **"Haunted Paperback" style** (see `website-astro/DESIGN.md`): worn cream paper backgrounds, charcoal ink text, one oxblood accent, flat ink, serif typography.
 * **Asset Pipeline**: Authored JavaScript must be imported by Astro so Vite fingerprints it. Shared generated assets under `website/static/` keep stable public URLs.
 
 ### Automated Deployment Pipeline

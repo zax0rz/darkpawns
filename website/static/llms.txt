@@ -19,6 +19,7 @@ The canonical site is https://darkpawns.labz0rz.com/. Source code is maintained 
 - [Database codex](https://darkpawns.labz0rz.com/database/): Searchable mobs and items from the active world files.
 - [Mob index](https://darkpawns.labz0rz.com/mobs/): Permanent HTML records for every mob. Append `.json` to a mob number for JSON, such as `/mobs/1.json`.
 - [Item index](https://darkpawns.labz0rz.com/items/): Permanent HTML records for every item. Append `.json` to an item number for JSON, such as `/items/30305.json`.
+- [Zone index](https://darkpawns.labz0rz.com/zones/): Permanent HTML records for every zone — rooms, mobs, items, shops, and connected zones. Append `.json` to a zone number for JSON, such as `/zones/132.json`.
 
 ## Project and history
 
