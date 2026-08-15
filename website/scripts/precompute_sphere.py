@@ -33,6 +33,7 @@ def load_world_map():
     return world_data, zone_names
 
 def run_precompute():
+    np.random.seed(1997)  # deterministic globe — same layout on every build
     world_data, zone_names = load_world_map()
     
     rooms_list = world_data["rooms"]

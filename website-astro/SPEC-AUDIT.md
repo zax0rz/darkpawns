@@ -125,6 +125,14 @@ Deferred:
 - A PWA manifest is unnecessary unless installing the web client becomes a supported product surface.
 - `Redirect-By` is optional and adds little while redirects come from one Astro configuration.
 
+### Deployment pipeline
+
+Implemented:
+
+- `make build-site` regenerates the shared world and database assets, runs the site checks, and builds Astro.
+- `make deploy-site` retains explicit host credentials and syncs `website-astro/dist/` to the existing Caddy document root.
+- The old help interlinker is no longer part of deployment because it only rewrites the retired Hugo content tree.
+
 ## Deployment verification
 
 - Confirm the live map loads its fingerprinted Astro script. The Hugo deployment referenced `/js/map.js?v=3`, which returned the site's 404 document during the migration audit.

@@ -166,9 +166,12 @@ def redirect_entries() -> list[Entry]:
     config = (SITE / "astro.config.mjs").read_text(encoding="utf-8")
     matches = re.findall(r"^\s*'(/[^']*)':\s*'([^']+)'", config, flags=re.MULTILINE)
     redirects = {source: target for source, target in matches}
+    help_categories = {"commands", "info", "socials", "spells", "wizhelp"}
     for path in sorted((SITE / "src/content/help").glob("*/*.md")):
         category, filename = path.relative_to(SITE / "src/content/help").parts
         slug = Path(filename).stem
+        if slug in help_categories:
+            continue
         redirects.setdefault(f"/help/{slug}", f"/help/{category}/{slug}/")
     return [
         Entry(source, "astro.config.mjs", "redirect", f"redirect to {target}", 5, "no copy review")

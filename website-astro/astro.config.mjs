@@ -3,6 +3,7 @@ import sitemap from '@astrojs/sitemap';
 import { readdirSync } from 'node:fs';
 
 const helpRoot = new URL('./src/content/help/', import.meta.url);
+const helpCategories = new Set(['commands', 'info', 'socials', 'spells', 'wizhelp']);
 const helpRedirects = Object.fromEntries(
   readdirSync(helpRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -12,7 +13,8 @@ const helpRedirects = Object.fromEntries(
         .map((entry) => {
           const slug = entry.name.slice(0, -3);
           return [`/help/${slug}`, `/help/${category.name}/${slug}/`];
-        }),
+        })
+        .filter(([source]) => !helpCategories.has(source.slice('/help/'.length))),
     ),
 );
 

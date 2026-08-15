@@ -128,8 +128,9 @@ test-parse:
 # in deploy-site below must fire when they are unset, otherwise a bare
 # `make deploy-site` silently targets a hardcoded host as root (DP-785).
 #
-# DEPLOY_PATH is the Hugo docroot Caddy serves from on prod. Caddy's fallback
-# handler (`root * /srv/hugo/`) serves the built site; the Go binary's
+# DEPLOY_PATH is the website docroot Caddy serves from on prod. The historical
+# path remains `/srv/hugo/`; the directory name does not select the generator.
+# The Go binary's
 # `-web /opt/darkpawns/web` is a separate legacy client, NOT what /play uses.
 # The prod host needs `rsync` installed (apt-get install rsync).
 DEPLOY_PATH ?= /srv/hugo/
@@ -158,12 +159,10 @@ site-check: voice-lint test-voice-lint check-content-inventory
 parse-world-json:
 	python3 website/scripts/parse_world.py
 	python3 website/scripts/parse_db.py
-	python3 website/scripts/interlink_help.py
 	python3 website/scripts/precompute_sphere.py
 	python3 website/scripts/precompute_graph.py
 
-build-site: parse-world-json
-	cd website && hugo --minify
+build-site: parse-world-json site-check
 
 # Create a dated news post from archetypes/news.md:
 #   make new-post TITLE=my-headline
@@ -178,6 +177,6 @@ endif
 ifndef DEPLOY_HOST
 	$(error DEPLOY_HOST is not set)
 endif
-	rsync -avz --delete website/public/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)
+	rsync -avz --delete website-astro/dist/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)
 
 .DEFAULT_GOAL := build
