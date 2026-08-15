@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-08-15T12:07:34-04:00",
+  "generatedAt": "2026-08-15T12:17:02-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
     {
       "week": "2026-05-25",
-      "commits": 49
+      "commits": 48
     },
     {
       "week": "2026-06-01",
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 93
+      "commits": 94
     }
   ],
   "recentCommits": [
+    {
+      "sha": "c56a47014df0ed594445cd9fd16e5309d38f6058",
+      "date": "2026-08-15",
+      "title": "docs(web): record Astro production deployment",
+      "url": "https://github.com/zax0rz/darkpawns/commit/c56a47014df0ed594445cd9fd16e5309d38f6058"
+    },
     {
       "sha": "9f6a9e21e5ad56d1a876f40835642d5965808701",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "feat(web): complete pre-launch site audit",
       "url": "https://github.com/zax0rz/darkpawns/commit/8efd6206f976faa0cd5c83ec023a05f2a2ed7ad8"
-    },
-    {
-      "sha": "4f84268edc9362e5982e89ec6a244389b5cae678",
-      "date": "2026-08-15",
-      "title": "feat(web): add agent discovery surfaces",
-      "url": "https://github.com/zax0rz/darkpawns/commit/4f84268edc9362e5982e89ec6a244389b5cae678"
     }
   ],
   "pullRequests": [

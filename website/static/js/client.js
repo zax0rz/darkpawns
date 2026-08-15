@@ -414,19 +414,23 @@
     "            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,\r\n" +
     "                H. Staerfeldt, M. Seifert, and S. Hammer\r\n\r\n";
 
-  function renderRoom(data) {
+  // handleStateRoom updates the sidebar from a state push. The terminal must
+  // NOT render the room here: the server already delivers room text through
+  // the canonical act()/text stream, and state arrives on every look, room
+  // entry, and state refresh — printing it here duplicated output 2-3x.
+  function handleStateRoom(data) {
     const r = data.room;
     if (!r) return;
-    term.writeln('\r\n\x1b[1;36m' + (r.name || '') + '\x1b[0m');
-    if (r.description) {
-      term.write(r.description.replace(/\r?\n/g, '\r\n'));
-      if (!/\n$/.test(r.description)) term.writeln('');
+    const connectPanel = document.getElementById('sidebar-connect-panel');
+    if (connectPanel) connectPanel.classList.add('hidden');
+    document.querySelectorAll('.sidebar-panel').forEach(p => p.classList.remove('hidden'));
+    if (r.vnum) {
+      playerState.roomVnum = r.vnum;
+      updateMinimap(r.vnum);
     }
-    const exits = (r.exits && r.exits.length) ? r.exits.join(' ') : 'none';
-    term.writeln('\x1b[32m[ Exits: ' + exits + ' ]\x1b[0m');
-    if (r.mobs) r.mobs.forEach(function(m) { term.writeln('\x1b[33m' + m + '\x1b[0m'); });
-    if (r.players) r.players.forEach(function(p) { term.writeln(p + ' is here.'); });
-    if (r.items) r.items.forEach(function(i) { term.writeln(i); });
+    if (r.mobs !== undefined || r.items !== undefined) {
+      updateRoomContents(r.mobs, r.items);
+    }
   }
 
   function setStatus(state) {
@@ -493,7 +497,7 @@
           }
           if (loggedIn && msg.data) {
             handleStateMsg(msg.data);
-            renderRoom(msg.data);
+            handleStateRoom(msg.data);
           }
         } else {
           term.write(evt.data);

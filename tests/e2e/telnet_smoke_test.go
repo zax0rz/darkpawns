@@ -53,17 +53,21 @@ func TestTelnetSmoke_GuestEntersWorld(t *testing.T) {
 	// and drops straight into the world as a level-1 Warrior.
 	mustWrite(t, conn, "guest\r\n")
 
-	// Read through to the MOTD, which the server sends *after* the
-	// look-on-entry room block. By the time "Welcome to Dark Pawns" arrives,
-	// the room name and exits have already been streamed.
+	// Read through to the welcome text, then keep reading into the entry
+	// room block that follows it (welcome precedes the entry look, matching
+	// C's welcome-before-look order). The room renders exactly once.
 	entered := readUntil(t, conn, r, "Welcome to Dark Pawns", 10*time.Second)
 	if entered == "" {
 		t.Fatal("guest never entered the world (no MOTD received after login)")
 	}
+	entered += readUntil(t, conn, r, "Exits:", 10*time.Second)
 	for _, want := range []string{"Temple Altar", "Exits:"} {
 		if !strings.Contains(entered, want) {
 			t.Errorf("entry output missing %q\n---\n%s", want, entered)
 		}
+	}
+	if got := strings.Count(entered, "Temple Altar"); got > 1 {
+		t.Errorf("entry room rendered %d times, want 1\n---\n%s", got, entered)
 	}
 	if strings.Contains(entered, "[8004]") || strings.Contains(entered, "[ 8004]") {
 		t.Errorf("mortal entry output leaked room vnum\n---\n%s", entered)

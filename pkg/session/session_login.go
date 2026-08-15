@@ -120,12 +120,10 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 		s.manager.world.GiveStartingItems(s.player)
 
-		// Guest login is a Go-only shortcut and historically performs an
-		// explicit full look. The shared welcome observation honors BRIEF, so
-		// this call remains necessary for the guest telnet entry surface.
-		if err := cmdLook(s, nil); err != nil {
-			slog.ErrorContext(s.sessionCtx, "look command failed on entry for guest", s.logAttrs(slog.Any("error", err))...)
-		}
+		// Guest entry renders the room exactly once, via sendWelcome's shared
+		// observation below (welcome text first, then the room — matching C's
+		// welcome-before-entry-look order). A prior explicit cmdLook here
+		// rendered the room a second time on both transports.
 
 		// Generate a dummy JWT token for WebSocket client auth checks
 		token, err := auth.GenerateJWT(guestName, s.isAgent, s.agentKeyID, "")
