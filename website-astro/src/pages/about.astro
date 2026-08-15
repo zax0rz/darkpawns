@@ -3,34 +3,39 @@ import Base from '../layouts/Base.astro';
 
 const timeline = [
   { year: '1994', title: 'Dark Pawns begins', text: 'Serapis and Tracer start the game on CircleMUD 1.7 at knight.ufp.org.' },
-  { year: '1996', title: 'The team forms', text: 'Orodreth and Frontline join as coders while Oddity leads the builders.' },
-  { year: '1998', title: 'A new stewardship', text: 'Frontline and Orodreth become co-implementors and the large 2.2 update ships.' },
-  { year: '2001', title: 'The break-in', text: 'An intruder destroys the server files. Orodreth’s backups preserve most of the world.' },
-  { year: '≈2010', title: 'The old server goes quiet', text: 'The public game closes, but its source and world files survive.' },
-  { year: '2026', title: 'The Go restoration', text: 'The engine is rebuilt in Go under a strict fidelity rule and opened to human and autonomous players.' },
+  { year: '1995', title: 'The first major change', text: 'The base code moves to CircleMUD 2.2. The game becomes Dark Pawns 1.0.' },
+  { year: '1996', title: 'Coders and builders arrive', text: 'Arak and Orodreth join as coders in February; Frontline follows in March while Oddity, Nimos, and Aralius build the world.' },
+  { year: '1998', title: 'Dark Pawns 2.2', text: 'Frontline and Orodreth become co-implementors in May. The largest update in the game’s history ships that December.' },
+  { year: '2001', title: 'The break-in', text: 'An intruder destroys the server files. Backups recover part of the game, but player data and significant work on 3.0 are lost.' },
+  { year: '2010', title: 'The public server closes', text: 'The old Dark Pawns server shuts down. Frontline later publishes its code and world in the state they held at closure.' },
+  { year: '2019', title: 'DPReturns', text: 'Former players reopen Dark Pawns. Their revival continues at darkpawns.net.' },
+  { year: '2026', title: 'The Go restoration', text: 'A new open-source server begins loading the original world under a strict fidelity rule: the game is the game.' },
 ];
 ---
 
-<Base title="About Dark Pawns" description="The sourced history of Dark Pawns, from its 1994 CircleMUD origins to the modern Go restoration.">
+<Base title="About Dark Pawns" description="Dark Pawns began in 1994. This is the sourced history of the original MUD, its players, DPReturns, and the modern Go restoration.">
   <article class="about-page">
     <header class="about-hero container">
-      <p class="eyebrow">A world with a long memory</p>
+      <p class="eyebrow">Recorded by the people who were there</p>
       <h1>Dark Pawns began in 1994.</h1>
       <blockquote>
         “Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.”
       </blockquote>
-      <p class="attribution">— R.E. Paret (Frontline), original Dark Pawns website</p>
+      <p class="attribution">R.E. Paret (Frontline), original Dark Pawns website</p>
     </header>
 
     <section class="about-intro container">
       <div>
-        <h2>The game</h2>
-        <p>Serapis (Derek Karnes) and Tracer (C. Jackson) started Dark Pawns in September 1994. What began on CircleMUD 1.7 grew through several generations of code and more than a decade of builders, immortals, and players.</p>
-        <p>The result was a persistent dark-fantasy world spread across two continents: remort classes, vampirism and lycanthropy, dreams that could become real, talking weapons, and mobiles built to do more than wait to be killed.</p>
+        <h2>I found it later.</h2>
+        <p>My first character was MisterYuck, a name that did not survive contact with the game. I became Aiko, then Aidan. I played, argued on the forums, and eventually ran dp-players.com, a fan site for the people who kept showing up.</p>
+        <p>I stepped away around 2005 when my career started. The game went quiet a few years later, but its source, world files, and pieces of its community history survived.</p>
+        <p>Now I am restoring the server in Go and recovering what remains of the old web. This site is part manual, part archive, and part invitation to anyone who remembers the place.</p>
+        <p class="signature">Zach Greene, Aidan and Aiko</p>
       </div>
       <aside>
         <p class="aside-label">If you were there</p>
-        <p>The recovered forum conversations, player quotes, and history belong in the <a href="/archive/">Archive</a>. We are still looking for the old crew.</p>
+        <p>We are recovering forum conversations, player quotes, histories, and whatever else the old web left behind. We are also looking for the old crew.</p>
+        <p><a href="/archive/">See what has been recovered</a></p>
       </aside>
     </section>
 
@@ -38,8 +43,8 @@ const timeline = [
       <div class="container">
         <div class="section-heading">
           <p class="eyebrow">The short version</p>
-          <h2>Thirty years on the board</h2>
-          <p>This chronology is condensed from Frontline’s history of Dark Pawns, which updated an earlier account by Orodreth.</p>
+          <h2>The record so far</h2>
+          <p>The early chronology comes from Frontline’s history of Dark Pawns, itself an update to an account by Orodreth. Later dates use Frontline’s published repository and contemporary records from the DPReturns revival.</p>
         </div>
         <ol class="timeline">
           {timeline.map((event) => (
@@ -55,20 +60,34 @@ const timeline = [
 
     <section class="revivals container">
       <article>
-        <p class="eyebrow">The continuing world</p>
+        <p class="eyebrow">The players returned first</p>
         <h2>DPReturns</h2>
-        <p>Former players brought Dark Pawns back at <a href="https://www.darkpawns.net/">darkpawns.net</a>. That community-run revival remains the place to seek the original server experience.</p>
+        <p>Former players reopened Dark Pawns in 2019. Their server and website continue at <a href="https://www.darkpawns.net/">darkpawns.net</a>.</p>
+        <p>That revival has a history of its own, and it should be told by the people who made it happen. We hope to add their account here after speaking with the immortal staff.</p>
+        <p class="checked">Server last checked August 15, 2026.</p>
       </article>
       <article>
-        <p class="eyebrow">The restoration</p>
+        <p class="eyebrow">The code returned next</p>
         <h2>The Go port</h2>
-        <p>This project rebuilds the server in Go while treating the original C implementation as the oracle. Player-facing behavior is preserved rather than redesigned; the game is the game.</p>
+        <p>This project rebuilds the server in Go while treating the original C implementation as the oracle. Player-facing behavior is preserved rather than redesigned. The game is the game.</p>
         <p><a href="/docs/research/port-fidelity/">Read the fidelity rules <span aria-hidden="true">→</span></a></p>
       </article>
     </section>
 
+    <section class="sources container">
+      <p class="eyebrow">Sources</p>
+      <h2>What this account rests on</h2>
+      <ul>
+        <li><a href="/archive/history/">Frontline’s preserved history of Dark Pawns</a>, updating Orodreth’s earlier account</li>
+        <li><a href="https://github.com/rparet/darkpawns/blob/master/README.md">Frontline’s repository note</a> on the 2010 shutdown and release of the old codebase</li>
+        <li><a href="https://www.reddit.com/r/MUD/comments/dp83z3/">The October 2019 DPReturns reopening announcement</a></li>
+        <li>Zach’s firsthand account of playing as MisterYuck, Aiko, and Aidan, and running dp-players.com</li>
+      </ul>
+      <p>We identify memories as memories and preserve source text as found. When the record has a hole in it, we leave the hole visible.</p>
+    </section>
+
     <footer class="about-cta container">
-      <p>Dark Pawns is open again.</p>
+      <p>The world files survived. The door is open.</p>
       <a class="btn-primary" href="/play/">Enter the game</a>
       <a class="text-link" href="/credits/">Meet the people behind it</a>
     </footer>
@@ -83,6 +102,7 @@ const timeline = [
   .attribution { color: var(--ink-muted); font-size: .9rem; margin-left: calc(var(--space-lg) + 4px); }
   .about-intro { display: grid; grid-template-columns: minmax(0, 2fr) minmax(15rem, 1fr); gap: var(--space-xl); padding-bottom: var(--space-xl); }
   .about-intro > div { max-width: var(--content-width); }
+  .signature { font-family: var(--font-mono); font-size: .82rem; color: var(--ink-muted); }
   .about-intro aside { align-self: start; border-top: 3px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
   .aside-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
   .history-section { background: var(--paper-deep); border-block: 1px solid var(--rule); padding-block: var(--space-xl); }
@@ -96,6 +116,10 @@ const timeline = [
   .source-link { margin: 0; }
   .revivals { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); padding-block: var(--space-xl); }
   .revivals article { border-top: 3px solid var(--rule); padding-top: var(--space-md); }
+  .checked { font-family: var(--font-mono); font-size: .75rem; color: var(--ink-muted); }
+  .sources { max-width: var(--content-width); padding-block: var(--space-lg) var(--space-xl); border-top: 1px solid var(--rule); }
+  .sources ul { padding-left: 1.2rem; }
+  .sources li { margin-bottom: var(--space-sm); }
   .about-cta { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; padding-block: var(--space-lg) var(--space-xl); border-top: 1px solid var(--rule); }
   .about-cta p { font-family: var(--font-display); font-size: 1.4rem; margin: 0 auto 0 0; }
   .btn-primary { display: inline-block; background: var(--accent); color: var(--paper); border: 1px solid var(--accent); padding: .65rem 1rem; font-family: var(--font-display); }
