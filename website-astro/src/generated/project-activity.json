@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T13:46:15-04:00",
+  "generatedAt": "2026-08-15T13:53:37-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 96
+      "commits": 97
     }
   ],
   "recentCommits": [
+    {
+      "sha": "1d32f4c60ad69a2ce78a65d43c6c42b3575b8d2e",
+      "date": "2026-08-15",
+      "title": "feat(web): breadcrumb JSON-LD on zone records; zones spec audit",
+      "url": "https://github.com/zax0rz/darkpawns/commit/1d32f4c60ad69a2ce78a65d43c6c42b3575b8d2e"
+    },
     {
       "sha": "bdc13bcc3736226b2f275e3a12369c23cb8c1484",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "feat(web): validate contact form challenges",
       "url": "https://github.com/zax0rz/darkpawns/commit/9f6a9e21e5ad56d1a876f40835642d5965808701"
-    },
-    {
-      "sha": "c3e621ff726c99b34bb4f57000bbd7a675c47eeb",
-      "date": "2026-08-15",
-      "title": "fix(web): deploy Astro site deterministically",
-      "url": "https://github.com/zax0rz/darkpawns/commit/c3e621ff726c99b34bb4f57000bbd7a675c47eeb"
     }
   ],
   "pullRequests": [

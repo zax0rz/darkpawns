@@ -153,6 +153,13 @@ def structural_entries() -> list[Entry]:
 def database_entries() -> list[Entry]:
     data_path = ROOT / "website/static/data/database.json"
     data = json.loads(data_path.read_text(encoding="utf-8"))
+
+    def zone_room_ids(zone_id: int, _world_rooms: dict[int, list[int]] | None = None) -> list[int]:
+        return (_world_rooms or {}).get(zone_id, [])
+
+    world = json.loads((ROOT / "website/static/map/world.json").read_text(encoding="utf-8"))
+    world_rooms = {zone["id"]: sorted(room["id"] for room in zone["rooms"]) for zone in world["zones"]}
+
     entries: list[Entry] = []
     for surface, source_file in (("mobs", "src/pages/mobs/[vnum].astro"), ("items", "src/pages/items/[vnum].astro")):
         entries.append(Entry(f"/{surface}/", f"src/pages/{surface}/index.astro", f"{surface}-index", "generated database index", 3, "template-and-sample QA"))
@@ -164,6 +171,9 @@ def database_entries() -> list[Entry]:
     for zone in map_index["zones"]:
         entries.append(Entry(f"/zones/{zone['id']}/", "src/pages/zones/[id].astro", "zone", "generated world-file record", 3, "template-and-sample QA", text_kind="engine data", voice_layer="engine", source="active world files"))
         entries.append(Entry(f"/zones/{zone['id']}.json", "src/pages/zones/[id].json.ts", "agent-json", "generated machine-readable record", 3, "schema-and-sample QA", text_kind="engine data", voice_layer="engine", source="active world files"))
+        for room in zone_room_ids(zone["id"], world_rooms):
+            entries.append(Entry(f"/rooms/{room}/", "src/pages/rooms/[vnum].astro", "room", "generated world-file record", 3, "template-and-sample QA", text_kind="engine data", voice_layer="engine", source="active world files"))
+            entries.append(Entry(f"/rooms/{room}.json", "src/pages/rooms/[vnum].json.ts", "agent-json", "generated machine-readable record", 3, "schema-and-sample QA", text_kind="engine data", voice_layer="engine", source="active world files"))
     return entries
 
 
