@@ -165,7 +165,15 @@ def database_entries() -> list[Entry]:
 def redirect_entries() -> list[Entry]:
     config = (SITE / "astro.config.mjs").read_text(encoding="utf-8")
     matches = re.findall(r"^\s*'(/[^']*)':\s*'([^']+)'", config, flags=re.MULTILINE)
-    return [Entry(source, "astro.config.mjs", "redirect", f"redirect to {target}", 5, "no copy review") for source, target in matches]
+    redirects = {source: target for source, target in matches}
+    for path in sorted((SITE / "src/content/help").glob("*/*.md")):
+        category, filename = path.relative_to(SITE / "src/content/help").parts
+        slug = Path(filename).stem
+        redirects.setdefault(f"/help/{slug}", f"/help/{category}/{slug}/")
+    return [
+        Entry(source, "astro.config.mjs", "redirect", f"redirect to {target}", 5, "no copy review")
+        for source, target in redirects.items()
+    ]
 
 
 def render_csv(entries: list[Entry]) -> str:

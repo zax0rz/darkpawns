@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T10:49:07-04:00",
+  "generatedAt": "2026-08-15T11:04:38-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 89
+      "commits": 90
     }
   ],
   "recentCommits": [
+    {
+      "sha": "8efd6206f976faa0cd5c83ec023a05f2a2ed7ad8",
+      "date": "2026-08-15",
+      "title": "feat(web): complete pre-launch site audit",
+      "url": "https://github.com/zax0rz/darkpawns/commit/8efd6206f976faa0cd5c83ec023a05f2a2ed7ad8"
+    },
     {
       "sha": "4f84268edc9362e5982e89ec6a244389b5cae678",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "feat(web): redesign the front page",
       "url": "https://github.com/zax0rz/darkpawns/commit/622d245da7c6ce6de2d4963c6205779bba2c9694"
-    },
-    {
-      "sha": "394eea4c4c640489af2f3605f0d37c05567122cc",
-      "date": "2026-08-15",
-      "title": "feat(web): add private contact form",
-      "url": "https://github.com/zax0rz/darkpawns/commit/394eea4c4c640489af2f3605f0d37c05567122cc"
     }
   ],
   "pullRequests": [

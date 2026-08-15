@@ -135,7 +135,7 @@ test-parse:
 DEPLOY_PATH ?= /srv/hugo/
 
 # Website commands
-.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint content-inventory check-content-inventory site-check
+.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint content-inventory check-content-inventory route-parity site-check
 
 voice-lint:
 	python3 website-astro/scripts/voice_lint.py
@@ -148,6 +148,9 @@ content-inventory:
 
 check-content-inventory:
 	python3 website-astro/scripts/content_inventory.py --check
+
+route-parity:
+	python3 website-astro/scripts/route_parity.py
 
 site-check: voice-lint test-voice-lint check-content-inventory
 	cd website-astro && npm run build

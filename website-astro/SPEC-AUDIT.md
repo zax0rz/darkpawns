@@ -51,7 +51,7 @@ Partial:
 - Breadcrumbs are visible on hierarchical pages but do not yet have `BreadcrumbList` JSON-LD.
 - Editorial structured data can be typed as `Article` after the content pass is complete.
 - A raster social image exists, but a purpose-built 1200 by 630 share image would produce better previews.
-- The remaining Hugo compatibility routes still need a final redirect comparison.
+- Every HTML route in the generated Hugo site has an Astro page or redirect. `make route-parity` enforces this against both build directories.
 
 ### Accessibility
 
@@ -127,6 +127,7 @@ Deferred:
 
 ## Deployment verification
 
+- Confirm the live map loads its fingerprinted Astro script. The Hugo deployment referenced `/js/map.js?v=3`, which returned the site's 404 document during the migration audit.
 - Confirm HTTP redirects to HTTPS and only TLS 1.2 or 1.3 is accepted.
 - Confirm HSTS, CSP, `nosniff`, referrer, permissions, cache, compression, and discovery headers at the public URL.
 - Confirm `/404-test` returns the custom page with status 404.
