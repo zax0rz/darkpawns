@@ -73,9 +73,18 @@ type Event struct {
 	Data any    `json:"data"`
 }
 
+// wsScheme returns the WebSocket URL scheme for the given config: "wss" when
+// Secure is enabled so the API key is not transmitted in plaintext, "ws" otherwise.
+func wsScheme(cfg *AgentConfig) string {
+	if cfg.Secure {
+		return "wss"
+	}
+	return "ws"
+}
+
 // Connect establishes a WebSocket connection and authenticates.
 func (a *AgentClient) Connect(ctx context.Context) error {
-	addr := fmt.Sprintf("ws://%s:%d/ws", a.Cfg.GameHost, a.Cfg.GamePort)
+	addr := fmt.Sprintf("%s://%s:%d/ws", wsScheme(a.Cfg), a.Cfg.GameHost, a.Cfg.GamePort)
 	slog.Debug("connecting", "addr", addr)
 
 	headers := http.Header{}

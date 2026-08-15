@@ -28,6 +28,7 @@ type AgentConfig struct {
 	LiteLLM       string  `json:"litellm_endpoint"`
 	GameHost      string  `json:"game_host"`
 	GamePort      int     `json:"game_port"`
+	Secure        bool    `json:"game_secure"`       // use wss:// (TLS) for the game WebSocket so the API key is not sent in plaintext
 	Temperature   float64 `json:"temperature"`       // LLM temperature (0 = deterministic, default)
 	Valence       bool    `json:"valence"`           // enable emotional valence in memory (default: true)
 	LogDir        string  `json:"log_dir,omitempty"` // local log directory (optional)
