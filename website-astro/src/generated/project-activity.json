@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T13:53:37-04:00",
+  "generatedAt": "2026-08-15T14:02:28-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 97
+      "commits": 98
     }
   ],
   "recentCommits": [
+    {
+      "sha": "4a10ab743481bd1a481922a20df0b238ee2788d2",
+      "date": "2026-08-15",
+      "title": "feat(web): room records \u2014 permanent pages for all 9,590 rooms",
+      "url": "https://github.com/zax0rz/darkpawns/commit/4a10ab743481bd1a481922a20df0b238ee2788d2"
+    },
     {
       "sha": "1d32f4c60ad69a2ce78a65d43c6c42b3575b8d2e",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "docs(web): record Astro production deployment",
       "url": "https://github.com/zax0rz/darkpawns/commit/c56a47014df0ed594445cd9fd16e5309d38f6058"
-    },
-    {
-      "sha": "9f6a9e21e5ad56d1a876f40835642d5965808701",
-      "date": "2026-08-15",
-      "title": "feat(web): validate contact form challenges",
-      "url": "https://github.com/zax0rz/darkpawns/commit/9f6a9e21e5ad56d1a876f40835642d5965808701"
     }
   ],
   "pullRequests": [

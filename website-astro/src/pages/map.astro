@@ -111,6 +111,17 @@ import mapScriptUrl from '../../../website/assets/js/map.js?url';
 }
 .zone-item:hover { background: var(--paper); color: var(--accent); }
 .zone-item.active { background: var(--paper); color: var(--accent); font-weight: 700; border-left: 3px solid var(--accent); }
+.zone-record-link {
+  color: var(--ink-muted);
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  margin-left: auto;
+  padding: 0 0.35rem;
+  text-decoration: none;
+}
+.zone-record-link:hover { color: var(--accent); }
+.zone-item:hover .zone-record-link, .zone-item.active .zone-record-link { color: var(--accent); }
+.zone-item .zone-count { margin-left: 0.35rem; }
 .zone-count {
   font-size: 0.65rem;
   color: var(--ink-muted);
@@ -543,6 +554,8 @@ import mapScriptUrl from '../../../website/assets/js/map.js?url';
         <div id="detail-vnum"></div>
       </div>
       <div style="display:flex;gap:.35rem;align-items:center;flex-shrink:0">
+        <a id="detail-record-link" href="#" title="Room record page" aria-label="Room record page"
+          style="display:none;background:none;border:1px solid var(--ink-muted);border-radius:2px;color:var(--ink-muted);font-family:var(--font-display);font-size:.6rem;font-weight:600;letter-spacing:.06em;padding:.2rem .45rem;text-decoration:none;text-transform:uppercase;white-space:nowrap">Record</a>
         <button id="detail-copy-link" title="Copy shareable link" aria-label="Copy link to this room"
           style="background:none;border:1px solid var(--ink-muted);border-radius:2px;color:var(--ink-muted);cursor:pointer;font-family:var(--font-display);font-size:.6rem;font-weight:600;letter-spacing:.06em;padding:.2rem .45rem;text-transform:uppercase;white-space:nowrap">
           Copy link

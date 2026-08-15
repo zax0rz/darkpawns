@@ -349,6 +349,7 @@
     html += zones.map(z => `
       <div class="zone-item${z.id === currentZoneId ? ' active' : ''}" data-zone="${z.id}">
         <span class="zone-name">${escHtml(z.name)}</span>
+        <a class="zone-record-link" href="/zones/${z.id}/" title="Zone record page" aria-label="Zone record page for ${escHtml(z.name)}">▤</a>
         <span class="zone-count">${z.rooms}</span>
       </div>`).join('');
 
@@ -357,6 +358,10 @@
     document.getElementById('item-world-map')?.addEventListener('click', selectWorldOverview);
     $zoneList.querySelectorAll('.zone-item[data-zone]').forEach(el =>
       el.addEventListener('click', () => selectZone(+el.dataset.zone))
+    );
+    // Record links navigate; keep the click from also selecting the zone.
+    $zoneList.querySelectorAll('.zone-record-link').forEach(el =>
+      el.addEventListener('click', e => e.stopPropagation())
     );
   }
 
@@ -1476,6 +1481,13 @@
     $detailName.textContent = room.name;
     $detailVnum.textContent = `#${room.id} · ${SECTOR_NAME[room.sector] ?? ''}`;
     $detailDesc.textContent = room.desc ?? '';
+
+    // Permanent record link for the selected room
+    const $recordLink = document.getElementById('detail-record-link');
+    if ($recordLink) {
+      $recordLink.href = `/rooms/${room.id}/`;
+      $recordLink.style.display = '';
+    }
 
     // Wire copy-link button
     const $copyBtn = document.getElementById('detail-copy-link');

@@ -35,16 +35,12 @@
 
   // canvas transform state (world map)
   let cvTransform = d3.zoomIdentity;
-  let viewMode = 'graph';      // 'graph' | 'grid' | 'globe' (#globe is a dormant Easter egg)
+  let viewMode = 'grid';       // 'grid' | 'globe'
   let roomDegrees = {};        // room_id → degree (exit count)
-
-  // Obsidian Graph View State
-  let graphData = null;        // loaded from world-graph.json
-  let graphRoomMap = null;     // room_id → projected node {x,y,degree,sector,zone}
 
   // 3D Globe View State
   let globeData = null;        // loaded from world-sphere.json
-  let globeRotation = [0.3, -0.18]; // [theta, phi] tracking angles — tuned so the dense core knot opens centered
+  let globeRotation = [0.3, -0.4]; // [theta, phi] tracking angles
   let isDraggingGlobe = false;
   let lastMousePos = { x: 0, y: 0 };
   let dragMoveDistance = 0;
@@ -63,15 +59,6 @@
     13: 'wind', 14: 'water', 15: 'swamp',
   };
   function sectorColor(s) { return SECTOR_COLOR[s] ?? '#a8201a'; }
-
-  // Lifted sector palette for the dark graph canvas (Obsidian-style).
-  const SECTOR_COLOR_DARK = {
-    0: '#9a948e', 1: '#cf4b42', 2: '#b8c07e',  3: '#6fa061',
-    4: '#d0ac7d', 5: '#a39481', 6: '#7fb3d1',  7: '#5c83b8',
-    8: '#4a6b9e', 9: '#8fc9f2', 10: '#e0c08a', 11: '#ee7a66',
-    12: '#b09c7e', 13: '#dbe2ea', 14: '#5c83b8', 15: '#87a086',
-  };
-  function sectorColorDark(s) { return SECTOR_COLOR_DARK[s] ?? '#cf4b42'; }
 
   const DIR_FULL = { n: 'north', e: 'east', s: 'south', w: 'west', u: 'up', d: 'down' };
 
@@ -98,8 +85,7 @@
   const $btnSetStart = document.getElementById('btn-set-start');
   const $btnClrPath  = document.getElementById('btn-clear-path');
   const $btnPath     = document.getElementById('btn-path');
-  const $btnViewGraph = document.getElementById('btn-view-graph');
-  const $btnViewGrid  = document.getElementById('btn-view-grid');
+  const $btnView     = document.getElementById('btn-view');
   const $svgWrap     = document.getElementById('map-svg-wrap');
   const $canvasWrap  = document.getElementById('map-canvas-wrap');
   const canvasEl     = document.getElementById('map-canvas');
@@ -177,14 +163,11 @@
       target.transition().duration(200).call(z.scaleBy, 1 / 1.4);
     });
     document.getElementById('btn-reset')?.addEventListener('click', () => {
-      if (currentZoneId !== null) fitSvgToZone();
-      else if (viewMode === 'graph') fitCanvasToGraph();
-      else if (viewMode === 'globe') d3.select(canvasEl).call(canvasZoom.transform, d3.zoomIdentity);
-      else fitCanvasToWorldMap();
+      if (currentZoneId === null) fitCanvasToWorldMap();
+      else fitSvgToZone();
     });
     $btnPath?.addEventListener('click', togglePathMode);
-    $btnViewGraph?.addEventListener('click', () => setViewMode('graph'));
-    $btnViewGrid?.addEventListener('click', () => setViewMode('grid'));
+    $btnView?.addEventListener('click', toggleViewMode);
     document.getElementById('btn-expand-zone')?.addEventListener('click', () => {
       if (selectedRoomId !== null) {
         const room = globeData?.rooms.find(r => r.id === selectedRoomId);
@@ -225,30 +208,24 @@
         $empty.style.display = 'none';
         renderZoneList('');
 
-        // Deep-link routing — the Obsidian graph is the default view;
-        // #grid and #globe select the alternates (#constellation is a legacy alias).
-        if (window.location.hash === '#grid' || window.location.hash === '#globe') {
-          viewMode = window.location.hash.slice(1);
-        } else {
-          viewMode = 'graph';
+        // Deep-link routing
+        if (window.location.hash === '#globe' || window.location.hash === '#constellation') {
+          viewMode = 'globe';
+          $btnView?.classList.add('active');
           if (window.location.hash === '#constellation') {
             window.location.hash = 'globe';
           }
+        } else {
+          viewMode = 'grid';
+          $btnView?.classList.remove('active');
         }
-        syncViewBtn();
 
         const params  = new URLSearchParams(window.location.search);
         const roomArg = params.get('room');
         const zoneArg = params.get('zone');
 
         if (zoneArg) {
-          selectZone(parseInt(zoneArg, 10), { pushHistory: false }).then(() => {
-            if (!roomArg) return;
-            const roomId = parseInt(roomArg, 10);
-            const room = currentRooms.find(r => r.id === roomId);
-            if (room) selectRoom(room);
-            jumpToRoom(roomId);
-          });
+          selectZone(parseInt(zoneArg, 10));
         } else if (roomArg) {
           // need to find which zone the room is in — check each zone's JSON
           // Fallback: show world overview, then load
@@ -303,23 +280,20 @@
     const zoneArg = p.get('zone');
     const roomArg = p.get('room');
 
-    if (window.location.hash === '#grid' || window.location.hash === '#globe') {
-      viewMode = window.location.hash.slice(1);
-    } else {
-      viewMode = 'graph';
+    if (window.location.hash === '#globe' || window.location.hash === '#constellation') {
+      viewMode = 'globe';
+      $btnView?.classList.add('active');
       if (window.location.hash === '#constellation') {
         window.location.hash = 'globe';
       }
+    } else {
+      viewMode = 'grid';
+      $btnView?.classList.remove('active');
     }
-    syncViewBtn();
 
     if (zoneArg) {
       selectZone(parseInt(zoneArg, 10), { pushHistory: false }).then(() => {
-        if (!roomArg) return;
-        const roomId = parseInt(roomArg, 10);
-        const room = currentRooms.find(r => r.id === roomId);
-        if (room) selectRoom(room);
-        jumpToRoom(roomId);
+        if (roomArg) jumpToRoom(parseInt(roomArg, 10));
       });
     } else {
       selectWorldOverview({ pushHistory: false });
@@ -375,6 +349,7 @@
     html += zones.map(z => `
       <div class="zone-item${z.id === currentZoneId ? ' active' : ''}" data-zone="${z.id}">
         <span class="zone-name">${escHtml(z.name)}</span>
+        <a class="zone-record-link" href="/zones/${z.id}/" title="Zone record page" aria-label="Zone record page for ${escHtml(z.name)}">▤</a>
         <span class="zone-count">${z.rooms}</span>
       </div>`).join('');
 
@@ -383,6 +358,10 @@
     document.getElementById('item-world-map')?.addEventListener('click', selectWorldOverview);
     $zoneList.querySelectorAll('.zone-item[data-zone]').forEach(el =>
       el.addEventListener('click', () => selectZone(+el.dataset.zone))
+    );
+    // Record links navigate; keep the click from also selecting the zone.
+    $zoneList.querySelectorAll('.zone-record-link').forEach(el =>
+      el.addEventListener('click', e => e.stopPropagation())
     );
   }
 
@@ -422,49 +401,6 @@
       });
   }
 
-  function loadGraphAndDraw() {
-    if (graphData) {
-      drawWorldMap();
-      return;
-    }
-    showLoading('Loading the world graph…');
-    fetch('/map/world-graph.json')
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(data => {
-        graphData = data;
-        graphRoomMap = {};
-        for (const r of data.rooms) {
-          r.degree = roomDegrees[r.id] || 0;
-          graphRoomMap[r.id] = r;
-        }
-        hideLoading();
-        fitCanvasToGraph();
-        drawWorldMap();
-      })
-      .catch(err => {
-        if ($loadingMsg) $loadingMsg.textContent = `Failed to load graph: ${err.message}`;
-      });
-  }
-
-  function fitCanvasToGraph() {
-    if (!graphData || !canvasEl) return;
-    const W = canvasEl.width  / (window.devicePixelRatio || 1);
-    const H = canvasEl.height / (window.devicePixelRatio || 1);
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const r of graphData.rooms) {
-      if (r.x < minX) minX = r.x;  if (r.x > maxX) maxX = r.x;
-      if (r.y < minY) minY = r.y;  if (r.y > maxY) maxY = r.y;
-    }
-    const pad = 40;
-    const k   = Math.max(0.02, Math.min(10,
-      Math.min((W - pad * 2) / (maxX - minX + 1), (H - pad * 2) / (maxY - minY + 1))
-    ));
-    const tx  = W / 2 - k * ((minX + maxX) / 2);
-    const ty  = H / 2 - k * ((minY + maxY) / 2);
-    d3.select(canvasEl).call(canvasZoom.transform,
-      d3.zoomIdentity.translate(tx, ty).scale(k));
-  }
-
   // ── World overview — Canvas ────────────────────────────────────────────────
   function selectWorldOverview({ pushHistory = true } = {}) {
     currentZoneId = null;
@@ -482,10 +418,7 @@
     if (worldMapData) {
       resizeCanvas();
       if (viewMode === 'globe') {
-        d3.select(canvasEl).call(canvasZoom.transform, d3.zoomIdentity);
         loadGlobeAndDraw();
-      } else if (viewMode === 'graph') {
-        loadGraphAndDraw();
       } else {
         drawWorldMap();
       }
@@ -589,21 +522,11 @@
         hideLoading();
         resizeCanvas();
         d3.select(canvasEl).call(canvasZoom);
-        if (viewMode === 'globe') {
-          // Globe derives screen radius from cvTransform.k — start at identity,
-          // not at the tiny 2D-fit zoom.
-          d3.select(canvasEl).call(canvasZoom.transform, d3.zoomIdentity);
-        } else if (viewMode === 'graph') {
-          // Graph fits after its data arrives (loadGraphAndDraw handles it)
-        } else {
-          fitCanvasToWorldMap();
-        }
+        fitCanvasToWorldMap();
         attachCanvasEvents();
 
         if (viewMode === 'globe') {
           loadGlobeAndDraw();
-        } else if (viewMode === 'graph') {
-          loadGraphAndDraw();
         } else {
           drawWorldMap();
         }
@@ -664,41 +587,25 @@
     lower.pop();
     return lower.concat(upper);
   }
-  function syncViewBtn() {
-    $btnViewGraph?.classList.toggle('active', viewMode === 'graph');
-    $btnViewGrid?.classList.toggle('active', viewMode === 'grid');
-  }
+  function toggleViewMode() {
+    viewMode = viewMode === 'grid' ? 'globe' : 'grid';
+    $btnView?.classList.toggle('active', viewMode === 'globe');
 
-  function setViewMode(mode) {
-    if (viewMode === mode) return;
-    viewMode = mode;
-    syncViewBtn();
-
-    // Each mode owns its camera: the globe resets to identity (its screen
-    // radius derives from k), the graph and grid fit their bounds.
-    if (canvasEl) {
-      if (mode === 'globe') {
-        d3.select(canvasEl).call(canvasZoom.transform, d3.zoomIdentity);
-      } else if (mode === 'graph' && graphData) {
-        fitCanvasToGraph();
-      } else if (mode === 'grid' && worldMapData) {
-        fitCanvasToWorldMap();
-      }
-    }
-
-    // Sync hash (graph is the default — only other modes get an explicit hash)
-    if (mode === 'graph') {
-      history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    // Sync hash
+    if (viewMode === 'globe') {
+      window.location.hash = 'globe';
     } else {
-      window.location.hash = mode;
+      history.replaceState(null, document.title, window.location.pathname + window.location.search);
     }
 
     if (currentZoneId !== null) {
       selectWorldOverview();
     } else if (worldMapData) {
-      if (viewMode === 'globe') loadGlobeAndDraw();
-      else if (viewMode === 'graph') loadGraphAndDraw();
-      else drawWorldMap();
+      if (viewMode === 'globe') {
+        loadGlobeAndDraw();
+      } else {
+        drawWorldMap();
+      }
     }
   }
 
@@ -731,34 +638,10 @@
     // visual radius: 38% of min dimension scaled by zoom scale
     const R = Math.min(W, H) * 0.38 * cvTransform.k;
 
-    // 0. The Planet — a dark celestial body on the cream page (the CRT-black
-    // exception, cf. DESIGN.md §3.5). Bright heart at the core, falling to
-    // near-black at the limb — every fiber reads as drawn toward the center.
-    const planet = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
-    planet.addColorStop(0, '#262019');
-    planet.addColorStop(0.55, '#171310');
-    planet.addColorStop(1, '#0a0908');
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.fillStyle = planet;
-    ctx.fill();
-    // Hairline limb ring
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(239, 231, 214, 0.25)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Everything but labels is clipped to the disc
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.clip();
-
     // 1. Subtle 3D Spherical Gridlines (Latitude & Longitude)
     ctx.lineWidth = 0.45;
     // Longitude lines
-    ctx.strokeStyle = 'rgba(239, 231, 214, 0.07)';
+    ctx.strokeStyle = 'rgba(168, 32, 26, 0.04)';
     for (let i = 0; i < 6; i++) {
       const lon = (i / 6) * Math.PI * 2;
       ctx.beginPath();
@@ -828,19 +711,15 @@
       }
     }
 
-    // 3. Connective Edges (Luminous cream web, shallow outward bend)
-    // Level-of-detail: at overview zoom, leaf-to-leaf fibers are hidden so the
-    // hub structure reads first; everything fades in past k=1.5.
-    const lodLeaves = cvTransform.k >= 1.5;
+    // 3. Connective Edges (Delicate Oxblood Web, Outward Curved)
     ctx.lineWidth = 0.35;
-    ctx.strokeStyle = 'rgba(239, 231, 214, 0.07)'; // Fine cream threads
+    ctx.strokeStyle = 'rgba(168, 32, 26, 0.08)'; // Fine oxblood ink threads
     ctx.beginPath();
     for (const lk of worldMapData.links) {
       const s = roomProj[lk.s];
       const t = roomProj[lk.t];
       if (!s || !t) continue;
       if (s.z_rot < 0 || t.z_rot < 0) continue; // culled back face
-      if (!lodLeaves && s.degree <= 1 && t.degree <= 1) continue;
 
       // Outward quadratic bend to prevent links from slicing the sphere core
       const mx = (s.sx + t.sx) / 2;
@@ -849,7 +728,7 @@
       const len = Math.hypot(vx, vy);
       if (len > 0.01) {
         const dist = Math.hypot(t.sx - s.sx, t.sy - s.sy);
-        const bend = dist * 0.08;
+        const bend = dist * 0.15;
         const ctrlX = mx + (vx / len) * bend;
         const ctrlY = my + (vy / len) * bend;
         ctx.moveTo(s.sx, s.sy);
@@ -861,32 +740,25 @@
     }
     ctx.stroke();
 
-    // 4. Luminous Nodes (Sorted by depth z_rot so front layers render on top)
+    // 4. Double-Circle "Ink-Bleed" Nodes (Sorted by depth z_rot so front layers render on top)
     visibleRooms.sort((a, b) => a.z_rot - b.z_rot);
 
-    // Pass 1: Halos — soft cream glow for rooms, oxblood ember for hubs
+    // Pass 1: Diluted oxblood bleeding halos
+    ctx.fillStyle = 'rgba(168, 32, 26, 0.08)';
+    ctx.beginPath();
     for (const r of visibleRooms) {
-      if (!lodLeaves && r.degree <= 1) continue;
-      const hub = r.degree >= 5;
-      const rVal = r.degree <= 1 ? 1.6 : (r.degree <= 4 ? 2.8 : 4.2);
+      const rVal = r.degree <= 1 ? 1.6 : (r.degree <= 4 ? 2.8 : 4.0);
       const dr = rVal * (0.7 + 0.3 * r.z_rot);
-      ctx.fillStyle = hub
-        ? `rgba(207, 75, 66, ${0.08 + 0.12 * r.z_rot})`
-        : `rgba(239, 231, 214, ${0.03 + 0.05 * r.z_rot})`;
-      ctx.beginPath();
-      ctx.arc(r.sx, r.sy, dr * 2.2, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(r.sx + dr * 2.8, r.sy);
+      ctx.arc(r.sx, r.sy, dr * 2.8, 0, Math.PI * 2);
     }
+    ctx.fill();
 
-    // Pass 2: Cores — cream ink, cities struck in oxblood-on-dark
+    // Pass 2: Saturated sector cores
     for (const r of visibleRooms) {
-      if (!lodLeaves && r.degree <= 1) continue;
-      const a = 0.22 + 0.62 * r.z_rot; // depth dimming toward the limb
-      ctx.fillStyle = r.sector === 1
-        ? `rgba(207, 75, 66, ${a})`
-        : `rgba(239, 231, 214, ${a})`;
+      ctx.fillStyle = sectorColor(r.sector);
       ctx.beginPath();
-      const rVal = r.degree <= 1 ? 1.6 : (r.degree <= 4 ? 2.8 : 4.2);
+      const rVal = r.degree <= 1 ? 1.6 : (r.degree <= 4 ? 2.8 : 4.0);
       const dr = rVal * (0.7 + 0.3 * r.z_rot);
       ctx.arc(r.sx, r.sy, dr, 0, Math.PI * 2);
       ctx.fill();
@@ -896,48 +768,39 @@
     if (selectedRoomId !== null) {
       const sel = roomProj[selectedRoomId];
       if (sel && sel.z_rot >= 0) {
-        const rVal = sel.degree <= 1 ? 1.6 : (sel.degree <= 4 ? 2.8 : 4.2);
+        const rVal = sel.degree <= 1 ? 1.6 : (sel.degree <= 4 ? 2.8 : 4.0);
         const dr = rVal * (0.7 + 0.3 * sel.z_rot);
         ctx.beginPath();
         ctx.arc(sel.sx, sel.sy, dr * 2.8, 0, Math.PI * 2);
-        ctx.strokeStyle = '#cf4b42';
+        ctx.strokeStyle = '#a8201a';
         ctx.lineWidth = 1.8;
         ctx.stroke();
       }
     }
 
-    ctx.restore(); // unclip — labels sit on the planet, not in it
-
-    // 6. Floating Zone Typographic Labels (DM Serif Display, Oxblood-on-dark)
-    // Low zoom: only major zones (100+ rooms) get labels, so the overview
-    // stays legible. Zoom in past k=2.2 and every zone names itself.
+    // 6. Floating Zone Typographic Labels (DM Serif Display, Oxblood)
     if (cvTransform.k >= 0.12 && globeData.zones) {
-      const labelAll = cvTransform.k >= 2.2;
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-
+      
       const fontSize = cvTransform.k >= 1.0 ? 12 : 10;
-      ctx.font = cvTransform.k >= 1.0
-        ? `bold ${fontSize}px 'DM Serif Display', Georgia, serif`
+      ctx.font = cvTransform.k >= 1.0 
+        ? `bold ${fontSize}px 'DM Serif Display', Georgia, serif` 
         : `${fontSize}px 'DM Serif Display', Georgia, serif`;
-
-      ctx.fillStyle = cvTransform.k >= 1.0
-        ? 'rgba(207, 75, 66, 0.95)' // full oxblood-on-dark at close zoom
-        : 'rgba(207, 75, 66, 0.65)'; // muted at medium zoom
+      
+      ctx.fillStyle = cvTransform.k >= 1.0 
+        ? 'rgba(168, 32, 26, 0.85)' // full oxblood at close zoom
+        : 'rgba(168, 32, 26, 0.55)';  // muted oxblood at medium zoom
 
       for (const z of globeData.zones) {
-        if (!labelAll && (z.count || 0) < 100) continue;
         const rot = rotate3D(z, globeRotation[0], globeRotation[1]);
-        if (rot.z < 0.15) continue; // culled back face + limb fade
+        if (rot.z < 0) continue; // culled back face
 
         const sx = cx + R * rot.x;
         const sy = cy + R * rot.y;
-
-        // Pin labels just outside their cluster, radially from the core
-        const vx = sx - cx, vy = sy - cy;
-        const vlen = Math.hypot(vx, vy) || 1;
-        ctx.fillText(z.name.toUpperCase(), sx + (vx / vlen) * 14, sy + (vy / vlen) * 14 - 3);
+        
+        ctx.fillText(z.name.toUpperCase(), sx, sy - 12);
       }
       ctx.restore();
     }
@@ -1118,123 +981,8 @@
 
     ctx.restore();
   }
-  // ── Obsidian Graph Renderer ─────────────────────────────────────────────────
-  // The world as a dark constellation map: every edge visible, sector-colored
-  // nodes, luminous hubs, zone names over their clusters.
-  function drawGraph() {
-    if (!ctx || !graphData || !worldMapData) return;
-    const dpr = window.devicePixelRatio || 1;
-    const W   = canvasEl.width  / dpr;
-    const H   = canvasEl.height / dpr;
-    const { x: tx, y: ty, k } = cvTransform;
-
-    // The dark plate — a full-bleed CRT-black canvas with a faint warm core
-    ctx.fillStyle = '#0a0908';
-    ctx.fillRect(0, 0, W, H);
-    const glow = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.55);
-    glow.addColorStop(0, 'rgba(38, 32, 25, 0.6)');
-    glow.addColorStop(1, 'rgba(10, 9, 8, 0)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.save();
-    ctx.translate(tx, ty);
-    ctx.scale(k, k);
-
-    // Viewport bounds in world coords (skip off-screen work)
-    const pad = 60 / k;
-    const vx0 = -tx / k - pad,  vx1 = (W - tx) / k + pad;
-    const vy0 = -ty / k - pad,  vy1 = (H - ty) / k + pad;
-    const inView = p => p.x >= vx0 && p.x <= vx1 && p.y >= vy0 && p.y <= vy1;
-
-    // LOD: leaf rooms (degree ≤ 1) fade in past k=1.2; every zone labels at k≥3
-    const lodLeaves = k >= 1.2;
-    const allLabels = k >= 3.0;
-
-    // 1. The Web — all edges, cream, luminous. This is the point of the view.
-    ctx.lineWidth = 0.7 / k;
-    ctx.strokeStyle = 'rgba(239, 231, 214, 0.16)';
-    ctx.beginPath();
-    for (const lk of worldMapData.links) {
-      const s = graphRoomMap[lk.s];
-      const t = graphRoomMap[lk.t];
-      if (!s || !t) continue;
-      if (!lodLeaves && s.degree <= 1 && t.degree <= 1) continue;
-      if (!inView(s) && !inView(t)) continue;
-      ctx.moveTo(s.x, s.y);
-      ctx.lineTo(t.x, t.y);
-    }
-    ctx.stroke();
-
-    // 2. Hub halos — oxblood embers under high-degree rooms (rare: deg ≥ 6 ≈ 36 rooms)
-    for (const r of graphData.rooms) {
-      if (r.degree < 6) continue;
-      if (!inView(r)) continue;
-      const dr = 5.5 / k;
-      ctx.fillStyle = 'rgba(207, 75, 66, 0.22)';
-      ctx.beginPath();
-      ctx.arc(r.x, r.y, dr * 2.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // 3. Nodes — sector-colored, sized by degree
-    for (const r of graphData.rooms) {
-      if (!lodLeaves && r.degree <= 1) continue;
-      if (!inView(r)) continue;
-      const base = r.degree <= 1 ? 1.4 : (r.degree <= 4 ? 2.4 : 4.0);
-      const dr = Math.max(base, base / k * 0.35);
-      ctx.fillStyle = sectorColorDark(r.sector);
-      ctx.beginPath();
-      ctx.arc(r.x, r.y, dr, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // 4. Selection ring
-    if (selectedRoomId !== null) {
-      const sel = graphRoomMap[selectedRoomId];
-      if (sel) {
-        ctx.beginPath();
-        ctx.arc(sel.x, sel.y, 9 / k, 0, Math.PI * 2);
-        ctx.strokeStyle = '#cf4b42';
-        ctx.lineWidth = 1.8 / k;
-        ctx.stroke();
-      }
-    }
-
-    // 5. Zone labels — major zones at overview, all zones when zoomed in.
-    // Decluttered: biggest zones win, labels too close to a placed one are skipped.
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const labelZones = graphData.zones
-      .filter(z => allLabels || (z.count || 0) >= 150)
-      .filter(z => inView(z))
-      .sort((a, b) => (b.count || 0) - (a.count || 0));
-    const placed = [];
-    const minGap = allLabels ? 60 / k : 130 / k; // world units; ≈ px on screen
-    for (const z of labelZones) {
-      if (placed.some(p => Math.hypot(p.x - z.x, p.y - z.y) < minGap)) continue;
-      placed.push(z);
-      const fs = (allLabels ? 11 : 13) / k;
-      ctx.font = `${allLabels ? '' : 'bold '}${fs}px 'DM Serif Display', Georgia, serif`;
-      // dark plate behind the ink so labels stay readable over bright patches
-      ctx.lineWidth = 3.5 / k;
-      ctx.strokeStyle = 'rgba(10, 9, 8, 0.85)';
-      ctx.strokeText(z.name.toUpperCase(), z.x, z.y);
-      ctx.fillStyle = 'rgba(239, 231, 214, 0.85)';
-      ctx.fillText(z.name.toUpperCase(), z.x, z.y);
-    }
-    ctx.restore();
-
-    ctx.restore();
-  }
-
   function drawWorldMap() {
     if (!ctx || !worldMapData) return;
-    if (viewMode === 'graph') {
-      drawGraph();
-      return;
-    }
     if (viewMode === 'globe') {
       drawGlobe();
       return;
@@ -1423,22 +1171,6 @@
     return nearest;
   }
 
-  // Graph hit-test: find nearest room under pointer (2D obsidian graph)
-  function graphHitTest(clientX, clientY) {
-    if (!graphData || !canvasEl) return null;
-    const rect = canvasEl.getBoundingClientRect();
-    const { x: tx, y: ty, k } = cvTransform;
-    const wx = (clientX - rect.left - tx) / k;
-    const wy = (clientY - rect.top  - ty) / k;
-    const threshold = 12 / k;
-    let nearest = null, minDist = threshold;
-    for (const room of graphData.rooms) {
-      const d = Math.hypot(room.x - wx, room.y - wy);
-      if (d < minDist) { minDist = d; nearest = room; }
-    }
-    return nearest;
-  }
-
   // Globe hit-test: find nearest room under pointer (3D globe)
   function globeHitTest(clientX, clientY) {
     if (!globeData || !canvasEl) return null;
@@ -1514,17 +1246,7 @@
         }
         return;
       }
-
-      if (viewMode === 'graph') {
-        const room = graphHitTest(e.clientX, e.clientY);
-        if (room) {
-          selectGlobeRoom(room); // same shape: {id, zone, sector}
-        } else {
-          deselectRoom();
-        }
-        return;
-      }
-
+      
       const room = worldMapHitTest(e.clientX, e.clientY);
       if (!room) return;
       selectZone(room.zone_id).then(() => {
@@ -1564,22 +1286,6 @@
             canvasEl.style.cursor = '';
             hideTooltip();
           }
-        }
-        return;
-      }
-
-      // Hover tooltip for graph mode
-      if (viewMode === 'graph') {
-        const room = graphHitTest(e.clientX, e.clientY);
-        if (room) {
-          canvasEl.style.cursor = 'pointer';
-          const zoneName = indexData?.zones.find(z => z.id === room.zone)?.name
-                           ?? `Zone ${room.zone}`;
-          showTooltip(e.clientX, e.clientY,
-            `<strong>${escHtml(zoneName)}</strong>${escHtml(SECTOR_NAME[room.sector] ?? 'unknown')}`);
-        } else {
-          canvasEl.style.cursor = '';
-          hideTooltip();
         }
         return;
       }
@@ -1776,6 +1482,13 @@
     $detailVnum.textContent = `#${room.id} · ${SECTOR_NAME[room.sector] ?? ''}`;
     $detailDesc.textContent = room.desc ?? '';
 
+    // Permanent record link for the selected room
+    const $recordLink = document.getElementById('detail-record-link');
+    if ($recordLink) {
+      $recordLink.href = `/rooms/${room.id}/`;
+      $recordLink.style.display = '';
+    }
+
     // Wire copy-link button
     const $copyBtn = document.getElementById('detail-copy-link');
     if ($copyBtn) {
@@ -1785,7 +1498,7 @@
     // Exits
     const exits = (room.exits ?? []).filter(e => ['n','s','e','w','u','d'].includes(e.d));
     $detailExits.innerHTML = exits.length
-      ? `<h2>Exits</h2>` + exits.map(ex => {
+      ? `<h4>Exits</h4>` + exits.map(ex => {
           const target = currentRooms.find(r => r.id === ex.t);
           return `<div class="exit-item" data-target="${ex.t}" tabindex="0" role="button">
             <span class="exit-dir">${ex.d}</span>
