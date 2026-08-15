@@ -26,7 +26,7 @@ const websiteJsonLd = JSON.stringify({
   description: 'The public website, documentation, world reference, and community archive for the Dark Pawns MUD.',
   inLanguage: 'en',
 });
-const socialImage = new URL('/apple-touch-icon.png', Astro.site);
+const socialImage = new URL('/og-image.png', Astro.site);
 ---
 <!doctype html>
 <html lang="en">
@@ -44,8 +44,8 @@ const socialImage = new URL('/apple-touch-icon.png', Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={socialImage} />
-    <meta property="og:image:alt" content="Dark Pawns" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image:alt" content="Dark Pawns - A Multi-User Dungeon" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={socialImage} />
