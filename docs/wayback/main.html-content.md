@@ -8,13 +8,13 @@
 
 ## News Posts
 
-### OUTLAW System
+### OUTLAW System (02/09/2002 07:28:29 PM EST)
 
 The OUTLAW system has undergone a minor revision.
 All the details can be found by reading the NEWS in the game.
 Thanks to everyone who contributed ideas to make the system better.
 
-### The Aiko Story
+### The Aiko Story (01/21/2002 07:28:29 PM EST)
 
 Aiko tells you, 'what's up?'
 You tell Aiko, 'not much, you?'

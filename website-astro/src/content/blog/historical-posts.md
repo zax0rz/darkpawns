@@ -14,7 +14,7 @@ voiceLayer: "frontline"
 <div class="archive-dispatch">
   <div class="dispatch-header">
     <span class="dispatch-tag">NEWS POST · SYSTEM REVISION</span>
-    <time>Circa 2001</time>
+    <time>February 9, 2002</time>
   </div>
   <h3>OUTLAW System</h3>
   <p>The OUTLAW system has undergone a minor revision.</p>
@@ -25,7 +25,7 @@ voiceLayer: "frontline"
 <div class="archive-dispatch">
   <div class="dispatch-header">
     <span class="dispatch-tag">NEWS POST · COMMUNITY ANECDOTE</span>
-    <time>Circa 2002</time>
+    <time>January 21, 2002</time>
   </div>
   <h3>The Aiko Story</h3>
   <pre><code>Aiko tells you, 'what's up?'

@@ -26,8 +26,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /archive/topic-737.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,906,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/topic-737/,src/content/archive/topic-737.md,archive,preserved community artifact,2,verify against capture,906,verbatim,frontline,Wayback capture identified by captureUrl
 /blog/,src/pages/blog/index.astro,hub,authored collection framing,1,full editorial review,,,,
-/blog/historical-posts.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,195,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
-/blog/historical-posts/,src/content/blog/historical-posts.md,blog,authored editorial,1,replace or remove,195,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
+/blog/historical-posts.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,197,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
+/blog/historical-posts/,src/content/blog/historical-posts.md,blog,authored editorial,1,replace or remove,197,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
 /blog/resurrection.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,389,original,mythic-admin,Dark Pawns repository and Zach
 /blog/resurrection/,src/content/blog/resurrection.md,blog,authored editorial,1,rewrite and source review,389,original,mythic-admin,Dark Pawns repository and Zach
 /contact/,src/pages/contact.astro,core,authored static page,1,full editorial review,,,,
