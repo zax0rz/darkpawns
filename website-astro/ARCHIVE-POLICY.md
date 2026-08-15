@@ -6,8 +6,9 @@ repository in `~/dp-community-revival/`.
 
 ## May be published
 
-- Public forum posts, guides, histories, game logs, quotes, and public staff or
-  player handles.
+- Public forum posts, guides, histories, game logs, selected quotes, and public
+  staff or player handles. Public availability alone does not require us to
+  republish something.
 - Public biographical details only when they are materially relevant to the
   historical record and were intentionally posted by that person.
 - Material with a verifiable original URL and Wayback capture. Every Astro
@@ -24,6 +25,10 @@ repository in `~/dp-community-revival/`.
 
 - Preserve the authors' words. Correct only extraction artifacts; do not
   silently rewrite spelling, tone, or disputes.
+- Curate for historical value and reasonable harm to people who are still
+  alive. A Wayback capture may be cited without reproducing its contents.
+- Do not republish slurs, sexual material, or contextless humiliation unless it
+  is necessary to document something of real historical importance.
 - Label unknown authors and incomplete captures honestly.
 - Do not present an archive capture date as the original publication date.
 - A failed or empty Wayback response is an inventory lead, not recovered

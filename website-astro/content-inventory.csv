@@ -7,7 +7,7 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /archive/p492/,src/content/archive/p492.md,archive,preserved community artifact,2,verify against capture,2244,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/p501/,src/content/archive/p501.md,archive,preserved community artifact,2,verify against capture,1049,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/p513/,src/content/archive/p513.md,archive,preserved community artifact,2,verify against capture,347,verbatim,frontline,Wayback capture identified by captureUrl
-/archive/player-quotes/,src/content/archive/player-quotes.md,archive,preserved community artifact,2,verify against capture,1262,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-quotes/,src/content/archive/player-quotes.md,archive,preserved community artifact,2,verify against capture,145,edited-excerpt,frontline,Wayback capture identified by captureUrl
 /archive/topic-705/,src/content/archive/topic-705.md,archive,preserved community artifact,2,verify against capture,652,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/topic-724/,src/content/archive/topic-724.md,archive,preserved community artifact,2,verify against capture,150,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/topic-731/,src/content/archive/topic-731.md,archive,preserved community artifact,2,verify against capture,2935,verbatim,frontline,Wayback capture identified by captureUrl
@@ -15,7 +15,7 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /blog/,src/pages/blog/index.astro,hub,authored collection framing,1,full editorial review,,,,
 /blog/historical-posts/,src/content/blog/historical-posts.md,blog,authored editorial,1,replace or remove,104,summary,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
 /blog/resurrection/,src/content/blog/resurrection.md,blog,authored editorial,1,rewrite and source review,241,original,mythic-admin,Dark Pawns repository and Zach
-/blog/website-launch/,src/content/blog/website-launch.md,blog,authored editorial,1,rewrite and source review,241,original,mythic-admin,Dark Pawns repository and recovered Wayback captures
+/blog/website-launch/,src/content/blog/website-launch.md,blog,authored editorial,1,rewrite and source review,215,original,mythic-admin,Dark Pawns repository and recovered Wayback captures
 /credits/,src/pages/credits.astro,core,authored static page,1,full editorial review,,,,
 /database/,src/pages/database.astro,core,authored static page,1,full editorial review,,,,
 /docs/,src/pages/docs/index.astro,hub,authored collection framing,1,full editorial review,,,,
