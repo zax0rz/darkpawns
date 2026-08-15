@@ -25,6 +25,16 @@ const jsonLd = {
   ],
 };
 const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Map', item: new URL('/map/', Astro.site) },
+    { '@type': 'ListItem', position: 2, name: 'Zones', item: new URL('/zones/', Astro.site) },
+    { '@type': 'ListItem', position: 3, name: zone.name, item: new URL(`/zones/${zone.id}/`, Astro.site) },
+  ],
+};
+const safeBreadcrumbLd = JSON.stringify(breadcrumbLd).replace(/</g, '\\u003c');
 const zoneName = (id: number) => zoneById.get(id)?.name ?? `Zone ${id}`;
 const roomChunks = zone.rooms;
 ---
@@ -33,6 +43,7 @@ const roomChunks = zone.rooms;
   <Fragment slot="head">
     <link rel="alternate" type="application/json" href={jsonUrl} title={`${zone.name} as JSON`} />
     <script type="application/ld+json" set:html={safeJsonLd}></script>
+    <script type="application/ld+json" set:html={safeBreadcrumbLd}></script>
   </Fragment>
 
   <article class="record-page container">

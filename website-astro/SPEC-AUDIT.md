@@ -14,8 +14,8 @@ This is a release checklist, not a promise to implement every emerging protocol.
 - Explicit crawler policy and AI crawler rules in `/robots.txt`.
 - Agent instructions at `/.well-known/agent-skills/`.
 - Predictable Markdown representations for docs, help, world, blog, and archive entries.
-- JSON representations for individual mob and item records.
-- JSON-LD for the site and database records.
+- JSON representations for individual mob, item, and zone records.
+- JSON-LD for the site and database records; zone records add `BreadcrumbList` markup.
 - HTML discovery links for the sitemap, `llms.txt`, agent skills, Markdown, and database JSON.
 - Caddy `Link` headers for the sitemap, `llms.txt`, and agent skills.
 
@@ -33,6 +33,27 @@ This is a release checklist, not a promise to implement every emerging protocol.
 - DNS-AID and Web Bot Auth: infrastructure work with no migration requirement.
 - OKF and schemamap: optional competing representations without a current consumer.
 - TDM reservation: unnecessary while the project explicitly permits agent use and training.
+
+## Zones surface audit (2026-08-15, specification.website seo + agent-readiness checklists)
+
+Audited `/zones/` and `/zones/{id}/` against the seo and agent-readiness
+categories. Verdicts:
+
+PASS: robots.txt (RFC 9309, explicit AI-crawler allows), sitemap coverage
+(all 91 zone pages), URL structure (numeric IDs under `/zones/`, consistent
+with the mob/item record pattern), static generation (no client-side
+rendering dependency), implicit index/follow on public pages, heading
+hierarchy (single `h1`, nested `h2` sections), internal linking (zones link
+mobs, items, connected zones, and `/map/?zone=` deep links), `Place` JSON-LD
+plus `BreadcrumbList` JSON-LD, canonical URLs, `.json` machine twins,
+`llms.txt` zone index entry, stable URLs.
+
+PARTIAL: per-page Markdown endpoints do not exist for zone records (nor for
+mob/item records) — the JSON twin is the machine format for engine data;
+revisit only if the spec's Markdown recommendation is extended to data
+records. Breadcrumb JSON-LD exists on zone records but not yet on mob/item
+records. Caddy `Link` headers must be re-verified at the edge after the
+zones deploy.
 
 ## Pre-launch audit
 

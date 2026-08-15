@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T13:29:26-04:00",
+  "generatedAt": "2026-08-15T13:46:15-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 95
+      "commits": 96
     }
   ],
   "recentCommits": [
+    {
+      "sha": "bdc13bcc3736226b2f275e3a12369c23cb8c1484",
+      "date": "2026-08-15",
+      "title": "feat(web): zone records \u2014 browsable, crawlable views of world-file zones",
+      "url": "https://github.com/zax0rz/darkpawns/commit/bdc13bcc3736226b2f275e3a12369c23cb8c1484"
+    },
     {
       "sha": "19acb079c9194bbf4076975ee553f71a92a73049",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "fix(web): deploy Astro site deterministically",
       "url": "https://github.com/zax0rz/darkpawns/commit/c3e621ff726c99b34bb4f57000bbd7a675c47eeb"
-    },
-    {
-      "sha": "9800212f06c8b26dcebf7acc138ae620f1d61b2b",
-      "date": "2026-08-15",
-      "title": "fix(web): preserve Hugo route parity",
-      "url": "https://github.com/zax0rz/darkpawns/commit/9800212f06c8b26dcebf7acc138ae620f1d61b2b"
     }
   ],
   "pullRequests": [
