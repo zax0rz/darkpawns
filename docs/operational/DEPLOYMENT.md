@@ -7,7 +7,7 @@ How to deploy Dark Pawns server changes to production.
 - **Host:** CT 120 (192.168.1.121) — bare Debian (dark-pawns VM)
 - **Binary:** `/opt/darkpawns/darkpawns-server` (directly on host, no container)
 - **World data:** `/opt/darkpawns/lib/`
-- **Web assets:** `/opt/darkpawns/hugo-site/` (Hugo site, served by Caddy)
+- **Web assets:** `/srv/hugo/` (Astro output; directory name retained from Hugo)
 - **Database:** PostgreSQL on localhost (darkpawns:darkpawns-ct120-pg@localhost/darkpawns)
 - **Cache:** Redis on localhost
 - **Public URL:** https://darkpawns.labz0rz.com (Cloudflare Tunnel)
@@ -95,16 +95,20 @@ ssh root@192.168.1.121 "cp /opt/darkpawns/darkpawns-server.bak /opt/darkpawns/da
 
 ## Website Deploy
 
-The Hugo site deploys via Makefile:
+The Astro site deploys via Makefile:
 
 ```bash
 cd darkpawns_repo
-make deploy-site
+make deploy-site DEPLOY_USER=root DEPLOY_HOST=192.168.1.121
 ```
 
-This runs: parse world data → Hugo build → rsync to CT 120 `/opt/darkpawns/hugo-site/`.
+This regenerates map and database data, runs the site checks, builds
+`website-astro/dist/`, generates permanent Caddy redirects, and syncs the
+static output to CT 120 at `/srv/hugo/`.
 
-Caddy serves the Hugo site directly — no restart needed (Caddy auto-detects file changes).
+Caddy serves the static files directly, so ordinary content deployments need
+no restart. Changes to `website/deploy/Caddyfile` or `redirects.caddy` require
+`caddy validate` followed by `systemctl reload caddy`.
 
 ## World Data Changes
 
@@ -152,7 +156,7 @@ Without SSH access, hand off to someone who has it (Brenda, The Architect).
 | Service | Port | Purpose |
 |---------|------|---------|
 | dark-pawns.service | 4350 (API), 7777 (telnet) | Game server |
-| caddy.service | 80 | Reverse proxy (routes /game, /ws, /api, /admin, /health to 4350; serves Hugo site) |
+| caddy.service | 80 | Reverse proxy (routes /game, /ws, /api, /admin, /health to 4350; serves Astro site) |
 | cloudflared.service | — | Tunnel to Cloudflare → https://darkpawns.labz0rz.com |
 | postgresql | 5432 | Game database |
 | redis-server | 6379 | Cache/session store |

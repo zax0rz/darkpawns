@@ -250,7 +250,7 @@ See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) for the full contribution gui
 | **Kubernetes** | Full manifests in `k8s/` — namespace, configmap, secrets, Postgres, Redis, server, AI agent |
 | **Monitoring** | Prometheus metrics at `/metrics` |
 | **Privacy filter** | Separate sidecar (`Dockerfile.privacy-filter`) |
-| **Website** | Hugo static site, deployed via `make deploy-site` |
+| **Website** | Astro static site, deployed via `make deploy-site` |
 
 ---
 

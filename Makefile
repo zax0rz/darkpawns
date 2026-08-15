@@ -136,7 +136,7 @@ test-parse:
 DEPLOY_PATH ?= /srv/hugo/
 
 # Website commands
-.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint content-inventory check-content-inventory route-parity site-check
+.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint content-inventory check-content-inventory route-parity generate-caddy-redirects site-check
 
 voice-lint:
 	python3 website-astro/scripts/voice_lint.py
@@ -153,6 +153,9 @@ check-content-inventory:
 route-parity:
 	python3 website-astro/scripts/route_parity.py
 
+generate-caddy-redirects:
+	python3 website-astro/scripts/caddy_redirects.py
+
 site-check: voice-lint test-voice-lint check-content-inventory
 	cd website-astro && npm run build
 
@@ -162,7 +165,7 @@ parse-world-json:
 	python3 website/scripts/precompute_sphere.py
 	python3 website/scripts/precompute_graph.py
 
-build-site: parse-world-json site-check
+build-site: parse-world-json site-check generate-caddy-redirects
 
 # Create a dated news post from archetypes/news.md:
 #   make new-post TITLE=my-headline

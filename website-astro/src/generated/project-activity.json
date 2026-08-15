@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T11:28:00-04:00",
+  "generatedAt": "2026-08-15T12:07:34-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 92
+      "commits": 93
     }
   ],
   "recentCommits": [
+    {
+      "sha": "9f6a9e21e5ad56d1a876f40835642d5965808701",
+      "date": "2026-08-15",
+      "title": "feat(web): validate contact form challenges",
+      "url": "https://github.com/zax0rz/darkpawns/commit/9f6a9e21e5ad56d1a876f40835642d5965808701"
+    },
     {
       "sha": "c3e621ff726c99b34bb4f57000bbd7a675c47eeb",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "feat(web): add agent discovery surfaces",
       "url": "https://github.com/zax0rz/darkpawns/commit/4f84268edc9362e5982e89ec6a244389b5cae678"
-    },
-    {
-      "sha": "c3c52ce34eb1327512598bc40092a4613bcdacfe",
-      "date": "2026-08-15",
-      "title": "feat(web): restore database record pages",
-      "url": "https://github.com/zax0rz/darkpawns/commit/c3c52ce34eb1327512598bc40092a4613bcdacfe"
     }
   ],
   "pullRequests": [

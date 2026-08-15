@@ -4,6 +4,7 @@
 
 :80 {
 	encode zstd gzip
+	import redirects.caddy
 
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
@@ -51,7 +52,7 @@
 		reverse_proxy localhost:4350
 	}
 
-	# Hugo static files (catch-all)
+	# Astro static files (catch-all; document-root name is historical)
 	handle {
 		root * /srv/hugo/
 		# Discovery headers for agents and crawlers.

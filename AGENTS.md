@@ -77,15 +77,15 @@ The game package has object movement tests that validate the ObjectLocation syst
 
 ## Website Development & Deployment
 
-The Dark Pawns website is a static site built using **Hugo** and served via Caddy. 
+The Dark Pawns website is a static site built using **Astro** and served via Caddy.
 
 ### Core Codebase Location
-* The website source files live exclusively inside the **`website/`** subdirectory of the main `darkpawns` repository.
-* **NEVER** edit files or run builds on the server inside `/opt/darkpawns/darkpawns-site/` or `/opt/darkpawns/darkpawns-site.deprecated/` — these are deprecated, outdated standalone clones and will completely wipe out new features (like `/map` and xterm client integrations) if compiled.
+* Authored website source lives in **`website-astro/`**. Generated map, database, and public discovery assets remain in **`website/static/`** and are shared through Astro's public directory configuration.
+* **NEVER** edit or build website source on the production server. `/srv/hugo/` is only the deployed document root; its name is historical.
 
 ### Design Aesthetics & Philosophy
 * **Stephen King Paperback Style**: Clean ivory/cream backgrounds, charcoal ink text, and dark oxblood highlights.
-* **Asset Pipeline**: Static JavaScript (like `/js/client.js`) MUST be managed through the Hugo assets pipeline (`resources.Get` + `fingerprint` in Hugo templates) for cache-busting and SRI integrity checks. **Do not** link raw `/js/client.js` in templates.
+* **Asset Pipeline**: Authored JavaScript must be imported by Astro so Vite fingerprints it. Shared generated assets under `website/static/` keep stable public URLs.
 
 ### Automated Deployment Pipeline
 To prevent compiling from the wrong directory or syncing outdated files, **always use the Makefile target** in the root of the repository:
@@ -95,7 +95,7 @@ make deploy-site
 ```
 
 This target automatically executes the complete, secure deployment sequence:
-1. **`python3 website/scripts/parse_world.py`** — Parses the authoritative MUD room files (`lib/world/`) and compiles a fresh `world.json` for the interactive D3 map page.
-2. **`cd website && hugo --minify`** — Runs the Hugo compilation in the correct subdirectory context.
-3. **`rsync -avz --delete website/public/ root@192.168.1.15:/opt/darkpawns/hugo-site/`** — Syncs the newly compiled static assets directly to the live server web root.
-
+1. Regenerates map and database assets from the authoritative world files.
+2. Runs voice, content-inventory, and Astro build checks.
+3. Generates the Caddy permanent-redirect table.
+4. Syncs `website-astro/dist/` to the configured production document root. `DEPLOY_USER` and `DEPLOY_HOST` are required explicitly.

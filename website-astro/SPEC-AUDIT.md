@@ -52,6 +52,7 @@ Partial:
 - Editorial structured data can be typed as `Article` after the content pass is complete.
 - A raster social image exists, but a purpose-built 1200 by 630 share image would produce better previews.
 - Every HTML route in the generated Hugo site has an Astro page or redirect. `make route-parity` enforces this against both build directories.
+- Static redirect documents are mirrored into Caddy permanent redirects by `website-astro/scripts/caddy_redirects.py`, preserving direct browser fallbacks and HTTP migration signals.
 
 ### Accessibility
 
