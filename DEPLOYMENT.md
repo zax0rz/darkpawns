@@ -95,6 +95,26 @@ After deploy, check:
 3. **Game port:** `curl http://localhost:4350/health` → `OK`
 4. **Logs are alive:** `journalctl -u dark-pawns.service --no-pager -n 5` — expect world-loading warnings (missing mob scripts are normal), no fatal errors
 
+## Website contact form
+
+The public form posts to `/api/contact`, which Caddy already proxies to the Go
+server. Install these values as private systemd service environment variables:
+
+```text
+CONTACT_TO=
+CONTACT_SMTP_HOST=smtp.gmail.com
+CONTACT_SMTP_PORT=587
+CONTACT_SMTP_USER=
+CONTACT_SMTP_PASSWORD=
+CONTACT_TURNSTILE_SECRET=
+```
+
+`CONTACT_TO` is the private destination. `CONTACT_SMTP_PASSWORD` should be a
+Google app password, not the account password. The static Astro build also
+requires the public `PUBLIC_TURNSTILE_SITE_KEY` value. The form remains disabled
+when that public key is absent, and the endpoint returns 503 when any private
+delivery setting is missing.
+
 ## Notes
 
 - **Don't deploy from `go run` or `go build` with no output flag.** The binary must be explicitly named and cross-compiled.

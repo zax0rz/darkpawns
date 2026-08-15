@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T09:00:16-04:00",
+  "generatedAt": "2026-08-15T10:01:36-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 83
+      "commits": 84
     }
   ],
   "recentCommits": [
+    {
+      "sha": "446390f7c908b0842d4f2b3fecbdc5f4a18df967",
+      "date": "2026-08-15",
+      "title": "feat(web): publish the restoration ledger",
+      "url": "https://github.com/zax0rz/darkpawns/commit/446390f7c908b0842d4f2b3fecbdc5f4a18df967"
+    },
     {
       "sha": "4bee4f483d2dcc148911e34b438cda860b545a2c",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "feat(web): tell the sourced Dark Pawns story",
       "url": "https://github.com/zax0rz/darkpawns/commit/68c28f904834b6bb0e5192fe747db72b97203017"
-    },
-    {
-      "sha": "d0cc533829c9c19ba098495531bcf4c6a75a0bcb",
-      "date": "2026-08-15",
-      "title": "docs(web): generate content inventory",
-      "url": "https://github.com/zax0rz/darkpawns/commit/d0cc533829c9c19ba098495531bcf4c6a75a0bcb"
     }
   ],
   "pullRequests": [

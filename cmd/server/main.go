@@ -52,6 +52,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
+	"github.com/zax0rz/darkpawns/pkg/contact"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -310,6 +311,13 @@ func main() {
 		}
 	})
 	http.HandleFunc("/metrics", metrics.Handler().ServeHTTP)
+	contactHandler, err := contact.NewFromEnvironment()
+	if err != nil {
+		slog.Warn("Website contact form disabled", "error", err)
+		http.Handle("/api/contact", contact.UnavailableHandler())
+	} else {
+		http.Handle("/api/contact", contactHandler)
+	}
 	// Serve Hugo static site if -hugo flag provided
 	// Falls back to -web flag for legacy web client, then plain text index
 	if *hugoDir != "" {
