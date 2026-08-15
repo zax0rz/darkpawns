@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import mapScriptUrl from '../../../website/assets/js/map.js?url';
 ---
 
 <Base title="Dark Pawns World Map" description="Explore the rooms, zones, and paths of the Dark Pawns world." hideFooter>
@@ -161,6 +162,10 @@ import Base from '../layouts/Base.astro';
 }
 .map-btn:hover { background: var(--accent); color: var(--paper); border-color: var(--accent); }
 .map-btn.active { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.map-view-switch { display: inline-flex; }
+.map-view-switch .map-btn { border-radius: 0; margin-left: -1px; }
+.map-view-switch .map-btn:first-child { border-radius: 2px 0 0 2px; margin-left: 0; }
+.map-view-switch .map-btn:last-child { border-radius: 0 2px 2px 0; }
 
 /* ── View wrapper — holds both canvas and svg ────────── */
 #map-view-wrap {
@@ -478,7 +483,10 @@ import Base from '../layouts/Base.astro';
         <button class="map-btn" id="btn-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
         <button class="map-btn" id="btn-reset"    title="Reset view" aria-label="Reset view">⌂</button>
         <button class="map-btn" id="btn-path"     title="Pathfinding mode" aria-label="Toggle pathfinding">Path</button>
-        <button class="map-btn" id="btn-view"     title="Toggle Globe View" aria-label="Toggle Globe View">✦ Globe</button>
+        <div class="map-view-switch" role="group" aria-label="Map view">
+          <button class="map-btn active" id="btn-view-graph" title="World graph" aria-label="World graph view">✦ Graph</button>
+          <button class="map-btn" id="btn-view-grid" title="Flat world overview" aria-label="Flat world overview">▦ Grid</button>
+        </div>
       </div>
     </div>
 
@@ -553,5 +561,5 @@ import Base from '../layouts/Base.astro';
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"
         integrity="sha256-8glLv2FBs1lyLE/kVOtsSw8OQswQzHr5IfwVj864ZTk=" is:inline
         crossorigin="anonymous"></script>
-<script is:inline src="/js/map.js"></script>
+<script is:inline src={mapScriptUrl}></script>
 </Base>

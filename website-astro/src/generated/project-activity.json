@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T10:09:07-04:00",
+  "generatedAt": "2026-08-15T10:13:25-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 85
+      "commits": 86
     }
   ],
   "recentCommits": [
+    {
+      "sha": "622d245da7c6ce6de2d4963c6205779bba2c9694",
+      "date": "2026-08-15",
+      "title": "feat(web): redesign the front page",
+      "url": "https://github.com/zax0rz/darkpawns/commit/622d245da7c6ce6de2d4963c6205779bba2c9694"
+    },
     {
       "sha": "394eea4c4c640489af2f3605f0d37c05567122cc",
       "date": "2026-08-15",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "fix(web): clarify the DPReturns home",
       "url": "https://github.com/zax0rz/darkpawns/commit/459036cc110a62cf27a75cedd3a2626bb31aef7c"
-    },
-    {
-      "sha": "cb7ec3ff863c370de3c3832655a709b0af7f78ad",
-      "date": "2026-08-15",
-      "title": "feat(web): document the DPReturns revival",
-      "url": "https://github.com/zax0rz/darkpawns/commit/cb7ec3ff863c370de3c3832655a709b0af7f78ad"
     }
   ],
   "pullRequests": [

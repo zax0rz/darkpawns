@@ -242,7 +242,13 @@
         const zoneArg = params.get('zone');
 
         if (zoneArg) {
-          selectZone(parseInt(zoneArg, 10));
+          selectZone(parseInt(zoneArg, 10), { pushHistory: false }).then(() => {
+            if (!roomArg) return;
+            const roomId = parseInt(roomArg, 10);
+            const room = currentRooms.find(r => r.id === roomId);
+            if (room) selectRoom(room);
+            jumpToRoom(roomId);
+          });
         } else if (roomArg) {
           // need to find which zone the room is in — check each zone's JSON
           // Fallback: show world overview, then load
@@ -309,7 +315,11 @@
 
     if (zoneArg) {
       selectZone(parseInt(zoneArg, 10), { pushHistory: false }).then(() => {
-        if (roomArg) jumpToRoom(parseInt(roomArg, 10));
+        if (!roomArg) return;
+        const roomId = parseInt(roomArg, 10);
+        const room = currentRooms.find(r => r.id === roomId);
+        if (room) selectRoom(room);
+        jumpToRoom(roomId);
       });
     } else {
       selectWorldOverview({ pushHistory: false });
