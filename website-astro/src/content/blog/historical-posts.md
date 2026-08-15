@@ -8,46 +8,54 @@ source: "https://web.archive.org/web/*/http://darkpawns.com/main.html"
 voiceLayer: "frontline"
 ---
 
-> **Source:** darkpawns.com/main.html and darkpawns.com/faq.html (R.E. Paret / Frontline)  
-> **Preserved:** Wayback Machine captures from the original site run.
+> **Source:** darkpawns.com/main.html (R.E. Paret / Frontline)  
+> **Preserved:** Verbatim news posts recovered from Wayback Machine captures.
 
 <div class="archive-dispatch">
   <div class="dispatch-header">
-    <span class="dispatch-tag">FAQ EXCERPT · GAME MECHANICS</span>
+    <span class="dispatch-tag">NEWS POST · SYSTEM REVISION</span>
     <time>Circa 2001</time>
   </div>
   <h3>OUTLAW System</h3>
-  <p><em>Note: Frontline's original news post introducing the system on main.html was not recovered in full. The preserved FAQ entry on faq.html defines the rule verbatim:</em></p>
-  <blockquote>"An 'outlaw' flag is automatically assigned after a successful PK. The flag is permanent, and will not be removed through death or remort of your character."</blockquote>
+  <p>The OUTLAW system has undergone a minor revision.</p>
+  <p>All the details can be found by reading the NEWS in the game.</p>
+  <p>Thanks to everyone who contributed ideas to make the system better.</p>
 </div>
 
 <div class="archive-dispatch">
   <div class="dispatch-header">
-    <span class="dispatch-tag">ANECDOTE</span>
+    <span class="dispatch-tag">NEWS POST · COMMUNITY ANECDOTE</span>
     <time>Circa 2002</time>
   </div>
   <h3>The Aiko Story</h3>
-  <p>A player mudding during a lecture had their speakers on and got paged roughly 20 times by in-game notifications, disrupting the entire class.</p>
+  <pre><code>Aiko tells you, 'what's up?'
+You tell Aiko, 'not much, you?'
+Aiko tells you, 'at school... listing to an NT lecture on user policies and file permissions and such'
+You tell Aiko, 'heh mudding during lecture'
+*Frontline* (page Aiko x 20)
+You tell Aiko, 'muhahaha'
+[ Closing link to: Aiko. ]</code></pre>
   <p><em>Moral of the story: Turn your speakers down if you are going to mud during lecture. :)</em></p>
 </div>
 
 <div class="archive-dispatch">
   <div class="dispatch-header">
-    <span class="dispatch-tag">BETA RELEASE</span>
-    <time>Circa 2003</time>
+    <span class="dispatch-tag">NEWS POST · BETA RELEASE</span>
+    <time>October 1, 2005</time>
   </div>
   <h3>Dark Pawns 3.0</h3>
-  <p>Dark Pawns 3.0 is (finally!) out in beta.</p>
+  <p>Dark Pawns 3.0 is (finally!) out in beta. To try it out, telnet to darkpawns.com 4355 with your favorite mud client or with Windows telnet if you are a masochist.</p>
 </div>
 
 <div class="archive-dispatch">
   <div class="dispatch-header">
-    <span class="dispatch-tag">ANNOUNCEMENT</span>
-    <time>Circa 2004</time>
+    <span class="dispatch-tag">NEWS POST · ANNOUNCEMENT</span>
+    <time>October 13, 2005</time>
   </div>
   <h3>Forums</h3>
   <p>Oh my god forums! Please please please register with your correct account name!</p>
 </div>
+
 
 
 
