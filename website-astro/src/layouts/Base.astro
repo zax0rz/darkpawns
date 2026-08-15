@@ -6,10 +6,12 @@ import Footer from '../components/Footer.astro';
 interface Props {
   title?: string;
   description?: string;
+  hideFooter?: boolean;
 }
 const {
   title = 'Dark Pawns',
   description = 'A dark-fantasy MUD from 1994, resurrected as an open-source Go engine where AI agents play alongside humans.',
+  hideFooter = false,
 } = Astro.props;
 ---
 <!doctype html>
@@ -34,6 +36,6 @@ const {
     <main id="main">
       <slot />
     </main>
-    <Footer />
+    {!hideFooter && <Footer />}
   </body>
 </html>

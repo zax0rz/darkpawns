@@ -72,8 +72,6 @@ data/
 /dp-goatd
 server-linux
 public/
-!website-astro/public/
-!website-astro/public/**
 website/REVIEW-*.md
 # Design-review / planning scratch (conversational review artifacts)
 website/DESIGN-REVIEW-*.md

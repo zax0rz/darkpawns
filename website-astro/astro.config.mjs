@@ -3,6 +3,9 @@ import { defineConfig } from 'astro/config';
 // Dark Pawns — Astro migration (replaces the Hugo site in ../website).
 export default defineConfig({
   site: 'https://darkpawns.labz0rz.com',
+  // Share the generated world/database assets with the Hugo site while the
+  // migration is in progress. The parsers continue to have one output tree.
+  publicDir: '../website/static',
   redirects: {
     '/connect': '/play/',
     '/connect/client-downloads': '/play/#desktop-client',
