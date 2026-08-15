@@ -1,0 +1,120 @@
+{
+  "generatedAt": "2026-08-15T09:00:16-04:00",
+  "repository": "https://github.com/zax0rz/darkpawns",
+  "activitySource": "local Git history, first-parent commits on the build revision",
+  "weeks": [
+    {
+      "week": "2026-05-25",
+      "commits": 50
+    },
+    {
+      "week": "2026-06-01",
+      "commits": 7
+    },
+    {
+      "week": "2026-06-08",
+      "commits": 11
+    },
+    {
+      "week": "2026-06-15",
+      "commits": 15
+    },
+    {
+      "week": "2026-06-22",
+      "commits": 78
+    },
+    {
+      "week": "2026-06-29",
+      "commits": 50
+    },
+    {
+      "week": "2026-07-06",
+      "commits": 90
+    },
+    {
+      "week": "2026-07-13",
+      "commits": 78
+    },
+    {
+      "week": "2026-07-20",
+      "commits": 82
+    },
+    {
+      "week": "2026-07-27",
+      "commits": 3
+    },
+    {
+      "week": "2026-08-03",
+      "commits": 1
+    },
+    {
+      "week": "2026-08-10",
+      "commits": 83
+    }
+  ],
+  "recentCommits": [
+    {
+      "sha": "4bee4f483d2dcc148911e34b438cda860b545a2c",
+      "date": "2026-08-15",
+      "title": "fix(web): curate the community archive",
+      "url": "https://github.com/zax0rz/darkpawns/commit/4bee4f483d2dcc148911e34b438cda860b545a2c"
+    },
+    {
+      "sha": "459036cc110a62cf27a75cedd3a2626bb31aef7c",
+      "date": "2026-08-15",
+      "title": "fix(web): clarify the DPReturns home",
+      "url": "https://github.com/zax0rz/darkpawns/commit/459036cc110a62cf27a75cedd3a2626bb31aef7c"
+    },
+    {
+      "sha": "cb7ec3ff863c370de3c3832655a709b0af7f78ad",
+      "date": "2026-08-15",
+      "title": "feat(web): document the DPReturns revival",
+      "url": "https://github.com/zax0rz/darkpawns/commit/cb7ec3ff863c370de3c3832655a709b0af7f78ad"
+    },
+    {
+      "sha": "68c28f904834b6bb0e5192fe747db72b97203017",
+      "date": "2026-08-15",
+      "title": "feat(web): tell the sourced Dark Pawns story",
+      "url": "https://github.com/zax0rz/darkpawns/commit/68c28f904834b6bb0e5192fe747db72b97203017"
+    },
+    {
+      "sha": "d0cc533829c9c19ba098495531bcf4c6a75a0bcb",
+      "date": "2026-08-15",
+      "title": "docs(web): generate content inventory",
+      "url": "https://github.com/zax0rz/darkpawns/commit/d0cc533829c9c19ba098495531bcf4c6a75a0bcb"
+    }
+  ],
+  "pullRequests": [
+    {
+      "number": 570,
+      "title": "fix: saveBoard silently drops write failures",
+      "url": "https://github.com/zax0rz/darkpawns/pull/570",
+      "mergedAt": "2026-08-15T10:04:44Z"
+    },
+    {
+      "number": 571,
+      "title": "fix: API key transmitted in plaintext over unencrypted WebSocket",
+      "url": "https://github.com/zax0rz/darkpawns/pull/571",
+      "mergedAt": "2026-08-15T10:04:39Z"
+    },
+    {
+      "number": 569,
+      "title": "fix: BehaviorEngine never evaluated in production decision loop",
+      "url": "https://github.com/zax0rz/darkpawns/pull/569",
+      "mergedAt": "2026-08-14T10:02:24Z"
+    },
+    {
+      "number": 567,
+      "title": "docs: DEV-SETUP Linux oracle build notes",
+      "url": "https://github.com/zax0rz/darkpawns/pull/567",
+      "mergedAt": "2026-08-14T01:09:14Z"
+    },
+    {
+      "number": 568,
+      "title": "chore: bump Go 1.26.5 to 1.26.6",
+      "url": "https://github.com/zax0rz/darkpawns/pull/568",
+      "mergedAt": "2026-08-14T00:59:45Z"
+    }
+  ],
+  "pullRequestSource": "GitHub REST API; the checked-in result is retained when GITHUB_TOKEN is absent"
+}

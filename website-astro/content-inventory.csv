@@ -2,6 +2,7 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /,src/pages/index.astro,core,authored static page,1,full editorial review,,,,
 /about/,src/pages/about.astro,core,authored static page,1,full editorial review,,,,
 /about/dpreturns/,src/pages/about/dpreturns.astro,core,authored static page,1,full editorial review,,,,
+/about/project/,src/pages/about/project.astro,core,authored static page,1,full editorial review,,,,
 /archive/,src/pages/archive/index.astro,hub,authored collection framing,1,full editorial review,,,,
 /archive/history/,src/content/archive/history.md,archive,preserved community artifact,2,verify against capture,549,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/p492/,src/content/archive/p492.md,archive,preserved community artifact,2,verify against capture,2244,verbatim,frontline,Wayback capture identified by captureUrl

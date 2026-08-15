@@ -1,0 +1,145 @@
+---
+import Base from '../../layouts/Base.astro';
+import activity from '../../generated/project-activity.json';
+
+const maxCommits = Math.max(...activity.weeks.map((week) => week.commits), 1);
+const dateLabel = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const generatedLabel = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(activity.generatedAt));
+const contributionPaths = [
+  { title: 'Test the port', text: 'Compare player-facing behavior with the original C server and add a reproducible case when the two disagree.' },
+  { title: 'Work on the server', text: 'Fix fidelity gaps, improve the oracle harness, or help maintain the Go implementation.' },
+  { title: 'Check the record', text: 'Correct documentation, identify missing sources, or help recover the history of the game and its community.' },
+  { title: 'Improve the field guides', text: 'Clarify help files and contributor documentation without changing what the game says or does.' },
+];
+---
+
+<Base title="The Dark Pawns restoration" description="Recent work on the open-source Dark Pawns server and ways to contribute to the restoration.">
+  <main class="project-page">
+    <header class="project-hero container">
+      <p class="eyebrow"><a href="/about/">About Dark Pawns</a> / The restoration</p>
+      <h1>The restoration is public.</h1>
+      <p class="lede">The Go server, tests, documentation, and website are maintained in the open.</p>
+      <div class="hero-actions">
+        <a class="btn-primary" href={activity.repository}>Browse the repository</a>
+        <a class="btn-secondary" href="/docs/server/contributing/">Read the contributing guide</a>
+      </div>
+    </header>
+
+    <section class="ledger-section">
+      <div class="container ledger-grid">
+        <div class="activity-copy">
+          <p class="eyebrow">Recent work</p>
+          <h2>Twelve weeks in Git</h2>
+          <p>This is a count of first-parent commits on the revision used to build the site. It shows when work landed, not how much any commit was worth.</p>
+          <p class="provenance">Generated {generatedLabel}. Source: {activity.activitySource}.</p>
+        </div>
+        <figure class="commit-chart" aria-labelledby="activity-caption">
+          <div class="bars">
+            {activity.weeks.map((week) => (
+              <div class="week" title={`${week.commits} commits during the week of ${week.week}`}>
+                <span class="count">{week.commits}</span>
+                <span class="bar-track">
+                  <span class="bar" style={`height: ${Math.max((week.commits / maxCommits) * 100, week.commits ? 5 : 0)}%`}></span>
+                </span>
+                <time datetime={week.week}>{dateLabel.format(new Date(`${week.week}T00:00:00Z`))}</time>
+              </div>
+            ))}
+          </div>
+          <figcaption id="activity-caption">Commits by week. Exact counts are printed above each bar.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="recent container">
+      <div class="recent-heading">
+        <div>
+          <p class="eyebrow">From the workbench</p>
+          <h2>Recently merged</h2>
+        </div>
+        <p>Pull requests are refreshed from GitHub during an authenticated site build. The last good result remains in the site when GitHub is unavailable.</p>
+      </div>
+      <ol class="work-list">
+        {activity.pullRequests.map((pr) => (
+          <li>
+            <span class="work-number">PR {pr.number}</span>
+            <a href={pr.url}>{pr.title}</a>
+            <time datetime={pr.mergedAt}>{dateLabel.format(new Date(pr.mergedAt))}</time>
+          </li>
+        ))}
+      </ol>
+      <p class="provenance">Source: {activity.pullRequestSource}.</p>
+    </section>
+
+    <section class="contribute-section">
+      <div class="container contribute-grid">
+        <div>
+          <p class="eyebrow">Contributing</p>
+          <h2>There is work for more than programmers.</h2>
+          <p>The server follows a strict fidelity rule: player-facing behavior comes from the original C implementation. Historical and editorial work follows the same principle. Find the source, preserve what it says, and document uncertainty.</p>
+        </div>
+        <ol class="contribution-list">
+          {contributionPaths.map((path) => (
+            <li><h3>{path.title}</h3><p>{path.text}</p></li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <footer class="project-footer container">
+      <p>Start with the contributor notes, then choose a piece of the record you can verify.</p>
+      <a class="btn-primary" href="/docs/server/contributing/">How to contribute</a>
+      <a class="text-link" href={activity.repository}>Open GitHub</a>
+    </footer>
+  </main>
+</Base>
+
+<style>
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .project-hero { padding-block: var(--space-xl); }
+  .project-hero h1 { max-width: 13ch; font-size: clamp(3rem, 8vw, 6rem); }
+  .lede { color: var(--ink-muted); font-size: 1.25rem; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg); }
+  .btn-primary, .btn-secondary { display: inline-block; border: 1px solid var(--rule); padding: .65rem 1rem; font-family: var(--font-display); color: var(--ink); }
+  .btn-primary { border-color: var(--accent); background: var(--accent); color: var(--paper); }
+  .btn-primary:hover { background: var(--accent-deep); text-decoration: none; }
+  .btn-secondary:hover { background: var(--ink); color: var(--paper); text-decoration: none; }
+  .ledger-section { border-block: 1px solid var(--rule); background: var(--paper-deep); padding-block: var(--space-xl); }
+  .ledger-grid { display: grid; grid-template-columns: minmax(16rem, .7fr) minmax(28rem, 1.3fr); gap: var(--space-xl); align-items: end; }
+  .activity-copy p:not(.eyebrow) { color: var(--ink-muted); }
+  .provenance { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; }
+  .commit-chart { margin: 0; min-width: 0; }
+  .bars { display: grid; grid-template-columns: repeat(12, minmax(1.5rem, 1fr)); gap: var(--space-sm); height: 18rem; border-bottom: 2px solid var(--rule); }
+  .week { display: grid; grid-template-rows: 1.5rem 1fr 2.5rem; gap: var(--space-xs); min-width: 0; text-align: center; }
+  .count, .week time { font-family: var(--font-mono); font-size: .68rem; }
+  .bar-track { display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
+  .bar { display: block; width: 70%; max-width: 2rem; background: var(--accent); border-top: 2px solid var(--accent-deep); }
+  .week time { align-self: start; color: var(--ink-muted); white-space: nowrap; writing-mode: vertical-rl; transform: rotate(180deg); margin-inline: auto; }
+  figcaption { color: var(--ink-muted); font-size: .8rem; margin-top: var(--space-sm); }
+  .recent { padding-block: var(--space-xl); }
+  .recent-heading { display: grid; grid-template-columns: 1fr minmax(18rem, .8fr); gap: var(--space-xl); }
+  .recent-heading > p { color: var(--ink-muted); }
+  .work-list, .contribution-list { list-style: none; margin: var(--space-lg) 0; padding: 0; border-top: 1px solid var(--rule); }
+  .work-list li { display: grid; grid-template-columns: 5rem 1fr 5rem; gap: var(--space-md); padding-block: var(--space-md); border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .work-number, .work-list time { color: var(--ink-muted); font-family: var(--font-mono); font-size: .75rem; }
+  .work-list time { text-align: right; }
+  .contribute-section { background: var(--paper-deep); border-block: 1px solid var(--rule); padding-block: var(--space-xl); }
+  .contribute-grid { display: grid; grid-template-columns: minmax(16rem, .8fr) minmax(24rem, 1.2fr); gap: var(--space-xl); }
+  .contribution-list { margin: 0; }
+  .contribution-list li { padding-block: var(--space-md); border-bottom: 1px solid var(--rule); }
+  .contribution-list h3 { font-size: 1.15rem; margin-bottom: var(--space-xs); }
+  .contribution-list p { color: var(--ink-muted); margin: 0; }
+  .project-footer { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-md); padding-block: var(--space-lg) var(--space-xl); }
+  .project-footer p { font-family: var(--font-display); font-size: 1.35rem; margin: 0 auto 0 0; }
+  .text-link { padding: .65rem 0; }
+  @media (max-width: 800px) {
+    .ledger-grid, .recent-heading, .contribute-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
+    .bars { height: 15rem; gap: .3rem; }
+  }
+  @media (max-width: 560px) {
+    .project-hero, .ledger-grid, .recent, .contribute-grid, .project-footer { padding-inline: var(--space-md); }
+    .work-list li { grid-template-columns: 4rem 1fr; }
+    .work-list time { display: none; }
+    .bars { height: 13rem; }
+    .count, .week time { font-size: .58rem; }
+  }
+</style>

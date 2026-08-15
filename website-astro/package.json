@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "generate:project": "python3 scripts/project_activity.py",
+    "build": "npm run generate:project && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "voice-lint": "python3 scripts/voice_lint.py",

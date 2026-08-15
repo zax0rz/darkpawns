@@ -100,6 +100,7 @@ def structural_entries() -> list[Entry]:
         "/": "src/pages/index.astro",
         "/about/": "src/pages/about.astro",
         "/about/dpreturns/": "src/pages/about/dpreturns.astro",
+        "/about/project/": "src/pages/about/project.astro",
         "/credits/": "src/pages/credits.astro",
         "/play/": "src/pages/play.astro",
         "/map/": "src/pages/map.astro",
