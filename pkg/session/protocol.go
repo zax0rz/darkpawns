@@ -18,6 +18,7 @@ const (
 	MsgText         = "text"
 	MsgCharCreate   = "char_create"   // server → client: prompts during char creation
 	MsgVars         = "vars"          // server → agent: variable state update
+	MsgPrompt       = "prompt"        // server → client: render the command prompt
 	MsgTokenRefresh = "token_refresh" // server → client: proactively rotated JWT
 )
 

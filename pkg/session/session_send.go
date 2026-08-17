@@ -162,5 +162,32 @@ func (s *Session) Send(message string) {
 	_ = s.SendMessage(message)
 }
 
+// SendPrompt enqueues a prompt marker on the session's outgoing channel so the
+// transport writes the prompt only after all earlier output (FIFO ordering).
+// Telnet renders it as the "> " command prompt; WebSocket clients may ignore
+// it. Sharing the channel with command output guarantees C's game-loop order
+// (comm.c:643-648): output is flushed first, the prompt is written after.
+// Safe to call when the channel is closed — the send is dropped like SendMessage.
+func (s *Session) SendPrompt() {
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgPrompt,
+		Data: map[string]interface{}{},
+	})
+	if err != nil {
+		slog.Error("json.Marshal error", "error", err)
+		return
+	}
+	s.sendMu.RLock()
+	defer s.sendMu.RUnlock()
+	if s.sendClosed {
+		return
+	}
+	select {
+	case s.send <- msg:
+	default:
+		slog.Warn("session send channel full — dropping prompt", "player", s.playerName)
+	}
+}
+
 // MarkDirty marks a variable as dirty for agent subscriptions.
 // Deprecated: prefer markDirty (unexported) which uses the agent mutex.
