@@ -878,3 +878,70 @@ func observationFormats(result game.ObservationResult) string {
 	}
 	return out.String()
 }
+
+// TestPromptAfterCommandOutput verifies the "> " prompt is written after the
+// command's response, never before it. The prompt now travels through the
+// session's send channel, so writeLoop drains the command output first and
+// prints the prompt after (C: comm.c:643-648 flush output, then prompt).
+func TestPromptAfterCommandOutput(t *testing.T) {
+	world, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{
+		VNum: game.MortalStartRoom,
+		Name: "The Temple",
+		Zone: 80,
+	}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager := session.NewManager(world, nil)
+	t.Cleanup(manager.Stop)
+
+	client, server := net.Pipe()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, manager, game.BanNot)
+	}()
+
+	transcript := make(chan []byte, 1)
+	go func() {
+		output, _ := io.ReadAll(client)
+		transcript <- output
+	}()
+
+	const playerName = "guest_prompt_order"
+	if _, err := client.Write([]byte(playerName + "\r\n")); err != nil {
+		t.Fatal(err)
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if _, ok := manager.GetSession(playerName); ok {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("guest session was not registered")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	if _, err := client.Write([]byte("say hello\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.Write([]byte("quit\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handleConn did not return after quit")
+	}
+
+	visible := string(stripTelnetCommands(<-transcript))
+	const response = "You say 'hello'\r\n"
+	if !strings.Contains(visible, response) {
+		t.Fatalf("transcript missing command response: %q", visible)
+	}
+	if !strings.Contains(visible, response+"> ") {
+		t.Fatalf("prompt did not follow command response (prompt/response race): %q", visible)
+	}
+}

@@ -436,8 +436,10 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
 		} else if line == "" {
-			// Pressing Enter with no command just refreshes the prompt.
-			tc.writeLine("> ")
+			// Pressing Enter with no command just refreshes the prompt. Route it
+			// through the session's send channel so writeLoop renders it in FIFO
+			// order after any still-pending output (C: comm.c:643-648).
+			s.SendPrompt()
 		} else {
 			// C-faithful tokenization (interpreter.c:883-907): a non-letter
 			// first char is a one-char command, no separating space needed
@@ -446,8 +448,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			if err := sendCommand(s, cmdWord, cmdArgs); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
+			// The prompt is enqueued after the command so writeLoop drains the
+			// command's output first, then prints "> " — matching C's flush-then-
+			// prompt order instead of racing the output writer goroutine.
 			if !s.SendClosed() {
-				tc.writeLine("> ")
+				s.SendPrompt()
 			}
 		}
 		if s.SendClosed() {
@@ -522,6 +527,11 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 					tc.writeLine(fmt.Sprintf("%s\r\n", text))
 				}
 			}
+		case "prompt":
+			// The command prompt travels through the session's send channel so
+			// it is written only after the command's queued output has been
+			// drained (C: comm.c:643-648 flush output, then prompt).
+			tc.writeLine("> ")
 		case "char_create":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
 				secret, _ := ed["secret"].(bool)
