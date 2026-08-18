@@ -201,6 +201,13 @@ func (d *Daemon) reconnect(ctx context.Context) {
 	// Hold d.mu while reconnecting so that sendCommand cannot observe a
 	// stale or nil connection between its nil-check and WriteJSON (DP-668).
 	d.mu.Lock()
+	// Close the previous connection before reconnecting: Connect() overwrites
+	// a.conn, and without an explicit Close the old WSConn leaks its TCP socket
+	// and read state on every reconnect (see WSConn.Close).
+	if d.client != nil && d.client.conn != nil {
+		_ = d.client.conn.Close()
+		d.client.conn = nil
+	}
 	err := d.client.Reconnect(ctx, rcfg)
 	d.mu.Unlock()
 	if err != nil {
