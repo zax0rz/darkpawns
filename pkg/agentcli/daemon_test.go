@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -323,4 +324,99 @@ func TestSendCommandConcurrentReconnect(t *testing.T) {
 
 	wg.Wait()
 	cancel()
+}
+
+// TestDaemonReconnectClosesOldConnection guards against fd exhaustion on the
+// daemon readLoop-error path: reconnect must close the previous WSConn's TCP
+// socket before Connect() overwrites a.conn with a fresh one.
+func TestDaemonReconnectClosesOldConnection(t *testing.T) {
+	shortHome(t)
+
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+
+		var login map[string]any
+		_ = c.ReadJSON(&login)
+		_ = c.WriteJSON(map[string]any{
+			"type": "state",
+			"data": map[string]any{},
+		})
+		var sub map[string]any
+		_ = c.ReadJSON(&sub)
+
+		for {
+			if _, _, err := c.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}))
+	defer srv.Close()
+
+	u, err := url.Parse(srv.URL)
+	if err != nil {
+		t.Fatalf("parse server url: %v", err)
+	}
+	port, err := strconv.Atoi(u.Port())
+	if err != nil {
+		t.Fatalf("parse server port: %v", err)
+	}
+	cfg := &AgentConfig{
+		Key:        "test-key",
+		PlayerName: "LeakBot",
+		GameHost:   u.Hostname(),
+		GamePort:   port,
+	}
+
+	d, err := NewDaemon(cfg)
+	if err != nil {
+		t.Fatalf("new daemon: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Dial the first connection through a tracked dialer so we can detect
+	// whether reconnect closes the old WSConn's underlying socket.
+	var closed int32
+	dialer := websocket.Dialer{
+		NetDial: func(network, addr string) (net.Conn, error) {
+			c, err := net.Dial(network, addr)
+			if err != nil {
+				return nil, err
+			}
+			return &trackedConn{Conn: c, closed: &closed}, nil
+		},
+	}
+	raw, _, err := dialer.Dial("ws://"+strings.TrimPrefix(srv.URL, "http://")+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	old := &WSConn{conn: raw}
+
+	client := NewAgentClient(cfg)
+	client.conn = old
+	d.client = client
+
+	d.reconnect(ctx)
+
+	if atomic.LoadInt32(&closed) != 1 {
+		t.Fatal("daemon reconnect did not close the previous WSConn (fd leak)")
+	}
+
+	d.mu.Lock()
+	conn := d.client.conn
+	d.mu.Unlock()
+	if conn == nil {
+		t.Fatal("reconnect did not establish a new connection")
+	}
+	if conn == old {
+		t.Fatal("reconnect reused the old connection")
+	}
 }
