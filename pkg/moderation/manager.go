@@ -163,6 +163,9 @@ func (m *Manager) loadActivePenalties() {
 
 		m.activePenalties[p.PlayerName] = append(m.activePenalties[p.PlayerName], p)
 	}
+	if err := rows.Err(); err != nil {
+		slog.Error("Failed to iterate penalties", "error", err)
+	}
 }
 
 // loadWordFilters loads word filters from database.
@@ -196,6 +199,9 @@ func (m *Manager) loadWordFilters() {
 		wf.compile()
 
 		m.wordFilters = append(m.wordFilters, wf)
+	}
+	if err := rows.Err(); err != nil {
+		slog.Error("Failed to iterate word filters", "error", err)
 	}
 }
 

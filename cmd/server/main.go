@@ -44,6 +44,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
@@ -98,6 +99,30 @@ func main() {
 		slog.Error("Usage: server -world <path-to-lib>")
 		os.Exit(1)
 	}
+	// Anchor the process to the game root (parent of the world/lib dir)
+	// before anything reads or writes a relative data/ path (DP-1193).
+	// Every persistence path — data/shops.json, data/aliases/, data/mail,
+	// data/bugs.txt, admin store — is CWD-relative; a daemon started from
+	// the wrong directory would silently fork the data set. Relative flag
+	// paths are resolved against the original CWD first.
+	absWorld, err := filepath.Abs(*worldDir)
+	if err != nil {
+		slog.Error("resolving world path", "error", err)
+		os.Exit(1)
+	}
+	for _, d := range []*string{worldDir, scriptsDir, webDir, hugoDir} {
+		if *d != "" {
+			if abs, aerr := filepath.Abs(*d); aerr == nil {
+				*d = abs
+			}
+		}
+	}
+	gameRoot := filepath.Dir(absWorld)
+	if err := os.Chdir(gameRoot); err != nil {
+		slog.Error("chdir to game root", "dir", gameRoot, "error", err)
+		os.Exit(1)
+	}
+	slog.Info("Working directory anchored to game root", "dir", gameRoot)
 	if *dbURL == "" {
 		*dbURL = os.Getenv("DATABASE_URL")
 	}
