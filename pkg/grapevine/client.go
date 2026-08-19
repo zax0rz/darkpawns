@@ -315,14 +315,12 @@ func (c *Client) readLoop() {
 					if p.IsNPC() {
 						continue
 					}
-					// Check NO_GOSSIP flag (bit 18) / prfNoGossip from comm_channel.go
-					const prfNoGossip uint64 = 1 << 18
-					if p.Flags&prfNoGossip != 0 {
+					// Check NO_GOSSIP flag / PrfNoGossip from other_helpers.go
+					if p.Flags&(1<<game.PrfNoGossip) != 0 {
 						continue
 					}
 					// Check deaf flag
-					const prfDeaf uint64 = 1 << 3
-					if p.Flags&prfDeaf != 0 {
+					if p.Flags&(1<<game.PrfDeaf) != 0 {
 						continue
 					}
 					p.SendMessage(formatted)

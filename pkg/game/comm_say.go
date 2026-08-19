@@ -67,7 +67,7 @@ func (w *World) doRaceSay(ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	// Self-message.
-	if ch.Flags&prfNoRepeat == 0 {
+	if ch.Flags&(1<<PrfNoRepeat) == 0 {
 		ch.SendMessage(fmt.Sprintf("You%s'(In %s) %s'\r\n", verbMsg, raceName, arg))
 	} else {
 		sendToChar(ch, "Ok.\r\n")
