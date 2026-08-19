@@ -123,6 +123,9 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("Working directory anchored to game root", "dir", gameRoot)
+	// Pin the shops persistence path explicitly (DP-1193) — belt and
+	// suspenders with the chdir above.
+	_ = os.Setenv("DARKPAWNS_DATA_DIR", filepath.Join(gameRoot, "data"))
 	if *dbURL == "" {
 		*dbURL = os.Getenv("DATABASE_URL")
 	}

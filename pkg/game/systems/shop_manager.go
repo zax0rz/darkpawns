@@ -388,7 +388,18 @@ func (sm *ShopManager) RestockAll(prototypes []*parser.Obj, currentTick int) int
 	return totalRestocked
 }
 
-const shopsFile = "./data/shops.json"
+// shopsFilePath resolves the shops persistence file (DP-1193). The path is
+// CWD-relative by default; DARKPAWNS_DATA_DIR pins it to an absolute data
+// directory so a mismatched working directory cannot fork the data set.
+// Resolved once at first use, not per call, so save and load always agree.
+var shopsFilePath = resolveShopsFile()
+
+func resolveShopsFile() string {
+	if dir := os.Getenv("DARKPAWNS_DATA_DIR"); dir != "" {
+		return filepath.Join(filepath.Clean(dir), "shops.json")
+	}
+	return "./data/shops.json"
+}
 
 // saveShopData is a JSON-serializable snapshot of a Shop.
 type saveShopData struct {
@@ -467,11 +478,11 @@ func (sm *ShopManager) SaveShops() error {
 		data.Shops = append(data.Shops, sd)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(shopsFile), 0o750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(shopsFilePath), 0o750); err != nil {
 		return fmt.Errorf("create shops dir: %w", err)
 	}
 
-	f, err := os.Create(filepath.Clean(shopsFile))
+	f, err := os.Create(filepath.Clean(shopsFilePath))
 	if err != nil {
 		return fmt.Errorf("create shops file: %w", err)
 	}
@@ -483,14 +494,14 @@ func (sm *ShopManager) SaveShops() error {
 		return fmt.Errorf("encode shops: %w", err)
 	}
 
-	slog.Debug("Shops saved", "path", shopsFile, "count", len(data.Shops))
+	slog.Debug("Shops saved", "path", shopsFilePath, "count", len(data.Shops))
 	return nil
 }
 
 // LoadShops restores shops from ./data/shops.json.
 // If the file does not exist, returns nil (first boot).
 func (sm *ShopManager) LoadShops(getProto func(int) (*parser.Obj, bool)) error {
-	f, err := os.Open(filepath.Clean(shopsFile))
+	f, err := os.Open(filepath.Clean(shopsFilePath))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -554,7 +565,7 @@ func (sm *ShopManager) LoadShops(getProto func(int) (*parser.Obj, bool)) error {
 		sm.roomToShop[shop.RoomVNum] = append(sm.roomToShop[shop.RoomVNum], shop.ID)
 	}
 
-	slog.Info("Shops loaded", "path", shopsFile, "count", len(data.Shops))
+	slog.Info("Shops loaded", "path", shopsFilePath, "count", len(data.Shops))
 	return nil
 }
 
