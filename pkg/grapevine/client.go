@@ -13,17 +13,20 @@ import (
 )
 
 type Client struct {
-	world  *game.World
-	conn   *websocket.Conn
-	mu     sync.Mutex
-	closed bool
-	done   chan struct{}
+	world    *game.World
+	conn     *websocket.Conn
+	mu       sync.Mutex
+	closed   bool
+	done     chan struct{}
+	send     chan grapevineMessage
+	stopOnce sync.Once
 }
 
 func NewClient(world *game.World) *Client {
 	return &Client{
 		world: world,
 		done:  make(chan struct{}),
+		send:  make(chan grapevineMessage, 256),
 	}
 }
 
@@ -41,6 +44,7 @@ func (c *Client) Start() {
 		return
 	}
 
+	go c.writeLoop()
 	go c.connectLoop(url, clientID, clientSecret)
 }
 
@@ -178,22 +182,10 @@ func (c *Client) sendGossip(senderName, message string) {
 		slog.Error("Grapevine: failed to marshal outbound gossip", "error", err)
 		return
 	}
-	msg := grapevineMessage{
+	c.enqueue(grapevineMessage{
 		Event:   "channels/send",
 		Payload: data,
-	}
-
-	go func() {
-		c.mu.Lock()
-		defer c.mu.Unlock()
-		if c.conn == nil {
-			return
-		}
-		_ = c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		if err := c.conn.WriteJSON(msg); err != nil {
-			slog.Error("Grapevine: failed to send gossip payload", "error", err)
-		}
-	}()
+	})
 }
 
 func (c *Client) presenceTicker(done chan struct{}) {
@@ -230,22 +222,45 @@ func (c *Client) sendPresence() {
 		slog.Error("Grapevine: failed to marshal presence", "error", err)
 		return
 	}
-	msg := grapevineMessage{
+	c.enqueue(grapevineMessage{
 		Event:   "players/sign-in",
 		Payload: data,
-	}
+	})
+}
 
-	go func() {
-		c.mu.Lock()
-		defer c.mu.Unlock()
-		if c.conn == nil {
+// enqueue queues an outbound message for the single background writer.
+// If the queue is full, the message is dropped to apply backpressure
+// instead of spawning unbounded goroutines.
+func (c *Client) enqueue(msg grapevineMessage) {
+	select {
+	case c.send <- msg:
+	default:
+		slog.Warn("Grapevine: outbound message queue full, dropping message", "event", msg.Event)
+	}
+}
+
+// writeLoop is the single writer goroutine that drains the send queue.
+func (c *Client) writeLoop() {
+	for {
+		select {
+		case msg := <-c.send:
+			c.writeMessage(msg)
+		case <-c.done:
 			return
 		}
-		_ = c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		if err := c.conn.WriteJSON(msg); err != nil {
-			slog.Error("Grapevine: failed to send presence payload", "error", err)
-		}
-	}()
+	}
+}
+
+func (c *Client) writeMessage(msg grapevineMessage) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.conn == nil || c.closed {
+		return
+	}
+	_ = c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	if err := c.conn.WriteJSON(msg); err != nil {
+		slog.Error("Grapevine: failed to send outbound payload", "event", msg.Event, "error", err)
+	}
 }
 
 type grapevineBroadcast struct {
@@ -318,10 +333,13 @@ func (c *Client) readLoop() {
 }
 
 func (c *Client) Stop() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.closed = true
-	if c.conn != nil {
-		_ = c.conn.Close()
-	}
+	c.stopOnce.Do(func() {
+		c.mu.Lock()
+		c.closed = true
+		if c.conn != nil {
+			_ = c.conn.Close()
+		}
+		c.mu.Unlock()
+		close(c.done)
+	})
 }
