@@ -6,6 +6,7 @@ import (
 )
 
 func TestNewSQLiteBackend_DSNWithSpecialChars(t *testing.T) {
+	ctx := t.Context()
 	tmpDir := t.TempDir()
 
 	// Spaces in the path should be URI-escaped and the database should still open.
@@ -18,7 +19,7 @@ func TestNewSQLiteBackend_DSNWithSpecialChars(t *testing.T) {
 	defer func() { _ = backend.Close() }()
 
 	// Sanity check that we can actually read/write.
-	_, err = backend.List()
+	_, err = backend.List(ctx)
 	if err != nil {
 		t.Fatalf("List failed: %v", err)
 	}
