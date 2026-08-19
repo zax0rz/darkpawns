@@ -490,6 +490,11 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch BoardPlayer, arg string) bool
 		return false
 	}
 
+	if ch.GetLevel() < bs.boards[boardType].ReadLvl {
+		ch.SendMessage("You try but fail to understand the holy words.\r\n")
+		return true
+	}
+
 	if bs.numOfMsgs[boardType] == 0 {
 		ch.SendMessage("The board is empty!\r\n")
 		return true

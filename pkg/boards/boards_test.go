@@ -154,6 +154,35 @@ func TestBoardSystem_RemoveMsg_LevelCheck(t *testing.T) {
 	}
 }
 
+func TestBoardSystem_RemoveMsg_ReadLvl(t *testing.T) {
+	bs := InitBoards(t.TempDir())
+	// Board 3 (immort) has ReadLvl=50, RemoveLvl=61.
+	poster := newMockBoardPlayer("Dave", 60, 4001)
+	reader := newMockBoardPlayer("Eve", 1, 4001)
+
+	magic := bs.WriteMessage(3, poster, "secret news")
+	bs.AppendBoardLine(magic, "body text")
+	bs.FinalizeBoardWrite(magic, poster)
+
+	// A player below ReadLvl must be rejected on permission grounds, never
+	// given a message-existence hint.
+	if !bs.RemoveMsg(3, reader, "1") {
+		t.Fatal("RemoveMsg = false, want true")
+	}
+	if !strings.Contains(reader.lastMessage(), "holy words") {
+		t.Fatalf("expected ReadLvl rejection, got %q", reader.lastMessage())
+	}
+	if strings.Contains(reader.allMessages(), "empty") || strings.Contains(reader.allMessages(), "imagination") {
+		t.Fatalf("ReadLvl rejection must not leak message count, got %q", reader.allMessages())
+	}
+
+	// Message should still be present.
+	out := newMockBoardPlayer("Out", 60, 4001)
+	if !bs.DisplayMsg(3, out, "1") {
+		t.Fatal("DisplayMsg after ReadLvl-rejected remove = false, want true")
+	}
+}
+
 func TestBoardSystem_RemoveMsg_RoomEcho(t *testing.T) {
 	bs := InitBoards(t.TempDir())
 	world := &mockBoardWorld{}
