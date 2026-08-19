@@ -1,7 +1,9 @@
 package agentcli
 
 import (
+	"encoding/json"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -97,5 +99,37 @@ func TestLoadConfigFrom_MissingPathUsesDefaults(t *testing.T) {
 	}
 	if cfg.GamePort != DefaultPort {
 		t.Errorf("GamePort = %d, want default %d", cfg.GamePort, DefaultPort)
+	}
+}
+
+func TestGameURLSchemeFollowsGameSecure(t *testing.T) {
+	cfg := &AgentConfig{GameHost: "mud.example", GamePort: 4350}
+	a := NewAgentClient(cfg)
+	if got, want := a.gameURL(), "ws://mud.example:4350/ws"; got != want {
+		t.Fatalf("insecure: got %q, want %q", got, want)
+	}
+	cfg.GameSecure = true
+	if got, want := a.gameURL(), "wss://mud.example:4350/ws"; got != want {
+		t.Fatalf("secure: got %q, want %q", got, want)
+	}
+}
+
+func TestLoadConfig_GameSecureRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "cfg.json")
+	in := &AgentConfig{GameHost: "h", GamePort: 1, GameSecure: true}
+	data, err := json.Marshal(in)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	cfg, err := LoadConfigFrom(path)
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if !cfg.GameSecure {
+		t.Fatal("game_secure lost on round trip")
 	}
 }

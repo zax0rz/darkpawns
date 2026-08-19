@@ -72,9 +72,19 @@ type Event struct {
 	Data any    `json:"data"`
 }
 
+// gameURL returns the WebSocket endpoint URL, using wss:// when
+// GameSecure is set so the API key is never sent in plaintext (DP-1183).
+func (a *AgentClient) gameURL() string {
+	scheme := "ws"
+	if a.Cfg.GameSecure {
+		scheme = "wss"
+	}
+	return fmt.Sprintf("%s://%s:%d/ws", scheme, a.Cfg.GameHost, a.Cfg.GamePort)
+}
+
 // Connect establishes a WebSocket connection and authenticates.
 func (a *AgentClient) Connect(ctx context.Context) error {
-	addr := fmt.Sprintf("ws://%s:%d/ws", a.Cfg.GameHost, a.Cfg.GamePort)
+	addr := a.gameURL()
 	slog.Debug("connecting", "addr", addr)
 
 	headers := http.Header{}
