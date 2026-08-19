@@ -193,7 +193,7 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 		if p.Name == ch.Name {
 			continue
 		}
-		if p.Flags&prfDeaf != 0 || p.Flags&prfNoCtell != 0 {
+		if p.Flags&(1<<PrfDeaf) != 0 || p.Flags&(1<<PrfNoCTell) != 0 {
 			continue
 		}
 		// Filter: only clan members with the same ClanID

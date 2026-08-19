@@ -57,23 +57,6 @@ const (
 )
 
 // ---------------------------------------------------------------------------
-// PRF flags (Preference flags) — use high bits of p.Flags since low bits
-// are taken by PLR_*. The C code has these as separate bits in PRF_FLAGS.
-// ---------------------------------------------------------------------------
-const (
-	prfNoTell   uint64 = 1 << 16
-	prfNoShout  uint64 = 1 << 17
-	prfNoGossip uint64 = 1 << 18
-	prfNoAuct   uint64 = 1 << 19
-	prfNoGratz  uint64 = 1 << 20
-	prfNoNewbie uint64 = 1 << 21
-	prfNoRepeat uint64 = 1 << 22
-	prfDeaf     uint64 = 1 << 23
-	prfAfk      uint64 = 1 << 24
-	prfNoCtell  uint64 = 1 << 25
-)
-
-// ---------------------------------------------------------------------------
 // Level constants. lvlImmort is declared in spec_procs4.go (31).
 // ---------------------------------------------------------------------------
 const (
