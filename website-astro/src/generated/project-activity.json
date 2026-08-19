@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-08-15T14:34:20-04:00",
+  "generatedAt": "2026-08-15T17:42:19-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
     {
       "week": "2026-05-25",
-      "commits": 48
+      "commits": 42
     },
     {
       "week": "2026-06-01",
@@ -49,39 +49,39 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 99
+      "commits": 109
     }
   ],
   "recentCommits": [
     {
-      "sha": "31f15abb1dd1d1a58efa4f8438c82c0222ce20a7",
+      "sha": "10ae37a3862b8e153f0acdcd2c54ab69adbde475",
       "date": "2026-08-15",
-      "title": "feat(web): map links into zone and room records",
-      "url": "https://github.com/zax0rz/darkpawns/commit/31f15abb1dd1d1a58efa4f8438c82c0222ce20a7"
+      "title": "docs(blog): update exact primary-source timestamps for historical news posts",
+      "url": "https://github.com/zax0rz/darkpawns/commit/10ae37a3862b8e153f0acdcd2c54ab69adbde475"
     },
     {
-      "sha": "4a10ab743481bd1a481922a20df0b238ee2788d2",
+      "sha": "b39749a7dc2dbdff302fc40c7f64771a3c6f49f1",
       "date": "2026-08-15",
-      "title": "feat(web): room records \u2014 permanent pages for all 9,590 rooms",
-      "url": "https://github.com/zax0rz/darkpawns/commit/4a10ab743481bd1a481922a20df0b238ee2788d2"
+      "title": "docs(blog): update historical posts with exact verbatim primary sources from darkpawns.com",
+      "url": "https://github.com/zax0rz/darkpawns/commit/b39749a7dc2dbdff302fc40c7f64771a3c6f49f1"
     },
     {
-      "sha": "1d32f4c60ad69a2ce78a65d43c6c42b3575b8d2e",
+      "sha": "bac9056eef01f8f1e8e238e6102910f606c05004",
       "date": "2026-08-15",
-      "title": "feat(web): breadcrumb JSON-LD on zone records; zones spec audit",
-      "url": "https://github.com/zax0rz/darkpawns/commit/1d32f4c60ad69a2ce78a65d43c6c42b3575b8d2e"
+      "title": "docs(blog): clarify OUTLAW system provenance from faq.html",
+      "url": "https://github.com/zax0rz/darkpawns/commit/bac9056eef01f8f1e8e238e6102910f606c05004"
     },
     {
-      "sha": "bdc13bcc3736226b2f275e3a12369c23cb8c1484",
+      "sha": "d973eb85764e713f417155ae7fcb041fd76cbfa9",
       "date": "2026-08-15",
-      "title": "feat(web): zone records \u2014 browsable, crawlable views of world-file zones",
-      "url": "https://github.com/zax0rz/darkpawns/commit/bdc13bcc3736226b2f275e3a12369c23cb8c1484"
+      "title": "style(web): simplify og-image card to title, caption, and est date",
+      "url": "https://github.com/zax0rz/darkpawns/commit/d973eb85764e713f417155ae7fcb041fd76cbfa9"
     },
     {
-      "sha": "19acb079c9194bbf4076975ee553f71a92a73049",
+      "sha": "b62d37580b939d7ca6a143cecd9e1c05a4304ea9",
       "date": "2026-08-15",
-      "title": "fix(web): guest entry renders room once; /play constrained to content width",
-      "url": "https://github.com/zax0rz/darkpawns/commit/19acb079c9194bbf4076975ee553f71a92a73049"
+      "title": "fix(schema): allow transcription textKind in blog collection schema",
+      "url": "https://github.com/zax0rz/darkpawns/commit/b62d37580b939d7ca6a143cecd9e1c05a4304ea9"
     }
   ],
   "pullRequests": [
