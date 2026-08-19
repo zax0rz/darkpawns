@@ -77,6 +77,13 @@ func (a *AgentClient) Connect(ctx context.Context) error {
 	addr := fmt.Sprintf("ws://%s:%d/ws", a.Cfg.GameHost, a.Cfg.GamePort)
 	slog.Debug("connecting", "addr", addr)
 
+	// Close any previous connection so reconnects don't leak the old
+	// socket and its read goroutine (DP-1184).
+	if a.conn != nil {
+		_ = a.conn.Close()
+		a.conn = nil
+	}
+
 	headers := http.Header{}
 	if key := a.Cfg.EffectiveKey(); key != "" {
 		headers.Set("X-Agent-Key", key)

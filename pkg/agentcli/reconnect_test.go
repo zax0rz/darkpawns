@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -82,5 +83,88 @@ func TestRunConnectedReconnectsOnDisconnect(t *testing.T) {
 
 	if atomic.LoadInt32(&connectCount) < 2 {
 		t.Fatalf("expected RunConnected to reconnect at least once, got %d connection(s)", connectCount)
+	}
+}
+
+func TestConnectClosesPreviousConnection(t *testing.T) {
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
+
+	firstClosed := make(chan struct{})
+	var mu sync.Mutex
+	connectCount := 0
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			t.Errorf("upgrade: %v", err)
+			return
+		}
+		defer c.Close()
+
+		mu.Lock()
+		connectCount++
+		n := connectCount
+		mu.Unlock()
+
+		// Consume login message.
+		var login map[string]any
+		if err := c.ReadJSON(&login); err != nil {
+			return
+		}
+		// Send a non-error response so Connect() succeeds.
+		if err := c.WriteJSON(map[string]any{
+			"type": "state",
+			"data": map[string]any{},
+		}); err != nil {
+			return
+		}
+		// Consume subscribe message.
+		var sub map[string]any
+		_ = c.ReadJSON(&sub)
+
+		if n == 1 {
+			// Block until the client closes this connection. Before the
+			// DP-1184 fix, the second Connect() leaked this socket and
+			// this read never returned.
+			_ = c.ReadJSON(&sub)
+			close(firstClosed)
+		}
+	}))
+	defer srv.Close()
+
+	u, err := url.Parse(srv.URL)
+	if err != nil {
+		t.Fatalf("parse server url: %v", err)
+	}
+	host := u.Hostname()
+	port, err := strconv.Atoi(u.Port())
+	if err != nil {
+		t.Fatalf("parse server port: %v", err)
+	}
+
+	cfg := &AgentConfig{
+		Key:        "test-key",
+		PlayerName: "TestBot",
+		GameHost:   host,
+		GamePort:   port,
+	}
+	client := NewAgentClient(cfg)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := client.Connect(ctx); err != nil {
+		t.Fatalf("first connect: %v", err)
+	}
+	if err := client.Connect(ctx); err != nil {
+		t.Fatalf("second connect: %v", err)
+	}
+
+	select {
+	case <-firstClosed:
+	case <-time.After(2 * time.Second):
+		t.Fatal("old connection was not closed on reconnect (leaked)")
 	}
 }
