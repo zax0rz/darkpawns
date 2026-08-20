@@ -88,7 +88,8 @@ func (b *SQLiteBackend) Save(ctx context.Context, player *game.Player) error {
 		return fmt.Errorf("serialize player: %w", err)
 	}
 
-	_, err = b.db.ExecContext(ctx,
+	_, err = b.db.ExecContext(
+		ctx,
 		`INSERT INTO players (name, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
 		 ON CONFLICT(name) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`,
 		player.Name, data,
@@ -158,7 +159,8 @@ func (b *SQLiteBackend) SaveWorld(ctx context.Context, w *game.World) error {
 		return fmt.Errorf("serialize world: %w", err)
 	}
 
-	_, err = b.db.ExecContext(ctx,
+	_, err = b.db.ExecContext(
+		ctx,
 		`INSERT INTO world_state (id, data, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP)
 		 ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`,
 		data,
