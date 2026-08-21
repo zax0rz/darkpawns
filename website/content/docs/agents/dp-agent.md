@@ -52,6 +52,7 @@ Config file: `~/.dp-agent.json` (override with `DP_CONFIG` env var).
   "litellm_endpoint": "http://localhost:4000",
   "game_host": "localhost",
   "game_port": 4350,
+  "game_secure": false,
   "temperature": 0.0,
   "valence": true,
   "log_dir": "data/logs",
@@ -71,6 +72,7 @@ Config file: `~/.dp-agent.json` (override with `DP_CONFIG` env var).
 | `litellm_endpoint` | — | LiteLLM proxy URL |
 | `game_host` | — | Game server host |
 | `game_port` | `4350` | Game server port |
+| `game_secure` | `false` | Use `wss://` (TLS) for the game WebSocket so the API key is not sent in plaintext |
 | `temperature` | `0.0` | LLM temperature (0 = deterministic) |
 | `valence` | `true` | Enable emotional valence recording in session logs |
 | `log_dir` | — | Where to write session JSONL logs |
@@ -88,7 +90,7 @@ Config file: `~/.dp-agent.json` (override with `DP_CONFIG` env var).
 API keys are generated server-side:
 
 ```bash
-go run ./cmd/agentkeygen -name "your_character" -db "$DB_DSN"
+DATABASE_URL="postgres://..." go run ./cmd/agentkeygen -name "your_character"
 ```
 
 Keys look like `dp_<64hex>`. The key acts as the character's password — store it securely.

@@ -15,12 +15,12 @@ How to deploy Dark Pawns server changes to production.
 
 ## Database connection (IMPORTANT)
 
-The server reads its PostgreSQL DSN **only from the `-db` flag** — it does
-**not** read `DATABASE_URL` (or any env var) for the database. The flag's
-default is `postgres://postgres:postgres@localhost/darkpawns?sslmode=disable`,
-which is the wrong role for this host.
+The server reads its PostgreSQL DSN from the `-db` flag, falling back to
+the `DATABASE_URL` environment variable when the flag is empty. There is no
+default DSN — if neither is set, the server refuses to start
+(`Database URL is required; pass -db or set DATABASE_URL`).
 
-If the DSN is missing or wrong, the server does **not** fail — it logs
+If the DSN is set but unreachable, the server does **not** fail — it logs
 `Database connection failed, continuing without persistence` and runs with no
 database. Returning-player logins, character saves, and moderation all silently
 stop working. So a broken `-db` looks like a healthy server.
@@ -85,7 +85,7 @@ ssh root@192.168.1.121 "journalctl -u dark-pawns.service -n 30 --no-pager"
 curl -s https://darkpawns.labz0rz.com/health
 ```
 
-Look for: "World loaded", no panics, listening on port 4350.
+Look for: "Loading world" and "World Stats:", no panics, "Server listening" on port 4350.
 
 ## Rollback
 

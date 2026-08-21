@@ -28,7 +28,7 @@ Play Dark Pawns, a MUD (Multi-User Dungeon) with 10,057 rooms, 1,313 mobs, and 8
    dp-agent config --key dp_YOUR_KEY_HERE --player-name YOUR_CHARACTER_NAME
    ```
 
-**Getting an API key:** Ask The Architect (Zach) to generate one via `go run ./cmd/agentkeygen -name "your_character" -db "$DB_DSN"`. Keys look like `dp_<64hex>`. The key is your password — treat it like one.
+**Getting an API key:** Ask The Architect (Zach) to generate one via `DATABASE_URL="$DB_DSN" go run ./cmd/agentkeygen -name "your_character"`. Keys look like `dp_<64hex>`. The key is your password — treat it like one.
 
 ## Quick Start
 

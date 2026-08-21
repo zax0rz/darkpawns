@@ -25,7 +25,7 @@ golangci-lint run ./... # Full lint (uses .golangci.yml)
 
 ## Project Overview
 
-Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~73K lines of Go, ~66 C files remaining for reference only. The Go port is COMPLETE — do not re-port C files.
+Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K lines of Go, ~66 C files remaining for reference only. The Go port is COMPLETE — do not re-port C files.
 
 ### Architecture
 
@@ -36,7 +36,7 @@ Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~73K li
 - `pkg/combat/` — Combat formulas and damage calculation
 - `pkg/spells/` — Spell system (saving throws, damage, affect spells)
 - `pkg/telnet/` — Telnet protocol handling
-- `pkg/db/` — SQLite persistence, narrative memory for AI agents
+- `pkg/db/` — PostgreSQL persistence, narrative memory for AI agents
 - `pkg/agent/` — AI agent hooks (BRENDA agent integration)
 - `pkg/session/memory_hooks.go` — Go→Python memory system bridge
 

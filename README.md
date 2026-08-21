@@ -12,7 +12,7 @@
 
 # Dark Pawns
 
-A dark fantasy MUD server, rebuilt in Go from the original C codebase (CircleMUD 3.0 → ROM 2.4b derivative). 107,000 lines of Go across 383 source files. The original 73,000 lines of C remain in `src/` as the authoritative reference for game mechanics — the Go port is complete.
+A dark fantasy MUD server, rebuilt in Go from the original C codebase (CircleMUD 3.0 → ROM 2.4b derivative). 114,000 lines of Go across 406 source files. The original 73,000 lines of C remain in `src/` as the authoritative reference for game mechanics — the Go port is complete.
 
 Dark Pawns ran from 1997 to 2010. 10,057 rooms. 1,319 mobs. 1,661 objects. 95 zones. This is that world, running again, same area files loaded directly, no conversion step.
 
@@ -46,7 +46,10 @@ Or point a browser at `http://localhost:4350` for the WebSocket client.
 
 ```bash
 docker build -t darkpawns .
-docker run -p 4350:4350 -p 7777:7777 -e DATABASE_URL="postgres://..." darkpawns
+docker run -p 4350:4350 -p 7777:7777 \
+  -v "$PWD/lib:/app/lib:ro" \
+  -e DATABASE_URL="postgres://..." \
+  darkpawns ./server -world /app/lib
 ```
 
 Additional Docker configurations in the repository root:
@@ -139,7 +142,7 @@ Additional Docker configurations in the repository root:
 
 Go, all the way down. Goroutine-per-connection for clients. Dedicated ticker goroutines for combat (2s), AI ticks, weather, zone resets, and affect updates. Lock ordering: `Manager.mu → World.mu → MobInstance.mu → CombatEngine.mu`. Lua scripts run serialized through the engine mutex. An in-process event bus (`pkg/events/`) handles decoupled subsystem communication.
 
-**Concurrency model:** ~107K lines of Go, mutex-protected world state, atomic alive checks for fast pre-filtering, O(N) AI tick processing. The combat engine processes thousands of mob instances per tick without data races.
+**Concurrency model:** ~114K lines of Go, mutex-protected world state, atomic alive checks for fast pre-filtering, O(N) AI tick processing. The combat engine processes thousands of mob instances per tick without data races.
 
 Full architecture docs: [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md)
 
