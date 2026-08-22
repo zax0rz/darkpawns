@@ -327,7 +327,6 @@ func main() {
 	loopCtx, loopCancel := context.WithCancel(context.Background())
 	defer loopCancel()
 	gameLoop.Start(loopCtx)
-	defer gameLoop.Stop()
 
 	// Setup HTTP routes
 	http.HandleFunc("/ws", manager.HandleWebSocket)
@@ -508,15 +507,22 @@ func main() {
 	}
 	slog.Info("Shutting down gracefully...")
 
-	// 1. Stop heartbeat callbacks before draining sessions or saving world state.
-	gameLoop.Stop()
-
-	// 1a. Stop standalone world tickers so they cannot mutate state during save.
+	// 1. Stop standalone world tickers, then stop heartbeat callbacks. A
+	// heartbeat callback can be doing slow world work, so bound the wait well
+	// below systemd's stop timeout instead of allowing SIGKILL to decide.
 	// The AI ticker and point update ticker share the World's done channel;
 	// StopAITicker closes it and stops both. StopPeriodicResets ends the
 	// zone-reset goroutine started in the boot goroutine below.
 	gameWorld.StopAITicker()
 	gameWorld.StopPeriodicResets()
+	loopCancel()
+	heartbeatCtx, heartbeatCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	heartbeatErr := gameLoop.StopContext(heartbeatCtx)
+	heartbeatCancel()
+	heartbeatStopped := heartbeatErr == nil
+	if heartbeatErr != nil {
+		slog.Error("Heartbeat did not stop before shutdown deadline; world snapshot will be skipped", "error", heartbeatErr)
+	}
 
 	// 2. Stop telnet listener (accepting new TCP connections)
 	telnet.Stop()
@@ -540,9 +546,13 @@ func main() {
 	// writes to world state from corrupting the save file.
 	wg.Wait()
 
-	// Save dynamic world state before exit.
-	if err := game.SaveWorld(gameWorld); err != nil {
-		slog.Error("Failed to save world state", "error", err)
+	// Save dynamic world state only after the heartbeat is proven quiescent.
+	// Saving concurrently with a stuck callback risks a corrupt snapshot; player
+	// profiles have already been drained independently above.
+	if heartbeatStopped {
+		if err := game.SaveWorld(gameWorld); err != nil {
+			slog.Error("Failed to save world state", "error", err)
+		}
 	}
 	slog.Info("Shutdown complete. Farewell.")
 }

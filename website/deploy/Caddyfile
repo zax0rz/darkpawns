@@ -40,13 +40,26 @@
 		reverse_proxy localhost:4350
 	}
 
-	# Serve the Markdown representation generated alongside each Hugo page.
+	# Serve Markdown siblings for trailing-slash canonical URLs such as
+	# /docs/agents/protocol/ -> /docs/agents/protocol.md.
+	@markdownTrailing {
+		header Accept *text/markdown*
+		path_regexp trailing ^(.+)/$
+	}
+	handle @markdownTrailing {
+		root * /srv/hugo/
+		header Vary "Accept, Accept-Encoding"
+		header Content-Type "text/markdown; charset=utf-8"
+		try_files {re.trailing.1}.md {path}index.md {path}/index.md
+		file_server
+	}
+
 	@markdown header Accept *text/markdown*
 	handle @markdown {
 		root * /srv/hugo/
 		header Vary "Accept, Accept-Encoding"
 		header Content-Type "text/markdown; charset=utf-8"
-		try_files {path}index.md {path}/index.md {path}.md
+		try_files {path}.md {path}index.md {path}/index.md
 		file_server
 	}
 

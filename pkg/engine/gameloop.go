@@ -205,14 +205,25 @@ func (gl *GameLoop) PumpPulses(n int) error {
 // already exited via context cancellation — it just observes the closed
 // doneCh and returns.
 func (gl *GameLoop) Stop() {
+	_ = gl.StopContext(context.Background())
+}
+
+// StopContext signals the loop goroutine to stop and waits until it exits or
+// ctx expires. A heartbeat callback may perform slow world work, so production
+// shutdown must be able to bound this wait instead of relying on systemd's
+// SIGKILL timeout.
+func (gl *GameLoop) StopContext(ctx context.Context) error {
 	if !gl.started.Load() {
-		return
+		return nil
 	}
-	gl.stopOnce.Do(func() {
-		close(gl.stopCh)
-		<-gl.doneCh
+	gl.stopOnce.Do(func() { close(gl.stopCh) })
+	select {
+	case <-gl.doneCh:
 		slog.Info("game loop stopped")
-	})
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("stop game loop: %w", ctx.Err())
+	}
 }
 
 // Uptime returns a snapshot of the server uptime.
