@@ -38,7 +38,7 @@ These endpoints do not require authentication and are accessible by any HTTP cli
 *   **Description:** Serves standard Prometheus exposition formatted telemetry capturing CPU utilization, goroutine counts, memory footprints, active session counts, command-dispatch throughput, and combat processing latencies.
 
 ### 3. OpenAPI 3.0 Specification
-*   **Path:** `/api/openapi.json`
+*   **Paths:** `/openapi.json` (canonical) and `/api/openapi.json` (compatibility alias)
 *   **Method:** `GET`
 *   **Response Content-Type:** `application/json`
 *   **Description:** Serves the structured OpenAPI 3.0 specification mapping all HTTP REST, WebSocket, and JSON-RPC message formats for AI agent developers.

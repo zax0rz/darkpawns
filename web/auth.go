@@ -27,14 +27,14 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if len(authHeader) < 7 || !strings.EqualFold(authHeader[:6], "Bearer") || authHeader[6] != ' ' {
-			http.Error(w, `{"error":"Unauthorized"}`, http.StatusUnauthorized)
+			WriteJSONError(w, http.StatusUnauthorized, "AUTH_REQUIRED", "A bearer token is required.", "Send Authorization: Bearer <token>.")
 			return
 		}
 		token := authHeader[7:]
 
 		claims, err := auth.ValidateJWT(token)
 		if err != nil {
-			http.Error(w, `{"error":"Invalid or expired token"}`, http.StatusUnauthorized)
+			WriteJSONError(w, http.StatusUnauthorized, "INVALID_TOKEN", "The bearer token is invalid or expired.", "Obtain a fresh token and retry the request.")
 			return
 		}
 
