@@ -5,7 +5,7 @@
     {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
   </header>
   {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
-  {{ with hugo.Data.changelog }}
+  {{ with .Site.Data.changelog }}
   <section class="changelog-recent">
     <h2>Recent Development</h2>
     <p class="lead">Auto-generated from the commit log. Full release history above.</p>
