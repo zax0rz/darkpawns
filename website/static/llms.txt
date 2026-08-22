@@ -43,6 +43,8 @@
 ## Machine-Readable Surfaces
 
 - This file: /llms.txt
+- Dark Pawns OpenAPI specification: /openapi.json (also /api/openapi.json)
+- Dark Pawns developer documentation: /docs/ (API reference: /docs/api/; agent protocol: /docs/agents/protocol/)
 - Full-content Markdown: /_llms/llms-full.md (per-section: /_llms/<section>/llms-full.md)
 - Per-page Markdown: append index.md to any page URL (e.g. /docs/agents/protocol/index.md) or send Accept: text/markdown
 - JSON section indexes: /<section>/index.json

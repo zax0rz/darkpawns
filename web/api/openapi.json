@@ -97,6 +97,21 @@
   },
   "components": {
     "schemas": {
+      "HTTPError": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message", "resolution"],
+            "properties": {
+              "code": { "type": "string", "example": "AUTH_REQUIRED" },
+              "message": { "type": "string", "example": "A bearer token is required." },
+              "resolution": { "type": "string", "example": "Send Authorization: Bearer <token>." }
+            }
+          }
+        }
+      },
       "LoginMessage": {
         "type": "object",
         "required": ["type", "data"],

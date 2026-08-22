@@ -357,19 +357,19 @@ func main() {
 		})
 	}
 
-	// Setup API handler chain: Auth → ContentNegotiation
-	// The ContentNegotiationMiddleware serves OpenAPI spec and JSON responses.
-	// AuthMiddleware protects all /api/ endpoints with JWT bearer tokens.
-	apiMux := http.NewServeMux()
-	apiMux.HandleFunc("/api/openapi.json", func(w http.ResponseWriter, r *http.Request) {
+	// Publish the API contract without authentication so clients can discover
+	// how to authenticate before making a protected request.
+	openAPIHandler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		http.ServeFile(w, r, "web/api/openapi.json")
-	})
+	}
+	http.HandleFunc("/openapi.json", openAPIHandler)
+	http.HandleFunc("/api/openapi.json", openAPIHandler)
+
+	// All other /api/ endpoints require a JWT bearer token.
+	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte(`{"error": "API endpoint not found", "docs": "/api/openapi.json"}`)); err != nil {
-			slog.Warn("API 404 write failed", "error", err)
-		}
+		web.WriteJSONError(w, http.StatusNotFound, "ENDPOINT_NOT_FOUND", "The requested API endpoint does not exist.", "Consult /openapi.json for supported endpoints.")
 	})
 	http.Handle("/api/", web.AuthMiddleware(apiMux))
 

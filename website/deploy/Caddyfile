@@ -27,6 +27,9 @@
 	handle /api/* {
 		reverse_proxy localhost:4350
 	}
+	handle /openapi.json {
+		reverse_proxy localhost:4350
+	}
 	handle /admin/* {
 		reverse_proxy localhost:4350
 	}
@@ -37,11 +40,22 @@
 		reverse_proxy localhost:4350
 	}
 
-	# Hugo static files (catch-all)
+	# Serve the Markdown representation generated alongside each Hugo page.
+	@markdown header Accept *text/markdown*
+	handle @markdown {
+		root * /srv/hugo/
+		header Vary "Accept, Accept-Encoding"
+		header Content-Type "text/markdown; charset=utf-8"
+		try_files {path}index.md {path}/index.md {path}.md
+		file_server
+	}
+
+	# Hugo static files (catch-all).
 	handle {
 		root * /srv/hugo/
 		# Discovery headers for AI agents & crawlers (specification.website: HTTP Link headers)
 		header Link "</llms.txt>; rel=\"llms-txt\", </sitemap.xml>; rel=\"sitemap\"; type=\"application/xml\", </index.xml>; rel=\"alternate\"; type=\"application/rss+xml\""
+		header Vary "Accept, Accept-Encoding"
 		try_files {path} {path}/index.html
 		file_server
 	}
@@ -49,7 +63,17 @@
 	# Serve 404.html for unmatched routes
 	handle_errors {
 		root * /srv/hugo/
-		rewrite /404.html
-		file_server
+		@markdownError header Accept *text/markdown*
+		handle @markdownError {
+			header Content-Type "text/markdown; charset=utf-8"
+			header Vary "Accept, Accept-Encoding"
+			rewrite /404.md
+			file_server
+		}
+		handle {
+			header Vary "Accept, Accept-Encoding"
+			rewrite /404.html
+			file_server
+		}
 	}
 }
