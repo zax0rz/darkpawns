@@ -223,6 +223,17 @@ func (w *World) DoMove(ch *Player, direction string) MoveResult {
 	return result
 }
 
+// DoFleeMove executes the do_simple_move leg selected by C do_flee. Unlike a
+// normal directional command it does not move followers, and it re-runs the
+// direction special-procedure check because C passes need_specials_check=TRUE.
+func (w *World) DoFleeMove(ch *Player, direction string) bool {
+	dir := searchBlock(strings.ToLower(strings.TrimSpace(direction)), dirs, false)
+	if dir < 0 {
+		return false
+	}
+	return doSimpleMove(w, ch, dir, true)
+}
+
 // doSimpleMove moves a character assuming follower traversal is handled by
 // performMoveResult. It mirrors C do_simple_move.
 func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {

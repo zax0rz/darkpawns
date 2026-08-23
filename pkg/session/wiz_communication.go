@@ -189,7 +189,7 @@ func cmdForce(s *Session, args []string) error {
 	target.ForcedPrivilegeLevel = 0
 
 	slog.Info("forced", "target", target.player.Name, "command", forceCmd, "by", s.player.Name)
-	s.Send(fmt.Sprintf("Forced %s to '%s'.", target.player.Name, forceCmd))
+	s.Send("Okay.\r\n")
 	return execErr
 }
 
