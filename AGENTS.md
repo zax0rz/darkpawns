@@ -18,6 +18,14 @@ Before extending oracle coverage or declaring a command complete, read
 breadth-to-depth strategy, proof levels, scenario fixtures, manifests, and the dated handoff frontier.
 Breadth coverage proves that a command can match once; it does **not** prove the port is complete.
 
+### Research Continuity
+
+Dark Pawns is also an open, ongoing research artifact. Before making paper-level
+claims or running a research-writing task, read **[`docs/research/README.md`](docs/research/README.md)**
+and update **[`docs/research/EVIDENCE_LEDGER.tsv`](docs/research/EVIDENCE_LEDGER.tsv)**. Treat cron and
+agent prose as field notes until its citations survive contact with the repository, oracle output,
+Git history, or another named primary artifact.
+
 ## Build & Verify
 
 ```bash
