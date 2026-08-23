@@ -369,6 +369,13 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		}
 	}
 
+	// C renders the mover's destination room here, before greet/entry triggers
+	// and before perform_move recursively moves followers (R1/R5e). The session
+	// callback is nil for NPCs and disconnected players, matching ch->desc.
+	if w.MovementLook != nil {
+		w.MovementLook(ch)
+	}
+
 	if !ch.IsAffected(affSneak) {
 		// MobProg greet: C-style trigger for specific mobs.
 		w.MpGreet(ch, ext.ToRoom)

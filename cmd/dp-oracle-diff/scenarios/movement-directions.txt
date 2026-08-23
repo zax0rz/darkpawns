@@ -1,4 +1,5 @@
 # Direction-command fidelity (east / west / up / down — all share do_move,
+# depth-case: movement.no-exit
 # act.movement.c). Deterministic, RNG-free, mortal-legal.
 #
 # The existing movement.txt covers north/south (leave/arrive broadcasts via a

@@ -132,7 +132,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// mutates the oracle clone. Unless empty-players is requested, keep its
 	// baseline player file so existing mortal scenarios retain today's boot.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -181,10 +181,10 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		if err := applyScriptlessMobFixtures(goWorld, scenario.ScriptlessMobIDs); err != nil {
 			return fmt.Errorf("apply Go port mob script fixtures: %w", err)
 		}
-		if err := applyRoomFixtures(filepath.Join(oracleData, "world"), scenario.RoomExitFixtures, scenario.RoomFlagFixtures); err != nil {
+		if err := applyRoomFixtures(filepath.Join(oracleData, "world"), scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors); err != nil {
 			return fmt.Errorf("apply C oracle room fixtures: %w", err)
 		}
-		if err := applyRoomFixtures(goWorld, scenario.RoomExitFixtures, scenario.RoomFlagFixtures); err != nil {
+		if err := applyRoomFixtures(goWorld, scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors); err != nil {
 			return fmt.Errorf("apply Go port room fixtures: %w", err)
 		}
 	}

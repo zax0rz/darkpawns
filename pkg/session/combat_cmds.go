@@ -314,9 +314,6 @@ func cmdFlee(s *Session) error {
 
 	s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
 
-	if err := cmdMovementLook(s); err != nil {
-		return err
-	}
 	s.Send("You flee head over heels.")
 	return nil
 }
