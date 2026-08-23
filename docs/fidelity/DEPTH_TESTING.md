@@ -95,10 +95,11 @@ durable evidence; prose percentages are only snapshots.
   added disposable exit-keyword and room-sector fixtures. Ordinary movement,
   closed exits, boats, tunnels, vertical audiences, follower state, resource
   costs, and death traps are proven.
-- The remaining movement frontier is explicit: five mounted-movement cases need
-  a real MobInstance movement pool/pair transfer, and greet plus room-enter
-  trigger ordering still need focused proof. Treat mounted movement as its own
-  vertical slice rather than obscuring it inside another command pass.
+- Mounted movement is now implemented and proven as a vertical slice: spawned
+  mobs have C's 50-point movement pool, rider/mount pairs transfer together,
+  only mounts pay movement cost, failure gates match, and room observations
+  represent the pair once. Greet plus room-enter trigger ordering are the two
+  remaining shared-movement proof gaps.
 
 Update this dated section when the frontier materially changes. Keep the rest
 of this document stable unless the methodology itself changes.

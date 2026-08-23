@@ -222,7 +222,9 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 
 func (w *World) appendDarkOccupants(result *ObservationResult, ch *Player, room *parser.Room) {
 	for _, mob := range sortedMobs(w.GetMobsInRoom(room.VNum)) {
-		if mob == nil {
+		// C list_char_to_char suppresses a mount while get_rider(mob) is
+		// non-nil; the rider's presence line represents the pair.
+		if mob == nil || mob.GetMountRider() != "" {
 			continue
 		}
 		if mob.IsAffected(affSneak) || mob.IsAffected(affHide) {
@@ -320,7 +322,9 @@ func (w *World) roomObjectLines(ch *Player, room *parser.Room) []string {
 func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView) []string {
 	var lines []string
 	for _, mob := range sortedMobs(w.GetMobsInRoom(room.VNum)) {
-		if mob == nil {
+		// C list_char_to_char suppresses a mount while get_rider(mob) is
+		// non-nil; the rider's presence line represents the pair.
+		if mob == nil || mob.GetMountRider() != "" {
 			continue
 		}
 		if !canSee(ch, mob) || mob.IsAffected(affHide) {
@@ -346,7 +350,7 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 			}
 			continue
 		}
-		line := playerPresenceLine(player, ch)
+		line := w.playerPresenceLine(player, ch)
 		lines = append(lines, line)
 		view.Players = append(view.Players, player.GetName())
 	}
@@ -947,7 +951,7 @@ func visibleObjectShortLines(ch *Player, objects []*ObjectInstance) []string {
 	return lines
 }
 
-func playerPresenceLine(player, viewer *Player) string {
+func (w *World) playerPresenceLine(player, viewer *Player) string {
 	name := player.GetName()
 	title := strings.TrimSpace(player.GetTitle())
 	if title == "" {
@@ -961,6 +965,13 @@ func playerPresenceLine(player, viewer *Player) string {
 	}
 	if player.IsAffected(affHide) {
 		name += " (hidden)"
+	}
+	if player.IsMounted() {
+		mountName := "thin air"
+		if mount := w.riddenMount(player); mount != nil {
+			mountName = mount.GetShortDesc()
+		}
+		return name + " is here, mounted on " + mountName + "."
 	}
 	if player.GetPosition() == posFighting {
 		target := player.GetFighting()
