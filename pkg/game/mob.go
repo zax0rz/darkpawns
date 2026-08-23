@@ -3,6 +3,7 @@ package game
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -31,6 +32,8 @@ type MobInstance struct {
 	MaxHP       int
 	CurrentMana int
 	MaxMana     int
+	CurrentMove int
+	MaxMove     int
 	Status      string // "standing", "sleeping", "fighting", etc.
 	Level       int    // Level override (0 = use prototype level)
 
@@ -145,6 +148,8 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		MaxHP:          hp,
 		CurrentMana:    100,
 		MaxMana:        100,
+		CurrentMove:    50,
+		MaxMove:        50,
 		Status:         "standing",
 		Inventory:      make([]*ObjectInstance, 0),
 		Equipment:      make(map[int]*ObjectInstance),
@@ -229,6 +234,42 @@ func (m *MobInstance) SetRoom(vnum int) {
 	m.RoomVNum = vnum
 }
 
+// GetMove returns the mob's current movement points. C initializes every
+// spawned mobile to max_move=50 in read_mobile (src/db.c:1073,1758).
+func (m *MobInstance) GetMove() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.CurrentMove
+}
+
+// SetMove sets the mob's current movement points.
+func (m *MobInstance) SetMove(move int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.CurrentMove = move
+}
+
+// SpendMove deducts movement points after all movement gates pass.
+func (m *MobInstance) SpendMove(cost int) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if cost < 0 || m.CurrentMove < cost {
+		return false
+	}
+	m.CurrentMove -= cost
+	return true
+}
+
+// GainMove restores movement points up to the mob's fixed maximum.
+func (m *MobInstance) GainMove(gain int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.CurrentMove += gain
+	if m.CurrentMove > m.MaxMove {
+		m.CurrentMove = m.MaxMove
+	}
+}
+
 // SetFollowing changes who the mob is following.
 func (m *MobInstance) SetFollowing(leader string) {
 	m.mu.Lock()
@@ -249,7 +290,7 @@ func (m *MobInstance) HasFlag(flag string) bool {
 		return false
 	}
 	for _, f := range m.Prototype.ActionFlags {
-		if f == flag {
+		if strings.EqualFold(strings.TrimPrefix(f, "MOB_"), strings.TrimPrefix(flag, "MOB_")) {
 			return true
 		}
 	}

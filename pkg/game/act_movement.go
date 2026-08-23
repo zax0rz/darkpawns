@@ -286,9 +286,23 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	// Movement points needed is avg of src and dest sector movement loss.
 	needMovement := (movementLoss[room.Sector] + movementLoss[toRoom.Sector]) >> 1
 
-	// Exhaustion is checked before tunnel/mount gates, but movement is not
+	mount := w.riddenMount(ch)
+	if ch.IsMounted() && mount == nil {
+		w.clearMountedPair(ch, nil)
+		return false
+	}
+
+	// Exhaustion is checked before tunnel/indoors gates, but movement is not
 	// deducted until every precondition has passed.
-	if !ch.IsMounted() && ch.GetLevel() < lvlImmort && ch.GetMove() < needMovement {
+	if mount != nil && mount.GetPosition() < combat.PosStanding {
+		movementSendToChar(ch, "Your mount is in no position to go ANYWHERE!")
+		return false
+	}
+	if mount != nil && mount.GetMove() < needMovement {
+		movementSendToChar(ch, "Your mount is too exhausted to carry you further.")
+		return false
+	}
+	if mount == nil && ch.GetLevel() < lvlImmort && ch.GetMove() < needMovement {
 		if needSpecialsCheck && ch.GetFollowing() != "" {
 			movementSendToChar(ch, "You are too exhausted to follow.")
 		} else {
@@ -306,26 +320,27 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		}
 	}
 
-	// TODO(DP-mount): move the mount/rider pair and charge the mount's move
-	// points once MobInstance has a movement pool. Until then, mounted movement
-	// is explicitly gated rather than silently moving only the rider.
-	if ch.IsMounted() {
-		if movementRoomHasFlag(toRoom, roomFlagIndoors, "indoors") {
-			movementSendToChar(ch, "You can't ride in there! Dismount first!")
-		} else {
-			movementSendToChar(ch, "Your mount is in no position to go ANYWHERE!")
-		}
+	if mount != nil && movementRoomHasFlag(toRoom, roomFlagIndoors, "indoors") {
+		movementSendToChar(ch, "You can't ride in there! Dismount first!")
 		return false
 	}
 
-	if ch.GetLevel() < lvlImmort && !ch.SpendMove(needMovement) {
+	if mount == nil && ch.GetLevel() < lvlImmort && !ch.SpendMove(needMovement) {
 		return false
 	}
 
 	wasIn := ch.GetRoom()
 
 	// Leave message
-	if !ch.IsAffected(affSneak) {
+	if mount != nil {
+		if !mount.IsAffected(affSneak) {
+			Act(w, true, mount, ch, nil, nil, fmt.Sprintf("$N rides %s on $n.", dirs[dir]), "", ToNotVict)
+		}
+		if err := w.MobTransfer(mount, ext.ToRoom); err != nil {
+			slog.Error("mount movement transfer failed", "mount", mount.GetName(), "from", wasIn, "to", ext.ToRoom, "error", err)
+			return false
+		}
+	} else if !ch.IsAffected(affSneak) {
 		Act(w, true, ch, nil, nil, nil, fmt.Sprintf("$n leaves %s.", dirs[dir]), "", ToRoom)
 	}
 
@@ -333,6 +348,14 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	// room membership invariants remain centralized.
 	if err := w.PlayerTransfer(ch, ext.ToRoom); err != nil {
 		slog.Error("movement transfer failed", "player", ch.Name, "from", wasIn, "to", ext.ToRoom, "error", err)
+		if mount != nil {
+			if rollbackErr := w.MobTransfer(mount, wasIn); rollbackErr != nil {
+				slog.Error("mount movement rollback failed", "mount", mount.GetName(), "to", wasIn, "error", rollbackErr)
+			}
+		}
+		return false
+	}
+	if mount != nil && !mount.SpendMove(needMovement) {
 		return false
 	}
 
@@ -346,15 +369,19 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 				msg = fmt.Sprintf("$n flies in from the %s.", direct)
 			} else if toRoom.Sector == SECT_UNDERWATER {
 				msg = fmt.Sprintf("$n swims in from the %s.", direct)
+			} else if mount != nil {
+				msg = fmt.Sprintf("$n rides in from the %s on $N.", direct)
 			} else {
 				msg = fmt.Sprintf("$n arrives from the %s.", direct)
 			}
-			Act(w, true, ch, nil, nil, nil, msg, "", ToRoom)
+			Act(w, true, ch, mount, nil, nil, msg, "", ToRoom)
 		case 4:
 			if ch.IsAffected(affFly) {
 				Act(w, true, ch, nil, nil, nil, "$n flies in from below.", "", ToRoom)
 			} else if toRoom.Sector == SECT_UNDERWATER {
 				Act(w, true, ch, nil, nil, nil, "$n swims in from below.", "", ToRoom)
+			} else if mount != nil {
+				Act(w, true, ch, mount, nil, nil, "$n rides in from below on $N.", "", ToRoom)
 			} else {
 				Act(w, true, ch, nil, nil, nil, "$n climbs in from below.", "", ToRoom)
 			}
@@ -363,6 +390,8 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 				Act(w, true, ch, nil, nil, nil, "$n flies in from above.", "", ToRoom)
 			} else if toRoom.Sector == SECT_UNDERWATER {
 				Act(w, true, ch, nil, nil, nil, "$n swims in from above.", "", ToRoom)
+			} else if mount != nil {
+				Act(w, true, ch, mount, nil, nil, "$n rides in from above on $N.", "", ToRoom)
 			} else {
 				Act(w, true, ch, nil, nil, nil, "$n climbs in from above.", "", ToRoom)
 			}
@@ -408,6 +437,29 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	}
 
 	return true
+}
+
+func (w *World) riddenMount(rider *Player) *MobInstance {
+	if rider == nil || !rider.IsMounted() {
+		return nil
+	}
+	for _, mount := range w.GetMobsInRoom(rider.GetRoom()) {
+		if mount.GetMountRider() == rider.Name && mount.GetName() == rider.GetMountName() &&
+			mount.IsAffected(affMounted) && mount.GetFollowing() == rider.Name {
+			return mount
+		}
+	}
+	return nil
+}
+
+func (w *World) clearMountedPair(rider *Player, mount *MobInstance) {
+	if rider != nil {
+		rider.SetAffect(affMounted, false)
+		rider.MountName = ""
+	}
+	if mount != nil {
+		mount.SetMountRider("")
+	}
 }
 
 // movementSpecialBlocks mirrors C special(ch, dir+1, "") for recursively

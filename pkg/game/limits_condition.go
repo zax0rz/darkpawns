@@ -244,6 +244,9 @@ func (w *World) PointUpdate() {
 					m.SetHealth(m.GetMaxHP())
 				}
 			}
+			// C point_update restores NPC movement by level every tick, capped
+			// at the fixed max_move=50 initialized in read_mobile.
+			m.GainMove(MoveGainNPC(m))
 			// Poison damage — limits.c:503-504 (applies to ALL chars including NPCs)
 			if m.HasAffect(AffPoison) {
 				m.TakeDamage(10)

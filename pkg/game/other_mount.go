@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -16,8 +15,11 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	// C do_ride (act.other.c:1556): ROOM_INDOORS checked BEFORE no-arg — an
-	// indoors player gets "Go outside if you want to ride!" regardless of args.
+	if ch.IsFighting() {
+		ch.SendMessage("You're too busy fighting!\n\r")
+		return true
+	}
+
 	room := w.GetRoomInWorld(ch.GetRoomVNum())
 	if room == nil || !isOutdoors(room) {
 		ch.SendMessage("Go outside if you want to ride!\r\n")
@@ -26,43 +28,50 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
-		ch.SendMessage("Ride what?\r\n")
-		return true
-	}
-
-	if ch.IsFighting() {
-		ch.SendMessage("You are fighting!\r\n")
+		ch.SendMessage("What do you wish to ride?\r\n")
 		return true
 	}
 
 	// Find mount
 	_, mountMob := w.findCharInRoom(ch, ch.GetRoomVNum(), arg)
 	if mountMob == nil {
-		ch.SendMessage("There's nothing here to ride!\r\n")
-		return true
-	}
-
-	if !mountMob.HasFlag("mountable") {
-		ch.SendMessage("You can't ride that!\r\n")
+		ch.SendMessage("No-one by that name here.\r\n")
 		return true
 	}
 
 	if ch.IsAffected(affMounted) {
-		ch.SendMessage("You're already riding!\r\n")
+		ch.SendMessage("You can't ride two beasts at once!\r\n")
 		return true
 	}
 
-	if mountMob.MountRider != "" {
-		ch.SendMessage("That mount already has a rider.\r\n")
+	if mountMob.IsMountedMob() {
+		ch.SendMessage("The beast is already being ridden!\r\n")
+		return true
+	}
+	if !mountMob.HasFlag("mountable") {
+		Act(w, true, ch, mountMob, nil, nil, "You can't ride $N!", "", ToChar)
+		return true
+	}
+	if ch.IsAffected(affCharm) {
+		ch.SendMessage("Get your master's permission first!\r\n")
+		return true
+	}
+	if mountMob.IsAffected(affCharm) && mountMob.GetFollowing() != ch.Name {
+		Act(w, true, ch, mountMob, nil, nil, "$S master would not like that!", "", ToChar)
 		return true
 	}
 
-	mountMob.MountRider = ch.Name
+	mountMob.SetMountRider(ch.Name)
+	mountMob.SetAffected(affMounted)
+	if !mountMob.IsAffected(affCharm) {
+		mountMob.SetAffected(affCharm)
+	}
+	mountMob.SetFollowing(ch.Name)
 	ch.MountName = mountMob.GetName()
 	ch.SetAffect(affMounted, true)
-	ch.SetFollowing(mountMob.GetShortDesc())
-	ch.SendMessage(fmt.Sprintf("You climb onto %s.\r\n", mountMob.GetShortDesc()))
-	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s climbs onto %s.\r\n", ch.Name, mountMob.GetShortDesc()), ch.Name)
+	ch.SendMessage("You hop on your mount.\r\n")
+	Act(w, true, ch, mountMob, nil, nil, "$n hops on your back!", "", ToVict)
+	Act(w, true, ch, mountMob, nil, nil, "$n hops onto the back of $N.", "", ToRoom)
 	return true
 }
 
@@ -80,17 +89,15 @@ func (w *World) doDismount(ch *Player, me *MobInstance, cmd string, arg string) 
 		return true
 	}
 
-	for _, m := range w.GetMobsInRoom(ch.GetRoomVNum()) {
-		if m.MountRider == ch.Name {
-			m.MountRider = ""
-			break
-		}
+	mount := w.riddenMount(ch)
+	if mount != nil {
+		Act(w, true, ch, mount, nil, nil, "$n dismounts from the back of $N.", "", ToRoom)
+		mount.SetMountRider("")
+		mount.RemoveAffected(affMounted)
 	}
 	ch.SetAffect(affMounted, false)
 	ch.MountName = ""
-	ch.SetFollowing("")
-	ch.SendMessage("You dismount.\r\n")
-	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s dismounts.\r\n", ch.Name), ch.Name)
+	ch.SendMessage("You hop off your mount.\r\n")
 	return true
 }
 
