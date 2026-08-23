@@ -11,6 +11,13 @@ Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-
 - `src/` and `darkpawns-c-oracle/` are the **read-only oracle** (ground truth). Never edit them; diff against them with `cmd/dp-oracle-diff`.
 - When a byte is in question, **the C source wins** (R5e — verify the actual call path, don't trust a summary). A repeated failure indicts the rule, not the file: amend the rulebook + audit the whole class (R5b/R5c).
 
+### Fidelity Work: Start Here
+
+Before extending oracle coverage or declaring a command complete, read
+**[`docs/fidelity/DEPTH_TESTING.md`](docs/fidelity/DEPTH_TESTING.md)**. It explains the current
+breadth-to-depth strategy, proof levels, scenario fixtures, manifests, and the dated handoff frontier.
+Breadth coverage proves that a command can match once; it does **not** prove the port is complete.
+
 ## Build & Verify
 
 ```bash
@@ -98,4 +105,3 @@ This target automatically executes the complete, secure deployment sequence:
 1. **`python3 website/scripts/parse_world.py`** — Parses the authoritative MUD room files (`lib/world/`) and compiles a fresh `world.json` for the interactive D3 map page.
 2. **`cd website && hugo --minify`** — Runs the Hugo compilation in the correct subdirectory context.
 3. **`rsync -avz --delete website/public/ root@192.168.1.15:/opt/darkpawns/hugo-site/`** — Syncs the newly compiled static assets directly to the live server web root.
-
