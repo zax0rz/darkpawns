@@ -43,12 +43,31 @@ func cmdColor(s *Session, args []string) error {
 
 // cmdCommands — list all commands available at the player's level.
 func cmdCommands(s *Session, args []string) error {
+	target := s.player
+	if len(args) > 0 {
+		target = nil
+		for _, candidate := range s.manager.world.GetAllPlayers() {
+			if strings.EqualFold(candidate.GetName(), args[0]) && game.CanSee(s.player, candidate) {
+				target = candidate
+				break
+			}
+		}
+		if target == nil {
+			s.Send("Who is that?\r\n")
+			return nil
+		}
+		if s.player.GetLevel() < target.GetLevel() {
+			s.Send("You can't see the commands of people above your level.\r\n")
+			return nil
+		}
+	}
+
 	entries := cmdRegistry.GetAll()
 
 	// Filter by player level and sort alphabetically
 	level := 0
-	if s.player != nil {
-		level = s.player.GetLevel()
+	if target != nil {
+		level = target.GetLevel()
 	}
 
 	var names []string

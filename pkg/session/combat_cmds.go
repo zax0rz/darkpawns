@@ -230,10 +230,6 @@ func isShopkeeper(world *game.World, mob *game.MobInstance) bool {
 // Port of do_flee() from src/fight.c: loops up to 6 random directions,
 // checks each exit is open and the destination isn't a DEATH room.
 func cmdFlee(s *Session) error {
-	if !s.manager.combatEngine.IsFighting(s.player.Name) {
-		s.Send("You're not fighting anyone!")
-		return nil
-	}
 	if s.player.GetPosition() < combat.PosFighting {
 		s.Send("Get on your feet first!")
 		return nil

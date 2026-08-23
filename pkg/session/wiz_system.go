@@ -18,6 +18,14 @@ func cmdShutdown(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
+	option := ""
+	if len(args) > 0 {
+		option = strings.ToLower(args[0])
+	}
+	if option != "" && option != "reboot" && option != "die" && option != "pause" {
+		s.Send("Unknown shutdown option.\r\n")
+		return nil
+	}
 	slog.Warn("server shutdown initiated", "by", s.player.Name)
 	s.Send("World shudders and begins to fade...")
 	s.Send("Shutting down...")
@@ -64,6 +72,23 @@ func cmdSnoop(s *Session, args []string) error {
 func cmdReload(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
+		return nil
+	}
+	option := ""
+	if len(args) > 0 {
+		option = strings.ToLower(args[0])
+	}
+	valid := option == "all" || strings.HasPrefix(option, "*")
+	if !valid {
+		for _, candidate := range []string{"wizlist", "immlist", "news", "credits", "motd", "imotd", "help", "info", "policy", "handbook", "background", "future", "xhelp"} {
+			if option == candidate {
+				valid = true
+				break
+			}
+		}
+	}
+	if !valid {
+		s.Send("Unknown reload option.\r\n")
 		return nil
 	}
 	slog.Info("(GC) reload initiated", "by", s.player.Name)
@@ -113,7 +138,12 @@ func cmdWizlock(s *Session, args []string) error {
 		}
 		s.manager.wizlocked = (val != 0)
 	} else {
-		s.manager.wizlocked = !s.manager.wizlocked
+		if s.manager.wizlocked {
+			s.Send("The game is currently closed to new players.\r\n")
+		} else {
+			s.Send("The game is currently completely open.\r\n")
+		}
+		return nil
 	}
 
 	if s.manager.wizlocked {
@@ -517,9 +547,12 @@ func cmdTick(s *Session, args []string) error {
 		return nil
 	}
 
-	// Log and acknowledge the command
 	slog.Warn("wizard tick forced", "by", s.playerName)
-	s.Send("Forcing game tick...")
+	game.WeatherAndTime(true, s.manager.SendToOutdoor)
+	s.manager.world.AffectUpdate()
+	s.manager.world.PointUpdate()
+	// TODO(port): C calls hunt_items() after point_update(); no Go equivalent
+	// exists yet. Add it here in the same order when that subsystem is ported.
 	return nil
 }
 

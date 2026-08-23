@@ -18,20 +18,15 @@ func (w *World) doAFK(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.SetPlrFlag(PrfAFK, false)
 		ch.SetAFK(false)
 		ch.SetAFKMessage("")
-		msg := fmt.Sprintf("%s is no longer AFK.\r\n", ch.Name)
-		actToRoom(w, ch.GetRoomVNum(), msg, ch.Name)
-		ch.SendMessage("You are no longer AFK.\r\n")
+		Act(w, false, ch, nil, nil, nil, "$n returns from some repulsive act...", "", ToRoom)
+		ch.SendMessage("You return from the world of the living.\r\n")
 	} else {
 		ch.SetPlrFlag(PrfAFK, true)
 		ch.SetAFK(true)
-		ch.SetAFKMessage(arg)
-		msg := fmt.Sprintf("%s is now AFK.\r\n", ch.Name)
-		actToRoom(w, ch.GetRoomVNum(), msg, ch.Name)
-		if arg != "" {
-			ch.SendMessage("You are now AFK: " + arg + "\r\n")
-		} else {
-			ch.SendMessage("You are now AFK.\r\n")
-		}
+		ch.SetAFKMessage("")
+		Act(w, false, ch, nil, nil, nil, "$n goes AFK...", "", ToRoom)
+		// C's command/prompt cycle leaves a blank line before the AFK prompt.
+		ch.SendMessage("Go leave..no one will notice anyways.\r\n\r\n")
 	}
 	return true
 }
@@ -48,60 +43,60 @@ func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool
 	arg = strings.TrimSpace(arg)
 
 	if arg == "" {
-		var autos []string
-		if ch.GetFlags()&(1<<PrfAutoexit) != 0 {
-			autos = append(autos, "exits")
+		var result strings.Builder
+		result.WriteString("You have the following autos set:\r\n")
+		if ch.GetAutoExit() {
+			result.WriteString("Exits ")
 		}
 		if ch.GetFlags()&(1<<PrfAutoLoot) != 0 {
-			autos = append(autos, "loot")
+			result.WriteString("Loot ")
 		}
 		if ch.GetFlags()&(1<<PrfAutoGold) != 0 {
-			autos = append(autos, "gold")
+			result.WriteString("Gold ")
 		}
 		if ch.GetFlags()&(1<<PrfAutoSplit) != 0 {
-			autos = append(autos, "split")
+			result.WriteString("Split")
 		}
-
-		if len(autos) == 0 {
-			ch.SendMessage("None.\r\n")
-		} else {
-			ch.SendMessage("Autos: " + strings.Join(autos, ", ") + "\r\n")
+		if result.Len() == len("You have the following autos set:\r\n") {
+			result.WriteString("None.")
 		}
+		result.WriteString("\r\n")
+		ch.SendMessage(result.String())
 		return true
 	}
 
 	switch strings.ToLower(arg) {
 	case "exit", "exits":
-		if ch.GetFlags()&(1<<PrfAutoexit) != 0 {
-			ch.SetPlrFlag(PrfAutoexit, false)
-			ch.SendMessage("Auto exits off.\r\n")
+		if ch.GetAutoExit() {
+			ch.SetAutoExit(false)
+			ch.SendMessage("You will no longer see room exits.\r\n")
 		} else {
-			ch.SetPlrFlag(PrfAutoexit, true)
-			ch.SendMessage("Auto exits on.\r\n")
+			ch.SetAutoExit(true)
+			ch.SendMessage("You will now see room exits.\r\n")
 		}
 	case "loot":
 		if ch.GetFlags()&(1<<PrfAutoLoot) != 0 {
 			ch.SetPlrFlag(PrfAutoLoot, false)
-			ch.SendMessage("Auto loot off.\r\n")
+			ch.SendMessage("You will no longer loot corpses.\r\n")
 		} else {
 			ch.SetPlrFlag(PrfAutoLoot, true)
-			ch.SendMessage("Auto loot on.\r\n")
+			ch.SendMessage("You will now automatically loot corpses.\r\n")
 		}
 	case "gold":
 		if ch.GetFlags()&(1<<PrfAutoGold) != 0 {
 			ch.SetPlrFlag(PrfAutoGold, false)
-			ch.SendMessage("Auto gold off.\r\n")
+			ch.SendMessage("You will no longer get the gold from corpses.\r\n")
 		} else {
 			ch.SetPlrFlag(PrfAutoGold, true)
-			ch.SendMessage("Auto gold on.\r\n")
+			ch.SendMessage("You will now get the gold from corpses.\r\n")
 		}
 	case "split":
 		if ch.GetFlags()&(1<<PrfAutoSplit) != 0 {
 			ch.SetPlrFlag(PrfAutoSplit, false)
-			ch.SendMessage("Auto split off.\r\n")
+			ch.SendMessage("You will no longer split gold with your group.\r\n")
 		} else {
 			ch.SetPlrFlag(PrfAutoSplit, true)
-			ch.SendMessage("Auto split on.\r\n")
+			ch.SendMessage("You will now split gold with your group.\r\n")
 		}
 	default:
 		ch.SendMessage("What do you want to make automatic?\r\n")

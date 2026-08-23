@@ -224,10 +224,8 @@ func (w *World) doInactive(ch *Player, me *MobInstance, cmd string, arg string) 
 
 	if ch.GetFlags()&(1<<PrfInactive) != 0 {
 		ch.SetPlrFlag(PrfInactive, false)
-		ch.SendMessage("You are now active.\r\n")
 	} else {
 		ch.SetPlrFlag(PrfInactive, true)
-		ch.SendMessage("You are now inactive.\r\n")
 	}
 	return true
 }
