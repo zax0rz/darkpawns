@@ -91,3 +91,29 @@ Frequency is a budget and editorial decision. Two writing sessions plus two
 digests per week may be useful during an active period, but it should be an
 explicit choice measured by novel verified claims per token, not an inherited
 cron accident.
+
+## Remediation Applied — 2026-08-23
+
+The live OpenClaw jobs and Daeron's workspace `AGENTS.md` were updated after this
+review:
+
+- Evidence digest: Sunday at 18:00 ET, weekly (`0 18 * * 0`).
+- Research writing: Thursday at 18:00 ET, weekly (`0 18 * * 4`).
+- MiMo v2.5 remains explicitly pinned on both jobs.
+- Lightweight bootstrap context is enabled.
+- Tool access was reduced to the minimum needed by each job; writing alone keeps
+  web research tools.
+- Soviet cross-post and redundant in-prompt Discord sends were removed. Cron
+  delivery remains the sole Discord path.
+- Both jobs now use absolute canonical repository paths, append-only field notes,
+  the evidence ledger, bounded source sets, claim-state rules, and `git diff --check`.
+- Failure alerts now trigger after two consecutive job errors and target the
+  operations channel.
+- Daeron workspace commit `bcf4725` aligns the standing Program 3/5 instructions
+  with the live weekly schedules and artifact contract.
+
+The jobs were not forced to run during remediation because doing so would create
+and distribute unscheduled research output. Their next natural executions are
+the first end-to-end verification of the new prompts. Compare token usage,
+artifact paths, ledger validity, and partial-failure reporting against the prior
+run history.
