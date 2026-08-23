@@ -133,7 +133,45 @@ func TestPerformMoveFollowerPositionAndHide(t *testing.T) {
 	})
 }
 
+func TestPerformMoveRendersLeaderBeforeFollowerRecursion(t *testing.T) {
+	w, leader := newMovementTestWorld(t)
+	follower := addMovementPlayer(t, w, "Follower", 1001)
+	follower.SetFollowing(leader.Name)
+
+	var rendered []string
+	w.MovementLook = func(player *Player) {
+		rendered = append(rendered, player.Name)
+		if player == leader && follower.GetRoom() != 1001 {
+			t.Fatalf("follower moved before leader room render: room = %d", follower.GetRoom())
+		}
+	}
+
+	if !w.DoMove(leader, "north").Success {
+		t.Fatal("leader move failed")
+	}
+	if got, want := strings.Join(rendered, ","), "TestPlayer,Follower"; got != want {
+		t.Fatalf("render order = %q, want %q", got, want)
+	}
+}
+
 func TestMovementFailureMessagesAndMountGate(t *testing.T) {
+	t.Run("charmed follower cannot leave master", func(t *testing.T) {
+		w, actor := newMovementTestWorld(t)
+		master := addMovementPlayer(t, w, "Master", 1001)
+		actor.SetFollowing(master.Name)
+		actor.SetAffect(affCharm, true)
+		output := captureMovementOutput(w)
+
+		result := w.DoMove(actor, "north")
+
+		if result.Success || actor.GetRoom() != 1001 {
+			t.Fatalf("result = %+v, room = %d", result, actor.GetRoom())
+		}
+		if got := output[actor.Name].String(); !strings.Contains(got, "The thought of leaving your master makes you weep.") {
+			t.Fatalf("actor output = %q", got)
+		}
+	})
+
 	t.Run("closed named door", func(t *testing.T) {
 		w, actor := newMovementTestWorld(t)
 		room := w.GetRoomInWorld(1001)
@@ -193,6 +231,35 @@ func TestMovementFailureMessagesAndMountGate(t *testing.T) {
 		}
 		if got := output[actor.Name].String(); !strings.Contains(got, "You can't ride in there! Dismount first!") {
 			t.Fatalf("actor output = %q", got)
+		}
+	})
+}
+
+func TestDoMoveMovementCostAndImmortalExemption(t *testing.T) {
+	t.Run("mortal pays averaged sector cost", func(t *testing.T) {
+		w, actor := newMovementTestWorld(t)
+		w.GetRoomInWorld(1001).Sector = SECT_FIELD
+		w.GetRoomInWorld(1002).Sector = SECT_DESERT
+		actor.SetMove(100)
+
+		if !w.DoMove(actor, "north").Success {
+			t.Fatal("DoMove failed")
+		}
+		if got, want := actor.GetMove(), 95; got != want {
+			t.Fatalf("move points = %d, want %d", got, want)
+		}
+	})
+
+	t.Run("immortal moves free while exhausted", func(t *testing.T) {
+		w, actor := newMovementTestWorld(t)
+		actor.SetLevel(lvlImmort)
+		actor.SetMove(0)
+
+		if !w.DoMove(actor, "north").Success {
+			t.Fatal("DoMove failed")
+		}
+		if got := actor.GetMove(); got != 0 {
+			t.Fatalf("move points = %d, want 0", got)
 		}
 	})
 }

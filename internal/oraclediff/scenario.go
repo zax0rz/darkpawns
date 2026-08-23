@@ -36,6 +36,7 @@ type Scenario struct {
 	ScriptlessMobIDs []int
 	RoomExitFixtures []RoomExitFixture
 	RoomFlagFixtures []RoomFlagFixture
+	RoomSectors      []RoomSectorFixture
 	// DiffSetup diffs the primary client's whole setup transcript (the
 	// character-creation dialogue) as one normalized block, instead of
 	// draining it. Set by the [creation:oracle]/[creation:port] sections,
@@ -86,6 +87,7 @@ type RoomExitFixture struct {
 	Direction string
 	ToRoom    int
 	DoorState int
+	Keyword   string
 }
 
 // RoomFlagFixture enables or disables one C ROOM_* bit on a disposable room.
@@ -93,6 +95,12 @@ type RoomFlagFixture struct {
 	RoomVNum int
 	Bit      int
 	Enabled  bool
+}
+
+// RoomSectorFixture replaces the sector type on one disposable room.
+type RoomSectorFixture struct {
+	RoomVNum int
+	Sector   int
 }
 
 // ProbeBlock is one probe command and the raw output it produced.
@@ -125,7 +133,9 @@ type AudienceProbeBlock struct {
 //	strip-mob-script 18306    # force native special dispatch in both copies
 //	replace-room-exits 8162 none
 //	replace-room-exits 8162 all 8161 0
+//	replace-room-exits 8162 north 8161 1 gate
 //	set-room-flag 8161 1 on  # ROOM_DEATH
+//	set-room-sector 8161 7   # SECT_WATER_NOSWIM
 //	[warmup]            # shared commands sent and discarded after peer setup
 //	get scroll
 //	[probe]             # sent to BOTH; this is the only diffed section
@@ -207,15 +217,17 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					continue
 				}
 			}
-			if len(fields) == 5 && strings.EqualFold(fields[0], "replace-room-exits") {
+			if (len(fields) == 5 || len(fields) == 6) && strings.EqualFold(fields[0], "replace-room-exits") {
 				roomVNum, roomErr := strconv.Atoi(fields[1])
 				toRoom, toErr := strconv.Atoi(fields[3])
 				doorState, doorErr := strconv.Atoi(fields[4])
 				direction := strings.ToLower(fields[2])
 				if roomErr == nil && toErr == nil && doorErr == nil && roomVNum > 0 && toRoom > 0 && doorState >= 0 && doorState <= 2 && validFixtureDirection(direction) {
-					sc.RoomExitFixtures = append(sc.RoomExitFixtures, RoomExitFixture{
-						RoomVNum: roomVNum, Direction: direction, ToRoom: toRoom, DoorState: doorState,
-					})
+					fixture := RoomExitFixture{RoomVNum: roomVNum, Direction: direction, ToRoom: toRoom, DoorState: doorState}
+					if len(fields) == 6 {
+						fixture.Keyword = fields[5]
+					}
+					sc.RoomExitFixtures = append(sc.RoomExitFixtures, fixture)
 					continue
 				}
 			}
@@ -225,6 +237,14 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				enabled, enabledOK := parseFixtureToggle(fields[3])
 				if roomErr == nil && bitErr == nil && enabledOK && roomVNum > 0 && bit >= 0 && bit < 64 {
 					sc.RoomFlagFixtures = append(sc.RoomFlagFixtures, RoomFlagFixture{RoomVNum: roomVNum, Bit: bit, Enabled: enabled})
+					continue
+				}
+			}
+			if len(fields) == 3 && strings.EqualFold(fields[0], "set-room-sector") {
+				roomVNum, roomErr := strconv.Atoi(fields[1])
+				sector, sectorErr := strconv.Atoi(fields[2])
+				if roomErr == nil && sectorErr == nil && roomVNum > 0 && sector >= 0 && sector <= 15 {
+					sc.RoomSectors = append(sc.RoomSectors, RoomSectorFixture{RoomVNum: roomVNum, Sector: sector})
 					continue
 				}
 			}

@@ -22,6 +22,10 @@ import (
 // SendMessage calls route through Session.send (which writePump reads).
 type MessageSinkFunc func(playerName string, msg []byte)
 
+// MovementLookFunc renders the destination room for a connected player at the
+// exact point C calls look_at_room during do_simple_move.
+type MovementLookFunc func(player *Player)
+
 // CloseConnectionFunc is called when a player session should be forcibly closed
 // (e.g., do_quit). Set by the session manager.
 type CloseConnectionFunc func(playerName string)
@@ -109,6 +113,11 @@ type World struct {
 	// MessageSink routes player messages through the session layer.
 	// Set by the session manager on initialization. If nil, messages are silently dropped.
 	MessageSink MessageSinkFunc
+
+	// MovementLook is owned by the session layer because room rendering is a
+	// transport concern, but movement owns its ordering relative to arrivals,
+	// followers, and entry triggers.
+	MovementLook MovementLookFunc
 
 	// LibTextDir is the lib/text root (2010 static text + help), derived from
 	// the -world flag's parent at boot; "lib/text" when no source dir is known.

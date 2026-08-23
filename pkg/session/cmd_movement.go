@@ -1,7 +1,6 @@
 package session
 
 import (
-	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -34,9 +33,6 @@ func finishMovementCommand(s *Session, result game.MoveResult) error {
 		}
 		_ = s.manager.world.OnPlayerEnterRoom(follower, follower.GetRoom(), s.manager.combatEngine)
 		if followerSession, ok := s.manager.GetSession(followerName); ok {
-			if err := cmdMovementLook(followerSession); err != nil {
-				slog.Error("movement look failed for follower", "follower", followerName, "error", err)
-			}
 			followerSession.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
 		}
 	}
@@ -45,5 +41,5 @@ func finishMovementCommand(s *Session, result game.MoveResult) error {
 		s.sendText("You are attacked!")
 	}
 	s.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
-	return cmdMovementLook(s)
+	return nil
 }

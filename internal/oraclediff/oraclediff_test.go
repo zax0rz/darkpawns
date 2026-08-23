@@ -116,9 +116,10 @@ empty-players
 quiet-mobs
 spawn-mob 18306 1 8162 80
 strip-mob-script 18306
-replace-room-exits 8162 west 8161 0
+replace-room-exits 8162 west 8161 1 secret
 replace-room-exits 8161 none
 set-room-flag 8161 1 on
+set-room-sector 8161 7
 [probe:victim]
 recite scroll
 `
@@ -148,11 +149,14 @@ recite scroll
 	if len(sc.ScriptlessMobIDs) != 1 || sc.ScriptlessMobIDs[0] != 18306 {
 		t.Fatalf("ScriptlessMobIDs = %#v", sc.ScriptlessMobIDs)
 	}
-	if len(sc.RoomExitFixtures) != 2 || sc.RoomExitFixtures[0] != (RoomExitFixture{RoomVNum: 8162, Direction: "west", ToRoom: 8161, DoorState: 0}) || sc.RoomExitFixtures[1] != (RoomExitFixture{RoomVNum: 8161}) {
+	if len(sc.RoomExitFixtures) != 2 || sc.RoomExitFixtures[0] != (RoomExitFixture{RoomVNum: 8162, Direction: "west", ToRoom: 8161, DoorState: 1, Keyword: "secret"}) || sc.RoomExitFixtures[1] != (RoomExitFixture{RoomVNum: 8161}) {
 		t.Fatalf("RoomExitFixtures = %#v", sc.RoomExitFixtures)
 	}
 	if len(sc.RoomFlagFixtures) != 1 || sc.RoomFlagFixtures[0] != (RoomFlagFixture{RoomVNum: 8161, Bit: 1, Enabled: true}) {
 		t.Fatalf("RoomFlagFixtures = %#v", sc.RoomFlagFixtures)
+	}
+	if len(sc.RoomSectors) != 1 || sc.RoomSectors[0] != (RoomSectorFixture{RoomVNum: 8161, Sector: 7}) {
+		t.Fatalf("RoomSectors = %#v", sc.RoomSectors)
 	}
 }
 

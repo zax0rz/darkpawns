@@ -298,6 +298,18 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		}
 	}
 
+	// C's do_simple_move calls look_at_room before follower recursion. Keep the
+	// renderer in session while letting the game transaction own that ordering.
+	world.MovementLook = func(player *game.Player) {
+		s, ok := m.GetSession(player.Name)
+		if !ok || s == nil {
+			return
+		}
+		if err := cmdMovementLook(s); err != nil {
+			slog.Error("movement look failed", "player", player.Name, "error", err)
+		}
+	}
+
 	// Wire CloseConnection so game-layer close requests route through the session
 	world.CloseConn = func(playerName string) {
 		m.UnregisterAndClose(playerName)

@@ -55,8 +55,9 @@ func TestApplyRoomFixturesReplacesExitsAndSetsFlags(t *testing.T) {
 		t.Fatalf("copy world: %v", err)
 	}
 	if err := applyRoomFixtures(worldDir,
-		[]oraclediff.RoomExitFixture{{RoomVNum: 8162, Direction: "all", ToRoom: 8161, DoorState: 0}},
+		[]oraclediff.RoomExitFixture{{RoomVNum: 8162, Direction: "all", ToRoom: 8161, DoorState: 1, Keyword: "gate"}},
 		[]oraclediff.RoomFlagFixture{{RoomVNum: 8161, Bit: 1, Enabled: true}},
+		[]oraclediff.RoomSectorFixture{{RoomVNum: 8161, Sector: 7}},
 	); err != nil {
 		t.Fatalf("applyRoomFixtures: %v", err)
 	}
@@ -68,12 +69,15 @@ func TestApplyRoomFixturesReplacesExitsAndSetsFlags(t *testing.T) {
 	for _, room := range parsed.Rooms {
 		rooms[room.VNum] = room
 	}
-	if got := rooms[8162].Exits; len(got) != 6 || got["west"].ToRoom != 8161 || got["up"].ToRoom != 8161 {
+	if got := rooms[8162].Exits; len(got) != 6 || got["west"].ToRoom != 8161 || got["up"].ToRoom != 8161 || got["north"].Keywords != "gate" || got["north"].DoorState != 1 {
 		t.Fatalf("room 8162 exits = %#v, want all six directions to 8161", got)
 	}
 	deathRoom := rooms[8161]
 	if !deathRoom.HasFlag(1) {
 		t.Fatal("room 8161 missing ROOM_DEATH bit")
+	}
+	if deathRoom.Sector != 7 {
+		t.Fatalf("room 8161 sector = %d, want 7", deathRoom.Sector)
 	}
 }
 

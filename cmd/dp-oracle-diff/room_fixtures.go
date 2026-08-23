@@ -20,7 +20,7 @@ var fixtureDirectionNumber = map[string]int{
 	"down":  5,
 }
 
-func applyRoomFixtures(worldDir string, exits []oraclediff.RoomExitFixture, flags []oraclediff.RoomFlagFixture) error {
+func applyRoomFixtures(worldDir string, exits []oraclediff.RoomExitFixture, flags []oraclediff.RoomFlagFixture, sectors []oraclediff.RoomSectorFixture) error {
 	for _, fixture := range exits {
 		if err := rewriteRoomRecord(worldDir, fixture.RoomVNum, func(record string) (string, error) {
 			return replaceRoomExits(record, fixture)
@@ -31,6 +31,13 @@ func applyRoomFixtures(worldDir string, exits []oraclediff.RoomExitFixture, flag
 	for _, fixture := range flags {
 		if err := rewriteRoomRecord(worldDir, fixture.RoomVNum, func(record string) (string, error) {
 			return setRoomFlag(record, fixture)
+		}); err != nil {
+			return err
+		}
+	}
+	for _, fixture := range sectors {
+		if err := rewriteRoomRecord(worldDir, fixture.RoomVNum, func(record string) (string, error) {
+			return setRoomSector(record, fixture)
 		}); err != nil {
 			return err
 		}
@@ -114,12 +121,27 @@ func replaceRoomExits(record string, fixture oraclediff.RoomExitFixture) (string
 		result = append(result,
 			fmt.Sprintf("D%d", direction),
 			"~",
-			"~",
+			fixture.Keyword+"~",
 			fmt.Sprintf("%d -1 %d", fixture.DoorState, fixture.ToRoom),
 		)
 	}
 	result = append(result, body...)
 	return strings.Join(result, "\n") + "\n", nil
+}
+
+func setRoomSector(record string, fixture oraclediff.RoomSectorFixture) (string, error) {
+	lines := strings.Split(strings.TrimSuffix(record, "\n"), "\n")
+	header, err := roomHeaderLine(lines)
+	if err != nil {
+		return "", err
+	}
+	fields := strings.Fields(lines[header])
+	if len(fields) < 6 {
+		return "", fmt.Errorf("room header has %d fields, want at least 6", len(fields))
+	}
+	fields[5] = strconv.Itoa(fixture.Sector)
+	lines[header] = strings.Join(fields, " ")
+	return strings.Join(lines, "\n") + "\n", nil
 }
 
 func setRoomFlag(record string, fixture oraclediff.RoomFlagFixture) (string, error) {

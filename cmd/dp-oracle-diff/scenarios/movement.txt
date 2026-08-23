@@ -1,4 +1,7 @@
 # Movement domain fidelity (Domain 5: move / position / follow / enter — O25/O26/O27/O28).
+# depth-case: movement.success-actor
+# depth-case: movement.success-origin-audience
+# depth-case: movement.success-destination-audience
 #
 # PREREQ: DP-1085 (PR #335) — Go now routes hometown-K newbies to 8162 like C, so both
 # servers co-locate. Shared newbie-zone graph (byte-identical 80.wld):

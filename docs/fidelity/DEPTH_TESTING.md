@@ -89,10 +89,16 @@ durable evidence; prose percentages are only snapshots.
   cases proven/delegated, zero blocked, and one NPC-only case excluded to the
   future mob/specproc surface.
 - Transitive boat, charm, tunnel, mount, special, and greet failures belong in a
-  future movement depth manifest; `flee` proves the callee false-return edge.
-- The next useful step is to select another command, create its manifest first,
-  and reuse the fixture/audience/seed machinery rather than launching another
-  unstructured breadth sweep.
+  movement depth manifest; `flee` proves the callee false-return edge.
+- The movement depth pass is now captured in `docs/fidelity/depth/movement.tsv`.
+  It exposed and fixed destination-look ordering during follower recursion and
+  added disposable exit-keyword and room-sector fixtures. Ordinary movement,
+  closed exits, boats, tunnels, vertical audiences, follower state, resource
+  costs, and death traps are proven.
+- The remaining movement frontier is explicit: five mounted-movement cases need
+  a real MobInstance movement pool/pair transfer, and greet plus room-enter
+  trigger ordering still need focused proof. Treat mounted movement as its own
+  vertical slice rather than obscuring it inside another command pass.
 
 Update this dated section when the frontier materially changes. Keep the rest
 of this document stable unless the methodology itself changes.

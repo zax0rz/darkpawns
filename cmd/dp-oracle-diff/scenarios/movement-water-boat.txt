@@ -1,0 +1,73 @@
+# depth-case: movement.boat-required
+# depth-case: movement.boat-success
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+set-room-sector 8161 7
+spawn-obj 6 1 8162 80
+
+[setup:oracle]
+Moveboat
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Moveboat
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+Boatsaw
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[setup:port:destination]
+Boatsaw
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[probe]
+north
+get boat
+north
