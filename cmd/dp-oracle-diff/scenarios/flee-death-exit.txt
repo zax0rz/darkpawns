@@ -1,0 +1,40 @@
+# depth-case: flee.death-exit-rejected
+# All six directions lead to a death room, proving do_flee rejects each sampled
+# exit before do_simple_move and exhausts all six draws.
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 all 8161 0
+set-room-flag 8161 1 on
+
+[setup:oracle]
+Fleedeath
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleedeath
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+flee

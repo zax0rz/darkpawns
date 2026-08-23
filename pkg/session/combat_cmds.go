@@ -234,6 +234,10 @@ func cmdFlee(s *Session) error {
 		s.Send("Get on your feet first!")
 		return nil
 	}
+	if (s.player.GetClass() == game.ClassThief || s.player.GetClass() == game.ClassAssassin) && s.player.GetWaitState() > 1 {
+		s.Send("You attempt to flee but cannot!")
+		return nil
+	}
 
 	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
 	if !ok {
@@ -258,7 +262,6 @@ func cmdFlee(s *Session) error {
 	// a shuffled list consumes a different number and shape of shared RNG draws.
 	allDirs := []string{"north", "east", "south", "west", "up", "down"}
 
-	oldRoom := s.player.GetRoom()
 	newRoomVNum := -1
 	for range 6 {
 		// #nosec G404 — game RNG, not cryptographic
@@ -286,14 +289,13 @@ func cmdFlee(s *Session) error {
 			slog.Error("json.Marshal error", "error", err)
 			return nil
 		}
-		s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
+		s.manager.BroadcastToRoom(s.player.GetRoom(), leaveMsg, s.player.Name)
 
-		nr, err := s.manager.world.MovePlayer(s.player, dir)
-		if err != nil {
+		if !s.manager.world.DoFleeMove(s.player, dir) {
 			broadcastToRoom(s, fmt.Sprintf("%s tries to flee, but can't!", s.player.Name))
 			return nil
 		}
-		newRoomVNum = nr.VNum
+		newRoomVNum = s.player.GetRoom()
 		break
 	}
 
@@ -307,23 +309,8 @@ func cmdFlee(s *Session) error {
 	// Apply XP loss to all levels; level > 10 already included extra above.
 	// LoseExp caps at max_exp_loss and returns the actual amount subtracted.
 	if xpLoss > 0 {
-		actualLoss := s.player.LoseExp(xpLoss)
-		s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", actualLoss))
+		s.player.LoseExp(xpLoss)
 	}
-
-	enterMsg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "enter",
-			From: s.player.Name,
-			Text: fmt.Sprintf("%s has arrived, fleeing from combat!", s.player.Name),
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
-	}
-	s.manager.BroadcastToRoom(newRoomVNum, enterMsg, s.player.Name)
 
 	s.markDirty(VarFighting, VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems)
 

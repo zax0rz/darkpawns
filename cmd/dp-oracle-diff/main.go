@@ -23,7 +23,6 @@ import (
 )
 
 const (
-	fixedSeed = "1"
 	// fixedTime pins the game calendar on both engines (DP_FIXED_TIME seam,
 	// orthogonal to DP_CLOCK's pulse freeze). 1770838461 => 2pm/daytime,
 	// {hours:14,day:17,month:8,year:1245}; both derive an identical calendar.
@@ -67,24 +66,30 @@ func main() {
 func run() int {
 	var (
 		scenarioName = flag.String("scenario", "look-start-room", "scenario name from scenarios/<name>.txt")
+		seed         = flag.String("seed", "1", "shared deterministic DP_SEED value")
+		showOracle   = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
 		quiescence   = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
 		bootTimeout  = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
 	)
 	flag.Parse()
+	if _, err := strconv.ParseUint(*seed, 10, 64); err != nil {
+		fmt.Fprintln(os.Stderr, "dp-oracle-diff: seed must be an unsigned integer")
+		return 1
+	}
 
 	oracleBin := os.Getenv("DP_ORACLE_BIN")
 	if oracleBin == "" {
 		fmt.Println("SKIP: DP_ORACLE_BIN is unset; C oracle differential run not available")
 		return 0
 	}
-	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin); err != nil {
+	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
 		return 1
 	}
 	return 0
 }
 
-func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin string) error {
+func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle bool) error {
 	if quiescence <= 0 {
 		return errors.New("quiescence must be positive")
 	}
@@ -127,7 +132,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// mutates the oracle clone. Unless empty-players is requested, keep its
 	// baseline player file so existing mortal scenarios retain today's boot.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -176,6 +181,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		if err := applyScriptlessMobFixtures(goWorld, scenario.ScriptlessMobIDs); err != nil {
 			return fmt.Errorf("apply Go port mob script fixtures: %w", err)
 		}
+		if err := applyRoomFixtures(filepath.Join(oracleData, "world"), scenario.RoomExitFixtures, scenario.RoomFlagFixtures); err != nil {
+			return fmt.Errorf("apply C oracle room fixtures: %w", err)
+		}
+		if err := applyRoomFixtures(goWorld, scenario.RoomExitFixtures, scenario.RoomFlagFixtures); err != nil {
+			return fmt.Errorf("apply Go port room fixtures: %w", err)
+		}
 	}
 
 	goWork := filepath.Join(tmp, "go-work")
@@ -190,7 +201,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	oracleProc, err := startProcess(ctx, "C oracle", oracleRoot,
-		append(os.Environ(), "DP_SEED="+fixedSeed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
+		append(os.Environ(), "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
 	if err != nil {
 		return err
 	}
@@ -198,7 +209,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 
 	goEnv := append(
 		os.Environ(),
-		"DP_SEED="+fixedSeed,
+		"DP_SEED="+seed,
 		"DP_CLOCK=1",
 		"DP_FIXED_TIME="+fixedTime,
 		"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
@@ -339,8 +350,14 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		Scenario:   scenario.Name,
 		OracleAddr: oracleAddr,
 		GoAddr:     goAddr,
-		Seed:       fixedSeed,
+		Seed:       seed,
 	}, diffs))
+	if showOracle {
+		fmt.Println("normalized C oracle blocks:")
+		for _, diff := range diffs {
+			fmt.Printf("--- [%s]\n%s", diff.Command, diff.Oracle)
+		}
+	}
 	return nil
 }
 

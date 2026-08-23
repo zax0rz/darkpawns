@@ -34,6 +34,8 @@ type Scenario struct {
 	QuietAllMobs     bool
 	EmptyPlayers     bool
 	ScriptlessMobIDs []int
+	RoomExitFixtures []RoomExitFixture
+	RoomFlagFixtures []RoomFlagFixture
 	// DiffSetup diffs the primary client's whole setup transcript (the
 	// character-creation dialogue) as one normalized block, instead of
 	// draining it. Set by the [creation:oracle]/[creation:port] sections,
@@ -75,6 +77,24 @@ type MobFixture struct {
 	ZoneNumber  int
 }
 
+// RoomExitFixture replaces every exit on a disposable room with either no
+// exits, one explicitly described exit, or all six directions to one room. Keeping this deliberately small
+// makes RNG-sensitive movement scenarios deterministic without creating a
+// second world-file language inside scenario files.
+type RoomExitFixture struct {
+	RoomVNum  int
+	Direction string
+	ToRoom    int
+	DoorState int
+}
+
+// RoomFlagFixture enables or disables one C ROOM_* bit on a disposable room.
+type RoomFlagFixture struct {
+	RoomVNum int
+	Bit      int
+	Enabled  bool
+}
+
 // ProbeBlock is one probe command and the raw output it produced.
 type ProbeBlock struct {
 	Command string
@@ -103,6 +123,9 @@ type AudienceProbeBlock struct {
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
 //	strip-mob-script 18306    # force native special dispatch in both copies
+//	replace-room-exits 8162 none
+//	replace-room-exits 8162 all 8161 0
+//	set-room-flag 8161 1 on  # ROOM_DEATH
 //	[warmup]            # shared commands sent and discarded after peer setup
 //	get scroll
 //	[probe]             # sent to BOTH; this is the only diffed section
@@ -177,6 +200,34 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		}
 		if fixtureSection {
 			fields := strings.Fields(line)
+			if len(fields) == 3 && strings.EqualFold(fields[0], "replace-room-exits") && strings.EqualFold(fields[2], "none") {
+				roomVNum, roomErr := strconv.Atoi(fields[1])
+				if roomErr == nil && roomVNum > 0 {
+					sc.RoomExitFixtures = append(sc.RoomExitFixtures, RoomExitFixture{RoomVNum: roomVNum})
+					continue
+				}
+			}
+			if len(fields) == 5 && strings.EqualFold(fields[0], "replace-room-exits") {
+				roomVNum, roomErr := strconv.Atoi(fields[1])
+				toRoom, toErr := strconv.Atoi(fields[3])
+				doorState, doorErr := strconv.Atoi(fields[4])
+				direction := strings.ToLower(fields[2])
+				if roomErr == nil && toErr == nil && doorErr == nil && roomVNum > 0 && toRoom > 0 && doorState >= 0 && doorState <= 2 && validFixtureDirection(direction) {
+					sc.RoomExitFixtures = append(sc.RoomExitFixtures, RoomExitFixture{
+						RoomVNum: roomVNum, Direction: direction, ToRoom: toRoom, DoorState: doorState,
+					})
+					continue
+				}
+			}
+			if len(fields) == 4 && strings.EqualFold(fields[0], "set-room-flag") {
+				roomVNum, roomErr := strconv.Atoi(fields[1])
+				bit, bitErr := strconv.Atoi(fields[2])
+				enabled, enabledOK := parseFixtureToggle(fields[3])
+				if roomErr == nil && bitErr == nil && enabledOK && roomVNum > 0 && bit >= 0 && bit < 64 {
+					sc.RoomFlagFixtures = append(sc.RoomFlagFixtures, RoomFlagFixture{RoomVNum: roomVNum, Bit: bit, Enabled: enabled})
+					continue
+				}
+			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "inert-scroll") {
 				objVNum, objErr := strconv.Atoi(fields[1])
 				if objErr != nil || objVNum <= 0 {
@@ -265,6 +316,26 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		}
 	}
 	return sc, nil
+}
+
+func validFixtureDirection(direction string) bool {
+	switch direction {
+	case "north", "east", "south", "west", "up", "down", "all":
+		return true
+	default:
+		return false
+	}
+}
+
+func parseFixtureToggle(value string) (bool, bool) {
+	switch strings.ToLower(value) {
+	case "on", "true", "1":
+		return true, true
+	case "off", "false", "0":
+		return false, true
+	default:
+		return false, false
+	}
 }
 
 // RunWarmup plays shared commands after every client has completed setup and

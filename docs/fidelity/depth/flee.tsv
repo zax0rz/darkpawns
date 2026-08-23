@@ -1,0 +1,15 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_flee	flee	flee.position-gate	D1	command	oracle-green	flee-position-gate	act.offensive.c:374-378	Position below POS_FIGHTING rejects before RNG.
+do_flee	flee	flee.six-invalid-attempts	D2	command	oracle-green	flee-no-exits	act.offensive.c:394-415	Six failed CAN_GO samples reach terminal PANIC.
+do_flee	flee	flee.death-exit-rejected	D2	command	oracle-green-multiseed	flee-death-exit@1,2,3,5,8	act.offensive.c:395-396	All six fixture exits lead to ROOM_DEATH and are rejected.
+do_flee	flee	flee.success-actor	D2	command	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.offensive.c:398-403	Destination look and self success bytes.
+do_flee	flee	flee.success-origin-audience	D3	command	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.offensive.c:397-398	Panic plus ordinary direction leave bytes.
+do_flee	flee	flee.success-destination-audience	D3	command	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.movement.c:231-273	Ordinary reverse-direction arrival bytes expose the selected RNG direction.
+do_flee	flee	flee.simple-move-failure	D3	command	oracle-green	flee-move-failure	act.offensive.c:398-412	Exhaustion makes do_simple_move false; actor and origin failure bytes match.
+do_flee	flee	flee.combat-stop	D4	command	oracle-green-multiseed	flee-combat-forced@1,2,3,5	act.offensive.c:365-370,398	Synchronous forced call proves active-combat successful movement and audiences.
+do_flee	flee	flee.base-xp-loss	D4	state	unit-green	TestCmdFlee_CanonicalCombatStateAndSilentXPLoss	act.offensive.c:365-370,403-409	Exact missing-HP times opponent-level delta; C has no loss message.
+do_flee	flee	flee.high-level-xp-bonus	D4	state	unit-green	TestCmdFlee_CanonicalHighLevelXPBonus	act.offensive.c:405-406	Exact truncation of 500*(level/2.6), added after base loss only above level 10.
+do_flee	flee	flee.direction-draw-parity	D5	rng	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.offensive.c:394	Observer arrival direction makes differing selected draws player-visible.
+do_flee	flee	flee.thief-wait-gate	D5	automatic-call	unit-green	TestCmdFlee_ThiefAutomaticCallHonorsWaitGate	act.offensive.c:386-391	Descriptor commands drain after wait reaches zero; automatic combat callbacks can reach this handler while wait is greater than one.
+do_flee	flee	flee.npc-wait-gate	D5	npc-call	excluded	-	act.offensive.c:380-384	Not reachable from a player-issued flee command; belongs to mob/specproc handler coverage.
+do_simple_move	flee	flee.transitive-movement-failures	D5	delegated	delegated	movement depth manifest	act.movement.c:95-305	Boat charm tunnel mount special and greet branches are shared movement behavior; flee proves the false-return edge with exhaustion.
