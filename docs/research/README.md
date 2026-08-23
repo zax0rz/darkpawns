@@ -79,3 +79,22 @@ Different research crons may serve different tracks. Every run should declare:
 A writing cron may synthesize verified ledger entries into prose. It must not
 promote `needs-verification` notes into facts. A monitoring cron should collect
 evidence and contradictions, not manufacture a narrative merely because it ran.
+
+### Output and Coordination Rules
+
+- Use append-only dated files under `field-notes/` for monitoring/digest output.
+  Do not make multiple isolated jobs edit different regions of one shared log.
+- Treat GBrain, Discord, and Soviet posts as distribution mirrors, not the
+  canonical record. A failed mirror must not invalidate a successfully written
+  repository artifact, but it must be reported as a partial failure.
+- A writing job should read a bounded set: the ledger, one selected field note,
+  and explicitly named primary artifacts. It should not recursively ingest the
+  draft corpus or whole repository to rediscover a topic.
+- Mechanical completion checks (file exists, minimum length) are necessary but
+  not quality gates. Also validate claim IDs, citations, ledger states, and that
+  the run did not duplicate an existing draft.
+- Record the configured model, schedule, token usage, result, and output path per
+  run. Changes to model or frequency require a dated rationale.
+
+The 2026-08-23 audit of the two principal research crons is preserved at
+`field-notes/2026-08-23-research-cron-review.md`.
