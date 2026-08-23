@@ -531,7 +531,13 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 			// The command prompt travels through the session's send channel so
 			// it is written only after the command's queued output has been
 			// drained (C: comm.c:643-648 flush output, then prompt).
-			tc.writeLine("> ")
+			prompt := "> "
+			if data, ok := sm.Data.(map[string]interface{}); ok {
+				if text, ok := data["text"].(string); ok && text != "" {
+					prompt = text
+				}
+			}
+			tc.writeLine(prompt)
 		case "char_create":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
 				secret, _ := ed["secret"].(bool)

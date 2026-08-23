@@ -1,0 +1,85 @@
+# Player state toggle fidelity: act.other.c::do_afk, do_auto, do_inactive.
+#
+# All three commands are mortal-accessible and deterministic. AFK broadcasts to
+# the room, so the observer transcript proves both actor and audience bytes.
+# `auto` exercises every supported toggle in both directions and the invalid-
+# argument rejection. Its no-argument listing is excluded because the C code
+# builds that text with overlapping sprintf input/output (undefined behavior),
+# and this Linux oracle binary emits nothing on that branch. `inactive` is
+# intentionally run twice: C only flips PRF_INACTIVE and emits no output.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Stateactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stateactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Stateobserv
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Stateobserv
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+afk
+afk back soon
+auto exits
+auto loot
+auto gold
+auto split
+auto exits
+auto loot
+auto gold
+auto split
+auto nonsense
+inactive
+inactive

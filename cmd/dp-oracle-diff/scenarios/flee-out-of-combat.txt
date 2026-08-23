@@ -1,0 +1,37 @@
+# C act.offensive.c::do_flee does not require FIGHTING(ch); a standing player
+# still samples exits and attempts to flee. This gates that reachable path.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Fleeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleeactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+flee

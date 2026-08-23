@@ -1,0 +1,38 @@
+# act.other.c::do_quit with SCMD_REALLY_QUIT bypasses the safe-room refusal,
+# drops equipment, prints the C goodbye, and closes the descriptor. Keep this
+# as the final/only probe because success intentionally ends the connection.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Rqactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rqactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+reallyquit

@@ -171,7 +171,7 @@ func (s *Session) Send(message string) {
 func (s *Session) SendPrompt() {
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgPrompt,
-		Data: map[string]interface{}{},
+		Data: map[string]interface{}{"text": s.promptText()},
 	})
 	if err != nil {
 		slog.Error("json.Marshal error", "error", err)
@@ -187,6 +187,23 @@ func (s *Session) SendPrompt() {
 	default:
 		slog.Warn("session send channel full — dropping prompt", "player", s.playerName)
 	}
+}
+
+// promptText returns the state prefixes that C's make_prompt emits after the
+// regular display fields. When both flags are set, PRF_INACTIVE wins because
+// the later sprintf in comm.c overwrites the earlier PRF_AFK prompt.
+func (s *Session) promptText() string {
+	if s.player == nil {
+		return "> "
+	}
+	flags := s.player.GetFlags()
+	if flags&(1<<uint(game.PrfInactive)) != 0 {
+		return "INACTIVE > "
+	}
+	if flags&(1<<uint(game.PrfAFK)) != 0 {
+		return "AFK > "
+	}
+	return "> "
 }
 
 // MarkDirty marks a variable as dirty for agent subscriptions.
