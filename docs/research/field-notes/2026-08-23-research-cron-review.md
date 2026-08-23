@@ -103,17 +103,21 @@ review:
 - Lightweight bootstrap context is enabled.
 - Tool access was reduced to the minimum needed by each job; writing alone keeps
   web research tools.
-- Soviet cross-post and redundant in-prompt Discord sends were removed. Cron
-  delivery remains the sole Discord path.
+- Soviet cross-posting was repaired rather than removed. Both prompts require
+  the absolute `soviet_as.sh daeron` wrapper, verify `displayName` is `Daeron`,
+  and report mirror status separately. The redundant in-prompt Discord send was
+  removed; cron delivery remains the sole Discord path.
 - Both jobs now use absolute canonical repository paths, append-only field notes,
   the evidence ledger, bounded source sets, claim-state rules, and `git diff --check`.
 - Failure alerts now trigger after two consecutive job errors and target the
   operations channel.
-- Daeron workspace commit `bcf4725` aligns the standing Program 3/5 instructions
-  with the live weekly schedules and artifact contract.
+- Daeron workspace commits `bcf4725` and `8af06a8` align the standing Program 3/5
+  instructions with the live weekly schedules, artifact contract, and repaired
+  Soviet mirror.
 
-The jobs were not forced to run during remediation because doing so would create
-and distribute unscheduled research output. Their next natural executions are
-the first end-to-end verification of the new prompts. Compare token usage,
-artifact paths, ledger validity, and partial-failure reporting against the prior
-run history.
+The absolute wrapper and read-only Daeron identity lookup were tested successfully
+from the Mac environment. The jobs themselves were not forced to run because that
+would create and distribute unscheduled research output. Their next natural
+executions are the first end-to-end verification of the new prompts. Compare
+token usage, artifact paths, ledger validity, partial-failure reporting, and
+Soviet delivery against the prior run history.
