@@ -98,8 +98,9 @@ durable evidence; prose percentages are only snapshots.
 - Mounted movement is now implemented and proven as a vertical slice: spawned
   mobs have C's 50-point movement pool, rider/mount pairs transfer together,
   only mounts pay movement cost, failure gates match, and room observations
-  represent the pair once. Greet plus room-enter trigger ordering are the two
-  remaining shared-movement proof gaps.
+  represent the pair once. Focused script recording now proves the final shared
+  movement ordering boundary: destination look, then mob greet, then room-enter
+  script. The movement depth manifest has no remaining actionable gaps.
 
 Update this dated section when the frontier materially changes. Keep the rest
 of this document stable unless the methodology itself changes.

@@ -8,6 +8,15 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+type movementTriggerRecorder struct {
+	events *[]string
+}
+
+func (r movementTriggerRecorder) RunScript(ctx *ScriptContext, filename, trigger string) (bool, error) {
+	*r.events = append(*r.events, filename+":"+trigger)
+	return true, nil
+}
+
 func captureMovementOutput(w *World) map[string]*strings.Builder {
 	output := make(map[string]*strings.Builder)
 	w.MessageSink = func(name string, message []byte) {
@@ -403,6 +412,72 @@ func TestMountedMovementVerticalArrivalAudiences(t *testing.T) {
 				t.Fatalf("destination output = %q, want %q", got, test.arrival)
 			}
 		})
+	}
+}
+
+func TestDoSimpleMoveTriggerOrdering(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Origin", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
+			{VNum: 1002, Name: "Destination", ScriptName: "room.lua", ScriptFunctions: 1 << 1},
+		},
+		Mobs: []parser.Mob{{
+			VNum:         9001,
+			Keywords:     "greeter",
+			ShortDesc:    "a greeter",
+			ScriptName:   "mob.lua",
+			LuaFunctions: 1 << 2,
+		}},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	actor := addMovementPlayer(t, w, "Mover", 1001)
+	if _, err := w.SpawnMob(9001, 1002); err != nil {
+		t.Fatal(err)
+	}
+
+	events := make([]string, 0, 3)
+	previousEngine := ScriptEngine
+	ScriptEngine = movementTriggerRecorder{events: &events}
+	t.Cleanup(func() { ScriptEngine = previousEngine })
+	w.MovementLook = func(player *Player) {
+		if player != actor {
+			t.Fatalf("look callback player = %v, want actor", player)
+		}
+		events = append(events, "look")
+	}
+
+	if !w.DoMove(actor, "north").Success {
+		t.Fatal("DoMove failed")
+	}
+
+	if got, want := strings.Join(events, ","), "look,mob.lua:greet,room.lua:enter"; got != want {
+		t.Fatalf("movement trigger order = %q, want %q", got, want)
+	}
+
+	deathParsed := &parser.World{Rooms: []parser.Room{
+		{VNum: 2001, Name: "Origin", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 2002}}},
+		{VNum: 2002, Name: "Death", Flags: []string{"2"}, ScriptName: "death-room.lua", ScriptFunctions: 1 << 1},
+		{VNum: MortalStartRoom, Name: "Temple"},
+	}}
+	deathWorld, err := NewWorld(deathParsed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(deathWorld.StopAITicker)
+	deathActor := addMovementPlayer(t, deathWorld, "Deathmover", 2001)
+	deathEvents := make([]string, 0, 2)
+	ScriptEngine = movementTriggerRecorder{events: &deathEvents}
+	deathWorld.MovementLook = func(*Player) { deathEvents = append(deathEvents, "look") }
+
+	if deathWorld.DoMove(deathActor, "north").Success {
+		t.Fatal("death-trap movement unexpectedly succeeded")
+	}
+	if got, want := strings.Join(deathEvents, ","), "look"; got != want {
+		t.Fatalf("death-trap trigger order = %q, want %q (room enter must not run)", got, want)
 	}
 }
 
