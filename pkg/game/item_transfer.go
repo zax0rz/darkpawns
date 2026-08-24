@@ -183,15 +183,9 @@ func (w *World) DoDrop(ch *Player, arg string) {
 
 // doGet handles the get/take command
 func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
-	parts := strings.SplitN(arg, " ", 2)
-	arg1 := ""
-	arg2 := ""
-	if len(parts) > 0 {
-		arg1 = strings.TrimSpace(parts[0])
-	}
-	if len(parts) > 1 {
-		arg2 = strings.TrimSpace(parts[1])
-	}
+	// C do_get parses with two_arguments (interpreter.c), which drops fill
+	// words ("get in pack" -> "get pack") and lowercases each argument.
+	arg1, arg2 := twoArguments(arg)
 
 	if len(ch.Inventory.Items) >= ch.MaxCarryItems() {
 		ch.SendMessage("Your arms are already full!\r\n")

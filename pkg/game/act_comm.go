@@ -396,8 +396,39 @@ func skipSpaces(s string) string {
 	return s
 }
 
-// oneArgument splits input into (firstWord, restAfterFirst).
+// fillWord reports whether a word is one of C's fill[] words (interpreter.c:853)
+// that one_argument/two_arguments skip when parsing command arguments.
+func fillWord(word string) bool {
+	switch strings.ToLower(word) {
+	case "in", "from", "with", "the", "on", "at", "to":
+		return true
+	}
+	return false
+}
+
+// oneArgument copies the first non-fill-word argument (lowercased) into the
+// first return value and returns the remainder, mirroring C one_argument
+// (interpreter.c:1265): leading fill words are skipped and the argument is
+// case-folded. The remainder preserves its original case.
 func oneArgument(input string) (string, string) {
+	for {
+		input = skipSpaces(input)
+		if input == "" {
+			return "", ""
+		}
+		fields := strings.Fields(input)
+		word := fields[0]
+		rest := skipSpaces(strings.TrimPrefix(input, word))
+		if lower := strings.ToLower(word); !fillWord(lower) {
+			return lower, rest
+		}
+		input = rest
+	}
+}
+
+// halfChop splits the first whitespace-delimited word from the rest, mirroring
+// C half_chop: no fill-word skipping and no case folding.
+func halfChop(input string) (string, string) {
 	input = skipSpaces(input)
 	if input == "" {
 		return "", ""
@@ -407,14 +438,8 @@ func oneArgument(input string) (string, string) {
 		return "", ""
 	}
 	word := fields[0]
-	rest := strings.TrimPrefix(input, word)
-	rest = skipSpaces(rest)
+	rest := skipSpaces(strings.TrimPrefix(input, word))
 	return word, rest
-}
-
-// halfChop splits first word from rest (mirrors C half_chop).
-func halfChop(input string) (string, string) {
-	return oneArgument(input)
 }
 
 // AllPlayers returns a snapshot of all connected players.
