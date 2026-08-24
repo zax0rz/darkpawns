@@ -60,7 +60,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 	// Find container in inventory or room
 	var cont *ObjectInstance
 	for _, obj := range ch.Inventory.Items {
-		if isname(arg2, obj.GetKeywords()) {
+		if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 			cont = obj
 			break
 		}
@@ -69,7 +69,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 		room := w.GetRoomInWorld(ch.GetRoomVNum())
 		if room != nil {
 			for _, obj := range w.roomItems[ch.RoomVNum] {
-				if isname(arg2, obj.GetKeywords()) {
+				if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 					cont = obj
 					break
 				}
@@ -92,7 +92,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 	if objDotmode == findIndiv {
 		var obj *ObjectInstance
 		for _, o := range ch.Inventory.Items {
-			if isname(arg1, o.GetKeywords()) {
+			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
 			}
@@ -117,7 +117,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 			if !canSeeObject(ch, obj) {
 				continue
 			}
-			if objDotmode == findAll || isname(arg1, obj.GetKeywords()) {
+			if objDotmode == findAll || isnameWithAbbrevs(arg1, obj.GetKeywords()) {
 				found = true
 				w.performPut(ch, obj, cont)
 			}

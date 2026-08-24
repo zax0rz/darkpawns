@@ -127,7 +127,7 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 		copy(items, ch.Inventory.Items)
 		found := false
 		for _, obj := range items {
-			if isname(keyword, obj.GetKeywords()) {
+			if isnameWithAbbrevs(keyword, obj.GetKeywords()) {
 				found = true
 				amount += w.performDispose(ch, obj, mode, sname, donationRoom)
 			}
@@ -138,7 +138,7 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 	default:
 		var obj *ObjectInstance
 		for _, o := range ch.Inventory.Items {
-			if isname(arg1, o.GetKeywords()) {
+			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
 			}

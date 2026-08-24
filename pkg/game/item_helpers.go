@@ -313,20 +313,6 @@ func canWearObject(obj *ObjectInstance, where int) bool {
 	return wearMask&bit != 0
 }
 
-// isname checks if str matches keywords in a space-separated namelist
-func isname(str, namelist string) bool {
-	if namelist == "" {
-		return false
-	}
-	words := strings.Fields(namelist)
-	for _, w := range words {
-		if strings.Contains(strings.ToLower(w), strings.ToLower(str)) {
-			return true
-		}
-	}
-	return false
-}
-
 // findAllDots returns the dot mode for an argument
 func findAllDots(arg string) int {
 	if arg == "all" || arg == "all." {

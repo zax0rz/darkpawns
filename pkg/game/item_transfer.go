@@ -83,7 +83,7 @@ func (w *World) getFromContainer(ch *Player, cont *ObjectInstance, arg string, m
 	dotmode := findAllDots(arg)
 	if dotmode == findIndiv {
 		for _, obj := range cont.Contains {
-			if isname(arg, obj.GetKeywords()) && canSeeObject(ch, obj) {
+			if isnameWithAbbrevs(arg, obj.GetKeywords()) && canSeeObject(ch, obj) {
 				w.performGetFromContainer(ch, obj, cont, mode)
 				return
 			}
@@ -101,7 +101,7 @@ func (w *World) getFromContainer(ch *Player, cont *ObjectInstance, arg string, m
 	items := append([]*ObjectInstance(nil), cont.Contains...)
 	found := false
 	for _, obj := range items {
-		if canSeeObject(ch, obj) && (dotmode == findAll || isname(keyword, obj.GetKeywords())) {
+		if canSeeObject(ch, obj) && (dotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords())) {
 			found = true
 			w.performGetFromContainer(ch, obj, cont, mode)
 		}
@@ -135,7 +135,7 @@ func (w *World) getFromRoom(ch *Player, arg string) {
 	items := append([]*ObjectInstance(nil), w.roomItems[ch.GetRoom()]...)
 	if dotmode == findIndiv {
 		for _, obj := range items {
-			if isname(arg, obj.GetKeywords()) && canSeeObject(ch, obj) {
+			if isnameWithAbbrevs(arg, obj.GetKeywords()) && canSeeObject(ch, obj) {
 				w.performGetFromRoom(ch, obj)
 				return
 			}
@@ -151,7 +151,7 @@ func (w *World) getFromRoom(ch *Player, arg string) {
 	}
 	found := false
 	for _, obj := range items {
-		if canSeeObject(ch, obj) && (dotmode == findAll || isname(keyword, obj.GetKeywords())) {
+		if canSeeObject(ch, obj) && (dotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords())) {
 			found = true
 			w.performGetFromRoom(ch, obj)
 		}
@@ -217,7 +217,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 		containers := append([]*ObjectInstance(nil), ch.Inventory.Items...)
 		containers = append(containers, w.roomItems[ch.GetRoom()]...)
 		for _, cont := range containers {
-			if !canSeeObject(ch, cont) || (contDotmode == findAlldot && !isname(keyword, cont.GetKeywords())) {
+			if !canSeeObject(ch, cont) || (contDotmode == findAlldot && !isnameWithAbbrevs(keyword, cont.GetKeywords())) {
 				continue
 			}
 			if cont.GetTypeFlag() != ITEM_CONTAINER {
@@ -247,7 +247,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 	var cont *ObjectInstance
 	mode := findObjRoom
 	for _, obj := range ch.Inventory.Items {
-		if isname(arg2, obj.GetKeywords()) {
+		if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 			cont = obj
 			mode = findObjInv
 			break
@@ -257,7 +257,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 		room := w.GetRoomInWorld(ch.GetRoomVNum())
 		if room != nil {
 			for _, obj := range w.roomItems[ch.GetRoom()] {
-				if isname(arg2, obj.GetKeywords()) {
+				if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 					cont = obj
 					break
 				}
@@ -361,7 +361,7 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 		copy(items, ch.Inventory.Items)
 		found := false
 		for _, obj := range items {
-			if isname(keyword, obj.GetKeywords()) {
+			if isnameWithAbbrevs(keyword, obj.GetKeywords()) {
 				w.performDropNamed(ch, obj, sname)
 				found = true
 			}
@@ -375,7 +375,7 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 	// Individual drop
 	var obj *ObjectInstance
 	for _, o := range ch.Inventory.Items {
-		if isname(arg1, o.GetKeywords()) {
+		if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 			obj = o
 			break
 		}
@@ -576,7 +576,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	if mob != nil {
 		var obj *ObjectInstance
 		for _, o := range ch.Inventory.Items {
-			if isname(arg1, o.GetKeywords()) {
+			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
 			}
@@ -599,7 +599,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	if dotmode == findIndiv {
 		var obj *ObjectInstance
 		for _, o := range ch.Inventory.Items {
-			if isname(arg1, o.GetKeywords()) {
+			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
 			}
@@ -622,7 +622,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 			if !canSeeObject(ch, obj) {
 				continue
 			}
-			if dotmode == findAll || isname(arg1, obj.GetKeywords()) {
+			if dotmode == findAll || isnameWithAbbrevs(arg1, obj.GetKeywords()) {
 				w.performGive(ch, vict, obj)
 			}
 		}
