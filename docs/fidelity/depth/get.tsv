@@ -1,33 +1,33 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_get	get	get.arms-full-pregate	D1	command	blocked	-	act.item.c:357-358	IS_CARRYING_N>=CAN_CARRY_N pre-empts even the Get-what arg gate.
-do_get	get	get.no-arg	D1	command	blocked	-	act.item.c:359-360	Empty arg1 yields "Get what?".
-do_get	get	get.room-single	D3	command	blocked	-	act.item.c:361-362	One-arg form delegates to get_from_room.
-do_get	get	get.container-not-held	D2	command	blocked	-	act.item.c:371-374	generic_find INV|ROOM miss yields "You don't have a/an X.".
-do_get	get	get.target-not-container	D2	command	blocked	-	act.item.c:375-376	Non-container target yields "$p is not a container.".
-do_get	get	get.container-single	D3	command	blocked	-	act.item.c:377-378	Two-arg indiv form delegates to get_from_container.
-do_get	get	get.all-of-what	D2	command	blocked	-	act.item.c:383-386	"get all." empty remainder yields "Get from all of what?".
-do_get	get	get.container-sweep	D2	command	blocked	-	act.item.c:388-412	all / all.X sweeps inventory then room containers.
-do_get	get	get.sweep-none-all	D2	command	blocked	-	act.item.c:409-410	FIND_ALL with no container yields "You can't seem to find any containers.".
-do_get	get	get.sweep-none-alldot	D2	command	blocked	-	act.item.c:411-414	FIND_ALLDOT with no match yields "You can't seem to find any Xss here.".
-do_get	get	get.alldot-non-container	D3	command	blocked	-	act.item.c:399-403	all.X matching a non-container yields "$p is not a container.".
+do_get	get	get.arms-full-pregate	D1	command	unit-green	TestDoGetChecksFullArmsBeforeEmptyArgument	act.item.c:357-358	IS_CARRYING_N>=CAN_CARRY_N pre-empts even the Get-what arg gate.
+do_get	get	get.no-arg	D1	command	oracle-green	get-room	act.item.c:359-360	Empty arg1 yields "Get what?".
+do_get	get	get.room-single	D3	command	oracle-green	get-room	act.item.c:361-362	One-arg form delegates to get_from_room.
+do_get	get	get.container-not-held	D2	command	oracle-green	get-container	act.item.c:371-374	generic_find INV|ROOM miss yields "You don't have a/an X.".
+do_get	get	get.target-not-container	D2	command	oracle-green	get-container	act.item.c:375-376	Non-container target yields "$p is not a container.".
+do_get	get	get.container-single	D3	command	oracle-green	get-container	act.item.c:377-378	Two-arg indiv form delegates to get_from_container.
+do_get	get	get.all-of-what	D2	command	blocked	-	act.item.c:383-386	"get all." must map to FIND_ALLDOT (empty keyword) -> "Get from all of what?"; Go findAllDots treats "all." as FIND_ALL. Owner: find_all_dots semantics PR (separate, shared).
+do_get	get	get.container-sweep	D2	command	oracle-green	get-container	act.item.c:388-412	all / all.X sweeps inventory then room containers.
+do_get	get	get.sweep-none-all	D2	command	oracle-green	get-sweep-none	act.item.c:409-410	FIND_ALL with no container yields "You can't seem to find any containers.".
+do_get	get	get.sweep-none-alldot	D2	command	oracle-green	get-room	act.item.c:411-414	FIND_ALLDOT with no match yields "You can't seem to find any Xss here.".
+do_get	get	get.alldot-non-container	D3	command	oracle-green	get-room	act.item.c:399-403	all.X matching a non-container yields "$p is not a container.".
 get_from_room	get	get.mounted-block	D1	command	oracle-green	get-mounted-block	act.item.c:297-299	Mounted actor cannot reach the floor: "You can't reach it from your mount.".
-get_from_room	get	get.room-not-found	D2	command	blocked	-	act.item.c:305-307	Indiv miss yields "You don't see a/an X here.".
-get_from_room	get	get.room-success	D3	command	blocked	-	act.item.c:273-285	Actor "You get $p." and origin peer "$n gets $p.".
-get_from_room	get	get.room-all-empty	D2	command	blocked	-	act.item.c:325-326	"get all" in an empty room yields "There doesn't seem to be anything here.".
-get_from_room	get	get.room-alldot-none	D2	command	blocked	-	act.item.c:327-329	"get all.X" with no match yields "You don't see any Xss here.".
-can_take_obj	get	get.gate-count	D2	command	blocked	-	act.item.c:160-164	Carry-count limit yields "$p: you can't carry that many items.".
-can_take_obj	get	get.gate-weight	D2	command	blocked	-	act.item.c:165-169	Carry-weight limit yields "$p: you can't carry that much weight.".
-can_take_obj	get	get.gate-take-flag	D2	command	blocked	-	act.item.c:170-174	Missing ITEM_WEAR_TAKE yields "$p: you can't take that!".
-get_from_container	get	get.container-closed	D2	command	blocked	-	act.item.c:225-226	CONT_CLOSED yields "$p is closed.".
-get_from_container	get	get.container-not-found	D2	command	blocked	-	act.item.c:231-234	Indiv miss yields "There doesn't seem to be a/an X in $p.".
-get_from_container	get	get.container-success	D3	command	blocked	-	act.item.c:203-212	Actor "You get $p from $P." and origin peer "$n gets $p from $P.".
-get_from_container	get	get.container-all-empty	D2	command	blocked	-	act.item.c:258-259	"get all" from empty container yields "$p seems to be empty.".
-get_from_container	get	get.container-alldot-none	D2	command	blocked	-	act.item.c:260-263	"get all.X" with no match yields "You can't seem to find any Xss in $p.".
-perform_get_from_container	get	get.inv-container-bypass	D5	state	blocked	-	act.item.c:200	mode==FIND_OBJ_INV skips can_take_obj: own-container get ignores TAKE/weight/count.
-perform_get_from_container	get	get.inv-container-arms-full	D2	command	blocked	-	act.item.c:202-203	Distinct wording "$p: you can't hold any more items." on the inv path.
-get_check_money	get	get.money-multi	D4	state	blocked	-	act.item.c:184-189	>1 coins prints "There were N coins." plus gold delta; object vanishes.
-get_check_money	get	get.money-single	D4	state	blocked	-	act.item.c:180-192	Exactly 1 coin is silent; gold+1; object vanishes.
-perform_get_from_room	get	get.onget-script	D5	hook	blocked	-	act.item.c:283-284	C fires the room onget trigger after a successful get; Go wiring under audit.
-get_obj_in_list_vis	get	get.abbrev-match	D2	shared	blocked	-	handler.c:get_obj_in_list_vis	Room/container lookup uses isname_with_abbrevs (prefix); Go wires substring isname. Owner: matcher-semantics PR (separate, foundational).
-one_argument	get	get.fill-word-parse	D2	shared	blocked	-	interpreter.c:1265	C drops leading fill words ("get in pack"->"get pack"); Go keeps them. Owner: fill-word parsing PR (separate, foundational).
+get_from_room	get	get.room-not-found	D2	command	oracle-green	get-room	act.item.c:305-307	Indiv miss yields "You don't see a/an X here.".
+get_from_room	get	get.room-success	D3	command	oracle-green	get-room	act.item.c:273-285	Actor "You get $p." and origin peer "$n gets $p.".
+get_from_room	get	get.room-all-empty	D2	command	oracle-green	get-room	act.item.c:325-326	"get all" in an empty room yields "There doesn't seem to be anything here.".
+get_from_room	get	get.room-alldot-none	D2	command	oracle-green	get-room	act.item.c:327-329	"get all.X" with no match yields "You don't see any Xss here.".
+can_take_obj	get	get.gate-count	D2	command	unit-green	TestCanTakeObjGateMessages	act.item.c:160-164	Carry-count limit yields "$p: you can't carry that many items.".
+can_take_obj	get	get.gate-weight	D2	command	unit-green	TestCanTakeObjGateMessages	act.item.c:165-169	Carry-weight limit yields "$p: you can't carry that much weight.".
+can_take_obj	get	get.gate-take-flag	D2	command	unit-green	TestCanTakeObjGateMessages	act.item.c:170-174	Missing ITEM_WEAR_TAKE yields "$p: you can't take that!".
+get_from_container	get	get.container-closed	D2	command	oracle-green	get-container	act.item.c:225-226	CONT_CLOSED yields "$p is closed.".
+get_from_container	get	get.container-not-found	D2	command	oracle-green	get-container	act.item.c:231-234	Indiv miss yields "There doesn't seem to be a/an X in $p.".
+get_from_container	get	get.container-success	D3	command	oracle-green	get-container	act.item.c:203-212	Actor "You get $p from $P." and origin peer "$n gets $p from $P.".
+get_from_container	get	get.container-all-empty	D2	command	oracle-green	get-container	act.item.c:258-259	"get all" from empty container yields "$p seems to be empty.".
+get_from_container	get	get.container-alldot-none	D2	command	oracle-green	get-container	act.item.c:260-263	"get all.X" with no match yields "You can't seem to find any Xss in $p.".
+perform_get_from_container	get	get.inv-container-bypass	D5	state	unit-green	TestGetFromInvContainerBypassesCanTake	act.item.c:200	mode==FIND_OBJ_INV skips can_take_obj: own-container get ignores TAKE/weight/count.
+perform_get_from_container	get	get.inv-container-arms-full	D2	command	unit-green	TestGetFromInvContainerArmsFull	act.item.c:202-203	Distinct wording "$p: you can't hold any more items." on the inv path.
+get_check_money	get	get.money-multi	D4	state	unit-green	TestGetCheckMoneyMultiAndSingle	act.item.c:184-189	>1 coins prints "There were N coins." plus gold delta; object vanishes.
+get_check_money	get	get.money-single	D4	state	unit-green	TestGetCheckMoneyMultiAndSingle	act.item.c:180-192	Exactly 1 coin is silent; gold+1; object vanishes.
+perform_get_from_room	get	get.onget-script	D5	hook	unit-green	TestGetFiresOnGetRoomScript	act.item.c:211,283	C fires the room onget trigger (RS_ONGET, 1<<4) after a successful room/container get. Go fired none; now wired in fireOnGet.
+get_obj_in_list_vis	get	get.abbrev-match	D2	shared	oracle-green	get-matcher-abbrev	handler.c:get_obj_in_list_vis	Room/container lookup uses isname_with_abbrevs (prefix): "sk" matches skin, "ater"/"kin" do not. Fixed in #610.
+one_argument	get	get.fill-word-parse	D2	shared	oracle-green	get-fillword	interpreter.c:1265	C drops leading fill words ("get in pack"->"get pack") and lowercases args. Fixed in #611.
 perform_get_from_room	get	get.palm-quiet-path	D5	skill-call	excluded	-	act.item.c:279-280	quiet=TRUE improve_skill(PALM) path is unreachable from a player get; belongs to steal/palm.

@@ -1,0 +1,85 @@
+# depth-case: get.container-closed
+# depth-case: get.container-not-found
+# depth-case: get.container-alldot-none
+# depth-case: get.container-single
+# depth-case: get.container-success
+# depth-case: get.target-not-container
+# depth-case: get.container-not-held
+# depth-case: get.container-sweep
+# depth-case: get.container-all-empty
+# The survival-loop container path: get food/water out of a backpack. The
+# warrior starting kit gives a closed backpack (8038) holding bread (8010) and a
+# water skin (8063) — a free fixture, no spawns. The "obs" peer shares the actor
+# room and proves the TO_ROOM broadcast on the success/sweep gets.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Getcont
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Getcont
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Getobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Getobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get bread pack
+open pack
+get xyzzy pack
+get all.xyzzy pack
+get bread pack
+get x bread
+get x xyzzy
+get all pack
+get all pack
