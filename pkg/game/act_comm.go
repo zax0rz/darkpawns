@@ -427,7 +427,9 @@ func oneArgument(input string) (string, string) {
 }
 
 // halfChop splits the first whitespace-delimited word from the rest, mirroring
-// C half_chop: no fill-word skipping and no case folding.
+// C half_chop (interpreter.c:1372). It calls any_one_arg, which lowercases the
+// first token but does NOT skip fill words; the remainder keeps its original
+// case. e.g. "Bob Hello THERE" -> "bob", "Hello THERE".
 func halfChop(input string) (string, string) {
 	input = skipSpaces(input)
 	if input == "" {
@@ -439,7 +441,7 @@ func halfChop(input string) (string, string) {
 	}
 	word := fields[0]
 	rest := skipSpaces(strings.TrimPrefix(input, word))
-	return word, rest
+	return strings.ToLower(word), rest
 }
 
 // AllPlayers returns a snapshot of all connected players.
