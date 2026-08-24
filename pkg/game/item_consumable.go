@@ -403,11 +403,12 @@ func twoArguments(s string) (string, string) {
 	return first, second
 }
 
-// findObjectInRoomByName locates an object in the room by keyword or short desc.
+// findObjectInRoomByName locates an object in the room by keyword, mirroring
+// C get_obj_in_list_vis (isname_with_abbrevs). C does not match short
+// descriptions here, so neither do we (R4).
 func (w *World) findObjectInRoomByName(roomVNum int, name string) *ObjectInstance {
-	lowerName := strings.ToLower(name)
 	for _, obj := range w.GetItemsInRoom(roomVNum) {
-		if isname(lowerName, obj.GetKeywords()) || strings.Contains(strings.ToLower(obj.GetShortDesc()), lowerName) {
+		if isnameWithAbbrevs(name, obj.GetKeywords()) {
 			return obj
 		}
 	}

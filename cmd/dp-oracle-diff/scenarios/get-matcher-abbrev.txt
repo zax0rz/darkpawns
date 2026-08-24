@@ -1,0 +1,44 @@
+# Object keyword matching must mirror C get_obj_in_list_vis, which uses
+# isname_with_abbrevs (prefix), NOT a substring match. Backpack 8038 holds a
+# water skin 8063 (keywords "water skin").
+#   "ater" / "kin" are substrings of "water"/"skin" but not prefixes -> reject.
+#   "sk" is a prefix of "skin" -> match.
+# All three blocks must be green once the Go port uses prefix matching.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Getmatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Getmatch
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+open pack
+get ater pack
+get kin pack
+get sk pack
