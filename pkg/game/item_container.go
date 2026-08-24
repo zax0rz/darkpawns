@@ -27,15 +27,9 @@ func (w *World) DoPut(ch *Player, arg string) {
 }
 
 func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
-	parts := strings.SplitN(arg, " ", 2)
-	arg1 := ""
-	arg2 := ""
-	if len(parts) > 0 {
-		arg1 = strings.TrimSpace(parts[0])
-	}
-	if len(parts) > 1 {
-		arg2 = strings.TrimSpace(parts[1])
-	}
+	// C do_put parses with two_arguments (interpreter.c): fill words dropped,
+	// tokens lowercased.
+	arg1, arg2 := twoArguments(arg)
 
 	objDotmode := findAllDots(arg1)
 	contDotmode := findAllDots(arg2)
@@ -107,6 +101,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 		}
 		w.performPut(ch, obj, cont)
 	} else {
+		keyword := strings.TrimPrefix(arg1, "all.")
 		found := false
 		for _, obj := range ch.Inventory.Items {
 			if obj == cont {
@@ -117,7 +112,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 			if !canSeeObject(ch, obj) {
 				continue
 			}
-			if objDotmode == findAll || isnameWithAbbrevs(arg1, obj.GetKeywords()) {
+			if objDotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords()) {
 				found = true
 				w.performPut(ch, obj, cont)
 			}
@@ -126,7 +121,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 			if objDotmode == findAll {
 				ch.SendMessage("You don't seem to have anything to put in it.\r\n")
 			} else {
-				ch.SendMessage(fmt.Sprintf("You don't seem to have any %ss.\r\n", arg1))
+				ch.SendMessage(fmt.Sprintf("You don't seem to have any %ss.\r\n", keyword))
 			}
 		}
 	}
