@@ -131,6 +131,12 @@ func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
 }
 
 func (w *World) getFromRoom(ch *Player, arg string) {
+	// C get_from_room (act.item.c:297) rejects a mounted actor before any
+	// lookup: a rider cannot reach objects on the floor.
+	if ch.IsMounted() {
+		ch.SendMessage("You can't reach it from your mount.\r\n")
+		return
+	}
 	dotmode := findAllDots(arg)
 	items := append([]*ObjectInstance(nil), w.roomItems[ch.GetRoom()]...)
 	if dotmode == findIndiv {
