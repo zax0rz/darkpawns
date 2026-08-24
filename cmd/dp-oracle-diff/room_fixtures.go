@@ -118,7 +118,8 @@ func replaceRoomExits(record string, fixture oraclediff.RoomExitFixture) (string
 		if !ok {
 			return "", fmt.Errorf("invalid direction %q", fixtureDirection)
 		}
-		result = append(result,
+		result = append(
+			result,
 			fmt.Sprintf("D%d", direction),
 			"~",
 			fixture.Keyword+"~",

@@ -54,7 +54,8 @@ func TestApplyRoomFixturesReplacesExitsAndSetsFlags(t *testing.T) {
 	if err := os.CopyFS(worldDir, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 		t.Fatalf("copy world: %v", err)
 	}
-	if err := applyRoomFixtures(worldDir,
+	if err := applyRoomFixtures(
+		worldDir,
 		[]oraclediff.RoomExitFixture{{RoomVNum: 8162, Direction: "all", ToRoom: 8161, DoorState: 1, Keyword: "gate"}},
 		[]oraclediff.RoomFlagFixture{{RoomVNum: 8161, Bit: 1, Enabled: true}},
 		[]oraclediff.RoomSectorFixture{{RoomVNum: 8161, Sector: 7}},
