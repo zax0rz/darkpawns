@@ -102,12 +102,9 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		return true
 	}
 
-	parts := strings.SplitN(arg, " ", 2)
-	itemArg := strings.TrimSpace(parts[0])
-	_ = itemArg // suppress unused
-	if len(parts) > 1 {
-		_ = strings.TrimSpace(parts[1]) // subArg placeholder
-	}
+	// C do_use parses with half_chop (interpreter.c): the first token is
+	// lowercased; fill words are not skipped.
+	itemArg, useRest := halfChop(arg)
 
 	if itemArg == "" {
 		ch.SendMessage(fmt.Sprintf("What do you want to %s?\r\n", cmd))
@@ -188,10 +185,7 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		}
 		item.SetValue(2, currCharges-1)
 
-		targetName := ""
-		if len(parts) > 1 {
-			targetName = strings.TrimSpace(parts[1])
-		}
+		targetName := useRest
 
 		var target interface{}
 		if targetName != "" {
@@ -267,10 +261,7 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.Inventory.RemoveItem(item)
 
 	case ITEM_SCROLL:
-		targetName := ""
-		if len(parts) > 1 {
-			targetName = strings.TrimSpace(parts[1])
-		}
+		targetName := useRest
 
 		var target interface{}
 		if targetName != "" {

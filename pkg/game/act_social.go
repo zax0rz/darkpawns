@@ -188,8 +188,10 @@ func extractArg(argument string) string {
 	if arg == "" {
 		return ""
 	}
-	parts := strings.SplitN(arg, " ", 2)
-	return parts[0]
+	// C do_action parses the target with one_argument (act.social.c): fill
+	// words dropped, token lowercased.
+	arg1, _ := oneArgument(arg)
+	return arg1
 }
 
 // findSocialTarget finds a character in the room by name, checking mobs first then players.

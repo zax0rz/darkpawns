@@ -1,0 +1,34 @@
+# depth-case: consider.fill-word-parse
+[fixture]
+quiet-mobs
+spawn-mob 8021 1 8162 80
+[setup:oracle]
+Consid
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Consid
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+consider the horse
+consider horse

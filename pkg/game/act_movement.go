@@ -819,15 +819,12 @@ func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
 
 // doGenDoor generic door command handler (open/close/lock/unlock/pick).
 func doGenDoor(w *World, ch *Player, argument string, scmd int) {
-	fields := strings.Fields(argument)
-	if len(fields) == 0 {
+	// C do_gen_door parses with two_arguments (interpreter.c): fill words
+	// dropped, tokens lowercased.
+	doorType, dir := twoArguments(argument)
+	if doorType == "" {
 		sendToChar(ch, strings.ToUpper(cmdDoor[scmd][:1])+cmdDoor[scmd][1:]+" what?\r\n")
 		return
-	}
-	doorType := fields[0]
-	dir := ""
-	if len(fields) > 1 {
-		dir = fields[1]
 	}
 
 	var obj *ObjectInstance
